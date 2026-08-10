@@ -237,21 +237,21 @@ Genre 10종, Theme 22종(centrality 1|2), Axis 17종(Narrative 6 / Tone·Relatio
 3. 그룹별 Work Similarity (Weighted Jaccard + Axis 거리)
 4. Coverage 미달 그룹만 중립(0.5) 수축
 5. Best Positive Anchor 점수 + Consensus Bonus (≤ +0.05)
-6. 명시적 보정 explicitAdjustment (±0.12 cap)
+6. 명시적 보정 explicitAdjustment (±0.12 cap) + Theme soft exclusion
 7. 사유별 Factor Penalty (합계 ≤ 0.25)
 8. Vague Dislike Shape Penalty (maxSim × 0.08)
-9. clamp(0, 1) → rawTasteScore
-10. 정렬: tasteScore 차 ≥ 0.025면 tasteScore, 아니면 tie-break
-    (recommendationConfidence → bayesianRating → maturity)
+9. 완결 우선 정책 감점 → clamp(0, 1) → rawTasteScore
+10. 정렬: 반올림된 tasteScore를 0.025 leader cohort로 분리한 뒤 cohort 안에서 tie-break
 11. 리스트 제약 적용 후 상위 10개 확정
 ```
 
 ### 6.2 유사도
 
-- Tag(Genre/Theme): Weighted Jaccard, Theme는 centrality를 가중치로.
+- Tag(Genre/Theme): Weighted Jaccard. Genre tag weight는 1, Theme는 각 작품의 centrality(1/2)를 가중치로 하며 tag별 교집합은 `min`, 합집합은 `max`다. Theme confidence는 similarity에 다시 곱하지 않고 Work confidence에서 사용한다.
 - Axis: `1 − |a−b|/4`. `darkness / mentalStress / romance`는 presence-sensitive — 한쪽이 0이고 다른 쪽이 >0이면 거리 ×1.5 (상한 1).
-- 팩터별 유효 가중치: `baseAxisWeight × min(anchorConfidence, candidateConfidence)`.
-- unknown 포함 비교 → 해당 팩터 미계산 + Coverage 감소. notApplicable → 기대 분모에서 제외.
+- v1의 17개 `baseAxisWeight`는 모두 1이다. 팩터별 유효 가중치는 `1 × min(anchorConfidence, candidateConfidence)`이며 그룹 안에서만 정규화한다.
+- Axis pair에서 한쪽이라도 notApplicable이면 기대 분모에서 제외한다. 그 외 pair는 기대 개수에 포함하고 양쪽 모두 known일 때만 관측 개수와 score에 포함한다. `coverage=observedCount/expectedCount`; 기대 개수 0 또는 관측 유효 가중치 합 0이면 raw score 0.5, coverage 0이다.
+- Tag group은 양쪽 배열이 모두 비어 있지 않을 때 coverage 1, 한쪽이라도 비면 coverage 0이다. 합집합이 비면 raw score 0.5다. 한쪽만 비면 raw Jaccard는 0이지만 coverage 0으로 최종 0.5에 수축한다. 양쪽 그룹 주석이 있을 때만 개별 tag 부재를 known absence로 본다.
 - 그룹 비중 고정: Genre 15% / Theme 25% / Narrative 25% / Tone·Relationship 20% / Art 15%.
 - Coverage 임계: Genre 0.80 / Theme 0.60 / Narrative 0.60 / Tone 0.60 / Art 0.30. 미달 그룹만 `0.5 + (score−0.5) × min(1, coverage/threshold)`. **가중치 재분배 금지.**
 
@@ -262,15 +262,29 @@ weight = { favorite: 1.0, liked: 0.8 };            // neutral·disliked는 posit
 anchorMatch = workSimilarity(candidate, anchor) * weight[reaction];
 bestMatch   = max(anchorMatches);
 // 같은 취향군: bestAnchor와 workSimilarity ≥ 0.65인 다른 positive anchor
-support        = average(sameModeMatches.slice(0, 2));
+supporterMatch = workSimilarity(candidate, supporter) * weight[supporter.reaction];
+support        = average(supporterMatches.sort(desc, workIdAsc).slice(0, 2));
 consensusBonus = max(0, support − 0.5) * 0.1;      // 실질 상한 ≈ +0.05
 positiveAnchorScore = clamp(bestMatch + consensusBonus, 0, 1);
 ```
+
+- positive anchor가 없으면 추천 배열은 비어 있다.
+- best anchor 완전 동률은 `workId` 오름차순으로 결정한다.
+- supporter가 0개면 support 0.5(보너스 0), 1개면 그 한 값의 평균이다. bonus는 계산 후 0.05에서 명시적으로 cap한다.
 
 ### 6.4 시장 신호 (tie-break 전용)
 
 - `bayesianRating = (n·avg + 20·catalogAvg) / (n + 20)` — 1권 리뷰 기준, priorCount 20에서 시작.
 - `maturity = min(1, log1p(volumeCount) / log1p(15))` — "검증된 작품 우선" 정책 선택 시에만 tie-break 우선순위 상승.
+- 리뷰가 없으면 `n=0`으로 Bayesian 결과는 catalog average다. 결측 reviewCount는 0, 결측 정적 volumeCount는 0이다.
+
+근접 동률은 pairwise comparator를 쓰지 않는다. 최종 tasteScore를 소수 12자리로 반올림해 내림차순 정렬하고, 아직 cohort에 들지 않은 첫 작품을 leader로 삼아 leader와 차가 `<0.025`인 연속 작품을 같은 cohort로 묶는다. 정확히 0.025 차이면 새 cohort다.
+
+- 기본 cohort tuple: `recommendationConfidence desc → bayesianRating desc → workId asc` (maturity 미사용).
+- 검증된 작품 우선: `bayesianRating desc → maturity desc → recommendationConfidence desc → workId asc`.
+- 숨은 작품 우선: `isPopular=false`를 위 tuple 맨 앞에 둔다. 검증 정책도 함께 켜졌으면 `isPopular asc → bayesianRating desc → maturity desc → recommendationConfidence desc → workId asc`.
+
+`maturity`의 기본 미사용은 이 절의 “검증된 작품 우선에서만”이 §6.1의 축약을 구체화한 것이며 `07` §2-12가 경계를 검증한다.
 
 ### 6.5 Confidence
 
@@ -279,6 +293,10 @@ profileConfidence = min(anchorCount/8, 1) * 0.8 + min(reasonedNegativeCount/2, 1
 workConfidence    = avgFactorConfidence * 0.6 + groupingConfidence * 0.2 + sourceAgreement * 0.2;
 recommendationConfidence = sqrt(profileConfidence * workConfidence);
 ```
+
+- `anchorCount`: distinct favorite/liked 작품 수.
+- `reasonedNegativeCount`: vague/external 이외 factor-backed reason이 1개 이상인 distinct 불호 작품 수.
+- `avgFactorConfidence`: 모든 known Axis confidence + 존재하는 Theme confidence의 산술 평균. unknown/notApplicable은 분모 제외, 값이 하나도 없으면 0.
 
 표시: 숫자가 아니라 3단계 레이블. `≥0.75 → 高い`, `0.5~0.75 → ふつう`, `<0.5 → 低め(データ収集中)`.
 
@@ -300,7 +318,7 @@ themeAdj = has(theme) ? strength * (centrality === 2 ? 1 : 0.5) : 0;
 explicitAdjustment = clamp(sum(axisAdj) + sum(themeAdj), -0.12, +0.12);
 ```
 
-`除外` 처리: Axis는 후보의 해당 값 ≥ 3이면 Hard Exclusion, Theme은 centrality 2이면 Hard Exclusion (centrality 1은 −0.10 감점).
+`除外` 처리: Axis는 후보의 해당 값 ≥ 3이면 Hard Exclusion, Theme은 centrality 2이면 Hard Exclusion. Axis 값 0~2에는 soft penalty가 없다. Theme centrality 1은 explicit adjustment clamp 뒤 별도 `softExclusionPenalty=-0.10`이며 reasoned factor penalty cap에 넣지 않는다.
 
 ### 6.7 부정 사유 어휘 (확정 12종 + 외부 사유)
 
@@ -317,12 +335,20 @@ UI·엔진·설명이 공유하는 고정 enum. 각 사유는 "후보가 조건�
 | `notEnoughSeriousness` | 軽すぎる・緊張感がない | `darkness ≤ 1` かつ `mentalStress ≤ 1` | |
 | `tooComplex` | 設定・人間関係が複雑 | `worldBuilding = 4` または `relationshipStructure = 4` | |
 | `artStyleDislike` | 絵が合わない | Art 그룹 유사도(대상 작품과) ≥ 0.75 | 약한 감점 0.08 |
-| `genericStory` | ありきたりな展開 | bestAnchor가 해당 불호 작품과 Theme 유사도 ≥ 0.7인 후보 | 감점 0.08 |
+| `genericStory` | ありきたりな展開 | 같은 불호 작품에 대해 bestAnchor↔불호와 candidate↔불호 Theme 유사도가 모두 ≥ 0.7 | 감점 0.08 |
 | `powerInflation` | インフレ・強さの破綻 | `progression = 4` | 감점 0.08 |
 | `vagueDislike` | なんとなく合わなかった | 작품 전체 유사도 기반 | `maxSim × 0.08` (§6.1-8) |
 | `external:*` | 休載・時間がない・配信終了 등 | **감점 없음** | 기록만 |
 
 unknown인 팩터는 감점 조건 판정에서 제외한다(원칙 2). 조건·수치는 Phase 1 sanity check에서 조정될 수 있으며, 조정 시 이 표를 갱신한다.
+
+집계 계약:
+
+- `external:*`은 계산에서 제거한다. factor-backed reason id는 여러 record에 반복되어도 전역 1회만 적용한다.
+- `artStyleDislike`와 `genericStory`의 threshold는 coverage shrink가 적용된 group score다. 여러 source 작품 중 조건을 만족하는 최댓값으로 1회 적용한다.
+- reasoned raw 합이 0.25를 넘으면 각 nominal penalty에 `0.25/rawTotal`을 곱해 비례 축소한다. 표 순서는 출력 안정화에만 쓰며 금액 우선권을 만들지 않는다.
+- vague는 이유 미선택이 `vagueDislike` 단독으로 정규화된 record만 사용한다. factor-backed 또는 external reason과 함께 있으면 적용하지 않는다. 남은 vague 작품과 후보의 전체 similarity 최댓값 ×0.08을 factor cap 밖에서 1회 적용한다(동률 source는 workId 오름차순).
+- `penaltiesApplied`는 실제 적용액이 0보다 큰 factor-backed reason과 vague만 `NegativeReasonId[]`로 담는다. external, Theme soft exclusion, completed policy는 넣지 않으며 이 표 순서로 정렬한다.
 
 ### 6.8 추천 리스트 제약
 
@@ -335,6 +361,36 @@ Discovery 슬롯               1~2 (top score − 0.10 이내에서만)
 
 추천 정책 반영: `완결작 우선` = status≠completed 후보 −0.05 (제외 아님) / `숨은 작품 우선` = Discovery 슬롯 2~4로 확대 + reviewCount 상위 20% 후보 tie-break 강등 / `검증된 작품 우선` = tie-break에서 bayesianRating·maturity 우선.
 
+정적 추천 제약 metadata는 확정 `Work` 타입을 늘리지 않고 별도 build input으로 둔다.
+
+```ts
+type RecommendationConstraintMetadata = {
+  workId: string;
+  catalogRole: "anchor" | "bridge" | "discovery";
+  seriesGroupId?: string;
+  volumeCount: number;
+};
+
+type RecommendationWorkMarketSignal = {
+  workId: string;
+  reviewAverage?: number;
+  reviewCount?: number;
+};
+```
+
+- 주요 Theme 조합 key는 centrality 2 Theme id 정렬 결합이며, 없으면 `none:{workId}`다. series/direct sequel key는 `seriesGroupId ?? workId`, Discovery는 `catalogRole=discovery`다.
+- metadata 결측 fallback은 단위 픽스처에서만 bridge/고유 series/volumeCount 0/reviewCount 0이다. 50/150작품 gate에서는 추천 작품의 정적 metadata 누락이 validation failure다.
+- review average/catalog average는 0~5 유한수, count류는 0 이상 정수로 경계 검증한다.
+- 정적 metadata와 market snapshot은 catalog와 함께 빌드되는 불변 context다. version 필드를 제외한 catalog+정규화 context로 digest를 계산해 catalog와 snapshot 양쪽에 같은 `catalogVersion`을 기록하고, 입력 경계에서 일치를 검증한다.
+
+리스트 선택은 §6.4에서 만든 전체 정렬을 순회하는 greedy다.
+
+1. best anchor≤4, 주요 Theme key≤3, series key≤1을 항상 적용한다.
+2. 모든 Discovery는 반올림된 `tasteScore >= overallTopTasteScore-0.10`일 때만 선택한다.
+3. Discovery 최대는 기본 2/숨은 정책 4, 최소는 기본 1/숨은 정책 2다.
+4. 최소 미달이면 가장 높은 미선택 Discovery `d`부터 본다. 선택이 10 미만이면 caps를 만족하는 `d`를 append한다. 이미 10이면 non-Discovery를 낮은 순위부터 `r`로 시도해 `(selected−r)+d`가 모든 cap을 만족하는 첫 쌍을 교체한다.
+5. 한 건마다 전체 tie-break 순서로 재정렬하고 최소 충족 또는 후보 소진까지 반복한다. cap은 완화하지 않으며 10개 미달은 후보 부족 상태로 처리한다.
+
 ### 6.9 설명 생성
 
 - 구성: 맞는 이유 최대 3 + 주의할 차이 1 + 근거 Anchor 1~3 + 확신도 레이블.
@@ -343,6 +399,33 @@ Discovery 슬롯               1~2 (top score − 0.10 이내에서만)
 - "주의할 차이"는 best Anchor 대비 가장 큰 음(−) 기여 팩터에서 생성한다. 음의 기여가 유의미하지 않으면 생략 가능(강제로 만들어내지 않음).
 - 템플릿 기반 일본어 문장. 예: `『{anchor}』で好きだった{clusterLabel}に近い作品です。` / 차이: `ただし序盤のテンポは、あなたの好みよりゆっくりめです。`
 - 각 추천 결과는 `contributions[]`(팩터·그룹별 기여값)를 함께 반환하며, 설명은 이 배열에서만 생성한다. 테스트로 강제한다(`07` §2).
+
+Contribution ledger는 `tasteScore`를 완전히 추적한다.
+
+```ts
+type ContributionSource =
+  | "baseline" | "similarity" | "consensus" | "adjustment"
+  | "penalty" | "policy" | "clamp";
+
+type GroupContribution = {
+  source: ContributionSource;
+  group: CoverageGroup | "overall";
+  factorId: string;
+  value: number;
+  anchorWorkIds: string[];
+  negativeReasonId?: NegativeReasonId;
+  explainable: boolean;
+};
+```
+
+- similarity factor delta는 중립 0.5 기준이다. Axis는 `(sim-0.5)*effectiveWeight/observedWeightSum`, tag는 합집합의 **각 tag별** `(minWeight-0.5*maxWeight)/totalUnionWeight`에 group weight와 coverage scale을 곱한다. 0분모에는 항을 만들지 않는다.
+- ledger는 `neutralBaseline=0.5*bestAnchorReactionWeight` + best anchor factor delta×reaction weight에서 시작한다. consensus는 clamp 후 실제 bonus, adjustment는 raw factor 항 + `adjustmentClamp`, penalty/policy는 실제 적용액, `finalClamp`는 `tasteScore-preClampScore`다.
+- source 고정: baseline / factor similarity / consensus / raw adjustment / Theme soft exclusion·reason penalty / completed policy / adjustment·final clamp 순으로 각각 이름과 같은 source를 쓴다. zero 항은 만들지 않는다.
+- group 고정: Genre/Theme tag=`genre/theme`, Axis=소속 그룹, Theme soft exclusion=`theme`, penalty는 §6.7의 원인 그룹(`tooComplex/vague=overall`), baseline/consensus/policy/clamp=`overall`.
+- reserved factorId: `neutralBaseline`, `consensus`, `adjustmentClamp`, `finalClamp`, `preferCompleted`. penalty는 reason id, 나머지는 실제 factor id다.
+- anchorWorkIds: similarity=[best], consensus=실제 supporter id 정렬, factor penalty=source disliked ids 정렬, vague=max source 1개, 나머지=[]다.
+- 설명 가능: similarity, 0이 아닌 adjustment/soft exclusion, factor-backed penalty만 true. baseline/consensus/vague/policy/clamp는 false다.
+- 내부 계산 후 출력은 소수 12자리로 반올림한다. contribution은 절댓값 내림차순→source/group/factor/anchor ids 오름차순이다. `tasteScore=sum(contribution.value)`가 반올림 허용오차에서 성립한다.
 
 ---
 
