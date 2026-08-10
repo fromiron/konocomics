@@ -31,5 +31,11 @@ jobs:
         run: pnpm lint
       - name: Run unit tests
         run: pnpm test
+      - name: Validate catalog
+        run: pnpm catalog:validate
+      - name: Verify generated catalog is current
+        run: |
+          pnpm catalog:build
+          git diff --exit-code -- data/generated/catalog-v1.json src/data/generated/catalog-v1.json
       - name: Build
         run: pnpm build

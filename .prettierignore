@@ -1,6 +1,7 @@
 .next
 coverage
 data/generated
+src/data/generated
 docs/factors/factor-dictionary.md
 docs/planning
 node_modules

@@ -1,0 +1,12 @@
+id,workId,volumeNumber,isbn,releaseDate,editionKind,isRepresentative,evidenceId
+dungeon-meshi-v1,dungeon-meshi,1,9784047301535,2015-01-15,standard,true,ev-dungeon-meshi
+kingdom-v1,kingdom,1,9784088770796,2006-05-19,standard,true,ev-kingdom
+fullmetal-alchemist-v1,fullmetal-alchemist,1,9784757506206,2002-01-22,standard,true,ev-fullmetal-alchemist
+death-note-v1,death-note,1,9784088736211,2004-04-02,standard,true,ev-death-note
+spy-family-v1,spy-family,1,9784088820118,2019-07-04,standard,true,ev-spy-family
+frieren-v1,frieren,1,9784098501809,2020-08-18,standard,true,ev-frieren
+chainsaw-man-v1,chainsaw-man,1,9784088817804,2019-03-04,standard,true,ev-chainsaw-man
+blue-lock-v1,blue-lock,1,9784065134009,2018-11-16,standard,true,ev-blue-lock
+monster-v1,monster,1,9784091836519,1995-06-30,standard,true,ev-monster
+yotsuba-to-v1,yotsuba-to,1,9784048690669,2003-08-27,standard,true,ev-yotsuba-to
+blame-v1,blame,1,9784063141825,1998-06-20,standard,true,ev-blame
