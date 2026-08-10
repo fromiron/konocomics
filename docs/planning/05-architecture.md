@@ -112,8 +112,8 @@ src/
 │                         # (화면 상태·Dexie 연결·이벤트 → 도메인 호출)
 ├─ domain/                # 순수 로직. React·Dexie import 금지 (lint로 강제)
 │  ├─ catalog/            # 타입, zod 스키마, 정규화(NFKC·가나·권수 제거)
-│  ├─ recommendation/     # similarity / coverage / anchor / penalty / rank
-│  ├─ explanation/        # contributions → 일본어 템플릿 문장
+│  ├─ recommendation/     # similarity / coverage / anchor / penalty / rank / baseline
+│  ├─ explanation/        # contribution 선택 + 주입 lexicon → 일본어 템플릿 문장
 │  └─ profile/            # DNA 요약, explicitAdjustment, confidence
 ├─ infrastructure/
 │  ├─ db/                 # Dexie 스키마, 훅 래퍼, export/import
@@ -132,7 +132,7 @@ docs/factors/ (factor-dictionary.md annotation-guide.md)
 harness/      (블라인드 테스트 로컬 하니스 — 배포 제외)
 ```
 
-의존 방향(ESLint `import/no-restricted-paths`로 강제): `app → features → domain` / `features → infrastructure` / **domain은 어떤 계층도 import하지 않음** / scripts와 harness는 domain·data만 import.
+의존 방향(ESLint `import/no-restricted-paths`로 강제): `app → features → domain` / `features → infrastructure` / **domain은 어떤 계층도 import하지 않음** / scripts와 harness는 domain·data만 import. 단, `scripts/run-baseline-experiment.ts`는 순수 일본어 lexicon 주입을 위해 `src/lib/strings.ts`만 import할 수 있는 유일한 scripts→lib 예외다.
 
 ## 6. 영속성 (Dexie 스키마 v1)
 

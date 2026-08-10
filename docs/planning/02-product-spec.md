@@ -404,9 +404,44 @@ type RecommendationWorkMarketSignal = {
 - 구성: 맞는 이유 최대 3 + 주의할 차이 1 + 근거 Anchor 1~3 + 확신도 레이블.
 - 소스는 실제 기여도 상위 항목만. 그룹/Cluster당 최대 1개.
 - Cluster: `tacticalThinking(problemSolving, strategy, mysteryReveal)` / `relationshipAppeal(characterArcWeight, relationshipStructure)` / `toneLoad(darkness, mentalStress)`.
-- "주의할 차이"는 best Anchor 대비 가장 큰 음(−) 기여 팩터에서 생성한다. 음의 기여가 유의미하지 않으면 생략 가능(강제로 만들어내지 않음).
-- 템플릿 기반 일본어 문장. 예: `『{anchor}』で好きだった{clusterLabel}に近い作品です。` / 차이: `ただし序盤のテンポは、あなたの好みよりゆっくりめです。`
+- "주의할 차이"는 best Anchor 대비 전역 최대 음(−) similarity 하나만 후보로 삼는다. 해당 후보가 없거나 아래 group/Cluster 경쟁에서 탈락하면 생략한다.
+- 템플릿 기반 일본어 문장. 예: `『{anchorTitle}』で好きだった「{factorLabel}」に近い作品です。` / 차이: `ただし「{factorLabel}」は、あなたの好みと少し異なります。`
 - 각 추천 결과는 `contributions[]`(팩터·그룹별 기여값)를 함께 반환하며, 설명은 이 배열에서만 생성한다. 테스트로 강제한다(`07` §2).
+
+선택·렌더링 계약:
+
+- positive 후보는 `explainable=true && value>0`, caution 후보는 best Anchor와의 차이인 `source=similarity && explainable=true && value<0`만이다. factor penalty·soft adjustment·policy를 Anchor 차이 문장으로 바꾸지 않는다.
+- 안정 fallback은 `source → group → factorId → anchorWorkIds.join("\\0") → negativeReasonId` 오름차순이다. 음수 similarity를 `value asc → fallback`으로 정렬한 첫 1개만 global caution 후보로 둔다.
+- 모든 positive와 global caution 하나를 `abs(value) desc → fallback`으로 순회한다. 이미 쓴 group/Cluster는 건너뛰고 positive 최대 3, caution 최대 1을 고른다. caution이 더 강한 positive와 충돌하면 다른 음수로 백필하지 않고 생략한다.
+- 렌더링 가능한 factor는 `ExplanationLexicon.factorLabels`에 정의된 Axis/Genre/Theme뿐이다. Cluster 소속 factor는 cluster label, 나머지는 factor label을 쓰되 구조화 identity에는 원래 factorId를 보존한다.
+- 근거 Anchor는 렌더링된 positive 순서 뒤 caution 순서에서 `source=similarity` contribution의 실제 `anchorWorkIds`만 distinct 1~3개 수집한다. penalty source·미렌더 contribution·제목 미해결 ID는 제외하고, 0개면 bestAnchorId를 보충하지 않은 채 Anchor 구역을 생략한다.
+- confidence는 Taste에만 정확히 `高い / ふつう / 低め(データ収集中)`로 표시한다. 모든 일본어 label/template은 `src/lib/strings.ts`가 소유하고 순수 설명기에 lexicon으로 주입한다.
+- placeholder는 원본 template의 `{factorLabel}`·`{anchorTitle}` token을 단일 비재귀 pass로 치환한다. 주입 값 안의 같은 token bytes는 다시 해석하지 않는다.
+
+```ts
+type StructuredExplanationSentence =
+  | {
+      kind: "positive" | "caution";
+      text: string;
+      source: ContributionSource;
+      group: CoverageGroup | "overall";
+      factorId: string;
+      value: number;
+      anchorWorkIds: string[];
+      negativeReasonId?: NegativeReasonId;
+    }
+  | {
+      kind: "baseline";
+      text: string;
+      source: "genre" | "market" | "maturity";
+      group: "genre" | "overall";
+      factorId: GenreTag | "bayesianRating" | "maturity";
+      value: number;
+      anchorWorkIds: string[];
+    };
+```
+
+각 문장의 `source/group/factorId/value/anchorWorkIds`와 optional negativeReasonId는 선택한 원 contribution identity와 정확히 같아야 한다.
 
 Contribution ledger는 `tasteScore`를 완전히 추적한다.
 
@@ -434,6 +469,56 @@ type GroupContribution = {
 - anchorWorkIds: similarity=[best], consensus=실제 supporter id 정렬, factor penalty=source disliked ids 정렬, vague=max source 1개, 나머지=[]다.
 - 설명 가능: similarity, 0이 아닌 adjustment/soft exclusion, factor-backed penalty만 true. baseline/consensus/vague/policy/clamp는 false다.
 - 내부 계산 후 출력은 소수 12자리로 반올림한다. contribution은 절댓값 내림차순→source/group/factor/anchor ids 오름차순이다. `tasteScore=sum(contribution.value)`가 반올림 허용오차에서 성립한다.
+
+### 6.10 실험 Baseline v1
+
+Baseline은 G1/G2에서만 쓰는 Genre+시장+축적도 control이다. 제품 Taste 점수에는 사용하지 않으며 G2 결과를 보기 전에 `BASELINE_VERSION="v1"`로 고정한다.
+
+```text
+genreAnchorScore = max(genreJaccard(candidate, anchor) × reactionWeight)
+marketScore       = bayesianRating / 5
+baselineScore     = q12(
+  0.60 × genreAnchorScore + 0.30 × marketScore + 0.10 × maturity
+)
+```
+
+- Genre는 중복 제거 set의 binary Jaccard이며 한쪽이라도 비면 0이다. positive anchor와 reactionWeight는 §6.3을 재사용하고 0개면 빈 결과다.
+- best Genre anchor는 raw match 내림차순 leader cohort와 §6.4 tolerance, 최종 workId 오름차순으로 고른다. `genreAnchorScore=0`이면 공개 bestAnchorId는 null이고 Genre contribution·이유·Anchor를 만들지 않는다.
+- 정렬은 공개 `baselineScore desc → workId asc`다. q12가 같으면 workId 순서다.
+- Taste와 동일 recommendation eligibility, catalog 안 positive anchor, 읽음·하차·숨김·불호 제외, Axis/Theme exclude, catalog/context 검증을 사용한다. catalog 밖 record는 계산에서 제외한다. soft adjustment·penalty·consensus·confidence는 Baseline score에 넣지 않는다. Slice 3 profile의 네 policy는 모두 false다.
+- 기본 리스트 제약을 공유한다. overlap>0의 anchor cap key는 bestAnchorId, 0이면 `none:{workId}`다. Discovery 창은 `baselineScore >= q12(overallTopBaselineScore-0.10)`이고 기본 1~2다.
+
+```ts
+type BaselineContribution = {
+  source: "genre" | "market" | "maturity";
+  group: "genre" | "overall";
+  factorId: GenreTag | "bayesianRating" | "maturity";
+  value: number;
+  anchorWorkIds: string[];
+  explainable: boolean;
+};
+
+type BaselineRecommendation = {
+  workId: string;
+  baselineScore: number;
+  bestAnchorId: string | null;
+  genreScore: number; // q12 reaction-weighted genreAnchorScore
+  bayesianRating: number;
+  maturity: number;
+  contributions: BaselineContribution[];
+};
+```
+
+- Genre 항은 best anchor와 공유하는 tag별 `0.60×reactionWeight/unionSize`, market은 `0.30×bayesianRating/5`, maturity는 `0.10×maturity`다. market/maturity anchor ids는 빈 배열이다.
+- 실제 1권 reviewAverage와 reviewCount>0이 있을 때만 market 설명 가능, volumeCount>0일 때만 maturity 설명 가능이다. prior-only market은 점수에 남지만 설명하지 않는다.
+- zero contribution은 생략한다. 공개 `baselineScore`, `genreScore`, `bayesianRating`, `maturity`, `contribution.value`는 모두 q12다. contribution은 절댓값 내림차순 뒤 source/factor/anchor 오름차순이며 `abs(sum-baselineScore)<=1e-11`이다.
+- Baseline 이유는 explainable contribution의 `value desc → source/factor/anchor` 첫 1개만 사용하고 caution/confidence는 만들지 않는다. 구조화 문장은 선택 contribution identity를 그대로 반환한다.
+- Baseline exact template은 `src/lib/strings.ts`에 다음 값으로 둔다.
+  - `baselineGenreWithAnchor="『{anchorTitle}』と「{factorLabel}」が共通しています。"`
+  - `baselineGenreWithoutAnchor="「{factorLabel}」のジャンル一致を順位に反映しています。"`
+  - `baselineMarketObserved="第1巻のレビュー情報を順位に反映しています。"`
+  - `baselineMaturity="刊行の蓄積を順位に反映しています。"`
+- Genre 이유는 bestAnchorId 제목이 resolve되면 withAnchor, 아니면 withoutAnchor를 쓴다. market/maturity에는 placeholder가 없다. 보간은 §6.9의 단일 비재귀 pass다.
 
 ---
 

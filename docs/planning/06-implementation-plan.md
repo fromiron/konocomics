@@ -47,9 +47,16 @@ Stage E  시그니처 폴리시 + PWA + 다크     (슬라이스 11~12)
 
 - **목표:** 사람이 읽을 수 있는 비교 리포트로 G1 수행 가능.
 - **의존:** 슬라이스 2.
-- **파일:** `domain/recommendation/baseline.ts`(장르 Jaccard + bayesianRating + maturity), `scripts/run-baseline-experiment.ts`, `domain/explanation/`(템플릿 문장 생성 — CLI에서도 사용).
-- **구현 결정:** CLI 입력 = catalog JSON + 사용자 프로필 JSON(anchor·부정·보정), 출력 = 마크다운 리포트(양 엔진 Top 10, 각 항목의 이유 문장, 기여도 상위 5, coverage 경고).
-- **완료 기준:** 3인 프로필 픽스처로 리포트 생성. 설명 문장이 contributions에서만 생성됨을 테스트로 강제.
+- **파일:** `domain/recommendation/baseline.ts`(`02` §6.10), `scripts/run-baseline-experiment.ts`, `domain/explanation/`, `data/fixtures/experiment-profiles/`.
+- **설명 결정:** Taste positive≤3/caution≤1과 Baseline reason≤1을 구조화 contribution identity로 반환한다. 일본어 lexicon은 `lib/strings.ts`가 소유하고 CLI가 순수 domain 설명기에 주입한다.
+- **Profile 경계:** strict `ExperimentProfileV1`(`format="konocomics-experiment-profile"`, `schemaVersion=1`, `profileId`, records, adjustments, policies). profileId는 길이 1~64와 `/^[a-z0-9]+(?:-[a-z0-9]+)*$/`, external reason은 길이 10~64와 `/^external:[a-z0-9]+(?:-[a-z0-9]+)*$/`를 만족한다. updatedAt은 offset 포함 ISO 8601이다. record workId와 각 reason 배열은 중복 불가, negative/dropped reasons 교집합은 비어야 하며 vague는 두 배열 합집합에서 단독이다. negativeReasons는 disliked, droppedReasons는 dropped record에만 허용한다. 모든 workId는 catalog 안, positive anchor 5~10, distinct negative source 0~3, 네 policies는 전부 false다. negative source는 reaction=disliked 또는 두 reason 배열 합집합이 비어 있지 않은 record다.
+- **CLI flags:** `--profile/-p` 반복, `--catalog`(기본 `data/generated/catalog-v1.json`), `--context`(기본 `data/generated/recommendation-context-v1.json`), `--output/-o`(기본 `-`), `--help/-h`. unknown flag·중복 scalar flag는 usage error 2다. profile 미지정 시 `data/fixtures/experiment-profiles/*.json`; 명시·기본 모두 parse 후 profileId 오름차순, 중복 profileId는 data error 1이다. 성공 0, data/runtime 1, usage 2이며 stdout에는 Markdown만, 진단은 stderr만 쓴다.
+- **파일 경계:** catalog/context는 각각 16 MiB, profile은 각각 1 MiB를 넘으면 읽기 전에 거부한다. catalog는 strict zod+`catalog:validate` 의미 검증, context는 strict zod+version·범위·metadata completeness를 통과해야 한다. 실패하면 엔진을 호출하지 않는다. resolve된 output 경로는 모든 input과 달라야 하고, 고정 sibling temp에 완성본을 쓴 뒤 rename한다. 실패 시 기존 output은 불변이다.
+- **리포트:** UTF-8/LF, 마지막 newline 정확히 1개. metadata(catalogVersion→factorDictionaryVersion→baselineVersion→profile count) → profile summary → Taste Top 10 → Baseline Top 10 → diagnostic summary 순서다. profile summary는 profileId, `reactionWeight desc→workId asc` anchor, `workId asc→NEGATIVE_REASON_ORDER` negative source(external은 문자열 asc fallback), `AXIS_IDS→THEME_TAGS` adjustment만 표시하고 updatedAt/progress/free text는 숨긴다. Taste 항목은 tasteScore, 숫자 없는 confidence label, best anchor, positive/caution, evidence anchors, penaltiesApplied, coverage(`genre→theme→narrative→tone→art`, SHRUNK/PARTIAL), ledger 상위 5다. Baseline 항목은 baselineScore, best Genre anchor, reason, bayesianRating, maturity, ledger 상위 5다. 후보 부족은 N/10, Baseline null anchor는 `なし`다. diagnostic은 Taste N/10→Baseline N/10→SHRUNK group 수→PARTIAL group 수만 쓴다. 숫자는 q12 뒤 `-0→0`, `String(number)`로 출력한다.
+- **escape:** dynamic text의 U+0000–001F·U+007F–009F를 U+FFFD로 바꾸고 `&`, `<`, `>`를 HTML escape한 뒤 `\\`, backtick, `* _ { } [ ] ( ) # + - . ! |`를 backslash escape한다. 생성 시각·절대 경로·locale·env·Rakuten·network·난수는 사용하지 않는다.
+- **개인정보:** 실사용 파일은 gitignore된 `data/local/experiment-profiles/`, `reports/local/`에만 둔다. 합성 profile 3개와 report golden만 커밋한다.
+- **완료 기준:** `tactical-mystery`, `warm-exploration`, `kinetic-competition` profile로 byte-identical 리포트 생성. 설명 문장이 contributions에서만 생성되고 입력 순열에도 결과가 동일함을 테스트로 강제.
+- **제외:** holdout·승패·블라인드 지표는 Slice 4 소유다.
 
 ## 게이트 G1 — Sanity Check (데이터·사람 작업)
 
