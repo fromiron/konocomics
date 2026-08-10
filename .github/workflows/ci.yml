@@ -33,9 +33,13 @@ jobs:
         run: pnpm test
       - name: Validate catalog
         run: pnpm catalog:validate
-      - name: Verify generated catalog is current
+      - name: Verify generated catalog and context are current
         run: |
           pnpm catalog:build
-          git diff --exit-code -- data/generated/catalog-v1.json src/data/generated/catalog-v1.json
+          git diff --exit-code -- \
+            data/generated/catalog-v1.json \
+            data/generated/recommendation-context-v1.json \
+            src/data/generated/catalog-v1.json \
+            src/data/generated/recommendation-context-v1.json
       - name: Build
         run: pnpm build

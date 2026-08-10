@@ -250,7 +250,7 @@ Genre 10종, Theme 22종(centrality 1|2), Axis 17종(Narrative 6 / Tone·Relatio
 - Tag(Genre/Theme): Weighted Jaccard. Genre tag weight는 1, Theme는 각 작품의 centrality(1/2)를 가중치로 하며 tag별 교집합은 `min`, 합집합은 `max`다. Theme confidence는 similarity에 다시 곱하지 않고 Work confidence에서 사용한다.
 - Axis: `1 − |a−b|/4`. `darkness / mentalStress / romance`는 presence-sensitive — 한쪽이 0이고 다른 쪽이 >0이면 거리 ×1.5 (상한 1).
 - v1의 17개 `baseAxisWeight`는 모두 1이다. 팩터별 유효 가중치는 `1 × min(anchorConfidence, candidateConfidence)`이며 그룹 안에서만 정규화한다.
-- Axis pair에서 한쪽이라도 notApplicable이면 기대 분모에서 제외한다. 그 외 pair는 기대 개수에 포함하고 양쪽 모두 known일 때만 관측 개수와 score에 포함한다. `coverage=observedCount/expectedCount`; 기대 개수 0 또는 관측 유효 가중치 합 0이면 raw score 0.5, coverage 0이다.
+- Axis pair에서 한쪽이라도 notApplicable이면 기대 분모에서 제외한다. 그 외 pair는 기대 개수에 포함하고 양쪽 모두 known일 때만 관측 개수와 score에 포함한다. `coverage=observedCount/expectedCount`; 기대 개수 0이면 coverage 0이다. 관측 유효 가중치 합이 0이면 raw score는 0.5지만 known count coverage는 유지한다(known을 다시 unknown처럼 이중 처리하지 않음).
 - Tag group은 양쪽 배열이 모두 비어 있지 않을 때 coverage 1, 한쪽이라도 비면 coverage 0이다. 합집합이 비면 raw score 0.5다. 한쪽만 비면 raw Jaccard는 0이지만 coverage 0으로 최종 0.5에 수축한다. 양쪽 그룹 주석이 있을 때만 개별 tag 부재를 known absence로 본다.
 - 그룹 비중 고정: Genre 15% / Theme 25% / Narrative 25% / Tone·Relationship 20% / Art 15%.
 - Coverage 임계: Genre 0.80 / Theme 0.60 / Narrative 0.60 / Tone 0.60 / Art 0.30. 미달 그룹만 `0.5 + (score−0.5) × min(1, coverage/threshold)`. **가중치 재분배 금지.**
@@ -269,7 +269,7 @@ positiveAnchorScore = clamp(bestMatch + consensusBonus, 0, 1);
 ```
 
 - positive anchor가 없으면 추천 배열은 비어 있다.
-- best anchor 완전 동률은 `workId` 오름차순으로 결정한다.
+- best anchor 완전 동률은 `workId` 오름차순으로 결정한다. `anchorMatch` 최댓값과 supporter 정렬의 수치 동률은 §6.4의 부동소수점 비교 계약을 따른다.
 - supporter가 0개면 support 0.5(보너스 0), 1개면 그 한 값의 평균이다. bonus는 계산 후 0.05에서 명시적으로 cap한다.
 
 ### 6.4 시장 신호 (tie-break 전용)
@@ -285,6 +285,13 @@ positiveAnchorScore = clamp(bestMatch + consensusBonus, 0, 1);
 - 숨은 작품 우선: `isPopular=false`를 위 tuple 맨 앞에 둔다. 검증 정책도 함께 켜졌으면 `isPopular asc → bayesianRating desc → maturity desc → recommendationConfidence desc → workId asc`.
 
 `maturity`의 기본 미사용은 이 절의 “검증된 작품 우선에서만”이 §6.1의 축약을 구체화한 것이며 `07` §2-12가 경계를 검증한다.
+
+부동소수점 비교 계약:
+
+- `tol(a,b) = 4 × Number.EPSILON × max(1, |a|, |b|)`로 정의한다. raw similarity threshold `0.65`·`0.75`·`0.7`은 `value`가 threshold보다 작더라도 차이가 `tol(value, threshold)` 이하면 경계값을 충족한 것으로 본다. `0.025` taste cohort, Discovery `0.10`, coverage·표시 confidence 등 나머지 threshold에는 이 tolerance를 확장하지 않고 각 절의 반올림·exact 계약을 따른다.
+- best anchor, supporter, vague source 및 cohort 내부 numeric tuple key는 raw 값 내림차순으로 먼저 정렬한다. 아직 묶이지 않은 최고값을 leader로 삼고 leader와의 차이가 tolerance 이내인 연속 항목만 같은 수치 동률 cohort로 묶는다. pairwise fuzzy comparator는 사용하지 않는다.
+- numeric tuple은 key마다 위 leader cohort를 재귀 적용하고, 모든 key가 동률일 때만 `workId` 오름차순으로 결정한다. `isPopular` 같은 boolean key는 tolerance 없이 정확히 분리한다.
+- 정렬·최댓값·threshold 선택에 쓰는 confidence·Bayesian·maturity·anchor·penalty 값은 q12로 조기 반올림하지 않는다. tasteScore cohort는 위 규칙대로 q12를 사용하고, contribution과 공개 숫자는 §6.9의 최종 출력 경계에서 q12로 만든다.
 
 ### 6.5 Confidence
 
@@ -348,6 +355,7 @@ unknown인 팩터는 감점 조건 판정에서 제외한다(원칙 2). 조건·
 - `artStyleDislike`와 `genericStory`의 threshold는 coverage shrink가 적용된 group score다. 여러 source 작품 중 조건을 만족하는 최댓값으로 1회 적용한다.
 - reasoned raw 합이 0.25를 넘으면 각 nominal penalty에 `0.25/rawTotal`을 곱해 비례 축소한다. 표 순서는 출력 안정화에만 쓰며 금액 우선권을 만들지 않는다.
 - vague는 이유 미선택이 `vagueDislike` 단독으로 정규화된 record만 사용한다. factor-backed 또는 external reason과 함께 있으면 적용하지 않는다. 남은 vague 작품과 후보의 전체 similarity 최댓값 ×0.08을 factor cap 밖에서 1회 적용한다(동률 source는 workId 오름차순).
+- `0.75`·`0.7` threshold와 vague 최댓값 동률은 §6.4의 부동소수점 비교 계약을 따른다.
 - `penaltiesApplied`는 실제 적용액이 0보다 큰 factor-backed reason과 vague만 `NegativeReasonId[]`로 담는다. external, Theme soft exclusion, completed policy는 넣지 않으며 이 표 순서로 정렬한다.
 
 ### 6.8 추천 리스트 제약

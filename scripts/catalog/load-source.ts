@@ -8,6 +8,8 @@ import {
   aliasSourceRowSchema,
   evidenceSourceRowSchema,
   factorSourceRowSchema,
+  recommendationConfigSourceRowSchema,
+  recommendationContextSourceRowSchema,
   themeSourceRowSchema,
   volumeSourceRowSchema,
   workSourceRowSchema,
@@ -113,6 +115,16 @@ export function loadCatalogSource(sourceDirectory: string): SourceLoadResult {
   const volumes = loadFile(sourceDirectory, "volumes.csv", volumeSourceRowSchema);
   const factors = loadFile(sourceDirectory, "factors.csv", factorSourceRowSchema);
   const themes = loadFile(sourceDirectory, "themes.csv", themeSourceRowSchema);
+  const recommendationContext = loadFile(
+    sourceDirectory,
+    "recommendation-context.csv",
+    recommendationContextSourceRowSchema,
+  );
+  const recommendationConfig = loadFile(
+    sourceDirectory,
+    "recommendation-config.csv",
+    recommendationConfigSourceRowSchema,
+  );
   const evidence = loadFile(sourceDirectory, "evidence/evidence.csv", evidenceSourceRowSchema);
 
   const source: CatalogSource = {
@@ -121,6 +133,8 @@ export function loadCatalogSource(sourceDirectory: string): SourceLoadResult {
     volumes: volumes.rows,
     factors: factors.rows,
     themes: themes.rows,
+    recommendationContext: recommendationContext.rows,
+    recommendationConfig: recommendationConfig.rows,
     evidence: evidence.rows,
   };
   const reviewReferenceIssues: SourceIssue[] = works.rows.flatMap((row) => {
@@ -148,6 +162,8 @@ export function loadCatalogSource(sourceDirectory: string): SourceLoadResult {
       ...volumes.issues,
       ...factors.issues,
       ...themes.issues,
+      ...recommendationContext.issues,
+      ...recommendationConfig.issues,
       ...evidence.issues,
       ...reviewReferenceIssues,
     ],

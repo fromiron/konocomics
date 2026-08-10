@@ -3,6 +3,8 @@ import { describe, expect, it } from "vitest";
 import { parseCsvContent } from "../../../scripts/catalog/load-source";
 import {
   factorSourceRowSchema,
+  recommendationConfigSourceRowSchema,
+  recommendationContextSourceRowSchema,
   themeSourceRowSchema,
   volumeSourceRowSchema,
   workSourceRowSchema,
@@ -111,6 +113,55 @@ describe("CSV diagnostics", () => {
         expect.objectContaining({ row: 2, field: "annotationReviewedAt" }),
         expect.objectContaining({ row: 2, field: "annotationReviewReference" }),
       ]),
+    );
+  });
+
+  it("parses blank optional market values and rejects invalid recommendation context bounds", () => {
+    const valid = parseCsvContent(
+      "recommendation-context.csv",
+      [
+        "workId,catalogRole,seriesGroupId,volumeCount,reviewAverage,reviewCount",
+        "work,bridge,,1,,",
+      ].join("\n"),
+      recommendationContextSourceRowSchema,
+    );
+    expect(valid.issues).toEqual([]);
+    expect(valid.rows[0]?.value).toEqual({
+      workId: "work",
+      catalogRole: "bridge",
+      seriesGroupId: undefined,
+      volumeCount: 1,
+      reviewAverage: undefined,
+      reviewCount: undefined,
+    });
+
+    const invalid = parseCsvContent(
+      "recommendation-context.csv",
+      [
+        "workId,catalogRole,seriesGroupId,volumeCount,reviewAverage,reviewCount",
+        "work,featured,,1,5.1,-1",
+      ].join("\n"),
+      recommendationContextSourceRowSchema,
+    );
+    expect(invalid.rows).toEqual([]);
+    expect(invalid.issues.map((issue) => issue.field)).toEqual(
+      expect.arrayContaining(["catalogRole", "reviewAverage", "reviewCount"]),
+    );
+  });
+
+  it("bounds the single recommendation config rating", () => {
+    const result = parseCsvContent(
+      "recommendation-config.csv",
+      "catalogAverageRating\n5.1\n",
+      recommendationConfigSourceRowSchema,
+    );
+    expect(result.rows).toEqual([]);
+    expect(result.issues[0]).toEqual(
+      expect.objectContaining({
+        file: "recommendation-config.csv",
+        row: 2,
+        field: "catalogAverageRating",
+      }),
     );
   });
 });

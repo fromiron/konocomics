@@ -168,6 +168,22 @@ export const themeSourceRowSchema = z.strictObject({
   evidenceId: catalogSourceId,
 });
 
+export const recommendationContextSourceRowSchema = z.strictObject({
+  workId: catalogSourceId,
+  catalogRole: z.enum(["anchor", "bridge", "discovery"]),
+  seriesGroupId: optionalText.pipe(catalogSourceId.optional()),
+  volumeCount: csvInteger.pipe(z.number().int().nonnegative()),
+  reviewAverage: z.union([
+    z.literal("").transform(() => undefined),
+    csvNumber.pipe(z.number().min(0).max(5)),
+  ]),
+  reviewCount: optionalCsvInteger.pipe(z.number().int().nonnegative().optional()),
+});
+
+export const recommendationConfigSourceRowSchema = z.strictObject({
+  catalogAverageRating: csvNumber.pipe(z.number().min(0).max(5)),
+});
+
 export const evidenceSourceRowSchema = z.strictObject({
   id: catalogSourceId,
   workId: catalogSourceId,

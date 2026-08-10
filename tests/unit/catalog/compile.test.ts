@@ -4,6 +4,8 @@ import { compileCatalog } from "../../../scripts/catalog/compile";
 import {
   evidenceSourceRowSchema,
   factorSourceRowSchema,
+  recommendationConfigSourceRowSchema,
+  recommendationContextSourceRowSchema,
   themeSourceRowSchema,
   volumeSourceRowSchema,
   workSourceRowSchema,
@@ -61,6 +63,17 @@ function createValidSource(): CatalogSource {
     confidence: "0.9",
     notes: "Test-only evidence fixture.",
   });
+  const recommendationContext = recommendationContextSourceRowSchema.parse({
+    workId: "test-work",
+    catalogRole: "bridge",
+    seriesGroupId: "",
+    volumeCount: "1",
+    reviewAverage: "",
+    reviewCount: "",
+  });
+  const recommendationConfig = recommendationConfigSourceRowSchema.parse({
+    catalogAverageRating: "3.5",
+  });
 
   return {
     works: [located("works.csv", 7, work)],
@@ -93,6 +106,8 @@ function createValidSource(): CatalogSource {
         }),
       ),
     ],
+    recommendationContext: [located("recommendation-context.csv", 2, recommendationContext)],
+    recommendationConfig: [located("recommendation-config.csv", 2, recommendationConfig)],
     evidence: [located("evidence/evidence.csv", 2, evidence)],
   };
 }
@@ -105,7 +120,81 @@ describe("catalog compilation", () => {
 
     expect(first.issues).toEqual([]);
     expect(second.catalog).toEqual(first.catalog);
+    expect(second.context).toEqual(first.context);
     expect(first.catalog.catalogVersion).toMatch(/^v1-[a-f0-9]{12}$/u);
+    expect(first.context.marketSnapshot.catalogVersion).toBe(first.catalog.catalogVersion);
+    expect(first.context).toEqual({
+      constraintByWorkId: {
+        "test-work": {
+          workId: "test-work",
+          catalogRole: "bridge",
+          volumeCount: 1,
+        },
+      },
+      marketSnapshot: {
+        catalogVersion: first.catalog.catalogVersion,
+        catalogAverageRating: 3.5,
+        byWorkId: { "test-work": { workId: "test-work" } },
+      },
+    });
+  });
+
+  it("changes the shared version when only normalized recommendation context changes", () => {
+    const source = createValidSource();
+    const original = compileCatalog(source);
+    const contextRow = source.recommendationContext[0];
+    if (contextRow === undefined) {
+      throw new Error("Expected recommendation context fixture");
+    }
+    source.recommendationContext[0] = {
+      ...contextRow,
+      value: { ...contextRow.value, catalogRole: "discovery" },
+    };
+    const changed = compileCatalog(source);
+
+    expect(changed.catalog.works).toEqual(original.catalog.works);
+    expect(changed.catalog.catalogVersion).not.toBe(original.catalog.catalogVersion);
+    expect(changed.context.marketSnapshot.catalogVersion).toBe(changed.catalog.catalogVersion);
+    expect(changed.context.constraintByWorkId["test-work"]?.catalogRole).toBe("discovery");
+  });
+
+  it("requires static recommendation metadata for every recommendation-eligible work", () => {
+    const source = createValidSource();
+    source.recommendationContext = [];
+
+    expect(compileCatalog(source).issues).toContainEqual(
+      expect.objectContaining({
+        code: "RECOMMENDATION_CONTEXT_MISSING",
+        file: "works.csv",
+        row: 7,
+        field: "recommendationContext",
+      }),
+    );
+  });
+
+  it("requires exactly one explicit recommendation config row", () => {
+    const missing = createValidSource();
+    missing.recommendationConfig = [];
+    expect(compileCatalog(missing).issues).toContainEqual(
+      expect.objectContaining({
+        code: "RECOMMENDATION_CONFIG_MISSING",
+        file: "recommendation-config.csv",
+      }),
+    );
+
+    const duplicate = createValidSource();
+    const config = duplicate.recommendationConfig[0];
+    if (config === undefined) {
+      throw new Error("Expected recommendation config fixture");
+    }
+    duplicate.recommendationConfig.push({ ...config, row: 3 });
+    expect(compileCatalog(duplicate).issues).toContainEqual(
+      expect.objectContaining({
+        code: "DUPLICATE_RECOMMENDATION_CONFIG",
+        file: "recommendation-config.csv",
+        row: 3,
+      }),
+    );
   });
 
   it("locates missing evidence on the referencing CSV row", () => {

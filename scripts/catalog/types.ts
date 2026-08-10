@@ -4,6 +4,8 @@ import type {
   aliasSourceRowSchema,
   evidenceSourceRowSchema,
   factorSourceRowSchema,
+  recommendationConfigSourceRowSchema,
+  recommendationContextSourceRowSchema,
   themeSourceRowSchema,
   volumeSourceRowSchema,
   workSourceRowSchema,
@@ -20,6 +22,8 @@ export type AliasSourceRow = z.infer<typeof aliasSourceRowSchema>;
 export type VolumeSourceRow = z.infer<typeof volumeSourceRowSchema>;
 export type FactorSourceRow = z.infer<typeof factorSourceRowSchema>;
 export type ThemeSourceRow = z.infer<typeof themeSourceRowSchema>;
+export type RecommendationContextSourceRow = z.infer<typeof recommendationContextSourceRowSchema>;
+export type RecommendationConfigSourceRow = z.infer<typeof recommendationConfigSourceRowSchema>;
 export type EvidenceSourceRow = z.infer<typeof evidenceSourceRowSchema>;
 
 export type CatalogSource = {
@@ -28,6 +32,8 @@ export type CatalogSource = {
   volumes: Located<VolumeSourceRow>[];
   factors: Located<FactorSourceRow>[];
   themes: Located<ThemeSourceRow>[];
+  recommendationContext: Located<RecommendationContextSourceRow>[];
+  recommendationConfig: Located<RecommendationConfigSourceRow>[];
   evidence: Located<EvidenceSourceRow>[];
 };
 

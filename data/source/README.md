@@ -9,6 +9,8 @@
 - `volumes.csv`: Work에 속한 권과 대표권
 - `factors.csv`: 17개 Axis의 known/unknown/notApplicable 값
 - `themes.csv`: Theme 중심성 1/2
+- `recommendation-context.csv`: 작품별 catalog 역할·시리즈·권수와 선택적 market snapshot 값
+- `recommendation-config.csv`: catalog 전체 market 평균값(정확히 1행)
 - `evidence/evidence.csv`: 기계 검증 가능한 evidence ID·범위·출처·검수 상태
 - `evidence/*.md`: 작품별 관찰, 공식 보조 URL, 경계 판정 설명
 - `reviews/*.md`: 사람 또는 사용자가 승인한 대체 게이트의 요청·판정 기록
@@ -26,6 +28,10 @@
 - `authorizedModelPanel`: 사용자가 명시적으로 허용한 대체 판정. 동일 증거를 독립 검토 경로에 제공하고 요구된 만장일치를 얻은 경우만 사용한다. 이 경우에도 `reviewedByHuman=false`를 유지한다.
 
 검토 완료 상태에는 `annotationReviewedAt`과 `annotationReviewReference`가 모두 필요하며, 참조 보고서가 실제로 존재하지 않으면 validation이 실패한다.
+
+## 추천 context
+
+모든 `recommendationEligible` 작품은 `recommendation-context.csv`에 정확히 한 행이 필요하다. `seriesGroupId`, `reviewAverage`, `reviewCount`는 결측을 허용하지만 `catalogRole`과 `volumeCount`는 필수다. `recommendation-config.csv`의 단일 `catalogAverageRating` 값은 0~5 범위여야 한다. Catalog와 이 context를 정규화한 공동 digest가 두 생성 artifact의 동일한 `catalogVersion`이 된다.
 
 ## 그룹핑
 

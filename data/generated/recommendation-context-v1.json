@@ -1,0 +1,98 @@
+{
+  "constraintByWorkId": {
+    "blame": {
+      "workId": "blame",
+      "catalogRole": "bridge",
+      "volumeCount": 1
+    },
+    "blue-lock": {
+      "workId": "blue-lock",
+      "catalogRole": "bridge",
+      "volumeCount": 1
+    },
+    "chainsaw-man": {
+      "workId": "chainsaw-man",
+      "catalogRole": "bridge",
+      "volumeCount": 1
+    },
+    "death-note": {
+      "workId": "death-note",
+      "catalogRole": "bridge",
+      "volumeCount": 1
+    },
+    "dungeon-meshi": {
+      "workId": "dungeon-meshi",
+      "catalogRole": "bridge",
+      "volumeCount": 1
+    },
+    "frieren": {
+      "workId": "frieren",
+      "catalogRole": "bridge",
+      "volumeCount": 1
+    },
+    "fullmetal-alchemist": {
+      "workId": "fullmetal-alchemist",
+      "catalogRole": "bridge",
+      "volumeCount": 1
+    },
+    "kingdom": {
+      "workId": "kingdom",
+      "catalogRole": "bridge",
+      "volumeCount": 1
+    },
+    "monster": {
+      "workId": "monster",
+      "catalogRole": "bridge",
+      "volumeCount": 1
+    },
+    "spy-family": {
+      "workId": "spy-family",
+      "catalogRole": "bridge",
+      "volumeCount": 1
+    },
+    "yotsuba-to": {
+      "workId": "yotsuba-to",
+      "catalogRole": "bridge",
+      "volumeCount": 1
+    }
+  },
+  "marketSnapshot": {
+    "catalogVersion": "v1-e21ce5aa9844",
+    "catalogAverageRating": 3.5,
+    "byWorkId": {
+      "blame": {
+        "workId": "blame"
+      },
+      "blue-lock": {
+        "workId": "blue-lock"
+      },
+      "chainsaw-man": {
+        "workId": "chainsaw-man"
+      },
+      "death-note": {
+        "workId": "death-note"
+      },
+      "dungeon-meshi": {
+        "workId": "dungeon-meshi"
+      },
+      "frieren": {
+        "workId": "frieren"
+      },
+      "fullmetal-alchemist": {
+        "workId": "fullmetal-alchemist"
+      },
+      "kingdom": {
+        "workId": "kingdom"
+      },
+      "monster": {
+        "workId": "monster"
+      },
+      "spy-family": {
+        "workId": "spy-family"
+      },
+      "yotsuba-to": {
+        "workId": "yotsuba-to"
+      }
+    }
+  }
+}

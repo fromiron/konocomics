@@ -119,9 +119,12 @@ src/
 │  ├─ db/                 # Dexie 스키마, 훅 래퍼, export/import
 │  └─ rakuten/            # 클라이언트 fetch 래퍼, providerCache TTL
 ├─ lib/strings.ts         # 일본어 UI 문자열 중앙 테이블
-└─ data/generated/catalog-v1.json
+└─ data/generated/
+   ├─ catalog-v1.json
+   └─ recommendation-context-v1.json
 
-data/source/  (works.csv factors.csv themes.csv aliases.csv volumes.csv evidence/)
+data/source/  (works.csv factors.csv themes.csv aliases.csv volumes.csv
+               recommendation-context.csv recommendation-config.csv evidence/)
 data/generated/
 scripts/      (sync-rakuten.ts normalize-works.ts validate-catalog.ts
                build-catalog.ts report-coverage.ts run-baseline-experiment.ts)

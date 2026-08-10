@@ -22,6 +22,7 @@ export function runCatalogPipeline(sourceDirectory: string) {
   const compiled = compileCatalog(loaded.source);
   return {
     catalog: compiled.catalog,
+    context: compiled.context,
     issues: sortIssues([...loaded.issues, ...compiled.issues]),
   };
 }

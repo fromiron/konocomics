@@ -11,16 +11,19 @@ import type {
   Work,
 } from "../../src/domain/catalog/types";
 import { validateCatalog } from "../../src/domain/catalog/validate";
+import type { RecommendationContext } from "../../src/domain/recommendation/types";
 import type {
   CatalogSource,
   EvidenceSourceRow,
   Located,
   SourceIssue,
   SourceIssueSeverity,
+  WorkSourceRow,
 } from "./types";
 
 type CompileResult = {
   catalog: CatalogV1;
+  context: RecommendationContext;
   issues: SourceIssue[];
 };
 
@@ -57,6 +60,112 @@ function collectFirstByKey<T>(
     map.set(id, row);
   }
   return map;
+}
+
+function compareIds(left: string, right: string) {
+  return left < right ? -1 : left > right ? 1 : 0;
+}
+
+function compileRecommendationContext(
+  source: CatalogSource,
+  catalog: CatalogV1,
+  workRows: ReadonlyMap<string, Located<WorkSourceRow>>,
+  issues: SourceIssue[],
+): RecommendationContext {
+  const config = source.recommendationConfig[0];
+  if (config === undefined) {
+    issues.push({
+      severity: "error",
+      code: "RECOMMENDATION_CONFIG_MISSING",
+      file: "recommendation-config.csv",
+      message: "Exactly one recommendation config row is required",
+    });
+  }
+  for (const duplicate of source.recommendationConfig.slice(1)) {
+    issues.push(
+      issue(
+        duplicate,
+        "error",
+        "DUPLICATE_RECOMMENDATION_CONFIG",
+        "Exactly one recommendation config row is allowed",
+      ),
+    );
+  }
+
+  const contextRows = collectFirstByKey(
+    source.recommendationContext,
+    (row) => row.workId,
+    "DUPLICATE_RECOMMENDATION_CONTEXT_WORK",
+    issues,
+  );
+  const constraintEntries: [string, RecommendationContext["constraintByWorkId"][string]][] = [];
+  const marketEntries: [string, RecommendationContext["marketSnapshot"]["byWorkId"][string]][] = [];
+
+  for (const [workId, row] of contextRows) {
+    if (!workRows.has(workId)) {
+      issues.push(
+        issue(
+          row,
+          "error",
+          "UNKNOWN_RECOMMENDATION_CONTEXT_WORK",
+          `Recommendation context references unknown work ${workId}`,
+          "workId",
+        ),
+      );
+      continue;
+    }
+    constraintEntries.push([
+      workId,
+      {
+        workId,
+        catalogRole: row.value.catalogRole,
+        ...(row.value.seriesGroupId === undefined
+          ? {}
+          : { seriesGroupId: row.value.seriesGroupId }),
+        volumeCount: row.value.volumeCount,
+      },
+    ]);
+    marketEntries.push([
+      workId,
+      {
+        workId,
+        ...(row.value.reviewAverage === undefined
+          ? {}
+          : { reviewAverage: row.value.reviewAverage }),
+        ...(row.value.reviewCount === undefined ? {} : { reviewCount: row.value.reviewCount }),
+      },
+    ]);
+  }
+
+  for (const work of catalog.works.filter(
+    (candidate) => candidate.eligibility.recommendationEligible,
+  )) {
+    if (!contextRows.has(work.id)) {
+      const row = workRows.get(work.id);
+      if (row !== undefined) {
+        issues.push(
+          issue(
+            row,
+            "error",
+            "RECOMMENDATION_CONTEXT_MISSING",
+            `Recommendation-eligible work ${work.id} requires static recommendation metadata`,
+            "recommendationContext",
+          ),
+        );
+      }
+    }
+  }
+
+  constraintEntries.sort(([left], [right]) => compareIds(left, right));
+  marketEntries.sort(([left], [right]) => compareIds(left, right));
+  return {
+    constraintByWorkId: Object.fromEntries(constraintEntries),
+    marketSnapshot: {
+      catalogVersion: "v1-unversioned",
+      catalogAverageRating: config?.value.catalogAverageRating ?? 0,
+      byWorkId: Object.fromEntries(marketEntries),
+    },
+  };
 }
 
 function evidenceMatches(
@@ -120,10 +229,44 @@ function validateEvidenceReference(
   }
 }
 
-function assignCatalogVersion(catalog: CatalogV1): CatalogV1 {
-  const content = JSON.stringify({ ...catalog, catalogVersion: "" });
+function canonicalize(value: unknown): unknown {
+  if (Array.isArray(value)) {
+    return value.map(canonicalize);
+  }
+  if (value !== null && typeof value === "object") {
+    return Object.fromEntries(
+      Object.entries(value)
+        .sort(([left], [right]) => (left < right ? -1 : left > right ? 1 : 0))
+        .map(([key, entry]) => [key, canonicalize(entry)]),
+    );
+  }
+  return value;
+}
+
+function assignJointVersion(catalog: CatalogV1, context: RecommendationContext) {
+  const { catalogVersion, ...versionlessCatalog } = catalog;
+  const { catalogVersion: contextCatalogVersion, ...versionlessMarketSnapshot } =
+    context.marketSnapshot;
+  void catalogVersion;
+  void contextCatalogVersion;
+  const content = JSON.stringify(
+    canonicalize({
+      catalog: versionlessCatalog,
+      context: {
+        constraintByWorkId: context.constraintByWorkId,
+        marketSnapshot: versionlessMarketSnapshot,
+      },
+    }),
+  );
   const digest = createHash("sha256").update(content).digest("hex").slice(0, 12);
-  return { ...catalog, catalogVersion: `v1-${digest}` };
+  const version = `v1-${digest}`;
+  return {
+    catalog: { ...catalog, catalogVersion: version },
+    context: {
+      ...context,
+      marketSnapshot: { ...context.marketSnapshot, catalogVersion: version },
+    },
+  };
 }
 
 export function compileCatalog(source: CatalogSource): CompileResult {
@@ -498,7 +641,7 @@ export function compileCatalog(source: CatalogSource): CompileResult {
       .sort(([left], [right]) => left.localeCompare(right))
       .map(([workId, row]) => [workId, row.value.id]),
   );
-  const unversioned = catalogV1Schema.parse({
+  const unversionedCatalog = catalogV1Schema.parse({
     schemaVersion: 1,
     catalogVersion: "v1-unversioned",
     factorDictionaryVersion: "v1",
@@ -506,7 +649,13 @@ export function compileCatalog(source: CatalogSource): CompileResult {
     volumes: volumes.sort((left, right) => left.id.localeCompare(right.id)),
     representativeVolumeByWorkId,
   });
-  const catalog = assignCatalogVersion(unversioned);
+  const unversionedContext = compileRecommendationContext(
+    source,
+    unversionedCatalog,
+    workRows,
+    issues,
+  );
+  const { catalog, context } = assignJointVersion(unversionedCatalog, unversionedContext);
 
   for (const catalogIssue of validateCatalog(catalog)) {
     const located =
@@ -522,5 +671,5 @@ export function compileCatalog(source: CatalogSource): CompileResult {
     });
   }
 
-  return { catalog, issues };
+  return { catalog, context, issues };
 }

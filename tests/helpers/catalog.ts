@@ -9,6 +9,8 @@ import type {
   ThemeFactor,
   Work,
   WorkAxes,
+  WorkEvidence,
+  WorkStatus,
 } from "@/domain/catalog/types";
 
 export function createTestAxes(overrides: Partial<Record<AxisId, AxisFactor>> = {}): WorkAxes {
@@ -24,6 +26,8 @@ type TestWorkOptions = {
   themes?: ThemeFactor[];
   axes?: WorkAxes;
   eligibility?: CatalogEligibility;
+  status?: WorkStatus;
+  evidence?: Partial<WorkEvidence>;
 };
 
 export function createTestWork(options: TestWorkOptions = {}): Work {
@@ -35,7 +39,7 @@ export function createTestWork(options: TestWorkOptions = {}): Work {
     creators: ["テスト作者"],
     publisher: "テスト出版社",
     demographic: "general",
-    status: "completed",
+    status: options.status ?? "completed",
     firstPublishedYear: 2020,
     genres: options.genres ?? ["fantasy"],
     themes: options.themes ?? [{ id: "adventure", centrality: 2, confidence: 0.9 }],
@@ -48,6 +52,7 @@ export function createTestWork(options: TestWorkOptions = {}): Work {
       metadataConfidence: 0.9,
       groupingConfidence: 0.9,
       sourceAgreement: 0.9,
+      ...options.evidence,
     },
   };
 }
