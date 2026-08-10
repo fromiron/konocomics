@@ -1,2 +1,27 @@
-.env
-node_modules
+# dependencies
+/node_modules
+
+# Next.js
+/.next/
+/out/
+/build/
+
+# tests
+/coverage/
+/playwright-report/
+/test-results/
+
+# local environment
+.env*
+!.env.example
+
+# package manager and debug logs
+*.log
+.pnpm-debug.log*
+
+# editors and operating systems
+.DS_Store
+
+# TypeScript
+*.tsbuildinfo
+next-env.d.ts

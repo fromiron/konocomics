@@ -1,0 +1,10 @@
+.next
+coverage
+data/generated
+docs/factors/factor-dictionary.md
+docs/planning
+node_modules
+out
+playwright-report
+test-results
+pnpm-lock.yaml
