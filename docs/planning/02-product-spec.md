@@ -1,15 +1,15 @@
 # 02 — 제품 사양 (Product Spec)
 
-> 이 문서는 `konocomics-project-plan.md`를 대체하는 **확정 제품 사양**이다.
-> 원본과 충돌하면 이 문서가 우선한다. 추천 산식은 이 문서 §6이 단일 진실 원천(single source of truth)이다.
+> konocomics의 **확정 제품 사양**이다. (초안 기획서는 감사 후 폐기되었고, 그 delta 기록은 `00-plan-audit.md`·`01-decision-ledger.md`에 있다.)
+> 추천 산식은 이 문서 §6이, 팩터 정의는 `docs/factors/factor-dictionary.md`가 단일 진실 원천(single source of truth)이다.
 
 ---
 
 ## 1. 제품 테제
 
-**KonoComics**는 사용자가 좋아하거나 싫어한 만화로부터 장르가 아니라 **전개·문제 해결·전략·관계·톤·심리적 피로도·작화 성향**을 추론하고, 아직 읽지 않은 만화를 **왜 추천했는지 설명하면서** 제시하는 개인 만화 취향 서비스다.
+**konocomics**는 사용자가 좋아하거나 싫어한 만화로부터 장르가 아니라 **전개·문제 해결·전략·관계·톤·심리적 피로도·작화 성향**을 추론하고, 아직 읽지 않은 만화를 **왜 추천했는지 설명하면서** 제시하는 개인 만화 취향 서비스다.
 
-- 사용자 노출 제품명: **KonoComics** / 로고: **kono**co**mi**cs / 일본어: コノコミックス
+- 사용자 노출 제품명: **konocomics** / 로고: **kono**co**mi**cs / 일본어: コノコミックス
 - 내부 엔진명: Manga Taste Engine / 대표 기능명: **Manga DNA**
 - 브랜드 기믹: `kono + mi = konomi = 好み`. 로고 안에 숨은 단어 = 작품 안에 숨은 취향.
 
@@ -108,9 +108,97 @@
 
 ## 5. 데이터 모델 (도메인 확정분)
 
-원본 계획서의 타입을 그대로 채택한다: `Work`, `Volume`, `ProviderListing`, `ThemeFactor(centrality 1|2)`, `AxisFactor(known|unknown|notApplicable)`, `CatalogEligibility`, `FactorEvidence`, `WorkEvidence`, `UserWorkRecord(readingState×reaction 분리)`. (원본 §10~13, §18, §30 참조 — 변경 없음)
+### 5.1 원칙
 
-추가 확정:
+- **ISBN은 작품 ID가 아니다.** 『キングダム』 1~3권은 서로 다른 ISBN이지만 추천에서는 하나의 `Work`다. MVP 계층은 `Work / Volume / ProviderListing` 셋뿐이며, 판형(완전판·문고판 등) 문제로 실제 오류가 발생한 뒤에만 별도 `Edition` 계층을 추가한다.
+- **원본 응답과 자체 데이터의 물리적 분리:** Work Taste Metadata(자체 정의·검수, 영구) / ProviderListing(라쿠텐 취득, 갱신 가능) / providerCache(TTL 캐시). 라쿠텐 응답을 영구 canonical DB로 복제하지 않는다.
+- 공개 Catalog에는 최종 값과 최소 confidence만 포함하고, 상세 근거(evidence)는 빌드용 `data/source/`에만 보존한다.
+
+### 5.2 핵심 타입 (확정)
+
+```ts
+type Work = {
+  id: string;
+  title: string;
+  titleKana?: string;
+  aliases: string[];
+  creators: string[];
+  publisher?: string;
+  demographic?: "shonen" | "seinen" | "shojo" | "josei" | "children" | "general" | "unknown";
+  status: "ongoing" | "completed" | "hiatus" | "unknown";
+  firstPublishedYear?: number;
+  genres: GenreTag[];
+  themes: ThemeFactor[];       // { id, centrality: 1|2, confidence }
+  axes: WorkAxes;              // 17개 AxisFactor — 정의는 팩터 사전
+  factorScope: "entry_1_3_volumes";
+  eligibility: CatalogEligibility;
+  evidence: WorkEvidence;
+};
+// demographic·firstPublishedYear는 핵심 Similarity 그룹에 넣지 않고
+// 약한 사용자 정책 또는 필터로만 사용한다.
+
+type Volume = {
+  id: string;
+  workId: string;
+  volumeNumber?: number;
+  isbn: string;
+  releaseDate?: string;
+  editionKind: "standard" | "digital" | "bunko" | "complete" | "limited" | "set" | "unknown";
+};
+
+type CatalogEligibility = {
+  onboardingEligible: boolean;
+  recommendationEligible: boolean;
+  libraryOnly: boolean;
+};
+
+type ProviderListing = {
+  workId: string;
+  provider: "rakuten";
+  isbn: string;
+  imageUrl?: string;
+  itemUrl?: string;
+  affiliateUrl?: string;
+  chirayomiUrl?: string;
+  itemPrice?: number;
+  availability?: number;
+  reviewAverage?: number;
+  reviewCount?: number;
+  fetchedAt: string;
+  expiresAt: string;
+};
+
+type FactorEvidence = {
+  sourceType: "rakuten" | "publisher" | "manual" | "model";  // ndl은 DEFER
+  sourceUrl?: string;
+  fetchedAt: string;
+  extractorVersion?: string;
+  reviewedByHuman: boolean;
+  confidence: number;
+};
+
+type WorkEvidence = {
+  metadataConfidence: number;
+  groupingConfidence: number;
+  sourceAgreement: number;
+  annotationReviewedAt?: string;
+};
+
+// 읽기 상태와 감상을 하나의 enum에 섞지 않는다 (원칙 4).
+// 표현 예: 완독+최애 / 읽는 중+좋음 / 완독+별로 / 하차+초반은 좋았음
+type UserWorkRecord = {
+  workId: string;
+  readingState: "planned" | "reading" | "completed" | "dropped" | "hidden";
+  reaction?: "favorite" | "liked" | "neutral" | "disliked";
+  progress?: { volume?: number; chapter?: number };
+  positiveReasons?: string[];
+  negativeReasons?: NegativeReason[];   // §6.7 enum
+  droppedReasons?: NegativeReason[];
+  updatedAt: string;
+};
+```
+
+### 5.3 추가 확정 타입
 
 ```ts
 // Catalog 외 작품의 Library 기록 (추천·DNA 계산에 절대 사용하지 않음)
@@ -133,7 +221,9 @@ type OnboardingDraft = {
 };
 ```
 
-Genre 10종, Theme 22종, Axis 17종(Narrative 6 / Tone·Relationship 7 / Art 4)의 정의와 0/2/4 기준은 원본 §15~16을 확정 채택하고, 실행 문서는 팩터 사전으로 이관한다. `training` Theme 제외, `actionIntensity` Axis 제거(→`combat` centrality)도 확정.
+### 5.4 팩터 정의
+
+Genre 10종, Theme 22종(centrality 1|2), Axis 17종(Narrative 6 / Tone·Relationship 7 / Art 4)의 전체 목록·0/2/4 판정 기준·`known/unknown/notApplicable` 의미·거리 종류·일본어 표시 레이블은 **`docs/factors/factor-dictionary.md`가 확정 정의**한다. `training` Theme 제외, `actionIntensity` Axis 제거(→`combat` centrality) 확정 포함.
 
 ---
 
@@ -269,7 +359,7 @@ Discovery 슬롯               1~2 (top score − 0.10 이내에서만)
 
 `Unknown Want-to-Read Rate` / `Explanation Agreement` / `Explanation Lift` / `Disliked Leakage@10` / `Holdout Recall@10` / 사용자별 승패.
 
-### REVISE 진단표 (원본 유지)
+### REVISE 진단표 (확정)
 
 설명은 정확한데 읽고 싶지 않음 → Catalog Hook·진입성 / Holdout 좋고 Discovery 약함 → Bridge·Discovery 보강 / 추천 좋고 설명 부정확 → contribution·템플릿 수정 / 인기작만 상위 → tie-break 범위·Catalog 편향 수정.
 

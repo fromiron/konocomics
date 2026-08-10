@@ -1,19 +1,19 @@
-# AGENTS.md — KonoComics 구현 에이전트 가이드
+# AGENTS.md — konocomics 구현 에이전트 가이드
 
-너는 **KonoComics**(일본 만화 취향 분석 + 설명 가능한 추천, 로컬 우선 웹앱)의 구현 담당이다.
+너는 **konocomics**(일본 만화 취향 분석 + 설명 가능한 추천, 로컬 우선 웹앱)의 구현 담당이다.
 기획·설계 결정은 이미 완료되어 `docs/planning/`에 확정되어 있다. **네 역할은 결정을 다시 내리는 것이 아니라 계약대로 구현하는 것이다.**
 
 ## 0. 문서 우선순위 (충돌 시 위가 이긴다)
 
 1. `docs/planning/02-product-spec.md` — 제품 사양·**추천 산식의 단일 진실 원천(§6)**
-2. `docs/planning/05-architecture.md` — 스택·경계·영속성·API 계약
-3. `docs/planning/03-ux-screen-contracts.md` — 화면별 구현 계약·수용 기준
-4. `docs/planning/04-visual-interaction-spec.md` — 토큰·모션·시그니처 모먼트
-5. `docs/planning/06-implementation-plan.md` — 슬라이스 순서·완료 기준
-6. `docs/planning/07-acceptance-test-plan.md` — 테스트 계약
-7. `konocomics-project-plan.md` — **원본 초안. 위 문서와 충돌하면 무시한다.** (팩터 0/2/4 기준표 등 명시적으로 이관 참조된 부분만 유효)
+2. `docs/factors/factor-dictionary.md` — **팩터 정의(17 Axis·Theme·Genre·0/2/4 기준·표시 레이블)의 단일 진실 원천**
+3. `docs/planning/05-architecture.md` — 스택·경계·영속성·API 계약·빌드 파이프라인
+4. `docs/planning/03-ux-screen-contracts.md` — 화면별 구현 계약·수용 기준
+5. `docs/planning/04-visual-interaction-spec.md` — 토큰·모션·시그니처 모먼트
+6. `docs/planning/06-implementation-plan.md` — 슬라이스 순서·완료 기준
+7. `docs/planning/07-acceptance-test-plan.md` — 테스트 계약
 
-`docs/planning/00-plan-audit.md`·`01-decision-ledger.md`는 결정의 "이유"가 궁금할 때만 참조.
+`docs/planning/00-plan-audit.md`·`01-decision-ledger.md`는 **이력 기록**(폐기된 초안 대비 무엇이 왜 달라졌는지)이다. 결정의 이유가 궁금할 때만 참조하고, 사양으로 읽지 마라.
 
 ## 1. 절대 규칙 (위반 금지)
 

@@ -56,6 +56,29 @@ data/generated/catalog-v1.json               │     출력: RankedRecommendatio
 
 \* 라쿠텐 약관상 상한은 3개월이지만 신선도를 위해 72h로 운용.
 
+### 2.1 Catalog 빌드 파이프라인 상세 (normalize-works)
+
+**제목 정규화 규칙** (검색 인덱스·그룹핑·external entry 키가 공유):
+
+```text
+Unicode NFKC → 히라가나·가타카나 통합 필드 생성 → 전각/반각 통합
+→ 공백·중점(・) 정규화 → 영문 소문자화
+→ 권수·판형 토큰 제거: 권수 숫자 / 上·下 / 完全版 / 新装版 / 文庫版 / 特装版 / 限定版 / 電子版 / セット
+```
+
+**Work 자동 그룹핑 (빌드 타임 전용):** Rakuten `seriesName`은 선택 필드이므로 단독 기준으로 쓰지 않는다.
+
+```ts
+groupingScore =
+  seriesNameMatch      * 0.40 +   // 정규화된 seriesName 일치
+  normalizedTitleMatch * 0.25 +   // 권수·판형 제거 제목 일치
+  authorMatch          * 0.15 +
+  publisherMatch       * 0.10 +
+  volumeSequenceMatch  * 0.10;    // 연속 권 번호
+```
+
+판정: `≥ 0.90` 자동 그룹 후보 / `0.70~0.89` 수동 검토 / `< 0.70` 별도 Work 유지. 자동 결과에는 항상 `groupingConfidence`와 검수 여부를 기록하고, 경계 사례는 사람이 최종 승인한다. **런타임에는 이 그룹핑을 수행하지 않는다** — 런타임 라쿠텐 검색 결과는 ISBN→Catalog 대조 또는 external entry로만 처리한다(§`03` 7).
+
 ## 3. 클라이언트/서버 경계 (선언)
 
 1. **모든 페이지는 정적 프리렌더 셸이다.** 각 `page.tsx`는 메타데이터와 레이아웃만 서버에서 결정하고, 본문은 `"use client"` 컴포넌트다. 동적 SSR·서버 액션·RSC 데이터 페칭을 사용하지 않는다.
@@ -162,4 +185,10 @@ type ExportFileV1 = {
 ## 10. 국제화·분석 준비
 
 - 문자열은 전부 `lib/strings.ts`의 키 참조. Phase 2 한국어는 이 테이블의 교체로 시작(라이브러리 도입은 그때 판단).
-- 분석: MVP 코드 없음. 도입 시 이벤트 이름은 원본 계획 §37 목록을 따르고, Taste 원본·Library 전체를 전송하지 않는다는 원칙만 상속.
+- 분석: MVP 코드 없음. 공개 베타 이후 도입 시(후보: PostHog) 이벤트는 아래 최소 목록으로 시작하고, **Taste Vector 원본·Library 전체·민감한 부정 이유는 절대 전송하지 않는다**:
+
+```text
+onboarding_started / work_selected / onboarding_completed / taste_revealed /
+recommendation_impression / recommendation_saved / recommendation_hidden /
+recommendation_already_read / provider_clicked / data_exported
+```

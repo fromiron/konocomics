@@ -20,7 +20,7 @@ Stage E  시그니처 폴리시 + PWA + 다크     (슬라이스 11~12)
 ## 슬라이스 0 — 저장소 스캐폴드
 
 - **목표:** 빌드·테스트·린트가 도는 빈 프로젝트.
-- **내용:** `create-next-app`(TS, App Router, Tailwind v4) + Vitest + Playwright + ESLint(strict, `import/no-restricted-paths`로 domain 격리 규칙) + Prettier + shadcn/ui 초기화. `docs/factors/factor-dictionary.md`·`annotation-guide.md` 골격 생성(17 Axis의 0/2/4 기준은 원본 계획 §16 표를 이관).
+- **내용:** `create-next-app`(TS, App Router, Tailwind v4) + Vitest + Playwright + ESLint(strict, `import/no-restricted-paths`로 domain 격리 규칙) + Prettier + shadcn/ui 초기화. 팩터 정의는 `docs/factors/factor-dictionary.md`에 이미 확정되어 있으므로, `docs/factors/annotation-guide.md`(대표 사례·경계 사례 모음) 골격만 추가 생성.
 - **완료 기준:** CI(GitHub Actions)에서 typecheck·lint·unit 통과. 버전은 lockfile 고정.
 - **제외:** UI 페이지, 배포 설정.
 
@@ -29,7 +29,7 @@ Stage E  시그니처 폴리시 + PWA + 다크     (슬라이스 11~12)
 - **목표:** CSV 주석 → 검증된 `catalog-v1.json`.
 - **의존:** 슬라이스 0.
 - **파일:** `domain/catalog/`(타입·zod·정규화), `scripts/normalize-works.ts`·`validate-catalog.ts`·`build-catalog.ts`·`report-coverage.ts`, `data/source/*.csv`(샘플 10작품 수동 작성).
-- **구현 결정:** validator 검사 항목은 원본 §39 목록 전부(ID·ISBN 중복, 팩터 범위, 상태 오류, centrality, eligibility 충돌, coverage 미달, evidence 누락). `report-coverage`는 축 간 상관계수 표를 출력(진단용). 정규화 규칙: NFKC, 가나 통합, 전각/반각, 권수 토큰 제거(§원본 12).
+- **구현 결정:** validator 검사 항목은 `07` §1의 목록 전부(ID·ISBN 중복, 팩터 범위, 상태 오류, centrality, eligibility 충돌, coverage 미달, evidence 누락, 대표 volume 누락). `report-coverage`는 축 간 상관계수 표를 출력(진단용). 제목 정규화·Work 그룹핑 규칙은 `05` §2.1을 따른다.
 - **테스트:** validator 규칙별 실패 픽스처, 정규화 골든 케이스(일본어 제목 10개).
 - **완료 기준:** 샘플 10작품이 validate 통과 → JSON 생성. 오류 CSV가 정확한 행·이유로 거부됨.
 - **제외:** `sync-rakuten.ts`(슬라이스 8과 병행 가능, 초기 표지 URL은 수동 입력 허용).
@@ -40,7 +40,7 @@ Stage E  시그니처 폴리시 + PWA + 다크     (슬라이스 11~12)
 - **의존:** 슬라이스 1.
 - **파일:** `domain/recommendation/`(similarity.ts, coverage.ts, anchor.ts, penalty.ts, adjustment.ts, rank.ts), `domain/profile/`(confidence.ts, dna-summary.ts).
 - **구현 결정:** 모든 함수 순수. 반환 `RankedRecommendation = { workId, tasteScore, confidence, bestAnchorId, contributions: GroupContribution[], penaltiesApplied[] }`. tie-break·리스트 제약(§6.8) 포함. 정책 3종 반영.
-- **테스트(핵심 계약):** 원본 §41 유닛 목록 전부 — 읽음/하차/숨김 제외, hard exclusion, coverage 수축, notApplicable 분모, 소수 취향 보존(2개 취향군 픽스처), consensus cap, 사유별 감점 조건(12사유 각각), vague penalty, 명시 보정 cap ±0.12, market tie-break 0.025 경계, 결정론(동일 입력 2회 호출 결과 동일).
+- **테스트(핵심 계약):** `07` §2의 계약 목록 전부 — 읽음/하차/숨김 제외, hard exclusion, coverage 수축, notApplicable 분모, 소수 취향 보존(2개 취향군 픽스처), consensus cap, 사유별 감점 조건(12사유 각각), vague penalty, 명시 보정 cap ±0.12, market tie-break 0.025 경계, 결정론(동일 입력 2회 호출 결과 동일).
 - **완료 기준:** 전체 테스트 통과 + 20작품 픽스처 골든 스냅샷.
 
 ## 슬라이스 3 — Baseline + CLI 리포트
