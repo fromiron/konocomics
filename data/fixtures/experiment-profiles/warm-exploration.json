@@ -1,0 +1,63 @@
+{
+  "format": "konocomics-experiment-profile",
+  "schemaVersion": 1,
+  "profileId": "warm-exploration",
+  "records": [
+    {
+      "workId": "frieren",
+      "readingState": "completed",
+      "reaction": "favorite",
+      "updatedAt": "2000-01-01T00:00:00.000Z"
+    },
+    {
+      "workId": "yotsuba-to",
+      "readingState": "completed",
+      "reaction": "liked",
+      "updatedAt": "2000-01-01T00:00:00.000Z"
+    },
+    {
+      "workId": "spy-family",
+      "readingState": "completed",
+      "reaction": "liked",
+      "updatedAt": "2000-01-01T00:00:00.000Z"
+    },
+    {
+      "workId": "dungeon-meshi",
+      "readingState": "completed",
+      "reaction": "liked",
+      "updatedAt": "2000-01-01T00:00:00.000Z"
+    },
+    {
+      "workId": "fullmetal-alchemist",
+      "readingState": "completed",
+      "reaction": "liked",
+      "updatedAt": "2000-01-01T00:00:00.000Z"
+    },
+    {
+      "workId": "chainsaw-man",
+      "readingState": "completed",
+      "reaction": "disliked",
+      "negativeReasons": ["tooDark", "tooStressful", "artStyleDislike"],
+      "updatedAt": "2000-01-01T00:00:00.000Z"
+    }
+  ],
+  "adjustments": {
+    "axes": {
+      "mentalStress": "less",
+      "darkness": "less",
+      "emotionalWarmth": "veryLike",
+      "visualSoftness": "like"
+    },
+    "themes": {
+      "combat": "less",
+      "foundFamily": "veryLike",
+      "exploration": "like"
+    }
+  },
+  "policies": {
+    "preferCompleted": false,
+    "preferHidden": false,
+    "preferVerified": false,
+    "excludeIncomplete": false
+  }
+}

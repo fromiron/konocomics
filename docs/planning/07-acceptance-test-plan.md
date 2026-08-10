@@ -29,7 +29,7 @@
 13. 리스트 제약: 동일 best Anchor ≤4, 동일 Theme 조합 ≤3, 동일 시리즈 ≤1, Discovery는 top−0.10 이내.
 14. **결정론:** 동일 입력 2회 호출 → 완전 동일 출력(순서 포함).
 15. **설명-기여 일치:** Taste `kind=positive|caution`, Baseline `kind=baseline`의 discriminated 구조화 문장에서 source/group/factor/value/anchor ID가 실제 contribution과 byte-identical하다. positive≤3, caution≤1, group/Cluster당 1개이며 caution은 전역 최대 음수 similarity 하나만 후보가 된다. 근거 Anchor는 렌더링된 similarity/Genre contribution에서만 온다.
-16. confidence: 산식 값과 3단 레이블 경계(0.5 / 0.75).
+16. confidence: 산식 값과 반올림 전 값 기준 3단 레이블 경계(0.5 / 0.75). 공개 q12 숫자가 경계로 반올림돼도 레이블은 바뀌지 않는다.
 17. 20작품 골든 스냅샷: 산식 수치 변경 시 순위 변화가 리뷰에 드러난다.
 
 ### Slice 3 Baseline·CLI 추가 계약
@@ -41,8 +41,8 @@
 5. prior-only market은 ledger에는 존재하지만 설명 불가. Baseline reason은 explainable contribution 중 안정 정렬 첫 1개뿐이며 `kind=baseline` identity 전체가 원 contribution과 같다.
 6. 작품·record·reason·map 입력 순열과 같은 profile 2회 실행의 결과 JSON/Markdown byte 동일.
 7. strict profile regex·reason/state·count 불변식, 1/16 MiB pre-read cap, catalog 의미 검증과 context completeness 거부 경계.
-8. CLI unknown/duplicate flag와 0/1/2 exit code, input=output 거부, temp+rename 실패 시 기존 output 불변.
-9. 합성 3 profile report golden: UTF-8/LF/단일 final newline, exact q12·escape, Taste/Baseline Top 10, ledger 상위 5, coverage SHRUNK/PARTIAL, 후보 부족 N/10.
+8. CLI unknown/duplicate flag와 0/1/2 exit code, 문서화된 `--silent` package-manager 호출의 stdout=golden, input=output·symlink alias 거부, temp+rename 실패 시 기존 output 불변.
+9. 합성 3 profile report golden + 상호 보완 unknown 축 pair의 coverage warning golden: UTF-8/LF/단일 final newline, exact q12·escape, Taste/Baseline Top 10, ledger 상위 5, SHRUNK/PARTIAL, 후보 부족 N/10.
 
 ## 3. Catalog·데이터 유닛 테스트
 

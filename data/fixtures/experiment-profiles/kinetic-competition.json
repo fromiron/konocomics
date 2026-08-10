@@ -1,0 +1,69 @@
+{
+  "format": "konocomics-experiment-profile",
+  "schemaVersion": 1,
+  "profileId": "kinetic-competition",
+  "records": [
+    {
+      "workId": "blue-lock",
+      "readingState": "completed",
+      "reaction": "favorite",
+      "updatedAt": "2000-01-01T00:00:00.000Z"
+    },
+    {
+      "workId": "chainsaw-man",
+      "readingState": "completed",
+      "reaction": "liked",
+      "updatedAt": "2000-01-01T00:00:00.000Z"
+    },
+    {
+      "workId": "kingdom",
+      "readingState": "completed",
+      "reaction": "liked",
+      "updatedAt": "2000-01-01T00:00:00.000Z"
+    },
+    {
+      "workId": "blame",
+      "readingState": "completed",
+      "reaction": "liked",
+      "updatedAt": "2000-01-01T00:00:00.000Z"
+    },
+    {
+      "workId": "fullmetal-alchemist",
+      "readingState": "completed",
+      "reaction": "liked",
+      "updatedAt": "2000-01-01T00:00:00.000Z"
+    },
+    {
+      "workId": "frieren",
+      "readingState": "completed",
+      "reaction": "disliked",
+      "negativeReasons": ["tooSlow"],
+      "updatedAt": "2000-01-01T00:00:00.000Z"
+    },
+    {
+      "workId": "yotsuba-to",
+      "readingState": "completed",
+      "reaction": "disliked",
+      "negativeReasons": ["vagueDislike"],
+      "updatedAt": "2000-01-01T00:00:00.000Z"
+    }
+  ],
+  "adjustments": {
+    "axes": {
+      "progression": "veryLike",
+      "pacing": "veryLike",
+      "motionImpact": "veryLike"
+    },
+    "themes": {
+      "combat": "veryLike",
+      "tournament": "like",
+      "sportsCompetition": "like"
+    }
+  },
+  "policies": {
+    "preferCompleted": false,
+    "preferHidden": false,
+    "preferVerified": false,
+    "excludeIncomplete": false
+  }
+}

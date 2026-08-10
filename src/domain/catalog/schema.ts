@@ -12,7 +12,7 @@ import {
 import { isValidIsbn } from "./normalize";
 
 const confidenceSchema = z.number().min(0).max(1);
-const catalogIdSchema = z
+export const catalogIdSchema = z
   .string()
   .min(1)
   .regex(/^[a-z0-9]+(?:[a-z0-9-]*[a-z0-9])?$/);

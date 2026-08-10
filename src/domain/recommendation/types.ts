@@ -5,6 +5,7 @@ import type {
   RecommendationPolicies,
   UserWorkRecord,
 } from "../profile/types";
+import type { ConfidenceLevel } from "../profile/confidence";
 
 export type SimilarityFactorId = AxisId | GenreTag | ThemeTag;
 
@@ -78,12 +79,32 @@ export type RankedRecommendation = {
   workId: string;
   tasteScore: number;
   confidence: number;
+  confidenceLevel: ConfidenceLevel;
   bestAnchorId: string;
   contributions: GroupContribution[];
   penaltiesApplied: NegativeReasonId[];
 };
 
-export type ScoredRecommendation = RankedRecommendation & {
+export type BaselineContribution = {
+  source: "genre" | "market" | "maturity";
+  group: "genre" | "overall";
+  factorId: GenreTag | "bayesianRating" | "maturity";
+  value: number;
+  anchorWorkIds: string[];
+  explainable: boolean;
+};
+
+export type BaselineRecommendation = {
+  workId: string;
+  baselineScore: number;
+  bestAnchorId: string | null;
+  genreScore: number;
+  bayesianRating: number;
+  maturity: number;
+  contributions: BaselineContribution[];
+};
+
+export type ScoredRecommendation = Omit<RankedRecommendation, "confidenceLevel"> & {
   work: Work;
   bayesianRating: number;
   maturity: number;

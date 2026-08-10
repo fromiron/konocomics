@@ -5,6 +5,7 @@ exports[`twenty-work recommendation golden > exposes every ranking and score-led
   {
     "bestAnchorId": "golden-00",
     "confidence": 0.578503817331,
+    "confidenceLevel": "normal",
     "contributions": [
       {
         "anchorWorkIds": [],
@@ -263,6 +264,7 @@ exports[`twenty-work recommendation golden > exposes every ranking and score-led
   {
     "bestAnchorId": "golden-00",
     "confidence": 0.575036230743,
+    "confidenceLevel": "normal",
     "contributions": [
       {
         "anchorWorkIds": [],
@@ -511,6 +513,7 @@ exports[`twenty-work recommendation golden > exposes every ranking and score-led
   {
     "bestAnchorId": "golden-00",
     "confidence": 0.581950742475,
+    "confidenceLevel": "normal",
     "contributions": [
       {
         "anchorWorkIds": [],
@@ -787,6 +790,7 @@ exports[`twenty-work recommendation golden > exposes every ranking and score-led
   {
     "bestAnchorId": "golden-00",
     "confidence": 0.587590978398,
+    "confidenceLevel": "normal",
     "contributions": [
       {
         "anchorWorkIds": [],
@@ -1071,6 +1075,7 @@ exports[`twenty-work recommendation golden > exposes every ranking and score-led
   {
     "bestAnchorId": "golden-02",
     "confidence": 0.590480030709,
+    "confidenceLevel": "normal",
     "contributions": [
       {
         "anchorWorkIds": [],
@@ -1329,6 +1334,7 @@ exports[`twenty-work recommendation golden > exposes every ranking and score-led
   {
     "bestAnchorId": "golden-02",
     "confidence": 0.583636512692,
+    "confidenceLevel": "normal",
     "contributions": [
       {
         "anchorWorkIds": [],
@@ -1625,6 +1631,7 @@ exports[`twenty-work recommendation golden > exposes every ranking and score-led
   {
     "bestAnchorId": "golden-02",
     "confidence": 0.597186385434,
+    "confidenceLevel": "normal",
     "contributions": [
       {
         "anchorWorkIds": [],
@@ -1881,6 +1888,7 @@ exports[`twenty-work recommendation golden > exposes every ranking and score-led
   {
     "bestAnchorId": "golden-01",
     "confidence": 0.588843648268,
+    "confidenceLevel": "normal",
     "contributions": [
       {
         "anchorWorkIds": [],

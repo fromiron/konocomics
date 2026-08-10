@@ -3,6 +3,7 @@ import {
   calculateProfileConfidence,
   calculateRecommendationConfidence,
   calculateWorkConfidence,
+  getConfidenceLevel,
 } from "../profile/confidence";
 import type { ProfileAdjustments, RecommendationPolicies, UserWorkRecord } from "../profile/types";
 import { calculateExplicitAdjustment, isHardExcluded } from "./adjustment";
@@ -241,11 +242,18 @@ function scoreCandidate(options: {
   };
 }
 
+export function serializeRecommendationConfidence(confidence: number) {
+  return {
+    confidence: roundScore(confidence),
+    confidenceLevel: getConfidenceLevel(confidence),
+  };
+}
+
 function publicRecommendation(candidate: ScoredRecommendation): RankedRecommendation {
   return {
     workId: candidate.workId,
     tasteScore: candidate.tasteScore,
-    confidence: roundScore(candidate.confidence),
+    ...serializeRecommendationConfidence(candidate.confidence),
     bestAnchorId: candidate.bestAnchorId,
     contributions: candidate.contributions,
     penaltiesApplied: candidate.penaltiesApplied,

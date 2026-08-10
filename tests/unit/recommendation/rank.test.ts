@@ -1,7 +1,11 @@
 import { describe, expect, it } from "vitest";
 
 import type { CatalogV1, ThemeFactor, Work } from "@/domain/catalog/types";
-import { rankRecommendations, filterEligibleCandidates } from "@/domain/recommendation/rank";
+import {
+  rankRecommendations,
+  filterEligibleCandidates,
+  serializeRecommendationConfidence,
+} from "@/domain/recommendation/rank";
 import type { RecommendationInput } from "@/domain/recommendation/types";
 import { createTestAxes, createTestWork } from "../../helpers/catalog";
 import {
@@ -44,6 +48,19 @@ function inputWith(options: {
     }),
   };
 }
+
+describe("serialized recommendation confidence", () => {
+  it("keeps the raw confidence level when the public number rounds onto a boundary", () => {
+    expect(serializeRecommendationConfidence(0.7499999999996)).toEqual({
+      confidence: 0.75,
+      confidenceLevel: "normal",
+    });
+    expect(serializeRecommendationConfidence(0.4999999999996)).toEqual({
+      confidence: 0.5,
+      confidenceLevel: "low",
+    });
+  });
+});
 
 describe("rank candidate eligibility", () => {
   it("excludes anchors, read, dropped, hidden, disliked, and ineligible works but keeps planned", () => {

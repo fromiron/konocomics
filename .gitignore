@@ -14,6 +14,8 @@
 # local environment
 .env*
 !.env.example
+/data/local/experiment-profiles/
+/reports/local/
 
 # package manager and debug logs
 *.log

@@ -1,0 +1,2 @@
+  - SHRUNK / tone / coverage=0.428571428571 / threshold=0.6 / adjustedScore=0.857142857143
+  - PARTIAL / tone / coverage=0.857142857143 / threshold=0.6 / adjustedScore=1

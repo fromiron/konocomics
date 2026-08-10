@@ -46,7 +46,7 @@ npm run lint && npm run typecheck
 npm run catalog:validate    # CI 게이트 — 실패 시 배포 불가
 npm run catalog:build       # data/source CSV → src/data/generated/catalog-v1.json
 npm run catalog:coverage    # 팩터 coverage·상관 진단 리포트
-npm run experiment:baseline # Taste vs Baseline CLI 비교 리포트
+npm run --silent experiment:baseline # Taste vs Baseline CLI 비교 리포트(stdout은 Markdown만)
 ```
 
 커밋 전 최소: `typecheck` + `lint` + `test` + (catalog 변경 시) `catalog:validate`.

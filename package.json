@@ -10,6 +10,7 @@
     "catalog:validate": "tsx scripts/validate-catalog.ts",
     "catalog:build": "tsx scripts/build-catalog.ts",
     "catalog:coverage": "tsx scripts/report-coverage.ts",
+    "experiment:baseline": "tsx scripts/run-baseline-experiment.ts",
     "typecheck": "tsc --noEmit",
     "lint": "eslint . --max-warnings=0",
     "test": "vitest run",
