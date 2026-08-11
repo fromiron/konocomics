@@ -131,6 +131,9 @@ ghost-in-the-shell,artRealism,known,4,0.95,ev-g1-art-ghost-in-the-shell
 ghost-in-the-shell,artDensity,known,4,0.97,ev-g1-art-ghost-in-the-shell
 ghost-in-the-shell,visualSoftness,known,0,0.94,ev-g1-art-ghost-in-the-shell
 ghost-in-the-shell,motionImpact,known,4,0.93,ev-g1-art-ghost-in-the-shell
+ghost-in-the-shell,darkness,known,2,0.90,ev-g1-ghost-in-the-shell-darkness
+ghost-in-the-shell,mentalStress,known,1,0.80,ev-g1-ghost-in-the-shell-mental-stress
+ghost-in-the-shell,emotionalWarmth,known,1,0.72,ev-g1-ghost-in-the-shell-emotional-warmth
 akira,artRealism,known,4,0.93,ev-g1-art-akira
 akira,artDensity,known,4,0.94,ev-g1-art-akira
 akira,visualSoftness,known,0,0.90,ev-g1-art-akira

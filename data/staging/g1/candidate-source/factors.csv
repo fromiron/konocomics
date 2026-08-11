@@ -552,10 +552,10 @@ ghost-in-the-shell,worldBuilding,known,4,0.96,ev-ghost-in-the-shell
 ghost-in-the-shell,characterArcWeight,known,2,0.82,ev-ghost-in-the-shell
 ghost-in-the-shell,relationshipStructure,known,2,0.88,ev-ghost-in-the-shell
 ghost-in-the-shell,comedy,known,2,0.84,ev-ghost-in-the-shell
-ghost-in-the-shell,darkness,known,2,0.84,ev-ghost-in-the-shell
-ghost-in-the-shell,mentalStress,known,0,0.83,ev-ghost-in-the-shell
+ghost-in-the-shell,darkness,known,2,0.90,ev-g1-ghost-in-the-shell-darkness
+ghost-in-the-shell,mentalStress,known,1,0.80,ev-g1-ghost-in-the-shell-mental-stress
 ghost-in-the-shell,romance,known,0,0.90,ev-ghost-in-the-shell
-ghost-in-the-shell,emotionalWarmth,known,0,0.83,ev-ghost-in-the-shell
+ghost-in-the-shell,emotionalWarmth,known,1,0.72,ev-g1-ghost-in-the-shell-emotional-warmth
 ghost-in-the-shell,artRealism,known,4,0.95,ev-g1-art-ghost-in-the-shell
 ghost-in-the-shell,artDensity,known,4,0.97,ev-g1-art-ghost-in-the-shell
 ghost-in-the-shell,visualSoftness,known,0,0.94,ev-g1-art-ghost-in-the-shell

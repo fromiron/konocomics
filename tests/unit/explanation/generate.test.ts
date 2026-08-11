@@ -243,7 +243,12 @@ describe("Taste explanations", () => {
         tasteContribution({ factorId: "tooSlow", value: 1.5 }),
         tasteContribution({ factorId: "pacing", value: -1.2 }),
         tasteContribution({ group: "tone", factorId: "darkness", value: -1 }),
-        tasteContribution({ group: "theme", factorId: "adventure", value: 0.8 }),
+        tasteContribution({
+          source: "adjustment",
+          group: "theme",
+          factorId: "adventure",
+          value: 0.8,
+        }),
       ],
       confidenceLevel: "normal",
       lexicon,
@@ -251,7 +256,7 @@ describe("Taste explanations", () => {
     });
 
     expect(result.positiveReasons.map(({ factorId }) => factorId)).toEqual(["adventure"]);
-    expect(result.positiveReasons[0]?.text).toBe("あなたが好む「冒険」を備えた作品です。");
+    expect(result.positiveReasons[0]?.text).toBe("「冒険」があなたの好みに合う作品です。");
     expect(result.caution?.factorId).toBe("darkness");
     expect(result.caution?.text).toBe("ただし「物語の重さ」は、あなたの好みと少し異なります。");
   });

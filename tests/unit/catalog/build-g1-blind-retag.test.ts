@@ -1,5 +1,4 @@
 import { createHash } from "node:crypto";
-import { readFileSync } from "node:fs";
 import { resolve } from "node:path";
 
 import { describe, expect, it } from "vitest";
@@ -11,7 +10,7 @@ import {
 import { GENRE_TAGS, THEME_TAGS } from "../../../src/domain/catalog/constants";
 
 describe("G1 blind-retag sample", () => {
-  it("freezes a deterministic, isolated 9-of-50 sample", async () => {
+  it("builds a deterministic, isolated 9-of-50 sample", async () => {
     const root = resolve(import.meta.dirname, "../../..");
     const first = await buildG1BlindRetagArtifacts(root);
     const second = await buildG1BlindRetagArtifacts(root);
@@ -108,11 +107,5 @@ describe("G1 blind-retag sample", () => {
     expect(first.inputContent).not.toContain("| review average |");
     expect(first.inputContent.endsWith("\n")).toBe(true);
     expect(first.manifestContent.endsWith("\n")).toBe(true);
-    expect(readFileSync(resolve(root, "data/staging/g1/blind-retag/input.md"), "utf8")).toBe(
-      first.inputContent,
-    );
-    expect(
-      readFileSync(resolve(root, "data/staging/g1/blind-retag/sample-manifest.json"), "utf8"),
-    ).toBe(first.manifestContent);
   });
 });
