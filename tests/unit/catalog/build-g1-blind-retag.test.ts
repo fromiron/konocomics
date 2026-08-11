@@ -1,3 +1,4 @@
+import { createHash } from "node:crypto";
 import { readFileSync } from "node:fs";
 import { resolve } from "node:path";
 
@@ -7,6 +8,7 @@ import {
   buildG1BlindRetagArtifacts,
   selectG1BlindRetagSample,
 } from "../../../scripts/build-g1-blind-retag";
+import { GENRE_TAGS, THEME_TAGS } from "../../../src/domain/catalog/constants";
 
 describe("G1 blind-retag sample", () => {
   it("freezes a deterministic, isolated 9-of-50 sample", async () => {
@@ -19,6 +21,10 @@ describe("G1 blind-retag sample", () => {
     expect(first.manifest.populationSize).toBe(50);
     expect(first.manifest.sampleSize).toBe(9);
     expect(first.manifest.sampleRate).toBe(0.18);
+    expect(first.manifest.inputSha256).toBe(
+      createHash("sha256").update(first.inputContent).digest("hex"),
+    );
+    expect(first.inputContent).not.toContain(first.manifest.inputSha256);
     expect(new Set(selectedIds)).toHaveLength(9);
     expect(first.manifest.selected.map(({ digest }) => digest)).toEqual(
       [...first.manifest.selected.map(({ digest }) => digest)].sort(),
@@ -63,6 +69,28 @@ describe("G1 blind-retag sample", () => {
     expect(first.inputContent).toContain(first.manifest.annotationGuideSha256);
     expect(first.inputContent).toContain("exactly 9 × 17 = 153 rows");
     expect(first.inputContent).toContain("Write exactly four files");
+    expect(first.inputContent).toContain(
+      `Within each cell, emit Genre IDs in this exact canonical order: ${GENRE_TAGS.map((genreId) => `\`${genreId}\``).join(", ")}`,
+    );
+    expect(first.inputContent).toContain(
+      `Within each work, emit Theme rows in this exact canonical order: ${THEME_TAGS.map((themeId) => `\`${themeId}\``).join(", ")}`,
+    );
+    expect(first.inputContent).toContain("The only authorized source URLs are the exact URLs");
+    expect(first.inputContent).toContain("only on facts within that entry scope");
+    expect(first.inputContent).toContain("Record an exact volume/chapter/page or time range only");
+    expect(first.inputContent).toContain("Metadata, catalog, and cover-only pages");
+    expect(first.inputContent).toContain("MONSTER's representative ISBN");
+    expect(first.inputContent).toContain("Input SHA-256: `{sha256 of input.md}`");
+    expect(first.inputContent).toContain(
+      "Isolation attestation: only input.md and factor-dictionary.md were read as local files; no other local files were read.",
+    );
+    expect(first.inputContent).toContain("## `{workId}`");
+    expect(first.inputContent).toContain("- Authorized URL: <{exact-url}>");
+    expect(first.inputContent).toContain("- Axis `{axisId}`: {nonempty rationale}");
+    expect(first.inputContent).toContain("- Genre `{genreId}`: {nonempty rationale}");
+    expect(first.inputContent).toContain(
+      "- Theme `{themeId}` (centrality {1-or-2}): {nonempty rationale}",
+    );
     expect(first.inputContent.match(/^\| (?!workId|---)[a-z0-9-]+\s+\|/gmu)).toHaveLength(9);
     expect(first.inputContent).not.toContain("| genres |");
     expect(first.inputContent).not.toContain("| catalog role |");

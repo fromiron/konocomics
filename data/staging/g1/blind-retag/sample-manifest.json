@@ -6,6 +6,7 @@
   "cohortWorkIdsSha256": "306711f19cba4b3d9c755d411ee0649b563083437fad986e167618135b2aea6a",
   "factorDictionarySha256": "a9c29a853a108aca1b9bb8d5d71a3e7d5d583303691c0b35cc6424c1e45ee8be",
   "annotationGuideSha256": "f7dd1ec55d97bf9200fcec92ce270e7745a0d3aa4fe98a40c746fc56b6a777b3",
+  "inputSha256": "5f989c3d285e7595e29d55a98781cec2ea275751a6eddbc6b889df1e62e1921c",
   "sourceFileSha256": {
     "works": "e7a93a87f3d89acae577f8b028e15644328ca15e633698507e0a284cfd1e8732",
     "volumes": "eae9aab92b8f6becfa075b144060b409723f916558639822dcc16bfa366c380d",
