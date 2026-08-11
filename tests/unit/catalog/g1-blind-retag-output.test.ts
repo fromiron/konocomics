@@ -36,11 +36,12 @@ describe("G1 blind-retag output", () => {
     ].join("\n");
     const themes = [
       "workId,themeId,centrality,confidence,evidenceId",
-      ...workIds.map((workId) => `${workId},adventure,2,0.8,blind-retag-g1-v1-${workId}`),
+      ...workIds.slice(1).map((workId) => `${workId},adventure,2,0.8,blind-retag-g1-v1-${workId}`),
     ].join("\n");
-    const genres = ["workId,genres", ...workIds.map((workId) => `${workId},action;fantasy`)].join(
-      "\n",
-    );
+    const genres = [
+      "workId,genres",
+      ...workIds.map((workId, index) => `${workId},${index === 0 ? "" : "action;fantasy"}`),
+    ].join("\n");
     const notes = [
       `Input SHA-256: \`${sampleManifest.inputSha256}\``,
       ATTESTATION,
@@ -49,9 +50,16 @@ describe("G1 blind-retag output", () => {
         `## \`${workId}\``,
         `- Authorized URL: <${authorizedUrls[index]}>`,
         ...AXIS_IDS.map((axisId) => `- Axis \`${axisId}\`: observed entry-scope pattern`),
-        "- Genre `action`: observed action pattern",
-        "- Genre `fantasy`: observed fantasy pattern",
-        "- Theme `adventure` (centrality 2): repeated central adventure pattern",
+        ...(index === 0
+          ? [
+              "- Genre unknown: official entry evidence does not establish a Genre",
+              "- Theme unknown: official entry evidence does not establish a Theme",
+            ]
+          : [
+              "- Genre `action`: observed action pattern",
+              "- Genre `fantasy`: observed fantasy pattern",
+              "- Theme `adventure` (centrality 2): repeated central adventure pattern",
+            ]),
         ...(index === workIds.length - 1 ? [] : [""]),
       ]),
     ].join("\n");
@@ -70,6 +78,16 @@ describe("G1 blind-retag output", () => {
       writeFileSync(join(output, "genres.csv"), `${genres}\n`);
       writeFileSync(join(output, "notes.md"), `${notes}\n`);
       expect(() => validateG1BlindRetagOutput(root, output)).not.toThrow();
+
+      writeFileSync(
+        join(output, "notes.md"),
+        `${notes.replace(
+          "- Genre unknown: official entry evidence does not establish a Genre\n",
+          "",
+        )}\n`,
+      );
+      expect(() => validateG1BlindRetagOutput(root, output)).toThrow(/Genre markers/u);
+      writeFileSync(join(output, "notes.md"), `${notes}\n`);
 
       writeFileSync(
         inputPath,

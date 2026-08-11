@@ -21,8 +21,10 @@ const genreRowSchema = z.strictObject({
   workId: z.string().trim().min(1),
   genres: z
     .string()
-    .transform((value) => value.split(";").map((genre) => genre.trim()))
-    .pipe(z.array(z.enum(GENRE_TAGS)).min(1)),
+    .transform((value) =>
+      value.trim() === "" ? [] : value.split(";").map((genre) => genre.trim()),
+    )
+    .pipe(z.array(z.enum(GENRE_TAGS))),
 });
 
 function readCanonicalFile(path: string) {
@@ -94,7 +96,7 @@ function requireMarkers(section: string, label: string, expectedPrefixes: readon
         prefix === undefined ||
         !line.startsWith(prefix) ||
         line.slice(prefix.length).trim() === "" ||
-        line.slice(prefix.length).trim() === "{nonempty rationale}"
+        ["{nonempty rationale}", "{nonempty limitation}"].includes(line.slice(prefix.length).trim())
       );
     })
   ) {
@@ -217,17 +219,23 @@ export function validateG1BlindRetagOutput(root: string, outputDirectory: string
         .filter((factor) => factor.workId === workId)
         .map((factor) => `- Axis \`${factor.axisId}\`: `),
     );
+    const workGenres = genres[index]?.genres ?? [];
     requireMarkers(
       section,
       "Genre",
-      genres[index]?.genres.map((genre) => `- Genre \`${genre}\`: `) ?? [],
+      workGenres.length === 0
+        ? ["- Genre unknown: "]
+        : workGenres.map((genre) => `- Genre \`${genre}\`: `),
     );
+    const workThemes = themes.filter((theme) => theme.workId === workId);
     requireMarkers(
       section,
       "Theme",
-      themes
-        .filter((theme) => theme.workId === workId)
-        .map((theme) => `- Theme \`${theme.themeId}\` (centrality ${String(theme.centrality)}): `),
+      workThemes.length === 0
+        ? ["- Theme unknown: "]
+        : workThemes.map(
+            (theme) => `- Theme \`${theme.themeId}\` (centrality ${String(theme.centrality)}): `,
+          ),
     );
   }
 

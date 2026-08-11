@@ -88,8 +88,16 @@ describe("G1 blind-retag sample", () => {
     expect(first.inputContent).toContain("- Authorized URL: <{exact-url}>");
     expect(first.inputContent).toContain("- Axis `{axisId}`: {nonempty rationale}");
     expect(first.inputContent).toContain("- Genre `{genreId}`: {nonempty rationale}");
+    expect(first.inputContent).toContain("- Genre unknown: {nonempty limitation}");
     expect(first.inputContent).toContain(
       "- Theme `{themeId}` (centrality {1-or-2}): {nonempty rationale}",
+    );
+    expect(first.inputContent).toContain("- Theme unknown: {nonempty limitation}");
+    expect(first.inputContent).toContain(
+      "A blank Genre cell or zero Theme rows is permitted only when entry-scope evidence is insufficient",
+    );
+    expect(first.inputContent).toContain(
+      "Do not emit a sentinel when its Genre IDs or Theme rows exist",
     );
     expect(first.inputContent.match(/^\| (?!workId|---)[a-z0-9-]+\s+\|/gmu)).toHaveLength(9);
     expect(first.inputContent).not.toContain("| genres |");
