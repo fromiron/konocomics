@@ -1,0 +1,12 @@
+workId,themeId,centrality,confidence,evidenceId
+berserk,combat,2,0.80,blind-retag-g1-v1-berserk
+dr-stone,adventure,2,0.88,blind-retag-g1-v1-dr-stone
+dr-stone,survival,2,0.90,blind-retag-g1-v1-dr-stone
+dr-stone,crafting,2,0.82,blind-retag-g1-v1-dr-stone
+dr-stone,postApocalypse,2,0.92,blind-retag-g1-v1-dr-stone
+20th-century-boys,investigation,2,0.88,blind-retag-g1-v1-20th-century-boys
+dungeon-meshi,dungeon,2,0.85,blind-retag-g1-v1-dungeon-meshi
+dungeon-meshi,cooking,2,0.88,blind-retag-g1-v1-dungeon-meshi
+kingdom,war,2,0.90,blind-retag-g1-v1-kingdom
+kingdom,historicalReconstruction,2,0.85,blind-retag-g1-v1-kingdom
+blue-lock,sportsCompetition,2,0.9,blind-retag-g1-v1-blue-lock

@@ -1,0 +1,117 @@
+GO
+
+1. Output A admissibility — GO
+
+Output A may be used as a blind semantic input.
+
+The helper scripts and HTML/text caches were created during the isolated run from the exact authorized URLs; they were not pre-existing local semantic sources and did not expose hidden labels, catalog annotations, roles, market data, or recommendation output. Removing one surplus final LF and restoring the Bocchi URL to the exact input string were byte-level normalizations that changed no factor, tag, confidence, or rationale. No rerun is required. The follow-up disclosure should remain attached as the controlling provenance record because it describes the ephemeral artifacts more precisely than the literal attestation inside notes.md.
+
+konocomics-blind-rerun-followup
+
+The hardened publisher-authorship rule also worked as intended: for example, the KADOKAWA page explicitly separates publisher material from its user-review section, and the rerun no longer uses those reviews as evidence.
+KADOKAWAオフィシャルサイト
+
+2. Conservative reconciliation — GO
+
+Applied exactly:
+
+state disagreement → unknown;
+
+value disagreement → unknown;
+
+one-model-only Genre/Theme → omitted;
+
+Theme centrality disagreement → omitted;
+
+ordinal values and confidence are never averaged;
+
+retained equal values use the lower confidence;
+
+equal judgments unsupported by the authorized entry-scope material are still discarded;
+
+all prior explicit decisions in the request remain controlling.
+
+konocomics-blind-rerun-followup
+
+All 36 Art rows remain unknown. They are not repeated below because the request asks for retained non-Art rows.
+
+3. Exact retained non-Art factor rows
+csv
+workId,axisId,value,confidence
+jojo-bizarre-adventure,worldBuilding,2,0.62
+jojo-bizarre-adventure,relationshipStructure,2,0.60
+jojo-bizarre-adventure,darkness,2,0.68
+berserk,darkness,4,0.88
+dr-stone,mysteryReveal,2,0.70
+dr-stone,relationshipStructure,2,0.68
+20th-century-boys,mysteryReveal,4,0.90
+20th-century-boys,relationshipStructure,3,0.75
+20th-century-boys,darkness,2,0.70
+dungeon-meshi,worldBuilding,2,0.55
+blue-lock,worldBuilding,2,0.6
+
+There are no retained non-Art factor rows for kingdom, bocchi-the-rock, or monster.
+
+New equal-value rows deliberately not retained
+
+jojo-bizarre-adventure.characterArcWeight=2: the official synopsis establishes an interpersonal conflict and Dio’s motive, but not character change as a balanced repeated reward. The setting, core household relationship, serious threat, and mysterious mask directly support the retained Jojo rows and tags.
+集英社　―　SHUEISHA　―
+
+dr-stone.progression=4, pacing=2, and characterArcWeight=2: the synopsis-level premise does not directly establish a repeated acquisition cadence, early-volume pacing frequency, or recurring character-change reward. The previously accepted mysteryReveal=2 and fixed-pair relationshipStructure=2 remain.
+
+kingdom.strategy=2 and mentalStress=2: an ancient war setting does not by itself prove recurring tactical planning or sustained psychological pressure. It directly supports the historical/action classification and central war setting only.
+集英社コミック公式 S-MANGA
+
+20th-century-boys Theme foundFamily=1: the publisher page establishes childhood friends, a secret base, a shared oath, a missing family, police involvement, and the strange mark. It supports the retained relationship structure, mystery, darkness, and investigation, but does not directly establish a family-substitute mechanic.
+小学館コミック
+
+The Dungeon Meshi publisher page provides only the title, early-volume identity, and dragon-as-steak tagline, but that is sufficient for a functional dungeon/monster-cooking setting at worldBuilding=2; broader cadence, tone, and problem-solving claims remain unknown.
+KADOKAWAオフィシャルサイト
+
+4. Exact Genre cells
+
+Blank cells are intentional.
+
+csv
+workId,genres
+jojo-bizarre-adventure,historical;mystery
+berserk,action;horror
+dr-stone,scienceFiction;mystery
+20th-century-boys,mystery
+dungeon-meshi,fantasy
+kingdom,action;historical
+bocchi-the-rock,
+monster,
+blue-lock,sports
+
+Jojo’s historical setting and mysterious stone mask are explicit in the Volume 1 publisher synopsis.
+集英社　―　SHUEISHA　―
+ Berserk’s giant-sword violence, blood, and corpse imagery directly support action;horror.
+白泉社
+
+monster remains blank despite both models agreeing on tags: the authorized page is MONSTER 完全版 1, ISBN 9784091817907, while the representative ISBN is 9784091836519; the required edition/entry-scope mapping remains absent.
+小学館コミック
+
+5. Exact retained Theme rows
+csv
+workId,themeId,centrality,confidence
+berserk,combat,2,0.80
+dr-stone,adventure,2,0.88
+dr-stone,survival,2,0.90
+dr-stone,crafting,2,0.82
+dr-stone,postApocalypse,2,0.92
+20th-century-boys,investigation,2,0.88
+dungeon-meshi,dungeon,2,0.85
+dungeon-meshi,cooking,2,0.88
+kingdom,war,2,0.90
+kingdom,historicalReconstruction,2,0.85
+blue-lock,sportsCompetition,2,0.9
+
+There are no retained Theme rows for jojo-bizarre-adventure, bocchi-the-rock, or monster.
+
+The Kingdom publisher synopsis explicitly places the work in pre-unification ancient China during a 500-year great-war era, supporting war=2 and historicalReconstruction=2 without requiring inferred strategy or mental-stress values.
+集英社コミック公式 S-MANGA
+
+Scope
+
+This approves use of the two rerun outputs and the exact conservative reconciliation above for the pre-G1 blind-retag adjudication checkpoint only. It does not approve G1, G2, or UI work.
