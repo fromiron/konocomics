@@ -1,0 +1,217 @@
+Input SHA-256: `331a2f007603cf9b46e4002b004f0f131c4a6a7a60c5c573e706f41015f3fa2c`
+Isolation attestation: only input.md and factor-dictionary.md were read as local files; no other local files were read.
+
+## `jojo-bizarre-adventure`
+- Authorized URL: <https://books.shueisha.co.jp/items/contents.html?isbn=4-08-851126-3>
+- Axis `progression`: Insufficient entry-scope evidence exposed on authorized URL during this run.
+- Axis `problemSolving`: Insufficient entry-scope evidence exposed on authorized URL during this run.
+- Axis `strategy`: Insufficient entry-scope evidence exposed on authorized URL during this run.
+- Axis `pacing`: Insufficient entry-scope evidence exposed on authorized URL during this run.
+- Axis `mysteryReveal`: Publisher synopsis highlights stone mask mystery and murder plot (謎の石仮面でジョジョを殺そうとする).
+- Axis `worldBuilding`: Publisher synopsis specifies 19th-century British aristocracy setting (19世紀末、英国貴族).
+- Axis `characterArcWeight`: Focuses on conflict between Jonathan Joestar and adopted brother Dio (ディオは本当の息子...退け、財産の横取りを計画).
+- Axis `relationshipStructure`: Focuses on Joestar family dynamic and adopted son Dio (ジョースター卿は恩人の息子、ディオを養子にする).
+- Axis `comedy`: Insufficient entry-scope evidence exposed on authorized URL during this run.
+- Axis `darkness`: Details sinister inheritance theft and murder plot using a stone mask (財産の横取りを計画。謎の石仮面でジョジョを殺そうとする).
+- Axis `mentalStress`: Jonathan targeted for assassination by adopted brother in noble household.
+- Axis `romance`: Insufficient entry-scope evidence exposed on authorized URL during this run.
+- Axis `emotionalWarmth`: Insufficient entry-scope evidence exposed on authorized URL during this run.
+- Axis `artRealism`: Catalog/metadata page exposes no readable internal pages or frames on authorized URL, failing Art evidence minimum of 6+ distinct readable internal pages across 2+ contexts.
+- Axis `artDensity`: Catalog/metadata page exposes no readable internal pages or frames on authorized URL, failing Art evidence minimum of 6+ distinct readable internal pages across 2+ contexts.
+- Axis `visualSoftness`: Catalog/metadata page exposes no readable internal pages or frames on authorized URL, failing Art evidence minimum of 6+ distinct readable internal pages across 2+ contexts.
+- Axis `motionImpact`: Catalog/metadata page exposes no readable internal pages or frames on authorized URL, failing Art evidence minimum of 6+ distinct readable internal pages across 2+ contexts.
+- Genre `historical`: Publisher synopsis specifies setting in 19th-century Britain among British nobility (19世紀末、英国貴族).
+- Genre `mystery`: Publisher synopsis details a plot involving a mysterious stone mask used in attempted murder (謎の石仮面でジョジョを殺そうとする).
+- Theme `historicalReconstruction` (centrality 1): Publisher synopsis specifies setting in 19th-century British aristocracy (19世紀末、英国貴族).
+
+## `berserk`
+- Authorized URL: <https://www.hakusensha.co.jp/comicslist/40773/>
+- Axis `progression`: Insufficient entry-scope evidence exposed on authorized URL during this run.
+- Axis `problemSolving`: Insufficient entry-scope evidence exposed on authorized URL during this run.
+- Axis `strategy`: Insufficient entry-scope evidence exposed on authorized URL during this run.
+- Axis `pacing`: Insufficient entry-scope evidence exposed on authorized URL during this run.
+- Axis `mysteryReveal`: Insufficient entry-scope evidence exposed on authorized URL during this run.
+- Axis `worldBuilding`: Establishes dark epic setting featuring a swordsman with an iron prosthetic arm (巨大な剣を背負い、鉄の義手をつけた剣士・ガッツ).
+- Axis `characterArcWeight`: Focuses on the solitary journey and bloody path of swordsman Guts (剣士・ガッツ).
+- Axis `relationshipStructure`: Depicts a solitary swordsman travelling alone (巨大な剣を背負い...剣士・ガッツ).
+- Axis `comedy`: Insufficient entry-scope evidence exposed on authorized URL during this run.
+- Axis `darkness`: Publisher text explicitly details rain of blood and mountains of corpses (血の雨が降り、死体の山が築かれる).
+- Axis `mentalStress`: Continuous extreme violence and grim slaughter surrounding protagonist.
+- Axis `romance`: Insufficient entry-scope evidence exposed on authorized URL during this run.
+- Axis `emotionalWarmth`: Insufficient entry-scope evidence exposed on authorized URL during this run.
+- Axis `artRealism`: Catalog/metadata page exposes no readable internal pages or frames on authorized URL, failing Art evidence minimum of 6+ distinct readable internal pages across 2+ contexts.
+- Axis `artDensity`: Catalog/metadata page exposes no readable internal pages or frames on authorized URL, failing Art evidence minimum of 6+ distinct readable internal pages across 2+ contexts.
+- Axis `visualSoftness`: Catalog/metadata page exposes no readable internal pages or frames on authorized URL, failing Art evidence minimum of 6+ distinct readable internal pages across 2+ contexts.
+- Axis `motionImpact`: Catalog/metadata page exposes no readable internal pages or frames on authorized URL, failing Art evidence minimum of 6+ distinct readable internal pages across 2+ contexts.
+- Genre `action`: Publisher text explicitly details a swordsman wielding a giant sword causing blood rain and corpses (巨大な剣を背負い...剣士・ガッツ, 血の雨が降り、死体の山が築かれる).
+- Genre `fantasy`: Publisher text describes an epic dark fantasy centered on a swordsman with an iron prosthetic arm (鉄の義手をつけた剣士, 圧倒的迫力の叙事詩).
+- Genre `horror`: Publisher text describes graphic dark horror with rain of blood and mountains of corpses (血の雨が降り、死体の山が築かれる).
+- Theme `combat` (centrality 2): Publisher text details continuous bloody sword battles causing blood rain and corpse piles (剣士・ガッツ, 血の雨が降り、死体の山가築かれる).
+
+## `dr-stone`
+- Authorized URL: <https://books.shueisha.co.jp/items/contents_amp.html?isbn=978-4-08-881184-0>
+- Axis `progression`: Explicit goal to rebuild human civilization from zero step-by-step (ゼロから文明を作ることを決意する).
+- Axis `problemSolving`: Rebuilding civilization from scratch through scientific creation and problem solving.
+- Axis `strategy`: Long-term civilization rebuilding plan.
+- Axis `pacing`: Rapid narrative setup jumping thousands of years after petrification (数千年後──).
+- Axis `mysteryReveal`: Central mystery of global human petrification phenomenon (一瞬にして世界中すべての人間が石と化す、謎の現象).
+- Axis `worldBuilding`: Post-apocalyptic world setting thousands of years after global petrification.
+- Axis `characterArcWeight`: Shared goal and determination of Taiju and Senku (大樹とその友・千空).
+- Axis `relationshipStructure`: Duo partnership between Taiju and Senku.
+- Axis `comedy`: Insufficient entry-scope evidence exposed on authorized URL during this run.
+- Axis `darkness`: Global petrification catastrophe framed with optimistic creation tone.
+- Axis `mentalStress`: High-stakes survival handled with active determination.
+- Axis `romance`: Insufficient entry-scope evidence exposed on authorized URL during this run.
+- Axis `emotionalWarmth`: Insufficient entry-scope evidence exposed on authorized URL during this run.
+- Axis `artRealism`: Catalog/metadata page exposes no readable internal pages or frames on authorized URL, failing Art evidence minimum of 6+ distinct readable internal pages across 2+ contexts.
+- Axis `artDensity`: Catalog/metadata page exposes no readable internal pages or frames on authorized URL, failing Art evidence minimum of 6+ distinct readable internal pages across 2+ contexts.
+- Axis `visualSoftness`: Catalog/metadata page exposes no readable internal pages or frames on authorized URL, failing Art evidence minimum of 6+ distinct readable internal pages across 2+ contexts.
+- Axis `motionImpact`: Catalog/metadata page exposes no readable internal pages or frames on authorized URL, failing Art evidence minimum of 6+ distinct readable internal pages across 2+ contexts.
+- Genre `fantasy`: Publisher synopsis presents high fantasy premise of humanity turned to stone for thousands of years (一瞬にして世界中すべての人間が石と化す).
+- Genre `scienceFiction`: Publisher text explicitly labels the work as an SF survival story (SFサバイバル冒険譚).
+- Genre `mystery`: Publisher synopsis details the mysterious global petrification phenomenon (謎の現象).
+- Theme `adventure` (centrality 2): Publisher text explicitly labels the work as an adventure epic (SFサバイバル冒険譚).
+- Theme `survival` (centrality 2): Publisher text explicitly labels the work as a survival epic after global petrification (SFサバイバル冒険譚).
+- Theme `crafting` (centrality 2): Publisher synopsis details rebuilding human civilization from zero (ゼロから文明を作ることを決意する).
+- Theme `postApocalypse` (centrality 2): Publisher synopsis specifies setting thousands of years after all humanity was turned to stone (一瞬にして世界中すべての人間が石と化す...数千年後).
+
+## `20th-century-boys`
+- Authorized URL: <https://shogakukan-comic.jp/book?isbn=9784091855312>
+- Axis `progression`: Insufficient entry-scope evidence exposed on authorized URL during this run.
+- Axis `problemSolving`: Insufficient entry-scope evidence exposed on authorized URL during this run.
+- Axis `strategy`: Insufficient entry-scope evidence exposed on authorized URL during this run.
+- Axis `pacing`: Insufficient entry-scope evidence exposed on authorized URL during this run.
+- Axis `mysteryReveal`: Core mystery of missing Shikishima family and strange wall symbol linked to childhood secret base (全員行方不明, 不思議なマーク).
+- Axis `worldBuilding`: Dual timeline structure connecting 1997 adult life and 1970s childhood secret base.
+- Axis `characterArcWeight`: Kenji ordinary life interrupted by childhood memory and mystery.
+- Axis `relationshipStructure`: Group of childhood friends: Kenji, Maruo, Yoshitsune, Keroyon, Yukiji.
+- Axis `comedy`: Insufficient entry-scope evidence exposed on authorized URL during this run.
+- Axis `darkness`: Eerie mystery involving missing family and strange mark on wall (全員行方不明).
+- Axis `mentalStress`: Psychological suspense surrounding missing family and mysterious symbol.
+- Axis `romance`: Insufficient entry-scope evidence exposed on authorized URL during this run.
+- Axis `emotionalWarmth`: Insufficient entry-scope evidence exposed on authorized URL during this run.
+- Axis `artRealism`: Catalog/metadata page exposes no readable internal pages or frames on authorized URL, failing Art evidence minimum of 6+ distinct readable internal pages across 2+ contexts.
+- Axis `artDensity`: Catalog/metadata page exposes no readable internal pages or frames on authorized URL, failing Art evidence minimum of 6+ distinct readable internal pages across 2+ contexts.
+- Axis `visualSoftness`: Catalog/metadata page exposes no readable internal pages or frames on authorized URL, failing Art evidence minimum of 6+ distinct readable internal pages across 2+ contexts.
+- Axis `motionImpact`: Catalog/metadata page exposes no readable internal pages or frames on authorized URL, failing Art evidence minimum of 6+ distinct readable internal pages across 2+ contexts.
+- Genre `mystery`: Publisher synopsis details a police investigation into a missing family and a mysterious mark on a wall linked to childhood memory (全員行方不明, 不思議なマーク, 刑事が訪れた).
+- Theme `investigation` (centrality 2): Publisher synopsis details police detective investigation into missing family and discovery of mysterious wall mark (刑事が訪れた, 全員行方不明, 不思議なマーク).
+- Theme `foundFamily` (centrality 1): Publisher synopsis details elementary school childhood friends who built a secret base together (小学校の仲間たちと近所の空き地に秘密基地を作り).
+
+## `dungeon-meshi`
+- Authorized URL: <https://www.kadokawa.co.jp/product/301411000826/>
+- Axis `progression`: Insufficient entry-scope evidence exposed on authorized URL during this run.
+- Axis `problemSolving`: Insufficient entry-scope evidence exposed on authorized URL during this run.
+- Axis `strategy`: Insufficient entry-scope evidence exposed on authorized URL during this run.
+- Axis `pacing`: Insufficient entry-scope evidence exposed on authorized URL during this run.
+- Axis `mysteryReveal`: Insufficient entry-scope evidence exposed on authorized URL during this run.
+- Axis `worldBuilding`: Dungeon fantasy setting where dungeon monsters like dragons are cooked into food (ダンジョン飯, ドラゴン).
+- Axis `characterArcWeight`: Insufficient entry-scope evidence exposed on authorized URL during this run.
+- Axis `relationshipStructure`: Insufficient entry-scope evidence exposed on authorized URL during this run.
+- Axis `comedy`: Humorous tagline framing dragon encounters as steak cooking (待ってろドラゴン、ステーキにしてやる！).
+- Axis `darkness`: Lighthearted comedic approach to dungeon monsters without grim tone.
+- Axis `mentalStress`: Playful culinary premise with low psychological stress.
+- Axis `romance`: Insufficient entry-scope evidence exposed on authorized URL during this run.
+- Axis `emotionalWarmth`: Insufficient entry-scope evidence exposed on authorized URL during this run.
+- Axis `artRealism`: Catalog/metadata page exposes no readable internal pages or frames on authorized URL, failing Art evidence minimum of 6+ distinct readable internal pages across 2+ contexts.
+- Axis `artDensity`: Catalog/metadata page exposes no readable internal pages or frames on authorized URL, failing Art evidence minimum of 6+ distinct readable internal pages across 2+ contexts.
+- Axis `visualSoftness`: Catalog/metadata page exposes no readable internal pages or frames on authorized URL, failing Art evidence minimum of 6+ distinct readable internal pages across 2+ contexts.
+- Axis `motionImpact`: Catalog/metadata page exposes no readable internal pages or frames on authorized URL, failing Art evidence minimum of 6+ distinct readable internal pages across 2+ contexts.
+- Genre `fantasy`: Publisher text presents a dungeon setting inhabited by dragons (ダンジョン飯, ドラゴン).
+- Genre `comedy`: Publisher tagline humorously frames dragon encounters as steak cooking (待ってろドラゴン、ステーキにしてやる！).
+- Theme `dungeon` (centrality 2): Title and setting center on dungeon exploration (ダンジョン飯).
+- Theme `cooking` (centrality 2): Publisher tagline and title focus on cooking dungeon monsters into food (待ってろドラゴン、ステーキにしてやる！, ダンジョン飯).
+
+## `kingdom`
+- Authorized URL: <https://www.s-manga.net/items/contents.html?isbn=4-08-877079-X>
+- Axis `progression`: Boy Shin striving to make a name for himself under heaven in war (少年・信は、自らの腕で天下に名を成すことを目指す).
+- Axis `problemSolving`: Insufficient entry-scope evidence exposed on authorized URL during this run.
+- Axis `strategy`: 500-year warring states period and Chinese unification background (500年の大戦争時代).
+- Axis `pacing`: Insufficient entry-scope evidence exposed on authorized URL during this run.
+- Axis `mysteryReveal`: Insufficient entry-scope evidence exposed on authorized URL during this run.
+- Axis `worldBuilding`: Vast pre-unification ancient China warring states setting (時は紀元前, 中国大陸).
+- Axis `characterArcWeight`: Shin ambitious personal goal to achieve martial renown.
+- Axis `relationshipStructure`: Insufficient entry-scope evidence exposed on authorized URL during this run.
+- Axis `comedy`: Insufficient entry-scope evidence exposed on authorized URL during this run.
+- Axis `darkness`: Harsh 500-year era of relentless warfare (苛烈な戦乱の世).
+- Axis `mentalStress`: High stakes war environment for a young warrior.
+- Axis `romance`: Insufficient entry-scope evidence exposed on authorized URL during this run.
+- Axis `emotionalWarmth`: Insufficient entry-scope evidence exposed on authorized URL during this run.
+- Axis `artRealism`: Catalog/metadata page exposes no readable internal pages or frames on authorized URL, failing Art evidence minimum of 6+ distinct readable internal pages across 2+ contexts.
+- Axis `artDensity`: Catalog/metadata page exposes no readable internal pages or frames on authorized URL, failing Art evidence minimum of 6+ distinct readable internal pages across 2+ contexts.
+- Axis `visualSoftness`: Catalog/metadata page exposes no readable internal pages or frames on authorized URL, failing Art evidence minimum of 6+ distinct readable internal pages across 2+ contexts.
+- Axis `motionImpact`: Catalog/metadata page exposes no readable internal pages or frames on authorized URL, failing Art evidence minimum of 6+ distinct readable internal pages across 2+ contexts.
+- Genre `action`: Publisher synopsis details a harsh era of war where a boy strives to achieve martial glory through his own strength (苛烈な戦乱の世, 自らの腕で天下に名を成す).
+- Genre `historical`: Publisher synopsis specifies historical setting in ancient pre-unification China during 500 years of warring states (時は紀元前, 中国大陸, 500年の大戦争時代).
+- Theme `war` (centrality 2): Publisher synopsis specifies 500-year era of major warfare in China (500年の大戦争時代, 苛烈な戦乱の世).
+- Theme `historicalReconstruction` (centrality 2): Publisher synopsis specifies pre-unification ancient China warring states era (時は紀元前, いまだ一度も統一されたことのない中国大陸).
+
+## `bocchi-the-rock`
+- Authorized URL: <https://houbunsha.co.jp/comics/detail.php?p=%25A4%25DC%25A4%25C3%25A4%25C1%25A1%25A6%25A4%25B6%25A1%25A6%25A4%25ED%25A4%25C3%25A4%25AF%25A1%25AA>
+- Axis `progression`: Insufficient entry-scope evidence exposed on authorized URL during this run.
+- Axis `problemSolving`: Insufficient entry-scope evidence exposed on authorized URL during this run.
+- Axis `strategy`: Insufficient entry-scope evidence exposed on authorized URL during this run.
+- Axis `pacing`: Insufficient entry-scope evidence exposed on authorized URL during this run.
+- Axis `mysteryReveal`: Insufficient entry-scope evidence exposed on authorized URL during this run.
+- Axis `worldBuilding`: Insufficient entry-scope evidence exposed on authorized URL during this run.
+- Axis `characterArcWeight`: Insufficient entry-scope evidence exposed on authorized URL during this run.
+- Axis `relationshipStructure`: Insufficient entry-scope evidence exposed on authorized URL during this run.
+- Axis `comedy`: Insufficient entry-scope evidence exposed on authorized URL during this run.
+- Axis `darkness`: Insufficient entry-scope evidence exposed on authorized URL during this run.
+- Axis `mentalStress`: Insufficient entry-scope evidence exposed on authorized URL during this run.
+- Axis `romance`: Insufficient entry-scope evidence exposed on authorized URL during this run.
+- Axis `emotionalWarmth`: Insufficient entry-scope evidence exposed on authorized URL during this run.
+- Axis `artRealism`: Catalog/metadata page exposes no readable internal pages or frames on authorized URL, failing Art evidence minimum of 6+ distinct readable internal pages across 2+ contexts.
+- Axis `artDensity`: Catalog/metadata page exposes no readable internal pages or frames on authorized URL, failing Art evidence minimum of 6+ distinct readable internal pages across 2+ contexts.
+- Axis `visualSoftness`: Catalog/metadata page exposes no readable internal pages or frames on authorized URL, failing Art evidence minimum of 6+ distinct readable internal pages across 2+ contexts.
+- Axis `motionImpact`: Catalog/metadata page exposes no readable internal pages or frames on authorized URL, failing Art evidence minimum of 6+ distinct readable internal pages across 2+ contexts.
+- Genre unknown: The authorized URL returned an error page (不正なURLです。) exposing no entry-scope bibliographic or plot evidence during this run.
+- Theme unknown: The authorized URL returned an error page (不正なURLです。) exposing no entry-scope bibliographic or plot evidence during this run.
+
+## `monster`
+- Authorized URL: <https://shogakukan-comic.jp/book?isbn=9784091817907>
+- Axis `progression`: Insufficient entry-scope evidence exposed on authorized URL during this run. Note: Representative ISBN 9784091836519 (tankobon 1) differs from authorized URL ISBN 9784091817907 (MONSTER Kanzenban 1); pagination/scope across editions is not assumed.
+- Axis `problemSolving`: Insufficient entry-scope evidence exposed on authorized URL during this run. Note: Representative ISBN 9784091836519 (tankobon 1) differs from authorized URL ISBN 9784091817907 (MONSTER Kanzenban 1); pagination/scope across editions is not assumed.
+- Axis `strategy`: Insufficient entry-scope evidence exposed on authorized URL during this run. Note: Representative ISBN 9784091836519 (tankobon 1) differs from authorized URL ISBN 9784091817907 (MONSTER Kanzenban 1); pagination/scope across editions is not assumed.
+- Axis `pacing`: Fast-paced series of tragic events: shooting, emergency surgery, serial murder. Note: Representative ISBN 9784091836519 (tankobon 1) differs from authorized URL ISBN 9784091817907 (MONSTER Kanzenban 1); pagination/scope across editions is not assumed.
+- Axis `mysteryReveal`: Unraveling Liebert family shooting case and true nature of monster Johann (リーベルト一家銃撃事件, 怪物). Note: Representative ISBN 9784091836519 (tankobon 1) differs from authorized URL ISBN 9784091817907 (MONSTER Kanzenban 1); pagination/scope across editions is not assumed.
+- Axis `worldBuilding`: 1980s German setting involving East German defectors and BKA investigation (デュッセルドルフ・アイスラー記念病院, BKAの男). Note: Representative ISBN 9784091836519 (tankobon 1) differs from authorized URL ISBN 9784091817907 (MONSTER Kanzenban 1); pagination/scope across editions is not assumed.
+- Axis `characterArcWeight`: Dr. Tenma moral crisis and transformation from surgeon to monster pursuer (自らのメスが産み出した怪物を殺すため). Note: Representative ISBN 9784091836519 (tankobon 1) differs from authorized URL ISBN 9784091817907 (MONSTER Kanzenban 1); pagination/scope across editions is not assumed.
+- Axis `relationshipStructure`: Interconnected character web: Tenma, Eva, Lunge, Johann, Anna/Nina. Note: Representative ISBN 9784091836519 (tankobon 1) differs from authorized URL ISBN 9784091817907 (MONSTER Kanzenban 1); pagination/scope across editions is not assumed.
+- Axis `comedy`: Insufficient entry-scope evidence exposed on authorized URL during this run. Note: Representative ISBN 9784091836519 (tankobon 1) differs from authorized URL ISBN 9784091817907 (MONSTER Kanzenban 1); pagination/scope across editions is not assumed.
+- Axis `darkness`: Chilling psychological thriller featuring child shooting and serial murder (戦慄のサイコ・サスペンス, ころして……, 怪物). Note: Representative ISBN 9784091836519 (tankobon 1) differs from authorized URL ISBN 9784091817907 (MONSTER Kanzenban 1); pagination/scope across editions is not assumed.
+- Axis `mentalStress`: Severe psychological pressure, trauma, and moral guilt over saving a murderer. Note: Representative ISBN 9784091836519 (tankobon 1) differs from authorized URL ISBN 9784091817907 (MONSTER Kanzenban 1); pagination/scope across editions is not assumed.
+- Axis `romance`: Insufficient entry-scope evidence exposed on authorized URL during this run. Note: Representative ISBN 9784091836519 (tankobon 1) differs from authorized URL ISBN 9784091817907 (MONSTER Kanzenban 1); pagination/scope across editions is not assumed.
+- Axis `emotionalWarmth`: Insufficient entry-scope evidence exposed on authorized URL during this run. Note: Representative ISBN 9784091836519 (tankobon 1) differs from authorized URL ISBN 9784091817907 (MONSTER Kanzenban 1); pagination/scope across editions is not assumed.
+- Axis `artRealism`: Catalog/metadata page exposes no readable internal pages or frames on authorized URL, failing Art evidence minimum of 6+ distinct readable internal pages across 2+ contexts. Note: Representative ISBN 9784091836519 (tankobon 1) differs from authorized URL ISBN 9784091817907 (MONSTER Kanzenban 1); pagination/scope across editions is not assumed.
+- Axis `artDensity`: Catalog/metadata page exposes no readable internal pages or frames on authorized URL, failing Art evidence minimum of 6+ distinct readable internal pages across 2+ contexts. Note: Representative ISBN 9784091836519 (tankobon 1) differs from authorized URL ISBN 9784091817907 (MONSTER Kanzenban 1); pagination/scope across editions is not assumed.
+- Axis `visualSoftness`: Catalog/metadata page exposes no readable internal pages or frames on authorized URL, failing Art evidence minimum of 6+ distinct readable internal pages across 2+ contexts. Note: Representative ISBN 9784091836519 (tankobon 1) differs from authorized URL ISBN 9784091817907 (MONSTER Kanzenban 1); pagination/scope across editions is not assumed.
+- Axis `motionImpact`: Catalog/metadata page exposes no readable internal pages or frames on authorized URL, failing Art evidence minimum of 6+ distinct readable internal pages across 2+ contexts. Note: Representative ISBN 9784091836519 (tankobon 1) differs from authorized URL ISBN 9784091817907 (MONSTER Kanzenban 1); pagination/scope across editions is not assumed.
+- Genre `mystery`: Publisher synopsis details police investigation into Liebert family shooting case and serial murder chain (リーベルト一家銃撃事件, 殺人事件, ルンゲ警部). Note: Representative ISBN 9784091836519 (tankobon 1) differs from authorized URL ISBN 9784091817907 (MONSTER Kanzenban 1); pagination/scope across editions is not assumed.
+- Genre `horror`: Publisher text labels the work as thrilling psychological suspense involving serial murder and a human monster (戦慄のサイコ・サスペンス, ころして……, 怪物). Note: Representative ISBN 9784091836519 (tankobon 1) differs from authorized URL ISBN 9784091817907 (MONSTER Kanzenban 1); pagination/scope across editions is not assumed.
+- Theme `investigation` (centrality 2): Publisher synopsis details BKA police detective Lunge investigating family shooting and serial murder cases (ルンゲ警部（ドイツ連邦捜査局の警部）, 殺人事件). Note: Representative ISBN 9784091836519 (tankobon 1) differs from authorized URL ISBN 9784091817907 (MONSTER Kanzenban 1); pagination/scope across editions is not assumed.
+- Theme `workplace` (centrality 1): Publisher synopsis specifies medical workplace setting in Düsseldorf Eisler Memorial Hospital with neurosurgeon Dr. Tenma (デュッセルドルフ・アイスラー記念病院の日本人医師). Note: Representative ISBN 9784091836519 (tankobon 1) differs from authorized URL ISBN 9784091817907 (MONSTER Kanzenban 1); pagination/scope across editions is not assumed.
+
+## `blue-lock`
+- Authorized URL: <https://www.kodansha.co.jp/r/comic/product?item=0000314505>
+- Axis `progression`: Isagi rising through survival elimination selection among 300 forward players (299人を蹴落とし, 最強のエースストライカー).
+- Axis `problemSolving`: Analyzing individual tactical survival to win forward selection (己のエゴを以って).
+- Axis `strategy`: Strategic positioning in competitive selection rounds.
+- Axis `pacing`: High-tempo elimination selection process.
+- Axis `mysteryReveal`: Insufficient entry-scope evidence exposed on authorized URL during this run.
+- Axis `worldBuilding`: Specialized training dormitory Blue Lock created by Japan Football Union (青い監獄（ブルーロック）).
+- Axis `characterArcWeight`: Isagi awakening egoism to become Japan top striker.
+- Axis `relationshipStructure`: Rivalry among 300 forward candidates and coach Ego Jinpachi (絵心甚八).
+- Axis `comedy`: Insufficient entry-scope evidence exposed on authorized URL during this run.
+- Axis `darkness`: Ruthless sports environment crushing rivals football careers.
+- Axis `mentalStress`: Extreme pressure in selection where 299 out of 300 players are eliminated.
+- Axis `romance`: Insufficient entry-scope evidence exposed on authorized URL during this run.
+- Axis `emotionalWarmth`: Insufficient entry-scope evidence exposed on authorized URL during this run.
+- Axis `artRealism`: Catalog/metadata page exposes no readable internal pages or frames on authorized URL, failing Art evidence minimum of 6+ distinct readable internal pages across 2+ contexts.
+- Axis `artDensity`: Catalog/metadata page exposes no readable internal pages or frames on authorized URL, failing Art evidence minimum of 6+ distinct readable internal pages across 2+ contexts.
+- Axis `visualSoftness`: Catalog/metadata page exposes no readable internal pages or frames on authorized URL, failing Art evidence minimum of 6+ distinct readable internal pages across 2+ contexts.
+- Axis `motionImpact`: Catalog/metadata page exposes no readable internal pages or frames on authorized URL, failing Art evidence minimum of 6+ distinct readable internal pages across 2+ contexts.
+- Genre `sports`: Publisher text explicitly labels the work as an egoist forward soccer manga centered on Japan World Cup ambitions (サッカー漫画, エースストライカー, FW).
+- Theme `survival` (centrality 2): Publisher synopsis details elimination survival selection where 300 players kick out 299 rivals (299人を蹴落とし, 蹴落とし合いの選別).
+- Theme `school` (centrality 1): Publisher synopsis specifies 300 high school youth players (高校２年生, 高校生300人).
+- Theme `sportsCompetition` (centrality 2): Publisher text details soccer selection competition to become Japan top ace striker (サッカー漫画, 最強のエースストライカー).

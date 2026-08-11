@@ -232,6 +232,7 @@ export async function buildG1BlindRetagArtifacts(root = process.cwd()) {
     "",
     "Use only this file, the factor dictionary, and the linked official sources. Do not open `docs/factors/annotation-guide.md`: its named examples and prior judgments leak the hidden labels. Do not inspect prior annotations, candidate factors or themes, recommendation context, catalog outputs, or recommendation outputs. They contain the original values and genre, theme, role, market, or review signals that this blind pass must not expose.",
     "The only authorized source URLs are the exact URLs printed in the table below. Cite those exact strings; do not substitute redirect targets, alternate editions, search results, or remembered sources. A fact not directly exposed by an authorized URL during this run is out of scope.",
+    "Only publisher-authored bibliographic, synopsis, table-of-contents, and editorial text on an authorized page is evidence. User reviews, ratings, comments, retailer or recommendation widgets, and other third-party text remain out of scope even when rendered on that exact URL.",
     "",
     "## Scope and Art evidence minimum",
     "",

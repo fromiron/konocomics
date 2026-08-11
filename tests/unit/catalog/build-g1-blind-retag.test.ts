@@ -76,6 +76,9 @@ describe("G1 blind-retag sample", () => {
       `Within each work, emit Theme rows in this exact canonical order: ${THEME_TAGS.map((themeId) => `\`${themeId}\``).join(", ")}`,
     );
     expect(first.inputContent).toContain("The only authorized source URLs are the exact URLs");
+    expect(first.inputContent).toContain(
+      "Only publisher-authored bibliographic, synopsis, table-of-contents, and editorial text on an authorized page is evidence. User reviews, ratings, comments, retailer or recommendation widgets, and other third-party text remain out of scope even when rendered on that exact URL.",
+    );
     expect(first.inputContent).toContain("only on facts within that entry scope");
     expect(first.inputContent).toContain("Record an exact volume/chapter/page or time range only");
     expect(first.inputContent).toContain("Metadata, catalog, and cover-only pages");

@@ -1,0 +1,223 @@
+Input SHA-256: `331a2f007603cf9b46e4002b004f0f131c4a6a7a60c5c573e706f41015f3fa2c`
+Isolation attestation: only input.md and factor-dictionary.md were read as local files; no other local files were read.
+
+## `jojo-bizarre-adventure`
+- Authorized URL: <https://books.shueisha.co.jp/items/contents.html?isbn=4-08-851126-3>
+- Axis `progression`: Inspected vol.1 bibliographic page ISBN 4-08-851126-3 matching representative 9784088511269; synopsis only; no labeled internal page/frame ranges; cover-only insufficient for Art. Synopsis shows Dio’s usurpation/stone-mask threat without a repeated growth-reward loop, so unknown
+- Axis `problemSolving`: Vol.1 synopsis centers inheritance conflict and a killing attempt, not constraint-analysis solving, so unknown
+- Axis `strategy`: Publisher copy states Dio plans to seize the Joestar fortune, a short-term usurpation scheme at value 2
+- Axis `pacing`: Only the opening adoption/plot setup is described; goal/place change rate across vols 1–3 is not exposed, so unknown
+- Axis `mysteryReveal`: Authorized synopsis foregrounds the mysterious stone mask as the killing device, mystery payoff mid-high at 3
+- Axis `worldBuilding`: Late-19th-century British aristocracy setting is stated as functional backdrop at value 2
+- Axis `characterArcWeight`: Conflict is framed as Dio rejecting Jonathan, balancing plot and interpersonal stake at 2
+- Axis `relationshipStructure`: Joestar household plus adopted Dio forms a repeating core cast rather than a lone lead, value 2
+- Axis `comedy`: No gag or comic patterning is stated in the publisher synopsis, so unknown
+- Axis `darkness`: Attempted murder via the stone mask and fortune theft mark serious threat at 2
+- Axis `mentalStress`: Psychological pressure patterning is not described beyond the plot setup, so unknown
+- Axis `romance`: No romantic relation is stated on the authorized page, so unknown
+- Axis `emotionalWarmth`: Described relation is adversarial usurpation without bonding warmth, scored 0
+- Axis `artRealism`: Inspected vol.1 bibliographic page ISBN 4-08-851126-3 matching representative 9784088511269; synopsis only; no labeled internal page/frame ranges; cover-only insufficient for Art. Art axes unknown because authorized URL lacks six distinct readable internal pages/frames across two contexts
+- Axis `artDensity`: Inspected vol.1 bibliographic page ISBN 4-08-851126-3 matching representative 9784088511269; synopsis only; no labeled internal page/frame ranges; cover-only insufficient for Art. Art axes unknown because authorized URL lacks six distinct readable internal pages/frames across two contexts
+- Axis `visualSoftness`: Inspected vol.1 bibliographic page ISBN 4-08-851126-3 matching representative 9784088511269; synopsis only; no labeled internal page/frame ranges; cover-only insufficient for Art. Art axes unknown because authorized URL lacks six distinct readable internal pages/frames across two contexts
+- Axis `motionImpact`: Inspected vol.1 bibliographic page ISBN 4-08-851126-3 matching representative 9784088511269; synopsis only; no labeled internal page/frame ranges; cover-only insufficient for Art. Art axes unknown because authorized URL lacks six distinct readable internal pages/frames across two contexts; no continuous on-URL action sequence with start/end labels
+- Genre `action`: Dio’s attempt to kill JoJo with the stone mask is an explicit violent confrontation hook
+- Genre `fantasy`: The mysterious stone mask used as a killing instrument marks a supernatural fantasy device
+- Genre `historical`: Publisher places the entry in late-19th-century Britain among aristocracy
+- Genre `mystery`: The stone mask is labeled mysterious and drives the opening threat
+- Theme unknown: Authorized entry-scope text does not establish a canonical Theme with enough centrality evidence
+
+## `berserk`
+- Authorized URL: <https://www.hakusensha.co.jp/comicslist/40773/>
+- Axis `progression`: Inspected Berserk 1 page ISBN 9784592135746 matching representative; publisher blurb only; off-URL 試し読み unused; no labeled internal pages/frames. Blurb shows Guts amid carnage but no growth-reward structure, so unknown
+- Axis `problemSolving`: No puzzle/constraint-solving process is described, so unknown
+- Axis `strategy`: No tactical or long-range planning content is exposed, so unknown
+- Axis `pacing`: Only a static carnage image is given; arc change rate across early volumes is not labeled, so unknown
+- Axis `mysteryReveal`: No clue/reveal structure appears in the publisher text, so unknown
+- Axis `worldBuilding`: Setting rules beyond a violent battlefield are not specified, so unknown
+- Axis `characterArcWeight`: Blurb names Guts and spectacle, not character-change rewards, so unknown
+- Axis `relationshipStructure`: Copy follows a solitary swordsman with no fixed party named, scored 0
+- Axis `comedy`: Blood-rain corpse-mountain framing shows no comedy patterning, scored 0
+- Axis `darkness`: Blood rain and corpse mountains make cruel violence central, scored 4
+- Axis `mentalStress`: Physical carnage is clear; sustained psychological constriction is only partial, scored 2
+- Axis `romance`: No romance is mentioned, scored 0
+- Axis `emotionalWarmth`: Portrayed path is harsh slaughter without bonding warmth, scored 0
+- Axis `artRealism`: Inspected Berserk 1 page ISBN 9784592135746 matching representative; publisher blurb only; off-URL 試し読み unused; no labeled internal pages/frames. Art axes unknown because authorized URL lacks six distinct readable internal pages/frames across two contexts
+- Axis `artDensity`: Inspected Berserk 1 page ISBN 9784592135746 matching representative; publisher blurb only; off-URL 試し読み unused; no labeled internal pages/frames. Art axes unknown because authorized URL lacks six distinct readable internal pages/frames across two contexts
+- Axis `visualSoftness`: Inspected Berserk 1 page ISBN 9784592135746 matching representative; publisher blurb only; off-URL 試し読み unused; no labeled internal pages/frames. Art axes unknown because authorized URL lacks six distinct readable internal pages/frames across two contexts
+- Axis `motionImpact`: Inspected Berserk 1 page ISBN 9784592135746 matching representative; publisher blurb only; off-URL 試し読み unused; no labeled internal pages/frames. Art axes unknown because authorized URL lacks six distinct readable internal pages/frames across two contexts; no continuous on-URL action sequence with start/end labels
+- Genre `action`: Giant-sword swordsman leaving blood rain and corpse mountains is action spectacle
+- Genre `horror`: Blood rain and corpse mountains frame visceral horror imagery
+- Theme `combat` (centrality 2): Sword-bearing Guts and battlefield slaughter make combat the repeating core
+
+## `dr-stone`
+- Authorized URL: <https://books.shueisha.co.jp/items/contents_amp.html?isbn=978-4-08-881184-0>
+- Axis `progression`: Inspected Dr.STONE 1 page ISBN 978-4-08-881184-0 matching representative; synopsis only; off-URL reader 試し読み unused; no labeled internal pages/frames. Senku/Taiju resolve to rebuild civilization from zero, repeated acquisition/growth reward at 4
+- Axis `problemSolving`: Zero-from-scratch civilization framing makes analytical problem-solving the core at 4
+- Axis `strategy`: Rebuilding society implies ongoing resource/plan management beyond improvisation, scored 3
+- Axis `pacing`: Petrification jump to far future then adventure open is a normal arc-scale shift at 2
+- Axis `mysteryReveal`: Mysterious global petrification is an open enigma but not yet clue-chain rewarded, scored 2
+- Axis `worldBuilding`: Post-petrification world and remaking rules are repeatedly central, scored 3
+- Axis `characterArcWeight`: Friend duo resolve shares focus with world goal, scored 2
+- Axis `relationshipStructure`: Taiju and Senku form a fixed core pair, scored 2
+- Axis `comedy`: Comic patterning is not stated in the synopsis, so unknown
+- Axis `darkness`: Humanity turned to stone is a grave premise without gore focus, scored 2
+- Axis `mentalStress`: Sustained anxiety patterning is not described, so unknown
+- Axis `romance`: No romance is stated, scored 0
+- Axis `emotionalWarmth`: Friends waking and resolving together supply mixed warmth at 2
+- Axis `artRealism`: Inspected Dr.STONE 1 page ISBN 978-4-08-881184-0 matching representative; synopsis only; off-URL reader 試し読み unused; no labeled internal pages/frames. Art axes unknown because authorized URL lacks six distinct readable internal pages/frames across two contexts
+- Axis `artDensity`: Inspected Dr.STONE 1 page ISBN 978-4-08-881184-0 matching representative; synopsis only; off-URL reader 試し読み unused; no labeled internal pages/frames. Art axes unknown because authorized URL lacks six distinct readable internal pages/frames across two contexts
+- Axis `visualSoftness`: Inspected Dr.STONE 1 page ISBN 978-4-08-881184-0 matching representative; synopsis only; off-URL reader 試し読み unused; no labeled internal pages/frames. Art axes unknown because authorized URL lacks six distinct readable internal pages/frames across two contexts
+- Axis `motionImpact`: Inspected Dr.STONE 1 page ISBN 978-4-08-881184-0 matching representative; synopsis only; off-URL reader 試し読み unused; no labeled internal pages/frames. Art axes unknown because authorized URL lacks six distinct readable internal pages/frames across two contexts; no continuous on-URL action sequence with start/end labels
+- Genre `scienceFiction`: Publisher explicitly calls it an unprecedented SF survival adventure
+- Genre `mystery`: Global petrification is introduced as an unexplained mystery phenomenon
+- Theme `adventure` (centrality 2): Publisher labels the entry an SF survival adventure opening
+- Theme `survival` (centrality 2): Surviving after universal petrification and rebuilding from zero is core
+- Theme `crafting` (centrality 2): Resolving to remake civilization from zero is repeated crafting/tech rebuild
+- Theme `postApocalypse` (centrality 2): All humans turned to stone then far-future awakening is post-apocalypse
+- Theme `exploration` (centrality 1): Reawakened world to rebuild implies exploratory recovery at secondary weight
+
+## `20th-century-boys`
+- Authorized URL: <https://shogakukan-comic.jp/book?isbn=9784091855312>
+- Axis `progression`: Inspected vol.1 ISBN 9784091855312; labeled TOC 第１話–第10話 with synopsis for 第１–２話; no readable internal pages/frames on-URL. Vol.1 publisher arc is mystery/reunion, not growth-reward loops, scored 0
+- Axis `problemSolving`: Police visit, missing family, and strange mark mix inquiry with action, scored 2
+- Axis `strategy`: Long-range planning is not exposed in the early synopsis, so unknown
+- Axis `pacing`: Chapter list moves across incidents at ordinary arc pace, scored 2
+- Axis `mysteryReveal`: Disappearances and the familiar strange mark make clue/reveal the main reward at 4
+- Axis `worldBuilding`: 1997 town life plus childhood secret-base myth is functional setting at 2
+- Axis `characterArcWeight`: Kenji and childhood friends’ past/present share weight with the case at 2
+- Axis `relationshipStructure`: Kenji, Maruo, Yoshitsune, Keroyon and elementary peers form a multi-friend web at 3
+- Axis `comedy`: Gag frequency is not stated in publisher copy, so unknown
+- Axis `darkness`: Whole-family disappearance and ominous mark are serious threats at 2
+- Axis `mentalStress`: Unease around the mark and missing persons mixes tension without collapse focus, scored 2
+- Axis `romance`: No romance is stated, scored 0
+- Axis `emotionalWarmth`: Childhood oath and wedding reunion supply bonding warmth at 2
+- Axis `artRealism`: Inspected vol.1 ISBN 9784091855312; labeled TOC 第１話–第10話 with synopsis for 第１–２話; no readable internal pages/frames on-URL. Art axes unknown because authorized URL lacks six distinct readable internal pages/frames across two contexts
+- Axis `artDensity`: Inspected vol.1 ISBN 9784091855312; labeled TOC 第１話–第10話 with synopsis for 第１–２話; no readable internal pages/frames on-URL. Art axes unknown because authorized URL lacks six distinct readable internal pages/frames across two contexts
+- Axis `visualSoftness`: Inspected vol.1 ISBN 9784091855312; labeled TOC 第１話–第10話 with synopsis for 第１–２話; no readable internal pages/frames on-URL. Art axes unknown because authorized URL lacks six distinct readable internal pages/frames across two contexts
+- Axis `motionImpact`: Inspected vol.1 ISBN 9784091855312; labeled TOC 第１話–第10話 with synopsis for 第１–２話; no readable internal pages/frames on-URL. Art axes unknown because authorized URL lacks six distinct readable internal pages/frames across two contexts; no continuous on-URL action sequence with start/end labels
+- Genre `mystery`: Missing household plus strange familiar mark open a mystery case
+- Theme `investigation` (centrality 2): Police inquiry, missing persons, and the wall mark drive investigation
+- Theme `school` (centrality 1): Elementary-school secret-base past is a secondary recalled stage
+- Theme `workplace` (centrality 1): Kenji’s convenience-store livelihood frames adult scenes secondarily
+- Theme `foundFamily` (centrality 1): Childhood friends reunited around a shared oath act as found-family bonds
+
+## `dungeon-meshi`
+- Authorized URL: <https://www.kadokawa.co.jp/product/301411000826/>
+- Axis `progression`: Inspected ダンジョン飯 1巻 ISBN 9784047301535; tagline plus series vols 1–3 titles listed; off-URL BOOK☆WALKER sample unused; cover-only visuals. Vol.1 page gives title/tagline only; growth-reward loops are not described, so unknown
+- Axis `problemSolving`: Dragon-to-steak tagline implies practical conversion of threats into meals at 2
+- Axis `strategy`: No campaign/resource strategy is stated beyond the meal threat, so unknown
+- Axis `pacing`: No labeled goal/place change rate across early volumes, so unknown
+- Axis `mysteryReveal`: No mystery-reveal structure is stated, so unknown
+- Axis `worldBuilding`: Dungeon/dragon meal premise supplies functional fantasy rules at 2
+- Axis `characterArcWeight`: No character-change focus is stated on the authorized page, so unknown
+- Axis `relationshipStructure`: Party structure is not named in publisher text, so unknown
+- Axis `comedy`: Comic patterning is not stated in the short tagline, so unknown
+- Axis `darkness`: Tone beyond dragon-steak bravado is not exposed, so unknown
+- Axis `mentalStress`: Psychological pressure is not described, so unknown
+- Axis `romance`: No romance is stated, so unknown
+- Axis `emotionalWarmth`: Warmth/healing reward is not described, so unknown
+- Axis `artRealism`: Inspected ダンジョン飯 1巻 ISBN 9784047301535; tagline plus series vols 1–3 titles listed; off-URL BOOK☆WALKER sample unused; cover-only visuals. Art axes unknown because authorized URL lacks six distinct readable internal pages/frames across two contexts
+- Axis `artDensity`: Inspected ダンジョン飯 1巻 ISBN 9784047301535; tagline plus series vols 1–3 titles listed; off-URL BOOK☆WALKER sample unused; cover-only visuals. Art axes unknown because authorized URL lacks six distinct readable internal pages/frames across two contexts
+- Axis `visualSoftness`: Inspected ダンジョン飯 1巻 ISBN 9784047301535; tagline plus series vols 1–3 titles listed; off-URL BOOK☆WALKER sample unused; cover-only visuals. Art axes unknown because authorized URL lacks six distinct readable internal pages/frames across two contexts
+- Axis `motionImpact`: Inspected ダンジョン飯 1巻 ISBN 9784047301535; tagline plus series vols 1–3 titles listed; off-URL BOOK☆WALKER sample unused; cover-only visuals. Art axes unknown because authorized URL lacks six distinct readable internal pages/frames across two contexts; no continuous on-URL action sequence with start/end labels
+- Genre `fantasy`: Title dungeon-meal premise and dragon-steak tagline place it in fantasy
+- Theme `adventure` (centrality 1): Waiting on a dragon to steak implies adventure pursuit at secondary weight
+- Theme `dungeon` (centrality 2): Work title centers dungeon as the repeating venue
+- Theme `cooking` (centrality 2): Steak tagline plus Senshi cooking promo make cooking the core loop
+
+## `kingdom`
+- Authorized URL: <https://www.s-manga.net/items/contents.html?isbn=4-08-877079-X>
+- Axis `progression`: Inspected キングダム 1 ISBN 4-08-877079-X matching representative 9784088770796; synopsis only; off-URL 試し読み unused; no labeled internal pages/frames. Shin aims to make a name under his own strength in the Warring age, clear growth path at 3
+- Axis `problemSolving`: Copy stresses arm/strength over clever constraint solving, scored 1
+- Axis `strategy`: 500-year great-war era implies tactics without proving long war-operations focus yet, scored 2
+- Axis `pacing`: Only premise ambition is given; early volume change rate is unlabeled, so unknown
+- Axis `mysteryReveal`: No mystery structure is stated, scored 0
+- Axis `worldBuilding`: Ununified ancient China in a 500-year war age is repeatedly important, scored 3
+- Axis `characterArcWeight`: Shin’s ambition balances with the war setting at 2
+- Axis `relationshipStructure`: Supporting cast structure is not named on the page, so unknown
+- Axis `comedy`: No comedy patterning is stated, scored 0
+- Axis `darkness`: Harsh continuous war era is central tone at 3
+- Axis `mentalStress`: War severity implies mixed tension without psychic-breakdown focus, scored 2
+- Axis `romance`: No romance is stated, scored 0
+- Axis `emotionalWarmth`: Warmth rewards are not described, so unknown
+- Axis `artRealism`: Inspected キングダム 1 ISBN 4-08-877079-X matching representative 9784088770796; synopsis only; off-URL 試し読み unused; no labeled internal pages/frames. Art axes unknown because authorized URL lacks six distinct readable internal pages/frames across two contexts
+- Axis `artDensity`: Inspected キングダム 1 ISBN 4-08-877079-X matching representative 9784088770796; synopsis only; off-URL 試し読み unused; no labeled internal pages/frames. Art axes unknown because authorized URL lacks six distinct readable internal pages/frames across two contexts
+- Axis `visualSoftness`: Inspected キングダム 1 ISBN 4-08-877079-X matching representative 9784088770796; synopsis only; off-URL 試し読み unused; no labeled internal pages/frames. Art axes unknown because authorized URL lacks six distinct readable internal pages/frames across two contexts
+- Axis `motionImpact`: Inspected キングダム 1 ISBN 4-08-877079-X matching representative 9784088770796; synopsis only; off-URL 試し読み unused; no labeled internal pages/frames. Art axes unknown because authorized URL lacks six distinct readable internal pages/frames across two contexts; no continuous on-URL action sequence with start/end labels
+- Genre `action`: Boy seeking renown by his own arm in a violent war age signals action
+- Genre `historical`: Setting is explicitly ancient China before unification in a great war age
+- Theme `adventure` (centrality 1): Shin’s path to make a name in the war age is secondary adventure framing
+- Theme `combat` (centrality 2): Making a name by one’s own arm in fierce war implies combat centrality
+- Theme `war` (centrality 2): 500-year great war era is the stated repeating world condition
+- Theme `historicalReconstruction` (centrality 2): Ancient China unification wars are historical reconstruction subject
+
+## `bocchi-the-rock`
+- Authorized URL: <https://houbunsha.co.jp/comics/detail.php?p=%25A4%25DC%25A4%25C3%25A4%25C1%25A1%25A6%25A4%25B6%25A1%25A6%25A4%25ED%25A4%25C3%25A4%25AF%25A1%25AA>
+- Axis `progression`: Series detail URL lists vols 4–8 only; representative ISBN 9784832270725 and vols 1–3 entry copy absent; entry-scope and Art frames unverifiable. Entry-scope publisher evidence missing, so unknown
+- Axis `problemSolving`: Series detail URL lists vols 4–8 only; representative ISBN 9784832270725 and vols 1–3 entry copy absent; entry-scope and Art frames unverifiable. Entry-scope publisher evidence missing, so unknown
+- Axis `strategy`: Series detail URL lists vols 4–8 only; representative ISBN 9784832270725 and vols 1–3 entry copy absent; entry-scope and Art frames unverifiable. Entry-scope publisher evidence missing, so unknown
+- Axis `pacing`: Series detail URL lists vols 4–8 only; representative ISBN 9784832270725 and vols 1–3 entry copy absent; entry-scope and Art frames unverifiable. Entry-scope publisher evidence missing, so unknown
+- Axis `mysteryReveal`: Series detail URL lists vols 4–8 only; representative ISBN 9784832270725 and vols 1–3 entry copy absent; entry-scope and Art frames unverifiable. Entry-scope publisher evidence missing, so unknown
+- Axis `worldBuilding`: Series detail URL lists vols 4–8 only; representative ISBN 9784832270725 and vols 1–3 entry copy absent; entry-scope and Art frames unverifiable. Entry-scope publisher evidence missing, so unknown
+- Axis `characterArcWeight`: Series detail URL lists vols 4–8 only; representative ISBN 9784832270725 and vols 1–3 entry copy absent; entry-scope and Art frames unverifiable. Entry-scope publisher evidence missing, so unknown
+- Axis `relationshipStructure`: Series detail URL lists vols 4–8 only; representative ISBN 9784832270725 and vols 1–3 entry copy absent; entry-scope and Art frames unverifiable. Entry-scope publisher evidence missing, so unknown
+- Axis `comedy`: Series detail URL lists vols 4–8 only; representative ISBN 9784832270725 and vols 1–3 entry copy absent; entry-scope and Art frames unverifiable. Entry-scope publisher evidence missing, so unknown
+- Axis `darkness`: Series detail URL lists vols 4–8 only; representative ISBN 9784832270725 and vols 1–3 entry copy absent; entry-scope and Art frames unverifiable. Entry-scope publisher evidence missing, so unknown
+- Axis `mentalStress`: Series detail URL lists vols 4–8 only; representative ISBN 9784832270725 and vols 1–3 entry copy absent; entry-scope and Art frames unverifiable. Entry-scope publisher evidence missing, so unknown
+- Axis `romance`: Series detail URL lists vols 4–8 only; representative ISBN 9784832270725 and vols 1–3 entry copy absent; entry-scope and Art frames unverifiable. Entry-scope publisher evidence missing, so unknown
+- Axis `emotionalWarmth`: Series detail URL lists vols 4–8 only; representative ISBN 9784832270725 and vols 1–3 entry copy absent; entry-scope and Art frames unverifiable. Entry-scope publisher evidence missing, so unknown
+- Axis `artRealism`: Series detail URL lists vols 4–8 only; representative ISBN 9784832270725 and vols 1–3 entry copy absent; entry-scope and Art frames unverifiable. Art axes unknown because authorized URL lacks six distinct readable internal pages/frames across two contexts
+- Axis `artDensity`: Series detail URL lists vols 4–8 only; representative ISBN 9784832270725 and vols 1–3 entry copy absent; entry-scope and Art frames unverifiable. Art axes unknown because authorized URL lacks six distinct readable internal pages/frames across two contexts
+- Axis `visualSoftness`: Series detail URL lists vols 4–8 only; representative ISBN 9784832270725 and vols 1–3 entry copy absent; entry-scope and Art frames unverifiable. Art axes unknown because authorized URL lacks six distinct readable internal pages/frames across two contexts
+- Axis `motionImpact`: Series detail URL lists vols 4–8 only; representative ISBN 9784832270725 and vols 1–3 entry copy absent; entry-scope and Art frames unverifiable. Art axes unknown because authorized URL lacks six distinct readable internal pages/frames across two contexts; no continuous on-URL action sequence with start/end labels
+- Genre unknown: Authorized URL lacks volumes 1–3 publisher synopsis needed to assign canonical Genre IDs under entry_1_3_volumes
+- Theme unknown: Authorized entry-scope text does not establish a canonical Theme with enough centrality evidence
+
+## `monster`
+- Authorized URL: <https://shogakukan-comic.jp/book?isbn=9784091817907>
+- Axis `progression`: MONSTER 完全版 1 ISBN 9784091817907 differs from representative 9784091836519 so pagination not transferred; used labeled 第1–16話 TOC/synopsis only; no internal pages/frames on-URL. Complete-edition vol.1 is crime/pursuit setup without growth-reward loops, scored 0
+- Axis `problemSolving`: Hospital casework plus BKA inspector threads mix deduction and direct events at 2
+- Axis `strategy`: Short investigative moves appear without long operational planning focus, scored 1
+- Axis `pacing`: Labeled TOC spans many incident chapters in one volume, rapid state shifts at 3
+- Axis `mysteryReveal`: Murders, the Monster, and pursuit make reveal/investigation the main reward at 4
+- Axis `worldBuilding`: Düsseldorf hospital/Germany crime milieu is functional at 2
+- Axis `characterArcWeight`: Tenma’s responsibility for the created monster drives character stakes at 3
+- Axis `relationshipStructure`: Tenma, Eva, Nina/Anna, Johan, and Inspector Runge recur as a core web at 2
+- Axis `comedy`: Psycho-suspense framing states no comedy, scored 0
+- Axis `darkness`: Shootings, murders, and monster pursuit make cruelty central at 4
+- Axis `mentalStress`: Shocked Anna, murders, and hunted status sustain psychological pressure at 4
+- Axis `romance`: Engagement to Eva is present as subplot setup, scored 1
+- Axis `emotionalWarmth`: Tone is cold suspense without healing bonds as reward, scored 0
+- Axis `artRealism`: MONSTER 完全版 1 ISBN 9784091817907 differs from representative 9784091836519 so pagination not transferred; used labeled 第1–16話 TOC/synopsis only; no internal pages/frames on-URL. Art axes unknown because authorized URL lacks six distinct readable internal pages/frames across two contexts
+- Axis `artDensity`: MONSTER 完全版 1 ISBN 9784091817907 differs from representative 9784091836519 so pagination not transferred; used labeled 第1–16話 TOC/synopsis only; no internal pages/frames on-URL. Art axes unknown because authorized URL lacks six distinct readable internal pages/frames across two contexts
+- Axis `visualSoftness`: MONSTER 完全版 1 ISBN 9784091817907 differs from representative 9784091836519 so pagination not transferred; used labeled 第1–16話 TOC/synopsis only; no internal pages/frames on-URL. Art axes unknown because authorized URL lacks six distinct readable internal pages/frames across two contexts
+- Axis `motionImpact`: MONSTER 完全版 1 ISBN 9784091817907 differs from representative 9784091836519 so pagination not transferred; used labeled 第1–16話 TOC/synopsis only; no internal pages/frames on-URL. Art axes unknown because authorized URL lacks six distinct readable internal pages/frames across two contexts; no continuous on-URL action sequence with start/end labels
+- Genre `mystery`: Murders around Tenma and the Monster are publisher-framed suspense mystery
+- Genre `horror`: Copy calls it chilling psycho-suspense with a produced monster
+- Theme `investigation` (centrality 2): Murders, BKA inspector, and Monster identity make investigation core
+- Theme `revenge` (centrality 1): Tenma sets out to kill the monster his scalpel created, secondary revenge
+- Theme `workplace` (centrality 1): Hospital neurosurgeon milieu is the entry workplace frame
+
+## `blue-lock`
+- Authorized URL: <https://www.kodansha.co.jp/r/comic/product?item=0000314505>
+- Axis `progression`: Inspected ブルーロック（１） ISBN 9784065134009; synopsis plus 目次 夢/入寮/かいぶつ/今こそ; off-URL 試し読み unused; no readable internal pages on-URL. Facility selects among 300 to forge a top ego striker, repeated competitive growth at 4
+- Axis `problemSolving`: Ego selection mixes trials with direct play rather than pure puzzles, scored 2
+- Axis `strategy`: Building a match-changing striker implies short tactical planning at 2
+- Axis `pacing`: WCup failure to dorm recruitment to elimination starts fast goal shifts at 3
+- Axis `mysteryReveal`: No mystery-reveal structure is stated, scored 0
+- Axis `worldBuilding`: Blue Lock prison-training premise is a functional rule set at 2
+- Axis `characterArcWeight`: Isagi’s ego remaking is a core stated reward at 3
+- Axis `relationshipStructure`: Cohort of 300 rivals around Isagi/Ego is a repeating competitive cast at 2
+- Axis `comedy`: Wild ego tone is advertised lightly without gag centrality, scored 1
+- Axis `darkness`: Hunger for goals and elimination stakes are serious but not gore-central, scored 2
+- Axis `mentalStress`: Kick-each-other-down selection sustains pressure at 3
+- Axis `romance`: No romance is stated, scored 0
+- Axis `emotionalWarmth`: Egoist rivalry framing denies warmth as core reward, scored 0
+- Axis `artRealism`: Inspected ブルーロック（１） ISBN 9784065134009; synopsis plus 目次 夢/入寮/かいぶつ/今こそ; off-URL 試し読み unused; no readable internal pages on-URL. Art axes unknown because authorized URL lacks six distinct readable internal pages/frames across two contexts
+- Axis `artDensity`: Inspected ブルーロック（１） ISBN 9784065134009; synopsis plus 目次 夢/入寮/かいぶつ/今こそ; off-URL 試し読み unused; no readable internal pages on-URL. Art axes unknown because authorized URL lacks six distinct readable internal pages/frames across two contexts
+- Axis `visualSoftness`: Inspected ブルーロック（１） ISBN 9784065134009; synopsis plus 目次 夢/入寮/かいぶつ/今こそ; off-URL 試し読み unused; no readable internal pages on-URL. Art axes unknown because authorized URL lacks six distinct readable internal pages/frames across two contexts
+- Axis `motionImpact`: Inspected ブルーロック（１） ISBN 9784065134009; synopsis plus 目次 夢/入寮/かいぶつ/今こそ; off-URL 試し読み unused; no readable internal pages on-URL. Art axes unknown because authorized URL lacks six distinct readable internal pages/frames across two contexts; no continuous on-URL action sequence with start/end labels
+- Genre `sports`: Synopsis is soccer striker selection inside Blue Lock
+- Theme `tournament` (centrality 2): 300-youth elimination selection is a tournament structure
+- Theme `school` (centrality 1): High-school-age players are the recruited cohort
+- Theme `sportsCompetition` (centrality 2): Soccer striker competition for World Cup ambition is the core mechanic

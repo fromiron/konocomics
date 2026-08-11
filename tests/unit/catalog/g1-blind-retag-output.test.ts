@@ -100,7 +100,24 @@ describe("G1 blind-retag output", () => {
         join(output, "notes.md"),
         `${notes.replace(ATTESTATION, "Isolation attestation: denied.")}\n`,
       );
-      expect(() => validateG1BlindRetagOutput(root, output)).toThrow(/positive isolation/u);
+      expect(() => validateG1BlindRetagOutput(root, output)).toThrow(/exact preamble/u);
+      writeFileSync(join(output, "notes.md"), `${notes}\n`);
+
+      writeFileSync(
+        join(output, "notes.md"),
+        `${notes.replace("## `jojo-bizarre-adventure`", "- unexpected preamble\n\n## `jojo-bizarre-adventure`")}\n`,
+      );
+      expect(() => validateG1BlindRetagOutput(root, output)).toThrow(/exact preamble/u);
+      writeFileSync(join(output, "notes.md"), `${notes}\n`);
+
+      writeFileSync(
+        join(output, "notes.md"),
+        `${notes.replace(
+          `- Authorized URL: <${authorizedUrls[0]}>`,
+          `- Authorized URL: <${authorizedUrls[0]}>\n- Recommendation: hidden candidate`,
+        )}\n`,
+      );
+      expect(() => validateG1BlindRetagOutput(root, output)).toThrow(/unexpected line/u);
       writeFileSync(join(output, "notes.md"), `${notes}\n`);
 
       writeFileSync(

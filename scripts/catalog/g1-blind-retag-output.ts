@@ -72,13 +72,16 @@ function readAuthorizedUrls(input: string, workIds: readonly string[]) {
   return urls;
 }
 
-function readWorkSections(notes: string, workIds: readonly string[]) {
+function readWorkSections(notes: string, workIds: readonly string[], expectedPreamble: string) {
   const headings = [...notes.matchAll(/^## `([a-z0-9]+(?:-[a-z0-9]+)*)`$/gmu)];
   if (
     headings.length !== workIds.length ||
     headings.some((heading, index) => heading[1] !== workIds[index])
   ) {
     throw new Error("notes.md work sections must exactly match the selected-work order");
+  }
+  if (notes.slice(0, headings[0]?.index ?? 0) !== expectedPreamble) {
+    throw new Error("notes.md must contain only the exact preamble");
   }
   return headings.map((heading, index) => {
     const start = (heading.index ?? 0) + heading[0].length + 1;
@@ -183,20 +186,8 @@ export function validateG1BlindRetagOutput(root: string, outputDirectory: string
   }
 
   const notes = readCanonicalText(join(directory, "notes.md"));
-  const noteLines = notes.split("\n");
-  const inputHashLines = noteLines.filter((line) => line.startsWith("Input SHA-256:"));
-  if (
-    inputHashLines.length !== 1 ||
-    inputHashLines[0] !== `Input SHA-256: \`${manifest.inputSha256}\``
-  ) {
-    throw new Error("notes.md must contain the exact current Input SHA-256 line");
-  }
-  const attestationLines = noteLines.filter((line) => line.startsWith("Isolation attestation:"));
-  if (attestationLines.length !== 1 || attestationLines[0] !== ISOLATION_ATTESTATION) {
-    throw new Error("notes.md must contain the exact positive isolation attestation");
-  }
-
-  const sections = readWorkSections(notes, workIds);
+  const expectedPreamble = `Input SHA-256: \`${manifest.inputSha256}\`\n${ISOLATION_ATTESTATION}\n\n`;
+  const sections = readWorkSections(notes, workIds, expectedPreamble);
   for (const [index, workId] of workIds.entries()) {
     const section = sections[index];
     const authorizedUrl = authorizedUrls.get(workId);
@@ -206,10 +197,8 @@ export function validateG1BlindRetagOutput(root: string, outputDirectory: string
     const authorizedUrlLines = section
       .split("\n")
       .filter((line) => line.startsWith("- Authorized URL"));
-    if (
-      authorizedUrlLines.length !== 1 ||
-      authorizedUrlLines[0] !== `- Authorized URL: <${authorizedUrl}>`
-    ) {
+    const authorizedUrlLine = `- Authorized URL: <${authorizedUrl}>`;
+    if (authorizedUrlLines.length !== 1 || authorizedUrlLines[0] !== authorizedUrlLine) {
       throw new Error(`notes.md has an invalid authorized URL for ${workId}`);
     }
     requireMarkers(
@@ -237,6 +226,19 @@ export function validateG1BlindRetagOutput(root: string, outputDirectory: string
             (theme) => `- Theme \`${theme.themeId}\` (centrality ${String(theme.centrality)}): `,
           ),
     );
+    const unexpectedLine = section
+      .split("\n")
+      .find(
+        (line) =>
+          line !== "" &&
+          line !== authorizedUrlLine &&
+          !line.startsWith("- Axis ") &&
+          !line.startsWith("- Genre ") &&
+          !line.startsWith("- Theme "),
+      );
+    if (unexpectedLine !== undefined) {
+      throw new Error(`notes.md contains an unexpected line for ${workId}: ${unexpectedLine}`);
+    }
   }
 
   const authorizedUrlSet = new Set(authorizedUrls.values());
