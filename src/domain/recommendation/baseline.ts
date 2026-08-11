@@ -1,11 +1,17 @@
 import type { GenreTag, Work } from "../catalog/types";
 import { REACTION_WEIGHTS } from "../profile/constants";
-import type { Reaction, RecommendationPolicies, UserWorkRecord } from "../profile/types";
+import type { RecommendationPolicies } from "../profile/types";
+import type { PositiveAnchorInput } from "./anchor";
 import { assertRecommendationContext, constraintMetadataFor, marketSignalFor } from "./context";
 import { calculateBayesianRating, calculateMaturity } from "./market";
 import { compareFloatingPoint, compareText, ownRecordValue, roundScore } from "./math";
 import { applyListConstraints } from "./ordering";
-import { filterEligibleCandidates } from "./rank";
+import {
+  assertUniqueRecords,
+  filterEligibleCandidates,
+  majorThemeKey,
+  positiveAnchors,
+} from "./rank";
 import type {
   BaselineContribution,
   BaselineRecommendation,
@@ -19,14 +25,7 @@ const GENRE_WEIGHT = 0.6;
 const MARKET_WEIGHT = 0.3;
 const MATURITY_WEIGHT = 0.1;
 
-type PositiveReaction = Extract<Reaction, "favorite" | "liked">;
-
-type GenreAnchor = {
-  work: Work;
-  reaction: PositiveReaction;
-};
-
-type GenreAnchorMatch = GenreAnchor & {
+type GenreAnchorMatch = PositiveAnchorInput & {
   genreJaccard: number;
   reactionWeight: number;
   score: number;
@@ -55,16 +54,6 @@ function assertDefaultPolicies(policies: RecommendationPolicies) {
   }
 }
 
-function assertUniqueRecords(records: readonly UserWorkRecord[]) {
-  const seen = new Set<string>();
-  for (const record of [...records].sort((left, right) => compareText(left.workId, right.workId))) {
-    if (seen.has(record.workId)) {
-      throw new Error(`Duplicate user work record: ${record.workId}`);
-    }
-    seen.add(record.workId);
-  }
-}
-
 export function calculateGenreJaccard(
   leftGenres: readonly GenreTag[],
   rightGenres: readonly GenreTag[],
@@ -84,22 +73,7 @@ export function calculateGenreJaccard(
   return intersectionSize / (left.size + right.size - intersectionSize);
 }
 
-function positiveGenreAnchors(
-  worksById: Readonly<Record<string, Work>>,
-  records: readonly UserWorkRecord[],
-): GenreAnchor[] {
-  return [...records]
-    .sort((left, right) => compareText(left.workId, right.workId))
-    .flatMap<GenreAnchor>((record) => {
-      if (record.reaction !== "favorite" && record.reaction !== "liked") {
-        return [];
-      }
-      const work = ownRecordValue(worksById, record.workId);
-      return work === undefined ? [] : [{ work, reaction: record.reaction }];
-    });
-}
-
-function bestGenreAnchor(candidate: Work, anchors: readonly GenreAnchor[]) {
+function bestGenreAnchor(candidate: Work, anchors: readonly PositiveAnchorInput[]) {
   const byScore = anchors
     .map<GenreAnchorMatch>((anchor) => {
       const genreJaccard = calculateGenreJaccard(candidate.genres, anchor.work.genres);
@@ -122,14 +96,6 @@ function bestGenreAnchor(candidate: Work, anchors: readonly GenreAnchor[]) {
     .sort((left, right) => compareText(left.work.id, right.work.id))[0];
 }
 
-function majorThemeKey(work: Work) {
-  const themes = work.themes
-    .filter((theme) => theme.centrality === 2)
-    .map((theme) => theme.id)
-    .sort(compareText);
-  return themes.length === 0 ? `none:${work.id}` : themes.join("+");
-}
-
 function contribution(
   entry: Omit<BaselineContribution, "value"> & { value: number },
 ): BaselineContribution | undefined {
@@ -149,7 +115,7 @@ function sortContributions(entries: readonly BaselineContribution[]) {
 
 function scoreCandidate(options: {
   work: Work;
-  anchors: readonly GenreAnchor[];
+  anchors: readonly PositiveAnchorInput[];
   input: RecommendationInput;
 }): ScoredBaselineCandidate {
   const { anchors, input, work } = options;
@@ -264,7 +230,7 @@ export function rankBaselineRecommendations(input: RecommendationInput): Baselin
   const catalogRecords = input.records.filter(
     (record) => ownRecordValue(worksById, record.workId) !== undefined,
   );
-  const anchors = positiveGenreAnchors(worksById, catalogRecords);
+  const anchors = positiveAnchors(worksById, catalogRecords);
   if (anchors.length === 0) {
     return [];
   }

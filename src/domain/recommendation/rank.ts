@@ -27,7 +27,7 @@ import type {
 
 const EXCLUDED_READING_STATES = new Set(["reading", "completed", "dropped", "hidden"]);
 
-function assertUniqueRecords(records: readonly UserWorkRecord[]) {
+export function assertUniqueRecords(records: readonly UserWorkRecord[]) {
   const seen = new Set<string>();
   for (const record of [...records].sort((left, right) => compareText(left.workId, right.workId))) {
     if (seen.has(record.workId)) {
@@ -37,7 +37,7 @@ function assertUniqueRecords(records: readonly UserWorkRecord[]) {
   }
 }
 
-function positiveAnchors(
+export function positiveAnchors(
   worksById: Readonly<Record<string, Work>>,
   records: readonly UserWorkRecord[],
 ) {
@@ -84,7 +84,7 @@ export function filterEligibleCandidates(options: {
     );
 }
 
-function majorThemeKey(work: Work) {
+export function majorThemeKey(work: Work) {
   const themes = work.themes
     .filter((theme) => theme.centrality === 2)
     .map((theme) => theme.id)

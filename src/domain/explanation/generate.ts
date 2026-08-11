@@ -60,16 +60,6 @@ function interpolateTemplate(
   );
 }
 
-function cachedTitleResolver(resolveTitle: WorkTitleResolver): WorkTitleResolver {
-  const cache = new Map<string, string | undefined>();
-  return (workId) => {
-    if (!cache.has(workId)) {
-      cache.set(workId, resolveTitle(workId));
-    }
-    return cache.get(workId);
-  };
-}
-
 function firstResolvedTitle(anchorWorkIds: readonly string[], resolveTitle: WorkTitleResolver) {
   for (const workId of anchorWorkIds) {
     const title = resolveTitle(workId);
@@ -290,14 +280,13 @@ export function generateTasteExplanation({
   lexicon,
   resolveTitle,
 }: GenerateTasteExplanationInput): TasteRecommendationExplanation {
-  const cachedResolveTitle = cachedTitleResolver(resolveTitle);
   const { selectedCaution, selectedPositives } = selectTasteContributions(contributions, lexicon);
   const positiveReasons = selectedPositives.map((candidate) =>
     tasteSentenceFor({
       candidate,
       kind: "positive",
       lexicon,
-      resolveTitle: cachedResolveTitle,
+      resolveTitle,
     }),
   );
   const caution =
@@ -307,7 +296,7 @@ export function generateTasteExplanation({
           candidate: selectedCaution,
           kind: "caution",
           lexicon,
-          resolveTitle: cachedResolveTitle,
+          resolveTitle,
         });
   return {
     positiveReasons,
@@ -315,7 +304,7 @@ export function generateTasteExplanation({
     anchors: collectAnchors(
       [...positiveReasons, ...(caution === undefined ? [] : [caution])],
       "similarity",
-      cachedResolveTitle,
+      resolveTitle,
     ),
     confidence: {
       level: confidenceLevel,
@@ -330,7 +319,6 @@ export function generateBaselineExplanation({
   lexicon,
   resolveTitle,
 }: GenerateBaselineExplanationInput): BaselineRecommendationExplanation {
-  const cachedResolveTitle = cachedTitleResolver(resolveTitle);
   const selected = [...contributions]
     .filter(isSelectableBaselineContribution)
     .sort(
@@ -343,10 +331,10 @@ export function generateBaselineExplanation({
     contribution: selected,
     bestAnchorId,
     lexicon,
-    resolveTitle: cachedResolveTitle,
+    resolveTitle,
   });
   return {
     reason,
-    anchors: collectAnchors([reason], "genre", cachedResolveTitle),
+    anchors: collectAnchors([reason], "genre", resolveTitle),
   };
 }

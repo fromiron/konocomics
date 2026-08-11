@@ -2,18 +2,11 @@ import { resolve } from "node:path";
 import { pathToFileURL } from "node:url";
 
 import { strings } from "../src/lib/strings";
-import {
-  assertDistinctOutputPath,
-  experimentExitCode,
-  EXPERIMENT_EXIT_CODES,
-  EXPERIMENT_USAGE,
-  loadExperimentCatalog,
-  loadExperimentProfiles,
-  loadRecommendationContext,
-  parseExperimentCliOptions,
-  resolveExperimentProfilePaths,
-  writeAtomicOutput,
-} from "./experiment";
+import { experimentExitCode, EXPERIMENT_EXIT_CODES } from "./experiment/errors";
+import { loadExperimentCatalog, loadRecommendationContext } from "./experiment/inputs";
+import { assertDistinctOutputPath, writeAtomicOutput } from "./experiment/io";
+import { EXPERIMENT_USAGE, parseExperimentCliOptions } from "./experiment/options";
+import { loadExperimentProfiles, resolveExperimentProfilePaths } from "./experiment/profiles";
 import { buildExperimentReport } from "./experiment/report";
 
 export type ExperimentCliRuntime = {
