@@ -1,3 +1,4 @@
+import { createHash } from "node:crypto";
 import {
   existsSync,
   mkdirSync,
@@ -13,13 +14,16 @@ import { join } from "node:path";
 import { describe, expect, it, vi } from "vitest";
 
 import {
+  applyG1Adjudication,
   artEvidenceManifestRowSchema,
   assertG1ArtEvidence,
   assertG1Cohort,
   assertG1CohortManifest,
   equalWeightCatalogAverage,
+  loadG1Adjudication,
   publishCandidateDirectory,
 } from "../../../scripts/build-g1-candidate";
+import { NON_ART_AXIS_IDS } from "../../../scripts/catalog/g1-replacement";
 import { ART_AXIS_IDS } from "../../../src/domain/catalog/constants";
 
 function createArtEvidenceRow() {
@@ -194,6 +198,254 @@ function createManifestFixture() {
   };
   return { freeze, manifest, replacement, originalHash, replacementHash };
 }
+
+const blindSampleWorkIds = [
+  "jojo-bizarre-adventure",
+  "berserk",
+  "dr-stone",
+  "20th-century-boys",
+  "dungeon-meshi",
+  "kingdom",
+  "bocchi-the-rock",
+  "monster",
+  "blue-lock",
+] as const;
+
+function sha256(content: string) {
+  return createHash("sha256").update(content).digest("hex");
+}
+
+function createAdjudicationFixture(mutate?: {
+  factors?: (rows: string[]) => string[];
+  evidence?: (rows: string[]) => string[];
+}) {
+  const root = mkdtempSync(join(tmpdir(), "konocomics-g1-adjudication-"));
+  const repositoryRoot = process.cwd();
+  const blindDirectory = join(root, "data/staging/g1/blind-retag");
+  const adjudicatedDirectory = join(blindDirectory, "adjudicated");
+  mkdirSync(join(blindDirectory, "reconciled"), { recursive: true });
+  mkdirSync(adjudicatedDirectory);
+
+  const sampleManifest = readFileSync(
+    join(repositoryRoot, "data/staging/g1/blind-retag/sample-manifest.json"),
+    "utf8",
+  );
+  const frozenInputs = {
+    sampleManifestFile: sampleManifest,
+    reconciledFactorsFile: "frozen factors\n",
+    reconciledGenresFile: "frozen genres\n",
+    reconciledThemesFile: "frozen themes\n",
+    artEvidenceManifestFile: "frozen art\n",
+  };
+  writeFileSync(join(blindDirectory, "sample-manifest.json"), sampleManifest);
+  writeFileSync(join(blindDirectory, "reconciled/factors.csv"), frozenInputs.reconciledFactorsFile);
+  writeFileSync(join(blindDirectory, "reconciled/genres.csv"), frozenInputs.reconciledGenresFile);
+  writeFileSync(join(blindDirectory, "reconciled/themes.csv"), frozenInputs.reconciledThemesFile);
+  writeFileSync(
+    join(root, "data/staging/g1/art-evidence-manifest.csv"),
+    frozenInputs.artEvidenceManifestFile,
+  );
+
+  const baseFactorRows = blindSampleWorkIds.flatMap((workId) =>
+    NON_ART_AXIS_IDS.map((axisId) => `${workId},${axisId},known,2,0.8,ev-g1-adjudicated-${workId}`),
+  );
+  const factorRows = mutate?.factors?.(baseFactorRows) ?? baseFactorRows;
+  const baseEvidenceRows = blindSampleWorkIds.map(
+    (workId) =>
+      `ev-g1-adjudicated-${workId},${workId},work,${workId},model,https://example.com/${workId},2026-08-11T00:00:00+09:00,g1-full-evidence-adjudication-v1,false,0.9,Official entry-scope adjudication`,
+  );
+  const evidenceRows = mutate?.evidence?.(baseEvidenceRows) ?? baseEvidenceRows;
+  const payloads = {
+    factorsFile: `workId,axisId,state,value,confidence,evidenceId\n${factorRows.join("\n")}\n`,
+    genresFile: `workId,genres\n${blindSampleWorkIds
+      .map((workId, index) => `${workId},${index === 0 ? "" : "action"}`)
+      .join("\n")}\n`,
+    themesFile: `workId,themeId,centrality,confidence,evidenceId\n${blindSampleWorkIds
+      .slice(1)
+      .map((workId) => `${workId},adventure,2,0.8,ev-g1-adjudicated-${workId}`)
+      .join("\n")}\n`,
+    evidenceFile: `id,workId,targetType,targetId,sourceType,sourceUrl,fetchedAt,extractorVersion,reviewedByHuman,confidence,notes\n${evidenceRows.join("\n")}\n`,
+    adjudicationFile: "# G1 full evidence adjudication\n",
+  };
+  for (const [file, content] of [
+    ["factors.csv", payloads.factorsFile],
+    ["genres.csv", payloads.genresFile],
+    ["themes.csv", payloads.themesFile],
+    ["evidence.csv", payloads.evidenceFile],
+    ["adjudication.md", payloads.adjudicationFile],
+  ] as const) {
+    writeFileSync(join(adjudicatedDirectory, file), content);
+  }
+
+  const preAdjudication = {
+    works: "a".repeat(64),
+    factors: "b".repeat(64),
+    themes: "c".repeat(64),
+    evidence: "d".repeat(64),
+  };
+  writeFileSync(
+    join(adjudicatedDirectory, "manifest.json"),
+    JSON.stringify({
+      schemaVersion: 1,
+      policyVersion: "g1-full-evidence-adjudication-v1",
+      workIds: blindSampleWorkIds,
+      inputHashes: {
+        sampleManifestFile: sha256(frozenInputs.sampleManifestFile),
+        reconciledFactorsFile: sha256(frozenInputs.reconciledFactorsFile),
+        reconciledGenresFile: sha256(frozenInputs.reconciledGenresFile),
+        reconciledThemesFile: sha256(frozenInputs.reconciledThemesFile),
+        artEvidenceManifestFile: sha256(frozenInputs.artEvidenceManifestFile),
+        preAdjudicationWorks: preAdjudication.works,
+        preAdjudicationFactors: preAdjudication.factors,
+        preAdjudicationThemes: preAdjudication.themes,
+        preAdjudicationEvidence: preAdjudication.evidence,
+      },
+      payloadHashes: {
+        factorsFile: sha256(payloads.factorsFile),
+        genresFile: sha256(payloads.genresFile),
+        themesFile: sha256(payloads.themesFile),
+        evidenceFile: sha256(payloads.evidenceFile),
+        adjudicationFile: sha256(payloads.adjudicationFile),
+      },
+    }),
+  );
+  return { root, preAdjudication };
+}
+
+describe("G1 full-evidence adjudication", () => {
+  it("loads the frozen 9x13 boundary and completely replaces sampled sets without touching Art", () => {
+    const fixture = createAdjudicationFixture();
+    try {
+      const adjudication = loadG1Adjudication(fixture.root, fixture.preAdjudication);
+      const firstWorkId = blindSampleWorkIds[0];
+      const artRow = [firstWorkId, "artRealism", "known", "4", "0.9", `ev-art-${firstWorkId}`];
+      const result = applyG1Adjudication({
+        works: [
+          [
+            firstWorkId,
+            "Title",
+            "",
+            "Creator",
+            "Publisher",
+            "seinen",
+            "completed",
+            "2000",
+            "action",
+            "entry_1_3_volumes",
+            "true",
+            "true",
+            "false",
+            "1",
+            "1",
+            "1",
+            "unreviewed",
+            "",
+            "",
+            `ev-work-${firstWorkId}`,
+          ],
+        ],
+        factors: [
+          [firstWorkId, "progression", "known", "4", "0.9", `ev-old-${firstWorkId}`],
+          artRow,
+        ],
+        themes: [[firstWorkId, "combat", "2", "0.9", `ev-old-${firstWorkId}`]],
+        evidence: [
+          [
+            `ev-old-${firstWorkId}`,
+            firstWorkId,
+            "work",
+            firstWorkId,
+            "model",
+            `https://example.com/old-${firstWorkId}`,
+            "2026-08-11T00:00:00+09:00",
+            "old",
+            "false",
+            "0.8",
+            "Old evidence",
+          ],
+        ],
+        adjudication,
+      });
+
+      expect(result.works[0]?.[8]).toBe("");
+      expect(result.factors).toContainEqual(artRow);
+      expect(result.factors).toContainEqual([
+        firstWorkId,
+        "progression",
+        "known",
+        "2",
+        "0.8",
+        `ev-g1-adjudicated-${firstWorkId}`,
+      ]);
+      expect(result.themes.some((row) => row[0] === firstWorkId)).toBe(false);
+      expect(result.evidence).toHaveLength(10);
+    } finally {
+      rmSync(fixture.root, { recursive: true, force: true });
+    }
+  });
+
+  it("rejects incomplete and Art-bearing factor products", () => {
+    for (const mutate of [
+      (rows: string[]) => rows.slice(0, -1),
+      (rows: string[]) => [
+        rows[0]?.replace(",progression,", ",artRealism,") ?? "",
+        ...rows.slice(1),
+      ],
+    ]) {
+      const fixture = createAdjudicationFixture({ factors: mutate });
+      try {
+        expect(() => loadG1Adjudication(fixture.root, fixture.preAdjudication)).toThrow(
+          /sample by non-Art-axis product|Invalid G1 adjudication factor/u,
+        );
+      } finally {
+        rmSync(fixture.root, { recursive: true, force: true });
+      }
+    }
+  });
+
+  it("rejects stale payload hashes before accepting adjudicated values", () => {
+    const fixture = createAdjudicationFixture();
+    try {
+      expect(() =>
+        loadG1Adjudication(fixture.root, {
+          ...fixture.preAdjudication,
+          works: "0".repeat(64),
+        }),
+      ).toThrow(/manifest is stale/u);
+      writeFileSync(
+        join(fixture.root, "data/staging/g1/blind-retag/adjudicated/adjudication.md"),
+        "changed after freeze\n",
+      );
+      expect(() => loadG1Adjudication(fixture.root, fixture.preAdjudication)).toThrow(
+        /manifest is stale/u,
+      );
+    } finally {
+      rmSync(fixture.root, { recursive: true, force: true });
+    }
+  });
+
+  it("requires one URL-bearing non-human model work-scope evidence row per sampled work", () => {
+    for (const mutate of [
+      (row: string) => row.replace(",false,", ",true,"),
+      (row: string) => {
+        const cells = row.split(",");
+        cells[5] = "";
+        return cells.join(",");
+      },
+    ]) {
+      const fixture = createAdjudicationFixture({
+        evidence: (rows) => [mutate(rows[0] ?? ""), ...rows.slice(1)],
+      });
+      try {
+        expect(() => loadG1Adjudication(fixture.root, fixture.preAdjudication)).toThrow(
+          /Invalid G1 adjudication evidence/u,
+        );
+      } finally {
+        rmSync(fixture.root, { recursive: true, force: true });
+      }
+    }
+  });
+});
 
 describe("G1 candidate cohort", () => {
   it("averages only representative volumes with observed reviews", () => {

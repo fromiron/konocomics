@@ -14,14 +14,22 @@ import { pathToFileURL } from "node:url";
 import { parse } from "csv-parse/sync";
 import { z } from "zod";
 
-import { ART_AXIS_IDS, FACTOR_SOURCE_TYPES } from "../src/domain/catalog/constants";
+import {
+  ART_AXIS_IDS,
+  FACTOR_SOURCE_TYPES,
+  GENRE_TAGS,
+  THEME_TAGS,
+} from "../src/domain/catalog/constants";
+import { blindRetagSampleManifestSchema } from "./build-g1-blind-retag";
 import { buildG1ReplacementManifest, replacementManifestSchema } from "./build-g1-replacement";
 import { NON_ART_AXIS_IDS } from "./catalog/g1-replacement";
 import { runCatalogPipeline } from "./catalog/pipeline";
 import { formatSourceIssue } from "./catalog/report";
 import {
   evidenceSourceRowSchema,
+  factorSourceRowSchema,
   recommendationContextSourceRowSchema,
+  themeSourceRowSchema,
 } from "./catalog/source-schema";
 
 const matrixSchema = z.array(z.array(z.string()));
@@ -57,6 +65,29 @@ const originalCohortFreezeSchema = z.object({
       }),
     )
     .length(2),
+});
+const adjudicationManifestSchema = z.strictObject({
+  schemaVersion: z.literal(1),
+  policyVersion: z.literal("g1-full-evidence-adjudication-v1"),
+  workIds: z.array(catalogIdSchema).length(9),
+  inputHashes: z.strictObject({
+    sampleManifestFile: sha256Schema,
+    reconciledFactorsFile: sha256Schema,
+    reconciledGenresFile: sha256Schema,
+    reconciledThemesFile: sha256Schema,
+    artEvidenceManifestFile: sha256Schema,
+    preAdjudicationWorks: sha256Schema,
+    preAdjudicationFactors: sha256Schema,
+    preAdjudicationThemes: sha256Schema,
+    preAdjudicationEvidence: sha256Schema,
+  }),
+  payloadHashes: z.strictObject({
+    factorsFile: sha256Schema,
+    genresFile: sha256Schema,
+    themesFile: sha256Schema,
+    evidenceFile: sha256Schema,
+    adjudicationFile: sha256Schema,
+  }),
 });
 
 const datasets = [
@@ -279,6 +310,19 @@ type G1EvidenceContract = {
   sourceType: string;
   sourceUrl?: string;
 };
+type G1Adjudication = {
+  workIds: string[];
+  factors: string[][];
+  genres: Map<string, string>;
+  themes: string[][];
+  evidence: string[][];
+};
+type PreAdjudicationHashes = {
+  works: string;
+  factors: string;
+  themes: string;
+  evidence: string;
+};
 type G1HistogramContract = z.infer<typeof originalCohortFreezeSchema>["histograms"];
 type G1Replacement = z.infer<typeof replacementManifestSchema>["replacements"][number];
 
@@ -310,8 +354,12 @@ function serializeCsv(headers: readonly string[], rows: readonly (readonly strin
   return `${[headers, ...rows].map((row) => row.map(csvCell).join(",")).join("\n")}\n`;
 }
 
+function contentHash(content: string | Buffer) {
+  return createHash("sha256").update(content).digest("hex");
+}
+
 function fileHash(path: string) {
-  return createHash("sha256").update(readFileSync(path)).digest("hex");
+  return contentHash(readFileSync(path));
 }
 
 function columnIndex(headers: readonly string[], column: string) {
@@ -366,6 +414,163 @@ function applyOverrides(dataset: MergeableDataset, rows: string[][], overrideDir
   return existsSync(overridePath)
     ? mergeOverrides(dataset, rows, parseCsv(overridePath, dataset.headers))
     : rows;
+}
+
+export function loadG1Adjudication(
+  root: string,
+  preAdjudication: PreAdjudicationHashes,
+): G1Adjudication {
+  const stagingDirectory = join(root, "data/staging/g1");
+  const blindDirectory = join(stagingDirectory, "blind-retag");
+  const adjudicatedDirectory = join(blindDirectory, "adjudicated");
+  const sampleManifestPath = join(blindDirectory, "sample-manifest.json");
+  const manifest = adjudicationManifestSchema.parse(
+    JSON.parse(readFileSync(join(adjudicatedDirectory, "manifest.json"), "utf8")) as unknown,
+  );
+  const sampleManifest = blindRetagSampleManifestSchema.parse(
+    JSON.parse(readFileSync(sampleManifestPath, "utf8")) as unknown,
+  );
+  const workIds = sampleManifest.selected.map(({ workId }) => workId);
+  if (
+    new Set(manifest.workIds).size !== manifest.workIds.length ||
+    JSON.stringify(manifest.workIds) !== JSON.stringify(workIds)
+  ) {
+    throw new Error("G1 adjudication work IDs must exactly match the frozen blind sample");
+  }
+
+  const factorsPath = join(adjudicatedDirectory, "factors.csv");
+  const genresPath = join(adjudicatedDirectory, "genres.csv");
+  const themesPath = join(adjudicatedDirectory, "themes.csv");
+  const evidencePath = join(adjudicatedDirectory, "evidence.csv");
+  const adjudicationPath = join(adjudicatedDirectory, "adjudication.md");
+  const inputHashes = {
+    sampleManifestFile: fileHash(sampleManifestPath),
+    reconciledFactorsFile: fileHash(join(blindDirectory, "reconciled/factors.csv")),
+    reconciledGenresFile: fileHash(join(blindDirectory, "reconciled/genres.csv")),
+    reconciledThemesFile: fileHash(join(blindDirectory, "reconciled/themes.csv")),
+    artEvidenceManifestFile: fileHash(join(stagingDirectory, "art-evidence-manifest.csv")),
+    preAdjudicationWorks: preAdjudication.works,
+    preAdjudicationFactors: preAdjudication.factors,
+    preAdjudicationThemes: preAdjudication.themes,
+    preAdjudicationEvidence: preAdjudication.evidence,
+  };
+  const payloadHashes = {
+    factorsFile: fileHash(factorsPath),
+    genresFile: fileHash(genresPath),
+    themesFile: fileHash(themesPath),
+    evidenceFile: fileHash(evidencePath),
+    adjudicationFile: fileHash(adjudicationPath),
+  };
+  if (
+    JSON.stringify(manifest.inputHashes) !== JSON.stringify(inputHashes) ||
+    JSON.stringify(manifest.payloadHashes) !== JSON.stringify(payloadHashes)
+  ) {
+    throw new Error("G1 adjudication manifest is stale for the current frozen inputs");
+  }
+
+  const factors = parseCsv(factorsPath, datasets[3].headers);
+  if (factors.length !== workIds.length * NON_ART_AXIS_IDS.length) {
+    throw new Error("G1 adjudication factors must equal the sample by non-Art-axis product");
+  }
+  for (const [index, row] of factors.entries()) {
+    const factor = factorSourceRowSchema.parse(rowRecord(datasets[3].headers, row));
+    const workId = workIds[Math.floor(index / NON_ART_AXIS_IDS.length)];
+    const axisId = NON_ART_AXIS_IDS[index % NON_ART_AXIS_IDS.length];
+    if (
+      factor.workId !== workId ||
+      factor.axisId !== axisId ||
+      factor.evidenceId !== `ev-g1-adjudicated-${factor.workId}`
+    ) {
+      throw new Error(`Invalid G1 adjudication factor at row ${String(index + 2)}`);
+    }
+  }
+
+  const genreRows = parseCsv(genresPath, reconciledGenreHeaders);
+  if (genreRows.length !== workIds.length) {
+    throw new Error("G1 adjudication genres must contain exactly one row per sampled work");
+  }
+  const genres = new Map<string, string>();
+  for (const [index, row] of genreRows.entries()) {
+    const workId = row[0] ?? "";
+    const cell = row[1] ?? "";
+    const parsedGenres = z.array(z.enum(GENRE_TAGS)).parse(cell === "" ? [] : cell.split(";"));
+    const orders = parsedGenres.map((genre) => GENRE_TAGS.indexOf(genre));
+    if (
+      workId !== workIds[index] ||
+      parsedGenres.join(";") !== cell ||
+      orders.some((order, genreIndex) => genreIndex > 0 && order <= orders[genreIndex - 1]!)
+    ) {
+      throw new Error(`Invalid G1 adjudication Genre row ${String(index + 2)}`);
+    }
+    genres.set(workId, cell);
+  }
+
+  const themes = parseCsv(themesPath, datasets[4].headers);
+  let previousThemeOrder = -1;
+  for (const row of themes) {
+    const theme = themeSourceRowSchema.parse(rowRecord(datasets[4].headers, row));
+    const workOrder = workIds.indexOf(theme.workId);
+    const order = workOrder * THEME_TAGS.length + THEME_TAGS.indexOf(theme.themeId);
+    if (
+      workOrder < 0 ||
+      order <= previousThemeOrder ||
+      theme.evidenceId !== `ev-g1-adjudicated-${theme.workId}`
+    ) {
+      throw new Error(`Invalid G1 adjudication Theme row: ${theme.workId}/${theme.themeId}`);
+    }
+    previousThemeOrder = order;
+  }
+
+  const evidence = parseCsv(evidencePath, evidenceHeaders);
+  if (evidence.length !== workIds.length) {
+    throw new Error("G1 adjudication evidence must contain exactly one row per sampled work");
+  }
+  for (const [index, row] of evidence.entries()) {
+    const item = evidenceSourceRowSchema.parse(rowRecord(evidenceHeaders, row));
+    const workId = workIds[index];
+    if (
+      item.workId !== workId ||
+      item.id !== `ev-g1-adjudicated-${workId}` ||
+      item.targetType !== "work" ||
+      item.targetId !== workId ||
+      item.sourceType !== "model" ||
+      item.sourceUrl === undefined ||
+      item.reviewedByHuman
+    ) {
+      throw new Error(`Invalid G1 adjudication evidence at row ${String(index + 2)}`);
+    }
+  }
+  return { workIds, factors, genres, themes, evidence };
+}
+
+export function applyG1Adjudication(input: {
+  works: string[][];
+  factors: string[][];
+  themes: string[][];
+  evidence: string[][];
+  adjudication: G1Adjudication;
+}) {
+  const sampleIds = new Set(input.adjudication.workIds);
+  const workIdIndex = columnIndex(datasets[0].headers, "id");
+  const genresIndex = columnIndex(datasets[0].headers, "genres");
+  const themeWorkIdIndex = columnIndex(datasets[4].headers, "workId");
+  return {
+    works: input.works.map((row) => {
+      const genres = input.adjudication.genres.get(row[workIdIndex] ?? "");
+      if (genres === undefined) {
+        return row;
+      }
+      const next = [...row];
+      next[genresIndex] = genres;
+      return next;
+    }),
+    factors: mergeOverrides(datasets[3], input.factors, input.adjudication.factors),
+    themes: [
+      ...input.themes.filter((row) => !sampleIds.has(row[themeWorkIdIndex] ?? "")),
+      ...input.adjudication.themes,
+    ],
+    evidence: mergeOverrides(evidenceDataset, input.evidence, input.adjudication.evidence),
+  };
 }
 
 function resetAnnotationReview(headers: readonly string[], rows: string[][]) {
@@ -886,7 +1091,7 @@ function buildG1Candidate(root = process.cwd()) {
     );
   }
 
-  const evidenceRows = filterRowsToCohort(
+  const baselineEvidenceRows = filterRowsToCohort(
     evidenceHeaders,
     applyOverrides(
       evidenceDataset,
@@ -901,6 +1106,36 @@ function buildG1Candidate(root = process.cwd()) {
     cohortIds,
     "workId",
   );
+  const worksDataset = datasets[0];
+  const factorDataset = datasets[3];
+  const themeDataset = datasets[4];
+  const baselineWorkRows = tables.get(worksDataset.file);
+  const baselineFactorRows = tables.get(factorDataset.file);
+  const baselineThemeRows = tables.get(themeDataset.file);
+  if (
+    baselineWorkRows === undefined ||
+    baselineFactorRows === undefined ||
+    baselineThemeRows === undefined
+  ) {
+    throw new Error("G1 work, factor, or theme rows are missing");
+  }
+  const adjudication = loadG1Adjudication(root, {
+    works: contentHash(serializeCsv(worksDataset.headers, baselineWorkRows)),
+    factors: contentHash(serializeCsv(factorDataset.headers, baselineFactorRows)),
+    themes: contentHash(serializeCsv(themeDataset.headers, baselineThemeRows)),
+    evidence: contentHash(serializeCsv(evidenceHeaders, baselineEvidenceRows)),
+  });
+  const adjudicated = applyG1Adjudication({
+    works: baselineWorkRows,
+    factors: baselineFactorRows,
+    themes: baselineThemeRows,
+    evidence: baselineEvidenceRows,
+    adjudication,
+  });
+  tables.set(worksDataset.file, adjudicated.works);
+  tables.set(factorDataset.file, adjudicated.factors);
+  tables.set(themeDataset.file, adjudicated.themes);
+  const evidenceRows = adjudicated.evidence;
   const artEvidenceSourceRows = parseCsv(
     join(stagingDirectory, "art-evidence-manifest.csv"),
     artEvidenceManifestHeaders,
@@ -912,14 +1147,9 @@ function buildG1Candidate(root = process.cwd()) {
     join(stagingDirectory, "deferred-works.csv"),
     deferredWorkHeaders,
   ).map((row) => deferredWorkRowSchema.parse(rowRecord(deferredWorkHeaders, row)).workId);
-  const worksDataset = datasets[0];
-  const factorDataset = datasets.find((dataset) => dataset.file === "factors.csv");
-  const workRows = tables.get(worksDataset.file);
-  const factorRows = factorDataset === undefined ? undefined : tables.get(factorDataset.file);
+  const workRows = adjudicated.works;
+  const factorRows = adjudicated.factors;
   const finalContextRows = tables.get(contextDataset.file);
-  if (workRows === undefined || factorDataset === undefined || factorRows === undefined) {
-    throw new Error("G1 work or factor rows are missing");
-  }
   if (finalContextRows === undefined) {
     throw new Error("G1 recommendation context rows are missing");
   }

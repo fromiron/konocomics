@@ -1,0 +1,33 @@
+{
+  "schemaVersion": 1,
+  "policyVersion": "g1-full-evidence-adjudication-v1",
+  "workIds": [
+    "jojo-bizarre-adventure",
+    "berserk",
+    "dr-stone",
+    "20th-century-boys",
+    "dungeon-meshi",
+    "kingdom",
+    "bocchi-the-rock",
+    "monster",
+    "blue-lock"
+  ],
+  "inputHashes": {
+    "sampleManifestFile": "05e31a288edaf11fb5cf7872537c56a9154e09516864674c90c2a2cc02b21658",
+    "reconciledFactorsFile": "8ee2e1d4b0e319ae464f9c2049cd4030891c28fc65853d341896913ebe308953",
+    "reconciledGenresFile": "644cac39e1243b8971c8a0e718fb85032f735465534b96e1bc5ab075234d05bd",
+    "reconciledThemesFile": "59556a4f5d31523faffd4192452738fe2214e45145a6e6750fa61e7a1d89d923",
+    "artEvidenceManifestFile": "099caa89c566693e64c3abd8f2ac31ed314658479aba80064ad82978bfe77642",
+    "preAdjudicationWorks": "e7a93a87f3d89acae577f8b028e15644328ca15e633698507e0a284cfd1e8732",
+    "preAdjudicationFactors": "eafad1475b722d86bd5f88a97ce7f8b2076adcd0c64876f8da1b856b0d343397",
+    "preAdjudicationThemes": "d6ab4fd05bfeab7e0bb0e783a1851ddc34a7c9cb84f0217f25179e0baacc6749",
+    "preAdjudicationEvidence": "5a4ce737fe04d283cd0200e83b07c26b44b5cfe8fac668cc2557a9d317f8a53f"
+  },
+  "payloadHashes": {
+    "factorsFile": "248537ef2290ed1596bfe1fd3cc22228a4cc32da4a06b9ac0d22cac515e6ed44",
+    "genresFile": "e3d13b0af427ab5145e5efc686b477c4e4095b82a18c027d946714ee35190a72",
+    "themesFile": "ab6768a62f6383e2a3ed645f525bd8c877d1bc3ff7bc258c49487aacd1de4ec1",
+    "evidenceFile": "6abeb784dfad5129097b141016903a4f287cd5d33ef5530676c75e69074f5876",
+    "adjudicationFile": "ea02b10351bbadc8104e96e8344cb9f49de6c9144b7395c2c20982c67eed76ef"
+  }
+}
