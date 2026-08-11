@@ -1,0 +1,129 @@
+{
+  "schemaVersion": 1,
+  "baseCommit": "dd16b1496d2267b9c7f6f57c35ee3e1decf56532",
+  "sourceTreeSha256": "47a1a1b7dfda851f498440222c5a2dfe6a936b2f31cc9193d259e8bc1f6edf0d",
+  "oracleInputPatches": [
+    {
+      "name": "konocomics-g1-tracked.patch",
+      "sha256": "617a064509721fafbaf45ef34c570b1867742ef64c1043484a7cac2518854ab4"
+    },
+    {
+      "name": "konocomics-g1-builder.patch",
+      "sha256": "8a064280986c92a3f01ffe81f11d3a8d490d88abe8151f62c95cb59afece1952"
+    }
+  ],
+  "workIds": [
+    "dungeon-meshi",
+    "kingdom",
+    "fullmetal-alchemist",
+    "death-note",
+    "spy-family",
+    "frieren",
+    "chainsaw-man",
+    "blue-lock",
+    "monster",
+    "yotsuba-to",
+    "blame",
+    "one-piece",
+    "naruto",
+    "dragon-ball",
+    "attack-on-titan",
+    "demon-slayer",
+    "jujutsu-kaisen",
+    "my-hero-academia",
+    "hunter-x-hunter",
+    "jojo-bizarre-adventure",
+    "berserk",
+    "vinland-saga",
+    "vagabond",
+    "golden-kamuy",
+    "made-in-abyss",
+    "land-of-the-lustrous",
+    "mushishi",
+    "dr-stone",
+    "promised-neverland",
+    "erased",
+    "20th-century-boys",
+    "pluto",
+    "ghost-in-the-shell",
+    "akira",
+    "nausicaa-of-the-valley-of-the-wind",
+    "witch-hat-atelier",
+    "mob-psycho-100",
+    "natsumes-book-of-friends",
+    "march-comes-in-like-a-lion",
+    "a-silent-voice",
+    "your-lie-in-april",
+    "kaguya-sama",
+    "horimiya",
+    "kimi-ni-todoke",
+    "nana",
+    "skip-and-loafer",
+    "bocchi-the-rock",
+    "haikyu",
+    "slam-dunk",
+    "hajime-no-ippo"
+  ],
+  "histograms": {
+    "demographic": {
+      "general": 1,
+      "seinen": 19,
+      "shojo": 3,
+      "shonen": 23,
+      "unknown": 4
+    },
+    "catalogRole": {
+      "anchor": 18,
+      "bridge": 20,
+      "discovery": 12
+    },
+    "onboardingEligible": 28,
+    "recommendationEligible": 50,
+    "libraryOnly": 0
+  },
+  "artAudit": {
+    "workCount": 50,
+    "axisRowCount": 200,
+    "knownCount": 158,
+    "unknownCount": 42,
+    "blockedWorkIds": [
+      "vagabond",
+      "akira",
+      "nausicaa-of-the-valley-of-the-wind",
+      "slam-dunk"
+    ]
+  },
+  "replacementSlots": [
+    {
+      "workId": "nausicaa-of-the-valley-of-the-wind",
+      "demographic": "general",
+      "catalogRole": "discovery",
+      "onboardingEligible": false
+    },
+    {
+      "workId": "slam-dunk",
+      "demographic": "shonen",
+      "catalogRole": "anchor",
+      "onboardingEligible": true
+    }
+  ],
+  "conditionalEvidenceAdmissionWorkIds": ["vagabond", "akira"],
+  "selectionContract": {
+    "candidatePoolTargetPerSlot": 5,
+    "minimumValidCandidatesPerSlot": 4,
+    "minimumSharedKnownNonArtAxes": 9,
+    "requiredNonArtGroups": ["narrative", "tone"],
+    "distanceWeights": {
+      "axis": 0.7,
+      "genre": 0.15,
+      "theme": 0.15
+    },
+    "excludedSelectionSignals": [
+      "art",
+      "market",
+      "recommendationOutput",
+      "popularity"
+    ],
+    "tieBreak": "workId-ascending"
+  }
+}

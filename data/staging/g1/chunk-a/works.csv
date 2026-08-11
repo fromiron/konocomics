@@ -1,0 +1,14 @@
+id,title,titleKana,creators,publisher,demographic,status,firstPublishedYear,genres,factorScope,onboardingEligible,recommendationEligible,libraryOnly,metadataConfidence,groupingConfidence,sourceAgreement,annotationReviewMethod,annotationReviewedAt,annotationReviewReference,evidenceId
+one-piece,ONE PIECE,ワンピース,尾田栄一郎,集英社,shonen,ongoing,1997,action;fantasy;comedy,entry_1_3_volumes,true,true,false,0.98,0.99,0.91,unreviewed,,,ev-one-piece
+naruto,NARUTO―ナルト―,ナルト,岸本斉史,集英社,shonen,completed,1999,action;fantasy;comedy,entry_1_3_volumes,false,true,false,0.98,0.99,0.91,unreviewed,,,ev-naruto
+dragon-ball,DRAGON BALL,ドラゴンボール,鳥山明,集英社,shonen,completed,1984,action;fantasy;comedy,entry_1_3_volumes,true,true,false,0.98,0.99,0.91,unreviewed,,,ev-dragon-ball
+attack-on-titan,進撃の巨人,シンゲキノキョジン,諫山創,講談社,shonen,completed,2009,action;fantasy;horror,entry_1_3_volumes,true,true,false,0.99,0.99,0.92,unreviewed,,,ev-attack-on-titan
+demon-slayer,鬼滅の刃,キメツノヤイバ,吾峠呼世晴,集英社,shonen,completed,2016,action;fantasy;historical;horror,entry_1_3_volumes,false,true,false,0.99,0.99,0.92,unreviewed,,,ev-demon-slayer
+jujutsu-kaisen,呪術廻戦,ジュジュツカイセン,芥見下々,集英社,shonen,completed,2018,action;fantasy;horror,entry_1_3_volumes,false,true,false,0.99,0.99,0.92,unreviewed,,,ev-jujutsu-kaisen
+my-hero-academia,僕のヒーローアカデミア,ボクノヒーローアカデミア,堀越耕平,集英社,shonen,completed,2014,action;fantasy;comedy,entry_1_3_volumes,false,true,false,0.99,0.99,0.92,unreviewed,,,ev-my-hero-academia
+hunter-x-hunter,HUNTER×HUNTER,ハンターハンター,冨樫義博,集英社,shonen,ongoing,1998,action;fantasy;comedy,entry_1_3_volumes,true,true,false,0.99,0.99,0.92,unreviewed,,,ev-hunter-x-hunter
+jojo-bizarre-adventure,ジョジョの奇妙な冒険,ジョジョノキミョウナボウケン,荒木飛呂彦,集英社,shonen,completed,1986,action;fantasy;historical;horror,entry_1_3_volumes,false,true,false,0.98,0.98,0.90,unreviewed,,,ev-jojo-bizarre-adventure
+berserk,ベルセルク,ベルセルク,三浦建太郎;スタジオ我画;森恒二,白泉社,seinen,ongoing,1989,action;fantasy;horror,entry_1_3_volumes,true,true,false,0.98,0.99,0.91,unreviewed,,,ev-berserk
+vinland-saga,ヴィンランド・サガ,ヴィンランドサガ,幸村誠,講談社,seinen,completed,2005,action;historical,entry_1_3_volumes,false,true,false,0.99,0.99,0.92,unreviewed,,,ev-vinland-saga
+vagabond,バガボンド,バガボンド,井上雄彦;吉川英治,講談社,seinen,ongoing,1998,action;historical,entry_1_3_volumes,true,true,false,0.98,0.99,0.90,unreviewed,,,ev-vagabond
+golden-kamuy,ゴールデンカムイ,ゴールデンカムイ,野田サトル,集英社,seinen,completed,2014,action;historical;comedy,entry_1_3_volumes,false,true,false,0.99,0.99,0.92,unreviewed,,,ev-golden-kamuy

@@ -1,0 +1,7 @@
+id,workId,volumeNumber,isbn,releaseDate,editionKind,isRepresentative,evidenceId
+beyond-the-clouds-v1,beyond-the-clouds,1,9784065291962,2022-10-20,standard,true,ev-g1-replacement-beyond-the-clouds
+beyond-the-clouds-v2,beyond-the-clouds,2,9784065291979,2023-01-19,standard,false,ev-g1-replacement-beyond-the-clouds
+beyond-the-clouds-v3,beyond-the-clouds,3,9784065291993,2023-04-20,standard,false,ev-g1-replacement-beyond-the-clouds
+noragami-stray-god-v1,noragami-stray-god,1,9784063712940,2011-07-15,standard,true,ev-g1-replacement-noragami-stray-god
+noragami-stray-god-v2,noragami-stray-god,2,9784063713084,2011-10-17,standard,false,ev-g1-replacement-noragami-stray-god
+noragami-stray-god-v3,noragami-stray-god,3,9784063713237,2012-02-17,standard,false,ev-g1-replacement-noragami-stray-god

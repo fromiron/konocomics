@@ -1,0 +1,362 @@
+{
+  "schemaVersion": 1,
+  "policyVersion": "g1-replacement-v1",
+  "frozenAt": "2026-08-11T10:51:59+09:00",
+  "originalCohortFreezeSha256": "5f970ead7bf0fddf5c96b58d7efeab6f96cb3ea32b04e94231bb2f3331b75eb3",
+  "candidateOrder": "workId-ascending",
+  "annotationStatus": "not-started",
+  "distanceStatus": "not-computed",
+  "excludedAdmissionSignals": [
+    "market",
+    "popularity",
+    "review",
+    "recommendationOutput"
+  ],
+  "excludedDistanceSignals": [
+    "art",
+    "market",
+    "popularity",
+    "review",
+    "recommendationOutput"
+  ],
+  "slots": [
+    {
+      "removedWorkId": "nausicaa-of-the-valley-of-the-wind",
+      "demographic": "general",
+      "catalogRole": "discovery",
+      "onboardingEligible": false,
+      "minimumValidCandidates": 4,
+      "validCandidateCount": 5,
+      "candidates": [
+        {
+          "workId": "beyond-the-clouds",
+          "title": "Beyond the Clouds",
+          "creators": ["Nicke"],
+          "volumeCount": 5,
+          "representativeIsbn": "9781632369574",
+          "volume1To3Isbns": [
+            ["9781646593279", "9781632369574"],
+            ["9781646594870", "9781632369581"],
+            ["9781646594221", "9781632369802"]
+          ],
+          "demographicEvidenceUrl": "https://kodansha.us/2025/11/25/browse-the-kodansha-gift-guide-for-winning-holiday-gift-recommendations/",
+          "sourceUrl": "https://kodansha.us/series/beyond-the-clouds/",
+          "authorityClass": "publisherAuthorizedPlatform",
+          "sourceType": "manual",
+          "readerPublisher": "Kodansha",
+          "chapterId": "8fe4ea10-de87-4f81-8ad3-bf1d51f1f7ee",
+          "chapterPageCount": 38,
+          "sampleRefs": [
+            "reader page 9",
+            "reader page 17",
+            "reader page 16",
+            "reader page 25",
+            "reader page 24",
+            "reader page 31",
+            "reader page 30"
+          ],
+          "contexts": ["bedroom and storybook", "industrial city and workshop", "junkyard"],
+          "seriesOverlapWithFrozenCohort": false
+        },
+        {
+          "workId": "chis-sweet-adventures",
+          "title": "Chi's Sweet Adventures",
+          "creators": ["Konami Kanata", "Kinoko Natsume"],
+          "volumeCount": 4,
+          "representativeIsbn": "9781945054822",
+          "volume1To3Isbns": [
+            ["9781642122312", "9781945054822"],
+            ["9781642124804", "9781947194113"],
+            ["9781642126921", "9781947194649"]
+          ],
+          "demographicEvidenceUrl": "https://kodansha.us/book/chis-sweet-adventures/",
+          "sourceUrl": "https://kodansha.us/book/chis-sweet-adventures/",
+          "authorityClass": "publisherAuthorizedPlatform",
+          "sourceType": "manual",
+          "readerPublisher": "Kodansha",
+          "chapterId": "e6ec6a44-e6a0-4990-aeaf-ed2e9a15e237",
+          "chapterPageCount": 11,
+          "sampleRefs": [
+            "reader page 7",
+            "reader page 6",
+            "reader page 9",
+            "reader page 8",
+            "reader page 11",
+            "reader page 10"
+          ],
+          "contexts": ["family kitchen feeding", "box and ball play", "meeting another cat"],
+          "seriesOverlapWithFrozenCohort": false
+        },
+        {
+          "workId": "lovely-muco",
+          "title": "Lovely Muco!",
+          "creators": ["Takayuki Mizushina"],
+          "volumeCount": 4,
+          "representativeIsbn": "9781647292393",
+          "volume1To3Isbns": [
+            ["9781684919949", "9781647292393"],
+            ["9798889331254", "9781647292409"],
+            ["9798889333012", "9781647292515"]
+          ],
+          "demographicEvidenceUrl": "https://kodansha.us/2024/11/26/find-the-perfect-manga-with-kodanshas-2024-holiday-gift-guide/",
+          "sourceUrl": "https://kodansha.us/series/lovely-muco/",
+          "authorityClass": "publisherAuthorizedPlatform",
+          "sourceType": "manual",
+          "readerPublisher": "Kodansha",
+          "chapterId": "424197ee-b3b2-4fc0-b7e4-66dbf919936c",
+          "chapterPageCount": 16,
+          "sampleRefs": [
+            "reader page 9",
+            "reader page 8",
+            "reader page 11",
+            "reader page 10",
+            "reader page 13",
+            "reader page 12",
+            "reader page 15",
+            "reader page 14"
+          ],
+          "contexts": ["glass workshop exterior and yard", "workshop interior", "garden and furnace"],
+          "seriesOverlapWithFrozenCohort": false
+        },
+        {
+          "workId": "penguin-and-house",
+          "title": "Penguin & House",
+          "creators": ["Akiho Ieda"],
+          "volumeCount": 3,
+          "representativeIsbn": "9781646513468",
+          "volume1To3Isbns": [
+            ["9781636996851", "9781646513468"],
+            ["9781684912414", "9781646513475"],
+            ["9781684912995", "9781646513482"]
+          ],
+          "demographicEvidenceUrl": "https://kodansha.us/2024/11/26/find-the-perfect-manga-with-kodanshas-2024-holiday-gift-guide/",
+          "sourceUrl": "https://kodansha.us/series/penguin-and-house/",
+          "authorityClass": "publisherAuthorizedPlatform",
+          "sourceType": "manual",
+          "readerPublisher": "Kodansha",
+          "chapterId": "3051d494-5e06-41c4-b080-98bb207949f3",
+          "chapterPageCount": 14,
+          "sampleRefs": [
+            "reader page 7",
+            "reader page 6",
+            "reader page 11",
+            "reader page 10",
+            "reader page 13",
+            "reader page 12"
+          ],
+          "contexts": ["bathroom and hallway chores", "kitchen cooking", "meal and return home"],
+          "seriesOverlapWithFrozenCohort": false
+        },
+        {
+          "workId": "sheetas-little-big-world",
+          "title": "Sheeta's Little Big World",
+          "creators": ["Yuki Kamba"],
+          "volumeCount": 3,
+          "representativeIsbn": "9798888775479",
+          "volume1To3Isbns": [
+            ["9798894787046", "9798888775479"],
+            ["9798894787596", "9798888775486"],
+            ["9798894788296", "9798888775493"]
+          ],
+          "demographicEvidenceUrl": "https://kodansha.us/2025/11/25/browse-the-kodansha-gift-guide-for-winning-holiday-gift-recommendations/",
+          "sourceUrl": "https://kodansha.us/series/sheetas-little-big-world/",
+          "authorityClass": "publisherAuthorizedPlatform",
+          "sourceType": "manual",
+          "readerPublisher": "Kodansha",
+          "chapterId": "1c5001f1-9a76-461c-ab4e-0bcc69481f0f",
+          "chapterPageCount": 42,
+          "sampleRefs": [
+            "reader page 9",
+            "reader page 8",
+            "reader page 17",
+            "reader page 16",
+            "reader page 25",
+            "reader page 24"
+          ],
+          "contexts": ["forest acorn gathering", "log village panorama", "night interior conversation"],
+          "seriesOverlapWithFrozenCohort": false
+        }
+      ]
+    },
+    {
+      "removedWorkId": "slam-dunk",
+      "demographic": "shonen",
+      "catalogRole": "anchor",
+      "onboardingEligible": true,
+      "minimumValidCandidates": 4,
+      "validCandidateCount": 5,
+      "candidates": [
+        {
+          "workId": "fairy-tail",
+          "title": "FAIRY TAIL",
+          "creators": ["Hiro Mashima"],
+          "volumeCount": 63,
+          "representativeIsbn": "9781612622767",
+          "volume1To3Isbns": [
+            ["9781612624600", "9781612622767"],
+            ["9781612624617", "9781612622774"],
+            ["9781612624624", "9781612622781"]
+          ],
+          "demographicEvidenceUrl": "https://shonenmagazine.com/info/entry/20260409fairytail20/",
+          "sourceUrl": "https://kodansha.us/series/fairy-tail/",
+          "authorityClass": "publisherAuthorizedPlatform",
+          "sourceType": "manual",
+          "readerPublisher": "Kodansha",
+          "chapterId": "184d20bb-d49c-4589-952f-1b2dc82ea243",
+          "chapterPageCount": 90,
+          "sampleRefs": [
+            "reader page 17",
+            "reader page 16",
+            "reader page 25",
+            "reader page 24",
+            "reader page 33",
+            "reader page 32"
+          ],
+          "contexts": ["magic shop and city street", "station and train", "restaurant and inn"],
+          "seriesOverlapWithFrozenCohort": false
+        },
+        {
+          "workId": "fire-force",
+          "title": "Fire Force",
+          "creators": ["Atsushi Ohkubo"],
+          "volumeCount": 34,
+          "representativeIsbn": "9781632363305",
+          "volume1To3Isbns": [
+            ["9781682335116", "9781632363305"],
+            ["9781682335529", "9781632363312"],
+            ["9781682336113", "9781632363787"]
+          ],
+          "demographicEvidenceUrl": "https://shonenmagazine.com/special_page/fireforce/",
+          "sourceUrl": "https://kodansha.us/series/fire-force/",
+          "authorityClass": "publisherAuthorizedPlatform",
+          "sourceType": "manual",
+          "readerPublisher": "Kodansha",
+          "chapterId": "17d7e552-f5a3-4f1f-83d3-17bd48aa496e",
+          "chapterPageCount": 58,
+          "sampleRefs": [
+            "reader page 17",
+            "reader page 16",
+            "reader page 25",
+            "reader page 24",
+            "reader page 33",
+            "reader page 32"
+          ],
+          "contexts": ["train and platform", "burning city", "fire brigade interior and suppression"],
+          "seriesOverlapWithFrozenCohort": false
+        },
+        {
+          "workId": "noragami-stray-god",
+          "title": "Noragami: Stray God",
+          "creators": ["Adachitoka"],
+          "volumeCount": 27,
+          "representativeIsbn": "9781612629063",
+          "volume1To3Isbns": [
+            ["9781632360182", "9781612629063"],
+            ["9781632360199", "9781612629070"],
+            ["9781632360205", "9781612629087"]
+          ],
+          "demographicEvidenceUrl": "https://gmaga.co/c/noragami.html",
+          "sourceUrl": "https://kodansha.us/series/noragami-stray-god/",
+          "authorityClass": "publisherAuthorizedPlatform",
+          "sourceType": "manual",
+          "readerPublisher": "Kodansha",
+          "chapterId": "d3cc16e6-ea58-4dd7-87cc-d4b97454264f",
+          "chapterPageCount": 74,
+          "sampleRefs": [
+            "reader page 9",
+            "reader page 8",
+            "reader page 17",
+            "reader page 16",
+            "reader page 25",
+            "reader page 24"
+          ],
+          "contexts": ["rooftop phone call", "classroom and school", "supernatural far shore"],
+          "seriesOverlapWithFrozenCohort": false
+        },
+        {
+          "workId": "the-seven-deadly-sins",
+          "title": "The Seven Deadly Sins",
+          "creators": ["Nakaba Suzuki"],
+          "volumeCount": 41,
+          "representativeIsbn": "9781612629216",
+          "volume1To3Isbns": [
+            ["9781612629223", "9781612629216"],
+            ["9781612629247", "9781612629230"],
+            ["9781612629261", "9781612629254"]
+          ],
+          "demographicEvidenceUrl": "https://shonenmagazine.com/info/entry/comics/%E4%B8%83%E3%81%A4%E3%81%AE%E5%A4%A7%E7%BD%AA/",
+          "sourceUrl": "https://kodansha.us/series/the-seven-deadly-sins/",
+          "authorityClass": "publisherAuthorizedPlatform",
+          "sourceType": "manual",
+          "readerPublisher": "Kodansha",
+          "chapterId": "65428188-c2d1-493d-8e0d-5794849cd107",
+          "chapterPageCount": 68,
+          "sampleRefs": [
+            "reader page 9",
+            "reader page 8",
+            "reader page 17",
+            "reader page 16",
+            "reader page 25",
+            "reader page 24"
+          ],
+          "contexts": ["forest tavern exterior and kitchen", "tavern bar fight", "meal and dialogue"],
+          "seriesOverlapWithFrozenCohort": false
+        },
+        {
+          "workId": "tokyo-revengers",
+          "title": "Tokyo Revengers",
+          "creators": ["Ken Wakui"],
+          "volumeCount": 31,
+          "representativeIsbn": "9781642125153",
+          "volume1To3Isbns": [
+            ["9781642125153"],
+            ["9781642125801"],
+            ["9781642126174"]
+          ],
+          "demographicEvidenceUrl": "https://shonenmagazine.com/info/entry/20250917tokyorevengers/",
+          "sourceUrl": "https://kodansha.us/series/tokyo-revengers/",
+          "authorityClass": "publisherAuthorizedPlatform",
+          "sourceType": "manual",
+          "readerPublisher": "Kodansha",
+          "chapterId": "dfb7c385-0e78-4ffb-9da7-b78ee3e512c6",
+          "chapterPageCount": 68,
+          "sampleRefs": [
+            "reader page 17",
+            "reader page 16",
+            "reader page 25",
+            "reader page 24",
+            "reader page 33",
+            "reader page 32"
+          ],
+          "contexts": ["Shibuya station friend group", "park gang gathering", "assault site and aftermath"],
+          "seriesOverlapWithFrozenCohort": false
+        }
+      ]
+    }
+  ],
+  "rejections": [
+    {
+      "workId": "with-a-dog-and-a-cat-every-day-is-fun",
+      "stage": "art-prerequisite",
+      "reason": "The eight-page official chapter contains only one readable manga interior page after decoration, title, author note, and cast pages are excluded.",
+      "sourceUrl": "https://kodansha.us/series/with-a-dog-and-a-cat-every-day-is-fun/"
+    },
+    {
+      "workId": "chis-sweet-home",
+      "stage": "series-overlap",
+      "reason": "Removed before formal lead registration because Chi's Sweet Adventures already represents the same franchise; workId ascending retained the registered lead."
+    }
+  ],
+  "sourceRouteScreenOuts": [
+    {
+      "workIds": ["assassination-classroom", "black-clover", "dandadan", "sakamoto-days"],
+      "source": "VIZ",
+      "reason": "The official pages advertised a preview, but the reader exposed no independently verifiable internal pages after the login refresh endpoint returned 403."
+    },
+    {
+      "workIds": ["blue-box", "dandadan", "kaiju-no-8", "sakamoto-days"],
+      "source": "MANGA Plus",
+      "reason": "The official reader returned error 12020803 and exposed no internal pages for verification."
+    }
+  ]
+}

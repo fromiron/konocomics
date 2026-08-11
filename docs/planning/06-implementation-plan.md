@@ -60,7 +60,16 @@ Stage E  시그니처 폴리시 + PWA + 다크     (슬라이스 11~12)
 
 ## 게이트 G1 — Sanity Check (데이터·사람 작업)
 
-50작품 주석(annotation-guide 준수, 15~20% 블라인드 재태깅 포함) → 본인+지인 2~3명 프로필로 CLI 리포트 검토. 통과 기준은 `02` §7-1. **실패 시 팩터 사전·산식 수치를 수정하고 반복(코드 슬라이스 진행 중단).**
+1. `annotation-guide.md`의 Art 출처·표본·판본 정책 버전을 고정한다.
+2. 정확히 50개의 서로 다른 `recommendationEligible` Work를 선택하고 ID·정책 버전을 cohort manifest로 동결한다.
+3. 50작품의 전 축 evidence audit을 끝낸다. coverage가 먼저 통과해도 중단하지 않으며 작품명·validator 예외를 만들지 않는다. 미달 작품 교체 시 사전 기록한 선택 규칙을 적용하고 cohort를 다시 동결한다.
+4. 전체 후보를 임시 디렉터리에서 빌드·검증한 뒤 완성본만 원자적으로 게시한다. 실패 시 기존 후보와 source는 불변이어야 한다.
+5. 동결 ID에서 결정론적으로 15~20%를 선택해 원점수를 숨긴 블라인드 재태깅을 수행하고 차이를 조정한다. cohort나 정책이 바뀌면 이 단계 결과를 폐기하고 2단계부터 반복한다.
+6. 수용한 조정을 반영해 후보를 다시 원자적으로 빌드·검증하고, 본인+지인 2~3명 프로필로 CLI 리포트를 검토한다.
+
+작품을 교체할 때는 후보 팩터를 가린 상태에서 전 후보를 먼저 주석하고 다음 계약을 적용한다. 13개 non-Art 축의 shared-known pair가 9개 이상이고 Narrative·Tone을 모두 포함해야 하며, `axisDistance = mean(abs(candidate − removed) / 4)`다. Genre Jaccard는 set 교집합/합집합, Theme Jaccard는 tag별 centrality의 `sum(min) / sum(max)`다. 최종 거리는 `0.70 × axisDistance + 0.15 × (1 − Genre Jaccard) + 0.15 × (1 − centrality-weighted Theme Jaccard)`다. `unknown` pair와 Art·시장·리뷰·인기·추천 결과는 제외한다. 두 슬롯의 합산 거리가 가장 작은 조합부터 code-unit `workId` 오름차순으로 검사하고, demographic·catalogRole·onboarding count, 기존 Genre·central Theme, non-Art 축의 기존 최솟값·최댓값과 점유 value bin을 모두 보존하는 첫 조합을 선택한다. 선택과 입력 hash는 추천 결과를 보기 전에 replacement manifest로 동결한다.
+
+통과 기준은 `02` §7-1이다. **실패 시 팩터 사전·산식 수치를 수정하고 반복하며 코드 슬라이스 진행을 중단한다.**
 
 ## 슬라이스 4 — 블라인드 테스트 하니스 + 150작품
 

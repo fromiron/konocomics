@@ -1,0 +1,14 @@
+id,workId,volumeNumber,isbn,releaseDate,editionKind,isRepresentative,evidenceId
+one-piece-v1,one-piece,1,9784088725093,1997-12-24,standard,true,ev-one-piece
+naruto-v1,naruto,1,9784088728407,2000-03-03,standard,true,ev-naruto
+dragon-ball-v1,dragon-ball,1,9784088518312,1985-09-10,standard,true,ev-dragon-ball
+attack-on-titan-v1,attack-on-titan,1,9784063842760,2010-03-17,standard,true,ev-attack-on-titan
+demon-slayer-v1,demon-slayer,1,9784088807232,2016-06-03,standard,true,ev-demon-slayer
+jujutsu-kaisen-v1,jujutsu-kaisen,1,9784088815169,2018-07-04,standard,true,ev-jujutsu-kaisen
+my-hero-academia-v1,my-hero-academia,1,9784088802640,2014-11-04,standard,true,ev-my-hero-academia
+hunter-x-hunter-v1,hunter-x-hunter,1,9784088725710,1998-06-04,standard,true,ev-hunter-x-hunter
+jojo-bizarre-adventure-v1,jojo-bizarre-adventure,1,9784088511269,1987-08-10,standard,true,ev-jojo-bizarre-adventure
+berserk-v1,berserk,1,9784592135746,1990-11-26,standard,true,ev-berserk
+vinland-saga-v1,vinland-saga,1,9784063144239,2006-08-23,standard,true,ev-vinland-saga
+vagabond-v1,vagabond,1,9784063286199,1999-03-22,standard,true,ev-vagabond
+golden-kamuy-v1,golden-kamuy,1,9784088900827,2015-01-19,standard,true,ev-golden-kamuy

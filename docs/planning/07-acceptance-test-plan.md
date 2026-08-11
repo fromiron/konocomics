@@ -53,6 +53,14 @@
 - providerCache TTL: 만료 판정(시간 주입) 경계.
 - Route Handler: 쿼리 검증 400, 필드 축소, `_ex` 재작성, 타임아웃→502.
 
+### G1 데이터 게이트 추가 계약
+
+1. cohort manifest는 정확히 50개의 서로 다른 `recommendationEligible` Work만 허용한다. 49·51개, 중복 ID, eligibility 불일치, manifest 밖 추천 작품은 각각 실패한다.
+2. Art evidence 픽스처는 원권리 출판사·정식 라이선스 해외 출판사·출판사 승인 플랫폼을 허용하고, 권리 관계 미확인·표지만 존재·판독 가능한 내부 페이지/동등 프레임 6개 미만·2개 미만 맥락·정적 축당 2개 미만 참조·연속 동작 없는 known `motionImpact`·정확한 페이지/타임코드 또는 판본 관계 누락을 거부한다. 근거 미달 축은 `unknown`이어야 하며 이를 `notApplicable`로 바꾸거나 coverage 0.30 통과로 검사를 우회하지 못한다.
+3. 후보 빌드 중 어느 검사에서 실패해도 기존 후보와 source가 byte-identical하고 임시 파일만 정리된다. 성공 시에는 같은 manifest의 완전한 파일 집합만 한 번에 게시된다.
+4. 같은 manifest·정책 버전은 항상 같은 15~20% 블라인드 표본을 만들고 표본은 cohort의 부분집합이며 입력에 원점수가 없다. cohort 또는 정책 버전 변경은 기존 표본을 무효화하고 새 표본을 만든다.
+5. replacement selector는 Art·시장·리뷰·추천 결과를 입력받지 않고, unknown pair를 건너뛰며, shared-known 9축·Narrative/Tone 경계를 강제한다. 후보 입력 순열에도 동일한 합산 거리·code-unit tie-break 결과를 내고, Genre·central Theme·non-Art 최솟값/최댓값·점유 value bin 보존 실패 조합은 다음 순위로 넘긴다.
+
 ## 4. E2E (Playwright — 5 시나리오 고정, 확장 금지)
 
 Chromium + 모바일 뷰포트(390×844) 프로젝트 2개로 실행. 라쿠텐은 라우트 모킹.

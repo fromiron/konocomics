@@ -1,0 +1,14 @@
+id,workId,targetType,targetId,sourceType,sourceUrl,fetchedAt,extractorVersion,reviewedByHuman,confidence,notes
+ev-made-in-abyss,made-in-abyss,work,made-in-abyss,model,https://takecomic.jp/series/3f846451aff2d/new,2026-08-11T06:28:47+09:00,g1-chunk-b-model-v1,false,0.90,竹書房公式連載の1巻から3巻と現行15巻および楽天ブックス1巻書誌を照合したモデル初稿
+ev-land-of-the-lustrous,land-of-the-lustrous,work,land-of-the-lustrous,model,https://www.kodansha.co.jp/comic/products/0000047266,2026-08-11T06:28:47+09:00,g1-chunk-b-model-v1,false,0.91,講談社の1巻から3巻紹介と完結13巻および楽天ブックス1巻書誌を照合したモデル初稿
+ev-mushishi,mushishi,work,mushishi,model,https://www.kodansha.co.jp/comic/products/0000030168,2026-08-11T06:28:47+09:00,g1-chunk-b-model-v1,false,0.91,講談社の1巻から3巻紹介と完結10巻および楽天ブックス1巻書誌を照合したモデル初稿
+ev-dr-stone,dr-stone,work,dr-stone,model,https://books.shueisha.co.jp/items/contents_amp.html?isbn=978-4-08-881184-0,2026-08-11T06:28:47+09:00,g1-chunk-b-model-v1,false,0.93,集英社の1巻から3巻紹介と27巻および楽天ブックス1巻書誌を照合したモデル初稿
+ev-promised-neverland,promised-neverland,work,promised-neverland,model,https://books.shueisha.co.jp/items/contents.html?isbn=978-4-08-880872-7,2026-08-11T06:28:47+09:00,g1-chunk-b-model-v1,false,0.93,集英社の1巻から3巻紹介と完結20巻および楽天ブックス1巻書誌を照合したモデル初稿
+ev-erased,erased,work,erased,model,https://www.kadokawa.co.jp/product/321208000180/,2026-08-11T06:28:47+09:00,g1-chunk-b-model-v1,false,0.91,KADOKAWAの1巻から3巻紹介と同シリーズ9巻および楽天ブックス1巻書誌を照合したモデル初稿
+ev-20th-century-boys,20th-century-boys,work,20th-century-boys,model,https://shogakukan-comic.jp/book?isbn=9784091855312,2026-08-11T06:28:47+09:00,g1-chunk-b-model-v1,false,0.93,小学館の1巻から3巻紹介と全22巻一覧および楽天ブックス1巻書誌を照合したモデル初稿
+ev-pluto,pluto,work,pluto,model,https://shogakukan-comic.jp/book?isbn=9784091874313,2026-08-11T06:28:47+09:00,g1-chunk-b-model-v1,false,0.93,小学館の1巻から3巻紹介と全8巻一覧および楽天ブックス1巻書誌を照合したモデル初稿
+ev-ghost-in-the-shell,ghost-in-the-shell,work,ghost-in-the-shell,model,https://www.kodansha.co.jp/comic/products/0000006425,2026-08-11T06:28:47+09:00,g1-chunk-b-model-v1,false,0.90,講談社の原作1巻と2巻および1.5巻一覧と楽天ブックス1巻書誌を照合したモデル初稿
+ev-akira,akira,work,akira,model,https://www.kodansha.co.jp/comic/products/0000002123,2026-08-11T06:28:47+09:00,g1-chunk-b-model-v1,false,0.93,講談社の1巻から3巻紹介と全6巻および楽天ブックス1巻書誌を照合したモデル初稿
+ev-nausicaa-of-the-valley-of-the-wind,nausicaa-of-the-valley-of-the-wind,work,nausicaa-of-the-valley-of-the-wind,model,https://www.ghibli.jp/shuppan/old/books/b_body.html,2026-08-11T06:28:47+09:00,g1-chunk-b-model-v1,false,0.90,スタジオジブリの原作全7巻案内と楽天ブックス1巻書誌を照合したモデル初稿
+ev-witch-hat-atelier,witch-hat-atelier,work,witch-hat-atelier,model,https://www.kodansha.co.jp/comic/products/0000018887,2026-08-11T06:28:47+09:00,g1-chunk-b-model-v1,false,0.93,講談社の1巻から3巻紹介と現行16巻および楽天ブックス1巻書誌を照合したモデル初稿
+ev-mob-psycho-100,mob-psycho-100,work,mob-psycho-100,model,https://shogakukan-comic.jp/book?isbn=9784091241023,2026-08-11T06:28:47+09:00,g1-chunk-b-model-v1,false,0.93,小学館の1巻から3巻紹介と全16巻一覧および楽天ブックス1巻書誌を照合したモデル初稿

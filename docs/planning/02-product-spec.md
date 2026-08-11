@@ -63,7 +63,7 @@
 ### Catalog 범위
 
 - 우선 장르: 액션·판타지·역사·SF·미스터리 / 인접: 코미디·무술·호러·일상·로맨스·스포츠
-- 규모: sanity check 50 → 블라인드 테스트·공개 MVP 150 (Anchor 30~40 / Bridge 30~40 / Discovery 70+)
+- 규모: sanity check는 동결된 정확히 50개의 서로 다른 `recommendationEligible` Work → 블라인드 테스트·공개 MVP 150 (Anchor 30~40 / Bridge 30~40 / Discovery 70+)
 - 역할 분리: `onboardingEligible` / `recommendationEligible` / `libraryOnly`
 - Anchor는 취향 판독기 역할(대비 축 커버)이어야 하며 단순 인기작 나열이 아니다.
 
@@ -277,6 +277,7 @@ positiveAnchorScore = clamp(bestMatch + consensusBonus, 0, 1);
 - `bayesianRating = (n·avg + 20·catalogAvg) / (n + 20)` — 1권 리뷰 기준, priorCount 20에서 시작.
 - `maturity = min(1, log1p(volumeCount) / log1p(15))` — "검증된 작품 우선" 정책 선택 시에만 tie-break 우선순위 상승.
 - 리뷰가 없으면 `n=0`으로 Bayesian 결과는 catalog average다. 결측 reviewCount는 0, 결측 정적 volumeCount는 0이다.
+- `catalogAvg`는 대표 1권의 `reviewAverage`가 있고 `reviewCount>0`인 작품만 동일 가중으로 산술평균한다. 리뷰 0건 작품은 명시적 context entry를 유지하되 평균 분모에서 제외하며, 관측 작품이 하나도 없으면 catalog build를 실패시킨다.
 
 근접 동률은 pairwise comparator를 쓰지 않는다. 최종 tasteScore를 소수 12자리로 반올림해 내림차순 정렬하고, 아직 cohort에 들지 않은 첫 작품을 leader로 삼아 leader와 차가 `<0.025`인 연속 작품을 같은 cohort로 묶는다. 정확히 0.025 차이면 새 cohort다.
 
@@ -526,7 +527,7 @@ type BaselineRecommendation = {
 
 ### 단계 게이트
 
-1. **Sanity Check (50작품, 본인+지인 2~3명):** CLI 리포트로 Top 10 육안 검증. 통과 기준 — 명백히 이상한 Top 10 없음 / 소수 취향 생존 / unknown 다수 작품 과대평가 없음 / 부정 사유가 올바른 팩터에만 작동.
+1. **Sanity Check (동결 cohort 50작품, 본인+지인 2~3명):** cohort는 정확히 50개의 서로 다른 `recommendationEligible` Work이며 evidence audit·블라인드 재태깅·CLI 리포트 사이에 동일해야 한다. `annotation-guide.md`의 Art 근거 정책을 제목 예외 없이 전 작품·전 축에 적용하고, coverage 통과를 근거 검수 완료로 간주하지 않는다. CLI 리포트로 Top 10을 육안 검증한다. 통과 기준 — 명백히 이상한 Top 10 없음 / 소수 취향 생존 / unknown 다수 작품 과대평가 없음 / 부정 사유가 올바른 팩터에만 작동.
 2. **블라인드 테스트 (150작품, 다독자 10명):** Baseline(장르 중첩+시장 신호+축적도) vs Taste Engine. 출처 숨김, 설명 공개 전/후 2단 설문. 로컬 웹 하니스 사용.
 3. **GO 기준 (방향성 판단, 통계적 유의성 주장 안 함):** 10명 중 7명 이상 Taste ≥ Baseline / Unknown Want-to-Read 우세 / Explanation Agreement ≥ 70% / Disliked Leakage 악화 없음 / Holdout Recall@10 열세 없음.
 4. GO 이후에만 Web MVP 본격 구현. 2회 수정 후에도 열세이고 DNA 콘텐츠 가치도 없으면 범위 축소·방향 전환 검토.

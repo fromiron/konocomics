@@ -168,17 +168,34 @@ export const themeSourceRowSchema = z.strictObject({
   evidenceId: catalogSourceId,
 });
 
-export const recommendationContextSourceRowSchema = z.strictObject({
-  workId: catalogSourceId,
-  catalogRole: z.enum(["anchor", "bridge", "discovery"]),
-  seriesGroupId: optionalText.pipe(catalogSourceId.optional()),
-  volumeCount: csvInteger.pipe(z.number().int().nonnegative()),
-  reviewAverage: z.union([
-    z.literal("").transform(() => undefined),
-    csvNumber.pipe(z.number().min(0).max(5)),
-  ]),
-  reviewCount: optionalCsvInteger.pipe(z.number().int().nonnegative().optional()),
-});
+export const recommendationContextSourceRowSchema = z
+  .strictObject({
+    workId: catalogSourceId,
+    catalogRole: z.enum(["anchor", "bridge", "discovery"]),
+    seriesGroupId: optionalText.pipe(catalogSourceId.optional()),
+    volumeCount: csvInteger.pipe(z.number().int().nonnegative()),
+    reviewAverage: z.union([
+      z.literal("").transform(() => undefined),
+      csvNumber.pipe(z.number().min(0).max(5)),
+    ]),
+    reviewCount: optionalCsvInteger.pipe(z.number().int().nonnegative().optional()),
+  })
+  .superRefine((row, context) => {
+    if (row.reviewAverage === undefined && (row.reviewCount ?? 0) > 0) {
+      context.addIssue({
+        code: "custom",
+        path: ["reviewAverage"],
+        message: `Missing reviewAverage for reviewed work ${row.workId}`,
+      });
+    }
+    if (row.reviewAverage !== undefined && (row.reviewCount ?? 0) === 0) {
+      context.addIssue({
+        code: "custom",
+        path: ["reviewCount"],
+        message: `reviewAverage requires a positive reviewCount for work ${row.workId}`,
+      });
+    }
+  });
 
 export const recommendationConfigSourceRowSchema = z.strictObject({
   catalogAverageRating: csvNumber.pipe(z.number().min(0).max(5)),

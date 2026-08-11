@@ -32,7 +32,7 @@ kingdom,emotionalWarmth,known,1,0.82,ev-kingdom
 kingdom,artRealism,known,4,0.92,ev-kingdom
 kingdom,artDensity,known,4,0.94,ev-kingdom
 kingdom,visualSoftness,known,0,0.91,ev-kingdom
-kingdom,motionImpact,known,4,0.96,ev-kingdom
+kingdom,motionImpact,unknown,,,ev-kingdom
 fullmetal-alchemist,progression,known,1,0.74,ev-fullmetal-alchemist
 fullmetal-alchemist,problemSolving,known,4,0.95,ev-fullmetal-alchemist
 fullmetal-alchemist,strategy,known,2,0.83,ev-fullmetal-alchemist
@@ -64,8 +64,8 @@ death-note,mentalStress,known,4,0.97,ev-death-note
 death-note,romance,known,0,0.95,ev-death-note
 death-note,emotionalWarmth,known,0,0.94,ev-death-note
 death-note,artRealism,known,4,0.95,ev-death-note
-death-note,artDensity,known,3,0.92,ev-death-note
-death-note,visualSoftness,known,1,0.89,ev-death-note
+death-note,artDensity,unknown,,,ev-death-note
+death-note,visualSoftness,unknown,,,ev-death-note
 death-note,motionImpact,known,1,0.85,ev-death-note
 spy-family,progression,known,2,0.82,ev-spy-family
 spy-family,problemSolving,known,3,0.88,ev-spy-family

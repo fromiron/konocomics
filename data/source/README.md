@@ -29,9 +29,17 @@
 
 검토 완료 상태에는 `annotationReviewedAt`과 `annotationReviewReference`가 모두 필요하며, 참조 보고서가 실제로 존재하지 않으면 validation이 실패한다.
 
+## G1 동결·빌드 계약
+
+- G1 cohort는 서로 다른 Work ID를 가진 정확히 50개 `recommendationEligible=true` 작품이다. 작품 목록과 정책 버전을 먼저 manifest로 동결하고, evidence audit·블라인드 표본·CLI 리포트가 모두 같은 목록을 사용한다.
+- `docs/factors/annotation-guide.md`의 Art 근거 최소선을 50작품 전부에 동일하게 적용한다. 작품명·validator별 예외는 없고 coverage 통과만으로 evidence audit을 중단하지 않는다.
+- 후보 빌더는 전체 source 후보를 sibling 임시 디렉터리에 만든 뒤 cohort·evidence·Catalog 검증을 모두 통과한 완성 디렉터리만 원자적으로 게시한다. 어느 단계에서든 실패하면 기존 후보와 `data/source/`는 byte-identical하게 유지한다.
+- 블라인드 재태깅 표본은 동결 manifest의 ID만으로 결정론적으로 15~20%를 선택하고, 선택 목록을 원점수 공개 전에 기록한다. 입력에는 원점수를 넣지 않는다. 작품 목록이나 정책 버전이 바뀌면 기존 표본·조정 결과를 폐기하고 새 manifest에서 다시 선택한다.
+- 근거 미달 작품을 교체할 때는 `06-implementation-plan.md`의 non-Art 거리와 다양성 보존 규칙을 사용하고, 전체 후보 주석·입력 hash·모든 조합의 거리·guard 결과·선택을 replacement manifest에 기록한다. 추천 결과를 본 뒤 후보를 바꾸지 않는다.
+
 ## 추천 context
 
-모든 `recommendationEligible` 작품은 `recommendation-context.csv`에 정확히 한 행이 필요하다. `seriesGroupId`, `reviewAverage`, `reviewCount`는 결측을 허용하지만 `catalogRole`과 `volumeCount`는 필수다. `recommendation-config.csv`의 단일 `catalogAverageRating` 값은 0~5 범위여야 한다. Catalog와 이 context를 정규화한 공동 digest가 두 생성 artifact의 동일한 `catalogVersion`이 된다.
+모든 `recommendationEligible` 작품은 `recommendation-context.csv`에 정확히 한 행이 필요하다. `seriesGroupId`, `reviewAverage`, `reviewCount`는 결측을 허용하지만 `catalogRole`과 `volumeCount`는 필수다. 리뷰 0건을 확인한 대표권은 `reviewAverage`를 비우고 `reviewCount=0`으로 기록한다. `recommendation-config.csv`의 단일 `catalogAverageRating`은 `reviewAverage`가 있고 `reviewCount>0`인 대표권만 동일 가중으로 평균한 0~5 값이어야 한다. Catalog와 이 context를 정규화한 공동 digest가 두 생성 artifact의 동일한 `catalogVersion`이 된다.
 
 ## 그룹핑
 

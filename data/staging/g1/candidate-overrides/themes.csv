@@ -1,0 +1,14 @@
+workId,themeId,centrality,confidence,evidenceId
+fullmetal-alchemist,adventure,2,0.96,ev-fullmetal-alchemist
+fullmetal-alchemist,combat,2,0.96,ev-fullmetal-alchemist
+fullmetal-alchemist,investigation,2,0.96,ev-fullmetal-alchemist
+fullmetal-alchemist,crafting,2,0.90,ev-fullmetal-alchemist
+fullmetal-alchemist,revenge,1,0.86,ev-fullmetal-alchemist
+fullmetal-alchemist,politics,1,0.82,ev-fullmetal-alchemist
+beyond-the-clouds,adventure,2,0.85,blind-replacement-v1-reconciled-beyond-the-clouds
+beyond-the-clouds,crafting,1,0.85,blind-replacement-v1-reconciled-beyond-the-clouds
+beyond-the-clouds,foundFamily,1,0.85,blind-replacement-v1-reconciled-beyond-the-clouds
+beyond-the-clouds,exploration,1,0.85,blind-replacement-v1-reconciled-beyond-the-clouds
+noragami-stray-god,combat,2,0.90,blind-replacement-v1-reconciled-noragami-stray-god
+noragami-stray-god,investigation,1,0.85,blind-replacement-v1-reconciled-noragami-stray-god
+noragami-stray-god,foundFamily,2,0.90,blind-replacement-v1-reconciled-noragami-stray-god

@@ -1,0 +1,14 @@
+id,title,titleKana,creators,publisher,demographic,status,firstPublishedYear,genres,factorScope,onboardingEligible,recommendationEligible,libraryOnly,metadataConfidence,groupingConfidence,sourceAgreement,annotationReviewMethod,annotationReviewedAt,annotationReviewReference,evidenceId
+made-in-abyss,メイドインアビス,メイドインアビス,つくしあきひと,竹書房,seinen,ongoing,2012,action;fantasy;scienceFiction;horror,entry_1_3_volumes,true,true,false,0.96,0.99,0.96,unreviewed,,,ev-made-in-abyss
+land-of-the-lustrous,宝石の国,ホウセキノクニ,市川春子,講談社,seinen,completed,2012,action;fantasy;scienceFiction,entry_1_3_volumes,false,true,false,0.99,0.99,0.99,unreviewed,,,ev-land-of-the-lustrous
+mushishi,蟲師,ムシシ,漆原友紀,講談社,seinen,completed,1999,fantasy;mystery;horror;sliceOfLife,entry_1_3_volumes,true,true,false,0.99,0.99,0.99,unreviewed,,,ev-mushishi
+dr-stone,Dr.STONE,ドクターストーン,Boichi;稲垣理一郎,集英社,shonen,completed,2017,action;scienceFiction;comedy,entry_1_3_volumes,true,true,false,0.99,0.99,0.99,unreviewed,,,ev-dr-stone
+promised-neverland,約束のネバーランド,ヤクソクノネバーランド,白井カイウ;出水ぽすか,集英社,shonen,completed,2016,mystery;horror,entry_1_3_volumes,true,true,false,0.99,0.99,0.99,unreviewed,,,ev-promised-neverland
+erased,僕だけがいない街,ボクダケガイナイマチ,三部けい,KADOKAWA,seinen,completed,2012,mystery;scienceFiction,entry_1_3_volumes,false,true,false,0.98,0.99,0.97,unreviewed,,,ev-erased
+20th-century-boys,20世紀少年,ニジュッセイキショウネン,浦沢直樹,小学館,seinen,completed,1999,scienceFiction;mystery,entry_1_3_volumes,false,true,false,0.99,0.99,0.99,unreviewed,,,ev-20th-century-boys
+pluto,PLUTO,,浦沢直樹;手塚治虫;長崎尚志;手塚眞;手塚プロダクション,小学館,seinen,completed,2003,scienceFiction;mystery,entry_1_3_volumes,false,true,false,0.99,0.99,0.99,unreviewed,,,ev-pluto
+ghost-in-the-shell,攻殻機動隊,コウカクキドウタイ,士郎正宗,講談社,seinen,completed,1989,action;scienceFiction;mystery,entry_1_3_volumes,false,true,false,0.98,0.98,0.98,unreviewed,,,ev-ghost-in-the-shell
+akira,AKIRA,アキラ,大友克洋,講談社,seinen,completed,1982,action;scienceFiction,entry_1_3_volumes,true,true,false,0.99,0.99,0.99,unreviewed,,,ev-akira
+nausicaa-of-the-valley-of-the-wind,風の谷のナウシカ,カゼノタニノナウシカ,宮崎駿,徳間書店,general,completed,1982,action;fantasy;scienceFiction,entry_1_3_volumes,false,true,false,0.97,0.99,0.97,unreviewed,,,ev-nausicaa-of-the-valley-of-the-wind
+witch-hat-atelier,とんがり帽子のアトリエ,トンガリボウシノアトリエ,白浜鴎,講談社,seinen,ongoing,2016,fantasy,entry_1_3_volumes,true,true,false,0.99,0.99,0.99,unreviewed,,,ev-witch-hat-atelier
+mob-psycho-100,モブサイコ100,モブサイコヒャク,ONE,小学館,shonen,completed,2012,action;fantasy;comedy;sliceOfLife,entry_1_3_volumes,true,true,false,0.99,0.99,0.99,unreviewed,,,ev-mob-psycho-100

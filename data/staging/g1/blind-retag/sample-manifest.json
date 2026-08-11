@@ -1,0 +1,56 @@
+{
+  "schemaVersion": 1,
+  "algorithmVersion": "g1-blind-retag-sha256-v1",
+  "policyVersion": "g1-replacement-v1",
+  "cohortManifestSha256": "065e5b972cddd53367682fedf0ff1ced95b57358216f0c553cb65252f0cd97c8",
+  "cohortWorkIdsSha256": "306711f19cba4b3d9c755d411ee0649b563083437fad986e167618135b2aea6a",
+  "factorDictionarySha256": "a9c29a853a108aca1b9bb8d5d71a3e7d5d583303691c0b35cc6424c1e45ee8be",
+  "annotationGuideSha256": "f7dd1ec55d97bf9200fcec92ce270e7745a0d3aa4fe98a40c746fc56b6a777b3",
+  "sourceFileSha256": {
+    "works": "e7a93a87f3d89acae577f8b028e15644328ca15e633698507e0a284cfd1e8732",
+    "volumes": "eae9aab92b8f6becfa075b144060b409723f916558639822dcc16bfa366c380d",
+    "evidence": "5a4ce737fe04d283cd0200e83b07c26b44b5cfe8fac668cc2557a9d317f8a53f"
+  },
+  "populationSize": 50,
+  "sampleSize": 9,
+  "sampleRate": 0.18,
+  "ordering": "sha256-code-unit-ascending",
+  "selected": [
+    {
+      "workId": "jojo-bizarre-adventure",
+      "digest": "00c34beafd15550f6a88bcfe53c45e6a0a0aefd218ee90c9a496ee04384d0d85"
+    },
+    {
+      "workId": "berserk",
+      "digest": "014227b251091b67d55aa9958d6a2b3a3975af0fd576163222017f7d1680ae2b"
+    },
+    {
+      "workId": "dr-stone",
+      "digest": "02ab18f39fc246cb241f07cf07265e28acf0bdb4c30a1604c71e58ee9044f41f"
+    },
+    {
+      "workId": "20th-century-boys",
+      "digest": "052416e0bd82d7ea909a83d6e8e62b6cd8b84e16b2c4d005e80482b2ce348f03"
+    },
+    {
+      "workId": "dungeon-meshi",
+      "digest": "062fbc613c0ad254da777864546d0082e7f72413832bab70d487a6d6105ffbf5"
+    },
+    {
+      "workId": "kingdom",
+      "digest": "0ddf2f905357dffa979572a0305b5f66e9909b7a3ae2310bc3977ffecf04f8e0"
+    },
+    {
+      "workId": "bocchi-the-rock",
+      "digest": "0deb99c1a3e75c14f291ffd192cfbac908f046a85528ef25bed8e4b02898566a"
+    },
+    {
+      "workId": "monster",
+      "digest": "1a8fc74fa6964a51feabd7381fc7c9a156ac5220cacc723126cd0eff3a911e50"
+    },
+    {
+      "workId": "blue-lock",
+      "digest": "255acd0ad3ee883bf462151c1cfaa892d91185b4970bc9ab52f3402d0a367cb8"
+    }
+  ]
+}

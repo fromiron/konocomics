@@ -1,0 +1,14 @@
+id,workId,volumeNumber,isbn,releaseDate,editionKind,isRepresentative,evidenceId
+made-in-abyss-v1,made-in-abyss,1,9784812483800,2013-07-31,standard,true,ev-made-in-abyss
+land-of-the-lustrous-v1,land-of-the-lustrous,1,9784063879063,2013-07-23,standard,true,ev-land-of-the-lustrous
+mushishi-v1,mushishi,1,9784063142556,2000-11-20,standard,true,ev-mushishi
+dr-stone-v1,dr-stone,1,9784088811840,2017-07-04,standard,true,ev-dr-stone
+promised-neverland-v1,promised-neverland,1,9784088808727,2016-12-02,standard,true,ev-promised-neverland
+erased-v1,erased,1,9784041205570,2013-01-25,standard,true,ev-erased
+20th-century-boys-v1,20th-century-boys,1,9784091855312,2000-01-29,standard,true,ev-20th-century-boys
+pluto-v1,pluto,1,9784091874313,2004-09-30,standard,true,ev-pluto
+ghost-in-the-shell-v1,ghost-in-the-shell,1,9784063132489,1991-10-02,standard,true,ev-ghost-in-the-shell
+akira-v1,akira,1,9784061037113,1984-09-14,standard,true,ev-akira
+nausicaa-of-the-valley-of-the-wind-v1,nausicaa-of-the-valley-of-the-wind,1,9784197735815,1989-07-22,standard,true,ev-nausicaa-of-the-valley-of-the-wind
+witch-hat-atelier-v1,witch-hat-atelier,1,9784063886900,2017-01-23,standard,true,ev-witch-hat-atelier
+mob-psycho-100-v1,mob-psycho-100,1,9784091241023,2012-11-16,standard,true,ev-mob-psycho-100

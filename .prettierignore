@@ -1,6 +1,8 @@
 .next
 coverage
 data/generated
+data/staging/g1/original-cohort-freeze.json
+data/staging/g1/replacement-pool-freeze.json
 src/data/generated
 docs/factors/factor-dictionary.md
 docs/planning

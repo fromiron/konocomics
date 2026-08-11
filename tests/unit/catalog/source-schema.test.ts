@@ -12,19 +12,21 @@ import {
 
 describe("CSV diagnostics", () => {
   it("reports an invalid axis value at the exact data row and field", () => {
-    const result = parseCsvContent(
-      "factors.csv",
-      "workId,axisId,state,value,confidence,evidenceId\nwork,progression,known,5,0.9,evidence\n",
-      factorSourceRowSchema,
-    );
-    expect(result.issues).toEqual([
-      expect.objectContaining({
-        code: "CSV_ROW_INVALID",
-        file: "factors.csv",
-        row: 2,
-        field: "value",
-      }),
-    ]);
+    for (const value of ["5", ""]) {
+      const result = parseCsvContent(
+        "factors.csv",
+        `workId,axisId,state,value,confidence,evidenceId\nwork,progression,known,${value},0.9,evidence\n`,
+        factorSourceRowSchema,
+      );
+      expect(result.issues).toEqual([
+        expect.objectContaining({
+          code: "CSV_ROW_INVALID",
+          file: "factors.csv",
+          row: 2,
+          field: "value",
+        }),
+      ]);
+    }
   });
 
   it("reports an invalid theme centrality at the exact row", () => {
@@ -147,6 +149,22 @@ describe("CSV diagnostics", () => {
     expect(invalid.issues.map((issue) => issue.field)).toEqual(
       expect.arrayContaining(["catalogRole", "reviewAverage", "reviewCount"]),
     );
+
+    for (const [reviewAverage, reviewCount, field] of [
+      ["4.5", "0", "reviewCount"],
+      ["4.5", "", "reviewCount"],
+      ["", "1", "reviewAverage"],
+    ]) {
+      const inconsistent = parseCsvContent(
+        "recommendation-context.csv",
+        [
+          "workId,catalogRole,seriesGroupId,volumeCount,reviewAverage,reviewCount",
+          `work,bridge,,1,${reviewAverage},${reviewCount}`,
+        ].join("\n"),
+        recommendationContextSourceRowSchema,
+      );
+      expect(inconsistent.issues[0]).toEqual(expect.objectContaining({ field }));
+    }
   });
 
   it("bounds the single recommendation config rating", () => {

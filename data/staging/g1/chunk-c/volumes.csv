@@ -1,0 +1,14 @@
+id,workId,volumeNumber,isbn,releaseDate,editionKind,isRepresentative,evidenceId
+natsumes-book-of-friends-v1,natsumes-book-of-friends,1,9784592171584,2005-10-05,standard,true,ev-g1c-natsumes-book-of-friends
+march-comes-in-like-a-lion-v1,march-comes-in-like-a-lion,1,9784592145110,2008-02-22,standard,true,ev-g1c-march-comes-in-like-a-lion
+a-silent-voice-v1,a-silent-voice,1,9784063949735,2013-11-15,standard,true,ev-g1c-a-silent-voice
+your-lie-in-april-v1,your-lie-in-april,1,9784063713015,2011-09-16,standard,true,ev-g1c-your-lie-in-april
+kaguya-sama-v1,kaguya-sama,1,9784088904320,2016-03-18,standard,true,ev-g1c-kaguya-sama
+horimiya-v1,horimiya,1,9784757535435,2012-03-27,standard,true,ev-g1c-horimiya
+kimi-ni-todoke-v1,kimi-ni-todoke,1,9784088460611,2006-05-25,standard,true,ev-g1c-kimi-ni-todoke
+nana-v1,nana,1,9784088562094,2000-05-15,standard,true,ev-g1c-nana
+skip-and-loafer-v1,skip-and-loafer,1,9784065142097,2019-01-23,standard,true,ev-g1c-skip-and-loafer
+bocchi-the-rock-v1,bocchi-the-rock,1,9784832270725,2019-02-27,standard,true,ev-g1c-bocchi-the-rock
+haikyu-v1,haikyu,1,9784088704531,2012-06-04,standard,true,ev-g1c-haikyu
+slam-dunk-v1,slam-dunk,1,9784088716114,1991-02-08,standard,true,ev-g1c-slam-dunk
+hajime-no-ippo-v1,hajime-no-ippo,1,9784063115321,1990-02-09,standard,true,ev-g1c-hajime-no-ippo

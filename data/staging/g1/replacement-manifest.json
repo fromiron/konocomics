@@ -1,0 +1,254 @@
+{
+  "schemaVersion": 1,
+  "policyVersion": "g1-replacement-v1",
+  "inputHashes": {
+    "originalCohortFreezeFile": "5f970ead7bf0fddf5c96b58d7efeab6f96cb3ea32b04e94231bb2f3331b75eb3",
+    "replacementPoolFreezeFile": "efbc3b19e7018d07b7e1b9e2674c82a95a481fb4cd99fb480326ea99a0255c39",
+    "originalSelectionProjection": "7b626f76ce1aa168e9d283bca7e9d9ad7a280729ae26bec08a0c272cbad8ae0d",
+    "reconciledFactorsFile": "2664d6ea7e64ab85e51012b3b6652324ff63b2c0d48131b0911c8575c548adf8",
+    "reconciledGenresFile": "0c2546a2d70f05115c3f0285c7650095ba47c7e7aafa708c32df9a672b59fbb1",
+    "reconciledThemesFile": "742579f45e6fee74fa001bfe4b847155abb373d6db330bf380bf484ed480e86c"
+  },
+  "selectionContract": {
+    "minimumSharedKnownNonArtAxes": 9,
+    "requiredNonArtGroups": ["narrative", "tone"],
+    "distanceWeights": { "axis": 0.7, "genre": 0.15, "theme": 0.15 },
+    "excludedSignals": ["art", "market", "popularity", "recommendationOutput", "review"],
+    "pairOrdering": "totalDistance-then-code-unit-workId"
+  },
+  "replacements": [
+    {
+      "removedWorkId": "nausicaa-of-the-valley-of-the-wind",
+      "selectedWorkId": "beyond-the-clouds",
+      "inherited": {
+        "demographic": "general",
+        "catalogRole": "discovery",
+        "onboardingEligible": false
+      },
+      "distance": {
+        "sharedKnownAxisIds": [
+          "progression",
+          "problemSolving",
+          "strategy",
+          "pacing",
+          "mysteryReveal",
+          "worldBuilding",
+          "characterArcWeight",
+          "relationshipStructure",
+          "comedy",
+          "darkness",
+          "mentalStress",
+          "romance",
+          "emotionalWarmth"
+        ],
+        "axisDistance": 0.38461538461538464,
+        "genreDistance": 0.33333333333333337,
+        "themeDistance": 0.9333333333333333,
+        "totalDistance": 0.4592307692307692
+      }
+    },
+    {
+      "removedWorkId": "slam-dunk",
+      "selectedWorkId": "noragami-stray-god",
+      "inherited": { "demographic": "shonen", "catalogRole": "anchor", "onboardingEligible": true },
+      "distance": {
+        "sharedKnownAxisIds": [
+          "progression",
+          "problemSolving",
+          "strategy",
+          "pacing",
+          "mysteryReveal",
+          "worldBuilding",
+          "characterArcWeight",
+          "relationshipStructure",
+          "comedy",
+          "darkness",
+          "romance",
+          "emotionalWarmth"
+        ],
+        "axisDistance": 0.25,
+        "genreDistance": 0.75,
+        "themeDistance": 1,
+        "totalDistance": 0.4375
+      }
+    }
+  ],
+  "selectedPairRank": 1,
+  "pairRanking": [
+    {
+      "rank": 1,
+      "candidateWorkIds": ["beyond-the-clouds", "noragami-stray-god"],
+      "totalDistance": 0.8967307692307692,
+      "diversityPassed": true,
+      "diversityFailures": []
+    },
+    {
+      "rank": 2,
+      "candidateWorkIds": ["beyond-the-clouds", "fairy-tail"],
+      "totalDistance": 0.9113141025641025,
+      "diversityPassed": true,
+      "diversityFailures": []
+    },
+    {
+      "rank": 3,
+      "candidateWorkIds": ["beyond-the-clouds", "the-seven-deadly-sins"],
+      "totalDistance": 0.9113141025641025,
+      "diversityPassed": true,
+      "diversityFailures": []
+    },
+    {
+      "rank": 4,
+      "candidateWorkIds": ["sheetas-little-big-world", "noragami-stray-god"],
+      "totalDistance": 0.9208791208791208,
+      "diversityPassed": true,
+      "diversityFailures": []
+    },
+    {
+      "rank": 5,
+      "candidateWorkIds": ["sheetas-little-big-world", "fairy-tail"],
+      "totalDistance": 0.9354624542124541,
+      "diversityPassed": true,
+      "diversityFailures": []
+    },
+    {
+      "rank": 6,
+      "candidateWorkIds": ["sheetas-little-big-world", "the-seven-deadly-sins"],
+      "totalDistance": 0.9354624542124541,
+      "diversityPassed": true,
+      "diversityFailures": []
+    },
+    {
+      "rank": 7,
+      "candidateWorkIds": ["beyond-the-clouds", "tokyo-revengers"],
+      "totalDistance": 0.9529807692307692,
+      "diversityPassed": true,
+      "diversityFailures": []
+    },
+    {
+      "rank": 8,
+      "candidateWorkIds": ["beyond-the-clouds", "fire-force"],
+      "totalDistance": 0.9633974358974359,
+      "diversityPassed": true,
+      "diversityFailures": []
+    },
+    {
+      "rank": 9,
+      "candidateWorkIds": ["sheetas-little-big-world", "tokyo-revengers"],
+      "totalDistance": 0.9771291208791208,
+      "diversityPassed": true,
+      "diversityFailures": []
+    },
+    {
+      "rank": 10,
+      "candidateWorkIds": ["sheetas-little-big-world", "fire-force"],
+      "totalDistance": 0.9875457875457875,
+      "diversityPassed": true,
+      "diversityFailures": []
+    },
+    {
+      "rank": 11,
+      "candidateWorkIds": ["penguin-and-house", "noragami-stray-god"],
+      "totalDistance": 1.1278846153846154,
+      "diversityPassed": true,
+      "diversityFailures": []
+    },
+    {
+      "rank": 12,
+      "candidateWorkIds": ["chis-sweet-adventures", "noragami-stray-god"],
+      "totalDistance": 1.1413461538461538,
+      "diversityPassed": true,
+      "diversityFailures": []
+    },
+    {
+      "rank": 13,
+      "candidateWorkIds": ["lovely-muco", "noragami-stray-god"],
+      "totalDistance": 1.1413461538461538,
+      "diversityPassed": true,
+      "diversityFailures": []
+    },
+    {
+      "rank": 14,
+      "candidateWorkIds": ["penguin-and-house", "fairy-tail"],
+      "totalDistance": 1.1424679487179485,
+      "diversityPassed": true,
+      "diversityFailures": []
+    },
+    {
+      "rank": 15,
+      "candidateWorkIds": ["penguin-and-house", "the-seven-deadly-sins"],
+      "totalDistance": 1.1424679487179485,
+      "diversityPassed": true,
+      "diversityFailures": []
+    },
+    {
+      "rank": 16,
+      "candidateWorkIds": ["chis-sweet-adventures", "fairy-tail"],
+      "totalDistance": 1.155929487179487,
+      "diversityPassed": true,
+      "diversityFailures": []
+    },
+    {
+      "rank": 17,
+      "candidateWorkIds": ["chis-sweet-adventures", "the-seven-deadly-sins"],
+      "totalDistance": 1.155929487179487,
+      "diversityPassed": true,
+      "diversityFailures": []
+    },
+    {
+      "rank": 18,
+      "candidateWorkIds": ["lovely-muco", "fairy-tail"],
+      "totalDistance": 1.155929487179487,
+      "diversityPassed": true,
+      "diversityFailures": []
+    },
+    {
+      "rank": 19,
+      "candidateWorkIds": ["lovely-muco", "the-seven-deadly-sins"],
+      "totalDistance": 1.155929487179487,
+      "diversityPassed": true,
+      "diversityFailures": []
+    },
+    {
+      "rank": 20,
+      "candidateWorkIds": ["penguin-and-house", "tokyo-revengers"],
+      "totalDistance": 1.1841346153846155,
+      "diversityPassed": true,
+      "diversityFailures": []
+    },
+    {
+      "rank": 21,
+      "candidateWorkIds": ["penguin-and-house", "fire-force"],
+      "totalDistance": 1.194551282051282,
+      "diversityPassed": true,
+      "diversityFailures": []
+    },
+    {
+      "rank": 22,
+      "candidateWorkIds": ["chis-sweet-adventures", "tokyo-revengers"],
+      "totalDistance": 1.197596153846154,
+      "diversityPassed": true,
+      "diversityFailures": []
+    },
+    {
+      "rank": 23,
+      "candidateWorkIds": ["lovely-muco", "tokyo-revengers"],
+      "totalDistance": 1.197596153846154,
+      "diversityPassed": true,
+      "diversityFailures": []
+    },
+    {
+      "rank": 24,
+      "candidateWorkIds": ["chis-sweet-adventures", "fire-force"],
+      "totalDistance": 1.2080128205128204,
+      "diversityPassed": true,
+      "diversityFailures": []
+    },
+    {
+      "rank": 25,
+      "candidateWorkIds": ["lovely-muco", "fire-force"],
+      "totalDistance": 1.2080128205128204,
+      "diversityPassed": true,
+      "diversityFailures": []
+    }
+  ]
+}
