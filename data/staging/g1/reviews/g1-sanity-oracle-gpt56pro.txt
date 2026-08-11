@@ -1,0 +1,114 @@
+GO
+
+Integrity verified: the ZIP SHA-256 is 06f1e597760785e5d39535fb159d78a79e375004bba0f54b74b5e6574c695353, and every file listed in SHA256SUMS matches.
+
+1. Profile-by-profile Top 10 review
+kinetic-competition
+
+No obviously wrong Taste result.
+
+Ranks 1–2, haikyu and hajime-no-ippo: directly express the profile’s distinctive sports-competition preference. Their decisive contributions are high motionImpact, high pacing, and sportsCompetition or combat; both also receive the intended vagueDislike penalty.
+
+Ranks 3–4, vinland-saga and akira: less literal sports matches, but both are supported by high pacing, motion, and combat contributions and by relevant Kingdom or BLAME! anchor similarity.
+
+Ranks 5–10: each has direct support in progression, pacing, combat, motion, or an action-oriented positive anchor. berserk is only rank 9 with three partial groups and a vague-dislike penalty; it is not being promoted through missing data.
+
+The nonmonotonic raw-score ordering within close results is consistent with the fixed <0.025 taste cohort and confidence/Bayesian tie-break contract.
+
+tactical-mystery
+
+No obviously wrong Taste result.
+
+Rank 1, 20th-century-boys: the strongest apparent elevation over Baseline is justified by investigation similarity to DEATH NOTE, positive problem-solving and mystery adjustments, and realistic-art similarity. Its partial groups remain above their thresholds.
+
+Ranks 2–4, promised-neverland, pluto, and erased: all directly fit strategy, investigation, mystery, problem-solving, or low-comedy preferences.
+
+Ranks 5 and 8, vinland-saga and vagabond: are not core mystery choices, but their lower placement is supported by Kingdom anchor affinity, action/historical similarity, low-comedy direction, and art density. Both also carry a negative mysteryReveal adjustment, so their mismatch is not concealed.
+
+Ranks 9–10, noragami-stray-god and spy-family: retain direct investigation or problem-solving support while remaining below the stronger mystery titles.
+
+warm-exploration
+
+No obviously wrong Taste result.
+
+Ranks 1–2, witch-hat-atelier and natsumes-book-of-friends: are direct warm, soft, fantasy, found-family matches.
+
+Ranks 3–5, hunter-x-hunter, beyond-the-clouds, and skip-and-loafer: each has concrete warmth, found-family, exploration, low-darkness, or soft-art support. hunter-x-hunter also receives the required art-style penalty.
+
+Ranks 6–9: the report transparently applies relevant drawbacks. dr-stone and kaguya-sama receive artStyleDislike; bocchi-the-rock receives tooStressful; mob-psycho-100 receives the low-combat and low-softness adjustments.
+
+Rank 10, ghost-in-the-shell: is the most marginal result but not an obviously wrong one. Its score is only 0.314511002054, it receives artStyleDislike=-0.08 and negative adjustments for visual softness, combat, and emotional warmth, while its remaining support comes from low mental stress and world-building/motion similarity to Fullmetal Alchemist. The fixed contract has no minimum score cutoff, so its low rank cannot be rejected merely for being marginal.
+
+2. Minority-taste preservation
+
+All three profiles preserve their distinctive taste.
+
+kinetic-competition: Taste places haikyu and hajime-no-ippo at ranks 1 and 2. Neither appears in the Baseline Top 10, which instead begins with vinland-saga, vagabond, and akira. The Blue Lock-derived sports/tournament preference survives the four broader action/fantasy/historical anchors.
+
+tactical-mystery: Taste places 20th-century-boys, promised-neverland, pluto, and erased in the top four. Baseline places 20th-century-boys only at rank 10 and omits pluto and erased, while promoting generic Genre matches such as one-piece, naruto, and dragon-ball.
+
+warm-exploration: Taste places natsumes-book-of-friends at rank 2, beyond-the-clouds at rank 4, skip-and-loafer at rank 5, and mob-psycho-100 at rank 7. Baseline places Natsume at rank 10, omits Beyond and Mob, and fills ranks 2–4 with one-piece, naruto, and dragon-ball.
+
+3. Unknown-heavy work review
+
+No unknown-heavy work is visibly overvalued.
+
+All three reports have zero SHRUNK groups.
+
+PARTIAL means that a group is not fully observed but still meets its fixed coverage threshold; it does not mean that the group failed validation or received a neutral-score rescue.
+
+The most incomplete work is bocchi-the-rock, with four unknown axes. It appears only at warm rank 8, has a score below 0.5, and receives the tooStressful penalty. Baseline ranks it higher at 6, so Taste is not inflating it.
+
+20th-century-boys and berserk each have three unknown axes. Twenty Century Boys’ tactical rank 1 is driven by strong observed investigation, mystery, problem-solving, and anchor contributions. Berserk appears only at kinetic rank 9 and receives the vague-dislike penalty.
+
+No recommendation relies on a below-threshold group, and the final catalog has zero coverage failures.
+
+4. Negative-reason audit
+
+The negative reasons act on their intended conditions.
+
+kinetic-competition
+
+tooSlow correctly applies to none of the Top 10: every listed candidate has known pacing of 2 or 4, while the fixed condition is pacing ≤ 1.
+
+vagueDislike is applied to all ten as the contract’s overall-shape penalty based on similarity to yotsuba-to; examples visible in the ledger include jujutsu-kaisen=-0.026040951576 and berserk=-0.020468305113.
+
+The disliked works themselves are excluded. No factor-specific penalty is fabricated from the vague reason.
+
+tactical-mystery
+
+The profile has no negative source, and no negative penalty is applied.
+
+warm-exploration
+
+tooDark correctly applies to none of the Top 10 because every listed candidate has known darkness ≤ 2.
+
+tooStressful applies only to bocchi-the-rock, whose mentalStress=4, producing the intended -0.10 tone penalty.
+
+artStyleDislike applies to hunter-x-hunter, dr-stone, kaguya-sama, and ghost-in-the-shell; each meets the fixed Art-group similarity threshold against Chainsaw Man. It does not apply to the remaining six.
+
+Dark/stress-heavy Baseline entries such as berserk and jujutsu-kaisen disappear from the Taste Top 10.
+
+The continued presence of several art-penalized works is not disliked leakage: artStyleDislike is intentionally a weak factor-specific penalty rather than a hard exclusion, and each surviving work has independent positive support.
+
+There is no negative-reason factor mismatch or obvious disliked leakage.
+
+5. Final G1 decision
+
+The frozen 50-work candidate passes G1 exactly as supplied.
+
+No obviously wrong Top 10 result is present.
+
+Each profile’s distinctive minority taste survives.
+
+Unknown-heavy works are not visibly overvalued.
+
+Negative reasons act only on their contracted factors and thresholds.
+
+The deterministic report, candidate, Art audit, adjudication bundle, catalog, and recommendation context are mutually consistent.
+
+This is an unqualified Oracle GO for the user-authorized model-panel G1 sanity gate. It does not approve G2 or UI work.
+
+6. Correction
+
+Not applicable. No evidence-backed correction is required, and this verdict requires no change to the cohort, factor dictionary, scoring contract, thresholds, list constraints, or candidate data.

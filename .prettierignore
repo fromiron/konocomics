@@ -9,6 +9,9 @@ data/staging/g1/reviews/blind-retag-oracle-response.md
 data/staging/g1/reviews/blind-retag-integration-gemini-response.md
 data/staging/g1/reviews/blind-retag-integration-grok-response.md
 data/staging/g1/reviews/blind-retag-integration-oracle-response.md
+data/staging/g1/reviews/g1-sanity-gemini-response.md
+data/staging/g1/reviews/g1-sanity-grok-response.md
+data/staging/g1/reviews/g1-sanity-local-response.md
 data/staging/g1/reviews/g1-sanity-taste-vs-baseline.md
 src/data/generated
 docs/factors/factor-dictionary.md

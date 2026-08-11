@@ -20,6 +20,7 @@ import {
   assertG1Cohort,
   assertG1CohortManifest,
   equalWeightCatalogAverage,
+  loadG1Approval,
   loadG1Adjudication,
   publishCandidateDirectory,
 } from "../../../scripts/build-g1-candidate";
@@ -215,6 +216,57 @@ function sha256(content: string) {
   return createHash("sha256").update(content).digest("hex");
 }
 
+function createApprovalFixture() {
+  const root = mkdtempSync(join(tmpdir(), "konocomics-g1-approval-"));
+  const stagingDirectory = join(root, "data/staging/g1");
+  const reviewDirectory = join(stagingDirectory, "reviews");
+  mkdirSync(reviewDirectory, { recursive: true });
+  const files = {
+    panelRequest: { path: "reviews/g1-sanity-panel-request.md", content: "# Request\n" },
+    tasteVsBaselineReport: {
+      path: "reviews/g1-sanity-taste-vs-baseline.md",
+      content: "# Report\n",
+    },
+    panelReport: { path: "reviews/g1-sanity-panel.md", content: "# Panel\n" },
+    local: { path: "reviews/g1-sanity-local-response.md", content: "GO\nLocal\n" },
+    gemini: { path: "reviews/g1-sanity-gemini-response.md", content: "GO\nGemini\n" },
+    grok: { path: "reviews/g1-sanity-grok-response.md", content: "GO\nGrok\n" },
+    oracle: { path: "reviews/g1-sanity-oracle-gpt56pro.txt", content: "GO\nOracle\n" },
+  };
+  for (const file of Object.values(files)) {
+    writeFileSync(join(stagingDirectory, file.path), file.content);
+  }
+  const preApprovalHashes = {
+    catalog: "a".repeat(64),
+    recommendationContext: "b".repeat(64),
+  };
+  const binding = (file: { path: string; content: string }) => ({
+    path: file.path,
+    sha256: sha256(file.content),
+  });
+  const manifest = {
+    schemaVersion: 1,
+    policyVersion: "g1-authorized-model-panel-v1",
+    bundleSha256: "06f1e597760785e5d39535fb159d78a79e375004bba0f54b74b5e6574c695353",
+    annotationReviewedAt: "2026-08-11T18:00:00+09:00",
+    reviewReference: "reviews/g1-sanity-panel.md",
+    preApprovalHashes,
+    panelRequest: binding(files.panelRequest),
+    tasteVsBaselineReport: binding(files.tasteVsBaselineReport),
+    panelReport: binding(files.panelReport),
+    responses: {
+      local: binding(files.local),
+      gemini: binding(files.gemini),
+      grok: binding(files.grok),
+      oracle: binding(files.oracle),
+    },
+  };
+  const writeManifest = () =>
+    writeFileSync(join(stagingDirectory, "g1-approval.json"), JSON.stringify(manifest));
+  writeManifest();
+  return { files, manifest, preApprovalHashes, root, stagingDirectory, writeManifest };
+}
+
 function createAdjudicationFixture(mutate?: {
   factors?: (rows: string[]) => string[];
   evidence?: (rows: string[]) => string[];
@@ -311,6 +363,35 @@ function createAdjudicationFixture(mutate?: {
   );
   return { root, preAdjudication };
 }
+
+describe("G1 approval boundary", () => {
+  it("rejects stale pre-approval inputs, changed evidence, and a hash-bound non-GO verdict", () => {
+    const fixture = createApprovalFixture();
+    try {
+      expect(() => loadG1Approval(fixture.root, fixture.preApprovalHashes)).not.toThrow();
+      expect(() =>
+        loadG1Approval(fixture.root, {
+          ...fixture.preApprovalHashes,
+          catalog: "0".repeat(64),
+        }),
+      ).toThrow(/stale for the current pre-approval candidate/u);
+
+      const responsePath = join(fixture.stagingDirectory, fixture.files.local.path);
+      writeFileSync(responsePath, "REVISE\nLocal\n");
+      expect(() => loadG1Approval(fixture.root, fixture.preApprovalHashes)).toThrow(
+        /file hash mismatch/u,
+      );
+
+      fixture.manifest.responses.local.sha256 = sha256("REVISE\nLocal\n");
+      fixture.writeManifest();
+      expect(() => loadG1Approval(fixture.root, fixture.preApprovalHashes)).toThrow(
+        /must start with exactly GO/u,
+      );
+    } finally {
+      rmSync(fixture.root, { recursive: true, force: true });
+    }
+  });
+});
 
 describe("G1 full-evidence adjudication", () => {
   it("loads the frozen 9x13 boundary and completely replaces sampled sets without touching Art", () => {

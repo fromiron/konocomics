@@ -37,6 +37,28 @@ const catalogIdSchema = z.string().regex(/^[a-z0-9]+(?:-[a-z0-9]+)*$/u, {
   message: "Must be a lowercase kebab-case catalog ID",
 });
 const sha256Schema = z.string().regex(/^[a-f0-9]{64}$/u);
+const approvalFileSchema = <const Path extends string>(path: Path) =>
+  z.strictObject({ path: z.literal(path), sha256: sha256Schema });
+const approvalManifestSchema = z.strictObject({
+  schemaVersion: z.literal(1),
+  policyVersion: z.literal("g1-authorized-model-panel-v1"),
+  bundleSha256: z.literal("06f1e597760785e5d39535fb159d78a79e375004bba0f54b74b5e6574c695353"),
+  annotationReviewedAt: z.iso.datetime({ offset: true }),
+  reviewReference: z.literal("reviews/g1-sanity-panel.md"),
+  preApprovalHashes: z.strictObject({
+    catalog: sha256Schema,
+    recommendationContext: sha256Schema,
+  }),
+  panelRequest: approvalFileSchema("reviews/g1-sanity-panel-request.md"),
+  tasteVsBaselineReport: approvalFileSchema("reviews/g1-sanity-taste-vs-baseline.md"),
+  panelReport: approvalFileSchema("reviews/g1-sanity-panel.md"),
+  responses: z.strictObject({
+    local: approvalFileSchema("reviews/g1-sanity-local-response.md"),
+    gemini: approvalFileSchema("reviews/g1-sanity-gemini-response.md"),
+    grok: approvalFileSchema("reviews/g1-sanity-grok-response.md"),
+    oracle: approvalFileSchema("reviews/g1-sanity-oracle-gpt56pro.txt"),
+  }),
+});
 const cohortManifestSchema = z.strictObject({
   schemaVersion: z.literal(1),
   policyVersion: z.string().trim().min(1),
@@ -323,6 +345,7 @@ type PreAdjudicationHashes = {
   themes: string;
   evidence: string;
 };
+type PreApprovalHashes = z.infer<typeof approvalManifestSchema>["preApprovalHashes"];
 type G1HistogramContract = z.infer<typeof originalCohortFreezeSchema>["histograms"];
 type G1Replacement = z.infer<typeof replacementManifestSchema>["replacements"][number];
 
@@ -360,6 +383,37 @@ function contentHash(content: string | Buffer) {
 
 function fileHash(path: string) {
   return contentHash(readFileSync(path));
+}
+
+export function loadG1Approval(root: string, preApprovalHashes: PreApprovalHashes) {
+  const stagingDirectory = join(root, "data/staging/g1");
+  const manifest = approvalManifestSchema.parse(
+    JSON.parse(readFileSync(join(stagingDirectory, "g1-approval.json"), "utf8")) as unknown,
+  );
+  if (
+    manifest.preApprovalHashes.catalog !== preApprovalHashes.catalog ||
+    manifest.preApprovalHashes.recommendationContext !== preApprovalHashes.recommendationContext
+  ) {
+    throw new Error("G1 approval manifest is stale for the current pre-approval candidate");
+  }
+  const bindings = [
+    manifest.panelRequest,
+    manifest.tasteVsBaselineReport,
+    manifest.panelReport,
+    ...Object.values(manifest.responses),
+  ];
+  for (const binding of bindings) {
+    if (fileHash(join(stagingDirectory, binding.path)) !== binding.sha256) {
+      throw new Error(`G1 approval file hash mismatch: ${binding.path}`);
+    }
+  }
+  for (const response of Object.values(manifest.responses)) {
+    const [verdict] = readFileSync(join(stagingDirectory, response.path), "utf8").split(/\r?\n/u);
+    if (verdict !== "GO") {
+      throw new Error(`G1 approval response must start with exactly GO: ${response.path}`);
+    }
+  }
+  return manifest;
 }
 
 function columnIndex(headers: readonly string[], column: string) {
@@ -573,15 +627,21 @@ export function applyG1Adjudication(input: {
   };
 }
 
-function resetAnnotationReview(headers: readonly string[], rows: string[][]) {
-  const method = columnIndex(headers, "annotationReviewMethod");
-  const reviewedAt = columnIndex(headers, "annotationReviewedAt");
-  const reference = columnIndex(headers, "annotationReviewReference");
+function setAnnotationReview(
+  headers: readonly string[],
+  rows: string[][],
+  method: "unreviewed" | "authorizedModelPanel",
+  reviewedAt = "",
+  reference = "",
+) {
+  const methodColumn = columnIndex(headers, "annotationReviewMethod");
+  const reviewedAtColumn = columnIndex(headers, "annotationReviewedAt");
+  const referenceColumn = columnIndex(headers, "annotationReviewReference");
   return rows.map((row) => {
     const next = [...row];
-    next[method] = "unreviewed";
-    next[reviewedAt] = "";
-    next[reference] = "";
+    next[methodColumn] = method;
+    next[reviewedAtColumn] = reviewedAt;
+    next[referenceColumn] = reference;
     return next;
   });
 }
@@ -1086,7 +1146,7 @@ function buildG1Candidate(root = process.cwd()) {
     tables.set(
       dataset.file,
       dataset.file === "works.csv"
-        ? resetAnnotationReview(dataset.headers, cohortRows)
+        ? setAnnotationReview(dataset.headers, cohortRows, "unreviewed")
         : cohortRows,
     );
   }
@@ -1223,24 +1283,56 @@ function buildG1Candidate(root = process.cwd()) {
       serializeCsv(artEvidenceManifestHeaders, artEvidenceSourceRows),
     );
 
-    const result = runCatalogPipeline(candidateDirectory);
-    const unexpectedErrors = result.issues.filter(
+    const preApprovalResult = runCatalogPipeline(candidateDirectory);
+    const unexpectedErrors = preApprovalResult.issues.filter(
       (issue) => issue.severity === "error" && issue.code !== "UNREVIEWED_ELIGIBILITY",
     );
-    const expectedReviewErrors = result.issues.filter(
+    const expectedReviewErrors = preApprovalResult.issues.filter(
       (issue) => issue.severity === "error" && issue.code === "UNREVIEWED_ELIGIBILITY",
     );
     if (unexpectedErrors.length > 0 || expectedReviewErrors.length !== 50) {
-      for (const issue of result.issues) {
+      for (const issue of preApprovalResult.issues) {
         console.error(formatSourceIssue(issue));
       }
       throw new Error(
         `Candidate validation failed with ${unexpectedErrors.length} unexpected errors and ${expectedReviewErrors.length} review errors`,
       );
     }
+
+    const approval = loadG1Approval(root, {
+      catalog: contentHash(`${JSON.stringify(preApprovalResult.catalog, null, 2)}\n`),
+      recommendationContext: contentHash(`${JSON.stringify(preApprovalResult.context, null, 2)}\n`),
+    });
+    const approvedWorkRows = setAnnotationReview(
+      worksDataset.headers,
+      workRows,
+      "authorizedModelPanel",
+      approval.annotationReviewedAt,
+      approval.reviewReference,
+    );
+    tables.set(worksDataset.file, approvedWorkRows);
+    writeCandidateFile(
+      candidateDirectory,
+      worksDataset.file,
+      serializeCsv(worksDataset.headers, approvedWorkRows),
+    );
+    writeCandidateFile(
+      candidateDirectory,
+      approval.reviewReference,
+      readFileSync(join(stagingDirectory, approval.panelReport.path), "utf8"),
+    );
+
+    const result = runCatalogPipeline(candidateDirectory);
+    const errors = result.issues.filter((issue) => issue.severity === "error");
+    if (errors.length > 0) {
+      for (const issue of result.issues) {
+        console.error(formatSourceIssue(issue));
+      }
+      throw new Error(`Approved candidate validation failed with ${errors.length} errors`);
+    }
     publishCandidateDirectory(candidateDirectory, outputDirectory, backupDirectory);
     console.log(
-      `Built 50-work G1 candidate with catalogAverageRating=${catalogAverageRating}; only 50 expected UNREVIEWED_ELIGIBILITY errors remain.`,
+      `Built approved 50-work G1 candidate with catalogAverageRating=${catalogAverageRating}.`,
     );
   } finally {
     if (existsSync(backupDirectory)) {

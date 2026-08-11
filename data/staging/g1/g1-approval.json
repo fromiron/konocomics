@@ -1,0 +1,41 @@
+{
+  "schemaVersion": 1,
+  "policyVersion": "g1-authorized-model-panel-v1",
+  "bundleSha256": "06f1e597760785e5d39535fb159d78a79e375004bba0f54b74b5e6574c695353",
+  "annotationReviewedAt": "2026-08-11T21:06:26+09:00",
+  "reviewReference": "reviews/g1-sanity-panel.md",
+  "preApprovalHashes": {
+    "catalog": "eeb66d02fe74092c31b187c0b6b495c37f39ec979fa88ecc785377bfc547a6a4",
+    "recommendationContext": "b1134d9638dec358816a05162873cffa16adce05039f66e881d54674b4409528"
+  },
+  "panelRequest": {
+    "path": "reviews/g1-sanity-panel-request.md",
+    "sha256": "fae3dcf0f8d8ab51c5340e00a4218204db1efc30ed7c87916ac3cf648583a6fe"
+  },
+  "tasteVsBaselineReport": {
+    "path": "reviews/g1-sanity-taste-vs-baseline.md",
+    "sha256": "22f9dd5f1401f22f648392c4729157928fcc266f821d89b285460c46bff9513e"
+  },
+  "panelReport": {
+    "path": "reviews/g1-sanity-panel.md",
+    "sha256": "382965a19ef75aeb03d051b2285eac0cd856acc2c016bb1635c3121627dac536"
+  },
+  "responses": {
+    "local": {
+      "path": "reviews/g1-sanity-local-response.md",
+      "sha256": "79fe9c79bea5d1ceb45b6fa0f0f6577c78fde836a36435c7bedd1fb8880743b3"
+    },
+    "gemini": {
+      "path": "reviews/g1-sanity-gemini-response.md",
+      "sha256": "35b73fb8595b6fc503cb4a7f77b51c8d67594d9a9eced87ff04b062ad87a1911"
+    },
+    "grok": {
+      "path": "reviews/g1-sanity-grok-response.md",
+      "sha256": "fa26fb3fbe38fba4f5e746cfe3745b61e9dc2b2b694a5bbc7134b2881768bbf9"
+    },
+    "oracle": {
+      "path": "reviews/g1-sanity-oracle-gpt56pro.txt",
+      "sha256": "c501ca1949c25dadcf0f1f335a7d6ca6edc99582914c66a2c0c0e0a2cd8c15a4"
+    }
+  }
+}
