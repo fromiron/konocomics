@@ -7,7 +7,7 @@ spy-family,SPY×FAMILY,スパイファミリー,遠藤達哉,集英社,shonen,on
 frieren,葬送のフリーレン,ソウソウノフリーレン,山田鐘人;アベツカサ,小学館,shonen,hiatus,2020,fantasy,entry_1_3_volumes,true,true,false,0.98,0.99,0.92,unreviewed,,,ev-frieren
 chainsaw-man,チェンソーマン,チェンソーマン,藤本タツキ,集英社,shonen,completed,2018,action;fantasy;horror;comedy,entry_1_3_volumes,true,true,false,0.99,0.99,0.99,unreviewed,,,ev-chainsaw-man
 blue-lock,ブルーロック,ブルーロック,金城宗幸;ノ村優介,講談社,shonen,ongoing,2018,sports,entry_1_3_volumes,true,true,false,0.99,0.99,0.99,unreviewed,,,ev-blue-lock
-monster,MONSTER,モンスター,浦沢直樹,小学館,seinen,completed,1994,mystery,entry_1_3_volumes,true,true,false,0.98,0.95,0.97,unreviewed,,,ev-monster
+monster,MONSTER,モンスター,浦沢直樹,小学館,seinen,completed,1994,mystery;horror,entry_1_3_volumes,true,true,false,0.98,0.95,0.97,unreviewed,,,ev-monster
 yotsuba-to,よつばと！,ヨツバト,あずまきよひこ,KADOKAWA,unknown,ongoing,2003,comedy;sliceOfLife,entry_1_3_volumes,true,true,false,0.98,0.99,0.95,unreviewed,,,ev-yotsuba-to
 blame,BLAME!,ブラム,弐瓶勉,講談社,seinen,completed,1997,action;scienceFiction,entry_1_3_volumes,true,true,false,0.99,0.99,0.99,unreviewed,,,ev-blame
 one-piece,ONE PIECE,ワンピース,尾田栄一郎,集英社,shonen,ongoing,1997,action;fantasy;comedy,entry_1_3_volumes,true,true,false,0.98,0.99,0.91,unreviewed,,,ev-one-piece
@@ -18,7 +18,7 @@ demon-slayer,鬼滅の刃,キメツノヤイバ,吾峠呼世晴,集英社,shonen
 jujutsu-kaisen,呪術廻戦,ジュジュツカイセン,芥見下々,集英社,shonen,completed,2018,action;fantasy;horror,entry_1_3_volumes,false,true,false,0.99,0.99,0.92,unreviewed,,,ev-jujutsu-kaisen
 my-hero-academia,僕のヒーローアカデミア,ボクノヒーローアカデミア,堀越耕平,集英社,shonen,completed,2014,action;fantasy;comedy,entry_1_3_volumes,false,true,false,0.99,0.99,0.92,unreviewed,,,ev-my-hero-academia
 hunter-x-hunter,HUNTER×HUNTER,ハンターハンター,冨樫義博,集英社,shonen,ongoing,1998,action;fantasy;comedy,entry_1_3_volumes,true,true,false,0.99,0.99,0.92,unreviewed,,,ev-hunter-x-hunter
-jojo-bizarre-adventure,ジョジョの奇妙な冒険,ジョジョノキミョウナボウケン,荒木飛呂彦,集英社,shonen,completed,1986,action;fantasy;historical;horror,entry_1_3_volumes,false,true,false,0.98,0.98,0.90,unreviewed,,,ev-jojo-bizarre-adventure
+jojo-bizarre-adventure,ジョジョの奇妙な冒険,ジョジョノキミョウナボウケン,荒木飛呂彦,集英社,shonen,completed,1986,action;fantasy;historical;mystery;horror,entry_1_3_volumes,false,true,false,0.98,0.98,0.90,unreviewed,,,ev-jojo-bizarre-adventure
 berserk,ベルセルク,ベルセルク,三浦建太郎;スタジオ我画;森恒二,白泉社,seinen,ongoing,1989,action;fantasy;horror,entry_1_3_volumes,true,true,false,0.98,0.99,0.91,unreviewed,,,ev-berserk
 vinland-saga,ヴィンランド・サガ,ヴィンランドサガ,幸村誠,講談社,seinen,completed,2005,action;historical,entry_1_3_volumes,false,true,false,0.99,0.99,0.92,unreviewed,,,ev-vinland-saga
 vagabond,バガボンド,バガボンド,井上雄彦;吉川英治,講談社,seinen,ongoing,1998,action;historical,entry_1_3_volumes,true,true,false,0.98,0.99,0.90,unreviewed,,,ev-vagabond
@@ -29,7 +29,7 @@ mushishi,蟲師,ムシシ,漆原友紀,講談社,seinen,completed,1999,fantasy;m
 dr-stone,Dr.STONE,ドクターストーン,Boichi;稲垣理一郎,集英社,shonen,completed,2017,action;scienceFiction;comedy,entry_1_3_volumes,true,true,false,0.99,0.99,0.99,unreviewed,,,ev-dr-stone
 promised-neverland,約束のネバーランド,ヤクソクノネバーランド,白井カイウ;出水ぽすか,集英社,shonen,completed,2016,mystery;horror,entry_1_3_volumes,true,true,false,0.99,0.99,0.99,unreviewed,,,ev-promised-neverland
 erased,僕だけがいない街,ボクダケガイナイマチ,三部けい,KADOKAWA,seinen,completed,2012,mystery;scienceFiction,entry_1_3_volumes,false,true,false,0.98,0.99,0.97,unreviewed,,,ev-erased
-20th-century-boys,20世紀少年,ニジュッセイキショウネン,浦沢直樹,小学館,seinen,completed,1999,scienceFiction;mystery,entry_1_3_volumes,false,true,false,0.99,0.99,0.99,unreviewed,,,ev-20th-century-boys
+20th-century-boys,20世紀少年,ニジュッセイキショウネン,浦沢直樹,小学館,seinen,completed,1999,mystery,entry_1_3_volumes,false,true,false,0.99,0.99,0.99,unreviewed,,,ev-20th-century-boys
 pluto,PLUTO,,浦沢直樹;手塚治虫;長崎尚志;手塚眞;手塚プロダクション,小学館,seinen,completed,2003,scienceFiction;mystery,entry_1_3_volumes,false,true,false,0.99,0.99,0.99,unreviewed,,,ev-pluto
 ghost-in-the-shell,攻殻機動隊,コウカクキドウタイ,士郎正宗,講談社,seinen,completed,1989,action;scienceFiction;mystery,entry_1_3_volumes,false,true,false,0.98,0.98,0.98,unreviewed,,,ev-ghost-in-the-shell
 akira,AKIRA,アキラ,大友克洋,講談社,seinen,completed,1982,action;scienceFiction,entry_1_3_volumes,true,true,false,0.99,0.99,0.99,unreviewed,,,ev-akira
