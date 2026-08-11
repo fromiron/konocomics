@@ -121,8 +121,8 @@ describe("deterministic experiment report", () => {
       output.indexOf("tactical\\-mystery"),
     );
     expect(output.indexOf("tactical\\-mystery")).toBeLessThan(output.indexOf("warm\\-exploration"));
-    expect(output).toContain("Taste Engine Top 10 (4/10)");
-    expect(output).toContain("Baseline Top 10 (4/10)");
+    expect(output).toContain("Taste Engine Top 10 (10/10)");
+    expect(output).toContain("Baseline Top 10 (10/10)");
     expect(output).toContain("SHRUNK グループ数");
     expect(output).not.toContain("Rank comparison");
   });

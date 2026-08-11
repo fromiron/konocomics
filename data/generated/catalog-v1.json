@@ -1,8 +1,815 @@
 {
   "schemaVersion": 1,
-  "catalogVersion": "v1-e21ce5aa9844",
+  "catalogVersion": "v1-18c883dff5ea",
   "factorDictionaryVersion": "v1",
   "works": [
+    {
+      "id": "20th-century-boys",
+      "title": "20世紀少年",
+      "titleKana": "ニジュッセイキショウネン",
+      "aliases": [
+        "20th Century Boys",
+        "二十世紀少年"
+      ],
+      "creators": [
+        "浦沢直樹"
+      ],
+      "publisher": "小学館",
+      "demographic": "seinen",
+      "status": "completed",
+      "firstPublishedYear": 1999,
+      "genres": [
+        "mystery"
+      ],
+      "themes": [
+        {
+          "id": "investigation",
+          "centrality": 2,
+          "confidence": 0.97
+        },
+        {
+          "id": "school",
+          "centrality": 1,
+          "confidence": 0.87
+        },
+        {
+          "id": "workplace",
+          "centrality": 1,
+          "confidence": 0.82
+        }
+      ],
+      "axes": {
+        "progression": {
+          "state": "unknown"
+        },
+        "problemSolving": {
+          "state": "known",
+          "value": 3,
+          "confidence": 0.92
+        },
+        "strategy": {
+          "state": "known",
+          "value": 2,
+          "confidence": 0.85
+        },
+        "pacing": {
+          "state": "known",
+          "value": 4,
+          "confidence": 0.96
+        },
+        "mysteryReveal": {
+          "state": "known",
+          "value": 4,
+          "confidence": 0.99
+        },
+        "worldBuilding": {
+          "state": "known",
+          "value": 2,
+          "confidence": 0.86
+        },
+        "characterArcWeight": {
+          "state": "known",
+          "value": 3,
+          "confidence": 0.9
+        },
+        "relationshipStructure": {
+          "state": "known",
+          "value": 3,
+          "confidence": 0.92
+        },
+        "comedy": {
+          "state": "unknown"
+        },
+        "darkness": {
+          "state": "known",
+          "value": 4,
+          "confidence": 0.97
+        },
+        "mentalStress": {
+          "state": "known",
+          "value": 3,
+          "confidence": 0.92
+        },
+        "romance": {
+          "state": "known",
+          "value": 1,
+          "confidence": 0.68
+        },
+        "emotionalWarmth": {
+          "state": "known",
+          "value": 2,
+          "confidence": 0.85
+        },
+        "artRealism": {
+          "state": "known",
+          "value": 4,
+          "confidence": 0.96
+        },
+        "artDensity": {
+          "state": "known",
+          "value": 4,
+          "confidence": 0.95
+        },
+        "visualSoftness": {
+          "state": "known",
+          "value": 2,
+          "confidence": 0.91
+        },
+        "motionImpact": {
+          "state": "unknown"
+        }
+      },
+      "factorScope": "entry_1_3_volumes",
+      "eligibility": {
+        "onboardingEligible": false,
+        "recommendationEligible": true,
+        "libraryOnly": false
+      },
+      "evidence": {
+        "metadataConfidence": 0.99,
+        "groupingConfidence": 0.99,
+        "sourceAgreement": 0.99,
+        "annotationReviewedAt": "2026-08-11T21:06:26+09:00"
+      }
+    },
+    {
+      "id": "a-silent-voice",
+      "title": "聲の形",
+      "titleKana": "コエノカタチ",
+      "aliases": [
+        "A Silent Voice",
+        "Koe no Katachi"
+      ],
+      "creators": [
+        "大今良時"
+      ],
+      "publisher": "講談社",
+      "demographic": "shonen",
+      "status": "completed",
+      "firstPublishedYear": 2013,
+      "genres": [
+        "romance",
+        "sliceOfLife"
+      ],
+      "themes": [
+        {
+          "id": "school",
+          "centrality": 2,
+          "confidence": 0.98
+        }
+      ],
+      "axes": {
+        "progression": {
+          "state": "known",
+          "value": 2,
+          "confidence": 0.92
+        },
+        "problemSolving": {
+          "state": "known",
+          "value": 0,
+          "confidence": 0.94
+        },
+        "strategy": {
+          "state": "known",
+          "value": 0,
+          "confidence": 0.94
+        },
+        "pacing": {
+          "state": "known",
+          "value": 2,
+          "confidence": 0.9
+        },
+        "mysteryReveal": {
+          "state": "known",
+          "value": 2,
+          "confidence": 0.8
+        },
+        "worldBuilding": {
+          "state": "known",
+          "value": 0,
+          "confidence": 0.93
+        },
+        "characterArcWeight": {
+          "state": "known",
+          "value": 4,
+          "confidence": 0.98
+        },
+        "relationshipStructure": {
+          "state": "known",
+          "value": 4,
+          "confidence": 0.96
+        },
+        "comedy": {
+          "state": "known",
+          "value": 0,
+          "confidence": 0.86
+        },
+        "darkness": {
+          "state": "known",
+          "value": 2,
+          "confidence": 0.94
+        },
+        "mentalStress": {
+          "state": "known",
+          "value": 4,
+          "confidence": 0.98
+        },
+        "romance": {
+          "state": "known",
+          "value": 2,
+          "confidence": 0.84
+        },
+        "emotionalWarmth": {
+          "state": "known",
+          "value": 2,
+          "confidence": 0.89
+        },
+        "artRealism": {
+          "state": "known",
+          "value": 4,
+          "confidence": 0.86
+        },
+        "artDensity": {
+          "state": "known",
+          "value": 2,
+          "confidence": 0.78
+        },
+        "visualSoftness": {
+          "state": "known",
+          "value": 2,
+          "confidence": 0.8
+        },
+        "motionImpact": {
+          "state": "known",
+          "value": 2,
+          "confidence": 0.84
+        }
+      },
+      "factorScope": "entry_1_3_volumes",
+      "eligibility": {
+        "onboardingEligible": true,
+        "recommendationEligible": true,
+        "libraryOnly": false
+      },
+      "evidence": {
+        "metadataConfidence": 0.99,
+        "groupingConfidence": 0.99,
+        "sourceAgreement": 0.99,
+        "annotationReviewedAt": "2026-08-11T21:06:26+09:00"
+      }
+    },
+    {
+      "id": "akira",
+      "title": "AKIRA",
+      "titleKana": "アキラ",
+      "aliases": [
+        "アキラ"
+      ],
+      "creators": [
+        "大友克洋"
+      ],
+      "publisher": "講談社",
+      "demographic": "seinen",
+      "status": "completed",
+      "firstPublishedYear": 1982,
+      "genres": [
+        "action",
+        "scienceFiction"
+      ],
+      "themes": [
+        {
+          "id": "combat",
+          "centrality": 2,
+          "confidence": 0.94
+        },
+        {
+          "id": "politics",
+          "centrality": 1,
+          "confidence": 0.86
+        },
+        {
+          "id": "postApocalypse",
+          "centrality": 2,
+          "confidence": 0.94
+        },
+        {
+          "id": "survival",
+          "centrality": 1,
+          "confidence": 0.84
+        }
+      ],
+      "axes": {
+        "progression": {
+          "state": "known",
+          "value": 0,
+          "confidence": 0.91
+        },
+        "problemSolving": {
+          "state": "known",
+          "value": 0,
+          "confidence": 0.86
+        },
+        "strategy": {
+          "state": "known",
+          "value": 2,
+          "confidence": 0.84
+        },
+        "pacing": {
+          "state": "known",
+          "value": 4,
+          "confidence": 0.95
+        },
+        "mysteryReveal": {
+          "state": "known",
+          "value": 4,
+          "confidence": 0.93
+        },
+        "worldBuilding": {
+          "state": "known",
+          "value": 4,
+          "confidence": 0.95
+        },
+        "characterArcWeight": {
+          "state": "known",
+          "value": 2,
+          "confidence": 0.85
+        },
+        "relationshipStructure": {
+          "state": "known",
+          "value": 4,
+          "confidence": 0.9
+        },
+        "comedy": {
+          "state": "known",
+          "value": 0,
+          "confidence": 0.91
+        },
+        "darkness": {
+          "state": "known",
+          "value": 4,
+          "confidence": 0.94
+        },
+        "mentalStress": {
+          "state": "known",
+          "value": 4,
+          "confidence": 0.91
+        },
+        "romance": {
+          "state": "known",
+          "value": 0,
+          "confidence": 0.91
+        },
+        "emotionalWarmth": {
+          "state": "known",
+          "value": 0,
+          "confidence": 0.87
+        },
+        "artRealism": {
+          "state": "known",
+          "value": 4,
+          "confidence": 0.93
+        },
+        "artDensity": {
+          "state": "known",
+          "value": 4,
+          "confidence": 0.94
+        },
+        "visualSoftness": {
+          "state": "known",
+          "value": 0,
+          "confidence": 0.9
+        },
+        "motionImpact": {
+          "state": "known",
+          "value": 4,
+          "confidence": 0.95
+        }
+      },
+      "factorScope": "entry_1_3_volumes",
+      "eligibility": {
+        "onboardingEligible": true,
+        "recommendationEligible": true,
+        "libraryOnly": false
+      },
+      "evidence": {
+        "metadataConfidence": 0.99,
+        "groupingConfidence": 0.99,
+        "sourceAgreement": 0.99,
+        "annotationReviewedAt": "2026-08-11T21:06:26+09:00"
+      }
+    },
+    {
+      "id": "attack-on-titan",
+      "title": "進撃の巨人",
+      "titleKana": "シンゲキノキョジン",
+      "aliases": [
+        "Attack on Titan"
+      ],
+      "creators": [
+        "諫山創"
+      ],
+      "publisher": "講談社",
+      "demographic": "shonen",
+      "status": "completed",
+      "firstPublishedYear": 2009,
+      "genres": [
+        "action",
+        "fantasy",
+        "horror"
+      ],
+      "themes": [
+        {
+          "id": "combat",
+          "centrality": 2,
+          "confidence": 0.96
+        },
+        {
+          "id": "investigation",
+          "centrality": 2,
+          "confidence": 0.88
+        },
+        {
+          "id": "postApocalypse",
+          "centrality": 2,
+          "confidence": 0.94
+        },
+        {
+          "id": "survival",
+          "centrality": 2,
+          "confidence": 0.98
+        },
+        {
+          "id": "war",
+          "centrality": 2,
+          "confidence": 0.9
+        }
+      ],
+      "axes": {
+        "progression": {
+          "state": "known",
+          "value": 2,
+          "confidence": 0.8
+        },
+        "problemSolving": {
+          "state": "known",
+          "value": 2,
+          "confidence": 0.84
+        },
+        "strategy": {
+          "state": "known",
+          "value": 2,
+          "confidence": 0.82
+        },
+        "pacing": {
+          "state": "known",
+          "value": 4,
+          "confidence": 0.94
+        },
+        "mysteryReveal": {
+          "state": "known",
+          "value": 4,
+          "confidence": 0.9
+        },
+        "worldBuilding": {
+          "state": "known",
+          "value": 4,
+          "confidence": 0.94
+        },
+        "characterArcWeight": {
+          "state": "known",
+          "value": 4,
+          "confidence": 0.92
+        },
+        "relationshipStructure": {
+          "state": "known",
+          "value": 4,
+          "confidence": 0.9
+        },
+        "comedy": {
+          "state": "known",
+          "value": 0,
+          "confidence": 0.94
+        },
+        "darkness": {
+          "state": "known",
+          "value": 4,
+          "confidence": 0.98
+        },
+        "mentalStress": {
+          "state": "known",
+          "value": 4,
+          "confidence": 0.96
+        },
+        "romance": {
+          "state": "known",
+          "value": 0,
+          "confidence": 0.9
+        },
+        "emotionalWarmth": {
+          "state": "known",
+          "value": 2,
+          "confidence": 0.82
+        },
+        "artRealism": {
+          "state": "known",
+          "value": 2,
+          "confidence": 0.8
+        },
+        "artDensity": {
+          "state": "known",
+          "value": 2,
+          "confidence": 0.78
+        },
+        "visualSoftness": {
+          "state": "known",
+          "value": 0,
+          "confidence": 0.9
+        },
+        "motionImpact": {
+          "state": "unknown"
+        }
+      },
+      "factorScope": "entry_1_3_volumes",
+      "eligibility": {
+        "onboardingEligible": true,
+        "recommendationEligible": true,
+        "libraryOnly": false
+      },
+      "evidence": {
+        "metadataConfidence": 0.99,
+        "groupingConfidence": 0.99,
+        "sourceAgreement": 0.92,
+        "annotationReviewedAt": "2026-08-11T21:06:26+09:00"
+      }
+    },
+    {
+      "id": "berserk",
+      "title": "ベルセルク",
+      "titleKana": "ベルセルク",
+      "aliases": [
+        "BERSERK"
+      ],
+      "creators": [
+        "三浦建太郎",
+        "スタジオ我画",
+        "森恒二"
+      ],
+      "publisher": "白泉社",
+      "demographic": "seinen",
+      "status": "ongoing",
+      "firstPublishedYear": 1989,
+      "genres": [
+        "action",
+        "fantasy",
+        "horror"
+      ],
+      "themes": [
+        {
+          "id": "adventure",
+          "centrality": 1,
+          "confidence": 0.8
+        },
+        {
+          "id": "combat",
+          "centrality": 2,
+          "confidence": 0.98
+        },
+        {
+          "id": "revenge",
+          "centrality": 2,
+          "confidence": 0.91
+        }
+      ],
+      "axes": {
+        "progression": {
+          "state": "unknown"
+        },
+        "problemSolving": {
+          "state": "known",
+          "value": 0,
+          "confidence": 0.86
+        },
+        "strategy": {
+          "state": "known",
+          "value": 0,
+          "confidence": 0.82
+        },
+        "pacing": {
+          "state": "known",
+          "value": 4,
+          "confidence": 0.9
+        },
+        "mysteryReveal": {
+          "state": "known",
+          "value": 4,
+          "confidence": 0.91
+        },
+        "worldBuilding": {
+          "state": "known",
+          "value": 4,
+          "confidence": 0.91
+        },
+        "characterArcWeight": {
+          "state": "known",
+          "value": 3,
+          "confidence": 0.86
+        },
+        "relationshipStructure": {
+          "state": "known",
+          "value": 1,
+          "confidence": 0.9
+        },
+        "comedy": {
+          "state": "known",
+          "value": 2,
+          "confidence": 0.8
+        },
+        "darkness": {
+          "state": "known",
+          "value": 4,
+          "confidence": 0.99
+        },
+        "mentalStress": {
+          "state": "known",
+          "value": 3,
+          "confidence": 0.88
+        },
+        "romance": {
+          "state": "unknown"
+        },
+        "emotionalWarmth": {
+          "state": "known",
+          "value": 1,
+          "confidence": 0.78
+        },
+        "artRealism": {
+          "state": "known",
+          "value": 3,
+          "confidence": 0.86
+        },
+        "artDensity": {
+          "state": "known",
+          "value": 4,
+          "confidence": 0.91
+        },
+        "visualSoftness": {
+          "state": "known",
+          "value": 0,
+          "confidence": 0.88
+        },
+        "motionImpact": {
+          "state": "unknown"
+        }
+      },
+      "factorScope": "entry_1_3_volumes",
+      "eligibility": {
+        "onboardingEligible": true,
+        "recommendationEligible": true,
+        "libraryOnly": false
+      },
+      "evidence": {
+        "metadataConfidence": 0.98,
+        "groupingConfidence": 0.99,
+        "sourceAgreement": 0.91,
+        "annotationReviewedAt": "2026-08-11T21:06:26+09:00"
+      }
+    },
+    {
+      "id": "beyond-the-clouds",
+      "title": "Ｂｅｙｏｎｄ　ｔｈｅ　Ｃｌｏｕｄｓ　空から落ちた少女",
+      "titleKana": "ビヨンドザクラウズ　ソラカラオチタショウジョ",
+      "aliases": [],
+      "creators": [
+        "Nicke"
+      ],
+      "publisher": "講談社",
+      "demographic": "general",
+      "status": "completed",
+      "firstPublishedYear": 2018,
+      "genres": [
+        "action",
+        "fantasy"
+      ],
+      "themes": [
+        {
+          "id": "adventure",
+          "centrality": 2,
+          "confidence": 0.85
+        },
+        {
+          "id": "crafting",
+          "centrality": 1,
+          "confidence": 0.85
+        },
+        {
+          "id": "exploration",
+          "centrality": 1,
+          "confidence": 0.85
+        },
+        {
+          "id": "foundFamily",
+          "centrality": 1,
+          "confidence": 0.85
+        }
+      ],
+      "axes": {
+        "progression": {
+          "state": "known",
+          "value": 1,
+          "confidence": 0.85
+        },
+        "problemSolving": {
+          "state": "known",
+          "value": 2,
+          "confidence": 0.85
+        },
+        "strategy": {
+          "state": "known",
+          "value": 0,
+          "confidence": 0.9
+        },
+        "pacing": {
+          "state": "known",
+          "value": 2,
+          "confidence": 0.85
+        },
+        "mysteryReveal": {
+          "state": "known",
+          "value": 2,
+          "confidence": 0.85
+        },
+        "worldBuilding": {
+          "state": "known",
+          "value": 2,
+          "confidence": 0.85
+        },
+        "characterArcWeight": {
+          "state": "known",
+          "value": 2,
+          "confidence": 0.85
+        },
+        "relationshipStructure": {
+          "state": "known",
+          "value": 2,
+          "confidence": 0.85
+        },
+        "comedy": {
+          "state": "known",
+          "value": 1,
+          "confidence": 0.85
+        },
+        "darkness": {
+          "state": "known",
+          "value": 1,
+          "confidence": 0.85
+        },
+        "mentalStress": {
+          "state": "known",
+          "value": 1,
+          "confidence": 0.85
+        },
+        "romance": {
+          "state": "known",
+          "value": 1,
+          "confidence": 0.85
+        },
+        "emotionalWarmth": {
+          "state": "known",
+          "value": 3,
+          "confidence": 0.9
+        },
+        "artRealism": {
+          "state": "known",
+          "value": 1,
+          "confidence": 0.88
+        },
+        "artDensity": {
+          "state": "known",
+          "value": 3,
+          "confidence": 0.92
+        },
+        "visualSoftness": {
+          "state": "known",
+          "value": 4,
+          "confidence": 0.95
+        },
+        "motionImpact": {
+          "state": "unknown"
+        }
+      },
+      "factorScope": "entry_1_3_volumes",
+      "eligibility": {
+        "onboardingEligible": false,
+        "recommendationEligible": true,
+        "libraryOnly": false
+      },
+      "evidence": {
+        "metadataConfidence": 0.98,
+        "groupingConfidence": 0.99,
+        "sourceAgreement": 0.95,
+        "annotationReviewedAt": "2026-08-11T21:06:26+09:00"
+      }
+    },
     {
       "id": "blame",
       "title": "BLAME!",
@@ -145,7 +952,7 @@
         "metadataConfidence": 0.99,
         "groupingConfidence": 0.99,
         "sourceAgreement": 0.99,
-        "annotationReviewedAt": "2026-08-11T01:47:41+09:00"
+        "annotationReviewedAt": "2026-08-11T21:06:26+09:00"
       }
     },
     {
@@ -176,39 +983,39 @@
         {
           "id": "survival",
           "centrality": 2,
-          "confidence": 0.97
+          "confidence": 0.98
         },
         {
           "id": "tournament",
           "centrality": 2,
-          "confidence": 0.99
+          "confidence": 0.97
         }
       ],
       "axes": {
         "progression": {
           "state": "known",
           "value": 4,
-          "confidence": 0.99
+          "confidence": 0.98
         },
         "problemSolving": {
           "state": "known",
-          "value": 4,
-          "confidence": 0.98
+          "value": 3,
+          "confidence": 0.9
         },
         "strategy": {
           "state": "known",
-          "value": 3,
-          "confidence": 0.96
+          "value": 2,
+          "confidence": 0.94
         },
         "pacing": {
           "state": "known",
           "value": 4,
-          "confidence": 0.97
+          "confidence": 0.95
         },
         "mysteryReveal": {
           "state": "known",
-          "value": 1,
-          "confidence": 0.83
+          "value": 0,
+          "confidence": 0.88
         },
         "worldBuilding": {
           "state": "known",
@@ -222,33 +1029,29 @@
         },
         "relationshipStructure": {
           "state": "known",
-          "value": 3,
-          "confidence": 0.96
+          "value": 2,
+          "confidence": 0.93
         },
         "comedy": {
           "state": "known",
           "value": 1,
-          "confidence": 0.84
+          "confidence": 0.62
         },
         "darkness": {
           "state": "known",
           "value": 1,
-          "confidence": 0.9
+          "confidence": 0.86
         },
         "mentalStress": {
           "state": "known",
           "value": 4,
-          "confidence": 0.99
+          "confidence": 0.97
         },
         "romance": {
-          "state": "known",
-          "value": 0,
-          "confidence": 0.99
+          "state": "unknown"
         },
         "emotionalWarmth": {
-          "state": "known",
-          "value": 1,
-          "confidence": 0.85
+          "state": "unknown"
         },
         "artRealism": {
           "state": "known",
@@ -281,7 +1084,140 @@
         "metadataConfidence": 0.99,
         "groupingConfidence": 0.99,
         "sourceAgreement": 0.99,
-        "annotationReviewedAt": "2026-08-11T01:47:41+09:00"
+        "annotationReviewedAt": "2026-08-11T21:06:26+09:00"
+      }
+    },
+    {
+      "id": "bocchi-the-rock",
+      "title": "ぼっち・ざ・ろっく！",
+      "titleKana": "ボッチザロック",
+      "aliases": [
+        "BOCCHI THE ROCK!",
+        "Bocchi the Rock!"
+      ],
+      "creators": [
+        "はまじあき"
+      ],
+      "publisher": "芳文社",
+      "demographic": "unknown",
+      "status": "ongoing",
+      "firstPublishedYear": 2018,
+      "genres": [
+        "comedy",
+        "sliceOfLife"
+      ],
+      "themes": [
+        {
+          "id": "foundFamily",
+          "centrality": 2,
+          "confidence": 0.94
+        },
+        {
+          "id": "school",
+          "centrality": 1,
+          "confidence": 0.85
+        },
+        {
+          "id": "tournament",
+          "centrality": 1,
+          "confidence": 0.86
+        },
+        {
+          "id": "workplace",
+          "centrality": 1,
+          "confidence": 0.82
+        }
+      ],
+      "axes": {
+        "progression": {
+          "state": "known",
+          "value": 4,
+          "confidence": 0.96
+        },
+        "problemSolving": {
+          "state": "unknown"
+        },
+        "strategy": {
+          "state": "unknown"
+        },
+        "pacing": {
+          "state": "known",
+          "value": 2,
+          "confidence": 0.86
+        },
+        "mysteryReveal": {
+          "state": "known",
+          "value": 0,
+          "confidence": 0.8
+        },
+        "worldBuilding": {
+          "state": "known",
+          "value": 2,
+          "confidence": 0.84
+        },
+        "characterArcWeight": {
+          "state": "known",
+          "value": 4,
+          "confidence": 0.97
+        },
+        "relationshipStructure": {
+          "state": "known",
+          "value": 2,
+          "confidence": 0.94
+        },
+        "comedy": {
+          "state": "known",
+          "value": 4,
+          "confidence": 0.98
+        },
+        "darkness": {
+          "state": "known",
+          "value": 0,
+          "confidence": 0.86
+        },
+        "mentalStress": {
+          "state": "known",
+          "value": 4,
+          "confidence": 0.98
+        },
+        "romance": {
+          "state": "unknown"
+        },
+        "emotionalWarmth": {
+          "state": "known",
+          "value": 4,
+          "confidence": 0.94
+        },
+        "artRealism": {
+          "state": "known",
+          "value": 0,
+          "confidence": 0.88
+        },
+        "artDensity": {
+          "state": "known",
+          "value": 0,
+          "confidence": 0.8
+        },
+        "visualSoftness": {
+          "state": "known",
+          "value": 4,
+          "confidence": 0.8
+        },
+        "motionImpact": {
+          "state": "unknown"
+        }
+      },
+      "factorScope": "entry_1_3_volumes",
+      "eligibility": {
+        "onboardingEligible": false,
+        "recommendationEligible": true,
+        "libraryOnly": false
+      },
+      "evidence": {
+        "metadataConfidence": 0.96,
+        "groupingConfidence": 0.99,
+        "sourceAgreement": 0.94,
+        "annotationReviewedAt": "2026-08-11T21:06:26+09:00"
       }
     },
     {
@@ -429,7 +1365,7 @@
         "metadataConfidence": 0.99,
         "groupingConfidence": 0.99,
         "sourceAgreement": 0.99,
-        "annotationReviewedAt": "2026-08-11T01:47:41+09:00"
+        "annotationReviewedAt": "2026-08-11T21:06:26+09:00"
       }
     },
     {
@@ -537,17 +1473,15 @@
         "artDensity": {
           "state": "known",
           "value": 3,
-          "confidence": 0.92
+          "confidence": 0.88
         },
         "visualSoftness": {
           "state": "known",
           "value": 1,
-          "confidence": 0.89
+          "confidence": 0.87
         },
         "motionImpact": {
-          "state": "known",
-          "value": 1,
-          "confidence": 0.85
+          "state": "unknown"
         }
       },
       "factorScope": "entry_1_3_volumes",
@@ -560,7 +1494,454 @@
         "metadataConfidence": 0.98,
         "groupingConfidence": 0.99,
         "sourceAgreement": 0.98,
-        "annotationReviewedAt": "2026-08-11T01:47:41+09:00"
+        "annotationReviewedAt": "2026-08-11T21:06:26+09:00"
+      }
+    },
+    {
+      "id": "demon-slayer",
+      "title": "鬼滅の刃",
+      "titleKana": "キメツノヤイバ",
+      "aliases": [
+        "Demon Slayer"
+      ],
+      "creators": [
+        "吾峠呼世晴"
+      ],
+      "publisher": "集英社",
+      "demographic": "shonen",
+      "status": "completed",
+      "firstPublishedYear": 2016,
+      "genres": [
+        "action",
+        "fantasy",
+        "historical",
+        "horror"
+      ],
+      "themes": [
+        {
+          "id": "adventure",
+          "centrality": 2,
+          "confidence": 0.92
+        },
+        {
+          "id": "combat",
+          "centrality": 2,
+          "confidence": 0.96
+        },
+        {
+          "id": "foundFamily",
+          "centrality": 1,
+          "confidence": 0.84
+        },
+        {
+          "id": "historicalReconstruction",
+          "centrality": 1,
+          "confidence": 0.82
+        },
+        {
+          "id": "martialArts",
+          "centrality": 2,
+          "confidence": 0.92
+        },
+        {
+          "id": "revenge",
+          "centrality": 2,
+          "confidence": 0.92
+        },
+        {
+          "id": "survival",
+          "centrality": 1,
+          "confidence": 0.84
+        }
+      ],
+      "axes": {
+        "progression": {
+          "state": "known",
+          "value": 4,
+          "confidence": 0.9
+        },
+        "problemSolving": {
+          "state": "known",
+          "value": 2,
+          "confidence": 0.84
+        },
+        "strategy": {
+          "state": "known",
+          "value": 2,
+          "confidence": 0.82
+        },
+        "pacing": {
+          "state": "known",
+          "value": 4,
+          "confidence": 0.92
+        },
+        "mysteryReveal": {
+          "state": "known",
+          "value": 2,
+          "confidence": 0.8
+        },
+        "worldBuilding": {
+          "state": "known",
+          "value": 4,
+          "confidence": 0.9
+        },
+        "characterArcWeight": {
+          "state": "known",
+          "value": 4,
+          "confidence": 0.92
+        },
+        "relationshipStructure": {
+          "state": "known",
+          "value": 2,
+          "confidence": 0.86
+        },
+        "comedy": {
+          "state": "known",
+          "value": 2,
+          "confidence": 0.86
+        },
+        "darkness": {
+          "state": "known",
+          "value": 4,
+          "confidence": 0.94
+        },
+        "mentalStress": {
+          "state": "known",
+          "value": 2,
+          "confidence": 0.84
+        },
+        "romance": {
+          "state": "known",
+          "value": 0,
+          "confidence": 0.92
+        },
+        "emotionalWarmth": {
+          "state": "known",
+          "value": 4,
+          "confidence": 0.92
+        },
+        "artRealism": {
+          "state": "known",
+          "value": 2,
+          "confidence": 0.82
+        },
+        "artDensity": {
+          "state": "known",
+          "value": 2,
+          "confidence": 0.8
+        },
+        "visualSoftness": {
+          "state": "known",
+          "value": 2,
+          "confidence": 0.82
+        },
+        "motionImpact": {
+          "state": "unknown"
+        }
+      },
+      "factorScope": "entry_1_3_volumes",
+      "eligibility": {
+        "onboardingEligible": false,
+        "recommendationEligible": true,
+        "libraryOnly": false
+      },
+      "evidence": {
+        "metadataConfidence": 0.99,
+        "groupingConfidence": 0.99,
+        "sourceAgreement": 0.92,
+        "annotationReviewedAt": "2026-08-11T21:06:26+09:00"
+      }
+    },
+    {
+      "id": "dr-stone",
+      "title": "Dr.STONE",
+      "titleKana": "ドクターストーン",
+      "aliases": [
+        "Dr. STONE",
+        "ドクターストーン"
+      ],
+      "creators": [
+        "Boichi",
+        "稲垣理一郎"
+      ],
+      "publisher": "集英社",
+      "demographic": "shonen",
+      "status": "completed",
+      "firstPublishedYear": 2017,
+      "genres": [
+        "action",
+        "comedy",
+        "scienceFiction"
+      ],
+      "themes": [
+        {
+          "id": "adventure",
+          "centrality": 2,
+          "confidence": 0.95
+        },
+        {
+          "id": "crafting",
+          "centrality": 2,
+          "confidence": 0.98
+        },
+        {
+          "id": "exploration",
+          "centrality": 1,
+          "confidence": 0.84
+        },
+        {
+          "id": "postApocalypse",
+          "centrality": 2,
+          "confidence": 0.98
+        },
+        {
+          "id": "survival",
+          "centrality": 2,
+          "confidence": 0.97
+        }
+      ],
+      "axes": {
+        "progression": {
+          "state": "known",
+          "value": 4,
+          "confidence": 0.98
+        },
+        "problemSolving": {
+          "state": "known",
+          "value": 4,
+          "confidence": 0.98
+        },
+        "strategy": {
+          "state": "known",
+          "value": 2,
+          "confidence": 0.9
+        },
+        "pacing": {
+          "state": "known",
+          "value": 4,
+          "confidence": 0.95
+        },
+        "mysteryReveal": {
+          "state": "known",
+          "value": 2,
+          "confidence": 0.88
+        },
+        "worldBuilding": {
+          "state": "known",
+          "value": 4,
+          "confidence": 0.96
+        },
+        "characterArcWeight": {
+          "state": "known",
+          "value": 2,
+          "confidence": 0.86
+        },
+        "relationshipStructure": {
+          "state": "known",
+          "value": 2,
+          "confidence": 0.9
+        },
+        "comedy": {
+          "state": "known",
+          "value": 4,
+          "confidence": 0.92
+        },
+        "darkness": {
+          "state": "known",
+          "value": 2,
+          "confidence": 0.88
+        },
+        "mentalStress": {
+          "state": "known",
+          "value": 2,
+          "confidence": 0.84
+        },
+        "romance": {
+          "state": "known",
+          "value": 2,
+          "confidence": 0.91
+        },
+        "emotionalWarmth": {
+          "state": "known",
+          "value": 4,
+          "confidence": 0.93
+        },
+        "artRealism": {
+          "state": "known",
+          "value": 2,
+          "confidence": 0.93
+        },
+        "artDensity": {
+          "state": "known",
+          "value": 4,
+          "confidence": 0.95
+        },
+        "visualSoftness": {
+          "state": "known",
+          "value": 0,
+          "confidence": 0.92
+        },
+        "motionImpact": {
+          "state": "known",
+          "value": 4,
+          "confidence": 0.92
+        }
+      },
+      "factorScope": "entry_1_3_volumes",
+      "eligibility": {
+        "onboardingEligible": true,
+        "recommendationEligible": true,
+        "libraryOnly": false
+      },
+      "evidence": {
+        "metadataConfidence": 0.99,
+        "groupingConfidence": 0.99,
+        "sourceAgreement": 0.99,
+        "annotationReviewedAt": "2026-08-11T21:06:26+09:00"
+      }
+    },
+    {
+      "id": "dragon-ball",
+      "title": "DRAGON BALL",
+      "titleKana": "ドラゴンボール",
+      "aliases": [
+        "ドラゴンボール"
+      ],
+      "creators": [
+        "鳥山明"
+      ],
+      "publisher": "集英社",
+      "demographic": "shonen",
+      "status": "completed",
+      "firstPublishedYear": 1984,
+      "genres": [
+        "action",
+        "comedy",
+        "fantasy"
+      ],
+      "themes": [
+        {
+          "id": "adventure",
+          "centrality": 2,
+          "confidence": 0.96
+        },
+        {
+          "id": "combat",
+          "centrality": 2,
+          "confidence": 0.92
+        },
+        {
+          "id": "exploration",
+          "centrality": 2,
+          "confidence": 0.94
+        },
+        {
+          "id": "martialArts",
+          "centrality": 2,
+          "confidence": 0.88
+        },
+        {
+          "id": "tournament",
+          "centrality": 1,
+          "confidence": 0.78
+        }
+      ],
+      "axes": {
+        "progression": {
+          "state": "known",
+          "value": 2,
+          "confidence": 0.84
+        },
+        "problemSolving": {
+          "state": "known",
+          "value": 2,
+          "confidence": 0.84
+        },
+        "strategy": {
+          "state": "known",
+          "value": 0,
+          "confidence": 0.84
+        },
+        "pacing": {
+          "state": "known",
+          "value": 4,
+          "confidence": 0.94
+        },
+        "mysteryReveal": {
+          "state": "known",
+          "value": 0,
+          "confidence": 0.86
+        },
+        "worldBuilding": {
+          "state": "known",
+          "value": 2,
+          "confidence": 0.86
+        },
+        "characterArcWeight": {
+          "state": "known",
+          "value": 2,
+          "confidence": 0.84
+        },
+        "relationshipStructure": {
+          "state": "known",
+          "value": 2,
+          "confidence": 0.84
+        },
+        "comedy": {
+          "state": "known",
+          "value": 4,
+          "confidence": 0.96
+        },
+        "darkness": {
+          "state": "known",
+          "value": 0,
+          "confidence": 0.92
+        },
+        "mentalStress": {
+          "state": "known",
+          "value": 0,
+          "confidence": 0.92
+        },
+        "romance": {
+          "state": "known",
+          "value": 2,
+          "confidence": 0.8
+        },
+        "emotionalWarmth": {
+          "state": "known",
+          "value": 2,
+          "confidence": 0.84
+        },
+        "artRealism": {
+          "state": "known",
+          "value": 0,
+          "confidence": 0.9
+        },
+        "artDensity": {
+          "state": "known",
+          "value": 2,
+          "confidence": 0.84
+        },
+        "visualSoftness": {
+          "state": "known",
+          "value": 2,
+          "confidence": 0.84
+        },
+        "motionImpact": {
+          "state": "unknown"
+        }
+      },
+      "factorScope": "entry_1_3_volumes",
+      "eligibility": {
+        "onboardingEligible": true,
+        "recommendationEligible": true,
+        "libraryOnly": false
+      },
+      "evidence": {
+        "metadataConfidence": 0.98,
+        "groupingConfidence": 0.99,
+        "sourceAgreement": 0.91,
+        "annotationReviewedAt": "2026-08-11T21:06:26+09:00"
       }
     },
     {
@@ -586,12 +1967,12 @@
         {
           "id": "adventure",
           "centrality": 2,
-          "confidence": 0.95
+          "confidence": 0.98
         },
         {
           "id": "combat",
           "centrality": 2,
-          "confidence": 0.9
+          "confidence": 0.95
         },
         {
           "id": "cooking",
@@ -606,79 +1987,87 @@
         {
           "id": "exploration",
           "centrality": 2,
-          "confidence": 0.94
+          "confidence": 0.97
+        },
+        {
+          "id": "investigation",
+          "centrality": 1,
+          "confidence": 0.88
+        },
+        {
+          "id": "school",
+          "centrality": 1,
+          "confidence": 0.91
         },
         {
           "id": "survival",
           "centrality": 2,
-          "confidence": 0.96
+          "confidence": 0.98
         }
       ],
       "axes": {
         "progression": {
           "state": "known",
           "value": 1,
-          "confidence": 0.72
+          "confidence": 0.83
         },
         "problemSolving": {
           "state": "known",
           "value": 4,
-          "confidence": 0.96
+          "confidence": 0.98
         },
         "strategy": {
           "state": "known",
           "value": 2,
-          "confidence": 0.8
+          "confidence": 0.93
         },
         "pacing": {
           "state": "known",
           "value": 3,
-          "confidence": 0.86
+          "confidence": 0.92
         },
         "mysteryReveal": {
           "state": "known",
-          "value": 2,
-          "confidence": 0.76
+          "value": 3,
+          "confidence": 0.91
         },
         "worldBuilding": {
           "state": "known",
           "value": 4,
-          "confidence": 0.95
+          "confidence": 0.99
         },
         "characterArcWeight": {
           "state": "known",
           "value": 2,
-          "confidence": 0.8
+          "confidence": 0.9
         },
         "relationshipStructure": {
           "state": "known",
           "value": 2,
-          "confidence": 0.91
+          "confidence": 0.95
         },
         "comedy": {
           "state": "known",
           "value": 4,
-          "confidence": 0.95
+          "confidence": 0.96
         },
         "darkness": {
           "state": "known",
           "value": 2,
-          "confidence": 0.85
+          "confidence": 0.93
         },
         "mentalStress": {
           "state": "known",
-          "value": 1,
-          "confidence": 0.84
+          "value": 2,
+          "confidence": 0.9
         },
         "romance": {
-          "state": "known",
-          "value": 0,
-          "confidence": 0.76
+          "state": "unknown"
         },
         "emotionalWarmth": {
           "state": "known",
           "value": 3,
-          "confidence": 0.86
+          "confidence": 0.94
         },
         "artRealism": {
           "state": "known",
@@ -711,7 +2100,141 @@
         "metadataConfidence": 0.95,
         "groupingConfidence": 0.98,
         "sourceAgreement": 0.95,
-        "annotationReviewedAt": "2026-08-11T01:47:41+09:00"
+        "annotationReviewedAt": "2026-08-11T21:06:26+09:00"
+      }
+    },
+    {
+      "id": "erased",
+      "title": "僕だけがいない街",
+      "titleKana": "ボクダケガイナイマチ",
+      "aliases": [
+        "Boku dake ga Inai Machi",
+        "ERASED"
+      ],
+      "creators": [
+        "三部けい"
+      ],
+      "publisher": "KADOKAWA",
+      "demographic": "seinen",
+      "status": "completed",
+      "firstPublishedYear": 2012,
+      "genres": [
+        "mystery",
+        "scienceFiction"
+      ],
+      "themes": [
+        {
+          "id": "investigation",
+          "centrality": 2,
+          "confidence": 0.93
+        },
+        {
+          "id": "school",
+          "centrality": 1,
+          "confidence": 0.84
+        },
+        {
+          "id": "timeTravel",
+          "centrality": 2,
+          "confidence": 0.95
+        }
+      ],
+      "axes": {
+        "progression": {
+          "state": "known",
+          "value": 0,
+          "confidence": 0.87
+        },
+        "problemSolving": {
+          "state": "known",
+          "value": 2,
+          "confidence": 0.88
+        },
+        "strategy": {
+          "state": "known",
+          "value": 2,
+          "confidence": 0.84
+        },
+        "pacing": {
+          "state": "known",
+          "value": 4,
+          "confidence": 0.9
+        },
+        "mysteryReveal": {
+          "state": "known",
+          "value": 4,
+          "confidence": 0.94
+        },
+        "worldBuilding": {
+          "state": "known",
+          "value": 2,
+          "confidence": 0.82
+        },
+        "characterArcWeight": {
+          "state": "known",
+          "value": 4,
+          "confidence": 0.92
+        },
+        "relationshipStructure": {
+          "state": "known",
+          "value": 2,
+          "confidence": 0.86
+        },
+        "comedy": {
+          "state": "known",
+          "value": 0,
+          "confidence": 0.88
+        },
+        "darkness": {
+          "state": "known",
+          "value": 4,
+          "confidence": 0.91
+        },
+        "mentalStress": {
+          "state": "known",
+          "value": 4,
+          "confidence": 0.93
+        },
+        "romance": {
+          "state": "known",
+          "value": 0,
+          "confidence": 0.82
+        },
+        "emotionalWarmth": {
+          "state": "known",
+          "value": 2,
+          "confidence": 0.86
+        },
+        "artRealism": {
+          "state": "known",
+          "value": 2,
+          "confidence": 0.92
+        },
+        "artDensity": {
+          "state": "known",
+          "value": 2,
+          "confidence": 0.91
+        },
+        "visualSoftness": {
+          "state": "known",
+          "value": 2,
+          "confidence": 0.89
+        },
+        "motionImpact": {
+          "state": "unknown"
+        }
+      },
+      "factorScope": "entry_1_3_volumes",
+      "eligibility": {
+        "onboardingEligible": false,
+        "recommendationEligible": true,
+        "libraryOnly": false
+      },
+      "evidence": {
+        "metadataConfidence": 0.98,
+        "groupingConfidence": 0.99,
+        "sourceAgreement": 0.97,
+        "annotationReviewedAt": "2026-08-11T21:06:26+09:00"
       }
     },
     {
@@ -835,9 +2358,7 @@
           "confidence": 0.92
         },
         "motionImpact": {
-          "state": "known",
-          "value": 1,
-          "confidence": 0.83
+          "state": "unknown"
         }
       },
       "factorScope": "entry_1_3_volumes",
@@ -850,7 +2371,7 @@
         "metadataConfidence": 0.98,
         "groupingConfidence": 0.99,
         "sourceAgreement": 0.92,
-        "annotationReviewedAt": "2026-08-11T01:47:41+09:00"
+        "annotationReviewedAt": "2026-08-11T21:06:26+09:00"
       }
     },
     {
@@ -892,6 +2413,11 @@
           "id": "investigation",
           "centrality": 2,
           "confidence": 0.96
+        },
+        {
+          "id": "politics",
+          "centrality": 1,
+          "confidence": 0.82
         },
         {
           "id": "revenge",
@@ -996,7 +2522,1405 @@
         "metadataConfidence": 0.98,
         "groupingConfidence": 0.99,
         "sourceAgreement": 0.98,
-        "annotationReviewedAt": "2026-08-11T01:47:41+09:00"
+        "annotationReviewedAt": "2026-08-11T21:06:26+09:00"
+      }
+    },
+    {
+      "id": "ghost-in-the-shell",
+      "title": "攻殻機動隊",
+      "titleKana": "コウカクキドウタイ",
+      "aliases": [
+        "Ghost in the Shell",
+        "THE GHOST IN THE SHELL"
+      ],
+      "creators": [
+        "士郎正宗"
+      ],
+      "publisher": "講談社",
+      "demographic": "seinen",
+      "status": "completed",
+      "firstPublishedYear": 1989,
+      "genres": [
+        "action",
+        "mystery",
+        "scienceFiction"
+      ],
+      "themes": [
+        {
+          "id": "combat",
+          "centrality": 1,
+          "confidence": 0.86
+        },
+        {
+          "id": "investigation",
+          "centrality": 2,
+          "confidence": 0.93
+        },
+        {
+          "id": "politics",
+          "centrality": 1,
+          "confidence": 0.88
+        },
+        {
+          "id": "workplace",
+          "centrality": 2,
+          "confidence": 0.92
+        }
+      ],
+      "axes": {
+        "progression": {
+          "state": "known",
+          "value": 0,
+          "confidence": 0.91
+        },
+        "problemSolving": {
+          "state": "known",
+          "value": 4,
+          "confidence": 0.94
+        },
+        "strategy": {
+          "state": "known",
+          "value": 2,
+          "confidence": 0.87
+        },
+        "pacing": {
+          "state": "known",
+          "value": 2,
+          "confidence": 0.86
+        },
+        "mysteryReveal": {
+          "state": "known",
+          "value": 2,
+          "confidence": 0.85
+        },
+        "worldBuilding": {
+          "state": "known",
+          "value": 4,
+          "confidence": 0.96
+        },
+        "characterArcWeight": {
+          "state": "known",
+          "value": 2,
+          "confidence": 0.82
+        },
+        "relationshipStructure": {
+          "state": "known",
+          "value": 2,
+          "confidence": 0.88
+        },
+        "comedy": {
+          "state": "known",
+          "value": 2,
+          "confidence": 0.84
+        },
+        "darkness": {
+          "state": "known",
+          "value": 2,
+          "confidence": 0.9
+        },
+        "mentalStress": {
+          "state": "known",
+          "value": 1,
+          "confidence": 0.8
+        },
+        "romance": {
+          "state": "known",
+          "value": 0,
+          "confidence": 0.9
+        },
+        "emotionalWarmth": {
+          "state": "known",
+          "value": 1,
+          "confidence": 0.72
+        },
+        "artRealism": {
+          "state": "known",
+          "value": 4,
+          "confidence": 0.95
+        },
+        "artDensity": {
+          "state": "known",
+          "value": 4,
+          "confidence": 0.97
+        },
+        "visualSoftness": {
+          "state": "known",
+          "value": 0,
+          "confidence": 0.94
+        },
+        "motionImpact": {
+          "state": "known",
+          "value": 4,
+          "confidence": 0.93
+        }
+      },
+      "factorScope": "entry_1_3_volumes",
+      "eligibility": {
+        "onboardingEligible": false,
+        "recommendationEligible": true,
+        "libraryOnly": false
+      },
+      "evidence": {
+        "metadataConfidence": 0.98,
+        "groupingConfidence": 0.98,
+        "sourceAgreement": 0.98,
+        "annotationReviewedAt": "2026-08-11T21:06:26+09:00"
+      }
+    },
+    {
+      "id": "golden-kamuy",
+      "title": "ゴールデンカムイ",
+      "titleKana": "ゴールデンカムイ",
+      "aliases": [
+        "金カム"
+      ],
+      "creators": [
+        "野田サトル"
+      ],
+      "publisher": "集英社",
+      "demographic": "seinen",
+      "status": "completed",
+      "firstPublishedYear": 2014,
+      "genres": [
+        "action",
+        "comedy",
+        "historical"
+      ],
+      "themes": [
+        {
+          "id": "adventure",
+          "centrality": 2,
+          "confidence": 0.96
+        },
+        {
+          "id": "combat",
+          "centrality": 2,
+          "confidence": 0.92
+        },
+        {
+          "id": "cooking",
+          "centrality": 2,
+          "confidence": 0.94
+        },
+        {
+          "id": "exploration",
+          "centrality": 2,
+          "confidence": 0.94
+        },
+        {
+          "id": "foundFamily",
+          "centrality": 1,
+          "confidence": 0.86
+        },
+        {
+          "id": "historicalReconstruction",
+          "centrality": 2,
+          "confidence": 0.98
+        },
+        {
+          "id": "investigation",
+          "centrality": 2,
+          "confidence": 0.94
+        },
+        {
+          "id": "politics",
+          "centrality": 1,
+          "confidence": 0.84
+        },
+        {
+          "id": "survival",
+          "centrality": 2,
+          "confidence": 0.98
+        }
+      ],
+      "axes": {
+        "progression": {
+          "state": "known",
+          "value": 0,
+          "confidence": 0.88
+        },
+        "problemSolving": {
+          "state": "known",
+          "value": 4,
+          "confidence": 0.92
+        },
+        "strategy": {
+          "state": "known",
+          "value": 2,
+          "confidence": 0.86
+        },
+        "pacing": {
+          "state": "known",
+          "value": 4,
+          "confidence": 0.92
+        },
+        "mysteryReveal": {
+          "state": "known",
+          "value": 4,
+          "confidence": 0.92
+        },
+        "worldBuilding": {
+          "state": "known",
+          "value": 4,
+          "confidence": 0.94
+        },
+        "characterArcWeight": {
+          "state": "known",
+          "value": 4,
+          "confidence": 0.9
+        },
+        "relationshipStructure": {
+          "state": "known",
+          "value": 4,
+          "confidence": 0.9
+        },
+        "comedy": {
+          "state": "known",
+          "value": 4,
+          "confidence": 0.94
+        },
+        "darkness": {
+          "state": "known",
+          "value": 4,
+          "confidence": 0.92
+        },
+        "mentalStress": {
+          "state": "known",
+          "value": 2,
+          "confidence": 0.82
+        },
+        "romance": {
+          "state": "known",
+          "value": 0,
+          "confidence": 0.88
+        },
+        "emotionalWarmth": {
+          "state": "known",
+          "value": 4,
+          "confidence": 0.9
+        },
+        "artRealism": {
+          "state": "known",
+          "value": 4,
+          "confidence": 0.92
+        },
+        "artDensity": {
+          "state": "known",
+          "value": 4,
+          "confidence": 0.9
+        },
+        "visualSoftness": {
+          "state": "known",
+          "value": 0,
+          "confidence": 0.9
+        },
+        "motionImpact": {
+          "state": "known",
+          "value": 4,
+          "confidence": 0.93
+        }
+      },
+      "factorScope": "entry_1_3_volumes",
+      "eligibility": {
+        "onboardingEligible": false,
+        "recommendationEligible": true,
+        "libraryOnly": false
+      },
+      "evidence": {
+        "metadataConfidence": 0.99,
+        "groupingConfidence": 0.99,
+        "sourceAgreement": 0.92,
+        "annotationReviewedAt": "2026-08-11T21:06:26+09:00"
+      }
+    },
+    {
+      "id": "haikyu",
+      "title": "ハイキュー!!",
+      "titleKana": "ハイキュー",
+      "aliases": [
+        "Haikyu!!",
+        "ハイキュー"
+      ],
+      "creators": [
+        "古舘春一"
+      ],
+      "publisher": "集英社",
+      "demographic": "shonen",
+      "status": "completed",
+      "firstPublishedYear": 2012,
+      "genres": [
+        "comedy",
+        "sports"
+      ],
+      "themes": [
+        {
+          "id": "school",
+          "centrality": 2,
+          "confidence": 0.99
+        },
+        {
+          "id": "sportsCompetition",
+          "centrality": 2,
+          "confidence": 0.99
+        },
+        {
+          "id": "tournament",
+          "centrality": 2,
+          "confidence": 0.98
+        }
+      ],
+      "axes": {
+        "progression": {
+          "state": "known",
+          "value": 4,
+          "confidence": 0.99
+        },
+        "problemSolving": {
+          "state": "known",
+          "value": 4,
+          "confidence": 0.96
+        },
+        "strategy": {
+          "state": "known",
+          "value": 2,
+          "confidence": 0.98
+        },
+        "pacing": {
+          "state": "known",
+          "value": 4,
+          "confidence": 0.99
+        },
+        "mysteryReveal": {
+          "state": "known",
+          "value": 0,
+          "confidence": 0.97
+        },
+        "worldBuilding": {
+          "state": "known",
+          "value": 2,
+          "confidence": 0.94
+        },
+        "characterArcWeight": {
+          "state": "known",
+          "value": 2,
+          "confidence": 0.91
+        },
+        "relationshipStructure": {
+          "state": "known",
+          "value": 4,
+          "confidence": 0.99
+        },
+        "comedy": {
+          "state": "known",
+          "value": 2,
+          "confidence": 0.96
+        },
+        "darkness": {
+          "state": "known",
+          "value": 0,
+          "confidence": 0.97
+        },
+        "mentalStress": {
+          "state": "known",
+          "value": 2,
+          "confidence": 0.93
+        },
+        "romance": {
+          "state": "known",
+          "value": 0,
+          "confidence": 0.99
+        },
+        "emotionalWarmth": {
+          "state": "known",
+          "value": 4,
+          "confidence": 0.98
+        },
+        "artRealism": {
+          "state": "known",
+          "value": 2,
+          "confidence": 0.88
+        },
+        "artDensity": {
+          "state": "known",
+          "value": 2,
+          "confidence": 0.86
+        },
+        "visualSoftness": {
+          "state": "known",
+          "value": 0,
+          "confidence": 0.9
+        },
+        "motionImpact": {
+          "state": "known",
+          "value": 4,
+          "confidence": 0.99
+        }
+      },
+      "factorScope": "entry_1_3_volumes",
+      "eligibility": {
+        "onboardingEligible": false,
+        "recommendationEligible": true,
+        "libraryOnly": false
+      },
+      "evidence": {
+        "metadataConfidence": 0.99,
+        "groupingConfidence": 0.99,
+        "sourceAgreement": 0.99,
+        "annotationReviewedAt": "2026-08-11T21:06:26+09:00"
+      }
+    },
+    {
+      "id": "hajime-no-ippo",
+      "title": "はじめの一歩",
+      "titleKana": "ハジメノイッポ",
+      "aliases": [
+        "Fighting Spirit",
+        "Hajime no Ippo"
+      ],
+      "creators": [
+        "森川ジョージ"
+      ],
+      "publisher": "講談社",
+      "demographic": "shonen",
+      "status": "ongoing",
+      "firstPublishedYear": 1989,
+      "genres": [
+        "action",
+        "sports"
+      ],
+      "themes": [
+        {
+          "id": "combat",
+          "centrality": 2,
+          "confidence": 0.96
+        },
+        {
+          "id": "martialArts",
+          "centrality": 2,
+          "confidence": 0.98
+        },
+        {
+          "id": "sportsCompetition",
+          "centrality": 2,
+          "confidence": 0.99
+        },
+        {
+          "id": "tournament",
+          "centrality": 2,
+          "confidence": 0.97
+        }
+      ],
+      "axes": {
+        "progression": {
+          "state": "known",
+          "value": 4,
+          "confidence": 0.99
+        },
+        "problemSolving": {
+          "state": "known",
+          "value": 2,
+          "confidence": 0.91
+        },
+        "strategy": {
+          "state": "known",
+          "value": 2,
+          "confidence": 0.97
+        },
+        "pacing": {
+          "state": "known",
+          "value": 4,
+          "confidence": 0.98
+        },
+        "mysteryReveal": {
+          "state": "known",
+          "value": 0,
+          "confidence": 0.96
+        },
+        "worldBuilding": {
+          "state": "known",
+          "value": 2,
+          "confidence": 0.94
+        },
+        "characterArcWeight": {
+          "state": "known",
+          "value": 4,
+          "confidence": 0.98
+        },
+        "relationshipStructure": {
+          "state": "known",
+          "value": 2,
+          "confidence": 0.92
+        },
+        "comedy": {
+          "state": "known",
+          "value": 2,
+          "confidence": 0.9
+        },
+        "darkness": {
+          "state": "known",
+          "value": 2,
+          "confidence": 0.91
+        },
+        "mentalStress": {
+          "state": "known",
+          "value": 2,
+          "confidence": 0.92
+        },
+        "romance": {
+          "state": "known",
+          "value": 0,
+          "confidence": 0.97
+        },
+        "emotionalWarmth": {
+          "state": "known",
+          "value": 2,
+          "confidence": 0.91
+        },
+        "artRealism": {
+          "state": "known",
+          "value": 2,
+          "confidence": 0.9
+        },
+        "artDensity": {
+          "state": "known",
+          "value": 4,
+          "confidence": 0.94
+        },
+        "visualSoftness": {
+          "state": "known",
+          "value": 0,
+          "confidence": 0.92
+        },
+        "motionImpact": {
+          "state": "known",
+          "value": 4,
+          "confidence": 0.99
+        }
+      },
+      "factorScope": "entry_1_3_volumes",
+      "eligibility": {
+        "onboardingEligible": false,
+        "recommendationEligible": true,
+        "libraryOnly": false
+      },
+      "evidence": {
+        "metadataConfidence": 0.99,
+        "groupingConfidence": 0.99,
+        "sourceAgreement": 0.99,
+        "annotationReviewedAt": "2026-08-11T21:06:26+09:00"
+      }
+    },
+    {
+      "id": "horimiya",
+      "title": "ホリミヤ",
+      "titleKana": "ホリミヤ",
+      "aliases": [
+        "HORI-SAN TO MIYAMURA-KUN",
+        "HORIMIYA"
+      ],
+      "creators": [
+        "HERO",
+        "萩原ダイスケ"
+      ],
+      "publisher": "スクウェア・エニックス",
+      "demographic": "unknown",
+      "status": "completed",
+      "firstPublishedYear": 2011,
+      "genres": [
+        "comedy",
+        "romance",
+        "sliceOfLife"
+      ],
+      "themes": [
+        {
+          "id": "school",
+          "centrality": 2,
+          "confidence": 0.99
+        }
+      ],
+      "axes": {
+        "progression": {
+          "state": "known",
+          "value": 2,
+          "confidence": 0.88
+        },
+        "problemSolving": {
+          "state": "known",
+          "value": 0,
+          "confidence": 0.95
+        },
+        "strategy": {
+          "state": "known",
+          "value": 0,
+          "confidence": 0.95
+        },
+        "pacing": {
+          "state": "known",
+          "value": 2,
+          "confidence": 0.91
+        },
+        "mysteryReveal": {
+          "state": "known",
+          "value": 2,
+          "confidence": 0.84
+        },
+        "worldBuilding": {
+          "state": "known",
+          "value": 0,
+          "confidence": 0.94
+        },
+        "characterArcWeight": {
+          "state": "known",
+          "value": 4,
+          "confidence": 0.98
+        },
+        "relationshipStructure": {
+          "state": "known",
+          "value": 4,
+          "confidence": 0.98
+        },
+        "comedy": {
+          "state": "known",
+          "value": 2,
+          "confidence": 0.94
+        },
+        "darkness": {
+          "state": "known",
+          "value": 0,
+          "confidence": 0.95
+        },
+        "mentalStress": {
+          "state": "known",
+          "value": 2,
+          "confidence": 0.9
+        },
+        "romance": {
+          "state": "known",
+          "value": 4,
+          "confidence": 0.98
+        },
+        "emotionalWarmth": {
+          "state": "known",
+          "value": 4,
+          "confidence": 0.98
+        },
+        "artRealism": {
+          "state": "known",
+          "value": 2,
+          "confidence": 0.81
+        },
+        "artDensity": {
+          "state": "known",
+          "value": 2,
+          "confidence": 0.78
+        },
+        "visualSoftness": {
+          "state": "known",
+          "value": 4,
+          "confidence": 0.85
+        },
+        "motionImpact": {
+          "state": "unknown"
+        }
+      },
+      "factorScope": "entry_1_3_volumes",
+      "eligibility": {
+        "onboardingEligible": false,
+        "recommendationEligible": true,
+        "libraryOnly": false
+      },
+      "evidence": {
+        "metadataConfidence": 0.98,
+        "groupingConfidence": 0.98,
+        "sourceAgreement": 0.96,
+        "annotationReviewedAt": "2026-08-11T21:06:26+09:00"
+      }
+    },
+    {
+      "id": "hunter-x-hunter",
+      "title": "HUNTER×HUNTER",
+      "titleKana": "ハンターハンター",
+      "aliases": [
+        "ハンターハンター"
+      ],
+      "creators": [
+        "冨樫義博"
+      ],
+      "publisher": "集英社",
+      "demographic": "shonen",
+      "status": "ongoing",
+      "firstPublishedYear": 1998,
+      "genres": [
+        "action",
+        "comedy",
+        "fantasy"
+      ],
+      "themes": [
+        {
+          "id": "adventure",
+          "centrality": 2,
+          "confidence": 0.96
+        },
+        {
+          "id": "combat",
+          "centrality": 1,
+          "confidence": 0.86
+        },
+        {
+          "id": "exploration",
+          "centrality": 2,
+          "confidence": 0.92
+        },
+        {
+          "id": "foundFamily",
+          "centrality": 2,
+          "confidence": 0.9
+        },
+        {
+          "id": "survival",
+          "centrality": 2,
+          "confidence": 0.94
+        },
+        {
+          "id": "tournament",
+          "centrality": 1,
+          "confidence": 0.84
+        }
+      ],
+      "axes": {
+        "progression": {
+          "state": "known",
+          "value": 2,
+          "confidence": 0.84
+        },
+        "problemSolving": {
+          "state": "known",
+          "value": 4,
+          "confidence": 0.92
+        },
+        "strategy": {
+          "state": "known",
+          "value": 2,
+          "confidence": 0.9
+        },
+        "pacing": {
+          "state": "known",
+          "value": 4,
+          "confidence": 0.92
+        },
+        "mysteryReveal": {
+          "state": "known",
+          "value": 2,
+          "confidence": 0.82
+        },
+        "worldBuilding": {
+          "state": "known",
+          "value": 4,
+          "confidence": 0.92
+        },
+        "characterArcWeight": {
+          "state": "known",
+          "value": 4,
+          "confidence": 0.88
+        },
+        "relationshipStructure": {
+          "state": "known",
+          "value": 2,
+          "confidence": 0.88
+        },
+        "comedy": {
+          "state": "known",
+          "value": 2,
+          "confidence": 0.84
+        },
+        "darkness": {
+          "state": "known",
+          "value": 2,
+          "confidence": 0.84
+        },
+        "mentalStress": {
+          "state": "known",
+          "value": 2,
+          "confidence": 0.82
+        },
+        "romance": {
+          "state": "known",
+          "value": 0,
+          "confidence": 0.92
+        },
+        "emotionalWarmth": {
+          "state": "known",
+          "value": 4,
+          "confidence": 0.88
+        },
+        "artRealism": {
+          "state": "known",
+          "value": 2,
+          "confidence": 0.82
+        },
+        "artDensity": {
+          "state": "known",
+          "value": 2,
+          "confidence": 0.82
+        },
+        "visualSoftness": {
+          "state": "known",
+          "value": 2,
+          "confidence": 0.82
+        },
+        "motionImpact": {
+          "state": "unknown"
+        }
+      },
+      "factorScope": "entry_1_3_volumes",
+      "eligibility": {
+        "onboardingEligible": true,
+        "recommendationEligible": true,
+        "libraryOnly": false
+      },
+      "evidence": {
+        "metadataConfidence": 0.99,
+        "groupingConfidence": 0.99,
+        "sourceAgreement": 0.92,
+        "annotationReviewedAt": "2026-08-11T21:06:26+09:00"
+      }
+    },
+    {
+      "id": "jojo-bizarre-adventure",
+      "title": "ジョジョの奇妙な冒険",
+      "titleKana": "ジョジョノキミョウナボウケン",
+      "aliases": [
+        "ジョジョ"
+      ],
+      "creators": [
+        "荒木飛呂彦"
+      ],
+      "publisher": "集英社",
+      "demographic": "shonen",
+      "status": "completed",
+      "firstPublishedYear": 1986,
+      "genres": [
+        "action",
+        "fantasy",
+        "historical",
+        "horror",
+        "mystery"
+      ],
+      "themes": [
+        {
+          "id": "adventure",
+          "centrality": 2,
+          "confidence": 0.84
+        },
+        {
+          "id": "combat",
+          "centrality": 2,
+          "confidence": 0.96
+        },
+        {
+          "id": "historicalReconstruction",
+          "centrality": 1,
+          "confidence": 0.72
+        },
+        {
+          "id": "martialArts",
+          "centrality": 2,
+          "confidence": 0.9
+        },
+        {
+          "id": "revenge",
+          "centrality": 2,
+          "confidence": 0.86
+        }
+      ],
+      "axes": {
+        "progression": {
+          "state": "known",
+          "value": 2,
+          "confidence": 0.84
+        },
+        "problemSolving": {
+          "state": "known",
+          "value": 2,
+          "confidence": 0.8
+        },
+        "strategy": {
+          "state": "known",
+          "value": 2,
+          "confidence": 0.76
+        },
+        "pacing": {
+          "state": "known",
+          "value": 4,
+          "confidence": 0.93
+        },
+        "mysteryReveal": {
+          "state": "known",
+          "value": 4,
+          "confidence": 0.92
+        },
+        "worldBuilding": {
+          "state": "known",
+          "value": 2,
+          "confidence": 0.88
+        },
+        "characterArcWeight": {
+          "state": "known",
+          "value": 4,
+          "confidence": 0.92
+        },
+        "relationshipStructure": {
+          "state": "known",
+          "value": 2,
+          "confidence": 0.88
+        },
+        "comedy": {
+          "state": "known",
+          "value": 2,
+          "confidence": 0.76
+        },
+        "darkness": {
+          "state": "known",
+          "value": 4,
+          "confidence": 0.96
+        },
+        "mentalStress": {
+          "state": "known",
+          "value": 3,
+          "confidence": 0.86
+        },
+        "romance": {
+          "state": "known",
+          "value": 2,
+          "confidence": 0.72
+        },
+        "emotionalWarmth": {
+          "state": "known",
+          "value": 2,
+          "confidence": 0.82
+        },
+        "artRealism": {
+          "state": "known",
+          "value": 4,
+          "confidence": 0.9
+        },
+        "artDensity": {
+          "state": "known",
+          "value": 4,
+          "confidence": 0.88
+        },
+        "visualSoftness": {
+          "state": "known",
+          "value": 0,
+          "confidence": 0.9
+        },
+        "motionImpact": {
+          "state": "unknown"
+        }
+      },
+      "factorScope": "entry_1_3_volumes",
+      "eligibility": {
+        "onboardingEligible": false,
+        "recommendationEligible": true,
+        "libraryOnly": false
+      },
+      "evidence": {
+        "metadataConfidence": 0.98,
+        "groupingConfidence": 0.98,
+        "sourceAgreement": 0.9,
+        "annotationReviewedAt": "2026-08-11T21:06:26+09:00"
+      }
+    },
+    {
+      "id": "jujutsu-kaisen",
+      "title": "呪術廻戦",
+      "titleKana": "ジュジュツカイセン",
+      "aliases": [
+        "Jujutsu Kaisen"
+      ],
+      "creators": [
+        "芥見下々"
+      ],
+      "publisher": "集英社",
+      "demographic": "shonen",
+      "status": "completed",
+      "firstPublishedYear": 2018,
+      "genres": [
+        "action",
+        "fantasy",
+        "horror"
+      ],
+      "themes": [
+        {
+          "id": "combat",
+          "centrality": 2,
+          "confidence": 0.98
+        },
+        {
+          "id": "foundFamily",
+          "centrality": 1,
+          "confidence": 0.82
+        },
+        {
+          "id": "school",
+          "centrality": 2,
+          "confidence": 0.92
+        },
+        {
+          "id": "survival",
+          "centrality": 2,
+          "confidence": 0.92
+        }
+      ],
+      "axes": {
+        "progression": {
+          "state": "known",
+          "value": 2,
+          "confidence": 0.84
+        },
+        "problemSolving": {
+          "state": "known",
+          "value": 2,
+          "confidence": 0.84
+        },
+        "strategy": {
+          "state": "known",
+          "value": 2,
+          "confidence": 0.84
+        },
+        "pacing": {
+          "state": "known",
+          "value": 4,
+          "confidence": 0.94
+        },
+        "mysteryReveal": {
+          "state": "known",
+          "value": 2,
+          "confidence": 0.82
+        },
+        "worldBuilding": {
+          "state": "known",
+          "value": 4,
+          "confidence": 0.92
+        },
+        "characterArcWeight": {
+          "state": "known",
+          "value": 2,
+          "confidence": 0.84
+        },
+        "relationshipStructure": {
+          "state": "known",
+          "value": 2,
+          "confidence": 0.86
+        },
+        "comedy": {
+          "state": "known",
+          "value": 2,
+          "confidence": 0.86
+        },
+        "darkness": {
+          "state": "known",
+          "value": 4,
+          "confidence": 0.96
+        },
+        "mentalStress": {
+          "state": "known",
+          "value": 4,
+          "confidence": 0.92
+        },
+        "romance": {
+          "state": "known",
+          "value": 0,
+          "confidence": 0.94
+        },
+        "emotionalWarmth": {
+          "state": "known",
+          "value": 2,
+          "confidence": 0.82
+        },
+        "artRealism": {
+          "state": "known",
+          "value": 2,
+          "confidence": 0.84
+        },
+        "artDensity": {
+          "state": "known",
+          "value": 2,
+          "confidence": 0.82
+        },
+        "visualSoftness": {
+          "state": "known",
+          "value": 0,
+          "confidence": 0.88
+        },
+        "motionImpact": {
+          "state": "unknown"
+        }
+      },
+      "factorScope": "entry_1_3_volumes",
+      "eligibility": {
+        "onboardingEligible": false,
+        "recommendationEligible": true,
+        "libraryOnly": false
+      },
+      "evidence": {
+        "metadataConfidence": 0.99,
+        "groupingConfidence": 0.99,
+        "sourceAgreement": 0.92,
+        "annotationReviewedAt": "2026-08-11T21:06:26+09:00"
+      }
+    },
+    {
+      "id": "kaguya-sama",
+      "title": "かぐや様は告らせたい〜天才たちの恋愛頭脳戦〜",
+      "titleKana": "カグヤサマハコクラセタイ",
+      "aliases": [
+        "Kaguya-sama: Love Is War",
+        "かぐや様は告らせたい"
+      ],
+      "creators": [
+        "赤坂アカ"
+      ],
+      "publisher": "集英社",
+      "demographic": "seinen",
+      "status": "completed",
+      "firstPublishedYear": 2015,
+      "genres": [
+        "comedy",
+        "romance"
+      ],
+      "themes": [
+        {
+          "id": "school",
+          "centrality": 2,
+          "confidence": 0.99
+        }
+      ],
+      "axes": {
+        "progression": {
+          "state": "known",
+          "value": 0,
+          "confidence": 0.94
+        },
+        "problemSolving": {
+          "state": "known",
+          "value": 4,
+          "confidence": 0.98
+        },
+        "strategy": {
+          "state": "known",
+          "value": 2,
+          "confidence": 0.99
+        },
+        "pacing": {
+          "state": "known",
+          "value": 2,
+          "confidence": 0.91
+        },
+        "mysteryReveal": {
+          "state": "known",
+          "value": 0,
+          "confidence": 0.94
+        },
+        "worldBuilding": {
+          "state": "known",
+          "value": 0,
+          "confidence": 0.95
+        },
+        "characterArcWeight": {
+          "state": "known",
+          "value": 2,
+          "confidence": 0.92
+        },
+        "relationshipStructure": {
+          "state": "known",
+          "value": 2,
+          "confidence": 0.96
+        },
+        "comedy": {
+          "state": "known",
+          "value": 4,
+          "confidence": 0.99
+        },
+        "darkness": {
+          "state": "known",
+          "value": 0,
+          "confidence": 0.96
+        },
+        "mentalStress": {
+          "state": "known",
+          "value": 2,
+          "confidence": 0.86
+        },
+        "romance": {
+          "state": "known",
+          "value": 4,
+          "confidence": 0.99
+        },
+        "emotionalWarmth": {
+          "state": "known",
+          "value": 2,
+          "confidence": 0.9
+        },
+        "artRealism": {
+          "state": "known",
+          "value": 2,
+          "confidence": 0.8
+        },
+        "artDensity": {
+          "state": "known",
+          "value": 2,
+          "confidence": 0.76
+        },
+        "visualSoftness": {
+          "state": "known",
+          "value": 2,
+          "confidence": 0.78
+        },
+        "motionImpact": {
+          "state": "unknown"
+        }
+      },
+      "factorScope": "entry_1_3_volumes",
+      "eligibility": {
+        "onboardingEligible": true,
+        "recommendationEligible": true,
+        "libraryOnly": false
+      },
+      "evidence": {
+        "metadataConfidence": 0.99,
+        "groupingConfidence": 0.99,
+        "sourceAgreement": 0.99,
+        "annotationReviewedAt": "2026-08-11T21:06:26+09:00"
+      }
+    },
+    {
+      "id": "kimi-ni-todoke",
+      "title": "君に届け",
+      "titleKana": "キミニトドケ",
+      "aliases": [
+        "From Me to You",
+        "Kimi ni Todoke"
+      ],
+      "creators": [
+        "椎名軽穂"
+      ],
+      "publisher": "集英社",
+      "demographic": "shojo",
+      "status": "completed",
+      "firstPublishedYear": 2005,
+      "genres": [
+        "romance",
+        "sliceOfLife"
+      ],
+      "themes": [
+        {
+          "id": "foundFamily",
+          "centrality": 2,
+          "confidence": 0.92
+        },
+        {
+          "id": "school",
+          "centrality": 2,
+          "confidence": 0.99
+        }
+      ],
+      "axes": {
+        "progression": {
+          "state": "known",
+          "value": 2,
+          "confidence": 0.92
+        },
+        "problemSolving": {
+          "state": "known",
+          "value": 0,
+          "confidence": 0.95
+        },
+        "strategy": {
+          "state": "known",
+          "value": 0,
+          "confidence": 0.95
+        },
+        "pacing": {
+          "state": "known",
+          "value": 0,
+          "confidence": 0.9
+        },
+        "mysteryReveal": {
+          "state": "known",
+          "value": 0,
+          "confidence": 0.94
+        },
+        "worldBuilding": {
+          "state": "known",
+          "value": 0,
+          "confidence": 0.95
+        },
+        "characterArcWeight": {
+          "state": "known",
+          "value": 4,
+          "confidence": 0.98
+        },
+        "relationshipStructure": {
+          "state": "known",
+          "value": 4,
+          "confidence": 0.98
+        },
+        "comedy": {
+          "state": "known",
+          "value": 2,
+          "confidence": 0.92
+        },
+        "darkness": {
+          "state": "known",
+          "value": 0,
+          "confidence": 0.95
+        },
+        "mentalStress": {
+          "state": "known",
+          "value": 2,
+          "confidence": 0.92
+        },
+        "romance": {
+          "state": "known",
+          "value": 4,
+          "confidence": 0.98
+        },
+        "emotionalWarmth": {
+          "state": "known",
+          "value": 4,
+          "confidence": 0.98
+        },
+        "artRealism": {
+          "state": "known",
+          "value": 2,
+          "confidence": 0.8
+        },
+        "artDensity": {
+          "state": "known",
+          "value": 2,
+          "confidence": 0.78
+        },
+        "visualSoftness": {
+          "state": "known",
+          "value": 4,
+          "confidence": 0.87
+        },
+        "motionImpact": {
+          "state": "unknown"
+        }
+      },
+      "factorScope": "entry_1_3_volumes",
+      "eligibility": {
+        "onboardingEligible": false,
+        "recommendationEligible": true,
+        "libraryOnly": false
+      },
+      "evidence": {
+        "metadataConfidence": 0.98,
+        "groupingConfidence": 0.99,
+        "sourceAgreement": 0.97,
+        "annotationReviewedAt": "2026-08-11T21:06:26+09:00"
       }
     },
     {
@@ -1019,7 +3943,7 @@
         {
           "id": "adventure",
           "centrality": 2,
-          "confidence": 0.92
+          "confidence": 0.95
         },
         {
           "id": "combat",
@@ -1029,17 +3953,17 @@
         {
           "id": "historicalReconstruction",
           "centrality": 2,
-          "confidence": 0.98
+          "confidence": 0.99
         },
         {
           "id": "martialArts",
           "centrality": 1,
-          "confidence": 0.84
+          "confidence": 0.89
         },
         {
           "id": "politics",
           "centrality": 2,
-          "confidence": 0.96
+          "confidence": 0.98
         },
         {
           "id": "revenge",
@@ -1049,74 +3973,72 @@
         {
           "id": "war",
           "centrality": 2,
-          "confidence": 0.98
+          "confidence": 0.99
         }
       ],
       "axes": {
         "progression": {
           "state": "known",
           "value": 3,
-          "confidence": 0.84
+          "confidence": 0.94
         },
         "problemSolving": {
           "state": "known",
           "value": 2,
-          "confidence": 0.82
+          "confidence": 0.92
         },
         "strategy": {
-          "state": "known",
-          "value": 3,
-          "confidence": 0.91
-        },
-        "pacing": {
-          "state": "known",
-          "value": 4,
-          "confidence": 0.94
-        },
-        "mysteryReveal": {
-          "state": "known",
-          "value": 1,
-          "confidence": 0.78
-        },
-        "worldBuilding": {
-          "state": "known",
-          "value": 4,
-          "confidence": 0.95
-        },
-        "characterArcWeight": {
-          "state": "known",
-          "value": 3,
-          "confidence": 0.88
-        },
-        "relationshipStructure": {
-          "state": "known",
-          "value": 3,
-          "confidence": 0.9
-        },
-        "comedy": {
-          "state": "known",
-          "value": 1,
-          "confidence": 0.82
-        },
-        "darkness": {
           "state": "known",
           "value": 4,
           "confidence": 0.96
         },
-        "mentalStress": {
+        "pacing": {
+          "state": "known",
+          "value": 4,
+          "confidence": 0.96
+        },
+        "mysteryReveal": {
+          "state": "known",
+          "value": 1,
+          "confidence": 0.8
+        },
+        "worldBuilding": {
+          "state": "known",
+          "value": 4,
+          "confidence": 0.98
+        },
+        "characterArcWeight": {
           "state": "known",
           "value": 3,
-          "confidence": 0.89
+          "confidence": 0.93
+        },
+        "relationshipStructure": {
+          "state": "known",
+          "value": 3,
+          "confidence": 0.92
+        },
+        "comedy": {
+          "state": "known",
+          "value": 1,
+          "confidence": 0.72
+        },
+        "darkness": {
+          "state": "known",
+          "value": 3,
+          "confidence": 0.94
+        },
+        "mentalStress": {
+          "state": "known",
+          "value": 2,
+          "confidence": 0.91
         },
         "romance": {
-          "state": "known",
-          "value": 0,
-          "confidence": 0.9
+          "state": "unknown"
         },
         "emotionalWarmth": {
           "state": "known",
-          "value": 1,
-          "confidence": 0.82
+          "value": 2,
+          "confidence": 0.91
         },
         "artRealism": {
           "state": "known",
@@ -1134,9 +4056,7 @@
           "confidence": 0.91
         },
         "motionImpact": {
-          "state": "known",
-          "value": 4,
-          "confidence": 0.96
+          "state": "unknown"
         }
       },
       "factorScope": "entry_1_3_volumes",
@@ -1149,7 +4069,577 @@
         "metadataConfidence": 0.98,
         "groupingConfidence": 0.99,
         "sourceAgreement": 0.98,
-        "annotationReviewedAt": "2026-08-11T01:47:41+09:00"
+        "annotationReviewedAt": "2026-08-11T21:06:26+09:00"
+      }
+    },
+    {
+      "id": "land-of-the-lustrous",
+      "title": "宝石の国",
+      "titleKana": "ホウセキノクニ",
+      "aliases": [
+        "Houseki no Kuni",
+        "Land of the Lustrous"
+      ],
+      "creators": [
+        "市川春子"
+      ],
+      "publisher": "講談社",
+      "demographic": "seinen",
+      "status": "completed",
+      "firstPublishedYear": 2012,
+      "genres": [
+        "action",
+        "fantasy",
+        "scienceFiction"
+      ],
+      "themes": [
+        {
+          "id": "combat",
+          "centrality": 2,
+          "confidence": 0.9
+        },
+        {
+          "id": "exploration",
+          "centrality": 1,
+          "confidence": 0.82
+        },
+        {
+          "id": "investigation",
+          "centrality": 1,
+          "confidence": 0.8
+        },
+        {
+          "id": "postApocalypse",
+          "centrality": 2,
+          "confidence": 0.92
+        },
+        {
+          "id": "survival",
+          "centrality": 2,
+          "confidence": 0.9
+        }
+      ],
+      "axes": {
+        "progression": {
+          "state": "known",
+          "value": 2,
+          "confidence": 0.86
+        },
+        "problemSolving": {
+          "state": "known",
+          "value": 2,
+          "confidence": 0.82
+        },
+        "strategy": {
+          "state": "known",
+          "value": 0,
+          "confidence": 0.84
+        },
+        "pacing": {
+          "state": "known",
+          "value": 2,
+          "confidence": 0.86
+        },
+        "mysteryReveal": {
+          "state": "known",
+          "value": 4,
+          "confidence": 0.84
+        },
+        "worldBuilding": {
+          "state": "known",
+          "value": 4,
+          "confidence": 0.94
+        },
+        "characterArcWeight": {
+          "state": "known",
+          "value": 4,
+          "confidence": 0.93
+        },
+        "relationshipStructure": {
+          "state": "known",
+          "value": 4,
+          "confidence": 0.88
+        },
+        "comedy": {
+          "state": "known",
+          "value": 2,
+          "confidence": 0.82
+        },
+        "darkness": {
+          "state": "known",
+          "value": 2,
+          "confidence": 0.85
+        },
+        "mentalStress": {
+          "state": "known",
+          "value": 2,
+          "confidence": 0.83
+        },
+        "romance": {
+          "state": "known",
+          "value": 0,
+          "confidence": 0.89
+        },
+        "emotionalWarmth": {
+          "state": "known",
+          "value": 2,
+          "confidence": 0.82
+        },
+        "artRealism": {
+          "state": "known",
+          "value": 0,
+          "confidence": 0.94
+        },
+        "artDensity": {
+          "state": "known",
+          "value": 2,
+          "confidence": 0.93
+        },
+        "visualSoftness": {
+          "state": "known",
+          "value": 4,
+          "confidence": 0.95
+        },
+        "motionImpact": {
+          "state": "unknown"
+        }
+      },
+      "factorScope": "entry_1_3_volumes",
+      "eligibility": {
+        "onboardingEligible": false,
+        "recommendationEligible": true,
+        "libraryOnly": false
+      },
+      "evidence": {
+        "metadataConfidence": 0.99,
+        "groupingConfidence": 0.99,
+        "sourceAgreement": 0.99,
+        "annotationReviewedAt": "2026-08-11T21:06:26+09:00"
+      }
+    },
+    {
+      "id": "made-in-abyss",
+      "title": "メイドインアビス",
+      "titleKana": "メイドインアビス",
+      "aliases": [
+        "Made in Abyss",
+        "メイアビ"
+      ],
+      "creators": [
+        "つくしあきひと"
+      ],
+      "publisher": "竹書房",
+      "demographic": "seinen",
+      "status": "ongoing",
+      "firstPublishedYear": 2012,
+      "genres": [
+        "action",
+        "fantasy",
+        "horror",
+        "scienceFiction"
+      ],
+      "themes": [
+        {
+          "id": "adventure",
+          "centrality": 2,
+          "confidence": 0.94
+        },
+        {
+          "id": "combat",
+          "centrality": 1,
+          "confidence": 0.82
+        },
+        {
+          "id": "exploration",
+          "centrality": 2,
+          "confidence": 0.95
+        },
+        {
+          "id": "foundFamily",
+          "centrality": 1,
+          "confidence": 0.82
+        },
+        {
+          "id": "survival",
+          "centrality": 2,
+          "confidence": 0.92
+        }
+      ],
+      "axes": {
+        "progression": {
+          "state": "known",
+          "value": 2,
+          "confidence": 0.84
+        },
+        "problemSolving": {
+          "state": "known",
+          "value": 2,
+          "confidence": 0.86
+        },
+        "strategy": {
+          "state": "known",
+          "value": 0,
+          "confidence": 0.82
+        },
+        "pacing": {
+          "state": "known",
+          "value": 4,
+          "confidence": 0.9
+        },
+        "mysteryReveal": {
+          "state": "known",
+          "value": 4,
+          "confidence": 0.93
+        },
+        "worldBuilding": {
+          "state": "known",
+          "value": 4,
+          "confidence": 0.95
+        },
+        "characterArcWeight": {
+          "state": "known",
+          "value": 2,
+          "confidence": 0.84
+        },
+        "relationshipStructure": {
+          "state": "known",
+          "value": 2,
+          "confidence": 0.88
+        },
+        "comedy": {
+          "state": "known",
+          "value": 2,
+          "confidence": 0.82
+        },
+        "darkness": {
+          "state": "known",
+          "value": 4,
+          "confidence": 0.92
+        },
+        "mentalStress": {
+          "state": "known",
+          "value": 4,
+          "confidence": 0.9
+        },
+        "romance": {
+          "state": "known",
+          "value": 0,
+          "confidence": 0.88
+        },
+        "emotionalWarmth": {
+          "state": "known",
+          "value": 2,
+          "confidence": 0.86
+        },
+        "artRealism": {
+          "state": "known",
+          "value": 0,
+          "confidence": 0.95
+        },
+        "artDensity": {
+          "state": "known",
+          "value": 4,
+          "confidence": 0.96
+        },
+        "visualSoftness": {
+          "state": "known",
+          "value": 4,
+          "confidence": 0.94
+        },
+        "motionImpact": {
+          "state": "unknown"
+        }
+      },
+      "factorScope": "entry_1_3_volumes",
+      "eligibility": {
+        "onboardingEligible": true,
+        "recommendationEligible": true,
+        "libraryOnly": false
+      },
+      "evidence": {
+        "metadataConfidence": 0.96,
+        "groupingConfidence": 0.99,
+        "sourceAgreement": 0.96,
+        "annotationReviewedAt": "2026-08-11T21:06:26+09:00"
+      }
+    },
+    {
+      "id": "march-comes-in-like-a-lion",
+      "title": "3月のライオン",
+      "titleKana": "サンガツノライオン",
+      "aliases": [
+        "March Comes in Like a Lion",
+        "Sangatsu no Lion"
+      ],
+      "creators": [
+        "羽海野チカ"
+      ],
+      "publisher": "白泉社",
+      "demographic": "seinen",
+      "status": "ongoing",
+      "firstPublishedYear": 2007,
+      "genres": [
+        "sliceOfLife"
+      ],
+      "themes": [
+        {
+          "id": "foundFamily",
+          "centrality": 2,
+          "confidence": 0.96
+        },
+        {
+          "id": "school",
+          "centrality": 1,
+          "confidence": 0.82
+        },
+        {
+          "id": "tournament",
+          "centrality": 2,
+          "confidence": 0.94
+        },
+        {
+          "id": "workplace",
+          "centrality": 2,
+          "confidence": 0.9
+        }
+      ],
+      "axes": {
+        "progression": {
+          "state": "known",
+          "value": 2,
+          "confidence": 0.88
+        },
+        "problemSolving": {
+          "state": "known",
+          "value": 4,
+          "confidence": 0.96
+        },
+        "strategy": {
+          "state": "known",
+          "value": 2,
+          "confidence": 0.96
+        },
+        "pacing": {
+          "state": "known",
+          "value": 0,
+          "confidence": 0.86
+        },
+        "mysteryReveal": {
+          "state": "known",
+          "value": 0,
+          "confidence": 0.91
+        },
+        "worldBuilding": {
+          "state": "known",
+          "value": 2,
+          "confidence": 0.9
+        },
+        "characterArcWeight": {
+          "state": "known",
+          "value": 4,
+          "confidence": 0.97
+        },
+        "relationshipStructure": {
+          "state": "known",
+          "value": 4,
+          "confidence": 0.97
+        },
+        "comedy": {
+          "state": "known",
+          "value": 2,
+          "confidence": 0.9
+        },
+        "darkness": {
+          "state": "known",
+          "value": 2,
+          "confidence": 0.89
+        },
+        "mentalStress": {
+          "state": "known",
+          "value": 4,
+          "confidence": 0.96
+        },
+        "romance": {
+          "state": "known",
+          "value": 0,
+          "confidence": 0.84
+        },
+        "emotionalWarmth": {
+          "state": "known",
+          "value": 4,
+          "confidence": 0.97
+        },
+        "artRealism": {
+          "state": "known",
+          "value": 2,
+          "confidence": 0.8
+        },
+        "artDensity": {
+          "state": "known",
+          "value": 2,
+          "confidence": 0.78
+        },
+        "visualSoftness": {
+          "state": "known",
+          "value": 4,
+          "confidence": 0.85
+        },
+        "motionImpact": {
+          "state": "unknown"
+        }
+      },
+      "factorScope": "entry_1_3_volumes",
+      "eligibility": {
+        "onboardingEligible": false,
+        "recommendationEligible": true,
+        "libraryOnly": false
+      },
+      "evidence": {
+        "metadataConfidence": 0.98,
+        "groupingConfidence": 0.99,
+        "sourceAgreement": 0.98,
+        "annotationReviewedAt": "2026-08-11T21:06:26+09:00"
+      }
+    },
+    {
+      "id": "mob-psycho-100",
+      "title": "モブサイコ100",
+      "titleKana": "モブサイコヒャク",
+      "aliases": [
+        "Mob Psycho 100",
+        "モブサイコ１００"
+      ],
+      "creators": [
+        "ONE"
+      ],
+      "publisher": "小学館",
+      "demographic": "shonen",
+      "status": "completed",
+      "firstPublishedYear": 2012,
+      "genres": [
+        "action",
+        "comedy",
+        "fantasy",
+        "sliceOfLife"
+      ],
+      "themes": [
+        {
+          "id": "combat",
+          "centrality": 2,
+          "confidence": 0.94
+        },
+        {
+          "id": "foundFamily",
+          "centrality": 1,
+          "confidence": 0.85
+        },
+        {
+          "id": "school",
+          "centrality": 2,
+          "confidence": 0.92
+        },
+        {
+          "id": "workplace",
+          "centrality": 1,
+          "confidence": 0.86
+        }
+      ],
+      "axes": {
+        "progression": {
+          "state": "known",
+          "value": 2,
+          "confidence": 0.91
+        },
+        "problemSolving": {
+          "state": "known",
+          "value": 2,
+          "confidence": 0.84
+        },
+        "strategy": {
+          "state": "known",
+          "value": 0,
+          "confidence": 0.89
+        },
+        "pacing": {
+          "state": "known",
+          "value": 4,
+          "confidence": 0.92
+        },
+        "mysteryReveal": {
+          "state": "known",
+          "value": 0,
+          "confidence": 0.86
+        },
+        "worldBuilding": {
+          "state": "known",
+          "value": 2,
+          "confidence": 0.82
+        },
+        "characterArcWeight": {
+          "state": "known",
+          "value": 4,
+          "confidence": 0.95
+        },
+        "relationshipStructure": {
+          "state": "known",
+          "value": 2,
+          "confidence": 0.88
+        },
+        "comedy": {
+          "state": "known",
+          "value": 4,
+          "confidence": 0.96
+        },
+        "darkness": {
+          "state": "known",
+          "value": 2,
+          "confidence": 0.82
+        },
+        "mentalStress": {
+          "state": "known",
+          "value": 2,
+          "confidence": 0.84
+        },
+        "romance": {
+          "state": "known",
+          "value": 2,
+          "confidence": 0.86
+        },
+        "emotionalWarmth": {
+          "state": "known",
+          "value": 4,
+          "confidence": 0.94
+        },
+        "artRealism": {
+          "state": "known",
+          "value": 0,
+          "confidence": 0.96
+        },
+        "artDensity": {
+          "state": "known",
+          "value": 0,
+          "confidence": 0.94
+        },
+        "visualSoftness": {
+          "state": "known",
+          "value": 0,
+          "confidence": 0.93
+        },
+        "motionImpact": {
+          "state": "unknown"
+        }
+      },
+      "factorScope": "entry_1_3_volumes",
+      "eligibility": {
+        "onboardingEligible": true,
+        "recommendationEligible": true,
+        "libraryOnly": false
+      },
+      "evidence": {
+        "metadataConfidence": 0.99,
+        "groupingConfidence": 0.99,
+        "sourceAgreement": 0.99,
+        "annotationReviewedAt": "2026-08-11T21:06:26+09:00"
       }
     },
     {
@@ -1168,45 +4658,46 @@
       "status": "completed",
       "firstPublishedYear": 1994,
       "genres": [
+        "horror",
         "mystery"
       ],
       "themes": [
         {
           "id": "historicalReconstruction",
           "centrality": 1,
-          "confidence": 0.91
+          "confidence": 0.8
         },
         {
           "id": "investigation",
           "centrality": 2,
-          "confidence": 0.99
+          "confidence": 0.98
         },
         {
           "id": "workplace",
           "centrality": 1,
-          "confidence": 0.89
+          "confidence": 0.88
         }
       ],
       "axes": {
         "progression": {
           "state": "known",
           "value": 0,
-          "confidence": 0.98
+          "confidence": 0.88
         },
         "problemSolving": {
           "state": "known",
-          "value": 4,
-          "confidence": 0.95
+          "value": 3,
+          "confidence": 0.86
         },
         "strategy": {
           "state": "known",
-          "value": 2,
-          "confidence": 0.87
+          "value": 1,
+          "confidence": 0.78
         },
         "pacing": {
           "state": "known",
-          "value": 4,
-          "confidence": 0.96
+          "value": 3,
+          "confidence": 0.9
         },
         "mysteryReveal": {
           "state": "known",
@@ -1216,22 +4707,22 @@
         "worldBuilding": {
           "state": "known",
           "value": 2,
-          "confidence": 0.92
+          "confidence": 0.9
         },
         "characterArcWeight": {
           "state": "known",
           "value": 4,
-          "confidence": 0.97
+          "confidence": 0.96
         },
         "relationshipStructure": {
           "state": "known",
-          "value": 4,
-          "confidence": 0.95
+          "value": 3,
+          "confidence": 0.88
         },
         "comedy": {
           "state": "known",
           "value": 0,
-          "confidence": 0.99
+          "confidence": 0.9
         },
         "darkness": {
           "state": "known",
@@ -1241,7 +4732,7 @@
         "mentalStress": {
           "state": "known",
           "value": 4,
-          "confidence": 0.99
+          "confidence": 0.98
         },
         "romance": {
           "state": "known",
@@ -1249,9 +4740,7 @@
           "confidence": 0.86
         },
         "emotionalWarmth": {
-          "state": "known",
-          "value": 1,
-          "confidence": 0.88
+          "state": "unknown"
         },
         "artRealism": {
           "state": "known",
@@ -1269,9 +4758,7 @@
           "confidence": 0.95
         },
         "motionImpact": {
-          "state": "known",
-          "value": 1,
-          "confidence": 0.86
+          "state": "unknown"
         }
       },
       "factorScope": "entry_1_3_volumes",
@@ -1284,7 +4771,1369 @@
         "metadataConfidence": 0.98,
         "groupingConfidence": 0.95,
         "sourceAgreement": 0.97,
-        "annotationReviewedAt": "2026-08-11T01:47:41+09:00"
+        "annotationReviewedAt": "2026-08-11T21:06:26+09:00"
+      }
+    },
+    {
+      "id": "mushishi",
+      "title": "蟲師",
+      "titleKana": "ムシシ",
+      "aliases": [
+        "MUSHISHI"
+      ],
+      "creators": [
+        "漆原友紀"
+      ],
+      "publisher": "講談社",
+      "demographic": "seinen",
+      "status": "completed",
+      "firstPublishedYear": 1999,
+      "genres": [
+        "fantasy",
+        "horror",
+        "mystery",
+        "sliceOfLife"
+      ],
+      "themes": [
+        {
+          "id": "exploration",
+          "centrality": 2,
+          "confidence": 0.9
+        },
+        {
+          "id": "investigation",
+          "centrality": 2,
+          "confidence": 0.94
+        }
+      ],
+      "axes": {
+        "progression": {
+          "state": "known",
+          "value": 0,
+          "confidence": 0.93
+        },
+        "problemSolving": {
+          "state": "known",
+          "value": 4,
+          "confidence": 0.94
+        },
+        "strategy": {
+          "state": "known",
+          "value": 0,
+          "confidence": 0.88
+        },
+        "pacing": {
+          "state": "known",
+          "value": 0,
+          "confidence": 0.9
+        },
+        "mysteryReveal": {
+          "state": "known",
+          "value": 4,
+          "confidence": 0.95
+        },
+        "worldBuilding": {
+          "state": "known",
+          "value": 4,
+          "confidence": 0.93
+        },
+        "characterArcWeight": {
+          "state": "known",
+          "value": 2,
+          "confidence": 0.84
+        },
+        "relationshipStructure": {
+          "state": "known",
+          "value": 0,
+          "confidence": 0.92
+        },
+        "comedy": {
+          "state": "known",
+          "value": 0,
+          "confidence": 0.92
+        },
+        "darkness": {
+          "state": "known",
+          "value": 2,
+          "confidence": 0.88
+        },
+        "mentalStress": {
+          "state": "known",
+          "value": 2,
+          "confidence": 0.84
+        },
+        "romance": {
+          "state": "known",
+          "value": 0,
+          "confidence": 0.9
+        },
+        "emotionalWarmth": {
+          "state": "known",
+          "value": 2,
+          "confidence": 0.87
+        },
+        "artRealism": {
+          "state": "known",
+          "value": 2,
+          "confidence": 0.91
+        },
+        "artDensity": {
+          "state": "known",
+          "value": 2,
+          "confidence": 0.9
+        },
+        "visualSoftness": {
+          "state": "known",
+          "value": 4,
+          "confidence": 0.93
+        },
+        "motionImpact": {
+          "state": "unknown"
+        }
+      },
+      "factorScope": "entry_1_3_volumes",
+      "eligibility": {
+        "onboardingEligible": true,
+        "recommendationEligible": true,
+        "libraryOnly": false
+      },
+      "evidence": {
+        "metadataConfidence": 0.99,
+        "groupingConfidence": 0.99,
+        "sourceAgreement": 0.99,
+        "annotationReviewedAt": "2026-08-11T21:06:26+09:00"
+      }
+    },
+    {
+      "id": "my-hero-academia",
+      "title": "僕のヒーローアカデミア",
+      "titleKana": "ボクノヒーローアカデミア",
+      "aliases": [
+        "ヒロアカ"
+      ],
+      "creators": [
+        "堀越耕平"
+      ],
+      "publisher": "集英社",
+      "demographic": "shonen",
+      "status": "completed",
+      "firstPublishedYear": 2014,
+      "genres": [
+        "action",
+        "comedy",
+        "fantasy"
+      ],
+      "themes": [
+        {
+          "id": "combat",
+          "centrality": 2,
+          "confidence": 0.96
+        },
+        {
+          "id": "foundFamily",
+          "centrality": 1,
+          "confidence": 0.84
+        },
+        {
+          "id": "school",
+          "centrality": 2,
+          "confidence": 0.98
+        },
+        {
+          "id": "sportsCompetition",
+          "centrality": 1,
+          "confidence": 0.8
+        },
+        {
+          "id": "tournament",
+          "centrality": 1,
+          "confidence": 0.82
+        }
+      ],
+      "axes": {
+        "progression": {
+          "state": "known",
+          "value": 4,
+          "confidence": 0.94
+        },
+        "problemSolving": {
+          "state": "known",
+          "value": 2,
+          "confidence": 0.84
+        },
+        "strategy": {
+          "state": "known",
+          "value": 2,
+          "confidence": 0.86
+        },
+        "pacing": {
+          "state": "known",
+          "value": 4,
+          "confidence": 0.92
+        },
+        "mysteryReveal": {
+          "state": "known",
+          "value": 0,
+          "confidence": 0.86
+        },
+        "worldBuilding": {
+          "state": "known",
+          "value": 4,
+          "confidence": 0.92
+        },
+        "characterArcWeight": {
+          "state": "known",
+          "value": 4,
+          "confidence": 0.92
+        },
+        "relationshipStructure": {
+          "state": "known",
+          "value": 2,
+          "confidence": 0.9
+        },
+        "comedy": {
+          "state": "known",
+          "value": 2,
+          "confidence": 0.86
+        },
+        "darkness": {
+          "state": "known",
+          "value": 2,
+          "confidence": 0.84
+        },
+        "mentalStress": {
+          "state": "known",
+          "value": 2,
+          "confidence": 0.82
+        },
+        "romance": {
+          "state": "known",
+          "value": 1,
+          "confidence": 0.76
+        },
+        "emotionalWarmth": {
+          "state": "known",
+          "value": 2,
+          "confidence": 0.9
+        },
+        "artRealism": {
+          "state": "known",
+          "value": 1,
+          "confidence": 0.9
+        },
+        "artDensity": {
+          "state": "known",
+          "value": 3,
+          "confidence": 0.86
+        },
+        "visualSoftness": {
+          "state": "known",
+          "value": 1,
+          "confidence": 0.87
+        },
+        "motionImpact": {
+          "state": "known",
+          "value": 4,
+          "confidence": 0.94
+        }
+      },
+      "factorScope": "entry_1_3_volumes",
+      "eligibility": {
+        "onboardingEligible": false,
+        "recommendationEligible": true,
+        "libraryOnly": false
+      },
+      "evidence": {
+        "metadataConfidence": 0.99,
+        "groupingConfidence": 0.99,
+        "sourceAgreement": 0.92,
+        "annotationReviewedAt": "2026-08-11T21:06:26+09:00"
+      }
+    },
+    {
+      "id": "nana",
+      "title": "NANA―ナナ―",
+      "titleKana": "ナナ",
+      "aliases": [
+        "NANA",
+        "ナナ"
+      ],
+      "creators": [
+        "矢沢あい"
+      ],
+      "publisher": "集英社",
+      "demographic": "shojo",
+      "status": "unknown",
+      "firstPublishedYear": 2000,
+      "genres": [
+        "romance",
+        "sliceOfLife"
+      ],
+      "themes": [
+        {
+          "id": "foundFamily",
+          "centrality": 2,
+          "confidence": 0.93
+        },
+        {
+          "id": "workplace",
+          "centrality": 2,
+          "confidence": 0.91
+        }
+      ],
+      "axes": {
+        "progression": {
+          "state": "known",
+          "value": 2,
+          "confidence": 0.9
+        },
+        "problemSolving": {
+          "state": "known",
+          "value": 0,
+          "confidence": 0.92
+        },
+        "strategy": {
+          "state": "known",
+          "value": 0,
+          "confidence": 0.93
+        },
+        "pacing": {
+          "state": "known",
+          "value": 2,
+          "confidence": 0.89
+        },
+        "mysteryReveal": {
+          "state": "known",
+          "value": 0,
+          "confidence": 0.88
+        },
+        "worldBuilding": {
+          "state": "known",
+          "value": 2,
+          "confidence": 0.87
+        },
+        "characterArcWeight": {
+          "state": "known",
+          "value": 4,
+          "confidence": 0.97
+        },
+        "relationshipStructure": {
+          "state": "known",
+          "value": 4,
+          "confidence": 0.98
+        },
+        "comedy": {
+          "state": "known",
+          "value": 2,
+          "confidence": 0.91
+        },
+        "darkness": {
+          "state": "known",
+          "value": 2,
+          "confidence": 0.91
+        },
+        "mentalStress": {
+          "state": "known",
+          "value": 4,
+          "confidence": 0.96
+        },
+        "romance": {
+          "state": "known",
+          "value": 4,
+          "confidence": 0.98
+        },
+        "emotionalWarmth": {
+          "state": "known",
+          "value": 2,
+          "confidence": 0.89
+        },
+        "artRealism": {
+          "state": "known",
+          "value": 4,
+          "confidence": 0.85
+        },
+        "artDensity": {
+          "state": "known",
+          "value": 2,
+          "confidence": 0.78
+        },
+        "visualSoftness": {
+          "state": "known",
+          "value": 2,
+          "confidence": 0.8
+        },
+        "motionImpact": {
+          "state": "unknown"
+        }
+      },
+      "factorScope": "entry_1_3_volumes",
+      "eligibility": {
+        "onboardingEligible": false,
+        "recommendationEligible": true,
+        "libraryOnly": false
+      },
+      "evidence": {
+        "metadataConfidence": 0.95,
+        "groupingConfidence": 0.99,
+        "sourceAgreement": 0.86,
+        "annotationReviewedAt": "2026-08-11T21:06:26+09:00"
+      }
+    },
+    {
+      "id": "naruto",
+      "title": "NARUTO―ナルト―",
+      "titleKana": "ナルト",
+      "aliases": [
+        "ナルト"
+      ],
+      "creators": [
+        "岸本斉史"
+      ],
+      "publisher": "集英社",
+      "demographic": "shonen",
+      "status": "completed",
+      "firstPublishedYear": 1999,
+      "genres": [
+        "action",
+        "comedy",
+        "fantasy"
+      ],
+      "themes": [
+        {
+          "id": "adventure",
+          "centrality": 2,
+          "confidence": 0.9
+        },
+        {
+          "id": "combat",
+          "centrality": 2,
+          "confidence": 0.94
+        },
+        {
+          "id": "foundFamily",
+          "centrality": 2,
+          "confidence": 0.88
+        },
+        {
+          "id": "martialArts",
+          "centrality": 2,
+          "confidence": 0.92
+        },
+        {
+          "id": "school",
+          "centrality": 1,
+          "confidence": 0.82
+        }
+      ],
+      "axes": {
+        "progression": {
+          "state": "known",
+          "value": 4,
+          "confidence": 0.9
+        },
+        "problemSolving": {
+          "state": "known",
+          "value": 2,
+          "confidence": 0.84
+        },
+        "strategy": {
+          "state": "known",
+          "value": 2,
+          "confidence": 0.84
+        },
+        "pacing": {
+          "state": "known",
+          "value": 4,
+          "confidence": 0.91
+        },
+        "mysteryReveal": {
+          "state": "known",
+          "value": 2,
+          "confidence": 0.8
+        },
+        "worldBuilding": {
+          "state": "known",
+          "value": 4,
+          "confidence": 0.91
+        },
+        "characterArcWeight": {
+          "state": "known",
+          "value": 4,
+          "confidence": 0.9
+        },
+        "relationshipStructure": {
+          "state": "known",
+          "value": 2,
+          "confidence": 0.86
+        },
+        "comedy": {
+          "state": "known",
+          "value": 4,
+          "confidence": 0.9
+        },
+        "darkness": {
+          "state": "known",
+          "value": 2,
+          "confidence": 0.86
+        },
+        "mentalStress": {
+          "state": "known",
+          "value": 2,
+          "confidence": 0.82
+        },
+        "romance": {
+          "state": "known",
+          "value": 1,
+          "confidence": 0.78
+        },
+        "emotionalWarmth": {
+          "state": "known",
+          "value": 4,
+          "confidence": 0.88
+        },
+        "artRealism": {
+          "state": "known",
+          "value": 2,
+          "confidence": 0.84
+        },
+        "artDensity": {
+          "state": "known",
+          "value": 2,
+          "confidence": 0.82
+        },
+        "visualSoftness": {
+          "state": "known",
+          "value": 2,
+          "confidence": 0.8
+        },
+        "motionImpact": {
+          "state": "unknown"
+        }
+      },
+      "factorScope": "entry_1_3_volumes",
+      "eligibility": {
+        "onboardingEligible": false,
+        "recommendationEligible": true,
+        "libraryOnly": false
+      },
+      "evidence": {
+        "metadataConfidence": 0.98,
+        "groupingConfidence": 0.99,
+        "sourceAgreement": 0.91,
+        "annotationReviewedAt": "2026-08-11T21:06:26+09:00"
+      }
+    },
+    {
+      "id": "natsumes-book-of-friends",
+      "title": "夏目友人帳",
+      "titleKana": "ナツメユウジンチョウ",
+      "aliases": [
+        "Natsume Yuujinchou",
+        "Natsume's Book of Friends"
+      ],
+      "creators": [
+        "緑川ゆき"
+      ],
+      "publisher": "白泉社",
+      "demographic": "shojo",
+      "status": "ongoing",
+      "firstPublishedYear": 2003,
+      "genres": [
+        "fantasy",
+        "sliceOfLife"
+      ],
+      "themes": [
+        {
+          "id": "foundFamily",
+          "centrality": 2,
+          "confidence": 0.94
+        },
+        {
+          "id": "investigation",
+          "centrality": 1,
+          "confidence": 0.78
+        },
+        {
+          "id": "school",
+          "centrality": 1,
+          "confidence": 0.82
+        }
+      ],
+      "axes": {
+        "progression": {
+          "state": "known",
+          "value": 0,
+          "confidence": 0.9
+        },
+        "problemSolving": {
+          "state": "known",
+          "value": 2,
+          "confidence": 0.86
+        },
+        "strategy": {
+          "state": "known",
+          "value": 0,
+          "confidence": 0.91
+        },
+        "pacing": {
+          "state": "known",
+          "value": 2,
+          "confidence": 0.86
+        },
+        "mysteryReveal": {
+          "state": "known",
+          "value": 2,
+          "confidence": 0.82
+        },
+        "worldBuilding": {
+          "state": "known",
+          "value": 4,
+          "confidence": 0.91
+        },
+        "characterArcWeight": {
+          "state": "known",
+          "value": 4,
+          "confidence": 0.94
+        },
+        "relationshipStructure": {
+          "state": "known",
+          "value": 2,
+          "confidence": 0.9
+        },
+        "comedy": {
+          "state": "known",
+          "value": 2,
+          "confidence": 0.88
+        },
+        "darkness": {
+          "state": "known",
+          "value": 2,
+          "confidence": 0.84
+        },
+        "mentalStress": {
+          "state": "known",
+          "value": 2,
+          "confidence": 0.88
+        },
+        "romance": {
+          "state": "known",
+          "value": 0,
+          "confidence": 0.91
+        },
+        "emotionalWarmth": {
+          "state": "known",
+          "value": 4,
+          "confidence": 0.95
+        },
+        "artRealism": {
+          "state": "known",
+          "value": 2,
+          "confidence": 0.78
+        },
+        "artDensity": {
+          "state": "known",
+          "value": 2,
+          "confidence": 0.76
+        },
+        "visualSoftness": {
+          "state": "known",
+          "value": 4,
+          "confidence": 0.84
+        },
+        "motionImpact": {
+          "state": "known",
+          "value": 2,
+          "confidence": 0.82
+        }
+      },
+      "factorScope": "entry_1_3_volumes",
+      "eligibility": {
+        "onboardingEligible": true,
+        "recommendationEligible": true,
+        "libraryOnly": false
+      },
+      "evidence": {
+        "metadataConfidence": 0.98,
+        "groupingConfidence": 0.99,
+        "sourceAgreement": 0.96,
+        "annotationReviewedAt": "2026-08-11T21:06:26+09:00"
+      }
+    },
+    {
+      "id": "noragami-stray-god",
+      "title": "ノラガミ",
+      "titleKana": "ノラガミ",
+      "aliases": [],
+      "creators": [
+        "あだちとか"
+      ],
+      "publisher": "講談社",
+      "demographic": "shonen",
+      "status": "completed",
+      "firstPublishedYear": 2011,
+      "genres": [
+        "action",
+        "comedy",
+        "fantasy"
+      ],
+      "themes": [
+        {
+          "id": "combat",
+          "centrality": 2,
+          "confidence": 0.9
+        },
+        {
+          "id": "foundFamily",
+          "centrality": 2,
+          "confidence": 0.9
+        },
+        {
+          "id": "investigation",
+          "centrality": 1,
+          "confidence": 0.85
+        }
+      ],
+      "axes": {
+        "progression": {
+          "state": "known",
+          "value": 2,
+          "confidence": 0.9
+        },
+        "problemSolving": {
+          "state": "known",
+          "value": 2,
+          "confidence": 0.9
+        },
+        "strategy": {
+          "state": "known",
+          "value": 1,
+          "confidence": 0.85
+        },
+        "pacing": {
+          "state": "known",
+          "value": 2,
+          "confidence": 0.9
+        },
+        "mysteryReveal": {
+          "state": "known",
+          "value": 2,
+          "confidence": 0.85
+        },
+        "worldBuilding": {
+          "state": "known",
+          "value": 3,
+          "confidence": 0.9
+        },
+        "characterArcWeight": {
+          "state": "known",
+          "value": 3,
+          "confidence": 0.9
+        },
+        "relationshipStructure": {
+          "state": "known",
+          "value": 2,
+          "confidence": 0.9
+        },
+        "comedy": {
+          "state": "known",
+          "value": 2,
+          "confidence": 0.9
+        },
+        "darkness": {
+          "state": "known",
+          "value": 2,
+          "confidence": 0.9
+        },
+        "mentalStress": {
+          "state": "known",
+          "value": 2,
+          "confidence": 0.9
+        },
+        "romance": {
+          "state": "known",
+          "value": 1,
+          "confidence": 0.85
+        },
+        "emotionalWarmth": {
+          "state": "known",
+          "value": 2,
+          "confidence": 0.9
+        },
+        "artRealism": {
+          "state": "known",
+          "value": 2,
+          "confidence": 0.9
+        },
+        "artDensity": {
+          "state": "known",
+          "value": 2,
+          "confidence": 0.9
+        },
+        "visualSoftness": {
+          "state": "known",
+          "value": 2,
+          "confidence": 0.88
+        },
+        "motionImpact": {
+          "state": "known",
+          "value": 2,
+          "confidence": 0.86
+        }
+      },
+      "factorScope": "entry_1_3_volumes",
+      "eligibility": {
+        "onboardingEligible": true,
+        "recommendationEligible": true,
+        "libraryOnly": false
+      },
+      "evidence": {
+        "metadataConfidence": 0.99,
+        "groupingConfidence": 0.99,
+        "sourceAgreement": 0.99,
+        "annotationReviewedAt": "2026-08-11T21:06:26+09:00"
+      }
+    },
+    {
+      "id": "one-piece",
+      "title": "ONE PIECE",
+      "titleKana": "ワンピース",
+      "aliases": [
+        "ワンピース"
+      ],
+      "creators": [
+        "尾田栄一郎"
+      ],
+      "publisher": "集英社",
+      "demographic": "shonen",
+      "status": "ongoing",
+      "firstPublishedYear": 1997,
+      "genres": [
+        "action",
+        "comedy",
+        "fantasy"
+      ],
+      "themes": [
+        {
+          "id": "adventure",
+          "centrality": 2,
+          "confidence": 0.96
+        },
+        {
+          "id": "combat",
+          "centrality": 2,
+          "confidence": 0.92
+        },
+        {
+          "id": "exploration",
+          "centrality": 2,
+          "confidence": 0.94
+        },
+        {
+          "id": "foundFamily",
+          "centrality": 2,
+          "confidence": 0.9
+        }
+      ],
+      "axes": {
+        "progression": {
+          "state": "known",
+          "value": 2,
+          "confidence": 0.84
+        },
+        "problemSolving": {
+          "state": "known",
+          "value": 2,
+          "confidence": 0.8
+        },
+        "strategy": {
+          "state": "known",
+          "value": 0,
+          "confidence": 0.78
+        },
+        "pacing": {
+          "state": "known",
+          "value": 4,
+          "confidence": 0.92
+        },
+        "mysteryReveal": {
+          "state": "known",
+          "value": 2,
+          "confidence": 0.78
+        },
+        "worldBuilding": {
+          "state": "known",
+          "value": 4,
+          "confidence": 0.92
+        },
+        "characterArcWeight": {
+          "state": "known",
+          "value": 4,
+          "confidence": 0.88
+        },
+        "relationshipStructure": {
+          "state": "known",
+          "value": 2,
+          "confidence": 0.86
+        },
+        "comedy": {
+          "state": "known",
+          "value": 4,
+          "confidence": 0.94
+        },
+        "darkness": {
+          "state": "known",
+          "value": 2,
+          "confidence": 0.84
+        },
+        "mentalStress": {
+          "state": "known",
+          "value": 1,
+          "confidence": 0.78
+        },
+        "romance": {
+          "state": "known",
+          "value": 0,
+          "confidence": 0.88
+        },
+        "emotionalWarmth": {
+          "state": "known",
+          "value": 4,
+          "confidence": 0.9
+        },
+        "artRealism": {
+          "state": "known",
+          "value": 0,
+          "confidence": 0.86
+        },
+        "artDensity": {
+          "state": "known",
+          "value": 2,
+          "confidence": 0.8
+        },
+        "visualSoftness": {
+          "state": "known",
+          "value": 0,
+          "confidence": 0.82
+        },
+        "motionImpact": {
+          "state": "unknown"
+        }
+      },
+      "factorScope": "entry_1_3_volumes",
+      "eligibility": {
+        "onboardingEligible": true,
+        "recommendationEligible": true,
+        "libraryOnly": false
+      },
+      "evidence": {
+        "metadataConfidence": 0.98,
+        "groupingConfidence": 0.99,
+        "sourceAgreement": 0.91,
+        "annotationReviewedAt": "2026-08-11T21:06:26+09:00"
+      }
+    },
+    {
+      "id": "pluto",
+      "title": "PLUTO",
+      "aliases": [
+        "Pluto",
+        "プルートゥ"
+      ],
+      "creators": [
+        "浦沢直樹",
+        "手塚治虫",
+        "長崎尚志",
+        "手塚眞",
+        "手塚プロダクション"
+      ],
+      "publisher": "小学館",
+      "demographic": "seinen",
+      "status": "completed",
+      "firstPublishedYear": 2003,
+      "genres": [
+        "mystery",
+        "scienceFiction"
+      ],
+      "themes": [
+        {
+          "id": "investigation",
+          "centrality": 2,
+          "confidence": 0.96
+        },
+        {
+          "id": "politics",
+          "centrality": 1,
+          "confidence": 0.82
+        },
+        {
+          "id": "war",
+          "centrality": 1,
+          "confidence": 0.87
+        }
+      ],
+      "axes": {
+        "progression": {
+          "state": "known",
+          "value": 0,
+          "confidence": 0.92
+        },
+        "problemSolving": {
+          "state": "known",
+          "value": 4,
+          "confidence": 0.95
+        },
+        "strategy": {
+          "state": "known",
+          "value": 2,
+          "confidence": 0.86
+        },
+        "pacing": {
+          "state": "known",
+          "value": 2,
+          "confidence": 0.88
+        },
+        "mysteryReveal": {
+          "state": "known",
+          "value": 4,
+          "confidence": 0.96
+        },
+        "worldBuilding": {
+          "state": "known",
+          "value": 4,
+          "confidence": 0.94
+        },
+        "characterArcWeight": {
+          "state": "known",
+          "value": 4,
+          "confidence": 0.94
+        },
+        "relationshipStructure": {
+          "state": "known",
+          "value": 4,
+          "confidence": 0.91
+        },
+        "comedy": {
+          "state": "known",
+          "value": 0,
+          "confidence": 0.93
+        },
+        "darkness": {
+          "state": "known",
+          "value": 4,
+          "confidence": 0.94
+        },
+        "mentalStress": {
+          "state": "known",
+          "value": 4,
+          "confidence": 0.92
+        },
+        "romance": {
+          "state": "known",
+          "value": 0,
+          "confidence": 0.9
+        },
+        "emotionalWarmth": {
+          "state": "known",
+          "value": 2,
+          "confidence": 0.87
+        },
+        "artRealism": {
+          "state": "known",
+          "value": 4,
+          "confidence": 0.96
+        },
+        "artDensity": {
+          "state": "known",
+          "value": 4,
+          "confidence": 0.95
+        },
+        "visualSoftness": {
+          "state": "known",
+          "value": 2,
+          "confidence": 0.91
+        },
+        "motionImpact": {
+          "state": "unknown"
+        }
+      },
+      "factorScope": "entry_1_3_volumes",
+      "eligibility": {
+        "onboardingEligible": false,
+        "recommendationEligible": true,
+        "libraryOnly": false
+      },
+      "evidence": {
+        "metadataConfidence": 0.99,
+        "groupingConfidence": 0.99,
+        "sourceAgreement": 0.99,
+        "annotationReviewedAt": "2026-08-11T21:06:26+09:00"
+      }
+    },
+    {
+      "id": "promised-neverland",
+      "title": "約束のネバーランド",
+      "titleKana": "ヤクソクノネバーランド",
+      "aliases": [
+        "The Promised Neverland",
+        "約ネバ"
+      ],
+      "creators": [
+        "白井カイウ",
+        "出水ぽすか"
+      ],
+      "publisher": "集英社",
+      "demographic": "shonen",
+      "status": "completed",
+      "firstPublishedYear": 2016,
+      "genres": [
+        "horror",
+        "mystery"
+      ],
+      "themes": [
+        {
+          "id": "foundFamily",
+          "centrality": 2,
+          "confidence": 0.94
+        },
+        {
+          "id": "investigation",
+          "centrality": 2,
+          "confidence": 0.95
+        },
+        {
+          "id": "survival",
+          "centrality": 2,
+          "confidence": 0.95
+        }
+      ],
+      "axes": {
+        "progression": {
+          "state": "known",
+          "value": 0,
+          "confidence": 0.88
+        },
+        "problemSolving": {
+          "state": "known",
+          "value": 4,
+          "confidence": 0.96
+        },
+        "strategy": {
+          "state": "known",
+          "value": 4,
+          "confidence": 0.96
+        },
+        "pacing": {
+          "state": "known",
+          "value": 4,
+          "confidence": 0.93
+        },
+        "mysteryReveal": {
+          "state": "known",
+          "value": 4,
+          "confidence": 0.96
+        },
+        "worldBuilding": {
+          "state": "known",
+          "value": 2,
+          "confidence": 0.86
+        },
+        "characterArcWeight": {
+          "state": "known",
+          "value": 4,
+          "confidence": 0.92
+        },
+        "relationshipStructure": {
+          "state": "known",
+          "value": 4,
+          "confidence": 0.93
+        },
+        "comedy": {
+          "state": "known",
+          "value": 0,
+          "confidence": 0.9
+        },
+        "darkness": {
+          "state": "known",
+          "value": 4,
+          "confidence": 0.95
+        },
+        "mentalStress": {
+          "state": "known",
+          "value": 4,
+          "confidence": 0.95
+        },
+        "romance": {
+          "state": "known",
+          "value": 0,
+          "confidence": 0.92
+        },
+        "emotionalWarmth": {
+          "state": "known",
+          "value": 4,
+          "confidence": 0.89
+        },
+        "artRealism": {
+          "state": "known",
+          "value": 2,
+          "confidence": 0.91
+        },
+        "artDensity": {
+          "state": "known",
+          "value": 2,
+          "confidence": 0.9
+        },
+        "visualSoftness": {
+          "state": "known",
+          "value": 2,
+          "confidence": 0.9
+        },
+        "motionImpact": {
+          "state": "unknown"
+        }
+      },
+      "factorScope": "entry_1_3_volumes",
+      "eligibility": {
+        "onboardingEligible": true,
+        "recommendationEligible": true,
+        "libraryOnly": false
+      },
+      "evidence": {
+        "metadataConfidence": 0.99,
+        "groupingConfidence": 0.99,
+        "sourceAgreement": 0.99,
+        "annotationReviewedAt": "2026-08-11T21:06:26+09:00"
+      }
+    },
+    {
+      "id": "skip-and-loafer",
+      "title": "スキップとローファー",
+      "titleKana": "スキップトローファー",
+      "aliases": [
+        "Skip and Loafer",
+        "スキロー"
+      ],
+      "creators": [
+        "高松美咲"
+      ],
+      "publisher": "講談社",
+      "demographic": "seinen",
+      "status": "ongoing",
+      "firstPublishedYear": 2018,
+      "genres": [
+        "comedy",
+        "romance",
+        "sliceOfLife"
+      ],
+      "themes": [
+        {
+          "id": "foundFamily",
+          "centrality": 2,
+          "confidence": 0.94
+        },
+        {
+          "id": "school",
+          "centrality": 2,
+          "confidence": 0.99
+        }
+      ],
+      "axes": {
+        "progression": {
+          "state": "known",
+          "value": 2,
+          "confidence": 0.91
+        },
+        "problemSolving": {
+          "state": "known",
+          "value": 2,
+          "confidence": 0.82
+        },
+        "strategy": {
+          "state": "known",
+          "value": 0,
+          "confidence": 0.94
+        },
+        "pacing": {
+          "state": "known",
+          "value": 2,
+          "confidence": 0.93
+        },
+        "mysteryReveal": {
+          "state": "known",
+          "value": 0,
+          "confidence": 0.9
+        },
+        "worldBuilding": {
+          "state": "known",
+          "value": 0,
+          "confidence": 0.93
+        },
+        "characterArcWeight": {
+          "state": "known",
+          "value": 4,
+          "confidence": 0.98
+        },
+        "relationshipStructure": {
+          "state": "known",
+          "value": 4,
+          "confidence": 0.97
+        },
+        "comedy": {
+          "state": "known",
+          "value": 2,
+          "confidence": 0.95
+        },
+        "darkness": {
+          "state": "known",
+          "value": 0,
+          "confidence": 0.95
+        },
+        "mentalStress": {
+          "state": "known",
+          "value": 2,
+          "confidence": 0.91
+        },
+        "romance": {
+          "state": "known",
+          "value": 2,
+          "confidence": 0.88
+        },
+        "emotionalWarmth": {
+          "state": "known",
+          "value": 4,
+          "confidence": 0.99
+        },
+        "artRealism": {
+          "state": "known",
+          "value": 2,
+          "confidence": 0.82
+        },
+        "artDensity": {
+          "state": "known",
+          "value": 2,
+          "confidence": 0.78
+        },
+        "visualSoftness": {
+          "state": "known",
+          "value": 4,
+          "confidence": 0.87
+        },
+        "motionImpact": {
+          "state": "known",
+          "value": 2,
+          "confidence": 0.82
+        }
+      },
+      "factorScope": "entry_1_3_volumes",
+      "eligibility": {
+        "onboardingEligible": false,
+        "recommendationEligible": true,
+        "libraryOnly": false
+      },
+      "evidence": {
+        "metadataConfidence": 0.99,
+        "groupingConfidence": 0.99,
+        "sourceAgreement": 0.98,
+        "annotationReviewedAt": "2026-08-11T21:06:26+09:00"
       }
     },
     {
@@ -1428,7 +6277,439 @@
         "metadataConfidence": 0.98,
         "groupingConfidence": 0.99,
         "sourceAgreement": 0.98,
-        "annotationReviewedAt": "2026-08-11T01:47:41+09:00"
+        "annotationReviewedAt": "2026-08-11T21:06:26+09:00"
+      }
+    },
+    {
+      "id": "vagabond",
+      "title": "バガボンド",
+      "titleKana": "バガボンド",
+      "aliases": [
+        "VAGABOND"
+      ],
+      "creators": [
+        "井上雄彦",
+        "吉川英治"
+      ],
+      "publisher": "講談社",
+      "demographic": "seinen",
+      "status": "ongoing",
+      "firstPublishedYear": 1998,
+      "genres": [
+        "action",
+        "historical"
+      ],
+      "themes": [
+        {
+          "id": "adventure",
+          "centrality": 1,
+          "confidence": 0.82
+        },
+        {
+          "id": "combat",
+          "centrality": 2,
+          "confidence": 0.96
+        },
+        {
+          "id": "historicalReconstruction",
+          "centrality": 2,
+          "confidence": 0.94
+        },
+        {
+          "id": "martialArts",
+          "centrality": 2,
+          "confidence": 0.98
+        },
+        {
+          "id": "survival",
+          "centrality": 2,
+          "confidence": 0.9
+        }
+      ],
+      "axes": {
+        "progression": {
+          "state": "known",
+          "value": 4,
+          "confidence": 0.92
+        },
+        "problemSolving": {
+          "state": "known",
+          "value": 2,
+          "confidence": 0.82
+        },
+        "strategy": {
+          "state": "known",
+          "value": 2,
+          "confidence": 0.84
+        },
+        "pacing": {
+          "state": "known",
+          "value": 2,
+          "confidence": 0.86
+        },
+        "mysteryReveal": {
+          "state": "known",
+          "value": 0,
+          "confidence": 0.86
+        },
+        "worldBuilding": {
+          "state": "known",
+          "value": 2,
+          "confidence": 0.82
+        },
+        "characterArcWeight": {
+          "state": "known",
+          "value": 4,
+          "confidence": 0.94
+        },
+        "relationshipStructure": {
+          "state": "known",
+          "value": 2,
+          "confidence": 0.84
+        },
+        "comedy": {
+          "state": "known",
+          "value": 0,
+          "confidence": 0.88
+        },
+        "darkness": {
+          "state": "known",
+          "value": 4,
+          "confidence": 0.94
+        },
+        "mentalStress": {
+          "state": "known",
+          "value": 4,
+          "confidence": 0.9
+        },
+        "romance": {
+          "state": "known",
+          "value": 2,
+          "confidence": 0.82
+        },
+        "emotionalWarmth": {
+          "state": "known",
+          "value": 2,
+          "confidence": 0.8
+        },
+        "artRealism": {
+          "state": "known",
+          "value": 4,
+          "confidence": 0.96
+        },
+        "artDensity": {
+          "state": "known",
+          "value": 4,
+          "confidence": 0.94
+        },
+        "visualSoftness": {
+          "state": "known",
+          "value": 0,
+          "confidence": 0.94
+        },
+        "motionImpact": {
+          "state": "unknown"
+        }
+      },
+      "factorScope": "entry_1_3_volumes",
+      "eligibility": {
+        "onboardingEligible": true,
+        "recommendationEligible": true,
+        "libraryOnly": false
+      },
+      "evidence": {
+        "metadataConfidence": 0.98,
+        "groupingConfidence": 0.99,
+        "sourceAgreement": 0.9,
+        "annotationReviewedAt": "2026-08-11T21:06:26+09:00"
+      }
+    },
+    {
+      "id": "vinland-saga",
+      "title": "ヴィンランド・サガ",
+      "titleKana": "ヴィンランドサガ",
+      "aliases": [
+        "VINLAND SAGA"
+      ],
+      "creators": [
+        "幸村誠"
+      ],
+      "publisher": "講談社",
+      "demographic": "seinen",
+      "status": "completed",
+      "firstPublishedYear": 2005,
+      "genres": [
+        "action",
+        "historical"
+      ],
+      "themes": [
+        {
+          "id": "adventure",
+          "centrality": 1,
+          "confidence": 0.94
+        },
+        {
+          "id": "combat",
+          "centrality": 2,
+          "confidence": 0.96
+        },
+        {
+          "id": "historicalReconstruction",
+          "centrality": 2,
+          "confidence": 0.96
+        },
+        {
+          "id": "politics",
+          "centrality": 1,
+          "confidence": 0.86
+        },
+        {
+          "id": "revenge",
+          "centrality": 2,
+          "confidence": 0.96
+        },
+        {
+          "id": "war",
+          "centrality": 2,
+          "confidence": 0.98
+        }
+      ],
+      "axes": {
+        "progression": {
+          "state": "known",
+          "value": 2,
+          "confidence": 0.82
+        },
+        "problemSolving": {
+          "state": "known",
+          "value": 2,
+          "confidence": 0.82
+        },
+        "strategy": {
+          "state": "known",
+          "value": 2,
+          "confidence": 0.84
+        },
+        "pacing": {
+          "state": "known",
+          "value": 4,
+          "confidence": 0.92
+        },
+        "mysteryReveal": {
+          "state": "known",
+          "value": 0,
+          "confidence": 0.84
+        },
+        "worldBuilding": {
+          "state": "known",
+          "value": 4,
+          "confidence": 0.94
+        },
+        "characterArcWeight": {
+          "state": "known",
+          "value": 4,
+          "confidence": 0.94
+        },
+        "relationshipStructure": {
+          "state": "known",
+          "value": 4,
+          "confidence": 0.9
+        },
+        "comedy": {
+          "state": "known",
+          "value": 0,
+          "confidence": 0.88
+        },
+        "darkness": {
+          "state": "known",
+          "value": 4,
+          "confidence": 0.96
+        },
+        "mentalStress": {
+          "state": "known",
+          "value": 4,
+          "confidence": 0.92
+        },
+        "romance": {
+          "state": "known",
+          "value": 0,
+          "confidence": 0.92
+        },
+        "emotionalWarmth": {
+          "state": "known",
+          "value": 2,
+          "confidence": 0.82
+        },
+        "artRealism": {
+          "state": "known",
+          "value": 3,
+          "confidence": 0.88
+        },
+        "artDensity": {
+          "state": "known",
+          "value": 4,
+          "confidence": 0.93
+        },
+        "visualSoftness": {
+          "state": "known",
+          "value": 1,
+          "confidence": 0.82
+        },
+        "motionImpact": {
+          "state": "known",
+          "value": 4,
+          "confidence": 0.86
+        }
+      },
+      "factorScope": "entry_1_3_volumes",
+      "eligibility": {
+        "onboardingEligible": false,
+        "recommendationEligible": true,
+        "libraryOnly": false
+      },
+      "evidence": {
+        "metadataConfidence": 0.99,
+        "groupingConfidence": 0.99,
+        "sourceAgreement": 0.92,
+        "annotationReviewedAt": "2026-08-11T21:06:26+09:00"
+      }
+    },
+    {
+      "id": "witch-hat-atelier",
+      "title": "とんがり帽子のアトリエ",
+      "titleKana": "トンガリボウシノアトリエ",
+      "aliases": [
+        "Witch Hat Atelier",
+        "とんがり帽子"
+      ],
+      "creators": [
+        "白浜鴎"
+      ],
+      "publisher": "講談社",
+      "demographic": "seinen",
+      "status": "ongoing",
+      "firstPublishedYear": 2016,
+      "genres": [
+        "fantasy"
+      ],
+      "themes": [
+        {
+          "id": "adventure",
+          "centrality": 1,
+          "confidence": 0.82
+        },
+        {
+          "id": "crafting",
+          "centrality": 2,
+          "confidence": 0.95
+        },
+        {
+          "id": "foundFamily",
+          "centrality": 1,
+          "confidence": 0.86
+        },
+        {
+          "id": "school",
+          "centrality": 2,
+          "confidence": 0.93
+        }
+      ],
+      "axes": {
+        "progression": {
+          "state": "known",
+          "value": 4,
+          "confidence": 0.94
+        },
+        "problemSolving": {
+          "state": "known",
+          "value": 4,
+          "confidence": 0.94
+        },
+        "strategy": {
+          "state": "known",
+          "value": 2,
+          "confidence": 0.82
+        },
+        "pacing": {
+          "state": "known",
+          "value": 2,
+          "confidence": 0.87
+        },
+        "mysteryReveal": {
+          "state": "known",
+          "value": 2,
+          "confidence": 0.86
+        },
+        "worldBuilding": {
+          "state": "known",
+          "value": 4,
+          "confidence": 0.96
+        },
+        "characterArcWeight": {
+          "state": "known",
+          "value": 4,
+          "confidence": 0.93
+        },
+        "relationshipStructure": {
+          "state": "known",
+          "value": 2,
+          "confidence": 0.88
+        },
+        "comedy": {
+          "state": "known",
+          "value": 2,
+          "confidence": 0.82
+        },
+        "darkness": {
+          "state": "known",
+          "value": 2,
+          "confidence": 0.84
+        },
+        "mentalStress": {
+          "state": "known",
+          "value": 2,
+          "confidence": 0.84
+        },
+        "romance": {
+          "state": "known",
+          "value": 0,
+          "confidence": 0.91
+        },
+        "emotionalWarmth": {
+          "state": "known",
+          "value": 4,
+          "confidence": 0.93
+        },
+        "artRealism": {
+          "state": "known",
+          "value": 2,
+          "confidence": 0.94
+        },
+        "artDensity": {
+          "state": "known",
+          "value": 4,
+          "confidence": 0.97
+        },
+        "visualSoftness": {
+          "state": "known",
+          "value": 4,
+          "confidence": 0.96
+        },
+        "motionImpact": {
+          "state": "unknown"
+        }
+      },
+      "factorScope": "entry_1_3_volumes",
+      "eligibility": {
+        "onboardingEligible": true,
+        "recommendationEligible": true,
+        "libraryOnly": false
+      },
+      "evidence": {
+        "metadataConfidence": 0.99,
+        "groupingConfidence": 0.99,
+        "sourceAgreement": 0.99,
+        "annotationReviewedAt": "2026-08-11T21:06:26+09:00"
       }
     },
     {
@@ -1559,11 +6840,206 @@
         "metadataConfidence": 0.98,
         "groupingConfidence": 0.99,
         "sourceAgreement": 0.95,
-        "annotationReviewedAt": "2026-08-11T01:47:41+09:00"
+        "annotationReviewedAt": "2026-08-11T21:06:26+09:00"
+      }
+    },
+    {
+      "id": "your-lie-in-april",
+      "title": "四月は君の嘘",
+      "titleKana": "シガツハキミノウソ",
+      "aliases": [
+        "Shigatsu wa Kimi no Uso",
+        "Your Lie in April"
+      ],
+      "creators": [
+        "新川直司"
+      ],
+      "publisher": "講談社",
+      "demographic": "shonen",
+      "status": "completed",
+      "firstPublishedYear": 2011,
+      "genres": [
+        "romance",
+        "sliceOfLife"
+      ],
+      "themes": [
+        {
+          "id": "school",
+          "centrality": 2,
+          "confidence": 0.96
+        },
+        {
+          "id": "tournament",
+          "centrality": 2,
+          "confidence": 0.93
+        }
+      ],
+      "axes": {
+        "progression": {
+          "state": "known",
+          "value": 4,
+          "confidence": 0.97
+        },
+        "problemSolving": {
+          "state": "known",
+          "value": 2,
+          "confidence": 0.85
+        },
+        "strategy": {
+          "state": "known",
+          "value": 0,
+          "confidence": 0.91
+        },
+        "pacing": {
+          "state": "known",
+          "value": 2,
+          "confidence": 0.88
+        },
+        "mysteryReveal": {
+          "state": "known",
+          "value": 2,
+          "confidence": 0.79
+        },
+        "worldBuilding": {
+          "state": "known",
+          "value": 2,
+          "confidence": 0.88
+        },
+        "characterArcWeight": {
+          "state": "known",
+          "value": 4,
+          "confidence": 0.98
+        },
+        "relationshipStructure": {
+          "state": "known",
+          "value": 2,
+          "confidence": 0.91
+        },
+        "comedy": {
+          "state": "known",
+          "value": 2,
+          "confidence": 0.87
+        },
+        "darkness": {
+          "state": "known",
+          "value": 2,
+          "confidence": 0.93
+        },
+        "mentalStress": {
+          "state": "known",
+          "value": 4,
+          "confidence": 0.97
+        },
+        "romance": {
+          "state": "known",
+          "value": 4,
+          "confidence": 0.98
+        },
+        "emotionalWarmth": {
+          "state": "known",
+          "value": 2,
+          "confidence": 0.9
+        },
+        "artRealism": {
+          "state": "known",
+          "value": 2,
+          "confidence": 0.8
+        },
+        "artDensity": {
+          "state": "known",
+          "value": 2,
+          "confidence": 0.78
+        },
+        "visualSoftness": {
+          "state": "known",
+          "value": 4,
+          "confidence": 0.85
+        },
+        "motionImpact": {
+          "state": "known",
+          "value": 4,
+          "confidence": 0.87
+        }
+      },
+      "factorScope": "entry_1_3_volumes",
+      "eligibility": {
+        "onboardingEligible": false,
+        "recommendationEligible": true,
+        "libraryOnly": false
+      },
+      "evidence": {
+        "metadataConfidence": 0.99,
+        "groupingConfidence": 0.99,
+        "sourceAgreement": 0.99,
+        "annotationReviewedAt": "2026-08-11T21:06:26+09:00"
       }
     }
   ],
   "volumes": [
+    {
+      "id": "20th-century-boys-v1",
+      "workId": "20th-century-boys",
+      "volumeNumber": 1,
+      "isbn": "9784091855312",
+      "releaseDate": "2000-01-29",
+      "editionKind": "standard"
+    },
+    {
+      "id": "a-silent-voice-v1",
+      "workId": "a-silent-voice",
+      "volumeNumber": 1,
+      "isbn": "9784063949735",
+      "releaseDate": "2013-11-15",
+      "editionKind": "standard"
+    },
+    {
+      "id": "akira-v1",
+      "workId": "akira",
+      "volumeNumber": 1,
+      "isbn": "9784061037113",
+      "releaseDate": "1984-09-14",
+      "editionKind": "standard"
+    },
+    {
+      "id": "attack-on-titan-v1",
+      "workId": "attack-on-titan",
+      "volumeNumber": 1,
+      "isbn": "9784063842760",
+      "releaseDate": "2010-03-17",
+      "editionKind": "standard"
+    },
+    {
+      "id": "berserk-v1",
+      "workId": "berserk",
+      "volumeNumber": 1,
+      "isbn": "9784592135746",
+      "releaseDate": "1990-11-26",
+      "editionKind": "standard"
+    },
+    {
+      "id": "beyond-the-clouds-v1",
+      "workId": "beyond-the-clouds",
+      "volumeNumber": 1,
+      "isbn": "9784065291962",
+      "releaseDate": "2022-10-20",
+      "editionKind": "standard"
+    },
+    {
+      "id": "beyond-the-clouds-v2",
+      "workId": "beyond-the-clouds",
+      "volumeNumber": 2,
+      "isbn": "9784065291979",
+      "releaseDate": "2023-01-19",
+      "editionKind": "standard"
+    },
+    {
+      "id": "beyond-the-clouds-v3",
+      "workId": "beyond-the-clouds",
+      "volumeNumber": 3,
+      "isbn": "9784065291993",
+      "releaseDate": "2023-04-20",
+      "editionKind": "standard"
+    },
     {
       "id": "blame-v1",
       "workId": "blame",
@@ -1578,6 +7054,14 @@
       "volumeNumber": 1,
       "isbn": "9784065134009",
       "releaseDate": "2018-11-16",
+      "editionKind": "standard"
+    },
+    {
+      "id": "bocchi-the-rock-v1",
+      "workId": "bocchi-the-rock",
+      "volumeNumber": 1,
+      "isbn": "9784832270725",
+      "releaseDate": "2019-02-27",
       "editionKind": "standard"
     },
     {
@@ -1597,11 +7081,43 @@
       "editionKind": "standard"
     },
     {
+      "id": "demon-slayer-v1",
+      "workId": "demon-slayer",
+      "volumeNumber": 1,
+      "isbn": "9784088807232",
+      "releaseDate": "2016-06-03",
+      "editionKind": "standard"
+    },
+    {
+      "id": "dr-stone-v1",
+      "workId": "dr-stone",
+      "volumeNumber": 1,
+      "isbn": "9784088811840",
+      "releaseDate": "2017-07-04",
+      "editionKind": "standard"
+    },
+    {
+      "id": "dragon-ball-v1",
+      "workId": "dragon-ball",
+      "volumeNumber": 1,
+      "isbn": "9784088518312",
+      "releaseDate": "1985-09-10",
+      "editionKind": "standard"
+    },
+    {
       "id": "dungeon-meshi-v1",
       "workId": "dungeon-meshi",
       "volumeNumber": 1,
       "isbn": "9784047301535",
       "releaseDate": "2015-01-15",
+      "editionKind": "standard"
+    },
+    {
+      "id": "erased-v1",
+      "workId": "erased",
+      "volumeNumber": 1,
+      "isbn": "9784041205570",
+      "releaseDate": "2013-01-25",
       "editionKind": "standard"
     },
     {
@@ -1621,11 +7137,123 @@
       "editionKind": "standard"
     },
     {
+      "id": "ghost-in-the-shell-v1",
+      "workId": "ghost-in-the-shell",
+      "volumeNumber": 1,
+      "isbn": "9784063132489",
+      "releaseDate": "1991-10-02",
+      "editionKind": "standard"
+    },
+    {
+      "id": "golden-kamuy-v1",
+      "workId": "golden-kamuy",
+      "volumeNumber": 1,
+      "isbn": "9784088900827",
+      "releaseDate": "2015-01-19",
+      "editionKind": "standard"
+    },
+    {
+      "id": "haikyu-v1",
+      "workId": "haikyu",
+      "volumeNumber": 1,
+      "isbn": "9784088704531",
+      "releaseDate": "2012-06-04",
+      "editionKind": "standard"
+    },
+    {
+      "id": "hajime-no-ippo-v1",
+      "workId": "hajime-no-ippo",
+      "volumeNumber": 1,
+      "isbn": "9784063115321",
+      "releaseDate": "1990-02-09",
+      "editionKind": "standard"
+    },
+    {
+      "id": "horimiya-v1",
+      "workId": "horimiya",
+      "volumeNumber": 1,
+      "isbn": "9784757535435",
+      "releaseDate": "2012-03-27",
+      "editionKind": "standard"
+    },
+    {
+      "id": "hunter-x-hunter-v1",
+      "workId": "hunter-x-hunter",
+      "volumeNumber": 1,
+      "isbn": "9784088725710",
+      "releaseDate": "1998-06-04",
+      "editionKind": "standard"
+    },
+    {
+      "id": "jojo-bizarre-adventure-v1",
+      "workId": "jojo-bizarre-adventure",
+      "volumeNumber": 1,
+      "isbn": "9784088511269",
+      "releaseDate": "1987-08-10",
+      "editionKind": "standard"
+    },
+    {
+      "id": "jujutsu-kaisen-v1",
+      "workId": "jujutsu-kaisen",
+      "volumeNumber": 1,
+      "isbn": "9784088815169",
+      "releaseDate": "2018-07-04",
+      "editionKind": "standard"
+    },
+    {
+      "id": "kaguya-sama-v1",
+      "workId": "kaguya-sama",
+      "volumeNumber": 1,
+      "isbn": "9784088904320",
+      "releaseDate": "2016-03-18",
+      "editionKind": "standard"
+    },
+    {
+      "id": "kimi-ni-todoke-v1",
+      "workId": "kimi-ni-todoke",
+      "volumeNumber": 1,
+      "isbn": "9784088460611",
+      "releaseDate": "2006-05-25",
+      "editionKind": "standard"
+    },
+    {
       "id": "kingdom-v1",
       "workId": "kingdom",
       "volumeNumber": 1,
       "isbn": "9784088770796",
       "releaseDate": "2006-05-19",
+      "editionKind": "standard"
+    },
+    {
+      "id": "land-of-the-lustrous-v1",
+      "workId": "land-of-the-lustrous",
+      "volumeNumber": 1,
+      "isbn": "9784063879063",
+      "releaseDate": "2013-07-23",
+      "editionKind": "standard"
+    },
+    {
+      "id": "made-in-abyss-v1",
+      "workId": "made-in-abyss",
+      "volumeNumber": 1,
+      "isbn": "9784812483800",
+      "releaseDate": "2013-07-31",
+      "editionKind": "standard"
+    },
+    {
+      "id": "march-comes-in-like-a-lion-v1",
+      "workId": "march-comes-in-like-a-lion",
+      "volumeNumber": 1,
+      "isbn": "9784592145110",
+      "releaseDate": "2008-02-22",
+      "editionKind": "standard"
+    },
+    {
+      "id": "mob-psycho-100-v1",
+      "workId": "mob-psycho-100",
+      "volumeNumber": 1,
+      "isbn": "9784091241023",
+      "releaseDate": "2012-11-16",
       "editionKind": "standard"
     },
     {
@@ -1637,11 +7265,131 @@
       "editionKind": "standard"
     },
     {
+      "id": "mushishi-v1",
+      "workId": "mushishi",
+      "volumeNumber": 1,
+      "isbn": "9784063142556",
+      "releaseDate": "2000-11-20",
+      "editionKind": "standard"
+    },
+    {
+      "id": "my-hero-academia-v1",
+      "workId": "my-hero-academia",
+      "volumeNumber": 1,
+      "isbn": "9784088802640",
+      "releaseDate": "2014-11-04",
+      "editionKind": "standard"
+    },
+    {
+      "id": "nana-v1",
+      "workId": "nana",
+      "volumeNumber": 1,
+      "isbn": "9784088562094",
+      "releaseDate": "2000-05-15",
+      "editionKind": "standard"
+    },
+    {
+      "id": "naruto-v1",
+      "workId": "naruto",
+      "volumeNumber": 1,
+      "isbn": "9784088728407",
+      "releaseDate": "2000-03-03",
+      "editionKind": "standard"
+    },
+    {
+      "id": "natsumes-book-of-friends-v1",
+      "workId": "natsumes-book-of-friends",
+      "volumeNumber": 1,
+      "isbn": "9784592171584",
+      "releaseDate": "2005-10-05",
+      "editionKind": "standard"
+    },
+    {
+      "id": "noragami-stray-god-v1",
+      "workId": "noragami-stray-god",
+      "volumeNumber": 1,
+      "isbn": "9784063712940",
+      "releaseDate": "2011-07-15",
+      "editionKind": "standard"
+    },
+    {
+      "id": "noragami-stray-god-v2",
+      "workId": "noragami-stray-god",
+      "volumeNumber": 2,
+      "isbn": "9784063713084",
+      "releaseDate": "2011-10-17",
+      "editionKind": "standard"
+    },
+    {
+      "id": "noragami-stray-god-v3",
+      "workId": "noragami-stray-god",
+      "volumeNumber": 3,
+      "isbn": "9784063713237",
+      "releaseDate": "2012-02-17",
+      "editionKind": "standard"
+    },
+    {
+      "id": "one-piece-v1",
+      "workId": "one-piece",
+      "volumeNumber": 1,
+      "isbn": "9784088725093",
+      "releaseDate": "1997-12-24",
+      "editionKind": "standard"
+    },
+    {
+      "id": "pluto-v1",
+      "workId": "pluto",
+      "volumeNumber": 1,
+      "isbn": "9784091874313",
+      "releaseDate": "2004-09-30",
+      "editionKind": "standard"
+    },
+    {
+      "id": "promised-neverland-v1",
+      "workId": "promised-neverland",
+      "volumeNumber": 1,
+      "isbn": "9784088808727",
+      "releaseDate": "2016-12-02",
+      "editionKind": "standard"
+    },
+    {
+      "id": "skip-and-loafer-v1",
+      "workId": "skip-and-loafer",
+      "volumeNumber": 1,
+      "isbn": "9784065142097",
+      "releaseDate": "2019-01-23",
+      "editionKind": "standard"
+    },
+    {
       "id": "spy-family-v1",
       "workId": "spy-family",
       "volumeNumber": 1,
       "isbn": "9784088820118",
       "releaseDate": "2019-07-04",
+      "editionKind": "standard"
+    },
+    {
+      "id": "vagabond-v1",
+      "workId": "vagabond",
+      "volumeNumber": 1,
+      "isbn": "9784063286199",
+      "releaseDate": "1999-03-22",
+      "editionKind": "standard"
+    },
+    {
+      "id": "vinland-saga-v1",
+      "workId": "vinland-saga",
+      "volumeNumber": 1,
+      "isbn": "9784063144239",
+      "releaseDate": "2006-08-23",
+      "editionKind": "standard"
+    },
+    {
+      "id": "witch-hat-atelier-v1",
+      "workId": "witch-hat-atelier",
+      "volumeNumber": 1,
+      "isbn": "9784063886900",
+      "releaseDate": "2017-01-23",
       "editionKind": "standard"
     },
     {
@@ -1651,19 +7399,66 @@
       "isbn": "9784048690669",
       "releaseDate": "2003-08-27",
       "editionKind": "standard"
+    },
+    {
+      "id": "your-lie-in-april-v1",
+      "workId": "your-lie-in-april",
+      "volumeNumber": 1,
+      "isbn": "9784063713015",
+      "releaseDate": "2011-09-16",
+      "editionKind": "standard"
     }
   ],
   "representativeVolumeByWorkId": {
+    "20th-century-boys": "20th-century-boys-v1",
+    "a-silent-voice": "a-silent-voice-v1",
+    "akira": "akira-v1",
+    "attack-on-titan": "attack-on-titan-v1",
+    "berserk": "berserk-v1",
+    "beyond-the-clouds": "beyond-the-clouds-v1",
     "blame": "blame-v1",
     "blue-lock": "blue-lock-v1",
+    "bocchi-the-rock": "bocchi-the-rock-v1",
     "chainsaw-man": "chainsaw-man-v1",
     "death-note": "death-note-v1",
+    "demon-slayer": "demon-slayer-v1",
+    "dr-stone": "dr-stone-v1",
+    "dragon-ball": "dragon-ball-v1",
     "dungeon-meshi": "dungeon-meshi-v1",
+    "erased": "erased-v1",
     "frieren": "frieren-v1",
     "fullmetal-alchemist": "fullmetal-alchemist-v1",
+    "ghost-in-the-shell": "ghost-in-the-shell-v1",
+    "golden-kamuy": "golden-kamuy-v1",
+    "haikyu": "haikyu-v1",
+    "hajime-no-ippo": "hajime-no-ippo-v1",
+    "horimiya": "horimiya-v1",
+    "hunter-x-hunter": "hunter-x-hunter-v1",
+    "jojo-bizarre-adventure": "jojo-bizarre-adventure-v1",
+    "jujutsu-kaisen": "jujutsu-kaisen-v1",
+    "kaguya-sama": "kaguya-sama-v1",
+    "kimi-ni-todoke": "kimi-ni-todoke-v1",
     "kingdom": "kingdom-v1",
+    "land-of-the-lustrous": "land-of-the-lustrous-v1",
+    "made-in-abyss": "made-in-abyss-v1",
+    "march-comes-in-like-a-lion": "march-comes-in-like-a-lion-v1",
+    "mob-psycho-100": "mob-psycho-100-v1",
     "monster": "monster-v1",
+    "mushishi": "mushishi-v1",
+    "my-hero-academia": "my-hero-academia-v1",
+    "nana": "nana-v1",
+    "naruto": "naruto-v1",
+    "natsumes-book-of-friends": "natsumes-book-of-friends-v1",
+    "noragami-stray-god": "noragami-stray-god-v1",
+    "one-piece": "one-piece-v1",
+    "pluto": "pluto-v1",
+    "promised-neverland": "promised-neverland-v1",
+    "skip-and-loafer": "skip-and-loafer-v1",
     "spy-family": "spy-family-v1",
-    "yotsuba-to": "yotsuba-to-v1"
+    "vagabond": "vagabond-v1",
+    "vinland-saga": "vinland-saga-v1",
+    "witch-hat-atelier": "witch-hat-atelier-v1",
+    "yotsuba-to": "yotsuba-to-v1",
+    "your-lie-in-april": "your-lie-in-april-v1"
   }
 }

@@ -1,10 +1,13 @@
 import { createHash } from "node:crypto";
-import { resolve } from "node:path";
+import { cpSync, mkdirSync, mkdtempSync, readFileSync, rmSync, writeFileSync } from "node:fs";
+import { tmpdir } from "node:os";
+import { dirname, join, resolve } from "node:path";
 
 import { describe, expect, it } from "vitest";
 
 import {
   buildG1BlindRetagArtifacts,
+  runG1BlindRetagCli,
   selectG1BlindRetagSample,
 } from "../../../scripts/build-g1-blind-retag";
 import { GENRE_TAGS, THEME_TAGS } from "../../../src/domain/catalog/constants";
@@ -107,5 +110,52 @@ describe("G1 blind-retag sample", () => {
     expect(first.inputContent).not.toContain("| review average |");
     expect(first.inputContent.endsWith("\n")).toBe(true);
     expect(first.manifestContent.endsWith("\n")).toBe(true);
+  });
+
+  it("uses the frozen blind input instead of mutable candidate approval provenance", async () => {
+    const repositoryRoot = resolve(import.meta.dirname, "../../..");
+    const root = mkdtempSync(join(tmpdir(), "konocomics-g1-blind-freeze-"));
+    const inputs = [
+      "data/staging/g1/cohort-manifest.json",
+      "data/staging/g1/blind-retag/sample-manifest.json",
+      "data/staging/g1/blind-retag/input.md",
+      "data/staging/g1/blind-retag/source/works.csv",
+      "data/staging/g1/blind-retag/source/volumes.csv",
+      "data/staging/g1/blind-retag/source/evidence/evidence.csv",
+      "docs/factors/factor-dictionary.md",
+      "docs/factors/annotation-guide.md",
+    ];
+    try {
+      for (const path of inputs) {
+        const destination = join(root, path);
+        mkdirSync(dirname(destination), { recursive: true });
+        cpSync(join(repositoryRoot, path), destination);
+      }
+      const candidateWorks = "data/staging/g1/candidate-source/works.csv";
+      mkdirSync(dirname(join(root, candidateWorks)), { recursive: true });
+      cpSync(join(repositoryRoot, candidateWorks), join(root, candidateWorks));
+
+      const expected = await buildG1BlindRetagArtifacts(root);
+      await expect(runG1BlindRetagCli(["--check"], root)).resolves.toBeUndefined();
+      const currentCandidate = readFileSync(join(root, candidateWorks), "utf8");
+      const changedApproval = currentCandidate.replace(
+        /,authorizedModelPanel,[^,\r\n]*,[^,\r\n]*,/gu,
+        ",authorizedModelPanel,2030-01-01T00:00:00+09:00,reviews/changed.md,",
+      );
+      expect(changedApproval).not.toBe(currentCandidate);
+      writeFileSync(join(root, candidateWorks), changedApproval);
+      await expect(buildG1BlindRetagArtifacts(root)).resolves.toEqual(expected);
+
+      const frozenWorksPath = join(root, "data/staging/g1/blind-retag/source/works.csv");
+      writeFileSync(
+        frozenWorksPath,
+        readFileSync(frozenWorksPath, "utf8").replace("ダンジョン飯", "ダンジョン飯 changed"),
+      );
+      await expect(runG1BlindRetagCli(["--check"], root)).rejects.toThrow(
+        /Stale blind-retag artifact/u,
+      );
+    } finally {
+      rmSync(root, { recursive: true, force: true });
+    }
   });
 });

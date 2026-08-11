@@ -143,7 +143,7 @@ function markdownCell(value: string | number | undefined) {
 
 export async function buildG1BlindRetagArtifacts(root = process.cwd()) {
   const stagingDirectory = join(root, "data/staging/g1");
-  const sourceDirectory = join(stagingDirectory, "candidate-source");
+  const sourceDirectory = join(stagingDirectory, "blind-retag/source");
   const cohortPath = join(stagingDirectory, "cohort-manifest.json");
   const worksPath = join(sourceDirectory, "works.csv");
   const volumesPath = join(sourceDirectory, "volumes.csv");

@@ -1033,8 +1033,8 @@ export function publishCandidateDirectory(
 }
 
 function buildG1Candidate(root = process.cwd()) {
-  const sourceDirectory = join(root, "data/source");
   const stagingDirectory = join(root, "data/staging/g1");
+  const sourceDirectory = join(stagingDirectory, "seed-source");
   const outputDirectory = join(stagingDirectory, "candidate-source");
   const chunkDirectories = ["chunk-a", "chunk-b", "chunk-c"].map((directory) =>
     join(stagingDirectory, directory),

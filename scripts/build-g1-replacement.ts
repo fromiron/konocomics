@@ -165,7 +165,7 @@ type FactorProjection = { workId: string; axisId: NonArtAxisId } & (
 type ThemeProjection = z.infer<typeof themeProjectionSchema>;
 
 const sourceDirectories = [
-  "data/source",
+  "data/staging/g1/seed-source",
   "data/staging/g1/chunk-a",
   "data/staging/g1/chunk-b",
   "data/staging/g1/chunk-c",

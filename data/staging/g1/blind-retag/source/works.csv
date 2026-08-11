@@ -1,0 +1,51 @@
+id,title,titleKana,creators,publisher,demographic,status,firstPublishedYear,genres,factorScope,onboardingEligible,recommendationEligible,libraryOnly,metadataConfidence,groupingConfidence,sourceAgreement,annotationReviewMethod,annotationReviewedAt,annotationReviewReference,evidenceId
+dungeon-meshi,ダンジョン飯,ダンジョンメシ,九井諒子,KADOKAWA,unknown,completed,2014,action;fantasy;comedy,entry_1_3_volumes,true,true,false,0.95,0.98,0.95,unreviewed,,,ev-dungeon-meshi
+kingdom,キングダム,キングダム,原泰久,集英社,seinen,ongoing,2006,action;historical,entry_1_3_volumes,true,true,false,0.98,0.99,0.98,unreviewed,,,ev-kingdom
+fullmetal-alchemist,鋼の錬金術師,ハガネノレンキンジュツシ,荒川弘,スクウェア・エニックス,shonen,completed,2001,action;fantasy,entry_1_3_volumes,true,true,false,0.98,0.99,0.98,unreviewed,,,ev-fullmetal-alchemist
+death-note,DEATH NOTE,デスノート,大場つぐみ;小畑健,集英社,shonen,completed,2003,mystery;horror,entry_1_3_volumes,true,true,false,0.98,0.99,0.98,unreviewed,,,ev-death-note
+spy-family,SPY×FAMILY,スパイファミリー,遠藤達哉,集英社,shonen,ongoing,2019,action;comedy;sliceOfLife,entry_1_3_volumes,true,true,false,0.98,0.99,0.98,unreviewed,,,ev-spy-family
+frieren,葬送のフリーレン,ソウソウノフリーレン,山田鐘人;アベツカサ,小学館,shonen,hiatus,2020,fantasy,entry_1_3_volumes,true,true,false,0.98,0.99,0.92,unreviewed,,,ev-frieren
+chainsaw-man,チェンソーマン,チェンソーマン,藤本タツキ,集英社,shonen,completed,2018,action;fantasy;horror;comedy,entry_1_3_volumes,true,true,false,0.99,0.99,0.99,unreviewed,,,ev-chainsaw-man
+blue-lock,ブルーロック,ブルーロック,金城宗幸;ノ村優介,講談社,shonen,ongoing,2018,sports,entry_1_3_volumes,true,true,false,0.99,0.99,0.99,unreviewed,,,ev-blue-lock
+monster,MONSTER,モンスター,浦沢直樹,小学館,seinen,completed,1994,mystery,entry_1_3_volumes,true,true,false,0.98,0.95,0.97,unreviewed,,,ev-monster
+yotsuba-to,よつばと！,ヨツバト,あずまきよひこ,KADOKAWA,unknown,ongoing,2003,comedy;sliceOfLife,entry_1_3_volumes,true,true,false,0.98,0.99,0.95,unreviewed,,,ev-yotsuba-to
+blame,BLAME!,ブラム,弐瓶勉,講談社,seinen,completed,1997,action;scienceFiction,entry_1_3_volumes,true,true,false,0.99,0.99,0.99,unreviewed,,,ev-blame
+one-piece,ONE PIECE,ワンピース,尾田栄一郎,集英社,shonen,ongoing,1997,action;fantasy;comedy,entry_1_3_volumes,true,true,false,0.98,0.99,0.91,unreviewed,,,ev-one-piece
+naruto,NARUTO―ナルト―,ナルト,岸本斉史,集英社,shonen,completed,1999,action;fantasy;comedy,entry_1_3_volumes,false,true,false,0.98,0.99,0.91,unreviewed,,,ev-naruto
+dragon-ball,DRAGON BALL,ドラゴンボール,鳥山明,集英社,shonen,completed,1984,action;fantasy;comedy,entry_1_3_volumes,true,true,false,0.98,0.99,0.91,unreviewed,,,ev-dragon-ball
+attack-on-titan,進撃の巨人,シンゲキノキョジン,諫山創,講談社,shonen,completed,2009,action;fantasy;horror,entry_1_3_volumes,true,true,false,0.99,0.99,0.92,unreviewed,,,ev-attack-on-titan
+demon-slayer,鬼滅の刃,キメツノヤイバ,吾峠呼世晴,集英社,shonen,completed,2016,action;fantasy;historical;horror,entry_1_3_volumes,false,true,false,0.99,0.99,0.92,unreviewed,,,ev-demon-slayer
+jujutsu-kaisen,呪術廻戦,ジュジュツカイセン,芥見下々,集英社,shonen,completed,2018,action;fantasy;horror,entry_1_3_volumes,false,true,false,0.99,0.99,0.92,unreviewed,,,ev-jujutsu-kaisen
+my-hero-academia,僕のヒーローアカデミア,ボクノヒーローアカデミア,堀越耕平,集英社,shonen,completed,2014,action;fantasy;comedy,entry_1_3_volumes,false,true,false,0.99,0.99,0.92,unreviewed,,,ev-my-hero-academia
+hunter-x-hunter,HUNTER×HUNTER,ハンターハンター,冨樫義博,集英社,shonen,ongoing,1998,action;fantasy;comedy,entry_1_3_volumes,true,true,false,0.99,0.99,0.92,unreviewed,,,ev-hunter-x-hunter
+jojo-bizarre-adventure,ジョジョの奇妙な冒険,ジョジョノキミョウナボウケン,荒木飛呂彦,集英社,shonen,completed,1986,action;fantasy;historical;horror,entry_1_3_volumes,false,true,false,0.98,0.98,0.90,unreviewed,,,ev-jojo-bizarre-adventure
+berserk,ベルセルク,ベルセルク,三浦建太郎;スタジオ我画;森恒二,白泉社,seinen,ongoing,1989,action;fantasy;horror,entry_1_3_volumes,true,true,false,0.98,0.99,0.91,unreviewed,,,ev-berserk
+vinland-saga,ヴィンランド・サガ,ヴィンランドサガ,幸村誠,講談社,seinen,completed,2005,action;historical,entry_1_3_volumes,false,true,false,0.99,0.99,0.92,unreviewed,,,ev-vinland-saga
+vagabond,バガボンド,バガボンド,井上雄彦;吉川英治,講談社,seinen,ongoing,1998,action;historical,entry_1_3_volumes,true,true,false,0.98,0.99,0.90,unreviewed,,,ev-vagabond
+golden-kamuy,ゴールデンカムイ,ゴールデンカムイ,野田サトル,集英社,seinen,completed,2014,action;historical;comedy,entry_1_3_volumes,false,true,false,0.99,0.99,0.92,unreviewed,,,ev-golden-kamuy
+made-in-abyss,メイドインアビス,メイドインアビス,つくしあきひと,竹書房,seinen,ongoing,2012,action;fantasy;scienceFiction;horror,entry_1_3_volumes,true,true,false,0.96,0.99,0.96,unreviewed,,,ev-made-in-abyss
+land-of-the-lustrous,宝石の国,ホウセキノクニ,市川春子,講談社,seinen,completed,2012,action;fantasy;scienceFiction,entry_1_3_volumes,false,true,false,0.99,0.99,0.99,unreviewed,,,ev-land-of-the-lustrous
+mushishi,蟲師,ムシシ,漆原友紀,講談社,seinen,completed,1999,fantasy;mystery;horror;sliceOfLife,entry_1_3_volumes,true,true,false,0.99,0.99,0.99,unreviewed,,,ev-mushishi
+dr-stone,Dr.STONE,ドクターストーン,Boichi;稲垣理一郎,集英社,shonen,completed,2017,action;scienceFiction;comedy,entry_1_3_volumes,true,true,false,0.99,0.99,0.99,unreviewed,,,ev-dr-stone
+promised-neverland,約束のネバーランド,ヤクソクノネバーランド,白井カイウ;出水ぽすか,集英社,shonen,completed,2016,mystery;horror,entry_1_3_volumes,true,true,false,0.99,0.99,0.99,unreviewed,,,ev-promised-neverland
+erased,僕だけがいない街,ボクダケガイナイマチ,三部けい,KADOKAWA,seinen,completed,2012,mystery;scienceFiction,entry_1_3_volumes,false,true,false,0.98,0.99,0.97,unreviewed,,,ev-erased
+20th-century-boys,20世紀少年,ニジュッセイキショウネン,浦沢直樹,小学館,seinen,completed,1999,scienceFiction;mystery,entry_1_3_volumes,false,true,false,0.99,0.99,0.99,unreviewed,,,ev-20th-century-boys
+pluto,PLUTO,,浦沢直樹;手塚治虫;長崎尚志;手塚眞;手塚プロダクション,小学館,seinen,completed,2003,scienceFiction;mystery,entry_1_3_volumes,false,true,false,0.99,0.99,0.99,unreviewed,,,ev-pluto
+ghost-in-the-shell,攻殻機動隊,コウカクキドウタイ,士郎正宗,講談社,seinen,completed,1989,action;scienceFiction;mystery,entry_1_3_volumes,false,true,false,0.98,0.98,0.98,unreviewed,,,ev-ghost-in-the-shell
+akira,AKIRA,アキラ,大友克洋,講談社,seinen,completed,1982,action;scienceFiction,entry_1_3_volumes,true,true,false,0.99,0.99,0.99,unreviewed,,,ev-akira
+witch-hat-atelier,とんがり帽子のアトリエ,トンガリボウシノアトリエ,白浜鴎,講談社,seinen,ongoing,2016,fantasy,entry_1_3_volumes,true,true,false,0.99,0.99,0.99,unreviewed,,,ev-witch-hat-atelier
+mob-psycho-100,モブサイコ100,モブサイコヒャク,ONE,小学館,shonen,completed,2012,action;fantasy;comedy;sliceOfLife,entry_1_3_volumes,true,true,false,0.99,0.99,0.99,unreviewed,,,ev-mob-psycho-100
+natsumes-book-of-friends,夏目友人帳,ナツメユウジンチョウ,緑川ゆき,白泉社,shojo,ongoing,2003,fantasy;sliceOfLife,entry_1_3_volumes,true,true,false,0.98,0.99,0.96,unreviewed,,,ev-g1c-natsumes-book-of-friends
+march-comes-in-like-a-lion,3月のライオン,サンガツノライオン,羽海野チカ,白泉社,seinen,ongoing,2007,sliceOfLife,entry_1_3_volumes,false,true,false,0.98,0.99,0.98,unreviewed,,,ev-g1c-march-comes-in-like-a-lion
+a-silent-voice,聲の形,コエノカタチ,大今良時,講談社,shonen,completed,2013,sliceOfLife;romance,entry_1_3_volumes,true,true,false,0.99,0.99,0.99,unreviewed,,,ev-g1c-a-silent-voice
+your-lie-in-april,四月は君の嘘,シガツハキミノウソ,新川直司,講談社,shonen,completed,2011,romance;sliceOfLife,entry_1_3_volumes,false,true,false,0.99,0.99,0.99,unreviewed,,,ev-g1c-your-lie-in-april
+kaguya-sama,かぐや様は告らせたい〜天才たちの恋愛頭脳戦〜,カグヤサマハコクラセタイ,赤坂アカ,集英社,seinen,completed,2015,comedy;romance,entry_1_3_volumes,true,true,false,0.99,0.99,0.99,unreviewed,,,ev-g1c-kaguya-sama
+horimiya,ホリミヤ,ホリミヤ,HERO;萩原ダイスケ,スクウェア・エニックス,unknown,completed,2011,comedy;sliceOfLife;romance,entry_1_3_volumes,false,true,false,0.98,0.98,0.96,unreviewed,,,ev-g1c-horimiya
+kimi-ni-todoke,君に届け,キミニトドケ,椎名軽穂,集英社,shojo,completed,2005,sliceOfLife;romance,entry_1_3_volumes,false,true,false,0.98,0.99,0.97,unreviewed,,,ev-g1c-kimi-ni-todoke
+nana,NANA―ナナ―,ナナ,矢沢あい,集英社,shojo,unknown,2000,romance;sliceOfLife,entry_1_3_volumes,false,true,false,0.95,0.99,0.86,unreviewed,,,ev-g1c-nana
+skip-and-loafer,スキップとローファー,スキップトローファー,高松美咲,講談社,seinen,ongoing,2018,comedy;sliceOfLife;romance,entry_1_3_volumes,false,true,false,0.99,0.99,0.98,unreviewed,,,ev-g1c-skip-and-loafer
+bocchi-the-rock,ぼっち・ざ・ろっく！,ボッチザロック,はまじあき,芳文社,unknown,ongoing,2018,comedy;sliceOfLife,entry_1_3_volumes,false,true,false,0.96,0.99,0.94,unreviewed,,,ev-g1c-bocchi-the-rock
+haikyu,ハイキュー!!,ハイキュー,古舘春一,集英社,shonen,completed,2012,sports;comedy,entry_1_3_volumes,false,true,false,0.99,0.99,0.99,unreviewed,,,ev-g1c-haikyu
+hajime-no-ippo,はじめの一歩,ハジメノイッポ,森川ジョージ,講談社,shonen,ongoing,1989,action;sports,entry_1_3_volumes,false,true,false,0.99,0.99,0.99,unreviewed,,,ev-g1c-hajime-no-ippo
+beyond-the-clouds,Ｂｅｙｏｎｄ　ｔｈｅ　Ｃｌｏｕｄｓ　空から落ちた少女,ビヨンドザクラウズ　ソラカラオチタショウジョ,Nicke,講談社,general,completed,2018,action;fantasy,entry_1_3_volumes,false,true,false,0.98,0.99,0.95,unreviewed,,,ev-g1-replacement-beyond-the-clouds
+noragami-stray-god,ノラガミ,ノラガミ,あだちとか,講談社,shonen,completed,2011,action;fantasy;comedy,entry_1_3_volumes,true,true,false,0.99,0.99,0.99,unreviewed,,,ev-g1-replacement-noragami-stray-god
