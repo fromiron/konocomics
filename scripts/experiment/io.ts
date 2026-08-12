@@ -21,12 +21,12 @@ function isMissingPathError(error: unknown) {
   return error instanceof Error && "code" in error && error.code === "ENOENT";
 }
 
-type CanonicalPathIdentity = {
+export type CanonicalPathIdentity = {
   path: string;
   inodeKey?: string;
 };
 
-async function canonicalPathIdentity(path: string): Promise<CanonicalPathIdentity> {
+export async function canonicalPathIdentity(path: string): Promise<CanonicalPathIdentity> {
   const resolvedPath = resolve(path);
   try {
     const canonicalPath = await realpath(resolvedPath);
@@ -70,7 +70,7 @@ export async function discoverDefaultProfilePaths(workingDirectory: string): Pro
   return paths;
 }
 
-async function readStableBytes(path: string, maximumBytes: number): Promise<Buffer> {
+export async function readStableBytes(path: string, maximumBytes: number): Promise<Buffer> {
   let file: FileHandle | undefined;
   try {
     file = await open(path, constants.O_RDONLY | constants.O_NONBLOCK);

@@ -50,7 +50,7 @@ const explanationFactorLabels = {
   motionImpact: "迫力・スピード感",
 } as const satisfies Readonly<Record<ExplanationFactorId, string>>;
 
-const explanation = {
+export const explanationLexicon = {
   factorLabels: explanationFactorLabels,
   clusterLabels: {
     tacticalThinking: "頭脳で解決する展開",
@@ -75,12 +75,139 @@ const explanation = {
   },
 } as const satisfies ExplanationLexicon;
 
+const wantToReadScale = [
+  { value: 1, label: "まったく読みたくない" },
+  { value: 2, label: "あまり読みたくない" },
+  { value: 3, label: "どちらともいえない" },
+  { value: 4, label: "読みたい" },
+  { value: 5, label: "とても読みたい" },
+] as const;
+
+const agreementScale = [
+  { value: 1, label: "まったく当てはまらない" },
+  { value: 2, label: "あまり当てはまらない" },
+  { value: 3, label: "どちらともいえない" },
+  { value: 4, label: "当てはまる" },
+  { value: 5, label: "とても当てはまる" },
+] as const;
+
+export const appName = "konocomics";
+
+export const g2HarnessStrings = {
+  metadata: {
+    title: "ブラインドテスト | konocomics",
+    description: "2つのおすすめ一覧を比較するローカル専用ブラインドテストです。",
+  },
+  entry: {
+    eyebrow: "ローカル専用ブラインドテスト",
+    title: "おすすめを、説明の前後で比べます。",
+    description:
+      "2つのおすすめ一覧を見て、作品ごとの印象と、どちらが自分に合うかを回答します。回答途中の内容は保存も送信もされません。",
+    choose: "入口を選んでください",
+    humanTitle: "参加者として回答する",
+    humanDescription: "人によるブラインドテストの結果を作成します。",
+    syntheticPilotTitle: "動作確認を行う",
+    syntheticPilotDescription:
+      "ブラウザから結果ファイルまでの流れを確認します。人の回答としては集計されません。",
+  },
+  mode: {
+    human: "参加者用",
+    syntheticPilot: "動作確認用",
+  },
+  progress: {
+    label: "回答の進み具合",
+    input: "入力",
+    before: "説明前",
+    after: "説明後",
+    complete: "完了",
+  },
+  input: {
+    title: "テストを始める",
+    description: "事前に用意したプロフィールを、このブラウザ内だけで読み込みます。",
+    participantIdLabel: "参加者ID",
+    participantIdHint:
+      "英小文字・数字・ハイフンだけの匿名IDを入力してください。氏名やメールアドレスは入力しないでください。",
+    profileLabel: "プロフィールJSON",
+    profileHint: "自分の参加者IDと同じ profileId を持つファイルを選んでください。",
+    privacy:
+      "ファイルと回答は外部へ送信されません。ページを閉じるか再読み込みすると、入力途中の内容は消えます。",
+    submit: "おすすめ一覧を作る",
+    loading: "おすすめ一覧を準備しています…",
+  },
+  before: {
+    title: "説明を見る前の回答",
+    description:
+      "リストA・リストBの順位を確認し、重複を除いた各作品について一度だけ回答してください。",
+    sharedResponse:
+      "両方のリストにある作品も、ここでは1回だけ回答します。次へ進むと回答は変更できません。",
+    sharedAnswerRecorded: "この作品の回答は、先に表示されたリストと共有されています。",
+    familiarityQuestion: "この作品を知っていましたか？",
+    familiarity: {
+      read: "読んだことがある",
+      knownUnread: "知っているが未読",
+      unknown: "知らなかった",
+    },
+    wantToReadQuestion: "今、この作品を読みたいですか？",
+    wantToReadScale,
+    preferenceQuestion: "説明を見る前のおすすめ一覧として、どちらが自分に合っていますか？",
+    preference: {
+      A: "リストA",
+      B: "リストB",
+      tie: "同じくらい",
+    },
+    submit: "説明前の回答を確定する",
+    incomplete: "すべての質問に回答すると次へ進めます。",
+  },
+  after: {
+    title: "おすすめ理由を見た後の回答",
+    description:
+      "順位はそのままです。各おすすめ理由を読み、一覧に現れる作品ごとに回答してください。",
+    explanationHeading: "おすすめ理由",
+    noExplanation: "説明はありません。",
+    wantToReadQuestion: "今、この作品を読みたいですか？",
+    wantToReadScale,
+    agreementQuestion: "このおすすめ理由は、あなたの好みとの関係を正しく説明していますか？",
+    agreementScale,
+    submit: "最終回答を確定する",
+    incomplete: "すべての質問に回答すると最終回答を確定できます。",
+  },
+  lists: {
+    A: "リストA",
+    B: "リストB",
+    rankSuffix: "位",
+    coverUnavailable: "表紙画像なし",
+    creatorPrefix: "作者",
+  },
+  complete: {
+    title: "回答が完了しました",
+    description:
+      "ここで初めて、各リストの作り方を確認できます。結果JSONをダウンロードし、集計担当者へ渡してください。",
+    debriefHeading: "リストの内訳",
+    taste: "Taste Engine",
+    baseline: "Baseline",
+    download: "結果JSONをダウンロード",
+    downloaded: "結果JSONをダウンロードしました。",
+    restart: "最初からやり直す",
+  },
+  errors: {
+    participantId: "参加者IDは、1〜64文字の英小文字・数字・ハイフンで入力してください。",
+    profileRequired: "プロフィールJSONを選んでください。",
+    profileTooLarge: "プロフィールJSONは1 MiB以下にしてください。",
+    profileEncoding: "プロフィールJSONはBOMなしのUTF-8で保存してください。",
+    profileJson: "プロフィールJSONを読み取れませんでした。内容を確認してください。",
+    setup:
+      "プロフィールを使ってテストを開始できませんでした。参加者IDとプロフィール内容を確認してください。",
+    result: "回答結果を作成できませんでした。入力内容を確認してください。",
+  },
+} as const;
+
 export const strings = {
-  appName: "konocomics",
+  appName,
   metadata: {
     description: "マンガの好みを分析し、理由とともに次の一冊を提案します。",
   },
-  explanation,
+  explanation: explanationLexicon,
+  g2Harness: g2HarnessStrings,
   experimentReport: {
     title: "konocomics Taste vs Baseline レポート",
     headings: {

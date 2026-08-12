@@ -4,6 +4,8 @@
 # Next.js
 /.next/
 /out/
+/harness/.next/
+/harness/out/
 /build/
 
 # tests

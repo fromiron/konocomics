@@ -22,4 +22,5 @@ playwright-report
 test-results
 tests/fixtures/experiment/report-golden.md
 tests/fixtures/experiment/coverage-warning-golden.md
+tests/fixtures/g2/aggregate-golden.md
 pnpm-lock.yaml

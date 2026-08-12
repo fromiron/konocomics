@@ -114,6 +114,8 @@ export default defineConfig([
     "build/**",
     "coverage/**",
     "data/generated/**",
+    "harness/.next/**",
+    "harness/out/**",
     "node_modules/**",
     "out/**",
     "playwright-report/**",
