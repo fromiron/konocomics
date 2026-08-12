@@ -34,11 +34,28 @@
       "nausicaa-of-the-valley-of-the-wind"
     ]
   },
-  "factorAnnotationStatus": "not-started",
+  "factorAnnotationStatus": "model-draft-complete-pending-human-or-authorized-model-panel-review",
+  "sourcePacket": {
+    "path": "data/staging/g2/fresh-c",
+    "status": "complete-pending-panel",
+    "dataRows": {
+      "works.csv": 30,
+      "volumes.csv": 30,
+      "factors.csv": 510,
+      "themes.csv": 102,
+      "aliases.csv": 30,
+      "recommendation-context.csv": 30,
+      "recommendation-config.csv": 1,
+      "intended-eligibility.csv": 30,
+      "evidence/evidence.csv": 90,
+      "evidence/art-evidence-manifest.csv": 120
+    },
+    "narrative": "data/staging/g2/fresh-c/annotations-and-evidence.md"
+  },
   "admissionBoundary": {
     "bibliography": "One first-party Japanese publisher bibliography page and its representative volume ISBN were checked for every work.",
     "interiorPreview": "One Kodansha USA licensed series page and one Omoi reader chapter with at least six readable interior pages across at least two contexts were checked for every work.",
-    "humanFactorReview": "Not performed in this admission phase. No factor scores or recommendation eligibility are asserted here."
+    "humanFactorReview": "A 510-row offline model-draft factor packet is complete, with motionImpact left unknown for all 30 works. No human or user-authorized model panel review has occurred. Every work remains unreviewed and ineligible; intended-eligibility.csv records future intent only and asserts no current eligibility."
   },
   "licensedPreviewProvider": {
     "publisher": "Kodansha USA Publishing",
