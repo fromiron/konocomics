@@ -1,0 +1,33 @@
+VERDICT: GO
+REVIEWER: Gemini
+REPOSITORY: konocomics (fromiron/konocomics)
+BRANCH: main
+HEAD: b74d525b151785097aa42434a721202f2ec99e17
+BUNDLE SHA-256: eab5e8bc2b5842a3801a744dd20f3f6dd31dc5df2d3634d0c6a24d8797102ad2
+
+REQUIRED QUESTIONS:
+1. IDENTITY: PASS — main 브랜치의 HEAD commit b74d525b151785097aa42434a721202f2ec99e17 확인 및 candidate-source bundle digest eab5e8bc2b5842a3801a744dd20f3f6dd31dc5df2d3634d0c6a24d8797102ad2 등 28개 동결 파일 SHA-256 hash 100% 일치 직접 검증 완료
+2. SCOPE: PASS — 4개 packet(reuse-eight 8, fresh-a 31, fresh-b 31, fresh-c 30) 합집합 100개 작품 ID 확인, packet 간 및 기존 G1 50작품과의 중복/속편 중복 없음 (총 150개 고유 Work ID)
+3. BIBLIOGRAPHY: PASS — 100작품 모두 일본어 원제, 작가, 출판사, demographic, status, firstPublishedYear 1차 서지 정보 및 대표 1권 ISBN 검증, Volume mapping, 초판일/판본 정보 확인 완료
+4. GENRE/THEME: PASS — 허용 태그 목록 및 초반 1~3권 중심성(centrality 1/2) 기준 충족. foundFamily 62작품 집중 및 스포츠 4부작(aoashi, yowamushi-pedal, ace-of-the-diamond, days)의 동일 테마 세트(foundFamily:2; school:2; sportsCompetition:2; tournament:2)가 각 작품 초반 부활동/동료 관계/대회 전개에 부합하여 독립적으로 정당함 확인
+5. NON-ART AXES: PASS — 100작품 13개 비미술 축 1300개 셀 모두 evidence notes 및 source URL 근거로 지지됨. fresh 패널 confidence 0.82 및 reuse-eight 다양한 confidence(0.85~0.95), characterArcWeight=4 65작품, relationshipStructure 2/3/4 분포(24/44/32)가 초반 서사 구조를 정직하게 반영함
+6. UNKNOWN POLICY: PASS — motionImpact 94작품 unknown 처리 등 연속 동작 근거 부족 항목을 0, 2 또는 notApplicable로 왜곡하지 않고 unknown으로 보수적 유지함 확인
+7. ART: PASS — 400개 신규 Art manifest 행 모두 권위 출처(originalPublisher, licensedPublisher, publisherAuthorizedPlatform), 작품당 6개 이상 표본/2개 이상 맥락, 정적 축 exact non-cover ref 2개 이상, known motionImpact의 수치적 연속 범위 명시, Factor-Evidence Provenance 일치 및 validateArtEvidence 0 issue 통과 확인
+8. PROVENANCE: PASS — 오프라인 모델 초벌 작성, 모든 신규 evidence reviewedByHuman=false 유지, annotationReviewMethod=unreviewed 명시로 모델 관찰을 사람 검수로 오인시키는 필드가 전혀 없음을 확인
+9. ROLE/ELIGIBILITY: PASS — packet별 12/10/78 역할과 onboarding 12가 합성 후보 data/staging/g2/candidate-source/에서 최종 30/30/90 (Anchor 30, Bridge 30, Discovery 90), onboarding 40, recommendation 150, libraryOnly 0으로 정확하게 유지됨
+10. PIPELINE: PASS — runCatalogPipeline 실행 시 catalogVersion v1-57aaede217a7, 150 works, 154 volumes, error:UNREVIEWED_ELIGIBILITY 100개(의도된 차단 상태), warning:AUTHORIZED_MODEL_PANEL_REVIEW 50개, warning:EVIDENCE_NOT_HUMAN_REVIEWED 415개, 다른 오류 0개 재현 확인. unit test (341/341), typecheck, lint 모두 통과
+11. PROMOTION: PASS — §11의 최소 변환(candidate-source를 data/source로 승격, 새 100작품 annotationReviewMethod를 authorizedModelPanel로 변경, annotationReviewedAt 기록, annotationReviewReference 지정, reviewedByHuman=false 유지)을 값 수정 없이 그대로 승인함
+12. BOUNDARY: PASS — 이 판정은 G2 제품 방향 GO, 10인 블라인드 테스트 통과 주장 인정, synthetic pilot 승인, Slice 5 UI 개발 시작, 추천 산식/지표 변경 또는 기존 G1 50작품 변경을 절대 허가하지 않음을 명시함
+
+PACKET CHECKS:
+- reuse-eight: PASS — 8개 작품의 서지, 17개 축 주석, Art manifest (32행) 및 evidence linkage 모두 규범 계약 및 §6 정책을 만족함
+- fresh-a: PASS — 31개 작품의 서지, 17개 축 주석, Art manifest (124행) 및 evidence linkage 모두 규범 계약 및 §6 정책을 만족함
+- fresh-b: PASS — 31개 작품의 서지, 17개 축 주석, Art manifest (124행) 및 evidence linkage 모두 규범 계약 및 §6 정책을 만족함
+- fresh-c: PASS — 30개 작품의 서지, 17개 축 주석, Art manifest (120행) 및 evidence linkage 모두 규범 계약 및 §6 정책을 만족함
+
+BLOCKERS:
+- none
+
+PROMOTION AUTHORIZATION: YES
+PRODUCT-DIRECTION G2 AUTHORIZATION: NO
+SLICE 5 AUTHORIZATION: NO

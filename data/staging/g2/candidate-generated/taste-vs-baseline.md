@@ -1,6 +1,6 @@
 # konocomics Taste vs Baseline レポート
 
-- カタログバージョン: v1\-57aaede217a7
+- カタログバージョン: v1\-06bec7c62162
 - ファクター辞書バージョン: v1
 - Baseline バージョン: v1
 - プロフィール数: 3
@@ -988,7 +988,31 @@
 | 4 | 0.06 | adjustment | tone | darkness | なし | なし | はい |
 | 5 | 0.06 | adjustment | tone | emotionalWarmth | なし | なし | はい |
 
-#### 6. モブサイコ100 (mob\-psycho\-100)
+#### 6. BLUE GIANT (blue\-giant)
+
+- スコア: 0.562244897959
+- 確信度: ふつう
+- 最も近いアンカー: よつばと！ (yotsuba\-to)
+- おすすめ理由:
+  - 「物語の重さ」があなたの好みに合う作品です。
+  - 『よつばと！』で好きだった「日常」に近い作品です。
+  - 『よつばと！』で好きだった「リアル寄りの絵」に近い作品です。
+- 注意点: ただし「探索」は、『よつばと！』で好きだった傾向と少し異なります。
+- 根拠アンカー: よつばと！ (yotsuba\-to)
+- 適用された減点: なし
+- カバレッジ警告:
+  - PARTIAL / art / coverage=0.75 / threshold=0.3 / adjustedScore=0.833333333333
+- 寄与度上位5件:
+
+| 順位 | 寄与 | source | group | factorId | anchorWorkIds | negativeReasonId | 説明対象 |
+| -: | -: | --- | --- | --- | --- | --- | --- |
+| 1 | 0.4 | baseline | overall | neutralBaseline | なし | なし | いいえ |
+| 2 | 0.06 | adjustment | tone | darkness | なし | なし | はい |
+| 3 | -0.04 | similarity | theme | exploration | yotsuba\-to | なし | はい |
+| 4 | 0.03 | adjustment | theme | foundFamily | なし | なし | はい |
+| 5 | 0.03 | adjustment | tone | emotionalWarmth | なし | なし | はい |
+
+#### 7. モブサイコ100 (mob\-psycho\-100)
 
 - スコア: 0.499854613655
 - 確信度: ふつう
@@ -1012,7 +1036,7 @@
 | 4 | -0.03 | adjustment | art | visualSoftness | なし | なし | はい |
 | 5 | 0.03 | adjustment | theme | foundFamily | なし | なし | はい |
 
-#### 7. Dr\.STONE (dr\-stone)
+#### 8. Dr\.STONE (dr\-stone)
 
 - スコア: 0.484708120813
 - 確信度: 高い
@@ -1036,7 +1060,7 @@
 | 4 | -0.03 | adjustment | art | visualSoftness | なし | なし | はい |
 | 5 | 0.017915904936 | similarity | narrative | problemSolving | dungeon\-meshi | なし | はい |
 
-#### 8. ぼっち・ざ・ろっく！ (bocchi\-the\-rock)
+#### 9. ぼっち・ざ・ろっく！ (bocchi\-the\-rock)
 
 - スコア: 0.487439184471
 - 確信度: ふつう
@@ -1062,7 +1086,7 @@
 | 4 | 0.06 | adjustment | tone | darkness | なし | なし | はい |
 | 5 | 0.06 | adjustment | tone | emotionalWarmth | なし | なし | はい |
 
-#### 9. かぐや様は告らせたい〜天才たちの恋愛頭脳戦〜 (kaguya\-sama)
+#### 10. かぐや様は告らせたい〜天才たちの恋愛頭脳戦〜 (kaguya\-sama)
 
 - スコア: 0.391708007903
 - 確信度: 高い
@@ -1086,29 +1110,6 @@
 | 3 | 0.06 | adjustment | tone | darkness | なし | なし | はい |
 | 4 | 0.020512820513 | similarity | art | artRealism | dungeon\-meshi | なし | はい |
 | 5 | 0.02 | similarity | art | visualSoftness | dungeon\-meshi | なし | はい |
-
-#### 10. 攻殻機動隊 (ghost\-in\-the\-shell)
-
-- スコア: 0.314511002054
-- 確信度: ふつう
-- 最も近いアンカー: 鋼の錬金術師 (fullmetal\-alchemist)
-- おすすめ理由:
-  - 「物語の重さ」があなたの好みに合う作品です。
-  - 『鋼の錬金術師』で好きだった「世界観の作り込み」に近い作品です。
-  - 『鋼の錬金術師』で好きだった「迫力・スピード感」に近い作品です。
-- 注意点: ただし「冒険」は、『鋼の錬金術師』で好きだった傾向と少し異なります。
-- 根拠アンカー: 鋼の錬金術師 (fullmetal\-alchemist)
-- 適用された減点: 絵柄が合わない
-- カバレッジ警告: なし
-- 寄与度上位5件:
-
-| 順位 | 寄与 | source | group | factorId | anchorWorkIds | negativeReasonId | 説明対象 |
-| -: | -: | --- | --- | --- | --- | --- | --- |
-| 1 | 0.4 | baseline | overall | neutralBaseline | なし | なし | いいえ |
-| 2 | -0.08 | penalty | art | artStyleDislike | chainsaw\-man | artStyleDislike | はい |
-| 3 | -0.03 | adjustment | art | visualSoftness | なし | なし | はい |
-| 4 | -0.03 | adjustment | theme | combat | なし | なし | はい |
-| 5 | -0.03 | adjustment | tone | emotionalWarmth | なし | なし | はい |
 
 ### Baseline Top 10 (10/10)
 
@@ -1279,4 +1280,4 @@
 - Taste 件数: 10/10
 - Baseline 件数: 10/10
 - SHRUNK グループ数: 0
-- PARTIAL グループ数: 15
+- PARTIAL グループ数: 16

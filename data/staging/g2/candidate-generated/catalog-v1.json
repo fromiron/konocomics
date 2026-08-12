@@ -1,6 +1,6 @@
 {
   "schemaVersion": 1,
-  "catalogVersion": "v1-57aaede217a7",
+  "catalogVersion": "v1-06bec7c62162",
   "factorDictionaryVersion": "v1",
   "works": [
     {
@@ -2833,8 +2833,7 @@
       "status": "completed",
       "firstPublishedYear": 2013,
       "genres": [
-        "sliceOfLife",
-        "sports"
+        "sliceOfLife"
       ],
       "themes": [
         {
@@ -8470,11 +8469,6 @@
       ],
       "themes": [
         {
-          "id": "foundFamily",
-          "centrality": 2,
-          "confidence": 0.84
-        },
-        {
           "id": "school",
           "centrality": 1,
           "confidence": 0.84
@@ -9132,11 +9126,6 @@
         "scienceFiction"
       ],
       "themes": [
-        {
-          "id": "foundFamily",
-          "centrality": 2,
-          "confidence": 0.84
-        },
         {
           "id": "investigation",
           "centrality": 2,
@@ -12616,11 +12605,6 @@
         {
           "id": "combat",
           "centrality": 1,
-          "confidence": 0.84
-        },
-        {
-          "id": "foundFamily",
-          "centrality": 2,
           "confidence": 0.84
         },
         {

@@ -318,6 +318,7 @@
     "initial-d": {
       "workId": "initial-d",
       "catalogRole": "anchor",
+      "seriesGroupId": "initial-d-mf-ghost",
       "volumeCount": 48
     },
     "inuyasha": {
@@ -418,6 +419,7 @@
     "mf-ghost": {
       "workId": "mf-ghost",
       "catalogRole": "discovery",
+      "seriesGroupId": "initial-d-mf-ghost",
       "volumeCount": 23
     },
     "mieruko-chan": {
@@ -752,7 +754,7 @@
     }
   },
   "marketSnapshot": {
-    "catalogVersion": "v1-57aaede217a7",
+    "catalogVersion": "v1-06bec7c62162",
     "catalogAverageRating": 4.367959183673469,
     "byWorkId": {
       "20th-century-boys": {
