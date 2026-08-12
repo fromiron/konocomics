@@ -8,17 +8,17 @@ intended-eligibility.csv는 최종 입장 심사를 통과했을 때의 역할�
 
 ## 산출물과 행 수
 
-| 파일 | 행 수 | 의미 |
-| --- | ---: | --- |
-| works.csv | 8 | 일본어 정식명·서지·현재 비자격 상태 |
-| aliases.csv | 9 | 영문 라이선스명과 도쿄 리벤저스 표기 별칭 |
-| volumes.csv | 8 | 작품별 일본어판 대표 1권 |
-| factors.csv | 136 | 8작품 × 17축; G1 13축 재사용 + Art 4축 |
-| themes.csv | 24 | G1 블라인드 조정 결과 재사용 |
-| recommendation-context.csv | 8 | 의도 역할·총 권수; 시장 리뷰는 결측 유지 |
-| evidence/evidence.csv | 24 | 서지 8 + 비Art 8 + Art 8 |
-| evidence/art-evidence-manifest.csv | 32 | 축별 판정·페이지 참조·판본 연결·한계 |
-| intended-eligibility.csv | 8 | 승인 후 의도 상태; 런타임 입력 아님 |
+| 파일                               | 행 수 | 의미                                      |
+| ---------------------------------- | ----: | ----------------------------------------- |
+| works.csv                          |     8 | 일본어 정식명·서지·현재 비자격 상태       |
+| aliases.csv                        |     9 | 영문 라이선스명과 도쿄 리벤저스 표기 별칭 |
+| volumes.csv                        |     8 | 작품별 일본어판 대표 1권                  |
+| factors.csv                        |   136 | 8작품 × 17축; G1 13축 재사용 + Art 4축    |
+| themes.csv                         |    24 | G1 블라인드 조정 결과 재사용              |
+| recommendation-context.csv         |     8 | 의도 역할·총 권수; 시장 리뷰는 결측 유지  |
+| evidence/evidence.csv              |    24 | 서지 8 + 비Art 8 + Art 8                  |
+| evidence/art-evidence-manifest.csv |    32 | 축별 판정·페이지 참조·판본 연결·한계      |
+| intended-eligibility.csv           |     8 | 승인 후 의도 상태; 런타임 입력 아님       |
 
 ## 동결 입력의 재사용 경계
 
@@ -33,16 +33,16 @@ intended-eligibility.csv는 최종 입장 심사를 통과했을 때의 역할�
 
 ## 작품별 역할·서지
 
-| 작품 ID | 일본어 정식명 | 분류 / 의도 역할 | 총 권수 | 대표 1권 근거 |
-| --- | --- | --- | ---: | --- |
-| chis-sweet-adventures | 今日のこねこのチー | general / Discovery | 4 | 강담사 일본 0000048116 |
-| lovely-muco | いとしのムーコ | general / Discovery | 17 | 강담사 일본 0000038806 |
-| penguin-and-house | ペンとハウス～ペンは飼い主が好き～ | general / Discovery | 3 | 강담사 일본 0000328349 |
-| sheetas-little-big-world | こびとのシイタと狩りぐらしの森 | general / Discovery | 3 | 강담사 일본 0000366420 |
-| fairy-tail | ＦＡＩＲＹ　ＴＡＩＬ | shonen / Anchor | 63 | 강담사 일본 0000012163 |
-| fire-force | 炎炎ノ消防隊 | shonen / Anchor | 34 | 강담사 일본 0000019629 |
-| the-seven-deadly-sins | 七つの大罪 | shonen / Anchor | 41 | 강담사 일본 0000017583 |
-| tokyo-revengers | 東京卍リベンジャーズ | shonen / Anchor | 31 | 강담사 일본 0000019996 |
+| 작품 ID                  | 일본어 정식명                      | 분류 / 의도 역할    | 총 권수 | 대표 1권 근거          |
+| ------------------------ | ---------------------------------- | ------------------- | ------: | ---------------------- |
+| chis-sweet-adventures    | 今日のこねこのチー                 | general / Discovery |       4 | 강담사 일본 0000048116 |
+| lovely-muco              | いとしのムーコ                     | general / Discovery |      17 | 강담사 일본 0000038806 |
+| penguin-and-house        | ペンとハウス～ペンは飼い主が好き～ | general / Discovery |       3 | 강담사 일본 0000328349 |
+| sheetas-little-big-world | こびとのシイタと狩りぐらしの森     | general / Discovery |       3 | 강담사 일본 0000366420 |
+| fairy-tail               | ＦＡＩＲＹ　ＴＡＩＬ               | shonen / Anchor     |      63 | 강담사 일본 0000012163 |
+| fire-force               | 炎炎ノ消防隊                       | shonen / Anchor     |      34 | 강담사 일본 0000019629 |
+| the-seven-deadly-sins    | 七つの大罪                         | shonen / Anchor     |      41 | 강담사 일본 0000017583 |
+| tokyo-revengers          | 東京卍リベンジャーズ               | shonen / Anchor     |      31 | 강담사 일본 0000019996 |
 
 Lovely Muco의 동결 volumeCount=4는 당시 강담사 USA 라이선스 가용 권수다. 추천 문맥의 maturity 입력은 일본 원작의 완결 총 권수 17로 정규화했다. 이 변경은 주석 점수 변경이 아니며 최종 합류 전 데이터 담당자가 기준을 승인해야 한다.
 
@@ -52,16 +52,16 @@ volumes.csv는 현행 source 계약과 같이 작품당 대표 1권만 싣는다
 
 모든 표본은 강담사 USA가 제공하는 정식 라이선스 1권 미리보기다. 원본 이미지는 저장소에 복제하지 않았고, 동결된 뷰어 페이지 참조와 판정만 기록했다. 영문 레터링은 artDensity 판정에서 제외했다.
 
-| 작품 | artRealism | artDensity | visualSoftness | motionImpact | 근거 요약 |
-| --- | ---: | ---: | ---: | --- | --- |
-| chis-sweet-adventures | 0 | 1 | 4 | 2 | 6쪽, 주방·공놀이·다른 고양이; page 8 연속 공놀이 |
-| lovely-muco | 0 | 1 | 3 | 2 | 8쪽, 유리 공방·정원·용광로; page 10 연속 회전/물 튀김 |
-| penguin-and-house | 0 | 1 | 3 | 2 | 6쪽, 욕실·주방·식사; pages 10–11 조리 동작 |
-| sheetas-little-big-world | 2 | 4 | 2 | unknown | 6쪽, 숲·통나무 마을·야간 대화; 전체 진입 범위의 동세를 확정하기에 부족 |
-| fairy-tail | 2 | 3 | 2 | unknown | 6쪽, 도시·열차·숙소; 대표 연속 액션 표본 부족 |
-| fire-force | 2 | 3 | 1 | 4 | 6쪽, 열차·화재 도시·소방대; pages 32–33 진압/폭발 연속 |
-| the-seven-deadly-sins | 2 | 3 | 1 | unknown | 6쪽, 숲속 주점·충돌·식사; 대표 연속 액션 표본 부족 |
-| tokyo-revengers | 3 | 2 | 1 | unknown | 6쪽, 시부야·공원 집회·폭행 후; 대표 연속 액션 표본 부족 |
+| 작품                     | artRealism | artDensity | visualSoftness | motionImpact | 근거 요약                                                              |
+| ------------------------ | ---------: | ---------: | -------------: | ------------ | ---------------------------------------------------------------------- |
+| chis-sweet-adventures    |          0 |          1 |              4 | 2            | 6쪽, 주방·공놀이·다른 고양이; page 8 연속 공놀이                       |
+| lovely-muco              |          0 |          1 |              3 | 2            | 8쪽, 유리 공방·정원·용광로; page 10 연속 회전/물 튀김                  |
+| penguin-and-house        |          0 |          1 |              3 | 2            | 6쪽, 욕실·주방·식사; pages 10–11 조리 동작                             |
+| sheetas-little-big-world |          2 |          4 |              2 | unknown      | 6쪽, 숲·통나무 마을·야간 대화; 전체 진입 범위의 동세를 확정하기에 부족 |
+| fairy-tail               |          2 |          3 |              2 | unknown      | 6쪽, 도시·열차·숙소; 대표 연속 액션 표본 부족                          |
+| fire-force               |          2 |          3 |              1 | 4            | 6쪽, 열차·화재 도시·소방대; pages 32–33 진압/폭발 연속                 |
+| the-seven-deadly-sins    |          2 |          3 |              1 | unknown      | 6쪽, 숲속 주점·충돌·식사; 대표 연속 액션 표본 부족                     |
+| tokyo-revengers          |          3 |          2 |              1 | unknown      | 6쪽, 시부야·공원 집회·폭행 후; 대표 연속 액션 표본 부족                |
 
 unknown은 낮은 값이 아니다. こびとのシイタと狩りぐらしの森, FAIRY TAIL, 七つの大罪, 東京卍リベンジャーズ의 motionImpact는 현재 참조가 전체 진입 범위의 연속 동작 최소선을 충족하지 않아 수치화하지 않았다.
 

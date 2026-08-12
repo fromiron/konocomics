@@ -81,10 +81,7 @@
       "that-time-i-got-reincarnated-as-a-slime",
       "how-a-realist-hero-rebuilt-the-kingdom"
     ],
-    "reincarnation": [
-      "that-time-i-got-reincarnated-as-a-slime",
-      "my-next-life-as-a-villainess"
-    ],
+    "reincarnation": ["that-time-i-got-reincarnated-as-a-slime", "my-next-life-as-a-villainess"],
     "demographicDiversity": [
       "a-sign-of-affection",
       "what-did-you-eat-yesterday",
@@ -96,13 +93,19 @@
     ]
   },
   "demographicDiversitySignals": [
-    {"workId": "a-sign-of-affection", "signal": "deaf protagonist"},
-    {"workId": "what-did-you-eat-yesterday", "signal": "adult same-sex couple"},
-    {"workId": "metamorphose-no-engawa", "signal": "75-year-old protagonist and intergenerational friendship"},
-    {"workId": "real", "signal": "wheelchair basketball and disabled characters"},
-    {"workId": "boys-run-the-riot", "signal": "transgender teenage protagonist"},
-    {"workId": "requiem-of-the-rose-king", "signal": "protagonist described by the publisher as having both male and female sex characteristics"},
-    {"workId": "i-think-our-son-is-gay", "signal": "family perspective on a son who may be gay"}
+    { "workId": "a-sign-of-affection", "signal": "deaf protagonist" },
+    { "workId": "what-did-you-eat-yesterday", "signal": "adult same-sex couple" },
+    {
+      "workId": "metamorphose-no-engawa",
+      "signal": "75-year-old protagonist and intergenerational friendship"
+    },
+    { "workId": "real", "signal": "wheelchair basketball and disabled characters" },
+    { "workId": "boys-run-the-riot", "signal": "transgender teenage protagonist" },
+    {
+      "workId": "requiem-of-the-rose-king",
+      "signal": "protagonist described by the publisher as having both male and female sex characteristics"
+    },
+    { "workId": "i-think-our-son-is-gay", "signal": "family perspective on a son who may be gay" }
   ],
   "exclusions": {
     "currentCatalogIds": [
@@ -226,7 +229,10 @@
       "representativeIsbn": "9784065207833",
       "previewUrl": "https://www.kodansha.co.jp/comic/products/0000344550/trial",
       "previewAuthorityClass": "primaryPublisherReader",
-      "evidenceAccessibilityConfidence": {"level": "high", "result": "HTTP 200, title-matched reader, interior assets observed via Edge CDP"}
+      "evidenceAccessibilityConfidence": {
+        "level": "high",
+        "result": "HTTP 200, title-matched reader, interior assets observed via Edge CDP"
+      }
     },
     {
       "workId": "chihayafuru",
@@ -239,7 +245,10 @@
       "representativeIsbn": "9784063192391",
       "previewUrl": "https://www.kodansha.co.jp/comic/products/0000031259/trial",
       "previewAuthorityClass": "primaryPublisherReader",
-      "evidenceAccessibilityConfidence": {"level": "high", "result": "HTTP 200, title-matched reader, interior assets observed via Edge CDP"}
+      "evidenceAccessibilityConfidence": {
+        "level": "high",
+        "result": "HTTP 200, title-matched reader, interior assets observed via Edge CDP"
+      }
     },
     {
       "workId": "that-time-i-got-reincarnated-as-a-slime",
@@ -252,7 +261,10 @@
       "representativeIsbn": "9784063765786",
       "previewUrl": "https://www.kodansha.co.jp/comic/products/0000045267/trial",
       "previewAuthorityClass": "primaryPublisherReader",
-      "evidenceAccessibilityConfidence": {"level": "high", "result": "HTTP 200, title-matched reader, interior assets observed via Edge CDP"}
+      "evidenceAccessibilityConfidence": {
+        "level": "high",
+        "result": "HTTP 200, title-matched reader, interior assets observed via Edge CDP"
+      }
     },
     {
       "workId": "welcome-to-the-ballroom",
@@ -265,7 +277,10 @@
       "representativeIsbn": "9784063713299",
       "previewUrl": "https://www.kodansha.co.jp/comic/products/0000043342/trial",
       "previewAuthorityClass": "primaryPublisherReader",
-      "evidenceAccessibilityConfidence": {"level": "high", "result": "HTTP 200, title-matched reader, interior assets observed via Edge CDP"}
+      "evidenceAccessibilityConfidence": {
+        "level": "high",
+        "result": "HTTP 200, title-matched reader, interior assets observed via Edge CDP"
+      }
     },
     {
       "workId": "a-sign-of-affection",
@@ -278,7 +293,10 @@
       "representativeIsbn": "9784065180624",
       "previewUrl": "https://www.kodansha.co.jp/comic/products/0000327361/trial",
       "previewAuthorityClass": "primaryPublisherReader",
-      "evidenceAccessibilityConfidence": {"level": "high", "result": "HTTP 200, title-matched reader, interior assets observed via Edge CDP"}
+      "evidenceAccessibilityConfidence": {
+        "level": "high",
+        "result": "HTTP 200, title-matched reader, interior assets observed via Edge CDP"
+      }
     },
     {
       "workId": "heavenly-delusion",
@@ -291,7 +309,10 @@
       "representativeIsbn": "9784065119761",
       "previewUrl": "https://www.kodansha.co.jp/comic/products/0000311498/trial",
       "previewAuthorityClass": "primaryPublisherReader",
-      "evidenceAccessibilityConfidence": {"level": "high", "result": "HTTP 200, title-matched reader, interior assets observed via Edge CDP"}
+      "evidenceAccessibilityConfidence": {
+        "level": "high",
+        "result": "HTTP 200, title-matched reader, interior assets observed via Edge CDP"
+      }
     },
     {
       "workId": "ajin",
@@ -304,7 +325,10 @@
       "representativeIsbn": "9784063878684",
       "previewUrl": "https://www.kodansha.co.jp/comic/products/0000047229/trial",
       "previewAuthorityClass": "primaryPublisherReader",
-      "evidenceAccessibilityConfidence": {"level": "high", "result": "HTTP 200, title-matched reader, interior assets observed via Edge CDP"}
+      "evidenceAccessibilityConfidence": {
+        "level": "high",
+        "result": "HTTP 200, title-matched reader, interior assets observed via Edge CDP"
+      }
     },
     {
       "workId": "historie",
@@ -317,7 +341,10 @@
       "representativeIsbn": "9784063143584",
       "previewUrl": "https://www.kodansha.co.jp/comic/products/0000030267/trial",
       "previewAuthorityClass": "primaryPublisherReader",
-      "evidenceAccessibilityConfidence": {"level": "high", "result": "HTTP 200, title-matched reader, interior assets observed via Edge CDP"}
+      "evidenceAccessibilityConfidence": {
+        "level": "high",
+        "result": "HTTP 200, title-matched reader, interior assets observed via Edge CDP"
+      }
     },
     {
       "workId": "what-did-you-eat-yesterday",
@@ -330,7 +357,10 @@
       "representativeIsbn": "9784063726480",
       "previewUrl": "https://www.kodansha.co.jp/comic/products/0000013776/trial",
       "previewAuthorityClass": "primaryPublisherReader",
-      "evidenceAccessibilityConfidence": {"level": "high", "result": "HTTP 200, title-matched reader, interior assets observed via Edge CDP"}
+      "evidenceAccessibilityConfidence": {
+        "level": "high",
+        "result": "HTTP 200, title-matched reader, interior assets observed via Edge CDP"
+      }
     },
     {
       "workId": "the-full-time-wife-escapist",
@@ -343,7 +373,10 @@
       "representativeIsbn": "9784063409116",
       "previewUrl": "https://www.kodansha.co.jp/comic/products/0000036370/trial",
       "previewAuthorityClass": "primaryPublisherReader",
-      "evidenceAccessibilityConfidence": {"level": "high", "result": "HTTP 200, title-matched reader, interior assets observed via Edge CDP"}
+      "evidenceAccessibilityConfidence": {
+        "level": "high",
+        "result": "HTTP 200, title-matched reader, interior assets observed via Edge CDP"
+      }
     },
     {
       "workId": "dance-dance-danseur",
@@ -356,7 +389,10 @@
       "representativeIsbn": "9784091874498",
       "previewUrl": "https://e-comi.shogakukan.co.jp/viewer/open?jdcn=091874490000d0000000",
       "previewAuthorityClass": "primaryPublisherReader",
-      "evidenceAccessibilityConfidence": {"level": "high", "result": "HTTP 200, title-matched reader, 19 interior image elements observed via Edge CDP"}
+      "evidenceAccessibilityConfidence": {
+        "level": "high",
+        "result": "HTTP 200, title-matched reader, 19 interior image elements observed via Edge CDP"
+      }
     },
     {
       "workId": "chi-on-the-movements-of-the-earth",
@@ -369,7 +405,10 @@
       "representativeIsbn": "9784098607785",
       "previewUrl": "https://e-comi.shogakukan.co.jp/viewer/open?jdcn=098607780000d0000000",
       "previewAuthorityClass": "primaryPublisherReader",
-      "evidenceAccessibilityConfidence": {"level": "high", "result": "HTTP 200, title-matched reader, 19 interior image elements observed via Edge CDP"}
+      "evidenceAccessibilityConfidence": {
+        "level": "high",
+        "result": "HTTP 200, title-matched reader, 19 interior image elements observed via Edge CDP"
+      }
     },
     {
       "workId": "mystery-to-iu-nakare",
@@ -382,7 +421,10 @@
       "representativeIsbn": "9784098700295",
       "previewUrl": "https://e-comi.shogakukan.co.jp/viewer/open?jdcn=098700290000d0000000",
       "previewAuthorityClass": "primaryPublisherReader",
-      "evidenceAccessibilityConfidence": {"level": "high", "result": "HTTP 200, title-matched reader, 19 interior image elements observed via Edge CDP"}
+      "evidenceAccessibilityConfidence": {
+        "level": "high",
+        "result": "HTTP 200, title-matched reader, 19 interior image elements observed via Edge CDP"
+      }
     },
     {
       "workId": "aoashi",
@@ -395,7 +437,10 @@
       "representativeIsbn": "9784091868923",
       "previewUrl": "https://e-comi.shogakukan.co.jp/viewer/open?jdcn=091868920000d0000000",
       "previewAuthorityClass": "primaryPublisherReader",
-      "evidenceAccessibilityConfidence": {"level": "high", "result": "HTTP 200, title-matched reader, 19 interior image elements observed via Edge CDP"}
+      "evidenceAccessibilityConfidence": {
+        "level": "high",
+        "result": "HTTP 200, title-matched reader, 19 interior image elements observed via Edge CDP"
+      }
     },
     {
       "workId": "blood-on-the-tracks",
@@ -408,7 +453,10 @@
       "representativeIsbn": "9784091896230",
       "previewUrl": "https://e-comi.shogakukan.co.jp/viewer/open?jdcn=091896230000d0000000",
       "previewAuthorityClass": "primaryPublisherReader",
-      "evidenceAccessibilityConfidence": {"level": "high", "result": "HTTP 200, title-matched reader, 19 interior image elements observed via Edge CDP"}
+      "evidenceAccessibilityConfidence": {
+        "level": "high",
+        "result": "HTTP 200, title-matched reader, 19 interior image elements observed via Edge CDP"
+      }
     },
     {
       "workId": "7seeds",
@@ -421,7 +469,10 @@
       "representativeIsbn": "9784091380135",
       "previewUrl": "https://e-comi.shogakukan.co.jp/viewer/open?jdcn=091380130000d0000000",
       "previewAuthorityClass": "primaryPublisherReader",
-      "evidenceAccessibilityConfidence": {"level": "high", "result": "HTTP 200, title-matched reader, 19 interior image elements observed via Edge CDP"}
+      "evidenceAccessibilityConfidence": {
+        "level": "high",
+        "result": "HTTP 200, title-matched reader, 19 interior image elements observed via Edge CDP"
+      }
     },
     {
       "workId": "mieruko-chan",
@@ -434,7 +485,10 @@
       "representativeIsbn": "9784040656588",
       "previewUrl": "https://comic-walker.com/detail/KC_003960_S/episodes/KC_0039600000100011_E",
       "previewAuthorityClass": "publisherOfficialSerialPlatform",
-      "evidenceAccessibilityConfidence": {"level": "high", "result": "HTTP 200, first-episode identity, 66 images and 16 canvases observed via Edge CDP"}
+      "evidenceAccessibilityConfidence": {
+        "level": "high",
+        "result": "HTTP 200, first-episode identity, 66 images and 16 canvases observed via Edge CDP"
+      }
     },
     {
       "workId": "the-summer-hikaru-died",
@@ -447,7 +501,10 @@
       "representativeIsbn": "9784041122730",
       "previewUrl": "https://comic-walker.com/detail/KC_001571_S/episodes/KC_0015710000100011_E",
       "previewAuthorityClass": "publisherOfficialSerialPlatform",
-      "evidenceAccessibilityConfidence": {"level": "high", "result": "HTTP 200, first-episode identity, 64 images and 21 canvases observed via Edge CDP"}
+      "evidenceAccessibilityConfidence": {
+        "level": "high",
+        "result": "HTTP 200, first-episode identity, 64 images and 21 canvases observed via Edge CDP"
+      }
     },
     {
       "workId": "my-love-story-with-yamada-kun-at-lv999",
@@ -460,7 +517,10 @@
       "representativeIsbn": "9784040645209",
       "previewUrl": "https://comic-walker.com/detail/KC_000561_S/episodes/KC_0005610000100012_E",
       "previewAuthorityClass": "publisherOfficialSerialPlatform",
-      "evidenceAccessibilityConfidence": {"level": "high", "result": "HTTP 200, first-episode identity, 47 images and 29 canvases observed via Edge CDP"}
+      "evidenceAccessibilityConfidence": {
+        "level": "high",
+        "result": "HTTP 200, first-episode identity, 47 images and 29 canvases observed via Edge CDP"
+      }
     },
     {
       "workId": "metamorphose-no-engawa",
@@ -473,7 +533,10 @@
       "representativeIsbn": "9784041068304",
       "previewUrl": "https://comic-walker.com/detail/KC_002801_S/episodes/KC_0028010000100012_E",
       "previewAuthorityClass": "publisherOfficialSerialPlatform",
-      "evidenceAccessibilityConfidence": {"level": "high", "result": "HTTP 200, first-episode identity, 49 images and 12 canvases observed via Edge CDP"}
+      "evidenceAccessibilityConfidence": {
+        "level": "high",
+        "result": "HTTP 200, first-episode identity, 49 images and 12 canvases observed via Edge CDP"
+      }
     },
     {
       "workId": "real",
@@ -486,7 +549,10 @@
       "representativeIsbn": "9784088761435",
       "previewUrl": "https://www.shueisha.co.jp/books/reader/main.php?cid=08876143876143315501",
       "previewAuthorityClass": "primaryPublisherReader",
-      "evidenceAccessibilityConfidence": {"level": "high", "result": "HTTP 200, title-matched reader, 12 interior image elements observed via Edge CDP"}
+      "evidenceAccessibilityConfidence": {
+        "level": "high",
+        "result": "HTTP 200, title-matched reader, 12 interior image elements observed via Edge CDP"
+      }
     },
     {
       "workId": "summer-time-rendering",
@@ -499,7 +565,10 @@
       "representativeIsbn": "9784088813394",
       "previewUrl": "https://www.shueisha.co.jp/books/reader/main.php?cid=9784088813394",
       "previewAuthorityClass": "primaryPublisherReader",
-      "evidenceAccessibilityConfidence": {"level": "high", "result": "HTTP 200, title-matched reader, 12 interior image elements observed via Edge CDP"}
+      "evidenceAccessibilityConfidence": {
+        "level": "high",
+        "result": "HTTP 200, title-matched reader, 12 interior image elements observed via Edge CDP"
+      }
     },
     {
       "workId": "kowloon-generic-romance",
@@ -512,7 +581,10 @@
       "representativeIsbn": "9784088914886",
       "previewUrl": "https://www.shueisha.co.jp/books/reader/main.php?cid=9784088914886",
       "previewAuthorityClass": "primaryPublisherReader",
-      "evidenceAccessibilityConfidence": {"level": "high", "result": "HTTP 200, title-matched reader, 12 interior image elements observed via Edge CDP"}
+      "evidenceAccessibilityConfidence": {
+        "level": "high",
+        "result": "HTTP 200, title-matched reader, 12 interior image elements observed via Edge CDP"
+      }
     },
     {
       "workId": "my-happy-marriage",
@@ -525,7 +597,10 @@
       "representativeIsbn": "9784757562936",
       "previewUrl": "https://www.ganganonline.com/title/30/chapter/581",
       "previewAuthorityClass": "publisherOfficialSerialPlatform",
-      "evidenceAccessibilityConfidence": {"level": "high", "result": "HTTP 200, title-matched chapter, decrypted interior blob images observed via Edge CDP"}
+      "evidenceAccessibilityConfidence": {
+        "level": "high",
+        "result": "HTTP 200, title-matched chapter, decrypted interior blob images observed via Edge CDP"
+      }
     },
     {
       "workId": "my-next-life-as-a-villainess",
@@ -538,7 +613,10 @@
       "representativeIsbn": "9784758033381",
       "previewUrl": "https://bookwalker.jp/de28a5cb4f-9d7f-4937-973f-dedc602cd578/?sample=1",
       "previewAuthorityClass": "publisherLinkedLicensedRetailer",
-      "evidenceAccessibilityConfidence": {"level": "high", "result": "Publisher-linked trial resolved with HTTP 200 to a title-matched 23-page reader; image and canvas assets observed via Edge CDP"}
+      "evidenceAccessibilityConfidence": {
+        "level": "high",
+        "result": "Publisher-linked trial resolved with HTTP 200 to a title-matched 23-page reader; image and canvas assets observed via Edge CDP"
+      }
     },
     {
       "workId": "how-a-realist-hero-rebuilt-the-kingdom",
@@ -551,7 +629,10 @@
       "representativeIsbn": "9784865543216",
       "previewUrl": "https://comic-gardo.com/episode/3269754496561208915",
       "previewAuthorityClass": "publisherOfficialSerialPlatform",
-      "evidenceAccessibilityConfidence": {"level": "high", "result": "HTTP 200, title-matched first chapter, image and canvas assets observed via Edge CDP"}
+      "evidenceAccessibilityConfidence": {
+        "level": "high",
+        "result": "HTTP 200, title-matched first chapter, image and canvas assets observed via Edge CDP"
+      }
     },
     {
       "workId": "boys-run-the-riot",
@@ -564,7 +645,10 @@
       "representativeIsbn": "9784065199961",
       "previewUrl": "https://www.kodansha.co.jp/comic/products/0000342502/trial",
       "previewAuthorityClass": "primaryPublisherReader",
-      "evidenceAccessibilityConfidence": {"level": "high", "result": "HTTP 200, title-matched reader, interior assets observed via Edge CDP"}
+      "evidenceAccessibilityConfidence": {
+        "level": "high",
+        "result": "HTTP 200, title-matched reader, interior assets observed via Edge CDP"
+      }
     },
     {
       "workId": "blue-box",
@@ -577,7 +661,10 @@
       "representativeIsbn": "9784088827315",
       "previewUrl": "https://www.shueisha.co.jp/books/reader/main.php?cid=9784088827315",
       "previewAuthorityClass": "primaryPublisherReader",
-      "evidenceAccessibilityConfidence": {"level": "high", "result": "HTTP 200, title-matched reader, 12 interior image elements observed via Edge CDP"}
+      "evidenceAccessibilityConfidence": {
+        "level": "high",
+        "result": "HTTP 200, title-matched reader, 12 interior image elements observed via Edge CDP"
+      }
     },
     {
       "workId": "the-darwin-incident",
@@ -590,7 +677,10 @@
       "representativeIsbn": "9784065213988",
       "previewUrl": "https://www.kodansha.co.jp/comic/products/0000346125/trial",
       "previewAuthorityClass": "primaryPublisherReader",
-      "evidenceAccessibilityConfidence": {"level": "high", "result": "HTTP 200, title-matched reader, interior assets observed via Edge CDP"}
+      "evidenceAccessibilityConfidence": {
+        "level": "high",
+        "result": "HTTP 200, title-matched reader, interior assets observed via Edge CDP"
+      }
     },
     {
       "workId": "requiem-of-the-rose-king",
@@ -603,7 +693,10 @@
       "representativeIsbn": "9784253271813",
       "previewUrl": "https://arc.akitashoten.co.jp/comics/bara/1",
       "previewAuthorityClass": "primaryPublisherReader",
-      "evidenceAccessibilityConfidence": {"level": "high", "result": "HTTP 200, title-matched 27-page reader, 53 interior image elements observed via Edge CDP"}
+      "evidenceAccessibilityConfidence": {
+        "level": "high",
+        "result": "HTTP 200, title-matched 27-page reader, 53 interior image elements observed via Edge CDP"
+      }
     },
     {
       "workId": "i-think-our-son-is-gay",
@@ -616,7 +709,10 @@
       "representativeIsbn": "9784757562332",
       "previewUrl": "https://www.pixiv.net/artworks/74681640",
       "previewAuthorityClass": "publisherLinkedCreatorPlatform",
-      "evidenceAccessibilityConfidence": {"level": "high", "result": "The publisher's explicit first-chapter link resolved with HTTP 200 to the creator's title-matched 4-page manga; interior assets observed via Edge CDP"}
+      "evidenceAccessibilityConfidence": {
+        "level": "high",
+        "result": "The publisher's explicit first-chapter link resolved with HTTP 200 to the creator's title-matched 4-page manga; interior assets observed via Edge CDP"
+      }
     }
   ]
 }

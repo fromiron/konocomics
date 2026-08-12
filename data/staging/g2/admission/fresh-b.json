@@ -84,7 +84,12 @@
     {
       "id": "the-apothecary-diaries",
       "titleJa": "薬屋のひとりごと",
-      "creators": ["日向夏（原作）", "ねこクラゲ（作画）", "七緒一綺（構成）", "しのとうこ（キャラクター原案）"],
+      "creators": [
+        "日向夏（原作）",
+        "ねこクラゲ（作画）",
+        "七緒一綺（構成）",
+        "しのとうこ（キャラクター原案）"
+      ],
       "publisher": "スクウェア・エニックス",
       "role": "Bridge",
       "officialWorkUrl": "https://magazine.jp.square-enix.com/top/comics/detail/9784757554894/",
