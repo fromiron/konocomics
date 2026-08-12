@@ -1400,7 +1400,7 @@ my-next-life-as-a-villainess,pacing,known,3,0.82,ev-g2-fresh-a-annotation-my-nex
 my-next-life-as-a-villainess,mysteryReveal,known,2,0.82,ev-g2-fresh-a-annotation-my-next-life-as-a-villainess
 my-next-life-as-a-villainess,worldBuilding,known,3,0.82,ev-g2-fresh-a-annotation-my-next-life-as-a-villainess
 my-next-life-as-a-villainess,characterArcWeight,known,3,0.82,ev-g2-fresh-a-annotation-my-next-life-as-a-villainess
-my-next-life-as-a-villainess,relationshipStructure,known,4,0.82,ev-g2-fresh-a-annotation-my-next-life-as-a-villainess
+my-next-life-as-a-villainess,relationshipStructure,known,2,0.82,ev-g2-fresh-a-annotation-my-next-life-as-a-villainess
 my-next-life-as-a-villainess,comedy,known,4,0.82,ev-g2-fresh-a-annotation-my-next-life-as-a-villainess
 my-next-life-as-a-villainess,darkness,known,1,0.82,ev-g2-fresh-a-annotation-my-next-life-as-a-villainess
 my-next-life-as-a-villainess,mentalStress,known,1,0.82,ev-g2-fresh-a-annotation-my-next-life-as-a-villainess
@@ -1735,7 +1735,7 @@ nina-the-starry-bride,visualSoftness,known,3,0.86,ev-g2-fresh-b-art-nina-the-sta
 nina-the-starry-bride,motionImpact,unknown,,,ev-g2-fresh-b-art-nina-the-starry-bride
 baby-steps,progression,known,4,0.82,ev-g2-fresh-b-annotation-baby-steps
 baby-steps,problemSolving,known,4,0.82,ev-g2-fresh-b-annotation-baby-steps
-baby-steps,strategy,known,4,0.82,ev-g2-fresh-b-annotation-baby-steps
+baby-steps,strategy,known,2,0.82,ev-g2-fresh-b-annotation-baby-steps
 baby-steps,pacing,known,2,0.82,ev-g2-fresh-b-annotation-baby-steps
 baby-steps,mysteryReveal,known,0,0.82,ev-g2-fresh-b-annotation-baby-steps
 baby-steps,worldBuilding,known,3,0.82,ev-g2-fresh-b-annotation-baby-steps
@@ -1752,7 +1752,7 @@ baby-steps,visualSoftness,known,2,0.86,ev-g2-fresh-b-art-baby-steps
 baby-steps,motionImpact,unknown,,,ev-g2-fresh-b-art-baby-steps
 capeta,progression,known,4,0.82,ev-g2-fresh-b-annotation-capeta
 capeta,problemSolving,known,3,0.82,ev-g2-fresh-b-annotation-capeta
-capeta,strategy,known,3,0.82,ev-g2-fresh-b-annotation-capeta
+capeta,strategy,known,2,0.82,ev-g2-fresh-b-annotation-capeta
 capeta,pacing,known,3,0.82,ev-g2-fresh-b-annotation-capeta
 capeta,mysteryReveal,known,0,0.82,ev-g2-fresh-b-annotation-capeta
 capeta,worldBuilding,known,3,0.82,ev-g2-fresh-b-annotation-capeta
@@ -1769,7 +1769,7 @@ capeta,visualSoftness,known,1,0.86,ev-g2-fresh-b-art-capeta
 capeta,motionImpact,unknown,,,ev-g2-fresh-b-art-capeta
 yowamushi-pedal,progression,known,4,0.82,ev-g2-fresh-b-annotation-yowamushi-pedal
 yowamushi-pedal,problemSolving,known,3,0.82,ev-g2-fresh-b-annotation-yowamushi-pedal
-yowamushi-pedal,strategy,known,3,0.82,ev-g2-fresh-b-annotation-yowamushi-pedal
+yowamushi-pedal,strategy,known,2,0.82,ev-g2-fresh-b-annotation-yowamushi-pedal
 yowamushi-pedal,pacing,known,4,0.82,ev-g2-fresh-b-annotation-yowamushi-pedal
 yowamushi-pedal,mysteryReveal,known,0,0.82,ev-g2-fresh-b-annotation-yowamushi-pedal
 yowamushi-pedal,worldBuilding,known,3,0.82,ev-g2-fresh-b-annotation-yowamushi-pedal
@@ -2194,7 +2194,7 @@ the-fable,visualSoftness,known,1,0.86,ev-g2-fresh-c-art-the-fable
 the-fable,motionImpact,unknown,,,ev-g2-fresh-c-art-the-fable
 ace-of-the-diamond,progression,known,4,0.82,ev-g2-fresh-c-annotation-ace-of-the-diamond
 ace-of-the-diamond,problemSolving,known,3,0.82,ev-g2-fresh-c-annotation-ace-of-the-diamond
-ace-of-the-diamond,strategy,known,3,0.82,ev-g2-fresh-c-annotation-ace-of-the-diamond
+ace-of-the-diamond,strategy,known,2,0.82,ev-g2-fresh-c-annotation-ace-of-the-diamond
 ace-of-the-diamond,pacing,known,3,0.82,ev-g2-fresh-c-annotation-ace-of-the-diamond
 ace-of-the-diamond,mysteryReveal,known,1,0.82,ev-g2-fresh-c-annotation-ace-of-the-diamond
 ace-of-the-diamond,worldBuilding,known,3,0.82,ev-g2-fresh-c-annotation-ace-of-the-diamond
@@ -2228,7 +2228,7 @@ days,visualSoftness,known,3,0.86,ev-g2-fresh-c-art-days
 days,motionImpact,unknown,,,ev-g2-fresh-c-art-days
 all-rounder-meguru,progression,known,4,0.82,ev-g2-fresh-c-annotation-all-rounder-meguru
 all-rounder-meguru,problemSolving,known,3,0.82,ev-g2-fresh-c-annotation-all-rounder-meguru
-all-rounder-meguru,strategy,known,3,0.82,ev-g2-fresh-c-annotation-all-rounder-meguru
+all-rounder-meguru,strategy,known,2,0.82,ev-g2-fresh-c-annotation-all-rounder-meguru
 all-rounder-meguru,pacing,known,2,0.82,ev-g2-fresh-c-annotation-all-rounder-meguru
 all-rounder-meguru,mysteryReveal,known,1,0.82,ev-g2-fresh-c-annotation-all-rounder-meguru
 all-rounder-meguru,worldBuilding,known,3,0.82,ev-g2-fresh-c-annotation-all-rounder-meguru
@@ -2364,7 +2364,7 @@ gto,visualSoftness,known,1,0.86,ev-g2-fresh-c-art-gto
 gto,motionImpact,unknown,,,ev-g2-fresh-c-art-gto
 tomorrows-joe,progression,known,4,0.82,ev-g2-fresh-c-annotation-tomorrows-joe
 tomorrows-joe,problemSolving,known,2,0.82,ev-g2-fresh-c-annotation-tomorrows-joe
-tomorrows-joe,strategy,known,3,0.82,ev-g2-fresh-c-annotation-tomorrows-joe
+tomorrows-joe,strategy,known,2,0.82,ev-g2-fresh-c-annotation-tomorrows-joe
 tomorrows-joe,pacing,known,3,0.82,ev-g2-fresh-c-annotation-tomorrows-joe
 tomorrows-joe,mysteryReveal,known,1,0.82,ev-g2-fresh-c-annotation-tomorrows-joe
 tomorrows-joe,worldBuilding,known,3,0.82,ev-g2-fresh-c-annotation-tomorrows-joe
@@ -2432,7 +2432,7 @@ life-lessons-with-uramichi-oniisan,visualSoftness,known,3,0.86,ev-g2-fresh-c-art
 life-lessons-with-uramichi-oniisan,motionImpact,unknown,,,ev-g2-fresh-c-art-life-lessons-with-uramichi-oniisan
 shangri-la-frontier,progression,known,4,0.82,ev-g2-fresh-c-annotation-shangri-la-frontier
 shangri-la-frontier,problemSolving,known,4,0.82,ev-g2-fresh-c-annotation-shangri-la-frontier
-shangri-la-frontier,strategy,known,3,0.82,ev-g2-fresh-c-annotation-shangri-la-frontier
+shangri-la-frontier,strategy,known,2,0.82,ev-g2-fresh-c-annotation-shangri-la-frontier
 shangri-la-frontier,pacing,known,4,0.82,ev-g2-fresh-c-annotation-shangri-la-frontier
 shangri-la-frontier,mysteryReveal,known,3,0.82,ev-g2-fresh-c-annotation-shangri-la-frontier
 shangri-la-frontier,worldBuilding,known,4,0.82,ev-g2-fresh-c-annotation-shangri-la-frontier
@@ -2454,7 +2454,7 @@ rent-a-girlfriend,pacing,known,3,0.82,ev-g2-fresh-c-annotation-rent-a-girlfriend
 rent-a-girlfriend,mysteryReveal,known,2,0.82,ev-g2-fresh-c-annotation-rent-a-girlfriend
 rent-a-girlfriend,worldBuilding,known,2,0.82,ev-g2-fresh-c-annotation-rent-a-girlfriend
 rent-a-girlfriend,characterArcWeight,known,4,0.82,ev-g2-fresh-c-annotation-rent-a-girlfriend
-rent-a-girlfriend,relationshipStructure,known,4,0.82,ev-g2-fresh-c-annotation-rent-a-girlfriend
+rent-a-girlfriend,relationshipStructure,known,2,0.82,ev-g2-fresh-c-annotation-rent-a-girlfriend
 rent-a-girlfriend,comedy,known,4,0.82,ev-g2-fresh-c-annotation-rent-a-girlfriend
 rent-a-girlfriend,darkness,known,1,0.82,ev-g2-fresh-c-annotation-rent-a-girlfriend
 rent-a-girlfriend,mentalStress,known,4,0.82,ev-g2-fresh-c-annotation-rent-a-girlfriend

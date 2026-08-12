@@ -1,6 +1,6 @@
 {
   "schemaVersion": 1,
-  "catalogVersion": "v1-df7474f9c604",
+  "catalogVersion": "v1-5aaf4ddb0325",
   "factorDictionaryVersion": "v1",
   "works": [
     {
@@ -956,7 +956,7 @@
         },
         "strategy": {
           "state": "known",
-          "value": 3,
+          "value": 2,
           "confidence": 0.82
         },
         "pacing": {
@@ -1370,7 +1370,7 @@
         },
         "strategy": {
           "state": "known",
-          "value": 3,
+          "value": 2,
           "confidence": 0.82
         },
         "pacing": {
@@ -1898,7 +1898,7 @@
         },
         "strategy": {
           "state": "known",
-          "value": 4,
+          "value": 2,
           "confidence": 0.82
         },
         "pacing": {
@@ -3452,7 +3452,7 @@
         },
         "strategy": {
           "state": "known",
-          "value": 3,
+          "value": 2,
           "confidence": 0.82
         },
         "pacing": {
@@ -12785,7 +12785,7 @@
         },
         "relationshipStructure": {
           "state": "known",
-          "value": 4,
+          "value": 2,
           "confidence": 0.82
         },
         "comedy": {
@@ -15139,7 +15139,7 @@
         },
         "relationshipStructure": {
           "state": "known",
-          "value": 4,
+          "value": 2,
           "confidence": 0.82
         },
         "comedy": {
@@ -15648,7 +15648,7 @@
         },
         "strategy": {
           "state": "known",
-          "value": 3,
+          "value": 2,
           "confidence": 0.82
         },
         "pacing": {
@@ -18447,7 +18447,7 @@
         },
         "strategy": {
           "state": "known",
-          "value": 3,
+          "value": 2,
           "confidence": 0.82
         },
         "pacing": {
@@ -19909,7 +19909,7 @@
         },
         "strategy": {
           "state": "known",
-          "value": 3,
+          "value": 2,
           "confidence": 0.82
         },
         "pacing": {

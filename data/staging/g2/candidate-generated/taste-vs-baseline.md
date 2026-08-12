@@ -1,6 +1,6 @@
 # konocomics Taste vs Baseline レポート
 
-- カタログバージョン: v1\-df7474f9c604
+- カタログバージョン: v1\-5aaf4ddb0325
 - ファクター辞書バージョン: v1
 - Baseline バージョン: v1
 - プロフィール数: 3
@@ -17,7 +17,7 @@
 
 #### 1. ｃａｐｅｔａ (capeta)
 
-- スコア: 0.923939429618
+- スコア: 0.933519361591
 - 確信度: ふつう
 - 最も近いアンカー: ブルーロック (blue\-lock)
 - おすすめ理由:
@@ -92,7 +92,7 @@
 
 #### 4. ダイヤのＡ (ace\-of\-the\-diamond)
 
-- スコア: 0.839451072737
+- スコア: 0.84903100471
 - 確信度: ふつう
 - 最も近いアンカー: ブルーロック (blue\-lock)
 - おすすめ理由:
@@ -988,31 +988,7 @@
 | 4 | 0.06 | adjustment | tone | darkness | なし | なし | はい |
 | 5 | 0.06 | adjustment | tone | emotionalWarmth | なし | なし | はい |
 
-#### 6. モブサイコ100 (mob\-psycho\-100)
-
-- スコア: 0.499854613655
-- 確信度: ふつう
-- 最も近いアンカー: SPY×FAMILY (spy\-family)
-- おすすめ理由:
-  - 「あたたかさ・癒やし」があなたの好みに合う作品です。
-  - 「仲間との家族的な絆」があなたの好みに合う作品です。
-  - 『SPY×FAMILY』で好きだった「テンポの速さ」に近い作品です。
-- 注意点: なし
-- 根拠アンカー: SPY×FAMILY (spy\-family)
-- 適用された減点: なし
-- カバレッジ警告:
-  - PARTIAL / art / coverage=0.75 / threshold=0.3 / adjustedScore=0.417300380228
-- 寄与度上位5件:
-
-| 順位 | 寄与 | source | group | factorId | anchorWorkIds | negativeReasonId | 説明対象 |
-| -: | -: | --- | --- | --- | --- | --- | --- |
-| 1 | 0.4 | baseline | overall | neutralBaseline | なし | なし | いいえ |
-| 2 | -0.06 | adjustment | theme | combat | なし | なし | はい |
-| 3 | 0.06 | adjustment | tone | emotionalWarmth | なし | なし | はい |
-| 4 | -0.03 | adjustment | art | visualSoftness | なし | なし | はい |
-| 5 | 0.03 | adjustment | theme | foundFamily | なし | なし | はい |
-
-#### 7. Dr\.STONE (dr\-stone)
+#### 6. Dr\.STONE (dr\-stone)
 
 - スコア: 0.484708120813
 - 確信度: 高い
@@ -1035,6 +1011,30 @@
 | 3 | 0.06 | adjustment | tone | emotionalWarmth | なし | なし | はい |
 | 4 | -0.03 | adjustment | art | visualSoftness | なし | なし | はい |
 | 5 | 0.017915904936 | similarity | narrative | problemSolving | dungeon\-meshi | なし | はい |
+
+#### 7. モブサイコ100 (mob\-psycho\-100)
+
+- スコア: 0.499854613655
+- 確信度: ふつう
+- 最も近いアンカー: SPY×FAMILY (spy\-family)
+- おすすめ理由:
+  - 「あたたかさ・癒やし」があなたの好みに合う作品です。
+  - 「仲間との家族的な絆」があなたの好みに合う作品です。
+  - 『SPY×FAMILY』で好きだった「テンポの速さ」に近い作品です。
+- 注意点: なし
+- 根拠アンカー: SPY×FAMILY (spy\-family)
+- 適用された減点: なし
+- カバレッジ警告:
+  - PARTIAL / art / coverage=0.75 / threshold=0.3 / adjustedScore=0.417300380228
+- 寄与度上位5件:
+
+| 順位 | 寄与 | source | group | factorId | anchorWorkIds | negativeReasonId | 説明対象 |
+| -: | -: | --- | --- | --- | --- | --- | --- |
+| 1 | 0.4 | baseline | overall | neutralBaseline | なし | なし | いいえ |
+| 2 | -0.06 | adjustment | theme | combat | なし | なし | はい |
+| 3 | 0.06 | adjustment | tone | emotionalWarmth | なし | なし | はい |
+| 4 | -0.03 | adjustment | art | visualSoftness | なし | なし | はい |
+| 5 | 0.03 | adjustment | theme | foundFamily | なし | なし | はい |
 
 #### 8. ぼっち・ざ・ろっく！ (bocchi\-the\-rock)
 
