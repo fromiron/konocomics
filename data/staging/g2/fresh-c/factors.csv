@@ -108,7 +108,7 @@ wave-listen-to-me,pacing,known,3,0.82,ev-g2-fresh-c-annotation-wave-listen-to-me
 wave-listen-to-me,mysteryReveal,known,1,0.82,ev-g2-fresh-c-annotation-wave-listen-to-me
 wave-listen-to-me,worldBuilding,known,3,0.82,ev-g2-fresh-c-annotation-wave-listen-to-me
 wave-listen-to-me,characterArcWeight,known,4,0.82,ev-g2-fresh-c-annotation-wave-listen-to-me
-wave-listen-to-me,relationshipStructure,known,4,0.82,ev-g2-fresh-c-annotation-wave-listen-to-me
+wave-listen-to-me,relationshipStructure,known,2,0.82,ev-g2-fresh-c-annotation-wave-listen-to-me
 wave-listen-to-me,comedy,known,4,0.82,ev-g2-fresh-c-annotation-wave-listen-to-me
 wave-listen-to-me,darkness,known,1,0.82,ev-g2-fresh-c-annotation-wave-listen-to-me
 wave-listen-to-me,mentalStress,known,2,0.82,ev-g2-fresh-c-annotation-wave-listen-to-me
@@ -125,7 +125,7 @@ police-in-a-pod,pacing,known,3,0.82,ev-g2-fresh-c-annotation-police-in-a-pod
 police-in-a-pod,mysteryReveal,known,2,0.82,ev-g2-fresh-c-annotation-police-in-a-pod
 police-in-a-pod,worldBuilding,known,3,0.82,ev-g2-fresh-c-annotation-police-in-a-pod
 police-in-a-pod,characterArcWeight,known,4,0.82,ev-g2-fresh-c-annotation-police-in-a-pod
-police-in-a-pod,relationshipStructure,known,4,0.82,ev-g2-fresh-c-annotation-police-in-a-pod
+police-in-a-pod,relationshipStructure,known,2,0.82,ev-g2-fresh-c-annotation-police-in-a-pod
 police-in-a-pod,comedy,known,4,0.82,ev-g2-fresh-c-annotation-police-in-a-pod
 police-in-a-pod,darkness,known,2,0.82,ev-g2-fresh-c-annotation-police-in-a-pod
 police-in-a-pod,mentalStress,known,2,0.82,ev-g2-fresh-c-annotation-police-in-a-pod
@@ -159,7 +159,7 @@ ace-of-the-diamond,pacing,known,3,0.82,ev-g2-fresh-c-annotation-ace-of-the-diamo
 ace-of-the-diamond,mysteryReveal,known,1,0.82,ev-g2-fresh-c-annotation-ace-of-the-diamond
 ace-of-the-diamond,worldBuilding,known,3,0.82,ev-g2-fresh-c-annotation-ace-of-the-diamond
 ace-of-the-diamond,characterArcWeight,known,4,0.82,ev-g2-fresh-c-annotation-ace-of-the-diamond
-ace-of-the-diamond,relationshipStructure,known,4,0.82,ev-g2-fresh-c-annotation-ace-of-the-diamond
+ace-of-the-diamond,relationshipStructure,known,2,0.82,ev-g2-fresh-c-annotation-ace-of-the-diamond
 ace-of-the-diamond,comedy,known,3,0.82,ev-g2-fresh-c-annotation-ace-of-the-diamond
 ace-of-the-diamond,darkness,known,1,0.82,ev-g2-fresh-c-annotation-ace-of-the-diamond
 ace-of-the-diamond,mentalStress,known,3,0.82,ev-g2-fresh-c-annotation-ace-of-the-diamond
@@ -176,7 +176,7 @@ days,pacing,known,3,0.82,ev-g2-fresh-c-annotation-days
 days,mysteryReveal,known,1,0.82,ev-g2-fresh-c-annotation-days
 days,worldBuilding,known,2,0.82,ev-g2-fresh-c-annotation-days
 days,characterArcWeight,known,4,0.82,ev-g2-fresh-c-annotation-days
-days,relationshipStructure,known,4,0.82,ev-g2-fresh-c-annotation-days
+days,relationshipStructure,known,2,0.82,ev-g2-fresh-c-annotation-days
 days,comedy,known,2,0.82,ev-g2-fresh-c-annotation-days
 days,darkness,known,1,0.82,ev-g2-fresh-c-annotation-days
 days,mentalStress,known,3,0.82,ev-g2-fresh-c-annotation-days
@@ -295,7 +295,7 @@ beck,pacing,known,3,0.82,ev-g2-fresh-c-annotation-beck
 beck,mysteryReveal,known,1,0.82,ev-g2-fresh-c-annotation-beck
 beck,worldBuilding,known,3,0.82,ev-g2-fresh-c-annotation-beck
 beck,characterArcWeight,known,4,0.82,ev-g2-fresh-c-annotation-beck
-beck,relationshipStructure,known,4,0.82,ev-g2-fresh-c-annotation-beck
+beck,relationshipStructure,known,2,0.82,ev-g2-fresh-c-annotation-beck
 beck,comedy,known,3,0.82,ev-g2-fresh-c-annotation-beck
 beck,darkness,known,2,0.82,ev-g2-fresh-c-annotation-beck
 beck,mentalStress,known,3,0.82,ev-g2-fresh-c-annotation-beck
@@ -312,7 +312,7 @@ gto,pacing,known,4,0.82,ev-g2-fresh-c-annotation-gto
 gto,mysteryReveal,known,1,0.82,ev-g2-fresh-c-annotation-gto
 gto,worldBuilding,known,2,0.82,ev-g2-fresh-c-annotation-gto
 gto,characterArcWeight,known,4,0.82,ev-g2-fresh-c-annotation-gto
-gto,relationshipStructure,known,4,0.82,ev-g2-fresh-c-annotation-gto
+gto,relationshipStructure,known,2,0.82,ev-g2-fresh-c-annotation-gto
 gto,comedy,known,4,0.82,ev-g2-fresh-c-annotation-gto
 gto,darkness,known,2,0.82,ev-g2-fresh-c-annotation-gto
 gto,mentalStress,known,2,0.82,ev-g2-fresh-c-annotation-gto
@@ -329,7 +329,7 @@ tomorrows-joe,pacing,known,3,0.82,ev-g2-fresh-c-annotation-tomorrows-joe
 tomorrows-joe,mysteryReveal,known,1,0.82,ev-g2-fresh-c-annotation-tomorrows-joe
 tomorrows-joe,worldBuilding,known,3,0.82,ev-g2-fresh-c-annotation-tomorrows-joe
 tomorrows-joe,characterArcWeight,known,4,0.82,ev-g2-fresh-c-annotation-tomorrows-joe
-tomorrows-joe,relationshipStructure,known,4,0.82,ev-g2-fresh-c-annotation-tomorrows-joe
+tomorrows-joe,relationshipStructure,known,2,0.82,ev-g2-fresh-c-annotation-tomorrows-joe
 tomorrows-joe,comedy,known,2,0.82,ev-g2-fresh-c-annotation-tomorrows-joe
 tomorrows-joe,darkness,known,3,0.82,ev-g2-fresh-c-annotation-tomorrows-joe
 tomorrows-joe,mentalStress,known,4,0.82,ev-g2-fresh-c-annotation-tomorrows-joe
@@ -380,7 +380,7 @@ life-lessons-with-uramichi-oniisan,pacing,known,2,0.82,ev-g2-fresh-c-annotation-
 life-lessons-with-uramichi-oniisan,mysteryReveal,known,1,0.82,ev-g2-fresh-c-annotation-life-lessons-with-uramichi-oniisan
 life-lessons-with-uramichi-oniisan,worldBuilding,known,2,0.82,ev-g2-fresh-c-annotation-life-lessons-with-uramichi-oniisan
 life-lessons-with-uramichi-oniisan,characterArcWeight,known,4,0.82,ev-g2-fresh-c-annotation-life-lessons-with-uramichi-oniisan
-life-lessons-with-uramichi-oniisan,relationshipStructure,known,4,0.82,ev-g2-fresh-c-annotation-life-lessons-with-uramichi-oniisan
+life-lessons-with-uramichi-oniisan,relationshipStructure,known,2,0.82,ev-g2-fresh-c-annotation-life-lessons-with-uramichi-oniisan
 life-lessons-with-uramichi-oniisan,comedy,known,4,0.82,ev-g2-fresh-c-annotation-life-lessons-with-uramichi-oniisan
 life-lessons-with-uramichi-oniisan,darkness,known,2,0.82,ev-g2-fresh-c-annotation-life-lessons-with-uramichi-oniisan
 life-lessons-with-uramichi-oniisan,mentalStress,known,3,0.82,ev-g2-fresh-c-annotation-life-lessons-with-uramichi-oniisan
@@ -465,7 +465,7 @@ mf-ghost,pacing,known,3,0.82,ev-g2-fresh-c-annotation-mf-ghost
 mf-ghost,mysteryReveal,known,2,0.82,ev-g2-fresh-c-annotation-mf-ghost
 mf-ghost,worldBuilding,known,4,0.82,ev-g2-fresh-c-annotation-mf-ghost
 mf-ghost,characterArcWeight,known,3,0.82,ev-g2-fresh-c-annotation-mf-ghost
-mf-ghost,relationshipStructure,known,4,0.82,ev-g2-fresh-c-annotation-mf-ghost
+mf-ghost,relationshipStructure,known,2,0.82,ev-g2-fresh-c-annotation-mf-ghost
 mf-ghost,comedy,known,2,0.82,ev-g2-fresh-c-annotation-mf-ghost
 mf-ghost,darkness,known,2,0.82,ev-g2-fresh-c-annotation-mf-ghost
 mf-ghost,mentalStress,known,3,0.82,ev-g2-fresh-c-annotation-mf-ghost
@@ -482,7 +482,7 @@ my-dearest-self-with-malice-aforethought,pacing,known,4,0.82,ev-g2-fresh-c-annot
 my-dearest-self-with-malice-aforethought,mysteryReveal,known,4,0.82,ev-g2-fresh-c-annotation-my-dearest-self-with-malice-aforethought
 my-dearest-self-with-malice-aforethought,worldBuilding,known,3,0.82,ev-g2-fresh-c-annotation-my-dearest-self-with-malice-aforethought
 my-dearest-self-with-malice-aforethought,characterArcWeight,known,4,0.82,ev-g2-fresh-c-annotation-my-dearest-self-with-malice-aforethought
-my-dearest-self-with-malice-aforethought,relationshipStructure,known,4,0.82,ev-g2-fresh-c-annotation-my-dearest-self-with-malice-aforethought
+my-dearest-self-with-malice-aforethought,relationshipStructure,known,2,0.82,ev-g2-fresh-c-annotation-my-dearest-self-with-malice-aforethought
 my-dearest-self-with-malice-aforethought,comedy,known,1,0.82,ev-g2-fresh-c-annotation-my-dearest-self-with-malice-aforethought
 my-dearest-self-with-malice-aforethought,darkness,known,4,0.82,ev-g2-fresh-c-annotation-my-dearest-self-with-malice-aforethought
 my-dearest-self-with-malice-aforethought,mentalStress,known,4,0.82,ev-g2-fresh-c-annotation-my-dearest-self-with-malice-aforethought

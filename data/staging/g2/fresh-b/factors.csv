@@ -91,7 +91,7 @@ the-apothecary-diaries,pacing,known,3,0.82,ev-g2-fresh-b-annotation-the-apotheca
 the-apothecary-diaries,mysteryReveal,known,4,0.82,ev-g2-fresh-b-annotation-the-apothecary-diaries
 the-apothecary-diaries,worldBuilding,known,4,0.82,ev-g2-fresh-b-annotation-the-apothecary-diaries
 the-apothecary-diaries,characterArcWeight,known,3,0.82,ev-g2-fresh-b-annotation-the-apothecary-diaries
-the-apothecary-diaries,relationshipStructure,known,4,0.82,ev-g2-fresh-b-annotation-the-apothecary-diaries
+the-apothecary-diaries,relationshipStructure,known,2,0.82,ev-g2-fresh-b-annotation-the-apothecary-diaries
 the-apothecary-diaries,comedy,known,2,0.82,ev-g2-fresh-b-annotation-the-apothecary-diaries
 the-apothecary-diaries,darkness,known,2,0.82,ev-g2-fresh-b-annotation-the-apothecary-diaries
 the-apothecary-diaries,mentalStress,known,2,0.82,ev-g2-fresh-b-annotation-the-apothecary-diaries
@@ -210,7 +210,7 @@ nina-the-starry-bride,pacing,known,4,0.82,ev-g2-fresh-b-annotation-nina-the-star
 nina-the-starry-bride,mysteryReveal,known,2,0.82,ev-g2-fresh-b-annotation-nina-the-starry-bride
 nina-the-starry-bride,worldBuilding,known,4,0.82,ev-g2-fresh-b-annotation-nina-the-starry-bride
 nina-the-starry-bride,characterArcWeight,known,4,0.82,ev-g2-fresh-b-annotation-nina-the-starry-bride
-nina-the-starry-bride,relationshipStructure,known,4,0.82,ev-g2-fresh-b-annotation-nina-the-starry-bride
+nina-the-starry-bride,relationshipStructure,known,2,0.82,ev-g2-fresh-b-annotation-nina-the-starry-bride
 nina-the-starry-bride,comedy,known,1,0.82,ev-g2-fresh-b-annotation-nina-the-starry-bride
 nina-the-starry-bride,darkness,known,2,0.82,ev-g2-fresh-b-annotation-nina-the-starry-bride
 nina-the-starry-bride,mentalStress,known,3,0.82,ev-g2-fresh-b-annotation-nina-the-starry-bride
@@ -295,7 +295,7 @@ giant-killing,pacing,known,3,0.82,ev-g2-fresh-b-annotation-giant-killing
 giant-killing,mysteryReveal,known,1,0.82,ev-g2-fresh-b-annotation-giant-killing
 giant-killing,worldBuilding,known,4,0.82,ev-g2-fresh-b-annotation-giant-killing
 giant-killing,characterArcWeight,known,3,0.82,ev-g2-fresh-b-annotation-giant-killing
-giant-killing,relationshipStructure,known,4,0.82,ev-g2-fresh-b-annotation-giant-killing
+giant-killing,relationshipStructure,known,2,0.82,ev-g2-fresh-b-annotation-giant-killing
 giant-killing,comedy,known,1,0.82,ev-g2-fresh-b-annotation-giant-killing
 giant-killing,darkness,known,0,0.82,ev-g2-fresh-b-annotation-giant-killing
 giant-killing,mentalStress,known,2,0.82,ev-g2-fresh-b-annotation-giant-killing
@@ -448,7 +448,7 @@ knights-of-sidonia,pacing,known,4,0.82,ev-g2-fresh-b-annotation-knights-of-sidon
 knights-of-sidonia,mysteryReveal,known,4,0.82,ev-g2-fresh-b-annotation-knights-of-sidonia
 knights-of-sidonia,worldBuilding,known,4,0.82,ev-g2-fresh-b-annotation-knights-of-sidonia
 knights-of-sidonia,characterArcWeight,known,3,0.82,ev-g2-fresh-b-annotation-knights-of-sidonia
-knights-of-sidonia,relationshipStructure,known,4,0.82,ev-g2-fresh-b-annotation-knights-of-sidonia
+knights-of-sidonia,relationshipStructure,known,2,0.82,ev-g2-fresh-b-annotation-knights-of-sidonia
 knights-of-sidonia,comedy,known,1,0.82,ev-g2-fresh-b-annotation-knights-of-sidonia
 knights-of-sidonia,darkness,known,4,0.82,ev-g2-fresh-b-annotation-knights-of-sidonia
 knights-of-sidonia,mentalStress,known,3,0.82,ev-g2-fresh-b-annotation-knights-of-sidonia
@@ -499,7 +499,7 @@ accomplishments-of-the-dukes-daughter,pacing,known,3,0.82,ev-g2-fresh-b-annotati
 accomplishments-of-the-dukes-daughter,mysteryReveal,known,2,0.82,ev-g2-fresh-b-annotation-accomplishments-of-the-dukes-daughter
 accomplishments-of-the-dukes-daughter,worldBuilding,known,4,0.82,ev-g2-fresh-b-annotation-accomplishments-of-the-dukes-daughter
 accomplishments-of-the-dukes-daughter,characterArcWeight,known,3,0.82,ev-g2-fresh-b-annotation-accomplishments-of-the-dukes-daughter
-accomplishments-of-the-dukes-daughter,relationshipStructure,known,4,0.82,ev-g2-fresh-b-annotation-accomplishments-of-the-dukes-daughter
+accomplishments-of-the-dukes-daughter,relationshipStructure,known,2,0.82,ev-g2-fresh-b-annotation-accomplishments-of-the-dukes-daughter
 accomplishments-of-the-dukes-daughter,comedy,known,1,0.82,ev-g2-fresh-b-annotation-accomplishments-of-the-dukes-daughter
 accomplishments-of-the-dukes-daughter,darkness,known,1,0.82,ev-g2-fresh-b-annotation-accomplishments-of-the-dukes-daughter
 accomplishments-of-the-dukes-daughter,mentalStress,known,2,0.82,ev-g2-fresh-b-annotation-accomplishments-of-the-dukes-daughter

@@ -1,6 +1,6 @@
 # konocomics Taste vs Baseline レポート
 
-- カタログバージョン: v1\-77ee502902e7
+- カタログバージョン: v1\-69256d2ffbe3
 - ファクター辞書バージョン: v1
 - Baseline バージョン: v1
 - プロフィール数: 3
@@ -40,7 +40,32 @@
 | 4 | 0.041666666667 | similarity | theme | sportsCompetition | blue\-lock | なし | はい |
 | 5 | -0.041666666667 | similarity | theme | survival | blue\-lock | なし | はい |
 
-#### 2. ボールルームへようこそ (welcome\-to\-the\-ballroom)
+#### 2. メダリスト (medalist)
+
+- スコア: 0.882457613815
+- 確信度: ふつう
+- 最も近いアンカー: ブルーロック (blue\-lock)
+- おすすめ理由:
+  - 『ブルーロック』で好きだった「スポーツ」に近い作品です。
+  - 「成長・報酬の積み重ね」があなたの好みに合う作品です。
+  - 『ブルーロック』で好きだった「スポーツ競技」に近い作品です。
+- 注意点: なし
+- 根拠アンカー: ブルーロック (blue\-lock)
+- 適用された減点: 理由を特定できない苦手
+- カバレッジ警告:
+  - PARTIAL / tone / coverage=0.714285714286 / threshold=0.6 / adjustedScore=0.855128205128
+  - PARTIAL / art / coverage=0.75 / threshold=0.3 / adjustedScore=0.666666666667
+- 寄与度上位5件:
+
+| 順位 | 寄与 | source | group | factorId | anchorWorkIds | negativeReasonId | 説明対象 |
+| -: | -: | --- | --- | --- | --- | --- | --- |
+| 1 | 0.5 | baseline | overall | neutralBaseline | なし | なし | いいえ |
+| 2 | 0.075 | similarity | genre | sports | blue\-lock | なし | はい |
+| 3 | 0.06 | adjustment | narrative | progression | なし | なし | はい |
+| 4 | 0.035714285714 | similarity | theme | sportsCompetition | blue\-lock | なし | はい |
+| 5 | -0.035714285714 | similarity | theme | survival | blue\-lock | なし | はい |
+
+#### 3. ボールルームへようこそ (welcome\-to\-the\-ballroom)
 
 - スコア: 0.889364861329
 - 確信度: ふつう
@@ -65,20 +90,20 @@
 | 4 | 0.035714285714 | similarity | theme | sportsCompetition | blue\-lock | なし | はい |
 | 5 | -0.035714285714 | similarity | theme | survival | blue\-lock | なし | はい |
 
-#### 3. メダリスト (medalist)
+#### 4. ダイヤのＡ (ace\-of\-the\-diamond)
 
-- スコア: 0.862378248735
+- スコア: 0.839451072737
 - 確信度: ふつう
 - 最も近いアンカー: ブルーロック (blue\-lock)
 - おすすめ理由:
   - 『ブルーロック』で好きだった「スポーツ」に近い作品です。
   - 「成長・報酬の積み重ね」があなたの好みに合う作品です。
-  - 『ブルーロック』で好きだった「スポーツ競技」に近い作品です。
-- 注意点: なし
+  - 『ブルーロック』で好きだった「物語の重さ」に近い作品です。
+- 注意点: ただし「学園」は、『ブルーロック』で好きだった傾向と少し異なります。
 - 根拠アンカー: ブルーロック (blue\-lock)
 - 適用された減点: 理由を特定できない苦手
 - カバレッジ警告:
-  - PARTIAL / tone / coverage=0.714285714286 / threshold=0.6 / adjustedScore=0.855128205128
+  - PARTIAL / tone / coverage=0.714285714286 / threshold=0.6 / adjustedScore=0.815384615385
   - PARTIAL / art / coverage=0.75 / threshold=0.3 / adjustedScore=0.666666666667
 - 寄与度上位5件:
 
@@ -87,33 +112,8 @@
 | 1 | 0.5 | baseline | overall | neutralBaseline | なし | なし | いいえ |
 | 2 | 0.075 | similarity | genre | sports | blue\-lock | なし | はい |
 | 3 | 0.06 | adjustment | narrative | progression | なし | なし | はい |
-| 4 | -0.032814058957 | penalty | overall | vagueDislike | yotsuba\-to | vagueDislike | いいえ |
+| 4 | -0.03125 | similarity | theme | school | blue\-lock | なし | はい |
 | 5 | 0.03125 | similarity | theme | sportsCompetition | blue\-lock | なし | はい |
-
-#### 4. アオアシ (aoashi)
-
-- スコア: 0.83543458922
-- 確信度: ふつう
-- 最も近いアンカー: ブルーロック (blue\-lock)
-- おすすめ理由:
-  - 『ブルーロック』で好きだった「スポーツ」に近い作品です。
-  - 「成長・報酬の積み重ね」があなたの好みに合う作品です。
-  - 『ブルーロック』で好きだった「スポーツ競技」に近い作品です。
-- 注意点: なし
-- 根拠アンカー: ブルーロック (blue\-lock)
-- 適用された減点: 理由を特定できない苦手
-- カバレッジ警告:
-  - PARTIAL / tone / coverage=0.714285714286 / threshold=0.6 / adjustedScore=0.802564102564
-  - PARTIAL / art / coverage=0.75 / threshold=0.3 / adjustedScore=0.916666666667
-- 寄与度上位5件:
-
-| 順位 | 寄与 | source | group | factorId | anchorWorkIds | negativeReasonId | 説明対象 |
-| -: | -: | --- | --- | --- | --- | --- | --- |
-| 1 | 0.5 | baseline | overall | neutralBaseline | なし | なし | いいえ |
-| 2 | 0.075 | similarity | genre | sports | blue\-lock | なし | はい |
-| 3 | 0.06 | adjustment | narrative | progression | なし | なし | はい |
-| 4 | 0.041666666667 | similarity | theme | sportsCompetition | blue\-lock | なし | はい |
-| 5 | -0.041666666667 | similarity | theme | survival | blue\-lock | なし | はい |
 
 #### 5. ヴィンランド・サガ (vinland\-saga)
 
@@ -163,31 +163,7 @@
 | 4 | -0.06 | adjustment | narrative | progression | なし | なし | はい |
 | 5 | 0.06 | adjustment | theme | combat | なし | なし | はい |
 
-#### 7. 呪術廻戦 (jujutsu\-kaisen)
-
-- スコア: 0.693385934883
-- 確信度: ふつう
-- 最も近いアンカー: チェンソーマン (chainsaw\-man)
-- おすすめ理由:
-  - 「テンポの速さ」があなたの好みに合う作品です。
-  - 「戦闘」があなたの好みに合う作品です。
-  - 『チェンソーマン』で好きだった「やわらかい絵柄」に近い作品です。
-- 注意点: なし
-- 根拠アンカー: チェンソーマン (chainsaw\-man)
-- 適用された減点: 理由を特定できない苦手
-- カバレッジ警告:
-  - PARTIAL / art / coverage=0.75 / threshold=0.3 / adjustedScore=1
-- 寄与度上位5件:
-
-| 順位 | 寄与 | source | group | factorId | anchorWorkIds | negativeReasonId | 説明対象 |
-| -: | -: | --- | --- | --- | --- | --- | --- |
-| 1 | 0.4 | baseline | overall | neutralBaseline | なし | なし | いいえ |
-| 2 | 0.06 | adjustment | narrative | pacing | なし | なし | はい |
-| 3 | 0.06 | adjustment | theme | combat | なし | なし | はい |
-| 4 | -0.026040951576 | penalty | overall | vagueDislike | yotsuba\-to | vagueDislike | いいえ |
-| 5 | 0.020787401575 | similarity | art | visualSoftness | chainsaw\-man | なし | はい |
-
-#### 8. バガボンド (vagabond)
+#### 7. バガボンド (vagabond)
 
 - スコア: 0.670493885066
 - 確信度: ふつう
@@ -212,30 +188,31 @@
 | 4 | 0.03 | similarity | genre | action | kingdom | なし | はい |
 | 5 | 0.03 | similarity | genre | historical | kingdom | なし | はい |
 
-#### 9. 炎炎ノ消防隊 (fire\-force)
+#### 8. 呪術廻戦 (jujutsu\-kaisen)
 
-- スコア: 0.627124369983
+- スコア: 0.693385934883
 - 確信度: ふつう
 - 最も近いアンカー: チェンソーマン (chainsaw\-man)
 - おすすめ理由:
-  - 「迫力・スピード感」があなたの好みに合う作品です。
-  - 「戦闘」があなたの好みに合う作品です。
   - 「テンポの速さ」があなたの好みに合う作品です。
+  - 「戦闘」があなたの好みに合う作品です。
+  - 『チェンソーマン』で好きだった「やわらかい絵柄」に近い作品です。
 - 注意点: なし
-- 根拠アンカー: なし
+- 根拠アンカー: チェンソーマン (chainsaw\-man)
 - 適用された減点: 理由を特定できない苦手
-- カバレッジ警告: なし
+- カバレッジ警告:
+  - PARTIAL / art / coverage=0.75 / threshold=0.3 / adjustedScore=1
 - 寄与度上位5件:
 
 | 順位 | 寄与 | source | group | factorId | anchorWorkIds | negativeReasonId | 説明対象 |
 | -: | -: | --- | --- | --- | --- | --- | --- |
 | 1 | 0.4 | baseline | overall | neutralBaseline | なし | なし | いいえ |
-| 2 | 0.06 | adjustment | art | motionImpact | なし | なし | はい |
+| 2 | 0.06 | adjustment | narrative | pacing | なし | なし | はい |
 | 3 | 0.06 | adjustment | theme | combat | なし | なし | はい |
-| 4 | 0.03 | adjustment | narrative | pacing | なし | なし | はい |
-| 5 | -0.03 | clamp | overall | adjustmentClamp | なし | なし | いいえ |
+| 4 | -0.026040951576 | penalty | overall | vagueDislike | yotsuba\-to | vagueDislike | いいえ |
+| 5 | 0.020787401575 | similarity | art | visualSoftness | chainsaw\-man | なし | はい |
 
-#### 10. 進撃の巨人 (attack\-on\-titan)
+#### 9. 進撃の巨人 (attack\-on\-titan)
 
 - スコア: 0.643177591794
 - 確信度: ふつう
@@ -258,6 +235,30 @@
 | 3 | 0.06 | adjustment | theme | combat | なし | なし | はい |
 | 4 | 0.02 | similarity | genre | action | fullmetal\-alchemist | なし | はい |
 | 5 | 0.02 | similarity | genre | fantasy | fullmetal\-alchemist | なし | はい |
+
+#### 10. ドロヘドロ (dorohedoro)
+
+- スコア: 0.644340755748
+- 確信度: ふつう
+- 最も近いアンカー: チェンソーマン (chainsaw\-man)
+- おすすめ理由:
+  - 「テンポの速さ」があなたの好みに合う作品です。
+  - 「戦闘」があなたの好みに合う作品です。
+  - 『チェンソーマン』で好きだった「リアル寄りの絵」に近い作品です。
+- 注意点: なし
+- 根拠アンカー: チェンソーマン (chainsaw\-man)
+- 適用された減点: 理由を特定できない苦手
+- カバレッジ警告:
+  - PARTIAL / art / coverage=0.75 / threshold=0.3 / adjustedScore=0.833333333333
+- 寄与度上位5件:
+
+| 順位 | 寄与 | source | group | factorId | anchorWorkIds | negativeReasonId | 説明対象 |
+| -: | -: | --- | --- | --- | --- | --- | --- |
+| 1 | 0.4 | baseline | overall | neutralBaseline | なし | なし | いいえ |
+| 2 | 0.06 | adjustment | narrative | pacing | なし | なし | はい |
+| 3 | 0.06 | adjustment | theme | combat | なし | なし | はい |
+| 4 | -0.028485260771 | penalty | overall | vagueDislike | yotsuba\-to | vagueDislike | いいえ |
+| 5 | 0.02 | similarity | art | artRealism | chainsaw\-man | なし | はい |
 
 ### Baseline Top 10 (10/10)
 
@@ -425,7 +426,7 @@
 - Taste 件数: 10/10
 - Baseline 件数: 10/10
 - SHRUNK グループ数: 0
-- PARTIAL グループ数: 14
+- PARTIAL グループ数: 15
 
 ## プロフィール: tactical\-mystery
 
@@ -657,29 +658,30 @@
 | 4 | 0.03 | similarity | genre | action | kingdom | なし | はい |
 | 5 | 0.03 | similarity | genre | historical | kingdom | なし | はい |
 
-#### 10. ノラガミ (noragami\-stray\-god)
+#### 10. 転生したらスライムだった件 (that\-time\-i\-got\-reincarnated\-as\-a\-slime)
 
-- スコア: 0.537099443835
+- スコア: 0.548738187475
 - 確信度: ふつう
 - 最も近いアンカー: ダンジョン飯 (dungeon\-meshi)
 - おすすめ理由:
-  - 「捜査・調査」があなたの好みに合う作品です。
-  - 『ダンジョン飯』で好きだった「アクション」に近い作品です。
+  - 「頭脳で解決する展開」があなたの好みに合う作品です。
   - 『ダンジョン飯』で好きだった「リアル寄りの絵」に近い作品です。
-- 注意点: なし
+  - 『ダンジョン飯』で好きだった「アクション」に近い作品です。
+- 注意点: ただし「料理」は、『ダンジョン飯』で好きだった傾向と少し異なります。
 - 根拠アンカー: ダンジョン飯 (dungeon\-meshi)
 - 適用された減点: なし
 - カバレッジ警告:
-  - PARTIAL / tone / coverage=0.857142857143 / threshold=0.6 / adjustedScore=0.833333333333
+  - PARTIAL / tone / coverage=0.857142857143 / threshold=0.6 / adjustedScore=0.916666666667
+  - PARTIAL / art / coverage=0.75 / threshold=0.3 / adjustedScore=0.916015625
 - 寄与度上位5件:
 
 | 順位 | 寄与 | source | group | factorId | anchorWorkIds | negativeReasonId | 説明対象 |
 | -: | -: | --- | --- | --- | --- | --- | --- |
 | 1 | 0.4 | baseline | overall | neutralBaseline | なし | なし | いいえ |
-| 2 | -0.03 | adjustment | narrative | strategy | なし | なし | はい |
-| 3 | 0.03 | adjustment | theme | investigation | なし | なし | はい |
-| 4 | 0.02 | similarity | genre | action | dungeon\-meshi | なし | はい |
-| 5 | 0.02 | similarity | genre | comedy | dungeon\-meshi | なし | はい |
+| 2 | -0.03 | adjustment | narrative | mysteryReveal | なし | なし | はい |
+| 3 | 0.03 | adjustment | narrative | strategy | なし | なし | はい |
+| 4 | -0.03 | adjustment | tone | comedy | なし | なし | はい |
+| 5 | 0.02015625 | similarity | art | artRealism | dungeon\-meshi | なし | はい |
 
 ### Baseline Top 10 (10/10)
 
@@ -852,7 +854,7 @@
 - Taste 件数: 10/10
 - Baseline 件数: 10/10
 - SHRUNK グループ数: 0
-- PARTIAL グループ数: 14
+- PARTIAL グループ数: 15
 
 ## プロフィール: warm\-exploration
 
@@ -987,31 +989,7 @@
 | 4 | 0.06 | adjustment | tone | darkness | なし | なし | はい |
 | 5 | 0.06 | adjustment | tone | emotionalWarmth | なし | なし | はい |
 
-#### 6. BLUE GIANT (blue\-giant)
-
-- スコア: 0.562244897959
-- 確信度: ふつう
-- 最も近いアンカー: よつばと！ (yotsuba\-to)
-- おすすめ理由:
-  - 「物語の重さ」があなたの好みに合う作品です。
-  - 『よつばと！』で好きだった「日常」に近い作品です。
-  - 『よつばと！』で好きだった「リアル寄りの絵」に近い作品です。
-- 注意点: ただし「探索」は、『よつばと！』で好きだった傾向と少し異なります。
-- 根拠アンカー: よつばと！ (yotsuba\-to)
-- 適用された減点: なし
-- カバレッジ警告:
-  - PARTIAL / art / coverage=0.75 / threshold=0.3 / adjustedScore=0.833333333333
-- 寄与度上位5件:
-
-| 順位 | 寄与 | source | group | factorId | anchorWorkIds | negativeReasonId | 説明対象 |
-| -: | -: | --- | --- | --- | --- | --- | --- |
-| 1 | 0.4 | baseline | overall | neutralBaseline | なし | なし | いいえ |
-| 2 | 0.06 | adjustment | tone | darkness | なし | なし | はい |
-| 3 | -0.04 | similarity | theme | exploration | yotsuba\-to | なし | はい |
-| 4 | 0.03 | adjustment | theme | foundFamily | なし | なし | はい |
-| 5 | 0.03 | adjustment | tone | emotionalWarmth | なし | なし | はい |
-
-#### 7. モブサイコ100 (mob\-psycho\-100)
+#### 6. モブサイコ100 (mob\-psycho\-100)
 
 - スコア: 0.499854613655
 - 確信度: ふつう
@@ -1035,7 +1013,7 @@
 | 4 | -0.03 | adjustment | art | visualSoftness | なし | なし | はい |
 | 5 | 0.03 | adjustment | theme | foundFamily | なし | なし | はい |
 
-#### 8. Dr\.STONE (dr\-stone)
+#### 7. Dr\.STONE (dr\-stone)
 
 - スコア: 0.484708120813
 - 確信度: 高い
@@ -1059,7 +1037,7 @@
 | 4 | -0.03 | adjustment | art | visualSoftness | なし | なし | はい |
 | 5 | 0.017915904936 | similarity | narrative | problemSolving | dungeon\-meshi | なし | はい |
 
-#### 9. ぼっち・ざ・ろっく！ (bocchi\-the\-rock)
+#### 8. ぼっち・ざ・ろっく！ (bocchi\-the\-rock)
 
 - スコア: 0.487439184471
 - 確信度: ふつう
@@ -1085,7 +1063,7 @@
 | 4 | 0.06 | adjustment | tone | darkness | なし | なし | はい |
 | 5 | 0.06 | adjustment | tone | emotionalWarmth | なし | なし | はい |
 
-#### 10. かぐや様は告らせたい〜天才たちの恋愛頭脳戦〜 (kaguya\-sama)
+#### 9. かぐや様は告らせたい〜天才たちの恋愛頭脳戦〜 (kaguya\-sama)
 
 - スコア: 0.391708007903
 - 確信度: 高い
@@ -1109,6 +1087,29 @@
 | 3 | 0.06 | adjustment | tone | darkness | なし | なし | はい |
 | 4 | 0.020512820513 | similarity | art | artRealism | dungeon\-meshi | なし | はい |
 | 5 | 0.02 | similarity | art | visualSoftness | dungeon\-meshi | なし | はい |
+
+#### 10. 攻殻機動隊 (ghost\-in\-the\-shell)
+
+- スコア: 0.314511002054
+- 確信度: ふつう
+- 最も近いアンカー: 鋼の錬金術師 (fullmetal\-alchemist)
+- おすすめ理由:
+  - 「物語の重さ」があなたの好みに合う作品です。
+  - 『鋼の錬金術師』で好きだった「世界観の作り込み」に近い作品です。
+  - 『鋼の錬金術師』で好きだった「迫力・スピード感」に近い作品です。
+- 注意点: ただし「冒険」は、『鋼の錬金術師』で好きだった傾向と少し異なります。
+- 根拠アンカー: 鋼の錬金術師 (fullmetal\-alchemist)
+- 適用された減点: 絵柄が合わない
+- カバレッジ警告: なし
+- 寄与度上位5件:
+
+| 順位 | 寄与 | source | group | factorId | anchorWorkIds | negativeReasonId | 説明対象 |
+| -: | -: | --- | --- | --- | --- | --- | --- |
+| 1 | 0.4 | baseline | overall | neutralBaseline | なし | なし | いいえ |
+| 2 | -0.08 | penalty | art | artStyleDislike | chainsaw\-man | artStyleDislike | はい |
+| 3 | -0.03 | adjustment | art | visualSoftness | なし | なし | はい |
+| 4 | -0.03 | adjustment | theme | combat | なし | なし | はい |
+| 5 | -0.03 | adjustment | tone | emotionalWarmth | なし | なし | はい |
 
 ### Baseline Top 10 (10/10)
 
@@ -1279,4 +1280,4 @@
 - Taste 件数: 10/10
 - Baseline 件数: 10/10
 - SHRUNK グループ数: 0
-- PARTIAL グループ数: 16
+- PARTIAL グループ数: 15

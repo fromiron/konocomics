@@ -1,6 +1,6 @@
 {
   "schemaVersion": 1,
-  "catalogVersion": "v1-77ee502902e7",
+  "catalogVersion": "v1-69256d2ffbe3",
   "factorDictionaryVersion": "v1",
   "works": [
     {
@@ -295,11 +295,6 @@
       ],
       "themes": [
         {
-          "id": "foundFamily",
-          "centrality": 2,
-          "confidence": 0.84
-        },
-        {
           "id": "historicalReconstruction",
           "centrality": 2,
           "confidence": 0.84
@@ -542,11 +537,6 @@
         "sliceOfLife"
       ],
       "themes": [
-        {
-          "id": "foundFamily",
-          "centrality": 1,
-          "confidence": 0.84
-        },
         {
           "id": "school",
           "centrality": 2,
@@ -861,7 +851,7 @@
         },
         "relationshipStructure": {
           "state": "known",
-          "value": 4,
+          "value": 2,
           "confidence": 0.82
         },
         "comedy": {
@@ -938,11 +928,6 @@
       ],
       "themes": [
         {
-          "id": "foundFamily",
-          "centrality": 2,
-          "confidence": 0.84
-        },
-        {
           "id": "school",
           "centrality": 2,
           "confidence": 0.84
@@ -996,7 +981,7 @@
         },
         "relationshipStructure": {
           "state": "known",
-          "value": 4,
+          "value": 2,
           "confidence": 0.82
         },
         "comedy": {
@@ -1349,11 +1334,6 @@
         {
           "id": "combat",
           "centrality": 2,
-          "confidence": 0.84
-        },
-        {
-          "id": "foundFamily",
-          "centrality": 1,
           "confidence": 0.84
         },
         {
@@ -2020,11 +2000,6 @@
       ],
       "themes": [
         {
-          "id": "foundFamily",
-          "centrality": 2,
-          "confidence": 0.84
-        },
-        {
           "id": "school",
           "centrality": 1,
           "confidence": 0.84
@@ -2073,7 +2048,7 @@
         },
         "relationshipStructure": {
           "state": "known",
-          "value": 4,
+          "value": 2,
           "confidence": 0.82
         },
         "comedy": {
@@ -2691,11 +2666,6 @@
       ],
       "themes": [
         {
-          "id": "foundFamily",
-          "centrality": 1,
-          "confidence": 0.84
-        },
-        {
           "id": "school",
           "centrality": 2,
           "confidence": 0.84
@@ -2821,11 +2791,6 @@
         "sliceOfLife"
       ],
       "themes": [
-        {
-          "id": "foundFamily",
-          "centrality": 1,
-          "confidence": 0.84
-        },
         {
           "id": "workplace",
           "centrality": 1,
@@ -3743,11 +3708,6 @@
           "confidence": 0.84
         },
         {
-          "id": "foundFamily",
-          "centrality": 1,
-          "confidence": 0.84
-        },
-        {
           "id": "workplace",
           "centrality": 2,
           "confidence": 0.84
@@ -4153,11 +4113,6 @@
       ],
       "themes": [
         {
-          "id": "foundFamily",
-          "centrality": 1,
-          "confidence": 0.84
-        },
-        {
           "id": "school",
           "centrality": 2,
           "confidence": 0.84
@@ -4423,11 +4378,6 @@
           "id": "sportsCompetition",
           "centrality": 2,
           "confidence": 0.84
-        },
-        {
-          "id": "tournament",
-          "centrality": 2,
-          "confidence": 0.84
         }
       ],
       "axes": {
@@ -4545,11 +4495,6 @@
       ],
       "themes": [
         {
-          "id": "foundFamily",
-          "centrality": 2,
-          "confidence": 0.84
-        },
-        {
           "id": "school",
           "centrality": 2,
           "confidence": 0.84
@@ -4603,7 +4548,7 @@
         },
         "relationshipStructure": {
           "state": "known",
-          "value": 4,
+          "value": 2,
           "confidence": 0.82
         },
         "comedy": {
@@ -6968,7 +6913,7 @@
         },
         "relationshipStructure": {
           "state": "known",
-          "value": 4,
+          "value": 2,
           "confidence": 0.82
         },
         "comedy": {
@@ -7218,11 +7163,6 @@
           "confidence": 0.84
         },
         {
-          "id": "foundFamily",
-          "centrality": 1,
-          "confidence": 0.84
-        },
-        {
           "id": "school",
           "centrality": 2,
           "confidence": 0.84
@@ -7271,7 +7211,7 @@
         },
         "relationshipStructure": {
           "state": "known",
-          "value": 4,
+          "value": 2,
           "confidence": 0.82
         },
         "comedy": {
@@ -7404,7 +7344,7 @@
         },
         "relationshipStructure": {
           "state": "known",
-          "value": 4,
+          "value": 2,
           "confidence": 0.99
         },
         "comedy": {
@@ -7462,8 +7402,7 @@
       "evidence": {
         "metadataConfidence": 0.99,
         "groupingConfidence": 0.99,
-        "sourceAgreement": 0.99,
-        "annotationReviewedAt": "2026-08-11T21:06:26+09:00"
+        "sourceAgreement": 0.99
       }
     },
     {
@@ -8154,11 +8093,6 @@
       ],
       "themes": [
         {
-          "id": "foundFamily",
-          "centrality": 1,
-          "confidence": 0.84
-        },
-        {
           "id": "politics",
           "centrality": 2,
           "confidence": 0.84
@@ -8212,7 +8146,7 @@
         },
         "relationshipStructure": {
           "state": "known",
-          "value": 4,
+          "value": 2,
           "confidence": 0.82
         },
         "comedy": {
@@ -8565,11 +8499,6 @@
           "confidence": 0.84
         },
         {
-          "id": "foundFamily",
-          "centrality": 1,
-          "confidence": 0.84
-        },
-        {
           "id": "school",
           "centrality": 1,
           "confidence": 0.84
@@ -8577,11 +8506,6 @@
         {
           "id": "sportsCompetition",
           "centrality": 2,
-          "confidence": 0.84
-        },
-        {
-          "id": "tournament",
-          "centrality": 1,
           "confidence": 0.84
         }
       ],
@@ -10098,7 +10022,7 @@
         },
         "relationshipStructure": {
           "state": "known",
-          "value": 4,
+          "value": 2,
           "confidence": 0.82
         },
         "comedy": {
@@ -10448,11 +10372,6 @@
       ],
       "themes": [
         {
-          "id": "foundFamily",
-          "centrality": 1,
-          "confidence": 0.84
-        },
-        {
           "id": "workplace",
           "centrality": 2,
           "confidence": 0.84
@@ -10496,7 +10415,7 @@
         },
         "relationshipStructure": {
           "state": "known",
-          "value": 4,
+          "value": 2,
           "confidence": 0.82
         },
         "comedy": {
@@ -10986,11 +10905,6 @@
       ],
       "themes": [
         {
-          "id": "foundFamily",
-          "centrality": 1,
-          "confidence": 0.84
-        },
-        {
           "id": "school",
           "centrality": 1,
           "confidence": 0.84
@@ -11295,7 +11209,7 @@
         },
         "relationshipStructure": {
           "state": "known",
-          "value": 4,
+          "value": 2,
           "confidence": 0.82
         },
         "comedy": {
@@ -12214,7 +12128,7 @@
         },
         "relationshipStructure": {
           "state": "known",
-          "value": 4,
+          "value": 2,
           "confidence": 0.82
         },
         "comedy": {
@@ -12297,11 +12211,6 @@
         {
           "id": "combat",
           "centrality": 1,
-          "confidence": 0.84
-        },
-        {
-          "id": "foundFamily",
-          "centrality": 2,
           "confidence": 0.84
         },
         {
@@ -12710,11 +12619,6 @@
       ],
       "themes": [
         {
-          "id": "foundFamily",
-          "centrality": 2,
-          "confidence": 0.84
-        },
-        {
           "id": "school",
           "centrality": 1,
           "confidence": 0.84
@@ -12842,11 +12746,6 @@
         "romance"
       ],
       "themes": [
-        {
-          "id": "foundFamily",
-          "centrality": 2,
-          "confidence": 0.84
-        },
         {
           "id": "politics",
           "centrality": 1,
@@ -13517,11 +13416,6 @@
           "id": "politics",
           "centrality": 2,
           "confidence": 0.84
-        },
-        {
-          "id": "territoryManagement",
-          "centrality": 1,
-          "confidence": 0.84
         }
       ],
       "axes": {
@@ -13562,7 +13456,7 @@
         },
         "relationshipStructure": {
           "state": "known",
-          "value": 4,
+          "value": 2,
           "confidence": 0.82
         },
         "comedy": {
@@ -14439,11 +14333,6 @@
       ],
       "themes": [
         {
-          "id": "foundFamily",
-          "centrality": 1,
-          "confidence": 0.84
-        },
-        {
           "id": "workplace",
           "centrality": 1,
           "confidence": 0.84
@@ -14702,11 +14591,6 @@
       ],
       "themes": [
         {
-          "id": "foundFamily",
-          "centrality": 1,
-          "confidence": 0.84
-        },
-        {
           "id": "investigation",
           "centrality": 2,
           "confidence": 0.84
@@ -14755,7 +14639,7 @@
         },
         "relationshipStructure": {
           "state": "known",
-          "value": 4,
+          "value": 2,
           "confidence": 0.82
         },
         "comedy": {
@@ -15231,11 +15115,6 @@
         "sliceOfLife"
       ],
       "themes": [
-        {
-          "id": "foundFamily",
-          "centrality": 1,
-          "confidence": 0.84
-        },
         {
           "id": "school",
           "centrality": 2,
@@ -17044,7 +16923,7 @@
         },
         "relationshipStructure": {
           "state": "known",
-          "value": 4,
+          "value": 2,
           "confidence": 0.82
         },
         "comedy": {
@@ -17180,7 +17059,7 @@
         },
         "relationshipStructure": {
           "state": "known",
-          "value": 4,
+          "value": 2,
           "confidence": 0.82
         },
         "comedy": {
@@ -17399,11 +17278,6 @@
           "confidence": 0.84
         },
         {
-          "id": "foundFamily",
-          "centrality": 1,
-          "confidence": 0.84
-        },
-        {
           "id": "investigation",
           "centrality": 1,
           "confidence": 0.84
@@ -17531,11 +17405,6 @@
       ],
       "themes": [
         {
-          "id": "foundFamily",
-          "centrality": 2,
-          "confidence": 0.84
-        },
-        {
           "id": "workplace",
           "centrality": 2,
           "confidence": 0.84
@@ -17655,11 +17524,6 @@
         "sliceOfLife"
       ],
       "themes": [
-        {
-          "id": "foundFamily",
-          "centrality": 2,
-          "confidence": 0.84
-        },
         {
           "id": "school",
           "centrality": 2,
@@ -17796,11 +17660,6 @@
         },
         {
           "id": "politics",
-          "centrality": 2,
-          "confidence": 0.84
-        },
-        {
-          "id": "territoryManagement",
           "centrality": 2,
           "confidence": 0.84
         },
@@ -18468,11 +18327,6 @@
       ],
       "themes": [
         {
-          "id": "foundFamily",
-          "centrality": 2,
-          "confidence": 0.84
-        },
-        {
           "id": "workplace",
           "centrality": 1,
           "confidence": 0.84
@@ -18658,7 +18512,7 @@
         },
         "relationshipStructure": {
           "state": "known",
-          "value": 4,
+          "value": 2,
           "confidence": 0.82
         },
         "comedy": {
@@ -19030,11 +18884,6 @@
       ],
       "themes": [
         {
-          "id": "foundFamily",
-          "centrality": 1,
-          "confidence": 0.84
-        },
-        {
           "id": "workplace",
           "centrality": 2,
           "confidence": 0.84
@@ -19078,7 +18927,7 @@
         },
         "relationshipStructure": {
           "state": "known",
-          "value": 4,
+          "value": 2,
           "confidence": 0.82
         },
         "comedy": {
@@ -19288,11 +19137,6 @@
       "themes": [
         {
           "id": "cooking",
-          "centrality": 2,
-          "confidence": 0.84
-        },
-        {
-          "id": "foundFamily",
           "centrality": 2,
           "confidence": 0.84
         },
@@ -19567,11 +19411,6 @@
           "confidence": 0.84
         },
         {
-          "id": "foundFamily",
-          "centrality": 1,
-          "confidence": 0.84
-        },
-        {
           "id": "school",
           "centrality": 2,
           "confidence": 0.84
@@ -19695,11 +19534,6 @@
       "themes": [
         {
           "id": "exploration",
-          "centrality": 1,
-          "confidence": 0.84
-        },
-        {
-          "id": "foundFamily",
           "centrality": 1,
           "confidence": 0.84
         },

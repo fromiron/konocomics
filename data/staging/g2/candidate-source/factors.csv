@@ -788,7 +788,7 @@ haikyu,pacing,known,4,0.99,ev-g1c-haikyu
 haikyu,mysteryReveal,known,0,0.97,ev-g1c-haikyu
 haikyu,worldBuilding,known,2,0.94,ev-g1c-haikyu
 haikyu,characterArcWeight,known,2,0.91,ev-g1c-haikyu
-haikyu,relationshipStructure,known,4,0.99,ev-g1c-haikyu
+haikyu,relationshipStructure,known,2,0.99,ev-g1c-haikyu
 haikyu,comedy,known,2,0.96,ev-g1c-haikyu
 haikyu,darkness,known,0,0.97,ev-g1c-haikyu
 haikyu,mentalStress,known,2,0.93,ev-g1c-haikyu
@@ -1026,7 +1026,7 @@ that-time-i-got-reincarnated-as-a-slime,pacing,known,4,0.82,ev-g2-fresh-a-annota
 that-time-i-got-reincarnated-as-a-slime,mysteryReveal,known,1,0.82,ev-g2-fresh-a-annotation-that-time-i-got-reincarnated-as-a-slime
 that-time-i-got-reincarnated-as-a-slime,worldBuilding,known,4,0.82,ev-g2-fresh-a-annotation-that-time-i-got-reincarnated-as-a-slime
 that-time-i-got-reincarnated-as-a-slime,characterArcWeight,known,2,0.82,ev-g2-fresh-a-annotation-that-time-i-got-reincarnated-as-a-slime
-that-time-i-got-reincarnated-as-a-slime,relationshipStructure,known,4,0.82,ev-g2-fresh-a-annotation-that-time-i-got-reincarnated-as-a-slime
+that-time-i-got-reincarnated-as-a-slime,relationshipStructure,known,2,0.82,ev-g2-fresh-a-annotation-that-time-i-got-reincarnated-as-a-slime
 that-time-i-got-reincarnated-as-a-slime,comedy,known,3,0.82,ev-g2-fresh-a-annotation-that-time-i-got-reincarnated-as-a-slime
 that-time-i-got-reincarnated-as-a-slime,darkness,known,2,0.82,ev-g2-fresh-a-annotation-that-time-i-got-reincarnated-as-a-slime
 that-time-i-got-reincarnated-as-a-slime,mentalStress,known,1,0.82,ev-g2-fresh-a-annotation-that-time-i-got-reincarnated-as-a-slime
@@ -1417,7 +1417,7 @@ how-a-realist-hero-rebuilt-the-kingdom,pacing,known,3,0.82,ev-g2-fresh-a-annotat
 how-a-realist-hero-rebuilt-the-kingdom,mysteryReveal,known,1,0.82,ev-g2-fresh-a-annotation-how-a-realist-hero-rebuilt-the-kingdom
 how-a-realist-hero-rebuilt-the-kingdom,worldBuilding,known,4,0.82,ev-g2-fresh-a-annotation-how-a-realist-hero-rebuilt-the-kingdom
 how-a-realist-hero-rebuilt-the-kingdom,characterArcWeight,known,2,0.82,ev-g2-fresh-a-annotation-how-a-realist-hero-rebuilt-the-kingdom
-how-a-realist-hero-rebuilt-the-kingdom,relationshipStructure,known,4,0.82,ev-g2-fresh-a-annotation-how-a-realist-hero-rebuilt-the-kingdom
+how-a-realist-hero-rebuilt-the-kingdom,relationshipStructure,known,2,0.82,ev-g2-fresh-a-annotation-how-a-realist-hero-rebuilt-the-kingdom
 how-a-realist-hero-rebuilt-the-kingdom,comedy,known,2,0.82,ev-g2-fresh-a-annotation-how-a-realist-hero-rebuilt-the-kingdom
 how-a-realist-hero-rebuilt-the-kingdom,darkness,known,2,0.82,ev-g2-fresh-a-annotation-how-a-realist-hero-rebuilt-the-kingdom
 how-a-realist-hero-rebuilt-the-kingdom,mentalStress,known,2,0.82,ev-g2-fresh-a-annotation-how-a-realist-hero-rebuilt-the-kingdom
@@ -1604,7 +1604,7 @@ the-apothecary-diaries,pacing,known,3,0.82,ev-g2-fresh-b-annotation-the-apotheca
 the-apothecary-diaries,mysteryReveal,known,4,0.82,ev-g2-fresh-b-annotation-the-apothecary-diaries
 the-apothecary-diaries,worldBuilding,known,4,0.82,ev-g2-fresh-b-annotation-the-apothecary-diaries
 the-apothecary-diaries,characterArcWeight,known,3,0.82,ev-g2-fresh-b-annotation-the-apothecary-diaries
-the-apothecary-diaries,relationshipStructure,known,4,0.82,ev-g2-fresh-b-annotation-the-apothecary-diaries
+the-apothecary-diaries,relationshipStructure,known,2,0.82,ev-g2-fresh-b-annotation-the-apothecary-diaries
 the-apothecary-diaries,comedy,known,2,0.82,ev-g2-fresh-b-annotation-the-apothecary-diaries
 the-apothecary-diaries,darkness,known,2,0.82,ev-g2-fresh-b-annotation-the-apothecary-diaries
 the-apothecary-diaries,mentalStress,known,2,0.82,ev-g2-fresh-b-annotation-the-apothecary-diaries
@@ -1723,7 +1723,7 @@ nina-the-starry-bride,pacing,known,4,0.82,ev-g2-fresh-b-annotation-nina-the-star
 nina-the-starry-bride,mysteryReveal,known,2,0.82,ev-g2-fresh-b-annotation-nina-the-starry-bride
 nina-the-starry-bride,worldBuilding,known,4,0.82,ev-g2-fresh-b-annotation-nina-the-starry-bride
 nina-the-starry-bride,characterArcWeight,known,4,0.82,ev-g2-fresh-b-annotation-nina-the-starry-bride
-nina-the-starry-bride,relationshipStructure,known,4,0.82,ev-g2-fresh-b-annotation-nina-the-starry-bride
+nina-the-starry-bride,relationshipStructure,known,2,0.82,ev-g2-fresh-b-annotation-nina-the-starry-bride
 nina-the-starry-bride,comedy,known,1,0.82,ev-g2-fresh-b-annotation-nina-the-starry-bride
 nina-the-starry-bride,darkness,known,2,0.82,ev-g2-fresh-b-annotation-nina-the-starry-bride
 nina-the-starry-bride,mentalStress,known,3,0.82,ev-g2-fresh-b-annotation-nina-the-starry-bride
@@ -1808,7 +1808,7 @@ giant-killing,pacing,known,3,0.82,ev-g2-fresh-b-annotation-giant-killing
 giant-killing,mysteryReveal,known,1,0.82,ev-g2-fresh-b-annotation-giant-killing
 giant-killing,worldBuilding,known,4,0.82,ev-g2-fresh-b-annotation-giant-killing
 giant-killing,characterArcWeight,known,3,0.82,ev-g2-fresh-b-annotation-giant-killing
-giant-killing,relationshipStructure,known,4,0.82,ev-g2-fresh-b-annotation-giant-killing
+giant-killing,relationshipStructure,known,2,0.82,ev-g2-fresh-b-annotation-giant-killing
 giant-killing,comedy,known,1,0.82,ev-g2-fresh-b-annotation-giant-killing
 giant-killing,darkness,known,0,0.82,ev-g2-fresh-b-annotation-giant-killing
 giant-killing,mentalStress,known,2,0.82,ev-g2-fresh-b-annotation-giant-killing
@@ -1961,7 +1961,7 @@ knights-of-sidonia,pacing,known,4,0.82,ev-g2-fresh-b-annotation-knights-of-sidon
 knights-of-sidonia,mysteryReveal,known,4,0.82,ev-g2-fresh-b-annotation-knights-of-sidonia
 knights-of-sidonia,worldBuilding,known,4,0.82,ev-g2-fresh-b-annotation-knights-of-sidonia
 knights-of-sidonia,characterArcWeight,known,3,0.82,ev-g2-fresh-b-annotation-knights-of-sidonia
-knights-of-sidonia,relationshipStructure,known,4,0.82,ev-g2-fresh-b-annotation-knights-of-sidonia
+knights-of-sidonia,relationshipStructure,known,2,0.82,ev-g2-fresh-b-annotation-knights-of-sidonia
 knights-of-sidonia,comedy,known,1,0.82,ev-g2-fresh-b-annotation-knights-of-sidonia
 knights-of-sidonia,darkness,known,4,0.82,ev-g2-fresh-b-annotation-knights-of-sidonia
 knights-of-sidonia,mentalStress,known,3,0.82,ev-g2-fresh-b-annotation-knights-of-sidonia
@@ -2012,7 +2012,7 @@ accomplishments-of-the-dukes-daughter,pacing,known,3,0.82,ev-g2-fresh-b-annotati
 accomplishments-of-the-dukes-daughter,mysteryReveal,known,2,0.82,ev-g2-fresh-b-annotation-accomplishments-of-the-dukes-daughter
 accomplishments-of-the-dukes-daughter,worldBuilding,known,4,0.82,ev-g2-fresh-b-annotation-accomplishments-of-the-dukes-daughter
 accomplishments-of-the-dukes-daughter,characterArcWeight,known,3,0.82,ev-g2-fresh-b-annotation-accomplishments-of-the-dukes-daughter
-accomplishments-of-the-dukes-daughter,relationshipStructure,known,4,0.82,ev-g2-fresh-b-annotation-accomplishments-of-the-dukes-daughter
+accomplishments-of-the-dukes-daughter,relationshipStructure,known,2,0.82,ev-g2-fresh-b-annotation-accomplishments-of-the-dukes-daughter
 accomplishments-of-the-dukes-daughter,comedy,known,1,0.82,ev-g2-fresh-b-annotation-accomplishments-of-the-dukes-daughter
 accomplishments-of-the-dukes-daughter,darkness,known,1,0.82,ev-g2-fresh-b-annotation-accomplishments-of-the-dukes-daughter
 accomplishments-of-the-dukes-daughter,mentalStress,known,2,0.82,ev-g2-fresh-b-annotation-accomplishments-of-the-dukes-daughter
@@ -2148,7 +2148,7 @@ wave-listen-to-me,pacing,known,3,0.82,ev-g2-fresh-c-annotation-wave-listen-to-me
 wave-listen-to-me,mysteryReveal,known,1,0.82,ev-g2-fresh-c-annotation-wave-listen-to-me
 wave-listen-to-me,worldBuilding,known,3,0.82,ev-g2-fresh-c-annotation-wave-listen-to-me
 wave-listen-to-me,characterArcWeight,known,4,0.82,ev-g2-fresh-c-annotation-wave-listen-to-me
-wave-listen-to-me,relationshipStructure,known,4,0.82,ev-g2-fresh-c-annotation-wave-listen-to-me
+wave-listen-to-me,relationshipStructure,known,2,0.82,ev-g2-fresh-c-annotation-wave-listen-to-me
 wave-listen-to-me,comedy,known,4,0.82,ev-g2-fresh-c-annotation-wave-listen-to-me
 wave-listen-to-me,darkness,known,1,0.82,ev-g2-fresh-c-annotation-wave-listen-to-me
 wave-listen-to-me,mentalStress,known,2,0.82,ev-g2-fresh-c-annotation-wave-listen-to-me
@@ -2165,7 +2165,7 @@ police-in-a-pod,pacing,known,3,0.82,ev-g2-fresh-c-annotation-police-in-a-pod
 police-in-a-pod,mysteryReveal,known,2,0.82,ev-g2-fresh-c-annotation-police-in-a-pod
 police-in-a-pod,worldBuilding,known,3,0.82,ev-g2-fresh-c-annotation-police-in-a-pod
 police-in-a-pod,characterArcWeight,known,4,0.82,ev-g2-fresh-c-annotation-police-in-a-pod
-police-in-a-pod,relationshipStructure,known,4,0.82,ev-g2-fresh-c-annotation-police-in-a-pod
+police-in-a-pod,relationshipStructure,known,2,0.82,ev-g2-fresh-c-annotation-police-in-a-pod
 police-in-a-pod,comedy,known,4,0.82,ev-g2-fresh-c-annotation-police-in-a-pod
 police-in-a-pod,darkness,known,2,0.82,ev-g2-fresh-c-annotation-police-in-a-pod
 police-in-a-pod,mentalStress,known,2,0.82,ev-g2-fresh-c-annotation-police-in-a-pod
@@ -2199,7 +2199,7 @@ ace-of-the-diamond,pacing,known,3,0.82,ev-g2-fresh-c-annotation-ace-of-the-diamo
 ace-of-the-diamond,mysteryReveal,known,1,0.82,ev-g2-fresh-c-annotation-ace-of-the-diamond
 ace-of-the-diamond,worldBuilding,known,3,0.82,ev-g2-fresh-c-annotation-ace-of-the-diamond
 ace-of-the-diamond,characterArcWeight,known,4,0.82,ev-g2-fresh-c-annotation-ace-of-the-diamond
-ace-of-the-diamond,relationshipStructure,known,4,0.82,ev-g2-fresh-c-annotation-ace-of-the-diamond
+ace-of-the-diamond,relationshipStructure,known,2,0.82,ev-g2-fresh-c-annotation-ace-of-the-diamond
 ace-of-the-diamond,comedy,known,3,0.82,ev-g2-fresh-c-annotation-ace-of-the-diamond
 ace-of-the-diamond,darkness,known,1,0.82,ev-g2-fresh-c-annotation-ace-of-the-diamond
 ace-of-the-diamond,mentalStress,known,3,0.82,ev-g2-fresh-c-annotation-ace-of-the-diamond
@@ -2216,7 +2216,7 @@ days,pacing,known,3,0.82,ev-g2-fresh-c-annotation-days
 days,mysteryReveal,known,1,0.82,ev-g2-fresh-c-annotation-days
 days,worldBuilding,known,2,0.82,ev-g2-fresh-c-annotation-days
 days,characterArcWeight,known,4,0.82,ev-g2-fresh-c-annotation-days
-days,relationshipStructure,known,4,0.82,ev-g2-fresh-c-annotation-days
+days,relationshipStructure,known,2,0.82,ev-g2-fresh-c-annotation-days
 days,comedy,known,2,0.82,ev-g2-fresh-c-annotation-days
 days,darkness,known,1,0.82,ev-g2-fresh-c-annotation-days
 days,mentalStress,known,3,0.82,ev-g2-fresh-c-annotation-days
@@ -2335,7 +2335,7 @@ beck,pacing,known,3,0.82,ev-g2-fresh-c-annotation-beck
 beck,mysteryReveal,known,1,0.82,ev-g2-fresh-c-annotation-beck
 beck,worldBuilding,known,3,0.82,ev-g2-fresh-c-annotation-beck
 beck,characterArcWeight,known,4,0.82,ev-g2-fresh-c-annotation-beck
-beck,relationshipStructure,known,4,0.82,ev-g2-fresh-c-annotation-beck
+beck,relationshipStructure,known,2,0.82,ev-g2-fresh-c-annotation-beck
 beck,comedy,known,3,0.82,ev-g2-fresh-c-annotation-beck
 beck,darkness,known,2,0.82,ev-g2-fresh-c-annotation-beck
 beck,mentalStress,known,3,0.82,ev-g2-fresh-c-annotation-beck
@@ -2352,7 +2352,7 @@ gto,pacing,known,4,0.82,ev-g2-fresh-c-annotation-gto
 gto,mysteryReveal,known,1,0.82,ev-g2-fresh-c-annotation-gto
 gto,worldBuilding,known,2,0.82,ev-g2-fresh-c-annotation-gto
 gto,characterArcWeight,known,4,0.82,ev-g2-fresh-c-annotation-gto
-gto,relationshipStructure,known,4,0.82,ev-g2-fresh-c-annotation-gto
+gto,relationshipStructure,known,2,0.82,ev-g2-fresh-c-annotation-gto
 gto,comedy,known,4,0.82,ev-g2-fresh-c-annotation-gto
 gto,darkness,known,2,0.82,ev-g2-fresh-c-annotation-gto
 gto,mentalStress,known,2,0.82,ev-g2-fresh-c-annotation-gto
@@ -2369,7 +2369,7 @@ tomorrows-joe,pacing,known,3,0.82,ev-g2-fresh-c-annotation-tomorrows-joe
 tomorrows-joe,mysteryReveal,known,1,0.82,ev-g2-fresh-c-annotation-tomorrows-joe
 tomorrows-joe,worldBuilding,known,3,0.82,ev-g2-fresh-c-annotation-tomorrows-joe
 tomorrows-joe,characterArcWeight,known,4,0.82,ev-g2-fresh-c-annotation-tomorrows-joe
-tomorrows-joe,relationshipStructure,known,4,0.82,ev-g2-fresh-c-annotation-tomorrows-joe
+tomorrows-joe,relationshipStructure,known,2,0.82,ev-g2-fresh-c-annotation-tomorrows-joe
 tomorrows-joe,comedy,known,2,0.82,ev-g2-fresh-c-annotation-tomorrows-joe
 tomorrows-joe,darkness,known,3,0.82,ev-g2-fresh-c-annotation-tomorrows-joe
 tomorrows-joe,mentalStress,known,4,0.82,ev-g2-fresh-c-annotation-tomorrows-joe
@@ -2420,7 +2420,7 @@ life-lessons-with-uramichi-oniisan,pacing,known,2,0.82,ev-g2-fresh-c-annotation-
 life-lessons-with-uramichi-oniisan,mysteryReveal,known,1,0.82,ev-g2-fresh-c-annotation-life-lessons-with-uramichi-oniisan
 life-lessons-with-uramichi-oniisan,worldBuilding,known,2,0.82,ev-g2-fresh-c-annotation-life-lessons-with-uramichi-oniisan
 life-lessons-with-uramichi-oniisan,characterArcWeight,known,4,0.82,ev-g2-fresh-c-annotation-life-lessons-with-uramichi-oniisan
-life-lessons-with-uramichi-oniisan,relationshipStructure,known,4,0.82,ev-g2-fresh-c-annotation-life-lessons-with-uramichi-oniisan
+life-lessons-with-uramichi-oniisan,relationshipStructure,known,2,0.82,ev-g2-fresh-c-annotation-life-lessons-with-uramichi-oniisan
 life-lessons-with-uramichi-oniisan,comedy,known,4,0.82,ev-g2-fresh-c-annotation-life-lessons-with-uramichi-oniisan
 life-lessons-with-uramichi-oniisan,darkness,known,2,0.82,ev-g2-fresh-c-annotation-life-lessons-with-uramichi-oniisan
 life-lessons-with-uramichi-oniisan,mentalStress,known,3,0.82,ev-g2-fresh-c-annotation-life-lessons-with-uramichi-oniisan
@@ -2505,7 +2505,7 @@ mf-ghost,pacing,known,3,0.82,ev-g2-fresh-c-annotation-mf-ghost
 mf-ghost,mysteryReveal,known,2,0.82,ev-g2-fresh-c-annotation-mf-ghost
 mf-ghost,worldBuilding,known,4,0.82,ev-g2-fresh-c-annotation-mf-ghost
 mf-ghost,characterArcWeight,known,3,0.82,ev-g2-fresh-c-annotation-mf-ghost
-mf-ghost,relationshipStructure,known,4,0.82,ev-g2-fresh-c-annotation-mf-ghost
+mf-ghost,relationshipStructure,known,2,0.82,ev-g2-fresh-c-annotation-mf-ghost
 mf-ghost,comedy,known,2,0.82,ev-g2-fresh-c-annotation-mf-ghost
 mf-ghost,darkness,known,2,0.82,ev-g2-fresh-c-annotation-mf-ghost
 mf-ghost,mentalStress,known,3,0.82,ev-g2-fresh-c-annotation-mf-ghost
@@ -2522,7 +2522,7 @@ my-dearest-self-with-malice-aforethought,pacing,known,4,0.82,ev-g2-fresh-c-annot
 my-dearest-self-with-malice-aforethought,mysteryReveal,known,4,0.82,ev-g2-fresh-c-annotation-my-dearest-self-with-malice-aforethought
 my-dearest-self-with-malice-aforethought,worldBuilding,known,3,0.82,ev-g2-fresh-c-annotation-my-dearest-self-with-malice-aforethought
 my-dearest-self-with-malice-aforethought,characterArcWeight,known,4,0.82,ev-g2-fresh-c-annotation-my-dearest-self-with-malice-aforethought
-my-dearest-self-with-malice-aforethought,relationshipStructure,known,4,0.82,ev-g2-fresh-c-annotation-my-dearest-self-with-malice-aforethought
+my-dearest-self-with-malice-aforethought,relationshipStructure,known,2,0.82,ev-g2-fresh-c-annotation-my-dearest-self-with-malice-aforethought
 my-dearest-self-with-malice-aforethought,comedy,known,1,0.82,ev-g2-fresh-c-annotation-my-dearest-self-with-malice-aforethought
 my-dearest-self-with-malice-aforethought,darkness,known,4,0.82,ev-g2-fresh-c-annotation-my-dearest-self-with-malice-aforethought
 my-dearest-self-with-malice-aforethought,mentalStress,known,4,0.82,ev-g2-fresh-c-annotation-my-dearest-self-with-malice-aforethought
