@@ -1,0 +1,9 @@
+workId,intendedCatalogRole,intendedOnboardingEligible,intendedRecommendationEligible,intendedLibraryOnly,promotionState,slotAuthority
+chis-sweet-adventures,discovery,false,true,false,pending-human-or-authorized-model-panel-review,replacement-pool-freeze:nausicaa-of-the-valley-of-the-wind
+lovely-muco,discovery,false,true,false,pending-human-or-authorized-model-panel-review,replacement-pool-freeze:nausicaa-of-the-valley-of-the-wind
+penguin-and-house,discovery,false,true,false,pending-human-or-authorized-model-panel-review,replacement-pool-freeze:nausicaa-of-the-valley-of-the-wind
+sheetas-little-big-world,discovery,false,true,false,pending-human-or-authorized-model-panel-review,replacement-pool-freeze:nausicaa-of-the-valley-of-the-wind
+fairy-tail,anchor,true,true,false,pending-human-or-authorized-model-panel-review,replacement-pool-freeze:slam-dunk
+fire-force,anchor,true,true,false,pending-human-or-authorized-model-panel-review,replacement-pool-freeze:slam-dunk
+the-seven-deadly-sins,anchor,true,true,false,pending-human-or-authorized-model-panel-review,replacement-pool-freeze:slam-dunk
+tokyo-revengers,anchor,true,true,false,pending-human-or-authorized-model-panel-review,replacement-pool-freeze:slam-dunk

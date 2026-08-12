@@ -1,0 +1,9 @@
+id,title,titleKana,creators,publisher,demographic,status,firstPublishedYear,genres,factorScope,onboardingEligible,recommendationEligible,libraryOnly,metadataConfidence,groupingConfidence,sourceAgreement,annotationReviewMethod,annotationReviewedAt,annotationReviewReference,evidenceId
+chis-sweet-adventures,今日のこねこのチー,キョウノコネコノチー,夏目きのこ;こなみかなた;こねこのチー製作委員会,講談社,general,completed,2017,comedy;sliceOfLife,entry_1_3_volumes,false,false,true,0.98,0.99,0.95,unreviewed,,,ev-g2-reuse-bib-chis-sweet-adventures
+lovely-muco,いとしのムーコ,イトシノムーコ,みずしな孝之,講談社,general,completed,2011,comedy;sliceOfLife,entry_1_3_volumes,false,false,true,0.99,0.99,0.96,unreviewed,,,ev-g2-reuse-bib-lovely-muco
+penguin-and-house,ペンとハウス～ペンは飼い主が好き～,ペントハウス,家田明歩,講談社,general,completed,2019,comedy;sliceOfLife,entry_1_3_volumes,false,false,true,0.99,0.99,0.96,unreviewed,,,ev-g2-reuse-bib-penguin-and-house
+sheetas-little-big-world,こびとのシイタと狩りぐらしの森,コビトノシイタトカリグラシノモリ,樺ユキ,講談社,general,completed,2022,fantasy;sliceOfLife,entry_1_3_volumes,false,false,true,0.99,0.99,0.96,unreviewed,,,ev-g2-reuse-bib-sheetas-little-big-world
+fairy-tail,ＦＡＩＲＹ　ＴＡＩＬ,フェアリーテイル,真島ヒロ,講談社,shonen,completed,2006,action;fantasy;comedy,entry_1_3_volumes,false,false,true,0.99,0.99,0.99,unreviewed,,,ev-g2-reuse-bib-fairy-tail
+fire-force,炎炎ノ消防隊,エンエンノショウボウタイ,大久保篤,講談社,shonen,completed,2015,action;fantasy;scienceFiction,entry_1_3_volumes,false,false,true,0.99,0.99,0.99,unreviewed,,,ev-g2-reuse-bib-fire-force
+the-seven-deadly-sins,七つの大罪,ナナツノタイザイ,鈴木央,講談社,shonen,completed,2012,action;fantasy;comedy,entry_1_3_volumes,false,false,true,0.99,0.99,0.99,unreviewed,,,ev-g2-reuse-bib-the-seven-deadly-sins
+tokyo-revengers,東京卍リベンジャーズ,トウキョウマンジリベンジャーズ,和久井健,講談社,shonen,completed,2017,action;scienceFiction;mystery,entry_1_3_volumes,false,false,true,0.99,0.99,0.99,unreviewed,,,ev-g2-reuse-bib-tokyo-revengers

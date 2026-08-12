@@ -1,0 +1,9 @@
+id,workId,volumeNumber,isbn,releaseDate,editionKind,isRepresentative,evidenceId
+chis-sweet-adventures-v1,chis-sweet-adventures,1,9784063931839,2017-03-23,standard,true,ev-g2-reuse-bib-chis-sweet-adventures
+lovely-muco-v1,lovely-muco,1,9784063524154,2012-04-23,standard,true,ev-g2-reuse-bib-lovely-muco
+penguin-and-house-v1,penguin-and-house,1,9784065183526,2020-04-09,standard,true,ev-g2-reuse-bib-penguin-and-house
+sheetas-little-big-world-v1,sheetas-little-big-world,1,9784065280966,2022-06-22,standard,true,ev-g2-reuse-bib-sheetas-little-big-world
+fairy-tail-v1,fairy-tail,1,9784063637717,2006-12-15,standard,true,ev-g2-reuse-bib-fairy-tail
+fire-force-v1,fire-force,1,9784063955675,2016-02-17,standard,true,ev-g2-reuse-bib-fire-force
+the-seven-deadly-sins-v1,the-seven-deadly-sins,1,9784063848021,2013-02-15,standard,true,ev-g2-reuse-bib-the-seven-deadly-sins
+tokyo-revengers-v1,tokyo-revengers,1,9784063959383,2017-05-17,standard,true,ev-g2-reuse-bib-tokyo-revengers
