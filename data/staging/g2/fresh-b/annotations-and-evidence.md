@@ -1,0 +1,65 @@
+# G2 fresh-b 주석 및 근거 기록
+
+> 스냅샷 기준일: 2026-08-12. 이 묶음은 G2 패널 전 입후보 staging이며 최종 catalog 승인이나 적격성 판정이 아니다.
+
+## 운영 상태와 행 원장
+
+- 작품 31, 별칭 32, 대표 권 31, 팩터 527(31×17축), 테마 86, 추천 맥락 31, 설정 1, 의도 적격성 31, 근거 93, Art 근거 124행이다.
+- 역할 의도는 Anchor 3, Bridge 4, Discovery 24다. `intended-eligibility.csv`에만 기록했으며 현재 적격성을 바꾸지 않는다.
+- 31작품 모두 `annotationReviewMethod=unreviewed`, `reviewedByHuman=false`, `onboardingEligible=false`, `recommendationEligible=false`, `libraryOnly=true`다.
+- Narrative, Tone, Theme, Art는 공식 소개와 초반 1~3권 범위의 합법적 내부 미리보기를 대조한 오프라인 모델 초벌이다. 사람 또는 명시적으로 승인된 모델 패널 검수 전에는 source 승격이나 런타임 추천에 사용하지 않는다.
+- 시장 평점과 리뷰 수는 권위 있게 같은 시점에 관찰한 값이 없어 모두 비웠다. 추정값이나 판매 플랫폼의 변동값을 넣지 않았다.
+
+## 서지와 대표 권 경계
+
+- 각 작품은 일본어 대표 1권과 ISBN을 갖는다. 본편 권수만 세고 특장판, 전자 합본, 외전, 팬북, 소설판은 합산하지 않았다.
+- `inuyasha`, `my-brothers-husband`, `homunculus`, `arte`, `saturn-apartments`의 `volumes.csv.releaseDate`는 빈 값으로 유지했다. 동결한 1차 출판사 페이지가 해당 ISBN의 원본 종이책 초판일을 노출하지 않았기 때문이다.
+- 위 다섯 작품에는 뒤늦은 전자판 JDCN 날짜나 와이드판·신장판 등 재판 날짜를 종이책 초판일처럼 대입하지 않았다. 특히 小学館 전자 페이지의 `犬夜叉` 2017-03-22, `ホムンクルス` 2015-05-15, `土星マンション` 2013-01-01 표기는 원본 종이책 날짜로 사용하지 않았다.
+- 나머지 26권의 날짜는 `evidence/evidence.csv`의 작품별 bibliography 근거와 연결된다. 다섯 빈 날짜는 스키마가 허용하는 정보 부재이며, 향후 정확한 1차 종이책 페이지가 확보될 때만 보완한다.
+
+## 작품별 초벌 판단과 Art 표본
+
+Art 값은 `artRealism/artDensity/visualSoftness/motionImpact` 순서다. exact 페이지 ref, URL, 판본, 표본 수, 맥락은 `evidence/art-evidence-manifest.csv`가 정본이다. 아래 판단은 모두 초반 1~3권 범위에만 적용된다.
+
+| 작품                                                            | 역할      | Narrative/Tone 및 Theme 초벌                                                                                                                           | Art 값·관찰 맥락                                            | 한계                                                                        |
+| --------------------------------------------------------------- | --------- | ------------------------------------------------------------------------------------------------------------------------------------------------------ | ----------------------------------------------------------- | --------------------------------------------------------------------------- |
+| fruits-basket / フルーツバスケット                              | anchor    | 가족 저주와 관계 회복, 학교 생활을 함께 다뤄 인물 변화·관계·따뜻함을 높게 두었다. school, foundFamily.                                                 | 1/2/4/unknown; 집·텐트, 학교, 숲의 밤 대화.                 | 초반의 밝음과 상처가 병존하며 후반 전개는 반영하지 않았다.                  |
+| inuyasha / 犬夜叉                                               | anchor    | 시대 이동 뒤 모험과 전투가 빠르게 이어져 템포·세계관을 높게 두었다. adventure, combat, timeTravel, exploration.                                        | 2/3/2/4; 마을·신사, 숲의 요괴 습격, 봉인 해제.              | 연속 동작은 인쇄면 31~36에서만 확정했으며 전권 대표성은 패널 검수 대상이다. |
+| space-brothers / 宇宙兄弟                                       | anchor    | 우주 목표를 향한 직업·훈련 성장과 형제 관계가 중심이라 성장·인물·따뜻함을 높게 두었다. workplace, exploration, foundFamily.                            | 3/3/2/unknown; 어린 시절 가족과 UFO, 설계 사무실, 집.       | 우주비행사 선발 이후의 전문성 변화는 반영하지 않았다.                       |
+| blue-giant / BLUE GIANT                                         | bridge    | 반복 연습과 연주 목표가 보상의 중심이라 성장·인물 변화를 높게 두었다. workplace, foundFamily.                                                          | 3/3/2/unknown; 강변 색소폰, 교실·통학, 체육관.              | 음악의 시간적 효과를 정지면만으로 motion 값에 치환하지 않았다.              |
+| blue-period / ブルーピリオド                                    | bridge    | 미술 입문과 진로 압박, 관찰·제작의 학습을 다뤄 성장·인물·정신 압박을 높게 두었다. school, workplace.                                                   | 2/3/3/unknown; 시부야, 학교, 미술부 회화.                   | 입시 이후의 작화·관계 변화는 반영하지 않았다.                               |
+| the-apothecary-diaries / 薬屋のひとりごと                       | bridge    | 약학 관찰로 궁중 사건을 푸는 구조라 문제해결·미스터리·세계관·관계를 높게 두었다. investigation, politics, workplace.                                   | 2/3/2/unknown; 궁정, 시녀 숙소·의학 관찰, 관리 호출.        | 후궁 밖 정치 확장은 반영하지 않았다.                                        |
+| dorohedoro / ドロヘドロ                                         | bridge    | 정체 추적, 마법 전투와 블랙 코미디가 병존해 미스터리·세계관·어둠·관계를 높게 두었다. combat, investigation, revenge, foundFamily.                      | 2/4/0/unknown; 공업 폐허, 가면 전투·마법, 괴물의 여파.      | 격한 단일 장면은 있으나 대표 연속 시퀀스를 확보하지 못했다.                 |
+| sweat-and-soap / あせとせっけん                                 | discovery | 직장 제품 개발과 성인 연애가 함께 전개되어 인물·연애·따뜻함을 높게 두었다. workplace, crafting.                                                        | 2/2/3/unknown; 사무실, 식당 제품 대화, 회사 밖 산책.        | 후반 동거·결혼 범위는 반영하지 않았다.                                      |
+| a-condition-called-love / 花野井くんと恋の病                    | discovery | 첫 연애의 경계와 불안을 세밀하게 다뤄 인물·연애·정신 압박을 높게 두었다. school.                                                                       | 1/2/4/unknown; 학교, 진료 대기실, 눈 오는 거리·식당.        | 관계의 장기 변화는 반영하지 않았다.                                         |
+| she-loves-to-cook-and-she-loves-to-eat / 作りたい女と食べたい女 | discovery | 요리와 식사를 매개로 이웃 관계가 가까워져 따뜻함·인물·연애를 높게 두었다. cooking, workplace, foundFamily.                                             | 2/2/3/unknown; 가정 요리, 복도 만남, 이웃 식사 초대.        | 초반 관계 형성만 관찰했다.                                                  |
+| my-brothers-husband / 弟の夫                                    | discovery | 사별 뒤 가족과 편견을 다시 보는 과정이 중심이라 인물·따뜻함·관계를 높게 두었다. foundFamily.                                                           | 3/2/2/unknown; 장례·가족 기억, 아침 식사, 방문과 포옹.      | 대표 ISBN은 확인했지만 1차 페이지에 종이책 초판일이 없어 날짜를 비웠다.     |
+| our-dreams-at-dusk / しまなみ誰そ彼                             | discovery | 고립과 정체성 고민, 공동체 접촉이 핵심이라 인물·관계·정신 압박을 높게 두었다. school, foundFamily.                                                     | 2/2/3/unknown; 교실, 해안 마을, 공동체 공간.                | 초반 위기와 만남까지만 반영했다.                                            |
+| nina-the-starry-bride / 星降る王国のニナ                        | discovery | 대역 신분과 왕궁 생존, 연애가 빠르게 얽혀 템포·세계관·인물·관계를 높게 두었다. politics, territoryManagement.                                          | 1/3/3/unknown; 빈민가, 도시, 마차 습격·왕족 조우.           | 후반 국가 간 정치와 로맨스 변화는 반영하지 않았다.                          |
+| baby-steps / ベイビーステップ                                   | discovery | 기록·분석을 통한 테니스 학습이 중심이라 성장·문제해결·전략을 높게 두었다. school, sportsCompetition, tournament.                                       | 2/2/2/unknown; 교실, 강변 학습 노트, 스포츠 대화.           | 본격 경기 전 단계 중심의 표본이다.                                          |
+| capeta / ｃａｐｅｔａ                                           | discovery | 장비 제약 속 카트 도전과 가족 지지가 결합되어 성장·인물·따뜻함을 높게 두었다. sportsCompetition, tournament, foundFamily.                              | 2/3/1/unknown; 운동회, 트랙 경주, 가족 식사.                | 고속 레이스의 대표 연속면을 확보하지 못했다.                                |
+| yowamushi-pedal / 弱虫ペダル                                    | discovery | 통학 자전거가 경기 성장과 팀 관계로 전환되어 성장·템포·관계·따뜻함을 높게 두었다. school, sportsCompetition, tournament, foundFamily.                  | 1/3/1/4; 아키하바라, 학교 통학, 도로 자전거 사건.           | 연속 동작은 인쇄면 16~17에서만 확정했으며 장기 연재 변화는 미반영이다.      |
+| moon-land / ムーンランド                                        | discovery | 체조 동작을 분석하고 반복 습득하는 구조라 성장·문제해결·인물을 높게 두었다. school, sportsCompetition, tournament.                                     | 2/3/2/unknown; 체조부 훈련, 코치 대화, 야외 훈련 기억.      | 공식 초반 표본에서 연속 동작 대표성을 확정하지 못했다.                      |
+| giant-killing / GIANT KILLING                                   | discovery | 감독의 전술과 구단·서포터 운영이 중심이라 문제해결·전략·세계관·관계를 높게 두었다. workplace, sportsCompetition, territoryManagement.                  | 3/3/1/unknown; 경기장, 영국 거리·펍, 구단 사무실.           | 실제 경기 연속면보다 감독 영입 맥락이 많은 초반 표본이다.                   |
+| dragon-head / ドラゴンヘッド                                    | discovery | 붕괴한 터널의 생존과 원인 불명이 긴장을 유지해 미스터리·어둠·정신 압박을 높게 두었다. survival, investigation, postApocalypse.                         | 4/4/0/unknown; 붕괴 열차, 불빛 터널 수색, 잔해.             | 폐쇄 공간 이후 세계 범위는 반영하지 않았다.                                 |
+| kasane / 累                                                     | discovery | 외모 교환의 비밀, 무대 욕망과 복수가 중심이라 미스터리·인물·어둠·정신 압박을 높게 두었다. revenge, investigation.                                      | 2/3/1/unknown; 침실 기억, 학교 무대· backstage, 대치.       | 능력 규칙의 후반 확장은 반영하지 않았다.                                    |
+| homunculus / ホムンクルス                                       | discovery | 트레파네이션 뒤 지각 변화와 정체 추적이 핵심이라 미스터리·인물·어둠·압박을 높게 두었다. investigation.                                                 | 4/4/1/unknown; 차 안·도시, 공원 노숙지, 호텔가.             | 小学館의 2015 전자판 날짜는 원본 종이책 날짜가 아니므로 비웠다.             |
+| fort-of-apocalypse / アポカリプスの砦                           | discovery | 소년원 집단과 감염 생존이 급격히 충돌해 템포·어둠·정신 압박을 높게 두었다. survival, combat, postApocalypse, foundFamily.                              | 2/3/1/unknown; 입소, 감방, 운동장 대치.                     | 감염 확산 이후 범위는 반영하지 않았다.                                      |
+| a-brides-story / 乙嫁語り                                       | discovery | 중앙아시아 혼인·가족 생활의 관찰이 중심이라 세계관·인물·관계·연애·따뜻함을 높게 두었다. historicalReconstruction, foundFamily.                         | 4/4/2/unknown; 혼례 복식, 마을 풍경, 가정의 차와 대화.      | 서로 다른 신부로 이동하는 후속 구조는 미반영이다.                           |
+| isabella-bird-in-wonderland / ふしぎの国のバード                | discovery | 메이지 일본 여행의 실무 문제와 문화 관찰이 중심이라 문제해결·세계관·인물을 높게 두었다. historicalReconstruction, exploration.                         | 3/3/2/unknown; 요코하마 항구, 호텔·통역, 거리·사무실.       | 여정 후반의 지역 다양성은 반영하지 않았다.                                  |
+| arte / アルテ                                                   | discovery | 르네상스 공방 진입과 숙련, 직업 장벽을 다뤄 성장·세계관·인물을 높게 두었다. historicalReconstruction, crafting, workplace.                             | 3/4/2/unknown; 피렌체·공방, 그림 연습·집, 길드 거리.        | 공식 작품 페이지가 대표 ISBN의 종이책 초판일을 노출하지 않아 날짜를 비웠다. |
+| thermae-romae / テルマエ・ロマエ                                | discovery | 로마 목욕 설계자가 시간 이동으로 해결책을 얻는 반복 구조라 문제해결·템포·세계관·코미디를 높게 두었다. historicalReconstruction, timeTravel, workplace. | 4/4/1/unknown; 로마 거리, 공중목욕탕, 물속 이동·현대 목욕.  | 반복 공식의 장기 변주는 반영하지 않았다.                                    |
+| knights-of-sidonia / シドニアの騎士                             | discovery | 세대우주선 생존과 전투 규칙, 비밀이 결합되어 전략·세계관·미스터리·어둠을 높게 두었다. combat, war, survival, exploration.                              | 2/3/1/unknown; 열차·산업 복도, 의료실, 주거구.              | 본격 함대전의 대표 연속면은 확보하지 못했다.                                |
+| saturn-apartments / 土星マンション                              | discovery | 궤도 주거의 창문 청소 노동과 가족 흔적이 중심이라 세계관·인물·따뜻함을 높게 두었다. workplace, exploration, foundFamily.                               | 2/2/4/unknown; 궤도 링, 학교·보행로, 아파트 지구.           | 小学館의 2013 전자판 날짜는 원본 종이책 날짜가 아니므로 비웠다.             |
+| origin / ORIGIN                                                 | discovery | 인간 사회에 숨은 로봇의 분석·전투가 중심이라 문제해결·템포·세계관·어둠을 높게 두었다. combat, investigation, workplace.                                | 4/4/0/unknown; 나이트클럽·차량, 설원 도시, 사무실 대치.     | 격한 장면은 있으나 대표 연속 동작 시퀀스를 확정하지 못했다.                 |
+| accomplishments-of-the-dukes-daughter / 公爵令嬢の嗜み          | discovery | 전생 지식으로 영지 행정과 정치를 개선해 성장·문제해결·전략·세계관을 높게 두었다. territoryManagement, reincarnation, politics, workplace.              | 1/2/3/unknown; 현대 게임 기억, 사고, 판타지 학교 심문·각성. | 영지 운영이 확대되는 후속 권은 반영하지 않았다.                             |
+| the-heroic-legend-of-arslan / アルスラーン戦記                  | discovery | 왕국 패전과 왕자의 성장, 전쟁·정치·동료 결집이 핵심이라 전략·세계관·인물·관계를 높게 두었다. war, politics, combat, territoryManagement, adventure.    | 2/3/2/unknown; 궁정·알현, 수도 행렬, 마구간·거리.           | 대규모 전쟁 이후의 세력 변동은 반영하지 않았다.                             |
+
+## Art 판정 규칙과 남은 검수
+
+1. 31작품 모두 합법적 공식 또는 출판사 연결 라이선스 내부 페이지를 직접 열어 작품당 서로 다른 6쪽 이상, 2개 이상 맥락을 확인했다. 표지·홍보 이미지·영상 프레임은 사용하지 않았다.
+2. 정적 Art 3축의 각 known 값은 같은 행에 적힌 서로 다른 exact ref 6개 이상을 근거로 한다. 화면 글자와 번역 글자는 artDensity에서 제외했다.
+3. `motionImpact`는 연속 물리 동작이 exact ref로 확인된 `inuyasha`와 `yowamushi-pedal`만 known=4다. 나머지 29작품은 동작이 없다고 단정하지 않고 unknown으로 유지했다. `notApplicable`은 사용하지 않았다.
+4. `evidence/evidence.csv`의 Art 근거와 `art-evidence-manifest.csv`의 authorityClass, sourceType, URL은 서로 일치한다. 라이선스 리더는 publisherAuthorizedPlatform/manual로 구분했다.
+5. 로더·스키마·행 수 검증은 파일의 구조와 내부 정합성만 확인한다. 사람 또는 승인 패널의 0/2/4 판단, 경계값 1/3, Theme centrality, 적격성 승인을 대신하지 않는다.
+6. 승격 전에는 미리보기 URL 접근성, 권수 스냅샷, 다섯 빈 종이책 초판일을 다시 확인하고, 패널 결정에 따라 factors/themes/intended eligibility를 별도 승인 절차로 반영해야 한다.

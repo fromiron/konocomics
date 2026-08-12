@@ -3,7 +3,7 @@
   "manifestId": "fresh-b",
   "asOf": "2026-08-12",
   "scope": "prospective-fresh-catalog-admission",
-  "factorAnnotationStatus": "not-started",
+  "factorAnnotationStatus": "model-draft-complete-pending-human-or-authorized-model-panel-review",
   "roleTotals": {
     "Anchor": 3,
     "Bridge": 4,
@@ -11,10 +11,36 @@
   },
   "checkpoint": {
     "sourcePairVerified": 31,
+    "manualInteriorAuditComplete": 31,
+    "factorRowsDrafted": 527,
+    "artRowsVerified": 124,
+    "pendingHumanOrAuthorizedModelPanelReview": 31,
     "pendingReaderInspection": 0,
     "pendingBibliographyDetail": 0
   },
-  "admissionCaveat": "A source-pair-verified row has a primary-publisher bibliography record and a publicly reachable official or licensed interior episode. It is not factor admission: every row still requires the manual minimum-page and two-context interior audit before annotation.",
+  "admissionCaveat": "All 31 source-pair-verified rows now have an offline model-draft factor packet and a completed minimum-six-page, minimum-two-context official or licensed interior audit. This does not assert human or panel review, catalog eligibility, or promotion: every work remains unreviewed, onboarding-ineligible, recommendation-ineligible, and library-only until a human or explicitly authorized model panel approves it.",
+  "sourcePacket": {
+    "path": "data/staging/g2/fresh-b",
+    "status": "complete-pending-panel",
+    "dataRows": {
+      "works.csv": 31,
+      "aliases.csv": 32,
+      "volumes.csv": 31,
+      "factors.csv": 527,
+      "themes.csv": 86,
+      "recommendation-context.csv": 31,
+      "recommendation-config.csv": 1,
+      "intended-eligibility.csv": 31,
+      "evidence/evidence.csv": 93,
+      "evidence/art-evidence-manifest.csv": 124
+    },
+    "narrative": "data/staging/g2/fresh-b/annotations-and-evidence.md"
+  },
+  "admissionBoundary": {
+    "bibliography": "The frozen first-party bibliography and representative ISBN pairs are preserved. Five optional original-paper releaseDate fields remain blank because the frozen first-party pages did not expose those dates; later digital or re-edition dates were not substituted.",
+    "interiorPreview": "Each work has at least six directly inspected legal official or licensed interior pages across at least two contexts. Exact references and limitations are recorded in evidence/art-evidence-manifest.csv.",
+    "humanFactorReview": "The 527-row factor packet is an offline model draft only. No human or authorized-model panel review has occurred, and no eligibility or promotion is asserted. intended-eligibility.csv records future slot intent separately from current source eligibility."
+  },
   "works": [
     {
       "id": "fruits-basket",
