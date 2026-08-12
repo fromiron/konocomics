@@ -1,0 +1,1309 @@
+{
+  "constraintByWorkId": {
+    "20th-century-boys": {
+      "workId": "20th-century-boys",
+      "catalogRole": "bridge",
+      "volumeCount": 22
+    },
+    "7seeds": {
+      "workId": "7seeds",
+      "catalogRole": "discovery",
+      "volumeCount": 35
+    },
+    "a-brides-story": {
+      "workId": "a-brides-story",
+      "catalogRole": "discovery",
+      "volumeCount": 15
+    },
+    "a-condition-called-love": {
+      "workId": "a-condition-called-love",
+      "catalogRole": "discovery",
+      "volumeCount": 16
+    },
+    "a-sign-of-affection": {
+      "workId": "a-sign-of-affection",
+      "catalogRole": "bridge",
+      "volumeCount": 14
+    },
+    "a-silent-voice": {
+      "workId": "a-silent-voice",
+      "catalogRole": "anchor",
+      "volumeCount": 7
+    },
+    "accomplishments-of-the-dukes-daughter": {
+      "workId": "accomplishments-of-the-dukes-daughter",
+      "catalogRole": "discovery",
+      "volumeCount": 8
+    },
+    "ace-of-the-diamond": {
+      "workId": "ace-of-the-diamond",
+      "catalogRole": "discovery",
+      "volumeCount": 47
+    },
+    "ajin": {
+      "workId": "ajin",
+      "catalogRole": "discovery",
+      "volumeCount": 17
+    },
+    "akira": {
+      "workId": "akira",
+      "catalogRole": "bridge",
+      "volumeCount": 6
+    },
+    "all-rounder-meguru": {
+      "workId": "all-rounder-meguru",
+      "catalogRole": "discovery",
+      "volumeCount": 19
+    },
+    "aoashi": {
+      "workId": "aoashi",
+      "catalogRole": "discovery",
+      "volumeCount": 40
+    },
+    "arte": {
+      "workId": "arte",
+      "catalogRole": "discovery",
+      "volumeCount": 22
+    },
+    "attack-on-titan": {
+      "workId": "attack-on-titan",
+      "catalogRole": "anchor",
+      "volumeCount": 34
+    },
+    "baby-steps": {
+      "workId": "baby-steps",
+      "catalogRole": "discovery",
+      "volumeCount": 47
+    },
+    "beck": {
+      "workId": "beck",
+      "catalogRole": "discovery",
+      "volumeCount": 34
+    },
+    "berserk": {
+      "workId": "berserk",
+      "catalogRole": "anchor",
+      "volumeCount": 43
+    },
+    "beyond-the-clouds": {
+      "workId": "beyond-the-clouds",
+      "catalogRole": "discovery",
+      "volumeCount": 5
+    },
+    "blame": {
+      "workId": "blame",
+      "catalogRole": "discovery",
+      "volumeCount": 10
+    },
+    "blood-on-the-tracks": {
+      "workId": "blood-on-the-tracks",
+      "catalogRole": "discovery",
+      "volumeCount": 17
+    },
+    "blue-box": {
+      "workId": "blue-box",
+      "catalogRole": "discovery",
+      "volumeCount": 26
+    },
+    "blue-giant": {
+      "workId": "blue-giant",
+      "catalogRole": "bridge",
+      "volumeCount": 10
+    },
+    "blue-lock": {
+      "workId": "blue-lock",
+      "catalogRole": "anchor",
+      "volumeCount": 39
+    },
+    "blue-period": {
+      "workId": "blue-period",
+      "catalogRole": "bridge",
+      "volumeCount": 19
+    },
+    "bocchi-the-rock": {
+      "workId": "bocchi-the-rock",
+      "catalogRole": "bridge",
+      "volumeCount": 8
+    },
+    "boys-run-the-riot": {
+      "workId": "boys-run-the-riot",
+      "catalogRole": "discovery",
+      "volumeCount": 4
+    },
+    "capeta": {
+      "workId": "capeta",
+      "catalogRole": "discovery",
+      "volumeCount": 32
+    },
+    "cardcaptor-sakura": {
+      "workId": "cardcaptor-sakura",
+      "catalogRole": "anchor",
+      "volumeCount": 12
+    },
+    "cells-at-work": {
+      "workId": "cells-at-work",
+      "catalogRole": "bridge",
+      "volumeCount": 6
+    },
+    "chainsaw-man": {
+      "workId": "chainsaw-man",
+      "catalogRole": "bridge",
+      "volumeCount": 24
+    },
+    "chi-on-the-movements-of-the-earth": {
+      "workId": "chi-on-the-movements-of-the-earth",
+      "catalogRole": "discovery",
+      "volumeCount": 8
+    },
+    "chihayafuru": {
+      "workId": "chihayafuru",
+      "catalogRole": "anchor",
+      "volumeCount": 50
+    },
+    "chis-sweet-adventures": {
+      "workId": "chis-sweet-adventures",
+      "catalogRole": "discovery",
+      "volumeCount": 4
+    },
+    "dance-dance-danseur": {
+      "workId": "dance-dance-danseur",
+      "catalogRole": "discovery",
+      "volumeCount": 32
+    },
+    "days": {
+      "workId": "days",
+      "catalogRole": "discovery",
+      "volumeCount": 42
+    },
+    "death-note": {
+      "workId": "death-note",
+      "catalogRole": "anchor",
+      "volumeCount": 12
+    },
+    "demon-slayer": {
+      "workId": "demon-slayer",
+      "catalogRole": "bridge",
+      "volumeCount": 23
+    },
+    "dorohedoro": {
+      "workId": "dorohedoro",
+      "catalogRole": "bridge",
+      "volumeCount": 23
+    },
+    "dr-stone": {
+      "workId": "dr-stone",
+      "catalogRole": "anchor",
+      "volumeCount": 27
+    },
+    "dragon-ball": {
+      "workId": "dragon-ball",
+      "catalogRole": "anchor",
+      "volumeCount": 42
+    },
+    "dragon-head": {
+      "workId": "dragon-head",
+      "catalogRole": "discovery",
+      "volumeCount": 10
+    },
+    "dungeon-meshi": {
+      "workId": "dungeon-meshi",
+      "catalogRole": "bridge",
+      "volumeCount": 14
+    },
+    "erased": {
+      "workId": "erased",
+      "catalogRole": "bridge",
+      "volumeCount": 9
+    },
+    "fairy-tail": {
+      "workId": "fairy-tail",
+      "catalogRole": "anchor",
+      "volumeCount": 63
+    },
+    "fire-force": {
+      "workId": "fire-force",
+      "catalogRole": "anchor",
+      "volumeCount": 34
+    },
+    "flying-witch": {
+      "workId": "flying-witch",
+      "catalogRole": "discovery",
+      "volumeCount": 15
+    },
+    "fort-of-apocalypse": {
+      "workId": "fort-of-apocalypse",
+      "catalogRole": "discovery",
+      "volumeCount": 10
+    },
+    "frieren": {
+      "workId": "frieren",
+      "catalogRole": "bridge",
+      "volumeCount": 15
+    },
+    "fruits-basket": {
+      "workId": "fruits-basket",
+      "catalogRole": "anchor",
+      "volumeCount": 23
+    },
+    "fullmetal-alchemist": {
+      "workId": "fullmetal-alchemist",
+      "catalogRole": "bridge",
+      "volumeCount": 27
+    },
+    "ghost-in-the-shell": {
+      "workId": "ghost-in-the-shell",
+      "catalogRole": "bridge",
+      "volumeCount": 3
+    },
+    "giant-killing": {
+      "workId": "giant-killing",
+      "catalogRole": "discovery",
+      "volumeCount": 70
+    },
+    "golden-kamuy": {
+      "workId": "golden-kamuy",
+      "catalogRole": "discovery",
+      "volumeCount": 31
+    },
+    "gto": {
+      "workId": "gto",
+      "catalogRole": "discovery",
+      "volumeCount": 25
+    },
+    "haikyu": {
+      "workId": "haikyu",
+      "catalogRole": "discovery",
+      "volumeCount": 45
+    },
+    "hajime-no-ippo": {
+      "workId": "hajime-no-ippo",
+      "catalogRole": "bridge",
+      "volumeCount": 145
+    },
+    "heavenly-delusion": {
+      "workId": "heavenly-delusion",
+      "catalogRole": "bridge",
+      "volumeCount": 13
+    },
+    "historie": {
+      "workId": "historie",
+      "catalogRole": "discovery",
+      "volumeCount": 12
+    },
+    "homunculus": {
+      "workId": "homunculus",
+      "catalogRole": "discovery",
+      "volumeCount": 15
+    },
+    "horimiya": {
+      "workId": "horimiya",
+      "catalogRole": "discovery",
+      "volumeCount": 17
+    },
+    "how-a-realist-hero-rebuilt-the-kingdom": {
+      "workId": "how-a-realist-hero-rebuilt-the-kingdom",
+      "catalogRole": "discovery",
+      "volumeCount": 14
+    },
+    "hunter-x-hunter": {
+      "workId": "hunter-x-hunter",
+      "catalogRole": "anchor",
+      "volumeCount": 39
+    },
+    "i-think-our-son-is-gay": {
+      "workId": "i-think-our-son-is-gay",
+      "catalogRole": "discovery",
+      "volumeCount": 5
+    },
+    "initial-d": {
+      "workId": "initial-d",
+      "catalogRole": "anchor",
+      "volumeCount": 48
+    },
+    "inuyasha": {
+      "workId": "inuyasha",
+      "catalogRole": "anchor",
+      "volumeCount": 56
+    },
+    "inuyashiki": {
+      "workId": "inuyashiki",
+      "catalogRole": "discovery",
+      "volumeCount": 10
+    },
+    "isabella-bird-in-wonderland": {
+      "workId": "isabella-bird-in-wonderland",
+      "catalogRole": "discovery",
+      "volumeCount": 13
+    },
+    "island-in-a-puddle": {
+      "workId": "island-in-a-puddle",
+      "catalogRole": "discovery",
+      "volumeCount": 5
+    },
+    "jojo-bizarre-adventure": {
+      "workId": "jojo-bizarre-adventure",
+      "catalogRole": "discovery",
+      "volumeCount": 63
+    },
+    "jujutsu-kaisen": {
+      "workId": "jujutsu-kaisen",
+      "catalogRole": "bridge",
+      "volumeCount": 30
+    },
+    "kaguya-sama": {
+      "workId": "kaguya-sama",
+      "catalogRole": "anchor",
+      "volumeCount": 28
+    },
+    "kasane": {
+      "workId": "kasane",
+      "catalogRole": "discovery",
+      "volumeCount": 14
+    },
+    "kimi-ni-todoke": {
+      "workId": "kimi-ni-todoke",
+      "catalogRole": "discovery",
+      "volumeCount": 30
+    },
+    "kingdom": {
+      "workId": "kingdom",
+      "catalogRole": "anchor",
+      "volumeCount": 79
+    },
+    "knights-of-sidonia": {
+      "workId": "knights-of-sidonia",
+      "catalogRole": "discovery",
+      "volumeCount": 15
+    },
+    "kowloon-generic-romance": {
+      "workId": "kowloon-generic-romance",
+      "catalogRole": "discovery",
+      "volumeCount": 12
+    },
+    "land-of-the-lustrous": {
+      "workId": "land-of-the-lustrous",
+      "catalogRole": "bridge",
+      "volumeCount": 13
+    },
+    "life-lessons-with-uramichi-oniisan": {
+      "workId": "life-lessons-with-uramichi-oniisan",
+      "catalogRole": "discovery",
+      "volumeCount": 12
+    },
+    "lovely-muco": {
+      "workId": "lovely-muco",
+      "catalogRole": "discovery",
+      "volumeCount": 17
+    },
+    "made-in-abyss": {
+      "workId": "made-in-abyss",
+      "catalogRole": "anchor",
+      "volumeCount": 15
+    },
+    "march-comes-in-like-a-lion": {
+      "workId": "march-comes-in-like-a-lion",
+      "catalogRole": "discovery",
+      "volumeCount": 18
+    },
+    "medalist": {
+      "workId": "medalist",
+      "catalogRole": "anchor",
+      "volumeCount": 15
+    },
+    "metamorphose-no-engawa": {
+      "workId": "metamorphose-no-engawa",
+      "catalogRole": "discovery",
+      "volumeCount": 5
+    },
+    "mf-ghost": {
+      "workId": "mf-ghost",
+      "catalogRole": "discovery",
+      "volumeCount": 23
+    },
+    "mieruko-chan": {
+      "workId": "mieruko-chan",
+      "catalogRole": "discovery",
+      "volumeCount": 14
+    },
+    "mob-psycho-100": {
+      "workId": "mob-psycho-100",
+      "catalogRole": "anchor",
+      "volumeCount": 16
+    },
+    "monster": {
+      "workId": "monster",
+      "catalogRole": "discovery",
+      "volumeCount": 18
+    },
+    "moon-land": {
+      "workId": "moon-land",
+      "catalogRole": "discovery",
+      "volumeCount": 9
+    },
+    "mushishi": {
+      "workId": "mushishi",
+      "catalogRole": "discovery",
+      "volumeCount": 10
+    },
+    "my-brothers-husband": {
+      "workId": "my-brothers-husband",
+      "catalogRole": "discovery",
+      "volumeCount": 4
+    },
+    "my-dearest-self-with-malice-aforethought": {
+      "workId": "my-dearest-self-with-malice-aforethought",
+      "catalogRole": "discovery",
+      "volumeCount": 11
+    },
+    "my-happy-marriage": {
+      "workId": "my-happy-marriage",
+      "catalogRole": "discovery",
+      "volumeCount": 6
+    },
+    "my-hero-academia": {
+      "workId": "my-hero-academia",
+      "catalogRole": "bridge",
+      "volumeCount": 42
+    },
+    "my-home-hero": {
+      "workId": "my-home-hero",
+      "catalogRole": "discovery",
+      "volumeCount": 26
+    },
+    "my-love-story-with-yamada-kun-at-lv999": {
+      "workId": "my-love-story-with-yamada-kun-at-lv999",
+      "catalogRole": "discovery",
+      "volumeCount": 10
+    },
+    "my-next-life-as-a-villainess": {
+      "workId": "my-next-life-as-a-villainess",
+      "catalogRole": "discovery",
+      "volumeCount": 13
+    },
+    "mystery-to-iu-nakare": {
+      "workId": "mystery-to-iu-nakare",
+      "catalogRole": "discovery",
+      "volumeCount": 16
+    },
+    "nana": {
+      "workId": "nana",
+      "catalogRole": "discovery",
+      "volumeCount": 21
+    },
+    "naruto": {
+      "workId": "naruto",
+      "catalogRole": "bridge",
+      "volumeCount": 72
+    },
+    "natsumes-book-of-friends": {
+      "workId": "natsumes-book-of-friends",
+      "catalogRole": "anchor",
+      "volumeCount": 33
+    },
+    "nina-the-starry-bride": {
+      "workId": "nina-the-starry-bride",
+      "catalogRole": "discovery",
+      "volumeCount": 19
+    },
+    "noragami-stray-god": {
+      "workId": "noragami-stray-god",
+      "catalogRole": "anchor",
+      "volumeCount": 27
+    },
+    "one-piece": {
+      "workId": "one-piece",
+      "catalogRole": "anchor",
+      "volumeCount": 115
+    },
+    "origin": {
+      "workId": "origin",
+      "catalogRole": "discovery",
+      "volumeCount": 10
+    },
+    "our-dreams-at-dusk": {
+      "workId": "our-dreams-at-dusk",
+      "catalogRole": "discovery",
+      "volumeCount": 4
+    },
+    "parasyte": {
+      "workId": "parasyte",
+      "catalogRole": "discovery",
+      "volumeCount": 10
+    },
+    "penguin-and-house": {
+      "workId": "penguin-and-house",
+      "catalogRole": "discovery",
+      "volumeCount": 3
+    },
+    "perfect-world": {
+      "workId": "perfect-world",
+      "catalogRole": "discovery",
+      "volumeCount": 12
+    },
+    "pluto": {
+      "workId": "pluto",
+      "catalogRole": "bridge",
+      "volumeCount": 8
+    },
+    "police-in-a-pod": {
+      "workId": "police-in-a-pod",
+      "catalogRole": "discovery",
+      "volumeCount": 23
+    },
+    "princess-jellyfish": {
+      "workId": "princess-jellyfish",
+      "catalogRole": "discovery",
+      "volumeCount": 17
+    },
+    "promised-neverland": {
+      "workId": "promised-neverland",
+      "catalogRole": "anchor",
+      "volumeCount": 20
+    },
+    "real": {
+      "workId": "real",
+      "catalogRole": "discovery",
+      "volumeCount": 17
+    },
+    "rent-a-girlfriend": {
+      "workId": "rent-a-girlfriend",
+      "catalogRole": "discovery",
+      "volumeCount": 46
+    },
+    "requiem-of-the-rose-king": {
+      "workId": "requiem-of-the-rose-king",
+      "catalogRole": "discovery",
+      "volumeCount": 17
+    },
+    "sailor-moon": {
+      "workId": "sailor-moon",
+      "catalogRole": "bridge",
+      "volumeCount": 18
+    },
+    "saturn-apartments": {
+      "workId": "saturn-apartments",
+      "catalogRole": "discovery",
+      "volumeCount": 7
+    },
+    "shangri-la-frontier": {
+      "workId": "shangri-la-frontier",
+      "catalogRole": "discovery",
+      "volumeCount": 27
+    },
+    "she-loves-to-cook-and-she-loves-to-eat": {
+      "workId": "she-loves-to-cook-and-she-loves-to-eat",
+      "catalogRole": "discovery",
+      "volumeCount": 6
+    },
+    "sheetas-little-big-world": {
+      "workId": "sheetas-little-big-world",
+      "catalogRole": "discovery",
+      "volumeCount": 3
+    },
+    "showa-genroku-rakugo-shinju": {
+      "workId": "showa-genroku-rakugo-shinju",
+      "catalogRole": "discovery",
+      "volumeCount": 10
+    },
+    "skip-and-loafer": {
+      "workId": "skip-and-loafer",
+      "catalogRole": "bridge",
+      "volumeCount": 13
+    },
+    "space-brothers": {
+      "workId": "space-brothers",
+      "catalogRole": "anchor",
+      "volumeCount": 46
+    },
+    "spy-family": {
+      "workId": "spy-family",
+      "catalogRole": "bridge",
+      "volumeCount": 17
+    },
+    "summer-time-rendering": {
+      "workId": "summer-time-rendering",
+      "catalogRole": "discovery",
+      "volumeCount": 13
+    },
+    "sweat-and-soap": {
+      "workId": "sweat-and-soap",
+      "catalogRole": "discovery",
+      "volumeCount": 11
+    },
+    "that-time-i-got-reincarnated-as-a-slime": {
+      "workId": "that-time-i-got-reincarnated-as-a-slime",
+      "catalogRole": "anchor",
+      "volumeCount": 32
+    },
+    "the-apothecary-diaries": {
+      "workId": "the-apothecary-diaries",
+      "catalogRole": "bridge",
+      "volumeCount": 17
+    },
+    "the-darwin-incident": {
+      "workId": "the-darwin-incident",
+      "catalogRole": "discovery",
+      "volumeCount": 11
+    },
+    "the-fable": {
+      "workId": "the-fable",
+      "catalogRole": "discovery",
+      "volumeCount": 22
+    },
+    "the-full-time-wife-escapist": {
+      "workId": "the-full-time-wife-escapist",
+      "catalogRole": "discovery",
+      "volumeCount": 11
+    },
+    "the-golden-sheep": {
+      "workId": "the-golden-sheep",
+      "catalogRole": "discovery",
+      "volumeCount": 3
+    },
+    "the-heroic-legend-of-arslan": {
+      "workId": "the-heroic-legend-of-arslan",
+      "catalogRole": "discovery",
+      "volumeCount": 24
+    },
+    "the-seven-deadly-sins": {
+      "workId": "the-seven-deadly-sins",
+      "catalogRole": "anchor",
+      "volumeCount": 41
+    },
+    "the-summer-hikaru-died": {
+      "workId": "the-summer-hikaru-died",
+      "catalogRole": "discovery",
+      "volumeCount": 9
+    },
+    "thermae-romae": {
+      "workId": "thermae-romae",
+      "catalogRole": "discovery",
+      "volumeCount": 6
+    },
+    "tokyo-revengers": {
+      "workId": "tokyo-revengers",
+      "catalogRole": "anchor",
+      "volumeCount": 31
+    },
+    "tokyo-tarareba-girls": {
+      "workId": "tokyo-tarareba-girls",
+      "catalogRole": "discovery",
+      "volumeCount": 9
+    },
+    "tomorrows-joe": {
+      "workId": "tomorrows-joe",
+      "catalogRole": "discovery",
+      "volumeCount": 20
+    },
+    "vagabond": {
+      "workId": "vagabond",
+      "catalogRole": "anchor",
+      "volumeCount": 37
+    },
+    "vinland-saga": {
+      "workId": "vinland-saga",
+      "catalogRole": "bridge",
+      "volumeCount": 29
+    },
+    "wave-listen-to-me": {
+      "workId": "wave-listen-to-me",
+      "catalogRole": "discovery",
+      "volumeCount": 12
+    },
+    "welcome-to-the-ballroom": {
+      "workId": "welcome-to-the-ballroom",
+      "catalogRole": "bridge",
+      "volumeCount": 12
+    },
+    "what-did-you-eat-yesterday": {
+      "workId": "what-did-you-eat-yesterday",
+      "catalogRole": "discovery",
+      "volumeCount": 25
+    },
+    "witch-hat-atelier": {
+      "workId": "witch-hat-atelier",
+      "catalogRole": "discovery",
+      "volumeCount": 16
+    },
+    "witchcraft-works": {
+      "workId": "witchcraft-works",
+      "catalogRole": "discovery",
+      "volumeCount": 17
+    },
+    "xxxholic": {
+      "workId": "xxxholic",
+      "catalogRole": "bridge",
+      "volumeCount": 19
+    },
+    "yotsuba-to": {
+      "workId": "yotsuba-to",
+      "catalogRole": "anchor",
+      "volumeCount": 16
+    },
+    "your-lie-in-april": {
+      "workId": "your-lie-in-april",
+      "catalogRole": "bridge",
+      "volumeCount": 11
+    },
+    "yowamushi-pedal": {
+      "workId": "yowamushi-pedal",
+      "catalogRole": "discovery",
+      "volumeCount": 100
+    }
+  },
+  "marketSnapshot": {
+    "catalogVersion": "v1-57aaede217a7",
+    "catalogAverageRating": 4.367959183673469,
+    "byWorkId": {
+      "20th-century-boys": {
+        "workId": "20th-century-boys",
+        "reviewAverage": 4.38,
+        "reviewCount": 249
+      },
+      "7seeds": {
+        "workId": "7seeds"
+      },
+      "a-brides-story": {
+        "workId": "a-brides-story"
+      },
+      "a-condition-called-love": {
+        "workId": "a-condition-called-love"
+      },
+      "a-sign-of-affection": {
+        "workId": "a-sign-of-affection"
+      },
+      "a-silent-voice": {
+        "workId": "a-silent-voice",
+        "reviewAverage": 4.14,
+        "reviewCount": 139
+      },
+      "accomplishments-of-the-dukes-daughter": {
+        "workId": "accomplishments-of-the-dukes-daughter"
+      },
+      "ace-of-the-diamond": {
+        "workId": "ace-of-the-diamond"
+      },
+      "ajin": {
+        "workId": "ajin"
+      },
+      "akira": {
+        "workId": "akira",
+        "reviewAverage": 4.58,
+        "reviewCount": 140
+      },
+      "all-rounder-meguru": {
+        "workId": "all-rounder-meguru"
+      },
+      "aoashi": {
+        "workId": "aoashi"
+      },
+      "arte": {
+        "workId": "arte"
+      },
+      "attack-on-titan": {
+        "workId": "attack-on-titan",
+        "reviewAverage": 4.03,
+        "reviewCount": 613
+      },
+      "baby-steps": {
+        "workId": "baby-steps"
+      },
+      "beck": {
+        "workId": "beck"
+      },
+      "berserk": {
+        "workId": "berserk",
+        "reviewAverage": 4.37,
+        "reviewCount": 112
+      },
+      "beyond-the-clouds": {
+        "workId": "beyond-the-clouds",
+        "reviewCount": 0
+      },
+      "blame": {
+        "workId": "blame",
+        "reviewAverage": 4.3,
+        "reviewCount": 41
+      },
+      "blood-on-the-tracks": {
+        "workId": "blood-on-the-tracks"
+      },
+      "blue-box": {
+        "workId": "blue-box"
+      },
+      "blue-giant": {
+        "workId": "blue-giant"
+      },
+      "blue-lock": {
+        "workId": "blue-lock",
+        "reviewAverage": 4.32,
+        "reviewCount": 44
+      },
+      "blue-period": {
+        "workId": "blue-period"
+      },
+      "bocchi-the-rock": {
+        "workId": "bocchi-the-rock",
+        "reviewAverage": 4.17,
+        "reviewCount": 12
+      },
+      "boys-run-the-riot": {
+        "workId": "boys-run-the-riot"
+      },
+      "capeta": {
+        "workId": "capeta"
+      },
+      "cardcaptor-sakura": {
+        "workId": "cardcaptor-sakura"
+      },
+      "cells-at-work": {
+        "workId": "cells-at-work"
+      },
+      "chainsaw-man": {
+        "workId": "chainsaw-man",
+        "reviewAverage": 4.19,
+        "reviewCount": 96
+      },
+      "chi-on-the-movements-of-the-earth": {
+        "workId": "chi-on-the-movements-of-the-earth"
+      },
+      "chihayafuru": {
+        "workId": "chihayafuru"
+      },
+      "chis-sweet-adventures": {
+        "workId": "chis-sweet-adventures"
+      },
+      "dance-dance-danseur": {
+        "workId": "dance-dance-danseur"
+      },
+      "days": {
+        "workId": "days"
+      },
+      "death-note": {
+        "workId": "death-note",
+        "reviewAverage": 4.44,
+        "reviewCount": 677
+      },
+      "demon-slayer": {
+        "workId": "demon-slayer",
+        "reviewAverage": 4.43,
+        "reviewCount": 292
+      },
+      "dorohedoro": {
+        "workId": "dorohedoro"
+      },
+      "dr-stone": {
+        "workId": "dr-stone",
+        "reviewAverage": 4.41,
+        "reviewCount": 61
+      },
+      "dragon-ball": {
+        "workId": "dragon-ball",
+        "reviewAverage": 4.56,
+        "reviewCount": 126
+      },
+      "dragon-head": {
+        "workId": "dragon-head"
+      },
+      "dungeon-meshi": {
+        "workId": "dungeon-meshi",
+        "reviewAverage": 4.34,
+        "reviewCount": 212
+      },
+      "erased": {
+        "workId": "erased",
+        "reviewAverage": 4.14,
+        "reviewCount": 103
+      },
+      "fairy-tail": {
+        "workId": "fairy-tail"
+      },
+      "fire-force": {
+        "workId": "fire-force"
+      },
+      "flying-witch": {
+        "workId": "flying-witch"
+      },
+      "fort-of-apocalypse": {
+        "workId": "fort-of-apocalypse"
+      },
+      "frieren": {
+        "workId": "frieren",
+        "reviewAverage": 4.55,
+        "reviewCount": 169
+      },
+      "fruits-basket": {
+        "workId": "fruits-basket"
+      },
+      "fullmetal-alchemist": {
+        "workId": "fullmetal-alchemist",
+        "reviewAverage": 4.57,
+        "reviewCount": 570
+      },
+      "ghost-in-the-shell": {
+        "workId": "ghost-in-the-shell",
+        "reviewAverage": 4.5,
+        "reviewCount": 152
+      },
+      "giant-killing": {
+        "workId": "giant-killing"
+      },
+      "golden-kamuy": {
+        "workId": "golden-kamuy",
+        "reviewAverage": 4.33,
+        "reviewCount": 136
+      },
+      "gto": {
+        "workId": "gto"
+      },
+      "haikyu": {
+        "workId": "haikyu",
+        "reviewAverage": 4.53,
+        "reviewCount": 245
+      },
+      "hajime-no-ippo": {
+        "workId": "hajime-no-ippo",
+        "reviewAverage": 4.25,
+        "reviewCount": 62
+      },
+      "heavenly-delusion": {
+        "workId": "heavenly-delusion"
+      },
+      "historie": {
+        "workId": "historie"
+      },
+      "homunculus": {
+        "workId": "homunculus"
+      },
+      "horimiya": {
+        "workId": "horimiya",
+        "reviewAverage": 4.32,
+        "reviewCount": 97
+      },
+      "how-a-realist-hero-rebuilt-the-kingdom": {
+        "workId": "how-a-realist-hero-rebuilt-the-kingdom"
+      },
+      "hunter-x-hunter": {
+        "workId": "hunter-x-hunter",
+        "reviewAverage": 4.42,
+        "reviewCount": 219
+      },
+      "i-think-our-son-is-gay": {
+        "workId": "i-think-our-son-is-gay"
+      },
+      "initial-d": {
+        "workId": "initial-d"
+      },
+      "inuyasha": {
+        "workId": "inuyasha"
+      },
+      "inuyashiki": {
+        "workId": "inuyashiki"
+      },
+      "isabella-bird-in-wonderland": {
+        "workId": "isabella-bird-in-wonderland"
+      },
+      "island-in-a-puddle": {
+        "workId": "island-in-a-puddle"
+      },
+      "jojo-bizarre-adventure": {
+        "workId": "jojo-bizarre-adventure",
+        "reviewAverage": 4.61,
+        "reviewCount": 132
+      },
+      "jujutsu-kaisen": {
+        "workId": "jujutsu-kaisen",
+        "reviewAverage": 4.25,
+        "reviewCount": 135
+      },
+      "kaguya-sama": {
+        "workId": "kaguya-sama",
+        "reviewAverage": 4.44,
+        "reviewCount": 31
+      },
+      "kasane": {
+        "workId": "kasane"
+      },
+      "kimi-ni-todoke": {
+        "workId": "kimi-ni-todoke",
+        "reviewAverage": 4.59,
+        "reviewCount": 693
+      },
+      "kingdom": {
+        "workId": "kingdom",
+        "reviewAverage": 4.43,
+        "reviewCount": 160
+      },
+      "knights-of-sidonia": {
+        "workId": "knights-of-sidonia"
+      },
+      "kowloon-generic-romance": {
+        "workId": "kowloon-generic-romance"
+      },
+      "land-of-the-lustrous": {
+        "workId": "land-of-the-lustrous",
+        "reviewAverage": 3.98,
+        "reviewCount": 144
+      },
+      "life-lessons-with-uramichi-oniisan": {
+        "workId": "life-lessons-with-uramichi-oniisan"
+      },
+      "lovely-muco": {
+        "workId": "lovely-muco"
+      },
+      "made-in-abyss": {
+        "workId": "made-in-abyss",
+        "reviewAverage": 4.08,
+        "reviewCount": 44
+      },
+      "march-comes-in-like-a-lion": {
+        "workId": "march-comes-in-like-a-lion",
+        "reviewAverage": 4.42,
+        "reviewCount": 771
+      },
+      "medalist": {
+        "workId": "medalist"
+      },
+      "metamorphose-no-engawa": {
+        "workId": "metamorphose-no-engawa"
+      },
+      "mf-ghost": {
+        "workId": "mf-ghost"
+      },
+      "mieruko-chan": {
+        "workId": "mieruko-chan"
+      },
+      "mob-psycho-100": {
+        "workId": "mob-psycho-100",
+        "reviewAverage": 4.34,
+        "reviewCount": 36
+      },
+      "monster": {
+        "workId": "monster",
+        "reviewAverage": 4.48,
+        "reviewCount": 181
+      },
+      "moon-land": {
+        "workId": "moon-land"
+      },
+      "mushishi": {
+        "workId": "mushishi",
+        "reviewAverage": 4.52,
+        "reviewCount": 316
+      },
+      "my-brothers-husband": {
+        "workId": "my-brothers-husband"
+      },
+      "my-dearest-self-with-malice-aforethought": {
+        "workId": "my-dearest-self-with-malice-aforethought"
+      },
+      "my-happy-marriage": {
+        "workId": "my-happy-marriage"
+      },
+      "my-hero-academia": {
+        "workId": "my-hero-academia",
+        "reviewAverage": 4.27,
+        "reviewCount": 96
+      },
+      "my-home-hero": {
+        "workId": "my-home-hero"
+      },
+      "my-love-story-with-yamada-kun-at-lv999": {
+        "workId": "my-love-story-with-yamada-kun-at-lv999"
+      },
+      "my-next-life-as-a-villainess": {
+        "workId": "my-next-life-as-a-villainess"
+      },
+      "mystery-to-iu-nakare": {
+        "workId": "mystery-to-iu-nakare"
+      },
+      "nana": {
+        "workId": "nana",
+        "reviewAverage": 4.33,
+        "reviewCount": 312
+      },
+      "naruto": {
+        "workId": "naruto",
+        "reviewAverage": 4.67,
+        "reviewCount": 50
+      },
+      "natsumes-book-of-friends": {
+        "workId": "natsumes-book-of-friends",
+        "reviewAverage": 4.55,
+        "reviewCount": 457
+      },
+      "nina-the-starry-bride": {
+        "workId": "nina-the-starry-bride"
+      },
+      "noragami-stray-god": {
+        "workId": "noragami-stray-god",
+        "reviewAverage": 3.82,
+        "reviewCount": 76
+      },
+      "one-piece": {
+        "workId": "one-piece",
+        "reviewAverage": 4.67,
+        "reviewCount": 756
+      },
+      "origin": {
+        "workId": "origin"
+      },
+      "our-dreams-at-dusk": {
+        "workId": "our-dreams-at-dusk"
+      },
+      "parasyte": {
+        "workId": "parasyte"
+      },
+      "penguin-and-house": {
+        "workId": "penguin-and-house"
+      },
+      "perfect-world": {
+        "workId": "perfect-world"
+      },
+      "pluto": {
+        "workId": "pluto",
+        "reviewAverage": 4.4,
+        "reviewCount": 298
+      },
+      "police-in-a-pod": {
+        "workId": "police-in-a-pod"
+      },
+      "princess-jellyfish": {
+        "workId": "princess-jellyfish"
+      },
+      "promised-neverland": {
+        "workId": "promised-neverland",
+        "reviewAverage": 4.25,
+        "reviewCount": 102
+      },
+      "real": {
+        "workId": "real"
+      },
+      "rent-a-girlfriend": {
+        "workId": "rent-a-girlfriend"
+      },
+      "requiem-of-the-rose-king": {
+        "workId": "requiem-of-the-rose-king"
+      },
+      "sailor-moon": {
+        "workId": "sailor-moon"
+      },
+      "saturn-apartments": {
+        "workId": "saturn-apartments"
+      },
+      "shangri-la-frontier": {
+        "workId": "shangri-la-frontier"
+      },
+      "she-loves-to-cook-and-she-loves-to-eat": {
+        "workId": "she-loves-to-cook-and-she-loves-to-eat"
+      },
+      "sheetas-little-big-world": {
+        "workId": "sheetas-little-big-world"
+      },
+      "showa-genroku-rakugo-shinju": {
+        "workId": "showa-genroku-rakugo-shinju"
+      },
+      "skip-and-loafer": {
+        "workId": "skip-and-loafer",
+        "reviewAverage": 4.6,
+        "reviewCount": 73
+      },
+      "space-brothers": {
+        "workId": "space-brothers"
+      },
+      "spy-family": {
+        "workId": "spy-family",
+        "reviewAverage": 4.49,
+        "reviewCount": 188
+      },
+      "summer-time-rendering": {
+        "workId": "summer-time-rendering"
+      },
+      "sweat-and-soap": {
+        "workId": "sweat-and-soap"
+      },
+      "that-time-i-got-reincarnated-as-a-slime": {
+        "workId": "that-time-i-got-reincarnated-as-a-slime"
+      },
+      "the-apothecary-diaries": {
+        "workId": "the-apothecary-diaries"
+      },
+      "the-darwin-incident": {
+        "workId": "the-darwin-incident"
+      },
+      "the-fable": {
+        "workId": "the-fable"
+      },
+      "the-full-time-wife-escapist": {
+        "workId": "the-full-time-wife-escapist"
+      },
+      "the-golden-sheep": {
+        "workId": "the-golden-sheep"
+      },
+      "the-heroic-legend-of-arslan": {
+        "workId": "the-heroic-legend-of-arslan"
+      },
+      "the-seven-deadly-sins": {
+        "workId": "the-seven-deadly-sins"
+      },
+      "the-summer-hikaru-died": {
+        "workId": "the-summer-hikaru-died"
+      },
+      "thermae-romae": {
+        "workId": "thermae-romae"
+      },
+      "tokyo-revengers": {
+        "workId": "tokyo-revengers"
+      },
+      "tokyo-tarareba-girls": {
+        "workId": "tokyo-tarareba-girls"
+      },
+      "tomorrows-joe": {
+        "workId": "tomorrows-joe"
+      },
+      "vagabond": {
+        "workId": "vagabond",
+        "reviewAverage": 4.28,
+        "reviewCount": 133
+      },
+      "vinland-saga": {
+        "workId": "vinland-saga",
+        "reviewAverage": 4.31,
+        "reviewCount": 101
+      },
+      "wave-listen-to-me": {
+        "workId": "wave-listen-to-me"
+      },
+      "welcome-to-the-ballroom": {
+        "workId": "welcome-to-the-ballroom"
+      },
+      "what-did-you-eat-yesterday": {
+        "workId": "what-did-you-eat-yesterday"
+      },
+      "witch-hat-atelier": {
+        "workId": "witch-hat-atelier",
+        "reviewAverage": 4.42,
+        "reviewCount": 64
+      },
+      "witchcraft-works": {
+        "workId": "witchcraft-works"
+      },
+      "xxxholic": {
+        "workId": "xxxholic"
+      },
+      "yotsuba-to": {
+        "workId": "yotsuba-to",
+        "reviewAverage": 4.37,
+        "reviewCount": 31
+      },
+      "your-lie-in-april": {
+        "workId": "your-lie-in-april",
+        "reviewAverage": 4.19,
+        "reviewCount": 133
+      },
+      "yowamushi-pedal": {
+        "workId": "yowamushi-pedal"
+      }
+    }
+  }
+}
