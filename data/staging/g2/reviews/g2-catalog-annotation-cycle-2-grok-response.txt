@@ -1,0 +1,42 @@
+VERDICT: REVISE
+REVIEWER: Grok
+REPOSITORY: konocomics (fromiron/konocomics)
+BRANCH: main
+HEAD: e32adf696d921c30501e4e57c95a22577e3b033a
+BUNDLE SHA-256: 14f881d0d1192d41d5b91c966322d3bbebc77ced64b22c51e371f9a28ffc5e65
+
+REQUIRED QUESTIONS:
+1. IDENTITY: FAIL — `.git/HEAD`→`refs/heads/main`, `.git/refs/heads/main`=`e32adf696d921c30501e4e57c95a22577e3b033a`까지는 확인. Ask 모드에서 `sha256sum`·`gh run view 31567754369`·WebFetch가 차단되어 동결 SHA-256 10파일·생성물·규범 해시와 CI run `31567754369` success를 이 세션에서 재증명하지 못함. 해시/CI 미확인 상태에서는 GO 불가.
+2. SCOPE: PASS — intended-eligibility 합집합 8+31+31+30=100; candidate `works.csv` 150행·`unreviewed` 100·`authorizedModelPanel` 50. `initial-d`/`mf-ghost`는 `recommendation-context.csv:123,149`에서 동일 `seriesGroupId=initial-d-mf-ghost`. `blue-giant.genres=sliceOfLife`만. packet 상호·G1 50과 Work ID 충돌 없음.
+3. BIBLIOGRAPHY: PASS — 신규 100작품 모두 candidate `volumes.csv` 대표 1권 ISBN·`works.csv` bibliography `evidenceId`·packet 공식 URL 행이 존재. `inuyasha`/`my-brothers-husband`/`homunculus`/`arte`/`saturn-apartments` 등 빈 `releaseDate`는 요청 §10.2 허용. Ask 모드로 출판사 라이브 페이지 재페치는 못 했으나, 번들 내부에서 ISBN/Work 연결 결손·중복은 확인되지 않음.
+4. GENRE/THEME: FAIL — `giant-killing.territoryManagement=2`는 공식 레이블 `領地運営`(`src/lib/strings.ts`)과 충돌(주석 근거는 구단 운영). `aoashi.school=2`/`tournament=2`는 패킷 관찰이 축구·사이드라인뿐인데 sports quartet 템플릿과 동일 set. `space-brothers`/`capeta`/`flying-witch`의 `foundFamily`는 패킷 서술이 생물학적 가족·친척을 근거로 함(레이블 `仲間との家族的な絆`). 반면 `i-think-our-son-is-gay`/`my-home-hero`/`island-in-a-puddle`에서 `foundFamily` 제거·`blue-giant` sports Genre 제거는 반영됨.
+5. NON-ART AXES: FAIL — fresh non-Art confidence 일괄 `0.82`·all-known은 편향 신호이나 그 자체만으로 필수는 아님. 다만 `yowamushi-pedal.relationshipStructure=4`는 `annotation-guide.md` 경계(고정 팀·핵심 조연=2, 군상=4)와 초반 Onoda 클럽 형성 서술에 비해 2단계 과대.
+6. UNKNOWN POLICY: PASS — 신규 100에서 `notApplicable` 0. `motionImpact` known 6 / unknown 94(reuse: chis/lovely-muco/penguin/fire-force + fresh: inuyasha/yowamushi-pedal). 근거 부족을 0/2로 치환한 Art motion은 보이지 않음.
+7. ART: FAIL — known 6의 `pageOrTimeRefs`는 수치 연속 구간(`reader pages 24-25`, `printed pages 16-17` 등)으로 게이트 정규식과 형태상 일치. 그러나 `reuse-eight/annotations-and-evidence.md`가 `fire-force`를 pages 32–33, `lovely-muco`를 page 10으로 적고 CSV는 각각 `reader pages 24-25` / `reader page 12 panels 3-7`이라 §10.9 서술·CSV 모순. 이미지 실검·파이프라인 재실행은 Ask 모드로 불가.
+8. PROVENANCE: FAIL — 전 evidence `reviewedByHuman=false`(415), 신규 `annotationReviewMethod=unreviewed`는 정직. 다만 Art exact ref 서술 불일치와 Theme/Axis의 템플릿성 과대 태그가 한계를 가림.
+9. ROLE/ELIGIBILITY: PASS — `recommendation-context.csv` anchor/bridge/discovery = 30/30/90. `works.csv` onboarding `true,true,false`=40, recommendation-only `false,true,false`=110, `libraryOnly` 활성 없음. packet 의도 12/10/78·onboarding 12가 최종 30/30/90·onboarding 40으로 보존.
+10. PIPELINE: FAIL — `scripts/catalog/art-evidence.ts`가 manifest를 읽고 6샘플/2맥락/static≥2 refs/motion continuous range를 검사함은 코드로 확인. 후보 파이프라인 stdout(100 `UNREVIEWED_ELIGIBILITY` only)과 Actions run `31567754369`는 Ask 모드에서 재실행·재확인 불가.
+11. PROMOTION: FAIL — 아래 BLOCKERS 수정 전 §11 값 무수정 승격 불가.
+12. BOUNDARY: PASS — 본 판정은 100작품 Catalog 주석 승격만 다루며 G2 제품 방향 GO·사람 블라인드 성공·Slice 5 시작을 허가하지 않음.
+
+PACKET CHECKS:
+- reuse-eight: REVISE — `fire-force`/`lovely-muco` motion exact ref가 `annotations-and-evidence.md`와 `art-evidence-manifest.csv`에서 불일치.
+- fresh-a: REVISE — `aoashi.school=2`·`aoashi.tournament=2`가 자체 관찰 노트·Theme 레이블(学園/大会・トーナメント)과 불일치; sports quartet 동일 Theme set의 독립 정당화 실패.
+- fresh-b: REVISE — `giant-killing.territoryManagement=2`, `space-brothers.foundFamily`, `capeta.foundFamily`, `yowamushi-pedal.relationshipStructure=4`.
+- fresh-c: REVISE — `flying-witch.foundFamily=2`가 생물학적 가족·이웃을 foundFamily로 사용. (`initial-d`/`mf-ghost` seriesGroup·`my-home-hero`/`island-in-a-puddle` foundFamily 제거는 OK.)
+
+BLOCKERS:
+- `giant-killing.themes.territoryManagement`: `2` -> remove — 공식 레이블 `領地運営` (`src/lib/strings.ts`); `fresh-b/annotations-and-evidence.md` 근거는 구단·서포터 운영(=`workplace`/`sportsCompetition`).
+- `aoashi.themes.school`: `2` -> remove (또는 근거 있으면 ≤1) — 레이블 `学園`; `fresh-a/annotations-and-evidence.md` 관찰은 축구·사이드라인뿐, 클럽 유스(Esperion) 중심.
+- `aoashi.themes.tournament`: `2` -> remove (또는 근거 있으면 ≤1) — 레이블 `大会・トーナメント`; 동일 노트는 기술·전술 보상만 서술, 초반 대회 중심성 미지지.
+- `space-brothers.themes.foundFamily`: `1` -> remove — 주석이 `형제 관계`로 태깅; 레이블 `仲間との家族的な絆`.
+- `capeta.themes.foundFamily`: `2` -> remove — 주석 `가족 지지`(생물학적 가족).
+- `flying-witch.themes.foundFamily`: `2` -> remove — 주석 `가족·이웃`; 생물학적 친척을 foundFamily로 사용.
+- `yowamushi-pedal.relationshipStructure`: `4` -> `2` — `docs/factors/annotation-guide.md` §5: 고정 팀·핵심 조연=2; 초반 클럽 형성은 군상극(4) 아님.
+- `fire-force.art.motionImpact.pageOrTimeRefs` / narrative: annotations `pages 32–33` vs manifest `reader pages 24-25` — 한쪽으로 정렬 필요 (`reuse-eight/annotations-and-evidence.md`, `candidate-source/evidence/art-evidence-manifest.csv`).
+- `lovely-muco.art.motionImpact.pageOrTimeRefs` / narrative: annotations `page 10` vs manifest `reader page 12 panels 3-7` — 동일.
+- IDENTITY/PIPELINE 재확인: Ask 모드 해제 후 동결 SHA-256·CI run `31567754369`·후보 `runCatalogPipeline` 100 `UNREVIEWED_ELIGIBILITY` only를 재증명할 것.
+
+PROMOTION AUTHORIZATION: NO
+PRODUCT-DIRECTION G2 AUTHORIZATION: NO
+SLICE 5 AUTHORIZATION: NO

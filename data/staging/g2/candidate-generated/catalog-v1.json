@@ -1,6 +1,6 @@
 {
   "schemaVersion": 1,
-  "catalogVersion": "v1-06bec7c62162",
+  "catalogVersion": "v1-77ee502902e7",
   "factorDictionaryVersion": "v1",
   "works": [
     {
@@ -1493,22 +1493,7 @@
       ],
       "themes": [
         {
-          "id": "foundFamily",
-          "centrality": 2,
-          "confidence": 0.84
-        },
-        {
-          "id": "school",
-          "centrality": 2,
-          "confidence": 0.84
-        },
-        {
           "id": "sportsCompetition",
-          "centrality": 2,
-          "confidence": 0.84
-        },
-        {
-          "id": "tournament",
           "centrality": 2,
           "confidence": 0.84
         }
@@ -3483,11 +3468,6 @@
         "sports"
       ],
       "themes": [
-        {
-          "id": "foundFamily",
-          "centrality": 2,
-          "confidence": 0.84
-        },
         {
           "id": "sportsCompetition",
           "centrality": 2,
@@ -6121,11 +6101,6 @@
           "confidence": 0.84
         },
         {
-          "id": "foundFamily",
-          "centrality": 2,
-          "confidence": 0.84
-        },
-        {
           "id": "school",
           "centrality": 1,
           "confidence": 0.84
@@ -6946,11 +6921,6 @@
       "themes": [
         {
           "id": "sportsCompetition",
-          "centrality": 2,
-          "confidence": 0.84
-        },
-        {
-          "id": "territoryManagement",
           "centrality": 2,
           "confidence": 0.84
         },
@@ -16472,11 +16442,6 @@
           "confidence": 0.84
         },
         {
-          "id": "foundFamily",
-          "centrality": 1,
-          "confidence": 0.84
-        },
-        {
           "id": "workplace",
           "centrality": 2,
           "confidence": 0.84
@@ -20127,22 +20092,12 @@
       ],
       "themes": [
         {
-          "id": "foundFamily",
-          "centrality": 2,
-          "confidence": 0.84
-        },
-        {
           "id": "school",
           "centrality": 2,
           "confidence": 0.84
         },
         {
           "id": "sportsCompetition",
-          "centrality": 2,
-          "confidence": 0.84
-        },
-        {
-          "id": "tournament",
           "centrality": 2,
           "confidence": 0.84
         }
@@ -20185,7 +20140,7 @@
         },
         "relationshipStructure": {
           "state": "known",
-          "value": 4,
+          "value": 2,
           "confidence": 0.82
         },
         "comedy": {

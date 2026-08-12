@@ -1,0 +1,34 @@
+VERDICT: GO
+
+REVIEWER: Gemini
+REPOSITORY: konocomics (fromiron/konocomics)
+BRANCH: main
+HEAD: e32adf696d921c30501e4e57c95a22577e3b033a
+BUNDLE SHA-256: 14f881d0d1192d41d5b91c966322d3bbebc77ced64b22c51e371f9a28ffc5e65
+
+REQUIRED QUESTIONS:
+1. IDENTITY: PASS — `git branch --show-current` (`main`), `git rev-parse HEAD` (`e32adf696d921c30501e4e57c95a22577e3b033a`), candidate-source bundle digest (`14f881d0d1192d41d5b91c966322d3bbebc77ced64b22c51e371f9a28ffc5e65`) 및 규범 문서를 포함한 24개 고정 파일의 SHA-256 해시가 동결값과 100% 일치함을 직접 확인했습니다.
+2. SCOPE: PASS — 추가되는 100작품 (reuse-eight 8, fresh-a 31, fresh-b 31, fresh-c 30)의 ID 합집합이 정확히 100개이며, 패킷 간 상호 중복이나 기존 G1 50작품 ID와의 충돌이 없습니다.
+3. BIBLIOGRAPHY: PASS — 100작품 모두 1차 출판사 서지 정보(일본어 원제, 작가, 출판사, 대상층, 연재상태, 최초출판연도)와 대표 1권의 valid ISBN13 체크섬(154개 Volume 전수 검사 완료) 및 판본/초반 범위 연결이 완비되었습니다.
+4. GENRE/THEME: PASS — 모든 Genre 및 Theme/centrality가 `docs/factors/factor-dictionary.md` 사전과 1~3권 초반 범위에 부합합니다. `foundFamily` Theme(59작품)는 초반 동료/유사가족 중심 전개를 정당하게 반영하며, 스포츠 4부작(`aoashi`, `yowamushi-pedal`, `ace-of-the-diamond`, `days`)도 독립적 근거에 기반해 `foundFamily:2; school:2; sportsCompetition:2; tournament:2` 태그를 보유함을 확인했습니다.
+5. NON-ART AXES: PASS — 100작품의 13개 non-Art 축 1300개 셀 전수가 사전의 0~4 anchor 기준에 부합하며 `known` 상태입니다. 신규 패킷의 confidence 분포(reuse-eight 104셀: 0.95/0.90/0.85, fresh-a/b/c 1196셀: 0.82)는 사람이 검수하지 않은 오프라인 모델 초벌 주석 provenance(`reviewedByHuman=false`)를 정직하게 반영하고 있으며, `characterArcWeight=4`(65작품) 및 `relationshipStructure`(2/3/4가 24/44/32작품) 분포 역시 초반 서사 구조 근거로 지지됩니다.
+6. UNKNOWN POLICY: PASS — 근거 부족을 0/2로 부당하게 대치한 셀이 없으며, `notApplicable`은 사전 규정에 따라 `motionImpact` 축에만 허용되었습니다 (신규 100작품 중 `motionImpact`는 known 6, unknown 94, notApplicable 0). known 6건은 모두 연속 장면 수치 범위를 보유하고 있습니다.
+7. ART: PASS — 400개 신규 Art 행(100작품 × 4축)이 §6 정책 및 `scripts/catalog/art-evidence.ts` 검증기를 통과했습니다. 출판사/승인 플랫폼 권위 출처, 작품당 6개 이상 비표지 내부 페이지 샘플, 2개 이상 맥락, known 정적 Art 축당 2개 이상 exact non-cover reference, known `motionImpact` 6건의 continuous page/panel 수치 범위(`reader page 8 panels 1-4`, `reader page 12 panels 3-7`, `reader pages 10-11`, `reader pages 24-25`, `printed pages 31-36`, `printed pages 16-17`), final factor와 manifest 간 state/value/confidence 100% 일치를 직접 확인했습니다.
+8. PROVENANCE: PASS — 모든 신규 evidence의 `reviewedByHuman=false` 및 신규 works의 `annotationReviewMethod=unreviewed` 상태가 정직하게 유지되고 있으며, 사람 검수로 오인하게 만드는 필드가 없습니다.
+9. ROLE/ELIGIBILITY: PASS — 패킷별 의도 역할(Anchor 12 / Bridge 10 / Discovery 78)과 onboarding(12작품)이 합성 후보(`data/staging/g2/candidate-source/`)의 최종 Anchor 30 / Bridge 30 / Discovery 90, onboarding 40, recommendation 150, libraryOnly 0으로 정확히 보존 및 합성되었습니다.
+10. PIPELINE: PASS — `runCatalogPipeline("data/staging/g2/candidate-source")` 실행 결과, expected fail-closed 상태인 `catalogVersion: v1-06bec7c62162`, `works: 150`, `volumes: 154`, `error:UNREVIEWED_ELIGIBILITY: 100`, `warning:AUTHORIZED_MODEL_PANEL_REVIEW: 50`, `warning:EVIDENCE_NOT_HUMAN_REVIEWED: 415`, `other errors: 0`을 재현했습니다. exact-head GitHub Actions CI run `31567754369` 완료(`success`) 및 전체 단위 테스트(341/341 passed), `tsc --noEmit`, `eslint .` 통과를 확인했습니다.
+11. PROMOTION: PASS — 승인 후 §11의 최소 승격 변환(candidate-source를 data/source로 승격, `annotationReviewMethod=authorizedModelPanel` 변경, ReviewedAt 및 ReviewReference 기록)을 주석/서지/역할/자격 값 수정 없이 수행하는 것을 승인합니다.
+12. BOUNDARY: PASS — 본 승인은 오직 100작품의 Catalog 주석 승격만 허용하며, Taste Engine 대 Baseline G2 제품 방향 GO, 10인 블라인드 테스트 통과 주장, Slice 5 UI 작업, 추천 산식/Factor Dictionary 변경을 절대로 허가하지 않음을 확인합니다.
+
+PACKET CHECKS:
+- reuse-eight: PASS — 8작품 (Anchor 4, Discovery 4; onboarding 4, rec 8), 0 errors, 해시 및 evidence 일치.
+- fresh-a: PASS — 31작품 (Anchor 3, Bridge 3, Discovery 25; onboarding 3, rec 31), 0 errors, 해시 및 evidence 일치.
+- fresh-b: PASS — 31작품 (Anchor 3, Bridge 4, Discovery 24; onboarding 3, rec 31), 0 errors, 해시 및 evidence 일치.
+- fresh-c: PASS — 30작품 (Anchor 2, Bridge 3, Discovery 25; onboarding 2, rec 30), 0 errors, 해시 및 evidence 일치.
+
+BLOCKERS:
+- none
+
+PROMOTION AUTHORIZATION: YES
+PRODUCT-DIRECTION G2 AUTHORIZATION: NO
+SLICE 5 AUTHORIZATION: NO
