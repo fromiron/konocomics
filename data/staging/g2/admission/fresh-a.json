@@ -11,9 +11,9 @@
     "discovery": 25
   },
   "verificationEnvironment": {
-    "browser": "Microsoft Edge 151.0.4129.78",
-    "connection": "remote CDP on 127.0.0.1:9222",
-    "method": "Fresh tabs navigated to each bibliography and preview route; HTTP success, title identity, and loaded interior image or canvas assets were checked."
+    "browser": "Microsoft Edge 151.0.4129.78; isolated Google Chrome for the Pixiv Comic fallback",
+    "connection": "remote CDP on 127.0.0.1:9222; isolated Playwright context for Pixiv Comic story 29486",
+    "method": "Fresh tabs navigated to each bibliography and preview route; HTTP success, title identity, and loaded interior image or canvas assets were checked. The Pixiv Comic fallback additionally exercised the public viewer flow and verified six exact interior pages."
   },
   "repositorySnapshot": {
     "branch": "main",
@@ -29,7 +29,7 @@
     "caveat": "This admits stable bibliography and inspectable interior-preview routes only. It does not establish the G1 Art policy minimums for page count, distinct contexts, or motion sequences."
   },
   "sourceQualityCaveats": [
-    "BOOK WALKER and pixiv are third-party platforms, but the stored routes are the exact preview destinations linked by the primary publisher bibliography pages.",
+    "BOOK WALKER and creator-posted pixiv routes are third-party platforms linked by primary publisher pages; Pixiv Comic story 29486 is an official title-and-creator-matched serialization route used after the stored BOOK WALKER sample exposed only five valid interior pages.",
     "Stable preview entry routes are stored instead of session-bound or tokenized reader redirects.",
     "Preview availability can change after this verification date and must be rechecked before Art annotation."
   ],
@@ -611,11 +611,11 @@
       "selectionGapTags": ["romance", "reincarnation"],
       "officialWorkUrl": "https://data.ichijinsha.co.jp/detail/75803338",
       "representativeIsbn": "9784758033381",
-      "previewUrl": "https://bookwalker.jp/de28a5cb4f-9d7f-4937-973f-dedc602cd578/?sample=1",
-      "previewAuthorityClass": "publisherLinkedLicensedRetailer",
+      "previewUrl": "https://comic.pixiv.net/viewer/stories/29486",
+      "previewAuthorityClass": "publisherAuthorizedSerialPlatform",
       "evidenceAccessibilityConfidence": {
         "level": "high",
-        "result": "Publisher-linked trial resolved with HTTP 200 to a title-matched 23-page reader; image and canvas assets observed via Edge CDP"
+        "result": "Official Pixiv Comic Chapter 1 resolved with HTTP 200 to a title-matched 35-page reader; six distinct interior pages and two contexts were observed in an isolated browser"
       }
     },
     {
