@@ -1,0 +1,46 @@
+VERDICT: REVISE
+REVIEWER: Local
+REPOSITORY: konocomics (fromiron/konocomics)
+BRANCH: main
+HEAD: c5f19736712b55b4f129d99830f8012a1ef30d4d
+BUNDLE SHA-256: f7185b412968dc3860afe7a2da908187c2efb9a38bfc214607b161d315a9939a
+DECLARED FILES CHECKED: 28/28
+NEW WORKS CHECKED: 100/100
+REOPENED CHECK: haikyu.relationshipStructure
+
+REQUIRED QUESTIONS:
+1. IDENTITY: PASS — Local HEAD and `origin/main` both equal the declared SHA; all 28 declared file hashes and the ten-file bundle digest matched. Exact-head [run 31573464505/job 94040245493](https://github.com/fromiron/konocomics/actions/runs/31573464505/job/94040245493) is completed/success.
+2. SCOPE: PASS — The four packets contain 8+31+31+30=100 unique works, with no packet overlap or overlap with the original 50; candidate changes to those 50 are limited to reopening `haikyu` and changing `relationshipStructure` 4→2.
+3. BIBLIOGRAPHY: PASS — I opened all 100 declared primary-publisher bibliography pages; each resolved and matched the work/representative edition. All 154 ISBN-13 values passed checksum validation.
+4. GENRE/THEME: FAIL — All Genre/Theme rows and all 25 retained `foundFamily` tags were checked. `real` and `cardcaptor-sakura` do not establish repeated chosen-family-like bonds, while `blue-period` and `my-love-story-with-yamada-kun-at-lv999` do not establish `仕事・職場` as an early Theme.
+5. NON-ART AXES: FAIL — I checked all 1,300 new non-Art cells and all 14 `relationshipStructure=4` cases. `mystery-to-iu-nakare`, `aoashi`, and `mf-ghost` overstate short/improvised tactics as long-term strategy; `gto.romance=3` is not supported by its early teacher-problem narrative. Reopened `haikyu.relationshipStructure=2` is supported.
+6. UNKNOWN POLICY: PASS — State/value encodings are internally consistent; 94/100 new `motionImpact` cells remain `unknown`, only six have numeric continuous-sequence evidence, and no `notApplicable` bypass is used. The incorrect known non-Art values are listed as concrete corrections below.
+7. ART: FAIL — All 400 new manifest rows pass structural reconciliation: 100×4 axes, six non-cover references, two contexts, two exact references per known static axis, provenance linkage, and numeric sequences for the six known motion rows. However, I could not independently render a complete six-page image set for any work: 75/100 reader entry URLs resolved and one Kodansha signed content map was traversed, but that verifies references, not image content. The supplied Edge endpoint was not listening from this environment and the in-app browser failed before navigation. **VERIFICATION LIMIT:** 0/100 complete Art page sets were visually adjudicated, so the actual images, contexts, and values cannot be approved.
+8. PROVENANCE: PASS — All 415 candidate evidence rows say `reviewedByHuman=false`; the 100 new works and reopened `haikyu` remain `unreviewed`. The frozen G1 report is referenced only for the 49 retained authorized works, and no source-authority field is misrepresented as human review.
+9. ROLE/ELIGIBILITY: PASS — New-work roles are exactly 12 anchor/10 bridge/78 discovery; final roles are 30/30/90. New eligibility is 12 onboarding/100 recommendation/0 library; final eligibility is 40/150/0, with all 101 unreviewed entries correctly fail-closed.
+10. PIPELINE: PASS — The generic gate reads and validates the actual Art manifest. The prescribed pipeline reproduced `v1-69256d2ffbe3`, 150 works, 154 volumes, exactly 101 `UNREVIEWED_ELIGIBILITY`, 49 `AUTHORIZED_MODEL_PANEL_REVIEW`, 415 `EVIDENCE_NOT_HUMAN_REVIEWED`, and no other errors. Exact-head CI independently passed formatting, types, lint, unit tests, validation, generated-current, build, and G2 harness.
+11. PROMOTION: FAIL — The content corrections below and incomplete direct Art inspection prevent the unconditional §11 transformation.
+12. BOUNDARY: PASS — This read-only verdict authorizes no catalog promotion, product-direction G2 decision, product/UI change, or Slice 5 work.
+
+PACKET CHECKS:
+- reuse-eight: REVISE — 8/8 works, 104 non-Art cells, 32 Art rows, bibliography, role, and eligibility were checked; no specific non-Art correction was found, but none of its eight complete Art page sets was independently rendered.
+- fresh-a: REVISE — 31/31 works, 403 non-Art cells, 124 Art rows, bibliography, roles, and eligibility were checked; four field corrections and the Art verification limit remain.
+- fresh-b: REVISE — 31/31 works, 403 non-Art cells, 124 Art rows, bibliography, roles, and eligibility were checked; `blue-period.workplace` and the Art verification limit remain.
+- fresh-c: REVISE — 30/30 works, 390 non-Art cells, 120 Art rows, bibliography, roles, and eligibility were checked; three field corrections and the Art verification limit remain.
+- haikyu.relationshipStructure: PASS — The [official Shueisha entry](https://www.s-manga.net/items/contents.html?isbn=978-4-08-870453-1) and early-range evidence support a recurring volleyball-club core cast rather than a multi-perspective complex relationship network; `2` and reopened `unreviewed` state are consistent.
+
+BLOCKERS:
+- `mystery-to-iu-nakare.strategy`: 3 -> 1 — The [official volume-one description](https://shogakukan-comic.jp/book?isbn=9784098700295) and packet narrative support immediate conversational observation/deduction, not sustained planning; the [dictionary](/home/bell/konocomics/docs/factors/factor-dictionary.md:82) reserves 4 for long-term planning and the [annotation guide](/home/bell/konocomics/docs/factors/annotation-guide.md:66) places short tactics at 2.
+- `aoashi.strategy`: 4 -> 2 — The [official entry](https://shogakukan-comic.jp/book?isbn=9784091868923) and packet explicitly describe soccer selection, spatial awareness, and team tactics; match tactics are the guide’s explicit `2` case.
+- `mf-ghost.strategy`: 4 -> 2 — The [official entry](https://www.kodansha.co.jp/comic/products/0000052840) establishes road racing, while the packet cites driving tactics, course knowledge, and vehicle-performance management; these are competition-scale tactics, not long-term war/politics/resource operation.
+- `gto.romance`: 3 -> 1 — The [official entry](https://www.kodansha.co.jp/comic/products/0000005708) and packet center Onizuka’s teaching, student problems, and comedy; romance is incidental rather than a major relationship/progression focus.
+- `real.foundFamily`: 1 -> remove — The [official entry](https://www.shueisha.co.jp/books/items/contents.html?isbn=978-4-08-876143-5) establishes Nomiya meeting wheelchair player Togawa and confronting their separate realities; neither it nor the packet establishes repeated family-like chosen bonds.
+- `cardcaptor-sakura.foundFamily`: 2 -> remove — The [official entry](https://www.kodansha.co.jp/comic/products/0000031602) supports Sakura and Kero collecting Clow Cards; early friendship, guardianship, and biological household ties do not by themselves satisfy `仲間との家族的な絆`.
+- `blue-period.workplace`: 1 -> remove — The [official entry](https://www.kodansha.co.jp/comic/products/0000052420) and packet concern high school, art study, and art-university preparation, not `仕事・職場`.
+- `my-love-story-with-yamada-kun-at-lv999.workplace`: 1 -> remove — The [official KADOKAWA entry](https://www.kadokawa.co.jp/product/321911000627/) and packet concern an online-game guild, home/phone interaction, and romance; no early workplace Theme is evidenced.
+- `new-100.Art[400 rows]`: current values -> no promotion; set any value whose cited pages cannot be directly rendered and judged to `unknown` — §6 requires direct inspection of six non-cover pages in two contexts per work. This review completed structural manifest checks but 0/100 full visual sets, so an independent image-level reinspection remains mandatory.
+
+PROMOTION AUTHORIZATION: NO
+PRODUCT-DIRECTION G2 AUTHORIZATION: NO
+PRODUCT UI CHANGE AUTHORIZATION: NO
+SLICE 5 AUTHORIZATION: NO

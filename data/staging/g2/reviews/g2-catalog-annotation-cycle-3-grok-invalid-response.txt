@@ -1,0 +1,51 @@
+```text
+VERDICT: REVISE
+REVIEWER: Grok
+REPOSITORY: konocomics (fromiron/konocomics)
+BRANCH: main
+HEAD: c5f19736712b55b4f129d99830f8012a1ef30d4d
+BUNDLE SHA-256: f7185b412968dc3860afe7a2da908187c2efb9a38bfc214607b161d315a9939a
+DECLARED FILES CHECKED: 0/28
+NEW WORKS CHECKED: 100/100
+REOPENED CHECK: haikyu.relationshipStructure
+
+REQUIRED QUESTIONS:
+1. IDENTITY: FAIL — `.git/refs/heads/main`과 `.git/refs/remotes/origin/main`은 모두 `c5f19736712b55b4f129d99830f8012a1ef30d4d`로 일치. 그러나 Ask 모드가 읽기 전용 셸·네트워크를 차단해 선언된 28파일 SHA-256 대조, candidate-source bundle digest 재계산, exact-head Actions run `31573464505` / job `94040245493` 재확인을 수행하지 못함. §7상 hash 미확인은 즉시 REVISE.
+2. SCOPE: PASS — packet intended-eligibility 합집합 8+31+31+30=100; candidate `works.csv`에서 `unreviewed` 101행(새 100+`haikyu`), `authorizedModelPanel` 49행; `recommendation-context` 역할 30/30/90; `initial-d`/`mf-ghost`만 `seriesGroupId=initial-d-mf-ghost`; 재판정 재개방은 `haikyu.relationshipStructure`뿐.
+3. BIBLIOGRAPHY: PASS — 100작품 모두 packet 공식 URL·대표 1권 ISBN·`volumes.csv` 연결을 파일 기준으로 대조. 빈 `releaseDate`(예: `saturn-apartments`, `arte`, `homunculus`)는 요청대로 1차 페이지 미표기 허용으로 처리. 라이브 출판사 HTML 재페치는 네트워크 차단으로 못 함(구조·ISBN·evidence 연결은 통과).
+4. GENRE/THEME: FAIL — Cycle 3 제거분(예: `medalist.foundFamily`, `dance-dance-danseur.tournament`, `initial-d.tournament/foundFamily`, `nina-the-starry-bride.territoryManagement`, `the-heroic-legend-of-arslan.territoryManagement`)은 themes.csv에서 사라짐. `blue-giant.genres=sliceOfLife` 유지. 그러나 남은 foundFamily 25개 전수 대조 결과, UI 레이블 `仲間との家族的な絆`(`src/lib/strings.ts`)·§9.7 기준에 맞지 않는 6건이 남음(BLOCKERS).
+5. NON-ART AXES: FAIL — 새 100의 non-Art는 전부 known·fresh confidence 0.82 균일·`characterArcWeight=4` 다수·RS 2/3/4=42/44/14 분포는 요청 신호와 일치. `haikyu.relationshipStructure=2`는 초반 고정 배구부·핵심 조연 반복으로 PASS. 다만 `the-golden-sheep.relationshipStructure=4`는 소규모 우정 균열/회복에 군상 4가 과대(→3 권고). foundFamily 과대해석은 Theme이지만 동일 초벌 편향의 일부.
+6. UNKNOWN POLICY: PASS — 새 100 non-Art에 unknown/0/notApplicable 치환 흔적 없음; `motionImpact` known 6 / unknown 94 / notApplicable 0; motion known 6건(`chis-sweet-adventures`,`lovely-muco`,`penguin-and-house`,`fire-force`,`inuyasha`,`yowamushi-pedal`)은 숫자 page/panel 구간 보유.
+7. ART: PASS (구조·정책 문서/코드 기준) — `scripts/catalog/art-evidence.ts`가 manifest 필수·Factor 수치 일치·URL provenance·연속 구간 regex를 검사하고 `pipeline.ts`가 import함; 테스트 `tests/unit/catalog/art-evidence.test.ts`가 계약 고정. 신규 Art 행은 authority/edition/6쪽·2맥락·static exact ref·numeric motion 형식이 파일상 충족. 실제 이미지 픽셀 재판독은 네트워크/뷰어 접근 불가로 제한적.
+8. PROVENANCE: PASS — evidence 415행 모두 `reviewedByHuman=false`; Art `reviewStatus=modelObservedPendingPanel`; packet이 모델 초벌·한계·template을 명시; 사람 검수로 오인할 필드 없음.
+9. ROLE/ELIGIBILITY: PASS — packet 의도 12/10/78·onboarding 12가 후보 최종 Anchor30/Bridge30/Discovery90·onboarding40·recommendation150·libraryOnly0으로 보존; `haikyu` `unreviewed`+recommendationEligible로 101번째 fail-closed 대상 구성과 일치(파이프라인 수치 재실행은 미완).
+10. PIPELINE: FAIL — 요청된 `runCatalogPipeline("data/staging/g2/candidate-source")`를 Ask 모드 셸 차단으로 재현하지 못함. 코드상 Art gate·UNREVIEWED 기대는 확인했으나 expected `error:UNREVIEWED_ELIGIBILITY:101` 외 0 errors를 이번 실행으로 증명하지 못함. generated `catalogVersion=v1-69256d2ffbe3`만 파일에서 확인.
+11. PROMOTION: FAIL — foundFamily 수정 필수 + hash/pipeline 미검증으로 §11 값 무수정 승격 불가.
+12. BOUNDARY: PASS — 본 판정은 Catalog 주석 승격만 다루며 G2 제품방향 GO·사람 블라인드 성공·제품 UI 변경·Slice 5를 허가하지 않음.
+
+PACKET CHECKS:
+- reuse-eight: PASS — 8/8 ID·역할(A4/D4)·Art motion known/unknown 경계·Genre/Theme 재사용 경계를 packet+candidate에서 전수 대조. 이번 Cycle 3 필수 수정 blocker 없음.
+- fresh-a: REVISE — 31/31 narrative/CSV 전수 대조. `real.foundFamily=1` 제거 필요(휠체어 농구·평행 인물 군상 ≠ 선택된 유사가족 중심 Theme).
+- fresh-b: REVISE — 31/31 전수 대조. `saturn-apartments.foundFamily=1` 제거 필요(narrative의 「가족 흔적」=생물학적 가족 잔상; foundFamily 아님). `blue-giant` sports Genre 없음·RS 수정 목록 반영 확인.
+- fresh-c: REVISE — 30/30 전수 대조. `cardcaptor-sakura.foundFamily=2`, `sailor-moon.foundFamily=2`, `showa-genroku-rakugo-shinju.foundFamily=1`, `tomorrows-joe.foundFamily=1` 제거 필요(학교·전팀·사제·전우 과대해석). `initial-d`/`mf-ghost` seriesGroup 및 RS 2 반영 확인.
+- haikyu.relationshipStructure: PASS — factors.csv `haikyu,relationshipStructure,known,2,0.99`; works `unreviewed` 재개방; 초반 카라스노 고정 팀+핵심 조연 반복은 dictionary 2에 부합. 기존 G1 GO/confidence를 근거로 쓰지 않음.
+
+BLOCKERS:
+- identity.hash-verification: undeclared/unverified (Ask-mode blocked sha256sum of 28 files + bundle digest) -> re-run hash gate on Agent/non-Ask path before any GO
+- identity.github-actions: run 31573464505 / job 94040245493 not re-fetched -> reconfirm success on HEAD c5f1973
+- pipeline.candidate-source: not executed this review -> must reproduce exactly error:UNREVIEWED_ELIGIBILITY:101, warning:AUTHORIZED_MODEL_PANEL_REVIEW:49, warning:EVIDENCE_NOT_HUMAN_REVIEWED:415, other errors:0
+- real.foundFamily: 1 -> remove Theme — sportsCompetition/school 중심; 仲間との家族的な絆 반복 중심 아님 (`docs/factors` UI label + request §9.7)
+- saturn-apartments.foundFamily: 1 -> remove Theme — packet narrative 「가족 흔적」은 생물학적 가족 잔상; workplace/exploration만 유지
+- cardcaptor-sakura.foundFamily: 2 -> remove Theme — 초반 카드 탐색·학교 우정/동료; 유사가족 중심성 부족
+- sailor-moon.foundFamily: 2 -> remove Theme — 초반 전사 팀 결성·학교; 단순 팀/전우
+- showa-genroku-rakugo-shinju.foundFamily: 1 -> remove Theme — packet이 사제·세대 관계로 서술; §9.7 명시 모호성
+- tomorrows-joe.foundFamily: 1 -> remove Theme — 조–단페이 사제/체육관 수련; 전우·사제 ≠ foundFamily
+- the-golden-sheep.relationshipStructure: 4 -> 3 — 고정 친구권 우정 균열/회복; annotation-guide 「다중 관점·복잡한 관계망 자체가 핵심 보상이 아니면 4 아님」
+
+PROMOTION AUTHORIZATION: NO
+PRODUCT-DIRECTION G2 AUTHORIZATION: NO
+PRODUCT UI CHANGE AUTHORIZATION: NO
+SLICE 5 AUTHORIZATION: NO
+```
+
+요약: HEAD는 `c5f1973`으로 맞지만, Ask 모드 때문에 28 hash·번들·파이프라인·Actions를 암호학적으로/실행으로 재증명하지 못했고, 저장소 전수 대조에서는 foundFamily 과대해석 6건(+ `the-golden-sheep` RS 4→3)이 남아 `REVISE`입니다. hash/pipeline만 다시 돌리려면 Agent 모드가 필요합니다.

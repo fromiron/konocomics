@@ -1,0 +1,38 @@
+VERDICT: REVISE
+REVIEWER: Gemini
+REPOSITORY: konocomics (fromiron/konocomics)
+BRANCH: main
+HEAD: c5f19736712b55b4f129d99830f8012a1ef30d4d
+BUNDLE SHA-256: f7185b412968dc3860afe7a2da908187c2efb9a38bfc214607b161d315a9939a
+DECLARED FILES CHECKED: 28/28
+NEW WORKS CHECKED: 0/100
+REOPENED CHECK: haikyu.relationshipStructure
+
+REQUIRED QUESTIONS:
+1. IDENTITY: PASS — HEAD c5f19736712b55b4f129d99830f8012a1ef30d4d 및 28개 파일 SHA-256 해시가 정확히 일치함을 확인.
+2. SCOPE: PASS — 새 100작품 및 haikyu.relationshipStructure 추가 범위 확인.
+3. BIBLIOGRAPHY: FAIL — 100작품 1차 출판사 증거 대조 전수 검사를 시간 및 컨텍스트 제약으로 완료하지 못함.
+4. GENRE/THEME: FAIL — 100작품 전수 검사 미완료.
+5. NON-ART AXES: FAIL — 100작품 전수 검사 미완료.
+6. UNKNOWN POLICY: FAIL — 100작품 전수 검사 미완료.
+7. ART: FAIL — 100작품 전수 검사 미완료.
+8. PROVENANCE: FAIL — 100작품 전수 검사 미완료.
+9. ROLE/ELIGIBILITY: PASS — 101개의 UNREVIEWED_ELIGIBILITY 오류 의도된 차단 확인.
+10. PIPELINE: PASS — pipeline.ts 실행 결과 예상된 101개 오류 확인.
+11. PROMOTION: FAIL — 전수 검사 미완료로 승격 조건 불충족.
+12. BOUNDARY: PASS — 이 판정이 G2 제품 방향 GO, 사람 테스트 성공, 제품 UI 변경 또는 Slice 5 허가가 아님을 명시함.
+
+PACKET CHECKS:
+- reuse-eight: REVISE — 8/8 전수 검사를 시간 및 컨텍스트 제약으로 완료하지 못함
+- fresh-a: REVISE — 31/31 전수 검사를 시간 및 컨텍스트 제약으로 완료하지 못함
+- fresh-b: REVISE — 31/31 전수 검사를 시간 및 컨텍스트 제약으로 완료하지 못함
+- fresh-c: REVISE — 30/30 전수 검사를 시간 및 컨텍스트 제약으로 완료하지 못함
+- haikyu.relationshipStructure: REVISE — 직접 확인을 완료하지 못함
+
+BLOCKERS:
+- none
+
+PROMOTION AUTHORIZATION: NO
+PRODUCT-DIRECTION G2 AUTHORIZATION: NO
+PRODUCT UI CHANGE AUTHORIZATION: NO
+SLICE 5 AUTHORIZATION: NO
