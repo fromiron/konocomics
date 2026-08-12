@@ -316,7 +316,7 @@ gto,relationshipStructure,known,2,0.82,ev-g2-fresh-c-annotation-gto
 gto,comedy,known,4,0.82,ev-g2-fresh-c-annotation-gto
 gto,darkness,known,2,0.82,ev-g2-fresh-c-annotation-gto
 gto,mentalStress,known,2,0.82,ev-g2-fresh-c-annotation-gto
-gto,romance,known,3,0.82,ev-g2-fresh-c-annotation-gto
+gto,romance,known,1,0.82,ev-g2-fresh-c-annotation-gto
 gto,emotionalWarmth,known,3,0.82,ev-g2-fresh-c-annotation-gto
 gto,artRealism,known,3,0.86,ev-g2-fresh-c-art-gto
 gto,artDensity,known,4,0.86,ev-g2-fresh-c-art-gto
@@ -460,7 +460,7 @@ island-in-a-puddle,visualSoftness,known,2,0.86,ev-g2-fresh-c-art-island-in-a-pud
 island-in-a-puddle,motionImpact,unknown,,,ev-g2-fresh-c-art-island-in-a-puddle
 mf-ghost,progression,known,4,0.82,ev-g2-fresh-c-annotation-mf-ghost
 mf-ghost,problemSolving,known,3,0.82,ev-g2-fresh-c-annotation-mf-ghost
-mf-ghost,strategy,known,4,0.82,ev-g2-fresh-c-annotation-mf-ghost
+mf-ghost,strategy,known,2,0.82,ev-g2-fresh-c-annotation-mf-ghost
 mf-ghost,pacing,known,3,0.82,ev-g2-fresh-c-annotation-mf-ghost
 mf-ghost,mysteryReveal,known,2,0.82,ev-g2-fresh-c-annotation-mf-ghost
 mf-ghost,worldBuilding,known,4,0.82,ev-g2-fresh-c-annotation-mf-ghost

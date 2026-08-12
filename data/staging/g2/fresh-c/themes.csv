@@ -2,7 +2,6 @@ workId,themeId,centrality,confidence,evidenceId
 cardcaptor-sakura,adventure,2,0.84,ev-g2-fresh-c-annotation-cardcaptor-sakura
 cardcaptor-sakura,combat,1,0.84,ev-g2-fresh-c-annotation-cardcaptor-sakura
 cardcaptor-sakura,school,2,0.84,ev-g2-fresh-c-annotation-cardcaptor-sakura
-cardcaptor-sakura,foundFamily,2,0.84,ev-g2-fresh-c-annotation-cardcaptor-sakura
 initial-d,adventure,1,0.84,ev-g2-fresh-c-annotation-initial-d
 initial-d,school,1,0.84,ev-g2-fresh-c-annotation-initial-d
 initial-d,sportsCompetition,2,0.84,ev-g2-fresh-c-annotation-initial-d
@@ -15,7 +14,6 @@ xxxholic,exploration,1,0.84,ev-g2-fresh-c-annotation-xxxholic
 sailor-moon,adventure,2,0.84,ev-g2-fresh-c-annotation-sailor-moon
 sailor-moon,combat,2,0.84,ev-g2-fresh-c-annotation-sailor-moon
 sailor-moon,school,2,0.84,ev-g2-fresh-c-annotation-sailor-moon
-sailor-moon,foundFamily,2,0.84,ev-g2-fresh-c-annotation-sailor-moon
 showa-genroku-rakugo-shinju,workplace,2,0.84,ev-g2-fresh-c-annotation-showa-genroku-rakugo-shinju
 showa-genroku-rakugo-shinju,foundFamily,1,0.84,ev-g2-fresh-c-annotation-showa-genroku-rakugo-shinju
 showa-genroku-rakugo-shinju,historicalReconstruction,2,0.84,ev-g2-fresh-c-annotation-showa-genroku-rakugo-shinju
@@ -56,7 +54,6 @@ tomorrows-joe,combat,2,0.84,ev-g2-fresh-c-annotation-tomorrows-joe
 tomorrows-joe,martialArts,2,0.84,ev-g2-fresh-c-annotation-tomorrows-joe
 tomorrows-joe,tournament,2,0.84,ev-g2-fresh-c-annotation-tomorrows-joe
 tomorrows-joe,sportsCompetition,2,0.84,ev-g2-fresh-c-annotation-tomorrows-joe
-tomorrows-joe,foundFamily,1,0.84,ev-g2-fresh-c-annotation-tomorrows-joe
 parasyte,combat,2,0.84,ev-g2-fresh-c-annotation-parasyte
 parasyte,survival,2,0.84,ev-g2-fresh-c-annotation-parasyte
 parasyte,investigation,2,0.84,ev-g2-fresh-c-annotation-parasyte
