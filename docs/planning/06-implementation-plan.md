@@ -73,12 +73,36 @@ Stage E  시그니처 폴리시 + PWA + 다크     (슬라이스 11~12)
 
 ## 슬라이스 4 — 블라인드 테스트 하니스 + 150작품
 
-- **목표:** G2(GO/NO-GO) 실행 도구.
-- **의존:** G1 통과.
-- **파일:** `harness/`(로컬 전용 페이지 1~2개: 참가자 ID 입력 → 양 엔진 혼합·출처 은닉 리스트 → 설명 공개 전/후 2단 설문 → 결과 JSON 다운로드), `scripts/`에 지표 집계 스크립트(Unknown Want-to-Read, Explanation Agreement/Lift, Disliked Leakage@10, Holdout Recall@10, 사용자별 승패).
-- **구현 결정:** 하니스는 스타일 최소(shadcn 기본). 배포하지 않고 로컬 실행. Holdout은 참가자 anchor 중 1~2개를 엔진 입력에서 자동 제외.
-- **완료 기준:** 참가자 1명 파일럿 후 10명 실행 가능. 집계 스크립트가 GO 기준표를 출력.
-- **제외:** 하니스의 시각 폴리시, 접근성 심화(내부 도구).
+- **목표:** 실제 browser survey→canonical JSON download→authoritative aggregate readback으로 G2 방향성 게이트를 실행한다.
+- **의존:** G1 통과와 동일 바이트 Slice 4 계약의 Local/Gemini/Grok/GPT-5.6 Pro 4/4 조건 없는 GO. 계약 동결 전 구현하거나 G2 GO 전에 Slice 5를 시작하지 않는다.
+- **파일:** 기존 `data/source/**`와 generated catalog/context, 단일 `src/domain/g2.ts`, 별도 `harness/` Next static export, `scripts/aggregate-g2.ts`, `src/lib/strings.ts`의 일본어 copy, G2 contract/metric·aggregator boundary/golden 테스트. 제품 `src/app`에는 하니스 route를 만들지 않는다.
+
+### Slice 4 실행 순서
+
+1. 승인된 기존 50작품을 유지하고 같은 `data/source` pipeline·evidence 정책으로 100작품을 추가한다. 정확히 150개의 서로 다른 `recommendationEligible` Work와 role Anchor 30~40 / Bridge 30~40 / Discovery 70+를 만들고 validate/build/coverage를 통과시킨다. G2 전용 catalog나 merger는 만들지 않는다.
+2. 기존 Slice 3 `ExperimentProfileV1`을 변경하지 않고 G2 wrapper로 participant/profile 결합, positive anchor 6~10, holdout 뒤 후보 복원 가능성을 검증한다. 순수 G2 모듈 한 곳에 holdout·slot·strict result·cross-field recomputation·지표·verdict를 구현한다.
+3. `harness/`에 같은 client wizard를 공유하는 `/human/`과 `/synthetic-pilot/` 두 정적 진입점을 만든다. 입력은 가명 participantId와 로컬 profile JSON뿐이며 respondent는 route로 고정한다. API·server action·DB·browser storage·auth·analytics·network·비밀키는 없다.
+4. 결정론적으로 anchor 1~2개를 양 엔진 records에서 동일하게 제거하고 같은 post-holdout input으로 Taste/Baseline을 각각 한 번 실행한다. 각 native Top 10과 rank를 그대로 A/B에 배치하고 union·dedupe·재정렬·interleave·백필하지 않는다.
+5. pre 단계에서 distinct work familiarity/Want-to-Read와 참가자 list A/B/tie를 모두 확정한 뒤에만 같은 occurrence의 설명·after Want-to-Read·Agreement를 연다. final 전까지 engine·score·confidence·anchor·contribution·penalty·market·maturity·catalog role을 UI·accessible name·DOM metadata·URL·console·download에서 숨긴다.
+6. final submit 뒤 strict canonical `G2ResultV1`을 브라우저로 다운로드한다. `pnpm --silent g2:aggregate`가 동결 catalog/context와 embedded profile로 holdout/list/slot/설명 유무/응답 cardinality를 전부 재계산하고 deterministic Markdown의 사용자별 승패, Unknown Want-to-Read, Explanation Agreement/Lift, Disliked Leakage@10, Holdout Recall@10과 GO 기준표를 출력한다.
+7. `/synthetic-pilot/`에서 한 건을 실제 브라우저로 끝까지 수행해 JSON download→CLI aggregate→accepted pilot 1건 readback을 확인한다. direct state mutation, test-only route, 손편집 result로 대체하지 않는다.
+8. 150-work catalog/context, 구현 diff, contract/metric tests, deterministic aggregate output, browser pilot 증거와 artifact identity를 hash manifest로 동결한 뒤 G2 evidence review로 넘어간다.
+
+### 테스트와 완료 기준
+
+- 순수 테스트는 schema/6~10 anchor/holdout/slot/native-list overlap/응답 cardinality/metric 분자·분모/tie/null/leakage predicate/canonical JSON/tamper·identity mismatch 거부를 보호한다. aggregator는 1 MiB·fatal UTF-8·canonical bytes·duplicate participant/path·flag/exit code·atomic output·Markdown golden을 보호한다. 하니스 UI E2E·visual regression은 만들지 않는다.
+- 동일 input은 holdout/list/slot/result/report가 byte-identical하고 배열·map 입력 순열에도 semantic 결과가 같아야 한다. Taste와 Baseline이 동일 post-holdout input을 받았음을 검증한다.
+- pre/final 전 DOM에 금지 정보가 없고 overlap의 pre 공유/after occurrence별 cardinality가 정확해야 한다. canonical output을 손상하거나 파생값을 바꾸면 aggregator가 전체 파일을 거부해야 한다.
+- root typecheck/lint/test/build/catalog validate·build·coverage, harness static build, G2 aggregate golden, `git diff --check`를 모두 통과한다.
+- manual pilot 파일은 accepted `syntheticPilot` 1건으로 authoritative report에 read back되고 human 분자·분모와 verdict에서는 제외돼야 한다.
+
+### G2 판정 provenance
+
+- **Human path:** 정확히 10개의 고유하고 완전한 `respondent.kind="human"` result만 숫자 GO/REVISE를 만든다. 10명이 아니면 `INCOMPLETE`이며 통과한 것처럼 표시하지 않는다. 완료 artifact는 `humanValidation: "complete"`, `decisionBasis: "ten-human-blind-test"`를 기록한다.
+- **사용자 승인 model-panel path:** human response·숫자 metric·`authorizedModelProxy` row를 만들지 않는다. synthetic pilot은 round-trip 증거일 뿐이다. 동결된 같은 evidence bundle에 대해 Local/Gemini/Grok/GPT-5.6 Pro 모두 hash-bound 조건 없는 GO를 내고 현재 사용자의 사전 승인이 있을 때만 Slice 5 방향성 게이트를 연다. artifact는 `humanValidation: "not-run"`, `decisionBasis: "user-authorized-model-panel"`, human metric `null`/`not-run`을 기록하며 “10명 다독자 통과”나 통계적 우세를 주장하지 않는다.
+- 두 경로를 혼합하지 않는다. 한 reviewer라도 `REVISE`면 G2는 열리지 않는다.
+
+- **제외:** 하니스 시각 폴리시·심화 접근성, UI 자동화/visual regression, profile 작성 UI, 계정·더미 이메일·Google 로그인, 서버 저장, 일반 survey framework, 새 dependency, G2 전용 catalog pipeline, 제품 UI Slice 5.
 
 ## 게이트 G2 — GO/NO-GO
 
@@ -151,4 +175,4 @@ Stage E  시그니처 폴리시 + PWA + 다크     (슬라이스 11~12)
 
 ## 임계 경로 주의
 
-코드가 아니라 **주석 데이터가 임계 경로다.** G1(50작품)·G2(+100작품) 사이 사람 작업 기간에 슬라이스 4의 하니스 구현과 `sync-rakuten.ts`(슬라이스 8 일부)를 병행하면 대기 시간을 흡수할 수 있다. UI 슬라이스(5~)는 G2 전에 시작하지 않는다.
+코드가 아니라 **주석 데이터가 임계 경로다.** Slice 4 계약 동결 뒤 +100작품 evidence 작업과 G2 순수 모듈·하니스·집계기 구현은 병행할 수 있지만, 150-work catalog/context identity를 동결한 뒤에만 final static build·manual pilot·G2 evidence bundle을 만든다. `sync-rakuten.ts`(슬라이스 8 일부)는 데이터 대기 중 병행할 수 있다. 제품 UI 슬라이스(5~)는 G2 GO 전에 시작하지 않는다.

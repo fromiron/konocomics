@@ -528,9 +528,212 @@ type BaselineRecommendation = {
 ### 단계 게이트
 
 1. **Sanity Check (동결 cohort 50작품, 본인+지인 2~3명):** cohort는 정확히 50개의 서로 다른 `recommendationEligible` Work이며 evidence audit·블라인드 재태깅·CLI 리포트 사이에 동일해야 한다. `annotation-guide.md`의 Art 근거 정책을 제목 예외 없이 전 작품·전 축에 적용하고, coverage 통과를 근거 검수 완료로 간주하지 않는다. CLI 리포트로 Top 10을 육안 검증한다. 통과 기준 — 명백히 이상한 Top 10 없음 / 소수 취향 생존 / unknown 다수 작품 과대평가 없음 / 부정 사유가 올바른 팩터에만 작동.
-2. **블라인드 테스트 (150작품, 다독자 10명):** Baseline(장르 중첩+시장 신호+축적도) vs Taste Engine. 출처 숨김, 설명 공개 전/후 2단 설문. 로컬 웹 하니스 사용.
-3. **GO 기준 (방향성 판단, 통계적 유의성 주장 안 함):** 10명 중 7명 이상 Taste ≥ Baseline / Unknown Want-to-Read 우세 / Explanation Agreement ≥ 70% / Disliked Leakage 악화 없음 / Holdout Recall@10 열세 없음.
-4. GO 이후에만 Web MVP 본격 구현. 2회 수정 후에도 열세이고 DNA 콘텐츠 가치도 없으면 범위 축소·방향 전환 검토.
+2. **블라인드 테스트 (150작품):** 승인된 50작품을 교체·약화하지 않고 evidence-complete 100작품을 추가한다. 역할 범위는 Anchor 30~40 / Bridge 30~40 / Discovery 70+다. Baseline(장르 중첩+시장 신호+축적도)과 Taste Engine의 출처를 숨기고 설명 공개 전/후 2단 설문을 로컬 웹 하니스에서 수행한다.
+3. **사람 경로 GO 기준 (방향성 판단, 통계적 유의성 주장 안 함):** 정확히 10명의 고유하고 완전한 사람 결과에서 Taste 또는 동률 7명 이상 / Unknown Want-to-Read 엄격 우세 / Taste Explanation Agreement 70% 이상 / Disliked Leakage 악화 없음 / Holdout Recall@10 열세 없음을 모두 만족해야 한다.
+4. **사용자 승인 모델 패널 경로:** 사람 응답이나 사람 지표를 합성하지 않는다. 동결된 G2 evidence bundle에 대한 Local/Gemini/Grok/GPT-5.6 Pro의 hash-bound 조건 없는 만장일치 GO와 현재 사용자의 사전 승인이 있을 때만 제품 방향 게이트를 열 수 있다. 이는 사람 검증을 대체 측정한 결과가 아니다.
+5. 어느 허용 경로로든 G2 GO를 받은 이후에만 Web MVP 본격 구현을 시작한다. 2회 수정 후에도 열세이고 DNA 콘텐츠 가치도 없으면 범위 축소·방향 전환을 검토한다.
+
+### G2 참가자 유입과 identity
+
+1. 하니스는 같은 client wizard를 사용하는 두 개의 문서화된 정적 진입점 `/human/`과 `/synthetic-pilot/`을 제공한다. 진입점은 wizard 시작 전에 respondent를 고정하며 실행 중 변경할 수 없다. `/human/`은 정확히 `{ kind: "human" }`, `/synthetic-pilot/`은 정확히 `{ kind: "syntheticPilot", label: "manual-round-trip" }`을 결과에 기록한다. 두 진입점은 engine identity나 A/B mapping을 final submit 전에 노출하지 않는다.
+2. 두 진입점의 첫 단계는 다음 두 입력만 받는다.
+   - `participantId`: 길이 1~64, `/^[a-z0-9]+(?:-[a-z0-9]+)*$/`인 가명 ID.
+   - 로컬 `ExperimentProfileV1` JSON 파일 1개.
+3. respondent를 정하는 query/hash, 숨은 control, 빌드 환경값, 파일 내용 추론, 결과 편집 경로는 허용하지 않는다.
+4. profile은 기존 strict schema를 통과하고 `profile.profileId === participantId`여야 한다. positive anchor는 6~10개, distinct negative source는 0~3개, 네 policy는 모두 false여야 한다. Slice 3의 5~10 positive anchor 계약은 변경하지 않고 G2 경계가 6~10을 추가 검증한다.
+5. 모든 record workId는 catalog에 있어야 한다. positive anchor는 `recommendationEligible=true`여야 하고, 아래 holdout 뒤 공통 후보 필터에서 선택된 holdout이 다시 후보가 되지 못하는 profile은 입력 오류다.
+6. profile import는 Slice 4의 의도된 입력 surface다. 프로필 작성 UI, 계정, 이메일, 비밀번호, Google 로그인, 서버 저장은 범위 밖이다. 고정 더미 이메일도 결과나 DOM에 저장하지 않는다. 장기 Google 계정 지원은 별도 post-MVP 결정이며 이 로컬 검증 계약의 식별자나 auth 추상화를 만들지 않는다.
+7. participantId는 한 집계 안에서 고유하다. 표시명·실명·이메일·자유서술 개인정보는 수집하지 않는다.
+
+### G2 결정론적 holdout
+
+1. `positiveAnchorCount`는 catalog에 존재하는 distinct `favorite | liked` record 수다. G2에서는 6~10만 허용한다.
+2. `holdoutCount = min(2, positiveAnchorCount - 5)`다. 따라서 6개면 1개, 7~10개면 2개를 holdout하고 엔진에는 항상 최소 5개 anchor가 남는다.
+3. 각 positive anchor의 key는 다음 UTF-8 바이트의 SHA-256 lowercase hex다.
+
+   ```text
+   konocomics-g2-holdout-v1\0{catalogVersion}\0{participantId}\0{workId}
+   ```
+
+4. key 오름차순, 동률이면 code-unit workId 오름차순으로 정렬한 첫 `holdoutCount` record를 고른다.
+5. 선택한 **record 전체**를 두 엔진에 전달할 records에서 제거한다. 다른 record·adjustment·policy는 바꾸지 않는다. 이로써 holdout 작품은 공통 eligibility/hard exclusion을 통과할 때 양 엔진의 후보로 복원된다.
+6. holdout workId는 위 선택 순서로 저장한다. 별도 seed, 현재 시간, 난수, 재추첨은 없다.
+
+### G2 엔진 실행, native list, A/B 배치
+
+1. 같은 post-holdout input으로 Taste와 Baseline을 각각 정확히 한 번 실행한다. 각 엔진이 반환한 native rank 1~10을 그대로 사용한다. 리스트가 10개 미만이면 실제 N개만 사용하고 낮은 후보나 다른 엔진 결과로 채우지 않는다.
+2. 두 리스트를 union, 교차 dedupe, 재정렬, interleave하지 않는다. 같은 work가 두 엔진에 있으면 각 native rank에 그대로 남는다.
+3. slot digest는 다음 UTF-8 바이트의 SHA-256이다.
+
+   ```text
+   konocomics-g2-slot-v1\0{catalogVersion}\0{participantId}
+   ```
+
+4. digest 첫 byte가 짝수면 Taste=`A`, Baseline=`B`; 홀수면 Taste=`B`, Baseline=`A`다. 사용자 표시는 정확히 `リストA`, `リストB`다.
+5. rank는 각 native list의 1부터 N까지 보존한다. 한 리스트 안 workId 중복은 오류다.
+
+### G2 블라인딩과 단계 전환
+
+1. pre 단계에는 두 리스트의 title/cover/native rank와 작품별 질문만 보인다. engine 이름, score, confidence, best anchor, contributions, penalty, market, maturity, catalog role은 보이지 않는다.
+2. 이 비밀 정보는 final submit 전 visible text, accessible name/description, DOM text, `data-*`, id/class name, URL/query/hash, JSON-LD, console log, 다운로드 파일에 넣지 않는다. 로컬 client bundle을 역분석하는 적대적 보안은 목표가 아니지만 일반 UI·DOM 검사로 출처를 알 수 없어야 한다.
+3. 모든 pre 응답과 A/B/tie 선택을 확정한 뒤에만 after 단계로 간다. 뒤로 가서 pre 값을 바꿀 수 없다.
+4. after 단계는 같은 두 native list/rank를 유지하고 contribution 기반 설명을 공개한다. 설명이 없으면 exact Japanese copy `説明はありません。`를 표시한다. 이 단계에서도 engine identity는 숨긴다.
+5. 모든 after 응답을 final submit한 뒤에만 A/B mapping을 debrief하고 canonical result JSON을 다운로드할 수 있다.
+6. 새로고침·닫기는 draft를 영속하지 않는다. 로컬 파일·DB·브라우저 storage 없이 다시 시작한다.
+
+### G2 질문과 exact Japanese scale
+
+pre 단계에서는 distinct work마다 familiarity와 wantToReadBefore를 각각 정확히 한 번 필수 응답한다. distinct work 순서는 `リストA` rank 순서의 첫 등장 뒤 `リストB` rank 순서의 새 work 첫 등장 순서다. 모든 distinct-work 응답을 확정한 뒤 listPreference를 참가자당 정확히 한 번 필수 응답한다.
+
+1. familiarity — `この作品を知っていましたか？`
+   - `read`: `読んだことがある`
+   - `knownUnread`: `知っているが未読`
+   - `unknown`: `知らなかった`
+2. wantToReadBefore — `今、この作品を読みたいですか？`
+   - 1 `まったく読みたくない`
+   - 2 `あまり読みたくない`
+   - 3 `どちらともいえない`
+   - 4 `読みたい`
+   - 5 `とても読みたい`
+3. listPreference — `説明を見る前のおすすめ一覧として、どちらが自分に合っていますか？`
+   - `A`: `リストA`
+   - `B`: `リストB`
+   - `tie`: `同じくらい`
+
+after 단계에서는 slot/rank/work occurrence마다 다음을 응답한다. 순서는 A rank 1~N, B rank 1~N이다.
+
+1. wantToReadAfter — pre와 같은 질문·1~5 scale, 필수.
+2. agreement — `このおすすめ理由は、あなたの好みとの関係を正しく説明していますか？`
+   - 1 `まったく当てはまらない`
+   - 2 `あまり当てはまらない`
+   - 3 `どちらともいえない`
+   - 4 `当てはまる`
+   - 5 `とても当てはまる`
+3. 해당 occurrence에 실제 설명이 있으면 agreement 1~5가 필수다. 설명이 없으면 agreement 질문을 표시하지 않고 값은 반드시 `null`이다.
+4. 같은 work가 A/B 양쪽에 있어도 familiarity와 wantToReadBefore는 공유 응답 한 개다. wantToReadAfter와 agreement는 slot/rank/work별 별도 응답이다.
+
+### G2 결과 schema와 canonical file boundary
+
+구조는 아래 의미를 정확히 따른다. 구현은 strict Zod object와 literal/enum/int 범위를 사용한다.
+
+```ts
+type G2ResultV1 = {
+  format: "konocomics-g2-result";
+  schemaVersion: 1;
+  contractVersion: "g2-v1";
+  participantId: string;
+  respondent:
+    | { kind: "human" }
+    | { kind: "syntheticPilot"; label: "manual-round-trip" };
+  catalogVersion: string;
+  factorDictionaryVersion: "v1";
+  baselineVersion: "v1";
+  profile: ExperimentProfileV1;
+  holdoutWorkIds: string[];
+  slots: {
+    A: {
+      engine: "taste" | "baseline";
+      items: { rank: number; workId: string; explanationAvailable: boolean }[];
+    };
+    B: {
+      engine: "taste" | "baseline";
+      items: { rank: number; workId: string; explanationAvailable: boolean }[];
+    };
+  };
+  preResponses: {
+    workId: string;
+    familiarity: "read" | "knownUnread" | "unknown";
+    wantToReadBefore: 1 | 2 | 3 | 4 | 5;
+  }[];
+  listPreference: "A" | "B" | "tie";
+  postResponses: {
+    slot: "A" | "B";
+    rank: number;
+    workId: string;
+    wantToReadAfter: 1 | 2 | 3 | 4 | 5;
+    agreement: 1 | 2 | 3 | 4 | 5 | null;
+  }[];
+};
+```
+
+1. result는 최대 1 MiB regular file, fatal UTF-8, BOM 없음, LF only다. exact serialization은 `JSON.stringify(validatedValue, null, 2) + "\n"`이다.
+2. key insertion order는 위 type의 field order, slot은 A→B, arrays는 holdout/native list/question 순서다. input bytes를 parse·strict validate·재직렬화한 bytes와 비교해 canonical이 아니면 거부한다. 이로써 duplicate JSON member, CRLF, key reorder, extra whitespace도 허용하지 않는다.
+3. aggregator는 제출된 파생값을 신뢰하지 않는다. 제공된 catalog/context와 embedded profile로 다음을 재계산하고 byte/identity가 다르면 전체 파일을 거부한다: profile/participant 결합, holdout, post-holdout records, Taste/Baseline native list, slot mapping, rank/work, explanation availability, pre/post required key set과 순서, agreement null 규칙.
+4. catalog/context는 각각 기존 16 MiB strict 경계와 semantic validation을 통과해야 한다. `catalogVersion`, factor dictionary, Baseline version, context catalogVersion이 result와 모두 같아야 한다.
+5. 한 집계의 duplicate participantId와 duplicate input path/identity를 거부한다. result와 output 경로는 달라야 하며 output은 기존 private temp + atomic rename을 재사용한다.
+6. result에는 설명 text, score, contribution, 실명, 이메일, 자유서술을 저장하지 않는다. aggregator가 current frozen engine에서 explanation availability만 재계산한다.
+
+### G2 공통 occurrence와 leakage 판정
+
+1. metric occurrence는 `(participantId, engine, native rank, workId)`다. 같은 work가 양 엔진 list에 있으면 엔진별 한 번씩 센다. 같은 work의 pre 응답은 두 occurrence가 같은 값을 참조한다.
+2. Disliked Leakage는 두 엔진 모두 같은 순수 predicate를 사용한다. candidate마다 remaining positive anchors로 `calculatePositiveAnchorScore`를 계산해 그 candidate의 Taste best positive anchor를 고르고, 기존 `calculateNegativePenalties`의 factor-backed reason trigger를 평가한다.
+3. `FACTOR_BACKED_NEGATIVE_REASON_IDS` 중 하나 이상이 trigger되면 leakage다. `vagueDislike`, `external:*`, 단순 disliked reaction만 있고 factor-backed reason이 없는 record는 leakage predicate에 쓰지 않는다.
+4. 이 predicate는 list를 만든 엔진이나 그 엔진의 contribution/bestAnchor를 보지 않는다. 따라서 Baseline occurrence도 Taste occurrence와 동일 candidate/profile predicate로 판정한다.
+
+### G2 지표의 정확한 분자·분모
+
+모든 aggregate count는 유효한 `respondent.kind="human"` 결과만 사용한다. 각 rate는 분자/분모 integer를 보존하고 표시에만 q12를 적용한다. 비교와 70% threshold는 반올림 값이 아니라 integer cross multiplication으로 판정한다.
+
+1. **사용자별 승패**
+   - listPreference slot을 hidden mapping으로 해석해 `taste | baseline | tie`로 저장 없이 계산한다.
+   - `tasteOrTieCount = tasteWinCount + tieCount`다. 사람 GO는 정확히 10명 중 `tasteOrTieCount >= 7`이다.
+   - strict `tasteWinCount`도 별도 보고하지만 threshold는 두지 않는다.
+2. **Unknown Want-to-Read Rate(engine)**
+   - denominator: 해당 engine occurrence 중 familiarity=`unknown`인 수.
+   - numerator: 그중 wantToReadBefore≥4인 수.
+   - 같은 overlap work는 각 engine에 한 번씩 센다. denominator 0이면 rate=`null`이다.
+   - 사람 GO는 두 denominator가 모두 >0이고 Taste fraction이 Baseline fraction보다 **strictly greater**여야 한다.
+3. **Explanation Agreement(engine)**
+   - denominator: 해당 engine의 전체 native list occurrence 수. 설명이 없는 occurrence도 포함한다.
+   - numerator: explanationAvailable=true이고 agreement≥4인 occurrence 수.
+   - 설명 없음은 agreement=null이며 numerator가 아니므로 누락 설명이 rate를 부풀리지 않는다.
+   - 사람 GO는 Taste denominator>0이고 Taste numerator/denominator≥0.70이다. Baseline rate는 diagnostic이다.
+4. **Explanation Lift(engine)**
+   - 실제 explanationAvailable=true인 occurrence의 `wantToReadAfter - wantToReadBefore` 산술평균이다.
+   - denominator 0이면 null이다. explanation availability count도 함께 보고한다. 방향 진단용이며 GO threshold는 없다.
+5. **Disliked Leakage@10(engine)**
+   - denominator: 해당 engine의 전체 native list occurrence 수.
+   - numerator: 위 공통 leakage predicate가 true인 occurrence 수.
+   - denominator 0이면 null이다. 사람 GO는 두 denominator>0이고 Taste fraction≤Baseline fraction이다.
+6. **Holdout Recall@10(engine)**
+   - denominator: 모든 participant의 holdoutWorkIds 수 합.
+   - numerator: 해당 engine native list에 복구된 holdout work 수. 한 participant의 holdout은 distinct이고 engine당 최대 한 번 센다.
+   - valid human result가 있으면 denominator는 항상 >0이어야 한다. 사람 GO는 Taste fraction≥Baseline fraction이다.
+7. per-participant raw counts와 preference verdict를 participantId code-unit 순으로 함께 보고한다. aggregate는 participant마다 먼저 rate를 평균내는 macro 변형을 GO 판정에 쓰지 않는다.
+
+### G2 집계 CLI와 verdict
+
+문서화된 호출은 lifecycle noise가 stdout에 섞이지 않게 다음으로 고정한다.
+
+```text
+pnpm --silent g2:aggregate
+  --result, -r <json>   # 반복 가능
+  --catalog <json>      # 기본 data/generated/catalog-v1.json
+  --context <json>      # 기본 data/generated/recommendation-context-v1.json
+  --output, -o <md|->   # 기본 stdout
+  --help, -h
+```
+
+1. result 미지정 시 `data/local/g2-results/*.json`을 읽는다. 명시·기본 result 모두 parse 뒤 participantId 오름차순이다.
+2. unknown flag, duplicate scalar flag는 usage error 2; data/runtime error 1; 성공 0이다. stdout은 deterministic Markdown만, 진단은 stderr만 쓴다.
+3. report 순서는 identity/catalog metadata → accepted human/pilot counts → five GO criteria table → aggregate metric counts/rates → participant rows → diagnostics(Explanation Lift/coverage)다. 생성 시각, 절대 경로, locale, env, 네트워크, 자유서술은 없다. LF와 마지막 newline 1개다.
+4. exactly 10 unique complete human result면 위 다섯 criterion을 모두 계산해 모두 PASS일 때만 `GO`, 아니면 `REVISE`다. human이 10명이 아니면 `INCOMPLETE`; 숫자 기준을 통과한 것처럼 표시하지 않는다.
+5. `syntheticPilot` result는 round-trip 검증과 diagnostic에만 표시하고 모든 human 분자·분모·10명 수에서 제외한다. pilot만으로 GO/REVISE를 만들지 않는다.
+
+### G2 사람 경로와 사용자 승인 모델 패널 경로
+
+두 경로를 혼합하거나 같은 의미로 보고하지 않는다.
+
+1. **Human path**
+   - 정확히 10개의 고유하고 완전한 `respondent.kind="human"` result와 위 숫자 기준으로만 GO/REVISE한다.
+   - 결과 문구는 `humanValidation: "complete"`, `decisionBasis: "ten-human-blind-test"`다.
+2. **User-authorized model-panel path**
+   - 10명 human response나 숫자 metric을 만들지 않는다. `authorizedModelProxy` row도 만들지 않는다.
+   - 한 개의 `syntheticPilot`은 UI→download→aggregator round-trip 증거일 뿐 participant evidence가 아니다.
+   - frozen 150-work catalog/context, engine identity, 구현 diff, contract/metric tests, deterministic aggregate output, manual pilot 증거를 하나의 hash manifest로 묶어 Local/Gemini/Grok/GPT-5.6 Pro 네 reviewer에게 동일 제공한다.
+   - 네 reviewer의 hash-bound unqualified GO와 현재 사용자의 사전 승인으로만 product direction gate를 열 수 있다. 한 reviewer라도 REVISE이면 열지 않는다.
+   - 결정 artifact는 exact `humanValidation: "not-run"`, `decisionBasis: "user-authorized-model-panel"`을 기록하고 human metrics는 `null`/`not-run`으로 둔다. “10명 다독자 통과”, 통계적 우세, human preference validation을 주장하지 않는다.
+   - 이 GO는 Slice 5 진행을 허용하는 사용자 승인 제품 결정이지, 실행하지 않은 human criteria의 대체 측정값이 아니다.
 
 ### 핵심 지표
 

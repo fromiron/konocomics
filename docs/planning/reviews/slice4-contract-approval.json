@@ -1,0 +1,41 @@
+{
+  "schemaVersion": 1,
+  "contractVersion": "g2-v1",
+  "reviewHead": "2e4c5141a14966f1b3f5d706ec5ef9fb33b5b66a",
+  "approvedAt": "2026-08-12T12:27:43+09:00",
+  "verdict": "GO",
+  "unanimousReviewerCount": 4,
+  "panelRequest": {
+    "path": "slice4-contract-panel-request.md",
+    "sha256": "32f944749ec7f54e188f78dd6a05534d145967b447bd7bb0f398915541dc6e5b"
+  },
+  "panelReport": {
+    "path": "slice4-contract-panel.md",
+    "sha256": "34fe5f7533143ecf7f52fe8258329ac525611a7b2b857a6747c827bf5605de1f"
+  },
+  "responses": {
+    "local": {
+      "path": "slice4-contract-local-response.md",
+      "sha256": "3f46285a88ca8b499fa935ab00e02dc8b46168fd170d25d47f09dd294cbf1772"
+    },
+    "gemini": {
+      "path": "slice4-contract-gemini-response.md",
+      "sha256": "3f46285a88ca8b499fa935ab00e02dc8b46168fd170d25d47f09dd294cbf1772"
+    },
+    "grok": {
+      "path": "slice4-contract-grok-response.md",
+      "sha256": "3f46285a88ca8b499fa935ab00e02dc8b46168fd170d25d47f09dd294cbf1772"
+    },
+    "oracle": {
+      "path": "slice4-contract-oracle-response.txt",
+      "sha256": "3f46285a88ca8b499fa935ab00e02dc8b46168fd170d25d47f09dd294cbf1772",
+      "conversationUrl": "https://chatgpt.com/c/6a7be566-5578-83ee-9076-89ca53554171"
+    }
+  },
+  "ssot": {
+    "02-product-spec.md": "0650bb77d69d4f0dcabab0fa9384040cbcadd93d9f31d18a2cbe00d2a3aba0c1",
+    "05-architecture.md": "8171a300af5630285ce02c9b0969f8e5fba4bcb523c2b5b932a68443f575beb4",
+    "06-implementation-plan.md": "0c0df6733d4ee61db33f901ee15b19be6a7fbe0d690c439f89882273e2cdfb00",
+    "07-acceptance-test-plan.md": "e9048e7bf2f71d1f26d844de5920621fbd80f111a4118362fa6f51abfbd84106"
+  }
+}

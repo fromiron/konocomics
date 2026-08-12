@@ -1,0 +1,3 @@
+REVISE
+- G2-1/G2-6/G2-11: 하니스 입력은 `participantId`와 profile 파일뿐인데 결과에는 필수 `respondent` 분기가 있고, 실제 브라우저에서 `human`과 `syntheticPilot` 중 무엇을 생성하는지 결정하는 계약이 없다. 따라서 manual pilot을 test-only 조작 없이 만들면서 human 경로도 보존하려면 구현자가 새 입력·URL·빌드 설정 중 하나를 임의로 발명해야 한다.
+- 교체 문구: `하니스는 같은 client wizard를 사용하는 두 개의 문서화된 정적 진입점 /human/과 /synthetic-pilot/을 제공한다. 진입점은 wizard 시작 전에 respondent를 고정하며 실행 중 변경할 수 없다. /human/은 정확히 { kind: "human" }, /synthetic-pilot/은 정확히 { kind: "syntheticPilot", label: "manual-round-trip" }을 결과에 기록한다. 두 진입점의 첫 단계 입력은 participantId와 로컬 ExperimentProfileV1 JSON 파일뿐이다. respondent를 정하는 query/hash, 숨은 control, 빌드 환경값, 파일 내용 추론, 결과 편집 경로는 허용하지 않는다. 두 진입점은 engine identity나 A/B mapping을 final submit 전에 노출하지 않는다.`
