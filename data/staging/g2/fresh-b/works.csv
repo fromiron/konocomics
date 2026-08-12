@@ -1,0 +1,32 @@
+id,title,titleKana,creators,publisher,demographic,status,firstPublishedYear,genres,factorScope,onboardingEligible,recommendationEligible,libraryOnly,metadataConfidence,groupingConfidence,sourceAgreement,annotationReviewMethod,annotationReviewedAt,annotationReviewReference,evidenceId
+fruits-basket,フルーツバスケット,フルーツバスケット,高屋奈月,白泉社,shojo,completed,1998,fantasy;comedy;sliceOfLife;romance,entry_1_3_volumes,false,false,true,0.99,0.99,0.98,unreviewed,,,ev-g2-fresh-b-bib-fruits-basket
+inuyasha,犬夜叉,イヌヤシャ,高橋留美子,小学館,shonen,completed,1996,action;fantasy;historical;comedy;romance,entry_1_3_volumes,false,false,true,0.99,0.99,0.98,unreviewed,,,ev-g2-fresh-b-bib-inuyasha
+space-brothers,宇宙兄弟,ウチュウキョウダイ,小山宙哉,講談社,seinen,completed,2007,scienceFiction;comedy;sliceOfLife,entry_1_3_volumes,false,false,true,0.99,0.99,0.98,unreviewed,,,ev-g2-fresh-b-bib-space-brothers
+blue-giant,BLUE GIANT,ブルージャイアント,石塚真一,小学館,seinen,completed,2013,sports;sliceOfLife,entry_1_3_volumes,false,false,true,0.99,0.99,0.98,unreviewed,,,ev-g2-fresh-b-bib-blue-giant
+blue-period,ブルーピリオド,ブルーピリオド,山口つばさ,講談社,seinen,ongoing,2017,sliceOfLife,entry_1_3_volumes,false,false,true,0.99,0.99,0.98,unreviewed,,,ev-g2-fresh-b-bib-blue-period
+the-apothecary-diaries,薬屋のひとりごと,クスリヤノヒトリゴト,日向夏;ねこクラゲ;七緒一綺;しのとうこ,スクウェア・エニックス,seinen,ongoing,2017,historical;mystery;romance,entry_1_3_volumes,false,false,true,0.99,0.99,0.98,unreviewed,,,ev-g2-fresh-b-bib-the-apothecary-diaries
+dorohedoro,ドロヘドロ,ドロヘドロ,林田球,小学館,seinen,completed,2000,action;fantasy;mystery;comedy;horror,entry_1_3_volumes,false,false,true,0.99,0.99,0.98,unreviewed,,,ev-g2-fresh-b-bib-dorohedoro
+sweat-and-soap,あせとせっけん,アセトセッケン,山田金鉄,講談社,seinen,completed,2018,comedy;sliceOfLife;romance,entry_1_3_volumes,false,false,true,0.99,0.99,0.98,unreviewed,,,ev-g2-fresh-b-bib-sweat-and-soap
+a-condition-called-love,花野井くんと恋の病,ハナノイクントコイノヤマイ,森野萌,講談社,shojo,completed,2017,sliceOfLife;romance,entry_1_3_volumes,false,false,true,0.99,0.99,0.98,unreviewed,,,ev-g2-fresh-b-bib-a-condition-called-love
+she-loves-to-cook-and-she-loves-to-eat,作りたい女と食べたい女,ツクリタイオンナトタベタイオンナ,ゆざきさかおみ,KADOKAWA,josei,ongoing,2021,sliceOfLife;romance,entry_1_3_volumes,false,false,true,0.99,0.99,0.98,unreviewed,,,ev-g2-fresh-b-bib-she-loves-to-cook-and-she-loves-to-eat
+my-brothers-husband,弟の夫,オトウトノオット,田亀源五郎,双葉社,seinen,completed,2014,sliceOfLife,entry_1_3_volumes,false,false,true,0.98,0.99,0.96,unreviewed,,,ev-g2-fresh-b-bib-my-brothers-husband
+our-dreams-at-dusk,しまなみ誰そ彼,シマナミタソガレ,鎌谷悠希,小学館,seinen,completed,2015,sliceOfLife,entry_1_3_volumes,false,false,true,0.99,0.99,0.98,unreviewed,,,ev-g2-fresh-b-bib-our-dreams-at-dusk
+nina-the-starry-bride,星降る王国のニナ,ホシフルオウコクノニナ,リカチ,講談社,josei,ongoing,2019,fantasy;romance,entry_1_3_volumes,false,false,true,0.99,0.99,0.98,unreviewed,,,ev-g2-fresh-b-bib-nina-the-starry-bride
+baby-steps,ベイビーステップ,ベイビーステップ,勝木光,講談社,shonen,completed,2007,sports,entry_1_3_volumes,false,false,true,0.99,0.99,0.98,unreviewed,,,ev-g2-fresh-b-bib-baby-steps
+capeta,ｃａｐｅｔａ,カペタ,曽田正人,講談社,shonen,completed,2003,sports,entry_1_3_volumes,false,false,true,0.99,0.99,0.98,unreviewed,,,ev-g2-fresh-b-bib-capeta
+yowamushi-pedal,弱虫ペダル,ヨワムシペダル,渡辺航,秋田書店,shonen,ongoing,2008,sports,entry_1_3_volumes,false,false,true,0.99,0.99,0.98,unreviewed,,,ev-g2-fresh-b-bib-yowamushi-pedal
+moon-land,ムーンランド,ムーンランド,山岸菜,集英社,shonen,completed,2018,sports,entry_1_3_volumes,false,false,true,0.99,0.99,0.98,unreviewed,,,ev-g2-fresh-b-bib-moon-land
+giant-killing,GIANT KILLING,ジャイアントキリング,ツジトモ;綱本将也,講談社,seinen,ongoing,2007,sports,entry_1_3_volumes,false,false,true,0.99,0.99,0.98,unreviewed,,,ev-g2-fresh-b-bib-giant-killing
+dragon-head,ドラゴンヘッド,ドラゴンヘッド,望月峯太郎,講談社,seinen,completed,1994,mystery;horror,entry_1_3_volumes,false,false,true,0.99,0.99,0.98,unreviewed,,,ev-g2-fresh-b-bib-dragon-head
+kasane,累,カサネ,松浦だるま,講談社,seinen,completed,2013,fantasy;mystery;horror,entry_1_3_volumes,false,false,true,0.99,0.99,0.98,unreviewed,,,ev-g2-fresh-b-bib-kasane
+homunculus,ホムンクルス,ホムンクルス,山本英夫,小学館,seinen,completed,2003,fantasy;mystery;horror,entry_1_3_volumes,false,false,true,0.99,0.99,0.98,unreviewed,,,ev-g2-fresh-b-bib-homunculus
+fort-of-apocalypse,アポカリプスの砦,アポカリプスノトリデ,イナベカズ;蔵石ユウ,講談社,shonen,completed,2011,action;horror,entry_1_3_volumes,false,false,true,0.99,0.99,0.98,unreviewed,,,ev-g2-fresh-b-bib-fort-of-apocalypse
+a-brides-story,乙嫁語り,オトヨメガタリ,森薫,KADOKAWA,seinen,ongoing,2008,historical;sliceOfLife;romance,entry_1_3_volumes,false,false,true,0.99,0.99,0.98,unreviewed,,,ev-g2-fresh-b-bib-a-brides-story
+isabella-bird-in-wonderland,ふしぎの国のバード,フシギノクニノバード,佐々大河,KADOKAWA,seinen,ongoing,2015,historical;sliceOfLife,entry_1_3_volumes,false,false,true,0.99,0.99,0.98,unreviewed,,,ev-g2-fresh-b-bib-isabella-bird-in-wonderland
+arte,アルテ,アルテ,大久保圭,コアミックス,seinen,ongoing,2013,historical;sliceOfLife,entry_1_3_volumes,false,false,true,0.98,0.99,0.96,unreviewed,,,ev-g2-fresh-b-bib-arte
+thermae-romae,テルマエ・ロマエ,テルマエロマエ,ヤマザキマリ,KADOKAWA,seinen,completed,2008,historical;scienceFiction;comedy,entry_1_3_volumes,false,false,true,0.99,0.99,0.98,unreviewed,,,ev-g2-fresh-b-bib-thermae-romae
+knights-of-sidonia,シドニアの騎士,シドニアノキシ,弐瓶勉,講談社,seinen,completed,2009,action;scienceFiction;romance,entry_1_3_volumes,false,false,true,0.99,0.99,0.98,unreviewed,,,ev-g2-fresh-b-bib-knights-of-sidonia
+saturn-apartments,土星マンション,ドセイマンション,岩岡ヒサエ,小学館,seinen,completed,2005,scienceFiction;sliceOfLife,entry_1_3_volumes,false,false,true,0.99,0.99,0.98,unreviewed,,,ev-g2-fresh-b-bib-saturn-apartments
+origin,ORIGIN,オリジン,Boichi,講談社,seinen,completed,2016,action;scienceFiction;mystery,entry_1_3_volumes,false,false,true,0.99,0.99,0.98,unreviewed,,,ev-g2-fresh-b-bib-origin
+accomplishments-of-the-dukes-daughter,公爵令嬢の嗜み,コウシャクレイジョウノタシナミ,梅宮スキ;澪亜;双葉はづき,KADOKAWA,seinen,completed,2015,fantasy;romance,entry_1_3_volumes,false,false,true,0.99,0.99,0.98,unreviewed,,,ev-g2-fresh-b-bib-accomplishments-of-the-dukes-daughter
+the-heroic-legend-of-arslan,アルスラーン戦記,アルスラーンセンキ,荒川弘;田中芳樹,講談社,shonen,ongoing,2013,action;fantasy;historical,entry_1_3_volumes,false,false,true,0.99,0.99,0.98,unreviewed,,,ev-g2-fresh-b-bib-the-heroic-legend-of-arslan
