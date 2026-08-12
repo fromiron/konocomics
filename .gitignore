@@ -19,6 +19,7 @@
 .env*
 !.env.example
 /data/local/experiment-profiles/
+/data/local/g2-results/
 /reports/local/
 
 # package manager and debug logs

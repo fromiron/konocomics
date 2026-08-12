@@ -43,3 +43,5 @@ jobs:
             src/data/generated/recommendation-context-v1.json
       - name: Build
         run: pnpm build
+      - name: Build G2 harness
+        run: pnpm harness:build
