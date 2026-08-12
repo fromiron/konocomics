@@ -14,14 +14,15 @@ import { pathToFileURL } from "node:url";
 import { parse } from "csv-parse/sync";
 import { z } from "zod";
 
-import {
-  ART_AXIS_IDS,
-  FACTOR_SOURCE_TYPES,
-  GENRE_TAGS,
-  THEME_TAGS,
-} from "../src/domain/catalog/constants";
+import { GENRE_TAGS, THEME_TAGS } from "../src/domain/catalog/constants";
 import { blindRetagSampleManifestSchema } from "./build-g1-blind-retag";
 import { buildG1ReplacementManifest, replacementManifestSchema } from "./build-g1-replacement";
+import {
+  artEvidenceManifestHeaders,
+  artEvidenceManifestRowSchema,
+  validateArtEvidence,
+} from "./catalog/art-evidence";
+import type { ArtEvidenceManifestRow } from "./catalog/art-evidence";
 import { NON_ART_AXIS_IDS } from "./catalog/g1-replacement";
 import { runCatalogPipeline } from "./catalog/pipeline";
 import { formatSourceIssue } from "./catalog/report";
@@ -31,6 +32,8 @@ import {
   recommendationContextSourceRowSchema,
   themeSourceRowSchema,
 } from "./catalog/source-schema";
+
+export { artEvidenceManifestRowSchema } from "./catalog/art-evidence";
 
 const matrixSchema = z.array(z.array(z.string()));
 const catalogIdSchema = z.string().regex(/^[a-z0-9]+(?:-[a-z0-9]+)*$/u, {
@@ -207,24 +210,6 @@ const evidenceDataset = {
   keyColumns: ["id"],
   overrideMode: "row" as const,
 };
-const artEvidenceManifestHeaders = [
-  "workId",
-  "axisId",
-  "state",
-  "value",
-  "confidence",
-  "authorityClass",
-  "sourceType",
-  "sourceUrl",
-  "edition",
-  "scopeMapping",
-  "pageOrTimeRefs",
-  "sampleCount",
-  "contexts",
-  "observation",
-  "limitation",
-  "reviewStatus",
-] as const;
 const reconciledGenreHeaders = ["workId", "genres"] as const;
 const deferredWorkHeaders = [
   "workId",
@@ -234,66 +219,6 @@ const deferredWorkHeaders = [
   "reentryCondition",
 ] as const;
 const requiredText = z.string().trim().min(1);
-export const artEvidenceManifestRowSchema = z
-  .strictObject({
-    workId: catalogIdSchema,
-    axisId: z.enum(ART_AXIS_IDS),
-    state: z.enum(["known", "unknown", "notApplicable"]),
-    value: z.string(),
-    confidence: z.string(),
-    authorityClass: z.enum([
-      "licensedPublisher",
-      "publisherAuthorizedPlatform",
-      "originalPublisher",
-    ]),
-    sourceType: z.enum(FACTOR_SOURCE_TYPES),
-    sourceUrl: z.url(),
-    edition: requiredText,
-    scopeMapping: requiredText,
-    pageOrTimeRefs: z.string(),
-    sampleCount: z.string().regex(/^\d+$/u).transform(Number),
-    contexts: requiredText,
-    observation: requiredText,
-    limitation: requiredText,
-    reviewStatus: requiredText,
-  })
-  .superRefine((row, context) => {
-    if (row.state === "known") {
-      if (!/^[0-4]$/u.test(row.value)) {
-        context.addIssue({ code: "custom", path: ["value"], message: "Known value is required" });
-      }
-      const confidence = Number(row.confidence);
-      if (!/^\d+(?:\.\d+)?$/u.test(row.confidence) || confidence < 0 || confidence > 1) {
-        context.addIssue({
-          code: "custom",
-          path: ["confidence"],
-          message: "Known confidence must be between 0 and 1",
-        });
-      }
-    } else if (row.value !== "" || row.confidence !== "") {
-      context.addIssue({
-        code: "custom",
-        path: ["value"],
-        message: "Unknown or not-applicable evidence cannot have value or confidence",
-      });
-    }
-    if (row.state !== "unknown" && row.pageOrTimeRefs.trim() === "") {
-      context.addIssue({
-        code: "custom",
-        path: ["pageOrTimeRefs"],
-        message: "Known or not-applicable Art evidence requires references",
-      });
-    }
-    const expectedSourceType =
-      row.authorityClass === "publisherAuthorizedPlatform" ? "manual" : "publisher";
-    if (row.sourceType !== expectedSourceType) {
-      context.addIssue({
-        code: "custom",
-        path: ["sourceType"],
-        message: `${row.authorityClass} requires sourceType=${expectedSourceType}`,
-      });
-    }
-  });
 const deferredWorkRowSchema = z.strictObject({
   workId: catalogIdSchema,
   failureReason: requiredText,
@@ -309,7 +234,6 @@ type MergeableDataset = {
   keyColumns: readonly string[];
   overrideMode: "row" | "workSet";
 };
-type ArtEvidenceManifestRow = z.infer<typeof artEvidenceManifestRowSchema>;
 type G1WorkContract = {
   id: string;
   demographic: string;
@@ -833,24 +757,6 @@ export function assertG1Cohort(
   }
 }
 
-function hasContinuousSequenceRange(references: string) {
-  const hasPageOrPanelRange = [
-    ...references.matchAll(/\b(?:pages?|panels?)\s+(\d+)\s*-\s*(\d+)/giu),
-  ].some((match) => Number(match[2]) > Number(match[1]));
-  if (hasPageOrPanelRange) {
-    return true;
-  }
-  return [
-    ...references.matchAll(
-      /\b(?:(\d{1,2}):)?([0-5]?\d):([0-5]\d(?:\.\d+)?)\s*-\s*(?:(\d{1,2}):)?([0-5]?\d):([0-5]\d(?:\.\d+)?)\b/gu,
-    ),
-  ].some((match) => {
-    const start = Number(match[1] ?? 0) * 3600 + Number(match[2]) * 60 + Number(match[3]);
-    const end = Number(match[4] ?? 0) * 3600 + Number(match[5]) * 60 + Number(match[6]);
-    return end > start;
-  });
-}
-
 export function assertG1ArtEvidence(
   manifestRows: readonly ArtEvidenceManifestRow[],
   factors: readonly G1FactorContract[],
@@ -861,24 +767,6 @@ export function assertG1ArtEvidence(
   if (manifestRows.length !== 200) {
     throw new Error(
       `G1 Art evidence manifest requires exactly 200 rows, received ${manifestRows.length}`,
-    );
-  }
-  const expectedPairs = new Set(
-    [...cohortIds].flatMap((workId) => ART_AXIS_IDS.map((axisId) => `${workId}\u0000${axisId}`)),
-  );
-  const manifestPairs = new Set<string>();
-  for (const row of manifestRows) {
-    const pair = `${row.workId}\u0000${row.axisId}`;
-    if (manifestPairs.has(pair)) {
-      throw new Error(`Duplicate Art evidence pair: ${row.workId}/${row.axisId}`);
-    }
-    manifestPairs.add(pair);
-  }
-  const missingPairs = [...expectedPairs].filter((pair) => !manifestPairs.has(pair)).sort();
-  const extraPairs = [...manifestPairs].filter((pair) => !expectedPairs.has(pair)).sort();
-  if (missingPairs.length > 0 || extraPairs.length > 0) {
-    throw new Error(
-      `G1 Art evidence pairs must equal cohort x Art axes: missing=${missingPairs.length}; extra=${extraPairs.length}`,
     );
   }
   const factorByAxis = new Map<string, G1FactorContract>();
@@ -896,72 +784,43 @@ export function assertG1ArtEvidence(
     }
     evidenceById.set(evidence.id, evidence);
   }
-  const referencesByWork = new Map<string, Set<string>>();
-  const contextsByWork = new Map<string, Set<string>>();
-  for (const row of manifestRows) {
-    if (!cohortIds.has(row.workId)) {
-      throw new Error(`Art evidence work is outside the G1 cohort: ${row.workId}`);
-    }
-    const factor = factorByAxis.get(`${row.workId}\u0000${row.axisId}`);
-    if (
-      factor === undefined ||
-      factor.state !== row.state ||
-      factor.value !== row.value ||
-      factor.confidence !== row.confidence
-    ) {
-      throw new Error(`Art evidence does not match final factor: ${row.workId}/${row.axisId}`);
-    }
-    const evidence = evidenceById.get(factor.evidenceId);
-    if (
-      evidence === undefined ||
-      evidence.workId !== row.workId ||
-      evidence.sourceType !== row.sourceType ||
-      evidence.sourceUrl === undefined ||
-      new URL(evidence.sourceUrl).href !== new URL(row.sourceUrl).href
-    ) {
-      throw new Error(
-        `Art evidence provenance does not match final factor: ${row.workId}/${row.axisId}`,
-      );
-    }
-    const distinctSampleRefs = new Set(
-      row.pageOrTimeRefs
-        .split(";")
-        .map((reference) => reference.trim())
-        .filter((reference) => reference !== "" && !/\bcover\b/iu.test(reference)),
-    );
-    const workReferences = referencesByWork.get(row.workId) ?? new Set<string>();
-    for (const reference of distinctSampleRefs) {
-      workReferences.add(reference);
-    }
-    referencesByWork.set(row.workId, workReferences);
-    const workContexts = contextsByWork.get(row.workId) ?? new Set<string>();
-    for (const context of row.contexts
-      .split(";")
-      .map((value) => value.trim())
-      .filter((value) => value !== "")) {
-      workContexts.add(context);
-    }
-    contextsByWork.set(row.workId, workContexts);
-    if (row.state === "known" && row.axisId !== "motionImpact" && distinctSampleRefs.size < 2) {
-      throw new Error(
-        `Known static Art evidence requires two distinct non-cover references: ${row.workId}/${row.axisId}`,
-      );
-    }
-    if (
-      row.state === "known" &&
-      row.axisId === "motionImpact" &&
-      !hasContinuousSequenceRange(row.pageOrTimeRefs)
-    ) {
-      throw new Error(`Known motion evidence requires a continuous sequence: ${row.workId}`);
-    }
+  const validationIssues = validateArtEvidence({
+    works: [...cohortIds].map((id, index) => ({
+      file: "cohort-manifest.json",
+      row: index + 1,
+      value: { id },
+    })),
+    factors: factors.map((value, index) => ({ file: "factors.csv", row: index + 2, value })),
+    evidence: evidenceRows.map((value, index) => ({
+      file: "evidence/evidence.csv",
+      row: index + 2,
+      value,
+    })),
+    manifest: manifestRows.map((value, index) => ({
+      file: "evidence/art-evidence-manifest.csv",
+      row: index + 2,
+      value,
+    })),
+  });
+  const duplicate = validationIssues.find((item) => item.code === "DUPLICATE_ART_EVIDENCE_PAIR");
+  if (duplicate !== undefined) {
+    throw new Error(duplicate.message);
   }
-  for (const workId of cohortIds) {
-    if ((referencesByWork.get(workId)?.size ?? 0) < 6) {
-      throw new Error(`Art evidence requires six work-wide samples: ${workId}`);
-    }
-    if ((contextsByWork.get(workId)?.size ?? 0) < 2) {
-      throw new Error(`Art evidence requires two distinct work-wide contexts: ${workId}`);
-    }
+  const missingOrExtra = validationIssues.filter((item) =>
+    ["ART_EVIDENCE_PAIR_MISSING", "UNKNOWN_ART_EVIDENCE_WORK"].includes(item.code),
+  );
+  if (missingOrExtra.length > 0) {
+    const missing = missingOrExtra.filter(
+      (item) => item.code === "ART_EVIDENCE_PAIR_MISSING",
+    ).length;
+    const extra = missingOrExtra.filter((item) => item.code === "UNKNOWN_ART_EVIDENCE_WORK").length;
+    throw new Error(
+      `G1 Art evidence pairs must equal cohort x Art axes: missing=${missing}; extra=${extra}`,
+    );
+  }
+  const firstIssue = validationIssues[0];
+  if (firstIssue !== undefined) {
+    throw new Error(firstIssue.message);
   }
   for (const workId of deferredWorkIds) {
     if (cohortIds.has(workId)) {

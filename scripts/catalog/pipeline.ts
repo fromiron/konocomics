@@ -1,4 +1,5 @@
 import { compileCatalog } from "./compile";
+import { ART_EVIDENCE_MANIFEST_FILE, validateArtEvidence } from "./art-evidence";
 import { loadCatalogSource } from "./load-source";
 import type { SourceIssue } from "./types";
 
@@ -20,9 +21,20 @@ function sortIssues(issues: readonly SourceIssue[]) {
 export function runCatalogPipeline(sourceDirectory: string) {
   const loaded = loadCatalogSource(sourceDirectory);
   const compiled = compileCatalog(loaded.source);
+  const artEvidenceLoadFailed = loaded.issues.some(
+    (issue) => issue.severity === "error" && issue.file === ART_EVIDENCE_MANIFEST_FILE,
+  );
+  const artEvidenceIssues = artEvidenceLoadFailed
+    ? []
+    : validateArtEvidence({
+        works: loaded.source.works,
+        factors: loaded.source.factors,
+        evidence: loaded.source.evidence,
+        manifest: loaded.artEvidence,
+      });
   return {
     catalog: compiled.catalog,
     context: compiled.context,
-    issues: sortIssues([...loaded.issues, ...compiled.issues]),
+    issues: sortIssues([...loaded.issues, ...compiled.issues, ...artEvidenceIssues]),
   };
 }

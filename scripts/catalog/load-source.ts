@@ -14,6 +14,7 @@ import {
   volumeSourceRowSchema,
   workSourceRowSchema,
 } from "./source-schema";
+import { ART_EVIDENCE_MANIFEST_FILE, artEvidenceManifestRowSchema } from "./art-evidence";
 import type { CatalogSource, Located, SourceIssue, SourceLoadResult } from "./types";
 
 const locatedCsvRowsSchema = z.array(
@@ -126,6 +127,11 @@ export function loadCatalogSource(sourceDirectory: string): SourceLoadResult {
     recommendationConfigSourceRowSchema,
   );
   const evidence = loadFile(sourceDirectory, "evidence/evidence.csv", evidenceSourceRowSchema);
+  const artEvidence = loadFile(
+    sourceDirectory,
+    ART_EVIDENCE_MANIFEST_FILE,
+    artEvidenceManifestRowSchema,
+  );
 
   const source: CatalogSource = {
     works: works.rows,
@@ -156,6 +162,7 @@ export function loadCatalogSource(sourceDirectory: string): SourceLoadResult {
 
   return {
     source,
+    artEvidence: artEvidence.rows,
     issues: [
       ...works.issues,
       ...aliases.issues,
@@ -165,6 +172,7 @@ export function loadCatalogSource(sourceDirectory: string): SourceLoadResult {
       ...recommendationContext.issues,
       ...recommendationConfig.issues,
       ...evidence.issues,
+      ...artEvidence.issues,
       ...reviewReferenceIssues,
     ],
   };

@@ -10,6 +10,7 @@ import type {
   volumeSourceRowSchema,
   workSourceRowSchema,
 } from "./source-schema";
+import type { ArtEvidenceManifestRow } from "./art-evidence";
 
 export type Located<T> = {
   file: string;
@@ -50,5 +51,6 @@ export type SourceIssue = {
 
 export type SourceLoadResult = {
   source: CatalogSource;
+  artEvidence: Located<ArtEvidenceManifestRow>[];
   issues: SourceIssue[];
 };
