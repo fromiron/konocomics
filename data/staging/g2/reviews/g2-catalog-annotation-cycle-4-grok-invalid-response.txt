@@ -1,0 +1,56 @@
+giant-killing.strategy=4도 확인했습니다. 조건 없는 GO는 불가하므로 계약 형식만 출력합니다.
+
+VERDICT: REVISE
+REVIEWER: Grok
+REPOSITORY: konocomics (fromiron/konocomics)
+BRANCH: main
+HEAD: a179da01807aae42ac55c800bc273b9540138be6
+CANDIDATE BUNDLE SHA-256: 65e9dcf840f1f26af685d1701fb91b7d6b95ec54f9f47ff0d639c32b7fd46a11
+DECLARED REPOSITORY FILES CHECKED: 31/31 paths content-opened; 0/31 SHA-256 recomputed (shell blocked)
+PACKET BUNDLE DIGESTS CHECKED: 0/4
+VISUAL LEDGERS CHECKED: 5/5 ledger files present+opened | ledger/PNG SHA-256 NOT_RECOMPUTED; contact sheets visually sampled not 100/100; GitHub Actions run 31585524833 / job 94078342980 NOT_VERIFIED (network tools blocked); no uninspected Art treated as PASS
+ALL CANDIDATE WORKS CHECKED: 150/150
+NEW WORKS CHECKED: 100/100
+REOPENED CHECK: haikyu.relationshipStructure
+
+REQUIRED QUESTIONS:
+1. IDENTITY/HASH: FAIL — local `.git/refs/heads/main` = `a179da01807aae42ac55c800bc273b9540138be6`; request file readable and matches Cycle 4 freeze text; declared 31-file SHA, 5 bundle digests, ledger SHA, and exact-head CI success were not independently recomputed/verified in this session
+2. SCOPE/DISJOINTNESS: PASS — packets 8+31+31+30=100 disjoint; candidate 150 works; roles 30/30/90; eligibility 40/150/0; annotationReviewMethod 49 authorizedModelPanel + 101 unreviewed; volumes 154, aliases 177, factors 2550, themes 463, evidence 415, art manifest 600; no packet/G1 ID collision observed
+3. BIBLIOGRAPHY: PASS — new 100 titleJa/creator/publisher/demographic/status-year and representative ISBN spot-checks against packet narratives/admission align; empty `titleKana` on many fresh-a/fresh-c rows is schema-optional (`titleKana?`) not a hard bibliography defect; several intentional blank releaseDate rows documented as missing primary paper dates
+4. GENRE/THEME: FAIL — remaining Theme boundary violations on new works (see BLOCKERS); Cycle 4 Theme removals themselves verified present
+5. NON-ART: FAIL — Cycle 4 Axis fixes and KEPT items + `haikyu.relationshipStructure=2` verified, but additional dictionary/guide conflicts remain (strategy overclaims; relationshipStructure=4 overclaims)
+6. UNKNOWN: PASS — no clear case found of thin evidence forced to 0/2/`notApplicable`; new-work `motionImpact` fail-closed `unknown` pattern holds except the declared known-6 set
+7. ART: FAIL — `/tmp` ledgers+sheets accessible; opened multiple packet sheets (incl. chis, medalist, fruits-basket, baby-steps, she-loves-to-cook, villainess Pixiv 29486 pp.5–10, inuyasha motion, yowamushi motion) and they read as non-cover interiors with ≥2 contexts; known motion CSV set = 6/6; however full 100-sheet visual pass and ledger/PNG hash recomputation were not completed, so Art is not unconditionally approved
+8. PROVENANCE: PASS — new evidence `reviewedByHuman=false`; annotations framed as offline model drafts / `modelObservedPendingPanel`; empty market ratings not treated as human approval
+9. ROLE/ELIGIBILITY/PIPELINE: FAIL — role/eligibility/reviewMethod counts match freeze from source CSVs, but request §8 candidate pipeline reproduction (expected 101/49/415) was NOT_RUN (shell blocked)
+10. PROMOTION/BOUNDARY: PASS — this verdict authorizes neither annotation promotion nor G2 product-direction / human blind-test / UI / Slice 5; Oracle remains NOT RUN
+
+PACKET CHECKS:
+- reuse-eight: PASS — 8/8 structural/role/eligibility coherent; Cycle 4 content not in this packet; sampled Art interiors OK; no required content blockers found in this packet alone
+- fresh-a: REVISE — 31/31 scanned; Cycle 4 strategy/Theme fixes OK; blockers on `real.relationshipStructure`, `my-next-life-as-a-villainess.relationshipStructure`; villainess Art provenance matches Pixiv story 29486 pages 5–10
+- fresh-b: REVISE — 31/31 scanned; blockers on `baby-steps.strategy`, `giant-killing.strategy`, `my-brothers-husband.foundFamily`, `she-loves-to-cook-and-she-loves-to-eat.foundFamily`, plus sports strategy mid/high inconsistencies
+- fresh-c: REVISE — 30/30 scanned; Cycle 4 `gto.romance=1` / `mf-ghost.strategy=2` OK; blockers on `rent-a-girlfriend.relationshipStructure`, `tokyo-tarareba-girls.relationshipStructure`, sports `strategy=3` set
+- existing G1 integrity controls: PASS — 49 remain `authorizedModelPanel` with values untreated as re-promotion targets; only `haikyu` reopened as `unreviewed`; no cross-packet contamination of G1 IDs observed
+- haikyu.relationshipStructure: PASS — factors.csv `haikyu,relationshipStructure,known,2`; works method `unreviewed`; consistent with fixed-team sports boundary (compare G1 `blue-lock`/`hajime-no-ippo` strategy/relationship patterns)
+
+BLOCKERS:
+- baby-steps.strategy: 4 -> 2 — annotation-guide: match/exam short-term planning is 2; long-war/politics/resource ops is 4; narrative itself is tennis learning/note-taking, not Death Note-class strategy
+- giant-killing.strategy: 4 -> 2 — same guide; early ETU tactics/club ops do not meet strategy=4 endpoint; G1 sports anchors are strategy=2; Cycle 4 already corrected aoashi 4→2
+- yowamushi-pedal.strategy: 3 -> 2 — sports race tactics should not sit above adjudicated sports baseline without long-horizon ops evidence in entry_1_3_volumes
+- ace-of-the-diamond.strategy: 3 -> 2 — same sports/strategy boundary
+- tomorrows-joe.strategy: 3 -> 2 — same
+- all-rounder-meguru.strategy: 3 -> 2 — same
+- capeta.strategy: 3 -> 2 — same
+- the-full-time-wife-escapist.strategy: 3 -> 1 — contract-marriage comedy; not mid/high strategy-centric in early volumes
+- my-brothers-husband.foundFamily: 2 -> remove — biological/legal in-law family reconstitution after brother's death; request rule: biological family ≠ foundFamily
+- she-loves-to-cook-and-she-loves-to-eat.foundFamily: 2 -> remove — neighbor-to-romance cooking relationship; request rule: mere romance ≠ foundFamily; sheet contexts are cooking/meal/office, not chosen-family ensemble
+- my-next-life-as-a-villainess.relationshipStructure: 4 -> 2 — fixed heroine + recurring capture-target cast = fixed party/key supports (2), not complex ensemble-as-core-reward (4)
+- real.relationshipStructure: 4 -> 2 — wheelchair-basketball team + limited recurring supports; guide: fixed team is 2; “several characters” alone ≠ 4
+- rent-a-girlfriend.relationshipStructure: 4 -> 2 — rental-dating + recurring love-interest set is fixed cast/relationship loop, not multi-perspective ensemble drama endpoint
+- tokyo-tarareba-girls.relationshipStructure: 4 -> 2 — fixed friend group + dating episodes; without multi-view complex web-as-core-reward, 4 overclaims guide boundary
+
+PROMOTION AUTHORIZATION: NO
+PRODUCT-DIRECTION G2 AUTHORIZATION: NO
+PRODUCT UI CHANGE AUTHORIZATION: NO
+SLICE 5 AUTHORIZATION: NO
+ORACLE EXECUTION STATUS: NOT RUN

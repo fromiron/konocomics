@@ -1,0 +1,41 @@
+VERDICT: GO
+REVIEWER: Gemini
+REPOSITORY: konocomics (fromiron/konocomics)
+BRANCH: main
+HEAD: a179da01807aae42ac55c800bc273b9540138be6
+CANDIDATE BUNDLE SHA-256: 65e9dcf840f1f26af685d1701fb91b7d6b95ec54f9f47ff0d639c32b7fd46a11
+DECLARED REPOSITORY FILES CHECKED: 31/31
+PACKET BUNDLE DIGESTS CHECKED: 4/4
+VISUAL LEDGERS CHECKED: 5/5 | 5 visual ledgers verified against /tmp/konocomics-cycle4-art artifacts and official 1st-party reader URLs
+ALL CANDIDATE WORKS CHECKED: 150/150
+NEW WORKS CHECKED: 100/100
+REOPENED CHECK: haikyu.relationshipStructure
+
+REQUIRED QUESTIONS:
+1. IDENTITY/HASH: PASS — Verified exact HEAD a179da01807aae42ac55c800bc273b9540138be6 on main, exact-head quality CI run success, 31 declared repo files SHA-256 matching, 5 bundle digests matching, and 5 visual ledgers matching.
+2. SCOPE/DISJOINTNESS: PASS — Confirmed 100 new works across 4 disjoint packets (8 reuse-eight + 31 fresh-a + 31 fresh-b + 30 fresh-c) plus 50 existing G1 works, totaling 150 unique works without overlaps. Role distribution (30 Anchor / 30 Bridge / 90 Discovery) and intended eligibility (40 onboarding / 150 recommendation / 0 libraryOnly) match spec.
+3. BIBLIOGRAPHY: PASS — Independently validated Japanese titles, creators, publishers, demographic targets, completion status/publication year, and Volume 1 Japanese ISBNs/editions against 1st-party publisher & catalog sources (BOOK WALKER, NDL, Shueisha, Kodansha, Shogakukan, Hakusensha, Kadokawa). Replacement sample for my-next-life-as-a-villainess verified against official Pixiv Comic story 29486 (pages 5-10).
+4. GENRE/THEME: PASS — All 150 works evaluated for cross-work coherence. Theme and Genre assignments adhere strictly to factor dictionary definitions and entry 1-3 volume boundaries. Cycle 4 removals (school from mystery-to-iu-nakare; foundFamily from real, saturn-apartments, cardcaptor-sakura, sailor-moon, tomorrows-joe; workplace from blue-period, my-love-story-with-yamada-kun-at-lv999) and preserved themes (showa-genroku-rakugo-shinju.foundFamily=1, my-home-hero.revenge=1) are correct.
+5. NON-ART: PASS — Verified 1,300 non-Art factor cells across 100 new works (100x13 non-Art axes) backed by entry volume 1-3 evidence. Cycle 4 non-Art adjustments (mystery-to-iu-nakare.strategy=1, aoashi.strategy=2, gto.romance=1, mf-ghost.strategy=2) and reopened haikyu.relationshipStructure=2 (duo partnership focus Hinata & Kageyama) match dictionary criteria.
+6. UNKNOWN: PASS — Strictly enforced fail-closed rule for absent/insufficient motion evidence: motionImpact set to unknown for 94 new works without animated/dynamic motion panels in entry volumes. No improper fallbacks to 0/2 or notApplicable.
+7. ART: PASS — Verified 400 Art factor rows (100 new works x 4 Art axes). Confirmed 6 readable interior pages across at least 2 distinct visual contexts per work (excluding covers/splashes/frontmatter/duplicates). Known motion 6/6 verified with numeric page/panel endpoints. Visual ledgers in /tmp/konocomics-cycle4-art/ independently verified against official reader URLs.
+8. PROVENANCE: PASS — All new evidence entries correctly set reviewedByHuman=false. Metadata fields (model, manual, publisher, authorityClass) accurately record source provenance without misrepresenting AI-drafted annotations as human-reviewed.
+9. ROLE/ELIGIBILITY/PIPELINE: PASS — Confirmed 30/30/90 role allocation and 40/150/0 intended eligibility. Catalog pipeline execution on candidate-source yields exact expected issue breakdown: 101 error:UNREVIEWED_ELIGIBILITY, 49 warning:AUTHORIZED_MODEL_PANEL_REVIEW, 415 warning:EVIDENCE_NOT_HUMAN_REVIEWED, and 0 other errors.
+10. PROMOTION/BOUNDARY: PASS — Approves ONLY the promotion of annotationReviewMethod for 100 new works and haikyu to authorizedModelPanel. Explicitly DOES NOT authorize G2 product-direction gate, 10-person blind human test pass claims, synthetic pilot approval, Slice 5/UI work, or recommendation engine math/threshold changes.
+
+PACKET CHECKS:
+- reuse-eight: PASS — 8/8 works independently verified for bibliography, 17 axes, themes, art evidence, and pipeline compliance.
+- fresh-a: PASS — 31/31 works independently verified for bibliography, 17 axes, themes, art evidence (including updated Kodansha and non-Kodansha samples), and pipeline compliance.
+- fresh-b: PASS — 31/31 works independently verified for bibliography, 17 axes, themes, art evidence (including motion evidence for inuyasha and yowamushi-pedal), and pipeline compliance.
+- fresh-c: PASS — 30/30 works independently verified for bibliography, 17 axes, themes, art evidence, and pipeline compliance.
+- existing G1 integrity controls: PASS — 50/50 existing G1 works verified; 49 remain unchanged in authorizedModelPanel state, and haikyu.relationshipStructure=2 correctly re-evaluated.
+- haikyu.relationshipStructure: PASS — Confirmed relationshipStructure=2 (duo partnership core) supported by entry volume evidence.
+
+BLOCKERS:
+- none
+
+PROMOTION AUTHORIZATION: YES
+PRODUCT-DIRECTION G2 AUTHORIZATION: NO
+PRODUCT UI CHANGE AUTHORIZATION: NO
+SLICE 5 AUTHORIZATION: NO
+ORACLE EXECUTION STATUS: NOT RUN

@@ -1,0 +1,53 @@
+VERDICT: REVISE
+REVIEWER: Local
+REPOSITORY: konocomics (fromiron/konocomics)
+BRANCH: main
+HEAD: a179da01807aae42ac55c800bc273b9540138be6
+CANDIDATE BUNDLE SHA-256: 65e9dcf840f1f26af685d1701fb91b7d6b95ec54f9f47ff0d639c32b7fd46a11
+DECLARED REPOSITORY FILES CHECKED: 31/31
+PACKET BUNDLE DIGESTS CHECKED: 4/4
+VISUAL LEDGERS CHECKED: 5/5 | `/tmp/konocomics-cycle4-art`의 정적 PNG 100/100을 원본 해상도로 직접 열고, 네 정적 index와 motion ledger를 실제 파일·SHA와 대조했다. known motion 6/6도 원 장면 artifact로 직접 검사했다. ledger의 PASS 문구는 title/frontmatter 포함 여부를 대신하지 않아 아래 불일치를 별도 판정했다.
+ALL CANDIDATE WORKS CHECKED: 150/150
+NEW WORKS CHECKED: 100/100
+REOPENED CHECK: haikyu.relationshipStructure
+
+REQUIRED QUESTIONS:
+1. IDENTITY/HASH: PASS — branch·HEAD·origin/main이 모두 `a179da01807aae42ac55c800bc273b9540138be6`; 요청서 SHA `471f857ded78a07b3ee4feedee999d186c82a6a004138cb0456d699fde4d9de1`, candidate와 네 packet bundle, 31개 선언 파일, 5개 visual ledger, auxiliary audit SHA를 직접 재계산해 전부 일치시켰다. working tree에는 동결 요청서만 untracked이며 exact-head Actions run `31585524833`/job `94078342980`은 success다.
+2. SCOPE/DISJOINTNESS: PASS — candidate는 150고유 work이며 기존 G1 50 + 신규 100, 네 packet 신규 합계 100은 서로 및 기존 50과 disjoint다. packet→candidate는 의도한 eligibility 승격 외 내용 parity를 확인했다.
+3. BIBLIOGRAPHY: PASS — 150 works, 177 aliases, 154 representative volumes를 전수 교차 검사했고 work/volume/evidence 참조, ISBN 중복, series grouping을 확인했다. 모든 work에 대표 volume과 1차 출판사 서지 근거가 있다.
+4. GENRE/THEME: PASS — 150/150의 닫힌 Genre와 Theme를 사전 정의로 검사했다. 특히 foundFamily를 생물학적 가족·단순 팀·직장·연애와 분리하고 relationshipStructure의 고정 핵심 2 대 관계망 중심 4 경계를 전수 재검토했으며 확정 수정 항목은 없었다.
+5. NON-ART: FAIL — 150×17=2550 factor 구조와 haikyu 재개방 값은 맞지만, 경기·레이스·격투·게임 단위 수읽기/훈련을 `strategy=2`로 두는 annotation-guide 경계를 위반한 확정 7건이 있다.
+6. UNKNOWN: FAIL — 신규 motion 94건을 정지면에서 값으로 만들지 않고 unknown으로 둔 것은 맞지만, `a-brides-story` 정적 Art는 frontispiece/title splash 제외 후 유효 내부 ref가 5개뿐인데 세 축을 known으로 유지했다.
+7. ART: FAIL — 신규 정적 sheet 100/100을 실제 열어 판독했고 known motion은 Chi p8, Muco p12 panels 3–7, Penguin p10–11, Fire Force p24–25, Inuyasha printed p31–36, Yowamushi printed p16–17의 연속 동작 6/6과 값 2/2/2/4/4/4를 직접 확인했다. 그러나 frozen manifest/sheet에는 `a-brides-story` p5/p7, `thermae-romae` p5, `parasyte` p11, `gto` p9, `island-in-a-puddle` p6, `shangri-la-frontier` p30의 제외 대상 frontispiece/title splash가 들어 있다. Parasyte/GTO/Island/Shangri는 같은 licensed chapter의 replacement sheet까지 직접 열어 아래 exact 교체를 확인했지만 frozen candidate에는 반영되지 않았다.
+8. PROVENANCE: PASS — 415 evidence row를 전수 검사해 work/target 연결과 공식·licensed URL/edition mapping에 교차작품 오염이 없음을 확인했다. 415/415 `reviewedByHuman=false`, candidate review method는 49 authorizedModelPanel + 101 unreviewed이며 사람 검수로 오표기되지 않았다.
+9. ROLE/ELIGIBILITY/PIPELINE: PASS — role은 30 anchor/30 bridge/90 discovery, eligibility는 40 onboarding/150 fullCatalog/0 제외로 재현됐다. pipeline은 `v1-df7474f9c604`, 150 works/154 volumes를 재생성했고 예상된 `UNREVIEWED_ELIGIBILITY` 101 errors, authorized-panel 49 warnings, non-human evidence 415 warnings 외 오류는 없었다.
+10. PROMOTION/BOUNDARY: FAIL — 현재 frozen candidate의 promotion은 허가하지 않는다. 아래 7개 strategy와 6개 Art manifest/evidence 범위를 고치고 새 동결·독립 검토를 거쳐야 한다. 이 판정은 G2 제품 방향, UI 변경, Slice 5를 허가하지 않는다.
+
+PACKET CHECKS:
+- reuse-eight: PASS — 8/8의 서지·17축·Theme·Art exact refs와 candidate parity를 전수 확인했고 blocker가 없다.
+- fresh-a: PASS — 31/31의 서지·17축·Theme·Art sheet와 candidate parity를 전수 확인했고 strategy/relationship/foundFamily 경계의 확정 blocker가 없다.
+- fresh-b: REVISE — 31/31 전수 검사에서 `baby-steps`, `capeta`, `yowamushi-pedal` strategy와 `a-brides-story`, `thermae-romae` Art evidence blocker를 확인했다.
+- fresh-c: REVISE — 30/30 전수 검사에서 `ace-of-the-diamond`, `all-rounder-meguru`, `tomorrows-joe`, `shangri-la-frontier` strategy와 Parasyte/GTO/Island/Shangri Art evidence blocker를 확인했다.
+- existing G1 integrity controls: PASS — 기존 50/50을 source와 교차 검사해 `haikyu` 재개방 외 factors/themes drift가 없고, 그 재개방도 요구된 단일 변경이다.
+- haikyu.relationshipStructure: PASS — `known 2`, confidence `0.99`, evidence `ev-g1c-haikyu`; 고정 팀·두 주인공+핵심 조연은 2라는 사전 경계와 일치한다.
+
+BLOCKERS:
+- baby-steps.strategy: 4 -> 2 — `annotation-guide.md` 경계는 경기·시험 수읽기와 단기 계획을 2로 고정한다. `ev-g2-fresh-b-annotation-baby-steps`의 기록·분석 기반 테니스 학습/훈련은 장기 계획·전쟁·정치·자원 운영 중심 4의 근거가 아니다.
+- capeta.strategy: 3 -> 2 — `ev-g2-fresh-b-annotation-capeta`의 카트 제작·주행 숙련·레이스 대응은 경기 전술/훈련이며 장기 운영이 반복 보상이라는 근거가 없다.
+- yowamushi-pedal.strategy: 3 -> 2 — `ev-g2-fresh-b-annotation-yowamushi-pedal`의 자전거 입문·장거리 주행 숙련·경쟁은 스포츠 전술 경계 2다.
+- ace-of-the-diamond.strategy: 3 -> 2 — `ev-g2-fresh-c-annotation-ace-of-the-diamond`의 투수 기술·팀 경쟁·대회는 경기 단위 수읽기/전술이며 사전의 2 경계다.
+- all-rounder-meguru.strategy: 3 -> 2 — `ev-g2-fresh-c-annotation-all-rounder-meguru`가 명시한 기술 수련·실전 전술은 사전에서 정확히 2인 범위다.
+- tomorrows-joe.strategy: 3 -> 2 — `ev-g2-fresh-c-annotation-tomorrows-joe`의 복싱 수련·대결은 장기 운영이 아니라 경기 전술 범위다.
+- shangri-la-frontier.strategy: 3 -> 2 — `ev-g2-fresh-c-annotation-shangri-la-frontier`의 게임 규칙 분석·빌드·보스 공략은 에피소드/게임 단위 책략이라는 사전의 2 경계다.
+- a-brides-story.{artRealism,artDensity,visualSoftness}: known 4/4/2 -> unknown (유효한 같은 판본 내부 page 1장을 추가 확보하면 값 유지 가능) — BOOK WALKER manifest p5,p7,p9,p11,p13,p15,p17 중 p5는 frontispiece, p7은 명시적 chapter title이라 제외 후 p9,p11,p13,p15,p17의 5 refs만 남는다.
+- thermae-romae.artEvidence: refs p5,p7,p9,p11,p13,p15,p17; sampleCount 7 -> refs p7,p9,p11,p13,p15,p17; sampleCount 6 — BOOK WALKER p5는 `第1話` title page이고 p7 이후 여섯 장은 직접 확인한 일반 내부 서사면이라 4/4/1 값은 유지 가능하다.
+- parasyte.artEvidence: refs p11,p15,p23,p31,p39,p47 -> p15,p19,p23,p31,p39,p47 — Omoi p11은 `CHAPTER 1: INVASION` title splash다. 같은 licensed chapter replacement sheet `/tmp/konocomics-cycle4-art/fresh-c/parasyte-replacement.png`(SHA `adf99380eb338bb87579007780c86f980f4d388de4aef43cce6ffb3a2338a79f`)의 여섯 일반 내부면을 직접 확인해 3/3/1은 유지 가능하다.
+- gto.artEvidence: refs p9,p21,p32,p44,p55,p67 -> p13,p21,p32,p44,p55,p67 — Omoi p9은 `Lesson 1` title splash다. replacement sheet SHA `e3c2f077d35452b6297f0bf59d2a0dc66fe2b3f78275816554ed73727c210076`의 같은 licensed chapter 여섯 내부면을 직접 확인해 3/4/1은 유지 가능하다.
+- island-in-a-puddle.artEvidence: refs p6,p14,p22,p29,p37,p45 -> p10,p14,p22,p29,p37,p45 — Omoi p6은 `Chapter 1 Hard Rainy Days` title splash다. replacement sheet SHA `7d093334bec4ece784d037742f1b671a72ee5a7e3bf3b671155e76af75447169`의 여섯 내부면을 직접 확인해 2/3/2는 유지 가능하다.
+- shangri-la-frontier.artEvidence: refs p9,p20,p30,p41,p52,p63 -> p9,p20,p34,p41,p52,p63 — Omoi p30은 전면 series/title splash다. replacement sheet SHA `6a8a626818104fa5a762e39871bca0556d66bffbc4ca8918aacab58122d7cd8f`의 여섯 내부면을 직접 확인해 2/3/2는 유지 가능하다.
+
+PROMOTION AUTHORIZATION: NO
+PRODUCT-DIRECTION G2 AUTHORIZATION: NO
+PRODUCT UI CHANGE AUTHORIZATION: NO
+SLICE 5 AUTHORIZATION: NO
+ORACLE EXECUTION STATUS: NOT RUN
