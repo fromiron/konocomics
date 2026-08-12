@@ -1,6 +1,7 @@
 .next
 coverage
 data/generated
+data/staging/g2/candidate-generated
 data/staging/g1/blind-retag/output-a
 data/staging/g1/blind-retag/output-b
 data/staging/g1/original-cohort-freeze.json
