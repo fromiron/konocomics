@@ -1,0 +1,60 @@
+VERDICT: REVISE
+REVIEWER: Grok
+REPOSITORY: konocomics (fromiron/konocomics)
+BRANCH: main
+HEAD: e56f663ea602b09d52d3d1608a4f89bf8b3c3398
+CANDIDATE BUNDLE SHA-256: fce949ff838bdb17f8fdfc8abc037b6dce9a6da54c7f65f08be843ee5236badf
+PREVIOUS RESPONSE/REPORT FILES READ: 0
+DECLARED REPOSITORY FILES CHECKED: 31/31
+REPOSITORY BUNDLE DIGESTS CHECKED: 5/5
+ALL CANDIDATE WORKS CHECKED: 150/150
+NEW WORKS CHECKED: 100/100
+OFFICIAL/PRIMARY WORK SOURCE SETS ACTUALLY OPENED: 100/100
+STATIC ART WORKS WHOSE IMAGES WERE ACTUALLY OPENED: 100/100
+KNOWN MOTION SEQUENCES WHOSE IMAGES WERE ACTUALLY OPENED: 6/6
+LOCAL VISUAL LEDGERS CHECKED: 2/2 | index.csv+known-motion-index.csv hashes matched; replacement sheet hashes matched; declared 11-artifact aggregate digest did not reproduce (809352ab… vs cce31fa6…)
+REOPENED CHECK: haikyu.relationshipStructure
+
+REQUIRED QUESTIONS:
+1. IDENTITY/HASH: PASS — local/origin HEAD=`e56f663…`; GH Actions run `31590978314` / quality job `94095599985` success on that SHA; declared 31 file SHA-256 and 5 repository bundle digests all matched; visual ledger/replacement individual hashes matched.
+2. SCOPE/DISJOINTNESS: PASS — packets 8+31+31+30=100 disjoint; candidate 150/177/154/2550/463/150/1/415/600; roles 30/30/90; intended onboarding 12 across packets; final onboarding 40 / recommendation 150 / libraryOnly 0; new100∩existing50=0; haikyu in existing50 as unreviewed.
+3. BIBLIOGRAPHY: FAIL — opened primary/hanmoto/publisher pages across all 100 new works; hard conflicts include `historie.volumes.releaseDate=2004-10-22` vs Kodansha纸版 2004-10-21; `police-in-a-pod.status=hiatus` vs Kodansha/Morning Part1完結 labeling; `real.title=リアル` vs Shueisha/hanmoto primary product title `REAL`.
+4. GENRE/THEME: FAIL — coherence mostly holds, but `she-loves-to-cook-and-she-loves-to-eat.foundFamily=2` conflicts with romance/sisterhood-GL framing and the simple-romance ≠ foundFamily rule (KADOKAWA primary).
+5. NON-ART: FAIL — Cycle5 strategy7 and relationshipStructure2 all currently `2` and dictionary-plausible; `haikyu.relationshipStructure=2` supported; KEEP fails on `she-loves-to-cook-and-she-loves-to-eat.foundFamily`; `gto` themes school=2+workplace=2 double-count school workplace.
+6. UNKNOWN: PASS — new100 non-Art 1300 cells: no notApplicable misuse on Narrative/Tone; motionImpact known exactly on the six known-motion works, else unknown on the corrected static six; no forced 0/2 substitution found.
+7. ART: FAIL — all 100 static sheets and 6 motion artifacts opened (helper completed remaining 84+6; parent opened first 16 and overlapping set). Failures: `i-think-our-son-is-gay` covers/UI; `accomplishments-of-the-dukes-daughter` title splash; `lovely-muco` title/chapter splash (static+motion same path); `moon-land` title-only page; `initial-d` map/frontmatter. Cycle5 corrected six sheets match declared exact refs and retained values `4/4/2`,`4/4/1`,`3/4/1`,`3/3/1`,`2/3/2`,`2/3/2` with motion unknown.
+8. PROVENANCE: PASS — new100+haikyu `annotationReviewMethod=unreviewed`; existing49 `authorizedModelPanel`; all 415 evidence `reviewedByHuman=false`; model-panel framing honest.
+9. ROLE/ELIGIBILITY/PIPELINE: PASS — reproduced pipeline `v1-5aaf4ddb0325`, 150 works/154 volumes; issues only `UNREVIEWED_ELIGIBILITY` 101 / `AUTHORIZED_MODEL_PANEL_REVIEW` 49 / `EVIDENCE_NOT_HUMAN_REVIEWED` 415.
+10. PROMOTION/BOUNDARY: PASS — this verdict authorizes only catalog-annotation revision needs; does not authorize G2 product-direction GO, human blind-test claims, UI, Slice 5, formula/dictionary changes, or G1-49 reapproval.
+
+PACKET CHECKS:
+- reuse-eight: REVISE — 8/8 reviewed; blocker `lovely-muco` Art splash (static+motion).
+- fresh-a: REVISE — 31/31 reviewed; blockers `i-think-our-son-is-gay` Art, `initial-d` Art, `historie` bibliography date.
+- fresh-b: REVISE — 31/31 reviewed; blockers `moon-land` Art, `accomplishments-of-the-dukes-daughter` Art, `she-loves-to-cook-and-she-loves-to-eat.foundFamily` KEEP/theme.
+- fresh-c: REVISE — 30/30 reviewed; blocker `police-in-a-pod.status`.
+- existing G1 integrity controls: PASS — 50/50 present; 49 authorizedModelPanel unchanged; values not re-promoted; haikyu remains unreviewed reopen target.
+- haikyu.relationshipStructure: PASS — candidate `known/2` (confidence 0.99); fixed club-core cast, not multi-ensemble `4`.
+
+CYCLE 5 CORRECTIONS:
+- strategy 7: PASS — 7/7 currently `2` (baby-steps, capeta, yowamushi-pedal, ace-of-the-diamond, all-rounder-meguru, tomorrows-joe, shangri-la-frontier).
+- relationshipStructure 2: PASS — 2/2 currently `2` (my-next-life-as-a-villainess, rent-a-girlfriend).
+- corrected static Art refs: PASS — 6/6 replacement sheets opened; refs match manifest/request; values/motion unchanged as declared.
+- protected KEEP anchors: REVISE — 9/10 hold; `she-loves-to-cook-and-she-loves-to-eat.foundFamily=2` conflicts with dictionary/request romance rule.
+
+BLOCKERS:
+- i-think-our-son-is-gay.artEvidence: cover/UI sheet (pixiv covers in slots; <6 interiors) -> replace with 6 licensed/official non-cover interiors
+- accomplishments-of-the-dukes-daughter.artEvidence: title splash in turn 2 -> replace turn 2 with non-title interior
+- lovely-muco.artEvidence / motionImpact sample: title/chapter splash pages 8–9 -> replace with non-splash interiors; re-validate motionImpact=2 sequence
+- moon-land.artEvidence: Jump Plus turn 2 title-only 「ムーンランド」 -> replace with interior page
+- initial-d.artEvidence: reader page 10 race-map/frontmatter -> replace with story interior
+- historie.volumes.releaseDate: 2004-10-22 -> 2004-10-21 — https://www.kodansha.co.jp/comic/products/0000030267
+- police-in-a-pod.status: hiatus -> completed (or justify enum against Part1完結 / Part2 caveat) — https://www.kodansha.co.jp/titles/1000031025 ; https://morning.kodansha.co.jp/c/hakozume/
+- real.title: リアル -> REAL — https://www.shueisha.co.jp/books/items/contents.html?isbn=978-4-08-876143-5 ; https://www.hanmoto.com/bd/isbn/9784088761435
+- she-loves-to-cook-and-she-loves-to-eat.foundFamily: 2 -> absent — romance/GL sisterhood ≠ foundFamily; https://www.kadokawa.co.jp/product/322010000636/
+- gto.workplace: 2 -> 1 — school=2 already covers teacher setting; avoid double workplace centrality
+
+PROMOTION AUTHORIZATION: NO
+PRODUCT-DIRECTION G2 AUTHORIZATION: NO
+PRODUCT UI CHANGE AUTHORIZATION: NO
+SLICE 5 AUTHORIZATION: NO
+ORACLE EXECUTION STATUS: NOT RUN

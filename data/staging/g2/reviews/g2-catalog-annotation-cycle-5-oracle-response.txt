@@ -1,0 +1,112 @@
+VERDICT: REVISE
+REVIEWER: GPT-5.6 Pro Oracle
+REPOSITORY: konocomics (fromiron/konocomics)
+BRANCH: main
+HEAD: e56f663ea602b09d52d3d1608a4f89bf8b3c3398
+CANDIDATE BUNDLE SHA-256: fce949ff838bdb17f8fdfc8abc037b6dce9a6da54c7f65f08be843ee5236badf
+PREVIOUS RESPONSE/REPORT FILES READ: 0
+DECLARED REPOSITORY FILES CHECKED: 31/31
+REPOSITORY BUNDLE DIGESTS CHECKED: 0/5
+ALL CANDIDATE WORKS CHECKED: 150/150
+NEW WORKS CHECKED: 100/100
+OFFICIAL/PRIMARY WORK SOURCE SETS ACTUALLY OPENED: 100/100
+STATIC ART WORKS WHOSE IMAGES WERE ACTUALLY OPENED: 100/100
+KNOWN MOTION SEQUENCES WHOSE IMAGES WERE ACTUALLY OPENED: 6/6
+LOCAL VISUAL LEDGERS CHECKED: 2/2 | inaccessible-not-claimed | 첨부 WebP transport derivative 100개와 motion artifact 6개를 개별적으로 열고 두 ledger와 대조했으며, Oracle에서 접근할 수 없는 canonical /tmp PNG의 내용 검사는 주장하지 않고 canonical SHA ledger는 identity에만 사용했다
+REOPENED CHECK: haikyu.relationshipStructure
+
+REQUIRED QUESTIONS:
+
+IDENTITY/HASH: FAIL — GitHub main, exact commit, Actions run 31590978314, quality job 94095599985가 지정 HEAD와 성공 상태임을 직접 확인했고, 첨부 transport ZIP의 SHA-256 a6b85fc6b87956c129395e63c7afa598f0b47052f82f6a278e22f0f0ac98e2d3도 일치했다. 그러나 31개 repository 파일은 내용을 열어 검사했을 뿐 개별 SHA-256을 독립 재계산하지 못했고, 다섯 repository bundle digest도 0/5이므로 hash-bound identity는 완료되지 않았다.
+
+SCOPE/DISJOINTNESS: PASS — 150개 고유 Work, 새 packet 8/31/31/30, 새 100개와 기존 50개 사이 중복 없음, 154 Volume, 전체 역할 Anchor/Bridge/Discovery 30/30/90, 새 작품 역할 12/10/78, 최종 의도 eligibility 40/150/0을 works·volumes·recommendation-context·intended-eligibility에서 교차 확인했다.
+
+g2-catalog-annotation-cycle-5-r…
+
+BIBLIOGRAPHY: PASS — 새 100작품 모두에서 공식·1차 source set을 실제로 열고 일본어 작품 identity, creator, publisher·게재 계열, status/year 및 대표 일본어 1권 ISBN·판본을 candidate rows와 대조했다. 마지막 미확인 집합이었던 homunculus, saturn-apartments, moon-land, knights-of-sidonia, origin, the-heroic-legend-of-arslan도 각각 권리자·출판사 source에서 확인했고 candidate ISBN과 일치했다.
+講談社
++5
+ビッグコミックブロス
++5
+小学館コミック
++5
+
+GENRE/THEME: PASS — 150작품의 Genre 일관성과 새 100작품의 Theme/centrality를 작품별 초반 narrative, 공식 synopsis 및 factor dictionary 경계에 대조했다. 463 Theme 행에서 필수 수정 충돌이나 기존 50작품으로부터의 명백한 기준 오염은 발견하지 않았다.
+
+NON-ART: PASS — 새 100작품의 작품별 13축, 합계 1300 non-Art 셀을 packet narrative와 factor 행으로 확인했다. strategy 7건은 모두 2, relationshipStructure 2건은 모두 2, 보호 KEEP 10건과 haikyu.relationshipStructure=2도 현재 dictionary의 전술·장기책략 및 고정 핵심망·복잡 군상망 경계에 부합했다.
+
+g2-catalog-annotation-cycle-5-r… +1
+
+UNKNOWN: PASS — 정지면만 있는 새 94작품의 motionImpact=unknown을 수치화하지 않았고, 알려진 6작품만 연속 page/panel sequence로 수치화했다. 확인 가능한 부재를 unknown으로 숨기거나 근거 부족을 0, 2, notApplicable로 대체한 필수 수정 항목은 발견하지 않았다.
+
+ART: FAIL — static sheet 100/100과 known-motion sequence 6/6을 ledger 문자열과 별개로 실제로 열었다. known motion은 chis-sweet-adventures=2, lovely-muco=2, penguin-and-house=2, fire-force=4, inuyasha=4, yowamushi-pedal=4의 연속 sequence를 지지했고, Cycle 5 교체 6작품도 수정된 exact refs와 현재 값을 지지했다. 그러나 i-think-our-son-is-gay, accomplishments-of-the-dukes-daughter, arte, chi-on-the-movements-of-the-earth, isabella-bird-in-wonderland, lovely-muco, requiem-of-the-rose-king에는 cropped webpage, chapter-title/opening splash 또는 frontispiece가 포함되어 “판독 가능한 서로 다른 내부 페이지 정확히 6장” 최소선을 충족하지 않는다. Ledger의 PASS와 실제 이미지가 충돌한다.
+
+g2-catalog-annotation-cycle-5-r…
+
+PROVENANCE: PASS — 새 100작품과 reopened haikyu는 unreviewed, 기존 G1 49작품만 authorizedModelPanel이며, 415 evidence의 reviewedByHuman=false가 유지된다. narrative와 manifest도 model draft·pending panel 한계 및 승인 전 eligibility 불가를 명시하여 사람 검수로 오인시키지 않는다.
+
+ROLE/ELIGIBILITY/PIPELINE: FAIL — 정적 데이터 교차검사로 30/30/90, 40/150/0, 100개 새 작품과 haikyu의 unreviewed 101개, 기존 authorized 49개, evidence 415개를 확인했고 generic Art gate의 pair·sample·context·motion·provenance 검사를 읽었다. 다만 exact-head quality job은 현재 production data/source의 50작품 catalog를 검증·빌드했으며, 동결 요청의 150작품 candidate-source pipeline 명령은 CI에서 실행되지 않았다. Oracle 환경에서도 그 명령을 독립 재현하지 못했으므로 v1-5aaf4ddb0325 및 101/49/415 실행 결과를 PASS로 승격할 수 없다.
+
+PROMOTION/BOUNDARY: PASS — 수정 후 허가 가능한 범위는 새 100작품과 haikyu의 Catalog annotation review metadata를 최소 변환하는 것뿐이다. 이 판정은 G2 제품 방향, 사람 10명 테스트, synthetic pilot 결과 대체, data/source, 제품 UI, 추천 산식·factor dictionary·threshold, Slice 5를 허가하지 않는다.
+
+g2-catalog-annotation-cycle-5-r… +1
+
+PACKET CHECKS:
+
+reuse-eight: REVISE — 8/8 작품·source·factor·Theme·Art를 검사했으나 lovely-muco의 static six-page set에 title-only splash인 reader p8이 포함된다. Motion p12 panels 3–7의 motionImpact=2는 별도로 유효하다.
+Kodansha
+
+fresh-a: REVISE — 31/31을 검사했으나 i-think-our-son-is-gay, chi-on-the-movements-of-the-earth, requiem-of-the-rose-king의 static evidence가 각각 cropped webpage capture, opening/title splash, chapter-title·frontispiece를 포함한다.
+
+fresh-b: REVISE — 31/31을 검사했으나 accomplishments-of-the-dukes-daughter, arte, isabella-bird-in-wonderland의 static evidence가 각각 credited/logo frontispiece, 第1話 弟子入り志願 chapter opening, 第1話 横浜 chapter opening을 포함한다.
+コマコミZenon
++1
+
+fresh-c: PASS — 30/30 bibliography·Genre/Theme·13축·static Art를 검사했다. Cycle 5에서 교체된 gto, parasyte, island-in-a-puddle, shangri-la-frontier refs도 실제 이미지와 일치했고 추가 수정 필수 항목을 발견하지 않았다.
+
+existing G1 integrity controls: PASS — 50/50을 새 100작품과 교차 확인했다. 기존 승인 49작품의 annotation 값·G1 reference·review method를 재승인하거나 변경하지 않았고, haikyu만 지정된 reopened target으로 분리되어 있다.
+
+haikyu.relationshipStructure: PASS — 현재값 2는 초반부 히나타 중심의 반복 고정 팀·라이벌 핵심망에 맞으며, 복잡한 다중 군상 축 4로 올릴 근거가 없다.
+
+CYCLE 5 CORRECTIONS:
+
+strategy 7: PASS — baby-steps, capeta, yowamushi-pedal, ace-of-the-diamond, all-rounder-meguru, tomorrows-joe, shangri-la-frontier 모두 2; 경기·에피소드 단위 전술/수읽기 경계에 맞는다. 7/7.
+
+relationshipStructure 2: PASS — my-next-life-as-a-villainess=2, rent-a-girlfriend=2; 두 작품 모두 주인공 중심의 반복 고정 핵심 관계망이다. 2/2.
+
+corrected static Art refs: PASS — a-brides-story, thermae-romae, gto, parasyte, island-in-a-puddle, shangri-la-frontier의 교체 sheet를 실제로 열어 6개 고유 내부 페이지, 2개 이상 맥락, edition·identity·exact ref 및 유지 값을 확인했다. 6/6.
+
+g2-catalog-annotation-cycle-5-r…
+
+protected KEEP anchors: PASS — giant-killing.strategy=4, the-full-time-wife-escapist.strategy=3, real.relationshipStructure=4, tokyo-tarareba-girls.relationshipStructure=4, 두 foundFamily =2, showa-genroku-rakugo-shinju.foundFamily=1, the-golden-sheep.relationshipStructure=4, my-home-hero.revenge=1, haikyu.relationshipStructure=2를 각각 직접 재검사했다. 10/10.
+
+BLOCKERS:
+
+repository.hashAttestation: repository content 31/31 opened, individual SHA-256 0/31 and bundle digests 0/5 independently recomputed -> declared SHA-256 31/31과 repository bundle 5/5를 exact HEAD bytes에서 재계산 — 동결 요청 §6의 hash-bound identity
+
+candidatePipeline.execution: not independently reproduced -> exact HEAD에서 동결된 runCatalogPipeline("data/staging/g2/candidate-source") 명령을 실행해 v1-5aaf4ddb0325, works 150, volumes 154, UNREVIEWED_ELIGIBILITY=101, AUTHORIZED_MODEL_PANEL_REVIEW=49, EVIDENCE_NOT_HUMAN_REVIEWED=415, other errors 0을 확인 — 동결 요청 §7
+
+i-think-our-son-is-gay.artEvidence: 1/1/3, refs 74681640 p0–p3; 74791760 p0–p1 -> 판독 가능한 서로 다른 내부 페이지 6장으로 전부 교체 후 재검토, 불가능하면 세 static axis를 unknown — 실제 sheet가 FAIL로 표시되고 여섯 칸이 브라우저 UI·blank margin이 포함된 cropped Pixiv webpage capture다.
+スクウェア・エニックス マガジン＆ブックス
+
+accomplishments-of-the-dukes-daughter.artEvidence: 1/2/3, KadoComi turn 2 포함 -> turn 2를 유효한 내부 서사 페이지로 교체 후 재검토, 불가능하면 세 static axis를 unknown — 해당 이미지는 logo·credit가 있는 전면 character frontispiece다
+
+arte.artEvidence: 3/4/2, Comic Zenon turn 1 포함 -> turn 1을 유효한 내부 서사 페이지로 교체 후 재검토, 불가능하면 세 static axis를 unknown — 第1話 弟子入り志願이 표시된 chapter-opening illustration이다.
+コマコミZenon
+
+chi-on-the-movements-of-the-earth.artEvidence: 3/3/1, Shogakukan p6 포함 -> p6을 유효한 내부 서사 페이지로 교체 후 재검토, 불가능하면 세 static axis를 unknown — 큰 setting text가 중심인 opening/title splash다
+
+isabella-bird-in-wonderland.artEvidence: 3/3/2, KadoComi turn 1 포함 -> turn 1을 유효한 내부 서사 페이지로 교체 후 재검토, 불가능하면 세 static axis를 unknown — 第1話 横浜이 표시된 chapter-opening page다.
+KADOKAWAオフィシャルサイト
+
+lovely-muco.artEvidence: static 0/1/3, reader p8 포함 -> p8을 유효한 내부 서사 페이지로 교체 후 static axes만 재검토, 불가능하면 세 static axis를 unknown — p8은 Muuuuuuuco! title-only splash다; p12 panels 3–7의 motionImpact=2는 유지 가능하다.
+Kodansha
+
+requiem-of-the-rose-king.artEvidence: 3/4/2, Akita p6·p7 포함 -> 두 refs를 유효한 내부 서사 페이지로 교체 후 재검토, 불가능하면 세 static axis를 unknown — p6은 1話 chapter-title page, p7은 전면 character portrait/frontispiece다.
+秋田書店
+
+PROMOTION AUTHORIZATION: NO
+PRODUCT-DIRECTION G2 AUTHORIZATION: NO
+PRODUCT UI CHANGE AUTHORIZATION: NO
+SLICE 5 AUTHORIZATION: NO
+ORACLE EXECUTION STATUS: RUN AFTER EXPLICIT USER RESUMPTION

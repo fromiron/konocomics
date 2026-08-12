@@ -1,0 +1,56 @@
+VERDICT: REVISE
+REVIEWER: Local
+REPOSITORY: konocomics (fromiron/konocomics)
+BRANCH: main
+HEAD: e56f663ea602b09d52d3d1608a4f89bf8b3c3398
+CANDIDATE BUNDLE SHA-256: fce949ff838bdb17f8fdfc8abc037b6dce9a6da54c7f65f08be843ee5236badf
+PREVIOUS RESPONSE/REPORT FILES READ: 0
+DECLARED REPOSITORY FILES CHECKED: 31/31
+REPOSITORY BUNDLE DIGESTS CHECKED: 5/5
+ALL CANDIDATE WORKS CHECKED: 150/150
+NEW WORKS CHECKED: 100/100
+OFFICIAL/PRIMARY WORK SOURCE SETS ACTUALLY OPENED: 100/100
+STATIC ART WORKS WHOSE IMAGES WERE ACTUALLY OPENED: 100/100
+KNOWN MOTION SEQUENCES WHOSE IMAGES WERE ACTUALLY OPENED: 6/6
+LOCAL VISUAL LEDGERS CHECKED: 2/2
+REOPENED CHECK: haikyu.relationshipStructure
+
+REQUIRED QUESTIONS:
+1. IDENTITY/HASH: PASS — local main, HEAD, and origin/main were all e56f663ea602b09d52d3d1608a4f89bf8b3c3398; exact-head run 31590978314 job 94095599985 concluded success; the frozen request SHA-256 was 39066eef87f659ef8cec96182a8787462c6c79f5edf62c65abd32c32cf4283e1; 31/31 declared repository hashes, 5/5 repository bundle digests, five local ledger hashes, the sorted 11-artifact bundle digest, and 6/6 replacement hashes matched.
+2. SCOPE/DISJOINTNESS: PASS — reuse 8 + fresh-a 31 + fresh-b 31 + fresh-c 30 formed 100 unique new Work IDs with no packet overlap or overlap with the 50 controls; the 150-work candidate had 150/177/154 Work/Alias/Volume rows, 2550 Factor rows, 463 Theme rows, 150 recommendation-context rows, one config row, 415 evidence rows, and 600 Art-manifest rows.
+3. BIBLIOGRAPHY: FAIL — for every new work I opened both its official Japanese-publisher bibliography page and its official/licensed annotation or early-content source (100/100 source sets); the 100 representative editions were standard Japanese Volume 1 with valid ISBN-13, but the candidate marks welcome-to-the-ballroom completed while the current official Monthly Shonen Magazine title page and ongoing-series lineup say it is serialized there.
+4. GENRE/THEME: PASS — all 150 works were checked for cross-catalog coherence; all 231 new Genre assignments across 100/100 works and all 263 new Theme assignments (centrality 1=66, 2=197) were checked against the opened sources and dictionary, with no definite Genre/Theme blocker.
+5. NON-ART: FAIL — all 1300/1300 new non-Art cells were checked; the Cycle 5 strategy corrections passed 7/7, relationshipStructure corrections passed 2/2, protected KEEP values passed 10/10, and reopened haikyu.relationshipStructure=2 passed, but i-think-our-son-is-gay and my-brothers-husband each use relationshipStructure=3 for an official-source fixed family core that the SSOT maps to 2.
+6. UNKNOWN: FAIL — the current 100-work state split is 1606 known and 94 unknown, with motion correctly limited to 6 known and 94 unknown; however, nine known static-Art cells across i-think-our-son-is-gay, requiem-of-the-rose-king, and blue-period lack the required six admissible exact refs and must remain unknown unless compliant replacement evidence is supplied and reviewed.
+7. ART: FAIL — I actually opened all 100/100 canonical six-page sheets at full image resolution, both local ledgers, all six Cycle 5 replacement sheets, and all 6/6 known-motion sequences. The replacements passed 6/6 and motion values 2/2/2/4/4/4 passed 6/6, but only 97/100 static sets were admissible: i-think-our-son-is-gay contains Pixiv UI/blank/partial captures and cover material, requiem-of-the-rose-king includes a part-opening title splash at p6, and blue-period includes a title/intro frontispiece at the first ref.
+8. PROVENANCE: PASS — the 100 new works have exactly 300 evidence rows (three per work), all 415/415 candidate evidence rows keep reviewedByHuman=false, and all 400 new Art-manifest rows remain modelObservedPendingPanel; the files consistently describe model draft evidence rather than human review.
+9. ROLE/ELIGIBILITY/PIPELINE: PASS — candidate roles were Anchor 30 / Bridge 30 / Discovery 90 and final intended eligibility was onboarding 40 / recommendation 150 / libraryOnly 0; the reproduced pipeline returned v1-5aaf4ddb0325, 150 works, 154 volumes, exactly 101 UNREVIEWED_ELIGIBILITY errors, 49 AUTHORIZED_MODEL_PANEL_REVIEW warnings, and 415 EVIDENCE_NOT_HUMAN_REVIEWED warnings with no other issue.
+10. PROMOTION/BOUNDARY: FAIL — the six blockers below prevent a value-free minimal promotion, so Catalog promotion is not authorized; this review does not authorize Taste Engine product-direction G2, a claim about ten-person blind testing, data/source promotion, product UI work, or Slice 5.
+
+PACKET CHECKS:
+- reuse-eight: PASS — 8/8 works, official source sets, 104 non-Art cells, Genres/Themes, bibliography, eligibility, evidence, static Art, and applicable motion were checked without a definite blocker.
+- fresh-a: REVISE — 31/31 works were checked; 28 were clear, while welcome-to-the-ballroom has a status blocker, i-think-our-son-is-gay has relationshipStructure and static-Art blockers, and requiem-of-the-rose-king has a static-Art blocker.
+- fresh-b: REVISE — 31/31 works were checked; 29 were clear, while my-brothers-husband has a relationshipStructure blocker and blue-period has a static-Art blocker.
+- fresh-c: PASS — 30/30 works, official source sets, 390 non-Art cells, Genres/Themes, bibliography, eligibility, evidence, static Art, and applicable motion were checked without a definite blocker.
+- existing G1 integrity controls: PASS — 50/50 controls matched the current source across aliases 75, volumes 54, themes 200, recommendation context 50, config 1, evidence 115, and Art manifest 200; the only intended differences were the Haikyu review reopening and relationshipStructure 4 -> 2.
+- haikyu.relationshipStructure: PASS — the official Shueisha Volume 1 source and the fixed team/core-supporting-cast SSOT boundary support 2, not a complex multi-axis ensemble 4.
+
+CYCLE 5 CORRECTIONS:
+- strategy 7: PASS — 7/7 corrected values are 2 and match episode/match-level tactics rather than long-horizon complex operation.
+- relationshipStructure 2: PASS — 2/2 corrected values for my-next-life-as-a-villainess and rent-a-girlfriend are 2 and match their fixed early core networks.
+- corrected static Art refs: PASS — 6/6 replacement sheets for a-brides-story, thermae-romae, gto, parasyte, island-in-a-puddle, and shangri-la-frontier were actually opened; each supplies six distinct readable non-cover internal pages across at least two contexts and supports the retained values.
+- protected KEEP anchors: PASS — 10/10 listed values were independently checked against current official/authorized sources and the factor dictionary, including the separately reopened Haikyu value.
+
+BLOCKERS:
+- welcome-to-the-ballroom.status: completed -> ongoing — the current official Monthly Shonen Magazine page says 月刊少年マガジンで連載中 and the title remains in its ongoing lineup: https://gmaga.co/c/ballroomheyoukoso/ and https://gmaga.co/getsumaga/lineup.html
+- i-think-our-son-is-gay.relationshipStructure: 3 -> 2 — the official Square Enix Volume 1 description identifies a mother and her two sons and calls it a family story; this is a fixed core under the dictionary/annotation-guide boundary: https://magazine.jp.square-enix.com/top/comics/detail/9784757562332/
+- my-brothers-husband.relationshipStructure: 3 -> 2 — the official Futabasha series page identifies the repeating core as Yaichi, Kana, and Mike, with Volume 3 explicitly describing the three spending their days together; fixed core maps to 2: https://www.futabasha.co.jp/introduction/otto/
+- i-think-our-son-is-gay.artRealism/artDensity/visualSoftness: known 1/1/3 -> unknown/unknown/unknown pending compliant replacement refs — the canonical exact-six sheet /tmp/konocomics-cycle4-art/fresh-a/i-think-our-son-is-gay.png is headed FAIL and shows Pixiv webpage UI, large blank areas, clipped partial manga, and cover material rather than six readable non-cover internal pages for manifest refs 74681640 p0-p3 and 74791760 p0-p1: https://www.pixiv.net/artworks/74681640
+- requiem-of-the-rose-king.artRealism/artDensity/visualSoftness: known 3/4/2 -> unknown/unknown/unknown pending a compliant sixth ref — Akita Shoten reader p6 visibly carries 第1部 and is a decorative part-opening/title splash, expressly excluded from the exact-six set; the remaining five refs do not satisfy the gate: https://arc.akitashoten.co.jp/comics/bara/1
+- blue-period.artRealism/artDensity/visualSoftness: known 2/3/3 -> unknown/unknown/unknown pending a compliant sixth ref — Kodansha reader state after 2 left turns is a color portrait/title-card and hand-art intro/frontispiece composition rather than a narrative internal page, expressly excluded from the exact-six set: https://www.kodansha.co.jp/comic/products/0000052420/trial
+
+PROMOTION AUTHORIZATION: NO
+PRODUCT-DIRECTION G2 AUTHORIZATION: NO
+PRODUCT UI CHANGE AUTHORIZATION: NO
+SLICE 5 AUTHORIZATION: NO
+ORACLE EXECUTION STATUS: NOT RUN
