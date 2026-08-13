@@ -19,12 +19,12 @@
 ## 실제 control flow
 
 1. `harness/out`을 localhost 정적 서버로 제공했다.
-2. `browser/run.mjs`가 새 Chrome context에서 `/synthetic-pilot/`을 열었다.
+2. 실제 실행 경로 `/tmp/konocomics-g2-pilot.fjIE7t/run-browser-pilot.mjs`가 새 Chrome context에서 `/synthetic-pilot/`을 열었다. 이 실행본은 보존된 `browser/run.mjs`와 byte-identical하다.
 3. `input[type=text]`에 가명 participant ID를 `fill`하고 `input[type=file]`에 `input/pilot-browser-one-profile.json`을 `setInputFiles`했다.
 4. pre 단계에서 실제 radio input을 `check`하고 submit button을 `click`했다.
 5. after 단계에서 실제 radio input을 `check`하고 final submit button을 `click`했다.
 6. complete 단계에서 브라우저 `download` event를 기다린 뒤 결과 버튼을 `click`하고 원본 JSON을 `output/konocomics-g2-pilot-browser-one.json`으로 저장했다.
-7. 다운로드 원본을 편집하지 않고 `pnpm --silent g2:aggregate -r <result> -o <report>`에 두 번 입력했다.
+7. 다운로드 원본을 편집하지 않고 `TEMP=/tmp TMP=/tmp TMPDIR=/tmp pnpm --silent g2:aggregate -r <result> -o <report>`에 두 번 입력했다. 브라우저 실행도 같은 `/tmp` 환경 접두사를 사용해 WSL의 Windows TEMP socket `ENOTSUP` 경계를 피했다.
 
 React state 주입, `checked` 직접 대입, test-only route, 결과 JSON 손편집, browser storage, 외부 network는 사용하지 않았다. `page.evaluate`는 DOM·attribute·storage를 읽는 blinding audit에만 사용했다.
 
