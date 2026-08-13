@@ -51,6 +51,6 @@ React state 주입, `checked` 직접 대입, test-only route, 결과 JSON 손편
 - Both checkpoints had no engine mapping, score, confidence, best-anchor, contribution metadata, penalty, market snapshot, maturity, catalog role, download control, query/hash, JSON-LD, cookie, local/session storage, CacheStorage, or IndexedDB entry.
 - Engine mapping appeared only in the complete-stage debrief.
 - All application document, JavaScript, and stylesheet requests succeeded from localhost. The static server logged one non-blocking `favicon.ico` `404`; no application asset or data request failed.
-- `browser/evidence.json` is the structured interaction/readback record, and `browser/static-server.log` is the isolated one-run server ledger.
+- `browser/evidence.json` is the structured interaction/readback record, and `browser/static-server.txt` is the isolated one-run server ledger.
 
 `output/aggregate-1.md` and `output/aggregate-2.md` are intentionally duplicated to prove deterministic bytes. The final product-direction evidence bundle may retain both or retain one plus their equality assertion, but neither may be represented as a human GO report.
