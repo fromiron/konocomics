@@ -65,6 +65,7 @@ export const explanationLexicon = {
   templates: {
     positiveWithAnchor: "『{anchorTitle}』で好きだった「{factorLabel}」に近い作品です。",
     positiveWithoutAnchor: "「{factorLabel}」があなたの好みに合う作品です。",
+    positiveLowerAxisAdjustment: "「{factorLabel}」が控えめな点が、あなたの好みに合う作品です。",
     cautionSimilarityWithAnchor:
       "ただし「{factorLabel}」は、『{anchorTitle}』で好きだった傾向と少し異なります。",
     cautionSimilarityWithoutAnchor: "ただし「{factorLabel}」は、あなたの好みと少し異なります。",

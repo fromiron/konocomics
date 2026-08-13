@@ -103,6 +103,19 @@ describe("explicit adjustment", () => {
       ["adventure", 0.06],
       ["combat", 0.015],
     ]);
+    expect(
+      result.rawEntries.map(({ axisPreferenceDirection, factorId }) => [
+        factorId,
+        axisPreferenceDirection,
+      ]),
+    ).toEqual([
+      ["progression", "higher"],
+      ["strategy", "higher"],
+      ["pacing", "higher"],
+      ["worldBuilding", "higher"],
+      ["adventure", undefined],
+      ["combat", undefined],
+    ]);
     expect(result.clampEntry).toMatchObject({
       source: "clamp",
       group: "overall",
@@ -117,6 +130,40 @@ describe("explicit adjustment", () => {
         factorId: "school",
         value: -0.1,
         anchorWorkIds: [],
+        explainable: true,
+      },
+    ]);
+  });
+
+  it("records the lower preference direction for positive low-Axis adjustments", () => {
+    const work = createTestWork({
+      axes: createTestAxes({
+        comedy: { state: "known", value: 0, confidence: 1 },
+        darkness: { state: "known", value: 1, confidence: 1 },
+      }),
+    });
+    const result = calculateExplicitAdjustment(
+      work,
+      createTestAdjustments({ axes: { comedy: "less", darkness: "less" } }),
+    );
+
+    expect(result.rawEntries).toEqual([
+      {
+        source: "adjustment",
+        group: "tone",
+        factorId: "comedy",
+        value: 0.06,
+        anchorWorkIds: [],
+        axisPreferenceDirection: "lower",
+        explainable: true,
+      },
+      {
+        source: "adjustment",
+        group: "tone",
+        factorId: "darkness",
+        value: 0.03,
+        anchorWorkIds: [],
+        axisPreferenceDirection: "lower",
         explainable: true,
       },
     ]);

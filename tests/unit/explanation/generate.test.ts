@@ -52,6 +52,7 @@ function tasteIdentityExists(
       entry.group === sentence.group &&
       entry.factorId === sentence.factorId &&
       entry.value === sentence.value &&
+      entry.axisPreferenceDirection === sentence.axisPreferenceDirection &&
       entry.negativeReasonId === sentence.negativeReasonId &&
       entry.anchorWorkIds.length === sentence.anchorWorkIds.length &&
       entry.anchorWorkIds.every((workId, index) => workId === sentence.anchorWorkIds[index]),
@@ -174,6 +175,7 @@ describe("Taste explanations", () => {
         factorId: "motionImpact",
         value: 0.5,
         anchorWorkIds: ["not-a-rendered-anchor"],
+        axisPreferenceDirection: "higher",
       }),
       tasteContribution({
         group: "tone",
@@ -259,6 +261,60 @@ describe("Taste explanations", () => {
     expect(result.positiveReasons[0]?.text).toBe("「冒険」があなたの好みに合う作品です。");
     expect(result.caution?.factorId).toBe("darkness");
     expect(result.caution?.text).toBe("ただし「物語の重さ」は、あなたの好みと少し異なります。");
+  });
+
+  it("states that a low Axis matches an explicit lower preference", () => {
+    const contributions = [
+      tasteContribution({
+        source: "adjustment",
+        group: "tone",
+        factorId: "comedy",
+        value: 0.06,
+        anchorWorkIds: [],
+        axisPreferenceDirection: "lower",
+      }),
+    ];
+
+    const result = generateTasteExplanation({
+      contributions,
+      confidenceLevel: "normal",
+      lexicon: strings.explanation,
+      resolveTitle: () => undefined,
+    });
+
+    expect(result.positiveReasons).toEqual([
+      {
+        kind: "positive",
+        text: "「ギャグ・コメディ」が控えめな点が、あなたの好みに合う作品です。",
+        source: "adjustment",
+        group: "tone",
+        factorId: "comedy",
+        value: 0.06,
+        anchorWorkIds: [],
+        axisPreferenceDirection: "lower",
+      },
+    ]);
+    expect(tasteIdentityExists(result.positiveReasons[0]!, contributions)).toBe(true);
+  });
+
+  it("fails closed when an Axis adjustment loses its preference direction", () => {
+    const result = generateTasteExplanation({
+      contributions: [
+        tasteContribution({
+          source: "adjustment",
+          group: "tone",
+          factorId: "comedy",
+          value: 0.06,
+          anchorWorkIds: [],
+        }),
+      ],
+      confidenceLevel: "normal",
+      lexicon: strings.explanation,
+      resolveTitle: () => undefined,
+    });
+
+    expect(result.positiveReasons).toEqual([]);
+    expect(result.anchors).toEqual([]);
   });
 
   it("interpolates original template tokens once without interpreting injected tokens", () => {

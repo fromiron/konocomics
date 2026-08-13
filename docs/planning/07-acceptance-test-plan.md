@@ -28,7 +28,7 @@
 12. market tie-break: tasteScore 차 0.025 경계의 양쪽 동작. 정책 미선택 시 maturity가 순위를 뒤집지 않는다.
 13. 리스트 제약: 동일 best Anchor ≤4, 동일 Theme 조합 ≤3, 동일 시리즈 ≤1, Discovery는 top−0.10 이내.
 14. **결정론:** 동일 입력 2회 호출 → 완전 동일 출력(순서 포함).
-15. **설명-기여 일치:** Taste `kind=positive|caution`, Baseline `kind=baseline`의 discriminated 구조화 문장에서 source/group/factor/value/anchor ID가 실제 contribution과 byte-identical하다. positive≤3, caution≤1, group/Cluster당 1개이며 caution은 전역 최대 음수 similarity 하나만 후보가 된다. 근거 Anchor는 렌더링된 similarity/Genre contribution에서만 온다.
+15. **설명-기여 일치:** Taste `kind=positive|caution`, Baseline `kind=baseline`의 discriminated 구조화 문장에서 source/group/factor/value/anchor ID와 optional Axis preference direction이 실제 contribution과 byte-identical하다. positive≤3, caution≤1, group/Cluster당 1개이며 caution은 전역 최대 음수 similarity 하나만 후보가 된다. `less`×낮은 Axis의 양수 contribution은 낮은 정도가 취향과 맞는다는 전용 문장을 쓰고, Axis adjustment의 direction이 빠지면 일반 positive로 추정하지 않는다. 근거 Anchor는 렌더링된 similarity/Genre contribution에서만 온다.
 16. confidence: 산식 값과 반올림 전 값 기준 3단 레이블 경계(0.5 / 0.75). 공개 q12 숫자가 경계로 반올림돼도 레이블은 바뀌지 않는다.
 17. 20작품 골든 스냅샷: 산식 수치 변경 시 순위 변화가 리뷰에 드러난다.
 

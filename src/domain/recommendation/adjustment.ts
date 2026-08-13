@@ -4,7 +4,7 @@ import { ADJUSTMENT_STRENGTHS } from "../profile/constants";
 import type { AdjustmentPreference, ProfileAdjustments } from "../profile/types";
 import { EXPLICIT_ADJUSTMENT_CAP, THEME_SOFT_EXCLUSION_PENALTY } from "./constants";
 import { clamp, roundScore } from "./math";
-import type { GroupContribution } from "./types";
+import type { AxisPreferenceDirection, GroupContribution } from "./types";
 
 const NARRATIVE_AXIS_SET = new Set<AxisId>(NARRATIVE_AXIS_IDS);
 const TONE_AXIS_SET = new Set<AxisId>(TONE_AXIS_IDS);
@@ -43,12 +43,25 @@ function adjustmentStrength(preference: AdjustmentPreference | undefined) {
   return ADJUSTMENT_STRENGTHS[preference];
 }
 
+function axisPreferenceDirection(
+  preference: AdjustmentPreference | undefined,
+): AxisPreferenceDirection | undefined {
+  if (preference === "less") {
+    return "lower";
+  }
+  if (preference === "like" || preference === "veryLike") {
+    return "higher";
+  }
+  return undefined;
+}
+
 function contribution(
   source: GroupContribution["source"],
   group: GroupContribution["group"],
   factorId: string,
   value: number,
   explainable: boolean,
+  direction?: AxisPreferenceDirection,
 ): GroupContribution {
   return {
     source,
@@ -56,6 +69,7 @@ function contribution(
     factorId,
     value: roundScore(value),
     anchorWorkIds: [],
+    ...(direction === undefined ? {} : { axisPreferenceDirection: direction }),
     explainable,
   };
 }
@@ -117,14 +131,24 @@ export function calculateExplicitAdjustment(
   const softExclusionEntries: GroupContribution[] = [];
 
   for (const axisId of AXIS_IDS) {
-    const strength = adjustmentStrength(adjustments.axes[axisId]);
+    const preference = adjustments.axes[axisId];
+    const strength = adjustmentStrength(preference);
     const factor = work.axes[axisId];
     if (strength === undefined || factor.state !== "known") {
       continue;
     }
     const value = calculateAxisAdjustment(factor.value, strength);
     if (value !== 0) {
-      rawEntries.push(contribution("adjustment", axisGroup(axisId), axisId, value, true));
+      rawEntries.push(
+        contribution(
+          "adjustment",
+          axisGroup(axisId),
+          axisId,
+          value,
+          true,
+          axisPreferenceDirection(preference),
+        ),
+      );
     }
   }
 

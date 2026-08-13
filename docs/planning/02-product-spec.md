@@ -326,6 +326,8 @@ themeAdj = has(theme) ? strength * (centrality === 2 ? 1 : 0.5) : 0;
 explicitAdjustment = clamp(sum(axisAdj) + sum(themeAdj), -0.12, +0.12);
 ```
 
+0이 아닌 Axis raw adjustment contribution은 보정 방향을 `axisPreferenceDirection`에 기록한다. `とても好き / 好き`은 `higher`, `控えめに`는 `lower`이며 Theme adjustment에는 이 필드를 두지 않는다. 이 필드는 설명 provenance이며 점수에는 추가 영향을 주지 않는다.
+
 `除外` 처리: Axis는 후보의 해당 값 ≥ 3이면 Hard Exclusion, Theme은 centrality 2이면 Hard Exclusion. Axis 값 0~2에는 soft penalty가 없다. Theme centrality 1은 explicit adjustment clamp 뒤 별도 `softExclusionPenalty=-0.10`이며 reasoned factor penalty cap에 넣지 않는다.
 
 ### 6.7 부정 사유 어휘 (확정 12종 + 외부 사유)
@@ -407,12 +409,14 @@ type RecommendationWorkMarketSignal = {
 - Cluster: `tacticalThinking(problemSolving, strategy, mysteryReveal)` / `relationshipAppeal(characterArcWeight, relationshipStructure)` / `toneLoad(darkness, mentalStress)`.
 - "주의할 차이"는 best Anchor 대비 전역 최대 음(−) similarity 하나만 후보로 삼는다. 해당 후보가 없거나 아래 group/Cluster 경쟁에서 탈락하면 생략한다.
 - 템플릿 기반 일본어 문장. 예: `『{anchorTitle}』で好きだった「{factorLabel}」に近い作品です。` / 차이: `ただし「{factorLabel}」は、あなたの好みと少し異なります。`
+- `axisPreferenceDirection=lower`인 양(+)의 Axis adjustment는 `「{factorLabel}」が控えめな点が、あなたの好みに合う作品です。`로 렌더링한다. 낮은 Axis 값이 `控えめに` 선호와 맞는다는 뜻이며, factor가 많아서 맞는다는 일반 positive 문장으로 바꾸지 않는다.
 - 각 추천 결과는 `contributions[]`(팩터·그룹별 기여값)를 함께 반환하며, 설명은 이 배열에서만 생성한다. 테스트로 강제한다(`07` §2).
 
 선택·렌더링 계약:
 
 - positive 후보는 `explainable=true && value>0`, caution 후보는 best Anchor와의 차이인 `source=similarity && explainable=true && value<0`만이다. factor penalty·soft adjustment·policy를 Anchor 차이 문장으로 바꾸지 않는다.
-- 안정 fallback은 `source → group → factorId → anchorWorkIds.join("\\0") → negativeReasonId` 오름차순이다. 음수 similarity를 `value asc → fallback`으로 정렬한 첫 1개만 global caution 후보로 둔다.
+- Axis adjustment는 `axisPreferenceDirection`이 있어야만 렌더링 후보가 된다. 이 provenance가 빠졌거나 Theme/다른 source에 잘못 붙은 contribution은 일반 positive 문장으로 추정하지 않고 설명 대상에서 제외한다.
+- 안정 fallback은 `source → group → factorId → axisPreferenceDirection → anchorWorkIds.join("\\0") → negativeReasonId` 오름차순이다. 음수 similarity를 `value asc → fallback`으로 정렬한 첫 1개만 global caution 후보로 둔다.
 - 모든 positive와 global caution 하나를 `abs(value) desc → fallback`으로 순회한다. 이미 쓴 group/Cluster는 건너뛰고 positive 최대 3, caution 최대 1을 고른다. caution이 더 강한 positive와 충돌하면 다른 음수로 백필하지 않고 생략한다.
 - 렌더링 가능한 factor는 `ExplanationLexicon.factorLabels`에 정의된 Axis/Genre/Theme뿐이다. Cluster 소속 factor는 cluster label, 나머지는 factor label을 쓰되 구조화 identity에는 원래 factorId를 보존한다.
 - 근거 Anchor는 렌더링된 positive 순서 뒤 caution 순서에서 `source=similarity` contribution의 실제 `anchorWorkIds`만 distinct 1~3개 수집한다. penalty source·미렌더 contribution·제목 미해결 ID는 제외하고, 0개면 bestAnchorId를 보충하지 않은 채 Anchor 구역을 생략한다.
@@ -429,6 +433,7 @@ type StructuredExplanationSentence =
       factorId: string;
       value: number;
       anchorWorkIds: string[];
+      axisPreferenceDirection?: "higher" | "lower";
       negativeReasonId?: NegativeReasonId;
     }
   | {
@@ -442,7 +447,7 @@ type StructuredExplanationSentence =
     };
 ```
 
-각 문장의 `source/group/factorId/value/anchorWorkIds`와 optional negativeReasonId는 선택한 원 contribution identity와 정확히 같아야 한다.
+각 문장의 `source/group/factorId/value/anchorWorkIds`와 optional `axisPreferenceDirection`/`negativeReasonId`는 선택한 원 contribution identity와 정확히 같아야 한다.
 
 Contribution ledger는 `tasteScore`를 완전히 추적한다.
 
@@ -457,6 +462,7 @@ type GroupContribution = {
   factorId: string;
   value: number;
   anchorWorkIds: string[];
+  axisPreferenceDirection?: "higher" | "lower";
   negativeReasonId?: NegativeReasonId;
   explainable: boolean;
 };
@@ -468,8 +474,9 @@ type GroupContribution = {
 - group 고정: Genre/Theme tag=`genre/theme`, Axis=소속 그룹, Theme soft exclusion=`theme`, penalty는 §6.7의 원인 그룹(`tooComplex/vague=overall`), baseline/consensus/policy/clamp=`overall`.
 - reserved factorId: `neutralBaseline`, `consensus`, `adjustmentClamp`, `finalClamp`, `preferCompleted`. penalty는 reason id, 나머지는 실제 factor id다.
 - anchorWorkIds: similarity=[best], consensus=실제 supporter id 정렬, factor penalty=source disliked ids 정렬, vague=max source 1개, 나머지=[]다.
+- axisPreferenceDirection: 0이 아닌 Axis adjustment에서만 §6.6의 `higher/lower`를 기록하며, Theme adjustment와 다른 source에는 없다.
 - 설명 가능: similarity, 0이 아닌 adjustment/soft exclusion, factor-backed penalty만 true. baseline/consensus/vague/policy/clamp는 false다.
-- 내부 계산 후 출력은 소수 12자리로 반올림한다. contribution은 절댓값 내림차순→source/group/factor/anchor ids 오름차순이다. `tasteScore=sum(contribution.value)`가 반올림 허용오차에서 성립한다.
+- 내부 계산 후 출력은 소수 12자리로 반올림한다. contribution은 절댓값 내림차순→source/group/factor/axis preference direction/anchor ids 오름차순이다. `tasteScore=sum(contribution.value)`가 반올림 허용오차에서 성립한다.
 
 ### 6.10 실험 Baseline v1
 

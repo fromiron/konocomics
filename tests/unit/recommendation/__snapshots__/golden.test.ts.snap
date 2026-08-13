@@ -38,6 +38,7 @@ exports[`twenty-work recommendation golden > exposes every ranking and score-led
       },
       {
         "anchorWorkIds": [],
+        "axisPreferenceDirection": "lower",
         "explainable": true,
         "factorId": "darkness",
         "group": "tone",
@@ -66,6 +67,7 @@ exports[`twenty-work recommendation golden > exposes every ranking and score-led
       },
       {
         "anchorWorkIds": [],
+        "axisPreferenceDirection": "higher",
         "explainable": true,
         "factorId": "pacing",
         "group": "narrative",
@@ -287,6 +289,7 @@ exports[`twenty-work recommendation golden > exposes every ranking and score-led
       },
       {
         "anchorWorkIds": [],
+        "axisPreferenceDirection": "lower",
         "explainable": true,
         "factorId": "darkness",
         "group": "tone",
@@ -325,6 +328,7 @@ exports[`twenty-work recommendation golden > exposes every ranking and score-led
       },
       {
         "anchorWorkIds": [],
+        "axisPreferenceDirection": "higher",
         "explainable": true,
         "factorId": "pacing",
         "group": "narrative",
@@ -536,6 +540,7 @@ exports[`twenty-work recommendation golden > exposes every ranking and score-led
       },
       {
         "anchorWorkIds": [],
+        "axisPreferenceDirection": "lower",
         "explainable": true,
         "factorId": "darkness",
         "group": "tone",
@@ -592,6 +597,7 @@ exports[`twenty-work recommendation golden > exposes every ranking and score-led
       },
       {
         "anchorWorkIds": [],
+        "axisPreferenceDirection": "higher",
         "explainable": true,
         "factorId": "pacing",
         "group": "narrative",
@@ -813,6 +819,7 @@ exports[`twenty-work recommendation golden > exposes every ranking and score-led
       },
       {
         "anchorWorkIds": [],
+        "axisPreferenceDirection": "higher",
         "explainable": true,
         "factorId": "pacing",
         "group": "narrative",
@@ -821,6 +828,7 @@ exports[`twenty-work recommendation golden > exposes every ranking and score-led
       },
       {
         "anchorWorkIds": [],
+        "axisPreferenceDirection": "lower",
         "explainable": true,
         "factorId": "darkness",
         "group": "tone",
@@ -930,6 +938,7 @@ exports[`twenty-work recommendation golden > exposes every ranking and score-led
       },
       {
         "anchorWorkIds": [],
+        "axisPreferenceDirection": "higher",
         "explainable": true,
         "factorId": "strategy",
         "group": "narrative",
@@ -1108,6 +1117,7 @@ exports[`twenty-work recommendation golden > exposes every ranking and score-led
       },
       {
         "anchorWorkIds": [],
+        "axisPreferenceDirection": "lower",
         "explainable": true,
         "factorId": "darkness",
         "group": "tone",
@@ -1227,6 +1237,7 @@ exports[`twenty-work recommendation golden > exposes every ranking and score-led
       },
       {
         "anchorWorkIds": [],
+        "axisPreferenceDirection": "higher",
         "explainable": true,
         "factorId": "strategy",
         "group": "narrative",
@@ -1377,6 +1388,7 @@ exports[`twenty-work recommendation golden > exposes every ranking and score-led
       },
       {
         "anchorWorkIds": [],
+        "axisPreferenceDirection": "lower",
         "explainable": true,
         "factorId": "darkness",
         "group": "tone",
@@ -1506,6 +1518,7 @@ exports[`twenty-work recommendation golden > exposes every ranking and score-led
       },
       {
         "anchorWorkIds": [],
+        "axisPreferenceDirection": "higher",
         "explainable": true,
         "factorId": "strategy",
         "group": "narrative",
@@ -1664,6 +1677,7 @@ exports[`twenty-work recommendation golden > exposes every ranking and score-led
       },
       {
         "anchorWorkIds": [],
+        "axisPreferenceDirection": "higher",
         "explainable": true,
         "factorId": "pacing",
         "group": "narrative",
@@ -1672,6 +1686,7 @@ exports[`twenty-work recommendation golden > exposes every ranking and score-led
       },
       {
         "anchorWorkIds": [],
+        "axisPreferenceDirection": "higher",
         "explainable": true,
         "factorId": "strategy",
         "group": "narrative",
@@ -1939,6 +1954,7 @@ exports[`twenty-work recommendation golden > exposes every ranking and score-led
       },
       {
         "anchorWorkIds": [],
+        "axisPreferenceDirection": "higher",
         "explainable": true,
         "factorId": "pacing",
         "group": "narrative",
@@ -1947,6 +1963,7 @@ exports[`twenty-work recommendation golden > exposes every ranking and score-led
       },
       {
         "anchorWorkIds": [],
+        "axisPreferenceDirection": "higher",
         "explainable": true,
         "factorId": "strategy",
         "group": "narrative",

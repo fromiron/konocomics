@@ -21,6 +21,7 @@ const context = recommendationContextFileSchema.parse(generatedContext);
 const execFileAsync = promisify(execFile);
 const temporaryDirectories: string[] = [];
 let canonicalResult = "";
+let pilotExplanationTexts: string[] = [];
 
 function sha256Hex(value: string) {
   return createHash("sha256").update(value, "utf8").digest("hex");
@@ -75,6 +76,9 @@ beforeAll(async () => {
     sha256Hex,
     lexicon: strings.explanation,
   });
+  pilotExplanationTexts = experiment.nativeLists.taste.items.flatMap(
+    (item) => item.explanationTexts,
+  );
   canonicalResult = serializeG2Result(
     createG2Result({
       experiment,
@@ -107,6 +111,14 @@ afterEach(async () => {
 });
 
 describe("G2 aggregate runner", () => {
+  it("keeps inverse Axis preference direction explicit in the approved pilot profile", () => {
+    const lowerComedy = "「ギャグ・コメディ」が控えめな点が、あなたの好みに合う作品です。";
+    const directionlessComedy = "「ギャグ・コメディ」があなたの好みに合う作品です。";
+
+    expect(pilotExplanationTexts.filter((text) => text === lowerComedy)).toHaveLength(3);
+    expect(pilotExplanationTexts).not.toContain(directionlessComedy);
+  });
+
   it("accepts a pilot, reports INCOMPLETE, and keeps stdout deterministic", async () => {
     const directory = await temporaryDirectory();
     const path = join(directory, "pilot.json");

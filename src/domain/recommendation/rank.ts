@@ -116,6 +116,7 @@ function sortContributions(entries: readonly GroupContribution[]) {
         compareText(left.source, right.source) ||
         compareText(left.group, right.group) ||
         compareText(left.factorId, right.factorId) ||
+        compareText(left.axisPreferenceDirection ?? "", right.axisPreferenceDirection ?? "") ||
         compareText(left.anchorWorkIds.join("\u0000"), right.anchorWorkIds.join("\u0000")),
     );
 }

@@ -33,12 +33,15 @@ export type WorkSimilarityResult = {
 export type ContributionSource =
   "baseline" | "similarity" | "consensus" | "adjustment" | "penalty" | "policy" | "clamp";
 
+export type AxisPreferenceDirection = "higher" | "lower";
+
 export type GroupContribution = {
   source: ContributionSource;
   group: CoverageGroup | "overall";
   factorId: string;
   value: number;
   anchorWorkIds: string[];
+  axisPreferenceDirection?: AxisPreferenceDirection;
   negativeReasonId?: NegativeReasonId;
   explainable: boolean;
 };
