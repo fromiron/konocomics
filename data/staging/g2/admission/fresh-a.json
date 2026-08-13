@@ -711,7 +711,7 @@
       "previewAuthorityClass": "publisherLinkedCreatorPlatform",
       "evidenceAccessibilityConfidence": {
         "level": "high",
-        "result": "The publisher's explicit first-chapter link resolved with HTTP 200 to the creator's title-matched 4-page manga; interior assets observed via Edge CDP"
+        "result": "HTTP 200 title-matched creator posts ① and ② exposed eight original 852x1200 images; Cycle 6 directly inspected and retained exactly six readable distinct interior pages (74681640 p0-p2 and 74791760 p0-p2) across two contexts after excluding UI, cover, title, frontispiece, and cropped captures"
       }
     }
   ]

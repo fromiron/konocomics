@@ -27,7 +27,7 @@
       "aliases.csv": 32,
       "volumes.csv": 31,
       "factors.csv": 527,
-      "themes.csv": 75,
+      "themes.csv": 74,
       "recommendation-context.csv": 31,
       "recommendation-config.csv": 1,
       "intended-eligibility.csv": 31,
@@ -103,7 +103,7 @@
       "officialWorkUrl": "https://www.kodansha.co.jp/comic/products/0000052420",
       "representativeIsbn": "9784065105863",
       "previewUrl": "https://www.kodansha.co.jp/comic/products/0000052420/trial",
-      "previewRef": "講談社・第1巻試し読み",
+      "previewRef": "講談社・第1巻試し読み（Cycle 6 Art: after 4/6/8/10/12/14 left turns; after 2 chapter-title splash excluded）",
       "evidenceAccessibilityConfidence": "high",
       "status": "source-pair-verified"
     },
@@ -355,7 +355,7 @@
       "officialWorkUrl": "https://www.kadokawa.co.jp/product/301503000079/",
       "representativeIsbn": "9784047305137",
       "previewUrl": "https://comic-walker.com/detail/KC_000652_S/episodes/KC_0006520000100012_E?episodeType=first",
-      "previewRef": "カドコミ・第1話『横浜』",
+      "previewRef": "カドコミ・第1話『横浜』（Cycle 6 Art: manuscript p1/p3-p9; p2 dedicated chapter-title splash excluded）",
       "evidenceAccessibilityConfidence": "high",
       "status": "source-pair-verified"
     },
@@ -368,7 +368,7 @@
       "officialWorkUrl": "https://catalog.coamix.co.jp/arte/",
       "representativeIsbn": "9784199802034",
       "previewUrl": "https://comic-zenon.com/episode/10834108156693612671",
-      "previewRef": "コミックゼノン・第1話",
+      "previewRef": "コミックゼノン・第1話（Cycle 6 Art: reader turns 2-7; turn 1 chapter-opening title illustration excluded）",
       "evidenceAccessibilityConfidence": "high",
       "status": "source-pair-verified"
     },
@@ -433,7 +433,7 @@
       "officialWorkUrl": "https://www.kadokawa.co.jp/product/321605000436/",
       "representativeIsbn": "9784041048023",
       "previewUrl": "https://comic-walker.com/detail/KC_003712_S/episodes/KC_0037120000100011_E?episodeType=first",
-      "previewRef": "カドコミ・第1話",
+      "previewRef": "カドコミ・第1話（Cycle 6 Art: manuscript p1/p2/p4-p9; p3 dedicated title/frontispiece and p10 footer excluded）",
       "evidenceAccessibilityConfidence": "high",
       "status": "source-pair-verified"
     },

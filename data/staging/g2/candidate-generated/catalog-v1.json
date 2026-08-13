@@ -1,6 +1,6 @@
 {
   "schemaVersion": 1,
-  "catalogVersion": "v1-5aaf4ddb0325",
+  "catalogVersion": "v1-61168a24beea",
   "factorDictionaryVersion": "v1",
   "works": [
     {
@@ -8406,7 +8406,7 @@
         },
         "relationshipStructure": {
           "state": "known",
-          "value": 3,
+          "value": 2,
           "confidence": 0.82
         },
         "comedy": {
@@ -11986,7 +11986,7 @@
         },
         "relationshipStructure": {
           "state": "known",
-          "value": 3,
+          "value": 2,
           "confidence": 0.82
         },
         "comedy": {
@@ -15757,11 +15757,6 @@
           "confidence": 0.84
         },
         {
-          "id": "foundFamily",
-          "centrality": 2,
-          "confidence": 0.84
-        },
-        {
           "id": "workplace",
           "centrality": 1,
           "confidence": 0.84
@@ -18957,7 +18952,7 @@
       ],
       "publisher": "講談社",
       "demographic": "shonen",
-      "status": "completed",
+      "status": "ongoing",
       "firstPublishedYear": 2011,
       "genres": [
         "sports"
@@ -20473,7 +20468,7 @@
       "workId": "historie",
       "volumeNumber": 1,
       "isbn": "9784063143584",
-      "releaseDate": "2004-10-22",
+      "releaseDate": "2004-10-21",
       "editionKind": "standard"
     },
     {

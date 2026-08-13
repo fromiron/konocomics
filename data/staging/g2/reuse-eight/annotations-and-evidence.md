@@ -52,16 +52,16 @@ volumes.csv는 현행 source 계약과 같이 작품당 대표 1권만 싣는다
 
 모든 표본은 강담사 USA가 제공하는 정식 라이선스 1권 미리보기다. 원본 이미지는 저장소에 복제하지 않았고, 동결된 뷰어 페이지 참조와 판정만 기록했다. 영문 레터링은 artDensity 판정에서 제외했다.
 
-| 작품                     | artRealism | artDensity | visualSoftness | motionImpact | 근거 요약                                                               |
-| ------------------------ | ---------: | ---------: | -------------: | ------------ | ----------------------------------------------------------------------- |
-| chis-sweet-adventures    |          0 |          1 |              4 | 2            | 6쪽, 주방·공놀이·다른 고양이; page 8 연속 공놀이                        |
-| lovely-muco              |          0 |          1 |              3 | 2            | 8쪽, 유리 공방·정원·용광로; reader page 12 panels 3–7 연속 회전/물 튀김 |
-| penguin-and-house        |          0 |          1 |              3 | 2            | 6쪽, 욕실·주방·식사; pages 10–11 조리 동작                              |
-| sheetas-little-big-world |          2 |          4 |              2 | unknown      | 6쪽, 숲·통나무 마을·야간 대화; 전체 진입 범위의 동세를 확정하기에 부족  |
-| fairy-tail               |          2 |          3 |              2 | unknown      | 6쪽, 도시·열차·숙소; 대표 연속 액션 표본 부족                           |
-| fire-force               |          2 |          3 |              1 | 4            | 6쪽, 열차·화재 도시·소방대; reader pages 24–25 진압/폭발 연속           |
-| the-seven-deadly-sins    |          2 |          3 |              1 | unknown      | 6쪽, 숲속 주점·충돌·식사; 대표 연속 액션 표본 부족                      |
-| tokyo-revengers          |          3 |          2 |              1 | unknown      | 6쪽, 시부야·공원 집회·폭행 후; 대표 연속 액션 표본 부족                 |
+| 작품                     | artRealism | artDensity | visualSoftness | motionImpact | 근거 요약                                                                                                          |
+| ------------------------ | ---------: | ---------: | -------------: | ------------ | ------------------------------------------------------------------------------------------------------------------ |
+| chis-sweet-adventures    |          0 |          1 |              4 | 2            | 6쪽, 주방·공놀이·다른 고양이; page 8 연속 공놀이                                                                   |
+| lovely-muco              |          0 |          1 |              3 | 2            | 타이틀 splash인 p8을 제외한 정확히 6쪽(p9~p14), 유리 공방·정원·용광로; reader page 12 panels 3–7 연속 회전/물 튀김 |
+| penguin-and-house        |          0 |          1 |              3 | 2            | 6쪽, 욕실·주방·식사; pages 10–11 조리 동작                                                                         |
+| sheetas-little-big-world |          2 |          4 |              2 | unknown      | 6쪽, 숲·통나무 마을·야간 대화; 전체 진입 범위의 동세를 확정하기에 부족                                             |
+| fairy-tail               |          2 |          3 |              2 | unknown      | 6쪽, 도시·열차·숙소; 대표 연속 액션 표본 부족                                                                      |
+| fire-force               |          2 |          3 |              1 | 4            | 6쪽, 열차·화재 도시·소방대; reader pages 24–25 진압/폭발 연속                                                      |
+| the-seven-deadly-sins    |          2 |          3 |              1 | unknown      | 6쪽, 숲속 주점·충돌·식사; 대표 연속 액션 표본 부족                                                                 |
+| tokyo-revengers          |          3 |          2 |              1 | unknown      | 6쪽, 시부야·공원 집회·폭행 후; 대표 연속 액션 표본 부족                                                            |
 
 unknown은 낮은 값이 아니다. こびとのシイタと狩りぐらしの森, FAIRY TAIL, 七つの大罪, 東京卍リベンジャーズ의 motionImpact는 현재 참조가 전체 진입 범위의 연속 동작 최소선을 충족하지 않아 수치화하지 않았다.
 
