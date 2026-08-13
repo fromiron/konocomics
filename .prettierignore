@@ -15,6 +15,12 @@ data/staging/g1/reviews/g1-sanity-grok-response.md
 data/staging/g1/reviews/g1-sanity-local-response.md
 data/staging/g1/reviews/g1-sanity-taste-vs-baseline.md
 data/staging/g2/reviews/g2-catalog-annotation-cycle-7-v3-request.md
+data/staging/g2/product-direction-cycle-1/pilot/browser/after-ready.html
+data/staging/g2/product-direction-cycle-1/pilot/browser/before-ready.html
+data/staging/g2/product-direction-cycle-1/pilot/browser/run.mjs
+data/staging/g2/product-direction-cycle-1/pilot/output/aggregate-1.md
+data/staging/g2/product-direction-cycle-1/pilot/output/aggregate-2.md
+data/staging/g2/product-direction-cycle-1/pilot/output/konocomics-g2-pilot-browser-one.json
 src/data/generated
 docs/factors/factor-dictionary.md
 docs/planning
