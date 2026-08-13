@@ -98,9 +98,9 @@ Work 자동 그룹핑(가중 점수식, 현 `05-architecture.md` §2.1)은 빌�
 
 NDL은 빌드 파이프라인 보조인데 "현재 사용" 서비스로 분류되어 있다. 150개 수동 검수 Catalog에서 서지 충돌은 사람이 직접 확인하는 편이 빠르다. → MVP에서 완전 제외(DEFER). Rakuten 데이터 품질 문제가 실제로 발생하면 도입.
 
-### A-5. [KEEP] Netlify Free / 정적 Catalog / Dexie / Route Handler Proxy
+### A-5. [SUPERSEDED 2026-08-13] Netlify Free / 정적 Catalog / Dexie / Route Handler Proxy
 
-2026-08 기준 검증: Netlify Free는 월 300 크레딧 하드 리밋(초과 시 일시 정지, 과금 없음), Next.js Runtime v5 공식 지원. 초안의 전제와 일치한다.
+2026-08 감사 당시에는 Netlify Free의 월 300 크레딧 하드 리밋과 Next.js Runtime v5 지원을 확인해 초안의 호스팅 전제를 유지했다. 이후 사용자가 배포처를 Vercel로 변경했으므로 Netlify 선택은 폐기되었다. 정적 Catalog·Dexie·두 Rakuten Route Handler 경계는 유지하며, 현재 배포 계약은 `05-architecture.md` §1·§3을 따른다.
 
 ---
 

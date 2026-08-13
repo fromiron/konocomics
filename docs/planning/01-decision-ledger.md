@@ -46,7 +46,7 @@
 | A5 | Library-only Rakuten 검색 | 방향만 존재 | **REFINE** | ISBN→Catalog 대조 우선, 불일치 시 정규화 제목+저자 키의 external entry (추천에 절대 미사용) | 런타임 Work 그룹핑 미정의 해소 (감사 A-2) |
 | A6 | NDL Search | "현재 사용" | **DEFER** | MVP 완전 제외. Rakuten 품질 문제 발생 시 도입 | 150개 수동 검수 규모에서 불필요 (감사 A-4) |
 | A7 | Export/Import | 기능 명시만 | **REFINE** | v1 JSON 스키마(zod), 전체 트랜잭션 적용, 미래 major 버전 거부 (`05` §7) | 데이터 이동성은 핵심 차별점이므로 계약 필요 |
-| A8 | Netlify Free | 채택 | **KEEP** | 그대로 (월 300크레딧 하드리밋 검증됨, 2026-08) | 사실 확인 완료 |
+| A8 | Hosting | Netlify Free | **REPLACE** | Vercel Git Integration. `main`은 Production, 그 외 브랜치·PR은 Preview. 요금제는 공개 운영 성격 확정 시 선택 | 2026-08-13 사용자 결정. Vercel Hobby는 개인·비상업 용도로 제한되므로 무료 요금제를 상업 운영 전제로 확정하지 않음 |
 | A9 | PWA: manifest 우선, Serwist는 나중 | 채택 | **KEEP** | 그대로 (Serwist 9.x 유지보수 활발·Turbopack 호환 검증됨) | 사실 확인 완료 |
 | A10 | 분석(PostHog) | 베타 이후 | **KEEP(DEFER)** | MVP에 분석 코드 없음 | 검증은 블라인드 테스트로 수행 |
 | A11 | Catalog 빌드 파이프라인 | CSV→정규화→검증→JSON 스크립트 체인 | **KEEP** | 그대로 (`05` §2.1) | 건전 |

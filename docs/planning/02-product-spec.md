@@ -749,4 +749,5 @@ pnpm --silent g2:aggregate
 
 - Rakuten: 브라우저 직접 호출 금지(Route Handler 프록시), 캐시 TTL(가격·재고 24h / 기타 3개월), `Supported by Rakuten Developers` 크레디트, Affiliate 관계 표시, 약관 버전·검토일 기록.
 - 표지: 원본 비율 유지, 크롭·누끼·텍스트 합성·콜라주 금지, 블러 배경은 동일 URL 재사용 + `aria-hidden`, 자체 CDN 영구 복제 금지.
+- 배포: **Vercel Git Integration**을 사용한다. `main`은 Production, 그 외 브랜치·PR은 Preview로 배포한다. `main` 병합에는 GitHub `CI / quality` 성공을 요구하고, 같은 job을 Vercel의 필수 Deployment Check로도 연결하며, Vercel Production build에서도 `catalog:validate`를 필수 게이트로 실행한다. Vercel Hobby는 개인·비상업 용도로만 사용하며, 공개 운영의 성격이 이를 벗어나면 출시 전에 Pro 이상으로 전환한다.
 - 상표: **[사용자 결정 필요]** 공개 전 J-PlatPat·도메인·SNS 핸들 확인. 내부 개발명으로는 즉시 사용 가능.

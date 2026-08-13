@@ -8,7 +8,7 @@
 
 | 역할 | 선택 | 존재 이유 |
 |---|---|---|
-| Framework | **Next.js (App Router, 최신 stable)** | 정적 셸 + 단일 Route Handler + Netlify 1저장소 배포. §3의 경계 선언과 함께 사용 |
+| Framework | **Next.js (App Router, 최신 stable)** | 정적 셸 + 두 Route Handler + Vercel 1저장소 배포. §3의 경계 선언과 함께 사용 |
 | Language | TypeScript strict | 산식·스키마 타입 안정성 |
 | Styling | Tailwind CSS v4 | 토큰(`04` §2)을 `@theme`으로 정의 |
 | UI Primitive | shadcn/ui (Dialog, Sheet, Tabs, Toast 등 필요분만) | 접근성 확보된 프리미티브 |
@@ -18,10 +18,23 @@
 | Local Search | Fuse.js | Catalog 검색(온보딩·Library) |
 | Catalog Build | tsx + csv-parse | CSV→JSON 파이프라인 |
 | Test | Vitest / Testing Library / Playwright | `07` 참조 |
-| Hosting | Netlify Free (Next.js Runtime v5) | 월 300크레딧 하드리밋 — 과금 폭주 없음(2026-08 검증) |
+| Hosting | Vercel Git Integration | Next.js 네이티브 지원. `main` Production + 브랜치·PR별 Preview 배포 |
 | PWA | manifest 우선 → Serwist(`@serwist/next`) 폴리시 단계 | Serwist 9.x 유지보수 활발, Turbopack 빌드 호환(dev PWA 테스트만 `--webpack`) |
 
 **의도적으로 없는 것:** TanStack Query(단일 프록시 + CDN 캐시로 충분) / Zustand(지속=Dexie, 일시=React state) / 서버 DB·Auth / i18n 라이브러리(중앙 문자열 테이블) / 분석 SDK / React Bits·Embla·NumberFlow·AutoAnimate(`01` V2~V6) / NDL 연동(DEFER).
+
+### 1.1 Vercel 배포 계약
+
+- GitHub 저장소를 Vercel Project에 연결한다. Production Branch는 `main`이고, 그 외 브랜치와 PR은 고유 Preview Deployment를 만든다.
+- `main` 보호 규칙에서 GitHub `CI / quality` check 성공을 병합 필수 조건으로 둔다. 이 workflow의 format·typecheck·lint·unit test·catalog validate·generated-currentness·production build·G2 harness build가 실패한 커밋은 Vercel Production 대상이 될 수 없다.
+- Vercel Project Settings에서 같은 GitHub `quality` job을 Production의 **필수 Deployment Check**로 선택한다. Production build가 성공해도 이 check 전에는 production domain을 alias하지 않으며, `Force Promote`는 사용자가 명시적으로 승인한 긴급 릴리스에서만 사용한다.
+- Vercel Production Build Command는 `pnpm catalog:validate && pnpm build`로 고정한다. Preview 성공만으로 GitHub 품질 게이트 통과나 Production 승격을 대체하지 않는다.
+- `RAKUTEN_APPLICATION_ID` 등 비밀값은 Vercel Project Settings의 Environment Variables에만 저장하고 Preview/Production 범위를 명시한다. 저장소·클라이언트 번들·배포 로그에 값을 출력하지 않는다.
+- Vercel Hobby는 공식 정책상 개인·비상업 용도로 제한된다. 개발·비상업 Preview에는 사용할 수 있지만, 공개 운영 성격이 이를 벗어나면 Production 공개 전에 Pro 이상을 선택한다. 요금제 선택은 호스팅 플랫폼 결정을 다시 여는 것이 아니다.
+- 커스텀 도메인은 상표·도메인 확인 뒤 연결한다. 도메인 미확정은 Vercel 제공 Preview/Production URL을 이용한 구현·검증을 막지 않는다.
+- G2 하니스는 계속 로컬 전용이며 Vercel Project에 포함하거나 별도 배포하지 않는다.
+
+검증 기준(2026-08-13): [Vercel Git 배포](https://vercel.com/docs/git), [Vercel Deployment Checks](https://vercel.com/docs/deployment-checks), [Vercel Hobby 정책](https://vercel.com/docs/plans/hobby), [Vercel CDN Cache-Control](https://vercel.com/docs/caching/cache-control-headers).
 
 ## 2. 데이터 흐름 전체도
 
@@ -116,7 +129,7 @@ GET /api/rakuten/search?title=...        → { items: ProviderSearchItem[] }
 GET /api/rakuten/item?isbn=...           → { listing: ProviderListing }
 ```
 
-- 응답 헤더: `Cache-Control: public, s-maxage=86400, stale-while-revalidate=604800` (Netlify CDN 캐시로 라쿠텐 호출 절감).
+- 응답 헤더: `Cache-Control: public, s-maxage=86400, stale-while-revalidate=604800` (Vercel CDN 캐시로 라쿠텐 호출 절감). 응답은 사용자별 정보가 없는 공용 Rakuten 축소 응답만 담는다.
 - 라쿠텐 응답에서 필요한 필드만 추출(§`02` 5). `largeImageUrl`의 `_ex=200x200`를 요청 프리셋(200/400/600)으로 재작성해 `imageUrl` 필드로 반환. 클라이언트 `CoverImage`는 로드 실패 시 200x200 폴백.
 - 실패 처리: 라쿠텐 4xx/5xx·타임아웃(5s) → `502 { error: "provider_unavailable" }`. 클라이언트는 placeholder 폴백(`03` 각 화면). 재시도는 사용자 액션으로만(자동 재시도 없음).
 - 요청 검증: title 1~100자 / isbn 형식. 미통과 400. (공개 프록시 남용 방지 겸)

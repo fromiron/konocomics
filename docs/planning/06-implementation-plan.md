@@ -155,7 +155,7 @@ Stage E  시그니처 폴리시 + PWA + 다크     (슬라이스 11~12)
 - **목표:** 데이터 주권 완결 + 공개 가능한 첫인상.
 - **의존:** 슬라이스 9.
 - **파일:** `features/settings/`(export/import/삭제, `05` §7 계약), `app/page.tsx` 랜딩(리다이렉트 로직, 정적 버전의 로고 — reveal 애니메이션은 슬라이스 11).
-- **완료 기준:** `03` §8 수용 기준 전부. E2E #5(Export→삭제→Import 복원). Netlify 배포 성립(환경변수·CI 게이트에 catalog:validate 포함).
+- **완료 기준:** `03` §8 수용 기준 전부. E2E #5(Export→삭제→Import 복원). GitHub 저장소와 Vercel Project 연결, 브랜치·PR Preview 확인, `main` Production 배포 성립. `main` 병합과 Production alias에는 GitHub `CI / quality` 성공을 각각 required check와 Vercel Deployment Check로 요구하고, Vercel Production build는 `catalog:validate`를 선행하며, Rakuten 비밀값은 Vercel Environment Variables에만 둔다.
 
 ## 슬라이스 11 — 시그니처 모먼트 + 모션 총정리
 
