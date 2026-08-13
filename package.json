@@ -12,6 +12,7 @@
     "catalog:g1-blind-retag": "tsx scripts/build-g1-blind-retag.ts",
     "catalog:g1-candidate": "tsx scripts/build-g1-candidate.ts",
     "catalog:g1-replacement": "tsx scripts/build-g1-replacement.ts",
+    "catalog:g2-promote": "node --import tsx scripts/promote-g2-catalog.ts",
     "catalog:coverage": "tsx scripts/report-coverage.ts",
     "experiment:baseline": "tsx scripts/run-baseline-experiment.ts",
     "g2:aggregate": "tsx scripts/aggregate-g2.ts",

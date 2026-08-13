@@ -14,6 +14,7 @@ data/staging/g1/reviews/g1-sanity-gemini-response.md
 data/staging/g1/reviews/g1-sanity-grok-response.md
 data/staging/g1/reviews/g1-sanity-local-response.md
 data/staging/g1/reviews/g1-sanity-taste-vs-baseline.md
+data/staging/g2/reviews/g2-catalog-annotation-cycle-7-v3-request.md
 src/data/generated
 docs/factors/factor-dictionary.md
 docs/planning

@@ -1,0 +1,30 @@
+GO
+Grok panel row: GO
+Reviewed runtime: Cursor Grok 4.6 High non-fast
+Reviewed repository: fromiron/konocomics
+Reviewed branch: main
+Reviewed HEAD: cc71d38d573cd24c520cbef62c607ee7a876490f
+Exact-HEAD CI run: 31682502622 success
+ZIP filename: konocomics-g2-four-path-v3.zip
+ZIP SHA-256: cee690a0b2a35b12c5cdfd655bdf84b13e7d1a22470e46a6d690cdb908d818c4
+Archive integrity: PASS
+File-hash ledger: 179/179 PASS
+Candidate artifact identity: 4/4 PASS
+Static original image inspection: 100/100 PASS
+Motion original image inspection: 6/6 PASS
+Normative candidate checks: PASS
+Prior-review independence: PASS
+Panel-row authorization: RECORD_GROK_GO_ROW
+Overall G2 / Slice 5 authorization: NOT_GRANTED_BY_GROK_ALONE
+
+1. Inspection ledger summary
+Direct-open set is 106 unique archive-relative original PNG paths: 100 under `evidence/static/` and 6 under `evidence/motion/`. Every path opened as a readable original PNG (valid signature, terminal IEND, PIL decode). Unique successful original paths = 106; no omitted static/motion member and no double-counted path. Unique image byte hashes = 103, with intentional static/motion byte identity for `chis-sweet-adventures`, `penguin-and-house`, and `fire-force`. `manifests/static-index.csv` maps all 100 static paths 1:1 to 100 distinct work IDs (packets reuse-eight 8, fresh-a 31, fresh-b 31, fresh-c 30); `manifests/known-motion-index.csv` maps all 6 motion paths to distinct works and `motionImpact` records. Current original `evidence/static/wave-listen-to-me.png` opened directly: six labeled interior cells (reader pages 5, 11, 16, 22, 28, 34) showing restaurant/bar, apartment, radio studio, and street/car, matching the static-index contexts; PNG ends at IEND with 0 trailing bytes. Motion originals inspected as sequences, not filenames: Chi p8 play; Muco p12 puddle fall; penguin cooking p10–11; Fire Force suppression p24–25; Inuyasha centipede/tree awakening; Yowamushi Pedal p16–17 climb-and-crash spread.
+
+2. Candidate identity and normative checks
+Independently recomputed ZIP SHA-256 is `cee690a0b2a35b12c5cdfd655bdf84b13e7d1a22470e46a6d690cdb908d818c4`. Archive: root `konocomics-oracle-g2-vote/`, no traversal/absolute/symlink/duplicate/case-collision/encrypted members, CRC OK. `manifests/ALL-FILES.sha256` 179/179; both image ledgers 100/100 and 6/6. Four identity-critical hashes: `candidate/generated/catalog-v1.json` `8695c5646a388f049dc25dcd6af5b5db06437ea82d8755b6b008ea4b97b27abb`; `candidate/generated/recommendation-context-v1.json` `a802af6c04d5d3c81668493ff4af7eec5fba5169dc38578e3013f4a71752c171`; `candidate/source/factors.csv` `4a0e3dc5450ac96250d23e84302ecd5554413f007adb751670ad59c4fb58973f`; `candidate/source/evidence/art-evidence-manifest.csv` `356e1d2eba63bca92340860f06d3f94bd8049ae6000c1d3dd91461d2fee5fc8e`. Catalog identity `v1-61168a24beea`, 150 recommendation-eligible works, 154 volumes; generated catalog/context match source IDs, eligibility, and axis states. Roles Anchor 30, Bridge 30, Discovery 90. Factors 2,550 rows, exactly 17 axes per work, no missing/duplicate identities; known values on the 0–4 scale with `unknown` (138) and no `notApplicable` bypass. Original 50-work cohort remains the 50 catalog works without G2 contact sheets and is not displaced by the added 100; haikyu is present with complete 17-factor / Art-known rows (`ev-g1c-haikyu`, `ev-g1-art-haikyu`). Visible interiors support authorized publisher/licensed-platform provenance, ≥6 samples and ≥2 contexts on the static sheets, ≥2 refs on known static Art axes, and continuous-motion evidence for the six known-motion works. v3 repair of `wave-listen-to-me.png` is IEND-truncated prefix only; pixels were inspected on the current original. Identity records bind branch `main`, HEAD `cc71d38d573cd24c520cbef62c607ee7a876490f`, and exact-HEAD CI `31682502622` expected `success`; live GitHub was not used.
+
+3. Blocking findings
+None.
+
+4. Vote rationale
+GO is based on this extraction: original ZIP bytes hashed here, archive integrity, complete 179/179 ledger, matching four candidate hashes, and direct original-path opening plus visual inspection of all 100 static and all 6 motion PNGs, including `wave-listen-to-me.png`, mapped through the internal manifests. Manifests, ledgers, and hashes corroborated identity and coverage; they were not substitutes for those original-path opens. This records only the Grok path row for this ZIP hash and candidate identity. It does not grant overall G2 or Slice 5 authorization.

@@ -1,0 +1,78 @@
+GO
+Oracle panel row: GO
+Reviewed runtime: ChatGPT GPT-5.6 Sol Pro
+Reviewed repository: fromiron/konocomics
+Reviewed branch: main
+Reviewed HEAD: cc71d38d573cd24c520cbef62c607ee7a876490f
+Exact-HEAD CI run: 31682502622 success
+ZIP filename: konocomics-g2-four-path-v3-cee690a0.zip
+ZIP SHA-256: cee690a0b2a35b12c5cdfd655bdf84b13e7d1a22470e46a6d690cdb908d818c4
+Archive integrity: PASS
+File-hash ledger: 179/179 PASS
+Candidate artifact identity: 4/4 PASS
+Static original image inspection: 100/100 PASS
+Motion original image inspection: 6/6 PASS
+Normative candidate checks: PASS
+Prior-review independence: PASS
+Panel-row authorization: RECORD_ORACLE_GO_ROW
+Overall G2 / Slice 5 authorization: NOT_GRANTED_BY_ORACLE_ALONE
+
+Inspection ledger summary
+
+The original ZIP contained 203 members: 180 files and 23 directories under the single required root konocomics-oracle-g2-vote/. No path traversal, absolute paths, symlinks, duplicate member names, case-colliding names, encryption, unreadable members, or content outside the required root was found.
+
+manifests/ALL-FILES.sha256 covered exactly the other 179 extracted files, with 179/179 recomputed hashes matching and no listed-file or unlisted-file discrepancy.
+
+manifests/static-sheets.sha256 matched 100/100 static originals, and manifests/known-motion-sheets.sha256 matched 6/6 motion originals.
+
+All 100 current original PNG members under evidence/static/ were individually opened directly and visually inspected at readable detail. Their work IDs and paths mapped one-to-one through manifests/static-index.csv; the sheets supplied readable internal pages or equivalent frames across the declared contexts without a material visual contradiction.
+
+The current original evidence/static/wave-listen-to-me.png was directly opened and inspected successfully. It is a valid 660×710 RGBA PNG whose terminal IEND ends at the byte-stream boundary with no trailing bytes; no converted, re-encoded, cropped, screenshotted, or replacement image was counted.
+
+All 6 current original PNG members under evidence/motion/ were separately opened and inspected as continuous sequences, including each distinct motion path whose bytes intentionally match a static sheet.
+
+The six motion mappings were: chis-sweet-adventures page 8 panels 1–4, lovely-muco page 12 panels 3–7, penguin-and-house pages 10–11, fire-force pages 24–25, inuyasha printed pages 31–36, and yowamushi-pedal printed pages 16–17.
+
+The required image set contained 106 paths and 103 unique byte hashes. The only duplicate-hash groups were the disclosed static/motion pairs for chis-sweet-adventures, penguin-and-house, and fire-force.
+
+Candidate identity and normative checks
+
+candidate/generated/catalog-v1.json: 8695c5646a388f049dc25dcd6af5b5db06437ea82d8755b6b008ea4b97b27abb
+
+candidate/generated/recommendation-context-v1.json: a802af6c04d5d3c81668493ff4af7eec5fba5169dc38578e3013f4a71752c171
+
+candidate/source/factors.csv: 4a0e3dc5450ac96250d23e84302ecd5554413f007adb751670ad59c4fb58973f
+
+candidate/source/evidence/art-evidence-manifest.csv: 356e1d2eba63bca92340860f06d3f94bd8049ae6000c1d3dd91461d2fee5fc8e
+
+The generated catalog reports catalogVersion = v1-61168a24beea and contains exactly 150 distinct works, 154 volumes, and one representative volume for every work. All 150 works are recommendation-eligible and not library-only.
+
+Source-to-generated comparisons passed for work identities and fields, aliases, genres, themes, all 17 axes, eligibility, evidence metadata, volumes, representative-volume mapping, recommendation constraints, market data, and catalog version.
+
+candidate/source/factors.csv contains exactly 2,550 unique (workId, axisId) rows: all 150 works have the complete 17-axis set with no missing or duplicate identity. Known values use the valid 0–4 scale with bounded confidence; unknown and notApplicable carry no numeric value or confidence, and notApplicable is restricted to the conditional motionImpact axis.
+
+Role counts are exactly Anchor 30, Bridge 30, and Discovery 90.
+
+The four packet work sets are disjoint and contain 8, 31, 31, and 30 works, totaling exactly the added 100. They exactly match the 100 static-index work IDs. The remaining original 50-work cohort is still present, recommendation-eligible, represented in source and generated context, and complete with 17 factor rows and four Art records per work.
+
+candidate/source/evidence/art-evidence-manifest.csv contains exactly 600 unique rows—four Art axes for every work—and every Art state, value, and confidence matches its corresponding factor row.
+
+For the added 100 works, every known static Art row has authorized publisher, publisher-authorized-platform, or licensed-publisher provenance; a stated edition and entry-scope relationship; at least six samples; at least two contexts; and exact references matching the static index. No title-specific exception, waiver, fabricated provenance, evidence-reuse mismatch, or unknown/notApplicable bypass was found.
+
+Within the added 100 works, the only known motionImpact rows are the six mapped motion artifacts. The other 94 are conservatively unknown, rather than receiving unsupported numeric or notApplicable values.
+
+manifests/visual-source-audit.json is explicitly non-verdict-bearing and matches the repository identity, candidate hashes, 100 static rows, 6 motion rows, 600 Art rows, and 2,550 factor rows.
+
+The disclosed v3 repair was treated only as provenance. The repaired current original was independently decoded, directly opened, visually inspected, and checked for a terminal IEND; the disclosure was not used as a substitute for inspection.
+
+Live GitHub corroboration showed main at the exact reviewed HEAD and associated run 31682502622 with that full SHA, completed with conclusion success. Its quality job and listed formatting, type, lint, unit-test, catalog-validation, generated-artifact, build, and G2-harness steps all concluded successfully.
+
+No prior response, v2 vote, panel report, review directory, reviewer opinion, or historical model verdict was opened or used. Evidence remains marked reviewedByHuman=false; this vote does not claim human validation.
+
+Blocking findings
+
+None.
+
+Vote rationale
+
+The archive, complete-file ledger, candidate identities, source/generated mappings, factor cardinality, role allocation, cohort preservation, Art provenance, and exact-HEAD CI association all passed without a material blocker. The 100/100 static and 6/6 motion conclusions are based on direct opening and visual inspection of each current original archive path. Manifests, structural ledgers, decoder checks, and hashes were used only to establish identity, completeness, mapping, and byte integrity; they were not substituted for original-image inspection.

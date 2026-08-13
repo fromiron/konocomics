@@ -1,0 +1,220 @@
+{
+  "schemaVersion": 1,
+  "policyVersion": "g2-catalog-annotation-authorized-model-panel-v1",
+  "approvalScope": "catalog-annotation-only",
+  "annotationReviewedAt": "2026-08-13T20:12:34+09:00",
+  "reviewReference": "reviews/g2-catalog-annotation-panel.md",
+  "reviewedRepository": "fromiron/konocomics",
+  "reviewedBranch": "main",
+  "reviewedHead": "cc71d38d573cd24c520cbef62c607ee7a876490f",
+  "exactHeadCi": {
+    "runId": 31682502622,
+    "status": "success"
+  },
+  "evidenceZip": {
+    "filename": "konocomics-g2-four-path-v3.zip",
+    "sha256": "cee690a0b2a35b12c5cdfd655bdf84b13e7d1a22470e46a6d690cdb908d818c4"
+  },
+  "targetWorkIds": [
+    "7seeds",
+    "a-brides-story",
+    "a-condition-called-love",
+    "a-sign-of-affection",
+    "accomplishments-of-the-dukes-daughter",
+    "ace-of-the-diamond",
+    "ajin",
+    "all-rounder-meguru",
+    "aoashi",
+    "arte",
+    "baby-steps",
+    "beck",
+    "blood-on-the-tracks",
+    "blue-box",
+    "blue-giant",
+    "blue-period",
+    "boys-run-the-riot",
+    "capeta",
+    "cardcaptor-sakura",
+    "cells-at-work",
+    "chi-on-the-movements-of-the-earth",
+    "chihayafuru",
+    "chis-sweet-adventures",
+    "dance-dance-danseur",
+    "days",
+    "dorohedoro",
+    "dragon-head",
+    "fairy-tail",
+    "fire-force",
+    "flying-witch",
+    "fort-of-apocalypse",
+    "fruits-basket",
+    "giant-killing",
+    "gto",
+    "haikyu",
+    "heavenly-delusion",
+    "historie",
+    "homunculus",
+    "how-a-realist-hero-rebuilt-the-kingdom",
+    "i-think-our-son-is-gay",
+    "initial-d",
+    "inuyasha",
+    "inuyashiki",
+    "isabella-bird-in-wonderland",
+    "island-in-a-puddle",
+    "kasane",
+    "knights-of-sidonia",
+    "kowloon-generic-romance",
+    "life-lessons-with-uramichi-oniisan",
+    "lovely-muco",
+    "medalist",
+    "metamorphose-no-engawa",
+    "mf-ghost",
+    "mieruko-chan",
+    "moon-land",
+    "my-brothers-husband",
+    "my-dearest-self-with-malice-aforethought",
+    "my-happy-marriage",
+    "my-home-hero",
+    "my-love-story-with-yamada-kun-at-lv999",
+    "my-next-life-as-a-villainess",
+    "mystery-to-iu-nakare",
+    "nina-the-starry-bride",
+    "origin",
+    "our-dreams-at-dusk",
+    "parasyte",
+    "penguin-and-house",
+    "perfect-world",
+    "police-in-a-pod",
+    "princess-jellyfish",
+    "real",
+    "rent-a-girlfriend",
+    "requiem-of-the-rose-king",
+    "sailor-moon",
+    "saturn-apartments",
+    "shangri-la-frontier",
+    "she-loves-to-cook-and-she-loves-to-eat",
+    "sheetas-little-big-world",
+    "showa-genroku-rakugo-shinju",
+    "space-brothers",
+    "summer-time-rendering",
+    "sweat-and-soap",
+    "that-time-i-got-reincarnated-as-a-slime",
+    "the-apothecary-diaries",
+    "the-darwin-incident",
+    "the-fable",
+    "the-full-time-wife-escapist",
+    "the-golden-sheep",
+    "the-heroic-legend-of-arslan",
+    "the-seven-deadly-sins",
+    "the-summer-hikaru-died",
+    "thermae-romae",
+    "tokyo-revengers",
+    "tokyo-tarareba-girls",
+    "tomorrows-joe",
+    "wave-listen-to-me",
+    "welcome-to-the-ballroom",
+    "what-did-you-eat-yesterday",
+    "witchcraft-works",
+    "xxxholic",
+    "yowamushi-pedal"
+  ],
+  "targetWorkIdsSha256": "7904dc8f869cb9a116ea25b05c888a7c3ec4f60a720a45e3fbd7e04ae3e59841",
+  "preApprovalBindings": {
+    "candidateSource": [
+      {
+        "path": "candidate-source/aliases.csv",
+        "sha256": "16b2964b3a4669bc07213c0f2fa70577fe7a9feefedc77752b24b637931d2ca4"
+      },
+      {
+        "path": "candidate-source/evidence/art-evidence-manifest.csv",
+        "sha256": "356e1d2eba63bca92340860f06d3f94bd8049ae6000c1d3dd91461d2fee5fc8e"
+      },
+      {
+        "path": "candidate-source/evidence/evidence.csv",
+        "sha256": "266cad29ab74ccae937682b1dbf8adfa2c96cf03f67f4a45c43fde6869de575c"
+      },
+      {
+        "path": "candidate-source/factors.csv",
+        "sha256": "4a0e3dc5450ac96250d23e84302ecd5554413f007adb751670ad59c4fb58973f"
+      },
+      {
+        "path": "candidate-source/recommendation-config.csv",
+        "sha256": "53f176328d441998917006e8e89ccbc2685798d4611ce40c66cea2775d94620d"
+      },
+      {
+        "path": "candidate-source/recommendation-context.csv",
+        "sha256": "87bc2661216c04b793449903bf8472714301fda3f75dd8de6c49d7b3b00ccf9d"
+      },
+      {
+        "path": "candidate-source/themes.csv",
+        "sha256": "eef4ffffbc5f8570e224808479be764d204e30e4e0aa1dd522fe5cf42cb83f19"
+      },
+      {
+        "path": "candidate-source/volumes.csv",
+        "sha256": "6fec4d757482328e9b609ce139ee2edcedfa7766be76a80bef35705857e1bf50"
+      },
+      {
+        "path": "candidate-source/works.csv",
+        "sha256": "80400ee58d9e33ce419237d779020b6b57e72f565c986c52026e5c479a1050ca"
+      }
+    ],
+    "candidateGenerated": [
+      {
+        "path": "candidate-generated/catalog-v1.json",
+        "sha256": "8695c5646a388f049dc25dcd6af5b5db06437ea82d8755b6b008ea4b97b27abb"
+      },
+      {
+        "path": "candidate-generated/recommendation-context-v1.json",
+        "sha256": "a802af6c04d5d3c81668493ff4af7eec5fba5169dc38578e3013f4a71752c171"
+      },
+      {
+        "path": "candidate-generated/taste-vs-baseline.md",
+        "sha256": "1b34a84865b6a5f099ea54a95aacbcc51d59e864cb41e4bf53d382dd08ba831e"
+      }
+    ]
+  },
+  "request": {
+    "path": "reviews/g2-catalog-annotation-cycle-7-v3-request.md",
+    "sha256": "cd917f67d36ac623f058cbf503d0fadad46c3e5f5c695a74ea72ddee70a2f793"
+  },
+  "panelReport": {
+    "path": "reviews/g2-catalog-annotation-cycle-7-v3-report.md",
+    "sha256": "b899456818ac79bbcf2ec3ab245176946479c670b22a3ec7cb989ff620c319fb"
+  },
+  "responses": {
+    "local": {
+      "path": "reviews/g2-catalog-annotation-cycle-7-v3-local-response.txt",
+      "sha256": "9ca36386672c846cff30cc5ef556b4df1454441c659b7635a4ce4edd31ace7d9"
+    },
+    "gemini": {
+      "path": "reviews/g2-catalog-annotation-cycle-7-v3-gemini-response.txt",
+      "sha256": "96c02900e32a862d5b1f71dbfc3a64a8ed4ccdf4f66facb4dabb926eda59ec51"
+    },
+    "grok": {
+      "path": "reviews/g2-catalog-annotation-cycle-7-v3-grok-response.txt",
+      "sha256": "8d775a830fc2e965fcc59dea34e00c3475b3e11ac03fc39e3cd04a8a43b1ce4d"
+    },
+    "oracle": {
+      "path": "reviews/g2-catalog-annotation-cycle-7-v3-oracle-response.txt",
+      "sha256": "73b0f22c2e75aaed4b93e6824e683b61f18f54bcc11898531248fdbaf34dac91"
+    }
+  },
+  "validities": {
+    "local": {
+      "path": "reviews/g2-catalog-annotation-cycle-7-v3-local-validity.md",
+      "sha256": "a66f4e529f453315f987b1640252d6627e9074da6c78edf8c679e64e1c5bf2f1"
+    },
+    "gemini": {
+      "path": "reviews/g2-catalog-annotation-cycle-7-v3-gemini-validity.md",
+      "sha256": "a754a31532cf72e7a8ad01b64f775ebc7a237b05a06e1a94ec111600f7d2cd70"
+    },
+    "grok": {
+      "path": "reviews/g2-catalog-annotation-cycle-7-v3-grok-validity.md",
+      "sha256": "749ef2f58b5c844b36149d9ca3d3cab7cdf44aeea422d65269f468d4a6d103fa"
+    },
+    "oracle": {
+      "path": "reviews/g2-catalog-annotation-cycle-7-v3-oracle-validity.md",
+      "sha256": "27fabe2c363e9c1078dcf63d95f20362b20be072fe882a264954174dc7e09166"
+    }
+  }
+}
