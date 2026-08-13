@@ -21,6 +21,12 @@ data/staging/g2/product-direction-cycle-1/pilot/browser/run.mjs
 data/staging/g2/product-direction-cycle-1/pilot/output/aggregate-1.md
 data/staging/g2/product-direction-cycle-1/pilot/output/aggregate-2.md
 data/staging/g2/product-direction-cycle-1/pilot/output/konocomics-g2-pilot-browser-one.json
+data/staging/g2/product-direction-cycle-2/pilot/browser/after-ready.html
+data/staging/g2/product-direction-cycle-2/pilot/browser/before-ready.html
+data/staging/g2/product-direction-cycle-2/pilot/browser/run.mjs
+data/staging/g2/product-direction-cycle-2/pilot/output/aggregate-1.md
+data/staging/g2/product-direction-cycle-2/pilot/output/aggregate-2.md
+data/staging/g2/product-direction-cycle-2/pilot/output/konocomics-g2-pilot-browser-one.json
 src/data/generated
 docs/factors/factor-dictionary.md
 docs/planning
