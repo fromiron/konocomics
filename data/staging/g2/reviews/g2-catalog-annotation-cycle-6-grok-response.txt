@@ -1,0 +1,60 @@
+VERDICT: REVISE
+REVIEWER: Grok
+REPOSITORY: konocomics (fromiron/konocomics)
+BRANCH: main
+HEAD: 543fd59fe5fc1e030fa98009b6c5fcf1a86cc209
+CANDIDATE BUNDLE SHA-256: 85eb3d88598c5320bc9bb68c5f149a746f28ad854aba273969aff4002851b442
+PREVIOUS RESPONSE/REPORT FILES READ: 0
+DECLARED REPOSITORY FILES CHECKED: 0/31
+REPOSITORY BUNDLE DIGESTS CHECKED: 0/5
+ALL CANDIDATE WORKS CHECKED: 150/150
+NEW WORKS CHECKED: 100/100
+OFFICIAL/PRIMARY WORK SOURCE SETS ACTUALLY OPENED: 0/100
+STATIC ART WORKS WHOSE IMAGES WERE ACTUALLY OPENED: 99/100
+KNOWN MOTION SEQUENCES WHOSE IMAGES WERE ACTUALLY OPENED: 6/6
+LOCAL VISUAL LEDGERS CHECKED: 2/2
+REOPENED CHECK: haikyu.relationshipStructure
+
+REQUIRED QUESTIONS:
+1. IDENTITY/HASH: FAIL — Local `main` ref is `543fd59fe5fc1e030fa98009b6c5fcf1a86cc209`. Request-file SHA-256 `080f44f4199a3b542fa0013b8b8d0a3ae13443585a5721cbc3e837445e667aa8`, the declared 31 repository files, the 5 repository bundle digests, and the Cycle 6 visual-ledger hashes were not independently recomputed (`sha256sum` unavailable in this session). GitHub exact-head checks were not opened. CSV/JSON contents of candidate tables were read; that is not a hash pass.
+2. SCOPE/DISJOINTNESS: PASS — Candidate counts from file line counts minus headers: works 150, aliases 177, volumes 154, factors 2550, themes 462, recommendation-context 150, recommendation-config 1, evidence 416, art manifest 600. Roles in `recommendation-context.csv`: anchor 30 / bridge 30 / discovery 90. Eligibility in `works.csv`: onboarding `true,true,false` = 40; remaining recommendation-only `false,true,false` = 110; libraryOnly 0. `annotationReviewMethod`: `authorizedModelPanel` 49, `unreviewed` 101. Packets are 8+31+31+30 and ID-disjoint from each other and from the first 50 `works.csv` rows (G1 controls). `haikyu` is in those 50 and not in the new-100 packets.
+3. BIBLIOGRAPHY: FAIL — Official/primary publisher pages were not actually opened (browser/CDP/WebFetch unavailable). CSV/narrative URLs are not a substitute. Cycle 6 status/date strings are present in candidate CSV only.
+4. GENRE/THEME: FAIL — Theme/genre cells were not verified against official/primary work sources. Dictionary-range and entry-scope review of all 150 works was not completed as an official-source check. `she-loves-to-cook-and-she-loves-to-eat` has only `cooking=2` and `workplace=1` in `themes.csv` (no `foundFamily` row).
+5. NON-ART: FAIL — The 1300 new-work non-Art cells were not checked against official/primary sources. Cycle 6 CSV writes are present (`welcome-to-the-ballroom.status=ongoing`; `historie-v1` `9784063143584` / `2004-10-21`; `i-think-our-son-is-gay.relationshipStructure=2`; `my-brothers-husband.relationshipStructure=2`; `foundFamily` absent for `she-loves-to-cook-and-she-loves-to-eat`; `haikyu.relationshipStructure=known,2`). CSV presence is not official-source support.
+6. UNKNOWN: FAIL — Mechanical CSV check: no `factors.csv` row matches `unknown` plus a numeric value. Whether insufficient samples were filled as known/0/2/`notApplicable` cannot be judged without official/primary sources and the unread `wave-listen-to-me` sheet.
+7. ART: FAIL — Static sheets actually opened: 99/100 under `/home/bell/.cache/konocomics/cycle6-art/sheets/`. `wave-listen-to-me.png` failed twice (`unrecognised content at end of stream`); not claimed PASS. Known motion 6/6 opened under `/home/bell/.cache/konocomics/cycle6-art/motion/`. Ledgers `index.csv` and `known-motion-index.csv` were read (2/2). Opened-sheet blockers below. Cycle 6 art-target 7/7 sheets opened and the declared static refs/values were supported on those sheets. KEEP controls on opened sheets: `chi-on-the-movements-of-the-earth` p6–p11 panel-rich (p6 not a dedicated title page); `chis-sweet-adventures` part labels on panel-rich interiors; `initial-d` p10 in-chapter Gunma/Akina map. Motion values supported where seen: `lovely-muco` p12 tail-spin/splash = 2; `penguin-and-house` cooking action = 2; `fire-force` combat = 4; `inuyasha` chase/awakening = 4; `yowamushi-pedal` road sequence = 4; `chis-sweet-adventures` p8 play = 2. `lovely-muco` motion sheet also contains reader p8 title splash (static sheet correctly uses p9–p14; hashes differ). G1 50 art is not in this 100-sheet bundle and was not opened.
+8. PROVENANCE: PASS — `evidence.csv` has 416 data rows; `reviewedByHuman` has 416 `,false,` and no `,true,`. New 100 + `haikyu` are `unreviewed`; 49 remain `authorizedModelPanel`. This is model-draft / fail-closed, not human review.
+9. ROLE/ELIGIBILITY/PIPELINE: PASS — Mechanical counts match the request (30/30/90, 40/150/0, unreviewed 101 / authorized 49 / evidence 416). `catalog-v1.json` `catalogVersion` is `v1-61168a24beea`. `catalog:validate` and GitHub Actions were not re-run here; CI success is not a content pass.
+10. PROMOTION/BOUNDARY: PASS — This verdict does not authorize catalog promotion, product-direction G2, UI change, Slice 5, `data/source` promotion, or Vercel. Oracle was not run.
+
+PACKET CHECKS:
+- reuse-eight: REVISE — 8/8 IDs present and disjoint. `lovely-muco` motion contact sheet includes excluded p8 title splash; static exact-six is p9–p14.
+- fresh-a: REVISE — 31/31 IDs present. `dance-dance-danseur` exact-six includes non-story SFX interiors.
+- fresh-b: REVISE — 31/31 IDs present. `homunculus` and `moon-land` exact-six include dedicated title/frontispiece pages. `a-condition-called-love` declared clinic/restaurant contexts were not visible in the opened six.
+- fresh-c: REVISE — 30/30 IDs present. `tokyo-tarareba-girls` and `witchcraft-works` exact-six include character-poster/splash pages. `wave-listen-to-me` local sheet was not decodable.
+- existing G1 controls: REVISE — 50/50 catalog rows present as `works.csv` lines 2–51 and disjoint from new-100 packets. Official/primary sources and G1 art were not opened.
+- haikyu.relationshipStructure: REVISE — Candidate CSV is `known,2,0.99,ev-g1c-haikyu` and `works.csv` is `unreviewed`. Official/primary source was not opened.
+
+CYCLE 6 CORRECTIONS:
+- bibliography/status/theme/relationship: REVISE — 5/5 are written in candidate CSV; 0/5 independently confirmed on official/primary pages (`gmaga` 連載中 and Kodansha product `0000030267` were not opened).
+- Art refs/contexts: PASS — 7/7 target sheets opened. Declared static refs and `realism/density/softness` (and `lovely-muco` motion 2 at p12) were supported. `lovely-muco` static excludes p8.
+- protected KEEP controls: PASS — Opened sheets support astronomy `chi-on-the-movements-of-the-earth` p6–p11, `chis-sweet-adventures` panel-rich story pages, and Initial D p10 in-chapter map.
+
+BLOCKERS:
+- identity.hash: undeclared SHA-256 recomputes (request file, 31 repository files, 5 bundle digests, visual ledgers) -> independently recompute and match before any GO
+- bibliography.officialSources: 0/100 publisher/primary pages actually opened -> open and verify title/creator/publisher/demographic/status/year/representative JP Vol.1 for each new work
+- wave-listen-to-me.staticArt: local `/home/bell/.cache/konocomics/cycle6-art/sheets/wave-listen-to-me.png` unreadable (`unrecognised content at end of stream`) -> supply a decodable exact-six sheet; do not treat ledger PASS as image review
+- homunculus.artExactSix: sample includes full-page fetus illustration and full-page portrait labeled `ホムンクルス 1` (title/frontispiece) -> replace with six story interiors excluding cover/title/frontispiece
+- moon-land.artExactSix: Jump Plus turn 2 includes a dedicated title page (`ムーンランド` on largely empty space); contradicts ledger note that the title mark is only embedded in panel-rich establishment -> exclude the dedicated title page
+- dance-dance-danseur.artExactSix: p19 nearly full-page SFX/scream splash (`ひやぁぁぁぁ`); p21 mostly SFX (`ドッカーン!!!`) -> replace with panel-rich story interiors
+- tokyo-tarareba-girls.artExactSix: p6 full-page character poster splash (“Choose Me!” / Fuji / Tokyo Tower), not a panel-rich story interior -> exclude
+- witchcraft-works.artExactSix: p7 full-page color character splash (“SHE WAS MY CLASSMATE”) -> exclude
+- a-condition-called-love.artContexts: ledger claims clinic waiting area and restaurant; opened six show school and rain/outdoor, not those claimed interiors -> retarget refs/contexts to pages that actually show the claimed settings, or rewrite contexts to what the six show
+- g1-controls.officialAndArt: 50/50 official sources and G1 art not opened in this review -> cannot expand into PASS/GO
+- lovely-muco.motionSheet: motion artifact includes reader p8 title splash (`Muuuuuuuuco!` Frisbee jump) which static exact-six correctly excludes -> motion contact sheet should be the p12 panels 3–7 sequence only
+
+PROMOTION AUTHORIZATION: NO
+PRODUCT-DIRECTION G2 AUTHORIZATION: NO
+PRODUCT UI CHANGE AUTHORIZATION: NO
+SLICE 5 AUTHORIZATION: NO
+ORACLE EXECUTION STATUS: NOT RUN

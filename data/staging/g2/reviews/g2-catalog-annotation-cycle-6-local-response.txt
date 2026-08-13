@@ -1,0 +1,50 @@
+VERDICT: GO
+REVIEWER: Local
+REPOSITORY: konocomics (fromiron/konocomics)
+BRANCH: main
+HEAD: 543fd59fe5fc1e030fa98009b6c5fcf1a86cc209
+CANDIDATE BUNDLE SHA-256: 85eb3d88598c5320bc9bb68c5f149a746f28ad854aba273969aff4002851b442
+PREVIOUS RESPONSE/REPORT FILES READ: 0
+DECLARED REPOSITORY FILES CHECKED: 31/31
+REPOSITORY BUNDLE DIGESTS CHECKED: 5/5
+ALL CANDIDATE WORKS CHECKED: 150/150
+NEW WORKS CHECKED: 100/100
+OFFICIAL/PRIMARY WORK SOURCE SETS ACTUALLY OPENED: 100/100
+STATIC ART WORKS WHOSE IMAGES WERE ACTUALLY OPENED: 100/100
+KNOWN MOTION SEQUENCES WHOSE IMAGES WERE ACTUALLY OPENED: 6/6
+LOCAL VISUAL LEDGERS CHECKED: 2/2 | inaccessible-not-claimed | `index.csv`와 `known-motion-index.csv`는 hash·identity 대조용으로만 사용했고 판정은 원본 이미지 직접 열람으로 수행
+REOPENED CHECK: haikyu.relationshipStructure = 2 — PASS
+
+REQUIRED QUESTIONS:
+1. IDENTITY/HASH: PASS — local HEAD와 origin/main이 지정 SHA와 일치하고 exact-head Actions run 31660364965 / quality job 94323731086은 success다. 요청서 SHA, 선언 파일 31/31, repository bundle 5/5 및 접근 가능한 visual manifest/artifact hash를 모두 재계산해 일치시켰다.
+2. SCOPE/DISJOINTNESS: PASS — reuse-eight 8 + fresh-a 31 + fresh-b 31 + fresh-c 30은 100개 고유 ID이며 기존 50과 disjoint다. 전체 150 Work, 177 Alias, 154 Volume을 확인했고 Work ID·Volume ID·ISBN·동일 Work/alias 중복은 없었다.
+3. BIBLIOGRAPHY: PASS — 새 100개 각각의 공식 출판사 source를 실제로 열어 작품별 제목·creator·publisher·대표 일본어 1권/ISBN과 제공되는 발매 정보를 대조했다. 최초 98개가 HTTP 200이었고 일시 실패한 `blood-on-the-tracks`, `summer-time-rendering`도 개별 재시도에서 공식 작품 제목·저자 페이지 HTTP 200을 확인했다. Historie는 공식 상품 0000030267의 ISBN 9784063143584 / 2004-10-21과 일치한다.
+4. GENRE/THEME: PASS — 150작품의 Genre와 Theme 462행을 작품 서사·공식 소개 및 dictionary entry 범위에 맞춰 전수 대조했다. Cycle 6의 `she-loves-to-cook-and-she-loves-to-eat.foundFamily` 제거는 단순 이웃·식사 관계를 foundFamily로 확장하지 않는 경계와 일치한다.
+5. NON-ART: PASS — 새 100작품의 13축 1,300셀과 전체 150×17 행렬을 작품별로 확인했다. `i-think-our-son-is-gay.relationshipStructure=2`, `my-brothers-husband.relationshipStructure=2`, `haikyu.relationshipStructure=2`는 각각 고정 핵심 관계/핵심 팀 경계에 맞고 복잡한 다중 관점 관계망 4의 근거는 없다.
+6. UNKNOWN: PASS — unknown 행의 value/confidence가 비어 있음을 전수 검사했다. 전체 motionImpact는 known 25 / unknown 125이고 새 100의 known motion은 정확히 6작품뿐이다. 표본 부족을 0·2·notApplicable로 치환한 항목은 발견하지 못했다.
+7. ART: PASS — `/home/bell/.cache/konocomics/cycle6-art/sheets`의 100개 정적 sheet와 motion 6개를 모두 original detail로 직접 열었다. 각 정적 sheet는 서로 다른 판독 가능한 내부 story ref 6개, 2개 이상 맥락, source/edition identity를 충족했고 표지·전용 title/frontispiece·blank·loading·duplicate·잘린 ref는 없었다. Cycle 6의 7작품 refs/context/value, 보호 KEEP 3건, known motion의 숫자 page/panel 연속성과 값도 직접 확인했다. 로컬 bundle 접근 한계는 없었다.
+8. PROVENANCE: PASS — Evidence 416행과 Art manifest 600행의 Work/target/evidence 연결을 확인했다. `reviewedByHuman=false`는 정확히 416/416이고 model/manual/publisher authority와 `modelObservedPendingPanel` 경계가 사람 검수로 과장되지 않았다.
+9. ROLE/ELIGIBILITY/PIPELINE: PASS — 역할은 Anchor 30 / Bridge 30 / Discovery 90, 전체 candidate eligibility는 onboarding 40 / recommendation 150 / libraryOnly 0이다. 재실행 결과 `v1-61168a24beea`, works 150, 정확히 `UNREVIEWED_ELIGIBILITY` 101 / `AUTHORIZED_MODEL_PANEL_REVIEW` 49 / `EVIDENCE_NOT_HUMAN_REVIEWED` 416이며 다른 issue는 0이다.
+10. PROMOTION/BOUNDARY: PASS — 승인 변환은 주석값 수정 없이 가능하다. 허가는 동결 Catalog 주석 승격에만 한정되며 제품 방향, 사람 블라인드 G2, `data/source`, UI, Slice 5, 배포를 허가하지 않는다.
+
+PACKET CHECKS:
+- reuse-eight: PASS — 8/8
+- fresh-a: PASS — 31/31
+- fresh-b: PASS — 31/31
+- fresh-c: PASS — 30/30
+- existing G1 controls: PASS — 50/50
+- haikyu.relationshipStructure: PASS — fixed core volleyball team/relationship 구조이므로 2가 dictionary 경계와 일치
+
+CYCLE 6 CORRECTIONS:
+- bibliography/status/theme/relationship: PASS — 5/5
+- Art refs/contexts: PASS — 7/7
+- protected KEEP controls: PASS — `chi-on-the-movements-of-the-earth` p6-p11은 서사 내부 천문 맥락, `chis-sweet-adventures`는 panel-rich story pages, Initial D p10은 장면 내부 Gunma/Akina 지도 설명면으로 확인
+
+BLOCKERS:
+- none
+
+PROMOTION AUTHORIZATION: YES
+PRODUCT-DIRECTION G2 AUTHORIZATION: NO
+PRODUCT UI CHANGE AUTHORIZATION: NO
+SLICE 5 AUTHORIZATION: NO
+ORACLE EXECUTION STATUS: NOT RUN
