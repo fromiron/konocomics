@@ -1,0 +1,17 @@
+REVISE
+Bundle SHA-256: 523bc95f4c1dcdd6439d3791d66053ccabb0b1c44fa962f7e18fc81f51ed7f3e
+Final HEAD: 0382c60c32a4eee32a3333149a3a746d96d1d0d7
+Human validation: not-run
+Decision basis: user-authorized-model-panel
+
+Inspection summary:
+- Independently verified the original ZIP, all 173 PAYLOAD entries, final identity, the full embedded G2 contract, the 150-work catalog/context, implementation patch and source, tests and validation logs, built static harness, browser source/DOM/ARIA/screenshots, unedited download, and deterministic aggregate readback.
+- The intended synthetic browser flow reached input -> blinded pre responses -> explanation responses -> final debrief -> canonical download. The captured pre/final-before-submit surfaces did not expose engine identity or the prohibited score/contribution metadata, and the authoritative aggregate accepted one synthetic pilot while retaining Human 0, verdict INCOMPLETE, and all five human criteria NOT_RUN.
+- Catalog identity is exact (`v1-83f85ca42c87`, 150 recommendation-eligible works, roles 30/30/90), and the implementation evidence contains no Slice 5 product implementation.
+
+Blocking findings:
+- `evidence/pilot/input/pilot-browser-one-profile.json`, `repository/data/source/factors.csv`, `evidence/pilot/output/konocomics-g2-pilot-browser-one.json`, `evidence/pilot/browser/after-ready.aria.txt`, `repository/src/domain/recommendation/adjustment.ts`, `repository/src/domain/explanation/generate.ts`, and `repository/src/lib/strings.ts`: the pilot explicitly requests less comedy, and Taste ranks three comedy=0 works (`promised-neverland`, `vinland-saga`, and `vagabond`) at 4/9/10, but each rendered positive reason says `「ギャグ・コメディ」があなたの好みに合う作品です。`. The score contribution is correctly positive because low comedy matches the negative preference, but the user-facing sentence suppresses that direction and reads as though comedy itself is the liked attribute. This affects 3 of the 10 exact Taste explanations and undercuts the explainability claim being judged.
+- Smallest complete correction: update `repository/docs/planning/02-product-spec.md` and the contribution-grounded explanation contract so a positive Axis adjustment uses an unambiguous level-aware Japanese template (for example, stating that the degree of the factor matches the configured preference), implement it in `repository/src/domain/explanation/generate.ts` and `repository/src/lib/strings.ts`, add a focused `less` + value-0 explanation regression, refresh affected goldens, rerun the same browser download/aggregate flow, and freeze a new hash-bound bundle. Keep human validation not-run and all human metrics null/not-run.
+
+Rationale:
+The exact Taste ranking is directionally promising and materially more profile-specific than the Baseline, and the evidence/identity/control-flow boundaries are credible. Nevertheless, a condition-free product-direction GO is not justified while a core explanation reverses or obscures the meaning of an explicit negative preference in 30% of the rendered Taste list. This REVISE is based on the actual product surface, not on test or hash failure, and it does not convert the synthetic pilot into human evidence.

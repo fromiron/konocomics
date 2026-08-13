@@ -1,0 +1,102 @@
+{
+  "status": "VALID",
+  "vote": "GO",
+  "conversationId": "b233ad01-aa89-4674-a26f-5373880c5aa8",
+  "finalResultStatus": "SUCCESS",
+  "conversationTurns": 4,
+  "model": "gemini-3.6-flash-high",
+  "effort": "high",
+  "artifacts": {
+    "exactResponse": {
+      "path": "/tmp/konocomics-g2-gemini-cycle-1-exact-response.md",
+      "sha256": "45790954ec38fff317b74e1ca7b558b9fa2d0a258ea2d2a059ca94e58a244474",
+      "matchesFinalTranscriptResponse": true
+    },
+    "rawTranscript": {
+      "path": "/tmp/konocomics-g2-gemini-cycle-1-raw-transcript.typescript",
+      "sha256": "108195578dc4d46a3998b6f2ddd73d613fffc0dbc7de5c6f8861fb98c284f0d9"
+    },
+    "initialPrompt": {
+      "path": "/tmp/konocomics-g2-gemini-cycle-1-prompt.md",
+      "sha256": "55193a3fa371b3f9626e57275a673f854ba540f50cdf0961ac6fb6d1569896b9",
+      "containsVerbatimFullRequest": true
+    },
+    "correctionPrompts": [
+      {
+        "path": "/tmp/konocomics-g2-gemini-cycle-1-correction-prompt.md",
+        "sha256": "671a6ddb853ef0e9a3700677624ed9411b36d32cd1e519e6aa9c332fac62afd0"
+      },
+      {
+        "path": "/tmp/konocomics-g2-gemini-cycle-1-final-audit-prompt.md",
+        "sha256": "bf4c1dd219b1e59bc576c512eb2f53a017b4979e00094d177277c6ed34827937"
+      },
+      {
+        "path": "/tmp/konocomics-g2-gemini-cycle-1-wording-correction-prompt.md",
+        "sha256": "1646bcb2ef5c3f51d9b6d5565f413ee8173c65a31da70f3b27acf6194e948f99"
+      }
+    ]
+  },
+  "routingAudit": {
+    "newProjectUsedOnInitialTurn": true,
+    "priorConversationOnInitialTurn": false,
+    "sameConversationUsedForAllCorrections": true,
+    "modelInitEventsMatchingExactModel": 4,
+    "effortHighCommandHeaders": 4,
+    "agentFlagUsed": false,
+    "backendSelectedModelLabel": "Gemini 3.6 Flash (High)",
+    "consumerAuthApplied": true,
+    "quotaRefreshObserved": true,
+    "quotaOrRateLimitFailureObserved": false,
+    "successfulResultEvents": 4,
+    "notice": "CLI logs reported that the model ID was absent from local config and defaulted to CCPA resolution; subsequent backend override logs and every stream init identify gemini-3.6-flash-high, and every result completed successfully."
+  },
+  "scopeAudit": {
+    "initialWorkspaceContainedOnlyCopiedZipAndRequest": true,
+    "toolPathsStayedInsideIsolatedTmpWorkspace": true,
+    "networkOrBrowserToolEvents": 0,
+    "liveRepositoryOrGitHubToolAccess": false,
+    "priorReviewResponseReportOrValidityAccess": false,
+    "repositoryEdited": false
+  },
+  "evidenceAudit": {
+    "originalZipHashVerified": true,
+    "safeZipListingAndExtractionVerified": true,
+    "payloadHashes": "173/173",
+    "selfExcludedLedger": "173 declared payload files plus PAYLOAD.sha256; 174 total; zero extra and zero missing",
+    "fullBundledNormativeDocumentsRead": true,
+    "pilotScreenshotsVisuallyInspected": 6,
+    "domAriaBrowserEvidenceDownloadAndAggregatesInspected": true,
+    "implementationPatchAndExactRelevantSourceInspected": true,
+    "g2TestsValidationLogsAndBuiltHarnessInspected": true,
+    "catalogIdentityRecomputedAndMatched": true,
+    "aggregateFilesSha256": "98db33b126521e3bce9f7ce58bed76f08e4175149ed0f147d06585061f6c3e60",
+    "aggregate1Aggregate2AndRecomputedByteIdentical": true,
+    "archivedPilotAggregateExitCode": 0,
+    "liveAggregatorRerun": false,
+    "liveAggregatorRerunLimitationDisclosedInFinalResponse": true
+  },
+  "boundaryAudit": {
+    "humanValidation": "not-run",
+    "decisionBasis": "user-authorized-model-panel",
+    "humanMetrics": "null/not-run",
+    "browserPilotHuman": 0,
+    "browserPilotSynthetic": 1,
+    "browserPilotVerdict": "INCOMPLETE",
+    "tenHumanValidationClaimed": false,
+    "statisticalSignificanceClaimed": false
+  },
+  "outputAudit": {
+    "line1": "GO",
+    "requiredIdentityAndBoundaryLinesExact": true,
+    "blockingFindings": "None.",
+    "conditionalGo": false
+  },
+  "correctionAudit": {
+    "initialResponseAccepted": false,
+    "reasonInitialResponseRejected": "It overclaimed unread patch/source/tests/logs/built evidence, called a failed npx attempt successful, and used incorrect required-line capitalization.",
+    "sameConversationBoundedCorrectionsPerformed": 3,
+    "expectedVerdictFedToModel": false,
+    "finalResponseToolClaimFidelity": true
+  },
+  "validityRationale": "The final replacement response has the required exact format and preserved evidence boundary. Its material inspection claims are supported by successful tool reads/checks in one isolated conversation. The unavailable live npx rerun is explicitly disclosed; archived exit-code evidence and three byte-identical aggregate outputs support the narrower acceptance claim."
+}
