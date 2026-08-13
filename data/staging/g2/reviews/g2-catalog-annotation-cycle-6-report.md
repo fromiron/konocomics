@@ -17,14 +17,13 @@ Cycle 6의 승격 판정은 **REVISE**다. Local의 유효한 `GO` 하나만으�
 
 ## 검토 경로
 
-| 경로                          | 실행                                                                                                                               | 판정   | 패널 효력                  |
-| ----------------------------- | ---------------------------------------------------------------------------------------------------------------------------------- | ------ | -------------------------- |
-| Local                         | 선언 파일 31/31, bundle 5/5, 후보 150/150, 공식 source 100/100, 정적 Art 100/100, motion 6/6 직접 검사                             | GO     | 유효한 단일 승인 표        |
-| Gemini 3.1 Pro High           | 요청 모델 심사 대신 `Gemini 3.6 Flash (High)` 안내만 반환; 후보·source·Art 검사 0                                                  | 없음   | INVALID, 효력 없음         |
-| Cursor Grok 4.6 High non-fast | 요청된 `agent -p` 모델로 실행; 후보 행 150/150, 정적 Art 99/100과 motion 6/6을 주장했으나 hash 0/31, bundle 0/5, 공식 source 0/100 | REVISE | 유효한 비승인              |
-| GPT-5.6 Pro Oracle            | 연결이 끊긴 두 세션과 staged 재시작 모두 완결 verdict 전에 폐기; 사용자 지시로 skip                                                | 없음   | SKIPPED BY USER, 효력 없음 |
+| 경로                          | 실행                                                                                                                               | 판정   | 패널 효력           |
+| ----------------------------- | ---------------------------------------------------------------------------------------------------------------------------------- | ------ | ------------------- |
+| Local                         | 선언 파일 31/31, bundle 5/5, 후보 150/150, 공식 source 100/100, 정적 Art 100/100, motion 6/6 직접 검사                             | GO     | 유효한 단일 승인 표 |
+| Gemini 3.1 Pro High           | 요청 모델 심사 대신 `Gemini 3.6 Flash (High)` 안내만 반환; 후보·source·Art 검사 0                                                  | 없음   | INVALID, 효력 없음  |
+| Cursor Grok 4.6 High non-fast | 요청된 `agent -p` 모델로 실행; 후보 행 150/150, 정적 Art 99/100과 motion 6/6을 주장했으나 hash 0/31, bundle 0/5, 공식 source 0/100 | REVISE | 유효한 비승인       |
 
-Grok은 Oracle로 사용하지 않았다. Oracle의 세 번의 중단·폐기 사유는 별도 validity 기록에 남겼으며, 부분 출력은 응답이나 투표로 취급하지 않는다.
+Oracle 검토는 후속 개선 범위로 연기했다. Cycle 6에서는 Oracle 상태나 효력을 판정하지 않으며, 미완결 출력도 응답이나 투표로 취급하지 않는다.
 
 ## Grok Art lead 독립 재판정
 
@@ -44,7 +43,7 @@ Grok이 제기한 Art 후보 8건은 현재 동결 이미지에 대한 별도 �
 - 새 100작품과 `haikyu`의 `annotationReviewMethod=unreviewed`, 기존 49작품의 `authorizedModelPanel`, evidence 416건의 `reviewedByHuman=false`를 유지한다.
 - 이 cycle에서 새로 확정된 Catalog 콘텐츠 수정사항은 없다. 현재 차단 조건은 확인된 데이터 결함이 아니라 4/4 독립 승인 미충족이다.
 - `data/source` 승격, 제품 방향 G2, 사람 10명 블라인드 테스트, UI 변경, 추천 산식, Slice 5 및 Vercel 배포를 허가하지 않는다.
-- 추가 Oracle 실행은 사용자가 다시 명시적으로 요청하기 전까지 하지 않는다.
+- Oracle 검토는 후속 개선 범위로 남기며, Cycle 6 종료 판정과 분리한다.
 
 `PROMOTION AUTHORIZATION: NO`
 

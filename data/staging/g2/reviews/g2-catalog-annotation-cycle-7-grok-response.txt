@@ -1,0 +1,52 @@
+VERDICT: GO
+```text
+REVIEWER: Cursor Grok 4.6 High non-fast
+EXECUTION IDENTITY: agent -p CLI; model cursor-grok-4.6-high; non-fast
+REPOSITORY: konocomics (fromiron/konocomics)
+BRANCH: main
+HEAD: cee70000f4af0a03476c9f09667e7c2d526fc814
+CANDIDATE BUNDLE SHA-256: 85eb3d88598c5320bc9bb68c5f149a746f28ad854aba273969aff4002851b442
+PREVIOUS RESPONSE/VALIDITY/REPORT FILES READ: 0
+DECLARED REPOSITORY FILES CHECKED: 31/31
+REPOSITORY BUNDLE DIGESTS CHECKED: 5/5
+ALL CANDIDATE WORKS CHECKED: 150/150
+NEW WORKS CHECKED: 100/100
+OFFICIAL/PRIMARY WORK SOURCE SETS ACTUALLY OPENED: 100/100
+STATIC ART WORKS WHOSE IMAGES WERE ACTUALLY OPENED: 100/100
+KNOWN MOTION SEQUENCES WHOSE IMAGES WERE ACTUALLY OPENED: 6/6
+LOCAL VISUAL LEDGERS CHECKED: 2/2 | accessible /home/bell/.cache/konocomics/cycle6-art
+REOPENED CHECK: haikyu.relationshipStructure
+
+REQUIRED QUESTIONS:
+1. IDENTITY/HASH: PASS — HEAD/origin/main `cee70000f4af0a03476c9f09667e7c2d526fc814`; declared 31/31 MATCH; repository bundles 5/5 MATCH (`LC_ALL=C find … | xargs -0 sha256sum` then SHA-256 of LF output); candidate `v1-61168a24beea`; visual `index.csv`/`known-motion-index.csv` MATCH; sheets 100 + motion 6.
+2. SCOPE/DISJOINTNESS: PASS — 150/177/154 works/aliases/volumes; 2550/462 factors/themes; 150/1 context/config; 416/600 evidence/art; roles Anchor 30 / Bridge 30 / Discovery 90; eligibility onboarding 40 / recommendation 150 / libraryOnly 0; packets 8+31+31+30 disjoint from each other and leftover G1 50; review `authorizedModelPanel` 49 + `unreviewed` 101.
+3. BIBLIOGRAPHY: PASS — 1차 urllib 87/100 HTTP 200; 잔여 13은 개별 재시도로 전부 열림(urllib 대체 공식 7 + WebFetch 6: `chi-on-the-movements-of-the-earth` ISBN 9784098607785 2020/12/11, `dorohedoro` 9784091882714 2002/01/30, `inuyasha` 9784091252012 디지털 2017/03/22 vs firstPublishedYear 1996, `homunculus`/`our-dreams-at-dusk`/`saturn-apartments` jdcn 디지털 페이지). `welcome-to-the-ballroom` gmaga 「連載中」; `historie` 講談社 紙版 2004年10月21日 / ISBN 9784063143584. 빈 `releaseDate`(inuyasha/homunculus/arte/saturn-apartments/my-brothers-husband)는 초판 필수값으로 독립 증명되지 않음.
+4. GENRE/THEME: PASS — 새 100작품 공식 소개·내부면 대조. 현재값→필수 보정으로 독립 증명된 Genre/Theme 필드 없음. Cycle 6 `she-loves-to-cook-and-she-loves-to-eat.foundFamily` absent(cooking 2 / workplace 1) 유지.
+5. NON-ART/UNKNOWN: PASS — 13 non-Art축을 공식 あらすじ+내부면으로 100/100 대조. unknown은 빈 value이며 0/2로 채워지지 않음; `notApplicable` 0건. 2단계 이상 필수 보정 없음. `haikyu.relationshipStructure` known 2.
+6. ART/MOTION: PASS — 정적 시트 99장은 원본 PNG Read; `wave-listen-to-me`는 IEND 이후 trailing 265바이트 때문에 원본 Read가 실패해 동일 픽셀을 IEND까지 잘라 `/tmp`에서 열어 reader p5/11/16/22/28/34·식당/자택·라디오 스튜디오·거리/차 ≥2 context·Art 3/3/1·motion unknown 확인. known motion 6/6 실제 개방(`chis-sweet-adventures` p8 연속 놀이, `lovely-muco` p12 꼬리추격/입수, `penguin-and-house` 조리 연속, `fire-force` p24–25 pile bunker, `inuyasha`, `yowamushi-pedal`).
+7. PROVENANCE: PASS — Art는 원권리/정식 라이선스/승인 플랫폼 표본; 표지·ledger PASS 문자열을 이미지 검토로 쓰지 않음.
+8. ROLE/ELIGIBILITY/PIPELINE: PASS — pipeline issues 정확히 `UNREVIEWED_ELIGIBILITY` 101, `AUTHORIZED_MODEL_PANEL_REVIEW` 49, `EVIDENCE_NOT_HUMAN_REVIEWED` 416; unexpected 0.
+9. PROMOTION BOUNDARY: PASS — 이번 실행은 중간 3경로 증거만. 3/3 GO여도 기존 G2 4/4 무조건 GO 승격 계약을 충족하지 않음. 승격·제품방향 G2·UI·Slice 5 전부 비승인.
+
+PACKET CHECKS:
+- reuse-eight: PASS — 8/8
+- fresh-a: PASS — 31/31
+- fresh-b: PASS — 31/31
+- fresh-c: PASS — 30/30
+- existing G1 controls: PASS — 50/50
+- haikyu.relationshipStructure: PASS — S-MANGA ハイキュー!! 1／古舘春一: 日向 vs 影山 후 烏野 입부; generated known 2; `unreviewed`; recommendationEligible true / onboarding false.
+
+CYCLE 6 FROZEN CORRECTIONS:
+- bibliography/status/theme/relationship: PASS — 5/5 (`welcome-to-the-ballroom.status` ongoing; `historie` v1 `2004-10-21`; `i-think-our-son-is-gay.relationshipStructure` 2; `my-brothers-husband.relationshipStructure` 2; `she-loves-to-cook-and-she-loves-to-eat.foundFamily` absent)
+- Art refs/contexts: PASS — 7/7 (`i-think-our-son-is-gay` Pixiv 74681640+74791760 1/1/3; `requiem-of-the-rose-king` p6–p11 3/4/2; `blue-period` 2/3/3; `arte` 3/4/2; `accomplishments-of-the-dukes-daughter` p1,p2,p4,p6,p8,p9 1/2/3; `isabella-bird-in-wonderland` p1,p3,p4,p6,p8,p9 3/3/2; `lovely-muco` static p9–p14 0/1/3)
+- protected KEEP controls: PASS — 3/3 (`chi-on-the-movements-of-the-earth` 3/3/1 motion unknown; `chis-sweet-adventures` 0/1/4 motion 2; `initial-d` 3/3/1 motion unknown)
+
+BLOCKERS:
+- none
+
+INTERIM THREE-PATH EVIDENCE: ACCEPT
+PROMOTION AUTHORIZATION: NO
+PRODUCT-DIRECTION G2 AUTHORIZATION: NO
+PRODUCT UI CHANGE AUTHORIZATION: NO
+SLICE 5 AUTHORIZATION: NO
+```

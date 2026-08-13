@@ -1,0 +1,50 @@
+VERDICT: GO
+REVIEWER: Local
+EXECUTION IDENTITY: /root/cycle7_local — independent Codex subagent
+REPOSITORY: konocomics (fromiron/konocomics)
+BRANCH: main
+HEAD: cee70000f4af0a03476c9f09667e7c2d526fc814
+CANDIDATE BUNDLE SHA-256: 85eb3d88598c5320bc9bb68c5f149a746f28ad854aba273969aff4002851b442
+PREVIOUS RESPONSE/VALIDITY/REPORT FILES READ: 0
+DECLARED REPOSITORY FILES CHECKED: 31/31
+REPOSITORY BUNDLE DIGESTS CHECKED: 5/5
+ALL CANDIDATE WORKS CHECKED: 150/150
+NEW WORKS CHECKED: 100/100
+OFFICIAL/PRIMARY WORK SOURCE SETS ACTUALLY OPENED: 100/100
+STATIC ART WORKS WHOSE IMAGES WERE ACTUALLY OPENED: 100/100
+KNOWN MOTION SEQUENCES WHOSE IMAGES WERE ACTUALLY OPENED: 6/6
+LOCAL VISUAL LEDGERS CHECKED: 2/2 | inaccessible-not-claimed | index.csv and known-motion-index.csv were hash-checked and joined to the images; no inaccessible artifact was claimed, and ledger PASS text was not substituted for direct image inspection
+REOPENED CHECK: haikyu.relationshipStructure
+
+REQUIRED QUESTIONS:
+1. IDENTITY/HASH: PASS — HEAD, branch, and origin/main independently resolved to cee70000f4af0a03476c9f09667e7c2d526fc814; the frozen request SHA-256 is 191aeccf35cb78567df1f3fd51db6f5a6814a31906174e7b5a22408de762934a; all 31 declared repository files, all five relative-path bundle digests, and all declared visual-bundle ledgers and artifacts match their frozen hashes. Exact-head GitHub Actions run 31663821707 / quality job 94334070325 is success.
+2. SCOPE/DISJOINTNESS: PASS — candidate counts are Work/Alias/Volume 150/177/154, Factor/Theme 2550/462, context/config 150/1, Evidence/Art manifest 416/600; packet work sets are mutually disjoint at 8/31/31/30, disjoint from the existing 50, and their union is exactly the 100 candidate additions. IDs, factor pairs, theme pairs, aliases, contexts, manifest pairs, evidence IDs, and all 154 ISBNs are unique with no dangling work or evidence references.
+3. BIBLIOGRAPHY: PASS — I actually opened one publisher bibliography source set for each of the 100 new works and checked the returned source content against title, creator/publisher, representative Volume 1/ISBN, publication status, and available release date; all 100 source sets were reachable on this run after retrying transient DNS failures. Candidate bibliography has one publisher evidence row per new work, 100/100 representative volumes, no duplicate ISBN, and deliberately leaves dates unknown where the primary source does not expose the original print date.
+4. GENRE/THEME: PASS — all 150 works were checked against the closed 10-Genre and 22-Theme dictionaries; all 462 Theme rows use allowed IDs, centrality 1/2, valid confidence, and evidence references. Theme centrality follows repeated-core versus subsidiary use. foundFamily remains a Theme independent of relationship complexity: biological/fixed-family structure does not create it, and she-loves-to-cook-and-she-loves-to-eat correctly has no foundFamily row.
+5. NON-ART/UNKNOWN: PASS — all 150 works' 13 non-Art axes were checked against the 0/2/4 definitions and entry_1_3_volumes narratives. Every work has exactly 17 axes; all known values/confidences are valid and all unknown rows are empty-valued. The candidate preserves 138 unknowns (13 non-Art and 125 motion), uses no notApplicable coercion, and never treats unknown as 0 or 2. Fixed teams/two leads plus recurring core cast map to relationshipStructure=2; value 4 is reserved for repeated multi-viewpoint/relationship-network reward.
+6. ART/MOTION: PASS — I actually opened all 100 PNG contact sheets under /home/bell/.cache/konocomics/cycle6-art/sheets at original detail and verified six distinct readable story interiors, two or more contexts, edition/source identity, exact refs, and the three known static values against all 400 manifest rows. I also opened all six motion images under /home/bell/.cache/konocomics/cycle6-art/motion and verified continuous numbered sequences and values: chis-sweet-adventures=2, fire-force=4, inuyasha=4, lovely-muco=2, penguin-and-house=2, yowamushi-pedal=4. Image hashes match both local ledgers; ledger assertions were corroboration only.
+7. PROVENANCE: PASS — all 416 Evidence rows target the same work/field consumers with no orphan or missing reference and honestly remain reviewedByHuman=false. Each new work has publisher bibliography plus annotation and Art evidence; all 600 Art manifest rows match final factor state/value/confidence and normalized source URL. Authority/source classes are internally consistent (392 originalPublisher, 200 publisherAuthorizedPlatform, 8 licensedPublisher; 400 publisher and 200 manual).
+8. ROLE/ELIGIBILITY/PIPELINE: PASS — roles are Anchor/Bridge/Discovery 30/30/90 and intended eligibility is onboarding/recommendation/libraryOnly 40/150/0. Review methods are 49 authorizedModelPanel and 101 unreviewed. An independent candidate pipeline compile reproduces v1-61168a24beea and is byte-identical to the frozen catalog/context; its complete issue multiset is exactly UNREVIEWED_ELIGIBILITY 101, AUTHORIZED_MODEL_PANEL_REVIEW 49, and EVIDENCE_NOT_HUMAN_REVIEWED 416, with no unexpected issue. Typecheck, lint, catalog validation, and all 341 tests pass with a Linux-local TMPDIR; the initial inherited Windows TEMP socket/mode failures were environment-only and disappeared without code or fixture changes.
+9. PROMOTION BOUNDARY: PASS — this is a non-authorizing Cycle 7 interim Local path. GO does not change or satisfy the existing unconditional 4/4 promotion contract and does not authorize data/source promotion, Catalog promotion, product-direction G2, the ten-person blind test, UI changes, Slice 5, or Vercel deployment.
+
+PACKET CHECKS:
+- reuse-eight: PASS — 8/8
+- fresh-a: PASS — 31/31
+- fresh-b: PASS — 31/31
+- fresh-c: PASS — 30/30
+- existing G1 controls: PASS — 50/50; 49 are byte-field preserved and haikyu is the sole intentional reopened factor/review-state change
+- haikyu.relationshipStructure: PASS — value 2 matches the official entry-range fixed Karasuno team and recurring core-cast structure; neither the evidence nor the factor boundary supports repeated multi-viewpoint relationship-network reward required for 4
+
+CYCLE 6 FROZEN CORRECTIONS:
+- bibliography/status/theme/relationship: PASS — 5/5; welcome-to-the-ballroom=ongoing, Historie Volume 1=2004-10-21, i-think-our-son-is-gay.relationshipStructure=2, my-brothers-husband.relationshipStructure=2, and she-loves-to-cook-and-she-loves-to-eat has no foundFamily Theme
+- Art refs/contexts: PASS — 7/7; i-think-our-son-is-gay, requiem-of-the-rose-king, blue-period, arte, accomplishments-of-the-dukes-daughter, isabella-bird-in-wonderland, and lovely-muco sheets were directly reopened and match corrected exact refs, non-title interiors, contexts, and values
+- protected KEEP controls: PASS — 3/3; chi-on-the-movements-of-the-earth, chis-sweet-adventures, and initial-d were directly reopened; their static values remain supported, and Chi's known motion sequence/value was independently confirmed
+
+BLOCKERS:
+- none
+
+INTERIM THREE-PATH EVIDENCE: ACCEPT
+PROMOTION AUTHORIZATION: NO
+PRODUCT-DIRECTION G2 AUTHORIZATION: NO
+PRODUCT UI CHANGE AUTHORIZATION: NO
+SLICE 5 AUTHORIZATION: NO
