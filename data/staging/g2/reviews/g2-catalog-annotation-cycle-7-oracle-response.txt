@@ -1,0 +1,94 @@
+GO
+Oracle panel row: GO
+Reviewed repository: fromiron/konocomics
+Reviewed branch: main
+Reviewed HEAD: 4743ae84e6c97b4fe06ba646c3915decba11f806
+ZIP filename: konocomics-oracle-g2-vote-v2-4444090b.zip
+ZIP SHA-256: 4444090b7bb765a9e22a012f1e17103911efb89069cd6c4c3e9a392ac1e6653f
+Archive integrity: PASS
+File-hash ledger: 179/179 PASS
+Candidate artifact identity: 4/4 PASS
+Static image inspection: 100/100 PASS
+Motion image inspection: 6/6 PASS
+Normative candidate checks: PASS
+Prior-review independence: PASS
+Panel-row authorization: RECORD_ORACLE_GO_ROW
+Overall G2 / Slice 5 authorization: NOT_GRANTED_BY_ORACLE_ALONE
+Inspection ledger summary
+The original ZIP bytes were hashed before extraction. The archive contained 203 members under the single required root konocomics-oracle-g2-vote/, yielding 180 regular files and 23 directory entries. Safe extraction found no absolute paths, path traversal, backslash-path ambiguity, duplicate member names, case-colliding names, symlinks, encrypted members, unreadable members, or content outside the required root.
+The required directories and documents were present. README.md identified and the review used:
+
+
+manifests/static-index.csv
+
+
+manifests/known-motion-index.csv
+
+
+manifests/static-sheets.sha256
+
+
+manifests/known-motion-sheets.sha256
+
+
+manifests/visual-source-audit.json
+
+
+manifests/ALL-FILES.sha256
+
+
+ALL-FILES.sha256 covered all 179 payload files other than the ledger itself, and all 179 recomputed hashes matched. The dedicated static and motion ledgers also matched 100/100 and 6/6 respectively.
+Exactly 100 PNGs existed under evidence/static/ and six under evidence/motion/. Every original PNG was opened individually at readable scale. The inspection log contained 106 unique work/path mappings, with no omitted or duplicate static or motion entry, and matched the corresponding manifest one-to-one.
+All 100 static sheets visibly contained at least six distinct readable interior-page samples across at least two contexts. None depended on a cover, title page, frontmatter-only view, filename, thumbnail, or manifest declaration as evidence. The visible samples supported the declared artRealism, artDensity, and visualSoftness values without a material contradiction.
+All six motion artifacts were inspected as sequences rather than as first-frame proxies:
+
+
+evidence/motion/chis-sweet-adventures.png — reader page 8, panels 1–4; continuous ball-play/chase sequence supports motionImpact=2.
+
+
+evidence/motion/lovely-muco.png — reader page 12, panels 3–7; continuous spinning and splash sequence supports motionImpact=2.
+
+
+evidence/motion/penguin-and-house.png — reader pages 10–11; continuous preparation, pounding, seasoning, and cooking sequence supports motionImpact=2.
+
+
+evidence/motion/fire-force.png — reader pages 24–25; firing, suppression blast, displacement, and strong effect treatment support motionImpact=4.
+
+
+evidence/motion/inuyasha.png — printed pages 31–36; sustained attack, evasion, repeated lunges, and forceful speed-line treatment support motionImpact=4.
+
+
+evidence/motion/yowamushi-pedal.png — printed pages 16–17; approach, collision, and ejection sequence with strong impact treatment supports motionImpact=4.
+
+
+Candidate identity and normative checks
+The four independently computed identity-critical hashes were:
+candidate/generated/catalog-v1.json
+8695c5646a388f049dc25dcd6af5b5db06437ea82d8755b6b008ea4b97b27abb
+
+candidate/generated/recommendation-context-v1.json
+a802af6c04d5d3c81668493ff4af7eec5fba5169dc38578e3013f4a71752c171
+
+candidate/source/factors.csv
+4a0e3dc5450ac96250d23e84302ecd5554413f007adb751670ad59c4fb58973f
+
+candidate/source/evidence/art-evidence-manifest.csv
+356e1d2eba63bca92340860f06d3f94bd8049ae6000c1d3dd91461d2fee5fc8e
+All four matched the required hashes exactly.
+The generated catalog identity was catalogVersion=v1-61168a24beea. It contained exactly 150 distinct recommendation-eligible works, 154 volumes, and one representative-volume mapping per work.
+candidate/source/factors.csv contained exactly 2,550 factor rows: 150 works multiplied by 17 factors. Every work had the complete unique 17-factor axis set, with no missing or duplicate factor identity. Known, unknown, and notApplicable state/value combinations followed the attached factor dictionary and annotation rules.
+Catalog roles were:
+Anchor:    30
+Bridge:    30
+Discovery: 90
+These satisfy the required Anchor 30–40, Bridge 30–40, and Discovery 70+ ranges.
+The 50 work IDs retained as the existing cohort were all present in the generated 150-work catalog, remained recommendation-eligible, and retained complete 17-axis records. The four admission packet sets were mutually disjoint, contained exactly 100 additional works in total, did not overlap the retained 50, and together equaled the remainder of the frozen candidate.
+The source CSVs, generated catalog, generated recommendation context, representative-volume map, static image index, known-motion index, Art manifest, SHA-256 ledgers, and visual-source audit referred to the same candidate identity and work sets.
+The Art manifest contained 600 rows: four Art axes for each of 150 works. All 150 works had known static values for the three static Art axes. motionImpact was known for 25 works and unknown for 125; the six added known-motion works matched the six motion artifacts exactly.
+Recorded Art provenance comprised 392 original-publisher references, eight licensed-publisher references, and 200 publisher-authorized-platform references. These provenance classes are permitted by the attached annotation authority. Static known values had the required supporting references, and known motion values had exact continuous-sequence references and matching edition/source relationships. No material title-specific exception, unsupported certainty, fabricated provenance, evidence-reuse mismatch, or unknown/notApplicable bypass was found.
+Archive identity records matched repository fromiron/konocomics, branch main, and full HEAD 4743ae84e6c97b4fe06ba646c3915decba11f806. No live GitHub reviewer opinion, review document, PR comment, historical verdict, or prior panel report was used.
+Blocking findings
+None.
+Vote rationale
+The vote rests on two independently checked layers. First, direct inspection established that all 100 static originals and all six motion originals were actually opened, uniquely mapped, readable, and visibly sufficient for their declared Art values. Second, archive security checks, full-file hash recomputation, candidate-artifact hashes, source/generated reconciliation, factor cardinality, cohort membership, role distribution, provenance records, indexes, and audit ledgers corroborated that those inspected images belonged to the exact frozen candidate named by this vote.
+Neither manifest assertions nor successful hashes were treated as substitutes for visual inspection. Conversely, visual plausibility was not treated as sufficient without exact ZIP, ledger, branch, HEAD, and candidate identity agreement. Both layers passed without a material blocker.
