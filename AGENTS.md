@@ -31,6 +31,7 @@
 
 - `06-implementation-plan.md`의 **슬라이스 순서를 따르고, 한 슬라이스를 완료 기준까지 끝낸 뒤 다음으로 넘어간다.** 슬라이스 범위 밖 기회적 확장 금지("Explicitly out of scope" 준수).
 - **게이트 G1(50작품 sanity)·G2(블라인드 GO/NO-GO)는 사람·데이터 작업이다.** 게이트 도달 시 멈추고 사용자에게 보고한다. G2 통과 전에 UI 슬라이스(5~)를 시작하지 않는다.
+- Model-panel evidence 검토에서 Local/Gemini/Grok CLI에는 ZIP이 아니라 canonical uncompressed directory와 exact request·complete payload ledger·root identity를 제공한다. ChatGPT.com GPT-5.6 Pro Oracle에만 같은 payload의 deterministic ZIP을 제공한다.
 - 화면 구현 시 `03-ux-screen-contracts.md`의 해당 섹션 **수용 기준 체크리스트를 그대로 검증**하고, 완료 보고에 항목별 충족 여부를 남긴다.
 - 산식 수치(감점값·cap·임계 등)를 조정해야 할 근거가 생기면: 코드만 바꾸지 말고 `02-product-spec.md` §6의 표를 함께 갱신하고 골든 스냅샷을 재생성한다.
 - 계약이 모호하거나 문서 간 모순을 발견하면: 임의로 정하지 말고 우선순위(§0)로 해소를 시도하고, 그래도 남으면 사용자에게 질문한다.
@@ -62,5 +63,8 @@ npm run --silent experiment:baseline # Taste vs Baseline CLI 비교 리포트(st
 
 ## 5. 현재 상태
 
-- 저장소는 아직 스캐폴드 전이다. 첫 작업 = 슬라이스 0 (`06-implementation-plan.md` 참조).
-- 미해결(사용자 소유 결정): 상표·도메인 확인, 라쿠텐 App ID 발급, 블라인드 테스트 참가자 모집.
+- 슬라이스 0~4와 150작품 Catalog를 완료했다. 제품 방향 G2는 `data/staging/g2/g2-product-direction-approval.json`의 사용자 승인 model-panel 경로로 `GO`이며 Slice 5가 승인됐다.
+- 사람 블라인드 검증은 실행하지 않았다. `humanValidation: "not-run"`, human metrics `null`, synthetic pilot human `0` / pilot `1` / verdict `INCOMPLETE` 경계를 유지한다.
+- 다음 구현 작업은 슬라이스 5(앱 셸 + 토큰 + 온보딩)다. `03-ux-screen-contracts.md` §0·2·3과 `04-visual-interaction-spec.md`를 그대로 따른다.
+- 배포 대상은 Vercel로 확정됐지만 현재 배포 권한은 열지 않았다. Project 연결, Preview, `main` Production은 슬라이스 10의 별도 완료 기준과 사용자 승인에 따른다.
+- 미해결 사용자 소유 항목: 상표·도메인 확인, 라쿠텐 App ID 발급, 향후 사람 블라인드 테스트 참가자 모집.

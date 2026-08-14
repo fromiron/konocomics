@@ -1,0 +1,47 @@
+GO
+
+PAYLOAD_LEDGER_SHA256: 9d66dd76fbbc6e68cdb0abe80d4ada965de6fb97228e537def3ae7b59c8c6e8a
+
+ORACLE_ZIP_SHA256: 680836440acc3275c03f7fb3466d4ed917d05ebc2b3979edec957088d165be38 (identity only; ZIP not accessed)
+
+HEAD: ce3bf4fca9dd5ba3f4bba371c9ae83407224ebc3
+
+TREE: d169a602b99599578aca8a1fd4ba0ffdcf0a371c
+
+CATALOG: v1-83f85ca42c87
+
+HUMAN_VALIDATION: not-run
+
+DECISION_BASIS: user-authorized-model-panel
+
+## Inspection summary
+
+무결성: `sha256(manifests/PAYLOAD.sha256)`이 바인딩된 원장 다이제스트와 일치했다. 원장 184행은 모두 `digest␠␠relative-path`로 파싱됐고, 절대경로·traversal·중복 경로/멤버는 없었다. 184개 멤버 해시를 재계산해 모두 일치했다. 독립 walk는 정규 파일 185개·심볼릭 링크 0개였고, 집합은 원장 184멤버 + 원장 파일 자체와 정확히 같았다.
+
+규범 문서 7종을 전문 읽었다: `02-product-spec.md`, `factor-dictionary.md`, `03-ux-screen-contracts.md`, `04-visual-interaction-spec.md`, `05-architecture.md`, `06-implementation-plan.md`, `07-acceptance-test-plan.md`. 추가로 `repository/AGENTS.md`를 읽었다.
+
+이번 결합 세션에서 실제로 전문 읽은 현재 소스/테스트 그룹: G2 도메인 `src/domain/g2.ts`; 추천 `src/domain/recommendation/`(adjustment/rank/types 및 관련 상수·수학); 설명 `src/domain/explanation/`(generate/types/constants/index); 카탈로그 `src/domain/catalog/{coverage,grouping,normalize,types,validate,schema,constants}.ts`; 프로필 `dna-summary.ts`, `experiment-schema.ts` 전문, constants/types/confidence; 하니스 `g2-wizard.tsx`, `app/{page,layout,human,synthetic-pilot}`, `globals.css`, `next.config.ts`, `package.json`, `tsconfig.json`; 문자열 `src/lib/strings.ts`; 카탈로그 파이프라인 `scripts/{build-catalog,report-coverage,validate-catalog}.ts`와 `scripts/catalog/{art-evidence,compile,load-source,pipeline,report,source-schema,types}.ts`; G2 CLI `scripts/aggregate-g2.ts`, `scripts/g2/{options,report,results}.ts`, `scripts/promote-g2-catalog.ts`, `scripts/experiment/io.ts`; 설정 `.gitignore`, `.prettierignore`, `eslint.config.mjs`, `.github/workflows/ci.yml`; `data/source/README.md`, `docs/factors/annotation-guide.md`; 테스트 `tests/helpers/{catalog,recommendation}.ts`, `tests/unit/catalog/{art-evidence,promote-g2-catalog}.test.ts`, `tests/unit/explanation/generate.test.ts`, `tests/unit/recommendation/{adjustment,golden}.test.ts`, `tests/unit/g2/{g2,options,report,results,runner}.test.ts`. 생성된 카탈로그/컨텍스트 JSON, lockfile, 골든/스냅샷, 미니파이 런타임의 모든 줄을 시각적으로 읽었다고 주장하지 않는다. 그것들은 원장 해시와 스키마·카운트 바인딩으로만 다뤘다. `scripts/build-g1-candidate.ts`는 185파일 스냅샷에 없고 패치 섹션으로만 읽었다.
+
+패치 `implementation/slice4.patch`는 파일 섹션 48개, hunk 260개다. 비생성 43개 중 37개는 결합 트랜스크립트에서 패치 바이트를 직접 전부 읽었다(1차에서 잘린 `scripts/promote-g2-catalog.ts` 생략 199줄과 `src/domain/g2.ts` 생략 532줄 포함). 나머지 비생성 6개(`.gitignore` 계열이 아니라 신규 파일 `harness/app/globals.css`, `harness/components/g2-wizard.tsx`, `scripts/catalog/art-evidence.ts`, `tests/unit/catalog/art-evidence.test.ts`, `tests/unit/catalog/promote-g2-catalog.test.ts`, `tests/unit/g2/g2.test.ts`)는 현재 소스 전문 읽기 + 패치 added body가 현재 파일과 바이트 동일하다는 기계적 확인으로 묶었다. 생성/골든 5개(`src/data/generated/catalog-v1.json`, `src/data/generated/recommendation-context-v1.json`, `tests/fixtures/experiment/report-golden.md`, `tests/fixtures/g2/aggregate-golden.md`, `tests/unit/recommendation/__snapshots__/golden.test.ts.snap`)는 원장 해시와 현재 파일 바인딩으로만 다뤘고 중복 바이트는 인쇄하지 않았다. 비생성 43개 전부의 `+` 접두 패치 줄을 두 번째로 시각 재독했다고 주장하지 않는다.
+
+재료 로그: 이번 완료 패스에서 `catalog-build.txt` 571줄 전부, `catalog-coverage.txt` 904줄 전부, `catalog-validate.txt` 41–571(1차의 1–40과 합쳐 전문), `format-check.txt`/`lint.txt`/`typecheck.txt`/`harness-build.txt`/`root-build.txt` 전문, `catalog-currentness-diff.txt`와 `git-diff-check.txt`는 0바이트를 직접 확인했다. `evidence/pilot/output/aggregate-2.md`, `evidence/validation/pilot-aggregate-recomputed.md`, `evidence/pilot/README.md`도 본문을 직접 읽었다. 1차에서 이미 다룬 것은 validation-summary, identity/final-identity, unit-tests(40 files / 355 tests passed), aggregate hash record, pre/post hashes, 빈 aggregate-command, `aggregate-1.md`다. 반복 WARNING도 줄 단위로 읽었고, build/validate는 동일 566경고(EVIDENCE_NOT_HUMAN_REVIEWED 416 + AUTHORIZED_MODEL_PANEL_REVIEW 150)에 푸터만 달랐다. coverage는 추천 적격 150작품 모두 PASS, FAIL 0이다.
+
+PNG 6장을 각각 이미지로 열었다: `01-input.png`, `02-before-top.png`, `03-before-complete.png`, `04-after-top.png`, `05-after-complete.png`, `06-complete.png`.
+
+세션 시작 시 런타임이 `/home/bell/.codex/skills/.system/review-agent/SKILL.md`를 자동으로 읽었다. 긴 canonical-file 명령 결과가 Cursor 내부 tool-output buffer로 외부화된 경우, 그 읽기는 해당 canonical 명령의 연속에 불과하다. 둘 다 외부 리뷰 증거가 아니다. ZIP, 라이브 체크아웃, GitHub/인터넷, 이전 리뷰어 자료, 다른 세션은 접근하지 않았다. 커버리지 감사를 위해 이 Cursor 세션 트랜스크립트를 검색한 것은 세션 메타데이터이며 canonical 증거가 아니다. 워크스페이스와 canonical 디렉터리는 수정하지 않았고 빌드/테스트도 실행하지 않았다.
+
+## Blocking findings
+
+None.
+
+## Rationale
+
+계약과 구현이 맞다. unknown Axis는 순위에서 제외되고, coverage는 가중치를 재분배하지 않고 0.5 쪽으로 줄어든다. Axis `axisPreferenceDirection`은 0이 아닌 Axis adjustment에만 붙고, 낮은 선호는 `positiveLowerAxisAdjustment` 전용 문장을 쓰며, direction이 없으면 일반 positive로 추정하지 않고 설명에서 떨어진다(fail closed). G2 holdout은 SHA-256 `konocomics-g2-holdout-v1\0…`, 슬롯은 `konocomics-g2-slot-v1\0…`이다. native Taste/Baseline 리스트는 섞지 않고, aggregator는 derived 필드를 재계산하며, synthetic pilot은 인간 지표에서 제외된다. 인간 10명 미만이면 verdict는 INCOMPLETE이고 다섯 기준은 모두 NOT_RUN이다. 프로모션은 catalog-annotation-only이며 `NOT_GRANTED_BY_*_ALONE` / `PRODUCT-DIRECTION G2 AUTHORIZATION: NO` / `SLICE 5 AUTHORIZATION: NO`를 강제한다. Slice 3 스키마의 5–10 앵커는 G2 래퍼가 6–10으로 조인다.
+
+수정된 역방향 문장 `「ギャグ・コメディ」が控えめな点が、あなたの好みに合う作品です。`는 after-ready HTML과 ARIA 모두에서 3회, 레거시 `「ギャグ・コメディ」があなたの好みに合う作品です。`는 양쪽 모두 0회다. 해당 HTML 문맥은 約束のネバーランド, ヴィンランド・サガ, バガボンド다. before-ready에는 그 문장과 `explanation-copy`가 없다. Taste Engine/Baseline/score/contribution 등 금지 토큰은 before/after HTML+ARIA에 없고, `data-*`는 Next `data-precedence="next"`뿐이다. 라디오는 before 131 / after 200이다.
+
+블라인딩과 browser→download→aggregate 사슬이 성립한다. `/human/`과 `/synthetic-pilot/`이 respondent를 고정하고, 설명은 after에만, debrief+download는 complete에만 있으며 스토리지는 없다. 다운로드 SHA는 `98429bdd94a864cc2e29a2edf48971ed0ab38983fa4f6b98c01d60d0806bddb8`이고 canonical UTF-8/LF이며 설명 문장/점수를 담지 않는다. `aggregate-1.md`, `aggregate-2.md`, `pilot-aggregate-recomputed.md`는 모두 SHA `98db33b126521e3bce9f7ce58bed76f08e4175149ed0f147d06585061f6c3e60`이고 aggregate-2와 recomputed는 1850바이트로 바이트 동일하다.
+
+Authoritative readback은 인간 0, synthetic 1, verdict INCOMPLETE, 다섯 GO 기준 전부 NOT_RUN이다. `humanValidation: not-run`, `decisionBasis: user-authorized-model-panel`이다. 카탈로그는 추천 적격 150 / 볼륨 154, 역할 Anchor 30 / Bridge 30 / Discovery 90, 버전 `v1-83f85ca42c87`이다. identity/validation은 HEAD/TREE/카탈로그 바인딩과 일치하고, format/lint/typecheck는 깨끗하며 currentness·git-diff는 빈 디프다. harness-build는 `/`, `/human`, `/synthetic-pilot`만 내보내고 root-build는 `/`와 `/_not-found`만 내보내 `src/app` 제품 UI가 없다. 카탈로그 경고는 인간 리뷰를 주장하지 않고 AUTHORIZED_MODEL_PANEL_REVIEW 150건을 명시한다. Slice 5는 열려 있지 않다.
+
+This individual vote does not by itself open G2 or authorize Slice 5.

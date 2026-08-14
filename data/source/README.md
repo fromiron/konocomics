@@ -41,7 +41,14 @@
 
 - 현재 source는 G1의 50작품을 보존한 150작품 Catalog다. 기존 승인 49작품은 G1 provenance를 유지하고, 신규 100작품과 재개방한 `haikyu`는 `reviews/g2-catalog-annotation-panel.md`의 Catalog 주석 판정에만 결속된다.
 - 승격 전 후보·생성물·4개 검토 경로·시각 evidence ZIP의 해시는 `data/staging/g2/g2-catalog-annotation-approval.json`에 동결되어 있다. 승격은 그 manifest와 정확히 101작품의 `annotationReview*` 세 필드만 갱신하며 주석 값과 evidence를 다시 쓰지 않는다.
-- 이 상태는 150작품 Catalog 주석 승격만 승인한다. 제품 방향 G2와 Slice 5는 엔진 identity, 구현 diff, contract/metric 테스트, 결정론적 aggregate, 실제 브라우저 pilot을 같은 manifest로 동결한 별도 4경로 GO 전까지 닫혀 있다.
+- Catalog 주석 승격의 범위와 provenance는 이후 제품 방향 판정과 분리되어 유지된다.
+
+## G2 제품 방향 승인
+
+- 제품 방향 Cycle 2는 HEAD `ce3bf4fca9dd5ba3f4bba371c9ae83407224ebc3`의 engine identity, 구현 diff, contract/metric 테스트, 결정론적 aggregate, 실제 브라우저 pilot을 같은 payload identity로 동결한 뒤 Local/Gemini/Grok/GPT-5.6 Pro의 유효하고 조건 없는 4/4 `GO`를 받았다. 결정과 모든 응답·유효성 해시는 `data/staging/g2/g2-product-direction-approval.json`에 결속되어 있다.
+- 이 승인은 `humanValidation: "not-run"`, `decisionBasis: "user-authorized-model-panel"` 경로다. Human metrics는 `null`이고 실제 파일럿은 human `0`, synthetic pilot `1`, verdict `INCOMPLETE`, 다섯 human 기준 전부 `NOT_RUN`이다. 사람 검증이나 통계적 우세를 주장하지 않는다.
+- 제품 방향 G2와 Slice 5는 승인됐다. Vercel은 배포 대상으로 확정되어 있지만 이 판정은 Vercel 배포를 승인하지 않으며, 실제 연결과 Production 배포는 Slice 10의 별도 완료 기준에 따른다.
+- 이후 검토에서 Local/Gemini/Grok CLI에는 canonical uncompressed evidence directory와 exact request·complete ledger·root identity를 제공한다. ChatGPT.com GPT-5.6 Pro Oracle에만 같은 payload의 deterministic ZIP을 제공한다.
 
 ## 추천 context
 

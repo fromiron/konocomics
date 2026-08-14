@@ -1,0 +1,14 @@
+GO
+Bundle SHA-256: 680836440acc3275c03f7fb3466d4ed917d05ebc2b3979edec957088d165be38
+Final HEAD: ce3bf4fca9dd5ba3f4bba371c9ae83407224ebc3
+Human validation: not-run
+Decision basis: user-authorized-model-panel
+
+Inspection summary:
+The original ZIP identity and all 184 payload-ledger entries were verified after safe extraction into a fresh directory. I independently inspected the normative G2 contracts, current 150-work catalog and recommendation context, full Slice 4 patch and exact source, all included G2 and direction-regression tests, built harness, browser runner and raw captures, unedited download, aggregate artifacts, validation logs, identity record, and all six PNG screenshots at original 1440x1000 detail. The lower-Axis correction is coherent from contract through rendered evidence: the corrected lower-comedy sentence occurs exactly 3 times in both raw after-ready HTML and ARIA, while the old directionless sentence occurs 0 times; both occur 0 times before reveal.
+
+Blocking findings:
+None.
+
+Rationale:
+For this exact bundle and identity, the intended local blind-test flow is reachable, list identity and ranks remain stable across explanation reveal, engine identity stays blinded until final submit, and the canonical browser download is represented by three byte-identical authoritative aggregate readbacks. The implementation explicitly creates and validates lower Axis preference provenance and fails closed when that provenance is absent or misplaced. Catalog identity and validation are exact, the synthetic pilot remains correctly excluded from human metrics (human 0, synthetic 1, INCOMPLETE, all human criteria NOT_RUN), and no Slice 5 product UI implementation is present. These artifacts support opening product-direction G2 under the already user-authorized model-panel decision path without substituting synthetic or test evidence for human validation.
