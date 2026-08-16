@@ -23,6 +23,10 @@ import type {
   UserWorkRecord,
 } from "@/domain/profile/types";
 import { useCatalog } from "@/features/catalog/catalog-provider";
+import {
+  createRecommendationCoverTargets,
+  useRecommendationCovers,
+} from "@/features/recommendations/recommendation-cover-resolver";
 import { usePersistence } from "@/infrastructure/db";
 import { tasteStrings, explanationLexicon } from "@/lib/strings";
 
@@ -107,7 +111,14 @@ function positiveAnchorWorks(
 function AnchorStrip({
   anchors,
   animateReveal,
-}: Readonly<{ anchors: Work[]; animateReveal: boolean }>) {
+  coverUrls,
+  onCoverSettled,
+}: Readonly<{
+  anchors: Work[];
+  animateReveal: boolean;
+  coverUrls: ReadonlyMap<string, string | null>;
+  onCoverSettled(workId: string): void;
+}>) {
   const content = (
     <>
       <h2 className="visually-hidden" id="taste-anchor-heading">
@@ -118,8 +129,10 @@ function AnchorStrip({
           <li key={work.id}>
             <CoverImage
               className="taste-anchor-cover"
+              coverUrl={coverUrls.get(work.id)}
               creators={work.creators}
               decorative
+              onSettled={() => onCoverSettled(work.id)}
               requestedSize={200}
               title={work.title}
             />
@@ -152,6 +165,8 @@ type TopPreferenceCardProps = Readonly<{
   worksById: ReadonlyMap<string, Work>;
   index: number;
   animateReveal: boolean;
+  coverUrls: ReadonlyMap<string, string | null>;
+  onCoverSettled(workId: string): void;
 }>;
 
 function TopPreferenceCard({
@@ -159,6 +174,8 @@ function TopPreferenceCard({
   worksById,
   index,
   animateReveal,
+  coverUrls,
+  onCoverSettled,
 }: TopPreferenceCardProps) {
   const evidenceWorks = preference.anchorWorkIds.flatMap((workId): Work[] => {
     const work = worksById.get(workId);
@@ -174,8 +191,10 @@ function TopPreferenceCard({
           <li key={work.id}>
             <CoverImage
               className="taste-evidence-cover"
+              coverUrl={coverUrls.get(work.id)}
               creators={work.creators}
               decorative
+              onSettled={() => onCoverSettled(work.id)}
               requestedSize={200}
               title={work.title}
             />
@@ -298,7 +317,9 @@ export function TasteFlow() {
   const catalog = useCatalog();
   const {
     adjustments: storedAdjustments,
+    getProviderCache,
     onboardingCompletedAt,
+    saveProviderCache,
     saveProfileAdjustments,
     status,
     userWorks,
@@ -341,6 +362,26 @@ export function TasteFlow() {
   const anchors = useMemo(
     () => positiveAnchorWorks(catalogRecords, worksById),
     [catalogRecords, worksById],
+  );
+  const coverTargets = useMemo(
+    () => createRecommendationCoverTargets(catalog, anchors.map((work) => work.id)),
+    [anchors, catalog],
+  );
+  const { coverUrls, notifyCoverSettled } = useRecommendationCovers({
+    targets: coverTargets,
+    getProviderCache,
+    saveProviderCache,
+  });
+  const coverTargetsByWorkId = useMemo(
+    () => new Map(coverTargets.map((target) => [target.workId, target] as const)),
+    [coverTargets],
+  );
+  const handleCoverSettled = useCallback(
+    (workId: string) => {
+      const target = coverTargetsByWorkId.get(workId);
+      if (target !== undefined) notifyCoverSettled(target);
+    },
+    [coverTargetsByWorkId, notifyCoverSettled],
   );
   const confidenceLevel = getConfidenceLevel(calculateProfileConfidence(catalogRecords));
   const narrative = summary.axes.filter((preference) => NARRATIVE_IDS.has(preference.factorId));
@@ -477,7 +518,12 @@ export function TasteFlow() {
               {tasteStrings.confidence}: {tasteStrings.confidenceLabels[confidenceLevel]}
             </p>
           </div>
-          <AnchorStrip anchors={anchors} animateReveal={revealExperience.animate} />
+          <AnchorStrip
+            anchors={anchors}
+            animateReveal={revealExperience.animate}
+            coverUrls={coverUrls}
+            onCoverSettled={handleCoverSettled}
+          />
         </header>
 
         {status.state === "degraded" ? (
@@ -500,9 +546,11 @@ export function TasteFlow() {
               {summary.topPreferences.map((preference, index) => (
                 <TopPreferenceCard
                   animateReveal={revealExperience.animate}
+                  coverUrls={coverUrls}
                   index={index}
                   key={`${preference.kind}:${preference.factorId}`}
                   preference={preference}
+                  onCoverSettled={handleCoverSettled}
                   worksById={worksById}
                 />
               ))}

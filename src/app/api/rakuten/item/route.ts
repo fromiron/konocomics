@@ -19,7 +19,11 @@ export async function GET(request: Request): Promise<Response> {
   }
 
   try {
-    const listings = await fetchRakutenBooks({ kind: "item", isbn: isbn.data }, credentials);
+    const listings = await fetchRakutenBooks(
+      { kind: "item", isbn: isbn.data },
+      credentials,
+      request,
+    );
     const listing = listings.find((candidate) => candidate.isbn === isbn.data);
     if (listing === undefined) {
       return providerUnavailable();

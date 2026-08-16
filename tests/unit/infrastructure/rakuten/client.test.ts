@@ -68,11 +68,33 @@ describe("Rakuten client", () => {
     const first = requestRakutenBook("978-4-09-185531-2");
     const second = requestRakutenBook(ITEM.isbn);
     expect(second).toBe(first);
-    expect(routeFetch).toHaveBeenCalledOnce();
+    await vi.waitFor(() => expect(routeFetch).toHaveBeenCalledOnce());
 
     resolveResponse(Response.json({ listing: ITEM }));
     await expect(first).resolves.toEqual(ITEM);
     await expect(requestRakutenBook(ITEM.isbn)).resolves.toEqual(ITEM);
+    expect(routeFetch).toHaveBeenCalledTimes(2);
+  });
+
+  it("serializes distinct provider requests through one client queue", async () => {
+    const otherItem = { ...ITEM, isbn: "9784091380135" };
+    let resolveFirst!: (response: Response) => void;
+    const firstResponse = new Promise<Response>((resolve) => {
+      resolveFirst = resolve;
+    });
+    const routeFetch = vi
+      .fn()
+      .mockImplementationOnce(() => firstResponse)
+      .mockResolvedValueOnce(Response.json({ listing: otherItem }));
+    vi.stubGlobal("fetch", routeFetch);
+
+    const first = fetchRakutenBook(ITEM.isbn);
+    const second = fetchRakutenBook(otherItem.isbn);
+    await vi.waitFor(() => expect(routeFetch).toHaveBeenCalledOnce());
+
+    resolveFirst(Response.json({ listing: ITEM }));
+    await expect(first).resolves.toEqual(ITEM);
+    await expect(second).resolves.toEqual(otherItem);
     expect(routeFetch).toHaveBeenCalledTimes(2);
   });
 

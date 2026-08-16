@@ -39,7 +39,7 @@ export const rakutenBookItemSchema = z.strictObject({
   affiliateUrl: httpsUrlSchema.optional(),
   imageUrl: httpsUrlSchema.optional(),
   chirayomiUrl: httpsUrlSchema.optional(),
-  availability: rakutenAvailabilitySchema,
+  availability: rakutenAvailabilitySchema.optional(),
   reviewAverage: z.number().finite().min(0).max(5),
   reviewCount: z.number().int().nonnegative(),
 });

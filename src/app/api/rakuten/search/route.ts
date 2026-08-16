@@ -19,7 +19,11 @@ export async function GET(request: Request): Promise<Response> {
   }
 
   try {
-    const items = await fetchRakutenBooks({ kind: "search", title: title.data }, credentials);
+    const items = await fetchRakutenBooks(
+      { kind: "search", title: title.data },
+      credentials,
+      request,
+    );
     return Response.json({ items }, { headers: { "Cache-Control": RAKUTEN_CDN_CACHE_CONTROL } });
   } catch {
     return providerUnavailable();

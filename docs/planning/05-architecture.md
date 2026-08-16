@@ -31,7 +31,7 @@
 - `main` 보호 규칙에서 GitHub `CI / quality` check 성공을 병합 필수 조건으로 둔다. 이 workflow의 format·typecheck·lint·unit test·catalog validate·generated-currentness·production build·G2 harness build가 실패한 커밋은 Vercel Production 대상이 될 수 없다.
 - Vercel Project Settings에서 같은 GitHub `quality` job을 Production의 **필수 Deployment Check**로 선택한다. Production build가 성공해도 이 check 전에는 production domain을 alias하지 않으며, `Force Promote`는 사용자가 명시적으로 승인한 긴급 릴리스에서만 사용한다.
 - Vercel Production Build Command는 `pnpm catalog:validate && pnpm build`로 고정한다. Preview 성공만으로 GitHub 품질 게이트 통과나 Production 승격을 대체하지 않는다.
-- `RAKUTEN_APPLICATION_ID`·`RAKUTEN_ACCESS_KEY`와 선택적 `RAKUTEN_AFFILIATE_ID`는 Vercel Project Settings의 Environment Variables에만 저장하고 Preview/Production 범위를 명시한다. 저장소·클라이언트 번들·배포 로그에 값을 출력하지 않는다.
+- `RAKUTEN_APPLICATION_ID`·`RAKUTEN_ACCESS_KEY`와 선택적 `RAKUTEN_AFFILIATE_ID`, 앱 등록의 허용 도메인과 일치하는 `RAKUTEN_ALLOWED_ORIGIN`은 Vercel Project Settings의 Environment Variables에만 저장하고 Preview/Production 범위를 명시한다. 저장소·클라이언트 번들·배포 로그에 값을 출력하지 않는다.
 - Vercel Hobby는 공식 정책상 개인·비상업 용도로 제한된다. 개발·비상업 Preview에는 사용할 수 있지만, 공개 운영 성격이 이를 벗어나면 Production 공개 전에 Pro 이상을 선택한다. 요금제 선택은 호스팅 플랫폼 결정을 다시 여는 것이 아니다.
 - 커스텀 도메인은 상표·도메인 확인 뒤 연결한다. 도메인 미확정은 Vercel 제공 Preview/Production URL을 이용한 구현·검증을 막지 않는다.
 - G2 하니스는 계속 로컬 전용이며 Vercel Project에 포함하거나 별도 배포하지 않는다.
@@ -144,8 +144,10 @@ GET /api/rakuten/item?isbn=...           → { listing: RakutenBookItem }
 ```
 
 - 응답 헤더: `Cache-Control: public, s-maxage=86400, stale-while-revalidate=604800` (Vercel CDN 캐시로 라쿠텐 호출 절감). 응답은 사용자별 정보가 없는 공용 Rakuten 축소 응답만 담는다.
+- Catalog 대표권이 품절이어도 메타데이터를 조회할 수 있도록 `outOfStockFlag=1`을 고정한다. 공급자의 현재 `Items`와 이전 `items` envelope를 모두 경계에서 정규화하고, 빈 availability는 미확인으로 보존하며 숫자 문자열 reviewAverage는 검증 후 number로 변환한다.
 - 라쿠텐 응답에서 필요한 필드만 추출(§`02` 5). `largeImageUrl`은 `_ex=600x600`으로 정규화해 `imageUrl`로 반환하고, 클라이언트 `CoverImage`가 같은 원본 URL에서 200/400/600 preset을 파생한다. 600 로드 실패 시 같은 URL의 200x200으로 폴백한다.
 - 실패 처리: 라쿠텐 4xx/5xx·타임아웃(5s) → `502 { error: "provider_unavailable" }`. 클라이언트는 placeholder 폴백(`03` 각 화면). 재시도는 사용자 액션으로만(자동 재시도 없음).
+- 요청 간격: 공통 Rakuten 클라이언트 큐가 서로 다른 요청의 시작을 1초 이상 분리해 application ID당 초당 1회 제한을 지킨다. 동일 ISBN의 동시 요청은 기존 in-flight 합류를 우선한다.
 - 요청 검증: title 1~100자 / isbn 형식. 미통과 400. (공개 프록시 남용 방지 겸)
 
 ## 5. 소스 구조

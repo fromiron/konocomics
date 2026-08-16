@@ -13,9 +13,11 @@ import { createTestCatalog, createTestWork } from "../../helpers/catalog";
 const testState = vi.hoisted(() => ({
   catalog: null as unknown,
   adjustments: { axes: {}, themes: {} } as ProfileAdjustments,
+  getProviderCache: vi.fn(),
   onboardingCompletedAt: "2026-08-14T01:00:00.000Z" as string | null | undefined,
   search: new URLSearchParams(),
   saveProfileAdjustments: vi.fn(),
+  saveProviderCache: vi.fn(),
   userWorks: [] as UserWorkRecord[],
 }));
 const motionState = vi.hoisted(() => ({ reduced: false as boolean | null }));
@@ -39,9 +41,11 @@ vi.mock("@/infrastructure/db", () => ({
     status: { state: "ready", mode: "indexeddb", warning: null },
     userWorks: testState.userWorks,
     adjustments: testState.adjustments,
+    getProviderCache: testState.getProviderCache,
     onboardingCompletedAt: testState.onboardingCompletedAt,
     hasProfile: true,
     saveProfileAdjustments: testState.saveProfileAdjustments,
+    saveProviderCache: testState.saveProviderCache,
   }),
 }));
 
@@ -67,6 +71,9 @@ beforeEach(() => {
   testState.onboardingCompletedAt = "2026-08-14T01:00:00.000Z";
   testState.saveProfileAdjustments.mockReset();
   testState.saveProfileAdjustments.mockResolvedValue(undefined);
+  testState.getProviderCache.mockReset();
+  testState.getProviderCache.mockResolvedValue(null);
+  testState.saveProviderCache.mockReset();
   motionState.reduced = false;
   motionPreferenceListener = null;
   window.sessionStorage.clear();
@@ -99,6 +106,31 @@ afterEach(() => {
 });
 
 describe("TasteFlow", () => {
+  it("renders cached Rakuten covers for positive anchor works", async () => {
+    const catalog = testState.catalog as ReturnType<typeof createTestCatalog>;
+    const work = catalog.works[0]!;
+    const volumeId = catalog.representativeVolumeByWorkId[work.id]!;
+    const isbn = catalog.volumes.find((volume) => volume.id === volumeId)!.isbn;
+    testState.getProviderCache.mockResolvedValue({
+      workId: work.id,
+      provider: "rakuten",
+      isbn,
+      imageUrl: "https://thumbnail.image.rakuten.co.jp/book.jpg?_ex=600x600",
+      fetchedAt: "2026-08-14T00:00:00.000Z",
+      commercialExpiresAt: "2099-08-14T00:00:00.000Z",
+      metadataExpiresAt: "2099-08-14T00:00:00.000Z",
+    });
+
+    const { container } = render(<TasteFlow />);
+
+    await waitFor(() => {
+      expect(container.querySelector<HTMLImageElement>(".taste-anchor-cover img")?.src).toBe(
+        "https://thumbnail.image.rakuten.co.jp/book.jpg?_ex=200x200",
+      );
+    });
+    expect(testState.getProviderCache).toHaveBeenCalledWith(isbn);
+  });
+
   it("does not render a profile backed only by catalog-stale records", () => {
     testState.userWorks = Array.from({ length: 5 }, (_, index) => ({
       workId: `stale-${String(index + 1)}`,

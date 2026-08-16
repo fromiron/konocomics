@@ -398,7 +398,7 @@ describe("WorkDetailFlow", () => {
     ).toBe(cached.itemUrl);
   });
 
-  it("renders profile compatibility from the same contribution and explanation functions", () => {
+  it("renders profile compatibility and resolves its anchor cover", async () => {
     testState.userWorks = catalog.works.slice(0, 5).map((work, index) => ({
       workId: work.id,
       readingState: "completed" as const,
@@ -422,8 +422,20 @@ describe("WorkDetailFlow", () => {
       lexicon: explanationLexicon,
       resolveTitle: (workId) => catalog.works.find((work) => work.id === workId)?.title,
     });
+    const anchorWorkId = expected.anchors[0]!.workId;
+    const anchorIsbn = catalog.volumes.find(
+      (volume) => volume.id === catalog.representativeVolumeByWorkId[anchorWorkId],
+    )!.isbn;
+    const anchorCache = {
+      ...providerCacheRecord({ commercialFresh: true, metadataFresh: true }),
+      workId: anchorWorkId,
+      isbn: anchorIsbn,
+    };
+    testState.getProviderCache.mockImplementation(async (isbn) =>
+      isbn === anchorIsbn ? anchorCache : null,
+    );
 
-    renderDetail();
+    const view = renderDetail();
 
     expect(
       screen.getByRole("heading", { name: workDetailStrings.compatibility.heading }),
@@ -432,5 +444,12 @@ describe("WorkDetailFlow", () => {
       expect(screen.getByText(reason.text)).toBeTruthy();
     });
     expect(screen.getByText(expected.confidence.label, { exact: false })).toBeTruthy();
+    await waitFor(() => {
+      expect(
+        view.container
+          .querySelector(".work-detail-compatibility__anchor-cover img")
+          ?.getAttribute("src"),
+      ).toContain("_ex=200x200");
+    });
   });
 });
