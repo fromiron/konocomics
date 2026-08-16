@@ -19,9 +19,9 @@ import {
   type G2SlotId,
 } from "../../src/domain/g2";
 import type { RecommendationContext } from "../../src/domain/recommendation/types";
-import { strings } from "../../src/lib/strings";
+import { coreStrings, explanationLexicon, g2HarnessStrings } from "../../src/lib/strings";
 
-const copy = strings.g2Harness;
+const copy = g2HarnessStrings;
 const PROFILE_FILE_LIMIT = 1024 * 1024;
 const PARTICIPANT_ID_PATTERN = /^[a-z0-9]+(?:-[a-z0-9]+)*$/;
 
@@ -129,7 +129,7 @@ function Progress({ stage }: { stage: Stage }) {
 function PageHeader({ modeLabel }: { modeLabel: string }) {
   return (
     <header className="site-header">
-      <p className="wordmark" aria-label={strings.appName}>
+      <p className="wordmark" aria-label={coreStrings.appName}>
         <span>kono</span>co<span>mi</span>cs
       </p>
       <p className="mode-label">{modeLabel}</p>
@@ -605,7 +605,7 @@ export function G2Wizard({ respondent }: G2WizardProps) {
         catalog,
         context: recommendationContext,
         sha256Hex,
-        lexicon: strings.explanation,
+        lexicon: explanationLexicon,
       });
       setExperiment(nextExperiment);
       setStage("before");

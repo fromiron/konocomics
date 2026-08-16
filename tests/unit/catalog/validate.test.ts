@@ -23,6 +23,13 @@ describe("catalog semantic validation", () => {
     );
   });
 
+  it.each(["external", `ext:rakuten:v1:${"a".repeat(64)}`])(
+    "reserves the external detail namespace from catalog work ids: %s",
+    (id) => {
+      expect(codes(createTestCatalog(createTestWork({ id })))).toContain("RESERVED_WORK_ID");
+    },
+  );
+
   it("treats equivalent ISBN-10 and ISBN-13 values as duplicates", () => {
     const catalog = createTestCatalog();
     catalog.volumes.push({

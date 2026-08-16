@@ -59,12 +59,24 @@ npm run --silent experiment:baseline # Taste vs Baseline CLI 비교 리포트(st
 - 스타일은 Tailwind + `globals.css`의 시맨틱 토큰(`04` §2)만 사용. 임의 hex·px 매직넘버로 토큰을 우회하지 않는다. `--accent`는 의미 있는 곳(로고 kono·mi, 상위 취향, 주요 CTA, 선택, focus)에만.
 - 모션은 `04` §6의 분류 A~F 중 하나에 속해야 하며, 상시 루프 애니메이션 금지, `prefers-reduced-motion` 폴백 필수.
 - 테스트는 `07`의 계약 목록이 기준이다. 계약 밖 커버리지 확대를 위한 테스트 양산 금지.
-- 접근성 기본선: focus-visible 링, 터치 타깃 ≥44px, 장식 요소 `aria-hidden`, FactorBar는 `role="meter"`, 리스트 변경 `aria-live` — 상세는 `03` 각 화면.
+- 접근성 기본선: focus-visible 링, 터치 타깃 ≥44px, 장식 요소 `aria-hidden`, 확인된 FactorBar는 `role="meter"`, 미확인 축은 이름 있는 비수치 상태, 리스트 변경 `aria-live` — 상세는 `03` 각 화면.
 
 ## 5. 현재 상태
 
 - 슬라이스 0~4와 150작품 Catalog를 완료했다. 제품 방향 G2는 `data/staging/g2/g2-product-direction-approval.json`의 사용자 승인 model-panel 경로로 `GO`이며 Slice 5가 승인됐다.
 - 사람 블라인드 검증은 실행하지 않았다. `humanValidation: "not-run"`, human metrics `null`, synthetic pilot human `0` / pilot `1` / verdict `INCOMPLETE` 경계를 유지한다.
-- 다음 구현 작업은 슬라이스 5(앱 셸 + 토큰 + 온보딩)다. `03-ux-screen-contracts.md` §0·2·3과 `04-visual-interaction-spec.md`를 그대로 따른다.
-- 배포 대상은 Vercel로 확정됐지만 현재 배포 권한은 열지 않았다. Project 연결, Preview, `main` Production은 슬라이스 10의 별도 완료 기준과 사용자 승인에 따른다.
+- 슬라이스 5(앱 셸·토큰·온보딩), 6(`/taste`), 7(`/recommendations`), 8(Rakuten 프록시·Catalog 작품 상세), 9(`/library`·external 작품), 10(`/settings`·Export/Import·전체 삭제·정적 랜딩)을 완료했다. 데스크톱·390×844 Playwright에서 키보드 온보딩→DNA→추천, 정책 저장·피드백 백필, Catalog/external Library 영속성, provider 장애, canonical external URL과 동시 편집 ISBN 보존, seven-store Export→삭제→Import와 손상·Catalog mismatch·pre-profile draft 분기를 검증했다.
+- Catalog 상세은 150개 build-time SSG path와 `dynamicParams=false`로 닫고, external은 고정 정적 셸 `/works/external?workId=<ExternalWorkId>`에서만 client lookup한다. external v1 ID/key는 immutable이며 Export/Import 복원은 슬라이스 10 완료 경계다.
+- 슬라이스 11(시그니처 모먼트·모션 총정리)을 완료했다. 사용자 결정으로 cold mobile LCP 예산은 랜딩·추천 각각 <3.5s이며, fixed 5 product E2E·reduced-motion 동등성·CLS·추천 초기 JS·추천 C frame gate를 충족했다. 다음 구현 작업은 슬라이스 12(PWA·다크 모드·최종 QA)다.
+- 향후 릴리스 대상은 Vercel로 확정됐지만 현재 배포 권한은 열지 않았다. GitHub의 현재 Slice 5~11 commit·PR·`main` merge만 2026-08-16 사용자 승인 범위이며, Vercel Project 연결·Preview·Production은 별도 승인 작업이다. 로컬 build/Playwright나 GitHub merge를 배포 증거로 간주하지 않는다.
 - 미해결 사용자 소유 항목: 상표·도메인 확인, 라쿠텐 App ID 발급, 향후 사람 블라인드 테스트 참가자 모집.
+
+<!-- BEGIN:nextjs-agent-rules -->
+
+# This is NOT the Next.js you know
+
+This version has breaking changes — APIs, conventions, and file structure may all differ from your training data. Read the relevant guide in `node_modules/next/dist/docs/` (resolved from this file's directory; in monorepos the `next` package may not be visible from the repo root) before writing any code. Heed deprecation notices.
+
+This block is written and re-added by `next dev` — verify at `node_modules/next/dist/server/lib/generate-agent-files.js`. Removing it from a diff only re-creates the uncommitted change; committing it with your work keeps the tree clean.
+
+<!-- END:nextjs-agent-rules -->

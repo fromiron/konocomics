@@ -11,7 +11,7 @@ import type {
   TasteExplanationSentence,
 } from "@/domain/explanation";
 import type { BaselineContribution, GroupContribution } from "@/domain/recommendation/types";
-import { strings } from "@/lib/strings";
+import { explanationLexicon } from "@/lib/strings";
 
 function tasteContribution(overrides: Partial<GroupContribution> = {}): GroupContribution {
   return {
@@ -132,7 +132,7 @@ describe("Taste explanations", () => {
     const result = generateTasteExplanation({
       contributions,
       confidenceLevel: "high",
-      lexicon: strings.explanation,
+      lexicon: explanationLexicon,
       resolveTitle: titleResolver({ "positive-anchor": "好きな作品" }),
     });
 
@@ -187,7 +187,7 @@ describe("Taste explanations", () => {
     const input = {
       contributions,
       confidenceLevel: "high" as const,
-      lexicon: strings.explanation,
+      lexicon: explanationLexicon,
       resolveTitle: titleResolver({
         "positive-a": "冒険作品",
         "positive-b": "幻想作品",
@@ -236,7 +236,7 @@ describe("Taste explanations", () => {
 
   it("uses only lexicon-supported Axis, Genre, or Theme factors", () => {
     const lexicon: ExplanationLexicon = {
-      ...strings.explanation,
+      ...explanationLexicon,
       factorLabels: { darkness: "ダークな世界観", adventure: "冒険" },
     };
     const result = generateTasteExplanation({
@@ -278,7 +278,7 @@ describe("Taste explanations", () => {
     const result = generateTasteExplanation({
       contributions,
       confidenceLevel: "normal",
-      lexicon: strings.explanation,
+      lexicon: explanationLexicon,
       resolveTitle: () => undefined,
     });
 
@@ -309,7 +309,7 @@ describe("Taste explanations", () => {
         }),
       ],
       confidenceLevel: "normal",
-      lexicon: strings.explanation,
+      lexicon: explanationLexicon,
       resolveTitle: () => undefined,
     });
 
@@ -319,10 +319,10 @@ describe("Taste explanations", () => {
 
   it("interpolates original template tokens once without interpreting injected tokens", () => {
     const lexicon: ExplanationLexicon = {
-      ...strings.explanation,
+      ...explanationLexicon,
       factorLabels: { adventure: "{anchorTitle}" },
       templates: {
-        ...strings.explanation.templates,
+        ...explanationLexicon.templates,
         positiveWithAnchor: "『{anchorTitle}』と「{factorLabel}」",
       },
     };
@@ -352,7 +352,7 @@ describe("Taste explanations", () => {
       generateTasteExplanation({
         contributions: [],
         confidenceLevel,
-        lexicon: strings.explanation,
+        lexicon: explanationLexicon,
         resolveTitle: () => undefined,
       }).confidence,
     ).toEqual({ level: confidenceLevel, label });
@@ -389,7 +389,7 @@ describe("Baseline explanations", () => {
     const input = {
       contributions,
       bestAnchorId: "anchor-a",
-      lexicon: strings.explanation,
+      lexicon: explanationLexicon,
       resolveTitle: titleResolver({ "anchor-a": "基準作品" }),
     };
 
@@ -419,7 +419,7 @@ describe("Baseline explanations", () => {
 
   it("does not replace the selected top signal when its injected copy is missing", () => {
     const lexicon: ExplanationLexicon = {
-      ...strings.explanation,
+      ...explanationLexicon,
       factorLabels: {},
     };
     const result = generateBaselineExplanation({
@@ -458,7 +458,7 @@ describe("Baseline explanations", () => {
     const result = generateBaselineExplanation({
       contributions,
       bestAnchorId: "anchor-b",
-      lexicon: strings.explanation,
+      lexicon: explanationLexicon,
       resolveTitle: titleResolver({ "anchor-a": "作品A", "anchor-b": "作品B" }),
     });
 
@@ -481,7 +481,7 @@ describe("Baseline explanations", () => {
     const result = generateBaselineExplanation({
       contributions: [baselineContribution()],
       bestAnchorId: "anchor-a",
-      lexicon: strings.explanation,
+      lexicon: explanationLexicon,
       resolveTitle: () => undefined,
     });
 
@@ -499,7 +499,7 @@ describe("Baseline explanations", () => {
     const result = generateBaselineExplanation({
       contributions: [maturity],
       bestAnchorId: null,
-      lexicon: strings.explanation,
+      lexicon: explanationLexicon,
       resolveTitle: () => undefined,
     });
 
@@ -508,7 +508,7 @@ describe("Baseline explanations", () => {
       generateBaselineExplanation({
         contributions: [{ ...maturity, explainable: false }],
         bestAnchorId: null,
-        lexicon: strings.explanation,
+        lexicon: explanationLexicon,
         resolveTitle: () => undefined,
       }),
     ).toEqual({ anchors: [] });
@@ -527,7 +527,7 @@ describe("Baseline explanations", () => {
         baselineContribution({ value: 0.2, anchorWorkIds: ["unrendered-anchor"] }),
       ],
       bestAnchorId: "unrendered-anchor",
-      lexicon: strings.explanation,
+      lexicon: explanationLexicon,
       resolveTitle: titleResolver({ "unrendered-anchor": "未表示作品" }),
     });
 

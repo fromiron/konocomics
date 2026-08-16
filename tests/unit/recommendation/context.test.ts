@@ -6,10 +6,23 @@ import {
   marketSignalFor,
   validateRecommendationContext,
 } from "@/domain/recommendation/context";
+import {
+  parseRecommendationContext,
+  recommendationContextSchema,
+} from "@/domain/recommendation/context-schema";
 import { createTestCatalog, createTestWork } from "../../helpers/catalog";
 import { createTestRecommendationContext } from "../../helpers/recommendation";
 
 describe("recommendation context", () => {
+  it("shares one strict zod boundary between product runtime and scripts", () => {
+    const context = createTestRecommendationContext("v1-schema");
+
+    expect(parseRecommendationContext(context)).toEqual(context);
+    expect(recommendationContextSchema.safeParse({ ...context, unexpected: true }).success).toBe(
+      false,
+    );
+  });
+
   it("accepts a matching bounded context and supplies deterministic fixture fallbacks", () => {
     const catalog = createTestCatalog();
     const work = catalog.works[0];

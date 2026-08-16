@@ -1,4 +1,5 @@
 const EDITION_TOKEN_PATTERN = /(完全版|新装版|文庫版|特装版|限定版|電子版|セット)/gu;
+const EXTERNAL_V1_EDITION_TOKEN_PATTERN = /(完全版|新装版|文庫版|特装版|限定版|電子版|せっと)/gu;
 const EMPTY_BRACKETS_PATTERN = /[([（【]\s*[)\]）】]/gu;
 const VOLUME_SUFFIX_PATTERNS = [
   /\s*\d{1,3}\s*[-~〜–—]\s*\d{1,3}\s*巻?\s*$/u,
@@ -10,7 +11,10 @@ const VOLUME_SUFFIX_PATTERNS = [
 ] as const;
 
 function normalizeSpacing(value: string) {
-  return value.replace(/[・･]/gu, " ").replace(/\s+/gu, " ").trim();
+  return value
+    .replace(/[・･·]/gu, " ")
+    .replace(/\s+/gu, " ")
+    .trim();
 }
 
 export function foldKatakanaToHiragana(value: string) {
@@ -20,9 +24,9 @@ export function foldKatakanaToHiragana(value: string) {
   });
 }
 
-export function stripVolumeAndEditionTokens(value: string) {
+function stripVolumeAndEditionTokensWithPattern(value: string, editionPattern: RegExp) {
   let normalized = normalizeSpacing(
-    value.replace(EDITION_TOKEN_PATTERN, " ").replace(EMPTY_BRACKETS_PATTERN, " "),
+    value.replace(editionPattern, " ").replace(EMPTY_BRACKETS_PATTERN, " "),
   );
   let previous = "";
 
@@ -34,6 +38,10 @@ export function stripVolumeAndEditionTokens(value: string) {
   }
 
   return normalized;
+}
+
+export function stripVolumeAndEditionTokens(value: string) {
+  return stripVolumeAndEditionTokensWithPattern(value, EDITION_TOKEN_PATTERN);
 }
 
 export type NormalizedTitle = {
@@ -55,7 +63,31 @@ export function normalizeCreator(value: string) {
 }
 
 export function createExternalWorkKey(title: string, firstCreator: string) {
-  return `${normalizeTitle(title).kanaFolded}::${normalizeCreator(firstCreator)}`;
+  return JSON.stringify([
+    normalizeExternalTitleV1(title),
+    normalizeExternalCreatorV1(firstCreator),
+  ]);
+}
+
+export function normalizeExternalTitleV1(value: string) {
+  const normalized = stripVolumeAndEditionTokensWithPattern(
+    foldKatakanaToHiragana(value.normalize("NFKC").toLowerCase()),
+    EXTERNAL_V1_EDITION_TOKEN_PATTERN,
+  );
+  if (normalized.length === 0) {
+    throw new TypeError("External work title is empty after v1 normalization");
+  }
+  return normalized;
+}
+
+export function normalizeExternalCreatorV1(value: string) {
+  const normalized = foldKatakanaToHiragana(
+    normalizeSpacing(value.normalize("NFKC").toLowerCase()),
+  );
+  if (normalized.length === 0) {
+    throw new TypeError("External work creator is empty after v1 normalization");
+  }
+  return normalized;
 }
 
 export function normalizeIsbn(value: string) {

@@ -88,6 +88,18 @@ export type RankedRecommendation = {
   penaltiesApplied: NegativeReasonId[];
 };
 
+export type RecommendationConstraintCandidate = Pick<
+  RankedRecommendation,
+  "workId" | "tasteScore" | "bestAnchorId"
+> & {
+  isDiscovery: boolean;
+  majorThemeKey: string;
+  seriesGroupId: string;
+};
+
+export type RecommendationPlanEntry = RankedRecommendation &
+  Pick<RecommendationConstraintCandidate, "isDiscovery" | "majorThemeKey" | "seriesGroupId">;
+
 export type BaselineContribution = {
   source: "genre" | "market" | "maturity";
   group: "genre" | "overall";

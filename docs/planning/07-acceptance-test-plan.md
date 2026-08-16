@@ -8,7 +8,7 @@
 ## 1. 정적 검사 (CI 매 커밋)
 
 - `tsc --noEmit` (strict) / ESLint (domain 계층 격리 규칙 포함: domain이 react·dexie·next를 import하면 실패) / Prettier check.
-- **`catalog:validate`를 CI 게이트로:** 검증 실패 데이터는 빌드 자체가 실패한다. 검사 항목 — ID·ISBN 중복, 팩터 범위·상태 오류, centrality 범위, eligibility 충돌, 추천 대상 coverage 미달, evidence 누락, 대표 volume 누락.
+- **`catalog:validate`를 CI 게이트로:** 검증 실패 데이터는 빌드 자체가 실패한다. 검사 항목 — ID·ISBN 중복, 팩터 범위·상태 오류, centrality 범위, eligibility 충돌, 추천 대상 coverage 미달, evidence 누락, 대표 volume 누락, `data`/`src`/exact versioned `public` Catalog 세 artifact의 존재와 canonical byte 동일성.
 
 ## 2. 추천 엔진 유닛 테스트 (가장 두터운 계층)
 
@@ -47,11 +47,44 @@
 ## 3. Catalog·데이터 유닛 테스트
 
 - zod 스키마 라운드트립(catalog JSON, Export v1, Rakuten 응답 축소형).
+- 추천용 `/catalog/catalog-v1.<catalogVersion>.json`은 bundled Catalog와 byte·strict schema·semantic validation·DNA·추천 plan이 동일하다. client provider는 exact URL, HTTP/JSON/schema/version/workIds mismatch, 실제 retry, abort와 late stale completion 차단을 검증한다. 공통 shell/랜딩/settings는 full Catalog client import가 없고 onboarding/DNA/Library/Catalog 상세만 bundled provider를 갖는 route source 계약을 고정한다.
 - 일본어 정규화 골든 케이스(NFKC·가나·전각/반각·권수 토큰 10례 이상).
-- Export→Import 라운드트립: 임의 상태 생성 → export → import → Dexie 상태 동등.
-- Import 거부: schemaVersion 2 / 필드 손상 / 부분 손상 배열 — 모두 기존 데이터 불변.
-- providerCache TTL: 만료 판정(시간 주입) 경계.
-- Route Handler: 쿼리 검증 400, 필드 축소, `_ex` 재작성, 타임아웃→502.
+- Export→Import 라운드트립: 임의 사용자 상태 생성 → export → import → userWorks/externalWorks/profile/draft 동등, cache empty와 current runtime meta 확인.
+- Import 거부: schemaVersion 2 / 필드 손상 / 부분 손상 배열 — mutation 전 전체 거부와 일곱 store 불변.
+- providerCache TTL: 주입 시간 기준 가격·재고 24시간 / 기타 metadata 90일의 직전·정확 경계, 상업 필드만 먼저 숨기는 상태, legacy 단일 `expiresAt` cache miss.
+- 추천 표지 resolver: 표시 순 representative ISBN, 1위 완료 전 2~10위 미시작, fresh exact-workId/no-image terminal, expired·mismatch·miss 갱신+저장 readback, 실패 placeholder, stale generation 차단, 백필 survivor URL 보존·신규만 요청. normalized ISBN 동시 요청은 한 provider 호출에 합류하고 settle 뒤 재시도 가능하다.
+- Route Handler: 쿼리 검증 400, App ID·Access Key 비노출, 필드 축소, `_ex=600x600` 재작성, 타임아웃→502, 자동 재시도 0회.
+
+### Slice 10 데이터 주권·호환 프로필 추가 계약
+
+1. strict `ExportFileV1`은 format/schema/exportedAt/catalogVersion/userWorks/externalWorks/profile/onboardingDraft의 exact key set을 요구한다. profile에는 adjustments와 `preferCompleted`·`preferHidden`·`preferVerified`·`excludeIncomplete` 전부, required `onboardingCompletedAt: string | null`이 있고 draft도 required nullable이다. profile rows가 없는 pre-profile Export는 app default adjustments/policies와 nullable `null`을 쓰며 시각을 합성하지 않고 cache/meta를 payload에 넣지 않는다.
+2. Export snapshot은 한 readonly transaction의 일관된 userWorks/externalWorks/profile/draft를 직렬화한다. external ID/key/metadata/ISBN/nested record를 재계산·누락하지 않으며 손상 row가 하나라도 있으면 부분 export를 만들지 않는다.
+3. Import는 strict schema, duplicate user/external ID, namespace, external version/key/digest/nested ID/ISBN/collision, profile/draft 교차 필드를 첫 write 전에 모두 검증한다. 어느 하나라도 실패하면 transaction을 열어 일부 적용하지 않고 raw 일곱 store와 memory mirror가 byte-equivalent로 유지된다.
+4. 호환 resolver 표는 현재 bundled Catalog의 distinct positive로 고정한다: `>=5 + marker string|null → usable`, `<5 + marker string → add recovery`, `<5 + marker null → firstRun`. `onboardingDraft=null`은 세 상태 모두 유효하고, non-null firstRun draft는 마지막 상태에서만, add draft는 usable 또는 marker 존재 상태에서만 유효하며 add entry가 imported userWorks와 겹치면 whole-file 거부한다. mode·marker를 자동 교정하지 않는다.
+5. 성공 Import readback은 한 seven-store transaction의 exact outcome을 검증한다: imported userWorks/externalWorks/profile/draft, 빈 recommendation/provider cache, current schemaVersion/current bundled catalogVersion meta. 과거 cache/meta를 복원하지 않고 성공 UI는 이 readback 뒤에만 허용한다.
+6. source catalogVersion 불일치는 preview warning을 만들되 Import를 막지 않는다. current Catalog에 없는 user record도 보존·「カタログ外」 표시되고 usable count와 추천 입력에서는 빠진다.
+7. 전체 삭제는 typed 「削除」 확인 뒤 seven-store transaction으로 모두 지우고 current runtime meta만 다시 쓴다. authoritative readback에서 여섯 non-meta store가 비고 meta가 exact current 값일 때만 성공·랜딩 이동을 허용한다.
+8. Import/삭제 commit 또는 readback failure를 주입해 uncertain primary operation이 memory backend에서 자동 재실행되지 않고 `indeterminate`가 반환되는지 검증한다. 의도적 memory-only 경로를 구현한 경우에는 `session-only` 결과와 새로고침 소실 안내를 별도로 검증한다.
+
+### Slice 9 external identity·영속성 추가 계약
+
+1. title/creator v1 golden은 NFKC·가나/폭·locale-independent lowercase·Unicode 공백/정확한 중점 집합 `[・･·]`(U+0387 NFKC 포함)과 title 전용 권수/판형 제거를 고정한다. 가나 통합 후 edition 제거 순서를 `作品 セット`/`作品 せっと`의 same-key/full-digest vector로 검증한다. 현재 edition regex의 인접 exact substring 제거와 remainder 보존(`完全版画集→画集`, `セットアップ→あっぷ`), 비목록 부분 문자열 보존을 경계 vector로 포함한다. `normalizedKey` canonical JSON, UTF-8 namespace input, full lowercase SHA-256과 exact `^ext:rakuten:v1:[0-9a-f]{64}$` ID를 byte-level golden으로 검증한다. 빈 정규화 결과와 규격 밖 digest/namespace/version은 거부한다.
+2. canonical href는 URL query 직렬화된 `/works/external?workId=<encoded-id>` 하나다. query의 missing/duplicate/empty/malformed 값은 invalid이고 해당 값을 `inspectExternalWork`에 넘기거나 Rakuten 요청을 하지 않는다. 전역 PersistenceProvider의 일반 초기화는 허용하며 `/works/[workId]`는 Catalog-only static params와 unknown 404를 유지한다.
+3. strict external readback은 parent/nested ID, canonical normalizedKey, stored key로 재계산한 ID/digest, distinct valid ISBN identity를 검증한다. ISBN-10/ISBN-13 동등 쌍은 한 canonical ISBN-13으로 parse/merge되고 중복 표본이 될 수 없다. 유효 row는 `found`, authoritative IndexedDB에서 확인한 유효 ID 미저장은 `missing`, schema/key/digest 손상은 서지를 반환하지 않는 `corrupt`, storage read/open 실패와 degraded mirror miss는 `unavailable`로 구분한다. 검증된 mirror hit는 degraded 상태에서도 `found`일 수 있다. 표시 title/creators 변경은 저장된 v1 identity를 무효화하거나 re-key하지 않는다.
+4. 초기 external 목록에 valid+corrupt row가 함께 있어도 valid row만 반환·mirror하며 IndexedDB 상태를 degraded로 바꾸지 않는다. 이어서 corrupt ID를 단건 조회하면 `missing`이 아니라 `corrupt`다. add/save/remove의 사전 mirror warm도 unrelated corrupt row를 건너뛰고 대상 transaction/readback을 계속한다.
+   과거 valid mirror를 가진 ID의 authoritative row가 이후 corrupt로 판정되면 해당 mirror를 무효화한다. 그 다음 storage failure로 degraded가 되어도 같은 ID는 stale `found`가 아니라 `unavailable`이다.
+5. Catalog와 external add는 stale-tab 경쟁에서도 insert-only다. `added`는 transaction 뒤 authoritative readback과 일치할 때만 반환한다. Catalog 기존 record 전체와 external의 user state·비-ISBN 표시 metadata는 `already-exists`로 보존하고, external ISBN만 §6의 canonical distinct union을 허용한다. primary 결과가 불확실하면 memory mirror에 재실행하지 않고 `preserved-unknown`을 반환한다.
+6. 같은 external key/ID 재선택은 기존 표시 metadata·사용자 record를 보존하며 distinct ISBN만 union한다. same-ID/different-key는 원본 row 불변으로 거부하고 suffix·시각·난수 fallback을 만들지 않는다.
+7. ISBN 1만 본 stale external 편집기와 같은 identity의 ISBN 2 추가가 경쟁하면, 편집 transaction은 authoritative 최신 row의 nested user record만 바꾸고 ISBN 1·2와 최신 표시 metadata를 모두 보존한다. 대상 삭제·손상·key 변경은 update-only로 거부하고, 불확실 primary write는 stale mirror에 재실행하지 않는다. IndexedDB transaction과 memory fallback을 각각 검증한다.
+8. Slice 10 Export→삭제→Import는 exact external ID/key/canonical URL/nested user record를 보존한다. unsupported identity version, noncanonical key, ID/digest mismatch, duplicate/collision, invalid ISBN 중 하나라도 있으면 replacement transaction 전 전체 파일을 거부하고 기존 DB를 유지한다.
+
+### Slice 5 온보딩 draft 추가 계약
+
+1. strict `OnboardingDraft` restore는 `id="current"`와 필수 `mode` 판별 필드를 요구한다. `firstRun`은 step 1|2, positive reaction, negative disposition·reason을 보존하고 `add`는 step 1 + `negativeEntries=[]`만 허용한다. positive/negative 내부 work 중복, 양쪽 overlap, positive 10개 초과, negative 3개 초과, 중복 reason, `vagueDislike` 혼합, 비정규 `external:*`을 거부한다.
+2. `firstRun` 완료는 positive 5개 미만을 거부하고 5~10개를 `completed` + 원 reaction으로 변환한다. `add` 완료는 신규 positive 1~10개를 같은 방식으로 변환하고 Step 2 입력을 허용하지 않는다. `disliked`는 `completed` + `disliked` + `negativeReasons`, `dropped`는 `dropped` + reaction 미지정 + `droppedReasons`가 되며 빈 reasons는 해당 bucket의 `vagueDislike` 하나가 된다.
+3. draft 생성·완료 시각은 호출자가 주입한다. 동일 draft와 동일 완료 시각은 record 순서와 bytes가 같은 결과를 만들며 `Date.now()`·난수·I/O를 사용하지 않는다.
+4. add 완료는 기존 `UserWorkRecord`의 모든 필드와 최초 `onboardingCompletedAt`을 보존하고 신규 workId만 한 트랜잭션으로 추가한다. 기존 ID 충돌은 신규 row·marker·draft 모두 불변으로 거부한다. 일반 닫기는 draft를 보존하고 명시적 폐기만 삭제한다.
+5. 기존 프로필 대표 흐름은 `/taste` → 추가 모드 → 새 positive 1개 선택 → 완료 → `/taste`를 검증한다. Step 2와 `?reveal=1`이 없고, 기존 record readback·완료 marker가 동일하며 add draft만 삭제됨을 확인한다.
 
 ### G1 데이터 게이트 추가 계약
 
@@ -95,13 +128,13 @@
 
 Chromium + 모바일 뷰포트(390×844) 프로젝트 2개로 실행. 라쿠텐은 라우트 모킹.
 
-1. **핵심 여정:** 온보딩(검색 포함 8작품, 1 favorite) → 불호 1개+이유 → DNA reveal → 추천 10개 표시, 1위 카드의 이유 문장이 카드 data-attribute의 contribution 요약과 일치.
+1. **핵심 여정:** 일반 first-run resolved landing의 marker 선기록·CTA 상시 조작·비소비 스킵·reload 정적 상태를 같은 시나리오의 격리 분기에서 확인 → 온보딩(검색 포함 8작품, 1 favorite) → `合わなかった` 1개+이유 → DNA reveal(`?reveal` 즉시 제거 뒤 local decision으로 계속, 1200ms 뒤 late-viewport FactorBar 즉시 시작) → 추천 10개 표시, 1위 카드의 이유 문장이 카드 data-attribute의 contribution 요약과 일치.
 2. **피드백 루프:** 추천 1위를 読んだ 처리 → 카드 제거·백필 → 재계산 후에도 해당 작품 미등장.
-3. **영속성:** 기록 생성 → 컨텍스트 재시작 → Library·DNA 유지.
+3. **영속성:** Catalog와 external 기록 생성 → 컨텍스트 재시작 → Library·DNA 유지. 같은 브라우저의 canonical external URL reload는 같은 row를 표시하고, row 없는 독립 context는 local-missing을 표시하며 provider로 복원하지 않는다.
 4. **Provider 장애:** `/api/rakuten/*` 전부 502 모킹 → placeholder 표지로 온보딩·추천·상세 성립, 구매 버튼 폴백.
-5. **데이터 주권:** Export → 전체 삭제(랜딩 복귀 확인) → Import → 추천·Library 원상 복구.
+5. **데이터 주권:** usable profile의 모든 정책·Catalog/external 기록을 Export → 전체 삭제(여섯 non-meta store empty + current meta readback, 랜딩/가드 확인) → `/settings`에서 Import → 추천·Library·정책과 exact external URL/identity 원상 복구. 같은 시나리오의 격리된 분기로 (a) 손상 external/profile/draft 파일의 whole-file 거부와 일곱 store 무변경, (b) 과거 catalogVersion 경고와 「カタログ外」 record 보존, (c) completion marker가 `null`인 pre-profile first-run draft의 Export→삭제→Import와 합성 시각 없음, (d) `?landing=1` 소개 전후 `logoRevealed` sentinel과 나머지 로컬 상태가 byte-identical임을 검증한다.
 
-E2E 내 접근성 스모크: 시나리오 1을 키보드만으로 완주(탭 순서·Enter/Space 선택) + 각 페이지 `axe-core` 주입 검사(critical 위반 0).
+E2E 내 기본 조작성 스모크: 시나리오 1을 키보드만으로 완주하고 탭 순서·Enter/Space 선택·focus 복귀를 검증한다. 주요 heading·label·name/role/value·status message는 Playwright DOM assertion으로 확인한다. 시나리오 1·3의 기존 경로에서 B allowlist와 quiet-surface 제외, reduced-motion의 A/B/C 정적 상태도 함께 확인하되 여섯 번째 제품 시나리오를 만들지 않는다. 이는 제품 회귀 검사이며 WCAG 적합성 판정으로 해석하지 않는다.
 
 ## 6. 수동 QA 체크리스트 (릴리스 게이트, 슬라이스 11~12에서 전체 실행)
 
@@ -112,15 +145,17 @@ E2E 내 접근성 스모크: 시나리오 1을 키보드만으로 완주(탭 순
 - [ ] 홈 화면 설치 → standalone 실행 → 오프라인에서 DNA·Library·기존 추천 열람.
 - [ ] 작품 상세 블러 배경의 스크롤 성능(프레임 드랍 육안 확인).
 
-### 키보드·스크린리더 (데스크톱)
+### 키보드·포커스·DOM 시맨틱 (데스크톱)
 
 - [ ] 전 화면 focus-visible 링 표시, 시트·다이얼로그 포커스 트랩과 복귀.
-- [ ] FactorBar가 VoiceOver/NVDA에서 「戦略的な展開: 強い好み」 형태로 읽힘. 미확인 축은 「まだ分析中」.
-- [ ] 추천 카드 제거 시 aria-live 어나운스와 포커스 이동.
+- [ ] FactorBar 확인값이 접근 가능한 이름 「戦略的な展開」과 정성 값 「強め」를 중복 없이 노출하고, 미확인 축은 「戦略的な展開: まだ分析中」인 비수치 DOM 상태를 노출한다.
+- [ ] 추천 카드 제거 시 `aria-live` 메시지의 DOM 갱신과 포커스 이동.
 
 ### reduced-motion
 
 - [ ] OS 설정 활성 후: 로고 reveal·DNA reveal·카드 layout 애니메이션이 무모션으로 즉시 완료되고 정보 손실이 없다.
+- [ ] A는 최종 상태와 해당 1회 marker를 보존하고 B는 최종 상태로 즉시 표시한다. C는 `layout=false`로 상태·순서·focus·live message를 즉시 반영한다. D/E는 scale·travel·값 보간 없이 선택·focus·정성 값·성공 상태를 보존하고 F는 흔들림 대신 정적 `--warn` 보더와 text를 유지한다.
+- [ ] skeleton은 pulse 없는 정적 silhouette로 loading/failure를 구분하고, 실행 중 reduce로 바뀌어도 A가 즉시 완료된 뒤 같은 session에서 재생되지 않는다.
 - [ ] Shelf 버튼 스크롤이 instant로 동작.
 
 ### 비주얼 충실도 (04 문서 대조)
@@ -131,11 +166,22 @@ E2E 내 접근성 스모크: 시나리오 1을 키보드만으로 완주(탭 순
 - [ ] 스크린톤이 지정 표면(랜딩 hero·빈 상태·DNA 요약)에만 존재.
 - [ ] 다크 모드(슬라이스 12 이후): 대비 재측정, 블러 배경 위 텍스트 4.5:1.
 
-### 성능 (수동 측정, 예산은 04 §8)
+### 성능 (독립 production-local 계측, 예산·프로토콜은 04 §8)
 
-- [ ] Lighthouse(모바일 스로틀): LCP < 2.5s, CLS < 0.05, PWA 설치 가능.
-- [ ] 추천 페이지 초기 JS < 250KB gzip (`next build` 출력 확인).
-- [ ] 중급 안드로이드(또는 CPU 4× 스로틀)에서 DNA reveal·카드 제거 60fps 근접.
+이 계측은 fixed 5 product E2E와 별도 suite/artifact로 실행하며 제품 E2E 시나리오 수에 포함하지 않는다.
+
+- [ ] `npm run build` + `npm run start`와 Playwright Chromium에서 390×844/DPR 3/touch, CDP CPU 4×·150ms RTT·1.6Mbit/s down·0.75Mbit/s up 조건을 기록하고, 실제 제품 flow로 state를 만든 독립 cold context 5회의 raw 결과와 중앙값을 보존한다.
+- [ ] navigation 전 buffered `PerformanceObserver`로 측정한 landing resolved introduction과 추천 화면의 실제 browser-selected LCP 중앙값이 각각 <3.5s이고, 두 route CLS 중앙값이 <0.05다. 가시 태그라인·설명문을 숨기거나 축소하거나 96px 표지를 확대해 후보 identity를 조작하지 않는다. 첫 로고 후보와 1위 표지 request·삽입·load 시각을 별도로 보존하고, 1위 표지는 eager/high-priority이며 provider fixture를 쓰면 fulfilled bytes가 같은 latency/transfer profile을 실제로 보존함을 함께 입증한다.
+- [ ] cold direct `/recommendations`가 user input 전 `networkidle`까지 실제 요청한 unique same-origin `/_next/static/**/*.js`를 emitted path/hash로 dedupe하고 exact file gzip level 9 합계를 냈을 때 <250,000 bytes다. URL·raw/gzip bytes·total을 JSON으로 남기며 `next build` 요약으로 대신하지 않는다.
+- [ ] 같은 frozen mobile 조건의 rAF raw interval에서 DNA A와 추천 C를 보고한다. 60fps는 목표이며 추천 C median effective FPS가 ≥30이다. 미달하면 해당 C owner의 layout motion을 끄고 같은 flow로 재검증한다.
+- [ ] Lighthouse Performance는 진단용일 뿐 위 직접 지표의 판정 근거가 아니다. **Lighthouse PWA 통과는 Slice 12 완료 게이트로 유지**하고 Slice 11에는 적용하지 않는다. Lighthouse accessibility는 실행하지 않는다.
+- [ ] production-local 결과와 별도로 중급 Android thermal/frame, real cellular/provider LCP, iOS/Android 설치 모드의 검증 한계를 기록한다.
+
+### 선택적 post-MVP 접근성 감사 (릴리스 비차단)
+
+- axe-core 또는 Lighthouse a11y 자동 판정, VoiceOver/NVDA 실제 낭독, 전체 WCAG 적합성 평가는 현재 구현 슬라이스와 MVP 릴리스 게이트에 포함하지 않는다.
+- 제품 완성 후 사용자가 별도 작업을 승인한 경우에만 독립 감사로 수행한다. 수행하지 않아도 슬라이스 완료·PR·배포를 막지 않는다.
+- 이 제외는 키보드 조작성, focus-visible, 의미 있는 heading·label, 기본 name/role/value, 상태 메시지 DOM, 대비·리플로우·터치 타깃 같은 기존 제품 계약을 제거하지 않는다.
 
 ## 7. 명시적으로 하지 않는 것
 

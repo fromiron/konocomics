@@ -10,7 +10,7 @@ import { afterEach, beforeAll, describe, expect, it } from "vitest";
 import { catalogV1Schema } from "@/domain/catalog/schema";
 import { createG2Experiment, createG2Result, serializeG2Result } from "@/domain/g2";
 import { experimentProfileV1Schema } from "@/domain/profile/experiment-schema";
-import { strings } from "@/lib/strings";
+import { explanationLexicon } from "@/lib/strings";
 import generatedCatalog from "../../../data/generated/catalog-v1.json";
 import generatedContext from "../../../data/generated/recommendation-context-v1.json";
 import { recommendationContextFileSchema } from "../../../scripts/experiment/inputs";
@@ -74,7 +74,7 @@ beforeAll(async () => {
     catalog,
     context,
     sha256Hex,
-    lexicon: strings.explanation,
+    lexicon: explanationLexicon,
   });
   pilotExplanationTexts = experiment.nativeLists.taste.items.flatMap(
     (item) => item.explanationTexts,

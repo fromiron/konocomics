@@ -1,7 +1,12 @@
 import type { RecommendationPolicies } from "../profile/types";
 import { DISCOVERY_SCORE_WINDOW, TASTE_COHORT_THRESHOLD } from "./constants";
 import { compareFloatingPoint, compareText, ownRecordValue, roundScore } from "./math";
-import type { RecommendationContext, ScoredRecommendation } from "./types";
+import type {
+  RecommendationConstraintCandidate,
+  RecommendationContext,
+  RecommendationPlanEntry,
+  ScoredRecommendation,
+} from "./types";
 
 function compareDescending(left: number, right: number) {
   return right - left;
@@ -146,17 +151,17 @@ type ListLimits = {
   discoveryMaximum: number;
 };
 
-function countBy(
-  selected: readonly ScoredRecommendation[],
-  key: (candidate: ScoredRecommendation) => string,
+function countBy<Candidate extends RecommendationConstraintCandidate>(
+  selected: readonly Candidate[],
+  key: (candidate: Candidate) => string,
   value: string,
 ) {
   return selected.reduce((count, candidate) => count + (key(candidate) === value ? 1 : 0), 0);
 }
 
-function canAdd(
-  selected: readonly ScoredRecommendation[],
-  candidate: ScoredRecommendation,
+function canAdd<Candidate extends RecommendationConstraintCandidate>(
+  selected: readonly Candidate[],
+  candidate: Candidate,
   limits: ListLimits,
 ) {
   if (selected.some((entry) => entry.workId === candidate.workId)) {
@@ -180,8 +185,8 @@ function canAdd(
   return true;
 }
 
-export function applyListConstraints(
-  sortedCandidates: readonly ScoredRecommendation[],
+export function applyListConstraints<Candidate extends RecommendationConstraintCandidate>(
+  sortedCandidates: readonly Candidate[],
   policies: RecommendationPolicies,
   limit = 10,
 ) {
@@ -196,9 +201,9 @@ export function applyListConstraints(
     ...sortedCandidates.map((candidate) => candidate.tasteScore),
   );
   const discoveryFloor = roundScore(overallTopTasteScore - DISCOVERY_SCORE_WINDOW);
-  const isDiscoveryEligible = (candidate: ScoredRecommendation) =>
+  const isDiscoveryEligible = (candidate: RecommendationConstraintCandidate) =>
     !candidate.isDiscovery || candidate.tasteScore >= discoveryFloor;
-  let selected: ScoredRecommendation[] = [];
+  let selected: Candidate[] = [];
 
   for (const candidate of sortedCandidates) {
     if (selected.length >= limit) {
@@ -255,6 +260,106 @@ export function applyListConstraints(
     }
 
     if (!changed) {
+      break;
+    }
+  }
+
+  sortSelected();
+  return selected;
+}
+
+export function selectRecommendationPlanEntries(
+  plan: readonly RecommendationPlanEntry[],
+  policies: RecommendationPolicies,
+  limit = 10,
+) {
+  return applyListConstraints(plan, policies, limit);
+}
+
+export type BackfillRecommendationPlanEntriesOptions = {
+  plan: readonly RecommendationPlanEntry[];
+  survivors: readonly RecommendationPlanEntry[];
+  excludedWorkIds: readonly string[];
+  policies: RecommendationPolicies;
+  limit?: number;
+};
+
+export function backfillRecommendationPlanEntries({
+  plan,
+  survivors,
+  excludedWorkIds,
+  policies,
+  limit = 10,
+}: BackfillRecommendationPlanEntriesOptions): RecommendationPlanEntry[] {
+  if (limit <= 0) {
+    return [];
+  }
+
+  const planByWorkId = new Map<string, RecommendationPlanEntry>();
+  const planOrder = new Map<string, number>();
+  for (const [index, entry] of plan.entries()) {
+    if (planByWorkId.has(entry.workId)) {
+      throw new Error(`Duplicate recommendation plan work: ${entry.workId}`);
+    }
+    planByWorkId.set(entry.workId, entry);
+    planOrder.set(entry.workId, index);
+  }
+
+  const excluded = new Set(excludedWorkIds);
+  const selected: RecommendationPlanEntry[] = [];
+  const sortSelected = () => {
+    selected.sort(
+      (left, right) =>
+        (planOrder.get(left.workId) ?? Number.MAX_SAFE_INTEGER) -
+        (planOrder.get(right.workId) ?? Number.MAX_SAFE_INTEGER),
+    );
+  };
+  for (const survivor of survivors) {
+    if (excluded.has(survivor.workId)) {
+      continue;
+    }
+    const planEntry = planByWorkId.get(survivor.workId);
+    if (planEntry === undefined) {
+      throw new Error(`Recommendation survivor is absent from plan: ${survivor.workId}`);
+    }
+    if (!selected.some((entry) => entry.workId === planEntry.workId)) {
+      selected.push(planEntry);
+    }
+  }
+  sortSelected();
+  if (selected.length >= limit) {
+    return selected.slice(0, limit);
+  }
+
+  const discoveryMinimum = policies.preferHidden ? 2 : 1;
+  const limits = { discoveryMaximum: policies.preferHidden ? 4 : 2 };
+  const overallTopTasteScore = Math.max(...plan.map((entry) => entry.tasteScore));
+  const discoveryFloor = roundScore(overallTopTasteScore - DISCOVERY_SCORE_WINDOW);
+  const alreadySelected = new Set(selected.map((entry) => entry.workId));
+
+  const appendFirstReserve = (discoveryOnly: boolean) => {
+    for (const candidate of plan) {
+      if (
+        excluded.has(candidate.workId) ||
+        alreadySelected.has(candidate.workId) ||
+        (candidate.isDiscovery && candidate.tasteScore < discoveryFloor) ||
+        (discoveryOnly && !candidate.isDiscovery) ||
+        !canAdd(selected, candidate, limits)
+      ) {
+        continue;
+      }
+      selected.push(candidate);
+      alreadySelected.add(candidate.workId);
+      sortSelected();
+      return true;
+    }
+    return false;
+  };
+
+  while (selected.length < limit) {
+    const discoveryCount = selected.filter((entry) => entry.isDiscovery).length;
+    const addedDiscovery = discoveryCount < discoveryMinimum ? appendFirstReserve(true) : false;
+    if (!addedDiscovery && !appendFirstReserve(false)) {
       break;
     }
   }

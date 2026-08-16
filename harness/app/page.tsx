@@ -1,15 +1,15 @@
 import Link from "next/link";
 
-import { strings } from "../../src/lib/strings";
+import { coreStrings, g2HarnessStrings } from "../../src/lib/strings";
 
-const copy = strings.g2Harness;
+const copy = g2HarnessStrings;
 
 export default function EntryPage() {
   return (
     <main className="page-shell entry-shell">
       <header className="entry-header">
         <p className="eyebrow">{copy.entry.eyebrow}</p>
-        <p className="wordmark" aria-label={strings.appName}>
+        <p className="wordmark" aria-label={coreStrings.appName}>
           <span>kono</span>co<span>mi</span>cs
         </p>
         <h1>{copy.entry.title}</h1>

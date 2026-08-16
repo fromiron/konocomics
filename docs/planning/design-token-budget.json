@@ -1,0 +1,96 @@
+{
+  "artifact": "konocomics Slice 5-6 review-integrated UI foundations",
+  "observed": {
+    "layout_grammars": 1,
+    "typeface_families": 2,
+    "type_roles": 6,
+    "accent_colors": 1,
+    "radius_tokens": 3,
+    "shadow_levels": 1,
+    "surface_styles": 3,
+    "primary_cta_styles": 1,
+    "secondary_cta_styles": 1,
+    "motion_patterns": 6,
+    "decorative_image_families": 0
+  },
+  "limits": {
+    "layout_grammars": 1,
+    "typeface_families": 2,
+    "type_roles": 6,
+    "accent_colors": 1,
+    "radius_tokens": 2,
+    "shadow_levels": 1,
+    "surface_styles": 3,
+    "primary_cta_styles": 1,
+    "secondary_cta_styles": 1,
+    "motion_patterns": 2,
+    "decorative_image_families": 0
+  },
+  "radius_scope": "evaluated",
+  "radius_scope_evidence": "The current globals.css radius roles and the 1440px and 390px onboarding renders were inspected. Shared cover-selection contours, independent inset covers, and pill or circle controls were classified.",
+  "radius_relationships": [
+    {
+      "id": "anchor-selection-cover",
+      "location": "Onboarding anchor selection border > CoverImage frame",
+      "kind": "shared-contour",
+      "rule": "concentric-offset",
+      "outer_radius": 6,
+      "inner_radius": 4,
+      "inset": 2,
+      "tolerance": 0,
+      "evidence_state": "observed",
+      "evidence": "globals.css derives --radius-cover-selection as --radius-cover plus the 2px selection border; the rendered selected cover preserves the parallel contour."
+    },
+    {
+      "id": "negative-entry-reason-chip",
+      "location": "Onboarding negative-entry card > reason chips",
+      "kind": "pill-or-circle",
+      "reason": "The 999px contour communicates a selectable chip state and is not intended to continue the 8px card contour.",
+      "evidence_state": "observed",
+      "evidence": "The Step 2 desktop render shows reason chips as independent inline choices inside the bordered card."
+    },
+    {
+      "id": "selected-tray-remove-control",
+      "location": "Selected tray cover > remove control",
+      "kind": "pill-or-circle",
+      "reason": "The circular overlay is a distinct remove affordance with its own 22px optical bounds, not an inset surface contour.",
+      "evidence_state": "observed",
+      "evidence": "globals.css positions the remove control over the cover corner and assigns --radius-pill independently."
+    },
+    {
+      "id": "taste-card-evidence-cover",
+      "location": "Taste summary card > evidence covers",
+      "kind": "independent",
+      "reason": "Authentic cover records retain their 4px print-object contour inside an 8px analytical card; they do not follow the card edge.",
+      "evidence_state": "observed",
+      "evidence": "globals.css assigns --radius-cover to evidence covers and --radius-card to analytical card surfaces with separating padding."
+    }
+  ],
+  "exceptions": [
+    {
+      "metric": "radius_tokens",
+      "reason": "Two bounded contour levels are joined by a third pill or circle role that preserves chip and circular-control meaning.",
+      "evidence": "The draft primitives are 4px cover, 8px card or control, and 999px pill. The observed 6px selection contour is derived from 4px plus its 2px border rather than a fourth primitive."
+    },
+    {
+      "metric": "motion_patterns",
+      "reason": "The six documented A-F classes communicate different functional events: one-time reward, page context, layout state, direct feedback, numeric change, and attention or error.",
+      "evidence": "docs/planning/04-visual-interaction-spec.md section 6 defines exact triggers, duration ranges, reduced-motion behavior, the static warning-border substitute for F, domMax ownership for C layout components, and a zero-ambient-loop rule for every class."
+    }
+  ],
+  "notes": [
+    "The typeface limit is project-owned at two: Space Grotesk for Latin brand display and Noto Sans JP for Japanese UI and body text.",
+    "The six type roles are display, page title, section title, subheading, body or emphasis, and caption or metadata.",
+    "Spacing was evaluated as content gap, section gap, and page-container padding at the existing 768px breakpoint. The 1440px and 390px onboarding renders preserve grouping without horizontal page overflow.",
+    "The single dominant grammar is a vertically ordered task or analysis flow containing responsive shelves, cards, and record groups; column-count changes do not create a second grammar.",
+    "The three surface styles are page paper, raised bordered content, and temporarily elevated raised content.",
+    "Status color --warn is not counted as an accent. --accent-hover is a darker state in the same hue and chroma family, not a second accent. Authentic manga covers are product evidence, not a decorative image family.",
+    "System Chrome measured white/accent at 4.888:1, white/accent-hover at 6.078:1, accent/paper at 4.560:1, and accent/accent-soft at 4.561:1 after review integration.",
+    "Repeated 28px and 24px section uses now consume existing spacing primitives. Only fixed-UI obstruction roles received new semantics: safe area, mobile navigation clearance, onboarding tray clearance, and taste fixed-action clearance.",
+    "Cursor Grok 4.6 High session d77400a8-ad25-4212-b86e-ac353d9aaf8d returned ACCEPT WITH MUST FIXES (final SHA-256 35d147f0096e55a55d6a5d8d9177e83936f6e658f3832f7d62a4481b27a83269). Gemini gemini-3.6-flash-high session e5e85532-7775-4c66-989b-8ea34a5cc1cb returned PASS WITH CHANGES (final SHA-256 0aa9bf003abbaa74435bf47b217a9a2d05fede0e87f48875cb1ef5a027716845).",
+    "Gemini's ordinary initial /taste blank-delay claim was qualified because Motion initial=false suppresses initial animation; only later non-reveal target changes inheriting reveal delay and 400ms remain supported.",
+    "Tailwind @theme inline spacing and radius aliases were rejected because current consumers use BEM semantic CSS and a duplicate utility surface would create a second styling authority without a consumer.",
+    "The checker remains review-required because documented radius and motion exceptions require human judgment; completed model reviews are not represented as an automatic pass.",
+    "The proposal artifact intentionally uses system-ui and does not prove Noto Sans JP or Space Grotesk metrics. Separate 1440px and 390px /taste product-flow renders verified mixed-script wrapping, fixed-control clearance, no horizontal overflow, and a computed DNA font stack containing both Space Grotesk and Noto Sans JP."
+  ]
+}

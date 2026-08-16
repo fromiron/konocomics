@@ -5,6 +5,7 @@ import type { CatalogV1 } from "./types";
 
 export type CatalogValidationCode =
   | "DUPLICATE_WORK_ID"
+  | "RESERVED_WORK_ID"
   | "DUPLICATE_VOLUME_ID"
   | "DUPLICATE_ISBN"
   | "INVALID_ISBN"
@@ -50,6 +51,17 @@ export function validateCatalog(catalog: CatalogV1): CatalogValidationIssue[] {
       workId,
       message: `Work id is duplicated: ${workId}`,
     });
+  }
+
+  for (const work of catalog.works) {
+    if (work.id === "external" || work.id.startsWith("ext:")) {
+      issues.push({
+        code: "RESERVED_WORK_ID",
+        workId: work.id,
+        field: "id",
+        message: `Work id uses the reserved external detail namespace: ${work.id}`,
+      });
+    }
   }
 
   for (const volumeId of findDuplicates(catalog.volumes.map((volume) => volume.id))) {

@@ -19,7 +19,7 @@ import {
 import { experimentProfileV1Schema } from "@/domain/profile/experiment-schema";
 import type { ExperimentProfileV1 } from "@/domain/profile/experiment-schema";
 import type { RecommendationContext } from "@/domain/recommendation/types";
-import { strings } from "@/lib/strings";
+import { explanationLexicon } from "@/lib/strings";
 import { createTestAxes, createTestWork } from "../../helpers/catalog";
 
 const sha256Hex = (value: string) => createHash("sha256").update(value, "utf8").digest("hex");
@@ -192,7 +192,7 @@ describe("G2 deterministic input, holdout, and native lists", () => {
           value.startsWith("konocomics-g2-slot-v1\0")
             ? `${slotByte}${"0".repeat(62)}`
             : sha256Hex(value),
-        lexicon: strings.explanation,
+        lexicon: explanationLexicon,
       });
       expect(experiment.slots[tasteSlot].engine).toBe("taste");
       expect(experiment.slots[tasteSlot === "A" ? "B" : "A"].engine).toBe("baseline");
@@ -213,14 +213,14 @@ describe("G2 deterministic input, holdout, and native lists", () => {
       ...fixture,
       participantId: "participant-one",
       sha256Hex,
-      lexicon: strings.explanation,
+      lexicon: explanationLexicon,
     });
     const second = await createG2Experiment({
       ...fixture,
       profile: reversed,
       participantId: "participant-one",
       sha256Hex,
-      lexicon: strings.explanation,
+      lexicon: explanationLexicon,
     });
     const slotDigest = sha256Hex("konocomics-g2-slot-v1\0g2-catalog-v1\0participant-one");
     const tasteSlot = Number.parseInt(slotDigest.slice(0, 2), 16) % 2 === 0 ? "A" : "B";
@@ -246,7 +246,7 @@ describe("G2 deterministic input, holdout, and native lists", () => {
         ...fixture,
         participantId: "different-participant",
         sha256Hex,
-        lexicon: strings.explanation,
+        lexicon: explanationLexicon,
       }),
     ).rejects.toThrow(/profile id/i);
 
@@ -268,7 +268,7 @@ describe("G2 deterministic input, holdout, and native lists", () => {
         catalog: ineligibleCatalog,
         context: contextFor(ineligibleCatalog),
         sha256Hex,
-        lexicon: strings.explanation,
+        lexicon: explanationLexicon,
       }),
     ).rejects.toThrow(/not recommendation eligible/i);
 
@@ -294,7 +294,7 @@ describe("G2 deterministic input, holdout, and native lists", () => {
         },
         participantId: "participant-one",
         sha256Hex,
-        lexicon: strings.explanation,
+        lexicon: explanationLexicon,
       }),
     ).rejects.toThrow(/cannot be restored/i);
 
@@ -319,7 +319,7 @@ describe("G2 deterministic input, holdout, and native lists", () => {
           ],
         },
         sha256Hex,
-        lexicon: strings.explanation,
+        lexicon: explanationLexicon,
       }),
     ).rejects.toThrow(/free-text/i);
   });
@@ -339,7 +339,7 @@ describe("G2 strict result and cross-field validation", () => {
       ...fixture,
       participantId: "participant-one",
       sha256Hex,
-      lexicon: strings.explanation,
+      lexicon: explanationLexicon,
     });
     const responses = completeResponses(experiment);
     const result = createG2Result({
@@ -408,7 +408,7 @@ describe("G2 strict result and cross-field validation", () => {
       ...fixture,
       participantId: "participant-one",
       sha256Hex,
-      lexicon: strings.explanation,
+      lexicon: explanationLexicon,
     });
     const responses = completeResponses(experiment);
     const result = createG2Result({
@@ -423,7 +423,7 @@ describe("G2 strict result and cross-field validation", () => {
         catalog: fixture.catalog,
         context: fixture.context,
         sha256Hex,
-        lexicon: strings.explanation,
+        lexicon: explanationLexicon,
       }),
     ).resolves.toEqual(result);
 
@@ -456,7 +456,7 @@ describe("G2 strict result and cross-field validation", () => {
         catalog: fixture.catalog,
         context: fixture.context,
         sha256Hex,
-        lexicon: strings.explanation,
+        lexicon: explanationLexicon,
       }),
     ).rejects.toThrow(/derived fields/i);
   });
