@@ -32,7 +32,7 @@ Stage E  시그니처 폴리시 + PWA + 다크     (슬라이스 11~12)
 - **구현 결정:** validator 검사 항목은 `07` §1의 목록 전부(ID·ISBN 중복, 팩터 범위, 상태 오류, centrality, eligibility 충돌, coverage 미달, evidence 누락, 대표 volume 누락). `report-coverage`는 축 간 상관계수 표를 출력(진단용). 제목 정규화·Work 그룹핑 규칙은 `05` §2.1을 따른다.
 - **테스트:** validator 규칙별 실패 픽스처, 정규화 골든 케이스(일본어 제목 10개).
 - **완료 기준:** 샘플 10작품이 validate 통과 → JSON 생성. 오류 CSV가 정확한 행·이유로 거부됨.
-- **제외:** `sync-rakuten.ts`(슬라이스 8과 병행 가능, 초기 표지 URL은 수동 입력 허용).
+- **제외:** 공급자 응답을 canonical Catalog에 합치는 `sync-rakuten.ts`(출력·TTL 계약을 정하지 않았으므로 runtime 프록시와 분리해 보류, 초기 표지는 placeholder 허용).
 
 ## 슬라이스 2 — 추천 엔진 코어
 
@@ -113,10 +113,10 @@ Stage E  시그니처 폴리시 + PWA + 다크     (슬라이스 11~12)
 - **목표:** 신규 사용자가 anchor를 선택하고 저장까지.
 - **의존:** G2.
 - **파일:** `app/layout.tsx`(폰트·토큰·내비), `components/nav/`, `infrastructure/db/`(Dexie 스키마 v1 전체), `features/onboarding/`, `components/cover/CoverImage.tsx`(placeholder 포함), Fuse 검색 모듈.
-- **구현 결정:** `03` §0·2·3 계약 전부. OnboardingDraft 저장·복원. IndexedDB 불가 감지 배너(`05` §9).
+- **구현 결정:** `03` §0·2·3 계약 전부. `mode="firstRun" | "add"` OnboardingDraft 저장·복원. 기존 프로필 추가 모드는 신규 positive 1~10개만 insert-only로 추가하고 STEP 2·reveal을 반복하지 않는다. IndexedDB 불가 감지 배너(`05` §9).
 - **비주얼:** 토큰(`04` §2) 정확 반영, Shelf는 scroll-snap 계약(`04` §7), tray Motion layout.
 - **테스트:** 검색 정규화 컴포넌트 테스트, draft 복원 유닛. E2E는 슬라이스 7에서 통합.
-- **완료 기준:** `03` §2·3 수용 기준 전부. 키보드 전용 온보딩 완주.
+- **완료 기준:** `03` §2·3 수용 기준과 기존 프로필 추가 모드 수용 기준 전부. 키보드 전용 온보딩 완주.
 
 ## 슬라이스 6 — Manga DNA (/taste)
 
@@ -132,14 +132,16 @@ Stage E  시그니처 폴리시 + PWA + 다크     (슬라이스 11~12)
 - **의존:** 슬라이스 6.
 - **파일:** `features/recommendations/`(inputHash 재계산·recommendationCache·백필 로직), `ReasonChips`, `StateActionRow`, 후속 시트(reaction·興味なし 이유), 정책 칩.
 - **구현 결정:** `03` §5 계약 전부. 카드 data-attribute에 contribution 요약을 노출해 E2E가 설명-근거 일치를 검증.
+- **교차 슬라이스 경계:** Slice 7에서는 아직 없는 `/works/[id]`로 이동하는 false affordance를 만들지 않는다. 카드 identity는 비대화형으로 두고, Slice 8의 실제 상세 구현과 함께 whole-card link를 활성화한다.
 - **완료 기준:** §5 수용 기준 전부. E2E #1(온보딩→DNA→추천), #2(読んだ→다음 추천 제외) 통과.
 
 ## 슬라이스 8 — Rakuten 프록시 + 작품 상세
 
 - **목표:** 상세 페이지와 실이미지·구매 연결.
 - **의존:** 슬라이스 7 (프록시 자체는 병행 가능).
-- **파일:** `app/api/rakuten/search|item/route.ts`, `infrastructure/rakuten/`, `features/work-detail/`, `scripts/sync-rakuten.ts`(빌드용 표지·서지 동기화).
-- **구현 결정:** `05` §4 계약(필드 축소, `_ex` 재작성, CDN 캐시, 5s 타임아웃, 실패 시 502 + 클라이언트 placeholder 폴백). providerCache TTL(가격·재고 24h/기타 72h). 블러 배경 시그니처(`04` §4.2).
+- **파일:** `app/api/rakuten/search|item/route.ts`, `infrastructure/rakuten/`, `features/work-detail/`. 초기 계획의 `scripts/sync-rakuten.ts`는 canonical Catalog나 영구 provider snapshot의 출력 계약이 없으므로 이번 runtime slice에서 만들지 않는다. 이후 사람 검수용 동기화 도구가 필요하면 비가격 metadata·로컬 출력 경계를 먼저 확정한다.
+- **구현 결정:** `05` §4 계약(필드 축소, `_ex` 재작성, CDN 캐시, 5s 타임아웃, 실패 시 502 + 클라이언트 placeholder 폴백). providerCache TTL(가격·재고 24h/기타 90일). 블러 배경 시그니처(`04` §4.2).
+- **정적 route 경계:** Slice 8의 `/works/[workId]`는 bundled Catalog 150개 ID만 `generateStaticParams`로 사전 생성하고 unknown ID는 404로 닫는다. external은 이 route에 넣지 않고 Slice 9의 sibling static shell `/works/external?workId=<ExternalWorkId>`에서 client-only로 조회한다.
 - **테스트:** Route Handler 유닛(검증·필드 축소·재작성), 실패 폴백 E2E #4.
 - **완료 기준:** `03` §6 수용 기준 전부. API 키 없는 로컬 환경에서도 placeholder로 전 화면 성립.
 
@@ -147,32 +149,41 @@ Stage E  시그니처 폴리시 + PWA + 다크     (슬라이스 11~12)
 
 - **목표:** 기록 관리와 external entry.
 - **의존:** 슬라이스 8 (라쿠텐 검색 재사용).
-- **파일:** `features/library/`, `WorkSearchSheet`(로컬→라쿠텐 확장, ISBN 대조→external 생성).
-- **완료 기준:** `03` §7 수용 기준 전부. E2E #3(재실행 후 Library 유지).
+- **파일:** `features/library/`, `WorkSearchSheet`(로컬→라쿠텐 확장, ISBN 대조→versioned external 생성), `app/works/external/`, `domain/catalog/external-work`, `infrastructure/db` external record 경계.
+- **구현 결정:** frozen v1 normalizer + full SHA-256 `ext:rakuten:v1:<64hex>` identity, fixed query static shell, Catalog/external discriminated link, strict `found/missing/corrupt/unavailable` local lookup, Catalog/external 원자적 insert-only add/readback. 같은 external ID/key는 기존 record를 보존하고 ISBN만 union하며 different-key collision은 write를 거부한다. external 상태 편집은 최신 row의 nested user record만 update하고 동시 ISBN/metadata 변경을 보존하며 stale 삭제·손상·key 충돌과 불확실 write를 재생·복구하지 않는다. DB v2 store/index는 변경하지 않는다.
+- **완료 기준:** `03` §6 external 기준과 §7의 runtime/Library 기준(재시작 영속성·추천 제외·하차 사유 반영·분기 link)을 충족한다. 같은 브라우저 direct URL reload, row 없는 browser의 local-missing, malformed/corrupt no-provider-request, E2E #3(재실행 후 Library 유지)을 검증한다. §7의 external Export/Import 복원 checkbox는 Slice 10/E2E #5로 명시적으로 이연하며 Slice 9 완료를 주장하지 않는다.
 
 ## 슬라이스 10 — 설정 + Export/Import + 랜딩
 
 - **목표:** 데이터 주권 완결 + 공개 가능한 첫인상.
 - **의존:** 슬라이스 9.
-- **파일:** `features/settings/`(export/import/삭제, `05` §7 계약), `app/page.tsx` 랜딩(리다이렉트 로직, 정적 버전의 로고 — reveal 애니메이션은 슬라이스 11).
-- **완료 기준:** `03` §8 수용 기준 전부. E2E #5(Export→삭제→Import 복원). GitHub 저장소와 Vercel Project 연결, 브랜치·PR Preview 확인, `main` Production 배포 성립. `main` 병합과 Production alias에는 GitHub `CI / quality` 성공을 각각 required check와 Vercel Deployment Check로 요구하고, Vercel Production build는 `catalog:validate`를 선행하며, Rakuten 비밀값은 Vercel Environment Variables에만 둔다.
+- **파일:** `features/settings/`(export/import/삭제, `05` §7 계약), `infrastructure/db`의 seven-store snapshot/replacement/delete 경계, `app/page.tsx` 정적 랜딩 client shell.
+- **데이터 주권 결정:** pre-profile Export를 허용하고 required nullable completion marker와 required nullable draft를 포함한다. userWorks/externalWorks와 adjustments·네 policies를 하나의 snapshot으로 보존한다. Import는 whole-file·external identity·profile/draft 교차 필드를 mutation 전에 검증하고, single transaction으로 imported user/profile/draft + empty caches + current runtime meta를 만든다. 전체 삭제도 single transaction 뒤 runtime meta만 남긴다. 둘 다 authoritative readback 전에는 성공하지 않으며 불확실 primary operation을 memory에 재생하지 않는다.
+- **호환·Catalog 결정:** 현재 Catalog positive≥5는 marker와 무관하게 usable, <5+marker는 add recovery, <5+null은 first-run이다. Catalog mismatch는 경고만 표시하고 current Catalog 밖 record를 보존·표시한다. unsupported external version이나 단일 손상/중복/충돌 row, mode/marker/draft 모순은 전체 거부한다.
+- **랜딩 결정:** 정적 셸 + hydration guard로 usable profile을 플래시 없이 redirect하고 `?landing=1`은 write-free 우회다. Slice 10은 정적 로고만 구현하며 reveal·페이지 진입 motion은 Slice 11에 남긴다.
+- **완료 기준(로컬):** `03` §1의 Slice 10 항목과 §8 수용 기준 전부, `07` §3 Slice 10 계약 테스트, E2E #5의 exact Export→삭제→Import·손상 무변경·Catalog mismatch·draft/pre-profile 분기를 통과한다. typecheck·lint·unit·catalog validate·production build와 데스크톱/390×844 Playwright로 실제 정적 셸과 IndexedDB readback을 확인한다. 이 기준은 구현 계획이며 완료 사실을 선기록하지 않는다.
+
+### 별도 승인 릴리스/배포 작업
+
+- **대상 계약:** GitHub 저장소와 Vercel Project 연결, 브랜치·PR Preview, `main` Production. `main` 병합과 Production alias에는 GitHub `CI / quality` 성공을 각각 required check와 Vercel Deployment Check로 요구하고, Production build는 `catalog:validate`를 선행하며 Rakuten 비밀값은 Vercel Environment Variables에만 둔다.
+- **권한 경계:** 2026-08-16 사용자 승인으로 현재 Slice 5~11 변경의 GitHub commit·push·PR·`main` merge는 허용됐다. Vercel Project 연결·Preview·Production mutation은 여전히 승인되지 않았다. 로컬 build/Playwright 또는 GitHub merge를 Vercel 배포 증거로 대체하지 않으며, 배포는 별도 사용자 승인 뒤 실행·readback으로만 완료한다.
 
 ## 슬라이스 11 — 시그니처 모먼트 + 모션 총정리
 
 - **목표:** `04`의 3개 시그니처와 모션 분류 체계 완성.
 - **의존:** 슬라이스 10.
-- **내용:** konomi 로고 reveal(§5.1 시퀀스·스킵·sessionStorage 가드), DNA reveal 타이밍 정밀화, 페이지 진입 B분류 일괄 적용, reduced-motion 전수 점검, 성능 예산(§8) 측정·조정.
-- **완료 기준:** `03` §1 수용 기준 전부. reduced-motion에서 정보 손실 0. LCP·CLS 예산 충족.
+- **내용:** static-first konomi 로고 reveal(§5.1 marker 선기록·고정 overlay·스킵/정리), DNA query 즉시 소비와 1200ms 전역 FactorBar gate, B를 onboarding Step 1·ordinary taste·resolved Catalog 상세·found external 상세에만 적용, A/C의 local Motion ownership과 E/F CSS ownership, reduced-motion 정적 동등성, Library sheet·image fade·비허용 보간 제거, 추천 skeleton 1.2s·첫 표지 priority, 라이트 상세 blur의 기존 60% paper overlay 복구, 공통 셸에는 Catalog identity만 두고 추천 전체 Catalog는 byte-identical content-addressed 정적 자산에서 strict 검증 후 로드, §8 production-local 성능 측정·조정.
+- **완료 기준:** `03` §1·§4·§5·§6·§7의 해당 모션 수용 기준과 `04` §5~§9를 충족한다. fixed 5 product E2E를 늘리지 않고 모두 통과하며 reduced-motion에서 정보·상태·focus 손실이 0이다. frozen cold mobile 5회 중앙값에서 landing/추천 LCP <3.5s, CLS <0.05, modern `/recommendations` actual initial entry JS <250,000 bytes gzip을 직접 입증한다. 추천 C는 60fps를 목표로 하고 median effective FPS ≥30을 충족하며 미달 owner는 layout motion 없이 재검증한다. production-local 증거를 배포·실기기 증거로 과장하지 않는다.
 
 ## 슬라이스 12 — PWA + 다크 모드 + 최종 QA
 
 - **목표:** 설치 가능·오프라인 셸·다크 테마.
 - **의존:** 슬라이스 11.
-- **내용:** manifest 완성 + Serwist 도입(`05` §8 캐시 전략), 다크 토큰 세트(시맨틱 변수에 값만 추가) + `next-themes`(system 기본 + settings 수동 3단), `07`의 수동 QA 체크리스트 전체 실행.
-- **완료 기준:** 홈 화면 설치 → 오프라인에서 DNA·Library·기존 추천 열람 가능. 다크에서 대비 기준 재충족. Lighthouse PWA·a11y 통과.
+- **내용:** manifest 완성 + Serwist 도입(`05` §8의 exact versioned Catalog precache와 오프라인 로컬 재계산 계약), 다크 토큰 세트(시맨틱 변수에 값만 추가) + `next-themes`(system 기본 + settings 수동 3단), `07`의 수동 QA 체크리스트 실행. `07`의 선택적 post-MVP 접근성 감사는 이 슬라이스 완료 게이트에 포함하지 않는다.
+- **완료 기준:** 홈 화면 설치 → 오프라인에서 DNA·Library·기존 추천 열람 가능. 다크에서 프로젝트 대비 기준 재충족. Lighthouse PWA 통과. axe-core·Lighthouse a11y·VoiceOver/NVDA·전체 WCAG 적합성 판정은 별도 승인된 post-MVP 작업으로만 수행하며 미실행 상태가 슬라이스나 배포를 막지 않는다.
 
 ---
 
 ## 임계 경로 주의
 
-코드가 아니라 **주석 데이터가 임계 경로다.** Slice 4 계약 동결 뒤 +100작품 evidence 작업과 G2 순수 모듈·하니스·집계기 구현은 병행할 수 있지만, 150-work catalog/context identity를 동결한 뒤에만 final static build·manual pilot·G2 evidence bundle을 만든다. `sync-rakuten.ts`(슬라이스 8 일부)는 데이터 대기 중 병행할 수 있다. 제품 UI 슬라이스(5~)는 G2 GO 전에 시작하지 않는다.
+코드가 아니라 **주석 데이터가 임계 경로다.** Slice 4 계약 동결 뒤 +100작품 evidence 작업과 G2 순수 모듈·하니스·집계기 구현은 병행할 수 있지만, 150-work catalog/context identity를 동결한 뒤에만 final static build·manual pilot·G2 evidence bundle을 만든다. 제품 UI 슬라이스(5~)는 G2 GO 전에 시작하지 않는다.

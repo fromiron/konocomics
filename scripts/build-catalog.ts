@@ -1,6 +1,7 @@
 import { mkdirSync, renameSync, writeFileSync } from "node:fs";
 import { dirname, resolve } from "node:path";
 
+import { catalogAssetFilename } from "../src/lib/catalog-asset";
 import { runCatalogPipeline } from "./catalog/pipeline";
 import { formatSourceIssue, hasErrors } from "./catalog/report";
 
@@ -14,6 +15,11 @@ const contextOutputs = [
   resolve(process.cwd(), "src/data/generated/recommendation-context-v1.json"),
 ] as const;
 const { catalog, context, issues } = runCatalogPipeline(sourceDirectory);
+const publicCatalogOutput = resolve(
+  process.cwd(),
+  "public/catalog",
+  catalogAssetFilename(catalog.catalogVersion),
+);
 
 for (const validationIssue of issues) {
   console.log(formatSourceIssue(validationIssue));
@@ -25,6 +31,7 @@ if (hasErrors(issues)) {
 } else {
   const artifacts = [
     ...catalogOutputs.map((output) => ({ output, value: catalog })),
+    { output: publicCatalogOutput, value: catalog },
     ...contextOutputs.map((output) => ({ output, value: context })),
   ];
   for (const { output, value } of artifacts) {

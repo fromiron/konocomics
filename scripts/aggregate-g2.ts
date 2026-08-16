@@ -2,7 +2,7 @@ import { resolve } from "node:path";
 import { pathToFileURL } from "node:url";
 
 import { aggregateG2Metrics } from "../src/domain/g2";
-import { strings } from "../src/lib/strings";
+import { explanationLexicon } from "../src/lib/strings";
 import { experimentExitCode, EXPERIMENT_EXIT_CODES } from "./experiment/errors";
 import { loadExperimentCatalog, loadRecommendationContext } from "./experiment/inputs";
 import { assertDistinctOutputPath, writeAtomicOutput } from "./experiment/io";
@@ -49,7 +49,7 @@ export async function runG2Aggregate(
       paths: resultPaths,
       catalog,
       context,
-      lexicon: strings.explanation,
+      lexicon: explanationLexicon,
     });
     const report = buildG2AggregateReport(catalog, aggregateG2Metrics(results, catalog));
     if (outputPath === "-") {

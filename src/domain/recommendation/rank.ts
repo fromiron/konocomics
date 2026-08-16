@@ -13,13 +13,14 @@ import { assertRecommendationContext, constraintMetadataFor, marketSignalFor } f
 import { calculateBayesianRating, calculateMaturity } from "./market";
 import { clamp, compareText, ownRecordValue, roundScore } from "./math";
 import {
-  applyListConstraints,
   determinePopularWorkIds,
+  selectRecommendationPlanEntries,
   sortScoredRecommendations,
 } from "./ordering";
 import { calculateNegativePenalties } from "./penalty";
 import type {
   GroupContribution,
+  RecommendationPlanEntry,
   RankedRecommendation,
   RecommendationInput,
   ScoredRecommendation,
@@ -116,6 +117,7 @@ function sortContributions(entries: readonly GroupContribution[]) {
         compareText(left.source, right.source) ||
         compareText(left.group, right.group) ||
         compareText(left.factorId, right.factorId) ||
+        compareText(left.axisPreferenceDirection ?? "", right.axisPreferenceDirection ?? "") ||
         compareText(left.anchorWorkIds.join("\u0000"), right.anchorWorkIds.join("\u0000")),
     );
 }
@@ -249,7 +251,7 @@ export function serializeRecommendationConfidence(confidence: number) {
   };
 }
 
-function publicRecommendation(candidate: ScoredRecommendation): RankedRecommendation {
+function planRecommendation(candidate: ScoredRecommendation): RecommendationPlanEntry {
   return {
     workId: candidate.workId,
     tasteScore: candidate.tasteScore,
@@ -257,10 +259,25 @@ function publicRecommendation(candidate: ScoredRecommendation): RankedRecommenda
     bestAnchorId: candidate.bestAnchorId,
     contributions: candidate.contributions,
     penaltiesApplied: candidate.penaltiesApplied,
+    isDiscovery: candidate.isDiscovery,
+    majorThemeKey: candidate.majorThemeKey,
+    seriesGroupId: candidate.seriesGroupId,
   };
 }
 
-export function rankRecommendations(input: RecommendationInput): RankedRecommendation[] {
+function publicRecommendation(candidate: RecommendationPlanEntry): RankedRecommendation {
+  return {
+    workId: candidate.workId,
+    tasteScore: candidate.tasteScore,
+    confidence: candidate.confidence,
+    confidenceLevel: candidate.confidenceLevel,
+    bestAnchorId: candidate.bestAnchorId,
+    contributions: candidate.contributions,
+    penaltiesApplied: candidate.penaltiesApplied,
+  };
+}
+
+export function buildRecommendationPlan(input: RecommendationInput): RecommendationPlanEntry[] {
   assertRecommendationContext(input.catalog, input.context);
   assertUniqueRecords(input.records);
 
@@ -297,7 +314,63 @@ export function rankRecommendations(input: RecommendationInput): RankedRecommend
     return result === null ? [] : [result];
   });
   const sorted = sortScoredRecommendations(scored, input.policies);
-  return applyListConstraints(sorted, input.policies).map(publicRecommendation);
+  return sorted.map(planRecommendation);
 }
 
-export { applyListConstraints, sortScoredRecommendations } from "./ordering";
+export function scoreWorkCompatibility(
+  input: RecommendationInput,
+  workId: string,
+): RankedRecommendation | null {
+  assertRecommendationContext(input.catalog, input.context);
+  assertUniqueRecords(input.records);
+
+  const worksById = Object.fromEntries(input.catalog.works.map((work) => [work.id, work]));
+  const work = ownRecordValue(worksById, workId);
+  if (work === undefined) {
+    return null;
+  }
+
+  const catalogRecords = input.records.filter(
+    (record) => ownRecordValue(worksById, record.workId) !== undefined,
+  );
+  const anchors = positiveAnchors(worksById, catalogRecords).filter(
+    (anchor) => anchor.work.id !== workId,
+  );
+  if (anchors.length === 0) {
+    return null;
+  }
+
+  const eligibleCandidates = filterEligibleCandidates({
+    works: input.catalog.works,
+    records: catalogRecords,
+    adjustments: input.adjustments,
+    policies: input.policies,
+  });
+  const candidate = scoreCandidate({
+    work,
+    anchors,
+    records: catalogRecords,
+    worksById,
+    profileConfidence: calculateProfileConfidence(catalogRecords),
+    input,
+    popularWorkIds: determinePopularWorkIds(
+      eligibleCandidates.map((eligibleWork) => eligibleWork.id),
+      input.context,
+    ),
+  });
+
+  return candidate === null ? null : publicRecommendation(planRecommendation(candidate));
+}
+
+export function rankRecommendations(input: RecommendationInput): RankedRecommendation[] {
+  return selectRecommendationPlanEntries(buildRecommendationPlan(input), input.policies).map(
+    publicRecommendation,
+  );
+}
+
+export {
+  applyListConstraints,
+  backfillRecommendationPlanEntries,
+  selectRecommendationPlanEntries,
+  sortScoredRecommendations,
+} from "./ordering";

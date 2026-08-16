@@ -1,0 +1,48 @@
+REVISE
+Payload ledger SHA-256: 9d66dd76fbbc6e68cdb0abe80d4ada965de6fb97228e537def3ae7b59c8c6e8a
+Corresponding Oracle ZIP SHA-256: 680836440acc3275c03f7fb3466d4ed917d05ebc2b3979edec957088d165be38
+Final HEAD: ce3bf4fca9dd5ba3f4bba371c9ae83407224ebc3
+Human validation: not-run
+Decision basis: user-authorized-model-panel
+
+이 한 표가 같은 세션의 무효 초기 GO와, 그다음 절차적 미완 REVISE를 모두 대체한다. 제품 방향 본투표가 아니라, 직접 Read를 소진한 뒤에도 남은 정본 본문을 닫지 못해 완결 커버리지를 주장할 수 없다는 최종 미완 판정이다. `implementation/slice4.patch`는 더 이상 말미 hunk 미완으로 보지 않는다. Read 결과 totalLines=33136, 최종 구간 종료 33136이며, unified diff는 마지막 hunk의 변경·문맥 줄에서 끝나도 유효하다.
+
+이번 연속에서 공백 없이 닫은 현재 파일은 다음이다. `repository/data/generated/catalog-v1.json` 1–21476, `repository/src/data/generated/catalog-v1.json` 1–21476, `evidence/validation/validation-summary.json` 전체, `evidence/validation/identity.txt` 전체, `evidence/validation/final-identity.txt` 전체, `evidence/validation/catalog-validate.txt` 1–572, `evidence/validation/catalog-build.txt` 1–572. 같은 세션의 기존 직접 Read(REQUEST.md, identity.json, 패치 1–33136, 파일럿 after/before ARIA·HTML, 양쪽 recommendation-context-v1.json 1–1311 등)는 유지한다. 앞선 판정문 자체는 커버리지로 치지 않는다.
+
+Blocking findings
+직접 Read가 아직 닫히지 않은 정본 경로·구간. 해시·grep·패치 hunk·요약·Glob 목록·Shell 출력으로 대체하지 않았다. 최소 완전 보정은 같은 세션에서 아래를 공백 없는 연속 Read로 닫은 뒤, 제품 증거에 대한 본투표 한 장을 내는 것이다.
+
+- `/home/bell/.cache/konocomics/g2-cycle2-canonical.8Jfgba/konocomics-g2-product-direction-cycle-2/repository/data/source/factors.csv` 전체
+- `/home/bell/.cache/konocomics/g2-cycle2-canonical.8Jfgba/konocomics-g2-product-direction-cycle-2/repository/data/source/works.csv` 전체
+- `/home/bell/.cache/konocomics/g2-cycle2-canonical.8Jfgba/konocomics-g2-product-direction-cycle-2/repository/data/source/themes.csv` 전체
+- `/home/bell/.cache/konocomics/g2-cycle2-canonical.8Jfgba/konocomics-g2-product-direction-cycle-2/repository/data/source/volumes.csv` 전체
+- `/home/bell/.cache/konocomics/g2-cycle2-canonical.8Jfgba/konocomics-g2-product-direction-cycle-2/repository/data/source/aliases.csv` 전체
+- `/home/bell/.cache/konocomics/g2-cycle2-canonical.8Jfgba/konocomics-g2-product-direction-cycle-2/repository/data/source/recommendation-context.csv` 전체
+- `/home/bell/.cache/konocomics/g2-cycle2-canonical.8Jfgba/konocomics-g2-product-direction-cycle-2/repository/data/source/recommendation-config.csv` 전체
+- `/home/bell/.cache/konocomics/g2-cycle2-canonical.8Jfgba/konocomics-g2-product-direction-cycle-2/repository/data/source/evidence/evidence.csv` 전체
+- `/home/bell/.cache/konocomics/g2-cycle2-canonical.8Jfgba/konocomics-g2-product-direction-cycle-2/repository/data/source/evidence/art-evidence-manifest.csv` 전체
+- `/home/bell/.cache/konocomics/g2-cycle2-canonical.8Jfgba/konocomics-g2-product-direction-cycle-2/repository/data/source/README.md` 전체
+- `/home/bell/.cache/konocomics/g2-cycle2-canonical.8Jfgba/konocomics-g2-product-direction-cycle-2/repository/pnpm-lock.yaml` 전체
+- `/home/bell/.cache/konocomics/g2-cycle2-canonical.8Jfgba/konocomics-g2-product-direction-cycle-2/repository/tests/fixtures/experiment/report-golden.md` 전체
+- `/home/bell/.cache/konocomics/g2-cycle2-canonical.8Jfgba/konocomics-g2-product-direction-cycle-2/repository/tests/unit/recommendation/__snapshots__/golden.test.ts.snap` 전체
+- `/home/bell/.cache/konocomics/g2-cycle2-canonical.8Jfgba/konocomics-g2-product-direction-cycle-2/evidence/validation/catalog-coverage.txt` 전체
+- `/home/bell/.cache/konocomics/g2-cycle2-canonical.8Jfgba/konocomics-g2-product-direction-cycle-2/evidence/validation/unit-tests.txt` 전체
+- `/home/bell/.cache/konocomics/g2-cycle2-canonical.8Jfgba/konocomics-g2-product-direction-cycle-2/evidence/validation/pilot-aggregate-hashes.txt` 전체
+- `/home/bell/.cache/konocomics/g2-cycle2-canonical.8Jfgba/konocomics-g2-product-direction-cycle-2/evidence/validation/typecheck.txt` 전체
+- `/home/bell/.cache/konocomics/g2-cycle2-canonical.8Jfgba/konocomics-g2-product-direction-cycle-2/evidence/validation/lint.txt` 전체
+- `/home/bell/.cache/konocomics/g2-cycle2-canonical.8Jfgba/konocomics-g2-product-direction-cycle-2/evidence/validation/harness-build.txt` 전체
+- `/home/bell/.cache/konocomics/g2-cycle2-canonical.8Jfgba/konocomics-g2-product-direction-cycle-2/evidence/validation/post-build-hashes.txt` 전체
+- `/home/bell/.cache/konocomics/g2-cycle2-canonical.8Jfgba/konocomics-g2-product-direction-cycle-2/evidence/validation/pilot-aggregate-recomputed.md` 전체
+- `/home/bell/.cache/konocomics/g2-cycle2-canonical.8Jfgba/konocomics-g2-product-direction-cycle-2/evidence/validation/root-build.txt` 전체
+- `/home/bell/.cache/konocomics/g2-cycle2-canonical.8Jfgba/konocomics-g2-product-direction-cycle-2/evidence/validation/pre-hashes.txt` 전체
+- `/home/bell/.cache/konocomics/g2-cycle2-canonical.8Jfgba/konocomics-g2-product-direction-cycle-2/evidence/validation/format-check.txt` 전체
+- `/home/bell/.cache/konocomics/g2-cycle2-canonical.8Jfgba/konocomics-g2-product-direction-cycle-2/runtime/harness-out/` 아래 현재 파일 전체: `__next._tree.txt`, `__next._full.txt`, `__next.__PAGE__.txt`, `index.html`, `index.txt`, `_not-found/__next._tree.txt`, `_not-found/__next._full.txt`, `_not-found/__next._not-found.__PAGE__.txt`, `_not-found/index.html`, `_not-found/index.txt`, `human/__next._tree.txt`, `human/__next._full.txt`, `human/__next.human.__PAGE__.txt`, `human/index.html`, `human/index.txt`, `synthetic-pilot/__next._tree.txt`, `synthetic-pilot/__next._full.txt`, `synthetic-pilot/__next.synthetic-pilot.__PAGE__.txt`, `synthetic-pilot/index.html`, `synthetic-pilot/index.txt`, `404.html`, `404/index.html`, `_next/static/Fyhh43jvyArX-AKxyzlc7/_buildManifest.js`, `_next/static/Fyhh43jvyArX-AKxyzlc7/_clientMiddlewareManifest.js`, `_next/static/Fyhh43jvyArX-AKxyzlc7/_ssgManifest.js`, `_next/static/chunks/0dlmeuwxoxkg-.js`, `_next/static/chunks/0-n1dbpdu8c0b.js`, `_next/static/chunks/20bgx4tnpkorc.js`, `_next/static/chunks/1bfv0twqyikhd.css`, `_next/static/chunks/turbopack-35jhnqft5vfyb.js`, `_next/static/chunks/2f6fnb4lx-yub.js`, `_next/static/chunks/0zrx-n7v36079.js`, `_next/static/chunks/0cz1d0mv5g_q7.js`, `_next/static/chunks/3z_u62x5_tqjc.js`, `_next/static/chunks/3jazbi6wf_r13.js`
+- `/home/bell/.cache/konocomics/g2-cycle2-canonical.8Jfgba/konocomics-g2-product-direction-cycle-2/repository/src/domain/` 현재 파일 전체: `g2.ts`, `catalog/grouping.ts`, `catalog/schema.ts`, `catalog/constants.ts`, `catalog/coverage.ts`, `catalog/types.ts`, `catalog/normalize.ts`, `catalog/validate.ts`, `explanation/generate.ts`, `explanation/constants.ts`, `explanation/index.ts`, `explanation/types.ts`, `profile/confidence.ts`, `profile/experiment-schema.ts`, `profile/constants.ts`, `profile/types.ts`, `profile/dna-summary.ts`, `recommendation/math.ts`, `recommendation/anchor.ts`, `recommendation/similarity.ts`, `recommendation/rank.ts`, `recommendation/market.ts`, `recommendation/coverage.ts`, `recommendation/context.ts`, `recommendation/types.ts`, `recommendation/constants.ts`, `recommendation/adjustment.ts`, `recommendation/baseline.ts`, `recommendation/ordering.ts`, `recommendation/penalty.ts`
+- `/home/bell/.cache/konocomics/g2-cycle2-canonical.8Jfgba/konocomics-g2-product-direction-cycle-2/repository/src/lib/strings.ts` 전체
+- `/home/bell/.cache/konocomics/g2-cycle2-canonical.8Jfgba/konocomics-g2-product-direction-cycle-2/repository/scripts/` 현재 파일 전체: `build-catalog.ts`, `aggregate-g2.ts`, `report-coverage.ts`, `promote-g2-catalog.ts`, `validate-catalog.ts`, `experiment/errors.ts`, `experiment/inputs.ts`, `experiment/io.ts`, `catalog/art-evidence.ts`, `catalog/source-schema.ts`, `catalog/load-source.ts`, `catalog/compile.ts`, `catalog/g1-replacement.ts`, `catalog/pipeline.ts`, `catalog/g1-blind-retag-output.ts`, `catalog/types.ts`, `catalog/report.ts`, `g2/results.ts`, `g2/report.ts`, `g2/options.ts`
+- `/home/bell/.cache/konocomics/g2-cycle2-canonical.8Jfgba/konocomics-g2-product-direction-cycle-2/repository/harness/` 현재 파일 전체: `tsconfig.json`, `package.json`, `next.config.ts`, `app/globals.css`, `app/layout.tsx`, `app/page.tsx`, `app/human/page.tsx`, `app/synthetic-pilot/page.tsx`, `components/g2-wizard.tsx`
+
+같은 세션에서 패치 hunk로만 본 현재 저장소 파일은 위 목록에 포함한다. 패치는 현재 파일 Read의 대체가 아니다.
+
+Rationale
+양쪽 catalog-v1.json과 일부 검증 로그는 이 연속에서 직접 닫혔다. 나머지 소스 CSV, lockfile, 골든·스냅샷, 남은 검증 로그, 빌드된 harness-out, 현재 domain/scripts/harness는 도구·컨텍스트 한도 때문에 직접 Read를 마치지 못했다. 완결 커버리지를 주장하지 않으며, 이 페이로드에 대한 무조건 GO도 내지 않는다.

@@ -1,0 +1,11 @@
+GO
+Bundle SHA-256: 523bc95f4c1dcdd6439d3791d66053ccabb0b1c44fa962f7e18fc81f51ed7f3e
+Final HEAD: 0382c60c32a4eee32a3333149a3a746d96d1d0d7
+Human validation: not-run
+Decision basis: user-authorized-model-panel
+
+검사 요약: ZIP 해시가 요구 다이제스트와 일치하고, 프리플라이트 후 `./extracted`에서 `PAYLOAD.sha256` 173/173이 재계산과 일치했다(원장 자체 제외). 규범 문서·slice4.patch 필수 구간 77–1751 / 2527–3508 / 28113–29199 / 30285–32470을 공백 없이 읽었고, G2 도메인·위저드·집계·프로모션·테스트·파일럿 산출물도 확인했다. HEAD `0382c60c32a4eee32a3333149a3a746d96d1d0d7`, tree `511fcfa3c6277ce31e6aae479ff4ab0146087be9`, 카탈로그 `v1-83f85ca42c87`(150작품, 역할 30/30/90, 사본 해시 일치). 하니스 `/human`·`/synthetic-pilot`가 각각 human / syntheticPilot:manual-round-trip에 고정되고, 루트 빌드는 `/`와 `/_not-found`만 있어 Slice 5 제품 UI는 없다. 브라우저 파일럿은 `/synthetic-pilot/` 4단계를 실제로 통과했고, 최종 제출 전 UI·ARIA·DOM·URL·콘솔·다운로드에 엔진/점수/신뢰도/앵커/기여/페널티/시장/성숙도/카탈로그 역할이 없었다. 미편집 다운로드 `98429bdd94a864cc2e29a2edf48971ed0ab38983fa4f6b98c01d60d0806bddb8`는 권위 집계기가 두 번과 재계산에서 바이트 동일 보고(`98db33b126521e3bce9f7ce58bed76f08e4175149ed0f147d06585061f6c3e60`)로 수락했다. 인간 0 / 합성 1 / 판정 INCOMPLETE, 다섯 기준 모두 NOT_RUN, 인간 비율 전부 0/0(null). 카탈로그는 장르·테마·온보딩 축 대비가 있고, 파일럿 목록도 Taste(수사·문제해결 편향)와 Baseline(인기작·리뷰 설명)이 실제로 갈라진다. 주석은 모델 패널이며 인간 검증은 돌리지 않았다.
+
+Blocking findings: None.
+
+근거: 이미 사용자 인가된 모델 패널 경로에서 G2를 열 조건은 인간 10명 측정이 아니라, 150작품 추천 적격 카탈로그와 블라인드 하니스가 방향 게이트에 쓸 수 있는지다. 이 묶음은 그 카탈로그·대비·블라인드 왕복·집계 경계를 충족한다. 합성 파일럿은 왕복 증거일 뿐이며 Taste가 G2를 이겼다고 주장하지 않는다. Slice 5는 시작되지 않았다.

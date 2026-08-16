@@ -1,3 +1,4 @@
+import { AXIS_IDS } from "../catalog/constants";
 import { compareText } from "../recommendation/math";
 import type { BaselineContribution, GroupContribution } from "../recommendation/types";
 import { explanationClusterFor, isExplanationFactorId, isGenreTag } from "./constants";
@@ -18,6 +19,7 @@ import type {
 const MAX_POSITIVE_REASONS = 3;
 const MAX_ANCHORS = 3;
 const TEMPLATE_TOKEN_PATTERN = /\{factorLabel\}|\{anchorTitle\}/gu;
+const AXIS_FACTOR_IDS = new Set<string>(AXIS_IDS);
 
 type TasteCandidate = {
   contribution: GroupContribution;
@@ -35,6 +37,7 @@ function compareTasteContributionIdentity(left: GroupContribution, right: GroupC
     compareText(left.source, right.source) ||
     compareText(left.group, right.group) ||
     compareText(left.factorId, right.factorId) ||
+    compareText(left.axisPreferenceDirection ?? "", right.axisPreferenceDirection ?? "") ||
     compareText(left.anchorWorkIds.join("\u0000"), right.anchorWorkIds.join("\u0000")) ||
     compareText(left.negativeReasonId ?? "", right.negativeReasonId ?? "")
   );
@@ -74,7 +77,19 @@ function tasteCandidateFor(
   contribution: GroupContribution,
   lexicon: ExplanationLexicon,
 ): TasteCandidate | undefined {
-  if (!contribution.explainable || !isExplanationFactorId(contribution.factorId)) {
+  const isAxisAdjustment =
+    contribution.source === "adjustment" && AXIS_FACTOR_IDS.has(contribution.factorId);
+  const hasValidAxisPreferenceDirection =
+    contribution.source === "adjustment"
+      ? isAxisAdjustment
+        ? contribution.axisPreferenceDirection !== undefined
+        : contribution.axisPreferenceDirection === undefined
+      : contribution.axisPreferenceDirection === undefined;
+  if (
+    !contribution.explainable ||
+    !hasValidAxisPreferenceDirection ||
+    !isExplanationFactorId(contribution.factorId)
+  ) {
     return undefined;
   }
   const factorLabel = lexicon.factorLabels[contribution.factorId];
@@ -162,9 +177,11 @@ function tasteSentenceFor(options: {
       : undefined;
   const template =
     kind === "positive"
-      ? anchorTitle === undefined
-        ? lexicon.templates.positiveWithoutAnchor
-        : lexicon.templates.positiveWithAnchor
+      ? contribution.source === "adjustment" && contribution.axisPreferenceDirection === "lower"
+        ? lexicon.templates.positiveLowerAxisAdjustment
+        : anchorTitle === undefined
+          ? lexicon.templates.positiveWithoutAnchor
+          : lexicon.templates.positiveWithAnchor
       : anchorTitle === undefined
         ? lexicon.templates.cautionSimilarityWithoutAnchor
         : lexicon.templates.cautionSimilarityWithAnchor;
@@ -180,6 +197,9 @@ function tasteSentenceFor(options: {
     factorId,
     value: contribution.value,
     anchorWorkIds: [...contribution.anchorWorkIds],
+    ...(contribution.axisPreferenceDirection === undefined
+      ? {}
+      : { axisPreferenceDirection: contribution.axisPreferenceDirection }),
     ...(contribution.negativeReasonId === undefined
       ? {}
       : { negativeReasonId: contribution.negativeReasonId }),

@@ -33,12 +33,15 @@ export type WorkSimilarityResult = {
 export type ContributionSource =
   "baseline" | "similarity" | "consensus" | "adjustment" | "penalty" | "policy" | "clamp";
 
+export type AxisPreferenceDirection = "higher" | "lower";
+
 export type GroupContribution = {
   source: ContributionSource;
   group: CoverageGroup | "overall";
   factorId: string;
   value: number;
   anchorWorkIds: string[];
+  axisPreferenceDirection?: AxisPreferenceDirection;
   negativeReasonId?: NegativeReasonId;
   explainable: boolean;
 };
@@ -84,6 +87,18 @@ export type RankedRecommendation = {
   contributions: GroupContribution[];
   penaltiesApplied: NegativeReasonId[];
 };
+
+export type RecommendationConstraintCandidate = Pick<
+  RankedRecommendation,
+  "workId" | "tasteScore" | "bestAnchorId"
+> & {
+  isDiscovery: boolean;
+  majorThemeKey: string;
+  seriesGroupId: string;
+};
+
+export type RecommendationPlanEntry = RankedRecommendation &
+  Pick<RecommendationConstraintCandidate, "isDiscovery" | "majorThemeKey" | "seriesGroupId">;
 
 export type BaselineContribution = {
   source: "genre" | "market" | "maturity";

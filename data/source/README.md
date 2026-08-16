@@ -37,6 +37,19 @@
 - 블라인드 재태깅 표본은 동결 manifest의 ID만으로 결정론적으로 15~20%를 선택하고, 선택 목록을 원점수 공개 전에 기록한다. 입력에는 원점수를 넣지 않는다. 작품 목록이나 정책 버전이 바뀌면 기존 표본·조정 결과를 폐기하고 새 manifest에서 다시 선택한다.
 - 근거 미달 작품을 교체할 때는 `06-implementation-plan.md`의 non-Art 거리와 다양성 보존 규칙을 사용하고, 전체 후보 주석·입력 hash·모든 조합의 거리·guard 결과·선택을 replacement manifest에 기록한다. 추천 결과를 본 뒤 후보를 바꾸지 않는다.
 
+## G2 Catalog 주석 승격
+
+- 현재 source는 G1의 50작품을 보존한 150작품 Catalog다. 기존 승인 49작품은 G1 provenance를 유지하고, 신규 100작품과 재개방한 `haikyu`는 `reviews/g2-catalog-annotation-panel.md`의 Catalog 주석 판정에만 결속된다.
+- 승격 전 후보·생성물·4개 검토 경로·시각 evidence ZIP의 해시는 `data/staging/g2/g2-catalog-annotation-approval.json`에 동결되어 있다. 승격은 그 manifest와 정확히 101작품의 `annotationReview*` 세 필드만 갱신하며 주석 값과 evidence를 다시 쓰지 않는다.
+- Catalog 주석 승격의 범위와 provenance는 이후 제품 방향 판정과 분리되어 유지된다.
+
+## G2 제품 방향 승인
+
+- 제품 방향 Cycle 2는 HEAD `ce3bf4fca9dd5ba3f4bba371c9ae83407224ebc3`의 engine identity, 구현 diff, contract/metric 테스트, 결정론적 aggregate, 실제 브라우저 pilot을 같은 payload identity로 동결한 뒤 Local/Gemini/Grok/GPT-5.6 Pro의 유효하고 조건 없는 4/4 `GO`를 받았다. 결정과 모든 응답·유효성 해시는 `data/staging/g2/g2-product-direction-approval.json`에 결속되어 있다.
+- 이 승인은 `humanValidation: "not-run"`, `decisionBasis: "user-authorized-model-panel"` 경로다. Human metrics는 `null`이고 실제 파일럿은 human `0`, synthetic pilot `1`, verdict `INCOMPLETE`, 다섯 human 기준 전부 `NOT_RUN`이다. 사람 검증이나 통계적 우세를 주장하지 않는다.
+- 제품 방향 G2와 Slice 5는 승인됐다. Vercel은 배포 대상으로 확정되어 있지만 이 판정은 Vercel 배포를 승인하지 않으며, 실제 연결과 Production 배포는 Slice 10의 별도 완료 기준에 따른다.
+- 이후 검토에서 Local/Gemini/Grok CLI에는 canonical uncompressed evidence directory와 exact request·complete ledger·root identity를 제공한다. ChatGPT.com GPT-5.6 Pro Oracle에만 같은 payload의 deterministic ZIP을 제공한다.
+
 ## 추천 context
 
 모든 `recommendationEligible` 작품은 `recommendation-context.csv`에 정확히 한 행이 필요하다. `seriesGroupId`, `reviewAverage`, `reviewCount`는 결측을 허용하지만 `catalogRole`과 `volumeCount`는 필수다. 리뷰 0건을 확인한 대표권은 `reviewAverage`를 비우고 `reviewCount=0`으로 기록한다. `recommendation-config.csv`의 단일 `catalogAverageRating`은 `reviewAverage`가 있고 `reviewCount>0`인 대표권만 동일 가중으로 평균한 0~5 값이어야 한다. Catalog와 이 context를 정규화한 공동 digest가 두 생성 artifact의 동일한 `catalogVersion`이 된다.

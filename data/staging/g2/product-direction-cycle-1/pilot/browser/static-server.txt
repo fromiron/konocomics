@@ -1,0 +1,11 @@
+127.0.0.1 - - [13/Aug/2026 21:06:03] "GET /synthetic-pilot/ HTTP/1.1" 200 -
+127.0.0.1 - - [13/Aug/2026 21:06:03] "GET /_next/static/chunks/1bfv0twqyikhd.css HTTP/1.1" 200 -
+127.0.0.1 - - [13/Aug/2026 21:06:03] "GET /_next/static/chunks/0-n1dbpdu8c0b.js HTTP/1.1" 200 -
+127.0.0.1 - - [13/Aug/2026 21:06:03] "GET /_next/static/chunks/20bgx4tnpkorc.js HTTP/1.1" 200 -
+127.0.0.1 - - [13/Aug/2026 21:06:03] "GET /_next/static/chunks/3z_u62x5_tqjc.js HTTP/1.1" 200 -
+127.0.0.1 - - [13/Aug/2026 21:06:03] "GET /_next/static/chunks/2f6fnb4lx-yub.js HTTP/1.1" 200 -
+127.0.0.1 - - [13/Aug/2026 21:06:03] "GET /_next/static/chunks/turbopack-35jhnqft5vfyb.js HTTP/1.1" 200 -
+127.0.0.1 - - [13/Aug/2026 21:06:03] "GET /_next/static/chunks/0zrx-n7v36079.js HTTP/1.1" 200 -
+127.0.0.1 - - [13/Aug/2026 21:06:03] "GET /_next/static/chunks/25w9j662pwqr9.js HTTP/1.1" 200 -
+127.0.0.1 - - [13/Aug/2026 21:06:03] code 404, message File not found
+127.0.0.1 - - [13/Aug/2026 21:06:03] "GET /favicon.ico HTTP/1.1" 404 -

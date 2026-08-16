@@ -1,0 +1,414 @@
+{
+  "format": "konocomics-g2-result",
+  "schemaVersion": 1,
+  "contractVersion": "g2-v1",
+  "participantId": "pilot-browser-one",
+  "respondent": {
+    "kind": "syntheticPilot",
+    "label": "manual-round-trip"
+  },
+  "catalogVersion": "v1-83f85ca42c87",
+  "factorDictionaryVersion": "v1",
+  "baselineVersion": "v1",
+  "profile": {
+    "format": "konocomics-experiment-profile",
+    "schemaVersion": 1,
+    "profileId": "pilot-browser-one",
+    "records": [
+      {
+        "workId": "death-note",
+        "readingState": "completed",
+        "reaction": "favorite",
+        "updatedAt": "2000-01-01T00:00:00.000Z"
+      },
+      {
+        "workId": "dungeon-meshi",
+        "readingState": "completed",
+        "reaction": "liked",
+        "updatedAt": "2000-01-01T00:00:00.000Z"
+      },
+      {
+        "workId": "frieren",
+        "readingState": "completed",
+        "reaction": "favorite",
+        "updatedAt": "2000-01-01T00:00:00.000Z"
+      },
+      {
+        "workId": "fullmetal-alchemist",
+        "readingState": "completed",
+        "reaction": "liked",
+        "updatedAt": "2000-01-01T00:00:00.000Z"
+      },
+      {
+        "workId": "kingdom",
+        "readingState": "completed",
+        "reaction": "liked",
+        "updatedAt": "2000-01-01T00:00:00.000Z"
+      },
+      {
+        "workId": "monster",
+        "readingState": "completed",
+        "reaction": "liked",
+        "updatedAt": "2000-01-01T00:00:00.000Z"
+      }
+    ],
+    "adjustments": {
+      "axes": {
+        "problemSolving": "like",
+        "strategy": "veryLike",
+        "mysteryReveal": "veryLike",
+        "comedy": "less"
+      },
+      "themes": {
+        "politics": "like",
+        "investigation": "veryLike"
+      }
+    },
+    "policies": {
+      "preferCompleted": false,
+      "preferHidden": false,
+      "preferVerified": false,
+      "excludeIncomplete": false
+    }
+  },
+  "holdoutWorkIds": [
+    "fullmetal-alchemist"
+  ],
+  "slots": {
+    "A": {
+      "engine": "taste",
+      "items": [
+        {
+          "rank": 1,
+          "workId": "my-dearest-self-with-malice-aforethought",
+          "explanationAvailable": true
+        },
+        {
+          "rank": 2,
+          "workId": "the-summer-hikaru-died",
+          "explanationAvailable": true
+        },
+        {
+          "rank": 3,
+          "workId": "20th-century-boys",
+          "explanationAvailable": true
+        },
+        {
+          "rank": 4,
+          "workId": "promised-neverland",
+          "explanationAvailable": true
+        },
+        {
+          "rank": 5,
+          "workId": "hunter-x-hunter",
+          "explanationAvailable": true
+        },
+        {
+          "rank": 6,
+          "workId": "fullmetal-alchemist",
+          "explanationAvailable": true
+        },
+        {
+          "rank": 7,
+          "workId": "fire-force",
+          "explanationAvailable": true
+        },
+        {
+          "rank": 8,
+          "workId": "noragami-stray-god",
+          "explanationAvailable": true
+        },
+        {
+          "rank": 9,
+          "workId": "vinland-saga",
+          "explanationAvailable": true
+        },
+        {
+          "rank": 10,
+          "workId": "vagabond",
+          "explanationAvailable": true
+        }
+      ]
+    },
+    "B": {
+      "engine": "baseline",
+      "items": [
+        {
+          "rank": 1,
+          "workId": "witch-hat-atelier",
+          "explanationAvailable": true
+        },
+        {
+          "rank": 2,
+          "workId": "how-a-realist-hero-rebuilt-the-kingdom",
+          "explanationAvailable": true
+        },
+        {
+          "rank": 3,
+          "workId": "promised-neverland",
+          "explanationAvailable": true
+        },
+        {
+          "rank": 4,
+          "workId": "one-piece",
+          "explanationAvailable": true
+        },
+        {
+          "rank": 5,
+          "workId": "naruto",
+          "explanationAvailable": true
+        },
+        {
+          "rank": 6,
+          "workId": "dragon-ball",
+          "explanationAvailable": true
+        },
+        {
+          "rank": 7,
+          "workId": "hunter-x-hunter",
+          "explanationAvailable": true
+        },
+        {
+          "rank": 8,
+          "workId": "vinland-saga",
+          "explanationAvailable": true
+        },
+        {
+          "rank": 9,
+          "workId": "vagabond",
+          "explanationAvailable": true
+        },
+        {
+          "rank": 10,
+          "workId": "xxxholic",
+          "explanationAvailable": true
+        }
+      ]
+    }
+  },
+  "preResponses": [
+    {
+      "workId": "my-dearest-self-with-malice-aforethought",
+      "familiarity": "unknown",
+      "wantToReadBefore": 4
+    },
+    {
+      "workId": "the-summer-hikaru-died",
+      "familiarity": "unknown",
+      "wantToReadBefore": 4
+    },
+    {
+      "workId": "20th-century-boys",
+      "familiarity": "unknown",
+      "wantToReadBefore": 4
+    },
+    {
+      "workId": "promised-neverland",
+      "familiarity": "unknown",
+      "wantToReadBefore": 4
+    },
+    {
+      "workId": "hunter-x-hunter",
+      "familiarity": "unknown",
+      "wantToReadBefore": 4
+    },
+    {
+      "workId": "fullmetal-alchemist",
+      "familiarity": "unknown",
+      "wantToReadBefore": 4
+    },
+    {
+      "workId": "fire-force",
+      "familiarity": "unknown",
+      "wantToReadBefore": 4
+    },
+    {
+      "workId": "noragami-stray-god",
+      "familiarity": "unknown",
+      "wantToReadBefore": 4
+    },
+    {
+      "workId": "vinland-saga",
+      "familiarity": "unknown",
+      "wantToReadBefore": 4
+    },
+    {
+      "workId": "vagabond",
+      "familiarity": "unknown",
+      "wantToReadBefore": 4
+    },
+    {
+      "workId": "witch-hat-atelier",
+      "familiarity": "unknown",
+      "wantToReadBefore": 4
+    },
+    {
+      "workId": "how-a-realist-hero-rebuilt-the-kingdom",
+      "familiarity": "unknown",
+      "wantToReadBefore": 4
+    },
+    {
+      "workId": "one-piece",
+      "familiarity": "unknown",
+      "wantToReadBefore": 4
+    },
+    {
+      "workId": "naruto",
+      "familiarity": "unknown",
+      "wantToReadBefore": 4
+    },
+    {
+      "workId": "dragon-ball",
+      "familiarity": "unknown",
+      "wantToReadBefore": 4
+    },
+    {
+      "workId": "xxxholic",
+      "familiarity": "unknown",
+      "wantToReadBefore": 4
+    }
+  ],
+  "listPreference": "tie",
+  "postResponses": [
+    {
+      "slot": "A",
+      "rank": 1,
+      "workId": "my-dearest-self-with-malice-aforethought",
+      "wantToReadAfter": 4,
+      "agreement": 4
+    },
+    {
+      "slot": "A",
+      "rank": 2,
+      "workId": "the-summer-hikaru-died",
+      "wantToReadAfter": 4,
+      "agreement": 4
+    },
+    {
+      "slot": "A",
+      "rank": 3,
+      "workId": "20th-century-boys",
+      "wantToReadAfter": 4,
+      "agreement": 4
+    },
+    {
+      "slot": "A",
+      "rank": 4,
+      "workId": "promised-neverland",
+      "wantToReadAfter": 4,
+      "agreement": 4
+    },
+    {
+      "slot": "A",
+      "rank": 5,
+      "workId": "hunter-x-hunter",
+      "wantToReadAfter": 4,
+      "agreement": 4
+    },
+    {
+      "slot": "A",
+      "rank": 6,
+      "workId": "fullmetal-alchemist",
+      "wantToReadAfter": 4,
+      "agreement": 4
+    },
+    {
+      "slot": "A",
+      "rank": 7,
+      "workId": "fire-force",
+      "wantToReadAfter": 4,
+      "agreement": 4
+    },
+    {
+      "slot": "A",
+      "rank": 8,
+      "workId": "noragami-stray-god",
+      "wantToReadAfter": 4,
+      "agreement": 4
+    },
+    {
+      "slot": "A",
+      "rank": 9,
+      "workId": "vinland-saga",
+      "wantToReadAfter": 4,
+      "agreement": 4
+    },
+    {
+      "slot": "A",
+      "rank": 10,
+      "workId": "vagabond",
+      "wantToReadAfter": 4,
+      "agreement": 4
+    },
+    {
+      "slot": "B",
+      "rank": 1,
+      "workId": "witch-hat-atelier",
+      "wantToReadAfter": 4,
+      "agreement": 4
+    },
+    {
+      "slot": "B",
+      "rank": 2,
+      "workId": "how-a-realist-hero-rebuilt-the-kingdom",
+      "wantToReadAfter": 4,
+      "agreement": 4
+    },
+    {
+      "slot": "B",
+      "rank": 3,
+      "workId": "promised-neverland",
+      "wantToReadAfter": 4,
+      "agreement": 4
+    },
+    {
+      "slot": "B",
+      "rank": 4,
+      "workId": "one-piece",
+      "wantToReadAfter": 4,
+      "agreement": 4
+    },
+    {
+      "slot": "B",
+      "rank": 5,
+      "workId": "naruto",
+      "wantToReadAfter": 4,
+      "agreement": 4
+    },
+    {
+      "slot": "B",
+      "rank": 6,
+      "workId": "dragon-ball",
+      "wantToReadAfter": 4,
+      "agreement": 4
+    },
+    {
+      "slot": "B",
+      "rank": 7,
+      "workId": "hunter-x-hunter",
+      "wantToReadAfter": 4,
+      "agreement": 4
+    },
+    {
+      "slot": "B",
+      "rank": 8,
+      "workId": "vinland-saga",
+      "wantToReadAfter": 4,
+      "agreement": 4
+    },
+    {
+      "slot": "B",
+      "rank": 9,
+      "workId": "vagabond",
+      "wantToReadAfter": 4,
+      "agreement": 4
+    },
+    {
+      "slot": "B",
+      "rank": 10,
+      "workId": "xxxholic",
+      "wantToReadAfter": 4,
+      "agreement": 4
+    }
+  ]
+}

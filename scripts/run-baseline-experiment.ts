@@ -1,7 +1,7 @@
 import { resolve } from "node:path";
 import { pathToFileURL } from "node:url";
 
-import { strings } from "../src/lib/strings";
+import { explanationLexicon, experimentReportStrings } from "../src/lib/strings";
 import { experimentExitCode, EXPERIMENT_EXIT_CODES } from "./experiment/errors";
 import { loadExperimentCatalog, loadRecommendationContext } from "./experiment/inputs";
 import { assertDistinctOutputPath, writeAtomicOutput } from "./experiment/io";
@@ -50,8 +50,8 @@ export async function runBaselineExperiment(
     const context = await loadRecommendationContext(contextPath, catalog);
     const profiles = await loadExperimentProfiles(profilePaths, catalog);
     const report = buildExperimentReport(
-      { catalog, context, profiles, lexicon: strings.explanation },
-      strings.experimentReport,
+      { catalog, context, profiles, lexicon: explanationLexicon },
+      experimentReportStrings,
     );
 
     if (outputPath === "-") {

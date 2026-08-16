@@ -1,0 +1,165 @@
+{
+  "schemaVersion": 1,
+  "policyVersion": "g2-product-direction-user-authorized-model-panel-v1",
+  "approvalScope": "product-direction-and-slice-5",
+  "approvedAt": "2026-08-14T11:20:33+09:00",
+  "decision": "GO",
+  "humanValidation": "not-run",
+  "decisionBasis": "user-authorized-model-panel",
+  "reviewedRepository": "fromiron/konocomics",
+  "reviewedBranch": "agent/promote-approved-catalog",
+  "reviewedHead": "ce3bf4fca9dd5ba3f4bba371c9ae83407224ebc3",
+  "reviewedTree": "d169a602b99599578aca8a1fd4ba0ffdcf0a371c",
+  "slice4ContractBase": "94d2ac803844ce39e884326d523afa9516f7d7ab",
+  "catalog": {
+    "version": "v1-83f85ca42c87",
+    "sha256": "d3f9d97a5d659fd7a6972b833e0fd0092a09089acf103709fa0bdb9968b64fe8",
+    "recommendationContextSha256": "2e1faa38a07a1f4ffd0f465fcf597d682162eea9433b175fd8a1af84d7ce282e",
+    "workCount": 150,
+    "volumeCount": 154,
+    "roleCounts": {
+      "anchor": 30,
+      "bridge": 30,
+      "discovery": 90
+    }
+  },
+  "evidence": {
+    "canonicalRootName": "konocomics-g2-product-direction-cycle-2",
+    "payloadEntries": 184,
+    "totalRegularFiles": 185,
+    "payloadLedgerPath": "manifests/PAYLOAD.sha256",
+    "payloadLedgerSha256": "9d66dd76fbbc6e68cdb0abe80d4ada965de6fb97228e537def3ae7b59c8c6e8a",
+    "identitySha256": "69f6f1f2c5e55df776b3c38801073bfade65b936479c5ecd1ad076763297af47",
+    "oracleZip": {
+      "filename": "konocomics-g2-product-direction-cycle-2-ce3bf4f.zip",
+      "sha256": "680836440acc3275c03f7fb3466d4ed917d05ebc2b3979edec957088d165be38",
+      "sizeBytes": 1513061
+    },
+    "pilotResultSha256": "98429bdd94a864cc2e29a2edf48971ed0ab38983fa4f6b98c01d60d0806bddb8",
+    "pilotAggregateSha256": "98db33b126521e3bce9f7ce58bed76f08e4175149ed0f147d06585061f6c3e60"
+  },
+  "requests": {
+    "originalFrozen": {
+      "path": "reviews/g2-product-direction-cycle-2-request.md",
+      "sha256": "a64c1f1f04d876f8300d41eba3fb6fc12a6230e3c6afdff126d40383d099b6de"
+    },
+    "finalGrokUncompressed": {
+      "path": "reviews/g2-product-direction-cycle-2-grok-uncompressed-request.md",
+      "sha256": "2d05798f63e04df751de961ee018757e9a9a70e012c57fa851897f31b14ee701"
+    }
+  },
+  "panelReport": {
+    "path": "reviews/g2-product-direction-cycle-2-report.md",
+    "sha256": "9666c28a4d9c7af6636a4134ecd36a3037d319ddb8ae8905a285f29f72c83c99"
+  },
+  "responses": {
+    "local": {
+      "vote": "GO",
+      "path": "reviews/g2-product-direction-cycle-2-local-response.txt",
+      "sha256": "31fae7989961f17e8ca73a7c2bcbcb0aa4329d3dad35500a52d3365ae967648b"
+    },
+    "gemini": {
+      "vote": "GO",
+      "path": "reviews/g2-product-direction-cycle-2-gemini-response.txt",
+      "sha256": "a636979aae2822d5a8810d683a8cd9e2eae2c32429e9adfa357f25baa057045c",
+      "durableTerminalContentSha256WithoutLf": "2b513627ebe0a42ef23e41dfda09c028df3eb9507712d1d40864a23f04bd9048",
+      "supersedesUnavailableSha256": "e87c485c40ddb5ca2d879a0b17ce90bbb5681cb00c375ed0648940d80891b9f2",
+      "conversationId": "00c4a6b0-c979-4abb-93b0-a20e1ae2287e"
+    },
+    "grok": {
+      "vote": "GO",
+      "path": "reviews/g2-product-direction-cycle-2-grok-response.txt",
+      "sha256": "815b37eb7f26009e16a7d53a8c85d6b63f495dbc851cdf5c845a69a9e6f4a977",
+      "sessionId": "dc3a2094-0562-4d78-80cb-49646d91a10b",
+      "model": "cursor-grok-4.6-high",
+      "fastMode": false
+    },
+    "oracle": {
+      "vote": "GO",
+      "path": "reviews/g2-product-direction-cycle-2-oracle-response.txt",
+      "sha256": "89dfec11d4fe43db61fa8f2de37b836557be602cf02f16bf4e838f0630691c81",
+      "conversationUrl": "https://chatgpt.com/c/6a7dcaa1-b420-83e8-8037-770333e36ae3",
+      "model": "gpt-5-6-pro"
+    }
+  },
+  "validities": {
+    "local": {
+      "status": "VALID",
+      "path": "reviews/g2-product-direction-cycle-2-local-validity.md",
+      "sha256": "2dd0193340a8c115b94d13d0b93d8fd16d0670a78a757509939ceca7769e0be4"
+    },
+    "gemini": {
+      "status": "VALID_AFTER_IDENTITY_SUPERSESSION_WITH_ARCHIVAL_LIMIT",
+      "path": "reviews/g2-product-direction-cycle-2-gemini-validity.md",
+      "sha256": "32d868d762f832030e0ddcbf1f8ed3edafbca81080f9314fff5e0eef7c73de3c"
+    },
+    "grok": {
+      "status": "VALID",
+      "path": "reviews/g2-product-direction-cycle-2-grok-validity.md",
+      "sha256": "c1d76a28a191c19253746e2858496b3d22338e6508823761a80748489ecec324"
+    },
+    "oracle": {
+      "status": "VALID_WITH_ACTIVITY_TRACE_LIMIT",
+      "path": "reviews/g2-product-direction-cycle-2-oracle-validity.md",
+      "sha256": "5017d3361b517a243084a7c27224ae401fa6349c69efb3386ae19e51e021513d"
+    }
+  },
+  "excludedAttempts": {
+    "grokProceduralIncomplete": {
+      "panelEffect": "EXCLUDED",
+      "reason": "INVALID_UNCOUNTABLE_PROCEDURAL_INCOMPLETENESS_NOT_PRODUCT_VOTE",
+      "response": {
+        "path": "reviews/g2-product-direction-cycle-2-grok-excluded-attempt-response.txt",
+        "sha256": "d05a5c05506c19301011087b6423c6e1b39e32cbcd3983fb89c491bdb87007bc"
+      },
+      "validity": {
+        "path": "reviews/g2-product-direction-cycle-2-grok-excluded-attempt-validity.md",
+        "sha256": "87de14acc7b732f90577699db21547b87e0773050ce45d19fe94ebda862e792d"
+      }
+    }
+  },
+  "transportPolicy": {
+    "canonicalPayloadIdentitySharedByAllRoutes": true,
+    "cliReviewers": {
+      "reviewers": ["local", "gemini", "grok"],
+      "mode": "uncompressed-canonical-directory",
+      "zipProhibited": true,
+      "requiredBindings": ["exact-request", "complete-payload-ledger", "root-identity"]
+    },
+    "oracle": {
+      "mode": "deterministic-zip",
+      "exclusiveZipRoute": true
+    },
+    "historicalCycle2Resolution": {
+      "localAndGeminiOriginalVotesPredateCurrentCliRule": true,
+      "localRecoveryRevalidatedUncompressedCanonicalRoot": true,
+      "finalGrokUsedUncompressedCanonicalRoot": true,
+      "oracleUsedDeterministicZip": true
+    }
+  },
+  "panel": {
+    "requiredReviewerCount": 4,
+    "acceptedReviewerCount": 4,
+    "unconditionalGoCount": 4,
+    "verdict": "GO"
+  },
+  "humanMetrics": null,
+  "humanCriteria": {
+    "tasteOrTie": "NOT_RUN",
+    "unknownWantToRead": "NOT_RUN",
+    "tasteExplanationAgreement": "NOT_RUN",
+    "dislikedLeakageAt10": "NOT_RUN",
+    "holdoutRecallAt10": "NOT_RUN"
+  },
+  "syntheticPilot": {
+    "humanResults": 0,
+    "syntheticPilotResults": 1,
+    "verdict": "INCOMPLETE",
+    "role": "browser-round-trip-only"
+  },
+  "authorizations": {
+    "productDirectionG2": true,
+    "slice5": true,
+    "vercelDeployment": false
+  }
+}

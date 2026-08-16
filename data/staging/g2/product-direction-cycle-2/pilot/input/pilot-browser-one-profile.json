@@ -1,0 +1,61 @@
+{
+  "format": "konocomics-experiment-profile",
+  "schemaVersion": 1,
+  "profileId": "pilot-browser-one",
+  "records": [
+    {
+      "workId": "death-note",
+      "readingState": "completed",
+      "reaction": "favorite",
+      "updatedAt": "2000-01-01T00:00:00.000Z"
+    },
+    {
+      "workId": "monster",
+      "readingState": "completed",
+      "reaction": "liked",
+      "updatedAt": "2000-01-01T00:00:00.000Z"
+    },
+    {
+      "workId": "kingdom",
+      "readingState": "completed",
+      "reaction": "liked",
+      "updatedAt": "2000-01-01T00:00:00.000Z"
+    },
+    {
+      "workId": "fullmetal-alchemist",
+      "readingState": "completed",
+      "reaction": "liked",
+      "updatedAt": "2000-01-01T00:00:00.000Z"
+    },
+    {
+      "workId": "dungeon-meshi",
+      "readingState": "completed",
+      "reaction": "liked",
+      "updatedAt": "2000-01-01T00:00:00.000Z"
+    },
+    {
+      "workId": "frieren",
+      "readingState": "completed",
+      "reaction": "favorite",
+      "updatedAt": "2000-01-01T00:00:00.000Z"
+    }
+  ],
+  "adjustments": {
+    "axes": {
+      "problemSolving": "like",
+      "strategy": "veryLike",
+      "mysteryReveal": "veryLike",
+      "comedy": "less"
+    },
+    "themes": {
+      "politics": "like",
+      "investigation": "veryLike"
+    }
+  },
+  "policies": {
+    "preferCompleted": false,
+    "preferHidden": false,
+    "preferVerified": false,
+    "excludeIncomplete": false
+  }
+}

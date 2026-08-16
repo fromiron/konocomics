@@ -2,8 +2,9 @@ import { describe, expect, it } from "vitest";
 
 import type { CatalogV1, ThemeFactor, Work } from "@/domain/catalog/types";
 import {
-  rankRecommendations,
   filterEligibleCandidates,
+  rankRecommendations,
+  scoreWorkCompatibility,
   serializeRecommendationConfidence,
 } from "@/domain/recommendation/rank";
 import type { RecommendationInput } from "@/domain/recommendation/types";
@@ -620,5 +621,86 @@ describe("rank recommendations", () => {
     const record = createTestRecord({ workId: anchor.id, reaction: "liked" });
     const input = inputWith({ works: [anchor], records: [record, { ...record }] });
     expect(() => rankRecommendations(input)).toThrow("Duplicate user work record: anchor");
+  });
+});
+
+describe("work compatibility", () => {
+  it("scores a read and hard-excluded target without applying candidate filters", () => {
+    const anchor = createTestWork({ id: "anchor" });
+    const target = createTestWork({
+      id: "target",
+      axes: createTestAxes({ strategy: { state: "known", value: 4, confidence: 0.9 } }),
+    });
+    const input = inputWith({
+      works: [anchor, target],
+      records: [
+        createTestRecord({ workId: anchor.id, reaction: "liked", readingState: "completed" }),
+        createTestRecord({ workId: target.id, reaction: "neutral", readingState: "completed" }),
+      ],
+      adjustments: createTestAdjustments({ axes: { strategy: "exclude" } }),
+    });
+
+    expect(rankRecommendations(input)).toEqual([]);
+    expect(scoreWorkCompatibility(input, target.id)).toMatchObject({
+      workId: target.id,
+      bestAnchorId: anchor.id,
+    });
+  });
+
+  it("never uses the target itself as its compatibility anchor", () => {
+    const target = createTestWork({ id: "target" });
+    const otherAnchor = createTestWork({ id: "other-anchor" });
+    const input = inputWith({
+      works: [target, otherAnchor],
+      records: [
+        createTestRecord({
+          workId: target.id,
+          reaction: "favorite",
+          readingState: "completed",
+        }),
+        createTestRecord({
+          workId: otherAnchor.id,
+          reaction: "liked",
+          readingState: "completed",
+        }),
+      ],
+    });
+
+    expect(scoreWorkCompatibility(input, target.id)?.bestAnchorId).toBe(otherAnchor.id);
+  });
+
+  it("returns null when the target is the only positive anchor", () => {
+    const target = createTestWork({ id: "target" });
+    const input = inputWith({
+      works: [target],
+      records: [
+        createTestRecord({
+          workId: target.id,
+          reaction: "favorite",
+          readingState: "completed",
+        }),
+      ],
+    });
+
+    expect(scoreWorkCompatibility(input, target.id)).toBeNull();
+    expect(scoreWorkCompatibility(input, "unknown-work")).toBeNull();
+  });
+
+  it("reuses the normal recommendation ledger for an eligible target", () => {
+    const anchor = createTestWork({ id: "anchor" });
+    const target = createTestWork({ id: "target", status: "ongoing" });
+    const input = inputWith({
+      works: [anchor, target],
+      records: [
+        createTestRecord({ workId: anchor.id, reaction: "favorite", readingState: "completed" }),
+      ],
+      policies: createTestPolicies({ preferCompleted: true }),
+    });
+    const recommendation = rankRecommendations(input)[0];
+    const compatibility = scoreWorkCompatibility(input, target.id);
+
+    expect(recommendation).toBeDefined();
+    expect(compatibility).toEqual(recommendation);
+    expect(compatibility?.contributions).toEqual(recommendation?.contributions);
   });
 });

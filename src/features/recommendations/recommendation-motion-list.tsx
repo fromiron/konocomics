@@ -1,0 +1,61 @@
+"use client";
+
+import { AnimatePresence, LazyMotion, domMax, m } from "motion/react";
+import type { ReactNode } from "react";
+
+export type RecommendationMotionItem = Readonly<{
+  workId: string;
+  animateIn: boolean;
+  content: ReactNode;
+}>;
+
+export type RecommendationMotionListProps = Readonly<{
+  items: readonly RecommendationMotionItem[];
+  reducedMotion: boolean;
+  shortage: ReactNode;
+}>;
+
+export function RecommendationMotionList({
+  items,
+  reducedMotion,
+  shortage,
+}: RecommendationMotionListProps) {
+  return (
+    <LazyMotion features={domMax} strict>
+      <ol className="recommendations-list" data-recommendation-motion="enabled" role="list">
+        <AnimatePresence initial={false}>
+          {items.map((item) => (
+            <m.li
+              animate={reducedMotion ? { opacity: 1 } : { opacity: 1, y: 0 }}
+              data-recommendation-work-id={item.workId}
+              exit={reducedMotion ? undefined : { height: 0, opacity: 0 }}
+              initial={
+                item.animateIn && !reducedMotion
+                  ? {
+                      opacity: 0,
+                      y: 8,
+                    }
+                  : false
+              }
+              key={item.workId}
+              layout={reducedMotion ? false : true}
+              transition={
+                reducedMotion
+                  ? { duration: 0 }
+                  : {
+                      height: { duration: 0.24, ease: "easeOut" },
+                      opacity: { duration: item.animateIn ? 0.2 : 0.24, ease: "easeOut" },
+                      y: { duration: 0.2, ease: "easeOut" },
+                      layout: { type: "spring", stiffness: 350, damping: 32 },
+                    }
+              }
+            >
+              {item.content}
+            </m.li>
+          ))}
+        </AnimatePresence>
+        {shortage}
+      </ol>
+    </LazyMotion>
+  );
+}

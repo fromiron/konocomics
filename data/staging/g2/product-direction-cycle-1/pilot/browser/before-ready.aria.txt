@@ -1,0 +1,511 @@
+- main:
+  - paragraph: konocomics
+  - paragraph: 動作確認用
+  - list "回答の進み具合":
+    - listitem: 入力
+    - listitem: 説明前
+    - listitem: 説明後
+    - listitem: 完了
+  - heading "説明を見る前の回答" [level=1]
+  - paragraph: リストA・リストBの順位を確認し、重複を除いた各作品について一度だけ回答してください。
+  - paragraph: 両方のリストにある作品も、ここでは1回だけ回答します。次へ進むと回答は変更できません。
+  - region "リストA":
+    - heading "リストA" [level=2]
+    - list:
+      - listitem:
+        - img "親愛なる僕へ殺意をこめて 表紙画像なし":
+          - text: 表紙画像なし
+          - strong: 親愛なる僕へ殺意をこめて
+          - text: 作者 井龍一・伊藤翔太
+        - paragraph: 1位
+        - heading "親愛なる僕へ殺意をこめて" [level=3]
+        - paragraph: 井龍一・伊藤翔太
+        - group "この作品を知っていましたか？":
+          - text: この作品を知っていましたか？
+          - radio "読んだことがある"
+          - text: 読んだことがある
+          - radio "知っているが未読"
+          - text: 知っているが未読
+          - radio "知らなかった" [checked]
+          - text: 知らなかった
+        - group "今、この作品を読みたいですか？":
+          - text: 今、この作品を読みたいですか？
+          - radio "まったく読みたくない"
+          - text: まったく読みたくない
+          - radio "あまり読みたくない"
+          - text: あまり読みたくない
+          - radio "どちらともいえない"
+          - text: どちらともいえない
+          - radio "読みたい" [checked]
+          - text: 読みたい
+          - radio "とても読みたい"
+          - text: とても読みたい
+      - listitem:
+        - img "光が死んだ夏 表紙画像なし":
+          - text: 表紙画像なし
+          - strong: 光が死んだ夏
+          - text: 作者 モクモクれん
+        - paragraph: 2位
+        - heading "光が死んだ夏" [level=3]
+        - paragraph: モクモクれん
+        - group "この作品を知っていましたか？":
+          - text: この作品を知っていましたか？
+          - radio "読んだことがある"
+          - text: 読んだことがある
+          - radio "知っているが未読"
+          - text: 知っているが未読
+          - radio "知らなかった" [checked]
+          - text: 知らなかった
+        - group "今、この作品を読みたいですか？":
+          - text: 今、この作品を読みたいですか？
+          - radio "まったく読みたくない"
+          - text: まったく読みたくない
+          - radio "あまり読みたくない"
+          - text: あまり読みたくない
+          - radio "どちらともいえない"
+          - text: どちらともいえない
+          - radio "読みたい" [checked]
+          - text: 読みたい
+          - radio "とても読みたい"
+          - text: とても読みたい
+      - listitem:
+        - img "20世紀少年 表紙画像なし":
+          - text: 表紙画像なし
+          - strong: 20世紀少年
+          - text: 作者 浦沢直樹
+        - paragraph: 3位
+        - heading "20世紀少年" [level=3]
+        - paragraph: 浦沢直樹
+        - group "この作品を知っていましたか？":
+          - text: この作品を知っていましたか？
+          - radio "読んだことがある"
+          - text: 読んだことがある
+          - radio "知っているが未読"
+          - text: 知っているが未読
+          - radio "知らなかった" [checked]
+          - text: 知らなかった
+        - group "今、この作品を読みたいですか？":
+          - text: 今、この作品を読みたいですか？
+          - radio "まったく読みたくない"
+          - text: まったく読みたくない
+          - radio "あまり読みたくない"
+          - text: あまり読みたくない
+          - radio "どちらともいえない"
+          - text: どちらともいえない
+          - radio "読みたい" [checked]
+          - text: 読みたい
+          - radio "とても読みたい"
+          - text: とても読みたい
+      - listitem:
+        - img "約束のネバーランド 表紙画像なし":
+          - text: 表紙画像なし
+          - strong: 約束のネバーランド
+          - text: 作者 白井カイウ・出水ぽすか
+        - paragraph: 4位
+        - heading "約束のネバーランド" [level=3]
+        - paragraph: 白井カイウ・出水ぽすか
+        - group "この作品を知っていましたか？":
+          - text: この作品を知っていましたか？
+          - radio "読んだことがある"
+          - text: 読んだことがある
+          - radio "知っているが未読"
+          - text: 知っているが未読
+          - radio "知らなかった" [checked]
+          - text: 知らなかった
+        - group "今、この作品を読みたいですか？":
+          - text: 今、この作品を読みたいですか？
+          - radio "まったく読みたくない"
+          - text: まったく読みたくない
+          - radio "あまり読みたくない"
+          - text: あまり読みたくない
+          - radio "どちらともいえない"
+          - text: どちらともいえない
+          - radio "読みたい" [checked]
+          - text: 読みたい
+          - radio "とても読みたい"
+          - text: とても読みたい
+      - listitem:
+        - img "HUNTER×HUNTER 表紙画像なし":
+          - text: 表紙画像なし
+          - strong: HUNTER×HUNTER
+          - text: 作者 冨樫義博
+        - paragraph: 5位
+        - heading "HUNTER×HUNTER" [level=3]
+        - paragraph: 冨樫義博
+        - group "この作品を知っていましたか？":
+          - text: この作品を知っていましたか？
+          - radio "読んだことがある"
+          - text: 読んだことがある
+          - radio "知っているが未読"
+          - text: 知っているが未読
+          - radio "知らなかった" [checked]
+          - text: 知らなかった
+        - group "今、この作品を読みたいですか？":
+          - text: 今、この作品を読みたいですか？
+          - radio "まったく読みたくない"
+          - text: まったく読みたくない
+          - radio "あまり読みたくない"
+          - text: あまり読みたくない
+          - radio "どちらともいえない"
+          - text: どちらともいえない
+          - radio "読みたい" [checked]
+          - text: 読みたい
+          - radio "とても読みたい"
+          - text: とても読みたい
+      - listitem:
+        - img "鋼の錬金術師 表紙画像なし":
+          - text: 表紙画像なし
+          - strong: 鋼の錬金術師
+          - text: 作者 荒川弘
+        - paragraph: 6位
+        - heading "鋼の錬金術師" [level=3]
+        - paragraph: 荒川弘
+        - group "この作品を知っていましたか？":
+          - text: この作品を知っていましたか？
+          - radio "読んだことがある"
+          - text: 読んだことがある
+          - radio "知っているが未読"
+          - text: 知っているが未読
+          - radio "知らなかった" [checked]
+          - text: 知らなかった
+        - group "今、この作品を読みたいですか？":
+          - text: 今、この作品を読みたいですか？
+          - radio "まったく読みたくない"
+          - text: まったく読みたくない
+          - radio "あまり読みたくない"
+          - text: あまり読みたくない
+          - radio "どちらともいえない"
+          - text: どちらともいえない
+          - radio "読みたい" [checked]
+          - text: 読みたい
+          - radio "とても読みたい"
+          - text: とても読みたい
+      - listitem:
+        - img "炎炎ノ消防隊 表紙画像なし":
+          - text: 表紙画像なし
+          - strong: 炎炎ノ消防隊
+          - text: 作者 大久保篤
+        - paragraph: 7位
+        - heading "炎炎ノ消防隊" [level=3]
+        - paragraph: 大久保篤
+        - group "この作品を知っていましたか？":
+          - text: この作品を知っていましたか？
+          - radio "読んだことがある"
+          - text: 読んだことがある
+          - radio "知っているが未読"
+          - text: 知っているが未読
+          - radio "知らなかった" [checked]
+          - text: 知らなかった
+        - group "今、この作品を読みたいですか？":
+          - text: 今、この作品を読みたいですか？
+          - radio "まったく読みたくない"
+          - text: まったく読みたくない
+          - radio "あまり読みたくない"
+          - text: あまり読みたくない
+          - radio "どちらともいえない"
+          - text: どちらともいえない
+          - radio "読みたい" [checked]
+          - text: 読みたい
+          - radio "とても読みたい"
+          - text: とても読みたい
+      - listitem:
+        - img "ノラガミ 表紙画像なし":
+          - text: 表紙画像なし
+          - strong: ノラガミ
+          - text: 作者 あだちとか
+        - paragraph: 8位
+        - heading "ノラガミ" [level=3]
+        - paragraph: あだちとか
+        - group "この作品を知っていましたか？":
+          - text: この作品を知っていましたか？
+          - radio "読んだことがある"
+          - text: 読んだことがある
+          - radio "知っているが未読"
+          - text: 知っているが未読
+          - radio "知らなかった" [checked]
+          - text: 知らなかった
+        - group "今、この作品を読みたいですか？":
+          - text: 今、この作品を読みたいですか？
+          - radio "まったく読みたくない"
+          - text: まったく読みたくない
+          - radio "あまり読みたくない"
+          - text: あまり読みたくない
+          - radio "どちらともいえない"
+          - text: どちらともいえない
+          - radio "読みたい" [checked]
+          - text: 読みたい
+          - radio "とても読みたい"
+          - text: とても読みたい
+      - listitem:
+        - img "ヴィンランド・サガ 表紙画像なし":
+          - text: 表紙画像なし
+          - strong: ヴィンランド・サガ
+          - text: 作者 幸村誠
+        - paragraph: 9位
+        - heading "ヴィンランド・サガ" [level=3]
+        - paragraph: 幸村誠
+        - group "この作品を知っていましたか？":
+          - text: この作品を知っていましたか？
+          - radio "読んだことがある"
+          - text: 読んだことがある
+          - radio "知っているが未読"
+          - text: 知っているが未読
+          - radio "知らなかった" [checked]
+          - text: 知らなかった
+        - group "今、この作品を読みたいですか？":
+          - text: 今、この作品を読みたいですか？
+          - radio "まったく読みたくない"
+          - text: まったく読みたくない
+          - radio "あまり読みたくない"
+          - text: あまり読みたくない
+          - radio "どちらともいえない"
+          - text: どちらともいえない
+          - radio "読みたい" [checked]
+          - text: 読みたい
+          - radio "とても読みたい"
+          - text: とても読みたい
+      - listitem:
+        - img "バガボンド 表紙画像なし":
+          - text: 表紙画像なし
+          - strong: バガボンド
+          - text: 作者 井上雄彦・吉川英治
+        - paragraph: 10位
+        - heading "バガボンド" [level=3]
+        - paragraph: 井上雄彦・吉川英治
+        - group "この作品を知っていましたか？":
+          - text: この作品を知っていましたか？
+          - radio "読んだことがある"
+          - text: 読んだことがある
+          - radio "知っているが未読"
+          - text: 知っているが未読
+          - radio "知らなかった" [checked]
+          - text: 知らなかった
+        - group "今、この作品を読みたいですか？":
+          - text: 今、この作品を読みたいですか？
+          - radio "まったく読みたくない"
+          - text: まったく読みたくない
+          - radio "あまり読みたくない"
+          - text: あまり読みたくない
+          - radio "どちらともいえない"
+          - text: どちらともいえない
+          - radio "読みたい" [checked]
+          - text: 読みたい
+          - radio "とても読みたい"
+          - text: とても読みたい
+  - region "リストB":
+    - heading "リストB" [level=2]
+    - list:
+      - listitem:
+        - img "とんがり帽子のアトリエ 表紙画像なし":
+          - text: 表紙画像なし
+          - strong: とんがり帽子のアトリエ
+          - text: 作者 白浜鴎
+        - paragraph: 1位
+        - heading "とんがり帽子のアトリエ" [level=3]
+        - paragraph: 白浜鴎
+        - group "この作品を知っていましたか？":
+          - text: この作品を知っていましたか？
+          - radio "読んだことがある"
+          - text: 読んだことがある
+          - radio "知っているが未読"
+          - text: 知っているが未読
+          - radio "知らなかった" [checked]
+          - text: 知らなかった
+        - group "今、この作品を読みたいですか？":
+          - text: 今、この作品を読みたいですか？
+          - radio "まったく読みたくない"
+          - text: まったく読みたくない
+          - radio "あまり読みたくない"
+          - text: あまり読みたくない
+          - radio "どちらともいえない"
+          - text: どちらともいえない
+          - radio "読みたい" [checked]
+          - text: 読みたい
+          - radio "とても読みたい"
+          - text: とても読みたい
+      - listitem:
+        - img "現実主義勇者の王国再建記 表紙画像なし":
+          - text: 表紙画像なし
+          - strong: 現実主義勇者の王国再建記
+          - text: 作者 上田悟司・どぜう丸・冬ゆき
+        - paragraph: 2位
+        - heading "現実主義勇者の王国再建記" [level=3]
+        - paragraph: 上田悟司・どぜう丸・冬ゆき
+        - group "この作品を知っていましたか？":
+          - text: この作品を知っていましたか？
+          - radio "読んだことがある"
+          - text: 読んだことがある
+          - radio "知っているが未読"
+          - text: 知っているが未読
+          - radio "知らなかった" [checked]
+          - text: 知らなかった
+        - group "今、この作品を読みたいですか？":
+          - text: 今、この作品を読みたいですか？
+          - radio "まったく読みたくない"
+          - text: まったく読みたくない
+          - radio "あまり読みたくない"
+          - text: あまり読みたくない
+          - radio "どちらともいえない"
+          - text: どちらともいえない
+          - radio "読みたい" [checked]
+          - text: 読みたい
+          - radio "とても読みたい"
+          - text: とても読みたい
+      - listitem:
+        - img "約束のネバーランド 表紙画像なし":
+          - text: 表紙画像なし
+          - strong: 約束のネバーランド
+          - text: 作者 白井カイウ・出水ぽすか
+        - paragraph: 3位
+        - heading "約束のネバーランド" [level=3]
+        - paragraph: 白井カイウ・出水ぽすか
+        - paragraph: この作品の回答は、先に表示されたリストと共有されています。
+      - listitem:
+        - img "ONE PIECE 表紙画像なし":
+          - text: 表紙画像なし
+          - strong: ONE PIECE
+          - text: 作者 尾田栄一郎
+        - paragraph: 4位
+        - heading "ONE PIECE" [level=3]
+        - paragraph: 尾田栄一郎
+        - group "この作品を知っていましたか？":
+          - text: この作品を知っていましたか？
+          - radio "読んだことがある"
+          - text: 読んだことがある
+          - radio "知っているが未読"
+          - text: 知っているが未読
+          - radio "知らなかった" [checked]
+          - text: 知らなかった
+        - group "今、この作品を読みたいですか？":
+          - text: 今、この作品を読みたいですか？
+          - radio "まったく読みたくない"
+          - text: まったく読みたくない
+          - radio "あまり読みたくない"
+          - text: あまり読みたくない
+          - radio "どちらともいえない"
+          - text: どちらともいえない
+          - radio "読みたい" [checked]
+          - text: 読みたい
+          - radio "とても読みたい"
+          - text: とても読みたい
+      - listitem:
+        - img "NARUTO―ナルト― 表紙画像なし":
+          - text: 表紙画像なし
+          - strong: NARUTO―ナルト―
+          - text: 作者 岸本斉史
+        - paragraph: 5位
+        - heading "NARUTO―ナルト―" [level=3]
+        - paragraph: 岸本斉史
+        - group "この作品を知っていましたか？":
+          - text: この作品を知っていましたか？
+          - radio "読んだことがある"
+          - text: 読んだことがある
+          - radio "知っているが未読"
+          - text: 知っているが未読
+          - radio "知らなかった" [checked]
+          - text: 知らなかった
+        - group "今、この作品を読みたいですか？":
+          - text: 今、この作品を読みたいですか？
+          - radio "まったく読みたくない"
+          - text: まったく読みたくない
+          - radio "あまり読みたくない"
+          - text: あまり読みたくない
+          - radio "どちらともいえない"
+          - text: どちらともいえない
+          - radio "読みたい" [checked]
+          - text: 読みたい
+          - radio "とても読みたい"
+          - text: とても読みたい
+      - listitem:
+        - img "DRAGON BALL 表紙画像なし":
+          - text: 表紙画像なし
+          - strong: DRAGON BALL
+          - text: 作者 鳥山明
+        - paragraph: 6位
+        - heading "DRAGON BALL" [level=3]
+        - paragraph: 鳥山明
+        - group "この作品を知っていましたか？":
+          - text: この作品を知っていましたか？
+          - radio "読んだことがある"
+          - text: 読んだことがある
+          - radio "知っているが未読"
+          - text: 知っているが未読
+          - radio "知らなかった" [checked]
+          - text: 知らなかった
+        - group "今、この作品を読みたいですか？":
+          - text: 今、この作品を読みたいですか？
+          - radio "まったく読みたくない"
+          - text: まったく読みたくない
+          - radio "あまり読みたくない"
+          - text: あまり読みたくない
+          - radio "どちらともいえない"
+          - text: どちらともいえない
+          - radio "読みたい" [checked]
+          - text: 読みたい
+          - radio "とても読みたい"
+          - text: とても読みたい
+      - listitem:
+        - img "HUNTER×HUNTER 表紙画像なし":
+          - text: 表紙画像なし
+          - strong: HUNTER×HUNTER
+          - text: 作者 冨樫義博
+        - paragraph: 7位
+        - heading "HUNTER×HUNTER" [level=3]
+        - paragraph: 冨樫義博
+        - paragraph: この作品の回答は、先に表示されたリストと共有されています。
+      - listitem:
+        - img "ヴィンランド・サガ 表紙画像なし":
+          - text: 表紙画像なし
+          - strong: ヴィンランド・サガ
+          - text: 作者 幸村誠
+        - paragraph: 8位
+        - heading "ヴィンランド・サガ" [level=3]
+        - paragraph: 幸村誠
+        - paragraph: この作品の回答は、先に表示されたリストと共有されています。
+      - listitem:
+        - img "バガボンド 表紙画像なし":
+          - text: 表紙画像なし
+          - strong: バガボンド
+          - text: 作者 井上雄彦・吉川英治
+        - paragraph: 9位
+        - heading "バガボンド" [level=3]
+        - paragraph: 井上雄彦・吉川英治
+        - paragraph: この作品の回答は、先に表示されたリストと共有されています。
+      - listitem:
+        - img "×××ＨＯＬｉＣ 表紙画像なし":
+          - text: 表紙画像なし
+          - strong: ×××ＨＯＬｉＣ
+          - text: 作者 CLAMP
+        - paragraph: 10位
+        - heading "×××ＨＯＬｉＣ" [level=3]
+        - paragraph: CLAMP
+        - group "この作品を知っていましたか？":
+          - text: この作品を知っていましたか？
+          - radio "読んだことがある"
+          - text: 読んだことがある
+          - radio "知っているが未読"
+          - text: 知っているが未読
+          - radio "知らなかった" [checked]
+          - text: 知らなかった
+        - group "今、この作品を読みたいですか？":
+          - text: 今、この作品を読みたいですか？
+          - radio "まったく読みたくない"
+          - text: まったく読みたくない
+          - radio "あまり読みたくない"
+          - text: あまり読みたくない
+          - radio "どちらともいえない"
+          - text: どちらともいえない
+          - radio "読みたい" [checked]
+          - text: 読みたい
+          - radio "とても読みたい"
+          - text: とても読みたい
+  - group "説明を見る前のおすすめ一覧として、どちらが自分に合っていますか？":
+    - text: 説明を見る前のおすすめ一覧として、どちらが自分に合っていますか？
+    - radio "リストA"
+    - text: リストA
+    - radio "リストB"
+    - text: リストB
+    - radio "同じくらい" [checked]
+    - text: 同じくらい
+  - button "説明前の回答を確定する"
+- alert

@@ -10,7 +10,7 @@ import { afterEach, beforeAll, describe, expect, it } from "vitest";
 import { catalogV1Schema } from "@/domain/catalog/schema";
 import { createG2Experiment, createG2Result, serializeG2Result } from "@/domain/g2";
 import { experimentProfileV1Schema } from "@/domain/profile/experiment-schema";
-import { strings } from "@/lib/strings";
+import { explanationLexicon } from "@/lib/strings";
 import generatedCatalog from "../../../data/generated/catalog-v1.json";
 import generatedContext from "../../../data/generated/recommendation-context-v1.json";
 import { recommendationContextFileSchema } from "../../../scripts/experiment/inputs";
@@ -21,6 +21,7 @@ const context = recommendationContextFileSchema.parse(generatedContext);
 const execFileAsync = promisify(execFile);
 const temporaryDirectories: string[] = [];
 let canonicalResult = "";
+let pilotExplanationTexts: string[] = [];
 
 function sha256Hex(value: string) {
   return createHash("sha256").update(value, "utf8").digest("hex");
@@ -73,8 +74,11 @@ beforeAll(async () => {
     catalog,
     context,
     sha256Hex,
-    lexicon: strings.explanation,
+    lexicon: explanationLexicon,
   });
+  pilotExplanationTexts = experiment.nativeLists.taste.items.flatMap(
+    (item) => item.explanationTexts,
+  );
   canonicalResult = serializeG2Result(
     createG2Result({
       experiment,
@@ -107,6 +111,14 @@ afterEach(async () => {
 });
 
 describe("G2 aggregate runner", () => {
+  it("keeps inverse Axis preference direction explicit in the approved pilot profile", () => {
+    const lowerComedy = "「ギャグ・コメディ」が控えめな点が、あなたの好みに合う作品です。";
+    const directionlessComedy = "「ギャグ・コメディ」があなたの好みに合う作品です。";
+
+    expect(pilotExplanationTexts.filter((text) => text === lowerComedy)).toHaveLength(3);
+    expect(pilotExplanationTexts).not.toContain(directionlessComedy);
+  });
+
   it("accepts a pilot, reports INCOMPLETE, and keeps stdout deterministic", async () => {
     const directory = await temporaryDirectory();
     const path = join(directory, "pilot.json");

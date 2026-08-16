@@ -46,7 +46,7 @@
 
 ### 포함
 
-- 온보딩: 좋아한 작품 선택(5~10개) + 선택적 불호 작품(0~3개, 이유 포함)
+- 온보딩: 첫 등록은 좋아한 작품 5~10개 + 선택적 불호 작품 0~3개(이유 포함). 기존 프로필의 작품 추가는 새 좋아한 작품 1~10개만 받고 불호 단계는 반복하지 않는다.
 - Manga DNA 생성·reveal·인라인 보정 (매우 선호/선호/자동/덜 추천/제외)
 - 설명 가능한 추천 10개 (이유 최대 3 + 주의점 1 + 근거 Anchor)
 - 추천 피드백: 읽고 싶음 / 이미 읽음 / 관심 없음(+이유)
@@ -73,29 +73,33 @@
 
 ```text
 [신규]
-/               랜딩. konomi 로고 reveal + 제품 설명 + CTA「好きなマンガから始める」
+/               랜딩. Slice 10 정적 konomi 로고 + 제품 설명 + CTA「好きなマンガから始める」(reveal은 Slice 11)
 /onboarding     STEP 1  좋아한 작품 5~10개 선택 (검색 + 장르 Shelf)
                 STEP 2  (선택) 싫어했거나 하차한 작품 0~3개 + 이유 선택
 /taste?reveal=1 STEP 3  Manga DNA reveal → 인라인 보정 → CTA「おすすめを見る」
 /recommendations 추천 10개 + 이유. 카드 액션: 読みたい / 読んだ / 興味なし(+이유)
-/works/[id]     상세: 표지·블러 배경·DNA 대조·추천 근거·라쿠텐 링크
+/works/[workId] Catalog 상세: 표지·블러 배경·DNA 대조·추천 근거·라쿠텐 링크
+/works/external?workId=<ExternalWorkId> 로컬 external 상세(고정 정적 셸)
 /library        읽음 상태·감상 관리, 외부 작품 추가
 /settings       추천 정책, Export/Import, 전체 삭제, 크레딧
 
 [재방문]
-/ → 프로필 존재 시 /recommendations로 클라이언트 리다이렉트
+/ → 현재 Catalog의 positive anchor가 5개 이상인 usable profile이면 /recommendations로 클라이언트 리다이렉트. `?landing=1`은 저장 없이 랜딩을 다시 보는 우회
 온보딩 중단 시 → 진행 상태가 Dexie에 남아 이어서 진행
+/taste의 「作品を追加して精度を上げる」 → /onboarding 추가 모드. 기존 기록은 보존하고 새 positive 1~10개만 추가한 뒤 reveal 없이 /taste로 복귀
 ```
 
 피드백 루프: 추천 카드에서 `読んだ`/`興味なし` 입력 → 해당 작품은 후보에서 제거되고 즉시 다음 순위로 백필 → 감상·이유는 Library에 축적 → 프로필 입력 변경 시 다음 추천 계산에 반영.
 
 **추천 재계산 계약:** 추천 목록은 `(프로필 입력 해시)`가 마지막 계산 시점과 다를 때만 페이지 진입 시 재계산한다. 같은 입력이면 동일한 목록을 유지한다(결정론). 카드 개별 제거는 재계산이 아니라 백필이다.
 
+추천 카드 피드백은 호출자가 주입한 한 `updatedAt`으로 저장한다. `読んだ`는 먼저 `readingState="completed"`로 저장하고, 후속 시트의 `最高 / 良かった / 普通 / いまいち`를 각각 `favorite / liked / neutral / disliked`에 대응한다. 시트를 스킵하면 reaction을 만들지 않는다. `興味なし`는 먼저 `readingState="hidden"`으로 저장한다. 이유를 고른 경우에만 `reaction="disliked"`와 선택한 `negativeReasons`를 함께 기록하고, 스킵하면 reaction·reason을 합성하지 않는다. 특히 사용자 입력 없는 `vagueDislike`를 만들지 않는다.
+
 ---
 
 ## 4. Manga DNA 경험
 
-- 사용자가 보는 것: 그룹(장르/테마/전개/톤·관계/작화)별 섹션 아래 **가로 막대(0~4)** 와 일본어 레이블. 상위 취향 3개는 상단에 konomi 강조 색으로 요약.
+- 사용자가 보는 것: 그룹(장르/테마/전개/톤·관계/작화)별 섹션 아래 **가로 막대(0~4)** 와 일본어 정성 레이블. 확인값은 `<0.5 → ごく控えめ`, `<1.5 → 控えめ`, `<2.5 → ほどほど`, `<3.5 → 強め`, 그 외 `とても強め`로 표시하고 숫자 원값은 노출하지 않는다. 상위 취향 3개는 상단에 konomi 강조 색으로 요약.
 - 각 상위 취향에는 근거 Anchor 표지 칩("『ダンジョン飯』『キングダム』から")을 붙인다 — 원칙 6의 시각화.
 - **미확인 정직성:** 데이터가 부족한 축은 빈(윤곽선) 막대 + 「まだ分析中」로 표시한다. 0으로 그리지 않는다.
 - 인라인 보정: 각 축·테마에 5단계 칩 `とても好き / 好き / 自動 / 控えめに / 除外`. 내부 수치 슬라이더는 노출하지 않는다.
@@ -152,6 +156,25 @@ type CatalogEligibility = {
   libraryOnly: boolean;
 };
 
+type RakutenBookItem = {
+  title: string;
+  author: string;
+  publisherName: string;
+  isbn: string;
+  imageUrl?: string;
+  itemUrl: string;
+  affiliateUrl?: string;
+  chirayomiUrl?: string;
+  itemCaption?: string;
+  salesDate?: string;
+  itemPrice: number;
+  availability: 1 | 2 | 3 | 4 | 5 | 6;
+  reviewAverage: number;
+  reviewCount: number;
+};
+
+// Route Handler는 공급자 필드만 반환한다. 현재 Catalog/외부 작품의 workId와
+// 취득 시각·TTL은 브라우저 경계가 결합하며 서버가 합성하지 않는다.
 type ProviderListing = {
   workId: string;
   provider: "rakuten";
@@ -160,12 +183,14 @@ type ProviderListing = {
   itemUrl?: string;
   affiliateUrl?: string;
   chirayomiUrl?: string;
+  itemCaption?: string;
   itemPrice?: number;
-  availability?: number;
+  availability?: 1 | 2 | 3 | 4 | 5 | 6;
   reviewAverage?: number;
   reviewCount?: number;
   fetchedAt: string;
-  expiresAt: string;
+  commercialExpiresAt: string; // 가격·재고: 24시간
+  metadataExpiresAt: string;   // 소개·URL·이미지·리뷰: 90일(3개월의 결정론적 v1 해석)
 };
 
 type FactorEvidence = {
@@ -192,36 +217,72 @@ type UserWorkRecord = {
   reaction?: "favorite" | "liked" | "neutral" | "disliked";
   progress?: { volume?: number; chapter?: number };
   positiveReasons?: string[];
-  negativeReasons?: NegativeReason[];   // §6.7 enum
-  droppedReasons?: NegativeReason[];
+  negativeReasons?: NegativeReasonId[];   // §6.7 enum
+  droppedReasons?: NegativeReasonId[];
   updatedAt: string;
 };
 ```
+
+`negativeReasons`는 명시적 `reaction="disliked"`와 함께 쓰며, 추천 카드의 `興味なし`는 선택 이유가 있을 때 이 조합을 `readingState="hidden"`과 함께 저장한다. 숨김만 선택하거나 이유 시트를 스킵한 record에는 reaction·reason이 없다.
 
 ### 5.3 추가 확정 타입
 
 ```ts
 // Catalog 외 작품의 Library 기록 (추천·DNA 계산에 절대 사용하지 않음)
+type ExternalWorkId = `ext:rakuten:v1:${string}`; // runtime: /^ext:rakuten:v1:[0-9a-f]{64}$/
 type ExternalWorkRecord = {
-  id: string;                 // "ext:" + normalizedKey
-  normalizedKey: string;      // NFKC(title 권수 제거) + "::" + first author
+  id: ExternalWorkId;
+  normalizedKey: string;      // canonical JSON: [v1 normalized title, v1 primary creator]
   title: string;
   creators: string[];
-  isbnSamples: string[];      // 확인된 권 ISBN들
+  isbnSamples: string[];      // 확인된 권 ISBN-13 identity들의 distinct set
   coverUrl?: string;
-  record: UserWorkRecord;     // workId 대신 이 id를 가리킴
+  record: UserWorkRecord;     // record.workId === id
 };
 
 // 온보딩 진행 상태 (중단·재개용)
+type PositiveOnboardingEntry = {
+  workId: string;
+  reaction: "favorite" | "liked";
+};
+
+type NegativeDisposition = "disliked" | "dropped";
+
+type NegativeOnboardingEntry = {
+  workId: string;
+  disposition: NegativeDisposition;
+  reasons: NegativeReasonId[];
+};
+
 type OnboardingDraft = {
+  id: "current";
+  mode: "firstRun" | "add";
   step: 1 | 2;
-  likedWorkIds: string[];     // reaction 포함해 확정 전 임시 보관
-  dislikedEntries: { workId: string; reasons: NegativeReason[] }[];
+  positiveEntries: PositiveOnboardingEntry[];
+  negativeEntries: NegativeOnboardingEntry[];
   updatedAt: string;
 };
 ```
 
-### 5.4 팩터 정의
+- external v1 identity는 `normalizedKey = JSON.stringify([normalizeExternalTitleV1(title), normalizeExternalCreatorV1(creators[0])])`, `digest = SHA-256(UTF8("konocomics-external-work-id-v1\0rakuten\0" + normalizedKey))`, `id = "ext:rakuten:v1:" + lowercaseHex(digest)`로 만든다. digest는 64자를 전부 보존한다. title v1은 NFKC·가나/폭·소문자·공백/중점(`[・･·]`, U+0387은 NFKC 후 `·`) 정규화 뒤 기존 권수·판형 토큰을 제거하고, creator v1은 같은 정규화에서 권수·판형 제거만 하지 않는다. 빈 결과는 거부하며 이 동작을 바꾸면 v2를 발급한다.
+- Catalog version·ISBN·표지/구매 URL·출판사·가격/재고/리뷰·사용자 record·시각·삽입 순서는 external identity 입력이 아니다. Library에서 만드는 링크는 URL query 직렬화를 거친 `/works/external?workId=<ExternalWorkId>` 하나뿐이며 `/works/[workId]`에는 external ID를 넣지 않는다.
+- 저장된 `id + normalizedKey`가 불변 identity다. 이후 표시용 title·creators가 갱신되어도 v1 ID를 다시 만들지 않는다. 같은 key/ID가 다시 선택되면 기존 user record를 보존하고 새 ISBN만 distinct union으로 합친다. ISBN-10은 기존 Catalog `isbnIdentityKey`로 동등한 ISBN-13에 canonicalize하므로 10/13 표현이 한 표본으로 합쳐진다. 상태·감상 편집은 최신 external row를 transaction 안에서 다시 읽고 nested `record`만 교체하여, 다른 탭이 합친 ISBN과 최신 표시 metadata를 보존한다. 대상이 삭제·손상되었거나 key가 달라졌으면 새 row를 만들거나 자동 복구하지 않고 거부한다. 같은 ID에 다른 key가 결합되면 전체 쓰기를 거부하고 suffix·시간·난수로 우회하지 않는다.
+- external 작품은 `externalWorks`만 소유하며 `userWorks`에는 `external` 또는 `ext:` ID를 넣지 않는다. external 작품 ID `ext:rakuten:v1:*`와 부정 사유 ID `external:*`은 서로 다른 namespace이고 상호 대체할 수 없다.
+- draft는 `mode` 판별 필드를 가진 strict union이다. `firstRun`은 step 1|2와 positive 0~10개·negative 0~3개를 허용하고 완료 시 positive 5~10개여야 한다. `add`는 step 1, 서로 다른 신규 positive 0~10개, `negativeEntries=[]`만 허용하며 완료 시 positive 1~10개여야 한다. 같은 `workId`가 양쪽에 동시에 있을 수 없다.
+- `add` 완료는 기존 `UserWorkRecord`를 덮어쓰지 않는 insert-only 작업이다. 기존 workId와 충돌하면 draft·기존 기록을 그대로 둔 채 전체 작업을 거부한다. 누적 positive 총량에는 별도 상한을 두지 않고 10개는 추가 세션 하나의 상한이다.
+- usable profile과 온보딩 mode는 현재 Catalog의 서로 다른 positive anchor 수와 완료 marker를 함께 해석한다. 5개 이상이면 `onboardingCompletedAt` 유무와 관계없이 usable profile이다. 5개 미만이면서 marker가 있으면 `firstRun`을 다시 열지 않고 `add` recovery로 진입하고, 5개 미만이면서 marker가 `null`이면 `firstRun`이다. recovery는 현재 Catalog 기준 5개를 회복할 때까지 profile guard를 유지하며 최초 완료 시각과 reveal marker를 바꾸지 않는다.
+- `vagueDislike`는 해당 작품의 유일한 사유여야 한다. 이유를 고르지 않은 negative entry는 완료 시 `vagueDislike` 하나로 정규화한다. `external:*`은 `external:[a-z0-9]+(?:-[a-z0-9]+)*` 형식의 10~64자 id만 허용하고 같은 entry 안의 reason id는 중복될 수 없다.
+- 완료 변환은 호출자가 주입한 동일 `completedAt`을 새 record의 `updatedAt`으로 쓴다. positive entry는 `readingState="completed"`와 보존된 reaction, `disliked` entry는 `readingState="completed"` + `reaction="disliked"` + `negativeReasons`, `dropped` entry는 `readingState="dropped"` + reaction 미지정 + `droppedReasons`가 된다. `add` 완료는 최초 `profile.onboardingCompletedAt`을 변경하지 않으므로 DNA reveal을 다시 열지 않는다.
+
+### 5.4 데이터 주권·호환 프로필 계약
+
+- 온보딩 전에도 `/settings`에서 Export할 수 있다. v1 파일은 `userWorks`·`externalWorks`, adjustments와 **네 정책 전부**(`preferCompleted`·`preferHidden`·`preferVerified`·`excludeIncomplete`), 필수 nullable `onboardingCompletedAt`, 필수 nullable `onboardingDraft`를 보존한다. 저장된 adjustments/policies row가 없으면 동결된 앱 기본값을 완전한 객체로 쓰고, 완료 시각이나 draft가 없으면 필드를 생략하거나 현재 시각을 합성하지 않고 정확히 `null`을 쓴다.
+- Import는 strict whole-file·external identity·중복/충돌·프로필/draft 교차 필드 검증을 mutation 전에 끝낸다. 유효한 파일만 일곱 store를 한 트랜잭션으로 대체한다. 결과는 imported `userWorks`·`externalWorks`·profile·draft, 빈 recommendation/provider cache, 현재 앱의 schemaVersion·현재 bundled catalogVersion만 가진 runtime meta다. export의 meta나 cache는 가져오지 않는다.
+- nullable draft의 `null`은 모든 resolver 상태에서 유효하다. non-null draft 교차 필드에서 `firstRun`은 현재 Catalog positive가 5개 미만이고 완료 marker가 `null`일 때만, `add`는 usable profile이거나 완료 marker가 있을 때만 유효하다. add draft의 workId는 imported 기록과 겹칠 수 없다. 모순된 조합은 mode를 자동 변경하지 않고 파일 전체를 거부한다.
+- source `catalogVersion`이 현재와 달라도 경고 후 Import할 수 있다. 현재 Catalog에 없는 `userWorks` 기록은 삭제하지 않고 「カタログ外」로 표시하며 positive 수에는 포함하지 않는다. external identity는 저장된 version 규칙으로 검증하고 그대로 보존한다.
+- 전체 삭제는 일곱 store를 원자적으로 비운 뒤 현재 runtime meta만 다시 만든다. Import·삭제 성공은 authoritative readback으로 exact outcome을 확인한 경우에만 표시한다. primary 결과가 불확실하면 memory backend에 destructive operation을 재생하지 않고 `indeterminate`로 알려 재로딩 후 primary 상태 확인을 요구한다. 명시적 memory-only 지원이 있다면 영속 성공과 구분된 session-only 결과와 새로고침 시 소실 안내가 필수다.
+
+### 5.5 팩터 정의
 
 Genre 10종, Theme 22종(centrality 1|2), Axis 17종(Narrative 6 / Tone·Relationship 7 / Art 4)의 전체 목록·0/2/4 판정 기준·`known/unknown/notApplicable` 의미·거리 종류·일본어 표시 레이블은 **`docs/factors/factor-dictionary.md`가 확정 정의**한다. `training` Theme 제외, `actionIntensity` Axis 제거(→`combat` centrality) 확정 포함.
 
@@ -326,6 +387,8 @@ themeAdj = has(theme) ? strength * (centrality === 2 ? 1 : 0.5) : 0;
 explicitAdjustment = clamp(sum(axisAdj) + sum(themeAdj), -0.12, +0.12);
 ```
 
+0이 아닌 Axis raw adjustment contribution은 보정 방향을 `axisPreferenceDirection`에 기록한다. `とても好き / 好き`은 `higher`, `控えめに`는 `lower`이며 Theme adjustment에는 이 필드를 두지 않는다. 이 필드는 설명 provenance이며 점수에는 추가 영향을 주지 않는다.
+
 `除外` 처리: Axis는 후보의 해당 값 ≥ 3이면 Hard Exclusion, Theme은 centrality 2이면 Hard Exclusion. Axis 값 0~2에는 soft penalty가 없다. Theme centrality 1은 explicit adjustment clamp 뒤 별도 `softExclusionPenalty=-0.10`이며 reasoned factor penalty cap에 넣지 않는다.
 
 ### 6.7 부정 사유 어휘 (확정 12종 + 외부 사유)
@@ -407,12 +470,14 @@ type RecommendationWorkMarketSignal = {
 - Cluster: `tacticalThinking(problemSolving, strategy, mysteryReveal)` / `relationshipAppeal(characterArcWeight, relationshipStructure)` / `toneLoad(darkness, mentalStress)`.
 - "주의할 차이"는 best Anchor 대비 전역 최대 음(−) similarity 하나만 후보로 삼는다. 해당 후보가 없거나 아래 group/Cluster 경쟁에서 탈락하면 생략한다.
 - 템플릿 기반 일본어 문장. 예: `『{anchorTitle}』で好きだった「{factorLabel}」に近い作品です。` / 차이: `ただし「{factorLabel}」は、あなたの好みと少し異なります。`
+- `axisPreferenceDirection=lower`인 양(+)의 Axis adjustment는 `「{factorLabel}」が控えめな点が、あなたの好みに合う作品です。`로 렌더링한다. 낮은 Axis 값이 `控えめに` 선호와 맞는다는 뜻이며, factor가 많아서 맞는다는 일반 positive 문장으로 바꾸지 않는다.
 - 각 추천 결과는 `contributions[]`(팩터·그룹별 기여값)를 함께 반환하며, 설명은 이 배열에서만 생성한다. 테스트로 강제한다(`07` §2).
 
 선택·렌더링 계약:
 
 - positive 후보는 `explainable=true && value>0`, caution 후보는 best Anchor와의 차이인 `source=similarity && explainable=true && value<0`만이다. factor penalty·soft adjustment·policy를 Anchor 차이 문장으로 바꾸지 않는다.
-- 안정 fallback은 `source → group → factorId → anchorWorkIds.join("\\0") → negativeReasonId` 오름차순이다. 음수 similarity를 `value asc → fallback`으로 정렬한 첫 1개만 global caution 후보로 둔다.
+- Axis adjustment는 `axisPreferenceDirection`이 있어야만 렌더링 후보가 된다. 이 provenance가 빠졌거나 Theme/다른 source에 잘못 붙은 contribution은 일반 positive 문장으로 추정하지 않고 설명 대상에서 제외한다.
+- 안정 fallback은 `source → group → factorId → axisPreferenceDirection → anchorWorkIds.join("\\0") → negativeReasonId` 오름차순이다. 음수 similarity를 `value asc → fallback`으로 정렬한 첫 1개만 global caution 후보로 둔다.
 - 모든 positive와 global caution 하나를 `abs(value) desc → fallback`으로 순회한다. 이미 쓴 group/Cluster는 건너뛰고 positive 최대 3, caution 최대 1을 고른다. caution이 더 강한 positive와 충돌하면 다른 음수로 백필하지 않고 생략한다.
 - 렌더링 가능한 factor는 `ExplanationLexicon.factorLabels`에 정의된 Axis/Genre/Theme뿐이다. Cluster 소속 factor는 cluster label, 나머지는 factor label을 쓰되 구조화 identity에는 원래 factorId를 보존한다.
 - 근거 Anchor는 렌더링된 positive 순서 뒤 caution 순서에서 `source=similarity` contribution의 실제 `anchorWorkIds`만 distinct 1~3개 수집한다. penalty source·미렌더 contribution·제목 미해결 ID는 제외하고, 0개면 bestAnchorId를 보충하지 않은 채 Anchor 구역을 생략한다.
@@ -429,6 +494,7 @@ type StructuredExplanationSentence =
       factorId: string;
       value: number;
       anchorWorkIds: string[];
+      axisPreferenceDirection?: "higher" | "lower";
       negativeReasonId?: NegativeReasonId;
     }
   | {
@@ -442,7 +508,7 @@ type StructuredExplanationSentence =
     };
 ```
 
-각 문장의 `source/group/factorId/value/anchorWorkIds`와 optional negativeReasonId는 선택한 원 contribution identity와 정확히 같아야 한다.
+각 문장의 `source/group/factorId/value/anchorWorkIds`와 optional `axisPreferenceDirection`/`negativeReasonId`는 선택한 원 contribution identity와 정확히 같아야 한다.
 
 Contribution ledger는 `tasteScore`를 완전히 추적한다.
 
@@ -457,6 +523,7 @@ type GroupContribution = {
   factorId: string;
   value: number;
   anchorWorkIds: string[];
+  axisPreferenceDirection?: "higher" | "lower";
   negativeReasonId?: NegativeReasonId;
   explainable: boolean;
 };
@@ -468,8 +535,9 @@ type GroupContribution = {
 - group 고정: Genre/Theme tag=`genre/theme`, Axis=소속 그룹, Theme soft exclusion=`theme`, penalty는 §6.7의 원인 그룹(`tooComplex/vague=overall`), baseline/consensus/policy/clamp=`overall`.
 - reserved factorId: `neutralBaseline`, `consensus`, `adjustmentClamp`, `finalClamp`, `preferCompleted`. penalty는 reason id, 나머지는 실제 factor id다.
 - anchorWorkIds: similarity=[best], consensus=실제 supporter id 정렬, factor penalty=source disliked ids 정렬, vague=max source 1개, 나머지=[]다.
+- axisPreferenceDirection: 0이 아닌 Axis adjustment에서만 §6.6의 `higher/lower`를 기록하며, Theme adjustment와 다른 source에는 없다.
 - 설명 가능: similarity, 0이 아닌 adjustment/soft exclusion, factor-backed penalty만 true. baseline/consensus/vague/policy/clamp는 false다.
-- 내부 계산 후 출력은 소수 12자리로 반올림한다. contribution은 절댓값 내림차순→source/group/factor/anchor ids 오름차순이다. `tasteScore=sum(contribution.value)`가 반올림 허용오차에서 성립한다.
+- 내부 계산 후 출력은 소수 12자리로 반올림한다. contribution은 절댓값 내림차순→source/group/factor/axis preference direction/anchor ids 오름차순이다. `tasteScore=sum(contribution.value)`가 반올림 허용오차에서 성립한다.
 
 ### 6.10 실험 Baseline v1
 
@@ -749,5 +817,5 @@ pnpm --silent g2:aggregate
 
 - Rakuten: 브라우저 직접 호출 금지(Route Handler 프록시), 캐시 TTL(가격·재고 24h / 기타 3개월), `Supported by Rakuten Developers` 크레디트, Affiliate 관계 표시, 약관 버전·검토일 기록.
 - 표지: 원본 비율 유지, 크롭·누끼·텍스트 합성·콜라주 금지, 블러 배경은 동일 URL 재사용 + `aria-hidden`, 자체 CDN 영구 복제 금지.
-- 배포: **Vercel Git Integration**을 사용한다. `main`은 Production, 그 외 브랜치·PR은 Preview로 배포한다. `main` 병합에는 GitHub `CI / quality` 성공을 요구하고, 같은 job을 Vercel의 필수 Deployment Check로도 연결하며, Vercel Production build에서도 `catalog:validate`를 필수 게이트로 실행한다. Vercel Hobby는 개인·비상업 용도로만 사용하며, 공개 운영의 성격이 이를 벗어나면 출시 전에 Pro 이상으로 전환한다.
+- 배포: 향후 승인된 릴리스는 **Vercel Git Integration**을 사용한다. `main`은 Production, 그 외 브랜치·PR은 Preview로 배포한다. `main` 병합에는 GitHub `CI / quality` 성공을 요구하고, 같은 job을 Vercel의 필수 Deployment Check로도 연결하며, Vercel Production build에서도 `catalog:validate`를 필수 게이트로 실행한다. Vercel Hobby는 개인·비상업 용도로만 사용하며, 공개 운영의 성격이 이를 벗어나면 출시 전에 Pro 이상으로 전환한다. 이 대상 계약은 Slice 10의 로컬 구현·검증 완료 증거가 아니며, 현재 GitHub/Vercel mutation은 별도 사용자 승인 전까지 실행하지 않는다.
 - 상표: **[사용자 결정 필요]** 공개 전 J-PlatPat·도메인·SNS 핸들 확인. 내부 개발명으로는 즉시 사용 가능.

@@ -1,0 +1,49 @@
+GO
+Bundle SHA-256: 680836440acc3275c03f7fb3466d4ed917d05ebc2b3979edec957088d165be38
+Final HEAD: ce3bf4fca9dd5ba3f4bba371c9ae83407224ebc3
+Human validation: not-run
+Decision basis: user-authorized-model-panel
+
+Inspection summary
+
+The original ZIP bytes matched the required SHA-256. Extraction produced 184 payload entries plus the self-excluded manifests/PAYLOAD.sha256; every ledger entry was recomputed from the extracted bytes with no mismatch, missing entry, duplicate, or unlisted payload.
+
+The frozen identity was internally consistent:
+
+Repository: fromiron/konocomics
+
+Branch: agent/promote-approved-catalog
+
+Final HEAD: ce3bf4fca9dd5ba3f4bba371c9ae83407224ebc3
+
+Final tree: d169a602b99599578aca8a1fd4ba0ffdcf0a371c
+
+Slice 4 contract base: 94d2ac803844ce39e884326d523afa9516f7d7ab
+
+Catalog version: v1-83f85ca42c87
+
+Catalog: 150 works and 154 volumes, with the frozen catalog and context hashes reproduced exactly
+
+I read the normative G2 documents, current catalog and context, full implementation patch, exact G2 implementation source, direction-regression source and tests, aggregator implementation, browser runner, built harness, browser DOM and ARIA captures, unedited result download, aggregate readbacks, validation logs, and identity record. The implementation patch contained no Slice 5 implementation.
+
+All six PNG screenshots were opened and inspected directly. They show a coherent input → blinded pre-explanation → blinded post-explanation → final submission → mapping-reveal/download flow. List identities remain concealed until final submission, the A/B lists and ranks remain unchanged between the pre- and post-explanation stages, and the downloaded result is produced only after completion.
+
+The correction was verified through the source, contract, tests, browser runner, structured evidence, and raw captures:
+
+evidence/pilot/browser/after-ready.html: 「ギャグ・コメディ」が控えめな点が、あなたの好みに合う作品です。 occurs exactly 3 times; 「ギャグ・コメディ」があなたの好みに合う作品です。 occurs 0 times.
+
+evidence/pilot/browser/after-ready.aria.txt: the corrected sentence occurs exactly 3 times; the old directionless sentence occurs 0 times.
+
+The exact unedited browser download was accepted by the authoritative aggregator. Independent aggregate runs and the validation readback were byte-identical. Pilot rows were excluded from human metrics, yielding human 0, synthetic 1, verdict INCOMPLETE, null human metrics, and every human criterion NOT_RUN.
+
+The deterministic holdout and A/B assignment reproduce the recorded result. The Taste list is materially responsive to the supplied anchors and explicit mystery, investigation, strategy, problem-solving, and lower-comedy preferences, while the Baseline remains a distinct broad genre/market recommendation path. This supports the proposed product direction without treating the synthetic participant’s mechanical answers as human preference evidence.
+
+Blocking findings
+
+None.
+
+Rationale
+
+The exact frozen bundle establishes a reachable and blinded G2 evaluation flow, strict catalog and result identity, deterministic comparison behavior, fail-closed directional explanation generation, successful unedited-download aggregation, and a credible product distinction between the Taste and Baseline paths. The hashes, tests, and synthetic pilot corroborate that implementation, but the vote does not treat them as substitutes for product reasoning or human evidence.
+
+This is an unconditional GO for this exact bundle and identity. humanValidation remains not-run, the decision basis remains user-authorized-model-panel, and no human effectiveness or statistical-significance claim is made. This individual vote and bundle do not authorize Slice 5; only a later recorded decision based on 4/4 valid independent GO votes can open G2.

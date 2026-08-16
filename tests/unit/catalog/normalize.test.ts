@@ -25,7 +25,7 @@ describe("normalizeTitle", () => {
   });
 
   it("creates the external key from normalized title and first creator", () => {
-    expect(createExternalWorkKey("キングダム 1", " 原 泰久 ")).toBe("きんぐだむ::原 泰久");
+    expect(createExternalWorkKey("キングダム 1", " 原 泰久 ")).toBe('["きんぐだむ","原 泰久"]');
   });
 });
 

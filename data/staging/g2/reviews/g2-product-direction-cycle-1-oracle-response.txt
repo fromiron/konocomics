@@ -1,0 +1,42 @@
+GO
+Oracle panel row: GO
+Reviewed runtime: GPT-5.6 Pro
+Bundle SHA-256: 523bc95f4c1dcdd6439d3791d66053ccabb0b1c44fa962f7e18fc81f51ed7f3e
+Repository: fromiron/konocomics
+Branch: agent/promote-approved-catalog
+Final HEAD: 0382c60c32a4eee32a3333149a3a746d96d1d0d7
+Final tree: 511fcfa3c6277ce31e6aae479ff4ab0146087be9
+Slice 4 contract base: 94d2ac803844ce39e884326d523afa9516f7d7ab
+Catalog version: v1-83f85ca42c87
+Payload ledger entries: 173 plus the self-excluded ledger
+Human validation: not-run
+Decision basis: user-authorized-model-panel
+Human metrics: null/not-run
+Browser pilot: human 0 / synthetic 1 / verdict INCOMPLETE
+Synthetic pilot role: browser round-trip evidence only; excluded from human metrics
+Ten-human validation: not-claimed
+Statistical significance: not-claimed
+Panel-row authorization: RECORD_ORACLE_GO_ROW
+Overall G2 / Slice 5 authorization: NOT_GRANTED_BY_ORACLE_ALONE
+
+Inspection summary
+
+The original ZIP SHA-256 exactly matched the required value. All 173 entries in manifests/PAYLOAD.sha256 were independently recomputed from the extracted bytes and matched; the ledger itself was correctly self-excluded.
+
+The identity record, generated catalog and context copies, source data, implementation patch, exact G2 source, tests, built harness, browser screenshots, DOM and accessibility captures, execution trace, unedited browser download, authoritative aggregation outputs, and final validation logs were inspected. Repository, branch, HEAD, tree, Slice 4 base, catalog version, 150-work catalog identity, and generated-copy equality were consistent.
+
+The evidence establishes the intended fixed-route /human/ and /synthetic-pilot/ flow; respondent mode cannot be selected through URL input. Before final submission, engine identity, slot mapping, scores, confidence, contribution details, catalog roles, and related metadata remain absent from visible content, accessibility content, relevant DOM attributes, URLs, structured data, console output, and downloads. Pre- and post-explanation stages retain the same native lists and ranks. Mapping and download become available only after final submission.
+
+The downloaded synthetic-pilot result is canonical and was accepted without editing by the authoritative aggregator. The aggregator independently recomputed the experiment, excluded the pilot from human metrics, reported zero human and one synthetic participant, kept every human criterion NOT_RUN, and returned INCOMPLETE. No ten-human result or statistical conclusion is represented.
+
+The final diff is confined to the G2 catalog, experiment implementation, harness, documentation, tests, and validation material. No Slice 5 product implementation was found before the gate.
+
+Blocking findings
+
+None.
+
+Rationale
+
+The synthetic pilot is appropriately limited to mechanical browser and aggregation validation, but it also provides a coherent product-direction example. For the supplied profile—favoring Death Note, Frieren, Dungeon Meshi, Fullmetal Alchemist, Kingdom, and Monster, with strong preferences for investigation, mystery revelation, strategy, and problem solving—the Taste Engine materially emphasizes works with those factors, including My Dearest Self with Malice Aforethought, The Summer Hikaru Died, 20th Century Boys, and The Promised Neverland, while recovering the held-out Fullmetal Alchemist. The baseline is more visibly driven by broad genre, market, and maturity signals. The post-submit explanations are grounded in the same catalog factors and recommendation contributions rather than unsupported prose.
+
+The implementation and frozen evidence therefore support opening G2 through the already authorized unanimous model-panel path. This GO is unconditional only for this exact bundle and identity. It does not represent human validation, ten-human completion, statistical significance, or authorization by Oracle alone to open overall G2 or begin Slice 5.

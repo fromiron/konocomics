@@ -1,0 +1,41 @@
+GO
+Local panel row: GO
+Reviewed runtime: Local
+Reviewed repository: fromiron/konocomics
+Reviewed branch: main
+Reviewed HEAD: cc71d38d573cd24c520cbef62c607ee7a876490f
+Exact-HEAD CI run: 31682502622 success
+ZIP filename: konocomics-g2-four-path-v3.zip
+ZIP SHA-256: cee690a0b2a35b12c5cdfd655bdf84b13e7d1a22470e46a6d690cdb908d818c4
+Archive integrity: PASS
+File-hash ledger: 179/179 PASS
+Candidate artifact identity: 4/4 PASS
+Static original image inspection: 100/100 PASS
+Motion original image inspection: 6/6 PASS
+Normative candidate checks: PASS
+Prior-review independence: PASS
+Panel-row authorization: RECORD_LOCAL_GO_ROW
+Overall G2 / Slice 5 authorization: NOT_GRANTED_BY_LOCAL_ALONE
+
+## Inspection ledger summary
+
+- Independently hashed the original `/tmp/konocomics-g2-four-path-v3.zip`, safety-checked its member paths and types, verified CRCs, extracted it fresh to `/tmp/konocomics-g2-v3-review.Jjr7QJ/konocomics-oracle-g2-vote`, and recursively inventoried the extracted tree before judging it. The complete-file ledger matched 179/179; the static and motion ledgers matched 100/100 and 6/6 respectively.
+- Directly opened and visually inspected every current original PNG at readable original detail: 100 distinct paths under `evidence/static/` and 6 distinct paths under `evidence/motion/`. The static index maps the 100 static paths one-to-one to the 100 added works. The known-motion index maps all 6 motion paths to their works, values, and continuous sequences. The three disclosed cross-set byte reuses were still opened through both required paths for their separate evidentiary purposes; 106 paths resolve to 103 unique hashes.
+- The current extracted original `evidence/static/wave-listen-to-me.png` opened directly and readably. Its six labeled reader pages were visible, and an independent PNG chunk walk confirmed terminal `IEND` with no trailing bytes. No derivative was counted for this file or any other original.
+
+## Candidate identity and normative checks
+
+- Independently computed candidate hashes: `candidate/generated/catalog-v1.json` = `8695c5646a388f049dc25dcd6af5b5db06437ea82d8755b6b008ea4b97b27abb`; `candidate/generated/recommendation-context-v1.json` = `a802af6c04d5d3c81668493ff4af7eec5fba5169dc38578e3013f4a71752c171`; `candidate/source/factors.csv` = `4a0e3dc5450ac96250d23e84302ecd5554413f007adb751670ad59c4fb58973f`; `candidate/source/evidence/art-evidence-manifest.csv` = `356e1d2eba63bca92340860f06d3f94bd8049ae6000c1d3dd91461d2fee5fc8e`.
+- The generated identity is `catalogVersion = v1-61168a24beea`, factor dictionary `v1`, with 150 unique recommendation-eligible works, 154 volumes, one representative volume per work, complete 150-work recommendation context, and role counts Anchor 30 / Bridge 30 / Discovery 90.
+- The source contains exactly 2,550 unique factor rows: 17 axes for each of 150 works. Known values use the 0–4 scale with confidence; unknown and notApplicable values are empty; notApplicable occurs only on conditional `motionImpact`. Generated axes numerically match source states, values, and confidence. The four disjoint addition packets contain 8 + 31 + 31 + 30 = 100 works, leaving the preserved 50-work cohort in the same candidate; all 150 remain recommendation eligible.
+- The Art manifest contains exactly 600 unique rows, four Art axes for each work, with state/value/confidence parity to the factor source. Authorized provenance, edition/scope mapping, exact references, observations, limitations, and review status are populated. For each added work, the known static Art axes are supported by at least six readable interior samples across at least two contexts and at least two exact references. Six added works have known `motionImpact` backed by directly inspected continuous sequences; the other 94 added works retain `unknown` instead of inventing a numeric value or notApplicable.
+- Direct visual inspection corroborated the pages, contexts, static Art judgments, and six motion sequences rather than treating manifests or hashes as a substitute. The disclosed v3 repair is accepted only because the repaired current original itself opened successfully, remained hash-bound to this ZIP, and was structurally clean.
+- GitHub's live Actions API independently corroborated repository `fromiron/konocomics`, branch `main`, exact head `cc71d38d573cd24c520cbef62c607ee7a876490f`, and completed run `31682502622` with conclusion `success` (attempt 1).
+
+## Blocking findings
+
+None.
+
+## Vote rationale
+
+The hash-bound archive, complete 179-file ledger, four candidate identities, catalog/source/context invariants, cohort and role requirements, factor-state semantics, and normative Art provenance rules all passed without a material discrepancy. Separately and decisively, every one of the 106 required current-original image paths was directly opened and visually evaluated at readable detail, including the repaired wave sheet and each continuous-motion artifact; manifest and hash checks served only as identity and mapping corroboration. This supports recording this Local reviewer row for the exact v3 ZIP while leaving overall G2 and Slice 5 authorization to the required four-path unanimity and user approval.

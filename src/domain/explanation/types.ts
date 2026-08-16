@@ -2,6 +2,7 @@ import type { AxisId, CoverageGroup, GenreTag, ThemeTag } from "../catalog/types
 import type { ConfidenceLevel } from "../profile/confidence";
 import type { NegativeReasonId } from "../profile/types";
 import type {
+  AxisPreferenceDirection,
   BaselineContribution,
   BaselineRecommendation,
   ContributionSource,
@@ -15,6 +16,7 @@ export type ExplanationFactorId = AxisId | GenreTag | ThemeTag;
 export type ExplanationTemplateId =
   | "positiveWithAnchor"
   | "positiveWithoutAnchor"
+  | "positiveLowerAxisAdjustment"
   | "cautionSimilarityWithAnchor"
   | "cautionSimilarityWithoutAnchor"
   | "baselineGenreWithAnchor"
@@ -37,6 +39,7 @@ export type TasteExplanationSentence = {
   factorId: ExplanationFactorId;
   value: number;
   anchorWorkIds: string[];
+  axisPreferenceDirection?: AxisPreferenceDirection;
   negativeReasonId?: NegativeReasonId;
 };
 

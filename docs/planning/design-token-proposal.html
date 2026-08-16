@@ -1,0 +1,909 @@
+<!doctype html>
+<html lang="ko">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <meta name="robots" content="noindex" />
+    <link rel="icon" href="data:," />
+    <title>konocomics — Design Token Proposal</title>
+    <style>
+      :root {
+        color-scheme: light;
+        --proposal-page: #f8f7f3;
+        --proposal-surface: #ffffff;
+        --proposal-text: #25231f;
+        --proposal-muted: #6a6760;
+        --proposal-line: #dedbd4;
+        --proposal-accent: #cf3b1d;
+        --proposal-accent-soft: #fff0eb;
+        --proposal-warning: #765300;
+        --proposal-warning-soft: #fff4cc;
+        --proposal-radius: 8px;
+        --proposal-space-1: 4px;
+        --proposal-space-2: 8px;
+        --proposal-space-3: 12px;
+        --proposal-space-4: 16px;
+        --proposal-space-5: 24px;
+        --proposal-space-6: 32px;
+
+        /* Product-token preview values. These mirror the review-integrated tokens. */
+        --demo-paper: oklch(0.975 0.005 90);
+        --demo-raised: oklch(1 0 0);
+        --demo-ink: oklch(0.22 0.01 90);
+        --demo-muted: oklch(0.5 0.01 90);
+        --demo-line: oklch(0.88 0.005 90);
+        --demo-accent: oklch(0.57 0.19 33);
+        --demo-accent-hover: oklch(0.52 0.19 33);
+        --demo-accent-soft: oklch(0.98 0.015 33);
+        --demo-radius-cover: 4px;
+        --demo-radius-card: 8px;
+        --demo-shadow: 0 4px 16px oklch(0 0 0 / 0.08);
+      }
+
+      * {
+        box-sizing: border-box;
+      }
+
+      html {
+        scroll-behavior: smooth;
+      }
+
+      body {
+        margin: 0;
+        color: var(--proposal-text);
+        background: var(--proposal-page);
+        font-family:
+          system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+        line-height: 1.6;
+      }
+
+      a {
+        color: inherit;
+      }
+
+      a:focus-visible,
+      button:focus-visible {
+        outline: 3px solid var(--proposal-accent);
+        outline-offset: 3px;
+      }
+
+      code {
+        padding: 0.12em 0.35em;
+        border: 1px solid var(--proposal-line);
+        border-radius: 4px;
+        background: #f3f1eb;
+        font-family: ui-monospace, SFMono-Regular, Consolas, monospace;
+        font-size: 0.9em;
+        overflow-wrap: anywhere;
+      }
+
+      .skip-link {
+        position: fixed;
+        z-index: 10;
+        top: var(--proposal-space-3);
+        left: var(--proposal-space-3);
+        padding: var(--proposal-space-2) var(--proposal-space-3);
+        background: var(--proposal-text);
+        color: white;
+        transform: translateY(-200%);
+      }
+
+      .skip-link:focus {
+        transform: translateY(0);
+      }
+
+      .shell {
+        display: grid;
+        grid-template-columns: minmax(220px, 280px) minmax(0, 1fr);
+        min-height: 100vh;
+      }
+
+      .sidebar {
+        position: sticky;
+        top: 0;
+        align-self: start;
+        min-width: 0;
+        height: 100vh;
+        padding: var(--proposal-space-6) var(--proposal-space-5);
+        border-right: 1px solid var(--proposal-line);
+        background: var(--proposal-surface);
+        overflow-y: auto;
+      }
+
+      .sidebar h2 {
+        margin: 0;
+        font-size: 1rem;
+      }
+
+      .sidebar p {
+        margin: var(--proposal-space-2) 0 var(--proposal-space-5);
+        color: var(--proposal-muted);
+        font-size: 0.875rem;
+      }
+
+      .status {
+        display: inline-block;
+        margin-top: var(--proposal-space-3);
+        padding: var(--proposal-space-1) var(--proposal-space-2);
+        border: 1px solid var(--proposal-warning);
+        border-radius: 999px;
+        color: var(--proposal-warning);
+        font-size: 0.75rem;
+        font-weight: 700;
+        letter-spacing: 0.04em;
+        text-transform: uppercase;
+      }
+
+      nav ul {
+        display: grid;
+        gap: var(--proposal-space-1);
+        margin: 0;
+        padding: 0;
+        list-style: none;
+      }
+
+      nav a {
+        display: block;
+        padding: var(--proposal-space-2) var(--proposal-space-3);
+        border-radius: 6px;
+        text-decoration: none;
+      }
+
+      nav a:hover {
+        background: var(--proposal-accent-soft);
+      }
+
+      main {
+        width: min(1180px, 100%);
+        min-width: 0;
+        max-width: 100%;
+        padding: 64px clamp(24px, 6vw, 80px) 96px;
+        overflow-x: hidden;
+      }
+
+      .hero {
+        padding-bottom: 48px;
+        border-bottom: 1px solid var(--proposal-line);
+      }
+
+      .eyebrow {
+        margin: 0 0 var(--proposal-space-3);
+        color: var(--proposal-accent);
+        font-size: 0.8rem;
+        font-weight: 700;
+        letter-spacing: 0.08em;
+        text-transform: uppercase;
+      }
+
+      h1 {
+        max-width: 18ch;
+        margin: 0;
+        font-size: clamp(2.2rem, 6vw, 4.5rem);
+        line-height: 1.1;
+        overflow-wrap: anywhere;
+      }
+
+      .lede {
+        max-width: 68ch;
+        margin: var(--proposal-space-5) 0 0;
+        color: var(--proposal-muted);
+        font-size: 1.05rem;
+      }
+
+      .meta {
+        display: flex;
+        flex-wrap: wrap;
+        gap: var(--proposal-space-3) var(--proposal-space-5);
+        margin-top: var(--proposal-space-5);
+        color: var(--proposal-muted);
+        font-size: 0.875rem;
+      }
+
+      .lede,
+      .callout {
+        overflow-wrap: anywhere;
+      }
+
+      .callout {
+        margin-top: var(--proposal-space-5);
+        padding: var(--proposal-space-4);
+        border: 1px solid var(--proposal-line);
+        border-radius: var(--proposal-radius);
+        background: var(--proposal-surface);
+      }
+
+      .callout--review {
+        border-color: #d8b34a;
+        color: var(--proposal-warning);
+        background: var(--proposal-warning-soft);
+      }
+
+      section {
+        padding-top: 72px;
+        scroll-margin-top: var(--proposal-space-5);
+      }
+
+      section > header {
+        display: grid;
+        grid-template-columns: minmax(0, 1fr) minmax(240px, 0.8fr);
+        gap: var(--proposal-space-6);
+        align-items: end;
+        margin-bottom: var(--proposal-space-6);
+      }
+
+      h2 {
+        margin: 0;
+        font-size: clamp(1.7rem, 3vw, 2.5rem);
+        line-height: 1.1;
+      }
+
+      section > header p {
+        margin: 0;
+        color: var(--proposal-muted);
+      }
+
+      h3 {
+        margin: 40px 0 var(--proposal-space-3);
+        font-size: 1.1rem;
+      }
+
+      .table-wrap {
+        overflow-x: auto;
+        border: 1px solid var(--proposal-line);
+        border-radius: var(--proposal-radius);
+        background: var(--proposal-surface);
+      }
+
+      table {
+        width: 100%;
+        border-collapse: collapse;
+        font-size: 0.9rem;
+      }
+
+      table code {
+        overflow-wrap: normal;
+        white-space: nowrap;
+      }
+
+      caption {
+        padding: var(--proposal-space-4);
+        text-align: left;
+        font-weight: 700;
+      }
+
+      th,
+      td {
+        padding: var(--proposal-space-3) var(--proposal-space-4);
+        border-top: 1px solid var(--proposal-line);
+        text-align: left;
+        vertical-align: top;
+      }
+
+      th {
+        color: var(--proposal-muted);
+        font-size: 0.75rem;
+        letter-spacing: 0.05em;
+        text-transform: uppercase;
+        white-space: nowrap;
+      }
+
+      .preview-grid {
+        display: grid;
+        grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+        gap: var(--proposal-space-4);
+      }
+
+      .preview {
+        min-height: 150px;
+        padding: var(--proposal-space-5);
+        border: 1px solid var(--proposal-line);
+        border-radius: var(--proposal-radius);
+        background: var(--proposal-surface);
+      }
+
+      .preview strong {
+        display: block;
+        margin-bottom: var(--proposal-space-2);
+      }
+
+      .preview p {
+        margin: 0;
+        color: var(--proposal-muted);
+      }
+
+      .type-page-title {
+        color: var(--demo-ink);
+        font-size: 1.75rem;
+        font-weight: 700;
+        line-height: 1.3;
+      }
+
+      .type-body {
+        color: var(--demo-ink);
+        font-size: 0.875rem;
+        line-height: 1.7;
+      }
+
+      .token-card {
+        color: var(--demo-ink);
+        background: var(--demo-paper);
+      }
+
+      .token-card__surface {
+        padding: 20px;
+        border: 1px solid var(--demo-line);
+        border-radius: var(--demo-radius-card);
+        background: var(--demo-raised);
+      }
+
+      .token-card__cover {
+        width: 56px;
+        aspect-ratio: 30 / 43;
+        margin-bottom: 12px;
+        border: 1px solid color-mix(in oklch, black 10%, transparent);
+        border-radius: var(--demo-radius-cover);
+        background: var(--demo-paper);
+      }
+
+      .token-card__action {
+        display: inline-flex;
+        min-height: 44px;
+        align-items: center;
+        justify-content: center;
+        margin-top: 16px;
+        padding: 10px 16px;
+        border: 1px solid var(--demo-accent);
+        border-radius: var(--demo-radius-card);
+        background: var(--demo-accent);
+        color: white;
+        font: inherit;
+        font-weight: 700;
+        transition:
+          background-color 120ms ease-out,
+          border-color 120ms ease-out;
+      }
+
+      @media (hover: hover) and (pointer: fine) {
+        .token-card__action:hover {
+          border-color: var(--demo-accent-hover);
+          background: var(--demo-accent-hover);
+        }
+      }
+
+      .decision-list {
+        display: grid;
+        gap: var(--proposal-space-3);
+        padding: 0;
+        list-style: none;
+      }
+
+      .decision-list li {
+        padding: var(--proposal-space-4);
+        border-left: 4px solid var(--proposal-accent);
+        background: var(--proposal-surface);
+      }
+
+      footer {
+        margin-top: 80px;
+        padding-top: var(--proposal-space-5);
+        border-top: 1px solid var(--proposal-line);
+        color: var(--proposal-muted);
+        font-size: 0.875rem;
+      }
+
+      @media (max-width: 760px) {
+        .shell {
+          grid-template-columns: 1fr;
+        }
+
+        .sidebar {
+          position: static;
+          width: 100%;
+          height: auto;
+          padding: var(--proposal-space-4);
+          border-right: 0;
+          border-bottom: 1px solid var(--proposal-line);
+        }
+
+        nav ul {
+          display: flex;
+          gap: var(--proposal-space-1);
+          overflow-x: auto;
+        }
+
+        nav a {
+          white-space: nowrap;
+        }
+
+        main {
+          padding: 40px var(--proposal-space-4) 72px;
+        }
+
+        section {
+          padding-top: 56px;
+        }
+
+        section > header {
+          grid-template-columns: 1fr;
+        }
+
+        .table-wrap table {
+          min-width: 680px;
+        }
+      }
+
+      @media (prefers-reduced-motion: reduce) {
+        html {
+          scroll-behavior: auto;
+        }
+      }
+
+      @media print {
+        body {
+          background: white;
+        }
+
+        .shell {
+          display: block;
+        }
+
+        .sidebar {
+          display: none;
+        }
+
+        main {
+          width: 100%;
+          padding: 0;
+        }
+
+        section {
+          break-inside: avoid;
+        }
+      }
+    </style>
+  </head>
+  <body>
+    <a class="skip-link" href="#content">토큰 제안 본문으로 건너뛰기</a>
+    <div class="shell">
+      <aside class="sidebar" aria-label="제안서 탐색">
+        <h2>konocomics</h2>
+        <span class="status">Review required</span>
+        <p>Slice 5/6 UI foundation: type, spacing, layout, radius, surface, CTA, motion.</p>
+        <nav aria-label="기초 토큰">
+          <ul>
+            <li><a href="#overview">개요</a></li>
+            <li><a href="#budget">예산</a></li>
+            <li><a href="#typography">타이포</a></li>
+            <li><a href="#spacing">간격</a></li>
+            <li><a href="#layout">레이아웃</a></li>
+            <li><a href="#radius">형태·표면</a></li>
+            <li><a href="#motion">모션</a></li>
+            <li><a href="#mapping">매핑</a></li>
+            <li><a href="#decisions">결정</a></li>
+          </ul>
+        </nav>
+      </aside>
+
+      <main id="content">
+        <header class="hero">
+          <p class="eyebrow">Design token proposal · review-integrated draft</p>
+          <h1>konocomics foundations</h1>
+          <p class="lede">
+            종이와 잉크 방향을 유지하면서 Slice 5 온보딩과 Slice 6 취향 화면의 반복값을
+            primitive와 semantic 역할로 정리했다. 값은 기존 사양·CSS·온보딩 렌더에서만
+            도출했으며 새로운 시각 방향을 추가하지 않았다.
+          </p>
+          <div class="meta">
+            <span>근거: 04 사양, globals.css, 1440px/390px onboarding·taste product renders</span>
+            <span>작성: 2026-08-14</span>
+            <span>상태: Grok/Gemini 독립 리뷰 통합, 예외 2건은 계속 review-required</span>
+          </div>
+          <div class="callout callout--review">
+            <strong>검토 경계.</strong> 구조화 검사 결과는 <code>review-required</code>다.
+            미해결 overage나 radius mismatch는 없지만, 999px pill radius와 A–F 6개 기능성
+            모션 분류는 기본 예산을 넘는 문서화된 예외다. 두 모델 리뷰의 필수 수정은
+            통합했지만 모델 리뷰를 자동 <code>pass</code>로 바꾸지 않는다. `/taste`의 실제
+            1440px/390px 제품 흐름은 통합 브라우저 검증에서 확인했다.
+          </div>
+        </header>
+
+        <section id="overview">
+          <header>
+            <h2>토큰 모델</h2>
+            <p>
+              Primitive는 재사용 값, semantic은 의사소통 역할, 컴포넌트는 semantic 역할을
+              소비한다. 파생값은 독립 primitive로 세지 않는다.
+            </p>
+          </header>
+          <div class="preview-grid">
+            <article class="preview">
+              <strong>Primitive</strong>
+              <p><code>--space-4</code><br />16px</p>
+            </article>
+            <article class="preview">
+              <strong>Semantic</strong>
+              <p><code>--layout-page-padding</code><br />mobile에서 <code>--space-4</code></p>
+            </article>
+            <article class="preview">
+              <strong>Component use</strong>
+              <p>
+                <code>.onboarding-page</code><br />페이지 컨테이너가
+                <code>--layout-page-padding</code>을 소유
+              </p>
+            </article>
+          </div>
+        </section>
+
+        <section id="budget">
+          <header>
+            <h2>Visual entropy budget</h2>
+            <p>
+              수치는 디자인 품질 점수가 아니라 서로 무관한 규칙의 개수다. 상태색과 실제 만화
+              표지는 각각 accent와 장식 이미지로 세지 않았다.
+            </p>
+          </header>
+          <div class="table-wrap">
+            <table>
+              <caption>
+                관측값, 한도, 초과와 처리
+              </caption>
+              <thead>
+                <tr>
+                  <th>Metric</th>
+                  <th>Observed</th>
+                  <th>Limit</th>
+                  <th>Overage</th>
+                  <th>결과·근거</th>
+                </tr>
+              </thead>
+              <tbody>
+                <tr><td>Layout grammars</td><td>1</td><td>1</td><td>0</td><td>세로 task/analysis flow 하나</td></tr>
+                <tr><td>Typeface families</td><td>2</td><td>2</td><td>0</td><td>Space Grotesk brand + Noto Sans JP UI</td></tr>
+                <tr><td>Type roles</td><td>6</td><td>6</td><td>0</td><td>display, page, section, subheading, body, caption</td></tr>
+                <tr><td>Accent colors</td><td>1</td><td>1</td><td>0</td><td>주홍 한 계열; accent-hover는 같은 hue/chroma의 상태값, warn은 상태색</td></tr>
+                <tr><td>Radius tokens</td><td>3</td><td>2</td><td>1</td><td>4/8px + 의미를 보존하는 pill 예외</td></tr>
+                <tr><td>Shadow levels</td><td>1</td><td>1</td><td>0</td><td>hover·raised에만 사용</td></tr>
+                <tr><td>Surface styles</td><td>3</td><td>3</td><td>0</td><td>page, raised bordered, temporary elevated</td></tr>
+                <tr><td>Primary CTA styles</td><td>1</td><td>1</td><td>0</td><td>accent fill</td></tr>
+                <tr><td>Secondary CTA styles</td><td>1</td><td>1</td><td>0</td><td>raised outline/ghost family</td></tr>
+                <tr><td>Motion patterns</td><td>6</td><td>2</td><td>4</td><td>A–F 기능성 분류 예외; ambient loop 0</td></tr>
+                <tr><td>Decorative image families</td><td>0</td><td>0</td><td>0</td><td>표지는 제품 증거</td></tr>
+              </tbody>
+            </table>
+          </div>
+        </section>
+
+        <section id="typography">
+          <header>
+            <h2>Typography</h2>
+            <p>
+              일본어 UI는 Noto Sans JP, 라틴 브랜드 디스플레이는 Space Grotesk를 사용한다.
+              tracking과 leading은 실제 역할별 기존 값만 유지했다.
+            </p>
+          </header>
+          <h3>Primitive tokens</h3>
+          <div class="table-wrap">
+            <table>
+              <caption>
+                Typeface-specific primitives
+              </caption>
+              <thead>
+                <tr><th>Name</th><th>Font context</th><th>Size/value</th><th>Weight</th><th>Letter spacing</th><th>Line height</th><th>Evidence</th></tr>
+              </thead>
+              <tbody>
+                <tr><td><code>--font-size-12</code></td><td>Noto Sans JP UI</td><td>0.75rem</td><td>500/700 by role</td><td>normal</td><td>role-owned</td><td>captions, metadata, chips</td></tr>
+                <tr><td><code>--font-size-14</code></td><td>Noto Sans JP UI</td><td>0.875rem</td><td>400/700</td><td>normal</td><td>1.7 body</td><td>mobile body and card labels</td></tr>
+                <tr><td><code>--font-size-16</code></td><td>Noto Sans JP UI</td><td>1rem</td><td>400/700</td><td>normal</td><td>1.7 or 1.3</td><td>emphasis and desktop body</td></tr>
+                <tr><td><code>--font-size-20</code></td><td>Noto Sans JP / Space Grotesk</td><td>1.25rem</td><td>700 / brand mixed</td><td>brand −0.01em</td><td>1.3 / brand 1</td><td>section/subheading and wordmark</td></tr>
+                <tr><td><code>--font-size-28</code></td><td>Noto Sans JP heading</td><td>1.75rem</td><td>700</td><td>normal</td><td>1.3</td><td>mobile page title, desktop section title</td></tr>
+                <tr><td><code>--font-size-40</code></td><td>Noto Sans JP / Space Grotesk display</td><td>2.5rem</td><td>700</td><td>role-owned</td><td>1.3</td><td>desktop page title and display</td></tr>
+              </tbody>
+            </table>
+          </div>
+          <h3>Semantic tokens</h3>
+          <div class="table-wrap">
+            <table>
+              <caption>
+                Roles mapped to typography primitives
+              </caption>
+              <thead>
+                <tr><th>Name</th><th>Mobile</th><th>Desktop ≥768px</th><th>Usage</th><th>Status</th></tr>
+              </thead>
+              <tbody>
+                <tr><td><code>--text-caption-size</code></td><td>12px</td><td>12px</td><td>metadata, chip, helper</td><td>implemented draft</td></tr>
+                <tr><td><code>--text-body-size</code></td><td>14px</td><td>16px</td><td>page body</td><td>implemented draft</td></tr>
+                <tr><td><code>--text-subheading-size</code></td><td>16px</td><td>20px</td><td>h3</td><td>implemented draft</td></tr>
+                <tr><td><code>--text-section-title-size</code></td><td>20px</td><td>28px</td><td>h2</td><td>implemented draft</td></tr>
+                <tr><td><code>--text-page-title-size</code></td><td>28px</td><td>40px</td><td>h1</td><td>implemented draft</td></tr>
+                <tr><td><code>--text-display-size</code></td><td>40px</td><td>40px</td><td>landing/DNA display</td><td>review-integrated; Taste DNA heading consumes it</td></tr>
+              </tbody>
+            </table>
+          </div>
+          <h3>Rendered specimens</h3>
+          <div class="preview-grid">
+            <article class="preview">
+              <strong>Page title · mobile mapping</strong>
+              <p class="type-page-title" lang="ja">好きなマンガを 5〜10 作品えらんでください</p>
+            </article>
+            <article class="preview">
+              <strong>Body · Japanese and Latin fallback</strong>
+              <p class="type-body" lang="ja">選んだ作品から、物語や雰囲気の好みを読み取ります。Manga DNA</p>
+            </article>
+          </div>
+          <div class="callout">
+            <strong>폰트 표본 한계.</strong> 이 네트워크 독립 제안서는 <code>system-ui</code>로
+            렌더된다. 따라서 위 표본은 Noto Sans JP나 Space Grotesk의 실제 glyph metric,
+            줄바꿈, fallback 조판을 증명하지 않으며 제품 화면에서 별도로 검증한다.
+          </div>
+        </section>
+
+        <section id="spacing">
+          <header>
+            <h2>Spacing</h2>
+            <p>
+              4px 기반을 유지하되 값의 존재보다 역할을 먼저 본다. primitive 9개가 content,
+              section, container 역할을 지원한다.
+            </p>
+          </header>
+          <h3>Primitive tokens</h3>
+          <div class="table-wrap">
+            <table>
+              <caption>
+                Reusable spacing values
+              </caption>
+              <thead>
+                <tr><th>Name</th><th>Value</th><th>Current values consolidated</th><th>Evidence</th></tr>
+              </thead>
+              <tbody>
+                <tr><td><code>--space-1</code></td><td>4px</td><td>tight inline/card gaps</td><td>favorite, nav, shelf controls</td></tr>
+                <tr><td><code>--space-2</code></td><td>8px</td><td>default internal gap</td><td>header, chips, evidence strip</td></tr>
+                <tr><td><code>--space-3</code></td><td>12px</td><td>loose content gap</td><td>card rows, shelf track</td></tr>
+                <tr><td><code>--space-4</code></td><td>16px</td><td>card padding/default page padding</td><td>Step 2 card and mobile edge</td></tr>
+                <tr><td><code>--space-5</code></td><td>20px</td><td>roomy card group</td><td>negative entry, taste summary</td></tr>
+                <tr><td><code>--space-6</code></td><td>24px</td><td>intro separation/desktop edge</td><td>header and ≥768px container</td></tr>
+                <tr><td><code>--space-7</code></td><td>28px</td><td>empty/search block exception mapping</td><td>existing onboarding empty surface</td></tr>
+                <tr><td><code>--space-8</code></td><td>32px</td><td>section gap/mobile page start</td><td>shelves and action separation</td></tr>
+                <tr><td><code>--space-12</code></td><td>48px</td><td>large section/desktop page start</td><td>desktop onboarding contract</td></tr>
+              </tbody>
+            </table>
+          </div>
+          <h3>Semantic tokens</h3>
+          <div class="table-wrap">
+            <table>
+              <caption>
+                Spacing roles mapped to primitives
+              </caption>
+              <thead>
+                <tr><th>Name</th><th>Role</th><th>Wide</th><th>Narrow</th><th>Usage</th></tr>
+              </thead>
+              <tbody>
+                <tr><td><code>--space-content-tight</code></td><td>content-gap</td><td>4px</td><td>4px</td><td>closely bound icon/label and compact controls</td></tr>
+                <tr><td><code>--space-content</code></td><td>content-gap</td><td>8px</td><td>8px</td><td>default internal grouping</td></tr>
+                <tr><td><code>--space-content-loose</code></td><td>content-gap</td><td>12px</td><td>12px</td><td>record and card groups</td></tr>
+                <tr><td><code>--space-section</code></td><td>section-gap</td><td>32px</td><td>32px</td><td>major flow regions</td></tr>
+                <tr><td><code>--space-section-large</code></td><td>section-gap</td><td>48px</td><td>48px</td><td>rare large editorial break</td></tr>
+                <tr><td><code>--layout-page-padding</code></td><td>container-padding</td><td>24px</td><td>16px</td><td>outer page owner</td></tr>
+                <tr><td><code>--layout-page-block-start</code></td><td>container-padding</td><td>48px</td><td>32px</td><td>onboarding/taste page start</td></tr>
+                <tr><td><code>--layout-safe-area-bottom</code></td><td>device inset</td><td>environment</td><td>environment</td><td>fixed UI safe-area owner</td></tr>
+                <tr><td><code>--layout-mobile-navigation-clearance</code></td><td>fixed navigation clearance</td><td>not used</td><td>64px + safe area</td><td>content and fixed-action offset</td></tr>
+                <tr><td><code>--layout-onboarding-tray-clearance</code></td><td>fixed tray clearance</td><td>120px + safe area</td><td>120px + safe area</td><td>onboarding page block end</td></tr>
+                <tr><td><code>--layout-taste-action-clearance</code></td><td>fixed CTA clearance</td><td>120px</td><td>160px + safe area</td><td>taste page block end</td></tr>
+              </tbody>
+            </table>
+          </div>
+        </section>
+
+        <section id="layout">
+          <header>
+            <h2>Layout</h2>
+            <p>
+              page container가 좌우 padding과 max-width를 소유한다. 768px에서 column 수와
+              padding만 바뀌며 DOM 순서와 주요 task 흐름은 유지된다.
+            </p>
+          </header>
+          <div class="table-wrap">
+            <table>
+              <caption>
+                Semantic layout and container tokens
+              </caption>
+              <thead>
+                <tr><th>Name</th><th>Value</th><th>Owner</th><th>Evidence/status</th></tr>
+              </thead>
+              <tbody>
+                <tr><td><code>--layout-width-form</code></td><td>640px</td><td>search/actions/settings-like forms</td><td>current CSS; implemented draft</td></tr>
+                <tr><td><code>--layout-width-recommendations</code></td><td>720px</td><td>recommendation feed</td><td>04 spec; reserved</td></tr>
+                <tr><td><code>--layout-width-reading</code></td><td>760px</td><td>onboarding intro/alerts</td><td>current CSS; implemented draft</td></tr>
+                <tr><td><code>--layout-width-taste</code></td><td>960px</td><td>taste page</td><td>04 spec/current CSS; source verified</td></tr>
+                <tr><td><code>--layout-width-detail</code></td><td>1040px</td><td>work detail</td><td>04 spec; reserved</td></tr>
+                <tr><td><code>--layout-width-onboarding</code></td><td>1120px</td><td>onboarding shelves</td><td>1440px render; implemented draft</td></tr>
+                <tr><td><code>--layout-width-navigation</code></td><td>1200px</td><td>desktop nav inner</td><td>current CSS; implemented draft</td></tr>
+              </tbody>
+            </table>
+          </div>
+          <h3>Responsive evidence</h3>
+          <div class="preview-grid">
+            <article class="preview">
+              <strong>Wide · 1440px screenshot</strong>
+              <p>24px page edge, 1120px shelf owner, 128px cover cards. Step 2 keeps a readable 760px heading and 640px actions.</p>
+            </article>
+            <article class="preview">
+              <strong>Breakpoint · 768px</strong>
+              <p>Existing project breakpoint. Page padding becomes 24px, titles step up, and grids gain columns without changing source order.</p>
+            </article>
+            <article class="preview">
+              <strong>Narrow · 390px screenshot</strong>
+              <p>16px page edge, 104px horizontal shelf cards, 48px search field, no page-level horizontal overflow.</p>
+            </article>
+          </div>
+        </section>
+
+        <section id="radius">
+          <header>
+            <h2>Radius, shadow, surface, CTA</h2>
+            <p>
+              bounded radius 두 단계와 의미가 다른 pill을 구분한다. 표지 선택 외곽 6px은
+              별도 primitive가 아니라 4px 표지 + 2px 선택 보더의 파생값이다.
+            </p>
+          </header>
+          <h3>Shape and elevation tokens</h3>
+          <div class="table-wrap">
+            <table>
+              <caption>
+                Draft shape roles
+              </caption>
+              <thead>
+                <tr><th>Name</th><th>Value</th><th>Usage</th><th>Nested-contour rule</th><th>Status</th></tr>
+              </thead>
+              <tbody>
+                <tr><td><code>--radius-cover</code></td><td>4px</td><td>authentic cover and compact bar</td><td>independent print-object contour</td><td>implemented draft</td></tr>
+                <tr><td><code>--radius-card</code></td><td>8px</td><td>card, sheet, control base</td><td>outer bounded contour</td><td>implemented draft</td></tr>
+                <tr><td><code>--radius-control</code></td><td>references card</td><td>button/input</td><td>independent component</td><td>draft alias</td></tr>
+                <tr><td><code>--radius-cover-selection</code></td><td>calc(4px + 2px)</td><td>selected cover outer border</td><td>6 outer − 2 inset = 4 inner</td><td>conforming derived value</td></tr>
+                <tr><td><code>--radius-pill</code></td><td>999px</td><td>chip/circle/progress track</td><td>pill-or-circle; not shared contour</td><td>documented exception</td></tr>
+                <tr><td><code>--shadow-level-1</code></td><td>0 4px 16px / 8%</td><td>hover, transient raised content</td><td>not applicable</td><td>only shadow level</td></tr>
+                <tr><td><code>--shadow-raised</code></td><td>references level 1</td><td>semantic elevation role</td><td>not applicable</td><td>draft alias</td></tr>
+              </tbody>
+            </table>
+          </div>
+          <h3>Surface and CTA specimen</h3>
+          <div class="preview-grid">
+            <article class="preview token-card">
+              <strong>Page → raised card → cover</strong>
+              <div class="token-card__surface">
+                <div class="token-card__cover" aria-hidden="true"></div>
+                <p>보더와 여백이 record 경계를 만든다. 기본 그림자는 없다.</p>
+                <button class="token-card__action" type="button">好みを見る</button>
+              </div>
+            </article>
+            <article class="preview">
+              <strong>Surface inventory</strong>
+              <p><code>--surface-page</code>: paper<br /><code>--surface-raised</code>: white + border<br /><code>--surface-hover</code>: neutral pointer tint<br /><code>--accent-hover</code>: primary CTA state, same accent family</p>
+            </article>
+            <article class="preview">
+              <strong>CTA inventory</strong>
+              <p>Primary 1: accent fill → accent-hover.<br />Selected chip: accent-soft + accent border/text.<br />Secondary 1: raised outline/ghost family.<br />Focus, error, selected, disabled states are not merged.</p>
+            </article>
+          </div>
+        </section>
+
+        <section id="motion">
+          <header>
+            <h2>Motion roles</h2>
+            <p>
+              기본 2종 예산보다 많지만 기능적 의미가 서로 달라 A–F 여섯 분류를 유지한다.
+              duration/easing 토큰은 분류를 합치지 않고 값 드리프트만 막는다.
+            </p>
+          </header>
+          <div class="table-wrap">
+            <table>
+              <caption>
+                Functional motion exception
+              </caption>
+              <thead>
+                <tr><th>Class</th><th>Meaning</th><th>Duration token/range</th><th>Reduced motion</th></tr>
+              </thead>
+              <tbody>
+                <tr><td>A</td><td>one-time signature reveal</td><td>400–1800ms; <code>--motion-ease-signature</code></td><td>final state immediately</td></tr>
+                <tr><td>B</td><td>page context entry</td><td><code>--motion-duration-page</code> 160ms</td><td>no motion</td></tr>
+                <tr><td>C</td><td>layout/data state transition</td><td>200–240ms spring; <code>domMax</code> only at layout owners</td><td>immediate layout</td></tr>
+                <tr><td>D</td><td>direct manipulation feedback</td><td><code>--motion-duration-press</code> 80ms / <code>feedback</code> 120ms</td><td>opacity only</td></tr>
+                <tr><td>E</td><td>numeric value transition</td><td><code>--motion-duration-value</code> 240ms</td><td>immediate value</td></tr>
+                <tr><td>F</td><td>attention/error boundary</td><td>120ms ×2</td><td>static full warn border replaces shake</td></tr>
+              </tbody>
+            </table>
+          </div>
+          <div class="callout">
+            <strong>예외가 보존하는 정보.</strong> A는 온보딩 보상, B는 화면 문맥, C는 항목의
+            이동 연속성, D는 입력 확인, E는 수치 변화, F는 오류·한도 인지를 전달한다. 이들을
+            두 종류로 합치면 trigger와 reduced-motion fallback의 계약이 사라진다. 대신 상시
+            loop, parallax, scroll hijacking, 분류 밖 모션은 계속 금지한다. Motion 기본 bundle은
+            <code>domAnimation</code>이고, 실제 layout continuity를 소유한 C 컴포넌트만
+            <code>domMax</code>를 쓴다.
+          </div>
+        </section>
+
+        <section id="mapping">
+          <header>
+            <h2>Current → draft mapping</h2>
+            <p>
+              명백히 반복되는 core 값만 기계적으로 바꿨다. 광학 보정과 컴포넌트 고유 치수는
+              의미를 확인하지 않고 scale에 억지로 편입하지 않았다.
+            </p>
+          </header>
+          <div class="table-wrap">
+            <table>
+              <caption>
+                Consolidated values and retained exceptions
+              </caption>
+              <thead>
+                <tr><th>Current</th><th>Draft token</th><th>Scope</th><th>Disposition</th></tr>
+              </thead>
+              <tbody>
+                <tr><td>16px / 24px page padding</td><td><code>--layout-page-padding</code></td><td>onboarding, taste, nav, transient messages</td><td>mapped</td></tr>
+                <tr><td>32px / 48px page top</td><td><code>--layout-page-block-start</code></td><td>onboarding and taste page containers</td><td>mapped</td></tr>
+                <tr><td>120px / 160px fixed-UI page ends</td><td><code>--layout-*-clearance</code></td><td>onboarding tray, taste fixed CTA, safe area</td><td>mapped by actual obstruction role</td></tr>
+                <tr><td>640/760/960/1120/1200px</td><td><code>--layout-width-*</code></td><td>form, reading, taste, onboarding, nav</td><td>mapped</td></tr>
+                <tr><td>4/8/12/16/20/24/28/32/48px gaps</td><td><code>--space-*</code> + semantic gaps</td><td>clear repeated grouping roles</td><td>mapped</td></tr>
+                <tr><td>4px cover radius</td><td><code>--radius-cover</code></td><td>covers and compact bars</td><td>mapped</td></tr>
+                <tr><td>8px card/control radius</td><td><code>--radius-card/control</code></td><td>cards, buttons, inputs</td><td>mapped</td></tr>
+                <tr><td>6px selected-cover outer radius</td><td><code>--radius-cover-selection</code></td><td>selection contour</td><td>raw alias deleted; derived</td></tr>
+                <tr><td>999px</td><td><code>--radius-pill</code></td><td>chips/circles/progress track</td><td>retained exception</td></tr>
+                <tr><td>44px min targets</td><td><code>--control-min-size</code></td><td>interactive controls</td><td>mapped; accessibility preserved</td></tr>
+                <tr><td>80/120/160/240/400ms roles</td><td><code>--motion-duration-*</code></td><td>direct, feedback, page, value, reveal</td><td>mapped where current use is unambiguous</td></tr>
+                <tr><td>2/6/10/14/18px</td><td>component-local values</td><td>border, icon, optical or inner padding</td><td>retained documented class, not generalized</td></tr>
+              </tbody>
+            </table>
+          </div>
+          <h3>Independent model review synthesis</h3>
+          <div class="table-wrap">
+            <table>
+              <caption>
+                Frozen review identity and disposition
+              </caption>
+              <thead>
+                <tr><th>Reviewer</th><th>Session</th><th>Verdict</th><th>Final SHA-256</th></tr>
+              </thead>
+              <tbody>
+                <tr><td>Cursor Grok 4.6 High (<code>cursor-grok-4.6-high</code>, non-fast)</td><td><code>d77400a8-ad25-4212-b86e-ac353d9aaf8d</code></td><td>ACCEPT WITH MUST FIXES</td><td><code>35d147f0096e55a55d6a5d8d9177e83936f6e658f3832f7d62a4481b27a83269</code></td></tr>
+                <tr><td><code>gemini-3.6-flash-high</code></td><td><code>e5e85532-7775-4c66-989b-8ea34a5cc1cb</code></td><td>PASS WITH CHANGES</td><td><code>0aa9bf003abbaa74435bf47b217a9a2d05fede0e87f48875cb1ef5a027716845</code></td></tr>
+              </tbody>
+            </table>
+          </div>
+          <div class="callout">
+            <strong>통합 판단.</strong> CTA hover 대비, 같은 accent 계열 상태, fixed-UI clearance,
+            mixed-script 폴백, 선택 칩, F 정적 보더, A–F 유지와 죽은 selector 제거를 수용했다.
+            Gemini의 일반 `/taste` 최초 진입 1.2초 blank 주장은 Motion
+            <code>initial=false</code> 때문에 기각했고, 이후 non-reveal target 변경에 reveal
+            delay/400ms가 상속되는 범위만 유효하다. Tailwind <code>@theme inline</code> spacing/radius
+            매핑은 현재 소비자가 없고 BEM custom properties와 권위가 중복되므로 거절했다.
+          </div>
+        </section>
+
+        <section id="decisions">
+          <header>
+            <h2>Decisions and verification</h2>
+            <p>
+              초안, 예외, 거절, 미확인을 분리해 이 문서가 실제 검증보다 강한 주장을 하지 않게
+              한다.
+            </p>
+          </header>
+          <ul class="decision-list">
+            <li><strong>Review-integrated draft:</strong> 위 token names와 values에는 Grok/Gemini 독립 리뷰의 근거 있는 수정이 반영됐고 실제 제품 flow 검증도 완료됐다. 남은 <code>review-required</code> 상태는 문서화된 radius·motion 예외의 사용자 판단만 뜻한다.</li>
+            <li><strong>Retained exception:</strong> pill radius 1개와 기능성 motion A–F 6개. 접근성·상태·정보 손실 없이 줄일 근거가 없다.</li>
+            <li><strong>Rejected:</strong> 외부 디자인 시스템 scale 복사, 새로운 breakpoint, 세 번째 폰트, 두 번째 accent, ambient animation, 소비자 없는 Tailwind spacing/radius 중복 매핑.</li>
+            <li><strong>Verified:</strong> 온보딩과 `/taste`의 1440px/390px 실제 제품 흐름에서 grouping, target, mixed-script wrapping, fixed-control clearance, horizontal overflow를 검토했다. `/taste` DNA 제목의 computed font stack은 Space Grotesk와 Noto Sans JP를 함께 포함했다.</li>
+            <li><strong>Remaining limit:</strong> proposal 자체는 system-ui specimen이므로 Noto Sans JP·Space Grotesk의 실제 글꼴 메트릭을 증명하지 않는다. 해당 증거는 제품 렌더와 computed style에만 결속한다.</li>
+            <li><strong>Verification:</strong> proposal wide/narrow reflow, JSON checker, formatter, typecheck, lint, diff check와 실제 `/taste` 흐름의 computed token values·reduced-motion을 각각 확인한다.</li>
+          </ul>
+        </section>
+
+        <footer>
+          이 파일은 네트워크 의존성이 없는 검토 아티팩트다. 제품 토큰의 구현 원본은
+          <code>src/app/globals.css</code>, 역할 계약은
+          <code>docs/planning/04-visual-interaction-spec.md</code>, 구조화 예산은
+          <code>docs/planning/design-token-budget.json</code>이다.
+        </footer>
+      </main>
+    </div>
+  </body>
+</html>

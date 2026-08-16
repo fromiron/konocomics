@@ -1,0 +1,58 @@
+GO
+Bundle SHA-256: 523bc95f4c1dcdd6439d3791d66053ccabb0b1c44fa962f7e18fc81f51ed7f3e
+Final HEAD: 0382c60c32a4eee32a3333149a3a746d96d1d0d7
+Human validation: not-run
+Decision basis: user-authorized-model-panel
+
+### 경로별 검증 요약 (Path-Specific Inspection Summary)
+
+1. **ZIP 해시, 디렉터리 추출 및 파일럿 장부 무결성 검증 (Ledger Proof)**
+   - `konocomics-g2-product-direction-cycle-1-0382c60.zip` SHA-256: `523bc95f4c1dcdd6439d3791d66053ccabb0b1c44fa962f7e18fc81f51ed7f3e` (요구사항과 일치).
+   - ZipEntry 내 절대 경로, 상위 디렉터리 참조(`..`), 심볼릭 링크 부재 확인 후 `extracted/`에 안전하게 추출 완료.
+   - `manifests/PAYLOAD.sha256`: 총 173개의 비어있지 않은 선언 항목 포함. `manifests/PAYLOAD.sha256` 자기 자신을 선언 항목에 포함하지 않는 자기 제외 장부(self-excluded ledger) 구조 성립.
+   - 추출된 번들 내 총 파일 수: 선언된 173개 페이로드 파일 + 1개 자기 제외 장부 파일 = 총 174개 파일 (미선언 파일 0개, 누락 파일 0개). 173/173 페이로드 파일 해시 직접 계산 검증 완료.
+   - `identity/identity.json` 기록과 `repository/data/generated/` 내 생성 파일의 SHA-256 직접 계산 검증: `catalogVersion` = `v1-83f85ca42c87`, `catalogSha256` = `d3f9d97a5d659fd7a6972b833e0fd0092a09089acf103709fa0bdb9968b64fe8`, `recommendationContextSha256` = `2e1faa38a07a1f4ffd0f465fcf597d682162eea9433b175fd8a1af84d7ce282e` 교차 일치. 카탈로그 추천 대상 작품 150개 (Anchor 30, Bridge 30, Discovery 90), 권수 154개 확인.
+
+2. **규범 문서 (Normative Documents) 전수 읽기**
+   - `repository/docs/planning/02-product-spec.md` (§7 G2 홀드아웃·A/B 배치·지표 분자분모·경로 구별 계약), `repository/docs/planning/05-architecture.md` (§2·§5 G2 정적 하니스·집계기 아키텍처), `repository/docs/factors/factor-dictionary.md` (17 Axis·Theme·Genre 0/2/4 기준), `repository/docs/factors/annotation-guide.md` (초반 1~3권 범위·Art 근거 기준), `repository/docs/planning/06-implementation-plan.md` (Slice 4 순서 및 게이트 전 UI 슬라이스 미시작 계약), `repository/docs/planning/07-acceptance-test-plan.md` (§4 G2 테스트 수용 기준), `repository/AGENTS.md` 전수를 열람하여 규범적 계약을 확인했습니다.
+
+3. **구현 소스 및 헬퍼 모듈 열람 (Implementation & Helpers)**
+   - `implementation/changed-files.txt` (38개 변경 파일 목록) 및 `implementation/slice4.patch` 아티팩트를 열람하고 개별 검사된 관련 주요 소스 파일들과 교차 대조했습니다.
+   - `repository/src/domain/g2.ts`: `selectG2Holdout` (positive anchor 6~10개 기준, `konocomics-g2-holdout-v1\0{catalogVersion}\0{participantId}\0{workId}` SHA-256 key 오름차순 및 code-unit workId tie-break로 1~2개 홀드아웃), `assignG2Slots` (`konocomics-g2-slot-v1` SHA-256 첫 바이트 짝/홀 결정론적 A/B 배치), `calculateG2ParticipantMetrics`, `aggregateG2Metrics` 구현 확인.
+   - `repository/scripts/aggregate-g2.ts`, `repository/scripts/g2/options.ts`, `repository/scripts/g2/report.ts`, `repository/scripts/g2/results.ts`: CLI 인자 파싱(`-r`, `--catalog`, `--context`, `-o`), 원자적 출력(`writeAtomicOutput`), 중복 식별자 거부, strict canonical JSON 재검증 및 결정론적 마크다운 생성 확인.
+   - `repository/harness/app/human/page.tsx`, `repository/harness/app/synthetic-pilot/page.tsx`, `repository/harness/components/g2-wizard.tsx`: 동일한 `G2Wizard` 컴포넌트 공유 및 `respondent` 속성을 통한 진입점 고정 확인.
+   - changed-files 아카이브 및 `repository/src/` 디렉터리 트리 검사를 통해 `components/nav/`, `infrastructure/db/`, `features/onboarding/`, `CoverImage.tsx`, Fuse 검색 모듈 등 Slice 5 관련 구현이 소스 디렉터리에 포함되어 있지 않음을 확인했습니다.
+
+4. **G2 및 카탈로그 유닛 테스트 열람 (Tests Verification)**
+   - `repository/tests/unit/g2/g2.test.ts`: 홀드아웃 선택, A/B 슬롯 배치, Zod 스키마 검증, leakage 및 지표 정합성 테스트.
+   - `repository/tests/unit/g2/options.test.ts`: CLI 옵션 기본값 및 플래그 검증.
+   - `repository/tests/unit/g2/report.test.ts`: `tests/fixtures/g2/aggregate-golden.md` 아티팩트와 보고서 생성 결과 일치 검증.
+   - `repository/tests/unit/g2/results.test.ts`: 결과 파일 정규화, BOM/CRLF/중복 멤버 거부, 심볼릭/하드링크 중복 검출 검증.
+   - `repository/tests/unit/g2/runner.test.ts`: CLI 실행 및 `pnpm --silent g2:aggregate` 결정론적 출력 검증.
+   - `repository/tests/unit/catalog/promote-g2-catalog.test.ts`: 카탈로그 모델 패널 승인 및 트랜잭션 게시 검증.
+   - `repository/tests/unit/catalog/art-evidence.test.ts`: Art 근거 최소선 및 매니페스트 정합성 검증.
+
+5. **최종 검증 로그 및 정적 빌드 아티팩트 열람 (Validation & Harness Out)**
+   - `evidence/validation/` 내 15개 파일 전수 열람: `validation-summary.json`, `unit-tests.txt` (40개 테스트 파일, 351개 유닛 테스트 통과), `catalog-build.txt`, `catalog-coverage.txt`, `catalog-validate.txt`, `format-check.txt`, `generated.sha256`, `git-diff-check.txt`, `harness-build.txt`, `lint.txt`, `pilot-aggregate-recomputed.md`, `pilot-aggregate.txt`, `root-build.txt`, `typecheck.txt`, `identity.txt`.
+   - `runtime/harness-out/` 정적 출력물 열람: `human/index.html`, `synthetic-pilot/index.html`, `human/__next.human.__PAGE__.txt`, `synthetic-pilot/__next.synthetic-pilot.__PAGE__.txt`를 비교하여 라우트별 `respondent` 차이 및 프리렌더 셸 구성을 확인했습니다.
+
+6. **브라우저 파일럿 증거 열람 (Browser Pilot Evidence)**
+   - `evidence/pilot/browser/run.mjs`, `evidence/pilot/browser/evidence.json`, `evidence/pilot/README.md`, `evidence/pilot/input/pilot-browser-one-profile.json` 열람 완료.
+   - 6종 파일럿 스크린샷(`01-input.png` ~ `06-complete.png`) 시각 검사 및 DOM/ARIA 캡처(`before-ready.html`, `before-ready.aria.txt`, `after-ready.html`, `after-ready.aria.txt`) 열람 완료: 최종 제출 전 UI 및 DOM에 블라인딩 대상 정보가 노출되지 않음을 확인했습니다.
+   - 다운로드 결과물 `evidence/pilot/output/konocomics-g2-pilot-browser-one.json` 및 집계 보고서 `evidence/pilot/output/aggregate-1.md`, `aggregate-2.md` 열람 완료: 파일럿 결과가 `syntheticPilot:manual-round-trip`으로 기록되어 사람 집계 지표(human 0, synthetic pilot 1, verdict INCOMPLETE, 5개 human GO 기준 NOT_RUN)에서 수치적으로 제외됨을 확인했습니다.
+
+### 라이브 재실행 한계 명시 (Live-Rerun Limitation)
+
+샌드박스 환경 내 `npx` 명령 미지원으로 인해 live shell 상에서의 `npx tsx scripts/aggregate-g2.ts` 직접 재실행은 수행되지 않았습니다. 집계기 수용성 및 결과 검증은 `scripts/aggregate-g2.ts`, `scripts/g2/*.ts`, `src/domain/g2.ts` 소스 코드의 전수 검사, Python을 통한 JSON 데이터 구조 및 규칙 직접 확인, 그리고 커밋되어 제공된 아카이브 실행 기록(`evidence/validation/pilot-aggregate.txt`, `pilot-aggregate-recomputed.md`, `evidence/pilot/output/aggregate-1.md`, `aggregate-2.md`) 대조를 통해 이루어졌음을 명시합니다.
+
+### 차단성 결함 (Blocking Findings)
+
+None.
+
+### 독립적 제품 판단 근거 (Independent Product Rationale)
+
+본 판단은 이전 대화나 외부 선입견 없이, 번들 내 파일들의 실제 내용 열람 결과를 토대로 작성되었습니다.
+
+Slice 4 범위 내 150작품 카탈로그 확장, 결정론적 홀드아웃 및 A/B 배치, 최종 제출 전 UI/DOM/ARIA 블라인딩 유지, 브라우저 결과 JSON 출력 및 집계기 수용 구조는 소스 코드 및 검증 아티팩트 상에서 규범적 사양과 상충 없이 일치합니다. 브라우저 파일럿 증거는 사람 응답을 대체하지 않고 합성 검증용(`syntheticPilot`)으로 처리되어 `INCOMPLETE` 판정을 올바르게 유지하고 있습니다.
+
+선언된 명시적 경계 조건(`humanValidation: not-run`, `decisionBasis: user-authorized-model-panel`)이 준수되었으며, 변경 패치 및 소스 디렉터리 확인 결과 게이트 승인 전 Slice 5 UI 구현이 시작되지 않은 점이 확인되었습니다. 따라서 사전 승인된 모델 패널 경로에 따라 G2 제품 방향성 게이트 승인(GO) 결정을 산출합니다.

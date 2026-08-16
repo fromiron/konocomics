@@ -1,0 +1,352 @@
+{
+  "runtime": {
+    "browser": "151.0.7922.137",
+    "executablePath": "/usr/bin/google-chrome",
+    "headless": true,
+    "viewport": {
+      "width": 1440,
+      "height": 1000
+    }
+  },
+  "entry": {
+    "url": "http://127.0.0.1:4173/synthetic-pilot/",
+    "title": "ブラインドテスト | konocomics"
+  },
+  "stages": [
+    {
+      "label": "input",
+      "url": "http://127.0.0.1:4173/synthetic-pilot/",
+      "heading": "テストを始める",
+      "active": {
+        "tag": "H1",
+        "text": "テストを始める"
+      }
+    },
+    {
+      "label": "before",
+      "url": "http://127.0.0.1:4173/synthetic-pilot/",
+      "heading": "説明を見る前の回答",
+      "active": {
+        "tag": "H1",
+        "text": "説明を見る前の回答"
+      }
+    },
+    {
+      "label": "after",
+      "url": "http://127.0.0.1:4173/synthetic-pilot/",
+      "heading": "おすすめ理由を見た後の回答",
+      "active": {
+        "tag": "H1",
+        "text": "おすすめ理由を見た後の回答"
+      }
+    },
+    {
+      "label": "complete",
+      "url": "http://127.0.0.1:4173/synthetic-pilot/",
+      "heading": "回答が完了しました",
+      "active": {
+        "tag": "H1",
+        "text": "回答が完了しました"
+      }
+    }
+  ],
+  "interactions": {
+    "profilePath": "pilot-browser-one-profile.json",
+    "beforeLists": {
+      "リストA": [
+        {
+          "rank": "1位",
+          "title": "親愛なる僕へ殺意をこめて"
+        },
+        {
+          "rank": "2位",
+          "title": "光が死んだ夏"
+        },
+        {
+          "rank": "3位",
+          "title": "20世紀少年"
+        },
+        {
+          "rank": "4位",
+          "title": "約束のネバーランド"
+        },
+        {
+          "rank": "5位",
+          "title": "HUNTER×HUNTER"
+        },
+        {
+          "rank": "6位",
+          "title": "鋼の錬金術師"
+        },
+        {
+          "rank": "7位",
+          "title": "炎炎ノ消防隊"
+        },
+        {
+          "rank": "8位",
+          "title": "ノラガミ"
+        },
+        {
+          "rank": "9位",
+          "title": "ヴィンランド・サガ"
+        },
+        {
+          "rank": "10位",
+          "title": "バガボンド"
+        }
+      ],
+      "リストB": [
+        {
+          "rank": "1位",
+          "title": "とんがり帽子のアトリエ"
+        },
+        {
+          "rank": "2位",
+          "title": "現実主義勇者の王国再建記"
+        },
+        {
+          "rank": "3位",
+          "title": "約束のネバーランド"
+        },
+        {
+          "rank": "4位",
+          "title": "ONE PIECE"
+        },
+        {
+          "rank": "5位",
+          "title": "NARUTO―ナルト―"
+        },
+        {
+          "rank": "6位",
+          "title": "DRAGON BALL"
+        },
+        {
+          "rank": "7位",
+          "title": "HUNTER×HUNTER"
+        },
+        {
+          "rank": "8位",
+          "title": "ヴィンランド・サガ"
+        },
+        {
+          "rank": "9位",
+          "title": "バガボンド"
+        },
+        {
+          "rank": "10位",
+          "title": "×××ＨＯＬｉＣ"
+        }
+      ]
+    },
+    "afterLists": {
+      "リストA": [
+        {
+          "rank": "1位",
+          "title": "親愛なる僕へ殺意をこめて"
+        },
+        {
+          "rank": "2位",
+          "title": "光が死んだ夏"
+        },
+        {
+          "rank": "3位",
+          "title": "20世紀少年"
+        },
+        {
+          "rank": "4位",
+          "title": "約束のネバーランド"
+        },
+        {
+          "rank": "5位",
+          "title": "HUNTER×HUNTER"
+        },
+        {
+          "rank": "6位",
+          "title": "鋼の錬金術師"
+        },
+        {
+          "rank": "7位",
+          "title": "炎炎ノ消防隊"
+        },
+        {
+          "rank": "8位",
+          "title": "ノラガミ"
+        },
+        {
+          "rank": "9位",
+          "title": "ヴィンランド・サガ"
+        },
+        {
+          "rank": "10位",
+          "title": "バガボンド"
+        }
+      ],
+      "リストB": [
+        {
+          "rank": "1位",
+          "title": "とんがり帽子のアトリエ"
+        },
+        {
+          "rank": "2位",
+          "title": "現実主義勇者の王国再建記"
+        },
+        {
+          "rank": "3位",
+          "title": "約束のネバーランド"
+        },
+        {
+          "rank": "4位",
+          "title": "ONE PIECE"
+        },
+        {
+          "rank": "5位",
+          "title": "NARUTO―ナルト―"
+        },
+        {
+          "rank": "6位",
+          "title": "DRAGON BALL"
+        },
+        {
+          "rank": "7位",
+          "title": "HUNTER×HUNTER"
+        },
+        {
+          "rank": "8位",
+          "title": "ヴィンランド・サガ"
+        },
+        {
+          "rank": "9位",
+          "title": "バガボンド"
+        },
+        {
+          "rank": "10位",
+          "title": "×××ＨＯＬｉＣ"
+        }
+      ]
+    },
+    "recommendationCardCount": 20,
+    "distinctBeforeWorkCount": 16,
+    "sharedResponseCount": 4,
+    "beforeInterestCount": 16,
+    "listPreference": "tie",
+    "afterInterestCount": 20,
+    "afterAgreementCount": 20,
+    "noExplanationCount": 0,
+    "explanationRegression": {
+      "lowerComedySentence": "「ギャグ・コメディ」が控えめな点が、あなたの好みに合う作品です。",
+      "lowerComedySentenceCount": 3,
+      "directionlessComedySentence": "「ギャグ・コメディ」があなたの好みに合う作品です。",
+      "directionlessComedySentenceCount": 0
+    },
+    "downloadedFilename": "konocomics-g2-pilot-browser-one.json",
+    "downloadedSha256": "98429bdd94a864cc2e29a2edf48971ed0ab38983fa4f6b98c01d60d0806bddb8",
+    "downloadedBytes": 9022
+  },
+  "blinding": {
+    "beforeForbiddenLabelsAbsent": true,
+    "afterForbiddenLabelsAbsent": true,
+    "engineIdentityRevealedOnlyAtComplete": true,
+    "before": {
+      "label": "before-ready",
+      "url": "http://127.0.0.1:4173/synthetic-pilot/",
+      "bodyTextSha256": "8b17148b2def2d9c89afc227f0a2bfd2be9bad5dd65932c921dd2368a2e53b72",
+      "htmlSha256": "1474c38c24503932e9e7556f848abc3e17bc8f85a9aada2b92014ed040ebe46d",
+      "ariaSha256": "3e342a666ed3b7c56b4563a8d23d659cb72301309d6d4a65ff48ba48c5784a0b",
+      "attributeCount": 648,
+      "jsonLdCount": 0,
+      "downloadButtonCount": 0,
+      "downloadAnchorCount": 0,
+      "storage": {
+        "localStorage": 0,
+        "sessionStorage": 0,
+        "cacheStorage": [],
+        "indexedDatabases": []
+      },
+      "cookieCount": 0,
+      "forbiddenHits": []
+    },
+    "after": {
+      "label": "after-ready",
+      "url": "http://127.0.0.1:4173/synthetic-pilot/",
+      "bodyTextSha256": "36e2399e8a769d380481cc146ecd13c2cd57839a57614687bde981a3922df7df",
+      "htmlSha256": "40b65a39f06797a51c47c612caa041dc2215ece117213d0df7fb9827cdd6793d",
+      "ariaSha256": "d4d38840d22ec12d3160c3c3700076e71681cc0c1f3715b28f46bbe0515985dc",
+      "attributeCount": 889,
+      "jsonLdCount": 0,
+      "downloadButtonCount": 0,
+      "downloadAnchorCount": 0,
+      "storage": {
+        "localStorage": 0,
+        "sessionStorage": 0,
+        "cacheStorage": [],
+        "indexedDatabases": []
+      },
+      "cookieCount": 0,
+      "forbiddenHits": []
+    }
+  },
+  "diagnostics": {
+    "requests": [
+      {
+        "url": "http://127.0.0.1:4173/synthetic-pilot/",
+        "method": "GET",
+        "resourceType": "document"
+      },
+      {
+        "url": "http://127.0.0.1:4173/_next/static/chunks/1bfv0twqyikhd.css",
+        "method": "GET",
+        "resourceType": "stylesheet"
+      },
+      {
+        "url": "http://127.0.0.1:4173/_next/static/chunks/0-n1dbpdu8c0b.js",
+        "method": "GET",
+        "resourceType": "script"
+      },
+      {
+        "url": "http://127.0.0.1:4173/_next/static/chunks/20bgx4tnpkorc.js",
+        "method": "GET",
+        "resourceType": "script"
+      },
+      {
+        "url": "http://127.0.0.1:4173/_next/static/chunks/3z_u62x5_tqjc.js",
+        "method": "GET",
+        "resourceType": "script"
+      },
+      {
+        "url": "http://127.0.0.1:4173/_next/static/chunks/2f6fnb4lx-yub.js",
+        "method": "GET",
+        "resourceType": "script"
+      },
+      {
+        "url": "http://127.0.0.1:4173/_next/static/chunks/turbopack-35jhnqft5vfyb.js",
+        "method": "GET",
+        "resourceType": "script"
+      },
+      {
+        "url": "http://127.0.0.1:4173/_next/static/chunks/0zrx-n7v36079.js",
+        "method": "GET",
+        "resourceType": "script"
+      },
+      {
+        "url": "http://127.0.0.1:4173/_next/static/chunks/3jazbi6wf_r13.js",
+        "method": "GET",
+        "resourceType": "script"
+      }
+    ],
+    "externalRequestCount": 0,
+    "consoleMessages": [
+      {
+        "type": "error",
+        "text": "Failed to load resource: the server responded with a status of 404 (File not found)"
+      }
+    ],
+    "pageErrors": [],
+    "requestFailures": [],
+    "httpErrors": [],
+    "knownNonBlockingServerResponse": {
+      "url": "http://127.0.0.1:4173/favicon.ico",
+      "status": 404,
+      "evidence": "Python static-server log; no application document, script, stylesheet, or data request failed"
+    }
+  }
+}
