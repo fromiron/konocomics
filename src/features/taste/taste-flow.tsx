@@ -364,7 +364,11 @@ export function TasteFlow() {
     [catalogRecords, worksById],
   );
   const coverTargets = useMemo(
-    () => createRecommendationCoverTargets(catalog, anchors.map((work) => work.id)),
+    () =>
+      createRecommendationCoverTargets(
+        catalog,
+        anchors.map((work) => work.id),
+      ),
     [anchors, catalog],
   );
   const { coverUrls, notifyCoverSettled } = useRecommendationCovers({

@@ -137,9 +137,7 @@ describe("Rakuten Route Handlers", () => {
     enableCredentials();
     vi.stubGlobal(
       "fetch",
-      vi.fn(async () =>
-        Response.json({ items: [{ ...upstreamItem(), availability: "" }] }),
-      ),
+      vi.fn(async () => Response.json({ items: [{ ...upstreamItem(), availability: "" }] })),
     );
 
     const response = await getItem(

@@ -71,10 +71,7 @@ const reviewAverageSchema = z.union([
 
 const availabilitySchema = z.union([
   z.number(),
-  z
-    .string()
-    .regex(/^\d+$/u)
-    .transform(Number),
+  z.string().regex(/^\d+$/u).transform(Number),
   z.literal("").transform(() => undefined),
 ]);
 
