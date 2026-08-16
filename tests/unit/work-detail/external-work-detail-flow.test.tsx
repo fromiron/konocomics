@@ -9,6 +9,7 @@ import {
   screen,
   waitFor,
 } from "@testing-library/react";
+import type { ReactNode } from "react";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 
 import { parseExternalWorkId, type ExternalWorkId } from "@/domain/catalog/external-work";
@@ -38,8 +39,12 @@ const testState = vi.hoisted(() => ({
     >(),
 }));
 
-vi.mock("next/navigation", () => ({
-  useSearchParams: () => new URLSearchParams(window.location.search),
+vi.mock("@tanstack/react-router", () => ({
+  Link: ({ children, className, to }: { children: ReactNode; className?: string; to: string }) => (
+    <a className={className} href={to}>
+      {children}
+    </a>
+  ),
 }));
 
 vi.mock("@/infrastructure/db", () => ({
@@ -78,6 +83,11 @@ function setSearch(search: string) {
 
 function detailSearch(id: ExternalWorkId) {
   return `?${new URLSearchParams({ workId: id }).toString()}`;
+}
+
+function ExternalDetailFromLocation() {
+  const workIds = new URLSearchParams(window.location.search).getAll("workId");
+  return <ExternalWorkDetailFlow workId={workIds.length === 1 ? workIds[0] : null} />;
 }
 
 function finishPageEntry(element: Element) {
@@ -132,7 +142,7 @@ describe("ExternalWorkDetailFlow", () => {
     ],
   ])("rejects a %s workId before any storage or provider lookup", async (_case, search) => {
     setSearch(search);
-    render(<ExternalWorkDetailFlow />);
+    render(<ExternalDetailFromLocation />);
 
     expect(
       await screen.findByRole("heading", { name: externalDetailStrings.malformed.title }),
@@ -159,7 +169,7 @@ describe("ExternalWorkDetailFlow", () => {
     async (kind, title) => {
       setSearch(detailSearch(EXTERNAL_ID));
       testState.inspectExternalWork.mockResolvedValue({ kind });
-      render(<ExternalWorkDetailFlow />);
+      render(<ExternalDetailFromLocation />);
 
       expect(await screen.findByRole("heading", { name: title })).toBeTruthy();
       expect(testState.inspectExternalWork).toHaveBeenCalledTimes(1);
@@ -173,7 +183,7 @@ describe("ExternalWorkDetailFlow", () => {
   it("maps a rejected local lookup to the unavailable state without provider recovery", async () => {
     setSearch(detailSearch(EXTERNAL_ID));
     testState.inspectExternalWork.mockRejectedValue(new Error("storage unavailable"));
-    render(<ExternalWorkDetailFlow />);
+    render(<ExternalDetailFromLocation />);
 
     expect(
       await screen.findByRole("heading", { name: externalDetailStrings.unavailable.title }),
@@ -186,7 +196,7 @@ describe("ExternalWorkDetailFlow", () => {
     const record = externalRecord();
     setSearch(detailSearch(record.id));
     testState.inspectExternalWork.mockResolvedValue({ kind: "found", record });
-    render(<ExternalWorkDetailFlow />);
+    render(<ExternalDetailFromLocation />);
 
     expect(await screen.findByRole("heading", { level: 1, name: record.title })).toBeTruthy();
     expect(screen.getByText(coverStrings.creatorLine(record.creators))).toBeTruthy();
@@ -222,7 +232,7 @@ describe("ExternalWorkDetailFlow", () => {
     setSearch(detailSearch(record.id));
     testState.inspectExternalWork.mockResolvedValue({ kind: "found", record });
     testState.saveExternalUserRecord.mockReturnValue(save.promise);
-    render(<ExternalWorkDetailFlow />);
+    render(<ExternalDetailFromLocation />);
 
     await screen.findByRole("heading", { level: 1, name: record.title });
     const form = screen.getByRole("button", { name: libraryStrings.editor.save }).closest("form")!;
@@ -242,7 +252,7 @@ describe("ExternalWorkDetailFlow", () => {
     setSearch(detailSearch(record.id));
     testState.inspectExternalWork.mockResolvedValue({ kind: "found", record });
     testState.saveExternalUserRecord.mockRejectedValue(new Error("write failed"));
-    render(<ExternalWorkDetailFlow />);
+    render(<ExternalDetailFromLocation />);
 
     await screen.findByRole("heading", { level: 1, name: record.title });
     fireEvent.click(screen.getByRole("button", { name: libraryStrings.editor.save }));
@@ -262,11 +272,11 @@ describe("ExternalWorkDetailFlow", () => {
     testState.inspectExternalWork.mockImplementation((id) =>
       id === first.id ? firstLookup.promise : Promise.resolve({ kind: "found", record: second }),
     );
-    const view = render(<ExternalWorkDetailFlow />);
+    const view = render(<ExternalDetailFromLocation />);
     await waitFor(() => expect(testState.inspectExternalWork).toHaveBeenCalledWith(first.id));
 
     setSearch(detailSearch(second.id));
-    view.rerender(<ExternalWorkDetailFlow />);
+    view.rerender(<ExternalDetailFromLocation />);
     expect(await screen.findByRole("heading", { level: 1, name: second.title })).toBeTruthy();
 
     await act(async () => {
@@ -282,7 +292,7 @@ describe("ExternalWorkDetailFlow", () => {
     const record = externalRecord();
     setSearch(detailSearch(record.id));
     testState.inspectExternalWork.mockResolvedValue({ kind: "found", record });
-    const view = render(<ExternalWorkDetailFlow />);
+    const view = render(<ExternalDetailFromLocation />);
 
     await screen.findByRole("heading", { level: 1, name: record.title });
     const firstMain = document.querySelector("main");
@@ -290,7 +300,7 @@ describe("ExternalWorkDetailFlow", () => {
     expect(firstMain?.classList.contains("page-entry-b")).toBe(false);
 
     setSearch(`?view=full&${new URLSearchParams({ workId: record.id }).toString()}`);
-    view.rerender(<ExternalWorkDetailFlow />);
+    view.rerender(<ExternalDetailFromLocation />);
 
     expect(document.querySelector("main")).toBe(firstMain);
     expect(document.querySelector("main")?.classList.contains("page-entry-b")).toBe(false);

@@ -1,18 +1,11 @@
 "use client";
 
-import { type KeyboardEvent, type ReactNode, useEffect, useRef } from "react";
+import { XIcon } from "lucide-react";
+import type { ReactNode } from "react";
 
+import { Button } from "@/components/design-system/button";
+import { Dialog, DialogContent } from "@/components/design-system/dialog";
 import { libraryStrings } from "@/lib/strings";
-import { cn } from "@/lib/utils";
-
-const FOCUSABLE_SELECTOR = [
-  "a[href]",
-  "button:not([disabled])",
-  "input:not([disabled])",
-  "select:not([disabled])",
-  "textarea:not([disabled])",
-  '[tabindex]:not([tabindex="-1"])',
-].join(",");
 
 type ModalSurfaceName =
   Readonly<{ label: string; labelledBy?: never }> | Readonly<{ label?: never; labelledBy: string }>;
@@ -35,77 +28,39 @@ export function ModalSurface({
   opener,
   variant,
 }: ModalSurfaceProps) {
-  const surfaceRef = useRef<HTMLDivElement>(null);
-
-  useEffect(() => {
-    const surface = surfaceRef.current;
-    const previousOverflow = document.body.style.overflow;
-    document.body.style.overflow = "hidden";
-    const first = surface?.querySelector<HTMLElement>(FOCUSABLE_SELECTOR);
-    first?.focus();
-    return () => {
-      document.body.style.overflow = previousOverflow;
-      if (opener?.isConnected === true) {
-        opener.focus();
-      } else if (fallbackFocusId !== undefined) {
-        document.getElementById(fallbackFocusId)?.focus();
-      }
-    };
-  }, [fallbackFocusId, opener]);
-
-  const handleKeyDown = (event: KeyboardEvent<HTMLDivElement>) => {
-    if (event.key === "Escape") {
-      event.preventDefault();
-      onClose();
-      return;
-    }
-    if (event.key !== "Tab") return;
-
-    const focusable = [
-      ...(surfaceRef.current?.querySelectorAll<HTMLElement>(FOCUSABLE_SELECTOR) ?? []),
-    ];
-    if (focusable.length === 0) {
-      event.preventDefault();
-      return;
-    }
-    const first = focusable[0];
-    const last = focusable.at(-1);
-    if (event.shiftKey && document.activeElement === first) {
-      event.preventDefault();
-      last?.focus();
-    } else if (!event.shiftKey && document.activeElement === last) {
-      event.preventDefault();
-      first?.focus();
-    }
-  };
-
   return (
-    <div
-      className="library-panel"
-      onMouseDown={(event) => {
-        if (event.currentTarget === event.target) onClose();
+    <Dialog
+      open
+      onOpenChange={(open) => {
+        if (!open) onClose();
       }}
-      role="presentation"
     >
-      <div
+      <DialogContent
         aria-label={label}
         aria-labelledby={labelledBy}
-        aria-modal="true"
-        className={cn("library-panel__surface surface-sheet", `library-panel__surface--${variant}`)}
-        onKeyDown={handleKeyDown}
-        ref={surfaceRef}
-        role="dialog"
+        className="fixed top-auto bottom-0 left-1/2 z-50 max-h-[88dvh] w-full max-w-[var(--layout-width-library)] -translate-x-1/2 translate-y-0 overflow-y-auto rounded-t-[var(--radius-card)] rounded-b-none bg-surface-1 px-[var(--layout-page-padding)] pt-[var(--space-6)] pb-[calc(var(--space-6)+var(--layout-safe-area-bottom))] !transition-none data-closed:!animate-none data-open:!animate-none sm:max-w-[var(--layout-width-library)] md:top-1/2 md:bottom-auto md:-translate-y-1/2 md:rounded-[var(--radius-card)]"
+        data-library-panel={variant}
+        finalFocus={() =>
+          opener?.isConnected === true
+            ? opener
+            : fallbackFocusId === undefined
+              ? null
+              : document.getElementById(fallbackFocusId)
+        }
+        showCloseButton={false}
       >
-        <button
+        <Button
           aria-label={libraryStrings.panel.close}
-          className="library-panel__close interactive-press"
+          className="sticky top-0 z-2 ml-auto grid size-[var(--control-min-size)] min-h-[var(--control-min-size)] place-items-center border border-line bg-surface-1 text-[length:var(--font-size-20)] leading-none text-text-strong"
           onClick={onClose}
+          size="icon"
           type="button"
+          variant="ghost"
         >
-          <span aria-hidden="true">×</span>
-        </button>
+          <XIcon aria-hidden="true" />
+        </Button>
         {children}
-      </div>
-    </div>
+      </DialogContent>
+    </Dialog>
   );
 }

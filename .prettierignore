@@ -29,10 +29,12 @@ data/staging/g2/product-direction-cycle-2/pilot/output/aggregate-1.md
 data/staging/g2/product-direction-cycle-2/pilot/output/aggregate-2.md
 data/staging/g2/product-direction-cycle-2/pilot/output/konocomics-g2-pilot-browser-one.json
 src/data/generated
+src/routeTree.gen.ts
 public/catalog
 docs/factors/factor-dictionary.md
 docs/planning
 node_modules
+.pnpm-store
 out
 playwright-report
 test-results

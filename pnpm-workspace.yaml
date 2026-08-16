@@ -1,3 +1,6 @@
+packages:
+  - harness
+
 ignoredBuiltDependencies:
   - sharp
   - unrs-resolver

@@ -1,7 +1,10 @@
-import Link from "next/link";
-import type { KeyboardEvent, Ref } from "react";
+import { Link } from "@tanstack/react-router";
+import { type Ref } from "react";
 
 import { CoverImage } from "@/components/cover/CoverImage";
+import { ExpandableMediaCard } from "@/components/media/expandable-media-card";
+import { ConfidenceLabel } from "@/components/media/recommendation-evidence";
+import { StateActionRow } from "@/components/media/state-action-row";
 import type { Work } from "@/domain/catalog/types";
 import { generateTasteExplanation } from "@/domain/explanation/generate";
 import type { TasteExplanationSentence } from "@/domain/explanation/types";
@@ -22,6 +25,7 @@ type RecommendationCardProps = Readonly<{
   onCompleted: () => void;
   onHidden: () => void;
   onRemovalIntent: () => void;
+  onPreview?: () => void;
   onCoverSettled?: () => void;
 }>;
 
@@ -51,6 +55,7 @@ export function RecommendationCard({
   onCoverSettled,
   onHidden,
   onPlanned,
+  onPreview,
   onRemovalIntent,
   planned,
   priority,
@@ -66,118 +71,107 @@ export function RecommendationCard({
   });
   const leadReason = explanation.positiveReasons[0];
   const remainingReasons = explanation.positiveReasons.slice(1, 3);
-  const prepareKeyboardRemoval = (event: KeyboardEvent<HTMLButtonElement>) => {
-    if (!busy && (event.key === "Enter" || event.key === " ")) onRemovalIntent();
-  };
-
   return (
-    <article className="recommendation-card surface-card" ref={articleRef} tabIndex={-1}>
-      <Link
-        aria-label={recommendationStrings.openDetails(work.title)}
-        className="recommendation-card__identity"
-        href={`/works/${work.id}`}
-        prefetch={false}
-      >
-        <CoverImage
-          className="recommendation-card__cover"
-          coverUrl={coverUrl}
-          creators={work.creators}
-          onSettled={onCoverSettled}
-          priority={priority}
-          requestedSize={400}
-          title={work.title}
-        />
-        <div className="recommendation-card__copy">
-          <h2>{work.title}</h2>
-          <p className="recommendation-card__creator">{coverStrings.creatorLine(work.creators)}</p>
-          <p className="recommendation-card__metadata">
-            {recommendationStrings.workStatus[work.status]}
-            <span aria-hidden="true"> · </span>
-            {recommendationStrings.volumeCount(volumeCount)}
-          </p>
-          {leadReason === undefined ? (
-            <p className="recommendation-card__reason-unavailable">
-              {recommendationStrings.reasonUnavailable}
-            </p>
-          ) : (
-            <section
-              aria-label={recommendationStrings.reasonHeading}
-              className="recommendation-card__reason"
-            >
-              <p data-contribution-summary={serializeContributionSummary(leadReason)}>
-                {leadReason.text}
+    <ExpandableMediaCard articleRef={articleRef} onPreview={onPreview}>
+      {({ expanded, onDetailsToggle, onPreviewClick }) => (
+        <>
+          <Link
+            aria-label={recommendationStrings.openDetails(work.title)}
+            className="recommendation-card__identity group/identity grid min-h-[var(--control-min-size)] grid-cols-[minmax(0,1fr)] gap-[var(--space-content)] p-[var(--space-content)] [@media(min-width:768px)_and_(hover:hover)_and_(pointer:fine)]:group-data-[expanded]/card:grid-cols-[var(--recommendation-cover-width)_minmax(0,1fr)] [@media(min-width:768px)_and_(hover:hover)_and_(pointer:fine)]:group-data-[expanded]/card:gap-[var(--space-4)] [@media(min-width:768px)_and_(hover:hover)_and_(pointer:fine)]:group-data-[expanded]/card:p-[var(--space-4)]"
+            onClick={onPreviewClick}
+            params={{ workId: work.id }}
+            preload={false}
+            to="/works/$workId"
+          >
+            <CoverImage
+              className="recommendation-card__cover w-full aspect-[30/43] transition-transform duration-[var(--motion-duration-feedback)] ease-[var(--motion-ease-direct)] motion-reduce:transform-none motion-reduce:transition-none [@media(hover:hover)_and_(pointer:fine)]:group-hover/identity:-translate-y-0.5 [@media(hover:hover)_and_(pointer:fine)]:group-hover/identity:shadow-[var(--shadow-raised)] [@media(min-width:768px)_and_(hover:hover)_and_(pointer:fine)]:group-data-[expanded]/card:w-[var(--recommendation-cover-width)]"
+              coverUrl={coverUrl}
+              creators={work.creators}
+              onSettled={onCoverSettled}
+              priority={priority}
+              requestedSize={400}
+              title={work.title}
+            />
+            <div className="min-w-0">
+              <h2 className="line-clamp-2 break-words [@media(min-width:768px)_and_(hover:hover)_and_(pointer:fine)]:group-data-[expanded]/card:line-clamp-none">
+                {work.title}
+              </h2>
+              <p className="mt-[var(--space-content-tight)] line-clamp-1 text-[length:var(--text-caption-size)] text-text-muted [@media(min-width:768px)_and_(hover:hover)_and_(pointer:fine)]:group-data-[expanded]/card:line-clamp-none">
+                {coverStrings.creatorLine(work.creators)}
               </p>
-            </section>
-          )}
-        </div>
-      </Link>
-
-      <details className="recommendation-card__details">
-        <summary>{recommendationStrings.moreReasons}</summary>
-        <div className="recommendation-card__details-content">
-          {remainingReasons.length === 0 ? null : (
-            <ul>
-              {remainingReasons.map((reason) => (
-                <li key={`${reason.source}:${reason.group}:${reason.factorId}`}>{reason.text}</li>
-              ))}
-            </ul>
-          )}
-          {explanation.caution === undefined ? null : (
-            <div className="recommendation-card__caution">
-              <h3>{recommendationStrings.cautionHeading}</h3>
-              <p>{explanation.caution.text}</p>
+              <p className="mt-[var(--space-content-tight)] line-clamp-1 text-[length:var(--text-caption-size)] text-text-muted [@media(min-width:768px)_and_(hover:hover)_and_(pointer:fine)]:group-data-[expanded]/card:line-clamp-none">
+                {recommendationStrings.workStatus[work.status]}
+                <span aria-hidden="true"> · </span>
+                {recommendationStrings.volumeCount(volumeCount)}
+              </p>
+              {leadReason === undefined ? (
+                <p className="mt-[var(--space-content)] line-clamp-2 border-t border-line pt-[var(--space-content)] text-[length:var(--text-caption-size)] text-text-muted [@media(min-width:768px)_and_(hover:hover)_and_(pointer:fine)]:group-data-[expanded]/card:line-clamp-none">
+                  {recommendationStrings.reasonUnavailable}
+                </p>
+              ) : (
+                <section
+                  aria-label={recommendationStrings.reasonHeading}
+                  className="mt-[var(--space-content)] line-clamp-2 border-t border-line pt-[var(--space-content)] [@media(min-width:768px)_and_(hover:hover)_and_(pointer:fine)]:group-data-[expanded]/card:line-clamp-none"
+                >
+                  <p
+                    className="font-bold leading-[1.55] text-text-strong"
+                    data-contribution-summary={serializeContributionSummary(leadReason)}
+                  >
+                    {leadReason.text}
+                  </p>
+                </section>
+              )}
             </div>
-          )}
-          <p className="recommendation-card__confidence">
-            {recommendationStrings.confidenceHeading}: {explanation.confidence.label}
-          </p>
-        </div>
-      </details>
+          </Link>
 
-      <div className="recommendation-card__actions">
-        <button
-          aria-pressed={planned}
-          className="recommendation-card__primary interactive-press"
-          disabled={busy}
-          onClick={onPlanned}
-          type="button"
-        >
-          <span>{recommendationStrings.actions.planned}</span>
-          {planned ? (
-            <span aria-hidden="true" className="recommendation-card__confirmation">
-              {recommendationStrings.actions.plannedConfirmation}
-            </span>
-          ) : null}
-        </button>
-        <button
-          className="interactive-press"
-          data-recommendation-action="completed"
-          disabled={busy}
-          onClick={() => {
-            onRemovalIntent();
-            onCompleted();
-          }}
-          onKeyDown={prepareKeyboardRemoval}
-          onPointerDown={busy ? undefined : onRemovalIntent}
-          type="button"
-        >
-          {recommendationStrings.actions.completed}
-        </button>
-        <button
-          className="interactive-press"
-          data-recommendation-action="hidden"
-          disabled={busy}
-          onClick={() => {
-            onRemovalIntent();
-            onHidden();
-          }}
-          onKeyDown={prepareKeyboardRemoval}
-          onPointerDown={busy ? undefined : onRemovalIntent}
-          type="button"
-        >
-          {recommendationStrings.actions.hidden}
-        </button>
-      </div>
-    </article>
+          <details
+            className="hidden border-t border-line [@media(min-width:768px)_and_(hover:hover)_and_(pointer:fine)]:block"
+            onToggle={onDetailsToggle}
+            open={expanded}
+          >
+            <summary
+              className="flex min-h-[var(--control-min-size)] cursor-pointer items-center px-[var(--space-4)] font-bold text-accent"
+              onClick={onPreviewClick}
+            >
+              {recommendationStrings.moreReasons}
+            </summary>
+            <div className="grid gap-[var(--space-3)] px-[var(--space-4)] pb-[var(--space-4)]">
+              {remainingReasons.length === 0 ? null : (
+                <ul className="m-0 grid gap-[var(--space-content)] pl-[var(--space-5)]">
+                  {remainingReasons.map((reason) => (
+                    <li key={`${reason.source}:${reason.group}:${reason.factorId}`}>
+                      {reason.text}
+                    </li>
+                  ))}
+                </ul>
+              )}
+              {explanation.caution === undefined ? null : (
+                <div className="border-l-[length:var(--space-content-tight)] border-warn bg-surface-danger-soft p-[var(--space-3)]">
+                  <h3 className="mb-[var(--space-content-tight)] text-[length:var(--font-size-14)]">
+                    {recommendationStrings.cautionHeading}
+                  </h3>
+                  <p>{explanation.caution.text}</p>
+                </div>
+              )}
+              <ConfidenceLabel
+                label={explanation.confidence.label}
+                prefix={recommendationStrings.confidenceHeading}
+              />
+            </div>
+          </details>
+
+          <StateActionRow
+            busy={busy}
+            className="hidden [@media(min-width:768px)_and_(hover:hover)_and_(pointer:fine)]:grid"
+            compact
+            onCompleted={onCompleted}
+            onHidden={onHidden}
+            onPlanned={onPlanned}
+            onRemovalIntent={onRemovalIntent}
+            planned={planned}
+          />
+        </>
+      )}
+    </ExpandableMediaCard>
   );
 }

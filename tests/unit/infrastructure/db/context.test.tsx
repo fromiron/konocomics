@@ -967,8 +967,8 @@ describe("PersistenceProvider profile state", () => {
     await waitFor(() => {
       expect(screen.getByTestId("transfer-result").textContent).toBe("applied");
       expect(screen.getByTestId("transfer-snapshot").textContent).toBe(importedSnapshot);
+      expect(observedSnapshots.slice(snapshotsBeforeImport)).toEqual([importedSnapshot]);
     });
-    expect(observedSnapshots.slice(snapshotsBeforeImport)).toEqual([importedSnapshot]);
 
     fireEvent.click(screen.getByRole("button", { name: "preview export" }));
     await waitFor(() => {
@@ -987,8 +987,8 @@ describe("PersistenceProvider profile state", () => {
     releaseDeleteRefresh();
     await waitFor(() => {
       expect(screen.getByTestId("transfer-snapshot").textContent).toBe(deletedSnapshot);
+      expect(observedSnapshots.slice(snapshotsBeforeDelete)).toEqual([deletedSnapshot]);
     });
-    expect(observedSnapshots.slice(snapshotsBeforeDelete)).toEqual([deletedSnapshot]);
   });
 
   it("does not refresh a stale context snapshot after an indeterminate replacement", async () => {

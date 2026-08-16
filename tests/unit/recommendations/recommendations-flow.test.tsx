@@ -1,7 +1,7 @@
 // @vitest-environment jsdom
 
 import { act, cleanup, fireEvent, render, screen, waitFor, within } from "@testing-library/react";
-import { useEffect } from "react";
+import { type ReactNode, useEffect } from "react";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 
 import catalogJson from "@/data/generated/catalog-v1.json";
@@ -12,6 +12,27 @@ import { recommendationContextSchema } from "@/domain/recommendation/context-sch
 import type { RecommendationPlanEntry } from "@/domain/recommendation/types";
 import type { RecommendationMotionListProps } from "@/features/recommendations/recommendation-motion-list";
 import { RecommendationsFlow } from "@/features/recommendations/recommendations-flow";
+
+vi.mock("@tanstack/react-router", () => ({
+  Link: ({
+    children,
+    className,
+    params,
+    to,
+  }: {
+    children: ReactNode;
+    className?: string;
+    params?: { workId: string };
+    to: string;
+  }) => (
+    <a
+      className={className}
+      href={params === undefined ? to : to.replace("$workId", params.workId)}
+    >
+      {children}
+    </a>
+  ),
+}));
 
 const testState = vi.hoisted(() => ({
   buildPlan: vi.fn(),
@@ -41,14 +62,14 @@ let motionPreferenceListener: ((event: { matches: boolean }) => void) | null = n
 function TestMotionList({ items, shortage }: RecommendationMotionListProps) {
   testState.motionListRenders.push(items.map((item) => item.workId));
   return (
-    <ol className="recommendations-list" data-recommendation-motion="enabled" role="list">
+    <>
       {items.map((item) => (
         <li data-recommendation-work-id={item.workId} key={item.workId}>
           {item.content}
         </li>
       ))}
       {shortage}
-    </ol>
+    </>
   );
 }
 
@@ -285,13 +306,13 @@ afterEach(() => {
 });
 
 describe("RecommendationsFlow", () => {
-  it("renders a cache hit as an ordered grounded list with stable provenance hooks", async () => {
+  it("renders a cache hit as a grounded list with stable provenance hooks", async () => {
     const { container } = render(<RecommendationsFlow />);
 
     const list = await waitFor(() => {
-      const element = container.querySelector("ol.recommendations-list");
+      const element = container.querySelector("ul.recommendations-list");
       expect(element).toBeTruthy();
-      return element as HTMLOListElement;
+      return element as HTMLUListElement;
     });
     expect(within(list).getAllByRole("listitem").slice(0, 10)).toHaveLength(10);
     expect(testState.buildPlan).not.toHaveBeenCalled();
@@ -447,7 +468,7 @@ describe("RecommendationsFlow", () => {
     expect(screen.queryByRole("dialog")).toBeNull();
     expect(
       container
-        .querySelector("ol.recommendations-list")
+        .querySelector("ul.recommendations-list")
         ?.getAttribute("data-recommendation-motion"),
     ).toBe("static");
 
@@ -458,7 +479,7 @@ describe("RecommendationsFlow", () => {
     expect(await screen.findByRole("dialog")).toBeTruthy();
     expect(
       container
-        .querySelector("ol.recommendations-list")
+        .querySelector("ul.recommendations-list")
         ?.getAttribute("data-recommendation-motion"),
     ).toBe("enabled");
     expect(testState.motionListRenders[0]).toContain(firstWorkId);
@@ -503,7 +524,7 @@ describe("RecommendationsFlow", () => {
     expect(testState.saveUserWork).toHaveBeenCalledTimes(1);
     expect(
       container
-        .querySelector("ol.recommendations-list")
+        .querySelector("ul.recommendations-list")
         ?.getAttribute("data-recommendation-motion"),
     ).toBe("static");
     expect(container.querySelector(`[data-recommendation-work-id='${removedWorkId}']`)).toBeNull();
@@ -546,7 +567,7 @@ describe("RecommendationsFlow", () => {
       expect(testState.saveUserWork).toHaveBeenCalledTimes(1);
       expect(
         container
-          .querySelector("ol.recommendations-list")
+          .querySelector("ul.recommendations-list")
           ?.getAttribute("data-recommendation-motion"),
       ).toBe("static");
     },
@@ -567,7 +588,7 @@ describe("RecommendationsFlow", () => {
     expect(await screen.findByRole("dialog")).toBeTruthy();
     expect(
       container
-        .querySelector("ol.recommendations-list")
+        .querySelector("ul.recommendations-list")
         ?.getAttribute("data-recommendation-motion"),
     ).toBe("enabled");
     fireEvent.click(screen.getByRole("button", { name: "スキップ" }));
@@ -586,7 +607,7 @@ describe("RecommendationsFlow", () => {
     await waitFor(() => {
       expect(
         container
-          .querySelector("ol.recommendations-list")
+          .querySelector("ul.recommendations-list")
           ?.getAttribute("data-recommendation-motion"),
       ).toBe("static");
       expect(document.activeElement).toBe(
@@ -629,7 +650,7 @@ describe("RecommendationsFlow", () => {
     expect(await screen.findByRole("dialog")).toBeTruthy();
     expect(
       container
-        .querySelector("ol.recommendations-list")
+        .querySelector("ul.recommendations-list")
         ?.getAttribute("data-recommendation-motion"),
     ).toBe("static");
     expect(container.querySelector(`[data-recommendation-work-id='${removedWorkId}']`)).toBeNull();
@@ -662,7 +683,7 @@ describe("RecommendationsFlow", () => {
     expect(await screen.findByRole("dialog")).toBeTruthy();
     expect(
       container
-        .querySelector("ol.recommendations-list")
+        .querySelector("ul.recommendations-list")
         ?.getAttribute("data-recommendation-motion"),
     ).toBe("enabled");
     fireEvent.click(screen.getByRole("button", { name: "スキップ" }));
@@ -673,7 +694,7 @@ describe("RecommendationsFlow", () => {
       expect(testState.savePolicies).toHaveBeenCalledTimes(1);
       expect(
         container
-          .querySelector("ol.recommendations-list")
+          .querySelector("ul.recommendations-list")
           ?.getAttribute("data-recommendation-motion"),
       ).toBe("static");
     });
@@ -694,7 +715,7 @@ describe("RecommendationsFlow", () => {
     expect(testState.loadMotionList).toHaveBeenCalledTimes(1);
     expect(
       container
-        .querySelector("ol.recommendations-list")
+        .querySelector("ul.recommendations-list")
         ?.getAttribute("data-recommendation-motion"),
     ).toBe("static");
 
@@ -777,10 +798,12 @@ describe("RecommendationsFlow", () => {
       await policyWrite.promise;
     });
     await waitFor(() => {
-      expect(screen.getByRole("checkbox", { name: "完結作を優先" }).matches(":checked")).toBe(true);
-      expect(screen.getByRole("checkbox", { name: "隠れた作品を優先" }).matches(":checked")).toBe(
-        false,
-      );
+      expect(
+        screen.getByRole("checkbox", { name: "完結作を優先" }).getAttribute("aria-checked"),
+      ).toBe("true");
+      expect(
+        screen.getByRole("checkbox", { name: "隠れた作品を優先" }).getAttribute("aria-checked"),
+      ).toBe("false");
     });
   });
 

@@ -1,6 +1,7 @@
 // @vitest-environment jsdom
 
 import { cleanup, fireEvent, render, screen, waitFor } from "@testing-library/react";
+import type { ReactNode } from "react";
 import { afterEach, describe, expect, it, vi } from "vitest";
 
 import catalogJson from "@/data/generated/catalog-v1.json";
@@ -10,6 +11,30 @@ import type { UserWorkRecord } from "@/domain/profile/types";
 import { LibraryView } from "@/features/library/library-view";
 import type { ExternalWorkRecord } from "@/infrastructure/db";
 import { libraryStrings } from "@/lib/strings";
+
+vi.mock("@tanstack/react-router", () => ({
+  Link: ({
+    children,
+    className,
+    params,
+    search,
+    to,
+  }: {
+    children: ReactNode;
+    className?: string;
+    params?: { workId: string };
+    search?: { workId: string };
+    to: string;
+  }) => {
+    const path = params === undefined ? to : to.replace("$workId", params.workId);
+    const query = search === undefined ? "" : `?${new URLSearchParams(search).toString()}`;
+    return (
+      <a className={className} href={`${path}${query}`}>
+        {children}
+      </a>
+    );
+  },
+}));
 
 const catalog = catalogV1Schema.parse(catalogJson);
 const target = catalog.works[0]!;
@@ -51,14 +76,11 @@ function renderLibrary(options?: {
       (id: ExternalWorkId, expectedNormalizedKey: string, record: UserWorkRecord) => Promise<void>
     >()
     .mockResolvedValue();
-  const externalHref = (id: string) =>
-    `/works/external?${new URLSearchParams({ workId: id }).toString()}`;
   render(
     <LibraryView
       addCatalogWork={vi.fn().mockResolvedValue("added")}
       addExternalWork={vi.fn().mockResolvedValue("added")}
       catalog={catalog}
-      externalHref={externalHref}
       externalWorks={options?.externalWorks ?? [externalRecord]}
       saveExternalUserRecord={saveExternalUserRecord}
       saveUserWork={saveUserWork}
@@ -103,7 +125,6 @@ describe("LibraryView", () => {
         addCatalogWork={vi.fn().mockResolvedValue("added")}
         addExternalWork={vi.fn().mockResolvedValue("added")}
         catalog={catalog}
-        externalHref={(id) => `/works/external?${new URLSearchParams({ workId: id }).toString()}`}
         externalWorks={[]}
         saveExternalUserRecord={vi.fn().mockResolvedValue(undefined)}
         saveUserWork={saveUserWork}
@@ -131,12 +152,12 @@ describe("LibraryView", () => {
     opener.focus();
     fireEvent.click(opener);
     const dialog = screen.getByRole("dialog", { name: target.title });
-    expect(document.body.style.overflow).toBe("hidden");
+    await waitFor(() => expect(document.body.style.overflowY).toBe("hidden"));
     fireEvent.keyDown(dialog, { key: "Escape" });
 
     await waitFor(() => expect(screen.queryByRole("dialog")).toBeNull());
     expect(document.activeElement).toBe(opener);
-    expect(document.body.style.overflow).toBe("");
+    await waitFor(() => expect(document.body.style.overflowY).toBe(""));
   });
 
   it("shows the contracted overall and per-tab empty states", () => {

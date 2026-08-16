@@ -1,5 +1,6 @@
 # dependencies
 /node_modules
+/harness/node_modules/
 
 # Next.js
 /.next/
@@ -7,9 +8,12 @@
 /harness/.next/
 /harness/out/
 /build/
+/.nitro/
+/.output/
 
 # tests
 /coverage/
+/.qa/
 /.playwright-cli/
 /output/playwright/
 /playwright-report/
@@ -25,6 +29,7 @@
 # package manager and debug logs
 *.log
 .pnpm-debug.log*
+/.pnpm-store/
 
 # editors and operating systems
 .DS_Store

@@ -1,16 +1,39 @@
 # 06 — 구현 계획 (Implementation Plan)
 
-> 수직 슬라이스 단위. 각 슬라이스는 검증 가능한 동작을 만든다.
-> **게이트 G1(sanity)·G2(블라인드 GO)는 사람·데이터 작업이며, 통과 전에 후속 UI 슬라이스를 시작하지 않는다.** 단, 디자인 토큰·화면 계약은 본 문서 세트로 이미 확정되어 있어 GO 직후 병목 없이 진행 가능하다.
+> 수직 슬라이스 단위. 각 단계는 검증 가능한 동작을 만든다. Slice 0~11은 완료된 Next.js baseline의 provenance이며, 현재 작업 순서는 아래 M0~M10이다.
 
-## 단계 재편 (기존 Phase 0~6 → 5단계)
+## 현재 프로그램 — TanStack Start migration + dark-only redesign
+
+`08-tanstack-start-migration.md`가 framework/Router 경계의 단일 계약이다. 추천 산식·domain model·Dexie schema·Export/Import·external identity·Rakuten URL/응답은 baseline과 동일하게 유지한다.
+
+| 단계 | 범위 | 완료 증거 |
+|---|---|---|
+| **M0** | 현재 route, fixed 5 product E2E, deterministic screenshot, recommendation fixture 동결 + R0 문서 정렬 | baseline build/fixture identity와 변경된 계약 문서 |
+| **M1** | TanStack Start scaffold, exact dependency version 고정 | dev/build와 lockfile |
+| **M2** | domain/lib/data/infrastructure의 framework 독립성 확보 | domain import boundary + 기존 golden |
+| **M3** | file route tree, route별 Zod `validateSearch`, pending/error/not-found | malformed/default/back-forward route checks |
+| **M4** | Dexie provider와 hydration 뒤 browser guard | 기존 DB readback, no server Dexie access |
+| **M5** | `/api/rakuten/search`, `/api/rakuten/item` Start server route 이전 | URL/validation/cache/error contract test |
+| **M6** | route별 기존 기능 parity와 Next 제품 runtime 제거 준비 | fixed 5 E2E + export/external/recommendation regression |
+| **M7** | dark shell, shadcn Base UI primitive→design-system wrapper, MediaShelf/expandable card/Top 10 | responsive navigation, keyboard/touch/reduced-motion |
+| **M8** | 확정 7개 디자인을 페이지별 수직 slice로 적용 | 1440×900/390×844 deterministic screenshot 검토 |
+| **M9** | 제품 Next 전용 파일/dependency 제거, 별도 G2 harness 격리 | product source/dependency scan + build |
+| **M10** | format/typecheck/lint/unit/fixed 5 E2E/catalog/build와 production deployment 검증 | 전체 gate와 별도 승인된 배포 readback |
+
+- Framework migration과 7화면 redesign을 하나의 대형 PR에 넣지 않는다. M1~M6와 M7~M8을 작고 검토 가능한 commit/PR로 나눈다.
+- shadcn CLI는 필요한 Base UI primitive만 `src/components/ui/**`에 생성한다. 제품 코드는 dark token과 접근성을 적용한 `src/components/design-system/**` wrapper를 사용한다.
+- Carousel은 CSS scroll-snap/ResizeObserver/기존 Motion으로 구현한다. TanStack Query·Embla·Swiper·Zustand를 추가하지 않는다.
+- Rakuten client의 1초 간격은 development-only다. 짧은 placeholder 노출은 허용한다.
+- fixed 5 product E2E를 늘리거나 새 visual-regression infrastructure를 만들지 않는다. 기존 fixture와 수동 deterministic screenshot을 재사용한다.
+
+## 완료된 baseline 경로 (역사 기록, 새 구현 지시가 아님)
 
 ```text
 Stage A  팩터 사전 + 엔진 + CLI          (슬라이스 0~3)
 Stage B  50작품 sanity check             (게이트 G1 — 데이터·사람 작업)
 Stage C  150작품 + 블라인드 테스트        (슬라이스 4, 게이트 G2 = GO/NO-GO)
 Stage D  Web MVP                          (슬라이스 5~10)
-Stage E  시그니처 폴리시 + PWA + 다크     (슬라이스 11~12)
+Stage E  시그니처 폴리시                  (슬라이스 11 완료, 12 폐기)
 ```
 
 기존 계획과의 차이: Spreadsheet 수식 검증 제거(엔진을 처음부터 TS로, `01` R12), 블라인드 하니스 신설, 7단계→5단계.
@@ -175,15 +198,12 @@ Stage E  시그니처 폴리시 + PWA + 다크     (슬라이스 11~12)
 - **내용:** static-first konomi 로고 reveal(§5.1 marker 선기록·고정 overlay·스킵/정리), DNA query 즉시 소비와 1200ms 전역 FactorBar gate, B를 onboarding Step 1·ordinary taste·resolved Catalog 상세·found external 상세에만 적용, A/C의 local Motion ownership과 E/F CSS ownership, reduced-motion 정적 동등성, Library sheet·image fade·비허용 보간 제거, 추천 skeleton 1.2s·첫 표지 priority, 라이트 상세 blur의 기존 60% paper overlay 복구, 공통 셸에는 Catalog identity만 두고 추천 전체 Catalog는 byte-identical content-addressed 정적 자산에서 strict 검증 후 로드, §8 production-local 성능 측정·조정.
 - **완료 기준:** `03` §1·§4·§5·§6·§7의 해당 모션 수용 기준과 `04` §5~§9를 충족한다. fixed 5 product E2E를 늘리지 않고 모두 통과하며 reduced-motion에서 정보·상태·focus 손실이 0이다. frozen cold mobile 5회 중앙값에서 landing/추천 LCP <3.5s, CLS <0.05, modern `/recommendations` actual initial entry JS <250,000 bytes gzip을 직접 입증한다. 추천 C는 60fps를 목표로 하고 median effective FPS ≥30을 충족하며 미달 owner는 layout motion 없이 재검증한다. production-local 증거를 배포·실기기 증거로 과장하지 않는다.
 
-## 슬라이스 12 — PWA + 다크 모드 + 최종 QA
+## 폐기된 슬라이스 12
 
-- **목표:** 설치 가능·오프라인 셸·다크 테마.
-- **의존:** 슬라이스 11.
-- **내용:** manifest 완성 + Serwist 도입(`05` §8의 exact versioned Catalog precache와 오프라인 로컬 재계산 계약), 다크 토큰 세트(시맨틱 변수에 값만 추가) + `next-themes`(system 기본 + settings 수동 3단), `07`의 수동 QA 체크리스트 실행. `07`의 선택적 post-MVP 접근성 감사는 이 슬라이스 완료 게이트에 포함하지 않는다.
-- **완료 기준:** 홈 화면 설치 → 오프라인에서 DNA·Library·기존 추천 열람 가능. 다크에서 프로젝트 대비 기준 재충족. Lighthouse PWA 통과. axe-core·Lighthouse a11y·VoiceOver/NVDA·전체 WCAG 적합성 판정은 별도 승인된 post-MVP 작업으로만 수행하며 미실행 상태가 슬라이스나 배포를 막지 않는다.
+기존 `next-themes`/라이트·다크 전환과 `@serwist/next` 계획은 실행하지 않는다. 제품은 M7부터 dark-only이며 theme selector가 없다. PWA service worker는 TanStack Start migration과 M10 검증이 끝난 뒤 배포 output에 맞는 adapter를 별도 승인·검토한다.
 
 ---
 
 ## 임계 경로 주의
 
-코드가 아니라 **주석 데이터가 임계 경로다.** Slice 4 계약 동결 뒤 +100작품 evidence 작업과 G2 순수 모듈·하니스·집계기 구현은 병행할 수 있지만, 150-work catalog/context identity를 동결한 뒤에만 final static build·manual pilot·G2 evidence bundle을 만든다. 제품 UI 슬라이스(5~)는 G2 GO 전에 시작하지 않는다.
+G1/G2와 Slice 0~11은 완료된 baseline provenance다. 현재 임계 경로는 M1~M6의 기능 parity 뒤 M7~M8 디자인 적용이며, recommendation fixture와 150-work catalog identity를 바꾸지 않는다.

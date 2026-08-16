@@ -1,21 +1,30 @@
 // @vitest-environment jsdom
 
-import { StrictMode } from "react";
+import { StrictMode, type ReactNode } from "react";
 import { act, cleanup, fireEvent, render, screen, waitFor, within } from "@testing-library/react";
 import type * as MotionReact from "motion/react";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 
 import { summarizeMangaDna } from "@/domain/profile/dna-summary";
-import type { ProfileAdjustments, UserWorkRecord } from "@/domain/profile/types";
+import type {
+  ProfileAdjustments,
+  RecommendationPolicies,
+  UserWorkRecord,
+} from "@/domain/profile/types";
 import { TasteFlow } from "@/features/taste/taste-flow";
-import { createTestCatalog, createTestWork } from "../../helpers/catalog";
+import { createTestAxes, createTestCatalog, createTestWork } from "../../helpers/catalog";
 
 const testState = vi.hoisted(() => ({
   catalog: null as unknown,
   adjustments: { axes: {}, themes: {} } as ProfileAdjustments,
   getProviderCache: vi.fn(),
   onboardingCompletedAt: "2026-08-14T01:00:00.000Z" as string | null | undefined,
-  search: new URLSearchParams(),
+  policies: {
+    preferCompleted: false,
+    preferHidden: false,
+    preferVerified: false,
+    excludeIncomplete: false,
+  } as RecommendationPolicies,
   saveProfileAdjustments: vi.fn(),
   saveProviderCache: vi.fn(),
   userWorks: [] as UserWorkRecord[],
@@ -28,8 +37,28 @@ vi.mock("motion/react", async (importOriginal) => {
   return { ...actual, useReducedMotion: () => motionState.reduced };
 });
 
-vi.mock("next/navigation", () => ({
-  useSearchParams: () => testState.search,
+vi.mock("@/data/generated/recommendation-context-v1.json", () => ({
+  default: {
+    constraintByWorkId: Object.fromEntries(
+      Array.from({ length: 7 }, (_, index) => {
+        const workId = `work-${String(index + 1)}`;
+        return [workId, { workId, catalogRole: "bridge", volumeCount: 1 }];
+      }),
+    ),
+    marketSnapshot: {
+      catalogVersion: "v1-test",
+      catalogAverageRating: 0,
+      byWorkId: {},
+    },
+  },
+}));
+
+vi.mock("@tanstack/react-router", () => ({
+  Link: ({ children, className, to }: { children: ReactNode; className?: string; to: string }) => (
+    <a className={className} href={to}>
+      {children}
+    </a>
+  ),
 }));
 
 vi.mock("@/features/catalog/catalog-provider", () => ({
@@ -41,6 +70,7 @@ vi.mock("@/infrastructure/db", () => ({
     status: { state: "ready", mode: "indexeddb", warning: null },
     userWorks: testState.userWorks,
     adjustments: testState.adjustments,
+    policies: testState.policies,
     getProviderCache: testState.getProviderCache,
     onboardingCompletedAt: testState.onboardingCompletedAt,
     hasProfile: true,
@@ -50,13 +80,19 @@ vi.mock("@/infrastructure/db", () => ({
 }));
 
 function createProfileFixture() {
-  const works = Array.from({ length: 5 }, (_, index) => ({
-    ...createTestWork({ id: `work-${String(index + 1)}` }),
-    title: `作品${String(index + 1)}`,
-  }));
+  const works = Array.from({ length: 7 }, (_, index) => {
+    const strategy = index === 5 ? 4 : index === 6 ? 0 : 2;
+    return {
+      ...createTestWork({
+        id: `work-${String(index + 1)}`,
+        axes: createTestAxes({ strategy: { state: "known", value: strategy, confidence: 0.9 } }),
+      }),
+      title: `作品${String(index + 1)}`,
+    };
+  });
   const baseCatalog = createTestCatalog(works[0]);
   testState.catalog = { ...baseCatalog, works };
-  testState.userWorks = works.map((work) => ({
+  testState.userWorks = works.slice(0, 5).map((work) => ({
     workId: work.id,
     readingState: "completed",
     reaction: "liked",
@@ -64,9 +100,12 @@ function createProfileFixture() {
   }));
 }
 
+function consumeReveal() {
+  window.history.replaceState({}, "", "/taste");
+}
+
 beforeEach(() => {
   createProfileFixture();
-  testState.search = new URLSearchParams();
   testState.adjustments = { axes: {}, themes: {} };
   testState.onboardingCompletedAt = "2026-08-14T01:00:00.000Z";
   testState.saveProfileAdjustments.mockReset();
@@ -161,12 +200,43 @@ describe("TasteFlow", () => {
     expect(await screen.findByText("分析の確信度: ふつう")).toBeTruthy();
   });
 
-  it("renders ordered, uniquely labelled groups and saves Axis adjustments immediately", async () => {
-    const { container } = render(<TasteFlow />);
+  it("keeps all groups in summary and opens only the selected adjustment group", async () => {
+    const onGroupChange = vi.fn();
+    const view = render(<TasteFlow onGroupChange={onGroupChange} />);
+
+    expect(await screen.findByRole("heading", { name: "あなたの Manga DNA" })).toBeTruthy();
+    expect(
+      [...view.container.querySelectorAll(".taste-factor-group > h2")].map(
+        (heading) => heading.textContent,
+      ),
+    ).toEqual(["テーマ", "展開", "トーン・関係", "作画", "ジャンル"]);
+    expect(screen.getByRole("button", { name: "すべて" }).getAttribute("aria-pressed")).toBe(
+      "true",
+    );
+
+    view.rerender(<TasteFlow mode="adjust" onGroupChange={onGroupChange} />);
+
+    expect(
+      [...view.container.querySelectorAll(".taste-factor-group > h2")].map(
+        (heading) => heading.textContent,
+      ),
+    ).toEqual([]);
+    expect(screen.queryByRole("button", { name: "すべて" })).toBeNull();
+    const themeFilter = screen.getByRole("button", { name: "テーマ" });
+    expect(themeFilter.getAttribute("aria-pressed")).toBe("false");
+    fireEvent.click(themeFilter);
+    expect(onGroupChange).toHaveBeenLastCalledWith("theme");
+  });
+
+  it("renders the selected labelled group and saves Axis adjustments immediately", async () => {
+    const { container } = render(<TasteFlow group="narrative" mode="adjust" />);
 
     expect(await screen.findByRole("heading", { name: "あなたの Manga DNA" })).toBeTruthy();
     expect(container.querySelector(".taste-page--with-action")).toBeNull();
     expect(container.querySelector("main")?.classList.contains("page-entry-b")).toBe(true);
+    const radar = screen.getByRole("region", { name: "好みの分布" });
+    expect(radar.querySelector("svg")?.getAttribute("aria-hidden")).toBe("true");
+    expect(within(radar).getByText("描き込みの密度")).toBeTruthy();
     const anchorRegion = screen.getByRole("region", { name: "選んだマンガ" });
     expect(within(anchorRegion).queryByRole("img")).toBeNull();
     expect(anchorRegion.querySelectorAll("li > .visually-hidden")).toHaveLength(5);
@@ -176,16 +246,10 @@ describe("TasteFlow", () => {
       true,
     );
     const groupHeadings = [...container.querySelectorAll(".taste-factor-group > h2")];
-    expect(groupHeadings.map((heading) => heading.textContent)).toEqual([
-      "テーマ",
-      "展開",
-      "トーン・関係",
-      "作画",
-      "ジャンル",
-    ]);
+    expect(groupHeadings.map((heading) => heading.textContent)).toEqual(["展開"]);
     const headingIds = groupHeadings.map((heading) => heading.id);
     expect(new Set(headingIds).size).toBe(headingIds.length);
-    expect(screen.getAllByRole("radiogroup")).toHaveLength(39);
+    expect(screen.getAllByRole("radiogroup")).toHaveLength(6);
     const expectedStrategy = summarizeMangaDna(
       (testState.catalog as ReturnType<typeof createTestCatalog>).works,
       testState.userWorks,
@@ -196,6 +260,10 @@ describe("TasteFlow", () => {
     const strategyGroup = screen.getByRole("radiogroup", {
       name: "戦略的な展開の好みを調整",
     });
+    const beforePreview = screen.getByRole("region", { name: "ページを開いた時" });
+    const afterPreview = screen.getByRole("region", { name: "現在の調整" });
+    expect(within(beforePreview).getByText("work-6")).toBeTruthy();
+    expect(within(afterPreview).getByText("work-6")).toBeTruthy();
     fireEvent.click(within(strategyGroup).getByRole("radio", { name: "除外" }));
 
     await waitFor(() => {
@@ -204,44 +272,50 @@ describe("TasteFlow", () => {
         themes: {},
       });
       expect(screen.getByText("次のおすすめに反映されます")).toBeTruthy();
+      expect(within(beforePreview).getByText("work-6")).toBeTruthy();
+      expect(within(afterPreview).queryByText("work-6")).toBeNull();
+      expect(within(afterPreview).getByText("work-7")).toBeTruthy();
     });
   });
 
   it("restores stored adjustments on remount and rolls back a rejected save", async () => {
     testState.adjustments = { axes: { strategy: "like" }, themes: {} };
     testState.saveProfileAdjustments.mockRejectedValue(new Error("write failed"));
-    const view = render(<TasteFlow />);
+    const view = render(<TasteFlow group="narrative" mode="adjust" />);
 
     const group = await screen.findByRole("radiogroup", {
       name: "戦略的な展開の好みを調整",
     });
-    expect(within(group).getByRole("radio", { name: "好き" }).matches(":checked")).toBe(true);
+    expect(within(group).getByRole("radio", { name: "好き" }).getAttribute("aria-checked")).toBe(
+      "true",
+    );
     fireEvent.click(within(group).getByRole("radio", { name: "除外" }));
 
     expect((await screen.findByRole("alert")).textContent).toContain(
       "好みの調整を保存できませんでした",
     );
-    expect(within(group).getByRole("radio", { name: "好き" }).matches(":checked")).toBe(true);
+    expect(within(group).getByRole("radio", { name: "好き" }).getAttribute("aria-checked")).toBe(
+      "true",
+    );
 
     view.unmount();
-    render(<TasteFlow />);
+    render(<TasteFlow group="narrative" mode="adjust" />);
     const remountedGroup = await screen.findByRole("radiogroup", {
       name: "戦略的な展開の好みを調整",
     });
-    expect(within(remountedGroup).getByRole("radio", { name: "好き" }).matches(":checked")).toBe(
-      true,
-    );
+    expect(
+      within(remountedGroup).getByRole("radio", { name: "好き" }).getAttribute("aria-checked"),
+    ).toBe("true");
   });
 
   it("consumes the URL immediately while the local 1200ms gate and reveal state continue", async () => {
     vi.useFakeTimers();
-    testState.search = new URLSearchParams("reveal=1");
     window.history.replaceState({}, "", "/taste?reveal=1");
     const replaceState = vi.spyOn(window.history, "replaceState");
 
     const view = render(
       <StrictMode>
-        <TasteFlow />
+        <TasteFlow onRevealConsumed={consumeReveal} reveal="1" />
       </StrictMode>,
     );
     await act(async () => {
@@ -258,10 +332,9 @@ describe("TasteFlow", () => {
     expect(replaceState).toHaveBeenCalledWith({}, "", "/taste");
     expect(window.location.pathname + window.location.search).toBe("/taste");
 
-    testState.search = new URLSearchParams();
     view.rerender(
       <StrictMode>
-        <TasteFlow />
+        <TasteFlow onRevealConsumed={consumeReveal} />
       </StrictMode>,
     );
     expect(screen.getByRole("link", { name: "おすすめを見る" })).toBeTruthy();
@@ -281,9 +354,8 @@ describe("TasteFlow", () => {
     expect(screen.getByRole("link", { name: "おすすめを見る" })).toBeTruthy();
 
     view.unmount();
-    testState.search = new URLSearchParams("reveal=1");
     window.history.replaceState({}, "", "/taste?reveal=1");
-    render(<TasteFlow />);
+    render(<TasteFlow onRevealConsumed={consumeReveal} reveal="1" />);
     await act(async () => Promise.resolve());
     expect(screen.getByRole("heading", { name: "あなたの Manga DNA" })).toBeTruthy();
     expect(screen.queryByRole("link", { name: "おすすめを見る" })).toBeNull();
@@ -292,13 +364,12 @@ describe("TasteFlow", () => {
   });
 
   it("consumes the mount query before persistence hydration and resumes the claimed reveal later", async () => {
-    testState.search = new URLSearchParams("reveal=1");
     testState.onboardingCompletedAt = undefined;
     window.history.replaceState({}, "", "/taste?reveal=1");
     const replaceState = vi.spyOn(window.history, "replaceState");
     const view = render(
       <StrictMode>
-        <TasteFlow />
+        <TasteFlow onRevealConsumed={consumeReveal} reveal="1" />
       </StrictMode>,
     );
 
@@ -311,7 +382,7 @@ describe("TasteFlow", () => {
     testState.onboardingCompletedAt = "2026-08-14T01:00:00.000Z";
     view.rerender(
       <StrictMode>
-        <TasteFlow />
+        <TasteFlow onRevealConsumed={consumeReveal} />
       </StrictMode>,
     );
 
@@ -325,11 +396,10 @@ describe("TasteFlow", () => {
   });
 
   it("allows one reveal for a new onboarding completion in the same session", async () => {
-    testState.search = new URLSearchParams("reveal=1");
     window.sessionStorage.setItem("konocomics:manga-dna-reveal:v1", "2026-08-14T01:00:00.000Z");
     testState.onboardingCompletedAt = "2026-08-14T02:00:00.000Z";
 
-    render(<TasteFlow />);
+    render(<TasteFlow reveal="1" />);
     await act(async () => {
       await Promise.resolve();
     });
@@ -343,7 +413,6 @@ describe("TasteFlow", () => {
   it.each(["get", "set", "readback"] as const)(
     "fails closed to the complete static result when sessionStorage %s cannot verify the claim",
     async (failure) => {
-      testState.search = new URLSearchParams("reveal=1");
       window.history.replaceState({}, "", "/taste?reveal=1");
 
       if (failure === "get") {
@@ -358,7 +427,7 @@ describe("TasteFlow", () => {
         vi.spyOn(Storage.prototype, "getItem").mockReturnValue(null);
       }
 
-      render(<TasteFlow />);
+      render(<TasteFlow onRevealConsumed={consumeReveal} reveal="1" />);
 
       expect(await screen.findByRole("link", { name: "おすすめを見る" })).toBeTruthy();
       expect(window.location.pathname + window.location.search).toBe("/taste");
@@ -369,26 +438,24 @@ describe("TasteFlow", () => {
 
   it("does not animate an unresolved preference and never starts later for that completion", async () => {
     motionState.reduced = null;
-    testState.search = new URLSearchParams("reveal=1");
     window.history.replaceState({}, "", "/taste?reveal=1");
 
-    const view = render(<TasteFlow />);
+    const view = render(<TasteFlow onRevealConsumed={consumeReveal} reveal="1" />);
 
     expect(await screen.findByRole("link", { name: "おすすめを見る" })).toBeTruthy();
     expect(window.location.pathname + window.location.search).toBe("/taste");
     expect(document.querySelector(".taste-top-card__label--reveal")).toBeNull();
 
     motionState.reduced = false;
-    view.rerender(<TasteFlow />);
+    view.rerender(<TasteFlow onRevealConsumed={consumeReveal} />);
     await act(async () => Promise.resolve());
     expect(document.querySelector(".taste-top-card__label--reveal")).toBeNull();
   });
 
   it("finishes an active reveal immediately when reduced motion becomes requested", async () => {
-    testState.search = new URLSearchParams("reveal=1");
     window.history.replaceState({}, "", "/taste?reveal=1");
 
-    render(<TasteFlow />);
+    render(<TasteFlow onRevealConsumed={consumeReveal} reveal="1" />);
     expect(await screen.findByRole("link", { name: "おすすめを見る" })).toBeTruthy();
     expect(document.querySelector(".taste-top-card__label--reveal")).toBeTruthy();
 

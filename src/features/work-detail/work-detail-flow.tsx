@@ -1,9 +1,15 @@
 "use client";
 
-import Link from "next/link";
+import { Link } from "@tanstack/react-router";
 import { useEffect, useMemo, useRef, useState } from "react";
 
-import { CoverImage } from "@/components/cover/CoverImage";
+import { CoverImage, coverSourceForSize } from "@/components/cover/CoverImage";
+import { Button, buttonClassName } from "@/components/design-system/button";
+import { NativeSelect } from "@/components/design-system/native-select";
+import { SiteFooter } from "@/components/layout/site-footer";
+import { MediaPosterCard } from "@/components/media/media-poster-card";
+import { MediaShelf } from "@/components/media/media-shelf";
+import { ConfidenceLabel, ReasonChips } from "@/components/media/recommendation-evidence";
 import { usePageEntryMotion } from "@/components/motion/use-page-entry-motion";
 import recommendationContextJson from "@/data/generated/recommendation-context-v1.json";
 import { AXIS_IDS, THEME_TAGS } from "@/domain/catalog/constants";
@@ -16,6 +22,7 @@ import { recommendationContextSchema } from "@/domain/recommendation/context-sch
 import { scoreWorkCompatibility } from "@/domain/recommendation/rank";
 import type { RecommendationInput } from "@/domain/recommendation/types";
 import { useCatalog } from "@/features/catalog/catalog-provider";
+import { WorkDetailShell } from "@/features/work-detail/work-detail-shell";
 import {
   createRecommendationCoverTargets,
   type RecommendationCoverTarget,
@@ -31,6 +38,7 @@ import {
 } from "@/infrastructure/rakuten";
 import {
   coverStrings,
+  navigationStrings,
   recommendationStrings,
   workDetailStrings,
   explanationLexicon,
@@ -107,6 +115,57 @@ function majorFactorIds(work: Work): ExplanationFactorId[] {
     return factor.state === "known" && factor.value >= 3;
   });
   return [...themeIds, ...axisIds];
+}
+
+function compareWorkIds(left: Work, right: Work) {
+  return left.id < right.id ? -1 : left.id === right.id ? 0 : 1;
+}
+
+function relatedWorkGroups(catalog: CatalogV1, source: Work) {
+  const sourceThemes = new Set(
+    source.themes.filter((theme) => theme.centrality > 0).map((theme) => theme.id),
+  );
+  const sourceAxes = AXIS_IDS.flatMap((axisId) => {
+    const factor = source.axes[axisId];
+    return factor.state === "known" ? [[axisId, factor.value] as const] : [];
+  });
+  const themeRanked = catalog.works
+    .filter((work) => work.id !== source.id)
+    .map((work) => ({
+      work,
+      score: work.themes.reduce(
+        (score, theme) => score + (sourceThemes.has(theme.id) ? theme.centrality : 0),
+        0,
+      ),
+    }))
+    .filter(({ score }) => score > 0)
+    .sort((left, right) => right.score - left.score || compareWorkIds(left.work, right.work))
+    .slice(0, 8)
+    .map(({ work }) => work);
+  const themeIds = new Set(themeRanked.map((work) => work.id));
+  const moodRanked = catalog.works
+    .filter((work) => work.id !== source.id && !themeIds.has(work.id))
+    .map((work) => {
+      const distances = sourceAxes.flatMap(([axisId, sourceValue]) => {
+        const factor = work.axes[axisId];
+        return factor.state === "known" ? [Math.abs(sourceValue - factor.value)] : [];
+      });
+      return {
+        work,
+        coverage: distances.length,
+        distance: distances.reduce((sum, value) => sum + value, 0),
+      };
+    })
+    .filter(({ coverage }) => coverage >= 4)
+    .sort(
+      (left, right) =>
+        left.distance / left.coverage - right.distance / right.coverage ||
+        compareWorkIds(left.work, right.work),
+    )
+    .slice(0, 8)
+    .map(({ work }) => work);
+
+  return { themeRanked, moodRanked };
 }
 
 function compatibilityFor(options: {
@@ -238,12 +297,16 @@ function WorkStateControls({
   };
 
   return (
-    <section aria-labelledby="work-state-heading" className="work-detail-state surface-card">
+    <section
+      aria-labelledby="work-state-heading"
+      className="grid gap-[var(--space-3)] rounded-[var(--radius-card)] border border-line bg-surface-overlay p-[var(--space-4)] md:gap-[var(--space-4)] md:p-[var(--space-5)]"
+    >
       <h2 id="work-state-heading">{workDetailStrings.state.heading}</h2>
-      <div className="work-detail-state__controls">
-        <label>
+      <div className="grid gap-[var(--space-content)] min-[360px]:grid-cols-[minmax(0,1fr)_auto] min-[360px]:items-end">
+        <label className="grid gap-[var(--space-content-tight)] text-[length:var(--text-caption-size)] font-bold text-text-muted">
           <span>{workDetailStrings.state.label}</span>
-          <select
+          <NativeSelect
+            className="[&_[data-slot=native-select]]:bg-surface-2 [&_[data-slot=native-select]]:text-[length:var(--font-size-14)] [&_[data-slot=native-select]]:font-bold [&_[data-slot=native-select]]:text-text-strong"
             disabled={busy || !recordsReady}
             onChange={(event) => {
               if (isReadingState(event.target.value)) {
@@ -260,34 +323,37 @@ function WorkStateControls({
                 {workDetailStrings.state.options[state]}
               </option>
             ))}
-          </select>
+          </NativeSelect>
         </label>
-        <button
+        <Button
           aria-pressed={minimalPlanned}
-          className="interactive-press"
+          className="aria-pressed:border-accent aria-pressed:bg-accent-soft aria-pressed:text-accent"
           disabled={busy || !recordsReady || plannedToggleUnavailable}
           onClick={() => void togglePlanned()}
           type="button"
+          variant="outline"
         >
           {minimalPlanned
             ? workDetailStrings.state.plannedRemove
             : workDetailStrings.state.plannedAdd}
-        </button>
+        </Button>
       </div>
       {!recordsReady ? (
-        <p aria-live="polite" className="work-detail-state__helper">
+        <p aria-live="polite" className="text-[length:var(--text-caption-size)] text-text-muted">
           {workDetailStrings.state.loading}
         </p>
       ) : plannedToggleUnavailable ? (
-        <p className="work-detail-state__helper">{workDetailStrings.state.managedByState}</p>
+        <p className="text-[length:var(--text-caption-size)] text-text-muted">
+          {workDetailStrings.state.managedByState}
+        </p>
       ) : null}
       {busy ? (
-        <p aria-live="polite" className="work-detail-state__message">
+        <p aria-live="polite" className="text-[length:var(--text-caption-size)] text-text-muted">
           {workDetailStrings.state.saving}
         </p>
       ) : message === undefined ? null : (
         <p
-          className="work-detail-state__message"
+          className="text-[length:var(--text-caption-size)] text-text-muted [&[role=alert]]:border-l-[length:var(--space-content-tight)] [&[role=alert]]:border-warn [&[role=alert]]:px-[var(--space-3)] [&[role=alert]]:py-[var(--space-content)] [&[role=alert]]:text-text-strong"
           role={message.kind === "error" ? "alert" : "status"}
         >
           {message.text}
@@ -315,35 +381,32 @@ function CompatibilitySection({
   return (
     <section
       aria-labelledby="work-compatibility-heading"
-      className="work-detail-compatibility surface-card"
+      className="grid gap-[var(--space-3)] rounded-[var(--radius-card)] border border-line-accent bg-surface-overlay p-[var(--space-4)] md:grid-cols-3 md:gap-[var(--space-4)] md:p-[var(--space-5)]"
     >
-      <h2 id="work-compatibility-heading">{workDetailStrings.compatibility.heading}</h2>
+      <h2 className="md:col-span-3" id="work-compatibility-heading">
+        {workDetailStrings.compatibility.heading}
+      </h2>
       {state.kind === "unavailable" ? (
         <p>{workDetailStrings.compatibility.unavailable}</p>
       ) : (
         <>
-          <div className="work-detail-compatibility__reasons">
-            <h3>{workDetailStrings.compatibility.reasons}</h3>
-            {state.explanation.positiveReasons.length === 0 ? (
-              <p>{recommendationStrings.reasonUnavailable}</p>
-            ) : (
-              <ul>
-                {state.explanation.positiveReasons.map((reason) => (
-                  <li key={`${reason.source}:${reason.group}:${reason.factorId}`}>{reason.text}</li>
-                ))}
-              </ul>
-            )}
+          <div className="grid gap-[var(--space-content)] md:col-span-3">
+            <h3 className="text-[length:var(--font-size-14)]">
+              {workDetailStrings.compatibility.reasons}
+            </h3>
+            <ReasonChips
+              caution={state.explanation.caution}
+              cautionLabel={workDetailStrings.compatibility.caution}
+              emptyText={recommendationStrings.reasonUnavailable}
+              reasons={state.explanation.positiveReasons}
+            />
           </div>
-          {state.explanation.caution === undefined ? null : (
-            <div className="work-detail-compatibility__caution">
-              <h3>{workDetailStrings.compatibility.caution}</h3>
-              <p>{state.explanation.caution.text}</p>
-            </div>
-          )}
           {state.explanation.anchors.length === 0 ? null : (
-            <div className="work-detail-compatibility__anchors">
-              <h3>{workDetailStrings.compatibility.anchors}</h3>
-              <ul>
+            <div className="grid gap-[var(--space-content)]">
+              <h3 className="text-[length:var(--font-size-14)]">
+                {workDetailStrings.compatibility.anchors}
+              </h3>
+              <ul className="m-0 flex list-none flex-wrap gap-[var(--space-content)] p-0">
                 {state.explanation.anchors.map((anchor) => {
                   const anchorWork = catalog.works.find((work) => work.id === anchor.workId);
                   if (anchorWork === undefined) return null;
@@ -351,9 +414,12 @@ function CompatibilitySection({
                     (target) => target.workId === anchor.workId,
                   );
                   return (
-                    <li key={anchor.workId}>
+                    <li
+                      className="grid max-w-[min(100%,calc(var(--layout-width-form)/2))] grid-cols-[var(--control-min-size)_minmax(0,1fr)] items-center gap-[var(--space-content)] rounded-[var(--radius-card)] border border-line bg-surface-2 p-[var(--space-content)]"
+                      key={anchor.workId}
+                    >
                       <CoverImage
-                        className="work-detail-compatibility__anchor-cover"
+                        className="work-detail-compatibility__anchor-cover w-[var(--control-min-size)]"
                         coverUrl={anchorCoverUrls.get(anchor.workId)}
                         creators={anchorWork.creators}
                         decorative
@@ -365,16 +431,20 @@ function CompatibilitySection({
                         requestedSize={200}
                         title={anchorWork.title}
                       />
-                      <span>{anchorWork.title}</span>
+                      <span className="[overflow-wrap:anywhere] text-[length:var(--text-caption-size)] font-bold">
+                        {anchorWork.title}
+                      </span>
                     </li>
                   );
                 })}
               </ul>
             </div>
           )}
-          <p className="work-detail-compatibility__confidence">
-            {workDetailStrings.compatibility.confidence}: {state.explanation.confidence.label}
-          </p>
+          <ConfidenceLabel
+            className="md:col-span-3"
+            label={state.explanation.confidence.label}
+            prefix={workDetailStrings.compatibility.confidence}
+          />
         </>
       )}
     </section>
@@ -417,22 +487,31 @@ function WorkDetailContent({ catalog, work }: Readonly<{ catalog: CatalogV1; wor
       }),
     [adjustments, catalog, policies, userWorks, work.id],
   );
-  const anchorCoverTargets = useMemo(
-    () =>
-      createRecommendationCoverTargets(
-        catalog,
-        compatibility.kind === "ready"
-          ? compatibility.explanation.anchors.map((anchor) => anchor.workId)
-          : [],
-      ),
-    [catalog, compatibility],
-  );
-  const { coverUrls: anchorCoverUrls, notifyCoverSettled: notifyAnchorCoverSettled } =
-    useRecommendationCovers({
-      targets: anchorCoverTargets,
-      getProviderCache,
-      saveProviderCache,
-    });
+  const relatedGroups = useMemo(() => relatedWorkGroups(catalog, work), [catalog, work]);
+  const coverTargets = useMemo(() => {
+    const anchorWorkIds =
+      compatibility.kind === "ready"
+        ? compatibility.explanation.anchors.map((anchor) => anchor.workId)
+        : [];
+    const orderedWorkIds = [
+      ...new Set([
+        ...anchorWorkIds,
+        ...relatedGroups.themeRanked.map((related) => related.id),
+        ...relatedGroups.moodRanked.map((related) => related.id),
+      ]),
+    ];
+    return createRecommendationCoverTargets(catalog, orderedWorkIds);
+  }, [catalog, compatibility, relatedGroups]);
+  const { coverUrls, notifyCoverSettled } = useRecommendationCovers({
+    targets: coverTargets,
+    getProviderCache,
+    saveProviderCache,
+  });
+
+  useEffect(() => {
+    const first = coverTargets[0];
+    if (first !== undefined && coverUrls.has(first.workId)) notifyCoverSettled(first);
+  }, [coverTargets, coverUrls, notifyCoverSettled]);
 
   useEffect(() => {
     if (status.state === "initializing" || isbn === null) return;
@@ -543,34 +622,32 @@ function WorkDetailContent({ catalog, work }: Readonly<{ catalog: CatalogV1; wor
   const volumeCount = parsedRecommendationContext.success
     ? (parsedRecommendationContext.data.constraintByWorkId[work.id]?.volumeCount ?? 0)
     : catalog.volumes.filter((volume) => volume.workId === work.id).length;
+  const heroCoverUrl =
+    metadata?.imageUrl === undefined ? null : coverSourceForSize(metadata.imageUrl, 600);
 
   return (
-    <main
-      className={`work-detail-page${pageEntryMotion.active ? " page-entry-b" : ""}`}
-      data-work-detail-id={work.id}
-      key={work.id}
-      onAnimationEnd={pageEntryMotion.onAnimationEnd}
-    >
-      <div className="work-detail-layout">
-        <div className="work-detail-media" data-work-detail-cover>
-          <CoverImage
-            className="work-detail-cover"
-            coverUrl={metadata?.imageUrl}
-            creators={work.creators}
-            priority
-            requestedSize={600}
-            title={work.title}
-            variant="hero"
-          />
-        </div>
-
-        <div className="work-detail-content">
-          <header className="work-detail-header">
-            <h1>{work.title}</h1>
-            <p className="work-detail-header__creators">
-              {coverStrings.creatorLine(work.creators)}
-            </p>
-            <dl className="work-detail-metadata">
+    <>
+      <main
+        className={`mx-auto min-h-dvh w-full pb-[var(--space-section-large)]${pageEntryMotion.active ? " page-entry-b motion-safe:animate-[page-entry-b-enter_var(--motion-duration-page)_var(--motion-ease-direct)_both]" : ""}`}
+        data-work-detail-id={work.id}
+        key={work.id}
+        onAnimationEnd={pageEntryMotion.onAnimationEnd}
+      >
+        <p aria-atomic="true" aria-live="polite" className="sr-only">
+          {navigationStrings.routeAnnouncement(work.title)}
+        </p>
+        <WorkDetailShell
+          coverUrl={heroCoverUrl}
+          creators={work.creators}
+          kind="catalog"
+          title={work.title}
+        >
+          <header className="grid gap-[var(--space-content-loose)]">
+            <h1 className="[overflow-wrap:anywhere] text-[length:var(--text-page-title-size)] leading-[var(--line-height-heading)] text-text-strong">
+              {work.title}
+            </h1>
+            <p className="font-medium text-text-muted">{coverStrings.creatorLine(work.creators)}</p>
+            <dl className="m-0 flex flex-wrap gap-x-[var(--space-6)] gap-y-[var(--space-3)] p-0 [&>div]:grid [&>div]:gap-[var(--space-content-tight)] [&_dd]:m-0 [&_dd]:font-bold [&_dd]:text-text-strong [&_dt]:text-[length:var(--text-caption-size)] [&_dt]:font-medium [&_dt]:text-text-muted">
               <div>
                 <dt>{workDetailStrings.metadata.publisher}</dt>
                 <dd>{work.publisher ?? workDetailStrings.metadata.unknownPublisher}</dd>
@@ -584,10 +661,25 @@ function WorkDetailContent({ catalog, work }: Readonly<{ catalog: CatalogV1; wor
                 <dd>{recommendationStrings.volumeCount(volumeCount)}</dd>
               </div>
             </dl>
+            {compatibility.kind === "ready" &&
+            compatibility.explanation.positiveReasons[0] !== undefined ? (
+              <section
+                aria-label={workDetailStrings.compatibility.reasons}
+                className="grid gap-[var(--space-content-tight)] border-l-[length:var(--space-1)] border-accent bg-surface-2 p-[var(--space-3)] md:hidden"
+              >
+                <h2 className="text-[length:var(--font-size-14)]">
+                  {workDetailStrings.compatibility.reasons}
+                </h2>
+                <p>{compatibility.explanation.positiveReasons[0].text}</p>
+              </section>
+            ) : null}
           </header>
 
           {status.state === "degraded" ? (
-            <p className="work-detail-alert" role="status">
+            <p
+              className="border-l-[length:var(--space-content-tight)] border-warn bg-surface-1 px-[var(--space-4)] py-[var(--space-3)]"
+              role="status"
+            >
               {workDetailStrings.storageWarning}
             </p>
           ) : null}
@@ -601,26 +693,39 @@ function WorkDetailContent({ catalog, work }: Readonly<{ catalog: CatalogV1; wor
           />
 
           <CompatibilitySection
-            anchorCoverTargets={anchorCoverTargets}
-            anchorCoverUrls={anchorCoverUrls}
+            anchorCoverTargets={coverTargets}
+            anchorCoverUrls={coverUrls}
             catalog={catalog}
-            notifyAnchorCoverSettled={notifyAnchorCoverSettled}
+            notifyAnchorCoverSettled={notifyCoverSettled}
             state={compatibility}
           />
+        </WorkDetailShell>
 
-          <section aria-labelledby="work-synopsis-heading" className="work-detail-section">
+        <div className="mx-auto grid w-full max-w-[var(--layout-width-detail)] gap-[var(--space-5)] px-[var(--layout-page-padding)] pt-[var(--space-section-large)]">
+          <section
+            aria-labelledby="work-synopsis-heading"
+            className="grid gap-[var(--space-3)] rounded-[var(--radius-card)] border border-line bg-surface-overlay p-[var(--space-5)]"
+          >
             <h2 id="work-synopsis-heading">{workDetailStrings.synopsis.heading}</h2>
             <p>{metadata?.itemCaption ?? workDetailStrings.synopsis.unavailable}</p>
           </section>
 
-          <section aria-labelledby="work-factors-heading" className="work-detail-section">
+          <section
+            aria-labelledby="work-factors-heading"
+            className="grid gap-[var(--space-3)] rounded-[var(--radius-card)] border border-line bg-surface-overlay p-[var(--space-5)]"
+          >
             <h2 id="work-factors-heading">{workDetailStrings.factors.heading}</h2>
             {factorIds.length === 0 ? (
               <p>{workDetailStrings.factors.empty}</p>
             ) : (
-              <ul className="work-detail-factors">
+              <ul className="m-0 flex list-none flex-wrap gap-[var(--space-content)] p-0">
                 {factorIds.map((factorId) => (
-                  <li key={factorId}>{explanationLexicon.factorLabels[factorId]}</li>
+                  <li
+                    className="inline-flex min-h-[var(--control-min-size)] items-center rounded-[var(--radius-pill)] border border-line bg-surface-2 px-[var(--space-3)] py-[var(--space-content)] text-[length:var(--font-size-14)] font-bold"
+                    key={factorId}
+                  >
+                    {explanationLexicon.factorLabels[factorId]}
+                  </li>
                 ))}
               </ul>
             )}
@@ -628,7 +733,7 @@ function WorkDetailContent({ catalog, work }: Readonly<{ catalog: CatalogV1; wor
 
           <section
             aria-labelledby="work-provider-heading"
-            className="work-detail-provider surface-card"
+            className="grid gap-[var(--space-4)] rounded-[var(--radius-card)] border border-line bg-surface-overlay p-[var(--space-5)]"
           >
             <h2 id="work-provider-heading">{workDetailStrings.provider.heading}</h2>
             {visibleProvider.phase === "loading" ? (
@@ -636,7 +741,7 @@ function WorkDetailContent({ catalog, work }: Readonly<{ catalog: CatalogV1; wor
             ) : commercial === null ? (
               <p>{workDetailStrings.provider.unavailable}</p>
             ) : (
-              <dl className="work-detail-provider__commercial">
+              <dl className="m-0 flex flex-wrap gap-x-[var(--space-6)] gap-y-[var(--space-3)] p-0 [&>div]:grid [&>div]:gap-[var(--space-content-tight)] [&_dd]:m-0 [&_dd]:font-bold [&_dd]:text-text-strong [&_dt]:text-[length:var(--text-caption-size)] [&_dt]:font-medium [&_dt]:text-text-muted">
                 {commercial.itemPrice === undefined ? null : (
                   <div>
                     <dt>{workDetailStrings.provider.priceLabel}</dt>
@@ -657,7 +762,10 @@ function WorkDetailContent({ catalog, work }: Readonly<{ catalog: CatalogV1; wor
                   ? workDetailStrings.provider.openNewTab
                   : workDetailStrings.provider.searchNewTab
               }
-              className="work-detail-provider__primary interactive-press"
+              className={buttonClassName({
+                className:
+                  "w-fit min-w-[min(100%,16rem)] px-[var(--space-4)] py-[var(--space-content)] font-bold",
+              })}
               href={providerHref}
               rel="noreferrer"
               target="_blank"
@@ -667,27 +775,76 @@ function WorkDetailContent({ catalog, work }: Readonly<{ catalog: CatalogV1; wor
                 : workDetailStrings.provider.search}
             </a>
             {visibleProvider.phase === "error" && isbn !== null ? (
-              <button
-                className="work-detail-provider__retry interactive-press"
+              <Button
+                className="w-fit justify-self-start"
                 onClick={() => {
                   setProviderLoad((current) => ({ ...current, phase: "loading" }));
                   setProviderAttempt((current) => current + 1);
                 }}
                 type="button"
+                variant="outline"
               >
                 {workDetailStrings.provider.retry}
-              </button>
+              </Button>
             ) : null}
             {metadata?.affiliateUrl === undefined ? null : (
-              <p className="work-detail-provider__affiliate">
+              <p className="text-[length:var(--text-caption-size)] text-text-muted">
                 {workDetailStrings.provider.affiliate}
               </p>
             )}
-            <p className="work-detail-provider__credit">{workDetailStrings.provider.credit}</p>
+            <p className="text-[length:var(--text-caption-size)] text-text-muted">
+              {workDetailStrings.provider.credit}
+            </p>
+            {metadata?.reviewAverage === undefined ? null : (
+              <dl className="m-0 flex flex-wrap gap-x-[var(--space-6)] gap-y-[var(--space-3)] p-0 [&>div]:grid [&>div]:gap-[var(--space-content-tight)] [&_dd]:m-0 [&_dd]:font-bold [&_dd]:text-text-strong [&_dd]:tabular-nums [&_dt]:text-[length:var(--text-caption-size)] [&_dt]:text-text-muted">
+                <div>
+                  <dt>{workDetailStrings.provider.ratingLabel}</dt>
+                  <dd>{workDetailStrings.provider.rating(metadata.reviewAverage)}</dd>
+                </div>
+                {metadata.reviewCount === undefined ? null : (
+                  <div>
+                    <dt>{workDetailStrings.provider.reviewCountLabel}</dt>
+                    <dd>{workDetailStrings.provider.reviewCount(metadata.reviewCount)}</dd>
+                  </div>
+                )}
+              </dl>
+            )}
           </section>
         </div>
-      </div>
-    </main>
+
+        <div className="mx-auto grid w-full max-w-[var(--layout-width-media)] gap-[var(--space-section-large)] px-[var(--layout-page-padding)] pt-[var(--space-section-large)] [&_h2]:border-l-[length:var(--space-content-tight)] [&_h2]:border-accent [&_h2]:pl-[var(--space-3)] [&_h2]:text-text-strong">
+          <MediaShelf
+            description={workDetailStrings.related.description}
+            title={workDetailStrings.related.heading}
+          >
+            {relatedGroups.themeRanked.map((related) => (
+              <MediaPosterCard
+                coverUrl={coverUrls.get(related.id)}
+                creators={related.creators}
+                key={related.id}
+                title={related.title}
+                workId={related.id}
+              />
+            ))}
+          </MediaShelf>
+          <MediaShelf
+            description={workDetailStrings.sameMood.description}
+            title={workDetailStrings.sameMood.heading}
+          >
+            {relatedGroups.moodRanked.map((related) => (
+              <MediaPosterCard
+                coverUrl={coverUrls.get(related.id)}
+                creators={related.creators}
+                key={related.id}
+                title={related.title}
+                workId={related.id}
+              />
+            ))}
+          </MediaShelf>
+        </div>
+      </main>
+      <SiteFooter />
+    </>
   );
 }
 
@@ -697,10 +854,15 @@ export function WorkDetailFlow({ workId }: Readonly<{ workId: string }>) {
 
   if (work === undefined) {
     return (
-      <main className="work-detail-not-found">
+      <main className="mx-auto grid min-h-[calc(100dvh-var(--layout-mobile-navigation-clearance))] w-full max-w-[var(--layout-width-reading)] content-center justify-items-start gap-[var(--space-4)] p-[var(--layout-page-padding)]">
         <h1>{workDetailStrings.notFound.title}</h1>
         <p>{workDetailStrings.notFound.description}</p>
-        <Link href="/recommendations">{workDetailStrings.notFound.recommendations}</Link>
+        <Link
+          className="inline-flex min-h-[var(--control-min-size)] items-center font-bold text-accent underline underline-offset-[var(--space-content-tight)]"
+          to="/recommendations"
+        >
+          {workDetailStrings.notFound.recommendations}
+        </Link>
       </main>
     );
   }

@@ -1,11 +1,16 @@
 // @vitest-environment jsdom
 
 import { cleanup, fireEvent, render, screen } from "@testing-library/react";
+import type { ReactNode } from "react";
 import { afterEach, describe, expect, it, vi } from "vitest";
 
 import catalogJson from "@/data/generated/catalog-v1.json";
 import { catalogV1Schema } from "@/domain/catalog/schema";
 import { RecommendationsFlow } from "@/features/recommendations/recommendations-flow";
+
+vi.mock("@tanstack/react-router", () => ({
+  Link: ({ children, to }: { children: ReactNode; to: string }) => <a href={to}>{children}</a>,
+}));
 
 vi.mock("@/data/generated/recommendation-context-v1.json", () => ({
   default: { invalid: true },

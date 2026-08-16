@@ -90,7 +90,7 @@ afterEach(() => {
 
 describe("LandingLogoReveal", () => {
   it("encodes the font budget, exact signature timing, and hidden font-wait overlay", () => {
-    const layoutSource = readFileSync(resolve(process.cwd(), "src/app/layout.tsx"), "utf8");
+    const rootSource = readFileSync(resolve(process.cwd(), "src/routes/__root.tsx"), "utf8");
     const componentSource = readFileSync(
       resolve(process.cwd(), "src/features/landing/landing-logo-reveal.tsx"),
       "utf8",
@@ -99,30 +99,18 @@ describe("LandingLogoReveal", () => {
       resolve(process.cwd(), "src/features/landing/landing-logo-reveal-motion.tsx"),
       "utf8",
     );
-    const globalStyles = readFileSync(resolve(process.cwd(), "src/app/globals.css"), "utf8");
-    const notoConfig = layoutSource.slice(
-      layoutSource.indexOf("const notoSansJp"),
-      layoutSource.indexOf("const spaceGrotesk"),
-    );
-    const spaceConfig = layoutSource.slice(
-      layoutSource.indexOf("const spaceGrotesk"),
-      layoutSource.indexOf("export const metadata"),
-    );
-
-    expect(notoConfig).toContain('weight: "variable"');
-    expect(notoConfig).toContain("preload: false");
-    expect(spaceConfig).toContain('weight: "variable"');
+    expect(rootSource).toContain('links: [{ rel: "stylesheet", href: globalStyles }]');
+    expect(rootSource).not.toContain("fonts.googleapis.com");
+    expect(rootSource).not.toContain('rel: "preload"');
     expect(componentSource).not.toContain('from "motion/react"');
     expect(componentSource).toContain('import("./landing-logo-reveal-motion")');
     expect(motionSource).toContain("animate={{ opacity: [0, 1, 0] }}");
     expect(motionSource).toContain("initial={{ opacity: 0 }}");
     expect(motionSource).toContain("duration: 0.9");
     expect(motionSource).toContain("times: [0, 4 / 9, 1]");
-    expect(globalStyles)
-      .toContain(`.landing-logo-reveal[data-motion="signature-a"][data-phase="waiting-fonts"]
-  .landing-logo-reveal__monochrome {
-  opacity: 0;
-}`);
+    expect(componentSource).toContain("group-data-[phase=waiting-fonts]/logo:opacity-0");
+    expect(componentSource).toContain("landing-logo-reveal__monochrome");
+    expect(componentSource).toContain("opacity-0");
   });
 
   it("keeps the final accessible wordmark and meaning caption present in every phase", () => {

@@ -1,0 +1,181 @@
+{
+  "version": 2,
+  "repository": "fromiron/konocomics",
+  "baseline": "87ba09e733901e16279e758d2f437dd51476d663",
+  "theme": {
+    "mode": "dark-only",
+    "primary": "#43BBFA",
+    "primaryOklch": "oklch(0.7525 0.1382 236.09)"
+  },
+  "hardConstraints": [
+    "desktop GNB and mobile bottom navigation must never be visible together",
+    "no login/account/avatar/premium/payment/community/own reader/runtime LLM",
+    "no new server routes beyond Rakuten search and item",
+    "no new dependency without explicit approval",
+    "keep deterministic recommendation order and contribution explanations",
+    "keep IndexedDB/export/import/external identity/static shell contracts",
+    "production copy through src/lib/strings.ts in Japanese",
+    "no probability-style match percentage"
+  ],
+  "tasks": [
+    {
+      "id": "R0",
+      "branch": "design/r0-contract-realignment",
+      "dependsOn": [],
+      "scope": [
+        "planning docs",
+        "AGENTS.md"
+      ],
+      "gate": "runtime untouched; architecture/product review passes"
+    },
+    {
+      "id": "R1",
+      "branch": "design/r1-dark-shell",
+      "dependsOn": [
+        "R0"
+      ],
+      "scope": [
+        "dark tokens",
+        "responsive nav",
+        "footer",
+        "CoverImage foundation"
+      ],
+      "gate": "7 routes render dark; desktop/mobile navigation exclusive"
+    },
+    {
+      "id": "R2",
+      "branch": "design/r2-media-primitives",
+      "dependsOn": [
+        "R1"
+      ],
+      "scope": [
+        "MediaShelf",
+        "expandable card",
+        "ranking",
+        "Quick Preview",
+        "hero backdrop"
+      ],
+      "gate": "pointer, keyboard, touch, reduced motion and focus restoration pass"
+    },
+    {
+      "id": "R3",
+      "branch": "design/r3-home",
+      "dependsOn": [
+        "R2"
+      ],
+      "route": "/",
+      "plan": "screen-plans/01-home.md",
+      "visual": "visual-targets/01-home.png",
+      "gate": "landing guard unchanged; showcase claims are non-personalized and deterministic"
+    },
+    {
+      "id": "R4",
+      "branch": "design/r4-recommendations",
+      "dependsOn": [
+        "R2"
+      ],
+      "route": "/recommendations",
+      "plan": "screen-plans/04-recommendations.md",
+      "visual": "visual-targets/04-recommendations.png",
+      "gate": "recommendation work IDs/order unchanged"
+    },
+    {
+      "id": "R5",
+      "branch": "design/r5-onboarding",
+      "dependsOn": [
+        "R2"
+      ],
+      "route": "/onboarding",
+      "plan": "screen-plans/02-onboarding.md",
+      "visual": "visual-targets/02-onboarding.png",
+      "gate": "keyboard-only onboarding commit matches existing contract"
+    },
+    {
+      "id": "R6",
+      "branch": "design/r6-manga-dna",
+      "dependsOn": [
+        "R4",
+        "R5"
+      ],
+      "route": "/taste",
+      "plan": "screen-plans/03-manga-dna.md",
+      "visual": "visual-targets/03-manga-dna.png",
+      "gate": "all five adjustment states persist; preview is deterministic"
+    },
+    {
+      "id": "R7",
+      "branch": "design/r7-work-detail",
+      "dependsOn": [
+        "R2",
+        "R4"
+      ],
+      "route": "/works/[workId], /works/external",
+      "plan": "screen-plans/05-work-detail.md",
+      "visual": "visual-targets/05-work-detail.png",
+      "gate": "catalog/external URL, persistence and provider failure contracts pass"
+    },
+    {
+      "id": "R8",
+      "branch": "design/r8-library",
+      "dependsOn": [
+        "R2",
+        "R7"
+      ],
+      "route": "/library",
+      "plan": "screen-plans/06-library.md",
+      "visual": "visual-targets/06-library.png",
+      "gate": "catalog/external union and record editor behavior unchanged"
+    },
+    {
+      "id": "R9",
+      "branch": "design/r9-settings",
+      "dependsOn": [
+        "R1",
+        "R6",
+        "R8"
+      ],
+      "route": "/settings",
+      "plan": "screen-plans/07-settings.md",
+      "visual": "visual-targets/07-settings.png",
+      "gate": "policies/export/import/reset pass; unsupported settings absent"
+    },
+    {
+      "id": "R10",
+      "branch": "design/r10-final-qa",
+      "dependsOn": [
+        "R3",
+        "R4",
+        "R5",
+        "R6",
+        "R7",
+        "R8",
+        "R9"
+      ],
+      "scope": [
+        "responsive",
+        "accessibility",
+        "performance",
+        "offline",
+        "full-page screenshots"
+      ],
+      "gate": "all repository checks and visual review pass"
+    }
+  ],
+  "requiredCommands": [
+    "pnpm format:check",
+    "pnpm typecheck",
+    "pnpm lint",
+    "pnpm test",
+    "pnpm test:e2e",
+    "pnpm catalog:validate",
+    "pnpm build"
+  ],
+  "requiredScreenshots": [
+    "1440x900 full page",
+    "390x844 full page",
+    "hover-expanded desktop",
+    "keyboard-focus expanded",
+    "mobile quick-preview sheet",
+    "reduced-motion"
+  ]
+}

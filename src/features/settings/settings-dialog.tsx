@@ -1,15 +1,8 @@
 "use client";
 
-import { type KeyboardEvent, type ReactNode, useEffect, useRef } from "react";
+import type { ReactNode } from "react";
 
-const FOCUSABLE_SELECTOR = [
-  "a[href]",
-  "button:not([disabled])",
-  "input:not([disabled])",
-  "select:not([disabled])",
-  "textarea:not([disabled])",
-  '[tabindex]:not([tabindex="-1"])',
-].join(",");
+import { Dialog, DialogContent } from "@/components/design-system/dialog";
 
 type SettingsDialogProps = Readonly<{
   busy: boolean;
@@ -30,73 +23,32 @@ export function SettingsDialog({
   onClose,
   opener,
 }: SettingsDialogProps) {
-  const surfaceRef = useRef<HTMLDivElement>(null);
-
-  useEffect(() => {
-    const previousOverflow = document.body.style.overflow;
-    document.body.style.overflow = "hidden";
-    const requested = initialFocusId === undefined ? null : document.getElementById(initialFocusId);
-    const first = surfaceRef.current?.querySelector<HTMLElement>(FOCUSABLE_SELECTOR);
-    (requested ?? first)?.focus();
-
-    return () => {
-      document.body.style.overflow = previousOverflow;
-      if (opener?.isConnected === true) {
-        opener.focus();
-      } else if (fallbackFocusId !== undefined) {
-        document.getElementById(fallbackFocusId)?.focus();
-      }
-    };
-  }, [fallbackFocusId, initialFocusId, opener]);
-
-  const requestClose = () => {
-    if (!busy) onClose();
-  };
-
-  const handleKeyDown = (event: KeyboardEvent<HTMLDivElement>) => {
-    if (event.key === "Escape") {
-      event.preventDefault();
-      requestClose();
-      return;
-    }
-    if (event.key !== "Tab") return;
-
-    const focusable = [
-      ...(surfaceRef.current?.querySelectorAll<HTMLElement>(FOCUSABLE_SELECTOR) ?? []),
-    ];
-    if (focusable.length === 0) {
-      event.preventDefault();
-      return;
-    }
-    const first = focusable[0];
-    const last = focusable.at(-1);
-    if (event.shiftKey && document.activeElement === first) {
-      event.preventDefault();
-      last?.focus();
-    } else if (!event.shiftKey && document.activeElement === last) {
-      event.preventDefault();
-      first?.focus();
-    }
-  };
-
   return (
-    <div
-      className="settings-dialog"
-      onMouseDown={(event) => {
-        if (event.currentTarget === event.target) requestClose();
+    <Dialog
+      open
+      onOpenChange={(open) => {
+        if (!open && !busy) onClose();
       }}
-      role="presentation"
     >
-      <div
+      <DialogContent
         aria-labelledby={labelledBy}
-        aria-modal="true"
-        className="settings-dialog__surface surface-sheet"
-        onKeyDown={handleKeyDown}
-        ref={surfaceRef}
-        role="dialog"
+        className="fixed top-1/2 left-1/2 z-50 grid max-h-[calc(100dvh-(var(--layout-page-padding)*2)-var(--layout-safe-area-bottom))] w-[min(100%,var(--layout-width-form))] max-w-[var(--layout-width-form)] -translate-x-1/2 -translate-y-1/2 gap-[var(--space-5)] overflow-y-auto rounded-[var(--radius-card)] bg-surface-1 p-[var(--space-6)] !transition-none data-closed:!animate-none data-open:!animate-none sm:max-w-[var(--layout-width-form)]"
+        finalFocus={() =>
+          busy && fallbackFocusId !== undefined
+            ? document.getElementById(fallbackFocusId)
+            : opener?.isConnected === true
+              ? opener
+              : fallbackFocusId === undefined
+                ? null
+                : document.getElementById(fallbackFocusId)
+        }
+        initialFocus={() =>
+          initialFocusId === undefined ? null : document.getElementById(initialFocusId)
+        }
+        showCloseButton={false}
       >
         {children}
-      </div>
-    </div>
+      </DialogContent>
+    </Dialog>
   );
 }

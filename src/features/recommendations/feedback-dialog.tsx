@@ -1,7 +1,20 @@
 "use client";
 
-import { useEffect, useRef, useState } from "react";
+import { useState } from "react";
 
+import { Button } from "@/components/design-system/button";
+import {
+  ChoiceChipCheckbox,
+  ChoiceChipRadio,
+  ChoiceChipRadioGroup,
+} from "@/components/design-system/choice-chip";
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogHeader,
+  DialogTitle,
+} from "@/components/design-system/dialog";
 import { FACTOR_BACKED_NEGATIVE_REASON_IDS } from "@/domain/profile/constants";
 import type { CompletedRecommendationReaction } from "@/domain/profile/recommendation-feedback";
 import type { FactorBackedNegativeReasonId } from "@/domain/profile/types";
@@ -34,7 +47,6 @@ export function FeedbackDialog({
   onSaveHidden,
   onSkip,
 }: FeedbackDialogProps) {
-  const dialogRef = useRef<HTMLDialogElement>(null);
   const feedbackKey =
     feedback === null ? "closed" : `${feedback.kind}:${feedback.workId}:${feedback.updatedAt}`;
   const [selection, setSelection] = useState<{
@@ -44,22 +56,6 @@ export function FeedbackDialog({
   }>({ feedbackKey: "closed", reaction: null, reasons: [] });
   const reaction = selection.feedbackKey === feedbackKey ? selection.reaction : null;
   const reasons = selection.feedbackKey === feedbackKey ? selection.reasons : [];
-
-  useEffect(() => {
-    const dialog = dialogRef.current;
-    if (dialog === null) return;
-    if (feedback === null) {
-      if (dialog.open) {
-        if (typeof dialog.close === "function") dialog.close();
-        else dialog.removeAttribute("open");
-      }
-      return;
-    }
-    if (!dialog.open) {
-      if (typeof dialog.showModal === "function") dialog.showModal();
-      else dialog.setAttribute("open", "");
-    }
-  }, [feedback]);
 
   const toggleReason = (reason: FactorBackedNegativeReasonId) => {
     setSelection((current) => {
@@ -86,84 +82,111 @@ export function FeedbackDialog({
   const canSave = completed ? reaction !== null : reasons.length > 0;
 
   return (
-    <dialog
-      aria-describedby="recommendation-feedback-description"
-      aria-labelledby="recommendation-feedback-title"
-      className="recommendation-feedback-dialog"
-      onCancel={(event) => {
-        event.preventDefault();
-        if (!busy) onSkip();
+    <Dialog
+      onOpenChange={(open) => {
+        if (!open && !busy) onSkip();
       }}
-      ref={dialogRef}
+      open={feedback !== null}
     >
-      <form
-        onSubmit={(event) => {
-          event.preventDefault();
-          if (feedback?.kind === "completed" && reaction !== null) {
-            onSaveCompleted(reaction);
-          } else if (feedback?.kind === "hidden" && reasons.length > 0) {
-            onSaveHidden(reasons);
-          }
-        }}
+      <DialogContent
+        aria-describedby="recommendation-feedback-description"
+        aria-labelledby="recommendation-feedback-title"
+        className="!top-auto bottom-0 !max-h-[88dvh] w-full max-w-[var(--layout-width-form)] -translate-x-1/2 translate-y-0 rounded-t-[var(--radius-card)] rounded-b-none border border-line bg-surface-1 p-0 text-text shadow-[var(--shadow-raised)] sm:max-w-[var(--layout-width-form)] md:!top-1/2 md:bottom-auto md:-translate-y-1/2 md:rounded-[var(--radius-card)]"
+        showCloseButton={false}
       >
-        <header>
-          <h2 id="recommendation-feedback-title">{title}</h2>
-          <p id="recommendation-feedback-description">{description}</p>
-        </header>
+        <form
+          className="grid max-h-[88dvh] gap-[var(--space-5)] overflow-y-auto px-[var(--layout-page-padding)] pt-[var(--space-6)] pb-[calc(var(--space-6)+var(--layout-safe-area-bottom))] md:p-[var(--space-8)]"
+          onSubmit={(event) => {
+            event.preventDefault();
+            if (feedback?.kind === "completed" && reaction !== null) {
+              onSaveCompleted(reaction);
+            } else if (feedback?.kind === "hidden" && reasons.length > 0) {
+              onSaveHidden(reasons);
+            }
+          }}
+        >
+          <DialogHeader className="grid gap-[var(--space-content)]">
+            <DialogTitle id="recommendation-feedback-title">{title}</DialogTitle>
+            <DialogDescription id="recommendation-feedback-description">
+              {description}
+            </DialogDescription>
+          </DialogHeader>
 
-        {completed ? (
-          <fieldset>
-            <legend>{recommendationStrings.feedbackDialog.reactionLegend}</legend>
-            <div className="recommendation-feedback-dialog__choices">
-              {REACTIONS.map((value, index) => (
-                <label key={value}>
-                  <input
-                    autoFocus={feedback?.kind === "completed" && index === 0}
-                    checked={reaction === value}
-                    disabled={busy}
-                    name="recommendation-reaction"
-                    onChange={() => setSelection({ feedbackKey, reaction: value, reasons: [] })}
-                    type="radio"
-                    value={value}
-                  />
-                  <span>{recommendationStrings.feedbackDialog.reactionLabels[value]}</span>
-                </label>
-              ))}
-            </div>
-          </fieldset>
-        ) : (
-          <fieldset>
-            <legend>{recommendationStrings.feedbackDialog.reasonLegend}</legend>
-            <div className="recommendation-feedback-dialog__reasons">
-              {FACTOR_BACKED_NEGATIVE_REASON_IDS.map((reason, index) => (
-                <label key={reason}>
-                  <input
-                    autoFocus={feedback?.kind === "hidden" && index === 0}
+          {completed ? (
+            <fieldset className="m-0 min-w-0 border-0 p-0">
+              <legend className="mb-[var(--space-content)] p-0 font-bold text-text-strong">
+                {recommendationStrings.feedbackDialog.reactionLegend}
+              </legend>
+              <ChoiceChipRadioGroup<(typeof REACTIONS)[number] | "">
+                aria-label={recommendationStrings.feedbackDialog.reactionLegend}
+                disabled={busy}
+                name="recommendation-reaction"
+                onValueChange={(value) => {
+                  if (value !== "") {
+                    setSelection({ feedbackKey, reaction: value, reasons: [] });
+                  }
+                }}
+                value={reaction ?? ""}
+              >
+                {REACTIONS.map((value) => (
+                  <ChoiceChipRadio key={value} value={value}>
+                    {recommendationStrings.feedbackDialog.reactionLabels[value]}
+                  </ChoiceChipRadio>
+                ))}
+              </ChoiceChipRadioGroup>
+            </fieldset>
+          ) : (
+            <fieldset className="m-0 min-w-0 border-0 p-0">
+              <legend className="mb-[var(--space-content)] p-0 font-bold text-text-strong">
+                {recommendationStrings.feedbackDialog.reasonLegend}
+              </legend>
+              <div className="flex flex-wrap gap-[var(--space-content)]">
+                {FACTOR_BACKED_NEGATIVE_REASON_IDS.map((reason) => (
+                  <ChoiceChipCheckbox
                     checked={reasons.includes(reason)}
                     disabled={busy}
-                    onChange={() => toggleReason(reason)}
-                    type="checkbox"
+                    key={reason}
+                    onCheckedChange={() => toggleReason(reason)}
                     value={reason}
-                  />
-                  <span>{recommendationStrings.feedbackDialog.reasonLabels[reason]}</span>
-                </label>
-              ))}
-            </div>
-          </fieldset>
-        )}
+                  >
+                    {recommendationStrings.feedbackDialog.reasonLabels[reason]}
+                  </ChoiceChipCheckbox>
+                ))}
+              </div>
+            </fieldset>
+          )}
 
-        {errorMessage ? <p role="alert">{errorMessage}</p> : null}
-        <div className="recommendation-feedback-dialog__actions">
-          <button disabled={busy} onClick={onSkip} type="button">
-            {recommendationStrings.feedbackDialog.skip}
-          </button>
-          <button className="interactive-press" disabled={busy || !canSave} type="submit">
-            {busy
-              ? recommendationStrings.feedbackDialog.saving
-              : recommendationStrings.feedbackDialog.save}
-          </button>
-        </div>
-      </form>
-    </dialog>
+          {errorMessage ? (
+            <p
+              className="rounded-[var(--radius-card)] border border-warn p-[var(--space-3)]"
+              role="alert"
+            >
+              {errorMessage}
+            </p>
+          ) : null}
+          <div className="grid grid-cols-2 gap-[var(--space-content)]">
+            <Button
+              className="min-h-[var(--control-min-size)] border-line bg-surface-1 px-[var(--space-4)] py-[var(--space-content)] font-bold"
+              busy={busy}
+              onClick={onSkip}
+              type="button"
+              variant="outline"
+            >
+              {recommendationStrings.feedbackDialog.skip}
+            </Button>
+            <Button
+              className="min-h-[var(--control-min-size)] px-[var(--space-4)] py-[var(--space-content)] font-bold"
+              busy={busy}
+              disabled={!canSave}
+              type="submit"
+            >
+              {busy
+                ? recommendationStrings.feedbackDialog.saving
+                : recommendationStrings.feedbackDialog.save}
+            </Button>
+          </div>
+        </form>
+      </DialogContent>
+    </Dialog>
   );
 }

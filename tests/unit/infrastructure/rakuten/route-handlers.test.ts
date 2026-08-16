@@ -1,7 +1,9 @@
 import { afterEach, describe, expect, it, vi } from "vitest";
 
-import { GET as getItem } from "@/app/api/rakuten/item/route";
-import { GET as searchItems } from "@/app/api/rakuten/search/route";
+import {
+  handleRakutenItem as getItem,
+  handleRakutenSearch as searchItems,
+} from "@/infrastructure/rakuten/server-routes";
 import { RAKUTEN_CDN_CACHE_CONTROL } from "@/infrastructure/rakuten/server";
 
 const ISBN = "9784091855312";

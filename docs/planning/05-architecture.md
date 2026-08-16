@@ -1,6 +1,6 @@
 # 05 — 아키텍처 (Architecture)
 
-> 검증된 MVP를 위한 최소 완결 아키텍처. "어디서 데이터가 생기고, 어디서 변환되고, 어디에 저장되며, 어떤 계층이 그 변환을 소유하는가"를 정의한다.
+> 검증된 MVP를 위한 최소 완결 아키텍처. Framework/Router의 세부 계약은 `08-tanstack-start-migration.md`가 우선하며, 이 문서는 데이터의 생성·변환·저장 소유권을 정의한다.
 
 ---
 
@@ -8,20 +8,20 @@
 
 | 역할 | 선택 | 존재 이유 |
 |---|---|---|
-| Framework | **Next.js (App Router, 최신 stable)** | 정적 셸 + 두 Route Handler + Vercel 1저장소 배포. §3의 경계 선언과 함께 사용 |
+| Framework | **TanStack Start + TanStack Router** | typed route contract, 선택적 SSR/client boundary, 두 server route. 상세 계약은 `08` |
 | Language | TypeScript strict | 산식·스키마 타입 안정성 |
 | Styling | Tailwind CSS v4 | 토큰(`04` §2)을 `@theme`으로 정의 |
-| UI Primitive | shadcn/ui (Dialog, Sheet, Tabs, Toast 등 필요분만) | 접근성 확보된 프리미티브 |
+| UI Primitive | shadcn CLI의 Base UI 기반 primitive + design-system wrapper | 필요한 primitive만 `components/ui`에 생성하고 tokenized wrapper로 제품 API 제공 |
 | Animation | Motion (LazyMotion) | `04` §7. 유일한 애니메이션 의존성 |
 | Validation | Zod v4 | Catalog·API 응답·Import 전 경계 검증 |
 | Local DB | Dexie + dexie-react-hooks | IndexedDB + `useLiveQuery` 반응성 |
 | Local Search | Fuse.js | Catalog 검색(온보딩·Library) |
 | Catalog Build | tsx + csv-parse | CSV→JSON 파이프라인 |
 | Test | Vitest / Testing Library / Playwright | `07` 참조 |
-| Hosting | Vercel Git Integration | Next.js 네이티브 지원. `main` Production + 브랜치·PR별 Preview 배포 |
-| PWA | manifest 우선 → Serwist(`@serwist/next`) 폴리시 단계 | Serwist 9.x 유지보수 활발, Turbopack 빌드 호환(dev PWA 테스트만 `--webpack`) |
+| Hosting | Vercel Git Integration + TanStack Start Nitro output | `main` Production + 브랜치·PR별 Preview 배포 |
+| PWA | manifest 우선, service worker adapter는 framework migration 뒤 별도 결정 | 현재 local-first·offline 경계를 보존하고 Next 전용 adapter를 이식하지 않음 |
 
-**의도적으로 없는 것:** TanStack Query(단일 프록시 + CDN 캐시로 충분) / Zustand(지속=Dexie, 일시=React state) / 서버 DB·Auth / i18n 라이브러리(중앙 문자열 테이블) / 분석 SDK / React Bits·Embla·NumberFlow·AutoAnimate(`01` V2~V6) / NDL 연동(DEFER).
+**의도적으로 없는 것:** TanStack Query(단일 프록시 + 기존 provider cache로 충분) / Zustand(지속=Dexie, 일시=React state) / 서버 DB·Auth / i18n 라이브러리(중앙 문자열 테이블) / 분석 SDK / React Bits·Embla·Swiper·NumberFlow·AutoAnimate(`01` V2~V6) / theme switcher / NDL 연동(DEFER).
 
 ### 1.1 Vercel 배포 계약
 
@@ -56,7 +56,7 @@ data/generated/catalog-v1.json                  Recommendation Engine (순수 �
                                          Dexie (IndexedDB)
                                            userWorks / externalWorks / profile /
                                            onboardingDraft / recommendationCache / meta
-[런타임 - 서버(유일)]
+[런타임 - TanStack Start server route(유일)]
 /api/rakuten/search|item  ← 브라우저 fetch
    │ zod로 쿼리 검증 → Rakuten Books API 호출(App ID·Access Key 서버 보관)
    │ 필드 축소 + `_ex` 재작성 + Cache-Control(CDN) 부여
@@ -91,7 +91,7 @@ deterministic Markdown 집계 리포트(stdout 또는 reports/local/)
 | 데이터 | 원천 | 변환 | 소유 계층 | 저장 |
 |---|---|---|---|---|
 | Work Taste Metadata | 사람 주석(CSV) | CSV→zod 검증→byte-identical bundled/public JSON | 빌드 스크립트 | route-scoped 번들 + content-addressed 정적 자산 |
-| ProviderListing | Rakuten API | 필드 축소·URL 재작성·브라우저 workId 결합·normalized ISBN in-flight 합류 | Route Handler + infrastructure/rakuten | Dexie providerCache (가격·재고 24h / 기타 90일) |
+| ProviderListing | Rakuten API | 필드 축소·URL 재작성·브라우저 workId 결합·normalized ISBN in-flight 합류 | Start server route + infrastructure/rakuten | Dexie providerCache (가격·재고 24h / 기타 90일) |
 | 사용자 프로필·기록 | 사용자 입력 | UI 이벤트→도메인 타입 | features 계층 | Dexie (영구) |
 | External 작품 | Rakuten 축소 DTO | ISBN 대조→v1 canonical key/hash identity→원자적 insert/readback | domain/catalog + infrastructure/db | Dexie externalWorks |
 | 추천 결과 | 엔진 계산 | catalog×프로필→순위+기여도 | domain/recommendation (순수) | Dexie recommendationCache (입력 해시 키) |
@@ -126,17 +126,19 @@ groupingScore =
 
 `normalizeExternalTitleV1`은 위 NFKC·폭·가나·locale-independent lowercase·Unicode 공백/중점(`[・･·]`; U+0387은 NFKC 후 `·`)·권수/판형 제거 결과를 고정하고, `normalizeExternalCreatorV1`은 같은 규칙에서 권수/판형 제거만 생략하며 첫 creator 순서를 유지한다. title은 가나 통합을 먼저 적용하므로 `セット`와 `せっと`가 같은 edition token으로 제거된다. v1 edition 목록은 현재 grouping regex와 동일하게 인접 문자열 안의 exact listed substring도 제거하고 나머지는 보존한다(`完全版画集→画集`, `セットアップ→あっぷ`); 목록에 없는 부분 문자열은 제거하지 않는다. 두 결과의 빈 문자열은 거부한다. `normalizedKey = JSON.stringify([titleV1, creatorV1])`, digest input은 UTF-8 `konocomics-external-work-id-v1\0rakuten\0${normalizedKey}`, ID는 full lowercase SHA-256을 붙인 `ext:rakuten:v1:<64hex>`다. token boundary·가나·중점 변형·UTF-8 digest golden을 고정하며 규칙 수정은 기존 v1을 바꾸지 않고 새 identity version을 발급한다.
 
-## 3. 클라이언트/서버 경계 (선언)
+## 3. Router·클라이언트/서버 경계 (선언)
 
-1. **모든 페이지는 정적 프리렌더 셸이다.** 각 `page.tsx`는 메타데이터와 레이아웃만 서버에서 결정하고, 본문은 `"use client"` 컴포넌트다. 동적 SSR·서버 액션·RSC 데이터 페칭을 사용하지 않는다.
-2. **서버 코드는 `/api/rakuten/*` Route Handler 단 둘(search, item)이다.** 이유: App ID·Access Key 은닉 + CDN 캐시 부여. 그 외 서버 로직 추가 금지.
-3. **추천 엔진·설명 엔진은 순수·결정론 함수다.** `Date.now()`·난수·I/O 접근 금지. 시간 의존 값(예: TTL 판정)은 인자로 주입. 동일 입력 → 동일 출력을 단위 테스트로 강제.
-4. Dexie 접근은 `infrastructure/db` 모듈을 통해서만. 컴포넌트가 Dexie를 직접 import하지 않는다(`useLiveQuery` 훅 래퍼 경유).
-5. **G2 하니스는 별도 `harness/` Next static export다.** 제품 `src/app`에 route를 추가하지 않고 `/human/`·`/synthetic-pilot/` 두 정적 진입점만 제공한다. API·Route Handler·server action·동적 SSR·DB·브라우저 storage·auth·analytics·network·비밀키를 사용하지 않으며, wizard draft는 React state에만 있어 새로고침·종료 시 소실된다.
-6. `/works/external`은 build-time에 정확히 하나 생성하는 sibling static shell이다. server page는 query를 읽거나 local record를 조회하지 않고, hydration 뒤 client feature만 query를 strict parse한 다음 `infrastructure/db`를 통해 IndexedDB를 읽는다. 이 route 때문에 Route Handler·SSR·server action·RSC data fetch를 추가하지 않는다. `/works/[workId]`의 bundled-ID `generateStaticParams`와 `dynamicParams=false`는 그대로 유지한다.
-7. `/`도 정적 셸이다. Slice 10 client는 hydration 동안 정적 로고만 보이고, 현재 Catalog positive anchor가 5개 이상인 usable profile이면 콘텐츠 플래시 없이 `/recommendations`로 이동한다. `?landing=1`은 redirect만 우회하며 storage·profile·draft·cache·session reveal state를 쓰지 않는다. 로고 reveal과 페이지 진입 모션은 Slice 11까지 추가하지 않는다.
+1. TanStack Router는 pathname/path params, Zod search params, loader data, route boundary와 metadata만 소유한다. Dexie 사용자 상태, 추천 결과/policy/cache, form·animation·scroll·mutation state는 소유하지 않는다(`08` §1~2).
+2. `/`는 공개 prerender shell, `/works/$workId`는 bundled Catalog ID만 prerender한다. `/onboarding`·`/taste`·`/recommendations`·`/library`·`/settings`는 `ssr: false` route 또는 client boundary이고 `/works/external`은 고정 static shell + hydration 뒤 IndexedDB lookup이다.
+3. shared root document는 server-safe하게 유지한다. persistence provider는 server render 중 memory 상태만 만들고 hydration effect에서만 Dexie backend를 생성·연다. Dexie profile guard를 server loader/`beforeLoad`에서 실행하지 않는다. Router context는 repository/client/config dependency injection에만 쓰며 mutable UI·사용자 state를 넣지 않는다.
+4. **서버 코드는 `/api/rakuten/*` Start server route 단 둘(search, item)이다.** App ID·Access Key 은닉과 CDN cache를 위한 경계이며 임의 server function·새 server route를 추가하지 않는다.
+5. **추천 엔진·설명 엔진은 순수·결정론 함수다.** `Date.now()`·난수·I/O 접근 금지. 시간 의존 값(예: TTL 판정)은 인자로 주입. 동일 입력 → 동일 출력을 단위 테스트로 강제한다.
+6. Dexie 접근은 `infrastructure/db` 모듈을 통해서만 한다. 컴포넌트가 Dexie를 직접 import하지 않는다(`useLiveQuery` 훅 래퍼 경유).
+7. **G2 하니스는 제품 runtime과 분리된 기존 `harness/` 정적 export다.** `/human/`·`/synthetic-pilot/`만 제공하고 API·DB·browser storage·auth·analytics·network·비밀키를 사용하지 않는다. 제품 M9에서 Next dependency를 제거할 때도 별도 workspace dependency로 격리한다.
+8. `/works/external`의 server shell은 query나 local record를 읽지 않는다. hydration 뒤 client feature가 typed `workId`를 strict parse하고 IndexedDB를 읽는다. `/works/$workId`의 bundled ID와 unknown not-found 경계를 유지한다.
+9. `/`의 hydration guard는 현재 Catalog positive anchor가 5개 이상이면 콘텐츠 플래시 없이 `/recommendations`로 이동한다. `?landing=1`은 redirect만 우회하며 storage·profile·draft·cache·session reveal state를 쓰지 않는다.
 
-## 4. Route Handler 계약
+## 4. Start server route 계약
 
 ```text
 GET /api/rakuten/search?title=...        → { items: RakutenBookItem[] }
@@ -147,19 +149,21 @@ GET /api/rakuten/item?isbn=...           → { listing: RakutenBookItem }
 - Catalog 대표권이 품절이어도 메타데이터를 조회할 수 있도록 `outOfStockFlag=1`을 고정한다. 공급자의 현재 `Items`와 이전 `items` envelope를 모두 경계에서 정규화하고, 빈 availability는 미확인으로 보존하며 숫자 문자열 reviewAverage는 검증 후 number로 변환한다.
 - 라쿠텐 응답에서 필요한 필드만 추출(§`02` 5). `largeImageUrl`은 `_ex=600x600`으로 정규화해 `imageUrl`로 반환하고, 클라이언트 `CoverImage`가 같은 원본 URL에서 200/400/600 preset을 파생한다. 600 로드 실패 시 같은 URL의 200x200으로 폴백한다.
 - 실패 처리: 라쿠텐 4xx/5xx·타임아웃(5s) → `502 { error: "provider_unavailable" }`. 클라이언트는 placeholder 폴백(`03` 각 화면). 재시도는 사용자 액션으로만(자동 재시도 없음).
-- 요청 간격: 공통 Rakuten 클라이언트 큐가 서로 다른 요청의 시작을 1초 이상 분리해 application ID당 초당 1회 제한을 지킨다. 동일 ISBN의 동시 요청은 기존 in-flight 합류를 우선한다.
+- 요청 간격: 공통 Rakuten 클라이언트 큐의 1초 간격은 개발 중 provider 보호용으로 development에서만 적용한다. production/test에는 강제 지연하지 않는다. 동일 ISBN의 동시 요청은 기존 in-flight 합류를 우선하며 짧은 placeholder 노출은 허용한다.
 - 요청 검증: title 1~100자 / isbn 형식. 미통과 400. (공개 프록시 남용 방지 겸)
 
 ## 5. 소스 구조
 
 ```text
 src/
-├─ app/
-│  ├─ page.tsx  onboarding/  taste/  recommendations/
-│  ├─ works/[workId]/  works/external/  library/  settings/
-│  ├─ api/rakuten/search/route.ts  api/rakuten/item/route.ts
-│  ├─ layout.tsx  manifest.ts  globals.css(토큰)
-├─ components/            # ui/(shadcn) cover/ feedback/ nav/
+├─ routes/
+│  ├─ __root.tsx  index.tsx  onboarding.tsx  taste.tsx  recommendations.tsx
+│  ├─ works/$workId.tsx  works/external.tsx  library.tsx  settings.tsx
+│  └─ api/rakuten/search.ts  api/rakuten/item.ts
+├─ styles/globals.css     # dark-only semantic token
+├─ components/
+│  ├─ ui/                 # shadcn CLI가 생성한 Base UI primitive
+│  └─ design-system/      # primitive를 감싸 token·size·focus contract 제공
 ├─ features/              # onboarding/ taste/ recommendations/ work-detail/ library/ settings/
 │                         # (화면 상태·Dexie 연결·이벤트 → 도메인 호출)
 ├─ domain/                # 순수 로직. React·Dexie import 금지 (lint로 강제)
@@ -184,10 +188,10 @@ scripts/      (normalize-works.ts validate-catalog.ts
                build-catalog.ts report-coverage.ts run-baseline-experiment.ts
                aggregate-g2.ts)
 docs/factors/ (factor-dictionary.md annotation-guide.md)
-harness/      (별도 Next static export — /human/ /synthetic-pilot/, 배포 제외)
+harness/      (제품과 격리된 기존 정적 export — /human/ /synthetic-pilot/, 배포 제외)
 ```
 
-의존 방향(ESLint `import/no-restricted-paths`로 강제): `app → features → domain` / `features → infrastructure` / **domain은 어떤 계층도 import하지 않음** / scripts와 harness는 domain·data만 import. External canonical key와 digest input 조립은 pure domain이 소유하고 Web Crypto SHA-256 구현은 브라우저/infrastructure 경계에서 주입한다. 예외는 읽기 전용 일본어 lexicon 주입뿐이다. `scripts/run-baseline-experiment.ts → src/lib/strings.ts`와 `harness → src/lib/strings.ts`를 허용하되, harness의 다른 `src/lib/**` import는 금지한다.
+의존 방향(ESLint `import/no-restricted-paths`로 강제): `routes → features → domain` / `features → infrastructure` / **domain은 어떤 계층도 import하지 않음** / scripts와 harness는 domain·data만 import. External canonical key와 digest input 조립은 pure domain이 소유하고 Web Crypto SHA-256 구현은 브라우저/infrastructure 경계에서 주입한다. 예외는 읽기 전용 일본어 lexicon 주입뿐이다. `scripts/run-baseline-experiment.ts → src/lib/strings.ts`와 `harness → src/lib/strings.ts`를 허용하되, harness의 다른 `src/lib/**` import는 금지한다.
 
 ### 5.1 G2 로컬 하니스 경계
 
@@ -288,8 +292,8 @@ type ExportFileV1 = {
 
 ## 8. PWA 경계
 
-- MVP: `app/manifest.ts`(이름·아이콘·`start_url: "/"`·`display: standalone`) + 설치 가능성. 오프라인은 Dexie 데이터의 자연 오프라인성에 의존.
-- 폴리시 슬라이스: Serwist 도입 — precache(앱 셸 + 현재 identity가 가리키는 exact `/catalog/catalog-v1.<catalogVersion>.json`) + 표지 이미지 runtime cache(cache-first, 7일, 최대 300항목) + `/api/rakuten/*`는 network-only. 추천은 이 동일 전체 Catalog 자산으로 오프라인에서도 로컬 재계산하며 cache-only 결과를 제품 계약으로 만들지 않는다. 오프라인 폴백 페이지 1개.
+- MVP: 정적 manifest(이름·아이콘·`start_url: "/"`·`display: standalone`) + 설치 가능성. 오프라인은 Dexie 데이터의 자연 오프라인성에 의존한다.
+- 폴리시 슬라이스: TanStack Start 배포 output과 호환되는 service worker adapter를 별도 검토한다. exact Catalog precache, 표지 cache-first(7일/300항목), `/api/rakuten/*` network-only 계약은 보존하되 Next 전용 Serwist 설정을 그대로 이식하지 않는다.
 - `start_url`은 `/` 유지(랜딩의 리다이렉트 로직이 온보딩 여부 분기 담당).
 
 ## 9. 실패 동작 요약

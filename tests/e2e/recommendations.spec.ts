@@ -660,9 +660,12 @@ async function verifyLateViewportFactorReveal(page: Page) {
 }
 
 test.describe("Slice 7 recommendation journeys", () => {
-  test("core journey keeps grounded recommendations stable across reload", async ({ page }) => {
+  test("core journey keeps grounded recommendations stable across reload", async ({
+    page,
+  }, testInfo) => {
     const itemRequests: Array<{ isbn: string; workId: string }> = [];
     const imageRequests: string[] = [];
+    const fatalRuntimeMessages: string[] = [];
     const pageEntryObservations: Array<{ owner: "onboarding" | "taste"; pathname: string }> = [];
     let failedIsbn: string | null = null;
     let firstResponseReleased = false;
@@ -686,6 +689,16 @@ test.describe("Slice 7 recommendation journeys", () => {
     const tasteReduction = new Promise<void>((resolve, reject) => {
       resolveTasteReduction = resolve;
       rejectTasteReduction = reject;
+    });
+
+    const recordFatalRuntimeMessage = (message: string) => {
+      if (/hydration|indexeddb.*(?:server|window)|window is not defined/iu.test(message)) {
+        fatalRuntimeMessages.push(message);
+      }
+    };
+    page.on("pageerror", (error) => recordFatalRuntimeMessage(error.message));
+    page.on("console", (message) => {
+      if (message.type() === "error") recordFatalRuntimeMessage(message.text());
     });
 
     await page.emulateMedia({ reducedMotion: "no-preference" });
@@ -1057,6 +1070,60 @@ test.describe("Slice 7 recommendation journeys", () => {
     await expect(page.locator("li[data-recommendation-work-id]")).toHaveCount(10);
     expect(await recommendationIds(page)).toEqual(initialIds);
 
+    if (testInfo.project.name === "chromium") {
+      const firstItem = page
+        .getByRole("list", { name: "あなたのために選んだ作品" })
+        .locator("li[data-recommendation-work-id]")
+        .first();
+      const firstCard = firstItem.locator("article");
+      const firstCardLink = firstItem.getByRole("link", { name: /作品詳細を見る$/u });
+
+      await firstCard.hover();
+      await page.waitForTimeout(150);
+      await expect(firstCard).not.toHaveAttribute("data-expanded");
+      await expect(firstCard).toHaveAttribute("data-expanded", "true", { timeout: 250 });
+      await expect(firstCard.locator("details")).toHaveJSProperty("open", true);
+      const expandedBox = await firstItem.boundingBox();
+      expect(expandedBox?.width).toBeGreaterThanOrEqual(300);
+      expect(expandedBox?.width).toBeLessThanOrEqual(360);
+
+      await page.mouse.move(0, 0);
+      await expect(firstCard).not.toHaveAttribute("data-expanded");
+      await page.evaluate(() => {
+        if (document.activeElement instanceof HTMLElement) document.activeElement.blur();
+      });
+      await tabUntil(page, /作品詳細を見る/u, 80);
+      await expect(firstCardLink).toBeFocused();
+      await expect(firstCard).toHaveAttribute("data-expanded", "true", { timeout: 150 });
+    }
+
+    if (testInfo.project.name === "mobile-chromium") {
+      const previewWorkId = initialIds[0];
+      expect(previewWorkId).toBeTruthy();
+      const previewOpener = page
+        .locator(`li[data-recommendation-work-id='${previewWorkId}']`)
+        .getByRole("link");
+      const previewTitle = (await previewOpener.locator("h2").textContent())?.trim();
+      expect(previewTitle).toBeTruthy();
+      const previewDialog = page.getByRole("dialog", { name: previewTitle });
+
+      await previewOpener.focus();
+      await previewOpener.click();
+      expect(new URL(page.url()).searchParams.get("preview")).toBe(previewWorkId);
+      await expect(previewDialog).toBeVisible();
+
+      await page.goBack();
+      await expect(previewDialog).toBeHidden();
+      await expect(previewOpener).toBeFocused();
+
+      await page.goForward();
+      await expect(previewDialog).toBeVisible();
+      await page.reload();
+      await expect(previewDialog).toBeVisible();
+      await page.goBack();
+      await expect(previewDialog).toBeHidden();
+    }
+
     await tabUntil(page, /^\s*完結作を優先\s*$/u, 40);
     await page.keyboard.press("Space");
     await expect(page.getByRole("checkbox", { name: "完結作を優先" })).toBeChecked();
@@ -1086,6 +1153,31 @@ test.describe("Slice 7 recommendation journeys", () => {
     await expect(page.getByRole("checkbox", { name: "完結作を優先" })).toBeChecked();
     await expect(page.locator("li[data-recommendation-work-id]")).toHaveCount(10);
     expect(await recommendationIds(page)).toEqual(policyIds);
+
+    await page.goto(
+      "/recommendations?preview=first&preview=second&genre=invalid&sort=invalid&shelf=%20",
+    );
+    await expect(page.getByRole("heading", { level: 1, name: "あなたへのおすすめ" })).toBeVisible();
+    await expect(page.getByRole("dialog")).toHaveCount(0);
+    await expect(page.locator("li[data-recommendation-work-id]")).toHaveCount(10);
+
+    await page.emulateMedia({ colorScheme: "light" });
+    expect(await page.evaluate(() => getComputedStyle(document.documentElement).colorScheme)).toBe(
+      "dark",
+    );
+    const desktopNavigation = page.getByRole("navigation", { name: "メインナビゲーション" });
+    const mobileNavigation = page.getByRole("navigation", { name: "メインタブ" });
+    const activeNavigation =
+      testInfo.project.name === "mobile-chromium" ? mobileNavigation : desktopNavigation;
+    await expect(activeNavigation).toBeVisible();
+    await expect(
+      testInfo.project.name === "mobile-chromium" ? desktopNavigation : mobileNavigation,
+    ).toBeHidden();
+    const navigationTarget = await activeNavigation.getByRole("link").first().boundingBox();
+    expect(navigationTarget).not.toBeNull();
+    expect(navigationTarget!.width).toBeGreaterThanOrEqual(44);
+    expect(navigationTarget!.height).toBeGreaterThanOrEqual(44);
+    expect(fatalRuntimeMessages).toEqual([]);
   });
 
   test("completed feedback removes, backfills, persists, and stays excluded after update", async ({
@@ -1160,6 +1252,12 @@ test.describe("Slice 8 provider and work-detail journey", () => {
     const affiliateUrl = "https://hb.afl.rakuten.co.jp/hgc/e2e-provider-link/";
     const coverUrl = "https://thumbnail.image.rakuten.co.jp/e2e-provider-cover.jpg";
     const itemCaption = "E2E で取得した、作品に根拠づけられた紹介文です。";
+
+    for (const path of ["/api/rakuten/search", "/api/rakuten/item"]) {
+      const response = await page.request.get(path);
+      expect(response.status()).toBe(400);
+      await expect(response.json()).resolves.toEqual({ error: "invalid_request" });
+    }
 
     await page.context().route(/\/api\/rakuten\/search(?:\?|$)/u, async (route) => {
       searchRequests.push(route.request().url());

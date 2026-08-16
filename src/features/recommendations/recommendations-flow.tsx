@@ -1,12 +1,23 @@
 "use client";
 
-import Link from "next/link";
+import { Link } from "@tanstack/react-router";
 import type { ComponentType, ReactNode } from "react";
 import { useCallback, useEffect, useLayoutEffect, useMemo, useRef, useState } from "react";
 import { flushSync } from "react-dom";
 
+import { Button } from "@/components/design-system/button";
+import { ChoiceChipCheckbox } from "@/components/design-system/choice-chip";
+import { NativeSelect } from "@/components/design-system/native-select";
+import { SiteFooter } from "@/components/layout/site-footer";
+import { MediaPosterCard } from "@/components/media/media-poster-card";
+import { MediaShelf } from "@/components/media/media-shelf";
+import { QuickPreviewDialog } from "@/components/media/quick-preview-dialog";
+import { RankingShelf } from "@/components/media/ranking-shelf";
 import recommendationContextJson from "@/data/generated/recommendation-context-v1.json";
+import { GENRE_TAGS } from "@/domain/catalog/constants";
+import type { GenreTag } from "@/domain/catalog/types";
 import type { ExplanationFactorId } from "@/domain/explanation";
+import { generateTasteExplanation } from "@/domain/explanation/generate";
 import {
   createRecommendationFeedbackRecord,
   type CompletedRecommendationReaction,
@@ -55,6 +66,7 @@ const DEFAULT_POLICIES: RecommendationPolicies = {
 const EMPTY_ADJUSTMENTS: ProfileAdjustments = { axes: {}, themes: {} };
 const EMPTY_RECORDS: readonly UserWorkRecord[] = [];
 const VISIBLE_POLICY_KEYS = ["preferCompleted", "preferHidden", "preferVerified"] as const;
+const RECOMMENDATION_SHELVES = ["featured", "anchor", "discovery", "completed", "ranking"] as const;
 const parsedRecommendationContext =
   recommendationContextSchema.safeParse(recommendationContextJson);
 
@@ -64,20 +76,56 @@ type MotionFocusTarget = Readonly<{
   workId: string;
   action: "completed" | "hidden" | null;
 }>;
+type RecommendationShelf = (typeof RECOMMENDATION_SHELVES)[number];
 
-function StaticRecommendationList({
+type RecommendationsFlowProps = Readonly<{
+  previewWorkId?: string;
+  genre?: GenreTag;
+  shelf?: string;
+  onPreviewOpen?: (workId: string) => void;
+  onPreviewClose?: () => void;
+  onGenreChange?: (genre: GenreTag | undefined) => void;
+  onShelfChange?: (shelf: RecommendationShelf | undefined) => void;
+}>;
+
+function StaticRecommendationItems({
   items,
   shortage,
 }: Readonly<{ items: readonly RecommendationMotionItem[]; shortage: ReactNode }>) {
   return (
-    <ol className="recommendations-list" data-recommendation-motion="static" role="list">
+    <>
       {items.map((item) => (
-        <li data-recommendation-work-id={item.workId} key={item.workId}>
+        <li
+          className="basis-[var(--featured-card-basis)] shrink-0 snap-start overflow-visible [@media(min-width:768px)_and_(hover:hover)_and_(pointer:fine)]:has-[article[data-expanded]]:basis-[calc(var(--control-min-size)*8)]"
+          data-recommendation-work-id={item.workId}
+          key={item.workId}
+        >
           {item.content}
         </li>
       ))}
       {shortage}
-    </ol>
+    </>
+  );
+}
+
+function FeaturedRecommendationState({ children }: Readonly<{ children: ReactNode }>) {
+  return (
+    <section
+      aria-labelledby="recommendation-featured-heading"
+      className="grid scroll-mt-[calc(var(--desktop-navigation-height)+var(--space-4))] gap-[var(--space-content)]"
+      id="recommendation-shelf-featured"
+    >
+      <header className="grid gap-[var(--space-content-tight)]">
+        <h2
+          className="border-l-[length:var(--space-1)] border-accent pl-[var(--space-4)]"
+          id="recommendation-featured-heading"
+        >
+          {recommendationStrings.shelves.featured.title}
+        </h2>
+        <p className="text-text-muted">{recommendationStrings.shelves.featured.description}</p>
+      </header>
+      {children}
+    </section>
   );
 }
 
@@ -127,15 +175,18 @@ function RecommendationsSkeleton() {
       aria-live="polite"
       className="recommendations-skeleton"
     >
-      <p>{recommendationStrings.calculating}</p>
-      <ol aria-hidden="true">
+      <p className="mb-[var(--space-4)] text-text-muted">{recommendationStrings.calculating}</p>
+      <ol aria-hidden="true" className="m-0 grid list-none gap-[var(--space-4)] p-0">
         {Array.from({ length: 10 }, (_, index) => (
-          <li key={index}>
-            <span />
-            <div>
-              <span />
-              <span />
-              <span />
+          <li
+            className="grid min-h-[calc(var(--recommendation-cover-width)*1.43)] grid-cols-[var(--recommendation-cover-width)_minmax(0,1fr)] gap-[var(--space-4)] rounded-[var(--radius-card)] border border-line bg-surface-1 p-[var(--space-4)] motion-safe:[animation:cover-skeleton-pulse_1.2s_ease-in-out_infinite_alternate] motion-reduce:animate-none motion-reduce:opacity-65"
+            key={index}
+          >
+            <span className="block aspect-[30/43] rounded-[var(--radius-cover)] bg-line" />
+            <div className="grid content-start gap-[var(--space-3)]">
+              <span className="block h-[var(--space-4)] rounded-[var(--radius-cover)] bg-line" />
+              <span className="block h-[var(--space-4)] w-2/3 rounded-[var(--radius-cover)] bg-line" />
+              <span className="block h-[var(--space-8)] rounded-[var(--radius-cover)] bg-line" />
             </div>
           </li>
         ))}
@@ -144,7 +195,15 @@ function RecommendationsSkeleton() {
   );
 }
 
-export function RecommendationsFlow() {
+export function RecommendationsFlow({
+  genre,
+  onGenreChange,
+  onPreviewClose,
+  onPreviewOpen,
+  onShelfChange,
+  previewWorkId,
+  shelf,
+}: RecommendationsFlowProps = {}) {
   const catalog = useCatalog();
   const {
     adjustments: storedAdjustments,
@@ -187,7 +246,7 @@ export function RecommendationsFlow() {
   const initialLoadHash = useRef<string | null>(null);
   const policySaveInFlight = useRef(false);
   const feedbackBaseInFlight = useRef(false);
-  const excludedWorkIds = useRef(new Set<string>());
+  const [excludedWorkIds, setExcludedWorkIds] = useState<ReadonlySet<string>>(new Set());
   const articleRefs = useRef(new Map<string, HTMLElement>());
   const updateButtonRef = useRef<HTMLButtonElement>(null);
   const motionAllowed = useRef(false);
@@ -195,6 +254,8 @@ export function RecommendationsFlow() {
   const loadedMotionList = useRef<RecommendationMotionListComponent | null>(null);
   const motionListRequest = useRef<Promise<void> | null>(null);
   const pendingMotionFocus = useRef<MotionFocusTarget | null>(null);
+  const previewOpener = useRef<HTMLElement | null>(null);
+  const previousPreviewWorkId = useRef<string | null>(null);
   const records = userWorks ?? EMPTY_RECORDS;
   const adjustments = storedAdjustments ?? EMPTY_ADJUSTMENTS;
   const policies = localPolicies ?? storedPolicies ?? DEFAULT_POLICIES;
@@ -230,13 +291,13 @@ export function RecommendationsFlow() {
     });
     return ids;
   }, [optimisticPlannedIds, records]);
+  const coverWorkIds = useMemo(
+    () => (plan ?? visibleEntries).slice(0, 18).map((entry) => entry.workId),
+    [plan, visibleEntries],
+  );
   const recommendationCoverTargets = useMemo(
-    () =>
-      createRecommendationCoverTargets(
-        catalog,
-        visibleEntries.map((entry) => entry.workId),
-      ),
-    [catalog, visibleEntries],
+    () => createRecommendationCoverTargets(catalog, coverWorkIds),
+    [catalog, coverWorkIds],
   );
   const { coverUrls: recommendationCoverUrls, notifyCoverSettled } = useRecommendationCovers({
     targets: recommendationCoverTargets,
@@ -338,6 +399,31 @@ export function RecommendationsFlow() {
     else article.focus();
   }, [MotionList]);
 
+  useLayoutEffect(() => {
+    const currentPreviewWorkId = previewWorkId ?? null;
+    if (previousPreviewWorkId.current !== null && currentPreviewWorkId === null) {
+      const opener = previewOpener.current;
+      previewOpener.current = null;
+      if (opener?.isConnected) opener.focus();
+    }
+    previousPreviewWorkId.current = currentPreviewWorkId;
+  }, [previewWorkId]);
+
+  useEffect(() => {
+    if (shelf === undefined) return;
+    document.getElementById(`recommendation-shelf-${shelf}`)?.scrollIntoView({ block: "start" });
+  }, [plan, shelf]);
+
+  useEffect(() => {
+    if (
+      plan !== null &&
+      previewWorkId !== undefined &&
+      (!plan.some((entry) => entry.workId === previewWorkId) || excludedWorkIds.has(previewWorkId))
+    ) {
+      onPreviewClose?.();
+    }
+  }, [excludedWorkIds, onPreviewClose, plan, previewWorkId]);
+
   useEffect(() => {
     if (recommendationInput === null) return;
     const sequence = hashSequence.current + 1;
@@ -402,7 +488,7 @@ export function RecommendationsFlow() {
         }
         if (calculationSequence.current !== sequence) return false;
         deactivateMotionList();
-        excludedWorkIds.current = new Set();
+        setExcludedWorkIds(new Set());
         setPlan(nextPlan);
         setPlanPolicies(input.policies);
         setVisibleEntries(nextVisible);
@@ -535,7 +621,7 @@ export function RecommendationsFlow() {
             }),
       );
       await requestedMotionList;
-      excludedWorkIds.current.add(entry.workId);
+      const nextExcludedWorkIds = new Set(excludedWorkIds).add(entry.workId);
       const removedIndex = visibleEntries.findIndex(
         (candidate) => candidate.workId === entry.workId,
       );
@@ -543,7 +629,7 @@ export function RecommendationsFlow() {
       const nextEntries = backfillRecommendationPlanEntries({
         plan,
         survivors,
-        excludedWorkIds: [...excludedWorkIds.current],
+        excludedWorkIds: [...nextExcludedWorkIds],
         policies: planPolicies ?? policies,
       });
       const survivorIds = new Set(survivors.map((candidate) => candidate.workId));
@@ -554,6 +640,7 @@ export function RecommendationsFlow() {
       );
       const focusEntry = nextEntries[Math.min(Math.max(removedIndex, 0), nextEntries.length - 1)];
       activateLoadedMotionList();
+      setExcludedWorkIds(nextExcludedWorkIds);
       setBackfillIds(addedIds);
       setVisibleEntries(nextEntries);
       announce(
@@ -676,6 +763,12 @@ export function RecommendationsFlow() {
     });
   };
 
+  const openPreview = (workId: string) => {
+    previewOpener.current =
+      document.activeElement instanceof HTMLElement ? document.activeElement : null;
+    onPreviewOpen?.(workId);
+  };
+
   if (
     status.state === "initializing" ||
     userWorks === undefined ||
@@ -683,7 +776,7 @@ export function RecommendationsFlow() {
     storedPolicies === undefined
   ) {
     return (
-      <main className="recommendations-page recommendations-page--loading">
+      <main className="mx-auto min-h-dvh w-full max-w-[var(--layout-width-media)] px-[var(--layout-page-padding)] pt-[var(--layout-page-block-start)] pb-[calc(var(--layout-mobile-navigation-clearance)+var(--space-8))] md:pb-[var(--space-section-large)] [--recommendation-cover-width:96px]">
         <p aria-live="polite">{recommendationStrings.loading}</p>
       </main>
     );
@@ -696,6 +789,45 @@ export function RecommendationsFlow() {
       : undefined;
     return work === undefined || metadata === undefined ? [] : [{ entry, metadata, work }];
   });
+  const featuredEntries =
+    genre === undefined
+      ? renderedEntries
+      : renderedEntries.filter(({ work }) => work.genres.includes(genre));
+  const allPlanEntries = (plan ?? []).flatMap((entry) => {
+    if (excludedWorkIds.has(entry.workId)) return [];
+    const work = worksById.get(entry.workId);
+    const metadata = parsedRecommendationContext.success
+      ? parsedRecommendationContext.data.constraintByWorkId[entry.workId]
+      : undefined;
+    return work === undefined || metadata === undefined ? [] : [{ entry, metadata, work }];
+  });
+  const visibleWorkIds = new Set(visibleEntries.map((entry) => entry.workId));
+  const auxiliaryEntries = allPlanEntries
+    .filter(
+      ({ entry, work }) =>
+        !visibleWorkIds.has(entry.workId) && (genre === undefined || work.genres.includes(genre)),
+    )
+    .slice(0, 18);
+  const usedAuxiliaryIds = new Set<string>();
+  const discoveryEntries = auxiliaryEntries.filter(({ entry }) => entry.isDiscovery).slice(0, 6);
+  discoveryEntries.forEach(({ entry }) => usedAuxiliaryIds.add(entry.workId));
+  const completedEntries = auxiliaryEntries
+    .filter(({ entry, work }) => work.status === "completed" && !usedAuxiliaryIds.has(entry.workId))
+    .slice(0, 6);
+  completedEntries.forEach(({ entry }) => usedAuxiliaryIds.add(entry.workId));
+  const anchorEntries = auxiliaryEntries
+    .filter(({ entry }) => !usedAuxiliaryIds.has(entry.workId))
+    .slice(0, 6);
+  const previewEntry = allPlanEntries.find(({ entry }) => entry.workId === previewWorkId) ?? null;
+  const previewExplanation =
+    previewEntry === null
+      ? null
+      : generateTasteExplanation({
+          contributions: previewEntry.entry.contributions,
+          confidenceLevel: previewEntry.entry.confidenceLevel,
+          lexicon: explanationLexicon,
+          resolveTitle: (workId) => worksById.get(workId)?.title,
+        });
   const hasInvalidEntry = renderedEntries.length !== visibleEntries.length;
   const showInitialError =
     (!parsedRecommendationContext.success || calculationError !== "" || hasInvalidEntry) &&
@@ -707,7 +839,7 @@ export function RecommendationsFlow() {
     currentHash === null ||
     displayedHash === null ||
     currentHash === displayedHash;
-  const recommendationItems: RecommendationMotionItem[] = renderedEntries.map(
+  const recommendationItems: RecommendationMotionItem[] = featuredEntries.map(
     ({ entry, metadata, work }, index) => ({
       workId: entry.workId,
       animateIn: backfillIds.has(entry.workId),
@@ -731,6 +863,7 @@ export function RecommendationsFlow() {
           }
           onHidden={() => void removeForFeedback(entry, "hidden")}
           onPlanned={() => void savePlanned(entry)}
+          onPreview={() => openPreview(entry.workId)}
           onRemovalIntent={requestRemovalMotion}
           planned={plannedIds.has(entry.workId)}
           priority={index === 0}
@@ -743,155 +876,463 @@ export function RecommendationsFlow() {
   );
   const shortageItem =
     renderedEntries.length < 10 ? (
-      <li className="recommendations-shortage surface-card" key="recommendation-shortage">
+      <li
+        className="grid basis-[var(--featured-card-basis)] shrink-0 snap-start gap-[var(--space-3)] overflow-visible rounded-[var(--radius-card)] border border-line bg-surface-1 p-[var(--space-6)]"
+        key="recommendation-shortage"
+      >
         <h2>{recommendationStrings.shortage.title}</h2>
         <p>{recommendationStrings.shortage.description}</p>
-        <div>
-          <Link className="interactive-press" href="/onboarding" prefetch={false}>
+        <div className="flex flex-wrap gap-[var(--space-content)]">
+          <Link
+            className="inline-flex min-h-[var(--control-min-size)] items-center font-bold text-accent underline underline-offset-[var(--space-content-tight)] transition-transform duration-[var(--motion-duration-press)] active:scale-[0.97] motion-reduce:transform-none motion-reduce:transition-none"
+            preload={false}
+            to="/onboarding"
+          >
             {recommendationStrings.shortage.addWorks}
           </Link>
-          <Link className="interactive-press" href="/taste" prefetch={false}>
+          <Link
+            className="inline-flex min-h-[var(--control-min-size)] items-center font-bold text-accent underline underline-offset-[var(--space-content-tight)] transition-transform duration-[var(--motion-duration-press)] active:scale-[0.97] motion-reduce:transform-none motion-reduce:transition-none"
+            preload={false}
+            to="/taste"
+          >
             {recommendationStrings.shortage.reviewTaste}
           </Link>
         </div>
       </li>
     ) : null;
+  const renderPoster = ({ entry, work }: (typeof allPlanEntries)[number], index: number) => (
+    <div
+      className="grid w-[calc(var(--control-min-size)*3.5)] shrink-0 snap-start content-start gap-[var(--space-content)]"
+      key={entry.workId}
+    >
+      <MediaPosterCard
+        className="!w-full"
+        coverUrl={recommendationCoverUrls.get(entry.workId)}
+        creators={work.creators}
+        metadata={explanationLexicon.confidenceLabels[entry.confidenceLevel]}
+        priority={index === 0}
+        title={work.title}
+        workId={work.id}
+      />
+      <Button
+        className="w-full min-h-[var(--control-min-size)] overflow-hidden text-ellipsis"
+        onClick={() => openPreview(entry.workId)}
+        type="button"
+        variant="outline"
+      >
+        {recommendationStrings.quickPreview.open(work.title)}
+      </Button>
+    </div>
+  );
 
   return (
-    <main
-      className="recommendations-page"
-      data-recommendation-input-hash={displayedHash ?? undefined}
-    >
-      <div className="recommendations-layout">
-        <div className="recommendations-main">
-          <header className="recommendations-header">
-            <h1 className="font-display">{recommendationStrings.title}</h1>
-            <p>{recommendationStrings.description}</p>
-          </header>
+    <>
+      <main
+        className="mx-auto min-h-dvh w-full max-w-[var(--layout-width-media)] bg-canvas px-[var(--layout-page-padding)] pt-[var(--layout-page-block-start)] pb-[calc(var(--layout-mobile-navigation-clearance)+var(--space-8))] md:pb-[var(--space-section-large)] [--recommendation-cover-width:96px]"
+        data-recommendation-input-hash={displayedHash ?? undefined}
+      >
+        <div className="block w-full min-w-0">
+          <div className="block w-full min-w-0">
+            <header className="mb-[var(--space-5)] grid gap-[var(--space-content)] lg:mb-[var(--space-3)] lg:grid-cols-[auto_minmax(0,1fr)] lg:items-baseline lg:gap-[var(--space-4)]">
+              <h1 className="font-display">{recommendationStrings.title}</h1>
+              <p className="text-text-muted">{recommendationStrings.description}</p>
+            </header>
 
-          {status.state === "degraded" ? (
-            <p className="recommendations-alert" role="status">
-              {recommendationStrings.storageWarning}
-            </p>
-          ) : null}
-
-          <section
-            aria-labelledby="recommendation-policy-heading"
-            className="recommendations-controls surface-card"
-          >
-            <fieldset>
-              <legend id="recommendation-policy-heading">
-                {recommendationStrings.policiesHeading}
-              </legend>
-              <div className="recommendations-controls__policies">
-                {VISIBLE_POLICY_KEYS.map((key) => (
-                  <label key={key}>
-                    <input
-                      checked={policies[key]}
-                      disabled={isComputing || isPolicySaving || feedbackBaseBusy}
-                      onChange={() => void togglePolicy(key)}
-                      type="checkbox"
-                    />
-                    <span>{recommendationStrings.policyLabels[key]}</span>
-                  </label>
-                ))}
+            <section className="mb-[var(--space-4)] grid grid-cols-1 gap-[var(--space-3)] rounded-[var(--radius-card)] border border-line bg-surface-1 p-[var(--space-3)] min-[360px]:grid-cols-[minmax(0,1fr)_auto] md:grid-cols-[minmax(0,1fr)_minmax(0,2fr)_auto] md:items-center lg:mb-[var(--space-3)]">
+              <div className="grid gap-[var(--space-content)]">
+                <h2>{recommendationStrings.criteria.heading}</h2>
+                <p className="sr-only text-text-muted sm:not-sr-only">
+                  {recommendationStrings.criteria.description}
+                </p>
               </div>
-            </fieldset>
-            <div className="recommendations-controls__update">
-              {displayedHash !== null && currentHash !== null && displayedHash !== currentHash ? (
-                <p>{recommendationStrings.pendingChanges}</p>
-              ) : null}
-              <button
-                className="interactive-press"
-                disabled={updateDisabled}
-                onClick={() => {
-                  if (recommendationInput === null) window.location.reload();
-                  else void updateRecommendations();
-                }}
-                ref={updateButtonRef}
-                type="button"
+              <dl className="m-0 grid grid-cols-3 gap-[var(--space-content)] min-[360px]:col-span-2 md:col-span-1">
+                <div className="grid gap-[var(--space-content-tight)] rounded-[var(--radius-control)] border border-line bg-surface-2 p-[var(--space-content)]">
+                  <dt className="text-[length:var(--text-caption-size)] text-text-muted">
+                    {recommendationStrings.criteria.records}
+                  </dt>
+                  <dd className="m-0 font-bold text-text-strong">
+                    {recommendationStrings.criteria.recordCount(records.length)}
+                  </dd>
+                </div>
+                <div className="grid gap-[var(--space-content-tight)] rounded-[var(--radius-control)] border border-line bg-surface-2 p-[var(--space-content)]">
+                  <dt className="text-[length:var(--text-caption-size)] text-text-muted">
+                    {recommendationStrings.criteria.preferences}
+                  </dt>
+                  <dd className="m-0 line-clamp-2 font-bold text-text-strong">
+                    {dnaSummary.topPreferences.length === 0
+                      ? recommendationStrings.tasteSummary.empty
+                      : dnaSummary.topPreferences
+                          .map(
+                            (preference) =>
+                              explanationLexicon.factorLabels[
+                                preference.factorId as ExplanationFactorId
+                              ] ?? preference.factorId,
+                          )
+                          .join("・")}
+                  </dd>
+                </div>
+                <div className="grid gap-[var(--space-content-tight)] rounded-[var(--radius-control)] border border-line bg-surface-2 p-[var(--space-content)]">
+                  <dt className="text-[length:var(--text-caption-size)] text-text-muted">
+                    {recommendationStrings.criteria.policies}
+                  </dt>
+                  <dd className="m-0 font-bold text-text-strong">
+                    {recommendationStrings.criteria.policyCount(
+                      VISIBLE_POLICY_KEYS.filter((key) => policies[key]).length,
+                    )}
+                  </dd>
+                </div>
+              </dl>
+              <Link
+                className="inline-flex min-h-[var(--control-min-size)] items-center justify-self-start font-bold text-accent min-[360px]:col-start-2 min-[360px]:row-start-1 md:col-auto md:row-auto"
+                preload={false}
+                to="/taste"
               >
-                {isComputing ? recommendationStrings.updating : recommendationStrings.update}
-              </button>
-            </div>
-          </section>
-
-          {actionError ? (
-            <p className="recommendations-alert" role="alert">
-              {actionError}
-            </p>
-          ) : null}
-          {calculationError && plan !== null ? (
-            <p className="recommendations-alert" role="alert">
-              {calculationError}
-            </p>
-          ) : null}
-
-          {showSkeleton ? (
-            <RecommendationsSkeleton />
-          ) : showInitialError ? (
-            <section className="recommendations-error surface-card" role="alert">
-              <h2>{recommendationStrings.errors.calculation}</h2>
-              <button
-                className="interactive-press"
-                onClick={() => {
-                  if (recommendationInput === null) window.location.reload();
-                  else void updateRecommendations();
-                }}
-                type="button"
-              >
-                {recommendationStrings.errors.retry}
-              </button>
-            </section>
-          ) : plan === null || isComputing ? null : renderedEntries.length === 0 ? (
-            <section className="recommendations-empty surface-card">
-              <span aria-hidden="true" className="recommendations-empty__illustration" />
-              <h2>{recommendationStrings.empty.title}</h2>
-              <p>{recommendationStrings.empty.description}</p>
-              <Link className="interactive-press" href="/taste" prefetch={false}>
-                {recommendationStrings.empty.link}
+                {recommendationStrings.tasteSummary.link}
               </Link>
             </section>
-          ) : MotionList === null ? (
-            <StaticRecommendationList items={recommendationItems} shortage={shortageItem} />
-          ) : (
-            <MotionList items={recommendationItems} reducedMotion={false} shortage={shortageItem} />
-          )}
+
+            {status.state === "degraded" ? (
+              <p
+                className="mb-[var(--space-4)] rounded-[var(--radius-card)] border border-warn bg-surface-1 px-[var(--space-4)] py-[var(--space-3)]"
+                role="status"
+              >
+                {recommendationStrings.storageWarning}
+              </p>
+            ) : null}
+
+            <section
+              aria-labelledby="recommendation-policy-heading"
+              className="mb-[var(--space-5)] grid gap-[var(--space-3)] rounded-[var(--radius-card)] border border-line bg-surface-1 p-[var(--space-3)] min-[360px]:grid-cols-[minmax(0,1fr)_auto] min-[360px]:items-end lg:grid-cols-[minmax(0,1.35fr)_minmax(0,1fr)_auto]"
+            >
+              <div className="grid grid-cols-3 gap-[var(--space-content)] min-[360px]:col-span-2 lg:col-span-1">
+                <label className="grid min-w-0 gap-[var(--space-content-tight)] text-[length:var(--text-caption-size)] font-bold text-text-muted">
+                  <span>{recommendationStrings.filters.genre}</span>
+                  <NativeSelect
+                    className="min-w-0 [&_[data-slot=native-select]]:bg-surface-2 [&_[data-slot=native-select]]:text-text-strong"
+                    onChange={(event) => {
+                      const nextGenre = GENRE_TAGS.find(
+                        (candidate) => candidate === event.currentTarget.value,
+                      );
+                      onGenreChange?.(nextGenre);
+                    }}
+                    value={genre ?? ""}
+                  >
+                    <option value="">{recommendationStrings.filters.allGenres}</option>
+                    {GENRE_TAGS.map((genreTag) => (
+                      <option key={genreTag} value={genreTag}>
+                        {explanationLexicon.factorLabels[genreTag]}
+                      </option>
+                    ))}
+                  </NativeSelect>
+                </label>
+                <label className="grid min-w-0 gap-[var(--space-content-tight)] text-[length:var(--text-caption-size)] font-bold text-text-muted">
+                  <span>{recommendationStrings.filters.shelf}</span>
+                  <NativeSelect
+                    className="min-w-0 [&_[data-slot=native-select]]:bg-surface-2 [&_[data-slot=native-select]]:text-text-strong"
+                    onChange={(event) => {
+                      const nextShelf = RECOMMENDATION_SHELVES.find(
+                        (candidate) => candidate === event.currentTarget.value,
+                      );
+                      onShelfChange?.(nextShelf);
+                    }}
+                    value={shelf ?? ""}
+                  >
+                    <option value="">{recommendationStrings.filters.allShelves}</option>
+                    <option value="featured">{recommendationStrings.shelves.featured.title}</option>
+                    <option value="anchor">{recommendationStrings.shelves.anchor.title}</option>
+                    <option value="discovery">
+                      {recommendationStrings.shelves.discovery.title}
+                    </option>
+                    <option value="completed">
+                      {recommendationStrings.shelves.completed.title}
+                    </option>
+                    <option value="ranking">{recommendationStrings.shelves.ranking.title}</option>
+                  </NativeSelect>
+                </label>
+                <div className="grid min-w-0 gap-[var(--space-content-tight)] text-[length:var(--text-caption-size)] font-bold text-text-muted">
+                  <span>{recommendationStrings.filters.sort}</span>
+                  <span className="inline-flex min-h-[var(--control-min-size)] min-w-0 items-center rounded-[var(--radius-control)] border border-line bg-surface-2 px-[var(--space-3)] text-text-strong">
+                    {recommendationStrings.filters.recommended}
+                  </span>
+                </div>
+              </div>
+              <fieldset className="m-0 min-w-0 border-0 p-0">
+                <legend
+                  className="mb-[var(--space-content)] p-0 font-bold text-text-strong lg:mb-[var(--space-content-tight)]"
+                  id="recommendation-policy-heading"
+                >
+                  {recommendationStrings.policiesHeading}
+                </legend>
+                <div className="grid grid-cols-3 gap-[var(--space-content)]">
+                  {VISIBLE_POLICY_KEYS.map((key) => (
+                    <ChoiceChipCheckbox
+                      checked={policies[key]}
+                      chipClassName="w-full px-[var(--space-content-tight)] py-[var(--space-content-tight)] text-center text-[length:var(--font-size-12)] leading-tight md:text-[length:var(--font-size-14)]"
+                      className="w-full min-w-0"
+                      disabled={isComputing || isPolicySaving || feedbackBaseBusy}
+                      key={key}
+                      onCheckedChange={() => void togglePolicy(key)}
+                    >
+                      {recommendationStrings.policyLabels[key]}
+                    </ChoiceChipCheckbox>
+                  ))}
+                </div>
+              </fieldset>
+              <div className="flex items-center justify-between gap-[var(--space-3)]">
+                {displayedHash !== null && currentHash !== null && displayedHash !== currentHash ? (
+                  <p className="text-[length:var(--text-caption-size)] text-text-muted">
+                    {recommendationStrings.pendingChanges}
+                  </p>
+                ) : null}
+                <Button
+                  className="min-w-[calc(var(--control-min-size)*2)] min-h-[var(--control-min-size)] border-line bg-surface-1 px-[var(--space-4)] py-[var(--space-content)] font-bold"
+                  busy={isComputing}
+                  disabled={updateDisabled}
+                  onClick={() => {
+                    if (recommendationInput === null) window.location.reload();
+                    else void updateRecommendations();
+                  }}
+                  ref={updateButtonRef}
+                  type="button"
+                  variant="outline"
+                >
+                  {isComputing ? recommendationStrings.updating : recommendationStrings.update}
+                </Button>
+              </div>
+            </section>
+
+            {actionError ? (
+              <p
+                className="mb-[var(--space-4)] rounded-[var(--radius-card)] border border-warn bg-surface-1 px-[var(--space-4)] py-[var(--space-3)]"
+                role="alert"
+              >
+                {actionError}
+              </p>
+            ) : null}
+            {calculationError && plan !== null ? (
+              <p
+                className="mb-[var(--space-4)] rounded-[var(--radius-card)] border border-warn bg-surface-1 px-[var(--space-4)] py-[var(--space-3)]"
+                role="alert"
+              >
+                {calculationError}
+              </p>
+            ) : null}
+
+            {showSkeleton ? (
+              <FeaturedRecommendationState>
+                <RecommendationsSkeleton />
+              </FeaturedRecommendationState>
+            ) : showInitialError ? (
+              <FeaturedRecommendationState>
+                <section
+                  className="grid gap-[var(--space-3)] rounded-[var(--radius-card)] border border-line bg-surface-1 p-[var(--space-6)]"
+                  role="alert"
+                >
+                  <h2>{recommendationStrings.errors.calculation}</h2>
+                  <Button
+                    className="min-w-[calc(var(--control-min-size)*2)] min-h-[var(--control-min-size)] border-line bg-surface-1 px-[var(--space-4)] py-[var(--space-content)] font-bold"
+                    onClick={() => {
+                      if (recommendationInput === null) window.location.reload();
+                      else void updateRecommendations();
+                    }}
+                    type="button"
+                    variant="outline"
+                  >
+                    {recommendationStrings.errors.retry}
+                  </Button>
+                </section>
+              </FeaturedRecommendationState>
+            ) : plan === null || isComputing ? (
+              <FeaturedRecommendationState>{null}</FeaturedRecommendationState>
+            ) : renderedEntries.length === 0 ? (
+              <FeaturedRecommendationState>
+                <section className="grid justify-items-start gap-[var(--space-3)] rounded-[var(--radius-card)] border border-line bg-surface-1 p-[var(--space-6)]">
+                  <h2>{recommendationStrings.empty.title}</h2>
+                  <p>{recommendationStrings.empty.description}</p>
+                  <Link
+                    className="inline-flex min-h-[var(--control-min-size)] items-center font-bold text-accent underline underline-offset-[var(--space-content-tight)] transition-transform duration-[var(--motion-duration-press)] active:scale-[0.97] motion-reduce:transform-none motion-reduce:transition-none"
+                    preload={false}
+                    to="/taste"
+                  >
+                    {recommendationStrings.empty.link}
+                  </Link>
+                </section>
+              </FeaturedRecommendationState>
+            ) : recommendationItems.length === 0 ? (
+              <FeaturedRecommendationState>
+                <p className="rounded-[var(--radius-card)] border border-line p-[var(--space-5)] text-text-muted">
+                  {recommendationStrings.filters.empty}
+                </p>
+              </FeaturedRecommendationState>
+            ) : (
+              <>
+                <span
+                  aria-hidden="true"
+                  className="scroll-mt-[calc(var(--desktop-navigation-height)+var(--space-4))]"
+                  id="recommendation-shelf-featured"
+                />
+                <MediaShelf
+                  className="scroll-mt-[calc(var(--desktop-navigation-height)+var(--space-4))] [&_h2]:border-l-[length:var(--space-1)] [&_h2]:border-accent [&_h2]:pl-[var(--space-4)]"
+                  description={recommendationStrings.shelves.featured.description}
+                  listType="unordered"
+                  title={recommendationStrings.shelves.featured.title}
+                  trackClassName="recommendations-list min-h-[calc(var(--control-min-size)*8)] items-start gap-[var(--space-4)] [--featured-card-basis:clamp(calc(var(--control-min-size)*2.5),calc((100%-(var(--space-4)*1.4))/2.4),calc(var(--control-min-size)*3.5))] [@media(min-width:768px)_and_(hover:hover)_and_(pointer:fine)]:min-h-[calc(var(--control-min-size)*11)] [@media(min-width:768px)_and_(hover:hover)_and_(pointer:fine)]:[--featured-card-basis:calc(var(--control-min-size)*3.5)]"
+                  trackData={{
+                    "data-recommendation-motion": MotionList === null ? "static" : "enabled",
+                  }}
+                >
+                  {MotionList === null ? (
+                    <StaticRecommendationItems
+                      items={recommendationItems}
+                      shortage={shortageItem}
+                    />
+                  ) : (
+                    <MotionList
+                      items={recommendationItems}
+                      reducedMotion={false}
+                      shortage={shortageItem}
+                    />
+                  )}
+                </MediaShelf>
+              </>
+            )}
+
+            <span
+              aria-hidden="true"
+              className="scroll-mt-[calc(var(--desktop-navigation-height)+var(--space-4))]"
+              id="recommendation-shelf-anchor"
+            />
+            <MediaShelf
+              className="mt-[var(--space-section-large)] scroll-mt-[calc(var(--desktop-navigation-height)+var(--space-4))] [&_h2]:border-l-[length:var(--space-1)] [&_h2]:border-accent [&_h2]:pl-[var(--space-4)]"
+              description={recommendationStrings.shelves.anchor.description}
+              title={recommendationStrings.shelves.anchor.title}
+            >
+              {anchorEntries.map(renderPoster)}
+            </MediaShelf>
+
+            <span
+              aria-hidden="true"
+              className="scroll-mt-[calc(var(--desktop-navigation-height)+var(--space-4))]"
+              id="recommendation-shelf-discovery"
+            />
+            <MediaShelf
+              className="mt-[var(--space-section-large)] scroll-mt-[calc(var(--desktop-navigation-height)+var(--space-4))] [&_h2]:border-l-[length:var(--space-1)] [&_h2]:border-accent [&_h2]:pl-[var(--space-4)]"
+              description={recommendationStrings.shelves.discovery.description}
+              title={recommendationStrings.shelves.discovery.title}
+            >
+              {discoveryEntries.map(renderPoster)}
+            </MediaShelf>
+
+            <span
+              aria-hidden="true"
+              className="scroll-mt-[calc(var(--desktop-navigation-height)+var(--space-4))]"
+              id="recommendation-shelf-completed"
+            />
+            <MediaShelf
+              className="mt-[var(--space-section-large)] scroll-mt-[calc(var(--desktop-navigation-height)+var(--space-4))] [&_h2]:border-l-[length:var(--space-1)] [&_h2]:border-accent [&_h2]:pl-[var(--space-4)]"
+              description={recommendationStrings.shelves.completed.description}
+              title={recommendationStrings.shelves.completed.title}
+            >
+              {completedEntries.map(renderPoster)}
+            </MediaShelf>
+
+            <span
+              aria-hidden="true"
+              className="scroll-mt-[calc(var(--desktop-navigation-height)+var(--space-4))]"
+              id="recommendation-shelf-ranking"
+            />
+            <RankingShelf
+              className="mt-[var(--space-section-large)] scroll-mt-[calc(var(--desktop-navigation-height)+var(--space-4))] [&_h2]:border-l-[length:var(--space-1)] [&_h2]:border-accent [&_h2]:pl-[var(--space-4)]"
+              description={recommendationStrings.shelves.ranking.description}
+              title={recommendationStrings.shelves.ranking.title}
+            >
+              {renderedEntries.slice(0, 10).map(renderPoster)}
+            </RankingShelf>
+            <section className="mt-[var(--space-section-large)] grid gap-[var(--space-4)] rounded-[var(--radius-card)] border border-line bg-surface-1 p-[var(--space-5)] md:grid-cols-[minmax(0,2fr)_minmax(0,1fr)] md:items-center">
+              <div className="grid gap-[var(--space-content)]">
+                <h2>{recommendationStrings.feedbackSummary.heading}</h2>
+                <p className="text-text-muted">
+                  {recommendationStrings.feedbackSummary.description}
+                </p>
+              </div>
+              <dl className="m-0 grid gap-[var(--space-content)] md:grid-cols-2">
+                <div className="grid gap-[var(--space-content-tight)] rounded-[var(--radius-control)] border border-line bg-surface-2 p-[var(--space-3)]">
+                  <dt className="text-[length:var(--text-caption-size)] text-text-muted">
+                    {recommendationStrings.actions.completed}
+                  </dt>
+                  <dd className="m-0 font-bold text-text-strong">
+                    {recommendationStrings.feedbackSummary.count(
+                      records.filter((record) => record.readingState === "completed").length,
+                    )}
+                  </dd>
+                </div>
+                <div className="grid gap-[var(--space-content-tight)] rounded-[var(--radius-control)] border border-line bg-surface-2 p-[var(--space-3)]">
+                  <dt className="text-[length:var(--text-caption-size)] text-text-muted">
+                    {recommendationStrings.actions.hidden}
+                  </dt>
+                  <dd className="m-0 font-bold text-text-strong">
+                    {recommendationStrings.feedbackSummary.count(
+                      records.filter((record) => record.readingState === "hidden").length,
+                    )}
+                  </dd>
+                </div>
+              </dl>
+            </section>
+          </div>
         </div>
 
-        <aside className="recommendations-taste-summary surface-card">
-          <h2>{recommendationStrings.tasteSummary.heading}</h2>
-          {dnaSummary.topPreferences.length === 0 ? (
-            <p>{recommendationStrings.tasteSummary.empty}</p>
-          ) : (
-            <ol>
-              {dnaSummary.topPreferences.map((preference) => (
-                <li key={`${preference.kind}:${preference.factorId}`}>
-                  {explanationLexicon.factorLabels[preference.factorId as ExplanationFactorId] ??
-                    preference.factorId}
-                </li>
-              ))}
-            </ol>
+        <FeedbackDialog
+          busy={feedbackBusy}
+          errorMessage={feedbackError}
+          feedback={feedback}
+          onSaveCompleted={(reaction) => void saveCompletedFeedback(reaction)}
+          onSaveHidden={(reasons) => void saveHiddenFeedback(reasons)}
+          onSkip={closeFeedback}
+        />
+        <QuickPreviewDialog
+          busy={
+            previewEntry === null ||
+            isComputing ||
+            isPolicySaving ||
+            feedbackBaseBusy ||
+            busyWorkIds.has(previewEntry.entry.workId)
+          }
+          coverUrl={
+            previewEntry === null ? null : recommendationCoverUrls.get(previewEntry.entry.workId)
+          }
+          explanation={previewExplanation}
+          onCompleted={() => {
+            if (previewEntry === null) return;
+            onPreviewClose?.();
+            void removeForFeedback(previewEntry.entry, "completed");
+          }}
+          onHidden={() => {
+            if (previewEntry === null) return;
+            onPreviewClose?.();
+            void removeForFeedback(previewEntry.entry, "hidden");
+          }}
+          onOpenChange={(open) => {
+            if (!open) onPreviewClose?.();
+          }}
+          onPlanned={() => {
+            if (previewEntry !== null) void savePlanned(previewEntry.entry);
+          }}
+          open={previewEntry !== null}
+          planned={previewEntry !== null && plannedIds.has(previewEntry.entry.workId)}
+          volumeCount={previewEntry?.metadata.volumeCount ?? null}
+          work={previewEntry?.work ?? null}
+        />
+        <p
+          aria-atomic="true"
+          aria-live="polite"
+          className="fixed right-[var(--layout-page-padding)] bottom-[calc(var(--layout-mobile-navigation-clearance)+var(--space-4))] z-40 max-w-[min(calc(var(--layout-width-form)/2),calc(100vw-(var(--layout-page-padding)*2)))] rounded-[var(--radius-card)] border border-line border-l-[length:var(--space-content-tight)] border-l-accent bg-surface-1 px-[var(--space-4)] py-[var(--space-3)] font-bold shadow-[var(--shadow-raised)] empty:hidden md:bottom-[var(--space-6)]"
+        >
+          {liveAnnouncement.text === "" ? null : (
+            <span key={liveAnnouncement.sequence}>{liveAnnouncement.text}</span>
           )}
-          <Link className="interactive-press" href="/taste" prefetch={false}>
-            {recommendationStrings.tasteSummary.link}
-          </Link>
-        </aside>
-      </div>
-
-      <FeedbackDialog
-        busy={feedbackBusy}
-        errorMessage={feedbackError}
-        feedback={feedback}
-        onSaveCompleted={(reaction) => void saveCompletedFeedback(reaction)}
-        onSaveHidden={(reasons) => void saveHiddenFeedback(reasons)}
-        onSkip={closeFeedback}
-      />
-      <p aria-atomic="true" aria-live="polite" className="recommendations-live-region">
-        {liveAnnouncement.text === "" ? null : (
-          <span key={liveAnnouncement.sequence}>{liveAnnouncement.text}</span>
-        )}
-      </p>
-    </main>
+        </p>
+      </main>
+      {plan === null ? null : <SiteFooter className="mt-[var(--space-section-large)]" />}
+    </>
   );
 }
