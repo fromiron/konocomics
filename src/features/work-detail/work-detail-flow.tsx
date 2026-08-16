@@ -16,6 +16,11 @@ import { recommendationContextSchema } from "@/domain/recommendation/context-sch
 import { scoreWorkCompatibility } from "@/domain/recommendation/rank";
 import type { RecommendationInput } from "@/domain/recommendation/types";
 import { useCatalog } from "@/features/catalog/catalog-provider";
+import {
+  createRecommendationCoverTargets,
+  type RecommendationCoverTarget,
+  useRecommendationCovers,
+} from "@/features/recommendations/recommendation-cover-resolver";
 import { usePersistence, type ProviderCacheRecord } from "@/infrastructure/db";
 import {
   buildRakutenBooksSearchUrl,
@@ -293,9 +298,18 @@ function WorkStateControls({
 }
 
 function CompatibilitySection({
+  anchorCoverTargets,
+  anchorCoverUrls,
   catalog,
+  notifyAnchorCoverSettled,
   state,
-}: Readonly<{ catalog: CatalogV1; state: CompatibilityState }>) {
+}: Readonly<{
+  anchorCoverTargets: readonly RecommendationCoverTarget[];
+  anchorCoverUrls: ReadonlyMap<string, string | null>;
+  catalog: CatalogV1;
+  notifyAnchorCoverSettled(target: RecommendationCoverTarget): void;
+  state: CompatibilityState;
+}>) {
   if (state.kind === "hidden") return null;
 
   return (
@@ -333,12 +347,21 @@ function CompatibilitySection({
                 {state.explanation.anchors.map((anchor) => {
                   const anchorWork = catalog.works.find((work) => work.id === anchor.workId);
                   if (anchorWork === undefined) return null;
+                  const coverTarget = anchorCoverTargets.find(
+                    (target) => target.workId === anchor.workId,
+                  );
                   return (
                     <li key={anchor.workId}>
                       <CoverImage
                         className="work-detail-compatibility__anchor-cover"
+                        coverUrl={anchorCoverUrls.get(anchor.workId)}
                         creators={anchorWork.creators}
                         decorative
+                        onSettled={
+                          coverTarget === undefined
+                            ? undefined
+                            : () => notifyAnchorCoverSettled(coverTarget)
+                        }
                         requestedSize={200}
                         title={anchorWork.title}
                       />
@@ -394,6 +417,22 @@ function WorkDetailContent({ catalog, work }: Readonly<{ catalog: CatalogV1; wor
       }),
     [adjustments, catalog, policies, userWorks, work.id],
   );
+  const anchorCoverTargets = useMemo(
+    () =>
+      createRecommendationCoverTargets(
+        catalog,
+        compatibility.kind === "ready"
+          ? compatibility.explanation.anchors.map((anchor) => anchor.workId)
+          : [],
+      ),
+    [catalog, compatibility],
+  );
+  const { coverUrls: anchorCoverUrls, notifyCoverSettled: notifyAnchorCoverSettled } =
+    useRecommendationCovers({
+      targets: anchorCoverTargets,
+      getProviderCache,
+      saveProviderCache,
+    });
 
   useEffect(() => {
     if (status.state === "initializing" || isbn === null) return;
@@ -561,7 +600,13 @@ function WorkDetailContent({ catalog, work }: Readonly<{ catalog: CatalogV1; wor
             workId={work.id}
           />
 
-          <CompatibilitySection catalog={catalog} state={compatibility} />
+          <CompatibilitySection
+            anchorCoverTargets={anchorCoverTargets}
+            anchorCoverUrls={anchorCoverUrls}
+            catalog={catalog}
+            notifyAnchorCoverSettled={notifyAnchorCoverSettled}
+            state={compatibility}
+          />
 
           <section aria-labelledby="work-synopsis-heading" className="work-detail-section">
             <h2 id="work-synopsis-heading">{workDetailStrings.synopsis.heading}</h2>

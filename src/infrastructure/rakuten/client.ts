@@ -23,6 +23,25 @@ export class RakutenClientError extends Error {
 }
 
 const providerRequests = new Map<string, Promise<RakutenBookItem>>();
+const RAKUTEN_REQUEST_INTERVAL_MS = process.env.NODE_ENV === "test" ? 0 : 1_000;
+let providerRequestQueue: Promise<void> = Promise.resolve();
+let nextProviderRequestAt = 0;
+
+function scheduleProviderRequest<T>(request: () => Promise<T>): Promise<T> {
+  const scheduled = providerRequestQueue.then(async () => {
+    const delay = nextProviderRequestAt - Date.now();
+    if (delay > 0) {
+      await new Promise((resolve) => setTimeout(resolve, delay));
+    }
+    nextProviderRequestAt = Date.now() + RAKUTEN_REQUEST_INTERVAL_MS;
+    return request();
+  });
+  providerRequestQueue = scheduled.then(
+    () => undefined,
+    () => undefined,
+  );
+  return scheduled;
+}
 
 export function buildRakutenBooksSearchUrl(title: string): string {
   const parsedTitle = rakutenTitleQuerySchema.safeParse(title);
@@ -38,7 +57,9 @@ export function buildRakutenBooksSearchUrl(title: string): string {
 async function fetchJson(url: string): Promise<unknown> {
   let response: Response;
   try {
-    response = await fetch(url, { headers: { Accept: "application/json" } });
+    response = await scheduleProviderRequest(() =>
+      fetch(url, { headers: { Accept: "application/json" } }),
+    );
   } catch {
     throw new RakutenClientError("provider_unavailable");
   }

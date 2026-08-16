@@ -12,6 +12,7 @@ export type RakutenCredentials = Readonly<{
   applicationId: string;
   accessKey: string;
   affiliateId?: string;
+  allowedOrigin: string;
 }>;
 
 type RakutenEnvironment = Readonly<Record<string, string | undefined>>;
@@ -20,6 +21,19 @@ const credentialsSchema = z.strictObject({
   applicationId: z.string().trim().min(1),
   accessKey: z.string().trim().min(1),
   affiliateId: z.string().trim().min(1).optional(),
+  allowedOrigin: z
+    .string()
+    .trim()
+    .transform((value, context) => {
+      try {
+        const url = new URL(value);
+        if (!/^https?:$/u.test(url.protocol) || url.origin !== value) throw new Error();
+        return value;
+      } catch {
+        context.addIssue({ code: "custom", message: "Expected an HTTP origin without a path" });
+        return z.NEVER;
+      }
+    }),
 });
 
 export type RakutenBooksQuery =
@@ -47,6 +61,20 @@ const optionalHttpsUrlSchema = z.string().transform((value, context) => {
   }
 });
 
+const reviewAverageSchema = z.union([
+  z.number(),
+  z
+    .string()
+    .regex(/^\d+(?:\.\d+)?$/u)
+    .transform(Number),
+]);
+
+const availabilitySchema = z.union([
+  z.number(),
+  z.string().regex(/^\d+$/u).transform(Number),
+  z.literal("").transform(() => undefined),
+]);
+
 const upstreamRakutenBookSchema = z.object({
   title: z.string(),
   author: z.string(),
@@ -59,14 +87,16 @@ const upstreamRakutenBookSchema = z.object({
   affiliateUrl: optionalHttpsUrlSchema.optional(),
   largeImageUrl: optionalHttpsUrlSchema.optional(),
   chirayomiUrl: optionalHttpsUrlSchema.optional(),
-  availability: z.number(),
-  reviewAverage: z.number(),
+  availability: availabilitySchema,
+  reviewAverage: reviewAverageSchema,
   reviewCount: z.number(),
 });
 
-const upstreamRakutenResponseSchema = z.object({
-  items: z.array(upstreamRakutenBookSchema),
-});
+const upstreamRakutenItemsSchema = z.array(upstreamRakutenBookSchema);
+const upstreamRakutenResponseSchema = z.union([
+  z.object({ items: upstreamRakutenItemsSchema }),
+  z.object({ Items: upstreamRakutenItemsSchema }).transform(({ Items }) => ({ items: Items })),
+]);
 
 const RAKUTEN_RESPONSE_ELEMENTS = [
   "title",
@@ -93,6 +123,7 @@ export function readRakutenCredentials(
     applicationId: environment.RAKUTEN_APPLICATION_ID,
     accessKey: environment.RAKUTEN_ACCESS_KEY,
     affiliateId: affiliateId === "" ? undefined : affiliateId,
+    allowedOrigin: environment.RAKUTEN_ALLOWED_ORIGIN,
   });
   return parsed.success ? parsed.data : null;
 }
@@ -103,6 +134,7 @@ function buildRakutenUrl(query: RakutenBooksQuery, credentials: RakutenCredentia
   url.searchParams.set("format", "json");
   url.searchParams.set("formatVersion", "2");
   url.searchParams.set("elements", RAKUTEN_RESPONSE_ELEMENTS);
+  url.searchParams.set("outOfStockFlag", "1");
   if (credentials.affiliateId !== undefined) {
     url.searchParams.set("affiliateId", credentials.affiliateId);
   }
@@ -139,13 +171,21 @@ function minimizeRakutenBook(value: z.infer<typeof upstreamRakutenBookSchema>): 
 export async function fetchRakutenBooks(
   query: RakutenBooksQuery,
   credentials: RakutenCredentials,
+  sourceRequest: Request,
 ): Promise<RakutenBookItem[]> {
   const controller = new AbortController();
   const timeout = setTimeout(() => controller.abort(), RAKUTEN_TIMEOUT_MS);
+  const userAgent = sourceRequest.headers.get("user-agent");
   try {
     const response = await fetch(buildRakutenUrl(query, credentials), {
       cache: "no-store",
-      headers: { Accept: "application/json", accessKey: credentials.accessKey },
+      headers: {
+        Accept: "application/json",
+        accessKey: credentials.accessKey,
+        Origin: credentials.allowedOrigin,
+        Referer: `${credentials.allowedOrigin}/`,
+        ...(userAgent === null ? {} : { "User-Agent": userAgent }),
+      },
       signal: controller.signal,
     });
     if (!response.ok) {

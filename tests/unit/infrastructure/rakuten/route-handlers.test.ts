@@ -31,6 +31,7 @@ function enableCredentials() {
   vi.stubEnv("RAKUTEN_APPLICATION_ID", "application-id");
   vi.stubEnv("RAKUTEN_ACCESS_KEY", "access-key");
   vi.stubEnv("RAKUTEN_AFFILIATE_ID", "affiliate-id");
+  vi.stubEnv("RAKUTEN_ALLOWED_ORIGIN", "https://konocomics.vercel.app");
 }
 
 afterEach(() => {
@@ -77,13 +78,17 @@ describe("Rakuten Route Handlers", () => {
     const providerFetch = vi.fn(async (url: URL, init: RequestInit) => {
       void url;
       void init;
-      return Response.json({ items: [upstreamItem()], providerInternal: "must not escape" });
+      return Response.json({
+        Items: [{ ...upstreamItem(), availability: "1", reviewAverage: "4.5" }],
+        providerInternal: "must not escape",
+      });
     });
     vi.stubGlobal("fetch", providerFetch);
 
     const response = await searchItems(
       new Request(
         "http://localhost/api/rakuten/search?title=20%E4%B8%96%E7%B4%80%E5%B0%91%E5%B9%B4",
+        { headers: { "User-Agent": "test-browser" } },
       ),
     );
 
@@ -117,15 +122,22 @@ describe("Rakuten Route Handlers", () => {
     expect(upstreamUrl.searchParams.get("applicationId")).toBe("application-id");
     expect(upstreamUrl.searchParams.get("affiliateId")).toBe("affiliate-id");
     expect(upstreamUrl.searchParams.get("title")).toBe("20世紀少年");
+    expect(upstreamUrl.searchParams.get("outOfStockFlag")).toBe("1");
     expect(upstreamUrl.searchParams.has("accessKey")).toBe(false);
-    expect(requestInit.headers).toEqual({ Accept: "application/json", accessKey: "access-key" });
+    expect(requestInit.headers).toEqual({
+      Accept: "application/json",
+      accessKey: "access-key",
+      Origin: "https://konocomics.vercel.app",
+      Referer: "https://konocomics.vercel.app/",
+      "User-Agent": "test-browser",
+    });
   });
 
   it("returns one transport listing without inventing cache identity or timestamps", async () => {
     enableCredentials();
     vi.stubGlobal(
       "fetch",
-      vi.fn(async () => Response.json({ items: [upstreamItem()] })),
+      vi.fn(async () => Response.json({ items: [{ ...upstreamItem(), availability: "" }] })),
     );
 
     const response = await getItem(
@@ -138,6 +150,7 @@ describe("Rakuten Route Handlers", () => {
     expect(payload.listing).not.toHaveProperty("fetchedAt");
     expect(payload.listing).not.toHaveProperty("commercialExpiresAt");
     expect(payload.listing).not.toHaveProperty("metadataExpiresAt");
+    expect(payload.listing).not.toHaveProperty("availability");
   });
 
   it("selects the exact requested ISBN and rejects mismatched-only provider results", async () => {
@@ -170,6 +183,14 @@ describe("Rakuten Route Handlers", () => {
     );
     expect(missingCredentials.status).toBe(502);
     await expect(missingCredentials.json()).resolves.toEqual({ error: "provider_unavailable" });
+    expect(providerFetch).not.toHaveBeenCalled();
+
+    enableCredentials();
+    vi.stubEnv("RAKUTEN_ALLOWED_ORIGIN", "https://konocomics.vercel.app/path");
+    const invalidOrigin = await getItem(
+      new Request(`http://localhost/api/rakuten/item?isbn=${ISBN}`),
+    );
+    expect(invalidOrigin.status).toBe(502);
     expect(providerFetch).not.toHaveBeenCalled();
 
     enableCredentials();
