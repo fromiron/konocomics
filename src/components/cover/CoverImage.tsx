@@ -114,11 +114,11 @@ export function CoverImage({
     }
 
     return (
-      <div
+      <span
         aria-hidden={decorative || undefined}
         aria-label={decorative ? undefined : coverStrings.placeholderLabel(title, creatorLine)}
         className={cn(
-          "cover-image cover-image--placeholder relative isolate w-full overflow-hidden rounded-[var(--radius-cover)] border border-line bg-surface-1 text-text-muted aspect-[30/43]",
+          "cover-image cover-image--placeholder relative isolate block w-full overflow-hidden rounded-[var(--radius-cover)] border border-line bg-surface-1 text-text-muted aspect-[30/43]",
           className,
         )}
         role={decorative ? undefined : "img"}
@@ -138,7 +138,7 @@ export function CoverImage({
             {creatorLine}
           </span>
         </span>
-      </div>
+      </span>
     );
   }
 
@@ -197,9 +197,9 @@ export function CoverImage({
   }
 
   return (
-    <div
+    <span
       className={cn(
-        "cover-image relative isolate w-full overflow-hidden rounded-[var(--radius-cover)] border border-line bg-surface-1 aspect-[30/43]",
+        "cover-image relative isolate block w-full overflow-hidden rounded-[var(--radius-cover)] border border-line bg-surface-1 aspect-[30/43]",
         className,
       )}
     >
@@ -230,6 +230,6 @@ export function CoverImage({
         src={currentSource}
         width={requestedSize}
       />
-    </div>
+    </span>
   );
 }

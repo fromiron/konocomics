@@ -20,6 +20,23 @@ describe("CoverImage accessibility contract", () => {
     expect(screen.getByRole("img", { name: "作品の表紙画像はありません。作者 作者" })).toBeTruthy();
   });
 
+  it("keeps the standard cover root valid inside native buttons", () => {
+    const actual = render(
+      <button type="button">
+        <CoverImage coverUrl="https://example.com/cover.jpg" creators={["作者"]} title="作品" />
+      </button>,
+    );
+    expect(actual.container.querySelector(".cover-image")?.tagName).toBe("SPAN");
+    actual.unmount();
+
+    const placeholder = render(
+      <button type="button">
+        <CoverImage creators={["作者"]} title="作品" />
+      </button>,
+    );
+    expect(placeholder.container.querySelector(".cover-image--placeholder")?.tagName).toBe("SPAN");
+  });
+
   it("uses eager high-priority loading only for the explicit LCP cover", () => {
     const priority = render(
       <CoverImage

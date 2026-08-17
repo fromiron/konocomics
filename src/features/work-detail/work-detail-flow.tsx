@@ -299,14 +299,20 @@ function WorkStateControls({
   return (
     <section
       aria-labelledby="work-state-heading"
-      className="grid gap-[var(--space-3)] rounded-[var(--radius-card)] border border-line bg-surface-overlay p-[var(--space-4)] md:gap-[var(--space-4)] md:p-[var(--space-5)]"
+      className="grid gap-[var(--space-3)] rounded-[var(--radius-card)] border border-line bg-surface-overlay p-[var(--space-4)] md:gap-[var(--space-2)]"
+      data-slot="work-state-controls"
     >
-      <h2 id="work-state-heading">{workDetailStrings.state.heading}</h2>
-      <div className="grid gap-[var(--space-content)] min-[360px]:grid-cols-[minmax(0,1fr)_auto] min-[360px]:items-end">
-        <label className="grid gap-[var(--space-content-tight)] text-[length:var(--text-caption-size)] font-bold text-text-muted">
+      <h2
+        className="border-l-[length:var(--space-content-tight)] border-accent pl-[var(--space-3)] text-[length:var(--font-size-16)]"
+        id="work-state-heading"
+      >
+        {workDetailStrings.state.heading}
+      </h2>
+      <div className="grid gap-[var(--space-content-loose)] min-[360px]:grid-cols-[minmax(0,1fr)_auto] min-[360px]:items-end">
+        <label className="grid min-w-0 gap-[var(--space-content-tight)] text-[length:var(--text-caption-size)] font-bold text-text-muted">
           <span>{workDetailStrings.state.label}</span>
           <NativeSelect
-            className="[&_[data-slot=native-select]]:bg-surface-2 [&_[data-slot=native-select]]:text-[length:var(--font-size-14)] [&_[data-slot=native-select]]:font-bold [&_[data-slot=native-select]]:text-text-strong"
+            className="[&_[data-slot=native-select]]:min-h-[var(--control-min-size)] [&_[data-slot=native-select]]:border-line [&_[data-slot=native-select]]:bg-surface-2 [&_[data-slot=native-select]]:text-[length:var(--font-size-14)] [&_[data-slot=native-select]]:font-bold [&_[data-slot=native-select]]:text-text-strong"
             disabled={busy || !recordsReady}
             onChange={(event) => {
               if (isReadingState(event.target.value)) {
@@ -327,7 +333,7 @@ function WorkStateControls({
         </label>
         <Button
           aria-pressed={minimalPlanned}
-          className="aria-pressed:border-accent aria-pressed:bg-accent-soft aria-pressed:text-accent"
+          className="min-w-[8rem] aria-pressed:border-accent aria-pressed:bg-accent aria-pressed:text-on-accent"
           disabled={busy || !recordsReady || plannedToggleUnavailable}
           onClick={() => void togglePlanned()}
           type="button"
@@ -381,70 +387,77 @@ function CompatibilitySection({
   return (
     <section
       aria-labelledby="work-compatibility-heading"
-      className="grid gap-[var(--space-3)] rounded-[var(--radius-card)] border border-line-accent bg-surface-overlay p-[var(--space-4)] md:grid-cols-3 md:gap-[var(--space-4)] md:p-[var(--space-5)]"
+      className="grid gap-[var(--space-3)] rounded-[var(--radius-card)] border border-line-accent bg-surface-overlay p-[var(--space-4)] md:grid-cols-[minmax(0,2fr)_minmax(13rem,1fr)] md:gap-[var(--space-2)] md:p-[var(--space-3)]"
+      data-slot="work-compatibility"
     >
-      <h2 className="md:col-span-3" id="work-compatibility-heading">
+      <h2
+        className="border-l-[length:var(--space-content-tight)] border-accent pl-[var(--space-3)] text-[length:var(--font-size-16)] md:col-span-2"
+        id="work-compatibility-heading"
+      >
         {workDetailStrings.compatibility.heading}
       </h2>
       {state.kind === "unavailable" ? (
         <p>{workDetailStrings.compatibility.unavailable}</p>
       ) : (
         <>
-          <div className="grid gap-[var(--space-content)] md:col-span-3">
+          <div className="grid content-start gap-[var(--space-content)]">
             <h3 className="text-[length:var(--font-size-14)]">
               {workDetailStrings.compatibility.reasons}
             </h3>
             <ReasonChips
               caution={state.explanation.caution}
               cautionLabel={workDetailStrings.compatibility.caution}
+              className="[&_li]:p-[var(--space-2)] [&_li]:text-[length:var(--text-caption-size)] [&_li]:leading-[1.45]"
               emptyText={recommendationStrings.reasonUnavailable}
               reasons={state.explanation.positiveReasons}
             />
           </div>
-          {state.explanation.anchors.length === 0 ? null : (
-            <div className="grid gap-[var(--space-content)]">
-              <h3 className="text-[length:var(--font-size-14)]">
-                {workDetailStrings.compatibility.anchors}
-              </h3>
-              <ul className="m-0 flex list-none flex-wrap gap-[var(--space-content)] p-0">
-                {state.explanation.anchors.map((anchor) => {
-                  const anchorWork = catalog.works.find((work) => work.id === anchor.workId);
-                  if (anchorWork === undefined) return null;
-                  const coverTarget = anchorCoverTargets.find(
-                    (target) => target.workId === anchor.workId,
-                  );
-                  return (
-                    <li
-                      className="grid max-w-[min(100%,calc(var(--layout-width-form)/2))] grid-cols-[var(--control-min-size)_minmax(0,1fr)] items-center gap-[var(--space-content)] rounded-[var(--radius-card)] border border-line bg-surface-2 p-[var(--space-content)]"
-                      key={anchor.workId}
-                    >
-                      <CoverImage
-                        className="work-detail-compatibility__anchor-cover w-[var(--control-min-size)]"
-                        coverUrl={anchorCoverUrls.get(anchor.workId)}
-                        creators={anchorWork.creators}
-                        decorative
-                        onSettled={
-                          coverTarget === undefined
-                            ? undefined
-                            : () => notifyAnchorCoverSettled(coverTarget)
-                        }
-                        requestedSize={200}
-                        title={anchorWork.title}
-                      />
-                      <span className="[overflow-wrap:anywhere] text-[length:var(--text-caption-size)] font-bold">
-                        {anchorWork.title}
-                      </span>
-                    </li>
-                  );
-                })}
-              </ul>
-            </div>
-          )}
-          <ConfidenceLabel
-            className="md:col-span-3"
-            label={state.explanation.confidence.label}
-            prefix={workDetailStrings.compatibility.confidence}
-          />
+          <div className="grid content-start gap-[var(--space-content-tight)]">
+            {state.explanation.anchors.length === 0 ? null : (
+              <>
+                <h3 className="text-[length:var(--font-size-14)]">
+                  {workDetailStrings.compatibility.anchors}
+                </h3>
+                <ul className="m-0 flex list-none flex-wrap gap-[var(--space-content)] p-0">
+                  {state.explanation.anchors.map((anchor) => {
+                    const anchorWork = catalog.works.find((work) => work.id === anchor.workId);
+                    if (anchorWork === undefined) return null;
+                    const coverTarget = anchorCoverTargets.find(
+                      (target) => target.workId === anchor.workId,
+                    );
+                    return (
+                      <li
+                        className="grid max-w-full grid-cols-[var(--control-min-size)_minmax(0,1fr)] items-center gap-[var(--space-content)] rounded-[var(--radius-card)] border border-line bg-surface-2 p-[var(--space-content-tight)]"
+                        key={anchor.workId}
+                      >
+                        <CoverImage
+                          className="work-detail-compatibility__anchor-cover w-[var(--control-min-size)]"
+                          coverUrl={anchorCoverUrls.get(anchor.workId)}
+                          creators={anchorWork.creators}
+                          decorative
+                          onSettled={
+                            coverTarget === undefined
+                              ? undefined
+                              : () => notifyAnchorCoverSettled(coverTarget)
+                          }
+                          requestedSize={200}
+                          title={anchorWork.title}
+                        />
+                        <span className="[overflow-wrap:anywhere] text-[length:var(--text-caption-size)] font-bold">
+                          {anchorWork.title}
+                        </span>
+                      </li>
+                    );
+                  })}
+                </ul>
+              </>
+            )}
+            <ConfidenceLabel
+              className="mt-[var(--space-content-tight)]"
+              label={state.explanation.confidence.label}
+              prefix={workDetailStrings.compatibility.confidence}
+            />
+          </div>
         </>
       )}
     </section>
@@ -628,7 +641,7 @@ function WorkDetailContent({ catalog, work }: Readonly<{ catalog: CatalogV1; wor
   return (
     <>
       <main
-        className={`mx-auto min-h-dvh w-full pb-[var(--space-section-large)]${pageEntryMotion.active ? " page-entry-b motion-safe:animate-[page-entry-b-enter_var(--motion-duration-page)_var(--motion-ease-direct)_both]" : ""}`}
+        className={`mx-auto w-full pb-[var(--space-section-large)]${pageEntryMotion.active ? " page-entry-b motion-safe:animate-[page-entry-b-enter_var(--motion-duration-page)_var(--motion-ease-direct)_both]" : ""}`}
         data-work-detail-id={work.id}
         key={work.id}
         onAnimationEnd={pageEntryMotion.onAnimationEnd}
@@ -642,7 +655,7 @@ function WorkDetailContent({ catalog, work }: Readonly<{ catalog: CatalogV1; wor
           kind="catalog"
           title={work.title}
         >
-          <header className="grid gap-[var(--space-content-loose)]">
+          <header className="grid gap-[var(--space-content-loose)] md:gap-[var(--space-content)]">
             <h1 className="[overflow-wrap:anywhere] text-[length:var(--text-page-title-size)] leading-[var(--line-height-heading)] text-text-strong">
               {work.title}
             </h1>
@@ -691,7 +704,9 @@ function WorkDetailContent({ catalog, work }: Readonly<{ catalog: CatalogV1; wor
             saveUserWork={saveUserWork}
             workId={work.id}
           />
+        </WorkDetailShell>
 
+        <div className="mx-auto grid w-full max-w-[var(--layout-width-detail)] gap-[var(--space-4)] px-[var(--layout-page-padding)] pt-[var(--space-6)]">
           <CompatibilitySection
             anchorCoverTargets={coverTargets}
             anchorCoverUrls={coverUrls}
@@ -699,121 +714,126 @@ function WorkDetailContent({ catalog, work }: Readonly<{ catalog: CatalogV1; wor
             notifyAnchorCoverSettled={notifyCoverSettled}
             state={compatibility}
           />
-        </WorkDetailShell>
 
-        <div className="mx-auto grid w-full max-w-[var(--layout-width-detail)] gap-[var(--space-5)] px-[var(--layout-page-padding)] pt-[var(--space-section-large)]">
-          <section
-            aria-labelledby="work-synopsis-heading"
-            className="grid gap-[var(--space-3)] rounded-[var(--radius-card)] border border-line bg-surface-overlay p-[var(--space-5)]"
-          >
-            <h2 id="work-synopsis-heading">{workDetailStrings.synopsis.heading}</h2>
-            <p>{metadata?.itemCaption ?? workDetailStrings.synopsis.unavailable}</p>
-          </section>
+          <div className="grid gap-[var(--space-4)] md:grid-cols-2">
+            <section
+              aria-labelledby="work-synopsis-heading"
+              className="grid content-start gap-[var(--space-3)] rounded-[var(--radius-card)] border border-line bg-surface-overlay p-[var(--space-4)]"
+            >
+              <h2 id="work-synopsis-heading">{workDetailStrings.synopsis.heading}</h2>
+              <p>{metadata?.itemCaption ?? workDetailStrings.synopsis.unavailable}</p>
+            </section>
 
-          <section
-            aria-labelledby="work-factors-heading"
-            className="grid gap-[var(--space-3)] rounded-[var(--radius-card)] border border-line bg-surface-overlay p-[var(--space-5)]"
-          >
-            <h2 id="work-factors-heading">{workDetailStrings.factors.heading}</h2>
-            {factorIds.length === 0 ? (
-              <p>{workDetailStrings.factors.empty}</p>
-            ) : (
-              <ul className="m-0 flex list-none flex-wrap gap-[var(--space-content)] p-0">
-                {factorIds.map((factorId) => (
-                  <li
-                    className="inline-flex min-h-[var(--control-min-size)] items-center rounded-[var(--radius-pill)] border border-line bg-surface-2 px-[var(--space-3)] py-[var(--space-content)] text-[length:var(--font-size-14)] font-bold"
-                    key={factorId}
-                  >
-                    {explanationLexicon.factorLabels[factorId]}
-                  </li>
-                ))}
-              </ul>
-            )}
-          </section>
+            <section
+              aria-labelledby="work-factors-heading"
+              className="grid content-start gap-[var(--space-3)] rounded-[var(--radius-card)] border border-line bg-surface-overlay p-[var(--space-4)] md:self-start"
+            >
+              <h2 id="work-factors-heading">{workDetailStrings.factors.heading}</h2>
+              {factorIds.length === 0 ? (
+                <p>{workDetailStrings.factors.empty}</p>
+              ) : (
+                <ul className="m-0 flex list-none flex-wrap gap-[var(--space-content)] p-0">
+                  {factorIds.map((factorId) => (
+                    <li
+                      className="inline-flex min-h-[var(--space-8)] items-center rounded-[var(--radius-pill)] border border-line bg-surface-2 px-[var(--space-3)] py-[var(--space-content-tight)] text-[length:var(--font-size-12)] font-bold"
+                      key={factorId}
+                    >
+                      {explanationLexicon.factorLabels[factorId]}
+                    </li>
+                  ))}
+                </ul>
+              )}
+            </section>
+          </div>
 
           <section
             aria-labelledby="work-provider-heading"
-            className="grid gap-[var(--space-4)] rounded-[var(--radius-card)] border border-line bg-surface-overlay p-[var(--space-5)]"
+            className="grid gap-[var(--space-content)] rounded-[var(--radius-card)] border border-line bg-surface-overlay p-[var(--space-4)] md:grid-cols-[minmax(0,1fr)_auto] md:[&>h2]:col-span-2"
           >
             <h2 id="work-provider-heading">{workDetailStrings.provider.heading}</h2>
-            {visibleProvider.phase === "loading" ? (
-              <p aria-live="polite">{workDetailStrings.provider.loading}</p>
-            ) : commercial === null ? (
-              <p>{workDetailStrings.provider.unavailable}</p>
-            ) : (
-              <dl className="m-0 flex flex-wrap gap-x-[var(--space-6)] gap-y-[var(--space-3)] p-0 [&>div]:grid [&>div]:gap-[var(--space-content-tight)] [&_dd]:m-0 [&_dd]:font-bold [&_dd]:text-text-strong [&_dt]:text-[length:var(--text-caption-size)] [&_dt]:font-medium [&_dt]:text-text-muted">
-                {commercial.itemPrice === undefined ? null : (
+            <div className="flex flex-wrap content-start gap-x-[var(--space-6)] gap-y-[var(--space-content)]">
+              {visibleProvider.phase === "loading" ? (
+                <p aria-live="polite">{workDetailStrings.provider.loading}</p>
+              ) : commercial === null ? (
+                <p>{workDetailStrings.provider.unavailable}</p>
+              ) : (
+                <dl className="m-0 flex flex-wrap gap-x-[var(--space-6)] gap-y-[var(--space-3)] p-0 [&>div]:grid [&>div]:gap-[var(--space-content-tight)] [&_dd]:m-0 [&_dd]:font-bold [&_dd]:text-text-strong [&_dt]:text-[length:var(--text-caption-size)] [&_dt]:font-medium [&_dt]:text-text-muted">
+                  {commercial.itemPrice === undefined ? null : (
+                    <div>
+                      <dt>{workDetailStrings.provider.priceLabel}</dt>
+                      <dd>{workDetailStrings.provider.price(commercial.itemPrice)}</dd>
+                    </div>
+                  )}
+                  {commercial.availability === undefined ? null : (
+                    <div>
+                      <dt>{workDetailStrings.provider.availabilityLabel}</dt>
+                      <dd>{workDetailStrings.provider.availability[commercial.availability]}</dd>
+                    </div>
+                  )}
+                </dl>
+              )}
+              {metadata?.reviewAverage === undefined ? null : (
+                <dl className="m-0 flex flex-wrap gap-x-[var(--space-6)] gap-y-[var(--space-3)] p-0 [&>div]:grid [&>div]:gap-[var(--space-content-tight)] [&_dd]:m-0 [&_dd]:font-bold [&_dd]:text-text-strong [&_dd]:tabular-nums [&_dt]:text-[length:var(--text-caption-size)] [&_dt]:text-text-muted">
                   <div>
-                    <dt>{workDetailStrings.provider.priceLabel}</dt>
-                    <dd>{workDetailStrings.provider.price(commercial.itemPrice)}</dd>
+                    <dt>{workDetailStrings.provider.ratingLabel}</dt>
+                    <dd>{workDetailStrings.provider.rating(metadata.reviewAverage)}</dd>
                   </div>
-                )}
-                {commercial.availability === undefined ? null : (
-                  <div>
-                    <dt>{workDetailStrings.provider.availabilityLabel}</dt>
-                    <dd>{workDetailStrings.provider.availability[commercial.availability]}</dd>
-                  </div>
-                )}
-              </dl>
-            )}
-            <a
-              aria-label={
-                isDirectProviderLink
-                  ? workDetailStrings.provider.openNewTab
-                  : workDetailStrings.provider.searchNewTab
-              }
-              className={buttonClassName({
-                className:
-                  "w-fit min-w-[min(100%,16rem)] px-[var(--space-4)] py-[var(--space-content)] font-bold",
-              })}
-              href={providerHref}
-              rel="noreferrer"
-              target="_blank"
-            >
-              {isDirectProviderLink
-                ? workDetailStrings.provider.view
-                : workDetailStrings.provider.search}
-            </a>
-            {visibleProvider.phase === "error" && isbn !== null ? (
-              <Button
-                className="w-fit justify-self-start"
-                onClick={() => {
-                  setProviderLoad((current) => ({ ...current, phase: "loading" }));
-                  setProviderAttempt((current) => current + 1);
-                }}
-                type="button"
-                variant="outline"
+                  {metadata.reviewCount === undefined ? null : (
+                    <div>
+                      <dt>{workDetailStrings.provider.reviewCountLabel}</dt>
+                      <dd>{workDetailStrings.provider.reviewCount(metadata.reviewCount)}</dd>
+                    </div>
+                  )}
+                </dl>
+              )}
+            </div>
+            <div className="grid content-start justify-items-start gap-[var(--space-content-tight)] md:justify-items-end">
+              <a
+                aria-label={
+                  isDirectProviderLink
+                    ? workDetailStrings.provider.openNewTab
+                    : workDetailStrings.provider.searchNewTab
+                }
+                className={buttonClassName({
+                  className:
+                    "w-fit min-w-[min(100%,16rem)] px-[var(--space-4)] py-[var(--space-content)] font-bold",
+                })}
+                href={providerHref}
+                rel="noreferrer"
+                target="_blank"
               >
-                {workDetailStrings.provider.retry}
-              </Button>
-            ) : null}
-            {metadata?.affiliateUrl === undefined ? null : (
+                {isDirectProviderLink
+                  ? workDetailStrings.provider.view
+                  : workDetailStrings.provider.search}
+              </a>
+              {visibleProvider.phase === "error" && isbn !== null ? (
+                <Button
+                  className="w-fit justify-self-start md:justify-self-end"
+                  onClick={() => {
+                    setProviderLoad((current) => ({ ...current, phase: "loading" }));
+                    setProviderAttempt((current) => current + 1);
+                  }}
+                  type="button"
+                  variant="outline"
+                >
+                  {workDetailStrings.provider.retry}
+                </Button>
+              ) : null}
+              {metadata?.affiliateUrl === undefined ? null : (
+                <p className="text-[length:var(--text-caption-size)] text-text-muted">
+                  {workDetailStrings.provider.affiliate}
+                </p>
+              )}
               <p className="text-[length:var(--text-caption-size)] text-text-muted">
-                {workDetailStrings.provider.affiliate}
+                {workDetailStrings.provider.credit}
               </p>
-            )}
-            <p className="text-[length:var(--text-caption-size)] text-text-muted">
-              {workDetailStrings.provider.credit}
-            </p>
-            {metadata?.reviewAverage === undefined ? null : (
-              <dl className="m-0 flex flex-wrap gap-x-[var(--space-6)] gap-y-[var(--space-3)] p-0 [&>div]:grid [&>div]:gap-[var(--space-content-tight)] [&_dd]:m-0 [&_dd]:font-bold [&_dd]:text-text-strong [&_dd]:tabular-nums [&_dt]:text-[length:var(--text-caption-size)] [&_dt]:text-text-muted">
-                <div>
-                  <dt>{workDetailStrings.provider.ratingLabel}</dt>
-                  <dd>{workDetailStrings.provider.rating(metadata.reviewAverage)}</dd>
-                </div>
-                {metadata.reviewCount === undefined ? null : (
-                  <div>
-                    <dt>{workDetailStrings.provider.reviewCountLabel}</dt>
-                    <dd>{workDetailStrings.provider.reviewCount(metadata.reviewCount)}</dd>
-                  </div>
-                )}
-              </dl>
-            )}
+            </div>
           </section>
         </div>
 
-        <div className="mx-auto grid w-full max-w-[var(--layout-width-media)] gap-[var(--space-section-large)] px-[var(--layout-page-padding)] pt-[var(--space-section-large)] [&_h2]:border-l-[length:var(--space-content-tight)] [&_h2]:border-accent [&_h2]:pl-[var(--space-3)] [&_h2]:text-text-strong">
+        <div className="mx-auto grid w-full max-w-[var(--layout-width-media)] gap-[var(--space-6)] px-[var(--layout-page-padding)] pt-[var(--space-6)]">
           <MediaShelf
+            compactHeading
             description={workDetailStrings.related.description}
             title={workDetailStrings.related.heading}
           >
@@ -822,12 +842,14 @@ function WorkDetailContent({ catalog, work }: Readonly<{ catalog: CatalogV1; wor
                 coverUrl={coverUrls.get(related.id)}
                 creators={related.creators}
                 key={related.id}
+                presentation="cover-overlay"
                 title={related.title}
                 workId={related.id}
               />
             ))}
           </MediaShelf>
           <MediaShelf
+            compactHeading
             description={workDetailStrings.sameMood.description}
             title={workDetailStrings.sameMood.heading}
           >
@@ -836,6 +858,7 @@ function WorkDetailContent({ catalog, work }: Readonly<{ catalog: CatalogV1; wor
                 coverUrl={coverUrls.get(related.id)}
                 creators={related.creators}
                 key={related.id}
+                presentation="cover-overlay"
                 title={related.title}
                 workId={related.id}
               />

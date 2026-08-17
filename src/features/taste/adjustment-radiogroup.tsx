@@ -28,15 +28,15 @@ export function AdjustmentRadiogroup({
   return (
     <ChoiceChipRadioGroup
       aria-label={tasteStrings.adjustmentGroupLabel(factorLabel)}
-      className="taste-adjustment-group grid grid-cols-[repeat(5,minmax(max-content,1fr))] gap-[var(--space-content)] overflow-x-auto overscroll-x-contain p-0.5 [scrollbar-width:none] [&::-webkit-scrollbar]:hidden"
+      className="taste-adjustment-group grid w-full grid-cols-[repeat(5,minmax(0,1fr))] gap-0 overflow-x-auto overscroll-x-contain rounded-[var(--radius-control)] border border-line bg-surface-1 p-0.5 [scrollbar-width:none] [&::-webkit-scrollbar]:hidden"
       name={`taste-adjustment-${factorId}`}
       onValueChange={onChange}
       value={value}
     >
       {OPTIONS.map((option) => (
         <ChoiceChipRadio
-          chipClassName="w-full rounded-[var(--radius-control)] px-[var(--space-3)] py-2 text-[length:var(--text-caption-size)]"
-          className="taste-adjustment-chip min-w-[var(--control-min-size)]"
+          chipClassName="h-full w-full whitespace-nowrap rounded-[var(--radius-cover)] border-transparent bg-transparent px-1 py-1 text-[length:var(--font-size-12)] font-medium leading-none"
+          className="taste-adjustment-chip min-h-[var(--control-min-size)] min-w-0"
           key={option}
           value={option}
           variant={option === "exclude" ? "danger" : "default"}

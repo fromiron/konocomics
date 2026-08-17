@@ -43,6 +43,12 @@ function TrayHarness({
 }
 
 describe("SelectedTray focus recovery", () => {
+  it("reserves one visible add slot while the tray is below its maximum", () => {
+    const { container } = render(<TrayHarness />);
+
+    expect(container.querySelector(".selected-tray__empty-slot")).not.toBeNull();
+  });
+
   it("moves focus to the next selected work after removal", async () => {
     render(<TrayHarness />);
 

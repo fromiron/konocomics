@@ -1077,15 +1077,21 @@ test.describe("Slice 7 recommendation journeys", () => {
         .first();
       const firstCard = firstItem.locator("article");
       const firstCardLink = firstItem.getByRole("link", { name: /作品詳細を見る$/u });
+      const collapsedBox = await firstCard.boundingBox();
 
       await firstCard.hover();
       await page.waitForTimeout(150);
       await expect(firstCard).not.toHaveAttribute("data-expanded");
       await expect(firstCard).toHaveAttribute("data-expanded", "true", { timeout: 250 });
-      await expect(firstCard.locator("details")).toHaveJSProperty("open", true);
-      const expandedBox = await firstItem.boundingBox();
+      await expect(firstCard.locator("[data-recommendation-evidence-summary]")).toBeVisible();
+      await expect(firstCard.locator("[data-recommendation-backdrop]")).toHaveCount(0);
+      await expect(firstCard.locator(".recommendation-card__cover")).toHaveCount(1);
+      const expandedBox = await firstCard.boundingBox();
       expect(expandedBox?.width).toBeGreaterThanOrEqual(300);
       expect(expandedBox?.width).toBeLessThanOrEqual(360);
+      expect(
+        Math.abs((expandedBox?.height ?? 0) - (collapsedBox?.height ?? 0)),
+      ).toBeLessThanOrEqual(1);
 
       await page.mouse.move(0, 0);
       await expect(firstCard).not.toHaveAttribute("data-expanded");
@@ -1095,6 +1101,51 @@ test.describe("Slice 7 recommendation journeys", () => {
       await tabUntil(page, /作品詳細を見る/u, 80);
       await expect(firstCardLink).toBeFocused();
       await expect(firstCard).toHaveAttribute("data-expanded", "true", { timeout: 150 });
+
+      await page.mouse.move(0, 0);
+      await page.evaluate(() => {
+        if (document.activeElement instanceof HTMLElement) document.activeElement.blur();
+      });
+      await expect(firstCard).not.toHaveAttribute("data-expanded");
+      const recommendationShelf = page.getByRole("list", {
+        name: "あなたのために選んだ作品",
+      });
+      const rightEdgeItem = recommendationShelf.locator("li[data-recommendation-work-id]").last();
+      await rightEdgeItem.scrollIntoViewIfNeeded();
+      const rightEdgeCard = rightEdgeItem.locator("article");
+      const rightEdgeCover = rightEdgeCard.locator("[data-expandable-cover-frame]");
+      const rightEdgeCopy = rightEdgeCard.locator(
+        ".recommendation-card__identity > div:last-child",
+      );
+      const collapsedEdgeCardBox = await rightEdgeCard.boundingBox();
+      const collapsedEdgeCoverBox = await rightEdgeCover.boundingBox();
+
+      await rightEdgeCard.hover();
+      await expect(rightEdgeCard).toHaveAttribute("data-expansion-side", "left", {
+        timeout: 250,
+      });
+      await page.waitForTimeout(300);
+      const shelfBox = await recommendationShelf.boundingBox();
+      const expandedEdgeCardBox = await rightEdgeCard.boundingBox();
+      const expandedEdgeCoverBox = await rightEdgeCover.boundingBox();
+      const expandedEdgeCopyBox = await rightEdgeCopy.boundingBox();
+      expect(expandedEdgeCardBox?.x).toBeGreaterThanOrEqual((shelfBox?.x ?? 0) - 1);
+      expect((expandedEdgeCardBox?.x ?? 0) + (expandedEdgeCardBox?.width ?? 0)).toBeLessThanOrEqual(
+        (shelfBox?.x ?? 0) + (shelfBox?.width ?? 0) + 1,
+      );
+      expect(expandedEdgeCoverBox?.x).toBeGreaterThan(expandedEdgeCopyBox?.x ?? Infinity);
+      expect(expandedEdgeCoverBox?.width).toBeLessThan(collapsedEdgeCoverBox?.width ?? 0);
+      expect(
+        Math.abs((expandedEdgeCardBox?.height ?? 0) - (collapsedEdgeCardBox?.height ?? 0)),
+      ).toBeLessThanOrEqual(1);
+      expect(
+        await page.evaluate(
+          () => document.documentElement.scrollWidth === document.documentElement.clientWidth,
+        ),
+      ).toBe(true);
+
+      await page.mouse.move(0, 0);
+      await expect(rightEdgeCard).not.toHaveAttribute("data-expanded");
     }
 
     if (testInfo.project.name === "mobile-chromium") {

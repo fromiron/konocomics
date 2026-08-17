@@ -6,15 +6,11 @@ import { useCallback, useEffect, useLayoutEffect, useMemo, useRef, useState } fr
 import { flushSync } from "react-dom";
 
 import { Button } from "@/components/design-system/button";
-import { ChoiceChipCheckbox } from "@/components/design-system/choice-chip";
-import { NativeSelect } from "@/components/design-system/native-select";
 import { SiteFooter } from "@/components/layout/site-footer";
-import { MediaPosterCard } from "@/components/media/media-poster-card";
 import { MediaShelf } from "@/components/media/media-shelf";
 import { QuickPreviewDialog } from "@/components/media/quick-preview-dialog";
-import { RankingShelf } from "@/components/media/ranking-shelf";
+import { RankingCard } from "@/components/media/ranking-card";
 import recommendationContextJson from "@/data/generated/recommendation-context-v1.json";
-import { GENRE_TAGS } from "@/domain/catalog/constants";
 import type { GenreTag } from "@/domain/catalog/types";
 import type { ExplanationFactorId } from "@/domain/explanation";
 import { generateTasteExplanation } from "@/domain/explanation/generate";
@@ -46,12 +42,22 @@ import { usePersistence } from "@/infrastructure/db";
 import { recommendationStrings, explanationLexicon } from "@/lib/strings";
 
 import { FeedbackDialog, type PendingRecommendationFeedback } from "./feedback-dialog";
+import { FeedbackImpactSummary } from "./feedback-impact-summary";
 import { RecommendationCard } from "./recommendation-card";
+import { RecommendationCriteriaSummary } from "./recommendation-criteria-summary";
 import {
   createRecommendationCoverTargets,
   useRecommendationCovers,
 } from "./recommendation-cover-resolver";
+import {
+  RecommendationFilterBar,
+  recommendationShelves,
+  type RecommendationShelf,
+  type VisiblePolicyKey,
+  visiblePolicyKeys,
+} from "./recommendation-filter-bar";
 import { loadRecommendationMotionList } from "./recommendation-motion-loader";
+import { RecommendationShelfCard } from "./recommendation-shelf-card";
 import type {
   RecommendationMotionItem,
   RecommendationMotionListProps,
@@ -65,19 +71,14 @@ const DEFAULT_POLICIES: RecommendationPolicies = {
 };
 const EMPTY_ADJUSTMENTS: ProfileAdjustments = { axes: {}, themes: {} };
 const EMPTY_RECORDS: readonly UserWorkRecord[] = [];
-const VISIBLE_POLICY_KEYS = ["preferCompleted", "preferHidden", "preferVerified"] as const;
-const RECOMMENDATION_SHELVES = ["featured", "anchor", "discovery", "completed", "ranking"] as const;
 const parsedRecommendationContext =
   recommendationContextSchema.safeParse(recommendationContextJson);
 
-type VisiblePolicyKey = (typeof VISIBLE_POLICY_KEYS)[number];
 type RecommendationMotionListComponent = ComponentType<RecommendationMotionListProps>;
 type MotionFocusTarget = Readonly<{
   workId: string;
   action: "completed" | "hidden" | null;
 }>;
-type RecommendationShelf = (typeof RECOMMENDATION_SHELVES)[number];
-
 type RecommendationsFlowProps = Readonly<{
   previewWorkId?: string;
   genre?: GenreTag;
@@ -96,7 +97,7 @@ function StaticRecommendationItems({
     <>
       {items.map((item) => (
         <li
-          className="basis-[var(--featured-card-basis)] shrink-0 snap-start overflow-visible [@media(min-width:768px)_and_(hover:hover)_and_(pointer:fine)]:has-[article[data-expanded]]:basis-[calc(var(--control-min-size)*8)]"
+          className="basis-[var(--featured-card-basis)] shrink-0 snap-start overflow-visible [@media(min-width:768px)_and_(hover:hover)_and_(pointer:fine)]:h-[var(--recommendation-card-height)] [@media(min-width:768px)_and_(hover:hover)_and_(pointer:fine)]:has-[article[data-expanded]]:basis-[calc(var(--control-min-size)*8)]"
           data-recommendation-work-id={item.workId}
           key={item.workId}
         >
@@ -291,10 +292,90 @@ export function RecommendationsFlow({
     });
     return ids;
   }, [optimisticPlannedIds, records]);
-  const coverWorkIds = useMemo(
-    () => (plan ?? visibleEntries).slice(0, 18).map((entry) => entry.workId),
-    [plan, visibleEntries],
-  );
+  const {
+    anchorEntries,
+    completedEntries,
+    discoveryEntries,
+    featuredEntries,
+    previewEntry,
+    renderedEntries,
+  } = useMemo(() => {
+    const nextRenderedEntries = visibleEntries.flatMap((entry) => {
+      const work = worksById.get(entry.workId);
+      const metadata = parsedRecommendationContext.success
+        ? parsedRecommendationContext.data.constraintByWorkId[entry.workId]
+        : undefined;
+      return work === undefined || metadata === undefined ? [] : [{ entry, metadata, work }];
+    });
+    const nextFeaturedEntries =
+      genre === undefined
+        ? nextRenderedEntries
+        : nextRenderedEntries.filter(({ work }) => work.genres.includes(genre));
+    const nextAllPlanEntries = (plan ?? []).flatMap((entry) => {
+      if (excludedWorkIds.has(entry.workId)) return [];
+      const work = worksById.get(entry.workId);
+      const metadata = parsedRecommendationContext.success
+        ? parsedRecommendationContext.data.constraintByWorkId[entry.workId]
+        : undefined;
+      return work === undefined || metadata === undefined ? [] : [{ entry, metadata, work }];
+    });
+    const visibleWorkIds = new Set(visibleEntries.map((entry) => entry.workId));
+    const auxiliaryEntries = nextAllPlanEntries
+      .filter(
+        ({ entry, work }) =>
+          !visibleWorkIds.has(entry.workId) && (genre === undefined || work.genres.includes(genre)),
+      )
+      .slice(0, 18);
+    const usedAuxiliaryIds = new Set<string>();
+    const nextAnchorEntries = auxiliaryEntries
+      .filter(({ entry }) => {
+        const leadReason = generateTasteExplanation({
+          contributions: entry.contributions,
+          confidenceLevel: entry.confidenceLevel,
+          lexicon: explanationLexicon,
+          resolveTitle: (workId) => worksById.get(workId)?.title,
+        }).positiveReasons[0];
+        return leadReason !== undefined && leadReason.anchorWorkIds.length > 0;
+      })
+      .slice(0, 6);
+    nextAnchorEntries.forEach(({ entry }) => usedAuxiliaryIds.add(entry.workId));
+    const nextDiscoveryEntries = auxiliaryEntries
+      .filter(({ entry }) => entry.isDiscovery && !usedAuxiliaryIds.has(entry.workId))
+      .slice(0, 6);
+    nextDiscoveryEntries.forEach(({ entry }) => usedAuxiliaryIds.add(entry.workId));
+    const nextCompletedEntries = auxiliaryEntries
+      .filter(
+        ({ entry, work }) => work.status === "completed" && !usedAuxiliaryIds.has(entry.workId),
+      )
+      .slice(0, 6);
+
+    return {
+      anchorEntries: nextAnchorEntries,
+      completedEntries: nextCompletedEntries,
+      discoveryEntries: nextDiscoveryEntries,
+      featuredEntries: nextFeaturedEntries,
+      previewEntry: nextAllPlanEntries.find(({ entry }) => entry.workId === previewWorkId) ?? null,
+      renderedEntries: nextRenderedEntries,
+    };
+  }, [excludedWorkIds, genre, plan, previewWorkId, visibleEntries, worksById]);
+  const coverWorkIds = useMemo(() => {
+    const orderedIds = [
+      ...featuredEntries.map(({ entry }) => entry.workId),
+      ...renderedEntries.map(({ entry }) => entry.workId),
+      ...anchorEntries.map(({ entry }) => entry.workId),
+      ...discoveryEntries.map(({ entry }) => entry.workId),
+      ...completedEntries.map(({ entry }) => entry.workId),
+      ...(previewEntry === null ? [] : [previewEntry.entry.workId]),
+    ];
+    return [...new Set(orderedIds)];
+  }, [
+    anchorEntries,
+    completedEntries,
+    discoveryEntries,
+    featuredEntries,
+    previewEntry,
+    renderedEntries,
+  ]);
   const recommendationCoverTargets = useMemo(
     () => createRecommendationCoverTargets(catalog, coverWorkIds),
     [catalog, coverWorkIds],
@@ -307,6 +388,15 @@ export function RecommendationsFlow({
   const recommendationCoverTargetsByWorkId = useMemo(
     () => new Map(recommendationCoverTargets.map((target) => [target.workId, target] as const)),
     [recommendationCoverTargets],
+  );
+  const firstRecommendationCoverWorkId = recommendationCoverTargets[0]?.workId;
+  const settleRecommendationCover = useCallback(
+    (workId: string) => {
+      if (workId !== firstRecommendationCoverWorkId) return;
+      const target = recommendationCoverTargetsByWorkId.get(workId);
+      if (target !== undefined) notifyCoverSettled(target);
+    },
+    [firstRecommendationCoverWorkId, notifyCoverSettled, recommendationCoverTargetsByWorkId],
   );
   const announce = useCallback((text: string) => {
     setLiveAnnouncement((current) => ({ sequence: current.sequence + 1, text }));
@@ -404,7 +494,13 @@ export function RecommendationsFlow({
     if (previousPreviewWorkId.current !== null && currentPreviewWorkId === null) {
       const opener = previewOpener.current;
       previewOpener.current = null;
-      if (opener?.isConnected) opener.focus();
+      if (opener?.isConnected) {
+        window.requestAnimationFrame(() => {
+          window.requestAnimationFrame(() => {
+            if (opener.isConnected) opener.focus();
+          });
+        });
+      }
     }
     previousPreviewWorkId.current = currentPreviewWorkId;
   }, [previewWorkId]);
@@ -764,8 +860,13 @@ export function RecommendationsFlow({
   };
 
   const openPreview = (workId: string) => {
-    previewOpener.current =
+    const activeElement =
       document.activeElement instanceof HTMLElement ? document.activeElement : null;
+    previewOpener.current = activeElement?.matches("[data-recommendation-evidence-disclosure]")
+      ? (activeElement
+          .closest("article")
+          ?.querySelector<HTMLElement>("[data-recommendation-identity-rail]") ?? activeElement)
+      : activeElement;
     onPreviewOpen?.(workId);
   };
 
@@ -776,49 +877,12 @@ export function RecommendationsFlow({
     storedPolicies === undefined
   ) {
     return (
-      <main className="mx-auto min-h-dvh w-full max-w-[var(--layout-width-media)] px-[var(--layout-page-padding)] pt-[var(--layout-page-block-start)] pb-[calc(var(--layout-mobile-navigation-clearance)+var(--space-8))] md:pb-[var(--space-section-large)] [--recommendation-cover-width:96px]">
+      <main className="mx-auto min-h-dvh w-full max-w-[var(--layout-width-media)] px-[var(--layout-page-padding)] pt-[var(--layout-page-block-start)] pb-[calc(var(--layout-mobile-navigation-clearance)+var(--space-8))] md:pb-[var(--space-section-large)] [--recommendation-cover-width:104px]">
         <p aria-live="polite">{recommendationStrings.loading}</p>
       </main>
     );
   }
 
-  const renderedEntries = visibleEntries.flatMap((entry) => {
-    const work = worksById.get(entry.workId);
-    const metadata = parsedRecommendationContext.success
-      ? parsedRecommendationContext.data.constraintByWorkId[entry.workId]
-      : undefined;
-    return work === undefined || metadata === undefined ? [] : [{ entry, metadata, work }];
-  });
-  const featuredEntries =
-    genre === undefined
-      ? renderedEntries
-      : renderedEntries.filter(({ work }) => work.genres.includes(genre));
-  const allPlanEntries = (plan ?? []).flatMap((entry) => {
-    if (excludedWorkIds.has(entry.workId)) return [];
-    const work = worksById.get(entry.workId);
-    const metadata = parsedRecommendationContext.success
-      ? parsedRecommendationContext.data.constraintByWorkId[entry.workId]
-      : undefined;
-    return work === undefined || metadata === undefined ? [] : [{ entry, metadata, work }];
-  });
-  const visibleWorkIds = new Set(visibleEntries.map((entry) => entry.workId));
-  const auxiliaryEntries = allPlanEntries
-    .filter(
-      ({ entry, work }) =>
-        !visibleWorkIds.has(entry.workId) && (genre === undefined || work.genres.includes(genre)),
-    )
-    .slice(0, 18);
-  const usedAuxiliaryIds = new Set<string>();
-  const discoveryEntries = auxiliaryEntries.filter(({ entry }) => entry.isDiscovery).slice(0, 6);
-  discoveryEntries.forEach(({ entry }) => usedAuxiliaryIds.add(entry.workId));
-  const completedEntries = auxiliaryEntries
-    .filter(({ entry, work }) => work.status === "completed" && !usedAuxiliaryIds.has(entry.workId))
-    .slice(0, 6);
-  completedEntries.forEach(({ entry }) => usedAuxiliaryIds.add(entry.workId));
-  const anchorEntries = auxiliaryEntries
-    .filter(({ entry }) => !usedAuxiliaryIds.has(entry.workId))
-    .slice(0, 6);
-  const previewEntry = allPlanEntries.find(({ entry }) => entry.workId === previewWorkId) ?? null;
   const previewExplanation =
     previewEntry === null
       ? null
@@ -839,6 +903,16 @@ export function RecommendationsFlow({
     currentHash === null ||
     displayedHash === null ||
     currentHash === displayedHash;
+  const preferenceSummary =
+    dnaSummary.topPreferences.length === 0
+      ? recommendationStrings.tasteSummary.empty
+      : dnaSummary.topPreferences
+          .map(
+            (preference) =>
+              explanationLexicon.factorLabels[preference.factorId as ExplanationFactorId] ??
+              preference.factorId,
+          )
+          .join("・");
   const recommendationItems: RecommendationMotionItem[] = featuredEntries.map(
     ({ entry, metadata, work }, index) => ({
       workId: entry.workId,
@@ -854,11 +928,9 @@ export function RecommendationsFlow({
           entry={entry}
           onCompleted={() => void removeForFeedback(entry, "completed")}
           onCoverSettled={
-            index === 0 && recommendationCoverUrls.has(entry.workId)
-              ? () => {
-                  const target = recommendationCoverTargetsByWorkId.get(entry.workId);
-                  if (target !== undefined) notifyCoverSettled(target);
-                }
+            entry.workId === firstRecommendationCoverWorkId &&
+            recommendationCoverUrls.has(entry.workId)
+              ? () => settleRecommendationCover(entry.workId)
               : undefined
           }
           onHidden={() => void removeForFeedback(entry, "hidden")}
@@ -900,96 +972,43 @@ export function RecommendationsFlow({
         </div>
       </li>
     ) : null;
-  const renderPoster = ({ entry, work }: (typeof allPlanEntries)[number], index: number) => (
-    <div
-      className="grid w-[calc(var(--control-min-size)*3.5)] shrink-0 snap-start content-start gap-[var(--space-content)]"
+  const renderShelfCard = (
+    { entry, metadata, work }: (typeof anchorEntries)[number],
+    variant: "anchor" | "discovery" | "completed",
+  ) => (
+    <RecommendationShelfCard
+      coverUrl={recommendationCoverUrls.get(entry.workId)}
+      entry={entry}
       key={entry.workId}
-    >
-      <MediaPosterCard
-        className="!w-full"
-        coverUrl={recommendationCoverUrls.get(entry.workId)}
-        creators={work.creators}
-        metadata={explanationLexicon.confidenceLabels[entry.confidenceLevel]}
-        priority={index === 0}
-        title={work.title}
-        workId={work.id}
-      />
-      <Button
-        className="w-full min-h-[var(--control-min-size)] overflow-hidden text-ellipsis"
-        onClick={() => openPreview(entry.workId)}
-        type="button"
-        variant="outline"
-      >
-        {recommendationStrings.quickPreview.open(work.title)}
-      </Button>
-    </div>
+      onPreview={() => openPreview(entry.workId)}
+      resolveTitle={(workId) => worksById.get(workId)?.title}
+      variant={variant}
+      volumeCount={metadata.volumeCount}
+      work={work}
+    />
   );
 
   return (
     <>
       <main
-        className="mx-auto min-h-dvh w-full max-w-[var(--layout-width-media)] bg-canvas px-[var(--layout-page-padding)] pt-[var(--layout-page-block-start)] pb-[calc(var(--layout-mobile-navigation-clearance)+var(--space-8))] md:pb-[var(--space-section-large)] [--recommendation-cover-width:96px]"
+        className="mx-auto min-h-dvh w-full max-w-[var(--layout-width-media)] bg-canvas px-[var(--layout-page-padding)] pt-[var(--layout-page-block-start)] pb-[calc(var(--layout-mobile-navigation-clearance)+var(--space-8))] md:pt-[var(--space-3)] md:pb-[var(--space-6)] [--recommendation-cover-width:104px]"
         data-recommendation-input-hash={displayedHash ?? undefined}
       >
         <div className="block w-full min-w-0">
           <div className="block w-full min-w-0">
-            <header className="mb-[var(--space-5)] grid gap-[var(--space-content)] lg:mb-[var(--space-3)] lg:grid-cols-[auto_minmax(0,1fr)] lg:items-baseline lg:gap-[var(--space-4)]">
+            <header className="mb-[var(--space-5)] grid gap-[var(--space-content)] md:sr-only">
               <h1 className="font-display">{recommendationStrings.title}</h1>
               <p className="text-text-muted">{recommendationStrings.description}</p>
             </header>
 
-            <section className="mb-[var(--space-4)] grid grid-cols-1 gap-[var(--space-3)] rounded-[var(--radius-card)] border border-line bg-surface-1 p-[var(--space-3)] min-[360px]:grid-cols-[minmax(0,1fr)_auto] md:grid-cols-[minmax(0,1fr)_minmax(0,2fr)_auto] md:items-center lg:mb-[var(--space-3)]">
-              <div className="grid gap-[var(--space-content)]">
-                <h2>{recommendationStrings.criteria.heading}</h2>
-                <p className="sr-only text-text-muted sm:not-sr-only">
-                  {recommendationStrings.criteria.description}
-                </p>
-              </div>
-              <dl className="m-0 grid grid-cols-3 gap-[var(--space-content)] min-[360px]:col-span-2 md:col-span-1">
-                <div className="grid gap-[var(--space-content-tight)] rounded-[var(--radius-control)] border border-line bg-surface-2 p-[var(--space-content)]">
-                  <dt className="text-[length:var(--text-caption-size)] text-text-muted">
-                    {recommendationStrings.criteria.records}
-                  </dt>
-                  <dd className="m-0 font-bold text-text-strong">
-                    {recommendationStrings.criteria.recordCount(records.length)}
-                  </dd>
-                </div>
-                <div className="grid gap-[var(--space-content-tight)] rounded-[var(--radius-control)] border border-line bg-surface-2 p-[var(--space-content)]">
-                  <dt className="text-[length:var(--text-caption-size)] text-text-muted">
-                    {recommendationStrings.criteria.preferences}
-                  </dt>
-                  <dd className="m-0 line-clamp-2 font-bold text-text-strong">
-                    {dnaSummary.topPreferences.length === 0
-                      ? recommendationStrings.tasteSummary.empty
-                      : dnaSummary.topPreferences
-                          .map(
-                            (preference) =>
-                              explanationLexicon.factorLabels[
-                                preference.factorId as ExplanationFactorId
-                              ] ?? preference.factorId,
-                          )
-                          .join("・")}
-                  </dd>
-                </div>
-                <div className="grid gap-[var(--space-content-tight)] rounded-[var(--radius-control)] border border-line bg-surface-2 p-[var(--space-content)]">
-                  <dt className="text-[length:var(--text-caption-size)] text-text-muted">
-                    {recommendationStrings.criteria.policies}
-                  </dt>
-                  <dd className="m-0 font-bold text-text-strong">
-                    {recommendationStrings.criteria.policyCount(
-                      VISIBLE_POLICY_KEYS.filter((key) => policies[key]).length,
-                    )}
-                  </dd>
-                </div>
-              </dl>
-              <Link
-                className="inline-flex min-h-[var(--control-min-size)] items-center justify-self-start font-bold text-accent min-[360px]:col-start-2 min-[360px]:row-start-1 md:col-auto md:row-auto"
-                preload={false}
-                to="/taste"
-              >
-                {recommendationStrings.tasteSummary.link}
-              </Link>
-            </section>
+            <RecommendationCriteriaSummary
+              activePolicyCount={
+                visiblePolicyKeys.filter((key) => policies[key]).length +
+                Number(policies.excludeIncomplete)
+              }
+              preferenceSummary={preferenceSummary}
+              recordCount={records.length}
+            />
 
             {status.state === "degraded" ? (
               <p
@@ -1000,106 +1019,25 @@ export function RecommendationsFlow({
               </p>
             ) : null}
 
-            <section
-              aria-labelledby="recommendation-policy-heading"
-              className="mb-[var(--space-5)] grid gap-[var(--space-3)] rounded-[var(--radius-card)] border border-line bg-surface-1 p-[var(--space-3)] min-[360px]:grid-cols-[minmax(0,1fr)_auto] min-[360px]:items-end lg:grid-cols-[minmax(0,1.35fr)_minmax(0,1fr)_auto]"
-            >
-              <div className="grid grid-cols-3 gap-[var(--space-content)] min-[360px]:col-span-2 lg:col-span-1">
-                <label className="grid min-w-0 gap-[var(--space-content-tight)] text-[length:var(--text-caption-size)] font-bold text-text-muted">
-                  <span>{recommendationStrings.filters.genre}</span>
-                  <NativeSelect
-                    className="min-w-0 [&_[data-slot=native-select]]:bg-surface-2 [&_[data-slot=native-select]]:text-text-strong"
-                    onChange={(event) => {
-                      const nextGenre = GENRE_TAGS.find(
-                        (candidate) => candidate === event.currentTarget.value,
-                      );
-                      onGenreChange?.(nextGenre);
-                    }}
-                    value={genre ?? ""}
-                  >
-                    <option value="">{recommendationStrings.filters.allGenres}</option>
-                    {GENRE_TAGS.map((genreTag) => (
-                      <option key={genreTag} value={genreTag}>
-                        {explanationLexicon.factorLabels[genreTag]}
-                      </option>
-                    ))}
-                  </NativeSelect>
-                </label>
-                <label className="grid min-w-0 gap-[var(--space-content-tight)] text-[length:var(--text-caption-size)] font-bold text-text-muted">
-                  <span>{recommendationStrings.filters.shelf}</span>
-                  <NativeSelect
-                    className="min-w-0 [&_[data-slot=native-select]]:bg-surface-2 [&_[data-slot=native-select]]:text-text-strong"
-                    onChange={(event) => {
-                      const nextShelf = RECOMMENDATION_SHELVES.find(
-                        (candidate) => candidate === event.currentTarget.value,
-                      );
-                      onShelfChange?.(nextShelf);
-                    }}
-                    value={shelf ?? ""}
-                  >
-                    <option value="">{recommendationStrings.filters.allShelves}</option>
-                    <option value="featured">{recommendationStrings.shelves.featured.title}</option>
-                    <option value="anchor">{recommendationStrings.shelves.anchor.title}</option>
-                    <option value="discovery">
-                      {recommendationStrings.shelves.discovery.title}
-                    </option>
-                    <option value="completed">
-                      {recommendationStrings.shelves.completed.title}
-                    </option>
-                    <option value="ranking">{recommendationStrings.shelves.ranking.title}</option>
-                  </NativeSelect>
-                </label>
-                <div className="grid min-w-0 gap-[var(--space-content-tight)] text-[length:var(--text-caption-size)] font-bold text-text-muted">
-                  <span>{recommendationStrings.filters.sort}</span>
-                  <span className="inline-flex min-h-[var(--control-min-size)] min-w-0 items-center rounded-[var(--radius-control)] border border-line bg-surface-2 px-[var(--space-3)] text-text-strong">
-                    {recommendationStrings.filters.recommended}
-                  </span>
-                </div>
-              </div>
-              <fieldset className="m-0 min-w-0 border-0 p-0">
-                <legend
-                  className="mb-[var(--space-content)] p-0 font-bold text-text-strong lg:mb-[var(--space-content-tight)]"
-                  id="recommendation-policy-heading"
-                >
-                  {recommendationStrings.policiesHeading}
-                </legend>
-                <div className="grid grid-cols-3 gap-[var(--space-content)]">
-                  {VISIBLE_POLICY_KEYS.map((key) => (
-                    <ChoiceChipCheckbox
-                      checked={policies[key]}
-                      chipClassName="w-full px-[var(--space-content-tight)] py-[var(--space-content-tight)] text-center text-[length:var(--font-size-12)] leading-tight md:text-[length:var(--font-size-14)]"
-                      className="w-full min-w-0"
-                      disabled={isComputing || isPolicySaving || feedbackBaseBusy}
-                      key={key}
-                      onCheckedChange={() => void togglePolicy(key)}
-                    >
-                      {recommendationStrings.policyLabels[key]}
-                    </ChoiceChipCheckbox>
-                  ))}
-                </div>
-              </fieldset>
-              <div className="flex items-center justify-between gap-[var(--space-3)]">
-                {displayedHash !== null && currentHash !== null && displayedHash !== currentHash ? (
-                  <p className="text-[length:var(--text-caption-size)] text-text-muted">
-                    {recommendationStrings.pendingChanges}
-                  </p>
-                ) : null}
-                <Button
-                  className="min-w-[calc(var(--control-min-size)*2)] min-h-[var(--control-min-size)] border-line bg-surface-1 px-[var(--space-4)] py-[var(--space-content)] font-bold"
-                  busy={isComputing}
-                  disabled={updateDisabled}
-                  onClick={() => {
-                    if (recommendationInput === null) window.location.reload();
-                    else void updateRecommendations();
-                  }}
-                  ref={updateButtonRef}
-                  type="button"
-                  variant="outline"
-                >
-                  {isComputing ? recommendationStrings.updating : recommendationStrings.update}
-                </Button>
-              </div>
-            </section>
+            <RecommendationFilterBar
+              disabled={isComputing || isPolicySaving || feedbackBaseBusy}
+              genre={genre}
+              onGenreChange={onGenreChange}
+              onPolicyToggle={(key) => void togglePolicy(key)}
+              onShelfChange={onShelfChange}
+              onUpdate={() => {
+                if (recommendationInput === null) window.location.reload();
+                else void updateRecommendations();
+              }}
+              pending={
+                displayedHash !== null && currentHash !== null && displayedHash !== currentHash
+              }
+              policies={policies}
+              shelf={recommendationShelves.find((candidate) => candidate === shelf)}
+              updateButtonRef={updateButtonRef}
+              updateDisabled={updateDisabled}
+              updating={isComputing}
+            />
 
             {actionError ? (
               <p
@@ -1172,11 +1110,12 @@ export function RecommendationsFlow({
                   id="recommendation-shelf-featured"
                 />
                 <MediaShelf
-                  className="scroll-mt-[calc(var(--desktop-navigation-height)+var(--space-4))] [&_h2]:border-l-[length:var(--space-1)] [&_h2]:border-accent [&_h2]:pl-[var(--space-4)]"
+                  className="scroll-mt-[calc(var(--desktop-navigation-height)+var(--space-4))]"
                   description={recommendationStrings.shelves.featured.description}
                   listType="unordered"
+                  compactHeading
                   title={recommendationStrings.shelves.featured.title}
-                  trackClassName="recommendations-list min-h-[calc(var(--control-min-size)*8)] items-start gap-[var(--space-4)] [--featured-card-basis:clamp(calc(var(--control-min-size)*2.5),calc((100%-(var(--space-4)*1.4))/2.4),calc(var(--control-min-size)*3.5))] [@media(min-width:768px)_and_(hover:hover)_and_(pointer:fine)]:min-h-[calc(var(--control-min-size)*11)] [@media(min-width:768px)_and_(hover:hover)_and_(pointer:fine)]:[--featured-card-basis:calc(var(--control-min-size)*3.5)]"
+                  trackClassName="recommendations-list min-h-[calc(var(--control-min-size)*6.5)] items-start gap-[var(--space-3)] has-[article[data-expanded]]:snap-none [--featured-card-basis:clamp(calc(var(--control-min-size)*2.5),calc((100%-(var(--space-3)*2))/2.4),calc(var(--control-min-size)*3.5))] [--recommendation-card-height:calc((var(--control-min-size)*8)+var(--space-3))] [@media(min-width:768px)_and_(hover:hover)_and_(pointer:fine)]:min-h-[calc(var(--control-min-size)*8.5)] [@media(min-width:768px)_and_(hover:hover)_and_(pointer:fine)]:[--featured-card-basis:calc(var(--control-min-size)*3.5)]"
                   trackData={{
                     "data-recommendation-motion": MotionList === null ? "static" : "enabled",
                   }}
@@ -1203,11 +1142,12 @@ export function RecommendationsFlow({
               id="recommendation-shelf-anchor"
             />
             <MediaShelf
-              className="mt-[var(--space-section-large)] scroll-mt-[calc(var(--desktop-navigation-height)+var(--space-4))] [&_h2]:border-l-[length:var(--space-1)] [&_h2]:border-accent [&_h2]:pl-[var(--space-4)]"
+              className="mt-[var(--space-4)] scroll-mt-[calc(var(--desktop-navigation-height)+var(--space-4))]"
+              compactHeading
               description={recommendationStrings.shelves.anchor.description}
               title={recommendationStrings.shelves.anchor.title}
             >
-              {anchorEntries.map(renderPoster)}
+              {anchorEntries.map((item) => renderShelfCard(item, "anchor"))}
             </MediaShelf>
 
             <span
@@ -1216,11 +1156,12 @@ export function RecommendationsFlow({
               id="recommendation-shelf-discovery"
             />
             <MediaShelf
-              className="mt-[var(--space-section-large)] scroll-mt-[calc(var(--desktop-navigation-height)+var(--space-4))] [&_h2]:border-l-[length:var(--space-1)] [&_h2]:border-accent [&_h2]:pl-[var(--space-4)]"
+              className="mt-[var(--space-4)] scroll-mt-[calc(var(--desktop-navigation-height)+var(--space-4))]"
+              compactHeading
               description={recommendationStrings.shelves.discovery.description}
               title={recommendationStrings.shelves.discovery.title}
             >
-              {discoveryEntries.map(renderPoster)}
+              {discoveryEntries.map((item) => renderShelfCard(item, "discovery"))}
             </MediaShelf>
 
             <span
@@ -1229,11 +1170,12 @@ export function RecommendationsFlow({
               id="recommendation-shelf-completed"
             />
             <MediaShelf
-              className="mt-[var(--space-section-large)] scroll-mt-[calc(var(--desktop-navigation-height)+var(--space-4))] [&_h2]:border-l-[length:var(--space-1)] [&_h2]:border-accent [&_h2]:pl-[var(--space-4)]"
+              className="mt-[var(--space-4)] scroll-mt-[calc(var(--desktop-navigation-height)+var(--space-4))]"
+              compactHeading
               description={recommendationStrings.shelves.completed.description}
               title={recommendationStrings.shelves.completed.title}
             >
-              {completedEntries.map(renderPoster)}
+              {completedEntries.map((item) => renderShelfCard(item, "completed"))}
             </MediaShelf>
 
             <span
@@ -1241,43 +1183,38 @@ export function RecommendationsFlow({
               className="scroll-mt-[calc(var(--desktop-navigation-height)+var(--space-4))]"
               id="recommendation-shelf-ranking"
             />
-            <RankingShelf
-              className="mt-[var(--space-section-large)] scroll-mt-[calc(var(--desktop-navigation-height)+var(--space-4))] [&_h2]:border-l-[length:var(--space-1)] [&_h2]:border-accent [&_h2]:pl-[var(--space-4)]"
+            <MediaShelf
+              className="mt-[var(--space-4)] scroll-mt-[calc(var(--desktop-navigation-height)+var(--space-4))]"
+              compactHeading
               description={recommendationStrings.shelves.ranking.description}
+              listType="ordered"
               title={recommendationStrings.shelves.ranking.title}
             >
-              {renderedEntries.slice(0, 10).map(renderPoster)}
-            </RankingShelf>
-            <section className="mt-[var(--space-section-large)] grid gap-[var(--space-4)] rounded-[var(--radius-card)] border border-line bg-surface-1 p-[var(--space-5)] md:grid-cols-[minmax(0,2fr)_minmax(0,1fr)] md:items-center">
-              <div className="grid gap-[var(--space-content)]">
-                <h2>{recommendationStrings.feedbackSummary.heading}</h2>
-                <p className="text-text-muted">
-                  {recommendationStrings.feedbackSummary.description}
-                </p>
-              </div>
-              <dl className="m-0 grid gap-[var(--space-content)] md:grid-cols-2">
-                <div className="grid gap-[var(--space-content-tight)] rounded-[var(--radius-control)] border border-line bg-surface-2 p-[var(--space-3)]">
-                  <dt className="text-[length:var(--text-caption-size)] text-text-muted">
-                    {recommendationStrings.actions.completed}
-                  </dt>
-                  <dd className="m-0 font-bold text-text-strong">
-                    {recommendationStrings.feedbackSummary.count(
-                      records.filter((record) => record.readingState === "completed").length,
-                    )}
-                  </dd>
-                </div>
-                <div className="grid gap-[var(--space-content-tight)] rounded-[var(--radius-control)] border border-line bg-surface-2 p-[var(--space-3)]">
-                  <dt className="text-[length:var(--text-caption-size)] text-text-muted">
-                    {recommendationStrings.actions.hidden}
-                  </dt>
-                  <dd className="m-0 font-bold text-text-strong">
-                    {recommendationStrings.feedbackSummary.count(
-                      records.filter((record) => record.readingState === "hidden").length,
-                    )}
-                  </dd>
-                </div>
-              </dl>
-            </section>
+              {renderedEntries.slice(0, 10).map(({ entry, work }, index) => (
+                <RankingCard
+                  coverUrl={recommendationCoverUrls.get(entry.workId)}
+                  creators={work.creators}
+                  key={entry.workId}
+                  metadata={explanationLexicon.confidenceLabels[entry.confidenceLevel]}
+                  onCoverSettled={
+                    entry.workId === firstRecommendationCoverWorkId &&
+                    recommendationCoverUrls.has(entry.workId)
+                      ? () => settleRecommendationCover(entry.workId)
+                      : undefined
+                  }
+                  position={index + 1}
+                  priority={featuredEntries.length === 0 && index === 0}
+                  title={work.title}
+                  workId={work.id}
+                />
+              ))}
+            </MediaShelf>
+            <FeedbackImpactSummary
+              completedCount={
+                records.filter((record) => record.readingState === "completed").length
+              }
+              hiddenCount={records.filter((record) => record.readingState === "hidden").length}
+            />
           </div>
         </div>
 
@@ -1332,7 +1269,7 @@ export function RecommendationsFlow({
           )}
         </p>
       </main>
-      {plan === null ? null : <SiteFooter className="mt-[var(--space-section-large)]" />}
+      {plan === null ? null : <SiteFooter />}
     </>
   );
 }

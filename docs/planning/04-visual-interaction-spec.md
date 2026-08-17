@@ -230,13 +230,13 @@
 
 - **상시(무한 루프) 애니메이션 0개.** skeleton 펄스만 예외(로딩 중 한정).
 - 한 인터랙션이 동시에 발화하는 **합성 효과 family**는 최대 2개다(예: 카드 제거/layout + 백필). DNA의 여러 카드·막대 instance stagger는 하나의 A family로 센다.
-- transform/opacity 외 프로퍼티 애니메이션 금지(height 축소는 추천 카드 제거 시에만 허용, contain 처리). color·background·border·box-shadow·font-weight 상태는 보간하지 않고 즉시 바꾼다.
+- transform/opacity 외 프로퍼티 애니메이션 금지(height 축소는 추천 카드 제거 시에만 허용, contain 처리). 단, desktop fine-pointer `ExpandableMediaCard`는 같은 카드의 공간 연속성을 유지하기 위해 실제 article `width`만 128~160px→300~360px로 240ms 보간할 수 있다. 이 예외는 높이 364px 고정, 최종 폭의 고정 content canvas, 동일 cover DOM, 고정 폭 identity rail, article 자체의 border/background/overflow clipping, reduced-motion 즉시 완료를 모두 만족해야 하며 `flex-basis`·텍스트/control 크기는 보간하지 않는다. color·background·border·box-shadow·font-weight 상태는 보간하지 않고 즉시 바꾼다.
 - 자동재생 캐러셀·스크롤 하이재킹·패럴랙스·커서 추적 효과 금지. 모바일에서 hover 의존 정보 금지(D의 hover lift는 장식이므로 무손실).
 - B의 정확한 allowlist는 `/onboarding` Step 1 resolved content(첫 등록·add mode), reveal 요청으로 시작하지 않은 ordinary `/taste`, 유효한 `/works/[workId]` resolved Catalog 상세, `found`인 `/works/external` resolved 상세뿐이다. Catalog는 `workId`, external은 external ID가 바뀐 새 route mount에서 다시 실행할 수 있다.
 - B는 landing의 모든 상태, A로 시작한 `/taste`, `/recommendations`, `/library`, `/settings`, onboarding Step 2, loading·hydration/redirect guard·skeleton·empty·invalid-link·local-missing·corrupt·unavailable·error, dialog·modal·drawer·panel·sheet·feedback surface에 적용하지 않는다. query cleanup·local state 변경·onboarding step 변경·dialog open/close·BFCache resume도 replay trigger가 아니다.
 - B는 AppShell/global layout이 아니라 eligible resolved-content root에만 적용한다. CSS 기본값은 최종 위치에서 완전히 보이는 상태이며 keyframe은 `prefers-reduced-motion: no-preference` 안에만 둔다. 8px 이동 중에도 opacity 0으로 만들어 콘텐츠를 완전히 숨기지 않고, 실패 시 최종 상태가 남는다.
 - E와 F는 CSS가 소유한다. ordinary FactorBar E는 static CSS 기본값을 target `scaleX`로 두고 변경 시 delay 0 / 240ms만 적용한다. 보정 성공의 600ms accent 상태는 `03` §4가 요구하는 E 내부 예외이며 색 보간 없이 즉시 켜고 끈다. F 흔들림도 CSS만 사용한다.
-- `prefers-reduced-motion: reduce`: A는 최종 상태로 즉시 완료하고 해당 1회 marker를 소비하며 B도 최종 상태로 즉시 표시한다. C는 `layout={false}`로 즉시 상태·순서·focus/live message를 반영한다. D는 scale/travel을 제거하고 선택·focus 상태는 유지한다. E는 target 값을 즉시 반영하며 600ms accent는 보간 없는 정적 상태다. F는 흔들림 없이 전체 `--warn` 보더와 오류·한도 text를 정적으로 유지한다. skeleton은 pulse 없는 정적 silhouette, Shelf 버튼 scroll은 `auto`다.
+- `prefers-reduced-motion: reduce`: A는 최종 상태로 즉시 완료하고 해당 1회 marker를 소비하며 B도 최종 상태로 즉시 표시한다. C는 `layout={false}`로 즉시 상태·순서·focus/live message를 반영하고 expandable card의 한정 width 예외도 최종 폭으로 즉시 완료한다. D는 scale/travel을 제거하고 선택·focus 상태는 유지한다. E는 target 값을 즉시 반영하며 600ms accent는 보간 없는 정적 상태다. F는 흔들림 없이 전체 `--warn` 보더와 오류·한도 text를 정적으로 유지한다. skeleton은 pulse 없는 정적 silhouette, Shelf 버튼 scroll은 `auto`다.
 
 ## 7. 서드파티 시각 라이브러리 판정
 

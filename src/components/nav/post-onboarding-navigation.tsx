@@ -90,11 +90,12 @@ export function PostOnboardingNavigation({
 
   return (
     <header className="app-navigation app-navigation--desktop sticky top-0 z-30 hidden h-[var(--desktop-navigation-height)] border-b border-line bg-surface-1 md:block">
-      <div className="app-navigation__desktop-inner mx-auto flex h-full w-full max-w-[var(--layout-width-navigation)] items-center justify-between gap-[var(--space-6)] px-[var(--layout-page-padding)]">
+      <div className="app-navigation__desktop-inner mx-auto grid h-full w-full max-w-[var(--layout-width-navigation)] grid-cols-[1fr_auto_1fr] items-center gap-[var(--space-6)] px-[var(--layout-page-padding)]">
         <BrandMark />
         <nav aria-label={navigationStrings.desktopLabel}>
           <NavigationLinks activePathname={activePathname} variant={variant} />
         </nav>
+        <span aria-hidden="true" />
       </div>
     </header>
   );

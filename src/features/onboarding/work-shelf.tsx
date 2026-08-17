@@ -54,6 +54,7 @@ export function WorkShelf({
   return (
     <MediaShelf
       className="work-shelf [&>div[aria-label]]:px-[var(--space-1)] [&>header]:items-center"
+      compactHeading
       title={title}
     >
       {works.map((work, index) => (

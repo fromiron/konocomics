@@ -15,18 +15,24 @@ import { RecommendationsFlow } from "@/features/recommendations/recommendations-
 
 vi.mock("@tanstack/react-router", () => ({
   Link: ({
+    "aria-label": ariaLabel,
     children,
     className,
+    "data-recommendation-identity-rail": identityRail,
     params,
     to,
   }: {
+    "aria-label"?: string;
     children: ReactNode;
     className?: string;
+    "data-recommendation-identity-rail"?: boolean;
     params?: { workId: string };
     to: string;
   }) => (
     <a
+      aria-label={ariaLabel}
       className={className}
+      data-recommendation-identity-rail={identityRail || undefined}
       href={params === undefined ? to : to.replace("$workId", params.workId)}
     >
       {children}
@@ -177,7 +183,7 @@ function freshProviderRecord(isbn: string) {
   };
 }
 
-function makePlan(): RecommendationPlanEntry[] {
+function makePlan(count = 12): RecommendationPlanEntry[] {
   const eligible = catalog.works.filter(
     (work) =>
       work.eligibility.recommendationEligible &&
@@ -185,7 +191,7 @@ function makePlan(): RecommendationPlanEntry[] {
   );
   const anchor = eligible[0];
   if (anchor === undefined) throw new Error("Expected an anchor fixture");
-  return eligible.slice(5, 17).map((work, index) => {
+  return eligible.slice(5, 5 + count).map((work, index) => {
     const metadata = recommendationContext.constraintByWorkId[work.id];
     if (metadata === undefined) throw new Error(`Missing recommendation metadata: ${work.id}`);
     return {
@@ -210,6 +216,53 @@ function makePlan(): RecommendationPlanEntry[] {
       seriesGroupId: metadata.seriesGroupId ?? work.id,
     };
   });
+}
+
+function makePlanWithExpandedEvidence(includeCaution: boolean): RecommendationPlanEntry[] {
+  const plan = makePlan();
+  const first = plan[0];
+  if (first === undefined) throw new Error("Expected an expanded evidence fixture");
+  const anchorWorkIds = first.bestAnchorId === null ? [] : [first.bestAnchorId];
+  const contributions: RecommendationPlanEntry["contributions"] = [
+    {
+      source: "similarity",
+      group: "narrative",
+      factorId: "strategy",
+      value: 0.3,
+      anchorWorkIds,
+      explainable: true,
+    },
+    {
+      source: "similarity",
+      group: "theme",
+      factorId: "adventure",
+      value: 0.2,
+      anchorWorkIds,
+      explainable: true,
+    },
+    {
+      source: "similarity",
+      group: "art",
+      factorId: "artDensity",
+      value: 0.1,
+      anchorWorkIds,
+      explainable: true,
+    },
+    ...(includeCaution
+      ? [
+          {
+            source: "similarity" as const,
+            group: "tone" as const,
+            factorId: "darkness" as const,
+            value: -0.4,
+            anchorWorkIds,
+            explainable: true,
+          },
+        ]
+      : []),
+  ];
+
+  return plan.map((entry, index) => (index === 0 ? { ...entry, contributions } : entry));
 }
 
 function cacheRecord(plan: readonly RecommendationPlanEntry[]) {
@@ -335,12 +388,32 @@ describe("RecommendationsFlow", () => {
     );
     expect(identityLink?.querySelector("h2")).toBeTruthy();
     expect(identityLink?.querySelector("button, details")).toBeNull();
+    if (identityLink === null) throw new Error("Expected recommendation identity link");
+    expect(within(identityLink).getByText(/分析の確信度: ふつう/u)).toBeTruthy();
+    expect(firstCard.querySelector("details")).toBeNull();
     expect(within(firstCard).getAllByRole("button")).toHaveLength(3);
+    expect(firstCard.querySelector(".lucide-bookmark")?.getAttribute("aria-hidden")).toBe("true");
+    expect(firstCard.querySelector(".lucide-circle-check")?.getAttribute("aria-hidden")).toBe(
+      "true",
+    );
+    expect(firstCard.querySelector(".lucide-circle-x")?.getAttribute("aria-hidden")).toBe("true");
     expect(container.querySelector("main")?.getAttribute("data-recommendation-input-hash")).toBe(
       INPUT_HASH,
     );
     expect(screen.getAllByRole("checkbox", { name: /優先/u })).toHaveLength(3);
     expect(screen.queryByRole("checkbox", { name: /未完/u })).toBeNull();
+    expect(container.querySelectorAll('[data-cover-priority="high"]')).toHaveLength(1);
+    const ranking = screen.getByRole("list", { name: "あなたの Top 10" });
+    expect(within(ranking).getAllByRole("link", { name: /^\d+位/u })).toHaveLength(10);
+    expect(within(list).queryAllByRole("link", { name: /^\d+位/u })).toHaveLength(0);
+    const firstRankingCard = within(ranking).getAllByRole("listitem")[0];
+    expect(firstRankingCard?.className).toContain("w-24");
+    expect(firstRankingCard?.className).not.toContain("md:min-w-[4.5rem]");
+    const anchorCards = container.querySelectorAll('[data-recommendation-shelf-card="anchor"]');
+    expect(anchorCards.length).toBeGreaterThan(0);
+    for (const anchorCard of anchorCards) {
+      expect(anchorCard.getAttribute("data-lead-anchor-work-ids")).not.toBe("");
+    }
     expect(list.getAttribute("data-recommendation-motion")).toBe("static");
     expect(testState.loadMotionList).not.toHaveBeenCalled();
     expect(
@@ -361,12 +434,181 @@ describe("RecommendationsFlow", () => {
           .querySelector(".recommendation-card__cover")
           ?.getAttribute("data-cover-settlement"),
       ).toBe("tracked");
+      expect(firstCard.querySelector('[data-recommendation-backdrop="true"]')).toBeNull();
+      expect(firstCard.querySelectorAll(".recommendation-card__cover")).toHaveLength(1);
     });
 
     const completed = within(firstCard).getByRole("button", { name: "読んだ" });
     fireEvent.mouseOver(completed);
     fireEvent.focus(completed);
     expect(testState.loadMotionList).not.toHaveBeenCalled();
+  });
+
+  it("locks the mirrored expanded-card anatomy while keeping omitted caution evidence reachable", async () => {
+    const plan = makePlanWithExpandedEvidence(true);
+    const first = plan[0];
+    if (first === undefined) throw new Error("Missing caution fixture entry");
+    testState.getRecommendationCache.mockResolvedValue(cacheRecord(plan));
+
+    const onPreviewOpen = vi.fn();
+    const view = render(<RecommendationsFlow onPreviewOpen={onPreviewOpen} />);
+    const { container } = view;
+    const firstCard = await waitFor(() => {
+      const element = container.querySelector<HTMLElement>(
+        "ul.recommendations-list li[data-recommendation-work-id]",
+      );
+      expect(element).toBeTruthy();
+      return element as HTMLElement;
+    });
+    const canvas = firstCard.querySelector<HTMLElement>("[data-expandable-content-canvas]");
+    const identity = firstCard.querySelector<HTMLElement>("[data-recommendation-identity-rail]");
+    const summary = firstCard.querySelector<HTMLElement>("[data-recommendation-evidence-summary]");
+    if (canvas === null || identity === null || summary === null) {
+      throw new Error("Missing expanded recommendation anatomy");
+    }
+    const header = summary.querySelector<HTMLElement>("[data-recommendation-evidence-header]");
+    const body = summary.querySelector<HTMLElement>("[data-recommendation-evidence-body]");
+    const disclosure = summary.querySelector<HTMLButtonElement>(
+      "[data-recommendation-evidence-disclosure]",
+    );
+    const caution = summary.querySelector<HTMLElement>("[data-recommendation-evidence-caution]");
+    if (header === null || body === null || disclosure === null || caution === null) {
+      throw new Error("Missing expanded evidence region");
+    }
+
+    expect(canvas.className).toContain(
+      "group-data-[expanded]/card:grid-cols-[calc(var(--featured-card-basis)-2px)_minmax(0,1fr)]",
+    );
+    expect(canvas.className).toContain(
+      "group-data-[expansion-side=left]/card:grid-cols-[minmax(0,1fr)_calc(var(--featured-card-basis)-2px)]",
+    );
+    expect(identity.className).toContain("group-data-[expansion-side=left]/card:col-start-2");
+    expect(summary.className).toContain("group-data-[expansion-side=left]/card:col-start-1");
+    expect(summary.firstElementChild).toBe(header);
+    expect(header.nextElementSibling).toBe(body);
+    expect(summary.lastElementChild?.contains(disclosure)).toBe(true);
+    expect(disclosure.parentElement).toBe(summary.lastElementChild);
+    expect(disclosure.className).toContain("min-h-[var(--control-min-size)]");
+    expect(disclosure.textContent).toBe("理由をもっと見る");
+
+    const lead = identity.querySelector<HTMLElement>("[data-contribution-summary]");
+    if (lead === null) throw new Error("Missing identity lead reason");
+    expect(firstCard.querySelectorAll("[data-contribution-summary]")).toHaveLength(1);
+    expect(summary.contains(lead)).toBe(false);
+    expect(firstCard.querySelectorAll(".recommendation-card__cover")).toHaveLength(1);
+    expect(body.querySelectorAll("[data-recommendation-evidence-support]")).toHaveLength(1);
+    expect(body.querySelectorAll("[data-recommendation-evidence-caution]")).toHaveLength(1);
+    expect(within(summary).queryByText(/描き込みの密度/u)).toBeNull();
+
+    const cautionHeading = within(caution).getByRole("heading", { name: "好みと異なる点" });
+    const cautionText = cautionHeading.parentElement?.querySelector("p")?.textContent;
+    if (cautionText === undefined || cautionText === null) {
+      throw new Error("Missing caution copy");
+    }
+
+    disclosure.focus();
+    expect(document.activeElement).toBe(disclosure);
+    fireEvent.click(disclosure);
+    expect(onPreviewOpen).toHaveBeenCalledWith(first.workId);
+    view.rerender(
+      <RecommendationsFlow onPreviewOpen={onPreviewOpen} previewWorkId={first.workId} />,
+    );
+    const dialog = await screen.findByRole("dialog");
+    expect(within(dialog).getByText(cautionText)).toBeTruthy();
+    expect(within(dialog).getByText(/描き込みの密度/u)).toBeTruthy();
+
+    view.rerender(<RecommendationsFlow onPreviewOpen={onPreviewOpen} />);
+    await waitFor(() => expect(document.activeElement).toBe(identity));
+  });
+
+  it("shows two evidence supports without caution and keeps the three-region disclosure anatomy", async () => {
+    const plan = makePlanWithExpandedEvidence(false);
+    testState.getRecommendationCache.mockResolvedValue(cacheRecord(plan));
+
+    const { container } = render(<RecommendationsFlow onPreviewOpen={vi.fn()} />);
+    const firstCard = await waitFor(() => {
+      const element = container.querySelector<HTMLElement>(
+        "ul.recommendations-list li[data-recommendation-work-id]",
+      );
+      expect(element).toBeTruthy();
+      return element as HTMLElement;
+    });
+    const summary = firstCard.querySelector<HTMLElement>("[data-recommendation-evidence-summary]");
+    if (summary === null) throw new Error("Missing expanded evidence summary");
+    const header = summary.querySelector("[data-recommendation-evidence-header]");
+    const body = summary.querySelector("[data-recommendation-evidence-body]");
+    const disclosure = summary.querySelector("[data-recommendation-evidence-disclosure]");
+    if (header === null || body === null || disclosure === null) {
+      throw new Error("Missing expanded evidence region");
+    }
+
+    expect(body.querySelectorAll("[data-recommendation-evidence-support]")).toHaveLength(2);
+    expect(body.querySelector("[data-recommendation-evidence-caution]")).toBeNull();
+    expect(summary.firstElementChild).toBe(header);
+    expect(header.nextElementSibling).toBe(body);
+    expect(summary.lastElementChild?.contains(disclosure)).toBe(true);
+    expect(disclosure.parentElement).toBe(summary.lastElementChild);
+  });
+
+  it("unlocks cover resolution from the first recommendation visible after genre filtering", async () => {
+    const plan = makePlan();
+    const canonicalFirst = catalog.works.find((work) => work.id === plan[0]?.workId);
+    if (canonicalFirst === undefined) throw new Error("Missing canonical first work");
+    const filteredGenre = plan
+      .slice(1)
+      .flatMap((entry) => {
+        const work = catalog.works.find((candidate) => candidate.id === entry.workId);
+        return work?.genres.filter((genre) => !canonicalFirst.genres.includes(genre)) ?? [];
+      })
+      .at(0);
+    if (filteredGenre === undefined) throw new Error("Missing a filtering genre fixture");
+    const expectedVisible = plan.find((entry) => {
+      const work = catalog.works.find((candidate) => candidate.id === entry.workId);
+      return work?.genres.includes(filteredGenre) ?? false;
+    });
+    if (expectedVisible === undefined) throw new Error("Missing visible genre fixture");
+
+    const { container } = render(<RecommendationsFlow genre={filteredGenre} />);
+
+    const firstCard = await waitFor(() => {
+      const element = container.querySelector<HTMLElement>("li[data-recommendation-work-id]");
+      expect(element?.dataset.recommendationWorkId).toBe(expectedVisible.workId);
+      return element as HTMLElement;
+    });
+    await waitFor(() => {
+      expect(
+        firstCard.querySelector(".recommendation-card__cover")?.getAttribute("data-cover-url"),
+      ).toBe(`https://thumbnail.image.rakuten.co.jp/${expectedVisible.workId}.jpg`);
+    });
+    const ranking = screen.getByRole("list", { name: "あなたの Top 10" });
+    await waitFor(() => {
+      expect(
+        within(ranking)
+          .getByRole("img", { name: canonicalFirst.title })
+          .getAttribute("data-cover-url"),
+      ).toBe(`https://thumbnail.image.rakuten.co.jp/${canonicalFirst.id}.jpg`);
+    });
+    expect(container.querySelectorAll('[data-cover-priority="high"]')).toHaveLength(1);
+  });
+
+  it("resolves covers for every rendered auxiliary shelf card after the visible cover settles", async () => {
+    const plan = makePlan(30);
+    testState.getRecommendationCache.mockResolvedValue(cacheRecord(plan));
+
+    const { container } = render(<RecommendationsFlow />);
+
+    await waitFor(() => {
+      expect(container.querySelectorAll("[data-recommendation-shelf-card]").length).toBeGreaterThan(
+        8,
+      );
+    });
+    await waitFor(() => {
+      for (const card of container.querySelectorAll("[data-recommendation-shelf-card]")) {
+        expect(card.querySelector('[role="img"]')?.getAttribute("data-cover-url")).toMatch(
+          /^https:\/\/thumbnail\.image\.rakuten\.co\.jp\//u,
+        );
+      }
+    });
   });
 
   it("keeps an honest candidate-shortage state instead of weakening list constraints", async () => {
@@ -775,6 +1017,21 @@ describe("RecommendationsFlow", () => {
       });
     });
     expect(testState.loadMotionList).not.toHaveBeenCalled();
+  });
+
+  it("counts the hidden compatibility policy without exposing a fourth policy control", async () => {
+    testState.policies = { ...testState.policies, excludeIncomplete: true };
+    render(<RecommendationsFlow />);
+
+    const criteriaHeading = await screen.findByRole("heading", {
+      name: "今回のおすすめ基準",
+    });
+    const criteria = criteriaHeading.closest("section");
+    if (criteria === null) throw new Error("Expected recommendation criteria summary");
+
+    expect(within(criteria).getByText("1件を反映")).toBeTruthy();
+    expect(screen.getAllByRole("checkbox", { name: /優先/u })).toHaveLength(3);
+    expect(screen.queryByRole("checkbox", { name: "刊行情報が不明な作品を除外" })).toBeNull();
   });
 
   it("serializes policy writes so rapid chip input cannot lose an earlier choice", async () => {

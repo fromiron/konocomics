@@ -36,6 +36,10 @@ export function HeroBackdrop({
         />
       ) : null}
       <span aria-hidden="true" className="absolute inset-0 bg-hero-scrim" />
+      <span
+        aria-hidden="true"
+        className="screentone pointer-events-none absolute inset-0 [mask-image:radial-gradient(ellipse_at_top_right,black_8%,transparent_72%)]"
+      />
       <div className="relative z-10">{children}</div>
     </div>
   );
