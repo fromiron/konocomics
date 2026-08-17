@@ -2,6 +2,7 @@
 
 import { type ReactNode, useEffect, useState } from "react";
 
+import { Button } from "@/components/design-system/button";
 import { catalogV1Schema } from "@/domain/catalog/schema";
 import type { CatalogV1 } from "@/domain/catalog/types";
 import { catalogAssetUrl } from "@/lib/catalog-asset";
@@ -58,7 +59,7 @@ export function StaticAssetCatalogProvider({ children }: StaticAssetCatalogProvi
   if (state.requestKey !== requestKey || state.kind === "loading") {
     return (
       <main
-        className="recommendations-page recommendations-page--loading"
+        className="recommendations-page recommendations-page--loading mx-auto grid min-h-dvh w-full max-w-[var(--layout-width-media)] place-items-center px-[var(--layout-page-padding)] py-[var(--layout-page-block-start)] text-text-muted"
         data-catalog-state="loading"
       >
         <p aria-live="polite">{catalogStrings.loading}</p>
@@ -68,11 +69,18 @@ export function StaticAssetCatalogProvider({ children }: StaticAssetCatalogProvi
 
   if (state.kind === "error") {
     return (
-      <main className="catalog-failure" data-catalog-state="error">
+      <main
+        className="catalog-failure grid min-h-dvh place-content-center justify-items-center gap-[var(--space-4)] px-[var(--layout-page-padding)] text-center"
+        data-catalog-state="error"
+      >
         <h1>{catalogStrings.loadError}</h1>
-        <button onClick={() => setAttempt((current) => current + 1)} type="button">
+        <Button
+          className="min-w-[120px]"
+          onClick={() => setAttempt((current) => current + 1)}
+          type="button"
+        >
           {catalogStrings.retry}
-        </button>
+        </Button>
       </main>
     );
   }

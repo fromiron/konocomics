@@ -1,6 +1,7 @@
 // @vitest-environment jsdom
 
 import { cleanup, fireEvent, render, screen, waitFor } from "@testing-library/react";
+import type { ReactNode } from "react";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 
 import type { CatalogV1 } from "@/domain/catalog/types";
@@ -16,20 +17,25 @@ const testState = vi.hoisted(() => ({
   deleteAllData: vi.fn(),
   exportUserData: vi.fn(),
   inspectImportJson: vi.fn(),
+  navigate: vi.fn(),
   policies: {
     preferCompleted: false,
     preferHidden: true,
     preferVerified: false,
     excludeIncomplete: true,
   } as RecommendationPolicies,
-  replace: vi.fn(),
   replaceFromExport: vi.fn(),
   savePolicies: vi.fn(),
   status: { state: "ready", mode: "indexeddb", warning: null } as const,
 }));
 
-vi.mock("next/navigation", () => ({
-  useRouter: () => ({ replace: testState.replace }),
+vi.mock("@tanstack/react-router", () => ({
+  Link: ({ children, className, to }: { children: ReactNode; className?: string; to: string }) => (
+    <a className={className} href={to}>
+      {children}
+    </a>
+  ),
+  useNavigate: () => testState.navigate,
 }));
 
 vi.mock("@/features/catalog/catalog-provider", () => ({
@@ -107,7 +113,7 @@ beforeEach(() => {
   testState.deleteAllData.mockReset().mockResolvedValue(appliedResult);
   testState.exportUserData.mockReset().mockResolvedValue(exportFile);
   testState.inspectImportJson.mockReset().mockResolvedValue(preview);
-  testState.replace.mockReset();
+  testState.navigate.mockReset();
   testState.replaceFromExport.mockReset().mockResolvedValue(appliedResult);
   testState.savePolicies.mockReset().mockResolvedValue(undefined);
 });
@@ -262,7 +268,7 @@ describe("SettingsFlow data ownership", () => {
     await waitFor(() =>
       expect(testState.deleteAllData).toHaveBeenCalledWith(catalog.catalogVersion),
     );
-    expect(testState.replace).toHaveBeenCalledWith("/");
+    expect(testState.navigate).toHaveBeenCalledWith({ to: "/", replace: true });
   });
 
   it("keeps the delete dialog open and does not redirect when mutation readback is indeterminate", async () => {
@@ -284,8 +290,8 @@ describe("SettingsFlow data ownership", () => {
     await waitFor(() =>
       expect(screen.getByRole("alert").textContent).toBe(settingsStrings.data.errors.indeterminate),
     );
-    expect(screen.getByRole("dialog")).toBeTruthy();
-    expect(testState.replace).not.toHaveBeenCalled();
+    expect(screen.getByRole("alertdialog")).toBeTruthy();
+    expect(testState.navigate).not.toHaveBeenCalled();
   });
 
   it("keeps Settings open and warns that a session-only delete may return after reload", async () => {
@@ -316,6 +322,6 @@ describe("SettingsFlow data ownership", () => {
 
     expect(await screen.findByText(settingsStrings.data.delete.successSessionOnly)).toBeTruthy();
     expect(screen.queryByRole("dialog")).toBeNull();
-    expect(testState.replace).not.toHaveBeenCalled();
+    expect(testState.navigate).not.toHaveBeenCalled();
   });
 });

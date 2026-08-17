@@ -1,45 +1,50 @@
 # 04 — 비주얼·인터랙션 사양 (Visual & Interaction Spec)
 
 > 코딩 에이전트가 시각적 판단을 새로 내리지 않도록 하는 구현 계약.
-> 원칙: **표지가 항상 주인공이고, UI는 종이다.** 시그니처 모먼트는 3곳뿐이며 나머지 표면은 의도적으로 조용하다.
+> 원칙: **표지가 항상 주인공이고, UI는 어두운 극장이다.** 시그니처 모먼트는 3곳뿐이며 나머지 표면은 의도적으로 조용하다.
 
 ---
 
-## 1. 아트 디렉션 — "종이와 잉크 (紙とインク)"
+## 1. 아트 디렉션 — dark media shelf
 
-만화라는 매체의 물성 — 인쇄된 종이, 검은 잉크, 스크린톤(망점), 그리고 그 위에서 유일하게 색을 가진 표지 — 을 UI 언어로 삼는다. 범용 SaaS의 글래스모피즘·그라데이션·오로라를 쓰지 않는다.
+`docs/planning/redesign/visual-targets/`의 7화면처럼 near-black/navy canvas 위에 실제 표지와 조밀한 Shelf를 배치한다. dark-only이며 theme selector, 라이트 fallback, 범용 SaaS의 글래스모피즘·오로라는 쓰지 않는다.
 
 - **브랜드 인격:** 안목 있는 서점 점원. 조용하고 정확하며, 근거를 갖고 말한다. 과장·호들갑 없음.
-- **색의 위계:** 화면에서 가장 채도 높은 것은 항상 만화 표지여야 한다. UI 자체는 무채색 + accent 1색.
-- **밀도:** 정보는 밀도 있게, 장식은 희박하게. 여백은 종이의 여백처럼.
+- **색의 위계:** 화면에서 가장 채도 높은 것은 만화 표지와 의미 있는 cyan accent다. UI 자체는 navy 중립색 + accent 1색.
+- **밀도:** 한 viewport에서 여러 작품을 탐색할 수 있게 Shelf·ranking을 밀도 있게 두고 장식은 희박하게 유지한다.
 
 ## 2. 디자인 토큰
 
-### 2.1 색 (라이트 테마 — MVP 기준. 다크는 폴리시 슬라이스에서 동일 시맨틱 토큰으로 추가)
+### 2.1 색 (dark-only)
 
 ```css
 :root {
-  color-scheme: light;
-  --paper:        oklch(0.975 0.005 90);  /* 따뜻한 종이 흰색 ≈ #F9F7F4 */
-  --paper-raised: oklch(1 0 0);           /* 카드 표면 #FFFFFF */
-  --ink:          oklch(0.22 0.01 90);    /* 본문 잉크 ≈ #26241F */
-  --ink-strong:   oklch(0.14 0.01 90);    /* 제목 */
-  --ink-muted:    oklch(0.50 0.01 90);    /* 보조 텍스트 */
-  --line:         oklch(0.88 0.005 90);   /* 헤어라인 보더 */
-  --accent:       oklch(0.57 0.19 33);    /* 주홍(朱色) ≈ #CF3B1D — konomi 색 */
-  --accent-hover: oklch(0.52 0.19 33);    /* 같은 주홍 계열의 주요 CTA hover */
-  --accent-soft:  oklch(0.98 0.015 33);   /* 선택 상태용 옅은 accent 배경 */
-  --warn:         oklch(0.55 0.15 60);    /* 除外 칩 등 */
-  --focus-ring:   var(--accent);
+  color-scheme: dark;
+  --canvas: oklch(0.12 0.018 250);
+  --surface-1: oklch(0.16 0.021 250);
+  --surface-2: oklch(0.20 0.024 250);
+  --surface-3: oklch(0.24 0.027 250);
+  --text-strong: oklch(0.97 0.006 250);
+  --text: oklch(0.86 0.012 250);
+  --text-muted: oklch(0.67 0.018 250);
+  --line: oklch(0.29 0.025 250);
+  --accent: oklch(0.7525 0.1382 236.09); /* #43BBFA */
+  --accent-hover: oklch(0.80 0.135 236.09);
+  --accent-active: oklch(0.69 0.14 236.09);
+  --accent-soft: oklch(0.22 0.055 236.09);
+  --on-accent: oklch(0.15 0.02 250);
+  --danger: oklch(0.65 0.22 25);
+  --warn: var(--danger);
+  --focus-ring: var(--accent);
 }
 ```
 
 규칙:
 
-- `--accent`는 **의미를 가질 때만** 사용: konomi(로고의 kono·mi), 상위 취향 강조, 주요 CTA, 선택 상태, focus ring. 장식적 사용 금지.
-- 본문 대비: ink/paper ≥ 12:1, muted/paper ≥ 4.6:1. WCAG AA의 색 대비 수치는 시각 토큰 guardrail로만 사용하며 전체 WCAG 적합성을 주장하지 않는다. accent와 accent-hover 위 텍스트는 white로 4.5:1 이상 유지한다. Chrome 2026-08-14 측정값은 white/accent **4.89:1**, white/accent-hover **6.08:1**, accent/paper **4.56:1**, accent/accent-soft **4.56:1**이다.
+- `--accent`는 **의미를 가질 때만** 사용: konomi, 상위 취향, 주요 CTA, 선택, focus ring. 장식적 사용 금지.
+- 본문/보조 텍스트와 모든 interaction state는 구현 viewport에서 WCAG AA 대비를 확인한다. cyan accent 채움 위에는 흰색이 아니라 `--on-accent`를 사용한다.
 - `--accent-hover`는 두 번째 accent가 아니라 같은 hue/chroma 계열의 주요 CTA 포인터 상태다. `--surface-hover`는 outline/ghost와 중립 인터랙션에만 쓰며 accent 채움 CTA에 적용하지 않는다.
-- 그라데이션 배경 금지. 유일한 예외는 표지 블러 배경(§4.2)과 스크린톤(§3.4).
+- 장식용 전면 gradient 금지. 읽기 대비를 위한 hero image overlay gradient, 표지 블러 배경(§4.2), 스크린톤은 예외다.
 
 ### 2.2 타이포그래피
 
@@ -48,11 +53,11 @@
 | 워드마크·디스플레이(라틴) | **Space Grotesk** (300 / 700) | 로고, 랜딩 hero, "Manga DNA" 표제 |
 | UI·본문(일본어) | **Noto Sans JP** (400 / 500 / 700) | 전체 UI. 라틴 폴백 겸용 |
 
-- 로고 조판: `kono`(700, accent) `co`(300, ink-muted) `mi`(700, accent) `cs`(300, ink-muted). letter-spacing −0.01em. 전체 단어가 한 단어로 읽히는 크기 대비 유지.
+- 로고 조판: `kono`(700, accent) `co`(300, text-muted) `mi`(700, accent) `cs`(300, text-muted). letter-spacing −0.01em. 전체 단어가 한 단어로 읽히는 크기 대비 유지.
 - 일본어와 라틴이 섞인 디스플레이(`あなたの Manga DNA`)는 Space Grotesk 뒤에 Noto Sans JP를 명시적으로 폴백한다. 일본어 글리프를 Arial에 맡기지 않는다.
 - 타입 스케일(모바일 기준, 데스크톱 +1단): 12 / 14(본문) / 16(강조 본문) / 20(섹션) / 28(페이지 h1) / 40(랜딩 hero). 행간 본문 1.7 (일본어), 표제 1.3.
 - 숫자·데이터 레이블은 `font-feature-settings: "tnum"` (별도 모노 폰트 도입하지 않음).
-- 폰트는 `next/font`로 self-host, `display: swap`, 서브셋 지정. CLS 방지를 위해 fallback 메트릭 조정 사용.
+- 폰트는 framework-neutral `@font-face` 또는 승인된 self-host package로 로드하고 `font-display: swap`과 fallback metric을 사용한다. `next/font`에 의존하지 않는다.
 
 타입 값과 역할은 아래 2단 토큰으로 소유한다. primitive는 실제 값을, semantic은 문맥을 나타낸다.
 
@@ -71,11 +76,11 @@
 
 ### 2.3 표면·보더·그림자·radius
 
-- 배경 층 2단뿐: `--paper`(페이지) / `--paper-raised`(카드·시트). 3단 이상 겹치지 않는다.
-- 카드: 1px `--line` 보더 + `--radius-card` **8px**. 그림자는 기본 없음. hover·시트 상승 시에만 `--shadow-raised`(`--shadow-level-1`: `0 4px 16px oklch(0 0 0 / 0.08)`).
+- 배경은 `--canvas`와 `--surface-1..3` 역할로만 구성하고 같은 card 안에서 불필요하게 3단을 모두 겹치지 않는다.
+- 카드: 1px `--line` 보더 + `--radius-card` **8px**. 그림자는 기본 없음. hover·시트 상승 시에만 `--shadow-raised` 한 단을 사용한다.
 - 표지: `--radius-cover` **4px** (인쇄물답게 작게) + 1px `oklch(0 0 0 / 0.1)` 보더. 선택 외곽은 2px 보더를 더한 `--radius-cover-selection: calc(var(--radius-cover) + 2px)`로 동심 윤곽을 유지한다.
 - 버튼·칩: `--radius-control` 8px(버튼) / `--radius-pill` 999px(칩·원형 상태). 주요 CTA만 accent 채움, 나머지는 outline/ghost.
-- 표면 역할은 `--surface-page`(paper), `--surface-raised`(카드·시트·컨트롤), `--surface-hover`(포인터 hover 2% ink tint) 세 가지다. 카드와 시트를 중복된 별도 표면으로 세지 않는다.
+- semantic 표면 역할은 `--surface-page`(`--canvas`), `--surface-raised`(`--surface-1`), `--surface-interactive`(`--surface-2`), `--surface-hover`(`--surface-3`)로 매핑한다.
 
 ### 2.4 간격·레이아웃 리듬
 
@@ -83,7 +88,7 @@
 - semantic 간격은 `--space-content-tight` 4, `--space-content` 8, `--space-content-loose` 12, `--space-section` 32, `--space-section-large` 48px이다.
 - 화면 좌우 패딩은 `--layout-page-padding` mobile 16 / desktop 24, 페이지 시작 간격은 `--layout-page-block-start` mobile 32 / desktop 48이다. 바깥 page container가 이 값을 소유하며 내부 카드가 다시 화면 패딩을 만들지 않는다.
 - 고정 UI 회피값만 별도 semantic 역할로 둔다. `--layout-safe-area-bottom`은 기기 safe area, `--layout-mobile-navigation-clearance`는 모바일 nav+safe area, `--layout-onboarding-tray-clearance`는 선택 tray가 있는 온보딩의 하단 여백, `--layout-taste-action-clearance`는 고정 추천 CTA가 있는 취향 화면의 하단 여백을 소유한다. 마지막 두 값은 각각 mobile `calc(120px + safe area)` / `calc(160px + safe area)`이며, 취향 화면은 desktop에서 120px로 바뀐다.
-- 콘텐츠 최대폭: `--layout-width-recommendations` 720 / `--layout-width-taste` 960 / `--layout-width-detail` 1040 / `--layout-width-form` 640. 온보딩 shelf는 `--layout-width-onboarding` 1120, 읽기·안내 블록은 `--layout-width-reading` 760, 전역 nav는 `--layout-width-navigation` 1200을 사용한다.
+- 콘텐츠 최대폭: shelf 중심 `/recommendations`와 landing은 `--layout-width-media` 1200, `/taste` 960, 상세 1040, form 640을 기본으로 한다. 온보딩 shelf는 1120, 읽기·안내 블록은 760, 전역 nav는 1200을 사용한다.
 - 구분선은 그림자 대신 1px `--line` 헤어라인 사용(인쇄물의 괘선 감각).
 
 ### 2.5 인터랙션 상태 (전 컴포넌트 공통)
@@ -93,7 +98,7 @@
 - focus-visible: 2px accent ring + 2px offset. **마우스 클릭에는 링 미표시.**
 - disabled: opacity 0.45 + `cursor: not-allowed`. 색만으로 구분하지 않고 레이블 유지.
 - selected: accent 보더 + 체크 오버레이(표지 카드) / `--accent-soft` 배경 + accent 보더·텍스트(칩). solid accent 채움은 주요 CTA에만 쓴다.
-- skeleton: `--line` 톤 펄스(1.2s), 카드 실루엣 그대로. 스피너는 전역 치명 오류 재시도에만.
+- skeleton: `--line` 톤 펄스(1.2s), 카드 실루엣 그대로. 1초 개발 throttle 동안의 짧은 placeholder 노출은 허용한다. 스피너는 전역 치명 오류 재시도에만 쓴다.
 - empty state: 스크린톤 원 안에 아이콘 + 1줄 안내 + 1개 액션. 일러스트 신규 제작 없음.
 - error: `--warn` 좌측 보더의 인라인 박스. 토스트는 성공 알림에만.
 
@@ -101,11 +106,11 @@
 
 ### 2.6 리뷰 통합 토큰·예산 경계
 
-- 위 primitive + semantic 명칭은 Slice 5/6 기반 토큰 초안을 Grok/Gemini가 독립 검토한 뒤 필수 수정과 근거 있는 개선을 통합한 **리뷰 통합안**이다. `src/app/globals.css :root`가 구현 원본이며, 실제 온보딩→취향 흐름의 wide/narrow/reduced-motion 검증까지 완료했다. 구조화 checker의 `review-required`는 아래에 문서화한 radius·motion 예외의 사용자 판단만 남긴다.
+- 위 dark primitive + semantic 명칭이 migration 이후 권위다. 구현 원본은 framework-neutral global stylesheet의 `:root`이며 wide/narrow/reduced-motion에서 검증한다. 이전 light token과 `src/app/globals.css`는 migration baseline일 뿐 새 구현 권위가 아니다.
 - radius의 bounded 단계는 4px/8px 두 개다. 999px은 칩·원형 상태를 구별하기 위한 `pill-or-circle` 예외이고, 선택 표지 6px은 새 primitive가 아니라 `4px + 2px 선택 보더`의 파생값이다.
 - 그림자 1단, accent 1색, primary CTA 1종, secondary CTA 1종을 유지한다. 상태색 `--warn`은 장식 accent로 세지 않는다.
 - visual entropy 기본 모션 예산 2종을 이 프로젝트에 강제하지 않는다. §6의 A~F 6종은 reveal·문맥 전환·재배치·직접 입력·수치 변화·오류 인지라는 서로 다른 정보를 보존하므로 **검토가 필요한 명시적 예외**로 유지한다. 무한 ambient motion과 분류 밖 모션은 계속 0개다.
-- 구조화된 관측값·한도·예외는 `docs/planning/design-token-budget.json`, 검토용 표본은 `docs/planning/design-token-proposal.html`에 기록한다.
+- 기존 `design-token-budget.json`과 `design-token-proposal.html`은 light baseline의 역사 자료다. M7에서 dark token 구현값으로 다시 생성하기 전에는 현재 token 권위로 사용하지 않는다.
 
 ### 2.7 외부 모델 독립 리뷰 통합 기록 (2026-08-14)
 
@@ -113,8 +118,16 @@
 - **Gemini:** `gemini-3.6-flash-high`, session `e5e85532-7775-4c66-989b-8ea34a5cc1cb`, verdict `PASS WITH CHANGES`, final SHA-256 `0aa9bf003abbaa74435bf47b217a9a2d05fede0e87f48875cb1ef5a027716845`.
 - **수용:** CTA hover 대비와 공유 accent-hover 상태, safe-area·고정 UI clearance 역할, mixed-script Noto 폴백, F의 정적 보더 대체, A~F 예외 유지, accent-soft 선택 칩, 미사용 selector 제거를 반영했다.
 - **Gemini trigger 한정:** Motion의 `initial={false}` 때문에 일반 `/taste` 최초 진입에서 1.2초 빈 막대가 생긴다는 주장은 성립하지 않는다. 유효한 결함은 **이후 non-reveal target 변경**도 reveal delay와 400ms를 상속한다는 점이며, non-reveal은 delay 0 / 240ms로 분리해야 한다.
-- **거절:** Tailwind `@theme inline`에 spacing/radius를 중복 노출하는 제안은 현재 TSX가 BEM semantic CSS만 소비하고 실제 유틸리티 소비자가 없으므로 채택하지 않는다. spacing/radius의 단일 권위는 `:root` custom properties와 BEM 소비자다.
+- **거절:** Tailwind `@theme inline`에 spacing/radius를 중복 노출하는 제안은 채택하지 않는다. TSX의 Tailwind utility는 `:root` semantic custom property를 직접 소비하며 spacing/radius 값의 단일 권위는 `:root`다.
 - 구조화 checker의 `review-required`는 오류가 아니라 pill radius와 A~F 예외의 인간 검토 필요성을 보존한다. 모델 리뷰 완료를 자동 `pass`로 과장하지 않는다.
+
+### 2.8 Base UI wrapper·media interaction
+
+- shadcn CLI가 Base UI 기반 primitive를 `src/components/ui/**`에 생성한다. 이 파일은 vendored primitive이며 제품 token이나 feature 의미를 직접 소유하지 않는다.
+- `src/components/design-system/**` wrapper가 위 primitive에 dark semantic token, 최소 44px target, focus-visible, disabled/busy 상태와 size variant를 적용한다. route/feature는 wrapper를 소비한다.
+- Shelf는 CSS scroll-snap + `ResizeObserver` + 기존 Motion만 사용한다. desktop fine pointer는 200ms hover intent 뒤 expanded card를 열고 keyboard focus는 즉시 연다. touch는 card를 확장하지 않고 Quick Preview sheet를 연다.
+- expanded/focus/scroll/dialog animation과 focus restoration은 React local state다. Quick Preview 대상만 deep-link 가치가 있어 `/recommendations?preview=<workId>`로 표현할 수 있다.
+- Shelf 높이를 미리 예약하고 expansion 정보는 이미 보유한 local data만 사용한다. hover network fetch, autoplay, 스크롤 하이재킹은 없다.
 
 ---
 
@@ -128,7 +141,7 @@
 
 ```css
 .screentone {
-  background-image: radial-gradient(oklch(0.22 0.01 90 / 0.05) 1px, transparent 1px);
+  background-image: radial-gradient(oklch(0.97 0.006 250 / 0.05) 1px, transparent 1px);
   background-size: 8px 8px;
 }
 ```
@@ -156,16 +169,16 @@
 <div class="relative isolate overflow-hidden">
   <img aria-hidden="true" alt="" src={coverUrl}
        class="absolute inset-0 size-full scale-125 object-cover opacity-30 blur-3xl" />
-  <div aria-hidden="true" class="cover-hero__paper-overlay"></div>
+  <div aria-hidden="true" class="cover-hero__tone-overlay"></div>
   <img src={coverUrl} alt="{title} 表紙" class="relative h-auto w-full object-contain" />
 </div>
 ```
 
-- 동일 URL 재사용(추가 요청 없음). 정적 — 패럴랙스·모션 없음. 라이트 테마는 기존 `--paper`를 60%로 합성한 정적 오버레이를 블러 위·전경 콘텐츠 아래에 실제 렌더해 텍스트 대비 4.5:1을 보장한다. Slice 12의 다크 값은 Grok·Gemini 리뷰 전에는 동결하지 않으며 동일 semantic 역할과 대비 계약만 이어받는다.
+- 동일 URL 재사용(추가 요청 없음). 정적이며 패럴랙스·모션은 없다. dark canvas/overlay gradient를 블러 위·전경 콘텐츠 아래에 렌더해 텍스트 대비를 보장한다.
 
 ### 4.3 Placeholder 표지 (이미지 실패·부재)
 
-paper-raised 배경 + 1px 보더 + 세로쓰기 느낌의 중앙 제목 텍스트(2줄 클램프, ink-muted) + 좌하단 저자. 스크린톤 12px 패턴을 우상단 모서리에만. 로딩 중에는 skeleton, 실패 확정 후 placeholder.
+`--surface-raised` 배경 + 1px 보더 + 세로쓰기 느낌의 중앙 제목 텍스트(2줄 clamp, `--text-muted`) + 좌하단 저자. 스크린톤 12px 패턴을 우상단 모서리에만 둔다. 로딩 중에는 skeleton, 실패 확정 후 placeholder다.
 
 ---
 
@@ -242,7 +255,7 @@ Shelf 구현 계약(캐러셀 대체): `overflow-x: auto` + `scroll-snap-type: x
 
 ### 8.1 판정값
 
-- 추천 페이지 초기 JS는 **250,000 bytes gzip 미만**이다. modern Chromium이 cold direct `/recommendations` 진입에서 사용자 입력 전 `networkidle`까지 실제 요청한 unique same-origin `/_next/static/**/*.js`만 대상으로 한다. emitted path/hash로 중복 제거한 정확한 `.next/static` 파일을 gzip level 9로 압축해 합산하며, 브라우저가 요청하지 않은 legacy `nomodule`과 interaction-only chunk는 제외한다. inline executable script와 initial HTML/RSC bytes는 별도 보고하되 이 합계로 대체하거나 몰래 합치지 않는다.
+- 추천 페이지 초기 JS는 **250,000 bytes gzip 미만**이다. modern Chromium이 cold direct `/recommendations` 진입에서 사용자 입력 전 `networkidle`까지 실제 요청한 unique same-origin JavaScript를 대상으로 한다. URL을 TanStack Start/Vite build manifest의 emitted file에 대응해 dedupe하고 exact file gzip level 9 합계를 낸다. interaction-only chunk는 제외하고 inline executable script와 initial HTML bytes는 별도 보고한다.
 - LCP: 랜딩 resolved introduction과 추천 화면에서 브라우저가 실제로 선택한 가장 큰 정당한 콘텐츠 후보의 cold mobile 5회 중앙값은 각각 < 3.5s다. 가시적인 태그라인·설명문을 숨기거나 축소하거나, mobile 96px 표지를 확대해 특정 element를 LCP로 강제하지 않는다. 랜딩 첫 로고 후보 시각과 추천 1위 표지의 request·삽입·load 시각은 LCP와 별도로 기록하고, 1위 표지는 eager/high-priority 계약을 유지한다.
 - CLS < 0.05: 같은 cold mobile 5회 중앙값. 표지 aspect-ratio 고정과 폰트 메트릭 폴백을 유지한다.
 - 60fps는 A/C 목표다. frozen local 4× CPU 환경에서 추천 C 제거·layout·백필의 median effective FPS가 30 미만이면 그 C owner의 layout motion을 비활성화한 뒤 다시 판정한다. runtime benchmark나 임의 기기 class는 만들지 않는다.
@@ -250,7 +263,7 @@ Shelf 구현 계약(캐러셀 대체): `overflow-x: auto` + `scroll-snap-type: x
 
 ### 8.2 재현 가능한 production-local 계측
 
-- `npm run build` 뒤 `npm run start` production server와 현재 Playwright Chromium을 사용한다. `next dev`, `next build` route summary, Lighthouse 수치로 아래 직접 계측을 대체하지 않는다.
+- `pnpm build` 뒤 `pnpm start` production server와 현재 Playwright Chromium을 사용한다. dev server나 build summary, Lighthouse 수치로 아래 직접 계측을 대체하지 않는다.
 - authoritative local mobile profile은 390×844, DPR 3, touch/mobile, CDP CPU 4× slowdown, 150ms RTT, 1.6Mbit/s down, 0.75Mbit/s up이다. 독립 browser context 5개에서 HTTP cache를 비운 cold run을 보존하고 중앙값으로 판정한다. 필요한 usable profile/recommendation state는 test-only route나 direct IndexedDB 주입 없이 실제 제품 flow로 만든 뒤 IndexedDB만 유지한다. Slice 11에서는 service worker를 우회한다.
 - LCP·CLS `PerformanceObserver`는 app script와 navigation 전에 주입하고 buffered `largest-contentful-paint`, `layout-shift`(`hadRecentInput === false`)를 고정 관측 창까지 수집한다. 관측 중 사용자 입력은 하지 않는다.
 - 1위 표지 provider 변동을 고정 fixture로 격리할 때도 실제 `CoverImage` 경로를 통과해야 한다. fulfilled bytes에 CDP throttle이 적용됨을 증명하거나 fixture 응답 자체가 위 latency·transfer profile을 재현해야 하며, 즉시 fulfill된 이미지를 mobile LCP gate로 쓰지 않는다. unmocked run은 진단으로 별도 기록할 수 있다.
@@ -258,4 +271,4 @@ Shelf 구현 계약(캐러셀 대체): `overflow-x: auto` + `scroll-snap-type: x
 
 ## 9. 조용한 표면 선언
 
-다음 화면·영역에는 시그니처·B 진입·장식을 **의도적으로 두지 않는다**: 랜딩의 A 외 별도 B, 추천 피드 전체(카드 hover lift와 기능적 C 제외), Library, 설정, 온보딩 STEP 2(불호 입력은 감정적으로 중립해야 함), 모든 다이얼로그·panel·시트. Library sheet/panel entry와 cover/image load opacity fade도 금지한다. 이 화면들의 품질은 타이포·간격·상태 완성도로만 만든다.
+다음 화면·영역에는 시그니처·B 진입·장식을 **의도적으로 두지 않는다**: 랜딩의 A 외 별도 B, Library, 설정, 온보딩 STEP 2(불호 입력은 감정적으로 중립해야 함), 모든 dialog·panel·sheet. 추천 피드는 §2.8의 기능적 expanded card와 C 제거/백필만 허용한다. Quick Preview와 Library sheet/panel entry, cover/image load opacity fade는 금지하고 최종 상태로 즉시 연다.

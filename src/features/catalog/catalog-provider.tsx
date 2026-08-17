@@ -2,6 +2,7 @@
 
 import { createContext, type ReactNode, useContext } from "react";
 
+import { Button } from "@/components/design-system/button";
 import type { CatalogV1 } from "@/domain/catalog/types";
 import type { CurrentCatalogIdentity } from "@/infrastructure/db";
 import { catalogStrings } from "@/lib/strings";
@@ -21,11 +22,14 @@ type CatalogIdentityProviderProps = Readonly<{
 
 export function CatalogFailure() {
   return (
-    <main className="catalog-failure" data-catalog-state="error">
+    <main
+      className="catalog-failure grid min-h-dvh place-content-center justify-items-center gap-[var(--space-4)] px-[var(--layout-page-padding)] text-center"
+      data-catalog-state="error"
+    >
       <h1>{catalogStrings.loadError}</h1>
-      <button onClick={() => window.location.reload()} type="button">
+      <Button className="min-w-[120px]" onClick={() => window.location.reload()} type="button">
         {catalogStrings.retry}
-      </button>
+      </Button>
     </main>
   );
 }

@@ -1,15 +1,15 @@
 "use client";
 
-import { useCallback } from "react";
+import { useCallback, useEffect, useMemo } from "react";
 
-import {
-  createExternalWorkDetailHref,
-  parseExternalWorkId,
-  type ExternalWorkId,
-} from "@/domain/catalog/external-work";
+import type { ExternalWorkId } from "@/domain/catalog/external-work";
 import type { Work } from "@/domain/catalog/types";
-import type { UserWorkRecord } from "@/domain/profile/types";
+import type { ReadingState, UserWorkRecord } from "@/domain/profile/types";
 import { useCatalog } from "@/features/catalog/catalog-provider";
+import {
+  createRecommendationCoverTargets,
+  useRecommendationCovers,
+} from "@/features/recommendations/recommendation-cover-resolver";
 import {
   createPlannedExternalWorkRecord,
   type ExternalWorkRecord,
@@ -24,7 +24,27 @@ function nowIso() {
   return new Date().toISOString();
 }
 
-export function LibraryFlow() {
+export function LibraryFlow({
+  activeState,
+  query,
+  showFooter = false,
+  sort,
+  view,
+  onActiveStateChange,
+  onQueryChange,
+  onSortChange,
+  onViewChange,
+}: Readonly<{
+  activeState?: ReadingState | null;
+  query?: string;
+  showFooter?: boolean;
+  sort?: "updated" | "title";
+  view?: "list" | "grid";
+  onActiveStateChange?: (state: ReadingState | null) => void;
+  onQueryChange?: (query: string) => void;
+  onSortChange?: (sort: "updated" | "title") => void;
+  onViewChange?: (view: "list" | "grid") => void;
+}> = {}) {
   const catalog = useCatalog();
   const {
     status,
@@ -32,9 +52,32 @@ export function LibraryFlow() {
     externalWorks,
     addUserWorkIfAbsent,
     addExternalWorkIfAbsent,
+    getProviderCache,
+    saveProviderCache,
     saveUserWork,
     saveExternalUserRecord,
   } = usePersistence();
+  const coverTargets = useMemo(
+    () =>
+      createRecommendationCoverTargets(
+        catalog,
+        [...(userWorks ?? [])]
+          .sort((left, right) => Date.parse(right.updatedAt) - Date.parse(left.updatedAt))
+          .slice(0, 12)
+          .map((record) => record.workId),
+      ),
+    [catalog, userWorks],
+  );
+  const { coverUrls, notifyCoverSettled } = useRecommendationCovers({
+    targets: coverTargets,
+    getProviderCache,
+    saveProviderCache,
+  });
+
+  useEffect(() => {
+    const first = coverTargets[0];
+    if (first !== undefined && coverUrls.has(first.workId)) notifyCoverSettled(first);
+  }, [coverTargets, coverUrls, notifyCoverSettled]);
 
   const addCatalogWork = useCallback(
     async (work: Work): Promise<LibraryAddOutcome> => {
@@ -77,15 +120,28 @@ export function LibraryFlow() {
 
   return (
     <LibraryView
+      activeState={activeState}
       addCatalogWork={addCatalogWork}
       addExternalWork={addExternalWork}
       catalog={catalog}
-      externalHref={(id) => createExternalWorkDetailHref(parseExternalWorkId(id))}
+      catalogCoverUrls={coverUrls}
       externalWorks={externalWorks}
+      notifyCatalogCoverSettled={(workId) => {
+        const target = coverTargets.find((candidate) => candidate.workId === workId);
+        if (target !== undefined) notifyCoverSettled(target);
+      }}
+      query={query}
       saveExternalUserRecord={saveExternalRecord}
       saveUserWork={saveCatalogRecord}
+      showFooter={showFooter}
+      sort={sort}
       storageDegraded={status.state === "degraded"}
       userWorks={userWorks}
+      view={view}
+      onActiveStateChange={onActiveStateChange}
+      onQueryChange={onQueryChange}
+      onSortChange={onSortChange}
+      onViewChange={onViewChange}
     />
   );
 }

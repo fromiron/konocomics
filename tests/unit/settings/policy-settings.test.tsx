@@ -28,7 +28,7 @@ describe("PolicySettings", () => {
     render(<PolicySettings policies={policies} savePolicies={savePolicies} />);
 
     fireEvent.click(
-      screen.getByRole("checkbox", { name: settingsStrings.policies.labels.preferCompleted }),
+      screen.getByRole("switch", { name: settingsStrings.policies.labels.preferCompleted }),
     );
 
     expect(savePolicies).toHaveBeenCalledWith({
@@ -36,9 +36,9 @@ describe("PolicySettings", () => {
       preferCompleted: true,
       excludeIncomplete: true,
     });
-    expect(screen.getAllByRole("checkbox").every((checkbox) => checkbox.matches(":disabled"))).toBe(
-      true,
-    );
+    expect(
+      screen.getAllByRole("switch").every((control) => control.matches("[data-disabled]")),
+    ).toBe(true);
 
     resolveSave?.();
     await waitFor(() => expect(screen.queryByText(settingsStrings.policies.saving)).toBeNull());
@@ -49,18 +49,18 @@ describe("PolicySettings", () => {
     render(<PolicySettings policies={policies} savePolicies={savePolicies} />);
 
     fireEvent.click(
-      screen.getByRole("checkbox", { name: settingsStrings.policies.labels.preferVerified }),
+      screen.getByRole("switch", { name: settingsStrings.policies.labels.preferVerified }),
     );
 
     await waitFor(() =>
       expect(screen.getByRole("alert").textContent).toBe(settingsStrings.policies.error),
     );
     expect(
-      (
-        screen.getByRole("checkbox", {
+      screen
+        .getByRole("switch", {
           name: settingsStrings.policies.labels.preferVerified,
-        }) as HTMLInputElement
-      ).checked,
-    ).toBe(false);
+        })
+        .getAttribute("aria-checked"),
+    ).toBe("false");
   });
 });

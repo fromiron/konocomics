@@ -1,8 +1,5 @@
 // @vitest-environment jsdom
 
-import { readFileSync } from "node:fs";
-import { resolve } from "node:path";
-
 import { cleanup, fireEvent, render, screen } from "@testing-library/react";
 import { afterEach, describe, expect, it, vi } from "vitest";
 
@@ -52,16 +49,13 @@ describe("CoverImage accessibility contract", () => {
       <CoverImage coverUrl="https://example.com/cover.jpg" creators={["作者"]} title="作品" />,
     );
     const image = container.querySelector<HTMLImageElement>(".cover-image__image");
-    const styles = readFileSync(resolve(process.cwd(), "src/app/globals.css"), "utf8");
-    const imageRule = styles.match(/\.cover-image__image\s*\{(?<declarations>[^}]*)\}/u)?.groups
-      ?.declarations;
+    const skeleton = container.querySelector(".cover-image__skeleton");
 
     expect(image?.dataset.loaded).toBe("false");
-    expect(container.querySelector(".cover-image__skeleton")).toBeTruthy();
-    expect(imageRule).toBeDefined();
-    expect(imageRule).not.toMatch(/background\s*:/u);
-    expect(imageRule).not.toMatch(/opacity\s*:/u);
-    expect(styles).not.toMatch(/\.cover-image__image\[data-loaded=[^\]]+\]\s*\{/u);
+    expect(skeleton).toBeTruthy();
+    expect(skeleton?.nextElementSibling).toBe(image);
+    expect(image?.hidden).toBe(false);
+    expect(image?.getAttribute("aria-hidden")).toBeNull();
   });
 
   it("removes the skeleton and reports settlement exactly once after a successful load", () => {

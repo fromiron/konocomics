@@ -1,6 +1,7 @@
 // @vitest-environment jsdom
 
 import { cleanup, fireEvent, render, screen, waitFor } from "@testing-library/react";
+import type { ReactNode } from "react";
 import type * as ReactDomModule from "react-dom";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 
@@ -13,14 +14,23 @@ import { createTestCatalog, createTestWork } from "../../helpers/catalog";
 
 const testState = vi.hoisted(() => ({
   pathname: "/recommendations",
+  navigate: vi.fn(),
   preload: vi.fn(),
-  replace: vi.fn(),
   userWorks: undefined as readonly UserWorkRecord[] | undefined,
 }));
 
-vi.mock("next/navigation", () => ({
-  usePathname: () => testState.pathname,
-  useRouter: () => ({ replace: testState.replace }),
+vi.mock("@tanstack/react-router", () => ({
+  Link: ({ children, className, to }: { children: ReactNode; className?: string; to: string }) => (
+    <a className={className} href={to}>
+      {children}
+    </a>
+  ),
+  useNavigate: () => testState.navigate,
+  useRouterState: ({
+    select,
+  }: {
+    select: (state: { location: { pathname: string } }) => unknown;
+  }) => select({ location: { pathname: testState.pathname } }),
 }));
 
 vi.mock("@/infrastructure/db", () => ({
@@ -98,8 +108,8 @@ function expectFatalOnlyDom() {
 
 beforeEach(() => {
   testState.pathname = "/recommendations";
+  testState.navigate.mockReset();
   testState.preload.mockReset();
-  testState.replace.mockReset();
   testState.userWorks = undefined;
   vi.stubGlobal("fetch", vi.fn());
 });
@@ -117,7 +127,9 @@ describe("AppShell recommendation Catalog boundary", () => {
 
     expect(screen.getByText(navigationStrings.profileLoading)).toBeTruthy();
     expectFatalOnlyDom();
-    await waitFor(() => expect(testState.replace).toHaveBeenCalledWith("/onboarding"));
+    await waitFor(() =>
+      expect(testState.navigate).toHaveBeenCalledWith({ to: "/onboarding", replace: true }),
+    );
   });
 
   it("hides the complete shell on load/failure and restores it only after a successful retry", async () => {

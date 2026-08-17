@@ -1,8 +1,6 @@
 // @vitest-environment jsdom
 
 import { act, cleanup, fireEvent, render, screen } from "@testing-library/react";
-import { readFileSync } from "node:fs";
-import { resolve } from "node:path";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 
 import { WorkShelf } from "@/features/onboarding/work-shelf";
@@ -45,10 +43,8 @@ function renderShelf() {
   render(
     <WorkShelf
       labels={labels}
-      nextLabel="次の作品"
       onToggleFavorite={vi.fn()}
       onToggleSelection={vi.fn()}
-      previousLabel="前の作品"
       selectionsByWorkId={new Map()}
       title="棚"
       works={works}
@@ -60,13 +56,11 @@ function renderShelf() {
 
 describe("WorkShelf roving focus", () => {
   it("removes selection scale and hover travel when reduced motion is requested", () => {
-    const globalStyles = readFileSync(resolve(process.cwd(), "src/app/globals.css"), "utf8");
+    renderShelf();
+    const cover = document.querySelector(".anchor-card__cover");
 
-    expect(globalStyles).toContain(`.anchor-card__selection:hover .anchor-card__cover,
-  .anchor-card[data-selected] .anchor-card__cover {
-    animation: none !important;
-    transform: none;
-  }`);
+    expect(cover?.classList.contains("motion-reduce:transform-none")).toBe(true);
+    expect(cover?.classList.contains("motion-reduce:transition-none")).toBe(true);
   });
 
   it("syncs on focus and moves from the event card index with nearest scrolling", () => {

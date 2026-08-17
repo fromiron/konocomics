@@ -1,6 +1,6 @@
 "use client";
 
-import { usePathname, useRouter } from "next/navigation";
+import { useNavigate, useRouterState } from "@tanstack/react-router";
 import { lazy, type ReactNode, Suspense, useEffect, useMemo } from "react";
 import { preload } from "react-dom";
 
@@ -21,7 +21,8 @@ type AppShellProps = Readonly<{
 type AppShellContentProps = Readonly<{
   children: ReactNode;
   pathname: string;
-  showNavigation: boolean;
+  showDesktopNavigation: boolean;
+  showMobileNavigation: boolean;
 }>;
 
 const RecommendationCatalogBoundary = lazy(() =>
@@ -78,7 +79,7 @@ function getRouteLabel(pathname: string) {
 function RecommendationCatalogLoading() {
   return (
     <main
-      className="recommendations-page recommendations-page--loading"
+      className="recommendations-page recommendations-page--loading mx-auto grid min-h-dvh w-full max-w-[var(--layout-width-media)] place-items-center px-[var(--layout-page-padding)] py-[var(--layout-page-block-start)] text-text-muted"
       data-catalog-state="loading"
     >
       <p aria-live="polite">{catalogStrings.loading}</p>
@@ -86,22 +87,41 @@ function RecommendationCatalogLoading() {
   );
 }
 
-function AppShellContent({ children, pathname, showNavigation }: AppShellContentProps) {
+function AppShellContent({
+  children,
+  pathname,
+  showDesktopNavigation,
+  showMobileNavigation,
+}: AppShellContentProps) {
+  const hasNavigation = showDesktopNavigation || showMobileNavigation;
+
   return (
-    <div className={cn("app-shell", showNavigation && "app-shell--post-onboarding")}>
-      <a className="skip-link" href="#app-content">
+    <div className={cn("app-shell min-h-dvh", hasNavigation && "app-shell--post-onboarding")}>
+      <a
+        className="skip-link fixed top-[var(--space-2)] left-[var(--space-2)] z-[100] min-h-[var(--control-min-size)] -translate-y-[calc(100%+var(--space-4))] rounded-[var(--radius-control)] border border-line bg-surface-1 px-[14px] py-[10px] font-bold text-text-strong shadow-[var(--shadow-raised)] transition-transform duration-[var(--motion-duration-feedback)] ease-[var(--motion-ease-direct)] focus-visible:translate-y-0"
+        href="#app-content"
+      >
         {navigationStrings.skipLink}
       </a>
-      <p aria-atomic="true" aria-live="polite" className="visually-hidden">
+      <p aria-atomic="true" aria-live="polite" className="visually-hidden sr-only">
         {navigationStrings.routeAnnouncement(getRouteLabel(pathname))}
       </p>
-      {showNavigation ? (
+      {showDesktopNavigation ? (
         <PostOnboardingNavigation activePathname={pathname} variant="desktop" />
       ) : null}
-      <div className="app-shell__content" id="app-content" tabIndex={-1}>
+      <div
+        className={cn(
+          "app-shell__content min-h-dvh",
+          showMobileNavigation && "pb-[var(--layout-mobile-navigation-clearance)]",
+          showDesktopNavigation &&
+            "md:min-h-[calc(100dvh-var(--desktop-navigation-height))] md:pb-0",
+        )}
+        id="app-content"
+        tabIndex={-1}
+      >
         {children}
       </div>
-      {showNavigation ? (
+      {showMobileNavigation ? (
         <PostOnboardingNavigation activePathname={pathname} variant="mobile" />
       ) : null}
     </div>
@@ -109,8 +129,8 @@ function AppShellContent({ children, pathname, showNavigation }: AppShellContent
 }
 
 export function AppShell({ children }: AppShellProps) {
-  const pathname = usePathname();
-  const router = useRouter();
+  const pathname = useRouterState({ select: (state) => state.location.pathname });
+  const navigate = useNavigate();
   const catalogIdentity = useCatalogIdentity();
   const { userWorks } = usePersistence();
   const hasProfile = useMemo(
@@ -119,19 +139,20 @@ export function AppShell({ children }: AppShellProps) {
   );
   const guarded = requiresProfile(pathname);
   const recommendationCatalog = requiresRecommendationCatalog(pathname);
-  const showNavigation = hasProfile === true && !isImmersivePath(pathname);
+  const showDesktopNavigation = true;
+  const showMobileNavigation = !isImmersivePath(pathname);
 
   useEffect(() => {
     if (guarded && hasProfile === false) {
-      router.replace("/onboarding");
+      void navigate({ to: "/onboarding", replace: true });
     }
-  }, [guarded, hasProfile, router]);
+  }, [guarded, hasProfile, navigate]);
 
   if (guarded && hasProfile !== true) {
     return (
-      <div className="app-shell app-shell--guarding">
-        <BrandWordmark className="app-shell__guard-wordmark" />
-        <p aria-live="polite" className="visually-hidden">
+      <div className="app-shell app-shell--guarding grid min-h-dvh place-items-center px-[var(--layout-page-padding)] text-text-muted">
+        <BrandWordmark className="app-shell__guard-wordmark text-[length:var(--font-size-28)]" />
+        <p aria-live="polite" className="visually-hidden sr-only">
           {navigationStrings.profileLoading}
         </p>
       </div>
@@ -139,7 +160,11 @@ export function AppShell({ children }: AppShellProps) {
   }
 
   const shell = (
-    <AppShellContent pathname={pathname} showNavigation={showNavigation}>
+    <AppShellContent
+      pathname={pathname}
+      showDesktopNavigation={showDesktopNavigation}
+      showMobileNavigation={showMobileNavigation}
+    >
       {children}
     </AppShellContent>
   );

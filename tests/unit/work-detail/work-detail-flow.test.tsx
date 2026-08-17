@@ -9,6 +9,7 @@ import {
   screen,
   waitFor,
 } from "@testing-library/react";
+import type { ReactNode } from "react";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 
 import catalogJson from "@/data/generated/catalog-v1.json";
@@ -24,6 +25,10 @@ import type { ProviderCacheRecord } from "@/infrastructure/db";
 import type * as RakutenExports from "@/infrastructure/rakuten";
 import { buildRakutenBooksSearchUrl } from "@/infrastructure/rakuten";
 import { coverStrings, workDetailStrings, explanationLexicon } from "@/lib/strings";
+
+vi.mock("@tanstack/react-router", () => ({
+  Link: ({ children, to }: { children: ReactNode; to: string }) => <a href={to}>{children}</a>,
+}));
 
 type TestStatus =
   | { state: "initializing"; mode: null; warning: null }
@@ -372,23 +377,25 @@ describe("WorkDetailFlow", () => {
     await act(async () => {
       await vi.advanceTimersByTimeAsync(0);
     });
+    const heroRequestCount = () =>
+      testState.requestRakutenBook.mock.calls.filter(([isbn]) => isbn === cached.isbn).length;
     expect(screen.getByText(workDetailStrings.provider.price(cached.itemPrice!))).toBeTruthy();
     expect(screen.getByText(cached.itemCaption!)).toBeTruthy();
-    expect(testState.requestRakutenBook).not.toHaveBeenCalled();
+    expect(heroRequestCount()).toBe(0);
 
     await act(async () => {
       await vi.advanceTimersByTimeAsync(1_000);
     });
     expect(screen.queryByText(workDetailStrings.provider.price(cached.itemPrice!))).toBeNull();
     expect(screen.getByText(cached.itemCaption!)).toBeTruthy();
-    expect(testState.requestRakutenBook).toHaveBeenCalledTimes(1);
+    expect(heroRequestCount()).toBe(1);
 
     await act(async () => {
       await vi.advanceTimersByTimeAsync(1_000);
     });
     expect(screen.getByText(workDetailStrings.synopsis.unavailable)).toBeTruthy();
     expect(view.container.innerHTML).not.toContain(cached.imageUrl);
-    expect(testState.requestRakutenBook).toHaveBeenCalledTimes(1);
+    expect(heroRequestCount()).toBe(1);
     expect(
       screen
         .getByRole<HTMLAnchorElement>("link", {
@@ -441,7 +448,7 @@ describe("WorkDetailFlow", () => {
       screen.getByRole("heading", { name: workDetailStrings.compatibility.heading }),
     ).toBeTruthy();
     expected.positiveReasons.forEach((reason) => {
-      expect(screen.getByText(reason.text)).toBeTruthy();
+      expect(screen.getAllByText(reason.text).length).toBeGreaterThan(0);
     });
     expect(screen.getByText(expected.confidence.label, { exact: false })).toBeTruthy();
     await waitFor(() => {

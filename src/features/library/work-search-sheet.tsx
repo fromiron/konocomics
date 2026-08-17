@@ -3,6 +3,8 @@
 import { useMemo, useRef, useState } from "react";
 
 import { CoverImage } from "@/components/cover/CoverImage";
+import { Button } from "@/components/design-system/button";
+import { Input } from "@/components/design-system/input";
 import type { CatalogV1, Work } from "@/domain/catalog/types";
 import { searchRakutenBooks, type RakutenBookItem } from "@/infrastructure/rakuten";
 import { libraryStrings } from "@/lib/strings";
@@ -126,13 +128,14 @@ export function WorkSearchSheet({
   };
 
   return (
-    <div className="library-search-sheet">
-      <header className="library-panel__header">
+    <div className="grid gap-[var(--space-4)]">
+      <header className="mt-[calc(var(--control-min-size)*-1)] mb-[var(--space-5)] grid gap-[var(--space-content)] pr-[calc(var(--control-min-size)+var(--space-content))]">
         <h2 id="library-search-title">{libraryStrings.search.heading}</h2>
       </header>
-      <label className="library-search-sheet__query">
+      <label className="grid gap-[var(--space-content-tight)] font-bold text-text-strong">
         <span>{libraryStrings.search.label}</span>
-        <input
+        <Input
+          className="w-full"
           autoComplete="off"
           onChange={(event) => {
             providerRequestSequence.current += 1;
@@ -148,39 +151,50 @@ export function WorkSearchSheet({
       </label>
 
       {hasQuery ? (
-        <section aria-labelledby="library-local-search-heading" className="library-search-section">
+        <section
+          aria-labelledby="library-local-search-heading"
+          className="grid gap-[var(--space-4)] border-t border-line pt-[var(--space-5)]"
+        >
           <h3 id="library-local-search-heading">{libraryStrings.search.localHeading}</h3>
-          <p aria-live="polite" className="library-search-section__summary">
+          <p aria-live="polite" className="text-text-muted">
             {localResults.length === 0
               ? libraryStrings.search.noLocalResults
               : libraryStrings.search.localResults(localResults.length)}
           </p>
           {localResults.length > 0 ? (
-            <ul className="library-search-results">
+            <ul className="m-0 grid list-none p-0">
               {localResults.map((work) => {
                 const added = isCatalogAdded(work.id);
                 const busy = busyKey === `catalog:${work.id}`;
                 return (
-                  <li className="library-search-result" key={work.id}>
-                    <div className="library-search-result__cover">
+                  <li
+                    className="grid grid-cols-[56px_minmax(0,1fr)] items-center gap-[var(--space-3)] border-b border-line py-[var(--space-3)] md:grid-cols-[56px_minmax(0,1fr)_auto]"
+                    key={work.id}
+                  >
+                    <div className="w-14">
                       <CoverImage creators={work.creators} requestedSize={200} title={work.title} />
                     </div>
-                    <div className="library-search-result__identity">
-                      <h4>{work.title}</h4>
-                      <p>{work.creators.join("・") || libraryStrings.unknownCreator}</p>
+                    <div className="grid min-w-0 gap-[var(--space-content-tight)]">
+                      <h4 className="m-0 [overflow-wrap:anywhere] text-[length:var(--font-size-14)] leading-[var(--line-height-heading)] text-text-strong">
+                        {work.title}
+                      </h4>
+                      <p className="text-text-muted">
+                        {work.creators.join("・") || libraryStrings.unknownCreator}
+                      </p>
                     </div>
-                    <button
-                      className="interactive-press"
+                    <Button
+                      className="col-span-full md:col-auto"
                       disabled={added || busyKey !== undefined}
                       onClick={() => void addCatalog(work)}
                       type="button"
+                      variant="outline"
                     >
                       {added
                         ? libraryStrings.search.added
                         : busy
                           ? libraryStrings.search.adding
                           : libraryStrings.search.add}
-                    </button>
+                    </Button>
                   </li>
                 );
               })}
@@ -188,12 +202,12 @@ export function WorkSearchSheet({
           ) : null}
         </section>
       ) : (
-        <p className="library-search-sheet__prompt">{libraryStrings.search.prompt}</p>
+        <p className="text-text-muted">{libraryStrings.search.prompt}</p>
       )}
 
       {hasQuery ? (
-        <button
-          className="library-search-sheet__rakuten interactive-press"
+        <Button
+          className="justify-self-start"
           disabled={provider.phase === "loading" || busyKey !== undefined}
           onClick={() => void runProviderSearch()}
           type="button"
@@ -201,25 +215,28 @@ export function WorkSearchSheet({
           {provider.phase === "loading"
             ? libraryStrings.search.rakutenSearching
             : libraryStrings.search.rakutenExpand}
-        </button>
+        </Button>
       ) : null}
 
       {provider.phase === "error" ? (
-        <p className="library-search-sheet__provider-error" role="status">
+        <p
+          className="border-l-[length:var(--space-content-tight)] border-warn bg-canvas p-[var(--space-3)] text-text-strong"
+          role="status"
+        >
           {libraryStrings.search.providerUnavailable}
         </p>
       ) : null}
       {provider.phase === "ready" ? (
         <section
           aria-labelledby="library-provider-search-heading"
-          className="library-search-section"
+          className="grid gap-[var(--space-4)] border-t border-line pt-[var(--space-5)]"
         >
           <h3 id="library-provider-search-heading">{libraryStrings.search.rakutenHeading}</h3>
-          <p aria-live="polite" className="library-search-section__summary">
+          <p aria-live="polite" className="text-text-muted">
             {libraryStrings.search.rakutenResults(provider.items.length)}
           </p>
           {provider.items.length > 0 ? (
-            <ul className="library-search-results">
+            <ul className="m-0 grid list-none p-0">
               {provider.items.map((item) => {
                 const catalogMatch = catalogWorkForRakutenItem(catalog, item);
                 const added =
@@ -228,8 +245,11 @@ export function WorkSearchSheet({
                     : isCatalogAdded(catalogMatch.id);
                 const busy = busyKey === `rakuten:${item.isbn}`;
                 return (
-                  <li className="library-search-result" key={item.isbn}>
-                    <div className="library-search-result__cover">
+                  <li
+                    className="grid grid-cols-[56px_minmax(0,1fr)] items-center gap-[var(--space-3)] border-b border-line py-[var(--space-3)] md:grid-cols-[56px_minmax(0,1fr)_auto]"
+                    key={item.isbn}
+                  >
+                    <div className="w-14">
                       <CoverImage
                         coverUrl={item.imageUrl}
                         creators={[item.author]}
@@ -237,20 +257,25 @@ export function WorkSearchSheet({
                         title={item.title}
                       />
                     </div>
-                    <div className="library-search-result__identity">
-                      <h4>{catalogMatch?.title ?? item.title}</h4>
-                      <p>{catalogMatch?.creators.join("・") ?? item.author}</p>
-                      <span className="library-search-result__match">
+                    <div className="grid min-w-0 gap-[var(--space-content-tight)]">
+                      <h4 className="m-0 [overflow-wrap:anywhere] text-[length:var(--font-size-14)] leading-[var(--line-height-heading)] text-text-strong">
+                        {catalogMatch?.title ?? item.title}
+                      </h4>
+                      <p className="text-text-muted">
+                        {catalogMatch?.creators.join("・") ?? item.author}
+                      </p>
+                      <span className="inline-flex min-h-6 w-fit items-center rounded-[var(--radius-pill)] border border-line px-[var(--space-content)] py-0.5 text-[length:var(--text-caption-size)] font-bold text-text-muted">
                         {catalogMatch === undefined
                           ? libraryStrings.externalBadge
                           : libraryStrings.search.catalogMatch}
                       </span>
                     </div>
-                    <button
-                      className="interactive-press"
+                    <Button
+                      className="col-span-full md:col-auto"
                       disabled={added || busyKey !== undefined}
                       onClick={() => void addProviderItem(item)}
                       type="button"
+                      variant="outline"
                     >
                       {added
                         ? libraryStrings.search.added
@@ -259,18 +284,20 @@ export function WorkSearchSheet({
                           : catalogMatch === undefined
                             ? libraryStrings.search.externalMatch
                             : libraryStrings.search.add}
-                    </button>
+                    </Button>
                   </li>
                 );
               })}
             </ul>
           ) : null}
-          <p className="library-search-sheet__credit">{libraryStrings.search.credit}</p>
+          <p className="text-[length:var(--text-caption-size)] text-text-muted">
+            {libraryStrings.search.credit}
+          </p>
         </section>
       ) : null}
       <p
         aria-live="polite"
-        className="library-search-sheet__message"
+        className="min-h-6 text-text-muted [&[role=alert]]:border-l-[length:var(--space-content-tight)] [&[role=alert]]:border-warn [&[role=alert]]:bg-canvas [&[role=alert]]:p-[var(--space-3)] [&[role=alert]]:text-text-strong"
         role={message?.kind === "error" ? "alert" : "status"}
       >
         {message?.text}

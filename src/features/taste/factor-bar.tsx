@@ -46,19 +46,24 @@ export function FactorBar({
   return (
     <div
       {...accessibilityProps}
-      className={cn("taste-factor-bar", highlighted && "taste-factor-bar--highlighted")}
+      className={cn(
+        "taste-factor-bar relative grid gap-[var(--space-content)] overflow-hidden rounded-[var(--radius-cover)] after:pointer-events-none after:absolute after:inset-0 after:rounded-[var(--radius-cover)] after:bg-accent-soft after:opacity-0 after:content-['']",
+        highlighted &&
+          "taste-factor-bar--highlighted motion-safe:after:animate-[taste-factor-highlight_600ms_ease-out] motion-reduce:after:opacity-80",
+      )}
     >
-      <span className="taste-factor-bar__heading">
+      <span className="taste-factor-bar__heading flex items-baseline justify-between gap-[var(--space-content-loose)] font-bold text-text-strong">
         <span>{label}</span>
-        <span className="taste-factor-bar__value">
+        <span className="taste-factor-bar__value whitespace-nowrap text-[length:var(--text-caption-size)] font-medium text-text-muted">
           {valueLabel === null ? tasteStrings.unknown : valueLabel}
         </span>
       </span>
       <span
         aria-hidden="true"
         className={cn(
-          "taste-factor-bar__track",
-          knownValue === null && "taste-factor-bar__track--unknown",
+          "taste-factor-bar__track block h-2 overflow-hidden rounded-full bg-line",
+          knownValue === null &&
+            "taste-factor-bar__track--unknown border border-line bg-transparent",
         )}
         ref={animateReveal && !revealComplete ? revealTrackRef : undefined}
       >
@@ -66,7 +71,7 @@ export function FactorBar({
           revealReady ? (
             <m.span
               animate={{ scaleX: revealInView ? knownValue / 4 : 0 }}
-              className="taste-factor-bar__fill taste-factor-bar__fill--reveal"
+              className="taste-factor-bar__fill taste-factor-bar__fill--reveal block h-full w-full origin-left rounded-[inherit] bg-accent motion-reduce:transition-none"
               data-reveal-ready="true"
               initial={{ scaleX: 0 }}
               onAnimationComplete={() => {
@@ -77,14 +82,14 @@ export function FactorBar({
             />
           ) : (
             <span
-              className="taste-factor-bar__fill taste-factor-bar__fill--reveal"
+              className="taste-factor-bar__fill taste-factor-bar__fill--reveal block h-full w-full origin-left rounded-[inherit] bg-accent motion-reduce:transition-none"
               data-reveal-ready="false"
               style={{ transform: "scaleX(0)", transformOrigin: "left" }}
             />
           )
         ) : (
           <span
-            className="taste-factor-bar__fill"
+            className="taste-factor-bar__fill block h-full w-full origin-left rounded-[inherit] bg-accent transition-transform duration-[var(--motion-duration-value)] ease-[var(--motion-ease-value)] motion-reduce:transition-none"
             style={{ transform: `scaleX(${String(knownValue / 4)})`, transformOrigin: "left" }}
           />
         )}

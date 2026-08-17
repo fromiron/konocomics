@@ -188,18 +188,24 @@ export function LandingLogoReveal({ staticPresentation = false }: LandingLogoRev
   );
   const staticLayers = (
     <>
-      <span className="landing-logo-reveal__mark">
-        <BrandWordmark className="landing-logo-reveal__base" />
-        <span className="landing-logo-reveal__monochrome">
-          <BrandWordmark decorative />
+      <span className="relative inline-flex text-[length:var(--font-size-28)]">
+        <BrandWordmark className="landing-logo-reveal__base relative z-0" />
+        <span className="landing-logo-reveal__monochrome pointer-events-none absolute inset-0 z-[1] opacity-0">
+          <BrandWordmark className="[&>span]:!text-text" decorative />
         </span>
       </span>
-      <span className="landing-logo-reveal__caption">{caption}</span>
+      <span className="flex items-baseline gap-[var(--space-content-tight)] text-[length:var(--text-caption-size)] text-text-muted group-data-[phase=waiting-fonts]/logo:translate-y-2 group-data-[phase=waiting-fonts]/logo:opacity-0 [&_[lang=ja]]:font-bold [&_[lang=ja]]:text-text">
+        {caption}
+      </span>
     </>
   );
 
   return (
-    <div className="landing-logo-reveal" data-motion={motion} data-phase={phase}>
+    <div
+      className="landing-logo-reveal group/logo grid justify-items-start gap-[var(--space-content-tight)]"
+      data-motion={motion}
+      data-phase={phase}
+    >
       {phase === "playing" && MotionRenderer !== null ? (
         <MotionRenderer caption={caption} />
       ) : (

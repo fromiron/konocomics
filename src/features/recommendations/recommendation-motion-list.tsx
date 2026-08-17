@@ -22,11 +22,12 @@ export function RecommendationMotionList({
 }: RecommendationMotionListProps) {
   return (
     <LazyMotion features={domMax} strict>
-      <ol className="recommendations-list" data-recommendation-motion="enabled" role="list">
+      <>
         <AnimatePresence initial={false}>
           {items.map((item) => (
             <m.li
               animate={reducedMotion ? { opacity: 1 } : { opacity: 1, y: 0 }}
+              className="basis-[var(--featured-card-basis)] shrink-0 snap-start overflow-visible [contain:layout_paint] [@media(min-width:768px)_and_(hover:hover)_and_(pointer:fine)]:has-[article[data-expanded]]:basis-[calc(var(--control-min-size)*8)]"
               data-recommendation-work-id={item.workId}
               exit={reducedMotion ? undefined : { height: 0, opacity: 0 }}
               initial={
@@ -55,7 +56,7 @@ export function RecommendationMotionList({
           ))}
         </AnimatePresence>
         {shortage}
-      </ol>
+      </>
     </LazyMotion>
   );
 }

@@ -1,6 +1,6 @@
 "use client";
 
-import { useRouter } from "next/navigation";
+import { useNavigate } from "@tanstack/react-router";
 import {
   type AnimationEvent,
   type ReactNode,
@@ -11,7 +11,11 @@ import {
   useState,
 } from "react";
 
+import { Button } from "@/components/design-system/button";
+import { CoverImage } from "@/components/cover/CoverImage";
+import { SiteFooter } from "@/components/layout/site-footer";
 import { usePageEntryMotion } from "@/components/motion/use-page-entry-motion";
+import { GENRE_TAGS } from "@/domain/catalog/constants";
 import type { GenreTag, Work } from "@/domain/catalog/types";
 import { hasCatalogBackedProfile } from "@/domain/profile/catalog-profile";
 import {
@@ -26,12 +30,17 @@ import {
 import { FACTOR_BACKED_NEGATIVE_REASON_IDS } from "@/domain/profile/constants";
 import type { NegativeReasonId } from "@/domain/profile/types";
 import { useCatalog } from "@/features/catalog/catalog-provider";
+import {
+  createRecommendationCoverTargets,
+  useRecommendationCovers,
+} from "@/features/recommendations/recommendation-cover-resolver";
 import { usePersistence } from "@/infrastructure/db";
 import {
   OnboardingAlreadyCompletedError,
   OnboardingWorkConflictError,
 } from "@/infrastructure/db/backend";
 import { onboardingStrings } from "@/lib/strings";
+import { cn } from "@/lib/utils";
 
 import { AnchorCoverCard } from "./anchor-cover-card";
 import {
@@ -46,19 +55,18 @@ import { WorkShelf } from "./work-shelf";
 const STEP_ONE_SEARCH_EMPTY: WorkSearchState = { query: "", results: [] };
 const STEP_TWO_SEARCH_EMPTY: WorkSearchState = { query: "", results: [] };
 
-const SHELVES = [
-  { id: "action", genre: "action", label: onboardingStrings.step1.shelves.action },
-  { id: "fantasy", genre: "fantasy", label: onboardingStrings.step1.shelves.fantasy },
-  { id: "historical", genre: "historical", label: onboardingStrings.step1.shelves.historical },
-  {
-    id: "scienceFiction",
-    genre: "scienceFiction",
-    label: onboardingStrings.step1.shelves.scienceFiction,
-  },
-  { id: "mystery", genre: "mystery", label: onboardingStrings.step1.shelves.mystery },
-] as const satisfies ReadonlyArray<{ id: string; genre: GenreTag; label: string }>;
+const COLLECTIONS = [
+  { id: "momentum", genres: ["action", "sports"] },
+  { id: "worlds", genres: ["fantasy", "scienceFiction"] },
+  { id: "mysteries", genres: ["mystery", "historical", "horror"] },
+  { id: "everyday", genres: ["sliceOfLife", "romance", "comedy"] },
+] as const satisfies ReadonlyArray<{ id: string; genres: readonly GenreTag[] }>;
 
-const PRIMARY_SHELF_GENRES = new Set<GenreTag>(SHELVES.map((shelf) => shelf.genre));
+type CollectionId = (typeof COLLECTIONS)[number]["id"];
+
+function isCollectionId(value: string | undefined): value is CollectionId {
+  return COLLECTIONS.some((collection) => collection.id === value);
+}
 
 const ANCHOR_CARD_LABELS = {
   select: onboardingStrings.step1.select,
@@ -119,7 +127,11 @@ function ResolvedOnboardingPage({
 
   return (
     <main
-      className={`onboarding-page${pageEntryMotion.active ? " onboarding-page--entry-b" : ""}`}
+      className={cn(
+        "onboarding-page mx-auto min-h-dvh w-[min(100%,var(--layout-width-onboarding))] px-[var(--layout-page-padding)] pt-[var(--layout-page-block-start)] pb-[calc(var(--space-12)+var(--space-12)+var(--space-12)+var(--space-8)+var(--layout-safe-area-bottom))] text-text md:pb-[var(--space-section-large)]",
+        pageEntryMotion.active &&
+          "onboarding-page--entry-b motion-safe:[&>.onboarding-step-one]:animate-[page-entry-b-enter_var(--motion-duration-page)_var(--motion-ease-direct)_both]",
+      )}
       data-page-entry-b={pageEntryMotion.active ? "active" : undefined}
       onAnimationEnd={(event) => {
         pageEntryMotion.onAnimationEnd(event);
@@ -131,15 +143,31 @@ function ResolvedOnboardingPage({
   );
 }
 
-export function OnboardingFlow() {
-  const router = useRouter();
+export function OnboardingFlow({
+  genre,
+  onGenreChange,
+  onQueryChange,
+  onShelfChange,
+  query,
+  shelf,
+}: Readonly<{
+  genre?: GenreTag;
+  onGenreChange?: (genre: GenreTag | undefined) => void;
+  onQueryChange?: (query: string) => void;
+  onShelfChange?: (shelf: string | undefined) => void;
+  query?: string;
+  shelf?: string;
+}> = {}) {
+  const navigate = useNavigate();
   const catalog = useCatalog();
   const {
     status,
     onboardingDraft: storedDraft,
     onboardingCompletedAt,
     userWorks,
+    getProviderCache,
     refresh,
+    saveProviderCache,
     saveOnboardingDraft,
     clearOnboardingDraft,
     finalizeOnboarding,
@@ -186,6 +214,49 @@ export function OnboardingFlow() {
     () => onboardingEligibleCatalogWorks.filter((work) => !persistedWorkIds.has(work.id)),
     [onboardingEligibleCatalogWorks, persistedWorkIds],
   );
+  const selectedCollection = isCollectionId(shelf)
+    ? COLLECTIONS.find((collection) => collection.id === shelf)
+    : undefined;
+  const filteredPositiveWorks = useMemo(
+    () =>
+      onboardingEligibleWorks
+        .filter((work) => genre === undefined || work.genres.includes(genre))
+        .filter(
+          (work) =>
+            selectedCollection === undefined ||
+            work.genres.some((workGenre) =>
+              selectedCollection.genres.some((collectionGenre) => collectionGenre === workGenre),
+            ),
+        ),
+    [genre, onboardingEligibleWorks, selectedCollection],
+  );
+  const browseWorks = useMemo(
+    () =>
+      [...new Map(filteredPositiveWorks.map((work) => [work.id, work] as const)).values()].slice(
+        0,
+        18,
+      ),
+    [filteredPositiveWorks],
+  );
+  const collectionPreviewWorks = useMemo(
+    () =>
+      new Map(
+        COLLECTIONS.map(
+          (collection) =>
+            [
+              collection.id,
+              onboardingEligibleWorks
+                .filter((work) =>
+                  work.genres.some((workGenre) =>
+                    collection.genres.some((collectionGenre) => collectionGenre === workGenre),
+                  ),
+                )
+                .slice(0, 4),
+            ] as const,
+        ),
+      ),
+    [onboardingEligibleWorks],
+  );
   const hadCatalogBackedProfile = useMemo(
     () => hasCatalogBackedProfile(userWorks, allCatalogWorks),
     [allCatalogWorks, userWorks],
@@ -223,6 +294,49 @@ export function OnboardingFlow() {
   );
   const draft = localDraft ?? initialDraft;
   const currentStep = draft?.step;
+  const coverWorkIds = useMemo(() => {
+    const ordered = [
+      ...(draft?.positiveEntries.map((entry) => entry.workId) ?? []),
+      ...(draft?.negativeEntries.map((entry) => entry.workId) ?? []),
+      ...stepOneSearch.results.slice(0, 8).map((work) => work.id),
+      ...stepTwoSearch.results.slice(0, 8).map((work) => work.id),
+      ...browseWorks.slice(0, 12).map((work) => work.id),
+      ...COLLECTIONS.flatMap((collection) =>
+        (collectionPreviewWorks.get(collection.id) ?? []).map((work) => work.id),
+      ),
+    ];
+    return [...new Set(ordered)].slice(0, 18);
+  }, [
+    browseWorks,
+    collectionPreviewWorks,
+    draft?.negativeEntries,
+    draft?.positiveEntries,
+    stepOneSearch.results,
+    stepTwoSearch.results,
+  ]);
+  const coverTargets = useMemo(
+    () =>
+      typeof getProviderCache === "function" && typeof saveProviderCache === "function"
+        ? createRecommendationCoverTargets(catalog, coverWorkIds)
+        : [],
+    [catalog, coverWorkIds, getProviderCache, saveProviderCache],
+  );
+  const { coverUrls, notifyCoverSettled } = useRecommendationCovers({
+    targets: coverTargets,
+    getProviderCache,
+    saveProviderCache,
+  });
+  const coverTargetsByWorkId = useMemo(
+    () => new Map(coverTargets.map((target) => [target.workId, target] as const)),
+    [coverTargets],
+  );
+  const handleCoverSettled = useCallback(
+    (workId: string) => {
+      const target = coverTargetsByWorkId.get(workId);
+      if (target !== undefined) notifyCoverSettled(target);
+    },
+    [coverTargetsByWorkId, notifyCoverSettled],
+  );
 
   useEffect(() => {
     if (currentStep !== undefined) {
@@ -267,7 +381,7 @@ export function OnboardingFlow() {
 
   if (draft === null || status.state === "initializing" || userWorks === undefined) {
     return (
-      <main className="onboarding-page onboarding-page--loading">
+      <main className="onboarding-page mx-auto grid min-h-dvh w-[min(100%,var(--layout-width-onboarding))] place-items-center px-[var(--layout-page-padding)] py-[var(--layout-page-block-start)] text-text-muted">
         <p aria-live="polite">{onboardingStrings.loading}</p>
       </main>
     );
@@ -421,15 +535,15 @@ export function OnboardingFlow() {
     try {
       await finalizeOnboarding(completedDraft, nowIso());
       if (completedDraft.mode === "add") {
-        router.replace("/taste");
+        await navigate({ to: "/taste", replace: true });
       } else {
-        router.push("/taste?reveal=1");
+        await navigate({ to: "/taste", search: { reveal: "1" } });
       }
     } catch (error) {
       if (error instanceof OnboardingAlreadyCompletedError) {
         await refresh().catch(() => undefined);
         setLocalDraft(null);
-        router.replace("/taste");
+        await navigate({ to: "/taste", replace: true });
         return;
       }
       if (error instanceof OnboardingWorkConflictError) {
@@ -470,7 +584,7 @@ export function OnboardingFlow() {
     setErrorMessage("");
     try {
       await saveOnboardingDraft(draft);
-      router.replace("/taste");
+      await navigate({ to: "/taste", replace: true });
     } catch {
       submittingRef.current = false;
       setSubmitting(false);
@@ -488,7 +602,7 @@ export function OnboardingFlow() {
     try {
       await clearOnboardingDraft();
       setLocalDraft(null);
-      router.replace("/taste");
+      await navigate({ to: "/taste", replace: true });
     } catch {
       submittingRef.current = false;
       setSubmitting(false);
@@ -507,12 +621,18 @@ export function OnboardingFlow() {
       pageEntryConsumed={pageEntryConsumed}
     >
       {storageWarning ? (
-        <div className="onboarding-alert" role="alert">
+        <div
+          className="onboarding-alert mb-[var(--space-4)] max-w-[var(--layout-width-reading)] border-l-[length:var(--space-1)] border-warn bg-surface-1 px-[var(--space-4)] py-[var(--space-3)]"
+          role="alert"
+        >
           {onboardingStrings.storageWarning}
         </div>
       ) : null}
       {errorMessage ? (
-        <div className="onboarding-alert" role="alert">
+        <div
+          className="onboarding-alert mb-[var(--space-4)] max-w-[var(--layout-width-reading)] border-l-[length:var(--space-1)] border-warn bg-surface-1 px-[var(--space-4)] py-[var(--space-3)]"
+          role="alert"
+        >
           {errorMessage}
         </div>
       ) : null}
@@ -520,78 +640,195 @@ export function OnboardingFlow() {
         <div
           aria-atomic="true"
           aria-live="polite"
-          className="onboarding-limit-message"
+          className="onboarding-limit-message fixed right-[var(--layout-page-padding)] bottom-[var(--layout-onboarding-tray-clearance)] z-50 max-w-[min(360px,calc(100vw-(var(--layout-page-padding)*2)))] rounded-[var(--radius-card)] border border-l-[length:var(--space-1)] border-line border-l-warn bg-surface-1 px-[var(--space-4)] py-[var(--space-3)] font-bold text-text-strong shadow-[var(--shadow-raised)] motion-reduce:border-2 motion-reduce:border-l-[length:var(--space-1)] motion-reduce:border-warn"
           key={shakeKey}
           role="status"
         >
           {limitMessage}
         </div>
       ) : null}
-      <p aria-atomic="true" aria-live="polite" className="visually-hidden">
+      <p aria-atomic="true" aria-live="polite" className="visually-hidden sr-only">
         {selectionMessage}
       </p>
 
       {draft.step === 1 ? (
-        <>
-          <div className="onboarding-step-one">
-            <header className="onboarding-header">
-              <p>
-                {isAddMode ? onboardingStrings.addMode.eyebrow : onboardingStrings.step1.eyebrow}
-              </p>
-              <h1 ref={headingRef} tabIndex={-1}>
-                {isAddMode ? onboardingStrings.addMode.title : onboardingStrings.step1.title}
-              </h1>
-              <p>
-                {isAddMode
-                  ? onboardingStrings.addMode.description
-                  : onboardingStrings.step1.description}
-              </p>
-            </header>
+        <div className="onboarding-step-one min-w-0">
+          {isAddMode ? null : (
+            <ol
+              aria-label={onboardingStrings.stepProgress.label}
+              className="onboarding-progress mx-auto mb-[var(--space-section-large)] flex max-w-[var(--layout-width-form)] list-none items-center justify-start gap-[var(--space-content-loose)] overflow-x-auto p-0 text-text-muted md:justify-center"
+            >
+              <li
+                aria-current="step"
+                className="inline-flex min-h-[var(--control-min-size)] shrink-0 items-center rounded-full border border-accent bg-accent-soft px-[var(--space-3)] font-bold text-accent"
+              >
+                {onboardingStrings.stepProgress.selection}
+              </li>
+              <li className="inline-flex min-h-[var(--control-min-size)] shrink-0 items-center rounded-full border border-line px-[var(--space-3)]">
+                {onboardingStrings.stepProgress.dna}
+              </li>
+              <li className="inline-flex min-h-[var(--control-min-size)] shrink-0 items-center rounded-full border border-line px-[var(--space-3)]">
+                {onboardingStrings.stepProgress.recommendations}
+              </li>
+            </ol>
+          )}
 
-            {isAddMode ? (
-              <div className="onboarding-step-actions onboarding-add-mode-actions">
-                <button
-                  className="onboarding-add-mode-actions__close"
-                  disabled={submitting}
-                  onClick={() => void closeAddMode()}
-                  type="button"
+          <div className="onboarding-hero mb-[var(--space-section-large)] grid gap-[var(--space-6)] md:grid-cols-[minmax(0,1.1fr)_minmax(0,0.9fr)] md:items-start">
+            <div className="onboarding-hero__copy min-w-0">
+              <header className="onboarding-header mb-[var(--space-5)] grid max-w-[var(--layout-width-reading)] gap-[var(--space-content)]">
+                <p className="font-display text-[length:var(--text-caption-size)] font-bold tracking-[0.08em] text-accent">
+                  {isAddMode ? onboardingStrings.addMode.eyebrow : onboardingStrings.step1.eyebrow}
+                </p>
+                <h1
+                  className="max-w-[18ch] text-[clamp(var(--font-size-28),5vw,var(--font-size-40))] leading-[1.25] tracking-[-0.03em] text-text-strong"
+                  ref={headingRef}
+                  tabIndex={-1}
                 >
-                  {onboardingStrings.addMode.close}
-                </button>
-                <button
-                  className="onboarding-add-mode-actions__discard"
-                  disabled={submitting}
-                  onClick={() => void discardAddDraft()}
-                  type="button"
-                >
-                  {onboardingStrings.addMode.discard}
-                </button>
-              </div>
-            ) : null}
+                  {isAddMode ? onboardingStrings.addMode.title : onboardingStrings.step1.title}
+                </h1>
+                <p className="text-text-muted">
+                  {isAddMode
+                    ? onboardingStrings.addMode.description
+                    : onboardingStrings.step1.description}
+                </p>
+              </header>
+              {isAddMode ? null : (
+                <ul className="onboarding-benefits m-0 grid list-none grid-cols-1 gap-[var(--space-content-loose)] p-0 md:grid-cols-3">
+                  {onboardingStrings.step1.benefits.map((benefit) => (
+                    <li
+                      className="grid gap-[var(--space-content-tight)] rounded-[var(--radius-card)] border border-line bg-surface-1 p-[var(--space-4)]"
+                      key={benefit.title}
+                    >
+                      <strong className="text-text-strong">{benefit.title}</strong>
+                      <span className="text-[length:var(--text-caption-size)] text-text-muted">
+                        {benefit.description}
+                      </span>
+                    </li>
+                  ))}
+                </ul>
+              )}
+            </div>
 
+            <SelectedTray
+              continueLabel={
+                submitting && isAddMode
+                  ? onboardingStrings.addMode.saving
+                  : isAddMode && draft.positiveEntries.length === 0
+                    ? onboardingStrings.addMode.minimum
+                    : isAddMode
+                      ? onboardingStrings.addMode.submit(draft.positiveEntries.length)
+                      : draft.positiveEntries.length < ONBOARDING_MIN_POSITIVE_WORKS
+                        ? onboardingStrings.step1.remaining(
+                            ONBOARDING_MIN_POSITIVE_WORKS - draft.positiveEntries.length,
+                          )
+                        : onboardingStrings.step1.next(draft.positiveEntries.length)
+              }
+              countLabel={onboardingStrings.step1.selectedCount(
+                draft.positiveEntries.length,
+                ONBOARDING_MAX_POSITIVE_WORKS,
+              )}
+              coverUrls={coverUrls}
+              disabled={submitting || draft.positiveEntries.length < minimumPositiveWorks}
+              emptyLabel={
+                isAddMode
+                  ? onboardingStrings.addMode.emptySelected
+                  : onboardingStrings.step1.emptySelected
+              }
+              label={
+                isAddMode
+                  ? onboardingStrings.addMode.selectedTray
+                  : onboardingStrings.step1.selectedTray
+              }
+              limitActive={limitMessage !== ""}
+              onContinue={continueFromStepOne}
+              onCoverSettled={handleCoverSettled}
+              onRemove={togglePositiveSelection}
+              removeLabel={onboardingStrings.step1.remove}
+              selections={draft.positiveEntries}
+              shakeKey={shakeKey}
+              worksById={worksById}
+            />
+          </div>
+
+          {isAddMode ? (
+            <div className="onboarding-step-actions onboarding-add-mode-actions mb-[var(--space-6)] flex max-w-[var(--layout-width-form)] flex-wrap justify-start gap-[var(--space-content-loose)] [&>button]:flex-[0_1_auto]">
+              <Button
+                className="onboarding-add-mode-actions__close"
+                disabled={submitting}
+                onClick={() => void closeAddMode()}
+                type="button"
+                variant="outline"
+              >
+                {onboardingStrings.addMode.close}
+              </Button>
+              <Button
+                className="onboarding-add-mode-actions__discard border-transparent bg-transparent text-warn"
+                disabled={submitting}
+                onClick={() => void discardAddDraft()}
+                type="button"
+                variant="ghost"
+              >
+                {onboardingStrings.addMode.discard}
+              </Button>
+            </div>
+          ) : null}
+
+          <div className="onboarding-discovery grid gap-[var(--space-6)] [&>.work-search]:m-0 [&>.work-search]:max-w-none [&_.work-search__input]:min-h-[calc(var(--space-7)+var(--space-7))] [&_.work-search__input]:border-accent [&_.work-search__input]:bg-surface-1 [&_.work-search__input]:shadow-[0_0_0_1px_var(--accent-soft)] motion-reduce:[&_.work-search__input]:transition-none">
             <WorkSearchInput
               key="positive-search"
               label={onboardingStrings.step1.searchLabel}
+              onQueryChange={onQueryChange}
               onSearchStateChange={setStepOneSearch}
               placeholder={onboardingStrings.step1.searchPlaceholder}
-              works={onboardingEligibleWorks}
+              query={query}
+              works={filteredPositiveWorks}
             />
-            <p aria-atomic="true" aria-live="polite" className="visually-hidden">
+            <p aria-atomic="true" aria-live="polite" className="visually-hidden sr-only">
               {stepOneSearch.query.trim().length > 0
                 ? onboardingStrings.searchResults(stepOneSearch.query, stepOneSearch.results.length)
                 : ""}
             </p>
 
+            <section
+              aria-labelledby="onboarding-genre-heading"
+              className="onboarding-genres grid gap-[var(--space-3)]"
+            >
+              <h2 id="onboarding-genre-heading">{onboardingStrings.step1.genreHeading}</h2>
+              <div className="flex flex-wrap gap-[var(--space-content)] [&>button[aria-pressed=true]]:border-accent [&>button[aria-pressed=true]]:text-accent">
+                <Button
+                  aria-pressed={genre === undefined}
+                  onClick={() => onGenreChange?.(undefined)}
+                  type="button"
+                  variant={genre === undefined ? "secondary" : "outline"}
+                >
+                  {onboardingStrings.step1.allGenres}
+                </Button>
+                {GENRE_TAGS.map((genreId) => (
+                  <Button
+                    aria-pressed={genre === genreId}
+                    key={genreId}
+                    onClick={() => onGenreChange?.(genre === genreId ? undefined : genreId)}
+                    type="button"
+                    variant={genre === genreId ? "secondary" : "outline"}
+                  >
+                    {onboardingStrings.step1.genreLabels[genreId]}
+                  </Button>
+                ))}
+              </div>
+            </section>
+
             {stepOneSearch.query.trim().length > 0 ? (
               stepOneSearch.results.length > 0 ? (
                 <section
                   aria-label={onboardingStrings.step1.searchLabel}
-                  className="work-search-grid"
+                  className="work-search-grid grid grid-cols-[repeat(auto-fill,minmax(104px,1fr))] gap-x-[var(--space-3)] gap-y-[var(--space-5)] [&>.anchor-card]:w-full [&>.anchor-card]:min-w-0 md:grid-cols-[repeat(auto-fill,minmax(128px,1fr))] md:gap-x-[var(--space-4)] md:gap-y-[var(--space-6)]"
                 >
                   {stepOneSearch.results.map((work) => (
                     <AnchorCoverCard
+                      coverUrl={coverUrls.get(work.id)}
                       key={work.id}
                       labels={ANCHOR_CARD_LABELS}
+                      onCoverSettled={() => handleCoverSettled(work.id)}
                       onToggleFavorite={toggleFavorite}
                       onToggleSelection={togglePositiveSelection}
                       selection={positiveByWorkId.get(work.id)}
@@ -600,99 +837,133 @@ export function OnboardingFlow() {
                   ))}
                 </section>
               ) : (
-                <div className="onboarding-empty">
+                <div className="onboarding-empty grid gap-[var(--space-content-tight)] rounded-[var(--radius-card)] border border-line bg-surface-1 px-[var(--space-5)] py-[var(--space-7)] text-text-muted">
                   <p>{onboardingStrings.step1.noResults}</p>
                   <p>{onboardingStrings.step1.catalogLater}</p>
                 </div>
               )
             ) : (
-              <div className="onboarding-shelves">
-                {SHELVES.map((shelf) => (
+              <div className="onboarding-shelves grid gap-[var(--space-section-large)]">
+                {browseWorks.length === 0 ? (
+                  <div className="onboarding-empty grid gap-[var(--space-content-tight)] rounded-[var(--radius-card)] border border-line bg-surface-1 px-[var(--space-5)] py-[var(--space-7)] text-text-muted">
+                    <p>{onboardingStrings.step1.noFilteredWorks}</p>
+                  </div>
+                ) : (
                   <WorkShelf
-                    key={shelf.id}
+                    coverUrls={coverUrls}
                     labels={ANCHOR_CARD_LABELS}
-                    nextLabel={onboardingStrings.step1.nextShelf}
+                    onCoverSettled={handleCoverSettled}
                     onToggleFavorite={toggleFavorite}
                     onToggleSelection={togglePositiveSelection}
-                    previousLabel={onboardingStrings.step1.previousShelf}
                     selectionsByWorkId={positiveByWorkId}
-                    title={shelf.label}
-                    works={onboardingEligibleWorks.filter((work) =>
-                      work.genres.includes(shelf.genre),
-                    )}
+                    title={
+                      selectedCollection === undefined
+                        ? onboardingStrings.step1.featuredHeading
+                        : onboardingStrings.step1.collections[selectedCollection.id].title
+                    }
+                    works={browseWorks}
                   />
-                ))}
-                <WorkShelf
-                  labels={ANCHOR_CARD_LABELS}
-                  nextLabel={onboardingStrings.step1.nextShelf}
-                  onToggleFavorite={toggleFavorite}
-                  onToggleSelection={togglePositiveSelection}
-                  previousLabel={onboardingStrings.step1.previousShelf}
-                  selectionsByWorkId={positiveByWorkId}
-                  title={onboardingStrings.step1.shelves.other}
-                  works={onboardingEligibleWorks.filter((work) =>
-                    work.genres.every((genre) => !PRIMARY_SHELF_GENRES.has(genre)),
-                  )}
-                />
+                )}
+
+                <section
+                  aria-labelledby="onboarding-collections-heading"
+                  className="onboarding-collections grid gap-[var(--space-3)]"
+                >
+                  <h2 id="onboarding-collections-heading">
+                    {onboardingStrings.step1.collectionsHeading}
+                  </h2>
+                  <div className="onboarding-collections__grid grid gap-[var(--space-content-loose)] md:grid-cols-2">
+                    {COLLECTIONS.map((collection) => {
+                      const copy = onboardingStrings.step1.collections[collection.id];
+                      const previewWorks = collectionPreviewWorks.get(collection.id) ?? [];
+                      const active = selectedCollection?.id === collection.id;
+                      return (
+                        <Button
+                          aria-pressed={active}
+                          className="onboarding-collection grid h-auto min-h-[calc(var(--space-12)+var(--space-12)+var(--space-12)+var(--space-12)+var(--space-2))] grid-rows-[auto_1fr_auto] justify-items-stretch gap-[var(--space-4)] whitespace-normal p-[var(--space-4)] aria-pressed:border-accent aria-pressed:bg-accent-soft md:min-h-[calc(var(--space-12)+var(--space-12)+var(--space-12)+var(--space-12)+var(--space-7))]"
+                          key={collection.id}
+                          onClick={() => onShelfChange?.(active ? undefined : collection.id)}
+                          type="button"
+                          variant={active ? "secondary" : "outline"}
+                        >
+                          <span className="onboarding-collection__copy grid gap-[var(--space-content-tight)] text-start">
+                            <strong className="text-text-strong">{copy.title}</strong>
+                            <span className="text-[length:var(--text-caption-size)] text-text-muted">
+                              {copy.description}
+                            </span>
+                          </span>
+                          <span
+                            aria-hidden="true"
+                            className="onboarding-collection__covers pointer-events-none grid min-w-0 grid-cols-4 gap-[var(--space-content)] [&>.cover-image]:min-w-0"
+                          >
+                            {previewWorks.map((work) => (
+                              <CoverImage
+                                coverUrl={coverUrls.get(work.id)}
+                                creators={work.creators}
+                                decorative
+                                key={work.id}
+                                onSettled={() => handleCoverSettled(work.id)}
+                                requestedSize={200}
+                                title={work.title}
+                              />
+                            ))}
+                          </span>
+                          <span className="onboarding-collection__action text-start text-[length:var(--text-caption-size)] font-bold text-accent">
+                            {copy.action}
+                          </span>
+                        </Button>
+                      );
+                    })}
+                  </div>
+                </section>
+
+                <section className="onboarding-guidance grid gap-[var(--space-3)] rounded-[var(--radius-card)] border border-line bg-surface-1 p-[var(--space-5)]">
+                  <h2>{onboardingStrings.step1.guidanceHeading}</h2>
+                  <ul className="m-0 grid gap-[var(--space-content)] ps-[var(--space-5)] text-[length:var(--text-caption-size)] text-text-muted">
+                    {onboardingStrings.step1.guidance.map((item) => (
+                      <li key={item}>{item}</li>
+                    ))}
+                  </ul>
+                </section>
               </div>
             )}
           </div>
-
-          <SelectedTray
-            continueLabel={
-              submitting && isAddMode
-                ? onboardingStrings.addMode.saving
-                : isAddMode && draft.positiveEntries.length === 0
-                  ? onboardingStrings.addMode.minimum
-                  : isAddMode
-                    ? onboardingStrings.addMode.submit(draft.positiveEntries.length)
-                    : draft.positiveEntries.length < ONBOARDING_MIN_POSITIVE_WORKS
-                      ? onboardingStrings.step1.remaining(
-                          ONBOARDING_MIN_POSITIVE_WORKS - draft.positiveEntries.length,
-                        )
-                      : onboardingStrings.step1.next(draft.positiveEntries.length)
-            }
-            disabled={submitting || draft.positiveEntries.length < minimumPositiveWorks}
-            emptyLabel={
-              isAddMode
-                ? onboardingStrings.addMode.emptySelected
-                : onboardingStrings.step1.emptySelected
-            }
-            label={
-              isAddMode
-                ? onboardingStrings.addMode.selectedTray
-                : onboardingStrings.step1.selectedTray
-            }
-            onContinue={continueFromStepOne}
-            onRemove={togglePositiveSelection}
-            removeLabel={onboardingStrings.step1.remove}
-            selections={draft.positiveEntries}
-            limitActive={limitMessage !== ""}
-            shakeKey={shakeKey}
-            worksById={worksById}
-          />
-        </>
+        </div>
       ) : (
         <fieldset
           aria-busy={submitting}
           aria-label={onboardingStrings.step2.title}
-          className="onboarding-step-two"
+          className="onboarding-step-two m-0 min-w-0 border-0 p-0"
           disabled={submitting}
         >
-          <header className="onboarding-header">
-            <p>{onboardingStrings.step2.eyebrow}</p>
-            <h1 ref={headingRef} tabIndex={-1}>
-              {onboardingStrings.step2.title} <span>{onboardingStrings.step2.optional}</span>
+          <header className="onboarding-header mb-[var(--space-5)] grid max-w-[var(--layout-width-reading)] gap-[var(--space-content)]">
+            <p className="font-display text-[length:var(--text-caption-size)] font-bold tracking-[0.08em] text-accent">
+              {onboardingStrings.step2.eyebrow}
+            </p>
+            <h1
+              className="max-w-[18ch] text-[clamp(var(--font-size-28),5vw,var(--font-size-40))] leading-[1.25] tracking-[-0.03em] text-text-strong"
+              ref={headingRef}
+              tabIndex={-1}
+            >
+              {onboardingStrings.step2.title}{" "}
+              <span className="ms-2 inline-block text-[length:var(--font-size-14)] font-medium text-text-muted">
+                {onboardingStrings.step2.optional}
+              </span>
             </h1>
-            <p>{onboardingStrings.step2.description}</p>
+            <p className="text-text-muted">{onboardingStrings.step2.description}</p>
           </header>
 
           {draft.negativeEntries.length > 0 ? (
-            <section aria-label={onboardingStrings.step2.title} className="negative-entries">
+            <section
+              aria-label={onboardingStrings.step2.title}
+              className="negative-entries mb-[var(--space-7)] grid gap-[var(--space-4)]"
+            >
               {draft.negativeEntries.map((entry) => {
                 const work = worksById.get(entry.workId);
                 return work === undefined ? null : (
                   <NegativeEntryEditor
+                    coverUrl={coverUrls.get(work.id)}
+                    disabled={submitting}
                     key={entry.workId}
                     entry={entry}
                     focusDisposition={
@@ -707,6 +978,7 @@ export function OnboardingFlow() {
                       externalHelper: onboardingStrings.step2.externalHelper,
                       remove: onboardingStrings.step2.remove,
                     }}
+                    onCoverSettled={() => handleCoverSettled(work.id)}
                     onDispositionChange={changeNegativeDisposition}
                     onReasonToggle={toggleNegativeReason}
                     onRemove={removeNegative}
@@ -721,29 +993,35 @@ export function OnboardingFlow() {
           <WorkSearchInput
             key="negative-search"
             label={onboardingStrings.step2.searchLabel}
+            onQueryChange={onQueryChange}
             onSearchStateChange={setStepTwoSearch}
             placeholder={onboardingStrings.step2.searchPlaceholder}
+            query={query}
             works={selectableCatalogWorks}
           />
-          <p aria-atomic="true" aria-live="polite" className="visually-hidden">
+          <p aria-atomic="true" aria-live="polite" className="visually-hidden sr-only">
             {stepTwoSearch.query.trim().length > 0
               ? onboardingStrings.searchResults(stepTwoSearch.query, stepTwoSearch.results.length)
               : ""}
           </p>
 
           {stepTwoSearch.query.trim().length === 0 ? (
-            <p className="onboarding-search-prompt">{onboardingStrings.step2.emptySearch}</p>
+            <p className="onboarding-search-prompt rounded-[var(--radius-card)] border border-line bg-surface-1 px-[var(--space-5)] py-[var(--space-7)] text-text-muted">
+              {onboardingStrings.step2.emptySearch}
+            </p>
           ) : stepTwoSearch.results.length === 0 ? (
-            <div className="onboarding-empty">
+            <div className="onboarding-empty grid gap-[var(--space-content-tight)] rounded-[var(--radius-card)] border border-line bg-surface-1 px-[var(--space-5)] py-[var(--space-7)] text-text-muted">
               <p>{onboardingStrings.step2.noResults}</p>
             </div>
           ) : (
             <section
               aria-label={onboardingStrings.step2.searchLabel}
-              className="negative-result-grid"
+              className="negative-result-grid grid grid-cols-[minmax(0,var(--layout-width-form))] gap-x-[var(--space-3)] gap-y-[var(--space-5)] [&>.negative-result-card]:w-full [&>.negative-result-card]:min-w-0"
             >
               {stepTwoSearch.results.map((work: Work) => (
                 <NegativeWorkCard
+                  coverUrl={coverUrls.get(work.id)}
+                  disabled={submitting}
                   key={work.id}
                   isPositive={positiveWorkIds.has(work.id)}
                   isSelected={negativeByWorkId.has(work.id)}
@@ -755,36 +1033,42 @@ export function OnboardingFlow() {
                     dropped: onboardingStrings.step2.dropped,
                   }}
                   onAdd={addNegative}
+                  onCoverSettled={() => handleCoverSettled(work.id)}
                   work={work}
                 />
               ))}
             </section>
           )}
 
-          <div className="onboarding-step-actions">
-            <button
-              className={
-                draft.negativeEntries.length === 0 ? "onboarding-step-actions__primary" : undefined
-              }
+          <div className="onboarding-step-actions mt-[var(--space-section)] flex max-w-[var(--layout-width-form)] justify-end gap-[var(--space-content-loose)] [&>button]:flex-1">
+            <Button
+              className={cn(
+                draft.negativeEntries.length === 0 &&
+                  "onboarding-step-actions__primary [@media(hover:hover)_and_(pointer:fine)]:hover:border-accent-hover [@media(hover:hover)_and_(pointer:fine)]:hover:bg-accent-hover",
+              )}
               disabled={submitting}
               onClick={() => void complete(false)}
               type="button"
+              variant={draft.negativeEntries.length === 0 ? "default" : "outline"}
             >
               {submitting ? onboardingStrings.step2.saving : onboardingStrings.step2.skip}
-            </button>
-            <button
-              className={
-                draft.negativeEntries.length > 0 ? "onboarding-step-actions__primary" : undefined
-              }
+            </Button>
+            <Button
+              className={cn(
+                draft.negativeEntries.length > 0 &&
+                  "onboarding-step-actions__primary [@media(hover:hover)_and_(pointer:fine)]:hover:border-accent-hover [@media(hover:hover)_and_(pointer:fine)]:hover:bg-accent-hover",
+              )}
               disabled={submitting}
               onClick={() => void complete(true)}
               type="button"
+              variant={draft.negativeEntries.length > 0 ? "default" : "outline"}
             >
               {submitting ? onboardingStrings.step2.saving : onboardingStrings.step2.finish}
-            </button>
+            </Button>
           </div>
         </fieldset>
       )}
+      <SiteFooter className="onboarding-footer mx-[calc(var(--layout-page-padding)*-1)] mt-[var(--space-section-large)]" />
     </ResolvedOnboardingPage>
   );
 }

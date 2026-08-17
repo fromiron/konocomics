@@ -102,6 +102,7 @@ const recommendationPolicyLabels = {
   preferCompleted: "完結作を優先",
   preferHidden: "隠れた作品を優先",
   preferVerified: "検証済み作品を優先",
+  excludeIncomplete: "刊行情報が不明な作品を除外",
 } as const;
 
 export const appName = "konocomics";
@@ -221,6 +222,28 @@ export const coreStrings = {
   },
 } as const;
 
+export const routeBoundaryStrings = {
+  pending: "ページを読み込んでいます…",
+  errorTitle: "ページを表示できません",
+  errorDescription: "一時的な問題が発生しました。もう一度お試しください。",
+  retry: "再試行",
+} as const;
+
+export const designSystemStrings = {
+  close: "閉じる",
+} as const;
+
+export const mediaStrings = {
+  openDetails: (title: string) => `「${title}」の作品詳細を見る`,
+  previous: (title: string) => `${title}を前へ送る`,
+  next: (title: string) => `${title}を次へ送る`,
+  rank: (position: number) => `${String(position)}位`,
+} as const;
+
+export const siteFooterStrings = {
+  navigationLabel: "フッターナビゲーション",
+} as const;
+
 export const landingStrings = {
   metadataTitle: "konocomics | 好みから見つける、次のマンガ。",
   logoCaption: {
@@ -233,6 +256,22 @@ export const landingStrings = {
     "好きな作品を選ぶと、Manga DNA と理由つきのおすすめがわかります。",
   ],
   cta: "好きなマンガから始める",
+  hero: {
+    eyebrow: "理由がわかるマンガ推薦",
+    trust: ["登録なしですぐ始める", "データはこの端末だけに保存", "推薦理由を根拠から表示"],
+  },
+  showcase: {
+    title: "まず出会いたい作品",
+    description: "カタログから幅広い作品を紹介しています。個人向けの順位ではありません。",
+  },
+  ranking: {
+    title: "カタログ Top 10",
+    description: "作品を探し始めるための中立なカタログ順です。人気順位ではありません。",
+  },
+  discovery: {
+    title: "まだ知らない一冊へ",
+    description: "ジャンルを横断して、好みを登録する前に作品を眺められます。",
+  },
   stepsHeading: "konocomics でできること",
   steps: [
     {
@@ -246,6 +285,10 @@ export const landingStrings = {
     {
       title: "理由つきでおすすめ",
       description: "好みに合う理由とともに、次の作品を提案します。",
+    },
+    {
+      title: "ブラウザだけに保存",
+      description: "好みと読書記録は、このブラウザの中だけに保存します。",
     },
   ],
   illustration: {
@@ -312,6 +355,12 @@ export const onboardingStrings = {
     count === 0
       ? `「${query}」の検索結果はありません。`
       : `「${query}」の検索結果は ${String(count)} 作品です。`,
+  stepProgress: {
+    label: "好み登録の進み具合",
+    selection: "作品を選ぶ",
+    dna: "DNAを確認",
+    recommendations: "おすすめへ",
+  },
   addMode: {
     eyebrow: "作品を追加",
     title: "好きなマンガを追加してください",
@@ -330,11 +379,17 @@ export const onboardingStrings = {
     eyebrow: "STEP 1 / 2",
     title: "好きなマンガを 5〜10 作品えらんでください",
     description: "選んだ作品から、物語や雰囲気の好みを読み取ります。",
+    benefits: [
+      { title: "好みが伝わる", description: "作品の共通点から傾向を見つけます。" },
+      { title: "根拠がわかる", description: "選んだ作品をおすすめ理由につなげます。" },
+      { title: "あとから調整", description: "Manga DNA はいつでも見直せます。" },
+    ],
     searchLabel: "好きなマンガを検索",
     searchPlaceholder: "タイトル・作者名を入力",
     noResults: "見つかりませんでした。別の書き方で試してください",
     catalogLater: "カタログにない作品は、あとでライブラリから追加できます。",
     selectedTray: "選んだマンガ",
+    selectedCount: (count: number, maximum: number) => `${String(count)} / ${String(maximum)} 作品`,
     emptySelected: "まだ選ばれていません",
     select: "好きに追加",
     remove: "選択を解除",
@@ -347,8 +402,52 @@ export const onboardingStrings = {
     maximum: "最大 10 作品までです",
     remaining: (count: number) => `あと ${String(count)} 作品`,
     next: (count: number) => `次へ (${String(count)}/10)`,
-    previousShelf: "前の作品",
-    nextShelf: "次の作品",
+    genreHeading: "ジャンルから探す",
+    allGenres: "すべて",
+    genreLabels: {
+      action: "アクション",
+      fantasy: "ファンタジー",
+      historical: "歴史",
+      scienceFiction: "SF",
+      mystery: "ミステリー",
+      sports: "スポーツ",
+      comedy: "コメディ",
+      horror: "ホラー",
+      sliceOfLife: "日常",
+      romance: "恋愛",
+    },
+    featuredHeading: "選びやすい作品",
+    noFilteredWorks: "この条件で選べる作品はありません。条件を変えてください。",
+    collectionsHeading: "コレクションから探す",
+    collections: {
+      momentum: {
+        title: "勢いのある物語",
+        description: "アクションやスポーツを中心に選びます。",
+        action: "この棚を見る",
+      },
+      worlds: {
+        title: "別世界へ入り込む",
+        description: "ファンタジーとSFを中心に選びます。",
+        action: "この棚を見る",
+      },
+      mysteries: {
+        title: "謎と緊張を楽しむ",
+        description: "ミステリー、歴史、ホラーを中心に選びます。",
+        action: "この棚を見る",
+      },
+      everyday: {
+        title: "日々と関係を味わう",
+        description: "日常、恋愛、コメディを中心に選びます。",
+        action: "この棚を見る",
+      },
+    },
+    guidanceHeading: "迷ったときは",
+    guidance: [
+      "最近夢中になった作品から選ぶ",
+      "違うジャンルを混ぜて選ぶ",
+      "5〜10作品の範囲で、無理に埋めない",
+      "選んだ内容はあとから追加・調整できる",
+    ],
     shelves: {
       action: "アクション",
       fantasy: "ファンタジー",
@@ -405,7 +504,9 @@ export const tasteStrings = {
   storageWarning:
     "このブラウザでは変更を保存できません。このセッション中だけ好みの調整を反映します。",
   saveError: "好みの調整を保存できませんでした。もう一度お試しください。",
+  eyebrow: "MANGA DNA",
   title: "あなたの Manga DNA",
+  description: "選んだ作品と読書記録から、物語・雰囲気・作画の好みを整理しました。",
   confidence: "分析の確信度",
   confidenceLabels: {
     high: "高い",
@@ -413,6 +514,8 @@ export const tasteStrings = {
     low: "低め(データ収集中)",
   },
   anchorsHeading: "選んだマンガ",
+  radarHeading: "好みの分布",
+  radarPending: "確認できる好みの軸を分析しています。",
   topPreferencesHeading: "あなたの上位の好み",
   topPreferenceEvidence: (titles: readonly string[]) =>
     `${titles.map((title) => `『${title}』`).join("")}から`,
@@ -424,6 +527,18 @@ export const tasteStrings = {
     art: "作画",
     genre: "ジャンル",
   },
+  workspaceHeading: "Manga DNA の詳細",
+  modeLabel: "Manga DNA の表示モード",
+  modes: {
+    summary: "まとめ",
+    adjust: "調整",
+  },
+  modeDescriptions: {
+    summary: "現在の分析をグループごとに確認できます。",
+    adjust: "5段階の設定は次のおすすめに反映されます。",
+  },
+  groupLabel: "表示する好みのグループ",
+  allGroups: "すべて",
   unknown: "まだ分析中",
   factorValue: (value: number) => {
     if (value < 0.5) return "ごく控えめ";
@@ -441,9 +556,28 @@ export const tasteStrings = {
     exclude: "除外",
   },
   adjustmentSaved: "次のおすすめに反映されます",
-  negativeHeading: "合わなかった作品",
-  negativeDisliked: "合わなかった",
-  negativeDropped: "途中でやめた",
+  previewHeading: "好み調整後のおすすめ変化",
+  previewDescription: "同じおすすめ計算で、ページを開いた時と現在の work ID を比較します。",
+  previewBefore: "ページを開いた時",
+  previewAfter: "現在の調整",
+  previewEmpty: "表示できる候補はありません。",
+  previewUnavailable: "おすすめの変化を計算できませんでした。",
+  previewUnchanged: "おすすめ順に変化はありません。",
+  previewChanged: "おすすめ順に変化があります。",
+  recentFeedbackHeading: "最近の記録",
+  feedbackLabels: {
+    favorite: "大好き",
+    liked: "好き",
+    neutral: "ふつう",
+    disliked: "合わなかった",
+  },
+  readingStateLabels: {
+    planned: "読みたい",
+    reading: "読んでいる",
+    completed: "読んだ",
+    dropped: "途中でやめた",
+    hidden: "興味なし",
+  },
   addWorks: "作品を追加して精度を上げる",
   recommendations: "おすすめを見る",
 } as const;
@@ -461,6 +595,56 @@ export const recommendationStrings = {
   update: "更新",
   updating: "更新しています…",
   pendingChanges: "おすすめに未反映の変更があります。",
+  criteria: {
+    heading: "今回のおすすめ基準",
+    description: "保存した読書記録、Manga DNA、おすすめ方針だけを使っています。",
+    records: "読書記録",
+    recordCount: (count: number) => `${String(count)}作品を反映`,
+    preferences: "上位の好み",
+    policies: "優先方針",
+    policyCount: (count: number) => (count === 0 ? "標準の並び順" : `${String(count)}件を反映`),
+  },
+  filters: {
+    genre: "ジャンル",
+    allGenres: "すべて",
+    shelf: "表示位置",
+    allShelves: "すべての棚",
+    sort: "並び順",
+    recommended: "おすすめ順",
+    empty: "この条件で表示できる作品はありません。ジャンルを変えてお試しください。",
+  },
+  shelves: {
+    featured: {
+      title: "あなたのために選んだ作品",
+      description: "推薦結果の順番を変えず、理由と読書アクションをまとめています。",
+    },
+    anchor: {
+      title: "好きな作品から広げる",
+      description: "推薦プランの順番を保ったまま、根拠作品から次の候補を探せます。",
+    },
+    discovery: {
+      title: "隠れた候補",
+      description: "推薦エンジンが discovery とした候補だけを表示しています。",
+    },
+    completed: {
+      title: "完結作から選ぶ",
+      description: "推薦プラン内の完結作品です。順位の再計算はしていません。",
+    },
+    ranking: {
+      title: "あなたの Top 10",
+      description: "現在の推薦結果をそのまま1位から並べています。",
+    },
+  },
+  quickPreview: {
+    open: (title: string) => `「${title}」をクイック表示`,
+    description: "おすすめ理由と読書状態を、詳細へ移動せずに確認できます。",
+    details: "作品詳細を見る",
+  },
+  feedbackSummary: {
+    heading: "記録した内容を反映しています",
+    description: "読了と興味なしの記録は、次回のおすすめ更新に使われます。",
+    count: (count: number) => `${String(count)}作品`,
+  },
   reasonHeading: "おすすめ理由",
   openDetails: (title: string) => `「${title}」の作品詳細を見る`,
   reasonUnavailable: "おすすめ理由を表示できません。",
@@ -567,6 +751,14 @@ export const workDetailStrings = {
     confidence: "分析の確信度",
     unavailable: "現在の好みから相性を表示できません。",
   },
+  related: {
+    heading: "似た作品",
+    description: "主要テーマが重なるカタログ作品です。",
+  },
+  sameMood: {
+    heading: "同じ雰囲気の作品",
+    description: "確認済みの作品ファクターが近いカタログ作品です。",
+  },
   synopsis: {
     heading: "作品紹介",
     unavailable: "作品紹介を取得できませんでした。",
@@ -612,6 +804,10 @@ export const workDetailStrings = {
     credit: "Supported by Rakuten Developers",
     priceLabel: "価格",
     availabilityLabel: "在庫・発送",
+    ratingLabel: "楽天レビュー",
+    reviewCountLabel: "レビュー件数",
+    rating: (value: number) => `${value.toFixed(1)} / 5`,
+    reviewCount: (value: number) => `${String(value)} 件`,
     price: (value: number) => yenFormatter.format(value),
     availability: {
       1: "在庫あり",
@@ -637,9 +833,34 @@ export const settingsStrings = {
     description: "変更はすぐに次のおすすめへ反映されます。",
     legend: "おすすめで優先する条件",
     labels: recommendationPolicyLabels,
+    descriptions: {
+      preferCompleted: "完結まで読める作品を上位に寄せます。",
+      preferHidden: "知名度だけに偏らない候補を優先します。",
+      preferVerified: "ファクター確認済みの作品を優先します。",
+      excludeIncomplete: "刊行状況を確認できない作品を候補から外します。",
+    },
     loading: "保存した方針を読み込んでいます…",
     saving: "方針を保存しています…",
     error: "おすすめの方針を保存できませんでした。変更前の状態に戻しました。",
+  },
+  sections: {
+    label: "設定セクション",
+    items: {
+      policies: "おすすめ",
+      data: "データ",
+      app: "このアプリ",
+    },
+  },
+  dna: {
+    title: "Manga DNA",
+    description: "好みの軸とテーマの手動調整は Manga DNA で管理します。",
+    adjustmentCount: (count: number) =>
+      count === 0 ? "手動調整はありません。" : `${String(count)} 項目を手動調整しています。`,
+    action: "Manga DNA を調整",
+  },
+  localData: {
+    title: "ローカルデータとプライバシー",
+    privacy: "データを外部へ送信せず、この端末のブラウザ内で処理します。",
   },
   data: {
     title: "データ",
@@ -746,6 +967,7 @@ export const libraryStrings = {
   storageWarning:
     "このブラウザではデータを保存できません。このセッション中だけライブラリを利用できます。",
   tablistLabel: "読書状態で絞り込む",
+  tabsAll: "すべて",
   tabs: {
     planned: "読みたい",
     reading: "読んでる",
@@ -754,6 +976,40 @@ export const libraryStrings = {
     hidden: "非表示",
   },
   listLabel: (state: string) => `${state}作品`,
+  summary: {
+    heading: "読書状態の件数",
+    total: "全作品",
+    count: (count: number) => `${String(count)} 作品`,
+  },
+  toolbar: {
+    searchLabel: "ライブラリ内を検索",
+    searchPlaceholder: "タイトル・作者で検索",
+    sortLabel: "並び順",
+    sortUpdated: "最近更新",
+    sortTitle: "タイトル順",
+    viewLabel: "表示方法",
+    views: { grid: "グリッド", list: "リスト" },
+  },
+  recent: {
+    heading: "最近更新した作品",
+    description: "保存済みの更新日時が新しい順です。",
+  },
+  favorites: {
+    heading: "お気に入り",
+    description: "感想を「最高」にした作品です。",
+  },
+  tools: {
+    heading: "ライブラリ管理",
+    description: "エクスポート、インポート、全削除は設定で管理します。",
+    openSettings: "データ設定を開く",
+  },
+  progress: (volume: number | undefined, chapter: number | undefined) =>
+    [
+      volume === undefined ? null : `${String(volume)}巻`,
+      chapter === undefined ? null : `${String(chapter)}話`,
+    ]
+      .filter((value): value is string => value !== null)
+      .join("・"),
   openRecord: (title: string) => `「${title}」の記録を編集`,
   updatedAt: (date: string) => `更新 ${date}`,
   overallEmpty: {

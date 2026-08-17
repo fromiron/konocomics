@@ -1,58 +1,101 @@
-# Design QA — FactorBar B
+# Design QA — dark-only TanStack Start redesign
 
-## Comparison target
+## Evidence
 
-- Source visual truth: `/tmp/konocomics-factor-label-comparison/b-compact-intensity-mobile.png`
-- Rendered implementation: `/tmp/konocomics-b-option-verification/factorbar-b-mobile.png`
-- Side-by-side comparison: `/tmp/konocomics-b-option-verification/factorbar-b-comparison.png`
-- Focused implementation region: `/tmp/konocomics-b-option-verification/factorbar-b-first-group.png`
-- Viewport and density: 390 × 844 CSS px, 390 × 844 source/implementation pixels, deviceScaleFactor 1
-- Browser state: Japanese locale, `prefers-reduced-motion: reduce`, production build
+- Approved sources: `docs/planning/redesign/visual-targets/01-home.png` through
+  `07-settings.png`
+- Same-state comparisons: `.qa/review/current-v6/comparisons/`
+- Desktop viewport and full-page captures: `.qa/review/current-v6/desktop-viewport/`
+  and `.qa/review/current-v6/desktop-full/`
+- Mobile viewport and full-page captures: `.qa/review/current-v6/mobile-viewport/`
+  and `.qa/review/current-v6/mobile-full/`
+- Interaction states: desktop hover expansion, mobile Quick Preview sheet, and
+  reduced motion under `.qa/review/current-v6/states/`
+- Capture details: `.qa/review/current-v6/CAPTURE_METADATA.md`
+- Browser: signed-in Codex in-app browser against the production Nitro server at
+  `http://127.0.0.1:3101`
+- Product state: completed local profile, five Catalog records, Japanese UI, and
+  a dark-only root
 
-The selected source is a comparison-only mock: its first five values are fixed to 0–4, it contains a reviewer annotation, and it shows the reveal CTA. The implementation capture uses a real six-work profile after add-mode completion and therefore has different factor values and correctly omits the reveal CTA. The fidelity target is the FactorBar B copy, typography, spacing, track, adjustment controls, and responsive composition—not the mock annotation or synthetic values.
+Each comparison places the approved source and a current browser render together
+at the source CSS viewport: 1024 × 1536 for Home and 948 × 1659 for the other six
+screens. The in-app-browser raster excludes a narrow browser-owned strip, so the
+current side is padded, never stretched. Separate 1440 × 900 and 390 × 844
+captures verify responsive behavior. Full-page captures are supporting evidence;
+viewport captures are authoritative where browser stitching repeats sticky or
+fixed elements.
 
-## Full-view comparison
+The source images' Korean copy, fake percentages, social/account controls,
+generated cover art, unsupported settings, reviews, and memos are not product
+requirements. Current captures use real catalog/provider data and supported
+fallbacks. The accepted development-only one-request-per-second provider throttle
+can briefly expose placeholders.
 
-The side-by-side image shows the same mobile column width, row rhythm, label/value alignment, track treatment, five adjustment controls, divider spacing, and bottom navigation. The implementation uses the selected exact B labels:
+## Seven-screen result
 
-`ごく控えめ / 控えめ / ほどほど / 強め / とても強め`
+1. Home preserves the dark cinematic hero, Catalog showcase, neutral Top 10,
+   discovery shelf, and footer hierarchy.
+2. Onboarding preserves search-first selection, typed genre/shelf URL state,
+   five-to-ten selection semantics, tray, and responsive navigation.
+3. Manga DNA preserves the radar/evidence relationship, qualitative confidence,
+   summary/adjust URL modes, persisted adjustments, and deterministic preview.
+4. Recommendations preserves canonical plan order, compact criteria/filters,
+   contribution-backed reasons, shared shelves, Top 10, 200 ms fine-pointer
+   expansion, and touch Quick Preview without inline expansion.
+5. Work detail keeps the title, reading state, and reason in the mobile first
+   viewport, plus qualitative compatibility evidence and provider separation.
+6. Library keeps IndexedDB counts, typed query/sort/view/state URL state, grouped
+   records, shelves, editor/search dialogs, and no document-level overflow.
+7. Settings keeps typed section tabs, the four supported policies, Manga DNA and
+   local-data panels, Base UI controls, compatible import/export, and destructive
+   confirmation.
 
-No horizontal document overflow was measured. The missing reveal CTA in the implementation is an expected state difference because add-mode completion must return to steady `/taste` without replaying reveal.
+## Component, token, and interaction result
 
-## Focused-region comparison
+- Screen styling uses Tailwind CSS v4 utilities. `src/styles/globals.css` is
+  limited to semantic dark tokens/theme mapping, base rules, shared keyframes,
+  reduced-motion defaults, and one shared portal-overlay exception.
+- Generated shadcn Base UI primitives live under `src/components/ui` and are
+  consumed through tokenized wrappers under `src/components/design-system`.
+- Shared media and detail contracts own shelves, expansion, preview, reasons,
+  confidence, state actions, cover/backdrop behavior, and work-detail layout.
+- Desktop GNB and mobile bottom navigation are mutually exclusive. All seven
+  routes were inspected at 1440 × 900 and 390 × 844 with no document overflow.
+- The first recommendation card expands to 352 px after hover intent and opens
+  its details. On a coarse pointer it remains compact and opens
+  `?preview=horimiya` as a bottom sheet ending at the viewport bottom.
+- With `prefers-reduced-motion: reduce`, the inspected Home viewport had no
+  computed running CSS animation.
+- Keyboard expansion and Back/Forward/focus restoration are present in the fixed
+  five-scenario E2E contract, but that suite has not been executed in this
+  session and is not claimed as runtime evidence here.
 
-The first-group capture makes all row labels and B values readable. It confirms the qualitative value remains on one line, every adjustment target remains at least 44 px, and long real catalog labels do not collide with the value. No separate raster assets are part of FactorBar, so image-quality fidelity is not applicable to this component.
+## Independent review
 
-## Required fidelity surfaces
+The signed-in in-app-browser Oracle reviewed the v6 Repomix and image bundle with
+GPT-5.6 Sol at High reasoning and returned `GO WITH DISCLOSED VERIFICATION GAP`
+with no P0/P1 blockers. Its single P2 pointer-only hover inconsistency was fixed;
+the response is preserved at `.qa/review/oracle-final-review-v6.md`. The paired
+Gemini 3.7 Flash High review returned the same verdict with no P0/P1 blockers at
+`.qa/review/agy-final-review-v6.md`.
 
-- Fonts and typography: aligned. Existing Japanese product fonts, weights, sizes, line heights, and nowrap value treatment are unchanged.
-- Spacing and layout rhythm: aligned. Row padding, track spacing, dividers, chip gaps, radii, and mobile width match the selected target.
-- Colors and visual tokens: aligned. Neutral factor fill, line track, accent-soft selected adjustment, accent focus/selection, and paper surface use the established semantic tokens.
-- Image quality and assets: not applicable to FactorBar; no product imagery or custom icon was introduced.
-- Copy and content: aligned. Numeric `n / 4` was replaced by the selected five B labels at the documented thresholds. Visible text and `aria-valuetext` are identical.
-- Accessibility and states: aligned in DOM inspection. Known values expose the axis as the meter name, exact numeric `aria-valuenow`, and only the qualitative label as `aria-valuetext`; unknown remains a named nonnumeric group with `まだ分析中`.
+## Verification status
 
-## Comparison history
+- Visual QA: passed for the seven same-viewport comparisons, desktop/mobile
+  responsive captures, hover, touch preview, and reduced-motion evidence.
+- Local gates: format, typecheck, lint, 83 files / 704 tests, Catalog validation
+  (150 works / 154 volumes / 0 errors), 157-page production build, and
+  `git diff --check` passed.
+- Production-local smoke: `/` returned 200, unknown route/work returned 404, and
+  both malformed Rakuten endpoints returned 400 JSON.
+- TanStack root pending, error, and not-found boundaries are localized and
+  registered.
+- Fixed-five Playwright E2E: not run; the mandatory release gate remains open.
+- M10 production deployment/readback: not performed and requires separate user
+  approval.
+- Unchecked manual and performance rows in `07-acceptance-test-plan.md` are not
+  claimed as passed.
 
-1. Earlier implementation drift: visible and accessible values used numeric `n / 4`, so the selected B target was not implemented.
-2. Fix: added the exact five labels and threshold mapping, removed duplicated axis text from `aria-valuetext`, and retained honest unknown semantics and reveal/update timing.
-3. Post-fix evidence: the side-by-side and focused captures show the selected wording and unchanged component geometry. Unit, DOM, responsive, and production-flow checks pass.
+visual QA result: passed
 
-## Findings
-
-No actionable P0, P1, or P2 visual mismatch remains within the selected FactorBar scope.
-
-A single browser console resource 404 string was observed, while the response ledger recorded no HTTP response at 400 or above and no page error. It did not affect the rendered component or primary flow.
-
-## Interaction verification
-
-- First-run onboarding: five positive works → optional Step 2 skipped → `/taste`.
-- Existing-profile add mode: one new work → `/taste` without reveal.
-- Add draft ordinary return, restoration, explicit discard, completion, and two-tab conflict recovery passed through the production UI and IndexedDB.
-- Existing rows and the first `onboardingCompletedAt` remained unchanged; work counts read back as 5 → 6 → 7 across the intended scenarios.
-- All 49 rendered FactorBars used B labels with visible/accessible parity; mobile overflow was 0 px.
-- Browser page errors and failed HTTP responses were 0.
-
-## Final result
-
-final result: passed
+M10 release result: pending

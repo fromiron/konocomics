@@ -81,17 +81,32 @@ export function CoverImage({
   if (showPlaceholder) {
     if (variant === "hero") {
       return (
-        <div className={cn("cover-image cover-image--hero", className)}>
+        <div
+          className={cn(
+            "cover-image cover-image--hero relative isolate grid h-[40vh] max-h-[40vh] w-full place-items-center overflow-hidden rounded-[var(--radius-card)] border border-line bg-surface-1",
+            className,
+          )}
+        >
           <div
             aria-hidden={decorative || undefined}
             aria-label={decorative ? undefined : coverStrings.placeholderLabel(title, creatorLine)}
-            className="cover-image__hero-frame cover-image--placeholder"
+            className="cover-image__hero-frame cover-image--placeholder relative z-10 h-[calc(100%-var(--space-8))] w-auto max-w-[calc(100%-var(--space-8))] overflow-hidden rounded-[var(--radius-cover)] border border-line bg-surface-1 text-text-muted shadow-[var(--shadow-raised)] aspect-[30/43]"
             role={decorative ? undefined : "img"}
           >
-            <span aria-hidden="true" className="cover-image__placeholder-content">
-              <span aria-hidden="true" className="cover-image__screentone" />
-              <span className="cover-image__placeholder-title">{title}</span>
-              <span className="cover-image__placeholder-creator">{creatorLine}</span>
+            <span
+              aria-hidden="true"
+              className="cover-image__placeholder-content absolute inset-0 grid place-items-center"
+            >
+              <span
+                aria-hidden="true"
+                className="cover-image__screentone absolute top-0 right-0 h-[30%] w-[42%] bg-[radial-gradient(color-mix(in_oklch,var(--text-strong)_8%,transparent)_1px,transparent_1px)] [background-size:12px_12px]"
+              />
+              <span className="cover-image__placeholder-title relative z-10 line-clamp-2 w-[72%] text-center text-[length:var(--font-size-14)] leading-[1.55] font-medium tracking-[0.06em] text-balance text-text-muted">
+                {title}
+              </span>
+              <span className="cover-image__placeholder-creator absolute right-[var(--space-3)] bottom-[var(--space-3)] left-[var(--space-3)] z-10 truncate text-[length:var(--text-caption-size)] leading-[1.4]">
+                {creatorLine}
+              </span>
             </span>
           </div>
         </div>
@@ -102,13 +117,26 @@ export function CoverImage({
       <div
         aria-hidden={decorative || undefined}
         aria-label={decorative ? undefined : coverStrings.placeholderLabel(title, creatorLine)}
-        className={cn("cover-image cover-image--placeholder", className)}
+        className={cn(
+          "cover-image cover-image--placeholder relative isolate w-full overflow-hidden rounded-[var(--radius-cover)] border border-line bg-surface-1 text-text-muted aspect-[30/43]",
+          className,
+        )}
         role={decorative ? undefined : "img"}
       >
-        <span aria-hidden="true" className="cover-image__placeholder-content">
-          <span aria-hidden="true" className="cover-image__screentone" />
-          <span className="cover-image__placeholder-title">{title}</span>
-          <span className="cover-image__placeholder-creator">{creatorLine}</span>
+        <span
+          aria-hidden="true"
+          className="cover-image__placeholder-content absolute inset-0 grid place-items-center"
+        >
+          <span
+            aria-hidden="true"
+            className="cover-image__screentone absolute top-0 right-0 h-[30%] w-[42%] bg-[radial-gradient(color-mix(in_oklch,var(--text-strong)_8%,transparent)_1px,transparent_1px)] [background-size:12px_12px]"
+          />
+          <span className="cover-image__placeholder-title relative z-10 line-clamp-2 w-[72%] text-center text-[length:var(--font-size-14)] leading-[1.55] font-medium tracking-[0.06em] text-balance text-text-muted">
+            {title}
+          </span>
+          <span className="cover-image__placeholder-creator absolute right-[var(--space-3)] bottom-[var(--space-3)] left-[var(--space-3)] z-10 truncate text-[length:var(--text-caption-size)] leading-[1.4]">
+            {creatorLine}
+          </span>
         </span>
       </div>
     );
@@ -116,24 +144,34 @@ export function CoverImage({
 
   if (variant === "hero") {
     return (
-      <div className={cn("cover-image cover-image--hero", className)}>
+      <div
+        className={cn(
+          "cover-image cover-image--hero relative isolate grid h-[40vh] max-h-[40vh] w-full place-items-center overflow-hidden rounded-[var(--radius-card)] border border-line bg-surface-1",
+          className,
+        )}
+      >
         {/* The decorative and informative images intentionally share one current source. */}
-        {/* eslint-disable-next-line @next/next/no-img-element */}
         <img
           alt=""
           aria-hidden="true"
-          className="cover-image__hero-blur"
+          className="cover-image__hero-blur pointer-events-none absolute inset-0 size-full scale-125 object-cover opacity-30 blur-[var(--space-12)]"
           data-cover-source={currentSource}
           src={currentSource}
         />
-        <span aria-hidden="true" className="cover-image__hero-paper" />
-        <div className="cover-image__hero-frame">
-          {loaded ? null : <span aria-hidden="true" className="cover-image__skeleton" />}
-          {/* Provider URLs are dynamic, so next/image cannot safely enumerate their hosts. */}
-          {/* eslint-disable-next-line @next/next/no-img-element */}
+        <span
+          aria-hidden="true"
+          className="cover-image__hero-paper pointer-events-none absolute inset-0 z-0 bg-cover-paper"
+        />
+        <div className="cover-image__hero-frame relative z-10 h-[calc(100%-var(--space-8))] w-auto max-w-[calc(100%-var(--space-8))] overflow-hidden rounded-[var(--radius-cover)] border border-line bg-surface-1 shadow-[var(--shadow-raised)] aspect-[30/43]">
+          {loaded ? null : (
+            <span
+              aria-hidden="true"
+              className="cover-image__skeleton absolute inset-0 bg-line motion-safe:[animation:cover-skeleton-pulse_1.2s_ease-in-out_infinite_alternate] motion-reduce:opacity-65"
+            />
+          )}
           <img
             alt={decorative ? "" : coverStrings.alt(title)}
-            className="cover-image__image"
+            className="cover-image__image absolute inset-0 size-full object-contain"
             data-cover-source={currentSource}
             data-loaded={loaded ? "true" : "false"}
             decoding={priority ? "sync" : "async"}
@@ -159,13 +197,21 @@ export function CoverImage({
   }
 
   return (
-    <div className={cn("cover-image", className)}>
-      {loaded ? null : <span aria-hidden="true" className="cover-image__skeleton" />}
-      {/* Provider URLs are dynamic, so next/image cannot safely enumerate their hosts. */}
-      {/* eslint-disable-next-line @next/next/no-img-element */}
+    <div
+      className={cn(
+        "cover-image relative isolate w-full overflow-hidden rounded-[var(--radius-cover)] border border-line bg-surface-1 aspect-[30/43]",
+        className,
+      )}
+    >
+      {loaded ? null : (
+        <span
+          aria-hidden="true"
+          className="cover-image__skeleton absolute inset-0 bg-line motion-safe:[animation:cover-skeleton-pulse_1.2s_ease-in-out_infinite_alternate] motion-reduce:opacity-65"
+        />
+      )}
       <img
         alt={decorative ? "" : coverStrings.alt(title)}
-        className="cover-image__image"
+        className="cover-image__image absolute inset-0 size-full object-contain"
         data-loaded={loaded ? "true" : "false"}
         decoding={priority ? "sync" : "async"}
         draggable={false}

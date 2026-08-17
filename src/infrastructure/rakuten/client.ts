@@ -23,7 +23,7 @@ export class RakutenClientError extends Error {
 }
 
 const providerRequests = new Map<string, Promise<RakutenBookItem>>();
-const RAKUTEN_REQUEST_INTERVAL_MS = process.env.NODE_ENV === "test" ? 0 : 1_000;
+const RAKUTEN_REQUEST_INTERVAL_MS = import.meta.env.MODE === "development" ? 1_000 : 0;
 let providerRequestQueue: Promise<void> = Promise.resolve();
 let nextProviderRequestAt = 0;
 

@@ -7,7 +7,7 @@
 
 ## 1. 정적 검사 (CI 매 커밋)
 
-- `tsc --noEmit` (strict) / ESLint (domain 계층 격리 규칙 포함: domain이 react·dexie·next를 import하면 실패) / Prettier check.
+- `tsc --noEmit` (strict) / ESLint (domain 계층 격리 규칙 포함: domain이 react·dexie·TanStack을 import하면 실패) / Prettier check.
 - **`catalog:validate`를 CI 게이트로:** 검증 실패 데이터는 빌드 자체가 실패한다. 검사 항목 — ID·ISBN 중복, 팩터 범위·상태 오류, centrality 범위, eligibility 충돌, 추천 대상 coverage 미달, evidence 누락, 대표 volume 누락, `data`/`src`/exact versioned `public` Catalog 세 artifact의 존재와 canonical byte 동일성.
 
 ## 2. 추천 엔진 유닛 테스트 (가장 두터운 계층)
@@ -53,7 +53,7 @@
 - Import 거부: schemaVersion 2 / 필드 손상 / 부분 손상 배열 — mutation 전 전체 거부와 일곱 store 불변.
 - providerCache TTL: 주입 시간 기준 가격·재고 24시간 / 기타 metadata 90일의 직전·정확 경계, 상업 필드만 먼저 숨기는 상태, legacy 단일 `expiresAt` cache miss.
 - 추천 표지 resolver: 표시 순 representative ISBN, 1위 완료 전 2~10위 미시작, fresh exact-workId/no-image terminal, expired·mismatch·miss 갱신+저장 readback, 실패 placeholder, stale generation 차단, 백필 survivor URL 보존·신규만 요청. normalized ISBN 동시 요청은 한 provider 호출에 합류하고 settle 뒤 재시도 가능하다.
-- Route Handler: 쿼리 검증 400, App ID·Access Key 비노출, 필드 축소, `_ex=600x600` 재작성, 타임아웃→502, 자동 재시도 0회.
+- TanStack Start server route: 기존 URL의 쿼리 검증 400, App ID·Access Key 비노출, 필드 축소, `_ex=600x600` 재작성, cache header, 타임아웃→502, 자동 재시도 0회.
 
 ### Slice 10 데이터 주권·호환 프로필 추가 계약
 
@@ -124,30 +124,39 @@
 - [ ] pre 확정 전과 final submit 전의 visible text, accessible name/description, DOM text, `data-*`, id/class, URL/query/hash, JSON-LD, console과 중간 다운로드 가능 상태를 확인해 engine identity·A/B mapping·score·confidence·anchor·contribution·penalty·market·maturity·catalog role이 노출되지 않음을 확인한다. after에서는 같은 native list/rank와 contribution 기반 설명 또는 exact `説明はありません。`을 확인한다.
 - [ ] 다운로드한 canonical JSON을 그대로 `pnpm --silent g2:aggregate -r <다운로드 파일> -o <리포트>`에 넣고 성공 exit와 authoritative report를 read back한다. report가 accepted pilot 1개, human 0개, verdict `INCOMPLETE`를 나타내며 pilot을 human 분자·분모나 10명 수에 포함하지 않는지 확인한다.
 
+## 4.5 TanStack Start migration 회귀
+
+- 하나의 parameterized route-schema test에서 `/onboarding`, `/taste`, `/recommendations`, `/library`, `/settings`, `/works/external`의 valid/default/malformed search를 검증한다. external duplicate `workId`만 기존 invalid-link/no-lookup 계약을 유지한다.
+- route/build integration은 `/` prerender, bundled `/works/$workId` prerender, unknown work not-found, local-state 5 route의 client boundary, `/works/external` static shell을 확인한다. server loader/`beforeLoad`에서 Dexie를 열지 않는다.
+- 같은 frozen fixture에서 migration 전후 추천 work ID 순서, contribution, confidence level, explanation source를 byte-equivalent하게 비교한다. 새 산식 테스트를 복제하지 않는다.
+- 기존 Export/Import/external identity/Rakuten server-route 테스트를 그대로 통과시킨다. 1초 client throttle은 development에서만 활성이고 production/test에는 지연이 없음을 한 기존 client test에 추가한다.
+- source contract는 feature/route가 `src/components/ui/**` primitive를 직접 import하지 않고 `src/components/design-system/**` wrapper를 쓰는지 확인한다. 새 visual-regression infrastructure는 만들지 않는다.
+
 ## 5. 제품 E2E (Playwright — 5 시나리오 고정, 확장 금지)
 
 Chromium + 모바일 뷰포트(390×844) 프로젝트 2개로 실행. 라쿠텐은 라우트 모킹.
 
-1. **핵심 여정:** 일반 first-run resolved landing의 marker 선기록·CTA 상시 조작·비소비 스킵·reload 정적 상태를 같은 시나리오의 격리 분기에서 확인 → 온보딩(검색 포함 8작품, 1 favorite) → `合わなかった` 1개+이유 → DNA reveal(`?reveal` 즉시 제거 뒤 local decision으로 계속, 1200ms 뒤 late-viewport FactorBar 즉시 시작) → 추천 10개 표시, 1위 카드의 이유 문장이 카드 data-attribute의 contribution 요약과 일치.
-2. **피드백 루프:** 추천 1위를 読んだ 처리 → 카드 제거·백필 → 재계산 후에도 해당 작품 미등장.
-3. **영속성:** Catalog와 external 기록 생성 → 컨텍스트 재시작 → Library·DNA 유지. 같은 브라우저의 canonical external URL reload는 같은 row를 표시하고, row 없는 독립 context는 local-missing을 표시하며 provider로 복원하지 않는다.
+1. **핵심 여정:** 일반 first-run resolved landing의 marker 선기록·CTA 상시 조작·비소비 스킵·reload 정적 상태를 같은 시나리오의 격리 분기에서 확인 → typed `q/genre/shelf`가 back/forward에 복원되는 온보딩(검색 포함 8작품, 1 favorite) → `合わなかった` 1개+이유 → DNA reveal(`?reveal` 즉시 제거 뒤 local decision으로 계속, 1200ms 뒤 late-viewport FactorBar 즉시 시작) → 추천 Top 10, 1위 이유와 contribution data 일치.
+2. **피드백 루프:** desktop focus expansion/mobile Quick Preview open-close와 opener 복원 → 추천 1위를 読んだ 처리 → 카드 제거·백필 → 재계산 후에도 해당 작품 미등장. `?preview` back/forward는 대상만 복원하고 dialog animation/focus state를 복원하지 않는다.
+3. **영속성:** Catalog와 external 기록 생성 → 컨텍스트 재시작 → Library·DNA 유지. Library typed filter/search가 reload/back에 복원된다. 같은 브라우저의 canonical external URL reload는 같은 row를 표시하고, row 없는 독립 context는 local-missing을 표시하며 provider로 복원하지 않는다.
 4. **Provider 장애:** `/api/rakuten/*` 전부 502 모킹 → placeholder 표지로 온보딩·추천·상세 성립, 구매 버튼 폴백.
 5. **데이터 주권:** usable profile의 모든 정책·Catalog/external 기록을 Export → 전체 삭제(여섯 non-meta store empty + current meta readback, 랜딩/가드 확인) → `/settings`에서 Import → 추천·Library·정책과 exact external URL/identity 원상 복구. 같은 시나리오의 격리된 분기로 (a) 손상 external/profile/draft 파일의 whole-file 거부와 일곱 store 무변경, (b) 과거 catalogVersion 경고와 「カタログ外」 record 보존, (c) completion marker가 `null`인 pre-profile first-run draft의 Export→삭제→Import와 합성 시각 없음, (d) `?landing=1` 소개 전후 `logoRevealed` sentinel과 나머지 로컬 상태가 byte-identical임을 검증한다.
 
-E2E 내 기본 조작성 스모크: 시나리오 1을 키보드만으로 완주하고 탭 순서·Enter/Space 선택·focus 복귀를 검증한다. 주요 heading·label·name/role/value·status message는 Playwright DOM assertion으로 확인한다. 시나리오 1·3의 기존 경로에서 B allowlist와 quiet-surface 제외, reduced-motion의 A/B/C 정적 상태도 함께 확인하되 여섯 번째 제품 시나리오를 만들지 않는다. 이는 제품 회귀 검사이며 WCAG 적합성 판정으로 해석하지 않는다.
+E2E 내 기본 조작성 스모크: 시나리오 1을 키보드만으로 완주하고 탭 순서·Enter/Space 선택·focus 복귀를 검증한다. 주요 heading·label·name/role/value·status message는 Playwright DOM assertion으로 확인한다. 기존 시나리오 안에서 desktop GNB/mobile bottom navigation 상호 배타, immersive route의 mobile nav 없음, Shelf overflow, reduced-motion의 A/B/C 정적 상태를 함께 확인하되 여섯 번째 제품 시나리오를 만들지 않는다. 이는 제품 회귀 검사이며 WCAG 적합성 판정으로 해석하지 않는다.
 
-## 6. 수동 QA 체크리스트 (릴리스 게이트, 슬라이스 11~12에서 전체 실행)
+## 6. 수동 QA 체크리스트 (M10 릴리스 게이트)
 
 ### 모바일 실기기 (iOS Safari + Android Chrome 각 1대)
 
 - [ ] 온보딩 Shelf 스와이프·스크롤 스냅 자연스러움, 터치 타깃 44px 실측.
 - [ ] 하단 탭 바가 키보드(가상)·세이프 에어리어와 충돌하지 않음.
-- [ ] 홈 화면 설치 → standalone 실행 → 오프라인에서 DNA·Library·기존 추천 열람.
 - [ ] 작품 상세 블러 배경의 스크롤 성능(프레임 드랍 육안 확인).
+- [ ] touch card는 hover 확장 없이 Quick Preview sheet를 열고 닫은 뒤 opener로 복귀.
 
 ### 키보드·포커스·DOM 시맨틱 (데스크톱)
 
 - [ ] 전 화면 focus-visible 링 표시, 시트·다이얼로그 포커스 트랩과 복귀.
+- [ ] desktop fine-pointer card는 200ms intent 뒤 확장되고 keyboard focus는 즉시 같은 정보를 노출한다.
 - [ ] FactorBar 확인값이 접근 가능한 이름 「戦略的な展開」과 정성 값 「強め」를 중복 없이 노출하고, 미확인 축은 「戦略的な展開: まだ分析中」인 비수치 DOM 상태를 노출한다.
 - [ ] 추천 카드 제거 시 `aria-live` 메시지의 DOM 갱신과 포커스 이동.
 
@@ -164,17 +173,17 @@ E2E 내 기본 조작성 스모크: 시나리오 1을 키보드만으로 완주�
 - [ ] 표지가 어떤 화면에서도 크롭되지 않음(세로/가로 특이 비율 표지 3종으로 확인).
 - [ ] placeholder 표지·빈 상태·오류 상태를 화면별로 강제 재현해 확인(라쿠텐 차단 + 데이터 비움).
 - [ ] 스크린톤이 지정 표면(랜딩 hero·빈 상태·DNA 요약)에만 존재.
-- [ ] 다크 모드(슬라이스 12 이후): 대비 재측정, 블러 배경 위 텍스트 4.5:1.
+- [ ] dark-only canvas에서 본문/보조/control 상태 대비와 블러/overlay 위 텍스트 4.5:1을 재측정하고 theme selector가 없음을 확인한다.
 
 ### 성능 (독립 production-local 계측, 예산·프로토콜은 04 §8)
 
 이 계측은 fixed 5 product E2E와 별도 suite/artifact로 실행하며 제품 E2E 시나리오 수에 포함하지 않는다.
 
-- [ ] `npm run build` + `npm run start`와 Playwright Chromium에서 390×844/DPR 3/touch, CDP CPU 4×·150ms RTT·1.6Mbit/s down·0.75Mbit/s up 조건을 기록하고, 실제 제품 flow로 state를 만든 독립 cold context 5회의 raw 결과와 중앙값을 보존한다.
+- [ ] `pnpm build` + `pnpm start`와 Playwright Chromium에서 390×844/DPR 3/touch, CDP CPU 4×·150ms RTT·1.6Mbit/s down·0.75Mbit/s up 조건을 기록하고, 실제 제품 flow로 state를 만든 독립 cold context 5회의 raw 결과와 중앙값을 보존한다.
 - [ ] navigation 전 buffered `PerformanceObserver`로 측정한 landing resolved introduction과 추천 화면의 실제 browser-selected LCP 중앙값이 각각 <3.5s이고, 두 route CLS 중앙값이 <0.05다. 가시 태그라인·설명문을 숨기거나 축소하거나 96px 표지를 확대해 후보 identity를 조작하지 않는다. 첫 로고 후보와 1위 표지 request·삽입·load 시각을 별도로 보존하고, 1위 표지는 eager/high-priority이며 provider fixture를 쓰면 fulfilled bytes가 같은 latency/transfer profile을 실제로 보존함을 함께 입증한다.
-- [ ] cold direct `/recommendations`가 user input 전 `networkidle`까지 실제 요청한 unique same-origin `/_next/static/**/*.js`를 emitted path/hash로 dedupe하고 exact file gzip level 9 합계를 냈을 때 <250,000 bytes다. URL·raw/gzip bytes·total을 JSON으로 남기며 `next build` 요약으로 대신하지 않는다.
+- [ ] cold direct `/recommendations`가 user input 전 `networkidle`까지 실제 요청한 unique same-origin JavaScript를 TanStack Start/Vite manifest의 emitted file로 dedupe하고 exact file gzip level 9 합계를 냈을 때 <250,000 bytes다. URL·raw/gzip bytes·total을 JSON으로 남기며 build summary로 대신하지 않는다.
 - [ ] 같은 frozen mobile 조건의 rAF raw interval에서 DNA A와 추천 C를 보고한다. 60fps는 목표이며 추천 C median effective FPS가 ≥30이다. 미달하면 해당 C owner의 layout motion을 끄고 같은 flow로 재검증한다.
-- [ ] Lighthouse Performance는 진단용일 뿐 위 직접 지표의 판정 근거가 아니다. **Lighthouse PWA 통과는 Slice 12 완료 게이트로 유지**하고 Slice 11에는 적용하지 않는다. Lighthouse accessibility는 실행하지 않는다.
+- [ ] Lighthouse Performance는 진단용일 뿐 위 직접 지표의 판정 근거가 아니다. PWA/service-worker 감사는 TanStack Start adapter가 별도 승인된 뒤 수행한다. Lighthouse accessibility는 실행하지 않는다.
 - [ ] production-local 결과와 별도로 중급 Android thermal/frame, real cellular/provider LCP, iOS/Android 설치 모드의 검증 한계를 기록한다.
 
 ### 선택적 post-MVP 접근성 감사 (릴리스 비차단)

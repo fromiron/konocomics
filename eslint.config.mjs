@@ -1,20 +1,35 @@
 import { defineConfig, globalIgnores } from "eslint/config";
 import importPlugin from "eslint-plugin-import";
-import nextTs from "eslint-config-next/typescript";
-import nextVitals from "eslint-config-next/core-web-vitals";
+import reactHooks from "eslint-plugin-react-hooks";
+import tseslint from "typescript-eslint";
 
 const domainFiles = ["src/domain/**/*.{ts,tsx}"];
 
 export default defineConfig([
-  ...nextVitals,
-  ...nextTs,
+  ...tseslint.configs.recommended,
+  importPlugin.flatConfigs.typescript,
+  reactHooks.configs.flat["recommended-latest"],
   {
-    plugins: {
-      import: importPlugin,
-    },
     rules: {
       "@typescript-eslint/consistent-type-imports": "error",
       "@typescript-eslint/no-explicit-any": "error",
+    },
+  },
+  {
+    files: ["src/{components,features,routes}/**/*.{ts,tsx}"],
+    ignores: ["src/components/{ui,design-system}/**/*.{ts,tsx}"],
+    rules: {
+      "no-restricted-imports": [
+        "error",
+        {
+          patterns: [
+            {
+              group: ["@/components/ui/*"],
+              message: "Use a tokenized component from @/components/design-system instead.",
+            },
+          ],
+        },
+      ],
     },
   },
   {
@@ -25,7 +40,7 @@ export default defineConfig([
         {
           basePath: import.meta.dirname,
           zones: [
-            { target: "./src/domain", from: "./src/app" },
+            { target: "./src/domain", from: "./src/routes" },
             { target: "./src/domain", from: "./src/components" },
             { target: "./src/domain", from: "./src/data" },
             { target: "./src/domain", from: "./src/features" },
@@ -47,9 +62,18 @@ export default defineConfig([
       "no-restricted-imports": [
         "error",
         {
-          paths: ["dexie", "dexie-react-hooks", "next", "react", "react-dom"],
+          paths: [
+            "@tanstack/react-router",
+            "@tanstack/react-start",
+            "dexie",
+            "dexie-react-hooks",
+            "react",
+            "react-dom",
+          ],
           patterns: [
-            "@/app/*",
+            "@/routes/*",
+            "@tanstack/react-router/*",
+            "@tanstack/react-start/*",
             "@/components/*",
             "@/data/*",
             "@/features/*",
@@ -69,7 +93,6 @@ export default defineConfig([
             "https/*",
             "net",
             "node:*",
-            "next/*",
             "perf_hooks",
             "process",
             "react/*",
@@ -111,6 +134,8 @@ export default defineConfig([
   },
   globalIgnores([
     ".next/**",
+    ".nitro/**",
+    ".output/**",
     "build/**",
     "coverage/**",
     "data/generated/**",

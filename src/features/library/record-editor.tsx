@@ -2,6 +2,9 @@
 
 import { type FormEvent, useState } from "react";
 
+import { Button } from "@/components/design-system/button";
+import { Input } from "@/components/design-system/input";
+import { NativeSelect } from "@/components/design-system/native-select";
 import { FACTOR_BACKED_NEGATIVE_REASON_IDS } from "@/domain/profile/constants";
 import type {
   NegativeReasonId,
@@ -71,27 +74,35 @@ function ReasonPicker({
 }: ReasonPickerProps) {
   const hasExternalReason = reasons.some((reason) => reason.startsWith("external:"));
   return (
-    <fieldset aria-describedby={descriptionId} className="library-editor__reasons">
-      <legend>{legend}</legend>
-      <p id={descriptionId}>{libraryStrings.editor.reasonOptional}</p>
-      <div role="group">
+    <fieldset
+      aria-describedby={descriptionId}
+      className="m-0 grid gap-[var(--space-content)] border-0 p-0"
+    >
+      <legend className="mb-[var(--space-content)] font-bold text-text-strong">{legend}</legend>
+      <p className="text-text-muted" id={descriptionId}>
+        {libraryStrings.editor.reasonOptional}
+      </p>
+      <div className="flex flex-wrap gap-[var(--space-content)]" role="group">
         {REASON_OPTIONS.map((option) => (
-          <button
+          <Button
             aria-pressed={reasons.includes(option.id)}
-            className="interactive-press"
+            className="aria-pressed:border-accent aria-pressed:bg-accent-soft aria-pressed:text-accent"
             key={option.id}
             onClick={() => {
               const next = toggleReason(reasons, otherReasons, option.id);
               setReasons(next.current, next.other);
             }}
             type="button"
+            variant="outline"
           >
             {option.label}
-          </button>
+          </Button>
         ))}
       </div>
       {hasExternalReason ? (
-        <p className="library-external-note">{libraryStrings.editor.externalReason}</p>
+        <p className="border-l-[length:var(--space-content-tight)] border-line bg-canvas p-[var(--space-3)] text-[length:var(--text-caption-size)] text-text-muted">
+          {libraryStrings.editor.externalReason}
+        </p>
       ) : null}
     </fieldset>
   );
@@ -154,12 +165,16 @@ export function LibraryRecordEditor({ busy, onSave, record }: LibraryRecordEdito
   };
 
   return (
-    <form aria-busy={busy} className="library-editor" onSubmit={submit}>
+    <form
+      aria-busy={busy}
+      className="grid gap-[var(--space-5)] border-t border-line pt-[var(--space-5)]"
+      onSubmit={submit}
+    >
       <h3>{libraryStrings.editor.heading}</h3>
-      <div className="library-editor__fields">
-        <label>
+      <div className="grid gap-[var(--space-3)] md:grid-cols-2">
+        <label className="grid gap-[var(--space-content-tight)] text-[length:var(--text-caption-size)] font-bold text-text-muted">
           <span>{libraryStrings.editor.readingState}</span>
-          <select
+          <NativeSelect
             disabled={busy}
             onChange={(event) => {
               if (isReadingState(event.currentTarget.value)) {
@@ -173,11 +188,11 @@ export function LibraryRecordEditor({ busy, onSave, record }: LibraryRecordEdito
                 {libraryStrings.tabs[state]}
               </option>
             ))}
-          </select>
+          </NativeSelect>
         </label>
-        <label>
+        <label className="grid gap-[var(--space-content-tight)] text-[length:var(--text-caption-size)] font-bold text-text-muted">
           <span>{libraryStrings.editor.reaction}</span>
-          <select
+          <NativeSelect
             disabled={busy}
             onChange={(event) => {
               const value = event.currentTarget.value;
@@ -191,14 +206,16 @@ export function LibraryRecordEditor({ busy, onSave, record }: LibraryRecordEdito
                 {libraryStrings.reactions[entry]}
               </option>
             ))}
-          </select>
+          </NativeSelect>
         </label>
       </div>
-      <fieldset className="library-editor__progress">
-        <legend>{libraryStrings.editor.progress}</legend>
-        <label>
+      <fieldset className="m-0 grid grid-cols-2 gap-[var(--space-3)] border-0 p-0">
+        <legend className="col-span-full mb-[var(--space-content)] font-bold text-text-strong">
+          {libraryStrings.editor.progress}
+        </legend>
+        <label className="grid gap-[var(--space-content-tight)] text-[length:var(--text-caption-size)] font-bold text-text-muted">
           <span>{libraryStrings.editor.volume}</span>
-          <input
+          <Input
             disabled={busy}
             inputMode="numeric"
             min="0"
@@ -208,9 +225,9 @@ export function LibraryRecordEditor({ busy, onSave, record }: LibraryRecordEdito
             value={volume}
           />
         </label>
-        <label>
+        <label className="grid gap-[var(--space-content-tight)] text-[length:var(--text-caption-size)] font-bold text-text-muted">
           <span>{libraryStrings.editor.chapter}</span>
-          <input
+          <Input
             disabled={busy}
             inputMode="numeric"
             min="0"
@@ -245,9 +262,9 @@ export function LibraryRecordEditor({ busy, onSave, record }: LibraryRecordEdito
           }}
         />
       ) : null}
-      <button className="library-editor__save interactive-press" disabled={busy} type="submit">
+      <Button className="justify-self-start" disabled={busy} type="submit">
         {busy ? libraryStrings.editor.saving : libraryStrings.editor.save}
-      </button>
+      </Button>
     </form>
   );
 }

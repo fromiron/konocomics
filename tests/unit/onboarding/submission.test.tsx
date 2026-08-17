@@ -1,6 +1,7 @@
 // @vitest-environment jsdom
 
 import { act, cleanup, fireEvent, render, screen, waitFor, within } from "@testing-library/react";
+import type { ReactNode } from "react";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 
 import { OnboardingFlow } from "@/features/onboarding/onboarding-flow";
@@ -16,16 +17,20 @@ const testState = vi.hoisted(() => ({
   draft: null as unknown,
   finalizeOnboarding: vi.fn(),
   hasProfile: false,
+  navigate: vi.fn(),
   onboardingCompletedAt: null as string | null,
-  push: vi.fn(),
   refresh: vi.fn(),
-  replace: vi.fn(),
   saveOnboardingDraft: vi.fn(),
   userWorks: [] as unknown[],
 }));
 
-vi.mock("next/navigation", () => ({
-  useRouter: () => ({ push: testState.push, replace: testState.replace }),
+vi.mock("@tanstack/react-router", () => ({
+  Link: ({ children, className, to }: { children: ReactNode; className?: string; to: string }) => (
+    <a className={className} href={to}>
+      {children}
+    </a>
+  ),
+  useNavigate: () => testState.navigate,
 }));
 
 vi.mock("@/features/catalog/catalog-provider", () => ({
@@ -77,10 +82,9 @@ beforeEach(() => {
   testState.clearOnboardingDraft.mockReset();
   testState.hasProfile = false;
   testState.onboardingCompletedAt = null;
-  testState.push.mockReset();
+  testState.navigate.mockReset();
   testState.refresh.mockReset();
   testState.refresh.mockResolvedValue(undefined);
-  testState.replace.mockReset();
   testState.saveOnboardingDraft.mockReset();
   testState.saveOnboardingDraft.mockResolvedValue(undefined);
   testState.clearOnboardingDraft.mockResolvedValue(undefined);
@@ -235,10 +239,10 @@ describe("OnboardingFlow finalization", () => {
 
     const candidateGroup = screen.getByRole("group", { name: "候補作品 — この作品について" });
     const candidateRadio = within(candidateGroup).getByRole("radio", { name: "合わなかった" });
-    expect(candidateRadio.matches(":disabled")).toBe(false);
+    expect(candidateRadio.getAttribute("aria-disabled")).not.toBe("true");
     fireEvent.click(candidateRadio);
 
-    expect(candidateRadio.matches(":checked")).toBe(false);
+    expect(candidateRadio.getAttribute("aria-checked")).toBe("false");
     expect(screen.getByRole("status").textContent).toContain("最大 3 作品までです");
     expect(testState.saveOnboardingDraft).not.toHaveBeenCalled();
   });
@@ -258,14 +262,14 @@ describe("OnboardingFlow finalization", () => {
     const search = screen.getByRole("searchbox", { name: "合わなかったマンガを検索" });
     const remove = screen.getByRole("button", { name: "MONSTER — この作品を外す" });
     const disposition = screen.getByRole("radio", { name: "合わなかった" });
-    const reason = screen.getByRole("button", { name: "展開が遅い" });
+    const reason = screen.getByRole("checkbox", { name: "展開が遅い" });
     const completionButtons = screen.getAllByRole("button", { name: "保存しています…" });
 
     await waitFor(() => {
       expect(search.matches(":disabled")).toBe(true);
       expect(remove.matches(":disabled")).toBe(true);
-      expect(disposition.matches(":disabled")).toBe(true);
-      expect(reason.matches(":disabled")).toBe(true);
+      expect(disposition.getAttribute("aria-disabled")).toBe("true");
+      expect(reason.getAttribute("aria-disabled")).toBe("true");
       expect(completionButtons).toHaveLength(2);
       expect(completionButtons.every((button) => button.matches(":disabled"))).toBe(true);
     });
@@ -305,7 +309,10 @@ describe("OnboardingFlow finalization", () => {
     fireEvent.click(screen.getByRole("button", { name: "好みを見る" }));
 
     await waitFor(() => {
-      expect(testState.push).toHaveBeenCalledWith("/taste?reveal=1");
+      expect(testState.navigate).toHaveBeenCalledWith({
+        to: "/taste",
+        search: { reveal: "1" },
+      });
     });
   });
 });
@@ -353,7 +360,7 @@ describe("OnboardingFlow add mode", () => {
 
     await waitFor(() => {
       expect(testState.finalizeOnboarding).toHaveBeenCalledTimes(1);
-      expect(testState.replace).toHaveBeenCalledWith("/taste");
+      expect(testState.navigate).toHaveBeenCalledWith({ to: "/taste", replace: true });
     });
     expect(testState.finalizeOnboarding.mock.calls[0]?.[0]).toMatchObject({
       mode: "add",
@@ -361,7 +368,7 @@ describe("OnboardingFlow add mode", () => {
       positiveEntries: [{ workId: "new-candidate", reaction: "liked" }],
       negativeEntries: [],
     });
-    expect(testState.push).not.toHaveBeenCalled();
+    expect(testState.navigate).toHaveBeenCalledTimes(1);
     expect(
       screen.queryByRole("heading", {
         name: "合わなかった・途中でやめたマンガはありますか？ 任意",
@@ -378,7 +385,7 @@ describe("OnboardingFlow add mode", () => {
     fireEvent.click(screen.getByRole("button", { name: "DNAに戻る" }));
 
     await waitFor(() => {
-      expect(testState.replace).toHaveBeenCalledWith("/taste");
+      expect(testState.navigate).toHaveBeenCalledWith({ to: "/taste", replace: true });
     });
     expect(testState.saveOnboardingDraft).toHaveBeenLastCalledWith(
       expect.objectContaining({
@@ -400,7 +407,7 @@ describe("OnboardingFlow add mode", () => {
 
     await waitFor(() => {
       expect(testState.clearOnboardingDraft).toHaveBeenCalledTimes(1);
-      expect(testState.replace).toHaveBeenCalledWith("/taste");
+      expect(testState.navigate).toHaveBeenCalledWith({ to: "/taste", replace: true });
     });
     expect(testState.finalizeOnboarding).not.toHaveBeenCalled();
   });
@@ -421,7 +428,7 @@ describe("OnboardingFlow add mode", () => {
         "「追加候補」は別の画面ですでに追加されています。最新の内容を読み込みました。選び直してください。",
       );
     });
-    expect(testState.replace).not.toHaveBeenCalled();
+    expect(testState.navigate).not.toHaveBeenCalled();
   });
 
   it("returns to the completed profile when another tab finishes first-run onboarding", async () => {
@@ -432,7 +439,7 @@ describe("OnboardingFlow add mode", () => {
 
     await waitFor(() => {
       expect(testState.refresh).toHaveBeenCalledTimes(1);
-      expect(testState.replace).toHaveBeenCalledWith("/taste");
+      expect(testState.navigate).toHaveBeenCalledWith({ to: "/taste", replace: true });
     });
     expect(
       screen.queryByText(

@@ -1,13 +1,14 @@
 "use client";
 
-import Link from "next/link";
-import { useSearchParams } from "next/navigation";
+import { Link } from "@tanstack/react-router";
 import { useEffect, useRef, useState } from "react";
 
-import { CoverImage } from "@/components/cover/CoverImage";
+import { coverSourceForSize } from "@/components/cover/CoverImage";
+import { SiteFooter } from "@/components/layout/site-footer";
 import { usePageEntryMotion } from "@/components/motion/use-page-entry-motion";
 import { parseExternalWorkDetailQuery } from "@/domain/catalog/external-work";
 import { LibraryRecordEditor } from "@/features/library/record-editor";
+import { WorkDetailShell } from "@/features/work-detail/work-detail-shell";
 import {
   type ExternalWorkLookupResult,
   type ExternalWorkRecord,
@@ -46,27 +47,42 @@ function ExternalDetailMessage({
           : externalDetailStrings.unavailable;
 
   return (
-    <main className="work-detail-not-found" data-external-detail-state={kind}>
-      <p aria-atomic="true" aria-live="polite" className="visually-hidden">
-        {navigationStrings.routeAnnouncement(copy.title)}
-      </p>
-      <h1>{copy.title}</h1>
-      <p>{copy.description}</p>
-      <Link className="interactive-press" href="/library">
-        {copy.library}
-      </Link>
-    </main>
+    <>
+      <main
+        className="mx-auto grid min-h-[calc(100dvh-var(--layout-mobile-navigation-clearance))] w-full max-w-[var(--layout-width-reading)] content-center justify-items-start gap-[var(--space-4)] p-[var(--layout-page-padding)]"
+        data-external-detail-state={kind}
+      >
+        <p aria-atomic="true" aria-live="polite" className="sr-only">
+          {navigationStrings.routeAnnouncement(copy.title)}
+        </p>
+        <h1>{copy.title}</h1>
+        <p>{copy.description}</p>
+        <Link
+          className="inline-flex min-h-[var(--control-min-size)] items-center font-bold text-accent underline underline-offset-[var(--space-content-tight)] transition-transform duration-[var(--motion-duration-press)] active:scale-[0.97] motion-reduce:transition-none"
+          to="/library"
+        >
+          {copy.library}
+        </Link>
+      </main>
+      <SiteFooter />
+    </>
   );
 }
 
 function ExternalDetailLoading() {
   return (
-    <main className="work-detail-page" data-external-detail-state="loading">
-      <header className="work-detail-header">
-        <h1>{externalDetailStrings.title}</h1>
-        <p aria-live="polite">{externalDetailStrings.loading}</p>
-      </header>
-    </main>
+    <>
+      <main
+        className="mx-auto grid min-h-dvh w-full max-w-[var(--layout-width-detail)] px-[var(--layout-page-padding)] pt-[var(--layout-page-block-start)] pb-[calc(var(--layout-mobile-navigation-clearance)+var(--space-8))] md:pb-[var(--space-section-large)]"
+        data-external-detail-state="loading"
+      >
+        <header className="grid gap-[var(--space-content-loose)]">
+          <h1>{externalDetailStrings.title}</h1>
+          <p aria-live="polite">{externalDetailStrings.loading}</p>
+        </header>
+      </main>
+      <SiteFooter />
+    </>
   );
 }
 
@@ -84,58 +100,62 @@ function ExternalDetailRecord({
   storageDegraded: boolean;
 }>) {
   const pageEntryMotion = usePageEntryMotion({ enabled: true, identity: record.id });
+  const heroCoverUrl =
+    record.coverUrl === undefined ? null : coverSourceForSize(record.coverUrl, 600);
 
   return (
-    <main
-      className={`work-detail-page${pageEntryMotion.active ? " page-entry-b" : ""}`}
-      data-external-detail-state="found"
-      data-external-work-detail={record.id}
-      key={record.id}
-      onAnimationEnd={pageEntryMotion.onAnimationEnd}
-    >
-      <p aria-atomic="true" aria-live="polite" className="visually-hidden">
-        {navigationStrings.routeAnnouncement(record.title)}
-      </p>
-      <div className="work-detail-layout">
-        <div className="work-detail-media" data-external-detail-cover>
-          <CoverImage
-            className="work-detail-cover"
-            coverUrl={record.coverUrl}
-            creators={record.creators}
-            priority
-            requestedSize={600}
-            title={record.title}
-            variant="hero"
-          />
-        </div>
-
-        <div className="work-detail-content">
-          <header className="work-detail-header">
-            <span className="library-external-badge">{externalDetailStrings.badge}</span>
-            <h1>{record.title}</h1>
-            <p className="work-detail-header__creators">
+    <>
+      <main
+        className={`mx-auto min-h-dvh w-full pb-[var(--space-section-large)]${pageEntryMotion.active ? " page-entry-b motion-safe:animate-[page-entry-b-enter_var(--motion-duration-page)_var(--motion-ease-direct)_both]" : ""}`}
+        data-external-detail-state="found"
+        data-external-work-detail={record.id}
+        key={record.id}
+        onAnimationEnd={pageEntryMotion.onAnimationEnd}
+      >
+        <p aria-atomic="true" aria-live="polite" className="sr-only">
+          {navigationStrings.routeAnnouncement(record.title)}
+        </p>
+        <WorkDetailShell
+          coverUrl={heroCoverUrl}
+          creators={record.creators}
+          kind="external"
+          title={record.title}
+        >
+          <header className="grid gap-[var(--space-content-loose)]">
+            <span className="inline-flex min-h-6 w-fit items-center rounded-[var(--radius-pill)] border border-line px-[var(--space-content)] py-0.5 text-[length:var(--text-caption-size)] font-bold text-text-muted">
+              {externalDetailStrings.badge}
+            </span>
+            <h1 className="[overflow-wrap:anywhere] text-[length:var(--text-page-title-size)] leading-[var(--line-height-heading)] text-text-strong">
+              {record.title}
+            </h1>
+            <p className="font-medium text-text-muted">
               {record.creators.length === 0
                 ? externalDetailStrings.metadata.unknownCreator
                 : coverStrings.creatorLine(record.creators)}
             </p>
-            <dl className="work-detail-metadata">
+            <dl className="m-0 flex flex-wrap gap-x-[var(--space-6)] gap-y-[var(--space-3)] p-0 [&>div]:grid [&>div]:gap-[var(--space-content-tight)] [&_dd]:m-0 [&_dd]:font-bold [&_dd]:text-text-strong [&_dt]:text-[length:var(--text-caption-size)] [&_dt]:font-medium [&_dt]:text-text-muted">
               <div>
                 <dt>{externalDetailStrings.metadata.isbn}</dt>
                 <dd>{isbnListFormatter.format(record.isbnSamples)}</dd>
               </div>
             </dl>
-            <p className="library-external-note">{externalDetailStrings.exclusion}</p>
+            <p className="border-l-[length:var(--space-content-tight)] border-line bg-canvas p-[var(--space-3)] text-[length:var(--text-caption-size)] text-text-muted">
+              {externalDetailStrings.exclusion}
+            </p>
           </header>
 
           {storageDegraded ? (
-            <p className="work-detail-alert" role="status">
+            <p
+              className="border-l-[length:var(--space-content-tight)] border-warn bg-surface-1 px-[var(--space-4)] py-[var(--space-3)]"
+              role="status"
+            >
               {workDetailStrings.storageWarning}
             </p>
           ) : null}
 
           <section
             aria-labelledby="external-work-state-heading"
-            className="work-detail-state surface-card"
+            className="grid gap-[var(--space-4)] rounded-[var(--radius-card)] border border-line bg-surface-overlay p-[var(--space-5)]"
           >
             <h2 id="external-work-state-heading">{workDetailStrings.state.heading}</h2>
             <LibraryRecordEditor
@@ -146,15 +166,16 @@ function ExternalDetailRecord({
             />
             <p
               aria-live="polite"
-              className="work-detail-state__message"
+              className="min-h-6 text-[length:var(--text-caption-size)] text-text-muted [&[role=alert]]:border-l-[length:var(--space-content-tight)] [&[role=alert]]:border-warn [&[role=alert]]:px-[var(--space-3)] [&[role=alert]]:py-[var(--space-content)] [&[role=alert]]:text-text-strong"
               role={message?.kind === "error" ? "alert" : "status"}
             >
               {message?.text}
             </p>
           </section>
-        </div>
-      </div>
-    </main>
+        </WorkDetailShell>
+      </main>
+      <SiteFooter />
+    </>
   );
 }
 
@@ -226,9 +247,8 @@ function ExternalWorkDetailQuery({ queryString }: Readonly<{ queryString: string
   );
 }
 
-export function ExternalWorkDetailFlow() {
-  const searchParams = useSearchParams();
-  const serializedSearchParams = searchParams.toString();
+export function ExternalWorkDetailFlow({ workId = null }: Readonly<{ workId?: string | null }>) {
+  const serializedSearchParams = workId === null ? "" : new URLSearchParams({ workId }).toString();
   const query = parseExternalWorkDetailQuery(new URLSearchParams(serializedSearchParams));
   const queryKey = query.kind === "valid" ? `valid:${query.id}` : "invalid";
 

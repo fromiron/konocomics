@@ -1,8 +1,20 @@
 "use client";
 
-import { useRouter } from "next/navigation";
+import { useNavigate } from "@tanstack/react-router";
 import { type ChangeEvent, useRef, useState } from "react";
 
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+} from "@/components/design-system/alert-dialog";
+import { Button } from "@/components/design-system/button";
+import { Input } from "@/components/design-system/input";
 import {
   DataTransferError,
   exportFilenameV1,
@@ -82,7 +94,7 @@ export function DataSettings({
   inspectImportJson,
   replaceFromExport,
 }: DataSettingsProps) {
-  const router = useRouter();
+  const navigate = useNavigate();
   const fileInputRef = useRef<HTMLInputElement>(null);
   const mutationFence = useRef(false);
   const [dialog, setDialog] = useState<DialogState>(null);
@@ -197,7 +209,7 @@ export function DataSettings({
         setSuccess(settingsStrings.data.delete.successSessionOnly);
         return;
       }
-      router.replace("/");
+      await navigate({ to: "/", replace: true });
     } catch (nextError) {
       setError(transferErrorMessage(nextError));
     } finally {
@@ -213,54 +225,64 @@ export function DataSettings({
   };
 
   return (
-    <section className="settings-section" aria-labelledby="settings-data-title">
-      <div className="settings-section__header">
-        <h2 id="settings-data-title">{settingsStrings.data.title}</h2>
-        <p>{settingsStrings.data.description}</p>
+    <section
+      className="grid min-w-0 gap-[var(--space-5)] rounded-[var(--radius-card)] border border-line bg-surface-1 p-[var(--space-5)]"
+      aria-labelledby="settings-data-title"
+    >
+      <div className="grid gap-[var(--space-content)]">
+        <h2 className="text-text-strong" id="settings-data-title">
+          {settingsStrings.data.title}
+        </h2>
+        <p className="text-text-muted">{settingsStrings.data.description}</p>
       </div>
 
-      <div className="settings-actions">
-        <div className="settings-action-row">
-          <div>
+      <div className="grid">
+        <div className="mt-[var(--space-3)] grid gap-[var(--space-3)] rounded-[var(--radius-card)] border border-line bg-surface-2 p-[var(--space-4)]">
+          <div className="grid gap-[var(--space-content-tight)]">
             <h3>{settingsStrings.data.export.title}</h3>
-            <p>{settingsStrings.data.export.description}</p>
+            <p className="text-text-muted">{settingsStrings.data.export.description}</p>
           </div>
-          <button
-            className="settings-button settings-button--secondary interactive-press"
+          <Button
+            className="w-fit"
             disabled={busyAction !== null}
             onClick={() => void handleExport()}
             type="button"
+            variant="outline"
           >
             {busyAction === "export"
               ? settingsStrings.data.export.exporting
               : settingsStrings.data.export.action}
-          </button>
+          </Button>
         </div>
 
-        <div className="settings-action-row settings-action-row--stacked">
-          <div>
+        <div className="mt-[var(--space-3)] grid gap-[var(--space-3)] rounded-[var(--radius-card)] border border-line bg-surface-2 p-[var(--space-4)]">
+          <div className="grid gap-[var(--space-content-tight)]">
             <h3>{settingsStrings.data.import.title}</h3>
-            <p>{settingsStrings.data.import.description}</p>
+            <p className="text-text-muted">{settingsStrings.data.import.description}</p>
           </div>
-          <label className="settings-file-control">
-            <span>
-              {busyAction === "inspect"
-                ? settingsStrings.data.import.inspecting
-                : settingsStrings.data.import.select}
-            </span>
+          <label className="relative w-fit cursor-pointer has-[input:disabled]:cursor-not-allowed has-[input:disabled]:opacity-45">
             <input
               accept=".json,application/json"
+              className="peer absolute size-px opacity-0"
               disabled={busyAction !== null}
               id="settings-import-file"
               onChange={(event) => void handleImportFile(event)}
               ref={fileInputRef}
               type="file"
             />
+            <span className="inline-flex min-h-[var(--control-min-size)] w-fit items-center justify-center rounded-[var(--radius-control)] border border-line bg-surface-1 px-[var(--space-4)] py-[var(--space-content)] text-center font-bold text-text-strong peer-focus-visible:outline-2 peer-focus-visible:outline-offset-2 peer-focus-visible:outline-ring [@media(hover:hover)_and_(pointer:fine)]:hover:bg-surface-3">
+              {busyAction === "inspect"
+                ? settingsStrings.data.import.inspecting
+                : settingsStrings.data.import.select}
+            </span>
           </label>
           {preview === null ? null : (
-            <div className="settings-import-preview" data-import-state="ready">
+            <div
+              className="grid gap-[var(--space-4)] rounded-[var(--radius-card)] border border-line bg-surface-1 p-[var(--space-4)]"
+              data-import-state="ready"
+            >
               <h4>{settingsStrings.data.import.preview.title}</h4>
-              <dl>
+              <dl className="m-0 grid [&>div]:grid [&>div]:grid-cols-[minmax(0,1fr)_auto] [&>div]:gap-[var(--space-4)] [&>div]:border-t [&>div]:border-line [&>div]:py-[var(--space-3)] [&_dd]:m-0 [&_dd]:text-end [&_dt]:text-text-muted">
                 <div>
                   <dt>{settingsStrings.data.import.preview.exportedAtLabel}</dt>
                   <dd>{exportedAtFormatter.format(new Date(preview.exportedAt))}</dd>
@@ -271,53 +293,61 @@ export function DataSettings({
                 </div>
               </dl>
               {preview.catalogVersionMismatch ? (
-                <p className="settings-import-preview__warning">
+                <p className="settings-import-preview__warning border-l-[length:var(--space-1)] border-warn bg-surface-1 px-[var(--space-4)] py-[var(--space-3)]">
                   {settingsStrings.data.import.preview.catalogMismatch(
                     preview.catalogVersion,
                     currentCatalog.catalogVersion,
                   )}
                 </p>
               ) : null}
-              <button
-                className="settings-button settings-button--secondary interactive-press"
+              <Button
+                className="w-fit"
                 disabled={busyAction !== null}
                 onClick={(event) => openReplaceDialog(event.currentTarget)}
                 type="button"
+                variant="outline"
               >
                 {settingsStrings.data.import.reviewReplacement}
-              </button>
+              </Button>
             </div>
           )}
         </div>
 
-        <div className="settings-action-row settings-action-row--danger">
-          <div>
+        <div className="mt-[var(--space-3)] grid gap-[var(--space-3)] rounded-[var(--radius-card)] border border-line-danger bg-surface-2 p-[var(--space-4)]">
+          <div className="grid gap-[var(--space-content-tight)]">
             <h3>{settingsStrings.data.delete.title}</h3>
-            <p>{settingsStrings.data.delete.description}</p>
+            <p className="text-text-muted">{settingsStrings.data.delete.description}</p>
           </div>
-          <button
-            className="settings-button settings-button--danger interactive-press"
+          <Button
+            className="w-fit"
             disabled={busyAction !== null}
             onClick={(event) => openDeleteDialog(event.currentTarget)}
             type="button"
+            variant="destructive"
           >
             {settingsStrings.data.delete.action}
-          </button>
+          </Button>
         </div>
       </div>
 
       {busyAction === "inspect" ? (
-        <p className="settings-status" role="status">
+        <p className="text-[length:var(--text-caption-size)] text-text-muted" role="status">
           {settingsStrings.data.import.inspecting}
         </p>
       ) : null}
       {error === null || dialog !== null ? null : (
-        <p className="settings-inline-error" role="alert">
+        <p
+          className="border-l-[length:var(--space-1)] border-warn bg-surface-1 px-[var(--space-4)] py-[var(--space-3)]"
+          role="alert"
+        >
           {error}
         </p>
       )}
       {success === null ? null : (
-        <p className="settings-snackbar" role="status">
+        <p
+          className="fixed right-[var(--layout-page-padding)] bottom-[calc(var(--layout-mobile-navigation-clearance)+var(--space-4))] left-[var(--layout-page-padding)] z-65 mx-auto w-fit max-w-[calc(100%-(var(--layout-page-padding)*2))] rounded-[var(--radius-control)] border border-line bg-surface-1 px-[var(--space-4)] py-[var(--space-3)] text-text-strong shadow-[var(--shadow-raised)]"
+          role="status"
+        >
           {success}
         </p>
       )}
@@ -331,32 +361,34 @@ export function DataSettings({
           onClose={closeDialog}
           opener={dialog.opener}
         >
-          <div className="settings-dialog__header">
+          <div className="grid gap-[var(--space-content)]">
             <h2 id="settings-replace-title">{settingsStrings.data.import.confirm.title}</h2>
-            <p>{settingsStrings.data.import.confirm.description}</p>
+            <p className="text-text-muted">{settingsStrings.data.import.confirm.description}</p>
           </div>
           {busyAction === "replace" ? (
-            <p className="settings-status" role="status">
+            <p className="text-[length:var(--text-caption-size)] text-text-muted" role="status">
               {settingsStrings.data.import.confirm.replacing}
             </p>
           ) : null}
           {error === null ? null : (
-            <p className="settings-inline-error" role="alert">
+            <p
+              className="border-l-[length:var(--space-1)] border-warn bg-surface-1 px-[var(--space-4)] py-[var(--space-3)]"
+              role="alert"
+            >
               {error}
             </p>
           )}
-          <div className="settings-dialog__actions">
-            <button
-              className="settings-button settings-button--secondary interactive-press"
+          <div className="flex flex-wrap justify-end gap-[var(--space-content)]">
+            <Button
               disabled={busyAction === "replace"}
               id="settings-replace-cancel"
               onClick={closeDialog}
               type="button"
+              variant="outline"
             >
               {settingsStrings.dialog.cancel}
-            </button>
-            <button
-              className="settings-button settings-button--primary interactive-press"
+            </Button>
+            <Button
               disabled={busyAction === "replace"}
               onClick={() => void handleReplace()}
               type="button"
@@ -364,27 +396,37 @@ export function DataSettings({
               {busyAction === "replace"
                 ? settingsStrings.data.import.confirm.replacing
                 : settingsStrings.data.import.confirm.action}
-            </button>
+            </Button>
           </div>
         </SettingsDialog>
       ) : null}
 
-      {dialog?.kind === "delete" ? (
-        <SettingsDialog
-          busy={busyAction === "delete"}
-          initialFocusId="settings-delete-confirmation"
-          labelledBy="settings-delete-title"
-          onClose={closeDialog}
-          opener={dialog.opener}
+      <AlertDialog
+        open={dialog?.kind === "delete"}
+        onOpenChange={(open) => {
+          if (!open && busyAction !== "delete") closeDialog();
+        }}
+      >
+        <AlertDialogContent
+          className="fixed top-1/2 left-1/2 z-50 grid max-h-[calc(100dvh-(var(--layout-page-padding)*2)-var(--layout-safe-area-bottom))] w-[min(100%,var(--layout-width-form))] max-w-[var(--layout-width-form)] -translate-x-1/2 -translate-y-1/2 gap-[var(--space-5)] overflow-y-auto rounded-[var(--radius-card)] bg-surface-1 p-[var(--space-6)] !transition-none data-[size=default]:max-w-[var(--layout-width-form)] data-[size=default]:sm:max-w-[var(--layout-width-form)] data-closed:!animate-none data-open:!animate-none sm:max-w-[var(--layout-width-form)]"
+          initialFocus={() => document.getElementById("settings-delete-confirmation")}
         >
-          <div className="settings-dialog__header">
-            <h2 id="settings-delete-title">{settingsStrings.data.delete.confirm.title}</h2>
-            <p>{settingsStrings.data.delete.confirm.description}</p>
-          </div>
-          <label className="settings-delete-confirmation" htmlFor="settings-delete-confirmation">
+          <AlertDialogHeader className="grid grid-rows-none place-items-stretch gap-[var(--space-content)] text-start">
+            <AlertDialogTitle id="settings-delete-title">
+              {settingsStrings.data.delete.confirm.title}
+            </AlertDialogTitle>
+            <AlertDialogDescription>
+              {settingsStrings.data.delete.confirm.description}
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <label
+            className="grid gap-[var(--space-content)] font-bold"
+            htmlFor="settings-delete-confirmation"
+          >
             <span>{settingsStrings.data.delete.confirm.label}</span>
-            <input
+            <Input
               autoComplete="off"
+              className="text-text-strong"
               disabled={busyAction === "delete"}
               id="settings-delete-confirmation"
               onChange={(event) => setDeleteConfirmation(event.currentTarget.value)}
@@ -394,40 +436,39 @@ export function DataSettings({
             />
           </label>
           {busyAction === "delete" ? (
-            <p className="settings-status" role="status">
+            <p className="text-[length:var(--text-caption-size)] text-text-muted" role="status">
               {settingsStrings.data.delete.confirm.deleting}
             </p>
           ) : null}
           {error === null ? null : (
-            <p className="settings-inline-error" role="alert">
+            <p
+              className="border-l-[length:var(--space-1)] border-warn bg-surface-1 px-[var(--space-4)] py-[var(--space-3)]"
+              role="alert"
+            >
               {error}
             </p>
           )}
-          <div className="settings-dialog__actions">
-            <button
-              className="settings-button settings-button--secondary interactive-press"
-              disabled={busyAction === "delete"}
-              onClick={closeDialog}
-              type="button"
-            >
+          <AlertDialogFooter className="m-0 flex flex-row flex-wrap justify-end gap-[var(--space-content)] rounded-none border-0 bg-transparent p-0">
+            <AlertDialogCancel disabled={busyAction === "delete"} onClick={closeDialog}>
               {settingsStrings.dialog.cancel}
-            </button>
-            <button
-              className="settings-button settings-button--danger interactive-press"
+            </AlertDialogCancel>
+            <AlertDialogAction
+              busy={busyAction === "delete"}
               disabled={
                 deleteConfirmation !== settingsStrings.data.delete.keyword ||
                 busyAction === "delete"
               }
               onClick={() => void handleDelete()}
               type="button"
+              variant="destructive"
             >
               {busyAction === "delete"
                 ? settingsStrings.data.delete.confirm.deleting
                 : settingsStrings.data.delete.confirm.action}
-            </button>
-          </div>
-        </SettingsDialog>
-      ) : null}
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
     </section>
   );
 }

@@ -42,16 +42,23 @@ afterEach(cleanup);
 
 describe("RecommendationMotionList", () => {
   it("contains the only permitted height-collapse owner without size containment", () => {
-    const globalStyles = readFileSync(resolve(process.cwd(), "src/app/globals.css"), "utf8");
-    expect(globalStyles).toMatch(
-      /\.recommendations-list\[data-recommendation-motion=["']enabled["']\]\s*>\s*li\s*\{[^}]*contain:\s*layout paint;/u,
+    render(
+      <RecommendationMotionList
+        items={[{ workId: "work-1", animateIn: true, content: <article>Work</article> }]}
+        reducedMotion={false}
+        shortage={null}
+      />,
     );
-    expect(globalStyles).not.toMatch(
-      /\.recommendations-list\[data-recommendation-motion=["']enabled["']\]\s*>\s*li\s*\{[^}]*contain:[^;}]*\bsize\b/u,
+
+    const itemClassName = motionState.itemProps[0]?.className;
+    expect(itemClassName).toContain("[contain:layout_paint]");
+    expect(itemClassName).not.toContain("contain:size");
+
+    const cardSource = readFileSync(
+      resolve(process.cwd(), "src/features/recommendations/recommendation-card.tsx"),
+      "utf8",
     );
-    expect(globalStyles).toMatch(
-      /@media\s*\(prefers-reduced-motion:\s*reduce\)\s*\{[\s\S]*?\.recommendation-card__identity:hover\s+\.recommendation-card__cover\s*\{[^}]*transform:\s*none;/u,
-    );
+    expect(cardSource).toContain("motion-reduce:transform-none");
   });
 
   it("uses local domMax layout motion only in the no-preference path", () => {
