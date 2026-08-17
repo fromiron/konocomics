@@ -55,6 +55,30 @@ function renderShelf() {
 }
 
 describe("WorkShelf roving focus", () => {
+  it("keeps the contract widths and layers remote-cover identity inside the cover surface", () => {
+    render(
+      <WorkShelf
+        coverUrls={new Map(works.map((work) => [work.id, `https://example.com/${work.id}.jpg`]))}
+        labels={labels}
+        onToggleFavorite={vi.fn()}
+        onToggleSelection={vi.fn()}
+        selectionsByWorkId={new Map()}
+        title="棚"
+        works={works}
+      />,
+    );
+
+    const firstCard = screen.getByRole("button", { name: "作品1 — 好きに追加" }).closest("article");
+    const firstCover = firstCard?.querySelector(".anchor-card__cover");
+
+    expect(firstCard?.classList.contains("w-[104px]")).toBe(true);
+    expect(firstCard?.classList.contains("md:w-32")).toBe(true);
+    expect(
+      firstCover?.querySelector(".anchor-card__identity .anchor-card__title")?.textContent,
+    ).toBe("作品1");
+    expect(firstCover?.querySelector(".anchor-card__add")).not.toBeNull();
+  });
+
   it("removes selection scale and hover travel when reduced motion is requested", () => {
     renderShelf();
     const cover = document.querySelector(".anchor-card__cover");

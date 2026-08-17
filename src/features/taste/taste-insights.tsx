@@ -1,5 +1,10 @@
+import { Link } from "@tanstack/react-router";
+
+import { CoverImage } from "@/components/cover/CoverImage";
+import type { Work } from "@/domain/catalog/types";
 import type { MangaDnaSummary } from "@/domain/profile/dna-summary";
-import { explanationLexicon, tasteStrings } from "@/lib/strings";
+import { explanationLexicon, mediaStrings, tasteStrings } from "@/lib/strings";
+import { cn } from "@/lib/utils";
 
 const RADAR_AXIS_LIMIT = 7;
 const RADAR_CENTER = 50;
@@ -40,17 +45,19 @@ export function DnaRadarChart({ axes }: Readonly<Pick<MangaDnaSummary, "axes">>)
   return (
     <section
       aria-labelledby="taste-radar-heading"
-      className="taste-overview taste-radar surface-card grid content-start gap-[var(--space-4)] rounded-[var(--radius-card)] border border-line bg-surface-1 p-[var(--space-5)]"
+      className="taste-overview taste-radar surface-card grid content-start gap-[var(--space-3)] rounded-[var(--radius-card)] border border-line bg-surface-1 p-[var(--space-3)] md:p-[var(--space-4)]"
     >
-      <h2 id="taste-radar-heading">{tasteStrings.radarHeading}</h2>
+      <h2 className="text-[length:var(--text-subheading-size)]" id="taste-radar-heading">
+        {tasteStrings.radarHeading}
+      </h2>
       {confirmedAxes.length === 0 ? (
         <p>{tasteStrings.radarPending}</p>
       ) : (
-        <div className="taste-radar__content grid grid-cols-1 items-center gap-[var(--space-4)] md:grid-cols-[minmax(0,0.9fr)_minmax(0,1.1fr)]">
+        <div className="taste-radar__content grid grid-cols-1 items-center gap-[var(--space-3)]">
           {canDrawRadar ? (
             <svg
               aria-hidden="true"
-              className="aspect-square w-full justify-self-center"
+              className="aspect-square w-full max-w-[calc(var(--space-12)*5)] justify-self-center md:max-w-[calc(var(--space-12)*6)]"
               focusable="false"
               viewBox="0 0 100 100"
             >
@@ -80,14 +87,16 @@ export function DnaRadarChart({ axes }: Readonly<Pick<MangaDnaSummary, "axes">>)
               />
             </svg>
           ) : null}
-          <ul className="m-0 grid list-none gap-[var(--space-content)] p-0">
+          <ul className="m-0 grid min-w-0 list-none grid-cols-1 gap-x-[var(--space-3)] border-t border-line p-0 pt-[var(--space-content-tight)] min-[420px]:grid-cols-2">
             {confirmedAxes.map((axis) => (
               <li
-                className="flex min-h-[var(--control-min-size)] items-center justify-between gap-[var(--space-4)] border-b border-line px-[var(--space-3)] py-[var(--space-2)] last:border-b-0"
+                className="flex min-h-[var(--space-7)] min-w-0 items-center justify-between gap-[var(--space-content)] border-b border-line px-[var(--space-content-tight)] py-[var(--space-content-tight)] text-[length:var(--font-size-12)]"
                 key={axis.factorId}
               >
-                <span>{explanationLexicon.factorLabels[axis.factorId]}</span>
-                <strong className="whitespace-nowrap text-[length:var(--text-caption-size)] text-accent">
+                <span className="min-w-0 truncate">
+                  {explanationLexicon.factorLabels[axis.factorId]}
+                </span>
+                <strong className="shrink-0 whitespace-nowrap text-[length:var(--font-size-12)] text-accent">
                   {tasteStrings.factorValue(axis.value)}
                 </strong>
               </li>
@@ -99,24 +108,65 @@ export function DnaRadarChart({ axes }: Readonly<Pick<MangaDnaSummary, "axes">>)
   );
 }
 
-function WorkIdList({ ids, label }: Readonly<{ ids: readonly string[]; label: string }>) {
+function WorkPreviewList({
+  coverUrls,
+  ids,
+  label,
+  onCoverSettled,
+  worksById,
+}: Readonly<{
+  ids: readonly string[];
+  label: string;
+  worksById: ReadonlyMap<string, Work>;
+  coverUrls: ReadonlyMap<string, string | null>;
+  onCoverSettled(workId: string): void;
+}>) {
   return (
     <section
       aria-label={label}
-      className="taste-recommendation-preview__list grid gap-[var(--space-content)] rounded-[var(--radius-card)] border border-line bg-surface-2 p-[var(--space-4)]"
+      className="taste-recommendation-preview__list grid min-w-0 content-start gap-[var(--space-content)] rounded-[var(--radius-card)] border border-line bg-surface-2 p-[var(--space-3)]"
     >
-      <h3>{label}</h3>
+      <h3 className="border-b border-line pb-[var(--space-content-tight)] text-[length:var(--font-size-14)]">
+        {label}
+      </h3>
       {ids.length === 0 ? (
         <p className="text-text-muted">{tasteStrings.previewEmpty}</p>
       ) : (
-        <ol className="m-0 grid gap-[var(--space-content-tight)] ps-[var(--space-5)]">
-          {ids.map((workId) => (
-            <li key={workId}>
-              <code className="text-[length:var(--text-caption-size)] text-text-strong [overflow-wrap:anywhere]">
-                {workId}
-              </code>
-            </li>
-          ))}
+        <ol className="m-0 grid list-none grid-cols-2 gap-[var(--space-content)] p-0 min-[360px]:grid-cols-4">
+          {ids.map((workId) => {
+            const work = worksById.get(workId);
+            return (
+              <li className="min-w-0" key={workId}>
+                {work === undefined ? (
+                  <code className="text-[length:var(--text-caption-size)] text-text-strong [overflow-wrap:anywhere]">
+                    {workId}
+                  </code>
+                ) : (
+                  <Link
+                    aria-label={mediaStrings.openDetails(work.title)}
+                    className="group/preview grid min-h-[var(--control-min-size)] gap-[var(--space-content-tight)] rounded-[var(--radius-cover)] focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-ring"
+                    params={{ workId }}
+                    preload={false}
+                    to="/works/$workId"
+                  >
+                    <CoverImage
+                      className="w-full transition-transform duration-[var(--motion-duration-feedback)] [@media(hover:hover)_and_(pointer:fine)_and_(prefers-reduced-motion:no-preference)]:group-hover/preview:-translate-y-0.5 motion-reduce:transition-none"
+                      coverUrl={coverUrls.get(workId)}
+                      creators={work.creators}
+                      decorative
+                      onSettled={() => onCoverSettled(workId)}
+                      requestedSize={200}
+                      title={work.title}
+                    />
+                    <strong className="line-clamp-2 text-[length:var(--font-size-12)] leading-tight text-text-strong">
+                      {work.title}
+                    </strong>
+                    <code className="sr-only">{workId}</code>
+                  </Link>
+                )}
+              </li>
+            );
+          })}
         </ol>
       )}
     </section>
@@ -126,9 +176,17 @@ function WorkIdList({ ids, label }: Readonly<{ ids: readonly string[]; label: st
 export function RecommendationDiffPreview({
   after,
   before,
+  className,
+  coverUrls,
+  onCoverSettled,
+  worksById,
 }: Readonly<{
   after: readonly string[] | null;
   before: readonly string[] | null;
+  className?: string;
+  worksById: ReadonlyMap<string, Work>;
+  coverUrls: ReadonlyMap<string, string | null>;
+  onCoverSettled(workId: string): void;
 }>) {
   const available = before !== null && after !== null;
   const unchanged =
@@ -139,22 +197,44 @@ export function RecommendationDiffPreview({
   return (
     <section
       aria-labelledby="taste-recommendation-preview-heading"
-      className="taste-recommendation-preview surface-card mt-[var(--space-6)] grid gap-[var(--space-4)] rounded-[var(--radius-card)] border border-line bg-surface-1 p-[var(--space-5)]"
+      className={cn(
+        "taste-recommendation-preview surface-card mt-[var(--space-4)] grid gap-[var(--space-3)] rounded-[var(--radius-card)] border border-line bg-surface-1 p-[var(--space-3)]",
+        className,
+      )}
     >
-      <div className="grid gap-[var(--space-content)]">
-        <h2 id="taste-recommendation-preview-heading">{tasteStrings.previewHeading}</h2>
-        <p className="text-text-muted">{tasteStrings.previewDescription}</p>
+      <div className="grid gap-[var(--space-content-tight)]">
+        <h2
+          className="text-[length:var(--text-subheading-size)]"
+          id="taste-recommendation-preview-heading"
+        >
+          {tasteStrings.previewHeading}
+        </h2>
+        <p className="text-[length:var(--font-size-12)] text-text-muted">
+          {tasteStrings.previewDescription}
+        </p>
       </div>
       {available ? (
         <div className="taste-recommendation-preview__body grid gap-[var(--space-content)]">
-          <div className="taste-recommendation-preview__columns grid grid-cols-1 gap-[var(--space-content-loose)] md:grid-cols-2">
-            <WorkIdList ids={before} label={tasteStrings.previewBefore} />
-            <WorkIdList ids={after} label={tasteStrings.previewAfter} />
+          <div className="taste-recommendation-preview__columns grid grid-cols-1 items-start gap-[var(--space-content)] md:grid-cols-2">
+            <WorkPreviewList
+              coverUrls={coverUrls}
+              ids={before}
+              label={tasteStrings.previewBefore}
+              onCoverSettled={onCoverSettled}
+              worksById={worksById}
+            />
+            <WorkPreviewList
+              coverUrls={coverUrls}
+              ids={after}
+              label={tasteStrings.previewAfter}
+              onCoverSettled={onCoverSettled}
+              worksById={worksById}
+            />
           </div>
           <p
             aria-atomic="true"
             aria-live="polite"
-            className="taste-recommendation-preview__status font-bold text-accent"
+            className="taste-recommendation-preview__status rounded-[var(--radius-card)] border border-line bg-surface-2 px-[var(--space-3)] py-[var(--space-2)] text-[length:var(--font-size-12)] font-bold text-accent"
           >
             {unchanged ? tasteStrings.previewUnchanged : tasteStrings.previewChanged}
           </p>

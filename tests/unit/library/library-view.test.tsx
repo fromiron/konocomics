@@ -7,7 +7,7 @@ import { afterEach, describe, expect, it, vi } from "vitest";
 import catalogJson from "@/data/generated/catalog-v1.json";
 import type { ExternalWorkId } from "@/domain/catalog/external-work";
 import { catalogV1Schema } from "@/domain/catalog/schema";
-import type { UserWorkRecord } from "@/domain/profile/types";
+import type { ReadingState, UserWorkRecord } from "@/domain/profile/types";
 import { LibraryView } from "@/features/library/library-view";
 import type { ExternalWorkRecord } from "@/infrastructure/db";
 import { libraryStrings } from "@/lib/strings";
@@ -38,6 +38,12 @@ vi.mock("@tanstack/react-router", () => ({
 
 const catalog = catalogV1Schema.parse(catalogJson);
 const target = catalog.works[0]!;
+const readingTarget = catalog.works.find(
+  (work) => work.id !== target.id && catalog.volumes.some((volume) => volume.workId === work.id),
+)!;
+const completedTarget = catalog.works.find(
+  (work) => work.id !== target.id && work.id !== readingTarget.id,
+)!;
 const externalId =
   "ext:rakuten:v1:0000000000000000000000000000000000000000000000000000000000000000";
 const catalogRecord: UserWorkRecord = {
@@ -67,7 +73,9 @@ const externalRecord: ExternalWorkRecord = {
 };
 
 function renderLibrary(options?: {
+  activeState?: ReadingState | null;
   externalWorks?: ExternalWorkRecord[];
+  showFooter?: boolean;
   userWorks?: UserWorkRecord[];
 }) {
   const saveUserWork = vi.fn<(record: UserWorkRecord) => Promise<void>>().mockResolvedValue();
@@ -78,12 +86,14 @@ function renderLibrary(options?: {
     .mockResolvedValue();
   render(
     <LibraryView
+      activeState={options?.activeState}
       addCatalogWork={vi.fn().mockResolvedValue("added")}
       addExternalWork={vi.fn().mockResolvedValue("added")}
       catalog={catalog}
       externalWorks={options?.externalWorks ?? [externalRecord]}
       saveExternalUserRecord={saveExternalUserRecord}
       saveUserWork={saveUserWork}
+      showFooter={options?.showFooter}
       storageDegraded={false}
       userWorks={options?.userWorks ?? [catalogRecord]}
     />,
@@ -94,6 +104,50 @@ function renderLibrary(options?: {
 afterEach(cleanup);
 
 describe("LibraryView", () => {
+  it("bottom-aligns the route footer without duplicating the shell mobile-navigation clearance", () => {
+    renderLibrary({ externalWorks: [], showFooter: true });
+
+    const main = screen.getByRole("main");
+    const frame = main.parentElement;
+
+    expect(frame?.className).toContain(
+      "min-h-[calc(100dvh-var(--layout-mobile-navigation-clearance))]",
+    );
+    expect(main.className).not.toContain("layout-mobile-navigation-clearance");
+    expect(main.nextElementSibling?.tagName).toBe("FOOTER");
+  });
+
+  it("uses role-specific cards for recent, reading, planned, status, and favorite records", () => {
+    const readingRecord: UserWorkRecord = {
+      workId: readingTarget.id,
+      readingState: "reading",
+      progress: { volume: 1, chapter: 4 },
+      updatedAt: "2026-08-15T00:00:00.000Z",
+    };
+    const completedRecord: UserWorkRecord = {
+      workId: completedTarget.id,
+      readingState: "completed",
+      updatedAt: "2026-08-13T00:00:00.000Z",
+    };
+
+    renderLibrary({
+      activeState: null,
+      externalWorks: [],
+      userWorks: [{ ...catalogRecord, reaction: "favorite" }, readingRecord, completedRecord],
+    });
+
+    expect(document.querySelectorAll('[data-library-card-role="recent"]')).toHaveLength(3);
+    expect(document.querySelector('[data-library-card-role="planned-compact"]')).not.toBeNull();
+    expect(document.querySelector('[data-library-card-role="reading-progress"]')).not.toBeNull();
+    expect(document.querySelector('[data-library-card-role="status"]')).not.toBeNull();
+    expect(document.querySelector('[data-library-card-role="favorite"]')).not.toBeNull();
+    expect(
+      screen
+        .getByRole("progressbar", { name: libraryStrings.editor.progress })
+        .getAttribute("aria-valuetext"),
+    ).toBe(libraryStrings.progress(1, 4));
+  });
+
   it("renders the five state tabs and discloses external rows and exclusion in detail", () => {
     renderLibrary();
     expect(screen.getAllByRole("tab")).toHaveLength(5);

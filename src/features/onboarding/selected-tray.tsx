@@ -1,7 +1,7 @@
 "use client";
 
 import { AnimatePresence, domMax, LazyMotion, m, useReducedMotion } from "motion/react";
-import { XIcon } from "lucide-react";
+import { PlusIcon, XIcon } from "lucide-react";
 import { useEffect, useRef } from "react";
 
 import { CoverImage } from "@/components/cover/CoverImage";
@@ -158,6 +158,14 @@ export function SelectedTray({
               );
             })}
           </AnimatePresence>
+          {selections.length > 0 && selections.length < 10 ? (
+            <span
+              aria-hidden="true"
+              className="selected-tray__empty-slot grid min-h-[60px] w-12 min-w-12 place-items-center rounded-[var(--radius-cover)] border border-line bg-surface-2 text-text-muted [&>svg]:size-4"
+            >
+              <PlusIcon />
+            </span>
+          ) : null}
         </div>
         <Button
           className="selected-tray__continue min-w-32 md:w-full md:min-w-0"

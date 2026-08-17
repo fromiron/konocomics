@@ -1,17 +1,15 @@
 "use client";
 
 import { useRef, useState } from "react";
+import { SlidersHorizontalIcon } from "lucide-react";
 
 import { Switch } from "@/components/design-system/switch";
 import type { RecommendationPolicies } from "@/domain/profile/types";
 import { settingsStrings } from "@/lib/strings";
 
-const VISIBLE_POLICY_KEYS = [
-  "preferCompleted",
-  "preferHidden",
-  "preferVerified",
-  "excludeIncomplete",
-] as const;
+import { SettingsPanel } from "./settings-panel";
+
+const VISIBLE_POLICY_KEYS = ["preferCompleted", "preferHidden", "preferVerified"] as const;
 
 type VisiblePolicyKey = (typeof VISIBLE_POLICY_KEYS)[number];
 
@@ -46,31 +44,34 @@ export function PolicySettings({ policies, savePolicies }: PolicySettingsProps) 
   const busy = pending !== null;
 
   return (
-    <section
-      className="grid min-w-0 gap-[var(--space-5)] rounded-[var(--radius-card)] border border-line bg-surface-1 p-[var(--space-5)]"
-      aria-labelledby="settings-policies-title"
+    <SettingsPanel
+      className="md:gap-[var(--space-6)]"
+      description={settingsStrings.policies.description}
+      headingId="settings-policies-title"
+      icon={SlidersHorizontalIcon}
+      title={settingsStrings.policies.title}
     >
-      <div className="grid gap-[var(--space-content)]">
-        <h2 className="text-text-strong" id="settings-policies-title">
-          {settingsStrings.policies.title}
-        </h2>
-        <p className="text-text-muted">{settingsStrings.policies.description}</p>
-      </div>
-      <fieldset className="m-0 grid gap-0 border-0 p-0" disabled={displayed === undefined || busy}>
+      <fieldset
+        className="m-0 grid gap-0 border-0 p-0 md:grid-cols-3"
+        disabled={displayed === undefined || busy}
+      >
         <legend className="sr-only">{settingsStrings.policies.legend}</legend>
         {VISIBLE_POLICY_KEYS.map((key) => {
           const labelId = `settings-policy-${key}-label`;
           const descriptionId = `settings-policy-${key}-description`;
           return (
             <div
-              className="grid grid-cols-[minmax(0,1fr)_auto] gap-[var(--space-4)] border-t border-line py-[var(--space-4)] first:border-t-0"
+              className="grid min-w-0 grid-cols-[minmax(0,1fr)_auto] items-start gap-[var(--space-4)] border-t border-line py-[var(--space-4)] first:border-t-0 md:grid-cols-[minmax(0,1fr)_auto] md:border-t-0 md:border-l md:px-[var(--space-5)] md:py-[var(--space-2)] md:first:border-l-0 md:first:pl-0 md:last:pr-0"
               key={key}
             >
-              <span className="grid gap-[var(--space-content-tight)]">
+              <span className="grid min-w-0 gap-[var(--space-content-tight)]">
                 <strong className="text-text-strong" id={labelId}>
                   {settingsStrings.policies.labels[key]}
                 </strong>
-                <small className="font-normal text-text-muted" id={descriptionId}>
+                <small
+                  className="font-normal text-text-muted [overflow-wrap:anywhere]"
+                  id={descriptionId}
+                >
                   {settingsStrings.policies.descriptions[key]}
                 </small>
               </span>
@@ -104,6 +105,6 @@ export function PolicySettings({ policies, savePolicies }: PolicySettingsProps) 
           {error}
         </p>
       )}
-    </section>
+    </SettingsPanel>
   );
 }

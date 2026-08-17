@@ -3,7 +3,6 @@
 import { Link } from "@tanstack/react-router";
 import { useMemo, useRef, useState } from "react";
 
-import { CoverImage } from "@/components/cover/CoverImage";
 import { Button } from "@/components/design-system/button";
 import { Input } from "@/components/design-system/input";
 import { NativeSelect } from "@/components/design-system/native-select";
@@ -19,67 +18,27 @@ import type { RakutenBookItem } from "@/infrastructure/rakuten";
 import { libraryStrings } from "@/lib/strings";
 import { cn } from "@/lib/utils";
 
+import {
+  LibraryFavoriteCard,
+  LibraryListCard,
+  LibraryRecentCard,
+  type LibraryRow,
+  LibraryStateCard,
+  RowMedia,
+  rowCreators,
+  rowTitle,
+} from "./library-media-cards";
+import { LibraryOverviewHeader } from "./library-overview-header";
 import { ModalSurface } from "./modal-surface";
 import { LibraryRecordEditor } from "./record-editor";
 import { WorkSearchSheet, type LibraryAddOutcome } from "./work-search-sheet";
 
 const READING_STATES = ["planned", "reading", "completed", "dropped", "hidden"] as const;
-const updatedAtFormatter = new Intl.DateTimeFormat("ja-JP", {
-  dateStyle: "medium",
-  timeZone: "Asia/Tokyo",
-});
-
-type CatalogRow = Readonly<{
-  id: string;
-  kind: "catalog";
-  work: Work;
-  record: UserWorkRecord;
-}>;
-type ExternalRow = Readonly<{
-  id: string;
-  kind: "external";
-  external: ExternalWorkRecord;
-  record: UserWorkRecord;
-}>;
-type CatalogMissingRow = Readonly<{
-  id: string;
-  kind: "catalog-missing";
-  record: UserWorkRecord;
-}>;
-
-export type LibraryRow = CatalogRow | ExternalRow | CatalogMissingRow;
+export type { LibraryRow } from "./library-media-cards";
 type SelectedRow = Readonly<Pick<LibraryRow, "id" | "kind">>;
 type LibrarySort = "updated" | "title";
 type LibraryViewMode = "list" | "grid";
 type LibraryStateFilter = ReadingState | null;
-
-function rowTitle(row: LibraryRow) {
-  if (row.kind === "catalog") return row.work.title;
-  if (row.kind === "external") return row.external.title;
-  return libraryStrings.catalogMissing.title;
-}
-
-function rowCreators(row: LibraryRow) {
-  if (row.kind === "catalog") return row.work.creators;
-  if (row.kind === "external") return row.external.creators;
-  return [];
-}
-
-function rowCoverUrl(row: LibraryRow, catalogCoverUrls: ReadonlyMap<string, string | null>) {
-  if (row.kind === "external") return row.external.coverUrl;
-  return row.kind === "catalog" ? catalogCoverUrls.get(row.id) : undefined;
-}
-
-function rowOpenLabel(row: LibraryRow) {
-  return row.kind === "catalog-missing"
-    ? libraryStrings.catalogMissing.openRecord(row.id)
-    : libraryStrings.openRecord(rowTitle(row));
-}
-
-function formatUpdatedAt(value: string) {
-  const time = Date.parse(value);
-  return Number.isFinite(time) ? updatedAtFormatter.format(new Date(time)) : value;
-}
 
 function compareRows(left: LibraryRow, right: LibraryRow, sort: LibrarySort) {
   if (sort === "title") {
@@ -102,122 +61,6 @@ function matchesQuery(row: LibraryRow, query: string) {
 function parseLibraryState(value: unknown): LibraryStateFilter | undefined {
   if (value === "all") return null;
   return READING_STATES.find((state) => state === value);
-}
-
-function RowMedia({
-  catalogCoverUrls,
-  onCoverSettled,
-  row,
-}: Readonly<{
-  catalogCoverUrls: ReadonlyMap<string, string | null>;
-  onCoverSettled?(workId: string): void;
-  row: LibraryRow;
-}>) {
-  if (row.kind === "catalog-missing") {
-    return (
-      <div className="grid w-full place-items-center rounded-[var(--radius-cover)] border border-dashed border-line bg-canvas text-text-muted [aspect-ratio:30/43]">
-        <span className="sr-only">{libraryStrings.catalogMissing.coverUnavailable}</span>
-      </div>
-    );
-  }
-
-  return (
-    <CoverImage
-      coverUrl={rowCoverUrl(row, catalogCoverUrls)}
-      creators={rowCreators(row)}
-      onSettled={row.kind === "catalog" ? () => onCoverSettled?.(row.id) : undefined}
-      requestedSize={200}
-      title={rowTitle(row)}
-    />
-  );
-}
-
-function ProgressDisplay({
-  row,
-  volumeCountByWorkId,
-}: Readonly<{ row: LibraryRow; volumeCountByWorkId: ReadonlyMap<string, number> }>) {
-  const volume = row.record.progress?.volume;
-  const chapter = row.record.progress?.chapter;
-  if (volume === undefined && chapter === undefined) return null;
-  const label = libraryStrings.progress(volume, chapter);
-  const total = row.kind === "catalog" ? volumeCountByWorkId.get(row.id) : undefined;
-
-  return (
-    <span className="grid gap-[var(--space-content-tight)] text-[length:var(--text-caption-size)] text-text-muted">
-      <span>{label}</span>
-      {volume === undefined || total === undefined || total < 1 ? null : (
-        <progress
-          aria-valuetext={label}
-          className="h-[var(--space-content-tight)] w-full overflow-hidden rounded-[var(--radius-pill)] border-0 bg-surface-3 text-accent [&::-moz-progress-bar]:bg-accent [&::-webkit-progress-bar]:bg-surface-3 [&::-webkit-progress-value]:bg-accent"
-          max={total}
-          value={Math.min(volume, total)}
-        />
-      )}
-    </span>
-  );
-}
-
-function LibraryMediaCard({
-  catalogCoverUrls,
-  onCoverSettled,
-  onOpen,
-  layout,
-  row,
-  volumeCountByWorkId,
-}: Readonly<{
-  catalogCoverUrls: ReadonlyMap<string, string | null>;
-  onCoverSettled?(workId: string): void;
-  onOpen(opener: HTMLElement, row: LibraryRow): void;
-  layout: "shelf" | LibraryViewMode;
-  row: LibraryRow;
-  volumeCountByWorkId: ReadonlyMap<string, number>;
-}>) {
-  return (
-    <article
-      className={cn(
-        "shrink-0 snap-start",
-        layout === "shelf" ? "w-[min(42vw,9rem)] md:w-36" : "h-full w-full",
-      )}
-      data-library-row-kind={row.kind}
-      data-work-id={row.id}
-    >
-      <Button
-        aria-label={rowOpenLabel(row)}
-        className={cn(
-          "grid h-full min-h-[var(--control-min-size)] w-full justify-stretch gap-[var(--space-3)] whitespace-normal rounded-[var(--radius-card)] border border-line bg-surface-1 p-[var(--space-3)] text-start text-text",
-          layout === "list" && "grid-cols-[5rem_minmax(0,1fr)]",
-        )}
-        onClick={(event) => onOpen(event.currentTarget, row)}
-        type="button"
-        variant="ghost"
-      >
-        <span className="w-full">
-          <RowMedia catalogCoverUrls={catalogCoverUrls} onCoverSettled={onCoverSettled} row={row} />
-        </span>
-        <span className="grid min-w-0 content-start gap-[var(--space-content-tight)]">
-          <strong className="[overflow-wrap:anywhere] leading-[var(--line-height-heading)] text-text-strong">
-            {rowTitle(row)}
-          </strong>
-          <span className="overflow-hidden text-ellipsis text-[length:var(--text-caption-size)] text-text-muted">
-            {row.kind === "catalog-missing"
-              ? libraryStrings.catalogMissing.workId(row.id)
-              : rowCreators(row).join("・") || libraryStrings.unknownCreator}
-          </span>
-          <span className="flex flex-wrap gap-[var(--space-content-tight)] text-[length:var(--text-caption-size)] [&>span]:rounded-[var(--radius-pill)] [&>span]:border [&>span]:border-line [&>span]:px-[var(--space-content)] [&>span]:py-[var(--space-content-tight)] [&>span]:text-text">
-            <span>{libraryStrings.tabs[row.record.readingState]}</span>
-            {row.kind === "external" ? <span>{libraryStrings.externalBadge}</span> : null}
-            {row.kind === "catalog-missing" ? (
-              <span>{libraryStrings.catalogMissing.badge}</span>
-            ) : null}
-          </span>
-          <ProgressDisplay row={row} volumeCountByWorkId={volumeCountByWorkId} />
-          <span className="overflow-hidden text-ellipsis text-[length:var(--text-caption-size)] text-text-muted">
-            {libraryStrings.updatedAt(formatUpdatedAt(row.record.updatedAt))}
-          </span>
-        </span>
-      </Button>
-    </article>
-  );
 }
 
 type LibraryViewProps = Readonly<{
@@ -325,22 +168,39 @@ export function LibraryView({
     activeState === null
       ? searchedRows
       : searchedRows.filter((row) => row.record.readingState === activeState);
-  const recentRows = [...visibleRows]
+  const recentRows = [...searchedRows]
     .sort((left, right) => compareRows(left, right, "updated"))
     .slice(0, 8);
-  const favoriteRows = visibleRows.filter((row) => row.record.reaction === "favorite");
+  const favoriteRows = searchedRows.filter((row) => row.record.reaction === "favorite");
   const selectedRow =
     panel === undefined || panel === "search"
       ? undefined
       : rows?.find((row) => row.kind === panel.kind && row.id === panel.id);
   const tabStates: readonly LibraryStateFilter[] =
     controlledActiveState === undefined ? READING_STATES : [null, ...READING_STATES];
+  const showOverviewShelves = controlledActiveState !== undefined && activeState === null;
 
   if (rows === undefined) {
-    return (
-      <main className="mx-auto grid min-h-dvh w-full max-w-[var(--layout-width-library)] place-items-center px-[var(--layout-page-padding)] pt-[var(--layout-page-block-start)] pb-[calc(var(--layout-mobile-navigation-clearance)+var(--space-8))] text-text-muted md:pb-[var(--space-section-large)]">
+    const loadingPage = (
+      <main
+        className={cn(
+          "mx-auto grid w-full max-w-[var(--layout-width-media)] flex-1 place-items-center px-[var(--layout-page-padding)] pt-[var(--layout-page-block-start)] text-text-muted",
+          showFooter
+            ? "pb-[var(--space-8)] md:pb-[var(--space-section-large)]"
+            : "min-h-dvh pb-[calc(var(--layout-mobile-navigation-clearance)+var(--space-8))] md:pb-[var(--space-section-large)]",
+        )}
+      >
         <p aria-live="polite">{libraryStrings.loading}</p>
       </main>
+    );
+
+    return showFooter ? (
+      <div className="flex min-h-[calc(100dvh-var(--layout-mobile-navigation-clearance))] flex-col md:min-h-[calc(100dvh-var(--desktop-navigation-height))]">
+        {loadingPage}
+        <SiteFooter className="mt-auto shrink-0" />
+      </div>
+    ) : (
+      loadingPage
     );
   }
 
@@ -386,25 +246,23 @@ export function LibraryView({
       : [{ state: activeState, rows: visibleRows }];
 
   const page = (
-    <main className="mx-auto min-h-dvh w-full max-w-[var(--layout-width-media)] px-[var(--layout-page-padding)] pt-[var(--layout-page-block-start)] pb-[calc(var(--layout-mobile-navigation-clearance)+var(--space-section-large))]">
-      <header className="mb-[var(--space-6)] flex flex-wrap items-end justify-between gap-[var(--space-4)]">
-        <div className="grid max-w-[var(--layout-width-reading)] gap-[var(--space-content)]">
-          <h1 className="text-[length:var(--text-page-title-size)] text-text-strong">
-            {libraryStrings.title}
-          </h1>
-          <p className="text-text-muted">{libraryStrings.description}</p>
-        </div>
-        <Button
-          onClick={(event) => {
-            setOpener(event.currentTarget);
-            setMessage(undefined);
-            setPanel("search");
-          }}
-          type="button"
-        >
-          {libraryStrings.addWork}
-        </Button>
-      </header>
+    <main
+      className={cn(
+        "mx-auto w-full max-w-[var(--layout-width-media)] flex-1 px-[var(--layout-page-padding)] pt-[var(--layout-page-block-start)]",
+        showFooter
+          ? "pb-[var(--space-8)] md:pb-[var(--space-section-large)]"
+          : "min-h-dvh pb-[calc(var(--layout-mobile-navigation-clearance)+var(--space-section-large))]",
+      )}
+    >
+      <LibraryOverviewHeader
+        onAddWork={(nextOpener) => {
+          setOpener(nextOpener);
+          setMessage(undefined);
+          setPanel("search");
+        }}
+        stateCounts={stateCounts}
+        total={rows.length}
+      />
 
       {storageDegraded ? (
         <p
@@ -431,33 +289,9 @@ export function LibraryView({
         </section>
       ) : (
         <>
-          <section
-            aria-label={libraryStrings.summary.heading}
-            className="mb-[var(--space-6)] grid grid-cols-3 gap-px overflow-hidden rounded-[var(--radius-card)] bg-line p-px md:grid-cols-6 [&>div]:grid [&>div]:min-h-[calc(var(--control-min-size)*1.6)] [&>div]:content-center [&>div]:justify-items-center [&>div]:gap-[var(--space-content-tight)] [&>div]:bg-surface-1 [&>div]:p-[var(--space-3)]"
-          >
-            <div>
-              <span className="text-[length:var(--text-caption-size)] text-text-muted">
-                {libraryStrings.summary.total}
-              </span>
-              <strong className="text-[length:var(--text-section-title-size)] text-text-strong tabular-nums">
-                {String(rows.length)}
-              </strong>
-            </div>
-            {READING_STATES.map((state) => (
-              <div key={state}>
-                <span className="text-[length:var(--text-caption-size)] text-text-muted">
-                  {libraryStrings.tabs[state]}
-                </span>
-                <strong className="text-[length:var(--text-section-title-size)] text-text-strong tabular-nums">
-                  {String(stateCounts[state])}
-                </strong>
-              </div>
-            ))}
-          </section>
-
-          <div className="mb-[var(--space-section)] grid grid-cols-2 gap-[var(--space-3)] rounded-[var(--radius-card)] border border-line bg-surface-1 p-[var(--space-3)] md:grid-cols-[minmax(0,1fr)_auto_auto] md:items-center xl:grid-cols-[minmax(0,1fr)_minmax(12rem,18rem)_auto_auto]">
+          <div className="mb-[var(--space-4)] grid grid-cols-2 gap-[var(--space-3)] rounded-[var(--radius-card)] border border-line bg-surface-1 p-[var(--space-3)] md:grid-cols-[minmax(0,1fr)_minmax(12rem,18rem)_auto_auto] md:items-center">
             <Tabs
-              className="col-span-2 w-full min-w-0 md:col-span-3 xl:col-span-1"
+              className="col-span-2 w-full min-w-0 md:col-span-1"
               onValueChange={(value) => {
                 const state = parseLibraryState(value);
                 if (state !== undefined) selectActiveState(state);
@@ -524,17 +358,17 @@ export function LibraryView({
             </div>
           </div>
 
-          {controlledActiveState === undefined || recentRows.length === 0 ? null : (
+          {!showOverviewShelves || recentRows.length === 0 ? null : (
             <MediaShelf
-              className="mt-[var(--space-section-large)] [&_h2]:border-l-[length:var(--space-content-tight)] [&_h2]:border-accent [&_h2]:pl-[var(--space-3)] [&_h2]:text-text-strong"
+              className="mt-[var(--space-6)] [&_h2]:text-text-strong"
+              compactHeading
               description={libraryStrings.recent.description}
               title={libraryStrings.recent.heading}
             >
               {recentRows.map((row) => (
-                <LibraryMediaCard
+                <LibraryRecentCard
                   catalogCoverUrls={catalogCoverUrls}
                   key={`recent:${row.kind}:${row.id}`}
-                  layout="shelf"
                   onCoverSettled={notifyCatalogCoverSettled}
                   onOpen={openRow}
                   row={row}
@@ -554,7 +388,7 @@ export function LibraryView({
             {shelves.map((shelf) => (
               <section
                 aria-labelledby={activeState === null ? undefined : `library-tab-${shelf.state}`}
-                className="mt-[var(--space-section-large)]"
+                className="mt-[var(--space-6)]"
                 id={activeState === null ? undefined : `library-tabpanel-${shelf.state}`}
                 key={shelf.state}
                 role={activeState === null ? undefined : "tabpanel"}
@@ -575,20 +409,33 @@ export function LibraryView({
                 ) : (
                   <ul
                     className={cn(
-                      "m-0 grid list-none gap-[var(--space-3)] border-0 p-0",
-                      view === "list" ? "grid-cols-1" : "grid-cols-2 md:grid-cols-4",
+                      "m-0 grid list-none gap-[var(--space-4)] border-0 p-0",
+                      view === "list"
+                        ? "grid-cols-1"
+                        : shelf.state === "reading"
+                          ? "grid-cols-1 md:grid-cols-4"
+                          : "grid-cols-2 sm:grid-cols-3 md:grid-cols-6",
                     )}
                   >
                     {shelf.rows.map((row) => (
                       <li className="min-w-0" key={`${row.kind}:${row.id}`}>
-                        <LibraryMediaCard
-                          catalogCoverUrls={catalogCoverUrls}
-                          layout={view}
-                          onCoverSettled={notifyCatalogCoverSettled}
-                          onOpen={openRow}
-                          row={row}
-                          volumeCountByWorkId={volumeCountByWorkId}
-                        />
+                        {view === "list" ? (
+                          <LibraryListCard
+                            catalogCoverUrls={catalogCoverUrls}
+                            onCoverSettled={notifyCatalogCoverSettled}
+                            onOpen={openRow}
+                            row={row}
+                            volumeCountByWorkId={volumeCountByWorkId}
+                          />
+                        ) : (
+                          <LibraryStateCard
+                            catalogCoverUrls={catalogCoverUrls}
+                            onCoverSettled={notifyCatalogCoverSettled}
+                            onOpen={openRow}
+                            row={row}
+                            volumeCountByWorkId={volumeCountByWorkId}
+                          />
+                        )}
                       </li>
                     ))}
                   </ul>
@@ -597,33 +444,37 @@ export function LibraryView({
             ))}
           </div>
 
-          {controlledActiveState === undefined || favoriteRows.length === 0 ? null : (
-            <MediaShelf
-              className="mt-[var(--space-section-large)] [&_h2]:border-l-[length:var(--space-content-tight)] [&_h2]:border-accent [&_h2]:pl-[var(--space-3)] [&_h2]:text-text-strong"
-              description={libraryStrings.favorites.description}
-              title={libraryStrings.favorites.heading}
-            >
-              {favoriteRows.map((row) => (
-                <LibraryMediaCard
-                  catalogCoverUrls={catalogCoverUrls}
-                  key={`favorite:${row.kind}:${row.id}`}
-                  layout="shelf"
-                  onCoverSettled={notifyCatalogCoverSettled}
-                  onOpen={openRow}
-                  row={row}
-                  volumeCountByWorkId={volumeCountByWorkId}
-                />
-              ))}
-            </MediaShelf>
+          {!showOverviewShelves || favoriteRows.length === 0 ? null : (
+            <div className="mt-[var(--space-6)] rounded-[var(--radius-card)] border border-line bg-surface-1 p-[var(--space-4)]">
+              <MediaShelf
+                className="[&_h2]:text-text-strong"
+                compactHeading
+                description={libraryStrings.favorites.description}
+                title={libraryStrings.favorites.heading}
+              >
+                {favoriteRows.map((row) => (
+                  <LibraryFavoriteCard
+                    catalogCoverUrls={catalogCoverUrls}
+                    key={`favorite:${row.kind}:${row.id}`}
+                    onCoverSettled={notifyCatalogCoverSettled}
+                    onOpen={openRow}
+                    row={row}
+                    volumeCountByWorkId={volumeCountByWorkId}
+                  />
+                ))}
+              </MediaShelf>
+            </div>
           )}
 
-          <section className="mt-[var(--space-section-large)] grid gap-[var(--space-4)] rounded-[var(--radius-card)] border border-line bg-surface-1 p-[var(--space-5)] md:grid-cols-[minmax(0,1fr)_auto] md:items-center">
-            <div>
+          <section className="mt-[var(--space-6)] grid gap-[var(--space-4)] rounded-[var(--radius-card)] border border-line-accent-subtle bg-surface-1 p-[var(--space-4)] md:grid-cols-[minmax(0,1fr)_auto] md:items-center">
+            <div className="grid gap-[var(--space-content)]">
               <h2>{libraryStrings.tools.heading}</h2>
-              <p>{libraryStrings.tools.description}</p>
+              <p className="max-w-[var(--layout-width-reading)] text-text-muted">
+                {libraryStrings.tools.description}
+              </p>
             </div>
             <Link
-              className="inline-flex min-h-[var(--control-min-size)] w-fit items-center font-bold text-accent underline underline-offset-[var(--space-content-tight)]"
+              className="inline-flex min-h-[var(--control-min-size)] w-fit items-center rounded-[var(--radius-control)] border border-accent px-[var(--space-4)] font-bold text-accent hover:bg-accent-soft focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-focus-ring"
               search={{ section: "data" }}
               to="/settings"
             >
@@ -744,10 +595,10 @@ export function LibraryView({
   );
 
   return showFooter ? (
-    <>
+    <div className="flex min-h-[calc(100dvh-var(--layout-mobile-navigation-clearance))] flex-col md:min-h-[calc(100dvh-var(--desktop-navigation-height))]">
       {page}
-      <SiteFooter />
-    </>
+      <SiteFooter className="mt-auto shrink-0" />
+    </div>
   ) : (
     page
   );

@@ -11,6 +11,7 @@ import {
 } from "react";
 
 import { Button } from "@/components/design-system/button";
+import { SectionHeading } from "@/components/layout/section-heading";
 import { mediaStrings } from "@/lib/strings";
 import { cn } from "@/lib/utils";
 
@@ -25,6 +26,7 @@ type MediaShelfProps = Readonly<{
   trackData?: Readonly<{
     [key: `data-${string}`]: string | boolean | undefined;
   }>;
+  compactHeading?: boolean;
 }>;
 
 type ScrollState = Readonly<{
@@ -46,6 +48,7 @@ export function MediaShelf({
   action,
   children,
   className,
+  compactHeading = false,
   description,
   listType,
   title,
@@ -131,6 +134,7 @@ export function MediaShelf({
         {...trackData}
         aria-label={title}
         className={cn(trackClassName, "m-0 list-none p-0", customTrackClassName)}
+        data-media-shelf-track
         data-overflow={scrollState.hasOverflow || undefined}
         onKeyDown={moveCardFocus}
         ref={setTrack}
@@ -143,6 +147,7 @@ export function MediaShelf({
         {...trackData}
         aria-label={title}
         className={cn(trackClassName, "m-0 list-none p-0", customTrackClassName)}
+        data-media-shelf-track
         data-overflow={scrollState.hasOverflow || undefined}
         onKeyDown={moveCardFocus}
         ref={setTrack}
@@ -155,6 +160,7 @@ export function MediaShelf({
         {...trackData}
         aria-label={title}
         className={cn(trackClassName, customTrackClassName)}
+        data-media-shelf-track
         data-overflow={scrollState.hasOverflow || undefined}
         onKeyDown={moveCardFocus}
         ref={setTrack}
@@ -165,39 +171,41 @@ export function MediaShelf({
 
   return (
     <section aria-labelledby={headingId} className={cn("min-w-0", className)}>
-      <header className="mb-[var(--space-3)] flex items-end justify-between gap-[var(--space-4)]">
-        <div className="grid gap-[var(--space-content-tight)]">
-          <h2 id={headingId}>{title}</h2>
-          {description === undefined ? null : <p className="text-text-muted">{description}</p>}
-        </div>
-        <div className="flex shrink-0 items-center gap-[var(--space-content-tight)]">
-          {action}
-          {scrollState.hasOverflow ? (
-            <span className="hidden gap-[var(--space-content-tight)] [@media(min-width:768px)_and_(hover:hover)_and_(pointer:fine)]:flex">
-              <Button
-                aria-label={mediaStrings.previous(title)}
-                disabled={!scrollState.canScrollBack}
-                onClick={() => move(-1)}
-                size="icon"
-                type="button"
-                variant="outline"
-              >
-                <ChevronLeftIcon aria-hidden="true" />
-              </Button>
-              <Button
-                aria-label={mediaStrings.next(title)}
-                disabled={!scrollState.canScrollForward}
-                onClick={() => move(1)}
-                size="icon"
-                type="button"
-                variant="outline"
-              >
-                <ChevronRightIcon aria-hidden="true" />
-              </Button>
-            </span>
-          ) : null}
-        </div>
-      </header>
+      <SectionHeading
+        action={
+          <>
+            {action}
+            {scrollState.hasOverflow ? (
+              <span className="hidden gap-[var(--space-content-tight)] [@media(min-width:768px)_and_(hover:hover)_and_(pointer:fine)]:flex">
+                <Button
+                  aria-label={mediaStrings.previous(title)}
+                  disabled={!scrollState.canScrollBack}
+                  onClick={() => move(-1)}
+                  size="icon"
+                  type="button"
+                  variant="outline"
+                >
+                  <ChevronLeftIcon aria-hidden="true" />
+                </Button>
+                <Button
+                  aria-label={mediaStrings.next(title)}
+                  disabled={!scrollState.canScrollForward}
+                  onClick={() => move(1)}
+                  size="icon"
+                  type="button"
+                  variant="outline"
+                >
+                  <ChevronRightIcon aria-hidden="true" />
+                </Button>
+              </span>
+            ) : null}
+          </>
+        }
+        compact={compactHeading}
+        description={description}
+        id={headingId}
+        title={title}
+      />
       {track}
     </section>
   );

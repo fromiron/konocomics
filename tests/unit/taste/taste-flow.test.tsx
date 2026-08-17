@@ -104,6 +104,23 @@ function consumeReveal() {
   window.history.replaceState({}, "", "/taste");
 }
 
+function createSessionStorageStub(
+  overrides: Partial<Pick<Storage, "getItem" | "setItem">>,
+): Storage {
+  const storage = window.sessionStorage;
+  return {
+    clear: storage.clear.bind(storage),
+    getItem: storage.getItem.bind(storage),
+    key: storage.key.bind(storage),
+    get length() {
+      return storage.length;
+    },
+    removeItem: storage.removeItem.bind(storage),
+    setItem: storage.setItem.bind(storage),
+    ...overrides,
+  };
+}
+
 beforeEach(() => {
   createProfileFixture();
   testState.adjustments = { axes: {}, themes: {} };
@@ -200,16 +217,19 @@ describe("TasteFlow", () => {
     expect(await screen.findByText("分析の確信度: ふつう")).toBeTruthy();
   });
 
-  it("keeps all groups in summary and opens only the selected adjustment group", async () => {
+  it("keeps every factor group expanded in summary and shows only the selected adjustment group", async () => {
     const onGroupChange = vi.fn();
     const view = render(<TasteFlow onGroupChange={onGroupChange} />);
 
     expect(await screen.findByRole("heading", { name: "あなたの Manga DNA" })).toBeTruthy();
     expect(
-      [...view.container.querySelectorAll(".taste-factor-group > h2")].map(
+      [...view.container.querySelectorAll(".taste-factor-group h2")].map(
         (heading) => heading.textContent,
       ),
     ).toEqual(["テーマ", "展開", "トーン・関係", "作画", "ジャンル"]);
+    expect(view.container.querySelectorAll("section.taste-factor-group")).toHaveLength(5);
+    expect(view.container.querySelectorAll("details.taste-factor-group")).toHaveLength(0);
+    expect(view.container.querySelectorAll(".taste-factor-row")).toHaveLength(49);
     expect(screen.getByRole("button", { name: "すべて" }).getAttribute("aria-pressed")).toBe(
       "true",
     );
@@ -217,11 +237,13 @@ describe("TasteFlow", () => {
     view.rerender(<TasteFlow mode="adjust" onGroupChange={onGroupChange} />);
 
     expect(
-      [...view.container.querySelectorAll(".taste-factor-group > h2")].map(
+      [...view.container.querySelectorAll(".taste-factor-group h2")].map(
         (heading) => heading.textContent,
       ),
-    ).toEqual([]);
-    expect(screen.queryByRole("button", { name: "すべて" })).toBeNull();
+    ).toEqual(["テーマ", "展開", "トーン・関係", "作画", "ジャンル"]);
+    expect(screen.getByRole("button", { name: "すべて" }).getAttribute("aria-pressed")).toBe(
+      "true",
+    );
     const themeFilter = screen.getByRole("button", { name: "テーマ" });
     expect(themeFilter.getAttribute("aria-pressed")).toBe("false");
     fireEvent.click(themeFilter);
@@ -239,14 +261,27 @@ describe("TasteFlow", () => {
     expect(within(radar).getByText("描き込みの密度")).toBeTruthy();
     const anchorRegion = screen.getByRole("region", { name: "選んだマンガ" });
     expect(within(anchorRegion).queryByRole("img")).toBeNull();
-    expect(anchorRegion.querySelectorAll("li > .visually-hidden")).toHaveLength(5);
+    expect(anchorRegion.querySelectorAll("li > a")).toHaveLength(5);
+    expect(anchorRegion.querySelector("li > .visually-hidden")).toBeNull();
+    const topPreferenceCards = container.querySelectorAll(".taste-top-card");
+    expect(topPreferenceCards).toHaveLength(3);
+    expect(
+      [...topPreferenceCards].every(
+        (card) =>
+          card.querySelector("h3") !== null &&
+          card.querySelector(".taste-top-card__level") !== null &&
+          card.querySelector("p") !== null,
+      ),
+    ).toBe(true);
     const evidenceGraphics = container.querySelectorAll(".taste-top-card > ul[aria-hidden='true']");
     expect(evidenceGraphics.length).toBeGreaterThan(0);
     expect([...evidenceGraphics].every((graphic) => !graphic.hasAttribute("aria-label"))).toBe(
       true,
     );
-    const groupHeadings = [...container.querySelectorAll(".taste-factor-group > h2")];
+    const groupHeadings = [...container.querySelectorAll(".taste-factor-group h2")];
     expect(groupHeadings.map((heading) => heading.textContent)).toEqual(["展開"]);
+    expect(container.querySelectorAll("section.taste-factor-group")).toHaveLength(1);
+    expect(container.querySelector("details.taste-factor-group")).toBeNull();
     const headingIds = groupHeadings.map((heading) => heading.id);
     expect(new Set(headingIds).size).toBe(headingIds.length);
     expect(screen.getAllByRole("radiogroup")).toHaveLength(6);
@@ -260,6 +295,7 @@ describe("TasteFlow", () => {
     const strategyGroup = screen.getByRole("radiogroup", {
       name: "戦略的な展開の好みを調整",
     });
+    expect(within(strategyGroup).getAllByRole("radio")).toHaveLength(5);
     const beforePreview = screen.getByRole("region", { name: "ページを開いた時" });
     const afterPreview = screen.getByRole("region", { name: "現在の調整" });
     expect(within(beforePreview).getByText("work-6")).toBeTruthy();
@@ -416,15 +452,25 @@ describe("TasteFlow", () => {
       window.history.replaceState({}, "", "/taste?reveal=1");
 
       if (failure === "get") {
-        vi.spyOn(Storage.prototype, "getItem").mockImplementation(() => {
-          throw new Error("get failed");
-        });
+        vi.spyOn(window, "sessionStorage", "get").mockReturnValue(
+          createSessionStorageStub({
+            getItem: () => {
+              throw new Error("get failed");
+            },
+          }),
+        );
       } else if (failure === "set") {
-        vi.spyOn(Storage.prototype, "setItem").mockImplementation(() => {
-          throw new Error("set failed");
-        });
+        vi.spyOn(window, "sessionStorage", "get").mockReturnValue(
+          createSessionStorageStub({
+            setItem: () => {
+              throw new Error("set failed");
+            },
+          }),
+        );
       } else {
-        vi.spyOn(Storage.prototype, "getItem").mockReturnValue(null);
+        vi.spyOn(window, "sessionStorage", "get").mockReturnValue(
+          createSessionStorageStub({ getItem: () => null }),
+        );
       }
 
       render(<TasteFlow onRevealConsumed={consumeReveal} reveal="1" />);

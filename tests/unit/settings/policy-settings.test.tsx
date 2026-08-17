@@ -27,6 +27,13 @@ describe("PolicySettings", () => {
     );
     render(<PolicySettings policies={policies} savePolicies={savePolicies} />);
 
+    expect(screen.getAllByRole("switch")).toHaveLength(3);
+    expect(
+      screen.queryByRole("switch", {
+        name: settingsStrings.policies.labels.excludeIncomplete,
+      }),
+    ).toBeNull();
+
     fireEvent.click(
       screen.getByRole("switch", { name: settingsStrings.policies.labels.preferCompleted }),
     );

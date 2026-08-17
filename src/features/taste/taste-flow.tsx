@@ -5,7 +5,6 @@ import { LazyMotion, domAnimation, m, useReducedMotion } from "motion/react";
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 
 import { Button, buttonClassName } from "@/components/design-system/button";
-import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/design-system/tabs";
 import { CoverImage } from "@/components/cover/CoverImage";
 import { SiteFooter } from "@/components/layout/site-footer";
 import { MediaShelf } from "@/components/media/media-shelf";
@@ -33,6 +32,7 @@ import type {
   RecommendationPolicies,
   UserWorkRecord,
 } from "@/domain/profile/types";
+import { isExternalNegativeReason } from "@/domain/profile/constants";
 import { recommendationContextSchema } from "@/domain/recommendation/context-schema";
 import {
   buildRecommendationPlan,
@@ -44,7 +44,7 @@ import {
   useRecommendationCovers,
 } from "@/features/recommendations/recommendation-cover-resolver";
 import { usePersistence } from "@/infrastructure/db";
-import { tasteStrings, explanationLexicon } from "@/lib/strings";
+import { explanationLexicon, mediaStrings, tasteStrings } from "@/lib/strings";
 import { cn } from "@/lib/utils";
 
 import { AdjustmentRadiogroup } from "./adjustment-radiogroup";
@@ -150,35 +150,53 @@ function AnchorStrip({
   anchors,
   animateReveal,
   coverUrls,
+  evidenceLabels,
   onCoverSettled,
 }: Readonly<{
   anchors: Work[];
   animateReveal: boolean;
   coverUrls: ReadonlyMap<string, string | null>;
+  evidenceLabels: ReadonlyMap<string, string>;
   onCoverSettled(workId: string): void;
 }>) {
   const shelf = (
     <MediaShelf
-      className="taste-anchor-strip mb-[var(--space-6)] min-w-0 rounded-[var(--radius-card)] border border-line bg-surface-1 p-[var(--space-5)]"
+      className="taste-anchor-strip mb-[var(--space-content)] min-w-0 rounded-[var(--radius-card)] border border-line bg-surface-1 p-[var(--space-3)]"
+      compactHeading
       listType="unordered"
       title={tasteStrings.anchorsHeading}
-      trackClassName="pt-0.5"
+      trackClassName="pt-[var(--space-content-tight)]"
     >
       {anchors.map((work) => (
         <li
-          className="relative w-[calc(var(--space-8)+var(--space-8)+var(--space-8)+var(--space-3))] min-w-[calc(var(--space-8)+var(--space-8)+var(--space-8)+var(--space-3))] snap-start"
+          className="relative w-[calc(var(--space-12)*4)] min-w-[calc(var(--space-12)*4)] snap-start"
           key={work.id}
         >
-          <CoverImage
-            className="taste-anchor-cover overflow-hidden rounded-[var(--radius-cover)] bg-surface-2"
-            coverUrl={coverUrls.get(work.id)}
-            creators={work.creators}
-            decorative
-            onSettled={() => onCoverSettled(work.id)}
-            requestedSize={200}
-            title={work.title}
-          />
-          <span className="visually-hidden sr-only">{work.title}</span>
+          <Link
+            aria-label={mediaStrings.openDetails(work.title)}
+            className="group/evidence grid min-h-[var(--control-min-size)] grid-cols-[var(--space-12)_minmax(0,1fr)] items-center gap-[var(--space-content)] rounded-[var(--radius-card)] border border-line bg-surface-2 p-[var(--space-content)] focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-ring"
+            params={{ workId: work.id }}
+            preload={false}
+            to="/works/$workId"
+          >
+            <CoverImage
+              className="taste-anchor-cover overflow-hidden rounded-[var(--radius-cover)] bg-surface-1 transition-transform duration-[var(--motion-duration-feedback)] [@media(hover:hover)_and_(pointer:fine)_and_(prefers-reduced-motion:no-preference)]:group-hover/evidence:-translate-y-0.5 motion-reduce:transition-none"
+              coverUrl={coverUrls.get(work.id)}
+              creators={work.creators}
+              decorative
+              onSettled={() => onCoverSettled(work.id)}
+              requestedSize={200}
+              title={work.title}
+            />
+            <span className="grid min-w-0 content-center gap-[var(--space-content-tight)]">
+              <strong className="line-clamp-2 text-[length:var(--text-caption-size)] text-text-strong">
+                {work.title}
+              </strong>
+              <span className="truncate text-[length:var(--font-size-12)] font-bold text-accent">
+                {evidenceLabels.get(work.id)}
+              </span>
+            </span>
+          </Link>
         </li>
       ))}
     </MediaShelf>
@@ -219,12 +237,14 @@ function TopPreferenceCard({
     return work === undefined ? [] : [work];
   });
   const label = factorLabel(preference.factorId);
+  const cardClassName =
+    "taste-top-card surface-card flex min-w-0 flex-col gap-[var(--space-content)] rounded-[var(--radius-card)] border border-line bg-surface-2 p-[var(--space-3)]";
 
   const content = (
     <>
       <h3
         className={cn(
-          "relative w-fit text-accent",
+          "relative line-clamp-2 min-w-0 text-[length:var(--font-size-14)] leading-tight text-text-strong",
           animateReveal &&
             "taste-top-card__label--reveal after:absolute after:right-0 after:-bottom-[3px] after:left-0 after:h-0.5 after:origin-left after:scale-x-0 after:bg-accent after:content-[''] motion-safe:after:animate-[taste-underline-reveal_300ms_500ms_ease-out_forwards]",
           animateReveal && index === 1 && "after:[animation-delay:680ms]",
@@ -233,14 +253,17 @@ function TopPreferenceCard({
       >
         {label}
       </h3>
+      <span className="taste-top-card__level w-fit shrink-0 whitespace-nowrap rounded-full border border-line bg-accent-soft px-[var(--space-content)] py-[var(--space-content-tight)] text-[length:var(--font-size-12)] font-bold text-accent">
+        {tasteStrings.factorValue(preference.value)}
+      </span>
       <ul
         aria-hidden="true"
-        className="m-0 flex min-h-[calc(var(--space-12)+var(--space-1))] list-none gap-[var(--space-content)] p-0 md:hidden"
+        className="m-0 flex min-h-[var(--space-7)] list-none items-center gap-[var(--space-content-tight)] p-0"
       >
         {evidenceWorks.map((work) => (
-          <li className="w-8 min-w-8 md:w-7 md:min-w-7" key={work.id}>
+          <li className="w-[var(--space-7)] min-w-[var(--space-7)]" key={work.id}>
             <CoverImage
-              className="taste-evidence-cover rounded-[var(--radius-cover)]"
+              className="taste-evidence-cover rounded-[var(--radius-cover)] border border-line"
               coverUrl={coverUrls.get(work.id)}
               creators={work.creators}
               decorative
@@ -251,10 +274,7 @@ function TopPreferenceCard({
           </li>
         ))}
       </ul>
-      <span className="taste-top-card__level whitespace-nowrap text-[length:var(--text-caption-size)] text-accent">
-        {tasteStrings.factorValue(preference.value)}
-      </span>
-      <p className="line-clamp-2 text-[length:var(--text-caption-size)] text-text-muted md:sr-only">
+      <p className="line-clamp-2 text-[length:var(--font-size-12)] leading-[var(--line-height-body)] text-text-muted">
         {tasteStrings.topPreferenceEvidence(evidenceWorks.map((work) => work.title))}
       </p>
     </>
@@ -263,16 +283,14 @@ function TopPreferenceCard({
   return animateReveal ? (
     <m.article
       animate={{ opacity: 1, y: 0 }}
-      className="taste-top-card surface-card grid min-w-0 gap-[var(--space-content-loose)] rounded-[var(--radius-card)] border border-line bg-surface-2 p-[var(--space-3)]"
+      className={cardClassName}
       initial={{ opacity: 0, y: 8 }}
       transition={{ delay: 0.5 + index * 0.18, duration: 0.4, ease: [0.2, 0, 0, 1] }}
     >
       {content}
     </m.article>
   ) : (
-    <article className="taste-top-card surface-card grid min-w-0 gap-[var(--space-content-loose)] rounded-[var(--radius-card)] border border-line bg-surface-2 p-[var(--space-3)]">
-      {content}
-    </article>
+    <article className={cardClassName}>{content}</article>
   );
 }
 
@@ -301,18 +319,25 @@ function FactorGroup<FactorId extends ExplanationFactorId>({
 }: FactorGroupProps<FactorId>) {
   return (
     <section
-      className="taste-factor-group surface-card m-0 min-w-0 rounded-[var(--radius-card)] border border-line bg-surface-2 px-[var(--space-4)] py-[var(--space-5)]"
       aria-labelledby={`taste-group-${id}`}
+      className="taste-factor-group surface-card m-0 h-fit min-w-0 overflow-hidden rounded-[var(--radius-card)] border border-line bg-surface-2"
     >
-      <h2 className="border-b border-line pb-3 text-text-strong" id={`taste-group-${id}`}>
-        {title}
-      </h2>
-      <div className="taste-factor-group__rows grid">
+      <header className="flex items-center border-b border-line px-[var(--space-3)] py-[var(--space-2)]">
+        <h2 className="text-[length:var(--font-size-16)] tracking-tight" id={`taste-group-${id}`}>
+          {title}
+        </h2>
+      </header>
+      <div
+        className={cn(
+          "taste-factor-group__rows grid px-[var(--space-3)]",
+          adjustmentValues === undefined && "gap-x-[var(--space-4)]",
+        )}
+      >
         {preferences.map((preference, index) => {
           const label = factorLabel(preference.factorId);
           return (
             <div
-              className="taste-factor-row grid min-w-0 gap-[var(--space-3)] border-b border-line py-[var(--space-4)] last:border-b-0 last:pb-0"
+              className="taste-factor-row grid min-w-0 gap-[var(--space-content-tight)] border-b border-line py-[var(--space-content-tight)] last:border-b-0 md:grid-cols-[minmax(12rem,0.75fr)_minmax(0,1.25fr)] md:items-center md:gap-[var(--space-content)]"
               key={preference.factorId}
             >
               <FactorBar
@@ -348,7 +373,6 @@ function FactorPanels({
   factorRevealReady,
   group,
   highlightedFactor,
-  mode,
   onAdjustment,
   summary,
 }: Readonly<{
@@ -357,7 +381,6 @@ function FactorPanels({
   factorRevealReady: boolean;
   group?: CoverageGroup;
   highlightedFactor: string | null;
-  mode: TasteMode;
   onAdjustment: (
     kind: "axis" | "theme",
     factorId: AxisId | ThemeTag,
@@ -368,68 +391,58 @@ function FactorPanels({
   const narrative = summary.axes.filter((preference) => NARRATIVE_IDS.has(preference.factorId));
   const tone = summary.axes.filter((preference) => TONE_IDS.has(preference.factorId));
   const art = summary.axes.filter((preference) => ART_IDS.has(preference.factorId));
-  const adjusting = mode === "adjust";
-  const visible = (candidate: CoverageGroup) =>
-    adjusting ? group === candidate : group === undefined || group === candidate;
+  const visible = (candidate: CoverageGroup) => group === undefined || group === candidate;
 
   return (
-    <div className="taste-factor-grid grid grid-cols-1 gap-[var(--space-content-loose)] md:grid-cols-2">
+    <div className="taste-factor-grid grid grid-cols-1 items-start gap-[var(--space-content)]">
       {visible("theme") ? (
         <FactorGroup
-          adjustmentValues={adjusting ? adjustments.themes : undefined}
+          adjustmentValues={adjustments.themes}
           animateReveal={animateReveal}
           factorRevealReady={factorRevealReady}
           highlightedFactor={highlightedFactor}
           highlightPrefix="theme"
           id="theme"
-          onAdjustment={
-            adjusting ? (factorId, value) => onAdjustment("theme", factorId, value) : undefined
-          }
+          onAdjustment={(factorId, value) => onAdjustment("theme", factorId, value)}
           preferences={summary.themes}
           title={tasteStrings.groups.theme}
         />
       ) : null}
       {visible("narrative") ? (
         <FactorGroup
-          adjustmentValues={adjusting ? adjustments.axes : undefined}
+          adjustmentValues={adjustments.axes}
           animateReveal={animateReveal}
           factorRevealReady={factorRevealReady}
           highlightedFactor={highlightedFactor}
           highlightPrefix="axis"
           id="narrative"
-          onAdjustment={
-            adjusting ? (factorId, value) => onAdjustment("axis", factorId, value) : undefined
-          }
+          onAdjustment={(factorId, value) => onAdjustment("axis", factorId, value)}
           preferences={narrative}
           title={tasteStrings.groups.narrative}
         />
       ) : null}
       {visible("tone") ? (
         <FactorGroup
-          adjustmentValues={adjusting ? adjustments.axes : undefined}
+          adjustmentValues={adjustments.axes}
           animateReveal={animateReveal}
           factorRevealReady={factorRevealReady}
           highlightedFactor={highlightedFactor}
           highlightPrefix="axis"
           id="tone"
-          onAdjustment={
-            adjusting ? (factorId, value) => onAdjustment("axis", factorId, value) : undefined
-          }
+          onAdjustment={(factorId, value) => onAdjustment("axis", factorId, value)}
           preferences={tone}
           title={tasteStrings.groups.tone}
         />
       ) : null}
       {visible("art") ? (
         <FactorGroup
-          adjustmentValues={adjusting ? adjustments.axes : undefined}
+          adjustmentValues={adjustments.axes}
           animateReveal={animateReveal}
           factorRevealReady={factorRevealReady}
           highlightedFactor={highlightedFactor}
           highlightPrefix="axis"
           id="art"
-          onAdjustment={
-            adjusting ? (factorId, value) => onAdjustment("axis", factorId, value) : undefined
-          }
+          onAdjustment={(factorId, value) => onAdjustment("axis", factorId, value)}
           preferences={art}
           title={tasteStrings.groups.art}
         />
@@ -473,20 +486,37 @@ function RecentFeedbackSummary({
     .slice(0, 3);
 
   const feedbackLabel = (record: UserWorkRecord) => {
-    if (record.reaction !== undefined) return tasteStrings.feedbackLabels[record.reaction];
-    return tasteStrings.readingStateLabels[record.readingState];
+    const status =
+      record.reaction !== undefined
+        ? tasteStrings.feedbackLabels[record.reaction]
+        : tasteStrings.readingStateLabels[record.readingState];
+    const reason = [...(record.negativeReasons ?? []), ...(record.droppedReasons ?? [])].find(
+      (candidate) => !isExternalNegativeReason(candidate),
+    );
+    return reason === undefined
+      ? status
+      : tasteStrings.feedbackWithReason(status, tasteStrings.negativeReasonLabels[reason]);
   };
 
   return items.length === 0 ? null : (
     <section
-      className="taste-negative-summary mt-[var(--space-6)] grid gap-[var(--space-content-loose)] rounded-[var(--radius-card)] border border-line bg-surface-1 p-[var(--space-5)]"
+      className="taste-negative-summary mt-[var(--space-4)] grid gap-[var(--space-content)] rounded-[var(--radius-card)] border border-line bg-surface-1 p-[var(--space-4)]"
       aria-labelledby="taste-negative-heading"
     >
-      <h2 id="taste-negative-heading">{tasteStrings.recentFeedbackHeading}</h2>
+      <header className="flex flex-wrap items-center justify-between gap-[var(--space-content)]">
+        <h2 id="taste-negative-heading">{tasteStrings.recentFeedbackHeading}</h2>
+        <Link
+          className="taste-add-link interactive-press inline-flex min-h-[var(--control-min-size)] items-center font-bold text-accent underline underline-offset-4 transition-[opacity,transform] duration-[var(--motion-duration-feedback)] ease-[var(--motion-ease-direct)] active:scale-[0.97] motion-reduce:transform-none"
+          preload={false}
+          to="/onboarding"
+        >
+          {tasteStrings.addWorks}
+        </Link>
+      </header>
       <ul className="m-0 grid list-none grid-cols-1 gap-[var(--space-content)] p-0 md:grid-cols-3">
         {items.map(({ record, work }) => (
           <li
-            className="grid min-h-[var(--control-min-size)] grid-cols-[var(--space-12)_minmax(0,1fr)] items-center gap-[var(--space-4)] rounded-[var(--radius-card)] border border-line bg-surface-1 px-3 py-2.5"
+            className="grid min-h-[var(--control-min-size)] grid-cols-[var(--space-12)_minmax(0,1fr)] items-center gap-[var(--space-3)] rounded-[var(--radius-card)] border border-line bg-surface-2 px-[var(--space-3)] py-[var(--space-content)]"
             key={work.id}
           >
             <CoverImage
@@ -515,7 +545,6 @@ export function TasteFlow({
   group,
   mode = "summary",
   onGroupChange,
-  onModeChange,
   onRevealConsumed,
   reveal,
 }: Readonly<{
@@ -575,9 +604,31 @@ export function TasteFlow({
     [catalog.works, catalogRecords],
   );
   const anchors = useMemo(
-    () => positiveAnchorWorks(catalogRecords, worksById),
+    () => positiveAnchorWorks(catalogRecords, worksById).slice(0, 5),
     [catalogRecords, worksById],
   );
+  const anchorEvidenceLabels = useMemo(() => {
+    const labels = new Map<string, string>();
+    for (const preference of summary.topPreferences) {
+      for (const workId of preference.anchorWorkIds) {
+        if (!labels.has(workId)) labels.set(workId, factorLabel(preference.factorId));
+      }
+    }
+    for (const record of catalogRecords) {
+      if (labels.has(record.workId) || record.reaction === undefined) continue;
+      labels.set(record.workId, tasteStrings.feedbackLabels[record.reaction]);
+    }
+    return labels;
+  }, [catalogRecords, summary.topPreferences]);
+  const confidenceLevel = getConfidenceLevel(calculateProfileConfidence(catalogRecords));
+  const beforePreviewWorkIds = useMemo(() => {
+    if (baselineAdjustments === null || storedPolicies === undefined) return null;
+    return recommendationPreviewWorkIds(catalog, records, baselineAdjustments, storedPolicies);
+  }, [baselineAdjustments, catalog, records, storedPolicies]);
+  const afterPreviewWorkIds = useMemo(() => {
+    if (storedPolicies === undefined) return null;
+    return recommendationPreviewWorkIds(catalog, records, adjustments, storedPolicies);
+  }, [adjustments, catalog, records, storedPolicies]);
   const recentFeedbackWorkIds = useMemo(
     () =>
       [...catalogRecords]
@@ -590,12 +641,29 @@ export function TasteFlow({
         .map((record) => record.workId),
     [catalogRecords],
   );
+  const topPreferenceWorkIds = useMemo(
+    () => summary.topPreferences.flatMap((preference) => preference.anchorWorkIds),
+    [summary.topPreferences],
+  );
   const coverTargets = useMemo(
     () =>
       createRecommendationCoverTargets(catalog, [
-        ...new Set([...anchors.map((work) => work.id), ...recentFeedbackWorkIds]),
+        ...new Set([
+          ...anchors.map((work) => work.id),
+          ...topPreferenceWorkIds,
+          ...recentFeedbackWorkIds,
+          ...(beforePreviewWorkIds ?? []),
+          ...(afterPreviewWorkIds ?? []),
+        ]),
       ]),
-    [anchors, catalog, recentFeedbackWorkIds],
+    [
+      afterPreviewWorkIds,
+      anchors,
+      beforePreviewWorkIds,
+      catalog,
+      recentFeedbackWorkIds,
+      topPreferenceWorkIds,
+    ],
   );
   const { coverUrls, notifyCoverSettled } = useRecommendationCovers({
     targets: coverTargets,
@@ -614,16 +682,6 @@ export function TasteFlow({
     },
     [coverTargetsByWorkId, notifyCoverSettled],
   );
-  const confidenceLevel = getConfidenceLevel(calculateProfileConfidence(catalogRecords));
-  const beforePreviewWorkIds = useMemo(() => {
-    if (baselineAdjustments === null || storedPolicies === undefined) return null;
-    return recommendationPreviewWorkIds(catalog, records, baselineAdjustments, storedPolicies);
-  }, [baselineAdjustments, catalog, records, storedPolicies]);
-  const afterPreviewWorkIds = useMemo(() => {
-    if (storedPolicies === undefined) return null;
-    return recommendationPreviewWorkIds(catalog, records, adjustments, storedPolicies);
-  }, [adjustments, catalog, records, storedPolicies]);
-
   useEffect(() => {
     if (baselineAdjustments !== null || storedAdjustments === undefined) return;
     let active = true;
@@ -756,7 +814,7 @@ export function TasteFlow({
     <LazyMotion features={domAnimation} strict>
       <main
         className={cn(
-          "taste-page mx-auto min-h-dvh w-[min(100%,var(--layout-width-taste))] px-[var(--layout-page-padding)] pt-[var(--layout-page-block-start)] pb-[var(--space-section-large)] text-text",
+          "taste-page mx-auto min-h-dvh w-[min(100%,var(--layout-width-taste))] px-[var(--layout-page-padding)] pt-[var(--space-4)] pb-[var(--space-section)] text-text md:pt-[var(--space-content)]",
           revealExperience.entry &&
             "taste-page--with-action pb-[var(--layout-taste-action-clearance)]",
           !revealExperience.entry &&
@@ -765,29 +823,33 @@ export function TasteFlow({
         )}
         onAnimationEnd={pageEntryMotion.onAnimationEnd}
       >
-        <header className="taste-header mb-[var(--space-6)] grid items-stretch gap-[var(--space-5)] md:grid-cols-[minmax(0,0.95fr)_minmax(0,1.05fr)]">
-          <div className="grid content-start gap-[var(--space-4)]">
-            <div className="taste-header__copy grid content-center gap-[var(--space-content)] border-l-2 border-accent p-[var(--space-5)]">
+        <header className="taste-header mb-[var(--space-content)] grid items-stretch gap-[var(--space-3)] md:grid-cols-[minmax(0,0.95fr)_minmax(0,1.05fr)]">
+          <div className="grid content-start gap-[var(--space-content)]">
+            <div className="taste-header__copy grid content-center gap-[var(--space-content-tight)] border-l-2 border-accent px-[var(--space-3)] py-[var(--space-content)]">
               <p className="taste-header__eyebrow text-[length:var(--text-caption-size)] font-bold tracking-[0.08em] text-accent">
                 {tasteStrings.eyebrow}
               </p>
-              <h1 className="font-display text-[length:var(--text-display-size)]">
+              <h1 className="font-display text-[length:var(--text-page-title-size)]">
                 {tasteStrings.title}
               </h1>
-              <p className="max-w-[48ch] font-normal text-text-muted">{tasteStrings.description}</p>
-              <strong className="taste-confidence min-h-[var(--control-min-size)] w-fit rounded-full border border-line bg-surface-1 px-[var(--space-3)] py-[var(--space-2)] leading-[calc(var(--control-min-size)-(var(--space-2)*2))] text-accent">
+              <p className="max-w-[48ch] text-[length:var(--text-caption-size)] font-normal text-text-muted">
+                {tasteStrings.description}
+              </p>
+              <strong className="taste-confidence w-fit rounded-full border border-line bg-surface-1 px-[var(--space-3)] py-[var(--space-content-tight)] text-[length:var(--text-caption-size)] text-accent">
                 {tasteStrings.confidence}: {tasteStrings.confidenceLabels[confidenceLevel]}
               </strong>
             </div>
             <section
-              className="taste-top-summary screentone grid gap-[var(--space-4)] rounded-[var(--radius-card)] border border-line bg-surface-1 p-[var(--space-4)] [background-image:radial-gradient(color-mix(in_oklch,var(--text-strong)_5%,transparent)_1px,transparent_1px)] [background-size:8px_8px]"
+              className="taste-top-summary screentone grid gap-[var(--space-content)] rounded-[var(--radius-card)] border border-line bg-surface-1 p-[var(--space-content)] [background-image:radial-gradient(color-mix(in_oklch,var(--text-strong)_5%,transparent)_1px,transparent_1px)] [background-size:8px_8px]"
               aria-labelledby="taste-top-heading"
             >
-              <h2 id="taste-top-heading">{tasteStrings.topPreferencesHeading}</h2>
+              <h2 className="text-[length:var(--text-subheading-size)]" id="taste-top-heading">
+                {tasteStrings.topPreferencesHeading}
+              </h2>
               {summary.topPreferences.length === 0 ? (
                 <p>{tasteStrings.topPreferencePending}</p>
               ) : (
-                <div className="taste-top-summary__grid grid gap-[var(--space-content-loose)] md:grid-cols-3">
+                <div className="taste-top-summary__grid grid grid-cols-1 gap-[var(--space-content)] sm:grid-cols-3">
                   {summary.topPreferences.map((preference, index) => (
                     <TopPreferenceCard
                       animateReveal={revealExperience.animate}
@@ -827,40 +889,33 @@ export function TasteFlow({
           anchors={anchors}
           animateReveal={revealExperience.animate}
           coverUrls={coverUrls}
+          evidenceLabels={anchorEvidenceLabels}
           onCoverSettled={handleCoverSettled}
         />
 
-        <Tabs
-          className="taste-workspace grid gap-[var(--space-4)] rounded-[var(--radius-card)] border border-line bg-surface-1 p-[var(--space-4)] md:p-[var(--space-5)]"
-          onValueChange={(value) => {
-            if (value === "summary" || value === "adjust") onModeChange?.(value);
-          }}
-          value={mode}
-        >
-          <div className="taste-workspace__header flex flex-col items-stretch justify-between gap-[var(--space-4)] md:flex-row md:items-end">
-            <div className="grid gap-[var(--space-content-tight)]">
-              <h2>{tasteStrings.workspaceHeading}</h2>
-              <p className="text-text-muted">
-                {mode === "summary"
-                  ? tasteStrings.modeDescriptions.summary
-                  : tasteStrings.modeDescriptions.adjust}
-              </p>
-            </div>
-            <TabsList
-              aria-label={tasteStrings.modeLabel}
-              className="w-full md:w-fit md:min-w-[min(calc(var(--layout-width-form)/2),100%)]"
-            >
-              <TabsTrigger value="summary">{tasteStrings.modes.summary}</TabsTrigger>
-              <TabsTrigger value="adjust">{tasteStrings.modes.adjust}</TabsTrigger>
-            </TabsList>
-          </div>
-
-          <div
-            aria-label={tasteStrings.groupLabel}
-            className="taste-group-filter flex flex-nowrap gap-[var(--space-content)] overflow-x-auto overscroll-x-contain border-y border-line py-[var(--space-content)] [scrollbar-width:none] [&::-webkit-scrollbar]:hidden [&>button]:shrink-0 [&>button[aria-pressed=true]]:border-accent [&>button[aria-pressed=true]]:text-accent md:flex-wrap md:overflow-x-visible"
-            role="group"
+        <div className="taste-workspace-layout grid items-start gap-[var(--space-4)]">
+          <section
+            aria-labelledby="taste-workspace-heading"
+            className="taste-workspace grid gap-[var(--space-content)] rounded-[var(--radius-card)] border border-line bg-surface-1 p-[var(--space-3)]"
+            data-taste-mode={mode}
           >
-            {mode === "summary" ? (
+            <header className="taste-workspace__header grid gap-[var(--space-content-tight)]">
+              <h2
+                className="text-[length:var(--text-subheading-size)]"
+                id="taste-workspace-heading"
+              >
+                {tasteStrings.workspaceHeading}
+              </h2>
+              <p className="text-[length:var(--text-caption-size)] text-text-muted">
+                {tasteStrings.modeDescriptions.adjust}
+              </p>
+            </header>
+
+            <div
+              aria-label={tasteStrings.groupLabel}
+              className="taste-group-filter flex flex-nowrap gap-[var(--space-content-tight)] overflow-x-auto overscroll-x-contain border-y border-line py-0 [scrollbar-width:none] [&::-webkit-scrollbar]:hidden [&>button]:shrink-0 [&>button[aria-pressed=true]]:border-accent [&>button[aria-pressed=true]]:text-accent"
+              role="group"
+            >
               <Button
                 aria-pressed={group === undefined}
                 onClick={() => onGroupChange?.(undefined)}
@@ -869,47 +924,39 @@ export function TasteFlow({
               >
                 {tasteStrings.allGroups}
               </Button>
-            ) : null}
-            {COVERAGE_GROUPS.map((groupId) => (
-              <Button
-                aria-pressed={activeGroup === groupId}
-                key={groupId}
-                onClick={() => onGroupChange?.(group === groupId ? undefined : groupId)}
-                type="button"
-                variant={activeGroup === groupId ? "secondary" : "outline"}
-              >
-                {tasteStrings.groups[groupId]}
-              </Button>
-            ))}
-          </div>
+              {COVERAGE_GROUPS.map((groupId) => (
+                <Button
+                  aria-pressed={activeGroup === groupId}
+                  key={groupId}
+                  onClick={() => onGroupChange?.(group === groupId ? undefined : groupId)}
+                  type="button"
+                  variant={activeGroup === groupId ? "secondary" : "outline"}
+                >
+                  {tasteStrings.groups[groupId]}
+                </Button>
+              ))}
+            </div>
 
-          <TabsContent value="summary">
             <FactorPanels
               adjustments={adjustments}
               animateReveal={revealExperience.animate}
               factorRevealReady={factorRevealReady}
               group={group}
               highlightedFactor={highlightedFactor}
-              mode="summary"
               onAdjustment={updateAdjustment}
               summary={summary}
             />
-          </TabsContent>
-          <TabsContent value="adjust">
-            <FactorPanels
-              adjustments={adjustments}
-              animateReveal={revealExperience.animate}
-              factorRevealReady={factorRevealReady}
-              group={activeGroup}
-              highlightedFactor={highlightedFactor}
-              mode="adjust"
-              onAdjustment={updateAdjustment}
-              summary={summary}
-            />
-          </TabsContent>
-        </Tabs>
+          </section>
 
-        <RecommendationDiffPreview after={afterPreviewWorkIds} before={beforePreviewWorkIds} />
+          <RecommendationDiffPreview
+            after={afterPreviewWorkIds}
+            before={beforePreviewWorkIds}
+            className="mt-0"
+            coverUrls={coverUrls}
+            onCoverSettled={handleCoverSettled}
+            worksById={worksById}
+          />
+        </div>
 
         <RecentFeedbackSummary
           coverUrls={coverUrls}
@@ -917,14 +964,6 @@ export function TasteFlow({
           records={catalogRecords}
           worksById={worksById}
         />
-        <div className="taste-next-actions mt-[var(--space-6)] flex flex-wrap items-center justify-between gap-[var(--space-4)]">
-          <Link
-            className="taste-add-link interactive-press mt-[var(--space-6)] inline-flex min-h-[var(--control-min-size)] items-center font-bold text-accent underline underline-offset-4 transition-[opacity,transform] duration-[var(--motion-duration-feedback)] ease-[var(--motion-ease-direct)] active:scale-[0.97] motion-reduce:transform-none"
-            to="/onboarding"
-          >
-            {tasteStrings.addWorks}
-          </Link>
-        </div>
         {revealExperience.entry ? (
           <div className="taste-reveal-cta fixed inset-x-0 bottom-[var(--layout-mobile-navigation-clearance)] z-25 border-t border-line bg-surface-1 px-[var(--layout-page-padding)] py-2.5 md:right-[var(--layout-page-padding)] md:bottom-[var(--layout-page-padding)] md:left-auto md:w-80 md:border-0 md:bg-transparent md:p-0">
             <Link
@@ -946,7 +985,7 @@ export function TasteFlow({
         >
           {message}
         </p>
-        <SiteFooter className="taste-footer mx-[calc(var(--layout-page-padding)*-1)] mt-[var(--space-section-large)]" />
+        <SiteFooter className="taste-footer mx-[calc(var(--layout-page-padding)*-1)] mt-[var(--space-6)] md:[&>div]:py-[var(--space-4)]" />
       </main>
     </LazyMotion>
   );

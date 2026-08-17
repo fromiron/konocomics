@@ -78,7 +78,7 @@ describe("RecommendationMotionList", () => {
       animate: { opacity: 1, y: 0 },
       exit: { height: 0, opacity: 0 },
       initial: { opacity: 0, y: 8 },
-      layout: true,
+      layout: "position",
     });
   });
 

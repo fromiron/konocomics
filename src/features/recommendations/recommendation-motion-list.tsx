@@ -27,7 +27,7 @@ export function RecommendationMotionList({
           {items.map((item) => (
             <m.li
               animate={reducedMotion ? { opacity: 1 } : { opacity: 1, y: 0 }}
-              className="basis-[var(--featured-card-basis)] shrink-0 snap-start overflow-visible [contain:layout_paint] [@media(min-width:768px)_and_(hover:hover)_and_(pointer:fine)]:has-[article[data-expanded]]:basis-[calc(var(--control-min-size)*8)]"
+              className="basis-[var(--featured-card-basis)] shrink-0 snap-start overflow-visible [contain:layout_paint] [@media(min-width:768px)_and_(hover:hover)_and_(pointer:fine)]:h-[var(--recommendation-card-height)] [@media(min-width:768px)_and_(hover:hover)_and_(pointer:fine)]:has-[article[data-expanded]]:basis-[calc(var(--control-min-size)*8)]"
               data-recommendation-work-id={item.workId}
               exit={reducedMotion ? undefined : { height: 0, opacity: 0 }}
               initial={
@@ -39,7 +39,7 @@ export function RecommendationMotionList({
                   : false
               }
               key={item.workId}
-              layout={reducedMotion ? false : true}
+              layout={reducedMotion ? false : "position"}
               transition={
                 reducedMotion
                   ? { duration: 0 }
@@ -47,7 +47,7 @@ export function RecommendationMotionList({
                       height: { duration: 0.24, ease: "easeOut" },
                       opacity: { duration: item.animateIn ? 0.2 : 0.24, ease: "easeOut" },
                       y: { duration: 0.2, ease: "easeOut" },
-                      layout: { type: "spring", stiffness: 350, damping: 32 },
+                      layout: { duration: 0.24, ease: [0.2, 0, 0, 1] },
                     }
               }
             >

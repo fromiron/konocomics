@@ -1,3 +1,4 @@
+import { BookmarkIcon, CircleCheckIcon, CircleXIcon } from "lucide-react";
 import type { KeyboardEvent } from "react";
 
 import { Button } from "@/components/design-system/button";
@@ -29,11 +30,12 @@ export function StateActionRow({
     if (!busy && (event.key === "Enter" || event.key === " ")) onRemovalIntent?.();
   };
   const compactButton = compact
-    ? "!h-auto min-h-[var(--control-min-size)] !rounded-none border-0 px-[var(--space-content-tight)] py-[var(--space-content-tight)] text-[length:var(--font-size-12)] leading-tight font-bold whitespace-normal"
+    ? "!h-auto min-h-[var(--control-min-size)] !rounded-none border-0 px-[var(--space-1)] py-[var(--space-content-tight)] text-[length:var(--font-size-12)] leading-tight font-bold whitespace-nowrap"
     : "min-h-[var(--control-min-size)]";
   const secondaryButton = compact
     ? `${compactButton} border-l border-line bg-surface-1`
     : compactButton;
+  const iconClassName = compact ? "size-3.5 shrink-0" : "size-4 shrink-0";
 
   return (
     <div
@@ -45,23 +47,35 @@ export function StateActionRow({
       )}
     >
       <Button
+        aria-label={
+          compact
+            ? planned
+              ? `${recommendationStrings.actions.planned}、${recommendationStrings.actions.plannedConfirmation}`
+              : recommendationStrings.actions.planned
+            : undefined
+        }
         aria-pressed={planned}
         className={compact ? `${compactButton} bg-accent text-on-accent` : compactButton}
         busy={busy}
         onClick={onPlanned}
         type="button"
       >
-        <span>{recommendationStrings.actions.planned}</span>
-        {compact && planned ? (
-          <span
-            aria-hidden="true"
-            className="text-[length:var(--font-size-12)] font-normal whitespace-nowrap"
-          >
-            {recommendationStrings.actions.plannedConfirmation}
-          </span>
-        ) : null}
+        <BookmarkIcon aria-hidden="true" className={cn(iconClassName, planned && "fill-current")} />
+        <span
+          className={
+            compact
+              ? "hidden text-[length:var(--font-size-12)] leading-tight whitespace-nowrap [@media(min-width:768px)_and_(hover:hover)_and_(pointer:fine)]:group-data-[expanded]/card:inline"
+              : undefined
+          }
+          data-expandable-reveal={compact || undefined}
+        >
+          {compact && planned
+            ? recommendationStrings.actions.plannedConfirmation
+            : recommendationStrings.actions.planned}
+        </span>
       </Button>
       <Button
+        aria-label={compact ? recommendationStrings.actions.completed : undefined}
         className={secondaryButton}
         data-recommendation-action="completed"
         busy={busy}
@@ -74,9 +88,20 @@ export function StateActionRow({
         type="button"
         variant="outline"
       >
-        {recommendationStrings.actions.completed}
+        <CircleCheckIcon aria-hidden="true" className={iconClassName} />
+        <span
+          className={
+            compact
+              ? "hidden text-[length:var(--font-size-12)] leading-tight whitespace-nowrap [@media(min-width:768px)_and_(hover:hover)_and_(pointer:fine)]:group-data-[expanded]/card:inline"
+              : undefined
+          }
+          data-expandable-reveal={compact || undefined}
+        >
+          {recommendationStrings.actions.completed}
+        </span>
       </Button>
       <Button
+        aria-label={compact ? recommendationStrings.actions.hidden : undefined}
         className={secondaryButton}
         data-recommendation-action="hidden"
         busy={busy}
@@ -89,7 +114,17 @@ export function StateActionRow({
         type="button"
         variant="outline"
       >
-        {recommendationStrings.actions.hidden}
+        <CircleXIcon aria-hidden="true" className={iconClassName} />
+        <span
+          className={
+            compact
+              ? "hidden text-[length:var(--font-size-12)] leading-tight whitespace-nowrap [@media(min-width:768px)_and_(hover:hover)_and_(pointer:fine)]:group-data-[expanded]/card:inline"
+              : undefined
+          }
+          data-expandable-reveal={compact || undefined}
+        >
+          {recommendationStrings.actions.hidden}
+        </span>
       </Button>
     </div>
   );

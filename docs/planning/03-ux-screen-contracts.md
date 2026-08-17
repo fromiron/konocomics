@@ -280,7 +280,7 @@ Shelf grouping은 presentation-only selector다. main Shelf 사이에는 work ID
 ### Expandable card·Quick Preview
 
 - 카드에는 원본 비율 표지, 제목/저자/메타, 실제 `contributions[]` 기반 lead reason, 정성 confidence와 reading action을 표시한다.
-- desktop fine pointer는 200ms hover intent 뒤 128~160px card를 300~360px로 확장하고 keyboard focus는 즉시 확장한다. Shelf 높이는 미리 예약하며 텍스트/control을 scale하지 않는다.
+- desktop fine pointer는 200ms hover intent 뒤 128~160px card를 300~360px로 확장하고 keyboard focus는 즉시 확장한다. Shelf 높이는 미리 예약하며 텍스트/control을 scale하지 않는다. 실제 article 경계만 240ms 동안 확장하고 내부는 최종 폭의 고정 canvas를 사용한다. 표지·제목은 같은 폭의 identity rail에 남겨 제목/설명이 가변 폭에 따라 가로로 재배치되지 않게 하며, 왼쪽 확장에서는 설명과 identity rail의 좌우만 반전한다.
 - touch에서는 card를 확장하지 않고 Quick Preview sheet를 연다. desktop preview는 Base UI Dialog wrapper를 사용한다.
 - Quick Preview는 cover, lead reasons, caution, 정성 confidence, reading action, 상세 링크만 가진다. 닫으면 opener focus를 복원한다. 대상 work ID만 `?preview=<workId>`로 복원할 수 있고 animation/focus state는 local state다.
 
@@ -312,7 +312,7 @@ Shelf grouping은 presentation-only selector다. main Shelf 사이에는 work ID
 
 ### 모션
 
-카드 제거/백필은 해당 Shelf owner의 C만 사용한다. reduced-motion에서는 `layout=false`로 즉시 반영한다. hover intent는 network 요청 없이 local detail을 열고, hover lift는 120ms D만 허용한다. Quick Preview는 진입 keyframe 없이 최종 상태로 열린다. 추천 화면에는 B 페이지 진입 모션을 적용하지 않는다.
+카드 제거/백필은 해당 Shelf owner의 C만 사용한다. expandable card는 실제 article 경계를 240ms signature easing으로 확장하는 `04` §6의 한정 예외를 사용하고, 동일 표지와 고정 identity rail의 block-axis 위치만 함께 보간한다. 상세 설명과 action label은 최종 canvas에서 80ms 뒤 opacity로 나타나며 가변 폭에 맞춘 text reflow는 노출하지 않는다. reduced-motion에서는 확장과 `layout`을 모두 즉시 반영한다. hover intent는 network 요청 없이 local detail을 열고, hover lift는 120ms D만 허용한다. Quick Preview는 진입 keyframe 없이 최종 상태로 열린다. 추천 화면에는 B 페이지 진입 모션을 적용하지 않는다.
 
 ### 수용 기준
 

@@ -12,10 +12,8 @@ import {
 } from "react";
 
 import { Button } from "@/components/design-system/button";
-import { CoverImage } from "@/components/cover/CoverImage";
 import { SiteFooter } from "@/components/layout/site-footer";
 import { usePageEntryMotion } from "@/components/motion/use-page-entry-motion";
-import { GENRE_TAGS } from "@/domain/catalog/constants";
 import type { GenreTag, Work } from "@/domain/catalog/types";
 import { hasCatalogBackedProfile } from "@/domain/profile/catalog-profile";
 import {
@@ -43,6 +41,14 @@ import { onboardingStrings } from "@/lib/strings";
 import { cn } from "@/lib/utils";
 
 import { AnchorCoverCard } from "./anchor-cover-card";
+import { isOnboardingCollectionId, onboardingCollections } from "./onboarding-collections";
+import {
+  OnboardingCollectionGrid,
+  OnboardingGenreChips,
+  OnboardingIntro,
+  OnboardingSelectionGuidance,
+  OnboardingStepProgress,
+} from "./onboarding-step-one-sections";
 import {
   NegativeEntryEditor,
   type NegativeReasonOption,
@@ -54,19 +60,6 @@ import { WorkShelf } from "./work-shelf";
 
 const STEP_ONE_SEARCH_EMPTY: WorkSearchState = { query: "", results: [] };
 const STEP_TWO_SEARCH_EMPTY: WorkSearchState = { query: "", results: [] };
-
-const COLLECTIONS = [
-  { id: "momentum", genres: ["action", "sports"] },
-  { id: "worlds", genres: ["fantasy", "scienceFiction"] },
-  { id: "mysteries", genres: ["mystery", "historical", "horror"] },
-  { id: "everyday", genres: ["sliceOfLife", "romance", "comedy"] },
-] as const satisfies ReadonlyArray<{ id: string; genres: readonly GenreTag[] }>;
-
-type CollectionId = (typeof COLLECTIONS)[number]["id"];
-
-function isCollectionId(value: string | undefined): value is CollectionId {
-  return COLLECTIONS.some((collection) => collection.id === value);
-}
 
 const ANCHOR_CARD_LABELS = {
   select: onboardingStrings.step1.select,
@@ -128,7 +121,7 @@ function ResolvedOnboardingPage({
   return (
     <main
       className={cn(
-        "onboarding-page mx-auto min-h-dvh w-[min(100%,var(--layout-width-onboarding))] px-[var(--layout-page-padding)] pt-[var(--layout-page-block-start)] pb-[calc(var(--space-12)+var(--space-12)+var(--space-12)+var(--space-8)+var(--layout-safe-area-bottom))] text-text md:pb-[var(--space-section-large)]",
+        "onboarding-page mx-auto min-h-dvh w-[min(100%,var(--layout-width-onboarding))] px-[var(--layout-page-padding)] pt-[var(--layout-page-block-start)] pb-[calc(var(--space-12)+var(--space-12)+var(--space-12)+var(--space-8)+var(--layout-safe-area-bottom))] text-text md:min-h-[calc(100dvh-var(--desktop-navigation-height))] md:pt-[var(--space-4)] md:pb-0",
         pageEntryMotion.active &&
           "onboarding-page--entry-b motion-safe:[&>.onboarding-step-one]:animate-[page-entry-b-enter_var(--motion-duration-page)_var(--motion-ease-direct)_both]",
       )}
@@ -214,8 +207,8 @@ export function OnboardingFlow({
     () => onboardingEligibleCatalogWorks.filter((work) => !persistedWorkIds.has(work.id)),
     [onboardingEligibleCatalogWorks, persistedWorkIds],
   );
-  const selectedCollection = isCollectionId(shelf)
-    ? COLLECTIONS.find((collection) => collection.id === shelf)
+  const selectedCollection = isOnboardingCollectionId(shelf)
+    ? onboardingCollections.find((collection) => collection.id === shelf)
     : undefined;
   const filteredPositiveWorks = useMemo(
     () =>
@@ -241,7 +234,7 @@ export function OnboardingFlow({
   const collectionPreviewWorks = useMemo(
     () =>
       new Map(
-        COLLECTIONS.map(
+        onboardingCollections.map(
           (collection) =>
             [
               collection.id,
@@ -251,7 +244,7 @@ export function OnboardingFlow({
                     collection.genres.some((collectionGenre) => collectionGenre === workGenre),
                   ),
                 )
-                .slice(0, 4),
+                .slice(0, 6),
             ] as const,
         ),
       ),
@@ -301,7 +294,7 @@ export function OnboardingFlow({
       ...stepOneSearch.results.slice(0, 8).map((work) => work.id),
       ...stepTwoSearch.results.slice(0, 8).map((work) => work.id),
       ...browseWorks.slice(0, 12).map((work) => work.id),
-      ...COLLECTIONS.flatMap((collection) =>
+      ...onboardingCollections.flatMap((collection) =>
         (collectionPreviewWorks.get(collection.id) ?? []).map((work) => work.id),
       ),
     ];
@@ -653,61 +646,10 @@ export function OnboardingFlow({
 
       {draft.step === 1 ? (
         <div className="onboarding-step-one min-w-0">
-          {isAddMode ? null : (
-            <ol
-              aria-label={onboardingStrings.stepProgress.label}
-              className="onboarding-progress mx-auto mb-[var(--space-section-large)] flex max-w-[var(--layout-width-form)] list-none items-center justify-start gap-[var(--space-content-loose)] overflow-x-auto p-0 text-text-muted md:justify-center"
-            >
-              <li
-                aria-current="step"
-                className="inline-flex min-h-[var(--control-min-size)] shrink-0 items-center rounded-full border border-accent bg-accent-soft px-[var(--space-3)] font-bold text-accent"
-              >
-                {onboardingStrings.stepProgress.selection}
-              </li>
-              <li className="inline-flex min-h-[var(--control-min-size)] shrink-0 items-center rounded-full border border-line px-[var(--space-3)]">
-                {onboardingStrings.stepProgress.dna}
-              </li>
-              <li className="inline-flex min-h-[var(--control-min-size)] shrink-0 items-center rounded-full border border-line px-[var(--space-3)]">
-                {onboardingStrings.stepProgress.recommendations}
-              </li>
-            </ol>
-          )}
+          {isAddMode ? null : <OnboardingStepProgress />}
 
-          <div className="onboarding-hero mb-[var(--space-section-large)] grid gap-[var(--space-6)] md:grid-cols-[minmax(0,1.1fr)_minmax(0,0.9fr)] md:items-start">
-            <div className="onboarding-hero__copy min-w-0">
-              <header className="onboarding-header mb-[var(--space-5)] grid max-w-[var(--layout-width-reading)] gap-[var(--space-content)]">
-                <p className="font-display text-[length:var(--text-caption-size)] font-bold tracking-[0.08em] text-accent">
-                  {isAddMode ? onboardingStrings.addMode.eyebrow : onboardingStrings.step1.eyebrow}
-                </p>
-                <h1
-                  className="max-w-[18ch] text-[clamp(var(--font-size-28),5vw,var(--font-size-40))] leading-[1.25] tracking-[-0.03em] text-text-strong"
-                  ref={headingRef}
-                  tabIndex={-1}
-                >
-                  {isAddMode ? onboardingStrings.addMode.title : onboardingStrings.step1.title}
-                </h1>
-                <p className="text-text-muted">
-                  {isAddMode
-                    ? onboardingStrings.addMode.description
-                    : onboardingStrings.step1.description}
-                </p>
-              </header>
-              {isAddMode ? null : (
-                <ul className="onboarding-benefits m-0 grid list-none grid-cols-1 gap-[var(--space-content-loose)] p-0 md:grid-cols-3">
-                  {onboardingStrings.step1.benefits.map((benefit) => (
-                    <li
-                      className="grid gap-[var(--space-content-tight)] rounded-[var(--radius-card)] border border-line bg-surface-1 p-[var(--space-4)]"
-                      key={benefit.title}
-                    >
-                      <strong className="text-text-strong">{benefit.title}</strong>
-                      <span className="text-[length:var(--text-caption-size)] text-text-muted">
-                        {benefit.description}
-                      </span>
-                    </li>
-                  ))}
-                </ul>
-              )}
-            </div>
+          <div className="onboarding-hero mb-[var(--space-6)] grid gap-[var(--space-6)] md:grid-cols-[minmax(0,1.1fr)_minmax(0,0.9fr)] md:items-start">
+            <OnboardingIntro addMode={isAddMode} headingRef={headingRef} />
 
             <SelectedTray
               continueLabel={
@@ -773,7 +715,7 @@ export function OnboardingFlow({
             </div>
           ) : null}
 
-          <div className="onboarding-discovery grid gap-[var(--space-6)] [&>.work-search]:m-0 [&>.work-search]:max-w-none [&_.work-search__input]:min-h-[calc(var(--space-7)+var(--space-7))] [&_.work-search__input]:border-accent [&_.work-search__input]:bg-surface-1 [&_.work-search__input]:shadow-[0_0_0_1px_var(--accent-soft)] motion-reduce:[&_.work-search__input]:transition-none">
+          <div className="onboarding-discovery grid gap-[var(--space-6)] [&>.work-search]:m-0 [&>.work-search]:max-w-none [&_.work-search__label]:sr-only [&_.work-search__input]:min-h-[var(--control-min-size)] [&_.work-search__input]:border-accent [&_.work-search__input]:bg-surface-1 [&_.work-search__input]:shadow-[0_0_0_1px_var(--accent-soft)] motion-reduce:[&_.work-search__input]:transition-none">
             <WorkSearchInput
               key="positive-search"
               label={onboardingStrings.step1.searchLabel}
@@ -789,33 +731,7 @@ export function OnboardingFlow({
                 : ""}
             </p>
 
-            <section
-              aria-labelledby="onboarding-genre-heading"
-              className="onboarding-genres grid gap-[var(--space-3)]"
-            >
-              <h2 id="onboarding-genre-heading">{onboardingStrings.step1.genreHeading}</h2>
-              <div className="flex flex-wrap gap-[var(--space-content)] [&>button[aria-pressed=true]]:border-accent [&>button[aria-pressed=true]]:text-accent">
-                <Button
-                  aria-pressed={genre === undefined}
-                  onClick={() => onGenreChange?.(undefined)}
-                  type="button"
-                  variant={genre === undefined ? "secondary" : "outline"}
-                >
-                  {onboardingStrings.step1.allGenres}
-                </Button>
-                {GENRE_TAGS.map((genreId) => (
-                  <Button
-                    aria-pressed={genre === genreId}
-                    key={genreId}
-                    onClick={() => onGenreChange?.(genre === genreId ? undefined : genreId)}
-                    type="button"
-                    variant={genre === genreId ? "secondary" : "outline"}
-                  >
-                    {onboardingStrings.step1.genreLabels[genreId]}
-                  </Button>
-                ))}
-              </div>
-            </section>
+            <OnboardingGenreChips genre={genre} onChange={onGenreChange} />
 
             {stepOneSearch.query.trim().length > 0 ? (
               stepOneSearch.results.length > 0 ? (
@@ -843,7 +759,7 @@ export function OnboardingFlow({
                 </div>
               )
             ) : (
-              <div className="onboarding-shelves grid gap-[var(--space-section-large)]">
+              <div className="onboarding-shelves grid gap-[var(--space-section)]">
                 {browseWorks.length === 0 ? (
                   <div className="onboarding-empty grid gap-[var(--space-content-tight)] rounded-[var(--radius-card)] border border-line bg-surface-1 px-[var(--space-5)] py-[var(--space-7)] text-text-muted">
                     <p>{onboardingStrings.step1.noFilteredWorks}</p>
@@ -865,66 +781,15 @@ export function OnboardingFlow({
                   />
                 )}
 
-                <section
-                  aria-labelledby="onboarding-collections-heading"
-                  className="onboarding-collections grid gap-[var(--space-3)]"
-                >
-                  <h2 id="onboarding-collections-heading">
-                    {onboardingStrings.step1.collectionsHeading}
-                  </h2>
-                  <div className="onboarding-collections__grid grid gap-[var(--space-content-loose)] md:grid-cols-2">
-                    {COLLECTIONS.map((collection) => {
-                      const copy = onboardingStrings.step1.collections[collection.id];
-                      const previewWorks = collectionPreviewWorks.get(collection.id) ?? [];
-                      const active = selectedCollection?.id === collection.id;
-                      return (
-                        <Button
-                          aria-pressed={active}
-                          className="onboarding-collection grid h-auto min-h-[calc(var(--space-12)+var(--space-12)+var(--space-12)+var(--space-12)+var(--space-2))] grid-rows-[auto_1fr_auto] justify-items-stretch gap-[var(--space-4)] whitespace-normal p-[var(--space-4)] aria-pressed:border-accent aria-pressed:bg-accent-soft md:min-h-[calc(var(--space-12)+var(--space-12)+var(--space-12)+var(--space-12)+var(--space-7))]"
-                          key={collection.id}
-                          onClick={() => onShelfChange?.(active ? undefined : collection.id)}
-                          type="button"
-                          variant={active ? "secondary" : "outline"}
-                        >
-                          <span className="onboarding-collection__copy grid gap-[var(--space-content-tight)] text-start">
-                            <strong className="text-text-strong">{copy.title}</strong>
-                            <span className="text-[length:var(--text-caption-size)] text-text-muted">
-                              {copy.description}
-                            </span>
-                          </span>
-                          <span
-                            aria-hidden="true"
-                            className="onboarding-collection__covers pointer-events-none grid min-w-0 grid-cols-4 gap-[var(--space-content)] [&>.cover-image]:min-w-0"
-                          >
-                            {previewWorks.map((work) => (
-                              <CoverImage
-                                coverUrl={coverUrls.get(work.id)}
-                                creators={work.creators}
-                                decorative
-                                key={work.id}
-                                onSettled={() => handleCoverSettled(work.id)}
-                                requestedSize={200}
-                                title={work.title}
-                              />
-                            ))}
-                          </span>
-                          <span className="onboarding-collection__action text-start text-[length:var(--text-caption-size)] font-bold text-accent">
-                            {copy.action}
-                          </span>
-                        </Button>
-                      );
-                    })}
-                  </div>
-                </section>
+                <OnboardingCollectionGrid
+                  activeId={selectedCollection?.id}
+                  coverUrls={coverUrls}
+                  onCoverSettled={handleCoverSettled}
+                  onSelect={onShelfChange}
+                  previewWorks={collectionPreviewWorks}
+                />
 
-                <section className="onboarding-guidance grid gap-[var(--space-3)] rounded-[var(--radius-card)] border border-line bg-surface-1 p-[var(--space-5)]">
-                  <h2>{onboardingStrings.step1.guidanceHeading}</h2>
-                  <ul className="m-0 grid gap-[var(--space-content)] ps-[var(--space-5)] text-[length:var(--text-caption-size)] text-text-muted">
-                    {onboardingStrings.step1.guidance.map((item) => (
-                      <li key={item}>{item}</li>
-                    ))}
-                  </ul>
-                </section>
+                <OnboardingSelectionGuidance />
               </div>
             )}
           </div>
@@ -1068,7 +933,7 @@ export function OnboardingFlow({
           </div>
         </fieldset>
       )}
-      <SiteFooter className="onboarding-footer mx-[calc(var(--layout-page-padding)*-1)] mt-[var(--space-section-large)]" />
+      <SiteFooter className="onboarding-footer mx-[calc(var(--layout-page-padding)*-1)] mt-[var(--space-section-large)] [&>div]:py-[var(--space-4)]" />
     </ResolvedOnboardingPage>
   );
 }

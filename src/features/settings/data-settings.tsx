@@ -1,6 +1,7 @@
 "use client";
 
 import { useNavigate } from "@tanstack/react-router";
+import { DatabaseBackupIcon, RotateCcwIcon } from "lucide-react";
 import { type ChangeEvent, useRef, useState } from "react";
 
 import {
@@ -27,6 +28,7 @@ import {
 import { settingsStrings } from "@/lib/strings";
 
 import { SettingsDialog } from "./settings-dialog";
+import { SettingsPanel } from "./settings-panel";
 
 type DataSettingsProps = Readonly<{
   currentCatalog: CurrentCatalogIdentity;
@@ -225,101 +227,123 @@ export function DataSettings({
   };
 
   return (
-    <section
-      className="grid min-w-0 gap-[var(--space-5)] rounded-[var(--radius-card)] border border-line bg-surface-1 p-[var(--space-5)]"
-      aria-labelledby="settings-data-title"
-    >
-      <div className="grid gap-[var(--space-content)]">
-        <h2 className="text-text-strong" id="settings-data-title">
-          {settingsStrings.data.title}
-        </h2>
-        <p className="text-text-muted">{settingsStrings.data.description}</p>
-      </div>
-
-      <div className="grid">
-        <div className="mt-[var(--space-3)] grid gap-[var(--space-3)] rounded-[var(--radius-card)] border border-line bg-surface-2 p-[var(--space-4)]">
-          <div className="grid gap-[var(--space-content-tight)]">
-            <h3>{settingsStrings.data.export.title}</h3>
-            <p className="text-text-muted">{settingsStrings.data.export.description}</p>
-          </div>
-          <Button
-            className="w-fit"
-            disabled={busyAction !== null}
-            onClick={() => void handleExport()}
-            type="button"
-            variant="outline"
-          >
-            {busyAction === "export"
-              ? settingsStrings.data.export.exporting
-              : settingsStrings.data.export.action}
-          </Button>
-        </div>
-
-        <div className="mt-[var(--space-3)] grid gap-[var(--space-3)] rounded-[var(--radius-card)] border border-line bg-surface-2 p-[var(--space-4)]">
-          <div className="grid gap-[var(--space-content-tight)]">
-            <h3>{settingsStrings.data.import.title}</h3>
-            <p className="text-text-muted">{settingsStrings.data.import.description}</p>
-          </div>
-          <label className="relative w-fit cursor-pointer has-[input:disabled]:cursor-not-allowed has-[input:disabled]:opacity-45">
-            <input
-              accept=".json,application/json"
-              className="peer absolute size-px opacity-0"
-              disabled={busyAction !== null}
-              id="settings-import-file"
-              onChange={(event) => void handleImportFile(event)}
-              ref={fileInputRef}
-              type="file"
-            />
-            <span className="inline-flex min-h-[var(--control-min-size)] w-fit items-center justify-center rounded-[var(--radius-control)] border border-line bg-surface-1 px-[var(--space-4)] py-[var(--space-content)] text-center font-bold text-text-strong peer-focus-visible:outline-2 peer-focus-visible:outline-offset-2 peer-focus-visible:outline-ring [@media(hover:hover)_and_(pointer:fine)]:hover:bg-surface-3">
-              {busyAction === "inspect"
-                ? settingsStrings.data.import.inspecting
-                : settingsStrings.data.import.select}
-            </span>
-          </label>
-          {preview === null ? null : (
-            <div
-              className="grid gap-[var(--space-4)] rounded-[var(--radius-card)] border border-line bg-surface-1 p-[var(--space-4)]"
-              data-import-state="ready"
-            >
-              <h4>{settingsStrings.data.import.preview.title}</h4>
-              <dl className="m-0 grid [&>div]:grid [&>div]:grid-cols-[minmax(0,1fr)_auto] [&>div]:gap-[var(--space-4)] [&>div]:border-t [&>div]:border-line [&>div]:py-[var(--space-3)] [&_dd]:m-0 [&_dd]:text-end [&_dt]:text-text-muted">
-                <div>
-                  <dt>{settingsStrings.data.import.preview.exportedAtLabel}</dt>
-                  <dd>{exportedAtFormatter.format(new Date(preview.exportedAt))}</dd>
-                </div>
-                <div>
-                  <dt>{settingsStrings.data.import.preview.workCountLabel}</dt>
-                  <dd>{settingsStrings.data.import.preview.workCount(preview.workCount)}</dd>
-                </div>
-              </dl>
-              {preview.catalogVersionMismatch ? (
-                <p className="settings-import-preview__warning border-l-[length:var(--space-1)] border-warn bg-surface-1 px-[var(--space-4)] py-[var(--space-3)]">
-                  {settingsStrings.data.import.preview.catalogMismatch(
-                    preview.catalogVersion,
-                    currentCatalog.catalogVersion,
-                  )}
-                </p>
-              ) : null}
-              <Button
-                className="w-fit"
-                disabled={busyAction !== null}
-                onClick={(event) => openReplaceDialog(event.currentTarget)}
-                type="button"
-                variant="outline"
-              >
-                {settingsStrings.data.import.reviewReplacement}
-              </Button>
+    <>
+      <SettingsPanel
+        className="h-full"
+        description={settingsStrings.data.description}
+        headingId="settings-data-title"
+        icon={DatabaseBackupIcon}
+        title={settingsStrings.data.title}
+      >
+        <div className="grid gap-[var(--space-5)]">
+          <div className="grid gap-[var(--space-4)] border-t border-line pt-[var(--space-5)] sm:grid-cols-[minmax(0,1fr)_auto] sm:items-center">
+            <div className="grid min-w-0 gap-[var(--space-content-tight)]">
+              <h3>{settingsStrings.data.export.title}</h3>
+              <p className="text-text-muted [overflow-wrap:anywhere]">
+                {settingsStrings.data.export.description}
+              </p>
             </div>
-          )}
+            <Button
+              className="w-full sm:w-fit"
+              disabled={busyAction !== null}
+              onClick={() => void handleExport()}
+              type="button"
+              variant="outline"
+            >
+              {busyAction === "export"
+                ? settingsStrings.data.export.exporting
+                : settingsStrings.data.export.action}
+            </Button>
+          </div>
+
+          <div className="grid gap-[var(--space-4)] border-t border-line pt-[var(--space-5)] sm:grid-cols-[minmax(0,1fr)_auto] sm:items-center">
+            <div className="grid min-w-0 gap-[var(--space-content-tight)]">
+              <h3>{settingsStrings.data.import.title}</h3>
+              <p className="text-text-muted [overflow-wrap:anywhere]">
+                {settingsStrings.data.import.description}
+              </p>
+            </div>
+            <label className="relative w-full cursor-pointer has-[input:disabled]:cursor-not-allowed has-[input:disabled]:opacity-45 sm:w-fit">
+              <input
+                accept=".json,application/json"
+                className="peer absolute size-px opacity-0"
+                disabled={busyAction !== null}
+                id="settings-import-file"
+                onChange={(event) => void handleImportFile(event)}
+                ref={fileInputRef}
+                type="file"
+              />
+              <span className="inline-flex min-h-[var(--control-min-size)] w-full items-center justify-center rounded-[var(--radius-control)] border border-line bg-surface-2 px-[var(--space-4)] py-[var(--space-content)] text-center font-bold text-text-strong peer-focus-visible:outline-2 peer-focus-visible:outline-offset-2 peer-focus-visible:outline-ring [@media(hover:hover)_and_(pointer:fine)]:hover:bg-surface-3 sm:w-fit">
+                {busyAction === "inspect"
+                  ? settingsStrings.data.import.inspecting
+                  : settingsStrings.data.import.select}
+              </span>
+            </label>
+            {preview === null ? null : (
+              <div
+                className="grid gap-[var(--space-4)] rounded-[var(--radius-card)] border border-line bg-surface-2 p-[var(--space-4)] sm:col-span-2"
+                data-import-state="ready"
+              >
+                <h4>{settingsStrings.data.import.preview.title}</h4>
+                <dl className="m-0 grid [&>div]:grid [&>div]:grid-cols-[minmax(0,1fr)_auto] [&>div]:gap-[var(--space-4)] [&>div]:border-t [&>div]:border-line [&>div]:py-[var(--space-3)] [&_dd]:m-0 [&_dd]:text-end [&_dt]:text-text-muted">
+                  <div>
+                    <dt>{settingsStrings.data.import.preview.exportedAtLabel}</dt>
+                    <dd>{exportedAtFormatter.format(new Date(preview.exportedAt))}</dd>
+                  </div>
+                  <div>
+                    <dt>{settingsStrings.data.import.preview.workCountLabel}</dt>
+                    <dd>{settingsStrings.data.import.preview.workCount(preview.workCount)}</dd>
+                  </div>
+                </dl>
+                {preview.catalogVersionMismatch ? (
+                  <p className="settings-import-preview__warning border-l-[length:var(--space-1)] border-warn bg-surface-1 px-[var(--space-4)] py-[var(--space-3)]">
+                    {settingsStrings.data.import.preview.catalogMismatch(
+                      preview.catalogVersion,
+                      currentCatalog.catalogVersion,
+                    )}
+                  </p>
+                ) : null}
+                <Button
+                  className="w-full sm:w-fit"
+                  disabled={busyAction !== null}
+                  onClick={(event) => openReplaceDialog(event.currentTarget)}
+                  type="button"
+                  variant="outline"
+                >
+                  {settingsStrings.data.import.reviewReplacement}
+                </Button>
+              </div>
+            )}
+          </div>
         </div>
 
-        <div className="mt-[var(--space-3)] grid gap-[var(--space-3)] rounded-[var(--radius-card)] border border-line-danger bg-surface-2 p-[var(--space-4)]">
-          <div className="grid gap-[var(--space-content-tight)]">
-            <h3>{settingsStrings.data.delete.title}</h3>
-            <p className="text-text-muted">{settingsStrings.data.delete.description}</p>
-          </div>
+        {busyAction === "inspect" ? (
+          <p className="text-[length:var(--text-caption-size)] text-text-muted" role="status">
+            {settingsStrings.data.import.inspecting}
+          </p>
+        ) : null}
+        {error === null || dialog !== null ? null : (
+          <p
+            className="border-l-[length:var(--space-1)] border-warn bg-surface-2 px-[var(--space-4)] py-[var(--space-3)]"
+            role="alert"
+          >
+            {error}
+          </p>
+        )}
+      </SettingsPanel>
+
+      <SettingsPanel
+        className="h-full"
+        description={settingsStrings.data.delete.description}
+        headingId="settings-delete-panel-title"
+        icon={RotateCcwIcon}
+        title={settingsStrings.data.delete.title}
+        tone="danger"
+      >
+        <div className="grid gap-[var(--space-4)] border-t border-line-danger pt-[var(--space-5)] sm:grid-cols-[minmax(0,1fr)_auto] sm:items-center">
+          <p className="text-text-muted">{settingsStrings.data.delete.confirm.description}</p>
           <Button
-            className="w-fit"
+            className="w-full sm:w-fit"
             disabled={busyAction !== null}
             onClick={(event) => openDeleteDialog(event.currentTarget)}
             type="button"
@@ -328,21 +352,8 @@ export function DataSettings({
             {settingsStrings.data.delete.action}
           </Button>
         </div>
-      </div>
+      </SettingsPanel>
 
-      {busyAction === "inspect" ? (
-        <p className="text-[length:var(--text-caption-size)] text-text-muted" role="status">
-          {settingsStrings.data.import.inspecting}
-        </p>
-      ) : null}
-      {error === null || dialog !== null ? null : (
-        <p
-          className="border-l-[length:var(--space-1)] border-warn bg-surface-1 px-[var(--space-4)] py-[var(--space-3)]"
-          role="alert"
-        >
-          {error}
-        </p>
-      )}
       {success === null ? null : (
         <p
           className="fixed right-[var(--layout-page-padding)] bottom-[calc(var(--layout-mobile-navigation-clearance)+var(--space-4))] left-[var(--layout-page-padding)] z-65 mx-auto w-fit max-w-[calc(100%-(var(--layout-page-padding)*2))] rounded-[var(--radius-control)] border border-line bg-surface-1 px-[var(--space-4)] py-[var(--space-3)] text-text-strong shadow-[var(--shadow-raised)]"
@@ -469,6 +480,6 @@ export function DataSettings({
           </AlertDialogFooter>
         </AlertDialogContent>
       </AlertDialog>
-    </section>
+    </>
   );
 }

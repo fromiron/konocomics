@@ -238,10 +238,21 @@ export const mediaStrings = {
   previous: (title: string) => `${title}を前へ送る`,
   next: (title: string) => `${title}を次へ送る`,
   rank: (position: number) => `${String(position)}位`,
+  topTenLabel: "TOP 10",
+  topTenBadge: {
+    top: "TOP",
+    ten: "10",
+  },
 } as const;
 
 export const siteFooterStrings = {
   navigationLabel: "フッターナビゲーション",
+  sections: {
+    discover: "作品を探す",
+    understand: "好みを知る",
+    manage: "記録とデータ",
+  },
+  localFirst: "登録なし。好みと読書記録は、このブラウザの中だけに保存されます。",
 } as const;
 
 export const landingStrings = {
@@ -285,10 +296,6 @@ export const landingStrings = {
     {
       title: "理由つきでおすすめ",
       description: "好みに合う理由とともに、次の作品を提案します。",
-    },
-    {
-      title: "ブラウザだけに保存",
-      description: "好みと読書記録は、このブラウザの中だけに保存します。",
     },
   ],
   illustration: {
@@ -578,6 +585,21 @@ export const tasteStrings = {
     dropped: "途中でやめた",
     hidden: "興味なし",
   },
+  negativeReasonLabels: {
+    tooSlow: "展開が遅い",
+    tooRepetitiveProgression: "強くなるだけの繰り返し",
+    tooDark: "暗すぎる・残酷",
+    tooStressful: "精神的にしんどい",
+    tooMuchRomance: "恋愛の比重が高い",
+    tooMuchComedy: "ギャグが多すぎる",
+    notEnoughSeriousness: "軽すぎる・緊張感がない",
+    tooComplex: "設定・人間関係が複雑",
+    artStyleDislike: "絵が合わない",
+    genericStory: "ありきたりな展開",
+    powerInflation: "インフレ・強さの破綻",
+    vagueDislike: "なんとなく合わなかった",
+  },
+  feedbackWithReason: (status: string, reason: string) => `${status} · ${reason}`,
   addWorks: "作品を追加して精度を上げる",
   recommendations: "おすすめを見る",
 } as const;
@@ -601,7 +623,7 @@ export const recommendationStrings = {
     records: "読書記録",
     recordCount: (count: number) => `${String(count)}作品を反映`,
     preferences: "上位の好み",
-    policies: "優先方針",
+    policies: "適用中の条件",
     policyCount: (count: number) => (count === 0 ? "標準の並び順" : `${String(count)}件を反映`),
   },
   filters: {
