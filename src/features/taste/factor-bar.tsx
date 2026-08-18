@@ -14,7 +14,6 @@ type FactorBarProps = Readonly<{
   animateReveal: boolean;
   revealReady: boolean;
   revealDelay?: number;
-  highlighted?: boolean;
 }>;
 
 export function FactorBar({
@@ -24,7 +23,6 @@ export function FactorBar({
   animateReveal,
   revealReady,
   revealDelay = 0,
-  highlighted = false,
 }: FactorBarProps) {
   const [revealComplete, setRevealComplete] = useState(false);
   const revealTrackRef = useRef<HTMLSpanElement>(null);
@@ -46,11 +44,7 @@ export function FactorBar({
   return (
     <div
       {...accessibilityProps}
-      className={cn(
-        "taste-factor-bar relative grid gap-[var(--space-content-tight)] overflow-hidden rounded-[var(--radius-cover)] after:pointer-events-none after:absolute after:inset-0 after:rounded-[var(--radius-cover)] after:bg-accent-soft after:opacity-0 after:content-['']",
-        highlighted &&
-          "taste-factor-bar--highlighted motion-safe:after:animate-[taste-factor-highlight_600ms_ease-out] motion-reduce:after:opacity-80",
-      )}
+      className="taste-factor-bar relative grid gap-[var(--space-content-tight)]"
     >
       <span className="taste-factor-bar__heading flex items-baseline justify-between gap-[var(--space-content-loose)] text-[length:var(--text-caption-size)] font-bold text-text-strong">
         <span>{label}</span>

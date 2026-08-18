@@ -316,18 +316,6 @@ h1[tabindex="-1"]:focus {
   }
 }
 
-@keyframes taste-factor-highlight {
-  0%,
-  100% {
-    opacity: 0;
-  }
-
-  20%,
-  65% {
-    opacity: 0.8;
-  }
-}
-
 @keyframes cover-skeleton-pulse {
   from {
     opacity: 0.45;

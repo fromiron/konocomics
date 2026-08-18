@@ -217,48 +217,81 @@ describe("TasteFlow", () => {
     expect(await screen.findByText("分析の確信度: ふつう")).toBeTruthy();
   });
 
-  it("keeps every factor group expanded in summary and shows only the selected adjustment group", async () => {
+  it("shows five compact group summaries and opens one labelled detail panel at a time", async () => {
     const onGroupChange = vi.fn();
-    const view = render(<TasteFlow onGroupChange={onGroupChange} />);
+    const { container } = render(<TasteFlow onGroupChange={onGroupChange} />);
 
     expect(await screen.findByRole("heading", { name: "あなたの Manga DNA" })).toBeTruthy();
     expect(
-      [...view.container.querySelectorAll(".taste-factor-group h2")].map(
+      [...container.querySelectorAll(".taste-factor-group h3")].map(
         (heading) => heading.textContent,
       ),
-    ).toEqual(["テーマ", "展開", "トーン・関係", "作画", "ジャンル"]);
-    expect(view.container.querySelectorAll("section.taste-factor-group")).toHaveLength(5);
-    expect(view.container.querySelectorAll("details.taste-factor-group")).toHaveLength(0);
-    expect(view.container.querySelectorAll(".taste-factor-row")).toHaveLength(49);
-    expect(screen.getByRole("button", { name: "すべて" }).getAttribute("aria-pressed")).toBe(
-      "true",
-    );
-
-    view.rerender(<TasteFlow mode="adjust" onGroupChange={onGroupChange} />);
-
+    ).toEqual(["ジャンル", "テーマ", "展開", "トーン・関係", "作画"]);
+    expect(container.querySelectorAll("section.taste-factor-group")).toHaveLength(5);
     expect(
-      [...view.container.querySelectorAll(".taste-factor-group h2")].map(
-        (heading) => heading.textContent,
-      ),
-    ).toEqual(["テーマ", "展開", "トーン・関係", "作画", "ジャンル"]);
-    expect(screen.getByRole("button", { name: "すべて" }).getAttribute("aria-pressed")).toBe(
-      "true",
+      container.querySelectorAll(".taste-factor-group__icon[aria-hidden='true']"),
+    ).toHaveLength(5);
+    expect(container.querySelectorAll(".taste-factor-row")).toHaveLength(49);
+    expect(container.querySelectorAll(".taste-factor-group__details:not([hidden])")).toHaveLength(
+      0,
     );
-    const themeFilter = screen.getByRole("button", { name: "テーマ" });
-    expect(themeFilter.getAttribute("aria-pressed")).toBe("false");
-    fireEvent.click(themeFilter);
+    expect(screen.queryByRole("radiogroup")).toBeNull();
+
+    const genreDetailsButton = screen.getByRole("button", { name: "ジャンルの詳細設定" });
+    const themeDetails = screen.getByRole("button", { name: "テーマの詳細設定" });
+    const narrativeDetails = screen.getByRole("button", { name: "展開の詳細設定" });
+    fireEvent.click(genreDetailsButton);
+
+    const genreDetails = container.querySelector<HTMLElement>("#taste-group-genre-details");
+    expect(onGroupChange).toHaveBeenLastCalledWith("genre");
+    expect(genreDetailsButton.getAttribute("aria-expanded")).toBe("true");
+    expect(genreDetails?.classList.contains("taste-factor-group__rows--analysis")).toBe(true);
+    expect(genreDetails?.className).toContain("md:grid-cols-2");
+    expect(genreDetails?.querySelectorAll(".taste-factor-row--analysis")).toHaveLength(10);
+    expect(within(genreDetails as HTMLElement).queryByRole("radiogroup")).toBeNull();
+
+    expect(themeDetails.getAttribute("aria-expanded")).toBe("false");
+    fireEvent.click(themeDetails);
+
     expect(onGroupChange).toHaveBeenLastCalledWith("theme");
+    expect(genreDetailsButton.getAttribute("aria-expanded")).toBe("false");
+    expect(themeDetails.getAttribute("aria-expanded")).toBe("true");
+    expect(container.querySelectorAll(".taste-factor-group__details:not([hidden])")).toHaveLength(
+      1,
+    );
+    expect(screen.getAllByRole("radiogroup").length).toBeGreaterThan(0);
+
+    fireEvent.click(narrativeDetails);
+    expect(onGroupChange).toHaveBeenLastCalledWith("narrative");
+    expect(themeDetails.getAttribute("aria-expanded")).toBe("false");
+    expect(narrativeDetails.getAttribute("aria-expanded")).toBe("true");
+    expect(container.querySelectorAll(".taste-factor-group__details:not([hidden])")).toHaveLength(
+      1,
+    );
   });
 
   it("renders the selected labelled group and saves Axis adjustments immediately", async () => {
     const { container } = render(<TasteFlow group="narrative" mode="adjust" />);
 
     expect(await screen.findByRole("heading", { name: "あなたの Manga DNA" })).toBeTruthy();
+    expect(screen.getByRole("heading", { name: "おすすめを調整" })).toBeTruthy();
+    expect(
+      screen.getByText(
+        "分析結果は変わりません。設定は自動保存され、次のおすすめにだけ反映されます。「自動」は分析結果に合わせます。",
+      ),
+    ).toBeTruthy();
     expect(container.querySelector(".taste-page--with-action")).toBeNull();
     expect(container.querySelector("main")?.classList.contains("page-entry-b")).toBe(true);
     const radar = screen.getByRole("region", { name: "好みの分布" });
     expect(radar.querySelector("svg")?.getAttribute("aria-hidden")).toBe("true");
-    expect(within(radar).getByText("描き込みの密度")).toBeTruthy();
+    expect(
+      [...radar.querySelectorAll(".taste-radar__label")].some((label) =>
+        label.textContent?.includes("描き込みの密度"),
+      ),
+    ).toBe(true);
+    expect(radar.querySelector(".sr-only")?.textContent).toContain("描き込みの密度：ほどほど");
+    expect(within(radar).queryByText("全体平均")).toBeNull();
+    expect(radar.querySelector(".taste-radar__value-dot")).toBeTruthy();
     const anchorRegion = screen.getByRole("region", { name: "選んだマンガ" });
     expect(within(anchorRegion).queryByRole("img")).toBeNull();
     expect(anchorRegion.querySelectorAll("li > a")).toHaveLength(5);
@@ -270,18 +303,28 @@ describe("TasteFlow", () => {
         (card) =>
           card.querySelector("h3") !== null &&
           card.querySelector(".taste-top-card__level") !== null &&
+          card.querySelector(".taste-top-card__icon[aria-hidden='true']") !== null &&
           card.querySelector("p") !== null,
       ),
     ).toBe(true);
-    const evidenceGraphics = container.querySelectorAll(".taste-top-card > ul[aria-hidden='true']");
-    expect(evidenceGraphics.length).toBeGreaterThan(0);
-    expect([...evidenceGraphics].every((graphic) => !graphic.hasAttribute("aria-label"))).toBe(
-      true,
-    );
-    const groupHeadings = [...container.querySelectorAll(".taste-factor-group h2")];
-    expect(groupHeadings.map((heading) => heading.textContent)).toEqual(["展開"]);
-    expect(container.querySelectorAll("section.taste-factor-group")).toHaveLength(1);
+    expect(container.querySelector(".taste-top-card .taste-evidence-cover")).toBeNull();
+    expect([...topPreferenceCards].some((card) => card.textContent?.includes("『作品"))).toBe(true);
+    const groupHeadings = [...container.querySelectorAll(".taste-factor-group h3")];
+    expect(groupHeadings.map((heading) => heading.textContent)).toEqual([
+      "ジャンル",
+      "テーマ",
+      "展開",
+      "トーン・関係",
+      "作画",
+    ]);
+    expect(container.querySelectorAll("section.taste-factor-group")).toHaveLength(5);
     expect(container.querySelector("details.taste-factor-group")).toBeNull();
+    expect(
+      screen.getByRole("button", { name: "展開の詳細設定を閉じる" }).getAttribute("aria-expanded"),
+    ).toBe("true");
+    expect(container.querySelectorAll(".taste-factor-group__details:not([hidden])")).toHaveLength(
+      1,
+    );
     const headingIds = groupHeadings.map((heading) => heading.id);
     expect(new Set(headingIds).size).toBe(headingIds.length);
     expect(screen.getAllByRole("radiogroup")).toHaveLength(6);
@@ -291,11 +334,48 @@ describe("TasteFlow", () => {
     ).axes.find((preference) => preference.factorId === "strategy")?.value;
     const strategyMeter = screen.getByRole("meter", { name: "戦略的な展開" });
     expect(Number(strategyMeter?.getAttribute("aria-valuenow"))).toBe(expectedStrategy);
+    const strategyMeterValueBeforeAdjustment = strategyMeter.getAttribute("aria-valuenow");
+    const strategyMeterTransformBeforeAdjustment = strategyMeter
+      .querySelector(".taste-factor-bar__fill")
+      ?.getAttribute("style");
+
+    const narrativePanel = container.querySelector("#taste-group-narrative-details") as HTMLElement;
+    const columnHeadings = narrativePanel.querySelector(".taste-factor-group__column-headings");
+    expect(columnHeadings?.getAttribute("aria-hidden")).toBe("true");
+    expect(columnHeadings?.textContent).toContain("分析した好み");
+    expect(columnHeadings?.textContent).toContain("おすすめへの反映");
+    expect(narrativePanel.querySelectorAll(".taste-factor-row__adjustment-label")).toHaveLength(6);
+    expect(
+      [...narrativePanel.querySelectorAll(".taste-factor-row__adjustment-label")].every(
+        (label) => label.textContent === "おすすめへの反映",
+      ),
+    ).toBe(true);
 
     const strategyGroup = screen.getByRole("radiogroup", {
-      name: "戦略的な展開の好みを調整",
+      name: "「戦略的な展開」のおすすめへの反映を設定",
     });
-    expect(within(strategyGroup).getAllByRole("radio")).toHaveLength(5);
+    const strategyRadios = within(strategyGroup).getAllByRole("radio");
+    expect(strategyRadios).toHaveLength(5);
+    expect(
+      ["とても好き", "好き", "自動", "控えめに", "除外"].map((label) =>
+        within(strategyGroup).getByRole("radio", { name: label }).getAttribute("aria-checked"),
+      ),
+    ).toEqual(["false", "false", "true", "false", "false"]);
+    expect(strategyGroup.className).toContain("flex-nowrap");
+    expect(strategyGroup.className).not.toContain("rounded-");
+    expect(strategyGroup.className).not.toContain("border-line");
+    expect(strategyGroup.querySelectorAll(".taste-adjustment-option__marker")).toHaveLength(5);
+    expect(
+      [...strategyGroup.querySelectorAll(".taste-adjustment-option__marker")].every(
+        (marker) => marker.getAttribute("aria-hidden") === "true",
+      ),
+    ).toBe(true);
+    expect(
+      within(strategyGroup)
+        .getByRole("radio", { name: "除外" })
+        .closest("label")
+        ?.className.includes("border-l"),
+    ).toBe(true);
     const beforePreview = screen.getByRole("region", { name: "ページを開いた時" });
     const afterPreview = screen.getByRole("region", { name: "現在の調整" });
     expect(within(beforePreview).getByText("work-6")).toBeTruthy();
@@ -307,7 +387,25 @@ describe("TasteFlow", () => {
         axes: { strategy: "exclude" },
         themes: {},
       });
-      expect(screen.getByText("次のおすすめに反映されます")).toBeTruthy();
+      expect(testState.saveProfileAdjustments).toHaveBeenCalledTimes(1);
+      expect(
+        within(strategyGroup).getByRole("radio", { name: "除外" }).getAttribute("aria-checked"),
+      ).toBe("true");
+      expect(
+        screen.getByText("「戦略的な展開」のおすすめへの反映を「除外」に変更しました。"),
+      ).toBeTruthy();
+      const strategyMeterAfterAdjustment = screen.getByRole("meter", {
+        name: "戦略的な展開",
+      });
+      expect(strategyMeterAfterAdjustment.getAttribute("aria-valuenow")).toBe(
+        strategyMeterValueBeforeAdjustment,
+      );
+      expect(
+        strategyMeterAfterAdjustment
+          .querySelector(".taste-factor-bar__fill")
+          ?.getAttribute("style"),
+      ).toBe(strategyMeterTransformBeforeAdjustment);
+      expect(container.querySelector(".taste-factor-bar--highlighted")).toBeNull();
       expect(within(beforePreview).getByText("work-6")).toBeTruthy();
       expect(within(afterPreview).queryByText("work-6")).toBeNull();
       expect(within(afterPreview).getByText("work-7")).toBeTruthy();
@@ -320,7 +418,7 @@ describe("TasteFlow", () => {
     const view = render(<TasteFlow group="narrative" mode="adjust" />);
 
     const group = await screen.findByRole("radiogroup", {
-      name: "戦略的な展開の好みを調整",
+      name: "「戦略的な展開」のおすすめへの反映を設定",
     });
     expect(within(group).getByRole("radio", { name: "好き" }).getAttribute("aria-checked")).toBe(
       "true",
@@ -328,7 +426,7 @@ describe("TasteFlow", () => {
     fireEvent.click(within(group).getByRole("radio", { name: "除外" }));
 
     expect((await screen.findByRole("alert")).textContent).toContain(
-      "好みの調整を保存できませんでした",
+      "おすすめの設定を保存できませんでした",
     );
     expect(within(group).getByRole("radio", { name: "好き" }).getAttribute("aria-checked")).toBe(
       "true",
@@ -337,7 +435,7 @@ describe("TasteFlow", () => {
     view.unmount();
     render(<TasteFlow group="narrative" mode="adjust" />);
     const remountedGroup = await screen.findByRole("radiogroup", {
-      name: "戦略的な展開の好みを調整",
+      name: "「戦略的な展開」のおすすめへの反映を設定",
     });
     expect(
       within(remountedGroup).getByRole("radio", { name: "好き" }).getAttribute("aria-checked"),

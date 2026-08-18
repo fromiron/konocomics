@@ -510,7 +510,7 @@ export const tasteStrings = {
   loading: "Manga DNA を読み込んでいます…",
   storageWarning:
     "このブラウザでは変更を保存できません。このセッション中だけ好みの調整を反映します。",
-  saveError: "好みの調整を保存できませんでした。もう一度お試しください。",
+  saveError: "おすすめの設定を保存できませんでした。もう一度お試しください。",
   eyebrow: "MANGA DNA",
   title: "あなたの Manga DNA",
   description: "選んだ作品と読書記録から、物語・雰囲気・作画の好みを整理しました。",
@@ -523,6 +523,7 @@ export const tasteStrings = {
   anchorsHeading: "選んだマンガ",
   radarHeading: "好みの分布",
   radarPending: "確認できる好みの軸を分析しています。",
+  radarAxisSummary: (label: string, value: string) => `${label}：${value}`,
   topPreferencesHeading: "あなたの上位の好み",
   topPreferenceEvidence: (titles: readonly string[]) =>
     `${titles.map((title) => `『${title}』`).join("")}から`,
@@ -534,7 +535,7 @@ export const tasteStrings = {
     art: "作画",
     genre: "ジャンル",
   },
-  workspaceHeading: "Manga DNA の詳細",
+  workspaceHeading: "おすすめを調整",
   modeLabel: "Manga DNA の表示モード",
   modes: {
     summary: "まとめ",
@@ -542,10 +543,18 @@ export const tasteStrings = {
   },
   modeDescriptions: {
     summary: "現在の分析をグループごとに確認できます。",
-    adjust: "5段階の設定は次のおすすめに反映されます。",
+    adjust:
+      "分析結果は変わりません。設定は自動保存され、次のおすすめにだけ反映されます。「自動」は分析結果に合わせます。",
   },
-  groupLabel: "表示する好みのグループ",
-  allGroups: "すべて",
+  groupFactorSummary: (labels: readonly string[], remaining: number) =>
+    remaining > 0 ? `${labels.join("、")} ほか${String(remaining)}項目` : labels.join("、"),
+  groupAdjustmentAuto: "すべて自動",
+  groupAdjustmentCount: (count: number) => `${String(count)}項目を調整中`,
+  groupAnalysisCount: (count: number) => `${String(count)}項目を分析`,
+  groupDetails: "詳細設定",
+  groupClose: "閉じる",
+  groupDetailsLabel: (title: string, open: boolean) =>
+    open ? `${title}の詳細設定を閉じる` : `${title}の詳細設定`,
   unknown: "まだ分析中",
   factorValue: (value: number) => {
     if (value < 0.5) return "ごく控えめ";
@@ -554,7 +563,9 @@ export const tasteStrings = {
     if (value < 3.5) return "強め";
     return "とても強め";
   },
-  adjustmentGroupLabel: (factorLabel: string) => `${factorLabel}の好みを調整`,
+  analysisColumnHeading: "分析した好み",
+  adjustmentColumnHeading: "おすすめへの反映",
+  adjustmentGroupLabel: (factorLabel: string) => `「${factorLabel}」のおすすめへの反映を設定`,
   adjustmentLabels: {
     veryLike: "とても好き",
     like: "好き",
@@ -562,7 +573,8 @@ export const tasteStrings = {
     less: "控えめに",
     exclude: "除外",
   },
-  adjustmentSaved: "次のおすすめに反映されます",
+  adjustmentSaved: (factorLabel: string, optionLabel: string) =>
+    `「${factorLabel}」のおすすめへの反映を「${optionLabel}」に変更しました。`,
   previewHeading: "好み調整後のおすすめ変化",
   previewDescription: "同じおすすめ計算で、ページを開いた時と現在の work ID を比較します。",
   previewBefore: "ページを開いた時",
@@ -875,10 +887,10 @@ export const settingsStrings = {
   },
   dna: {
     title: "Manga DNA",
-    description: "好みの軸とテーマの手動調整は Manga DNA で管理します。",
+    description: "Manga DNA の分析結果を確認し、おすすめへの反映を設定できます。",
     adjustmentCount: (count: number) =>
       count === 0 ? "手動調整はありません。" : `${String(count)} 項目を手動調整しています。`,
-    action: "Manga DNA を調整",
+    action: "おすすめを調整",
   },
   localData: {
     title: "ローカルデータとプライバシー",

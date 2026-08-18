@@ -350,3 +350,305 @@ The component-level comparison shows the source on the left and implementation o
 P3: the supplied visual uses different cover artwork, so the warm shadow's perceived luminance differs over the two underlying images; the measured SVG contour, shadow token, and opacity are shared independently of catalog content.
 
 final result: passed
+
+# 2026-08-18 Manga DNA radar-axis addendum
+
+- Source visual truth:
+  `C:/Users/Bell/AppData/Local/Temp/codex-clipboard-fee05894-6013-4ec6-82c2-21c63cf3f714.png`
+  (435 x 313 px).
+- Rendered implementation: `.qa/taste-radar-implementation.png`.
+- Full route capture: `.qa/taste-radar-after.png`.
+- Same-state comparison input: `.qa/taste-radar-comparison.png` (reference left,
+  implementation right).
+- Route and state: `http://localhost:3000/taste`, persisted Manga DNA profile,
+  seven highest confirmed deterministic profile axes.
+- Browser viewport: 1366 x 1077 CSS px at device pixel ratio 1.5.
+- Rendered radar card: 472.49 x 437.29 CSS px.
+
+## Comparison evidence
+
+The reference's useful contract is now present: every polygon direction ends in
+an outer leader and point, followed immediately by its real Japanese factor name
+and current qualitative value. Long labels wrap at a semantic separator or a
+stable midpoint, so the displayed text remains the factor-dictionary label. The
+implementation intentionally keeps seven data-backed axes rather than copying the
+reference's six fictional axes.
+
+The dotted overall-average polygon and both legend rows from the reference were
+excluded. Raw numeric values were also excluded because the higher `/taste`
+contract requires the existing qualitative labels (`ほどほど`, `強め`,
+`とても強め`) instead of percentages or profile numbers.
+
+## Accessibility and runtime checks
+
+- The chart SVG remains decorative with `aria-hidden="true"`.
+- The same factor/value pairs remain available as a semantic screen-reader list;
+  only its former visual table presentation was removed.
+- The final browser DOM contained seven visible `.taste-radar__label` nodes,
+  seven accent value points, no overall-average label or legend, and no root
+  horizontal overflow (`1351 / 1351`).
+- Every measured label stayed within the radar card boundary. The card itself had
+  equal client and scroll dimensions (`471 / 471` wide, `436 / 436` high).
+- The fresh route cycle logged Vite debug/info messages and no runtime error or
+  warning.
+
+## Verification
+
+- Focused TasteFlow suite: 1 file / 14 tests passed.
+- `pnpm typecheck`: passed.
+- `pnpm lint`: passed.
+- Scoped Prettier check: passed.
+- Production build: passed; 157 pages prerendered.
+
+final result: passed
+
+---
+
+# 2026-08-18 Manga DNA top-preferences addendum
+
+- Source visual truth:
+  `C:/Users/Bell/AppData/Local/Temp/codex-clipboard-671e269a-23e8-4660-9afa-4f6e3e67849d.png`
+  (854 x 325 px).
+- Rendered implementation: `.qa/taste-top-preferences-implementation.png`.
+- Full route capture: `.qa/taste-top-preferences-after.png`.
+- Focused comparison input: `.qa/taste-top-preferences-comparison.png`
+  (reference's first three cards left, real product Top 3 right).
+- Route and state: `http://localhost:3000/taste`, persisted Manga DNA profile,
+  real deterministic Top 3 preferences.
+- Browser viewport: 1366 x 1077 CSS px at device pixel ratio 1.5.
+- Source focus crop: 520 x 315 px, normalized to 428 x 259 px.
+- Implementation section: 427.5 x 241.46 CSS px; comparison crop 428 x
+  242 px.
+
+## Comparison evidence
+
+The useful hierarchy from the reference is present in all three product cards:
+a large semantic icon, centered factor name, prominent strength, and a quieter
+supporting line. The previous 28 px cover thumbnails were removed because their
+subjects were not legible at this card width. The actual anchor titles remain in
+the supporting line, so explanation provenance is still visible.
+
+The implementation intentionally keeps the domain's Top 3 rather than copying
+the reference's fictional Top 5. It also keeps the contracted qualitative
+strength (`とても強め`) instead of inventing percentages or percentile ranks.
+
+## Fidelity surfaces
+
+- **Typography:** the section heading, 14 px factor label, responsive 16/20 px
+  strength, and 12 px evidence copy preserve the reference's four-level
+  hierarchy without unsupported numeric emphasis.
+- **Spacing and layout:** the three cards are equal at 128.72 x 182.13 CSS px,
+  with centered icon/name/value anatomy and bottom-aligned evidence copy. The
+  section and document have no horizontal overflow.
+- **Colors and tokens:** existing canvas, surface, line, accent, strong-text, and
+  muted-text tokens are preserved. The source's isolated green icon was not
+  introduced into the product's single-accent semantic system.
+- **Image and icon quality:** no unreadable raster cover remains in the cards.
+  Existing Lucide assets provide factor-specific Zap, Gauge, and Paintbrush
+  icons in the captured state; all are decorative because the adjacent heading
+  supplies the accessible name.
+- **Copy and content:** factor-dictionary names, qualitative profile values, and
+  real anchor work titles remain data-driven. No source-only score or percentile
+  copy was added.
+
+## Runtime and verification
+
+- Browser DOM readback: three cards, three icons, zero card cover images, and
+  root width `1351 / 1351`.
+- Browser console: no error or warning in the final route cycle.
+- Focused TasteFlow suite: 1 file / 14 tests passed.
+- `pnpm typecheck`: passed.
+- `pnpm lint`: passed.
+- Scoped Prettier check: passed.
+- Production build: passed; 157 pages prerendered.
+
+The first focused side-by-side comparison found no actionable P0, P1, or P2
+differences. P3: the source icons use stronger glow and mixed cyan/green accents;
+the implementation uses the closest existing icon library and the product's
+single semantic accent.
+
+final result: passed
+
+---
+
+# 2026-08-18 Manga DNA header-spacing addendum
+
+- Source visual truth:
+  `C:/Users/Bell/AppData/Local/Temp/codex-clipboard-2ddefe8c-1dd6-4b61-bc3c-721096007089.png`
+  (1412 x 694 px, 144 dpi).
+- Rendered implementation: `.qa/taste-spacing-after-viewport.png`
+  (1351 x 1065 px browser capture).
+- Focused comparison input: `.qa/taste-spacing-comparison.png` (reported
+  state left, corrected state right).
+- Route and state: `http://localhost:3000/taste`, persisted Manga DNA profile.
+- Browser viewport: 1366 x 1077 CSS px at device pixel ratio 1.5.
+- Comparison normalization: source crop 642 x 684 px; implementation crop
+  423 x 451 px resized to 642 x 684 px so the same left-column region and the
+  beginning of `選んだマンガ` can be judged together.
+
+## Finding and comparison history
+
+- **P2 spacing/layout rhythm:** the desktop header row was sized by the taller
+  radar card. The left stack used `content-start`, leaving 16.92 px unused below
+  `あなたの上位の好み`. Together with the intended 8 px section gap, the
+  measured distance to `選んだマンガ` was 24.92 px.
+- **Fix:** the desktop left stack now uses explicit `auto 1fr` rows, and the top
+  preference section uses `auto 1fr` internally. The preference card row fills
+  the available height instead of leaving an anonymous gap. The change is
+  desktop-only; the existing mobile content-sized flow remains unchanged.
+- **Post-fix evidence:** the top-preference and radar cards now share the same
+  509.29 px bottom edge. `選んだマンガ` begins at 517.29 px, leaving exactly
+  the intended 8 px gap. The focused comparison shows no remaining actionable
+  P0, P1, or P2 spacing difference.
+
+## Fidelity surfaces and verification
+
+- Typography, colors/tokens, icons/image quality, and Japanese copy are
+  unchanged; this correction affects only the desktop grid track sizing.
+- Root width remains `1351 / 1351`, with no horizontal overflow.
+- Browser console contains no error or warning after the hot update.
+- Focused TasteFlow suite: 1 file / 14 tests passed.
+- `pnpm typecheck`: passed.
+- `pnpm lint`: passed.
+- Production build: passed; 157 pages prerendered.
+
+final result: passed
+
+---
+
+# 2026-08-18 Manga DNA adjustment-editor addendum
+
+- Source visual truth:
+  `C:/Users/Bell/AppData/Local/Temp/codex-clipboard-bd58022a-230e-48e4-b84e-f72116427d57.png`
+  (763 x 752 px, 144 dpi).
+- Before capture: `.qa/taste-workspace-before.png`.
+- Rendered collapsed state: `.qa/taste-workspace-after-collapsed.png`.
+- Rendered expanded state: `.qa/taste-workspace-after-expanded.png`.
+- Focused side-by-side comparison: `.qa/taste-workspace-comparison.jpg`.
+- Route and state: `http://localhost:3000/taste`, persisted Manga DNA profile.
+- Browser viewport: 1366 x 1077 CSS px at device pixel ratio 1.5; captured
+  bitmap 1351 x 1065 px.
+
+## Finding and comparison history
+
+- **P1 information density:** the old editor exposed 49 factor rows and 195
+  adjustment choices at once. Its workspace was 3012.31 CSS px tall, so the
+  category model was not scannable before the user encountered fine-grained
+  controls.
+- **P1 duplicated navigation:** six group-filter buttons repeated the same
+  classification already represented by the five group cards.
+- **P2 surface hierarchy:** a rounded workspace card wrapped five more rounded
+  group cards, making the outer container an unnecessary visual boundary.
+- **Fix:** the editor now starts with five data-derived category summaries in
+  the reference order. Each row has a semantic category icon, real strongest
+  factors, truthful adjustment/analysis status, and an explicit detail
+  disclosure. Only one category can be open. The duplicated filter and outer
+  card boundary were removed.
+- **Post-fix evidence:** the collapsed workspace is 493.06 CSS px tall with five
+  groups, five disclosures, zero visible detail panels, zero visible adjustment
+  buttons, zero duplicate filter buttons, and zero horizontal overflow. All 49
+  factor rows and 195 adjustment choices remain mounted behind the disclosures.
+
+The implementation intentionally does not copy the reference's three-state
+category control, reset button, or save button. Those controls do not exist in
+the accepted product contract: individual factors retain the real five-state
+preference model and save immediately. Copying the source controls would create
+false behavior.
+
+## Fidelity surfaces
+
+- **Typography:** one action-oriented heading, quiet auto-save explanation,
+  category heading, factor summary, state summary, and detail action form a
+  deliberate hierarchy without dashboard-style numeric emphasis.
+- **Spacing and layout:** the reference's five full-width category rows replace
+  the repeated matrix. The row itself is the component boundary; the workspace
+  no longer adds a second same-radius container.
+- **Colors and tokens:** existing canvas, surface, line, accent, strong-text,
+  and muted-text tokens are preserved. No new arbitrary color or decorative
+  gradient was introduced.
+- **Image and icon quality:** existing Lucide icons distinguish the five
+  categories and are decorative because the adjacent heading supplies the
+  accessible name. No raster asset or generated image was needed.
+- **Copy and content:** every factor name, strength, count, and adjustment state
+  comes from the deterministic profile or current persisted settings. No mock
+  preference, percentile, or source-only action was added.
+
+## Interaction, accessibility, and verification
+
+- Each disclosure is a native button with a contextual accessible name,
+  `aria-expanded`, `aria-controls`, a controlled panel, and a measured 44 px
+  target. Closed panels use the native `hidden` state.
+- Opening the narrative category exposed one panel and six real radiogroups.
+  Opening the theme category set `?group=theme`; a full reload restored the same
+  one open panel and its 22 radiogroups with no error or warning.
+- The old all-expanded presentation assertion was test drift after the current
+  accepted layout decision. It now verifies all five summaries, initial
+  collapse, one-open-at-a-time behavior, and preservation of every factor row.
+- Fresh browser reload: no error or warning; root horizontal overflow 0.
+- Focused TasteFlow suite: 1 file / 14 tests passed.
+- `pnpm typecheck`: passed.
+- `pnpm lint`: passed.
+- Scoped Prettier check: passed.
+- `git diff --check`: passed.
+- Production build: passed; 157 pages prerendered.
+- Full Vitest suite: 712/728 passed. The 16 failures are outside the changed
+  files and reproduce Windows line-ending/path, frozen artifact, permission,
+  npm-spawn, timeout, and pre-existing landing-logo expectations; none exercise
+  this editor. This is a full-suite verification limit, not evidence for the
+  scoped UI result.
+
+final result: passed for the scoped Manga DNA adjustment-editor change
+
+---
+
+# 2026-08-18 Manga DNA genre-detail layout addendum
+
+## Source and comparison evidence
+
+- User-reported current state: `.qa/genre-layout-review/02-user-report.png`
+- Browser reproduction before the change: `.qa/genre-layout-review/01-current-browser.png`
+- Original editor direction reference: `.qa/genre-layout-review/03-original-editor-reference.png`
+- Gemini 3.7 Flash High evidence package: `.qa/genre-layout-review/gemini-evidence/`
+- Gemini consultation result: `.qa/genre-layout-review/gemini-consultation.md`
+- Browser result after the change: `.qa/genre-layout-review/02-after-browser.png`
+- Cropped result card: `.qa/genre-layout-review/02-after-card.jpg`
+- Side-by-side review: `.qa/genre-layout-review/genre-before-after.jpg`
+- Verified route and viewport: `/taste?group=genre`, 1366 x 1077 CSS px, DPR 1.5
+
+## Finding and decision
+
+- **P1 structural defect:** the analysis-only genre group inherited the adjustable
+  groups' desktop two-column row template. Its meter occupied 329.5 px of an
+  886.67 px row while the absent adjustment control left 557.17 px, or about
+  62.8%, unused.
+- Gemini 3.7 Flash High independently verified the 11-file payload ledger and
+  repository root identity, then selected the same direction: a desktop
+  two-column by five-row meter grid that collapses to one column on mobile.
+- Full-width meters were rejected because an approximately 886 px meter would
+  remain visually overextended and retain ten rows. Chip or tag presentation was
+  rejected because it would weaken the continuous 0-4 strength meaning and the
+  explicit `まだ分析中` state.
+- The other four groups keep their one-column FactorBar plus real five-state
+  adjustment controls. No genre control or unsupported behavior was invented.
+
+## After evidence
+
+- Genre now renders two equal 435.33 px columns and five visual rows on desktop.
+- The detail panel height decreased from 390.63 px to 195.31 px.
+- All ten genre meters remain present with their qualitative labels and existing
+  `role="meter"` semantics; visible genre radiogroups remain 0.
+- Root horizontal overflow remains 0.
+- The theme group still uses one detail column, the existing 329.5 / 549.17 px
+  meter-control split, and all 22 visible radiogroups.
+- Mobile one-column behavior is covered by responsive source and the component
+  contract test; no separate live mobile capture was taken for this addendum.
+
+## Verification
+
+- Fresh browser reload: no error or warning; genre query state restored.
+- Focused TasteFlow suite: 1 file / 14 tests passed.
+- `pnpm typecheck`: passed.
+- `pnpm lint`: passed.
+- Production build: passed; 157 pages prerendered.
+
+final result: passed for the scoped genre-detail layout change

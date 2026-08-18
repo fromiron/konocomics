@@ -201,12 +201,12 @@ CTA 버튼 1개: **「好きなマンガから始める」** → /onboarding.
 
 ### 목적
 
-(a) 온보딩 직후: 분석 결과를 "결과물"로 공개하는 보상 화면(가설 E). (b) 상시: DNA 열람과 보정. 동일 화면, `?reveal=1`일 때만 1회 reveal 모드.
+(a) 온보딩 직후: 분석 결과를 "결과물"로 공개하는 보상 화면(가설 E). (b) 상시: DNA 분석값 열람과 추천 반영 설정. 동일 화면, `?reveal=1`일 때만 1회 reveal 모드.
 
 ### 주요 액션
 
 - reveal 모드: 하단 고정 CTA 「おすすめを見る」.
-- 상시 모드: 보정 자체가 액션. 저장 버튼 없음(칩 변경 즉시 Dexie 반영). 변경 시 스낵바 「次のおすすめに反映されます」.
+- 상시 모드: 추천 반영 radio 변경 자체가 액션. 저장 버튼 없이 즉시 Dexie에 반영하고, 성공 시 factor와 선택값을 포함한 스낵바를 제공한다(예: 「『戦略的な展開』のおすすめへの反映を『除外』に変更しました。」).
 
 ### 정보 위계
 
@@ -214,7 +214,7 @@ CTA 버튼 1개: **「好きなマンガから始める」** → /onboarding.
 2. **상위 취향 3개 요약 카드**: 취향 레이블 + 근거 Anchor 표지 칩 1~3개 ("『キングダム』『ダンジョン飯』から")
 3. 동일 deterministic profile의 대표 축을 요약한 radar. 새 chart dependency 없이 inline SVG/CSS로 그리고 같은 데이터를 text list로 제공한다.
 4. 근거 작품 `MediaShelf`
-5. 그룹 섹션 5개(테마/전개/톤·관계/작화/장르): 각 축의 가로 막대(0~4) + 일본어 레이블 + 5단 보정 control
+5. 5개 범주(장르/테마/전개/톤·관계/작화)의 compact summary row. 각 row는 범주 icon, 실제 profile에서 계산한 대표 factor, 조정 상태, 명시적인 「詳細設定」 disclosure를 제공한다. 초기에는 모두 접고 한 번에 한 범주의 상세만 연다. 장르는 분석 전용으로 가로 막대(0~4) + 일본어 레이블만 제공하고 보정 control을 만들지 않는다. 나머지 네 범주의 열린 상세에는 기존 5단 보정 control을 그대로 제공한다.
 6. 보정 전후 같은 recommendation engine을 local에서 실행해 work ID 변화만 보여 주는 preview. network 요청과 별도 추천 산식은 없다.
 7. `UserWorkRecord.updatedAt`과 기존 reasons로 구성한 최근 feedback 요약 + 「作品を追加して精度を上げる」 링크
 
@@ -223,24 +223,26 @@ CTA 버튼 1개: **「好きなマンガから始める」** → /onboarding.
 - 값 = 사용자 positive anchor들의 가중 평균에서 추론된 선호 강도(엔진의 프로필 요약 출력).
 - 확인값의 표시 레이블: `<0.5 → ごく控えめ`, `<1.5 → 控えめ`, `<2.5 → ほどほど`, `<3.5 → 強め`, 그 외 `とても強め`. 숫자 원값은 화면에 표시하지 않는다.
 - **미확인 축: 빈 윤곽선 막대 + 「まだ分析中」. 0으로 그리지 않는다.**
-- 보정 칩 5단: `とても好き / 好き / 自動 / 控えめに / 除外`. 기본 `自動`. `除外` 선택 시 확인 다이얼로그 없이 적용하되 칩이 경고색으로 표시.
+- 보정 radio 5단: `とても好き / 好き / 自動 / 控えめに / 除外`. 기본 `自動`. 반복되는 segmented box 대신 배경·외곽선이 없는 marker + label 행을 사용하고, 선택값은 채운 marker와 굵은 text로 구분한다. `除外`는 앞의 가는 구분선으로 일반 강도 조절과 분리하며 선택 시에만 marker와 text를 경고색으로 표시한다. 확인 다이얼로그 없이 즉시 적용한다.
+- adjustment workspace의 visible contract는 「おすすめを調整」이다. 설명은 분석값이 바뀌지 않고 설정만 추천에 반영된다는 점과 `自動`이 분석 결과를 따른다는 점을 명시한다. 열린 보정 범주의 desktop 상세은 `分析した好み` / `おすすめへの反映` 두 열 제목과 가는 구분선을 사용한다. FactorBar는 read-only 분석 출력이며 radio 변경으로 값·길이·색을 바꾸지 않는다.
 
 ### 상태
 
 - reveal(1회): §`04` 5.2의 시퀀스. `?reveal=1`을 발견하면 현재 mount의 reveal 여부를 local state/ref에 먼저 고정하고 같은 effect에서 query를 즉시 `replaceState`로 제거한다. 이후 A 시퀀스는 고정된 판정으로 계속하며 URL을 진행 중 상태나 재생 token으로 사용하지 않는다.
-- 보정 변경 직후: 해당 축 막대에 accent 하이라이트 600ms.
+- 보정 변경 직후: 선택 marker와 text 상태를 즉시 반영하고, 저장 성공 시 어떤 factor를 어떤 값으로 변경했는지 `aria-live` snackbar로 알린다. FactorBar에는 보정 성공 highlight나 값 전이를 적용하지 않는다.
 - anchor < 5 (가드 통과 못함): /onboarding 리다이렉트.
 
 ### 반응형
 
-- mobile: 1열, 그룹 섹션 아코디언 아님 — 전부 펼침, 스크롤. 보정 칩은 막대 아래 가로 스크롤 행.
-- desktop: 2열 그리드(그룹 섹션 카드), 최대폭 960px.
+- mobile: 5개 범주 summary를 1열로 쌓고 한 범주의 상세만 연다. 열린 상세은 각 FactorBar 아래에 visible `おすすめへの反映` micro-label과 줄바꿈 없는 가로 스크롤 radio 행을 둔다.
+- desktop: 최대폭 960px의 full-width 범주 row를 사용하고 한 범주의 상세만 연다. 분석 전용 장르 상세은 2열 meter grid로 10개 항목을 5행에 배치한다. 보정 가능한 네 범주는 sticky `分析した好み` / `おすすめへの反映` 열 제목 아래 FactorBar + 5단 control 행을 유지한다.
 
 ### 접근성
 
 - 확인된 막대는 축 레이블만 접근 가능한 이름으로 사용하고 `role="meter"` + `aria-valuemin/max/now`를 제공한다. `aria-valuetext`는 중복된 축 이름이나 숫자 없이 위 정성 레이블만 제공한다(예: 이름 `戦略的な展開`, `aria-valuetext="強め"`).
 - radar와 동일한 값은 keyboard/screen reader가 읽을 수 있는 text list로 중복 제공하고 SVG 자체는 장식으로 처리한다.
-- 보정 칩은 radiogroup. 미확인 막대는 가짜 0을 넣지 않고, 축 이름과 「まだ分析中」을 함께 읽는 비수치 group 상태로 노출한다.
+- 각 범주의 「詳細設定」은 범주명을 포함한 accessible name, `aria-expanded`, `aria-controls`, visible focus를 가진 44px 이상 button이다. 접힌 상세의 control은 accessibility tree에서 제외한다.
+- 보정 선택은 `「{factor}」のおすすめへの反映を設定` 형식의 이름을 가진 radiogroup이며 각 선택은 44px 이상 target, visible label, outline/filled marker, `aria-checked`, visible focus를 제공한다. 선택 상태는 색만으로 전달하지 않는다. 미확인 막대는 가짜 0을 넣지 않고, 축 이름과 「まだ分析中」을 함께 읽는 비수치 group 상태로 노출한다.
 - reveal 애니메이션은 정보 추가 없음 — reduced-motion 시 즉시 완성 상태.
 
 ### 수용 기준
@@ -249,6 +251,12 @@ CTA 버튼 1개: **「好きなマンガから始める」** → /onboarding.
 - [ ] reveal 판정 직후 `?reveal`이 즉시 제거되지만 anchors·요약·FactorBar A 시퀀스는 local decision으로 계속된다.
 - [ ] 1200ms 전 뷰포트에 들어온 FactorBar는 전역 gate 뒤 시작하고, gate가 지난 뒤 처음 진입한 화면 밖 FactorBar는 추가 1200ms 지연 없이 섹션 내 60ms stagger만 적용해 각 1회 재생된다.
 - [ ] 모든 막대 값이 엔진 프로필 출력과 일치한다(스냅샷 테스트).
+- [ ] 초기 화면에는 5개 범주 summary가 모두 보이고 상세는 접혀 있다. disclosure를 열면 해당 범주의 상세만 노출되며 다른 범주의 상세는 닫힌다.
+- [ ] 장르 상세은 desktop 2열/mobile 1열 meter grid이며 radiogroup이 없다. 다른 네 범주의 5단 보정 control에는 영향이 없다.
+- [ ] 보정 radiogroup은 반복 segmented container나 선택 pill 없이 marker + label로 표시되고, 선택값은 filled marker와 text weight로도 구분된다. `除外` warning은 선택 시에만 표시된다.
+- [ ] 열린 보정 범주는 desktop에서 `分析した好み` / `おすすめへの反映` 열 제목과 divider, mobile에서 행별 `おすすめへの反映` label을 제공한다. workspace heading과 설명은 분석값과 추천 설정을 별개로 설명한다.
+- [ ] radio 변경 전후 해당 FactorBar의 `aria-valuenow`와 시각 길이는 동일하며, 막대 highlight 대신 구체적인 저장 `aria-live` message와 recommendation preview가 실제 영향을 전달한다.
+- [ ] 열린 범주의 모든 기존 5단 보정 control을 keyboard로 접근할 수 있고 접고 다시 열어도 값이 유지된다.
 - [ ] 보정 칩 변경 → Dexie 반영 → /recommendations 재진입 시 추천이 변한다.
 - [ ] 미확인 축이 0값 축과 시각·접근성 DOM 시맨틱 모두에서 구분된다. 실제 스크린리더 낭독 검증은 제품 완료 후 선택적 접근성 감사 범위다.
 - [ ] 상위 취향 3개 각각에 근거 Anchor 칩이 표시된다.
