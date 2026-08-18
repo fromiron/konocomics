@@ -304,3 +304,49 @@ inversions.
 - These are `UNKNOWN` visual states, not evidence of an observed product defect.
 
 release result: pending explicit release/deployment authorization
+
+---
+
+# 2026-08-18 Top 10 first-place card addendum
+
+- Source visual truth: `.qa/top-ten-first-card-reference.png`
+- Rendered implementation: `.qa/top-ten-first-card-implementation.png`
+- Full landing capture: `.qa/top-ten-landing-viewport.png`
+- Normalized full-card comparison: `.qa/top-ten-first-card-pixel-comparison.png` (reference left, implementation right)
+- Normalized background zoom: `.qa/top-ten-first-card-background-comparison.png` (reference left, implementation right)
+- Route and state: `http://localhost:3000/?landing=1`, resolved landing, first Top 10 item
+- Browser viewport: 1366 x 1077 CSS px at device pixel ratio 1.5
+- Source pixels: 284 x 341; card crop 263 x 313 at x=10, y=14
+- Implementation pixels: 112 x 133; rendered card CSS size 112 x 133.33
+- Density normalization: source crop downsampled at its natural 21:25 ratio to 112 x 133; the browser capture was converted from viewport CSS coordinates to screenshot pixels before the 112 x 133 element crop
+
+## Comparison evidence
+
+The component-level comparison shows the source on the left and implementation on the right. The original yellow-body edge was sampled every two normalized pixels and traced into the external SVG. On the final capture, the sampled body-edge mean absolute error is 1.28 px and the maximum sampled error is 5 px. The edge now descends gradually from the upper right, turns sharply through the 30-34 px rows, and finishes against a source-matched warm dark shadow rather than a second opaque yellow wedge. The rank glyph bounding box is 13,48-25,76 in the source and 13,48-25,75 in the implementation. Crown, stacked `TOP` / `10`, surface colors, and the full card ratio were also measured from the normalized source.
+
+## Fidelity surfaces
+
+- Typography: existing product fonts remain; the library crown is 18 px, the crown-label inset is 8 px by 5 px, and the landing rank is horizontally condensed to the measured source glyph box.
+- Layout: the traced surface occupies 58% of card width with a square mask box, the first card uses the source-derived 21:25 ratio, and the rank is positioned at x=10 px and y=28 px before glyph metrics.
+- Color: measured semantic tokens separate the 0.79-lightness yellow surface, saturated rank number, ochre badge ink, and warm dark shadow.
+- Imagery: the supplied design uses a different work; the product keeps the real catalog cover and its established image contract.
+- Copy: rank, title, metadata, and accessible link label remain data-driven.
+
+## Comparison history
+
+1. P1: rectangular plate, undersized crown, and high rank position. Fixed with an external curved SVG mask, a 20 px library crown, and lower rank placement.
+2. P2: first curved pass covered 72% of the card width. Reduced to 64% so the upper-right artwork remains exposed.
+3. P1: enlarged review showed that the reference is an S-like two-layer shape, while the first SVG remained a single C-like sweep. Rebuilt the SVG as an opaque S-curve body plus a blurred 48% alpha lower tail, changed its ratio to 6:5, and reduced its final width to 58%.
+4. P1: user review rejected the hand-tuned result. Investigation found that the implementation crop used document coordinates against viewport pixels, cutting the card about 8 px low, while the 263 x 313 source crop had been vertically compressed to 112 x 130. Replaced that invalid comparison with CSS-to-screenshot coordinate conversion and natural-ratio 112 x 133 crops.
+5. P1: the corrected comparison showed the hand-tuned SVG sweeping inward too late, an extra yellow tail, an over-bright surface and border, a dark oversized badge, and a rank glyph nine pixels low and too wide. Traced the source body edge row by row, removed the yellow tail and special gold border, restored the 21:25 card ratio, sampled dedicated semantic colors, resized/repositioned the badge, and matched the rank glyph box.
+6. Post-fix normalized full-card and focused background comparisons have no actionable P0, P1, or P2 differences. Body-edge MAE is 1.28 px; the remaining maximum 5 px sample occurs within the antialiased 30-34 px turn.
+
+## Interaction and runtime checks
+
+- Card navigation reached `/works/a-silent-voice`; Back restored the landing shelf.
+- Browser console errors: none.
+- Focused component tests, typecheck, lint, production build, formatting, and `git diff --check`: passed.
+
+P3: the supplied visual uses different cover artwork, so the warm shadow's perceived luminance differs over the two underlying images; the measured SVG contour, shadow token, and opacity are shared independently of catalog content.
+
+final result: passed

@@ -48,8 +48,7 @@ export function RankingCard({
           aria-label={`${mediaStrings.rank(position)} · ${mediaStrings.openDetails(title)}`}
           className={cn(
             "group/ranking relative block min-h-[var(--control-min-size)] overflow-hidden rounded-[var(--radius-card)] border border-line bg-surface-1 shadow-[var(--shadow-level-1)] transition-transform duration-[var(--motion-duration-feedback)] focus-visible:border-line-accent [@media(hover:hover)_and_(pointer:fine)_and_(prefers-reduced-motion:no-preference)]:hover:-translate-y-0.5 motion-reduce:transform-none motion-reduce:transition-none",
-            isLandingTopTen ? (isFirst ? "aspect-[6/7]" : "aspect-[3/5]") : "aspect-[30/43]",
-            isFirst && "border-[var(--rank-highlight)]",
+            isLandingTopTen ? (isFirst ? "aspect-[21/25]" : "aspect-[3/5]") : "aspect-[30/43]",
           )}
           params={{ workId }}
           preload={false}
@@ -81,37 +80,44 @@ export function RankingCard({
             className="pointer-events-none absolute inset-0 bg-[linear-gradient(to_top,var(--canvas)_0%,color-mix(in_oklch,var(--canvas)_92%,transparent)_38%,color-mix(in_oklch,var(--canvas)_42%,transparent)_68%,transparent_86%)]"
           />
           {isFirst ? (
-            <span
-              aria-hidden="true"
-              className="absolute top-0 left-0 z-10 inline-flex items-center gap-[var(--space-1)] rounded-br-[var(--radius-card)] bg-[var(--rank-highlight)] px-[var(--space-2)] py-[var(--space-1)] leading-none font-bold text-[var(--on-rank-highlight)] shadow-[var(--shadow-level-1)]"
-            >
-              <CrownIcon
+            <>
+              <span
                 aria-hidden="true"
-                className={cn("shrink-0 fill-current", isLandingTopTen ? "size-3.5" : "size-4")}
-                strokeWidth={2.5}
+                className="ranking-card__first-swash pointer-events-none absolute top-0 left-0 z-10"
+                data-ranking-first-swash="true"
               />
               <span
-                className={cn(
-                  "grid gap-0 tracking-[0.08em]",
-                  isLandingTopTen
-                    ? "text-[10px] leading-none font-black"
-                    : "text-[length:var(--text-caption-size)]",
-                )}
+                aria-hidden="true"
+                className="absolute top-0 left-0 z-20 inline-flex translate-y-px items-center gap-[3px] px-[var(--space-2)] pt-[var(--space-1)] leading-none font-bold text-[var(--rank-first-ink)]"
               >
-                <span>{mediaStrings.topTenBadge.top}</span>
-                <span className="tracking-normal">{mediaStrings.topTenBadge.ten}</span>
+                <CrownIcon
+                  aria-hidden="true"
+                  className="size-4.5 shrink-0 fill-current"
+                  strokeWidth={2}
+                />
+                <span
+                  className={cn(
+                    "grid gap-0 font-black tracking-[0.08em]",
+                    isLandingTopTen
+                      ? "text-[10px] leading-[0.9]"
+                      : "text-[length:var(--text-caption-size)] leading-none",
+                  )}
+                >
+                  <span>{mediaStrings.topTenBadge.top}</span>
+                  <span className="tracking-normal">{mediaStrings.topTenBadge.ten}</span>
+                </span>
               </span>
-            </span>
+            </>
           ) : null}
           <span
             aria-hidden="true"
             className={cn(
-              "absolute left-[var(--space-2)] z-10 font-display leading-none font-black text-text-strong drop-shadow-[0_2px_3px_var(--canvas)] tabular-nums",
+              "absolute z-20 font-display leading-none font-black text-text-strong drop-shadow-[0_2px_3px_var(--canvas)] tabular-nums",
               isLandingTopTen && isFirst
-                ? "top-[var(--space-8)] text-[length:var(--font-size-40)] text-[var(--rank-highlight)]"
+                ? "top-[calc(var(--space-8)-var(--space-1))] left-2.5 origin-left scale-x-[0.65] text-[length:var(--font-size-40)] text-[var(--rank-first-number)]"
                 : isFirst
-                  ? "top-[var(--space-8)] text-[length:var(--font-size-32)] text-[var(--rank-highlight)]"
-                  : "top-[var(--space-2)] text-[length:var(--font-size-32)]",
+                  ? "top-[calc(var(--space-8)+var(--space-1))] left-[var(--space-2)] text-[length:var(--font-size-32)] text-[var(--rank-highlight)]"
+                  : "top-[var(--space-2)] left-[var(--space-2)] text-[length:var(--font-size-32)]",
             )}
           >
             {position}
