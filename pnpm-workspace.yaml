@@ -2,5 +2,6 @@ packages:
   - harness
 
 ignoredBuiltDependencies:
+  - esbuild
   - sharp
   - unrs-resolver
