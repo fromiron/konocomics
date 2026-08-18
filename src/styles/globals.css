@@ -19,6 +19,10 @@
   --on-accent: oklch(0.15 0.02 250);
   --danger: oklch(0.65 0.22 25);
   --rank-highlight: oklch(0.82 0.16 78);
+  --rank-first-surface: oklch(0.79 0.16 78);
+  --rank-first-number: oklch(0.81 0.19 79);
+  --rank-first-ink: oklch(0.53 0.105 79);
+  --rank-first-shadow: color-mix(in oklch, var(--rank-first-surface) 24%, var(--canvas));
   --on-rank-highlight: oklch(0.19 0.045 78);
   --line-accent: color-mix(in oklch, var(--accent) 48%, var(--line));
   --line-accent-subtle: color-mix(in oklch, var(--accent) 32%, var(--line));
@@ -217,6 +221,17 @@ body {
   background-size: 8px 8px;
 }
 
+.ranking-card__first-swash {
+  aspect-ratio: 1;
+  width: 58%;
+  background: var(--rank-first-surface);
+  filter: drop-shadow(
+    0 var(--space-2) var(--space-3) color-mix(in oklch, var(--rank-first-shadow) 62%, transparent)
+  );
+  -webkit-mask: url("/media/ranking-first-swash.svg") left top / 100% 100% no-repeat;
+  mask: url("/media/ranking-first-swash.svg") left top / 100% 100% no-repeat;
+}
+
 button,
 input,
 select,
@@ -298,18 +313,6 @@ h1[tabindex="-1"]:focus {
 @keyframes taste-underline-reveal {
   to {
     transform: scaleX(1);
-  }
-}
-
-@keyframes taste-factor-highlight {
-  0%,
-  100% {
-    opacity: 0;
-  }
-
-  20%,
-  65% {
-    opacity: 0.8;
   }
 }
 

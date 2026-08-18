@@ -31,6 +31,8 @@ TasteFlow
   DnaRadarChart
   EvidenceWorkShelf
   AdjustmentEditor
+    AdjustmentCategorySummary × 5
+    AdjustmentCategoryDetails × 1 open
   RecommendationDiffPreview
   RecentFeedbackSummary
   SiteFooter
@@ -57,7 +59,7 @@ TasteFlow
 2. top factors와 qualitative confidence를 hero 영역으로 이동
 3. radar component 구현 + accessible text alternative
 4. representative anchor works를 MediaShelf로 표시
-5. 기존 adjustment radio group를 dark segmented control로 리스타일
+5. workspace를 「おすすめを調整」로 명명하고 분석값은 불변이며 설정만 추천에 반영된다는 설명을 제공한다. 5개 범주의 compact summary row를 먼저 표시하고 명시적인 「詳細設定」 disclosure로 한 범주의 상세만 연다. 장르는 분석 전용 desktop 2열/mobile 1열 meter grid를 사용하고 adjustment control을 추가하지 않는다. 나머지 네 범주의 desktop 상세은 `分析した好み` / `おすすめへの反映` 열과 divider로 분석/설정을 분리하고, mobile은 각 FactorBar 아래 visible 반영 label을 둔다. 기존 5단 radiogroup은 반복 segmented box 대신 unboxed marker + label 행으로 표시한다. `除外`는 구분선 뒤에 두고 선택될 때만 warning token을 사용한다.
 6. adjustment 변경 시 preview를 memoized/debounced local 계산
 7. persistence는 현재 save API 유지; network 요청 없음
 8. recent feedback는 지원되는 records만 표시하고 empty state 제공
@@ -73,6 +75,12 @@ TasteFlow
 
 - no profile → route guard
 - all-auto / partial adjustment / exclude states
+- initial all-collapsed / query-selected group / one-open-at-a-time disclosure
+- analysis-only genre desktop 2-column/mobile 1-column meter grid / zero radiogroup
+- editable group unboxed five-choice radiogroup / selected marker + text weight / selected-only exclude warning
+- immutable FactorBar before/after adjustment / no meter success highlight / specific save live message
+- desktop analysis/adjustment column labels and divider / mobile per-row adjustment label
+- disclosure accessible name / `aria-expanded` / `aria-controls` / keyboard activation
 - unknown/notApplicable factor
 - preview before/after deterministic
 - chart keyboard/reader 대체 정보

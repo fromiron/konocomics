@@ -1,6 +1,29 @@
 "use client";
 
 import { Link } from "@tanstack/react-router";
+import {
+  BrainCircuitIcon,
+  ChevronDownIcon,
+  CloudLightningIcon,
+  FeatherIcon,
+  GaugeIcon,
+  GlobeIcon,
+  HeartIcon,
+  LayoutGridIcon,
+  MoonStarIcon,
+  PaintbrushIcon,
+  PaletteIcon,
+  SearchIcon,
+  ShapesIcon,
+  SmileIcon,
+  SproutIcon,
+  SunIcon,
+  SwordsIcon,
+  TagsIcon,
+  TrendingUpIcon,
+  UsersRoundIcon,
+  ZapIcon,
+} from "lucide-react";
 import { LazyMotion, domAnimation, m, useReducedMotion } from "motion/react";
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 
@@ -10,12 +33,7 @@ import { SiteFooter } from "@/components/layout/site-footer";
 import { MediaShelf } from "@/components/media/media-shelf";
 import { usePageEntryMotion } from "@/components/motion/use-page-entry-motion";
 import recommendationContextJson from "@/data/generated/recommendation-context-v1.json";
-import {
-  ART_AXIS_IDS,
-  COVERAGE_GROUPS,
-  NARRATIVE_AXIS_IDS,
-  TONE_AXIS_IDS,
-} from "@/domain/catalog/constants";
+import { ART_AXIS_IDS, NARRATIVE_AXIS_IDS, TONE_AXIS_IDS } from "@/domain/catalog/constants";
 import type { AxisId, CatalogV1, CoverageGroup, ThemeTag, Work } from "@/domain/catalog/types";
 import type { ExplanationFactorId } from "@/domain/explanation";
 import { hasCatalogBackedProfile } from "@/domain/profile/catalog-profile";
@@ -109,6 +127,57 @@ function useLiveReducedMotion() {
 
 function factorLabel(factorId: ExplanationFactorId) {
   return explanationLexicon.factorLabels[factorId];
+}
+
+function TopPreferenceIcon({ preference }: Readonly<{ preference: DnaTopPreference }>) {
+  const iconProps = {
+    "aria-hidden": true,
+    className: "taste-top-card__icon size-[var(--space-8)] shrink-0 text-accent",
+    strokeWidth: 1.75,
+  } as const;
+
+  switch (preference.factorId) {
+    case "progression":
+      return <SproutIcon {...iconProps} />;
+    case "problemSolving":
+      return <BrainCircuitIcon {...iconProps} />;
+    case "strategy":
+      return <SwordsIcon {...iconProps} />;
+    case "pacing":
+      return <GaugeIcon {...iconProps} />;
+    case "mysteryReveal":
+      return <SearchIcon {...iconProps} />;
+    case "worldBuilding":
+      return <GlobeIcon {...iconProps} />;
+    case "characterArcWeight":
+      return <TrendingUpIcon {...iconProps} />;
+    case "relationshipStructure":
+      return <UsersRoundIcon {...iconProps} />;
+    case "comedy":
+      return <SmileIcon {...iconProps} />;
+    case "darkness":
+      return <MoonStarIcon {...iconProps} />;
+    case "mentalStress":
+      return <CloudLightningIcon {...iconProps} />;
+    case "romance":
+      return <HeartIcon {...iconProps} />;
+    case "emotionalWarmth":
+      return <SunIcon {...iconProps} />;
+    case "artRealism":
+      return <PaletteIcon {...iconProps} />;
+    case "artDensity":
+      return <PaintbrushIcon {...iconProps} />;
+    case "visualSoftness":
+      return <FeatherIcon {...iconProps} />;
+    case "motionImpact":
+      return <ZapIcon {...iconProps} />;
+    default:
+      return preference.kind === "genre" ? (
+        <TagsIcon {...iconProps} />
+      ) : (
+        <ShapesIcon {...iconProps} />
+      );
+  }
 }
 
 function claimDnaReveal(completionIdentity: string): RevealClaim {
@@ -220,8 +289,6 @@ type TopPreferenceCardProps = Readonly<{
   worksById: ReadonlyMap<string, Work>;
   index: number;
   animateReveal: boolean;
-  coverUrls: ReadonlyMap<string, string | null>;
-  onCoverSettled(workId: string): void;
 }>;
 
 function TopPreferenceCard({
@@ -229,8 +296,6 @@ function TopPreferenceCard({
   worksById,
   index,
   animateReveal,
-  coverUrls,
-  onCoverSettled,
 }: TopPreferenceCardProps) {
   const evidenceWorks = preference.anchorWorkIds.flatMap((workId): Work[] => {
     const work = worksById.get(workId);
@@ -238,13 +303,14 @@ function TopPreferenceCard({
   });
   const label = factorLabel(preference.factorId);
   const cardClassName =
-    "taste-top-card surface-card flex min-w-0 flex-col gap-[var(--space-content)] rounded-[var(--radius-card)] border border-line bg-surface-2 p-[var(--space-3)]";
+    "taste-top-card surface-card flex h-full min-w-0 flex-col items-center gap-[var(--space-content)] rounded-[var(--radius-card)] border border-line bg-surface-2 px-[var(--space-2)] py-[var(--space-3)] text-center";
 
   const content = (
     <>
+      <TopPreferenceIcon preference={preference} />
       <h3
         className={cn(
-          "relative line-clamp-2 min-w-0 text-[length:var(--font-size-14)] leading-tight text-text-strong",
+          "relative flex min-h-[calc(var(--space-5)*2)] min-w-0 items-center justify-center text-[length:var(--font-size-14)] leading-tight text-text-strong",
           animateReveal &&
             "taste-top-card__label--reveal after:absolute after:right-0 after:-bottom-[3px] after:left-0 after:h-0.5 after:origin-left after:scale-x-0 after:bg-accent after:content-[''] motion-safe:after:animate-[taste-underline-reveal_300ms_500ms_ease-out_forwards]",
           animateReveal && index === 1 && "after:[animation-delay:680ms]",
@@ -253,28 +319,10 @@ function TopPreferenceCard({
       >
         {label}
       </h3>
-      <span className="taste-top-card__level w-fit shrink-0 whitespace-nowrap rounded-full border border-line bg-accent-soft px-[var(--space-content)] py-[var(--space-content-tight)] text-[length:var(--font-size-12)] font-bold text-accent">
+      <strong className="taste-top-card__level shrink-0 whitespace-nowrap text-[length:var(--text-subheading-size)] leading-none text-text-strong">
         {tasteStrings.factorValue(preference.value)}
-      </span>
-      <ul
-        aria-hidden="true"
-        className="m-0 flex min-h-[var(--space-7)] list-none items-center gap-[var(--space-content-tight)] p-0"
-      >
-        {evidenceWorks.map((work) => (
-          <li className="w-[var(--space-7)] min-w-[var(--space-7)]" key={work.id}>
-            <CoverImage
-              className="taste-evidence-cover rounded-[var(--radius-cover)] border border-line"
-              coverUrl={coverUrls.get(work.id)}
-              creators={work.creators}
-              decorative
-              onSettled={() => onCoverSettled(work.id)}
-              requestedSize={200}
-              title={work.title}
-            />
-          </li>
-        ))}
-      </ul>
-      <p className="line-clamp-2 text-[length:var(--font-size-12)] leading-[var(--line-height-body)] text-text-muted">
+      </strong>
+      <p className="mt-auto line-clamp-2 min-h-[calc(var(--font-size-12)*var(--line-height-body)*2)] text-[length:var(--font-size-12)] leading-[var(--line-height-body)] text-text-muted">
         {tasteStrings.topPreferenceEvidence(evidenceWorks.map((work) => work.title))}
       </p>
     </>
@@ -295,67 +343,183 @@ function TopPreferenceCard({
 }
 
 type FactorGroupProps<FactorId extends ExplanationFactorId> = Readonly<{
-  id: string;
-  highlightPrefix?: "axis" | "theme";
+  id: CoverageGroup;
   title: string;
   preferences: readonly DnaPreference<FactorId>[];
   animateReveal: boolean;
   factorRevealReady: boolean;
   adjustmentValues?: Partial<Record<FactorId, AdjustmentPreference>>;
   onAdjustment?: (factorId: FactorId, preference: AdjustmentPreference) => void;
-  highlightedFactor: string | null;
+  onOpenChange: (open: boolean) => void;
+  open: boolean;
 }>;
+
+function FactorGroupIcon({ id }: Readonly<{ id: CoverageGroup }>) {
+  const iconProps = {
+    className: "size-[var(--space-7)]",
+    strokeWidth: 1.75,
+  } as const;
+
+  switch (id) {
+    case "genre":
+      return <LayoutGridIcon {...iconProps} />;
+    case "theme":
+      return <ShapesIcon {...iconProps} />;
+    case "narrative":
+      return <ZapIcon {...iconProps} />;
+    case "tone":
+      return <UsersRoundIcon {...iconProps} />;
+    case "art":
+      return <PaintbrushIcon {...iconProps} />;
+  }
+}
+
+function summarizeGroupPreferences<FactorId extends ExplanationFactorId>(
+  preferences: readonly DnaPreference<FactorId>[],
+) {
+  const labels = preferences
+    .flatMap((preference) =>
+      preference.state === "known" && preference.value !== null ? [preference] : [],
+    )
+    .sort(
+      (left, right) =>
+        (right.value ?? 0) - (left.value ?? 0) ||
+        (left.factorId < right.factorId ? -1 : left.factorId > right.factorId ? 1 : 0),
+    )
+    .slice(0, 3)
+    .map((preference) => factorLabel(preference.factorId));
+
+  return labels.length === 0
+    ? tasteStrings.unknown
+    : tasteStrings.groupFactorSummary(labels, Math.max(0, preferences.length - labels.length));
+}
 
 function FactorGroup<FactorId extends ExplanationFactorId>({
   id,
-  highlightPrefix,
   title,
   preferences,
   animateReveal,
   factorRevealReady,
   adjustmentValues,
   onAdjustment,
-  highlightedFactor,
+  onOpenChange,
+  open,
 }: FactorGroupProps<FactorId>) {
+  const detailsId = `taste-group-${id}-details`;
+  const isAnalysisOnly = adjustmentValues === undefined || onAdjustment === undefined;
+  const adjustedCount =
+    adjustmentValues === undefined
+      ? null
+      : preferences.filter(
+          (preference) => (adjustmentValues[preference.factorId] ?? "auto") !== "auto",
+        ).length;
+  const settingSummary =
+    adjustedCount === null
+      ? tasteStrings.groupAnalysisCount(preferences.length)
+      : adjustedCount === 0
+        ? tasteStrings.groupAdjustmentAuto
+        : tasteStrings.groupAdjustmentCount(adjustedCount);
+
   return (
     <section
       aria-labelledby={`taste-group-${id}`}
-      className="taste-factor-group surface-card m-0 h-fit min-w-0 overflow-hidden rounded-[var(--radius-card)] border border-line bg-surface-2"
+      className="taste-factor-group surface-card m-0 h-fit min-w-0 overflow-clip rounded-[var(--radius-card)] border border-line bg-surface-1"
     >
-      <header className="flex items-center border-b border-line px-[var(--space-3)] py-[var(--space-2)]">
-        <h2 className="text-[length:var(--font-size-16)] tracking-tight" id={`taste-group-${id}`}>
-          {title}
-        </h2>
+      <header className="grid grid-cols-[auto_minmax(0,1fr)] items-center gap-[var(--space-3)] p-[var(--space-4)] sm:grid-cols-[auto_minmax(0,1fr)_auto]">
+        <span
+          aria-hidden="true"
+          className="taste-factor-group__icon grid size-[var(--space-12)] place-items-center rounded-[var(--radius-control)] border border-line bg-surface-2 text-accent"
+        >
+          <FactorGroupIcon id={id} />
+        </span>
+        <span className="min-w-0">
+          <h3 className="text-[length:var(--font-size-16)] tracking-tight" id={`taste-group-${id}`}>
+            {title}
+          </h3>
+          <span className="mt-[var(--space-content-tight)] line-clamp-2 block text-[length:var(--font-size-12)] leading-[var(--line-height-body)] text-text-muted">
+            {summarizeGroupPreferences(preferences)}
+          </span>
+        </span>
+        <span className="col-start-2 flex min-w-0 flex-wrap items-center justify-between gap-[var(--space-content)] sm:col-start-3 sm:row-start-1 sm:flex-nowrap sm:justify-end">
+          <span className="whitespace-nowrap text-[length:var(--font-size-12)] font-bold text-text-muted">
+            {settingSummary}
+          </span>
+          <Button
+            aria-controls={detailsId}
+            aria-expanded={open}
+            aria-label={tasteStrings.groupDetailsLabel(title, open)}
+            className="shrink-0 gap-[var(--space-content-tight)] px-[var(--space-2)] text-[length:var(--font-size-12)] font-bold text-accent"
+            onClick={() => onOpenChange(!open)}
+            type="button"
+            variant="ghost"
+          >
+            {open ? tasteStrings.groupClose : tasteStrings.groupDetails}
+            <ChevronDownIcon
+              aria-hidden="true"
+              className={cn(
+                "size-[var(--space-4)] transition-transform duration-[var(--motion-duration-feedback)] motion-reduce:transition-none",
+                open && "rotate-180",
+              )}
+            />
+          </Button>
+        </span>
       </header>
       <div
         className={cn(
-          "taste-factor-group__rows grid px-[var(--space-3)]",
-          adjustmentValues === undefined && "gap-x-[var(--space-4)]",
+          "taste-factor-group__details taste-factor-group__rows grid border-t border-line bg-surface-2 px-[var(--space-3)]",
+          isAnalysisOnly
+            ? "taste-factor-group__rows--analysis grid-cols-1 md:grid-cols-2 md:gap-x-[var(--space-4)]"
+            : "grid-cols-1",
         )}
+        hidden={!open}
+        id={detailsId}
       >
+        {isAnalysisOnly ? null : (
+          <div
+            aria-hidden="true"
+            className="taste-factor-group__column-headings sticky top-[var(--desktop-navigation-height)] z-10 hidden grid-cols-[minmax(12rem,0.75fr)_minmax(0,1.25fr)] items-center gap-[var(--space-content)] border-b border-line bg-surface-2 py-[var(--space-content)] text-[length:var(--font-size-12)] font-bold text-text-muted md:grid"
+          >
+            <span>{tasteStrings.analysisColumnHeading}</span>
+            <span className="taste-factor-group__column-adjustment border-l border-line pl-[var(--space-content-loose)]">
+              {tasteStrings.adjustmentColumnHeading}
+            </span>
+          </div>
+        )}
         {preferences.map((preference, index) => {
           const label = factorLabel(preference.factorId);
           return (
             <div
-              className="taste-factor-row grid min-w-0 gap-[var(--space-content-tight)] border-b border-line py-[var(--space-content-tight)] last:border-b-0 md:grid-cols-[minmax(12rem,0.75fr)_minmax(0,1.25fr)] md:items-center md:gap-[var(--space-content)]"
+              className={cn(
+                "taste-factor-row min-w-0 border-b border-line py-[var(--space-content-tight)]",
+                isAnalysisOnly
+                  ? "taste-factor-row--analysis grid gap-[var(--space-content-tight)] last:border-b-0 md:[&:nth-last-child(-n+2)]:border-b-0"
+                  : "grid gap-[var(--space-content-tight)] last:border-b-0 md:grid-cols-[minmax(12rem,0.75fr)_minmax(0,1.25fr)] md:items-center md:gap-[var(--space-content)]",
+              )}
               key={preference.factorId}
             >
               <FactorBar
                 animateReveal={animateReveal}
                 revealReady={factorRevealReady}
-                highlighted={highlightedFactor === `${highlightPrefix}:${preference.factorId}`}
                 label={label}
                 revealDelay={index * 0.06}
                 state={preference.state}
                 value={preference.value}
               />
               {adjustmentValues === undefined || onAdjustment === undefined ? null : (
-                <AdjustmentRadiogroup
-                  factorId={`${id}-${preference.factorId}`}
-                  factorLabel={label}
-                  onChange={(value) => onAdjustment(preference.factorId, value)}
-                  value={adjustmentValues[preference.factorId] ?? "auto"}
-                />
+                <div className="taste-factor-row__adjustment grid min-w-0 gap-[var(--space-content-tight)] md:border-l md:border-line md:pl-[var(--space-content-loose)]">
+                  <span
+                    aria-hidden="true"
+                    className="taste-factor-row__adjustment-label text-[length:var(--font-size-12)] font-bold text-text-muted md:hidden"
+                  >
+                    {tasteStrings.adjustmentColumnHeading}
+                  </span>
+                  <AdjustmentRadiogroup
+                    factorId={`${id}-${preference.factorId}`}
+                    factorLabel={label}
+                    onChange={(value) => onAdjustment(preference.factorId, value)}
+                    value={adjustmentValues[preference.factorId] ?? "auto"}
+                  />
+                </div>
               )}
             </div>
           );
@@ -372,91 +536,88 @@ function FactorPanels({
   animateReveal,
   factorRevealReady,
   group,
-  highlightedFactor,
   onAdjustment,
+  onGroupChange,
   summary,
 }: Readonly<{
   adjustments: ProfileAdjustments;
   animateReveal: boolean;
   factorRevealReady: boolean;
   group?: CoverageGroup;
-  highlightedFactor: string | null;
   onAdjustment: (
     kind: "axis" | "theme",
     factorId: AxisId | ThemeTag,
     preference: AdjustmentPreference,
   ) => void;
+  onGroupChange?: (group: CoverageGroup | undefined) => void;
   summary: MangaDnaSummary;
 }>) {
   const narrative = summary.axes.filter((preference) => NARRATIVE_IDS.has(preference.factorId));
   const tone = summary.axes.filter((preference) => TONE_IDS.has(preference.factorId));
   const art = summary.axes.filter((preference) => ART_IDS.has(preference.factorId));
-  const visible = (candidate: CoverageGroup) => group === undefined || group === candidate;
+  const [openGroup, setOpenGroup] = useState<CoverageGroup | null>(group ?? null);
+
+  const setGroupOpen = (candidate: CoverageGroup, open: boolean) => {
+    const nextGroup = open ? candidate : null;
+    setOpenGroup(nextGroup);
+    onGroupChange?.(nextGroup ?? undefined);
+  };
 
   return (
-    <div className="taste-factor-grid grid grid-cols-1 items-start gap-[var(--space-content)]">
-      {visible("theme") ? (
-        <FactorGroup
-          adjustmentValues={adjustments.themes}
-          animateReveal={animateReveal}
-          factorRevealReady={factorRevealReady}
-          highlightedFactor={highlightedFactor}
-          highlightPrefix="theme"
-          id="theme"
-          onAdjustment={(factorId, value) => onAdjustment("theme", factorId, value)}
-          preferences={summary.themes}
-          title={tasteStrings.groups.theme}
-        />
-      ) : null}
-      {visible("narrative") ? (
-        <FactorGroup
-          adjustmentValues={adjustments.axes}
-          animateReveal={animateReveal}
-          factorRevealReady={factorRevealReady}
-          highlightedFactor={highlightedFactor}
-          highlightPrefix="axis"
-          id="narrative"
-          onAdjustment={(factorId, value) => onAdjustment("axis", factorId, value)}
-          preferences={narrative}
-          title={tasteStrings.groups.narrative}
-        />
-      ) : null}
-      {visible("tone") ? (
-        <FactorGroup
-          adjustmentValues={adjustments.axes}
-          animateReveal={animateReveal}
-          factorRevealReady={factorRevealReady}
-          highlightedFactor={highlightedFactor}
-          highlightPrefix="axis"
-          id="tone"
-          onAdjustment={(factorId, value) => onAdjustment("axis", factorId, value)}
-          preferences={tone}
-          title={tasteStrings.groups.tone}
-        />
-      ) : null}
-      {visible("art") ? (
-        <FactorGroup
-          adjustmentValues={adjustments.axes}
-          animateReveal={animateReveal}
-          factorRevealReady={factorRevealReady}
-          highlightedFactor={highlightedFactor}
-          highlightPrefix="axis"
-          id="art"
-          onAdjustment={(factorId, value) => onAdjustment("axis", factorId, value)}
-          preferences={art}
-          title={tasteStrings.groups.art}
-        />
-      ) : null}
-      {visible("genre") ? (
-        <FactorGroup
-          animateReveal={animateReveal}
-          factorRevealReady={factorRevealReady}
-          highlightedFactor={highlightedFactor}
-          id="genre"
-          preferences={summary.genres}
-          title={tasteStrings.groups.genre}
-        />
-      ) : null}
+    <div className="taste-factor-grid grid grid-cols-1 items-start gap-[var(--space-3)]">
+      <FactorGroup
+        animateReveal={animateReveal}
+        factorRevealReady={factorRevealReady}
+        id="genre"
+        onOpenChange={(open) => setGroupOpen("genre", open)}
+        open={openGroup === "genre"}
+        preferences={summary.genres}
+        title={tasteStrings.groups.genre}
+      />
+      <FactorGroup
+        adjustmentValues={adjustments.themes}
+        animateReveal={animateReveal}
+        factorRevealReady={factorRevealReady}
+        id="theme"
+        onAdjustment={(factorId, value) => onAdjustment("theme", factorId, value)}
+        onOpenChange={(open) => setGroupOpen("theme", open)}
+        open={openGroup === "theme"}
+        preferences={summary.themes}
+        title={tasteStrings.groups.theme}
+      />
+      <FactorGroup
+        adjustmentValues={adjustments.axes}
+        animateReveal={animateReveal}
+        factorRevealReady={factorRevealReady}
+        id="narrative"
+        onAdjustment={(factorId, value) => onAdjustment("axis", factorId, value)}
+        onOpenChange={(open) => setGroupOpen("narrative", open)}
+        open={openGroup === "narrative"}
+        preferences={narrative}
+        title={tasteStrings.groups.narrative}
+      />
+      <FactorGroup
+        adjustmentValues={adjustments.axes}
+        animateReveal={animateReveal}
+        factorRevealReady={factorRevealReady}
+        id="tone"
+        onAdjustment={(factorId, value) => onAdjustment("axis", factorId, value)}
+        onOpenChange={(open) => setGroupOpen("tone", open)}
+        open={openGroup === "tone"}
+        preferences={tone}
+        title={tasteStrings.groups.tone}
+      />
+      <FactorGroup
+        adjustmentValues={adjustments.axes}
+        animateReveal={animateReveal}
+        factorRevealReady={factorRevealReady}
+        id="art"
+        onAdjustment={(factorId, value) => onAdjustment("axis", factorId, value)}
+        onOpenChange={(open) => setGroupOpen("art", open)}
+        open={openGroup === "art"}
+        preferences={art}
+        title={tasteStrings.groups.art}
+      />
     </div>
   );
 }
@@ -571,10 +732,8 @@ export function TasteFlow({
   const [factorRevealReady, setFactorRevealReady] = useState(false);
   const [localAdjustments, setLocalAdjustments] = useState<ProfileAdjustments | null>(null);
   const [baselineAdjustments, setBaselineAdjustments] = useState<ProfileAdjustments | null>(null);
-  const [highlightedFactor, setHighlightedFactor] = useState<string | null>(null);
   const [message, setMessage] = useState("");
   const [errorMessage, setErrorMessage] = useState("");
-  const highlightTimer = useRef<number | null>(null);
   const messageTimer = useRef<number | null>(null);
   const saveSequence = useRef(0);
   const revealDecision = useRef<RevealExperience | null>(null);
@@ -641,29 +800,17 @@ export function TasteFlow({
         .map((record) => record.workId),
     [catalogRecords],
   );
-  const topPreferenceWorkIds = useMemo(
-    () => summary.topPreferences.flatMap((preference) => preference.anchorWorkIds),
-    [summary.topPreferences],
-  );
   const coverTargets = useMemo(
     () =>
       createRecommendationCoverTargets(catalog, [
         ...new Set([
           ...anchors.map((work) => work.id),
-          ...topPreferenceWorkIds,
           ...recentFeedbackWorkIds,
           ...(beforePreviewWorkIds ?? []),
           ...(afterPreviewWorkIds ?? []),
         ]),
       ]),
-    [
-      afterPreviewWorkIds,
-      anchors,
-      beforePreviewWorkIds,
-      catalog,
-      recentFeedbackWorkIds,
-      topPreferenceWorkIds,
-    ],
+    [afterPreviewWorkIds, anchors, beforePreviewWorkIds, catalog, recentFeedbackWorkIds],
   );
   const { coverUrls, notifyCoverSettled } = useRecommendationCovers({
     targets: coverTargets,
@@ -674,7 +821,6 @@ export function TasteFlow({
     () => new Map(coverTargets.map((target) => [target.workId, target] as const)),
     [coverTargets],
   );
-  const activeGroup = group;
   const handleCoverSettled = useCallback(
     (workId: string) => {
       const target = coverTargetsByWorkId.get(workId);
@@ -755,7 +901,6 @@ export function TasteFlow({
 
   useEffect(
     () => () => {
-      if (highlightTimer.current !== null) window.clearTimeout(highlightTimer.current);
       if (messageTimer.current !== null) window.clearTimeout(messageTimer.current);
     },
     [],
@@ -772,14 +917,16 @@ export function TasteFlow({
       saveSequence.current = sequence;
       setLocalAdjustments(next);
       setErrorMessage("");
-      setHighlightedFactor(`${kind}:${factorId}`);
-      if (highlightTimer.current !== null) window.clearTimeout(highlightTimer.current);
-      highlightTimer.current = window.setTimeout(() => setHighlightedFactor(null), 600);
 
       void saveProfileAdjustments(next).then(
         () => {
           if (saveSequence.current !== sequence) return;
-          setMessage(tasteStrings.adjustmentSaved);
+          setMessage(
+            tasteStrings.adjustmentSaved(
+              factorLabel(factorId),
+              tasteStrings.adjustmentLabels[preference],
+            ),
+          );
           if (messageTimer.current !== null) window.clearTimeout(messageTimer.current);
           messageTimer.current = window.setTimeout(() => setMessage(""), 2400);
         },
@@ -824,7 +971,7 @@ export function TasteFlow({
         onAnimationEnd={pageEntryMotion.onAnimationEnd}
       >
         <header className="taste-header mb-[var(--space-content)] grid items-stretch gap-[var(--space-3)] md:grid-cols-[minmax(0,0.95fr)_minmax(0,1.05fr)]">
-          <div className="grid content-start gap-[var(--space-content)]">
+          <div className="grid content-start gap-[var(--space-content)] md:grid-rows-[auto_1fr]">
             <div className="taste-header__copy grid content-center gap-[var(--space-content-tight)] border-l-2 border-accent px-[var(--space-3)] py-[var(--space-content)]">
               <p className="taste-header__eyebrow text-[length:var(--text-caption-size)] font-bold tracking-[0.08em] text-accent">
                 {tasteStrings.eyebrow}
@@ -840,7 +987,7 @@ export function TasteFlow({
               </strong>
             </div>
             <section
-              className="taste-top-summary screentone grid gap-[var(--space-content)] rounded-[var(--radius-card)] border border-line bg-surface-1 p-[var(--space-content)] [background-image:radial-gradient(color-mix(in_oklch,var(--text-strong)_5%,transparent)_1px,transparent_1px)] [background-size:8px_8px]"
+              className="taste-top-summary grid gap-[var(--space-2)] rounded-[var(--radius-card)] border border-line bg-surface-1 p-[var(--space-3)] md:grid-rows-[auto_1fr]"
               aria-labelledby="taste-top-heading"
             >
               <h2 className="text-[length:var(--text-subheading-size)]" id="taste-top-heading">
@@ -853,11 +1000,9 @@ export function TasteFlow({
                   {summary.topPreferences.map((preference, index) => (
                     <TopPreferenceCard
                       animateReveal={revealExperience.animate}
-                      coverUrls={coverUrls}
                       index={index}
                       key={`${preference.kind}:${preference.factorId}`}
                       preference={preference}
-                      onCoverSettled={handleCoverSettled}
                       worksById={worksById}
                     />
                   ))}
@@ -896,10 +1041,10 @@ export function TasteFlow({
         <div className="taste-workspace-layout grid items-start gap-[var(--space-4)]">
           <section
             aria-labelledby="taste-workspace-heading"
-            className="taste-workspace grid gap-[var(--space-content)] rounded-[var(--radius-card)] border border-line bg-surface-1 p-[var(--space-3)]"
+            className="taste-workspace grid gap-[var(--space-3)]"
             data-taste-mode={mode}
           >
-            <header className="taste-workspace__header grid gap-[var(--space-content-tight)]">
+            <header className="taste-workspace__header flex flex-wrap items-baseline gap-x-[var(--space-3)] gap-y-[var(--space-content-tight)] border-l-2 border-accent pl-[var(--space-3)]">
               <h2
                 className="text-[length:var(--text-subheading-size)]"
                 id="taste-workspace-heading"
@@ -911,39 +1056,14 @@ export function TasteFlow({
               </p>
             </header>
 
-            <div
-              aria-label={tasteStrings.groupLabel}
-              className="taste-group-filter flex flex-nowrap gap-[var(--space-content-tight)] overflow-x-auto overscroll-x-contain border-y border-line py-0 [scrollbar-width:none] [&::-webkit-scrollbar]:hidden [&>button]:shrink-0 [&>button[aria-pressed=true]]:border-accent [&>button[aria-pressed=true]]:text-accent"
-              role="group"
-            >
-              <Button
-                aria-pressed={group === undefined}
-                onClick={() => onGroupChange?.(undefined)}
-                type="button"
-                variant={group === undefined ? "secondary" : "outline"}
-              >
-                {tasteStrings.allGroups}
-              </Button>
-              {COVERAGE_GROUPS.map((groupId) => (
-                <Button
-                  aria-pressed={activeGroup === groupId}
-                  key={groupId}
-                  onClick={() => onGroupChange?.(group === groupId ? undefined : groupId)}
-                  type="button"
-                  variant={activeGroup === groupId ? "secondary" : "outline"}
-                >
-                  {tasteStrings.groups[groupId]}
-                </Button>
-              ))}
-            </div>
-
             <FactorPanels
               adjustments={adjustments}
               animateReveal={revealExperience.animate}
               factorRevealReady={factorRevealReady}
               group={group}
-              highlightedFactor={highlightedFactor}
+              key={group ?? "collapsed"}
               onAdjustment={updateAdjustment}
+              onGroupChange={onGroupChange}
               summary={summary}
             />
           </section>

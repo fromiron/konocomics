@@ -204,7 +204,7 @@
   3. 1200ms~: 1200ms는 페이지 전체에 한 번만 적용하는 전역 gate다. gate 전에 뷰포트에 들어온 FactorBar는 gate가 열린 뒤 0→값으로 성장하고, gate 뒤 처음 진입한 화면 밖 막대는 추가 1200ms 지연 없이 즉시 시작한다(막대당 400ms, 섹션 내 stagger 60ms, ease-out, 각 1회).
 - **URL 소비:** mount에서 `?reveal=1` 판정을 local state/ref에 고정한 즉시 같은 effect에서 query를 `replaceState`로 제거한다. URL 제거 뒤에도 고정된 판정으로 A를 계속하며 query를 in-progress state나 replay token으로 사용하지 않는다.
 - **reduced-motion:** 전부 생략, 완성 상태 즉시 표시.
-- **반복:** reveal 모드 1회. 상시 /taste에서는 막대가 정적(보정 변경 시 값 전이 240ms만).
+- **반복:** reveal 모드 1회. 상시 /taste의 막대는 positive anchor에서 계산한 분석 출력으로 정적이며, 추천 adjustment 변경으로 값·길이·색을 바꾸지 않는다.
 - **성능:** transform/opacity만 사용. 막대는 `scaleX` transform(레이아웃 리플로우 금지).
 
 ### 5.3 작품 상세 블러 표지 배경 (정적 시그니처)
@@ -223,7 +223,7 @@
 | B. 페이지 진입 | 문맥 전환 인지 | 160ms | ease-out | CSS | 허용된 resolved content만 fade-up 8px. **exit 애니메이션 없음**(내비 블로킹 금지) |
 | C. 상태 전환 | 데이터 변화 표현 | 200–240ms | Motion spring (stiffness 350, damping 32) | Motion layout | 추천 카드 제거→백필, tray 재배치, Library 행 이동 |
 | D. 직접 조작 피드백 | 입력 확인 | 80–120ms | ease-out | CSS | press scale 0.97, 선택 체크 페이드, hover lift 2px |
-| E. 값 전이 | 수치 변경 표현 | 240ms | ease-in-out | CSS transition | FactorBar 보정 반영, 확신도 레이블 크로스페이드 |
+| E. 값 전이 | 수치 변경 표현 | 240ms | ease-in-out | CSS transition | positive anchor 변경 뒤 FactorBar 분석값 갱신, 확신도 레이블 크로스페이드. 추천 adjustment는 FactorBar 입력이 아니다. |
 | F. 어텐션 | 오류·한도 안내 | 120ms×2 | linear | CSS | tray 흔들림(±4px), 오류 박스 등장. reduced-motion에서는 전체 `--warn` 보더를 정적으로 유지 |
 
 전역 규칙:
@@ -235,8 +235,8 @@
 - B의 정확한 allowlist는 `/onboarding` Step 1 resolved content(첫 등록·add mode), reveal 요청으로 시작하지 않은 ordinary `/taste`, 유효한 `/works/[workId]` resolved Catalog 상세, `found`인 `/works/external` resolved 상세뿐이다. Catalog는 `workId`, external은 external ID가 바뀐 새 route mount에서 다시 실행할 수 있다.
 - B는 landing의 모든 상태, A로 시작한 `/taste`, `/recommendations`, `/library`, `/settings`, onboarding Step 2, loading·hydration/redirect guard·skeleton·empty·invalid-link·local-missing·corrupt·unavailable·error, dialog·modal·drawer·panel·sheet·feedback surface에 적용하지 않는다. query cleanup·local state 변경·onboarding step 변경·dialog open/close·BFCache resume도 replay trigger가 아니다.
 - B는 AppShell/global layout이 아니라 eligible resolved-content root에만 적용한다. CSS 기본값은 최종 위치에서 완전히 보이는 상태이며 keyframe은 `prefers-reduced-motion: no-preference` 안에만 둔다. 8px 이동 중에도 opacity 0으로 만들어 콘텐츠를 완전히 숨기지 않고, 실패 시 최종 상태가 남는다.
-- E와 F는 CSS가 소유한다. ordinary FactorBar E는 static CSS 기본값을 target `scaleX`로 두고 변경 시 delay 0 / 240ms만 적용한다. 보정 성공의 600ms accent 상태는 `03` §4가 요구하는 E 내부 예외이며 색 보간 없이 즉시 켜고 끈다. F 흔들림도 CSS만 사용한다.
-- `prefers-reduced-motion: reduce`: A는 최종 상태로 즉시 완료하고 해당 1회 marker를 소비하며 B도 최종 상태로 즉시 표시한다. C는 `layout={false}`로 즉시 상태·순서·focus/live message를 반영하고 expandable card의 한정 width 예외도 최종 폭으로 즉시 완료한다. D는 scale/travel을 제거하고 선택·focus 상태는 유지한다. E는 target 값을 즉시 반영하며 600ms accent는 보간 없는 정적 상태다. F는 흔들림 없이 전체 `--warn` 보더와 오류·한도 text를 정적으로 유지한다. skeleton은 pulse 없는 정적 silhouette, Shelf 버튼 scroll은 `auto`다.
+- E와 F는 CSS가 소유한다. ordinary FactorBar E는 static CSS 기본값을 target `scaleX`로 두고 underlying analysis 값 변경 시 delay 0 / 240ms만 적용한다. 추천 adjustment의 직접 피드백은 D의 선택 marker/text와 저장 live message가 소유하며 FactorBar success highlight를 만들지 않는다. F 흔들림도 CSS만 사용한다.
+- `prefers-reduced-motion: reduce`: A는 최종 상태로 즉시 완료하고 해당 1회 marker를 소비하며 B도 최종 상태로 즉시 표시한다. C는 `layout={false}`로 즉시 상태·순서·focus/live message를 반영하고 expandable card의 한정 width 예외도 최종 폭으로 즉시 완료한다. D는 scale/travel을 제거하고 선택·focus 상태는 유지한다. E는 underlying analysis의 target 값을 즉시 반영한다. F는 흔들림 없이 전체 `--warn` 보더와 오류·한도 text를 정적으로 유지한다. skeleton은 pulse 없는 정적 silhouette, Shelf 버튼 scroll은 `auto`다.
 
 ## 7. 서드파티 시각 라이브러리 판정
 

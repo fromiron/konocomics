@@ -49,9 +49,10 @@ describe("media card anatomy", () => {
     expect(screen.getByText("作品名")).toBeTruthy();
     expect(screen.getByText("高い確信")).toBeTruthy();
     expect(container.querySelector(".lucide-crown")).toBeTruthy();
+    expect(container.querySelector('[data-ranking-first-swash="true"]')).toBeTruthy();
     expect(container.querySelector("img")?.getAttribute("loading")).toBe("eager");
     expect(container.querySelector("li")?.classList.contains("w-28")).toBe(true);
-    expect(container.querySelector("a")?.classList.contains("aspect-[6/7]")).toBe(true);
+    expect(container.querySelector("a")?.classList.contains("aspect-[21/25]")).toBe(true);
   });
 
   it("keeps non-first ranks visible without the first-place plate or eager loading", () => {
@@ -72,6 +73,7 @@ describe("media card anatomy", () => {
 
     expect(screen.queryByText("TOP 10")).toBeNull();
     expect(screen.getByText("2")).toBeTruthy();
+    expect(container.querySelector('[data-ranking-first-swash="true"]')).toBeNull();
     expect(container.querySelector("img")?.getAttribute("loading")).toBe("lazy");
     expect(container.querySelector("li")?.classList.contains("w-20")).toBe(true);
     expect(container.querySelector("a")?.classList.contains("aspect-[3/5]")).toBe(true);
