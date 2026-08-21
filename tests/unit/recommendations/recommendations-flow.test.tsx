@@ -407,8 +407,13 @@ describe("RecommendationsFlow", () => {
     expect(within(ranking).getAllByRole("link", { name: /^\d+位/u })).toHaveLength(10);
     expect(within(list).queryAllByRole("link", { name: /^\d+位/u })).toHaveLength(0);
     const firstRankingCard = within(ranking).getAllByRole("listitem")[0];
-    expect(firstRankingCard?.className).toContain("w-24");
+    expect(firstRankingCard?.className).toContain("w-[calc(var(--control-min-size)*1.75)]");
     expect(firstRankingCard?.className).not.toContain("md:min-w-[4.5rem]");
+    expect(firstRankingCard?.getAttribute("data-ranking-kind")).toBe("personalized-ranking");
+    expect(
+      firstRankingCard?.querySelector('[data-ranking-personalized-crown="true"]'),
+    ).toBeTruthy();
+    expect(firstRankingCard?.querySelector('[data-ranking-first-swash="true"]')).toBeNull();
     const anchorCards = container.querySelectorAll('[data-recommendation-shelf-card="anchor"]');
     expect(anchorCards.length).toBeGreaterThan(0);
     for (const anchorCard of anchorCards) {

@@ -238,6 +238,7 @@ export const mediaStrings = {
   previous: (title: string) => `${title}を前へ送る`,
   next: (title: string) => `${title}を次へ送る`,
   rank: (position: number) => `${String(position)}位`,
+  editorialRank: (position: number) => `おすすめ${String(position)}位`,
   topTenLabel: "TOP 10",
   topTenBadge: {
     top: "TOP",
@@ -276,8 +277,9 @@ export const landingStrings = {
     description: "カタログから幅広い作品を紹介しています。個人向けの順位ではありません。",
   },
   ranking: {
-    title: "カタログ Top 10",
-    description: "作品を探し始めるための中立なカタログ順です。人気順位ではありません。",
+    title: "最初におすすめしたい Top 10",
+    description:
+      "はじめての方に出会ってほしい作品を、おすすめ順に紹介します。個人向けの順位ではありません。",
   },
   discovery: {
     title: "まだ知らない一冊へ",

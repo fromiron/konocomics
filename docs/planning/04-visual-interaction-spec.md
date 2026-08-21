@@ -93,7 +93,7 @@
 
 ### 2.5 인터랙션 상태 (전 컴포넌트 공통)
 
-- hover(포인터만): outline/ghost는 `--surface-hover`, 주요 accent CTA는 `--accent-hover`, 표지는 lift(§6-D). `--motion-duration-feedback` 120ms는 허용된 transform/opacity에만 적용하고 색·배경·보더·그림자는 즉시 상태를 바꾼다.
+- hover(포인터만): outline/ghost는 `--surface-hover`, 주요 accent CTA는 `--accent-hover`, 단독 탐색 표지는 lift(§6-D). hover/focus가 이미 카드 확장·ranking accessory 이동·preview disclosure 같은 주 상태 전환을 수행하면 같은 대상에 lift/scale을 겹치지 않는다. 한 입력에는 하나의 spatial motion cue만 사용한다. `--motion-duration-feedback` 120ms는 허용된 transform/opacity에만 적용하고 색·배경·보더·그림자는 즉시 상태를 바꾼다.
 - active/press: scale 0.97, `--motion-duration-press` 80ms.
 - focus-visible: 2px accent ring + 2px offset. **마우스 클릭에는 링 미표시.**
 - disabled: opacity 0.45 + `cursor: not-allowed`. 색만으로 구분하지 않고 레이블 유지.
@@ -222,7 +222,7 @@
 | A. 1회성 reveal | 시그니처 모먼트 | 400–1800ms | `[0.2,0,0,1]` / spring | Motion | §5.1, §5.2 |
 | B. 페이지 진입 | 문맥 전환 인지 | 160ms | ease-out | CSS | 허용된 resolved content만 fade-up 8px. **exit 애니메이션 없음**(내비 블로킹 금지) |
 | C. 상태 전환 | 데이터 변화 표현 | 200–240ms | Motion spring (stiffness 350, damping 32) | Motion layout | 추천 카드 제거→백필, tray 재배치, Library 행 이동 |
-| D. 직접 조작 피드백 | 입력 확인 | 80–120ms | ease-out | CSS | press scale 0.97, 선택 체크 페이드, hover lift 2px |
+| D. 직접 조작 피드백 | 입력 확인 | 80–120ms | ease-out | CSS | press scale 0.97, 선택 체크 페이드, 다른 주 상태 전환이 없는 카드의 hover lift 2px |
 | E. 값 전이 | 수치 변경 표현 | 240ms | ease-in-out | CSS transition | positive anchor 변경 뒤 FactorBar 분석값 갱신, 확신도 레이블 크로스페이드. 추천 adjustment는 FactorBar 입력이 아니다. |
 | F. 어텐션 | 오류·한도 안내 | 120ms×2 | linear | CSS | tray 흔들림(±4px), 오류 박스 등장. reduced-motion에서는 전체 `--warn` 보더를 정적으로 유지 |
 

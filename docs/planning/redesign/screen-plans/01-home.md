@@ -20,7 +20,8 @@
 - profile 있음 + `?landing=1` 없음: 기존처럼 `/recommendations`로 redirect
 - showcase는 개인화라고 주장하지 않음
 - popularity analytics가 없으므로 「今週の人気」 같은 검증 불가 문구를 사용하지 않음
-- `src/data/landing-showcase.ts`에 Catalog ID를 명시하고 존재 검증 test를 추가할 수 있음
+- Top 10은 `src/data/landing-showcase.ts`의 명시적 Catalog ID 순서를 editorial 추천 순위로 사용하며, market popularity나 개인화 순위라고 주장하지 않음
+- editorial Top 10 ID는 정확히 10개·중복 없음·Catalog 존재·`onboardingEligible`을 test로 검증
 - 실제 표지는 기존 Catalog/Rakuten resolver와 placeholder를 사용
 
 ## 제안 컴포넌트
@@ -51,7 +52,7 @@ LandingFlow
 2. hero copy/CTA를 dark layout으로 재배치
 3. CoverFan을 `HeroBackdrop + poster mosaic`로 교체
 4. showcase Shelf를 공통 `MediaShelf`로 구현
-5. Top 10 시각 구조는 사용하되 label은 검증 가능한 중립 문구로 변경
+5. Top 10 시각 구조와 crown을 유지하되 label은 첫 방문자를 위한 editorial 추천임을 명시. crown accessory는 1위를 기본 spotlight로 두고, 다른 card의 fine-pointer hover 또는 keyboard focus 동안 해당 순위로 이동하며 이탈하면 1위로 복귀
 6. 서비스 설명 4개 card를 기존 제품 핵심에 맞게 재작성
 7. SiteFooter 적용
 8. mobile에서는 compact hero + 2.4장 노출 Shelf, bottom navigation 없음
@@ -85,5 +86,6 @@ LandingFlow
 ## 수용 기준
 
 - 첫 viewport에서 가치 제안, CTA, 실제 표지 기반 hero가 보임
-- 개인화되지 않은 콘텐츠를 개인화라고 오인시키지 않음
+- editorial 추천과 개인화 추천, market popularity를 서로 오인시키지 않음
+- showcase 확장과 editorial crown 이동은 각각 hover/focus의 유일한 spatial state이며, 해당 카드에 generic 상단 lift를 추가하지 않음
 - footer까지 full-page layout이 확정 이미지의 밀도와 일치

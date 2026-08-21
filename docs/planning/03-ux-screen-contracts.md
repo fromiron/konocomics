@@ -53,7 +53,7 @@ CTA 버튼 1개: **「好きなマンガから始める」** → /onboarding.
 1. 실제 Catalog 표지의 hero backdrop/mosaic + konomi 2톤 로고와 태그라인 「好みから見つける、次のマンガ。」
 2. CTA와 데이터가 브라우저에만 저장된다는 짧은 privacy benefit
 3. 개인화라고 주장하지 않는 Catalog showcase Shelf
-4. 중립 제목의 Top 10 ranking(`<ol>`). 검증된 popularity 데이터가 없으므로 「今週の人気」 같은 문구는 쓰지 않는다.
+4. 첫 방문자를 위해 명시적으로 큐레이션한 editorial Top 10 ranking(`<ol>`). 시장 popularity나 개인화 결과로 주장하지 않고 「今週の人気」 같은 문구는 쓰지 않는다. 1위 card는 Top 10 crown accessory의 기본 spotlight이며, 다른 card의 fine-pointer hover 또는 keyboard focus 동안 accessory가 해당 순위로 이동하고 이탈 시 1위로 돌아온다. accessory 이동과 generic card lift는 동시에 적용하지 않는다.
 5. discovery Shelf와 3단 설명: 選ぶ → 好みが見える → 理由つきでおすすめ
 6. 실제 route만 연결한 footer + `Supported by Rakuten Developers`
 

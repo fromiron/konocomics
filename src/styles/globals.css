@@ -232,6 +232,63 @@ body {
   mask: url("/media/ranking-first-swash.svg") left top / 100% 100% no-repeat;
 }
 
+/* The editorial Top 10 keeps rank one spotlighted until another card is explored. */
+[data-ranking-shelf="editorial-ranking"] [data-ranking-editorial-accessory="true"] {
+  opacity: 0;
+}
+
+[data-ranking-shelf="editorial-ranking"] [data-ranking-editorial-position="true"] {
+  opacity: 1;
+}
+
+[data-ranking-shelf="editorial-ranking"]
+  [data-ranking-position="1"]
+  [data-ranking-editorial-accessory="true"] {
+  opacity: 1;
+}
+
+[data-ranking-shelf="editorial-ranking"]
+  [data-ranking-position="1"]
+  [data-ranking-editorial-position="true"] {
+  opacity: 0;
+}
+
+[data-ranking-shelf="editorial-ranking"]:has(a:focus-visible)
+  [data-ranking-editorial-accessory="true"] {
+  opacity: 0;
+}
+
+[data-ranking-shelf="editorial-ranking"]:has(a:focus-visible)
+  [data-ranking-editorial-position="true"] {
+  opacity: 1;
+}
+
+[data-ranking-shelf="editorial-ranking"] a:focus-visible [data-ranking-editorial-accessory="true"] {
+  opacity: 1;
+}
+
+[data-ranking-shelf="editorial-ranking"] a:focus-visible [data-ranking-editorial-position="true"] {
+  opacity: 0;
+}
+
+@media (hover: hover) and (pointer: fine) {
+  [data-ranking-shelf="editorial-ranking"]:has(a:hover) [data-ranking-editorial-accessory="true"] {
+    opacity: 0;
+  }
+
+  [data-ranking-shelf="editorial-ranking"]:has(a:hover) [data-ranking-editorial-position="true"] {
+    opacity: 1;
+  }
+
+  [data-ranking-shelf="editorial-ranking"] a:hover [data-ranking-editorial-accessory="true"] {
+    opacity: 1;
+  }
+
+  [data-ranking-shelf="editorial-ranking"] a:hover [data-ranking-editorial-position="true"] {
+    opacity: 0;
+  }
+}
+
 button,
 input,
 select,

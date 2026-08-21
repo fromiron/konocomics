@@ -10,6 +10,7 @@ import { SiteFooter } from "@/components/layout/site-footer";
 import { MediaShelf } from "@/components/media/media-shelf";
 import { QuickPreviewDialog } from "@/components/media/quick-preview-dialog";
 import { RankingCard } from "@/components/media/ranking-card";
+import { RankingShelf } from "@/components/media/ranking-shelf";
 import recommendationContextJson from "@/data/generated/recommendation-context-v1.json";
 import type { GenreTag } from "@/domain/catalog/types";
 import type { ExplanationFactorId } from "@/domain/explanation";
@@ -1183,11 +1184,11 @@ export function RecommendationsFlow({
               className="scroll-mt-[calc(var(--desktop-navigation-height)+var(--space-4))]"
               id="recommendation-shelf-ranking"
             />
-            <MediaShelf
+            <RankingShelf
               className="mt-[var(--space-4)] scroll-mt-[calc(var(--desktop-navigation-height)+var(--space-4))]"
               compactHeading
               description={recommendationStrings.shelves.ranking.description}
-              listType="ordered"
+              rankingKind="personalized-ranking"
               title={recommendationStrings.shelves.ranking.title}
             >
               {renderedEntries.slice(0, 10).map(({ entry, work }, index) => (
@@ -1204,11 +1205,12 @@ export function RecommendationsFlow({
                   }
                   position={index + 1}
                   priority={featuredEntries.length === 0 && index === 0}
+                  rankingKind="personalized-ranking"
                   title={work.title}
                   workId={work.id}
                 />
               ))}
-            </MediaShelf>
+            </RankingShelf>
             <FeedbackImpactSummary
               completedCount={
                 records.filter((record) => record.readingState === "completed").length
