@@ -57,6 +57,13 @@ LandingFlow
 7. SiteFooter 적용
 8. mobile에서는 compact hero + 2.4장 노출 Shelf, bottom navigation 없음
 
+## Shelf 크기 계약
+
+- editorial Top 10은 같은 `RankingCard`의 `editorial-ranking` 변형을 사용하며 mobile 96px, `sm` 이상 112px 폭과 `18 / 25` 비율을 유지한다. desktop에서는 10번째 card 일부가 보이는 overflow를 만들어 공통 `MediaShelf`의 탐색 control을 노출한다.
+- discovery의 `MediaPosterCard` `cover-overlay` 변형은 mobile에서 정확히 2.4장이 보이는 fluid 폭을 유지하고, `sm` 이상에서는 152px 폭을 사용한다. desktop에서는 7장이 한 화면에 들어오는 밀도를 목표로 한다.
+- `personalized-ranking`과 standard poster의 기존 크기는 변경하지 않는다. 비슷한 Shelf라도 ranking accessory, 카드 밀도, 탐색 control의 유무로 섹션 역할을 구분한다.
+- 별도 carousel 의존성을 추가하지 않는다. 공통 `MediaShelf`의 CSS scroll-snap, touch scroll, keyboard focus 이동, overflow 조건부 control을 그대로 사용한다.
+
 ## 이미지에서 제거/교정
 
 - 로그인/아바타/알림 제거

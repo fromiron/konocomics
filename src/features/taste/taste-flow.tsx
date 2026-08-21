@@ -238,18 +238,18 @@ function AnchorStrip({
     >
       {anchors.map((work) => (
         <li
-          className="relative w-[calc(var(--space-12)*4)] min-w-[calc(var(--space-12)*4)] snap-start"
+          className="relative w-[calc((100%-(var(--space-content-loose)*4))/5)] min-w-[10.5rem] snap-start"
           key={work.id}
         >
           <Link
             aria-label={mediaStrings.openDetails(work.title)}
-            className="group/evidence grid min-h-[var(--control-min-size)] grid-cols-[var(--space-12)_minmax(0,1fr)] items-center gap-[var(--space-content)] rounded-[var(--radius-card)] border border-line bg-surface-2 p-[var(--space-content)] focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-ring"
+            className="group/evidence relative block h-44 min-h-[var(--control-min-size)] overflow-hidden rounded-[var(--radius-card)] border border-line bg-surface-2 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-ring"
             params={{ workId: work.id }}
             preload={false}
             to="/works/$workId"
           >
             <CoverImage
-              className="taste-anchor-cover overflow-hidden rounded-[var(--radius-cover)] bg-surface-1 transition-transform duration-[var(--motion-duration-feedback)] [@media(hover:hover)_and_(pointer:fine)_and_(prefers-reduced-motion:no-preference)]:group-hover/evidence:-translate-y-0.5 motion-reduce:transition-none"
+              className="taste-anchor-cover pointer-events-none absolute inset-y-0 right-0 h-full w-[68%] rounded-none border-0 bg-transparent"
               coverUrl={coverUrls.get(work.id)}
               creators={work.creators}
               decorative
@@ -257,13 +257,21 @@ function AnchorStrip({
               requestedSize={200}
               title={work.title}
             />
-            <span className="grid min-w-0 content-center gap-[var(--space-content-tight)]">
-              <strong className="line-clamp-2 text-[length:var(--text-caption-size)] text-text-strong">
-                {work.title}
-              </strong>
-              <span className="truncate text-[length:var(--font-size-12)] font-bold text-accent">
+            <span
+              aria-hidden="true"
+              className="pointer-events-none absolute inset-0 bg-[linear-gradient(to_right,var(--canvas)_0%,color-mix(in_oklch,var(--canvas)_94%,transparent)_42%,transparent_78%)]"
+            />
+            <span
+              aria-hidden="true"
+              className="pointer-events-none absolute inset-0 bg-[linear-gradient(to_top,var(--canvas)_0%,color-mix(in_oklch,var(--canvas)_88%,transparent)_34%,transparent_70%)]"
+            />
+            <span className="absolute inset-0 z-10 flex min-w-0 flex-col justify-between p-[var(--space-3)]">
+              <span className="w-fit rounded-[var(--radius-pill)] border border-line-accent-subtle bg-surface-overlay px-[var(--space-2)] py-[var(--space-1)] text-[length:var(--font-size-12)] font-bold text-accent">
                 {evidenceLabels.get(work.id)}
               </span>
+              <strong className="line-clamp-2 max-w-[88%] text-[length:var(--font-size-14)] leading-tight text-text-strong">
+                {work.title}
+              </strong>
             </span>
           </Link>
         </li>
@@ -996,7 +1004,7 @@ export function TasteFlow({
               {summary.topPreferences.length === 0 ? (
                 <p>{tasteStrings.topPreferencePending}</p>
               ) : (
-                <div className="taste-top-summary__grid grid grid-cols-1 gap-[var(--space-content)] sm:grid-cols-3">
+                <div className="taste-top-summary__grid grid grid-cols-3 gap-[var(--space-content)]">
                   {summary.topPreferences.map((preference, index) => (
                     <TopPreferenceCard
                       animateReveal={revealExperience.animate}

@@ -47,6 +47,9 @@ type ExpansionControls = Readonly<{
 type ExpandableMediaCardProps = Readonly<{
   articleRef: Ref<HTMLElement>;
   children(controls: ExpansionControls): ReactNode;
+  expanded?: boolean;
+  initiallyExpanded?: boolean;
+  onExpandedChange?: (expanded: boolean) => void;
   onPreview?: () => void;
 }>;
 
@@ -294,8 +297,16 @@ function chooseExpansionSide(card: HTMLElement): {
   };
 }
 
-export function ExpandableMediaCard({ articleRef, children, onPreview }: ExpandableMediaCardProps) {
-  const [expanded, setExpanded] = useState(false);
+export function ExpandableMediaCard({
+  articleRef,
+  children,
+  expanded: controlledExpanded,
+  initiallyExpanded = false,
+  onExpandedChange,
+  onPreview,
+}: ExpandableMediaCardProps) {
+  const [internalExpanded, setInternalExpanded] = useState(initiallyExpanded);
+  const expanded = controlledExpanded ?? internalExpanded;
   const [expansionSide, setExpansionSide] = useState<ExpansionSide>("right");
   const collapseCoverRect = useRef<VisualRect | null>(null);
   const coverAnimation = useRef<Animation | null>(null);
@@ -321,7 +332,8 @@ export function ExpandableMediaCard({ articleRef, children, onPreview }: Expanda
     siblingSnapshots.current =
       next.context === null ? [] : measureSiblingPositions(next.context.item, next.context.track);
     setExpansionSide(next.side);
-    setExpanded(true);
+    if (controlledExpanded === undefined) setInternalExpanded(true);
+    onExpandedChange?.(true);
   };
 
   const collapseCard = (card: HTMLElement) => {
@@ -331,7 +343,8 @@ export function ExpandableMediaCard({ articleRef, children, onPreview }: Expanda
     const context = expansionContext.current;
     siblingSnapshots.current =
       context === null ? [] : measureSiblingPositions(context.item, context.track);
-    setExpanded(false);
+    if (controlledExpanded === undefined) setInternalExpanded(false);
+    onExpandedChange?.(false);
   };
 
   const collapseAfterFocusLeaves = (event: FocusEvent<HTMLElement>) => {
@@ -427,7 +440,7 @@ export function ExpandableMediaCard({ articleRef, children, onPreview }: Expanda
         onPreviewClick: (event) => {
           if (onPreview === undefined || !usesTouchPresentation()) return;
           event.preventDefault();
-          setExpanded(false);
+          if (controlledExpanded === undefined) setInternalExpanded(false);
           onPreview();
         },
       })}

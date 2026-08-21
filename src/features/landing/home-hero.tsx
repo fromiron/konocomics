@@ -10,9 +10,15 @@ import { LandingLogoReveal } from "./landing-logo-reveal";
 import type { LandingWork } from "./landing-types";
 
 const HERO_COVER_CLASS_NAMES = [
-  "absolute top-1/2 left-1/2 z-30 w-[min(48%,10.5rem)] -translate-x-1/2 -translate-y-1/2",
-  "absolute bottom-[6%] left-[4%] z-20 w-[36%] -rotate-6 opacity-90",
-  "absolute right-[4%] bottom-[5%] z-20 w-[36%] rotate-6 opacity-90",
+  "absolute top-1/2 left-1/2 z-30 w-[min(46%,12.5rem)] -translate-x-1/2 -translate-y-1/2",
+  "absolute bottom-[5%] left-[1%] z-20 w-[38%] -rotate-6 opacity-90",
+  "absolute right-[1%] bottom-[5%] z-20 w-[38%] rotate-6 opacity-90",
+] as const;
+
+const HERO_FALLBACK_TINTS = [
+  "bg-accent-soft/55 border-line-accent/45",
+  "bg-surface-2/90 border-line/80",
+  "bg-surface-2/90 border-line/80",
 ] as const;
 
 const trustIcons = [HeartIcon, HardDriveIcon, ShieldCheckIcon] as const;
@@ -36,7 +42,7 @@ export function HomeHero({
     <HeroBackdrop className="border-b border-line" coverUrl={backdropUrl} priority>
       <section
         aria-labelledby="landing-title"
-        className="mx-auto grid w-full max-w-[var(--layout-width-media)] gap-[var(--space-4)] px-[var(--layout-page-padding)] py-[var(--space-5)] md:grid-cols-[minmax(0,1.08fr)_minmax(18rem,0.92fr)] md:items-center md:gap-x-[var(--space-8)] md:gap-y-[var(--space-3)]"
+        className="mx-auto grid w-full max-w-[var(--layout-width-media)] gap-[var(--space-4)] px-[var(--layout-page-padding)] py-[var(--space-5)] md:grid-cols-[minmax(19rem,0.78fr)_minmax(24rem,1.22fr)] md:items-center md:gap-x-[var(--space-8)] md:gap-y-[var(--space-3)]"
       >
         <div className="grid max-w-[36rem] justify-items-start gap-[var(--space-2)]">
           <div className="flex flex-wrap items-end gap-x-[var(--space-4)] gap-y-[var(--space-content)] [&_.landing-logo-reveal]:!flex [&_.landing-logo-reveal]:items-baseline [&_.landing-logo-reveal]:gap-[var(--space-content)]">
@@ -84,22 +90,26 @@ export function HomeHero({
 
         <div
           aria-hidden="true"
-          className="relative mx-auto h-52 w-full max-w-[23rem] md:h-60 md:max-w-[26rem]"
+          className="relative mx-auto h-52 w-full max-w-[23rem] md:h-72 md:max-w-[34rem]"
         >
-          <span className="absolute inset-x-[10%] top-[10%] bottom-[3%] rounded-[var(--radius-card)] border border-line bg-surface-overlay" />
-          {works.slice(0, HERO_COVER_CLASS_NAMES.length).map((work, index) => (
-            <CoverImage
-              className={`${HERO_COVER_CLASS_NAMES[index]} shadow-[var(--shadow-raised)]`}
-              coverUrl={coverUrls.get(work.id)}
-              creators={work.creators}
-              decorative
-              key={work.id}
-              onSettled={index === 0 ? onFirstCoverSettled : undefined}
-              priority={index === 0}
-              requestedSize={index === 0 ? 600 : 400}
-              title={work.title}
-            />
-          ))}
+          {works.slice(0, HERO_COVER_CLASS_NAMES.length).map((work, index) => {
+            const coverUrl = coverUrls.get(work.id);
+            const fallbackTint = HERO_FALLBACK_TINTS[index] ?? HERO_FALLBACK_TINTS[1];
+
+            return (
+              <CoverImage
+                className={`${HERO_COVER_CLASS_NAMES[index]} shadow-[var(--shadow-raised)] ${coverUrl ? "" : `!border ${fallbackTint}`.trim()} ${coverUrl ? "" : "[&_.cover-image__placeholder-content]:bg-[radial-gradient(ellipse_at_top,color-mix(in_oklch,var(--accent)_10%,transparent),transparent_62%)]"}`}
+                coverUrl={coverUrl}
+                creators={work.creators}
+                decorative
+                key={work.id}
+                onSettled={index === 0 ? onFirstCoverSettled : undefined}
+                priority={index === 0}
+                requestedSize={index === 0 ? 600 : 400}
+                title={work.title}
+              />
+            );
+          })}
         </div>
       </section>
     </HeroBackdrop>

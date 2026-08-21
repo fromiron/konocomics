@@ -5,7 +5,12 @@ import { MediaShelf } from "@/components/media/media-shelf";
 import { RankingCard } from "@/components/media/ranking-card";
 import { RankingShelf } from "@/components/media/ranking-shelf";
 import { ShowcaseCard } from "@/components/media/showcase-card";
-import { landingStrings, onboardingStrings, recommendationStrings } from "@/lib/strings";
+import {
+  landingStrings,
+  mediaStrings,
+  onboardingStrings,
+  recommendationStrings,
+} from "@/lib/strings";
 
 import type { LandingWork } from "./landing-types";
 
@@ -21,12 +26,19 @@ function genreLine(work: LandingWork) {
     .join(" · ");
 }
 
-function compactCatalogLine(work: LandingWork) {
-  const genre = work.genres[0];
-  const genreLabel = genre === undefined ? undefined : onboardingStrings.step1.genreLabels[genre];
+function catalogMetadata(work: LandingWork, density: "compact" | "standard") {
+  const genreLabels = work.genres.map((genre) => onboardingStrings.step1.genreLabels[genre]);
+  const primaryGenre = genreLabels[0];
   const statusLabel = recommendationStrings.workStatus[work.status];
+  const remainingGenreCount = Math.max(0, genreLabels.length - 1);
 
-  return [genreLabel, statusLabel].filter((label) => label !== undefined).join(" · ");
+  return {
+    accessible: mediaStrings.catalogMetadata.accessible(genreLabels, statusLabel),
+    visible:
+      density === "compact"
+        ? mediaStrings.catalogMetadata.compact(primaryGenre, remainingGenreCount)
+        : mediaStrings.catalogMetadata.standard(primaryGenre, remainingGenreCount, statusLabel),
+  } as const;
 }
 
 export function HomeShowcaseShelf({ coverUrls, works }: HomeShelfProps) {
@@ -125,18 +137,23 @@ export function HomeRankingShelf({ coverUrls, works }: HomeShelfProps) {
       title={landingStrings.ranking.title}
       trackClassName="items-start"
     >
-      {works.map((work, index) => (
-        <RankingCard
-          coverUrl={coverUrls.get(work.id)}
-          creators={work.creators}
-          key={work.id}
-          metadata={compactCatalogLine(work)}
-          position={index + 1}
-          rankingKind="editorial-ranking"
-          title={work.title}
-          workId={work.id}
-        />
-      ))}
+      {works.map((work, index) => {
+        const metadata = catalogMetadata(work, "compact");
+
+        return (
+          <RankingCard
+            coverUrl={coverUrls.get(work.id)}
+            creators={work.creators}
+            key={work.id}
+            metadata={metadata.visible}
+            metadataAccessibleLabel={metadata.accessible}
+            position={index + 1}
+            rankingKind="editorial-ranking"
+            title={work.title}
+            workId={work.id}
+          />
+        );
+      })}
     </RankingShelf>
   );
 }
@@ -149,17 +166,22 @@ export function HomeDiscoveryShelf({ coverUrls, works }: HomeShelfProps) {
       title={landingStrings.discovery.title}
       trackClassName="items-start"
     >
-      {works.map((work) => (
-        <MediaPosterCard
-          coverUrl={coverUrls.get(work.id)}
-          creators={work.creators}
-          key={work.id}
-          metadata={compactCatalogLine(work)}
-          presentation="cover-overlay"
-          title={work.title}
-          workId={work.id}
-        />
-      ))}
+      {works.map((work) => {
+        const metadata = catalogMetadata(work, "standard");
+
+        return (
+          <MediaPosterCard
+            coverUrl={coverUrls.get(work.id)}
+            creators={work.creators}
+            key={work.id}
+            metadata={metadata.visible}
+            metadataAccessibleLabel={metadata.accessible}
+            presentation="cover-overlay"
+            title={work.title}
+            workId={work.id}
+          />
+        );
+      })}
     </MediaShelf>
   );
 }

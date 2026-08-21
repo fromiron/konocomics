@@ -27,7 +27,7 @@ export function RecommendationMotionList({
           {items.map((item) => (
             <m.li
               animate={reducedMotion ? { opacity: 1 } : { opacity: 1, y: 0 }}
-              className="basis-[var(--featured-card-basis)] shrink-0 snap-start overflow-visible [contain:layout_paint] [@media(min-width:768px)_and_(hover:hover)_and_(pointer:fine)]:h-[var(--recommendation-card-height)] [@media(min-width:768px)_and_(hover:hover)_and_(pointer:fine)]:has-[article[data-expanded]]:basis-[calc(var(--control-min-size)*8)]"
+              className="basis-[var(--featured-card-basis)] shrink-0 snap-start overflow-visible [contain:layout_paint] [@media(min-width:768px)_and_(hover:hover)_and_(pointer:fine)]:h-[var(--recommendation-card-height)] [@media(min-width:768px)_and_(hover:hover)_and_(pointer:fine)]:has-[article[data-expanded]]:basis-[var(--featured-expanded-basis)]"
               data-recommendation-work-id={item.workId}
               exit={reducedMotion ? undefined : { height: 0, opacity: 0 }}
               initial={

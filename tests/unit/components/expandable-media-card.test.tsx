@@ -5,7 +5,7 @@ import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 
 import { ExpandableMediaCard } from "@/components/media/expandable-media-card";
 
-function rect(left: number, width: number, height = 364, top = 0): DOMRect {
+function rect(left: number, width: number, height = 212, top = 0): DOMRect {
   return {
     bottom: top + height,
     height,
@@ -19,11 +19,19 @@ function rect(left: number, width: number, height = 364, top = 0): DOMRect {
   };
 }
 
-function renderCard(left: number) {
+function renderCard(
+  left: number,
+  onExpandedChange?: (expanded: boolean) => void,
+  initiallyExpanded = false,
+) {
   const view = render(
     <ul data-media-shelf-track>
       <li>
-        <ExpandableMediaCard articleRef={() => undefined}>
+        <ExpandableMediaCard
+          articleRef={() => undefined}
+          initiallyExpanded={initiallyExpanded}
+          onExpandedChange={onExpandedChange}
+        >
           {() => (
             <div>
               <div data-expandable-cover-frame>
@@ -73,7 +81,7 @@ function renderCard(left: number) {
     configurable: true,
     get: () => (article.hasAttribute("data-expanded") ? 352 : 154),
   });
-  vi.spyOn(track, "getBoundingClientRect").mockImplementation(() => rect(0, 700, 374));
+  vi.spyOn(track, "getBoundingClientRect").mockImplementation(() => rect(0, 700, 222));
   vi.spyOn(item, "getBoundingClientRect").mockImplementation(() =>
     rect(left, article.hasAttribute("data-expanded") ? 352 : 154),
   );
@@ -131,6 +139,20 @@ afterEach(() => {
 });
 
 describe("ExpandableMediaCard", () => {
+  it("can render the featured card expanded before pointer intent", () => {
+    const onExpandedChange = vi.fn();
+    const { article } = renderCard(20, onExpandedChange, true);
+
+    expect(article.getAttribute("data-expanded")).toBe("true");
+    expect(article.getAttribute("data-expansion-side")).toBe("right");
+    expect(onExpandedChange).not.toHaveBeenCalled();
+
+    fireEvent.pointerEnter(article);
+    fireEvent.pointerLeave(article);
+    expect(article.getAttribute("data-expanded")).toBeNull();
+    expect(onExpandedChange).toHaveBeenLastCalledWith(false);
+  });
+
   it("keeps the same cover node and expands right after the 200ms intent delay", () => {
     const { article, articleAnimate, cover, positionAnimate, revealAnimate, track } =
       renderCard(20);
@@ -160,6 +182,18 @@ describe("ExpandableMediaCard", () => {
       ],
       { delay: 80, duration: 160, easing: "ease-out", fill: "backwards" },
     );
+  });
+
+  it("reports the expanded state so a consuming shelf can synchronize its detail panel", () => {
+    const onExpandedChange = vi.fn();
+    const { article } = renderCard(20, onExpandedChange);
+
+    fireEvent.pointerEnter(article);
+    act(() => vi.advanceTimersByTime(200));
+    expect(onExpandedChange).toHaveBeenLastCalledWith(true);
+
+    fireEvent.pointerLeave(article);
+    expect(onExpandedChange).toHaveBeenLastCalledWith(false);
   });
 
   it("anchors a right-edge card by expanding left and restores only its own scroll adjustment", () => {

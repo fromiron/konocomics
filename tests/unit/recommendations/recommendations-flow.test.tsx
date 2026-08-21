@@ -1,7 +1,7 @@
 // @vitest-environment jsdom
 
 import { act, cleanup, fireEvent, render, screen, waitFor, within } from "@testing-library/react";
-import { type ReactNode, useEffect } from "react";
+import { type MouseEventHandler, type ReactNode, useEffect } from "react";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 
 import catalogJson from "@/data/generated/catalog-v1.json";
@@ -19,6 +19,8 @@ vi.mock("@tanstack/react-router", () => ({
     children,
     className,
     "data-recommendation-identity-rail": identityRail,
+    "data-recommendation-select": recommendationSelect,
+    onClick,
     params,
     to,
   }: {
@@ -26,6 +28,8 @@ vi.mock("@tanstack/react-router", () => ({
     children: ReactNode;
     className?: string;
     "data-recommendation-identity-rail"?: boolean;
+    "data-recommendation-select"?: boolean;
+    onClick?: MouseEventHandler<HTMLAnchorElement>;
     params?: { workId: string };
     to: string;
   }) => (
@@ -33,7 +37,9 @@ vi.mock("@tanstack/react-router", () => ({
       aria-label={ariaLabel}
       className={className}
       data-recommendation-identity-rail={identityRail || undefined}
+      data-recommendation-select={recommendationSelect || undefined}
       href={params === undefined ? to : to.replace("$workId", params.workId)}
+      onClick={onClick}
     >
       {children}
     </a>
@@ -380,18 +386,54 @@ describe("RecommendationsFlow", () => {
       factorId: "strategy",
     });
     const firstCard = cards[0] as HTMLElement;
-    const identityLink = firstCard.querySelector<HTMLAnchorElement>(
-      ".recommendation-card__identity",
+    const selectedWorkId = firstCard.getAttribute("data-recommendation-work-id");
+    const selectButton = firstCard.querySelector<HTMLAnchorElement>("[data-recommendation-select]");
+    if (selectButton === null || selectedWorkId === null) {
+      throw new Error("Expected a selectable personalized recommendation");
+    }
+    expect(firstCard.querySelector("article")?.getAttribute("data-expanded")).toBe("true");
+    expect(cards[1]?.querySelector("article")?.getAttribute("data-expanded")).toBeNull();
+    const secondIdentity = cards[1]?.querySelector<HTMLAnchorElement>(
+      "[data-recommendation-select]",
     );
-    expect(identityLink?.getAttribute("href")).toBe(
-      `/works/${firstCard.getAttribute("data-recommendation-work-id")}`,
+    if (secondIdentity === null || secondIdentity === undefined) {
+      throw new Error("Expected a second selectable personalized recommendation");
+    }
+    const originalMatches = secondIdentity.matches.bind(secondIdentity);
+    vi.spyOn(secondIdentity, "matches").mockImplementation(
+      (selector) => selector === ":focus-visible" || originalMatches(selector),
     );
-    expect(identityLink?.querySelector("h2")).toBeTruthy();
-    expect(identityLink?.querySelector("button, details")).toBeNull();
-    if (identityLink === null) throw new Error("Expected recommendation identity link");
-    expect(within(identityLink).getByText(/分析の確信度: ふつう/u)).toBeTruthy();
+    fireEvent.focus(secondIdentity);
+    expect(cards[1]?.querySelector("article")?.getAttribute("data-expanded")).toBe("true");
+    expect(firstCard.querySelector("article")?.getAttribute("data-expanded")).toBeNull();
+    const originalFirstMatches = selectButton.matches.bind(selectButton);
+    vi.spyOn(selectButton, "matches").mockImplementation(
+      (selector) => selector === ":focus-visible" || originalFirstMatches(selector),
+    );
+    fireEvent.focus(selectButton);
+    expect(firstCard.querySelector("article")?.getAttribute("data-expanded")).toBe("true");
+    expect(cards[1]?.querySelector("article")?.getAttribute("data-expanded")).toBeNull();
+    expect(
+      firstCard
+        .querySelector("[data-personalized-recommendation-card]")
+        ?.getAttribute("data-selected"),
+    ).toBe("true");
+    expect(selectButton.getAttribute("href")).toBe(`/works/${selectedWorkId}`);
+    expect(within(selectButton).getByText(/分析の確信度: ふつう/u)).toBeTruthy();
     expect(firstCard.querySelector("details")).toBeNull();
-    expect(within(firstCard).getAllByRole("button")).toHaveLength(3);
+    expect(within(firstCard).getAllByRole("button")).toHaveLength(4);
+    const detail = container.querySelector<HTMLElement>(
+      `[data-personalized-recommendation-detail='${selectedWorkId}']`,
+    );
+    if (detail === null) throw new Error("Expected selected recommendation detail");
+    expect(
+      within(detail)
+        .getByRole("link", {
+          name: catalog.works.find((work) => work.id === selectedWorkId)?.title,
+        })
+        .getAttribute("href"),
+    ).toBe(`/works/${selectedWorkId}`);
+    expect(within(detail).getAllByRole("button")).toHaveLength(4);
     expect(firstCard.querySelector(".lucide-bookmark")?.getAttribute("aria-hidden")).toBe("true");
     expect(firstCard.querySelector(".lucide-circle-check")?.getAttribute("aria-hidden")).toBe(
       "true",
@@ -449,7 +491,7 @@ describe("RecommendationsFlow", () => {
     expect(testState.loadMotionList).not.toHaveBeenCalled();
   });
 
-  it("locks the mirrored expanded-card anatomy while keeping omitted caution evidence reachable", async () => {
+  it("keeps selected recommendation evidence visible and the full mobile preview reachable", async () => {
     const plan = makePlanWithExpandedEvidence(true);
     const first = plan[0];
     if (first === undefined) throw new Error("Missing caution fixture entry");
@@ -465,45 +507,25 @@ describe("RecommendationsFlow", () => {
       expect(element).toBeTruthy();
       return element as HTMLElement;
     });
-    const canvas = firstCard.querySelector<HTMLElement>("[data-expandable-content-canvas]");
-    const identity = firstCard.querySelector<HTMLElement>("[data-recommendation-identity-rail]");
-    const summary = firstCard.querySelector<HTMLElement>("[data-recommendation-evidence-summary]");
-    if (canvas === null || identity === null || summary === null) {
-      throw new Error("Missing expanded recommendation anatomy");
+    const selectButton = firstCard.querySelector<HTMLAnchorElement>("[data-recommendation-select]");
+    const detail = container.querySelector<HTMLElement>(
+      `[data-personalized-recommendation-detail='${first.workId}']`,
+    );
+    if (selectButton === null || detail === null) {
+      throw new Error("Missing selected recommendation experience");
     }
-    const header = summary.querySelector<HTMLElement>("[data-recommendation-evidence-header]");
-    const body = summary.querySelector<HTMLElement>("[data-recommendation-evidence-body]");
-    const disclosure = summary.querySelector<HTMLButtonElement>(
-      "[data-recommendation-evidence-disclosure]",
-    );
-    const caution = summary.querySelector<HTMLElement>("[data-recommendation-evidence-caution]");
-    if (header === null || body === null || disclosure === null || caution === null) {
-      throw new Error("Missing expanded evidence region");
-    }
-
-    expect(canvas.className).toContain(
-      "group-data-[expanded]/card:grid-cols-[calc(var(--featured-card-basis)-2px)_minmax(0,1fr)]",
-    );
-    expect(canvas.className).toContain(
-      "group-data-[expansion-side=left]/card:grid-cols-[minmax(0,1fr)_calc(var(--featured-card-basis)-2px)]",
-    );
-    expect(identity.className).toContain("group-data-[expansion-side=left]/card:col-start-2");
-    expect(summary.className).toContain("group-data-[expansion-side=left]/card:col-start-1");
-    expect(summary.firstElementChild).toBe(header);
-    expect(header.nextElementSibling).toBe(body);
-    expect(summary.lastElementChild?.contains(disclosure)).toBe(true);
-    expect(disclosure.parentElement).toBe(summary.lastElementChild);
-    expect(disclosure.className).toContain("min-h-[var(--control-min-size)]");
-    expect(disclosure.textContent).toBe("理由をもっと見る");
-
-    const lead = identity.querySelector<HTMLElement>("[data-contribution-summary]");
-    if (lead === null) throw new Error("Missing identity lead reason");
-    expect(firstCard.querySelectorAll("[data-contribution-summary]")).toHaveLength(1);
-    expect(summary.contains(lead)).toBe(false);
+    expect(
+      firstCard
+        .querySelector("[data-personalized-recommendation-card]")
+        ?.getAttribute("data-selected"),
+    ).toBe("true");
+    expect(selectButton.getAttribute("href")).toBe(`/works/${first.workId}`);
+    expect(within(detail).getByRole("link").getAttribute("href")).toBe(`/works/${first.workId}`);
     expect(firstCard.querySelectorAll(".recommendation-card__cover")).toHaveLength(1);
-    expect(body.querySelectorAll("[data-recommendation-evidence-support]")).toHaveLength(1);
-    expect(body.querySelectorAll("[data-recommendation-evidence-caution]")).toHaveLength(1);
-    expect(within(summary).queryByText(/描き込みの密度/u)).toBeNull();
+    expect(detail.querySelectorAll("[data-recommendation-evidence-support]")).toHaveLength(2);
+    const caution = detail.querySelector<HTMLElement>("[data-recommendation-evidence-caution]");
+    if (caution === null) throw new Error("Missing selected recommendation caution");
+    expect(within(detail).getByText(/描き込みの密度/u)).toBeTruthy();
 
     const cautionHeading = within(caution).getByRole("heading", { name: "好みと異なる点" });
     const cautionText = cautionHeading.parentElement?.querySelector("p")?.textContent;
@@ -511,9 +533,14 @@ describe("RecommendationsFlow", () => {
       throw new Error("Missing caution copy");
     }
 
-    disclosure.focus();
-    expect(document.activeElement).toBe(disclosure);
-    fireEvent.click(disclosure);
+    selectButton.focus();
+    expect(document.activeElement).toBe(selectButton);
+    vi.stubGlobal("matchMedia", (query: string) => ({
+      matches: query.includes("hover: none") || query.includes("pointer: coarse"),
+      addEventListener: () => undefined,
+      removeEventListener: () => undefined,
+    }));
+    fireEvent.click(selectButton);
     expect(onPreviewOpen).toHaveBeenCalledWith(first.workId);
     view.rerender(
       <RecommendationsFlow onPreviewOpen={onPreviewOpen} previewWorkId={first.workId} />,
@@ -523,10 +550,10 @@ describe("RecommendationsFlow", () => {
     expect(within(dialog).getByText(/描き込みの密度/u)).toBeTruthy();
 
     view.rerender(<RecommendationsFlow onPreviewOpen={onPreviewOpen} />);
-    await waitFor(() => expect(document.activeElement).toBe(identity));
+    await waitFor(() => expect(document.activeElement).toBe(selectButton));
   });
 
-  it("shows two evidence supports without caution and keeps the three-region disclosure anatomy", async () => {
+  it("shows distinct supporting reasons without inventing a caution", async () => {
     const plan = makePlanWithExpandedEvidence(false);
     testState.getRecommendationCache.mockResolvedValue(cacheRecord(plan));
 
@@ -538,21 +565,67 @@ describe("RecommendationsFlow", () => {
       expect(element).toBeTruthy();
       return element as HTMLElement;
     });
-    const summary = firstCard.querySelector<HTMLElement>("[data-recommendation-evidence-summary]");
-    if (summary === null) throw new Error("Missing expanded evidence summary");
-    const header = summary.querySelector("[data-recommendation-evidence-header]");
-    const body = summary.querySelector("[data-recommendation-evidence-body]");
-    const disclosure = summary.querySelector("[data-recommendation-evidence-disclosure]");
-    if (header === null || body === null || disclosure === null) {
-      throw new Error("Missing expanded evidence region");
+    const workId = firstCard.getAttribute("data-recommendation-work-id");
+    const detail = container.querySelector<HTMLElement>(
+      `[data-personalized-recommendation-detail='${workId ?? ""}']`,
+    );
+    if (detail === null) throw new Error("Missing selected recommendation detail");
+    expect(detail.querySelectorAll("[data-recommendation-evidence-support]")).toHaveLength(2);
+    expect(detail.querySelector("[data-recommendation-evidence-caution]")).toBeNull();
+    expect(detail.querySelectorAll("[data-contribution-summary]")).toHaveLength(3);
+  });
+
+  it("switches the selected detail by activation and closes it back to its trigger", async () => {
+    const { container } = render(<RecommendationsFlow />);
+    const cards = await waitFor(() => {
+      const elements = container.querySelectorAll<HTMLElement>(
+        "[data-personalized-recommendation-card]",
+      );
+      expect(elements.length).toBeGreaterThan(1);
+      return elements;
+    });
+    const firstSelect = cards[0]?.querySelector<HTMLButtonElement>(
+      "[data-recommendation-detail-trigger]",
+    );
+    const secondSelect = cards[1]?.querySelector<HTMLButtonElement>(
+      "[data-recommendation-detail-trigger]",
+    );
+    const secondWorkId = cards[1]?.dataset.personalizedRecommendationCard;
+    if (
+      firstSelect === null ||
+      firstSelect === undefined ||
+      secondSelect === null ||
+      secondSelect === undefined ||
+      secondWorkId === undefined
+    ) {
+      throw new Error("Missing recommendation selection controls");
     }
 
-    expect(body.querySelectorAll("[data-recommendation-evidence-support]")).toHaveLength(2);
-    expect(body.querySelector("[data-recommendation-evidence-caution]")).toBeNull();
-    expect(summary.firstElementChild).toBe(header);
-    expect(header.nextElementSibling).toBe(body);
-    expect(summary.lastElementChild?.contains(disclosure)).toBe(true);
-    expect(disclosure.parentElement).toBe(summary.lastElementChild);
+    fireEvent.click(secondSelect);
+    await waitFor(() => {
+      expect(firstSelect.getAttribute("aria-expanded")).toBe("false");
+      expect(secondSelect.getAttribute("aria-expanded")).toBe("true");
+      expect(
+        container
+          .querySelector("[data-personalized-recommendation-detail]")
+          ?.getAttribute("data-personalized-recommendation-detail"),
+      ).toBe(secondWorkId);
+    });
+
+    fireEvent.click(screen.getByRole("button", { name: "おすすめ詳細を閉じる" }));
+    await waitFor(() => {
+      expect(container.querySelector("[data-personalized-recommendation-detail]")).toBeNull();
+      expect(document.activeElement).toBe(secondSelect);
+    });
+
+    fireEvent.click(secondSelect);
+    await waitFor(() => {
+      expect(
+        container
+          .querySelector("[data-personalized-recommendation-detail]")
+          ?.getAttribute("data-personalized-recommendation-detail"),
+      ).toBe(secondWorkId);
+    });
   });
 
   it("unlocks cover resolution from the first recommendation visible after genre filtering", async () => {

@@ -27,6 +27,8 @@ type MediaShelfProps = Readonly<{
     [key: `data-${string}`]: string | boolean | undefined;
   }>;
   compactHeading?: boolean;
+  controlsPlacement?: "heading" | "overlay";
+  onPageChange?: (firstVisibleIndex: number) => void;
 }>;
 
 type ScrollState = Readonly<{
@@ -49,8 +51,10 @@ export function MediaShelf({
   children,
   className,
   compactHeading = false,
+  controlsPlacement = "heading",
   description,
   listType,
+  onPageChange,
   title,
   trackClassName: customTrackClassName,
   trackData,
@@ -100,6 +104,18 @@ export function MediaShelf({
   const move = (direction: -1 | 1) => {
     const track = trackRef.current;
     if (track === null) return;
+    const maximum = Math.max(0, track.scrollWidth - track.clientWidth);
+    const targetLeft = Math.min(
+      maximum,
+      Math.max(0, track.scrollLeft + direction * track.clientWidth),
+    );
+    const cards = Array.from(track.children).filter(
+      (element): element is HTMLElement => element instanceof HTMLElement,
+    );
+    const firstVisibleIndex = cards.findIndex(
+      (card) => card.offsetLeft + card.offsetWidth > targetLeft + 1,
+    );
+    onPageChange?.(firstVisibleIndex < 0 ? Math.max(0, cards.length - 1) : firstVisibleIndex);
     track.scrollBy({ left: direction * track.clientWidth });
   };
   const moveCardFocus = (event: KeyboardEvent<HTMLElement>) => {
@@ -168,35 +184,38 @@ export function MediaShelf({
         {children}
       </div>
     );
+  const scrollButton = (direction: -1 | 1) => (
+    <Button
+      aria-label={direction === -1 ? mediaStrings.previous(title) : mediaStrings.next(title)}
+      className={
+        controlsPlacement === "overlay"
+          ? "pointer-events-auto rounded-[var(--radius-pill)] border-line bg-surface-overlay shadow-[var(--shadow-level-1)]"
+          : undefined
+      }
+      disabled={direction === -1 ? !scrollState.canScrollBack : !scrollState.canScrollForward}
+      onClick={() => move(direction)}
+      size="icon"
+      type="button"
+      variant="outline"
+    >
+      {direction === -1 ? (
+        <ChevronLeftIcon aria-hidden="true" />
+      ) : (
+        <ChevronRightIcon aria-hidden="true" />
+      )}
+    </Button>
+  );
 
   return (
-    <section aria-labelledby={headingId} className={cn("min-w-0", className)}>
+    <section aria-labelledby={headingId} className={cn("relative min-w-0", className)}>
       <SectionHeading
         action={
           <>
             {action}
-            {scrollState.hasOverflow ? (
+            {scrollState.hasOverflow && controlsPlacement === "heading" ? (
               <span className="hidden gap-[var(--space-content-tight)] [@media(min-width:768px)_and_(hover:hover)_and_(pointer:fine)]:flex">
-                <Button
-                  aria-label={mediaStrings.previous(title)}
-                  disabled={!scrollState.canScrollBack}
-                  onClick={() => move(-1)}
-                  size="icon"
-                  type="button"
-                  variant="outline"
-                >
-                  <ChevronLeftIcon aria-hidden="true" />
-                </Button>
-                <Button
-                  aria-label={mediaStrings.next(title)}
-                  disabled={!scrollState.canScrollForward}
-                  onClick={() => move(1)}
-                  size="icon"
-                  type="button"
-                  variant="outline"
-                >
-                  <ChevronRightIcon aria-hidden="true" />
-                </Button>
+                {scrollButton(-1)}
+                {scrollButton(1)}
               </span>
             ) : null}
           </>
@@ -206,7 +225,23 @@ export function MediaShelf({
         id={headingId}
         title={title}
       />
-      {track}
+      {controlsPlacement === "overlay" ? (
+        <div className="relative">
+          {track}
+          {scrollState.hasOverflow ? (
+            <span className="pointer-events-none absolute inset-0 z-30 hidden [@media(min-width:768px)_and_(hover:hover)_and_(pointer:fine)]:block">
+              <span className="absolute top-1/2 -left-[var(--space-6)] -translate-y-1/2">
+                {scrollButton(-1)}
+              </span>
+              <span className="absolute inset-y-0 -right-[var(--space-6)] flex w-[calc(var(--control-min-size)+var(--space-5))] items-center justify-end bg-canvas">
+                {scrollButton(1)}
+              </span>
+            </span>
+          ) : null}
+        </div>
+      ) : (
+        track
+      )}
     </section>
   );
 }

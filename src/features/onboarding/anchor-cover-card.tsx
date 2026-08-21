@@ -68,7 +68,7 @@ export function AnchorCoverCard({
       >
         <span
           className={cn(
-            "anchor-card__cover relative block overflow-hidden rounded-[var(--radius-cover-selection)] border-2 border-transparent bg-surface-2 transition-transform duration-[var(--motion-duration-feedback)] ease-[var(--motion-ease-direct)] [@media(hover:hover)_and_(pointer:fine)_and_(prefers-reduced-motion:no-preference)]:group-hover/selection:-translate-y-0.5 [@media(hover:hover)_and_(pointer:fine)]:group-hover/selection:shadow-[var(--shadow-raised)] motion-reduce:transform-none motion-reduce:transition-none",
+            "anchor-card__cover relative block overflow-hidden rounded-[var(--radius-cover-selection)] border-2 border-transparent bg-surface-2 [@media(hover:hover)_and_(pointer:fine)]:group-hover/selection:shadow-[var(--shadow-raised)]",
             isSelected &&
               "border-accent shadow-[0_0_0_2px_var(--accent-soft)] motion-safe:animate-[anchor-card-selected_var(--motion-duration-feedback)_var(--motion-ease-direct)]",
           )}

@@ -1,13 +1,18 @@
 // @vitest-environment jsdom
 
-import { cleanup, render, screen } from "@testing-library/react";
+import { cleanup, render, screen, within } from "@testing-library/react";
 import type { ReactNode } from "react";
 import { afterEach, describe, expect, it, vi } from "vitest";
 
 import { MediaPosterCard } from "@/components/media/media-poster-card";
 import { RankingCard } from "@/components/media/ranking-card";
 import { ShowcaseCard } from "@/components/media/showcase-card";
-import { HomeShowcaseShelf } from "@/features/landing/home-showcase";
+import {
+  HomeDiscoveryShelf,
+  HomeRankingShelf,
+  HomeShowcaseShelf,
+} from "@/features/landing/home-showcase";
+import { landingStrings } from "@/lib/strings";
 
 vi.mock("@tanstack/react-router", () => ({
   Link: ({
@@ -70,9 +75,17 @@ describe("media card anatomy", () => {
     expect(basePosition).toBeTruthy();
     expect(screen.getByRole("link").getAttribute("aria-label")).toMatch(/^おすすめ1位/u);
     expect(screen.getByRole("link").className).not.toContain("hover:-translate-y");
+    expect(container.querySelectorAll("img")).toHaveLength(1);
     expect(container.querySelector("img")?.getAttribute("loading")).toBe("eager");
+    const rankingCover = container.querySelector<HTMLElement>(".cover-image");
+    expect(rankingCover?.className).toContain("[&>img]:!object-cover");
+    expect(rankingCover?.className).toContain("[&>img]:!object-top");
+    expect(container.querySelector('[data-cover-backdrop="true"]')).toBeNull();
     expect(container.querySelector("li")?.classList.contains("w-24")).toBe(true);
+    expect(container.querySelector("li")?.classList.contains("sm:w-28")).toBe(true);
     expect(container.querySelector("a")?.classList.contains("aspect-[18/25]")).toBe(true);
+    expect(container.querySelector('[data-media-meta-line="true"]')).toBeTruthy();
+    expect(container.querySelector(".lucide-circle")).toBeNull();
   });
 
   it("gives later editorial ranks the same movable spotlight plate and geometry", () => {
@@ -97,6 +110,7 @@ describe("media card anatomy", () => {
     expect(container.querySelector("li")?.getAttribute("data-ranking-position")).toBe("2");
     expect(container.querySelector("img")?.getAttribute("loading")).toBe("lazy");
     expect(container.querySelector("li")?.classList.contains("w-24")).toBe(true);
+    expect(container.querySelector("li")?.classList.contains("sm:w-28")).toBe(true);
     expect(container.querySelector("a")?.classList.contains("aspect-[18/25]")).toBe(true);
   });
 
@@ -118,7 +132,7 @@ describe("media card anatomy", () => {
     expect(screen.getByRole("link").getAttribute("aria-label")).toMatch(/^1位/u);
     expect(container.querySelector('[data-ranking-personalized-crown="true"]')).toBeTruthy();
     expect(container.querySelector('[data-ranking-first-swash="true"]')).toBeNull();
-    expect(screen.getByRole("link").className).toContain("hover:-translate-y-0.5");
+    expect(screen.getByRole("link").className).not.toContain("translate-y");
     expect(container.querySelector("li")?.className).toContain(
       "w-[calc(var(--control-min-size)*1.75)]",
     );
@@ -142,16 +156,38 @@ describe("media card anatomy", () => {
     expect(screen.getByText("ファンタジー · 完結")).toBeTruthy();
     const poster = container.querySelector('[data-card-presentation="cover-overlay"]');
     expect(poster).toBeTruthy();
-    expect(poster?.classList.contains("sm:w-40")).toBe(true);
+    expect(poster?.classList.contains("sm:w-38")).toBe(true);
     expect(
       poster?.classList.contains(
         "w-[calc((100vw-(var(--layout-page-padding)*2)-(var(--space-content-loose)*2))/2.4)]",
       ),
     ).toBe(true);
-    expect(container.querySelector(".lucide-book-open")).toBeTruthy();
+    expect(container.querySelector('[data-media-meta-line="true"]')).toBeTruthy();
+    expect(container.querySelector(".lucide-book-open")).toBeNull();
+    expect(screen.getByRole("link").className).not.toContain("translate-y");
     expect(container.querySelector("a")?.classList.contains("shadow-[var(--shadow-level-1)]")).toBe(
       false,
     );
+    const posterCover = container.querySelector<HTMLElement>(".cover-image");
+    expect(container.querySelectorAll("img")).toHaveLength(1);
+    expect(posterCover?.className).toContain("[&>img]:!object-cover");
+    expect(posterCover?.className).toContain("[&>img]:!object-top");
+    expect(container.querySelector('[data-cover-backdrop="true"]')).toBeNull();
+  });
+
+  it("keeps the standard poster desktop width independent from the discovery overlay", () => {
+    const { container } = render(
+      <MediaPosterCard
+        coverUrl="https://example.com/cover.jpg"
+        creators={["作者"]}
+        title="標準作品"
+        workId="standard-work"
+      />,
+    );
+
+    const poster = container.querySelector("article");
+    expect(poster?.classList.contains("sm:w-40")).toBe(true);
+    expect(poster?.classList.contains("sm:w-38")).toBe(false);
   });
 
   it("renders a layered featured showcase card with truthful overlay content", () => {
@@ -372,5 +408,45 @@ describe("media card anatomy", () => {
     expect(screen.getByText("プレースホルダなし作品")).toBeTruthy();
     // creatorLine via coverStrings: "作者 " + join
     expect(screen.getByText("作者 宮崎駿")).toBeTruthy();
+  });
+
+  it("shares a text-only catalog metadata contract while preserving multi-genre detail", () => {
+    const works = [
+      {
+        id: "multi-genre-work",
+        title: "複数ジャンル作品",
+        creators: ["作者"],
+        genres: ["action" as const, "fantasy" as const, "horror" as const],
+        status: "completed" as const,
+      },
+    ];
+    const coverUrls = new Map([["multi-genre-work", "https://example.com/cover.jpg"]]);
+
+    render(
+      <>
+        <HomeRankingShelf coverUrls={coverUrls} works={works} />
+        <HomeDiscoveryShelf coverUrls={coverUrls} works={works} />
+      </>,
+    );
+
+    const ranking = screen.getByRole("list", { name: landingStrings.ranking.title });
+    const discovery = screen
+      .getByRole("heading", { name: landingStrings.discovery.title })
+      .closest("section")
+      ?.querySelector<HTMLElement>("[data-media-shelf-track]");
+    expect(discovery).toBeTruthy();
+    if (discovery === null || discovery === undefined) return;
+    expect(within(ranking).getByText("アクション +2")).toBeTruthy();
+    expect(within(discovery).getByText("アクション ほか2 · 完結")).toBeTruthy();
+    expect(ranking.querySelector('[data-media-meta-line="true"]')).toBeTruthy();
+    expect(discovery.querySelector('[data-media-meta-line="true"]')).toBeTruthy();
+    expect(ranking.querySelector(".lucide-circle")).toBeNull();
+    expect(discovery.querySelector(".lucide-book-open")).toBeNull();
+    expect(within(ranking).getByRole("link").getAttribute("aria-label")).toContain(
+      "ジャンル アクション、ファンタジー、ホラー。刊行状況 完結",
+    );
+    expect(within(discovery).getByRole("link").getAttribute("aria-label")).toContain(
+      "ジャンル アクション、ファンタジー、ホラー。刊行状況 完結",
+    );
   });
 });

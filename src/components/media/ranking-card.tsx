@@ -3,6 +3,7 @@ import { CircleIcon, CrownIcon } from "lucide-react";
 import type { ReactNode } from "react";
 
 import { CoverImage } from "@/components/cover/CoverImage";
+import { MediaMetaLine } from "@/components/media/media-meta-line";
 import { mediaStrings } from "@/lib/strings";
 import { cn } from "@/lib/utils";
 
@@ -17,6 +18,7 @@ type RankingCardProps = Readonly<{
   creators: readonly string[];
   coverUrl?: string | null;
   metadata?: ReactNode;
+  metadataAccessibleLabel?: string;
   priority?: boolean;
   onCoverSettled?: () => void;
   className?: string;
@@ -27,6 +29,7 @@ export function RankingCard({
   coverUrl,
   creators,
   metadata,
+  metadataAccessibleLabel,
   onCoverSettled,
   position,
   priority = false,
@@ -44,7 +47,7 @@ export function RankingCard({
     <li
       className={cn(
         "shrink-0 snap-start",
-        isEditorialRanking ? "w-24" : "w-[calc(var(--control-min-size)*1.75)]",
+        isEditorialRanking ? "w-24 sm:w-28" : "w-[calc(var(--control-min-size)*1.75)]",
         className,
       )}
       data-ranking-kind={rankingKind}
@@ -52,12 +55,14 @@ export function RankingCard({
     >
       <article>
         <Link
-          aria-label={`${positionLabel} · ${mediaStrings.openDetails(title)}`}
+          aria-label={
+            metadataAccessibleLabel === undefined
+              ? `${positionLabel} · ${mediaStrings.openDetails(title)}`
+              : `${positionLabel} · ${mediaStrings.openDetails(title)} · ${metadataAccessibleLabel}`
+          }
           className={cn(
             "group/ranking relative block min-h-[var(--control-min-size)] overflow-hidden rounded-[var(--radius-card)] border border-line bg-surface-1 shadow-[var(--shadow-level-1)] focus-visible:border-line-accent",
             isEditorialRanking ? "aspect-[18/25]" : "aspect-[30/43]",
-            !isEditorialRanking &&
-              "transition-transform duration-[var(--motion-duration-feedback)] [@media(hover:hover)_and_(pointer:fine)_and_(prefers-reduced-motion:no-preference)]:hover:-translate-y-0.5 motion-reduce:transform-none motion-reduce:transition-none",
             !isEditorialRanking && isFirst && "border-[var(--rank-highlight)]",
           )}
           params={{ workId }}
@@ -65,29 +70,16 @@ export function RankingCard({
           to="/works/$workId"
         >
           {coverUrl ? (
-            <>
-              <span aria-hidden="true">
-                <CoverImage
-                  className="pointer-events-none absolute inset-0 size-full rounded-none border-0 opacity-50 [&_.cover-image__image]:object-cover [&_.cover-image__placeholder-content]:hidden [&_.cover-image__skeleton]:hidden"
-                  coverUrl={coverUrl}
-                  creators={creators}
-                  decorative
-                  priority={priority && isFirst}
-                  requestedSize={400}
-                  title={title}
-                />
-              </span>
-              <CoverImage
-                className="absolute inset-0 size-full rounded-none border-0 bg-transparent"
-                coverUrl={coverUrl}
-                creators={creators}
-                decorative
-                onSettled={onCoverSettled}
-                priority={priority && isFirst}
-                requestedSize={400}
-                title={title}
-              />
-            </>
+            <CoverImage
+              className="absolute inset-0 size-full rounded-none border-0 bg-transparent [&>img]:!object-cover [&>img]:!object-top"
+              coverUrl={coverUrl}
+              creators={creators}
+              decorative
+              onSettled={onCoverSettled}
+              priority={priority && isFirst}
+              requestedSize={400}
+              title={title}
+            />
           ) : (
             <>
               <span
@@ -168,7 +160,9 @@ export function RankingCard({
             <h3 className="line-clamp-2 text-[length:var(--font-size-14)] leading-tight font-bold text-text-strong [overflow-wrap:anywhere]">
               {title}
             </h3>
-            {metadata === undefined ? null : (
+            {metadata === undefined ? null : isEditorialRanking ? (
+              <MediaMetaLine>{metadata}</MediaMetaLine>
+            ) : (
               <span className="flex min-w-0 items-center gap-[var(--space-1)] text-[length:var(--text-caption-size)] leading-tight text-text-muted">
                 <CircleIcon
                   aria-hidden="true"

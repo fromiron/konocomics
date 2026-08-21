@@ -1,8 +1,8 @@
 import { Link } from "@tanstack/react-router";
-import { BookOpenIcon } from "lucide-react";
 import type { ReactNode } from "react";
 
 import { CoverImage } from "@/components/cover/CoverImage";
+import { MediaMetaLine } from "@/components/media/media-meta-line";
 import { coverStrings, mediaStrings } from "@/lib/strings";
 import { cn } from "@/lib/utils";
 
@@ -13,6 +13,7 @@ type MediaPosterCardProps = Readonly<{
   coverUrl?: string | null;
   badge?: ReactNode;
   metadata?: ReactNode;
+  metadataAccessibleLabel?: string;
   presentation?: "standard" | "cover-overlay";
   priority?: boolean;
   className?: string;
@@ -24,6 +25,7 @@ export function MediaPosterCard({
   coverUrl,
   creators,
   metadata,
+  metadataAccessibleLabel,
   presentation = "standard",
   priority = false,
   title,
@@ -33,20 +35,24 @@ export function MediaPosterCard({
     return (
       <article
         className={cn(
-          "w-[calc((100vw-(var(--layout-page-padding)*2)-(var(--space-content-loose)*2))/2.4)] shrink-0 snap-start sm:w-40",
+          "w-[calc((100vw-(var(--layout-page-padding)*2)-(var(--space-content-loose)*2))/2.4)] shrink-0 snap-start sm:w-38",
           className,
         )}
         data-card-presentation="cover-overlay"
       >
         <Link
-          aria-label={mediaStrings.openDetails(title)}
-          className="group/card relative block min-h-[var(--control-min-size)] overflow-hidden rounded-[var(--radius-card)] border border-line bg-surface-1 transition-[transform,border-color,box-shadow] duration-[var(--motion-duration-feedback)] focus-visible:border-line-accent [@media(hover:hover)_and_(pointer:fine)_and_(prefers-reduced-motion:no-preference)]:hover:-translate-y-0.5 [@media(hover:hover)_and_(pointer:fine)]:hover:border-line-accent [@media(hover:hover)_and_(pointer:fine)]:hover:shadow-[var(--shadow-raised)] motion-reduce:transform-none motion-reduce:transition-none"
+          aria-label={
+            metadataAccessibleLabel === undefined
+              ? mediaStrings.openDetails(title)
+              : `${mediaStrings.openDetails(title)} · ${metadataAccessibleLabel}`
+          }
+          className="group/card relative block min-h-[var(--control-min-size)] overflow-hidden rounded-[var(--radius-card)] border border-line bg-surface-1 focus-visible:border-line-accent [@media(hover:hover)_and_(pointer:fine)]:hover:border-line-accent [@media(hover:hover)_and_(pointer:fine)]:hover:shadow-[var(--shadow-raised)]"
           params={{ workId }}
           preload={false}
           to="/works/$workId"
         >
           <CoverImage
-            className="rounded-none border-0"
+            className="rounded-none border-0 [&>img]:!object-cover [&>img]:!object-top"
             coverUrl={coverUrl}
             creators={creators}
             decorative
@@ -70,12 +76,7 @@ export function MediaPosterCard({
             <span className="line-clamp-1 text-[length:var(--text-caption-size)] leading-tight text-text-muted">
               {coverStrings.creatorLine(creators)}
             </span>
-            {metadata === undefined ? null : (
-              <span className="flex min-w-0 items-center gap-[var(--space-1)] text-[length:var(--text-caption-size)] leading-tight text-accent">
-                <BookOpenIcon aria-hidden="true" className="size-3 shrink-0" />
-                <span className="line-clamp-1 min-w-0">{metadata}</span>
-              </span>
-            )}
+            {metadata === undefined ? null : <MediaMetaLine>{metadata}</MediaMetaLine>}
           </div>
         </Link>
       </article>
@@ -90,7 +91,11 @@ export function MediaPosterCard({
       )}
     >
       <Link
-        aria-label={mediaStrings.openDetails(title)}
+        aria-label={
+          metadataAccessibleLabel === undefined
+            ? mediaStrings.openDetails(title)
+            : `${mediaStrings.openDetails(title)} · ${metadataAccessibleLabel}`
+        }
         className="group/card grid min-h-[var(--control-min-size)] gap-[var(--space-content)] rounded-[var(--radius-card)]"
         params={{ workId }}
         preload={false}
@@ -98,7 +103,7 @@ export function MediaPosterCard({
       >
         <div className="relative">
           <CoverImage
-            className="transition-[transform,box-shadow] duration-[var(--motion-duration-feedback)] [@media(hover:hover)_and_(pointer:fine)_and_(prefers-reduced-motion:no-preference)]:group-hover/card:-translate-y-0.5 [@media(hover:hover)_and_(pointer:fine)]:group-hover/card:shadow-[var(--shadow-raised)] motion-reduce:transform-none motion-reduce:transition-none"
+            className="[@media(hover:hover)_and_(pointer:fine)]:group-hover/card:shadow-[var(--shadow-raised)]"
             coverUrl={coverUrl}
             creators={creators}
             priority={priority}
@@ -118,11 +123,7 @@ export function MediaPosterCard({
           <span className="line-clamp-1 text-[length:var(--text-caption-size)] text-text-muted">
             {coverStrings.creatorLine(creators)}
           </span>
-          {metadata === undefined ? null : (
-            <span className="text-[length:var(--text-caption-size)] text-text-muted">
-              {metadata}
-            </span>
-          )}
+          {metadata === undefined ? null : <MediaMetaLine>{metadata}</MediaMetaLine>}
         </div>
       </Link>
     </article>
