@@ -55,8 +55,9 @@ Grouping을 위해 ranking score를 다시 계산하거나 새 가중치를 만�
 
 - desktop fine pointer: 200ms hover intent
 - keyboard focus: 즉시 확장
-- 기본 128–160px, 확장 300–360px
-- Shelf 높이 사전 예약
+- 첫 진입의 1위 card는 확장 상태, 2·3위는 같은 viewport에 접힌 상태로 표시
+- 접힘 220–250px, 확장 300–360px
+- Shelf 높이 212px 사전 예약
 - title/reason/action control은 scale하지 않고 reflow
 - touch: 고정 card + Quick Preview sheet
 

@@ -17,7 +17,6 @@ import { HomeDiscoveryShelf, HomeRankingShelf, HomeShowcaseShelf } from "./home-
 import type { LandingWork } from "./landing-types";
 
 const SHOWCASE_COUNT = 4;
-const RANKING_COUNT = 10;
 const DISCOVERY_COUNT = 7;
 
 function LandingGuard() {
@@ -32,11 +31,16 @@ function LandingGuard() {
 }
 
 type LandingFlowProps = Readonly<{
+  editorialRankingWorks: readonly LandingWork[];
   heroWorks: readonly LandingWork[];
   showIntroduction?: boolean;
 }>;
 
-export function LandingFlow({ heroWorks, showIntroduction = false }: LandingFlowProps) {
+export function LandingFlow({
+  editorialRankingWorks,
+  heroWorks,
+  showIntroduction = false,
+}: LandingFlowProps) {
   const navigate = useNavigate();
   const catalogIdentity = useCatalogIdentity();
   const { getProviderCache, saveProviderCache, userWorks } = usePersistence();
@@ -44,13 +48,15 @@ export function LandingFlow({ heroWorks, showIntroduction = false }: LandingFlow
     () => hasCatalogBackedProfileById(userWorks, catalogIdentity.workIds),
     [catalogIdentity.workIds, userWorks],
   );
-  const coverTargets = useMemo(
-    () =>
-      heroWorks.flatMap((work) =>
-        work.isbn === undefined ? [] : [{ workId: work.id, isbn: work.isbn }],
-      ),
-    [heroWorks],
-  );
+  const coverTargets = useMemo(() => {
+    const uniqueWorks = new Map(
+      [...heroWorks, ...editorialRankingWorks].map((work) => [work.id, work] as const),
+    );
+
+    return [...uniqueWorks.values()].flatMap((work) =>
+      work.isbn === undefined ? [] : [{ workId: work.id, isbn: work.isbn }],
+    );
+  }, [editorialRankingWorks, heroWorks]);
   const { coverUrls, notifyCoverSettled } = useRecommendationCovers({
     targets: coverTargets,
     getProviderCache,
@@ -61,7 +67,6 @@ export function LandingFlow({ heroWorks, showIntroduction = false }: LandingFlow
   const heroCoverSource = heroWork === undefined ? null : coverUrls.get(heroWork.id);
   const heroCoverUrl = heroCoverSource ? coverSourceForSize(heroCoverSource, 600) : null;
   const showcaseWorks = heroWorks.slice(0, SHOWCASE_COUNT);
-  const rankingWorks = heroWorks.slice(0, RANKING_COUNT);
   const discoveryWorks = heroWorks.slice(-DISCOVERY_COUNT);
 
   useEffect(() => {
@@ -90,7 +95,7 @@ export function LandingFlow({ heroWorks, showIntroduction = false }: LandingFlow
 
       <div className="mx-auto grid w-full max-w-[var(--layout-width-media)] gap-[var(--space-section)] px-[var(--layout-page-padding)] py-[var(--space-section)]">
         <HomeShowcaseShelf coverUrls={coverUrls} works={showcaseWorks} />
-        <HomeRankingShelf coverUrls={coverUrls} works={rankingWorks} />
+        <HomeRankingShelf coverUrls={coverUrls} works={editorialRankingWorks} />
         <HomeDiscoveryShelf coverUrls={coverUrls} works={discoveryWorks} />
         <HomeHowItWorks />
       </div>

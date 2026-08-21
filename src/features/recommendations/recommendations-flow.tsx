@@ -10,6 +10,7 @@ import { SiteFooter } from "@/components/layout/site-footer";
 import { MediaShelf } from "@/components/media/media-shelf";
 import { QuickPreviewDialog } from "@/components/media/quick-preview-dialog";
 import { RankingCard } from "@/components/media/ranking-card";
+import { RankingShelf } from "@/components/media/ranking-shelf";
 import recommendationContextJson from "@/data/generated/recommendation-context-v1.json";
 import type { GenreTag } from "@/domain/catalog/types";
 import type { ExplanationFactorId } from "@/domain/explanation";
@@ -43,7 +44,7 @@ import { recommendationStrings, explanationLexicon } from "@/lib/strings";
 
 import { FeedbackDialog, type PendingRecommendationFeedback } from "./feedback-dialog";
 import { FeedbackImpactSummary } from "./feedback-impact-summary";
-import { RecommendationCard } from "./recommendation-card";
+import { RecommendationCard, RecommendationDetailPanel } from "./recommendation-card";
 import { RecommendationCriteriaSummary } from "./recommendation-criteria-summary";
 import {
   createRecommendationCoverTargets,
@@ -97,7 +98,7 @@ function StaticRecommendationItems({
     <>
       {items.map((item) => (
         <li
-          className="basis-[var(--featured-card-basis)] shrink-0 snap-start overflow-visible [@media(min-width:768px)_and_(hover:hover)_and_(pointer:fine)]:h-[var(--recommendation-card-height)] [@media(min-width:768px)_and_(hover:hover)_and_(pointer:fine)]:has-[article[data-expanded]]:basis-[calc(var(--control-min-size)*8)]"
+          className="basis-[var(--featured-card-basis)] shrink-0 snap-start overflow-visible [@media(min-width:768px)_and_(hover:hover)_and_(pointer:fine)]:h-[var(--recommendation-card-height)] [@media(min-width:768px)_and_(hover:hover)_and_(pointer:fine)]:has-[article[data-expanded]]:basis-[var(--featured-expanded-basis)]"
           data-recommendation-work-id={item.workId}
           key={item.workId}
         >
@@ -240,6 +241,11 @@ export function RecommendationsFlow({
   const [feedbackBusy, setFeedbackBusy] = useState(false);
   const [feedbackBaseBusy, setFeedbackBaseBusy] = useState(false);
   const [feedbackError, setFeedbackError] = useState("");
+  const [selectedFeaturedWorkId, setSelectedFeaturedWorkId] = useState<string | null>(null);
+  const [expandedFeaturedWorkId, setExpandedFeaturedWorkId] = useState<string | null | undefined>(
+    undefined,
+  );
+  const [featuredDetailOpen, setFeaturedDetailOpen] = useState(true);
   const [MotionList, setMotionList] = useState<RecommendationMotionListComponent | null>(null);
   const calculationSequence = useRef(0);
   const calculationInFlight = useRef(false);
@@ -320,12 +326,10 @@ export function RecommendationsFlow({
       return work === undefined || metadata === undefined ? [] : [{ entry, metadata, work }];
     });
     const visibleWorkIds = new Set(visibleEntries.map((entry) => entry.workId));
-    const auxiliaryEntries = nextAllPlanEntries
-      .filter(
-        ({ entry, work }) =>
-          !visibleWorkIds.has(entry.workId) && (genre === undefined || work.genres.includes(genre)),
-      )
-      .slice(0, 18);
+    const auxiliaryEntries = nextAllPlanEntries.filter(
+      ({ entry, work }) =>
+        !visibleWorkIds.has(entry.workId) && (genre === undefined || work.genres.includes(genre)),
+    );
     const usedAuxiliaryIds = new Set<string>();
     const nextAnchorEntries = auxiliaryEntries
       .filter(({ entry }) => {
@@ -337,7 +341,7 @@ export function RecommendationsFlow({
         }).positiveReasons[0];
         return leadReason !== undefined && leadReason.anchorWorkIds.length > 0;
       })
-      .slice(0, 6);
+      .slice(0, 8);
     nextAnchorEntries.forEach(({ entry }) => usedAuxiliaryIds.add(entry.workId));
     const nextDiscoveryEntries = auxiliaryEntries
       .filter(({ entry }) => entry.isDiscovery && !usedAuxiliaryIds.has(entry.workId))
@@ -358,6 +362,16 @@ export function RecommendationsFlow({
       renderedEntries: nextRenderedEntries,
     };
   }, [excludedWorkIds, genre, plan, previewWorkId, visibleEntries, worksById]);
+  const selectedFeaturedItem =
+    featuredEntries.find(({ entry }) => entry.workId === selectedFeaturedWorkId) ??
+    featuredEntries[0] ??
+    null;
+  const resolvedExpandedFeaturedWorkId =
+    expandedFeaturedWorkId === null
+      ? null
+      : featuredEntries.some(({ entry }) => entry.workId === expandedFeaturedWorkId)
+        ? expandedFeaturedWorkId
+        : (featuredEntries[0]?.entry.workId ?? null);
   const coverWorkIds = useMemo(() => {
     const orderedIds = [
       ...featuredEntries.map(({ entry }) => entry.workId),
@@ -925,7 +939,9 @@ export function RecommendationsFlow({
           }}
           busy={isComputing || isPolicySaving || feedbackBaseBusy || busyWorkIds.has(entry.workId)}
           coverUrl={recommendationCoverUrls.get(entry.workId)}
+          detailOpen={featuredDetailOpen && selectedFeaturedItem?.entry.workId === entry.workId}
           entry={entry}
+          expanded={resolvedExpandedFeaturedWorkId === entry.workId}
           onCompleted={() => void removeForFeedback(entry, "completed")}
           onCoverSettled={
             entry.workId === firstRecommendationCoverWorkId &&
@@ -934,12 +950,26 @@ export function RecommendationsFlow({
               : undefined
           }
           onHidden={() => void removeForFeedback(entry, "hidden")}
+          onExpansionChange={(expanded) => {
+            setExpandedFeaturedWorkId((current) => {
+              if (expanded) return entry.workId;
+              const currentWorkId =
+                current === undefined ? featuredEntries[0]?.entry.workId : current;
+              return currentWorkId === entry.workId ? null : current;
+            });
+          }}
           onPlanned={() => void savePlanned(entry)}
           onPreview={() => openPreview(entry.workId)}
           onRemovalIntent={requestRemovalMotion}
+          onSelect={() => {
+            setSelectedFeaturedWorkId(entry.workId);
+            setFeaturedDetailOpen(true);
+          }}
           planned={plannedIds.has(entry.workId)}
+          position={index + 1}
           priority={index === 0}
           resolveTitle={(workId) => worksById.get(workId)?.title}
+          selected={selectedFeaturedItem?.entry.workId === entry.workId}
           volumeCount={metadata.volumeCount}
           work={work}
         />
@@ -991,7 +1021,7 @@ export function RecommendationsFlow({
   return (
     <>
       <main
-        className="mx-auto min-h-dvh w-full max-w-[var(--layout-width-media)] bg-canvas px-[var(--layout-page-padding)] pt-[var(--layout-page-block-start)] pb-[calc(var(--layout-mobile-navigation-clearance)+var(--space-8))] md:pt-[var(--space-3)] md:pb-[var(--space-6)] [--recommendation-cover-width:104px]"
+        className="mx-auto w-full max-w-[var(--layout-width-media)] bg-canvas px-[var(--layout-page-padding)] pt-[var(--layout-page-block-start)] pb-[calc(var(--layout-mobile-navigation-clearance)+var(--space-8))] md:pt-0 md:pb-[var(--space-6)] [--recommendation-cover-width:104px]"
         data-recommendation-input-hash={displayedHash ?? undefined}
       >
         <div className="block w-full min-w-0">
@@ -1111,11 +1141,18 @@ export function RecommendationsFlow({
                 />
                 <MediaShelf
                   className="scroll-mt-[calc(var(--desktop-navigation-height)+var(--space-4))]"
+                  controlsPlacement="overlay"
                   description={recommendationStrings.shelves.featured.description}
                   listType="unordered"
                   compactHeading
+                  onPageChange={(firstVisibleIndex) => {
+                    const firstVisible = featuredEntries[firstVisibleIndex];
+                    if (firstVisible === undefined) return;
+                    setSelectedFeaturedWorkId(firstVisible.entry.workId);
+                    setFeaturedDetailOpen(true);
+                  }}
                   title={recommendationStrings.shelves.featured.title}
-                  trackClassName="recommendations-list min-h-[calc(var(--control-min-size)*6.5)] items-start gap-[var(--space-3)] has-[article[data-expanded]]:snap-none [--featured-card-basis:clamp(calc(var(--control-min-size)*2.5),calc((100%-(var(--space-3)*2))/2.4),calc(var(--control-min-size)*3.5))] [--recommendation-card-height:calc((var(--control-min-size)*8)+var(--space-3))] [@media(min-width:768px)_and_(hover:hover)_and_(pointer:fine)]:min-h-[calc(var(--control-min-size)*8.5)] [@media(min-width:768px)_and_(hover:hover)_and_(pointer:fine)]:[--featured-card-basis:calc(var(--control-min-size)*3.5)]"
+                  trackClassName="recommendations-list min-h-[calc(var(--control-min-size)*6.5)] items-stretch gap-[var(--space-3)] [--featured-card-basis:clamp(calc(var(--control-min-size)*2.5),calc((100%-(var(--space-3)*2))/2.4),calc(var(--control-min-size)*3.5))] [--featured-expanded-basis:calc(var(--control-min-size)*8)] [--recommendation-card-height:212px] [@media(min-width:768px)_and_(hover:hover)_and_(pointer:fine)]:min-h-[var(--recommendation-card-height)] [@media(min-width:768px)_and_(hover:hover)_and_(pointer:fine)]:[--featured-card-basis:calc(var(--control-min-size)*5.5)]"
                   trackData={{
                     "data-recommendation-motion": MotionList === null ? "static" : "enabled",
                   }}
@@ -1133,6 +1170,42 @@ export function RecommendationsFlow({
                     />
                   )}
                 </MediaShelf>
+                {featuredDetailOpen && selectedFeaturedItem !== null ? (
+                  <div className="mt-[var(--space-2)]">
+                    <RecommendationDetailPanel
+                      busy={
+                        isComputing ||
+                        isPolicySaving ||
+                        feedbackBaseBusy ||
+                        busyWorkIds.has(selectedFeaturedItem.entry.workId)
+                      }
+                      coverUrl={recommendationCoverUrls.get(selectedFeaturedItem.entry.workId)}
+                      entry={selectedFeaturedItem.entry}
+                      onClose={() => {
+                        const selectedWorkId = selectedFeaturedItem.entry.workId;
+                        setFeaturedDetailOpen(false);
+                        window.requestAnimationFrame(() => {
+                          articleRefs.current
+                            .get(selectedWorkId)
+                            ?.querySelector<HTMLButtonElement>(
+                              "[data-recommendation-detail-trigger]",
+                            )
+                            ?.focus();
+                        });
+                      }}
+                      onCompleted={() =>
+                        void removeForFeedback(selectedFeaturedItem.entry, "completed")
+                      }
+                      onHidden={() => void removeForFeedback(selectedFeaturedItem.entry, "hidden")}
+                      onPlanned={() => void savePlanned(selectedFeaturedItem.entry)}
+                      onRemovalIntent={requestRemovalMotion}
+                      planned={plannedIds.has(selectedFeaturedItem.entry.workId)}
+                      resolveTitle={(workId) => worksById.get(workId)?.title}
+                      volumeCount={selectedFeaturedItem.metadata.volumeCount}
+                      work={selectedFeaturedItem.work}
+                    />
+                  </div>
+                ) : null}
               </>
             )}
 
@@ -1146,6 +1219,7 @@ export function RecommendationsFlow({
               compactHeading
               description={recommendationStrings.shelves.anchor.description}
               title={recommendationStrings.shelves.anchor.title}
+              trackClassName="!pb-[var(--space-1)]"
             >
               {anchorEntries.map((item) => renderShelfCard(item, "anchor"))}
             </MediaShelf>
@@ -1156,10 +1230,11 @@ export function RecommendationsFlow({
               id="recommendation-shelf-discovery"
             />
             <MediaShelf
-              className="mt-[var(--space-4)] scroll-mt-[calc(var(--desktop-navigation-height)+var(--space-4))]"
+              className="mt-[var(--space-2)] scroll-mt-[calc(var(--desktop-navigation-height)+var(--space-4))]"
               compactHeading
               description={recommendationStrings.shelves.discovery.description}
               title={recommendationStrings.shelves.discovery.title}
+              trackClassName="!pb-[var(--space-1)]"
             >
               {discoveryEntries.map((item) => renderShelfCard(item, "discovery"))}
             </MediaShelf>
@@ -1170,10 +1245,11 @@ export function RecommendationsFlow({
               id="recommendation-shelf-completed"
             />
             <MediaShelf
-              className="mt-[var(--space-4)] scroll-mt-[calc(var(--desktop-navigation-height)+var(--space-4))]"
+              className="mt-[var(--space-2)] scroll-mt-[calc(var(--desktop-navigation-height)+var(--space-4))]"
               compactHeading
               description={recommendationStrings.shelves.completed.description}
               title={recommendationStrings.shelves.completed.title}
+              trackClassName="!pb-[var(--space-1)]"
             >
               {completedEntries.map((item) => renderShelfCard(item, "completed"))}
             </MediaShelf>
@@ -1183,12 +1259,13 @@ export function RecommendationsFlow({
               className="scroll-mt-[calc(var(--desktop-navigation-height)+var(--space-4))]"
               id="recommendation-shelf-ranking"
             />
-            <MediaShelf
-              className="mt-[var(--space-4)] scroll-mt-[calc(var(--desktop-navigation-height)+var(--space-4))]"
+            <RankingShelf
+              className="mt-[var(--space-2)] scroll-mt-[calc(var(--desktop-navigation-height)+var(--space-4))]"
               compactHeading
               description={recommendationStrings.shelves.ranking.description}
-              listType="ordered"
+              rankingKind="personalized-ranking"
               title={recommendationStrings.shelves.ranking.title}
+              trackClassName="!pb-[var(--space-1)]"
             >
               {renderedEntries.slice(0, 10).map(({ entry, work }, index) => (
                 <RankingCard
@@ -1204,11 +1281,12 @@ export function RecommendationsFlow({
                   }
                   position={index + 1}
                   priority={featuredEntries.length === 0 && index === 0}
+                  rankingKind="personalized-ranking"
                   title={work.title}
                   workId={work.id}
                 />
               ))}
-            </MediaShelf>
+            </RankingShelf>
             <FeedbackImpactSummary
               completedCount={
                 records.filter((record) => record.readingState === "completed").length
@@ -1269,7 +1347,7 @@ export function RecommendationsFlow({
           )}
         </p>
       </main>
-      {plan === null ? null : <SiteFooter />}
+      {plan === null ? null : <SiteFooter className="[&>div]:py-[var(--space-5)]" />}
     </>
   );
 }

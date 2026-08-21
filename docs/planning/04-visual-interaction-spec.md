@@ -93,7 +93,7 @@
 
 ### 2.5 인터랙션 상태 (전 컴포넌트 공통)
 
-- hover(포인터만): outline/ghost는 `--surface-hover`, 주요 accent CTA는 `--accent-hover`, 표지는 lift(§6-D). `--motion-duration-feedback` 120ms는 허용된 transform/opacity에만 적용하고 색·배경·보더·그림자는 즉시 상태를 바꾼다.
+- hover(포인터만): outline/ghost는 `--surface-hover`, 주요 accent CTA는 `--accent-hover`, 탐색 카드는 border·background·shadow 또는 컴포넌트 고유 상태로 반응한다. 장식적인 generic Y축 lift는 전역에서 사용하지 않는다. 카드 확장·ranking accessory 이동·preview disclosure처럼 의미 있는 주 상태 전환만 spatial motion cue가 될 수 있다. `--motion-duration-feedback` 120ms는 허용된 transform/opacity에만 적용하고 색·배경·보더·그림자는 즉시 상태를 바꾼다.
 - active/press: scale 0.97, `--motion-duration-press` 80ms.
 - focus-visible: 2px accent ring + 2px offset. **마우스 클릭에는 링 미표시.**
 - disabled: opacity 0.45 + `cursor: not-allowed`. 색만으로 구분하지 않고 레이블 유지.
@@ -222,7 +222,7 @@
 | A. 1회성 reveal | 시그니처 모먼트 | 400–1800ms | `[0.2,0,0,1]` / spring | Motion | §5.1, §5.2 |
 | B. 페이지 진입 | 문맥 전환 인지 | 160ms | ease-out | CSS | 허용된 resolved content만 fade-up 8px. **exit 애니메이션 없음**(내비 블로킹 금지) |
 | C. 상태 전환 | 데이터 변화 표현 | 200–240ms | Motion spring (stiffness 350, damping 32) | Motion layout | 추천 카드 제거→백필, tray 재배치, Library 행 이동 |
-| D. 직접 조작 피드백 | 입력 확인 | 80–120ms | ease-out | CSS | press scale 0.97, 선택 체크 페이드, hover lift 2px |
+| D. 직접 조작 피드백 | 입력 확인 | 80–120ms | ease-out | CSS | press scale 0.97, 선택 체크 페이드. generic hover Y축 lift는 사용하지 않음 |
 | E. 값 전이 | 수치 변경 표현 | 240ms | ease-in-out | CSS transition | positive anchor 변경 뒤 FactorBar 분석값 갱신, 확신도 레이블 크로스페이드. 추천 adjustment는 FactorBar 입력이 아니다. |
 | F. 어텐션 | 오류·한도 안내 | 120ms×2 | linear | CSS | tray 흔들림(±4px), 오류 박스 등장. reduced-motion에서는 전체 `--warn` 보더를 정적으로 유지 |
 
@@ -230,8 +230,8 @@
 
 - **상시(무한 루프) 애니메이션 0개.** skeleton 펄스만 예외(로딩 중 한정).
 - 한 인터랙션이 동시에 발화하는 **합성 효과 family**는 최대 2개다(예: 카드 제거/layout + 백필). DNA의 여러 카드·막대 instance stagger는 하나의 A family로 센다.
-- transform/opacity 외 프로퍼티 애니메이션 금지(height 축소는 추천 카드 제거 시에만 허용, contain 처리). 단, desktop fine-pointer `ExpandableMediaCard`는 같은 카드의 공간 연속성을 유지하기 위해 실제 article `width`만 128~160px→300~360px로 240ms 보간할 수 있다. 이 예외는 높이 364px 고정, 최종 폭의 고정 content canvas, 동일 cover DOM, 고정 폭 identity rail, article 자체의 border/background/overflow clipping, reduced-motion 즉시 완료를 모두 만족해야 하며 `flex-basis`·텍스트/control 크기는 보간하지 않는다. color·background·border·box-shadow·font-weight 상태는 보간하지 않고 즉시 바꾼다.
-- 자동재생 캐러셀·스크롤 하이재킹·패럴랙스·커서 추적 효과 금지. 모바일에서 hover 의존 정보 금지(D의 hover lift는 장식이므로 무손실).
+- transform/opacity 외 프로퍼티 애니메이션 금지(height 축소는 추천 카드 제거 시에만 허용, contain 처리). 단, desktop fine-pointer `ExpandableMediaCard`는 같은 카드의 공간 연속성을 유지하기 위해 실제 article `width`만 220~250px→300~360px로 240ms 보간할 수 있다. 이 예외는 높이 212px 고정, 최종 폭의 고정 content canvas, 동일 cover DOM, article 자체의 border/background/overflow clipping, reduced-motion 즉시 완료를 모두 만족해야 하며 `flex-basis`·텍스트/control 크기는 보간하지 않는다. color·background·border·box-shadow·font-weight 상태는 보간하지 않고 즉시 바꾼다.
+- 자동재생 캐러셀·스크롤 하이재킹·패럴랙스·커서 추적 효과와 generic hover Y축 lift를 금지한다. 모바일에서 hover 의존 정보 금지.
 - B의 정확한 allowlist는 `/onboarding` Step 1 resolved content(첫 등록·add mode), reveal 요청으로 시작하지 않은 ordinary `/taste`, 유효한 `/works/[workId]` resolved Catalog 상세, `found`인 `/works/external` resolved 상세뿐이다. Catalog는 `workId`, external은 external ID가 바뀐 새 route mount에서 다시 실행할 수 있다.
 - B는 landing의 모든 상태, A로 시작한 `/taste`, `/recommendations`, `/library`, `/settings`, onboarding Step 2, loading·hydration/redirect guard·skeleton·empty·invalid-link·local-missing·corrupt·unavailable·error, dialog·modal·drawer·panel·sheet·feedback surface에 적용하지 않는다. query cleanup·local state 변경·onboarding step 변경·dialog open/close·BFCache resume도 replay trigger가 아니다.
 - B는 AppShell/global layout이 아니라 eligible resolved-content root에만 적용한다. CSS 기본값은 최종 위치에서 완전히 보이는 상태이며 keyframe은 `prefers-reduced-motion: no-preference` 안에만 둔다. 8px 이동 중에도 opacity 0으로 만들어 콘텐츠를 완전히 숨기지 않고, 실패 시 최종 상태가 남는다.

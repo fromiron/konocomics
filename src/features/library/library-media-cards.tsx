@@ -287,7 +287,7 @@ function LibraryPlannedCompactCard({
         type="button"
         variant="ghost"
       >
-        <span className="relative block w-full overflow-hidden rounded-[var(--radius-cover)] shadow-[var(--shadow-level-1)] transition-transform duration-[var(--motion-duration-feedback)] [@media(hover:hover)_and_(pointer:fine)_and_(prefers-reduced-motion:no-preference)]:group-hover/card:-translate-y-0.5 motion-reduce:transform-none motion-reduce:transition-none">
+        <span className="relative block w-full overflow-hidden rounded-[var(--radius-cover)] shadow-[var(--shadow-level-1)]">
           <RowMedia
             catalogCoverUrls={catalogCoverUrls}
             onCoverSettled={onCoverSettled}
@@ -393,7 +393,7 @@ export function LibraryFavoriteCard({
       >
         <RowMedia
           catalogCoverUrls={catalogCoverUrls}
-          className="shadow-[var(--shadow-level-1)] transition-transform duration-[var(--motion-duration-feedback)] [@media(hover:hover)_and_(pointer:fine)_and_(prefers-reduced-motion:no-preference)]:group-hover/card:-translate-y-0.5 motion-reduce:transform-none motion-reduce:transition-none"
+          className="shadow-[var(--shadow-level-1)]"
           onCoverSettled={onCoverSettled}
           requestedSize={400}
           row={row}

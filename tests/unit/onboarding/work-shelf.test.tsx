@@ -79,12 +79,12 @@ describe("WorkShelf roving focus", () => {
     expect(firstCover?.querySelector(".anchor-card__add")).not.toBeNull();
   });
 
-  it("removes selection scale and hover travel when reduced motion is requested", () => {
+  it("does not add generic hover travel to selection covers", () => {
     renderShelf();
     const cover = document.querySelector(".anchor-card__cover");
 
-    expect(cover?.classList.contains("motion-reduce:transform-none")).toBe(true);
-    expect(cover?.classList.contains("motion-reduce:transition-none")).toBe(true);
+    expect(cover?.className).not.toContain("translate-y");
+    expect(cover?.className).not.toContain("transition-transform");
   });
 
   it("syncs on focus and moves from the event card index with nearest scrolling", () => {

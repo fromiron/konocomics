@@ -2,7 +2,7 @@ import { readFile } from "node:fs/promises";
 
 import { expect, test, type Page } from "@playwright/test";
 
-import catalogJson from "@/data/generated/catalog-v1.json";
+import catalogJson from "@/data/generated/catalog-v1.json" with { type: "json" };
 
 type StoredUserWork = {
   workId: string;
@@ -1077,24 +1077,41 @@ test.describe("Slice 7 recommendation journeys", () => {
         .first();
       const firstCard = firstItem.locator("article");
       const firstCardLink = firstItem.getByRole("link", { name: /作品詳細を見る$/u });
-      const collapsedBox = await firstCard.boundingBox();
-
-      await firstCard.hover();
-      await page.waitForTimeout(150);
+      const secondCard = page
+        .getByRole("list", { name: "あなたのために選んだ作品" })
+        .locator("li[data-recommendation-work-id]")
+        .nth(1)
+        .locator("article");
+      await expect(firstCard).toHaveAttribute("data-expanded", "true");
+      await secondCard.getByRole("link").focus();
+      await expect(secondCard).toHaveAttribute("data-expanded", "true");
       await expect(firstCard).not.toHaveAttribute("data-expanded");
-      await expect(firstCard).toHaveAttribute("data-expanded", "true", { timeout: 250 });
+      await firstCardLink.focus();
+      await expect(firstCard).toHaveAttribute("data-expanded", "true");
+      await expect(secondCard).not.toHaveAttribute("data-expanded");
       await expect(firstCard.locator("[data-recommendation-evidence-summary]")).toBeVisible();
-      await expect(firstCard.locator("[data-recommendation-backdrop]")).toHaveCount(0);
-      await expect(firstCard.locator(".recommendation-card__cover")).toHaveCount(1);
-      const expandedBox = await firstCard.boundingBox();
-      expect(expandedBox?.width).toBeGreaterThanOrEqual(300);
-      expect(expandedBox?.width).toBeLessThanOrEqual(360);
-      expect(
-        Math.abs((expandedBox?.height ?? 0) - (collapsedBox?.height ?? 0)),
-      ).toBeLessThanOrEqual(1);
-
+      const initialExpandedBox = await firstCard.boundingBox();
+      expect(initialExpandedBox?.width).toBeGreaterThanOrEqual(300);
+      expect(initialExpandedBox?.width).toBeLessThanOrEqual(360);
+      await firstCard.hover();
       await page.mouse.move(0, 0);
       await expect(firstCard).not.toHaveAttribute("data-expanded");
+      const collapsedBox = await firstCard.boundingBox();
+      expect(collapsedBox?.width).toBeGreaterThanOrEqual(220);
+      expect(collapsedBox?.width).toBeLessThanOrEqual(250);
+      expect(
+        Math.abs((initialExpandedBox?.height ?? 0) - (collapsedBox?.height ?? 0)),
+      ).toBeLessThanOrEqual(1);
+
+      await secondCard.hover();
+      await page.waitForTimeout(150);
+      await expect(secondCard).not.toHaveAttribute("data-expanded");
+      await expect(secondCard).toHaveAttribute("data-expanded", "true", { timeout: 250 });
+      await expect(firstCard.locator("[data-recommendation-backdrop]")).toHaveCount(0);
+      await expect(firstCard.locator(".recommendation-card__cover")).toHaveCount(1);
+
+      await page.mouse.move(0, 0);
+      await expect(secondCard).not.toHaveAttribute("data-expanded");
       await page.evaluate(() => {
         if (document.activeElement instanceof HTMLElement) document.activeElement.blur();
       });
@@ -1134,7 +1151,7 @@ test.describe("Slice 7 recommendation journeys", () => {
         (shelfBox?.x ?? 0) + (shelfBox?.width ?? 0) + 1,
       );
       expect(expandedEdgeCoverBox?.x).toBeGreaterThan(expandedEdgeCopyBox?.x ?? Infinity);
-      expect(expandedEdgeCoverBox?.width).toBeLessThan(collapsedEdgeCoverBox?.width ?? 0);
+      expect(expandedEdgeCoverBox?.width).toBeGreaterThan(collapsedEdgeCoverBox?.width ?? 0);
       expect(
         Math.abs((expandedEdgeCardBox?.height ?? 0) - (collapsedEdgeCardBox?.height ?? 0)),
       ).toBeLessThanOrEqual(1);
@@ -1154,7 +1171,7 @@ test.describe("Slice 7 recommendation journeys", () => {
       const previewOpener = page
         .locator(`li[data-recommendation-work-id='${previewWorkId}']`)
         .getByRole("link");
-      const previewTitle = (await previewOpener.locator("h2").textContent())?.trim();
+      const previewTitle = (await previewOpener.locator("h3").textContent())?.trim();
       expect(previewTitle).toBeTruthy();
       const previewDialog = page.getByRole("dialog", { name: previewTitle });
 

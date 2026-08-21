@@ -1,7 +1,7 @@
 "use client";
 
 import { useNavigate } from "@tanstack/react-router";
-import { DatabaseBackupIcon, RotateCcwIcon } from "lucide-react";
+import { DatabaseBackupIcon } from "lucide-react";
 import { type ChangeEvent, useRef, useState } from "react";
 
 import {
@@ -229,7 +229,6 @@ export function DataSettings({
   return (
     <>
       <SettingsPanel
-        className="h-full"
         description={settingsStrings.data.description}
         headingId="settings-data-title"
         icon={DatabaseBackupIcon}
@@ -315,6 +314,24 @@ export function DataSettings({
               </div>
             )}
           </div>
+
+          <div className="grid gap-[var(--space-4)] border-t border-line-danger pt-[var(--space-5)] sm:grid-cols-[minmax(0,1fr)_auto] sm:items-center">
+            <div className="grid min-w-0 gap-[var(--space-content-tight)]">
+              <h3>{settingsStrings.data.delete.title}</h3>
+              <p className="text-text-muted [overflow-wrap:anywhere]">
+                {settingsStrings.data.delete.confirm.description}
+              </p>
+            </div>
+            <Button
+              className="w-full sm:w-fit"
+              disabled={busyAction !== null}
+              onClick={(event) => openDeleteDialog(event.currentTarget)}
+              type="button"
+              variant="destructive"
+            >
+              {settingsStrings.data.delete.action}
+            </Button>
+          </div>
         </div>
 
         {busyAction === "inspect" ? (
@@ -330,28 +347,6 @@ export function DataSettings({
             {error}
           </p>
         )}
-      </SettingsPanel>
-
-      <SettingsPanel
-        className="h-full"
-        description={settingsStrings.data.delete.description}
-        headingId="settings-delete-panel-title"
-        icon={RotateCcwIcon}
-        title={settingsStrings.data.delete.title}
-        tone="danger"
-      >
-        <div className="grid gap-[var(--space-4)] border-t border-line-danger pt-[var(--space-5)] sm:grid-cols-[minmax(0,1fr)_auto] sm:items-center">
-          <p className="text-text-muted">{settingsStrings.data.delete.confirm.description}</p>
-          <Button
-            className="w-full sm:w-fit"
-            disabled={busyAction !== null}
-            onClick={(event) => openDeleteDialog(event.currentTarget)}
-            type="button"
-            variant="destructive"
-          >
-            {settingsStrings.data.delete.action}
-          </Button>
-        </div>
       </SettingsPanel>
 
       {success === null ? null : (

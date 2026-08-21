@@ -146,7 +146,7 @@ export function SettingsFlow({
     </div>
   );
   const dataPanel = (
-    <div className="grid gap-[var(--space-6)] md:grid-cols-2 md:items-stretch">
+    <div className="grid gap-[var(--space-4)] md:gap-[var(--space-6)]">
       {localDataPanel}
       {dataSettingsPanel}
     </div>
@@ -161,15 +161,27 @@ export function SettingsFlow({
   return (
     <>
       <main className="mx-auto grid w-full max-w-[var(--layout-width-media)] gap-[var(--space-section)] px-[var(--layout-page-padding)] pt-[var(--layout-page-block-start)] pb-[calc(var(--layout-mobile-navigation-clearance)+var(--space-8))] md:px-[var(--space-8)] md:pt-[var(--space-6)] md:pb-[var(--space-section-large)]">
-        <header className="grid min-w-0 gap-[var(--space-4)] md:grid-cols-[minmax(0,1fr)_auto] md:items-center">
+        <header className="relative grid min-h-32 min-w-0 items-center gap-[var(--space-4)] overflow-hidden md:grid-cols-[minmax(0,1fr)_minmax(14rem,0.42fr)]">
           <div className="grid max-w-[var(--layout-width-reading)] gap-[var(--space-content-loose)]">
             <h1 className="text-[length:var(--text-page-title-size)] text-text-strong md:text-[length:var(--font-size-32)]">
               {settingsStrings.title}
             </h1>
             <p className="text-text-muted">{settingsStrings.description}</p>
           </div>
-          <span aria-hidden="true" className="hidden size-[calc(var(--space-8)*2)] md:block">
-            <CogIcon className="size-full text-accent opacity-45" strokeWidth={1.25} />
+          <span aria-hidden="true" className="relative hidden h-32 md:block">
+            <span className="absolute inset-y-0 right-0 w-56 bg-accent-soft opacity-45 [mask-image:radial-gradient(circle_at_center,black,transparent_70%)]" />
+            <CogIcon
+              className="absolute top-1/2 right-[var(--space-5)] size-28 -translate-y-1/2 text-accent opacity-70"
+              strokeWidth={1.15}
+            />
+            <CogIcon
+              className="absolute top-[var(--space-2)] right-32 size-12 text-accent opacity-35"
+              strokeWidth={1.2}
+            />
+            <CogIcon
+              className="absolute right-36 bottom-[var(--space-2)] size-9 text-accent opacity-25"
+              strokeWidth={1.2}
+            />
           </span>
         </header>
 
@@ -183,15 +195,13 @@ export function SettingsFlow({
         ) : null}
 
         {activeSection === undefined ? (
-          <div className="grid gap-[var(--space-6)] md:gap-[var(--space-8)]">
+          <div className="grid gap-[var(--space-4)] md:gap-[var(--space-6)]">
             {policySettingsPanel}
             <div className="grid gap-[var(--space-6)] md:grid-cols-2 md:items-stretch">
               {dnaPanel}
               {localDataPanel}
             </div>
-            <div className="grid gap-[var(--space-6)] md:grid-cols-2 md:items-stretch">
-              {dataSettingsPanel}
-            </div>
+            {dataSettingsPanel}
             {appPanel}
           </div>
         ) : (

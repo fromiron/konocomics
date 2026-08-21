@@ -54,7 +54,7 @@ afterEach(cleanup);
 
 describe("RecommendationShelfCard", () => {
   it.each(["discovery", "completed"] as const)(
-    "keeps the %s shelf card wide enough for its cover and text hierarchy",
+    "keeps the %s shelf card dense without losing its cover and text hierarchy",
     (variant) => {
       const { container } = render(
         <RecommendationShelfCard
@@ -72,9 +72,9 @@ describe("RecommendationShelfCard", () => {
         `[data-recommendation-shelf-card="${variant}"]`,
       );
       expect(card).toBeTruthy();
-      expect(card?.className).toContain("md:min-w-[13.5rem]");
+      expect(card?.className).toContain("md:min-w-[10.5rem]");
       expect(card?.className).not.toContain("md:max-w");
-      expect(card?.querySelector("a")?.className).toContain("md:grid-cols-[5rem_minmax(0,1fr)]");
+      expect(card?.querySelector("a")?.className).toContain("md:grid-cols-[3.5rem_minmax(0,1fr)]");
       expect(card?.querySelector("h3")?.className).toContain("font-bold");
       expect(card?.textContent).toContain("ふつう");
     },

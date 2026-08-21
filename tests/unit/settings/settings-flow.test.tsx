@@ -1,6 +1,6 @@
 // @vitest-environment jsdom
 
-import { cleanup, fireEvent, render, screen, waitFor } from "@testing-library/react";
+import { cleanup, fireEvent, render, screen, waitFor, within } from "@testing-library/react";
 import type { ReactNode } from "react";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 
@@ -124,6 +124,27 @@ afterEach(() => {
 });
 
 describe("SettingsFlow data ownership", () => {
+  it("keeps export, import, and deletion in one compact data group", () => {
+    render(<SettingsFlow />);
+
+    const dataHeading = screen.getByRole("heading", { name: settingsStrings.data.title });
+    const dataPanel = dataHeading.closest("section");
+    if (dataPanel === null) throw new Error("Missing data settings group");
+
+    expect(
+      within(dataPanel).getByRole("button", { name: settingsStrings.data.export.action }),
+    ).toBeTruthy();
+    expect(
+      within(dataPanel).getByLabelText(settingsStrings.data.import.select, { selector: "input" }),
+    ).toBeTruthy();
+    expect(
+      within(dataPanel).getByRole("button", { name: settingsStrings.data.delete.action }),
+    ).toBeTruthy();
+    expect(
+      screen.queryByRole("heading", { level: 2, name: settingsStrings.data.delete.title }),
+    ).toBeNull();
+  });
+
   it("discloses the conditional affiliate relationship without exposing configuration", () => {
     render(<SettingsFlow />);
 

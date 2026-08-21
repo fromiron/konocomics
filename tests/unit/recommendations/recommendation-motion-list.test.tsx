@@ -58,7 +58,12 @@ describe("RecommendationMotionList", () => {
       resolve(process.cwd(), "src/features/recommendations/recommendation-card.tsx"),
       "utf8",
     );
-    expect(cardSource).toContain("motion-reduce:transform-none");
+    expect(cardSource).toContain("<ExpandableMediaCard");
+    const expandableCardSource = readFileSync(
+      resolve(process.cwd(), "src/components/media/expandable-media-card.tsx"),
+      "utf8",
+    );
+    expect(expandableCardSource).toContain("prefersReducedMotion()");
   });
 
   it("uses local domMax layout motion only in the no-preference path", () => {

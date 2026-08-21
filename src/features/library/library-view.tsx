@@ -385,63 +385,98 @@ export function LibraryView({
             role={activeState === null ? "tabpanel" : undefined}
             tabIndex={activeState === null ? 0 : undefined}
           >
-            {shelves.map((shelf) => (
-              <section
-                aria-labelledby={activeState === null ? undefined : `library-tab-${shelf.state}`}
-                className="mt-[var(--space-6)]"
-                id={activeState === null ? undefined : `library-tabpanel-${shelf.state}`}
-                key={shelf.state}
-                role={activeState === null ? undefined : "tabpanel"}
-                tabIndex={activeState === null ? undefined : 0}
-              >
-                <header className="mb-[var(--space-4)] flex items-center justify-between gap-[var(--space-3)]">
-                  <h2 className="border-l-[length:var(--space-content-tight)] border-accent pl-[var(--space-3)] text-text-strong">
-                    {libraryStrings.tabs[shelf.state]}
-                  </h2>
-                  <span className="text-text-muted tabular-nums">
-                    {libraryStrings.summary.count(shelf.rows.length)}
-                  </span>
-                </header>
-                {shelf.rows.length === 0 ? (
-                  <div className="grid justify-items-start gap-[var(--space-3)] py-[var(--space-8)]">
-                    <p className="text-text-muted">{libraryStrings.tabEmpty[shelf.state]}</p>
-                  </div>
-                ) : (
-                  <ul
-                    className={cn(
-                      "m-0 grid list-none gap-[var(--space-4)] border-0 p-0",
-                      view === "list"
-                        ? "grid-cols-1"
-                        : shelf.state === "reading"
-                          ? "grid-cols-1 md:grid-cols-4"
-                          : "grid-cols-2 sm:grid-cols-3 md:grid-cols-6",
-                    )}
-                  >
-                    {shelf.rows.map((row) => (
-                      <li className="min-w-0" key={`${row.kind}:${row.id}`}>
-                        {view === "list" ? (
-                          <LibraryListCard
-                            catalogCoverUrls={catalogCoverUrls}
-                            onCoverSettled={notifyCatalogCoverSettled}
-                            onOpen={openRow}
-                            row={row}
-                            volumeCountByWorkId={volumeCountByWorkId}
-                          />
-                        ) : (
-                          <LibraryStateCard
-                            catalogCoverUrls={catalogCoverUrls}
-                            onCoverSettled={notifyCatalogCoverSettled}
-                            onOpen={openRow}
-                            row={row}
-                            volumeCountByWorkId={volumeCountByWorkId}
-                          />
-                        )}
-                      </li>
-                    ))}
-                  </ul>
-                )}
-              </section>
-            ))}
+            {shelves.map((shelf) =>
+              activeState === null && view === "grid" && shelf.rows.length > 0 ? (
+                <MediaShelf
+                  action={
+                    <span className="text-text-muted tabular-nums">
+                      {libraryStrings.summary.count(shelf.rows.length)}
+                    </span>
+                  }
+                  className="mt-[var(--space-6)]"
+                  compactHeading
+                  key={shelf.state}
+                  title={libraryStrings.tabs[shelf.state]}
+                  trackClassName="items-stretch"
+                >
+                  {shelf.rows.map((row) => (
+                    <div
+                      className={cn(
+                        "h-auto shrink-0 snap-start",
+                        shelf.state === "reading"
+                          ? "w-[min(78vw,17rem)] md:w-[calc((100%-(var(--space-content-loose)*3))/4)] md:min-w-[15rem]"
+                          : "w-[calc((100vw-(var(--layout-page-padding)*2)-(var(--space-content-loose)*2))/2.4)] max-w-40 md:w-[calc((100%-(var(--space-content-loose)*5))/6)] md:min-w-[8.5rem]",
+                      )}
+                      key={`${row.kind}:${row.id}`}
+                    >
+                      <LibraryStateCard
+                        catalogCoverUrls={catalogCoverUrls}
+                        onCoverSettled={notifyCatalogCoverSettled}
+                        onOpen={openRow}
+                        row={row}
+                        volumeCountByWorkId={volumeCountByWorkId}
+                      />
+                    </div>
+                  ))}
+                </MediaShelf>
+              ) : (
+                <section
+                  aria-labelledby={activeState === null ? undefined : `library-tab-${shelf.state}`}
+                  className="mt-[var(--space-6)]"
+                  id={activeState === null ? undefined : `library-tabpanel-${shelf.state}`}
+                  key={shelf.state}
+                  role={activeState === null ? undefined : "tabpanel"}
+                  tabIndex={activeState === null ? undefined : 0}
+                >
+                  <header className="mb-[var(--space-4)] flex items-center justify-between gap-[var(--space-3)]">
+                    <h2 className="border-l-[length:var(--space-content-tight)] border-accent pl-[var(--space-3)] text-text-strong">
+                      {libraryStrings.tabs[shelf.state]}
+                    </h2>
+                    <span className="text-text-muted tabular-nums">
+                      {libraryStrings.summary.count(shelf.rows.length)}
+                    </span>
+                  </header>
+                  {shelf.rows.length === 0 ? (
+                    <div className="grid justify-items-start gap-[var(--space-3)] py-[var(--space-8)]">
+                      <p className="text-text-muted">{libraryStrings.tabEmpty[shelf.state]}</p>
+                    </div>
+                  ) : (
+                    <ul
+                      className={cn(
+                        "m-0 grid list-none gap-[var(--space-4)] border-0 p-0",
+                        view === "list"
+                          ? "grid-cols-1"
+                          : shelf.state === "reading"
+                            ? "grid-cols-1 md:grid-cols-4"
+                            : "grid-cols-2 sm:grid-cols-3 md:grid-cols-6",
+                      )}
+                    >
+                      {shelf.rows.map((row) => (
+                        <li className="min-w-0" key={`${row.kind}:${row.id}`}>
+                          {view === "list" ? (
+                            <LibraryListCard
+                              catalogCoverUrls={catalogCoverUrls}
+                              onCoverSettled={notifyCatalogCoverSettled}
+                              onOpen={openRow}
+                              row={row}
+                              volumeCountByWorkId={volumeCountByWorkId}
+                            />
+                          ) : (
+                            <LibraryStateCard
+                              catalogCoverUrls={catalogCoverUrls}
+                              onCoverSettled={notifyCatalogCoverSettled}
+                              onOpen={openRow}
+                              row={row}
+                              volumeCountByWorkId={volumeCountByWorkId}
+                            />
+                          )}
+                        </li>
+                      ))}
+                    </ul>
+                  )}
+                </section>
+              ),
+            )}
           </div>
 
           {!showOverviewShelves || favoriteRows.length === 0 ? null : (

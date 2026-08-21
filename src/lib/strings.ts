@@ -238,10 +238,34 @@ export const mediaStrings = {
   previous: (title: string) => `${title}を前へ送る`,
   next: (title: string) => `${title}を次へ送る`,
   rank: (position: number) => `${String(position)}位`,
+  editorialRank: (position: number) => `おすすめ${String(position)}位`,
   topTenLabel: "TOP 10",
   topTenBadge: {
     top: "TOP",
     ten: "10",
+  },
+  catalogMetadata: {
+    compact: (genre: string | undefined, remainingGenres: number) =>
+      genre === undefined
+        ? ""
+        : remainingGenres > 0
+          ? `${genre} +${String(remainingGenres)}`
+          : genre,
+    standard: (genre: string | undefined, remainingGenres: number, status: string) =>
+      [
+        genre === undefined
+          ? undefined
+          : remainingGenres > 0
+            ? `${genre} ほか${String(remainingGenres)}`
+            : genre,
+        status,
+      ]
+        .filter((value) => value !== undefined)
+        .join(" · "),
+    accessible: (genres: readonly string[], status: string) =>
+      [genres.length === 0 ? undefined : `ジャンル ${genres.join("、")}`, `刊行状況 ${status}`]
+        .filter((value) => value !== undefined)
+        .join("。"),
   },
 } as const;
 
@@ -276,8 +300,9 @@ export const landingStrings = {
     description: "カタログから幅広い作品を紹介しています。個人向けの順位ではありません。",
   },
   ranking: {
-    title: "カタログ Top 10",
-    description: "作品を探し始めるための中立なカタログ順です。人気順位ではありません。",
+    title: "最初におすすめしたい Top 10",
+    description:
+      "はじめての方に出会ってほしい作品を、おすすめ順に紹介します。個人向けの順位ではありません。",
   },
   discovery: {
     title: "まだ知らない一冊へ",
@@ -639,6 +664,7 @@ export const recommendationStrings = {
     policyCount: (count: number) => (count === 0 ? "標準の並び順" : `${String(count)}件を反映`),
   },
   filters: {
+    heading: "絞り込み",
     genre: "ジャンル",
     allGenres: "すべて",
     shelf: "表示位置",
@@ -650,7 +676,7 @@ export const recommendationStrings = {
   shelves: {
     featured: {
       title: "あなたのために選んだ作品",
-      description: "推薦結果の順番を変えず、理由と読書アクションをまとめています。",
+      description: "上位の作品を選ぶと、あなたの好みとの接点と読書アクションを確認できます。",
     },
     anchor: {
       title: "好きな作品から広げる",
@@ -673,6 +699,13 @@ export const recommendationStrings = {
     open: (title: string) => `「${title}」をクイック表示`,
     description: "おすすめ理由と読書状態を、詳細へ移動せずに確認できます。",
     details: "作品詳細を見る",
+  },
+  showcase: {
+    rank: (position: number) => `おすすめ ${String(position)}位`,
+    select: (position: number, title: string) =>
+      `おすすめ ${String(position)}位「${title}」の理由を表示`,
+    points: "おすすめポイント",
+    close: "おすすめ詳細を閉じる",
   },
   feedbackSummary: {
     heading: "記録した内容を反映しています",

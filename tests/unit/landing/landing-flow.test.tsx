@@ -1,6 +1,6 @@
 // @vitest-environment jsdom
 
-import { cleanup, render, screen, waitFor } from "@testing-library/react";
+import { cleanup, render, screen, waitFor, within } from "@testing-library/react";
 import type { ReactNode } from "react";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 
@@ -17,8 +17,18 @@ const testState = vi.hoisted(() => ({
 }));
 
 vi.mock("@tanstack/react-router", () => ({
-  Link: ({ children, className, to }: { children: ReactNode; className?: string; to: string }) => (
-    <a className={className} href={to}>
+  Link: ({
+    children,
+    className,
+    "aria-label": ariaLabel,
+    to,
+  }: {
+    children: ReactNode;
+    className?: string;
+    "aria-label"?: string;
+    to: string;
+  }) => (
+    <a aria-label={ariaLabel} className={className} href={to}>
       {children}
     </a>
   ),
@@ -42,7 +52,13 @@ const works = Array.from({ length: 6 }, (_, index) =>
 const baseCatalog = createTestCatalog(works[0]);
 
 function renderLanding(showIntroduction = false) {
-  return render(<LandingFlow heroWorks={works.slice(0, 4)} showIntroduction={showIntroduction} />);
+  return render(
+    <LandingFlow
+      editorialRankingWorks={works.slice(0, 4)}
+      heroWorks={works.slice(0, 4)}
+      showIntroduction={showIntroduction}
+    />,
+  );
 }
 
 beforeEach(() => {
@@ -92,6 +108,10 @@ describe("LandingFlow profile routing", () => {
     expect(screen.getByRole("heading", { level: 1, name: landingStrings.tagline })).toBeTruthy();
     expect(screen.getByRole("link", { name: landingStrings.cta }).getAttribute("href")).toBe(
       "/onboarding",
+    );
+    const editorialRanking = screen.getByRole("list", { name: landingStrings.ranking.title });
+    expect(within(editorialRanking).getAllByRole("link", { name: /^おすすめ\d+位/u })).toHaveLength(
+      4,
     );
     expect(
       screen.getByRole("link", { name: landingStrings.footer.settings }).getAttribute("href"),

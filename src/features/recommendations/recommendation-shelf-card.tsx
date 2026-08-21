@@ -39,15 +39,15 @@ export function RecommendationShelfCard({
   const leadReason = leadSentence?.text ?? recommendationStrings.reasonUnavailable;
   const widthClass =
     variant === "anchor"
-      ? "w-[calc((100vw-(var(--layout-page-padding)*2)-(var(--space-content-loose)*2))/2.4)] max-w-44 md:w-24 md:max-w-24"
+      ? "w-[calc((100vw-(var(--layout-page-padding)*2)-(var(--space-content-loose)*2))/2.4)] max-w-44 sm:w-32 md:w-[calc((100%-var(--space-content-loose)*7)/8)] md:min-w-24 md:max-w-28"
       : variant === "discovery"
-        ? "w-[calc((100vw-(var(--layout-page-padding)*2)-(var(--space-content-loose)*2))/2.4)] max-w-44 md:w-[calc((100%-var(--space-content-loose)*4)/5)] md:min-w-[13.5rem]"
-        : "w-[calc((100vw-(var(--layout-page-padding)*2)-(var(--space-content-loose)*2))/2.4)] max-w-44 md:w-[calc((100%-var(--space-content-loose)*4)/5)] md:min-w-[13.5rem]";
+        ? "w-[calc((100vw-(var(--layout-page-padding)*2)-(var(--space-content-loose)*2))/1.8)] max-w-72 sm:w-64 md:w-[calc((100%-var(--space-content-loose)*4)/5)] md:min-w-[10.5rem]"
+        : "w-[calc((100vw-(var(--layout-page-padding)*2)-(var(--space-content-loose)*2))/1.8)] max-w-72 sm:w-64 md:w-[calc((100%-var(--space-content-loose)*4)/5)] md:min-w-[10.5rem]";
 
   return (
     <article
       className={cn(
-        "shrink-0 snap-start overflow-hidden rounded-[var(--radius-card)] border border-line bg-surface-1",
+        "shrink-0 snap-start overflow-hidden rounded-[var(--radius-card)] border border-line/80 bg-surface-1 transition-colors duration-[var(--motion-duration-feedback)] hover:border-line-accent motion-reduce:transition-none",
         widthClass,
       )}
       data-lead-anchor-work-ids={
@@ -58,19 +58,22 @@ export function RecommendationShelfCard({
       <Link
         aria-label={mediaStrings.openDetails(work.title)}
         className={cn(
-          "group/shelf-card grid min-h-[var(--control-min-size)] gap-[var(--space-content-tight)] p-[var(--space-content-tight)]",
-          variant === "anchor" && "md:relative md:block md:p-0",
+          "group/shelf-card grid min-h-[var(--control-min-size)] gap-[var(--space-2)] p-[var(--space-2)] focus-visible:outline-2 focus-visible:outline-offset-[-2px] focus-visible:outline-ring",
+          variant === "anchor" && "relative !block !p-0",
           variant === "discovery" &&
-            "md:grid-cols-[5rem_minmax(0,1fr)] md:gap-[var(--space-2)] md:p-[var(--space-2)]",
+            "md:grid-cols-[3.5rem_minmax(0,1fr)] md:gap-[var(--space-2)] md:p-[var(--space-2)]",
           variant === "completed" &&
-            "md:grid-cols-[5rem_minmax(0,1fr)] md:gap-[var(--space-2)] md:p-[var(--space-2)]",
+            "md:grid-cols-[3.5rem_minmax(0,1fr)] md:gap-[var(--space-2)] md:p-[var(--space-2)]",
         )}
         params={{ workId: work.id }}
         preload={false}
         to="/works/$workId"
       >
         <CoverImage
-          className="w-full transition-transform duration-[var(--motion-duration-feedback)] motion-reduce:transform-none motion-reduce:transition-none [@media(hover:hover)_and_(pointer:fine)_and_(prefers-reduced-motion:no-preference)]:group-hover/shelf-card:-translate-y-0.5 [@media(hover:hover)_and_(pointer:fine)]:group-hover/shelf-card:shadow-[var(--shadow-raised)]"
+          className={cn(
+            "w-full overflow-hidden rounded-[var(--radius-cover)] border border-line/60",
+            "aspect-[30/43]",
+          )}
           coverUrl={coverUrl}
           creators={work.creators}
           priority={priority}
@@ -79,31 +82,26 @@ export function RecommendationShelfCard({
         />
         <div
           className={cn(
-            "grid min-w-0 content-start gap-[var(--space-content-tight)]",
+            "grid min-w-0 content-start gap-[var(--space-1)]",
             variant === "anchor" &&
-              "md:absolute md:inset-x-0 md:bottom-0 md:bg-surface-overlay md:p-[var(--space-2)]",
+              "absolute inset-x-0 bottom-0 z-10 bg-gradient-to-t from-canvas via-canvas/85 to-transparent p-[var(--space-2)] pt-[var(--space-6)]",
           )}
         >
-          <h3
-            className={cn(
-              "line-clamp-2 text-[length:var(--font-size-14)] leading-tight font-bold text-text-strong",
-              variant === "anchor" && "md:line-clamp-1",
-            )}
-          >
+          <h3 className="line-clamp-2 text-[length:var(--font-size-14)] leading-tight font-bold text-text-strong transition-colors group-hover/shelf-card:text-accent">
             {work.title}
           </h3>
           {variant === "completed" ? (
-            <p className="hidden line-clamp-1 text-[length:var(--text-caption-size)] text-text-muted md:block">
+            <p className="hidden text-[length:var(--text-caption-size)] font-medium text-text-muted md:line-clamp-1">
               {recommendationStrings.workStatus.completed}
               <span aria-hidden="true"> · </span>
               {recommendationStrings.volumeCount(volumeCount)}
             </p>
           ) : null}
-          <p className="hidden text-[length:var(--text-caption-size)] leading-tight font-bold text-accent md:block">
+          <p className="text-[length:var(--text-caption-size)] leading-tight font-bold text-accent">
             {explanationLexicon.confidenceLabels[entry.confidenceLevel]}
           </p>
           {variant === "discovery" ? (
-            <p className="hidden line-clamp-2 border-t border-line pt-[var(--space-content-tight)] text-[length:var(--text-caption-size)] leading-[1.45] text-text md:block">
+            <p className="hidden border-l-2 border-accent/50 pl-[var(--space-2)] text-[length:var(--text-caption-size)] leading-[1.4] text-text-muted md:line-clamp-2">
               {leadReason}
             </p>
           ) : null}

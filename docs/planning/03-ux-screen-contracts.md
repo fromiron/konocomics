@@ -53,7 +53,7 @@ CTA 버튼 1개: **「好きなマンガから始める」** → /onboarding.
 1. 실제 Catalog 표지의 hero backdrop/mosaic + konomi 2톤 로고와 태그라인 「好みから見つける、次のマンガ。」
 2. CTA와 데이터가 브라우저에만 저장된다는 짧은 privacy benefit
 3. 개인화라고 주장하지 않는 Catalog showcase Shelf
-4. 중립 제목의 Top 10 ranking(`<ol>`). 검증된 popularity 데이터가 없으므로 「今週の人気」 같은 문구는 쓰지 않는다.
+4. 첫 방문자를 위해 명시적으로 큐레이션한 editorial Top 10 ranking(`<ol>`). 시장 popularity나 개인화 결과로 주장하지 않고 「今週の人気」 같은 문구는 쓰지 않는다. 1위 card는 Top 10 crown accessory의 기본 spotlight이며, 다른 card의 fine-pointer hover 또는 keyboard focus 동안 accessory가 해당 순위로 이동하고 이탈 시 1위로 돌아온다. generic card Y축 lift는 적용하지 않는다.
 5. discovery Shelf와 3단 설명: 選ぶ → 好みが見える → 理由つきでおすすめ
 6. 실제 route만 연결한 footer + `Supported by Rakuten Developers`
 
@@ -66,8 +66,8 @@ CTA 버튼 1개: **「好きなマンガから始める」** → /onboarding.
 
 ### 반응형
 
-- mobile: compact hero의 첫 viewport에 로고+태그라인+CTA를 두고 Shelf는 2.4장 이상 보여 overflow를 암시한다. bottom navigation은 없다.
-- desktop: hero 2열 — 좌측 텍스트+CTA, 우측 실제 세로 표지 기반 backdrop/mosaic. 아래에는 1200px media container의 Shelf/ranking을 둔다.
+- mobile: compact hero의 첫 viewport에 로고+태그라인+CTA를 두고 discovery Shelf는 2.4장을 보여 overflow를 암시한다. editorial Top 10은 96px 폭을 사용한다. bottom navigation은 없다.
+- desktop: hero 2열 — 좌측 텍스트+CTA, 우측 실제 세로 표지 기반 backdrop/mosaic. 아래에는 1200px media container의 Shelf/ranking을 둔다. editorial Top 10은 112px 폭으로 부분 노출+가로 탐색을 만들고, discovery `cover-overlay`는 152px 폭으로 7장을 한 화면에 둔다.
 
 ### 인터랙션·모션
 
@@ -288,7 +288,7 @@ Shelf grouping은 presentation-only selector다. main Shelf 사이에는 work ID
 ### Expandable card·Quick Preview
 
 - 카드에는 원본 비율 표지, 제목/저자/메타, 실제 `contributions[]` 기반 lead reason, 정성 confidence와 reading action을 표시한다.
-- desktop fine pointer는 200ms hover intent 뒤 128~160px card를 300~360px로 확장하고 keyboard focus는 즉시 확장한다. Shelf 높이는 미리 예약하며 텍스트/control을 scale하지 않는다. 실제 article 경계만 240ms 동안 확장하고 내부는 최종 폭의 고정 canvas를 사용한다. 표지·제목은 같은 폭의 identity rail에 남겨 제목/설명이 가변 폭에 따라 가로로 재배치되지 않게 하며, 왼쪽 확장에서는 설명과 identity rail의 좌우만 반전한다.
+- desktop fine pointer의 첫 진입은 1위 card를 300~360px 확장 상태로 보여 주고, 같은 viewport에 220~250px의 접힌 2·3위 card가 함께 보이게 한다. 접힌 card는 200ms hover intent 뒤 확장하고 keyboard focus는 즉시 확장한다. Shelf 높이는 212px로 미리 예약하며 텍스트/control을 scale하지 않는다. 실제 article 경계만 240ms 동안 확장하고 내부는 최종 폭의 고정 canvas를 사용한다. 표지·제목은 같은 identity 영역에 남기고 backdrop만 동일 표지를 blur/cover로 재사용하며, 왼쪽 확장에서는 card가 shelf 밖으로 넘치지 않게 scroll 위치를 보정한다.
 - touch에서는 card를 확장하지 않고 Quick Preview sheet를 연다. desktop preview는 Base UI Dialog wrapper를 사용한다.
 - Quick Preview는 cover, lead reasons, caution, 정성 confidence, reading action, 상세 링크만 가진다. 닫으면 opener focus를 복원한다. 대상 work ID만 `?preview=<workId>`로 복원할 수 있고 animation/focus state는 local state다.
 
@@ -320,11 +320,12 @@ Shelf grouping은 presentation-only selector다. main Shelf 사이에는 work ID
 
 ### 모션
 
-카드 제거/백필은 해당 Shelf owner의 C만 사용한다. expandable card는 실제 article 경계를 240ms signature easing으로 확장하는 `04` §6의 한정 예외를 사용하고, 동일 표지와 고정 identity rail의 block-axis 위치만 함께 보간한다. 상세 설명과 action label은 최종 canvas에서 80ms 뒤 opacity로 나타나며 가변 폭에 맞춘 text reflow는 노출하지 않는다. reduced-motion에서는 확장과 `layout`을 모두 즉시 반영한다. hover intent는 network 요청 없이 local detail을 열고, hover lift는 120ms D만 허용한다. Quick Preview는 진입 keyframe 없이 최종 상태로 열린다. 추천 화면에는 B 페이지 진입 모션을 적용하지 않는다.
+카드 제거/백필은 해당 Shelf owner의 C만 사용한다. expandable card는 실제 article 경계를 240ms signature easing으로 확장하는 `04` §6의 한정 예외를 사용하고, 동일 표지와 고정 identity rail의 block-axis 위치만 함께 보간한다. 상세 설명과 action label은 최종 canvas에서 80ms 뒤 opacity로 나타나며 가변 폭에 맞춘 text reflow는 노출하지 않는다. reduced-motion에서는 확장과 `layout`을 모두 즉시 반영한다. hover intent는 network 요청 없이 local detail을 열고, generic hover Y축 lift는 사용하지 않는다. Quick Preview는 진입 keyframe 없이 최종 상태로 열린다. 추천 화면에는 B 페이지 진입 모션을 적용하지 않는다.
 
 ### 수용 기준
 
 - [ ] 동일 프로필 입력에서 새로고침해도 목록·순서가 동일하다.
+- [ ] desktop 첫 진입에서 1위 card가 확장되어 있고 2·3위 접힌 card와 선택된 상세 panel이 함께 보인다.
 - [ ] `読んだ` 처리한 작품이 이후 어떤 추천에도 다시 나타나지 않는다.
 - [ ] 각 카드의 이유가 해당 카드 contribution 데이터와 일치한다(E2E에서 data-attribute 대조).
 - [ ] 카드 제거→후속 시트→백필이 키보드 포커스를 잃지 않는다(시트가 열리면 내부로, 닫히면 제거된 카드 다음 카드로 복귀).

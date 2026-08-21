@@ -1,4 +1,5 @@
 import { Link } from "@tanstack/react-router";
+import { BookOpenTextIcon, InfoIcon, SlidersHorizontalIcon, SparklesIcon } from "lucide-react";
 
 import { recommendationStrings } from "@/lib/strings";
 
@@ -15,50 +16,60 @@ export function RecommendationCriteriaSummary({
 }: RecommendationCriteriaSummaryProps) {
   const metrics = [
     {
+      icon: BookOpenTextIcon,
       label: recommendationStrings.criteria.records,
       value: recommendationStrings.criteria.recordCount(recordCount),
     },
     {
+      icon: SparklesIcon,
       label: recommendationStrings.criteria.preferences,
       value: preferenceSummary,
     },
     {
+      icon: SlidersHorizontalIcon,
       label: recommendationStrings.criteria.policies,
       value: recommendationStrings.criteria.policyCount(activePolicyCount),
     },
   ] as const;
 
   return (
-    <section className="mb-[var(--space-3)] overflow-hidden rounded-[var(--radius-card)] border border-line bg-surface-1 md:grid md:grid-cols-[minmax(13rem,0.9fr)_minmax(0,2.1fr)]">
-      <header className="grid justify-items-start gap-[var(--space-content-tight)] border-b border-line px-[var(--space-3)] py-[var(--space-content)] md:border-r md:border-b-0 md:py-[var(--space-2)]">
-        <div className="grid gap-[var(--space-content-tight)]">
-          <h2 className="whitespace-nowrap text-[length:var(--text-subheading-size)]">
-            {recommendationStrings.criteria.heading}
-          </h2>
-          <p className="sr-only text-[length:var(--text-caption-size)] text-text-muted">
-            {recommendationStrings.criteria.description}
-          </p>
+    <section className="mb-[var(--space-3)] overflow-hidden rounded-[var(--radius-card)] border border-line/80 bg-surface-1">
+      <header className="flex min-h-[var(--control-min-size)] min-w-0 items-center justify-between gap-[var(--space-3)] border-b border-line/80 px-[var(--space-3)] py-0">
+        <div className="flex min-w-0 items-center gap-[var(--space-2)]">
+          <InfoIcon aria-hidden="true" className="size-4 shrink-0 text-accent" />
+          <div className="flex min-w-0 items-baseline gap-[var(--space-2)]">
+            <h2 className="whitespace-nowrap text-[length:var(--font-size-16)] font-bold text-text-strong">
+              {recommendationStrings.criteria.heading}
+            </h2>
+            <p className="hidden truncate text-[length:var(--text-caption-size)] text-text-muted md:block">
+              {recommendationStrings.criteria.description}
+            </p>
+          </div>
         </div>
         <Link
-          className="inline-flex min-h-[var(--control-min-size)] items-center text-[length:var(--text-caption-size)] font-bold text-accent"
+          className="inline-flex min-h-[var(--control-min-size)] shrink-0 items-center gap-[var(--space-1)] px-[var(--space-2)] text-[length:var(--text-caption-size)] font-bold text-accent underline-offset-[var(--space-content-tight)] hover:underline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-ring"
           preload={false}
           to="/taste"
         >
-          {recommendationStrings.tasteSummary.link}
+          <span>{recommendationStrings.tasteSummary.link}</span>
+          <span aria-hidden="true">→</span>
         </Link>
       </header>
-      <dl className="m-0 grid grid-cols-3">
-        {metrics.map((metric) => (
+      <dl className="m-0 grid grid-cols-3 divide-x divide-line/70">
+        {metrics.map(({ icon: Icon, label, value }) => (
           <div
-            className="grid min-w-0 gap-[var(--space-content-tight)] border-r border-line px-[var(--space-content)] py-[var(--space-3)] last:border-r-0 md:py-[var(--space-2)]"
-            key={metric.label}
+            className="grid min-h-[var(--control-min-size)] min-w-0 grid-cols-1 items-center gap-[var(--space-2)] px-[var(--space-2)] py-0 sm:grid-cols-[auto_minmax(0,1fr)] md:px-[var(--space-4)]"
+            key={label}
           >
-            <dt className="text-[length:var(--text-caption-size)] text-text-muted">
-              {metric.label}
-            </dt>
-            <dd className="m-0 line-clamp-2 font-bold text-text-strong md:line-clamp-1">
-              {metric.value}
-            </dd>
+            <Icon aria-hidden="true" className="hidden size-4 shrink-0 text-accent sm:block" />
+            <div className="grid min-w-0 gap-px">
+              <dt className="truncate text-[length:var(--text-caption-size)] font-medium text-text-muted">
+                {label}
+              </dt>
+              <dd className="m-0 line-clamp-1 text-[length:var(--font-size-12)] font-bold text-text-strong md:text-[length:var(--font-size-14)]">
+                {value}
+              </dd>
+            </div>
           </div>
         ))}
       </dl>

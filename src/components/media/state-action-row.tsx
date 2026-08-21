@@ -29,20 +29,19 @@ export function StateActionRow({
   const prepareKeyboardRemoval = (event: KeyboardEvent<HTMLButtonElement>) => {
     if (!busy && (event.key === "Enter" || event.key === " ")) onRemovalIntent?.();
   };
-  const compactButton = compact
-    ? "!h-auto min-h-[var(--control-min-size)] !rounded-none border-0 px-[var(--space-1)] py-[var(--space-content-tight)] text-[length:var(--font-size-12)] leading-tight font-bold whitespace-nowrap"
-    : "min-h-[var(--control-min-size)]";
-  const secondaryButton = compact
-    ? `${compactButton} border-l border-line bg-surface-1`
-    : compactButton;
-  const iconClassName = compact ? "size-3.5 shrink-0" : "size-4 shrink-0";
+  const baseButtonClass =
+    "flex min-h-[var(--control-min-size)] min-w-0 items-center justify-center gap-[var(--space-1)] rounded-[var(--radius-cover)] border text-[length:var(--font-size-12)] font-bold";
+  const iconClassName = compact ? "size-2.5 shrink-0" : "size-4 shrink-0";
+  const compactLabelClassName = compact
+    ? "hidden text-[length:var(--text-caption-size)] leading-tight whitespace-nowrap [@media(min-width:768px)_and_(hover:hover)_and_(pointer:fine)]:inline"
+    : undefined;
 
   return (
     <div
       className={cn(
         compact
-          ? "grid grid-cols-3 border-t border-line"
-          : "grid grid-cols-3 gap-[var(--space-content)]",
+          ? "grid grid-cols-3 items-center gap-[var(--space-content-tight)] border-t border-line/70 bg-canvas/70 p-[var(--space-content-tight)] [@media(min-width:768px)_and_(hover:hover)_and_(pointer:fine)]:grid-cols-[minmax(0,1.35fr)_minmax(0,0.9fr)_minmax(0,1.05fr)] [@media(min-width:768px)_and_(hover:hover)_and_(pointer:fine)]:gap-[var(--space-2)]"
+          : "grid grid-cols-[minmax(0,1fr)_auto_auto] gap-[var(--space-2)]",
         className,
       )}
     >
@@ -55,20 +54,19 @@ export function StateActionRow({
             : undefined
         }
         aria-pressed={planned}
-        className={compact ? `${compactButton} bg-accent text-on-accent` : compactButton}
+        className={cn(
+          baseButtonClass,
+          compact
+            ? "px-[var(--space-content-tight)] py-1 [@media(min-width:768px)_and_(hover:hover)_and_(pointer:fine)]:px-[var(--space-2)]"
+            : "px-[var(--space-3)] py-1.5",
+          "border-accent bg-accent !text-on-accent hover:bg-accent-hover",
+        )}
         busy={busy}
         onClick={onPlanned}
         type="button"
       >
         <BookmarkIcon aria-hidden="true" className={cn(iconClassName, planned && "fill-current")} />
-        <span
-          className={
-            compact
-              ? "hidden text-[length:var(--font-size-12)] leading-tight whitespace-nowrap [@media(min-width:768px)_and_(hover:hover)_and_(pointer:fine)]:group-data-[expanded]/card:inline"
-              : undefined
-          }
-          data-expandable-reveal={compact || undefined}
-        >
+        <span className={compactLabelClassName} data-expandable-reveal={compact || undefined}>
           {compact && planned
             ? recommendationStrings.actions.plannedConfirmation
             : recommendationStrings.actions.planned}
@@ -76,7 +74,13 @@ export function StateActionRow({
       </Button>
       <Button
         aria-label={compact ? recommendationStrings.actions.completed : undefined}
-        className={secondaryButton}
+        className={cn(
+          baseButtonClass,
+          compact
+            ? "px-[var(--space-content-tight)] py-1 [@media(min-width:768px)_and_(hover:hover)_and_(pointer:fine)]:px-[var(--space-2)]"
+            : "px-[var(--space-3)] py-1.5",
+          "border-line/80 bg-transparent text-text-muted hover:border-line-accent-subtle hover:bg-surface-2 hover:text-text-strong",
+        )}
         data-recommendation-action="completed"
         busy={busy}
         onClick={() => {
@@ -89,20 +93,19 @@ export function StateActionRow({
         variant="outline"
       >
         <CircleCheckIcon aria-hidden="true" className={iconClassName} />
-        <span
-          className={
-            compact
-              ? "hidden text-[length:var(--font-size-12)] leading-tight whitespace-nowrap [@media(min-width:768px)_and_(hover:hover)_and_(pointer:fine)]:group-data-[expanded]/card:inline"
-              : undefined
-          }
-          data-expandable-reveal={compact || undefined}
-        >
+        <span className={compactLabelClassName} data-expandable-reveal={compact || undefined}>
           {recommendationStrings.actions.completed}
         </span>
       </Button>
       <Button
         aria-label={compact ? recommendationStrings.actions.hidden : undefined}
-        className={secondaryButton}
+        className={cn(
+          baseButtonClass,
+          compact
+            ? "px-[var(--space-content-tight)] py-1 [@media(min-width:768px)_and_(hover:hover)_and_(pointer:fine)]:px-[var(--space-2)]"
+            : "px-[var(--space-3)] py-1.5",
+          "border-line/80 bg-transparent text-text-muted hover:border-warn hover:bg-surface-danger-soft hover:text-warn",
+        )}
         data-recommendation-action="hidden"
         busy={busy}
         onClick={() => {
@@ -115,14 +118,7 @@ export function StateActionRow({
         variant="outline"
       >
         <CircleXIcon aria-hidden="true" className={iconClassName} />
-        <span
-          className={
-            compact
-              ? "hidden text-[length:var(--font-size-12)] leading-tight whitespace-nowrap [@media(min-width:768px)_and_(hover:hover)_and_(pointer:fine)]:group-data-[expanded]/card:inline"
-              : undefined
-          }
-          data-expandable-reveal={compact || undefined}
-        >
+        <span className={compactLabelClassName} data-expandable-reveal={compact || undefined}>
           {recommendationStrings.actions.hidden}
         </span>
       </Button>

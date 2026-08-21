@@ -258,7 +258,7 @@ function WorkPreviewList({
                     to="/works/$workId"
                   >
                     <CoverImage
-                      className="w-full transition-transform duration-[var(--motion-duration-feedback)] [@media(hover:hover)_and_(pointer:fine)_and_(prefers-reduced-motion:no-preference)]:group-hover/preview:-translate-y-0.5 motion-reduce:transition-none"
+                      className="w-full"
                       coverUrl={coverUrls.get(workId)}
                       creators={work.creators}
                       decorative

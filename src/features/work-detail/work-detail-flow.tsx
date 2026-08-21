@@ -407,8 +407,9 @@ function CompatibilitySection({
             <ReasonChips
               caution={state.explanation.caution}
               cautionLabel={workDetailStrings.compatibility.caution}
-              className="[&_li]:p-[var(--space-2)] [&_li]:text-[length:var(--text-caption-size)] [&_li]:leading-[1.45]"
+              className="[&_li]:text-[length:var(--text-caption-size)] [&_li]:leading-[1.45]"
               emptyText={recommendationStrings.reasonUnavailable}
+              presentation="feature-cards"
               reasons={state.explanation.positiveReasons}
             />
           </div>
@@ -715,10 +716,10 @@ function WorkDetailContent({ catalog, work }: Readonly<{ catalog: CatalogV1; wor
             state={compatibility}
           />
 
-          <div className="grid gap-[var(--space-4)] md:grid-cols-2">
+          <div className="grid overflow-hidden rounded-[var(--radius-card)] border border-line bg-surface-overlay md:grid-cols-[minmax(0,1.08fr)_minmax(0,0.92fr)]">
             <section
               aria-labelledby="work-synopsis-heading"
-              className="grid content-start gap-[var(--space-3)] rounded-[var(--radius-card)] border border-line bg-surface-overlay p-[var(--space-4)]"
+              className="grid content-start gap-[var(--space-3)] p-[var(--space-4)]"
             >
               <h2 id="work-synopsis-heading">{workDetailStrings.synopsis.heading}</h2>
               <p>{metadata?.itemCaption ?? workDetailStrings.synopsis.unavailable}</p>
@@ -726,7 +727,7 @@ function WorkDetailContent({ catalog, work }: Readonly<{ catalog: CatalogV1; wor
 
             <section
               aria-labelledby="work-factors-heading"
-              className="grid content-start gap-[var(--space-3)] rounded-[var(--radius-card)] border border-line bg-surface-overlay p-[var(--space-4)] md:self-start"
+              className="grid content-start gap-[var(--space-3)] border-t border-line bg-surface-1 p-[var(--space-4)] md:border-t-0 md:border-l"
             >
               <h2 id="work-factors-heading">{workDetailStrings.factors.heading}</h2>
               {factorIds.length === 0 ? (
