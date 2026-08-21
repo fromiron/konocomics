@@ -1419,7 +1419,7 @@ Japanese copy, responsive card dimensions, and interaction contract.
   320 px card before clipping, and the foreground right edge reaches the card
   boundary. The foreground mask computes to
   `linear-gradient(to left, black 48%, transparent 100%)` with `box-shadow:
-  none`.
+none`.
 - Interaction and accessibility: featured state, link naming, real image
   semantics, and the global contain/no-crop cover contract are unchanged.
 
@@ -1428,7 +1428,7 @@ Japanese copy, responsive card dimensions, and interaction contract.
 - Fresh browser reload: no console errors; no `TEST` text or `placehold.co`
   image source in the showcase cards.
 - Live computed style: backdrop `object-fit: cover`; foreground `object-fit:
-  cover`; widened left mask present; foreground shadow `none`.
+cover`; widened left mask present; foreground shadow `none`.
 - `pnpm vitest run tests/unit/components/media-cards.test.tsx`: 7 passed.
 - `pnpm vitest run tests/unit/components/cover-image.test.tsx`: 8 passed.
 - `pnpm typecheck`: passed.

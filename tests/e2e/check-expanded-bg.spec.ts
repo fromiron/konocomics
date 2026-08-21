@@ -2,7 +2,7 @@ import { test } from "@playwright/test";
 test("expanded bg fills", async ({ page }) => {
   await page.goto("/?landing=1");
   await page.waitForTimeout(800);
-  const secondCard = page.locator("[data-card-presentation=\"showcase\"]").nth(1);
+  const secondCard = page.locator('[data-card-presentation="showcase"]').nth(1);
   await secondCard.hover();
   await page.waitForTimeout(500);
   const cardBox = await secondCard.boundingBox();

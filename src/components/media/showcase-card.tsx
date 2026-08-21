@@ -40,9 +40,7 @@ export function ShowcaseCard({
     <article
       className={cn(
         "group/showcase-card relative isolate w-[calc((100vw-(var(--layout-page-padding)*2)-(var(--space-content-loose)*2))/2.4)] shrink-0 snap-start transition-[width,border-color,box-shadow] duration-[var(--motion-duration-value)] ease-[var(--motion-ease-direct)] motion-reduce:transition-none [@media(hover:hover)_and_(pointer:fine)]:hover:z-10",
-        featured
-          ? "z-[1] md:w-[min(86vw,20rem)]"
-          : "md:w-[min(74vw,14rem)]",
+        featured ? "z-[1] md:w-[min(86vw,20rem)]" : "md:w-[min(74vw,14rem)]",
         className,
       )}
       data-card-presentation="showcase"
@@ -117,9 +115,7 @@ export function ShowcaseCard({
             aria-hidden="true"
             className={cn(
               "absolute top-[var(--space-2)] left-[var(--space-2)] z-10 inline-flex size-7 items-center justify-center rounded-[var(--radius-cover)] bg-accent font-display text-[length:var(--font-size-14)] leading-none font-bold text-on-accent shadow-[0_2px_10px_color-mix(in_oklch,var(--accent)_28%,transparent)] ring-1 ring-white/10 md:size-8 md:text-[length:var(--font-size-16)]",
-              featured
-                ? "ring-accent-hover"
-                : "ring-white/0 group-hover/showcase:ring-white/10",
+              featured ? "ring-accent-hover" : "ring-white/0 group-hover/showcase:ring-white/10",
             )}
           >
             {ordinal}
@@ -128,7 +124,9 @@ export function ShowcaseCard({
         <div
           className={cn(
             "absolute inset-x-0 bottom-0 z-10 grid gap-[var(--space-content-tight)] p-[var(--space-3)]",
-            featured ? "max-w-[78%] md:max-w-[66%] md:p-[var(--space-4)]" : "max-w-[82%] md:max-w-[72%]",
+            featured
+              ? "max-w-[78%] md:max-w-[66%] md:p-[var(--space-4)]"
+              : "max-w-[82%] md:max-w-[72%]",
           )}
         >
           <h3
@@ -146,8 +144,13 @@ export function ShowcaseCard({
           </p>
           {metadata === undefined ? null : (
             <div className="inline-flex max-w-full items-center gap-[var(--space-content-tight)] text-[length:var(--text-caption-size)] leading-tight">
-              <span className="inline-flex size-[3px] shrink-0 rounded-full bg-accent/70" aria-hidden="true" />
-              <span className="line-clamp-1 min-w-0 font-medium tracking-wide text-text/90">{metadata}</span>
+              <span
+                className="inline-flex size-[3px] shrink-0 rounded-full bg-accent/70"
+                aria-hidden="true"
+              />
+              <span className="line-clamp-1 min-w-0 font-medium tracking-wide text-text/90">
+                {metadata}
+              </span>
             </div>
           )}
         </div>
