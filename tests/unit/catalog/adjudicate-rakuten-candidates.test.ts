@@ -134,6 +134,10 @@ describe("Rakuten candidate adjudication", () => {
     expect(canonicalTitleIdentity("チェーザレ", "別作者")).toEqual({
       titleKey: "ちぇーざれ",
     });
+    expect(canonicalTitleIdentity("機械仕掛けの愛１", "業田 良家")).toMatchObject({
+      titleKey: "機械仕掛けの愛",
+      canonicalTitle: "機械仕掛けの愛",
+    });
   });
 
   it("groups a shortened publisher title with its full canonical work", () => {

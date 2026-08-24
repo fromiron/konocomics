@@ -48,6 +48,12 @@ const CANONICAL_TITLE_RULES = [
     creator: "惣領冬実",
     evidenceUrl: "https://www.kodansha.co.jp/titles/1000002705",
   },
+  {
+    aliasTitle: "機械仕掛けの愛１",
+    canonicalTitle: "機械仕掛けの愛",
+    creator: "業田良家",
+    evidenceUrl: "https://shogakukan-comic.jp/book?isbn=9784091846440",
+  },
 ] as const;
 
 const SOURCE_REGISTRY_HEADERS = [
