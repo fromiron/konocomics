@@ -1,6 +1,6 @@
 // @vitest-environment jsdom
 
-import { cleanup, fireEvent, render, screen, waitFor } from "@testing-library/react";
+import { cleanup, render, screen, waitFor } from "@testing-library/react";
 import type { ReactNode } from "react";
 import type * as ReactDomModule from "react-dom";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
@@ -9,7 +9,8 @@ import type { UserWorkRecord } from "@/domain/profile/types";
 import { AppShell } from "@/components/nav/app-shell";
 import { catalogIdentityFromCatalog } from "@/features/catalog/catalog-identity";
 import { CatalogIdentityProvider } from "@/features/catalog/catalog-provider";
-import { catalogStrings, navigationStrings } from "@/lib/strings";
+import { catalogAssetUrl } from "@/lib/catalog-asset";
+import { navigationStrings } from "@/lib/strings";
 import { createTestCatalog, createTestWork } from "../../helpers/catalog";
 
 const testState = vi.hoisted(() => ({
@@ -77,13 +78,6 @@ const profile = works.map((work): UserWorkRecord => ({
   updatedAt: "2026-08-15T00:00:00.000Z",
 }));
 
-function responseWith(value: unknown, ok = true): Response {
-  return new Response(JSON.stringify(value), {
-    status: ok ? 200 : 503,
-    headers: { "Content-Type": "application/json" },
-  });
-}
-
 function renderShell() {
   return render(
     <CatalogIdentityProvider identity={identity}>
@@ -111,15 +105,13 @@ beforeEach(() => {
   testState.navigate.mockReset();
   testState.preload.mockReset();
   testState.userWorks = undefined;
-  vi.stubGlobal("fetch", vi.fn());
 });
 
 afterEach(() => {
   cleanup();
-  vi.unstubAllGlobals();
 });
 
-describe("AppShell recommendation Catalog boundary", () => {
+describe("AppShell recommendation guard", () => {
   it("redirects first-run state without rendering the protected shell", async () => {
     testState.userWorks = [];
 
@@ -132,25 +124,17 @@ describe("AppShell recommendation Catalog boundary", () => {
     );
   });
 
-  it("hides the complete shell on load/failure and restores it only after a successful retry", async () => {
+  it("preloads the recommendation Catalog while the route owns its provider", async () => {
     testState.userWorks = profile;
-    const fetchMock = vi.mocked(fetch);
-    fetchMock
-      .mockResolvedValueOnce(responseWith({}, false))
-      .mockResolvedValueOnce(responseWith(catalog));
 
     renderShell();
 
-    expect(await screen.findByText(catalogStrings.loading)).toBeTruthy();
-    expectFatalOnlyDom();
-    expect(await screen.findByRole("heading", { name: catalogStrings.loadError })).toBeTruthy();
-    expectFatalOnlyDom();
-
-    fireEvent.click(screen.getByRole("button", { name: catalogStrings.retry }));
-    expect(screen.getByText(catalogStrings.loading)).toBeTruthy();
-    expectFatalOnlyDom();
-
     expect(await screen.findByText("recommendations-flow")).toBeTruthy();
+    expect(testState.preload).toHaveBeenCalledWith(catalogAssetUrl(identity.catalogVersion), {
+      as: "fetch",
+      crossOrigin: "anonymous",
+      fetchPriority: "high",
+    });
     expect(screen.getByText(navigationStrings.skipLink)).toBeTruthy();
     expect(
       screen.getByText(

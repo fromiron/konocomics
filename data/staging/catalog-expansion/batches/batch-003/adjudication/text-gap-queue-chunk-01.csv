@@ -1,0 +1,6 @@
+position,workId,canonicalTitle,narrativeKnown,toneKnown,artKnown,themeCount,narrativeNeeded,toneNeeded,artNeeded,searchRoute,status,hardBlocker
+2,work-048a39f42bd18cb0823e,大東京トイボックス,4,2,3,2,0,3,0,"entry-edition official text or authorized internal preview for three additional Tone axes; Art closed by bounded recovery",text-evidence-recovery,false
+3,work-04f35b4c99514d50231d,デトロイト・メタル・シティ,2,3,3,2,2,2,0,"entry-edition official text or authorized internal preview for Narrative and Tone gaps; Art closed by bounded recovery",text-evidence-recovery,false
+5,work-07faf4019b12de5e877d,私の少年,1,4,3,0,3,1,0,"entry-edition official text for Narrative Tone and Theme without inferring romance from age gap; Art closed by bounded recovery",text-evidence-recovery,false
+7,work-171b262b7ad72871f795,ドリフターズ,4,3,3,3,0,2,0,"entry-edition official text or authorized internal preview for two additional Tone axes; Art closed by bounded recovery",text-evidence-recovery,false
+9,work-197089286d30de82f9e9,多聞くん今どっち!?,3,5,3,2,1,0,0,"official publisher internal preview for one additional recurring Narrative mechanism",official-preview-recovery,false

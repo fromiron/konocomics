@@ -1,0 +1,10 @@
+position,workId,canonicalTitle,narrativeKnown,toneKnown,narrativeNeeded,toneNeeded,searchRoute,status,hardBlocker
+11,work-29d4300ad9d3358fb67a,外天楼,4,3,0,2,"complete-volume publisher editorial or rights-holder-approved commentary for recurring character or tone observations",evidence-search,false
+12,work-3dfaf6231e21133620c6,忍者と極道,3,5,1,0,"official volume 1-3 pages or readable preview for one repeated progression problem-solving or strategy method",evidence-search,false
+14,work-40b8c35b1d8c9a90144c,orange,0,0,4,5,"official Shueisha original contents or Shueisha-to-Futabasha unchanged-content bridge; only then scoped review",evidence-search,false
+15,work-4c784fc78dfd9b139c3f,正反対な君と僕,1,5,3,0,"official entry sequence or editorial for directly observed repeated Narrative methods or sustained absence",evidence-search,false
+16,work-518d7ed42dd9253679c3,墨攻,5,3,0,2,"bridged original-edition preview or scoped criticism for recurring subjective tone distinct from siege events",evidence-search,false
+17,work-53e54c95f637b66c4fb2,がんばれ元気,3,5,1,0,"official entry episode sequence or scoped commentary for bout analysis constraint handling or repeated planning",evidence-search,false
+18,work-5915d6d7601377fcc75f,赤髪の白雪姫,3,6,1,0,"official volume-2 preview or approved editorial showing observation inference and resolution of the illness case",evidence-search,false
+19,work-5b4dc4e6e966436b2990,人形芝居,3,4,1,1,"exact volumes 1-3 preview or scoped criticism for a repeated solution method and one additional distinct Tone axis",evidence-search,false
+20,work-5b9a3ec60ac5fc90f444,魔法使いの嫁,3,6,1,0,"official volumes 1-3 preview or approved editorial showing repeated skill acquisition or a concrete constraint-analysis loop",evidence-search,false

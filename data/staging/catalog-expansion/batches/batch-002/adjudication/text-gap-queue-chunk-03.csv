@@ -1,0 +1,11 @@
+position,workId,canonicalTitle,narrativeKnown,toneKnown,narrativeNeeded,toneNeeded,searchRoute,status,hardBlocker
+21,work-5cafd57db6b870a71a05,機動警察パトレイバー,0,0,4,5,"official wide-edition contents bridge or wide-volume internal preview; only then scoped reviews",evidence-search,false
+22,work-5e20323e014d6d390aaf,あさひなぐ,3,4,1,1,"official entry previews or editorial for one repeated Narrative method and one sustained tone observation; then scoped independent reviews",evidence-search,false
+23,work-5ebbc9bede841d2faf7b,高台家の人々,2,4,2,1,"official entry preview and author/editor interview for repeated Narrative structures and one sustained tone observation; then scoped independent reviews",evidence-search,false
+24,work-6f849a8e785deee3d5dc,怪物事変,3,3,1,2,"official entry preview or editorial for one repeated Narrative method and recurring tone distinct from supernatural danger; then scoped independent reviews",evidence-search,false
+25,work-71e824df2e6bc2125294,SAKAMOTO DAYS,3,4,1,1,"official entry preview or editorial for one repeated Narrative method and one sustained tone observation; then scoped independent reviews",evidence-search,false
+26,work-7975d62582a89492a35f,図書館の大魔術師,3,5,1,0,"official entry preview or editorial for one repeated Narrative solution strategy or reveal structure",evidence-search,false
+27,work-7d259c925286a9f91310,聖☆おにいさん,2,2,2,3,"official entry preview and multiple independent scoped reviews for concrete recurring narrative and tone observations",evidence-search,false
+28,work-8147aefccc365b0ecb4d,黒執事,3,3,1,2,"official entry preview for investigation method and recurring tone; then multiple independent scoped reviews",evidence-search,false
+29,work-838a6f0ad2d1ef487588,信長協奏曲,3,3,1,2,"official entry preview or editorial for repeated planning or problem method and recurring tone; then scoped independent reviews",evidence-search,false
+30,work-83fc3c4366e51b35b821,風と木の詩,0,0,4,5,"official original-to-bunko contents bridge or original-edition preview; then scoped safety and independent review",evidence-search,false

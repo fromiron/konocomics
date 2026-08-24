@@ -4,8 +4,8 @@ import { ExperimentUsageError } from "./errors";
 
 export const DEFAULT_EXPERIMENT_PATHS = {
   profilesDirectory: "data/fixtures/experiment-profiles",
-  catalog: "data/generated/catalog-v1.json",
-  context: "data/generated/recommendation-context-v1.json",
+  catalog: "data/generated/recommendation-profile-catalog-v1.json",
+  context: "data/generated/recommendation-profile-context-v1.json",
   output: "-",
 } as const;
 

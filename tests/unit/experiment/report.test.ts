@@ -10,8 +10,8 @@ import {
 } from "@/domain/profile/experiment-schema";
 import { explanationLexicon, experimentReportStrings } from "@/lib/strings";
 import { createTestAxes, createTestWork } from "../../helpers/catalog";
-import generatedCatalog from "../../../data/generated/catalog-v1.json";
-import generatedContext from "../../../data/generated/recommendation-context-v1.json";
+import generatedCatalog from "../../../data/generated/recommendation-profile-catalog-v1.json";
+import generatedContext from "../../../data/generated/recommendation-profile-context-v1.json";
 import { recommendationContextFileSchema } from "../../../scripts/experiment/inputs";
 import { loadExperimentProfiles } from "../../../scripts/experiment/profiles";
 import {

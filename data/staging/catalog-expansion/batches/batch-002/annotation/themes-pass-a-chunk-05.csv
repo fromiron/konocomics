@@ -1,0 +1,14 @@
+workId,themeId,centrality,confidence,evidenceId
+work-ccf0ddff9c6410c4de14,school,1,0.74,ev-batch-002-a-work-ccf0ddff9c6410c4de14
+work-ccf0ddff9c6410c4de14,sportsCompetition,2,0.94,ev-batch-002-a-work-ccf0ddff9c6410c4de14
+work-daf65c6f2cce3e076dfa,workplace,1,0.72,ev-batch-002-a-work-daf65c6f2cce3e076dfa
+work-db80d94709b62aa8823f,combat,2,0.90,ev-batch-002-a-work-db80d94709b62aa8823f
+work-db80d94709b62aa8823f,war,2,0.86,ev-batch-002-a-work-db80d94709b62aa8823f
+work-db80d94709b62aa8823f,politics,1,0.76,ev-batch-002-a-work-db80d94709b62aa8823f
+work-db80d94709b62aa8823f,survival,2,0.92,ev-batch-002-a-work-db80d94709b62aa8823f
+work-db80d94709b62aa8823f,historicalReconstruction,2,0.90,ev-batch-002-a-work-db80d94709b62aa8823f
+work-ef1bdac46a0956a87f7f,school,1,0.74,ev-batch-002-a-work-ef1bdac46a0956a87f7f
+work-f5847c45d30753150364,survival,2,0.88,ev-batch-002-a-work-f5847c45d30753150364
+work-f5847c45d30753150364,revenge,1,0.82,ev-batch-002-a-work-f5847c45d30753150364
+work-fabc7f5d853e361acaf3,combat,2,0.92,ev-batch-002-a-work-fabc7f5d853e361acaf3
+work-fabc7f5d853e361acaf3,martialArts,2,0.90,ev-batch-002-a-work-fabc7f5d853e361acaf3

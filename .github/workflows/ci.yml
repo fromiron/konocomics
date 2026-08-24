@@ -33,13 +33,31 @@ jobs:
         run: pnpm test
       - name: Validate catalog
         run: pnpm catalog:validate
+      - name: Validate catalog expansion staging and Gold Set
+        run: |
+          pnpm catalog:expansion:validate
+          pnpm catalog:promotion:registry --check
+      - name: Verify catalog expansion research derivations
+        run: |
+          pnpm catalog:expansion:cache-rakuten --check
+          pnpm catalog:expansion:adjudicate-rakuten --check
+          pnpm catalog:promotion:pilot --check
+          pnpm catalog:promotion:batch-002-overlay --check
+          pnpm catalog:promotion:apply-batch-002 --check
+          pnpm catalog:promotion:batch-003-overlay --check
+          pnpm catalog:promotion:apply-batch-003 --check
       - name: Verify generated catalog and context are current
         run: |
           pnpm catalog:build
+          pnpm catalog:expansion:promote-library --check
           git diff --exit-code -- \
             data/generated/catalog-v1.json \
             data/generated/recommendation-context-v1.json \
+            data/generated/recommendation-profile-catalog-v1.json \
+            data/generated/recommendation-profile-context-v1.json \
+            src/data/generated/catalog-identity-v1.json \
             src/data/generated/catalog-v1.json \
+            src/data/generated/landing-v1.json \
             src/data/generated/recommendation-context-v1.json
       - name: Build
         run: pnpm build

@@ -3,8 +3,8 @@
 import { useEffect, useMemo, useRef, useState, type FormEvent, type ReactNode } from "react";
 import { z } from "zod";
 
-import catalogInput from "../../src/data/generated/catalog-v1.json";
-import recommendationContextInput from "../../src/data/generated/recommendation-context-v1.json";
+import catalogInput from "../../data/generated/recommendation-profile-catalog-v1.json";
+import recommendationContextInput from "../../data/generated/recommendation-profile-context-v1.json";
 import { catalogIdSchema, catalogV1Schema } from "../../src/domain/catalog/schema";
 import type { Work } from "../../src/domain/catalog/types";
 import {

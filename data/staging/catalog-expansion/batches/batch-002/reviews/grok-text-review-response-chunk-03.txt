@@ -1,0 +1,154 @@
+# Batch 002 chunk 03 independent non-Art review
+
+## 1. Execution attestation
+
+- Actual model: Cursor Grok 4.6 High (`cursor-grok-4.6-high`)
+- Non-fast: yes
+- Completion: normal; full access to all nine frozen inputs; no timeout, rate-limit, or degraded output
+- `reviewedByHuman=false`
+- Art abstention: Art values were not inspected or judged; no pixel access; Art axes are omitted
+
+Independence order was followed: dictionary, annotation guide, general request, frozen manifest, and research packet first; independent conclusions for positions 21–30; Pass A files only after that. Gold Factor, Theme, Genre, and recommendation-context rows were not inspected. Works outside positions 21–30 were not inspected. Award/list membership was treated as selection provenance only.
+
+## 2. Verified input hashes
+
+| Path | SHA-256 |
+| --- | --- |
+| `docs/factors/factor-dictionary.md` | `a9c29a853a108aca1b9bb8d5d71a3e7d5d583303691c0b35cc6424c1e45ee8be` |
+| `docs/factors/annotation-guide.md` | `f7dd1ec55d97bf9200fcec92ce270e7745a0d3aa4fe98a40c746fc56b6a777b3` |
+| `data/staging/catalog-expansion/batches/batch-002/annotation-review-adjudication-request.md` | `ca34d38bc87e58603014142a0abfd6fb886cbdbeb7e917414f2874cd387fdeb2` |
+| `data/staging/catalog-expansion/batches/batch-002/frozen-work-set.csv` | `80888903a34792a5b079d153c86493bc0263cb56bf5bb5a0c0528dd309cf61f6` |
+| `data/staging/catalog-expansion/batches/batch-002/research/chunk-03.md` | `2e31ccaf1d9202ea253e4339ec155405b5c234c15410b2272c2c591a83e368f7` |
+| `data/staging/catalog-expansion/batches/batch-002/annotation/pass-a-text-chunk-03.csv` | `89cf6b2b4d9ebb3e62965f13bf75f51eed210f8fb124dd6a32af10a26090e018` |
+| `data/staging/catalog-expansion/batches/batch-002/annotation/genres-pass-a-chunk-03.csv` | `9825c2dd5173dd676b68c3993c6e86438ab6016f943753098312d63302f57799` |
+| `data/staging/catalog-expansion/batches/batch-002/annotation/themes-pass-a-chunk-03.csv` | `7977448ab8682323d0fe7538ed096cb5f9a206fc4cd5e93d2cf90200252ea6a7` |
+| `data/staging/catalog-expansion/batches/batch-002/annotation/pass-a-text-chunk-03.md` | `0e4245dbbb9e31d1b7e080fe50d5d21df328b2fe28e9f1542aa1e3eec272d3da` |
+
+All nine paths were fully readable inside the frozen bundle. No `INPUT_MISMATCH`.
+
+## 3. Independent 13-axis matrix
+
+| workId | progression | problemSolving | strategy | pacing | mysteryReveal | worldBuilding | characterArcWeight | relationshipStructure | comedy | darkness | mentalStress | romance | emotionalWarmth |
+| --- | --- | --- | --- | --- | --- | --- | --- | --- | --- | --- | --- | --- | --- |
+| work-5cafd57db6b870a71a05 | U | U | U | U | U | U | U | U | U | U | U | U | U |
+| work-5e20323e014d6d390aaf | 3 | U | U | 3 | U | 2 | 4 | 2 | U | U | 2 | U | 2 |
+| work-5ebbc9bede841d2faf7b | U | U | U | 3 | U | 2 | 4 | 2 | U | U | 2 | 4 | U |
+| work-6f849a8e785deee3d5dc | U | U | U | 3 | 2 | 3 | 2 | 2 | U | 2 | U | U | U |
+| work-71e824df2e6bc2125294 | U | U | U | 3 | 1 | 2 | 3 | 2 | U | 2 | U | U | 2 |
+| work-7975d62582a89492a35f | 4 | U | U | 3 | U | 4 | 4 | 2 | U | 2 | 2 | U | 2 |
+| work-7d259c925286a9f91310 | U | U | U | 1 | U | 2 | U | 2 | U | U | U | U | 2 |
+| work-8147aefccc365b0ecb4d | U | U | U | 3 | 2 | 2 | 2 | 2 | U | 2 | U | U | U |
+| work-838a6f0ad2d1ef487588 | U | U | U | 4 | 2 | 3 | 3 | 2 | U | 2 | U | U | U |
+| work-83fc3c4366e51b35b821 | U | U | U | U | U | U | U | U | U | U | U | U | U |
+
+Edition-to-entry bridges for `機動警察パトレイバー` and `風と木の詩` remain unproven in-packet; later-edition prose was not used for entry Factors. Unmentioned axes stay `U`; known `0` was not assigned from silence.
+
+## 4. Genre conclusion
+
+| workId | genres |
+| --- | --- |
+| work-5cafd57db6b870a71a05 |  |
+| work-5e20323e014d6d390aaf | sports |
+| work-5ebbc9bede841d2faf7b | fantasy;romance |
+| work-6f849a8e785deee3d5dc | fantasy;mystery |
+| work-71e824df2e6bc2125294 | action |
+| work-7975d62582a89492a35f | fantasy |
+| work-7d259c925286a9f91310 | fantasy;comedy;sliceOfLife |
+| work-8147aefccc365b0ecb4d | historical;mystery |
+| work-838a6f0ad2d1ef487588 | historical |
+| work-83fc3c4366e51b35b821 |  |
+
+## 5. Theme conclusion
+
+| workId | themes |
+| --- | --- |
+| work-5cafd57db6b870a71a05 |  |
+| work-5e20323e014d6d390aaf | martialArts:2;school:2;sportsCompetition:2 |
+| work-5ebbc9bede841d2faf7b | workplace:1 |
+| work-6f849a8e785deee3d5dc | investigation:2;workplace:2 |
+| work-71e824df2e6bc2125294 | combat:2;tournament:1 |
+| work-7975d62582a89492a35f | adventure:2;workplace:2 |
+| work-7d259c925286a9f91310 |  |
+| work-8147aefccc365b0ecb4d | combat:1;investigation:2;workplace:2 |
+| work-838a6f0ad2d1ef487588 | war:1;politics:2;timeTravel:2;historicalReconstruction:2 |
+| work-83fc3c4366e51b35b821 |  |
+
+## 6. Pass A comparison
+
+- `work-5cafd57db6b870a71a05`: none
+- `work-5e20323e014d6d390aaf` `progression` 4 → 3. https://e-comi.shogakukan.co.jp/books/091838990000d0000000 — dictionary 4 is repeated clear growth/acquisition/mastery rewards; the official 1–3권 sequence is one continuous training arc (join, one qualification, camp), between gradual growth (2) and 4.
+- `work-5e20323e014d6d390aaf` `relationshipStructure` 3 → 2. https://e-comi.shogakukan.co.jp/books/091837980000d0000000 — annotation-guide boundary: a fixed club team plus core supporting cast is 2, not a widening-network 3.
+- `work-5ebbc9bede841d2faf7b` `relationshipStructure` 3 → 2. https://www.shueisha.co.jp/books/items/contents.html?jdcn=08845109845109315501 — core pair plus siblings/mother is two leads and key supporting cast (2).
+- `work-6f849a8e785deee3d5dc` `relationshipStructure` 3 → 2. https://www.shueisha.co.jp/books/items/contents.html?jdcn=08881169881096315501 — the three-person assignment group is a fixed party (2).
+- `work-6f849a8e785deee3d5dc` Genre `fantasy;mystery;horror` → `fantasy;mystery`. https://www.shueisha.co.jp/books/items/contents.html?isbn=978-4-08-881096-6 — packet forbids converting livestock deaths or creature names into a sustained horror mode; fantasy+mystery already cover the supernatural inquiry.
+- `work-71e824df2e6bc2125294` `relationshipStructure` 3 → 2. https://www.shueisha.co.jp/books/items/contents.html?jdcn=08882657882657315501 — shop/family/Shin is a fixed core party (2); incoming assassins are antagonists, not relationship-structure expansion.
+- `work-71e824df2e6bc2125294` Theme add `tournament:1`. https://www.shueisha.co.jp/books/items/contents.html?isbn=978-4-08-882763-6 — one official volume-3 survival-game contest is episode-level centrality 1, not a repeating core.
+- `work-7975d62582a89492a35f` `relationshipStructure` 3 → 2. https://www.kodansha.co.jp/comic/products/0000315327 — travel companion and exam team remain a forming party around one protagonist (2).
+- `work-7d259c925286a9f91310`: none
+- `work-8147aefccc365b0ecb4d` `problemSolving` 2 → U. https://magazine.jp.square-enix.com/top/comics/detail/9784757520639/ — dictionary 2 needs observed mix of analysis and direct action; the packet does not expose method, only that an inquiry exists.
+- `work-8147aefccc365b0ecb4d` `mysteryReveal` 3 → 2. https://magazine.jp.square-enix.com/top/comics/detail/9784757521926/ — a culprit reveal is documented, which is secrets/twists present (2); clue cadence for 3/4 is not in the official copy.
+- `work-8147aefccc365b0ecb4d` `darkness` 3 → 2. https://magazine.jp.square-enix.com/top/comics/detail/9784757520639/ — serial murder establishes serious danger (2), not that cruelty/bleakness is the entry center (4) or the unmeasured midpoint 3.
+- `work-838a6f0ad2d1ef487588` `relationshipStructure` 3 → 2. https://e-comi.shogakukan.co.jp/books/091221000000d0000000 — identity substitution plus Dosan and period figures remains protagonist-led, not a multi-relation reward structure.
+- `work-838a6f0ad2d1ef487588` Genre `historical;scienceFiction` → `historical`. https://e-comi.shogakukan.co.jp/books/091221000000d0000000 — packet limitation: time-travel setup alone does not set Genre; `timeTravel` already carries that mechanic as Theme.
+- `work-83fc3c4366e51b35b821`: none
+
+## 7. Identity / safety / representative ISBN
+
+| workId | title | ISBN | identity | safety | ISBN mapping | verdict | evidence URL |
+| --- | --- | --- | --- | --- | --- | --- | --- |
+| work-5cafd57db6b870a71a05 | 機動警察パトレイバー | 9784091247216 | same work; wide vol. 1 vs standard 1–3권 unmapped | no in-packet safety flag | unresolved | NEEDS_ADJUDICATION | https://books.rakuten.co.jp/rb/739903/ |
+| work-5e20323e014d6d390aaf | あさひなぐ | 9784091837981 | title/ISBN align with official 1–3권 | no in-packet safety flag | aligned | PASS | https://e-comi.shogakukan.co.jp/books/091837980000d0000000 |
+| work-5ebbc9bede841d2faf7b | 高台家の人々 | 9784088451091 | title/ISBN align with official 1–3권 | no in-packet safety flag | aligned | PASS | https://www.shueisha.co.jp/books/items/contents.html?jdcn=08845109845109315501 |
+| work-6f849a8e785deee3d5dc | 怪物事変 | 9784088810966 | title/ISBN align with official 1–3권 | no in-packet safety flag | aligned | PASS | https://www.shueisha.co.jp/books/items/contents.html?isbn=978-4-08-881096-6 |
+| work-71e824df2e6bc2125294 | SAKAMOTO DAYS | 9784088826578 | title/ISBN align with official 1–3권 | no in-packet safety flag | aligned | PASS | https://www.shueisha.co.jp/books/items/contents.html?jdcn=08882657882657315501 |
+| work-7975d62582a89492a35f | 図書館の大魔術師 | 9784065112434 | title/ISBN align with official 1–3권 | no in-packet safety flag | aligned | PASS | https://www.kodansha.co.jp/comic/products/0000115710 |
+| work-7d259c925286a9f91310 | 聖☆おにいさん | 9784063726626 | title/ISBN align with official 1–3권 | no in-packet safety flag | aligned | PASS | https://www.kodansha.co.jp/comic/products/0000013790 |
+| work-8147aefccc365b0ecb4d | 黒執事 | 9784757519633 | title/ISBN align with official 1–3권 | no in-packet safety flag | aligned | PASS | https://magazine.jp.square-enix.com/top/comics/detail/9784757519633/ |
+| work-838a6f0ad2d1ef487588 | 信長協奏曲 | 9784091221001 | title/ISBN align with official 1–3권 | no in-packet safety flag | aligned | PASS | https://e-comi.shogakukan.co.jp/books/091221000000d0000000 |
+| work-83fc3c4366e51b35b821 | 風と木の詩 | 9784091302212 | same work; original vol. 1 vs bunko 1–3권 unmapped | bunko 2–3권 intimate and child-manipulation events need entry-scope safety review | unresolved | NEEDS_ADJUDICATION | https://books.rakuten.co.jp/rb/379720/ |
+
+Canonical titles in the frozen manifest contain no `『` or `』`.
+
+## 8. Per-work final review outcome
+
+| workId | outcome |
+| --- | --- |
+| work-5cafd57db6b870a71a05 | needs-adjudication |
+| work-5e20323e014d6d390aaf | verified |
+| work-5ebbc9bede841d2faf7b | verified |
+| work-6f849a8e785deee3d5dc | verified |
+| work-71e824df2e6bc2125294 | verified |
+| work-7975d62582a89492a35f | verified |
+| work-7d259c925286a9f91310 | verified |
+| work-8147aefccc365b0ecb4d | verified |
+| work-838a6f0ad2d1ef487588 | verified |
+| work-83fc3c4366e51b35b821 | needs-adjudication |
+
+## 9. Extremes (0 or 4) and Theme centrality 2
+
+No known `0` values.
+
+| workId | item | value | direct entry-scope evidence |
+| --- | --- | --- | --- |
+| work-5e20323e014d6d390aaf | characterArcWeight | 4 | yes — official 1–3권: inexperience, self-comparison, continued practice, confrontation with weakness as the repeated early reward |
+| work-5e20323e014d6d390aaf | martialArts | 2 | yes — naginata club training repeats across official 1–3권 |
+| work-5e20323e014d6d390aaf | school | 2 | yes — club, peers, sports festival, and camp structure the official 1–3권 |
+| work-5e20323e014d6d390aaf | sportsCompetition | 2 | yes — qualification, practice match, and camp repeat as the sports frame |
+| work-5ebbc9bede841d2faf7b | characterArcWeight | 4 | yes — official 1–3권: inner fantasy, insecurity, commitment, family opposition as the central reward |
+| work-5ebbc9bede841d2faf7b | romance | 4 | yes — invitation, courtship, engagement, and family opposition drive all three official volumes |
+| work-6f849a8e785deee3d5dc | investigation | 2 | yes — rural inquiry then Tokyo detective work and a team assignment across official 1–3권 |
+| work-6f849a8e785deee3d5dc | workplace | 2 | yes — detective work and requests become the repeating job frame in official 2–3권 |
+| work-71e824df2e6bc2125294 | combat | 2 | yes — assassin confrontations recur across shop, amusement park, and organization threat in official 1–3권 |
+| work-7975d62582a89492a35f | progression | 4 | yes — official 1–3권: exclusion to travel to stated vocational goals to written/interview/practical gates |
+| work-7975d62582a89492a35f | worldBuilding | 4 | yes — exclusion rules, book city, library, and librarian selection repeatedly determine access and challenges |
+| work-7975d62582a89492a35f | characterArcWeight | 4 | yes — exclusion, aspiration, departure, interview mistake, and continued final-stage attempt |
+| work-7975d62582a89492a35f | adventure | 2 | yes — leaving the village, travel, companions, and the distant city form the early journey |
+| work-7975d62582a89492a35f | workplace | 2 | yes — librarian vocation and multi-stage selection drive official 2–3권 |
+| work-8147aefccc365b0ecb4d | investigation | 2 | yes — Jack-the-Ripper inquiry and culprit disclosure drive official 2–3권 |
+| work-8147aefccc365b0ecb4d | workplace | 2 | yes — butler service frames all three official volume descriptions |
+| work-838a6f0ad2d1ef487588 | pacing | 4 | yes — official 1–3권 each change era/identity, a major political relation, then a named large-scale battle |
+| work-838a6f0ad2d1ef487588 | politics | 2 | yes — impersonating Nobunaga and meeting period leaders repeatedly constrain the role |
+| work-838a6f0ad2d1ef487588 | timeTravel | 2 | yes — displacement and continued identity substitution define all three official volumes |
+| work-838a6f0ad2d1ef487588 | historicalReconstruction | 2 | yes — named Sengoku meetings and Okehazama are the early event structure |
+
+`tournament:1` on `SAKAMOTO DAYS` is centrality 1, not listed above. `combat:1` and `war:1` are centrality 1. No extreme or centrality-2 value was taken from awards, later editions without a bridge, or model memory.

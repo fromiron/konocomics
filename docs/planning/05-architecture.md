@@ -44,15 +44,20 @@ Rakuten 계약 검토일(2026-08-14): [Rakuten Books Book Search API 2017-04-04]
 
 ```text
 [빌드 타임]                              [런타임 - 브라우저]
-data/source/*.csv (수동 주석)            root: catalogVersion+workIds identity만 직렬화
-   │  scripts/normalize-works.ts             ├→ bundled Catalog: 온보딩·DNA·Library·Catalog 상세
-   │  scripts/validate-catalog.ts            └→ /recommendations: content-addressed public Catalog fetch
+data/source/*.csv (수동 주석)            root: catalogVersion+전체 workIds+profileWorkIds만 직렬화
+   │  scripts/normalize-works.ts             ├→ landing: 소형 showcase projection
+   │  scripts/validate-catalog.ts            ├→ route-scoped bundled Catalog: 온보딩·DNA·Library·Catalog 상세
+   │  scripts/build-catalog.ts               └→ /recommendations: content-addressed public Catalog fetch
    │  scripts/build-catalog.ts                  (`/catalog/catalog-v1.<catalogVersion>.json`)
    ▼                                            strict zod+exact identity 확인 뒤
 data/generated/catalog-v1.json                  Recommendation Engine (순수 함수)
    ├→ src/data/generated/catalog-v1.json        입력: catalog + Dexie 스냅샷(프로필·기록)
    └→ public/catalog/catalog-v1.<version>.json  출력: RankedRecommendation[] (contributions 포함)
    (세 Catalog artifact는 byte-identical)       ▼
+   ├→ src/data/generated/catalog-identity-v1.json
+   └→ src/data/generated/landing-v1.json
+   └→ data/generated/recommendation-profile-{catalog,context}-v1.json
+      (recommendationEligible 작품만의 공동 digest; G1/G2 회귀 입력)
                                          Dexie (IndexedDB)
                                            userWorks / externalWorks / profile /
                                            onboardingDraft / recommendationCache / meta
@@ -90,7 +95,7 @@ deterministic Markdown 집계 리포트(stdout 또는 reports/local/)
 
 | 데이터 | 원천 | 변환 | 소유 계층 | 저장 |
 |---|---|---|---|---|
-| Work Taste Metadata | 사람 주석(CSV) | CSV→zod 검증→byte-identical bundled/public JSON | 빌드 스크립트 | route-scoped 번들 + content-addressed 정적 자산 |
+| Work metadata | 사람 주석 또는 검증된 library-only 서지(CSV) | CSV→zod 검증→byte-identical bundled/public JSON + 소형 identity/landing projection | 빌드 스크립트 | route-scoped 번들 + content-addressed 정적 자산 |
 | ProviderListing | Rakuten API | 필드 축소·URL 재작성·브라우저 workId 결합·normalized ISBN in-flight 합류 | Start server route + infrastructure/rakuten | Dexie providerCache (가격·재고 24h / 기타 90일) |
 | 사용자 프로필·기록 | 사용자 입력 | UI 이벤트→도메인 타입 | features 계층 | Dexie (영구) |
 | External 작품 | Rakuten 축소 DTO | ISBN 대조→v1 canonical key/hash identity→원자적 insert/readback | domain/catalog + infrastructure/db | Dexie externalWorks |
@@ -183,6 +188,7 @@ src/
 data/source/  (works.csv factors.csv themes.csv aliases.csv volumes.csv
                recommendation-context.csv recommendation-config.csv evidence/)
 data/generated/
+  recommendation-profile-{catalog,context}-v1.json
 public/catalog/catalog-v1.<catalogVersion>.json
 scripts/      (normalize-works.ts validate-catalog.ts
                build-catalog.ts report-coverage.ts run-baseline-experiment.ts
@@ -218,8 +224,8 @@ harness/      (제품과 격리된 기존 정적 export — /human/ /synthetic-p
 ```text
 pnpm --silent g2:aggregate
   --result, -r <json>   # 반복 가능; 미지정 시 data/local/g2-results/*.json
-  --catalog <json>      # 기본 data/generated/catalog-v1.json
-  --context <json>      # 기본 data/generated/recommendation-context-v1.json
+  --catalog <json>      # 기본 data/generated/recommendation-profile-catalog-v1.json
+  --context <json>      # 기본 data/generated/recommendation-profile-context-v1.json
   --output, -o <md|->   # 기본 stdout
   --help, -h
 ```
@@ -256,7 +262,7 @@ db.version(2).stores({
 - `onboardingDraft` readback은 `02` §5.3의 `mode: "firstRun" | "add"` strict union으로 파싱한다. 완료 변환은 시간 값을 인자로 받고 positive/disliked/dropped mapping을 적용하며 domain이 런타임 시계를 직접 읽지 않는다.
 - `firstRun` 완료는 신규 `userWorks` insert-only + `profile.onboardingCompletedAt` 최초 기록 + draft 삭제를 한 트랜잭션으로 수행한다. 이미 완료 marker가 있거나 workId가 충돌하면 stale tab으로 간주해 전체를 거부한다. `add` 완료는 신규 workId의 insert-only 추가 + draft 삭제만 한 트랜잭션으로 수행하고 기존 `userWorks`와 최초 `onboardingCompletedAt`을 byte-equivalent로 보존한다. add workId 충돌도 트랜잭션 전체를 롤백한다.
 - 추가 모드의 일반 닫기는 draft를 보존한다. 명시적 폐기만 draft 단일 행을 삭제한다. 성공한 추가는 새 anchor가 `inputHash`를 바꾸지만 reveal marker와 최초 완료 시각은 바꾸지 않는다.
-- 호환 프로필 resolver는 현재 bundled Catalog에 속한 서로 다른 favorite/liked record 수를 센다. 5개 이상이면 `profile.onboardingCompletedAt` 유무와 무관하게 usable profile, 5개 미만+marker 존재면 `add` recovery, 5개 미만+marker `null`이면 `firstRun`이다. recovery path는 first-run 트랜잭션을 다시 호출하지 않고 insert-only 추가만 허용한다.
+- 호환 프로필 resolver는 현재 bundled Catalog 중 `recommendationEligible`인 서로 다른 favorite/liked record 수만 센다. `libraryOnly` 기록은 보존·표시하지만 프로필·DNA·입력 hash의 record payload·추천에는 쓰지 않는다. 전체 `catalogVersion` 변경은 추천 캐시를 한 번 무효화한다. 5개 이상이면 `profile.onboardingCompletedAt` 유무와 무관하게 usable profile, 5개 미만+marker 존재면 `add` recovery, 5개 미만+marker `null`이면 `firstRun`이다. recovery path는 first-run 트랜잭션을 다시 호출하지 않고 insert-only 추가만 허용한다.
 - recommendation cache의 `plan`은 점수 재계산 없는 백필을 위해 전체 정렬 후보를 보존한다. 각 항목은 공개 추천 결과(contributions 포함)와 `isDiscovery / majorThemeKey / seriesGroupId` 제약 metadata를 가지며 렌더링된 설명 문장은 저장하지 않는다. 최초 10개와 이후 백필은 같은 plan에서만 고른다.
 - `inputHash` = `hash(engineVersion + catalogVersion + 정렬된 anchor·reaction + 부정 항목·disposition·이유 + adjustments + policies + 제외 workId 목록)`. 추천 재계산 판정의 단일 기준(`03` §5)이다. `updatedAt`·진행률·자유 positive text·추천 산식에 영향을 주지 않는 planned-only record는 hash에서 제외한다.
 - 추천 카드 피드백은 record 쓰기와 authoritative readback이 성공한 뒤에만 화면에 반영한다. `読んだ`는 completed + 선택 reaction(스킵 시 없음), `興味なし`는 hidden + 선택 이유가 있을 때만 disliked/negativeReasons(스킵 시 둘 다 없음)이다. 현재 세션은 기존 plan으로 백필하고 기존 계산 hash를 유지해 입력 변경 상태를 정직하게 표시하며, 재진입이나 명시적 更新에서 새 hash로 계산한다.
@@ -286,7 +292,7 @@ type ExportFileV1 = {
 - profile/draft 교차 필드는 §6 resolver를 그대로 사용한다. nullable draft의 `null`은 모든 상태에서 유효하다. non-null `firstRun` draft는 현재 Catalog positive <5와 marker `null`에서만, `add` draft는 usable profile 또는 marker 존재 상태에서만 유효하며 imported `userWorks`와 add entry workId가 겹치면 전체 거부한다. resolver가 mode나 marker를 조용히 고치지 않는다.
 - 확인 뒤 일곱 store를 포괄하는 단일 replacement transaction을 수행한다(병합 아님 — v1은 대체만 지원). commit 후 exact outcome은 imported `userWorks`·`externalWorks`·profile rows·`onboardingDraft`, 빈 `recommendationCache`·`providerCache`, 현재 앱의 schemaVersion과 현재 bundled catalogVersion을 가진 `meta`다. export의 cache·meta·과거 catalogVersion을 runtime state로 복원하지 않는다.
 - 최신 normalizer로 과거 ID를 재계산하지 않는다. imported v1은 v1 규칙으로 검증하고 그대로 주소화한다. unsupported newer external identity는 앱 업데이트가 필요한 파일로 전체 거부하며 silent v1→v2 re-key를 금지한다. 향후 re-key는 모든 nested reference를 원자적으로 바꾸는 명시적 DB/export schema migration만 허용한다.
-- catalogVersion 불일치는 미리보기 경고만 만든다. 현재 Catalog에 없는 `userWorks` 기록은 보존하고 UI에서 「カタログ外」 처리하며 usable profile count·추천 계산에는 넣지 않는다.
+- catalogVersion 불일치는 미리보기 경고만 만든다. 현재 Catalog에 없거나 `recommendationEligible`이 아닌 `userWorks` 기록은 보존하고 UI에 표시하되 usable profile count·추천 계산에는 넣지 않는다.
 - 전체 삭제도 일곱 store의 단일 transaction이다. 모든 row를 지운 뒤 현재 schemaVersion·현재 bundled catalogVersion의 runtime meta만 다시 쓰며, 여섯 non-meta store empty + exact meta의 authoritative readback 뒤에만 성공으로 반환한다.
 - Import·삭제의 primary commit/readback 결과가 불확실하면 동일 destructive operation을 memory backend에 재생하거나 성공·불변을 주장하지 않는다. `indeterminate` 결과로 재로딩 후 primary 상태 확인을 요구한다. 제품이 의도적 memory-only 모드를 제공한다면 `session-only`를 별도 결과로 반환하고 새로고침 시 소실됨을 UI가 명시해야 한다.
 

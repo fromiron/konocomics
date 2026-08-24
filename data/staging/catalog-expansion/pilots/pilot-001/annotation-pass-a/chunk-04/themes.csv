@@ -1,0 +1,12 @@
+workId,themeId,centrality,confidence,evidenceId
+work-0153a125c5a56225b06c,foundFamily,2,0.95,ev-pilot-001-a-work-0153a125c5a56225b06c
+work-07ff2a01ef593ce2f809,school,2,0.9,ev-pilot-001-a-work-07ff2a01ef593ce2f809
+work-11296a590b885cb73b66,workplace,2,0.95,ev-pilot-001-a-work-11296a590b885cb73b66
+work-222504590507d3ab8093,adventure,2,0.8,ev-pilot-001-a-work-222504590507d3ab8093
+work-34bba03e2a127ef29cd7,investigation,2,0.9,ev-pilot-001-a-work-34bba03e2a127ef29cd7
+work-34bba03e2a127ef29cd7,exploration,2,0.85,ev-pilot-001-a-work-34bba03e2a127ef29cd7
+work-8716f80d9b988bd0d055,workplace,2,0.9,ev-pilot-001-a-work-8716f80d9b988bd0d055
+work-9d04c47e7efbbbd8aca6,school,2,0.95,ev-pilot-001-a-work-9d04c47e7efbbbd8aca6
+work-cdf549d4b1888153e146,combat,2,0.9,ev-pilot-001-a-work-cdf549d4b1888153e146
+work-d489f5a2229689aa5115,school,2,0.95,ev-pilot-001-a-work-d489f5a2229689aa5115
+work-d489f5a2229689aa5115,workplace,2,0.9,ev-pilot-001-a-work-d489f5a2229689aa5115

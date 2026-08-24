@@ -1,6 +1,7 @@
 import { AXIS_IDS, GENRE_TAGS, THEME_TAGS } from "../catalog/constants";
 import type { AxisId, GenreTag, ThemeTag, Work } from "../catalog/types";
 import { roundScore } from "../recommendation/math";
+import { recommendationProfileRecords } from "./catalog-profile";
 import { REACTION_WEIGHTS } from "./constants";
 import type { Reaction, UserWorkRecord } from "./types";
 
@@ -177,7 +178,7 @@ export function summarizeMangaDna(
   works: readonly Work[],
   records: readonly UserWorkRecord[],
 ): MangaDnaSummary {
-  const anchors = positiveAnchors(works, records);
+  const anchors = positiveAnchors(works, recommendationProfileRecords(records, works));
   const axes = AXIS_IDS.map((axisId) => summarizeAxis(anchors, axisId));
   const themes = THEME_TAGS.map((themeId) => summarizeTheme(anchors, themeId));
   const genres = GENRE_TAGS.map((genreId) => summarizeGenre(anchors, genreId));

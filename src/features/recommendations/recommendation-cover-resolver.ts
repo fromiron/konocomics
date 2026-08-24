@@ -29,6 +29,7 @@ type RecommendationCoverDependencies = Readonly<{
   saveProviderCache(record: ProviderCacheRecord): Promise<ProviderCacheRecord>;
   requestBook?(isbn: string): Promise<RakutenBookItem>;
   now?(): string;
+  isActive?(): boolean;
 }>;
 
 function targetKey(target: RecommendationCoverTarget) {
@@ -87,6 +88,9 @@ export async function resolveRecommendationCover(
 
     const item = await requestBook(target.isbn);
     if (normalizeIsbn(item.isbn) !== target.isbn) {
+      return { target, coverUrl: null, source: "unavailable" };
+    }
+    if (dependencies.isActive?.() === false) {
       return { target, coverUrl: null, source: "unavailable" };
     }
 
@@ -160,6 +164,7 @@ export function useRecommendationCovers({
       if (existing !== undefined) return existing;
       const request = resolveRecommendationCover(target, {
         getProviderCache,
+        isActive: () => generationRef.current === generation,
         saveProviderCache,
       });
       inFlightRef.current.set(key, request);

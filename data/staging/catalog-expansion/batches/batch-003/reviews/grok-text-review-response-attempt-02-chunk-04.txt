@@ -1,0 +1,240 @@
+요청대로 읽기 전용으로 진행합니다. 먼저 9개 frozen input의 SHA-256을 계산하고, 해시가 일치하면 지정된 독립 순서대로 문서를 열겠습니다.해시 9개가 모두 일치합니다. 독립 결론을 내기 전에 사전 문서와 리서치 패킷만 전부 읽겠습니다.해시가 일치했고, 대상은 frozen 31–40입니다. 이제 리서치 패킷을 전부 읽고 Pass A는 아직 열지 않겠습니다.독립 결론은 리서치 패킷만으로 고정했습니다. 이제 Pass A 산출물만 읽고 비교하겠습니다.# Batch 003 chunk 04 Pass B — independent non-Art review
+
+## 1. Execution attestation
+
+- Actual model ID: `cursor-grok-4.6-high`
+- Label: Cursor Grok 4.6 High
+- Non-fast status: non-fast
+- Completion: normal completion
+- Input access: full access to all nine frozen inputs; each file opened in full
+- Degradation: no timeout, no rate-limit, no degraded output
+- `reviewedByHuman=false`
+- Repository edits: none
+- `ART_ABSTAIN`: pixel access was not established; no Art conclusion was inspected or judged; the four out-of-scope Art rows per work were ignored and are not compared
+
+## 2. Locally verified input hashes
+
+| Path | SHA-256 |
+| --- | --- |
+| `docs/factors/factor-dictionary.md` | `a9c29a853a108aca1b9bb8d5d71a3e7d5d583303691c0b35cc6424c1e45ee8be` |
+| `docs/factors/annotation-guide.md` | `f7dd1ec55d97bf9200fcec92ce270e7745a0d3aa4fe98a40c746fc56b6a777b3` |
+| `data/staging/catalog-expansion/batches/batch-003/annotation-review-adjudication-request.md` | `fc865e59e5b8b92dc94cdb5ad0a7db47c5e6f3b0f8ee4e867717c30e27778759` |
+| `data/staging/catalog-expansion/batches/batch-003/frozen-work-set.csv` | `ccba877e5377f7f02fc3a5010bad076bae979eb250fc8d2432cb5d7b0b9a5ddd` |
+| `data/staging/catalog-expansion/batches/batch-003/research/chunk-04.md` | `80450417a3500e632acddcf20ee568fbc18b56f363530bbf840cc2735c585546` |
+| `data/staging/catalog-expansion/batches/batch-003/annotation-pass-a/chunk-04/factors.csv` | `910a44e7148df1ad8a028117e4b2c17190dab717ba346c033dd466f61dc88763` |
+| `data/staging/catalog-expansion/batches/batch-003/annotation-pass-a/chunk-04/genres.csv` | `af1a1aae86a3b726fc9606891f2df2afb3f3c3ed4fc8084cc250b0ca9f8e12d1` |
+| `data/staging/catalog-expansion/batches/batch-003/annotation-pass-a/chunk-04/themes.csv` | `c3f78748ca19ec5e140efc1deba877e93dced6dae138fc31651628f060f855c8` |
+| `data/staging/catalog-expansion/batches/batch-003/annotation-pass-a/chunk-04/notes.md` | `0dfa15c3cd6aa4100cc4e8e4637ce88fb555fd699a386b53b4518d88b704bff0` |
+
+All nine hashes match the frozen contract.
+
+## 3. Independent 13-axis matrix
+
+workId, canonicalTitle, progression, problemSolving, strategy, pacing, mysteryReveal, worldBuilding, characterArcWeight, relationshipStructure, comedy, darkness, mentalStress, romance, emotionalWarmth
+
+`work-a7413b6e35e0d316a538`, となりの怪物くん, 0, U, U, 2, 0, 0, 4, 2, U, U, U, 4, U
+
+`work-a7e0062c7153978fc6fe`, 失恋ショコラティエ, 2, U, U, 2, 0, 2, 4, 2, U, U, U, 4, U
+
+`work-a960372ed5efa4031896`, シルバーマウンテン, U, U, U, 2, 2, 3, U, U, U, 2, U, 0, U
+
+`work-aa6d796e2e04a55b94b1`, 惑星のさみだれ, U, U, U, U, U, 2, 2, 2, U, U, U, U, U
+
+`work-ae0ac8a5acfc5fbb7dd6`, 終末のワルキューレ, 0, U, U, U, 0, 2, U, U, U, U, U, 0, U
+
+`work-b2be97620643b3342637`, アオイホノオ, 2, U, U, U, U, 2, 4, U, U, U, 2, U, U
+
+`work-b708734262fb9b67f948`, ねこだらけ, 0, U, U, U, 0, 0, 0, U, U, 0, 0, 0, U
+
+`work-bd42208a660912d9d95d`, 路地恋花, U, U, U, 2, U, 2, 4, 4, U, U, U, 2, U
+
+`work-c5e8c957903bf1832dc5`, 日々ロック, 3, U, U, 3, U, U, 4, 2, U, 2, 2, U, U
+
+`work-c805c5b70111f75d6fb5`, 海獣の子供, U, U, U, U, 3, 3, 2, 2, U, U, U, U, U
+
+## 4. Independent Genre conclusion
+
+| workId | canonicalTitle | genres |
+| --- | --- | --- |
+| `work-a7413b6e35e0d316a538` | となりの怪物くん | sliceOfLife;romance |
+| `work-a7e0062c7153978fc6fe` | 失恋ショコラティエ | sliceOfLife;romance |
+| `work-a960372ed5efa4031896` | シルバーマウンテン | action;fantasy |
+| `work-aa6d796e2e04a55b94b1` | 惑星のさみだれ | action;fantasy;sliceOfLife |
+| `work-ae0ac8a5acfc5fbb7dd6` | 終末のワルキューレ | action;fantasy |
+| `work-b2be97620643b3342637` | アオイホノオ | sliceOfLife |
+| `work-b708734262fb9b67f948` | ねこだらけ | comedy |
+| `work-bd42208a660912d9d95d` | 路地恋花 | sliceOfLife;romance |
+| `work-c5e8c957903bf1832dc5` | 日々ロック | sliceOfLife |
+| `work-c805c5b70111f75d6fb5` | 海獣の子供 | fantasy;mystery |
+
+## 5. Independent Theme conclusion
+
+| workId | canonicalTitle | themes |
+| --- | --- | --- |
+| `work-a7413b6e35e0d316a538` | となりの怪物くん | school:2 |
+| `work-a7e0062c7153978fc6fe` | 失恋ショコラティエ | cooking:2; workplace:1; school:1 |
+| `work-a960372ed5efa4031896` | シルバーマウンテン | adventure:2; combat:2; martialArts:2; exploration:1 |
+| `work-aa6d796e2e04a55b94b1` | 惑星のさみだれ | combat:2; survival:1 |
+| `work-ae0ac8a5acfc5fbb7dd6` | 終末のワルキューレ | combat:2; tournament:2; survival:1 |
+| `work-b2be97620643b3342637` | アオイホノオ | school:2; crafting:2; workplace:1 |
+| `work-b708734262fb9b67f948` | ねこだらけ |  |
+| `work-bd42208a660912d9d95d` | 路地恋花 | crafting:2; workplace:2 |
+| `work-c5e8c957903bf1832dc5` | 日々ロック | school:1 |
+| `work-c805c5b70111f75d6fb5` | 海獣の子供 | exploration:2; investigation:1; school:1 |
+
+## 6. Pass A comparison (non-Art only)
+
+### `work-a7413b6e35e0d316a538` となりの怪物くん
+
+- `progression` 2 → 0. Source: https://www.kodansha.co.jp/comic/products/0000041905 , https://www.kodansha.co.jp/comic/products/0000041920 , https://www.kodansha.co.jp/comic/products/0000041940 . Dictionary: `progression` 0 is absence of a growth-reward structure; 1–3권 소개는 과제 전달·고백·감정 자각·문화제 엇갈림으로, 획득·숙련 보상이 아니라 이미 `characterArcWeight=4`인 인물·관계 변화다.
+- `pacing` U → 2. Source: 위 1~3권 URL. Dictionary: 2 is ordinary arc-unit change; 1권 만남, 2권 여름방학·가족, 3권 문화제는 권 단위 상황 변화다.
+- `mysteryReveal` U → 0. Source: 위 1~3권 URL. Dictionary: 0 is almost no mystery structure; 초반 소개에 단서·추리 보상이 없다.
+- `worldBuilding` U → 0. Source: 위 1~3권 URL. Dictionary: 0 is minimal background rules; 학교 일상이 배경이며 역사·세력 규칙이 사건에 반복 관여하지 않는다.
+
+### `work-a7e0062c7153978fc6fe` 失恋ショコラティエ
+
+- `pacing` U → 2. Source: https://e-comi.shogakukan.co.jp/books/091322600000d0000000 , https://e-comi.shogakukan.co.jp/books/091328240000d0000000 . Dictionary: 2 is arc-unit change; 1권 제과학교 거절에서 2권 5년 파리 수련 후 귀국·점포 경쟁으로 목표·장소·직업 상태가 바뀐다.
+- `mysteryReveal` U → 0. Source: 위 1~3권 URL. Dictionary: 0 is almost no mystery structure; 전개는 일방적 연애와 직업 이동이며 수수께끼 보상이 없다.
+- `worldBuilding` U → 2. Source: https://e-comi.shogakukan.co.jp/books/091328240000d0000000 . Dictionary: 2 is a functional setting; 쇼콜라티에 점포와 경쟁 가게가 2권 이후 사건에 기능한다.
+- `relationshipStructure` 4 → 2. Source: https://e-comi.shogakukan.co.jp/books/091334640000d0000000 . Dictionary/guide: 고정 핵심 조연은 2이고, 관계 수가 늘어도 다중 관계망 자체가 핵심 보상이 아니면 4가 아니다; 3권은 복수 감정선을 보여 주지만 분량·지속성이 미확정이며 중심은 <(의 연애다.
+- Theme `crafting:2` → `cooking:2`. Source: https://e-comi.shogakukan.co.jp/books/091322600000d0000000 . Dictionary: 초콜릿 제작은 `cooking`이지 일반 `crafting`이 아니다.
+- Theme add `school:1`. Source: 같은 1권 URL. Dictionary: centrality 1 is a partial-episode frame; 제과학교는 1권 범위다.
+
+### `work-a960372ed5efa4031896` シルバーマウンテン
+
+- `pacing` U → 2. Source: https://shogakukan-comic.jp/book?isbn=9784098542420 , https://shogakukan-comic.jp/book?isbn=9784098543267 , https://shogakukan-comic.jp/book?isbn=9784098544530 . Dictionary: 2 is arc-unit change; 1권 등반 개시, 2권 새 적·목적지, 3권 불의 마법사로 장애가 권 단위로 바뀐다.
+- `mysteryReveal` U → 2. Source: https://shogakukan-comic.jp/book?isbn=9784098543267 . Dictionary: 2 is partial secrets; 목적지 위치와 거짓말할 수 없는 사람들의 과거가 일부 공개된다.
+- `darkness` U → 2. Source: https://shogakukan-comic.jp/book?isbn=9784098542420 , https://shogakukan-comic.jp/book?isbn=9784098544530 . Dictionary: 2 is existence of serious danger; 납치, 접촉이 위험한 적, 투아하 사람들이 노려지는 사건이 있다. 묘사 강도가 아니라 위험의 존재다.
+- `romance` U → 0. Source: 위 1~3권 URL. Dictionary: 0 is affirmative absence; 1~3권 소개가 등반·전투·책략으로 전개를 채우며 연애 전개가 없다.
+- Theme `exploration:2` → `exploration:1`. Source: https://shogakukan-comic.jp/book?isbn=9784098542420 . Dictionary: centrality 2 is the repeating core; 산 이동은 `adventure:2`의 일부이고, 탐색 자체는 목적지 공개 수준의 부분 소재다.
+
+### `work-aa6d796e2e04a55b94b1` 惑星のさみだれ
+
+- `worldBuilding` 3 → 2. Source: https://www.shonengahosha.co.jp/book_Info.php?id=7347 . Dictionary: 2 is functional setting; 동물 기사·힘 부여·진흙 인형은 기능 설정이고, 3권 고유 세계 규칙이 거의 없어 4에 가까운 3을 지지하지 않는다.
+- `characterArcWeight` 3 → 2. Source: https://www.shonengahosha.co.jp/book_Info.php?id=6004 . Dictionary: 2 is balance of events and character change; 다른 기사에 마음을 여는 것과 습격이 병행될 뿐, 인물 변화가 핵심 보상(4) 쪽으로 기울었다고 확정할 수 없다.
+- Theme `survival:2` → `survival:1`. Source: https://www.shonengahosha.co.jp/book_Info.php?id=7347 . Dictionary: centrality 2 is repeating core structure; 지구를 구해 달라는 요청은 전제 스테이크이고, 반복 사건은 습격·기사 관계(`combat`)다.
+
+### `work-ae0ac8a5acfc5fbb7dd6` 終末のワルキューレ
+
+- `progression` U → 0. Source: https://catalog.coamix.co.jp/record-of-ragnarok/ . Dictionary: 0 is almost no growth-reward structure; 초반은 13전 일대일 대결 순환이며 성장·획득 루프가 없다.
+- `mysteryReveal` U → 0. Source: 같은 URL. Dictionary: 0 is almost no mystery structure; 인류 존속 대결 전제가 처음부터 공표된다.
+- `romance` U → 0. Source: 같은 URL. Dictionary: 0 is affirmative absence; 원작 도입과 초반 대진은 전투 순환이며 연애 전개가 없다.
+- Theme `survival:2` → `survival:1`. Source: 같은 URL. Annotation-guide centrality split: 장기 목적·스테이크는 1, 현재 사건 자체는 2; 인류 멸망은 배경 목적이고 초반 사건은 일대일 경기(`tournament`/`combat`)다.
+- `pacing`는 Cmoa 소개가 진행 속도를 소개만으로 판정할 수 없다고 명시하므로 Pass A의 U를 유지한다.
+
+### `work-b2be97620643b3342637` アオイホノ오
+
+- Genre `comedy;sliceOfLife` → `sliceOfLife`. Source: https://e-comi.shogakukan.co.jp/books/091512680000d0000000 . Dictionary: Genre는 직접 진입 근거만; 공식 1~3권은 창작 지망 생활이지 희극 장르를 확정하지 않고, 심사 코멘트의 희극 인상은 값·장르로 환산하지 못한다. Genre로 Axis를 정하지도 않는다.
+- Theme add `workplace:1`. Source: https://e-comi.shogakukan.co.jp/books/091221090000d0000000 . Dictionary: centrality 1; 3권의 출판사 투고·도쿄 이동은 일부 단계다.
+
+### `work-b708734262fb9b67f948` ねこだらけ
+
+- `mysteryReveal` U → 0. Source: https://www.kodansha.co.jp/comic/products/0000013952 . Dictionary: 0 is almost no mystery structure; 단권은 독립 단기 행동 단위의 4컷이며 수수께끼 서사가 없다.
+- `worldBuilding` U → 0. Source: 같은 URL. Dictionary: 0 is minimal background rules; 장기 세계 규칙이 아니라 고양이 행동 단위의 반복이다.
+- `darkness` U → 0. Source: 같은 URL. Dictionary: 0 is bright/light; 춤·신장 등 짧은 고양이 행동이 책의 내용이다.
+- `mentalStress` U → 0. Source: 같은 URL. Dictionary: 0 is almost no psychological pressure; 독립 행동 단위에 지속 압박 구조가 없다.
+- `romance` U → 0. Source: 같은 URL. Dictionary: 0 is affirmative absence; 연애 전개가 없다.
+- comedy Axis는 Pass A와 같이 U를 유지한다. Genre `comedy`가 Axis 값을 결정하지 않는다.
+
+### `work-bd42208a660912d9d95d` 路地恋花
+
+- `pacing` U → 2. Source: https://www.kodansha.co.jp/comic/products/0000029686 , https://www.kodansha.co.jp/comic/products/0000029749 , https://www.kodansha.co.jp/comic/products/0000029829 . Dictionary: 2 is ordinary arc-unit change; 매권 다른 장인·창작자를 중심에 두는 에피소드 단위 변화가 반복된다.
+
+### `work-c5e8c957903bf1832dc5` 日々ロック
+
+- `darkness` U → 2. Source: https://www.shueisha.co.jp/books/items/contents.html?jdcn=08879034879034315501 . Dictionary: 2 is existence of serious danger/tragedy; 1권 학교 괴롭힘은 단발 폭행이 아니라 초반 전제의 지속 위험이다. 체육관 손상·한 차례 폭행만으로 값을 올린 것이 아니다.
+
+### `work-c805c5b70111f75d6fb5` 海獣の子供
+
+- `mysteryReveal` 4 → 3. Source: https://e-comi.shogakukan.co.jp/books/091883680000d0000000 , https://e-comi.shogakukan.co.jp/books/091883690000d0000000 , https://e-comi.shogakukan.co.jp/books/091884220000d0000000 . Dictionary: 4 is clue/reveal as main reward, 2 is partial secrets; 1권은 만남·장소 연결이 중심이고 2~3권에서 수수께끼가 강해지므로 1~3권 전체를 4로 두지 않고 그 사이로 둔다.
+- `characterArcWeight` 3 → 2. Source: https://e-comi.shogakukan.co.jp/books/091883680000d0000000 , https://e-comi.shogakukan.co.jp/books/091884220000d0000000 . Dictionary: 2 is balance of events and character change; 소외·실종 반응은 해양 사건과 병행되며 인물 변화가 핵심 보상인 4 쪽으로 확정되지 않는다.
+- Theme `investigation:2` → `investigation:1`. Source: https://e-comi.shogakukan.co.jp/books/091883690000d0000000 . Dictionary: centrality 2 is repeating investigative structure; 空를 찾는 행위는 일부 실종 추적이지, 추리 절차가 작품의 반복 핵심은 아니다(`mysteryReveal`가 단서 구조를 담당).
+- Theme add `school:1`. Source: https://e-comi.shogakukan.co.jp/books/091883680000d0000000 . Dictionary: centrality 1; 동아리에서 자리를 잃은 여름은 도입의 부분 소재다.
+
+## 7. Identity, safety, representative ISBN
+
+| workId | canonicalTitle | representative ISBN | identity finding | safety finding | verdict | evidence URL |
+| --- | --- | --- | --- | --- | --- | --- |
+| `work-a7413b6e35e0d316a538` | となりの怪物くん | `9784063655407` | Frozen ISBN is Kodansha regular vol. 1. Collector’s edition is a later regrouping of regular volumes, not a second Work; evidence stays on the regular edition. Frozen title has no decorative `『』`. | School romance; no adult-only status. | PASS | https://www.kodansha.co.jp/comic/products/0000041905 |
+| `work-a7e0062c7153978fc6fe` | 失恋ショコラティエ | `9784091322609` | Frozen ISBN is paper regular vol. 1; inspected pages are Shogakukan official e-comic of the same original volumes. Paper/electronic are format variants of one Work, not a new Work. | Married-person pursuit and smoking-smell cue are content leads, not adult-only status. | PASS | https://e-comi.shogakukan.co.jp/books/091322600000d0000000 |
+| `work-a960372ed5efa4031896` | シルバーマウンテン | `9784098542420` | Vols. 1–3 are consecutive Shogakukan regular ISBN product pages for the same series. | Combat danger and magic attacks are not adult-only status. | PASS | https://shogakukan-comic.jp/book?isbn=9784098542420 |
+| `work-aa6d796e2e04a55b94b1` | 惑星のさみだれ | `9784785926052` | Vols. 1–3 match the same Shonen Gahosha series; thin vol. 3 copy is an evidence gap, not an identity split. | World-destruction stake and repeated attacks are not adult-only status. | PASS | https://www.shonengahosha.co.jp/book_Info.php?id=7347 |
+| `work-ae0ac8a5acfc5fbb7dd6` | 終末のワルキューレ | `9784199804953` | Original tankōbon vs Whomor full-color vertical remake: officially separate derived edition; remake evidence must not mix. Current rights-holder is Coamix series page, not the frozen ISBN product page; initial publisher of `9784199804953` is unnamed in this packet; Cmoa is licensed original 1–3 copy. Same-series mapping is plausible but ISBN/rights-holder provenance is incomplete. | Human-extinction stake and tournament combat are not adult-only status. | NEEDS_ADJUDICATION | https://catalog.coamix.co.jp/record-of-ragnarok/ ; remake lead https://catalog.coamix.co.jp/valktennen/ ; licensed 1–3 https://www.cmoa.jp/title/149793/ |
+| `work-b2be97620643b3342637` | アオイホノオ | `9784091512680` | Frozen ISBN is paper regular vol. 1; inspected pages are Shogakukan official e-comic of the same original volumes. Named real creators are narrative content, not a second Work. | No adult-only status. | PASS | https://e-comi.shogakukan.co.jp/books/091512680000d0000000 |
+| `work-b708734262fb9b67f948` | ねこだらけ | `9784063728262` | Unnumbered single volume compiling 2006–2009 strips; first major episode is this tankōbon. Frozen title unchanged. | No adult-only status. | PASS | https://www.kodansha.co.jp/comic/products/0000013952 |
+| `work-bd42208a660912d9d95d` | 路地恋花 | `9784063106282` | Vols. 1–3 share one Kyoto alley community with rotating artisan leads; that is series structure, not a grouping conflict. | Wedding-day appearance is relationship conflict, not adult-only status. | PASS | https://www.kodansha.co.jp/comic/products/0000029686 |
+| `work-c5e8c957903bf1832dc5` | 日々ロック | `9784088790343` | Frozen ISBN is paper regular; inspected pages/reader are Shueisha official electronic editions of the same volumes. Paper/electronic are format variants of one Work. | Bullying, gym damage, and one assault are not adult-only status. | PASS | https://www.shueisha.co.jp/books/items/contents.html?jdcn=08879034879034315501 |
+| `work-c805c5b70111f75d6fb5` | 海獣の子供 | `9784091883681` | Frozen ISBN is paper regular vol. 1; inspected pages are Shogakukan official e-comic of the same original volumes. Paper/electronic are format variants of one Work. | Whaling, disappearance, and apparent death are not adult-only status; narrative fact of death is not established by copy. | PASS | https://e-comi.shogakukan.co.jp/books/091883680000d0000000 |
+
+Requested inspections:
+
+- となりの怪物くん regular vs collector’s: regular `9784063655407` is the frozen representative; collector’s is a bundled reconstruction of regular volumes. Same Work, separate edition for evidence. PASS.
+- 失恋ショコラティエ, アオイホノオ, 日々ロック, 海獣の子供 paper vs electronic: each electronic source is the publisher’s official e-edition of the same original volume line as the frozen paper ISBN. Not a new Work. PASS.
+- 終末のワルキューレ original vs full-color vertical remake, and initial publisher vs current rights-holder: remake is a distinct derived edition (Whomor, vertical full color) and must stay out of original Factor evidence. Coamix is current rights-holder at series level; frozen ISBN’s initial publisher is not named here. NEEDS_ADJUDICATION for provenance, not a demonstrated identity-conflict of two unrelated works.
+- Sensitive-content leads (失恋ショコラティエ married-person pursuit; シルバーマウンテン combat; 惑星のさみだれ world destruction; 終末のワルキューレ extinction/combat; 日々ロック bullying/property damage/assault; 海獣の子供 whaling/disappearance/apparent death): none of these, by themselves, establish adult-only status. No safety-conflict.
+
+## 8. Per-work final review outcome
+
+| workId | canonicalTitle | outcome |
+| --- | --- | --- |
+| `work-a7413b6e35e0d316a538` | となりの怪物くん | needs-adjudication |
+| `work-a7e0062c7153978fc6fe` | 失恋ショコラティエ | needs-adjudication |
+| `work-a960372ed5efa4031896` | シルバーマウンテン | needs-adjudication |
+| `work-aa6d796e2e04a55b94b1` | 惑星のさみだれ | needs-adjudication |
+| `work-ae0ac8a5acfc5fbb7dd6` | 終末のワルキューレ | needs-adjudication |
+| `work-b2be97620643b3342637` | アオイホノオ | needs-adjudication |
+| `work-b708734262fb9b67f948` | ねこだらけ | needs-adjudication |
+| `work-bd42208a660912d9d95d` | 路地恋花 | needs-adjudication |
+| `work-c5e8c957903bf1832dc5` | 日々ロック | needs-adjudication |
+| `work-c805c5b70111f75d6fb5` | 海獣の子供 | needs-adjudication |
+
+No `identity-conflict` or `safety-conflict`. No work is `verified` because each has at least one non-Art Pass B proposal, and 終末のワルキューレ also has incomplete ISBN/rights-holder provenance. 惑星のさみだれ 3권 고유 서술은 빈약하나 1~2권 1차 소개로 일부 값은 서므로 `insufficient-evidence`로 닫지 않았다.
+
+## 9. Independently assigned extremes (0 or 4) and Theme centrality 2
+
+Direct entry-scope evidence exists for each row below.
+
+| work | assignment | direct evidence? | URL |
+| --- | --- | --- | --- |
+| となりの怪物くん | `progression=0` | yes | https://www.kodansha.co.jp/comic/products/0000041905 |
+| となりの怪物くん | `mysteryReveal=0` | yes | https://www.kodansha.co.jp/comic/products/0000041905 |
+| となりの怪物くん | `worldBuilding=0` | yes | https://www.kodansha.co.jp/comic/products/0000041905 |
+| となりの怪物くん | `characterArcWeight=4` | yes | https://www.kodansha.co.jp/comic/products/0000041905 ; https://www.kodansha.co.jp/comic/products/0000041940 |
+| となりの怪物くん | `romance=4` | yes | https://www.kodansha.co.jp/comic/products/0000041905 ; https://www.kodansha.co.jp/comic/products/0000041920 ; https://www.kodansha.co.jp/comic/products/0000041940 |
+| となりの怪物くん | `school:2` | yes | https://www.kodansha.co.jp/comic/products/0000041905 ; https://www.kodansha.co.jp/comic/products/0000041940 |
+| 失恋ショコラティエ | `mysteryReveal=0` | yes | https://e-comi.shogakukan.co.jp/books/091322600000d0000000 |
+| 失恋ショコラティエ | `characterArcWeight=4` | yes | https://e-comi.shogakukan.co.jp/books/091322600000d0000000 ; https://e-comi.shogakukan.co.jp/books/091334640000d0000000 |
+| 失恋ショコラティエ | `romance=4` | yes | https://e-comi.shogakukan.co.jp/books/091322600000d0000000 ; https://e-comi.shogakukan.co.jp/books/091328240000d0000000 ; https://e-comi.shogakukan.co.jp/books/091334640000d0000000 |
+| 失恋ショコラティエ | `cooking:2` | yes | https://e-comi.shogakukan.co.jp/books/091322600000d0000000 ; https://e-comi.shogakukan.co.jp/books/091328240000d0000000 |
+| シルバーマウンテン | `romance=0` | yes | https://shogakukan-comic.jp/book?isbn=9784098542420 ; https://shogakukan-comic.jp/book?isbn=9784098543267 ; https://shogakukan-comic.jp/book?isbn=9784098544530 |
+| シルバーマウンテン | `adventure:2` | yes | https://shogakukan-comic.jp/book?isbn=9784098542420 |
+| シルバーマウンテン | `combat:2` | yes | https://shogakukan-comic.jp/book?isbn=9784098543267 ; https://shogakukan-comic.jp/book?isbn=9784098544530 |
+| シルバーマウンテン | `martialArts:2` | yes | https://shogakukan-comic.jp/book?isbn=9784098542420 ; https://shogakukan-comic.jp/book?isbn=9784098543267 |
+| 惑星のさみだれ | `combat:2` | yes | https://www.shonengahosha.co.jp/book_Info.php?id=7347 ; https://www.shonengahosha.co.jp/book_Info.php?id=6004 |
+| 終末のワルキューレ | `progression=0` | yes | https://catalog.coamix.co.jp/record-of-ragnarok/ |
+| 終末のワルキューレ | `mysteryReveal=0` | yes | https://catalog.coamix.co.jp/record-of-ragnarok/ |
+| 終末のワルキューレ | `romance=0` | yes | https://catalog.coamix.co.jp/record-of-ragnarok/ |
+| 終末のワルキューレ | `combat:2` | yes | https://catalog.coamix.co.jp/record-of-ragnarok/ |
+| 終末のワルキューレ | `tournament:2` | yes | https://catalog.coamix.co.jp/record-of-ragnarok/ |
+| アオイホノオ | `characterArcWeight=4` | yes | https://e-comi.shogakukan.co.jp/books/091512680000d0000000 ; https://e-comi.shogakukan.co.jp/books/091221090000d0000000 |
+| アオイホノオ | `school:2` | yes | https://e-comi.shogakukan.co.jp/books/091512680000d0000000 |
+| アオイホノオ | `crafting:2` | yes | https://e-comi.shogakukan.co.jp/books/091512680000d0000000 ; https://e-comi.shogakukan.co.jp/books/091221090000d0000000 |
+| ねこだらけ | `progression=0` | yes | https://www.kodansha.co.jp/comic/products/0000013952 |
+| ねこだらけ | `mysteryReveal=0` | yes | https://www.kodansha.co.jp/comic/products/0000013952 |
+| ねこだらけ | `worldBuilding=0` | yes | https://www.kodansha.co.jp/comic/products/0000013952 |
+| ねこだらけ | `characterArcWeight=0` | yes | https://www.kodansha.co.jp/comic/products/0000013952 |
+| ねこだらけ | `darkness=0` | yes | https://www.kodansha.co.jp/comic/products/0000013952 |
+| ねこだらけ | `mentalStress=0` | yes | https://www.kodansha.co.jp/comic/products/0000013952 |
+| ねこだらけ | `romance=0` | yes | https://www.kodansha.co.jp/comic/products/0000013952 |
+| 路地恋花 | `characterArcWeight=4` | yes | https://www.kodansha.co.jp/comic/products/0000029686 ; https://www.kodansha.co.jp/comic/products/0000029749 ; https://www.kodansha.co.jp/comic/products/0000029829 |
+| 路地恋花 | `relationshipStructure=4` | yes | https://www.kodansha.co.jp/comic/products/0000029686 ; https://www.kodansha.co.jp/comic/products/0000029749 ; https://www.kodansha.co.jp/comic/products/0000029829 |
+| 路地恋花 | `crafting:2` | yes | https://www.kodansha.co.jp/comic/products/0000029686 |
+| 路地恋花 | `workplace:2` | yes | https://www.kodansha.co.jp/comic/products/0000029686 ; https://www.kodansha.co.jp/comic/products/0000029749 ; https://www.kodansha.co.jp/comic/products/0000029829 |
+| 日々ロック | `characterArcWeight=4` | yes | https://www.shueisha.co.jp/books/items/contents.html?jdcn=08879034879034315501 ; https://www.shueisha.co.jp/books/items/contents.html?jdcn=08879173879034315501 |
+| 海獣の子供 | `exploration:2` | yes | https://e-comi.shogakukan.co.jp/books/091883680000d0000000 ; https://e-comi.shogakukan.co.jp/books/091883690000d0000000 |
+
+No other 0, 4, or Theme centrality 2 was assigned. Comedy Axis is never 4 in this chunk. ねこだらけ has Genre `comedy` without a comedy Axis extreme.
+
+## 10. Completeness
+
+`WORK_COUNT=10`, `AXIS_COUNT_PER_WORK=13`, `IDENTITY_ROWS=10`, `SAFETY_ROWS=10`, `ISBN_ROWS=10`, `ART_ABSTAIN`

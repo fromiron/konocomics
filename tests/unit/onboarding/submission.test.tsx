@@ -103,6 +103,33 @@ afterEach(() => {
 });
 
 describe("OnboardingFlow finalization", () => {
+  it("does not offer library-only works as negative profile evidence", async () => {
+    vi.useFakeTimers();
+    const libraryOnlyWork = {
+      ...createTestWork({
+        id: "library-only",
+        eligibility: {
+          onboardingEligible: false,
+          recommendationEligible: false,
+          libraryOnly: true,
+        },
+      }),
+      title: "保管専用作品",
+    };
+    testState.catalog = {
+      ...(testState.catalog as ReturnType<typeof createTestCatalog>),
+      works: [...defaultPositiveWorks, monster, libraryOnlyWork],
+    };
+
+    render(<OnboardingFlow />);
+    fireEvent.change(screen.getByRole("searchbox", { name: "合わなかったマンガを検索" }), {
+      target: { value: "保管専用作品" },
+    });
+    await act(async () => vi.advanceTimersByTime(300));
+
+    expect(screen.queryByText("保管専用作品")).toBeNull();
+  });
+
   it("marks only the initially resolved Step 1 content for B entry and does not replay on Step 2", () => {
     testState.draft = {
       id: "current",

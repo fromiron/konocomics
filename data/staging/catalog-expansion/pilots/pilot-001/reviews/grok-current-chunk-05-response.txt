@@ -1,0 +1,277 @@
+sessionId=16acae79-dced-4e9c-b9ab-8a59ae2d4a1d
+model=cursor-grok-4.6-high
+resolvedLabel=Cursor Grok 4.6
+mode=plan
+fast=false
+completionStatus=SUCCESS_AFTER_RESUME
+firstResponseStatus=REJECTED_INCOMPLETE_PROCESS_NARRATION
+candidateSha256=aaf4f4a4845ec105b8218f0f9e8358a2ae95c5823519e68e1752acada6e22529
+artAccess=abstained
+
+# Pilot 001 chunk-05 독립 Pass B 최종 리뷰
+
+판정원: Cursor Grok 4.6 High non-fast  
+Candidate SHA-256: `aaf4f4a4845ec105b8218f0f9e8358a2ae95c5823519e68e1752acada6e22529`  
+HEAD: `e03cfc9e45077386d1ec4d744a3bdee4b9176f1a`  
+범위: `entry_1_3_volumes`  
+게이트: Narrative known `>=4/6`, Tone known `>=5/7`  
+N 순서: `progression / problemSolving / strategy / pacing / mysteryReveal / worldBuilding`  
+T 순서: `characterArcWeight / relationshipStructure / comedy / darkness / mentalStress / romance / emotionalWarmth`  
+`U` = `unknown`. Art 픽셀 패킷 없음 → 10작품 전부 **ART_ABSTAIN**.  
+Local 대조: Pass A CSV + coverage-gap + text-pass-bc + follow-up E/E-review + follow-up F/F-review 누적 유효값.  
+Hard-blocker 허용 코드: `VERTICAL_WEBTOON` | `NON_JAPANESE` | `NON_MANGA` | `FAN_WORK` | `NON_WORK_MATERIAL` | `DUPLICATE_WORK` | `IDENTITY_UNRESOLVED` | `SAFETY_UNRESOLVED` | `SOURCE_INFORMATION_UNAVAILABLE` | `FACTOR_MODEL_INCOMPATIBLE` | `PRODUCT_CONTRACT_INCOMPATIBLE`. 공식 경로가 남아 있으면 코드 없음.
+
+---
+
+## 1. `work-07dc759bd91e1cffb2df` — しあわせは食べて寝て待て
+
+- **N:** `2 / 1 / 2 / 1 / 0 / 0` = **6/6**
+- **T:** `4 / 2 / 2 / 1 / 2 / 0 / 4` = **7/7**
+- **Genre:** `sliceOfLife`
+- **Theme:** `cooking` 1; `workplace` 1
+- **Gate:** **PASS**
+- **ART_ABSTAIN**
+- **Identity conflict:** no. canonical `しあわせは食べて寝て待て` (장식 `『』` 없음). ISBN `9784253160827`.
+- **Safety conflict:** no. packet `safe`. 면역질환·생활고 = 민감 소재 ≠ R18.
+- **Hard blocker:** **no** / code 없음
+- **남은 공식 경로:** 해당 없음
+
+**결정**
+- ACCEPT Genre `sliceOfLife`, Theme `cooking:1` `workplace:1` — Souffle 제1화 음식·제철·이웃; 秋田 1권 주 4일 파트타임은 한 가닥. https://www.akitashoten.co.jp/comics/4253160824 https://souffle.life/manga/shiawase-ha-tabete-nete-mate/20200318-2/
+- ACCEPT `progression=2`, `characterArcWeight=4`, `relationshipStructure=2`, `mentalStress=2`, `emotionalWarmth=4` — 점진 회복이 핵심 아크; 집주인 가족 고정핵; 병·생계 압박은 붕괴(4) 미만; 음식·이웃 회복이 힐링 보상.
+- ACCEPT `pacing=1` — 秋田 2·3권: 같은 단지·직장·회복, 작은 도전. sliceOfLife 라벨에서 추론하지 않음. https://www.akitashoten.co.jp/comics/4253160832 https://www.akitashoten.co.jp/comics/4253160840
+- ACCEPT `problemSolving=1`, `strategy=2` — Souffle 완결 3화: 건강·음식·주거 제약을 조언+직접 행동으로 반복 대응(분석 핵심 4 아님); 근무 축소·저가 주거·방 일부 임대는 단기·중기 생계 계획.
+- ACCEPT `mysteryReveal=0`, `worldBuilding=0`, `comedy=2`, `romance=0` — 완결 3화에 단서 루프·세계 규칙 보상 없음; 데드팬·오해는 간헐; 연애 보상 없음.
+- CORRECT follow-up E `darkness 0→1` (E-review와 일치) — 만성질환·지원 비해당·고립사 상상은 밝은 0 앵커를 깨나, 잔혹 세계(2)는 아님. `mentalStress=2`와 분리.
+- 불일치 vs Local 누적값: **없음**
+
+## 2. `work-3588928ab8f6a2520923` — 海が走るエンドロール
+
+- **N:** `3 / 0 / 0 / 2 / 0 / 0` = **6/6**
+- **T:** `4 / 2 / 1 / 1 / 2 / 0 / 2` = **7/7**
+- **Genre:** `sliceOfLife`
+- **Theme:** `school` 1
+- **Gate:** **PASS**
+- **ART_ABSTAIN**
+- **Identity conflict:** no. ISBN `9784253265218`. 장식 `『』` 없음.
+- **Safety conflict:** no. packet `safe`. 사별·노년 ≠ R18.
+- **Hard blocker:** **no** / code 없음
+- **남은 공식 경로:** 해당 없음
+
+**결정**
+- ACCEPT Genre `sliceOfLife`; NEW Theme `school:1` — 秋田 2권 미대 입학은 진입창 안이나 개인·창작 아크의 부차. centrality 2 아님. 영화 제작은 Dictionary Theme 없음. https://www.akitashoten.co.jp/comics/4253265219
+- ACCEPT `progression=3`, `characterArcWeight=4`, `relationshipStructure=2`, `mentalStress=2` — 새 도전·교육이 성장 보상; 사별·욕망·변화가 인물 보상; 우미코·카이 고정쌍; 3권 동요가 혼합 압박.
+- ACCEPT `pacing 1→2` — 입학·촬영 대상·새 지망생·감독 의미 대면은 일반 arc. https://www.akitashoten.co.jp/comics/4253265227 https://www.akitashoten.co.jp/comics/4253265235
+- ACCEPT 완결 1화(Souffle pp.5–38) 기준 `problemSolving=0` `strategy=0` `mysteryReveal=0` `worldBuilding=0` `romance=0` — 초대·상영·만남·통찰이지 분석·계획·추리·규칙 보상 아님. 2권 `告白`는 연애로 변환 금지. https://souffle.life/topics/souffle-special/20210816-3/
+- ACCEPT `comedy=1`, `darkness=1`, `emotionalWarmth=2` — 가벼운 연령 농담; 사별은 한정된 비극 배경; 이웃 초대·극장 기쁨·카이 유대를 혼합 온기(힐링 핵 4 아님). coverage-gap `emotionalWarmth=3` 기각은 유지.
+- 불일치 vs Local 누적값: **없음**
+
+## 3. `work-b2c37bdb52e2a78dfd41` — 天幕のジャードゥーガル
+
+- **N:** `U / 3 / 2 / 3 / U / 4` = **4/6**
+- **T:** `3 / 2 / 2 / 4 / 3 / 0 / 2` = **7/7**
+- **Genre:** `historical`
+- **Theme:** `war` 1; `politics` 2; `revenge` 2; `historicalReconstruction` 2
+- **Gate:** **PASS**
+- **ART_ABSTAIN**
+- **Identity conflict:** no. canonical `天幕のジャードゥーガル` (`ー` 장음 유지). ISBN `9784253264464`.
+- **Safety conflict:** no. packet `safe`. 포로·전쟁·복수 ≠ R18.
+- **Hard blocker:** **no** / code 없음
+- **남은 공식 경로:** 해당 없음 (`progression`/`mysteryReveal`는 live 게이트 불요)
+
+**결정**
+- ACCEPT Genre `historical`; Themes — 13세기 몽골·이란·궁정 권력은 공식 1권; 복수·역사 재구성은 マンガ大賞2023. 장르 라벨에서 Theme를 만들지 않음. https://www.akitashoten.co.jp/comics/4253264468 https://www.mangataisho.com/data/2023/comment2023.pdf
+- ACCEPT `problemSolving=3` (Pass A 4 하향 유지) — 지식을 무기로 쓰는 전제는 강하나, 기발한 제약 분석이 핵심 보상(4)임을 공식 카피로만 확정하지 않음.
+- ACCEPT `strategy=2`, `pacing=3`, `worldBuilding=4` — 첩보 전배·복수 동맹은 전술·중기 계획; 포로→궁정→첩보→제국 변경 동맹은 짧은 간격의 지위 교체; 제국·의학·궁정 규칙이 사건을 반복 결정. https://www.akitashoten.co.jp/comics/4253264476 https://www.akitashoten.co.jp/comics/4253264484
+- ACCEPT `characterArcWeight=3`, `relationshipStructure=2`, `darkness=4`, `mentalStress=3` — 상실·포로·복수가 역사·전략과 병행; 궁정/동맹은 고독 초과·군상 4 미만; 침공·가문 파괴·포로는 비극이 중심(4); 능동적 지식 사용이 압박 4를 막음.
+- ACCEPT `comedy=2`, `romance=0`, `emotionalWarmth=2` — 개막 88p 가정 농담은 간헐; 보호자/아이 유대이지 연애 없음; 시타라 교육·침공 중 상호 보호는 혼합 온기. 정치 동맹을 warmth로 치지 않음. https://souffle.life/manga/tenmaku-no-ja-dougal/20210925/
+- REJECT 지식 사용=`progression`, 첩보=`mysteryReveal`. 둘 다 `U`.
+- 불일치 vs Local 누적값: **없음**
+
+## 4. `work-e049c9aaf92ba31da8b0` — これ描いて死ね
+
+- **N:** `4 / 2 / U / 3 / 1 / U` = **4/6**
+- **T:** `4 / 2 / 3 / U / 2 / U / 2` = **5/7**
+- **Genre:** `sliceOfLife`
+- **Theme:** `crafting` 2; `school` 1
+- **Gate:** **PASS**
+- **ART_ABSTAIN**
+- **Identity conflict:** no. canonical `これ描いて死ね`. ISBN `9784098511433`. 제목 `死ね` ≠ 성인 표지.
+- **Safety conflict:** no. packet `safe`.
+- **Hard blocker:** **no** / code 없음
+- **남은 공식 경로:** 해당 없음. `darkness`/`romance` 재개방은 완결 1화 종점이 명시된 ISBN reader/권 단위만.
+
+**결정**
+- ACCEPT Genre; Theme `crafting:2`; CORRECT Pass A `school 2→1` — 창작이 반복 핵심; 부·문화제는 부차. https://shogakukan-comic.jp/book?isbn=9784098511433 https://shogakukan-comic.jp/book?isbn=9784098513260
+- ACCEPT `progression=4`, `characterArcWeight=4`, `mentalStress=2`, `emotionalWarmth=2` — 창작 숙련·고통/즐거움이 공식 보상.
+- ACCEPT `problemSolving=2`, `pacing=3`, `mysteryReveal=1` — 부 결성·취재·SNS·문화제 배포는 혼합 직접 행동; 신분 공개·부원 변화·행사 연쇄는 잦은 상태 교체; 선생 작가 정체는 부차 폭로(루프 4 아님). https://shogakukan-comic.jp/book?isbn=9784098520213
+- ACCEPT `relationshipStructure 3→2` — 창작자·고문·부원·라이벌·독자는 고정 핵이지 군상 보상 아님.
+- ACCEPT `comedy=3` — 공식 reader pp.5–48 반복 슬랩스틱·과장. 창작이 공존하므로 4 아님. https://sc-portal.tameshiyo.me/9784098511433
+- ACCEPT `darkness=U`, `romance=U` — reader 종점이 완결 1화로 명시되지 않음. 시놉시스 생략을 0으로 채우지 않음.
+- REJECT `strategy`/`worldBuilding`을 만화 제작에서 추론.
+- 불일치 vs Local 누적값: **없음**
+
+## 5. `work-081e75d8bbc53ac64713` — ダイヤモンドの功罪
+
+- **N:** `0 / 0 / 0 / 4 / 0 / 2` = **6/6**
+- **T:** `4 / 3 / U / 2 / 4 / U / 1` = **5/7**
+- **Genre:** `sports`
+- **Theme:** `sportsCompetition` 2
+- **Gate:** **PASS**
+- **ART_ABSTAIN**
+- **Identity conflict:** no. ISBN `9784088927671`. 장식 `『』` 없음. 作者 `平井 大橋` 표기 공백은 별 Work 아님.
+- **Safety conflict:** no. packet `safe`. 경쟁·심리적 압박 ≠ R18.
+- **Hard blocker:** **no** / code 없음
+- **남은 공식 경로:** 해당 없음 (`comedy`/`romance`는 Tone 게이트 불요)
+
+**결정**
+- ACCEPT Genre `sports`, Theme `sportsCompetition:2` — 유소년 야구·승패·팀 이동이 공식 1~3권 핵. https://www.shueisha.co.jp/books/items/contents.html?isbn=978-4-08-892767-1
+- ACCEPT 완결 1화 71p `progression=0` `problemSolving=0` `strategy=0` `mysteryReveal=0` — 이미 여러 종목·야구를 즉시 압도; 갈등은 재능·설득·감정 결단; 단서 루프 없음. sports 장르에서 0을 채우지 않았고, 관찰된 대체 보상(재능·즉흥 플레이)이 있음. https://tonarinoyj.jp/episode/4855956445056488441
+- ACCEPT `pacing=4` — 약팀 입부→탈퇴→U12 캠프→팀메이트 충돌→징벌 선발→최강팀 압도. https://www.shueisha.co.jp/books/items/contents.html?isbn=978-4-08-892768-8 https://www.shueisha.co.jp/books/items/contents.html?isbn=978-4-08-892864-7
+- ACCEPT `worldBuilding=2` — U12 선발·위계·징벌 지도가 사건을 기능적으로 유발. `sports` 라벨만으로 부여하지 않음.
+- ACCEPT `characterArcWeight=4`, `relationshipStructure=3`, `mentalStress=4`, `darkness=2`, `emotionalWarmth=1` — 고립·타 아동 피해가 중심; 다수 선수/코치 입장; 지속 압박; 심각하나 비극 세계 4 아님; 엔의 자존심 보호는 낮은 온기.
+- REJECT `comedy`/`romance` 0 채움.
+- 불일치 vs Local 누적값: **없음**
+
+## 6. `work-7730845c9cf7ba0cccc8` — 君と宇宙を歩くために
+
+- **N:** `3 / 4 / 2 / 2 / U / U` = **4/6**
+- **T:** `4 / 2 / U / 0 / 2 / U / 4` = **5/7**
+- **Genre:** `sliceOfLife`
+- **Theme:** `school` 2; `workplace` 1
+- **Gate:** **PASS**
+- **ART_ABSTAIN**
+- **Identity conflict:** no. ISBN `9784065334874`. 장식 `『』` 없음. 허구 특성을 진단명으로 해석하지 않음.
+- **Safety conflict:** no. packet `safe`.
+- **Hard blocker:** **no** / code 없음
+- **남은 공식 경로:** 해당 없음
+
+**결정**
+- ACCEPT Genre; Themes — 학업·대인 거리가 반복 핵; 아르바이트는 한 가닥. https://www.kodansha.co.jp/titles/1000045255 https://www.kodansha.co.jp/notices/95
+- ACCEPT `progression=3`, `problemSolving=4`, `characterArcWeight=4`, `relationshipStructure=2`, `emotionalWarmth=4` — 대처법·우정 성장; 심사평의 구체적 지침·개별 대처가 분석 해결의 핵; 두 학생 고정쌍; 우정이 핵심 온기. https://www.mangataisho.com/data/2024/comment2024.pdf
+- ACCEPT `pacing=2` — 시험/학습, 플라네타리움 차질·재대응은 일반 arc. https://www.kodansha.co.jp/comic/products/0000388972 https://www.kodansha.co.jp/comic/products/0000398866
+- ACCEPT `strategy=2` — 완결 1화: 노트/루틴, 아르바이트 단계 분해, 기록 절차 실행. `problemSolving`(해법 품질)과 `strategy`(사전 계획·순서)를 분리. 장기 운영 4 아님. https://comic-days.com/episode/4856001361225662498
+- ACCEPT `mentalStress 3→2`, `darkness=0` — 일상 적응 압박은 상호 대처로 혼합(2); 공식 1~3권 범위에 잔혹·비극 보상 없음. 시놉시스 생략이 아니라 완결 1화+2·3권 소개가 학교/노동/활동 난점에 한정.
+- REJECT Pass BC 제안 `strategy=0`을 0으로 확정. 즉시 대응만 보인다고 해서 1~3권 계획 부재를 시놉시스로 채우지 않음. 실제 1화가 단기 계획을 보이므로 2.
+- REJECT `mysteryReveal`/`worldBuilding`/`comedy`/`romance` 0 채움.
+- 불일치 vs Local 누적값: **없음**
+
+## 7. `work-112589a161d1596ec97f` — 写らナイんです
+
+- **N:** `2 / 2 / U / 4 / U / 2` = **4/6**
+- **T:** `U / 2 / 3 / 2 / U / 1 / 3` = **5/7**
+- **Genre:** `comedy; horror`
+- **Theme:** `school` 2
+- **Gate:** **PASS**
+- **ART_ABSTAIN**
+- **Identity conflict:** no. canonical `写らナイんです` (片仮名 `ナイ` 유지; `写らないんです`로 교정하지 않음). ISBN `9784098535439`.
+- **Safety conflict:** no. packet `safe`. 호러·괴이 ≠ R18.
+- **Hard blocker:** **no** / code 없음
+- **남은 공식 경로:** 해당 없음
+
+**결정**
+- ACCEPT Genre `comedy;horror`; Theme `school:2` — 오컬트부·청춘 호러 코미디. https://shogakukan-comic.jp/book?isbn=9784098535439
+- REJECT Pass A Theme `investigation:1` — 괴이 사건이 반복 수사 루프가 아님. `mysteryReveal`도 `U`.
+- ACCEPT `pacing=4` — 2·3권: 전국 대회·선배 스카우트·악령·도시전설·저주 마을·금역 훈련·원령 게임. 호러 라벨에서 추론하지 않음. https://shogakukan-comic.jp/book?isbn=9784098536825 https://shogakukan-comic.jp/book?isbn=9784098540129
+- ACCEPT `progression=2`, `problemSolving=2`, `worldBuilding=2` — 페어 결성→부 목표·훈련은 점진 성장(숙련 4 아님); 지식+도구+직접 행동의 혼합 대응; 쿠로키리 특성·대처가 사건을 제약하는 기능 설정. 장르→축 변환 아님. https://sc-portal.tameshiyo.me/9784098535439
+- ACCEPT `relationshipStructure=2`, `comedy=3`, `romance=1`, `darkness=2`, `emotionalWarmth=3` — 고정 듀오; 호러코미디이나 상시 개그 4 아님; boy-meets-girl은 낮은 연애; 생명 위협은 진지한 위험(2); 상호 구원·소속이 온기이나 유일 보상 아님.
+- REJECT Pass A `mentalStress=2` → `U`. 위협·darkness가 지속 체감 압박을 증명하지 않음.
+- REJECT `characterArcWeight`/`strategy`/`mysteryReveal` 채움.
+- 불일치 vs Local 누적값: **없음**
+
+## 8. `work-268e1fa3599955359969` — ふつうの軽音部
+
+- **N:** `2 / U / U / 3 / U / 2` = **3/6**
+- **T:** `2 / 3 / 2 / U / 3 / U / 2` = **5/7**
+- **Genre:** `sliceOfLife`
+- **Theme:** `school` 2
+- **Gate:** **FAIL** (Narrative 3/6)
+- **ART_ABSTAIN**
+- **Identity conflict:** no. ISBN `9784088840192`. 장식 `『』` 없음.
+- **Safety conflict:** no. packet `safe`.
+- **Hard blocker:** **no** / code 없음
+- **남은 공식 경로:** 표준 2·3권 내부 또는 Jump+ 후속화에서 **반복**되는 제약 해결만. 1~4화 묶음의 기타 구매 1회를 `problemSolving`으로 재사용 금지. https://www.shueisha.co.jp/books/items/contents.html?isbn=978-4-08-884082-6 https://www.shueisha.co.jp/books/items/contents.html?isbn=978-4-08-884238-7
+
+**결정**
+- ACCEPT Genre `sliceOfLife`, Theme `school:2` — 고1 경음부·밴드. https://books.shueisha.co.jp/items/contents.html?isbn=978-4-08-884019-2&mode=1
+- ACCEPT `progression 3→2`, `pacing=3`, `worldBuilding=2` — 초보 입부·연습은 성장이나 관계 보상과 혼합(3–4 아님); 탈퇴 저지·감정 파열은 잦은 상태 변화; 부 인원·밴드 구성·연습실 배정이 결성/연습을 유발하는 기능 규칙. 음악/학교 라벨에서 추론하지 않음. https://shonenjumpplus.com/episode/16457717013869519536
+- ACCEPT `characterArcWeight 3→2`, `relationshipStructure=3`, `comedy=2`, `mentalStress=3`, `emotionalWarmth=2` — 인물 변화는 밴드 사건과 병행; 복수 멤버 병렬; R06+R07 간헐 개그; 관계 악화·폭발은 혼합 초과 압박; 잔류 설득은 혼합 온기.
+- REJECT TO UNKNOWN Local `problemSolving=1`. 완결 1~4화의 중고 기타 비교·구매는 1회 실무 해소일 뿐, Dictionary가 요구하는 반복 해결 구조가 아님. 1을 주면 `progression=2` `pacing=3` `worldBuilding=2`와 합쳐 정확히 4/6이 되므로 coverage 채움으로 본다. `unknown` 유지.
+- REJECT `strategy`/`mysteryReveal`/`darkness`/`romance` 0 채움.
+- 불일치 vs Local 누적값: **`problemSolving 1→U`**
+
+## 9. `work-192cbecc59e9c028142b` — 本なら売るほど
+
+- **N:** `U / 2 / 2 / 1 / U / 2` = **4/6**
+- **T:** `4 / 3 / 1 / U / 1 / U / 3` = **5/7**
+- **Genre:** `sliceOfLife`
+- **Theme:** `workplace` 2
+- **Gate:** **PASS**
+- **ART_ABSTAIN**
+- **Identity conflict:** no. ISBN `9784047381070`. 장식 `『』` 없음.
+- **Safety conflict:** no. packet `safe`. KADOKAWA `大人向け` ≠ `成人向け`/R18.
+- **Hard blocker:** **no** / code 없음
+- **남은 공식 경로:** 해당 없음
+
+**결정**
+- ACCEPT Genre, Theme `workplace:2` — 헌책방·손님 군상. https://store.kadokawa.co.jp/shop/g/g322405000881/
+- ACCEPT `problemSolving=2`, `pacing=1`, `worldBuilding=2` — 추천·서가·난객은 직업적 판단+직접 행동; 연작 단편·여유 운영은 저변화; 추천 실무·유통이 이야기를 조직. workplace 라벨만으로 WB를 넣지 않음. https://www.kadokawa.co.jp/product/322501000958/ https://www.kadokawa.co.jp/product/322512000156/
+- ACCEPT `strategy=2` — 완결 1화: 다음날 철수 기한, 다방·운반/매장 용량, 방별 선별. `problemSolving`(감정·가치 감정)과 별개의 단기 자원 배분. https://comic-walker.com/detail/KC_006231_S/episodes/KC_0062310000200012_E
+- ACCEPT `characterArcWeight=4`, `relationshipStructure 4→3`, `emotionalWarmth=3`, `comedy=1`, `mentalStress=1` — 책을 통한 인생 변화가 핵; 다시점이나 최대 복잡 군상 4 미만; 온기와 쓴맛 혼합; 점내 농담은 낮은 존재; 난객은 간헐 압박.
+- REJECT coverage-gap `darkness=1` → `U` 유지. 씁쓸함·사망 맥락을 darkness로 자동 변환하지 않음.
+- REJECT `progression`/`mysteryReveal`/`romance` 0 채움.
+- 불일치 vs Local 누적값: **없음**
+
+## 10. `work-37ecced0b2392d7af9b2` — 路傍のフジイ
+
+- **N:** `0 / U / 0 / 1 / 2 / U` = **4/6**
+- **T:** `4 / 2 / U / 1 / 2 / U / 3` = **5/7**
+- **Genre:** `sliceOfLife`
+- **Theme:** `workplace` 2
+- **Gate:** **PASS**
+- **ART_ABSTAIN**
+- **Identity conflict:** no. ISBN `9784098625420`. 장식 `『』` 없음.
+- **Safety conflict:** no. packet `safe`. 중년·직장·고립 ≠ R18.
+- **Hard blocker:** **no** / code 없음
+- **남은 공식 경로:** 해당 없음 (1권 reader는 1화 미완. 제로 이견 시 완결 1~3권 화를 재검토 경로로만 둠)
+
+**결정**
+- ACCEPT Genre, Theme `workplace:2` — 눈에 띄지 않는 직장인+관찰 동료. https://shogakukan-comic.jp/book?isbn=9784098625420
+- ACCEPT `pacing=1`, `mysteryReveal=2` — 같은 직장 일상·조용함; 학생/가정/중학 과거 공개가 반복 부차 보상. https://shogakukan-comic.jp/book?isbn=9784098627080 https://shogakukan-comic.jp/book?isbn=9784098630202
+- ACCEPT `progression=0`, `strategy=0` — 시놉시스 생략이 아님. 2권 편집: 이미 형성된 관심/애착으로 하루를 산다; 3권: 그 방식이 변하지 않는다, 음악을 듣고 즉시 사고 꽃을 보고 달린다. 관찰자 재평가는 `characterArcWeight`에 이미 있고 숙련 루프가 아님. 즉흥 0 앵커.
+- ACCEPT `characterArcWeight=4`, `relationshipStructure 3→2`, `mentalStress=2`, `emotionalWarmth=3`, `darkness=1` — 성인 삶의 재평가가 핵; 후지이+관찰 동료는 고정 핵; 고립·평가가 혼합 압박; 관계 온기; 가벼운 무시·고립은 낮은 심각(2 미만).
+- REJECT coverage-gap `progression=1` (Pass BC와 같이 인물 관찰과 이중 계산).
+- REJECT `problemSolving`/`worldBuilding`/`comedy`/`romance`를 workplace에서 추론.
+- 불일치 vs Local 누적값: **없음**
+
+---
+
+## 기계 판독 집계
+
+```
+chunk=05
+pilot=pilot-001
+candidateSha256=aaf4f4a4845ec105b8218f0f9e8358a2ae95c5823519e68e1752acada6e22529
+headSha=e03cfc9e45077386d1ec4d744a3bdee4b9176f1a
+factorScope=entry_1_3_volumes
+gates=narrative_4_of_6,tone_5_of_7
+works=10
+pass=9
+fail=1
+failIds=work-268e1fa3599955359969
+hardBlockerYes=0
+hardBlockerNo=10
+hardBlockerCodesAssigned=0
+artAbstain=10
+identityConflict=0
+safetyConflict=0
+titleOrnamentConflict=0
+themeEmpty=0
+themeEmptyIds=
+disagreementWorks=1
+disagreementCount=1
+disagreements=work-268e1fa3599955359969:problemSolving:1->U
+remainingOfficialRouteFail=https://www.shueisha.co.jp/books/items/contents.html?isbn=978-4-08-884082-6 ; https://www.shueisha.co.jp/books/items/contents.html?isbn=978-4-08-884238-7
+reviewedByHuman=false
+filesEdited=0
+```

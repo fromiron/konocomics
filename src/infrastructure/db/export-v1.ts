@@ -27,6 +27,7 @@ export const EXPORT_SCHEMA_VERSION = 1 as const;
 export type CurrentCatalogIdentity = Readonly<{
   catalogVersion: string;
   workIds: readonly string[];
+  profileWorkIds: readonly string[];
 }>;
 
 export type ExportProfileV1 = Readonly<{
@@ -155,18 +156,35 @@ const currentCatalogIdentitySchema = z
   .strictObject({
     catalogVersion: z.string().trim().min(1),
     workIds: z.array(z.string().min(1)),
+    profileWorkIds: z.array(z.string().min(1)),
   })
   .superRefine((catalog, context) => {
-    const seen = new Set<string>();
-    catalog.workIds.forEach((workId, index) => {
-      if (seen.has(workId)) {
+    const workIds = new Set<string>();
+    for (const [field, values] of [
+      ["workIds", catalog.workIds],
+      ["profileWorkIds", catalog.profileWorkIds],
+    ] as const) {
+      const seen = new Set<string>();
+      values.forEach((workId, index) => {
+        if (seen.has(workId)) {
+          context.addIssue({
+            code: "custom",
+            path: [field, index],
+            message: `Current catalog ${field} must be unique`,
+          });
+        }
+        seen.add(workId);
+        if (field === "workIds") workIds.add(workId);
+      });
+    }
+    catalog.profileWorkIds.forEach((workId, index) => {
+      if (!workIds.has(workId)) {
         context.addIssue({
           code: "custom",
-          path: ["workIds", index],
-          message: "Current catalog work ids must be unique",
+          path: ["profileWorkIds", index],
+          message: "Profile work id must belong to the current catalog",
         });
       }
-      seen.add(workId);
     });
   });
 
@@ -235,8 +253,13 @@ export function parseCurrentCatalogIdentity(value: CurrentCatalogIdentity): Curr
   const parsed = currentCatalogIdentitySchema.parse({
     catalogVersion: value.catalogVersion,
     workIds: [...value.workIds],
+    profileWorkIds: [...value.profileWorkIds],
   });
-  return { catalogVersion: parsed.catalogVersion, workIds: parsed.workIds };
+  return {
+    catalogVersion: parsed.catalogVersion,
+    workIds: parsed.workIds,
+    profileWorkIds: parsed.profileWorkIds,
+  };
 }
 
 export function runtimeMetaV2(catalogVersion: string): RuntimeMetaV2 {
@@ -359,7 +382,7 @@ export function resolveImportedProfileState(
   currentCatalog: CurrentCatalogIdentity,
 ): ImportedProfileState {
   const catalog = parseCurrentCatalogIdentity(currentCatalog);
-  const currentWorkIds = new Set(catalog.workIds);
+  const currentWorkIds = new Set(catalog.profileWorkIds);
   const positiveWorkIds = new Set<string>();
   for (const record of snapshot.userWorks) {
     if (

@@ -9,19 +9,23 @@ import {
 
 import { Button } from "@/components/design-system/button";
 import { AppShell } from "@/components/nav/app-shell";
-import catalogJson from "@/data/generated/catalog-v1.json";
-import { catalogV1Schema } from "@/domain/catalog/schema";
-import { catalogIdentityFromCatalog } from "@/features/catalog/catalog-identity";
+import catalogIdentityJson from "@/data/generated/catalog-identity-v1.json";
 import { CatalogIdentityProvider } from "@/features/catalog/catalog-provider";
-import { PersistenceProvider } from "@/infrastructure/db";
+import {
+  type CurrentCatalogIdentity,
+  parseCurrentCatalogIdentity,
+  PersistenceProvider,
+} from "@/infrastructure/db";
 import { coreStrings, routeBoundaryStrings, workDetailStrings } from "@/lib/strings";
 
 import globalStyles from "../styles/globals.css?url";
 
-const catalogResult = catalogV1Schema.safeParse(catalogJson);
-const currentCatalogIdentity = catalogResult.success
-  ? catalogIdentityFromCatalog(catalogResult.data)
-  : null;
+let currentCatalogIdentity: CurrentCatalogIdentity | null = null;
+try {
+  currentCatalogIdentity = parseCurrentCatalogIdentity(catalogIdentityJson);
+} catch {
+  currentCatalogIdentity = null;
+}
 
 export const Route = createRootRoute({
   head: () => ({

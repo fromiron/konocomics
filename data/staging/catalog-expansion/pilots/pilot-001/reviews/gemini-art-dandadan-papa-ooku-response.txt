@@ -1,0 +1,194 @@
+conversationId=889072ee-6d22-4b9a-92be-3601d3bbc07e
+model=gemini-3.7-flash-high
+resolvedLabel=Gemini 3.7 Flash (High)
+effort=high
+pixelAccess=actual-local-png
+completionStatus=SUCCESS
+candidateSha256=aaf4f4a4845ec105b8218f0f9e8358a2ae95c5823519e68e1752acada6e22529
+
+{
+  "candidateSha256": "aaf4f4a4845ec105b8218f0f9e8358a2ae95c5823519e68e1752acada6e22529",
+  "exactModel": "gemini-3.7-flash-high",
+  "resolvedLabel": "Gemini 3.7 Flash (High)",
+  "effort": "high",
+  "completionStatus": "SUCCESS",
+  "pixelFiles": [
+    {
+      "workId": "work-cdf549d4b1888153e146",
+      "path": "output/playwright/pilot-art/chunk-04/dandadan/spread-05.png",
+      "sha256": "c51af3e28d751cc3f77f12ab32eb213e3fa0a0f8d954aa4e9e6053fe39efac5e"
+    },
+    {
+      "workId": "work-cdf549d4b1888153e146",
+      "path": "output/playwright/pilot-art/chunk-04/dandadan/spread-09.png",
+      "sha256": "2037d16eba3f8f41559c6891793418c852668a1808113b4f5f3c47bcc649dfb0"
+    },
+    {
+      "workId": "work-cdf549d4b1888153e146",
+      "path": "output/playwright/pilot-art/chunk-04/dandadan/spread-13.png",
+      "sha256": "7b7fe1c78ab12e2054404db0bde2d610429c36a8316097af535c46a7416b5264"
+    },
+    {
+      "workId": "work-ad2b80b81b7bc9b602a3",
+      "path": "output/playwright/pilot-art/remaining/papa-told-me/pages-6-7.png",
+      "sha256": "bcb596f8b4c0b6553cc0b2ed1de9302b57eb8482f05bb27c641584a2937d5d7a"
+    },
+    {
+      "workId": "work-ad2b80b81b7bc9b602a3",
+      "path": "output/playwright/pilot-art/remaining/papa-told-me/pages-14-15.png",
+      "sha256": "c8c29050bc698f1e396646011ed1a6b5eb3dca3a8598bcfaacd70667196fdbf0"
+    },
+    {
+      "workId": "work-ad2b80b81b7bc9b602a3",
+      "path": "output/playwright/pilot-art/remaining/papa-told-me/pages-22-23.png",
+      "sha256": "cb54bb8624d4d29958245460c9cf3fb0f3948c4af08c744748120790766f663e"
+    },
+    {
+      "workId": "work-464322afcd10013437b9",
+      "path": "output/playwright/pilot-art/remaining/ooku/pages-14-15.png",
+      "sha256": "448635ce03f63ea39add0f676b9fb1069d51ea6d86adcc5694f410240d2539ba"
+    },
+    {
+      "workId": "work-464322afcd10013437b9",
+      "path": "output/playwright/pilot-art/remaining/ooku/pages-22-23.png",
+      "sha256": "c612e2a562338ba2eb9bd490a156139f4ab44a95febfb4c04895b555799a8755"
+    },
+    {
+      "workId": "work-464322afcd10013437b9",
+      "path": "output/playwright/pilot-art/remaining/ooku/pages-30-31.png",
+      "sha256": "60320780c7eeed68f2c12abc313e637660d3a6a53487a4592bab7d3ba1bfb49a"
+    }
+  ],
+  "works": [
+    {
+      "workId": "work-cdf549d4b1888153e146",
+      "title": "ダンダダン",
+      "gateQualified": true,
+      "axes": {
+        "artRealism": {
+          "state": "known",
+          "value": 2,
+          "refs": [
+            "spread-05.png",
+            "spread-09.png",
+            "spread-13.png"
+          ],
+          "reason": "Conventional modern shonen stylization with expressive, exaggerated character faces and comical reactions, grounded in proportionate human anatomy and observed real-world backgrounds (classrooms, hallway lockers, ruined architecture)."
+        },
+        "artDensity": {
+          "state": "known",
+          "value": 3,
+          "refs": [
+            "spread-05.png",
+            "spread-09.png",
+            "spread-13.png"
+          ],
+          "reason": "Above-balanced visual density with heavy ink blacks, detailed architectural perspectives, textured screentones, crumbled debris, and dynamic panel layouts."
+        },
+        "visualSoftness": {
+          "state": "known",
+          "value": 1,
+          "refs": [
+            "spread-05.png",
+            "spread-09.png",
+            "spread-13.png"
+          ],
+          "reason": "Crisp, sharp, angular linework featuring high-contrast ink blacks, bold outlines, and intense dramatic facial hatching rather than soft or gentle rendering."
+        },
+        "motionImpact": {
+          "state": "unknown",
+          "value": null,
+          "refs": [],
+          "reason": "Sampled spreads depict classroom isolation/paper throwing, hallway argument/gestures, and a phone conversation while walking into ruins; no contiguous bounded dynamic combat or action choreography sequence was captured."
+        }
+      }
+    },
+    {
+      "workId": "work-ad2b80b81b7bc9b602a3",
+      "title": "Papa told me",
+      "gateQualified": true,
+      "axes": {
+        "artRealism": {
+          "state": "known",
+          "value": 2,
+          "refs": [
+            "pages-6-7.png",
+            "pages-14-15.png",
+            "pages-22-23.png"
+          ],
+          "reason": "Proportionate figures and authentic domestic and school environments (kitchen sink, stove, classroom desks, apartment entrance, urban street trees), rendered with classic delicate shoujo manga stylization."
+        },
+        "artDensity": {
+          "state": "known",
+          "value": 2,
+          "refs": [
+            "pages-6-7.png",
+            "pages-14-15.png",
+            "pages-22-23.png"
+          ],
+          "reason": "Balanced visual density with clean negative white space, selective background rendering, uncluttered multi-panel layouts, and restrained screentone shading."
+        },
+        "visualSoftness": {
+          "state": "known",
+          "value": 4,
+          "refs": [
+            "pages-6-7.png",
+            "pages-14-15.png",
+            "pages-22-23.png"
+          ],
+          "reason": "Exceptionally delicate, soft, and fine linework with gentle rounded facial contours, flowing hair strands, and warm, lyrical tonal gradients."
+        },
+        "motionImpact": {
+          "state": "unknown",
+          "value": null,
+          "refs": [],
+          "reason": "Sampled pages depict everyday domestic and school routines (washing face, boiling water, dropping a pass, walking in hallway, riding train, checking mail); no continuous bounded dynamic action sequence is present."
+        }
+      }
+    },
+    {
+      "workId": "work-464322afcd10013437b9",
+      "title": "大奥",
+      "gateQualified": true,
+      "axes": {
+        "artRealism": {
+          "state": "known",
+          "value": 3,
+          "refs": [
+            "pages-14-15.png",
+            "pages-22-23.png",
+            "pages-30-31.png"
+          ],
+          "reason": "Realistic adult human proportions, bone structure, historical garments, and authentic period Edo architectural perspective, combined with refined manga facial features."
+        },
+        "artDensity": {
+          "state": "known",
+          "value": 3,
+          "refs": [
+            "pages-14-15.png",
+            "pages-22-23.png",
+            "pages-30-31.png"
+          ],
+          "reason": "Above-balanced density featuring intricate bird's-eye Edo streetscapes, tiled roofs, patterned kimono textures, and detailed village interiors, balanced by clean character closeups."
+        },
+        "visualSoftness": {
+          "state": "known",
+          "value": 2,
+          "refs": [
+            "pages-14-15.png",
+            "pages-22-23.png",
+            "pages-30-31.png"
+          ],
+          "reason": "Neutral balance between clean, elegant contours and sharp angular jawlines, high-contrast black hair/garments, and stark dramatic framing."
+        },
+        "motionImpact": {
+          "state": "unknown",
+          "value": null,
+          "refs": [],
+          "reason": "Sampled spreads depict epidemic tragedy exposition, dojo practice aftermath/banter, and family conversation; no contiguous continuous dynamic action sequence with verified start/end is captured."
+        }
+      }
+    }
+  ],
+  "issues": []
+}

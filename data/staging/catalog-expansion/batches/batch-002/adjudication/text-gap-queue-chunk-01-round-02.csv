@@ -1,0 +1,9 @@
+position,workId,canonicalTitle,narrativeKnown,toneKnown,narrativeNeeded,toneNeeded,searchRoute,status,hardBlocker
+1,work-017446dd1a9039d9839b,サンダー３,3,2,1,3,"official volumes 2-3 internal pages or official editorial that directly describes recurring entry methods and tone",evidence-search,false
+2,work-02d5d329c9ef85e481cb,のたり松太郎,6,4,0,1,"official volumes 2-3 relationship pages or scoped cross-platform reviews for one recurring Tone observation",evidence-search,false
+3,work-089947c5303024841fef,デカワンコ,4,4,0,1,"official entry pages or scoped cross-platform reviews where the defining recurring Tone observation is not user-only",evidence-search,false
+4,work-0e036724913c69bb937a,ファイアパンチ,3,5,1,0,"official volumes 1-3 editorial or preview for one additional repeated Narrative method or affirmative absence",evidence-search,false
+5,work-1012948f5de799831da4,RED,2,4,2,1,"mapped original volumes 1-3 preview or exact original-volume episode descriptions for remaining Narrative and Tone observations",evidence-search,false
+6,work-1088a1dc00a3b0d22201,邪眼は月輪に飛ぶ,2,3,2,2,"official mid-volume solution preparation and final confrontation pages for method and relationship or tone observations",evidence-search,false
+7,work-19a26f01512166856a6a,銀河鉄道999,2,3,2,2,"official mapped entry episode pages plus entry-scoped cross-platform observations whose defining claim is also official",evidence-search,false
+8,work-1e27731b880d0d9012f8,吉祥天女,0,2,4,3,"official volumes 2-3 preview or editorial that isolates entry events without importing volume 4",evidence-search,false

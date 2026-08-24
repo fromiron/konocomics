@@ -1,0 +1,8 @@
+position,workId,canonicalTitle,narrativeKnown,toneKnown,narrativeNeeded,toneNeeded,searchRoute,status,hardBlocker
+21,work-5cafd57db6b870a71a05,機動警察パトレイバー,0,0,4,5,"official contents table or publisher bridge from frozen wide edition ISBN 9784091247216 to original entry volumes; only then exact-range previews and independent scoped reviews",evidence-search-round-02,false
+22,work-5e20323e014d6d390aaf,あさひなぐ,3,5,1,0,"official volumes 1-3 preview or editorial for one repeated Narrative method such as problem solving or strategy; scoped independent reviews only as auxiliary corroboration",evidence-search-round-02,false
+23,work-5ebbc9bede841d2faf7b,高台家の人々,2,6,2,0,"official volumes 1-3 preview or creator-editor material for two repeated Narrative structures; exclude romance or comedy genre inference",evidence-search-round-02,false
+24,work-6f849a8e785deee3d5dc,怪物事変,3,5,1,0,"official volumes 1-3 preview or editorial for one recurring Narrative method; do not infer from supernatural danger or mystery genre",evidence-search-round-02,false
+25,work-71e824df2e6bc2125294,SAKAMOTO DAYS,3,5,1,0,"official volumes 1-3 preview or editorial for one repeated Narrative method; preserve entry-range and avoid action-genre inference",evidence-search-round-02,false
+27,work-7d259c925286a9f91310,聖☆おにいさん,3,5,1,0,"official volumes 1-3 preview or editorial for one repeated Narrative mechanism; independent exact-range reviews may only corroborate a concrete observation",evidence-search-round-02,false
+30,work-83fc3c4366e51b35b821,風と木の詩,0,0,4,5,"official contents table or publisher bridge from frozen original ISBN 9784091302212 to later editions; then exact-range safety and scoped review without projecting whole-series events",evidence-search-round-02,false

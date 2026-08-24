@@ -1,0 +1,16 @@
+workId,themeId,centrality,confidence,evidenceId
+work-0bec5d8d9474a2197312,school,2,0.9,ev-pilot-001-a-work-0bec5d8d9474a2197312
+work-1cf7a0bb5f55e0d69b27,sportsCompetition,2,0.95,ev-pilot-001-a-work-1cf7a0bb5f55e0d69b27
+work-1fc61ddbeb429b4a2c15,workplace,2,0.85,ev-pilot-001-a-work-1fc61ddbeb429b4a2c15
+work-1fc61ddbeb429b4a2c15,historicalReconstruction,2,0.9,ev-pilot-001-a-work-1fc61ddbeb429b4a2c15
+work-2f39795212f5ad8db155,combat,2,0.9,ev-pilot-001-a-work-2f39795212f5ad8db155
+work-2f39795212f5ad8db155,politics,2,0.85,ev-pilot-001-a-work-2f39795212f5ad8db155
+work-303d0a9d67a606a817af,investigation,2,0.9,ev-pilot-001-a-work-303d0a9d67a606a817af
+work-303d0a9d67a606a817af,workplace,2,0.9,ev-pilot-001-a-work-303d0a9d67a606a817af
+work-464322afcd10013437b9,politics,2,0.95,ev-pilot-001-a-work-464322afcd10013437b9
+work-464322afcd10013437b9,historicalReconstruction,2,0.9,ev-pilot-001-a-work-464322afcd10013437b9
+work-76c038b398f4b28b7748,survival,2,0.85,ev-pilot-001-a-work-76c038b398f4b28b7748
+work-b4b21d2ebe5b8efc84ea,workplace,2,0.95,ev-pilot-001-a-work-b4b21d2ebe5b8efc84ea
+work-c4abbc1b44fa5706bce3,combat,1,0.75,ev-pilot-001-a-work-c4abbc1b44fa5706bce3
+work-c4abbc1b44fa5706bce3,politics,1,0.7,ev-pilot-001-a-work-c4abbc1b44fa5706bce3
+work-c4abbc1b44fa5706bce3,revenge,1,0.8,ev-pilot-001-a-work-c4abbc1b44fa5706bce3

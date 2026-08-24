@@ -4,8 +4,8 @@ import { ExperimentUsageError } from "../experiment/errors";
 
 export const DEFAULT_G2_PATHS = {
   resultsDirectory: "data/local/g2-results",
-  catalog: "data/generated/catalog-v1.json",
-  context: "data/generated/recommendation-context-v1.json",
+  catalog: "data/generated/recommendation-profile-catalog-v1.json",
+  context: "data/generated/recommendation-profile-context-v1.json",
   output: "-",
 } as const;
 

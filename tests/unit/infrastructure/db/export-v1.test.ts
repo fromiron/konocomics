@@ -8,6 +8,7 @@ import {
   exportFilenameV1,
   inspectExportFileV1,
   inspectExportJsonV1,
+  parseCurrentCatalogIdentity,
   serializeExportFileV1,
   type CurrentCatalogIdentity,
   type ExportFileV1,
@@ -22,6 +23,7 @@ const EXTERNAL_ID =
 const CURRENT_CATALOG: CurrentCatalogIdentity = {
   catalogVersion: "catalog-current",
   workIds: ["one", "two", "three", "four", "five", "six"],
+  profileWorkIds: ["one", "two", "three", "four", "five"],
 };
 
 function externalRecord(): ExternalWorkRecord {
@@ -95,6 +97,21 @@ async function exportFile(overrides: Partial<RawUserDataSnapshot> = {}): Promise
 }
 
 describe("Export v1 file contract", () => {
+  it("rejects duplicate or out-of-catalog profile identity entries", () => {
+    expect(() =>
+      parseCurrentCatalogIdentity({
+        ...CURRENT_CATALOG,
+        workIds: ["one", "one"],
+      }),
+    ).toThrow();
+    expect(() =>
+      parseCurrentCatalogIdentity({
+        ...CURRENT_CATALOG,
+        profileWorkIds: ["missing"],
+      }),
+    ).toThrow();
+  });
+
   it("exports a pre-profile draft with a required null marker and preserves every policy", async () => {
     const file = await exportFile();
 
@@ -185,6 +202,19 @@ describe("Export v1 file contract", () => {
     ).resolves.toMatchObject({
       profileState: "first-run",
     });
+
+    const libraryOnlyFifthAnchor = await exportFile({
+      userWorks: positiveRecords(4).concat({
+        workId: "six",
+        readingState: "completed",
+        reaction: "favorite",
+        updatedAt: EXPORTED_AT,
+      }),
+      onboardingDraft: null,
+    });
+    await expect(
+      inspectExportFileV1(libraryOnlyFifthAnchor, CURRENT_CATALOG),
+    ).resolves.toMatchObject({ profileState: "first-run" });
   });
 
   it("reuses the strict draft schema for duplicate and positive-negative overlap rejection", async () => {

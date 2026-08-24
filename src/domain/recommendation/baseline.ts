@@ -1,10 +1,11 @@
 import type { GenreTag, Work } from "../catalog/types";
+import { recommendationProfileRecords } from "../profile/catalog-profile";
 import { REACTION_WEIGHTS } from "../profile/constants";
 import type { RecommendationPolicies } from "../profile/types";
 import type { PositiveAnchorInput } from "./anchor";
 import { assertRecommendationContext, constraintMetadataFor, marketSignalFor } from "./context";
 import { calculateBayesianRating, calculateMaturity } from "./market";
-import { compareFloatingPoint, compareText, ownRecordValue, roundScore } from "./math";
+import { compareFloatingPoint, compareText, roundScore } from "./math";
 import { applyListConstraints } from "./ordering";
 import {
   assertUniqueRecords,
@@ -227,9 +228,7 @@ export function rankBaselineRecommendations(input: RecommendationInput): Baselin
   assertDefaultPolicies(input.policies);
 
   const worksById = Object.fromEntries(input.catalog.works.map((work) => [work.id, work]));
-  const catalogRecords = input.records.filter(
-    (record) => ownRecordValue(worksById, record.workId) !== undefined,
-  );
+  const catalogRecords = recommendationProfileRecords(input.records, input.catalog.works);
   const anchors = positiveAnchors(worksById, catalogRecords);
   if (anchors.length === 0) {
     return [];

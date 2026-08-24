@@ -1,0 +1,105 @@
+session=4b544f95-450d-45a6-8770-c7109a55d624
+model=cursor-grok-4.6-high
+mode=plan
+fast=false
+status=SUCCESS_AFTER_RESUME
+candidateSha256=aaf4f4a4845ec105b8218f0f9e8358a2ae95c5823519e68e1752acada6e22529
+scope=chunk-01 current evidence follow-up
+artAccess=ART_ABSTAIN
+
+HEAD: `e03cfc9e45077386d1ec4d744a3bdee4b9176f1a`
+Candidate SHA-256: `aaf4f4a4845ec105b8218f0f9e8358a2ae95c5823519e68e1752acada6e22529`
+Reviewer: Cursor Grok 4.6 High non-fast · Art: ART_ABSTAIN (전 10작 미판정)
+N 순서: `progression / problemSolving / strategy / pacing / mysteryReveal / worldBuilding`
+T 순서: `characterArcWeight / relationshipStructure / comedy / darkness / mentalStress / romance / emotionalWarmth`
+`U` = unknown. 다수결·평균 없음.
+
+### 1. `work-0262dcaa820443c3185d` — ゴルゴ13 — verified
+- Coverage: N `0/2/2/4/U/2` = 5/6, T `0/0/0/3/1/0/0` = 7/7 · text-pass
+- Accept: 위 13축; Genre `action`; Theme `combat:2`, `workplace:2`, `politics:1`; `mysteryReveal=U`
+- Correct: 없음. Art known 행은 미판정
+- Evidence: https://www.leed.co.jp/9784845800018 ; https://e-comi.shogakukan.co.jp/books/091794010001d0000000 ; Pass A notes; `text-pass-bc-chunks-01-02.md` §01
+- Identity/Safety/ISBN: OK / `safe` / `9784845800018` standard vol.1 `1989-03-01`
+- Conflict: 없음 · Blocker: no
+
+### 2. `work-9d5d64262dbc2893acd4` — ポーの一族 — verified
+- Coverage: N `U/U/2/3/2/3` = 4/6, T `3/3/U/3/3/1/U` = 5/7 · text-pass
+- Accept: `strategy=2`, `pacing=3`, `mysteryReveal=2`, `worldBuilding=3`, `characterArcWeight=3`, `relationshipStructure=3`, `darkness=3`, `mentalStress=3`, `romance=1`; Genre `fantasy;horror`; Theme `school:1` (vol.3 bounded; not 2)
+- Correct: Pass A Theme 공란 → `school:1`. `romance`는 1 유지(Frank/Sheila 1화 = 0과 2 사이). Art 미판정
+- Evidence: https://e-comi.shogakukan.co.jp/books/091300010000d0000000 ; `.../091300020000d0000000` ; `.../091300030000d0000000` ; `theme-gap-pass-c.md` / `theme-gap-pass-c-review.md`
+- Identity/Safety/ISBN: OK(후속 분리) / `safe` / `9784091300010` standard vol.1 `1974-05-28`
+- Conflict: 없음 · Blocker: no
+
+### 3. `work-98d513b70560f2f96a38` — 漂流교실 — verified
+- Coverage: N `U/2/U/3/2/3` = 4/6, T `2/4/U/4/4/U/2` = 5/7 · text-pass
+- Accept: Pass A N + `relationshipStructure=4`, `darkness=4`, `mentalStress=4`; `characterArcWeight=2`, `emotionalWarmth=2` (S05 연대순 첫 생존 arc만); Genre `scienceFiction;horror`; Theme `survival:2`, `postApocalypse:2`
+- Correct: Pass A Tone `characterArcWeight`/`emotionalWarmth` U → 2. 합본 후반·문고 후속 미사용
+- Evidence: https://adpocket.shogakukan.co.jp/mangaplanning/detail/8e93e440f571a4dac32666ef784bf1f995b3ae865d4a9aa0ef981a44442ad39e/ ; https://shogakukan-comic.jp/book?isbn=9784091814982 (S05, opening only); `text-pass-bc-chunks-01-02.md` §03
+- Identity/Safety/ISBN: OK / `safe`(아동 위기 ≠ 성인전용) / `9784091200013` standard vol.1 `1974-05-30`
+- Conflict: 대표권≠S05 합본; 주석은 첫 생존 arc로 닫힘 · Blocker: no
+
+### 4. `work-f50fa290eb4116a7078e` — 11人いる！ — verified
+- Coverage: N `0/3/U/U/4/2` = 4/6, T `2/4/U/2/4/U/2` = 5/7 · text-pass
+- Accept: N; `relationshipStructure=4`, `darkness=2`, `mentalStress=4`, `emotionalWarmth=2`; Genre `scienceFiction;mystery`; Theme `investigation:2`, `survival:2`. 원작=첫 주요 에피소드
+- Correct: Pass A `characterArcWeight=3` → 2 (사건/시험 보상과 균형; S07). 속편 미사용
+- Evidence: https://shogakukan-comic.jp/news/17107 ; https://e-comi.shogakukan.co.jp/books/091910110000d0000000 ; `text-pass-bc-chunks-01-02.md` §04
+- Identity/Safety/ISBN: Work=원작 OK / `safe` / `9784091788115` complete, volNumber 공란, `1986-10-15`
+- Conflict: 대표 합본에 속편 수록; Factor는 원작만 · Blocker: no
+
+### 5. `work-a089c0eef91d1213da38` — うる星やつら — verified
+- Coverage: N `0/0/0/3/0/2` = 6/6, T `2/3/4/0/1/4/U` = 6/7 · text-pass
+- Accept: 위 13축; `emotionalWarmth=U`; Genre `scienceFiction;comedy;romance`; Theme `school:1`
+- Correct: 없음
+- Evidence: https://adpocket.shogakukan.co.jp/adnews/13902/ ; https://e-comi.shogakukan.co.jp/books/091207160000d0000000 ; `text-pass-bc-chunks-01-02.md` §05
+- Identity/Safety/ISBN: OK / `safe` / `9784091204417` standard vol.1, `releaseDate` 공란
+- Conflict: 없음 · Blocker: no
+
+### 6. `work-671e3453cf9e1df2ee87` — 陽だまりの樹 — needs-adjudication
+- Coverage: N `2/2/U/2/U/4` = 4/6, T `4/2/U/2/U/U/2` = 4/7 · text-fail (Tone)
+- Accept: `progression=2` (H-01 경로 시작 → H-02 발탁 → H-03 가증); `problemSolving=2`, `pacing=2`, `worldBuilding=4`; Tone `characterArcWeight=4`, `relationshipStructure=2`, `darkness=2`, `emotionalWarmth=2`; Genre `historical`; Theme `historicalReconstruction:2`, `politics:1`; `strategy`/`mysteryReveal`/`comedy`/`mentalStress` = U
+- Correct: 현 후보 `romance=2` → U. S09 “이후/같은 여인”은 권별 미대응. H-01~H-03에 연애 사건 없음. coverage를 위해 채우지 않음
+- Evidence: https://tezukaosamu.net/jp/manga/380.html ; https://shogakukan-comic.jp/book-series?cd=16938 ; https://shogakukan-comic.jp/book?isbn=9784091920515 ; `...0522` ; `...0539` ; `text-coverage-followup-a.md` ; `text-coverage-followup-a-review.md`
+- Identity/Safety/ISBN: OK / `safe` / 대표 `9784091806017` standard vol.1 유지(문고는 근거 전용, ISBN 교체 아님). `releaseDate` 공란
+- Conflict: Tone 1축 부족; 문고 1–3에 로맨스 직접 서술 없음 · Blocker: no
+
+### 7. `work-14e489bf1afd1587c44a` — YAWARA！ — verified
+- Coverage: N `4/U/2/U/0/0` = 4/6, T `4/3/3/0/2/2/U` = 6/7 · text-pass
+- Accept: Pass A Tone/N 중 `strategy` 제외; `strategy=2` (V01 제1–17화 `おじいちゃんの陰謀`/`大胆構想`, 데뷔 계획). Genre `sports;comedy;romance`; Theme `sportsCompetition:2`
+- Correct: Pass A `strategy=U` → 2. S10 29전자권은 보조만
+- Evidence: https://shogakukan-comic.jp/book?isbn=9784091922816 (V01); https://bigcomicbros.net/7350/ ; `text-pass-bc-chunks-01-02.md` §07
+- Identity/Safety/ISBN: OK(전각 `！`) / `safe` / 대표 `9784091813411` standard vol.1 `1987-04-30`
+- Conflict: V01은 문고; 대표 ISBN 불변 · Blocker: no
+
+### 8. `work-ad2b80b81b7bc9b602a3` — Papa told me — verified
+- Coverage: N `0/U/U/1/0/0` = 4/6, T `4/2/1/0/U/U/4` = 5/7 · text-pass
+- Accept: N; `characterArcWeight=4`, `relationshipStructure=2`, `comedy=1`, `darkness=0`, `emotionalWarmth=4`; Genre `sliceOfLife`; Theme `school:1` (1화 교실 이동·또래 접촉=부속 메카닉; `foundFamily` 기각). `romance`/`mentalStress` U
+- Correct: Pass A Theme 공란 → `school:1`. `comedy`는 1(상시 개그 아님)
+- Evidence: https://www.shueisha.co.jp/books/items/contents.html?jdcn=08864013864013315501 ; `...24864013315501` (vol.2); reader https://www.shueisha.co.jp/books/reader/main.php?cid=08864013864013315501 ; `theme-gap-pass-c-review.md` 인쇄 pp.12–13 (본 심사자 픽셀 미재개봉; Art 아님)
+- Identity/Safety/ISBN: OK / `safe` / `9784088640136` standard vol.1 `1988-02-19`
+- Conflict: `school=1` 페이지는 Local 직접 판독에 의존 · Blocker: no
+
+### 9. `work-39555fe7402dada0d79f` — 名探偵コナン — verified
+- Coverage: N `0/4/2/3/4/2` = 6/6, T `1/3/U/3/2/1/U` = 5/7 · text-pass
+- Accept: N; `characterArcWeight=1`, `relationshipStructure=3`, `darkness=3`, `mentalStress=2`, `romance=1`; Genre `mystery`; Theme `investigation:2`, `school:1`. `comedy`/`emotionalWarmth` U
+- Correct: Pass A `characterArcWeight`/`romance` U → 1 (S13 사건 아카이브; 2 균형 아님). ラブコメ 라벨 미사용
+- Evidence: https://websunday.net/work/720/ ; https://websunday.net/conan100/comics/ (S13); `text-pass-bc-chunks-01-02.md` §09
+- Identity/Safety/ISBN: OK(스핀오프 분리) / `safe` / `9784091233714` standard vol.1 `1994-06-18`
+- Conflict: 없음 · Blocker: no
+
+### 10. `work-4a8a22fc766bf9bc4c59` — 天は赤い河のほとり — verified
+- Coverage: N `U/2/3/3/U/4` = 4/6, T `4/3/U/3/3/4/U` = 5/7 · text-pass
+- Accept: `problemSolving=2`, `strategy=3`, `pacing=3`, `worldBuilding=4`; Tone 5축; Genre `fantasy;historical;romance`; Theme `timeTravel:2`, `politics:2`, `war:1`, `combat:1` (`historicalReconstruction` 없음)
+- Correct: Pass A `problemSolving=U` → 2
+- Evidence: https://e-comi.shogakukan.co.jp/books/091365010000d0000000 ; `.../091365020000d0000000` ; `.../091365030000d0000000` ; `text-pass-bc-chunks-01-02.md` §10
+- Identity/Safety/ISBN: OK / `safe` / `9784091365019` standard vol.1 `1995-05-26`
+- Conflict: 없음 · Blocker: no
+
+`text-coverage-followup-b.md` / `text-coverage-followup-b-review.md` / `art-local-barairo-recheck.md`: chunk-01 밖. `art-final-matrix.csv` Art 행은 전부 ART_ABSTAIN.
+
+## Totals
+- verified: 9
+- needs-adjudication: 1
+- insufficient-evidence: 0
+- text-pass: 9
+- hard-blocker 후보: 0
+- ART_ABSTAIN: 10

@@ -109,6 +109,7 @@ vi.mock("@/domain/recommendation/rank", () => ({
 }));
 
 vi.mock("@/components/cover/CoverImage", () => ({
+  coverSourceForSize: (coverUrl: string) => coverUrl,
   CoverImage: function MockCoverImage({
     className,
     coverUrl,

@@ -99,6 +99,16 @@ describe("StaticAssetCatalogProvider", () => {
     expect(screen.queryByText("v1-other:test-work")).toBeNull();
   });
 
+  it("rejects an asset whose recommendation-profile identity does not match", async () => {
+    const fetchMock = vi.mocked(fetch);
+    fetchMock.mockResolvedValue(responseWith(catalog));
+
+    render(<CatalogBoundary currentIdentity={{ ...identity, profileWorkIds: [] }} />);
+
+    expect(await screen.findByRole("heading", { name: catalogStrings.loadError })).toBeTruthy();
+    expect(screen.queryByText("v1-test:test-work")).toBeNull();
+  });
+
   it.each([
     [
       "invalid JSON",

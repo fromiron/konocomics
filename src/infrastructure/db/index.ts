@@ -21,6 +21,7 @@ export {
   exportFilenameV1,
   inspectExportFileV1,
   inspectExportJsonV1,
+  parseCurrentCatalogIdentity,
   serializeExportFileV1,
 } from "./export-v1";
 export type {

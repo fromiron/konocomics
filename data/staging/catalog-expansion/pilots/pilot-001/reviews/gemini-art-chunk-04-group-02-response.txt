@@ -1,0 +1,194 @@
+conversationId=1d78391e-6a92-4ea4-b1e7-37630d015f7d
+model=gemini-3.7-flash-high
+resolvedLabel=Gemini 3.7 Flash (High)
+effort=high
+pixelAccess=actual-local-png
+completionStatus=SUCCESS
+candidateSha256=aaf4f4a4845ec105b8218f0f9e8358a2ae95c5823519e68e1752acada6e22529
+
+{
+  "candidateSha256": "aaf4f4a4845ec105b8218f0f9e8358a2ae95c5823519e68e1752acada6e22529",
+  "exactModel": "gemini-3.7-flash-high",
+  "resolvedLabel": "Gemini 3.7 Flash (High)",
+  "effort": "high",
+  "completionStatus": "SUCCESS",
+  "pixelFiles": [
+    {
+      "workId": "work-0153a125c5a56225b06c",
+      "path": "output/playwright/pilot-art/chunk-04/ikoku-nikki/spread-05.png",
+      "sha256": "f105b113f4106235ac77da77f2383e3830155f50d3038dec8531e32b25894468"
+    },
+    {
+      "workId": "work-0153a125c5a56225b06c",
+      "path": "output/playwright/pilot-art/chunk-04/ikoku-nikki/spread-09.png",
+      "sha256": "57a2c3444456371b8f46e48d50d653b6d8795b26b7a706fb972bf3a7fc17e383"
+    },
+    {
+      "workId": "work-0153a125c5a56225b06c",
+      "path": "output/playwright/pilot-art/chunk-04/ikoku-nikki/spread-13.png",
+      "sha256": "bf48923e8b8a1d5c751dcaa25fb39dce8589e4d2eea27c68dc79d1d6a413b767"
+    },
+    {
+      "workId": "work-34bba03e2a127ef29cd7",
+      "path": "output/playwright/pilot-art/chunk-04/hokuhokusei/pages-10-11.png",
+      "sha256": "0f024ab27deff067bcfea0ca27d61ed920d26d7de440afc36a5eddb234d01995"
+    },
+    {
+      "workId": "work-34bba03e2a127ef29cd7",
+      "path": "output/playwright/pilot-art/chunk-04/hokuhokusei/pages-18-19.png",
+      "sha256": "f4c5cd67249f68ded664974a9cf8c4b931a4f2bc82f70914e2426346bf1e5871"
+    },
+    {
+      "workId": "work-34bba03e2a127ef29cd7",
+      "path": "output/playwright/pilot-art/chunk-04/hokuhokusei/pages-26-27.png",
+      "sha256": "65859ca72e1eed441a7cc95dbb7c3f4d24d5da899b79b997c518050d201bc571"
+    },
+    {
+      "workId": "work-9d04c47e7efbbbd8aca6",
+      "path": "output/playwright/pilot-art/chunk-04/kageki-shoujo/pages-14-15.png",
+      "sha256": "12c2e95a1ef2af49a7215e704a4768768f102c63f01a018b2477b3a9a295ff40"
+    },
+    {
+      "workId": "work-9d04c47e7efbbbd8aca6",
+      "path": "output/playwright/pilot-art/chunk-04/kageki-shoujo/pages-22-23.png",
+      "sha256": "9fa2b7ae9ac11855bda266366938663b8212367a1c7287565a7fb04decfedb79"
+    },
+    {
+      "workId": "work-9d04c47e7efbbbd8aca6",
+      "path": "output/playwright/pilot-art/chunk-04/kageki-shoujo/pages-28-29.png",
+      "sha256": "75fe978bec357a3f7a7577385e1ebc6b2dea985a57f1dc5520647ec0da00750b"
+    }
+  ],
+  "works": [
+    {
+      "workId": "work-0153a125c5a56225b06c",
+      "title": "違国日記",
+      "gateQualified": true,
+      "axes": {
+        "artRealism": {
+          "state": "known",
+          "value": 3,
+          "refs": [
+            "spread-05.png",
+            "spread-09.png",
+            "spread-13.png"
+          ],
+          "reason": "Proportionate, naturalistic human body anatomy, authentic posture, and realistically drafted domestic interior spaces (kitchen counters, stovetop, dining furniture) combined with expressive, stylized facial features."
+        },
+        "artDensity": {
+          "state": "known",
+          "value": 2,
+          "refs": [
+            "spread-05.png",
+            "spread-09.png",
+            "spread-13.png"
+          ],
+          "reason": "Balanced line and environment density with clear panel compositions, functional background staging, and uncluttered negative space."
+        },
+        "visualSoftness": {
+          "state": "known",
+          "value": 3,
+          "refs": [
+            "spread-05.png",
+            "spread-09.png",
+            "spread-13.png"
+          ],
+          "reason": "Supple, organic inking with rounded contours, delicate hair rendering, smooth screentone transitions, and an absence of harsh angular hatching."
+        },
+        "motionImpact": {
+          "state": "unknown",
+          "value": null,
+          "refs": [],
+          "reason": "Sampled spreads depict quiet domestic activities (cooking, note-taking, conversation at table and doorway); no contiguous bounded physical action sequence was captured."
+        }
+      }
+    },
+    {
+      "workId": "work-34bba03e2a127ef29cd7",
+      "title": "北北西に曇と往け",
+      "gateQualified": true,
+      "axes": {
+        "artRealism": {
+          "state": "known",
+          "value": 3,
+          "refs": [
+            "pages-10-11.png",
+            "pages-18-19.png",
+            "pages-26-27.png"
+          ],
+          "reason": "Realistic anatomical bone structure, authentic gestures, and mechanically precise rendering of vehicle undercarriages and Icelandic geography, balanced with stylized character features."
+        },
+        "artDensity": {
+          "state": "known",
+          "value": 4,
+          "refs": [
+            "pages-10-11.png",
+            "pages-18-19.png",
+            "pages-26-27.png"
+          ],
+          "reason": "High information density across panels, featuring intricate mechanical components, detailed grassy terrain, layered fabric textures on clothing, camping equipment, and textured cloud formations."
+        },
+        "visualSoftness": {
+          "state": "known",
+          "value": 3,
+          "refs": [
+            "pages-10-11.png",
+            "pages-18-19.png",
+            "pages-26-27.png"
+          ],
+          "reason": "Fluid, elegant brush/pen work with watercolor-like atmospheric shading, fine hair rendering, and soft lighting textures across wide landscapes."
+        },
+        "motionImpact": {
+          "state": "unknown",
+          "value": null,
+          "refs": [],
+          "reason": "The overturned car is presented as an aftermath scene rather than an active crash, and subsequent pages depict stationary camping and logbook writing; no continuous action sequence is sampled."
+        }
+      }
+    },
+    {
+      "workId": "work-9d04c47e7efbbbd8aca6",
+      "title": "かげきしょうじょ!!",
+      "gateQualified": true,
+      "axes": {
+        "artRealism": {
+          "state": "known",
+          "value": 2,
+          "refs": [
+            "pages-14-15.png",
+            "pages-22-23.png",
+            "pages-28-29.png"
+          ],
+          "reason": "Standard shoujo/josei manga stylization with large expressive eyes and simplified facial features over naturalistic, proportionate body anatomy and architectural settings."
+        },
+        "artDensity": {
+          "state": "known",
+          "value": 2,
+          "refs": [
+            "pages-14-15.png",
+            "pages-22-23.png",
+            "pages-28-29.png"
+          ],
+          "reason": "Balanced visual density with clean line work, moderate background detailing (school buildings, dressing rooms), and open white space."
+        },
+        "visualSoftness": {
+          "state": "known",
+          "value": 3,
+          "refs": [
+            "pages-14-15.png",
+            "pages-22-23.png",
+            "pages-28-29.png"
+          ],
+          "reason": "Soft, rounded outlines, smooth line quality, delicate facial expressions, and gentle screentone shading without harsh or abrasive texturing."
+        },
+        "motionImpact": {
+          "state": "unknown",
+          "value": null,
+          "refs": [],
+          "reason": "Sampled pages depict classroom dialogue, dressing room conversation, and hallway walking; no contiguous dynamic action or dance choreography sequence is present."
+        }
+      }
+    }
+  ],
+  "issues": []
+}

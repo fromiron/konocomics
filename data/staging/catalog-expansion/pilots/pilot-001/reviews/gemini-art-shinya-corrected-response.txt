@@ -1,0 +1,66 @@
+conversationId=3d91e371-aaeb-4c4c-99ad-1f7bf1049f08
+model=gemini-3.7-flash-high
+effort=high
+pixelAccess=actual-local-png
+completionStatus=SUCCESS
+candidateBinding=adopt-only-through-current-SHA-Pass-C
+
+{
+  "workId": "work-d7e64b0b5479ca943edd",
+  "title": "深夜食堂",
+  "pixelAccess": true,
+  "readablePageCount": 6,
+  "contexts": [
+    "Diner counter ordering and food preparation scene in color wash (pp. 8-9): Master preparing tamagoyaki in a rectangular pan for Kosuzu, and Ryu entering in a dark suit/sunglasses ordering 'いつもの'.",
+    "Counter conversation, food sharing, and exterior night/news report (pp. 14-15): Kosuzu and Master discussing Ryu over octopus wieners and tamagoyaki; exterior night streetscape with siren, followed by counter television broadcast reporting a yakuza office shooting involving Ryu.",
+    "Casual diner interaction and eating sequence (pp. 22-23): Erika finishing multiple bowls of yesterday's curry at the counter; Master informing Jin-san upon arrival that the curry is sold out."
+  ],
+  "artRealism": {
+    "state": "known",
+    "value": 1,
+    "confidence": 0.85,
+    "refs": [
+      "p.8",
+      "p.9",
+      "p.14",
+      "p.22",
+      "p.23"
+    ],
+    "observation": "Human figures are drawn with noticeable loose caricatural simplification: simplified bead/slit eyes, minimal contour lines for noses and mouths, and relaxed anatomy (p.8 panel 5 Master, p.9 panel 3 customer reaction faces, p.22 panel 2 Erika). Real-world objects and setting props (tamagoyaki pan on p.8 panel 3, wiener/tamagoyaki tableware on p.14 panel 1, curry dish on p.22 panel 1, CRT television on p.15 panel 5) maintain believable proportions and spatial grounding without photorealistic or academic anatomical precision.",
+    "limitation": "Sample limited to 6 interior pages of volume 1 consisting primarily of seated conversational diner interactions."
+  },
+  "artDensity": {
+    "state": "known",
+    "value": 0,
+    "confidence": 0.9,
+    "refs": [
+      "p.14",
+      "p.15",
+      "p.22",
+      "p.23"
+    ],
+    "observation": "The panel layouts rely heavily on open white space and minimal linework. Multiple panels feature completely unrendered, blank white backgrounds behind characters (p.14 panels 2-4, p.22 panels 1-4, p.23 panels 1-3). Tone application is very sparse, line count per panel is low, and architectural or background rendering is reduced to simple, essential outline strokes.",
+    "limitation": "Pages 8-9 feature color wash fills, but the standard monochrome interior pages (pp. 14-15, 22-23) consistently demonstrate very low linework density and dominant whitespace."
+  },
+  "visualSoftness": {
+    "state": "known",
+    "value": 2,
+    "confidence": 0.85,
+    "refs": [
+      "p.8",
+      "p.9",
+      "p.14",
+      "p.22"
+    ],
+    "observation": "The linework exhibits hand-drawn, organic, slightly wavering ink strokes with rounded edges rather than rigid geometric lines or high-contrast angular hatching (p.8 panels 1-5, p.14 panels 2-3, p.22 panel 2). While it lacks delicate, glossy shojo/high-finish rendering (value 4), it distinctly avoids harsh, sharp, aggressive gekiga cross-hatching (value 0), placing it at a balanced, neutral hand-crafted softness (value 2).",
+    "limitation": "Based on a combination of 2 color pages (pp. 8-9) and 4 black-and-white pages (pp. 14-15, 22-23)."
+  },
+  "motionImpact": {
+    "state": "unknown",
+    "value": null,
+    "confidence": 0.0,
+    "refs": [],
+    "observation": "None of the supplied consecutive spreads (pp. 8-9, 14-15, 22-23) depict a continuous dynamic action sequence, combat choreography, or high-speed physical motion with clear start and end frames.",
+    "limitation": "Protocol mandates motionImpact to be marked unknown unless a supplied consecutive page pair visibly shows a continuous action sequence with verifiable start and end boundaries."
+  }
+}

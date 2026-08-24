@@ -293,6 +293,16 @@ describe("generic Art evidence validation", () => {
       ]),
     );
   });
+
+  it("does not require visual samples when every Art axis is explicitly unknown", () => {
+    const fixture = createFixture();
+    fixture.factors = fixture.factors.map((row) => ({
+      ...row,
+      value: { ...row.value, state: "unknown", value: "", confidence: "" },
+    }));
+    fixture.manifest = [];
+    expect(validateArtEvidence(fixture)).toEqual([]);
+  });
 });
 
 describe("catalog pipeline Art evidence boundary", () => {

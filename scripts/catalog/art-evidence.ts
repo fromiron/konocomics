@@ -309,6 +309,10 @@ export function validateArtEvidence(input: ArtEvidenceValidationInput): SourceIs
   }
 
   for (const [workId, work] of workById) {
+    const hasArtClaim = ART_AXIS_IDS.some(
+      (axisId) => factorByPair.get(`${workId}\u0000${axisId}`)?.value.state !== "unknown",
+    );
+    if (!hasArtClaim) continue;
     for (const axisId of ART_AXIS_IDS) {
       if (!manifestByPair.has(`${workId}\u0000${axisId}`)) {
         issues.push(

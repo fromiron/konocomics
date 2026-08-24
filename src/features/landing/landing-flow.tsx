@@ -9,7 +9,7 @@ import { BrandWordmark } from "@/components/nav/brand-wordmark";
 import { hasCatalogBackedProfileById } from "@/domain/profile/catalog-profile";
 import { useCatalogIdentity } from "@/features/catalog/catalog-provider";
 import { useRecommendationCovers } from "@/features/recommendations/recommendation-cover-resolver";
-import { usePersistence } from "@/infrastructure/db";
+import { usePersistence, type ProviderCacheRecord } from "@/infrastructure/db";
 
 import { HomeHero } from "./home-hero";
 import { HomeHowItWorks } from "./home-how-it-works";
@@ -18,6 +18,10 @@ import type { LandingWork } from "./landing-types";
 
 const SHOWCASE_COUNT = 4;
 const DISCOVERY_COUNT = 7;
+
+function skipProviderCacheWrite(record: ProviderCacheRecord) {
+  return Promise.resolve(record);
+}
 
 function LandingGuard() {
   return (
@@ -43,10 +47,10 @@ export function LandingFlow({
 }: LandingFlowProps) {
   const navigate = useNavigate();
   const catalogIdentity = useCatalogIdentity();
-  const { getProviderCache, saveProviderCache, userWorks } = usePersistence();
+  const { getProviderCache, userWorks } = usePersistence();
   const hasProfile = useMemo(
-    () => hasCatalogBackedProfileById(userWorks, catalogIdentity.workIds),
-    [catalogIdentity.workIds, userWorks],
+    () => hasCatalogBackedProfileById(userWorks, catalogIdentity.profileWorkIds),
+    [catalogIdentity.profileWorkIds, userWorks],
   );
   const coverTargets = useMemo(() => {
     const uniqueWorks = new Map(
@@ -60,7 +64,7 @@ export function LandingFlow({
   const { coverUrls, notifyCoverSettled } = useRecommendationCovers({
     targets: coverTargets,
     getProviderCache,
-    saveProviderCache,
+    saveProviderCache: skipProviderCacheWrite,
   });
   const firstCoverTarget = coverTargets[0];
   const heroWork = heroWorks[0];

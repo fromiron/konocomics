@@ -159,6 +159,22 @@ describe("recommendation cover resolver", () => {
     expect(saveProviderCache).not.toHaveBeenCalled();
   });
 
+  it("does not persist a provider response after its consumer becomes inactive", async () => {
+    const target = targets[0]!;
+    const saveProviderCache = vi.fn(async (record: ProviderCacheRecord) => record);
+
+    await expect(
+      resolveRecommendationCover(target, {
+        getProviderCache: vi.fn(async () => null),
+        isActive: () => false,
+        saveProviderCache,
+        requestBook: vi.fn(async () => itemFor(target)),
+        now: () => NOW,
+      }),
+    ).resolves.toMatchObject({ coverUrl: null, source: "unavailable" });
+    expect(saveProviderCache).not.toHaveBeenCalled();
+  });
+
   it("waits for the first rendered cover to settle before starting the remaining providers", async () => {
     const firstCache = deferred<ProviderCacheRecord | null>();
     const getProviderCache = vi.fn((isbn: string) => {

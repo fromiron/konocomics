@@ -46,15 +46,30 @@ describe("Manga DNA summary", () => {
       themes: [{ id: "adventure", centrality: 1, confidence: 1 }],
       genres: ["action"],
     });
+    const libraryOnly = createTestWork({
+      id: "library-only",
+      axes: createTestAxes({ strategy: { state: "known", value: 0, confidence: 1 } }),
+      themes: [{ id: "war", centrality: 2, confidence: 1 }],
+      genres: ["historical"],
+      eligibility: {
+        onboardingEligible: false,
+        recommendationEligible: false,
+        libraryOnly: true,
+      },
+    });
     const records = [
       createTestRecord({ workId: "anchor-b", reaction: "liked" }),
       createTestRecord({ workId: "anchor-a", reaction: "favorite" }),
       createTestRecord({ workId: "anchor-a", reaction: "liked" }),
       createTestRecord({ workId: "anchor-c", reaction: "liked" }),
       createTestRecord({ workId: "ignored", reaction: "neutral" }),
+      createTestRecord({ workId: "library-only", reaction: "favorite" }),
     ];
 
-    const summary = summarizeMangaDna([ignored, emptyTagGroups, liked, favorite], records);
+    const summary = summarizeMangaDna(
+      [ignored, libraryOnly, emptyTagGroups, liked, favorite],
+      records,
+    );
 
     expect(summary.axes.find(({ factorId }) => factorId === "strategy")).toEqual({
       factorId: "strategy",
@@ -99,7 +114,10 @@ describe("Manga DNA summary", () => {
     ]);
 
     expect(
-      summarizeMangaDna([favorite, liked, emptyTagGroups, ignored], [...records].reverse()),
+      summarizeMangaDna(
+        [favorite, liked, emptyTagGroups, libraryOnly, ignored],
+        [...records].reverse(),
+      ),
     ).toEqual(summary);
   });
 

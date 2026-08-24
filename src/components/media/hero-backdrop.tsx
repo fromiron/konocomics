@@ -1,5 +1,9 @@
+"use client";
+
+import { useState } from "react";
 import type { ReactNode } from "react";
 
+import { coverSourceForSize } from "@/components/cover/CoverImage";
 import { cn } from "@/lib/utils";
 
 type HeroBackdropProps = Readonly<{
@@ -15,24 +19,41 @@ export function HeroBackdrop({
   coverUrl,
   priority = false,
 }: HeroBackdropProps) {
-  const source = coverUrl?.trim();
+  const source = coverUrl?.trim() ?? "";
+  const fallbackSource = source === "" ? "" : coverSourceForSize(source, 200);
+  const [failure, setFailure] = useState<{
+    source: string;
+    stage: "requested" | "fallback";
+  } | null>(null);
+  const failureStage = failure !== null && failure.source === source ? failure.stage : null;
+  const currentSource = failureStage === "requested" ? fallbackSource : source;
+  const showImage =
+    currentSource !== "" &&
+    failureStage !== "fallback" &&
+    !(failureStage === "requested" && source === fallbackSource);
 
   return (
     <div
       className={cn("relative isolate overflow-hidden bg-surface-1", className)}
       data-slot="hero-backdrop"
     >
-      {source ? (
+      {showImage ? (
         <img
           alt=""
           aria-hidden="true"
           className="absolute inset-y-0 right-0 h-full w-[78%] scale-105 object-cover object-center opacity-55 blur-sm saturate-[0.9]"
-          data-cover-source={source}
+          data-cover-source={currentSource}
           decoding="async"
           draggable={false}
           fetchPriority={priority ? "high" : "auto"}
           loading={priority ? "eager" : "lazy"}
-          src={source}
+          onError={() => {
+            setFailure({
+              source,
+              stage: failureStage === "requested" ? "fallback" : "requested",
+            });
+          }}
+          src={currentSource}
         />
       ) : (
         <span
@@ -55,7 +76,7 @@ export function HeroBackdrop({
       <span
         aria-hidden="true"
         className={
-          source
+          showImage
             ? "hidden"
             : "pointer-events-none absolute inset-0 opacity-55 [background-image:linear-gradient(to_right,color-mix(in_oklch,var(--line)_22%,transparent)_1px,transparent_1px),linear-gradient(to_bottom,color-mix(in_oklch,var(--line)_18%,transparent)_1px,transparent_1px)] [background-size:32px_32px] [mask-image:radial-gradient(ellipse_at_center,black_42%,transparent_78%)]"
         }

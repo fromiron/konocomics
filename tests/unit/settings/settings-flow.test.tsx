@@ -42,6 +42,9 @@ vi.mock("@/features/catalog/catalog-provider", () => ({
   useCatalogIdentity: () => ({
     catalogVersion: testState.catalog.catalogVersion,
     workIds: testState.catalog.works.map((work) => work.id),
+    profileWorkIds: testState.catalog.works
+      .filter((work) => work.eligibility.recommendationEligible)
+      .map((work) => work.id),
   }),
 }));
 
@@ -169,6 +172,9 @@ describe("SettingsFlow data ownership", () => {
     expect(testState.exportUserData.mock.calls[0]?.[1]).toEqual({
       catalogVersion: catalog.catalogVersion,
       workIds: catalog.works.map((work) => work.id),
+      profileWorkIds: catalog.works
+        .filter((work) => work.eligibility.recommendationEligible)
+        .map((work) => work.id),
     });
     expect(downloadedFilename).toMatch(/^konocomics-export-\d{8}\.json$/u);
     expect(createObjectUrl).toHaveBeenCalledTimes(1);
@@ -212,6 +218,9 @@ describe("SettingsFlow data ownership", () => {
       expect(testState.replaceFromExport).toHaveBeenCalledWith(exportFile, {
         catalogVersion: catalog.catalogVersion,
         workIds: catalog.works.map((work) => work.id),
+        profileWorkIds: catalog.works
+          .filter((work) => work.eligibility.recommendationEligible)
+          .map((work) => work.id),
       }),
     );
     expect(await screen.findByText(settingsStrings.data.import.success)).toBeTruthy();

@@ -1,6 +1,19 @@
 import type { UserWorkRecord } from "./types";
 
-type CatalogWorkIdentity = Readonly<{ id: string }>;
+type CatalogWorkIdentity = Readonly<{
+  id: string;
+  eligibility: Readonly<{ recommendationEligible: boolean }>;
+}>;
+
+export function recommendationProfileRecords(
+  records: readonly UserWorkRecord[],
+  catalogWorks: readonly CatalogWorkIdentity[],
+) {
+  const eligibleWorkIds = new Set(
+    catalogWorks.filter((work) => work.eligibility.recommendationEligible).map((work) => work.id),
+  );
+  return records.filter((record) => eligibleWorkIds.has(record.workId));
+}
 
 export function hasCatalogBackedProfile(
   records: readonly UserWorkRecord[] | undefined,
@@ -8,7 +21,7 @@ export function hasCatalogBackedProfile(
 ): boolean | undefined {
   return hasCatalogBackedProfileById(
     records,
-    catalogWorks.map((work) => work.id),
+    catalogWorks.filter((work) => work.eligibility.recommendationEligible).map((work) => work.id),
   );
 }
 

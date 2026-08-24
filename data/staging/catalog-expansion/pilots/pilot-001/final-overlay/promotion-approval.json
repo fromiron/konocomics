@@ -1,0 +1,638 @@
+{
+  "schemaVersion": 1,
+  "policyVersion": "promotion-evidence-v2",
+  "batchId": "pilot-001",
+  "candidateSha256": "aaf4f4a4845ec105b8218f0f9e8358a2ae95c5823519e68e1752acada6e22529",
+  "annotationReviewedAt": "2026-08-23T00:00:00+09:00",
+  "reviewMethod": "authorizedModelPanel",
+  "reviewedByHuman": false,
+  "humanValidation": "NOT_RUN",
+  "decision": "GO",
+  "hardBlockerCount": 0,
+  "panel": {
+    "localCodex": {
+      "art": "PASS",
+      "nonArt": "PASS"
+    },
+    "gemini": {
+      "model": "gemini-3.7-flash-high",
+      "effort": "high",
+      "art": "PASS"
+    },
+    "grok": {
+      "model": "cursor-grok-4.6-high",
+      "mode": "non-fast",
+      "nonArt": "PASS",
+      "art": "ABSTAIN"
+    },
+    "muse": {
+      "model": "muse-spark-1.2",
+      "status": "NOT_USED"
+    }
+  },
+  "reviewReference": "reviews/pilot-001-promotion-panel.md",
+  "targetWorkIds": [
+    "work-0153a125c5a56225b06c",
+    "work-0262dcaa820443c3185d",
+    "work-07b11ec79f10c7eb7e05",
+    "work-07dc759bd91e1cffb2df",
+    "work-07ff2a01ef593ce2f809",
+    "work-081e75d8bbc53ac64713",
+    "work-0bec5d8d9474a2197312",
+    "work-112589a161d1596ec97f",
+    "work-11296a590b885cb73b66",
+    "work-14e489bf1afd1587c44a",
+    "work-192cbecc59e9c028142b",
+    "work-1cf7a0bb5f55e0d69b27",
+    "work-1fc61ddbeb429b4a2c15",
+    "work-205e576ef057e3aed1ab",
+    "work-222504590507d3ab8093",
+    "work-268e1fa3599955359969",
+    "work-2f39795212f5ad8db155",
+    "work-303d0a9d67a606a817af",
+    "work-34bba03e2a127ef29cd7",
+    "work-3588928ab8f6a2520923",
+    "work-37ecced0b2392d7af9b2",
+    "work-3823ff0766f67c015c53",
+    "work-39555fe7402dada0d79f",
+    "work-440f93a4e60ef906685b",
+    "work-464322afcd10013437b9",
+    "work-4a8a22fc766bf9bc4c59",
+    "work-5e7eef6cc23d9738e034",
+    "work-61f2b70ee9f8217b3604",
+    "work-671e3453cf9e1df2ee87",
+    "work-76c038b398f4b28b7748",
+    "work-7730845c9cf7ba0cccc8",
+    "work-8716f80d9b988bd0d055",
+    "work-98d513b70560f2f96a38",
+    "work-9d04c47e7efbbbd8aca6",
+    "work-9d5d64262dbc2893acd4",
+    "work-a089c0eef91d1213da38",
+    "work-a7a1e0666169f1b2e8c0",
+    "work-ad2b80b81b7bc9b602a3",
+    "work-b2c37bdb52e2a78dfd41",
+    "work-b4b21d2ebe5b8efc84ea",
+    "work-c4abbc1b44fa5706bce3",
+    "work-cdf549d4b1888153e146",
+    "work-d489f5a2229689aa5115",
+    "work-d7e64b0b5479ca943edd",
+    "work-e049c9aaf92ba31da8b0",
+    "work-ebe399258f28460b8f9b",
+    "work-ef7106f6a387c9860877",
+    "work-f391e591282e435a3c1d",
+    "work-f50fa290eb4116a7078e",
+    "work-f5f0ee0b0ff16bc146e0"
+  ],
+  "bindings": [
+    {
+      "path": "art-confidence-pass-c.csv",
+      "sha256": "72f039e312259ba2c63485e9eac71544a0ff34292206badaff9d1642016cee4f"
+    },
+    {
+      "path": "art-confidence-pass-c.md",
+      "sha256": "bf276d6f81dfb6c7a858b5922aaaeb9f5a9566e900357478030fb55bf241bc92"
+    },
+    {
+      "path": "art-decision-ledger.csv",
+      "sha256": "81772bb4f4718107512ee73a1024c5e3daaade46f04a166815d7d4c203ffb01c"
+    },
+    {
+      "path": "art-evidence-final.csv",
+      "sha256": "d007840e4409828098e7e2707e4e10af7192e46c7e16348eca08604bec3cd869"
+    },
+    {
+      "path": "art-evidence-manifest-final.csv",
+      "sha256": "5825766d9f15d6ec833e1f48b08740eac759520d52a8e58b242e806d01d0bbd1"
+    },
+    {
+      "path": "art-factors-final.csv",
+      "sha256": "0de4cc119840a90a6390e669a971516b42c71adcc35cf11f52abf5b6adb2026a"
+    },
+    {
+      "path": "art-manifest-final.csv",
+      "sha256": "5825766d9f15d6ec833e1f48b08740eac759520d52a8e58b242e806d01d0bbd1"
+    },
+    {
+      "path": "art-overlay-report.md",
+      "sha256": "d36d5177a86492bd7c8171b7e500f19cdc7e2df688af6e0bae1d0a9401b607e6"
+    },
+    {
+      "path": "context-provenance.md",
+      "sha256": "5e1182134873c7b3fa4a3b1767aeb06b16ed99d56bf2ad75e89eb5e6fba7aad7"
+    },
+    {
+      "path": "evidence-final.csv",
+      "sha256": "f1053e1b891cfb7a351fc995316d5a55089d5c0b3c8721e13656f604dceaf0b8"
+    },
+    {
+      "path": "factors-final.csv",
+      "sha256": "1c4b56357d6b182e2e7441dc4333ca307bf8cb4ec36db89eef1a3bd219958fa1"
+    },
+    {
+      "path": "final-overlay-validation.json",
+      "sha256": "fe47c51c4f23d79aeccedb36cde20cc24b1493bba1401db363aeefd4a8401397"
+    },
+    {
+      "path": "genres-final.csv",
+      "sha256": "e23d3d94d7ca0d16510046c052f0b8c06e292efbb5585c8f9f2f2f5f5f5206ee"
+    },
+    {
+      "path": "pilot-001-promotion-panel.md",
+      "sha256": "f6a77d5a1f61932061773c3cdd460705d590b4cf4c0b33b24a273ab14b8c6301"
+    },
+    {
+      "path": "recommendation-context-final.csv",
+      "sha256": "573278fae36119eb584a8ec35f2ceb29bd458a3c527155ce23180c211917a14f"
+    },
+    {
+      "path": "text-decision-ledger.csv",
+      "sha256": "cb4e783b33cf16be04d119d3671ff49eee2eb34d08b6973826e2fdbcde84fd24"
+    },
+    {
+      "path": "text-evidence-final.csv",
+      "sha256": "42d6a6a68b21ad886eb27e10342dcd6e9bf9a0ac7d200acfef64ecfd93022622"
+    },
+    {
+      "path": "text-factors-final.csv",
+      "sha256": "fa3cb840912c3ac88f53c025c07b57da16a02edaf681d0a8f9af95aecd541653"
+    },
+    {
+      "path": "text-overlay-report.md",
+      "sha256": "5ab06135fa09b9bbd57c3062d93012421d5b7dc9c70d03f790ea7105df8f455f"
+    },
+    {
+      "path": "themes-final.csv",
+      "sha256": "eca46a480cafe8117247954ad66ba7ec3ef65c9d96899e17f346e95a57fa0dec"
+    },
+    {
+      "path": "works-final.csv",
+      "sha256": "fa12dffafa3138f74933de949e0c0f832ee20141221dcb15de7758eac441cfb8"
+    }
+  ],
+  "reviewBindings": [
+    {
+      "path": "data/staging/catalog-expansion/pilots/pilot-001/reviews/art-barakamon-pass-c-adjudication.md",
+      "sha256": "9fad00b0446b50f4902db0c27a92c13a2f632eeef2cd314f49ea96c2e80083bc"
+    },
+    {
+      "path": "data/staging/catalog-expansion/pilots/pilot-001/reviews/art-dr-coto-pass-c-adjudication.md",
+      "sha256": "a4b9a55920b5a6acee8ba339e6a5ede3db3f5c7e10e5cc6de21a621c736347f3"
+    },
+    {
+      "path": "data/staging/catalog-expansion/pilots/pilot-001/reviews/art-emma-pass-c-adjudication.md",
+      "sha256": "351e8bfc5924ec164a99f71f3f81c8a3b7a75cd6e07968c064e0924e865535b1"
+    },
+    {
+      "path": "data/staging/catalog-expansion/pilots/pilot-001/reviews/art-final-matrix.csv",
+      "sha256": "c02457eab38b2b00ec381880abf9eb31077f70ace82401f99b10463d4ce03fa6"
+    },
+    {
+      "path": "data/staging/catalog-expansion/pilots/pilot-001/reviews/art-hidamari-pass-c-adjudication.md",
+      "sha256": "f0cedca28ed15c52e12f072342771bceb3133c0e34b6637009e2ba02e9f14c82"
+    },
+    {
+      "path": "data/staging/catalog-expansion/pilots/pilot-001/reviews/art-hourou-pass-c-adjudication.md",
+      "sha256": "3f05be974b4a2df39868abbe416723e955c266a15cdc5e7cd7c2e5e28e345a45"
+    },
+    {
+      "path": "data/staging/catalog-expansion/pilots/pilot-001/reviews/art-local-barairo-recheck.md",
+      "sha256": "9db7a494469fdeafb7423fbe0e1c7abf0b44e4094e8ef9fe89992b47590c0bbe"
+    },
+    {
+      "path": "data/staging/catalog-expansion/pilots/pilot-001/reviews/art-local-barakamon-salvage.md",
+      "sha256": "2b250987d35bca9be7015ed28a5665374ba4ea853b3f5e3cbd2783a30517bbf2"
+    },
+    {
+      "path": "data/staging/catalog-expansion/pilots/pilot-001/reviews/art-local-chunk-04.md",
+      "sha256": "ffc5f12a6622a37261c1b77a0f9cf48957fc2beb86f45bea975555777116dbd9"
+    },
+    {
+      "path": "data/staging/catalog-expansion/pilots/pilot-001/reviews/art-local-chunk-05.md",
+      "sha256": "4326b1e3adfc864756b5a55bd7ee97d71814345f1479c0ee25026423315ca2fc"
+    },
+    {
+      "path": "data/staging/catalog-expansion/pilots/pilot-001/reviews/art-local-dr-coto-salvage.md",
+      "sha256": "1d1e90a78352d6abe540a6d86cfd48ba03e4168b3112dd447860b1225f362e35"
+    },
+    {
+      "path": "data/staging/catalog-expansion/pilots/pilot-001/reviews/art-local-ecomi-audit.md",
+      "sha256": "6514a06d9efca9f07b36a907c6e3198939c94f58d0c4a37cfac3bf4689a73ea7"
+    },
+    {
+      "path": "data/staging/catalog-expansion/pilots/pilot-001/reviews/art-local-emma-salvage.md",
+      "sha256": "260ab2c5a12b36abcc99264524ee2fe41c72fb1760a66edff40e24847bf37fce"
+    },
+    {
+      "path": "data/staging/catalog-expansion/pilots/pilot-001/reviews/art-local-hidamari-salvage.md",
+      "sha256": "bfb762d926938e094d05ee15439c9110d0bcfcd99c1bc5a65d510479c3870b9e"
+    },
+    {
+      "path": "data/staging/catalog-expansion/pilots/pilot-001/reviews/art-local-hourou-salvage.md",
+      "sha256": "4fb20993e65861b86a5a386a7ea77091f247d7b567bf172d673cfc4f6a8e07a4"
+    },
+    {
+      "path": "data/staging/catalog-expansion/pilots/pilot-001/reviews/art-local-mashiro-salvage.md",
+      "sha256": "01aec03be30aa99e52cdbac495e29735d5c69ef3c2750b6ebc6b951f3b924bfb"
+    },
+    {
+      "path": "data/staging/catalog-expansion/pilots/pilot-001/reviews/art-local-other-audit.md",
+      "sha256": "34a08cf0697c2e351118afd467af721e5a294209c03ae12102655c97186f49bf"
+    },
+    {
+      "path": "data/staging/catalog-expansion/pilots/pilot-001/reviews/art-local-remaining.md",
+      "sha256": "00067c0246cc27577b570e6d61b4aac14c248322560537c6af6d7c6321db1a31"
+    },
+    {
+      "path": "data/staging/catalog-expansion/pilots/pilot-001/reviews/art-pass-c-adjudication.md",
+      "sha256": "17e1df11212d7d763941c2d073b2293681026389a3fa0e5a8d595e13107bdcb6"
+    },
+    {
+      "path": "data/staging/catalog-expansion/pilots/pilot-001/reviews/art-salvage-four/eleven-gemini-counted-meta.md",
+      "sha256": "3f66c3b1b1542b4a5454d5f237787f43792c3485c11bc93d58fb69eabcb69b01"
+    },
+    {
+      "path": "data/staging/catalog-expansion/pilots/pilot-001/reviews/art-salvage-four/eleven-gemini-counted-stdout.json",
+      "sha256": "be64030a36e24e290ba5dc5c24b8d7df607d5e2fe5f781cbb3876892f2290db0"
+    },
+    {
+      "path": "data/staging/catalog-expansion/pilots/pilot-001/reviews/art-salvage-four/eleven-gemini-counted.log",
+      "sha256": "6c66afbaf1f729b61115ec2179a0dc750bd743f56b4d5b38dad7b8263fada211"
+    },
+    {
+      "path": "data/staging/catalog-expansion/pilots/pilot-001/reviews/art-salvage-four/eleven-gemini-prompt.md",
+      "sha256": "9e1983307e6b3384a2aa1aae50d5e2b9c2870057f0ed6343d1a7d82c0f738601"
+    },
+    {
+      "path": "data/staging/catalog-expansion/pilots/pilot-001/reviews/art-salvage-four/hyoryu-gemini-counted-meta.md",
+      "sha256": "84706b5cdc293bec46660634acd350c4f2b3a63cbf310d6790ac007cb252339a"
+    },
+    {
+      "path": "data/staging/catalog-expansion/pilots/pilot-001/reviews/art-salvage-four/hyoryu-gemini-counted-stdout.json",
+      "sha256": "5c975ee3946b2d73d9c84036ae9cc620639479ffba547cbf445bb4779d60e7fd"
+    },
+    {
+      "path": "data/staging/catalog-expansion/pilots/pilot-001/reviews/art-salvage-four/hyoryu-gemini-counted.log",
+      "sha256": "1314073351a0bbfb453213b4b27411a7f9038c8197636cce2cb0d0214edd1646"
+    },
+    {
+      "path": "data/staging/catalog-expansion/pilots/pilot-001/reviews/art-salvage-four/hyoryu-gemini-excluded-meta.md",
+      "sha256": "3d089db03499c90ed2980066860751b90b5ed810c636b93ac57fd82af8fa8487"
+    },
+    {
+      "path": "data/staging/catalog-expansion/pilots/pilot-001/reviews/art-salvage-four/hyoryu-gemini-excluded-stdout.json",
+      "sha256": "2d09607a7c4f5479d200d0f7e2327730724adff4c432c4e6cb92afe5db79ba61"
+    },
+    {
+      "path": "data/staging/catalog-expansion/pilots/pilot-001/reviews/art-salvage-four/hyoryu-gemini-excluded.log",
+      "sha256": "63da906cc379dbe464d3b65df35e1863086a28666d879df58f712f803c89ce9e"
+    },
+    {
+      "path": "data/staging/catalog-expansion/pilots/pilot-001/reviews/art-salvage-four/hyoryu-gemini-prompt.md",
+      "sha256": "216549d175a88319177c69881aebdd2b9dd4060ac9163044565c08cfed015d8d"
+    },
+    {
+      "path": "data/staging/catalog-expansion/pilots/pilot-001/reviews/art-salvage-four/hyoryu-opencode-failed-argument-meta.md",
+      "sha256": "5dc48954fa3aff86903b05bf63569236c5cdd31ad23d8ab91c99acd5ae8f0772"
+    },
+    {
+      "path": "data/staging/catalog-expansion/pilots/pilot-001/reviews/art-salvage-four/hyoryu-opencode-failed-argument-stdout.jsonl",
+      "sha256": "45db726a3660e9bf7fa74e5200b6d25db1c858b62c8ed6e985fb9a882c638175"
+    },
+    {
+      "path": "data/staging/catalog-expansion/pilots/pilot-001/reviews/art-salvage-four/hyoryu-opencode-failed-credits-meta.md",
+      "sha256": "95f4894ba0b8a200e9a205d0c7c0641ec5ec03ab5d9caad8947a23518e3e5c1f"
+    },
+    {
+      "path": "data/staging/catalog-expansion/pilots/pilot-001/reviews/art-salvage-four/hyoryu-opencode-failed-credits-stdout.jsonl",
+      "sha256": "23407f019cc14f488f10c6fb39afbf11192a1b78c00fc34116f74fe15f3804fd"
+    },
+    {
+      "path": "data/staging/catalog-expansion/pilots/pilot-001/reviews/art-salvage-four/local-codex-blind-freeze.md",
+      "sha256": "b5adf60dae4cf103aa703824a12ef97b6882ace5cb087f302b7a1bd0839d691b"
+    },
+    {
+      "path": "data/staging/catalog-expansion/pilots/pilot-001/reviews/art-salvage-four/pass-c-adjudication.csv",
+      "sha256": "ba7c0c11567562b5f4ae887f214771f6354e9bb339211ecec2afcf9cfef9b133"
+    },
+    {
+      "path": "data/staging/catalog-expansion/pilots/pilot-001/reviews/art-salvage-four/pass-c-adjudication.md",
+      "sha256": "37362e7280b914ba13eaf117f9f2927d97c0e3886c6d86762a2123cfaeaa2d10"
+    },
+    {
+      "path": "data/staging/catalog-expansion/pilots/pilot-001/reviews/art-salvage-four/urusei-gemini-counted-meta.md",
+      "sha256": "7d1aa4d0f79bcc5f74bf86796872e609a0c498e3072400519043afdd7998620e"
+    },
+    {
+      "path": "data/staging/catalog-expansion/pilots/pilot-001/reviews/art-salvage-four/urusei-gemini-counted-stdout.json",
+      "sha256": "8aedbdc0a90099660b2c38adb29a87a9beb3111796c7fa056c71cfdecc2296c4"
+    },
+    {
+      "path": "data/staging/catalog-expansion/pilots/pilot-001/reviews/art-salvage-four/urusei-gemini-counted.log",
+      "sha256": "5229643cd03f81dc6c97af0efe8156e8da4ff340f1960ae32fd1bd2eea28ae37"
+    },
+    {
+      "path": "data/staging/catalog-expansion/pilots/pilot-001/reviews/art-salvage-four/urusei-gemini-prompt.md",
+      "sha256": "6d295f90c294fe322bec0d7792ecfb0d95e4f49df4305f989e6b638b46f0d304"
+    },
+    {
+      "path": "data/staging/catalog-expansion/pilots/pilot-001/reviews/art-salvage-four/yawara-gemini-counted-meta.md",
+      "sha256": "3e57793e60e72dce2715a55b5b3b54a82895bda92933f847c2bbaa542d6c9687"
+    },
+    {
+      "path": "data/staging/catalog-expansion/pilots/pilot-001/reviews/art-salvage-four/yawara-gemini-counted-stdout.json",
+      "sha256": "dfe94f740a730e79080d02855191aea52f3d36c34ef9f8e374ace3cd29581d65"
+    },
+    {
+      "path": "data/staging/catalog-expansion/pilots/pilot-001/reviews/art-salvage-four/yawara-gemini-counted.log",
+      "sha256": "9a7cdd0ee4cbff4fbc2d160a0c8f18cf047426d302b48e82345e958e9318389f"
+    },
+    {
+      "path": "data/staging/catalog-expansion/pilots/pilot-001/reviews/art-salvage-four/yawara-gemini-prompt.md",
+      "sha256": "315e69c781726d3dfe97ae04c6d55b802f2988acd1452b49a76b23d74117797a"
+    },
+    {
+      "path": "data/staging/catalog-expansion/pilots/pilot-001/reviews/bibliography-audit.md",
+      "sha256": "33ca924c25b15d0b1360e554a6cb63662ca0948812843e33de83e8178689578c"
+    },
+    {
+      "path": "data/staging/catalog-expansion/pilots/pilot-001/reviews/chunk-01-gemini-art-response.txt",
+      "sha256": "6c5ed6031f60686067575cf41171c87029b7815869311ba0ee7279f99bebebec"
+    },
+    {
+      "path": "data/staging/catalog-expansion/pilots/pilot-001/reviews/chunk-01-grok-response.txt",
+      "sha256": "1a6305463410841fa46ec3c7e71638f52d632d64b564b819c8052a64b4ca18c2"
+    },
+    {
+      "path": "data/staging/catalog-expansion/pilots/pilot-001/reviews/chunks-02-03-grok-response.txt",
+      "sha256": "7f64cea187708e89f6eb244c4eec6be9d08376724a490b25aaf087bd530b9883"
+    },
+    {
+      "path": "data/staging/catalog-expansion/pilots/pilot-001/reviews/chunks-04-05-grok-response.txt",
+      "sha256": "73769e8a6d6f705c170e3b64cef777019826f96906c5a0813d558aff44ae29f2"
+    },
+    {
+      "path": "data/staging/catalog-expansion/pilots/pilot-001/reviews/coverage-gap-chunk-05.md",
+      "sha256": "ab5cc5662e4485fd39259e9e2572e52d6788a3e2dd32fb8dfb5ac7b7eede563c"
+    },
+    {
+      "path": "data/staging/catalog-expansion/pilots/pilot-001/reviews/coverage-gap-chunks-01-02.md",
+      "sha256": "ce8ec48b622bfe8889aa585a4ed485797fb7638fecefdf45823e99ecde2cb353"
+    },
+    {
+      "path": "data/staging/catalog-expansion/pilots/pilot-001/reviews/coverage-gap-chunks-03-04.md",
+      "sha256": "f361cdccbce5a9f1cfb9aecdc4bea0c792f41246aee203ff9c77efd4a37a01e3"
+    },
+    {
+      "path": "data/staging/catalog-expansion/pilots/pilot-001/reviews/gemini-art-barairo-recheck-response.txt",
+      "sha256": "fdbe0575ec58b7efb36c3a6bd0cb07ce3b3813cca4ffe8418801cb627a62e930"
+    },
+    {
+      "path": "data/staging/catalog-expansion/pilots/pilot-001/reviews/gemini-art-barakamon-salvage-response.md",
+      "sha256": "a3f8993c1e2faf82a1893abf00f43d9e2a263233b4111a48d7f9db21bea96c44"
+    },
+    {
+      "path": "data/staging/catalog-expansion/pilots/pilot-001/reviews/gemini-art-chunk-04-group-01-response.txt",
+      "sha256": "bb7e9b866f86cccdaa79f2284d3a72535465718310f10c7f41a8137351a13bb4"
+    },
+    {
+      "path": "data/staging/catalog-expansion/pilots/pilot-001/reviews/gemini-art-chunk-04-group-02-response.txt",
+      "sha256": "d909842f84fdcab3261d585725caade4220c87632205f5bb0ebcf57e32723da3"
+    },
+    {
+      "path": "data/staging/catalog-expansion/pilots/pilot-001/reviews/gemini-art-chunk-04-group-03-response.txt",
+      "sha256": "c2e253bf18714d878c737c641a52c5d06471491c622a760719b4068f444870a8"
+    },
+    {
+      "path": "data/staging/catalog-expansion/pilots/pilot-001/reviews/gemini-art-chunk-05-group-01-response.txt",
+      "sha256": "6a0a1545282ba483cb74bfb6148f826c496e3fb75e2a71f3877363d1cb8e6f38"
+    },
+    {
+      "path": "data/staging/catalog-expansion/pilots/pilot-001/reviews/gemini-art-chunk-05-group-02-response.txt",
+      "sha256": "c6c056ed23f9108e9f96d0edc939849cd23044ad42745adf4b5016944cd27213"
+    },
+    {
+      "path": "data/staging/catalog-expansion/pilots/pilot-001/reviews/gemini-art-chunk-05-group-03-response.txt",
+      "sha256": "83cc8568823e9f7f8696a81e85a4df8a2244350e32363f6e179fb560e761f0d1"
+    },
+    {
+      "path": "data/staging/catalog-expansion/pilots/pilot-001/reviews/gemini-art-dandadan-papa-ooku-response.txt",
+      "sha256": "2257055b8773e45bb14cab7617072323754f4c15d306f15baad41e071da7b671"
+    },
+    {
+      "path": "data/staging/catalog-expansion/pilots/pilot-001/reviews/gemini-art-dr-coto-salvage-response.md",
+      "sha256": "1dad5d1282955c4b1eb5fdbe539eb0767aa53c28e8f2dd67191ab8455ae5d7f7"
+    },
+    {
+      "path": "data/staging/catalog-expansion/pilots/pilot-001/reviews/gemini-art-ecomi-batch-01-response.txt",
+      "sha256": "3f40fb564396ac8f868914f32b972e5e2de3c7a3d2ec7762f72e150b75d44805"
+    },
+    {
+      "path": "data/staging/catalog-expansion/pilots/pilot-001/reviews/gemini-art-ecomi-batch-02-response.txt",
+      "sha256": "74591bc6e357f4b9fb912b66083e10aae99b2e7c02e3c48e92ad572fdb1312eb"
+    },
+    {
+      "path": "data/staging/catalog-expansion/pilots/pilot-001/reviews/gemini-art-ecomi-batch-03-response.txt",
+      "sha256": "6020bd9fe32848338e8b34290a7ac7ec6a14617a068c4b195c6acc369c5d9cc2"
+    },
+    {
+      "path": "data/staging/catalog-expansion/pilots/pilot-001/reviews/gemini-art-emma-salvage-response.md",
+      "sha256": "d1a5c7d2618508f6894ee4f7ee69d05c6e8075b674e519beec26e9e5b66576ca"
+    },
+    {
+      "path": "data/staging/catalog-expansion/pilots/pilot-001/reviews/gemini-art-final-remaining-response.txt",
+      "sha256": "9f1c2920d2f105d6cf7e3a398be8109ead6d61133c41583d18dea24508444eea"
+    },
+    {
+      "path": "data/staging/catalog-expansion/pilots/pilot-001/reviews/gemini-art-hidamari-salvage-response.md",
+      "sha256": "d3226f75276fd63f27b25114d96fba89097bea44f629d328c579db6e5e3c5d34"
+    },
+    {
+      "path": "data/staging/catalog-expansion/pilots/pilot-001/reviews/gemini-art-hourou-salvage-response.md",
+      "sha256": "93e102e0b476d89d9697c4993614a075e2ee9a5d35df864e3ef2a70076331f45"
+    },
+    {
+      "path": "data/staging/catalog-expansion/pilots/pilot-001/reviews/gemini-art-mashiro-salvage-response.txt",
+      "sha256": "d9ba35623d5da6a979ed76b0a236ab79c22a3bcda1faa42e581a14c6f2981852"
+    },
+    {
+      "path": "data/staging/catalog-expansion/pilots/pilot-001/reviews/gemini-art-other-batch-a-response.txt",
+      "sha256": "65b3b2ce9b3a8db372c8ce2d3b3ad595d5e721ecbbe3d237eee70617466ca623"
+    },
+    {
+      "path": "data/staging/catalog-expansion/pilots/pilot-001/reviews/gemini-art-other-batch-b-response.txt",
+      "sha256": "bd6b7ee36fdbf78d9117ef6b3f044754ebafaae9a2912ece54f2a09227f9905b"
+    },
+    {
+      "path": "data/staging/catalog-expansion/pilots/pilot-001/reviews/gemini-art-pass-c-ceres-response.txt",
+      "sha256": "37bf951b8d633640c057a878e36cc35e626da617ee60b24307db596aac9af64d"
+    },
+    {
+      "path": "data/staging/catalog-expansion/pilots/pilot-001/reviews/gemini-art-pass-c-ecomi-group-01-response.txt",
+      "sha256": "75652ec0aa2512ba6bf9c42f13b344926414f62fb55c6523788cc669d9fe46db"
+    },
+    {
+      "path": "data/staging/catalog-expansion/pilots/pilot-001/reviews/gemini-art-pass-c-ecomi-group-02-response.txt",
+      "sha256": "8737c3bc78e9b0ea657d98391b306af8f126efb55034e9abb7630a61d2f5f7a0"
+    },
+    {
+      "path": "data/staging/catalog-expansion/pilots/pilot-001/reviews/gemini-art-pass-c-ecomi-group-03-response.txt",
+      "sha256": "d638256981a4d9243153f9953017c306478bd1cf7cfa1cd60603d928f1fbaf55"
+    },
+    {
+      "path": "data/staging/catalog-expansion/pilots/pilot-001/reviews/gemini-art-pass-c-ecomi-group-04-response.txt",
+      "sha256": "4b7b2a69dfa549fd629e19f16c948894066ecf64b333ea8319bcdf32b05c2936"
+    },
+    {
+      "path": "data/staging/catalog-expansion/pilots/pilot-001/reviews/gemini-art-pass-c-other-group-01-response.txt",
+      "sha256": "8f69bcebe9a8ebca16f13d31f70fdfcf09b78e88119397d2df4fdb366317235c"
+    },
+    {
+      "path": "data/staging/catalog-expansion/pilots/pilot-001/reviews/gemini-art-pass-c-other-group-02-response.txt",
+      "sha256": "86739afdcf5b94b0050aeacb5875a5b4920a20370faacbd8eb39aa7b62ae1d01"
+    },
+    {
+      "path": "data/staging/catalog-expansion/pilots/pilot-001/reviews/gemini-art-shinya-corrected-response.txt",
+      "sha256": "7f5624ec5845004f9bea86aecb926bba48b6ce205cf4356cbf56124db7ec3094"
+    },
+    {
+      "path": "data/staging/catalog-expansion/pilots/pilot-001/reviews/grok-current-chunk-01-followup-response.txt",
+      "sha256": "19f2a87d98b02f65d213fb68491f5fd7502403a1b3af1e4bc180b2e77d63fe5c"
+    },
+    {
+      "path": "data/staging/catalog-expansion/pilots/pilot-001/reviews/grok-current-chunk-01-response.txt",
+      "sha256": "bfd3eec5bb634b201c38df5f4424421246dda86fa0ca40224f16b4088ef679cd"
+    },
+    {
+      "path": "data/staging/catalog-expansion/pilots/pilot-001/reviews/grok-current-chunk-02-followup-response.txt",
+      "sha256": "aa9dd1d1eb09a684d6c87dcbfcda6894d4463b03b19819d0509e6f8d6b89ffea"
+    },
+    {
+      "path": "data/staging/catalog-expansion/pilots/pilot-001/reviews/grok-current-chunk-02-response.txt",
+      "sha256": "8a0bc3eee1ab455e28812558ae31c9c1772bb9a7bd9081f3529e4aa4102d9efa"
+    },
+    {
+      "path": "data/staging/catalog-expansion/pilots/pilot-001/reviews/grok-current-chunk-03-response.txt",
+      "sha256": "36bed44045cefc8903c813c18378eb68f38ad777ca87dc697a76e1a4c8067ee2"
+    },
+    {
+      "path": "data/staging/catalog-expansion/pilots/pilot-001/reviews/grok-current-chunk-04-response.txt",
+      "sha256": "a26c1d79d036d9f629aec1ea07ad666b1f2ad736023cf650e72335d496283726"
+    },
+    {
+      "path": "data/staging/catalog-expansion/pilots/pilot-001/reviews/grok-current-chunk-05-response.txt",
+      "sha256": "890166644a7e5efe35ddbac14afb8e7b12f9439af271849d0b45c24699ce2fe1"
+    },
+    {
+      "path": "data/staging/catalog-expansion/pilots/pilot-001/reviews/grok-current-theme-gap-response.txt",
+      "sha256": "3dbc3aa4cb4c1a45898e8a0eff383ffcd9233560ac6df2dedf5c0fbfd6dbf894"
+    },
+    {
+      "path": "data/staging/catalog-expansion/pilots/pilot-001/reviews/review-ledger.md",
+      "sha256": "6470b1fe41b5dfc387a9a448aa47b7076c8fc408c3dcfc50add66e60bfc05aa6"
+    },
+    {
+      "path": "data/staging/catalog-expansion/pilots/pilot-001/reviews/supplemental-user-reviews-chunks-01-03.md",
+      "sha256": "30ad5de2fc1988ab563b4693ce4c0dff0e1b822efb27ce1b13fe5710882d64bf"
+    },
+    {
+      "path": "data/staging/catalog-expansion/pilots/pilot-001/reviews/supplemental-user-reviews-chunks-04-05.md",
+      "sha256": "19b19ab18405a6628f16f999305d492244c16fb153c12ce551dc41fbb70ad292"
+    },
+    {
+      "path": "data/staging/catalog-expansion/pilots/pilot-001/reviews/text-coverage-followup-a-review.md",
+      "sha256": "cfe0f41ef6c9d00b53e829029aa3aa0c5aebd6c892ce4b6b4673f1115d8dfe03"
+    },
+    {
+      "path": "data/staging/catalog-expansion/pilots/pilot-001/reviews/text-coverage-followup-a.md",
+      "sha256": "ed44fe2903f96d279695bdedf211d427a02c10126ec22344dbd5a4086dcb6b2e"
+    },
+    {
+      "path": "data/staging/catalog-expansion/pilots/pilot-001/reviews/text-coverage-followup-b-review.md",
+      "sha256": "b0ad74c87a8714fbb48c1ff7e1a6550c60bc0e97333f2dcad539ac144f6f9d77"
+    },
+    {
+      "path": "data/staging/catalog-expansion/pilots/pilot-001/reviews/text-coverage-followup-b.md",
+      "sha256": "005848536e52c6f4308666a563394c4352bcaf2552d5121b4a544648b6656bec"
+    },
+    {
+      "path": "data/staging/catalog-expansion/pilots/pilot-001/reviews/text-coverage-followup-c-review.md",
+      "sha256": "8c0a99f61eded32efd8000d428f23c7c42c15a49a7a48420b9d1721082bf75b1"
+    },
+    {
+      "path": "data/staging/catalog-expansion/pilots/pilot-001/reviews/text-coverage-followup-c.md",
+      "sha256": "6341971ad5ce9ceaac19706866e1eb8b92ccda5960496582e677c21fcf38f2c3"
+    },
+    {
+      "path": "data/staging/catalog-expansion/pilots/pilot-001/reviews/text-coverage-followup-d-review.md",
+      "sha256": "1e75711572f1a049367a563526bd711cb6013765cff574c47b4673684362da60"
+    },
+    {
+      "path": "data/staging/catalog-expansion/pilots/pilot-001/reviews/text-coverage-followup-d.md",
+      "sha256": "c5a1d08c3d18e7d2747b6332ea08ff52814fcc62e98ec987ca693d4ce74a7263"
+    },
+    {
+      "path": "data/staging/catalog-expansion/pilots/pilot-001/reviews/text-coverage-followup-e-review.md",
+      "sha256": "f29277d443b3fcfcf7609a9061862373423499105d50c0b6446a2070ee585382"
+    },
+    {
+      "path": "data/staging/catalog-expansion/pilots/pilot-001/reviews/text-coverage-followup-e.md",
+      "sha256": "96a6e521e9322a6c647e81385f13d86aba0760f27ffd202195b0d9539cb04c1f"
+    },
+    {
+      "path": "data/staging/catalog-expansion/pilots/pilot-001/reviews/text-coverage-followup-f-review.md",
+      "sha256": "6525e86d87b71049b543ad48133cde088dcd5508dcc6365818686866445a0843"
+    },
+    {
+      "path": "data/staging/catalog-expansion/pilots/pilot-001/reviews/text-coverage-followup-f.md",
+      "sha256": "611432a5a04f2728167f4fb90c06120fb5d76e87ac6b08e94d9668f65da7b530"
+    },
+    {
+      "path": "data/staging/catalog-expansion/pilots/pilot-001/reviews/text-coverage-followup-g-review.md",
+      "sha256": "de20247a8a3cbdc1a0b0aba91c1e1405ec28c3f1e71869a5fe0375b9a561e88c"
+    },
+    {
+      "path": "data/staging/catalog-expansion/pilots/pilot-001/reviews/text-coverage-followup-g.md",
+      "sha256": "87c6076a60051da43d5ad9804634b97ef2efd9eec4bfe119c8c063fd18a71758"
+    },
+    {
+      "path": "data/staging/catalog-expansion/pilots/pilot-001/reviews/text-coverage-followup-golden-gold.md",
+      "sha256": "369d6e9b41dfe72108e5550c4c2e1a0879f7c0f6ed6c7fbce93c18bcb2308fab"
+    },
+    {
+      "path": "data/staging/catalog-expansion/pilots/pilot-001/reviews/text-coverage-followup-hidamari.md",
+      "sha256": "a023f4b9faef04c066509b12103c4ea2a823210734acf0702fd1800b19236332"
+    },
+    {
+      "path": "data/staging/catalog-expansion/pilots/pilot-001/reviews/text-coverage-followup-keion.md",
+      "sha256": "e727d4739e99d42f3eda32a651f82d5c9c662567668c5ca0233d00eb0b35adf8"
+    },
+    {
+      "path": "data/staging/catalog-expansion/pilots/pilot-001/reviews/text-coverage-followup-koi-review.md",
+      "sha256": "2b09fd7cf96ae12844f25eddb83ad6205abceb8feece4356ae76f0d7fa8552a1"
+    },
+    {
+      "path": "data/staging/catalog-expansion/pilots/pilot-001/reviews/text-coverage-followup-koi.md",
+      "sha256": "fd639311ad621625fece809dcc7aac16ea02b9337e95f62d8623ffe9ef7761ae"
+    },
+    {
+      "path": "data/staging/catalog-expansion/pilots/pilot-001/reviews/text-pass-bc-chunk-05.md",
+      "sha256": "8b81b30e73e496833f30289d995c58b426336b6a70ea5ce92930c4a62e86447f"
+    },
+    {
+      "path": "data/staging/catalog-expansion/pilots/pilot-001/reviews/text-pass-bc-chunks-01-02.md",
+      "sha256": "868ab7d93d2ae676babfbb76dbf9399eaa53f4e860f56a33d0010a3048366405"
+    },
+    {
+      "path": "data/staging/catalog-expansion/pilots/pilot-001/reviews/text-pass-bc-chunks-03-04.md",
+      "sha256": "5b12f7db919eb87263a5c003e128b3283140cc5111cd10b7bcb576630e4fb81d"
+    },
+    {
+      "path": "data/staging/catalog-expansion/pilots/pilot-001/reviews/theme-gap-pass-c-review.md",
+      "sha256": "d545a845692c17d1e402f01da86324b1cf8cc1a4ccc5304476c2a96602617135"
+    },
+    {
+      "path": "data/staging/catalog-expansion/pilots/pilot-001/reviews/theme-gap-pass-c.md",
+      "sha256": "1862f147ccb935691d4ac588c64a3159ae1abbb6a5d64b0a4f35443c25179337"
+    }
+  ]
+}

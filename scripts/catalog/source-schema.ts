@@ -50,7 +50,10 @@ const csvList = z.string().transform((value) =>
 export const workSourceRowSchema = z
   .strictObject({
     id: catalogSourceId,
-    title: requiredText,
+    title: requiredText.refine(
+      (value) => !/[『』]/u.test(value),
+      "Title quotation marks are not canonical title text",
+    ),
     titleKana: optionalText,
     creators: csvList.pipe(z.array(requiredText).min(1)),
     publisher: optionalText,

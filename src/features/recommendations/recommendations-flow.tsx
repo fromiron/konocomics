@@ -15,6 +15,7 @@ import recommendationContextJson from "@/data/generated/recommendation-context-v
 import type { GenreTag } from "@/domain/catalog/types";
 import type { ExplanationFactorId } from "@/domain/explanation";
 import { generateTasteExplanation } from "@/domain/explanation/generate";
+import { recommendationProfileRecords } from "@/domain/profile/catalog-profile";
 import {
   createRecommendationFeedbackRecord,
   type CompletedRecommendationReaction,
@@ -136,8 +137,13 @@ function planReferencesCurrentInput(
   input: RecommendationInput,
 ) {
   const catalogWorkIds = new Set(input.catalog.works.map((work) => work.id));
+  const profileWorkIds = new Set(
+    input.catalog.works
+      .filter((work) => work.eligibility.recommendationEligible)
+      .map((work) => work.id),
+  );
   const positiveAnchorIds = new Set(
-    input.records
+    recommendationProfileRecords(input.records, input.catalog.works)
       .filter((record) => record.reaction === "favorite" || record.reaction === "liked")
       .map((record) => record.workId),
   );
@@ -151,7 +157,7 @@ function planReferencesCurrentInput(
       metadata === undefined ||
       metadata.workId !== entry.workId ||
       entry.contributions.some((contribution) =>
-        contribution.anchorWorkIds.some((workId) => !catalogWorkIds.has(workId)),
+        contribution.anchorWorkIds.some((workId) => !profileWorkIds.has(workId)),
       )
     ) {
       return false;
@@ -264,6 +270,10 @@ export function RecommendationsFlow({
   const previewOpener = useRef<HTMLElement | null>(null);
   const previousPreviewWorkId = useRef<string | null>(null);
   const records = userWorks ?? EMPTY_RECORDS;
+  const profileRecords = useMemo(
+    () => recommendationProfileRecords(records, catalog.works),
+    [catalog.works, records],
+  );
   const adjustments = storedAdjustments ?? EMPTY_ADJUSTMENTS;
   const policies = localPolicies ?? storedPolicies ?? DEFAULT_POLICIES;
   const worksById = useMemo(
@@ -288,8 +298,8 @@ export function RecommendationsFlow({
     };
   }, [adjustments, catalog, policies, storedAdjustments, storedPolicies, userWorks]);
   const dnaSummary = useMemo(
-    () => summarizeMangaDna(catalog.works, records),
-    [catalog.works, records],
+    () => summarizeMangaDna(catalog.works, profileRecords),
+    [catalog.works, profileRecords],
   );
   const plannedIds = useMemo(() => {
     const ids = new Set(optimisticPlannedIds);
@@ -1037,7 +1047,7 @@ export function RecommendationsFlow({
                 Number(policies.excludeIncomplete)
               }
               preferenceSummary={preferenceSummary}
-              recordCount={records.length}
+              recordCount={profileRecords.length}
             />
 
             {status.state === "degraded" ? (

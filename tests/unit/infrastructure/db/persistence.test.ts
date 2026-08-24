@@ -61,6 +61,7 @@ const EXTERNAL_ID =
 const CURRENT_CATALOG = {
   catalogVersion: "catalog-current",
   workIds: ["one", "two", "three", "four", "five", "six"],
+  profileWorkIds: ["one", "two", "three", "four", "five", "six"],
 } as const;
 
 function createExternalRecord(overrides: Partial<ExternalWorkRecord> = {}): ExternalWorkRecord {

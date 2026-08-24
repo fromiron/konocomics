@@ -1,0 +1,11 @@
+workId,themeId,centrality,confidence,evidenceId
+work-29806fe5f9633b940747,school,2,0.94,ev-batch-003-a-work-29806fe5f9633b940747
+work-3ba6e8e3cfdec674eae3,crafting,1,0.88,ev-batch-003-a-work-3ba6e8e3cfdec674eae3
+work-40ea287aae6305289cf6,crafting,2,0.95,ev-batch-003-a-work-40ea287aae6305289cf6
+work-40ea287aae6305289cf6,school,1,0.79,ev-batch-003-a-work-40ea287aae6305289cf6
+work-550854424fc9cc94d585,cooking,2,0.96,ev-batch-003-a-work-550854424fc9cc94d585
+work-5baea1ce0e7e74df34b9,survival,1,0.85,ev-batch-003-a-work-5baea1ce0e7e74df34b9
+work-672862529a341488245b,school,2,0.92,ev-batch-003-a-work-672862529a341488245b
+work-680837b0db4ec9d2932c,workplace,2,0.94,ev-batch-003-a-work-680837b0db4ec9d2932c
+work-724c064d491faf4c7414,school,2,0.90,ev-batch-003-a-work-724c064d491faf4c7414
+work-78d44d381562e37dd94a,workplace,1,0.94,ev-batch-003-a-work-78d44d381562e37dd94a

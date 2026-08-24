@@ -1,0 +1,13 @@
+workId,themeId,centrality,confidence,evidenceId
+work-07b11ec79f10c7eb7e05,school,2,0.88,ev-pilot-001-a-work-07b11ec79f10c7eb7e05
+work-205e576ef057e3aed1ab,school,2,0.86,ev-pilot-001-a-work-205e576ef057e3aed1ab
+work-61f2b70ee9f8217b3604,school,2,0.90,ev-pilot-001-a-work-61f2b70ee9f8217b3604
+work-d7e64b0b5479ca943edd,cooking,2,0.95,ev-pilot-001-a-work-d7e64b0b5479ca943edd
+work-d7e64b0b5479ca943edd,workplace,2,0.92,ev-pilot-001-a-work-d7e64b0b5479ca943edd
+work-ebe399258f28460b8f9b,school,2,0.93,ev-pilot-001-a-work-ebe399258f28460b8f9b
+work-ebe399258f28460b8f9b,workplace,2,0.88,ev-pilot-001-a-work-ebe399258f28460b8f9b
+work-ef7106f6a387c9860877,workplace,2,0.94,ev-pilot-001-a-work-ef7106f6a387c9860877
+work-ef7106f6a387c9860877,historicalReconstruction,1,0.62,ev-pilot-001-a-work-ef7106f6a387c9860877
+work-f391e591282e435a3c1d,survival,2,0.78,ev-pilot-001-a-work-f391e591282e435a3c1d
+work-f391e591282e435a3c1d,workplace,1,0.72,ev-pilot-001-a-work-f391e591282e435a3c1d
+work-f391e591282e435a3c1d,postApocalypse,1,0.68,ev-pilot-001-a-work-f391e591282e435a3c1d

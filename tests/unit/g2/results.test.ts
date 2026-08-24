@@ -14,8 +14,8 @@ import {
 } from "@/domain/g2";
 import { experimentProfileV1Schema } from "@/domain/profile/experiment-schema";
 import { explanationLexicon } from "@/lib/strings";
-import generatedCatalog from "../../../data/generated/catalog-v1.json";
-import generatedContext from "../../../data/generated/recommendation-context-v1.json";
+import generatedCatalog from "../../../data/generated/recommendation-profile-catalog-v1.json";
+import generatedContext from "../../../data/generated/recommendation-profile-context-v1.json";
 import { ExperimentDataError } from "../../../scripts/experiment/errors";
 import { recommendationContextFileSchema } from "../../../scripts/experiment/inputs";
 import {

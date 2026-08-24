@@ -243,7 +243,7 @@ function canonicalize(value: unknown): unknown {
   return value;
 }
 
-function assignJointVersion(catalog: CatalogV1, context: RecommendationContext) {
+export function assignJointVersion(catalog: CatalogV1, context: RecommendationContext) {
   const { catalogVersion, ...versionlessCatalog } = catalog;
   const { catalogVersion: contextCatalogVersion, ...versionlessMarketSnapshot } =
     context.marketSnapshot;

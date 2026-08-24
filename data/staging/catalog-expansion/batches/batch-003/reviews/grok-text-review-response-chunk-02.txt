@@ -1,0 +1,208 @@
+요청 파일을 읽고, 동결된 독립 리뷰 계약을 그대로 실행하겠습니다. 파일은 수정하지 않습니다.입력 해시부터 검증한 뒤, Pass A는 보지 않고 사전·가이드·동결 패킷만 읽겠습니다.해시가 모두 일치합니다. 동결 작품 목록과 chunk-02 연구 패킷을 전부 읽겠습니다.독립 결론을 고정한 뒤, 이제 Pass A 산출물만 읽어 비교하겠습니다.독립 결론과 Pass A 비교를 반영한 최종 문서를 작성합니다.
+
+# Batch 003 chunk 02 independent non-Art review (Pass B)
+
+## 1. Execution attestation
+
+- Actual model ID: `cursor-grok-4.6-high`
+- Label: Cursor Grok 4.6 High
+- Non-fast status: non-fast (this run is not a fast-tier substitute)
+- Completion: normal completion
+- Inputs: full access to all nine frozen inputs; each file opened in full
+- Degradation: no timeout, no rate-limit, no degraded output
+- `reviewedByHuman=false`
+- Repository edits: none
+- `ART_ABSTAIN`: pixel access was not established; no Art conclusion was inspected or judged; the four out-of-scope Art rows per work were ignored
+
+These are Pass B proposals only. No promotion, eligibility change, disagreement adjudication, or file modification is made.
+
+## 2. Locally verified input hashes
+
+| Path | SHA-256 |
+| --- | --- |
+| `docs/factors/factor-dictionary.md` | `a9c29a853a108aca1b9bb8d5d71a3e7d5d583303691c0b35cc6424c1e45ee8be` |
+| `docs/factors/annotation-guide.md` | `f7dd1ec55d97bf9200fcec92ce270e7745a0d3aa4fe98a40c746fc56b6a777b3` |
+| `data/staging/catalog-expansion/batches/batch-003/annotation-review-adjudication-request.md` | `fc865e59e5b8b92dc94cdb5ad0a7db47c5e6f3b0f8ee4e867717c30e27778759` |
+| `data/staging/catalog-expansion/batches/batch-003/frozen-work-set.csv` | `ccba877e5377f7f02fc3a5010bad076bae979eb250fc8d2432cb5d7b0b9a5ddd` |
+| `data/staging/catalog-expansion/batches/batch-003/research/chunk-02.md` | `7c59174ec97cc10922aabc09208f19e04e74ea6a852734cb9dbdf77ebdc5add5` |
+| `data/staging/catalog-expansion/batches/batch-003/annotation-pass-a/chunk-02/factors.csv` | `fadb3aad99068ca027c887ad3f372b05272206d88e6dc4ef7dea79c16c1c452e` |
+| `data/staging/catalog-expansion/batches/batch-003/annotation-pass-a/chunk-02/genres.csv` | `c403be06bdea6fb71a218b7faaaa549d302873f1ab85a9d5ff1de94788444459` |
+| `data/staging/catalog-expansion/batches/batch-003/annotation-pass-a/chunk-02/themes.csv` | `2a4e92d21ec4cb05c889834cf42859cb837f5247e53f7f3924411ae53968b575` |
+| `data/staging/catalog-expansion/batches/batch-003/annotation-pass-a/chunk-02/notes.md` | `5aea0caf4802bbe504aee15d169962b05e9050c6837b89c232825985f28fc99c` |
+
+All nine hashes match the frozen request. No `INPUT_MISMATCH`.
+
+## 3. Independent 13-axis matrix
+
+| workId | canonicalTitle | progression | problemSolving | strategy | pacing | mysteryReveal | worldBuilding | characterArcWeight | relationshipStructure | comedy | darkness | mentalStress | romance | emotionalWarmth |
+| --- | --- | --- | --- | --- | --- | --- | --- | --- | --- | --- | --- | --- | --- | --- |
+| work-29806fe5f9633b940747 | 暗殺教室 | U | U | U | 2 | U | 2 | U | 2 | 2 | 2 | U | U | 2 |
+| work-319e39a597d16251efc9 | 乱と灰色の世界 | U | U | U | U | U | U | U | 2 | U | U | U | U | U |
+| work-3ba6e8e3cfdec674eae3 | 劇光仮面 | U | U | U | 2 | U | 2 | U | U | U | 2 | U | U | U |
+| work-40ea287aae6305289cf6 | その着せ替え人形は恋をする | 2 | U | U | 2 | U | U | 2 | 2 | U | U | U | 3 | 2 |
+| work-550854424fc9cc94d585 | 高杉さん家のおべんとう | U | U | U | U | U | U | 2 | 2 | U | U | U | 0 | 2 |
+| work-5baea1ce0e7e74df34b9 | 刻刻 | U | 2 | 2 | 3 | 2 | 4 | 2 | 2 | U | 4 | 3 | U | 2 |
+| work-672862529a341488245b | BUTTER！！！ | 2 | U | U | 2 | U | U | 2 | 2 | U | 1 | 2 | U | 2 |
+| work-680837b0db4ec9d2932c | トクサツガガガ | U | U | U | 2 | U | U | 2 | 2 | U | U | 2 | U | 2 |
+| work-724c064d491faf4c7414 | もやしもん | U | U | U | U | U | 2 | U | 2 | U | U | U | U | U |
+| work-78d44d381562e37dd94a | きょうは会社休みます。 | U | U | U | 2 | U | U | 2 | 2 | U | U | U | 4 | 2 |
+
+## 4. Genre conclusion
+
+| workId | canonicalTitle | genres |
+| --- | --- | --- |
+| work-29806fe5f9633b940747 | 暗殺教室 | comedy |
+| work-319e39a597d16251efc9 | 乱と灰色の世界 | fantasy |
+| work-3ba6e8e3cfdec674eae3 | 劇光仮面 | action |
+| work-40ea287aae6305289cf6 | その着せ替え人形は恋をする | sliceOfLife;romance |
+| work-550854424fc9cc94d585 | 高杉さん家のおべんとう | sliceOfLife |
+| work-5baea1ce0e7e74df34b9 | 刻刻 | fantasy |
+| work-672862529a341488245b | BUTTER！！！ | sports;sliceOfLife |
+| work-680837b0db4ec9d2932c | トクサツガガガ | sliceOfLife |
+| work-724c064d491faf4c7414 | もやしもん | sliceOfLife;fantasy |
+| work-78d44d381562e37dd94a | きょうは会社休みます。 | sliceOfLife;romance |
+
+## 5. Theme conclusion
+
+| workId | canonicalTitle | themes |
+| --- | --- | --- |
+| work-29806fe5f9633b940747 | 暗殺教室 | school:2 |
+| work-319e39a597d16251efc9 | 乱と灰色の世界 |  |
+| work-3ba6e8e3cfdec674eae3 | 劇光仮面 | crafting:1 |
+| work-40ea287aae6305289cf6 | その着せ替え人形は恋をする | crafting:2;school:1 |
+| work-550854424fc9cc94d585 | 高杉さん家のおべんとう | cooking:2 |
+| work-5baea1ce0e7e74df34b9 | 刻刻 | survival:1 |
+| work-672862529a341488245b | BUTTER！！！ | school:2 |
+| work-680837b0db4ec9d2932c | トクサツガガガ | workplace:2 |
+| work-724c064d491faf4c7414 | もやしもん | school:2 |
+| work-78d44d381562e37dd94a | きょうは会社休みます。 | workplace:1 |
+
+## 6. Pass A comparison (non-Art Axis, Genre, Theme only)
+
+### work-29806fe5f9633b940747 — 暗殺教室
+
+- `characterArcWeight` Pass A `2` → Pass B `U`. Official 1–3권은 암살 임무·외부 암살자·납치 구출 사건을 압축 소개할 뿐 인물 변화와 사건의 균형(사전 2)을 지속 특성으로 확정하지 못한다. 심사평의 돌봄·교육 언급은 secondary이며 값으로 환산할 수 없다. https://www.shueisha.co.jp/books/items/contents.html?isbn=978-4-08-870596-5
+- `comedy` Pass A `3` → Pass B `2`. 복수 심사위원의 코믹한 제시 방식은 개그가 중간중간 있는 2를 보조할 수 있으나, secondary 한계상 2와 4 사이인 3을 확정하지 않는다. https://www.mangataisho.com/data/2013/comment2013.pdf
+- Genre: Pass A `action;comedy;sliceOfLife` → Pass B `comedy`. 암살 시도·납치는 사건이지 action Genre를 성립시키지 않고, 교실 일상은 암살 임무와 동시에 시작되어 sliceOfLife로 분리되지 않는다. 코믹 제시는 반복된 심사 관찰로 comedy만 남긴다. https://www.shueisha.co.jp/books/items/contents.html?isbn=978-4-08-870596-5
+- Theme `combat:2` 제거. 암살 임무는 학급 전제이며, 전투가 반복 핵심 구조(centrality 2)라는 관찰 가능한 전투 빈도는 공식 소개에 없다. https://www.shueisha.co.jp/books/items/contents.html?isbn=978-4-08-870604-7
+
+### work-319e39a597d16251efc9 — 乱と灰色の世界
+
+- `worldBuilding` Pass A `2` → Pass B `U`. 1·2권 공식 소개는 네 명의 마법사라는 한 문장뿐이고, 3권의 마법 은닉·금기는 3권 사건 한계가 명시되어 1–3권 기능적 설정(사전 2)으로 일반화하지 않는다. https://www.kadokawa.co.jp/product/200908000223/
+- `characterArcWeight` Pass A `2` → Pass B `U`. 아이 시점·가족은 심사평 secondary이며, 공식 1·2권은 인물 변화 보상을 지지하지 않는다. https://www.kadokawa.co.jp/product/201008000181/
+- `comedy` Pass A `2` → Pass B `U`. 심사평이 코미디를 반복하지만 분류·값 직접 환산을 금지하고, 공식 권 소개는 코미디를 말하지 않는다. https://www.mangataisho.com/data/2012/mantai_comment2012.pdf
+- Genre: Pass A `fantasy;comedy` → Pass B `fantasy`. comedy Genre는 위와 같은 secondary 한계로 성립하지 않는다. 마법사·마법은 공식 1–3권에서 fantasy만 지지한다. https://www.kadokawa.co.jp/product/301709000036/
+
+### work-3ba6e8e3cfdec674eae3 — 劇光仮面
+
+- `pacing` Pass A `3` → Pass B `2`. 1권 생활 → 2권 재판 → 3권 도전자는 권 단위 Arc 변화(사전 2)이지, 짧은 간격의 큰 상태 변화(4)와의 중간값 3을 확정할 간격 증거가 없다. https://www.shogakukan.co.jp/books/09861363
+- `worldBuilding` Pass A `3` → Pass B `2`. 현실 개입 의상은 기능적 설정(2)이다. 특촬 역사는 심사평 secondary이며 역사·세력이 반복적으로 중요한 4 근처의 3을 공식 권 소개만으로 지지하지 않는다. https://www.shogakukan.co.jp/books/09861506
+- `characterArcWeight` Pass A `3` → Pass B `U`. 1권은 자기인식을 말하지만 원인을 숨기고 지속성을 확정하지 못한다. https://www.shogakukan.co.jp/books/09861363
+- `mentalStress` Pass A `2` → Pass B `U`. 고립·재판은 사건 존재이지 긴장과 답답함의 혼합이 지속 특성이라는 근거가 아니다. https://www.shogakukan.co.jp/books/09861506
+- Genre: Pass A `action;scienceFiction` → Pass B `action`. 특수 의상의 현실 개입은 장치일 뿐 과학적 허구로서의 scienceFiction Genre를 성립시키지 않는다. 3권의 범죄 대응·가면 도전자는 action을 지지한다. https://www.shogakukan.co.jp/books/09861744
+- Theme `crafting` Pass A `2` → Pass B `1`. 의상 제작은 2권 과거와 심사평의 집념으로 일부 소재(1)이지, 1권 자기인식·3권 도전자를 아우르는 반복 핵심 구조(2)가 아니다. https://www.shogakukan.co.jp/books/09861506
+- Theme `combat:1` 제거. 3권의 도전은 새 국면 한 건이며 전투 Theme를 성립시키지 않는다. https://www.shogakukan.co.jp/books/09861744
+
+### work-40ea287aae6305289cf6 — その着せ替え人形は恋をする
+
+- `characterArcWeight` Pass A `3` → Pass B `2`. 공식 1–2권은 의상 제작·협업 사건이 중심이고 3권에서 감정 변화가 더해져 사건과 인물 변화의 균형(2)이다. 핵심 보상(4) 쪽의 3은 확정하지 않는다. https://magazine.jp.square-enix.com/top/comics/detail/9784757559202/
+- `emotionalWarmth` Pass A `3` → Pass B `2`. 공동 제작과 함께 보기은 혼합된 온기(2)이지, 유대·힐링이 핵심 보상(4)에 가까운 3을 공식 소개만으로 지지하지 않는다. https://magazine.jp.square-enix.com/top/comics/detail/9784757561380/
+
+### work-550854424fc9cc94d585 — 高杉さん家のおべんとう
+
+- `mysteryReveal` Pass A `2` → Pass B `U`. 출생 비밀은 정식 유통 소개(secondary)이며 출판사 권 페이지에 줄거리가 없고 작성 주체 한계가 남아, 비밀이 일부 존재하는 2를 확정하지 않는다. https://www.cmoa.jp/title/31428/vol/1/
+- `characterArcWeight` Pass A `3` → Pass B `2`. 공식 개요는 도시락 소통·동거이며, 거리 변화는 심사 범위가 4권을 넘을 수 있는 secondary다. 균형값 2만 지지한다. https://comic-walker.com/detail/KC_000801_S
+- `romance` Pass A `U` → Pass B `0`. 공식 개요가 박사 학위를 가진 온巳가 열두 살 사촌을 맡고 도시락으로 소통하는 보호·동거 관계를 전제로 제시하므로, 연애가 거의 없음(0)의 긍정 근거가 된다. 부재의 기본값이 아니다. https://comic-walker.com/detail/KC_000801_S
+- `emotionalWarmth` Pass A `3` → Pass B `2`. 도시락 소통은 온기의 존재(2)를 지지하나, 짧은 시리즈 개요만으로 핵심 보상(4) 쪽 3을 확정하지 않는다. https://comic-walker.com/detail/KC_000801_S
+- Theme `workplace:1` 제거. 대학 취업은 유통 소개 secondary이며 공식 개요의 핵심 구조가 아니다. https://www.cmoa.jp/title/31428/vol/1/
+- Theme `foundFamily:2` 제거. 두 사람은 사촌 혈연의 보호자 동거이며, 선택한 가족 형성으로서의 foundFamily 반복 핵심을 공식 개요가 성립시키지 않는다. https://comic-walker.com/detail/KC_000801_S
+
+### work-5baea1ce0e7e74df34b9 — 刻刻
+
+- `progression` Pass A `2` → Pass B `U`. 능력 드러남·기원 연결은 성장·획득·숙련 보상의 반복(사전 progression)이 아니다. https://www.kodansha.co.jp/comic/products/0000013949
+- `strategy` Pass A `1` → Pass B `2`. 구출·추격·도주와 집단 목적이 1–3권에 있어 전술·단기 계획의 존재(2)를 지지한다. 즉흥(0)과 2 사이의 1은 불필요하다. https://www.kodansha.co.jp/comic/products/0000013948
+- `mysteryReveal` Pass A `3` → Pass B `2`. 止界 기원·능력 차이는 비밀·반전의 일부 존재(2)이다. 단서·추리가 주요 보상(4) 쪽의 3은, 구출·추격이 병행되므로 확정하지 않는다. https://www.kodansha.co.jp/comic/products/0000013949
+- `worldBuilding` Pass A `3` → Pass B `4`. 정지 세계 규칙, 管理人, 종교 집단, 神ノ離忍, 능력 차이가 1–3권에서 반복적으로 사건에 관여하므로 역사·규칙·세력이 반복적으로 중요한 4다. https://www.kodansha.co.jp/comic/products/0000014049
+- `relationshipStructure` Pass A `3` → Pass B `2`. 핵심은 가족 구출의 고정 집단(2)이다. 인원 증가만으로 군상극 쪽 3이 되지 않는다(가이드: 고정 팀·핵심 조연은 2). https://www.kodansha.co.jp/comic/products/0000013948
+- `darkness` Pass A `3` → Pass B `4`. 납치, 공식 소개가 포함한 강한 폭력, 종교 집단 대립, 실험과 神ノ離忍이 초반 전개의 중심이므로 잔혹·암울·비극적 사건이 중심인 4다. https://www.kodansha.co.jp/comic/products/0000013948
+- Genre: Pass A `action;scienceFiction;mystery;horror` → Pass B `fantasy`. 止界術·神ノ離忍·종교 집단은 초자연 fantasy이다. 추격은 사건이지 action Genre가 아니고, 규칙 공개는 mysteryReveal 축이지 mystery Genre가 아니며, 폭력은 horror Genre가 아니고, 術/神 프레이밍은 scienceFiction이 아니다. https://www.kodansha.co.jp/comic/products/0000013948
+- Theme `combat:2` 제거. 폭력·추격은 있으나 전투가 반복 핵심 Theme라는 구조는 공식 소개에 없다. https://www.kodansha.co.jp/comic/products/0000013948
+- Theme `survival` Pass A `2` → Pass B `1`. 가족 구출은 1권 전제이나 2–3권은 기원·실험·집단 목적으로 확장되어, 생존이 작품의 반복 핵심 구조(2)라고 단정하지 않고 일부 전개(1)로 둔다. https://www.kodansha.co.jp/comic/products/0000013948
+
+### work-672862529a341488245b — BUTTER！！！
+
+- `progression` Pass A `3` → Pass B `2`. 춤의 즐거움 발견·파트너 향상은 서서히 성장(2)이다. 2권은 춤을 못 추게 되는 위기이며, 숙련 보상의 반복(4) 쪽 3은 공식 한계상 확정하지 않는다. https://www.kodansha.co.jp/comic/products/0000029740
+- `problemSolving` Pass A `1` → Pass B `U`. 파트너 위기 대응은 제약 분석·기발한 해결의 축을 성립시키지 않는다. https://www.kodansha.co.jp/comic/products/0000029780
+- `characterArcWeight` Pass A `3` → Pass B `2`. 3권의 여러 부원 약점은 한 시점 문제의 일반화 금지가 명시되어, 사건과 인물 변화의 균형(2)만 취한다. https://www.kodansha.co.jp/comic/products/0000029838
+- `darkness` Pass A `U` → Pass B `1`. 체형 조롱·춤 불가 위기는 밝음(0)과 진지한 위험(2) 사이이며, 납치·살상 수준의 2는 아니다. https://www.kodansha.co.jp/comic/products/0000029838
+- `mentalStress` Pass A `3` → Pass B `2`. 공개 댄스 공포·조롱·대인 문제는 긴장과 답답함의 혼합(2)이다. 지속적 붕괴(4) 쪽 3은 한 시점 문제의 일반화 금지에 걸린다. https://www.kodansha.co.jp/comic/products/0000029838
+- `emotionalWarmth` Pass A `3` → Pass B `2`. 노력·우정은 심사평 secondary이며, 공식은 충돌과 위기를 포함하므로 혼합(2)이다. https://www.kodansha.co.jp/comic/products/0000029740
+
+### work-680837b0db4ec9d2932c — トクサツガガガ
+
+- `progression` Pass A `2` → Pass B `U`. 숨기던 취미가 팬 친구로 넓어지는 것은 성장·숙련 보상 구조가 아니다. https://www.shogakukan.co.jp/books/09186810
+- `problemSolving` Pass A `2` → Pass B `U`. 영웅의 말을 일상에 연결하는 것은 제약 분석형 문제 해결(사전 problemSolving)이 아니다. 심사평의 제작자·판매자 태도는 1–3권을 넘을 수 있다. https://www.shogakukan.co.jp/books/09186606
+- `pacing` Pass A `1` → Pass B `2`. 2권 팬 공동 활동·수집, 3권 직장 노출 위험은 권 단위 상황 변화(2)이다. https://www.shogakukan.co.jp/books/09186810
+- `worldBuilding` Pass A `3` → Pass B `U`. 특촬 취미·캡슐 토이·피규어는 현대 일상의 취미이지, 세계 규칙·세력이 반복적으로 중요한 설정이 아니다. https://www.shogakukan.co.jp/books/09186606
+- `characterArcWeight` Pass A `3` → Pass B `2`. 3권이 비밀을 말하는 내적 이유를 다루나, 1–2권은 에피소드형 팬 활동이어서 사건과 인물의 균형(2)이다. https://www.shogakukan.co.jp/books/09187060
+- `mentalStress` Pass A `3` → Pass B `2`. 노출 공포는 1–3권에 반복되나 공식은 강도 확정을 금지한다. 긴장과 답답함의 혼합(2)만 취한다. https://www.shogakukan.co.jp/books/09187060
+
+### work-724c064d491faf4c7414 — もやしもん
+
+- Genre: Pass A `scienceFiction;sliceOfLife` → Pass B `sliceOfLife;fantasy`. 균을 보는 능력은 개인적 초능력이지 과학기술 SF Genre가 아니다. 농업대학 캠퍼스 생활은 sliceOfLife다. https://www.kodansha.co.jp/comic/products/0000038500
+
+### work-78d44d381562e37dd94a — きょうは会社休みます。
+
+- `progression` Pass A `3` → Pass B `U`. 첫 연애·첫 경험의 나열은 성장·숙련 보상 축이 아니다. https://www.shueisha.co.jp/books/items/contents.html?jdcn=08846820846769315501
+- `characterArcWeight` Pass A `3` → Pass B `2`. 교제 심화와 관계 사건은 균형(2)이다. 인물 변화가 핵심 보상(4) 쪽 3은, 상대·결과를 숨긴 1권 한계와 3권 한 사건의 일반화 금지에 걸린다. https://www.shueisha.co.jp/books/items/contents.html?jdcn=08846769846769315501
+- `mentalStress` Pass A `2` → Pass B `U`. 다른 여성의 접근은 3권의 한 변수이며 지속 압박으로 일반화할 수 없다. https://www.shueisha.co.jp/books/items/contents.html?jdcn=08845002846769315501
+- Theme `workplace` Pass A `2` → Pass B `1`. 회사 아르바이트생과의 접점은 만남 배경(1)이고, 반복 핵심 구조는 연애(Genre romance, Axis romance 4)이다. https://www.shueisha.co.jp/books/items/contents.html?jdcn=08846820846769315501
+
+## 7. Identity, safety, and representative ISBN
+
+| workId | canonicalTitle | representativeISBN | identityFinding | safetyFinding | verdict | evidenceURL |
+| --- | --- | --- | --- | --- | --- | --- |
+| work-29806fe5f9633b940747 | 暗殺教室 | 9784088705965 | 집영사 1권 공식 ISBN `978-4-08-870596-5`가 동결 대표 ISBN과 일치. 제목에 장식 `『』` 없음. | 담임 암살 임무·수학여행 납치는 폭력 소재 lead일 뿐 성인 전용을 성립시키지 않음. | PASS | https://www.shueisha.co.jp/books/items/contents.html?isbn=978-4-08-870596-5 |
+| work-319e39a597d16251efc9 | 乱と灰色の世界 | 9784047261457 | KADOKAWA 1–3권 공식 상품이 동일 작품 계열. 동결 제목과 대표 ISBN을 이 패킷이 1권에 연결. | 공식 3권은 열 살 乱의 금기 위반. 심사평 일부의 성인 욕망·아이 반응 병치는 secondary 민감 lead이며, 그 자체로 성인 전용이 아님. | PASS | https://www.kadokawa.co.jp/product/301709000036/ |
+| work-3ba6e8e3cfdec674eae3 | 劇光仮面 | 9784098613632 | 소학관 1권 공식 페이지가 동결 대표 ISBN 계열. 제목 일치. | 범죄 대응·재판은 민감 소재 lead이나 성인 전용이 아님. | PASS | https://www.shogakukan.co.jp/books/09861363 |
+| work-40ea287aae6305289cf6 | その着せ替え人形は恋をする | 9784757559202 | 스퀘어 에닉스 1권 URL이 ISBN `9784757559202`와 일치. | 초반 공식 소개에 성인 전용 근거 없음. | PASS | https://magazine.jp.square-enix.com/top/comics/detail/9784757559202/ |
+| work-550854424fc9cc94d585 | 高杉さん家のおべんとう | 9784040661001 | 현재 KADOKAWA 1권 페이지가 동결 ISBN `9784040661001`을 연결함. 초기 Media Factory판 ISBN·판본 계보는 미해결 edition lead. 동일 Work로 보이지만 대표 판본 확정은 후속 검수. | 온巳가 열두 살 사촌 久留里를 맡고 동거·도시락 소통. 연령차 동거는 민감할 수 있으나 공식 전제는 보호·식사 소통이며 성인 전용이 아님. | NEEDS_ADJUDICATION | https://www.kadokawa.co.jp/product/302408001751/ |
+| work-5baea1ce0e7e74df34b9 | 刻刻 | 9784063728224 | 고단샤 1권 공식 상품이 동결 대표 ISBN `9784063728224` 계열. 제목 일치. | 납치, 강한 폭력, 폭력적 죽음 lead, 종교 집단, 이형 존재. 어둡고 폭력적인 내용은 그 자체로 성인 전용이 아님. | PASS | https://www.kodansha.co.jp/comic/products/0000013948 |
+| work-672862529a341488245b | BUTTER！！！ | 9784063106824 | 고단샤 1권 공식 상품. 동결 제목의 전각 느낌표 세 개(`！！！`) 유지. | 체형 조롱·대인 위기는 내용 lead이며 성인 전용이 아님. | PASS | https://www.kodansha.co.jp/comic/products/0000029740 |
+| work-680837b0db4ec9d2932c | トクサツガガガ | 9784091866066 | 소학관 1권 공식 페이지가 동결 대표 ISBN 계열. 제목 일치. | 취미 노출 공포는 직장 일상 lead이며 성인 전용이 아님. | PASS | https://www.shogakukan.co.jp/books/09186606 |
+| work-724c064d491faf4c7414 | もやしもん | 9784063521061 | 원판 1권 공식 상품이 동결 대표 ISBN. 신장판은 새 표지·종이책 전용이나 본편·보너스 만화가 원판과 같다는 공식 안내. 별 Work가 아니며 대표 ISBN 변경 근거는 이 lead만으로 없음. | 캠퍼스·균 능력 개요에 성인 전용 근거 없음. | PASS | https://www.kodansha.co.jp/titles/1000000069 |
+| work-78d44d381562e37dd94a | きょうは会社休みます。 | 9784088467696 | 집영사 현재 URL은 JDCN 전자판 레코드(`jdcn=08846769846769315501`)이며 종이 발매일은 함께 표시. 동결 종이 대표 ISBN `9784088467696`과의 직접 매핑은 미해결 서지 lead. 제목 끝 고리점 유지. | 33세와 21세의 성관계·교제. 둘 다 성인. 나이 차·성적 내용은 그 자체로 성인 전용이 아님. | NEEDS_ADJUDICATION | https://www.shueisha.co.jp/books/items/contents.html?jdcn=08846769846769315501 |
+
+## 8. Per-work final review outcome
+
+| workId | canonicalTitle | outcome |
+| --- | --- | --- |
+| work-29806fe5f9633b940747 | 暗殺教室 | verified |
+| work-319e39a597d16251efc9 | 乱と灰色の世界 | insufficient-evidence |
+| work-3ba6e8e3cfdec674eae3 | 劇光仮面 | verified |
+| work-40ea287aae6305289cf6 | その着せ替え人形は恋をする | verified |
+| work-550854424fc9cc94d585 | 高杉さん家のおべんとう | needs-adjudication |
+| work-5baea1ce0e7e74df34b9 | 刻刻 | verified |
+| work-672862529a341488245b | BUTTER！！！ | verified |
+| work-680837b0db4ec9d2932c | トクサツガガガ | verified |
+| work-724c064d491faf4c7414 | もやしもん | insufficient-evidence |
+| work-78d44d381562e37dd94a | きょうは会社休みます。 | needs-adjudication |
+
+## 9. Independently assigned extremes (`0` or `4`) and Theme centrality `2`
+
+- `work-550854424fc9cc94d585` `romance=0`: direct entry-scope evidence exists. Official series page states a doctoral-graduate guardian living with a twelve-year-old cousin and communicating through bento, which is an affirmative non-romance premise, not a silence fallback. https://comic-walker.com/detail/KC_000801_S
+- `work-5baea1ce0e7e74df34b9` `worldBuilding=4`: direct entry-scope evidence exists. Official vols 1–3 repeat 止界 rules, 管理人, religious-group opposition, 神ノ離忍, and differing abilities as event-driving setting. https://www.kodansha.co.jp/comic/products/0000013948
+- `work-5baea1ce0e7e74df34b9` `darkness=4`: direct entry-scope evidence exists. Official vol 1 includes kidnapping, family rescue in a stopped world, religious-group confrontation, and strong violence; vols 2–3 continue chase, experiments, and 神ノ離忍. https://www.kodansha.co.jp/comic/products/0000013948
+- `work-78d44d381562e37dd94a` `romance=4`: direct entry-scope evidence exists. Official vol 2 states sexual relations and the start of dating; vol 3 states the first relationship deepening. Romance is the center of the main relationship and plot. https://www.shueisha.co.jp/books/items/contents.html?jdcn=08846820846769315501
+- `work-29806fe5f9633b940747` Theme `school:2`: direct entry-scope evidence exists. Official vols 1–3 are classroom, homeroom teacher, foreign-language teacher, and school-trip events. https://www.shueisha.co.jp/books/items/contents.html?isbn=978-4-08-870596-5
+- `work-40ea287aae6305289cf6` Theme `crafting:2`: direct entry-scope evidence exists. Official vols 1–3 repeat meeting in the sewing room, making cosplay costumes, a two-week production, and a cosplay event. https://magazine.jp.square-enix.com/top/comics/detail/9784757559202/
+- `work-550854424fc9cc94d585` Theme `cooking:2`: direct entry-scope evidence exists. Official series page frames bento / meal preparation as the communication path of cohabitation. https://comic-walker.com/detail/KC_000801_S
+- `work-672862529a341488245b` Theme `school:2`: direct entry-scope evidence exists. Official vols 1–3 are a high-school dance club, partner practice, and cultural-festival participation. https://www.kodansha.co.jp/comic/products/0000029740
+- `work-680837b0db4ec9d2932c` Theme `workplace:2`: direct entry-scope evidence exists. Official vols 1–3 repeat hiding the hobby at the company, workplace exposure fear, and a colleague who creates disclosure risk. https://www.shogakukan.co.jp/books/09186606
+- `work-724c064d491faf4c7414` Theme `school:2`: direct entry-scope evidence exists. Official vol 1 (repeated as series overview on vols 2–3) is agricultural-university campus life, laboratory, and fellow students. https://www.kodansha.co.jp/comic/products/0000038500
+
+No other `0`, `4`, or Theme centrality `2` is independently assigned.
+
+## 10. Completeness
+
+`WORK_COUNT=10` `AXIS_COUNT_PER_WORK=13` `IDENTITY_ROWS=10` `SAFETY_ROWS=10` `ISBN_ROWS=10` `ART_ABSTAIN`

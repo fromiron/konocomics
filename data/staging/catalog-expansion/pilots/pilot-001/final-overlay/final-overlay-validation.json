@@ -1,0 +1,72 @@
+{
+  "counts": {
+    "works": 50,
+    "factors": 850,
+    "evidence": 250,
+    "themes": 78,
+    "context": 50,
+    "artManifest": 200
+  },
+  "schemas": [
+    {
+      "name": "works",
+      "rows": 50,
+      "invalidRows": 0
+    },
+    {
+      "name": "themes",
+      "rows": 78,
+      "invalidRows": 0
+    },
+    {
+      "name": "context",
+      "rows": 50,
+      "invalidRows": 0
+    },
+    {
+      "name": "factors",
+      "rows": 850,
+      "invalidRows": 0
+    },
+    {
+      "name": "evidence",
+      "rows": 250,
+      "invalidRows": 0
+    },
+    {
+      "name": "artManifest",
+      "rows": 200,
+      "invalidRows": 0
+    }
+  ],
+  "exact50x17": true,
+  "standaloneArtExactOrder": true,
+  "standaloneArtKnownUnknown": {
+    "known": 163,
+    "unknownOrNotApplicable": 37
+  },
+  "evidenceUnique250": true,
+  "artManifestByteIdentical": true,
+  "validateArtEvidenceIssueCount": 0,
+  "coverage": {
+    "passingWorks": 50,
+    "totalWorks": 50,
+    "minimumByGroup": {
+      "genre": 1,
+      "theme": 1,
+      "narrative": 0.6666666666666666,
+      "tone": 0.7142857142857143,
+      "art": 0.75
+    },
+    "thresholds": {
+      "genre": 0.8,
+      "theme": 0.6,
+      "narrative": 0.6,
+      "tone": 0.6,
+      "art": 0.3
+    }
+  },
+  "schemaErrors": [],
+  "invariantErrors": [],
+  "artIssues": []
+}

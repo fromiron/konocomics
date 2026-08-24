@@ -16,7 +16,10 @@ function record(workId: string, reaction: UserWorkRecord["reaction"]): UserWorkR
 }
 
 describe("catalog-backed profile", () => {
-  const catalogWorks = ["a", "b", "c", "d", "e"].map((id) => ({ id }));
+  const catalogWorks = ["a", "b", "c", "d", "e"].map((id) => ({
+    id,
+    eligibility: { recommendationEligible: true },
+  }));
 
   it("requires five distinct favorite or liked records present in the current catalog", () => {
     expect(
@@ -51,6 +54,19 @@ describe("catalog-backed profile", () => {
 
   it("keeps the guard pending until persisted records load", () => {
     expect(hasCatalogBackedProfile(undefined, catalogWorks)).toBe(undefined);
+  });
+
+  it("does not count library-only works as taste-profile anchors", () => {
+    const libraryOnly = {
+      id: "library",
+      eligibility: { recommendationEligible: false },
+    };
+    expect(
+      hasCatalogBackedProfile(
+        ["a", "b", "c", "d", "library"].map((workId) => record(workId, "liked")),
+        [...catalogWorks, libraryOnly],
+      ),
+    ).toBe(false);
   });
 
   it("accepts the same identity-only work id boundary used by the shared shell", () => {

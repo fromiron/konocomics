@@ -1,0 +1,22 @@
+workId,catalogRole,seriesGroupId,volumeCount,sourceName,sourceUrl,sourcePublishedAt,retrievedAt,statusNote
+work-5e20323e014d6d390aaf,anchor,,34,小学館コミック あさひなぐ 34,https://shogakukan-comic.jp/book?isbn=9784098607105,2020-09-30,2026-08-23,Complete at 34 standard Big Comics volumes.
+work-6f849a8e785deee3d5dc,bridge,,25,集英社 怪物事変 25,https://www.shueisha.co.jp/books/items/contents.html?jdcn=08X10000000073438100,2026-08-04,2026-08-23,Ongoing; standard volumes 1-25 were released by the cutoff.
+work-71e824df2e6bc2125294,anchor,,28,集英社 SAKAMOTO DAYS 28,https://www.shueisha.co.jp/books/items/contents.html?isbn=978-4-08-885131-0,2026-08-04,2026-08-23,Ongoing; standard volumes 1-28 were released by the cutoff.
+work-7975d62582a89492a35f,bridge,,10,月刊アフタヌーン 図書館の大魔術師 10,https://afternoon.kodansha.co.jp/comics/2026/06/0000427640.html,2026-06-05,2026-08-23,Ongoing; standard volumes 1-10 were released by the cutoff.
+work-8147aefccc365b0ecb4d,anchor,,35,SQUARE ENIX 黒執事 35,https://magazine.jp.square-enix.com/top/comics/detail/9784301001973/,2025-11-27,2026-08-23,Ongoing at 35; volume 36 is scheduled after the cutoff and is excluded.
+work-838a6f0ad2d1ef487588,bridge,,23,小学館コミック 信長協奏曲 23,https://shogakukan-comic.jp/book?isbn=9784098547616,2026-08-10,2026-08-23,Ongoing at 23; the official page says the next volume will be the final volume.
+work-9072892a767332254f00,discovery,,8,マッグガーデン flat 8,https://www.mag-garden.co.jp/comics/6045/,2014-02-15,2026-08-23,Complete at 8 standard volumes.
+work-98b7d2ef065bde405972,bridge,,9,SQUARE ENIX スーパーの裏でヤニ吸うふたり 9,https://magazine.jp.square-enix.com/top/comics/detail/9784301006565/,2026-07-24,2026-08-23,Ongoing; standard volumes 1-9 were released by the cutoff.
+work-a8349445836546a82934,discovery,,9,新書館 百姓貴族 9 通常版,https://www.shinshokan.co.jp/book/b669149.html,2026-04-24,2026-08-23,Ongoing at 9 standard volumes; the DVD special edition is not counted separately.
+work-ab95f4d4997113e0687a,anchor,,18,SQUARE ENIX 月刊少女野崎くん 18 発売記念,https://magazine.jp.square-enix.com/top/event/detail/4292/,2026-08-10,2026-08-23,Ongoing at 18 standard volumes; the booklet special edition is not counted separately.
+work-ad32c71b07fd13c65a79,bridge,,12,一迅社 2026年4月発売カレンダー,https://data.ichijinsha.co.jp/month/2026-04,2026-04-17,2026-08-23,Ongoing at 12 manga volumes; the source novel is excluded.
+work-bbeeaad9e37ab267dc29,anchor,,27,集英社 僕とロボコ 27,https://www.shueisha.co.jp/books/items/contents.html?jdcn=08X10000000073439200,2026-08-04,2026-08-23,Ongoing; standard volumes 1-27 were released by the cutoff.
+work-c221a17d6b962b17c9f4,anchor,,11,集英社 屍鬼 11,https://www.shueisha.co.jp/books/items/contents.html?jdcn=08870267874549315501,2011-07-04,2026-08-23,Complete at 11 standard Jump Comics volumes; the later bunko edition is excluded.
+work-c55467873ec70e670484,discovery,,9,小学館コミック 大ダーク 9,https://shogakukan-comic.jp/book?isbn=9784098542789,2025-10-10,2026-08-23,Ongoing; standard volumes 1-9 were released by the cutoff.
+work-ccf0ddff9c6410c4de14,bridge,,6,集英社 サンキューピッチ 6,https://www.shueisha.co.jp/books/items/contents.html?isbn=978-4-08-885065-8,2026-06-04,2026-08-23,Ongoing; standard volumes 1-6 were released by the cutoff.
+work-cdef8cfd678998a51447,bridge,,10,祥伝社 2026年1月コミックス注文一覧,https://www.shodensha.co.jp/pop/comic_202601.pdf,2026-01,2026-08-23,Complete at 10 numbered standard volumes; volume 10 is the official extra-story volume and reissues are excluded.
+work-ced7a8e6d9c3b8147702,bridge,,3,講談社 水は海に向かって流れる 3,https://www.kodansha.co.jp/comic/products/0000344116,2020-09-09,2026-08-23,Complete at 3 standard volumes.
+work-daf65c6f2cce3e076dfa,bridge,,12,秋田書店 凪のお暇,https://www.akitashoten.co.jp/series/6797,2025-06-16,2026-08-23,Complete at 12 standard volumes; the publisher magazine page marks the final episode.
+work-db80d94709b62aa8823f,bridge,,26,集英社 逃げ上手の若君 26,https://www.shueisha.co.jp/books/items/contents_amp.html?jdcn=08X10000000073439100,2026-08-04,2026-08-23,Ongoing at 26; a later scheduled volume is after the cutoff and is excluded.
+work-ef1bdac46a0956a87f7f,anchor,,2,集英社 タコピーの原罪 下,https://www.shueisha.co.jp/books/items/contents_amp.html?isbn=978-4-08-883104-6&mode=1,2022-04-04,2026-08-23,Complete in 2 standard volumes numbered upper and lower.
+work-fabc7f5d853e361acaf3,anchor,,24,小学館コミック YAIBA 24,https://shogakukan-comic.jp/book?jdcn=091232340000d0000000,2013-07-12,2026-08-23,Complete at 24 standard Shonen Sunday Comics volumes; bunko and restoration boxes are excluded.

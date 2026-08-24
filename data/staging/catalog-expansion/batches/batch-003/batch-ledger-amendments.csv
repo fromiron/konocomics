@@ -1,0 +1,2 @@
+batchId,effectiveAt,policyVersion,amendmentPath,sha256,scope,reason,reviewedByHuman
+batch-003,2026-08-24,promotion-evidence-v2,docs/catalog-expansion/01a-promotion-method-operational-amendment.md,663fdef3fc7e08f5054f78f142bea5ac06dc1b7e8cd6863c564745e02cc33e5d,art-route-reuse;multi-volume-entry-sampling;luna-acquisition;daybreak-verification,Apply operational efficiency rules without changing or re-signing the frozen candidate identity,false

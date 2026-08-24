@@ -1,0 +1,153 @@
+# Batch 002 chunk 02 Pass B — independent non-Art review
+
+## 1. Execution attestation
+
+- Reviewer: Cursor Grok 4.6 High
+- CLI model ID: `cursor-grok-4.6-high`
+- Non-fast: yes
+- Completion: normal; full access to all nine frozen inputs; no timeout, rate-limit, or degraded output
+- `reviewedByHuman=false`
+- Art abstention: Art axes (`artRealism`, `artDensity`, `visualSoftness`, `motionImpact`) were not inspected or judged. No pixel, preview-page, or motion evidence was used.
+
+## 2. Verified input hashes
+
+| Path | SHA-256 |
+| --- | --- |
+| `docs/factors/factor-dictionary.md` | `a9c29a853a108aca1b9bb8d5d71a3e7d5d583303691c0b35cc6424c1e45ee8be` |
+| `docs/factors/annotation-guide.md` | `f7dd1ec55d97bf9200fcec92ce270e7745a0d3aa4fe98a40c746fc56b6a777b3` |
+| `data/staging/catalog-expansion/batches/batch-002/annotation-review-adjudication-request.md` | `ca34d38bc87e58603014142a0abfd6fb886cbdbeb7e917414f2874cd387fdeb2` |
+| `data/staging/catalog-expansion/batches/batch-002/frozen-work-set.csv` | `80888903a34792a5b079d153c86493bc0263cb56bf5bb5a0c0528dd309cf61f6` |
+| `data/staging/catalog-expansion/batches/batch-002/research/chunk-02.md` | `645c8e20898357c3533cb879b197c367209e3fed66c9dceb495c7ee6bf0817ed` |
+| `data/staging/catalog-expansion/batches/batch-002/annotation/pass-a-text-chunk-02.csv` | `19127c718ceda3a0df46df079939605e9353288d90c84cc4609607e2b2ce2410` |
+| `data/staging/catalog-expansion/batches/batch-002/annotation/genres-pass-a-chunk-02.csv` | `15f90688570a8e1edb166fc1c9ca71bc4047edc4de3b2783c8a24641ad08a123` |
+| `data/staging/catalog-expansion/batches/batch-002/annotation/themes-pass-a-chunk-02.csv` | `953ccda344142d5a77d3dd82f2ff07d8de58cdef69e49686b1cb29fda63f2ced` |
+| `data/staging/catalog-expansion/batches/batch-002/annotation/pass-a-text-chunk-02.md` | `4bdb5943013f49cd0015d81f47a2006a1f6466658feb5b510a5589c770a8a991` |
+
+## 3. Independent 13-axis matrix
+
+`workId, progression, problemSolving, strategy, pacing, mysteryReveal, worldBuilding, characterArcWeight, relationshipStructure, comedy, darkness, mentalStress, romance, emotionalWarmth`
+
+```
+work-29d4300ad9d3358fb67a, U, 2, U, 3, 4, 2, U, 2, U, 2, U, U, U
+work-3dfaf6231e21133620c6, U, U, U, 3, 2, 3, 3, 2, U, 4, 3, U, 1
+work-3e725951eb9c49771087, U, 3, U, 3, 3, 2, 2, 2, U, 2, U, U, U
+work-40b8c35b1d8c9a90144c, U, U, U, U, U, U, U, U, U, U, U, U, U
+work-4c784fc78dfd9b139c3f, U, U, U, 2, U, U, 4, 2, U, U, 1, 4, 4
+work-518d7ed42dd9253679c3, U, 4, 4, 3, 1, 3, 2, 3, U, 3, U, U, U
+work-53e54c95f637b66c4fb2, 2, U, U, 3, U, 2, 4, 2, U, 2, 2, U, 3
+work-5915d6d7601377fcc75f, 2, U, U, 3, U, 2, 4, 3, U, 2, 2, 3, 3
+work-5b4dc4e6e966436b2990, U, U, U, 2, 2, 3, 3, 3, U, U, U, U, 3
+work-5b9a3ec60ac5fc90f444, U, U, U, U, U, U, U, U, U, U, U, U, U
+```
+
+## 4. Genre conclusion
+
+| workId | genres |
+| --- | --- |
+| work-29d4300ad9d3358fb67a | mystery |
+| work-3dfaf6231e21133620c6 | action |
+| work-3e725951eb9c49771087 | historical;mystery |
+| work-40b8c35b1d8c9a90144c | |
+| work-4c784fc78dfd9b139c3f | sliceOfLife;romance |
+| work-518d7ed42dd9253679c3 | action;historical |
+| work-53e54c95f637b66c4fb2 | sports |
+| work-5915d6d7601377fcc75f | fantasy;romance |
+| work-5b4dc4e6e966436b2990 | scienceFiction;sliceOfLife |
+| work-5b9a3ec60ac5fc90f444 | fantasy |
+
+## 5. Theme conclusion
+
+| workId | themes |
+| --- | --- |
+| work-29d4300ad9d3358fb67a | investigation:2 |
+| work-3dfaf6231e21133620c6 | combat:2; revenge:1 |
+| work-3e725951eb9c49771087 | investigation:2 |
+| work-40b8c35b1d8c9a90144c | |
+| work-4c784fc78dfd9b139c3f | school:2 |
+| work-518d7ed42dd9253679c3 | combat:2; war:2; territoryManagement:2 |
+| work-53e54c95f637b66c4fb2 | martialArts:2; sportsCompetition:2 |
+| work-5915d6d7601377fcc75f | politics:1; workplace:1 |
+| work-5b4dc4e6e966436b2990 | |
+| work-5b9a3ec60ac5fc90f444 | |
+
+## 6. Pass A comparison
+
+### Axis
+
+- `work-29d4300ad9d3358fb67a` `relationshipStructure` 4 → 2. Source: https://www.kodansha.co.jp/comic/products/0000223170 . Dictionary 4 requires a complex ensemble / multi-relation reward; the official one-volume structure is separate incidents converging on a detective through-line plus building/sibling clues, which matches 고정 파티·핵심 조연 (2), not 군상극 as the reward.
+- `work-3dfaf6231e21133620c6` `pacing` 4 → 3. Sources: https://www.kodansha.co.jp/comic/products/0000339844 ; https://www.kodansha.co.jp/comic/products/0000342928 ; https://www.kodansha.co.jp/comic/products/0000344749 . Volumes 1–3 change encounter → underground duel → highway clash, which is more than ordinary single-arc stasis (2) but is still volume-scale arc change, not 짧은 간격으로 목표·장소·상태가 크게 바뀜 (4).
+- `work-3dfaf6231e21133620c6` `relationshipStructure` 3 → 2. Sources: https://www.kodansha.co.jp/comic/products/0000339844 ; https://www.kodansha.co.jp/comic/products/0000342928 . Official entry copy centers two leads plus faction opponents; annotation-guide boundary treats 두 주인공+핵심 조연 as 2, and opposing groups are combat factions rather than a multi-relation reward.
+- `work-4c784fc78dfd9b139c3f` `progression` 2 → U. Sources: https://www.shueisha.co.jp/books/items/contents.html?jdcn=08X10000000022198000 ; https://www.mangataisho.com/data/2023/comment2023.pdf . Publisher volumes show relationship steps; jury self-reflection is character change, not 성장·획득·숙련 보상. Secondary lead cannot reclassify that as `progression`.
+- `work-4c784fc78dfd9b139c3f` `relationshipStructure` 3 → 2. Sources: https://www.shueisha.co.jp/books/items/contents.html?jdcn=08X10000000024401900 ; https://www.shueisha.co.jp/books/items/contents.html?isbn=978-4-08-883395-8 . Main pair plus Yamada/Nishi and school friends is 고정 파티·핵심 조연 (2); parallel threads do not make relationship-network complexity the reward (4), so 3 is not required.
+- `work-518d7ed42dd9253679c3` `mentalStress` 2 → U. Sources: https://e-comi.shogakukan.co.jp/books/091830420000d0000000 ; https://e-comi.shogakukan.co.jp/books/091830430000d0000000 . Packet limitation states scene-level psychological pressure is not established from the event summaries; siege harm supports `darkness` separately and is not by itself sustained 긴장·답답함.
+- `work-53e54c95f637b66c4fb2` `progression` 4 → 2. Sources: https://e-comi.shogakukan.co.jp/books/091202110000d0000000 ; https://e-comi.shogakukan.co.jp/books/091202130000d0000000 . Entry scope is childhood start, inherited goal, secret practice, and a gym introduction — 서서히 성장 (2), not 성장·획득·숙련 보상이 반복적으로 명확함 (4). Later-career boxing structure is out of range.
+- `work-53e54c95f637b66c4fb2` `relationshipStructure` 3 → 2. Sources: https://e-comi.shogakukan.co.jp/books/091202110000d0000000 ; https://e-comi.shogakukan.co.jp/books/091202130000d0000000 . Father, grandparents, and teacher Ashikawa are 핵심 조연 around one child protagonist (2), not a widening multi-relation structure.
+- `work-5b4dc4e6e966436b2990` `characterArcWeight` 4 → 3. Sources: https://www.hakusensha.co.jp/comicslist/41133/ ; https://www.hakusensha.co.jp/comicslist/41065/ ; https://www.hakusensha.co.jp/comicslist/43939 . Loneliness-and-aid is the episode frame, but official copy does not expose episode outcomes or completed character change; 4 requires 인물 동기·변화·관계가 핵심 보상 as a sustained observed reward, so the value sits between 2 and 4.
+- `work-5b9a3ec60ac5fc90f444` `worldBuilding` 3 → U. Source: https://comic.mag-garden.co.jp/mgnbooks/mediamix_books/mahoyome-supplement/ . The supplement landing page confirms that vols 1–3 setting was annotated; it does not show history/culture/rules/factions operating inside entry events. Packet instruction is not to assign an Axis from that blurb alone.
+
+### Genre
+
+- `work-29d4300ad9d3358fb67a` `scienceFiction;mystery` → `mystery`. Source: https://www.kodansha.co.jp/comic/products/0000223170 . Robot/space-police material is one of nine initially separate incidents; the sustained work-level structure is detective tracking and a converging building/sibling mystery. Genre is not inherited from a single episode premise.
+
+### Theme
+
+- `work-3dfaf6231e21133620c6` drop `war:2`. Sources: https://www.kodansha.co.jp/comic/products/0000339844 ; https://www.kodansha.co.jp/comic/products/0000342928 ; https://www.kodansha.co.jp/comic/products/0000344749 . Recurring lethal ninja–yakuza clashes support `combat:2`; modern underground/highway faction fights are not a repeated war structure (states, campaigns, or wartime operations) at centrality 2.
+- `work-3e725951eb9c49771087` drop `workplace:2`. Sources: https://www.hakusensha.co.jp/comicslist/45955/ ; https://www.hakusensha.co.jp/comicslist/45957/ ; https://www.hakusensha.co.jp/comicslist/45959/ . The detective–assistant pair is the investigation frame (`investigation:2` and `relationshipStructure=2`); case inquiry, not workplace process, is the repeated core.
+- `work-5b4dc4e6e966436b2990` `crafting:2` → empty. Sources: https://www.hakusensha.co.jp/comicslist/41133/ ; https://www.hakusensha.co.jp/comicslist/41065/ . Dollmakers and sentient dolls are the setting frame; official copy repeats visitor–doll encounters and an origin secret, not a recurring crafting/making loop.
+
+## 7. Identity / safety / representative-ISBN
+
+| workId | title | ISBN | identity | safety | verdict | packet evidence URL |
+| --- | --- | --- | --- | --- | --- | --- |
+| work-29d4300ad9d3358fb67a | 外天楼 | 9784063761597 | Kodansha one-volume page matches frozen title/work | no packet safety flag | PASS | https://www.kodansha.co.jp/comic/products/0000223170 |
+| work-3dfaf6231e21133620c6 | 忍者と極道 | 9784065193655 | Kodansha vols 1–3 match frozen title/work | no packet safety flag | PASS | https://www.kodansha.co.jp/comic/products/0000339844 |
+| work-3e725951eb9c49771087 | 嘘解きレトリック | 9784592196334 | Hakusensha vols 1–3 match frozen title/work | no packet safety flag | PASS | https://www.hakusensha.co.jp/comicslist/45955/ |
+| work-40b8c35b1d8c9a90144c | orange | 9784088468044 | Frozen ISBN is 集英社 vol. 1; usable official copy is later 双葉社 series overview with no original 1–3 volume bridge | no packet safety flag | NEEDS_ADJUDICATION | https://www.futabasha.co.jp/introduction/orange/pc/index.html |
+| work-4c784fc78dfd9b139c3f | 正反対な君と僕 | 9784088831251 | Shueisha vols 1–3 match frozen title/work | no packet safety flag | PASS | https://www.shueisha.co.jp/books/items/contents.html?jdcn=08X10000000022198000 |
+| work-518d7ed42dd9253679c3 | 墨攻 | 9784091830418 | Official copy is a later e-comic 1–3 sequence; page-level mapping to the frozen paper ISBN is not shown | no packet safety flag | NEEDS_ADJUDICATION | https://e-comi.shogakukan.co.jp/books/091830410000d0000000 |
+| work-53e54c95f637b66c4fb2 | がんばれ元気 | 9784091202116 | Later e-comic 1–3 copy; page-level mapping to frozen paper ISBN unverified; award-year 1976 vs repository first-year 1977 remains unresolved in-packet | no packet safety flag | NEEDS_ADJUDICATION | https://e-comi.shogakukan.co.jp/books/091202110000d0000000 |
+| work-5915d6d7601377fcc75f | 赤髪の白雪姫 | 9784592183730 | Hakusensha vols 1–3 match frozen title/work; vol. 1 also contains a separate short that is not treated as mainline evidence | no packet safety flag | PASS | https://www.hakusensha.co.jp/comicslist/44169/ |
+| work-5b4dc4e6e966436b2990 | 人形芝居 | 9784592177098 | Hakusensha vols 1–3 match frozen title/work; long vol. 2–3 gap is a scope note, not a second work | child-shaped mechanical dolls; no sexual or exploitative claim in packet | PASS | https://www.hakusensha.co.jp/comicslist/41133/ |
+| work-5b9a3ec60ac5fc90f444 | 魔法使いの嫁 | 9784800002846 | Official notice maps frozen ISBN to Mag Garden old vol. 1 and lists old vols 2–3; current-publisher continuity is identity-only | no packet safety flag | PASS | https://www.mag-garden.co.jp/news/12448/ |
+
+## 8. Per-work final review outcome
+
+| workId | title | outcome |
+| --- | --- | --- |
+| work-29d4300ad9d3358fb67a | 外天楼 | needs-adjudication |
+| work-3dfaf6231e21133620c6 | 忍者と極道 | needs-adjudication |
+| work-3e725951eb9c49771087 | 嘘解きレトリック | needs-adjudication |
+| work-40b8c35b1d8c9a90144c | orange | insufficient-evidence |
+| work-4c784fc78dfd9b139c3f | 正反対な君と僕 | needs-adjudication |
+| work-518d7ed42dd9253679c3 | 墨攻 | needs-adjudication |
+| work-53e54c95f637b66c4fb2 | がんばれ元気 | needs-adjudication |
+| work-5915d6d7601377fcc75f | 赤髪の白雪姫 | verified |
+| work-5b4dc4e6e966436b2990 | 人形芝居 | needs-adjudication |
+| work-5b9a3ec60ac5fc90f444 | 魔法使いの嫁 | insufficient-evidence |
+
+## 9. Extremes (0 or 4) and Theme centrality 2
+
+No known 0 values. Every candidate 0 was left `U` because official copy does not affirmatively certify sustained absence.
+
+| workId | item | value | direct entry-scope evidence? |
+| --- | --- | --- | --- |
+| work-29d4300ad9d3358fb67a | mysteryReveal | 4 | yes — complete-volume official structure of initially separate incidents, murder inquiry, and building/sibling clues converging as the central reward; https://www.kodansha.co.jp/comic/products/0000223170 |
+| work-29d4300ad9d3358fb67a | Theme investigation | 2 | yes — detective pursuit and clue linkage is the one-volume through-line; https://www.kodansha.co.jp/comic/products/0000223170 |
+| work-3dfaf6231e21133620c6 | darkness | 4 | yes — vols 1–3 official copy keep lethal faction conflict, a companion’s death, revenge, and mass violent clash as the event center; https://www.kodansha.co.jp/comic/products/0000339844 ; https://www.kodansha.co.jp/comic/products/0000342928 ; https://www.kodansha.co.jp/comic/products/0000344749 |
+| work-3dfaf6231e21133620c6 | Theme combat | 2 | yes — duels and group clashes recur across official vols 1–3; same URLs |
+| work-3e725951eb9c49771087 | Theme investigation | 2 | yes — clue-finding and case inquiry recur in official vols 2–3 after the partnership forms; https://www.hakusensha.co.jp/comicslist/45957/ ; https://www.hakusensha.co.jp/comicslist/45959/ |
+| work-4c784fc78dfd9b139c3f | characterArcWeight | 4 | yes — official vols 1–3 repeatedly reward communication, adjustment, and relationship change; https://www.shueisha.co.jp/books/items/contents.html?jdcn=08X10000000022198000 ; https://www.shueisha.co.jp/books/items/contents.html?isbn=978-4-08-883395-8 |
+| work-4c784fc78dfd9b139c3f | romance | 4 | yes — couple initiation, increasing closeness, and a parallel pair drive all three official volume descriptions; same Shueisha URLs |
+| work-4c784fc78dfd9b139c3f | emotionalWarmth | 4 | yes — publisher closeness/respect-in-daily-school-life is the entry reward; jury packet is only corroborating secondary lead, not the sole basis; https://www.shueisha.co.jp/books/items/contents.html?jdcn=08X10000000022198000 ; https://www.mangataisho.com/data/2023/comment2023.pdf |
+| work-4c784fc78dfd9b139c3f | Theme school | 2 | yes — class relations, festival, study meeting, and cultural-festival prep structure vols 1–3; https://www.shueisha.co.jp/books/items/contents.html?jdcn=08X10000000024401900 ; https://www.shueisha.co.jp/books/items/contents.html?isbn=978-4-08-883395-8 |
+| work-518d7ed42dd9253679c3 | problemSolving | 4 | yes — wall repair, weapons, drills, and counters to arson, infiltration, and tunnels are the repeated constraint-solution core; https://e-comi.shogakukan.co.jp/books/091830410000d0000000 ; https://e-comi.shogakukan.co.jp/books/091830420000d0000000 |
+| work-518d7ed42dd9253679c3 | strategy | 4 | yes — siege defense, mobilization, intelligence, changing attack methods, and leadership outcomes are the 1–3 center; https://e-comi.shogakukan.co.jp/books/091830410000d0000000 ; https://e-comi.shogakukan.co.jp/books/091830430000d0000000 |
+| work-518d7ed42dd9253679c3 | Theme combat | 2 | yes — siege combat recurs through official e-comic 1–3; same URLs |
+| work-518d7ed42dd9253679c3 | Theme war | 2 | yes — the Liang siege, opposing army, and campaign consequences occupy the whole entry range; same URLs |
+| work-518d7ed42dd9253679c3 | Theme territoryManagement | 2 | yes — fortification, weapons, drills, and resident mobilization for one city recur across 1–3; https://e-comi.shogakukan.co.jp/books/091830410000d0000000 |
+| work-53e54c95f637b66c4fb2 | characterArcWeight | 4 | yes — parent-child bond, death, inherited goal, opposition, and the choice to keep boxing are the official 1–3 reward; https://e-comi.shogakukan.co.jp/books/091202110000d0000000 ; https://e-comi.shogakukan.co.jp/books/091202130000d0000000 |
+| work-53e54c95f637b66c4fb2 | Theme martialArts | 2 | yes — boxing practice and gym entry structure the child’s continuing path in official 1 and 3; same URLs |
+| work-53e54c95f637b66c4fb2 | Theme sportsCompetition | 2 | yes — professional bouts and the championship goal structure official 1–2; https://e-comi.shogakukan.co.jp/books/091202110000d0000000 ; https://e-comi.shogakukan.co.jp/books/091202120000d0000000 |
+| work-5915d6d7601377fcc75f | characterArcWeight | 4 | yes — refusal, leaving the country, vocational choice, and the Zen bond drive official vols 1–3; https://www.hakusensha.co.jp/comicslist/44169/ ; https://www.hakusensha.co.jp/comicslist/44171/ ; https://www.hakusensha.co.jp/comicslist/44173/ |
+
+No other Theme centrality 2 tags are retained. Award/list pages were not used as Factor, Genre, or Theme evidence.

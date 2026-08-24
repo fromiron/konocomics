@@ -1,4 +1,5 @@
 import type { Work } from "../catalog/types";
+import { recommendationProfileRecords } from "../profile/catalog-profile";
 import {
   calculateProfileConfidence,
   calculateRecommendationConfidence,
@@ -49,7 +50,9 @@ export function positiveAnchors(
         return [];
       }
       const work = ownRecordValue(worksById, record.workId);
-      return work === undefined ? [] : [{ work, reaction: record.reaction }];
+      return work?.eligibility.recommendationEligible === true
+        ? [{ work, reaction: record.reaction }]
+        : [];
     });
 }
 
@@ -282,9 +285,7 @@ export function buildRecommendationPlan(input: RecommendationInput): Recommendat
   assertUniqueRecords(input.records);
 
   const worksById = Object.fromEntries(input.catalog.works.map((work) => [work.id, work]));
-  const catalogRecords = input.records.filter(
-    (record) => ownRecordValue(worksById, record.workId) !== undefined,
-  );
+  const catalogRecords = recommendationProfileRecords(input.records, input.catalog.works);
   const anchors = positiveAnchors(worksById, catalogRecords);
   if (anchors.length === 0) {
     return [];
@@ -326,13 +327,11 @@ export function scoreWorkCompatibility(
 
   const worksById = Object.fromEntries(input.catalog.works.map((work) => [work.id, work]));
   const work = ownRecordValue(worksById, workId);
-  if (work === undefined) {
+  if (work?.eligibility.recommendationEligible !== true) {
     return null;
   }
 
-  const catalogRecords = input.records.filter(
-    (record) => ownRecordValue(worksById, record.workId) !== undefined,
-  );
+  const catalogRecords = recommendationProfileRecords(input.records, input.catalog.works);
   const anchors = positiveAnchors(worksById, catalogRecords).filter(
     (anchor) => anchor.work.id !== workId,
   );

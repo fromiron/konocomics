@@ -183,13 +183,17 @@ export function OnboardingFlow({
   const submittingRef = useRef(false);
 
   const allCatalogWorks = catalog.works;
-  const catalogWorkIds = useMemo(
-    () => new Set(allCatalogWorks.map((work) => work.id)),
+  const recommendationEligibleCatalogWorks = useMemo(
+    () => allCatalogWorks.filter((work) => work.eligibility.recommendationEligible),
     [allCatalogWorks],
   );
+  const recommendationEligibleWorkIds = useMemo(
+    () => new Set(recommendationEligibleCatalogWorks.map((work) => work.id)),
+    [recommendationEligibleCatalogWorks],
+  );
   const onboardingEligibleCatalogWorks = useMemo(
-    () => allCatalogWorks.filter((work) => work.eligibility.onboardingEligible),
-    [allCatalogWorks],
+    () => recommendationEligibleCatalogWorks.filter((work) => work.eligibility.onboardingEligible),
+    [recommendationEligibleCatalogWorks],
   );
   const onboardingEligibleWorkIds = useMemo(
     () => new Set(onboardingEligibleCatalogWorks.map((work) => work.id)),
@@ -200,8 +204,8 @@ export function OnboardingFlow({
     [userWorks],
   );
   const selectableCatalogWorks = useMemo(
-    () => allCatalogWorks.filter((work) => !persistedWorkIds.has(work.id)),
-    [allCatalogWorks, persistedWorkIds],
+    () => recommendationEligibleCatalogWorks.filter((work) => !persistedWorkIds.has(work.id)),
+    [persistedWorkIds, recommendationEligibleCatalogWorks],
   );
   const onboardingEligibleWorks = useMemo(
     () => onboardingEligibleCatalogWorks.filter((work) => !persistedWorkIds.has(work.id)),
@@ -273,13 +277,13 @@ export function OnboardingFlow({
               shouldUseAddMode,
               persistedWorkIds,
               onboardingEligibleWorkIds,
-              catalogWorkIds,
+              recommendationEligibleWorkIds,
             ),
     [
-      catalogWorkIds,
       onboardingEligibleWorkIds,
       onboardingCompletedAt,
       persistedWorkIds,
+      recommendationEligibleWorkIds,
       shouldUseAddMode,
       storedDraft,
       userWorks,

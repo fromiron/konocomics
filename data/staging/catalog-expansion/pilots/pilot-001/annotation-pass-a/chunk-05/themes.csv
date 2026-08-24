@@ -1,0 +1,17 @@
+workId,themeId,centrality,confidence,evidenceId
+work-07dc759bd91e1cffb2df,cooking,1,0.66,ev-pilot-001-a-work-07dc759bd91e1cffb2df
+work-07dc759bd91e1cffb2df,workplace,1,0.76,ev-pilot-001-a-work-07dc759bd91e1cffb2df
+work-081e75d8bbc53ac64713,sportsCompetition,2,0.94,ev-pilot-001-a-work-081e75d8bbc53ac64713
+work-112589a161d1596ec97f,investigation,1,0.68,ev-pilot-001-a-work-112589a161d1596ec97f
+work-112589a161d1596ec97f,school,2,0.82,ev-pilot-001-a-work-112589a161d1596ec97f
+work-192cbecc59e9c028142b,workplace,2,0.92,ev-pilot-001-a-work-192cbecc59e9c028142b
+work-268e1fa3599955359969,school,2,0.92,ev-pilot-001-a-work-268e1fa3599955359969
+work-37ecced0b2392d7af9b2,workplace,2,0.90,ev-pilot-001-a-work-37ecced0b2392d7af9b2
+work-7730845c9cf7ba0cccc8,school,2,0.90,ev-pilot-001-a-work-7730845c9cf7ba0cccc8
+work-7730845c9cf7ba0cccc8,workplace,1,0.68,ev-pilot-001-a-work-7730845c9cf7ba0cccc8
+work-b2c37bdb52e2a78dfd41,war,1,0.74,ev-pilot-001-a-work-b2c37bdb52e2a78dfd41
+work-b2c37bdb52e2a78dfd41,politics,2,0.88,ev-pilot-001-a-work-b2c37bdb52e2a78dfd41
+work-b2c37bdb52e2a78dfd41,revenge,2,0.82,ev-pilot-001-a-work-b2c37bdb52e2a78dfd41
+work-b2c37bdb52e2a78dfd41,historicalReconstruction,2,0.90,ev-pilot-001-a-work-b2c37bdb52e2a78dfd41
+work-e049c9aaf92ba31da8b0,crafting,2,0.88,ev-pilot-001-a-work-e049c9aaf92ba31da8b0
+work-e049c9aaf92ba31da8b0,school,2,0.90,ev-pilot-001-a-work-e049c9aaf92ba31da8b0

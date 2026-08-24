@@ -63,8 +63,10 @@
 ### Catalog 범위
 
 - 우선 장르: 액션·판타지·역사·SF·미스터리 / 인접: 코미디·무술·호러·일상·로맨스·스포츠
-- 규모: sanity check는 동결된 정확히 50개의 서로 다른 `recommendationEligible` Work → 블라인드 테스트·공개 MVP 150 (Anchor 30~40 / Bridge 30~40 / Discovery 70+)
+- 규모: sanity check는 동결된 정확히 50개의 서로 다른 `recommendationEligible` Work → 블라인드 테스트·공개 MVP의 Gold Set 150 (Anchor 30~40 / Bridge 30~40 / Discovery 70+) → 비성인 일본 만화 총 1,000작품 이상으로 확장. 1,000은 최소값이며 상한은 두지 않는다.
 - 역할 분리: `onboardingEligible` / `recommendationEligible` / `libraryOnly`
+- 기존 Gold Set 150작품은 ID·주석·추천 계약을 동결한다. 확장 작품은 안전·canonical identity·선정 provenance·대표 ISBN을 검증해 `libraryOnly`로 먼저 수용할 수 있으며, 17축을 명시적 `unknown`으로 두고 사람 또는 승인된 주석 게이트 전에는 온보딩·DNA·추천 산식에 사용하지 않는다.
+- 외부 API가 제공하지 않는 원산지 국적과 원작 레이아웃 형식은 추론하지 않고 staging에서 `unknown`으로 유지한다. 별도 공식 근거로 세로 스크롤 우선 작품임이 확인된 경우에만 `excluded-webtoon`으로 제외한다.
 - Anchor는 취향 판독기 역할(대비 축 커버)이어야 하며 단순 인기작 나열이 아니다.
 
 ---
@@ -776,8 +778,8 @@ type G2ResultV1 = {
 ```text
 pnpm --silent g2:aggregate
   --result, -r <json>   # 반복 가능
-  --catalog <json>      # 기본 data/generated/catalog-v1.json
-  --context <json>      # 기본 data/generated/recommendation-context-v1.json
+  --catalog <json>      # 기본 data/generated/recommendation-profile-catalog-v1.json
+  --context <json>      # 기본 data/generated/recommendation-profile-context-v1.json
   --output, -o <md|->   # 기본 stdout
   --help, -h
 ```

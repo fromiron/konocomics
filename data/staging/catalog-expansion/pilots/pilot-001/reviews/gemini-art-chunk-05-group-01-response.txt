@@ -1,0 +1,266 @@
+conversationId=e8c5229f-0460-4648-874b-a134b5223fe8
+model=gemini-3.7-flash-high
+resolvedLabel=Gemini 3.7 Flash (High)
+effort=high
+pixelAccess=actual-local-png
+completionStatus=SUCCESS
+candidateSha256=aaf4f4a4845ec105b8218f0f9e8358a2ae95c5823519e68e1752acada6e22529
+
+{
+  "candidateSha256": "aaf4f4a4845ec105b8218f0f9e8358a2ae95c5823519e68e1752acada6e22529",
+  "exactModel": "gemini-3.7-flash-high",
+  "resolvedLabel": "Gemini 3.7 Flash (High)",
+  "effort": "high",
+  "completionStatus": "SUCCESS",
+  "pixelFiles": [
+    {
+      "workId": "work-07dc759bd91e1cffb2df",
+      "path": "output/playwright/pilot-art/chunk-05/shiawase/page-0002.png",
+      "sha256": "92c8b0d8daa054e92b00c2db9f76b15af787e376f6c3ad6744e6f67e9c06a14b"
+    },
+    {
+      "workId": "work-07dc759bd91e1cffb2df",
+      "path": "output/playwright/pilot-art/chunk-05/shiawase/page-0003.png",
+      "sha256": "900342aea8223ecac11ec7f6f70b417420b62888b82ec7f7d14fb9af00af4982"
+    },
+    {
+      "workId": "work-07dc759bd91e1cffb2df",
+      "path": "output/playwright/pilot-art/chunk-05/shiawase/page-0008.png",
+      "sha256": "d679815689a1765521fac2252691beca7c5a847d203dd110236c573d75a61afe"
+    },
+    {
+      "workId": "work-07dc759bd91e1cffb2df",
+      "path": "output/playwright/pilot-art/chunk-05/shiawase/page-0009.png",
+      "sha256": "c7719c2120041015a19d760beef53fae0937ccfa3e88cd2c4046da74ab249929"
+    },
+    {
+      "workId": "work-07dc759bd91e1cffb2df",
+      "path": "output/playwright/pilot-art/chunk-05/shiawase/page-0014.png",
+      "sha256": "9592849b1ea94f7d7e11f3e00c00370e47928869437f033a71331f7f9fee458c"
+    },
+    {
+      "workId": "work-07dc759bd91e1cffb2df",
+      "path": "output/playwright/pilot-art/chunk-05/shiawase/page-0015.png",
+      "sha256": "5334bec30fac6e3ed6d2e0c7f1799038d2ee8d8e0e43ca9fc9e00e20ef9f4817"
+    },
+    {
+      "workId": "work-3588928ab8f6a2520923",
+      "path": "output/playwright/pilot-art/chunk-05/umi-endroll/page-05.png",
+      "sha256": "06db47ca75549db299579546c549b75a3f244ea10498ec38b120107359eee207"
+    },
+    {
+      "workId": "work-3588928ab8f6a2520923",
+      "path": "output/playwright/pilot-art/chunk-05/umi-endroll/page-06.png",
+      "sha256": "880ad97868738f7784f8cb2038cc5b8d160ce35648305c4c63a6b553b32d9656"
+    },
+    {
+      "workId": "work-3588928ab8f6a2520923",
+      "path": "output/playwright/pilot-art/chunk-05/umi-endroll/page-18.png",
+      "sha256": "843933626ab255a7f2eb19717265df8aba6cae412bb453c553d4b695c0593b66"
+    },
+    {
+      "workId": "work-3588928ab8f6a2520923",
+      "path": "output/playwright/pilot-art/chunk-05/umi-endroll/page-19.png",
+      "sha256": "cef3977f5d3d7562abdf82db730acfc1029b6db353703ff542d1622c5a524ac2"
+    },
+    {
+      "workId": "work-3588928ab8f6a2520923",
+      "path": "output/playwright/pilot-art/chunk-05/umi-endroll/page-31.png",
+      "sha256": "a713067db5fa097af1e3d355d0dba889dbc702eaf700c9ea0cb3ccd3b8f84ad9"
+    },
+    {
+      "workId": "work-3588928ab8f6a2520923",
+      "path": "output/playwright/pilot-art/chunk-05/umi-endroll/page-32.png",
+      "sha256": "754174f8e63a4b0400117fee1b6923bcc76e7c38cd65af98894b0c5af66d44ef"
+    },
+    {
+      "workId": "work-b2c37bdb52e2a78dfd41",
+      "path": "output/playwright/pilot-art/chunk-05/tenmaku/page-0002c.png",
+      "sha256": "34b00aa652c934e440ee21300ed0e3199ce672fa6827c1469dbd16e383ea0b1e"
+    },
+    {
+      "workId": "work-b2c37bdb52e2a78dfd41",
+      "path": "output/playwright/pilot-art/chunk-05/tenmaku/page-0003c.png",
+      "sha256": "22f4c9c2da1547948481f571b252b62db02ab68635092b9c0bb2e74388047316"
+    },
+    {
+      "workId": "work-b2c37bdb52e2a78dfd41",
+      "path": "output/playwright/pilot-art/chunk-05/tenmaku/page-0012.png",
+      "sha256": "0292f29d799b07d74b0047038b4450bc6077771a92a8e4d0121706bfe3851db1"
+    },
+    {
+      "workId": "work-b2c37bdb52e2a78dfd41",
+      "path": "output/playwright/pilot-art/chunk-05/tenmaku/page-0013.png",
+      "sha256": "d50d68608d049d55d249f56121a4c4f2d7266c1d898790a4c97e63a518ad6c61"
+    },
+    {
+      "workId": "work-b2c37bdb52e2a78dfd41",
+      "path": "output/playwright/pilot-art/chunk-05/tenmaku/page-0030.png",
+      "sha256": "aeb04a0c4ca97fc65266ff2107b3cc5f615f09ff349d798cbb1654185cfdd57d"
+    },
+    {
+      "workId": "work-b2c37bdb52e2a78dfd41",
+      "path": "output/playwright/pilot-art/chunk-05/tenmaku/page-0031.png",
+      "sha256": "dfed78021e1b6635e3f0a809cf29a7703fa2982fe2b0c0b71799020b24d1e1f0"
+    }
+  ],
+  "works": [
+    {
+      "workId": "work-07dc759bd91e1cffb2df",
+      "title": "しあわせは食べて寝て待て",
+      "gateQualified": true,
+      "axes": {
+        "artRealism": {
+          "state": "known",
+          "value": 2,
+          "refs": [
+            "page-0002.png",
+            "page-0003.png",
+            "page-0008.png",
+            "page-0009.png",
+            "page-0014.png",
+            "page-0015.png"
+          ],
+          "reason": "Anatomy and everyday domestic/office spaces follow realistic proportions, but faces and expressions feature standard manga stylization with simplified contours and features."
+        },
+        "artDensity": {
+          "state": "known",
+          "value": 2,
+          "refs": [
+            "page-0002.png",
+            "page-0003.png",
+            "page-0008.png",
+            "page-0009.png",
+            "page-0014.png",
+            "page-0015.png"
+          ],
+          "reason": "Balanced line and environment density with functional background staging (desks, computers, clinic doors, kitchen counters) and clean, legible negative space."
+        },
+        "visualSoftness": {
+          "state": "known",
+          "value": 3,
+          "refs": [
+            "page-0002.png",
+            "page-0003.png",
+            "page-0008.png",
+            "page-0009.png",
+            "page-0014.png",
+            "page-0015.png"
+          ],
+          "reason": "Gentle, rounded line work, delicate facial features, and warm tonal treatment leaning softer than neutral without harsh jagged hatching."
+        },
+        "motionImpact": {
+          "state": "unknown",
+          "value": null,
+          "refs": [],
+          "reason": "Sampled pages depict static office work, medical consultations, stair climbing, and domestic dialogue; no continuous bounded physical action sequence is present."
+        }
+      }
+    },
+    {
+      "workId": "work-3588928ab8f6a2520923",
+      "title": "海が走るエンドロール",
+      "gateQualified": true,
+      "axes": {
+        "artRealism": {
+          "state": "known",
+          "value": 3,
+          "refs": [
+            "page-05.png",
+            "page-06.png",
+            "page-18.png",
+            "page-19.png",
+            "page-31.png",
+            "page-32.png"
+          ],
+          "reason": "Realistic anatomical bone structure, authentic posture, and convincing facial aging/wrinkles for the elderly protagonist alongside perspective-accurate kitchen and theater environments, balanced with stylized facial features for younger characters."
+        },
+        "artDensity": {
+          "state": "known",
+          "value": 3,
+          "refs": [
+            "page-05.png",
+            "page-06.png",
+            "page-18.png",
+            "page-19.png",
+            "page-31.png",
+            "page-32.png"
+          ],
+          "reason": "Rich textural details including sea spray and waves, detailed kitchen utensils and ingredients, atmospheric cinema lighting, and textured screentones exceeding standard balanced density."
+        },
+        "visualSoftness": {
+          "state": "known",
+          "value": 3,
+          "refs": [
+            "page-05.png",
+            "page-06.png",
+            "page-18.png",
+            "page-19.png",
+            "page-31.png",
+            "page-32.png"
+          ],
+          "reason": "Supple, expressive linework with delicate hair rendering, soft lighting gradients, and smooth screentone transitions leaning distinctly softer than neutral."
+        },
+        "motionImpact": {
+          "state": "unknown",
+          "value": null,
+          "refs": [],
+          "reason": "Sampled pages depict contemplative beach photography, quiet cooking, theater viewing, and doorway conversation; metaphorical water wave paneling does not constitute a bounded continuous physical action sequence."
+        }
+      }
+    },
+    {
+      "workId": "work-b2c37bdb52e2a78dfd41",
+      "title": "天幕のジャードゥーガル",
+      "gateQualified": true,
+      "axes": {
+        "artRealism": {
+          "state": "known",
+          "value": 0,
+          "refs": [
+            "page-0002c.png",
+            "page-0003c.png",
+            "page-0012.png",
+            "page-0013.png",
+            "page-0030.png",
+            "page-0031.png"
+          ],
+          "reason": "Intentional and pronounced deformation with stylized picture-book character silhouettes, large expressive eyes, simplified facial proportions, and cartoonish anatomy directly matching the 0 anchor."
+        },
+        "artDensity": {
+          "state": "known",
+          "value": 3,
+          "refs": [
+            "page-0002c.png",
+            "page-0003c.png",
+            "page-0012.png",
+            "page-0013.png",
+            "page-0030.png",
+            "page-0031.png"
+          ],
+          "reason": "High graphic pattern density featuring intricate Islamic textile patterns, astrological diagrams, nomadic camp details, brickwork textures, and strong solid black contrast fills."
+        },
+        "visualSoftness": {
+          "state": "known",
+          "value": 3,
+          "refs": [
+            "page-0002c.png",
+            "page-0003c.png",
+            "page-0012.png",
+            "page-0013.png",
+            "page-0030.png",
+            "page-0031.png"
+          ],
+          "reason": "Rounded, flowing outlines with arabesque flourishes and gentle curved contours creating an approachable, soft storybook aesthetic."
+        },
+        "motionImpact": {
+          "state": "unknown",
+          "value": null,
+          "refs": [],
+          "reason": "Horseback archers on page 0003c are presented as stylized decorative woodcut-like exposition, and remaining pages are quiet dialogues; no continuous bounded action sequence is present."
+        }
+      }
+    }
+  ],
+  "issues": []
+}

@@ -1,0 +1,155 @@
+# Batch 002 chunk 05 independent non-Art review
+
+## 1. Execution attestation
+
+- Reviewer label: Cursor Grok 4.6 High
+- CLI model ID: `cursor-grok-4.6-high`
+- Fast mode: no (non-fast)
+- Completion: normal; full read access to all nine frozen inputs; no timeout, rate-limit, or degraded output
+- `reviewedByHuman=false`
+- Art: abstained. Art values were not inspected or judged. Pixel access was not used. JDCN/paper routes were treated as non-Art text identity only.
+
+## 2. Verified input hashes
+
+All nine frozen inputs were fully readable. Echoed SHA-256 values match the frozen request table:
+
+| Path | SHA-256 |
+| --- | --- |
+| `docs/factors/factor-dictionary.md` | `a9c29a853a108aca1b9bb8d5d71a3e7d5d583303691c0b35cc6424c1e45ee8be` |
+| `docs/factors/annotation-guide.md` | `f7dd1ec55d97bf9200fcec92ce270e7745a0d3aa4fe98a40c746fc56b6a777b3` |
+| `data/staging/catalog-expansion/batches/batch-002/annotation-review-adjudication-request.md` | `ca34d38bc87e58603014142a0abfd6fb886cbdbeb7e917414f2874cd387fdeb2` |
+| `data/staging/catalog-expansion/batches/batch-002/frozen-work-set.csv` | `80888903a34792a5b079d153c86493bc0263cb56bf5bb5a0c0528dd309cf61f6` |
+| `data/staging/catalog-expansion/batches/batch-002/research/chunk-05.md` | `acc50bd535669e00a1bc115cfed4203835f5e9e76a9218f196eb6124f3fcb02c` |
+| `data/staging/catalog-expansion/batches/batch-002/annotation/pass-a-text-chunk-05.csv` | `989c0fe9f95c94290d878d817e95e64b2ca46e4dccca5f0be3b00417a93a81c0` |
+| `data/staging/catalog-expansion/batches/batch-002/annotation/genres-pass-a-chunk-05.csv` | `c4658542c5c98244a01815eab6b0b3f94f8d4c3879049dd704a130f88f18bf4b` |
+| `data/staging/catalog-expansion/batches/batch-002/annotation/themes-pass-a-chunk-05.csv` | `a4ee3285e4856428908327d42f11297aa70c3875305a6bbbecaa0ca548c77b60` |
+| `data/staging/catalog-expansion/batches/batch-002/annotation/pass-a-text-chunk-05.md` | `e917d2e44f04231b9348cc8a7822a5836b6014c7f8135e2282327948eb5eeb53` |
+
+## 3. Independent 13-axis matrix
+
+| workId | progression | problemSolving | strategy | pacing | mysteryReveal | worldBuilding | characterArcWeight | relationshipStructure | comedy | darkness | mentalStress | romance | emotionalWarmth |
+| --- | --- | --- | --- | --- | --- | --- | --- | --- | --- | --- | --- | --- | --- |
+| work-ccf0ddff9c6410c4de14 | U | 2 | 2 | 2 | 2 | 2 | 2 | 2 | U | U | 2 | U | U |
+| work-cdef8cfd678998a51447 | U | U | U | U | U | U | U | U | U | U | U | U | U |
+| work-ced7a8e6d9c3b8147702 | U | U | U | 3 | 3 | U | 4 | 3 | U | 2 | 3 | U | U |
+| work-daf65c6f2cce3e076dfa | U | U | U | 2 | U | U | 4 | 3 | U | 2 | 2 | 3 | 2 |
+| work-db80d94709b62aa8823f | 2 | 2 | 2 | 3 | U | 3 | 2 | 3 | U | 3 | U | U | U |
+| work-ef1bdac46a0956a87f7f | U | U | U | 4 | U | U | 4 | 3 | U | 4 | U | U | U |
+| work-f5847c45d30753150364 | U | U | U | 4 | 3 | 2 | 4 | 2 | U | 4 | U | 2 | U |
+| work-fabc7f5d853e361acaf3 | 4 | U | U | 4 | U | 3 | 2 | 2 | U | 2 | U | U | U |
+| work-fb7a0ed6a88db7d7bc71 | U | U | U | U | U | U | U | U | U | U | U | U | U |
+| work-fd88144bf7334c4aae39 | U | U | U | U | U | U | U | U | U | U | U | U | U |
+
+## 4. Genre conclusion
+
+| workId | canonicalTitle | genres |
+| --- | --- | --- |
+| work-ccf0ddff9c6410c4de14 | サンキューピッチ | sports |
+| work-cdef8cfd678998a51447 | うさぎドロップ | sliceOfLife |
+| work-ced7a8e6d9c3b8147702 | 水は海に向かって流れる | sliceOfLife |
+| work-daf65c6f2cce3e076dfa | 凪のお暇 | sliceOfLife;romance |
+| work-db80d94709b62aa8823f | 逃げ上手の若君 | action;historical |
+| work-ef1bdac46a0956a87f7f | タコピーの原罪 | scienceFiction |
+| work-f5847c45d30753150364 | 闇のパープル・アイ | fantasy;horror |
+| work-fabc7f5d853e361acaf3 | YAIBA | action;fantasy |
+| work-fb7a0ed6a88db7d7bc71 | 夢の碑 |  |
+| work-fd88144bf7334c4aae39 | おそ松くん |  |
+
+## 5. Theme conclusion
+
+| workId | canonicalTitle | themes |
+| --- | --- | --- |
+| work-ccf0ddff9c6410c4de14 | サンキューピッチ | school:1;sportsCompetition:2 |
+| work-cdef8cfd678998a51447 | うさぎドロップ |  |
+| work-ced7a8e6d9c3b8147702 | 水は海に向かって流れる |  |
+| work-daf65c6f2cce3e076dfa | 凪のお暇 | workplace:1 |
+| work-db80d94709b62aa8823f | 逃げ上手の若君 | combat:1;war:2;politics:1;survival:2;historicalReconstruction:2 |
+| work-ef1bdac46a0956a87f7f | タコピーの原罪 | school:1 |
+| work-f5847c45d30753150364 | 闇のパープル・アイ | survival:1;revenge:1 |
+| work-fabc7f5d853e361acaf3 | YAIBA | combat:2;martialArts:2 |
+| work-fb7a0ed6a88db7d7bc71 | 夢の碑 |  |
+| work-fd88144bf7334c4aae39 | おそ松くん |  |
+
+## 6. Pass A comparison
+
+Independent values were formed from the dictionary, guide, general request, manifest, and research packet before Pass A files were opened. Award/list rows were ignored as Factor evidence. No Art values were compared.
+
+### Axis
+
+- `work-ccf0ddff9c6410c4de14` `pacing` 3 → 2. Source: https://www.shueisha.co.jp/books/items/contents.html?isbn=978-4-08-884499-2 and https://www.shueisha.co.jp/books/items/contents.html?isbn=978-4-08-884668-2 . Dictionary `pacing` 2 is ordinary arc-unit change; the practice match occupies volumes 2–3 and only then yields roster/tournament transition. Volume-end settlement copy does not prove short-interval large-state change (`pacing` 4) or the in-between 3.
+- `work-ccf0ddff9c6410c4de14` `relationshipStructure` 3 → 2. Source: https://www.shueisha.co.jp/books/items/contents.html?isbn=978-4-08-884305-6 . Dictionary 2 is a fixed party / recurring core supporting cast. Named club members plus an opposing battery remain a sports team, not an ensemble network.
+- `work-daf65c6f2cce3e076dfa` `mentalStress` 3 → 2. Source: https://www.akitashoten.co.jp/comics/425315638X and https://www.akitashoten.co.jp/comics/4253156371 . Dictionary 2 is mixed tension and relief. Volume 1 collapse is followed by comfortable new ties; jury commentary is not volume-bounded and was not used to raise intensity.
+- `work-db80d94709b62aa8823f` `problemSolving` 3 → 2. Source: https://www.shueisha.co.jp/books/items/contents.html?isbn=978-4-08-882734-6 . Dictionary 2 is mixed tactics and direct action. One forced contest plus later pursuit-planning does not make constraint analysis the core reward (4) or the in-between 3; the packet itself withholds persistence from a single duel.
+- `work-db80d94709b62aa8823f` `pacing` 4 → 3. Source: https://www.shueisha.co.jp/books/items/contents.html?isbn=978-4-08-882710-0 ; https://www.shueisha.co.jp/books/items/contents.html?isbn=978-4-08-882734-6 ; https://www.shueisha.co.jp/books/items/contents.html?isbn=978-4-08-882793-3 . Each volume holds one large situation (flight, contest, invasion). That is faster than quiet `pacing` 2, but `pacing` 4 requires short-interval swings, not one arc per volume.
+- `work-db80d94709b62aa8823f` `characterArcWeight` 3 → 2. Source: https://www.shueisha.co.jp/books/items/contents.html?isbn=978-4-08-882710-0 . Dictionary 2 is balanced events and character change. Family loss and a proposed heroic path sit beside historical conflict; character change is not the dominant reward (4).
+- `work-db80d94709b62aa8823f` `darkness` 4 → 3. Source: https://www.shueisha.co.jp/books/items/contents.html?isbn=978-4-08-882710-0 and https://www.shueisha.co.jp/books/items/contents.html?isbn=978-4-08-882793-3 . Dictionary 4 requires cruel/tragic events as the center. Volume 1 loss and volume 3 civilian killing are severe, but volume 2 is a formal contest and the repeating method is escape/survival, so 4 is not established.
+- `work-f5847c45d30753150364` `relationshipStructure` 3 → 2. Source: https://shogakukan-comic.jp/book?jdcn=091316520000d0000000 and https://shogakukan-comic.jp/book?jdcn=091316530000d0000000 . Dictionary 2 is protagonist plus recurring core supports (sister, pursuing teacher, lover). Count of relations is not an ensemble.
+- `work-fabc7f5d853e361acaf3` `relationshipStructure` 3 → 2. Source: https://shogakukan-comic.jp/book?jdcn=091222710000d0000000 and https://shogakukan-comic.jp/book?jdcn=091222720000d0000000 . Father, school rival, and master are a fixed shonen support set (dictionary 2), not a multi-viewpoint network.
+
+### Genre
+
+- `work-cdef8cfd678998a51447` empty → `sliceOfLife`. Source: https://www.shodensha.co.jp/mangajam/jam012.html . The official first major episode is kinship discovery and the start of shared caregiving/cohabitation. New-edition nursery/school copy was not used. Axis values remain `U` because original volumes 1–3 still lack a contents bridge.
+
+### Theme
+
+- `work-db80d94709b62aa8823f` `combat` 2 → 1. Source: https://www.shueisha.co.jp/books/items/contents.html?isbn=978-4-08-882710-0 . Centrality 2 is a repeating core structure. Volume 1 states the starting method as survival/flight rather than winning fights; armed contest and attack training are later-volume material (centrality 1).
+- `work-f5847c45d30753150364` `survival` 2 → 1. Source: https://shogakukan-comic.jp/book?jdcn=091316510000d0000000 . Volume 1 is bodily-change identity, not capture-survival as the repeating core; hunting/rescue occupy volumes 2–3 (centrality 1).
+
+No other Axis, Genre, or Theme cells differ from Pass A.
+
+## 7. Identity / safety / representative-ISBN
+
+| workId | canonicalTitle | verdict | evidence URL | note |
+| --- | --- | --- | --- | --- |
+| work-ccf0ddff9c6410c4de14 | サンキューピッチ | PASS | https://www.shueisha.co.jp/books/items/contents.html?isbn=978-4-08-884305-6 | Frozen ISBN matches ジャンプコミックス vols 1–3. No adult/TL mark. Game pressure is not a safety conflict. |
+| work-cdef8cfd678998a51447 | うさぎドロップ | NEEDS_ADJUDICATION | https://www.shodensha.co.jp/pop/comic_202602.pdf | Frozen ISBN is original vol. 1, but original vols 1–3 have no contents bridge to the new edition. Child-and-adult household is not adult-only by itself. |
+| work-ced7a8e6d9c3b8147702 | 水は海に向かって流れる | NEEDS_ADJUDICATION | https://www.kodansha.co.jp/comic/products/0000319530 | Frozen ISBN matches the complete KCデラックス 1–3. High-schooler and 26-year-old shared housing remains an unresolved inspection boundary, not a proven adult-only class. |
+| work-daf65c6f2cce3e076dfa | 凪のお暇 | PASS | https://www.akitashoten.co.jp/comics/4253156371 | Frozen ISBN matches A.L.C.DX 1–3. Hyperventilation/resignation is not a sales-age mark. |
+| work-db80d94709b62aa8823f | 逃げ上手の若君 | NEEDS_ADJUDICATION | https://www.shueisha.co.jp/books/items/contents.html?isbn=978-4-08-882793-3 | Frozen ISBN matches JC 1–3. Civilian killing and child survivors are unresolved expression-level inspection, not a proven adult-only class. |
+| work-ef1bdac46a0956a87f7f | タコピーの原罪 | NEEDS_ADJUDICATION | https://www.shueisha.co.jp/books/items/contents.html?isbn=978-4-08-883049-0 | Frozen ISBN is the official upper volume of a two-volume complete work. Child harm, a corpse, and police inquiry remain unresolved severity inspection. |
+| work-f5847c45d30753150364 | 闇のパープル・アイ | NEEDS_ADJUDICATION | https://shogakukan-comic.jp/book?jdcn=091316510000d0000000 | Paper product code routes to the same JDCN electronic vols 1–3 for non-Art text. Capture, experiment, death, and transformation remain unresolved expression-level inspection. |
+| work-fabc7f5d853e361acaf3 | YAIBA | PASS | https://shogakukan-comic.jp/book?jdcn=091222710000d0000000 | Paper product code routes to the same JDCN electronic vols 1–3 for non-Art text. Sword contests are not an adult-only mark. Pixel identity is not claimed. |
+| work-fb7a0ed6a88db7d7bc71 | 夢の碑 | NEEDS_ADJUDICATION | https://books.rakuten.co.jp/rb/377347/ | Frozen ISBN is original PF vol. 1. Current story collections have no contents bridge to PF vols 1–3. |
+| work-fd88144bf7334c4aae39 | おそ松くん | NEEDS_ADJUDICATION | https://www.kodansha.co.jp/comic/products/0000120298 | Frozen ISBN is the 1988 講談社 vol. 1; official 1–3 pages have no contents. 1962 origin / 1987 revival / later adaptation are not a contents bridge. |
+
+No `safety-conflict` is reported. Shared settings, death, transformation, experiment, or historical violence in copy do not by themselves prove adult-only classification.
+
+## 8. Per-work final review outcome
+
+| workId | canonicalTitle | outcome |
+| --- | --- | --- |
+| work-ccf0ddff9c6410c4de14 | サンキューピッチ | verified |
+| work-cdef8cfd678998a51447 | うさぎドロップ | insufficient-evidence |
+| work-ced7a8e6d9c3b8147702 | 水は海に向かって流れる | needs-adjudication |
+| work-daf65c6f2cce3e076dfa | 凪のお暇 | verified |
+| work-db80d94709b62aa8823f | 逃げ上手の若君 | needs-adjudication |
+| work-ef1bdac46a0956a87f7f | タコピーの原罪 | needs-adjudication |
+| work-f5847c45d30753150364 | 闇のパープル・アイ | needs-adjudication |
+| work-fabc7f5d853e361acaf3 | YAIBA | verified |
+| work-fb7a0ed6a88db7d7bc71 | 夢の碑 | insufficient-evidence |
+| work-fd88144bf7334c4aae39 | おそ松くん | needs-adjudication |
+
+## 9. Extremes (0 or 4) and Theme centrality 2
+
+No known `0` was assigned. Packet synopses do not affirmatively certify sustained absence.
+
+| workId | item | value | direct entry-scope evidence? |
+| --- | --- | --- | --- |
+| work-ced7a8e6d9c3b8147702 | characterArcWeight | 4 | Yes. Official vols 2–3 make motive, avoidance, suppressed feeling, and inherited family history the complete three-volume reward: https://www.kodansha.co.jp/comic/products/0000327242 ; https://www.kodansha.co.jp/comic/products/0000344116 |
+| work-daf65c6f2cce3e076dfa | characterArcWeight | 4 | Yes. Official vols 1–3 repeat self-suppression, collapse, life reset, and shifting feeling as the central reward: https://www.akitashoten.co.jp/comics/4253156371 |
+| work-ef1bdac46a0956a87f7f | pacing | 4 | Yes. The complete two volumes move from an alien-child premise to death, police inquiry, and a Tokyo journey: https://www.shueisha.co.jp/books/items/contents.html?isbn=978-4-08-883049-0 ; https://www.shueisha.co.jp/books/items/contents.html?isbn=978-4-08-883104-6 |
+| work-ef1bdac46a0956a87f7f | characterArcWeight | 4 | Yes. The same complete entry makes limited nonhuman understanding and the children's circumstances the core: same two URLs |
+| work-ef1bdac46a0956a87f7f | darkness | 4 | Yes. Severe child circumstances, a corpse, and police inquiry are central to the complete entry, not incidental: https://www.shueisha.co.jp/books/items/contents.html?isbn=978-4-08-883104-6 |
+| work-f5847c45d30753150364 | pacing | 4 | Yes. Official vols 1–3 escalate from incidents to capture/rescue, then identity confirmation, experiment, death, betrayal, and a revenge decision: https://shogakukan-comic.jp/book?jdcn=091316530000d0000000 |
+| work-f5847c45d30753150364 | characterArcWeight | 4 | Yes. Bodily identity, sister protection, death, betrayal, and the revenge turn are the entry's character reward: same URL |
+| work-f5847c45d30753150364 | darkness | 4 | Yes. Capture, planned experimentation, family death, betrayal, and revenge are the entry center: same URL |
+| work-fabc7f5d853e361acaf3 | progression | 4 | Yes. Jungle training, Musashi instruction, the Thunder God sword, and new technique against successive attackers are repeated acquisition/mastery rewards: https://shogakukan-comic.jp/book?jdcn=091222720000d0000000 ; https://shogakukan-comic.jp/book?jdcn=091222730000d0000000 |
+| work-fabc7f5d853e361acaf3 | pacing | 4 | Yes. Jungle-to-Japan relocation, magical swords, mountain training, and sequential revived attackers occur inside vols 1–3: https://shogakukan-comic.jp/book?jdcn=091222710000d0000000 ; https://shogakukan-comic.jp/book?jdcn=091222730000d0000000 |
+| work-ccf0ddff9c6410c4de14 | sportsCompetition | 2 | Yes. Practice-match tactics, result, bench selection, and the approaching tournament drive vols 1–3: https://www.shueisha.co.jp/books/items/contents.html?isbn=978-4-08-884668-2 |
+| work-db80d94709b62aa8823f | war | 2 | Yes. Rebellion, territorial invasion, and civilian killing define the early conflict: https://www.shueisha.co.jp/books/items/contents.html?isbn=978-4-08-882710-0 ; https://www.shueisha.co.jp/books/items/contents.html?isbn=978-4-08-882793-3 |
+| work-db80d94709b62aa8823f | survival | 2 | Yes. Escape/survival is the stated starting method and continues through pursuit: https://www.shueisha.co.jp/books/items/contents.html?isbn=978-4-08-882710-0 ; https://www.shueisha.co.jp/books/items/contents.html?isbn=978-4-08-882793-3 |
+| work-db80d94709b62aa8823f | historicalReconstruction | 2 | Yes. 1333, named historical actors, shrine authority, and regional powers repeatedly determine events: https://www.shueisha.co.jp/books/items/contents.html?isbn=978-4-08-882710-0 |
+| work-fabc7f5d853e361acaf3 | combat | 2 | Yes. Rivalry, magical-weapon fights, and successive attackers recur across vols 1–3: https://shogakukan-comic.jp/book?jdcn=091222730000d0000000 |
+| work-fabc7f5d853e361acaf3 | martialArts | 2 | Yes. Sword training, a master, weapon handling, and new techniques are the repeated skill frame: https://shogakukan-comic.jp/book?jdcn=091222720000d0000000 |
+
+`darkness` 4 was not kept for `逃げ上手の若君`. `combat` 2 was not kept for that work. `survival` 2 was not kept for `闇のパープル・アイ`.

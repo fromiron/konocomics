@@ -36,7 +36,10 @@ import recommendationContextJson from "@/data/generated/recommendation-context-v
 import { ART_AXIS_IDS, NARRATIVE_AXIS_IDS, TONE_AXIS_IDS } from "@/domain/catalog/constants";
 import type { AxisId, CatalogV1, CoverageGroup, ThemeTag, Work } from "@/domain/catalog/types";
 import type { ExplanationFactorId } from "@/domain/explanation";
-import { hasCatalogBackedProfile } from "@/domain/profile/catalog-profile";
+import {
+  hasCatalogBackedProfile,
+  recommendationProfileRecords,
+} from "@/domain/profile/catalog-profile";
 import {
   summarizeMangaDna,
   type DnaPreference,
@@ -762,17 +765,21 @@ export function TasteFlow({
     () => records.filter((record) => worksById.has(record.workId)),
     [records, worksById],
   );
+  const profileRecords = useMemo(
+    () => recommendationProfileRecords(catalogRecords, catalog.works),
+    [catalog.works, catalogRecords],
+  );
   const hasProfile = useMemo(
     () => hasCatalogBackedProfile(userWorks, catalog.works),
     [catalog.works, userWorks],
   );
   const summary = useMemo(
-    () => summarizeMangaDna(catalog.works, catalogRecords),
-    [catalog.works, catalogRecords],
+    () => summarizeMangaDna(catalog.works, profileRecords),
+    [catalog.works, profileRecords],
   );
   const anchors = useMemo(
-    () => positiveAnchorWorks(catalogRecords, worksById).slice(0, 5),
-    [catalogRecords, worksById],
+    () => positiveAnchorWorks(profileRecords, worksById).slice(0, 5),
+    [profileRecords, worksById],
   );
   const anchorEvidenceLabels = useMemo(() => {
     const labels = new Map<string, string>();
@@ -781,13 +788,13 @@ export function TasteFlow({
         if (!labels.has(workId)) labels.set(workId, factorLabel(preference.factorId));
       }
     }
-    for (const record of catalogRecords) {
+    for (const record of profileRecords) {
       if (labels.has(record.workId) || record.reaction === undefined) continue;
       labels.set(record.workId, tasteStrings.feedbackLabels[record.reaction]);
     }
     return labels;
-  }, [catalogRecords, summary.topPreferences]);
-  const confidenceLevel = getConfidenceLevel(calculateProfileConfidence(catalogRecords));
+  }, [profileRecords, summary.topPreferences]);
+  const confidenceLevel = getConfidenceLevel(calculateProfileConfidence(profileRecords));
   const beforePreviewWorkIds = useMemo(() => {
     if (baselineAdjustments === null || storedPolicies === undefined) return null;
     return recommendationPreviewWorkIds(catalog, records, baselineAdjustments, storedPolicies);

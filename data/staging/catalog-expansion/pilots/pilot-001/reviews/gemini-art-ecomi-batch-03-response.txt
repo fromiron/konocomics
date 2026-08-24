@@ -1,0 +1,227 @@
+conversationId=f9bc0fb9-b01e-498f-918c-a24272052782
+model=gemini-3.7-flash-high
+effort=high
+pixelAccess=actual-local-png
+completionStatus=SUCCESS
+candidateBinding=adopt-only-through-current-SHA-Pass-C
+
+[
+  {
+    "workId": "work-9d5d64262dbc2893acd4",
+    "title": "ポーの一族",
+    "pixelAccess": true,
+    "readablePageCount": 6,
+    "contexts": [
+      "Village departure / grassy hillside conversation and carriage farewell (reader pp. 6-7)",
+      "Indoor sickbed dialogue and equestrian riding grounds (reader pp. 14-15 / folio 15)",
+      "School courtyard encounter and classroom confrontation (reader pp. 22-23 / folios 22-23)"
+    ],
+    "axes": {
+      "artRealism": {
+        "state": "known",
+        "value": 2,
+        "confidence": 0.9,
+        "refs": [
+          "reader-p.6",
+          "reader-p.14",
+          "reader-p.23"
+        ],
+        "observation": "Classic 1970s shojo stylization displaying elongated slender anatomical proportions, large expressive eyes with fine radial eyelashes and starry highlights (p.6 Marybelle/Edgar, p.14 Marybelle, p.23 Alan/Edgar), ornate curly hair, and stylized European period costumes and architecture.",
+        "limitation": "Inspected sample limited to entry spreads (reader pp.6-7, 14-15, 22-23); later serialization stylistic evolution not directly observed."
+      },
+      "artDensity": {
+        "state": "known",
+        "value": 1,
+        "confidence": 0.85,
+        "refs": [
+          "reader-p.6",
+          "reader-p.14",
+          "reader-p.22"
+        ],
+        "observation": "Airy, open page composition utilizing substantial negative white space, sparse delicate background linework (p.6 open sky and tree, p.22 courtyard), and borderless floating portrait insets (p.14) without heavy screentone layering or dense cross-hatch shading.",
+        "limitation": "Inspected sample limited to 6 pages across 3 spreads."
+      },
+      "visualSoftness": {
+        "state": "known",
+        "value": 4,
+        "confidence": 0.95,
+        "refs": [
+          "reader-p.6",
+          "reader-p.14",
+          "reader-p.22"
+        ],
+        "observation": "Highly delicate, lyrical linework with soft rounded facial contours, flowing curved hair strands, decorative floral rose motifs (p.6), and gentle feathered shading (p.14, p.22), with no angular or aggressive gekiga hatching.",
+        "limitation": "Inspected sample limited to 6 pages across 3 spreads."
+      },
+      "motionImpact": {
+        "state": "unknown",
+        "value": null,
+        "confidence": null,
+        "refs": [],
+        "observation": "No continuous multi-panel action sequence is present across any provided consecutive page pair (p.6-7 is a static farewell dialogue, p.14-15 transitions from bedroom dialogue to an isolated riding vignette, p.22-23 is conversational).",
+        "limitation": "Inspected consecutive spreads do not capture a continuous action sequence to verify dynamic motion impact."
+      }
+    }
+  },
+  {
+    "workId": "work-a7a1e0666169f1b2e8c0",
+    "title": "海街diary",
+    "pixelAccess": true,
+    "readablePageCount": 6,
+    "contexts": [
+      "Outdoor garden pathway and bamboo wall meeting Suzu (reader pp. 6-7)",
+      "Kamakura residence dining room breakfast table discussion (reader pp. 14-15 / folios 12-13)",
+      "Bedroom conversation and train station platform / train carriage journey (reader pp. 22-23 / folios 20-21)"
+    ],
+    "axes": {
+      "artRealism": {
+        "state": "known",
+        "value": 2,
+        "confidence": 0.9,
+        "refs": [
+          "reader-pp.6-7",
+          "reader-p.14/folio 12",
+          "reader-p.22/folio 20"
+        ],
+        "observation": "Naturalistic human proportions and realistic contemporary environmental rendering (pp.6-7 bamboo wall and cobblestones, folio 12 traditional dining room, folio 21 train platform and train interior), integrated with clean, standard manga facial stylization and occasional comedic expressive exaggeration (folio 20 wide eyes, folio 21 sweat drops).",
+        "limitation": "Sample limited to 6 early pages; intense dramatic scenes not directly inspected."
+      },
+      "artDensity": {
+        "state": "known",
+        "value": 2,
+        "confidence": 0.9,
+        "refs": [
+          "reader-pp.6-7",
+          "reader-p.14/folio 12",
+          "reader-p.22/folio 21"
+        ],
+        "observation": "Balanced density throughout; rich tonal wash and foliage textures on opening title splash (pp.6-7) counterbalanced by clean, readable line art and moderate architectural/furniture details in conversational panels (folios 12-13, 20-21).",
+        "limitation": "Sample limited to 6 pages across 3 spreads."
+      },
+      "visualSoftness": {
+        "state": "known",
+        "value": 3,
+        "confidence": 0.85,
+        "refs": [
+          "reader-pp.6-7",
+          "reader-p.14/folio 12",
+          "reader-p.22/folio 20"
+        ],
+        "observation": "Gentle, rounded line contours with smooth curves on hair and facial silhouettes, complemented by soft watercolor-like grayscale washes and subtle screentone shading (pp.6-7 outdoor wash, folio 20 soft bed tones).",
+        "limitation": "Sample limited to 6 pages across 3 spreads."
+      },
+      "motionImpact": {
+        "state": "unknown",
+        "value": null,
+        "confidence": null,
+        "refs": [],
+        "observation": "No continuous action sequence exists in any provided consecutive page pair (scenes are strictly static outdoor standing, seated dining conversation, and transit travel).",
+        "limitation": "Provided sample pages are entirely conversational slice-of-life scenes without dynamic action sequences."
+      }
+    }
+  },
+  {
+    "workId": "work-c4abbc1b44fa5706bce3",
+    "title": "風光る",
+    "pixelAccess": true,
+    "readablePageCount": 6,
+    "contexts": [
+      "Mibu Roshigumi lodging entrance and outdoor courtyard sparring evaluation (reader pp. 6-7 / folios 4-5)",
+      "Courtyard sparring duel with Todō Heisuke and Okita Soji (reader pp. 14-15 / folios 12-13)",
+      "Domestic courtyard practice flashback and tragic family sword vow (reader pp. 22-23 / folios 20-21)"
+    ],
+    "axes": {
+      "artRealism": {
+        "state": "known",
+        "value": 2,
+        "confidence": 0.9,
+        "refs": [
+          "reader-p.6/folio 5",
+          "reader-p.14/folio 12",
+          "reader-p.22/folio 20"
+        ],
+        "observation": "Standard manga stylization featuring expressive eyes and comedic deformations (folio 12 flustered Todō, folio 20 smiling brother) combined with anatomically grounded bodies, authentic Bakumatsu period samurai garments, kendo bōgu armor, and traditional wooden architecture.",
+        "limitation": "Sample limited to 6 pages across 3 early spreads."
+      },
+      "artDensity": {
+        "state": "known",
+        "value": 2,
+        "confidence": 0.9,
+        "refs": [
+          "reader-p.6/folio 4",
+          "reader-p.14/folio 12",
+          "reader-p.22/folio 20"
+        ],
+        "observation": "Balanced graphic density featuring detailed historical elements (tile roofs, wooden lattices, armor textures, straw makiwara target) balanced by clean character inking and open panel compositions.",
+        "limitation": "Sample limited to 6 pages across 3 spreads."
+      },
+      "visualSoftness": {
+        "state": "known",
+        "value": 3,
+        "confidence": 0.85,
+        "refs": [
+          "reader-p.6/folio 5",
+          "reader-p.15/folio 13",
+          "reader-p.23/folio 21"
+        ],
+        "observation": "Polished, smooth curved linework on hair and faces, accompanied by soft screentone shading and gradient tone effects (folio 5 Okita, folio 13 Sei, folio 21 dramatic sword grip), devoid of harsh angular gekiga cross-hatching.",
+        "limitation": "Sample limited to 6 pages across 3 spreads."
+      },
+      "motionImpact": {
+        "state": "known",
+        "value": 2,
+        "confidence": 0.85,
+        "refs": [
+          "reader-p.14/folio 12 panel 2 to reader-p.15/folio 13 panel 1"
+        ],
+        "observation": "Continuous sparring action sequence across consecutive pair pp.14-15 (printed folios 12-13) from folio 12 panel 2 (Sei rapid shinai attack) through folio 12 panel 4 (Todō lunging thrust with full-panel horizontal speed lines) to folio 13 panel 1 (Sei throat-stop counter), demonstrating standard dynamic speed lines and readable martial arts choreography (value 2).",
+        "limitation": "Observed continuous sequence is a practice sparring match rather than lethal combat."
+      }
+    }
+  },
+  {
+    "workId": "work-d7e64b0b5479ca943edd",
+    "title": "深夜食堂",
+    "pixelAccess": true,
+    "readablePageCount": 5,
+    "contexts": [
+      "Shinya Shokudo diner exterior & night street introduction (color reader p.7 / printed p.1)",
+      "Diner counter dialogue with Ryu/Kosuzu and TV news broadcast (reader pp. 14-15 / printed pp.8-9)",
+      "Diner counter curry episode with Erika and Jin-san (reader pp. 22-23 / printed pp.6-7)"
+    ],
+    "axes": {
+      "artRealism": {
+        "state": "unknown",
+        "value": null,
+        "confidence": null,
+        "refs": [],
+        "observation": "Sample fails the mandatory threshold of 6 readable pages (only 5 readable pages present: 1 on pages-6-7, 2 on pages-14-15, 2 on pages-22-23; the right side of pages-6-7 is an unrendered solid black void).",
+        "limitation": "Insufficient readable page sample (5 < 6); axis closed as unknown per audit rules."
+      },
+      "artDensity": {
+        "state": "unknown",
+        "value": null,
+        "confidence": null,
+        "refs": [],
+        "observation": "Sample fails the mandatory threshold of 6 readable pages due to the unrendered solid black right half on pages-6-7.",
+        "limitation": "Insufficient readable page sample (5 < 6); axis closed as unknown per audit rules."
+      },
+      "visualSoftness": {
+        "state": "unknown",
+        "value": null,
+        "confidence": null,
+        "refs": [],
+        "observation": "Sample fails the mandatory threshold of 6 readable pages due to the unrendered solid black right half on pages-6-7.",
+        "limitation": "Insufficient readable page sample (5 < 6); axis closed as unknown per audit rules."
+      },
+      "motionImpact": {
+        "state": "unknown",
+        "value": null,
+        "confidence": null,
+        "refs": [],
+        "observation": "Sample fails the mandatory threshold of 6 readable pages and contains no continuous action sequence across any consecutive pair.",
+        "limitation": "Insufficient readable page sample (5 < 6) and absence of continuous action sequence."
+      }
+    }
+  }
+]

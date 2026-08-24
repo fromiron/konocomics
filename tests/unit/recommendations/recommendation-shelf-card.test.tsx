@@ -18,6 +18,7 @@ vi.mock("@tanstack/react-router", () => ({
 }));
 
 vi.mock("@/components/cover/CoverImage", () => ({
+  coverSourceForSize: (coverUrl: string) => coverUrl,
   CoverImage: ({ className, title }: { className?: string; title: string }) => (
     <span aria-label={title} className={className} role="img" />
   ),

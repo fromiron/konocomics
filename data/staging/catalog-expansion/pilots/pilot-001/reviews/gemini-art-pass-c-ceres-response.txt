@@ -1,0 +1,9 @@
+conversationId=f687f513-8003-4367-a0fd-de5f73582452
+model=gemini-3.7-flash-high
+resolvedLabel=Gemini 3.7 Flash (High)
+effort=high
+pixelAccess=actual-local-png
+completionStatus=SUCCESS
+candidateSha256=aaf4f4a4845ec105b8218f0f9e8358a2ae95c5823519e68e1752acada6e22529
+
+{"candidateSha256":"aaf4f4a4845ec105b8218f0f9e8358a2ae95c5823519e68e1752acada6e22529","exactModel":"gemini-3.7-flash-high","resolvedLabel":"Gemini 3.7 Flash (High)","effort":"high","completionStatus":"completed","pixelFiles":["output/playwright/pilot-art/ecomi/work-76c038b398f4b28b7748-pages-6-7.png","output/playwright/pilot-art/ecomi/work-76c038b398f4b28b7748-pages-14-15.png","output/playwright/pilot-art/ecomi/work-76c038b398f4b28b7748-pages-22-23.png"],"verdict":"REJECT","decisions":[{"work":"妖しのセレス","axis":"motionImpact","passCState":"known","passCValue":3,"decision":"REJECT","correctedState":"unknown","correctedValue":null,"refs":["output/playwright/pilot-art/ecomi/work-76c038b398f4b28b7748-pages-14-15.png"],"reason":"Spread 14-15 depicts Aya slipping over the pedestrian bridge railing while holding a handbag, followed by a mid-air plunge with downward speed lines and a psychological shock/awakening sequence containing celestial maiden memory shards overlaying her face. The sequence does not depict a physical object shattering, physical impact, landing, or rescue endpoint (the rescue occurs off-panel before page 22). Because a complete contiguous start-to-end action sequence is not contained within the spread, the motion gate is not satisfied, requiring unknown rather than known 3."}],"issues":[]}

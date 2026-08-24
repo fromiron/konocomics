@@ -1,0 +1,11 @@
+position,workId,canonicalTitle,narrativeKnown,toneKnown,artKnown,themeCount,narrativeNeeded,toneNeeded,artNeeded,themeNeeded,searchRoute,status,hardBlocker
+31,work-a7413b6e35e0d316a538,となりの怪物くん,1,5,3,1,3,0,0,0,"official entry preview or per-volume editorial for three recurring Narrative mechanisms without recasting relationship recognition as progression",evidence-recovery,false
+32,work-a7e0062c7153978fc6fe,失恋ショコラティエ,2,5,3,2,2,0,0,0,"official entry preview or scoped criticism for two recurring Narrative mechanisms beyond romantic maneuvering",evidence-recovery,false
+33,work-a960372ed5efa4031896,シルバーマウンテン,3,1,3,4,1,4,0,0,"official entry preview or per-volume editorial for one recurring Narrative mechanism and four sustained Tone observations",evidence-recovery,false
+34,work-aa6d796e2e04a55b94b1,惑星のさみだれ,3,3,0,2,1,2,2,0,"official entry preview or editorial for one recurring Narrative mechanism and two Tone observations plus a browser-rendered official six-page two-context Art sample",evidence-recovery,false
+35,work-ae0ac8a5acfc5fbb7dd6,終末のワルキューレ,2,2,3,3,2,3,0,0,"official original-series entry preview or scoped criticism for two recurring Narrative mechanisms and three Tone observations without using the vertical remake",evidence-recovery,false
+36,work-b2be97620643b3342637,アオイホノオ,3,4,3,1,1,1,0,0,"official entry preview or scoped official criticism for one recurring Narrative mechanism and one Tone observation beyond comedy and creative stress",evidence-recovery,false
+37,work-b708734262fb9b67f948,ねこだらけ,2,4,0,0,2,1,2,1,"official complete-work material for two Narrative axes one Tone axis and one existing dictionary Theme plus an authorized six-page two-context Art sample",evidence-recovery,false
+38,work-bd42208a660912d9d95d,路地恋花,2,4,3,2,2,1,0,0,"official entry preview or per-episode editorial for two recurring Narrative mechanisms and one Tone observation",evidence-recovery,false
+39,work-c5e8c957903bf1832dc5,日々ロック,2,5,3,1,2,0,0,0,"official entry preview or per-volume editorial for two recurring Narrative mechanisms beyond gradual band growth and ordinary arc changes",evidence-recovery,false
+40,work-c805c5b70111f75d6fb5,海獣の子供,3,4,4,2,1,1,0,0,"official entry preview or scoped criticism for one recurring Narrative mechanism and one Tone observation without treating mystery or disappearance as proof",evidence-recovery,false

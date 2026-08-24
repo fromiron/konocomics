@@ -1,0 +1,183 @@
+session=2f59eed7-09f7-4f8b-9a9a-0dad3ea62060
+model=cursor-grok-4.6-high
+mode=plan
+fast=false
+status=SUCCESS_AFTER_RESUME
+candidateSha256=aaf4f4a4845ec105b8218f0f9e8358a2ae95c5823519e68e1752acada6e22529
+scope=chunk-02 current evidence follow-up
+artAccess=ART_ABSTAIN
+recording=structured capture; whitespace and repeated acceptance wording normalized
+
+판정원: cursor-grok-4.6-high non-fast
+HEAD: e03cfc9e45077386d1ec4d744a3bdee4b9176f1a
+Candidate SHA-256: aaf4f4a4845ec105b8218f0f9e8358a2ae95c5823519e68e1752acada6e22529
+범위: entry_1_3_volumes
+Art: 픽셀 접근 없음. 10작품 ART_ABSTAIN. Art 값을 판정·재사용하지 않음. 다수결·평균 없음.
+
+## work-2f39795212f5ad8db155 — あずみ
+verdict: VERIFIED
+text coverage: Narrative 4/6; Tone 5/7; PASS
+Genre: action; historical
+Theme: combat 2; politics 2
+Narrative 최종: progression=U; problemSolving=2; strategy=2; pacing=3; mysteryReveal=U; worldBuilding=2
+Tone 최종: characterArcWeight=2; relationshipStructure=2; comedy=U; darkness=4; mentalStress=4; romance=U; emotionalWarmth=1
+수용: 위 벡터 전부. darkness=4·mentalStress=4는 공식 1~3권 사건 요약의 강제 살해·동료 사망 반복으로 극단 4 직접 근거. characterArcWeight는 4가 아니라 2.
+수정: Pass A characterArcWeight unknown → 2.
+evidence: https://e-comi.shogakukan.co.jp/books/091835410000d0000000 ; `reviews/text-pass-bc-chunks-01-02.md` §14
+identity: 小山ゆう / 小学館 / 9784091835413. AZUMI 후속은 별도. OK
+safety: candidate safe. OK
+남은 conflict: 없음
+blocker: 아니오
+ART_ABSTAIN
+
+## work-1cf7a0bb5f55e0d69b27 — モンキーターン
+verdict: VERIFIED
+text coverage: Narrative 4/6; Tone 5/7; PASS
+Genre: sports
+Theme: sportsCompetition 2
+Narrative 최종: progression=4; problemSolving=U; strategy=U; pacing=2; mysteryReveal=0; worldBuilding=2
+Tone 최종: characterArcWeight=2; relationshipStructure=2; comedy=U; darkness=U; mentalStress=2; romance=1; emotionalWarmth=2
+수용: 공식 1~3권 순차 소개가 입학·훈련·평가·순위 보상을 명시하므로 progression=4·mysteryReveal=0은 누락 추론이 아님.
+수정: Pass A의 다수 unknown을 위 known으로 채움. problemSolving·strategy·comedy·darkness는 unknown 유지.
+evidence: https://e-comi.shogakukan.co.jp/books/091251610000d0000000 ; `reviews/text-pass-bc-chunks-01-02.md` §12
+identity: 河合克敏 / 小学館 / 9784091251619. OK
+safety: candidate safe. OK
+남은 conflict: 없음
+blocker: 아니오
+ART_ABSTAIN
+
+## work-440f93a4e60ef906685b — バラ色の明日
+verdict: VERIFIED
+text coverage: Narrative 5/6; Tone 5/7; PASS
+Genre: sliceOfLife; romance
+Theme: school 1 (anthology 한정 episode mechanic; centrality 2 아님)
+Narrative 최종: progression=0; problemSolving=0; strategy=0; pacing=U; mysteryReveal=0; worldBuilding=0
+Tone 최종: characterArcWeight=4; relationshipStructure=U; comedy=U; darkness=2; mentalStress=2; romance=4; emotionalWarmth=1
+수용: 1997 standard 1~3권 공식 item 소개(제1~8화)와 2009 재편집 1~3권 title/order mapping이 관계극 payoff를 빠짐없이 열거. 0은 synopsis 침묵이 아니라 2/4 anchor와의 대조.
+수정: Pass A relationshipStructure=4 → U. Theme 공란 → school=1. Pass A 나머지 Narrative unknown을 0/U로 종결.
+evidence: https://web.archive.org/web/20040820212024id_/http://books.shueisha.co.jp:80/CGI/search/syousai_put.cgi?isbn_cd=4-08-848709-5&mode=1 ; https://web.archive.org/web/20040820212024id_/http://books.shueisha.co.jp:80/CGI/search/syousai_put.cgi?isbn_cd=4-08-848760-5&mode=1 ; https://web.archive.org/web/20040820212024id_/http://books.shueisha.co.jp:80/CGI/search/syousai_put.cgi?isbn_cd=4-08-848850-4&mode=1 ; https://www.shueisha.co.jp/books/items/contents.html?jdcn=08782229848709315501 ; https://www.shueisha.co.jp/books/reader/main.php?cid=08782230848709315501 ; `reviews/text-coverage-followup-b-review.md` ; `reviews/theme-gap-pass-c.md` ; `reviews/theme-gap-pass-c-review.md`
+identity: いくえみ綾 / 集英社 / 9784088487090. 문고는 판본. standard↔re-edit 1~3권 mapping resolved. OK
+safety: candidate safe. OK
+남은 conflict: 없음. `text-coverage-followup-b.md`의 SOURCE_INFORMATION_UNAVAILABLE 후보는 기각. workplace Theme는 부여하지 않음.
+blocker: 아니오
+ART_ABSTAIN (`art-local-barairo-recheck.md`·`art-final-matrix.csv` 값을 재판정하지 않음)
+
+## work-303d0a9d67a606a817af — ギャラリーフェイク
+verdict: VERIFIED
+text coverage: Narrative 4/6; Tone 6/7; PASS
+Genre: mystery
+Theme: investigation 2; workplace 2
+Narrative 최종: progression=U; problemSolving=4; strategy=U; pacing=2; mysteryReveal=4; worldBuilding=3
+Tone 최종: characterArcWeight=1; relationshipStructure=U; comedy=1; darkness=2; mentalStress=1; romance=0; emotionalWarmth=2
+수용: 공식 1권 reader ART.1 완결(pp.6–27). 진품 공개가 주요 보상, 인간적 선택이 정서 payoff, 연애는 완결 표본의 positive absence.
+수정: Pass A relationshipStructure/Tone unknown. comedy=1, mentalStress=1, romance=0, emotionalWarmth=2, worldBuilding=3, characterArcWeight=1을 신규 종결. mysteryReveal 4는 완결 episode로 유지.
+evidence: https://e-comi.shogakukan.co.jp/books/091830210000d0000000 ; https://e-comi.shogakukan.co.jp/viewer/open?jdcn=091830210000d0000000 ; `reviews/text-coverage-followup-b.md` ; `reviews/text-coverage-followup-b-review.md`
+identity: 細野不二彦 / 小学館 / 9784091830210. OK. 미술 소재 ≠ Art Axis.
+safety: candidate safe. OK
+남은 conflict: 없음. honto/LOMICO는 범위 미확정으로 값에 미사용.
+blocker: 아니오
+ART_ABSTAIN
+
+## work-c4abbc1b44fa5706bce3 — 風光る
+verdict: VERIFIED
+text coverage: Narrative 5/6; Tone 5/7; PASS
+Genre: historical; romance
+Theme: combat 1; politics 1; revenge 1. historicalReconstruction 미부여 유지.
+Narrative 최종: progression=2; problemSolving=2; strategy=2; pacing=3; mysteryReveal=U; worldBuilding=3
+Tone 최종: characterArcWeight=4; relationshipStructure=2; comedy=U; darkness=2; mentalStress=3; romance=4; emotionalWarmth=U
+수용: 공식 진입 권의 입대·훈련·위장·신분 제약이 2/3 빈도를 직접 지지. romance=4·characterArcWeight=4는 세이·오키타 관계와 남장 identity가 핵심 보상.
+수정: Pass A Narrative unknown → 위 known. historicalReconstruction은 역사 Genre에서 파생하지 않음.
+evidence: https://e-comi.shogakukan.co.jp/books/091373510000d0000000 ; `reviews/text-pass-bc-chunks-01-02.md` §20
+identity: 渡辺多恵子 / 小学館 / 9784091373519. 동명 야구 만화와 미병합. OK
+safety: candidate safe. OK
+남은 conflict: 없음
+blocker: 아니오
+ART_ABSTAIN
+
+## work-76c038b398f4b28b7748 — 妖しのセレス
+verdict: VERIFIED
+text coverage: Narrative 4/6; Tone 5/7; PASS
+Genre: fantasy; mystery; romance
+Theme: survival 2
+Narrative 최종: progression=U; problemSolving=1; strategy=U; pacing=3; mysteryReveal=2; worldBuilding=2
+Tone 최종: characterArcWeight=2; relationshipStructure=2; comedy=U; darkness=3; mentalStress=3; romance=2; emotionalWarmth=U
+수용: 공식 1권 소개와 2~3권 상태 급변(살해 미수·포획·배신)이 pacing=3·survival=2·darkness/mentalStress=3을 지지. mystery·romance Genre는 혈통 비밀과 관계선이 진입 사건에 실제로 관여하므로 유지.
+수정: Pass A problemSolving unknown → 1. 나머지 Pass A known 유지.
+evidence: https://e-comi.shogakukan.co.jp/books/091363540000d0000000 ; `reviews/text-pass-bc-chunks-01-02.md` §18
+identity: 渡瀬悠宇 / 小学館 / 9784091363541. OK
+safety: candidate safe. OK
+남은 conflict: 없음
+blocker: 아니오
+ART_ABSTAIN
+
+## work-b4b21d2ebe5b8efc84ea — Dr.コトー診療所
+verdict: VERIFIED
+text coverage: Narrative 4/6; Tone 5/7; PASS
+Genre: sliceOfLife. medical Genre 창설 금지.
+Theme: workplace 2
+Narrative 최종: progression=U; problemSolving=4; strategy=U; pacing=2; mysteryReveal=2; worldBuilding=2
+Tone 최종: characterArcWeight=4; relationshipStructure=2; comedy=U; darkness=1; mentalStress=2; romance=U; emotionalWarmth=4
+수용: 제한 의료 환경의 진단·치료가 problemSolving=4. 신뢰 형성이 characterArcWeight=4·emotionalWarmth=4. 과거 책임 추적은 mysteryReveal=2. darkness=1은 죽음·비난이 있으나 비극 중심 2 미만.
+수정: Pass A pacing/mysteryReveal/worldBuilding/darkness unknown → 위 값.
+evidence: https://e-comi.shogakukan.co.jp/books/091525010000d0000000 ; `reviews/text-pass-bc-chunks-01-02.md` §19
+identity: 山田貴敏 / 小学館 / 9784091525017. OK
+safety: candidate safe. OK
+남은 conflict: 없음
+blocker: 아니오
+ART_ABSTAIN (`art-final-matrix.csv` edition-gate-failed 행을 재판정하지 않음)
+
+## work-1fc61ddbeb429b4a2c15 — エマ
+verdict: VERIFIED
+text coverage: Narrative 4/6; Tone 5/7; PASS
+Genre: historical; romance
+Theme: workplace 2; historicalReconstruction 2
+Narrative 최종: progression=1; problemSolving=0; strategy=U; pacing=2; mysteryReveal=U; worldBuilding=4
+Tone 최종: characterArcWeight=4; relationshipStructure=2; comedy=U; darkness=1; mentalStress=3; romance=4; emotionalWarmth=U
+수용: 계급 규칙이 사건을 구동(worldBuilding=4). 이별·이동은 감정/직접 결단(problemSolving=0). 3권 가사 노동 적응은 숙련 보상 흔적(progression=1)이지 characterArc 이중 계산이 아님. workplace=2는 메이드 노동이 반복 무대.
+수정: Pass A progression unknown → 1. problemSolving unknown → 0. pacing unknown → 2. darkness/mentalStress unknown → 1/3.
+evidence: https://www.kadokawa.co.jp/product/301407000933/ ; https://www.kadokawa.co.jp/product/301502000864/ ; https://www.kadokawa.co.jp/product/301502000865/ ; https://bookwalker.jp/series/11626/ ; https://yenpress.com/titles/9781975356583-emma-vol-3 ; https://j-mediaarts-festival.bunka.go.jp/award/single/emma/index.html ; `reviews/text-coverage-followup-b-review.md`
+identity: 森薫 / KADOKAWA / 9784047298804 = E01. OK
+safety: candidate safe. OK
+남은 conflict: 없음. BOOK WALKER trial 내부 이미지 미로딩은 delivery 실패일 뿐 공식 권 소개가 있다. `text-coverage-followup-b.md` SOURCE_INFORMATION_UNAVAILABLE 후보는 기각.
+blocker: 아니오
+ART_ABSTAIN
+
+## work-0bec5d8d9474a2197312 — 放浪息子
+verdict: VERIFIED
+text coverage: Narrative 4/6; Tone 5/7; PASS
+Genre: sliceOfLife
+Theme: school 2
+Narrative 최종: progression=U; problemSolving=0; strategy=0; pacing=2; mysteryReveal=0; worldBuilding=U
+Tone 최종: characterArcWeight=4; relationshipStructure=2; comedy=U; darkness=U; mentalStress=3; romance=1; emotionalWarmth=2
+수용: 공식 1~3권 trial 서사 36쪽의 반복 resolution은 대화·정서 결단(problemSolving=0, strategy=0). 보상은 자기표현·관계 조정(mysteryReveal=0은 세 권 실제 표본). emotionalWarmth=2는 지지와 당혹의 혼합. identity 성장을 progression으로 세지 않음.
+수정: Pass A Narrative/Tone 다수 unknown → 위 0/2/3/1.
+evidence: https://store.kadokawa.co.jp/shop/g/g200700002446/ ; https://bookwalker.jp/series/162/ ; https://viewer-trial.bookwalker.jp/trial-page/03/view?cid=4bd52269-b4b6-43d8-a916-9cf8c2437a09 ; https://viewer-trial.bookwalker.jp/trial-page/03/view?cid=446e1436-912e-4738-bba9-5916bcd3faff ; https://viewer-trial.bookwalker.jp/trial-page/03/view?cid=028c9d22-530c-4728-b4d4-f45038f05b0b ; https://j-mediaarts-festival.bunka.go.jp/award/single/hourou-musuko/index.html ; `reviews/text-coverage-followup-a.md` ; `reviews/text-coverage-followup-a-review.md`
+identity: 志村貴子 / エンターブレイン / 9784757715226. OK
+safety: candidate safe. OK
+남은 conflict: 없음
+blocker: 아니오
+ART_ABSTAIN
+
+## work-464322afcd10013437b9 — 大奥
+verdict: VERIFIED
+text coverage: Narrative 4/6; Tone 5/7; PASS
+Genre: historical; scienceFiction
+Theme: politics 2; historicalReconstruction 2
+Narrative 최종: progression=U; problemSolving=U; strategy=2; pacing=3; mysteryReveal=2; worldBuilding=4
+Tone 최종: characterArcWeight=4; relationshipStructure=4; comedy=U; darkness=2; mentalStress=3; romance=3; emotionalWarmth=U
+수용: 공식 1권·MELODY·진입 권 세대/제도 이동이 worldBuilding=4·politics=2·relationshipStructure=4를 지지. pacing=3은 주인공·세대 전환. romance=3은 이에미쓰/아리코토가 중심이되 정치와 공존.
+수정: Pass A strategy=2 유지. pacing/mysteryReveal/mentalStress/romance unknown → 3/2/3/3.
+evidence: https://www.hakusensha.co.jp/comicslist/40895/ ; https://melody-web.com/sakuhin/?id=3 ; https://j-mediaarts-festival.bunka.go.jp/award/single/ohoku/index.html ; `reviews/text-pass-bc-chunks-01-02.md` §17
+identity: よしながふみ / 白泉社 / 9784592143017. 복수 선정 원장은 duplicate. OK
+safety: candidate safe. OK
+남은 conflict: 없음
+blocker: 아니오
+ART_ABSTAIN
+
+## TOTALS
+verified: 10
+needs-adjudication: 0
+insufficient-evidence: 0
+text-pass: 10
+hard-blocker 후보: 0
+ART_ABSTAIN: 10

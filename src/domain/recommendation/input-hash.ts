@@ -1,5 +1,6 @@
 import { AXIS_IDS, THEME_TAGS } from "../catalog/constants";
 import type { AxisId, ThemeTag } from "../catalog/types";
+import { recommendationProfileRecords } from "../profile/catalog-profile";
 import type {
   AdjustmentPreference,
   NegativeReasonId,
@@ -71,7 +72,7 @@ export function createRecommendationInputProjection(
   input: RecommendationInputHashSource,
 ): RecommendationInputProjectionV1 {
   const workById = new Map(input.catalog.works.map((work) => [work.id, work]));
-  const currentRecords = input.records.filter((record) => workById.has(record.workId));
+  const currentRecords = recommendationProfileRecords(input.records, input.catalog.works);
   const anchors = currentRecords
     .filter(isPositiveAnchor)
     .map((record) => ({ workId: record.workId, reaction: record.reaction }))

@@ -1,0 +1,11 @@
+position,workId,canonicalTitle,narrativeKnown,toneKnown,narrativeNeeded,toneNeeded,searchRoute,status,hardBlocker
+11,work-29d4300ad9d3358fb67a,外天楼,4,2,0,3,"official complete-volume preview or editorial; then multiple independent scoped reviews for recurring character or tone observations",evidence-search,false
+12,work-3dfaf6231e21133620c6,忍者と極道,3,5,1,0,"official volumes 1-3 preview or editorial for one repeated Narrative method or progression observation",evidence-search,false
+13,work-3e725951eb9c49771087,嘘解きレトリック,4,3,0,2,"official volumes 1-3 preview; then independent scoped reviews for recurring warmth comedy stress or romance observations",evidence-search,false
+14,work-40b8c35b1d8c9a90144c,orange,0,0,4,5,"official original-edition contents bridge or original volumes 1-3 preview; only then scoped independent reviews",evidence-search,false
+15,work-4c784fc78dfd9b139c3f,正反対な君と僕,1,5,3,0,"official entry previews and detailed editor or independent reviews for directly observed Narrative structures or sustained absence",evidence-search,false
+16,work-518d7ed42dd9253679c3,墨攻,5,3,0,2,"official entry preview; then independent scoped reviews for recurring subjective tone distinct from siege events",evidence-search,false
+17,work-53e54c95f637b66c4fb2,がんばれ元気,3,5,1,0,"official entry episode pages or scoped reviews for one repeated Narrative method such as bout analysis or planning",evidence-search,false
+18,work-5915d6d7601377fcc75f,赤髪の白雪姫,3,6,1,0,"official entry preview or editorial for one repeated Narrative solution or reveal structure",evidence-search,false
+19,work-5b4dc4e6e966436b2990,人形芝居,3,3,1,2,"official entry story descriptions or previews; then independent scoped reviews for repeated Narrative and tone observations",evidence-search,false
+20,work-5b9a3ec60ac5fc90f444,魔法使いの嫁,0,0,4,5,"official unchanged-content bridge plus mapped volumes 1-3 descriptions or previews; then multiple independent entry-scoped reviews",evidence-search,false

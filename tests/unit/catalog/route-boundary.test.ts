@@ -4,7 +4,11 @@ import { resolve } from "node:path";
 import { describe, expect, it } from "vitest";
 
 import catalogJson from "@/data/generated/catalog-v1.json";
+import catalogIdentityJson from "@/data/generated/catalog-identity-v1.json";
+import landingJson from "@/data/generated/landing-v1.json";
 import { parseExternalWorkId } from "@/domain/catalog/external-work";
+import { landingProjectionSchema } from "@/features/landing/landing-types";
+import { parseCurrentCatalogIdentity } from "@/infrastructure/db";
 import {
   externalWorkSearchSchema,
   landingSearchSchema,
@@ -129,10 +133,12 @@ const contracts = [
     },
   },
   {
-    name: "prerenders the seven fixed shells and all 150 bundled work paths",
+    name: "prerenders the seven fixed shells and every bundled work path",
     verify: () => {
-      expect(catalogJson.works).toHaveLength(150);
-      expect(new Set(catalogJson.works.map((work) => work.id))).toHaveLength(150);
+      expect(catalogJson.works.length).toBeGreaterThanOrEqual(1_000);
+      expect(new Set(catalogJson.works.map((work) => work.id))).toHaveLength(
+        catalogJson.works.length,
+      );
 
       const expectedPaths = [
         ...fixedPrerenderPaths,
@@ -140,6 +146,33 @@ const contracts = [
       ];
       expect(prerenderPaths).toHaveLength(expectedPaths.length);
       expect(new Set(prerenderPaths)).toEqual(new Set(expectedPaths));
+    },
+  },
+  {
+    name: "keeps common routes on small generated projections instead of the full Catalog",
+    verify: () => {
+      for (const path of [
+        "src/routes/__root.tsx",
+        "src/routes/index.tsx",
+        "src/routes/settings.tsx",
+        "src/components/nav/app-shell.tsx",
+        "src/features/landing/landing-flow.tsx",
+      ]) {
+        expect(source(path)).not.toContain("@/data/generated/catalog-v1.json");
+      }
+
+      const identity = parseCurrentCatalogIdentity(catalogIdentityJson);
+      expect(identity.catalogVersion).toBe(catalogJson.catalogVersion);
+      expect(identity.workIds).toEqual(catalogJson.works.map((work) => work.id));
+      expect(identity.profileWorkIds).toEqual(
+        catalogJson.works
+          .filter((work) => work.eligibility.recommendationEligible)
+          .map((work) => work.id),
+      );
+      expect(landingProjectionSchema.parse(landingJson).catalogVersion).toBe(
+        catalogJson.catalogVersion,
+      );
+      expect(source("src/routes/recommendations.tsx")).toContain("<StaticAssetCatalogProvider>");
     },
   },
 ] as const;

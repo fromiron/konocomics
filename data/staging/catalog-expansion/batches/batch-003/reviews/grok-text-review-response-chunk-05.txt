@@ -1,0 +1,85 @@
+# Batch 003 chunk 05 Pass B — independent non-Art review
+
+- model: `cursor-grok-4.6-high` / Cursor Grok 4.6 High
+- fast status: non-fast
+- completion: normal; no timeout, rate-limit, or degraded output
+- all nine request-bound files opened
+- reviewedByHuman: false
+- Art: `ART_ABSTAIN`
+- repository edits: none
+
+## Independent 13-axis matrix
+
+Columns are progression, problemSolving, strategy, pacing, mysteryReveal,
+worldBuilding, characterArcWeight, relationshipStructure, comedy, darkness,
+mentalStress, romance, emotionalWarmth.
+
+```text
+work-c9e32218e26c6c6292f9,ファントムバスターズ,U,U,U,2,U,2,2,2,U,U,U,U,U
+work-d655ea1cfb913f33cc9a,湯神くんには友達がいない,U,U,U,2,U,0,2,2,U,U,U,2,U
+work-d735187a8421d0d33399,姉の結婚,U,U,U,2,U,0,4,2,U,U,U,4,U
+work-da98a01b4d345bd9c415,放課後のカリスマ,U,U,U,2,2,3,2,2,U,2,2,U,U
+work-df29832c2155775e0e7c,となりの関くん,0,2,U,1,0,0,U,2,2,0,U,U,U
+work-ea41ee65245a0dbdc4a8,男子高校生の日常,0,U,0,2,0,0,0,3,4,0,0,U,U
+work-f1d22b68efa7fbd501ee,僕の小規模な生活,2,U,U,2,0,0,2,2,U,U,U,2,U
+work-f59be454d59478f33914,ハクメイとミコチ,U,U,U,2,U,3,2,2,U,U,U,U,U
+work-f6cddc6b36f20bd0cc74,空挺ドラゴンズ,U,U,U,2,U,3,2,2,U,2,2,U,U
+work-f6fa4c2d3a7e1dc5257b,ワカコ酒,0,0,0,2,0,0,0,0,U,0,0,0,2
+```
+
+## Genre rows
+
+```text
+work-c9e32218e26c6c6292f9 fantasy
+work-d655ea1cfb913f33cc9a sliceOfLife
+work-d735187a8421d0d33399 romance
+work-da98a01b4d345bd9c415 scienceFiction;mystery
+work-df29832c2155775e0e7c comedy;sliceOfLife
+work-ea41ee65245a0dbdc4a8 comedy;sliceOfLife
+work-f1d22b68efa7fbd501ee sliceOfLife
+work-f59be454d59478f33914 fantasy;sliceOfLife
+work-f6cddc6b36f20bd0cc74 fantasy
+work-f6fa4c2d3a7e1dc5257b sliceOfLife
+```
+
+## Theme rows
+
+```text
+work-c9e32218e26c6c6292f9 school:2
+work-d655ea1cfb913f33cc9a school:2,sportsCompetition:1
+work-d735187a8421d0d33399 workplace:1
+work-da98a01b4d345bd9c415 school:2
+work-df29832c2155775e0e7c school:2
+work-ea41ee65245a0dbdc4a8 school:2
+work-f1d22b68efa7fbd501ee workplace:2
+work-f59be454d59478f33914 adventure:1,exploration:1,workplace:1
+work-f6cddc6b36f20bd0cc74 adventure:2,workplace:2,combat:1,cooking:1,exploration:1,survival:1
+work-f6fa4c2d3a7e1dc5257b cooking:2
+```
+
+## Outcomes
+
+| position | workId | outcome |
+| ---: | --- | --- |
+| 41 | `work-c9e32218e26c6c6292f9` | verified |
+| 42 | `work-d655ea1cfb913f33cc9a` | needs-adjudication |
+| 43 | `work-d735187a8421d0d33399` | needs-adjudication |
+| 44 | `work-da98a01b4d345bd9c415` | needs-adjudication |
+| 45 | `work-df29832c2155775e0e7c` | needs-adjudication |
+| 46 | `work-ea41ee65245a0dbdc4a8` | verified |
+| 47 | `work-f1d22b68efa7fbd501ee` | verified |
+| 48 | `work-f59be454d59478f33914` | verified |
+| 49 | `work-f6cddc6b36f20bd0cc74` | verified |
+| 50 | `work-f6fa4c2d3a7e1dc5257b` | needs-adjudication |
+
+Identity, Japan-manga scope, representative ISBN, and non-adult safety passed
+for positions 41–49. Position 50's original-publisher ISBN to current-rights-holder
+bridge was sent to adjudication. Position 44's official killing and hanging-event
+language was sent to safety adjudication without claiming adult classification.
+
+WORK_COUNT=10
+AXIS_COUNT_PER_WORK=13
+IDENTITY_ROWS=10
+SAFETY_ROWS=10
+ISBN_ROWS=10
+ART_ABSTAIN

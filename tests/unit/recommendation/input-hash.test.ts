@@ -17,9 +17,19 @@ import {
 } from "../../helpers/recommendation";
 
 function inputFixture(): RecommendationInput {
-  const works = ["anchor-z", "negative-b", "dropped-a", "excluded-c", "hidden-e", "planned-d"].map(
-    (id) => createTestWork({ id }),
-  );
+  const works = [
+    ...["anchor-z", "negative-b", "dropped-a", "excluded-c", "hidden-e", "planned-d"].map((id) =>
+      createTestWork({ id }),
+    ),
+    createTestWork({
+      id: "library-only",
+      eligibility: {
+        onboardingEligible: false,
+        recommendationEligible: false,
+        libraryOnly: true,
+      },
+    }),
+  ];
   const catalog: CatalogV1 = {
     schemaVersion: 1,
     catalogVersion: "v1-input-hash",
@@ -65,6 +75,11 @@ function inputFixture(): RecommendationInput {
         workId: "catalog-out",
         reaction: "favorite",
         negativeReasons: ["tooStressful"],
+      }),
+      createTestRecord({
+        workId: "library-only",
+        reaction: "favorite",
+        negativeReasons: ["tooDark"],
       }),
     ],
     adjustments: createTestAdjustments({

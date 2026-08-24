@@ -12,7 +12,11 @@ afterEach(cleanup);
 
 describe("CatalogProvider", () => {
   it("exposes only the supplied current Catalog identity", () => {
-    const identity = { catalogVersion: "v1-test", workIds: ["work-one", "work-two"] } as const;
+    const identity = {
+      catalogVersion: "v1-test",
+      workIds: ["work-one", "work-two"],
+      profileWorkIds: ["work-one"],
+    } as const;
 
     function IdentityProbe() {
       const current = useCatalogIdentity();
@@ -30,7 +34,9 @@ describe("CatalogProvider", () => {
 
   it("renders only the fatal error when catalog loading fails", () => {
     render(
-      <CatalogIdentityProvider identity={{ catalogVersion: "v1-test", workIds: [] }}>
+      <CatalogIdentityProvider
+        identity={{ catalogVersion: "v1-test", workIds: [], profileWorkIds: [] }}
+      >
         <BundledCatalogProvider>
           <p>rest of app</p>
         </BundledCatalogProvider>

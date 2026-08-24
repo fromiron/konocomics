@@ -1,0 +1,13 @@
+{
+  "schemaVersion": 1,
+  "sourceName": "Rakuten Books Book Search API 2017-04-04",
+  "documentationUrl": "https://webservice.rakuten.co.jp/documentation/books-book-search",
+  "endpoint": "https://openapi.rakuten.co.jp/services/api/BooksBook/Search/20170404",
+  "booksGenreId": "001001",
+  "bookSize": 9,
+  "selectionPolicy": "konomanga-all;tsugimanga-comics-all;shogakukan-all;bookseller-all;mangataisho-finalists-all-and-first-selection-2008-2015",
+  "retrievedThrough": "2026-08-22",
+  "queryCount": 2114,
+  "sourceItemCount": 2965,
+  "sha256": "23bb2f90b495c9be6de78736bb959302df8a18cd97c3f003898076c34dd8fc6a"
+}

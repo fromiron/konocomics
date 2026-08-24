@@ -1,14 +1,14 @@
 "use client";
 
 import { useNavigate, useRouterState } from "@tanstack/react-router";
-import { lazy, type ReactNode, Suspense, useEffect, useMemo } from "react";
+import { type ReactNode, useEffect, useMemo } from "react";
 import { preload } from "react-dom";
 
 import { hasCatalogBackedProfileById } from "@/domain/profile/catalog-profile";
 import { useCatalogIdentity } from "@/features/catalog/catalog-provider";
 import { usePersistence } from "@/infrastructure/db";
 import { catalogAssetUrl } from "@/lib/catalog-asset";
-import { catalogStrings, navigationStrings } from "@/lib/strings";
+import { navigationStrings } from "@/lib/strings";
 import { cn } from "@/lib/utils";
 
 import { BrandWordmark } from "./brand-wordmark";
@@ -24,12 +24,6 @@ type AppShellContentProps = Readonly<{
   showDesktopNavigation: boolean;
   showMobileNavigation: boolean;
 }>;
-
-const RecommendationCatalogBoundary = lazy(() =>
-  import("@/features/catalog/static-asset-catalog-provider").then((module) => ({
-    default: module.StaticAssetCatalogProvider,
-  })),
-);
 
 function isImmersivePath(pathname: string) {
   return pathname === "/" || pathname === "/onboarding" || pathname.startsWith("/onboarding/");
@@ -74,17 +68,6 @@ function getRouteLabel(pathname: string) {
   }
 
   return navigationStrings.routeNames.home;
-}
-
-function RecommendationCatalogLoading() {
-  return (
-    <main
-      className="recommendations-page recommendations-page--loading mx-auto grid min-h-dvh w-full max-w-[var(--layout-width-media)] place-items-center px-[var(--layout-page-padding)] py-[var(--layout-page-block-start)] text-text-muted"
-      data-catalog-state="loading"
-    >
-      <p aria-live="polite">{catalogStrings.loading}</p>
-    </main>
-  );
 }
 
 function AppShellContent({
@@ -134,8 +117,8 @@ export function AppShell({ children }: AppShellProps) {
   const catalogIdentity = useCatalogIdentity();
   const { userWorks } = usePersistence();
   const hasProfile = useMemo(
-    () => hasCatalogBackedProfileById(userWorks, catalogIdentity.workIds),
-    [catalogIdentity.workIds, userWorks],
+    () => hasCatalogBackedProfileById(userWorks, catalogIdentity.profileWorkIds),
+    [catalogIdentity.profileWorkIds, userWorks],
   );
   const guarded = requiresProfile(pathname);
   const recommendationCatalog = requiresRecommendationCatalog(pathname);
@@ -169,17 +152,13 @@ export function AppShell({ children }: AppShellProps) {
     </AppShellContent>
   );
 
-  if (!recommendationCatalog) return shell;
+  if (recommendationCatalog) {
+    preload(catalogAssetUrl(catalogIdentity.catalogVersion), {
+      as: "fetch",
+      crossOrigin: "anonymous",
+      fetchPriority: "high",
+    });
+  }
 
-  preload(catalogAssetUrl(catalogIdentity.catalogVersion), {
-    as: "fetch",
-    crossOrigin: "anonymous",
-    fetchPriority: "high",
-  });
-
-  return (
-    <Suspense fallback={<RecommendationCatalogLoading />}>
-      <RecommendationCatalogBoundary>{shell}</RecommendationCatalogBoundary>
-    </Suspense>
-  );
+  return shell;
 }

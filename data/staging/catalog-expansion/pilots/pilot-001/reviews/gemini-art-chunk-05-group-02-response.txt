@@ -1,0 +1,187 @@
+conversationId=16f3f1d7-c0b4-4c5c-8c2c-18ed2a9eb504
+model=gemini-3.7-flash-high
+resolvedLabel=Gemini 3.7 Flash (High)
+effort=high
+pixelAccess=actual-local-png
+completionStatus=SUCCESS
+candidateSha256=aaf4f4a4845ec105b8218f0f9e8358a2ae95c5823519e68e1752acada6e22529
+
+{
+  "candidateSha256": "aaf4f4a4845ec105b8218f0f9e8358a2ae95c5823519e68e1752acada6e22529",
+  "exactModel": "gemini-3.7-flash-high",
+  "resolvedLabel": "Gemini 3.7 Flash (High)",
+  "effort": "high",
+  "completionStatus": "SUCCESS",
+  "pixelFiles": [
+    {
+      "workId": "work-081e75d8bbc53ac64713",
+      "path": "output/playwright/pilot-art/chunk-05/diamond/page-area-15.png",
+      "sha256": "fe227b0a8a8f9a78f7a45deddd703deb655385815dcf6fc006b3086765880ce9"
+    },
+    {
+      "workId": "work-081e75d8bbc53ac64713",
+      "path": "output/playwright/pilot-art/chunk-05/diamond/page-area-16.png",
+      "sha256": "19b2aa56f349dc6f66c672cc70f7641a16a9ee45d15426b3f6ab35a871f26907"
+    },
+    {
+      "workId": "work-081e75d8bbc53ac64713",
+      "path": "output/playwright/pilot-art/chunk-05/diamond/page-area-30.png",
+      "sha256": "60a3fa5bd579489d213a17e685c0f0079a5a3aa9246b672899e7e1d41ed90867"
+    },
+    {
+      "workId": "work-081e75d8bbc53ac64713",
+      "path": "output/playwright/pilot-art/chunk-05/diamond/page-area-31.png",
+      "sha256": "99ee856d770fc337d28b634d8c0b8bcb67ee6a587dc92a2b8575bd549d442a95"
+    },
+    {
+      "workId": "work-081e75d8bbc53ac64713",
+      "path": "output/playwright/pilot-art/chunk-05/diamond/page-area-45.png",
+      "sha256": "a673f57874d94696c25d929732f966cbf0f73829ee03283ce0181769a75d5932"
+    },
+    {
+      "workId": "work-081e75d8bbc53ac64713",
+      "path": "output/playwright/pilot-art/chunk-05/diamond/page-area-46.png",
+      "sha256": "0a4e7a39f27b3b7e4cb86592c55270d7a384293794873e91e1d577173b45a4c1"
+    },
+    {
+      "workId": "work-7730845c9cf7ba0cccc8",
+      "path": "output/playwright/pilot-art/chunk-05/kimi-uchu/page-area-16-full.png",
+      "sha256": "08017a1447d9b374399e34c9ca3403dbc22ef41e75cb4e4ed5c7bccf854be94b"
+    },
+    {
+      "workId": "work-7730845c9cf7ba0cccc8",
+      "path": "output/playwright/pilot-art/chunk-05/kimi-uchu/page-area-17-full.png",
+      "sha256": "aa09e760fd6604797e030b44cc5148f4f1b0e8766e6124a3ca616bc7563e0c9c"
+    },
+    {
+      "workId": "work-7730845c9cf7ba0cccc8",
+      "path": "output/playwright/pilot-art/chunk-05/kimi-uchu/page-area-30-full.png",
+      "sha256": "742fc262c6e2d610e26137bf61ec1957e8e2866681388af8f9421d879d9fa95d"
+    },
+    {
+      "workId": "work-7730845c9cf7ba0cccc8",
+      "path": "output/playwright/pilot-art/chunk-05/kimi-uchu/page-area-31-full.png",
+      "sha256": "b316d65cdee21e76afdb307f7fbc7a361e6bb2007367a0c5c11ec56df0ec4788"
+    },
+    {
+      "workId": "work-7730845c9cf7ba0cccc8",
+      "path": "output/playwright/pilot-art/chunk-05/kimi-uchu/page-area-46-full.png",
+      "sha256": "bcacb66e5ddbd3aca0b65ee920a905c04fc8b7045bd7f2ed99d9d8ed37b79918"
+    },
+    {
+      "workId": "work-7730845c9cf7ba0cccc8",
+      "path": "output/playwright/pilot-art/chunk-05/kimi-uchu/page-area-47-full.png",
+      "sha256": "bf18612d57be93a4e912e5ff9901f4a24206e3b4d397b3778747909c9b7de7cc"
+    }
+  ],
+  "works": [
+    {
+      "workId": "work-081e75d8bbc53ac64713",
+      "title": "ダイヤモンドの功罪",
+      "gateQualified": true,
+      "axes": {
+        "artRealism": {
+          "state": "known",
+          "value": 2,
+          "refs": [
+            "page-area-15.png",
+            "page-area-16.png",
+            "page-area-30.png",
+            "page-area-31.png",
+            "page-area-45.png",
+            "page-area-46.png"
+          ],
+          "reason": "Standard contemporary manga stylization featuring expressive character faces and emotional line rendering paired with accurate, naturalistic body anatomy, sports mechanics, and observed ballfield/vehicle environments."
+        },
+        "artDensity": {
+          "state": "known",
+          "value": 2,
+          "refs": [
+            "page-area-15.png",
+            "page-area-16.png",
+            "page-area-30.png",
+            "page-area-31.png",
+            "page-area-45.png",
+            "page-area-46.png"
+          ],
+          "reason": "Balanced line and environment density with functional background staging (car interiors, fences, dugouts, bleachers) and purposeful open negative space around dialogue and figures."
+        },
+        "visualSoftness": {
+          "state": "known",
+          "value": 2,
+          "refs": [
+            "page-area-15.png",
+            "page-area-16.png",
+            "page-area-30.png",
+            "page-area-31.png",
+            "page-area-45.png",
+            "page-area-46.png"
+          ],
+          "reason": "Neutral linework balance combining supple contours and delicate facial features for child characters with crisp, energetic lines for athletic motions and equipment."
+        },
+        "motionImpact": {
+          "state": "known",
+          "value": 3,
+          "refs": [
+            "page-area-30.png",
+            "page-area-31.png"
+          ],
+          "reason": "Exact contiguous dynamic sequence sampled across page-area-30 to 31: initiates with the pitcher's leg lift, grip, and windup on page 30, and culminates contiguously on page 31 with high-velocity radial speed lines into the catcher's mitt, dynamic body follow-through torque, and the post-pitch recovery pose. The speed and impact distinctly exceed baseline moderate motion (2), sitting firmly at 3."
+        }
+      }
+    },
+    {
+      "workId": "work-7730845c9cf7ba0cccc8",
+      "title": "君と宇宙を歩くために",
+      "gateQualified": true,
+      "axes": {
+        "artRealism": {
+          "state": "known",
+          "value": 2,
+          "refs": [
+            "page-area-16-full.png",
+            "page-area-17-full.png",
+            "page-area-30-full.png",
+            "page-area-31-full.png",
+            "page-area-46-full.png",
+            "page-area-47-full.png"
+          ],
+          "reason": "Conventional manga stylization with stylized, exaggerated facial expressions and reaction shots (such as Uno's wide concentric eyes and comedic sweat marks), grounded in proportionate adolescent anatomy, authentic classroom furniture, and detailed everyday props."
+        },
+        "artDensity": {
+          "state": "known",
+          "value": 2,
+          "refs": [
+            "page-area-16-full.png",
+            "page-area-17-full.png",
+            "page-area-30-full.png",
+            "page-area-31-full.png",
+            "page-area-46-full.png",
+            "page-area-47-full.png"
+          ],
+          "reason": "Balanced density featuring clear panel staging, legible speech balloons, and uncluttered white space, complemented by detailed elements where storytelling demands it (handwritten notebook diagrams, store shelves, bird's-eye bedroom layout)."
+        },
+        "visualSoftness": {
+          "state": "known",
+          "value": 2,
+          "refs": [
+            "page-area-16-full.png",
+            "page-area-17-full.png",
+            "page-area-30-full.png",
+            "page-area-31-full.png",
+            "page-area-46-full.png",
+            "page-area-47-full.png"
+          ],
+          "reason": "Neutral inking quality characterized by clean, rounded pen strokes, soft screen tones, and tidy hatching without harsh angular aggression or overly ornate delicacy."
+        },
+        "motionImpact": {
+          "state": "unknown",
+          "value": null,
+          "refs": [],
+          "reason": "Sampled pages capture part-time job vignettes, hallway/street walking, classroom desk dialogues, and bedroom notebook reviews; no continuous dynamic action or sports sequence with bounded start and end points is present in the sample."
+        }
+      }
+    }
+  ],
+  "issues": []
+}

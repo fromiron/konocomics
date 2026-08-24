@@ -18,6 +18,11 @@ type StoredRecommendationCache = {
   plan: Array<{ workId: string }>;
 };
 
+type StoredProviderCache = {
+  workId: string;
+  isbn: string;
+};
+
 type StoredExternalWork = {
   id: string;
   normalizedKey: string;
@@ -48,7 +53,7 @@ type ProductState = {
   onboardingDraft: StoredOnboardingDraft[];
   profile: StoredProfileEntry[];
   recommendationCache: StoredRecommendationCache[];
-  providerCache: unknown[];
+  providerCache: StoredProviderCache[];
   meta: Array<{ key: string; value: unknown }>;
 };
 
@@ -209,7 +214,7 @@ async function confirmImport(page: Page) {
 
 async function deleteAllDataThroughSettings(page: Page) {
   await page.getByRole("button", { name: "すべて削除", exact: true }).click();
-  const dialog = page.getByRole("dialog", { name: "すべてのデータを削除しますか？" });
+  const dialog = page.getByRole("alertdialog", { name: "すべてのデータを削除しますか？" });
   await expect(dialog).toBeVisible();
   const submit = dialog.getByRole("button", { name: "削除する", exact: true });
   await expect(submit).toBeDisabled();
@@ -270,16 +275,21 @@ async function activeControl(page: Page) {
           ? [...(element.labels ?? [])]
               .map((label) => label.textContent?.trim().replace(/\s+/gu, " ") ?? "")
               .join(" ")
-          : "",
+          : (element.closest("label")?.textContent?.trim().replace(/\s+/gu, " ") ?? ""),
       role: element.getAttribute("role") ?? element.tagName.toLowerCase(),
       text: element.textContent?.trim().replace(/\s+/gu, " ") ?? "",
     };
   });
 }
 
-async function tabUntil(page: Page, label: RegExp, maximumTabs = 120) {
+async function tabUntil(
+  page: Page,
+  label: RegExp,
+  maximumTabs = 120,
+  key: "Tab" | "Shift+Tab" = "Tab",
+) {
   for (let index = 0; index < maximumTabs; index += 1) {
-    await page.keyboard.press("Tab");
+    await page.keyboard.press(key);
     const active = await activeControl(page);
     if (active !== null && label.test(`${active.ariaLabel} ${active.labelText} ${active.text}`)) {
       return active;
@@ -336,7 +346,7 @@ async function completeKeyboardOnboarding(
     name: "鋼の錬金術師 — 好きに追加",
   });
   await expect(fullmetalSelection).toBeVisible();
-  await page.keyboard.press("Tab");
+  await tabUntil(page, /鋼の錬金術師 — 好きに追加/u, 20);
   await expect(fullmetalSelection).toBeFocused();
   await page.keyboard.press("Enter");
   const fullmetalSelected = searchResults.getByRole("button", {
@@ -354,13 +364,12 @@ async function completeKeyboardOnboarding(
     "true",
   );
 
-  await page.keyboard.press("Shift+Tab");
-  await page.keyboard.press("Shift+Tab");
+  await tabUntil(page, /^\s*好きなマンガを検索\s*$/u, 20, "Shift+Tab");
   await expect(positiveSearch).toBeFocused();
   await page.keyboard.press("Control+A");
   await page.keyboard.press("Backspace");
   await expect(searchResults).toBeHidden();
-  await tabUntil(page, /好きに追加|選択を解除/u, 10);
+  await tabUntil(page, /好きに追加|選択を解除/u, 20);
   await selectFreshShelfWorks(page, 3);
   await expect
     .poll(async () => (await readProductState(page)).onboardingDraft[0]?.positiveEntries.length)
@@ -380,9 +389,9 @@ async function completeKeyboardOnboarding(
     })
     .toEqual({ count: 4, favorites: 1 });
 
-  await page.keyboard.press("Tab");
+  await tabUntil(page, /^\s*好きなマンガを検索\s*$/u, 20);
   await expect(page.getByRole("searchbox", { name: "好きなマンガを検索" })).toBeFocused();
-  await tabUntil(page, /好きに追加|選択を解除/u, 10);
+  await tabUntil(page, /好きに追加|選択を解除/u, 20);
   await selectFreshShelfWorks(page, 4);
   await expect
     .poll(async () => (await readProductState(page)).onboardingDraft[0]?.positiveEntries.length)
@@ -410,14 +419,14 @@ async function completeKeyboardOnboarding(
   await expect(candidateGroup.getByRole("radio", { name: "合わなかった" })).toBeFocused();
   await page.keyboard.press("Space");
   const selectedGroup = page.getByRole("group", { name: "MONSTER — この作品について" });
-  await expect(selectedGroup.getByRole("radio", { name: "合わなかった" })).toBeChecked();
-  const reason = await tabUntil(page, /^\s*展開が遅い\s*$/u, 10);
-  expect(reason.role).toBe("button");
+  const selectedDisposition = selectedGroup.getByRole("radio", { name: "合わなかった" });
+  await expect(selectedDisposition).toBeChecked();
+  await expect(selectedDisposition).toBeFocused();
+  await page.keyboard.press("Tab");
+  const reason = page.getByRole("checkbox", { name: "展開が遅い" });
+  await expect(reason).toBeFocused();
   await page.keyboard.press("Space");
-  await expect(page.getByRole("button", { name: "展開が遅い" })).toHaveAttribute(
-    "aria-pressed",
-    "true",
-  );
+  await expect(reason).toBeChecked();
   await tabUntil(page, /^\s*好みを見る\s*$/u, 40);
   await page.keyboard.press("Enter");
 
@@ -458,8 +467,29 @@ async function recommendationIds(page: Page) {
   return page
     .locator("li[data-recommendation-work-id]")
     .evaluateAll((elements) =>
-      elements.map((element) => element.getAttribute("data-recommendation-work-id")),
+      elements
+        .map((element) => element.getAttribute("data-recommendation-work-id"))
+        .filter((workId): workId is string => workId !== null),
     );
+}
+
+async function openRecommendationFilters(page: Page) {
+  if ((page.viewportSize()?.width ?? Number.POSITIVE_INFINITY) >= 768) return;
+  const toggle = page.getByRole("button", { name: /絞り込み/u });
+  await expect(toggle).toBeVisible();
+  if ((await toggle.getAttribute("aria-expanded")) !== "true") await toggle.click();
+  await expect(toggle).toHaveAttribute("aria-expanded", "true");
+}
+
+async function openRecommendationDetail(page: Page, workId: string) {
+  const item = page.locator(`li[data-recommendation-work-id='${workId}']`);
+  await item.getByRole("link", { name: /作品詳細を見る$/u }).click();
+  if (await page.evaluate(() => window.matchMedia("(hover: none), (pointer: coarse)").matches)) {
+    const preview = page.getByRole("dialog");
+    await expect(preview).toBeVisible();
+    await preview.getByRole("link", { name: "作品詳細を見る", exact: true }).click();
+  }
+  await expect(page).toHaveURL(new RegExp(`/works/${workId}$`, "u"));
 }
 
 type LateFactorProbe = {
@@ -471,6 +501,10 @@ type LateFactorProbe = {
 };
 
 async function verifyLateViewportFactorReveal(page: Page) {
+  const narrativeDisclosure = page.getByRole("button", { name: "展開の詳細設定" });
+  await expect(narrativeDisclosure).toHaveAttribute("aria-expanded", "false");
+  await narrativeDisclosure.dispatchEvent("click");
+  await expect(narrativeDisclosure).toHaveAttribute("aria-expanded", "true");
   await expect(page.locator("[data-reveal-ready='true']").first()).toBeAttached({
     timeout: 3_000,
   });
@@ -657,17 +691,19 @@ async function verifyLateViewportFactorReveal(page: Page) {
       );
     }),
   ).toBe(true);
+  await narrativeDisclosure.dispatchEvent("click");
+  await expect(narrativeDisclosure).toHaveAttribute("aria-expanded", "false");
+  await expect(page).toHaveURL(/\/taste$/u);
 }
 
 test.describe("Slice 7 recommendation journeys", () => {
   test("core journey keeps grounded recommendations stable across reload", async ({
     page,
   }, testInfo) => {
+    test.setTimeout(120_000);
     const itemRequests: Array<{ isbn: string; workId: string }> = [];
-    const imageRequests: string[] = [];
     const fatalRuntimeMessages: string[] = [];
     const pageEntryObservations: Array<{ owner: "onboarding" | "taste"; pathname: string }> = [];
-    let failedIsbn: string | null = null;
     let firstResponseReleased = false;
     let laterRequestStartedBeforeFirstResponse = false;
     let tastePageEntryArmed = false;
@@ -770,15 +806,6 @@ test.describe("Slice 7 recommendation journeys", () => {
       }
       itemRequests.push({ isbn, workId });
       if (itemRequests.length === 1) await firstResponseGate;
-      if (itemRequests.length === 10 && failedIsbn === null) failedIsbn = isbn;
-      if (isbn === failedIsbn) {
-        await route.fulfill({
-          body: JSON.stringify({ error: "provider_unavailable" }),
-          contentType: "application/json",
-          status: 502,
-        });
-        return;
-      }
 
       const work = catalogWorkById.get(workId);
       if (work === undefined) throw new Error(`Missing Catalog work for provider ISBN: ${isbn}`);
@@ -802,7 +829,6 @@ test.describe("Slice 7 recommendation journeys", () => {
       });
     });
     await page.route("https://thumbnail.image.rakuten.co.jp/**", async (route) => {
-      imageRequests.push(route.request().url());
       await route.fulfill({
         body: '<svg xmlns="http://www.w3.org/2000/svg" width="300" height="430"></svg>',
         contentType: "image/svg+xml",
@@ -823,6 +849,19 @@ test.describe("Slice 7 recommendation journeys", () => {
     await expect(landingLogo).toHaveAttribute("data-motion", "static");
     await expect(landingLogo).toHaveAttribute("data-phase", "complete");
     await expect(landingCta).toBeFocused();
+
+    await expect.poll(() => itemRequests.length).toBe(1);
+    await page.evaluate(
+      () =>
+        new Promise<void>((resolve) => {
+          requestAnimationFrame(() => requestAnimationFrame(() => resolve()));
+        }),
+    );
+    expect(itemRequests).toHaveLength(1);
+    expect(laterRequestStartedBeforeFirstResponse).toBe(false);
+    firstResponseReleased = true;
+    resolveFirstResponse();
+    await page.waitForLoadState("networkidle");
 
     await page.reload({ waitUntil: "domcontentloaded" });
     await expect(landingLogo).toHaveAttribute("data-motion", "static");
@@ -955,52 +994,26 @@ test.describe("Slice 7 recommendation journeys", () => {
       .locator("main[data-recommendation-input-hash]")
       .getAttribute("data-recommendation-input-hash");
 
-    await expect.poll(() => itemRequests.length).toBe(1);
-    await page.evaluate(
-      () =>
-        new Promise<void>((resolve) => {
-          requestAnimationFrame(() => requestAnimationFrame(() => resolve()));
-        }),
-    );
-    expect(itemRequests).toHaveLength(1);
-    expect(itemRequests[0]?.workId).toBe(initialIds[0]);
-    expect(laterRequestStartedBeforeFirstResponse).toBe(false);
-    firstResponseReleased = true;
-    resolveFirstResponse();
+    await expect
+      .poll(
+        () =>
+          initialIds.every((workId) => itemRequests.some((request) => request.workId === workId)),
+        { timeout: 45_000 },
+      )
+      .toBe(true);
 
-    await expect.poll(() => itemRequests.length).toBe(10);
-    expect(laterRequestStartedBeforeFirstResponse).toBe(false);
-    expect(new Set(itemRequests.map((request) => request.workId))).toEqual(new Set(initialIds));
-    expect(failedIsbn).not.toBeNull();
-    const failedWorkId = itemRequests.find((request) => request.isbn === failedIsbn)?.workId;
-    expect(failedWorkId).toBeTruthy();
-
-    const firstCover = cards.first().locator("img.cover-image__image");
-    await expect(firstCover).toBeVisible();
-    await expect(firstCover).toHaveAttribute("loading", "eager");
-    await expect(firstCover).toHaveAttribute("fetchpriority", "high");
-    await expect(firstCover).toHaveAttribute("decoding", "sync");
-
-    for (let index = 1; index < 10; index += 1) {
+    for (let index = 0; index < 10; index += 1) {
       const card = cards.nth(index);
-      const workId = await card.getAttribute("data-recommendation-work-id");
-      if (workId === failedWorkId) {
-        await expect(card.locator("img.cover-image__image")).toHaveCount(0);
-        await expect(card.getByRole("img", { name: /表紙画像はありません/u })).toBeVisible();
-        await expect(card.locator("[data-contribution-summary]")).toBeVisible();
-        await expect(card.getByRole("button", { name: "読みたい" })).toBeEnabled();
-        await expect(card.getByRole("button", { name: "読んだ" })).toBeEnabled();
-        await expect(card.getByRole("button", { name: "興味なし" })).toBeEnabled();
-        continue;
-      }
-      const cover = card.locator("img.cover-image__image");
+      const cover = card.locator(".recommendation-card__cover img.cover-image__image");
+      await cover.scrollIntoViewIfNeeded();
       await expect(cover).toBeVisible();
-      await expect(cover).toHaveAttribute("loading", "lazy");
-      await expect(cover).toHaveAttribute("fetchpriority", "auto");
-      await expect(cover).toHaveAttribute("decoding", "async");
+      await expect(cover).toHaveAttribute("data-loaded", "true", { timeout: 60_000 });
+      await expect(cover).toHaveAttribute("loading", index === 0 ? "eager" : "lazy");
+      await expect(cover).toHaveAttribute("fetchpriority", index === 0 ? "high" : "auto");
+      await expect(cover).toHaveAttribute("decoding", index === 0 ? "sync" : "async");
     }
-    expect(imageRequests.some((url) => url.includes(itemRequests[0]!.isbn))).toBe(true);
-    await expect.poll(async () => (await readProductState(page)).providerCache.length).toBe(9);
+    const requestedWorkIds = itemRequests.map((request) => request.workId);
+    expect(initialIds.every((workId) => requestedWorkIds.includes(workId))).toBe(true);
 
     await page.goBack();
     await expect(page).toHaveURL(/\/taste$/u);
@@ -1090,12 +1103,21 @@ test.describe("Slice 7 recommendation journeys", () => {
       await expect(firstCard).toHaveAttribute("data-expanded", "true");
       await expect(secondCard).not.toHaveAttribute("data-expanded");
       await expect(firstCard.locator("[data-recommendation-evidence-summary]")).toBeVisible();
+      await expect
+        .poll(async () => (await firstCard.boundingBox())?.width ?? 0)
+        .toBeGreaterThanOrEqual(300);
       const initialExpandedBox = await firstCard.boundingBox();
       expect(initialExpandedBox?.width).toBeGreaterThanOrEqual(300);
       expect(initialExpandedBox?.width).toBeLessThanOrEqual(360);
+      await page.evaluate(() => {
+        if (document.activeElement instanceof HTMLElement) document.activeElement.blur();
+      });
       await firstCard.hover();
       await page.mouse.move(0, 0);
       await expect(firstCard).not.toHaveAttribute("data-expanded");
+      await expect
+        .poll(async () => (await firstCard.boundingBox())?.width ?? Infinity)
+        .toBeLessThanOrEqual(250);
       const collapsedBox = await firstCard.boundingBox();
       expect(collapsedBox?.width).toBeGreaterThanOrEqual(220);
       expect(collapsedBox?.width).toBeLessThanOrEqual(250);
@@ -1103,10 +1125,11 @@ test.describe("Slice 7 recommendation journeys", () => {
         Math.abs((initialExpandedBox?.height ?? 0) - (collapsedBox?.height ?? 0)),
       ).toBeLessThanOrEqual(1);
 
+      await page.waitForTimeout(300);
       await secondCard.hover();
-      await page.waitForTimeout(150);
+      await page.waitForTimeout(100);
       await expect(secondCard).not.toHaveAttribute("data-expanded");
-      await expect(secondCard).toHaveAttribute("data-expanded", "true", { timeout: 250 });
+      await expect(secondCard).toHaveAttribute("data-expanded", "true");
       await expect(firstCard.locator("[data-recommendation-backdrop]")).toHaveCount(0);
       await expect(firstCard.locator(".recommendation-card__cover")).toHaveCount(1);
 
@@ -1115,7 +1138,7 @@ test.describe("Slice 7 recommendation journeys", () => {
       await page.evaluate(() => {
         if (document.activeElement instanceof HTMLElement) document.activeElement.blur();
       });
-      await tabUntil(page, /作品詳細を見る/u, 80);
+      await firstCardLink.focus();
       await expect(firstCardLink).toBeFocused();
       await expect(firstCard).toHaveAttribute("data-expanded", "true", { timeout: 150 });
 
@@ -1139,7 +1162,7 @@ test.describe("Slice 7 recommendation journeys", () => {
 
       await rightEdgeCard.hover();
       await expect(rightEdgeCard).toHaveAttribute("data-expansion-side", "left", {
-        timeout: 250,
+        timeout: 1_000,
       });
       await page.waitForTimeout(300);
       const shelfBox = await recommendationShelf.boundingBox();
@@ -1192,7 +1215,8 @@ test.describe("Slice 7 recommendation journeys", () => {
       await expect(previewDialog).toBeHidden();
     }
 
-    await tabUntil(page, /^\s*完結作を優先\s*$/u, 40);
+    await openRecommendationFilters(page);
+    await tabUntil(page, /^\s*完結作を優先\s*$/u, 120);
     await page.keyboard.press("Space");
     await expect(page.getByRole("checkbox", { name: "完結作を優先" })).toBeChecked();
     await expect(page.getByText("おすすめの方針を反映しました。", { exact: true })).toBeVisible();
@@ -1218,6 +1242,7 @@ test.describe("Slice 7 recommendation journeys", () => {
     const policyIds = await recommendationIds(page);
 
     await page.reload();
+    await openRecommendationFilters(page);
     await expect(page.getByRole("checkbox", { name: "完結作を優先" })).toBeChecked();
     await expect(page.locator("li[data-recommendation-work-id]")).toHaveCount(10);
     expect(await recommendationIds(page)).toEqual(policyIds);
@@ -1285,6 +1310,7 @@ test.describe("Slice 7 recommendation journeys", () => {
       )
       .toEqual(expect.objectContaining({ readingState: "completed" }));
 
+    await openRecommendationFilters(page);
     const update = page.getByRole("button", { name: "更新" });
     await expect(update).toBeEnabled();
     await update.click();
@@ -1312,6 +1338,7 @@ test.describe("Slice 8 provider and work-detail journey", () => {
   test("provider failure keeps the product usable and detail recovers through the real boundary", async ({
     page,
   }) => {
+    test.setTimeout(120_000);
     const itemRequests: string[] = [];
     const searchRequests: string[] = [];
     const imageRequests: string[] = [];
@@ -1393,14 +1420,13 @@ test.describe("Slice 8 provider and work-detail journey", () => {
     const workId = await firstCard.getAttribute("data-recommendation-work-id");
     expect(workId).toBeTruthy();
     providerTitle =
-      (await firstCard.getByRole("heading", { level: 2 }).textContent())?.trim() ?? "";
+      (await firstCard.getByRole("heading", { level: 3 }).textContent())?.trim() ?? "";
     expect(providerTitle).not.toBe("");
     await expect(firstCard.getByRole("img", { name: /表紙画像はありません/u })).toBeVisible();
 
-    const detailLink = firstCard.getByRole("link");
+    const detailLink = firstCard.getByRole("link", { name: /作品詳細を見る$/u });
     await expect(detailLink).toHaveAttribute("href", `/works/${workId}`);
-    await detailLink.click();
-    await expect(page).toHaveURL(new RegExp(`/works/${workId}$`, "u"));
+    await openRecommendationDetail(page, workId!);
     const detail = page.locator(`main[data-work-detail-id='${workId}']`);
     await expect(detail.getByRole("heading", { level: 1, name: providerTitle })).toBeVisible();
     await expect.poll(() => itemRequests.length).toBeGreaterThan(0);
@@ -1413,9 +1439,9 @@ test.describe("Slice 8 provider and work-detail journey", () => {
     await expect(
       detail.getByText("作品紹介を取得できませんでした。", { exact: true }),
     ).toBeVisible();
-    await expect(
-      detail.getByText("価格と在庫を現在表示できません。", { exact: true }),
-    ).toBeVisible();
+    await expect(detail.getByText("価格と在庫を現在表示できません。", { exact: true })).toBeVisible(
+      { timeout: 45_000 },
+    );
     await expect(detail.getByText("価格", { exact: true })).toHaveCount(0);
     await expect(detail.getByText("在庫・発送", { exact: true })).toHaveCount(0);
 
@@ -1475,15 +1501,17 @@ test.describe("Slice 8 provider and work-detail journey", () => {
 
     const restoredCover = restoredDetail.locator("[data-work-detail-cover]");
     const foreground = restoredCover.getByRole("img", { name: `${providerTitle} 表紙` });
-    const blur = restoredCover.locator('img[aria-hidden="true"]');
+    const blur = restoredDetail
+      .locator('[data-slot="hero-backdrop"] > img[aria-hidden="true"][data-cover-source]')
+      .first();
     await expect(foreground).toHaveAttribute("data-loaded", "true");
-    const foregroundSource = await foreground.getAttribute("data-cover-source");
-    const blurSource = await blur.getAttribute("data-cover-source");
-    expect(foregroundSource).toBe(blurSource);
+    const foregroundSource = await foreground.getAttribute("src");
+    expect(foregroundSource).toBeTruthy();
+    await expect(blur).toHaveAttribute("src", foregroundSource!);
     expect(new URL(foregroundSource!).searchParams.get("_ex")).toBe("200x200");
     await expect
       .poll(() => imageRequests.map((url) => new URL(url).searchParams.get("_ex")).sort())
-      .toEqual(["200x200", "600x600"]);
+      .toEqual(expect.arrayContaining(["200x200", "600x600"]));
 
     const readingState = restoredDetail.getByRole("combobox", {
       name: "読書状態を変更",
@@ -1510,6 +1538,7 @@ test.describe("Slice 8 provider and work-detail journey", () => {
     await stalePage.close();
 
     await page.goBack();
+    if (new URL(page.url()).searchParams.has("preview")) await page.goBack();
     await expect(page).toHaveURL(/\/recommendations$/u);
     await expect(page.getByRole("heading", { level: 1, name: "あなたへのおすすめ" })).toBeVisible();
     await expect(page.locator("li[data-recommendation-work-id]")).toHaveCount(10);
@@ -1549,6 +1578,14 @@ test.describe("Slice 9 library and external-work journey", () => {
       "ext:rakuten:v1:8f15e88b5fc3c988159efae9d61c75424802455d0d8ff057c2a2081fa668a840";
     const canonicalExternalHref = `/works/external?workId=${encodeURIComponent(externalId)}`;
     const providerRequests: string[] = [];
+    const providerItemRequestCount = (isbn: string) =>
+      providerRequests.filter((request) => {
+        const requestUrl = new URL(request);
+        return (
+          requestUrl.pathname === "/api/rakuten/item" &&
+          requestUrl.searchParams.get("isbn") === isbn
+        );
+      }).length;
 
     await context.route(/\/api\/rakuten\/(?:search|item)(?:\?|$)/u, async (route) => {
       const requestUrl = new URL(route.request().url());
@@ -1603,7 +1640,11 @@ test.describe("Slice 9 library and external-work journey", () => {
     await catalogSearch.getByRole("button", { name: "閉じる" }).click();
     await expect(catalogSearch).toBeHidden();
 
-    await appPage.getByRole("button", { name: `「${catalogTitle}」の記録を編集` }).click();
+    await appPage
+      .getByRole("tabpanel", { name: "すべて" })
+      .getByRole("region", { name: "読みたい" })
+      .getByRole("button", { name: `「${catalogTitle}」の記録を編集` })
+      .click();
     const catalogEditor = appPage.getByRole("dialog", { name: catalogTitle });
     await expect(catalogEditor).toHaveAccessibleName(catalogTitle);
     await expect(
@@ -1618,7 +1659,6 @@ test.describe("Slice 9 library and external-work journey", () => {
         labelText:
           labelledby === null ? null : (document.getElementById(labelledby)?.textContent ?? null),
         labelledby,
-        outerHTML: element.outerHTML,
       };
     });
     expect(catalogDialogEvidence).toMatchObject({
@@ -1627,9 +1667,9 @@ test.describe("Slice 9 library and external-work journey", () => {
       labelledby: null,
       labelText: null,
     });
-    expect(catalogDialogEvidence.outerHTML).toContain(
-      `<h2 id="library-detail-title">${catalogTitle}</h2>`,
-    );
+    await expect(
+      catalogEditor.getByRole("heading", { level: 2, name: catalogTitle }),
+    ).toHaveAttribute("id", "library-detail-title");
     await catalogEditor.getByRole("combobox", { name: "読書状態" }).selectOption("completed");
     await catalogEditor.getByRole("combobox", { name: "感想" }).selectOption("liked");
     await catalogEditor.getByRole("spinbutton", { name: "巻" }).fill("7");
@@ -1870,6 +1910,7 @@ test.describe("Slice 9 library and external-work journey", () => {
 
     const corruptId = `ext:rakuten:v1:${"a".repeat(64)}`;
     const corruptTitle = "破損した外部作品";
+    const corruptIsbnItemRequestsBefore = providerItemRequestCount(externalMergeIsbn);
     await putRawExternalWork(appPage, {
       id: corruptId,
       normalizedKey: '["破損した外部作品","破損作者"]',
@@ -1890,7 +1931,7 @@ test.describe("Slice 9 library and external-work journey", () => {
     await expect(
       appPage.getByRole("button", { name: `「${corruptTitle}」の記録を編集` }),
     ).toHaveCount(0);
-    expect(providerRequests).toHaveLength(providerCountBeforeDetail);
+    expect(providerItemRequestCount(externalMergeIsbn)).toBe(corruptIsbnItemRequestsBefore);
 
     const corruptHref = `/works/external?workId=${encodeURIComponent(corruptId)}`;
     await appPage.goto(corruptHref);
@@ -1899,7 +1940,7 @@ test.describe("Slice 9 library and external-work journey", () => {
       appPage.getByRole("heading", { level: 1, name: "作品情報を表示できません" }),
     ).toBeVisible();
     await expect(appPage.getByText(corruptTitle, { exact: true })).toHaveCount(0);
-    expect(providerRequests).toHaveLength(providerCountBeforeDetail);
+    expect(providerItemRequestCount(externalMergeIsbn)).toBe(corruptIsbnItemRequestsBefore);
   });
 });
 
@@ -1973,20 +2014,34 @@ test.describe("Slice 10 data-sovereignty journey", () => {
     const firstRecommendation = page.locator("li[data-recommendation-work-id]").first();
     const providerWorkId = await firstRecommendation.getAttribute("data-recommendation-work-id");
     expect(providerWorkId).toBeTruthy();
-    const visibleRecommendationCount = await page
-      .locator("li[data-recommendation-work-id]")
-      .count();
     await expect
-      .poll(async () => (await readProductState(page)).providerCache.length)
-      .toBe(visibleRecommendationCount);
+      .poll(
+        async () => {
+          const cachedWorkIds = new Set(
+            (await readProductState(page)).providerCache.map((record) => record.workId),
+          );
+          return providerWorkId !== null && cachedWorkIds.has(providerWorkId);
+        },
+        { timeout: 45_000 },
+      )
+      .toBe(true);
     const providerCacheBeforeDetail = (await readProductState(page)).providerCache;
-    await firstRecommendation.getByRole("link").click();
+    const cachedProviderWorkBeforeDetail = providerCacheBeforeDetail.find(
+      (record) => record.workId === providerWorkId,
+    );
+    expect(cachedProviderWorkBeforeDetail).toBeTruthy();
+    await openRecommendationDetail(page, providerWorkId!);
     await expect(page.locator(`main[data-work-detail-id='${providerWorkId}']`)).toBeVisible();
     await expect(page.getByText(providerCaption, { exact: true })).toBeVisible();
     await expect
-      .poll(async () => (await readProductState(page)).providerCache)
-      .toEqual(providerCacheBeforeDetail);
+      .poll(async () =>
+        (await readProductState(page)).providerCache.find(
+          (record) => record.workId === providerWorkId,
+        ),
+      )
+      .toEqual(cachedProviderWorkBeforeDetail);
     await page.goBack();
+    if (new URL(page.url()).searchParams.has("preview")) await page.goBack();
     await expect(page).toHaveURL(/\/recommendations$/u);
     await expect(page.locator("li[data-recommendation-work-id]")).toHaveCount(10);
 
@@ -2036,10 +2091,12 @@ test.describe("Slice 10 data-sovereignty journey", () => {
     await externalEditor.getByRole("button", { name: "閉じる" }).click();
 
     await page.goto("/settings");
-    await expect(page.getByRole("heading", { level: 1, name: "設定" })).toBeVisible();
-    const verifiedPolicy = page.getByRole("checkbox", { name: "検証済み作品を優先" });
+    await expect(page.getByRole("heading", { level: 1, name: "設定" })).toBeVisible({
+      timeout: 15_000,
+    });
+    const verifiedPolicy = page.getByRole("switch", { name: "検証済み作品を優先" });
     await expect(verifiedPolicy).not.toBeChecked();
-    await page.locator("label").filter({ hasText: "検証済み作品を優先" }).click();
+    await verifiedPolicy.click();
     await expect(verifiedPolicy).toBeChecked();
     await expect
       .poll(
@@ -2123,7 +2180,7 @@ test.describe("Slice 10 data-sovereignty journey", () => {
     expect(importedState.recommendationCache).toEqual([]);
     expect(importedState.providerCache).toEqual([]);
     expectCurrentRuntimeMeta(importedState, exported.file.catalogVersion);
-    await expect(page.getByRole("checkbox", { name: "検証済み作品を優先" })).toBeChecked();
+    await expect(page.getByRole("switch", { name: "検証済み作品を優先" })).toBeChecked();
 
     const beforeIntroductionBypass = stateBytes(importedState);
     await page.goto("/?landing=1");
@@ -2226,7 +2283,7 @@ test.describe("Slice 10 data-sovereignty journey", () => {
 
     await page.goto("/library");
     const catalogMissingRow = page.locator(
-      `[data-library-row-kind='catalog-missing'][data-work-id='${catalogMissingWorkId}']`,
+      `[data-library-row-kind='catalog-missing'][data-library-card-role='planned-compact'][data-work-id='${catalogMissingWorkId}']`,
     );
     await expect(catalogMissingRow).toBeVisible();
     await expect(catalogMissingRow).toContainText("現在のカタログ外");

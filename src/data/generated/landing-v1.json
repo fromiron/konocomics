@@ -1,0 +1,397 @@
+{
+  "catalogVersion": "v1-7ec12b11f0aa",
+  "heroWorks": [
+    {
+      "id": "a-silent-voice",
+      "title": "聲の形",
+      "creators": [
+        "大今良時"
+      ],
+      "genres": [
+        "romance",
+        "sliceOfLife"
+      ],
+      "status": "completed",
+      "isbn": "9784063949735"
+    },
+    {
+      "id": "akira",
+      "title": "AKIRA",
+      "creators": [
+        "大友克洋"
+      ],
+      "genres": [
+        "action",
+        "scienceFiction"
+      ],
+      "status": "completed",
+      "isbn": "9784061037113"
+    },
+    {
+      "id": "attack-on-titan",
+      "title": "進撃の巨人",
+      "creators": [
+        "諫山創"
+      ],
+      "genres": [
+        "action",
+        "fantasy",
+        "horror"
+      ],
+      "status": "completed",
+      "isbn": "9784063842760"
+    },
+    {
+      "id": "berserk",
+      "title": "ベルセルク",
+      "creators": [
+        "三浦建太郎",
+        "スタジオ我画",
+        "森恒二"
+      ],
+      "genres": [
+        "action",
+        "fantasy",
+        "horror"
+      ],
+      "status": "ongoing",
+      "isbn": "9784592135746"
+    },
+    {
+      "id": "blame",
+      "title": "BLAME!",
+      "creators": [
+        "弐瓶勉"
+      ],
+      "genres": [
+        "action",
+        "scienceFiction"
+      ],
+      "status": "completed",
+      "isbn": "9784063141825"
+    },
+    {
+      "id": "blue-lock",
+      "title": "ブルーロック",
+      "creators": [
+        "金城宗幸",
+        "ノ村優介"
+      ],
+      "genres": [
+        "sports"
+      ],
+      "status": "ongoing",
+      "isbn": "9784065134009"
+    },
+    {
+      "id": "cardcaptor-sakura",
+      "title": "カードキャプターさくら",
+      "creators": [
+        "CLAMP"
+      ],
+      "genres": [
+        "comedy",
+        "fantasy",
+        "romance"
+      ],
+      "status": "completed",
+      "isbn": "9784063197433"
+    },
+    {
+      "id": "chainsaw-man",
+      "title": "チェンソーマン",
+      "creators": [
+        "藤本タツキ"
+      ],
+      "genres": [
+        "action",
+        "comedy",
+        "fantasy",
+        "horror"
+      ],
+      "status": "completed",
+      "isbn": "9784088817804"
+    },
+    {
+      "id": "chihayafuru",
+      "title": "ちはやふる",
+      "creators": [
+        "末次由紀"
+      ],
+      "genres": [
+        "romance",
+        "sliceOfLife",
+        "sports"
+      ],
+      "status": "completed",
+      "isbn": "9784063192391"
+    },
+    {
+      "id": "death-note",
+      "title": "DEATH NOTE",
+      "creators": [
+        "大場つぐみ",
+        "小畑健"
+      ],
+      "genres": [
+        "horror",
+        "mystery"
+      ],
+      "status": "completed",
+      "isbn": "9784088736211"
+    },
+    {
+      "id": "dr-stone",
+      "title": "Dr.STONE",
+      "creators": [
+        "Boichi",
+        "稲垣理一郎"
+      ],
+      "genres": [
+        "action",
+        "comedy",
+        "scienceFiction"
+      ],
+      "status": "completed",
+      "isbn": "9784088811840"
+    },
+    {
+      "id": "dragon-ball",
+      "title": "DRAGON BALL",
+      "creators": [
+        "鳥山明"
+      ],
+      "genres": [
+        "action",
+        "comedy",
+        "fantasy"
+      ],
+      "status": "completed",
+      "isbn": "9784088518312"
+    },
+    {
+      "id": "dungeon-meshi",
+      "title": "ダンジョン飯",
+      "creators": [
+        "九井諒子"
+      ],
+      "genres": [
+        "action",
+        "comedy",
+        "fantasy"
+      ],
+      "status": "completed",
+      "isbn": "9784047301535"
+    },
+    {
+      "id": "fairy-tail",
+      "title": "ＦＡＩＲＹ　ＴＡＩＬ",
+      "creators": [
+        "真島ヒロ"
+      ],
+      "genres": [
+        "action",
+        "comedy",
+        "fantasy"
+      ],
+      "status": "completed",
+      "isbn": "9784063637717"
+    },
+    {
+      "id": "fire-force",
+      "title": "炎炎ノ消防隊",
+      "creators": [
+        "大久保篤"
+      ],
+      "genres": [
+        "action",
+        "fantasy",
+        "scienceFiction"
+      ],
+      "status": "completed",
+      "isbn": "9784063955675"
+    },
+    {
+      "id": "frieren",
+      "title": "葬送のフリーレン",
+      "creators": [
+        "山田鐘人",
+        "アベツカサ"
+      ],
+      "genres": [
+        "fantasy"
+      ],
+      "status": "hiatus",
+      "isbn": "9784098501809"
+    },
+    {
+      "id": "fruits-basket",
+      "title": "フルーツバスケット",
+      "creators": [
+        "高屋奈月"
+      ],
+      "genres": [
+        "comedy",
+        "fantasy",
+        "romance",
+        "sliceOfLife"
+      ],
+      "status": "completed",
+      "isbn": "9784592171614"
+    },
+    {
+      "id": "fullmetal-alchemist",
+      "title": "鋼の錬金術師",
+      "creators": [
+        "荒川弘"
+      ],
+      "genres": [
+        "action",
+        "fantasy"
+      ],
+      "status": "completed",
+      "isbn": "9784757506206"
+    }
+  ],
+  "editorialRankingWorks": [
+    {
+      "id": "a-silent-voice",
+      "title": "聲の形",
+      "creators": [
+        "大今良時"
+      ],
+      "genres": [
+        "romance",
+        "sliceOfLife"
+      ],
+      "status": "completed",
+      "isbn": "9784063949735"
+    },
+    {
+      "id": "akira",
+      "title": "AKIRA",
+      "creators": [
+        "大友克洋"
+      ],
+      "genres": [
+        "action",
+        "scienceFiction"
+      ],
+      "status": "completed",
+      "isbn": "9784061037113"
+    },
+    {
+      "id": "attack-on-titan",
+      "title": "進撃の巨人",
+      "creators": [
+        "諫山創"
+      ],
+      "genres": [
+        "action",
+        "fantasy",
+        "horror"
+      ],
+      "status": "completed",
+      "isbn": "9784063842760"
+    },
+    {
+      "id": "berserk",
+      "title": "ベルセルク",
+      "creators": [
+        "三浦建太郎",
+        "スタジオ我画",
+        "森恒二"
+      ],
+      "genres": [
+        "action",
+        "fantasy",
+        "horror"
+      ],
+      "status": "ongoing",
+      "isbn": "9784592135746"
+    },
+    {
+      "id": "blame",
+      "title": "BLAME!",
+      "creators": [
+        "弐瓶勉"
+      ],
+      "genres": [
+        "action",
+        "scienceFiction"
+      ],
+      "status": "completed",
+      "isbn": "9784063141825"
+    },
+    {
+      "id": "blue-lock",
+      "title": "ブルーロック",
+      "creators": [
+        "金城宗幸",
+        "ノ村優介"
+      ],
+      "genres": [
+        "sports"
+      ],
+      "status": "ongoing",
+      "isbn": "9784065134009"
+    },
+    {
+      "id": "cardcaptor-sakura",
+      "title": "カードキャプターさくら",
+      "creators": [
+        "CLAMP"
+      ],
+      "genres": [
+        "comedy",
+        "fantasy",
+        "romance"
+      ],
+      "status": "completed",
+      "isbn": "9784063197433"
+    },
+    {
+      "id": "chainsaw-man",
+      "title": "チェンソーマン",
+      "creators": [
+        "藤本タツキ"
+      ],
+      "genres": [
+        "action",
+        "comedy",
+        "fantasy",
+        "horror"
+      ],
+      "status": "completed",
+      "isbn": "9784088817804"
+    },
+    {
+      "id": "chihayafuru",
+      "title": "ちはやふる",
+      "creators": [
+        "末次由紀"
+      ],
+      "genres": [
+        "romance",
+        "sliceOfLife",
+        "sports"
+      ],
+      "status": "completed",
+      "isbn": "9784063192391"
+    },
+    {
+      "id": "death-note",
+      "title": "DEATH NOTE",
+      "creators": [
+        "大場つぐみ",
+        "小畑健"
+      ],
+      "genres": [
+        "horror",
+        "mystery"
+      ],
+      "status": "completed",
+      "isbn": "9784088736211"
+    }
+  ]
+}

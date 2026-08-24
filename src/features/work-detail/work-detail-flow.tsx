@@ -130,7 +130,7 @@ function relatedWorkGroups(catalog: CatalogV1, source: Work) {
     return factor.state === "known" ? [[axisId, factor.value] as const] : [];
   });
   const themeRanked = catalog.works
-    .filter((work) => work.id !== source.id)
+    .filter((work) => work.id !== source.id && work.eligibility.recommendationEligible)
     .map((work) => ({
       work,
       score: work.themes.reduce(
@@ -144,7 +144,10 @@ function relatedWorkGroups(catalog: CatalogV1, source: Work) {
     .map(({ work }) => work);
   const themeIds = new Set(themeRanked.map((work) => work.id));
   const moodRanked = catalog.works
-    .filter((work) => work.id !== source.id && !themeIds.has(work.id))
+    .filter(
+      (work) =>
+        work.id !== source.id && work.eligibility.recommendationEligible && !themeIds.has(work.id),
+    )
     .map((work) => {
       const distances = sourceAxes.flatMap(([axisId, sourceValue]) => {
         const factor = work.axes[axisId];
@@ -576,6 +579,7 @@ function WorkDetailContent({ catalog, work }: Readonly<{ catalog: CatalogV1; wor
     ) {
       try {
         const item = await requestRakutenBook(providerIsbn);
+        if (!active) return;
         const fetchedAt = providerNow();
         const saved = await saveProviderCache(
           createProviderCacheRecord({ workId: work.id, item, fetchedAt }),

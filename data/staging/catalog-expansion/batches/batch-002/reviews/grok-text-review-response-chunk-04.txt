@@ -1,0 +1,183 @@
+# Batch 002 chunk 04 Pass B non-Art review
+
+## 1. Execution attestation
+
+- Reviewer: Cursor Grok 4.6 High (`cursor-grok-4.6-high`), non-fast
+- Mode: read-only; normal completion; full access to the nine contracted frozen inputs; no timeout, rate-limit, or degraded output
+- `reviewedByHuman=false`
+- Art abstention: Art axes were not inspected and are not judged
+
+## 2. Verified input hashes
+
+| Path | SHA-256 |
+| --- | --- |
+| `docs/factors/factor-dictionary.md` | `a9c29a853a108aca1b9bb8d5d71a3e7d5d583303691c0b35cc6424c1e45ee8be` |
+| `docs/factors/annotation-guide.md` | `f7dd1ec55d97bf9200fcec92ce270e7745a0d3aa4fe98a40c746fc56b6a777b3` |
+| `data/staging/catalog-expansion/batches/batch-002/annotation-review-adjudication-request.md` | `ca34d38bc87e58603014142a0abfd6fb886cbdbeb7e917414f2874cd387fdeb2` |
+| `data/staging/catalog-expansion/batches/batch-002/frozen-work-set.csv` | `80888903a34792a5b079d153c86493bc0263cb56bf5bb5a0c0528dd309cf61f6` |
+| `data/staging/catalog-expansion/batches/batch-002/research/chunk-04.md` | `c7436d6d23b304d72700ad7a1d4ebff881ac08e865438a4974c1de36c96b0999` |
+| `data/staging/catalog-expansion/batches/batch-002/annotation/pass-a-text-chunk-04.csv` | `895e2f1715741065bbb5adfb6edf6f0688d09a8b0780d98047c43ade6fb9bb23` |
+| `data/staging/catalog-expansion/batches/batch-002/annotation/genres-pass-a-chunk-04.csv` | `bf2e2325303a6cdf997c403d3e8a3c22b34a50d3f735990326850bcaede0c005` |
+| `data/staging/catalog-expansion/batches/batch-002/annotation/themes-pass-a-chunk-04.csv` | `e432191244003963572bf8f981ecaab3e32626901a19bcd0a57d14eb4df726c3` |
+| `data/staging/catalog-expansion/batches/batch-002/annotation/pass-a-text-chunk-04.md` | `8db250f0688cf4f8dda8b5a8592503f19aba4362bc38b7889e44ad2665e5f2e2` |
+
+## 3. Independent 13-axis matrix
+
+| workId | progression | problemSolving | strategy | pacing | mysteryReveal | worldBuilding | characterArcWeight | relationshipStructure | comedy | darkness | mentalStress | romance | emotionalWarmth |
+| --- | --- | --- | --- | --- | --- | --- | --- | --- | --- | --- | --- | --- | --- |
+| work-84b7c7d7720447075c25 | U | U | 3 | 2 | U | 3 | U | 2 | U | 2 | U | U | U |
+| work-9072892a767332254f00 | U | U | U | U | U | U | U | 2 | U | U | U | U | U |
+| work-98b7d2ef065bde405972 | U | U | U | 1 | U | U | 3 | 2 | U | U | 1 | U | U |
+| work-a59481c00155de21d75f | U | U | U | 2 | U | 2 | U | 2 | 3 | U | U | U | U |
+| work-a8349445836546a82934 | U | U | U | 2 | U | 2 | U | U | U | U | U | U | U |
+| work-ab95f4d4997113e0687a | U | U | U | 2 | U | 2 | 3 | 3 | U | U | U | 2 | U |
+| work-ad32c71b07fd13c65a79 | 2 | 2 | U | 2 | U | 2 | 4 | 2 | U | U | U | 4 | U |
+| work-bbeeaad9e37ab267dc29 | U | U | U | U | U | 2 | U | 2 | 2 | U | U | U | U |
+| work-c221a17d6b962b17c9f4 | U | 2 | U | 2 | 3 | 2 | 2 | 2 | U | 4 | 2 | U | U |
+| work-c55467873ec70e670484 | U | U | U | 2 | U | 2 | U | 2 | U | 2 | U | U | U |
+
+## 4. Genre conclusion
+
+| workId | genres |
+| --- | --- |
+| work-84b7c7d7720447075c25 | historical |
+| work-9072892a767332254f00 | sliceOfLife |
+| work-98b7d2ef065bde405972 | sliceOfLife |
+| work-a59481c00155de21d75f | scienceFiction;comedy |
+| work-a8349445836546a82934 | sliceOfLife |
+| work-ab95f4d4997113e0687a | comedy;romance |
+| work-ad32c71b07fd13c65a79 | fantasy;romance |
+| work-bbeeaad9e37ab267dc29 | scienceFiction;comedy;sliceOfLife |
+| work-c221a17d6b962b17c9f4 | mystery;horror |
+| work-c55467873ec70e670484 | action;scienceFiction |
+
+## 5. Theme conclusion
+
+| workId | themes |
+| --- | --- |
+| work-84b7c7d7720447075c25 | politics:2;war:1;school:1 |
+| work-9072892a767332254f00 | |
+| work-98b7d2ef065bde405972 | workplace:2 |
+| work-a59481c00155de21d75f | foundFamily:1 |
+| work-a8349445836546a82934 | workplace:2;historicalReconstruction:1 |
+| work-ab95f4d4997113e0687a | school:2;workplace:2 |
+| work-ad32c71b07fd13c65a79 | reincarnation:2;school:1;combat:1 |
+| work-bbeeaad9e37ab267dc29 | cooking:1 |
+| work-c221a17d6b962b17c9f4 | investigation:2 |
+| work-c55467873ec70e670484 | adventure:2;combat:2 |
+
+## 6. Pass A comparison
+
+### work-84b7c7d7720447075c25 — 軍靴のバルツァー
+
+- Axis `strategy` 4 → 3. https://www.shinchosha.co.jp/book/771626/ ; https://www.shinchosha.co.jp/book/771642/ ; https://www.shinchosha.co.jp/book/771671/ — Dictionary 4 requires long-horizon war, politics, or resource operation as the center. The packet shows a reform posting, one armed deployment, and a strategist appointment without a repeated planning process, so 3 sits between short-term tactics (2) and 4.
+- Axis `pacing` 4 → 2. Same URLs — Dictionary 4 is large goal, place, or state change at short intervals. Academy → suppression → court/battlefield is ordinary volume-scale arc change (2).
+- Axis `worldBuilding` 4 → 3. Same URLs — Imperial institutions and factions constrain events above a merely functional 2, but the packet does not show history, culture, rules, and factions as repeated solving constraints at 4.
+- Axis `characterArcWeight` 2 → U. https://www.shinchosha.co.jp/book/771642/ ; https://www.shinchosha.co.jp/book/771671/ — Trust-building and a role change are stated, not a repeated inner-change reward.
+- Axis `relationshipStructure` 3 → 2. https://www.shinchosha.co.jp/book/771626/ ; https://www.shinchosha.co.jp/book/771642/ ; https://www.shinchosha.co.jp/book/771671/ — Students, instructors, and the prince are a protagonist-led supporting cast (2). A larger named network is not ensemble-as-reward (4), and 3 is not required.
+- Genre `action` removed. Same URLs — Armed deployment is present in volumes 2–3, but the repeated entry structure is historical military-political life, not action as the reading mode.
+- Theme `war` 2 → 1. https://www.shinchosha.co.jp/book/771642/ ; https://www.shinchosha.co.jp/book/771671/ — Suppression and a battlefield appear after an academy-reform volume 1, so war is not the entry-wide core.
+- Theme `school` 2 → 1. https://www.shinchosha.co.jp/book/771626/ ; https://www.shinchosha.co.jp/book/771642/ — The academy frames volumes 1–2, then the scope leaves for court and battlefield.
+
+### work-9072892a767332254f00 — flat
+
+- Axis `pacing` 1 → U. https://www.mag-garden.co.jp/comics/6038/ ; https://www.mag-garden.co.jp/comics/6039/ ; https://www.mag-garden.co.jp/comics/6040/ — Volume 2 is a short promotional restatement and does not establish event magnitude. Thin volume copy cannot certify a sustained pacing value.
+- Axis `characterArcWeight` 3 → U. Same URLs — The packet states that the size of emotional change is not provided. Small daily change is not a known 3.
+- Theme `school` 1 removed. https://www.mag-garden.co.jp/comics/6038/ ; https://www.mag-garden.co.jp/comics/6040/ — High-school labels are demographic. School mechanics are not the observed structure.
+
+### work-98b7d2ef065bde405972 — スーパーの裏でヤニ吸うふたり
+
+none
+
+### work-a59481c00155de21d75f — ケロロ軍曹
+
+- Axis `relationshipStructure` 3 → 2. https://www.kadokawa.co.jp/product/200659000036/ ; https://www.kadokawa.co.jp/product/200659000037/ ; https://www.kadokawa.co.jp/product/200000000671/ — The Hinata household plus an assembling four-member platoon is a fixed party (2), not a complex multi-relation web.
+- Theme `foundFamily` 2 → 1. Same URLs — Capture, cohabitation, and platoon assembly are the recurring gag frame. Chosen-family bonds are not shown as the core reward.
+
+### work-a8349445836546a82934 — 百姓貴族
+
+- Axis `worldBuilding` 3 → 2. https://www.shinshokan.co.jp/book/b565859.html ; https://www.shinshokan.co.jp/book/b565858.html ; https://www.shinshokan.co.jp/book/b565857.html — Farm labor plus one volume of pioneer history is a functional real-world setting (2), not repeated world-rules that constrain narrative solving.
+
+### work-ab95f4d4997113e0687a — 月刊少女野崎くん
+
+- Axis `relationshipStructure` 4 → 3. https://magazine.jp.square-enix.com/top/comics/detail/9784757535664/ ; https://magazine.jp.square-enix.com/top/comics/detail/9784757537774/ ; https://magazine.jp.square-enix.com/top/comics/detail/9784757539853/ — Guide: more recurring characters is not 4 unless the multi-relation web itself is the core reward. The expanding school and creation cast sits between a fixed pair-plus-support (2) and complex ensemble (4).
+
+### work-ad32c71b07fd13c65a79 — 私の推しは悪役令嬢。
+
+- Axis `pacing` 3 → 2. https://data.ichijinsha.co.jp/detail/75802193 ; https://data.ichijinsha.co.jp/detail/75802263 ; https://data.ichijinsha.co.jp/detail/75802318 — Reincarnation → maid role → exam/festival is typical arc-unit change, not short-interval large shifts.
+- Axis `worldBuilding` 3 → 2. Same URLs — Game-world knowledge, magic, and academy roles are a functional fantasy setting (2).
+- Axis `relationshipStructure` 3 → 2. Same URLs — Rei and Claire remain the core pair, with prince and academy figures as supporting cast (2).
+
+### work-bbeeaad9e37ab267dc29 — 僕とロボコ
+
+- Axis `problemSolving` 1 → U. https://www.shueisha.co.jp/books/items/contents.html?isbn=978-4-08-882548-9 ; https://www.shueisha.co.jp/books/items/contents.html?isbn=978-4-08-882595-3 — Representative fail-episodes do not establish a sustained solving style.
+- Axis `pacing` 1 → U. https://www.shueisha.co.jp/books/items/contents.html?isbn=978-4-08-882509-0 ; https://www.shueisha.co.jp/books/items/contents.html?isbn=978-4-08-882548-9 ; https://www.shueisha.co.jp/books/items/contents.html?isbn=978-4-08-882595-3 — Volumes 2–3 are representative-episode copy and cannot certify entry-wide slow pacing.
+- Axis `comedy` 3 → 2. Same URLs — An out-of-spec robot plus two highlighted fail-episodes establish gags (2) without volume-range frequency for 3 or 4.
+- Theme `foundFamily` 2 removed. https://www.shueisha.co.jp/books/items/contents.html?isbn=978-4-08-882509-0 — A child and a live-in robot sharing a house is the premise, not found-family as a repeated core structure.
+
+### work-c221a17d6b962b17c9f4 — 屍鬼
+
+- Axis `problemSolving` 3 → 2. https://www.shueisha.co.jp/books/items/contents.html?jdcn=08874550874549315501 ; https://www.shueisha.co.jp/books/items/contents.html?jdcn=08874585874549315501 — Epidemic hypothesis, rejection, and a planned grave check mix analysis and action (2). Method detail is insufficient for 3.
+- Axis `pacing` 3 → 2. https://www.shueisha.co.jp/books/items/contents.html?jdcn=08874549874549315501 ; https://www.shueisha.co.jp/books/items/contents.html?jdcn=08874550874549315501 ; https://www.shueisha.co.jp/books/items/contents.html?jdcn=08874585874549315501 — Corpses → twelve deaths → grave check is typical mystery arc escalation (2).
+- Axis `mysteryReveal` 2 → 3. Same URLs — Unexplained deaths and competing explanations are the entry plot, above incidental secrets (2). Withheld answers still block 4.
+- Axis `worldBuilding` 3 → 2. Same URLs — Isolated village, medical and temple roles, and the old estate are a functional setting (2).
+- Axis `relationshipStructure` 4 → 2. Same URLs — Named investigators and two inquiry lines are a core supporting cast. The packet reward is the case, not a complex ensemble web.
+
+### work-c55467873ec70e670484 — 大ダーク
+
+- Axis `pacing` 4 → 2. https://shogakukan-comic.jp/book?isbn=9784091294869 ; https://shogakukan-comic.jp/book?isbn=9784098502158 ; https://shogakukan-comic.jp/book?isbn=9784098504961 — Travel → infiltration → injury/rescue is volume-scale adventure change (2), not short-interval 4.
+- Axis `worldBuilding` 4 → 2. Same URLs — Universe, corporation, cult, and bone rumor are a functional science-fiction setting (2). Listing factions is not 4.
+- Axis `relationshipStructure` 3 → 2. Same URLs — An assembling travel party is a fixed party (2).
+- Axis `darkness` 3 → 2. https://shogakukan-comic.jp/book?isbn=9784091294869 ; https://shogakukan-comic.jp/book?isbn=9784098504961 — Hunt, violence, and injury are serious danger (2). Violent incidents are not converted into near-4 bleakness.
+- Theme `foundFamily` 2 removed. Same three URLs — Companion assembly and one rescue are adventure companionship, not found-family as the core structure.
+
+## 7. Identity / safety / representative ISBN
+
+| workId | canonicalTitle | ISBN | identity | safety | ISBN mapping | verdict | evidence URL |
+| --- | --- | --- | --- | --- | --- | --- | --- |
+| work-84b7c7d7720447075c25 | 軍靴のバルツァー | 9784107716262 | PASS | PASS | PASS | PASS | https://www.shinchosha.co.jp/book/771626/ |
+| work-9072892a767332254f00 | flat | 9784861275333 | PASS | PASS | PASS | PASS | https://www.mag-garden.co.jp/comics/6038/ |
+| work-98b7d2ef065bde405972 | スーパーの裏でヤニ吸うふたり | 9784757580947 | PASS | PASS | PASS | PASS | https://magazine.jp.square-enix.com/top/comics/detail/9784757580947/ |
+| work-a59481c00155de21d75f | ケロロ軍曹 | 9784047133075 | PASS | PASS | PASS | PASS | https://www.kadokawa.co.jp/product/200659000036/ |
+| work-a8349445836546a82934 | 百姓貴族 | 9784403670855 | PASS | PASS | PASS | PASS | https://www.shinshokan.co.jp/book/b565859.html |
+| work-ab95f4d4997113e0687a | 月刊少女野崎くん | 9784757535664 | PASS | PASS | PASS | PASS | https://magazine.jp.square-enix.com/top/comics/detail/9784757535664/ |
+| work-ad32c71b07fd13c65a79 | 私の推しは悪役令嬢。 | 9784758021937 | PASS | PASS | PASS | PASS | https://data.ichijinsha.co.jp/detail/75802193 |
+| work-bbeeaad9e37ab267dc29 | 僕とロボコ | 9784088825090 | PASS | PASS | PASS | PASS | https://www.shueisha.co.jp/books/items/contents.html?isbn=978-4-08-882509-0 |
+| work-c221a17d6b962b17c9f4 | 屍鬼 | 9784088745497 | PASS | PASS | NEEDS_ADJUDICATION | NEEDS_ADJUDICATION | https://www.shueisha.co.jp/books/items/contents.html?jdcn=08874549874549315501 |
+| work-c55467873ec70e670484 | 大ダーク | 9784091294869 | PASS | PASS | PASS | PASS | https://shogakukan-comic.jp/book?isbn=9784091294869 |
+
+Safety notes kept inside the unresolved inspection boundary: smoking in `work-98b7d2ef065bde405972`, volume-3 sexual-humor notice in `work-a59481c00155de21d75f`, corpses and deaths in `work-c221a17d6b962b17c9f4`, and violent copy in `work-c55467873ec70e670484` are not adult-only classification. No safety-conflict is reported. `work-ad32c71b07fd13c65a79` is the official manga volumes 1–3 only; novel, Revolution, and メイドキッチン remain out of scope. `work-c221a17d6b962b17c9f4` is reviewed as the mapped original 1–3 volume text; absent on-page ISBN is not treated as a different Work.
+
+## 8. Per-work final review outcome
+
+| workId | canonicalTitle | outcome |
+| --- | --- | --- |
+| work-84b7c7d7720447075c25 | 軍靴のバルツァー | needs-adjudication |
+| work-9072892a767332254f00 | flat | insufficient-evidence |
+| work-98b7d2ef065bde405972 | スーパーの裏でヤニ吸うふたり | verified |
+| work-a59481c00155de21d75f | ケロロ軍曹 | needs-adjudication |
+| work-a8349445836546a82934 | 百姓貴族 | needs-adjudication |
+| work-ab95f4d4997113e0687a | 月刊少女野崎くん | needs-adjudication |
+| work-ad32c71b07fd13c65a79 | 私の推しは悪役令嬢。 | needs-adjudication |
+| work-bbeeaad9e37ab267dc29 | 僕とロボコ | needs-adjudication |
+| work-c221a17d6b962b17c9f4 | 屍鬼 | needs-adjudication |
+| work-c55467873ec70e670484 | 大ダーク | needs-adjudication |
+
+## 9. Extremes (0 or 4) and Theme centrality 2
+
+No known 0 values. The packet does not affirmatively certify sustained absence on any axis.
+
+| workId | item | value | direct entry-scope evidence |
+| --- | --- | --- | --- |
+| work-ad32c71b07fd13c65a79 | characterArcWeight | 4 | Yes. Manga volumes 1–3 all center Rei’s motive toward Claire and Claire’s later attitude change: https://data.ichijinsha.co.jp/detail/75802193 ; https://data.ichijinsha.co.jp/detail/75802263 ; https://data.ichijinsha.co.jp/detail/75802318 |
+| work-ad32c71b07fd13c65a79 | romance | 4 | Yes. Attraction, efforts to become close, intervention in Claire’s other relationship, and attitude change are the entry plot on the same three manga URLs |
+| work-c221a17d6b962b17c9f4 | darkness | 4 | Yes. Unexplained corpses, disappearance, twelve deaths in one month, fear of a dead classmate, and grave verification remain the central events: https://www.shueisha.co.jp/books/items/contents.html?jdcn=08874549874549315501 ; https://www.shueisha.co.jp/books/items/contents.html?jdcn=08874550874549315501 ; https://www.shueisha.co.jp/books/items/contents.html?jdcn=08874585874549315501 |
+| work-84b7c7d7720447075c25 | politics | 2 | Yes. Royal faction conflict and service as the second prince’s strategist drive volumes 2–3 after an institutional reform posting: https://www.shinchosha.co.jp/book/771642/ ; https://www.shinchosha.co.jp/book/771671/ |
+| work-98b7d2ef065bde405972 | workplace | 2 | Yes. Supermarket staff, after-work visits, and the smoking area behind the store are the encounter frame in all three volumes: https://magazine.jp.square-enix.com/top/comics/detail/9784757580947/ ; https://magazine.jp.square-enix.com/top/comics/detail/9784757583627/ ; https://magazine.jp.square-enix.com/top/comics/detail/9784757586949/ |
+| work-a8349445836546a82934 | workplace | 2 | Yes. Livestock, cultivation, year-round labor, barns, pasture, harvest, and farm/manga dual work recur: https://www.shinshokan.co.jp/book/b565859.html ; https://www.shinshokan.co.jp/book/b565858.html ; https://www.shinshokan.co.jp/book/b565857.html |
+| work-ab95f4d4997113e0687a | school | 2 | Yes. Classmates and school relationships repeatedly frame the entry cast: https://magazine.jp.square-enix.com/top/comics/detail/9784757535664/ ; https://magazine.jp.square-enix.com/top/comics/detail/9784757537774/ ; https://magazine.jp.square-enix.com/top/comics/detail/9784757539853/ |
+| work-ab95f4d4997113e0687a | workplace | 2 | Yes. Assistant work, manga creation, and editor relationships recur on the volume 1 and volume 3 Square Enix URLs |
+| work-ad32c71b07fd13c65a79 | reincarnation | 2 | Yes. Prior-world identity and knowledge establish the goal and are used again to secure the maid role: https://data.ichijinsha.co.jp/detail/75802193 ; https://data.ichijinsha.co.jp/detail/75802263 |
+| work-c221a17d6b962b17c9f4 | investigation | 2 | Yes. Medical/temple inquiry, rejection of the epidemic explanation, and a planned grave inspection advance the conflict across the three JDCN URLs |
+| work-c55467873ec70e670484 | adventure | 2 | Yes. Space travel, hostile ships, new encounters, and rescue movement expand the early journey: https://shogakukan-comic.jp/book?isbn=9784091294869 ; https://shogakukan-comic.jp/book?isbn=9784098502158 ; https://shogakukan-comic.jp/book?isbn=9784098504961 |
+| work-c55467873ec70e670484 | combat | 2 | Yes. Attackers, violent response, rampage, and rescue infiltration repeatedly drive the conflict on the volume 1 and volume 3 Shogakukan URLs |

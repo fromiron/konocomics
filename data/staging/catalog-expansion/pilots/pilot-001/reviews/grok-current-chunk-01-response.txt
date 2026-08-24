@@ -1,0 +1,121 @@
+sessionId=4b544f95-450d-45a6-8770-c7109a55d624
+model=cursor-grok-4.6-high
+resolvedLabel=Cursor Grok 4.6
+mode=plan
+fast=false
+completionStatus=SUCCESS_AFTER_RESUME
+candidateSha256=aaf4f4a4845ec105b8218f0f9e8358a2ae95c5823519e68e1752acada6e22529
+artAccess=abstained
+**Model ID:** Cursor Grok 4.6 High non-fast  
+**Candidate SHA-256:** `aaf4f4a4845ec105b8218f0f9e8358a2ae95c5823519e68e1752acada6e22529`  
+**Scope:** volumes 1–3 or first major episode. Art = `unknown` on all 10 (ART_ABSTAIN). Titles have no decorative `『』`.
+
+Axis order — Narrative: `progression, problemSolving, strategy, pacing, mysteryReveal, worldBuilding`. Tone: `characterArcWeight, relationshipStructure, comedy, darkness, mentalStress, romance, emotionalWarmth`. `u` = unknown.
+
+---
+
+### 1. `work-0262dcaa820443c3185d` — ゴルゴ13 — **VERIFIED**
+- **N:** 0, 2, 2, 4, u, 2 (**5/6**)
+- **T:** 0, 0, 0, 3, 1, 0, 0 (**7/7**)
+- **Genre:** `action`
+- **Themes:** `combat:2`, `workplace:2`, `politics:1`
+- **Pass A:** accept all 13 non-Art values, Genre, Themes. Reject Art knowns → `unknown` (no pixel access). Accept `mysteryReveal=u` (do not fill 0).
+- **Identity:** OK. **Safety:** OK (killing ≠ adult-only; packet `safe`). **ISBN:** OK `9784845800018` standard vol.1 `1989-03-01`.
+- **Conflicts:** none. **Coverage:** PASS.
+
+### 2. `work-9d5d64262dbc2893acd4` — ポーの一族 — **VERIFIED**
+- **N:** u, u, 2, 3, 2, 3 (**4/6**)
+- **T:** 3, 3, u, 3, 3, 2, u (**5/7**)
+- **Genre:** `fantasy;horror`
+- **Themes:** none
+- **Pass A:** accept `mysteryReveal=2`, `worldBuilding=3`, `characterArcWeight=3`, `relationshipStructure=3`, `darkness=3`, Genre, empty Themes, remaining u. Correct `strategy u→2`, `pacing u→3`, `mentalStress u→3`, `romance u→2` from official vols 1–3 (recruit/conceal plans; 1880→origin→1959 school; persecution/exposure; Frank–Sheila subplot). Keep `comedy`/`emotionalWarmth`/`progression`/`problemSolving` u.
+- **Identity:** OK (sequels separate). **Safety:** OK. **ISBN:** OK `9784091300010` standard vol.1 `1974-05-28`.
+- **Conflicts:** none. **Coverage:** PASS.
+
+### 3. `work-98d513b70560f2f96a38` — 漂流教室 — **NEEDS_ADJUDICATION**
+- **N:** u, 2, u, 3, 2, 3 (**4/6**)
+- **T:** u, 4, u, 4, 4, u, u (**3/7**)
+- **Genre:** `scienceFiction;horror`
+- **Themes:** `survival:2`, `postApocalypse:2`
+- **Pass A:** accept all listed N/T/Genre/Themes; accept not converting omitted comedy/romance/warmth to 0. Reject coverage-gap `characterArcWeight=2` and `emotionalWarmth=2` (S05 compiled omnibus / S06 bunko unmapped to original 1–3).
+- **Identity:** OK. **Safety:** OK (child peril ≠ adult-only). **ISBN:** OK `9784091200013` standard vol.1 `1974-05-30`.
+- **Conflicts:** Tone short vs unused original-volume copy/preview. **Coverage:** FAIL.
+
+### 4. `work-f50fa290eb4116a7078e` — 11人いる！ — **NEEDS_ADJUDICATION**
+- **N:** 0, 3, u, u, 4, 2 (**4/6**)
+- **T:** 3, 4, u, 2, 4, u, 2 (**5/7**)
+- **Genre:** `scienceFiction;mystery`
+- **Themes:** `investigation:2`, `survival:2`
+- **Pass A:** accept N knowns, `relationshipStructure=4`, `darkness=2`, `mentalStress=4`, Genre, Themes; keep `pacing`/`strategy`/`comedy`/`romance` u. Correct `characterArcWeight u→3`, `emotionalWarmth u→2` from official article (prejudice/friendship/identity) plus original-only user reviews. Factor scope = original story only, not sequel.
+- **Identity:** Work OK; representative binds sequel. **Safety:** OK. **ISBN:** `9784091788115` complete, blank `volumeNumber`, `1986-10-15`; work year 1975. Not original numbered vol.1.
+- **Conflicts:** complete-edition co-bind. **Coverage:** PASS (original = first major episode).
+
+### 5. `work-a089c0eef91d1213da38` — うる星やつら — **VERIFIED**
+- **N:** 0, 0, 0, 3, 0, 2 (**6/6**)
+- **T:** 2, 3, 4, 0, 1, 4, u (**6/7**)
+- **Genre:** `scienceFiction;comedy;romance`
+- **Themes:** `school:1`
+- **Pass A:** accept all 13 non-Art, Genre, Theme, including `emotionalWarmth=u`. User reviews only corroborate comedy/pacing.
+- **Identity:** OK. **Safety:** OK (jokes/exposure ≠ adult-only). **ISBN:** OK `9784091204417` standard vol.1; `releaseDate` blank.
+- **Conflicts:** none. **Coverage:** PASS.
+
+### 6. `work-671e3453cf9e1df2ee87` — 陽だまりの樹 — **INSUFFICIENT_EVIDENCE**
+- **N:** u, u, u, u, u, 4 (**1/6**)
+- **T:** 4, 2, u, 2, u, u, u (**3/7**)
+- **Genre:** `historical`
+- **Themes:** `historicalReconstruction:2`, `politics:1`
+- **Pass A:** accept all known/unknown. Reject coverage-gap fills (`pacing`/`problemSolving`/`progression`/`comedy`/`romance`/`emotionalWarmth`) as whole-work/opening-only drift. Do not fill for coverage.
+- **Identity:** OK. **Safety:** OK. **ISBN:** `9784091806017` standard vol.1; `releaseDate` blank (JPO vs NDL day conflict).
+- **Conflicts:** only one official page; volume blurbs/preview unused. **Coverage:** FAIL.
+
+### 7. `work-14e489bf1afd1587c44a` — YAWARA！ — **NEEDS_ADJUDICATION**
+- **N:** 4, u, u, u, 0, 0 (**3/6**)
+- **T:** 4, 3, 3, 0, 2, 2, u (**6/7**)
+- **Genre:** `sports;comedy;romance`
+- **Themes:** `sportsCompetition:2`
+- **Pass A:** accept all 13 non-Art, Genre, Theme. Reject adding `strategy=2` from unmapped complete e-vol 2. User reviews out of scope.
+- **Identity:** OK. Title uses fullwidth `！` (not `『』`). **Safety:** OK. **ISBN:** OK `9784091813411` standard vol.1 `1987-04-30`.
+- **Conflicts:** Narrative short vs unused original vols 2–3. **Coverage:** FAIL.
+
+### 8. `work-ad2b80b81b7bc9b602a3` — Papa told me — **VERIFIED**
+- **N:** 0, u, u, 1, 0, 0 (**4/6**)
+- **T:** 4, 2, 2, 0, u, u, 4 (**5/7**)
+- **Genre:** `sliceOfLife`
+- **Themes:** none (not `foundFamily`)
+- **Pass A:** accept N knowns and Tone except comedy. Correct `comedy u→2` from official vols 1–2 (repeated mistakes, doting-dad episodes). Keep `romance`/`mentalStress` u. Mixed-scope user reviews not used as known.
+- **Identity:** OK. **Safety:** OK. **ISBN:** OK `9784088640136` standard vol.1 `1988-02-19`. Serialization-start year not independently verified.
+- **Conflicts:** none. **Coverage:** PASS.
+
+### 9. `work-39555fe7402dada0d79f` — 名探偵コナン — **VERIFIED**
+- **N:** 0, 4, 2, 3, 4, 2 (**6/6**)
+- **T:** 2, 3, u, 3, 2, 2, u (**5/7**)
+- **Genre:** `mystery`
+- **Themes:** `investigation:2`, `school:1`
+- **Pass A:** accept all N, `relationshipStructure=3`, `darkness=3`, `mentalStress=2`, Genre, Themes; keep `comedy`/`emotionalWarmth` u. Correct `characterArcWeight u→2` (vol.1 origin + repeating cases; reject coverage-gap 1). Correct `romance u→2` from official case archive first date/Ran subplot, not the ラブコメ label. Spin-offs stay separate.
+- **Identity:** OK. **Safety:** OK (murder ≠ adult-only). **ISBN:** OK `9784091233714` standard vol.1 `1994-06-18`.
+- **Conflicts:** none. **Coverage:** PASS.
+
+### 10. `work-4a8a22fc766bf9bc4c59` — 天は赤い河のほとり — **VERIFIED**
+- **N:** u, 2, 3, 3, u, 4 (**4/6**)
+- **T:** 4, 3, u, 3, 3, 4, u (**5/7**)
+- **Genre:** `fantasy;historical;romance`
+- **Themes:** `timeTravel:2`, `politics:2`, `war:1`, `combat:1` (no `historicalReconstruction`)
+- **Pass A:** accept all except `problemSolving`. Correct `problemSolving u→2` from official vols 2–3 (traps, escape, chase, mixed action). Keep `progression`/`mysteryReveal`/`comedy`/`emotionalWarmth` u.
+- **Identity:** OK. **Safety:** OK (war/coercion ≠ adult-only). **ISBN:** OK `9784091365019` standard vol.1 `1995-05-26`.
+- **Conflicts:** none. **Coverage:** PASS.
+
+---
+
+## Totals
+| Status | n |
+|---|---|
+| VERIFIED | **6** |
+| NEEDS_ADJUDICATION | **3** |
+| INSUFFICIENT_EVIDENCE | **1** |
+| IDENTITY_CONFLICT | **0** |
+| SAFETY_CONFLICT | **0** |
+
+- **Coverage-pass (N≥4/6 and T≥5/7):** **7**/10  
+  Fail: 漂流教室 (T 3/7), 陽だまりの樹 (N 1/6, T 3/7), YAWARA！ (N 3/6)
+- **Hard-blocker count:** **0** (shorts still have unused official volume copy, previews, or in-scope reviews)
+- **ART_ABSTAIN:** **10**/10

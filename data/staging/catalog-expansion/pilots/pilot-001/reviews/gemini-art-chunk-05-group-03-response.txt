@@ -1,0 +1,184 @@
+conversationId=039be9ed-61d4-49b6-b940-043a203e8876
+model=gemini-3.7-flash-high
+resolvedLabel=Gemini 3.7 Flash (High)
+effort=high
+pixelAccess=actual-local-png
+completionStatus=SUCCESS
+candidateSha256=aaf4f4a4845ec105b8218f0f9e8358a2ae95c5823519e68e1752acada6e22529
+
+{
+  "candidateSha256": "aaf4f4a4845ec105b8218f0f9e8358a2ae95c5823519e68e1752acada6e22529",
+  "exactModel": "gemini-3.7-flash-high",
+  "resolvedLabel": "Gemini 3.7 Flash (High)",
+  "effort": "high",
+  "completionStatus": "SUCCESS",
+  "pixelFiles": [
+    {
+      "workId": "work-268e1fa3599955359969",
+      "path": "output/playwright/pilot-art/chunk-05/futsu-keion/page-area-16.png",
+      "sha256": "3d931e3b88219f59febc908693260bd1cfad3694af925258d2dfb6be48960238"
+    },
+    {
+      "workId": "work-268e1fa3599955359969",
+      "path": "output/playwright/pilot-art/chunk-05/futsu-keion/page-area-17.png",
+      "sha256": "923b0185f74b9373682ed866908473038b23db0db1f8e344bfa19a4d388c6ba3"
+    },
+    {
+      "workId": "work-268e1fa3599955359969",
+      "path": "output/playwright/pilot-art/chunk-05/futsu-keion/page-area-30.png",
+      "sha256": "97748d35a8675b6949a71d4c18a0fb859d80fdea3bccd1c7dbdfa491a0e324e0"
+    },
+    {
+      "workId": "work-268e1fa3599955359969",
+      "path": "output/playwright/pilot-art/chunk-05/futsu-keion/page-area-31.png",
+      "sha256": "be28da49e8a1697e71bb5c60bb2d68bbe582afef7b1280470e34f9544621e24c"
+    },
+    {
+      "workId": "work-268e1fa3599955359969",
+      "path": "output/playwright/pilot-art/chunk-05/futsu-keion/page-area-44.png",
+      "sha256": "3e1eaabbccafca1fd15a26931d992fb5d6496fb8101353ffb97d4840f2b3adae"
+    },
+    {
+      "workId": "work-268e1fa3599955359969",
+      "path": "output/playwright/pilot-art/chunk-05/futsu-keion/page-area-45.png",
+      "sha256": "b255857a4db5def9ff88c878a20c1f87a54a07b0d36e414ceeb2ba64adeb234f"
+    },
+    {
+      "workId": "work-192cbecc59e9c028142b",
+      "path": "output/playwright/pilot-art/chunk-05/hon-nara/page-02.png",
+      "sha256": "153e37559e18d155f73e145ed7ab02d8add70e37c90b1cb886387c187d7fec36"
+    },
+    {
+      "workId": "work-192cbecc59e9c028142b",
+      "path": "output/playwright/pilot-art/chunk-05/hon-nara/page-03.png",
+      "sha256": "36718d09ae9045b371a951edd12285744bd58e1e00dad6bfa808dbfbff71974b"
+    },
+    {
+      "workId": "work-192cbecc59e9c028142b",
+      "path": "output/playwright/pilot-art/chunk-05/hon-nara/page-14.png",
+      "sha256": "82ff9035b60fca01af9141eace6721e0b64729754ef25d68377c8a141f5014e8"
+    },
+    {
+      "workId": "work-192cbecc59e9c028142b",
+      "path": "output/playwright/pilot-art/chunk-05/hon-nara/page-15.png",
+      "sha256": "9f3dc1e5c0dad8e86326d2ab976027f32d107b3f244191b0376a64cc377545e4"
+    },
+    {
+      "workId": "work-192cbecc59e9c028142b",
+      "path": "output/playwright/pilot-art/chunk-05/hon-nara/page-26.png",
+      "sha256": "86a7a26604d15b79caada3e7580b9f2f089bff7308df443184ef80458bbb7359"
+    },
+    {
+      "workId": "work-192cbecc59e9c028142b",
+      "path": "output/playwright/pilot-art/chunk-05/hon-nara/page-27.png",
+      "sha256": "7171872db63653ef8e9583818f8f9872979d137db689dab29779a089db8195bf"
+    }
+  ],
+  "works": [
+    {
+      "workId": "work-268e1fa3599955359969",
+      "title": "ふつうの軽音部",
+      "gateQualified": true,
+      "axes": {
+        "artRealism": {
+          "state": "known",
+          "value": 1,
+          "refs": [
+            "page-area-16.png",
+            "page-area-17.png",
+            "page-area-30.png",
+            "page-area-31.png",
+            "page-area-44.png",
+            "page-area-45.png"
+          ],
+          "reason": "Character features exhibit recurring simplified cartoon deformation (e.g. minimalist dot/line eyes, exaggerated comedy reaction faces, and schematic silhouettes) while retaining recognizable teenage school anatomy and uniform proportions, placing it at 1 between heavy deformation (0) and conventional manga stylization (2)."
+        },
+        "artDensity": {
+          "state": "known",
+          "value": 2,
+          "refs": [
+            "page-area-16.png",
+            "page-area-17.png",
+            "page-area-30.png",
+            "page-area-31.png",
+            "page-area-44.png",
+            "page-area-45.png"
+          ],
+          "reason": "Balanced visual density with functional classroom and hallway backgrounds (desks, window frames, audiovisual lecture seating), clear panel structuring, and ample readable open space."
+        },
+        "visualSoftness": {
+          "state": "known",
+          "value": 3,
+          "refs": [
+            "page-area-16.png",
+            "page-area-17.png",
+            "page-area-30.png",
+            "page-area-31.png",
+            "page-area-44.png",
+            "page-area-45.png"
+          ],
+          "reason": "Clean, rounded linework, gentle contouring on hair and facial expressions, and light tonal fills leaning noticeably softer than neutral without harsh angular hatching."
+        },
+        "motionImpact": {
+          "state": "unknown",
+          "value": null,
+          "refs": [],
+          "reason": "Sampled pages capture school hallway conversations, classroom seating, and club recruitment exchanges; no continuous dynamic action or music performance sequence with verified start and end points is present in the sample."
+        }
+      }
+    },
+    {
+      "workId": "work-192cbecc59e9c028142b",
+      "title": "本なら売るほど",
+      "gateQualified": true,
+      "axes": {
+        "artRealism": {
+          "state": "known",
+          "value": 3,
+          "refs": [
+            "page-02.png",
+            "page-03.png",
+            "page-14.png",
+            "page-15.png",
+            "page-26.png",
+            "page-27.png"
+          ],
+          "reason": "Naturalistic anatomical proportions, realistic rendering of bone structure, facial planes, varied ages, and observed body postures (e.g. glove donning, book inspection, seated appraisal) distinctly leaning toward realism above standard manga stylization (2)."
+        },
+        "artDensity": {
+          "state": "known",
+          "value": 3,
+          "refs": [
+            "page-02.png",
+            "page-03.png",
+            "page-14.png",
+            "page-15.png",
+            "page-26.png",
+            "page-27.png"
+          ],
+          "reason": "Rich inking density featuring fine crosshatching, detailed book stacks and shelving, precise wrist watch mechanics, ex-libris stamp woodcuts, and plant foliage exceeding standard balanced density."
+        },
+        "visualSoftness": {
+          "state": "known",
+          "value": 2,
+          "refs": [
+            "page-02.png",
+            "page-03.png",
+            "page-14.png",
+            "page-15.png",
+            "page-26.png",
+            "page-27.png"
+          ],
+          "reason": "Neutral linework aesthetic combining firm, crisp ink strokes, structured hatching, and solid contour definition without excessive harshness or delicate softness."
+        },
+        "motionImpact": {
+          "state": "unknown",
+          "value": null,
+          "refs": [],
+          "reason": "Sampled pages depict quiet bookstore retail, book sorting/packing procedures, checking watch times, and conversational appraisal; no continuous dynamic action sequence with bounded start and end frames is present in the sample."
+        }
+      }
+    }
+  ],
+  "issues": []
+}

@@ -1,0 +1,402 @@
+sessionId=1aefeb2a-577f-40d6-aacf-d6fb62c238e1
+model=cursor-grok-4.6-high
+resolvedLabel=Cursor Grok 4.6
+mode=plan
+fast=false
+completionStatus=SUCCESS_AFTER_RESUME
+firstResponseStatus=REJECTED_INCOMPLETE_PROCESS_NARRATION
+candidateSha256=aaf4f4a4845ec105b8218f0f9e8358a2ae95c5823519e68e1752acada6e22529
+artAccess=abstained
+
+# Pilot 001 chunk 03 — current-SHA independent Pass B
+
+- **Model ID:** Cursor Grok 4.6 High non-fast (`cursor-grok-4.6-high`)
+- **Candidate SHA-256:** `aaf4f4a4845ec105b8218f0f9e8358a2ae95c5823519e68e1752acada6e22529`
+- **Scope:** volumes 1–3 or first major episode
+- **Art:** `ART_ABSTAIN` 10/10. Art values are not reused and do not enter the text verdict.
+- **Titles:** no decorative `『』`
+- **Text coverage gate:** Narrative `>=4/6`, Tone `>=5/7`
+- **Full promotion authorization (`recommendationVerified`):** 0/10. Text `VERIFIED` is not promotion.
+
+Axis order — Narrative: `progression / problemSolving / strategy / pacing / mysteryReveal / worldBuilding`. Tone: `characterArcWeight / relationshipStructure / comedy / darkness / mentalStress / romance / emotionalWarmth`. `U` = `unknown`.
+
+---
+
+## 1. `work-07b11ec79f10c7eb7e05` — かくかくしかじか — **NEEDS_ADJUDICATION**
+
+- **workId:** `work-07b11ec79f10c7eb7e05`
+- **canonicalTitle:** かくかくしかじか
+- **verdict:** NEEDS_ADJUDICATION
+- **final Genre:** `sliceOfLife`
+- **final Themes:** `school=2`
+- **Narrative:** `3 / U / U / 3 / U / 2` = **3/6**
+- **Tone:** `4 / 2 / U / U / 2 / U / U` = **3/7**
+- **text coverage:** **FAIL**
+- **identity:** OK. Paper vol.1 2012-07-25 matches 集英社. Unresolved serialization-start year is not an identity conflict.
+- **safety:** OK. Cocohana / 少女・女性, ungated reader, safety row `safe`. Strict instruction, grief, regret are sensitivity notes, not adult-only. No safety change.
+- **representative ISBN:** `9784087824575` (standard vol.1, 2012-07-25)
+- **blocker candidate:** **no** — official vol.1 reader `https://www.shueisha.co.jp/books/reader/main.php?cid=9784087824575` and official vols 2–3 copy remain unexhausted for `problemSolving`, `comedy`, and `emotionalWarmth`
+- **ART_ABSTAIN**
+
+**Accepted**
+- Genre `sliceOfLife` — official vol.1 frames high-school art training, a strict teacher, and a manga-artist dream as everyday school/training life, not adventure or speculative mechanism. [集英社 vol.1](https://www.shueisha.co.jp/books/items/contents.html?isbn=978-4-08-782457-5&mode=1)
+- Theme `school=2` — high school and the teacher–student training relation are the entry premise. Same page. Later professional life is not imported as `workplace`
+- `progression=3` — vols 1–3: training starts, entrance exam passed, art school completed, then unemployment/return. Between gradual 2 and reward-max 4. Vol.1 + [vol.2](https://www.shueisha.co.jp/books/items/contents.html?isbn=978-4-08-782653-1) + [vol.3](https://books.shueisha.co.jp/items/contents.html?isbn=978-4-08-782746-0)
+- `pacing=3` — CG34-09. Those three official volumes move training → admission → graduation → return/unemployment. Above ordinary single-arc 2, below short-interval 4
+- `worldBuilding=2` — CG34-09. Art tutoring, entrance examination, and art-school institutions constrain the path. Functional setting, not a Genre inference
+- `characterArcWeight=4` — autobiographical dream, training, and teacher relation are the stated dramatic reward in official entry copy
+- `relationshipStructure=2` — fixed student–teacher core; no ensemble evidence
+- `mentalStress=2` — vol.1 「厳格な美術教師」 plus vol.2 「過酷な訓練」. Mixed pressure from official volumes, not whole-work regret language alone
+
+**Rejected / corrected**
+- Pass A `comedy=2` — **REJECT TO UNKNOWN**. Humor is only in マンガ大賞2015 whole-work jury commentary ([comment2015.pdf](https://www.mangataisho.com/data/2015/comment2015.pdf)), not scoped to vols 1–3. Award selection is not Factor Evidence
+- Pass A `emotionalWarmth=3` — **REJECT TO UNKNOWN**. Warmth is jury-only. Official 1–3 copy establishes a mentor relation and a reunion, not bond/healing as a repeated payoff
+- CG34-09 `problemSolving=1` — **REJECT TO UNKNOWN**. Training/exam persistence is the `progression` mechanism. Facing training tasks is not constraint-analysis or mixed solving
+- `strategy`, `mysteryReveal`, `darkness`, `romance` remain **UNKNOWN**. Synopsis omission is not 0
+- Art: **ART_ABSTAIN**
+
+**Limitation:** Narrative 3/6 and Tone 3/7 fail because comedy/warmth/problemSolving cannot be closed from synopsis plus whole-work jury.
+
+---
+
+## 2. `work-205e576ef057e3aed1ab` — 坂道のアポロン — **VERIFIED** (text only)
+
+- **workId:** `work-205e576ef057e3aed1ab`
+- **canonicalTitle:** 坂道のアポロン
+- **verdict:** VERIFIED
+- **final Genre:** `historical;romance`
+- **final Themes:** `school=2`
+- **Narrative:** `U / 0 / 0 / 2 / U / 2` = **4/6**
+- **Tone:** `4 / 2 / U / U / 2 / 3 / 2` = **5/7**
+- **text coverage:** **PASS**
+- **identity:** OK. Paper representative date 2008-04-25 must not be replaced by the 2013-01-01 JDCN electronic date. Bibliography 2007 serialization vs 2008 tankōbon is not a conflict
+- **safety:** OK. 月刊flowers / 少女・女性マンガ, ungated reader, safety row `safe`. School distress is a sensitivity note
+- **representative ISBN:** `9784091316707` (standard vol.1, 2008-04-25)
+- **blocker candidate:** **no**
+- **ART_ABSTAIN**
+
+**Accepted**
+- Genres `historical;romance` — official store places the entry in 1966 and classifies `歴史モノ` / `恋愛`. [e-comi vol.1](https://e-comi.shogakukan.co.jp/books/091316700000d0000000). Genre labels are not converted into Axis values
+- Theme `school=2` — transfer student whose high-school life is changed by a meeting. Same page
+- `characterArcWeight=4`, `relationshipStructure=2`, `mentalStress=2` — school pain plus a small set of consequential relationships as the human-drama reward
+- `romance=3` — official vols 1–3 describe unrequited feeling and crossed romance as a major thread beside jazz/friendship, not the sole maximum. Axis is from plot structure, not from copying Genre `romance`
+- `pacing=2` — CG34-03 proposed 3; **corrected to 2**. Friendship/romance change across three volumes is ordinary arc scale. Vols [1](https://e-comi.shogakukan.co.jp/books/091316700000d0000000), [2](https://e-comi.shogakukan.co.jp/books/091321740000d0000000), [3](https://e-comi.shogakukan.co.jp/books/091322680000d0000000)
+- `worldBuilding=2` — 1966 Kyushu and jazz practice functionally constrain where they go and who they meet. Not inferred from `historical`
+- `emotionalWarmth=2` — CG34-03. Jazz-mediated friendship deepens while conflict and unrequited feeling remain
+- Follow-up C `problemSolving=0` — **ACCEPT**. Inspected vol.1 sample: rooftop/bully obstacle resolved by force, then a relationship gesture (key). Dictionary 0 is 우연·힘·감정적 결단. Follow-up-C review records the same mechanism. Not a zero from `romance`/`historical`
+- Follow-up C `strategy=0` — **ACCEPT**. Sampled entry actions are immediate (confront/flee, accept key, choose rehearsal, answer family questions). No short tactical or long-horizon plan organizes the inspected range
+
+**Rejected**
+- CG34-03 `progression=2` — **REJECT TO UNKNOWN**. Relationship/emotional change is already `characterArcWeight`. Playing jazz is not a repeated acquisition/mastery loop
+- CG34-03 `mysteryReveal=0` — **REJECT TO UNKNOWN**. Three product synopses are not an exhaustive absence proof
+- `comedy`, `darkness` remain **UNKNOWN**
+- Art: **ART_ABSTAIN**
+
+**Limitation:** Vol.1 preview sample is substantial; vols 2–3 page samples are short openings. `strategy=0` / `problemSolving=0` rest on vol.1’s first major episode plus non-planning vol 2–3 copy.
+
+---
+
+## 3. `work-3823ff0766f67c015c53` — ましろのおと — **NEEDS_ADJUDICATION**
+
+- **workId:** `work-3823ff0766f67c015c53`
+- **canonicalTitle:** ましろのおと
+- **verdict:** NEEDS_ADJUDICATION
+- **final Genre:** *(empty)*
+- **final Themes:** `school=2`
+- **Narrative:** `3 / U / U / 3 / U / 2` = **3/6**
+- **Tone:** `4 / 2 / U / U / 2 / 1 / 2` = **5/7**
+- **text coverage:** **FAIL** (Narrative short; Genre also empty)
+- **identity:** OK. ISBN `9784063712612` and 2010-10-15 match 講談社. Direct HTTP 403 on automated fetch is an access limitation, not a conflict
+- **safety:** OK. 月刊少年マガジン, ungated first chapter, safety row `safe`. Bereavement is a sensitivity note
+- **representative ISBN:** `9784063712612` (standard vol.1, 2010-10-15)
+- **blocker candidate:** **no** — official first-chapter campaign pages and vols 2–3 copy remain for `problemSolving` and a canonical Genre test
+- **ART_ABSTAIN**
+
+**Accepted**
+- `progression=3` — lose the grandfather/mentor and “own sound,” then seek it through new encounters. [講談社 vol.1](https://www.kodansha.co.jp/comic/products/0000043275) + [今日のおすすめ first-chapter editorial](https://news.kodansha.co.jp/comics/9461)
+- `characterArcWeight=4`, `relationshipStructure=2`, `mentalStress=2` — bereavement and identity loss are the core character reward, with recurring encounters and a forward journey rather than breakdown
+- `pacing=3` — CG34-07. Vol.1 relocation/search → [vol.2](https://www.kodansha.co.jp/comic/products/0000043280) school-club founding → [vol.3](https://www.kodansha.co.jp/comic/products/0000043295) tournament prep. マンガ大賞2011 comments are explicitly scoped to then-published vols 1–2 and note rapid life/status change
+- `worldBuilding=2` — Tsugaru-shamisen repertoire, practice, club organization, and competition culture functionally constrain the entry. Music is not a Theme id
+- `romance=1`, `emotionalWarmth=2` — CG34-07. Same 2011 entry-scoped comments name Yuna feelings (subordinate) and brother reconciliation/warmth mixed with conflict
+- Theme `school=2` — **ACCEPT as follow-up addition**. Official vols 2–3 make school-club founding and 松吾郎杯 practice the repeating structure. Not present in Pass A
+
+**Rejected**
+- Genre assignment — **REJECT / leave empty**. `青春` and music are not Dictionary Genres. School-club life is not automatically `sliceOfLife` or `sports`
+- Theme `adventure` from the word “journey” — **REJECT**
+- CG34-07 `problemSolving=1` — **REJECT TO UNKNOWN**. Vol.3 only says the club *faces* member/instructor shortages. Facing a constraint is not a demonstrated solving process and would double-count `progression`
+- `strategy`, `mysteryReveal`, `comedy`, `darkness` remain **UNKNOWN**
+- Art: **ART_ABSTAIN**
+
+---
+
+## 4. `work-61f2b70ee9f8217b3604` — 銀の匙 Silver Spoon — **VERIFIED** (text only)
+
+- **workId:** `work-61f2b70ee9f8217b3604`
+- **canonicalTitle:** 銀の匙 Silver Spoon
+- **verdict:** VERIFIED
+- **final Genre:** `sliceOfLife`
+- **final Themes:** `school=2`
+- **Narrative:** `3 / 2 / U / 2 / U / 3` = **4/6**
+- **Tone:** `3 / 2 / U / 1 / 2 / U / 3` = **5/7**
+- **text coverage:** **PASS**
+- **identity:** OK. ISBN and 2011-07-15 match 小学館. Award listing is provenance only
+- **safety:** OK. 週刊少年サンデー, ungated reader, safety row `safe`. Slaughter/animal death/school strain are sensitivity notes, not adult-only
+- **representative ISBN:** `9784091231802` (standard vol.1, 2011-07-15)
+- **blocker candidate:** **no**
+- **ART_ABSTAIN**
+
+**Accepted**
+- Genre `sliceOfLife` — repeated agricultural-school lessons, livestock, classmates, daily struggle. [小学館 vol.1](https://shogakukan-comic.jp/book?isbn=9784091231802). Not a mechanical map from 少年サンデー
+- Theme `school=2` — enrollment and practical curriculum are the recurring entry structure
+- `progression=3`, `characterArcWeight=3`, `relationshipStructure=2`, `emotionalWarmth=3` — unfamiliar practice and learning the value of life, peer/animal help, struggle. Warmth is mixed, not healing-max 4
+- CG34-08 `problemSolving=2` — agricultural labor, livestock constraints, and the vol.3 pig-to-meat decision require practical knowledge plus direct action. Mixed anchor, not ingenious-solution 4. [vol.3](https://shogakukan-comic.jp/book?isbn=9784091236531)
+- `pacing=2` — school → summer farm work → livestock decision at ordinary arc scale. [vol.2](https://shogakukan-comic.jp/book?isbn=9784091234278)
+- `worldBuilding=3` — agricultural school, labor, livestock, production, and food rules repeatedly drive decisions. Above functional 2; not maximally elaborate 4
+- `darkness=1`, `mentalStress=2` — slaughter/economic reality is bounded seriousness (between bright 0 and tragedy-centered 2); unresolved purpose and life/food choice are mixed pressure. Positive presence, not omission-as-0
+
+**Rejected**
+- Theme `workplace` from agricultural practice — **REJECT**. It remains school activity in the entry
+- `strategy`, `mysteryReveal`, `comedy`, `romance` remain **UNKNOWN**. Unfamiliar tasks are not `strategy`
+- Art: **ART_ABSTAIN**
+
+---
+
+## 5. `work-a7a1e0666169f1b2e8c0` — 海街diary — **VERIFIED** (text only)
+
+- **workId:** `work-a7a1e0666169f1b2e8c0`
+- **canonicalTitle:** 海街diary
+- **verdict:** VERIFIED
+- **final Genre:** `sliceOfLife`
+- **final Themes:** `foundFamily=2`
+- **Narrative:** `U / 2 / 1 / 1 / U / 1` = **4/6**
+- **Tone:** `4 / 3 / U / 1 / 2 / U / 3` = **5/7**
+- **text coverage:** **PASS**
+- **identity:** OK. ISBN `9784091670250`, tankōbon 2007-04-26; bibliography 2006 serialization start is not a conflict
+- **safety:** OK. flowers / 少女・女性マンガ, ungated reader, safety row `safe`. Bereavement/family rupture are sensitivity notes
+- **representative ISBN:** `9784091670250` (standard vol.1, 2007-04-26)
+- **blocker candidate:** **no**
+- **ART_ABSTAIN**
+
+**Accepted**
+- Pass A `characterArcWeight=4`, `relationshipStructure=3`, `darkness=1`, `mentalStress=2`, `emotionalWarmth=3` — father’s death, three-then-four sisters, gentleness/bonds. Darkness 1 is a parental death inside a gentle frame. [小学館 vol.1](https://shogakukan-comic.jp/book?isbn=9784091670250)
+- CG34-05 `pacing=1` — official vol.3 says a year passes and the sisters’ time accumulates slowly. [vol.3](https://shogakukan-comic.jp/book?isbn=9784091670403). Between little-change 0 and ordinary-arc 2
+- Follow-up C `problemSolving=2` — **ACCEPT**. Edition-matched vol.1 sample: inheritance constraints (property, debt, legal heirs, consent, registration) plus the eldest sister’s direct confrontation. Mix of analysis and action = Dictionary 2, not 4
+- Follow-up C-review `strategy=1` — **ACCEPT AS CORRECTION**
+- Follow-up C `worldBuilding=1` — **ACCEPT**. Inheritance law, funeral procedure, travel, and household arrangements briefly constrain the episode; Kamakura seasons are not a repeated rule-system 2
+- Genre `sliceOfLife` — **ACCEPT from episode structure** (meals, bathing, travel, funeral tasks, household time in vols 1–3), not from the publisher label `ヒューマンドラマ`
+- Theme `foundFamily=2` — **ACCEPT**. Pass A correctly refused “biological family = foundFamily.” New evidence: previously separate half-sister Suzu is taken into the three older sisters’ household; vol.2 confirms the new shared life; vol.3 returns the four as the continuing unit. Reconstituted household after loss
+
+**Rejected**
+- CG34-05 `progression=2` — **REJECT TO UNKNOWN**. Suzu’s adaptation is character/relationship reward, not a mastery loop
+- CG34-05 `mysteryReveal=0` — **REJECT TO UNKNOWN**. Synopsis silence is not absence proof
+- Follow-up C `strategy=0` — **REJECT**. The same vol.1 sample contains a short procedural estate plan (follow-up-C review, printed pages 28–29). Wholly reactive 0 is false
+- `strategy=1` is the Dictionary between-anchor: one bounded short plan, while main family conflicts still resolve through immediate conversation and moral choice
+- `comedy`, `romance` remain **UNKNOWN**
+- Art: **ART_ABSTAIN**
+
+---
+
+## 6. `work-d7e64b0b5479ca943edd` — 深夜食堂 — **VERIFIED** (text only)
+
+- **workId:** `work-d7e64b0b5479ca943edd`
+- **canonicalTitle:** 深夜食堂
+- **verdict:** VERIFIED
+- **final Genre:** `sliceOfLife`
+- **final Themes:** `cooking=2; workplace=2`
+- **Narrative:** `0 / U / U / 2 / 0 / 2` = **4/6**
+- **Tone:** `3 / 2 / U / 1 / 1 / U / 3` = **5/7**
+- **text coverage:** **PASS**
+- **identity:** OK. ISBN and 2007-12-26 match; bibliography 2006 serialization is not a conflict
+- **safety:** OK. ビッグコミックオリジナル, ungated reader, safety row `safe`. Nightlife/alcohol/possible crime or grief are not adult-only distribution
+- **representative ISBN:** `9784091817075` (standard vol.1, 2007-12-26)
+- **blocker candidate:** **no**
+- **ART_ABSTAIN**
+
+**Accepted**
+- Genre `sliceOfLife` from fourteen food-titled human stories, not from `グルメ` as a Genre. [小学館 vol.1](https://shogakukan-comic.jp/book?isbn=9784091817075)
+- Themes `cooking=2`, `workplace=2` — requested dishes and the recurring diner/proprietor organize vol.1 and repeat in [vol.2](https://shogakukan-comic.jp/book?isbn=9784091821607) and [vol.3](https://shogakukan-comic.jp/book?isbn=9784091824479)
+- CG34-06 `progression=0` — **ACCEPT**. Official 1–3 contents enumerate ~40 reset patron stories with no cumulative protagonist growth loop. Structural negative, not omission
+- CG34-06 `mysteryReveal=0` — **ACCEPT**. The same enumerated anecdotal-life reward is not clue/reveal structure
+- `worldBuilding=2` — late-night opening, request menu, proprietor, diner space functionally bind every story
+- `characterArcWeight=3` — each episode’s person’s circumstances and emotional turn are a primary reward beside the food frame (vol.2 explicitly includes illness and healing)
+- Pass A `pacing=4` — **REJECT AS TOO HIGH; `pacing=2` ACCEPT**. Episode resets prove ordinary anthology cadence, not uniformly rapid within-story goal/state change
+- Pass A `relationshipStructure=3` — **REJECT AS TOO HIGH; `2` ACCEPT**. Rotating unrelated patrons are not a continuous ensemble; proprietor + repeat diner relation is a stable core at Dictionary 2
+- `emotionalWarmth=3` — official nostalgic/healing frame. Supplemental 1-volume honto reviews (Koukun 2025-05-04, タオミチル 2021-02-27, nico 2022-09-05) independently observe short life-stories with generally gentle landings; used only as alignment
+- `darkness=1`, `mentalStress=1` — illness and loneliness recur at low intensity; short closure and gentle framing block 2+. Official vol.2 names illness; user reviews align on loneliness-with-gentle-landing
+
+**Rejected**
+- `problemSolving`, `strategy`, `comedy`, `romance` remain **UNKNOWN**
+- Art: **ART_ABSTAIN**
+
+---
+
+## 7. `work-ebe399258f28460b8f9b` — 鈴木先生 — **VERIFIED** (text only)
+
+- **workId:** `work-ebe399258f28460b8f9b`
+- **canonicalTitle:** 鈴木先生
+- **verdict:** VERIFIED
+- **final Genre:** `sliceOfLife`
+- **final Themes:** `school=2; workplace=2`
+- **Narrative:** `U / 2 / 2 / 2 / 2 / U` = **4/6**
+- **Tone:** `3 / 3 / 1 / U / 4 / 1 / U` = **5/7**
+- **text coverage:** **PASS**
+- **identity:** OK. ISBN `9784575940237`, creator 武富健治, 2006-08-11 match 双葉社 API. Unresolved serialization-start year is not a conflict
+- **safety:** OK. Ordinary commercial comic; `age_verification=0` is reader metadata, not a content-intensity proof; safety row `safe`. Classroom/psychological/sexual-social issues remain sensitivity notes. No safety change
+- **representative ISBN:** `9784575940237` (standard vol.1, 2006-08-11)
+- **blocker candidate:** **no** — vols 2–3 have `trial_url=null`; remaining unknowns (`progression`, `worldBuilding`, `darkness`, `emotionalWarmth`) are valid terminal unknowns for this gate
+- **ART_ABSTAIN**
+
+**Accepted**
+- Themes `school=2`, `workplace=2` — anxious middle-school classroom and the teacher’s job of handling student problems. [文化庁メディア芸術祭](https://www.j-mediaarts.jp/award/single/suzuki-sensei/index.html) + [双葉社 API vol.1](https://book-api.futabasha.co.jp/book_details?media=1&jdcn_code=97845759402370000000&image_size=330%2055%201000&grouping_media=0). Jury *selection* is provenance; classroom-anxiety and problem-handling sentences are the Factor text
+- `problemSolving=2` — teacher repeatedly works minor and major student problems; Famitsu vol.1 describes thorough thinking and unexpected landings (lunch-menu debate). Not analysis-core 4
+- `characterArcWeight=3`, `relationshipStructure=3`, `mentalStress=4` — continuing teacher anguish, confused students, failed conventional reconciliation. Vol.1 product + Famitsu + independent vol.1 reviews support sustained pressure at 4
+- CG34-01 `pacing=3` — **REJECT AS TOO HIGH; `pacing=2` ACCEPT**. Multiple classroom problems with long discussion are ordinary arc changes
+- CG34-01 `mysteryReveal=2` — **ACCEPT with limitation**. マンガ大賞2008 comments describe logic/answer catharsis analogous to mystery. Bounded reveal-landing beside `problemSolving`, not a detective Genre. Selection provenance unused
+- CG34-01 `comedy=1` — **ACCEPT**. Multiple independent vol.1 reviews (BookLive/Booklog 2019-08-16, 2013-08-12, plus 2011-07-17 / 2011-06-06) observe intermittent absurd humor inside serious discussion. Official serious-classroom frame does not contradict “not comedy-centered”
+- Follow-up C `strategy=2` — **ACCEPT**. CG34 `strategy=1` from “long thought” is **REJECTED as a duplicate of `problemSolving`**. ISBN-matched vol.1 reader (printed pages through 26) shows a declared 2–3 day window, senior consult, repeated lunch observation, seat map, written comparison, and planned return. Dictionary 2 short-term plan, distinct from the solving method
+- Follow-up C `romance=1` — **ACCEPT**. Shared meal with a partner, scarce meetings, later follow-up message. Secondary to the school problem; not subplot-level 2
+- Genre `sliceOfLife` — **ACCEPT from first-episode structure** (ordinary meal, school-lunch dispute, staff consult, classroom observation), not by copying `school`/`workplace`
+
+**Rejected**
+- CG34-01 `emotionalWarmth=1` — **REJECT TO UNKNOWN**. Professional sincerity and failed reconciliation are not bond/healing payoff
+- `progression`, `worldBuilding`, `darkness` remain **UNKNOWN**. Whole-work “no growth/reconciliation” language is not an entry 0
+- Art: **ART_ABSTAIN**
+
+---
+
+## 8. `work-ef7106f6a387c9860877` — その女、ジルバ — **VERIFIED** (text only)
+
+- **workId:** `work-ef7106f6a387c9860877`
+- **canonicalTitle:** その女、ジルバ
+- **verdict:** VERIFIED
+- **final Genre:** `sliceOfLife`
+- **final Themes:** `workplace=2; historicalReconstruction=1`
+- **Narrative:** `3 / U / U / 2 / 2 / 2` = **4/6**
+- **Tone:** `4 / 3 / U / 2 / 3 / U / 3` = **5/7**
+- **text coverage:** **PASS**
+- **identity:** OK. Paper 2013-02-28 vs electronic 2014-11-03 is edition difference, not a conflict. Official news states serialization 2011–2018
+- **safety:** OK. ビッグコミックオリジナル / 少年・青年マンガ, ungated reader, safety row `safe`. Hostess bar, economic precarity, war, migration are mature sensitivity notes, not adult-only sale
+- **representative ISBN:** `9784091850249` (standard vol.1, 2013-02-28)
+- **blocker candidate:** **no**
+- **ART_ABSTAIN**
+
+**Accepted**
+- Genre `sliceOfLife` — 40-year-old woman’s work, money, coworkers, and everyday rebuilding. [e-comi vol.1](https://e-comi.shogakukan.co.jp/books/091850240000d0000000)
+- Theme `workplace=2` — restructuring, warehouse, second job at the bar
+- Theme `historicalReconstruction=1` — official news and 手塚治虫文化賞 copy say wartime/postwar/migration histories are encountered; vols 2–3 make postwar nightlife and Jilba’s past a subordinate strand. Not centrality 2: present-life rebuilding remains the core. [小学館 news](https://shogakukan-comic.jp/news/28579), [朝日/手塚賞](https://book.asahi.com/article/12302977). Award win itself unused
+- `progression=3`, `characterArcWeight=4`, `relationshipStructure=3`, `mentalStress=3`, `emotionalWarmth=3` — recover what was lost; anxiety without savings; singing/dancing/coworkers amid hardship
+- CG34-10 `pacing=2` — layoff/job change → bar adaptation → past inquiry at ordinary arc scale. [vol.2](https://e-comi.shogakukan.co.jp/books/091863530000d0000000), [vol.3](https://e-comi.shogakukan.co.jp/books/091870780000d0000000)
+- `mysteryReveal=2` — vol.3 explicitly makes deceased Jilba’s hidden past a discovery reward, subordinate to life-rebuild
+- `worldBuilding=2` — older-hostess bar, postwar nightlife histories, dual workplaces repeatedly shape choices. Distinct from the Theme: Theme = reconstructed personal histories; Axis = the bar/nightlife rule-setting
+- `darkness=2` — layoff, aging insecurity, war survival, death are material; warmth and renewed agency block darkness-centered 4
+
+**Rejected**
+- `problemSolving`, `strategy`, `comedy`, `romance` remain **UNKNOWN**. Hostess setting does not imply `romance`
+- Art: **ART_ABSTAIN**
+
+---
+
+## 9. `work-f391e591282e435a3c1d` — アイアムアヒーロー — **VERIFIED** (text only)
+
+- **workId:** `work-f391e591282e435a3c1d`
+- **canonicalTitle:** アイアムアヒーロー
+- **verdict:** VERIFIED
+- **final Genre:** `horror`
+- **final Themes:** `survival=2; workplace=1; postApocalypse=1`
+- **Narrative:** `U / U / 0 / 3 / 2 / 2` = **4/6**
+- **Tone:** `2 / 1 / U / 4 / 4 / 2 / U` = **5/7**
+- **text coverage:** **PASS**
+- **identity:** OK. ISBN and 2009-08-28 match Big Comic BROS vol.1. 小学館漫画賞 listing is provenance only
+- **safety:** OK. 週刊スピリッツ, ungated reader, safety row `safe`. Infection, corpses, guns, violence are content warnings, not adult-only classification. No safety change
+- **representative ISBN:** `9784091825803` (standard vol.1, 2009-08-28)
+- **blocker candidate:** **no**
+- **ART_ABSTAIN**
+
+**Accepted**
+- Genre `horror` — official work page defines unexplained infection producing living corpses and people fleeing. [BROS work page](https://bigcomicbros.net/work/6114/). Not auto-`scienceFiction`
+- `survival=2` — flight from infected is the recurring activity by official vols 2–3
+- `workplace=1` — vol.1 manga-assistant job is entry setup, not the later dominant structure. [BROS vol.1](https://bigcomicbros.net/comics/30630/)
+- `postApocalypse=1` — collapse is underway by vol.3 (首都圏日常崩壊 → 孤立) but is not yet the repeating entry core from page 1. Centrality 1 is the entry-accurate cap
+- `worldBuilding=2` — named ZQN infection and living-corpse consequence are a functional rule; cause unknown; not a rich repeated system 4
+- `characterArcWeight=2`, `darkness=4`, `mentalStress=4` — vol.1 fear/anxiety/reality-breaking plus infection/corpses/violence. Darkness is from described events, not from copying Genre `horror`
+- CG34-02 `strategy=0` — **ACCEPT**. Sequential official 1–3: confusion, immediate escape, isolation. Positive improvisation, not a Genre-inferred zero. [vol.2](https://bigcomicbros.net/comics/30631/), [vol.3](https://bigcomicbros.net/comics/30632/)
+- Proposed `pacing=4` — **REJECT AS TOO HIGH; `pacing=3` ACCEPT**. Vol.1 accumulates stagnation then collapses (official + two independent 1-volume reviews: まかろに 2009-09-06, 読書メーター 2025-09-16). Vols 2–3 then rapidly change relationship, workplace, city, location, survival state. Mixed entry sits between ordinary 2 and max 4
+- `mysteryReveal=2` — vol.2 moves from incomprehensible events toward partial understanding, subordinate to survival
+- `relationshipStructure=1` — solitary protagonist with a bounded girlfriend/work network before collapse, below fixed-party 2
+- `romance=2` — reconciliation with the girlfriend and its destruction is an important entry subplot, not the primary reward
+
+**Rejected**
+- `progression`, `problemSolving`, `comedy`, `emotionalWarmth` remain **UNKNOWN**. Escape is not ingenious solving
+- Art: **ART_ABSTAIN**
+
+---
+
+## 10. `work-f5f0ee0b0ff16bc146e0` — ばらかもん — **VERIFIED** (text only)
+
+- **workId:** `work-f5f0ee0b0ff16bc146e0`
+- **canonicalTitle:** ばらかもん
+- **verdict:** VERIFIED
+- **final Genre:** `comedy;sliceOfLife`
+- **final Themes:** `foundFamily=2`
+- **Narrative:** `2 / U / 0 / 2 / U / 2` = **4/6**
+- **Tone:** `4 / 2 / 4 / 0 / U / U / 4` = **5/7**
+- **text coverage:** **PASS**
+- **identity:** OK. ISBN and 2009-07-22 match SQUARE ENIX. Bibliography 2008 one-shot vs 2009 vol.1 is not a conflict
+- **safety:** OK. ガンガン, ungated official first chapter, safety row `safe`
+- **representative ISBN:** `9784757526167` (standard vol.1, 2009-07-22)
+- **blocker candidate:** **no**
+- **ART_ABSTAIN**
+
+**Accepted**
+- Genres `comedy;sliceOfLife` — official vol.1 and work pages repeatedly call it a warm island daily-life comedy. [SQUARE ENIX vol.1](https://magazine.jp.square-enix.com/top/comics/detail/9784757526167/), [ガンガン work page](https://magazine.jp.square-enix.com/gangan/introduction/barakamon/). Comedy Genre does not by itself set `darkness` or `mysteryReveal`
+- `progression=2`, `characterArcWeight=4`, `relationshipStructure=2`, `comedy=4`, `emotionalWarmth=4` — gradual growth as calligrapher and person through island community; comedy as core mode; warmth as core payoff. Supplemental 1-volume reviews (honto 2016-05-31, 2021-09-29; Rakuten 2009-08-03) align on Naru/community loosening Handa with laughter and warmth; official pages remain primary
+- CG34-04 `pacing=2`, `worldBuilding=2` — island episodes and gradual development; local routines and resident relations functionally constrain conduct (tractor, children in the house, neighbor entry, narrow village society)
+- Follow-up C `strategy=0` — **ACCEPT**. Complete official ACT.1 (`33142` / `33139` / `33136`): impulsive punch, anger, apology, following Naru, unplanned calligraphy. Vols 2–3 continue local setbacks (vol.3 contest becomes comic sea fishing). Observed improvisation, not a comedy-Genre zero
+- Follow-up C `darkness=0` — **ACCEPT**. ACT.1 supplies the counterexample check CG34 lacked: punch/water/wall beats resolve immediately into safety or relationship payoff. Official vols 1–3 enumerate low-stakes social/work/fishing conflicts; none makes serious danger or tragedy an entry reward
+- Theme `foundFamily=2` — **ACCEPT**. Pass A correctly refused “residents/children appear.” ACT.1: non-kin child enters the home, conflicts, forgives, helps. Official cast assigns Naru caretaker-like child, Hiroshi meals, village chief’s wife caregiver, Kawafuji friend/manager-like support. Non-kin communal care is a repeated core
+
+**Rejected**
+- CG34-04 `mysteryReveal=0` — **REJECT TO UNKNOWN**. Warm-comedy framing does not exhaustively prove absence of any entry reveal reward
+- `problemSolving` not inferred from “facing difficulties” — remains **UNKNOWN**
+- `mentalStress`, `romance` remain **UNKNOWN**
+- Art: **ART_ABSTAIN**
+
+**Limitation:** `darkness=0` uses complete ACT.1 plus official 1–3 descriptions, not full interiors of vols 2–3.
+
+---
+
+## TSV summary
+
+```tsv
+workId	canonicalTitle	verdict	genres	themes	narrative	n_known	tone	t_known	text_coverage	identity	safety	isbn	blocker	art
+work-07b11ec79f10c7eb7e05	かくかくしかじか	NEEDS_ADJUDICATION	sliceOfLife	school=2	3/U/U/3/U/2	3/6	4/2/U/U/2/U/U	3/7	FAIL	OK	OK	9784087824575	no: official vol.1 reader unexhausted	ART_ABSTAIN
+work-205e576ef057e3aed1ab	坂道のアポロン	VERIFIED	historical;romance	school=2	U/0/0/2/U/2	4/6	4/2/U/U/2/3/2	5/7	PASS	OK	OK	9784091316707	no	ART_ABSTAIN
+work-3823ff0766f67c015c53	ましろのおと	NEEDS_ADJUDICATION		school=2	3/U/U/3/U/2	3/6	4/2/U/U/2/1/2	5/7	FAIL	OK	OK	9784063712612	no: first chapter + vol 2-3 copy unexhausted for problemSolving/Genre	ART_ABSTAIN
+work-61f2b70ee9f8217b3604	銀の匙 Silver Spoon	VERIFIED	sliceOfLife	school=2	3/2/U/2/U/3	4/6	3/2/U/1/2/U/3	5/7	PASS	OK	OK	9784091231802	no	ART_ABSTAIN
+work-a7a1e0666169f1b2e8c0	海街diary	VERIFIED	sliceOfLife	foundFamily=2	U/2/1/1/U/1	4/6	4/3/U/1/2/U/3	5/7	PASS	OK	OK	9784091670250	no	ART_ABSTAIN
+work-d7e64b0b5479ca943edd	深夜食堂	VERIFIED	sliceOfLife	cooking=2;workplace=2	0/U/U/2/0/2	4/6	3/2/U/1/1/U/3	5/7	PASS	OK	OK	9784091817075	no	ART_ABSTAIN
+work-ebe399258f28460b8f9b	鈴木先生	VERIFIED	sliceOfLife	school=2;workplace=2	U/2/2/2/2/U	4/6	3/3/1/U/4/1/U	5/7	PASS	OK	OK	9784575940237	no	ART_ABSTAIN
+work-ef7106f6a387c9860877	その女、ジルバ	VERIFIED	sliceOfLife	workplace=2;historicalReconstruction=1	3/U/U/2/2/2	4/6	4/3/U/2/3/U/3	5/7	PASS	OK	OK	9784091850249	no	ART_ABSTAIN
+work-f391e591282e435a3c1d	アイアムアヒーロー	VERIFIED	horror	survival=2;workplace=1;postApocalypse=1	U/U/0/3/2/2	4/6	2/1/U/4/4/2/U	5/7	PASS	OK	OK	9784091825803	no	ART_ABSTAIN
+work-f5f0ee0b0ff16bc146e0	ばらかもん	VERIFIED	comedy;sliceOfLife	foundFamily=2	2/U/0/2/U/2	4/6	4/2/4/0/U/U/4	5/7	PASS	OK	OK	9784757526167	no	ART_ABSTAIN
+```
+
+---
+
+## Aggregates
+
+| Status | n |
+|---|---:|
+| VERIFIED | **8** |
+| NEEDS_ADJUDICATION | **2** |
+| INSUFFICIENT_EVIDENCE | **0** |
+| IDENTITY_CONFLICT | **0** |
+| SAFETY_CONFLICT | **0** |
+
+- **Text coverage PASS** (N≥4/6 and T≥5/7): **8/10**
+- **Text coverage FAIL:** **2/10** — かくかくしかじか (N 3/6, T 3/7), ましろのおと (N 3/6; Genre empty)
+- **Hard-blocker candidates:** **0**
+- **ART_ABSTAIN:** **10/10**
+- **Full promotion authorization:** **0/10**
+
+`VERIFIED` means current-SHA text annotation is internally consistent, identity/safety are unchanged, and Narrative/Tone coverage passes. It does not authorize Art values, Evidence-row mutation, context/eligibility, human review, or `recommendationVerified`. Art remains outside this verdict.

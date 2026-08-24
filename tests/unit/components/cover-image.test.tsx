@@ -4,10 +4,29 @@ import { cleanup, fireEvent, render, screen } from "@testing-library/react";
 import { afterEach, describe, expect, it, vi } from "vitest";
 
 import { CoverImage } from "@/components/cover/CoverImage";
+import { HeroBackdrop } from "@/components/media/hero-backdrop";
 
 afterEach(cleanup);
 
 describe("CoverImage accessibility contract", () => {
+  it("keeps the hero backdrop on the 200px fallback and removes a broken fallback", () => {
+    const { container } = render(
+      <HeroBackdrop coverUrl="https://example.com/cover.jpg?_ex=600x600">
+        <span>content</span>
+      </HeroBackdrop>,
+    );
+    const backdrop = () =>
+      container.querySelector<HTMLImageElement>(
+        '[data-slot="hero-backdrop"] > img[aria-hidden="true"]',
+      );
+
+    expect(backdrop()?.dataset.coverSource).toContain("_ex=600x600");
+    fireEvent.error(backdrop()!);
+    expect(backdrop()?.dataset.coverSource).toContain("_ex=200x200");
+    fireEvent.error(backdrop()!);
+    expect(backdrop()).toBeNull();
+  });
+
   it("keeps informative covers named by default", () => {
     const { container } = render(
       <CoverImage coverUrl="https://example.com/cover.jpg" creators={["作者"]} title="作品" />,

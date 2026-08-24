@@ -1,0 +1,7 @@
+position,workId,canonicalTitle,narrativeKnown,toneKnown,artKnown,themeCount,narrativeNeeded,toneNeeded,artNeeded,themeNeeded,searchRoute,status,hardBlocker
+41,work-c9e32218e26c6c6292f9,ファントムバスターズ,2,4,0,1,2,1,2,0,"official entry preview or scoped independent criticism for two recurring Narrative mechanisms and one sustained Tone observation; Art requires an exact-edition six-page two-context sample",evidence-recovery,false
+42,work-d655ea1cfb913f33cc9a,湯神くんには友達がいない,2,5,3,2,2,0,0,0,"official entry preview or scoped criticism for two recurring Narrative mechanisms beyond ordinary social misunderstandings",evidence-recovery,false
+43,work-d735187a8421d0d33399,姉の結婚,4,4,3,0,0,1,0,1,"official entry-range criticism for one sustained Tone observation and one existing dictionary Theme without treating occupation or marriage alone as a Theme",evidence-recovery,false
+44,work-da98a01b4d345bd9c415,放課後のカリスマ,3,5,3,1,1,0,0,0,"official entry preview or scoped criticism for one recurring Narrative mechanism beyond premise mystery and setting",evidence-recovery,false
+48,work-f59be454d59478f33914,ハクメイとミコチ,4,3,0,2,0,2,2,0,"official entry preview or scoped criticism for two additional Tone observations; Art requires an exact-edition six-page two-context sample",evidence-recovery,false
+49,work-f6cddc6b36f20bd0cc74,空挺ドラゴンズ,2,3,0,6,2,2,2,0,"official entry preview or scoped criticism for two recurring Narrative mechanisms and two sustained Tone observations; Art requires an exact-edition six-page two-context sample",evidence-recovery,false

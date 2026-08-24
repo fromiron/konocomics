@@ -1,0 +1,218 @@
+conversationId=0f829e47-e5f0-4698-8df6-0faa3af0b409
+model=gemini-3.7-flash-high
+resolvedLabel=Gemini 3.7 Flash (High)
+effort=high
+pixelAccess=actual-local-png
+completionStatus=SUCCESS
+candidateSha256=aaf4f4a4845ec105b8218f0f9e8358a2ae95c5823519e68e1752acada6e22529
+
+{
+  "candidateSha256": "aaf4f4a4845ec105b8218f0f9e8358a2ae95c5823519e68e1752acada6e22529",
+  "exactModel": "gemini-3.7-flash-high",
+  "resolvedLabel": "Gemini 3.7 Flash (High)",
+  "effort": "high",
+  "completionStatus": "SUCCESS",
+  "pixelFiles": [
+    {
+      "workId": "work-222504590507d3ab8093",
+      "path": "output/playwright/pilot-art/chunk-04/osama-ranking/start.png",
+      "sha256": "ff66b848199bb6ef25aca25d9b0e758c21a27f7b63eb77ab17f26281185860b6"
+    },
+    {
+      "workId": "work-222504590507d3ab8093",
+      "path": "output/playwright/pilot-art/chunk-04/osama-ranking/after-left.png",
+      "sha256": "552df7fd5634110a8e2ae59b98dc228c2d67051fd6f1e73bfc6ddcc04270239c"
+    },
+    {
+      "workId": "work-222504590507d3ab8093",
+      "path": "output/playwright/pilot-art/chunk-04/osama-ranking/spread-05.png",
+      "sha256": "e3cdd49a622723c3130d96b64d4d65f812aee2b8ca9190c497a05ab32bc067f2"
+    },
+    {
+      "workId": "work-07ff2a01ef593ce2f809",
+      "path": "output/playwright/pilot-art/chunk-04/sayonara-miniskirt/direct-page-004.png",
+      "sha256": "254bc7081c0b0d9231cb7224773a9621e599cb58022ba64f18f4c0b3e990bb98"
+    },
+    {
+      "workId": "work-07ff2a01ef593ce2f809",
+      "path": "output/playwright/pilot-art/chunk-04/sayonara-miniskirt/direct-page-005.png",
+      "sha256": "cec178df21021d4937ebb3d2aa1ab56857d46c8c4c36f50a11d233caf4acc3b8"
+    },
+    {
+      "workId": "work-07ff2a01ef593ce2f809",
+      "path": "output/playwright/pilot-art/chunk-04/sayonara-miniskirt/direct-page-020.png",
+      "sha256": "bdcfe1aa2cb51cabbb71386b2d45e8df03b068e8e68e91e496c68c20b8e8269e"
+    },
+    {
+      "workId": "work-07ff2a01ef593ce2f809",
+      "path": "output/playwright/pilot-art/chunk-04/sayonara-miniskirt/direct-page-021.png",
+      "sha256": "2a01f1a355339a01017e27ba48e044097cc96d414bb5f501d1616d1f41670742"
+    },
+    {
+      "workId": "work-07ff2a01ef593ce2f809",
+      "path": "output/playwright/pilot-art/chunk-04/sayonara-miniskirt/direct-page-040.png",
+      "sha256": "d8d85c45dd55c4b727fdde6a4f78745e8448f9653820a8c3b16893b109e56e22"
+    },
+    {
+      "workId": "work-07ff2a01ef593ce2f809",
+      "path": "output/playwright/pilot-art/chunk-04/sayonara-miniskirt/direct-page-041.png",
+      "sha256": "fac0c9caa8eafa9d49e37640d11def7dbdad84ee0f02032dab4a50d3592a1608"
+    },
+    {
+      "workId": "work-d489f5a2229689aa5115",
+      "path": "output/playwright/pilot-art/chunk-04/onna-no-sono-no-hoshi/spread-05.png",
+      "sha256": "959cafb710022a5e46eaf3c765a40e8fa0714a3d798a785ec29d3e616fe710a3"
+    },
+    {
+      "workId": "work-d489f5a2229689aa5115",
+      "path": "output/playwright/pilot-art/chunk-04/onna-no-sono-no-hoshi/spread-09.png",
+      "sha256": "e85837b1788ddf2f3726258eb37043f65bfef63ff7996a8d8e4f1a8619a31ed1"
+    },
+    {
+      "workId": "work-d489f5a2229689aa5115",
+      "path": "output/playwright/pilot-art/chunk-04/onna-no-sono-no-hoshi/spread-13.png",
+      "sha256": "6d5bdaf4ec3c9fd8722f106e08dc69ebcde5f51f2c09a0bf1e19e17fecf08d56"
+    }
+  ],
+  "works": [
+    {
+      "workId": "work-222504590507d3ab8093",
+      "title": "王様ランキング",
+      "gateQualified": true,
+      "axes": {
+        "artRealism": {
+          "state": "known",
+          "value": 0,
+          "refs": [
+            "start.png",
+            "after-left.png",
+            "spread-05.png"
+          ],
+          "reason": "Strong picture-book cartoon deformation with simplified anatomy, minimalist dot/line facial features, and non-realistic whimsical proportions."
+        },
+        "artDensity": {
+          "state": "known",
+          "value": 1,
+          "refs": [
+            "start.png",
+            "after-left.png",
+            "spread-05.png"
+          ],
+          "reason": "Airy layouts featuring generous white negative space, sparse linework, minimal screentone shading, and simple uncluttered background rendering."
+        },
+        "visualSoftness": {
+          "state": "known",
+          "value": 3,
+          "refs": [
+            "start.png",
+            "after-left.png",
+            "spread-05.png"
+          ],
+          "reason": "Gentle, curved linework with rounded character contours and fairy-tale softness, devoid of harsh angular cross-hatching or aggressive dark contrasts."
+        },
+        "motionImpact": {
+          "state": "unknown",
+          "value": null,
+          "refs": [],
+          "reason": "Sampled spreads depict introductory world setup, walking through town, and dialogue/undressing interaction; no contiguous bounded dynamic action or combat sequence is present."
+        }
+      }
+    },
+    {
+      "workId": "work-07ff2a01ef593ce2f809",
+      "title": "さよならミニスカート",
+      "gateQualified": true,
+      "axes": {
+        "artRealism": {
+          "state": "known",
+          "value": 2,
+          "refs": [
+            "direct-page-004.png",
+            "direct-page-005.png",
+            "direct-page-020.png",
+            "direct-page-021.png",
+            "direct-page-040.png",
+            "direct-page-041.png"
+          ],
+          "reason": "Conventional shojo manga character stylization with large expressive eyes and refined facial features, grounded on proportionate adolescent human anatomy and realistic school/domestic background environments."
+        },
+        "artDensity": {
+          "state": "known",
+          "value": 3,
+          "refs": [
+            "direct-page-004.png",
+            "direct-page-005.png",
+            "direct-page-020.png",
+            "direct-page-021.png",
+            "direct-page-040.png",
+            "direct-page-041.png"
+          ],
+          "reason": "Rich visual information including detailed schoolyard foliage, architectural perspective, intricate hair rendering, dense screentone textures, and meticulously detailed eye closeups."
+        },
+        "visualSoftness": {
+          "state": "known",
+          "value": 3,
+          "refs": [
+            "direct-page-004.png",
+            "direct-page-005.png",
+            "direct-page-020.png",
+            "direct-page-021.png",
+            "direct-page-040.png",
+            "direct-page-041.png"
+          ],
+          "reason": "Polished and delicate linework featuring soft flowing hair contours, smooth tonal gradients, sparkling eye rendering, and gentle curved silhouettes."
+        },
+        "motionImpact": {
+          "state": "unknown",
+          "value": null,
+          "refs": [],
+          "reason": "Sampled pages include judo practice fragments and school encounters, but lack a continuous bounded kinetic action choreography sequence with verified start and end points."
+        }
+      }
+    },
+    {
+      "workId": "work-d489f5a2229689aa5115",
+      "title": "女の園の星",
+      "gateQualified": true,
+      "axes": {
+        "artRealism": {
+          "state": "known",
+          "value": 4,
+          "refs": [
+            "spread-05.png (pp.12-13)",
+            "spread-09.png (pp.20-21)",
+            "spread-13.png (pp.28-29)"
+          ],
+          "reason": "Naturalistic and observational adult and student anatomy, realistic facial bone structure, accurate linear perspective for faculty desks, office equipment, and classroom furniture."
+        },
+        "artDensity": {
+          "state": "known",
+          "value": 3,
+          "refs": [
+            "spread-05.png (pp.12-13)",
+            "spread-09.png (pp.20-21)",
+            "spread-13.png (pp.28-29)"
+          ],
+          "reason": "High density of environmental line detail across faculty room desks, stationery, electronic office equipment, filing cabinets, and classroom furniture."
+        },
+        "visualSoftness": {
+          "state": "known",
+          "value": 1,
+          "refs": [
+            "spread-05.png (pp.12-13)",
+            "spread-09.png (pp.20-21)",
+            "spread-13.png (pp.28-29)"
+          ],
+          "reason": "Crisp, dry, and angular linework characterized by precise contouring, stark contrast, and austere realism rather than soft or decorative rendering."
+        },
+        "motionImpact": {
+          "state": "unknown",
+          "value": null,
+          "refs": [],
+          "reason": "Sampled spreads consist exclusively of static faculty office conversations, logbook reading, and classroom dialogue; no contiguous dynamic action sequence is present."
+        }
+      }
+    }
+  ],
+  "issues": []
+}

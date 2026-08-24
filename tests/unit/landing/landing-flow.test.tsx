@@ -39,6 +39,9 @@ vi.mock("@/features/catalog/catalog-provider", () => ({
   useCatalogIdentity: () => ({
     catalogVersion: testState.catalog.catalogVersion,
     workIds: testState.catalog.works.map((work) => work.id),
+    profileWorkIds: testState.catalog.works
+      .filter((work) => work.eligibility.recommendationEligible)
+      .map((work) => work.id),
   }),
 }));
 

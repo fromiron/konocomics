@@ -1,0 +1,112 @@
+workId=work-3823ff0766f67c015c53
+canonicalTitle=ましろのおと
+candidateSha256=aaf4f4a4845ec105b8218f0f9e8358a2ae95c5823519e68e1752acada6e22529
+model=gemini-3.7-flash-high
+resolvedLabel=Gemini 3.7 Flash (High)
+effort=high
+route=agy
+retrievedAt=2026-08-23
+
+EXCLUDED RUNS
+
+conversationId=51c3d998-4e5f-4b86-a4d7-fed6a5c156b6
+outerStatus=ERROR
+error=context canceled
+reasonExcluded=Outer execution did not terminate successfully. Its internally complete 3/3/3/U response is not counted.
+
+conversationId=1fe51d85-279e-4c6a-a51d-f2c1c90961ac
+outerStatus=ERROR
+error=connecting to sandbox server: connection reset by peer
+reasonExcluded=Outer execution did not terminate successfully. The initial and resumed internally complete 3/3/3/U responses are not counted.
+
+conversationId=01de3115-f6c9-4f13-8246-bed997f411b8
+outerStatus=ERROR
+error=context canceled
+reasonExcluded=Outer execution did not terminate successfully. Its internally complete 3/2/3/U response is not counted or used for adjudication.
+
+healthProbeConversationId=b2e492d3-2270-4676-a192-fe9d889f01eb
+healthProbeOuterStatus=SUCCESS
+healthProbePixelAccess=false
+healthProbeUse=Transport health only; not an Art judgment.
+
+opencodeFallbackStatus=ERROR
+opencodeFallbackError=OpenCode Zen returned 401 CreditsError because no payment method is configured.
+opencodeFallbackUse=None. No model response was produced and no substitute model was used.
+
+ACCEPTED RUN
+
+conversationId=58f61017-4bf4-4ab0-b367-ca5eacf5ae85
+outerStatus=SUCCESS
+completionStatus=complete
+pixelAccess=actual-local-contact-sheet
+contactSheet=mashiro-contact.jpg
+contactSheetLayout=row-major 2x3; tiles 004,006,009,013,018,024
+contactSheetDimensions=1936x1644
+contactSheetSha256=36cb5132e923bd075b12cbb64fba30d891dfd1eea1f9c9bac240e02529473079
+sourcePacketSha256=b35252362427e4636a3b417261271e748816c9ab50d2b63dbbc3390b1dee4872
+sourceUrl=https://www.kodansha.co.jp/comic/products/0000043275/trial
+edition=Official Kodansha standard volume 1
+isbn=9784063712612
+sampleGate=PASS
+pageCount=12
+contextCount=3
+
+{
+  "exactModel": "Gemini 3.7 Flash High",
+  "resolvedLabel": "Gemini 3.7 Flash (High)",
+  "effort": "high",
+  "completionStatus": "complete",
+  "pixelAccessProven": true,
+  "contactHash": "36cb5132e923bd075b12cbb64fba30d891dfd1eea1f9c9bac240e02529473079",
+  "candidateHash": "aaf4f4a4845ec105b8218f0f9e8358a2ae95c5823519e68e1752acada6e22529",
+  "workId": "work-3823ff0766f67c015c53",
+  "isbn": "9784063712612",
+  "source": "https://www.kodansha.co.jp/comic/products/0000043275/trial",
+  "sampleGate": {
+    "passed": true,
+    "pageCount": 12,
+    "contextCount": 3,
+    "contexts": [
+      "Tokyo nighttime cityscape and street encounters with snow (tiles 004, 006, 009, 018)",
+      "Flashback memories of grandfather with pipe and Tsugaru shamisen (tiles 009, 024)",
+      "Tokyo apartment interior room with standing shamisen and bachi (tiles 013, 024)"
+    ]
+  },
+  "axes": {
+    "artRealism": {
+      "state": "known",
+      "value": 3,
+      "confidence": 0.92,
+      "tileRefs": ["004", "006", "013", "024"],
+      "reason": "Detailed, perspective-accurate Tokyo architecture and realistic instrument anatomy combined with anatomically proportional figures and moderately stylized faces."
+    },
+    "artDensity": {
+      "state": "known",
+      "value": 3,
+      "confidence": 0.90,
+      "tileRefs": ["004", "006", "009", "013", "024"],
+      "reason": "Rich screentone texturing, dense city skylines, fine clothing and fur rendering, and multilayered panel information."
+    },
+    "visualSoftness": {
+      "state": "known",
+      "value": 3,
+      "confidence": 0.90,
+      "tileRefs": ["004", "013", "018", "024"],
+      "reason": "Smooth refined linework, delicate hair strands, soft tonal gradients, and gentle atmospheric lighting."
+    },
+    "motionImpact": {
+      "state": "unknown",
+      "value": null,
+      "confidence": 0,
+      "tileRefs": [],
+      "reason": "No exact continuous action sequence exists across the discontinuous sampled spreads."
+    }
+  },
+  "issues": []
+}
+
+ADJUDICATION
+
+Local Codex and the accepted Gemini run independently agree on 3/3/3/U.
+The excluded ERROR runs are retained for provenance but carry no vote.
+Final Art decision: artRealism=3, artDensity=3, visualSoftness=3, motionImpact=unknown.

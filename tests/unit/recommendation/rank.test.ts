@@ -262,6 +262,51 @@ describe("rank recommendations", () => {
     ).toEqual([]);
   });
 
+  it("keeps library-only records and targets outside taste scoring", () => {
+    const anchor = createTestWork({ id: "anchor" });
+    const candidate = createTestWork({ id: "candidate" });
+    const libraryOnly = createTestWork({
+      id: "library-only",
+      eligibility: {
+        onboardingEligible: false,
+        recommendationEligible: false,
+        libraryOnly: true,
+      },
+    });
+    const anchorRecord = createTestRecord({
+      workId: anchor.id,
+      reaction: "favorite",
+      readingState: "completed",
+    });
+    const baseline = inputWith({
+      works: [anchor, candidate, libraryOnly],
+      records: [anchorRecord],
+    });
+    const withLibraryRecord = inputWith({
+      works: [anchor, candidate, libraryOnly],
+      records: [
+        anchorRecord,
+        createTestRecord({
+          workId: libraryOnly.id,
+          reaction: "favorite",
+          readingState: "completed",
+          negativeReasons: ["tooDark"],
+        }),
+      ],
+    });
+
+    expect(rankRecommendations(withLibraryRecord)).toEqual(rankRecommendations(baseline));
+    expect(
+      rankRecommendations(
+        inputWith({
+          works: [libraryOnly, candidate],
+          records: [createTestRecord({ workId: libraryOnly.id, reaction: "favorite" })],
+        }),
+      ),
+    ).toEqual([]);
+    expect(scoreWorkCompatibility(withLibraryRecord, libraryOnly.id)).toBeNull();
+  });
+
   it("produces a complete score ledger and applies completed preference before clamp", () => {
     const anchor = createTestWork({ id: "anchor" });
     const candidate = createTestWork({ id: "candidate", status: "ongoing" });

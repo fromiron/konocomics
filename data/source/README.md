@@ -15,6 +15,8 @@
 - `evidence/*.md`: 작품별 관찰, 공식 보조 URL, 경계 판정 설명
 - `reviews/*.md`: 사람 또는 사용자가 승인한 대체 게이트의 요청·판정 기록
 
+`works.firstPublishedYear`는 작품의 최초 정식 연재·발표 시작 연도다. 대표 단행본의 판매 연도는 `volumes.releaseDate`에만 기록하며 Work 연도로 대체하지 않는다. 공식 시작 연도를 확인하지 못하면 빈 값으로 둔다.
+
 ## evidence 범위
 
 `targetType=work`인 evidence는 해당 Work의 서지·Theme·Axis·대표권을 함께 검토한 work-scope 묶음이다. 이 범위를 사용하는 경우 `evidence/*.md`에 known 값의 관찰 근거와 불확실성을 남겨야 한다. 그 외 `axis`, `theme`, `volume` evidence는 `targetId`가 정확히 일치해야 한다. Validator는 ID·대상 연결과 누락을 검사하고, prose의 품질은 주석 검토 게이트가 심사한다.
@@ -39,7 +41,7 @@
 
 ## G2 Catalog 주석 승격
 
-- 현재 source는 G1의 50작품을 보존한 150작품 Catalog다. 기존 승인 49작품은 G1 provenance를 유지하고, 신규 100작품과 재개방한 `haikyu`는 `reviews/g2-catalog-annotation-panel.md`의 Catalog 주석 판정에만 결속된다.
+- G2 승격 당시 source는 G1의 50작품을 보존한 150작품 Catalog였다. 기존 승인 49작품은 G1 provenance를 유지하고, 당시 신규 100작품과 재개방한 `haikyu`는 `reviews/g2-catalog-annotation-panel.md`의 Catalog 주석 판정에만 결속된다.
 - 승격 전 후보·생성물·4개 검토 경로·시각 evidence ZIP의 해시는 `data/staging/g2/g2-catalog-annotation-approval.json`에 동결되어 있다. 승격은 그 manifest와 정확히 101작품의 `annotationReview*` 세 필드만 갱신하며 주석 값과 evidence를 다시 쓰지 않는다.
 - Catalog 주석 승격의 범위와 provenance는 이후 제품 방향 판정과 분리되어 유지된다.
 
@@ -49,6 +51,15 @@
 - 이 승인은 `humanValidation: "not-run"`, `decisionBasis: "user-authorized-model-panel"` 경로다. Human metrics는 `null`이고 실제 파일럿은 human `0`, synthetic pilot `1`, verdict `INCOMPLETE`, 다섯 human 기준 전부 `NOT_RUN`이다. 사람 검증이나 통계적 우세를 주장하지 않는다.
 - 제품 방향 G2와 Slice 5는 승인됐다. Vercel은 배포 대상으로 확정되어 있지만 이 판정은 Vercel 배포를 승인하지 않으며, 실제 연결과 Production 배포는 Slice 10의 별도 완료 기준에 따른다.
 - 이후 검토에서 Local/Gemini/Grok CLI에는 canonical uncompressed evidence directory와 exact request·complete ledger·root identity를 제공한다. ChatGPT.com GPT-5.6 Pro Oracle에만 같은 payload의 deterministic ZIP을 제공한다.
+
+## 1,000+작품 확장
+
+- 위 150작품은 Gold Set으로 고정하며 ID·행·검토 문서 hash를 `data/staging/catalog-expansion/gold-set-manifest.json`으로 검사한다.
+- 총 작품 수 1,000은 최소값이고 상한은 없다. 외부 목록 원문 항목은 terminal membership 상태 없이 누락할 수 없다.
+- 안전·canonical identity·선정 provenance·대표 ISBN을 확인한 신규 작품은 보수적으로 `libraryOnly=true`로 승격할 수 있다. 이 단계에서는 17축을 모두 명시적 `unknown`으로 두고 Theme·추천 context를 만들지 않으며 `onboardingEligible`과 `recommendationEligible`을 모두 끈다.
+- Rakuten 응답에 없는 원산지 국적·원작 형식은 추론하지 않는다. staging에는 `unknown`으로 남기고, 별도 공식 근거로 세로형임을 확인한 항목만 제외한다. 따라서 `libraryOnly` 승격을 페이지형·일본 제작 검증 완료로 표현하지 않는다.
+- `libraryOnly` 기록은 Library 검색·상세·Export/Import에만 참여한다. 사람 또는 승인된 주석 게이트를 통과하기 전에는 프로필 수, DNA, confidence, 입력 hash의 record payload, Baseline/Taste 순위와 설명 근거에 참여하지 않는다. 다만 전체 `catalogVersion` 변경은 캐시를 한 번 무효화한다.
+- staging 원천은 CSV, 중첩된 Rakuten 응답 캐시는 JSONL로 유지한다. 현 규모에서 측정된 병목이 없어 SQLite는 도입하지 않는다.
 
 ## 추천 context
 

@@ -5,6 +5,9 @@ export function catalogIdentityFromCatalog(catalog: CatalogV1): CurrentCatalogId
   return {
     catalogVersion: catalog.catalogVersion,
     workIds: catalog.works.map((work) => work.id),
+    profileWorkIds: catalog.works
+      .filter((work) => work.eligibility.recommendationEligible)
+      .map((work) => work.id),
   };
 }
 
@@ -19,5 +22,12 @@ export function catalogMatchesIdentity(
     return false;
   }
 
-  return catalog.works.every((work, index) => work.id === identity.workIds[index]);
+  return (
+    catalog.works.every((work, index) => work.id === identity.workIds[index]) &&
+    catalog.works
+      .filter((work) => work.eligibility.recommendationEligible)
+      .every((work, index) => work.id === identity.profileWorkIds[index]) &&
+    catalog.works.filter((work) => work.eligibility.recommendationEligible).length ===
+      identity.profileWorkIds.length
+  );
 }

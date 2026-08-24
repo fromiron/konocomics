@@ -1,0 +1,283 @@
+sessionId=09928fe4-e8f6-4547-ba64-61c60f466932
+model=cursor-grok-4.6-high
+resolvedLabel=Cursor Grok 4.6
+mode=plan
+fast=false
+completionStatus=SUCCESS_AFTER_RESUME
+firstResponseStatus=REJECTED_INCOMPLETE_PROCESS_NARRATION
+candidateSha256=aaf4f4a4845ec105b8218f0f9e8358a2ae95c5823519e68e1752acada6e22529
+artAccess=abstained
+
+# Pilot 001 chunk-04 독립 Pass B 최종 리뷰
+
+판정원: Cursor Grok 4.6 High non-fast  
+Candidate SHA-256: `aaf4f4a4845ec105b8218f0f9e8358a2ae95c5823519e68e1752acada6e22529`  
+HEAD: `e03cfc9e45077386d1ec4d744a3bdee4b9176f1a`  
+범위: `entry_1_3_volumes`  
+게이트: Narrative known `>=4/6`, Tone known `>=5/7`  
+N 순서: `progression / problemSolving / strategy / pacing / mysteryReveal / worldBuilding`  
+T 순서: `characterArcWeight / relationshipStructure / comedy / darkness / mentalStress / romance / emotionalWarmth`  
+`U` = `unknown`. Art 픽셀 패킷 없음 → 10작품 전부 **ART_ABSTAIN**.  
+Local 대조: Pass A CSV + coverage-gap + text-pass-bc + follow-up D + koi follow-up 누적 유효값.  
+Hard-blocker 허용 코드: `VERTICAL_WEBTOON` | `NON_JAPANESE` | `NON_MANGA` | `FAN_WORK` | `NON_WORK_MATERIAL` | `DUPLICATE_WORK` | `IDENTITY_UNRESOLVED` | `SAFETY_UNRESOLVED` | `SOURCE_INFORMATION_UNAVAILABLE` | `FACTOR_MODEL_INCOMPATIBLE` | `PRODUCT_CONTRACT_INCOMPATIBLE`. 공식 경로가 남아 있으면 코드 없음.
+
+---
+
+## 1. `work-8716f80d9b988bd0d055` — 恋は雨上がりのように
+
+- **N:** `U / 0 / 0 / U / 0 / 1` = **4/6**
+- **T:** `4 / 2 / U / U / 2 / 4 / 2` = **5/7**
+- **Genre:** `romance`
+- **Theme:** `workplace` 2
+- **Gate:** **PASS**
+- **ART_ABSTAIN**
+- **Identity conflict:** no. canonical `恋は雨上がりのように` (장식 `『』` 없음). ISBN `9784091867285`.
+- **Safety conflict:** no. packet `safe`. 17세/45세 연령 차 = 민감 소재 ≠ R18.
+- **Hard blocker:** **no** / code 없음
+- **남은 공식 경로:** 해당 없음 (N/T 게이트 충족)
+
+**결정**
+- ACCEPT `romance=4`, `characterArcWeight=4`, `relationshipStructure=2`, `workplace=2`, Genre `romance` — 小学館 AD POCKET; マンガ大賞2016 심사평.
+- ACCEPT `problemSolving=0` — 공식 1~3권 소개가 고백·망설임·보살핌·감정적 결단을 대응 방식으로 직접 제시. https://shogakukan-comic.jp/book?isbn=9784091867285 및 2·3권 동일 계열.
+- ACCEPT `strategy=0` — 빅코믹BROS 완전 1·4·5화(2015-01-02/03/04): 놓친 버스→식당, 잊은 전화→추격, 부상→병원. 즉흥 대응이 반복. https://bigcomicbros.net/7742/ https://bigcomicbros.net/7743/ https://bigcomicbros.net/7744/
+- ACCEPT `mysteryReveal=0` — 1~3권 본편 소개가 관계·잃은 꿈을 보상으로 두고 단서/추리 구조를 제시하지 않음. 과거 꿈은 인물 맥락이지 수사 보상 아님.
+- ACCEPT `worldBuilding=1` — 식당·육상은 기능적 맥락이나 규칙 세계(2) 미만.
+- ACCEPT `mentalStress=2`, `emotionalWarmth=2` — 나이 차·일방 고백·잃은 꿈의 긴장; 점장의 도움과 상호 배려. https://shogakukan-comic.jp/news/12269
+- REJECT TO UNKNOWN `progression=1` — 감정/관계 변화는 `characterArcWeight`에 이미 있음. 획득·숙련 루프 없음.
+- REJECT TO UNKNOWN `pacing` — 독립 1~3권 리뷰가 체감 속도에서 충돌. 다수결 금지.
+- 불일치 vs Local 누적값: **없음**
+
+## 2. `work-11296a590b885cb73b66` — 透明なゆりかご
+
+- **N:** `2 / 1 / U / 3 / U / 2` = **4/6**
+- **T:** `4 / 2 / U / 4 / 4 / U / 2` = **5/7**
+- **Genre:** `sliceOfLife`
+- **Theme:** `workplace` 2
+- **Gate:** **PASS**
+- **ART_ABSTAIN**
+- **Identity conflict:** no. ISBN `9784063409574`. 장식 `『』` 없음.
+- **Safety conflict:** no. packet `safe`. 중절·출산·유산 ≠ 성인 전용.
+- **Hard blocker:** **no** / code 없음
+- **남은 공식 경로:** 해당 없음
+
+**결정**
+- ACCEPT Pass A Tone `characterArcWeight=4`, `relationshipStructure=2`, `darkness=4`, `mentalStress=4`, `emotionalWarmth=2`, Genre `sliceOfLife`, Theme `workplace=2` — 講談社 1권; 제42회 講談社漫画賞 심사평.
+- ACCEPT `progression=2` — 1권: 그만둘 뻔하다 계속 일하기로 결심 후 사례로 관점 축적. https://www.kodansha.co.jp/comic/products/0000036416
+- ACCEPT `pacing=3` — 2~3권이 분만 중 사망, 14세 임신, 짧은 생명 등 사례를 짧은 간격으로 교체. https://www.kodansha.co.jp/comic/products/0000036427 https://www.kodansha.co.jp/comic/products/0000036443
+- ACCEPT `worldBuilding=2` — 산부인과 절차·역할·윤리 조건이 매화 기능.
+- ACCEPT `problemSolving=1` — コミックDAYS 제1화 전체, 인쇄 12–17쪽 중절 후 처치/기록/인계, 18–23쪽 분만 대응. 실무적 직접 행동이며 기발한 분석(2) 아님. https://comic-days.com/episode/13932016480030343945
+- REJECT TO UNKNOWN 의료 소재만으로의 `strategy`/`mysteryReveal`/`comedy`/`romance` 0 채움.
+- 불일치 vs Local 누적값: **없음**
+
+## 3. `work-5e7eef6cc23d9738e034` — ゴールデンゴールド
+
+- **N:** `U / U / U / 1 / 4 / 2` = **3/6**
+- **T:** `2 / 2 / U / 4 / 4 / 2 / U` = **5/7**
+- **Genre:** `fantasy; mystery; horror`
+- **Theme:** (비어 있음. `investigation`을 coverage용으로 만들지 않음)
+- **Gate:** **FAIL** (Narrative 3/6)
+- **ART_ABSTAIN**
+- **Identity conflict:** no. ISBN `9784063886153`. 장식 `『』` 없음.
+- **Safety conflict:** no. packet `safe`. 피·공포 = 톤 ≠ R18.
+- **Hard blocker:** **no** / code 없음
+- **남은 공식 경로:** https://comic-days.com/episode/13932016480030208354 (コミックDAYS 공식 에피소드)와 講談社 1~3권 https://www.kodansha.co.jp/comic/products/0000018813 https://www.kodansha.co.jp/comic/products/0000018886 https://www.kodansha.co.jp/r/comic/product?isbn=9784065102022 에서 **반복**되는 해결·계획·성장 보상만 볼 것. 3권 포획 작전 1회를 `problemSolving` 값으로 재사용 금지.
+
+**결정**
+- ACCEPT `mysteryReveal=4`, `worldBuilding=2`, `characterArcWeight=2`, `darkness=4`, `mentalStress=4`, Genre 3종 — モーニング 공식; マンガ大賞2017 심사평.
+- ACCEPT `pacing=1` — 심사평의 1~2권 점진 침식 + 3권 급전개. 평균은 느린 쪽.
+- ACCEPT `romance=2` — 공식 3권의 연정·어린 시절 친구 소원이 서브플롯.
+- CORRECT `relationshipStructure` Local `4` → **`2`**. 루카·가족·후쿠노카미 핵심 관계이지, 군상 보상(4)이 아님. 주석 가이드: 주민이 많다고 4가 되지 않음.
+- REJECT TO UNKNOWN Local `problemSolving=1`. 3권 포획 작전 1회는 반복 해결 모드가 아님. 게이트 채움 금지.
+- REJECT Theme 행 제조. 3권 수사 한 줄은 centrality 2가 아님.
+- 불일치 vs Local: `problemSolving 1→U`, `relationshipStructure 4→2`
+
+## 4. `work-0153a125c5a56225b06c` — 違国日記
+
+- **N:** `2 / 1 / U / 1 / U / 0` = **4/6**
+- **T:** `4 / 2 / U / 2 / 2 / U / 4` = **5/7**
+- **Genre:** `sliceOfLife`
+- **Theme:** `foundFamily` 2
+- **Gate:** **PASS**
+- **ART_ABSTAIN**
+- **Identity conflict:** no. canonical `違国日記`. 대표 ISBN `9784396767174` (祥伝社 4396). 장식 `『』` 없음.
+- **Safety conflict:** no. packet `safe`. 사별·성 역할 ≠ R18.
+- **Hard blocker:** **no** / code 없음
+- **남은 공식 경로:** 해당 없음
+
+**결정**
+- ACCEPT Pass A Tone 5축, Genre, Theme — 祥伝社 특설; マンガ大賞2019 심사평. https://www.shodensha.co.jp/ikokunikki/
+- ACCEPT `progression=2` — 1권 동거 시작, 2권 학교·편지, 3권 집필 갈등→이해. 점진 성장.
+- ACCEPT `problemSolving=1` — 말·편지·거리 조정이 반복 대응이나 분석 해결(2) 아님.
+- ACCEPT `pacing=1` — 공식 소개가 관계를 천천히 축적한다고 직접 서술.
+- ACCEPT `worldBuilding=0` — 1~3권 보상이 현대 집/학교/집필 관계에만 위치. sliceOfLife 라벨에서 추론하지 않음.
+- REJECT 유저평 warmth 분열로 Pass A `emotionalWarmth=4`를 내림. 공식 유대 보상이 우선.
+- REJECT `romance`/`comedy`/`strategy`/`mysteryReveal`를 미언급으로 0 채움.
+- 불일치 vs Local 누적값: **없음**
+
+## 5. `work-34bba03e2a127ef29cd7` — 北北西に曇と往け
+
+- **N:** `U / 4 / U / 2 / 2 / 2` = **4/6**
+- **T:** `2 / 2 / U / 2 / 2 / 1 / U` = **5/7**
+- **Genre:** `fantasy; mystery`
+- **Theme:** `investigation` 2; `exploration` 2
+- **Gate:** **PASS**
+- **ART_ABSTAIN**
+- **Identity conflict:** no. `曇`은 공식 표기. ISBN `9784047348318` 일반 B6. 와이드/전자판 ≠ 별 Work. 장식 `『』` 없음.
+- **Safety conflict:** no. packet `safe`.
+- **Hard blocker:** **no** / code 없음
+- **남은 공식 경로:** 해당 없음
+
+**결정**
+- ACCEPT Pass A `problemSolving=4`, `mysteryReveal=2`, `worldBuilding=2`, Genre, Themes — KADOKAWA 1권; マンガ大賞2019 심사평. https://www.kadokawa.co.jp/product/321706000806/
+- ACCEPT `pacing=2` — 1권 긴장 → 2권 여행 완화 → 3권 실종·동생. 일반 arc. https://www.kadokawa.co.jp/product/321807000123/
+- ACCEPT `characterArcWeight=2`, `relationshipStructure=2` — 사건/여행과 형제 동기 균형; 할아버지·친구·동생 고정 핵심.
+- ACCEPT `darkness=2`, `mentalStress=2` — 실종·간헐 광기·서스펜스가 여행 일상에 완충.
+- ACCEPT `romance=1` — 1권 ‘첫눈에 반한 상대 찾기’ 의뢰는 낮은 존재. 본편 로맨스 아크 아님.
+- REJECT TO UNKNOWN `emotionalWarmth` — 친근한 여행만으로 유대 보상 확정 불가.
+- 불일치 vs Local 누적값: **없음**
+
+## 6. `work-9d04c47e7efbbbd8aca6` — かげきしょうじょ!!
+
+- **N:** `4 / 1 / U / 3 / U / 3` = **4/6**
+- **T:** `4 / 4 / 1 / U / 2 / U / 2` = **5/7**
+- **Genre:** `sliceOfLife`
+- **Theme:** `school` 2
+- **Gate:** **PASS**
+- **ART_ABSTAIN**
+- **Identity conflict:** no. canonical 반각 `かげきしょうじょ!!` = 공식 전각 `かげきしょうじょ！！` punctuation alias. ISBN `9784592217268`. `シーズンゼロ`/集英社 `かげきしょうじょ！`는 이 Work 값에 쓰지 않음. 장식 `『』` 없음.
+- **Safety conflict:** no. packet `safe`.
+- **Hard blocker:** **no** / code 없음
+- **남은 공식 경로:** 해당 없음
+
+**결정**
+- ACCEPT Pass A `progression=4`, `characterArcWeight=4`, `relationshipStructure=4`, Genre, Theme — 白泉社 1권; マンガ大賞2017 심사평. 값 근거 = 본편 `!!` 1~3권만. https://www.hakusensha.co.jp/comicslist/46806/
+- ACCEPT `problemSolving=1` — 훈련·공연 제약에 실무 대응. 분석 중심 아님.
+- ACCEPT `pacing=3` — 입학 → 교사 평가 → 귀향/재회 → 100주년 공연 준비. https://www.hakusensha.co.jp/comicslist/48355/ https://www.hakusensha.co.jp/comicslist/48734/
+- ACCEPT `worldBuilding=3` — 가극단 서열·수업·공연 관습이 목표/갈등을 반복 규정. 기능적 2와 과잉 세계 4의 사이.
+- ACCEPT `comedy=1` — 본편 1권 독립 리뷰 2건이 간헐 웃음에 합의. identity 폐쇄 후에만 사용.
+- ACCEPT `mentalStress=2` — “톱스타가 될 수 없다” 평가·경쟁·공연 압박.
+- ACCEPT `emotionalWarmth=2` — 본편 1권 인쇄 6–11쪽 또래 공유, 24–27쪽 첫 친구·생일 보수. 경쟁과 혼합. https://www.hakusensha-e.net/hakusensha_otameshi?jdcn=59221726kagesho00111&viewer=bs
+- REJECT Season Zero 페이지를 warmth/comedy 근거로 사용.
+- 불일치 vs Local 누적값: **없음**
+
+## 7. `work-222504590507d3ab8093` — 王様ランキング
+
+- **N:** `2 / 2 / U / 3 / U / 2` = **4/6**
+- **T:** `4 / 2 / U / 2 / 2 / U / 4` = **5/7**
+- **Genre:** `fantasy`
+- **Theme:** `adventure` 2
+- **Gate:** **PASS**
+- **ART_ABSTAIN**
+- **Identity conflict:** no. ISBN `9784047355170`. 웹 연재 기원 ≠ 세로 웹툰 제외. 장식 `『』` 없음.
+- **Safety conflict:** no. packet `safe`.
+- **Hard blocker:** **no** / code 없음
+- **남은 공식 경로:** 해당 없음
+
+**결정**
+- ACCEPT Pass A `progression=2`, `worldBuilding=2`, `characterArcWeight=4`, `relationshipStructure=2`, `emotionalWarmth=4`, Genre, Theme — KADOKAWA 1권. https://www.kadokawa.co.jp/product/321811000381/
+- ACCEPT `problemSolving=2` — 약점 인정, 스승/방법 탐색, 도움과 위험을 통과. https://www.kadokawa.co.jp/product/321811000382/ https://www.kadokawa.co.jp/product/321901000444/
+- CORRECT Local `pacing=4` → **`3`**. 2~3권은 왕위 상실·여행·음모·재회로 급변하나 1권은 우정 도입. 혼합 진입은 동일 패킷 `アイアムアヒーロー`와 같이 3. N는 여전히 4/6.
+- ACCEPT `darkness=2`, `mentalStress=2` — 음모·배제·위험과 우정 지지의 혼합.
+- REJECT `comedy`/`romance`/`strategy`/`mysteryReveal`를 판타지·모험에서 채움.
+- 불일치 vs Local: `pacing 4→3`
+
+## 8. `work-07ff2a01ef593ce2f809` — さよならミニスカート
+
+- **N:** `U / U / 0 / 3 / 2 / 1` = **4/6**
+- **T:** `4 / 2 / 1 / 3 / 4 / U / U` = **5/7**
+- **Genre:** `mystery`
+- **Theme:** `school` 2
+- **Gate:** **PASS**
+- **ART_ABSTAIN**
+- **Identity conflict:** no. ISBN `9784088675206`. 장식 `『』` 없음.
+- **Safety conflict:** no. packet `safe`. 성폭력·젠더 트라우마 ≠ 성인 전용.
+- **Hard blocker:** **no** / code 없음
+- **남은 공식 경로:** 해당 없음
+
+**결정**
+- ACCEPT Pass A `mysteryReveal=2`, `characterArcWeight=4`, `relationshipStructure=2`, `darkness=3`, `mentalStress=4`, Genre, Theme — 集英社 1권; りぼん 특설. https://www.shueisha.co.jp/books/items/contents.html?isbn=978-4-08-867520-6
+- ACCEPT `pacing=3` — 비밀 도입·정체 위협·피해자 비난·추가 사건. 공식 1~2권 + 범위 확인 독립 리뷰.
+- ACCEPT `worldBuilding=1` — 학교·아이돌 산업의 성별 규범이 제약하나 규칙 세계(2) 미만.
+- ACCEPT `strategy=0` — 공식 제1화 63쪽 전체: 관찰·추적·대면·보호로 즉각 대응. 장기 전술 없음. mystery 장르에서 0을 추론하지 않음. https://ribon.shueisha.co.jp/sayonara_miniskirt_trial/
+- ACCEPT `comedy=1` — 같은 63쪽에 백스테이지·교실 험담·사제 대화·전화 농담의 간헐 개그. `comedy=0`은 페이지가 반증. 2 미만.
+- REJECT TO UNKNOWN `progression=2` — 정체/관계 변화는 `characterArcWeight`. 별도 획득 루프 없음.
+- REJECT TO UNKNOWN `problemSolving` — 보호·추궁은 있으나 분석 해결이 반복 보상으로 분리되지 않음.
+- REJECT 트라우마 소재로 `romance`/`emotionalWarmth`를 0 채움.
+- 불일치 vs Local 누적값: **없음**
+
+## 9. `work-d489f5a2229689aa5115` — 女の園の星
+
+- **N:** `0 / 1 / U / 2 / 1 / U` = **4/6**
+- **T:** `2 / 4 / 4 / 0 / 0 / U / U` = **5/7**
+- **Genre:** `comedy; sliceOfLife`
+- **Theme:** `school` 2; `workplace` 2
+- **Gate:** **PASS**
+- **ART_ABSTAIN**
+- **Identity conflict:** no. 대표 ISBN `9784396767976`. 특장판·굿즈 ≠ 대표판. 장식 `『』` 없음.
+- **Safety conflict:** no. packet `safe`.
+- **Hard blocker:** **no** / code 없음
+- **남은 공식 경로:** 해당 없음
+
+**결정**
+- ACCEPT Pass A `characterArcWeight=2`, `relationshipStructure=4`, `comedy=4`, Genre, Themes — 祥伝社 특설; マンガ大賞2021 심사평. https://www.shodensha.co.jp/onnanosononohoshi/
+- ACCEPT `progression=0` — 공식 초기 에피소드가 일상 상태로 복귀하는 단편. 누적 성장 루프 없음.
+- ACCEPT `problemSolving=1` — 그림 끝말잇기·`ほ□い` 같은 작은 착지. 분석 중심 아님.
+- ACCEPT `pacing=2` — 짧은 단편 단위 교체. 배역 교체만으로 더 빠르게 치지 않음.
+- ACCEPT `mysteryReveal=1` — 교실 수수께끼의 펀치라인. 추리 보상(2) 미만.
+- ACCEPT `darkness=0`, `mentalStress=0` — 공식 전제 “무의미하고 우스운 일상” + 초기 에피소드 열거(끝말잇기, `ほ□い`, 폴로셔츠, 술자리). 장르 라벨이 아니라 양성 저위험 구조. https://www.shodensha.co.jp/onnanosono_special/ https://news.shodensha.co.jp/article/479008557.html
+- REJECT TO UNKNOWN `emotionalWarmth` — “포근한 재미” 홍보 문구만으로 유대 축을 만들지 않음.
+- REJECT `strategy`/`worldBuilding`/`romance`를 일상 코미디에서 채움.
+- 불일치 vs Local 누적값: **없음**
+
+## 10. `work-cdf549d4b1888153e146` — ダンダダン
+
+- **N:** `U / 2 / U / 4 / 2 / 2` = **4/6**
+- **T:** `2 / 2 / 4 / 2 / U / 2 / U` = **5/7**
+- **Genre:** `action; fantasy; horror; romance`
+- **Theme:** `combat` 2
+- **Gate:** **PASS**
+- **ART_ABSTAIN**
+- **Identity conflict:** no. ISBN `9784088825991`. 次にくるマンガ大賞 주최 Web 2위는 provenance이지 Factor가 아님. 장식 `『』` 없음.
+- **Safety conflict:** no. packet `safe`. 괴이·신체 위협·성적 농담 가능성 ≠ R18.
+- **Hard blocker:** **no** / code 없음
+- **남은 공식 경로:** 해당 없음
+
+**결정**
+- ACCEPT Pass A `pacing=4`, `mysteryReveal=2`, `worldBuilding=2`, `characterArcWeight=2`, `relationshipStructure=2`, `comedy=4`, `romance=2`, Genre, Theme — 集英社 1권; マンガ大賞2022 심사평. https://www.shueisha.co.jp/books/items/contents.html?isbn=978-4-08-882599-1
+- ACCEPT `problemSolving=2` — 공식 2권 터보 할머니 술래잡기(명시 승리 조건) + 3권 분실물·초자연 공격 협력 대응. 반복된 혼합 해결. 골드골드 1회 작전과 다름. https://www.shueisha.co.jp/books/items/contents.html?isbn=978-4-08-882804-6 https://www.shueisha.co.jp/books/items/contents.html?isbn=978-4-08-882854-1
+- ACCEPT `darkness=2` — 저주·신체 위협·초자연 공격이 상시 코미디에 완충. 4 아님.
+- REJECT `comedy` Genre를 axis `comedy=4`에서 자동 추가.
+- REJECT TO UNKNOWN `mentalStress`/`emotionalWarmth`/`progression`/`strategy` — horror/action에서 채우지 않음.
+- 불일치 vs Local 누적값: **없음**
+
+---
+
+## 기계 판독 집계
+
+```
+chunk=04
+pilot=pilot-001
+candidateSha256=aaf4f4a4845ec105b8218f0f9e8358a2ae95c5823519e68e1752acada6e22529
+headSha=e03cfc9e45077386d1ec4d744a3bdee4b9176f1a
+factorScope=entry_1_3_volumes
+gates=narrative_4_of_6,tone_5_of_7
+works=10
+pass=9
+fail=1
+failIds=work-5e7eef6cc23d9738e034
+hardBlockerYes=0
+hardBlockerNo=10
+hardBlockerCodesAssigned=0
+artAbstain=10
+identityConflict=0
+safetyConflict=0
+titleOrnamentConflict=0
+themeEmpty=1
+themeEmptyIds=work-5e7eef6cc23d9738e034
+disagreementWorks=2
+disagreementCount=3
+disagreements=work-5e7eef6cc23d9738e034:problemSolving:1->U;work-5e7eef6cc23d9738e034:relationshipStructure:4->2;work-222504590507d3ab8093:pacing:4->3
+remainingOfficialRouteFail=https://comic-days.com/episode/13932016480030208354
+reviewedByHuman=false
+filesEdited=0
+```
