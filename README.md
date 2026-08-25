@@ -24,7 +24,7 @@ The app is designed around three constraints:
 
 - Guided taste onboarding and a reusable 17-axis preference profile
 - Ranked recommendations with factor-level contribution explanations
-- Bundled catalog of 150 reviewed manga works
+- Bundled catalog of 150 curated manga works
 - Catalog and external-work detail pages with stable URL contracts
 - Rakuten Books search and item lookup through server-only proxy routes
 - Local library, reading state, preference feedback, and backfill behavior
