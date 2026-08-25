@@ -1,0 +1,140 @@
+# Batch 005 chunk 01 independent non-Art Pass B
+
+## 1. Attestation
+
+Model `cursor-grok-4.6-high` / Cursor Grok 4.6 High, non-fast. Normal completion. All twelve frozen inputs read in full. No degradation. No repository edits. `reviewedByHuman=false`. `ART_ABSTAIN`. Muse `NOT_USED`. Ox `EXCLUDED`. Independent Pass B proposals only; no promotion authorization.
+
+## 2. Verified hashes
+
+Packet candidate SHA-256: `8e9a726ceef4daaaabaa133502ffe59a39594adc359e1fde1ec7f58d26517695`
+
+| Path | SHA-256 |
+| --- | --- |
+| `docs/factors/factor-dictionary.md` | `a9c29a853a108aca1b9bb8d5d71a3e7d5d583303691c0b35cc6424c1e45ee8be` |
+| `docs/factors/annotation-guide.md` | `f7dd1ec55d97bf9200fcec92ce270e7745a0d3aa4fe98a40c746fc56b6a777b3` |
+| `data/staging/catalog-expansion/batches/batch-005/annotation-review-adjudication-request.md` | `9254c3d00faeb844df9f81ffb7ce0b7873eff2c009dccf8e87fca7342c5f9527` |
+| `data/staging/catalog-expansion/batches/batch-005/manifest.json` | `3aee17575d6d10bd93071c0ca1129e7f75d170d9cb34616e1692c6621b1aaf03` |
+| `data/staging/catalog-expansion/batches/batch-005/PAYLOAD.sha256` | `50512fc57d612eb50d2b76bf7f32354241c3478933fd16e4c90908aa9b9c0d02` |
+| `data/staging/catalog-expansion/batches/batch-005/frozen-work-set.csv` | `ddf9343b48146eaaf58971155f4190b4ec53e09d28d932d0d03cdc515ff8b2b8` |
+| `data/staging/catalog-expansion/batches/batch-005/research/chunk-01.md` | `2390a3e9b6f57c48b109710728568d4eeb2f6d08416122f9f91b2e81b78909e0` |
+| `data/staging/catalog-expansion/batches/batch-005/annotation-pass-a/chunk-01/factors.csv` | `d49ca60fc5ebe84c5ca0b7665be613f3fd66682c0d25459edce9189254251511` |
+| `data/staging/catalog-expansion/batches/batch-005/annotation-pass-a/chunk-01/genres.csv` | `0e4c10c3e182c262ddba6a13e149e44b431496d36e2dbedb2c83524455f02fb4` |
+| `data/staging/catalog-expansion/batches/batch-005/annotation-pass-a/chunk-01/themes.csv` | `3c3db45ff29da9186ffcbc8dd72566d5dd7765a4785f8be9d8883d6c51d6f529` |
+| `data/staging/catalog-expansion/batches/batch-005/annotation-pass-a/chunk-01/notes.md` | `4857566793b21112dc258fe7c23663277598a33a2e69f796d12579402e2350c0` |
+| `data/staging/catalog-expansion/batches/batch-005/reviews/daybreak-annotation-qa-chunks-01-02.md` | `4f032d8fbfacdeec01ab01dc53a414dd9f1b118fc5f208b4584d520828a65539` |
+
+All twelve hashes matched. No `INPUT_MISMATCH`.
+
+## 3. Axis matrix
+
+| workId | canonicalTitle | progression | problemSolving | strategy | pacing | mysteryReveal | worldBuilding | characterArcWeight | relationshipStructure | comedy | darkness | mentalStress | romance | emotionalWarmth |
+| --- | --- | --- | --- | --- | --- | --- | --- | --- | --- | --- | --- | --- | --- | --- |
+| work-060a72fe10cf6ba9cbfc | チェーザレ 破壊の創造者 | U | U | 4 | 2 | U | 3 | U | 2 | U | U | U | U | U |
+| work-076beb86f844b642beef | くーねるまるた | 0 | 0 | 0 | 0 | 0 | 0 | 0 | 2 | U | 0 | 0 | U | 2 |
+| work-091d231d37f037fb07e8 | インベスターZ | 2 | U | 2 | 2 | U | 2 | U | U | U | U | U | U | U |
+| work-0cf463005cc77eeded8e | 黄泉のツガイ | U | U | U | 3 | 2 | 2 | U | 2 | U | 2 | U | U | U |
+| work-0d1ad77728a44df56508 | ラーメン大好き小泉さん | U | U | U | U | U | U | U | U | U | U | U | U | U |
+| work-0dabd1d17e5fcf2992b9 | 忘却のサチコ | 0 | 0 | 0 | 2 | 0 | 0 | 2 | U | U | U | 2 | U | U |
+| work-0ebf010ac12b9b60d80e | 機動旅団八福神 | U | U | U | 2 | U | 2 | U | 2 | U | 3 | U | U | U |
+| work-0ede6921b81169dc2dda | 不滅のあなたへ | U | U | U | 2 | U | U | 2 | U | U | 2 | U | U | 2 |
+| work-0eff8190c0c6ff604527 | よるくも | U | U | U | 2 | U | 2 | 2 | 2 | U | 4 | 3 | U | U |
+| work-12b484cd79bfe6852ea1 | 高校球児 ザワさん | U | U | U | 0 | U | U | U | 2 | U | 0 | U | U | U |
+
+## 4. Genre
+
+| workId | genres |
+| --- | --- |
+| work-060a72fe10cf6ba9cbfc | historical |
+| work-076beb86f844b642beef | sliceOfLife |
+| work-091d231d37f037fb07e8 | none |
+| work-0cf463005cc77eeded8e | action;fantasy |
+| work-0d1ad77728a44df56508 | sliceOfLife |
+| work-0dabd1d17e5fcf2992b9 | sliceOfLife |
+| work-0ebf010ac12b9b60d80e | action;scienceFiction |
+| work-0ede6921b81169dc2dda | fantasy |
+| work-0eff8190c0c6ff604527 | none |
+| work-12b484cd79bfe6852ea1 | sports;sliceOfLife |
+
+## 4b. Theme
+
+| workId | themes |
+| --- | --- |
+| work-060a72fe10cf6ba9cbfc | politics:2; historicalReconstruction:2 |
+| work-076beb86f844b642beef | cooking:2 |
+| work-091d231d37f037fb07e8 | school:2 |
+| work-0cf463005cc77eeded8e | combat:2; adventure:1 |
+| work-0d1ad77728a44df56508 | cooking:2; school:1 |
+| work-0dabd1d17e5fcf2992b9 | workplace:2 |
+| work-0ebf010ac12b9b60d80e | combat:2; war:2 |
+| work-0ede6921b81169dc2dda | exploration:2 |
+| work-0eff8190c0c6ff604527 | none |
+| work-12b484cd79bfe6852ea1 | school:2 |
+
+## 5. Pass A non-Art disagreements
+
+| workId | disagreements |
+| --- | --- |
+| work-060a72fe10cf6ba9cbfc | `strategy` 3→4 — https://www.kodansha.co.jp/comic/products/0000013470 https://www.kodansha.co.jp/comic/products/0000013493 — dictionary 4 is long-term political operation as the center (papal succession plan; cardinals plotting the next election), not a 2/4 midpoint. `worldBuilding` 2→3 — https://www.kodansha.co.jp/comic/products/0000013469 plus the volume 2–3 URLs — university, papal rank, and secular/religious factions are repeatedly load-bearing, above functional setting (2) and short of fully elaborated rules (4). |
+| work-076beb86f844b642beef | `pacing` 2→0 — https://e-comi.shogakukan.co.jp/books/091848470000d0000000 https://e-comi.shogakukan.co.jp/books/091853050000d0000000 https://e-comi.shogakukan.co.jp/books/091857280000d0000000 — dictionary 0 is little goal/situation change across the first three volumes; repeated ordinary cooking-and-neighbor episodes are not arc-unit change (2). `progression` U→0, `problemSolving` U→0, `strategy` U→0, `mysteryReveal` U→0, `worldBuilding` U→0, `characterArcWeight` U→0 — same three URLs — the established repeating structure is named-dish daily life, which affirmatively is not growth-reward, constraint-solving, long-term strategy, clue-reveal, elaborated world rules, or character-change reward. `darkness` U→0, `mentalStress` U→0 — same URLs — the bounded copy is bright everyday food life, matching darkness 0 and mentalStress 0. |
+| work-091d231d37f037fb07e8 | none |
+| work-0cf463005cc77eeded8e | `pacing` 2→3 — https://magazine.jp.square-enix.com/top/comics/detail/9784757581005/ https://magazine.jp.square-enix.com/top/comics/detail/9784757584013/ — village peace ends, underworld travel, mansion return, reunion, and a further attack are larger place/goal shifts than typical arc-unit (2), short of constant short-interval upheaval (4). `worldBuilding` U→2 — https://magazine.jp.square-enix.com/top/comics/detail/9784757579620/ plus the volume 2–3 URLs — ツガイ, otsutome, underworld, and the Kagemori house function as the plot setting (dictionary 2); rules are not explained enough for 4. Theme `adventure:1` added — volume 2–3 URLs — parent-seeking underworld travel is present as substructure, not the repeating core (combat remains 2). |
+| work-0d1ad77728a44df56508 | Genre none→`sliceOfLife`; Theme none→`cooking:2; school:1` — https://www.fujitv.co.jp/ramen_koizumi/2019/topics_01.html https://www.animate-onlineshop.jp/pn/pd/1290164/ — official series/first-episode copy states daily ramen hunting by a taciturn high-school transfer student. Axes stay U because the packet is secondary-lead and not a 1–3 publisher volume set. |
+| work-0dabd1d17e5fcf2992b9 | `romance` 2→U — https://shogakukan-comic.jp/book?isbn=9784091866707&lang=en https://shogakukan-comic.jp/book?isbn=9784091868800 — a broken engagement and one ex-lookalike sighting are inciting backstory, not an established romantic subplot (dictionary 2). `mentalStress` U→2 — https://shogakukan-comic.jp/book?isbn=9784091871756 — oblivion-seeking plus being overwhelmed by rail fans and schedule is mixed tension/frustration (2), not unknown. `progression` U→0, `problemSolving` U→0, `strategy` U→0, `mysteryReveal` U→0, `worldBuilding` U→0 — https://shogakukan-comic.jp/book?isbn=9784091866707&lang=en https://shogakukan-comic.jp/book?isbn=9784091868800 https://shogakukan-comic.jp/book?isbn=9784091871756 — repeating editor/food-travel structure is not growth, puzzle-solving, long-term strategy, mystery-reward, or world-rule elaboration. |
+| work-0ebf010ac12b9b60d80e | `darkness` 2→3 — https://www.kadokawa.co.jp/product/200700002796/ — war, occupation, and the explicit loss of family/friends/home/identity/peace/love/dreams sit between serious stakes (2) and cruelty-as-center (4). |
+| work-0ede6921b81169dc2dda | `progression` 2→U — https://www.kodansha.co.jp/comic/products/0000019901 https://www.kodansha.co.jp/comic/products/0000020013 — “小さな進化” and later TOC titles are excluded by the packet limitation; capability-to-transform is not a demonstrated growth-reward loop. `relationshipStructure` 2→U — same URLs — “新しい家族” is TOC-only; the copy establishes meeting and leaving a boy, not a fixed party. |
+| work-0eff8190c0c6ff604527 | Genre `action`→none — https://shogakukan-comic.jp/book?jdcn=091885380000d0000000 https://shogakukan-comic.jp/book?jdcn=091885980000d0000000 — murder, abduction, and escape are event facts for darkness, not an action-genre identity; the diner/class/relationship frame is not combat-as-genre. |
+| work-12b484cd79bfe6852ea1 | `pacing` 2→0 — https://e-comi.shogakukan.co.jp/books/091825370000d0000000 — official volume 1 copy is “nothing special” everyday club life; dictionary 0, not typical arc-unit change. `darkness` U→0 — https://e-comi.shogakukan.co.jp/books/091825370000d0000000 https://e-comi.shogakukan.co.jp/books/091828640000d0000000 — school/club daily life with spacey-vs-serious contrast is affirmatively light (0). |
+
+## 6. Identity, safety, representative ISBN
+
+| workId | identity | safety | representativeISBN | verdict | packetURL |
+| --- | --- | --- | --- | --- | --- |
+| work-060a72fe10cf6ba9cbfc | PASS | PASS | PASS `9784063722017` | PASS | https://www.kodansha.co.jp/comic/products/0000013469 |
+| work-076beb86f844b642beef | PASS | PASS | NEEDS_ADJUDICATION (no ISBN in packet) | NEEDS_ADJUDICATION | https://e-comi.shogakukan.co.jp/books/091848470000d0000000 |
+| work-091d231d37f037fb07e8 | PASS | PASS | PASS `9784063872576` | PASS | https://www.kodansha.co.jp/comic/products/0000018461 |
+| work-0cf463005cc77eeded8e | PASS | PASS | PASS `9784757579620` | PASS | https://magazine.jp.square-enix.com/top/comics/detail/9784757579620/ |
+| work-0d1ad77728a44df56508 | PASS | PASS | PASS `9784812487983` (distributor) | PASS | https://www.animate-onlineshop.jp/pn/pd/1290164/ |
+| work-0dabd1d17e5fcf2992b9 | PASS | PASS | PASS `9784091866707` | PASS | https://shogakukan-comic.jp/book?isbn=9784091866707&lang=en |
+| work-0ebf010ac12b9b60d80e | PASS | PASS | NEEDS_ADJUDICATION (frozen representative is vol. 9 `9784757746954`; entry evidence is vols. 1–3, vol. 1 `9784757720923`) | NEEDS_ADJUDICATION | https://www.kadokawa.co.jp/product/200700002796/ |
+| work-0ede6921b81169dc2dda | PASS | PASS | PASS `9784063958423` | PASS | https://www.kodansha.co.jp/comic/products/0000019901 |
+| work-0eff8190c0c6ff604527 | PASS (「コタツ」 is not a title claim) | PASS | NEEDS_ADJUDICATION (JDCN only; no ISBN in packet) | NEEDS_ADJUDICATION | https://shogakukan-comic.jp/book?jdcn=091885380000d0000000 |
+| work-12b484cd79bfe6852ea1 | PASS | PASS | PASS `9784091825377` | PASS | https://e-comi.shogakukan.co.jp/books/091825370000d0000000 |
+
+Titles match the frozen set with no decorative `『』`. Packet violence/war wording is not converted into a safety classification. No `safety-conflict` or `identity-conflict` is declared.
+
+## 7. Outcomes
+
+| workId | outcome |
+| --- | --- |
+| work-060a72fe10cf6ba9cbfc | needs-adjudication |
+| work-076beb86f844b642beef | needs-adjudication |
+| work-091d231d37f037fb07e8 | verified |
+| work-0cf463005cc77eeded8e | needs-adjudication |
+| work-0d1ad77728a44df56508 | insufficient-evidence |
+| work-0dabd1d17e5fcf2992b9 | needs-adjudication |
+| work-0ebf010ac12b9b60d80e | needs-adjudication |
+| work-0ede6921b81169dc2dda | needs-adjudication |
+| work-0eff8190c0c6ff604527 | needs-adjudication |
+| work-12b484cd79bfe6852ea1 | needs-adjudication |
+
+## 8. Endpoint 0/4 and Theme centrality 2 support
+
+| workId | assigned | packetURL | support |
+| --- | --- | --- | --- |
+| work-060a72fe10cf6ba9cbfc | `strategy=4` | https://www.kodansha.co.jp/comic/products/0000013470 https://www.kodansha.co.jp/comic/products/0000013493 | Cesare plans to make his father the next pope; cardinals plot the next election; another schemer approaches. Dictionary 4: long-term political operation as the center. |
+| work-060a72fe10cf6ba9cbfc | `politics:2` | https://www.kodansha.co.jp/comic/products/0000013469 https://www.kodansha.co.jp/comic/products/0000013470 https://www.kodansha.co.jp/comic/products/0000013493 | Papal rank, secular/religious collision, and succession manoeuvring are the repeating entry structure. |
+| work-060a72fe10cf6ba9cbfc | `historicalReconstruction:2` | https://www.kodansha.co.jp/comic/products/0000013469 https://www.kodansha.co.jp/comic/products/0000013470 https://www.kodansha.co.jp/comic/products/0000013493 | Dated 1491 Pisa/Vatican reconstruction with named historical figures is the repeating frame. |
+| work-076beb86f844b642beef | `progression=0` `problemSolving=0` `strategy=0` `pacing=0` `mysteryReveal=0` `worldBuilding=0` `characterArcWeight=0` `darkness=0` `mentalStress=0` | https://e-comi.shogakukan.co.jp/books/091848470000d0000000 https://e-comi.shogakukan.co.jp/books/091853050000d0000000 https://e-comi.shogakukan.co.jp/books/091857280000d0000000 | Volumes 1–3 repeat named-dish daily life with neighbors/friends and no goal shift, growth-reward, strategy, mystery, world-rules, character-change reward, danger, or psychological pressure. |
+| work-076beb86f844b642beef | `cooking:2` | https://e-comi.shogakukan.co.jp/books/091848470000d0000000 https://e-comi.shogakukan.co.jp/books/091853050000d0000000 https://e-comi.shogakukan.co.jp/books/091857280000d0000000 | Named dishes are the repeating core of every entry volume. |
+| work-091d231d37f037fb07e8 | `school:2` | https://www.kodansha.co.jp/comic/products/0000018483 | Dozuku academy admission and the investment club’s 130-year school-club rule are the repeating entry frame. |
+| work-0cf463005cc77eeded8e | `combat:2` | https://magazine.jp.square-enix.com/top/comics/detail/9784757579620/ https://magazine.jp.square-enix.com/top/comics/detail/9784757581005/ https://magazine.jp.square-enix.com/top/comics/detail/9784757584013/ | ツガイ battles, Asa’s attack, Kagemori clash, and a further ツガイ attack repeat across the entry volumes. |
+| work-0d1ad77728a44df56508 | `cooking:2` | https://www.fujitv.co.jp/ramen_koizumi/2019/topics_01.html https://www.animate-onlineshop.jp/pn/pd/1290164/ | Daily ramen hunting is the stated series/first-episode core. No axis endpoints assigned. |
+| work-0dabd1d17e5fcf2992b9 | `progression=0` `problemSolving=0` `strategy=0` `mysteryReveal=0` `worldBuilding=0` | https://shogakukan-comic.jp/book?isbn=9784091866707&lang=en https://shogakukan-comic.jp/book?isbn=9784091868800 https://shogakukan-comic.jp/book?isbn=9784091871756 | Entry copy repeats editorial food-seeking travel, not growth, puzzles, long-term strategy, mystery-reward, or world-rule systems. |
+| work-0dabd1d17e5fcf2992b9 | `workplace:2` | https://shogakukan-comic.jp/book?isbn=9784091866707&lang=en https://shogakukan-comic.jp/book?isbn=9784091868800 https://shogakukan-comic.jp/book?isbn=9784091871756 | Editor assignments (Osaka reporting, Hokutosei/railway reporting) are the repeating vehicle of the entry volumes. |
+| work-0ebf010ac12b9b60d80e | `combat:2` `war:2` | https://www.kadokawa.co.jp/product/200700002796/ https://www.hulu.jp/comic/series/138521/chapter https://ebookstore.sony.jp/title/10102361/id/LT000016409000340695/ | Occupied-Japan war, sortie in combat machines, and an independence force repeat as the entry premise. No axis 0/4 assigned. |
+| work-0ede6921b81169dc2dda | `exploration:2` | https://www.kodansha.co.jp/comic/products/0000019901 https://www.kodansha.co.jp/comic/products/0000019946 https://www.kodansha.co.jp/comic/products/0000020013 | Information-gathering and an eternal journey are the repeated series premise on the official volume pages. No axis 0/4 assigned. |
+| work-0eff8190c0c6ff604527 | `darkness=4` | https://shogakukan-comic.jp/book?jdcn=091885380000d0000000 https://shogakukan-comic.jp/book?jdcn=091885600000d0000000 https://shogakukan-comic.jp/book?jdcn=091885980000d0000000 | Forest-origin killer, inescapable dark class world, tragedy, matricide, and abduction/escape are the repeating center (dictionary 4). No Theme centrality 2 assigned. |
+| work-12b484cd79bfe6852ea1 | `pacing=0` `darkness=0` | https://e-comi.shogakukan.co.jp/books/091825370000d0000000 https://e-comi.shogakukan.co.jp/books/091828640000d0000000 | “Nothing special” everyday club life and the training/daily-life contrast are slow and light. |
+| work-12b484cd79bfe6852ea1 | `school:2` | https://e-comi.shogakukan.co.jp/books/091825370000d0000000 https://e-comi.shogakukan.co.jp/books/091826690000d0000000 https://e-comi.shogakukan.co.jp/books/091828640000d0000000 | Class, club, and high-school baseball-club restriction repeat as the entry frame. |
+
+WORK_COUNT=10 AXIS_COUNT_PER_WORK=13 IDENTITY_ROWS=10 SAFETY_ROWS=10 ISBN_ROWS=10 ART_ABSTAIN

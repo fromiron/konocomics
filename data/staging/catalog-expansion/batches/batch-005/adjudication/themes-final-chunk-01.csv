@@ -1,0 +1,12 @@
+workId,themeId,centrality,confidence,evidenceId
+work-060a72fe10cf6ba9cbfc,politics,2,0.86,ev-batch-005-a-work-060a72fe10cf6ba9cbfc
+work-060a72fe10cf6ba9cbfc,historicalReconstruction,2,0.84,ev-batch-005-a-work-060a72fe10cf6ba9cbfc
+work-076beb86f844b642beef,cooking,2,0.86,ev-batch-005-a-work-076beb86f844b642beef
+work-091d231d37f037fb07e8,school,2,0.78,ev-batch-005-a-work-091d231d37f037fb07e8
+work-0cf463005cc77eeded8e,adventure,1,0.72,ev-batch-005-a-work-0cf463005cc77eeded8e
+work-0cf463005cc77eeded8e,combat,2,0.82,ev-batch-005-a-work-0cf463005cc77eeded8e
+work-0dabd1d17e5fcf2992b9,workplace,2,0.78,ev-batch-005-a-work-0dabd1d17e5fcf2992b9
+work-0ebf010ac12b9b60d80e,combat,2,0.84,ev-batch-005-a-work-0ebf010ac12b9b60d80e
+work-0ebf010ac12b9b60d80e,war,2,0.88,ev-batch-005-a-work-0ebf010ac12b9b60d80e
+work-0ede6921b81169dc2dda,exploration,2,0.80,ev-batch-005-a-work-0ede6921b81169dc2dda
+work-12b484cd79bfe6852ea1,school,2,0.78,ev-batch-005-a-work-12b484cd79bfe6852ea1

@@ -26,6 +26,7 @@ import {
   themeSourceRowSchema,
   workSourceRowSchema,
 } from "./source-schema";
+import { PROMOTION_HARD_BLOCKERS } from "../build-promotion-registry";
 
 type CsvRow = Record<string, string>;
 
@@ -43,6 +44,7 @@ export type PromotionOverlayConfig = {
   artFactorOverrideFiles?: readonly string[];
   artPreflightOverrideFiles?: readonly string[];
   terminalQaFiles?: readonly string[];
+  blockerAdjudicationFile?: string;
   sceneContexts: ReadonlyMap<string, string>;
   motionReferences: ReadonlyMap<string, string>;
 };
@@ -207,27 +209,32 @@ function artEvidenceAuthority(sourceType: string) {
 function validateReviewLedgers(root: string, config: PromotionOverlayConfig) {
   const artReviewFiles = listFiles(root, `${config.batchRoot}/art-review`);
   for (const chunk of config.chunks) {
+    const finalArtRows = readCsv(
+      join(root, `${config.batchRoot}/art-review/chunk-${chunk}/final-art.csv`),
+    );
     const artLedger = artReviewFiles
       .filter((path) => path.includes(`chunk-${chunk}`))
       .map((path) => readFileSync(join(root, path), "utf8"))
       .join("\n")
       .replaceAll(/\s+/gu, " ");
-    for (const [label, pattern] of [
-      ["exact Gemini model", /gemini-3\.7-flash-high/u],
-      [
-        "completed execution",
-        /(?:completionStatus=completed|completed normally|outer(?:Result| subtype)?[^.;]{0,40}success|outer SUCCESS)/iu,
-      ],
-      [
-        "original-pixel access",
-        /(?:full pixel access|original[- ]detail pixel|original pixels|opened all [^.;]{0,80}pixels|openedAtOriginalPixels=yes)/iu,
-      ],
-      ["non-human review", /reviewedByHuman`?\s*[:=]\s*`?false/iu],
-      ["Grok Art abstention", /ART_ABSTAIN/u],
-      ["Muse non-use", /(?:Muse (?:is |was )?`?NOT_USED|Muse was not (?:used|invoked))/iu],
-    ] as const) {
-      if (!pattern.test(artLedger)) {
-        throw new Error(`Art adjudication chunk ${chunk} lacks quorum evidence: ${label}`);
+    if (finalArtRows.some((row) => row.state === "known")) {
+      for (const [label, pattern] of [
+        ["exact Gemini model", /gemini-3\.7-flash-high/u],
+        [
+          "completed execution",
+          /(?:completionStatus=completed|completed normally|outer(?:Result| subtype)?[^.;]{0,40}success|outer SUCCESS)/iu,
+        ],
+        [
+          "original-pixel access",
+          /(?:full pixel access|original[- ]detail pixel|original pixels|opened all [^.;]{0,80}pixels|openedAtOriginalPixels=yes)/iu,
+        ],
+        ["non-human review", /reviewedByHuman`?\s*[:=]\s*`?false/iu],
+        ["Grok Art abstention", /ART_ABSTAIN/u],
+        ["Muse non-use", /(?:Muse (?:is |was )?`?NOT_USED|Muse was not (?:used|invoked))/iu],
+      ] as const) {
+        if (!pattern.test(artLedger)) {
+          throw new Error(`Art adjudication chunk ${chunk} lacks quorum evidence: ${label}`);
+        }
       }
     }
     const grok = readFileSync(
@@ -369,7 +376,7 @@ function readPrimaryTextSources(root: string, config: PromotionOverlayConfig) {
         headings[index + 1]?.index ?? content.length,
       );
       const field = (name: string) =>
-        new RegExp(`^- ${name}: (.+)$`, "mu").exec(section)?.[1]?.trim() ?? "";
+        new RegExp(`^- \`?${name}\`?: (.+)$`, "mu").exec(section)?.[1]?.trim() ?? "";
       const workId = heading[1] ?? "";
       if (sources.has(workId)) throw new Error(`Duplicate primary research section: ${workId}`);
       sources.set(workId, {
@@ -574,6 +581,33 @@ function finalOverlay(root: string, config: PromotionOverlayConfig) {
       `Primary official research must contain exactly the ${String(config.targetWorkCount)} frozen works`,
     );
   }
+  const explicitBlockers = new Map<string, CsvRow[]>();
+  if (config.blockerAdjudicationFile !== undefined) {
+    const path = join(root, config.batchRoot, config.blockerAdjudicationFile);
+    if (!existsSync(path)) throw new Error(`Independent blocker adjudication is missing: ${path}`);
+    for (const row of readCsv(path)) {
+      const workId = row.workId ?? "";
+      if (
+        !frozenIds.has(workId) ||
+        !Object.hasOwn(PROMOTION_HARD_BLOCKERS, row.blockerCode ?? "") ||
+        (row.blockerDetails ?? "") === "" ||
+        (row.recheckPath ?? "") === ""
+      ) {
+        throw new Error(`Invalid independent blocker adjudication: ${workId}`);
+      }
+      assertProvenance(
+        row,
+        {
+          name: "evidenceName",
+          url: "evidenceUrl",
+          publishedAt: "evidencePublishedAt",
+          retrievedAt: "retrievedAt",
+        },
+        `Independent blocker adjudication ${workId}`,
+      );
+      explicitBlockers.set(workId, [...(explicitBlockers.get(workId) ?? []), row]);
+    }
+  }
 
   const decisions: CsvRow[] = [];
   const blockers: CsvRow[] = [];
@@ -675,25 +709,13 @@ function finalOverlay(root: string, config: PromotionOverlayConfig) {
       ...(workGenres.length === 0 ? ["Genre 0"] : []),
       ...(workThemes.length === 0 ? ["Theme 0"] : []),
     ];
-    const blockerDetails =
+    const defaultBlockerDetails =
       deficiencies.length === 0
         ? ""
         : `Finite official-first routes exhausted; unchanged promotion coverage fails: ${deficiencies.join(
             "; ",
           )}. Unknown is not a low value and no value was filled to meet a quota.`;
-    decisions.push({
-      position: frozenRow.position ?? "",
-      workId,
-      canonicalTitle,
-      narrativeKnown: String(narrative.known),
-      toneKnown: String(tone.known),
-      artKnown: String(art.known),
-      genreCount: String(workGenres.length),
-      themeCount: String(workThemes.length),
-      outcome: deficiencies.length === 0 ? "recommendationVerified" : "promotionBlocked",
-      blockerCode: deficiencies.length === 0 ? "" : "SOURCE_INFORMATION_UNAVAILABLE",
-      blockerDetails,
-    });
+    let blockerRecords: CsvRow[] = [];
     if (deficiencies.length > 0) {
       const textSource = primarySources.get(workId);
       const source = art.ratio < COVERAGE_THRESHOLDS.art ? artSource : textSource;
@@ -724,18 +746,62 @@ function finalOverlay(root: string, config: PromotionOverlayConfig) {
           ? ["Provide direct official evidence for at least one central Theme"]
           : []),
       ];
-      blockers.push({
-        workId,
-        blockerCode: "SOURCE_INFORMATION_UNAVAILABLE",
-        blockerDetails: `${blockerDetails}${publication.fallbackNote} Combined input/review packet binding: SHA-256=${bindings.combinedSha256}; see final-overlay-validation.json inputBindings.`,
-        evidenceName: source.sourceName ?? "",
-        evidenceUrl: source.officialUrl ?? source.sourceUrl ?? "",
-        evidencePublishedAt: publication.value,
-        retrievedAt: source.retrievedAt ?? "",
-        recheckPath: recheck.join("; "),
-      });
-      continue;
+      blockerRecords = explicitBlockers.get(workId) ?? [];
+      if (blockerRecords.length === 0 && config.blockerAdjudicationFile !== undefined) {
+        throw new Error(`Coverage failure lacks independent hard-blocker adjudication: ${workId}`);
+      }
+      if (blockerRecords.length === 0) {
+        blockerRecords = [
+          {
+            blockerCode: "SOURCE_INFORMATION_UNAVAILABLE",
+            blockerDetails: defaultBlockerDetails,
+            recheckPath: recheck.join("; "),
+          },
+        ];
+      }
+      if (
+        blockerRecords.length === 0 ||
+        new Set(blockerRecords.map((record) => record.blockerCode)).size !==
+          blockerRecords.length ||
+        blockerRecords.some(
+          (record) =>
+            record.blockerCode === "" || record.blockerDetails === "" || record.recheckPath === "",
+        )
+      ) {
+        throw new Error(`Invalid blocker override: ${workId}`);
+      }
+      blockers.push(
+        ...blockerRecords.map((record) => {
+          const explicit = record.evidenceUrl !== undefined;
+          return {
+            workId,
+            blockerCode: record.blockerCode ?? "",
+            blockerDetails: `${record.blockerDetails ?? ""}${explicit ? "" : publication.fallbackNote} Combined input/review packet binding: SHA-256=${bindings.combinedSha256}; see final-overlay-validation.json inputBindings.`,
+            evidenceName: explicit ? (record.evidenceName ?? "") : (source.sourceName ?? ""),
+            evidenceUrl: explicit
+              ? (record.evidenceUrl ?? "")
+              : (source.officialUrl ?? source.sourceUrl ?? ""),
+            evidencePublishedAt: explicit ? (record.evidencePublishedAt ?? "") : publication.value,
+            retrievedAt: explicit ? (record.retrievedAt ?? "") : (source.retrievedAt ?? ""),
+            recheckPath: record.recheckPath ?? "",
+          };
+        }),
+      );
     }
+    decisions.push({
+      position: frozenRow.position ?? "",
+      workId,
+      canonicalTitle,
+      narrativeKnown: String(narrative.known),
+      toneKnown: String(tone.known),
+      artKnown: String(art.known),
+      genreCount: String(workGenres.length),
+      themeCount: String(workThemes.length),
+      outcome: deficiencies.length === 0 ? "recommendationVerified" : "promotionBlocked",
+      blockerCode: blockerRecords.map((record) => record.blockerCode).join(";"),
+      blockerDetails: blockerRecords.map((record) => record.blockerDetails).join(" | "),
+    });
+    if (deficiencies.length > 0) continue;
 
     const context = contexts.get(workId);
     const contextsForArt = config.sceneContexts.get(workId);
@@ -749,6 +815,10 @@ function finalOverlay(root: string, config: PromotionOverlayConfig) {
     }
     works.push({
       ...sourceWork,
+      status:
+        context.status === undefined || context.status === ""
+          ? (sourceWork.status ?? "")
+          : context.status,
       genres: workGenres.join(";"),
       onboardingEligible: "true",
       recommendationEligible: "true",
@@ -864,8 +934,8 @@ function finalOverlay(root: string, config: PromotionOverlayConfig) {
       catalogRole: context.catalogRole ?? "",
       seriesGroupId: context.seriesGroupId ?? "",
       volumeCount: context.volumeCount ?? "",
-      reviewAverage: "",
-      reviewCount: "",
+      reviewAverage: context.reviewAverage ?? "",
+      reviewCount: context.reviewCount ?? "",
     });
   }
 
@@ -875,6 +945,17 @@ function finalOverlay(root: string, config: PromotionOverlayConfig) {
   const verifiedPositions = decisions
     .filter((row) => row.outcome === "recommendationVerified")
     .map((row) => Number(row.position));
+  const blockedIds = decisions
+    .filter((row) => row.outcome === "promotionBlocked")
+    .map((row) => row.workId ?? "");
+  const blockerWorkIds = [...new Set(blockers.map((row) => row.workId ?? ""))];
+  if (
+    [...explicitBlockers.keys()].some(
+      (workId) => !blockedIds.includes(workId) || !blockerWorkIds.includes(workId),
+    )
+  ) {
+    throw new Error(`${config.batchLabel} blocker adjudication contains a non-blocked work`);
+  }
   if (JSON.stringify(verifiedPositions) !== JSON.stringify(config.expectedVerifiedPositions)) {
     throw new Error(
       `${config.batchLabel} outcome drifted from the frozen ${String(config.expectedVerifiedPositions.length)}/${String(config.targetWorkCount - config.expectedVerifiedPositions.length)} adjudication: ${verifiedPositions.join(",")}`,
@@ -901,7 +982,8 @@ function finalOverlay(root: string, config: PromotionOverlayConfig) {
     recommendationContext.length !== verifiedIds.length ||
     artManifest.length !== verifiedIds.length * ART_AXIS_IDS.length ||
     evidence.length !== verifiedIds.length * 5 ||
-    blockers.length + verifiedIds.length !== config.targetWorkCount
+    JSON.stringify(blockerWorkIds) !== JSON.stringify(blockedIds) ||
+    blockedIds.length + verifiedIds.length !== config.targetWorkCount
   ) {
     throw new Error(`${config.batchLabel} overlay cardinality or canonical order is invalid`);
   }
@@ -955,7 +1037,7 @@ function finalOverlay(root: string, config: PromotionOverlayConfig) {
       humanValidation: "NOT_RUN",
       targetWorkCount: config.targetWorkCount,
       recommendationVerified: verifiedIds.length,
-      promotionBlocked: blockers.length,
+      promotionBlocked: blockedIds.length,
       expectedVerifiedPositions: config.expectedVerifiedPositions,
       coverageThresholds: {
         narrative: COVERAGE_THRESHOLDS.narrative,
@@ -994,7 +1076,7 @@ function finalOverlay(root: string, config: PromotionOverlayConfig) {
     2,
   )}\n`;
   contents.set("final-overlay-validation.json", validation);
-  return { contents, verified: verifiedIds.length, blocked: blockers.length };
+  return { contents, verified: verifiedIds.length, blocked: blockedIds.length };
 }
 
 export function runPromotionOverlay(

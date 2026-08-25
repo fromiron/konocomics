@@ -1,0 +1,9 @@
+workId,themeId,centrality,confidence,evidenceId
+work-5b7cf2105a4bc6f6b46c,adventure,2,0.82,ev-batch-005-a-work-5b7cf2105a4bc6f6b46c
+work-5b7cf2105a4bc6f6b46c,survival,2,0.80,ev-batch-005-a-work-5b7cf2105a4bc6f6b46c
+work-5b7cf2105a4bc6f6b46c,exploration,2,0.78,ev-batch-005-a-work-5b7cf2105a4bc6f6b46c
+work-5e30ab3c7e3fb43e51f2,politics,2,0.82,ev-batch-005-a-work-5e30ab3c7e3fb43e51f2
+work-62fb5d8e9f6c6bbbeba9,combat,2,0.84,ev-batch-005-a-work-62fb5d8e9f6c6bbbeba9
+work-62fb5d8e9f6c6bbbeba9,survival,2,0.78,ev-batch-005-a-work-62fb5d8e9f6c6bbbeba9
+work-77008e04537e3fd889e2,combat,1,0.72,ev-batch-005-a-work-77008e04537e3fd889e2
+work-77008e04537e3fd889e2,investigation,2,0.88,ev-batch-005-a-work-77008e04537e3fd889e2

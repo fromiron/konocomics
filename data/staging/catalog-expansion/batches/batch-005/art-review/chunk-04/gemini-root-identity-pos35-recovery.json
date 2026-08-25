@@ -1,0 +1,23 @@
+{
+  "project": "fromiron/konocomics",
+  "batch": "batch-005",
+  "chunk": "chunk-04-pos35-recovery",
+  "workId": "work-8a7846af8ead1797e6a2",
+  "canonicalTitle": "ハイスコアガール",
+  "model": "gemini-3.7-flash-high",
+  "effort": "high",
+  "payloadFormat": "canonical-uncompressed-directory",
+  "exactRoot": "/tmp/konocomics-batch005-gemini-art04-pos35.Peqx6H",
+  "payloadFileCount": 12,
+  "imageCount": 6,
+  "openedOriginalPixels": "6/6",
+  "requestSha256": "2637b727e83f402413ab3c3daff449e5db41e80769e7d934758bdd351cab5143",
+  "responseSha256": "3bf826a5aac8c2280940382df6e31a79c486f4d8693a8a6be7783586eb194d71",
+  "payloadFilesSha256": "ec56221a2e3c47d0cadb9107f1473aab9a26a5f636662ef7214469aefa493e6c",
+  "payloadLedgerSha256": "85b851e8c52e9b85e43a24ef7043028f1cb8e88900f76f0cc311663c135a52c7",
+  "completionStatus": "completed",
+  "reviewedByHuman": false,
+  "grokArtAccess": "ART_ABSTAIN",
+  "muse": "NOT_USED",
+  "retrievedAt": "2026-08-25"
+}

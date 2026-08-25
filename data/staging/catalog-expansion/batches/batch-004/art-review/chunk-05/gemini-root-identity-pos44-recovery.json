@@ -1,0 +1,16 @@
+{
+  "project": "konocomics",
+  "batch": "batch-004",
+  "chunk": "chunk-05-pos44-recovery",
+  "workId": "work-e2f095e08fc5e08d5a2b",
+  "canonicalTitle": "高嶺と花",
+  "model": "gemini-3.7-flash-high",
+  "effort": "high",
+  "payloadFormat": "canonical-uncompressed-directory",
+  "payloadFileCount": 11,
+  "imageCount": 6,
+  "requestSha256": "883952e41c2dc1effe1fbbdfa409a1f833bf8745fdfa3d85ef6f35a083a9b9b9",
+  "payloadLedgerSha256": "838f5683a6a57e8cecc9191e765aeca5d223ad6be81aafab6694919ab9485677",
+  "reviewedByHuman": false,
+  "retrievedAt": "2026-08-25"
+}

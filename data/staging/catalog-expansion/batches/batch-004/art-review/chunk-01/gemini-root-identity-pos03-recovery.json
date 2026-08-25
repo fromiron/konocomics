@@ -1,0 +1,16 @@
+{
+  "project": "konocomics",
+  "batch": "batch-004",
+  "chunk": "chunk-01-pos03-recovery",
+  "workId": "work-0f3a44f5dcab9623d1be",
+  "canonicalTitle": "応天の門",
+  "model": "gemini-3.7-flash-high",
+  "effort": "high",
+  "payloadFormat": "canonical-uncompressed-directory",
+  "payloadFileCount": 11,
+  "imageCount": 6,
+  "requestSha256": "fe0d6c0b78ce2c2425988ad90a5cce1a9697653ab7b4974906ca096d32b27e7e",
+  "payloadLedgerSha256": "a31680d0f959ad0a75040861f6517e8465fccd303dea24f5e520d2c8303e5857",
+  "reviewedByHuman": false,
+  "retrievedAt": "2026-08-25"
+}

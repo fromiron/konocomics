@@ -1,0 +1,106 @@
+# Batch 004 chunk 04 independent non-Art review
+
+## 1. Attestation
+
+`cursor-grok-4.6-high` / Cursor Grok 4.6 High, non-fast. Normal completion. All nine frozen inputs read. No degradation. No edits. `reviewedByHuman=false`. `ART_ABSTAIN`. Muse `NOT_USED`. Ox `EXCLUDED`. Independent Pass B proposals only.
+
+## 2. Verified hashes
+
+| Path | SHA-256 |
+| --- | --- |
+| `docs/factors/factor-dictionary.md` | `a9c29a853a108aca1b9bb8d5d71a3e7d5d583303691c0b35cc6424c1e45ee8be` |
+| `docs/factors/annotation-guide.md` | `f7dd1ec55d97bf9200fcec92ce270e7745a0d3aa4fe98a40c746fc56b6a777b3` |
+| `data/staging/catalog-expansion/batches/batch-004/annotation-review-adjudication-request.md` | `693e302b8ca0dbd44b513b2ad62bab93a4587a7dc60c3437182af2a9d15f6513` |
+| `data/staging/catalog-expansion/batches/batch-004/frozen-work-set.csv` | `a07a3bd053ce3edb79bdd5803ea3f04dbf8ceac4fd422d84ca97432ba75f68a1` |
+| `data/staging/catalog-expansion/batches/batch-004/research/chunk-04.md` | `5e0bb7550c8f84929faef52580a520b4dd5053ee1f61db07b051b0acf71787e2` |
+| `data/staging/catalog-expansion/batches/batch-004/annotation-pass-a/chunk-04/factors.csv` | `c3692a24e4eced00f998cbc2db5b1f379d69b1f284ee041a3829a5b80eedb02d` |
+| `data/staging/catalog-expansion/batches/batch-004/annotation-pass-a/chunk-04/genres.csv` | `e0c501bf7575d0e5c02c98741a4637b3090b8b46a67eab3a2fdbb68990236acd` |
+| `data/staging/catalog-expansion/batches/batch-004/annotation-pass-a/chunk-04/themes.csv` | `fa5511e1fcb9eabd5f650d84026492fa945e9b1df89ba4ee8067b96ada202ac0` |
+| `data/staging/catalog-expansion/batches/batch-004/annotation-pass-a/chunk-04/notes.md` | `b256cd19aec06570deff881a7f27b89764c5acdad1d08594aae8664281be6caa` |
+
+## 3. Axis matrix
+
+| workId | canonicalTitle | progression | problemSolving | strategy | pacing | mysteryReveal | worldBuilding | characterArcWeight | relationshipStructure | comedy | darkness | mentalStress | romance | emotionalWarmth |
+| --- | --- | --- | --- | --- | --- | --- | --- | --- | --- | --- | --- | --- | --- | --- |
+| work-925f371723beac5227f7 | 邪神の弁当屋さん | U | U | U | U | U | 2 | U | 2 | U | U | U | U | U |
+| work-961a49798df191311f42 | 働かないふたり | 0 | U | U | U | 0 | 0 | U | 2 | 2 | U | U | U | U |
+| work-9bd00739b995d84e2494 | あした死ぬには、 | U | U | U | U | U | U | 4 | 2 | U | 2 | 2 | 1 | U |
+| work-a3d922576a1a1ecc8e3e | ドカ食いダイスキ！ もちづきさん | U | U | U | U | U | U | U | U | 4 | U | U | U | U |
+| work-aa85b65d02f367e76a07 | ディグイット | 2 | U | U | 2 | U | U | 3 | 2 | U | U | U | U | U |
+| work-af3443bab1c30d470a76 | 坂本ですが? | U | U | U | U | U | U | U | U | 2 | U | U | U | U |
+| work-bd5c323a3dbc9f3a04d4 | 来世は他人がいい | U | U | U | 2 | U | U | 3 | 3 | 2 | 2 | 2 | 4 | U |
+| work-c2df32661c0b925ff74f | カラオケ行こ！ | U | U | U | U | U | U | 3 | 2 | 2 | U | U | U | U |
+| work-c2f3864045578cebb590 | となりの猫と恋知らず | U | U | U | 2 | U | U | 3 | 2 | U | U | U | 4 | U |
+| work-c5c2695ad33fd05af945 | カッコウの許嫁 | U | U | U | 2 | U | U | 3 | 3 | U | U | U | 4 | U |
+
+## 4. Genre / Theme
+
+| workId | genres | themes |
+| --- | --- | --- |
+| work-925f371723beac5227f7 | fantasy;sliceOfLife | cooking 1; foundFamily 1 |
+| work-961a49798df191311f42 | comedy;sliceOfLife | none |
+| work-9bd00739b995d84e2494 | sliceOfLife | workplace 1 |
+| work-a3d922576a1a1ecc8e3e | comedy;sliceOfLife | none |
+| work-aa85b65d02f367e76a07 | sports | sportsCompetition 2 |
+| work-af3443bab1c30d470a76 | comedy;sliceOfLife | school 2 |
+| work-bd5c323a3dbc9f3a04d4 | romance | none |
+| work-c2df32661c0b925ff74f | comedy;sliceOfLife | school 1 |
+| work-c2f3864045578cebb590 | sliceOfLife;romance | school 2 |
+| work-c5c2695ad33fd05af945 | sliceOfLife;romance | school 2 |
+
+## 5. Pass A non-Art disagreements
+
+- work-925f371723beac5227f7 Theme `cooking` 2→1; add `foundFamily` 1. [講談社 3](https://www.kodansha.co.jp/comic/products/0000420295) 신사·축제·내면은 조리 퍼즐의 반복 핵심이 아님(centrality 2 미달). 동거·결핍 교차는 `foundFamily` 1. Axis none.
+- work-961a49798df191311f42 `progression` U→0, `mysteryReveal` U→0, `worldBuilding` U→0. [新潮社 1](https://www.shinchosha.co.jp/book/771744/)·[2](https://www.shinchosha.co.jp/book/771765/)·[3](https://www.shinchosha.co.jp/book/771782/) 무직 남매 4컷·정적 생활이 3권까지 유지. 성장 보상·수수께끼·구축 세계 규칙 거의 없음=known 0.
+- work-9bd00739b995d84e2494 `characterArcWeight` 3→4. [太田出版 2](https://www.ohtabooks.com/publish/2020/01/16130028.html)·[3](https://www.ohtabooks.com/publish/2021/03/11181256.html) 전환점·퇴직·돌봄·말기 진단이 초반 보상 자체.
+- work-a3d922576a1a1ecc8e3e none
+- work-aa85b65d02f367e76a07 none
+- work-af3443bab1c30d470a76 `comedy` 4→2. [KADOKAWA 1](https://www.kadokawa.co.jp/product/201211000248)·[2](https://www.kadokawa.co.jp/product/301307000930/)·[3](https://www.kadokawa.co.jp/product/301410000750/)는 학교 스타일뿐. [マンガ大賞 2014](https://www.mangataisho.com/archives/2014/01/post-433.html) 짧은 웃음은 2. 상시/핵심 4는 1차 반복 미달.
+- work-bd5c323a3dbc9f3a04d4 `relationshipStructure` 4→3; `romance` 3→4. [講談社 3](https://www.kodansha.co.jp/comic/products/0000320388) 야쿠자 러브·약혼=romance 4. 커플+조연 확장은 군상극 핵심 보상 아님(3).
+- work-c2df32661c0b925ff74f `relationshipStructure` 1→2. [KADOKAWA 단권](https://www.kadokawa.co.jp/product/322002001211/) 주간 노래방 쌍이 단권 고정 구조. romance 부여 없음.
+- work-c2f3864045578cebb590 `progression` 2→U. [SQEX 1](https://magazine.jp.square-enix.com/top/comics/detail/9784757591264/) 첫사랑 단계는 성장·획득·숙련 보상이 아님.
+- work-c5c2695ad33fd05af945 `progression` 2→U. [講談社 1](https://www.kodansha.co.jp/comic/products/0000341183) 출생 비밀·가짜 연인·약혼은 progression 정의 밖.
+
+## 6. Identity / safety / ISBN
+
+| workId | ISBN | identity | safety | verdict | URL |
+| --- | --- | --- | --- | --- | --- |
+| work-925f371723beac5227f7 | 9784065378557 | PASS | PASS | PASS | https://www.kodansha.co.jp/comic/products/0000404585 |
+| work-961a49798df191311f42 | 9784107717443 | PASS | PASS | PASS | https://www.shinchosha.co.jp/book/771744/ |
+| work-9bd00739b995d84e2494 | 9784778323011 | PASS | PASS | PASS | https://www.ohtabooks.com/publish/2019/06/12000000.html |
+| work-a3d922576a1a1ecc8e3e | 9784592160311 | PASS | PASS | PASS | https://www.hakusensha.co.jp/comicslist/72311/ |
+| work-aa85b65d02f367e76a07 | 9784065398043 | PASS | PASS | PASS | https://www.kodansha.co.jp/comic/products/0000413972 |
+| work-af3443bab1c30d470a76 | 9784047286337 | PASS | PASS | PASS | https://www.kadokawa.co.jp/product/201211000248 |
+| work-bd5c323a3dbc9f3a04d4 | 9784065103760 | PASS | NEEDS_ADJUDICATION | NEEDS_ADJUDICATION | https://www.kodansha.co.jp/comic/products/0000052167 |
+| work-c2df32661c0b925ff74f | 9784047361515 | PASS | NEEDS_ADJUDICATION | NEEDS_ADJUDICATION | https://www.kadokawa.co.jp/product/322002001211/ |
+| work-c2f3864045578cebb590 | 9784757591264 | PASS | PASS | PASS | https://magazine.jp.square-enix.com/top/comics/detail/9784757591264/ |
+| work-c5c2695ad33fd05af945 | 9784065193808 | PASS | NEEDS_ADJUDICATION | NEEDS_ADJUDICATION | https://www.kodansha.co.jp/comic/products/0000341183 |
+
+Identity: 동결 제목(장식 `『』` 없음)과 대표 ISBN이 공식 1권과 일치. `カラオケ行こ！`는 단권, 2·3권 없음. Safety NA: 37 야쿠자 폭력·강압 약혼; 38 성인 야쿠자×중학생 주간 노래방; 40 고교생 약혼·다각 관계. 등급 미배정.
+
+## 7. Outcomes
+
+| workId | outcome |
+| --- | --- |
+| work-925f371723beac5227f7 | needs-adjudication |
+| work-961a49798df191311f42 | needs-adjudication |
+| work-9bd00739b995d84e2494 | needs-adjudication |
+| work-a3d922576a1a1ecc8e3e | verified |
+| work-aa85b65d02f367e76a07 | verified |
+| work-af3443bab1c30d470a76 | needs-adjudication |
+| work-bd5c323a3dbc9f3a04d4 | needs-adjudication |
+| work-c2df32661c0b925ff74f | safety-conflict |
+| work-c2f3864045578cebb590 | needs-adjudication |
+| work-c5c2695ad33fd05af945 | needs-adjudication |
+
+## 8. Endpoint 0/4 and Theme centrality 2
+
+- work-961a49798df191311f42 `progression=0` `mysteryReveal=0` `worldBuilding=0`: [新潮社 1](https://www.shinchosha.co.jp/book/771744/)·[2](https://www.shinchosha.co.jp/book/771765/)·[3](https://www.shinchosha.co.jp/book/771782/) 무직 남매 4컷·정적 생활. 성장 보상·수수께끼·세계 규칙 거의 없음.
+- work-a3d922576a1a1ecc8e3e `comedy=4`: [白泉社 1](https://www.hakusensha.co.jp/comicslist/72311/)·[2](https://www.hakusensha.co.jp/comicslist/74386/)·[3](https://www.hakusensha.co.jp/comicslist/76507/) 금단의 미식 개그·대량 섭취 1~3권 반복.
+- work-9bd00739b995d84e2494 `characterArcWeight=4`: [太田出版 2](https://www.ohtabooks.com/publish/2020/01/16130028.html)·[3](https://www.ohtabooks.com/publish/2021/03/11181256.html) 전환점·돌봄·말기가 초반 핵심 보상.
+- work-bd5c323a3dbc9f3a04d4 `romance=4`: [講談社 1](https://www.kodansha.co.jp/comic/products/0000052167)·[3](https://www.kodansha.co.jp/comic/products/0000320388) 정략 약혼·야쿠자 러브 스토리.
+- work-c2f3864045578cebb590 `romance=4`: [SQEX 1](https://magazine.jp.square-enix.com/top/comics/detail/9784757591264/)·[2](https://magazine.jp.square-enix.com/top/comics/detail/9784757591646/)·[3](https://magazine.jp.square-enix.com/top/comics/detail/9784757594883/) 무자각 첫사랑.
+- work-c5c2695ad33fd05af945 `romance=4`: [講談社 1](https://www.kodansha.co.jp/comic/products/0000341183)·[3](https://www.kodansha.co.jp/comic/products/0000344125) 가짜 연인·약혼·다각 연애.
+- Theme 2: work-aa85b65d02f367e76a07 `sportsCompetition` — [講談社 2](https://www.kodansha.co.jp/comic/products/0000420816)·[3](https://www.kodansha.co.jp/comic/products/0000425848) 배구부·연습시합·리베로 첫 경기. work-af3443bab1c30d470a76 `school` — [KADOKAWA 1–3](https://www.kadokawa.co.jp/product/201211000248) 고교 무대. work-c2f3864045578cebb590 `school` — 옆자리·사진부. work-c5c2695ad33fd05af945 `school` — 고교 공동생활.
+
+WORK_COUNT=10 AXIS_COUNT_PER_WORK=13 IDENTITY_ROWS=10 SAFETY_ROWS=10 ISBN_ROWS=10 ART_ABSTAIN

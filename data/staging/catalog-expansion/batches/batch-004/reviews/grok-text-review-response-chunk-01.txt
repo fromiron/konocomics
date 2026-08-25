@@ -1,0 +1,129 @@
+# Batch 004 chunk 01 Pass B — independent non-Art review
+
+## 1. Attestation
+
+Model `cursor-grok-4.6-high` / Cursor Grok 4.6 High, non-fast. Normal completion. All nine frozen inputs read in full. No degradation. No repository edits. `reviewedByHuman=false`. `ART_ABSTAIN`. Muse `NOT_USED`. Ox `EXCLUDED`.
+
+## 2. Hashes
+
+```text
+docs/factors/factor-dictionary.md=a9c29a853a108aca1b9bb8d5d71a3e7d5d583303691c0b35cc6424c1e45ee8be
+docs/factors/annotation-guide.md=f7dd1ec55d97bf9200fcec92ce270e7745a0d3aa4fe98a40c746fc56b6a777b3
+data/staging/catalog-expansion/batches/batch-004/annotation-review-adjudication-request.md=693e302b8ca0dbd44b513b2ad62bab93a4587a7dc60c3437182af2a9d15f6513
+data/staging/catalog-expansion/batches/batch-004/frozen-work-set.csv=a07a3bd053ce3edb79bdd5803ea3f04dbf8ceac4fd422d84ca97432ba75f68a1
+data/staging/catalog-expansion/batches/batch-004/research/chunk-01.md=d1cba408b07922025beb197096478cb4ac03facce623ffa8ae7074e93c2c7893
+data/staging/catalog-expansion/batches/batch-004/annotation-pass-a/chunk-01/factors.csv=672b3b3328f281146b291ee083fbc93bbd3e7d3442e37fa2e308da7c4f1bd42c
+data/staging/catalog-expansion/batches/batch-004/annotation-pass-a/chunk-01/genres.csv=aaf08018802e6d1082d955bdb2c389f3028c0836507eb4a0b21155bb3d04dbe5
+data/staging/catalog-expansion/batches/batch-004/annotation-pass-a/chunk-01/themes.csv=c3c22a4ba0a57e7f41de78ade35018bed033dc7aa43d0f89ff404628e944ca6d
+data/staging/catalog-expansion/batches/batch-004/annotation-pass-a/chunk-01/notes.md=2ee204d250b6886df38e8d238bfd1a56802f041ebfef0b99e09be8cd8c6e4360
+```
+
+All nine match. No `INPUT_MISMATCH`.
+
+## 3. Axis matrix
+
+```csv
+workId,canonicalTitle,progression,problemSolving,strategy,pacing,mysteryReveal,worldBuilding,characterArcWeight,relationshipStructure,comedy,darkness,mentalStress,romance,emotionalWarmth
+work-025c8ab93483a39c9330,ホストと社畜,U,U,U,U,U,U,2,2,U,U,U,0,4
+work-098b1781e14365eea667,うるわしの宵の月,U,U,U,2,U,0,4,2,U,U,U,4,U
+work-0f3a44f5dcab9623d1be,応天の門,U,2,U,2,4,3,2,2,U,2,U,U,U
+work-11d23966f22f777e95d0,のらみみ,U,U,U,2,U,2,3,2,U,U,U,U,3
+work-132ce7172750a3b1fa53,ヒナまつり,U,2,2,2,U,2,2,2,U,2,U,U,U
+work-15dba4fdb46308ab45d7,駅から5分,U,U,U,2,U,2,2,4,U,2,U,2,2
+work-188ba092c6195603bb3f,つらつらわらじ,U,U,U,2,2,3,U,2,U,U,U,U,U
+work-19c2017b33c07f48634e,ふうらい姉妹,U,U,U,U,U,U,U,2,4,0,U,U,4
+work-1a6ad6771865b43c8516,それでも町は廻っている,U,U,U,U,U,2,2,2,4,U,U,U,U
+work-1cdc6c5cca7c33fafe51,青空にとおく酒浸り,U,U,U,U,U,U,U,U,U,U,U,U,U
+```
+
+## 4. Genre / Theme
+
+```csv
+workId,genres
+work-025c8ab93483a39c9330,sliceOfLife
+work-098b1781e14365eea667,romance
+work-0f3a44f5dcab9623d1be,historical;mystery
+work-11d23966f22f777e95d0,sliceOfLife;fantasy
+work-132ce7172750a3b1fa53,action;fantasy
+work-15dba4fdb46308ab45d7,sliceOfLife
+work-188ba092c6195603bb3f,historical
+work-19c2017b33c07f48634e,comedy;sliceOfLife
+work-1a6ad6771865b43c8516,comedy;sliceOfLife
+work-1cdc6c5cca7c33fafe51,none
+```
+
+```csv
+workId,themes
+work-025c8ab93483a39c9330,none
+work-098b1781e14365eea667,school 2
+work-0f3a44f5dcab9623d1be,investigation 2; politics 1
+work-11d23966f22f777e95d0,foundFamily 2
+work-132ce7172750a3b1fa53,combat 1
+work-15dba4fdb46308ab45d7,none
+work-188ba092c6195603bb3f,adventure 2; politics 1; historicalReconstruction 2
+work-19c2017b33c07f48634e,none
+work-1a6ad6771865b43c8516,workplace 1
+work-1cdc6c5cca7c33fafe51,none
+```
+
+## 5. Pass A disagreements
+
+- work-025c8ab93483a39c9330: romance U→0; emotionalWarmth 3→4 — https://prtimes.jp/main/html/rd/p/000000821.000014531.html — neither lovers; daily breakfast/encouragement is core warmth.
+- work-098b1781e14365eea667: worldBuilding U→0 — https://www.kodansha.co.jp/comic/products/0000347553 — 1–3巻 ordinary school/romance, minimal background rules.
+- work-0f3a44f5dcab9623d1be: mysteryReveal 2→4; worldBuilding 2→3; drop historicalReconstruction 2 — https://www.shinchosha.co.jp/book/771742/ — case/truth-reveal is main reward; Heian is genre backdrop not reconstruction core.
+- work-11d23966f22f777e95d0: emotionalWarmth 2→3; add fantasy — https://e-comi.shogakukan.co.jp/books/091884110000d0000000 — belonging/home-wish between mixed and core; living characters are fantastical.
+- work-132ce7172750a3b1fa53: strategy U→2; add fantasy — https://www.kadokawa.co.jp/product/301306000980/ — 新田 devises countermeasures; oval object/psychic girls.
+- work-15dba4fdb46308ab45d7: darkness U→2 — https://www.s-manga.net/items/contents.html?isbn=978-4-08-619654-3 — taxi accident exists as serious danger/tragedy.
+- work-188ba092c6195603bb3f: mysteryReveal U→2; worldBuilding 2→3; politics 2→1 — https://www.kodansha.co.jp/comic/products/0000014069 — spy in procession; sankin-kotai institutions; politics is journey setup.
+- work-19c2017b33c07f48634e: darkness U→0; emotionalWarmth U→4; add sliceOfLife — https://www.kadokawa.co.jp/product/301309000222/ — light 4-koma; together-the-world-is-fun is sister-bond reward.
+- work-1a6ad6771865b43c8516: workplace 2→1 — https://www.shonengahosha.co.jp/book_Info.php?id=5944 — Seaside is gag stage, not workplace-mechanic centrality 2.
+- work-1cdc6c5cca7c33fafe51: none.
+
+## 6. Identity / safety / ISBN
+
+```csv
+workId,identity,safety,isbn,url
+work-025c8ab93483a39c9330,PASS,PASS,PASS 9784575860016,https://prtimes.jp/main/html/rd/p/000000821.000014531.html
+work-098b1781e14365eea667,PASS,PASS,PASS 9784065217771,https://www.kodansha.co.jp/comic/products/0000347553
+work-0f3a44f5dcab9623d1be,PASS,PASS,PASS 9784107717429,https://www.shinchosha.co.jp/book/771742/
+work-11d23966f22f777e95d0,PASS,PASS,NEEDS_ADJUDICATION 9784091884114 not on official e-comic,https://e-comi.shogakukan.co.jp/books/091884110000d0000000
+work-132ce7172750a3b1fa53,PASS,NEEDS_ADJUDICATION girl living with young yakuza; age/intensity unstated,PASS 9784047273818,https://www.kadokawa.co.jp/product/301306000979/
+work-15dba4fdb46308ab45d7,PASS,PASS,PASS 9784088654393 original v1 do not substitute bunko,https://www.shueisha.co.jp/books/items/contents.html?jdcn=08865439865439315501
+work-188ba092c6195603bb3f,PASS,PASS,PASS 9784063729443,https://www.kodansha.co.jp/comic/products/0000014069
+work-19c2017b33c07f48634e,PASS,PASS,PASS 9784047268685 v1 do not substitute v2,https://store.kadokawa.co.jp/shop/g/g201008000188/
+work-1a6ad6771865b43c8516,PASS,PASS,PASS 9784785926045,https://www.shonengahosha.co.jp/book_Info.php?id=5944
+work-1cdc6c5cca7c33fafe51,PASS,NEEDS_ADJUDICATION no publisher 1-3 plot; violence/sexual unconfirmed,PASS 9784199501746,https://books.rakuten.co.jp/rb/6414362/
+```
+
+## 7. Outcomes
+
+```csv
+workId,outcome
+work-025c8ab93483a39c9330,needs-adjudication
+work-098b1781e14365eea667,needs-adjudication
+work-0f3a44f5dcab9623d1be,needs-adjudication
+work-11d23966f22f777e95d0,needs-adjudication
+work-132ce7172750a3b1fa53,needs-adjudication
+work-15dba4fdb46308ab45d7,needs-adjudication
+work-188ba092c6195603bb3f,needs-adjudication
+work-19c2017b33c07f48634e,needs-adjudication
+work-1a6ad6771865b43c8516,needs-adjudication
+work-1cdc6c5cca7c33fafe51,insufficient-evidence
+```
+
+## 8. Endpoints 0/4 and Theme centrality 2
+
+- work-025c8ab93483a39c9330 romance=0; emotionalWarmth=4 — https://prtimes.jp/main/html/rd/p/000000821.000014531.html — neither lovers; daily breakfast/encouragement.
+- work-098b1781e14365eea667 worldBuilding=0; characterArcWeight=4; romance=4; school=2 — https://www.kodansha.co.jp/comic/products/0000347553 — school/trial-dating/feeling-change.
+- work-0f3a44f5dcab9623d1be mysteryReveal=4; investigation=2 — https://www.shinchosha.co.jp/book/771742/ — recurring cases; brother’s-death truth.
+- work-11d23966f22f777e95d0 foundFamily=2 — https://e-comi.shogakukan.co.jp/books/091884110000d0000000 — 16-year resident; wish for a child’s home.
+- work-132ce7172750a3b1fa53 none (combat=1 only).
+- work-15dba4fdb46308ab45d7 relationshipStructure=4 — https://www.shueisha.co.jp/books/items/contents.html?jdcn=08865439865439315501 — intersecting 花染町 lives.
+- work-188ba092c6195603bb3f adventure=2; historicalReconstruction=2 — https://www.kodansha.co.jp/comic/products/0000014069 — sankin-kotai journey/institutions.
+- work-19c2017b33c07f48634e comedy=4; darkness=0; emotionalWarmth=4 — https://www.kadokawa.co.jp/product/201008000188/ — 4-koma laughter; together-the-world-is-fun.
+- work-1a6ad6771865b43c8516 comedy=4 — https://www.shonengahosha.co.jp/book_Info.php?id=5944 — lively neighborhood gags.
+- work-1cdc6c5cca7c33fafe51 none — https://www.mangataisho.com/data/2012/mantai_comment2012.pdf not mapped to 1–3巻.
+
+Independent Pass B proposals only. No promotion authorized. No files modified.
+
+WORK_COUNT=10 AXIS_COUNT_PER_WORK=13 IDENTITY_ROWS=10 SAFETY_ROWS=10 ISBN_ROWS=10 ART_ABSTAIN

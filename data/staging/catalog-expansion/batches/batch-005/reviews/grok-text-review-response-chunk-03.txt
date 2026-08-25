@@ -1,0 +1,134 @@
+# Batch 005 chunk 03 independent non-Art Pass B
+
+Reviewer: `cursor-grok-4.6-high` / Cursor Grok 4.6 High, non-fast. Normal completion. All twelve frozen inputs read in full. No degradation. No repository edits. `reviewedByHuman=false`. `ART_ABSTAIN`. Muse `NOT_USED`. Ox `EXCLUDED`. Independent Pass B proposals only; no promotion.
+
+## Verified hashes
+
+Packet candidate SHA-256: `8e9a726ceef4daaaabaa133502ffe59a39594adc359e1fde1ec7f58d26517695`
+
+| Path | SHA-256 |
+| --- | --- |
+| `docs/factors/factor-dictionary.md` | `a9c29a853a108aca1b9bb8d5d71a3e7d5d583303691c0b35cc6424c1e45ee8be` |
+| `docs/factors/annotation-guide.md` | `f7dd1ec55d97bf9200fcec92ce270e7745a0d3aa4fe98a40c746fc56b6a777b3` |
+| `data/staging/catalog-expansion/batches/batch-005/annotation-review-adjudication-request.md` | `9254c3d00faeb844df9f81ffb7ce0b7873eff2c009dccf8e87fca7342c5f9527` |
+| `data/staging/catalog-expansion/batches/batch-005/manifest.json` | `3aee17575d6d10bd93071c0ca1129e7f75d170d9cb34616e1692c6621b1aaf03` |
+| `data/staging/catalog-expansion/batches/batch-005/PAYLOAD.sha256` | `50512fc57d612eb50d2b76bf7f32354241c3478933fd16e4c90908aa9b9c0d02` |
+| `data/staging/catalog-expansion/batches/batch-005/frozen-work-set.csv` | `ddf9343b48146eaaf58971155f4190b4ec53e09d28d932d0d03cdc515ff8b2b8` |
+| `data/staging/catalog-expansion/batches/batch-005/research/chunk-03.md` | `92f9a69121128aa2668898bdb70a112492bda8958247cd0e9c8202128e533191` |
+| `data/staging/catalog-expansion/batches/batch-005/annotation-pass-a/chunk-03/factors.csv` | `230e0864ec9429b9b21898e50f5916d3420d70e4b72aea3f41b5fb8c2a8c243a` |
+| `data/staging/catalog-expansion/batches/batch-005/annotation-pass-a/chunk-03/genres.csv` | `b4ba1df14b39b0436d5c7524a3488428de651d841f88b0adc1187c8656c2bb2b` |
+| `data/staging/catalog-expansion/batches/batch-005/annotation-pass-a/chunk-03/themes.csv` | `6e7d05fb2023528745d902df7ec14c10baf096871389c757ec44798766019421` |
+| `data/staging/catalog-expansion/batches/batch-005/annotation-pass-a/chunk-03/notes.md` | `86c8e43665bbd75137a89ca9a5ae06a11898fec8b7228ffff66dcccbba71e6b6` |
+| `data/staging/catalog-expansion/batches/batch-005/reviews/daybreak-annotation-qa-chunks-03-05.md` | `93613b984e2285187810ac97424ea7a618872a3ac65d8e7152db3294b93db620` |
+
+## Axis matrix
+
+| workId | canonicalTitle | progression | problemSolving | strategy | pacing | mysteryReveal | worldBuilding | characterArcWeight | relationshipStructure | comedy | darkness | mentalStress | romance | emotionalWarmth |
+| --- | --- | --- | --- | --- | --- | --- | --- | --- | --- | --- | --- | --- | --- | --- |
+| work-1ec3d48e64b228bb8a92 | 娚の一生 | U | U | U | 2 | U | U | 4 | 2 | U | U | 2 | 4 | 2 |
+| work-238c04ae3a3a61451078 | リューシカ・リューシカ | U | U | U | 0 | U | U | U | U | U | 0 | 0 | 0 | U |
+| work-43ebf010a490cfd4bb50 | 千年万年りんごの子 | U | U | U | 2 | 2 | 4 | 2 | 2 | U | 2 | U | 2 | 2 |
+| work-4b4bbe8c10859c46e726 | 百舌谷さん逆上する | U | U | U | 2 | 2 | U | 2 | 2 | U | 2 | 2 | 2 | 2 |
+| work-5ad62e6413f67d351f1d | 天にひびき | 2 | U | U | 2 | U | U | 2 | 2 | U | U | U | U | U |
+| work-5b7cf2105a4bc6f6b46c | クジラの子らは砂上に歌う | U | U | U | 2 | 2 | 4 | 2 | 2 | U | 4 | 2 | U | U |
+| work-5e30ab3c7e3fb43e51f2 | 女王の花 | U | U | U | 2 | 2 | 2 | 2 | 2 | U | 2 | 2 | 2 | 2 |
+| work-62fb5d8e9f6c6bbbeba9 | 血潜り林檎と金魚鉢男 | U | U | U | 2 | U | 2 | U | 2 | U | 4 | U | U | U |
+| work-6c6341781c12b590864f | 鉄楽レトラ | 2 | U | U | 2 | U | U | 4 | 2 | U | U | 2 | U | 2 |
+| work-77008e04537e3fd889e2 | ジョジョリオン | U | 2 | 2 | 2 | 4 | 2 | 2 | 2 | U | 2 | 2 | U | U |
+
+## Genre
+
+| workId | genres |
+| --- | --- |
+| work-1ec3d48e64b228bb8a92 | romance |
+| work-238c04ae3a3a61451078 | sliceOfLife |
+| work-43ebf010a490cfd4bb50 | fantasy |
+| work-4b4bbe8c10859c46e726 | romance |
+| work-5ad62e6413f67d351f1d | sliceOfLife |
+| work-5b7cf2105a4bc6f6b46c | fantasy |
+| work-5e30ab3c7e3fb43e51f2 | historical;romance |
+| work-62fb5d8e9f6c6bbbeba9 | action;horror;fantasy |
+| work-6c6341781c12b590864f | sliceOfLife |
+| work-77008e04537e3fd889e2 | action;mystery;fantasy |
+
+## Theme
+
+| workId | themes |
+| --- | --- |
+| work-1ec3d48e64b228bb8a92 | none |
+| work-238c04ae3a3a61451078 | none |
+| work-43ebf010a490cfd4bb50 | none |
+| work-4b4bbe8c10859c46e726 | school 1 |
+| work-5ad62e6413f67d351f1d | school 1 |
+| work-5b7cf2105a4bc6f6b46c | postApocalypse 2;survival 2;politics 1 |
+| work-5e30ab3c7e3fb43e51f2 | politics 2 |
+| work-62fb5d8e9f6c6bbbeba9 | combat 2;survival 1 |
+| work-6c6341781c12b590864f | none |
+| work-77008e04537e3fd889e2 | investigation 2;combat 1 |
+
+## Pass A non-Art disagreements
+
+- work-1ec3d48e64b228bb8a92: `characterArcWeight` 4 vs Pass A 3 — https://e-comi.shogakukan.co.jp/books/091330270000d0000000 — 1–3권 공식 소개가 동거·결혼 의사·전 연인 재등장·관계 결말로 인물 동기·변화·관계를 핵심 보상(4)으로 제시한다. `mentalStress` 2 vs Pass A U — https://e-comi.shogakukan.co.jp/books/091326380000d0000000 — 의사 차이·제3자·전 연인 메일로 긴장과 답답함이 초반 갈등의 관찰 가능한 상태다.
+- work-238c04ae3a3a61451078: `pacing` 0 vs Pass A 2 — https://magazine.jp.square-enix.com/top/comics/detail/9784757534155/ — 1–3권이 평범한 하루의 계속을 반복해 목표·상황의 큰 변화가 적다. `darkness` 0 vs U — 같은 URL — 천진난만한 일상은 밝고 가벼움(0). `mentalStress` 0 vs U — 같은 URL — 심리적 압박의 지속이 없다. `romance` 0 vs U — https://magazine.jp.square-enix.com/top/comics/detail/9784757529083/ — 어린 소녀의 일상 전제에 연애 전개가 없다.
+- work-43ebf010a490cfd4bb50: Genre `fantasy` vs Pass A `fantasy;romance` — https://www.kodansha.co.jp/comic/products/0000046459 — 마을 신·의식·사과의 시간이 장르 전제이고, 부부 관계는 이해관계이지 romance Genre를 단독 확정하지 않는다. `worldBuilding` 4 vs 2 — https://www.kodansha.co.jp/comic/products/0000046505 — 계절·60년 의식·마을 신·祭文이 1–3권 사건을 반복적으로 움직인다. `characterArcWeight` 2 vs 3 — 같은 URL — 사건(의식)과 부부 선택이 균형(2). `darkness` 2 vs U — 같은 URL — 병·신의 아내·오래된 의식은 진지한 위험·비극(2). `romance` 2 vs 4 — https://www.kodansha.co.jp/comic/products/0000046557 — 부부 보호는 서브/이해관계(2)이지 연애 전개 중심(4)이 아니다.
+- work-4b4bbe8c10859c46e726: Genre `romance` vs 공란 — https://www.kodansha.co.jp/comic/products/0000029330 — 호의·함께 지냄·두 학생의 만남이 관계 전개의 출발이다. Theme `school` 1 vs none — 같은 URL — 전학생·학교 관계가 일부 에피소드 무대이나 2–3권은 병원·가족 과거로 확장되어 centrality 1. `romance` 2 vs U — https://www.kodansha.co.jp/comic/products/0000029364 — 함께 지내던 관계는 서브 플롯(2)이지 미확정 U가 아니다. `emotionalWarmth` 2 vs U — https://www.kodansha.co.jp/comic/products/0000029395 — 접촉·성장과 이じめ·장렬한 과거가 혼합(2).
+- work-5ad62e6413f67d351f1d: Genre `sliceOfLife` vs 공란 — https://www.shonengahosha.co.jp/book_Info.php?id=6719 — 음악 수련·오케스트라·대학 재회가 일상·활동 장르로 관찰된다. Theme `school` 1 vs none — https://www.shonengahosha.co.jp/book_Info.php?id=6369 — 대학 재회는 학교 Theme의 일부 무대(1)이지 반복 핵심 구조(2)가 아니다. `characterArcWeight` 2 vs 3 — https://www.shonengahosha.co.jp/book_Info.php?id=6619 — 재회·재노력은 사건과 인물 변화의 균형(2)이다.
+- work-5b7cf2105a4bc6f6b46c: Theme `adventure` 2·`exploration` 2 제거, `postApocalypse` 2·`politics` 1 부여 — https://www.akitashoten.co.jp/comics/4253261019 — 폐허선·모래 바다·재앙은 postApocalypse의 반복 세계 조건이고, 바깥 동경은 exploration/adventure의 반복 핵심이 아니다. `survival`는 유지하되 수명·재앙의 반복 조건으로 2. `politics` 1 — https://www.akitashoten.co.jp/comics/4253261035 — 장로회·자경단은 3권 사건이지 초반 전체의 반복 핵심이 아니다. `worldBuilding` 4 vs 3 — https://www.akitashoten.co.jp/comics/4253261027 — 泥クジラ·기록계·30년 수명·장로회·자경단이 규칙·세력으로 반복 중요하다. `darkness` 4 vs 2 — 같은 URL — 단명·재앙·침략이 초반 암울·비극의 중심이다.
+- work-5e30ab3c7e3fb43e51f2: Genre에 `historical` 추가 — https://shogakukan-comic.jp/book?jdcn=091320090000d0000000 — 소국 공주·노예·인질은 역사 배경 장르다. `mysteryReveal` 2 vs U — https://shogakukan-comic.jp/book?jdcn=091336540000d0000000 — 조력자 과거 공개는 비밀·반전의 일부(2). `characterArcWeight` 2 vs 3 — 같은 URL — 신분 이동 사건과 관계 변화가 균형(2). `mentalStress` 2 vs U — https://shogakukan-comic.jp/book?jdcn=091333830000d0000000 — 냉대·독살·인질은 긴장과 답답함(2). `romance` 2 vs 4 — 같은 URL — 유대·관계 변화는 정치·인질 플롯과 병행하는 서브(2)다.
+- work-62fb5d8e9f6c6bbbeba9: Genre에 `horror` 추가 — https://www.kadokawa.co.jp/product/201108000200/ — 흡혈·인체 변형이 공포 장르의 직접 전제다. Theme `survival` 1 vs 2 — https://www.kadokawa.co.jp/product/201111000282/ — 생존은 전투의 이해관계이지 반복 핵심 구조(2)가 아니다. `darkness` 4 vs 3 — https://store.kadokawa.co.jp/shop/g/g311781600000/ — 피·변형·동료 변신이 잔혹·암울 사건의 중심(4)이다.
+- work-6c6341781c12b590864f: `characterArcWeight` 4 vs 3 — https://e-comi.shogakukan.co.jp/books/091234450000d0000000 — 꿈의 상실·재회·새 발걸음이 인물 변화의 핵심 보상(4). `mentalStress` 2 vs U — https://e-comi.shogakukan.co.jp/books/091240770000d0000000 — 과거 경험으로 새 발걸음을 못 떼는 주저가 긴장·답답함(2).
+- work-77008e04537e3fd889e2: Genre에 `fantasy` 추가 — https://www.shueisha.co.jp/books/items/contents.html?isbn=978-4-08-870526-2 — 스탠드·기억 상실은 초자연 장르 전제다. `mysteryReveal` 4 vs 3 — https://www.shueisha.co.jp/books/items/contents.html?isbn=978-4-08-870311-4 — 이상 현상·정체 조사가 1–3권의 주요 보상(4). `strategy` 2 vs U — https://www.shueisha.co.jp/books/items/contents.html?isbn=978-4-08-870413-5 — 잠입은 단기 전술(2)이지 장기 운영(4)이 아니다.
+
+Daybreak QA는 투표로 사용하지 않았다.
+
+## Identity, safety, representative ISBN
+
+| workId | identity | safety | representativeISBN | verdict | packetURL |
+| --- | --- | --- | --- | --- | --- |
+| work-1ec3d48e64b228bb8a92 | 동결 제목·workId가 공식 1–3권 소개와 일치 | 성인 동거·결혼; 금지 안전 충돌 없음 | 9784091322692 | PASS | https://e-comi.shogakukan.co.jp/books/091322690000d0000000 |
+| work-238c04ae3a3a61451078 | 일치 | 소녀 일상; 표현 수위 미확인이나 금지 충돌 없음 | 9784757529083 | PASS | https://magazine.jp.square-enix.com/top/comics/detail/9784757529083/ |
+| work-43ebf010a490cfd4bb50 | 일치 | 병·의식; 금지 충돌 없음 | 9784063805789 | PASS | https://www.kodansha.co.jp/comic/products/0000046459 |
+| work-4b4bbe8c10859c46e726 | 일치 | 이じめ·병원; 금지 충돌 없음 | 9784063145120 | PASS | https://www.kodansha.co.jp/comic/products/0000029330 |
+| work-5ad62e6413f67d351f1d | 일치 | 음악·재회; 금지 충돌 없음 | 9784785932909 | PASS | https://www.shonengahosha.co.jp/book_Info.php?id=6719 |
+| work-5b7cf2105a4bc6f6b46c | 일치; ISBN-10 URL과 ISBN-13 대표값이 동일 판 | 단명·침략; 금지 충돌 없음 | 9784253261012 | PASS | https://www.akitashoten.co.jp/comics/4253261019 |
+| work-5e30ab3c7e3fb43e51f2 | 일치 | 독살·인질·노예; 연령·성적 금지는 미확정이되 충돌 증거 없음 | 9784091320094 | PASS | https://shogakukan-comic.jp/book?jdcn=091320090000d0000000 |
+| work-62fb5d8e9f6c6bbbeba9 | 일치 | 흡혈·변형; 금지 충돌 없음 | 9784048860499 | PASS | https://www.kadokawa.co.jp/product/201108000200/ |
+| work-6c6341781c12b590864f | 일치 | 꿈·춤; 금지 충돌 없음 | 9784091234452 | PASS | https://e-comi.shogakukan.co.jp/books/091234450000d0000000 |
+| work-77008e04537e3fd889e2 | 일치; 별제목 시리즈 관계와 대표 ISBN이 1권 공식 페이지와 맞음 | 재난·공격·기억 상실; 금지 충돌 없음 | 9784088703114 | PASS | https://www.shueisha.co.jp/books/items/contents.html?isbn=978-4-08-870311-4 |
+
+## Outcome
+
+| workId | outcome |
+| --- | --- |
+| work-1ec3d48e64b228bb8a92 | verified |
+| work-238c04ae3a3a61451078 | insufficient-evidence |
+| work-43ebf010a490cfd4bb50 | needs-adjudication |
+| work-4b4bbe8c10859c46e726 | needs-adjudication |
+| work-5ad62e6413f67d351f1d | insufficient-evidence |
+| work-5b7cf2105a4bc6f6b46c | needs-adjudication |
+| work-5e30ab3c7e3fb43e51f2 | needs-adjudication |
+| work-62fb5d8e9f6c6bbbeba9 | needs-adjudication |
+| work-6c6341781c12b590864f | needs-adjudication |
+| work-77008e04537e3fd889e2 | needs-adjudication |
+
+## Endpoint 0/4 and Theme centrality 2
+
+- work-1ec3d48e64b228bb8a92 `characterArcWeight` 4 — https://e-comi.shogakukan.co.jp/books/091330270000d0000000 — 마음을 열어 가던 관계의 동요와 결말이 초반 핵심 보상.
+- work-1ec3d48e64b228bb8a92 `romance` 4 — https://e-comi.shogakukan.co.jp/books/091326380000d0000000 — 동거·결혼 의사·전 연인이 전개 중심.
+- work-238c04ae3a3a61451078 `pacing` 0 — https://magazine.jp.square-enix.com/top/comics/detail/9784757534155/ — 평범한 하루가 1–3권에 계속.
+- work-238c04ae3a3a61451078 `darkness` 0 — 같은 URL — 천진난만한 일상.
+- work-238c04ae3a3a61451078 `mentalStress` 0 — 같은 URL — 지속 압박 없음.
+- work-238c04ae3a3a61451078 `romance` 0 — https://magazine.jp.square-enix.com/top/comics/detail/9784757529083/ — 연애 전개 없음.
+- work-43ebf010a490cfd4bb50 `worldBuilding` 4 — https://www.kodansha.co.jp/comic/products/0000046505 — 의식·마을 신·祭文이 반복적으로 사건을 규정.
+- work-5b7cf2105a4bc6f6b46c `worldBuilding` 4 — https://www.akitashoten.co.jp/comics/4253261027 — 선상 계급·수명·장로회가 반복 규칙.
+- work-5b7cf2105a4bc6f6b46c `darkness` 4 — 같은 URL — 30년 수명·재앙·침략이 암울의 중심.
+- work-5b7cf2105a4bc6f6b46c `postApocalypse` 2 — https://www.akitashoten.co.jp/comics/4253261019 — 모래 바다·폐허선·재앙이 세계 조건.
+- work-5b7cf2105a4bc6f6b46c `survival` 2 — https://www.akitashoten.co.jp/comics/4253261027 — 단명과 재앙이 생존 조건의 반복 핵심.
+- work-5e30ab3c7e3fb43e51f2 `politics` 2 — https://shogakukan-comic.jp/book?jdcn=091333830000d0000000 — 모국 이탈·인질이 초반 사건 자체.
+- work-62fb5d8e9f6c6bbbeba9 `darkness` 4 — https://www.kadokawa.co.jp/product/201108000200/ — 흡혈·금붕어 변형이 중심 사건.
+- work-62fb5d8e9f6c6bbbeba9 `combat` 2 — https://www.kadokawa.co.jp/product/201111000282/ — 피 속 전투·공동 대항이 반복 핵심.
+- work-6c6341781c12b590864f `characterArcWeight` 4 — https://e-comi.shogakukan.co.jp/books/091234450000d0000000 — 꿈의 상실과 재출발이 핵심 보상.
+- work-77008e04537e3fd889e2 `mysteryReveal` 4 — https://www.shueisha.co.jp/books/items/contents.html?isbn=978-4-08-870311-4 — 이상 현상·정체 조사가 주요 보상.
+- work-77008e04537e3fd889e2 `investigation` 2 — 같은 URL — 조사·잠입이 초반 반복 구조.
+
+WORK_COUNT=10 AXIS_COUNT_PER_WORK=13 IDENTITY_ROWS=10 SAFETY_ROWS=10 ISBN_ROWS=10 ART_ABSTAIN

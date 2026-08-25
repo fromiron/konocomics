@@ -1,0 +1,61 @@
+# Batch 005 chunk 03 Gemini payload ledger
+
+- reviewedByHuman: `false`
+- imageCount: `36`
+- inputCount: `10`
+
+## Frozen inputs
+
+| Source path | Payload file | SHA-256 |
+| --- | --- | --- |
+| `docs/factors/factor-dictionary.md` | `inputs/docs__factors__factor-dictionary.md` | `a9c29a853a108aca1b9bb8d5d71a3e7d5d583303691c0b35cc6424c1e45ee8be` |
+| `docs/factors/annotation-guide.md` | `inputs/docs__factors__annotation-guide.md` | `f7dd1ec55d97bf9200fcec92ce270e7745a0d3aa4fe98a40c746fc56b6a777b3` |
+| `data/staging/catalog-expansion/batches/batch-005/annotation-review-adjudication-request.md` | `inputs/data__staging__catalog-expansion__batches__batch-005__annotation-review-adjudication-request.md` | `9254c3d00faeb844df9f81ffb7ce0b7873eff2c009dccf8e87fca7342c5f9527` |
+| `data/staging/catalog-expansion/batches/batch-005/frozen-work-set.csv` | `inputs/data__staging__catalog-expansion__batches__batch-005__frozen-work-set.csv` | `ddf9343b48146eaaf58971155f4190b4ec53e09d28d932d0d03cdc515ff8b2b8` |
+| `data/staging/catalog-expansion/batches/batch-005/PAYLOAD.sha256` | `inputs/data__staging__catalog-expansion__batches__batch-005__PAYLOAD.sha256` | `50512fc57d612eb50d2b76bf7f32354241c3478933fd16e4c90908aa9b9c0d02` |
+| `data/staging/catalog-expansion/batches/batch-005/manifest.json` | `inputs/data__staging__catalog-expansion__batches__batch-005__manifest.json` | `3aee17575d6d10bd93071c0ca1129e7f75d170d9cb34616e1692c6621b1aaf03` |
+| `data/staging/catalog-expansion/batches/batch-005/art-preflight/chunk-03/preflight.csv` | `inputs/data__staging__catalog-expansion__batches__batch-005__art-preflight__chunk-03__preflight.csv` | `8379215c7c1ddcde7c4d3bfe2848b974a2200f5a95b5c7758e6778b9436f38f0` |
+| `data/staging/catalog-expansion/batches/batch-005/art-preflight/chunk-03/ledger.md` | `inputs/data__staging__catalog-expansion__batches__batch-005__art-preflight__chunk-03__ledger.md` | `ecda6c82f9b90e95354c7ed28c8234ecd774bf80ddacafef8c1ea45ddc60413c` |
+| `data/staging/catalog-expansion/batches/batch-005/reviews/daybreak-art-preflight-qa-chunk-03-round-3.md` | `inputs/data__staging__catalog-expansion__batches__batch-005__reviews__daybreak-art-preflight-qa-chunk-03-round-3.md` | `70c26ee3952595ca74e2041ecc85349e3e63c6f08daf8f0b16db4f4e3e5dd05d` |
+| `data/staging/catalog-expansion/batches/batch-005/art-review/chunk-03/gemini-request.md` | `inputs/data__staging__catalog-expansion__batches__batch-005__art-review__chunk-03__gemini-request.md` | `51fc3f2c5cbe9d4049552c9c845c4e44a19b98afb952519d3205b980fac46a21` |
+
+## Original pixels
+
+| Position | workId | Ref | File | SHA-256 |
+| ---: | --- | --- | --- | --- |
+| 21 | `work-1ec3d48e64b228bb8a92` | `reader-step-04` | `images/21-reader-step-04.png` | `929fd481fb2d278e43cc6a1039277dd64e207e2a0ce4083e3e1210c65dc543e5` |
+| 21 | `work-1ec3d48e64b228bb8a92` | `reader-step-05` | `images/21-reader-step-05.png` | `9c0f95ba69797435776e64c9a2866bed3210c050b6b783cf549d832254b18c0e` |
+| 21 | `work-1ec3d48e64b228bb8a92` | `reader-step-06` | `images/21-reader-step-06.png` | `9b42d6b2a50cb466796fc7ab4489ab3d4f40f134ef0710251ca2a4e57fb0a8b9` |
+| 21 | `work-1ec3d48e64b228bb8a92` | `reader-step-07` | `images/21-reader-step-07.png` | `df4866e5fd08d70c60fc71c544bfeda4ae8f320a8d1def588aab0dcf64acf408` |
+| 21 | `work-1ec3d48e64b228bb8a92` | `reader-step-08` | `images/21-reader-step-08.png` | `ea9475225f62b2cde2b6e301aeb4c3b1874835b301e86eb6c86f8e6ae9b96854` |
+| 21 | `work-1ec3d48e64b228bb8a92` | `reader-step-09` | `images/21-reader-step-09.png` | `a4f244ecec2772100240b248e2d14a7227ad6e6ef104a82500cf5e31af38961a` |
+| 23 | `work-43ebf010a490cfd4bb50` | `reader-step-04` | `images/23-reader-step-04.png` | `3a04c9585e1f57ce2138c6063dd8f6a9cab93bf7c080b02cb79ac8543940010e` |
+| 23 | `work-43ebf010a490cfd4bb50` | `reader-step-05` | `images/23-reader-step-05.png` | `38d013ba7c534a2c9743b52d1d6203c2e167c60f9808fd279203533d22d8b6df` |
+| 23 | `work-43ebf010a490cfd4bb50` | `reader-step-06` | `images/23-reader-step-06.png` | `f5274e88c63b8851965d73535ee3319c97fa0d697e04819cbc5dea4add230262` |
+| 23 | `work-43ebf010a490cfd4bb50` | `reader-step-07` | `images/23-reader-step-07.png` | `83116f9f697ed0161c5e7fa00b01fc05188c6f0b0107c5df0ece7d89518c808c` |
+| 23 | `work-43ebf010a490cfd4bb50` | `reader-step-08` | `images/23-reader-step-08.png` | `4bd728d88734529152661fe6284ea8937b1e7b75295c49de55945ba44f2f421f` |
+| 23 | `work-43ebf010a490cfd4bb50` | `reader-step-09` | `images/23-reader-step-09.png` | `7623b77ddc003159f9e7aa288c951ca78ec3d72e9532da7ee145a37579ccf5a8` |
+| 24 | `work-4b4bbe8c10859c46e726` | `reader-step-04` | `images/24-reader-step-04.png` | `92abea8b4aa94fff54f14b89e269a8fa94219f734155430e7c0377f6e9f6e31a` |
+| 24 | `work-4b4bbe8c10859c46e726` | `reader-step-05` | `images/24-reader-step-05.png` | `ecd3cea43191300657310721453aaabb7e7df0131c9f3e760551d09c0f3317df` |
+| 24 | `work-4b4bbe8c10859c46e726` | `reader-step-06` | `images/24-reader-step-06.png` | `7f9d3c98df7fc6877f94c93012c009c9243704eda1cda422673e82417323f5de` |
+| 24 | `work-4b4bbe8c10859c46e726` | `reader-step-07` | `images/24-reader-step-07.png` | `812dc6c6936b3236c4d6c578a48940edad6e2bbd6e0acc977a2f9b00d6f81bf1` |
+| 24 | `work-4b4bbe8c10859c46e726` | `reader-step-08` | `images/24-reader-step-08.png` | `996beb99f07b333619b7db6d6a6d340246663a00cfebd8ca545b70546f516386` |
+| 24 | `work-4b4bbe8c10859c46e726` | `reader-step-09` | `images/24-reader-step-09.png` | `6ffc6d95f2519e28b376dea2953d13b29d49503f077779eff78c0db72bece957` |
+| 27 | `work-5e30ab3c7e3fb43e51f2` | `reader-step-04` | `images/27-reader-step-04.png` | `f283db06cd04d06c3cddab3796c28d7555cc6781bab50e24d7e78be4010cbd28` |
+| 27 | `work-5e30ab3c7e3fb43e51f2` | `reader-step-05` | `images/27-reader-step-05.png` | `1bcda3bbec6ed83d84a853db909b5917fffd187b0f3c96dcfa06075db3d29ad6` |
+| 27 | `work-5e30ab3c7e3fb43e51f2` | `reader-step-06` | `images/27-reader-step-06.png` | `5c81a04abd5a4ae7c7d99f4bdc0efb51b1b353a4569cad89b1773fa5f7e45f4a` |
+| 27 | `work-5e30ab3c7e3fb43e51f2` | `reader-step-07` | `images/27-reader-step-07.png` | `ea775ffa3eb18160919a0986edcf0ff7895d6d26c62b4110a6fed900fc501f28` |
+| 27 | `work-5e30ab3c7e3fb43e51f2` | `reader-step-08` | `images/27-reader-step-08.png` | `2906c7decb5e90e1a0ac674ae6c4f2c91a63b43a61ca18d78ef69761e3d531b2` |
+| 27 | `work-5e30ab3c7e3fb43e51f2` | `reader-step-09` | `images/27-reader-step-09.png` | `7fe5491aaf1ed6d0797625def24cfa41b2d72ef8cd894c8b0d4a94a6f9afa06e` |
+| 29 | `work-6c6341781c12b590864f` | `reader-step-04` | `images/29-reader-step-04.png` | `fb313bdddc18d983219c2b78d1eb9180494bdfdc4a2eeb4ad4e90d81ccd4bda3` |
+| 29 | `work-6c6341781c12b590864f` | `reader-step-05` | `images/29-reader-step-05.png` | `a927ae93f9c8b2b529ff5be4c3f7298262126247d4eff8a6ec715c0772da5ab3` |
+| 29 | `work-6c6341781c12b590864f` | `reader-step-06` | `images/29-reader-step-06.png` | `a2cb9e02f813392f5d0ee4b5e0190984b8bd6c90f2503a2bf470aaf45111d4fa` |
+| 29 | `work-6c6341781c12b590864f` | `reader-step-07` | `images/29-reader-step-07.png` | `400ea2e057c5384146fb4f46286c6011ff55198a103dd11d4a981559202eec8f` |
+| 29 | `work-6c6341781c12b590864f` | `reader-step-08` | `images/29-reader-step-08.png` | `2f70f46ab410efbd5c2615e0c765bb20a0fcec4eed5918897fb7d4a357de67a8` |
+| 29 | `work-6c6341781c12b590864f` | `reader-step-09` | `images/29-reader-step-09.png` | `4fff94f5aa17f58ff4abcb4fbd774ecc87c1ca2887896bdcac292e63a937b5af` |
+| 30 | `work-77008e04537e3fd889e2` | `reader-step-05` | `images/30-reader-step-05.png` | `bba491a471d3ce544ec68d68af9e50462d3b14487ebd51cbf7a1c246b8d2730b` |
+| 30 | `work-77008e04537e3fd889e2` | `reader-step-06` | `images/30-reader-step-06.png` | `f12ced145bae2595583e2d2471d184f815f3fe7ca23b2e07b28de6a05d6635e1` |
+| 30 | `work-77008e04537e3fd889e2` | `reader-step-07` | `images/30-reader-step-07.png` | `b655fa7fe144dd4be99e92b58cb3aeca65a95e83c1eb4dfc310da9b5d1f35682` |
+| 30 | `work-77008e04537e3fd889e2` | `reader-step-08` | `images/30-reader-step-08.png` | `9ad26c84852e6eefefe2e12c47f23490ff3c1ab5d731b967cb90f6399e174587` |
+| 30 | `work-77008e04537e3fd889e2` | `reader-step-09` | `images/30-reader-step-09.png` | `90155f576f780b31b62f2ac6d938ba333b1d4d259f9165c88093a4e195b9c599` |
+| 30 | `work-77008e04537e3fd889e2` | `reader-step-10` | `images/30-reader-step-10.png` | `fbd1bbb44a4371f13cb59c16d8984f9ca3d584054305235f00daf3f233ab940e` |

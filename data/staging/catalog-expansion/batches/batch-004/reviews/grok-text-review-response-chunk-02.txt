@@ -1,0 +1,96 @@
+# Batch 004 chunk 02 Pass B (compact)
+
+`cursor-grok-4.6-high` / Cursor Grok 4.6 High, non-fast. Normal completion. Nine inputs read in full after hash match. No degradation. No edits. `reviewedByHuman=false`. `ART_ABSTAIN`. Muse `NOT_USED`. Ox `EXCLUDED`. Pass B proposals only; no promotion.
+
+## Hashes (expected=local; no INPUT_MISMATCH)
+
+- `docs/factors/factor-dictionary.md` `a9c29a853a108aca1b9bb8d5d71a3e7d5d583303691c0b35cc6424c1e45ee8be`
+- `docs/factors/annotation-guide.md` `f7dd1ec55d97bf9200fcec92ce270e7745a0d3aa4fe98a40c746fc56b6a777b3`
+- `.../annotation-review-adjudication-request.md` `693e302b8ca0dbd44b513b2ad62bab93a4587a7dc60c3437182af2a9d15f6513`
+- `.../frozen-work-set.csv` `a07a3bd053ce3edb79bdd5803ea3f04dbf8ceac4fd422d84ca97432ba75f68a1`
+- `.../research/chunk-02.md` `c83946e19c51642c008c35baed8005068fb5c5e066602e45ac709485c4fe70a1`
+- `.../annotation-pass-a/chunk-02/factors.csv` `773c309a6296f8b5589c1fa734ceab6905903cd0801eae6793edbcc3ada2ab6d`
+- `.../annotation-pass-a/chunk-02/genres.csv` `5ce67a28196c63a757f771f2f430ff5d33ed2131778df81bd2af39b758d67927`
+- `.../annotation-pass-a/chunk-02/themes.csv` `8860469d94c167c2b01e8d5d911d492259dc9c29b5382d3a72bc8ddbc437a3a3`
+- `.../annotation-pass-a/chunk-02/notes.md` `10c836ce11ef6fced89c7d39c466517f192579b5411974fc2e248cd42236bc7d`
+
+## Axes CSV
+
+`workId,canonicalTitle,progression,problemSolving,strategy,pacing,mysteryReveal,worldBuilding,characterArcWeight,relationshipStructure,comedy,darkness,mentalStress,romance,emotionalWarmth`
+
+```
+work-23077ad33a2066bef5a6,Sunny,U,U,U,U,U,2,2,2,U,2,U,U,2
+work-2356050c72240569e1c5,すみれファンファーレ,U,U,U,U,U,0,2,2,U,2,U,U,2
+work-2c4fe00df5255fc082f9,ヒーローカンパニー,U,U,U,U,U,2,U,U,U,U,U,U,U
+work-2d385ad0525742330e70,ねずみの初恋,U,U,U,2,U,2,2,2,U,2,2,4,2
+work-2df743e085adef5e9bd3,キルアオ,U,U,U,2,U,2,U,2,U,2,U,2,U
+work-2f1d1c3ad0f943f1562f,尾守つみきと奇日常。,U,U,U,U,U,2,2,2,U,U,U,2,U
+work-3713ab561de583d709bc,アリスと蔵六,U,U,U,U,U,2,U,2,U,U,U,U,U
+work-39c1a2b6791238827ed5,とろける鉄工所,U,U,U,2,U,2,2,2,U,U,U,0,2
+work-3ad85a2ffdc026007d61,新しい上司はど天然,U,U,U,U,U,U,U,U,U,U,U,U,U
+work-44d0000353478596369e,環と周,0,U,U,U,2,2,4,2,U,2,U,2,2
+```
+
+## Genre / Theme
+
+```
+work-23077ad33a2066bef5a6,sliceOfLife,foundFamily:2
+work-2356050c72240569e1c5,sliceOfLife,school:1
+work-2c4fe00df5255fc082f9,action,combat:1;workplace:1
+work-2d385ad0525742330e70,action;romance,combat:2
+work-2df743e085adef5e9bd3,action;comedy;scienceFiction,combat:2;school:2
+work-2f1d1c3ad0f943f1562f,fantasy;sliceOfLife;romance,school:2
+work-3713ab561de583d709bc,scienceFiction,workplace:1
+work-39c1a2b6791238827ed5,sliceOfLife,workplace:2
+work-3ad85a2ffdc026007d61,comedy;sliceOfLife,workplace:2
+work-44d0000353478596369e,historical;romance,revenge:1;historicalReconstruction:2
+```
+
+## Pass A disagreements (non-Art)
+
+Sunny: none. 新しい上司はど天然: none.
+
+すみれファンファーレ: `worldBuilding` U→0 https://shogakukan-comic.jp/book?jdcn=091885790000d0000000 1~3권 현대 일상만, 배경 규칙 최소. `characterArcWeight` 3→2 https://shogakukan-comic.jp/book?jdcn=091886030000d0000000 사건/인물 균형, 3은 추정. `emotionalWarmth` 3→2 https://shogakukan-comic.jp/book?jdcn=091885790000d0000000 웃게 함은 온기 존재이지 핵심 보상(4) 아님. Theme `school:2`→`school:1` 같은 2권 URL — 병원·일식과 병렬, 학교는 일부.
+
+ヒーローカンパニー: `comedy` 2→U https://www.mangataisho.com/data/2013/comment2013.pdf secondary. Genre comedy 제거; `action` only https://viewer.heros-web.com/episode/10834108156657187802. Theme `combat:2`→1, `workplace:2`→1 — 1~3권 반복 미확인.
+
+ねずみの初恋: `progression` 2→U https://www.kodansha.co.jp/comic/products/0000392937 훈련은 강제 사건이지 성장 보상 아님. `pacing` 3→2 https://www.kodansha.co.jp/comic/products/0000385374 권 단위 Arc. `characterArcWeight` 3→2 https://www.kodansha.co.jp/comic/products/0000398073 사건/인물 균형. `darkness` 4→2 https://www.kodansha.co.jp/comic/products/0000392937 수위 미확정, 진지한 위험(2). `mentalStress` 3→2 같은 URL — 혼합 긴장, 지속 붕괴 아님.
+
+キルアオ: `pacing` 3→2 https://www.s-manga.net/items/contents.html?isbn=978-4-08-883686-7 권 단위 Arc. `comedy` 3→U https://www.shonenjump.com/j/rensai/killblue/ Genre comedy, Axis U. `romance` U→2 https://www.s-manga.net/items/contents.html?jdcn=08X10000000032350600 가짜 남친·데이트=서브. Genre +scienceFiction https://www.s-manga.net/items/contents.html?isbn=978-4-08-883686-7 생물 병기.
+
+尾守つみきと奇日常。: `progression` 2→U https://e-comi.shogakukan.co.jp/books/098531820000d0000000 감정 탐색≠progression. `characterArcWeight` 3→2 https://shogakukan-comic.jp/book?isbn=9784098533817 홍보 표현으로 3 금지. `romance` U→2 같은 URL + https://shogakukan-comic.jp/book?isbn=9784098535750 관계 진전=서브. `emotionalWarmth` 3→U. Genre +romance.
+
+アリスと蔵六: `characterArcWeight` 2→U https://ebookstore.sony.jp/title/00336100/id/BT000033610000300301/ secondary 성장. Genre sliceOfLife 제거 https://www.comic-ryu.jp/author/simizu-jn/ 1차는 SF×소녀.
+
+とろける鉄工所: `romance` U→0 https://www.kodansha.co.jp/comic/products/0000038640 노동·가족만. Theme `crafting:2` 제거 — 용접은 workplace.
+
+環と周: `progression` U→0 https://www.shueisha.co.jp/books/items/contents.html?isbn=978-4-08-844839-8 옴니버스, 성장 보상 없음. `worldBuilding` 3→2 기능적 시대 배경. `characterArcWeight` 3→4 https://shueisha.online/articles/-/167862 만남·좋아함이 핵심. `darkness` 3→2 비극 존재, 잔혹 중심 미입증. `mentalStress` 3→U https://shueisha.online/articles/-/167862?disp=paging&page=3 한 편. `romance` 3→2 우정과 병기, 서브.
+
+## Identity / safety / ISBN / outcome
+
+`workId,ISBN,verdict,outcome,url`
+
+```
+work-23077ad33a2066bef5a6,9784091885579,NEEDS_ADJUDICATION,needs-adjudication,https://e-comi.shogakukan.co.jp/books/091885570000d0000000
+work-2356050c72240569e1c5,9784091885791,NEEDS_ADJUDICATION,needs-adjudication,https://shogakukan-comic.jp/book?jdcn=091885790000d0000000
+work-2c4fe00df5255fc082f9,9784864683043,NEEDS_ADJUDICATION,needs-adjudication,https://ebookstore.sony.jp/title/00192282/
+work-2d385ad0525742330e70,9784065344231,PASS,verified,https://www.kodansha.co.jp/comic/products/0000385374
+work-2df743e085adef5e9bd3,9784088836867,PASS,verified,https://www.s-manga.net/items/contents.html?isbn=978-4-08-883686-7
+work-2f1d1c3ad0f943f1562f,9784098531820,NEEDS_ADJUDICATION,needs-adjudication,https://e-comi.shogakukan.co.jp/books/098531820000d0000000
+work-3713ab561de583d709bc,9784199503375,PASS,insufficient-evidence,https://www.comic-ryu.jp/author/simizu-jn/
+work-39c1a2b6791238827ed5,9784063522471,PASS,verified,https://www.kodansha.co.jp/comic/products/0000038640
+work-3ad85a2ffdc026007d61,9784253142311,PASS,insufficient-evidence,https://www.akitashoten.co.jp/comics/4253142311
+work-44d0000353478596369e,9784088448398,PASS,verified,https://www.shueisha.co.jp/books/items/contents.html?isbn=978-4-08-844839-8
+```
+
+Identity notes unchanged: Sunny/すみれ/ヒーロー/尾守 = paper vs e/edition bridge. アリス vol.1 ISBN match; 3권 Sony dates=lead. 鉄工所 vol.3 e/paper dates=lead. 新しい上司 = 1권 only. Safety leads (분리·이혼·재해·살인훈련·암살·환인·탈출·용접위험·파워하라·병/복수) ≠ adult-only.
+
+## Endpoint audit
+
+**4:** ねずみ `romance=4` https://www.kodansha.co.jp/comic/products/0000385374 https://www.kodansha.co.jp/comic/products/0000392937 https://www.kodansha.co.jp/comic/products/0000398073. 環と周 `characterArcWeight=4` https://www.shueisha.co.jp/books/items/contents.html?isbn=978-4-08-844839-8 https://shueisha.online/articles/-/167862. Pass A `darkness=4` 불채택.
+
+**0:** すみれ `worldBuilding=0` jdcn=091885790000d0000000 / 091886030000d0000000 / 091886240000d0000000. 鉄工所 `romance=0` https://www.kodansha.co.jp/comic/products/0000038640. 環と周 `progression=0` isbn=978-4-08-844839-8.
+
+**Theme 2:** Sunny `foundFamily:2` https://e-comi.shogakukan.co.jp/books/091885570000d0000000. ねずみ `combat:2` https://www.kodansha.co.jp/comic/products/0000392937. キルアオ `combat:2` isbn=978-4-08-883797-0; `school:2` https://www.shonenjump.com/j/rensai/killblue/. 尾守 `school:2` https://e-comi.shogakukan.co.jp/books/098531820000d0000000. 鉄工所 `workplace:2` https://www.kodansha.co.jp/comic/products/0000038640. 新しい上司 `workplace:2` https://prtimes.jp/main/html/rd/p/000000029.000040601.html. 環と周 `historicalReconstruction:2` isbn=978-4-08-844839-8. No centrality 2 for すみれ / ヒーロー / アリス.
+
+`WORK_COUNT=10 AXIS_COUNT_PER_WORK=13 IDENTITY_ROWS=10 SAFETY_ROWS=10 ISBN_ROWS=10 ART_ABSTAIN`

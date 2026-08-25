@@ -1,0 +1,130 @@
+# Batch 005 chunk 05 independent non-Art Pass B review
+
+Attestation: model `cursor-grok-4.6-high` / Cursor Grok 4.6 High, non-fast; normal completion; all twelve listed inputs read in full; hashes recomputed before conclusions; no degradation; no repository edits; `reviewedByHuman=false`; `ART_ABSTAIN`; Muse `NOT_USED`; Ox `EXCLUDED`. Independent conclusions were formed from the dictionary, guide, general request, frozen set, and research packet before Pass A and Daybreak QA were read. Daybreak is QA evidence only, not a vote.
+
+## Verified hashes
+
+| Path | SHA-256 |
+| --- | --- |
+| `docs/factors/factor-dictionary.md` | `a9c29a853a108aca1b9bb8d5d71a3e7d5d583303691c0b35cc6424c1e45ee8be` |
+| `docs/factors/annotation-guide.md` | `f7dd1ec55d97bf9200fcec92ce270e7745a0d3aa4fe98a40c746fc56b6a777b3` |
+| `data/staging/catalog-expansion/batches/batch-005/annotation-review-adjudication-request.md` | `9254c3d00faeb844df9f81ffb7ce0b7873eff2c009dccf8e87fca7342c5f9527` |
+| `data/staging/catalog-expansion/batches/batch-005/manifest.json` | `3aee17575d6d10bd93071c0ca1129e7f75d170d9cb34616e1692c6621b1aaf03` |
+| `data/staging/catalog-expansion/batches/batch-005/PAYLOAD.sha256` | `50512fc57d612eb50d2b76bf7f32354241c3478933fd16e4c90908aa9b9c0d02` |
+| `data/staging/catalog-expansion/batches/batch-005/frozen-work-set.csv` | `ddf9343b48146eaaf58971155f4190b4ec53e09d28d932d0d03cdc515ff8b2b8` |
+| `data/staging/catalog-expansion/batches/batch-005/research/chunk-05.md` | `cf36b8d5e6fe4a363e87d832de0079b52dd0e96ecffb2e0f96e0c4b627864710` |
+| `data/staging/catalog-expansion/batches/batch-005/annotation-pass-a/chunk-05/factors.csv` | `5a2642237dcaf1f61028ec89c36b77fcc8fd0f92f9d5d6dcb0887a982bb788c0` |
+| `data/staging/catalog-expansion/batches/batch-005/annotation-pass-a/chunk-05/genres.csv` | `320f9e0d323c29e6ae46682d2c900e0768e61e23d960cc8dff3c303c4594ee1b` |
+| `data/staging/catalog-expansion/batches/batch-005/annotation-pass-a/chunk-05/themes.csv` | `56b70ed3ff000805399663dfc1c0aaf7747ca36de1f4b6cd008446eb9a73a243` |
+| `data/staging/catalog-expansion/batches/batch-005/annotation-pass-a/chunk-05/notes.md` | `8eb02630e8e98bd86631a6d6d311333b14fb89342465a4b2e905ebf867a38dbb` |
+| `data/staging/catalog-expansion/batches/batch-005/reviews/daybreak-annotation-qa-chunks-03-05.md` | `93613b984e2285187810ac97424ea7a618872a3ac65d8e7152db3294b93db620` |
+
+Packet candidate SHA-256: `8e9a726ceef4daaaabaa133502ffe59a39594adc359e1fde1ec7f58d26517695`
+
+## Axis matrix
+
+| workId | canonicalTitle | progression | problemSolving | strategy | pacing | mysteryReveal | worldBuilding | characterArcWeight | relationshipStructure | comedy | darkness | mentalStress | romance | emotionalWarmth |
+| --- | --- | --- | --- | --- | --- | --- | --- | --- | --- | --- | --- | --- | --- | --- |
+| work-c50ea94bb66f72c679a2 | 機械仕掛けの愛 | U | U | U | 2 | U | U | U | U | U | U | U | U | U |
+| work-c7e065f61bb7a176ee56 | 臨死!!江古田ちゃん | U | U | U | 2 | U | U | U | U | U | U | U | 2 | U |
+| work-c8243866b7c8a6d9a2f8 | 町でうわさの天狗の子 | U | U | U | 2 | U | 2 | 2 | 2 | U | U | U | 3 | U |
+| work-db4a0ec451d7f4ffd8b8 | 万福児 | U | U | U | 2 | U | U | U | 2 | 4 | U | U | U | U |
+| work-e658d3aee2e33c17aa38 | スピリットサークル | U | U | U | 2 | 2 | 2 | 2 | 2 | U | U | U | U | U |
+| work-e906b3eaa9ef9eafe23c | トリリオンゲーム | 2 | 2 | 2 | 2 | U | U | U | 2 | U | U | U | U | U |
+| work-f31a42ea4ad724acefa5 | デッドデッドデーモンズデデデデデストラクション | U | U | U | 2 | U | 2 | U | 2 | U | 2 | U | U | U |
+| work-f4bfc29a5e0a9b5148d0 | 月に吠えらんねえ | U | U | U | 2 | U | 2 | 2 | 2 | U | 2 | U | U | U |
+| work-fb89f119251610cf1648 | 1/11 じゅういちぶんのいち | U | U | U | 2 | U | U | 2 | 2 | U | U | U | 2 | 2 |
+| work-fe35a5f01946f5153eb4 | シュトヘル | U | U | U | 2 | U | 2 | 2 | 2 | U | 3 | U | U | U |
+
+## Genre
+
+| workId | genres |
+| --- | --- |
+| work-c50ea94bb66f72c679a2 | scienceFiction |
+| work-c7e065f61bb7a176ee56 | sliceOfLife |
+| work-c8243866b7c8a6d9a2f8 | fantasy;sliceOfLife;romance |
+| work-db4a0ec451d7f4ffd8b8 | comedy;sliceOfLife |
+| work-e658d3aee2e33c17aa38 | fantasy |
+| work-e906b3eaa9ef9eafe23c | none |
+| work-f31a42ea4ad724acefa5 | scienceFiction;sliceOfLife |
+| work-f4bfc29a5e0a9b5148d0 | fantasy |
+| work-fb89f119251610cf1648 | sports;sliceOfLife |
+| work-fe35a5f01946f5153eb4 | action;fantasy;historical |
+
+## Theme
+
+| workId | themes |
+| --- | --- |
+| work-c50ea94bb66f72c679a2 | workplace:2 |
+| work-c7e065f61bb7a176ee56 | workplace:2 |
+| work-c8243866b7c8a6d9a2f8 | school:1 |
+| work-db4a0ec451d7f4ffd8b8 | none |
+| work-e658d3aee2e33c17aa38 | reincarnation:2; school:1 |
+| work-e906b3eaa9ef9eafe23c | workplace:2 |
+| work-f31a42ea4ad724acefa5 | war:1; school:1 |
+| work-f4bfc29a5e0a9b5148d0 | historicalReconstruction:1 |
+| work-fb89f119251610cf1648 | school:1; sportsCompetition:1 |
+| work-fe35a5f01946f5153eb4 | adventure:2; combat:1; war:2; historicalReconstruction:2; timeTravel:2 |
+
+## Pass A non-Art disagreements
+
+- `work-c50ea94bb66f72c679a2`: none
+- `work-c7e065f61bb7a176ee56`: `relationshipStructure` Pass A 2 → U; dictionary 2 requires a repeating fixed party or core supporting cast, while https://www.kodansha.co.jp/comic/products/0000029261 states rotating jobs and dating situations around a solo urban protagonist, not a named repeating ensemble. `romance` Pass A U → 2; dictionary 2 is a romantic subplot, and the same official volume-1 description plus catalog restatements through volume 3 repeat boyfriend / convenience-girlfriend treatment as an entry-scope thread.
+- `work-c8243866b7c8a6d9a2f8`: `romance` Pass A 2 → 3; dictionary 2 is subplot and 4 is the center of main relationships and plot. https://e-comi.shogakukan.co.jp/books/091316920000d0000000 and https://e-comi.shogakukan.co.jp/books/091322580000d0000000?page=1 make dating, the postponed first date, and the seaside date the stated volume plots while tengu rite and unstable power also drive events, so the value sits between 2 and 4.
+- `work-db4a0ec451d7f4ffd8b8`: none
+- `work-e658d3aee2e33c17aa38`: none
+- `work-e906b3eaa9ef9eafe23c`: none
+- `work-f31a42ea4ad724acefa5`: none
+- `work-f4bfc29a5e0a9b5148d0`: Theme `crafting` 2 removed; dictionary `crafting` is a making/building mechanic, not literary composition, and https://www.kodansha.co.jp/comic/products/0000047330 frames personified poems writing verse as the world premise rather than a crafting loop. `mentalStress` Pass A 2 → U; dictionary requires mixed tension or sustained pressure, while https://www.kodansha.co.jp/comic/products/0000047407 names creative despair and war responsibility without establishing lived psychological pressure; `darkness` 2 is retained separately.
+- `work-fb89f119251610cf1648`: Theme `sportsCompetition` 2 → 1; centrality 2 requires a repeating core competition structure, and https://www.shueisha.co.jp/books/items/contents.html?jdcn=08870161870161315501 records soccer-linked character episodes while match weight is unconfirmed. `progression` Pass A 2 → U; dictionary progression is a growth-reward structure, not a one-time return of feeling at https://www.shueisha.co.jp/books/items/contents.html?jdcn=08870161870161315501. `mentalStress` Pass A 2 → U; listed disappointment and unfulfilled love at https://www.shueisha.co.jp/books/items/contents.html?jdcn=08870244870161315501 do not establish sustained pressure. `romance` Pass A U → 2; dictionary 2 is subplot, and unfulfilled love plus feelings toward Sora at https://www.shueisha.co.jp/books/items/contents.html?jdcn=08870244870161315501 and https://www.shueisha.co.jp/books/items/contents.html?jdcn=08870426870161315501 are entry-scope romantic subplots without needing to be the primary structure.
+- `work-fe35a5f01946f5153eb4`: Theme `combat` 2 → 1; centrality 2 needs repeated combat as core structure, and https://shogakukan-comic.jp/book?jdcn=091825290000d0000000 does not establish battlefield-scene frequency. Theme `timeTravel` 2 added; daily dreams plus transformation across time and space at the same URL are the repeating entry mechanism linking the modern student to the 13th-century war plot.
+
+## Identity, safety, representative ISBN
+
+| workId | canonicalTitle | representativeISBN | identity | safety | isbn | verdict | packetUrl |
+| --- | --- | --- | --- | --- | --- | --- | --- |
+| work-c50ea94bb66f72c679a2 | 機械仕掛けの愛 | 9784091846440 | PASS | PASS | PASS | PASS | https://shogakukan-comic.jp/book?isbn=9784091846440 |
+| work-c7e065f61bb7a176ee56 | 臨死!!江古田ちゃん | 9784063144130 | PASS | PASS | PASS | PASS | https://www.kodansha.co.jp/comic/products/0000029261 |
+| work-c8243866b7c8a6d9a2f8 | 町でうわさの天狗の子 | 9784091313935 | PASS | PASS | PASS | PASS | https://e-comi.shogakukan.co.jp/books/091313930000d0000000 |
+| work-db4a0ec451d7f4ffd8b8 | 万福児 | 9784088653457 | PASS | PASS | PASS | PASS | https://www.shueisha.co.jp/books/items/contents.html?jdcn=08865345865345315501 |
+| work-e658d3aee2e33c17aa38 | スピリットサークル | 9784785939830 | PASS | PASS | PASS | PASS | https://www.shonengahosha.co.jp/book_Info.php?id=7155 |
+| work-e906b3eaa9ef9eafe23c | トリリオンゲーム | 9784098610105 | PASS | PASS | PASS | PASS | https://shogakukan-comic.jp/book?isbn=9784098610105 |
+| work-f31a42ea4ad724acefa5 | デッドデッドデーモンズデデデデデストラクション | 9784091865007 | PASS | PASS | PASS | PASS | https://shogakukan-comic.jp/book?isbn=9784091865007 |
+| work-f4bfc29a5e0a9b5148d0 | 月に吠えらんねえ | 9784063879704 | PASS | PASS | PASS | PASS | https://www.kodansha.co.jp/comic/products/0000047330 |
+| work-fb89f119251610cf1648 | 1/11 じゅういちぶんのいち | 9784088701615 | PASS | PASS | PASS | PASS | https://www.shueisha.co.jp/books/items/contents.html?jdcn=08870161870161315501 |
+| work-fe35a5f01946f5153eb4 | シュトヘル | 9784091825292 | PASS | PASS | PASS | PASS | https://shogakukan-comic.jp/book?jdcn=091825290000d0000000 |
+
+Frozen titles match official publisher identification without decorative `『』`. Representative ISBNs are the frozen volume-1 identifiers recorded on those official pages. No entry-scope official text establishes a safety hard blocker.
+
+## Outcome
+
+| workId | outcome |
+| --- | --- |
+| work-c50ea94bb66f72c679a2 | verified |
+| work-c7e065f61bb7a176ee56 | needs-adjudication |
+| work-c8243866b7c8a6d9a2f8 | needs-adjudication |
+| work-db4a0ec451d7f4ffd8b8 | verified |
+| work-e658d3aee2e33c17aa38 | verified |
+| work-e906b3eaa9ef9eafe23c | verified |
+| work-f31a42ea4ad724acefa5 | verified |
+| work-f4bfc29a5e0a9b5148d0 | needs-adjudication |
+| work-fb89f119251610cf1648 | needs-adjudication |
+| work-fe35a5f01946f5153eb4 | needs-adjudication |
+
+## Endpoint 0/4 and Theme centrality 2 support
+
+No independently assigned Axis 0.
+
+- `work-db4a0ec451d7f4ffd8b8` `comedy=4`: dictionary 4 is gag as constant or core form. https://www.shueisha.co.jp/books/items/contents.html?jdcn=08865345865345315501 states poison-and-laughter guidance into a paradise; https://www.shueisha.co.jp/books/items/contents.html?jdcn=08865380865345315501 states surreal Japanese-style gag; https://www.shueisha.co.jp/books/items/contents.html?jdcn=08865410865345315501 states kitsch Buddhist gag across the entry volumes.
+- `work-c50ea94bb66f72c679a2` `workplace:2`: dictionary 2 is a repeating core structure. https://shogakukan-comic.jp/book?isbn=9784091846440, https://shogakukan-comic.jp/book?isbn=9784091853844, and https://shogakukan-comic.jp/book?jdcn=091867970000d0000000 present occupational/function cases (detective, soldier, clerk, delivery, surveillance, interrogation, teacher, vending machine, temple monk) as the omnibus engine of volumes 1–3.
+- `work-c7e065f61bb7a176ee56` `workplace:2`: https://www.kodansha.co.jp/comic/products/0000029261 and rights-holder catalog restatements through volumes 2–3 keep teleoperator / nude-model / hostess and other jobs as the repeating episode frame of the protagonist’s urban life.
+- `work-e658d3aee2e33c17aa38` `reincarnation:2`: https://www.shonengahosha.co.jp/book_Info.php?id=7156 and https://www.shonengahosha.co.jp/book_Info.php?id=7157 make seeing past lives, then multiple past lives including an Edo relocation, the expanding core mechanism after the volume-1 meeting.
+- `work-e906b3eaa9ef9eafe23c` `workplace:2`: https://shogakukan-comic.jp/book?isbn=9784098610105, https://shogakukan-comic.jp/book?isbn=9784098611133, and https://shogakukan-comic.jp/book?isbn=9784098612284 repeat company founding, conditional investment, contest-as-work, and host/AI/flower business operation as the entry structure.
+- `work-fe35a5f01946f5153eb4` `adventure:2`: https://shogakukan-comic.jp/book?jdcn=091827990000d0000000 and https://shogakukan-comic.jp/book?jdcn=091834200000d0000000 state the Chengdu journey to protect writing and the fortress expedition to rescue Yururu.
+- `work-fe35a5f01946f5153eb4` `war:2`: https://shogakukan-comic.jp/book?jdcn=091825290000d0000000 presents daily dreams of a horrific battlefield, and https://shogakukan-comic.jp/book?jdcn=091834200000d0000000 places the volume-3 plot inside the 13th-century Mongol invasion of Western Xia.
+- `work-fe35a5f01946f5153eb4` `historicalReconstruction:2`: https://shogakukan-comic.jp/book?jdcn=091827990000d0000000 centers Western Xia script and cultural preservation; https://shogakukan-comic.jp/book?jdcn=091834200000d0000000 continues that 13th-century Mongol/Xia reconstruction as the event world.
+- `work-fe35a5f01946f5153eb4` `timeTravel:2`: https://shogakukan-comic.jp/book?jdcn=091825290000d0000000 states that the high-schooler dreams the battlefield daily and, when Shuthell is summoned, transforms across time and space into the dream warrior, which is the recurring entry mechanism.
+
+These are independent Pass B proposals only. They do not authorize promotion.
+
+WORK_COUNT=10 AXIS_COUNT_PER_WORK=13 IDENTITY_ROWS=10 SAFETY_ROWS=10 ISBN_ROWS=10 ART_ABSTAIN

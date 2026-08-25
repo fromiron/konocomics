@@ -1,0 +1,11 @@
+workId,themeId,centrality,confidence,evidenceId
+work-098b1781e14365eea667,school,2,0.82,ev-batch-004-a-work-098b1781e14365eea667
+work-0f3a44f5dcab9623d1be,politics,1,0.72,ev-batch-004-a-work-0f3a44f5dcab9623d1be
+work-0f3a44f5dcab9623d1be,investigation,2,0.90,ev-batch-004-a-work-0f3a44f5dcab9623d1be
+work-0f3a44f5dcab9623d1be,historicalReconstruction,2,0.86,ev-batch-004-a-work-0f3a44f5dcab9623d1be
+work-11d23966f22f777e95d0,foundFamily,2,0.82,ev-batch-004-a-work-11d23966f22f777e95d0
+work-132ce7172750a3b1fa53,combat,1,0.74,ev-batch-004-a-work-132ce7172750a3b1fa53
+work-188ba092c6195603bb3f,adventure,2,0.82,ev-batch-004-a-work-188ba092c6195603bb3f
+work-188ba092c6195603bb3f,politics,2,0.84,ev-batch-004-a-work-188ba092c6195603bb3f
+work-188ba092c6195603bb3f,historicalReconstruction,2,0.86,ev-batch-004-a-work-188ba092c6195603bb3f
+work-1a6ad6771865b43c8516,workplace,2,0.80,ev-batch-004-a-work-1a6ad6771865b43c8516

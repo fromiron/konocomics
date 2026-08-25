@@ -1,0 +1,15 @@
+workId,themeId,centrality,confidence,evidenceId
+work-23077ad33a2066bef5a6,foundFamily,2,0.83,ev-batch-004-a-work-23077ad33a2066bef5a6
+work-2356050c72240569e1c5,school,2,0.79,ev-batch-004-a-work-2356050c72240569e1c5
+work-2c4fe00df5255fc082f9,combat,2,0.82,ev-batch-004-a-work-2c4fe00df5255fc082f9
+work-2c4fe00df5255fc082f9,workplace,2,0.8,ev-batch-004-a-work-2c4fe00df5255fc082f9
+work-2d385ad0525742330e70,combat,2,0.94,ev-batch-004-a-work-2d385ad0525742330e70
+work-2df743e085adef5e9bd3,combat,2,0.92,ev-batch-004-a-work-2df743e085adef5e9bd3
+work-2df743e085adef5e9bd3,school,2,0.85,ev-batch-004-a-work-2df743e085adef5e9bd3
+work-2f1d1c3ad0f943f1562f,school,2,0.9,ev-batch-004-a-work-2f1d1c3ad0f943f1562f
+work-3713ab561de583d709bc,workplace,1,0.68,ev-batch-004-a-work-3713ab561de583d709bc
+work-39c1a2b6791238827ed5,crafting,2,0.9,ev-batch-004-a-work-39c1a2b6791238827ed5
+work-39c1a2b6791238827ed5,workplace,2,0.94,ev-batch-004-a-work-39c1a2b6791238827ed5
+work-3ad85a2ffdc026007d61,workplace,2,0.83,ev-batch-004-a-work-3ad85a2ffdc026007d61
+work-44d0000353478596369e,revenge,1,0.68,ev-batch-004-a-work-44d0000353478596369e
+work-44d0000353478596369e,historicalReconstruction,2,0.9,ev-batch-004-a-work-44d0000353478596369e

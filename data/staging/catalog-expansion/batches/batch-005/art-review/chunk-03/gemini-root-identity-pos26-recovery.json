@@ -1,0 +1,16 @@
+{
+  "project": "konocomics",
+  "batch": "batch-005",
+  "chunk": "chunk-03-pos26-recovery",
+  "workId": "work-5b7cf2105a4bc6f6b46c",
+  "canonicalTitle": "クジラの子らは砂上に歌う",
+  "model": "gemini-3.7-flash-high",
+  "effort": "high",
+  "payloadFormat": "canonical-uncompressed-directory",
+  "payloadFileCount": 15,
+  "imageCount": 9,
+  "requestSha256": "9f20ef2ece09c6df73dc9f89c896cbd6d7538db9dfeec6de2d04954a1f2dd8a4",
+  "payloadLedgerSha256": "aea331030c4b9c4dfc6208476c4c5d1890331a16ca263970c3b24847c9db0b9d",
+  "reviewedByHuman": false,
+  "retrievedAt": "2026-08-25"
+}

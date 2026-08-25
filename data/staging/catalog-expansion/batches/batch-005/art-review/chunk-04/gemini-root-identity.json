@@ -1,0 +1,15 @@
+{
+  "batchId": "batch-005",
+  "chunk": "04",
+  "reviewer": "Gemini 3.7 Flash High",
+  "requestedModel": "gemini-3.7-flash-high",
+  "effort": "high",
+  "mode": "plan",
+  "reviewedByHuman": false,
+  "canonicalUncompressedRoot": "/tmp/konocomics-batch005-gemini-art04.EOXSVN",
+  "payloadIdentitySha256": "61deabd357de4ae2fb3e80e42249e67861de2a44630ae8dca1026c503282c469",
+  "fileCount": 48,
+  "imageCount": 37,
+  "inputCount": 10,
+  "candidateSha256": "8e9a726ceef4daaaabaa133502ffe59a39594adc359e1fde1ec7f58d26517695"
+}

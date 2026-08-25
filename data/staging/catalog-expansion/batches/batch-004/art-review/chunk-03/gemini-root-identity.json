@@ -1,0 +1,13 @@
+{
+  "schemaVersion": "model-panel-root-identity-v1",
+  "project": "fromiron/konocomics",
+  "repositoryRoot": "/home/bell/Toys/konocomics",
+  "branch": "main",
+  "headSha": "a423c20add1162b7cdf71342a721ffcd7191d3c2",
+  "dirtyWorktree": true,
+  "batchId": "batch-004",
+  "chunk": "03",
+  "payloadRoot": "/tmp/konocomics-batch004-gemini-art03",
+  "payloadIdentitySha256": "059722be6395a449ed9e305687529f319f3eb033c89cb64445895c09516189be",
+  "reviewedByHuman": false
+}

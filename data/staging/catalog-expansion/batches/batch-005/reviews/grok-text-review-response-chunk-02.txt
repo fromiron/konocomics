@@ -1,0 +1,151 @@
+# Batch 005 chunk 02 independent non-Art Pass B
+
+## 1. Attestation
+
+Requested reviewer: `cursor-grok-4.6-high` / Cursor Grok 4.6 High, non-fast. Normal completion. All twelve frozen inputs read in full after recomputed SHA-256 match. No degradation. No repository edits. `reviewedByHuman=false`. `ART_ABSTAIN`. Muse `NOT_USED`. Ox `EXCLUDED`. Independent Pass B proposals only; no promotion authorization.
+
+## 2. Verified hashes
+
+Twelve frozen inputs recomputed; all match the request. Packet candidate echoed from the attested workspace root and `manifest.json` `candidateSha256`.
+
+| Path | SHA-256 |
+| --- | --- |
+| `docs/factors/factor-dictionary.md` | `a9c29a853a108aca1b9bb8d5d71a3e7d5d583303691c0b35cc6424c1e45ee8be` |
+| `docs/factors/annotation-guide.md` | `f7dd1ec55d97bf9200fcec92ce270e7745a0d3aa4fe98a40c746fc56b6a777b3` |
+| `data/staging/catalog-expansion/batches/batch-005/annotation-review-adjudication-request.md` | `9254c3d00faeb844df9f81ffb7ce0b7873eff2c009dccf8e87fca7342c5f9527` |
+| `data/staging/catalog-expansion/batches/batch-005/manifest.json` | `3aee17575d6d10bd93071c0ca1129e7f75d170d9cb34616e1692c6621b1aaf03` |
+| `data/staging/catalog-expansion/batches/batch-005/PAYLOAD.sha256` | `50512fc57d612eb50d2b76bf7f32354241c3478933fd16e4c90908aa9b9c0d02` |
+| `data/staging/catalog-expansion/batches/batch-005/frozen-work-set.csv` | `ddf9343b48146eaaf58971155f4190b4ec53e09d28d932d0d03cdc515ff8b2b8` |
+| `data/staging/catalog-expansion/batches/batch-005/research/chunk-02.md` | `7b102a7889fa15bc778d5eb0f91785a285fed2d08b0386f809eebd3d04fc6bdd` |
+| `data/staging/catalog-expansion/batches/batch-005/annotation-pass-a/chunk-02/factors.csv` | `f1a78e3029887f2549b5b4b3e9836a32680d311ca7e21252cfb8ec1de31de6c2` |
+| `data/staging/catalog-expansion/batches/batch-005/annotation-pass-a/chunk-02/genres.csv` | `2dc31c0b29003889c0650e1ec3e208f766139050cab1afdcb143418e7bdd9e9e` |
+| `data/staging/catalog-expansion/batches/batch-005/annotation-pass-a/chunk-02/themes.csv` | `8b61757f1d427ded69ebc351a7532f923b34e8e423f4213424fe821d77ab09b0` |
+| `data/staging/catalog-expansion/batches/batch-005/annotation-pass-a/chunk-02/notes.md` | `0ea56e271b53ebbad98cd6eb80e71c6f5512893b48551366e31cd73f4f841c49` |
+| `data/staging/catalog-expansion/batches/batch-005/reviews/daybreak-annotation-qa-chunks-01-02.md` | `4f032d8fbfacdeec01ab01dc53a414dd9f1b118fc5f208b4584d520828a65539` |
+
+Packet candidate SHA-256: `8e9a726ceef4daaaabaa133502ffe59a39594adc359e1fde1ec7f58d26517695`
+
+## 3. Axis matrix
+
+| workId | canonicalTitle | progression | problemSolving | strategy | pacing | mysteryReveal | worldBuilding | characterArcWeight | relationshipStructure | comedy | darkness | mentalStress | romance | emotionalWarmth |
+| --- | --- | --- | --- | --- | --- | --- | --- | --- | --- | --- | --- | --- | --- | --- |
+| work-151b456508f78852b002 | ヨルムンガンド | U | U | U | 2 | U | 2 | 2 | 2 | U | 4 | U | U | U |
+| work-1550d4a52c3fe6d9f94c | ボクラノキセキ | U | U | U | U | 3 | 2 | 3 | 2 | U | U | 2 | U | U |
+| work-15d6508605fbd4a266fc | おまかせ精霊 | U | U | U | U | U | U | U | U | U | U | U | U | U |
+| work-18e08fe95968a6537773 | ニラメッコ | U | U | U | U | U | U | 3 | 2 | U | U | 2 | U | U |
+| work-19b578d0e828242f14f3 | 恋愛ラボ | U | U | U | U | U | U | 2 | 2 | 3 | U | U | 3 | 2 |
+| work-1b3afe12c434a9cf7603 | 銀のスプーン | 2 | U | U | 2 | 2 | U | 3 | 2 | U | 2 | 2 | U | 4 |
+| work-1b7c4ed54d7761cd242b | おかめ日和 | U | U | U | 2 | U | U | 2 | 2 | U | 2 | 2 | 3 | 2 |
+| work-1bce95b6c02673e59bcf | 新黒沢 最強伝説 | U | U | U | 2 | U | U | 2 | 0 | U | 2 | U | U | U |
+| work-1d5a3158e78e639f1973 | カレチ | 2 | U | U | 3 | U | 2 | 2 | U | U | U | U | U | 2 |
+| work-1e9c4852863a22bba058 | GREEN WORLDZ | U | U | 2 | 3 | 2 | 2 | 1 | 2 | U | 4 | 3 | U | U |
+
+## 4. Genre and Theme
+
+### Genre
+
+| workId | canonicalTitle | genres |
+| --- | --- | --- |
+| work-151b456508f78852b002 | ヨルムンガンド | action |
+| work-1550d4a52c3fe6d9f94c | ボクラノキセキ | fantasy;mystery |
+| work-15d6508605fbd4a266fc | おまかせ精霊 | fantasy;sliceOfLife |
+| work-18e08fe95968a6537773 | ニラメッコ | sliceOfLife |
+| work-19b578d0e828242f14f3 | 恋愛ラボ | comedy;romance |
+| work-1b3afe12c434a9cf7603 | 銀のスプーン | sliceOfLife |
+| work-1b7c4ed54d7761cd242b | おかめ日和 | sliceOfLife;romance |
+| work-1bce95b6c02673e59bcf | 新黒沢 最強伝説 | sliceOfLife |
+| work-1d5a3158e78e639f1973 | カレチ | historical;sliceOfLife |
+| work-1e9c4852863a22bba058 | GREEN WORLDZ | action;scienceFiction;horror |
+
+### Theme
+
+| workId | canonicalTitle | themes |
+| --- | --- | --- |
+| work-151b456508f78852b002 | ヨルムンガンド | combat 2; adventure 1; war 1; revenge 1 |
+| work-1550d4a52c3fe6d9f94c | ボクラノキセキ | reincarnation 2; investigation 2; school 2 |
+| work-15d6508605fbd4a266fc | おまかせ精霊 | school 1 |
+| work-18e08fe95968a6537773 | ニラメッコ | workplace 2 |
+| work-19b578d0e828242f14f3 | 恋愛ラボ | school 2 |
+| work-1b3afe12c434a9cf7603 | 銀のスプーン | cooking 2 |
+| work-1b7c4ed54d7761cd242b | おかめ日和 | none |
+| work-1bce95b6c02673e59bcf | 新黒沢 最強伝説 | survival 2 |
+| work-1d5a3158e78e639f1973 | カレチ | workplace 2; historicalReconstruction 2 |
+| work-1e9c4852863a22bba058 | GREEN WORLDZ | combat 2; survival 2; postApocalypse 2 |
+
+## 5. Pass A non-Art disagreements
+
+| workId | canonicalTitle | disagreements |
+| --- | --- | --- |
+| work-151b456508f78852b002 | ヨルムンガンド | `pacing` U→2: vol-interval join / Dubai attack / Casper clash is dictionary 2 (https://shogakukan-comic.jp/book?isbn=9784091570697, https://shogakukan-comic.jp/book?isbn=9784091570895, https://shogakukan-comic.jp/book?isbn=9784091571090). `darkness` 3→4: child-soldier bereavement, assassination gunfight, mines/revenge are the entry events; dictionary 4 is centrality of cruel/tragic events, not gore intensity. `adventure` 2→1 and `war` 2→1: unit travel and weapons milieu are present but not the repeating core versus `combat`. `revenge` added at 1 from vol3 revenge clash only. |
+| work-1550d4a52c3fe6d9f94c | ボクラノキセキ | none |
+| work-15d6508605fbd4a266fc | おまかせ精霊 | none |
+| work-18e08fe95968a6537773 | ニラメッコ | `mentalStress` U→2: https://www.hakusensha.co.jp/comicslist/62179/ online abuse plus partner/future worry, and https://magazine.younganimal.com/title/?id=44 unstable life, match mixed tension (2), not collapse (4). |
+| work-19b578d0e828242f14f3 | 恋愛ラボ | none |
+| work-1b3afe12c434a9cf7603 | 銀のスプーン | none |
+| work-1b7c4ed54d7761cd242b | おかめ日和 | `darkness` U→2: https://www.kodansha.co.jp/comic/products/0000044241 husband with another woman, anger, and a larger incident is dictionary 2 (serious danger/tragedy present), not a dark-world 4. |
+| work-1bce95b6c02673e59bcf | 新黒沢 最強伝説 | `characterArcWeight` 3→2: street incidents share the entry with the return-to-society goal (https://bigcomicbros.net/comics/30136/, https://bigcomicbros.net/comics/30138/). `relationshipStructure` U→0: https://bigcomicbros.net/comics/30137/ “홀로 걷고” is affirmative solo-protagonist 0; the clerk is incidental. `darkness` U→2: eight-year hospital absence, unemployment, street sleeping, and a fight are serious hardship (2). |
+| work-1d5a3158e78e639f1973 | カレチ | `problemSolving` 2→U: passenger-service and craft blurbs (https://www.kodansha.co.jp/comic/products/0000013990, https://www.kodansha.co.jp/comic/products/0000014109) do not show constraint analysis versus force/emotion, so known 2 is unsupported. |
+| work-1e9c4852863a22bba058 | GREEN WORLDZ | `strategy` U→2: https://www.kodansha.co.jp/comic/products/0000019222 weapons search plus plants stopping at night is short-term plan/tactics (2). `mysteryReveal` U→2: https://www.kodansha.co.jp/comic/products/0000019307 mysterious Nano and prophecy are some secrets (2), not a deduction-reward 4. `worldBuilding` 3→2: plant/night/insect rules are a functional apocalypse setting, not repeated history/culture/factions (4). `characterArcWeight` 2→1: entry copy is world/threat-centered with one fight decision. `relationshipStructure` U→2: Akira with Iwatobi, then Shiratori/Nano, is a recurring party (2). `darkness` 3→4: human-attacking plants, continuing fear, despair-carrying insects are the plot center (https://www.kodansha.co.jp/comic/products/0000019152). Genre: add `horror` from explicit 공포/절망, not from `action`/`scienceFiction` labels. |
+
+## 6. Identity, safety, and representative ISBN
+
+Identity: frozen titles match research titles; no decorative `『』`. Safety: packet shows no sexual-minor or other catalog safety-conflict; child-soldier plot in ヨルムンガンド is published fiction, not a safety-conflict. Representative ISBN: only vol1 ヨルムンガンド encodes ISBN in the official packet URL. Pass A notes list other ISBNs absent from `research/chunk-02.md`; those are not adopted.
+
+| workId | canonicalTitle | identity | safety | representativeISBN | packetURL | verdict |
+| --- | --- | --- | --- | --- | --- | --- |
+| work-151b456508f78852b002 | ヨルムンガンド | PASS | PASS | 9784091570697 | https://shogakukan-comic.jp/book?isbn=9784091570697 | PASS |
+| work-1550d4a52c3fe6d9f94c | ボクラノキセキ | PASS | PASS | unattested-in-packet | https://data.ichijinsha.co.jp/detail/75805394 | NEEDS_ADJUDICATION |
+| work-15d6508605fbd4a266fc | おまかせ精霊 | PASS | PASS | unattested-in-packet | https://comic-alive.jp/product/omakase/201216022042.html | NEEDS_ADJUDICATION |
+| work-18e08fe95968a6537773 | ニラメッコ | PASS | PASS | unattested-in-packet | https://www.hakusensha.co.jp/comicslist/60421/ | NEEDS_ADJUDICATION |
+| work-19b578d0e828242f14f3 | 恋愛ラボ | PASS | PASS | unattested-in-packet | https://manga-time.com/comics/cart/mru.html | NEEDS_ADJUDICATION |
+| work-1b3afe12c434a9cf7603 | 銀のスプーン | PASS | PASS | unattested-in-packet | https://www.kodansha.co.jp/comic/products/0000044784 | NEEDS_ADJUDICATION |
+| work-1b7c4ed54d7761cd242b | おかめ日和 | PASS | PASS | unattested-in-packet | https://www.kodansha.co.jp/comic/products/0000043658 | NEEDS_ADJUDICATION |
+| work-1bce95b6c02673e59bcf | 新黒沢 最強伝説 | PASS | PASS | unattested-in-packet | https://bigcomicbros.net/comics/30136/ | NEEDS_ADJUDICATION |
+| work-1d5a3158e78e639f1973 | カレチ | PASS | PASS | unattested-in-packet | https://www.kodansha.co.jp/comic/products/0000013990 | NEEDS_ADJUDICATION |
+| work-1e9c4852863a22bba058 | GREEN WORLDZ | PASS | PASS | unattested-in-packet | https://www.kodansha.co.jp/comic/products/0000019152 | NEEDS_ADJUDICATION |
+
+## 7. Outcomes
+
+| workId | canonicalTitle | outcome |
+| --- | --- | --- |
+| work-151b456508f78852b002 | ヨルムンガンド | needs-adjudication |
+| work-1550d4a52c3fe6d9f94c | ボクラノキセキ | needs-adjudication |
+| work-15d6508605fbd4a266fc | おまかせ精霊 | insufficient-evidence |
+| work-18e08fe95968a6537773 | ニラメッコ | needs-adjudication |
+| work-19b578d0e828242f14f3 | 恋愛ラボ | needs-adjudication |
+| work-1b3afe12c434a9cf7603 | 銀のスプーン | needs-adjudication |
+| work-1b7c4ed54d7761cd242b | おかめ日和 | needs-adjudication |
+| work-1bce95b6c02673e59bcf | 新黒沢 最強伝説 | needs-adjudication |
+| work-1d5a3158e78e639f1973 | カレチ | needs-adjudication |
+| work-1e9c4852863a22bba058 | GREEN WORLDZ | needs-adjudication |
+
+## 8. Endpoints 0/4 and Theme centrality 2
+
+### Axis endpoints 0/4
+
+| workId | axis | value | packetURL | entry-scope support |
+| --- | --- | --- | --- | --- |
+| work-151b456508f78852b002 | darkness | 4 | https://shogakukan-comic.jp/book?isbn=9784091570697 | vol1: 무기 때문에 부모를 잃은 소년 병사; vol2 https://shogakukan-comic.jp/book?isbn=9784091570895 암살자 습격·총격전; vol3 https://shogakukan-comic.jp/book?isbn=9784091571090 지뢰·소년병·복수. Tragic/cruel events are the entry plot center. |
+| work-1b3afe12c434a9cf7603 | emotionalWarmth | 4 | https://www.kodansha.co.jp/comic/products/0000044883 | vol3: 가족의 사랑과 요리가 그를 지지; cooking/family support is the stated entry reward across vol1 https://www.kodansha.co.jp/comic/products/0000044784 and vol2 https://www.kodansha.co.jp/comic/products/0000044817. |
+| work-1bce95b6c02673e59bcf | relationshipStructure | 0 | https://bigcomicbros.net/comics/30137/ | vol2: 병원을 떠나 홀로 걷고 54세 무직; vol3 clerk is incidental, not a party. |
+| work-1e9c4852863a22bba058 | darkness | 4 | https://www.kodansha.co.jp/comic/products/0000019152 | vol1: 식물 공격·절망적 세계; vol2 https://www.kodansha.co.jp/comic/products/0000019222 공포가 계속; vol3 https://www.kodansha.co.jp/comic/products/0000019307 절망을 옮기는 곤충. |
+
+### Theme centrality 2
+
+| workId | themeId | centrality | packetURL | entry-scope support |
+| --- | --- | --- | --- | --- |
+| work-151b456508f78852b002 | combat | 2 | https://shogakukan-comic.jp/book?isbn=9784091570895 | vol1 private military unit; vol2 gunfight; vol3 armed clash. |
+| work-1550d4a52c3fe6d9f94c | reincarnation | 2 | https://data.ichijinsha.co.jp/detail/75805394 | vol1 Veronica memories; vol2 https://data.ichijinsha.co.jp/detail/75805477 classmates recover past lives; https://www.ichijinsha.co.jp/stories/comic-zerosum/bokuranok/ confirms the structure. |
+| work-1550d4a52c3fe6d9f94c | investigation | 2 | https://www.ichijinsha.co.jp/stories/comic-zerosum/bokuranok/ | series page 과거의 진실을 풀어가는; vol2 identity claim. |
+| work-1550d4a52c3fe6d9f94c | school | 2 | https://data.ichijinsha.co.jp/detail/75805394 | school isolation and classmates as the repeating frame across vol1–2 and the series page. |
+| work-18e08fe95968a6537773 | workplace | 2 | https://www.hakusensha.co.jp/comicslist/60421/ | comedian stage work across vol1, vol2 https://www.hakusensha.co.jp/comicslist/62179/, and https://magazine.younganimal.com/title/?id=44. |
+| work-19b578d0e828242f14f3 | school | 2 | https://manga-time.com/comics/cart/mru.html | Fujijo student council across vols 1–3. |
+| work-1b3afe12c434a9cf7603 | cooking | 2 | https://www.kodansha.co.jp/comic/products/0000044784 | starts cooking vol1; difficult dishes vol2 https://www.kodansha.co.jp/comic/products/0000044817; cooking as support vol3 https://www.kodansha.co.jp/comic/products/0000044883. |
+| work-1bce95b6c02673e59bcf | survival | 2 | https://bigcomicbros.net/comics/30137/ | hospital exit, unemployment, street sleep, supermarket samples (vol3 https://bigcomicbros.net/comics/30138/). |
+| work-1d5a3158e78e639f1973 | workplace | 2 | https://www.kodansha.co.jp/comic/products/0000013990 | conductor passenger service and craft across vol1–vol3 https://www.kodansha.co.jp/comic/products/0000018293. |
+| work-1d5a3158e78e639f1973 | historicalReconstruction | 2 | https://www.kodansha.co.jp/comic/products/0000013990 | 쇼와 말기 국철 / railway occupations repeated in vol1–vol3 blurbs. |
+| work-1e9c4852863a22bba058 | combat | 2 | https://www.kodansha.co.jp/comic/products/0000019222 | plants attack; Akira decides to fight and seek weapons. |
+| work-1e9c4852863a22bba058 | survival | 2 | https://www.kodansha.co.jp/comic/products/0000019152 | subway emergence into a desperate overrun Tokyo, weapons search, continuing fear. |
+| work-1e9c4852863a22bba058 | postApocalypse | 2 | https://www.kodansha.co.jp/comic/products/0000019152 | blackout then plant-dominated Tokyo as the entry world across vols 1–3. |
+
+WORK_COUNT=10 AXIS_COUNT_PER_WORK=13 IDENTITY_ROWS=10 SAFETY_ROWS=10 ISBN_ROWS=10 ART_ABSTAIN

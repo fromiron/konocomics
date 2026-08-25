@@ -1,0 +1,12 @@
+workId,themeId,centrality,confidence,evidenceId
+work-79c18b26dfde8a532f73,combat,2,0.92,ev-batch-005-a-work-79c18b26dfde8a532f73
+work-79c18b26dfde8a532f73,investigation,2,0.84,ev-batch-005-a-work-79c18b26dfde8a532f73
+work-79c18b26dfde8a532f73,revenge,2,0.92,ev-batch-005-a-work-79c18b26dfde8a532f73
+work-7b6eb2b48ac06ffa26eb,politics,1,0.70,ev-batch-005-a-work-7b6eb2b48ac06ffa26eb
+work-7b6eb2b48ac06ffa26eb,survival,1,0.74,ev-batch-005-a-work-7b6eb2b48ac06ffa26eb
+work-7b6eb2b48ac06ffa26eb,historicalReconstruction,2,0.92,ev-batch-005-a-work-7b6eb2b48ac06ffa26eb
+work-8037856e7703fdaf4324,school,2,0.86,ev-batch-005-a-work-8037856e7703fdaf4324
+work-8a7846af8ead1797e6a2,tournament,1,0.94,ev-batch-005-a-work-8a7846af8ead1797e6a2
+work-8ff141505b0a27f8d630,combat,2,0.92,ev-batch-005-a-work-8ff141505b0a27f8d630
+work-8ff141505b0a27f8d630,war,2,0.94,ev-batch-005-a-work-8ff141505b0a27f8d630
+work-aa6018249b7fe7e92d95,workplace,1,0.76,ev-batch-005-a-work-aa6018249b7fe7e92d95

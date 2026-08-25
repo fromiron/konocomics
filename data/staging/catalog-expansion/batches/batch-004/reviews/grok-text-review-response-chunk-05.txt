@@ -1,0 +1,137 @@
+# Batch 004 chunk 05 independent non-Art review (Pass B proposals)
+
+## 1. Attestation
+
+`cursor-grok-4.6-high` / Cursor Grok 4.6 High, non-fast. Normal completion. All nine frozen inputs read in full; hashes recomputed and matched. No degradation, no repository edits, no web browse, no model memory, no Gold, no works outside positions 41–50. `reviewedByHuman=false`. `ART_ABSTAIN`. Muse `NOT_USED`. Ox `EXCLUDED`. Independent conclusions formed before Pass A. Pass B proposals only; no promotion.
+
+## 2. Verified SHA-256
+
+| Path | SHA-256 |
+| --- | --- |
+| `docs/factors/factor-dictionary.md` | `a9c29a853a108aca1b9bb8d5d71a3e7d5d583303691c0b35cc6424c1e45ee8be` |
+| `docs/factors/annotation-guide.md` | `f7dd1ec55d97bf9200fcec92ce270e7745a0d3aa4fe98a40c746fc56b6a777b3` |
+| `data/staging/catalog-expansion/batches/batch-004/annotation-review-adjudication-request.md` | `693e302b8ca0dbd44b513b2ad62bab93a4587a7dc60c3437182af2a9d15f6513` |
+| `data/staging/catalog-expansion/batches/batch-004/frozen-work-set.csv` | `a07a3bd053ce3edb79bdd5803ea3f04dbf8ceac4fd422d84ca97432ba75f68a1` |
+| `data/staging/catalog-expansion/batches/batch-004/research/chunk-05.md` | `a78aafd61f78b7801bcf25c3b2ec957d36e91f5580f05dc5dec9cd4cf30ed07d` |
+| `data/staging/catalog-expansion/batches/batch-004/annotation-pass-a/chunk-05/factors.csv` | `9d4f6c46aa8913f51be8ab57370c1b4f7c3d12fddae01c732480d739427ce44c` |
+| `data/staging/catalog-expansion/batches/batch-004/annotation-pass-a/chunk-05/genres.csv` | `6072bc3cbc3e002df79a2eb751b3f10f4fece40b2a3d9e9dc14a81a074589b4b` |
+| `data/staging/catalog-expansion/batches/batch-004/annotation-pass-a/chunk-05/themes.csv` | `4c32f8d768f835598f809bf0b681971d6e59be8348fedf3e2911da2e8e598005` |
+| `data/staging/catalog-expansion/batches/batch-004/annotation-pass-a/chunk-05/notes.md` | `1387df86beac926c4f171d9cd6ba9279803666468816c8e7a647f9fbcec2e49e` |
+
+## 3. Axis matrix (13 Narrative/Tone)
+
+| workId | canonicalTitle | progression | problemSolving | strategy | pacing | mysteryReveal | worldBuilding | characterArcWeight | relationshipStructure | comedy | darkness | mentalStress | romance | emotionalWarmth |
+| --- | --- | --- | --- | --- | --- | --- | --- | --- | --- | --- | --- | --- | --- | --- |
+| work-c7280f9dcc2754d3f864 | 鵺の陰陽師 | U | U | U | 2 | U | 2 | U | 2 | U | U | U | U | U |
+| work-d63a83030a8819ff553c | モテキ | U | U | U | 2 | U | U | U | U | U | U | U | 4 | U |
+| work-d8a87d01c1f35d58e791 | 八雲さんは餌づけがしたい。 | 0 | U | U | 0 | 0 | 0 | 2 | 1 | U | U | U | U | 4 |
+| work-e2f095e08fc5e08d5a2b | 高嶺と花 | U | U | U | 2 | U | U | 2 | 2 | 2 | U | U | 4 | U |
+| work-e81955a9fc5c4d84580f | ここは今から倫理です。 | U | U | U | U | U | U | 2 | 2 | U | U | 2 | U | U |
+| work-eef84d07d90ba2b040cf | さよなら絵梨 | U | U | U | 3 | 2 | U | 4 | 1 | U | 4 | U | U | U |
+| work-f8cb26831612e0c6ece5 | 極楽街 | U | 2 | U | 2 | 2 | 2 | 2 | 2 | U | 4 | U | U | U |
+| work-fc53cb5669aa4099ee4a | アオハライド | U | U | U | 2 | U | U | 3 | 2 | U | U | 2 | 4 | U |
+| work-fd2a957c501c36047ed0 | 青の祓魔師 | 2 | U | U | 2 | U | 2 | 2 | 2 | U | 2 | 2 | U | U |
+| work-ff9b025f58d7e12f3cb1 | LOVE SO LIFE | U | U | U | 2 | U | U | 2 | 2 | U | U | U | U | 4 |
+
+## 4. Genre and Theme
+
+| workId | genres | themes |
+| --- | --- | --- |
+| work-c7280f9dcc2754d3f864 | action; fantasy | combat 2; school 1 |
+| work-d63a83030a8819ff553c | romance | (none) |
+| work-d8a87d01c1f35d58e791 | sliceOfLife | cooking 2; sportsCompetition 1 |
+| work-e2f095e08fc5e08d5a2b | comedy; romance | school 1 |
+| work-e81955a9fc5c4d84580f | sliceOfLife | school 2; workplace 2 |
+| work-eef84d07d90ba2b040cf | (none) | (none) |
+| work-f8cb26831612e0c6ece5 | action; fantasy; mystery | combat 2; investigation 2 |
+| work-fc53cb5669aa4099ee4a | sliceOfLife; romance | school 2 |
+| work-fd2a957c501c36047ed0 | action; fantasy | combat 2; school 2 |
+| work-ff9b025f58d7e12f3cb1 | sliceOfLife | school 1; workplace 2; foundFamily 2 |
+
+## 5. Pass A non-Art disagreements
+
+**work-c7280f9dcc2754d3f864 鵺の陰陽師** — Theme `school` 2→1. https://www.shueisha.co.jp/books/items/contents.html?isbn=978-4-08-883788-8 — centrality 2 is the repeating core structure; vol. 2 sends the occult club to the sea and the occupied loop is 幻妖退治, so school is stage (1).
+
+**work-d63a83030a8819ff553c モテキ** — `romance` 2→4. https://www.kodansha.co.jp/comic/products/0000038652 ; https://www.kodansha.co.jp/comic/products/0000038671 ; https://www.kodansha.co.jp/comic/products/0000038689 — 2 is subplot; vols. 1–3 contents are organized by ふられ/恋/好き/モテ/好きなコ, i.e. 주요 관계와 전개의 중심 (4). Titles not expanded into other axes.
+
+**work-d8a87d01c1f35d58e791 八雲さんは餌づけがしたい。**
+- `progression` U→0. https://magazine.jp.square-enix.com/top/comics/detail/9784757551107/ — evening-meal/feed promise occupies vols. 1–3 with no 성장·획득·숙련 보상 (0).
+- `pacing` U→0. https://magazine.jp.square-enix.com/top/comics/detail/9784757553347/ — same daily-dinner promise continues; 목표·상황 변화가 적음 (0). Vol. 2 baseball/bento is the same feeding loop.
+- `mysteryReveal` U→0. Same URLs — meal-care structure, 수수께끼 구조가 거의 없음.
+- `worldBuilding` U→0. Same URLs — neighbor cooking / high-school baseball, 배경 규칙이 최소.
+- `emotionalWarmth` 2→4. https://magazine.jp.square-enix.com/top/comics/detail/9784757551107/ — lost will to cook is filled by daily meals; food grows shared time: 유대·힐링·따뜻함이 핵심 보상 (4), not 혼합 (2).
+
+**work-e2f095e08fc5e08d5a2b 高嶺と花** — none
+
+**work-e81955a9fc5c4d84580f ここは今から倫理です。** — none
+
+**work-eef84d07d90ba2b040cf さよなら絵梨**
+- Theme `crafting` 2→removed. https://books.shueisha.co.jp/items/contents.html?isbn=978-4-08-883167-1 — filmmaking is not dictionary `crafting` (item/gear mechanic); centrality 2 would be ID inflation.
+- `darkness` 3→4. Same URL — filming the mother’s death and the suicide attempt are the official spine: 잔혹·암울·비극적 사건이 중심 (4).
+
+**work-f8cb26831612e0c6ece5 極楽街** — none
+
+**work-fc53cb5669aa4099ee4a アオハライド** — none
+
+**work-fd2a957c501c36047ed0 青の祓魔師**
+- `characterArcWeight` 3→2. https://books.shueisha.co.jp/items/contents.html?isbn=978-4-08-874757-6 — academy training, camp attack, and missions remain 사건과 인물 변화가 균형 (2); 3 inflates toward character-as-core.
+- `darkness` 3→2. https://books.shueisha.co.jp/items/contents.html?isbn=978-4-08-874709-5 — foster-father death and demon attacks are 진지한 위험·비극 존재 (2); occupied goal is becoming an exorcist, not 잔혹·암울 중심 (4).
+
+**work-ff9b025f58d7e12f3cb1 LOVE SO LIFE** — `emotionalWarmth` 3→4. https://www.hakusensha.co.jp/comicslist/44745/ ; https://www.hakusensha.co.jp/comicslist/44747/ — family-like home, enjoyable care daily, house as the important place: 유대·힐링·따뜻함이 핵심 보상 (4).
+
+## 6. Identity, safety, representative ISBN
+
+| workId | identity | safety | ISBN | verdict | packet URL |
+| --- | --- | --- | --- | --- | --- |
+| work-c7280f9dcc2754d3f864 | PASS (鵺の陰陽師, no decorative brackets, frozen pos. 41) | NEEDS_ADJUDICATION (幻妖退治, duel, shikigami weapon-break) | PASS `9784088836874` | NEEDS_ADJUDICATION | https://www.shueisha.co.jp/books/items/contents.html?isbn=978-4-08-883687-4 |
+| work-d63a83030a8819ff553c | PASS (モテキ, pos. 42) | PASS (no violence/sexual/mental-health signal in official contents) | PASS `9784063522594` | PASS | https://www.kodansha.co.jp/comic/products/0000038652 |
+| work-d8a87d01c1f35d58e791 | PASS (八雲さんは餌づけがしたい。, pos. 43) | NEEDS_ADJUDICATION (28-year-old widow / 16-year-old neighbor; private evening meals) | PASS `9784757551107` | NEEDS_ADJUDICATION | https://magazine.jp.square-enix.com/top/comics/detail/9784757551107/ |
+| work-e2f095e08fc5e08d5a2b | PASS (高嶺と花, pos. 44) | NEEDS_ADJUDICATION (high-schooler / older wealthy heir omiai; age–power asymmetry) | PASS `9784592213512` | NEEDS_ADJUDICATION | https://www.hakusensha.co.jp/comicslist/46600/ |
+| work-e81955a9fc5c4d84580f | PASS (ここは今から倫理です。, pos. 45) | NEEDS_ADJUDICATION (inner burdens, 구원; student mental-health signal, intensity unknown) | PASS `9784088907918` | NEEDS_ADJUDICATION | https://books.shueisha.co.jp/items/contents.html?isbn=978-4-08-890791-8 |
+| work-eef84d07d90ba2b040cf | PASS (さよなら絵梨 one-shot; empty vol. 2–3 in scope exception) | NEEDS_ADJUDICATION (illness, death, suicide attempt, mourning) | PASS `9784088831671` | NEEDS_ADJUDICATION | https://books.shueisha.co.jp/items/contents.html?isbn=978-4-08-883167-1 |
+| work-f8cb26831612e0c6ece5 | PASS (極楽街, pos. 47) | NEEDS_ADJUDICATION (missing persons, animal corpses, hanging deaths, man-eating, despair) | PASS `9784088827407` | NEEDS_ADJUDICATION | https://www.shueisha.co.jp/books/items/contents.html?jdcn=08X10000000024865900 |
+| work-fc53cb5669aa4099ee4a | PASS (アオハライド, pos. 48) | NEEDS_ADJUDICATION (middle-school bullying / social isolation) | PASS `9784088466477` | NEEDS_ADJUDICATION | https://books.shueisha.co.jp/items/contents.html?isbn=978-4-08-846647-7 |
+| work-fd2a957c501c36047ed0 | PASS (青の祓魔師, pos. 49) | NEEDS_ADJUDICATION (foster-father death, demon attacks, uncontrolled flame) | PASS `9784088747095` | NEEDS_ADJUDICATION | https://books.shueisha.co.jp/items/contents.html?isbn=978-4-08-874709-5 |
+| work-ff9b025f58d7e12f3cb1 | PASS (LOVE SO LIFE, pos. 50) | NEEDS_ADJUDICATION (16-year-old live-in babysitter in adult household; orphan/care boundary) | PASS `9784592187349` | NEEDS_ADJUDICATION | https://www.hakusensha.co.jp/comicslist/44745/ |
+
+## 7. Outcomes
+
+| workId | outcome |
+| --- | --- |
+| work-c7280f9dcc2754d3f864 | needs-adjudication |
+| work-d63a83030a8819ff553c | insufficient-evidence |
+| work-d8a87d01c1f35d58e791 | needs-adjudication |
+| work-e2f095e08fc5e08d5a2b | needs-adjudication |
+| work-e81955a9fc5c4d84580f | needs-adjudication |
+| work-eef84d07d90ba2b040cf | needs-adjudication |
+| work-f8cb26831612e0c6ece5 | needs-adjudication |
+| work-fc53cb5669aa4099ee4a | needs-adjudication |
+| work-fd2a957c501c36047ed0 | needs-adjudication |
+| work-ff9b025f58d7e12f3cb1 | needs-adjudication |
+
+## 8. Independent endpoints 0/4 and Theme centrality 2
+
+**work-c7280f9dcc2754d3f864** — Theme `combat` 2: https://www.shueisha.co.jp/books/items/contents.html?isbn=978-4-08-883820-5 — duel, shikigami weapon-break, and counterattack continue the vol. 1 退治 / vol. 2 難局 loop.
+
+**work-d63a83030a8819ff553c** — `romance` 4: contents URLs in §5 — ふられ/恋/好き/モテ titles organize all three entry volumes.
+
+**work-d8a87d01c1f35d58e791**
+- `progression` 0, `pacing` 0, `mysteryReveal` 0, `worldBuilding` 0: https://magazine.jp.square-enix.com/top/comics/detail/9784757551107/ ; https://magazine.jp.square-enix.com/top/comics/detail/9784757553347/ — daily feed promise is the occupied structure; no growth-reward, puzzle, or special world rules; goal/situation stay the meal loop.
+- `emotionalWarmth` 4: vol. 1 URL — empty cooking-life filled by daily meals as the repeating reward.
+- Theme `cooking` 2: same URLs — cooking/feeding is the repeating core.
+
+**work-e2f095e08fc5e08d5a2b** — `romance` 4: https://www.hakusensha.co.jp/comicslist/46600/ — proxy omiai, confessed liking, continued meetings; publisher frames entry as love comedy. (Comedy axis stays 2: Genre does not set Axis.)
+
+**work-e81955a9fc5c4d84580f** — Theme `school` 2: https://books.shueisha.co.jp/items/contents.html?isbn=978-4-08-890791-8 — ethics class and student problems are the repeating frame. Theme `workplace` 2: same — teacher’s job of facing students’ inner burdens repeats across vols. 1–3.
+
+**work-eef84d07d90ba2b040cf** — `characterArcWeight` 4 and `darkness` 4: https://books.shueisha.co.jp/items/contents.html?isbn=978-4-08-883167-1 — mother’s death-filming, suicide attempt, mourning, then making a film with Eri: person-change is the reward; tragic events are the one-shot spine.
+
+**work-f8cb26831612e0c6ece5** — `darkness` 4: https://www.shueisha.co.jp/books/items/contents.html?jdcn=08X10000000024865900 — corpses, hanging deaths, man-eating nonhumans, rampage, despair occupy the case loop. Theme `combat` 2 and `investigation` 2: https://www.shueisha.co.jp/books/items/contents.html?isbn=978-4-08-883462-7 — hunting nonhumans and chasing missing-person / serial-death cases repeat.
+
+**work-fc53cb5669aa4099ee4a** — `romance` 4: https://books.shueisha.co.jp/items/contents.html?isbn=978-4-08-846731-3 — first-love reunion and friend triangle are the development center. Theme `school` 2: https://books.shueisha.co.jp/items/contents.html?isbn=978-4-08-846690-3 — class, camp, and high-school peer structure repeat.
+
+**work-fd2a957c501c36047ed0** — Theme `combat` 2: https://books.shueisha.co.jp/items/contents.html?isbn=978-4-08-874709-5 — decide to fight demons; camp attack continues. Theme `school` 2: https://books.shueisha.co.jp/items/contents.html?isbn=978-4-08-874757-6 — exorcist-academy training is the vol. 2–3 structure. (No independent 0/4 Narrative/Tone endpoints.)
+
+**work-ff9b025f58d7e12f3cb1** — `emotionalWarmth` 4: https://www.hakusensha.co.jp/comicslist/44747/ — family-like treatment and the house as important place, busy but enjoyable care. Theme `workplace` 2: https://www.hakusensha.co.jp/comicslist/44745/ — orphanage work plus live-in babysitting repeats. Theme `foundFamily` 2: vol. 2 URL — uncle treats her as family; Matsunaga home becomes the belonging structure.
+
+WORK_COUNT=10 AXIS_COUNT_PER_WORK=13 IDENTITY_ROWS=10 SAFETY_ROWS=10 ISBN_ROWS=10 ART_ABSTAIN

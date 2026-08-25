@@ -1,0 +1,17 @@
+workId,themeId,centrality,confidence,evidenceId
+work-c7280f9dcc2754d3f864,combat,2,0.84,ev-batch-004-a-work-c7280f9dcc2754d3f864
+work-c7280f9dcc2754d3f864,school,1,0.78,ev-batch-004-a-work-c7280f9dcc2754d3f864
+work-d8a87d01c1f35d58e791,cooking,2,0.88,ev-batch-004-a-work-d8a87d01c1f35d58e791
+work-d8a87d01c1f35d58e791,sportsCompetition,1,0.72,ev-batch-004-a-work-d8a87d01c1f35d58e791
+work-e2f095e08fc5e08d5a2b,school,1,0.72,ev-batch-004-a-work-e2f095e08fc5e08d5a2b
+work-e81955a9fc5c4d84580f,school,2,0.82,ev-batch-004-a-work-e81955a9fc5c4d84580f
+work-e81955a9fc5c4d84580f,workplace,2,0.78,ev-batch-004-a-work-e81955a9fc5c4d84580f
+work-eef84d07d90ba2b040cf,crafting,2,0.82,ev-batch-004-a-work-eef84d07d90ba2b040cf
+work-f8cb26831612e0c6ece5,combat,2,0.86,ev-batch-004-a-work-f8cb26831612e0c6ece5
+work-f8cb26831612e0c6ece5,investigation,2,0.84,ev-batch-004-a-work-f8cb26831612e0c6ece5
+work-fc53cb5669aa4099ee4a,school,2,0.86,ev-batch-004-a-work-fc53cb5669aa4099ee4a
+work-fd2a957c501c36047ed0,combat,2,0.88,ev-batch-004-a-work-fd2a957c501c36047ed0
+work-fd2a957c501c36047ed0,school,2,0.86,ev-batch-004-a-work-fd2a957c501c36047ed0
+work-ff9b025f58d7e12f3cb1,school,1,0.72,ev-batch-004-a-work-ff9b025f58d7e12f3cb1
+work-ff9b025f58d7e12f3cb1,workplace,2,0.86,ev-batch-004-a-work-ff9b025f58d7e12f3cb1
+work-ff9b025f58d7e12f3cb1,foundFamily,2,0.84,ev-batch-004-a-work-ff9b025f58d7e12f3cb1

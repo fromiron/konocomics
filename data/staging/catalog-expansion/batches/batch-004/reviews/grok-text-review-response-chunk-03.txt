@@ -1,0 +1,107 @@
+# Batch 004 chunk 03 Pass B (non-Art)
+
+## 1. Attestation
+
+Model `cursor-grok-4.6-high` / Cursor Grok 4.6 High, non-fast. Normal completion. All nine inputs read. No degradation. No edits. `reviewedByHuman=false`. `ART_ABSTAIN`. Muse `NOT_USED`. Ox `EXCLUDED`. Independent Pass B proposals only.
+
+## 2. Verified hashes
+
+| Path | SHA-256 |
+| --- | --- |
+| `docs/factors/factor-dictionary.md` | `a9c29a853a108aca1b9bb8d5d71a3e7d5d583303691c0b35cc6424c1e45ee8be` |
+| `docs/factors/annotation-guide.md` | `f7dd1ec55d97bf9200fcec92ce270e7745a0d3aa4fe98a40c746fc56b6a777b3` |
+| `data/staging/catalog-expansion/batches/batch-004/annotation-review-adjudication-request.md` | `693e302b8ca0dbd44b513b2ad62bab93a4587a7dc60c3437182af2a9d15f6513` |
+| `data/staging/catalog-expansion/batches/batch-004/frozen-work-set.csv` | `a07a3bd053ce3edb79bdd5803ea3f04dbf8ceac4fd422d84ca97432ba75f68a1` |
+| `data/staging/catalog-expansion/batches/batch-004/research/chunk-03.md` | `2df04cf22b36b484e91e2c0a213857751d2666b25aef9dac8d7cab8303148f14` |
+| `data/staging/catalog-expansion/batches/batch-004/annotation-pass-a/chunk-03/factors.csv` | `648cb388f0b1e6f6e7b22051d30c805f72c7700a96bf3d3140a431167f220723` |
+| `data/staging/catalog-expansion/batches/batch-004/annotation-pass-a/chunk-03/genres.csv` | `6e4a37abd5683bdfcf5c58f6c4cf1ad7aec5028152feb2c9aaa8522e2112476e` |
+| `data/staging/catalog-expansion/batches/batch-004/annotation-pass-a/chunk-03/themes.csv` | `77024e12368faa8904c8cf509719712ac43651d53e43e6f5bbc7264376535dc7` |
+| `data/staging/catalog-expansion/batches/batch-004/annotation-pass-a/chunk-03/notes.md` | `8a4bd19e4945326b6b39b88dfb9e51ea9adc7030d70508a9c2b4478a58249530` |
+
+## 3. Axis matrix
+
+| workId | canonicalTitle | progression | problemSolving | strategy | pacing | mysteryReveal | worldBuilding | characterArcWeight | relationshipStructure | comedy | darkness | mentalStress | romance | emotionalWarmth |
+| --- | --- | --- | --- | --- | --- | --- | --- | --- | --- | --- | --- | --- | --- | --- |
+| work-53fb816835ab36e40a1f | アンデッドアンラック | U | U | U | 2 | 2 | 2 | 2 | 2 | U | 2 | U | U | U |
+| work-62fbc6b2253b895e3a66 | 俺物語！！ | 0 | 0 | 0 | 2 | 0 | 0 | 4 | 2 | U | 1 | 0 | 4 | 4 |
+| work-634f34830600e07d8f17 | お茶にごす。 | 2 | 0 | 0 | 2 | 0 | 0 | 4 | 2 | 2 | 1 | U | 2 | 2 |
+| work-65f856a6fa2078f21d2f | 黒月のイェルクナハト | U | 0 | 0 | 2 | 0 | 2 | 2 | 2 | U | 2 | 2 | 4 | 2 |
+| work-741deb03d9f59e723929 | ルックバック | U | U | U | U | U | U | 4 | 2 | U | U | U | U | 2 |
+| work-7c8931bc010e2f28f7ec | 夢中さ、きみに。 | 0 | U | 0 | U | 0 | 0 | U | U | 2 | 0 | 0 | U | U |
+| work-7d4568dcc8e9175d35ba | 異世界おじさん | 0 | U | 0 | 2 | 2 | 2 | 2 | 2 | 2 | U | 0 | 2 | 2 |
+| work-7f0f63c5d80083f2be7f | 思い、思われ、ふり、ふられ | 0 | 0 | 0 | 2 | 2 | 0 | 4 | 4 | U | 0 | 2 | 4 | 2 |
+| work-80a2f62ce5073ade2ec2 | 式の前日 | 0 | U | 0 | U | 0 | 0 | 2 | 2 | U | 0 | 0 | 2 | 4 |
+| work-8733067e6afcaeadbd8d | さんすくみ | U | U | 0 | 2 | 0 | 2 | 2 | 2 | 2 | 0 | 2 | 2 | 2 |
+
+## 4. Genre / Theme
+
+| workId | Genre | Theme |
+| --- | --- | --- |
+| work-53fb816835ab36e40a1f | action; fantasy | combat 2 |
+| work-62fbc6b2253b895e3a66 | romance; sliceOfLife | school 1 |
+| work-634f34830600e07d8f17 | comedy; sliceOfLife | school 2 |
+| work-65f856a6fa2078f21d2f | action; fantasy; romance | combat 2 |
+| work-741deb03d9f59e723929 | sliceOfLife | none |
+| work-7c8931bc010e2f28f7ec | comedy; sliceOfLife | school 2 |
+| work-7d4568dcc8e9175d35ba | comedy; fantasy; sliceOfLife | adventure 1 |
+| work-7f0f63c5d80083f2be7f | romance; sliceOfLife | none |
+| work-80a2f62ce5073ade2ec2 | sliceOfLife; romance | foundFamily 1 |
+| work-8733067e6afcaeadbd8d | comedy; sliceOfLife | workplace 2 |
+
+## 5. Pass A non-Art disagreements
+
+- work-53fb816835ab36e40a1f: mysteryReveal U→2 — [vol.3](https://www.shueisha.co.jp/books/items/contents.html?isbn=978-4-08-882404-8) Victor 공개는 2「비밀·반전 일부」. characterArcWeight U→2 — [vol.1](https://www.shueisha.co.jp/books/items/contents.html?isbn=978-4-08-882310-2) 고립→동행·[vol.3](https://www.shueisha.co.jp/books/items/contents.html?isbn=978-4-08-882404-8) 구출은 2「사건/인물 균형」. darkness U→2 — 불운 고립·사망 조건·격렬 대결은 2「진지한 위험 존재」.
+- work-62fbc6b2253b895e3a66: progression/mysteryReveal/worldBuilding U→0 — [vol.1](https://www.shueisha.co.jp/books/items/contents.html?isbn=978-4-08-846756-6)–[vol.3](https://www.shueisha.co.jp/books/items/contents.html?isbn=978-4-08-846896-9) 교제만. problemSolving/strategy U→0 — [vol.2](https://www.shueisha.co.jp/books/items/contents.html?jdcn=08846817846756315501) 힘 대응 = 0「힘·감정 결단」. characterArcWeight 2→4 — 체격/연애가 핵심 보상. darkness U→1 — 치한 편린 vs 이후 가벼운 교제. mentalStress U→0 — [vol.3](https://www.shueisha.co.jp/books/items/contents.html?isbn=978-4-08-846896-9) 설렘. emotionalWarmth U→4 — 구조·교제·귀가 보호. Genre `comedy;romance`→`romance;sliceOfLife` — 코미디는 metadata lead. Theme none→school 1 — 고교는 무대(1).
+- work-634f34830600e07d8f17: problemSolving/strategy U→0 — [vol.1](https://e-comi.shogakukan.co.jp/books/091211680000d0000000) 감정 입부. mysteryReveal/worldBuilding U→0 — 다도부 현실. comedy U→2 — 불량×다도 = 2「중간 개그」. darkness U→1 — 폭력 전제와 폭력 없음 홍보 사이. emotionalWarmth U→2 — 부장 시간·친절화.
+- work-65f856a6fa2078f21d2f: problemSolving/strategy U→0 — [vol.2](https://www.kodansha.co.jp/comic/products/0000419091) 격파·훈련. mysteryReveal U→0. worldBuilding U→2 — 비인간·재앙 사자·적대 조직. darkness U→2 — 결혼/죽음·전투·납치. mentalStress U→2 — 강요 선택·납치. emotionalWarmth U→2 — 구출 후 가사 루틴.
+- work-741deb03d9f59e723929: relationshipStructure 1→2 — [one-shot](https://www.shueisha.co.jp/books/items/contents_amp.html?jdcn=08X10000000016342800) 두 창작자가 동등 중심(고정 쌍 2).
+- work-7c8931bc010e2f28f7ec: progression/strategy/mysteryReveal/worldBuilding/darkness/mentalStress U→0 — [press](https://group.kadokawa.co.jp/documents/topics/20200428_k43ef.pdf) 고교 일상·엉뚱한 유머.
+- work-7d4568dcc8e9175d35ba: progression/strategy U→0 — 동거·회상 코미디. mysteryReveal U→2 — [vol.3](https://www.kadokawa.co.jp/product/321906000326/) 충격적 사실. characterArcWeight U→2 — 삼촌·조카·藤宮. mentalStress U→0. emotionalWarmth U→2. Theme none→adventure 1 — 이세계 회상은 액자(1).
+- work-7f0f63c5d80083f2be7f: progression/problemSolving/strategy/worldBuilding U→0 — 감정 연쇄. mysteryReveal U→2 — [vol.2](https://www.shueisha.co.jp/books/items/contents.html?jdcn=08845528845467315501&rf=hr) 理央의 비밀. darkness U→0 — 청춘 연애.
+- work-80a2f62ce5073ade2ec2: progression/strategy/mysteryReveal/worldBuilding/darkness/mentalStress U→0. characterArcWeight/relationshipStructure U→2 — 둘만의 순간. romance U→2 — 결혼 전 남녀. emotionalWarmth U→4 — [collection](https://shogakukan-comic.jp/book?jdcn=091345850000d0000000) 따뜻하고 선명하게. Genre sliceOfLife→sliceOfLife;romance. Theme none→foundFamily 1.
+- work-8733067e6afcaeadbd8d: strategy/mysteryReveal/darkness U→0. comedy U→2 — [vol.3](https://shogakukan-comic.jp/book?jdcn=091341120000d0000000) Jr. trio 코미디 생활. mentalStress U→2 — [vol.1](https://shogakukan-comic.jp/book?jdcn=091334600000d0000000) 후계 압박·실패 불가 의식. emotionalWarmth U→2 — [vol.2](https://shogakukan-comic.jp/book?jdcn=091338140000d0000000) 우정은 과도.
+
+## 6. Identity / safety / ISBN
+
+| workId | identity | safety | ISBN | verdict | URL |
+| --- | --- | --- | --- | --- | --- |
+| work-53fb816835ab36e40a1f | 제목·1권 일치 | 능력·사망·전투 lead | `9784088823102` | PASS | https://www.shueisha.co.jp/books/items/contents.html?isbn=978-4-08-882310-2 |
+| work-62fbc6b2253b895e3a66 | 제목·1권 일치 | 고교생+치한+첫날 밤 | `9784088467566` | NEEDS_ADJUDICATION | https://www.shueisha.co.jp/books/items/contents.html?isbn=978-4-08-846756-6 |
+| work-634f34830600e07d8f17 | 종이 대표 vs 2014 전자 | 폭력 탈피 lead | `9784091211682` | NEEDS_ADJUDICATION | https://e-comi.shogakukan.co.jp/books/091211680000d0000000 |
+| work-65f856a6fa2078f21d2f | 제목·1권 일치 | 결혼/죽음 강요·봉사·목욕 | `9784065400753` | NEEDS_ADJUDICATION | https://www.kodansha.co.jp/comic/products/0000415577 |
+| work-741deb03d9f59e723929 | 단편 1권, vol2·3 없음 | 개요 밖 비극 추정 금지 | `9784088827827` | PASS | https://www.shueisha.co.jp/books/items/contents_amp.html?jdcn=08X10000000016342800 |
+| work-7c8931bc010e2f28f7ec | 단권 8편 컬렉션 | 고교 일상 | `9784047357181` | PASS | https://www.kadokawa.co.jp/product/321904000716/ |
+| work-7d4568dcc8e9175d35ba | 제목·1권 일치 | 혼수·이세계 회상 lead | `9784040653686` | PASS | https://www.kadokawa.co.jp/product/321808000769/ |
+| work-7f0f63c5d80083f2be7f | 제목·1권 일치 | 청춘 짝사랑 부담 | `9784088454672` | PASS | https://www.shueisha.co.jp/books/items/contents.html?isbn=978-4-08-845467-2 |
+| work-80a2f62ce5073ade2ec2 | 종이 2012 vs 전자 2013 | 가족·결혼 전 단편 | `9784091345851` | NEEDS_ADJUDICATION | https://shogakukan-comic.jp/book?jdcn=091345850000d0000000 |
+| work-8733067e6afcaeadbd8d | 종이 대표 vs 2013 전자 | 종교 의식·후계 압박 lead | `9784091334602` | NEEDS_ADJUDICATION | https://shogakukan-comic.jp/book?jdcn=091334600000d0000000 |
+
+## 7. Outcomes
+
+| workId | outcome |
+| --- | --- |
+| work-53fb816835ab36e40a1f | needs-adjudication |
+| work-62fbc6b2253b895e3a66 | needs-adjudication |
+| work-634f34830600e07d8f17 | needs-adjudication |
+| work-65f856a6fa2078f21d2f | needs-adjudication |
+| work-741deb03d9f59e723929 | insufficient-evidence |
+| work-7c8931bc010e2f28f7ec | needs-adjudication |
+| work-7d4568dcc8e9175d35ba | needs-adjudication |
+| work-7f0f63c5d80083f2be7f | needs-adjudication |
+| work-80a2f62ce5073ade2ec2 | needs-adjudication |
+| work-8733067e6afcaeadbd8d | needs-adjudication |
+
+## 8. Endpoints 0/4 and Theme centrality 2
+
+- work-53fb816835ab36e40a1f combat 2: [vol.2](https://www.shueisha.co.jp/books/items/contents.html?isbn=978-4-08-882330-0) Negator 자리 격파, [vol.3](https://www.shueisha.co.jp/books/items/contents.html?isbn=978-4-08-882404-8) 격렬 대결.
+- work-62fbc6b2253b895e3a66 progression/mysteryReveal/worldBuilding 0: [vol.1](https://www.shueisha.co.jp/books/items/contents.html?isbn=978-4-08-846756-6)–[vol.3](https://www.shueisha.co.jp/books/items/contents.html?isbn=978-4-08-846896-9) 교제만. problemSolving/strategy 0: [vol.2](https://www.shueisha.co.jp/books/items/contents.html?jdcn=08846817846756315501) 힘 대응. characterArcWeight/romance/emotionalWarmth 4: 만남→교제→귀가 보호. mentalStress 0: 첫날 밤 설렘.
+- work-634f34830600e07d8f17 problemSolving/strategy 0: [vol.1](https://e-comi.shogakukan.co.jp/books/091211680000d0000000) 감정 입부. mysteryReveal/worldBuilding 0: 다도부 현실. characterArcWeight 4: [vol.2](https://shogakukan-comic.jp/book?jdcn=091212160000d0000000) 폭력 탈피·친절화. school 2: 고교 다도부 1–3권.
+- work-65f856a6fa2078f21d2f problemSolving/strategy 0: [vol.2](https://www.kodansha.co.jp/comic/products/0000419091) 격파. mysteryReveal 0. romance 4: [vol.1](https://www.kodansha.co.jp/comic/products/0000415577) 결혼/죽음 전투 로맨스. combat 2: 1권 전투 전제, 2권 훈련, [vol.3](https://www.kodansha.co.jp/comic/products/0000424213) 구출 전투.
+- work-741deb03d9f59e723929 characterArcWeight 4: [one-shot](https://www.shueisha.co.jp/books/items/contents_amp.html?jdcn=08X10000000016342800) 연결과 지지가 단편 보상.
+- work-7c8931bc010e2f28f7ec progression/strategy/mysteryReveal/worldBuilding/darkness/mentalStress 0: [press](https://group.kadokawa.co.jp/documents/topics/20200428_k43ef.pdf) 학교 일상·유머. school 2: 8편 고교 남학생 일상.
+- work-7d4568dcc8e9175d35ba progression/strategy 0: [vol.1](https://www.kadokawa.co.jp/product/321808000769/) 회상 코미디. mentalStress 0: [vol.2](https://www.kadokawa.co.jp/product/321901000234/) 황당 확대.
+- work-7f0f63c5d80083f2be7f progression/problemSolving/strategy/worldBuilding/darkness 0: 감정 연쇄. characterArcWeight/relationshipStructure/romance 4: [vol.1](https://www.shueisha.co.jp/books/items/contents.html?isbn=978-4-08-845467-2)–[vol.3](https://www.shueisha.co.jp/books/items/contents.html?isbn=978-4-08-845596-9&mode=1) 네 사람 본심 파급.
+- work-80a2f62ce5073ade2ec2 progression/strategy/mysteryReveal/worldBuilding/darkness/mentalStress 0. emotionalWarmth 4: [collection](https://shogakukan-comic.jp/book?jdcn=091345850000d0000000) 따뜻하게 자른 둘만의 순간.
+- work-8733067e6afcaeadbd8d strategy/mysteryReveal/darkness 0. workplace 2: [vol.1](https://shogakukan-comic.jp/book?jdcn=091334600000d0000000)–[vol.3](https://shogakukan-comic.jp/book?jdcn=091341120000d0000000) 신사·사찰·교회 후계 업무.
+
+WORK_COUNT=10 AXIS_COUNT_PER_WORK=13 IDENTITY_ROWS=10 SAFETY_ROWS=10 ISBN_ROWS=10 ART_ABSTAIN

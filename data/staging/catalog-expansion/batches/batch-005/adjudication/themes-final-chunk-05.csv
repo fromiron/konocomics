@@ -1,0 +1,17 @@
+workId,themeId,centrality,confidence,evidenceId
+work-c50ea94bb66f72c679a2,workplace,2,0.80,ev-batch-005-a-work-c50ea94bb66f72c679a2
+work-c7e065f61bb7a176ee56,workplace,2,0.84,ev-batch-005-a-work-c7e065f61bb7a176ee56
+work-c8243866b7c8a6d9a2f8,school,1,0.76,ev-batch-005-a-work-c8243866b7c8a6d9a2f8
+work-e658d3aee2e33c17aa38,reincarnation,2,0.92,ev-batch-005-a-work-e658d3aee2e33c17aa38
+work-e658d3aee2e33c17aa38,school,1,0.70,ev-batch-005-a-work-e658d3aee2e33c17aa38
+work-e906b3eaa9ef9eafe23c,workplace,2,0.88,ev-batch-005-a-work-e906b3eaa9ef9eafe23c
+work-f31a42ea4ad724acefa5,war,1,0.72,ev-batch-005-a-work-f31a42ea4ad724acefa5
+work-f31a42ea4ad724acefa5,school,1,0.72,ev-batch-005-a-work-f31a42ea4ad724acefa5
+work-f4bfc29a5e0a9b5148d0,historicalReconstruction,1,0.70,ev-batch-005-a-work-f4bfc29a5e0a9b5148d0
+work-fb89f119251610cf1648,school,1,0.72,ev-batch-005-a-work-fb89f119251610cf1648
+work-fb89f119251610cf1648,sportsCompetition,1,0.72,ev-batch-005-a-work-fb89f119251610cf1648
+work-fe35a5f01946f5153eb4,adventure,2,0.82,ev-batch-005-a-work-fe35a5f01946f5153eb4
+work-fe35a5f01946f5153eb4,combat,2,0.84,ev-batch-005-a-work-fe35a5f01946f5153eb4
+work-fe35a5f01946f5153eb4,war,2,0.90,ev-batch-005-a-work-fe35a5f01946f5153eb4
+work-fe35a5f01946f5153eb4,timeTravel,2,0.84,ev-batch-005-a-work-fe35a5f01946f5153eb4
+work-fe35a5f01946f5153eb4,historicalReconstruction,2,0.84,ev-batch-005-a-work-fe35a5f01946f5153eb4

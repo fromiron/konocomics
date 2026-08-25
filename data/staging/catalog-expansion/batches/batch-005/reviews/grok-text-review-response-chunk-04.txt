@@ -1,0 +1,143 @@
+# Batch 005 chunk 04 independent non-Art Pass B
+
+model: `cursor-grok-4.6-high` / Cursor Grok 4.6 High, non-fast
+completion: normal
+inputsRead: 12/12
+degradation: none
+edits: none
+reviewedByHuman=false
+art: `ART_ABSTAIN`
+Muse: `NOT_USED`
+Ox: `EXCLUDED`
+status: independent Pass B proposals only; no promotion authorized
+
+## Verified hashes
+
+| Path | SHA-256 |
+| --- | --- |
+| `docs/factors/factor-dictionary.md` | `a9c29a853a108aca1b9bb8d5d71a3e7d5d583303691c0b35cc6424c1e45ee8be` |
+| `docs/factors/annotation-guide.md` | `f7dd1ec55d97bf9200fcec92ce270e7745a0d3aa4fe98a40c746fc56b6a777b3` |
+| `data/staging/catalog-expansion/batches/batch-005/annotation-review-adjudication-request.md` | `9254c3d00faeb844df9f81ffb7ce0b7873eff2c009dccf8e87fca7342c5f9527` |
+| `data/staging/catalog-expansion/batches/batch-005/manifest.json` | `3aee17575d6d10bd93071c0ca1129e7f75d170d9cb34616e1692c6621b1aaf03` |
+| `data/staging/catalog-expansion/batches/batch-005/PAYLOAD.sha256` | `50512fc57d612eb50d2b76bf7f32354241c3478933fd16e4c90908aa9b9c0d02` |
+| `data/staging/catalog-expansion/batches/batch-005/frozen-work-set.csv` | `ddf9343b48146eaaf58971155f4190b4ec53e09d28d932d0d03cdc515ff8b2b8` |
+| `data/staging/catalog-expansion/batches/batch-005/research/chunk-04.md` | `46e6b37d07f4b2baee839dca05331e9c870a6d158c392e3d77ad77419a5b76a3` |
+| `data/staging/catalog-expansion/batches/batch-005/annotation-pass-a/chunk-04/factors.csv` | `0ec928d7914d3061847e223adfd23915647b82f39a050fa514f30705eb6058d8` |
+| `data/staging/catalog-expansion/batches/batch-005/annotation-pass-a/chunk-04/genres.csv` | `41d4f721d19def51cc686d86f4b235afdbfb2e23524170ab7beb72258aadbfb7` |
+| `data/staging/catalog-expansion/batches/batch-005/annotation-pass-a/chunk-04/themes.csv` | `873753e3b438c22f3e55f5d2551ff1fee83e2b87550ff8eb4a3db16a0b814509` |
+| `data/staging/catalog-expansion/batches/batch-005/annotation-pass-a/chunk-04/notes.md` | `e3de7edbe9486d469cbdef9c014f38b6836121190e0a1a5d91cef1659c690d4e` |
+| `data/staging/catalog-expansion/batches/batch-005/reviews/daybreak-annotation-qa-chunks-03-05.md` | `93613b984e2285187810ac97424ea7a618872a3ac65d8e7152db3294b93db620` |
+
+packet candidate SHA-256: `8e9a726ceef4daaaabaa133502ffe59a39594adc359e1fde1ec7f58d26517695`
+
+## Axis matrix
+
+| workId | canonicalTitle | progression | problemSolving | strategy | pacing | mysteryReveal | worldBuilding | characterArcWeight | relationshipStructure | comedy | darkness | mentalStress | romance | emotionalWarmth |
+| --- | --- | --- | --- | --- | --- | --- | --- | --- | --- | --- | --- | --- | --- | --- |
+| work-79c18b26dfde8a532f73 | デストロ２４６ | U | U | U | 2 | U | 2 | U | 2 | U | 4 | U | U | U |
+| work-7b6eb2b48ac06ffa26eb | 夢の雫、黄金の鳥籠 | U | U | U | 3 | U | 3 | 3 | 2 | U | 3 | 2 | 4 | U |
+| work-8037856e7703fdaf4324 | 日常 | U | U | U | 3 | U | U | U | 2 | 4 | U | U | U | U |
+| work-88cb26a0229ad7b83263 | ひらやすみ | U | U | U | 2 | U | U | 3 | 2 | U | U | 2 | 2 | U |
+| work-8a7846af8ead1797e6a2 | ハイスコアガール | U | U | U | U | U | U | U | U | U | U | U | U | U |
+| work-8ff141505b0a27f8d630 | WOMBS | 2 | U | 2 | 3 | 2 | 3 | 2 | 2 | U | 4 | 3 | U | U |
+| work-982bb79e03193ebbafcd | ママはテンパリスト | U | U | U | 3 | U | U | 2 | 2 | 3 | U | U | U | 2 |
+| work-9e98119539f60465ce66 | 僕らはみんな河合荘 | U | U | U | 2 | U | U | 2 | 2 | U | U | U | 3 | 2 |
+| work-aa6018249b7fe7e92d95 | かよちゃんの荷物 | U | U | U | U | U | U | U | U | U | U | U | U | U |
+| work-ab9331f7fed1990f7dc6 | 脳内ポイズンベリー | U | U | U | 2 | U | U | 4 | 2 | U | U | 3 | 4 | U |
+
+## Genre
+
+| workId | canonicalTitle | genres |
+| --- | --- | --- |
+| work-79c18b26dfde8a532f73 | デストロ２４６ | action |
+| work-7b6eb2b48ac06ffa26eb | 夢の雫、黄金の鳥籠 | historical; romance |
+| work-8037856e7703fdaf4324 | 日常 | comedy; sliceOfLife |
+| work-88cb26a0229ad7b83263 | ひらやすみ | sliceOfLife |
+| work-8a7846af8ead1797e6a2 | ハイスコアガール | none |
+| work-8ff141505b0a27f8d630 | WOMBS | action; scienceFiction |
+| work-982bb79e03193ebbafcd | ママはテンパリスト | comedy; sliceOfLife |
+| work-9e98119539f60465ce66 | 僕らはみんな河合荘 | sliceOfLife; romance |
+| work-aa6018249b7fe7e92d95 | かよちゃんの荷物 | sliceOfLife |
+| work-ab9331f7fed1990f7dc6 | 脳内ポイズンベリー | romance |
+
+## Theme
+
+| workId | canonicalTitle | themes |
+| --- | --- | --- |
+| work-79c18b26dfde8a532f73 | デストロ２４６ | combat:2; investigation:2; revenge:2 |
+| work-7b6eb2b48ac06ffa26eb | 夢の雫、黄金の鳥籠 | historicalReconstruction:2; politics:1; survival:1 |
+| work-8037856e7703fdaf4324 | 日常 | school:2 |
+| work-88cb26a0229ad7b83263 | ひらやすみ | none |
+| work-8a7846af8ead1797e6a2 | ハイスコアガール | none |
+| work-8ff141505b0a27f8d630 | WOMBS | combat:2; war:2 |
+| work-982bb79e03193ebbafcd | ママはテンパリスト | none |
+| work-9e98119539f60465ce66 | 僕らはみんな河合荘 | none |
+| work-aa6018249b7fe7e92d95 | かよちゃんの荷物 | none |
+| work-ab9331f7fed1990f7dc6 | 脳内ポイズンベリー | none |
+
+## Pass A non-Art disagreements
+
+| workId | disagreements |
+| --- | --- |
+| work-79c18b26dfde8a532f73 | `pacing` 3→2. https://shogakukan-comic.jp/book?isbn=9784091573254 https://shogakukan-comic.jp/book?isbn=9784091573483 https://shogakukan-comic.jp/book?isbn=9784091573650 — 1~3권 소개는 복수 의뢰→인물·조직 확대→요코하마 총격·배신이라는 권 단위 상황 변화이며 `pacing` 2(일반적인 Arc 단위 변화)에 해당한다. 짧은 간격의 큰 목표·장소·상태 변화(4)는 미확인이므로 3은 중간값 추정이다. |
+| work-7b6eb2b48ac06ffa26eb | `politics` 2→1. https://shogakukan-comic.jp/book?isbn=9784091340108 https://shogakukan-comic.jp/book?isbn=9784091342164 https://shogakukan-comic.jp/book?isbn=9784091346834 — 1권은 납치·노예·이동, 3권은 사랑이 중심이다. 하렘 음모는 2권 사건으로 `politics` centrality 2(반복적 핵심 구조)가 아니라 1이다. |
+| work-7b6eb2b48ac06ffa26eb | `mentalStress` 3→2. https://shogakukan-comic.jp/book?isbn=9784091342164 — 친구 살해 후 생존 분투·질투·음모는 `mentalStress` 2(긴장과 답답함의 혼합) 근거다. 불안·심리 붕괴·압박의 지속(4)은 미확인이다. |
+| work-7b6eb2b48ac06ffa26eb | Theme `survival` 없음→1. https://shogakukan-comic.jp/book?isbn=9784091342164 — 2권 소개가 생존 분투를 명시한다. 1~3권 반복 핵심은 아니므로 centrality 1이다. |
+| work-8037856e7703fdaf4324 | none |
+| work-88cb26a0229ad7b83263 | none |
+| work-8a7846af8ead1797e6a2 | none |
+| work-8ff141505b0a27f8d630 | none |
+| work-982bb79e03193ebbafcd | none |
+| work-9e98119539f60465ce66 | none |
+| work-aa6018249b7fe7e92d95 | none |
+| work-ab9331f7fed1990f7dc6 | none |
+
+## Identity, safety, representative ISBN
+
+| workId | canonicalTitle | identity | safety | representativeISBN | verdict | packetURL |
+| --- | --- | --- | --- | --- | --- | --- |
+| work-79c18b26dfde8a532f73 | デストロ２４６ | 공식 1~3권 제목·ISBN 연속 | 성인 폭력·암살 전개; 미성년 확정 없음 | 9784091573254 | PASS | https://shogakukan-comic.jp/book?isbn=9784091573254 |
+| work-7b6eb2b48ac06ffa26eb | 夢の雫、黄金の鳥籠 | 공식 1~3권 제목·ISBN 연속 | 노예·하렘; 미성년 확정 없음 | 9784091340108 | PASS | https://shogakukan-comic.jp/book?isbn=9784091340108 |
+| work-8037856e7703fdaf4324 | 日常 | 공식 1~2권 소개와 시리즈 목록으로 작품 일치 | 일상 개그; 안전 충돌 없음 | unconfirmed-in-packet | NEEDS_ADJUDICATION | https://www.kadokawa.co.jp/product/200879000105/ |
+| work-88cb26a0229ad7b83263 | ひらやすみ | 공식 1~3권 제목·ISBN 연속 | 18세 사촌 동거; 미성년 확정 없음 | 9784098611188 | PASS | https://shogakukan-comic.jp/book?isbn=9784098611188 |
+| work-8a7846af8ead1797e6a2 | ハイスコアガール | 시리즈 페이지 제목 일치; 체험판↔대표권 미연결 | 오락실 대전 소개만; 안전 충돌 없음 | unconfirmed-in-packet | NEEDS_ADJUDICATION | https://magazine.jp.square-enix.com/biggangan/introduction/highscoregirl/ |
+| work-8ff141505b0a27f8d630 | WOMBS | 전자 재수록 vs frozen 물리 ISBN 미대조 | 전쟁·자궁 이식; 연령 미기재 | 9784091884947 | NEEDS_ADJUDICATION | https://e-comi.shogakukan.co.jp/books/091884940000d0000000 |
+| work-982bb79e03193ebbafcd | ママはテンパリスト | 공식 1~3권 제목·ISBN 연속 | 육아 에세이; 안전 충돌 없음 | 9784087821888 | PASS | https://books.shueisha.co.jp/items/contents.html?isbn=978-4-08-782188-8 |
+| work-9e98119539f60465ce66 | 僕らはみんな河合荘 | frozen 대표 1권 vs 패킷 공식 3권 페이지 | 하숙 일상·호감; 안전 충돌 없음 | unconfirmed-in-packet | NEEDS_ADJUDICATION | https://www.shonengahosha.co.jp/book_Info.php?id=7102 |
+| work-aa6018249b7fe7e92d95 | かよちゃんの荷物 | 출판사 권 소개 없음; 심사 코멘트만 | 심사 관찰의 비극 에피소드; 확정 충돌 없음 | unconfirmed-in-packet | NEEDS_ADJUDICATION | https://www.mangataisho.com/data/2010/comment2010.pdf |
+| work-ab9331f7fed1990f7dc6 | 脳内ポイズンベリー | 전자 jdcn vs frozen 물리 ISBN 미대조 | 성인 연애; 안전 충돌 없음 | unconfirmed-in-packet | NEEDS_ADJUDICATION | https://www.shueisha.co.jp/books/items/contents.html?jdcn=08865626865626315501&rf=ak |
+
+## Outcome
+
+| workId | canonicalTitle | outcome |
+| --- | --- | --- |
+| work-79c18b26dfde8a532f73 | デストロ２４６ | verified |
+| work-7b6eb2b48ac06ffa26eb | 夢の雫、黄金の鳥籠 | verified |
+| work-8037856e7703fdaf4324 | 日常 | verified |
+| work-88cb26a0229ad7b83263 | ひらやすみ | verified |
+| work-8a7846af8ead1797e6a2 | ハイスコアガール | insufficient-evidence |
+| work-8ff141505b0a27f8d630 | WOMBS | needs-adjudication |
+| work-982bb79e03193ebbafcd | ママはテンパリスト | verified |
+| work-9e98119539f60465ce66 | 僕らはみんな河合荘 | needs-adjudication |
+| work-aa6018249b7fe7e92d95 | かよちゃんの荷物 | insufficient-evidence |
+| work-ab9331f7fed1990f7dc6 | 脳内ポイズンベリー | needs-adjudication |
+
+## Endpoint 0/4 and Theme centrality 2
+
+0: none
+
+- `work-79c18b26dfde8a532f73` `darkness=4`. https://shogakukan-comic.jp/book?isbn=9784091573254 https://shogakukan-comic.jp/book?isbn=9784091573650 — 가족 살해 의뢰, 암살자 매수, 독·총격·배신이 1~3권 소개의 중심. `darkness` 4 = 잔혹·암울·비극적 사건이 중심.
+- `work-7b6eb2b48ac06ffa26eb` `romance=4`. https://shogakukan-comic.jp/book?isbn=9784091346834 — Hürrem의 Suleiman 사랑과 Ibrahim에 대한 감정, 후궁 관계가 3권 소개 중심. `romance` 4 = 주요 관계와 전개의 중심.
+- `work-8037856e7703fdaf4324` `comedy=4`. https://www.kadokawa.co.jp/product/200879000105/ https://www.kadokawa.co.jp/product/200879000106/ — 짧고 뜻밖의 일상 사건과 성격 대비가 1~2권 소개의 핵심. `comedy` 4 = 개그가 상시 또는 핵심.
+- `work-8ff141505b0a27f8d630` `darkness=4`. https://e-comi.shogakukan.co.jp/books/091884940000d0000000 — 징집, 이민자 전쟁, 자궁 생체 이식, 가혹한 군사 생활이 초반 소개 중심. `darkness` 4 = 잔혹·암울·비극적 사건이 중심.
+- `work-ab9331f7fed1990f7dc6` `characterArcWeight=4`. https://www.shueisha.co.jp/books/items/contents.html?jdcn=08865626865626315501&rf=ak — 연애 선택을 머릿속 회의가 논의하는 구성이 1권 premise. `characterArcWeight` 4 = 인물 동기·변화·관계가 핵심 보상.
+- `work-ab9331f7fed1990f7dc6` `romance=4`. https://www.shueisha.co.jp/books/items/contents.html?jdcn=08865626865626315501&rf=ak https://cocohana.shueisha.co.jp/story/mizushiro/poisonberry/ — 새 연애의 출발과 전 약혼자·키스·메일 긴장이 1·3권·시리즈 소개 중심. `romance` 4 = 주요 관계와 전개의 중심.
+- `work-79c18b26dfde8a532f73` `combat` 2. https://shogakukan-comic.jp/book?isbn=9784091573650 — 암살자 집단 충돌과 요코하마 총격이 초반 권에서 반복된다.
+- `work-79c18b26dfde8a532f73` `investigation` 2. https://shogakukan-comic.jp/book?isbn=9784091573483 — 가족 독살범 조사·추적이 2~3권 소개에서 이어진다.
+- `work-79c18b26dfde8a532f73` `revenge` 2. https://shogakukan-comic.jp/book?isbn=9784091573254 — 가족을 죽인 사람 추적이 1~3권 출발·지속 구조다.
+- `work-7b6eb2b48ac06ffa26eb` `historicalReconstruction` 2. https://shogakukan-comic.jp/book?isbn=9784091340108 — 16세기 초 오스만 궁정과 Hürrem/Suleiman/Ibrahim이 1~3권 설정의 반복 골격이다.
+- `work-8037856e7703fdaf4324` `school` 2. https://www.kadokawa.co.jp/product/200879000105/ — 고등학생 유코와 학생 그룹의 학교 생활이 1~2권 소개의 반복 무대다.
+- `work-8ff141505b0a27f8d630` `combat` 2. https://www.kinokuniya.co.jp/f/dsg-08-EK-0259910 — 징집 후 실전과 기지 공격이 2권 설명에서 이어진다.
+- `work-8ff141505b0a27f8d630` `war` 2. https://e-comi.shogakukan.co.jp/books/091884940000d0000000 https://e-comi.shogakukan.co.jp/books/091885830000d0000000 — 제1·제2이민자 전쟁이 1~3권 소개의 반복 배경이다.
+
+WORK_COUNT=10 AXIS_COUNT_PER_WORK=13 IDENTITY_ROWS=10 SAFETY_ROWS=10 ISBN_ROWS=10 ART_ABSTAIN

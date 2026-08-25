@@ -1,0 +1,16 @@
+{
+  "project": "konocomics",
+  "batch": "batch-004",
+  "chunk": "chunk-03-pos21-recovery",
+  "workId": "work-53fb816835ab36e40a1f",
+  "canonicalTitle": "アンデッドアンラック",
+  "model": "gemini-3.7-flash-high",
+  "effort": "high",
+  "payloadFormat": "canonical-uncompressed-directory",
+  "payloadFileCount": 11,
+  "imageCount": 6,
+  "requestSha256": "c9c1379899bdadea1152d809a3aeb515aeef95ca4fa3489ec67c906efad71407",
+  "payloadLedgerSha256": "123fbf7df88cf7d3205e91409d6c698b63283376b51e106c81dc0c9a5eb03e9b",
+  "reviewedByHuman": false,
+  "retrievedAt": "2026-08-25"
+}

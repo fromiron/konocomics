@@ -1,0 +1,10 @@
+workId,themeId,centrality,confidence,evidenceId
+work-43ebf010a490cfd4bb50,investigation,1,0.84,ev-batch-005-a-work-43ebf010a490cfd4bb50
+work-4b4bbe8c10859c46e726,school,1,0.70,ev-batch-005-a-work-4b4bbe8c10859c46e726
+work-5b7cf2105a4bc6f6b46c,politics,1,0.70,ev-batch-005-a-work-5b7cf2105a4bc6f6b46c
+work-5b7cf2105a4bc6f6b46c,survival,2,0.82,ev-batch-005-a-work-5b7cf2105a4bc6f6b46c
+work-5e30ab3c7e3fb43e51f2,politics,2,0.82,ev-batch-005-a-work-5e30ab3c7e3fb43e51f2
+work-62fb5d8e9f6c6bbbeba9,combat,2,0.84,ev-batch-005-a-work-62fb5d8e9f6c6bbbeba9
+work-6c6341781c12b590864f,school,1,0.73,ev-batch-005-r5-work-6c6341781c12b590864f
+work-77008e04537e3fd889e2,combat,1,0.72,ev-batch-005-a-work-77008e04537e3fd889e2
+work-77008e04537e3fd889e2,investigation,2,0.88,ev-batch-005-a-work-77008e04537e3fd889e2

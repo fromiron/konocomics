@@ -1,0 +1,16 @@
+{
+  "project": "konocomics",
+  "batch": "batch-005",
+  "chunk": "chunk-05-pos45-recovery",
+  "workId": "work-e658d3aee2e33c17aa38",
+  "canonicalTitle": "スピリットサークル",
+  "model": "gemini-3.7-flash-high",
+  "effort": "high",
+  "payloadFormat": "canonical-uncompressed-directory",
+  "payloadFileCount": 11,
+  "imageCount": 6,
+  "requestSha256": "3070ea61c63d846868c33cebc4547c0917dc34c47178769bdd79dde1058b6246",
+  "payloadLedgerSha256": "70247d355509014f8dc36cc39225ae3769c0becfaa64a9a7a53a7e1456bcf7df",
+  "reviewedByHuman": false,
+  "retrievedAt": "2026-08-25"
+}

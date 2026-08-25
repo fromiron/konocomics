@@ -1,0 +1,8 @@
+workId,themeId,centrality,confidence,evidenceId
+work-925f371723beac5227f7,cooking,2,0.82,ev-batch-004-a-work-925f371723beac5227f7
+work-9bd00739b995d84e2494,workplace,1,0.78,ev-batch-004-a-work-9bd00739b995d84e2494
+work-aa85b65d02f367e76a07,sportsCompetition,2,0.95,ev-batch-004-a-work-aa85b65d02f367e76a07
+work-af3443bab1c30d470a76,school,2,0.9,ev-batch-004-a-work-af3443bab1c30d470a76
+work-c2df32661c0b925ff74f,school,1,0.78,ev-batch-004-a-work-c2df32661c0b925ff74f
+work-c2f3864045578cebb590,school,2,0.9,ev-batch-004-a-work-c2f3864045578cebb590
+work-c5c2695ad33fd05af945,school,2,0.9,ev-batch-004-a-work-c5c2695ad33fd05af945
