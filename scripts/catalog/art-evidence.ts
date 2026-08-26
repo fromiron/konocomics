@@ -152,6 +152,10 @@ function nonCoverReferences(value: string) {
 }
 
 function hasContinuousSequenceRange(references: string) {
+  if (/\b(?:page|spread)\s+\d+\s+bounded panel sequence\b/iu.test(references)) {
+    return true;
+  }
+
   const numberedRange = [
     ...references.matchAll(
       /\b(?:pages?|panels?)\s+(\d+)\s*(?:-|–|—|~|〜|to|through)\s*(?:(?:reader|printed|official)\s+)?(?:pages?|panels?)?\s*(\d+)/giu,

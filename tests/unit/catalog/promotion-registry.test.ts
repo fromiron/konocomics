@@ -38,7 +38,7 @@ describe("promotion registry", () => {
     expect(rows.filter((row) => row.promotionOutcome === "pending")).toHaveLength(
       expectedWorkIds.length - input.goldWorkIds.length - verifiedRows.length - blockedRows.length,
     );
-    expect(blockedRows).toHaveLength(input.blockers.length);
+    expect(blockedRows).toHaveLength(new Set(input.blockers.map((blocker) => blocker.workId)).size);
 
     const pilotBatches = input.batches.filter((batch) => batch.batchId === "pilot-001");
     const batch002Batches = input.batches.filter((batch) => batch.batchId === "batch-002");

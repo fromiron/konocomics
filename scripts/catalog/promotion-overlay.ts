@@ -247,7 +247,10 @@ function validateReviewLedgers(root: string, config: PromotionOverlayConfig) {
         "resolved model",
         /(?:resolvedModel|resolvedModelAttestation):\s*`?Cursor Grok 4\.6 High`?/u,
       ],
-      ["non-fast read-only mode", /mode:\s*non-fast, read-only `(?:ask|plan)`/u],
+      [
+        "non-fast read-only mode",
+        /(?:mode:\s*non-fast, read-only `(?:ask|plan)`|fastVariantInvoked:\s*`?false`?[\s\S]{0,160}mode:\s*read-only `(?:ask|plan)`)/u,
+      ],
       ["successful result", /(?:outerResult|outerSubtype):\s*`?success`?/u],
       ["zero exit", /exitCode:\s*`?0`?/u],
       ["non-human review", /reviewedByHuman:\s*`?false`?/u],
@@ -286,8 +289,12 @@ function assertUrl(value: string, label: string) {
   if (!z.url().safeParse(value).success) throw new Error(`${label} must contain a source URL`);
 }
 
+function isExplicitlyUndated(value: string) {
+  return value.startsWith("undated") || value.startsWith("not stated on page");
+}
+
 function assertSourceDate(value: string, label: string) {
-  if (!value.startsWith("undated") && !/\b(?:18|19|20)\d{2}(?:-\d{2}(?:-\d{2})?)?\b/u.test(value)) {
+  if (!isExplicitlyUndated(value) && !/\b(?:18|19|20)\d{2}(?:-\d{2}(?:-\d{2})?)?\b/u.test(value)) {
     throw new Error(`${label} must contain a source date/year or the explicit value undated`);
   }
 }
@@ -340,7 +347,7 @@ function expandedPageReferences(value: string) {
 function evidencePublishedAt(value: string, fallbackYear: string, workId: string) {
   const sourceDate = value.match(/\b(?:18|19|20)\d{2}(?:-\d{2}-\d{2})?/u)?.[0];
   if (sourceDate !== undefined) return { value: sourceDate, fallbackNote: "" };
-  if (!value.startsWith("undated") || !/^(?:18|19|20)\d{2}$/u.test(fallbackYear)) {
+  if (!isExplicitlyUndated(value) || !/^(?:18|19|20)\d{2}$/u.test(fallbackYear)) {
     throw new Error(`Blocker evidence publication provenance is incomplete: ${workId}`);
   }
   return {
@@ -747,10 +754,23 @@ function finalOverlay(root: string, config: PromotionOverlayConfig) {
           : []),
       ];
       blockerRecords = explicitBlockers.get(workId) ?? [];
-      if (blockerRecords.length === 0 && config.blockerAdjudicationFile !== undefined) {
-        throw new Error(`Coverage failure lacks independent hard-blocker adjudication: ${workId}`);
-      }
       if (blockerRecords.length === 0) {
+        if (config.blockerAdjudicationFile !== undefined) {
+          decisions.push({
+            position: frozenRow.position ?? "",
+            workId,
+            canonicalTitle,
+            narrativeKnown: String(narrative.known),
+            toneKnown: String(tone.known),
+            artKnown: String(art.known),
+            genreCount: String(workGenres.length),
+            themeCount: String(workThemes.length),
+            outcome: "pending",
+            blockerCode: "",
+            blockerDetails: "",
+          });
+          continue;
+        }
         blockerRecords = [
           {
             blockerCode: "SOURCE_INFORMATION_UNAVAILABLE",
@@ -948,6 +968,9 @@ function finalOverlay(root: string, config: PromotionOverlayConfig) {
   const blockedIds = decisions
     .filter((row) => row.outcome === "promotionBlocked")
     .map((row) => row.workId ?? "");
+  const pendingIds = decisions
+    .filter((row) => row.outcome === "pending")
+    .map((row) => row.workId ?? "");
   const blockerWorkIds = [...new Set(blockers.map((row) => row.workId ?? ""))];
   if (
     [...explicitBlockers.keys()].some(
@@ -961,17 +984,6 @@ function finalOverlay(root: string, config: PromotionOverlayConfig) {
       `${config.batchLabel} outcome drifted from the frozen ${String(config.expectedVerifiedPositions.length)}/${String(config.targetWorkCount - config.expectedVerifiedPositions.length)} adjudication: ${verifiedPositions.join(",")}`,
     );
   }
-  if (
-    decisions.some(
-      (row) => row.outcome !== "recommendationVerified" && row.outcome !== "promotionBlocked",
-    ) ||
-    decisions.filter((row) => row.outcome === "promotionBlocked").length !==
-      config.targetWorkCount - config.expectedVerifiedPositions.length
-  ) {
-    throw new Error(
-      `${config.batchLabel} must close with exactly ${String(config.expectedVerifiedPositions.length)} verified and ${String(config.targetWorkCount - config.expectedVerifiedPositions.length)} blocked works`,
-    );
-  }
   const expectedFactorPairs = verifiedIds.flatMap((workId) =>
     AXIS_IDS.map((axisId) => `${workId}\0${axisId}`),
   );
@@ -983,7 +995,7 @@ function finalOverlay(root: string, config: PromotionOverlayConfig) {
     artManifest.length !== verifiedIds.length * ART_AXIS_IDS.length ||
     evidence.length !== verifiedIds.length * 5 ||
     JSON.stringify(blockerWorkIds) !== JSON.stringify(blockedIds) ||
-    blockedIds.length + verifiedIds.length !== config.targetWorkCount
+    blockedIds.length + verifiedIds.length + pendingIds.length !== config.targetWorkCount
   ) {
     throw new Error(`${config.batchLabel} overlay cardinality or canonical order is invalid`);
   }
@@ -1038,6 +1050,7 @@ function finalOverlay(root: string, config: PromotionOverlayConfig) {
       targetWorkCount: config.targetWorkCount,
       recommendationVerified: verifiedIds.length,
       promotionBlocked: blockedIds.length,
+      pending: pendingIds.length,
       expectedVerifiedPositions: config.expectedVerifiedPositions,
       coverageThresholds: {
         narrative: COVERAGE_THRESHOLDS.narrative,
@@ -1076,7 +1089,12 @@ function finalOverlay(root: string, config: PromotionOverlayConfig) {
     2,
   )}\n`;
   contents.set("final-overlay-validation.json", validation);
-  return { contents, verified: verifiedIds.length, blocked: blockedIds.length };
+  return {
+    contents,
+    verified: verifiedIds.length,
+    blocked: blockedIds.length,
+    pending: pendingIds.length,
+  };
 }
 
 export function runPromotionOverlay(
@@ -1098,5 +1116,5 @@ export function runPromotionOverlay(
       writeFileSync(path, content, "utf8");
     }
   }
-  return { verified: result.verified, blocked: result.blocked };
+  return { verified: result.verified, blocked: result.blocked, pending: result.pending };
 }

@@ -1,6 +1,6 @@
 {
   "schemaVersion": 1,
-  "catalogVersion": "v1-6a4e34fe0dce",
+  "catalogVersion": "v1-b7f3de656400",
   "factorDictionaryVersion": "v1",
   "works": [
     {
@@ -25481,8 +25481,22 @@
       "demographic": "shonen",
       "status": "unknown",
       "firstPublishedYear": 2022,
-      "genres": [],
-      "themes": [],
+      "genres": [
+        "action",
+        "fantasy"
+      ],
+      "themes": [
+        {
+          "id": "adventure",
+          "centrality": 1,
+          "confidence": 0.72
+        },
+        {
+          "id": "combat",
+          "centrality": 2,
+          "confidence": 0.82
+        }
+      ],
       "axes": {
         "progression": {
           "state": "unknown"
@@ -25491,46 +25505,70 @@
           "state": "unknown"
         },
         "strategy": {
-          "state": "unknown"
+          "state": "known",
+          "value": 2,
+          "confidence": 0.88
         },
         "pacing": {
-          "state": "unknown"
+          "state": "known",
+          "value": 3,
+          "confidence": 0.78
         },
         "mysteryReveal": {
-          "state": "unknown"
+          "state": "known",
+          "value": 2,
+          "confidence": 0.82
         },
         "worldBuilding": {
-          "state": "unknown"
+          "state": "known",
+          "value": 2,
+          "confidence": 0.8
         },
         "characterArcWeight": {
           "state": "unknown"
         },
         "relationshipStructure": {
-          "state": "unknown"
+          "state": "known",
+          "value": 2,
+          "confidence": 0.78
         },
         "comedy": {
-          "state": "unknown"
+          "state": "known",
+          "value": 2,
+          "confidence": 0.86
         },
         "darkness": {
-          "state": "unknown"
+          "state": "known",
+          "value": 2,
+          "confidence": 0.72
         },
         "mentalStress": {
-          "state": "unknown"
+          "state": "known",
+          "value": 2,
+          "confidence": 0.82
         },
         "romance": {
           "state": "unknown"
         },
         "emotionalWarmth": {
-          "state": "unknown"
+          "state": "known",
+          "value": 2,
+          "confidence": 0.82
         },
         "artRealism": {
-          "state": "unknown"
+          "state": "known",
+          "value": 2,
+          "confidence": 0.9
         },
         "artDensity": {
-          "state": "unknown"
+          "state": "known",
+          "value": 3,
+          "confidence": 0.92
         },
         "visualSoftness": {
-          "state": "unknown"
+          "state": "known",
+          "value": 2,
+          "confidence": 0.9
         },
         "motionImpact": {
           "state": "unknown"
@@ -25538,14 +25576,15 @@
       },
       "factorScope": "entry_1_3_volumes",
       "eligibility": {
-        "onboardingEligible": false,
-        "recommendationEligible": false,
-        "libraryOnly": true
+        "onboardingEligible": true,
+        "recommendationEligible": true,
+        "libraryOnly": false
       },
       "evidence": {
         "metadataConfidence": 1,
         "groupingConfidence": 1,
-        "sourceAgreement": 1
+        "sourceAgreement": 1,
+        "annotationReviewedAt": "2026-08-25T00:00:00+09:00"
       }
     },
     {
@@ -26388,11 +26427,21 @@
       "demographic": "shonen",
       "status": "unknown",
       "firstPublishedYear": 2017,
-      "genres": [],
-      "themes": [],
+      "genres": [
+        "fantasy"
+      ],
+      "themes": [
+        {
+          "id": "exploration",
+          "centrality": 2,
+          "confidence": 0.8
+        }
+      ],
       "axes": {
         "progression": {
-          "state": "unknown"
+          "state": "known",
+          "value": 2,
+          "confidence": 0.88
         },
         "problemSolving": {
           "state": "unknown"
@@ -26401,16 +26450,24 @@
           "state": "unknown"
         },
         "pacing": {
-          "state": "unknown"
+          "state": "known",
+          "value": 2,
+          "confidence": 0.78
         },
         "mysteryReveal": {
-          "state": "unknown"
+          "state": "known",
+          "value": 2,
+          "confidence": 0.76
         },
         "worldBuilding": {
-          "state": "unknown"
+          "state": "known",
+          "value": 2,
+          "confidence": 0.84
         },
         "characterArcWeight": {
-          "state": "unknown"
+          "state": "known",
+          "value": 2,
+          "confidence": 0.78
         },
         "relationshipStructure": {
           "state": "unknown"
@@ -26419,25 +26476,39 @@
           "state": "unknown"
         },
         "darkness": {
-          "state": "unknown"
+          "state": "known",
+          "value": 2,
+          "confidence": 0.72
         },
         "mentalStress": {
-          "state": "unknown"
+          "state": "known",
+          "value": 2,
+          "confidence": 0.72
         },
         "romance": {
-          "state": "unknown"
+          "state": "known",
+          "value": 2,
+          "confidence": 0.84
         },
         "emotionalWarmth": {
-          "state": "unknown"
+          "state": "known",
+          "value": 2,
+          "confidence": 0.72
         },
         "artRealism": {
-          "state": "unknown"
+          "state": "known",
+          "value": 3,
+          "confidence": 0.9
         },
         "artDensity": {
-          "state": "unknown"
+          "state": "known",
+          "value": 1,
+          "confidence": 0.9
         },
         "visualSoftness": {
-          "state": "unknown"
+          "state": "known",
+          "value": 3,
+          "confidence": 0.9
         },
         "motionImpact": {
           "state": "unknown"
@@ -26445,14 +26516,15 @@
       },
       "factorScope": "entry_1_3_volumes",
       "eligibility": {
-        "onboardingEligible": false,
-        "recommendationEligible": false,
-        "libraryOnly": true
+        "onboardingEligible": true,
+        "recommendationEligible": true,
+        "libraryOnly": false
       },
       "evidence": {
         "metadataConfidence": 1,
         "groupingConfidence": 1,
-        "sourceAgreement": 1
+        "sourceAgreement": 1,
+        "annotationReviewedAt": "2026-08-25T00:00:00+09:00"
       }
     },
     {
@@ -26621,56 +26693,99 @@
       "demographic": "seinen",
       "status": "unknown",
       "firstPublishedYear": 2014,
-      "genres": [],
-      "themes": [],
+      "genres": [
+        "historical",
+        "mystery"
+      ],
+      "themes": [
+        {
+          "id": "historicalReconstruction",
+          "centrality": 2,
+          "confidence": 0.86
+        },
+        {
+          "id": "investigation",
+          "centrality": 2,
+          "confidence": 0.9
+        },
+        {
+          "id": "politics",
+          "centrality": 1,
+          "confidence": 0.72
+        }
+      ],
       "axes": {
         "progression": {
           "state": "unknown"
         },
         "problemSolving": {
-          "state": "unknown"
+          "state": "known",
+          "value": 2,
+          "confidence": 0.78
         },
         "strategy": {
           "state": "unknown"
         },
         "pacing": {
-          "state": "unknown"
+          "state": "known",
+          "value": 2,
+          "confidence": 0.74
         },
         "mysteryReveal": {
-          "state": "unknown"
+          "state": "known",
+          "value": 4,
+          "confidence": 0.76
         },
         "worldBuilding": {
-          "state": "unknown"
+          "state": "known",
+          "value": 3,
+          "confidence": 0.82
         },
         "characterArcWeight": {
-          "state": "unknown"
+          "state": "known",
+          "value": 2,
+          "confidence": 0.76
         },
         "relationshipStructure": {
-          "state": "unknown"
+          "state": "known",
+          "value": 2,
+          "confidence": 0.82
         },
         "comedy": {
           "state": "unknown"
         },
         "darkness": {
-          "state": "unknown"
+          "state": "known",
+          "value": 2,
+          "confidence": 0.72
         },
         "mentalStress": {
-          "state": "unknown"
+          "state": "known",
+          "value": 2,
+          "confidence": 0.73
         },
         "romance": {
           "state": "unknown"
         },
         "emotionalWarmth": {
-          "state": "unknown"
+          "state": "known",
+          "value": 2,
+          "confidence": 0.66
         },
         "artRealism": {
-          "state": "unknown"
+          "state": "known",
+          "value": 3,
+          "confidence": 0.91
         },
         "artDensity": {
-          "state": "unknown"
+          "state": "known",
+          "value": 3,
+          "confidence": 0.92
         },
         "visualSoftness": {
-          "state": "unknown"
+          "state": "known",
+          "value": 1,
+          "confidence": 0.88
         },
         "motionImpact": {
           "state": "unknown"
@@ -26678,14 +26793,15 @@
       },
       "factorScope": "entry_1_3_volumes",
       "eligibility": {
-        "onboardingEligible": false,
-        "recommendationEligible": false,
-        "libraryOnly": true
+        "onboardingEligible": true,
+        "recommendationEligible": true,
+        "libraryOnly": false
       },
       "evidence": {
         "metadataConfidence": 1,
         "groupingConfidence": 1,
-        "sourceAgreement": 1
+        "sourceAgreement": 1,
+        "annotationReviewedAt": "2026-08-25T00:00:00+09:00"
       }
     },
     {
@@ -41762,11 +41878,22 @@
       "demographic": "seinen",
       "status": "unknown",
       "firstPublishedYear": 2024,
-      "genres": [],
-      "themes": [],
+      "genres": [
+        "action",
+        "romance"
+      ],
+      "themes": [
+        {
+          "id": "combat",
+          "centrality": 2,
+          "confidence": 0.94
+        }
+      ],
       "axes": {
         "progression": {
-          "state": "unknown"
+          "state": "known",
+          "value": 2,
+          "confidence": 0.84
         },
         "problemSolving": {
           "state": "unknown"
@@ -41775,43 +41902,67 @@
           "state": "unknown"
         },
         "pacing": {
-          "state": "unknown"
+          "state": "known",
+          "value": 2,
+          "confidence": 0.84
         },
         "mysteryReveal": {
-          "state": "unknown"
+          "state": "known",
+          "value": 2,
+          "confidence": 0.72
         },
         "worldBuilding": {
-          "state": "unknown"
+          "state": "known",
+          "value": 2,
+          "confidence": 0.86
         },
         "characterArcWeight": {
-          "state": "unknown"
+          "state": "known",
+          "value": 2,
+          "confidence": 0.83
         },
         "relationshipStructure": {
-          "state": "unknown"
+          "state": "known",
+          "value": 2,
+          "confidence": 0.8
         },
         "comedy": {
           "state": "unknown"
         },
         "darkness": {
-          "state": "unknown"
+          "state": "known",
+          "value": 2,
+          "confidence": 0.95
         },
         "mentalStress": {
-          "state": "unknown"
+          "state": "known",
+          "value": 2,
+          "confidence": 0.87
         },
         "romance": {
-          "state": "unknown"
+          "state": "known",
+          "value": 4,
+          "confidence": 0.97
         },
         "emotionalWarmth": {
-          "state": "unknown"
+          "state": "known",
+          "value": 2,
+          "confidence": 0.71
         },
         "artRealism": {
-          "state": "unknown"
+          "state": "known",
+          "value": 3,
+          "confidence": 0.92
         },
         "artDensity": {
-          "state": "unknown"
+          "state": "known",
+          "value": 3,
+          "confidence": 0.92
         },
         "visualSoftness": {
-          "state": "unknown"
+          "state": "known",
+          "value": 2,
+          "confidence": 0.87
         },
         "motionImpact": {
           "state": "unknown"
@@ -41819,14 +41970,15 @@
       },
       "factorScope": "entry_1_3_volumes",
       "eligibility": {
-        "onboardingEligible": false,
-        "recommendationEligible": false,
-        "libraryOnly": true
+        "onboardingEligible": true,
+        "recommendationEligible": true,
+        "libraryOnly": false
       },
       "evidence": {
         "metadataConfidence": 1,
         "groupingConfidence": 1,
-        "sourceAgreement": 1
+        "sourceAgreement": 1,
+        "annotationReviewedAt": "2026-08-25T00:00:00+09:00"
       }
     },
     {
@@ -46135,11 +46287,22 @@
       "demographic": "unknown",
       "status": "unknown",
       "firstPublishedYear": 2013,
-      "genres": [],
-      "themes": [],
+      "genres": [
+        "scienceFiction",
+        "sliceOfLife"
+      ],
+      "themes": [
+        {
+          "id": "workplace",
+          "centrality": 1,
+          "confidence": 0.68
+        }
+      ],
       "axes": {
         "progression": {
-          "state": "unknown"
+          "state": "known",
+          "value": 2,
+          "confidence": 0.67
         },
         "problemSolving": {
           "state": "unknown"
@@ -46148,25 +46311,39 @@
           "state": "unknown"
         },
         "pacing": {
-          "state": "unknown"
+          "state": "known",
+          "value": 2,
+          "confidence": 0.54
         },
         "mysteryReveal": {
-          "state": "unknown"
+          "state": "known",
+          "value": 2,
+          "confidence": 0.6
         },
         "worldBuilding": {
-          "state": "unknown"
+          "state": "known",
+          "value": 2,
+          "confidence": 0.78
         },
         "characterArcWeight": {
-          "state": "unknown"
+          "state": "known",
+          "value": 2,
+          "confidence": 0.75
         },
         "relationshipStructure": {
-          "state": "unknown"
+          "state": "known",
+          "value": 2,
+          "confidence": 0.76
         },
         "comedy": {
-          "state": "unknown"
+          "state": "known",
+          "value": 2,
+          "confidence": 0.56
         },
         "darkness": {
-          "state": "unknown"
+          "state": "known",
+          "value": 2,
+          "confidence": 0.61
         },
         "mentalStress": {
           "state": "unknown"
@@ -46175,16 +46352,24 @@
           "state": "unknown"
         },
         "emotionalWarmth": {
-          "state": "unknown"
+          "state": "known",
+          "value": 3,
+          "confidence": 0.65
         },
         "artRealism": {
-          "state": "unknown"
+          "state": "known",
+          "value": 2,
+          "confidence": 0.88
         },
         "artDensity": {
-          "state": "unknown"
+          "state": "known",
+          "value": 2,
+          "confidence": 0.88
         },
         "visualSoftness": {
-          "state": "unknown"
+          "state": "known",
+          "value": 2,
+          "confidence": 0.91
         },
         "motionImpact": {
           "state": "unknown"
@@ -46192,14 +46377,15 @@
       },
       "factorScope": "entry_1_3_volumes",
       "eligibility": {
-        "onboardingEligible": false,
-        "recommendationEligible": false,
-        "libraryOnly": true
+        "onboardingEligible": true,
+        "recommendationEligible": true,
+        "libraryOnly": false
       },
       "evidence": {
         "metadataConfidence": 1,
         "groupingConfidence": 1,
-        "sourceAgreement": 1
+        "sourceAgreement": 1,
+        "annotationReviewedAt": "2026-08-25T00:00:00+09:00"
       }
     },
     {
@@ -47646,35 +47832,62 @@
       "demographic": "seinen",
       "status": "unknown",
       "firstPublishedYear": 2008,
-      "genres": [],
-      "themes": [],
+      "genres": [
+        "sliceOfLife"
+      ],
+      "themes": [
+        {
+          "id": "crafting",
+          "centrality": 2,
+          "confidence": 0.9
+        },
+        {
+          "id": "workplace",
+          "centrality": 2,
+          "confidence": 0.94
+        }
+      ],
       "axes": {
         "progression": {
-          "state": "unknown"
+          "state": "known",
+          "value": 2,
+          "confidence": 0.76
         },
         "problemSolving": {
-          "state": "unknown"
+          "state": "known",
+          "value": 2,
+          "confidence": 0.63
         },
         "strategy": {
           "state": "unknown"
         },
         "pacing": {
-          "state": "unknown"
+          "state": "known",
+          "value": 2,
+          "confidence": 0.8
         },
         "mysteryReveal": {
           "state": "unknown"
         },
         "worldBuilding": {
-          "state": "unknown"
+          "state": "known",
+          "value": 2,
+          "confidence": 0.9
         },
         "characterArcWeight": {
-          "state": "unknown"
+          "state": "known",
+          "value": 2,
+          "confidence": 0.77
         },
         "relationshipStructure": {
-          "state": "unknown"
+          "state": "known",
+          "value": 2,
+          "confidence": 0.83
         },
         "comedy": {
-          "state": "unknown"
+          "state": "known",
+          "value": 2,
+          "confidence": 0.79
         },
         "darkness": {
           "state": "unknown"
@@ -47683,19 +47896,29 @@
           "state": "unknown"
         },
         "romance": {
-          "state": "unknown"
+          "state": "known",
+          "value": 0,
+          "confidence": 0.8
         },
         "emotionalWarmth": {
-          "state": "unknown"
+          "state": "known",
+          "value": 2,
+          "confidence": 0.82
         },
         "artRealism": {
-          "state": "unknown"
+          "state": "known",
+          "value": 0,
+          "confidence": 0.95
         },
         "artDensity": {
-          "state": "unknown"
+          "state": "known",
+          "value": 1,
+          "confidence": 0.89
         },
         "visualSoftness": {
-          "state": "unknown"
+          "state": "known",
+          "value": 1,
+          "confidence": 0.84
         },
         "motionImpact": {
           "state": "unknown"
@@ -47703,14 +47926,15 @@
       },
       "factorScope": "entry_1_3_volumes",
       "eligibility": {
-        "onboardingEligible": false,
-        "recommendationEligible": false,
-        "libraryOnly": true
+        "onboardingEligible": true,
+        "recommendationEligible": true,
+        "libraryOnly": false
       },
       "evidence": {
         "metadataConfidence": 1,
         "groupingConfidence": 1,
-        "sourceAgreement": 1
+        "sourceAgreement": 1,
+        "annotationReviewedAt": "2026-08-25T00:00:00+09:00"
       }
     },
     {
@@ -52320,56 +52544,89 @@
       "demographic": "unknown",
       "status": "unknown",
       "firstPublishedYear": 2012,
-      "genres": [],
-      "themes": [],
+      "genres": [
+        "fantasy",
+        "romance"
+      ],
+      "themes": [
+        {
+          "id": "investigation",
+          "centrality": 1,
+          "confidence": 0.84
+        }
+      ],
       "axes": {
         "progression": {
           "state": "unknown"
         },
         "problemSolving": {
-          "state": "unknown"
+          "state": "known",
+          "value": 2,
+          "confidence": 0.82
         },
         "strategy": {
           "state": "unknown"
         },
         "pacing": {
-          "state": "unknown"
+          "state": "known",
+          "value": 2,
+          "confidence": 0.76
         },
         "mysteryReveal": {
-          "state": "unknown"
+          "state": "known",
+          "value": 2,
+          "confidence": 0.74
         },
         "worldBuilding": {
-          "state": "unknown"
+          "state": "known",
+          "value": 4,
+          "confidence": 0.9
         },
         "characterArcWeight": {
-          "state": "unknown"
+          "state": "known",
+          "value": 2,
+          "confidence": 0.78
         },
         "relationshipStructure": {
-          "state": "unknown"
+          "state": "known",
+          "value": 2,
+          "confidence": 0.8
         },
         "comedy": {
           "state": "unknown"
         },
         "darkness": {
-          "state": "unknown"
+          "state": "known",
+          "value": 2,
+          "confidence": 0.74
         },
         "mentalStress": {
           "state": "unknown"
         },
         "romance": {
-          "state": "unknown"
+          "state": "known",
+          "value": 3,
+          "confidence": 0.82
         },
         "emotionalWarmth": {
-          "state": "unknown"
+          "state": "known",
+          "value": 2,
+          "confidence": 0.72
         },
         "artRealism": {
-          "state": "unknown"
+          "state": "known",
+          "value": 2,
+          "confidence": 0.9
         },
         "artDensity": {
-          "state": "unknown"
+          "state": "known",
+          "value": 2,
+          "confidence": 0.9
         },
         "visualSoftness": {
-          "state": "unknown"
+          "state": "known",
+          "value": 3,
+          "confidence": 0.89
         },
         "motionImpact": {
           "state": "unknown"
@@ -52377,14 +52634,15 @@
       },
       "factorScope": "entry_1_3_volumes",
       "eligibility": {
-        "onboardingEligible": false,
-        "recommendationEligible": false,
-        "libraryOnly": true
+        "onboardingEligible": true,
+        "recommendationEligible": true,
+        "libraryOnly": false
       },
       "evidence": {
         "metadataConfidence": 1,
         "groupingConfidence": 1,
-        "sourceAgreement": 1
+        "sourceAgreement": 1,
+        "annotationReviewedAt": "2026-08-25T00:00:00+09:00"
       }
     },
     {
@@ -52743,11 +53001,27 @@
       "publisher": "集英社",
       "demographic": "shojo",
       "status": "unknown",
-      "genres": [],
-      "themes": [],
+      "genres": [
+        "historical",
+        "romance"
+      ],
+      "themes": [
+        {
+          "id": "historicalReconstruction",
+          "centrality": 2,
+          "confidence": 0.9
+        },
+        {
+          "id": "revenge",
+          "centrality": 1,
+          "confidence": 0.68
+        }
+      ],
       "axes": {
         "progression": {
-          "state": "unknown"
+          "state": "known",
+          "value": 0,
+          "confidence": 0.8
         },
         "problemSolving": {
           "state": "unknown"
@@ -52756,43 +53030,65 @@
           "state": "unknown"
         },
         "pacing": {
-          "state": "unknown"
+          "state": "known",
+          "value": 2,
+          "confidence": 0.76
         },
         "mysteryReveal": {
-          "state": "unknown"
+          "state": "known",
+          "value": 2,
+          "confidence": 0.75
         },
         "worldBuilding": {
-          "state": "unknown"
+          "state": "known",
+          "value": 2,
+          "confidence": 0.69
         },
         "characterArcWeight": {
-          "state": "unknown"
+          "state": "known",
+          "value": 4,
+          "confidence": 0.84
         },
         "relationshipStructure": {
-          "state": "unknown"
+          "state": "known",
+          "value": 2,
+          "confidence": 0.85
         },
         "comedy": {
           "state": "unknown"
         },
         "darkness": {
-          "state": "unknown"
+          "state": "known",
+          "value": 2,
+          "confidence": 0.86
         },
         "mentalStress": {
           "state": "unknown"
         },
         "romance": {
-          "state": "unknown"
+          "state": "known",
+          "value": 2,
+          "confidence": 0.84
         },
         "emotionalWarmth": {
-          "state": "unknown"
+          "state": "known",
+          "value": 2,
+          "confidence": 0.78
         },
         "artRealism": {
-          "state": "unknown"
+          "state": "known",
+          "value": 3,
+          "confidence": 0.88
         },
         "artDensity": {
-          "state": "unknown"
+          "state": "known",
+          "value": 1,
+          "confidence": 0.9
         },
         "visualSoftness": {
-          "state": "unknown"
+          "state": "known",
+          "value": 3,
+          "confidence": 0.92
         },
         "motionImpact": {
           "state": "unknown"
@@ -52800,14 +53096,15 @@
       },
       "factorScope": "entry_1_3_volumes",
       "eligibility": {
-        "onboardingEligible": false,
-        "recommendationEligible": false,
-        "libraryOnly": true
+        "onboardingEligible": true,
+        "recommendationEligible": true,
+        "libraryOnly": false
       },
       "evidence": {
         "metadataConfidence": 1,
         "groupingConfidence": 1,
-        "sourceAgreement": 1
+        "sourceAgreement": 1,
+        "annotationReviewedAt": "2026-08-25T00:00:00+09:00"
       }
     },
     {
@@ -58985,8 +59282,17 @@
       "demographic": "shonen",
       "status": "unknown",
       "firstPublishedYear": 2020,
-      "genres": [],
-      "themes": [],
+      "genres": [
+        "action",
+        "fantasy"
+      ],
+      "themes": [
+        {
+          "id": "combat",
+          "centrality": 2,
+          "confidence": 0.82
+        }
+      ],
       "axes": {
         "progression": {
           "state": "unknown"
@@ -58995,28 +59301,44 @@
           "state": "unknown"
         },
         "strategy": {
-          "state": "unknown"
+          "state": "known",
+          "value": 2,
+          "confidence": 0.64
         },
         "pacing": {
-          "state": "unknown"
+          "state": "known",
+          "value": 2,
+          "confidence": 0.78
         },
         "mysteryReveal": {
-          "state": "unknown"
+          "state": "known",
+          "value": 2,
+          "confidence": 0.8
         },
         "worldBuilding": {
-          "state": "unknown"
+          "state": "known",
+          "value": 2,
+          "confidence": 0.8
         },
         "characterArcWeight": {
-          "state": "unknown"
+          "state": "known",
+          "value": 2,
+          "confidence": 0.8
         },
         "relationshipStructure": {
-          "state": "unknown"
+          "state": "known",
+          "value": 2,
+          "confidence": 0.8
         },
         "comedy": {
-          "state": "unknown"
+          "state": "known",
+          "value": 2,
+          "confidence": 0.78
         },
         "darkness": {
-          "state": "unknown"
+          "state": "known",
+          "value": 2,
+          "confidence": 0.8
         },
         "mentalStress": {
           "state": "unknown"
@@ -59025,16 +59347,24 @@
           "state": "unknown"
         },
         "emotionalWarmth": {
-          "state": "unknown"
+          "state": "known",
+          "value": 2,
+          "confidence": 0.66
         },
         "artRealism": {
-          "state": "unknown"
+          "state": "known",
+          "value": 2,
+          "confidence": 0.91
         },
         "artDensity": {
-          "state": "unknown"
+          "state": "known",
+          "value": 3,
+          "confidence": 0.9
         },
         "visualSoftness": {
-          "state": "unknown"
+          "state": "known",
+          "value": 1,
+          "confidence": 0.89
         },
         "motionImpact": {
           "state": "unknown"
@@ -59042,14 +59372,15 @@
       },
       "factorScope": "entry_1_3_volumes",
       "eligibility": {
-        "onboardingEligible": false,
-        "recommendationEligible": false,
-        "libraryOnly": true
+        "onboardingEligible": true,
+        "recommendationEligible": true,
+        "libraryOnly": false
       },
       "evidence": {
         "metadataConfidence": 1,
         "groupingConfidence": 1,
-        "sourceAgreement": 1
+        "sourceAgreement": 1,
+        "annotationReviewedAt": "2026-08-25T00:00:00+09:00"
       }
     },
     {
@@ -62648,8 +62979,21 @@
       "demographic": "unknown",
       "status": "unknown",
       "firstPublishedYear": 2013,
-      "genres": [],
-      "themes": [],
+      "genres": [
+        "fantasy"
+      ],
+      "themes": [
+        {
+          "id": "politics",
+          "centrality": 1,
+          "confidence": 0.7
+        },
+        {
+          "id": "survival",
+          "centrality": 2,
+          "confidence": 0.82
+        }
+      ],
       "axes": {
         "progression": {
           "state": "unknown"
@@ -62658,61 +63002,88 @@
           "state": "unknown"
         },
         "strategy": {
-          "state": "unknown"
+          "state": "known",
+          "value": 2,
+          "confidence": 0.84
         },
         "pacing": {
-          "state": "unknown"
+          "state": "known",
+          "value": 2,
+          "confidence": 0.78
         },
         "mysteryReveal": {
-          "state": "unknown"
+          "state": "known",
+          "value": 2,
+          "confidence": 0.72
         },
         "worldBuilding": {
-          "state": "unknown"
+          "state": "known",
+          "value": 4,
+          "confidence": 0.9
         },
         "characterArcWeight": {
-          "state": "unknown"
+          "state": "known",
+          "value": 2,
+          "confidence": 0.78
         },
         "relationshipStructure": {
-          "state": "unknown"
+          "state": "known",
+          "value": 2,
+          "confidence": 0.8
         },
         "comedy": {
           "state": "unknown"
         },
         "darkness": {
-          "state": "unknown"
+          "state": "known",
+          "value": 3,
+          "confidence": 0.84
         },
         "mentalStress": {
-          "state": "unknown"
+          "state": "known",
+          "value": 2,
+          "confidence": 0.72
         },
         "romance": {
           "state": "unknown"
         },
         "emotionalWarmth": {
-          "state": "unknown"
+          "state": "known",
+          "value": 2,
+          "confidence": 0.74
         },
         "artRealism": {
-          "state": "unknown"
+          "state": "known",
+          "value": 2,
+          "confidence": 0.91
         },
         "artDensity": {
-          "state": "unknown"
+          "state": "known",
+          "value": 3,
+          "confidence": 0.91
         },
         "visualSoftness": {
-          "state": "unknown"
+          "state": "known",
+          "value": 3,
+          "confidence": 0.89
         },
         "motionImpact": {
-          "state": "unknown"
+          "state": "known",
+          "value": 2,
+          "confidence": 0.91
         }
       },
       "factorScope": "entry_1_3_volumes",
       "eligibility": {
-        "onboardingEligible": false,
-        "recommendationEligible": false,
-        "libraryOnly": true
+        "onboardingEligible": true,
+        "recommendationEligible": true,
+        "libraryOnly": false
       },
       "evidence": {
         "metadataConfidence": 1,
         "groupingConfidence": 1,
-        "sourceAgreement": 1
+        "sourceAgreement": 1,
+        "annotationReviewedAt": "2026-08-25T00:00:00+09:00"
       }
     },
     {
@@ -64165,8 +64536,16 @@
       "demographic": "unknown",
       "status": "unknown",
       "firstPublishedYear": 2008,
-      "genres": [],
-      "themes": [],
+      "genres": [
+        "romance"
+      ],
+      "themes": [
+        {
+          "id": "politics",
+          "centrality": 2,
+          "confidence": 0.82
+        }
+      ],
       "axes": {
         "progression": {
           "state": "unknown"
@@ -64175,61 +64554,90 @@
           "state": "unknown"
         },
         "strategy": {
-          "state": "unknown"
+          "state": "known",
+          "value": 2,
+          "confidence": 0.86
         },
         "pacing": {
-          "state": "unknown"
+          "state": "known",
+          "value": 2,
+          "confidence": 0.76
         },
         "mysteryReveal": {
-          "state": "unknown"
+          "state": "known",
+          "value": 2,
+          "confidence": 0.72
         },
         "worldBuilding": {
-          "state": "unknown"
+          "state": "known",
+          "value": 2,
+          "confidence": 0.78
         },
         "characterArcWeight": {
-          "state": "unknown"
+          "state": "known",
+          "value": 2,
+          "confidence": 0.78
         },
         "relationshipStructure": {
-          "state": "unknown"
+          "state": "known",
+          "value": 2,
+          "confidence": 0.8
         },
         "comedy": {
           "state": "unknown"
         },
         "darkness": {
-          "state": "unknown"
+          "state": "known",
+          "value": 2,
+          "confidence": 0.76
         },
         "mentalStress": {
-          "state": "unknown"
+          "state": "known",
+          "value": 2,
+          "confidence": 0.74
         },
         "romance": {
-          "state": "unknown"
+          "state": "known",
+          "value": 3,
+          "confidence": 0.82
         },
         "emotionalWarmth": {
-          "state": "unknown"
+          "state": "known",
+          "value": 2,
+          "confidence": 0.78
         },
         "artRealism": {
-          "state": "unknown"
+          "state": "known",
+          "value": 2,
+          "confidence": 0.9
         },
         "artDensity": {
-          "state": "unknown"
+          "state": "known",
+          "value": 3,
+          "confidence": 0.9
         },
         "visualSoftness": {
-          "state": "unknown"
+          "state": "known",
+          "value": 4,
+          "confidence": 0.92
         },
         "motionImpact": {
-          "state": "unknown"
+          "state": "known",
+          "value": 2,
+          "confidence": 0.9
         }
       },
       "factorScope": "entry_1_3_volumes",
       "eligibility": {
-        "onboardingEligible": false,
-        "recommendationEligible": false,
-        "libraryOnly": true
+        "onboardingEligible": true,
+        "recommendationEligible": true,
+        "libraryOnly": false
       },
       "evidence": {
         "metadataConfidence": 1,
         "groupingConfidence": 1,
-        "sourceAgreement": 1
+        "sourceAgreement": 1,
+        "annotationReviewedAt": "2026-08-25T00:00:00+09:00"
       }
     },
     {
@@ -74053,41 +74461,76 @@
       "demographic": "shonen",
       "status": "unknown",
       "firstPublishedYear": 2011,
-      "genres": [],
-      "themes": [],
+      "genres": [
+        "action",
+        "fantasy",
+        "mystery"
+      ],
+      "themes": [
+        {
+          "id": "combat",
+          "centrality": 1,
+          "confidence": 0.72
+        },
+        {
+          "id": "investigation",
+          "centrality": 2,
+          "confidence": 0.88
+        }
+      ],
       "axes": {
         "progression": {
           "state": "unknown"
         },
         "problemSolving": {
-          "state": "unknown"
+          "state": "known",
+          "value": 2,
+          "confidence": 0.8
         },
         "strategy": {
-          "state": "unknown"
+          "state": "known",
+          "value": 2,
+          "confidence": 0.74
         },
         "pacing": {
-          "state": "unknown"
+          "state": "known",
+          "value": 2,
+          "confidence": 0.8
         },
         "mysteryReveal": {
-          "state": "unknown"
+          "state": "known",
+          "value": 3,
+          "confidence": 0.88
         },
         "worldBuilding": {
-          "state": "unknown"
+          "state": "known",
+          "value": 2,
+          "confidence": 0.78
         },
         "characterArcWeight": {
-          "state": "unknown"
+          "state": "known",
+          "value": 2,
+          "confidence": 0.76
         },
         "relationshipStructure": {
-          "state": "unknown"
+          "state": "known",
+          "value": 2,
+          "confidence": 0.8
         },
         "comedy": {
-          "state": "unknown"
+          "state": "known",
+          "value": 2,
+          "confidence": 0.72
         },
         "darkness": {
-          "state": "unknown"
+          "state": "known",
+          "value": 2,
+          "confidence": 0.72
         },
         "mentalStress": {
-          "state": "unknown"
+          "state": "known",
+          "value": 2,
+          "confidence": 0.74
         },
         "romance": {
           "state": "unknown"
@@ -74096,28 +74539,37 @@
           "state": "unknown"
         },
         "artRealism": {
-          "state": "unknown"
+          "state": "known",
+          "value": 3,
+          "confidence": 0.92
         },
         "artDensity": {
-          "state": "unknown"
+          "state": "known",
+          "value": 4,
+          "confidence": 0.95
         },
         "visualSoftness": {
-          "state": "unknown"
+          "state": "known",
+          "value": 0,
+          "confidence": 0.93
         },
         "motionImpact": {
-          "state": "unknown"
+          "state": "known",
+          "value": 2,
+          "confidence": 0.91
         }
       },
       "factorScope": "entry_1_3_volumes",
       "eligibility": {
-        "onboardingEligible": false,
-        "recommendationEligible": false,
-        "libraryOnly": true
+        "onboardingEligible": true,
+        "recommendationEligible": true,
+        "libraryOnly": false
       },
       "evidence": {
         "metadataConfidence": 1,
         "groupingConfidence": 1,
-        "sourceAgreement": 1
+        "sourceAgreement": 1,
+        "annotationReviewedAt": "2026-08-25T00:00:00+09:00"
       }
     },
     {
@@ -83498,35 +83950,58 @@
       "demographic": "shonen",
       "status": "unknown",
       "firstPublishedYear": 2012,
-      "genres": [],
-      "themes": [],
+      "genres": [
+        "comedy",
+        "romance"
+      ],
+      "themes": [
+        {
+          "id": "tournament",
+          "centrality": 1,
+          "confidence": 0.94
+        }
+      ],
       "axes": {
         "progression": {
-          "state": "unknown"
+          "state": "known",
+          "value": 2,
+          "confidence": 0.58
         },
         "problemSolving": {
           "state": "unknown"
         },
         "strategy": {
-          "state": "unknown"
+          "state": "known",
+          "value": 2,
+          "confidence": 0.66
         },
         "pacing": {
-          "state": "unknown"
+          "state": "known",
+          "value": 3,
+          "confidence": 0.7
         },
         "mysteryReveal": {
           "state": "unknown"
         },
         "worldBuilding": {
-          "state": "unknown"
+          "state": "known",
+          "value": 2,
+          "confidence": 0.7
         },
         "characterArcWeight": {
-          "state": "unknown"
+          "state": "known",
+          "value": 2,
+          "confidence": 0.64
         },
         "relationshipStructure": {
-          "state": "unknown"
+          "state": "known",
+          "value": 2,
+          "confidence": 0.66
         },
         "comedy": {
-          "state": "unknown"
+          "state": "known",
+          "value": 2,
+          "confidence": 0.66
         },
         "darkness": {
           "state": "unknown"
@@ -83535,34 +84010,47 @@
           "state": "unknown"
         },
         "romance": {
-          "state": "unknown"
+          "state": "known",
+          "value": 3,
+          "confidence": 0.82
         },
         "emotionalWarmth": {
-          "state": "unknown"
+          "state": "known",
+          "value": 2,
+          "confidence": 0.6
         },
         "artRealism": {
-          "state": "unknown"
+          "state": "known",
+          "value": 1,
+          "confidence": 0.91
         },
         "artDensity": {
-          "state": "unknown"
+          "state": "known",
+          "value": 2,
+          "confidence": 0.91
         },
         "visualSoftness": {
-          "state": "unknown"
+          "state": "known",
+          "value": 1,
+          "confidence": 0.91
         },
         "motionImpact": {
-          "state": "unknown"
+          "state": "known",
+          "value": 4,
+          "confidence": 0.93
         }
       },
       "factorScope": "entry_1_3_volumes",
       "eligibility": {
-        "onboardingEligible": false,
-        "recommendationEligible": false,
-        "libraryOnly": true
+        "onboardingEligible": true,
+        "recommendationEligible": true,
+        "libraryOnly": false
       },
       "evidence": {
         "metadataConfidence": 1,
         "groupingConfidence": 1,
-        "sourceAgreement": 1
+        "sourceAgreement": 1,
+        "annotationReviewedAt": "2026-08-25T00:00:00+09:00"
       }
     },
     {
@@ -112164,41 +112652,73 @@
       "demographic": "shonen",
       "status": "unknown",
       "firstPublishedYear": 2023,
-      "genres": [],
-      "themes": [],
+      "genres": [
+        "action",
+        "fantasy"
+      ],
+      "themes": [
+        {
+          "id": "combat",
+          "centrality": 2,
+          "confidence": 0.84
+        },
+        {
+          "id": "school",
+          "centrality": 1,
+          "confidence": 0.78
+        }
+      ],
       "axes": {
         "progression": {
-          "state": "unknown"
+          "state": "known",
+          "value": 2,
+          "confidence": 0.66
         },
         "problemSolving": {
-          "state": "unknown"
+          "state": "known",
+          "value": 2,
+          "confidence": 0.62
         },
         "strategy": {
           "state": "unknown"
         },
         "pacing": {
-          "state": "unknown"
+          "state": "known",
+          "value": 2,
+          "confidence": 0.72
         },
         "mysteryReveal": {
           "state": "unknown"
         },
         "worldBuilding": {
-          "state": "unknown"
+          "state": "known",
+          "value": 2,
+          "confidence": 0.78
         },
         "characterArcWeight": {
-          "state": "unknown"
+          "state": "known",
+          "value": 2,
+          "confidence": 0.65
         },
         "relationshipStructure": {
-          "state": "unknown"
+          "state": "known",
+          "value": 2,
+          "confidence": 0.76
         },
         "comedy": {
-          "state": "unknown"
+          "state": "known",
+          "value": 1,
+          "confidence": 0.6
         },
         "darkness": {
-          "state": "unknown"
+          "state": "known",
+          "value": 2,
+          "confidence": 0.84
         },
         "mentalStress": {
-          "state": "unknown"
+          "state": "known",
+          "value": 2,
+          "confidence": 0.82
         },
         "romance": {
           "state": "unknown"
@@ -112207,13 +112727,19 @@
           "state": "unknown"
         },
         "artRealism": {
-          "state": "unknown"
+          "state": "known",
+          "value": 2,
+          "confidence": 0.9
         },
         "artDensity": {
-          "state": "unknown"
+          "state": "known",
+          "value": 2,
+          "confidence": 0.88
         },
         "visualSoftness": {
-          "state": "unknown"
+          "state": "known",
+          "value": 3,
+          "confidence": 0.87
         },
         "motionImpact": {
           "state": "unknown"
@@ -112221,14 +112747,15 @@
       },
       "factorScope": "entry_1_3_volumes",
       "eligibility": {
-        "onboardingEligible": false,
-        "recommendationEligible": false,
-        "libraryOnly": true
+        "onboardingEligible": true,
+        "recommendationEligible": true,
+        "libraryOnly": false
       },
       "evidence": {
         "metadataConfidence": 1,
         "groupingConfidence": 1,
-        "sourceAgreement": 1
+        "sourceAgreement": 1,
+        "annotationReviewedAt": "2026-08-25T00:00:00+09:00"
       }
     },
     {
@@ -119632,11 +120159,26 @@
       "demographic": "seinen",
       "status": "unknown",
       "firstPublishedYear": 2016,
-      "genres": [],
-      "themes": [],
+      "genres": [
+        "sliceOfLife"
+      ],
+      "themes": [
+        {
+          "id": "cooking",
+          "centrality": 2,
+          "confidence": 0.88
+        },
+        {
+          "id": "sportsCompetition",
+          "centrality": 1,
+          "confidence": 0.72
+        }
+      ],
       "axes": {
         "progression": {
-          "state": "unknown"
+          "state": "known",
+          "value": 0,
+          "confidence": 0.8
         },
         "problemSolving": {
           "state": "unknown"
@@ -119645,25 +120187,39 @@
           "state": "unknown"
         },
         "pacing": {
-          "state": "unknown"
+          "state": "known",
+          "value": 0,
+          "confidence": 0.8
         },
         "mysteryReveal": {
-          "state": "unknown"
+          "state": "known",
+          "value": 0,
+          "confidence": 0.8
         },
         "worldBuilding": {
-          "state": "unknown"
+          "state": "known",
+          "value": 0,
+          "confidence": 0.8
         },
         "characterArcWeight": {
-          "state": "unknown"
+          "state": "known",
+          "value": 2,
+          "confidence": 0.78
         },
         "relationshipStructure": {
-          "state": "unknown"
+          "state": "known",
+          "value": 1,
+          "confidence": 0.74
         },
         "comedy": {
-          "state": "unknown"
+          "state": "known",
+          "value": 2,
+          "confidence": 0.71
         },
         "darkness": {
-          "state": "unknown"
+          "state": "known",
+          "value": 0,
+          "confidence": 0.55
         },
         "mentalStress": {
           "state": "unknown"
@@ -119672,16 +120228,24 @@
           "state": "unknown"
         },
         "emotionalWarmth": {
-          "state": "unknown"
+          "state": "known",
+          "value": 4,
+          "confidence": 0.78
         },
         "artRealism": {
-          "state": "unknown"
+          "state": "known",
+          "value": 2,
+          "confidence": 0.9
         },
         "artDensity": {
-          "state": "unknown"
+          "state": "known",
+          "value": 1,
+          "confidence": 0.89
         },
         "visualSoftness": {
-          "state": "unknown"
+          "state": "known",
+          "value": 4,
+          "confidence": 0.94
         },
         "motionImpact": {
           "state": "unknown"
@@ -119689,14 +120253,15 @@
       },
       "factorScope": "entry_1_3_volumes",
       "eligibility": {
-        "onboardingEligible": false,
-        "recommendationEligible": false,
-        "libraryOnly": true
+        "onboardingEligible": true,
+        "recommendationEligible": true,
+        "libraryOnly": false
       },
       "evidence": {
         "metadataConfidence": 1,
         "groupingConfidence": 1,
-        "sourceAgreement": 1
+        "sourceAgreement": 1,
+        "annotationReviewedAt": "2026-08-25T00:00:00+09:00"
       }
     },
     {
@@ -124436,35 +125001,58 @@
       "demographic": "shojo",
       "status": "unknown",
       "firstPublishedYear": 2015,
-      "genres": [],
-      "themes": [],
+      "genres": [
+        "comedy",
+        "romance"
+      ],
+      "themes": [
+        {
+          "id": "school",
+          "centrality": 1,
+          "confidence": 0.72
+        }
+      ],
       "axes": {
         "progression": {
           "state": "unknown"
         },
         "problemSolving": {
-          "state": "unknown"
+          "state": "known",
+          "value": 1,
+          "confidence": 0.56
         },
         "strategy": {
-          "state": "unknown"
+          "state": "known",
+          "value": 1,
+          "confidence": 0.55
         },
         "pacing": {
-          "state": "unknown"
+          "state": "known",
+          "value": 2,
+          "confidence": 0.74
         },
         "mysteryReveal": {
-          "state": "unknown"
+          "state": "known",
+          "value": 2,
+          "confidence": 0.6
         },
         "worldBuilding": {
           "state": "unknown"
         },
         "characterArcWeight": {
-          "state": "unknown"
+          "state": "known",
+          "value": 2,
+          "confidence": 0.76
         },
         "relationshipStructure": {
-          "state": "unknown"
+          "state": "known",
+          "value": 2,
+          "confidence": 0.82
         },
         "comedy": {
-          "state": "unknown"
+          "state": "known",
+          "value": 2,
+          "confidence": 0.86
         },
         "darkness": {
           "state": "unknown"
@@ -124473,19 +125061,29 @@
           "state": "unknown"
         },
         "romance": {
-          "state": "unknown"
+          "state": "known",
+          "value": 4,
+          "confidence": 0.9
         },
         "emotionalWarmth": {
-          "state": "unknown"
+          "state": "known",
+          "value": 2,
+          "confidence": 0.61
         },
         "artRealism": {
-          "state": "unknown"
+          "state": "known",
+          "value": 2,
+          "confidence": 0.92
         },
         "artDensity": {
-          "state": "unknown"
+          "state": "known",
+          "value": 2,
+          "confidence": 0.91
         },
         "visualSoftness": {
-          "state": "unknown"
+          "state": "known",
+          "value": 3,
+          "confidence": 0.91
         },
         "motionImpact": {
           "state": "unknown"
@@ -124493,14 +125091,15 @@
       },
       "factorScope": "entry_1_3_volumes",
       "eligibility": {
-        "onboardingEligible": false,
-        "recommendationEligible": false,
-        "libraryOnly": true
+        "onboardingEligible": true,
+        "recommendationEligible": true,
+        "libraryOnly": false
       },
       "evidence": {
         "metadataConfidence": 1,
         "groupingConfidence": 1,
-        "sourceAgreement": 1
+        "sourceAgreement": 1,
+        "annotationReviewedAt": "2026-08-25T00:00:00+09:00"
       }
     },
     {
@@ -125602,56 +126201,93 @@
       "demographic": "seinen",
       "status": "unknown",
       "firstPublishedYear": 2012,
-      "genres": [],
-      "themes": [],
+      "genres": [
+        "fantasy"
+      ],
+      "themes": [
+        {
+          "id": "reincarnation",
+          "centrality": 2,
+          "confidence": 0.92
+        },
+        {
+          "id": "school",
+          "centrality": 1,
+          "confidence": 0.7
+        }
+      ],
       "axes": {
         "progression": {
           "state": "unknown"
         },
         "problemSolving": {
-          "state": "unknown"
+          "state": "known",
+          "value": 2,
+          "confidence": 0.7
         },
         "strategy": {
           "state": "unknown"
         },
         "pacing": {
-          "state": "unknown"
+          "state": "known",
+          "value": 2,
+          "confidence": 0.8
         },
         "mysteryReveal": {
-          "state": "unknown"
+          "state": "known",
+          "value": 2,
+          "confidence": 0.78
         },
         "worldBuilding": {
-          "state": "unknown"
+          "state": "known",
+          "value": 2,
+          "confidence": 0.82
         },
         "characterArcWeight": {
-          "state": "unknown"
+          "state": "known",
+          "value": 2,
+          "confidence": 0.82
         },
         "relationshipStructure": {
-          "state": "unknown"
+          "state": "known",
+          "value": 2,
+          "confidence": 0.8
         },
         "comedy": {
           "state": "unknown"
         },
         "darkness": {
-          "state": "unknown"
+          "state": "known",
+          "value": 2,
+          "confidence": 0.74
         },
         "mentalStress": {
-          "state": "unknown"
+          "state": "known",
+          "value": 2,
+          "confidence": 0.76
         },
         "romance": {
           "state": "unknown"
         },
         "emotionalWarmth": {
-          "state": "unknown"
+          "state": "known",
+          "value": 2,
+          "confidence": 0.72
         },
         "artRealism": {
-          "state": "unknown"
+          "state": "known",
+          "value": 2,
+          "confidence": 0.88
         },
         "artDensity": {
-          "state": "unknown"
+          "state": "known",
+          "value": 1,
+          "confidence": 0.87
         },
         "visualSoftness": {
-          "state": "unknown"
+          "state": "known",
+          "value": 2,
+          "confidence": 0.9
         },
         "motionImpact": {
           "state": "unknown"
@@ -125659,14 +126295,15 @@
       },
       "factorScope": "entry_1_3_volumes",
       "eligibility": {
-        "onboardingEligible": false,
-        "recommendationEligible": false,
-        "libraryOnly": true
+        "onboardingEligible": true,
+        "recommendationEligible": true,
+        "libraryOnly": false
       },
       "evidence": {
         "metadataConfidence": 1,
         "groupingConfidence": 1,
-        "sourceAgreement": 1
+        "sourceAgreement": 1,
+        "annotationReviewedAt": "2026-08-25T00:00:00+09:00"
       }
     },
     {
@@ -131278,8 +131915,22 @@
       "demographic": "seinen",
       "status": "unknown",
       "firstPublishedYear": 2014,
-      "genres": [],
-      "themes": [],
+      "genres": [
+        "scienceFiction",
+        "sliceOfLife"
+      ],
+      "themes": [
+        {
+          "id": "school",
+          "centrality": 1,
+          "confidence": 0.72
+        },
+        {
+          "id": "war",
+          "centrality": 1,
+          "confidence": 0.72
+        }
+      ],
       "axes": {
         "progression": {
           "state": "unknown"
@@ -131288,46 +131939,74 @@
           "state": "unknown"
         },
         "strategy": {
-          "state": "unknown"
+          "state": "known",
+          "value": 2,
+          "confidence": 0.8
         },
         "pacing": {
-          "state": "unknown"
+          "state": "known",
+          "value": 2,
+          "confidence": 0.78
         },
         "mysteryReveal": {
-          "state": "unknown"
+          "state": "known",
+          "value": 2,
+          "confidence": 0.7
         },
         "worldBuilding": {
-          "state": "unknown"
+          "state": "known",
+          "value": 2,
+          "confidence": 0.86
         },
         "characterArcWeight": {
-          "state": "unknown"
+          "state": "known",
+          "value": 2,
+          "confidence": 0.68
         },
         "relationshipStructure": {
-          "state": "unknown"
+          "state": "known",
+          "value": 2,
+          "confidence": 0.8
         },
         "comedy": {
-          "state": "unknown"
+          "state": "known",
+          "value": 2,
+          "confidence": 0.7
         },
         "darkness": {
-          "state": "unknown"
+          "state": "known",
+          "value": 2,
+          "confidence": 0.78
         },
         "mentalStress": {
-          "state": "unknown"
+          "state": "known",
+          "value": 2,
+          "confidence": 0.78
         },
         "romance": {
-          "state": "unknown"
+          "state": "known",
+          "value": 2,
+          "confidence": 0.72
         },
         "emotionalWarmth": {
-          "state": "unknown"
+          "state": "known",
+          "value": 2,
+          "confidence": 0.74
         },
         "artRealism": {
-          "state": "unknown"
+          "state": "known",
+          "value": 2,
+          "confidence": 0.9
         },
         "artDensity": {
-          "state": "unknown"
+          "state": "known",
+          "value": 4,
+          "confidence": 0.94
         },
         "visualSoftness": {
-          "state": "unknown"
+          "state": "known",
+          "value": 2,
+          "confidence": 0.82
         },
         "motionImpact": {
           "state": "unknown"
@@ -131335,14 +132014,15 @@
       },
       "factorScope": "entry_1_3_volumes",
       "eligibility": {
-        "onboardingEligible": false,
-        "recommendationEligible": false,
-        "libraryOnly": true
+        "onboardingEligible": true,
+        "recommendationEligible": true,
+        "libraryOnly": false
       },
       "evidence": {
         "metadataConfidence": 1,
         "groupingConfidence": 1,
-        "sourceAgreement": 1
+        "sourceAgreement": 1,
+        "annotationReviewedAt": "2026-08-25T00:00:00+09:00"
       }
     },
     {
@@ -133851,56 +134531,95 @@
       "demographic": "shonen",
       "status": "unknown",
       "firstPublishedYear": 2022,
-      "genres": [],
-      "themes": [],
+      "genres": [
+        "action",
+        "fantasy",
+        "mystery"
+      ],
+      "themes": [
+        {
+          "id": "combat",
+          "centrality": 2,
+          "confidence": 0.86
+        },
+        {
+          "id": "investigation",
+          "centrality": 2,
+          "confidence": 0.84
+        }
+      ],
       "axes": {
         "progression": {
           "state": "unknown"
         },
         "problemSolving": {
-          "state": "unknown"
+          "state": "known",
+          "value": 2,
+          "confidence": 0.56
         },
         "strategy": {
           "state": "unknown"
         },
         "pacing": {
-          "state": "unknown"
+          "state": "known",
+          "value": 2,
+          "confidence": 0.76
         },
         "mysteryReveal": {
-          "state": "unknown"
+          "state": "known",
+          "value": 2,
+          "confidence": 0.82
         },
         "worldBuilding": {
-          "state": "unknown"
+          "state": "known",
+          "value": 2,
+          "confidence": 0.78
         },
         "characterArcWeight": {
-          "state": "unknown"
+          "state": "known",
+          "value": 2,
+          "confidence": 0.72
         },
         "relationshipStructure": {
-          "state": "unknown"
+          "state": "known",
+          "value": 2,
+          "confidence": 0.8
         },
         "comedy": {
           "state": "unknown"
         },
         "darkness": {
-          "state": "unknown"
+          "state": "known",
+          "value": 4,
+          "confidence": 0.9
         },
         "mentalStress": {
-          "state": "unknown"
+          "state": "known",
+          "value": 2,
+          "confidence": 0.78
         },
         "romance": {
           "state": "unknown"
         },
         "emotionalWarmth": {
-          "state": "unknown"
+          "state": "known",
+          "value": 2,
+          "confidence": 0.65
         },
         "artRealism": {
-          "state": "unknown"
+          "state": "known",
+          "value": 3,
+          "confidence": 0.91
         },
         "artDensity": {
-          "state": "unknown"
+          "state": "known",
+          "value": 4,
+          "confidence": 0.95
         },
         "visualSoftness": {
-          "state": "unknown"
+          "state": "known",
+          "value": 2,
+          "confidence": 0.9
         },
         "motionImpact": {
           "state": "unknown"
@@ -133908,14 +134627,15 @@
       },
       "factorScope": "entry_1_3_volumes",
       "eligibility": {
-        "onboardingEligible": false,
-        "recommendationEligible": false,
-        "libraryOnly": true
+        "onboardingEligible": true,
+        "recommendationEligible": true,
+        "libraryOnly": false
       },
       "evidence": {
         "metadataConfidence": 1,
         "groupingConfidence": 1,
-        "sourceAgreement": 1
+        "sourceAgreement": 1,
+        "annotationReviewedAt": "2026-08-25T00:00:00+09:00"
       }
     },
     {
@@ -135996,11 +136716,27 @@
       "demographic": "shonen",
       "status": "unknown",
       "firstPublishedYear": 2009,
-      "genres": [],
-      "themes": [],
+      "genres": [
+        "action",
+        "fantasy"
+      ],
+      "themes": [
+        {
+          "id": "combat",
+          "centrality": 2,
+          "confidence": 0.88
+        },
+        {
+          "id": "school",
+          "centrality": 2,
+          "confidence": 0.86
+        }
+      ],
       "axes": {
         "progression": {
-          "state": "unknown"
+          "state": "known",
+          "value": 2,
+          "confidence": 0.82
         },
         "problemSolving": {
           "state": "unknown"
@@ -136009,25 +136745,39 @@
           "state": "unknown"
         },
         "pacing": {
-          "state": "unknown"
+          "state": "known",
+          "value": 2,
+          "confidence": 0.8
         },
         "mysteryReveal": {
-          "state": "unknown"
+          "state": "known",
+          "value": 2,
+          "confidence": 0.68
         },
         "worldBuilding": {
-          "state": "unknown"
+          "state": "known",
+          "value": 2,
+          "confidence": 0.86
         },
         "characterArcWeight": {
-          "state": "unknown"
+          "state": "known",
+          "value": 2,
+          "confidence": 0.8
         },
         "relationshipStructure": {
-          "state": "unknown"
+          "state": "known",
+          "value": 2,
+          "confidence": 0.84
         },
         "comedy": {
-          "state": "unknown"
+          "state": "known",
+          "value": 2,
+          "confidence": 0.61
         },
         "darkness": {
-          "state": "unknown"
+          "state": "known",
+          "value": 2,
+          "confidence": 0.82
         },
         "mentalStress": {
           "state": "unknown"
@@ -136036,16 +136786,24 @@
           "state": "unknown"
         },
         "emotionalWarmth": {
-          "state": "unknown"
+          "state": "known",
+          "value": 2,
+          "confidence": 0.64
         },
         "artRealism": {
-          "state": "unknown"
+          "state": "known",
+          "value": 2,
+          "confidence": 0.9
         },
         "artDensity": {
-          "state": "unknown"
+          "state": "known",
+          "value": 3,
+          "confidence": 0.91
         },
         "visualSoftness": {
-          "state": "unknown"
+          "state": "known",
+          "value": 1,
+          "confidence": 0.89
         },
         "motionImpact": {
           "state": "unknown"
@@ -136053,14 +136811,15 @@
       },
       "factorScope": "entry_1_3_volumes",
       "eligibility": {
-        "onboardingEligible": false,
-        "recommendationEligible": false,
-        "libraryOnly": true
+        "onboardingEligible": true,
+        "recommendationEligible": true,
+        "libraryOnly": false
       },
       "evidence": {
         "metadataConfidence": 1,
         "groupingConfidence": 1,
-        "sourceAgreement": 1
+        "sourceAgreement": 1,
+        "annotationReviewedAt": "2026-08-25T00:00:00+09:00"
       }
     },
     {

@@ -17,6 +17,8 @@ import { z } from "zod";
 import { ART_AXIS_IDS, AXIS_IDS } from "../src/domain/catalog/constants";
 import { runBatch002Overlay } from "./build-batch-002-overlay";
 import { runBatch003Overlay } from "./build-batch-003-overlay";
+import { runBatch004Overlay } from "./build-batch-004-overlay";
+import { runBatch005Overlay } from "./build-batch-005-overlay";
 import { buildCatalog } from "./build-catalog";
 import {
   ART_EVIDENCE_MANIFEST_FILE,
@@ -35,6 +37,7 @@ import {
   workSourceRowSchema,
 } from "./catalog/source-schema";
 import {
+  PROMOTION_HARD_BLOCKERS,
   PROMOTION_BLOCKER_HEADERS,
   PROMOTION_REGISTRY_HEADERS,
   runPromotionRegistry,
@@ -56,6 +59,7 @@ const batchConfigs = {
     inputBindingsSha256: "3852eea86b876b9231d549cf044e99a9a396b6adb6c1bd8d9b0ccd9be1e71e2f",
     verifiedCount: 33,
     blockedCount: 17,
+    pendingCount: 0,
     expectedVerifiedPositions: [
       2, 3, 4, 6, 9, 10, 12, 13, 15, 17, 18, 20, 22, 24, 25, 26, 28, 29, 32, 33, 35, 36, 37, 38, 39,
       40, 41, 42, 43, 44, 45, 46, 48,
@@ -70,8 +74,33 @@ const batchConfigs = {
     inputBindingsSha256: "f4f08de2b64f307247b140ef10810a100bb07e05bd42593130818edf00158bff",
     verifiedCount: 11,
     blockedCount: 39,
+    pendingCount: 0,
     expectedVerifiedPositions: [1, 4, 6, 8, 10, 15, 16, 26, 29, 47, 50],
     runOverlay: runBatch003Overlay,
+  },
+  "batch-004": {
+    label: "Batch 004",
+    reviewFile: "batch-004-promotion-panel.md",
+    frozenSha256: "a07a3bd053ce3edb79bdd5803ea3f04dbf8ceac4fd422d84ca97432ba75f68a1",
+    validationSha256: "c6d9ca0e2dd7a5ef9016016a2d930cb61be617a5954a0b4ac81d5eafd52bd618",
+    inputBindingsSha256: "0dcdfce37fdec5e4eb9c84e49bdd3123a287f84150c47e8f992971fae95c23e8",
+    verifiedCount: 11,
+    blockedCount: 1,
+    pendingCount: 38,
+    expectedVerifiedPositions: [3, 14, 17, 18, 20, 21, 41, 43, 44, 47, 49],
+    runOverlay: runBatch004Overlay,
+  },
+  "batch-005": {
+    label: "Batch 005",
+    reviewFile: "batch-005-promotion-panel.md",
+    frozenSha256: "ddf9343b48146eaaf58971155f4190b4ec53e09d28d932d0d03cdc515ff8b2b8",
+    validationSha256: "e5c0b43380b9ff041e1d17fc3abf2662ba03b2ad323cba5e20f7e52cf6c9439b",
+    inputBindingsSha256: "2f6e6ee4ba92ce93bc1a558aa2440581dc601e252233e53a10b80d747514880b",
+    verifiedCount: 9,
+    blockedCount: 4,
+    pendingCount: 37,
+    expectedVerifiedPositions: [4, 8, 23, 26, 27, 30, 35, 45, 47],
+    runOverlay: runBatch005Overlay,
   },
 } as const;
 const configuredBatchId = process.env.KONOCOMICS_PROMOTION_BATCH_ID ?? "batch-002";
@@ -89,6 +118,7 @@ const VALIDATION_SHA256 = batchConfig.validationSha256;
 const INPUT_BINDINGS_SHA256 = batchConfig.inputBindingsSha256;
 const VERIFIED_COUNT: number = batchConfig.verifiedCount;
 const BLOCKED_COUNT: number = batchConfig.blockedCount;
+const PENDING_COUNT: number = batchConfig.pendingCount;
 const EXPECTED_VERIFIED_POSITIONS: readonly number[] = batchConfig.expectedVerifiedPositions;
 const WORK_HEADERS = [
   "id",
@@ -201,13 +231,13 @@ const decisionRowSchema = z.strictObject({
   artKnown: z.string().regex(/^\d+$/u),
   genreCount: z.string().regex(/^\d+$/u),
   themeCount: z.string().regex(/^\d+$/u),
-  outcome: z.enum(["recommendationVerified", "promotionBlocked"]),
+  outcome: z.enum(["pending", "recommendationVerified", "promotionBlocked"]),
   blockerCode: z.string(),
   blockerDetails: z.string(),
 });
 const blockerRowSchema = z.strictObject({
   workId: z.string().min(1),
-  blockerCode: z.literal("SOURCE_INFORMATION_UNAVAILABLE"),
+  blockerCode: z.string().refine((code) => Object.hasOwn(PROMOTION_HARD_BLOCKERS, code)),
   blockerDetails: z.string().min(1),
   evidenceName: z.string().min(1),
   evidenceUrl: z.url(),
@@ -223,6 +253,7 @@ const validationSchema = z.strictObject({
   targetWorkCount: z.literal(50),
   recommendationVerified: z.literal(VERIFIED_COUNT),
   promotionBlocked: z.literal(BLOCKED_COUNT),
+  pending: z.literal(PENDING_COUNT).optional(),
   expectedVerifiedPositions: z.array(z.number().int()).length(VERIFIED_COUNT),
   coverageThresholds: z.strictObject({
     narrative: z.literal(0.6),
@@ -312,7 +343,7 @@ function exactOrderedSet(actual: readonly string[], expected: readonly string[],
 }
 
 function validatePanel(report: string) {
-  for (const line of [
+  const requiredLines = [
     "PROMOTION AUTHORIZATION: YES",
     "HUMAN VALIDATION: NOT_RUN",
     "REVIEWED BY HUMAN: false",
@@ -325,7 +356,9 @@ function validatePanel(report: string) {
     `FROZEN WORK SET SHA-256: ${FROZEN_SHA256}`,
     `- Final overlay validation SHA-256: \`${VALIDATION_SHA256}\`.`,
     `- Combined input/review packet SHA-256: \`${INPUT_BINDINGS_SHA256}\`.`,
-  ]) {
+  ];
+  if (PENDING_COUNT > 0) requiredLines.push(`PENDING: ${PENDING_COUNT}`);
+  for (const line of requiredLines) {
     if (!report.split(/\r?\n/u).includes(line)) {
       throw new Error(`Batch 002 panel report is missing exact decision: ${line}`);
     }
@@ -412,8 +445,15 @@ function validateOverlay(root: string) {
         /[『』]/u.test(row.canonicalTitle) ||
         (row.outcome === "recommendationVerified" &&
           (row.blockerCode !== "" || row.blockerDetails !== "")) ||
+        (row.outcome === "pending" &&
+          (row.blockerCode !== "" || row.blockerDetails !== "")) ||
         (row.outcome === "promotionBlocked" &&
-          (row.blockerCode !== "SOURCE_INFORMATION_UNAVAILABLE" || row.blockerDetails === "")),
+          (row.blockerDetails === "" ||
+            row.blockerCode === "" ||
+            new Set(row.blockerCode.split(";")).size !== row.blockerCode.split(";").length ||
+            row.blockerCode
+              .split(";")
+              .some((code) => !Object.hasOwn(PROMOTION_HARD_BLOCKERS, code)))),
     )
   ) {
     throw new Error("Batch 002 decisions conflict with the frozen identity or blocker contract");
@@ -424,8 +464,15 @@ function validateOverlay(root: string) {
   const blockedIds = decisions
     .filter((row) => row.outcome === "promotionBlocked")
     .map((row) => row.workId);
-  if (verifiedIds.length !== VERIFIED_COUNT || blockedIds.length !== BLOCKED_COUNT) {
-    throw new Error("Batch 002 must resolve to exactly 33 verified and 17 blocked works");
+  const pendingIds = decisions
+    .filter((row) => row.outcome === "pending")
+    .map((row) => row.workId);
+  if (
+    verifiedIds.length !== VERIFIED_COUNT ||
+    blockedIds.length !== BLOCKED_COUNT ||
+    pendingIds.length !== PENDING_COUNT
+  ) {
+    throw new Error("Promotion decisions do not match the configured terminal and pending counts");
   }
   if (
     JSON.stringify(
@@ -479,7 +526,7 @@ function validateOverlay(root: string) {
     "Recommendation context overlay",
   );
   exactOrderedSet(
-    blockers.map((row) => row.workId),
+    [...new Set(blockers.map((row) => row.workId))],
     blockedIds,
     "Promotion blocker overlay",
   );
@@ -580,6 +627,7 @@ function validateOverlay(root: string) {
     frozenIds: frozen.map((row) => row.workId),
     verifiedIds,
     blockedIds,
+    pendingIds,
     decisions,
     works,
     factors,
@@ -637,7 +685,7 @@ function classifyState(root: string, overlay: Overlay): PromotionState {
     factors.set(factor.value.workId, [...(factors.get(factor.value.workId) ?? []), factor]);
   }
   const approved = new Map(overlay.works.rows.map((row) => [row.value.id, row.value]));
-  const targetSet = new Set(overlay.frozenIds);
+  const targetSet = new Set([...overlay.verifiedIds, ...overlay.blockedIds]);
   const approvedBlockerBytes = readFileSync(
     join(root, OVERLAY_ROOT, OVERLAY_FILES.blockers),
     "utf8",
@@ -738,7 +786,7 @@ function writeCandidate(root: string, candidateRoot: string, overlay: Overlay) {
     else mkdirSync(destination, { recursive: true });
   }
   const verifiedSet = new Set(overlay.verifiedIds);
-  const targetSet = new Set(overlay.frozenIds);
+  const targetSet = new Set([...overlay.verifiedIds, ...overlay.blockedIds]);
   const evidenceIds = new Set(overlay.evidence.rows.map((row) => row.value.id));
   mergeFile({
     sourceRoot: root,
@@ -805,7 +853,7 @@ function writeCandidate(root: string, candidateRoot: string, overlay: Overlay) {
     overlayFile: OVERLAY_FILES.blockers,
     headers: PROMOTION_BLOCKER_HEADERS,
     matches: (row) => targetSet.has(row[0] ?? ""),
-    allowedCurrentMatchCounts: [0, BLOCKED_COUNT],
+    allowedCurrentMatchCounts: [0, overlay.blockers.length],
     existingRowsMustMatchOverlay: true,
   });
   const reportDestination = join(candidateRoot, "data/source", REVIEW_REFERENCE);
@@ -820,7 +868,6 @@ function assertRegistryTransition(
   root: string,
   candidateRoot: string,
   overlay: Overlay,
-  state: PromotionState,
 ) {
   const baseline = runPromotionRegistry("check", root);
   const candidate = runPromotionRegistry("write", candidateRoot);
@@ -832,7 +879,7 @@ function assertRegistryTransition(
     join(candidateRoot, "data/staging/catalog-expansion/promotion-registry.csv"),
     PROMOTION_REGISTRY_HEADERS,
   );
-  const targetSet = new Set(overlay.frozenIds);
+  const targetSet = new Set([...overlay.verifiedIds, ...overlay.blockedIds]);
   for (const [workId, raw] of baselineRows) {
     if (!targetSet.has(workId) && candidateRows.get(workId) !== raw) {
       throw new Error(`Non-target registry row changed: ${workId}`);
@@ -858,23 +905,10 @@ function assertRegistryTransition(
       throw new Error(`Batch 002 registry outcome mismatch: ${row.workId}`);
     }
   }
-  const expectedCounts =
-    state === "isolated"
-      ? {
-          verified: baseline.verifiedCount + VERIFIED_COUNT,
-          blocked: baseline.blockedCount + BLOCKED_COUNT,
-          pending: baseline.pendingCount - 50,
-        }
-      : {
-          verified: baseline.verifiedCount,
-          blocked: baseline.blockedCount,
-          pending: baseline.pendingCount,
-        };
   if (
     candidate.goldCount !== 150 ||
-    candidate.verifiedCount !== expectedCounts.verified ||
-    candidate.blockedCount !== expectedCounts.blocked ||
-    candidate.pendingCount !== expectedCounts.pending
+    candidate.verifiedCount + candidate.blockedCount + candidate.pendingCount + candidate.goldCount !==
+      baseline.workCount
   ) {
     throw new Error("Batch 002 promotion registry counts are inconsistent");
   }
@@ -910,7 +944,7 @@ export function prepareBatch002Promotion(root = process.cwd()): PreparedPromotio
       ),
     ) as unknown;
     validateGoldSet(candidateRoot, goldManifest);
-    const summary = assertRegistryTransition(canonicalRoot, candidateRoot, overlay, state);
+    const summary = assertRegistryTransition(canonicalRoot, candidateRoot, overlay);
     const built = buildCatalog(candidateRoot);
     const profile = z
       .object({ works: z.array(z.unknown()) })

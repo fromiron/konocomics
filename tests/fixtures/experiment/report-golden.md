@@ -1,6 +1,6 @@
 # konocomics Taste vs Baseline レポート
 
-- カタログバージョン: v1\-860c43f671ce
+- カタログバージョン: v1\-5345207c47c5
 - ファクター辞書バージョン: v1
 - Baseline バージョン: v1
 - プロフィール数: 3
@@ -324,7 +324,23 @@
 | 2 | 0.26207755102 | market | overall | bayesianRating | なし | なし | いいえ |
 | 3 | 0.1 | maturity | overall | maturity | なし | なし | はい |
 
-#### 5. 怪獣8号 (work\-23851cd7ccf1d0c676cc)
+#### 5. 黄泉のツガイ (work\-0cf463005cc77eeded8e)
+
+- スコア: 0.845453260807
+- 最も近いアンカー: 鋼の錬金術師 (fullmetal\-alchemist)
+- 理由: 第1巻のレビュー情報を順位に反映しています。
+- ベイズ補正レビュー: 4.504489795918
+- 刊行蓄積度: 0.951838730514
+- 寄与度上位5件:
+
+| 順位 | 寄与 | source | group | factorId | anchorWorkIds | negativeReasonId | 説明対象 |
+| -: | -: | --- | --- | --- | --- | --- | --- |
+| 1 | 0.270269387755 | market | overall | bayesianRating | なし | なし | はい |
+| 2 | 0.24 | genre | genre | action | fullmetal\-alchemist | なし | はい |
+| 3 | 0.24 | genre | genre | fantasy | fullmetal\-alchemist | なし | はい |
+| 4 | 0.095183873051 | maturity | overall | maturity | なし | なし | はい |
+
+#### 6. 怪獣8号 (work\-23851cd7ccf1d0c676cc)
 
 - スコア: 0.84207755102
 - 最も近いアンカー: BLAME\! (blame)
@@ -340,7 +356,7 @@
 | 3 | 0.24 | genre | genre | scienceFiction | blame | なし | はい |
 | 4 | 0.1 | maturity | overall | maturity | なし | なし | はい |
 
-#### 6. あずみ (work\-2f39795212f5ad8db155)
+#### 7. あずみ (work\-2f39795212f5ad8db155)
 
 - スコア: 0.84207755102
 - 最も近いアンカー: キングダム (kingdom)
@@ -356,23 +372,7 @@
 | 3 | 0.24 | genre | genre | historical | kingdom | なし | はい |
 | 4 | 0.1 | maturity | overall | maturity | なし | なし | はい |
 
-#### 7. 逃げ上手の若君 (work\-db80d94709b62aa8823f)
-
-- スコア: 0.84207755102
-- 最も近いアンカー: キングダム (kingdom)
-- 理由: 『キングダム』と「アクション」が共通しています。
-- ベイズ補正レビュー: 4.367959183673
-- 刊行蓄積度: 1
-- 寄与度上位5件:
-
-| 順位 | 寄与 | source | group | factorId | anchorWorkIds | negativeReasonId | 説明対象 |
-| -: | -: | --- | --- | --- | --- | --- | --- |
-| 1 | 0.26207755102 | market | overall | bayesianRating | なし | なし | いいえ |
-| 2 | 0.24 | genre | genre | action | kingdom | なし | はい |
-| 3 | 0.24 | genre | genre | historical | kingdom | なし | はい |
-| 4 | 0.1 | maturity | overall | maturity | なし | なし | はい |
-
-#### 8. YAIBA (work\-fabc7f5d853e361acaf3)
+#### 8. アンデッドアンラック (work\-53fb816835ab36e40a1f)
 
 - スコア: 0.84207755102
 - 最も近いアンカー: 鋼の錬金術師 (fullmetal\-alchemist)
@@ -388,36 +388,36 @@
 | 3 | 0.24 | genre | genre | fantasy | fullmetal\-alchemist | なし | はい |
 | 4 | 0.1 | maturity | overall | maturity | なし | なし | はい |
 
-#### 9. ヴィンランド・サガ (vinland\-saga)
+#### 9. 逃げ上手の若君 (work\-db80d94709b62aa8823f)
 
-- スコア: 0.839174801822
+- スコア: 0.84207755102
 - 最も近いアンカー: キングダム (kingdom)
-- 理由: 第1巻のレビュー情報を順位に反映しています。
-- ベイズ補正レビュー: 4.319580030359
+- 理由: 『キングダム』と「アクション」が共通しています。
+- ベイズ補正レビュー: 4.367959183673
 - 刊行蓄積度: 1
 - 寄与度上位5件:
 
 | 順位 | 寄与 | source | group | factorId | anchorWorkIds | negativeReasonId | 説明対象 |
 | -: | -: | --- | --- | --- | --- | --- | --- |
-| 1 | 0.259174801822 | market | overall | bayesianRating | なし | なし | はい |
+| 1 | 0.26207755102 | market | overall | bayesianRating | なし | なし | いいえ |
 | 2 | 0.24 | genre | genre | action | kingdom | なし | はい |
 | 3 | 0.24 | genre | genre | historical | kingdom | なし | はい |
 | 4 | 0.1 | maturity | overall | maturity | なし | なし | はい |
 
-#### 10. バガボンド (vagabond)
+#### 10. YAIBA (work\-fabc7f5d853e361acaf3)
 
-- スコア: 0.83748987595
-- 最も近いアンカー: キングダム (kingdom)
-- 理由: 第1巻のレビュー情報を順位に反映しています。
-- ベイズ補正レビュー: 4.291497932506
+- スコア: 0.84207755102
+- 最も近いアンカー: 鋼の錬金術師 (fullmetal\-alchemist)
+- 理由: 『鋼の錬金術師』と「アクション」が共通しています。
+- ベイズ補正レビュー: 4.367959183673
 - 刊行蓄積度: 1
 - 寄与度上位5件:
 
 | 順位 | 寄与 | source | group | factorId | anchorWorkIds | negativeReasonId | 説明対象 |
 | -: | -: | --- | --- | --- | --- | --- | --- |
-| 1 | 0.25748987595 | market | overall | bayesianRating | なし | なし | はい |
-| 2 | 0.24 | genre | genre | action | kingdom | なし | はい |
-| 3 | 0.24 | genre | genre | historical | kingdom | なし | はい |
+| 1 | 0.26207755102 | market | overall | bayesianRating | なし | なし | いいえ |
+| 2 | 0.24 | genre | genre | action | fullmetal\-alchemist | なし | はい |
+| 3 | 0.24 | genre | genre | fantasy | fullmetal\-alchemist | なし | はい |
 | 4 | 0.1 | maturity | overall | maturity | なし | なし | はい |
 
 ### 診断サマリー
@@ -801,7 +801,23 @@
 | 4 | 0.16 | genre | genre | fantasy | dungeon\-meshi | なし | はい |
 | 5 | 0.1 | maturity | overall | maturity | なし | なし | はい |
 
-#### 8. HUNTER×HUNTER (hunter\-x\-hunter)
+#### 8. 黄泉のツガイ (work\-0cf463005cc77eeded8e)
+
+- スコア: 0.845453260807
+- 最も近いアンカー: 鋼の錬金術師 (fullmetal\-alchemist)
+- 理由: 第1巻のレビュー情報を順位に反映しています。
+- ベイズ補正レビュー: 4.504489795918
+- 刊行蓄積度: 0.951838730514
+- 寄与度上位5件:
+
+| 順位 | 寄与 | source | group | factorId | anchorWorkIds | negativeReasonId | 説明対象 |
+| -: | -: | --- | --- | --- | --- | --- | --- |
+| 1 | 0.270269387755 | market | overall | bayesianRating | なし | なし | はい |
+| 2 | 0.24 | genre | genre | action | fullmetal\-alchemist | なし | はい |
+| 3 | 0.24 | genre | genre | fantasy | fullmetal\-alchemist | なし | はい |
+| 4 | 0.095183873051 | maturity | overall | maturity | なし | なし | はい |
+
+#### 9. HUNTER×HUNTER (hunter\-x\-hunter)
 
 - スコア: 0.844938707198
 - 最も近いアンカー: ダンジョン飯 (dungeon\-meshi)
@@ -818,23 +834,7 @@
 | 4 | 0.16 | genre | genre | fantasy | dungeon\-meshi | なし | はい |
 | 5 | 0.1 | maturity | overall | maturity | なし | なし | はい |
 
-#### 9. あずみ (work\-2f39795212f5ad8db155)
-
-- スコア: 0.84207755102
-- 最も近いアンカー: キングダム (kingdom)
-- 理由: 『キングダム』と「アクション」が共通しています。
-- ベイズ補正レビュー: 4.367959183673
-- 刊行蓄積度: 1
-- 寄与度上位5件:
-
-| 順位 | 寄与 | source | group | factorId | anchorWorkIds | negativeReasonId | 説明対象 |
-| -: | -: | --- | --- | --- | --- | --- | --- |
-| 1 | 0.26207755102 | market | overall | bayesianRating | なし | なし | いいえ |
-| 2 | 0.24 | genre | genre | action | kingdom | なし | はい |
-| 3 | 0.24 | genre | genre | historical | kingdom | なし | はい |
-| 4 | 0.1 | maturity | overall | maturity | なし | なし | はい |
-
-#### 10. 逃げ上手の若君 (work\-db80d94709b62aa8823f)
+#### 10. あずみ (work\-2f39795212f5ad8db155)
 
 - スコア: 0.84207755102
 - 最も近いアンカー: キングダム (kingdom)
@@ -1163,20 +1163,20 @@
 | 2 | 0.26207755102 | market | overall | bayesianRating | なし | なし | いいえ |
 | 3 | 0.09767226489 | maturity | overall | maturity | なし | なし | はい |
 
-#### 4. 図書館の大魔術師 (work\-7975d62582a89492a35f)
+#### 4. 不滅のあなたへ (work\-0ede6921b81169dc2dda)
 
-- スコア: 0.948563341486
+- スコア: 0.957833638283
 - 最も近いアンカー: 葬送のフリーレン (frieren)
 - 理由: 『葬送のフリーレン』と「ファンタジー」が共通しています。
-- ベイズ補正レビュー: 4.367959183673
-- 刊行蓄積度: 0.864857904659
+- ベイズ補正レビュー: 4.297227304715
+- 刊行蓄積度: 1
 - 寄与度上位5件:
 
 | 順位 | 寄与 | source | group | factorId | anchorWorkIds | negativeReasonId | 説明対象 |
 | -: | -: | --- | --- | --- | --- | --- | --- |
 | 1 | 0.6 | genre | genre | fantasy | frieren | なし | はい |
-| 2 | 0.26207755102 | market | overall | bayesianRating | なし | なし | いいえ |
-| 3 | 0.086485790466 | maturity | overall | maturity | なし | なし | はい |
+| 2 | 0.257833638283 | market | overall | bayesianRating | なし | なし | はい |
+| 3 | 0.1 | maturity | overall | maturity | なし | なし | はい |
 
 #### 5. ONE PIECE (one\-piece)
 
@@ -1229,7 +1229,23 @@
 | 4 | 0.16 | genre | genre | fantasy | dungeon\-meshi | なし | はい |
 | 5 | 0.1 | maturity | overall | maturity | なし | なし | はい |
 
-#### 8. HUNTER×HUNTER (hunter\-x\-hunter)
+#### 8. 黄泉のツガイ (work\-0cf463005cc77eeded8e)
+
+- スコア: 0.845453260807
+- 最も近いアンカー: 鋼の錬金術師 (fullmetal\-alchemist)
+- 理由: 第1巻のレビュー情報を順位に反映しています。
+- ベイズ補正レビュー: 4.504489795918
+- 刊行蓄積度: 0.951838730514
+- 寄与度上位5件:
+
+| 順位 | 寄与 | source | group | factorId | anchorWorkIds | negativeReasonId | 説明対象 |
+| -: | -: | --- | --- | --- | --- | --- | --- |
+| 1 | 0.270269387755 | market | overall | bayesianRating | なし | なし | はい |
+| 2 | 0.24 | genre | genre | action | fullmetal\-alchemist | なし | はい |
+| 3 | 0.24 | genre | genre | fantasy | fullmetal\-alchemist | なし | はい |
+| 4 | 0.095183873051 | maturity | overall | maturity | なし | なし | はい |
+
+#### 9. HUNTER×HUNTER (hunter\-x\-hunter)
 
 - スコア: 0.844938707198
 - 最も近いアンカー: ダンジョン飯 (dungeon\-meshi)
@@ -1246,23 +1262,7 @@
 | 4 | 0.16 | genre | genre | fantasy | dungeon\-meshi | なし | はい |
 | 5 | 0.1 | maturity | overall | maturity | なし | なし | はい |
 
-#### 9. ばらかもん (work\-f5f0ee0b0ff16bc146e0)
-
-- スコア: 0.84207755102
-- 最も近いアンカー: よつばと！ (yotsuba\-to)
-- 理由: 『よつばと！』と「ギャグ・コメディ」が共通しています。
-- ベイズ補正レビュー: 4.367959183673
-- 刊行蓄積度: 1
-- 寄与度上位5件:
-
-| 順位 | 寄与 | source | group | factorId | anchorWorkIds | negativeReasonId | 説明対象 |
-| -: | -: | --- | --- | --- | --- | --- | --- |
-| 1 | 0.26207755102 | market | overall | bayesianRating | なし | なし | いいえ |
-| 2 | 0.24 | genre | genre | comedy | yotsuba\-to | なし | はい |
-| 3 | 0.24 | genre | genre | sliceOfLife | yotsuba\-to | なし | はい |
-| 4 | 0.1 | maturity | overall | maturity | なし | なし | はい |
-
-#### 10. YAIBA (work\-fabc7f5d853e361acaf3)
+#### 10. アンデッドアンラック (work\-53fb816835ab36e40a1f)
 
 - スコア: 0.84207755102
 - 最も近いアンカー: 鋼の錬金術師 (fullmetal\-alchemist)

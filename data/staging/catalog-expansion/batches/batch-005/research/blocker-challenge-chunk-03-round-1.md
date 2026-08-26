@@ -105,7 +105,7 @@ The reader’s official page images at orders 4–9 were fetched transiently; no
 | 5 | https://arc.akitashoten.co.jp/comics/kojiranoko/1/5?style=pc | `499baf43abe445f2c224edd63d01c53228869e0768b4779c455c579c85f5bb22` |
 | 6 | https://arc.akitashoten.co.jp/comics/kojiranoko/1/6?style=pc | `662dd7d48b21a5ccedcc544a4f56e9011ad08e56c3282ba5979958fb08bf92ba` |
 | 7 | https://arc.akitashoten.co.jp/comics/kojiranoko/1/7?style=pc | `d0242000a68c5c33b5db2bf66a57bb867c0e4b999ca9655cba17959fddca274a` |
-| 8 | https://arc.akitashoten.co.jp/comics/kojiranoko/1/8?style=pc | `7198867a4aa18bd8908d756f2a6588b9a7818163fed12df9a9ea18d0ae76bab45` |
+| 8 | https://arc.akitashoten.co.jp/comics/kojiranoko/1/8?style=pc | `7198867a4aa18bd890d756f2a6588b9a7818163fed12df9a9ea18d0ae76bab45` |
 | 9 | https://arc.akitashoten.co.jp/comics/kojiranoko/1/9?style=pc | `dc34ceca0dd9ecd4d1bbd7c1b82b304cf3ac4e20c7990a805fdde99f8822f4c3` |
 
 The six-page set contains at least two distinct scene contexts (ship/outdoor world-building and character/group scenes) and is directly tied by the publisher product page and reader metadata to frozen vol. 1. This is a compliant sample-ready Art route under the current preflight policy. It does **not** assign any Art values: Local + Gemini must perform the required Art review, and only extreme/conflicting results proceed to adjudication.
