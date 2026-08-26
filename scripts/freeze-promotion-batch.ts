@@ -24,9 +24,9 @@ import { publishDirectorySet } from "./promote-g2-catalog";
 import { assertPilotPublishSnapshot, getPilotPublishDigests } from "./promote-pilot-001";
 
 export const PROMOTION_BATCH_SIZE = 50;
-export const PROMOTION_METHOD_POLICY = "promotion-evidence-v2";
+export const PROMOTION_METHOD_POLICY = "promotion-evidence-v3";
 export const PROMOTION_PANEL_POLICY =
-  "art-local-codex+gemini-3.7-flash-high;grok-art-abstain;muse-conditional";
+  "official+community-bounded;art-optional-peer;muse-conditional";
 
 const FROZEN_HEADERS = ["position", "workId", "canonicalTitle"] as const;
 
@@ -139,11 +139,7 @@ export function freezePromotionBatch(options: {
       row.sourceTypes !== "" &&
       (row.plannedBatch === "" || row.plannedBatch === options.allowPlannedBatch),
   );
-  if (eligible.length < PROMOTION_BATCH_SIZE) {
-    throw new Error(
-      `Promotion batch requires ${PROMOTION_BATCH_SIZE} eligible works; found ${eligible.length}`,
-    );
-  }
+  if (eligible.length === 0) throw new Error("Promotion batch requires at least one eligible work");
 
   const preferred = [...eligible]
     .sort(
@@ -253,11 +249,13 @@ function currentBatch(options: {
   );
   const existingRows = input.batches.filter((row) => row.batchId === options.batchId);
   if (
-    options.allowExisting ? existingRows.length !== PROMOTION_BATCH_SIZE : existingRows.length > 0
+    options.allowExisting
+      ? existingRows.length === 0 || existingRows.length > PROMOTION_BATCH_SIZE
+      : existingRows.length > 0
   ) {
     throw new Error(
       options.allowExisting
-        ? `Existing ${options.batchId} ledger must contain exactly ${PROMOTION_BATCH_SIZE} rows`
+        ? `Existing ${options.batchId} ledger must contain 1-${PROMOTION_BATCH_SIZE} rows`
         : `Promotion batch already exists in the ledger: ${options.batchId}`,
     );
   }

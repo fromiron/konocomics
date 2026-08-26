@@ -120,4 +120,20 @@ describe("promotion batch freezer", () => {
       }),
     ).toThrow(`Canonical title contains delimiters: ${rows[0]!.workId}`);
   });
+
+  it("freezes the final partial batch", () => {
+    const rows = Array.from({ length: 14 }, (_, index) =>
+      registryRow(`work-final-${String(index).padStart(2, "0")}`, 2, "award;editorial"),
+    );
+
+    const result = freezePromotionBatch({
+      batchId: "batch-030",
+      freezeDate: "2026-08-26",
+      registryRows: rows,
+      works: rows.map(work),
+    });
+
+    expect(result.selectedWorkIds).toHaveLength(14);
+    expect(result.batchLedgerRows).toHaveLength(14);
+  });
 });

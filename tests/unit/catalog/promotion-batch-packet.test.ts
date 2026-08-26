@@ -50,4 +50,17 @@ describe("promotion batch packet", () => {
 
     expect(() => parseFrozenPromotionBatch(changed)).toThrow("Canonical title contains delimiters");
   });
+
+  it("accepts a final partial frozen work set", () => {
+    const frozen = `${[
+      "position,workId,canonicalTitle",
+      ...Array.from(
+        { length: 14 },
+        (_, index) =>
+          `${index + 1},work-${index.toString(16).padStart(20, "0")},Title ${index + 1}`,
+      ),
+    ].join("\n")}\n`;
+
+    expect(parseFrozenPromotionBatch(frozen)).toHaveLength(14);
+  });
 });

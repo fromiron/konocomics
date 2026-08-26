@@ -27,12 +27,17 @@ const PACKET_SCHEMA_VERSION = "promotion-batch-packet-v1";
 const CANDIDATE_SCHEMA_VERSION = "promotion-batch-candidate-v1";
 const PAYLOAD_LEDGER_FILE = "PAYLOAD.sha256";
 const MANIFEST_FILE = "manifest.json";
-const RESEARCH_CHUNKS = ["01", "02", "03", "04", "05"] as const;
 const SHA256_PATTERN = /^[a-f0-9]{64}$/u;
 const BATCH_ID_PATTERN = /^[a-z0-9]+(?:-[a-z0-9]+)*$/u;
 const WORK_ID_PATTERN = /^work-[a-f0-9]{20}$/u;
 
 const FROZEN_HEADERS = ["position", "workId", "canonicalTitle"] as const;
+
+function researchChunks(workCount: number) {
+  return Array.from({ length: Math.ceil(workCount / 10) }, (_, index) =>
+    String(index + 1).padStart(2, "0"),
+  );
+}
 const WORK_HEADERS = [
   "id",
   "title",
@@ -181,13 +186,17 @@ export const promotionBatchPacketManifestSchema = z.strictObject({
     annotationGuide: policySchema,
     promotionMethod: policySchema,
   }),
-  workSet: z.strictObject({
-    count: z.literal(PROMOTION_BATCH_SIZE),
-    ordering: z.literal("frozen-position"),
-    workIds: z.array(z.string().regex(WORK_ID_PATTERN)).length(PROMOTION_BATCH_SIZE),
-    sha256: z.string().regex(SHA256_PATTERN),
-    frozenWorkSetSha256: z.string().regex(SHA256_PATTERN),
-  }),
+  workSet: z
+    .strictObject({
+      count: z.number().int().min(1).max(PROMOTION_BATCH_SIZE),
+      ordering: z.literal("frozen-position"),
+      workIds: z.array(z.string().regex(WORK_ID_PATTERN)).min(1).max(PROMOTION_BATCH_SIZE),
+      sha256: z.string().regex(SHA256_PATTERN),
+      frozenWorkSetSha256: z.string().regex(SHA256_PATTERN),
+    })
+    .refine((workSet) => workSet.count === workSet.workIds.length, {
+      message: "Work-set count differs from workIds",
+    }),
   payload: z.strictObject({
     ledgerPath: z.literal(PAYLOAD_LEDGER_FILE),
     ledgerSha256: z.string().regex(SHA256_PATTERN),
@@ -287,8 +296,8 @@ export function parseFrozenPromotionBatch(content: string): FrozenWork[] {
   if (headers === undefined || JSON.stringify(headers) !== JSON.stringify(FROZEN_HEADERS)) {
     throw new Error("Unexpected frozen work-set header");
   }
-  if (records.length !== PROMOTION_BATCH_SIZE) {
-    throw new Error(`Frozen work set requires exactly ${PROMOTION_BATCH_SIZE} works`);
+  if (records.length === 0 || records.length > PROMOTION_BATCH_SIZE) {
+    throw new Error(`Frozen work set requires 1-${PROMOTION_BATCH_SIZE} works`);
   }
   const rows = records.map((record, index): FrozenWork => {
     if (record.length !== FROZEN_HEADERS.length) {
@@ -331,45 +340,48 @@ function researchPayloadFiles(
     "observation",
     "limitation",
   ] as const;
-  return RESEARCH_CHUNKS.map((chunk) => {
-    const path = `research/chunk-${chunk}.md`;
-    const content = readFileSync(join(packetDirectory, path), "utf8");
-    const headings = [...content.matchAll(/^## workId: `(work-[a-f0-9]{20})` — (.+)$/gmu)];
-    if (headings.length !== 10) {
-      throw new Error(`Research chunk-${chunk} requires exactly 10 work headings`);
-    }
-    for (const [index, heading] of headings.entries()) {
-      const workId = heading[1] ?? "";
-      const canonicalTitle = heading[2]?.trim() ?? "";
-      const section = content.slice(
-        heading.index ?? 0,
-        headings[index + 1]?.index ?? content.length,
-      );
-      if (/[『』]/u.test(canonicalTitle)) {
-        throw new Error(`Research title contains delimiters: ${workId}`);
+  return researchChunks(frozenWorks.length)
+    .map((chunk, chunkIndex) => {
+      const path = `research/chunk-${chunk}.md`;
+      const content = readFileSync(join(packetDirectory, path), "utf8");
+      const headings = [...content.matchAll(/^## workId: `(work-[a-f0-9]{20})` — (.+)$/gmu)];
+      const expectedCount = Math.min(10, frozenWorks.length - chunkIndex * 10);
+      if (headings.length !== expectedCount) {
+        throw new Error(`Research chunk-${chunk} requires exactly ${expectedCount} work headings`);
       }
-      const sourceCount = fieldCount(section, "sourceName");
-      if (sourceCount === 0) throw new Error(`Research has no source: ${workId}`);
-      for (const field of requiredFields) {
-        if (fieldCount(section, field) !== sourceCount) {
-          throw new Error(`Research source field count differs for ${workId}: ${field}`);
+      for (const [index, heading] of headings.entries()) {
+        const workId = heading[1] ?? "";
+        const canonicalTitle = heading[2]?.trim() ?? "";
+        const section = content.slice(
+          heading.index ?? 0,
+          headings[index + 1]?.index ?? content.length,
+        );
+        if (/[『』]/u.test(canonicalTitle)) {
+          throw new Error(`Research title contains delimiters: ${workId}`);
+        }
+        const sourceCount = fieldCount(section, "sourceName");
+        if (sourceCount === 0) throw new Error(`Research has no source: ${workId}`);
+        for (const field of requiredFields) {
+          if (fieldCount(section, field) !== sourceCount) {
+            throw new Error(`Research source field count differs for ${workId}: ${field}`);
+          }
+        }
+        researched.push({ workId, canonicalTitle });
+      }
+      return { path, rowCount: headings.length, content };
+    })
+    .map((file, index, files) => {
+      if (index === files.length - 1) {
+        const expected = frozenWorks.map(({ workId, canonicalTitle }) => ({
+          workId,
+          canonicalTitle,
+        }));
+        if (JSON.stringify(researched) !== JSON.stringify(expected)) {
+          throw new Error("Research work set or title order differs from the frozen work set");
         }
       }
-      researched.push({ workId, canonicalTitle });
-    }
-    return { path, rowCount: headings.length, content };
-  }).map((file, index, files) => {
-    if (index === files.length - 1) {
-      const expected = frozenWorks.map(({ workId, canonicalTitle }) => ({
-        workId,
-        canonicalTitle,
-      }));
-      if (JSON.stringify(researched) !== JSON.stringify(expected)) {
-        throw new Error("Research work set or title order differs from the frozen work set");
-      }
-    }
-    return file;
-  });
+      return file;
+    });
 }
 
 function assertPacketRelationships(input: {
@@ -635,7 +647,7 @@ export function buildPromotionBatchPacketArtifacts(
     repository: repositoryIdentity(canonicalRoot),
     policies,
     workSet: {
-      count: PROMOTION_BATCH_SIZE,
+      count: workIds.length,
       ordering: "frozen-position",
       workIds,
       sha256: workSetSha256,
@@ -698,7 +710,7 @@ function validateStoredPacket(batchId: string, root: string) {
     "provenance/safety-review.csv",
     "provenance/source-membership.csv",
     "provenance/source-registry.csv",
-    ...RESEARCH_CHUNKS.map((chunk) => `research/chunk-${chunk}.md`),
+    ...researchChunks(manifest.workSet.count).map((chunk) => `research/chunk-${chunk}.md`),
     "selection-report.md",
     "source/aliases.csv",
     "source/volumes.csv",
