@@ -105,16 +105,18 @@ const batchConfigs = {
     label: "Batch 005",
     reviewFile: "batch-005-promotion-panel.md",
     frozenSha256: "ddf9343b48146eaaf58971155f4190b4ec53e09d28d932d0d03cdc515ff8b2b8",
-    validationSha256: "35023d87f365d500f9fc1e61dac8a5bff1a1e4596e7cda92e783d1f3db114f11",
-    inputBindingsSha256: "aa044484a0e2932098e6653b1aa40c6a4a51c7a3ba1cd6796b6a0336bc41cc5a",
+    validationSha256: "38151092c5ae82fed4abd4a5607928bc7ec69194028f28456f2e447569a973db",
+    inputBindingsSha256: "539e91ac8a38b3abf2c207fb6a842bf8be3026a51d177c54a0a9e87149f4846a",
     overlaySchemaVersion: 3,
     verifiedCount: 9,
-    blockedCount: 9,
-    pendingCount: 32,
+    blockedCount: 41,
+    pendingCount: 0,
     previousReviewSha256: [
       "7966dfd51a8985f5076211ae031996b95c15b487c8fbf3c4d77bb103973b5674",
       "b5586fcd1cb2a88667d59175827037d855fc97bc44e87ed1495ca88e7326e934",
       "00acb4c10fa7b5c3ce7510edef35b85d40dce0602e7f271f327e05fd96522e2f",
+      "5e4cc9e75229e83ee81e6a5d5f827c9abe9067ff3134ff3010989b08e1bdbee9",
+      "cfff9826b09eafa834959205f3a29b91ba928ffa85194faea5bc57b231fc2eea",
     ],
     expectedVerifiedPositions: [4, 8, 23, 26, 27, 30, 35, 45, 47],
     runOverlay: runBatch005Overlay,
@@ -624,7 +626,9 @@ function validateOverlay(root: string) {
         !row.value.reviewStatus.split(";").includes("reviewedByHuman=false"),
     )
   ) {
-    throw new Error("Every image-backed Art state requires non-human Local/Gemini quorum provenance");
+    throw new Error(
+      "Every image-backed Art state requires non-human Local/Gemini quorum provenance",
+    );
   }
   const artIssues = validateArtEvidence({
     works: works.rows,
@@ -795,8 +799,10 @@ function classifyState(root: string, overlay: Overlay): PromotionState {
     return (
       currentWork !== undefined &&
       approvedWork !== undefined &&
-      JSON.stringify({ ...currentWork, annotationReviewedAt: approvedWork.annotationReviewedAt }) ===
-        JSON.stringify(approvedWork) &&
+      JSON.stringify({
+        ...currentWork,
+        annotationReviewedAt: approvedWork.annotationReviewedAt,
+      }) === JSON.stringify(approvedWork) &&
       JSON.stringify((factors.get(workId) ?? []).map((row) => row.value)) ===
         JSON.stringify((approvedFactors.get(workId) ?? []).map((row) => row.value))
     );

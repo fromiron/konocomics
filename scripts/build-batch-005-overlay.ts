@@ -12,7 +12,7 @@ const batch005Config: PromotionOverlayConfig = {
   batchLabel: "Batch 005",
   batchRoot: "data/staging/catalog-expansion/batches/batch-005",
   reviewReference: "reviews/batch-005-promotion-panel.md",
-  reviewedAt: "2026-08-25T00:00:00+09:00",
+  reviewedAt: "2026-08-26T00:00:00+09:00",
   targetWorkCount: 50,
   expectedVerifiedPositions: [4, 8, 23, 26, 27, 30, 35, 45, 47],
   chunks: ["01", "02", "03", "04", "05"],
@@ -27,6 +27,7 @@ const batch005Config: PromotionOverlayConfig = {
     "data/staging/catalog-expansion/batches/batch-005/reviews/daybreak-final-overlay-qa.md",
   ],
   blockerAdjudicationFile: "adjudication/blockers-final.csv",
+  allowDefaultBlockers: true,
   sceneContexts: new Map([
     ["work-0cf463005cc77eeded8e", "mountain;village and home;roadside"],
     ["work-0ede6921b81169dc2dda", "snowy wilderness;inhabited or human contexts"],

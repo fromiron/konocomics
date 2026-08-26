@@ -45,6 +45,7 @@ export type PromotionOverlayConfig = {
   artPreflightOverrideFiles?: readonly string[];
   terminalQaFiles?: readonly string[];
   blockerAdjudicationFile?: string;
+  allowDefaultBlockers?: boolean;
   sceneContexts: ReadonlyMap<string, string>;
   motionReferences: ReadonlyMap<string, string>;
 };
@@ -735,9 +736,9 @@ function finalOverlay(root: string, config: PromotionOverlayConfig) {
     const defaultBlockerDetails =
       deficiencies.length === 0
         ? ""
-        : `Finite official-first routes exhausted; unchanged promotion coverage fails: ${deficiencies.join(
+        : `Finite official-first${config.allowDefaultBlockers === true ? ", Japanese-community, and Korean-title community" : ""} routes exhausted; unchanged promotion coverage fails: ${deficiencies.join(
             "; ",
-          )}. Unknown is not a low value and no value was filled to meet a quota.`;
+          )}. Unknown is not a low value and no value was filled to meet a quota.${config.allowDefaultBlockers === true ? " Art is optional and was not used as a blocker." : ""}`;
     let blockerRecords: CsvRow[] = [];
     if (deficiencies.length > 0) {
       const source = primarySources.get(workId);
@@ -765,7 +766,7 @@ function finalOverlay(root: string, config: PromotionOverlayConfig) {
       ];
       blockerRecords = explicitBlockers.get(workId) ?? [];
       if (blockerRecords.length === 0) {
-        if (config.blockerAdjudicationFile !== undefined) {
+        if (config.blockerAdjudicationFile !== undefined && config.allowDefaultBlockers !== true) {
           decisions.push({
             position: frozenRow.position ?? "",
             workId,

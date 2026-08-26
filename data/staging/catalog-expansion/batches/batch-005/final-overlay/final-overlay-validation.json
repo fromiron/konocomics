@@ -5,8 +5,8 @@
   "humanValidation": "NOT_RUN",
   "targetWorkCount": 50,
   "recommendationVerified": 9,
-  "promotionBlocked": 9,
-  "pending": 32,
+  "promotionBlocked": 41,
+  "pending": 0,
   "expectedVerifiedPositions": [
     4,
     8,
@@ -28,7 +28,7 @@
     "effect": "neutral shrink only; not a promotion gate"
   },
   "inputBindings": {
-    "combinedSha256": "aa044484a0e2932098e6653b1aa40c6a4a51c7a3ba1cd6796b6a0336bc41cc5a",
+    "combinedSha256": "539e91ac8a38b3abf2c207fb6a842bf8be3026a51d177c54a0a9e87149f4846a",
     "files": {
       "frozen": {
         "data/staging/catalog-expansion/batches/batch-005/frozen-work-set.csv": "ddf9343b48146eaaf58971155f4190b4ec53e09d28d932d0d03cdc515ff8b2b8"
@@ -231,6 +231,7 @@
         "data/staging/catalog-expansion/batches/batch-005/reviews/grok-text-review-response-chunk-05.txt": "fa2b54e08b20483c827d247405fa17c24aef3b6808ce5f5eb717f516f5411f83",
         "data/staging/catalog-expansion/batches/batch-005/reviews/luna-max-continuation-qa-2026-08-26.md": "ef20fc2dd8526fb3b5ec88ae9b370a9d821d7cd8cb8bddba9d6c2f02e4caf4ac",
         "data/staging/catalog-expansion/batches/batch-005/reviews/luna-max-korean-title-search-2026-08-26.md": "ad7db10246f0bbe8b8fe999dd2d2da12b48963a25e6aacfd4ff2e16334e430bf",
+        "data/staging/catalog-expansion/batches/batch-005/reviews/luna-max-terminal-closeout-2026-08-26.md": "2d7a603aca1ae29735eaf4f6a9a1e3b23f1be374a74b154cd6a8b6005d8af5eb",
         "data/staging/catalog-expansion/batches/batch-005/reviews/luna-max-v3-closeout-adjudication-2026-08-26.md": "de4d93c4c11198ea9fa9ffe0f204c029b4e9a0b83e34232e14289a2a934d3007",
         "data/staging/catalog-expansion/batches/batch-005/reviews/luna-research-qa-chunk-05.md": "411b3c0cef60934add6896fd6db7952bec3e281d0dea4028c3a3ab0989fa40f1",
         "data/staging/catalog-expansion/batches/batch-005/reviews/luna-research-qa-chunks-01-02.md": "2f0d4da654892aa8f7eaf6701664aa6ed5777df040e1aad703503b8109e235e4",
@@ -365,13 +366,13 @@
     "art": 5
   },
   "files": {
-    "promotion-decisions.csv": "ab91a58d221e2fc2a9f16f597b34463bf08ae27ff4ca54e74b73d8beb2a2f363",
-    "works-final.csv": "bae595241e27c2d9222359bdb251d25f6c37450c3403f95f6f59cc7bbcae19a2",
+    "promotion-decisions.csv": "469e559354da01e86098eb3a01dd951c9a89ba8df83a886fd4738b5f6de45fec",
+    "works-final.csv": "88c25e7b6cb6e418da7c2e08ab3a7329a4ba23ab23b6299c014da2591ad5c293",
     "factors-final.csv": "80ade96e9bf252c51db4539400243d0cb7a07a2f69bc6d46bcc9c47420db31c1",
     "themes-final.csv": "68b3c5a6e80d31c5585a586136a77b9bed458ad852ff79b4c4d20e2fe907a520",
-    "evidence-final.csv": "6b523bbe0c18e0e7776b336269589893e052924df3f3615c13f44e1ae03d5949",
+    "evidence-final.csv": "16cd11b753766610476b39ba602d842f7e0b4f3807d40fa185023fdfac57a252",
     "art-evidence-manifest-final.csv": "c1cdf5d366e9db362dfd718a713a64e8551a7e79a84193d5881897d6880c36a0",
     "recommendation-context-final.csv": "81ebaafe9a62e6185a05005ad939e834c65a4766397317cf1ca6f60c9d73eb62",
-    "promotion-blockers-final.csv": "f0eb46f13b02a0d1cf7bc5a51cc9ad1f896867f712bcafe23c46b06c6db30dad"
+    "promotion-blockers-final.csv": "29f54302644c09fb8c95daccebdb9c0acab7cf4bfd40aa83682a2abe3cf5ef49"
   }
 }
