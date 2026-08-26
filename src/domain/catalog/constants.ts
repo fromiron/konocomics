@@ -85,6 +85,8 @@ export const FACTOR_SOURCE_TYPES = ["rakuten", "publisher", "manual", "model"] a
 
 export const COVERAGE_GROUPS = ["genre", "theme", "narrative", "tone", "art"] as const;
 
+export const PROMOTION_REQUIRED_COVERAGE_GROUPS = ["genre", "theme", "narrative", "tone"] as const;
+
 export const COVERAGE_THRESHOLDS = {
   genre: 0.8,
   theme: 0.6,

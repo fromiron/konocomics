@@ -66,6 +66,40 @@ describe("Pilot 001 raw CSV promotion", () => {
         existingRowsMustMatchOverlay: true,
       }),
     ).toThrow("Existing target rows conflict with approved overlay");
+    expect(
+      mergeRawCsv({
+        current: "id,value\ntarget-a,approved-a-old-hash\n",
+        overlay: "id,value\ntarget-a,approved-a-new-hash\ntarget-b,approved-b\n",
+        headers: ["id", "value"],
+        matches: (row) => row[0]?.startsWith("target-") ?? false,
+        allowedCurrentMatchCounts: [0, 1, 2],
+        existingRowsMayBeOverlaySubset: true,
+        normalizeRow: (row) => row.replace(/-(?:old|new)-hash/u, "-hash"),
+      }),
+    ).toBe("id,value\ntarget-a,approved-a-new-hash\ntarget-b,approved-b\n");
+  });
+
+  it("accepts only exact pre-existing rows from a larger approved overlay", () => {
+    expect(
+      mergeRawCsv({
+        current: "id,value\nkeep,ok\ntarget-a,approved-a\n",
+        overlay: "id,value\ntarget-a,approved-a\ntarget-b,approved-b\n",
+        headers: ["id", "value"],
+        matches: (row) => row[0]?.startsWith("target-") ?? false,
+        allowedCurrentMatchCounts: [0, 1, 2],
+        existingRowsMayBeOverlaySubset: true,
+      }),
+    ).toBe("id,value\nkeep,ok\ntarget-a,approved-a\ntarget-b,approved-b\n");
+    expect(() =>
+      mergeRawCsv({
+        current: "id,value\ntarget-a,changed\n",
+        overlay: "id,value\ntarget-a,approved-a\ntarget-b,approved-b\n",
+        headers: ["id", "value"],
+        matches: (row) => row[0]?.startsWith("target-") ?? false,
+        allowedCurrentMatchCounts: [0, 1, 2],
+        existingRowsMayBeOverlaySubset: true,
+      }),
+    ).toThrow("Existing target rows conflict with approved overlay");
   });
 
   it("requires the frozen Local, Gemini, and Grok panel contract", () => {

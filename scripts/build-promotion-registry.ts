@@ -108,18 +108,35 @@ const promotionBlockerSchema = z.strictObject({
   recheckPath: z.string().min(1),
 });
 
-const batchLedgerRowSchema = z.strictObject({
-  workId: z.string().min(1),
-  batchId: z.string().regex(/^[a-z0-9]+(?:-[a-z0-9]+)*$/u),
-  batchType: z.enum(["pilot", "batch"]),
-  status: z.literal("frozen"),
-  selectionReason: z
-    .string()
-    .regex(/^era-[a-z0-9-]+;audience-[a-z0-9-]+;genre-[a-z0-9-]+;ev-[a-z0-9-]+$/u),
-  methodPolicy: z.literal("promotion-evidence-v2"),
-  panelPolicy: z.literal("art-local-codex+gemini-3.7-flash-high;grok-art-abstain;muse-conditional"),
-  lastUpdatedAt: z.iso.date(),
-});
+const batchLedgerRowSchema = z
+  .strictObject({
+    workId: z.string().min(1),
+    batchId: z.string().regex(/^[a-z0-9]+(?:-[a-z0-9]+)*$/u),
+    batchType: z.enum(["pilot", "batch"]),
+    status: z.literal("frozen"),
+    selectionReason: z
+      .string()
+      .regex(/^era-[a-z0-9-]+;audience-[a-z0-9-]+;genre-[a-z0-9-]+;ev-[a-z0-9-]+$/u),
+    methodPolicy: z.enum(["promotion-evidence-v2", "promotion-evidence-v3"]),
+    panelPolicy: z.enum([
+      "art-local-codex+gemini-3.7-flash-high;grok-art-abstain;muse-conditional",
+      "official+community-bounded;art-optional-peer;muse-conditional",
+    ]),
+    lastUpdatedAt: z.iso.date(),
+  })
+  .superRefine((row, context) => {
+    const expectedPanel =
+      row.methodPolicy === "promotion-evidence-v3"
+        ? "official+community-bounded;art-optional-peer;muse-conditional"
+        : "art-local-codex+gemini-3.7-flash-high;grok-art-abstain;muse-conditional";
+    if (row.panelPolicy !== expectedPanel) {
+      context.addIssue({
+        code: "custom",
+        path: ["panelPolicy"],
+        message: `${row.methodPolicy} requires its matching panel policy`,
+      });
+    }
+  });
 
 const promotionRegistryRowSchema = z.strictObject({
   workId: z.string().min(1),
@@ -224,8 +241,7 @@ function annotationStatus(
     work.genres.length > 0 &&
     themeCount > 0 &&
     axisCoverage(factors, NARRATIVE_AXIS_IDS) >= COVERAGE_THRESHOLDS.narrative &&
-    axisCoverage(factors, TONE_AXIS_IDS) >= COVERAGE_THRESHOLDS.tone &&
-    axisCoverage(factors, ART_AXIS_IDS) >= COVERAGE_THRESHOLDS.art;
+    axisCoverage(factors, TONE_AXIS_IDS) >= COVERAGE_THRESHOLDS.tone;
   if (complete) return "complete";
   return factors.some((row) => row.value.state !== "unknown") ||
     themeCount > 0 ||

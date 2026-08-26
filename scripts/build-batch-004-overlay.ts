@@ -14,7 +14,7 @@ const batch004Config: PromotionOverlayConfig = {
   reviewReference: "reviews/batch-004-promotion-panel.md",
   reviewedAt: "2026-08-25T00:00:00+09:00",
   targetWorkCount: 50,
-  expectedVerifiedPositions: [3, 14, 17, 18, 20, 21, 41, 43, 44, 47, 49],
+  expectedVerifiedPositions: [3, 14, 17, 18, 20, 21, 24, 41, 43, 44, 47, 49],
   chunks: ["01", "02", "03", "04", "05"],
   artPreflightReviewChunks: new Set(),
   annotationDirectory: "annotation-pass-a",
@@ -32,10 +32,7 @@ const batch004Config: PromotionOverlayConfig = {
       "work-0f3a44f5dcab9623d1be",
       "outdoor movement;indoor characters;Heian-kyō architecture;multi-person dialogue",
     ],
-    [
-      "work-2d385ad0525742330e70",
-      "school and store;food interaction;apartment kitchen thriller",
-    ],
+    ["work-2d385ad0525742330e70", "school and store;food interaction;apartment kitchen thriller"],
     ["work-3713ab561de583d709bc", "city street;convenience store;home restaurant"],
     [
       "work-39c1a2b6791238827ed5",
@@ -46,6 +43,7 @@ const batch004Config: PromotionOverlayConfig = {
       "work-53fb816835ab36e40a1f",
       "vol2 barrier battle and aftermath exchange;vol3 outdoor confrontation and battle",
     ],
+    ["work-65f856a6fa2078f21d2f", "eerie encounter;office;street action;aftermath"],
     [
       "work-c7280f9dcc2754d3f864",
       "supernatural room and forest;classroom conversation;school hallway",

@@ -47,7 +47,7 @@ Pilot 001과 Batch 002의 내구적 입력에는 URL·게시일·독립성·진�
 
 ### 리뷰 유래 비점수 신호
 
-`예쁜 그림`, `감동적`, `액션이 좋다`처럼 축 기준·반복 구조·entry scope를 확정하지 못하는 평가적 문구 자체는 `promotion-evidence-v2`가 적용되는 모든 catalog-expansion batch의 staging에서 비점수 감사 신호로만 다룬다. 복수 독립 리뷰에서 확인된 구체적 entry-scope 관찰을 기존 텍스트 Factor의 보조 Evidence로 검토하는 절차와는 별개이며, 평가적 문구를 Axis 이름이나 값으로 직접 매핑하지 않는다.
+`예쁜 그림`, `감동적`, `액션이 좋다`처럼 축 기준·반복 구조·entry scope를 확정하지 못하는 평가적 문구 자체는 `promotion-evidence-v3`가 적용되는 모든 catalog-expansion batch의 staging에서 비점수 감사 신호로만 다룬다. 복수 독립 리뷰에서 확인된 구체적 entry-scope 관찰을 Factor Evidence로 검토하는 절차와는 별개이며, 평가적 문구를 Axis 이름이나 값으로 직접 매핑하지 않는다.
 
 이 신호는 공식 자료 재검사 순서를 정하거나 기존 주석과의 충돌을 경고할 수만 있다. promotion coverage·eligibility·Manga DNA·점수·contribution·설명에 관여하지 않고, absence로 조사를 조기 종료하거나 blocker를 만들지 않는다. 이 금지는 외부 유저평 문구에서 추출한 review-language staging signal에만 적용한다. 기존 수치형 `reviewAverage`·`reviewCount` 시장 계약과 사용자가 직접 선택한 `artStyleDislike` 등 profile reason 계약은 변경하지 않으며, review-language signal을 그 필드로 변환하거나 자동 입력하지 않는다.
 

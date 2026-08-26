@@ -1,6 +1,10 @@
 import { resolve } from "node:path";
 
-import { AXIS_IDS, COVERAGE_GROUPS, COVERAGE_THRESHOLDS } from "../src/domain/catalog/constants";
+import {
+  AXIS_IDS,
+  COVERAGE_THRESHOLDS,
+  PROMOTION_REQUIRED_COVERAGE_GROUPS,
+} from "../src/domain/catalog/constants";
 import {
   calculateAxisCorrelations,
   calculateAxisValueRanges,
@@ -30,7 +34,9 @@ if (hasErrors(issues)) {
   console.log("workId\tgenre\ttheme\tnarrative\ttone\tart\tstatus");
   for (const work of recommendationWorks) {
     const coverage = calculateWorkCoverage(work);
-    const passes = COVERAGE_GROUPS.every((group) => coverage[group] >= COVERAGE_THRESHOLDS[group]);
+    const passes = PROMOTION_REQUIRED_COVERAGE_GROUPS.every(
+      (group) => coverage[group] >= COVERAGE_THRESHOLDS[group],
+    );
     console.log(
       [
         work.id,

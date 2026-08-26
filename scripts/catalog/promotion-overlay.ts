@@ -166,7 +166,9 @@ function inputBindings(root: string, config: PromotionOverlayConfig) {
       (path) => !(config.terminalQaFiles ?? []).includes(path),
     ),
     adjudication: listFiles(root, `${config.batchRoot}/adjudication`),
-    artPreflight: listFiles(root, `${config.batchRoot}/art-preflight`),
+    artPreflight: existsSync(join(root, `${config.batchRoot}/art-preflight`))
+      ? listFiles(root, `${config.batchRoot}/art-preflight`)
+      : [],
     artReview: listFiles(root, `${config.batchRoot}/art-review`),
     contextResearch: contextFiles,
   };
@@ -217,7 +219,11 @@ function validateReviewLedgers(root: string, config: PromotionOverlayConfig) {
       .map((path) => readFileSync(join(root, path), "utf8"))
       .join("\n")
       .replaceAll(/\s+/gu, " ");
-    if (finalArtRows.some((row) => row.state === "known")) {
+    if (
+      finalArtRows.some(
+        (row) => row.state === "known" && (row.evidenceRoute ?? "image") !== "community",
+      )
+    ) {
       for (const [label, pattern] of [
         ["exact Gemini model", /gemini-3\.7-flash-high/u],
         [
@@ -425,6 +431,9 @@ function validateTerminalFactors(
       evidenceId: row.evidenceId ?? `${batchId}-terminal-${workId}`,
     });
     if (label === "Art") {
+      if (!["", "image", "community"].includes(row.evidenceRoute ?? "")) {
+        throw new Error(`Art terminal row has an invalid evidence route: ${workId}/${row.axisId}`);
+      }
       if ((row.observation ?? "") === "" || (row.limitation ?? "") === "") {
         throw new Error(
           `Art terminal row lacks observation or limitation: ${workId}/${row.axisId}`,
@@ -432,6 +441,17 @@ function validateTerminalFactors(
       }
       if (row.state === "known" && (row.refs ?? "") === "") {
         throw new Error(`Known Art terminal row lacks a page reference: ${workId}/${row.axisId}`);
+      }
+      if (
+        row.state === "known" &&
+        row.evidenceRoute === "community" &&
+        new Set(
+          (row.refs ?? "").split(";").filter((reference) => z.url().safeParse(reference).success),
+        ).size < 2
+      ) {
+        throw new Error(
+          `Community-backed Art requires two exact independent review URLs: ${workId}/${row.axisId}`,
+        );
       }
     }
   }
@@ -514,10 +534,12 @@ function finalOverlay(root: string, config: PromotionOverlayConfig) {
     const preflightPath = config.artPreflightReviewChunks.has(chunk)
       ? join(batch, `art-review/chunk-${chunk}/preflight.csv`)
       : join(batch, `art-preflight/chunk-${chunk}/preflight.csv`);
-    for (const row of readCsv(preflightPath)) {
-      const workId = row.workId ?? "";
-      if (preflight.has(workId)) throw new Error(`Duplicate Art preflight row: ${workId}`);
-      preflight.set(workId, row);
+    if (existsSync(preflightPath)) {
+      for (const row of readCsv(preflightPath)) {
+        const workId = row.workId ?? "";
+        if (preflight.has(workId)) throw new Error(`Duplicate Art preflight row: ${workId}`);
+        preflight.set(workId, row);
+      }
     }
   }
   for (const file of config.artFactorOverrideFiles ?? []) {
@@ -543,13 +565,8 @@ function finalOverlay(root: string, config: PromotionOverlayConfig) {
         throw new Error(`${label} contains an out-of-batch work: ${workId}`);
     }
   }
-  if (
-    preflight.size !== config.targetWorkCount ||
-    [...preflight.keys()].some((workId) => !frozenIds.has(workId))
-  ) {
-    throw new Error(
-      `Art preflight must contain exactly the ${String(config.targetWorkCount)} frozen works`,
-    );
+  if ([...preflight.keys()].some((workId) => !frozenIds.has(workId))) {
+    throw new Error("Art preflight contains an out-of-batch work");
   }
   const contexts = new Map<string, CsvRow>();
   for (const file of [
@@ -639,7 +656,6 @@ function finalOverlay(root: string, config: PromotionOverlayConfig) {
     if (
       sourceWork === undefined ||
       registryRow === undefined ||
-      artSource === undefined ||
       primary === undefined ||
       registryRow.plannedBatch !== config.batchId ||
       registryRow.safetyStatus !== "safe" ||
@@ -652,12 +668,11 @@ function finalOverlay(root: string, config: PromotionOverlayConfig) {
       canonicalTitle === "" ||
       sourceWork.title !== canonicalTitle ||
       registryRow.canonicalTitle !== canonicalTitle ||
-      artSource.canonicalTitle !== canonicalTitle ||
       primary.canonicalTitle !== canonicalTitle ||
       [
         sourceWork.title,
         registryRow.canonicalTitle,
-        artSource.canonicalTitle,
+        ...(artSource === undefined ? [] : [artSource.canonicalTitle]),
         primary.canonicalTitle,
       ].some((title) => /[『』]/u.test(title ?? ""))
     ) {
@@ -685,34 +700,35 @@ function finalOverlay(root: string, config: PromotionOverlayConfig) {
       },
       `Primary text research ${workId}`,
     );
-    assertProvenance(
-      artSource,
-      {
-        name: "sourceName",
-        url: "officialUrl",
-        publishedAt: "publishedAt",
-        retrievedAt: "retrievedAt",
-      },
-      `Art preflight ${workId}`,
-    );
-    for (const field of [
-      "sourceType",
-      "editionMapping",
-      "accessResult",
-      "stateEligibility",
-      "limitation",
-    ] as const) {
-      if ((artSource[field] ?? "") === "")
-        throw new Error(`Art preflight lacks ${field}: ${workId}`);
+    if (artSource !== undefined) {
+      assertProvenance(
+        artSource,
+        {
+          name: "sourceName",
+          url: "officialUrl",
+          publishedAt: "publishedAt",
+          retrievedAt: "retrievedAt",
+        },
+        `Art preflight ${workId}`,
+      );
+      for (const field of [
+        "sourceType",
+        "editionMapping",
+        "accessResult",
+        "stateEligibility",
+        "limitation",
+      ] as const) {
+        if ((artSource[field] ?? "") === "")
+          throw new Error(`Art preflight lacks ${field}: ${workId}`);
+      }
+      sampleHashes(artSource.temporarySampleSha256 ?? "");
     }
-    sampleHashes(artSource.temporarySampleSha256 ?? "");
     const narrative = axisCoverage(workText, NARRATIVE_AXIS_IDS);
     const tone = axisCoverage(workText, TONE_AXIS_IDS);
     const art = axisCoverage(workArt, ART_AXIS_IDS);
     const deficiencies = [
       ...coverageDeficiency("Narrative", narrative, COVERAGE_THRESHOLDS.narrative),
       ...coverageDeficiency("Tone", tone, COVERAGE_THRESHOLDS.tone),
-      ...coverageDeficiency("Art", art, COVERAGE_THRESHOLDS.art),
       ...(workGenres.length === 0 ? ["Genre 0"] : []),
       ...(workThemes.length === 0 ? ["Theme 0"] : []),
     ];
@@ -724,8 +740,7 @@ function finalOverlay(root: string, config: PromotionOverlayConfig) {
           )}. Unknown is not a low value and no value was filled to meet a quota.`;
     let blockerRecords: CsvRow[] = [];
     if (deficiencies.length > 0) {
-      const textSource = primarySources.get(workId);
-      const source = art.ratio < COVERAGE_THRESHOLDS.art ? artSource : textSource;
+      const source = primarySources.get(workId);
       if (source === undefined) throw new Error(`Blocker evidence is missing: ${workId}`);
       const publication = evidencePublishedAt(
         source.publishedAt ?? "",
@@ -733,11 +748,6 @@ function finalOverlay(root: string, config: PromotionOverlayConfig) {
         workId,
       );
       const recheck = [
-        ...(art.ratio < COVERAGE_THRESHOLDS.art
-          ? [
-              "Provide an edition-mapped official internal preview with at least 6 readable pages, 2 scene contexts, and Local Codex plus Gemini pixel quorum",
-            ]
-          : []),
         ...(narrative.ratio < COVERAGE_THRESHOLDS.narrative
           ? [
               "Provide direct entry-range evidence for enough remaining Narrative axes to reach the frozen coverage threshold",
@@ -824,13 +834,7 @@ function finalOverlay(root: string, config: PromotionOverlayConfig) {
     if (deficiencies.length > 0) continue;
 
     const context = contexts.get(workId);
-    const contextsForArt = config.sceneContexts.get(workId);
-    if (
-      context === undefined ||
-      primary === undefined ||
-      artSource === undefined ||
-      contextsForArt === undefined
-    ) {
+    if (context === undefined || primary === undefined) {
       throw new Error(`Verified overlay provenance is incomplete: ${workId}`);
     }
     works.push({
@@ -854,6 +858,17 @@ function finalOverlay(root: string, config: PromotionOverlayConfig) {
         AXIS_IDS.indexOf(left.axisId as (typeof AXIS_IDS)[number]) -
         AXIS_IDS.indexOf(right.axisId as (typeof AXIS_IDS)[number]),
     );
+    const knownArtRoutes = new Set(
+      workArt.filter((row) => row.state !== "unknown").map((row) => row.evidenceRoute || "image"),
+    );
+    if (knownArtRoutes.size > 1) {
+      throw new Error(`Art evidence routes cannot be mixed within one work: ${workId}`);
+    }
+    const artRoute = knownArtRoutes.has("community")
+      ? "community"
+      : knownArtRoutes.has("image")
+        ? "image"
+        : "none";
     for (const row of sortedText) factors.push({ ...row, evidenceId: textEvidenceId });
     for (const row of [...workThemes].sort(
       (left, right) =>
@@ -862,7 +877,11 @@ function finalOverlay(root: string, config: PromotionOverlayConfig) {
     )) {
       finalThemes.push({ ...row, evidenceId: textEvidenceId });
     }
-    const claimConfidences = [...sortedText, ...workThemes]
+    const claimConfidences = [
+      ...sortedText,
+      ...workThemes,
+      ...(artRoute === "community" ? workArt : []),
+    ]
       .filter((row) => row.state === "known" || row.confidence !== "")
       .map((row) => Number(row.confidence));
     evidence.push({
@@ -876,78 +895,86 @@ function finalOverlay(root: string, config: PromotionOverlayConfig) {
       extractorVersion: `${config.batchId}-text-overlay-v1`,
       reviewedByHuman: "false",
       confidence: String(Math.min(...claimConfidences)),
-      notes: `reviewedByHuman=false; primary source lead/index=${primary.sourceName}; source published=${primary.publishedAt}; retrieved=${primary.retrievedAt}; the sourceUrl is a research lead/index and is not asserted as the sole support for every Axis or Theme. Supporting official, annotation, review, and adjudication packets are immutably bound under final-overlay-validation.json inputBindings; combined input/review packet SHA-256=${bindings.combinedSha256}. Official-first entry-range research, independent Pass B, and Local Codex Pass C were combined claim by claim. Multiple independent user observations were supplemental only where recorded; selection provenance was not reused as Factor evidence.`,
+      notes: `reviewedByHuman=false; primary source lead/index=${primary.sourceName}; source published=${primary.publishedAt}; retrieved=${primary.retrievedAt}; the sourceUrl is a research lead/index and is not asserted as the sole support for every Axis or Theme. Supporting official, annotation, review, and adjudication packets are immutably bound under final-overlay-validation.json inputBindings; combined input/review packet SHA-256=${bindings.combinedSha256}. Official-first entry-range research, independent Pass B, and Local Codex Pass C were combined claim by claim. Repeated bounded independent community observations may support text or Art claims only where recorded; selection provenance was not reused as Factor evidence.`,
     });
 
-    const expandedRefs = expandedPageReferences(artSource.pageRefs ?? "");
-    const artSourceUrl = exactArtSourceUrl(artSource.officialUrl ?? "");
-    const artAuthority = artEvidenceAuthority(artSource.sourceType ?? "");
-    if (
-      Number(artSource.readableInternalPageCount) < 6 ||
-      Number(artSource.distinctContextCount) < 2 ||
-      expandedRefs.split(";").filter(Boolean).length < 6 ||
-      contextsForArt.split(";").length < 2
-    ) {
-      throw new Error(`Verified Art sample gate is incomplete: ${workId}`);
-    }
     const sortedArt = [...workArt].sort(
       (left, right) =>
         ART_AXIS_IDS.indexOf(left.axisId as (typeof ART_AXIS_IDS)[number]) -
         ART_AXIS_IDS.indexOf(right.axisId as (typeof ART_AXIS_IDS)[number]),
     );
-    for (const row of sortedArt) {
-      const axisId = row.axisId ?? "";
-      const evidenceId = `ev-${config.batchId}-art-${workId}-${axisId.replace(/([a-z])([A-Z])/gu, "$1-$2").toLowerCase()}`;
-      const pageOrTimeRefs =
-        axisId === "motionImpact" && row.state === "known"
-          ? (config.motionReferences.get(workId) ?? "")
-          : expandedRefs;
-      if (axisId === "motionImpact" && row.state === "known" && pageOrTimeRefs === "") {
-        throw new Error(`Known motion sequence lacks an exact range: ${workId}`);
+    if (artRoute !== "image") {
+      for (const row of sortedArt) factors.push({ ...row, evidenceId: textEvidenceId });
+    } else {
+      const contextsForArt = config.sceneContexts.get(workId);
+      if (artSource === undefined || contextsForArt === undefined) {
+        throw new Error(`Verified image Art provenance is incomplete: ${workId}`);
       }
-      factors.push({
-        workId,
-        axisId,
-        state: row.state ?? "",
-        value: row.value ?? "",
-        confidence: row.confidence ?? "",
-        evidenceId,
-      });
-      const hashes = sampleHashes(artSource.temporarySampleSha256 ?? "");
-      if (hashes === "") throw new Error(`Verified Art sample hashes are missing: ${workId}`);
-      const limitation = `${row.limitation}; ${artSource.limitation}; temporary sample SHA-256=${hashes}. Temporary images and paths are not committed.`;
-      evidence.push({
-        id: evidenceId,
-        workId,
-        targetType: "axis",
-        targetId: axisId,
-        sourceType: artAuthority.sourceType,
-        sourceUrl: artSourceUrl,
-        fetchedAt: config.reviewedAt,
-        extractorVersion: `${config.batchId}-art-overlay-v1`,
-        reviewedByHuman: "false",
-        confidence: row.state === "known" ? (row.confidence ?? "") : "1",
-        notes: `reviewedByHuman=false; source=${artSource.sourceName}; published=${artSource.publishedAt}; retrieved=${artSource.retrievedAt}; Local Codex and gemini-3.7-flash-high pixel quorum; Cursor Grok ART_ABSTAIN; Muse NOT_USED; combined input/review packet SHA-256=${bindings.combinedSha256}; ${limitation}`,
-      });
-      artManifest.push({
-        workId,
-        axisId,
-        state: row.state ?? "",
-        value: row.value ?? "",
-        confidence: row.confidence ?? "",
-        authorityClass: artAuthority.authorityClass,
-        sourceType: artAuthority.sourceType,
-        sourceUrl: artSourceUrl,
-        edition: artSource.editionMapping ?? "",
-        scopeMapping:
-          "Official internal preview mapped to the entry_1_3_volumes contract; static claims require at least 6 readable pages and 2 scene contexts.",
-        pageOrTimeRefs,
-        sampleCount: artSource.readableInternalPageCount ?? "",
-        contexts: contextsForArt,
-        observation: row.observation ?? "",
-        limitation,
-        reviewStatus: "quorum-verified;adjudicated;reviewedByHuman=false",
-      });
+      const expandedRefs = expandedPageReferences(artSource.pageRefs ?? "");
+      const artSourceUrl = exactArtSourceUrl(artSource.officialUrl ?? "");
+      const artAuthority = artEvidenceAuthority(artSource.sourceType ?? "");
+      if (
+        Number(artSource.readableInternalPageCount) < 6 ||
+        Number(artSource.distinctContextCount) < 2 ||
+        expandedRefs.split(";").filter(Boolean).length < 6 ||
+        contextsForArt.split(";").length < 2
+      ) {
+        throw new Error(`Verified Art sample gate is incomplete: ${workId}`);
+      }
+      for (const row of sortedArt) {
+        const axisId = row.axisId ?? "";
+        const evidenceId = `ev-${config.batchId}-art-${workId}-${axisId.replace(/([a-z])([A-Z])/gu, "$1-$2").toLowerCase()}`;
+        const pageOrTimeRefs =
+          axisId === "motionImpact" && row.state === "known"
+            ? (config.motionReferences.get(workId) ?? "")
+            : expandedRefs;
+        if (axisId === "motionImpact" && row.state === "known" && pageOrTimeRefs === "") {
+          throw new Error(`Known motion sequence lacks an exact range: ${workId}`);
+        }
+        factors.push({
+          workId,
+          axisId,
+          state: row.state ?? "",
+          value: row.value ?? "",
+          confidence: row.confidence ?? "",
+          evidenceId,
+        });
+        const hashes = sampleHashes(artSource.temporarySampleSha256 ?? "");
+        if (hashes === "") throw new Error(`Verified Art sample hashes are missing: ${workId}`);
+        const limitation = `${row.limitation}; ${artSource.limitation}; temporary sample SHA-256=${hashes}. Temporary images and paths are not committed.`;
+        evidence.push({
+          id: evidenceId,
+          workId,
+          targetType: "axis",
+          targetId: axisId,
+          sourceType: artAuthority.sourceType,
+          sourceUrl: artSourceUrl,
+          fetchedAt: config.reviewedAt,
+          extractorVersion: `${config.batchId}-art-overlay-v1`,
+          reviewedByHuman: "false",
+          confidence: row.state === "known" ? (row.confidence ?? "") : "1",
+          notes: `reviewedByHuman=false; source=${artSource.sourceName}; published=${artSource.publishedAt}; retrieved=${artSource.retrievedAt}; Local Codex and gemini-3.7-flash-high pixel quorum; Cursor Grok ART_ABSTAIN; Muse NOT_USED; combined input/review packet SHA-256=${bindings.combinedSha256}; ${limitation}`,
+        });
+        artManifest.push({
+          workId,
+          axisId,
+          state: row.state ?? "",
+          value: row.value ?? "",
+          confidence: row.confidence ?? "",
+          authorityClass: artAuthority.authorityClass,
+          sourceType: artAuthority.sourceType,
+          sourceUrl: artSourceUrl,
+          edition: artSource.editionMapping ?? "",
+          scopeMapping:
+            "Official internal preview mapped to the entry_1_3_volumes contract; static claims require at least 6 readable pages and 2 scene contexts.",
+          pageOrTimeRefs,
+          sampleCount: artSource.readableInternalPageCount ?? "",
+          contexts: contextsForArt,
+          observation: row.observation ?? "",
+          limitation,
+          reviewStatus: "quorum-verified;adjudicated;reviewedByHuman=false",
+        });
+      }
     }
     recommendationContext.push({
       workId,
@@ -992,8 +1019,7 @@ function finalOverlay(root: string, config: PromotionOverlayConfig) {
       JSON.stringify(expectedFactorPairs) ||
     works.length !== verifiedIds.length ||
     recommendationContext.length !== verifiedIds.length ||
-    artManifest.length !== verifiedIds.length * ART_AXIS_IDS.length ||
-    evidence.length !== verifiedIds.length * 5 ||
+    evidence.length !== verifiedIds.length + artManifest.length ||
     JSON.stringify(blockerWorkIds) !== JSON.stringify(blockedIds) ||
     blockedIds.length + verifiedIds.length + pendingIds.length !== config.targetWorkCount
   ) {
@@ -1043,7 +1069,7 @@ function finalOverlay(root: string, config: PromotionOverlayConfig) {
   }
   const validation = `${JSON.stringify(
     {
-      schemaVersion: 2,
+      schemaVersion: 3,
       batchId: config.batchId,
       reviewedByHuman: false,
       humanValidation: "NOT_RUN",
@@ -1052,11 +1078,14 @@ function finalOverlay(root: string, config: PromotionOverlayConfig) {
       promotionBlocked: blockedIds.length,
       pending: pendingIds.length,
       expectedVerifiedPositions: config.expectedVerifiedPositions,
-      coverageThresholds: {
+      promotionCoverageThresholds: {
         narrative: COVERAGE_THRESHOLDS.narrative,
         tone: COVERAGE_THRESHOLDS.tone,
-        art: COVERAGE_THRESHOLDS.art,
         denominator: "known+unknown; notApplicable excluded",
+      },
+      scoringCoverageThresholds: {
+        art: COVERAGE_THRESHOLDS.art,
+        effect: "neutral shrink only; not a promotion gate",
       },
       inputBindings: bindings,
       known: {

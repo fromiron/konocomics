@@ -8,7 +8,7 @@
 ## 1. 정적 검사 (CI 매 커밋)
 
 - `tsc --noEmit` (strict) / ESLint (domain 계층 격리 규칙 포함: domain이 react·dexie·TanStack을 import하면 실패) / Prettier check.
-- **`catalog:validate`를 CI 게이트로:** 검증 실패 데이터는 빌드 자체가 실패한다. 검사 항목 — ID·ISBN 중복, 팩터 범위·상태 오류, centrality 범위, eligibility 충돌, 추천 대상 coverage 미달, evidence 누락, 대표 volume 누락, `data`/`src`/exact versioned `public` Catalog 세 artifact의 존재와 canonical byte 동일성.
+- **`catalog:validate`를 CI 게이트로:** 검증 실패 데이터는 빌드 자체가 실패한다. 검사 항목 — ID·ISBN 중복, 팩터 범위·상태 오류, centrality 범위, eligibility 충돌, 추천 대상의 Genre·Theme·Narrative·Tone 필수 coverage 미달, evidence 누락, 대표 volume 누락, `data`/`src`/exact versioned `public` Catalog 세 artifact의 존재와 canonical byte 동일성. Art는 선택 축이며 이미지 경로를 사용한 known 값에만 Art manifest 최소선을 강제한다.
 
 ## 2. 추천 엔진 유닛 테스트 (가장 두터운 계층)
 
@@ -49,6 +49,7 @@
 - zod 스키마 라운드트립(catalog JSON, Export v1, Rakuten 응답 축소형).
 - 추천용 `/catalog/catalog-v1.<catalogVersion>.json`은 bundled Catalog와 byte·strict schema·semantic validation·DNA·추천 plan이 동일하다. client provider는 exact URL, HTTP/JSON/schema/version/workIds mismatch, 실제 retry, abort와 late stale completion 차단을 검증한다. 공통 shell/랜딩/settings는 full Catalog client import가 없고 onboarding/DNA/Library/Catalog 상세만 bundled provider를 갖는 route source 계약을 고정한다.
 - 일본어 정규화 골든 케이스(NFKC·가나·전각/반각·권수 토큰 10례 이상).
+- Art 4축이 모두 `unknown`인 Work도 다른 네 필수 그룹을 충족하면 `recommendationEligible`을 통과한다. 커뮤니티 근거의 Art는 이미지 manifest 없이 허용하고, publisher/manual 이미지 근거의 known Art는 기존 manifest·표본·맥락 검사를 그대로 통과해야 한다.
 - Export→Import 라운드트립: 임의 사용자 상태 생성 → export → import → userWorks/externalWorks/profile/draft 동등, cache empty와 current runtime meta 확인.
 - Import 거부: schemaVersion 2 / 필드 손상 / 부분 손상 배열 — mutation 전 전체 거부와 일곱 store 불변.
 - providerCache TTL: 주입 시간 기준 가격·재고 24시간 / 기타 metadata 90일의 직전·정확 경계, 상업 필드만 먼저 숨기는 상태, legacy 단일 `expiresAt` cache miss.

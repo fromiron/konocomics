@@ -302,6 +302,8 @@ export function mergeRawCsv(options: {
   matches: (record: readonly string[]) => boolean;
   allowedCurrentMatchCounts: readonly number[];
   existingRowsMustMatchOverlay?: boolean;
+  existingRowsMayBeOverlaySubset?: boolean;
+  normalizeRow?: (row: string) => string;
 }) {
   const current = readRawCsv(options.current, options.headers);
   const overlay = readRawCsv(options.overlay, options.headers);
@@ -310,11 +312,15 @@ export function mergeRawCsv(options: {
   if (!options.allowedCurrentMatchCounts.includes(currentMatchCount)) {
     throw new Error(`Unexpected current overlay row count: ${currentMatchCount}`);
   }
+  const normalizeRow = options.normalizeRow ?? ((row: string) => row);
+  const currentRows = currentMatches.map((row) => normalizeRow(row.raw));
+  const overlayRows = overlay.records.map((row) => normalizeRow(row.raw));
+  const rowsMatch = JSON.stringify(currentRows) === JSON.stringify(overlayRows);
+  const rowsAreSubset = currentRows.every((row) => overlayRows.includes(row));
   if (
-    options.existingRowsMustMatchOverlay &&
     currentMatches.length > 0 &&
-    JSON.stringify(currentMatches.map((row) => row.raw)) !==
-      JSON.stringify(overlay.records.map((row) => row.raw))
+    ((options.existingRowsMustMatchOverlay && !rowsMatch) ||
+      (options.existingRowsMayBeOverlaySubset && !rowsAreSubset))
   ) {
     throw new Error("Existing target rows conflict with approved overlay");
   }

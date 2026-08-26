@@ -57,9 +57,11 @@ const batchConfigs = {
     frozenSha256: "80888903a34792a5b079d153c86493bc0263cb56bf5bb5a0c0528dd309cf61f6",
     validationSha256: "ea34b2459e967ba27129e0e7522dadfcbb8830a5cb1a90f5af3c2337f0d9432e",
     inputBindingsSha256: "3852eea86b876b9231d549cf044e99a9a396b6adb6c1bd8d9b0ccd9be1e71e2f",
+    overlaySchemaVersion: 2,
     verifiedCount: 33,
     blockedCount: 17,
     pendingCount: 0,
+    previousReviewSha256: [],
     expectedVerifiedPositions: [
       2, 3, 4, 6, 9, 10, 12, 13, 15, 17, 18, 20, 22, 24, 25, 26, 28, 29, 32, 33, 35, 36, 37, 38, 39,
       40, 41, 42, 43, 44, 45, 46, 48,
@@ -72,9 +74,11 @@ const batchConfigs = {
     frozenSha256: "ccba877e5377f7f02fc3a5010bad076bae979eb250fc8d2432cb5d7b0b9a5ddd",
     validationSha256: "e7a4f8ef3c5f52a2d43d59f36a488870075f1ae7afbf1382cc3837fb027117f8",
     inputBindingsSha256: "f4f08de2b64f307247b140ef10810a100bb07e05bd42593130818edf00158bff",
+    overlaySchemaVersion: 2,
     verifiedCount: 11,
     blockedCount: 39,
     pendingCount: 0,
+    previousReviewSha256: [],
     expectedVerifiedPositions: [1, 4, 6, 8, 10, 15, 16, 26, 29, 47, 50],
     runOverlay: runBatch003Overlay,
   },
@@ -82,23 +86,34 @@ const batchConfigs = {
     label: "Batch 004",
     reviewFile: "batch-004-promotion-panel.md",
     frozenSha256: "a07a3bd053ce3edb79bdd5803ea3f04dbf8ceac4fd422d84ca97432ba75f68a1",
-    validationSha256: "c6d9ca0e2dd7a5ef9016016a2d930cb61be617a5954a0b4ac81d5eafd52bd618",
-    inputBindingsSha256: "0dcdfce37fdec5e4eb9c84e49bdd3123a287f84150c47e8f992971fae95c23e8",
-    verifiedCount: 11,
+    validationSha256: "bc9c60a448deda934b265e72ef40b3dfc24859c37f71354444298cc728d7a97f",
+    inputBindingsSha256: "5d402f3e73986ccb36bc7c98bc201805b34573336b11108a8e9cf41bbf0c6505",
+    overlaySchemaVersion: 3,
+    verifiedCount: 12,
     blockedCount: 1,
-    pendingCount: 38,
-    expectedVerifiedPositions: [3, 14, 17, 18, 20, 21, 41, 43, 44, 47, 49],
+    pendingCount: 37,
+    previousReviewSha256: [
+      "1ac10464d520f2e349b727c3806741b084e58acf74f7f82a4b53b2fc98c18fc7",
+      "d8320aea7eda002d99df600f1f9062615dd61fc34bd4956e6f1fe6c854f29f85",
+    ],
+    expectedVerifiedPositions: [3, 14, 17, 18, 20, 21, 24, 41, 43, 44, 47, 49],
     runOverlay: runBatch004Overlay,
   },
   "batch-005": {
     label: "Batch 005",
     reviewFile: "batch-005-promotion-panel.md",
     frozenSha256: "ddf9343b48146eaaf58971155f4190b4ec53e09d28d932d0d03cdc515ff8b2b8",
-    validationSha256: "e5c0b43380b9ff041e1d17fc3abf2662ba03b2ad323cba5e20f7e52cf6c9439b",
-    inputBindingsSha256: "2f6e6ee4ba92ce93bc1a558aa2440581dc601e252233e53a10b80d747514880b",
+    validationSha256: "35023d87f365d500f9fc1e61dac8a5bff1a1e4596e7cda92e783d1f3db114f11",
+    inputBindingsSha256: "aa044484a0e2932098e6653b1aa40c6a4a51c7a3ba1cd6796b6a0336bc41cc5a",
+    overlaySchemaVersion: 3,
     verifiedCount: 9,
-    blockedCount: 4,
-    pendingCount: 37,
+    blockedCount: 9,
+    pendingCount: 32,
+    previousReviewSha256: [
+      "7966dfd51a8985f5076211ae031996b95c15b487c8fbf3c4d77bb103973b5674",
+      "b5586fcd1cb2a88667d59175827037d855fc97bc44e87ed1495ca88e7326e934",
+      "00acb4c10fa7b5c3ce7510edef35b85d40dce0602e7f271f327e05fd96522e2f",
+    ],
     expectedVerifiedPositions: [4, 8, 23, 26, 27, 30, 35, 45, 47],
     runOverlay: runBatch005Overlay,
   },
@@ -116,10 +131,12 @@ const REVIEW_REFERENCE = `reviews/${REVIEW_FILE}`;
 const FROZEN_SHA256 = batchConfig.frozenSha256;
 const VALIDATION_SHA256 = batchConfig.validationSha256;
 const INPUT_BINDINGS_SHA256 = batchConfig.inputBindingsSha256;
+const OVERLAY_SCHEMA_VERSION = batchConfig.overlaySchemaVersion;
 const VERIFIED_COUNT: number = batchConfig.verifiedCount;
 const BLOCKED_COUNT: number = batchConfig.blockedCount;
 const PENDING_COUNT: number = batchConfig.pendingCount;
 const EXPECTED_VERIFIED_POSITIONS: readonly number[] = batchConfig.expectedVerifiedPositions;
+const PREVIOUS_REVIEW_SHA256: readonly string[] = batchConfig.previousReviewSha256;
 const WORK_HEADERS = [
   "id",
   "title",
@@ -245,8 +262,7 @@ const blockerRowSchema = z.strictObject({
   retrievedAt: z.iso.date(),
   recheckPath: z.string().min(1),
 });
-const validationSchema = z.strictObject({
-  schemaVersion: z.literal(2),
+const validationShape = {
   batchId: z.literal(BATCH_ID),
   reviewedByHuman: z.literal(false),
   humanValidation: z.literal("NOT_RUN"),
@@ -255,12 +271,6 @@ const validationSchema = z.strictObject({
   promotionBlocked: z.literal(BLOCKED_COUNT),
   pending: z.literal(PENDING_COUNT).optional(),
   expectedVerifiedPositions: z.array(z.number().int()).length(VERIFIED_COUNT),
-  coverageThresholds: z.strictObject({
-    narrative: z.literal(0.6),
-    tone: z.literal(0.6),
-    art: z.literal(0.3),
-    denominator: z.literal("known+unknown; notApplicable excluded"),
-  }),
   inputBindings: z.strictObject({
     combinedSha256: z.literal(INPUT_BINDINGS_SHA256),
     files: z.strictObject({
@@ -284,10 +294,35 @@ const validationSchema = z.strictObject({
     art: z.number().int().nonnegative(),
   }),
   files: z.record(z.string(), sha256Schema),
-});
+};
+const validationSchema =
+  OVERLAY_SCHEMA_VERSION === 3
+    ? z.strictObject({
+        ...validationShape,
+        schemaVersion: z.literal(3),
+        promotionCoverageThresholds: z.strictObject({
+          narrative: z.literal(0.6),
+          tone: z.literal(0.6),
+          denominator: z.literal("known+unknown; notApplicable excluded"),
+        }),
+        scoringCoverageThresholds: z.strictObject({
+          art: z.literal(0.3),
+          effect: z.literal("neutral shrink only; not a promotion gate"),
+        }),
+      })
+    : z.strictObject({
+        ...validationShape,
+        schemaVersion: z.literal(2),
+        coverageThresholds: z.strictObject({
+          narrative: z.literal(0.6),
+          tone: z.literal(0.6),
+          art: z.literal(0.3),
+          denominator: z.literal("known+unknown; notApplicable excluded"),
+        }),
+      });
 
 type Overlay = ReturnType<typeof validateOverlay>;
-type PromotionState = "isolated" | "exactlyApplied";
+type PromotionState = "isolated" | "partiallyApplied" | "exactlyApplied";
 type PreparedPromotion = {
   temporaryRoot: string;
   candidateRoot: string;
@@ -343,13 +378,22 @@ function exactOrderedSet(actual: readonly string[], expected: readonly string[],
 }
 
 function validatePanel(report: string) {
+  const artEvidenceLines =
+    OVERLAY_SCHEMA_VERSION === 3
+      ? [
+          "COMMUNITY/IMAGE POLICY: promotion-evidence-v3",
+          "ART EVIDENCE ROUTE: OPTIONAL — COMMUNITY OR IMAGE",
+        ]
+      : [
+          "LOCAL ART QUORUM: PASS",
+          "GEMINI ART QUORUM: PASS — gemini-3.7-flash-high",
+          "GROK ART: ABSTAIN",
+        ];
   const requiredLines = [
     "PROMOTION AUTHORIZATION: YES",
     "HUMAN VALIDATION: NOT_RUN",
     "REVIEWED BY HUMAN: false",
-    "LOCAL ART QUORUM: PASS",
-    "GEMINI ART QUORUM: PASS — gemini-3.7-flash-high",
-    "GROK ART: ABSTAIN",
+    ...artEvidenceLines,
     "MUSE: NOT_USED",
     `RECOMMENDATION VERIFIED: ${VERIFIED_COUNT}`,
     `HARD BLOCKERS: ${BLOCKED_COUNT}`,
@@ -445,8 +489,7 @@ function validateOverlay(root: string) {
         /[『』]/u.test(row.canonicalTitle) ||
         (row.outcome === "recommendationVerified" &&
           (row.blockerCode !== "" || row.blockerDetails !== "")) ||
-        (row.outcome === "pending" &&
-          (row.blockerCode !== "" || row.blockerDetails !== "")) ||
+        (row.outcome === "pending" && (row.blockerCode !== "" || row.blockerDetails !== "")) ||
         (row.outcome === "promotionBlocked" &&
           (row.blockerDetails === "" ||
             row.blockerCode === "" ||
@@ -464,9 +507,7 @@ function validateOverlay(root: string) {
   const blockedIds = decisions
     .filter((row) => row.outcome === "promotionBlocked")
     .map((row) => row.workId);
-  const pendingIds = decisions
-    .filter((row) => row.outcome === "pending")
-    .map((row) => row.workId);
+  const pendingIds = decisions.filter((row) => row.outcome === "pending").map((row) => row.workId);
   if (
     verifiedIds.length !== VERIFIED_COUNT ||
     blockedIds.length !== BLOCKED_COUNT ||
@@ -677,6 +718,33 @@ function currentBlockerBytes(root: string, targetIds: ReadonlySet<string>) {
     .map((row) => row.raw);
 }
 
+function withoutInputBinding(row: string) {
+  return row
+    .replace(
+      /(Combined input\/review packet binding: SHA-256|combined input\/review packet SHA-256)=[0-9a-f]{64}/gu,
+      "$1=<binding>",
+    )
+    .replace(
+      /Multiple independent user observations were supplemental only where recorded|Repeated bounded independent community observations may support text or Art claims only where recorded/gu,
+      "Community evidence follows the bound promotion policy",
+    );
+}
+
+function blockerIdentity(row: string) {
+  const [record] = z
+    .array(z.array(z.string()).length(PROMOTION_BLOCKER_HEADERS.length))
+    .length(1)
+    .parse(parse(row, { relax_column_count: false }) as unknown);
+  return JSON.stringify([
+    record?.[0],
+    record?.[1],
+    record?.[3],
+    record?.[4],
+    record?.[5],
+    record?.[6],
+  ]);
+}
+
 function classifyState(root: string, overlay: Overlay): PromotionState {
   const loaded = loadCatalogSource(join(root, "data/source"));
   const works = new Map(loaded.source.works.map((row) => [row.value.id, row.value]));
@@ -685,6 +753,13 @@ function classifyState(root: string, overlay: Overlay): PromotionState {
     factors.set(factor.value.workId, [...(factors.get(factor.value.workId) ?? []), factor]);
   }
   const approved = new Map(overlay.works.rows.map((row) => [row.value.id, row.value]));
+  const approvedFactors = new Map<string, typeof overlay.factors.rows>();
+  for (const factor of overlay.factors.rows) {
+    approvedFactors.set(factor.value.workId, [
+      ...(approvedFactors.get(factor.value.workId) ?? []),
+      factor,
+    ]);
+  }
   const targetSet = new Set([...overlay.verifiedIds, ...overlay.blockedIds]);
   const approvedBlockerBytes = readFileSync(
     join(root, OVERLAY_ROOT, OVERLAY_FILES.blockers),
@@ -701,43 +776,63 @@ function classifyState(root: string, overlay: Overlay): PromotionState {
     )
     .slice(1)
     .map((row) => row.raw);
+  const currentBlockers = currentBlockerBytes(root, targetSet);
+  const matchesApproved = (workId: string) =>
+    JSON.stringify(works.get(workId)) === JSON.stringify(approved.get(workId)) &&
+    JSON.stringify((factors.get(workId) ?? []).map((row) => row.value)) ===
+      JSON.stringify((approvedFactors.get(workId) ?? []).map((row) => row.value));
+  const isIsolated = (workId: string) => {
+    const work = works.get(workId);
+    const workFactors = factors.get(workId) ?? [];
+    return (
+      work !== undefined &&
+      work.libraryOnly &&
+      !work.onboardingEligible &&
+      !work.recommendationEligible &&
+      work.annotationReviewMethod === "unreviewed" &&
+      work.annotationReviewedAt === undefined &&
+      work.annotationReviewReference === undefined &&
+      workFactors.length === AXIS_IDS.length &&
+      workFactors.every(
+        (row) =>
+          row.value.state === "unknown" &&
+          row.value.value === "" &&
+          row.value.confidence === "" &&
+          row.value.evidenceId === work.evidenceId,
+      )
+    );
+  };
   const reportPath = join(root, "data/source", REVIEW_REFERENCE);
   const exactlyApplied =
-    overlay.verifiedIds.every(
-      (workId) => JSON.stringify(works.get(workId)) === JSON.stringify(approved.get(workId)),
-    ) &&
-    JSON.stringify(currentBlockerBytes(root, targetSet)) === JSON.stringify(approvedBlockers) &&
+    overlay.verifiedIds.every(matchesApproved) &&
+    JSON.stringify(currentBlockers) === JSON.stringify(approvedBlockers) &&
     existsSync(reportPath) &&
     readFileSync(reportPath, "utf8") === overlay.report;
   if (exactlyApplied) return "exactlyApplied";
 
   const isolated =
-    currentBlockerBytes(root, targetSet).length === 0 &&
-    !existsSync(reportPath) &&
-    overlay.frozenIds.every((workId) => {
-      const work = works.get(workId);
-      const workFactors = factors.get(workId) ?? [];
-      return (
-        work !== undefined &&
-        work.libraryOnly &&
-        !work.onboardingEligible &&
-        !work.recommendationEligible &&
-        work.annotationReviewMethod === "unreviewed" &&
-        work.annotationReviewedAt === undefined &&
-        work.annotationReviewReference === undefined &&
-        workFactors.length === AXIS_IDS.length &&
-        workFactors.every(
-          (row) =>
-            row.value.state === "unknown" &&
-            row.value.value === "" &&
-            row.value.confidence === "" &&
-            row.value.evidenceId === work.evidenceId,
-        )
-      );
-    });
+    currentBlockers.length === 0 && !existsSync(reportPath) && overlay.frozenIds.every(isIsolated);
   if (isolated) return "isolated";
+  const reportIsKnownPartial =
+    existsSync(reportPath) && PREVIOUS_REVIEW_SHA256.includes(sha256(readFileSync(reportPath)));
+  const approvedBlockersWithoutBinding = approvedBlockers.map(withoutInputBinding);
+  const blockersAreApprovedSubset = currentBlockers
+    .map(withoutInputBinding)
+    .every((row) => approvedBlockersWithoutBinding.includes(row));
+  const blockersKeepApprovedIdentity =
+    currentBlockers.length === approvedBlockers.length &&
+    JSON.stringify(currentBlockers.map(blockerIdentity)) ===
+      JSON.stringify(approvedBlockers.map(blockerIdentity));
+  const verifiedSet = new Set(overlay.verifiedIds);
+  const partiallyApplied =
+    reportIsKnownPartial &&
+    (blockersAreApprovedSubset || blockersKeepApprovedIdentity) &&
+    overlay.frozenIds.every((workId) =>
+      verifiedSet.has(workId) ? matchesApproved(workId) || isIsolated(workId) : isIsolated(workId),
+    );
+  if (partiallyApplied) return "partiallyApplied";
   throw new Error(
-    "Batch 002 source is neither isolated nor exactly applied; partial promotion refused",
+    "Promotion source is neither isolated, an approved partial state, nor exactly applied",
   );
 }
 
@@ -750,6 +845,8 @@ function mergeFile(options: {
   matches: (record: readonly string[]) => boolean;
   allowedCurrentMatchCounts: readonly number[];
   existingRowsMustMatchOverlay?: boolean;
+  existingRowsMayBeOverlaySubset?: boolean;
+  normalizeRow?: (row: string) => string;
 }) {
   const current = readFileSync(join(options.sourceRoot, options.sourceFile), "utf8");
   const overlay = readFileSync(
@@ -766,6 +863,8 @@ function mergeFile(options: {
       matches: options.matches,
       allowedCurrentMatchCounts: options.allowedCurrentMatchCounts,
       existingRowsMustMatchOverlay: options.existingRowsMustMatchOverlay,
+      existingRowsMayBeOverlaySubset: options.existingRowsMayBeOverlaySubset,
+      normalizeRow: options.normalizeRow,
     }),
     "utf8",
   );
@@ -788,6 +887,7 @@ function writeCandidate(root: string, candidateRoot: string, overlay: Overlay) {
   const verifiedSet = new Set(overlay.verifiedIds);
   const targetSet = new Set([...overlay.verifiedIds, ...overlay.blockedIds]);
   const evidenceIds = new Set(overlay.evidence.rows.map((row) => row.value.id));
+  const subsetCounts = (count: number) => Array.from({ length: count + 1 }, (_, index) => index);
   mergeFile({
     sourceRoot: root,
     candidateRoot,
@@ -813,8 +913,8 @@ function writeCandidate(root: string, candidateRoot: string, overlay: Overlay) {
     overlayFile: OVERLAY_FILES.themes,
     headers: THEME_HEADERS,
     matches: (row) => verifiedSet.has(row[0] ?? ""),
-    allowedCurrentMatchCounts: [0, overlay.themes.rows.length],
-    existingRowsMustMatchOverlay: true,
+    allowedCurrentMatchCounts: subsetCounts(overlay.themes.rows.length),
+    existingRowsMayBeOverlaySubset: true,
   });
   mergeFile({
     sourceRoot: root,
@@ -823,8 +923,8 @@ function writeCandidate(root: string, candidateRoot: string, overlay: Overlay) {
     overlayFile: OVERLAY_FILES.context,
     headers: CONTEXT_HEADERS,
     matches: (row) => verifiedSet.has(row[0] ?? ""),
-    allowedCurrentMatchCounts: [0, VERIFIED_COUNT],
-    existingRowsMustMatchOverlay: true,
+    allowedCurrentMatchCounts: subsetCounts(VERIFIED_COUNT),
+    existingRowsMayBeOverlaySubset: true,
   });
   mergeFile({
     sourceRoot: root,
@@ -833,8 +933,9 @@ function writeCandidate(root: string, candidateRoot: string, overlay: Overlay) {
     overlayFile: OVERLAY_FILES.evidence,
     headers: EVIDENCE_HEADERS,
     matches: (row) => evidenceIds.has(row[0] ?? ""),
-    allowedCurrentMatchCounts: [0, overlay.evidence.rows.length],
-    existingRowsMustMatchOverlay: true,
+    allowedCurrentMatchCounts: subsetCounts(overlay.evidence.rows.length),
+    existingRowsMayBeOverlaySubset: true,
+    normalizeRow: withoutInputBinding,
   });
   mergeFile({
     sourceRoot: root,
@@ -843,8 +944,8 @@ function writeCandidate(root: string, candidateRoot: string, overlay: Overlay) {
     overlayFile: OVERLAY_FILES.artEvidence,
     headers: artEvidenceManifestHeaders,
     matches: (row) => verifiedSet.has(row[0] ?? ""),
-    allowedCurrentMatchCounts: [0, overlay.artEvidence.rows.length],
-    existingRowsMustMatchOverlay: true,
+    allowedCurrentMatchCounts: subsetCounts(overlay.artEvidence.rows.length),
+    existingRowsMayBeOverlaySubset: true,
   });
   mergeFile({
     sourceRoot: root,
@@ -853,22 +954,25 @@ function writeCandidate(root: string, candidateRoot: string, overlay: Overlay) {
     overlayFile: OVERLAY_FILES.blockers,
     headers: PROMOTION_BLOCKER_HEADERS,
     matches: (row) => targetSet.has(row[0] ?? ""),
-    allowedCurrentMatchCounts: [0, overlay.blockers.length],
-    existingRowsMustMatchOverlay: true,
+    allowedCurrentMatchCounts: subsetCounts(overlay.blockers.length),
+    existingRowsMayBeOverlaySubset: true,
+    normalizeRow: blockerIdentity,
   });
   const reportDestination = join(candidateRoot, "data/source", REVIEW_REFERENCE);
-  if (existsSync(reportDestination) && readFileSync(reportDestination, "utf8") !== overlay.report) {
-    throw new Error(`Existing review report conflicts with Batch 002: ${REVIEW_REFERENCE}`);
+  if (existsSync(reportDestination)) {
+    const currentReport = readFileSync(reportDestination);
+    if (
+      currentReport.toString("utf8") !== overlay.report &&
+      !PREVIOUS_REVIEW_SHA256.includes(sha256(currentReport))
+    ) {
+      throw new Error(`Existing review report conflicts with ${BATCH_ID}: ${REVIEW_REFERENCE}`);
+    }
   }
   mkdirSync(dirname(reportDestination), { recursive: true });
   writeFileSync(reportDestination, overlay.report, "utf8");
 }
 
-function assertRegistryTransition(
-  root: string,
-  candidateRoot: string,
-  overlay: Overlay,
-) {
+function assertRegistryTransition(root: string, candidateRoot: string, overlay: Overlay) {
   const baseline = runPromotionRegistry("check", root);
   const candidate = runPromotionRegistry("write", candidateRoot);
   const baselineRows = rawRowsByKey(
@@ -907,7 +1011,10 @@ function assertRegistryTransition(
   }
   if (
     candidate.goldCount !== 150 ||
-    candidate.verifiedCount + candidate.blockedCount + candidate.pendingCount + candidate.goldCount !==
+    candidate.verifiedCount +
+      candidate.blockedCount +
+      candidate.pendingCount +
+      candidate.goldCount !==
       baseline.workCount
   ) {
     throw new Error("Batch 002 promotion registry counts are inconsistent");
@@ -1006,7 +1113,7 @@ export function runBatch002Promotion(mode: "check" | "write", root = process.cwd
       prepared.baselineDigests,
       "Live Batch 002 outputs changed before publish",
     );
-    if (mode === "write" && prepared.state === "isolated") publishDirectorySet(swaps);
+    if (mode === "write" && prepared.state !== "exactlyApplied") publishDirectorySet(swaps);
     return {
       ...prepared.summary,
       catalogVersion: prepared.catalogVersion,

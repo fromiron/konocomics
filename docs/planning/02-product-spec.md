@@ -317,6 +317,7 @@ Genre 10종, Theme 22종(centrality 1|2), Axis 17종(Narrative 6 / Tone·Relatio
 - Tag group은 양쪽 배열이 모두 비어 있지 않을 때 coverage 1, 한쪽이라도 비면 coverage 0이다. 합집합이 비면 raw score 0.5다. 한쪽만 비면 raw Jaccard는 0이지만 coverage 0으로 최종 0.5에 수축한다. 양쪽 그룹 주석이 있을 때만 개별 tag 부재를 known absence로 본다.
 - 그룹 비중 고정: Genre 15% / Theme 25% / Narrative 25% / Tone·Relationship 20% / Art 15%.
 - Coverage 임계: Genre 0.80 / Theme 0.60 / Narrative 0.60 / Tone 0.60 / Art 0.30. 미달 그룹만 `0.5 + (score−0.5) × min(1, coverage/threshold)`. **가중치 재분배 금지.**
+- 위 임계는 추천 유사도의 수축 계약이다. `recommendationEligible`·Gold-quality 승격의 필수 coverage는 Genre / Theme / Narrative / Tone만이며 Art는 선택 축이다. Art가 없으면 네 축을 `unknown`으로 유지하고 Art 그룹만 0.5로 수축하며 다른 그룹에 15%를 재분배하지 않는다.
 
 ### 6.3 Positive Anchor
 
@@ -597,7 +598,7 @@ type BaselineRecommendation = {
 
 ### 단계 게이트
 
-1. **Sanity Check (동결 cohort 50작품, 본인+지인 2~3명):** cohort는 정확히 50개의 서로 다른 `recommendationEligible` Work이며 evidence audit·블라인드 재태깅·CLI 리포트 사이에 동일해야 한다. `annotation-guide.md`의 Art 근거 정책을 제목 예외 없이 전 작품·전 축에 적용하고, coverage 통과를 근거 검수 완료로 간주하지 않는다. CLI 리포트로 Top 10을 육안 검증한다. 통과 기준 — 명백히 이상한 Top 10 없음 / 소수 취향 생존 / unknown 다수 작품 과대평가 없음 / 부정 사유가 올바른 팩터에만 작동.
+1. **Sanity Check (동결 cohort 50작품, 본인+지인 2~3명):** cohort는 정확히 50개의 서로 다른 `recommendationEligible` Work이며 evidence audit·블라인드 재태깅·CLI 리포트 사이에 동일해야 한다. 이 동결 G1의 기존 Art 감사는 역사적 cohort 근거로 보존한다. 이후 확장 승격은 Art를 선택 축으로 다루되, Art 값을 채우는 경우 `annotation-guide.md`의 이미지 또는 커뮤니티 근거 경로를 충족해야 한다. CLI 리포트로 Top 10을 육안 검증한다. 통과 기준 — 명백히 이상한 Top 10 없음 / 소수 취향 생존 / unknown 다수 작품 과대평가 없음 / 부정 사유가 올바른 팩터에만 작동.
 2. **블라인드 테스트 (150작품):** 승인된 50작품을 교체·약화하지 않고 evidence-complete 100작품을 추가한다. 역할 범위는 Anchor 30~40 / Bridge 30~40 / Discovery 70+다. Baseline(장르 중첩+시장 신호+축적도)과 Taste Engine의 출처를 숨기고 설명 공개 전/후 2단 설문을 로컬 웹 하니스에서 수행한다.
 3. **사람 경로 GO 기준 (방향성 판단, 통계적 유의성 주장 안 함):** 정확히 10명의 고유하고 완전한 사람 결과에서 Taste 또는 동률 7명 이상 / Unknown Want-to-Read 엄격 우세 / Taste Explanation Agreement 70% 이상 / Disliked Leakage 악화 없음 / Holdout Recall@10 열세 없음을 모두 만족해야 한다.
 4. **사용자 승인 모델 패널 경로:** 사람 응답이나 사람 지표를 합성하지 않는다. 동결된 G2 evidence bundle에 대한 Local/Gemini/Grok/GPT-5.6 Pro의 hash-bound 조건 없는 만장일치 GO와 현재 사용자의 사전 승인이 있을 때만 제품 방향 게이트를 열 수 있다. 이는 사람 검증을 대체 측정한 결과가 아니다.

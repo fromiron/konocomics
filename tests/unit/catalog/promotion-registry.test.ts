@@ -54,19 +54,24 @@ describe("promotion registry", () => {
       input.batches.map((row) => `${row.workId}\u0000${row.batchId}`).sort(),
     );
     expect(
-      [...Map.groupBy(input.batches, (batch) => batch.batchId)].every(
-        ([batchId, batches]) =>
+      [...Map.groupBy(input.batches, (batch) => batch.batchId)].every(([batchId, batches]) => {
+        const usesOptionalArtPolicy = batchId === "batch-004" || batchId === "batch-005";
+        return (
           batches.length === 50 &&
           batches.every(
             (batch) =>
               batch.batchType === (batchId === "pilot-001" ? "pilot" : "batch") &&
               batch.status === "frozen" &&
-              batch.methodPolicy === "promotion-evidence-v2" &&
+              batch.methodPolicy ===
+                (usesOptionalArtPolicy ? "promotion-evidence-v3" : "promotion-evidence-v2") &&
               batch.panelPolicy ===
-                "art-local-codex+gemini-3.7-flash-high;grok-art-abstain;muse-conditional" &&
+                (usesOptionalArtPolicy
+                  ? "official+community-bounded;art-optional-peer;muse-conditional"
+                  : "art-local-codex+gemini-3.7-flash-high;grok-art-abstain;muse-conditional") &&
               /^\d{4}-\d{2}-\d{2}$/u.test(batch.lastUpdatedAt),
-          ),
-      ),
+          )
+        );
+      }),
     ).toBe(true);
     expect(pilotBatches).toHaveLength(50);
     expect(

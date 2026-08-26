@@ -1,12 +1,12 @@
 {
-  "schemaVersion": 2,
+  "schemaVersion": 3,
   "batchId": "batch-004",
   "reviewedByHuman": false,
   "humanValidation": "NOT_RUN",
   "targetWorkCount": 50,
-  "recommendationVerified": 11,
+  "recommendationVerified": 12,
   "promotionBlocked": 1,
-  "pending": 38,
+  "pending": 37,
   "expectedVerifiedPositions": [
     3,
     14,
@@ -14,20 +14,24 @@
     18,
     20,
     21,
+    24,
     41,
     43,
     44,
     47,
     49
   ],
-  "coverageThresholds": {
+  "promotionCoverageThresholds": {
     "narrative": 0.6,
     "tone": 0.6,
-    "art": 0.3,
     "denominator": "known+unknown; notApplicable excluded"
   },
+  "scoringCoverageThresholds": {
+    "art": 0.3,
+    "effect": "neutral shrink only; not a promotion gate"
+  },
   "inputBindings": {
-    "combinedSha256": "0dcdfce37fdec5e4eb9c84e49bdd3123a287f84150c47e8f992971fae95c23e8",
+    "combinedSha256": "5d402f3e73986ccb36bc7c98bc201805b34573336b11108a8e9cf41bbf0c6505",
     "files": {
       "frozen": {
         "data/staging/catalog-expansion/batches/batch-004/frozen-work-set.csv": "a07a3bd053ce3edb79bdd5803ea3f04dbf8ceac4fd422d84ca97432ba75f68a1"
@@ -159,6 +163,9 @@
         "data/staging/catalog-expansion/batches/batch-004/reviews/luna-flagged-cell-review.md": "4a54854f9f2726d87d765f67c51d50dbb16bd7db687cda5c0e04f69282a427cd",
         "data/staging/catalog-expansion/batches/batch-004/reviews/luna-identity-safety-qa.md": "55b731f943e552444f15ba828c49f55278d7cbf4be8d36924e8a414e4af7900c",
         "data/staging/catalog-expansion/batches/batch-004/reviews/luna-max-continuation-qa-2026-08-26.md": "86d9e3c6915c17ee6bb93d15628491eb51504c7537542d7352a626a7770e4b9f",
+        "data/staging/catalog-expansion/batches/batch-004/reviews/luna-max-korean-title-adjudication-2026-08-26.md": "24f182f44a677b28ecf43319f7b8c3680c5d7dcb428e1499b31c19cd4e828b09",
+        "data/staging/catalog-expansion/batches/batch-004/reviews/luna-max-korean-title-search-2026-08-26.md": "8c282effe11bf2271d7b7869d761957f3d0d56f2841eec5e249ac00d6edd05d9",
+        "data/staging/catalog-expansion/batches/batch-004/reviews/luna-max-v3-closeout-adjudication-2026-08-26.md": "fe72c2559e6eb58035f4fb5a19f65cbae9f46db478f30a5e9525ba4b8d8c17a9",
         "data/staging/catalog-expansion/batches/batch-004/reviews/luna-pass-a-vector-qa.md": "2bdb1a15ad0dcec0146c53b82b953dc09298b9a5b23cfe049d705db36d5156d5",
         "data/staging/catalog-expansion/batches/batch-004/reviews/luna-research-packet-qa.md": "1020e53237ac15b1e48f5c04746ba5d686c66d300e9cd2f1fdf07261b64ecaa0"
       },
@@ -171,7 +178,7 @@
         "data/staging/catalog-expansion/batches/batch-004/adjudication/genres-final-chunk-05.csv": "c7c7ab76b16caa86418da729165b0f457f763be691fdf5941ddd14c97af3214b",
         "data/staging/catalog-expansion/batches/batch-004/adjudication/text-final-chunk-01.csv": "1d36a1c9c5a99b0a935aaf49f1a4e327046308ad9507d17cc245214124e5f5fe",
         "data/staging/catalog-expansion/batches/batch-004/adjudication/text-final-chunk-02.csv": "0baabb3833eb2c4551eac5b97a8211b773d9bb59a1073c5b2bebc4622cd21c60",
-        "data/staging/catalog-expansion/batches/batch-004/adjudication/text-final-chunk-03.csv": "764e5d582cf45e6e85278087394098d4f0ce601a2973785b3b25734fe607bc32",
+        "data/staging/catalog-expansion/batches/batch-004/adjudication/text-final-chunk-03.csv": "44bb508f2524fe863cf8b17db6fa6b0e45865a7445a66f80c4b37102e781130b",
         "data/staging/catalog-expansion/batches/batch-004/adjudication/text-final-chunk-04.csv": "8b8a99757c29b85eb0cf78e647fa10e086218dbeb2695ab53f8cdafcd67bc706",
         "data/staging/catalog-expansion/batches/batch-004/adjudication/text-final-chunk-05.csv": "fe04b4f4ef5daf8612d62822afda2258283ef407bb8b729ae69067904fdb9e6a",
         "data/staging/catalog-expansion/batches/batch-004/adjudication/themes-final-chunk-01.csv": "61a36f4c60f0a735f2a20b124292e079ece246f80006ea82080368f87614c8c4",
@@ -276,27 +283,27 @@
       "contextResearch": {
         "data/staging/catalog-expansion/batches/batch-004/final-overlay/context-research-positions-01-20.csv": "fb9a610a29a66e79203b3582d1a20573780b580a8c0f579a6acb3c09e9965c47",
         "data/staging/catalog-expansion/batches/batch-004/final-overlay/context-research-positions-01-20.md": "1d2408859d52ffa3d8b3fc8d6b375d9c6044de0a5fac5645e5377bcac67a7663",
-        "data/staging/catalog-expansion/batches/batch-004/final-overlay/context-research-positions-21-50.csv": "2a08cc49e9f2c205118a09b045b5b983b42c3b3d1ddfe04d3717e79ad02fb5d7",
-        "data/staging/catalog-expansion/batches/batch-004/final-overlay/context-research-positions-21-50.md": "51df469a2bf20f4f8ea7fc525a3a8de5b3b3d12d60d9e3785fcad751b97a2d59"
+        "data/staging/catalog-expansion/batches/batch-004/final-overlay/context-research-positions-21-50.csv": "aa72a063add7e0434bc00076f6590c6763c305a5f67e14f7f16d139161f03ab3",
+        "data/staging/catalog-expansion/batches/batch-004/final-overlay/context-research-positions-21-50.md": "eff9265b1e167c15ec9155cf7bc1efb84796ac58111a87faeedcd319842c094a"
       }
     }
   },
   "known": {
-    "text": 100,
-    "art": 33
+    "text": 109,
+    "art": 36
   },
   "unknown": {
-    "text": 43,
-    "art": 11
+    "text": 47,
+    "art": 12
   },
   "files": {
-    "promotion-decisions.csv": "0564b126a0914c6e27605d4a288d632218351d916f77a1efa1308fa0db616d16",
-    "works-final.csv": "fc9f690997e04cd2aaaae899728492a9e4d80847d06933e6751381263efaf425",
-    "factors-final.csv": "340e19a1fba532abed627b4ddf0cb29bcf2c53addf8558658bbdf3178a6ecbb0",
-    "themes-final.csv": "7d45e16a2dd701f7ab8d268b3859f219bac5693954c881aeb2b3c9be1758a2ba",
-    "evidence-final.csv": "904618ad7be52ae26b50c760b34adb085e6379aaca630bd3866f9580dfd5fb47",
-    "art-evidence-manifest-final.csv": "826220037ec6ce283493a3258a040cf70dc7912f50d6cffeb69769d7f29b148e",
-    "recommendation-context-final.csv": "c9c604c333bfbc81f0cefcae6e3d051569d65ac5ec0f9e9c855956f2a3e641c9",
-    "promotion-blockers-final.csv": "fe85bc233c9cdeeeffdccf6b210adfcf0e06314f2b70b820df8344a08465b5ac"
+    "promotion-decisions.csv": "5c3d15c44c68fa5062b80d933817b35544b4f84b1462e61e0bf681351a96a4dd",
+    "works-final.csv": "037c286376d9d30c29174d7a004b020f2f12102cff76d275fdfc4cae33f13f38",
+    "factors-final.csv": "c2309afff46248d070905876d3e113d1a6804ba20aeecb55ff7e8c3f4ce16afb",
+    "themes-final.csv": "3d0def84f3bba7016375809eadeddfbfff978343df20de19197418e5dbd926eb",
+    "evidence-final.csv": "ef36b18a002d481972bf4cbde80c3ecb8f6d6b9315b3edf4a7087674e2e48d98",
+    "art-evidence-manifest-final.csv": "b9b8b89b0fa84d507b4425ede45850f89ddf85910a681a847538d46e2473de91",
+    "recommendation-context-final.csv": "18ef7b6985498090fe8943105e23673ed51f71ce994ea264d37c4641736ed7b8",
+    "promotion-blockers-final.csv": "0306d52df4901595d13dfe03a68855c9b591788774fbd196c97f130653ab94de"
   }
 }

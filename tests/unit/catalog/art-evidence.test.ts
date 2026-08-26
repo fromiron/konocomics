@@ -303,6 +303,13 @@ describe("generic Art evidence validation", () => {
     fixture.manifest = [];
     expect(validateArtEvidence(fixture)).toEqual([]);
   });
+
+  it("accepts community-backed Art claims without an image manifest", () => {
+    const fixture = createFixture();
+    fixture.evidence[0]!.value.sourceType = "model";
+    fixture.manifest = [];
+    expect(validateArtEvidence(fixture)).toEqual([]);
+  });
 });
 
 describe("catalog pipeline Art evidence boundary", () => {

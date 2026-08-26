@@ -1,6 +1,6 @@
 {
   "schemaVersion": 1,
-  "catalogVersion": "v1-5345207c47c5",
+  "catalogVersion": "v1-902d2ed16905",
   "factorDictionaryVersion": "v1",
   "works": [
     {
@@ -26428,6 +26428,119 @@
       }
     },
     {
+      "id": "work-65f856a6fa2078f21d2f",
+      "title": "黒月のイェルクナハト",
+      "aliases": [],
+      "creators": [
+        "スズモト コウ"
+      ],
+      "publisher": "講談社",
+      "demographic": "unknown",
+      "status": "unknown",
+      "firstPublishedYear": 2025,
+      "genres": [
+        "action",
+        "fantasy",
+        "romance"
+      ],
+      "themes": [
+        {
+          "id": "combat",
+          "centrality": 2,
+          "confidence": 0.8
+        }
+      ],
+      "axes": {
+        "progression": {
+          "state": "known",
+          "value": 2,
+          "confidence": 0.66
+        },
+        "problemSolving": {
+          "state": "unknown"
+        },
+        "strategy": {
+          "state": "known",
+          "value": 2,
+          "confidence": 0.78
+        },
+        "pacing": {
+          "state": "known",
+          "value": 2,
+          "confidence": 0.8
+        },
+        "mysteryReveal": {
+          "state": "unknown"
+        },
+        "worldBuilding": {
+          "state": "known",
+          "value": 2,
+          "confidence": 0.7
+        },
+        "characterArcWeight": {
+          "state": "known",
+          "value": 2,
+          "confidence": 0.78
+        },
+        "relationshipStructure": {
+          "state": "known",
+          "value": 2,
+          "confidence": 0.82
+        },
+        "comedy": {
+          "state": "unknown"
+        },
+        "darkness": {
+          "state": "known",
+          "value": 2,
+          "confidence": 0.88
+        },
+        "mentalStress": {
+          "state": "known",
+          "value": 2,
+          "confidence": 0.68
+        },
+        "romance": {
+          "state": "known",
+          "value": 4,
+          "confidence": 0.86
+        },
+        "emotionalWarmth": {
+          "state": "unknown"
+        },
+        "artRealism": {
+          "state": "known",
+          "value": 2,
+          "confidence": 0.89
+        },
+        "artDensity": {
+          "state": "known",
+          "value": 3,
+          "confidence": 0.92
+        },
+        "visualSoftness": {
+          "state": "known",
+          "value": 1,
+          "confidence": 0.9
+        },
+        "motionImpact": {
+          "state": "unknown"
+        }
+      },
+      "factorScope": "entry_1_3_volumes",
+      "eligibility": {
+        "onboardingEligible": true,
+        "recommendationEligible": true,
+        "libraryOnly": false
+      },
+      "evidence": {
+        "metadataConfidence": 1,
+        "groupingConfidence": 1,
+        "sourceAgreement": 1,
+        "annotationReviewedAt": "2026-08-25T00:00:00+09:00"
+      }
+    },
+    {
       "id": "work-671e3453cf9e1df2ee87",
       "title": "陽だまりの樹",
       "aliases": [],
@@ -35023,6 +35136,14 @@
       "editionKind": "standard"
     },
     {
+      "id": "work-65f856a6fa2078f21d2f-representative",
+      "workId": "work-65f856a6fa2078f21d2f",
+      "volumeNumber": 1,
+      "isbn": "9784065400753",
+      "releaseDate": "2025-07-16",
+      "editionKind": "standard"
+    },
+    {
       "id": "work-671e3453cf9e1df2ee87-representative",
       "workId": "work-671e3453cf9e1df2ee87",
       "volumeNumber": 1,
@@ -35687,6 +35808,7 @@
     "work-5e30ab3c7e3fb43e51f2": "work-5e30ab3c7e3fb43e51f2-representative",
     "work-5e7eef6cc23d9738e034": "work-5e7eef6cc23d9738e034-representative",
     "work-61f2b70ee9f8217b3604": "work-61f2b70ee9f8217b3604-representative",
+    "work-65f856a6fa2078f21d2f": "work-65f856a6fa2078f21d2f-representative",
     "work-671e3453cf9e1df2ee87": "work-671e3453cf9e1df2ee87-representative",
     "work-6f849a8e785deee3d5dc": "work-6f849a8e785deee3d5dc-representative",
     "work-71e824df2e6bc2125294": "work-71e824df2e6bc2125294-representative",

@@ -73,6 +73,17 @@ describe("catalog semantic validation", () => {
     expect(codes(catalog)).toContain("COVERAGE_BELOW_THRESHOLD");
   });
 
+  it("allows recommendation eligibility when every Art axis is unknown", () => {
+    const axes = createTestAxes({
+      artRealism: { state: "unknown" },
+      artDensity: { state: "unknown" },
+      visualSoftness: { state: "unknown" },
+      motionImpact: { state: "unknown" },
+    });
+    const issues = validateCatalog(createTestCatalog(createTestWork({ axes })));
+    expect(issues).not.toContainEqual(expect.objectContaining({ field: "art" }));
+  });
+
   it("rejects duplicate tags and missing representative volumes", () => {
     const work = createTestWork({
       genres: ["fantasy", "fantasy"],

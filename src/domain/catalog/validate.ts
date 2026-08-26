@@ -1,4 +1,4 @@
-import { COVERAGE_GROUPS, COVERAGE_THRESHOLDS } from "./constants";
+import { COVERAGE_THRESHOLDS, PROMOTION_REQUIRED_COVERAGE_GROUPS } from "./constants";
 import { calculateWorkCoverage } from "./coverage";
 import { isbnIdentityKey, isValidIsbn } from "./normalize";
 import type { CatalogV1 } from "./types";
@@ -164,7 +164,7 @@ export function validateCatalog(catalog: CatalogV1): CatalogValidationIssue[] {
 
     if (eligibility.recommendationEligible) {
       const coverage = calculateWorkCoverage(work);
-      for (const group of COVERAGE_GROUPS) {
+      for (const group of PROMOTION_REQUIRED_COVERAGE_GROUPS) {
         const threshold = COVERAGE_THRESHOLDS[group];
         const value = coverage[group];
         if (value < threshold) {

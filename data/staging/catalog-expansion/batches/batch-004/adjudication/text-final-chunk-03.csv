@@ -52,7 +52,7 @@ work-634f34830600e07d8f17,visualSoftness,unknown,,,ev-batch-004-a-work-634f34830
 work-634f34830600e07d8f17,motionImpact,unknown,,,ev-batch-004-a-work-634f34830600e07d8f17
 work-65f856a6fa2078f21d2f,progression,known,2,0.66,ev-batch-004-a-work-65f856a6fa2078f21d2f
 work-65f856a6fa2078f21d2f,problemSolving,unknown,,,ev-batch-004-a-work-65f856a6fa2078f21d2f
-work-65f856a6fa2078f21d2f,strategy,unknown,,,ev-batch-004-a-work-65f856a6fa2078f21d2f
+work-65f856a6fa2078f21d2f,strategy,known,2,0.78,ev-batch-004-a-work-65f856a6fa2078f21d2f
 work-65f856a6fa2078f21d2f,pacing,known,2,0.80,ev-batch-004-a-work-65f856a6fa2078f21d2f
 work-65f856a6fa2078f21d2f,mysteryReveal,unknown,,,ev-batch-004-a-work-65f856a6fa2078f21d2f
 work-65f856a6fa2078f21d2f,worldBuilding,known,2,0.70,ev-batch-004-a-work-65f856a6fa2078f21d2f
@@ -67,7 +67,7 @@ work-65f856a6fa2078f21d2f,artRealism,unknown,,,ev-batch-004-a-work-65f856a6fa207
 work-65f856a6fa2078f21d2f,artDensity,unknown,,,ev-batch-004-a-work-65f856a6fa2078f21d2f
 work-65f856a6fa2078f21d2f,visualSoftness,unknown,,,ev-batch-004-a-work-65f856a6fa2078f21d2f
 work-65f856a6fa2078f21d2f,motionImpact,unknown,,,ev-batch-004-a-work-65f856a6fa2078f21d2f
-work-741deb03d9f59e723929,progression,unknown,,,ev-batch-004-a-work-741deb03d9f59e723929
+work-741deb03d9f59e723929,progression,known,2,0.85,ev-batch-004-a-work-741deb03d9f59e723929
 work-741deb03d9f59e723929,problemSolving,unknown,,,ev-batch-004-a-work-741deb03d9f59e723929
 work-741deb03d9f59e723929,strategy,unknown,,,ev-batch-004-a-work-741deb03d9f59e723929
 work-741deb03d9f59e723929,pacing,known,2,0.62,ev-batch-004-a-work-741deb03d9f59e723929
@@ -139,7 +139,7 @@ work-80a2f62ce5073ade2ec2,progression,unknown,,,ev-batch-004-a-work-80a2f62ce507
 work-80a2f62ce5073ade2ec2,problemSolving,unknown,,,ev-batch-004-a-work-80a2f62ce5073ade2ec2
 work-80a2f62ce5073ade2ec2,strategy,unknown,,,ev-batch-004-a-work-80a2f62ce5073ade2ec2
 work-80a2f62ce5073ade2ec2,pacing,unknown,,,ev-batch-004-a-work-80a2f62ce5073ade2ec2
-work-80a2f62ce5073ade2ec2,mysteryReveal,unknown,,,ev-batch-004-a-work-80a2f62ce5073ade2ec2
+work-80a2f62ce5073ade2ec2,mysteryReveal,known,2,0.84,ev-batch-004-a-work-80a2f62ce5073ade2ec2
 work-80a2f62ce5073ade2ec2,worldBuilding,unknown,,,ev-batch-004-a-work-80a2f62ce5073ade2ec2
 work-80a2f62ce5073ade2ec2,characterArcWeight,unknown,,,ev-batch-004-a-work-80a2f62ce5073ade2ec2
 work-80a2f62ce5073ade2ec2,relationshipStructure,unknown,,,ev-batch-004-a-work-80a2f62ce5073ade2ec2

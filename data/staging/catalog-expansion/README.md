@@ -17,7 +17,9 @@ work is never dropped merely to keep the final count near 1,000.
 4. Record canonical identity decisions in `canonical-mapping.csv` and exclusions in
    `exclusions.csv`.
 5. A recommendation-eligible promotion requires `safe` safety review and complete bibliography,
-   Factor, Theme, Evidence, Art evidence, and annotation review gates. A conservative
+   Genre, Theme, Narrative, Tone, Evidence, and annotation review gates. Art is an optional peer
+   signal: known Art may use either bounded independent community evidence or the direct-image
+   route, while absent Art remains explicit `unknown`. A conservative
    `libraryOnly` promotion may remain `unreviewed`, but all 17 axes must be explicit `unknown`,
    Themes must make no claims, and onboarding/recommendation eligibility must stay off.
 6. `promotion-registry.csv` is generated from the actual source catalog and staging decisions.
@@ -51,25 +53,25 @@ current staging set is small enough that SQLite would add migration and tooling 
 measured bottleneck.
 
 Recommendation-list membership, ratings, and popularity ranks are selection provenance, not
-Factor evidence. Repeated concrete observations from multiple independent user reviews may be
-used only as secondary text-Factor evidence when their URLs, dates, independence, repeated claim,
-and reviewed entry scope are recorded. A single reaction, copied review, bare preference, or
-unread reaction is never Factor evidence. Conflicts go to adjudication or `unknown`; user-review
-text never establishes an Art value and is never copied into product-facing explanations.
+Factor evidence. Repeated concrete observations from multiple independent user reviews may support
+text or Art Factors when their URLs, dates, independence, repeated claim, and reviewed entry scope
+are recorded. A single reaction, copied review, bare preference, or unread reaction is never Factor
+evidence. Conflicts go to adjudication or `unknown`; source wording is never copied into
+product-facing explanations.
 
 ## Review-language staging isolation
 
 Bare evaluative phrases such as `예쁜 그림`, `감동적`, or `액션이 좋다` are staging-only audit
-signals. They may enqueue or reorder a qualifying official-source reinspection or raise a conflict
-warning. They never satisfy coverage, create a blocker, change eligibility, or become a Factor,
+signals. They may enqueue or reorder a qualifying source reinspection or raise a conflict warning.
+They never satisfy coverage, create a blocker, change eligibility, or become a Factor,
 Theme, market signal, profile reason, contribution, explanation, promotion overlay, recommendation
 context, or generated runtime field. In particular, they must not be mapped directly to
 `visualSoftness`, `emotionalWarmth`, `motionImpact`, or any other Axis value.
 
-Gender-coded art labels are not Work traits. They may be retained only as source-scoped audit text
-and a hypothesis for rechecking official internal pages. The review phrase itself never changes Art
-state, value, or confidence; the normal edition bridge, page/context gate, direct-pixel review, and
-`motionImpact` sequence requirement remain mandatory.
+Gender-coded art labels are not Work traits. They may be retained only as source-scoped audit text.
+The phrase itself never changes Art state, value, or confidence. A known Art value needs either the
+documented direct-image route or two bounded, independent, non-duplicated community sources that
+repeat a concrete observation matching the Factor Dictionary anchor.
 
 This isolation does not alter the existing numeric `reviewAverage`/`reviewCount` market contract or
 explicit user-selected profile reasons such as `artStyleDislike`. Review-language signals must not
@@ -79,10 +81,11 @@ registry is introduced later, adding, removing, or reordering only its rows must
 promotion, generated catalog/context, coverage, score, contribution, and explanation outputs
 byte-identical.
 
-Art preflight starts from `art-source-route-registry.csv`. Reuse a verified publisher product and
-preview route before doing title-level web research; only route misses or edition conflicts enter
-the exception research queue. A route match still needs the per-work edition bridge and sample
-gate, and a failed route closes Art as `unknown` rather than weakening those gates.
+When the optional image route is used, Art preflight starts from
+`art-source-route-registry.csv`. Reuse a verified publisher product and preview route before doing
+title-level web research; only route misses or edition conflicts enter the exception research
+queue. A route match still needs the per-work edition bridge and sample gate. Skipping or failing
+the image route leaves Art `unknown` and does not block promotion.
 
 `gold-set-manifest.json` freezes the current 150 Work rows and their referenced review
 documents while allowing rows for new Work IDs to be appended.

@@ -313,10 +313,13 @@ export function validateArtEvidence(input: ArtEvidenceValidationInput): SourceIs
   }
 
   for (const [workId, work] of workById) {
-    const hasArtClaim = ART_AXIS_IDS.some(
-      (axisId) => factorByPair.get(`${workId}\u0000${axisId}`)?.value.state !== "unknown",
-    );
-    if (!hasArtClaim) continue;
+    const hasImageArtClaim = ART_AXIS_IDS.some((axisId) => {
+      const factor = factorByPair.get(`${workId}\u0000${axisId}`)?.value;
+      if (factor === undefined || factor.state === "unknown") return false;
+      const sourceType = evidenceById.get(factor.evidenceId)?.value.sourceType;
+      return sourceType === "publisher" || sourceType === "manual";
+    });
+    if (!hasImageArtClaim) continue;
     for (const axisId of ART_AXIS_IDS) {
       if (!manifestByPair.has(`${workId}\u0000${axisId}`)) {
         issues.push(
