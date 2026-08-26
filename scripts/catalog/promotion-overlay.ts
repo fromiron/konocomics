@@ -904,7 +904,16 @@ function finalOverlay(root: string, config: PromotionOverlayConfig) {
         ART_AXIS_IDS.indexOf(right.axisId as (typeof ART_AXIS_IDS)[number]),
     );
     if (artRoute !== "image") {
-      for (const row of sortedArt) factors.push({ ...row, evidenceId: textEvidenceId });
+      for (const row of sortedArt) {
+        factors.push({
+          workId,
+          axisId: row.axisId ?? "",
+          state: row.state ?? "",
+          value: row.value ?? "",
+          confidence: row.confidence ?? "",
+          evidenceId: textEvidenceId,
+        });
+      }
     } else {
       const contextsForArt = config.sceneContexts.get(workId);
       if (artSource === undefined || contextsForArt === undefined) {

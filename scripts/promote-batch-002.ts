@@ -86,17 +86,19 @@ const batchConfigs = {
     label: "Batch 004",
     reviewFile: "batch-004-promotion-panel.md",
     frozenSha256: "a07a3bd053ce3edb79bdd5803ea3f04dbf8ceac4fd422d84ca97432ba75f68a1",
-    validationSha256: "bc9c60a448deda934b265e72ef40b3dfc24859c37f71354444298cc728d7a97f",
-    inputBindingsSha256: "5d402f3e73986ccb36bc7c98bc201805b34573336b11108a8e9cf41bbf0c6505",
+    validationSha256: "8c6d9a8d174bf52c3677071f8f7d2c7775ad50a2baa1cde8b652a219915cb9b7",
+    inputBindingsSha256: "5ec2b05f096ecb5662ad8d8cfa207cb3ede6e101bc8902a8c015c04a72496a22",
     overlaySchemaVersion: 3,
-    verifiedCount: 12,
-    blockedCount: 1,
-    pendingCount: 37,
+    verifiedCount: 14,
+    blockedCount: 36,
+    pendingCount: 0,
     previousReviewSha256: [
       "1ac10464d520f2e349b727c3806741b084e58acf74f7f82a4b53b2fc98c18fc7",
       "d8320aea7eda002d99df600f1f9062615dd61fc34bd4956e6f1fe6c854f29f85",
+      "4230fc49ef347a4cfc3fe81c0d48effc9cd9d6667610477687cf48422363fa35",
+      "8464207e5178aa7b4bb6181bc6807f2602401ac070cab224dadc8d84105373a4",
     ],
-    expectedVerifiedPositions: [3, 14, 17, 18, 20, 21, 24, 41, 43, 44, 47, 49],
+    expectedVerifiedPositions: [3, 7, 9, 14, 17, 18, 20, 21, 24, 41, 43, 44, 47, 49],
     runOverlay: runBatch004Overlay,
   },
   "batch-005": {
@@ -592,8 +594,10 @@ function validateOverlay(root: string) {
   if (verifiedIds.some((workId) => !themes.rows.some((row) => row.value.workId === workId))) {
     throw new Error("Every verified Batch 002 work requires at least one Theme");
   }
+  const expectedEvidenceCount =
+    OVERLAY_SCHEMA_VERSION === 3 ? VERIFIED_COUNT + artEvidence.rows.length : VERIFIED_COUNT * 5;
   if (
-    evidence.rows.length !== VERIFIED_COUNT * 5 ||
+    evidence.rows.length !== expectedEvidenceCount ||
     new Set(evidence.rows.map((row) => row.value.id)).size !== evidence.rows.length ||
     evidence.rows.some(
       (row) =>
@@ -602,21 +606,25 @@ function validateOverlay(root: string) {
         row.value.sourceUrl === undefined,
     )
   ) {
-    throw new Error("Batch 002 Evidence must be 5/work, unique, URL-backed, and non-human");
+    throw new Error(
+      "Batch 002 Evidence must match the text and optional Art manifest, be unique, URL-backed, and non-human",
+    );
   }
   const artFactors = factors.rows.filter((row) =>
     ART_AXIS_IDS.includes(row.value.axisId as (typeof ART_AXIS_IDS)[number]),
   );
   if (
     artFactors.length !== VERIFIED_COUNT * ART_AXIS_IDS.length ||
-    artEvidence.rows.length !== VERIFIED_COUNT * ART_AXIS_IDS.length ||
+    (OVERLAY_SCHEMA_VERSION === 2 &&
+      artEvidence.rows.length !== VERIFIED_COUNT * ART_AXIS_IDS.length) ||
+    (OVERLAY_SCHEMA_VERSION === 3 && artEvidence.rows.length % ART_AXIS_IDS.length !== 0) ||
     artEvidence.rows.some(
       (row) =>
         !row.value.reviewStatus.split(";").includes("quorum-verified") ||
         !row.value.reviewStatus.split(";").includes("reviewedByHuman=false"),
     )
   ) {
-    throw new Error("Every verified Art state requires non-human Local/Gemini quorum provenance");
+    throw new Error("Every image-backed Art state requires non-human Local/Gemini quorum provenance");
   }
   const artIssues = validateArtEvidence({
     works: works.rows,
@@ -781,6 +789,18 @@ function classifyState(root: string, overlay: Overlay): PromotionState {
     JSON.stringify(works.get(workId)) === JSON.stringify(approved.get(workId)) &&
     JSON.stringify((factors.get(workId) ?? []).map((row) => row.value)) ===
       JSON.stringify((approvedFactors.get(workId) ?? []).map((row) => row.value));
+  const matchesApprovedWithReviewRefresh = (workId: string) => {
+    const currentWork = works.get(workId);
+    const approvedWork = approved.get(workId);
+    return (
+      currentWork !== undefined &&
+      approvedWork !== undefined &&
+      JSON.stringify({ ...currentWork, annotationReviewedAt: approvedWork.annotationReviewedAt }) ===
+        JSON.stringify(approvedWork) &&
+      JSON.stringify((factors.get(workId) ?? []).map((row) => row.value)) ===
+        JSON.stringify((approvedFactors.get(workId) ?? []).map((row) => row.value))
+    );
+  };
   const isIsolated = (workId: string) => {
     const work = works.get(workId);
     const workFactors = factors.get(workId) ?? [];
@@ -828,7 +848,9 @@ function classifyState(root: string, overlay: Overlay): PromotionState {
     reportIsKnownPartial &&
     (blockersAreApprovedSubset || blockersKeepApprovedIdentity) &&
     overlay.frozenIds.every((workId) =>
-      verifiedSet.has(workId) ? matchesApproved(workId) || isIsolated(workId) : isIsolated(workId),
+      verifiedSet.has(workId)
+        ? matchesApproved(workId) || matchesApprovedWithReviewRefresh(workId) || isIsolated(workId)
+        : isIsolated(workId),
     );
   if (partiallyApplied) return "partiallyApplied";
   throw new Error(
@@ -934,7 +956,6 @@ function writeCandidate(root: string, candidateRoot: string, overlay: Overlay) {
     headers: EVIDENCE_HEADERS,
     matches: (row) => evidenceIds.has(row[0] ?? ""),
     allowedCurrentMatchCounts: subsetCounts(overlay.evidence.rows.length),
-    existingRowsMayBeOverlaySubset: true,
     normalizeRow: withoutInputBinding,
   });
   mergeFile({

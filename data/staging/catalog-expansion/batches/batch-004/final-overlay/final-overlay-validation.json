@@ -4,11 +4,13 @@
   "reviewedByHuman": false,
   "humanValidation": "NOT_RUN",
   "targetWorkCount": 50,
-  "recommendationVerified": 12,
-  "promotionBlocked": 1,
-  "pending": 37,
+  "recommendationVerified": 14,
+  "promotionBlocked": 36,
+  "pending": 0,
   "expectedVerifiedPositions": [
     3,
+    7,
+    9,
     14,
     17,
     18,
@@ -31,7 +33,7 @@
     "effect": "neutral shrink only; not a promotion gate"
   },
   "inputBindings": {
-    "combinedSha256": "5d402f3e73986ccb36bc7c98bc201805b34573336b11108a8e9cf41bbf0c6505",
+    "combinedSha256": "5ec2b05f096ecb5662ad8d8cfa207cb3ede6e101bc8902a8c015c04a72496a22",
     "files": {
       "frozen": {
         "data/staging/catalog-expansion/batches/batch-004/frozen-work-set.csv": "a07a3bd053ce3edb79bdd5803ea3f04dbf8ceac4fd422d84ca97432ba75f68a1"
@@ -165,18 +167,19 @@
         "data/staging/catalog-expansion/batches/batch-004/reviews/luna-max-continuation-qa-2026-08-26.md": "86d9e3c6915c17ee6bb93d15628491eb51504c7537542d7352a626a7770e4b9f",
         "data/staging/catalog-expansion/batches/batch-004/reviews/luna-max-korean-title-adjudication-2026-08-26.md": "24f182f44a677b28ecf43319f7b8c3680c5d7dcb428e1499b31c19cd4e828b09",
         "data/staging/catalog-expansion/batches/batch-004/reviews/luna-max-korean-title-search-2026-08-26.md": "8c282effe11bf2271d7b7869d761957f3d0d56f2841eec5e249ac00d6edd05d9",
+        "data/staging/catalog-expansion/batches/batch-004/reviews/luna-max-terminal-evidence-2026-08-26.md": "fa8f618733c5ebc0261de05dea03b69836447b696599042037c5b3d7ef042ec5",
         "data/staging/catalog-expansion/batches/batch-004/reviews/luna-max-v3-closeout-adjudication-2026-08-26.md": "fe72c2559e6eb58035f4fb5a19f65cbae9f46db478f30a5e9525ba4b8d8c17a9",
         "data/staging/catalog-expansion/batches/batch-004/reviews/luna-pass-a-vector-qa.md": "2bdb1a15ad0dcec0146c53b82b953dc09298b9a5b23cfe049d705db36d5156d5",
         "data/staging/catalog-expansion/batches/batch-004/reviews/luna-research-packet-qa.md": "1020e53237ac15b1e48f5c04746ba5d686c66d300e9cd2f1fdf07261b64ecaa0"
       },
       "adjudication": {
-        "data/staging/catalog-expansion/batches/batch-004/adjudication/blockers-final.csv": "b5d8a7d35ffb27cc6b9013ddc3d8608ecdd968dcb503739b4cd71f045bf1bddb",
+        "data/staging/catalog-expansion/batches/batch-004/adjudication/blockers-final.csv": "fe6d37b8a787fa11384b6d4ad3e7ef21bfb7fe9e7a3502bfc4b9fb295bff9550",
         "data/staging/catalog-expansion/batches/batch-004/adjudication/genres-final-chunk-01.csv": "e316e9cef11e6f6179b4b829f22865ba7bba0b8f50f238a81ae532b36981c65c",
         "data/staging/catalog-expansion/batches/batch-004/adjudication/genres-final-chunk-02.csv": "05c7f1678e6089dbcc7a2076a96157bae0fc3702028a4e482b1f80f43f44cfc9",
         "data/staging/catalog-expansion/batches/batch-004/adjudication/genres-final-chunk-03.csv": "6e4a37abd5683bdfcf5c58f6c4cf1ad7aec5028152feb2c9aaa8522e2112476e",
         "data/staging/catalog-expansion/batches/batch-004/adjudication/genres-final-chunk-04.csv": "e0c501bf7575d0e5c02c98741a4637b3090b8b46a67eab3a2fdbb68990236acd",
         "data/staging/catalog-expansion/batches/batch-004/adjudication/genres-final-chunk-05.csv": "c7c7ab76b16caa86418da729165b0f457f763be691fdf5941ddd14c97af3214b",
-        "data/staging/catalog-expansion/batches/batch-004/adjudication/text-final-chunk-01.csv": "1d36a1c9c5a99b0a935aaf49f1a4e327046308ad9507d17cc245214124e5f5fe",
+        "data/staging/catalog-expansion/batches/batch-004/adjudication/text-final-chunk-01.csv": "9de00f2ffc72910bc3aa702ac2183cf041ef14905fb1c93a31fec112678c841f",
         "data/staging/catalog-expansion/batches/batch-004/adjudication/text-final-chunk-02.csv": "0baabb3833eb2c4551eac5b97a8211b773d9bb59a1073c5b2bebc4622cd21c60",
         "data/staging/catalog-expansion/batches/batch-004/adjudication/text-final-chunk-03.csv": "44bb508f2524fe863cf8b17db6fa6b0e45865a7445a66f80c4b37102e781130b",
         "data/staging/catalog-expansion/batches/batch-004/adjudication/text-final-chunk-04.csv": "8b8a99757c29b85eb0cf78e647fa10e086218dbeb2695ab53f8cdafcd67bc706",
@@ -281,29 +284,29 @@
         "data/staging/catalog-expansion/batches/batch-004/art-review/chunk-05/local-codex.md": "38868a1b4db8134640f4f74b1951fd90621d9d246c8d04e0c5e6693e749a893b"
       },
       "contextResearch": {
-        "data/staging/catalog-expansion/batches/batch-004/final-overlay/context-research-positions-01-20.csv": "fb9a610a29a66e79203b3582d1a20573780b580a8c0f579a6acb3c09e9965c47",
-        "data/staging/catalog-expansion/batches/batch-004/final-overlay/context-research-positions-01-20.md": "1d2408859d52ffa3d8b3fc8d6b375d9c6044de0a5fac5645e5377bcac67a7663",
+        "data/staging/catalog-expansion/batches/batch-004/final-overlay/context-research-positions-01-20.csv": "0e3b44b031c8df5fde173d2c813f4c8dbafa36f0152e7846479bce05aff17ba4",
+        "data/staging/catalog-expansion/batches/batch-004/final-overlay/context-research-positions-01-20.md": "8fe463f2b67102829980f9bd96fb789abb81bff746e95832714f8431ed03819d",
         "data/staging/catalog-expansion/batches/batch-004/final-overlay/context-research-positions-21-50.csv": "aa72a063add7e0434bc00076f6590c6763c305a5f67e14f7f16d139161f03ab3",
         "data/staging/catalog-expansion/batches/batch-004/final-overlay/context-research-positions-21-50.md": "eff9265b1e167c15ec9155cf7bc1efb84796ac58111a87faeedcd319842c094a"
       }
     }
   },
   "known": {
-    "text": 109,
+    "text": 127,
     "art": 36
   },
   "unknown": {
-    "text": 47,
-    "art": 12
+    "text": 55,
+    "art": 20
   },
   "files": {
-    "promotion-decisions.csv": "5c3d15c44c68fa5062b80d933817b35544b4f84b1462e61e0bf681351a96a4dd",
-    "works-final.csv": "037c286376d9d30c29174d7a004b020f2f12102cff76d275fdfc4cae33f13f38",
-    "factors-final.csv": "c2309afff46248d070905876d3e113d1a6804ba20aeecb55ff7e8c3f4ce16afb",
-    "themes-final.csv": "3d0def84f3bba7016375809eadeddfbfff978343df20de19197418e5dbd926eb",
-    "evidence-final.csv": "ef36b18a002d481972bf4cbde80c3ecb8f6d6b9315b3edf4a7087674e2e48d98",
+    "promotion-decisions.csv": "7eb2e571ed45ca5f975383ae7fee9576b0fe98cc10f2adaafcb53b54c8652d3e",
+    "works-final.csv": "822177f10d7f477921580d27638a25821268d895fe0419408af3a3e4f765eda1",
+    "factors-final.csv": "a26bca86b8267c6a8f0a7fe30307ac0f23e5731e576186fe58c4ecc365771292",
+    "themes-final.csv": "be89aa6e534c9cd9c27caad2a898263492a1c0618ee85ad984e4b9385bac4e3d",
+    "evidence-final.csv": "0b9c9e1bcc0e065dfd754d16e6418fe16d6facad70385a4d1ec62606906e7757",
     "art-evidence-manifest-final.csv": "b9b8b89b0fa84d507b4425ede45850f89ddf85910a681a847538d46e2473de91",
-    "recommendation-context-final.csv": "18ef7b6985498090fe8943105e23673ed51f71ce994ea264d37c4641736ed7b8",
-    "promotion-blockers-final.csv": "0306d52df4901595d13dfe03a68855c9b591788774fbd196c97f130653ab94de"
+    "recommendation-context-final.csv": "a1c4d8afbeb2752c9a072bac7d15149b9772a86919dd7b3e9e205d5a988d89b4",
+    "promotion-blockers-final.csv": "a7bcb8bdfce052695aacb0af79078e86da3941ab6f8953fbbd33e5c81d7a43fb"
   }
 }

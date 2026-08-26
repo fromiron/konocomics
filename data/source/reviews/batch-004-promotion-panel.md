@@ -1,4 +1,4 @@
-# Batch 004 partial promotion panel
+# Batch 004 terminal promotion panel
 
 PROMOTION AUTHORIZATION: YES
 HUMAN VALIDATION: NOT_RUN
@@ -6,26 +6,23 @@ REVIEWED BY HUMAN: false
 COMMUNITY/IMAGE POLICY: promotion-evidence-v3
 ART EVIDENCE ROUTE: OPTIONAL — COMMUNITY OR IMAGE
 MUSE: NOT_USED
-RECOMMENDATION VERIFIED: 12
-HARD BLOCKERS: 1
-PENDING: 37
+RECOMMENDATION VERIFIED: 14
+HARD BLOCKERS: 36
 FROZEN WORK SET SHA-256: a07a3bd053ce3edb79bdd5803ea3f04dbf8ceac4fd422d84ca97432ba75f68a1
 
 ## Scope and decision
 
 - Batch: `batch-004`, frozen 50-work set.
-- Apply only the 12 verified works and the exact position-42 compound blocker. Keep the other 37 works pending and byte-identical in source and registry state.
-- Verified positions: `3, 14, 17, 18, 20, 21, 24, 41, 43, 44, 47, 49`.
-- Blocked position: `42`, with `FACTOR_MODEL_INCOMPATIBLE;SOURCE_INFORMATION_UNAVAILABLE` in the independently adjudicated order.
+- Verified positions: `3, 7, 9, 14, 17, 18, 20, 21, 24, 41, 43, 44, 47, 49`.
+- The other 36 works have terminal `promotionBlocked` records. Positions 8 and 42 also carry `FACTOR_MODEL_INCOMPATIBLE`; all blocked works carry `SOURCE_INFORMATION_UNAVAILABLE` where bounded evidence could not meet coverage.
+- Luna Max independently checked official promotion or product pages, Japanese community evidence, and Korean discovery routes using Korean titles and spelling variants. Only entry-bounded repeated observations were accepted.
+- Positions 7 and 9 reached the text coverage gate from official and independent Japanese evidence. Their Art values remain unknown and optional.
+- Position 5 gained `problemSolving=2` from bounded evidence but remains below Narrative coverage and is blocked rather than left pending.
 - Human validation was not run. All new evidence remains `reviewedByHuman=false`.
-- Luna Max independently checked official promotion/product pages, Japanese community evidence, and Korean discovery routes using official or common Korean titles and recorded Korean spelling variants. Only bounded, repeated evidence was accepted; community absence was not converted into a blocker.
-- Position 24 reached the required text coverage after two independent Japanese reviews supported `strategy=2`; image analysis was not required.
-- Korean and cross-layer adjudication accepted position 25 `progression=2` and position 29 `mysteryReveal=2`. Both works remain below the complete promotion gate, stay pending, and are not written into product source rows.
-- Position 15 remains pending after Korean-title and Japanese review rechecks left Narrative at `3/6`.
-- Gold 150, Factor Dictionary values, recommendation math, frozen identities, and the 37 unresolved works remain unchanged. Art is an optional peer evidence route; unknown Art remains neutral-shrunk in scoring.
+- Gold 150, recommendation math, frozen identities, and unknown-is-not-low semantics remain unchanged.
 
 ## Immutable binding
 
-- Final overlay validation SHA-256: `bc9c60a448deda934b265e72ef40b3dfc24859c37f71354444298cc728d7a97f`.
-- Combined input/review packet SHA-256: `5d402f3e73986ccb36bc7c98bc201805b34573336b11108a8e9cf41bbf0c6505`.
-- The source application must validate the candidate tree and publish affected directories atomically without changing pending works.
+- Final overlay validation SHA-256: `8c6d9a8d174bf52c3677071f8f7d2c7775ad50a2baa1cde8b652a219915cb9b7`.
+- Combined input/review packet SHA-256: `5ec2b05f096ecb5662ad8d8cfa207cb3ede6e101bc8902a8c015c04a72496a22`.
+- The source application must validate the candidate tree and publish affected directories atomically.

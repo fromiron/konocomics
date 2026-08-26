@@ -1,6 +1,6 @@
 {
   "schemaVersion": 1,
-  "catalogVersion": "v1-902d2ed16905",
+  "catalogVersion": "v1-a9ab97171fe4",
   "factorDictionaryVersion": "v1",
   "works": [
     {
@@ -21348,7 +21348,7 @@
         "metadataConfidence": 1,
         "groupingConfidence": 1,
         "sourceAgreement": 1,
-        "annotationReviewedAt": "2026-08-25T00:00:00+09:00"
+        "annotationReviewedAt": "2026-08-26T00:00:00+09:00"
       }
     },
     {
@@ -22039,6 +22039,121 @@
       }
     },
     {
+      "id": "work-188ba092c6195603bb3f",
+      "title": "つらつらわらじ",
+      "aliases": [],
+      "creators": [
+        "オノ・ナツメ"
+      ],
+      "publisher": "講談社",
+      "demographic": "seinen",
+      "status": "unknown",
+      "firstPublishedYear": 2010,
+      "genres": [
+        "historical"
+      ],
+      "themes": [
+        {
+          "id": "adventure",
+          "centrality": 2,
+          "confidence": 0.82
+        },
+        {
+          "id": "historicalReconstruction",
+          "centrality": 2,
+          "confidence": 0.86
+        },
+        {
+          "id": "politics",
+          "centrality": 2,
+          "confidence": 0.84
+        }
+      ],
+      "axes": {
+        "progression": {
+          "state": "unknown"
+        },
+        "problemSolving": {
+          "state": "unknown"
+        },
+        "strategy": {
+          "state": "known",
+          "value": 2,
+          "confidence": 0.79
+        },
+        "pacing": {
+          "state": "known",
+          "value": 2,
+          "confidence": 0.72
+        },
+        "mysteryReveal": {
+          "state": "known",
+          "value": 2,
+          "confidence": 0.8
+        },
+        "worldBuilding": {
+          "state": "known",
+          "value": 3,
+          "confidence": 0.76
+        },
+        "characterArcWeight": {
+          "state": "known",
+          "value": 2,
+          "confidence": 0.8
+        },
+        "relationshipStructure": {
+          "state": "known",
+          "value": 2,
+          "confidence": 0.74
+        },
+        "comedy": {
+          "state": "unknown"
+        },
+        "darkness": {
+          "state": "known",
+          "value": 2,
+          "confidence": 0.7
+        },
+        "mentalStress": {
+          "state": "known",
+          "value": 2,
+          "confidence": 0.8
+        },
+        "romance": {
+          "state": "unknown"
+        },
+        "emotionalWarmth": {
+          "state": "known",
+          "value": 2,
+          "confidence": 0.76
+        },
+        "artRealism": {
+          "state": "unknown"
+        },
+        "artDensity": {
+          "state": "unknown"
+        },
+        "visualSoftness": {
+          "state": "unknown"
+        },
+        "motionImpact": {
+          "state": "unknown"
+        }
+      },
+      "factorScope": "entry_1_3_volumes",
+      "eligibility": {
+        "onboardingEligible": true,
+        "recommendationEligible": true,
+        "libraryOnly": false
+      },
+      "evidence": {
+        "metadataConfidence": 1,
+        "groupingConfidence": 1,
+        "sourceAgreement": 1,
+        "annotationReviewedAt": "2026-08-26T00:00:00+09:00"
+      }
+    },
+    {
       "id": "work-192cbecc59e9c028142b",
       "title": "本なら売るほど",
       "aliases": [],
@@ -22147,6 +22262,112 @@
         "groupingConfidence": 1,
         "sourceAgreement": 1,
         "annotationReviewedAt": "2026-08-23T00:00:00+09:00"
+      }
+    },
+    {
+      "id": "work-1a6ad6771865b43c8516",
+      "title": "それでも町は廻っている",
+      "aliases": [],
+      "creators": [
+        "石黒正数"
+      ],
+      "publisher": "少年画報社",
+      "demographic": "seinen",
+      "status": "unknown",
+      "firstPublishedYear": 2006,
+      "genres": [
+        "comedy",
+        "sliceOfLife"
+      ],
+      "themes": [
+        {
+          "id": "workplace",
+          "centrality": 1,
+          "confidence": 0.8
+        }
+      ],
+      "axes": {
+        "progression": {
+          "state": "unknown"
+        },
+        "problemSolving": {
+          "state": "known",
+          "value": 2,
+          "confidence": 0.82
+        },
+        "strategy": {
+          "state": "unknown"
+        },
+        "pacing": {
+          "state": "known",
+          "value": 2,
+          "confidence": 0.61
+        },
+        "mysteryReveal": {
+          "state": "known",
+          "value": 2,
+          "confidence": 0.84
+        },
+        "worldBuilding": {
+          "state": "known",
+          "value": 2,
+          "confidence": 0.76
+        },
+        "characterArcWeight": {
+          "state": "known",
+          "value": 2,
+          "confidence": 0.74
+        },
+        "relationshipStructure": {
+          "state": "known",
+          "value": 2,
+          "confidence": 0.78
+        },
+        "comedy": {
+          "state": "known",
+          "value": 4,
+          "confidence": 0.86
+        },
+        "darkness": {
+          "state": "unknown"
+        },
+        "mentalStress": {
+          "state": "unknown"
+        },
+        "romance": {
+          "state": "known",
+          "value": 2,
+          "confidence": 0.76
+        },
+        "emotionalWarmth": {
+          "state": "known",
+          "value": 2,
+          "confidence": 0.62
+        },
+        "artRealism": {
+          "state": "unknown"
+        },
+        "artDensity": {
+          "state": "unknown"
+        },
+        "visualSoftness": {
+          "state": "unknown"
+        },
+        "motionImpact": {
+          "state": "unknown"
+        }
+      },
+      "factorScope": "entry_1_3_volumes",
+      "eligibility": {
+        "onboardingEligible": true,
+        "recommendationEligible": true,
+        "libraryOnly": false
+      },
+      "evidence": {
+        "metadataConfidence": 1,
+        "groupingConfidence": 1,
+        "sourceAgreement": 1,
+        "annotationReviewedAt": "2026-08-26T00:00:00+09:00"
       }
     },
     {
@@ -23186,7 +23407,7 @@
         "metadataConfidence": 1,
         "groupingConfidence": 1,
         "sourceAgreement": 1,
-        "annotationReviewedAt": "2026-08-25T00:00:00+09:00"
+        "annotationReviewedAt": "2026-08-26T00:00:00+09:00"
       }
     },
     {
@@ -23769,7 +23990,7 @@
         "metadataConfidence": 1,
         "groupingConfidence": 1,
         "sourceAgreement": 1,
-        "annotationReviewedAt": "2026-08-25T00:00:00+09:00"
+        "annotationReviewedAt": "2026-08-26T00:00:00+09:00"
       }
     },
     {
@@ -24229,7 +24450,7 @@
         "metadataConfidence": 1,
         "groupingConfidence": 1,
         "sourceAgreement": 1,
-        "annotationReviewedAt": "2026-08-25T00:00:00+09:00"
+        "annotationReviewedAt": "2026-08-26T00:00:00+09:00"
       }
     },
     {
@@ -24799,7 +25020,7 @@
         "metadataConfidence": 1,
         "groupingConfidence": 1,
         "sourceAgreement": 1,
-        "annotationReviewedAt": "2026-08-25T00:00:00+09:00"
+        "annotationReviewedAt": "2026-08-26T00:00:00+09:00"
       }
     },
     {
@@ -25387,7 +25608,7 @@
         "metadataConfidence": 1,
         "groupingConfidence": 1,
         "sourceAgreement": 1,
-        "annotationReviewedAt": "2026-08-25T00:00:00+09:00"
+        "annotationReviewedAt": "2026-08-26T00:00:00+09:00"
       }
     },
     {
@@ -26537,7 +26758,7 @@
         "metadataConfidence": 1,
         "groupingConfidence": 1,
         "sourceAgreement": 1,
-        "annotationReviewedAt": "2026-08-25T00:00:00+09:00"
+        "annotationReviewedAt": "2026-08-26T00:00:00+09:00"
       }
     },
     {
@@ -30162,7 +30383,7 @@
         "metadataConfidence": 1,
         "groupingConfidence": 1,
         "sourceAgreement": 1,
-        "annotationReviewedAt": "2026-08-25T00:00:00+09:00"
+        "annotationReviewedAt": "2026-08-26T00:00:00+09:00"
       }
     },
     {
@@ -30967,7 +31188,7 @@
         "metadataConfidence": 1,
         "groupingConfidence": 1,
         "sourceAgreement": 1,
-        "annotationReviewedAt": "2026-08-25T00:00:00+09:00"
+        "annotationReviewedAt": "2026-08-26T00:00:00+09:00"
       }
     },
     {
@@ -31443,7 +31664,7 @@
         "metadataConfidence": 1,
         "groupingConfidence": 1,
         "sourceAgreement": 1,
-        "annotationReviewedAt": "2026-08-25T00:00:00+09:00"
+        "annotationReviewedAt": "2026-08-26T00:00:00+09:00"
       }
     },
     {
@@ -32721,7 +32942,7 @@
         "metadataConfidence": 1,
         "groupingConfidence": 1,
         "sourceAgreement": 1,
-        "annotationReviewedAt": "2026-08-25T00:00:00+09:00"
+        "annotationReviewedAt": "2026-08-26T00:00:00+09:00"
       }
     },
     {
@@ -32957,7 +33178,7 @@
         "metadataConfidence": 1,
         "groupingConfidence": 1,
         "sourceAgreement": 1,
-        "annotationReviewedAt": "2026-08-25T00:00:00+09:00"
+        "annotationReviewedAt": "2026-08-26T00:00:00+09:00"
       }
     },
     {
@@ -34842,11 +35063,25 @@
       "editionKind": "standard"
     },
     {
+      "id": "work-188ba092c6195603bb3f-representative",
+      "workId": "work-188ba092c6195603bb3f",
+      "volumeNumber": 1,
+      "isbn": "9784063729443",
+      "editionKind": "standard"
+    },
+    {
       "id": "work-192cbecc59e9c028142b-representative",
       "workId": "work-192cbecc59e9c028142b",
       "volumeNumber": 1,
       "isbn": "9784047381070",
       "releaseDate": "2025-01-15",
+      "editionKind": "standard"
+    },
+    {
+      "id": "work-1a6ad6771865b43c8516-representative",
+      "workId": "work-1a6ad6771865b43c8516",
+      "volumeNumber": 1,
+      "isbn": "9784785926045",
       "editionKind": "standard"
     },
     {
@@ -35770,7 +36005,9 @@
     "work-131ba7a362fa9e38a10a": "work-131ba7a362fa9e38a10a-representative",
     "work-14e489bf1afd1587c44a": "work-14e489bf1afd1587c44a-representative",
     "work-174e7603bb0e71bb62ab": "work-174e7603bb0e71bb62ab-representative",
+    "work-188ba092c6195603bb3f": "work-188ba092c6195603bb3f-representative",
     "work-192cbecc59e9c028142b": "work-192cbecc59e9c028142b-representative",
+    "work-1a6ad6771865b43c8516": "work-1a6ad6771865b43c8516-representative",
     "work-1cf7a0bb5f55e0d69b27": "work-1cf7a0bb5f55e0d69b27-representative",
     "work-1d447cc9026b530fb53d": "work-1d447cc9026b530fb53d-representative",
     "work-1fc61ddbeb429b4a2c15": "work-1fc61ddbeb429b4a2c15-representative",

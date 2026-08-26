@@ -837,10 +837,20 @@
       "catalogRole": "anchor",
       "volumeCount": 20
     },
+    "work-188ba092c6195603bb3f": {
+      "workId": "work-188ba092c6195603bb3f",
+      "catalogRole": "bridge",
+      "volumeCount": 5
+    },
     "work-192cbecc59e9c028142b": {
       "workId": "work-192cbecc59e9c028142b",
       "catalogRole": "discovery",
       "volumeCount": 3
+    },
+    "work-1a6ad6771865b43c8516": {
+      "workId": "work-1a6ad6771865b43c8516",
+      "catalogRole": "bridge",
+      "volumeCount": 16
     },
     "work-1cf7a0bb5f55e0d69b27": {
       "workId": "work-1cf7a0bb5f55e0d69b27",
@@ -1330,7 +1340,7 @@
     }
   },
   "marketSnapshot": {
-    "catalogVersion": "v1-8abcfeefce53",
+    "catalogVersion": "v1-2f914cbc06c4",
     "catalogAverageRating": 4.367959183673469,
     "byWorkId": {
       "20th-century-boys": {
@@ -1933,8 +1943,14 @@
       "work-174e7603bb0e71bb62ab": {
         "workId": "work-174e7603bb0e71bb62ab"
       },
+      "work-188ba092c6195603bb3f": {
+        "workId": "work-188ba092c6195603bb3f"
+      },
       "work-192cbecc59e9c028142b": {
         "workId": "work-192cbecc59e9c028142b"
+      },
+      "work-1a6ad6771865b43c8516": {
+        "workId": "work-1a6ad6771865b43c8516"
       },
       "work-1cf7a0bb5f55e0d69b27": {
         "workId": "work-1cf7a0bb5f55e0d69b27"

@@ -1,6 +1,6 @@
 {
   "schemaVersion": 1,
-  "catalogVersion": "v1-8abcfeefce53",
+  "catalogVersion": "v1-2f914cbc06c4",
   "factorDictionaryVersion": "v1",
   "works": [
     {
@@ -26801,7 +26801,7 @@
         "metadataConfidence": 1,
         "groupingConfidence": 1,
         "sourceAgreement": 1,
-        "annotationReviewedAt": "2026-08-25T00:00:00+09:00"
+        "annotationReviewedAt": "2026-08-26T00:00:00+09:00"
       }
     },
     {
@@ -31014,8 +31014,26 @@
       "demographic": "seinen",
       "status": "unknown",
       "firstPublishedYear": 2010,
-      "genres": [],
-      "themes": [],
+      "genres": [
+        "historical"
+      ],
+      "themes": [
+        {
+          "id": "adventure",
+          "centrality": 2,
+          "confidence": 0.82
+        },
+        {
+          "id": "historicalReconstruction",
+          "centrality": 2,
+          "confidence": 0.86
+        },
+        {
+          "id": "politics",
+          "centrality": 2,
+          "confidence": 0.84
+        }
+      ],
       "axes": {
         "progression": {
           "state": "unknown"
@@ -31024,37 +31042,55 @@
           "state": "unknown"
         },
         "strategy": {
-          "state": "unknown"
+          "state": "known",
+          "value": 2,
+          "confidence": 0.79
         },
         "pacing": {
-          "state": "unknown"
+          "state": "known",
+          "value": 2,
+          "confidence": 0.72
         },
         "mysteryReveal": {
-          "state": "unknown"
+          "state": "known",
+          "value": 2,
+          "confidence": 0.8
         },
         "worldBuilding": {
-          "state": "unknown"
+          "state": "known",
+          "value": 3,
+          "confidence": 0.76
         },
         "characterArcWeight": {
-          "state": "unknown"
+          "state": "known",
+          "value": 2,
+          "confidence": 0.8
         },
         "relationshipStructure": {
-          "state": "unknown"
+          "state": "known",
+          "value": 2,
+          "confidence": 0.74
         },
         "comedy": {
           "state": "unknown"
         },
         "darkness": {
-          "state": "unknown"
+          "state": "known",
+          "value": 2,
+          "confidence": 0.7
         },
         "mentalStress": {
-          "state": "unknown"
+          "state": "known",
+          "value": 2,
+          "confidence": 0.8
         },
         "romance": {
           "state": "unknown"
         },
         "emotionalWarmth": {
-          "state": "unknown"
+          "state": "known",
+          "value": 2,
+          "confidence": 0.76
         },
         "artRealism": {
           "state": "unknown"
@@ -31071,14 +31107,15 @@
       },
       "factorScope": "entry_1_3_volumes",
       "eligibility": {
-        "onboardingEligible": false,
-        "recommendationEligible": false,
-        "libraryOnly": true
+        "onboardingEligible": true,
+        "recommendationEligible": true,
+        "libraryOnly": false
       },
       "evidence": {
         "metadataConfidence": 1,
         "groupingConfidence": 1,
-        "sourceAgreement": 1
+        "sourceAgreement": 1,
+        "annotationReviewedAt": "2026-08-26T00:00:00+09:00"
       }
     },
     {
@@ -32452,35 +32489,58 @@
       "demographic": "seinen",
       "status": "unknown",
       "firstPublishedYear": 2006,
-      "genres": [],
-      "themes": [],
+      "genres": [
+        "comedy",
+        "sliceOfLife"
+      ],
+      "themes": [
+        {
+          "id": "workplace",
+          "centrality": 1,
+          "confidence": 0.8
+        }
+      ],
       "axes": {
         "progression": {
           "state": "unknown"
         },
         "problemSolving": {
-          "state": "unknown"
+          "state": "known",
+          "value": 2,
+          "confidence": 0.82
         },
         "strategy": {
           "state": "unknown"
         },
         "pacing": {
-          "state": "unknown"
+          "state": "known",
+          "value": 2,
+          "confidence": 0.61
         },
         "mysteryReveal": {
-          "state": "unknown"
+          "state": "known",
+          "value": 2,
+          "confidence": 0.84
         },
         "worldBuilding": {
-          "state": "unknown"
+          "state": "known",
+          "value": 2,
+          "confidence": 0.76
         },
         "characterArcWeight": {
-          "state": "unknown"
+          "state": "known",
+          "value": 2,
+          "confidence": 0.74
         },
         "relationshipStructure": {
-          "state": "unknown"
+          "state": "known",
+          "value": 2,
+          "confidence": 0.78
         },
         "comedy": {
-          "state": "unknown"
+          "state": "known",
+          "value": 4,
+          "confidence": 0.86
         },
         "darkness": {
           "state": "unknown"
@@ -32489,10 +32549,14 @@
           "state": "unknown"
         },
         "romance": {
-          "state": "unknown"
+          "state": "known",
+          "value": 2,
+          "confidence": 0.76
         },
         "emotionalWarmth": {
-          "state": "unknown"
+          "state": "known",
+          "value": 2,
+          "confidence": 0.62
         },
         "artRealism": {
           "state": "unknown"
@@ -32509,14 +32573,15 @@
       },
       "factorScope": "entry_1_3_volumes",
       "eligibility": {
-        "onboardingEligible": false,
-        "recommendationEligible": false,
-        "libraryOnly": true
+        "onboardingEligible": true,
+        "recommendationEligible": true,
+        "libraryOnly": false
       },
       "evidence": {
         "metadataConfidence": 1,
         "groupingConfidence": 1,
-        "sourceAgreement": 1
+        "sourceAgreement": 1,
+        "annotationReviewedAt": "2026-08-26T00:00:00+09:00"
       }
     },
     {
@@ -41978,7 +42043,7 @@
         "metadataConfidence": 1,
         "groupingConfidence": 1,
         "sourceAgreement": 1,
-        "annotationReviewedAt": "2026-08-25T00:00:00+09:00"
+        "annotationReviewedAt": "2026-08-26T00:00:00+09:00"
       }
     },
     {
@@ -46385,7 +46450,7 @@
         "metadataConfidence": 1,
         "groupingConfidence": 1,
         "sourceAgreement": 1,
-        "annotationReviewedAt": "2026-08-25T00:00:00+09:00"
+        "annotationReviewedAt": "2026-08-26T00:00:00+09:00"
       }
     },
     {
@@ -47934,7 +47999,7 @@
         "metadataConfidence": 1,
         "groupingConfidence": 1,
         "sourceAgreement": 1,
-        "annotationReviewedAt": "2026-08-25T00:00:00+09:00"
+        "annotationReviewedAt": "2026-08-26T00:00:00+09:00"
       }
     },
     {
@@ -53104,7 +53169,7 @@
         "metadataConfidence": 1,
         "groupingConfidence": 1,
         "sourceAgreement": 1,
-        "annotationReviewedAt": "2026-08-25T00:00:00+09:00"
+        "annotationReviewedAt": "2026-08-26T00:00:00+09:00"
       }
     },
     {
@@ -59380,7 +59445,7 @@
         "metadataConfidence": 1,
         "groupingConfidence": 1,
         "sourceAgreement": 1,
-        "annotationReviewedAt": "2026-08-25T00:00:00+09:00"
+        "annotationReviewedAt": "2026-08-26T00:00:00+09:00"
       }
     },
     {
@@ -67782,7 +67847,7 @@
         "metadataConfidence": 1,
         "groupingConfidence": 1,
         "sourceAgreement": 1,
-        "annotationReviewedAt": "2026-08-25T00:00:00+09:00"
+        "annotationReviewedAt": "2026-08-26T00:00:00+09:00"
       }
     },
     {
@@ -112790,7 +112855,7 @@
         "metadataConfidence": 1,
         "groupingConfidence": 1,
         "sourceAgreement": 1,
-        "annotationReviewedAt": "2026-08-25T00:00:00+09:00"
+        "annotationReviewedAt": "2026-08-26T00:00:00+09:00"
       }
     },
     {
@@ -120296,7 +120361,7 @@
         "metadataConfidence": 1,
         "groupingConfidence": 1,
         "sourceAgreement": 1,
-        "annotationReviewedAt": "2026-08-25T00:00:00+09:00"
+        "annotationReviewedAt": "2026-08-26T00:00:00+09:00"
       }
     },
     {
@@ -125134,7 +125199,7 @@
         "metadataConfidence": 1,
         "groupingConfidence": 1,
         "sourceAgreement": 1,
-        "annotationReviewedAt": "2026-08-25T00:00:00+09:00"
+        "annotationReviewedAt": "2026-08-26T00:00:00+09:00"
       }
     },
     {
@@ -134670,7 +134735,7 @@
         "metadataConfidence": 1,
         "groupingConfidence": 1,
         "sourceAgreement": 1,
-        "annotationReviewedAt": "2026-08-25T00:00:00+09:00"
+        "annotationReviewedAt": "2026-08-26T00:00:00+09:00"
       }
     },
     {
@@ -136854,7 +136919,7 @@
         "metadataConfidence": 1,
         "groupingConfidence": 1,
         "sourceAgreement": 1,
-        "annotationReviewedAt": "2026-08-25T00:00:00+09:00"
+        "annotationReviewedAt": "2026-08-26T00:00:00+09:00"
       }
     },
     {
