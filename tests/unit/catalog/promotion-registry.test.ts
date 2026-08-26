@@ -55,9 +55,12 @@ describe("promotion registry", () => {
     );
     expect(
       [...Map.groupBy(input.batches, (batch) => batch.batchId)].every(([batchId, batches]) => {
-        const usesOptionalArtPolicy = batchId === "batch-004" || batchId === "batch-005";
+        const batchNumber = batchId.startsWith("batch-")
+          ? Number.parseInt(batchId.slice("batch-".length), 10)
+          : 0;
+        const usesOptionalArtPolicy = batchNumber >= 4;
         return (
-          batches.length === 50 &&
+          batches.length === (batchId === "batch-030" ? 14 : 50) &&
           batches.every(
             (batch) =>
               batch.batchType === (batchId === "pilot-001" ? "pilot" : "batch") &&
@@ -155,6 +158,7 @@ describe("promotion registry", () => {
     const nonGold = rows.find((row) => row.currentStatus !== "gold")!;
     const withoutCanonical = buildPromotionRegistry({
       ...input,
+      blockers: input.blockers.filter((blocker) => blocker.workId !== nonGold.workId),
       expansion: {
         ...input.expansion,
         mappings: input.expansion.mappings.filter((mapping) => mapping.workId !== nonGold.workId),
@@ -197,6 +201,8 @@ describe("promotion registry", () => {
       lastUpdatedAt: "2026-08-23T00:00:00Z",
       currentStatus: "recommendationVerified" as const,
       promotionOutcome: "recommendationVerified" as const,
+      blockerCode: "",
+      blockerDetails: "",
     };
     expect(() =>
       validatePromotionRegistry(
