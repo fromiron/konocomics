@@ -6,6 +6,7 @@ import { describe, expect, it } from "vitest";
 
 import {
   assertNode24,
+  canonicalTextBytes,
   lexicalTupleDigest,
   parseLexicalCsv,
   serializeCsv,
@@ -71,6 +72,22 @@ describe("catalog SQLite shadow adapter", () => {
     expect(() => parseLexicalCsv("bad.csv", Buffer.from('a\n"unterminated\n'), ["a"])).toThrow(
       "malformed CSV",
     );
+  });
+
+  it("canonicalizes identity text without trimming or inventing a terminal newline", () => {
+    expect(canonicalTextBytes("policy.md", Buffer.from(" a\r\n b\r\n"))).toEqual(
+      Buffer.from(" a\n b\n"),
+    );
+    expect(sha256(canonicalTextBytes("policy.md", Buffer.from("x")))).not.toBe(
+      sha256(canonicalTextBytes("policy.md", Buffer.from("x\n"))),
+    );
+    expect(() => canonicalTextBytes("policy.md", Buffer.from("\uFEFFx"))).toThrow(
+      "UTF-8 BOM is prohibited",
+    );
+    expect(() => canonicalTextBytes("policy.md", Buffer.from("x\ry"))).toThrow(
+      "lone CR is prohibited",
+    );
+    expect(() => canonicalTextBytes("policy.md", Buffer.from([0xff]))).toThrow("invalid UTF-8");
   });
 
   it("rejects malformed candidates and every model-derived authoring writer before I/O", () => {

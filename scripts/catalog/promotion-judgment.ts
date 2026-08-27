@@ -1,3 +1,5 @@
+import { createHash } from "node:crypto";
+
 export const PROMOTION_REASON_CODES = [
   "SOURCE_PROVENANCE_INCOMPLETE",
   "CANONICAL_IDENTITY_NOT_VERIFIED",
@@ -29,6 +31,24 @@ export type PromotionJudgment = {
   blockerCodes: string[];
 };
 
+export type JudgmentArtifactIdentity = readonly [version: string, exactArtifactDigest: string];
+
+export type PromotionJudgmentIdentityInput = {
+  targetType: "promotion";
+  targetId: string;
+  sourceManifestDigest: string;
+  acceptedFactsDigest: string;
+  resolutionSetDigest: string;
+  factorDictionaryIdentity: JudgmentArtifactIdentity;
+  annotationGuideIdentity: JudgmentArtifactIdentity;
+  policyIdentity: JudgmentArtifactIdentity;
+  decisionSchemaIdentity: JudgmentArtifactIdentity;
+  engineManifestDigest: string;
+  contextMarketIdentity: JudgmentArtifactIdentity;
+  goldManifestIdentity: JudgmentArtifactIdentity;
+  legacyRegistryEvidenceIdentity: JudgmentArtifactIdentity;
+};
+
 const reasonCodeSet = new Set<string>(PROMOTION_REASON_CODES);
 
 export function compareCodeUnit(left: string, right: string) {
@@ -46,6 +66,56 @@ function canonicalReasonCodes(values: readonly PromotionReasonCode[]) {
     throw new Error("Promotion reason codes contain an unknown code");
   }
   return canonicalCodes(values, "Promotion reason codes");
+}
+
+function assertDigest(value: string, label: string) {
+  if (!/^[a-f0-9]{64}$/u.test(value)) throw new Error(`${label} must be a lowercase SHA-256`);
+}
+
+function artifactIdentity(identity: JudgmentArtifactIdentity, label: string) {
+  if (identity[0] === "") throw new Error(`${label} version cannot be empty`);
+  assertDigest(identity[1], `${label} digest`);
+  return identity;
+}
+
+function digestTuple(value: unknown) {
+  return createHash("sha256").update(JSON.stringify(value), "utf8").digest("hex");
+}
+
+export function promotionJudgmentInputDigest(input: PromotionJudgmentIdentityInput) {
+  if (input.targetId === "") throw new Error("Promotion judgment target ID cannot be empty");
+  assertDigest(input.sourceManifestDigest, "Source manifest digest");
+  assertDigest(input.acceptedFactsDigest, "Accepted facts digest");
+  assertDigest(input.resolutionSetDigest, "Resolution set digest");
+  assertDigest(input.engineManifestDigest, "Engine manifest digest");
+  return digestTuple([
+    input.targetType,
+    input.targetId,
+    input.sourceManifestDigest,
+    input.acceptedFactsDigest,
+    input.resolutionSetDigest,
+    artifactIdentity(input.factorDictionaryIdentity, "Factor Dictionary identity"),
+    artifactIdentity(input.annotationGuideIdentity, "Annotation Guide identity"),
+    artifactIdentity(input.policyIdentity, "Promotion policy identity"),
+    artifactIdentity(input.decisionSchemaIdentity, "Decision schema identity"),
+    input.engineManifestDigest,
+    artifactIdentity(input.contextMarketIdentity, "Recommendation context identity"),
+    artifactIdentity(input.goldManifestIdentity, "Gold manifest identity"),
+    artifactIdentity(input.legacyRegistryEvidenceIdentity, "Legacy registry evidence identity"),
+  ]);
+}
+
+export function promotionDecisionDigest(
+  judgmentInputDigest: string,
+  judgment: Pick<PromotionJudgment, "promotionOutcome" | "reasonCodes" | "blockerCodes">,
+) {
+  assertDigest(judgmentInputDigest, "Judgment input digest");
+  return digestTuple([
+    judgmentInputDigest,
+    judgment.promotionOutcome,
+    canonicalReasonCodes(judgment.reasonCodes),
+    canonicalCodes(judgment.blockerCodes, "Promotion blocker codes"),
+  ]);
 }
 
 function assertAnnotationReason(

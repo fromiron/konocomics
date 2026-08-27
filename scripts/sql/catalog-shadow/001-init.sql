@@ -218,3 +218,29 @@ CREATE TABLE fact_resolution (
   ),
   CHECK (state <> 'notApplicable' OR fact_key GLOB 'work:*:factor:motionImpact')
 ) STRICT;
+
+CREATE TABLE judgment_run (
+  target_type TEXT NOT NULL CHECK (target_type = 'promotion'),
+  target_id TEXT NOT NULL,
+  judgment_input_digest TEXT NOT NULL UNIQUE CHECK (
+    length(judgment_input_digest) = 64
+    AND judgment_input_digest NOT GLOB '*[^0-9a-f]*'
+  ),
+  current_status TEXT NOT NULL CHECK (
+    current_status IN ('libraryOnly', 'annotationDraft', 'recommendationVerified', 'gold')
+  ),
+  verdict TEXT NOT NULL CHECK (
+    verdict IN ('pending', 'recommendationVerified', 'promotionBlocked', 'gold')
+  ),
+  reason_codes_json TEXT NOT NULL CHECK (
+    json_valid(reason_codes_json) AND json_type(reason_codes_json) = 'array'
+  ),
+  blocker_codes_json TEXT NOT NULL CHECK (
+    json_valid(blocker_codes_json) AND json_type(blocker_codes_json) = 'array'
+  ),
+  decision_digest TEXT NOT NULL UNIQUE CHECK (
+    length(decision_digest) = 64
+    AND decision_digest NOT GLOB '*[^0-9a-f]*'
+  ),
+  PRIMARY KEY (target_type, target_id)
+) STRICT;

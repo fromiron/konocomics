@@ -82,10 +82,16 @@ CSV는 fatal UTF-8로 decode한다. 선두 UTF-8 BOM은 첫 header 이름에서�
 - `resolutionSetDigest`: effective 다섯 상태 전체의 resolution tuple 배열 digest.
 - source manifest는 candidate·diagnostic 경로를 제외한 `data/source/`만 포함한다. table CSV entry field 순서는 `[path, "tableCsv", headerArray, lexicalRowTupleDigest]`, opaque entry는 `[path, "opaqueFile", rawSha256, byteLength]`이며 canonical entry 문자열을 code-unit 순으로 정렬한다.
 - 모델 candidate·모델 공급 citation·diagnostic과 최종 promotion reason/blocker code는 source manifest와 두 resolution digest에서 모두 제외한다.
-- `judgmentInputDigest` tuple field 순서는 `[targetType, targetId, sourceManifestDigest, acceptedFactsDigest, resolutionSetDigest, factorDictionaryIdentity, annotationGuideIdentity, policyIdentity, decisionSchemaIdentity, engineManifestDigest, contextMarketIdentity, goldManifestIdentity]`다. 각 `*Identity`는 `[version, exactArtifactDigest]`이고 `engineManifestDigest`는 normalization과 판정 커널의 transitive source manifest를 결속한다.
+- `judgmentInputDigest` tuple field 순서는 `[targetType, targetId, sourceManifestDigest, acceptedFactsDigest, resolutionSetDigest, factorDictionaryIdentity, annotationGuideIdentity, policyIdentity, decisionSchemaIdentity, engineManifestDigest, contextMarketIdentity, goldManifestIdentity, legacyRegistryEvidenceIdentity]`다. 기존 12개 위치는 유지하고 legacy registry 입력 identity를 13번째에 추가한다. 각 `*Identity`는 `[version, exactArtifactDigest]`이고 `engineManifestDigest`는 normalization과 판정 커널의 transitive source manifest를 결속한다.
 - `decisionDigest` tuple field 순서는 `[judgmentInputDigest, verdict, sortedUniqueReasonCodes, sortedUniqueBlockerCodes]`다. 두 code 배열은 각각 code-unit 순으로 정렬한다.
 
 환경의 Node patch, SQLite version, OS, architecture, 절대 경로, 실행 시각은 audit metadata일 뿐 semantic digest에 넣지 않는다.
+
+S5의 `legacyRegistryEvidenceIdentity`는 `legacy-registry-evidence-v1`과 다음 6개 CSV의 repo-relative path·고정 header·lexical tuple digest로 만든 source manifest digest다: `source-registry.csv`, `source-membership.csv`, `canonical-mapping.csv`, `safety-review.csv`, `promotion-blockers.csv`, `batch-ledger.csv`. 현재 고정 digest는 `e2aed5340ea7e71d849fad767637a592906999e4e23ef1927129a0785de73bbe`다. 이 파일들은 판정의 provenance·identity·safety·blocker·batch timestamp에 실제로 쓰이므로 source manifest와 별도의 판정 입력으로 결속한다. 그 밖의 catalog-expansion staging 파일은 identity에서 제외하되 기존 전체 validator를 계속 통과해야 한다. 위 6개 파일의 row 순서는 `sourceOrdinal` 의미이므로 순서 변경도 identity 변경이다.
+
+Markdown·TypeScript identity text는 fatal UTF-8, BOM 거부, CRLF→LF, lone CR 거부를 적용하며 trim·Unicode normalization·마지막 LF 추가/제거를 하지 않는다. generated recommendation context와 Gold manifest도 같은 canonical artifact bytes 전체를 hash한다. promotion policy identity는 두 정책 문서의 `[repoRelativePath, canonicalTextSha256]` manifest를, decision schema identity는 허용 status·verdict·reason·blocker vocabulary descriptor를 결속한다.
+
+`engineManifestDigest`의 root는 `scripts/build-promotion-registry.ts`와 `scripts/catalog/promotion-judgment.ts`다. local static import와 type-only import/export closure를 재귀 탐색해 각 source의 canonical text digest를 넣고, 외부 semantic dependency는 lockfile의 `csv-parse@7.0.2`, `zod@4.4.3`만 포함한다. Node built-in, Node patch, SQLite, tsx·TypeScript·test runner, package/lockfile 전체, UI·runtime·Dexie·server·test·문서는 제외한다.
 
 S4의 resolution universe는 candidate가 주소화할 수 있는 `factor|theme|genre` 의미 사실만이다. 서지·판본·confidence·evidence·eligibility·recommendation context·promotion 필드는 source manifest가 결속하는 source 입력으로 남기며 resolution으로 복제하지 않는다. 현재 cutoff는 Factor 27,438행, 존재하는 Theme 2,565행, 존재하는 Genre membership 3,232행으로 총 33,235 resolution이다. 존재하지 않는 Theme·Genre membership은 명시적 거부가 아니므로 resolution을 만들지 않는다.
 
@@ -115,3 +121,12 @@ S3 candidate ingest는 `work:<workId>:factor:<axisId>`, `work:<workId>:theme:<th
 - 이 gate 중 하나라도 실패하면 S1은 실패다. 우회 export, 기존 source 덮어쓰기, S2 진행으로 실패를 숨기지 않는다.
 
 S1은 저장소 전체 pairwise 조합을 새로 전수 검사하지 않는다. 기존 validator와 golden을 재사용하는 것이 같은 계약을 가장 작은 범위로 검증한다.
+
+## 9. S5 shadow judgment
+
+- SQLite에는 `targetType="promotion"`, `targetId=workId`인 하나의 `STRICT judgment_run` table만 둔다. 저장 열은 `judgmentInputDigest`, `currentStatus`, `verdict`, canonical reason/blocker JSON, `decisionDigest`뿐이며 run ID·시각·cache·history·candidate FK·trigger·view는 두지 않는다.
+- registry row adapter가 기존 `registryReasonCodes`와 S2 `decidePromotionJudgment`를 호출한다. SQLite나 shadow orchestration에서 reason·blocker·verdict 로직을 다시 구현하지 않는다.
+- SQLite source export를 기존 catalog builder와 promotion loader/validator/builder에 넣은 뒤 13-field input digest와 4-field decision digest를 계산한다. 모든 1,614행을 메모리에서 검증한 다음 한 transaction으로 insert하고 exact readback한다.
+- candidate-free fresh shadow와 maximal candidate fresh shadow는 judgment row·digest가 정확히 같아야 한다. 6개 legacy registry 입력 중 하나라도 바뀌거나 row 순서가 바뀌면 고정 identity gate가 insert 전 실패하고 `judgment_run`은 0행이어야 한다.
+- close/read-only reopen 뒤 source·resolution·모든 identity와 judgment를 재계산한다. generated artifact·promotion registry bytes와 Gold 150 / verified 1,291 / blocked 173 / pending 0은 기존과 같고, 성공·실패 모두 임시 DB/export를 삭제하며 tracked tree는 변하지 않아야 한다.
+- S5는 shadow 증명만 추가한다. SQLite export나 judgment를 `data/source/`에 반영하거나 authoring 권한을 옮기는 S6은 별도 사용자 승인 전 실행하지 않는다.

@@ -13,7 +13,7 @@ import {
   writeFileSync,
 } from "node:fs";
 import { arch, platform, tmpdir } from "node:os";
-import { dirname, join, relative, resolve } from "node:path";
+import { dirname, isAbsolute, join, relative, resolve } from "node:path";
 import { DatabaseSync } from "node:sqlite";
 import { fileURLToPath, pathToFileURL } from "node:url";
 
@@ -21,8 +21,13 @@ import { parse } from "csv-parse/sync";
 
 import { buildCatalog } from "./build-catalog.ts";
 import {
+  BATCH_LEDGER_HEADERS,
   buildPromotionRegistry,
   loadPromotionRegistryInput,
+  PROMOTION_BLOCKER_HEADERS,
+  PROMOTION_HARD_BLOCKERS,
+  promotionDecisionSchemaDescriptor,
+  promotionJudgmentForRegistryRow,
   serializePromotionRegistry,
   validatePromotionRegistry,
 } from "./build-promotion-registry.ts";
@@ -34,6 +39,17 @@ import {
   readResolutionSnapshot,
 } from "./catalog/fact-resolution.ts";
 import { loadCatalogSource } from "./catalog/load-source.ts";
+import {
+  PROMOTION_REASON_CODES,
+  promotionDecisionDigest,
+  promotionJudgmentInputDigest,
+} from "./catalog/promotion-judgment.ts";
+import {
+  CANONICAL_MAPPING_HEADERS,
+  SAFETY_REVIEW_HEADERS,
+  SOURCE_MEMBERSHIP_HEADERS,
+  SOURCE_REGISTRY_HEADERS,
+} from "./validate-catalog-expansion.ts";
 
 export const BASELINE_COMMIT = LEGACY_CUTOFF_BASELINE_COMMIT;
 
@@ -177,6 +193,29 @@ const OPAQUE_PATHS = [
 
 const EXPECTED_PATHS = [...TABLES.map((table) => table.path), ...OPAQUE_PATHS].sort(compareText);
 const SCHEMA_PATH = fileURLToPath(new URL("./sql/catalog-shadow/001-init.sql", import.meta.url));
+const LEGACY_REGISTRY_EVIDENCE_DIGEST =
+  "e2aed5340ea7e71d849fad767637a592906999e4e23ef1927129a0785de73bbe";
+const LEGACY_REGISTRY_EVIDENCE = [
+  ["data/staging/catalog-expansion/source-registry.csv", SOURCE_REGISTRY_HEADERS],
+  ["data/staging/catalog-expansion/source-membership.csv", SOURCE_MEMBERSHIP_HEADERS],
+  ["data/staging/catalog-expansion/canonical-mapping.csv", CANONICAL_MAPPING_HEADERS],
+  ["data/staging/catalog-expansion/safety-review.csv", SAFETY_REVIEW_HEADERS],
+  ["data/staging/catalog-expansion/promotion-blockers.csv", PROMOTION_BLOCKER_HEADERS],
+  ["data/staging/catalog-expansion/batch-ledger.csv", BATCH_LEDGER_HEADERS],
+];
+const ENGINE_ROOTS = [
+  "scripts/build-promotion-registry.ts",
+  "scripts/catalog/promotion-judgment.ts",
+];
+const ENGINE_PACKAGES = ["csv-parse", "zod"];
+const S5_IDENTITY_DIGESTS = {
+  factorDictionary: "55bc79f2c862880496aa5daa34340b5489320847df76c48c5b2dfb1fe3677f4a",
+  annotationGuide: "a455d3f762bf2626e0c396a55f9182f7b3780def7c55fa2c9b6b6e59e4741cfe",
+  policy: "e0a6e13a97b7335cab3dd866cc327897e6213fa80715101b3b8e2d864d787862",
+  decisionSchema: "a4aa75a6249fd6eb9d731e83bffe0e0baa91b6c77f5a3d19d03431dba0f55d60",
+  contextMarket: "4cd5d10d3ed0f6c5374b55215d2419b8081cbe9c1d2450fab46fa58a61207732",
+  goldManifest: "eee9030933949bd92fbb48d0a94610ed933d2aaa76d620b86fec6c4a44b18fe2",
+};
 
 export function compareText(left, right) {
   return left < right ? -1 : left > right ? 1 : 0;
@@ -188,6 +227,84 @@ export function sha256(value) {
 
 function jsonDigest(value) {
   return sha256(Buffer.from(JSON.stringify(value), "utf8"));
+}
+
+export function canonicalTextBytes(path, bytes) {
+  let text;
+  try {
+    text = new TextDecoder("utf-8", { fatal: true, ignoreBOM: true }).decode(bytes);
+  } catch (error) {
+    throw new Error(`${path}: invalid UTF-8`, { cause: error });
+  }
+  if (text.startsWith("\uFEFF")) throw new Error(`${path}: UTF-8 BOM is prohibited`);
+  if (/\r(?!\n)/u.test(text)) throw new Error(`${path}: lone CR is prohibited`);
+  return Buffer.from(text.replaceAll("\r\n", "\n"), "utf8");
+}
+
+function canonicalTextDigest(root, path) {
+  return sha256(canonicalTextBytes(path, readFileSync(resolve(root, path))));
+}
+
+function localModulePath(repoRoot, importerPath, specifier) {
+  const base = resolve(repoRoot, dirname(importerPath), specifier);
+  const candidates = [base, `${base}.ts`, `${base}.mjs`, join(base, "index.ts")];
+  const absolute = candidates.find(
+    (candidate) => existsSync(candidate) && lstatSync(candidate).isFile(),
+  );
+  if (absolute === undefined) {
+    throw new Error(`${importerPath}: unresolved local engine import ${specifier}`);
+  }
+  const path = relative(repoRoot, absolute).replaceAll("\\", "/");
+  if (path.startsWith("../") || isAbsolute(path)) {
+    throw new Error(`${importerPath}: engine import escapes the repository`);
+  }
+  return path;
+}
+
+function moduleSpecifiers(text) {
+  return [
+    ...text.matchAll(/\bimport\s+(?:type\s+)?(?:[^;]*?\s+from\s+)?["']([^"']+)["']/gu),
+    ...text.matchAll(/\bexport\s+(?:type\s+)?[^;]*?\s+from\s+["']([^"']+)["']/gu),
+  ].map((match) => match[1]);
+}
+
+function packageName(specifier) {
+  return specifier.startsWith("@") ? specifier.split("/", 2).join("/") : specifier.split("/", 1)[0];
+}
+
+function packageVersionFromLock(repoRoot, name) {
+  const escaped = name.replace(/[.*+?^${}()|[\]\\]/gu, "\\$&");
+  const matches = [
+    ...readFileSync(resolve(repoRoot, "pnpm-lock.yaml"), "utf8").matchAll(
+      new RegExp(`^  ${escaped}@([^:\\s(]+):\\s*$`, "gmu"),
+    ),
+  ];
+  const versions = [...new Set(matches.map((match) => match[1]))];
+  if (versions.length !== 1) throw new Error(`Cannot resolve one ${name} version from pnpm lock`);
+  return versions[0];
+}
+
+function engineManifest(repoRoot) {
+  const pending = [...ENGINE_ROOTS];
+  const visited = new Set();
+  const packages = new Set();
+  while (pending.length > 0) {
+    const path = pending.pop();
+    if (visited.has(path)) continue;
+    visited.add(path);
+    const source = canonicalTextBytes(path, readFileSync(resolve(repoRoot, path))).toString("utf8");
+    for (const specifier of moduleSpecifiers(source)) {
+      if (specifier.startsWith(".")) pending.push(localModulePath(repoRoot, path, specifier));
+      else if (!specifier.startsWith("node:")) packages.add(packageName(specifier));
+    }
+  }
+  assert.deepEqual([...packages].sort(compareText), ENGINE_PACKAGES);
+  const entries = [
+    ...[...visited].map((path) => ["source", path, canonicalTextDigest(repoRoot, path)]),
+    ...ENGINE_PACKAGES.map((name) => ["package", name, packageVersionFromLock(repoRoot, name)]),
+  ];
+  entries.sort((left, right) => compareText(JSON.stringify(left), JSON.stringify(right)));
+  return { digest: jsonDigest(entries), entries };
 }
 
 export function assertNode24(version = process.version) {
@@ -929,54 +1046,393 @@ function compareBuildArtifacts(repoRoot, originalRoot, exportedRoot, originalBui
   }
 }
 
-function exportedReviewReferences(sourceRoot, works) {
-  return new Set(
-    works.flatMap((row) => {
-      const reference = row.value.annotationReviewReference;
-      return reference !== undefined && existsSync(resolve(sourceRoot, reference))
-        ? [reference]
-        : [];
-    }),
-  );
-}
-
-function assertPromotionParity(repoRoot, exportSourceRoot) {
-  const input = loadPromotionRegistryInput(repoRoot);
-  const originalRows = buildPromotionRegistry(input);
+function promotionSnapshot(root) {
+  const input = loadPromotionRegistryInput(root);
+  const rows = buildPromotionRegistry(input);
   validatePromotionRegistry(
-    originalRows,
+    rows,
     input.source.works.map((row) => row.value.id),
   );
-  const original = serializePromotionRegistry(originalRows);
+  return { input, rows, serialized: serializePromotionRegistry(rows) };
+}
 
-  const exported = loadCatalogSource(exportSourceRoot);
-  assert.equal(exported.issues.filter((issue) => issue.severity === "error").length, 0);
-  const shadowInput = {
-    ...input,
-    source: exported.source,
-    artEvidence: exported.artEvidence,
-    existingReviewReferences: exportedReviewReferences(exportSourceRoot, exported.source.works),
-  };
-  const shadowRows = buildPromotionRegistry(shadowInput);
-  validatePromotionRegistry(
-    shadowRows,
-    shadowInput.source.works.map((row) => row.value.id),
-  );
-  assert.equal(serializePromotionRegistry(shadowRows), original);
+function assertPromotionParity(repoRoot, shadowRoot) {
+  const original = promotionSnapshot(repoRoot);
+  const shadow = promotionSnapshot(shadowRoot);
+
+  assert.equal(shadow.serialized, original.serialized);
   assert.equal(
     readFileSync(
       resolve(repoRoot, "data/staging/catalog-expansion/promotion-registry.csv"),
       "utf8",
     ),
-    original,
+    original.serialized,
   );
-  assert.equal(shadowRows.filter((row) => row.promotionOutcome === "gold").length, 150);
+  assert.equal(shadow.rows.filter((row) => row.promotionOutcome === "gold").length, 150);
   assert.equal(
-    shadowRows.filter((row) => row.promotionOutcome === "recommendationVerified").length,
+    shadow.rows.filter((row) => row.promotionOutcome === "recommendationVerified").length,
     1291,
   );
-  assert.equal(shadowRows.filter((row) => row.promotionOutcome === "promotionBlocked").length, 173);
-  assert.equal(shadowRows.filter((row) => row.promotionOutcome === "pending").length, 0);
+  assert.equal(
+    shadow.rows.filter((row) => row.promotionOutcome === "promotionBlocked").length,
+    173,
+  );
+  assert.equal(shadow.rows.filter((row) => row.promotionOutcome === "pending").length, 0);
+  return shadow;
+}
+
+export function legacyRegistryEvidenceDigest(root) {
+  const tables = LEGACY_REGISTRY_EVIDENCE.map(([path, headers]) =>
+    parseLexicalCsv(path, readFileSync(resolve(root, path)), headers),
+  );
+  return sourceManifestDigest(tables, []);
+}
+
+function legacyRegistryEvidenceIdentity(root) {
+  const digest = legacyRegistryEvidenceDigest(root);
+  if (digest !== LEGACY_REGISTRY_EVIDENCE_DIGEST) {
+    throw new Error("Legacy registry evidence does not match the fixed S5 identity");
+  }
+  return ["legacy-registry-evidence-v1", digest];
+}
+
+function promotionPolicyIdentity(repoRoot) {
+  const paths = [
+    "docs/catalog-expansion/01-promotion-method.md",
+    "docs/catalog-expansion/01a-promotion-method-operational-amendment.md",
+  ];
+  const entries = paths.map((path) => [path, canonicalTextDigest(repoRoot, path)]);
+  entries.sort((left, right) => compareText(JSON.stringify(left), JSON.stringify(right)));
+  return ["promotion-evidence-v3+operational-amendment-2026-08-26", jsonDigest(entries)];
+}
+
+function judgmentIdentityContext(db, repoRoot, shadowRoot) {
+  const source = databaseSnapshot(db);
+  const resolution = readResolutionSnapshot(db);
+  const engine = engineManifest(repoRoot);
+  const input = {
+    sourceManifestDigest: source.sourceManifestDigest,
+    acceptedFactsDigest: resolution.acceptedFactsDigest,
+    resolutionSetDigest: resolution.resolutionSetDigest,
+    factorDictionaryIdentity: [
+      "factor-dictionary-v1",
+      canonicalTextDigest(repoRoot, "docs/factors/factor-dictionary.md"),
+    ],
+    annotationGuideIdentity: [
+      "annotation-guide-v1",
+      canonicalTextDigest(repoRoot, "docs/factors/annotation-guide.md"),
+    ],
+    policyIdentity: promotionPolicyIdentity(repoRoot),
+    decisionSchemaIdentity: [
+      "promotion-decision-schema-v1",
+      jsonDigest(promotionDecisionSchemaDescriptor()),
+    ],
+    engineManifestDigest: engine.digest,
+    contextMarketIdentity: [
+      "recommendation-context-v1",
+      canonicalTextDigest(shadowRoot, "data/generated/recommendation-context-v1.json"),
+    ],
+    goldManifestIdentity: [
+      "gold-set-v1",
+      canonicalTextDigest(shadowRoot, "data/staging/catalog-expansion/gold-set-manifest.json"),
+    ],
+    legacyRegistryEvidenceIdentity: legacyRegistryEvidenceIdentity(shadowRoot),
+  };
+  assert.deepEqual(
+    {
+      factorDictionary: input.factorDictionaryIdentity[1],
+      annotationGuide: input.annotationGuideIdentity[1],
+      policy: input.policyIdentity[1],
+      decisionSchema: input.decisionSchemaIdentity[1],
+      contextMarket: input.contextMarketIdentity[1],
+      goldManifest: input.goldManifestIdentity[1],
+    },
+    S5_IDENTITY_DIGESTS,
+  );
+  return { input, engine };
+}
+
+function buildJudgmentRows(registryRows, identities) {
+  return registryRows.map((row) => {
+    const judgment = promotionJudgmentForRegistryRow(row);
+    assert.equal(judgment.currentStatus, row.currentStatus);
+    assert.equal(judgment.promotionOutcome, row.promotionOutcome);
+    const judgmentInputDigest = promotionJudgmentInputDigest({
+      targetType: "promotion",
+      targetId: row.workId,
+      ...identities.input,
+    });
+    return {
+      targetType: "promotion",
+      targetId: row.workId,
+      judgmentInputDigest,
+      currentStatus: judgment.currentStatus,
+      verdict: judgment.promotionOutcome,
+      reasonCodes: judgment.reasonCodes,
+      blockerCodes: judgment.blockerCodes,
+      decisionDigest: promotionDecisionDigest(judgmentInputDigest, judgment),
+    };
+  });
+}
+
+function assertCanonicalCodes(values, allowed, label) {
+  assert(Array.isArray(values), `${label} must be an array`);
+  assert(values.every((value) => typeof value === "string" && allowed.has(value)));
+  assert.deepEqual(values, [...new Set(values)].sort(compareText), `${label} must be canonical`);
+}
+
+function assertJudgmentRows(rows) {
+  assert(rows.length > 0, "Judgment run cannot be empty");
+  assert.deepEqual(
+    rows.map((row) => row.targetId),
+    [...rows.map((row) => row.targetId)].sort(compareText),
+  );
+  assert.equal(new Set(rows.map((row) => `${row.targetType}:${row.targetId}`)).size, rows.length);
+  assert.equal(new Set(rows.map((row) => row.judgmentInputDigest)).size, rows.length);
+  assert.equal(new Set(rows.map((row) => row.decisionDigest)).size, rows.length);
+  const reasonCodes = new Set(PROMOTION_REASON_CODES);
+  const blockerCodes = new Set(Object.keys(PROMOTION_HARD_BLOCKERS));
+  const currentStatuses = new Set([
+    "libraryOnly",
+    "annotationDraft",
+    "recommendationVerified",
+    "gold",
+  ]);
+  const verdicts = new Set(["pending", "recommendationVerified", "promotionBlocked", "gold"]);
+  for (const row of rows) {
+    assert.equal(row.targetType, "promotion");
+    assert(row.targetId !== "");
+    assert.match(row.judgmentInputDigest, /^[a-f0-9]{64}$/u);
+    assert(currentStatuses.has(row.currentStatus));
+    assert(verdicts.has(row.verdict));
+    assertCanonicalCodes(row.reasonCodes, reasonCodes, "Judgment reason codes");
+    assertCanonicalCodes(row.blockerCodes, blockerCodes, "Judgment blocker codes");
+    assert.equal(
+      row.decisionDigest,
+      promotionDecisionDigest(row.judgmentInputDigest, {
+        promotionOutcome: row.verdict,
+        reasonCodes: row.reasonCodes,
+        blockerCodes: row.blockerCodes,
+      }),
+    );
+  }
+}
+
+const JUDGMENT_INSERT = `INSERT INTO judgment_run (
+  target_type, target_id, judgment_input_digest, current_status, verdict,
+  reason_codes_json, blocker_codes_json, decision_digest
+) VALUES (?, ?, ?, ?, ?, ?, ?, ?)`;
+
+function insertJudgment(statement, row) {
+  statement.run(
+    row.targetType,
+    row.targetId,
+    row.judgmentInputDigest,
+    row.currentStatus,
+    row.verdict,
+    JSON.stringify(row.reasonCodes),
+    JSON.stringify(row.blockerCodes),
+    row.decisionDigest,
+  );
+}
+
+function readJudgmentRows(db) {
+  const rows = db
+    .prepare(
+      `SELECT target_type AS targetType, target_id AS targetId,
+        judgment_input_digest AS judgmentInputDigest, current_status AS currentStatus,
+        verdict, reason_codes_json AS reasonCodesJson,
+        blocker_codes_json AS blockerCodesJson, decision_digest AS decisionDigest
+      FROM judgment_run ORDER BY target_type, target_id`,
+    )
+    .all()
+    .map(({ reasonCodesJson, blockerCodesJson, ...row }) => ({
+      ...row,
+      reasonCodes: JSON.parse(reasonCodesJson),
+      blockerCodes: JSON.parse(blockerCodesJson),
+    }));
+  assertJudgmentRows(rows);
+  return rows;
+}
+
+function assertJudgmentSchemaIsolation(db) {
+  assert.deepEqual(db.prepare("PRAGMA foreign_key_list(judgment_run)").all(), []);
+  assert.deepEqual(
+    db
+      .prepare("PRAGMA table_info(judgment_run)")
+      .all()
+      .map((row) => row.name),
+    [
+      "target_type",
+      "target_id",
+      "judgment_input_digest",
+      "current_status",
+      "verdict",
+      "reason_codes_json",
+      "blocker_codes_json",
+      "decision_digest",
+    ],
+  );
+  assert.deepEqual(
+    db
+      .prepare(
+        `SELECT type, name FROM sqlite_schema
+        WHERE type IN ('trigger', 'view') AND lower(sql) LIKE '%judgment_run%'`,
+      )
+      .all(),
+    [],
+  );
+  assert.deepEqual(
+    db
+      .prepare(
+        `SELECT name FROM sqlite_schema
+        WHERE type = 'table' AND lower(name) LIKE '%judgment%' ORDER BY name`,
+      )
+      .all()
+      .map((row) => row.name),
+    ["judgment_run"],
+  );
+}
+
+function assertJudgmentAtomicity(db, row) {
+  assert.equal(readCount(db, "judgment_run"), 0);
+  const insert = db.prepare(JUDGMENT_INSERT);
+  let rejected = false;
+  db.exec("BEGIN IMMEDIATE");
+  try {
+    insertJudgment(insert, row);
+    insertJudgment(insert, row);
+  } catch {
+    rejected = true;
+  } finally {
+    db.exec("ROLLBACK");
+  }
+  assert(rejected, "Duplicate judgment probe must fail");
+  assert.equal(readCount(db, "judgment_run"), 0);
+}
+
+function insertJudgmentRowsAtomic(db, rows) {
+  assertJudgmentRows(rows);
+  assert.equal(readCount(db, "judgment_run"), 0);
+  const insert = db.prepare(JUDGMENT_INSERT);
+  db.exec("BEGIN IMMEDIATE");
+  try {
+    for (const row of rows) insertJudgment(insert, row);
+    assert.deepEqual(readJudgmentRows(db), rows);
+    db.exec("COMMIT");
+  } catch (error) {
+    db.exec("ROLLBACK");
+    throw error;
+  }
+}
+
+function changedFirstDataCell(bytes) {
+  const changed = Buffer.from(bytes);
+  const headerEnd = changed.indexOf(0x0a);
+  assert(headerEnd >= 0, "Legacy evidence CSV must have a data row");
+  let index = headerEnd + 1;
+  while (
+    index < changed.length &&
+    !(
+      (changed[index] >= 0x30 && changed[index] <= 0x39) ||
+      (changed[index] >= 0x41 && changed[index] <= 0x5a) ||
+      (changed[index] >= 0x61 && changed[index] <= 0x7a)
+    )
+  ) {
+    index += 1;
+  }
+  assert(index < changed.length, "Legacy evidence CSV must have a mutable data cell");
+  changed[index] = changed[index] === 0x61 ? 0x62 : 0x61;
+  return changed;
+}
+
+function assertLegacyEvidenceMutationGuards(db, shadowRoot) {
+  assert.equal(readCount(db, "judgment_run"), 0);
+  for (const [path] of LEGACY_REGISTRY_EVIDENCE) {
+    const absolute = resolve(shadowRoot, path);
+    const original = readFileSync(absolute);
+    try {
+      writeFileSync(absolute, changedFirstDataCell(original));
+      assert.throws(() => legacyRegistryEvidenceIdentity(shadowRoot), /fixed S5 identity/u);
+      assert.equal(readCount(db, "judgment_run"), 0);
+    } finally {
+      writeFileSync(absolute, original);
+    }
+  }
+
+  const [path, headers] = LEGACY_REGISTRY_EVIDENCE[0];
+  const absolute = resolve(shadowRoot, path);
+  const original = readFileSync(absolute);
+  const parsed = parseLexicalCsv(path, original, headers);
+  assert(parsed.rows.length >= 2);
+  [parsed.rows[0].values, parsed.rows[1].values] = [parsed.rows[1].values, parsed.rows[0].values];
+  try {
+    writeFileSync(absolute, serializeCsv(parsed));
+    assert.throws(() => legacyRegistryEvidenceIdentity(shadowRoot), /fixed S5 identity/u);
+    assert.equal(readCount(db, "judgment_run"), 0);
+  } finally {
+    writeFileSync(absolute, original);
+  }
+  assert.equal(legacyRegistryEvidenceDigest(shadowRoot), LEGACY_REGISTRY_EVIDENCE_DIGEST);
+}
+
+function copyPromotionStaging(repoRoot, shadowRoot) {
+  const destination = resolve(shadowRoot, "data/staging/catalog-expansion");
+  mkdirSync(dirname(destination), { recursive: true });
+  cpSync(resolve(repoRoot, "data/staging/catalog-expansion"), destination, { recursive: true });
+}
+
+function prepareJudgmentSnapshot(db, repoRoot, shadowRoot, promotion) {
+  const identities = judgmentIdentityContext(db, repoRoot, shadowRoot);
+  const rows = buildJudgmentRows(promotion.rows, identities);
+  assertJudgmentRows(rows);
+  return { identities, rows };
+}
+
+function runCandidateFreeJudgmentShadow(
+  repoRoot,
+  temporaryRoot,
+  schema,
+  files,
+  parsedTables,
+  metadata,
+) {
+  const databasePath = resolve(temporaryRoot, "candidate-free.sqlite");
+  const shadowRoot = resolve(temporaryRoot, "candidate-free-build");
+  let database;
+  let reader;
+  try {
+    database = new DatabaseSync(databasePath);
+    database.exec("PRAGMA foreign_keys = ON; PRAGMA journal_mode = DELETE");
+    importDatabase(database, schema, files, parsedTables, metadata);
+    assertDatabase(database, metadata.rawSourceTreeDigest, metadata.sourceManifestDigest);
+    assert.equal(readCount(database, "model_attempt"), 0);
+    assert.equal(readCount(database, "claim_candidate"), 0);
+    bootstrapFromLiveSource(database);
+    assertResolutionSchemaIsolation(database);
+    assertJudgmentSchemaIsolation(database);
+    writeExportedSource(database, resolve(shadowRoot, "data/source"));
+    copyPromotionStaging(repoRoot, shadowRoot);
+    buildQuietly(shadowRoot);
+    const promotion = assertPromotionParity(repoRoot, shadowRoot);
+    const snapshot = prepareJudgmentSnapshot(database, repoRoot, shadowRoot, promotion);
+    insertJudgmentRowsAtomic(database, snapshot.rows);
+    assert.deepEqual(readJudgmentRows(database), snapshot.rows);
+    database.close();
+    database = undefined;
+    assertNoJournals(databasePath);
+
+    reader = new DatabaseSync(databasePath, { readOnly: true });
+    assertDatabase(reader, metadata.rawSourceTreeDigest, metadata.sourceManifestDigest);
+    assert.deepEqual(readJudgmentRows(reader), snapshot.rows);
+    reader.close();
+    reader = undefined;
+    assertNoJournals(databasePath);
+    return snapshot;
+  } finally {
+    reader?.close();
+    database?.close();
+  }
 }
 
 function assertLegacyBoundary(repoRoot, loaded) {
@@ -1047,10 +1503,12 @@ export function runCatalogShadow(repoRoot = process.cwd()) {
   const databasePath = join(temporaryRoot, "catalog-shadow.sqlite");
   const originalBuildRoot = join(temporaryRoot, "original-build");
   const exportedBuildRoot = join(temporaryRoot, "exported-build");
+  const reopenedBuildRoot = join(temporaryRoot, "reopened-build");
   let database;
   let reader;
   let candidateReadback;
   let resolutionSnapshot;
+  let judgmentSnapshot;
   try {
     const schema = readFileSync(SCHEMA_PATH, "utf8");
     database = new DatabaseSync(databasePath);
@@ -1108,7 +1566,72 @@ export function runCatalogShadow(repoRoot = process.cwd()) {
     const exportedLoaded = loadCatalogSource(resolve(exportedBuildRoot, "data/source"));
     assert.equal(exportedLoaded.issues.filter((issue) => issue.severity === "error").length, 0);
     assertLegacyBoundary(canonicalRoot, exportedLoaded);
-    assertPromotionParity(canonicalRoot, resolve(exportedBuildRoot, "data/source"));
+    copyPromotionStaging(canonicalRoot, exportedBuildRoot);
+    const promotion = assertPromotionParity(canonicalRoot, exportedBuildRoot);
+
+    database = new DatabaseSync(databasePath);
+    database.exec("PRAGMA foreign_keys = ON");
+    assertDatabase(database, rawSourceTreeDigest, manifestDigest);
+    assertCandidateSchemaIsolation(database);
+    assertResolutionSchemaIsolation(database);
+    assertJudgmentSchemaIsolation(database);
+    assertLegacyEvidenceMutationGuards(database, exportedBuildRoot);
+    const withCandidates = prepareJudgmentSnapshot(
+      database,
+      canonicalRoot,
+      exportedBuildRoot,
+      promotion,
+    );
+    assertJudgmentAtomicity(database, withCandidates.rows[0]);
+    insertJudgmentRowsAtomic(database, withCandidates.rows);
+
+    const candidateFree = runCandidateFreeJudgmentShadow(
+      canonicalRoot,
+      temporaryRoot,
+      schema,
+      filesBefore,
+      parsedTables,
+      {
+        rawSourceTreeDigest,
+        sourceManifestDigest: manifestDigest,
+        sqliteVersion,
+      },
+    );
+    assert.deepEqual(candidateFree.identities, withCandidates.identities);
+    assert.deepEqual(candidateFree.rows, withCandidates.rows);
+    judgmentSnapshot = withCandidates;
+    database.close();
+    database = undefined;
+    assertNoJournals(databasePath);
+
+    reader = new DatabaseSync(databasePath, { readOnly: true });
+    assertDatabase(reader, rawSourceTreeDigest, manifestDigest);
+    assertCandidateSchemaIsolation(reader);
+    assertResolutionSchemaIsolation(reader);
+    assertJudgmentSchemaIsolation(reader);
+    assert.deepEqual(readResolutionSnapshot(reader), resolutionSnapshot);
+    writeExportedSource(reader, resolve(reopenedBuildRoot, "data/source"));
+    copyPromotionStaging(canonicalRoot, reopenedBuildRoot);
+    const reopenedBuild = buildQuietly(reopenedBuildRoot);
+    compareBuildArtifacts(
+      canonicalRoot,
+      originalBuildRoot,
+      reopenedBuildRoot,
+      originalBuild,
+      reopenedBuild,
+    );
+    const reopenedPromotion = assertPromotionParity(canonicalRoot, reopenedBuildRoot);
+    const reopenedJudgment = prepareJudgmentSnapshot(
+      reader,
+      canonicalRoot,
+      reopenedBuildRoot,
+      reopenedPromotion,
+    );
+    assert.deepEqual(reopenedJudgment, judgmentSnapshot);
+    assert.deepEqual(readJudgmentRows(reader), judgmentSnapshot.rows);
+    reader.close();
+    reader = undefined;
+    assertNoJournals(databasePath);
 
     assert.deepEqual(
       discoverSourceFiles(sourceRoot).map((file) => file.rawSha256),
@@ -1135,6 +1658,22 @@ export function runCatalogShadow(repoRoot = process.cwd()) {
         states: resolutionSnapshot.states,
         acceptedFactsDigest: resolutionSnapshot.acceptedFactsDigest,
         resolutionSetDigest: resolutionSnapshot.resolutionSetDigest,
+      },
+      judgment: {
+        rows: judgmentSnapshot.rows.length,
+        engineManifestDigest: judgmentSnapshot.identities.engine.digest,
+        engineSources: judgmentSnapshot.identities.engine.entries.filter(
+          (entry) => entry[0] === "source",
+        ).length,
+        identities: {
+          factorDictionary: judgmentSnapshot.identities.input.factorDictionaryIdentity,
+          annotationGuide: judgmentSnapshot.identities.input.annotationGuideIdentity,
+          policy: judgmentSnapshot.identities.input.policyIdentity,
+          decisionSchema: judgmentSnapshot.identities.input.decisionSchemaIdentity,
+          contextMarket: judgmentSnapshot.identities.input.contextMarketIdentity,
+          goldManifest: judgmentSnapshot.identities.input.goldManifestIdentity,
+          legacyRegistryEvidence: judgmentSnapshot.identities.input.legacyRegistryEvidenceIdentity,
+        },
       },
       audit: { node: process.version, sqlite: sqliteVersion, os: platform(), architecture: arch() },
     };

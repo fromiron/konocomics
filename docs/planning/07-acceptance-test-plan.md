@@ -240,3 +240,13 @@ E2E 내 기본 조작성 스모크: 시나리오 1을 키보드만으로 완주�
 - [ ] `legacySnapshot`은 persisted source에서 첫 insert 직전 재계산한 manifest, 저장 manifest, 고정 cutoff manifest와 저장·고정 baseline commit이 모두 맞는 기존 값만 bootstrap한다. source를 유효한 다른 값으로 변조하고 metadata를 유지하면 resolution 0행 상태에서 실패한다.
 - [ ] 모든 legacy row는 고정 manifest authority, 빈 citation-set digest, `LEGACY_SNAPSHOT_CUTOFF`를 쓰며 `authorizedModelPanel`이나 human-not-run provenance를 재분류하지 않는다. 비어 있지 않은 resolution table은 교체하지 않고 실패한다.
 - [ ] close/read-only reopen 뒤 tuple·digest를 재계산하고 source export, generated artifact, promotion registry bytes와 Gold 150 / verified 1,291 / blocked 173 / pending 0을 보존한다. S4에는 judgment input/run·`judgmentInputDigest`·`decisionDigest`·source export가 없다.
+
+### S5 shadow judgment gate
+
+- [ ] 기존 registry row adapter와 S2 커널만으로 1,614개 판정을 만들고 하나의 `STRICT judgment_run` table에 한 transaction으로 기록한다. run ID·시각·cache·history·candidate FK·trigger·view와 SQL 판정 재구현은 없다.
+- [ ] 13-field `judgmentInputDigest`가 source, 두 resolution digest, Factor Dictionary, Annotation Guide, 두 promotion policy 문서, decision vocabulary, 21-source engine closure와 `csv-parse@7.0.2`·`zod@4.4.3`, generated recommendation context, Gold manifest, 6-file legacy registry evidence를 결속한다. 환경 metadata와 candidate는 제외한다.
+- [ ] Markdown·TypeScript·generated JSON identity bytes는 fatal UTF-8, BOM 거부, CRLF→LF, lone CR 거부, no trim/no Unicode normalization/terminal-LF 보존 계약을 통과한다.
+- [ ] reason/blocker 배열은 closed vocabulary·code-unit sorted unique이며 입력 순서·중복이 달라도 같은 `decisionDigest`를 만든다. 각 identity field를 바꾸면 해당 `judgmentInputDigest`가 달라진다.
+- [ ] candidate-free와 maximal-candidate fresh shadow의 1,614개 judgment row·digest가 exact 동일하다. 6개 legacy registry CSV 각각의 cell mutation과 frozen row reorder는 고정 `legacy-registry-evidence-v1` gate에서 insert 전에 실패하고 table은 0행이다.
+- [ ] malformed row·중복 digest의 전체 insert는 rollback되어 0행이고, 성공 insert 직후와 close/read-only reopen 뒤 app-level validation·exact readback·identity 재계산을 통과한다.
+- [ ] source export, generated artifacts, serialized promotion registry, Gold 150 / verified 1,291 / blocked 173 / pending 0, tracked source/tree가 불변이며 임시 DB·journal/export residue가 없다. S6 authoring cutover는 수행하지 않는다.

@@ -19,6 +19,8 @@ import { runCatalogPipeline } from "./catalog/pipeline";
 import {
   compareCodeUnit,
   decidePromotionJudgment,
+  PROMOTION_REASON_CODES,
+  type PromotionJudgment,
   type PromotionReasonCode,
 } from "./catalog/promotion-judgment";
 import { formatSourceIssue } from "./catalog/report";
@@ -407,6 +409,45 @@ function registryReasonCodes(
   return reasons;
 }
 
+function registryBlockerCodes(row: Pick<PromotionRegistryRow, "workId" | "blockerCode">) {
+  const blockerCodes = row.blockerCode === "" ? [] : row.blockerCode.split(";");
+  if (
+    new Set(blockerCodes).size !== blockerCodes.length ||
+    JSON.stringify(blockerCodes) !== JSON.stringify([...blockerCodes].sort(compareCodeUnit)) ||
+    blockerCodes.some((code) => !Object.hasOwn(PROMOTION_HARD_BLOCKERS, code))
+  ) {
+    throw new Error(`Promotion registry has an unknown hard blocker: ${row.workId}`);
+  }
+  return blockerCodes;
+}
+
+export function promotionJudgmentForRegistryRow(row: PromotionRegistryRow): PromotionJudgment {
+  return decidePromotionJudgment({
+    targetStatus: row.targetStatus,
+    annotationStatus: row.annotationStatus,
+    reasonCodes: registryReasonCodes({
+      ...row,
+      provenanceComplete:
+        row.targetStatus === "gold"
+          ? row.sourceCount === 0 && row.sourceTypes === "frozen"
+          : row.sourceCount > 0 && row.sourceTypes !== "",
+    }),
+    blockerCodes: registryBlockerCodes(row),
+  });
+}
+
+export function promotionDecisionSchemaDescriptor() {
+  return [
+    ["targetType", ["promotion"]],
+    ["targetStatus", ["gold", "recommendationVerified"]],
+    ["annotationStatus", ["complete", "draft", "missing"]],
+    ["currentStatus", ["annotationDraft", "gold", "libraryOnly", "recommendationVerified"]],
+    ["verdict", ["gold", "pending", "promotionBlocked", "recommendationVerified"]],
+    ["reasonCodes", [...PROMOTION_REASON_CODES].sort(compareCodeUnit)],
+    ["blockerCodes", Object.keys(PROMOTION_HARD_BLOCKERS).sort(compareCodeUnit)],
+  ];
+}
+
 export function buildPromotionRegistry(input: PromotionRegistryInput): PromotionRegistryRow[] {
   const goldIds = new Set(input.goldWorkIds);
   const workIds = new Set(input.source.works.map((row) => row.value.id));
@@ -615,14 +656,6 @@ export function validatePromotionRegistry(
     if ((row.blockerCode === "") !== (row.blockerDetails === "")) {
       throw new Error(`Promotion blocker code and details disagree: ${row.workId}`);
     }
-    const blockerCodes = row.blockerCode === "" ? [] : row.blockerCode.split(";");
-    if (
-      new Set(blockerCodes).size !== blockerCodes.length ||
-      JSON.stringify(blockerCodes) !== JSON.stringify([...blockerCodes].sort(compareCodeUnit)) ||
-      blockerCodes.some((code) => !Object.hasOwn(PROMOTION_HARD_BLOCKERS, code))
-    ) {
-      throw new Error(`Promotion registry has an unknown hard blocker: ${row.workId}`);
-    }
     if (row.targetStatus === "gold") {
       if (
         row.sourceCount !== 0 ||
@@ -634,18 +667,7 @@ export function validatePromotionRegistry(
         throw new Error(`Gold registry contract is invalid: ${row.workId}`);
       }
     }
-    const judgment = decidePromotionJudgment({
-      targetStatus: row.targetStatus,
-      annotationStatus: row.annotationStatus,
-      reasonCodes: registryReasonCodes({
-        ...row,
-        provenanceComplete:
-          row.targetStatus === "gold"
-            ? row.sourceCount === 0 && row.sourceTypes === "frozen"
-            : row.sourceCount > 0 && row.sourceTypes !== "",
-      }),
-      blockerCodes,
-    });
+    const judgment = promotionJudgmentForRegistryRow(row);
     if (
       row.currentStatus !== judgment.currentStatus ||
       row.promotionOutcome !== judgment.promotionOutcome

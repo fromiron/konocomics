@@ -3,6 +3,9 @@ import { describe, expect, it } from "vitest";
 import {
   compareCodeUnit,
   decidePromotionJudgment,
+  promotionDecisionDigest,
+  promotionJudgmentInputDigest,
+  type PromotionJudgmentIdentityInput,
   type PromotionJudgmentInput,
 } from "../../../scripts/catalog/promotion-judgment";
 
@@ -97,5 +100,61 @@ describe("promotion judgment", () => {
     expect(compareCodeUnit("A", "a")).toBe(-1);
     expect(compareCodeUnit("a", "A")).toBe(1);
     expect(compareCodeUnit("同", "同")).toBe(0);
+  });
+
+  it("binds every judgment identity and canonicalizes decision codes", () => {
+    const digest = "a".repeat(64);
+    const changedDigest = "b".repeat(64);
+    const identity = ["v1", digest] as const;
+    const input: PromotionJudgmentIdentityInput = {
+      targetType: "promotion",
+      targetId: "work-a",
+      sourceManifestDigest: digest,
+      acceptedFactsDigest: digest,
+      resolutionSetDigest: digest,
+      factorDictionaryIdentity: identity,
+      annotationGuideIdentity: identity,
+      policyIdentity: identity,
+      decisionSchemaIdentity: identity,
+      engineManifestDigest: digest,
+      contextMarketIdentity: identity,
+      goldManifestIdentity: identity,
+      legacyRegistryEvidenceIdentity: identity,
+    };
+    const baseline = promotionJudgmentInputDigest(input);
+    expect(promotionJudgmentInputDigest({ ...input, targetId: "work-b" })).not.toBe(baseline);
+    for (const key of [
+      "sourceManifestDigest",
+      "acceptedFactsDigest",
+      "resolutionSetDigest",
+      "engineManifestDigest",
+    ] as const) {
+      expect(promotionJudgmentInputDigest({ ...input, [key]: changedDigest })).not.toBe(baseline);
+    }
+    for (const key of [
+      "factorDictionaryIdentity",
+      "annotationGuideIdentity",
+      "policyIdentity",
+      "decisionSchemaIdentity",
+      "contextMarketIdentity",
+      "goldManifestIdentity",
+      "legacyRegistryEvidenceIdentity",
+    ] as const) {
+      expect(promotionJudgmentInputDigest({ ...input, [key]: ["v1", changedDigest] })).not.toBe(
+        baseline,
+      );
+    }
+
+    const first = promotionDecisionDigest(baseline, {
+      promotionOutcome: "promotionBlocked",
+      reasonCodes: ["REVIEW_NOT_ACCEPTED", "ANNOTATION_INCOMPLETE", "REVIEW_NOT_ACCEPTED"],
+      blockerCodes: ["SAFETY_UNRESOLVED", "ADULT_CONTENT", "SAFETY_UNRESOLVED"],
+    });
+    const second = promotionDecisionDigest(baseline, {
+      promotionOutcome: "promotionBlocked",
+      reasonCodes: ["ANNOTATION_INCOMPLETE", "REVIEW_NOT_ACCEPTED"],
+      blockerCodes: ["ADULT_CONTENT", "SAFETY_UNRESOLVED"],
+    });
+    expect(first).toBe(second);
   });
 });

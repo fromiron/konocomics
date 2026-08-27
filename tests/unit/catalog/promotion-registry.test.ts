@@ -7,6 +7,7 @@ import {
   PROMOTION_REGISTRY_HEADERS,
   buildPromotionRegistry,
   loadPromotionRegistryInput,
+  promotionJudgmentForRegistryRow,
   serializePromotionRegistry,
   validatePromotionRegistry,
 } from "../../../scripts/build-promotion-registry";
@@ -164,6 +165,13 @@ describe("promotion registry", () => {
     expect(serializePromotionRegistry(reversed)).toBe(serializePromotionRegistry(rows));
 
     const nonGold = rows.find((row) => row.currentStatus !== "gold")!;
+    expect(promotionJudgmentForRegistryRow(nonGold)).toMatchObject({
+      currentStatus: nonGold.currentStatus,
+      promotionOutcome: nonGold.promotionOutcome,
+    });
+    expect(() =>
+      promotionJudgmentForRegistryRow({ ...nonGold, blockerCode: "NOT_A_BLOCKER" }),
+    ).toThrow(`Promotion registry has an unknown hard blocker: ${nonGold.workId}`);
     const withoutCanonical = buildPromotionRegistry({
       ...input,
       blockers: input.blockers.filter((blocker) => blocker.workId !== nonGold.workId),

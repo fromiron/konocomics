@@ -35,7 +35,7 @@ const url = z.url().refine((value) => {
 });
 const optionalUrl = z.union([z.literal(""), url]);
 
-const SOURCE_REGISTRY_HEADERS = [
+export const SOURCE_REGISTRY_HEADERS = [
   "sourceId",
   "sourceKind",
   "organization",
@@ -85,7 +85,7 @@ const CANDIDATE_HEADERS = [
   "notes",
 ] as const;
 
-const SOURCE_MEMBERSHIP_HEADERS = [
+export const SOURCE_MEMBERSHIP_HEADERS = [
   "sourceItemId",
   "sourceId",
   "status",
@@ -94,7 +94,7 @@ const SOURCE_MEMBERSHIP_HEADERS = [
   "decisionRef",
 ] as const;
 
-const CANONICAL_MAPPING_HEADERS = [
+export const CANONICAL_MAPPING_HEADERS = [
   "mappingId",
   "sourceItemId",
   "candidateId",
@@ -122,7 +122,7 @@ const EXCLUSION_HEADERS = [
   "notes",
 ] as const;
 
-const SAFETY_REVIEW_HEADERS = [
+export const SAFETY_REVIEW_HEADERS = [
   "candidateId",
   "safetyStatus",
   "evidenceName",
