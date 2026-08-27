@@ -1,6 +1,6 @@
 # konocomics Taste vs Baseline レポート
 
-- カタログバージョン: v1\-5345207c47c5
+- カタログバージョン: v1\-632abd8c3da0
 - ファクター辞書バージョン: v1
 - Baseline バージョン: v1
 - プロフィール数: 3
@@ -189,7 +189,31 @@
 | 4 | -0.06 | adjustment | narrative | progression | なし | なし | はい |
 | 5 | 0.06 | adjustment | theme | combat | なし | なし | はい |
 
-#### 8. バガボンド (vagabond)
+#### 8. 呪術廻戦 (jujutsu\-kaisen)
+
+- スコア: 0.693385934883
+- 確信度: ふつう
+- 最も近いアンカー: チェンソーマン (chainsaw\-man)
+- おすすめ理由:
+  - 「テンポの速さ」があなたの好みに合う作品です。
+  - 「戦闘」があなたの好みに合う作品です。
+  - 『チェンソーマン』で好きだった「やわらかい絵柄」に近い作品です。
+- 注意点: なし
+- 根拠アンカー: チェンソーマン (chainsaw\-man)
+- 適用された減点: 理由を特定できない苦手
+- カバレッジ警告:
+  - PARTIAL / art / coverage=0.75 / threshold=0.3 / adjustedScore=1
+- 寄与度上位5件:
+
+| 順位 | 寄与 | source | group | factorId | anchorWorkIds | negativeReasonId | 説明対象 |
+| -: | -: | --- | --- | --- | --- | --- | --- |
+| 1 | 0.4 | baseline | overall | neutralBaseline | なし | なし | いいえ |
+| 2 | 0.06 | adjustment | narrative | pacing | なし | なし | はい |
+| 3 | 0.06 | adjustment | theme | combat | なし | なし | はい |
+| 4 | -0.026040951576 | penalty | overall | vagueDislike | yotsuba\-to | vagueDislike | いいえ |
+| 5 | 0.020787401575 | similarity | art | visualSoftness | chainsaw\-man | なし | はい |
+
+#### 9. バガボンド (vagabond)
 
 - スコア: 0.670493885066
 - 確信度: ふつう
@@ -214,53 +238,28 @@
 | 4 | 0.03 | similarity | genre | action | kingdom | なし | はい |
 | 5 | 0.03 | similarity | genre | historical | kingdom | なし | はい |
 
-#### 9. 呪術廻戦 (jujutsu\-kaisen)
+#### 10. 炎炎ノ消防隊 (fire\-force)
 
-- スコア: 0.693385934883
+- スコア: 0.627124369983
 - 確信度: ふつう
 - 最も近いアンカー: チェンソーマン (chainsaw\-man)
 - おすすめ理由:
-  - 「テンポの速さ」があなたの好みに合う作品です。
+  - 「迫力・スピード感」があなたの好みに合う作品です。
   - 「戦闘」があなたの好みに合う作品です。
-  - 『チェンソーマン』で好きだった「やわらかい絵柄」に近い作品です。
+  - 「テンポの速さ」があなたの好みに合う作品です。
 - 注意点: なし
-- 根拠アンカー: チェンソーマン (chainsaw\-man)
+- 根拠アンカー: なし
 - 適用された減点: 理由を特定できない苦手
-- カバレッジ警告:
-  - PARTIAL / art / coverage=0.75 / threshold=0.3 / adjustedScore=1
+- カバレッジ警告: なし
 - 寄与度上位5件:
 
 | 順位 | 寄与 | source | group | factorId | anchorWorkIds | negativeReasonId | 説明対象 |
 | -: | -: | --- | --- | --- | --- | --- | --- |
 | 1 | 0.4 | baseline | overall | neutralBaseline | なし | なし | いいえ |
-| 2 | 0.06 | adjustment | narrative | pacing | なし | なし | はい |
+| 2 | 0.06 | adjustment | art | motionImpact | なし | なし | はい |
 | 3 | 0.06 | adjustment | theme | combat | なし | なし | はい |
-| 4 | -0.026040951576 | penalty | overall | vagueDislike | yotsuba\-to | vagueDislike | いいえ |
-| 5 | 0.020787401575 | similarity | art | visualSoftness | chainsaw\-man | なし | はい |
-
-#### 10. 進撃の巨人 (attack\-on\-titan)
-
-- スコア: 0.643177591794
-- 確信度: ふつう
-- 最も近いアンカー: 鋼の錬金術師 (fullmetal\-alchemist)
-- おすすめ理由:
-  - 「テンポの速さ」があなたの好みに合う作品です。
-  - 「戦闘」があなたの好みに合う作品です。
-  - 『鋼の錬金術師』で好きだった「アクション」に近い作品です。
-- 注意点: なし
-- 根拠アンカー: 鋼の錬金術師 (fullmetal\-alchemist)
-- 適用された減点: 理由を特定できない苦手
-- カバレッジ警告:
-  - PARTIAL / art / coverage=0.75 / threshold=0.3 / adjustedScore=0.911885245902
-- 寄与度上位5件:
-
-| 順位 | 寄与 | source | group | factorId | anchorWorkIds | negativeReasonId | 説明対象 |
-| -: | -: | --- | --- | --- | --- | --- | --- |
-| 1 | 0.4 | baseline | overall | neutralBaseline | なし | なし | いいえ |
-| 2 | 0.06 | adjustment | narrative | pacing | なし | なし | はい |
-| 3 | 0.06 | adjustment | theme | combat | なし | なし | はい |
-| 4 | 0.02 | similarity | genre | action | fullmetal\-alchemist | なし | はい |
-| 5 | 0.02 | similarity | genre | fantasy | fullmetal\-alchemist | なし | はい |
+| 4 | 0.03 | adjustment | narrative | pacing | なし | なし | はい |
+| 5 | -0.03 | clamp | overall | adjustmentClamp | なし | なし | いいえ |
 
 ### Baseline Top 10 (10/10)
 
@@ -425,7 +424,7 @@
 - Taste 件数: 10/10
 - Baseline 件数: 10/10
 - SHRUNK グループ数: 0
-- PARTIAL グループ数: 17
+- PARTIAL グループ数: 16
 
 ## プロフィール: tactical\-mystery
 
@@ -867,7 +866,32 @@
 
 ### Taste Engine Top 10 (10/10)
 
-#### 1. こびとのシイタと狩りぐらしの森 (sheetas\-little\-big\-world)
+#### 1. テガミバチ (work\-49af41f47417b01de20e)
+
+- スコア: 0.953431283906
+- 確信度: ふつう
+- 最も近いアンカー: 葬送のフリーレン (frieren)
+- おすすめ理由:
+  - 『葬送のフリーレン』で好きだった「ファンタジー」に近い作品です。
+  - 「仲間との家族的な絆」があなたの好みに合う作品です。
+  - 「あたたかさ・癒やし」があなたの好みに合う作品です。
+- 注意点: なし
+- 根拠アンカー: 葬送のフリーレン (frieren)
+- 適用された減点: なし
+- カバレッジ警告:
+  - PARTIAL / tone / coverage=0.857142857143 / threshold=0.6 / adjustedScore=0.875
+  - SHRUNK / art / coverage=0 / threshold=0.3 / adjustedScore=0.5
+- 寄与度上位5件:
+
+| 順位 | 寄与 | source | group | factorId | anchorWorkIds | negativeReasonId | 説明対象 |
+| -: | -: | --- | --- | --- | --- | --- | --- |
+| 1 | 0.5 | baseline | overall | neutralBaseline | なし | なし | いいえ |
+| 2 | 0.075 | similarity | genre | fantasy | frieren | なし | はい |
+| 3 | 0.06 | adjustment | theme | foundFamily | なし | なし | はい |
+| 4 | 0.06 | adjustment | tone | emotionalWarmth | なし | なし | はい |
+| 5 | 0.035714285714 | similarity | theme | adventure | frieren | なし | はい |
+
+#### 2. こびとのシイタと狩りぐらしの森 (sheetas\-little\-big\-world)
 
 - スコア: 0.878655286671
 - 確信度: ふつう
@@ -891,31 +915,6 @@
 | 3 | -0.06 | clamp | overall | adjustmentClamp | なし | なし | いいえ |
 | 4 | 0.0375 | similarity | genre | fantasy | frieren | なし | はい |
 | 5 | -0.0375 | similarity | genre | sliceOfLife | frieren | なし | はい |
-
-#### 2. とんがり帽子のアトリエ (witch\-hat\-atelier)
-
-- スコア: 0.800479484631
-- 確信度: ふつう
-- 最も近いアンカー: 葬送のフリーレン (frieren)
-- おすすめ理由:
-  - 『葬送のフリーレン』で好きだった「ファンタジー」に近い作品です。
-  - 「あたたかさ・癒やし」があなたの好みに合う作品です。
-  - 「やわらかい絵柄」があなたの好みに合う作品です。
-- 注意点: ただし「ものづくり」は、『葬送のフリーレン』で好きだった傾向と少し異なります。
-- 根拠アンカー: 葬送のフリーレン (frieren)
-- 適用された減点: なし
-- カバレッジ警告:
-  - PARTIAL / tone / coverage=0.857142857143 / threshold=0.6 / adjustedScore=0.959923664122
-  - PARTIAL / art / coverage=0.75 / threshold=0.3 / adjustedScore=0.751838235294
-- 寄与度上位5件:
-
-| 順位 | 寄与 | source | group | factorId | anchorWorkIds | negativeReasonId | 説明対象 |
-| -: | -: | --- | --- | --- | --- | --- | --- |
-| 1 | 0.5 | baseline | overall | neutralBaseline | なし | なし | いいえ |
-| 2 | 0.075 | similarity | genre | fantasy | frieren | なし | はい |
-| 3 | 0.06 | adjustment | tone | emotionalWarmth | なし | なし | はい |
-| 4 | 0.03 | adjustment | art | visualSoftness | なし | なし | はい |
-| 5 | 0.03 | adjustment | theme | foundFamily | なし | なし | はい |
 
 #### 3. 夏目友人帳 (natsumes\-book\-of\-friends)
 
@@ -1262,11 +1261,11 @@
 | 4 | 0.16 | genre | genre | fantasy | dungeon\-meshi | なし | はい |
 | 5 | 0.1 | maturity | overall | maturity | なし | なし | はい |
 
-#### 10. アンデッドアンラック (work\-53fb816835ab36e40a1f)
+#### 10. それでも町は廻っている (work\-1a6ad6771865b43c8516)
 
 - スコア: 0.84207755102
-- 最も近いアンカー: 鋼の錬金術師 (fullmetal\-alchemist)
-- 理由: 『鋼の錬金術師』と「アクション」が共通しています。
+- 最も近いアンカー: よつばと！ (yotsuba\-to)
+- 理由: 『よつばと！』と「ギャグ・コメディ」が共通しています。
 - ベイズ補正レビュー: 4.367959183673
 - 刊行蓄積度: 1
 - 寄与度上位5件:
@@ -1274,13 +1273,13 @@
 | 順位 | 寄与 | source | group | factorId | anchorWorkIds | negativeReasonId | 説明対象 |
 | -: | -: | --- | --- | --- | --- | --- | --- |
 | 1 | 0.26207755102 | market | overall | bayesianRating | なし | なし | いいえ |
-| 2 | 0.24 | genre | genre | action | fullmetal\-alchemist | なし | はい |
-| 3 | 0.24 | genre | genre | fantasy | fullmetal\-alchemist | なし | はい |
+| 2 | 0.24 | genre | genre | comedy | yotsuba\-to | なし | はい |
+| 3 | 0.24 | genre | genre | sliceOfLife | yotsuba\-to | なし | はい |
 | 4 | 0.1 | maturity | overall | maturity | なし | なし | はい |
 
 ### 診断サマリー
 
 - Taste 件数: 10/10
 - Baseline 件数: 10/10
-- SHRUNK グループ数: 0
-- PARTIAL グループ数: 19
+- SHRUNK グループ数: 1
+- PARTIAL グループ数: 18

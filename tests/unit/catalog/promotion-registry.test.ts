@@ -221,7 +221,7 @@ describe("promotion registry", () => {
       ),
     ).not.toThrow();
 
-    const draftButBlocked = buildPromotionRegistry({
+    const annotatedButBlocked = buildPromotionRegistry({
       ...input,
       source: {
         ...input.source,
@@ -244,9 +244,9 @@ describe("promotion registry", () => {
         },
       ],
     }).find((row) => row.workId === nonGold.workId)!;
-    expect(draftButBlocked).toMatchObject({
+    expect(annotatedButBlocked).toMatchObject({
       currentStatus: "libraryOnly",
-      annotationStatus: "draft",
+      annotationStatus: nonGold.annotationStatus,
       promotionOutcome: "promotionBlocked",
       blockerCode: "SOURCE_INFORMATION_UNAVAILABLE",
     });
