@@ -161,9 +161,10 @@ Library-only 작품      → 서지와 Work 연결만 유지 (팩터 불요)
 
 ### 자동 제안의 한계
 
-- LLM·모델의 용도는 **오프라인 초벌 제안만**: 공식 소개문에서 Theme 후보 생성, Narrative/Tone 초안, 태그 누락 후보 탐지, 충돌 데이터 표시.
+- LLM·모델의 용도는 **격리된 오프라인 candidate 생성만**: 공식 소개문에서 Theme 후보 생성, Narrative/Tone 초안, 태그 누락 후보 탐지, 충돌 데이터 표시.
 - 금지: 런타임 후보 생성, 최종 순위 결정, 근거 없는 특성 생성, 미확인 작품 설명 생성.
-- 자동 제안은 사람이 승인하기 전까지 `reviewedByHuman = false`이며 추천에 그대로 쓰지 않는다.
+- candidate는 모델·응답 수·일치 여부와 무관하게 Catalog 사실이나 판정 권한이 아니며 `09`의 candidate-independent 비모델 resolution 없이는 추천에 쓰지 않는다.
+- 기존 `authorizedModelPanel` 행은 legacy provenance로 동결하며 신규 주석의 일반 승인 경로로 재사용하지 않는다.
 
 ### 자기 취향 편향 방지
 

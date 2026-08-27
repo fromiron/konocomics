@@ -24,6 +24,7 @@ import {
   validateArtEvidence,
 } from "./catalog/art-evidence";
 import { loadCatalogSource, parseCsvContent } from "./catalog/load-source";
+import { assertLegacyModelWriteMode } from "./catalog/candidate-quarantine";
 import { runCatalogPipeline } from "./catalog/pipeline";
 import { formatSourceIssue } from "./catalog/report";
 import {
@@ -887,6 +888,7 @@ export function preparePilotPromotion(root = process.cwd()): PreparedPromotion {
 }
 
 export function runPilotPromotion(mode: "check" | "write", root = process.cwd()) {
+  assertLegacyModelWriteMode(mode);
   const canonicalRoot = resolve(root);
   const prepared = preparePilotPromotion(canonicalRoot);
   const backupRoot = join(prepared.temporaryRoot, "backups");

@@ -39,6 +39,7 @@
 10. 데이터가 부족한 작품을 높은 확신으로 추천하지 않는다.
 11. MVP 투자는 인프라가 아니라 Catalog와 추천 정확도에 집중한다.
 12. 확신도(Confidence)는 확률 숫자가 아니라 단계 레이블로 표시한다.
+13. 오프라인 모델 출력도 격리된 candidate일 뿐 Catalog 사실·판정의 권한이 아니다. 동일 source와 동일 비모델 권한 입력은 모델과 무관하게 동일 결과를 낸다.
 
 ---
 
@@ -65,7 +66,7 @@
 - 우선 장르: 액션·판타지·역사·SF·미스터리 / 인접: 코미디·무술·호러·일상·로맨스·스포츠
 - 규모: sanity check는 동결된 정확히 50개의 서로 다른 `recommendationEligible` Work → 블라인드 테스트·공개 MVP의 Gold Set 150 (Anchor 30~40 / Bridge 30~40 / Discovery 70+) → 비성인 일본 만화 총 1,000작품 이상으로 확장. 1,000은 최소값이며 상한은 두지 않는다.
 - 역할 분리: `onboardingEligible` / `recommendationEligible` / `libraryOnly`
-- 기존 Gold Set 150작품은 ID·주석·추천 계약을 동결한다. 확장 작품은 안전·canonical identity·선정 provenance·대표 ISBN을 검증해 `libraryOnly`로 먼저 수용할 수 있으며, 17축을 명시적 `unknown`으로 두고 사람 또는 승인된 주석 게이트 전에는 온보딩·DNA·추천 산식에 사용하지 않는다.
+- 기존 Gold Set 150작품은 ID·주석·추천 계약을 동결한다. 확장 작품은 안전·canonical identity·선정 provenance·대표 ISBN을 검증해 `libraryOnly`로 먼저 수용할 수 있으며, 17축을 명시적 `unknown`으로 둔다. 신규 주석은 `09`의 candidate-independent 비모델 resolution 전에는 온보딩·DNA·추천 산식에 사용하지 않으며, 기존 `authorizedModelPanel`은 legacy provenance로만 보존한다.
 - 외부 API가 제공하지 않는 원산지 국적과 원작 레이아웃 형식은 추론하지 않고 staging에서 `unknown`으로 유지한다. 별도 공식 근거로 세로 스크롤 우선 작품임이 확인된 경우에만 `excluded-webtoon`으로 제외한다.
 - Anchor는 취향 판독기 역할(대비 축 커버)이어야 하며 단순 인기작 나열이 아니다.
 

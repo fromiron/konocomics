@@ -13,6 +13,7 @@
     "catalog:normalize": "tsx scripts/normalize-works.ts",
     "catalog:validate": "tsx scripts/validate-catalog.ts",
     "catalog:build": "tsx scripts/build-catalog.ts",
+    "catalog:shadow": "node --import tsx scripts/catalog-shadow.mjs",
     "catalog:expansion:validate": "tsx scripts/validate-catalog-expansion.ts",
     "catalog:expansion:import-dc": "tsx scripts/import-dc-monthly-comics-sheet.ts",
     "catalog:expansion:import-dc-2013": "tsx scripts/import-dc-manga-gallery-list-2013.ts",

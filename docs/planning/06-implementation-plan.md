@@ -1,6 +1,6 @@
 # 06 — 구현 계획 (Implementation Plan)
 
-> 수직 슬라이스 단위. 각 단계는 검증 가능한 동작을 만든다. Slice 0~11은 완료된 Next.js baseline의 provenance이며, 현재 작업 순서는 아래 M0~M10이다.
+> 수직 슬라이스 단위. 각 단계는 검증 가능한 동작을 만든다. Slice 0~11은 완료된 Next.js baseline의 provenance다. 현재는 Catalog authoring S0~S5를 먼저 진행하고 S6에서 별도 승인을 기다리며, framework 작업은 아래 M0~M10 순서를 유지한다.
 
 ## 현재 프로그램 — TanStack Start migration + dark-only redesign
 
@@ -37,6 +37,22 @@ Stage E  시그니처 폴리시                  (슬라이스 11 완료, 12 폐
 ```
 
 기존 계획과의 차이: Spreadsheet 수식 검증 제거(엔진을 처음부터 TS로, `01` R12), 블라인드 하니스 신설, 7단계→5단계.
+
+## 현재 선행 작업 — Catalog authoring authority (S0~S6)
+
+상세 권한과 digest 계약은 `09-catalog-authoring-authority.md`가 단일 진실 원천이다.
+
+| 단계 | 최소 범위 | Gate |
+|---|---|---|
+| **S0** | 권한·legacy·digest·rollback 문서 정렬 | 계약 모순 없음 |
+| **S1** | Node 24 임시 SQLite import/export shadow | source/generated/promotion exact parity |
+| **S2** | 기존 판정 분기를 하나의 순수 커널로 이동 | 같은 입력의 byte-identical decision |
+| **S3** | 모델 candidate quarantine | candidate 변형·삭제에도 decision 불변 |
+| **S4** | cutoff-bound `legacySnapshot` resolution bootstrap | 기존 값·`authorizedModelPanel` provenance·human-not-run 무변경 |
+| **S5** | shadow judgment end-to-end | 현행 판정과 exact parity |
+| **S6** | authoring source-of-truth 전환 | **별도 사용자 승인 필요** |
+
+S0~S5 동안 `data/source/`만 쓰기 권한을 가진다. S6은 구현 연속 단계가 아니라 권한 전환점이므로 자동으로 진입하지 않는다.
 
 ---
 
@@ -206,4 +222,4 @@ Stage E  시그니처 폴리시                  (슬라이스 11 완료, 12 폐
 
 ## 임계 경로 주의
 
-G1/G2와 Slice 0~11은 완료된 baseline provenance다. 현재 임계 경로는 M1~M6의 기능 parity 뒤 M7~M8 디자인 적용이며, recommendation fixture와 Gold Set 150작품의 ID·주석·추천 계약을 바꾸지 않는다. 전체 Catalog identity는 검증된 `libraryOnly` 작품 추가에 따라 확장될 수 있다.
+G1/G2와 Slice 0~11은 완료된 baseline provenance다. 현재 임계 경로는 S0→S5 shadow parity→S6 별도 승인 대기다. 이후 framework 경로는 M1~M6의 기능 parity 뒤 M7~M8 디자인 적용이며, recommendation fixture와 Gold Set 150작품의 ID·주석·추천 계약을 바꾸지 않는다. 전체 Catalog identity는 검증된 `libraryOnly` 작품 추가에 따라 확장될 수 있다.

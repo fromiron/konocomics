@@ -197,3 +197,46 @@ E2E 내 기본 조작성 스모크: 시나리오 1을 키보드만으로 완주�
 
 - 크로스 브라우저 전수 매트릭스(Firefox는 스모크 수동 1회만), 시각 회귀 스냅샷 인프라, 부하 테스트, 엔진 property-based testing(골든+계약 테스트로 충분).
 - 하니스(`harness/`)에서 제외하는 자동화는 **UI Playwright E2E와 visual regression뿐**이다. §4의 순수 G2 schema/holdout/slot/overlap/leakage/metric/tie/null/canonical JSON 테스트와 aggregator 경계·변조 거부·CLI·골든 테스트는 필수이며 제외 대상이 아니다.
+
+## 8. Catalog authoring / SQLite shadow
+
+`09-catalog-authoring-authority.md`의 S0~S5는 기존 제품 E2E 수를 늘리지 않고 build-time 계약 테스트로 검증한다.
+
+### S0 문서 gate
+
+- [ ] `02`와 factor dictionary가 모델 candidate를 Catalog 사실·판정 권한으로 인정하지 않는다.
+- [ ] 기존 `authorizedModelPanel` 1,481행, evidence provenance, Gold 150, G2 human-not-run 경계가 legacy snapshot으로 보존된다.
+- [ ] S0~S5의 source-of-truth는 `data/source/`이고 S6은 별도 사용자 승인 전 중지한다.
+
+### S1 `pnpm catalog:shadow` gate
+
+- [ ] Node 24 LTS에서 실행하고 다른 major는 source mutation 전에 실패한다. 실제 Node/SQLite/OS/architecture는 audit metadata에만 있으며 semantic digest에는 없다.
+- [ ] `data/source/` regular file을 재귀 탐색해 현재 commit의 정확한 21-path golden을 확인하고 모든 raw SHA-256·length를 기록한다.
+- [ ] 9개 CSV를 fatal UTF-8, first-header-only BOM 제거, strict malformed/header/열 수 검증, `trim=false` lexical cell, 1-based `sourceOrdinal`, audit-only physical `sourceLine`으로 import한다. 12개 opaque file은 raw BLOB으로 import한다.
+- [ ] SQLite `integrity_check`, close, read-only reopen을 통과한다.
+- [ ] 9개 CSV는 table column에서 export하고 12개 opaque file은 BLOB에서 export한다. BLOB/table mutation isolation probe를 통과한다.
+- [ ] 9개 CSV는 lexical tuple digest와 baseline HEAD canonical Git blob byte golden을 모두 통과하며 golden 실패를 semantic parity로 낮추지 않는다. 12개 opaque file은 raw BLOB byte equality를 통과한다.
+- [ ] export를 기존 loader·validator·builder·promotion registry에 다시 넣어 generated artifact bytes와 serialized registry가 기존과 같다.
+- [ ] 성공·실패 뒤 source와 tracked tree가 무변경이고 임시 DB·`-wal`·`-shm`·export가 남지 않는다.
+
+### S2 순수 판정 커널 gate
+
+- [ ] 같은 고정형 judgment input은 `currentStatus`·`promotionOutcome`·정렬·중복 제거된 reason/blocker code를 byte-identical JSON으로 반환한다. 빈·미등록 reason code와 빈 blocker code는 거부한다.
+- [ ] Gold는 complete annotation, reason 없음, blocker 없음만 허용한다. non-Gold는 blocker 우선, reason 없음이면 `recommendationVerified`, 그 외 annotation 상태에 따라 `libraryOnly|annotationDraft`/`pending`으로 결정한다.
+- [ ] registry 생성과 검증이 같은 커널을 사용하고 기존 registry CSV bytes와 Gold 150 / verified 1,291 / blocked 173 / pending 0을 보존한다. 독립 배치 기대값 검사는 커널로 대체하지 않는다.
+
+### S3 candidate 격리 gate
+
+- [ ] candidate 존재·부재·내용·순서·충돌·provider·model·attempt·confidence·citation 변화는 판정 input, manualReview, eligibility, blocker, promotion, reason/blocker code, verdict를 바꾸지 않는다.
+- [ ] candidate artifact는 `data/source/`와 비모델 resolution 입력 밖에 머물며 candidate writer는 승격·차단 판정을 기록하지 않는다.
+- [ ] strict ingest는 현재 source manifest와 Work 존재, 고정 Axis·Theme·Genre vocabulary, canonical nonempty URL citation을 검증하고 unknown·decision-authority field를 원자적으로 거부한다. insert 직후와 read-only reopen 뒤 exact candidate readback을 확인한다.
+- [ ] promotion overlay·community·pilot·batch 002~005 공유 writer와 `promoteG2Catalog`는 root I/O 전에 model-derived write를 거부하고, 동결 legacy `--check`는 유지한다.
+
+### S4 resolution·legacy gate
+
+- [ ] candidate 없는 fresh shadow와 provider·model·attempt·confidence·값·순서·충돌·citation이 다른 maximal candidate를 가진 별도 fresh shadow는 정확히 같은 33,235 resolution tuple bytes, `acceptedFactsDigest`, `resolutionSetDigest`를 만든다. candidate 변화가 다섯 resolution 상태나 accepted facts를 바꾸지 않는다.
+- [ ] resolution tuple은 explicit state와 canonical value encoding을 포함하고 고정 field 순서 JSON array→UTF-8→SHA-256 계약을 지킨다. tuple은 `JSON.stringify(tuple)`의 code-unit 순으로 정렬하고 stable fact key 중복은 거부한다. 현재 cutoff는 rejected/manualReview가 없으므로 두 digest가 같은 것도 확인한다.
+- [ ] Factor는 Work×17 Axis를 정확히 한 번씩 포함한다. `known 0`·`unknown`·`notApplicable`을 구분하고 `notApplicable`은 `motionImpact`에만 허용한다. Theme은 centrality `1|2`, Genre는 present membership만 허용하며 Theme·Genre·최종 fact key 중복을 거부한다.
+- [ ] `legacySnapshot`은 persisted source에서 첫 insert 직전 재계산한 manifest, 저장 manifest, 고정 cutoff manifest와 저장·고정 baseline commit이 모두 맞는 기존 값만 bootstrap한다. source를 유효한 다른 값으로 변조하고 metadata를 유지하면 resolution 0행 상태에서 실패한다.
+- [ ] 모든 legacy row는 고정 manifest authority, 빈 citation-set digest, `LEGACY_SNAPSHOT_CUTOFF`를 쓰며 `authorizedModelPanel`이나 human-not-run provenance를 재분류하지 않는다. 비어 있지 않은 resolution table은 교체하지 않고 실패한다.
+- [ ] close/read-only reopen 뒤 tuple·digest를 재계산하고 source export, generated artifact, promotion registry bytes와 Gold 150 / verified 1,291 / blocked 173 / pending 0을 보존한다. S4에는 judgment input/run·`judgmentInputDigest`·`decisionDigest`·source export가 없다.

@@ -26,6 +26,7 @@ import {
   themeSourceRowSchema,
   workSourceRowSchema,
 } from "./source-schema";
+import { assertLegacyModelWriteMode } from "./candidate-quarantine";
 import { PROMOTION_HARD_BLOCKERS } from "../build-promotion-registry";
 
 type CsvRow = Record<string, string>;
@@ -1141,6 +1142,7 @@ export function runPromotionOverlay(
   mode: PromotionOverlayMode,
   root = process.cwd(),
 ) {
+  assertLegacyModelWriteMode(mode);
   const canonicalRoot = resolve(root);
   const outputRoot = `${config.batchRoot}/final-overlay`;
   const result = finalOverlay(canonicalRoot, config);

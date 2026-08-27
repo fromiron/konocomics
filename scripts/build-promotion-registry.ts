@@ -16,6 +16,11 @@ import { isValidIsbn } from "../src/domain/catalog/normalize";
 import { validateArtEvidence } from "./catalog/art-evidence";
 import { loadCatalogSource } from "./catalog/load-source";
 import { runCatalogPipeline } from "./catalog/pipeline";
+import {
+  compareCodeUnit,
+  decidePromotionJudgment,
+  type PromotionReasonCode,
+} from "./catalog/promotion-judgment";
 import { formatSourceIssue } from "./catalog/report";
 import type {
   CatalogSource,
@@ -176,12 +181,8 @@ export type PromotionRegistryInput = {
   batches: readonly BatchLedgerRow[];
 };
 
-function codeUnitCompare(left: string, right: string) {
-  return left < right ? -1 : left > right ? 1 : 0;
-}
-
 function sortedUnique(values: readonly string[]) {
-  return [...new Set(values)].sort(codeUnitCompare);
+  return [...new Set(values)].sort(compareCodeUnit);
 }
 
 function groupByWork<T>(rows: readonly Located<T>[], workId: (row: T) => string) {
@@ -210,7 +211,7 @@ function latestTimestamp(values: readonly (string | undefined)[]) {
   });
   if (dated.length === 0) return "";
   const latest = dated.sort(
-    (left, right) => right.timestamp - left.timestamp || codeUnitCompare(right.value, left.value),
+    (left, right) => right.timestamp - left.timestamp || compareCodeUnit(right.value, left.value),
   )[0]!;
   return new Date(latest.timestamp).toISOString();
 }
@@ -361,6 +362,51 @@ function eligibilityStatus(
   return eligible && libraryOnly ? "conflict" : eligible ? "eligible" : "ineligible";
 }
 
+function registryReasonCodes(
+  row: Pick<
+    PromotionRegistryRow,
+    | "targetStatus"
+    | "canonicalStatus"
+    | "safetyStatus"
+    | "representativeIsbnStatus"
+    | "annotationStatus"
+    | "reviewStatus"
+    | "evidenceStatus"
+    | "recommendationContextStatus"
+    | "onboardingEligibilityStatus"
+    | "recommendationEligibilityStatus"
+    | "lastUpdatedAt"
+  > & { provenanceComplete: boolean },
+) {
+  const reasons: PromotionReasonCode[] = [];
+  const isGold = row.targetStatus === "gold";
+  if (!row.provenanceComplete) reasons.push("SOURCE_PROVENANCE_INCOMPLETE");
+  if (!isGold && row.canonicalStatus !== "verified") {
+    reasons.push("CANONICAL_IDENTITY_NOT_VERIFIED");
+  }
+  if (!isGold && row.safetyStatus !== "safe") reasons.push("SAFETY_NOT_SAFE");
+  if (row.representativeIsbnStatus !== "verified") {
+    reasons.push("REPRESENTATIVE_ISBN_NOT_VERIFIED");
+  }
+  if (row.annotationStatus === "missing") reasons.push("ANNOTATION_MISSING");
+  if (row.annotationStatus === "draft") reasons.push("ANNOTATION_INCOMPLETE");
+  if (row.reviewStatus !== "human" && row.reviewStatus !== "authorizedModelPanel") {
+    reasons.push("REVIEW_NOT_ACCEPTED");
+  }
+  if (row.evidenceStatus !== "complete") reasons.push("EVIDENCE_INCOMPLETE");
+  if (row.recommendationContextStatus !== "complete") {
+    reasons.push("RECOMMENDATION_CONTEXT_INCOMPLETE");
+  }
+  if (row.lastUpdatedAt === "") reasons.push("LAST_UPDATED_AT_MISSING");
+  if (!isGold && row.onboardingEligibilityStatus !== "eligible") {
+    reasons.push("ONBOARDING_INELIGIBLE");
+  }
+  if (row.recommendationEligibilityStatus !== "eligible") {
+    reasons.push("RECOMMENDATION_INELIGIBLE");
+  }
+  return reasons;
+}
+
 export function buildPromotionRegistry(input: PromotionRegistryInput): PromotionRegistryRow[] {
   const goldIds = new Set(input.goldWorkIds);
   const workIds = new Set(input.source.works.map((row) => row.value.id));
@@ -490,12 +536,9 @@ export function buildPromotionRegistry(input: PromotionRegistryInput): Promotion
 
     const blockers = [...(blockersByWork.get(work.id) ?? [])].sort(
       (left, right) =>
-        left.blockerCode.localeCompare(right.blockerCode) ||
-        left.blockerDetails.localeCompare(right.blockerDetails),
+        compareCodeUnit(left.blockerCode, right.blockerCode) ||
+        compareCodeUnit(left.blockerDetails, right.blockerDetails),
     );
-    if (isGold && blockers.length > 0) {
-      throw new Error(`Gold work cannot have a promotion blocker: ${work.id}`);
-    }
 
     const updatedAt = latestTimestamp([
       work.annotationReviewedAt,
@@ -505,47 +548,32 @@ export function buildPromotionRegistry(input: PromotionRegistryInput): Promotion
       ...sources.map((source) => source.retrievedAt),
       batch?.lastUpdatedAt,
     ]);
-    const gatesComplete =
-      provenanceComplete &&
-      (isGold || canonicalStatus === "verified") &&
-      (isGold || safetyStatus === "safe") &&
-      representativeIsbnStatus === "verified" &&
-      workAnnotationStatus === "complete" &&
-      (workReviewStatus === "human" || workReviewStatus === "authorizedModelPanel") &&
-      workEvidenceStatus === "complete" &&
-      recommendationContextStatus === "complete" &&
-      updatedAt !== "";
-    if (isGold && (!gatesComplete || recommendationEligibilityStatus !== "eligible")) {
-      throw new Error(`Frozen Gold work fails its promotion contract: ${work.id}`);
-    }
-
-    const promotable = blockers.length === 0 && gatesComplete;
-    const promotionEligible =
-      onboardingEligibilityStatus === "eligible" && recommendationEligibilityStatus === "eligible";
-    const currentStatus: PromotionRegistryRow["currentStatus"] = isGold
-      ? "gold"
-      : blockers.length > 0
-        ? "libraryOnly"
-        : promotable && promotionEligible
-          ? "recommendationVerified"
-          : workAnnotationStatus === "missing"
-            ? "libraryOnly"
-            : "annotationDraft";
-    const promotionOutcome: PromotionRegistryRow["promotionOutcome"] = isGold
-      ? blockers.length === 0
-        ? "gold"
-        : "promotionBlocked"
-      : blockers.length > 0
-        ? "promotionBlocked"
-        : promotable && promotionEligible
-          ? "recommendationVerified"
-          : "pending";
+    const targetStatus = isGold ? "gold" : "recommendationVerified";
+    const judgment = decidePromotionJudgment({
+      targetStatus,
+      annotationStatus: workAnnotationStatus,
+      reasonCodes: registryReasonCodes({
+        targetStatus,
+        provenanceComplete,
+        canonicalStatus,
+        safetyStatus,
+        representativeIsbnStatus,
+        annotationStatus: workAnnotationStatus,
+        reviewStatus: workReviewStatus,
+        evidenceStatus: workEvidenceStatus,
+        recommendationContextStatus,
+        onboardingEligibilityStatus,
+        recommendationEligibilityStatus,
+        lastUpdatedAt: updatedAt,
+      }),
+      blockerCodes: blockers.map((blocker) => blocker.blockerCode),
+    });
 
     return promotionRegistryRowSchema.parse({
       workId: work.id,
       canonicalTitle: work.title,
-      currentStatus,
-      targetStatus: isGold ? "gold" : "recommendationVerified",
+      currentStatus: judgment.currentStatus,
+      targetStatus,
       sourceCount: isGold ? 0 : sourceIds.length,
       sourceTypes,
       safetyStatus,
@@ -561,11 +589,11 @@ export function buildPromotionRegistry(input: PromotionRegistryInput): Promotion
       blockerCode: blockers.map((blocker) => blocker.blockerCode).join(";"),
       blockerDetails: blockers.map((blocker) => blocker.blockerDetails).join(" | "),
       lastUpdatedAt: updatedAt,
-      promotionOutcome,
+      promotionOutcome: judgment.promotionOutcome,
     });
   });
 
-  return rows.sort((left, right) => codeUnitCompare(left.workId, right.workId));
+  return rows.sort((left, right) => compareCodeUnit(left.workId, right.workId));
 }
 
 export function validatePromotionRegistry(
@@ -577,65 +605,52 @@ export function validatePromotionRegistry(
   const expectedIds = sortedUnique(expectedWorkIds);
   if (
     new Set(actualIds).size !== actualIds.length ||
-    JSON.stringify(actualIds) !== JSON.stringify([...actualIds].sort(codeUnitCompare)) ||
+    JSON.stringify(actualIds) !== JSON.stringify([...actualIds].sort(compareCodeUnit)) ||
     JSON.stringify(actualIds) !== JSON.stringify(expectedIds)
   ) {
     throw new Error("Promotion registry must cover every source work exactly once in workId order");
   }
 
   for (const row of parsed) {
-    const blocked = row.promotionOutcome === "promotionBlocked";
-    if (blocked !== (row.blockerCode !== "" && row.blockerDetails !== "")) {
-      throw new Error(`Promotion blockers and outcome disagree: ${row.workId}`);
+    if ((row.blockerCode === "") !== (row.blockerDetails === "")) {
+      throw new Error(`Promotion blocker code and details disagree: ${row.workId}`);
     }
     const blockerCodes = row.blockerCode === "" ? [] : row.blockerCode.split(";");
     if (
       new Set(blockerCodes).size !== blockerCodes.length ||
+      JSON.stringify(blockerCodes) !== JSON.stringify([...blockerCodes].sort(compareCodeUnit)) ||
       blockerCodes.some((code) => !Object.hasOwn(PROMOTION_HARD_BLOCKERS, code))
     ) {
       throw new Error(`Promotion registry has an unknown hard blocker: ${row.workId}`);
     }
-    if (row.currentStatus === "gold") {
+    if (row.targetStatus === "gold") {
       if (
-        row.targetStatus !== "gold" ||
         row.sourceCount !== 0 ||
         row.sourceTypes !== "frozen" ||
         row.safetyStatus !== "frozen" ||
         row.canonicalStatus !== "frozen" ||
-        row.plannedBatch !== "" ||
-        (!blocked && row.promotionOutcome !== "gold")
+        row.plannedBatch !== ""
       ) {
         throw new Error(`Gold registry contract is invalid: ${row.workId}`);
       }
-      continue;
     }
-    if (row.targetStatus !== "recommendationVerified") {
-      throw new Error(`Non-Gold work has an invalid target: ${row.workId}`);
-    }
-    const gatesComplete =
-      row.sourceCount > 0 &&
-      row.sourceTypes !== "" &&
-      row.safetyStatus === "safe" &&
-      row.canonicalStatus === "verified" &&
-      row.representativeIsbnStatus === "verified" &&
-      row.annotationStatus === "complete" &&
-      (row.reviewStatus === "human" || row.reviewStatus === "authorizedModelPanel") &&
-      row.evidenceStatus === "complete" &&
-      row.recommendationContextStatus === "complete" &&
-      row.lastUpdatedAt !== "";
-    if (!blocked && !gatesComplete && row.promotionOutcome !== "pending") {
-      throw new Error(`Promotion registry fails open: ${row.workId}`);
-    }
+    const judgment = decidePromotionJudgment({
+      targetStatus: row.targetStatus,
+      annotationStatus: row.annotationStatus,
+      reasonCodes: registryReasonCodes({
+        ...row,
+        provenanceComplete:
+          row.targetStatus === "gold"
+            ? row.sourceCount === 0 && row.sourceTypes === "frozen"
+            : row.sourceCount > 0 && row.sourceTypes !== "",
+      }),
+      blockerCodes,
+    });
     if (
-      row.promotionOutcome === "recommendationVerified" &&
-      (row.currentStatus !== "recommendationVerified" ||
-        row.onboardingEligibilityStatus !== "eligible" ||
-        row.recommendationEligibilityStatus !== "eligible")
+      row.currentStatus !== judgment.currentStatus ||
+      row.promotionOutcome !== judgment.promotionOutcome
     ) {
-      throw new Error(`Verified promotion status is inconsistent: ${row.workId}`);
-    }
-    if (row.promotionOutcome === "pending" && row.currentStatus === "recommendationVerified") {
-      throw new Error(`Pending promotion status is inconsistent: ${row.workId}`);
+      throw new Error(`Promotion registry judgment is inconsistent: ${row.workId}`);
     }
   }
 }

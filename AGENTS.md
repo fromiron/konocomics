@@ -7,13 +7,14 @@
 
 1. `docs/planning/02-product-spec.md` — 제품 사양·**추천 산식의 단일 진실 원천(§6)**
 2. `docs/factors/factor-dictionary.md` — **팩터 정의(17 Axis·Theme·Genre·0/2/4 기준·표시 레이블)의 단일 진실 원천**
-3. `docs/planning/08-tanstack-start-migration.md` — framework·Router·URL·SSR·server migration 계약
-4. `docs/planning/05-architecture.md` — 스택·경계·영속성·API 계약·빌드 파이프라인
-5. `docs/planning/03-ux-screen-contracts.md` — 화면별 구현 계약·수용 기준
-6. `docs/planning/04-visual-interaction-spec.md` — dark token·모션·시그니처 모먼트
-7. `docs/planning/redesign/` — 확정 7화면의 구도·밀도·페이지별 구현 번들
-8. `docs/planning/06-implementation-plan.md` — 슬라이스 순서·완료 기준
-9. `docs/planning/07-acceptance-test-plan.md` — 테스트 계약
+3. `docs/planning/09-catalog-authoring-authority.md` — Catalog authoring 권한·SQLite shadow·판정 결정론 계약
+4. `docs/planning/08-tanstack-start-migration.md` — framework·Router·URL·SSR·server migration 계약
+5. `docs/planning/05-architecture.md` — 스택·경계·영속성·API 계약·빌드 파이프라인
+6. `docs/planning/03-ux-screen-contracts.md` — 화면별 구현 계약·수용 기준
+7. `docs/planning/04-visual-interaction-spec.md` — dark token·모션·시그니처 모먼트
+8. `docs/planning/redesign/` — 확정 7화면의 구도·밀도·페이지별 구현 번들
+9. `docs/planning/06-implementation-plan.md` — 슬라이스 순서·완료 기준
+10. `docs/planning/07-acceptance-test-plan.md` — 테스트 계약
 
 `docs/planning/00-plan-audit.md`·`01-decision-ledger.md`는 **이력 기록**(폐기된 초안 대비 무엇이 왜 달라졌는지)이다. 결정의 이유가 궁금할 때만 참조하고, 사양으로 읽지 마라.
 
@@ -22,8 +23,8 @@
 - **결정론:** `src/domain/**`은 순수 함수만. React/Dexie/TanStack/`Date.now()`/난수/I-O import 금지(ESLint로 강제). 시간은 인자로 주입. 동일 입력 → 동일 출력.
 - **설명은 근거에서만:** 추천 이유 문장은 엔진이 반환한 `contributions[]`에서만 생성한다. 임의 문구·하드코딩 설명 금지.
 - **데이터 없음 ≠ 불호:** `unknown` 팩터는 유사도·감점·보정 어디에도 수치로 쓰지 않는다. Coverage 미달 그룹은 0.5로 수축만 하고 **가중치를 다른 그룹에 재분배하지 않는다.**
-- **런타임 LLM 금지.** 추천·순위·설명 생성에 LLM API를 호출하지 않는다.
-- **서버 경계:** 서버 코드는 TanStack Start server route의 `/api/rakuten/search`·`/api/rakuten/item` 둘뿐. 임의 server function·새 server route·database·auth·runtime LLM 추가 금지. `08` §3의 route별 SSR/client 경계를 따른다.
+- **LLM 권한 금지.** 런타임 추천·순위·설명 생성에 LLM API를 호출하지 않는다. 오프라인 모델 출력도 `09`의 격리된 candidate일 뿐 Catalog 사실·판정의 권한이 아니다.
+- **서버 경계:** 서버 코드는 TanStack Start server route의 `/api/rakuten/search`·`/api/rakuten/item` 둘뿐. 임의 server function·새 server route·runtime database·auth·runtime LLM 추가 금지. `09`의 OS 임시 SQLite shadow는 빌드 타임에만 존재하며 `08` §3의 route별 SSR/client 경계를 바꾸지 않는다.
 - **의존성 추가 금지(허용 목록 외):** TanStack Start/Router, Vite/React plugin/Nitro, react, tailwindcss v4, shadcn Base UI 계열, motion, zod, dexie(+react-hooks), fuse.js, tsx, csv-parse, vitest, @testing-library/*, playwright. 그 외가 필요하면 **추가하지 말고 사유를 남기고 사용자에게 물어라.** React Bits·NumberFlow·Embla·Swiper·AutoAnimate·GSAP·TanStack Query·Zustand·next-themes는 추가하지 않는다. 별도 G2 harness의 동결된 Next dependency는 제품 M9와 격리한다.
 - **UI primitive:** shadcn CLI의 Base UI 기반 primitive를 필요한 것만 `src/components/ui/**`에 생성하고, 시맨틱 dark token과 접근성 기본값은 `src/components/design-system/**` wrapper에서 적용한다. route/feature가 생성 primitive를 직접 소비하지 않는다.
 - **dark-only:** theme selector와 light token을 만들지 않는다. 확정 primary는 `oklch(0.7525 0.1382 236.09)`이며 accent 위 텍스트는 어두운 `--on-accent`를 쓴다.
@@ -33,6 +34,7 @@
 
 ## 2. 작업 절차
 
+- Catalog authoring은 `09`의 **S0~S6 순서**를 따른다. S0~S5는 `data/source/` 권한을 유지하는 shadow 작업이고, S6 권한 전환은 별도 사용자 승인 전에는 시작하지 않는다.
 - `06-implementation-plan.md`의 **M0~M10 순서를 따르고, 한 단계의 완료 기준을 끝낸 뒤 다음으로 넘어간다.** framework migration과 7화면 redesign을 하나의 대형 PR로 합치지 않는다.
 - **게이트 G1(50작품 sanity)·G2(블라인드 GO/NO-GO)는 사람·데이터 작업이다.** 게이트 도달 시 멈추고 사용자에게 보고한다. G2 통과 전에 UI 슬라이스(5~)를 시작하지 않는다.
 - Model-panel evidence 검토에서 Local/Gemini/Grok CLI에는 ZIP이 아니라 canonical uncompressed directory와 exact request·complete payload ledger·root identity를 제공한다. ChatGPT.com GPT-5.6 Pro Oracle에만 같은 payload의 deterministic ZIP을 제공한다.
@@ -72,6 +74,6 @@ pnpm --silent experiment:baseline # Taste vs Baseline CLI 비교 리포트(stdou
 - 사람 블라인드 검증은 실행하지 않았다. `humanValidation: "not-run"`, human metrics `null`, synthetic pilot human `0` / pilot `1` / verdict `INCOMPLETE` 경계를 유지한다.
 - 슬라이스 5(앱 셸·토큰·온보딩), 6(`/taste`), 7(`/recommendations`), 8(Rakuten 프록시·Catalog 작품 상세), 9(`/library`·external 작품), 10(`/settings`·Export/Import·전체 삭제·정적 랜딩)을 완료했다. 데스크톱·390×844 Playwright에서 키보드 온보딩→DNA→추천, 정책 저장·피드백 백필, Catalog/external Library 영속성, provider 장애, canonical external URL과 동시 편집 ISBN 보존, seven-store Export→삭제→Import와 손상·Catalog mismatch·pre-profile draft 분기를 검증했다.
 - Catalog 상세은 현재 모든 bundled ID를 prerender하고 unknown ID는 닫으며, external은 고정 정적 셸 `/works/external?workId=<ExternalWorkId>`에서만 client lookup한다. 기존 150작품은 추천 Gold Set으로 동결하고, 검증된 확장 작품은 주석 게이트 전까지 `libraryOnly`로만 수용한다. external v1 ID/key는 immutable이며 Export/Import 호환을 유지한다.
-- 슬라이스 11까지의 Next.js 제품이 migration baseline이다. 다음 구현 작업은 `08`의 M0~M10 TanStack Start migration과 dark-only 7화면 redesign이며, 추천/Dexie/Rakuten 계약은 동결한다.
+- 슬라이스 11까지의 Next.js 제품이 migration baseline이다. 현재 선행 작업은 `09`의 Catalog authoring S0~S5이고 S6에서 멈춘다. 이후 `08`의 M0~M10 TanStack Start migration과 dark-only 7화면 redesign을 진행하며, 추천/Dexie/Rakuten 계약은 동결한다.
 - 향후 릴리스 대상은 Vercel로 확정됐지만 현재 배포 권한은 열지 않았다. GitHub의 현재 Slice 5~11 commit·PR·`main` merge만 2026-08-16 사용자 승인 범위이며, Vercel Project 연결·Preview·Production은 별도 승인 작업이다. 로컬 build/Playwright나 GitHub merge를 배포 증거로 간주하지 않는다.
 - 미해결 사용자 소유 항목: 상표·도메인 확인, 라쿠텐 App ID 발급, 향후 사람 블라인드 테스트 참가자 모집.

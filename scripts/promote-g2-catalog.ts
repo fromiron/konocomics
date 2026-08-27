@@ -16,6 +16,7 @@ import { parse } from "csv-parse/sync";
 import { z } from "zod";
 
 import { runCatalogPipeline } from "./catalog/pipeline";
+import { rejectModelDerivedAuthoringWrite } from "./catalog/candidate-quarantine";
 import { formatSourceIssue } from "./catalog/report";
 
 const TARGET_IDS_SHA256 = "7904dc8f869cb9a116ea25b05c888a7c3ec4f60a720a45e3fbd7e04ae3e59841";
@@ -491,6 +492,7 @@ function assertNoPipelineErrors(sourceDirectory: string) {
 }
 
 export function promoteG2Catalog(root = process.cwd()) {
+  rejectModelDerivedAuthoringWrite();
   const stagingDirectory = join(root, "data/staging/g2");
   const baselineDirectory = join(root, "data/source");
   const candidateSourceDirectory = join(stagingDirectory, "candidate-source");

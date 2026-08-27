@@ -12,7 +12,8 @@
 - `recommendation-context.csv`: 작품별 catalog 역할·시리즈·권수와 선택적 market snapshot 값
 - `recommendation-config.csv`: catalog 전체 market 평균값(정확히 1행)
 - `evidence/evidence.csv`: 기계 검증 가능한 evidence ID·범위·출처·검수 상태
-- `evidence/*.md`: 작품별 관찰, 공식 보조 URL, 경계 판정 설명
+- `evidence/art-evidence-manifest.csv`: Art 근거 manifest
+- `evidence/seed-annotations.md`: 작품별 관찰, 공식 보조 URL, 경계 판정 설명
 - `reviews/*.md`: 사람 또는 사용자가 승인한 대체 게이트의 요청·판정 기록
 
 `works.firstPublishedYear`는 작품의 최초 정식 연재·발표 시작 연도다. 대표 단행본의 판매 연도는 `volumes.releaseDate`에만 기록하며 Work 연도로 대체하지 않는다. 공식 시작 연도를 확인하지 못하면 빈 값으로 둔다.
@@ -27,9 +28,11 @@
 
 - `unreviewed`: 주석 게이트 미통과. onboarding/recommendation eligibility를 켜면 validation 오류다.
 - `human`: 실제 사람이 검토했다. work evidence의 `reviewedByHuman=true`, 검토 시각, 보고서가 모두 필요하다.
-- `authorizedModelPanel`: 사용자가 명시적으로 허용한 대체 판정. 동일 증거를 독립 검토 경로에 제공하고 요구된 만장일치를 얻은 경우만 사용한다. 이 경우에도 `reviewedByHuman=false`를 유지한다.
+- `authorizedModelPanel`: 과거 사용자 승인 대체 판정의 legacy provenance. 기존 행은 `reviewedByHuman=false`로 보존하며 신규 주석에 사용하지 않는다.
 
 검토 완료 상태에는 `annotationReviewedAt`과 `annotationReviewReference`가 모두 필요하며, 참조 보고서가 실제로 존재하지 않으면 validation이 실패한다.
+
+신규 모델 출력은 `data/source/` 밖의 candidate이며, 모델 수·일치·confidence·citation으로 주석 사실이나 판정을 승인하지 않는다. 신규 resolution은 `docs/planning/09-catalog-authoring-authority.md`의 candidate-independent 비모델 권한만 만들 수 있다.
 
 ## G1 동결·빌드 계약
 
@@ -58,8 +61,16 @@
 - 총 작품 수 1,000은 최소값이고 상한은 없다. 외부 목록 원문 항목은 terminal membership 상태 없이 누락할 수 없다.
 - 안전·canonical identity·선정 provenance·대표 ISBN을 확인한 신규 작품은 보수적으로 `libraryOnly=true`로 승격할 수 있다. 이 단계에서는 17축을 모두 명시적 `unknown`으로 두고 Theme·추천 context를 만들지 않으며 `onboardingEligible`과 `recommendationEligible`을 모두 끈다.
 - Rakuten 응답에 없는 원산지 국적·원작 형식은 추론하지 않는다. staging에는 `unknown`으로 남기고, 별도 공식 근거로 세로형임을 확인한 항목만 제외한다. 따라서 `libraryOnly` 승격을 페이지형·일본 제작 검증 완료로 표현하지 않는다.
-- `libraryOnly` 기록은 Library 검색·상세·Export/Import에만 참여한다. 사람 또는 승인된 주석 게이트를 통과하기 전에는 프로필 수, DNA, confidence, 입력 hash의 record payload, Baseline/Taste 순위와 설명 근거에 참여하지 않는다. 다만 전체 `catalogVersion` 변경은 캐시를 한 번 무효화한다.
-- staging 원천은 CSV, 중첩된 Rakuten 응답 캐시는 JSONL로 유지한다. 현 규모에서 측정된 병목이 없어 SQLite는 도입하지 않는다.
+- `libraryOnly` 기록은 Library 검색·상세·Export/Import에만 참여한다. `09`의 candidate-independent 비모델 resolution 전에는 프로필 수, DNA, confidence, 입력 hash의 record payload, Baseline/Taste 순위와 설명 근거에 참여하지 않는다. 다만 전체 `catalogVersion` 변경은 캐시를 한 번 무효화한다.
+- staging 원천은 CSV, 중첩된 Rakuten 응답 캐시는 JSONL로 유지한다. SQLite는 Node 24의 OS 임시 디렉터리에서 import/export parity와 shadow judgment에만 사용하며 S0~S5에는 원천 권한이 없다.
+
+## Source snapshot과 shadow 경계
+
+- 모든 regular file을 재귀 탐색한다. 현재 commit은 table-backed CSV 9개와 opaque file 12개, 총 21개다. 운영 코드는 이 동적 개수를 하드코딩하지 않고 현재 golden만 exact path set을 검사한다.
+- 모든 파일의 raw bytes·SHA-256·length를 저장한다. CSV는 명시적 table column에서, Markdown은 raw BLOB에서 export한다.
+- CSV row order는 header 제외 1-based `sourceOrdinal`이 결정한다. physical `sourceLine`은 오류·감사에만 쓰며 digest나 정렬에 쓰지 않는다.
+- CSV working bytes는 audit snapshot으로 보존한다. S1의 현재-byte golden은 checkout EOL이 아니라 baseline HEAD의 canonical Git blob을 기준으로 하며 lexical tuple parity와 별도로 통과해야 한다.
+- shadow export는 sibling temp에서 기존 loader·validator·builder·promotion registry를 통과시킨다. 기존 `data/source/`를 덮어쓰지 않으며 성공·실패 모두 임시 DB와 export를 제거한다.
 
 ## 추천 context
 

@@ -1,12 +1,4 @@
-import {
-  cpSync,
-  mkdirSync,
-  mkdtempSync,
-  readFileSync,
-  rmSync,
-  statSync,
-  writeFileSync,
-} from "node:fs";
+import { cpSync, mkdirSync, mkdtempSync, readFileSync, rmSync, writeFileSync } from "node:fs";
 import { tmpdir } from "node:os";
 import { dirname, join } from "node:path";
 
@@ -149,16 +141,12 @@ describe("Pilot 001 raw CSV promotion", () => {
     );
   });
 
-  it("rejects approval drift and partial state while making exact re-apply a no-op", () => {
+  it("rejects approval drift, partial state, and legacy model-derived writes", () => {
     const root = copyPromotionFixture();
     const log = vi.spyOn(console, "log").mockImplementation(() => undefined);
     try {
       const prepared = preparePilotPromotion(root);
       expect(prepared.state).toBe("exactlyApplied");
-      const expectedResult = {
-        ...prepared.summary,
-        profileWorkCount: prepared.profileWorkCount,
-      };
       rmSync(prepared.temporaryRoot, { recursive: true, force: true });
 
       const baseline = getPilotPublishDigests(root);
@@ -173,12 +161,7 @@ describe("Pilot 001 raw CSV promotion", () => {
       ).toThrow("Live Pilot outputs changed before publish: data/source");
       rmSync(drift);
 
-      expect(runPilotPromotion("write", root)).toMatchObject(expectedResult);
-      const appliedDigests = getPilotPublishDigests(root);
-      const sourceInode = statSync(join(root, "data/source")).ino;
-      expect(runPilotPromotion("write", root)).toMatchObject(expectedResult);
-      expect(getPilotPublishDigests(root)).toEqual(appliedDigests);
-      expect(statSync(join(root, "data/source")).ino).toBe(sourceInode);
+      expect(() => runPilotPromotion("write", root)).toThrow("quarantined in S3");
 
       const worksPath = join(root, "data/source/works.csv");
       const works = readFileSync(worksPath, "utf8");

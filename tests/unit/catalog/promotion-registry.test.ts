@@ -1,3 +1,5 @@
+import { readFileSync } from "node:fs";
+
 import { parse } from "csv-parse/sync";
 import { describe, expect, it } from "vitest";
 
@@ -35,6 +37,10 @@ describe("promotion registry", () => {
     );
     const verifiedRows = rows.filter((row) => row.promotionOutcome === "recommendationVerified");
     const blockedRows = rows.filter((row) => row.promotionOutcome === "promotionBlocked");
+    expect(rows.filter((row) => row.promotionOutcome === "gold")).toHaveLength(150);
+    expect(verifiedRows).toHaveLength(1_291);
+    expect(blockedRows).toHaveLength(173);
+    expect(rows.filter((row) => row.promotionOutcome === "pending")).toHaveLength(0);
     expect(rows.filter((row) => row.promotionOutcome === "pending")).toHaveLength(
       expectedWorkIds.length - input.goldWorkIds.length - verifiedRows.length - blockedRows.length,
     );
@@ -151,9 +157,11 @@ describe("promotion registry", () => {
         safetyReviews: [...input.expansion.safetyReviews].reverse(),
       },
       goldWorkIds: [...input.goldWorkIds].reverse(),
+      blockers: [...input.blockers].reverse(),
       batches: [...input.batches].reverse(),
     });
     expect(reversed).toEqual(rows);
+    expect(serializePromotionRegistry(reversed)).toBe(serializePromotionRegistry(rows));
 
     const nonGold = rows.find((row) => row.currentStatus !== "gold")!;
     const withoutCanonical = buildPromotionRegistry({
@@ -183,7 +191,7 @@ describe("promotion registry", () => {
         ),
         expectedWorkIds,
       ),
-    ).toThrow(`Promotion registry fails open: ${withoutCanonical.workId}`);
+    ).toThrow(`Promotion registry judgment is inconsistent: ${withoutCanonical.workId}`);
 
     const verificationReady = {
       ...nonGold,
@@ -209,7 +217,7 @@ describe("promotion registry", () => {
         rows.map((row) => (row.workId === nonGold.workId ? verificationReady : row)),
         expectedWorkIds,
       ),
-    ).toThrow(`Verified promotion status is inconsistent: ${nonGold.workId}`);
+    ).toThrow(`Promotion registry judgment is inconsistent: ${nonGold.workId}`);
     expect(() =>
       validatePromotionRegistry(
         rows.map((row) =>
@@ -251,7 +259,27 @@ describe("promotion registry", () => {
       blockerCode: "SOURCE_INFORMATION_UNAVAILABLE",
     });
 
+    const gold = rows.find((row) => row.currentStatus === "gold")!;
+    expect(() =>
+      validatePromotionRegistry(
+        rows.map((row) =>
+          row.workId === gold.workId
+            ? {
+                ...gold,
+                blockerCode: "ADULT_CONTENT",
+                blockerDetails: "Forged blocked Gold row.",
+                promotionOutcome: "promotionBlocked",
+              }
+            : row,
+        ),
+        expectedWorkIds,
+      ),
+    ).toThrow("Gold promotion judgment requires complete annotation and no reason or blocker");
+
     const [headers] = parse(serializePromotionRegistry(rows)) as string[][];
     expect(headers).toEqual(PROMOTION_REGISTRY_HEADERS);
+    expect(serializePromotionRegistry(rows)).toBe(
+      readFileSync("data/staging/catalog-expansion/promotion-registry.csv", "utf8"),
+    );
   }, 15_000);
 });

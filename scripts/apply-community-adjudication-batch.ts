@@ -21,7 +21,9 @@ import {
   validatePromotionRegistry,
 } from "./build-promotion-registry";
 import { loadCatalogSource } from "./catalog/load-source";
+import { assertLegacyModelWriteMode } from "./catalog/candidate-quarantine";
 import { runCatalogPipeline } from "./catalog/pipeline";
+import { compareCodeUnit } from "./catalog/promotion-judgment";
 import { formatSourceIssue } from "./catalog/report";
 import { mergeRawCsv } from "./promote-pilot-001";
 
@@ -285,6 +287,7 @@ export function runCommunityAdjudicationBatch(
   mode: "check" | "write",
   root = process.cwd(),
 ) {
+  assertLegacyModelWriteMode(mode);
   if (!/^batch-\d{3}$/u.test(batchId)) throw new Error("Batch ID must match batch-NNN");
   const canonicalRoot = resolve(root);
   const sourceRoot = join(canonicalRoot, "data/source");
@@ -430,8 +433,8 @@ export function runCommunityAdjudicationBatch(
     )
     .sort(
       (left, right) =>
-        left.workId.localeCompare(right.workId) ||
-        left.blockerCode.localeCompare(right.blockerCode),
+        compareCodeUnit(left.workId, right.workId) ||
+        compareCodeUnit(left.blockerCode, right.blockerCode),
     );
   const blockersContent = serialize(PROMOTION_BLOCKER_HEADERS, blockers as unknown as CsvRow[]);
 
