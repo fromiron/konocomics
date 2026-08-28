@@ -1,6 +1,5 @@
 import assert from "node:assert/strict";
 import { execFileSync } from "node:child_process";
-import { createHash } from "node:crypto";
 import {
   cpSync,
   existsSync,
@@ -16,8 +15,6 @@ import { arch, platform, tmpdir } from "node:os";
 import { dirname, isAbsolute, join, relative, resolve } from "node:path";
 import { DatabaseSync } from "node:sqlite";
 import { fileURLToPath, pathToFileURL } from "node:url";
-
-import { parse } from "csv-parse/sync";
 
 import { buildCatalog } from "./build-catalog.ts";
 import {
@@ -40,6 +37,18 @@ import {
 } from "./catalog/fact-resolution.ts";
 import { loadCatalogSource } from "./catalog/load-source.ts";
 import {
+  assertNode24,
+  CATALOG_CUTOVER_SOURCE_COMMIT,
+  CATALOG_OPAQUE_PATHS,
+  CATALOG_TABLES,
+  compareText,
+  lexicalTupleDigest,
+  parseLexicalCsv,
+  serializeCsv,
+  sha256,
+  sourceManifestDigest,
+} from "./catalog/authority.ts";
+import {
   PROMOTION_REASON_CODES,
   promotionDecisionDigest,
   promotionJudgmentInputDigest,
@@ -53,146 +62,14 @@ import {
 
 export const BASELINE_COMMIT = LEGACY_CUTOFF_BASELINE_COMMIT;
 
-export const TABLES = [
-  {
-    path: "works.csv",
-    table: "source_works",
-    expectedRows: 1614,
-    headers: [
-      "id",
-      "title",
-      "titleKana",
-      "creators",
-      "publisher",
-      "demographic",
-      "status",
-      "firstPublishedYear",
-      "genres",
-      "factorScope",
-      "onboardingEligible",
-      "recommendationEligible",
-      "libraryOnly",
-      "metadataConfidence",
-      "groupingConfidence",
-      "sourceAgreement",
-      "annotationReviewMethod",
-      "annotationReviewedAt",
-      "annotationReviewReference",
-      "evidenceId",
-    ],
-  },
-  {
-    path: "aliases.csv",
-    table: "source_aliases",
-    expectedRows: 178,
-    headers: ["workId", "alias"],
-  },
-  {
-    path: "volumes.csv",
-    table: "source_volumes",
-    expectedRows: 1618,
-    headers: [
-      "id",
-      "workId",
-      "volumeNumber",
-      "isbn",
-      "releaseDate",
-      "editionKind",
-      "isRepresentative",
-      "evidenceId",
-    ],
-  },
-  {
-    path: "factors.csv",
-    table: "source_factors",
-    expectedRows: 27438,
-    headers: ["workId", "axisId", "state", "value", "confidence", "evidenceId"],
-  },
-  {
-    path: "themes.csv",
-    table: "source_themes",
-    expectedRows: 2565,
-    headers: ["workId", "themeId", "centrality", "confidence", "evidenceId"],
-  },
-  {
-    path: "recommendation-context.csv",
-    table: "source_recommendation_context",
-    expectedRows: 1481,
-    headers: [
-      "workId",
-      "catalogRole",
-      "seriesGroupId",
-      "volumeCount",
-      "reviewAverage",
-      "reviewCount",
-    ],
-  },
-  {
-    path: "recommendation-config.csv",
-    table: "source_recommendation_config",
-    expectedRows: 1,
-    headers: ["catalogAverageRating"],
-  },
-  {
-    path: "evidence/evidence.csv",
-    table: "source_evidence",
-    expectedRows: 2458,
-    headers: [
-      "id",
-      "workId",
-      "targetType",
-      "targetId",
-      "sourceType",
-      "sourceUrl",
-      "fetchedAt",
-      "extractorVersion",
-      "reviewedByHuman",
-      "confidence",
-      "notes",
-    ],
-  },
-  {
-    path: "evidence/art-evidence-manifest.csv",
-    table: "source_art_evidence_manifest",
-    expectedRows: 1060,
-    headers: [
-      "workId",
-      "axisId",
-      "state",
-      "value",
-      "confidence",
-      "authorityClass",
-      "sourceType",
-      "sourceUrl",
-      "edition",
-      "scopeMapping",
-      "pageOrTimeRefs",
-      "sampleCount",
-      "contexts",
-      "observation",
-      "limitation",
-      "reviewStatus",
-    ],
-  },
-];
-
-const OPAQUE_PATHS = [
-  "README.md",
-  "evidence/seed-annotations.md",
-  "reviews/batch-002-promotion-panel.md",
-  "reviews/batch-003-promotion-panel.md",
-  "reviews/batch-004-promotion-panel.md",
-  "reviews/batch-005-promotion-panel.md",
-  "reviews/community-promotion-v4.md",
-  "reviews/g1-sanity-panel.md",
-  "reviews/g2-catalog-annotation-panel.md",
-  "reviews/pilot-001-promotion-panel.md",
-  "reviews/slice1-seed-panel-request.md",
-  "reviews/slice1-seed-panel.md",
-];
+export const TABLES = CATALOG_TABLES;
+const OPAQUE_PATHS = CATALOG_OPAQUE_PATHS;
 
 const EXPECTED_PATHS = [...TABLES.map((table) => table.path), ...OPAQUE_PATHS].sort(compareText);
-const SCHEMA_PATH = fileURLToPath(new URL("./sql/catalog-shadow/001-init.sql", import.meta.url));
+const SCHEMA_PATHS = [
+  fileURLToPath(new URL("./sql/catalog-authority/001-init.sql", import.meta.url)),
+  fileURLToPath(new URL("./sql/catalog-shadow/002-proof.sql", import.meta.url)),
+];
 const LEGACY_REGISTRY_EVIDENCE_DIGEST =
   "e2aed5340ea7e71d849fad767637a592906999e4e23ef1927129a0785de73bbe";
 const LEGACY_REGISTRY_EVIDENCE = [
@@ -216,14 +93,6 @@ const S5_IDENTITY_DIGESTS = {
   contextMarket: "4cd5d10d3ed0f6c5374b55215d2419b8081cbe9c1d2450fab46fa58a61207732",
   goldManifest: "eee9030933949bd92fbb48d0a94610ed933d2aaa76d620b86fec6c4a44b18fe2",
 };
-
-export function compareText(left, right) {
-  return left < right ? -1 : left > right ? 1 : 0;
-}
-
-export function sha256(value) {
-  return createHash("sha256").update(value).digest("hex");
-}
 
 function jsonDigest(value) {
   return sha256(Buffer.from(JSON.stringify(value), "utf8"));
@@ -307,100 +176,14 @@ function engineManifest(repoRoot) {
   return { digest: jsonDigest(entries), entries };
 }
 
-export function assertNode24(version = process.version) {
-  const major = Number.parseInt(version.replace(/^v/u, "").split(".", 1)[0] ?? "", 10);
-  if (major !== 24) {
-    throw new Error(`catalog:shadow requires Node 24 LTS; received ${version}`);
-  }
-}
-
-function normalizeCell(value) {
-  return value.replace(/\r\n?/gu, "\n");
-}
-
-export function parseLexicalCsv(path, bytes, expectedHeaders) {
-  let text;
-  try {
-    text = new TextDecoder("utf-8", { fatal: true }).decode(bytes);
-  } catch (error) {
-    throw new Error(`${path}: invalid UTF-8`, { cause: error });
-  }
-
-  let records;
-  try {
-    records = parse(text, {
-      bom: false,
-      columns: false,
-      info: true,
-      relax_column_count: false,
-      skip_empty_lines: true,
-      trim: false,
-    });
-  } catch (error) {
-    throw new Error(`${path}: malformed CSV: ${error instanceof Error ? error.message : error}`, {
-      cause: error,
-    });
-  }
-  if (records.length === 0) throw new Error(`${path}: missing header`);
-
-  const headers = records[0].record.map(normalizeCell);
-  if (headers.some((header) => header === "")) throw new Error(`${path}: empty header`);
-  if (new Set(headers).size !== headers.length) throw new Error(`${path}: duplicate header`);
-  if (JSON.stringify(headers) !== JSON.stringify(expectedHeaders)) {
-    throw new Error(`${path}: header mismatch`);
-  }
-
-  const rows = records.slice(1).map((entry, index) => {
-    if (entry.record.length !== headers.length) {
-      throw new Error(`${path}:${entry.info.lines}: column count mismatch`);
-    }
-    return {
-      sourceOrdinal: index + 1,
-      sourceLine: entry.info.lines,
-      values: entry.record.map(normalizeCell),
-    };
-  });
-  return { path, headers, rows };
-}
-
-function csvCell(value) {
-  return /[",\r\n]/u.test(value) ? `"${value.replaceAll('"', '""')}"` : value;
-}
-
-export function serializeCsv(parsed) {
-  const lines = [
-    parsed.headers.map(csvCell).join(","),
-    ...parsed.rows.map((row) => row.values.map(csvCell).join(",")),
-  ];
-  return Buffer.from(`${lines.join("\n")}\n`, "utf8");
-}
-
-export function lexicalTupleDigest(parsed) {
-  const tuples = parsed.rows.flatMap((row) =>
-    parsed.headers.map((header, index) => [
-      parsed.path,
-      row.sourceOrdinal,
-      header,
-      row.values[index],
-    ]),
-  );
-  tuples.sort((left, right) => compareText(JSON.stringify(left), JSON.stringify(right)));
-  return jsonDigest(tuples);
-}
-
-export function sourceManifestDigest(parsedTables, opaqueFiles) {
-  const entries = [
-    ...parsedTables.map((parsed) => [
-      parsed.path,
-      "tableCsv",
-      parsed.headers,
-      lexicalTupleDigest(parsed),
-    ]),
-    ...opaqueFiles.map((file) => [file.path, "opaqueFile", file.rawSha256, file.byteLength]),
-  ];
-  entries.sort((left, right) => compareText(JSON.stringify(left), JSON.stringify(right)));
-  return jsonDigest(entries);
-}
+export {
+  assertNode24,
+  lexicalTupleDigest,
+  parseLexicalCsv,
+  serializeCsv,
+  sha256,
+  sourceManifestDigest,
+};
 
 function discoverSourceFiles(sourceRoot) {
   const rootStat = lstatSync(sourceRoot);
@@ -1019,7 +802,7 @@ function buildQuietly(root) {
   const originalLog = console.log;
   console.log = () => undefined;
   try {
-    return buildCatalog(root);
+    return buildCatalog(root, "csv");
   } finally {
     console.log = originalLog;
   }
@@ -1046,8 +829,8 @@ function compareBuildArtifacts(repoRoot, originalRoot, exportedRoot, originalBui
   }
 }
 
-function promotionSnapshot(root) {
-  const input = loadPromotionRegistryInput(root);
+function promotionSnapshot(root, sourceKind) {
+  const input = loadPromotionRegistryInput(root, sourceKind);
   const rows = buildPromotionRegistry(input);
   validatePromotionRegistry(
     rows,
@@ -1057,8 +840,8 @@ function promotionSnapshot(root) {
 }
 
 function assertPromotionParity(repoRoot, shadowRoot) {
-  const original = promotionSnapshot(repoRoot);
-  const shadow = promotionSnapshot(shadowRoot);
+  const original = promotionSnapshot(repoRoot, "authority");
+  const shadow = promotionSnapshot(shadowRoot, "csv");
 
   assert.equal(shadow.serialized, original.serialized);
   assert.equal(
@@ -1462,10 +1245,7 @@ function assertNoJournals(databasePath) {
   }
 }
 
-export function runCatalogShadow(repoRoot = process.cwd()) {
-  assertNode24();
-  const canonicalRoot = resolve(repoRoot);
-  const sourceRoot = resolve(canonicalRoot, "data/source");
+function runCatalogShadowFromCsv(canonicalRoot, sourceRoot) {
   git(canonicalRoot, ["cat-file", "-e", `${BASELINE_COMMIT}^{commit}`]);
 
   const trackedBefore = trackedTreeSnapshot(canonicalRoot);
@@ -1510,7 +1290,7 @@ export function runCatalogShadow(repoRoot = process.cwd()) {
   let resolutionSnapshot;
   let judgmentSnapshot;
   try {
-    const schema = readFileSync(SCHEMA_PATH, "utf8");
+    const schema = SCHEMA_PATHS.map((path) => readFileSync(path, "utf8")).join("\n");
     database = new DatabaseSync(databasePath);
     database.exec("PRAGMA foreign_keys = ON; PRAGMA journal_mode = DELETE");
     assert.equal(database.prepare("PRAGMA journal_mode").get().journal_mode, "delete");
@@ -1694,6 +1474,30 @@ export function runCatalogShadow(repoRoot = process.cwd()) {
         assert(workingStatus(canonicalRoot).equals(statusBefore));
       }
     }
+  }
+}
+
+export function runCatalogShadow(repoRoot = process.cwd()) {
+  assertNode24();
+  const canonicalRoot = resolve(repoRoot);
+  const temporaryRoot = mkdtempSync(join(tmpdir(), "konocomics-cutover-source-"));
+  const sourceRoot = join(temporaryRoot, "data/source");
+  try {
+    for (const path of EXPECTED_PATHS) {
+      const output = resolve(sourceRoot, path);
+      mkdirSync(dirname(output), { recursive: true });
+      writeFileSync(
+        output,
+        execFileSync("git", ["show", `${CATALOG_CUTOVER_SOURCE_COMMIT}:data/source/${path}`], {
+          cwd: canonicalRoot,
+          maxBuffer: 64 * 1024 * 1024,
+        }),
+      );
+    }
+    return runCatalogShadowFromCsv(canonicalRoot, sourceRoot);
+  } finally {
+    rmSync(temporaryRoot, { recursive: true, force: true });
+    assert(!existsSync(temporaryRoot), "cutover source temp directory was not removed");
   }
 }
 

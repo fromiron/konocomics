@@ -26,6 +26,7 @@ import {
   artEvidenceManifestRowSchema,
   validateArtEvidence,
 } from "./catalog/art-evidence";
+import { CATALOG_DATABASE_FILE, writeCatalogCsvProjection } from "./catalog/authority";
 import { loadCatalogSource, parseCsvContent } from "./catalog/load-source";
 import { assertLegacyModelWriteMode } from "./catalog/candidate-quarantine";
 import { runCatalogPipeline } from "./catalog/pipeline";
@@ -877,12 +878,12 @@ function mergeFile(options: {
   existingRowsMayBeOverlaySubset?: boolean;
   normalizeRow?: (row: string) => string;
 }) {
-  const current = readFileSync(join(options.sourceRoot, options.sourceFile), "utf8");
+  const destination = join(options.candidateRoot, options.sourceFile);
+  const current = readFileSync(destination, "utf8");
   const overlay = readFileSync(
     join(options.candidateRoot, OVERLAY_ROOT, options.overlayFile),
     "utf8",
   );
-  const destination = join(options.candidateRoot, options.sourceFile);
   writeFileSync(
     destination,
     mergeRawCsv({
@@ -900,7 +901,13 @@ function mergeFile(options: {
 }
 
 function writeCandidate(root: string, candidateRoot: string, overlay: Overlay) {
-  cpSync(join(root, "data/source"), join(candidateRoot, "data/source"), { recursive: true });
+  const sourceDirectory = join(root, "data/source");
+  const candidateSourceDirectory = join(candidateRoot, "data/source");
+  if (existsSync(join(sourceDirectory, CATALOG_DATABASE_FILE))) {
+    writeCatalogCsvProjection(sourceDirectory, candidateSourceDirectory);
+  } else {
+    cpSync(sourceDirectory, candidateSourceDirectory, { recursive: true });
+  }
   cpSync(
     join(root, "data/staging/catalog-expansion"),
     join(candidateRoot, "data/staging/catalog-expansion"),
@@ -1001,8 +1008,12 @@ function writeCandidate(root: string, candidateRoot: string, overlay: Overlay) {
 }
 
 function assertRegistryTransition(root: string, candidateRoot: string, overlay: Overlay) {
-  const baseline = runPromotionRegistry("check", root);
-  const candidate = runPromotionRegistry("write", candidateRoot);
+  const baseline = runPromotionRegistry(
+    "check",
+    root,
+    existsSync(join(root, "data/source/catalog.sqlite")) ? "authority" : "csv",
+  );
+  const candidate = runPromotionRegistry("write", candidateRoot, "csv");
   const baselineRows = rawRowsByKey(
     join(root, "data/staging/catalog-expansion/promotion-registry.csv"),
     PROMOTION_REGISTRY_HEADERS,
@@ -1080,7 +1091,7 @@ export function prepareBatch002Promotion(root = process.cwd()): PreparedPromotio
     ) as unknown;
     validateGoldSet(candidateRoot, goldManifest);
     const summary = assertRegistryTransition(canonicalRoot, candidateRoot, overlay);
-    const built = buildCatalog(candidateRoot);
+    const built = buildCatalog(candidateRoot, "csv");
     const profile = z
       .object({ works: z.array(z.unknown()) })
       .parse(

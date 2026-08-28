@@ -28,6 +28,7 @@ import {
 } from "./source-schema";
 import { assertLegacyModelWriteMode } from "./candidate-quarantine";
 import { PROMOTION_HARD_BLOCKERS } from "../build-promotion-registry";
+import { CATALOG_DATABASE_FILE, readCatalogAuthorityRecords } from "./authority";
 
 type CsvRow = Record<string, string>;
 
@@ -505,8 +506,13 @@ function finalOverlay(root: string, config: PromotionOverlayConfig) {
 
   validateReviewLedgers(root, config);
   const bindings = inputBindings(root, config);
+  const sourceDirectory = join(root, "data/source");
   const sourceWorks = uniqueRows(
-    readCsv(join(root, "data/source/works.csv")),
+    existsSync(join(sourceDirectory, CATALOG_DATABASE_FILE))
+      ? readCatalogAuthorityRecords(sourceDirectory)
+          .get("works.csv")!
+          .map(({ record }) => record)
+      : readCsv(join(sourceDirectory, "works.csv")),
     "id",
     "Source works",
   );

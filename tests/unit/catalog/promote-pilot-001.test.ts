@@ -12,6 +12,7 @@ import {
   runPilotPromotion,
   validatePilotPanelDecision,
 } from "../../../scripts/promote-pilot-001";
+import { writeCatalogCsvProjection } from "../../../scripts/catalog/authority";
 
 const PUBLISH_PATHS = [
   "data/source",
@@ -26,7 +27,11 @@ function copyPromotionFixture() {
   for (const relativePath of PUBLISH_PATHS) {
     const destination = join(root, relativePath);
     mkdirSync(dirname(destination), { recursive: true });
-    cpSync(join(process.cwd(), relativePath), destination, { recursive: true });
+    if (relativePath === "data/source") {
+      writeCatalogCsvProjection(join(process.cwd(), relativePath), destination);
+    } else {
+      cpSync(join(process.cwd(), relativePath), destination, { recursive: true });
+    }
   }
   return root;
 }
@@ -220,5 +225,5 @@ describe("Pilot 001 raw CSV promotion", () => {
       log.mockRestore();
       rmSync(root, { recursive: true, force: true });
     }
-  }, 60_000);
+  }, 120_000);
 });

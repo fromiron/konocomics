@@ -1,6 +1,7 @@
 import { createHash } from "node:crypto";
 import {
   copyFileSync,
+  existsSync,
   mkdtempSync,
   readFileSync,
   renameSync,
@@ -26,6 +27,7 @@ import {
   type RepresentativeVolumeDecision,
 } from "./catalog/representative-volume-decisions";
 import { loadCatalogExpansion, validateCatalogExpansion } from "./validate-catalog-expansion";
+import { CATALOG_DATABASE_FILE, readCatalogAuthorityRecords } from "./catalog/authority";
 
 export {
   creatorsOverlap,
@@ -931,6 +933,10 @@ function loadCache(path: string) {
 
 function loadInputs(root: string): RakutenAdjudicationInput {
   const directory = join(root, "data/staging/catalog-expansion");
+  const sourceDirectory = join(root, "data/source");
+  const authorityRecords = existsSync(join(sourceDirectory, CATALOG_DATABASE_FILE))
+    ? readCatalogAuthorityRecords(sourceDirectory)
+    : undefined;
   const manifest = z
     .object({ workIds: z.array(idSchema).min(1) })
     .parse(JSON.parse(readFileSync(join(directory, "gold-set-manifest.json"), "utf8")) as unknown);
@@ -938,31 +944,32 @@ function loadInputs(root: string): RakutenAdjudicationInput {
   if (goldWorkIds.size !== manifest.workIds.length) {
     throw new Error("Gold Set manifest contains duplicate work IDs");
   }
-  const goldWorks = readCsv(
-    join(root, "data/source/works.csv"),
-    [
-      "id",
-      "title",
-      "titleKana",
-      "creators",
-      "publisher",
-      "demographic",
-      "status",
-      "firstPublishedYear",
-      "genres",
-      "factorScope",
-      "onboardingEligible",
-      "recommendationEligible",
-      "libraryOnly",
-      "metadataConfidence",
-      "groupingConfidence",
-      "sourceAgreement",
-      "annotationReviewMethod",
-      "annotationReviewedAt",
-      "annotationReviewReference",
-      "evidenceId",
-    ],
-    stringRecordSchema,
+  const workHeaders = [
+    "id",
+    "title",
+    "titleKana",
+    "creators",
+    "publisher",
+    "demographic",
+    "status",
+    "firstPublishedYear",
+    "genres",
+    "factorScope",
+    "onboardingEligible",
+    "recommendationEligible",
+    "libraryOnly",
+    "metadataConfidence",
+    "groupingConfidence",
+    "sourceAgreement",
+    "annotationReviewMethod",
+    "annotationReviewedAt",
+    "annotationReviewReference",
+    "evidenceId",
+  ] as const;
+  const goldWorks = (
+    authorityRecords === undefined
+      ? readCsv(join(sourceDirectory, "works.csv"), workHeaders, stringRecordSchema)
+      : authorityRecords.get("works.csv")!.map(({ record }) => stringRecordSchema.parse(record))
   )
     .filter((row) => goldWorkIds.has(row["id"] ?? ""))
     .map((row) => goldWorkSchema.parse(row));
@@ -979,10 +986,9 @@ function loadInputs(root: string): RakutenAdjudicationInput {
     ),
     cacheRecords: loadCache(join(directory, "rakuten-search-results.jsonl")),
     goldWorks,
-    goldAliases: readCsv(
-      join(root, "data/source/aliases.csv"),
-      ["workId", "alias"],
-      goldAliasSchema,
+    goldAliases: (authorityRecords === undefined
+      ? readCsv(join(sourceDirectory, "aliases.csv"), ["workId", "alias"], goldAliasSchema)
+      : authorityRecords.get("aliases.csv")!.map(({ record }) => goldAliasSchema.parse(record))
     ).filter((alias) => goldWorkIds.has(alias.workId)),
     existingCandidates: readCsv(
       join(directory, "candidates.csv"),

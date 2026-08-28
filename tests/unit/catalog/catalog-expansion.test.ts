@@ -1,10 +1,11 @@
-import { cpSync, mkdtempSync, mkdirSync, readFileSync, rmSync, writeFileSync } from "node:fs";
+import { mkdtempSync, mkdirSync, readFileSync, rmSync, writeFileSync } from "node:fs";
 import { tmpdir } from "node:os";
 import { dirname, join, resolve } from "node:path";
 
 import { afterEach, describe, expect, it } from "vitest";
 
 import { extractKonomangaRanking } from "../../../scripts/import-konomanga-rankings";
+import { writeCatalogCsvProjection } from "../../../scripts/catalog/authority";
 import {
   loadCatalogExpansion,
   validateCatalogExpansion,
@@ -23,7 +24,7 @@ function copySource() {
   temporaryRoots.push(temporaryRoot);
   const destination = join(temporaryRoot, "data/source");
   mkdirSync(dirname(destination), { recursive: true });
-  cpSync(join(root, "data/source"), destination, { recursive: true });
+  writeCatalogCsvProjection(join(root, "data/source"), destination);
   return temporaryRoot;
 }
 

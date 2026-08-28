@@ -24,6 +24,11 @@ import {
   normalizeIsbn,
 } from "../src/domain/catalog/normalize";
 import { catalogAssetFilename } from "../src/lib/catalog-asset";
+import {
+  CATALOG_DATABASE_FILE,
+  finalizeCatalogAuthorityProjection,
+  withCatalogCsvProjection,
+} from "./catalog/authority";
 import { runCatalogPipeline } from "./catalog/pipeline";
 import {
   assertRepresentativeDecisionIdentity,
@@ -896,9 +901,12 @@ function parseGoldManifest(path: string) {
   return JSON.parse(readFileSync(path, "utf8")) as unknown;
 }
 
-export function runLibraryOnlyExpansion(mode: "--check" | "--write", root = process.cwd()) {
-  const canonicalRoot = resolve(root);
-  const sourceDirectory = join(canonicalRoot, "data/source");
+function runLibraryOnlyExpansionFromSource(
+  mode: "--check" | "--write",
+  canonicalRoot: string,
+  sourceDirectory: string,
+) {
+  const canonicalSourceDirectory = join(canonicalRoot, "data/source");
   const stagingDirectory = join(canonicalRoot, "data/staging/catalog-expansion");
   const expansionValidation = runCatalogExpansionValidation(canonicalRoot);
   const expansion = loadCatalogExpansion(stagingDirectory);
@@ -930,9 +938,11 @@ export function runLibraryOnlyExpansion(mode: "--check" | "--write", root = proc
   }
 
   if (fresh.length === 0) throw new Error("No new library-only source rows need promotion");
-  const sourceDigest = directoryDigest(sourceDirectory);
+  const sourceDigest = directoryDigest(canonicalSourceDirectory);
   const stagingDigest = directoryDigest(stagingDirectory);
-  const transactionRoot = mkdtempSync(join(dirname(sourceDirectory), ".library-only-expansion-"));
+  const transactionRoot = mkdtempSync(
+    join(dirname(canonicalSourceDirectory), ".library-only-expansion-"),
+  );
   const nextSource = join(transactionRoot, "data/source");
   const backupSource = join(transactionRoot, "source-backup");
   try {
@@ -945,12 +955,17 @@ export function runLibraryOnlyExpansion(mode: "--check" | "--write", root = proc
     assertMinimumCatalogSize(pipeline.catalog.works.length);
     validateGoldSet(transactionRoot, goldManifestInput);
     if (
-      directoryDigest(sourceDirectory) !== sourceDigest ||
+      directoryDigest(canonicalSourceDirectory) !== sourceDigest ||
       directoryDigest(stagingDirectory) !== stagingDigest
     ) {
       throw new Error("Catalog source or expansion staging changed during promotion");
     }
-    publishDirectorySet([{ candidate: nextSource, output: sourceDirectory, backup: backupSource }]);
+    if (existsSync(join(canonicalSourceDirectory, CATALOG_DATABASE_FILE))) {
+      finalizeCatalogAuthorityProjection(canonicalSourceDirectory, nextSource);
+    }
+    publishDirectorySet([
+      { candidate: nextSource, output: canonicalSourceDirectory, backup: backupSource },
+    ]);
     return {
       mode,
       promotedCount: fresh.length,
@@ -964,6 +979,16 @@ export function runLibraryOnlyExpansion(mode: "--check" | "--write", root = proc
       rmSync(transactionRoot, { recursive: true, force: true });
     }
   }
+}
+
+export function runLibraryOnlyExpansion(mode: "--check" | "--write", root = process.cwd()) {
+  const canonicalRoot = resolve(root);
+  const sourceDirectory = join(canonicalRoot, "data/source");
+  return existsSync(join(sourceDirectory, CATALOG_DATABASE_FILE))
+    ? withCatalogCsvProjection(sourceDirectory, (projected) =>
+        runLibraryOnlyExpansionFromSource(mode, canonicalRoot, projected),
+      )
+    : runLibraryOnlyExpansionFromSource(mode, canonicalRoot, sourceDirectory);
 }
 
 const invokedPath = process.argv[1];

@@ -1,6 +1,6 @@
 # 06 — 구현 계획 (Implementation Plan)
 
-> 수직 슬라이스 단위. 각 단계는 검증 가능한 동작을 만든다. Slice 0~11은 완료된 Next.js baseline의 provenance다. 현재는 Catalog authoring S0~S5를 먼저 진행하고 S6에서 별도 승인을 기다리며, framework 작업은 아래 M0~M10 순서를 유지한다.
+> 수직 슬라이스 단위. 각 단계는 검증 가능한 동작을 만든다. Slice 0~11은 완료된 Next.js baseline의 provenance다. Catalog authoring S0~S6과 framework M0~M10은 완료됐으며, 아래 순서는 그 구현·검증 경계를 보존한다.
 
 ## 현재 프로그램 — TanStack Start migration + dark-only redesign
 
@@ -50,9 +50,9 @@ Stage E  시그니처 폴리시                  (슬라이스 11 완료, 12 폐
 | **S3** | 모델 candidate quarantine | candidate 변형·삭제에도 decision 불변 |
 | **S4** | cutoff-bound `legacySnapshot` resolution bootstrap | 기존 값·`authorizedModelPanel` provenance·human-not-run 무변경 |
 | **S5** | shadow judgment end-to-end | 현행 판정과 exact parity |
-| **S6** | authoring source-of-truth 전환 | **별도 사용자 승인 필요** |
+| **S6** | authoring source-of-truth 전환 | **2026-08-28 승인·완료:** tracked `catalog.sqlite`, 9 CSV 삭제, direct reader·candidate writer·rollback 검증 |
 
-S0~S5 동안 `data/source/`만 쓰기 권한을 가진다. S6은 구현 연속 단계가 아니라 권한 전환점이므로 자동으로 진입하지 않는다.
+S0~S5 동안 9개 CSV가 쓰기 권한을 가졌고 SQLite는 OS 임시 shadow였다. 별도 사용자 승인 뒤 S6에서 `data/source/catalog.sqlite`가 table-backed 단일 권한이 됐다. ongoing CI는 일반 authority/schema 검증을 수행하고, 고정 cutoff shadow와 CSV byte parity는 one-time cutover proof로 보존한다.
 
 ---
 
@@ -222,4 +222,4 @@ S0~S5 동안 `data/source/`만 쓰기 권한을 가진다. S6은 구현 연속 �
 
 ## 임계 경로 주의
 
-G1/G2와 Slice 0~11은 완료된 baseline provenance다. 현재 임계 경로는 S0→S5 shadow parity→S6 별도 승인 대기다. 이후 framework 경로는 M1~M6의 기능 parity 뒤 M7~M8 디자인 적용이며, recommendation fixture와 Gold Set 150작품의 ID·주석·추천 계약을 바꾸지 않는다. 전체 Catalog identity는 검증된 `libraryOnly` 작품 추가에 따라 확장될 수 있다.
+G1/G2, Slice 0~11, S0~S6, framework M0~M10은 완료된 provenance다. 현재 table-backed Catalog authority는 SQLite이며 recommendation fixture와 Gold Set 150작품의 ID·주석·추천 계약은 동결한다. 전체 Catalog identity는 공용 candidate 검증·원자적 publish를 통과한 `libraryOnly` 작품 추가에 따라 확장될 수 있다.

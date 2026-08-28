@@ -1,18 +1,18 @@
 # Catalog source 운영 계약
 
-`data/source/`는 공개 Catalog를 만드는 빌드 전용 원천이다. 생성 JSON은 직접 수정하지 않고 CSV와 evidence를 변경한 뒤 `catalog:validate`와 `catalog:build`로 다시 만든다.
+`data/source/`는 공개 Catalog를 만드는 빌드 전용 원천이다. S6 이후 table-backed 단일 권한은 `catalog.sqlite`이고, 생성 JSON은 직접 수정하지 않는다. DB 변경은 공용 candidate 검증·원자적 publish 경로를 사용한 뒤 `catalog:validate`와 `catalog:build`로 다시 만든다.
 
 ## 파일 역할
 
-- `works.csv`: Work 서지, eligibility, 주석 검토 provenance
-- `aliases.csv`: Work 검색 별칭
-- `volumes.csv`: Work에 속한 권과 대표권
-- `factors.csv`: 17개 Axis의 known/unknown/notApplicable 값
-- `themes.csv`: Theme 중심성 1/2
-- `recommendation-context.csv`: 작품별 catalog 역할·시리즈·권수와 선택적 market snapshot 값
-- `recommendation-config.csv`: catalog 전체 market 평균값(정확히 1행)
-- `evidence/evidence.csv`: 기계 검증 가능한 evidence ID·범위·출처·검수 상태
-- `evidence/art-evidence-manifest.csv`: Art 근거 manifest
+- `catalog.sqlite/source_works`: Work 서지, eligibility, 주석 검토 provenance
+- `catalog.sqlite/source_aliases`: Work 검색 별칭
+- `catalog.sqlite/source_volumes`: Work에 속한 권과 대표권
+- `catalog.sqlite/source_factors`: 17개 Axis의 known/unknown/notApplicable 값
+- `catalog.sqlite/source_themes`: Theme 중심성 1/2
+- `catalog.sqlite/source_recommendation_context`: 작품별 catalog 역할·시리즈·권수와 선택적 market snapshot 값
+- `catalog.sqlite/source_recommendation_config`: catalog 전체 market 평균값(정확히 1행)
+- `catalog.sqlite/source_evidence`: 기계 검증 가능한 evidence ID·범위·출처·검수 상태
+- `catalog.sqlite/source_art_evidence_manifest`: Art 근거 manifest
 - `evidence/seed-annotations.md`: 작품별 관찰, 공식 보조 URL, 경계 판정 설명
 - `reviews/*.md`: 사람 또는 사용자가 승인한 대체 게이트의 요청·판정 기록
 
@@ -62,19 +62,20 @@
 - 안전·canonical identity·선정 provenance·대표 ISBN을 확인한 신규 작품은 보수적으로 `libraryOnly=true`로 승격할 수 있다. 이 단계에서는 17축을 모두 명시적 `unknown`으로 두고 Theme·추천 context를 만들지 않으며 `onboardingEligible`과 `recommendationEligible`을 모두 끈다.
 - Rakuten 응답에 없는 원산지 국적·원작 형식은 추론하지 않는다. staging에는 `unknown`으로 남기고, 별도 공식 근거로 세로형임을 확인한 항목만 제외한다. 따라서 `libraryOnly` 승격을 페이지형·일본 제작 검증 완료로 표현하지 않는다.
 - `libraryOnly` 기록은 Library 검색·상세·Export/Import에만 참여한다. `09`의 candidate-independent 비모델 resolution 전에는 프로필 수, DNA, confidence, 입력 hash의 record payload, Baseline/Taste 순위와 설명 근거에 참여하지 않는다. 다만 전체 `catalogVersion` 변경은 캐시를 한 번 무효화한다.
-- staging 원천은 CSV, 중첩된 Rakuten 응답 캐시는 JSONL로 유지한다. SQLite는 Node 24의 OS 임시 디렉터리에서 import/export parity와 shadow judgment에만 사용하며 S0~S5에는 원천 권한이 없다.
+- `data/staging/`의 연구·배치 원천은 CSV, 중첩된 Rakuten 응답 캐시는 JSONL로 유지한다. canonical Catalog는 tracked SQLite이고, OS 임시 CSV projection/shadow는 frozen staging 도구와 one-time cutover proof에만 사용한다.
 
-## Source snapshot과 shadow 경계
+## SQLite authority와 projection 경계
 
-- 모든 regular file을 재귀 탐색한다. 현재 commit은 table-backed CSV 9개와 opaque file 12개, 총 21개다. 운영 코드는 이 동적 개수를 하드코딩하지 않고 현재 golden만 exact path set을 검사한다.
-- 모든 파일의 raw bytes·SHA-256·length를 저장한다. CSV는 명시적 table column에서, Markdown은 raw BLOB에서 export한다.
-- CSV row order는 header 제외 1-based `sourceOrdinal`이 결정한다. physical `sourceLine`은 오류·감사에만 쓰며 digest나 정렬에 쓰지 않는다.
-- CSV working bytes는 audit snapshot으로 보존한다. S1의 현재-byte golden은 checkout EOL이 아니라 baseline HEAD의 canonical Git blob을 기준으로 하며 lexical tuple parity와 별도로 통과해야 한다.
-- shadow export는 sibling temp에서 기존 loader·validator·builder·promotion registry를 통과시킨다. 기존 `data/source/`를 덮어쓰지 않으며 성공·실패 모두 임시 DB와 export를 제거한다.
+- 허용 regular file은 `catalog.sqlite` 하나와 opaque Markdown 12개, 총 13개다. 삭제된 9개 authoritative CSV나 SQLite journal sidecar가 함께 있으면 검증에 실패한다.
+- canonical DB에는 정확히 9개 `STRICT` source table만 둔다. proof/candidate/resolution/judgment table, view, trigger는 넣지 않는다.
+- row order는 1-based `sourceOrdinal`이 결정한다. `sourceLine`은 canonical CSV projection에서 record가 끝나는 physical line이며 오류·감사에만 쓰고 digest나 정렬에는 쓰지 않는다.
+- 일반 reader·validator·builder·promotion registry는 SQLite를 직접 읽는다. CSV-shaped frozen 도구만 sibling OS temp에 projection하며 기존 `data/source/`를 덮어쓰지 않고 성공·실패 모두 temp와 sidecar를 제거한다.
+- legitimate write는 현재 DB를 candidate로 복사해 한 transaction에서 변경·전체 검증하고, close/read-only exact readback 뒤에만 원자적으로 교체한다. 모델 출력 기반 writer는 I/O 전에 거부한다.
+- S0~S5의 9개 CSV byte golden과 shadow judgment는 고정 parent Git snapshot에서 실행하는 one-time cutover proof다. ongoing authority는 `pnpm catalog:authority:verify`로 schema·layout·integrity를 검증한다.
 
 ## 추천 context
 
-모든 `recommendationEligible` 작품은 `recommendation-context.csv`에 정확히 한 행이 필요하다. `seriesGroupId`, `reviewAverage`, `reviewCount`는 결측을 허용하지만 `catalogRole`과 `volumeCount`는 필수다. 리뷰 0건을 확인한 대표권은 `reviewAverage`를 비우고 `reviewCount=0`으로 기록한다. `recommendation-config.csv`의 단일 `catalogAverageRating`은 `reviewAverage`가 있고 `reviewCount>0`인 대표권만 동일 가중으로 평균한 0~5 값이어야 한다. Catalog와 이 context를 정규화한 공동 digest가 두 생성 artifact의 동일한 `catalogVersion`이 된다.
+모든 `recommendationEligible` 작품은 `source_recommendation_context`에 정확히 한 행이 필요하다. `seriesGroupId`, `reviewAverage`, `reviewCount`는 결측을 허용하지만 `catalogRole`과 `volumeCount`는 필수다. 리뷰 0건을 확인한 대표권은 `reviewAverage`를 비우고 `reviewCount=0`으로 기록한다. `source_recommendation_config`의 단일 `catalogAverageRating`은 `reviewAverage`가 있고 `reviewCount>0`인 대표권만 동일 가중으로 평균한 0~5 값이어야 한다. Catalog와 이 context를 정규화한 공동 digest가 두 생성 artifact의 동일한 `catalogVersion`이 된다.
 
 ## 그룹핑
 

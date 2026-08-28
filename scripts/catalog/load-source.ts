@@ -16,6 +16,12 @@ import {
 } from "./source-schema";
 import { ART_EVIDENCE_MANIFEST_FILE, artEvidenceManifestRowSchema } from "./art-evidence";
 import type { CatalogSource, Located, SourceIssue, SourceLoadResult } from "./types";
+import {
+  CATALOG_DATABASE_FILE,
+  CATALOG_TABLES,
+  readCatalogAuthorityRecords,
+  type AuthorityRecord,
+} from "./authority";
 
 const locatedCsvRowsSchema = z.array(
   z.strictObject({
@@ -24,37 +30,12 @@ const locatedCsvRowsSchema = z.array(
   }),
 );
 
-export function parseCsvContent<T>(
+function parseLocatedRecords<T>(
   file: string,
-  content: string,
+  records: readonly AuthorityRecord[],
   schema: z.ZodType<T>,
 ): { rows: Located<T>[]; issues: SourceIssue[] } {
-  let parsed: unknown;
-  try {
-    parsed = parse(content, {
-      bom: true,
-      columns: true,
-      skip_empty_lines: true,
-      trim: true,
-      on_record(record, context) {
-        return { row: context.lines, record };
-      },
-    });
-  } catch (error) {
-    return {
-      rows: [],
-      issues: [
-        {
-          severity: "error",
-          code: "CSV_PARSE_ERROR",
-          file,
-          message: error instanceof Error ? error.message : "Unknown CSV parse error",
-        },
-      ],
-    };
-  }
-
-  const locatedResult = locatedCsvRowsSchema.safeParse(parsed);
+  const locatedResult = locatedCsvRowsSchema.safeParse(records);
   if (!locatedResult.success) {
     return {
       rows: [],
@@ -91,6 +72,39 @@ export function parseCsvContent<T>(
   return { rows, issues };
 }
 
+export function parseCsvContent<T>(
+  file: string,
+  content: string,
+  schema: z.ZodType<T>,
+): { rows: Located<T>[]; issues: SourceIssue[] } {
+  let parsed: unknown;
+  try {
+    parsed = parse(content, {
+      bom: true,
+      columns: true,
+      skip_empty_lines: true,
+      trim: true,
+      on_record(record, context) {
+        return { row: context.lines, record };
+      },
+    });
+  } catch (error) {
+    return {
+      rows: [],
+      issues: [
+        {
+          severity: "error",
+          code: "CSV_PARSE_ERROR",
+          file,
+          message: error instanceof Error ? error.message : "Unknown CSV parse error",
+        },
+      ],
+    };
+  }
+
+  return parseLocatedRecords(file, parsed as AuthorityRecord[], schema);
+}
+
 function loadFile<T>(sourceDirectory: string, file: string, schema: z.ZodType<T>) {
   const path = join(sourceDirectory, file);
   try {
@@ -110,29 +124,46 @@ function loadFile<T>(sourceDirectory: string, file: string, schema: z.ZodType<T>
   }
 }
 
-export function loadCatalogSource(sourceDirectory: string): SourceLoadResult {
-  const works = loadFile(sourceDirectory, "works.csv", workSourceRowSchema);
-  const aliases = loadFile(sourceDirectory, "aliases.csv", aliasSourceRowSchema);
-  const volumes = loadFile(sourceDirectory, "volumes.csv", volumeSourceRowSchema);
-  const factors = loadFile(sourceDirectory, "factors.csv", factorSourceRowSchema);
-  const themes = loadFile(sourceDirectory, "themes.csv", themeSourceRowSchema);
-  const recommendationContext = loadFile(
-    sourceDirectory,
-    "recommendation-context.csv",
-    recommendationContextSourceRowSchema,
-  );
-  const recommendationConfig = loadFile(
-    sourceDirectory,
-    "recommendation-config.csv",
-    recommendationConfigSourceRowSchema,
-  );
-  const evidence = loadFile(sourceDirectory, "evidence/evidence.csv", evidenceSourceRowSchema);
-  const artEvidence = loadFile(
-    sourceDirectory,
-    ART_EVIDENCE_MANIFEST_FILE,
-    artEvidenceManifestRowSchema,
-  );
+type LoadedRows<T> = { rows: Located<T>[]; issues: SourceIssue[] };
 
+function emptyCatalogSource(): CatalogSource {
+  return {
+    works: [],
+    aliases: [],
+    volumes: [],
+    factors: [],
+    themes: [],
+    recommendationContext: [],
+    recommendationConfig: [],
+    evidence: [],
+  };
+}
+
+function finishLoad(
+  sourceDirectory: string,
+  inputs: {
+    works: LoadedRows<z.infer<typeof workSourceRowSchema>>;
+    aliases: LoadedRows<z.infer<typeof aliasSourceRowSchema>>;
+    volumes: LoadedRows<z.infer<typeof volumeSourceRowSchema>>;
+    factors: LoadedRows<z.infer<typeof factorSourceRowSchema>>;
+    themes: LoadedRows<z.infer<typeof themeSourceRowSchema>>;
+    recommendationContext: LoadedRows<z.infer<typeof recommendationContextSourceRowSchema>>;
+    recommendationConfig: LoadedRows<z.infer<typeof recommendationConfigSourceRowSchema>>;
+    evidence: LoadedRows<z.infer<typeof evidenceSourceRowSchema>>;
+    artEvidence: LoadedRows<z.infer<typeof artEvidenceManifestRowSchema>>;
+  },
+): SourceLoadResult {
+  const {
+    works,
+    aliases,
+    volumes,
+    factors,
+    themes,
+    recommendationContext,
+    recommendationConfig,
+    evidence,
+    artEvidence,
+  } = inputs;
   const source: CatalogSource = {
     works: works.rows,
     aliases: aliases.rows,
@@ -176,4 +207,84 @@ export function loadCatalogSource(sourceDirectory: string): SourceLoadResult {
       ...reviewReferenceIssues,
     ],
   };
+}
+
+export function loadCatalogSourceFromCsv(sourceDirectory: string): SourceLoadResult {
+  return finishLoad(sourceDirectory, {
+    works: loadFile(sourceDirectory, "works.csv", workSourceRowSchema),
+    aliases: loadFile(sourceDirectory, "aliases.csv", aliasSourceRowSchema),
+    volumes: loadFile(sourceDirectory, "volumes.csv", volumeSourceRowSchema),
+    factors: loadFile(sourceDirectory, "factors.csv", factorSourceRowSchema),
+    themes: loadFile(sourceDirectory, "themes.csv", themeSourceRowSchema),
+    recommendationContext: loadFile(
+      sourceDirectory,
+      "recommendation-context.csv",
+      recommendationContextSourceRowSchema,
+    ),
+    recommendationConfig: loadFile(
+      sourceDirectory,
+      "recommendation-config.csv",
+      recommendationConfigSourceRowSchema,
+    ),
+    evidence: loadFile(sourceDirectory, "evidence/evidence.csv", evidenceSourceRowSchema),
+    artEvidence: loadFile(
+      sourceDirectory,
+      ART_EVIDENCE_MANIFEST_FILE,
+      artEvidenceManifestRowSchema,
+    ),
+  });
+}
+
+export function loadCatalogAuthority(sourceDirectory: string): SourceLoadResult {
+  if (CATALOG_TABLES.some((table) => existsSync(join(sourceDirectory, table.path)))) {
+    return {
+      source: emptyCatalogSource(),
+      artEvidence: [],
+      issues: [
+        {
+          severity: "error",
+          code: "SOURCE_DUAL_AUTHORITY",
+          file: CATALOG_DATABASE_FILE,
+          message: "Catalog source cannot contain both SQLite and authoritative CSV tables",
+        },
+      ],
+    };
+  }
+  let records: ReadonlyMap<string, AuthorityRecord[]>;
+  try {
+    records = readCatalogAuthorityRecords(sourceDirectory);
+  } catch (error) {
+    return {
+      source: emptyCatalogSource(),
+      artEvidence: [],
+      issues: [
+        {
+          severity: "error",
+          code: "SOURCE_DATABASE_ERROR",
+          file: CATALOG_DATABASE_FILE,
+          message: error instanceof Error ? error.message : "Unable to read Catalog authority",
+        },
+      ],
+    };
+  }
+  const load = <T>(file: string, schema: z.ZodType<T>) =>
+    parseLocatedRecords(file, records.get(file) ?? [], schema);
+  return finishLoad(sourceDirectory, {
+    works: load("works.csv", workSourceRowSchema),
+    aliases: load("aliases.csv", aliasSourceRowSchema),
+    volumes: load("volumes.csv", volumeSourceRowSchema),
+    factors: load("factors.csv", factorSourceRowSchema),
+    themes: load("themes.csv", themeSourceRowSchema),
+    recommendationContext: load("recommendation-context.csv", recommendationContextSourceRowSchema),
+    recommendationConfig: load("recommendation-config.csv", recommendationConfigSourceRowSchema),
+    evidence: load("evidence/evidence.csv", evidenceSourceRowSchema),
+    artEvidence: load(ART_EVIDENCE_MANIFEST_FILE, artEvidenceManifestRowSchema),
+  });
+}
+
+export function loadCatalogSource(sourceDirectory: string): SourceLoadResult {
+  const hasDatabase = existsSync(join(sourceDirectory, CATALOG_DATABASE_FILE));
+  return hasDatabase
+    ? loadCatalogAuthority(sourceDirectory)
+    : loadCatalogSourceFromCsv(sourceDirectory);
 }

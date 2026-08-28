@@ -1,5 +1,5 @@
 import { createHash } from "node:crypto";
-import { readFileSync } from "node:fs";
+import { existsSync, readFileSync } from "node:fs";
 import { join, resolve } from "node:path";
 import { pathToFileURL } from "node:url";
 
@@ -11,6 +11,7 @@ import {
   loadRepresentativeVolumeDecisions,
   type RepresentativeVolumeDecision,
 } from "./catalog/representative-volume-decisions";
+import { CATALOG_DATABASE_FILE, readCatalogAuthority } from "./catalog/authority";
 
 const ID_PATTERN = /^[a-z0-9]+(?:-[a-z0-9]+)*$/u;
 const DATE_PATTERN = /^\d{4}-\d{2}-\d{2}$/u;
@@ -844,19 +845,12 @@ function sha256(value: string | Buffer) {
 }
 
 function canonicalGoldDataset(
-  sourceDirectory: string,
+  matrix: string[][],
   file: string,
   workIdColumn: string,
   mode: "exact" | "subset",
   ids: Set<string>,
 ) {
-  const matrix = matrixSchema.parse(
-    parse(readFileSync(join(sourceDirectory, file), "utf8"), {
-      bom: true,
-      relax_column_count: false,
-      skip_empty_lines: true,
-    }),
-  );
   const [headers, ...rows] = matrix;
   if (headers === undefined) {
     throw new Error(`Gold Set source is empty: ${file}`);
@@ -877,23 +871,41 @@ function canonicalGoldDataset(
   };
 }
 
+function goldSourceMatrices(sourceDirectory: string) {
+  if (existsSync(join(sourceDirectory, CATALOG_DATABASE_FILE))) {
+    return new Map(
+      readCatalogAuthority(sourceDirectory).map((table) => [
+        table.path,
+        [[...table.headers], ...table.rows.map((row) => [...row.values])],
+      ]),
+    );
+  }
+  return new Map(
+    GOLD_DATASETS.map(({ file }) => [
+      file,
+      matrixSchema.parse(
+        parse(readFileSync(join(sourceDirectory, file), "utf8"), {
+          bom: true,
+          relax_column_count: false,
+          skip_empty_lines: true,
+        }),
+      ),
+    ]),
+  );
+}
+
 function deriveGoldSetState(root: string, workIds: readonly string[]) {
   const sourceDirectory = join(root, "data/source");
   const ids = new Set(workIds);
+  const matrices = goldSourceMatrices(sourceDirectory);
   const datasets = Object.fromEntries(
     GOLD_DATASETS.map(({ file, workIdColumn, mode }) => [
       file,
-      canonicalGoldDataset(sourceDirectory, file, workIdColumn, mode, ids),
+      canonicalGoldDataset(matrices.get(file) ?? [], file, workIdColumn, mode, ids),
     ]),
   );
 
-  const worksMatrix = matrixSchema.parse(
-    parse(readFileSync(join(sourceDirectory, "works.csv"), "utf8"), {
-      bom: true,
-      relax_column_count: false,
-      skip_empty_lines: true,
-    }),
-  );
+  const worksMatrix = matrices.get("works.csv") ?? [];
   const [headers, ...works] = worksMatrix;
   const idIndex = headers?.indexOf("id") ?? -1;
   const referenceIndex = headers?.indexOf("annotationReviewReference") ?? -1;

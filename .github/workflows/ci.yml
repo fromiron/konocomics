@@ -33,10 +33,10 @@ jobs:
         run: pnpm lint
       - name: Run unit tests
         run: pnpm test
+      - name: Verify SQLite catalog authority
+        run: pnpm catalog:authority:verify
       - name: Validate catalog
         run: pnpm catalog:validate
-      - name: Verify catalog shadow round-trip
-        run: pnpm catalog:shadow
       - name: Validate catalog expansion staging and Gold Set
         run: |
           pnpm catalog:expansion:validate

@@ -15,6 +15,7 @@ import { parse } from "csv-parse/sync";
 import { z } from "zod";
 
 import { runCatalogPipeline } from "./catalog/pipeline";
+import { CATALOG_DATABASE_FILE, withCatalogCsvProjection } from "./catalog/authority";
 import { formatSourceIssue } from "./catalog/report";
 import {
   PROMOTION_BATCH_SIZE,
@@ -468,9 +469,13 @@ function validateLiveRepository(root: string) {
   return runCatalogExpansionValidation(root);
 }
 
-function buildPayloadFiles(root: string, batchId: string, frozenWorks: readonly FrozenWork[]) {
+function buildPayloadFiles(
+  root: string,
+  batchId: string,
+  frozenWorks: readonly FrozenWork[],
+  sourceDirectory: string,
+) {
   const packetDirectory = join(root, "data/staging/catalog-expansion/batches", batchId);
-  const sourceDirectory = join(root, "data/source");
   const stagingDirectory = join(root, "data/staging/catalog-expansion");
   const selectedIds = new Set(frozenWorks.map((row) => row.workId));
 
@@ -627,7 +632,12 @@ export function buildPromotionBatchPacketArtifacts(
   const packetDirectory = join(canonicalRoot, packetRoot);
   const frozenBytes = readFileSync(join(packetDirectory, "frozen-work-set.csv"), "utf8");
   const frozenWorks = parseFrozenPromotionBatch(frozenBytes);
-  const payloadFiles = buildPayloadFiles(canonicalRoot, batchId, frozenWorks);
+  const sourceDirectory = join(canonicalRoot, "data/source");
+  const payloadFiles = existsSync(join(sourceDirectory, CATALOG_DATABASE_FILE))
+    ? withCatalogCsvProjection(sourceDirectory, (projected) =>
+        buildPayloadFiles(canonicalRoot, batchId, frozenWorks, projected),
+      )
+    : buildPayloadFiles(canonicalRoot, batchId, frozenWorks, sourceDirectory);
   const payloadLedger = `${payloadFiles
     .map((file) => `${sha256(file.content)}  ${file.path}`)
     .join("\n")}\n`;

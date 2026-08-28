@@ -23,6 +23,11 @@ import {
   artEvidenceManifestRowSchema,
   validateArtEvidence,
 } from "./catalog/art-evidence";
+import {
+  CATALOG_DATABASE_FILE,
+  catalogSourceSnapshotDigest,
+  writeCatalogCsvProjection,
+} from "./catalog/authority";
 import { loadCatalogSource, parseCsvContent } from "./catalog/load-source";
 import { assertLegacyModelWriteMode } from "./catalog/candidate-quarantine";
 import { runCatalogPipeline } from "./catalog/pipeline";
@@ -229,7 +234,12 @@ function directoryDigest(directory: string) {
 
 export function getPilotPublishDigests(root: string) {
   return Object.fromEntries(
-    PUBLISH_PATHS.map((path) => [path, directoryDigest(join(root, path))]),
+    PUBLISH_PATHS.map((path) => [
+      path,
+      path === "data/source"
+        ? catalogSourceSnapshotDigest(join(root, path))
+        : directoryDigest(join(root, path)),
+    ]),
   ) as Record<(typeof PUBLISH_PATHS)[number], string>;
 }
 
@@ -624,7 +634,11 @@ function writeMergedSource(options: {
 }) {
   const source = join(options.root, "data/source");
   const candidate = join(options.candidateRoot, "data/source");
-  cpSync(source, candidate, { recursive: true });
+  if (existsSync(join(source, CATALOG_DATABASE_FILE))) {
+    writeCatalogCsvProjection(source, candidate);
+  } else {
+    cpSync(source, candidate, { recursive: true });
+  }
   const targetSet = new Set(options.approval.targetWorkIds);
   const evidenceIdSet = new Set(options.overlay.evidence.rows.map((row) => row.value.id));
   const merge = (
@@ -636,7 +650,7 @@ function writeMergedSource(options: {
     existingRowsMustMatch = false,
   ) => {
     const destination = join(candidate, sourceFile);
-    const current = readFileSync(join(source, sourceFile), "utf8");
+    const current = readFileSync(join(candidate, sourceFile), "utf8");
     const overlayBytes = options.overlayFiles.get(overlayFile);
     if (overlayBytes === undefined) throw new Error(`Approved overlay is missing: ${overlayFile}`);
     const overlayContent = overlayBytes.toString("utf8");
@@ -723,8 +737,12 @@ function assertRegistryTransition(
   candidateRoot: string,
   targetIds: readonly string[],
 ) {
-  const baseline = runPromotionRegistry("check", root);
-  const candidate = runPromotionRegistry("write", candidateRoot);
+  const baseline = runPromotionRegistry(
+    "check",
+    root,
+    existsSync(join(root, "data/source/catalog.sqlite")) ? "authority" : "csv",
+  );
+  const candidate = runPromotionRegistry("write", candidateRoot, "csv");
   const targetSet = new Set(targetIds);
   const baselineRows = rawRowsByKey(
     join(root, "data/staging/catalog-expansion/promotion-registry.csv"),
@@ -878,7 +896,7 @@ export function preparePilotPromotion(root = process.cwd()): PreparedPromotion {
     ) as unknown;
     validateGoldSet(candidateRoot, goldManifest);
     const summary = assertRegistryTransition(canonicalRoot, candidateRoot, approval.targetWorkIds);
-    const built = buildCatalog(candidateRoot);
+    const built = buildCatalog(candidateRoot, "csv");
     const profile = z
       .object({ works: z.array(z.unknown()) })
       .parse(

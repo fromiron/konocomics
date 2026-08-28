@@ -2,11 +2,11 @@ import { readFileSync } from "node:fs";
 import { resolve } from "node:path";
 
 import { catalogAssetFilename } from "../src/lib/catalog-asset";
-import { runCatalogPipeline } from "./catalog/pipeline";
+import { runCatalogPipelineFromAuthority } from "./catalog/pipeline";
 import { formatSourceIssue, hasErrors } from "./catalog/report";
 
 const sourceDirectory = resolve(process.cwd(), "data/source");
-const { catalog, issues } = runCatalogPipeline(sourceDirectory);
+const { catalog, issues } = runCatalogPipelineFromAuthority(sourceDirectory);
 const expectedCatalogBytes = `${JSON.stringify(catalog, null, 2)}\n`;
 const generatedCatalogPaths = [
   resolve(process.cwd(), "data/generated/catalog-v1.json"),

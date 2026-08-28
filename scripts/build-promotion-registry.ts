@@ -14,8 +14,8 @@ import {
 } from "../src/domain/catalog/constants";
 import { isValidIsbn } from "../src/domain/catalog/normalize";
 import { validateArtEvidence } from "./catalog/art-evidence";
-import { loadCatalogSource } from "./catalog/load-source";
-import { runCatalogPipeline } from "./catalog/pipeline";
+import { loadCatalogAuthority, loadCatalogSourceFromCsv } from "./catalog/load-source";
+import { runCatalogPipelineFromAuthority, runCatalogPipelineFromCsv } from "./catalog/pipeline";
 import {
   compareCodeUnit,
   decidePromotionJudgment,
@@ -710,18 +710,26 @@ function loadBatchLedger(path: string) {
   return z.array(batchLedgerRowSchema).parse(rows);
 }
 
-export function loadPromotionRegistryInput(root = process.cwd()): PromotionRegistryInput {
+export function loadPromotionRegistryInput(
+  root = process.cwd(),
+  sourceKind: "authority" | "csv" = "authority",
+): PromotionRegistryInput {
   const canonicalRoot = resolve(root);
   const sourceDirectory = join(canonicalRoot, "data/source");
   const stagingDirectory = join(canonicalRoot, "data/staging/catalog-expansion");
-  const pipelineErrors = runCatalogPipeline(sourceDirectory).issues.filter(
-    (issue) => issue.severity === "error",
-  );
+  const pipelineErrors = (
+    sourceKind === "authority"
+      ? runCatalogPipelineFromAuthority(sourceDirectory)
+      : runCatalogPipelineFromCsv(sourceDirectory)
+  ).issues.filter((issue) => issue.severity === "error");
   if (pipelineErrors.length > 0) {
     throw new Error(pipelineErrors.map(formatSourceIssue).join("\n"));
   }
   runCatalogExpansionValidation(canonicalRoot);
-  const loaded = loadCatalogSource(sourceDirectory);
+  const loaded =
+    sourceKind === "authority"
+      ? loadCatalogAuthority(sourceDirectory)
+      : loadCatalogSourceFromCsv(sourceDirectory);
   const expansion = loadCatalogExpansion(stagingDirectory);
   const manifest = validateGoldSet(
     canonicalRoot,
@@ -746,8 +754,11 @@ export function loadPromotionRegistryInput(root = process.cwd()): PromotionRegis
   };
 }
 
-function buildCurrentPromotionRegistry(root = process.cwd()) {
-  const input = loadPromotionRegistryInput(root);
+function buildCurrentPromotionRegistry(
+  root = process.cwd(),
+  sourceKind: "authority" | "csv" = "authority",
+) {
+  const input = loadPromotionRegistryInput(root, sourceKind);
   const rows = buildPromotionRegistry(input);
   validatePromotionRegistry(
     rows,
@@ -759,8 +770,9 @@ function buildCurrentPromotionRegistry(root = process.cwd()) {
 export function runPromotionRegistry(
   mode: "stdout" | "check" | "write" = "stdout",
   root = process.cwd(),
+  sourceKind: "authority" | "csv" = "authority",
 ) {
-  const { rows, content } = buildCurrentPromotionRegistry(root);
+  const { rows, content } = buildCurrentPromotionRegistry(root, sourceKind);
   const path = join(resolve(root), "data/staging/catalog-expansion/promotion-registry.csv");
   if (mode === "stdout") process.stdout.write(content);
   if (mode === "check" && (!existsSync(path) || readFileSync(path, "utf8") !== content)) {

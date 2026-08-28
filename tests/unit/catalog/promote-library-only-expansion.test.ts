@@ -1,5 +1,5 @@
 import { createHash } from "node:crypto";
-import { appendFileSync, cpSync, mkdirSync, mkdtempSync, readFileSync, rmSync } from "node:fs";
+import { appendFileSync, mkdirSync, mkdtempSync, readFileSync, rmSync } from "node:fs";
 import { tmpdir } from "node:os";
 import { join } from "node:path";
 
@@ -16,6 +16,7 @@ import {
   type LibraryOnlyBuildInput,
 } from "../../../scripts/promote-library-only-expansion";
 import { runCatalogPipeline } from "../../../scripts/catalog/pipeline";
+import { writeCatalogCsvProjection } from "../../../scripts/catalog/authority";
 import { validateGoldSet } from "../../../scripts/validate-catalog-expansion";
 
 const input: LibraryOnlyBuildInput = {
@@ -188,7 +189,7 @@ describe("library-only expansion row construction", () => {
     const source = join(temporaryRoot, "data/source");
     try {
       mkdirSync(join(temporaryRoot, "data"), { recursive: true });
-      cpSync(join(process.cwd(), "data/source"), source, { recursive: true });
+      writeCatalogCsvProjection(join(process.cwd(), "data/source"), source);
       const rows = buildLibraryOnlyRows(input);
       appendFileSync(
         join(source, "works.csv"),
@@ -273,5 +274,5 @@ describe("library-only expansion row construction", () => {
     } finally {
       rmSync(temporaryRoot, { recursive: true, force: true });
     }
-  });
+  }, 120_000);
 });

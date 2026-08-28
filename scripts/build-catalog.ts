@@ -5,10 +5,10 @@ import { pathToFileURL } from "node:url";
 import { landingEditorialRankingIds } from "../src/data/landing-showcase";
 import { catalogAssetFilename } from "../src/lib/catalog-asset";
 import { assignJointVersion } from "./catalog/compile";
-import { runCatalogPipeline } from "./catalog/pipeline";
+import { runCatalogPipelineFromAuthority, runCatalogPipelineFromCsv } from "./catalog/pipeline";
 import { formatSourceIssue, hasErrors } from "./catalog/report";
 
-export function buildCatalog(root = process.cwd()) {
+export function buildCatalog(root = process.cwd(), sourceKind: "authority" | "csv" = "authority") {
   const canonicalRoot = resolve(root);
   const sourceDirectory = resolve(canonicalRoot, "data/source");
   const catalogOutputs = [
@@ -19,7 +19,10 @@ export function buildCatalog(root = process.cwd()) {
     resolve(canonicalRoot, "data/generated/recommendation-context-v1.json"),
     resolve(canonicalRoot, "src/data/generated/recommendation-context-v1.json"),
   ] as const;
-  const { catalog, context, issues } = runCatalogPipeline(sourceDirectory);
+  const { catalog, context, issues } =
+    sourceKind === "authority"
+      ? runCatalogPipelineFromAuthority(sourceDirectory)
+      : runCatalogPipelineFromCsv(sourceDirectory);
   const recommendationWorkIds = new Set(
     catalog.works.filter((work) => work.eligibility.recommendationEligible).map((work) => work.id),
   );

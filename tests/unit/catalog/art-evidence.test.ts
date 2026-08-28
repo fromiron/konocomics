@@ -1,4 +1,4 @@
-import { cpSync, mkdtempSync, readFileSync, rmSync, unlinkSync, writeFileSync } from "node:fs";
+import { mkdtempSync, readFileSync, rmSync, unlinkSync, writeFileSync } from "node:fs";
 import { tmpdir } from "node:os";
 import { join, resolve } from "node:path";
 
@@ -9,6 +9,7 @@ import {
   artEvidenceManifestRowSchema,
   validateArtEvidence,
 } from "../../../scripts/catalog/art-evidence";
+import { writeCatalogCsvProjection } from "../../../scripts/catalog/authority";
 import { runCatalogPipeline } from "../../../scripts/catalog/pipeline";
 import { ART_AXIS_IDS } from "../../../src/domain/catalog/constants";
 
@@ -319,7 +320,7 @@ describe("catalog pipeline Art evidence boundary", () => {
     const root = mkdtempSync(join(tmpdir(), "konocomics-art-missing-"));
     const source = join(root, "source");
     try {
-      cpSync(join(repositoryRoot, "data/source"), source, { recursive: true });
+      writeCatalogCsvProjection(join(repositoryRoot, "data/source"), source);
       unlinkSync(join(source, ART_EVIDENCE_MANIFEST_FILE));
       const result = runCatalogPipeline(source);
       expect(result.issues).toContainEqual(
@@ -338,7 +339,7 @@ describe("catalog pipeline Art evidence boundary", () => {
     const root = mkdtempSync(join(tmpdir(), "konocomics-art-provenance-"));
     const source = join(root, "source");
     try {
-      cpSync(join(repositoryRoot, "data/source"), source, { recursive: true });
+      writeCatalogCsvProjection(join(repositoryRoot, "data/source"), source);
       const evidencePath = join(source, "evidence/evidence.csv");
       const evidence = readFileSync(evidencePath, "utf8").replace(
         /^(ev-g1-art-dungeon-meshi,[^\r\n]*?),publisher,/mu,

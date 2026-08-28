@@ -6,6 +6,7 @@ import { pathToFileURL } from "node:url";
 
 import { parse } from "csv-parse/sync";
 import { z } from "zod";
+import { CATALOG_DATABASE_FILE, withCatalogCsvProjection } from "./catalog/authority";
 
 import { loadCatalogSource } from "./catalog/load-source";
 import { runCatalogPipeline } from "./catalog/pipeline";
@@ -460,9 +461,19 @@ function readCsvTableFromContent(content: string): CsvTable {
 
 export function buildPromotionPilotArtifacts(
   input = loadPromotionPilotInput(),
+  sourceOverride?: string,
 ): PromotionPilotArtifacts {
   const { root } = input;
-  const sourceDirectory = join(root, "data/source");
+  const canonicalSourceDirectory = join(root, "data/source");
+  if (
+    sourceOverride === undefined &&
+    existsSync(join(canonicalSourceDirectory, CATALOG_DATABASE_FILE))
+  ) {
+    return withCatalogCsvProjection(canonicalSourceDirectory, (projected) =>
+      buildPromotionPilotArtifacts(input, projected),
+    );
+  }
+  const sourceDirectory = sourceOverride ?? canonicalSourceDirectory;
   const stagingDirectory = join(root, "data/staging/catalog-expansion");
   const workIds = validatePilotWorkSet(input.batches, input.works, input.goldWorkIds);
   const selectedIds = new Set(workIds);

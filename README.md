@@ -61,7 +61,7 @@ Bundled work detail pages are prerendered. External works use a fixed client-res
 
 ## Development
 
-Requires Node.js 22.12 or later and pnpm 10.
+Requires Node.js 24 LTS and pnpm 10.
 
 ```bash
 pnpm install
@@ -79,6 +79,7 @@ pnpm lint
 pnpm test
 pnpm test:e2e
 pnpm build
+pnpm catalog:authority:verify
 pnpm catalog:validate
 ```
 

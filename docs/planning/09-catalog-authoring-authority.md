@@ -1,17 +1,17 @@
-# 09 — Catalog authoring 권한과 SQLite shadow
+# 09 — Catalog authoring 권한과 SQLite source-of-truth
 
-> 목표는 어떤 모델을 candidate 생성에 사용해도 동일한 source와 동일한 비모델 권한 입력이면 동일한 사실·판정·승격 결과를 만드는 것이다. S0~S5에서 `data/source/`가 유일한 Catalog 원천이며 SQLite는 폐기 가능한 빌드 타임 shadow다.
+> 목표는 어떤 모델을 candidate 생성에 사용해도 동일한 canonical source와 동일한 비모델 권한 입력이면 동일한 사실·판정·승격 결과를 만드는 것이다. S0~S5의 shadow 증명을 마친 뒤 2026-08-28 승인된 S6에서 `data/source/catalog.sqlite`가 table-backed Catalog의 유일한 원천이 됐다.
 
 ## 1. 범위와 우선순위
 
 - `02-product-spec.md`의 제품·추천 계약과 `factor-dictionary.md`의 팩터 의미가 이 문서보다 우선한다.
-- 이 문서는 Catalog authoring 권한, source snapshot, 판정 digest, SQLite shadow의 단일 계약이며 framework migration보다 우선한다.
+- 이 문서는 Catalog authoring 권한, source snapshot, 판정 digest, SQLite authority/shadow의 단일 계약이며 framework migration보다 우선한다.
 - 제품 런타임은 생성된 정적 JSON과 순수 TypeScript만 사용한다. Dexie schema, 두 Rakuten server route, 추천 산식, 설명 생성, Export/Import는 바꾸지 않는다.
-- tracked SQLite 파일, ORM, 새 의존성, runtime database, runtime LLM을 추가하지 않는다.
+- tracked SQLite는 빌드 타임 Catalog 원천 하나만 허용한다. ORM, 새 의존성, runtime database, runtime LLM은 추가하지 않는다.
 
 ## 2. 권한 계약
 
-1. S0~S5의 쓰기 권한과 최종 진실 원천은 `data/source/`다. SQLite export는 별도 임시 디렉터리에서만 만들고 기존 source를 덮어쓰지 않는다.
+1. S6의 table-backed 쓰기 권한과 최종 진실 원천은 `data/source/catalog.sqlite`다. 12개 Markdown 근거 문서는 같은 디렉터리의 opaque authority로 남는다. 삭제된 9개 CSV를 canonical source로 다시 두거나 SQLite와 함께 두는 dual authority는 거부한다.
 2. 새 모델 출력은 `data/source/` 밖의 격리된 candidate artifact다. candidate의 존재·부재·순서·충돌·confidence·provider·model·attempt·citation은 accepted fact, `manualReview`, eligibility, blocker, promotion, semantic digest, verdict에 영향을 주지 않는다.
 3. candidate 간 충돌은 진단 정보일 뿐 `manualReview`나 `pending`을 만들지 않는다.
 4. 사실 resolution은 candidate와 독립적으로 고정된 비모델 권한이나 candidate-independent 결정론적 source 검증만 만들 수 있다. 모델이 제안한 값을 단순 승인하는 절차는 권한이 아니다.
@@ -41,35 +41,35 @@ S4는 cutoff manifest의 exact path·hash·row tuple과 일치하는 기존 값�
 | **S3** | 모델 candidate 저장·실행 격리 | candidate 변화가 resolution·decision에 영향 없음 |
 | **S4** | legacy resolution bootstrap | cutoff-bound `legacySnapshot`; 기존 값·라벨·human-not-run 불변 |
 | **S5** | SQLite 기반 shadow judgment | 현행 결과와 exact parity, source 권한 유지 |
-| **S6** | authoring 권한 전환 | **별도 사용자 승인 후에만** source-of-truth 이동 |
+| **S6** | authoring 권한 전환 | **2026-08-28 승인·완료:** tracked SQLite 단일 권한, CSV 삭제, parity·rollback gate |
 
-각 단계는 앞 단계 gate를 통과한 뒤 진행한다. S6 승인 전에는 SQLite export, candidate, shadow decision을 `data/source/`에 반영하지 않는다.
+S0~S5는 CSV 권한을 보존한 채 수행한 cutover 증명 이력이다. S6은 그 결과와 별도 사용자 승인을 바탕으로 진행됐으며, 이후 일반 authoring은 SQLite candidate copy의 전체 검증과 원자적 교체를 통과해야 한다.
 
 S3부터 동결된 model-panel 경로의 read-only `--check`는 보존하되 새 write는 public entry에서 파일 I/O 전에 거부한다. 대상은 promotion overlay, community adjudication, pilot, batch 002~005의 공유 publisher와 write-only `promoteG2Catalog`다. G1 staging·Rakuten library-only·canonical repair처럼 모델 claim을 authoring 권한으로 쓰지 않는 경로와 공용 atomic publish helper는 이 차단 대상이 아니다.
 
 ## 5. Source snapshot과 row identity
 
-`data/source/` 아래 regular file을 재귀 탐색하고 `/` 구분의 상대 경로를 code-unit 순으로 정렬한다. 동적 탐색은 파일 수를 하드코딩하지 않지만 현재 commit의 golden은 정확히 21개 경로다.
+`data/source/` 아래 regular file을 재귀 탐색하고 `/` 구분의 상대 경로를 code-unit 순으로 정렬한다. S6의 허용 layout은 `catalog.sqlite` 하나와 opaque Markdown 12개, 총 13개 파일이다.
 
-- table-backed CSV 9개: `works.csv`→`source_works`, `aliases.csv`→`source_aliases`, `volumes.csv`→`source_volumes`, `factors.csv`→`source_factors`, `themes.csv`→`source_themes`, `recommendation-context.csv`→`source_recommendation_context`, `recommendation-config.csv`→`source_recommendation_config`, `evidence/evidence.csv`→`source_evidence`, `evidence/art-evidence-manifest.csv`→`source_art_evidence_manifest`.
+- SQLite table 9개: `source_works`, `source_aliases`, `source_volumes`, `source_factors`, `source_themes`, `source_recommendation_context`, `source_recommendation_config`, `source_evidence`, `source_art_evidence_manifest`. 각각의 logical projection path는 이전의 `works.csv`, `aliases.csv`, `volumes.csv`, `factors.csv`, `themes.csv`, `recommendation-context.csv`, `recommendation-config.csv`, `evidence/evidence.csv`, `evidence/art-evidence-manifest.csv`다.
 - opaque file 12개: `README.md`, `evidence/seed-annotations.md`, `reviews/*.md` 10개.
 
-모든 파일은 `source_file`에 normalized path, `tableCsv|opaqueFile` role, raw bytes, SHA-256, byte length를 기록한다. `source_table` 연결은 table-backed CSV에만 둔다.
+canonical DB에는 위 9개 `STRICT` source table만 있고 `source_file`, `source_import`, candidate, resolution, judgment, view, trigger를 두지 않는다. S0~S5 증명용 OS 임시 shadow만 opaque raw bytes와 proof table을 가진다.
 
-CSV는 fatal UTF-8로 decode한다. 선두 UTF-8 BOM은 첫 header 이름에서만 제외하고, malformed quoting·열 수 불일치·빈 header·중복 header는 거부한다. 빈 record는 건너뛰되 physical line 계산에는 포함하며, cell은 `trim`·타입 강제 변환 없이 lexical string으로 저장한다. 각 parsed record에는 다음 두 순서를 둔다.
+Bootstrap과 임시 CSV projection은 fatal UTF-8로 decode한다. 선두 UTF-8 BOM은 첫 header 이름에서만 제외하고, malformed quoting·열 수 불일치·빈 header·중복 header는 거부한다. 빈 record는 건너뛰되 physical line 계산에는 포함하며, cell은 `trim`·타입 강제 변환 없이 lexical string으로 저장한다. 각 SQLite record에는 다음 두 순서를 둔다.
 
 - `sourceOrdinal`: header를 제외한 parsed record의 1-based 순서. table primary key, export 순서, semantic digest에 사용한다.
 - `sourceLine`: header·빈 줄을 포함한 원본에서 record가 끝나는 1-based physical line. 오류·감사용이며 digest와 정렬에는 사용하지 않는다.
 
-## 6. Export와 parity
+## 6. 임시 projection과 parity
 
-- 9개 CSV는 raw BLOB이 아니라 명시적 table column과 `sourceOrdinal`로 export한다.
-- 12개 opaque file은 `source_file.raw_bytes`를 byte-for-byte export한다.
+- 기존 CSV-shaped validator·staging 도구가 필요할 때만 9개 logical CSV를 OS 임시 디렉터리에 투영한다. canonical source에는 남기지 않는다.
+- 12개 opaque file은 canonical 파일에서 byte-for-byte 복사한다. S0~S5 proof shadow에서는 `source_file.raw_bytes`에서 export한다.
 - CSV serializer는 UTF-8 without BOM, LF, 고정 header 순서, source 순서, 정확히 마지막 LF 하나를 사용한다. comma·quote·CR·LF가 있는 cell만 quote하고 내부 quote는 두 번 쓴다.
 - 일반 valid CSV의 semantic parity는 `[normalizedPath, sourceOrdinal, columnName, lexicalValue]` tuple digest로 비교한다. quote/BOM/빈 줄·checkout EOL 표기 차이는 의미가 아니다.
 - S1 baseline의 9개 CSV는 별도 golden probe에서 export bytes가 baseline HEAD `b8463b31ff58332fee8762dccb733ac902982cea`의 canonical Git blob과 정확히 같아야 한다. working-tree raw snapshot은 별도로 보존하며, golden 불일치를 semantic parity로 낮춰 통과시키지 않는다.
 - opaque raw BLOB mutation은 opaque export만 바꾸고, CSV table mutation은 해당 CSV export만 바꾸는 isolation probe를 통과해야 한다.
-- export 결과를 기존 loader·validator·builder·promotion registry에 다시 넣어 기존 생성 artifact bytes와 직렬화된 promotion registry가 같아야 한다.
+- cutover proof의 export 결과를 기존 loader·validator·builder·promotion registry에 다시 넣어 기존 생성 artifact bytes와 직렬화된 promotion registry가 같아야 한다. S6 이후 primary loader·validator·builder·promotion registry는 SQLite를 직접 읽는다.
 
 ## 7. 판정 digest 계약
 
@@ -111,14 +111,15 @@ Bootstrap은 `source_import`의 저장값만 신뢰하지 않는다. 첫 insert 
 
 S3 candidate ingest는 `work:<workId>:factor:<axisId>`, `work:<workId>:theme:<themeId>`, `work:<workId>:genre:<genreId>`만 허용한다. `workId`는 현재 shadow의 `source_works`에 정확히 한 행이어야 하고 나머지 ID는 각각 고정 Axis·Theme·Genre vocabulary에 속해야 한다. ingest의 source manifest 표기는 현재 `source_import.source_manifest_digest`와 일치해야 하며, candidate citation은 URL 배열을 exact 중복 제거·code-unit 정렬한 compact JSON이다. 이 검증은 candidate에 source 권한을 주지 않고 잘못된 diagnostic provenance와 decision field 위장을 거부하기 위한 경계다.
 
-## 8. S1 실행·검증·rollback
+## 8. S0~S5 one-time cutover proof
 
-- 명령은 `pnpm catalog:shadow`이고 Node 24 LTS에서만 성공해야 한다. 다른 major는 source mutation 전에 실패한다.
+- `pnpm catalog:shadow`는 고정 parent Git snapshot을 OS temp에 복원해 S0~S5 cutoff를 증명하는 one-time/manual gate다. 일반 authoring을 동결하므로 S6 이후 ongoing CI에는 넣지 않는다.
+- 명령은 Node 24 LTS에서만 성공해야 한다. 다른 major는 source mutation 전에 실패한다.
 - SQLite는 OS 임시 디렉터리에 만들고 한 writer·한 transaction·`journal_mode=DELETE`로 import한 뒤 `integrity_check`, close, read-only reopen을 통과한다.
 - 성공·실패 모두 DB와 `-wal`·`-shm` 및 export temp를 정리한다. tracked tree와 `data/source/`는 byte-identical해야 한다.
 - source file raw snapshot, lexical tuple digest, 현재 CSV byte golden, opaque bytes, 기존 generated artifact, serialized promotion registry를 각각 비교한다.
 - 실행 이력용 실제 Node/SQLite/OS/architecture는 결과에 기록하되 semantic 판정에는 사용하지 않는다.
-- 이 gate 중 하나라도 실패하면 S1은 실패다. 우회 export, 기존 source 덮어쓰기, S2 진행으로 실패를 숨기지 않는다.
+- 이 gate 중 하나라도 실패하면 cutover proof는 실패다. 우회 export나 기존 source 덮어쓰기로 실패를 숨기지 않는다.
 
 S1은 저장소 전체 pairwise 조합을 새로 전수 검사하지 않는다. 기존 validator와 golden을 재사용하는 것이 같은 계약을 가장 작은 범위로 검증한다.
 
@@ -129,4 +130,14 @@ S1은 저장소 전체 pairwise 조합을 새로 전수 검사하지 않는다. 
 - SQLite source export를 기존 catalog builder와 promotion loader/validator/builder에 넣은 뒤 13-field input digest와 4-field decision digest를 계산한다. 모든 1,614행을 메모리에서 검증한 다음 한 transaction으로 insert하고 exact readback한다.
 - candidate-free fresh shadow와 maximal candidate fresh shadow는 judgment row·digest가 정확히 같아야 한다. 6개 legacy registry 입력 중 하나라도 바뀌거나 row 순서가 바뀌면 고정 identity gate가 insert 전 실패하고 `judgment_run`은 0행이어야 한다.
 - close/read-only reopen 뒤 source·resolution·모든 identity와 judgment를 재계산한다. generated artifact·promotion registry bytes와 Gold 150 / verified 1,291 / blocked 173 / pending 0은 기존과 같고, 성공·실패 모두 임시 DB/export를 삭제하며 tracked tree는 변하지 않아야 한다.
-- S5는 shadow 증명만 추가한다. SQLite export나 judgment를 `data/source/`에 반영하거나 authoring 권한을 옮기는 S6은 별도 사용자 승인 전 실행하지 않는다.
+- S5 당시에는 shadow 증명만 추가했고 authoring 권한을 옮기지 않았다. 이후 별도 승인으로 아래 S6을 수행했다.
+
+## 10. S6 SQLite authority
+
+- canonical authority는 `data/source/catalog.sqlite` 하나다. `PRAGMA user_version=1`, 정확히 9개 `STRICT` rowid table, 기준 DDL의 `CHECK`·column·type·PK와 일치해야 하며 view·trigger·journal sidecar를 허용하지 않는다.
+- ongoing `pnpm catalog:authority:verify`는 layout, integrity, schema identity, 연속 `sourceOrdinal`, canonical `sourceLine`, opaque path set을 검증한다. `pnpm catalog:authority:verify-cutover`와 `pnpm catalog:shadow`는 삭제된 9개 CSV 및 S0~S5 cutoff와의 일회성 이관 증명이다.
+- 일반 reader는 SQLite를 직접 읽는다. CSV compatibility가 필요한 frozen validator·staging 흐름은 OS 임시 projection만 사용하고 성공·실패 모두 제거한다.
+- legitimate writer는 현재 DB를 candidate로 복사하고 `BEGIN IMMEDIATE` 안에서 table을 교체한 뒤 전체 schema·Catalog 검증을 수행한다. commit·close 뒤 read-only exact readback과 sidecar 부재를 확인한 candidate만 canonical DB와 원자적으로 교체한다. 검증 실패 전에는 현재 DB가 바뀌지 않는다.
+- model-derived writer는 파일 I/O 전에 계속 실패한다. candidate 입력의 provider·model·attempt·순서·수·confidence·citation은 accepted fact나 판정 digest에 포함되지 않는다.
+- runtime은 SQLite를 열지 않는다. build가 생성한 정적 JSON과 순수 TypeScript 추천 커널만 배포한다.
+- 이관 자체의 rollback은 정확한 이전 Git commit revert다. authoring 중 실패 rollback은 미게시 candidate 삭제이며, publish 중 실패는 공용 atomic publish helper가 기존 source를 복구한다.

@@ -17,6 +17,11 @@ import { z } from "zod";
 
 import { runCatalogPipeline } from "./catalog/pipeline";
 import {
+  CATALOG_DATABASE_FILE,
+  finalizeCatalogAuthorityProjection,
+  writeCatalogCsvProjection,
+} from "./catalog/authority";
+import {
   assertRepresentativeDecisionIdentity,
   loadRepresentativeVolumeDecisions,
   resolveRepresentativeVolumeDecision,
@@ -619,7 +624,7 @@ function validateCandidateRoot(root: string) {
   validateCatalogExpansion(loadCatalogExpansion(join(root, STAGING_DIRECTORY)));
 }
 
-export function repairRepresentativeIsbns(mode: RepairMode = "dry-run", root = process.cwd()) {
+function repairRepresentativeIsbnsFromCsv(mode: RepairMode = "dry-run", root = process.cwd()) {
   const resolvedRoot = resolve(root);
   if (!existsSync(join(resolvedRoot, SOURCE_DIRECTORY))) {
     throw new Error(`Catalog source directory does not exist: ${resolvedRoot}`);
@@ -676,6 +681,57 @@ export function repairRepresentativeIsbns(mode: RepairMode = "dry-run", root = p
     mappingRows: plan.mappingRows,
     changedFiles: [...plan.outputs.keys()],
   };
+}
+
+export function repairRepresentativeIsbns(mode: RepairMode = "dry-run", root = process.cwd()) {
+  const resolvedRoot = resolve(root);
+  const sourceDirectory = join(resolvedRoot, SOURCE_DIRECTORY);
+  if (!existsSync(join(sourceDirectory, CATALOG_DATABASE_FILE))) {
+    return repairRepresentativeIsbnsFromCsv(mode, resolvedRoot);
+  }
+
+  const originalSnapshot = validationSnapshot(resolvedRoot);
+  const temporaryRoot = mkdtempSync(join(resolvedRoot, ".representative-isbn-authority-"));
+  try {
+    writeCatalogCsvProjection(sourceDirectory, join(temporaryRoot, SOURCE_DIRECTORY));
+    cpSync(join(resolvedRoot, STAGING_DIRECTORY), join(temporaryRoot, STAGING_DIRECTORY), {
+      recursive: true,
+    });
+    const result = repairRepresentativeIsbnsFromCsv(mode, temporaryRoot);
+    if (mode === "apply" && !result.alreadyApplied) {
+      const candidateSource = join(temporaryRoot, SOURCE_DIRECTORY);
+      finalizeCatalogAuthorityProjection(sourceDirectory, candidateSource);
+      assertValidationSnapshot(resolvedRoot, originalSnapshot);
+      const stagingFiles = result.changedFiles.filter((path) =>
+        path.startsWith(`${STAGING_DIRECTORY}/`),
+      );
+      const swaps = [
+        {
+          candidate: candidateSource,
+          output: sourceDirectory,
+          backup: join(temporaryRoot, "backups", SOURCE_DIRECTORY),
+        },
+        ...stagingFiles.map((path) => ({
+          candidate: join(temporaryRoot, path),
+          output: join(resolvedRoot, path),
+          backup: join(temporaryRoot, "backups", path),
+        })),
+      ];
+      for (const swap of swaps) mkdirSync(dirname(swap.backup), { recursive: true });
+      publishDirectorySet(swaps);
+    }
+    return {
+      ...result,
+      changedFiles: result.changedFiles.some((path) => path.startsWith(`${SOURCE_DIRECTORY}/`))
+        ? [
+            `${SOURCE_DIRECTORY}/${CATALOG_DATABASE_FILE}`,
+            ...result.changedFiles.filter((path) => path.startsWith(`${STAGING_DIRECTORY}/`)),
+          ]
+        : result.changedFiles,
+    };
+  } finally {
+    rmSync(temporaryRoot, { recursive: true, force: true });
+  }
 }
 
 function cliMode(args: readonly string[]): RepairMode {

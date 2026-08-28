@@ -1,7 +1,7 @@
 import { compileCatalog } from "./compile";
 import { ART_EVIDENCE_MANIFEST_FILE, validateArtEvidence } from "./art-evidence";
-import { loadCatalogSource } from "./load-source";
-import type { SourceIssue } from "./types";
+import { loadCatalogAuthority, loadCatalogSource, loadCatalogSourceFromCsv } from "./load-source";
+import type { SourceIssue, SourceLoadResult } from "./types";
 
 function sortIssues(issues: readonly SourceIssue[]) {
   return [...issues].sort((left, right) => {
@@ -18,8 +18,7 @@ function sortIssues(issues: readonly SourceIssue[]) {
   });
 }
 
-export function runCatalogPipeline(sourceDirectory: string) {
-  const loaded = loadCatalogSource(sourceDirectory);
+function runLoadedPipeline(loaded: SourceLoadResult) {
   const compiled = compileCatalog(loaded.source);
   const artEvidenceLoadFailed = loaded.issues.some(
     (issue) => issue.severity === "error" && issue.file === ART_EVIDENCE_MANIFEST_FILE,
@@ -37,4 +36,16 @@ export function runCatalogPipeline(sourceDirectory: string) {
     context: compiled.context,
     issues: sortIssues([...loaded.issues, ...compiled.issues, ...artEvidenceIssues]),
   };
+}
+
+export function runCatalogPipeline(sourceDirectory: string) {
+  return runLoadedPipeline(loadCatalogSource(sourceDirectory));
+}
+
+export function runCatalogPipelineFromAuthority(sourceDirectory: string) {
+  return runLoadedPipeline(loadCatalogAuthority(sourceDirectory));
+}
+
+export function runCatalogPipelineFromCsv(sourceDirectory: string) {
+  return runLoadedPipeline(loadCatalogSourceFromCsv(sourceDirectory));
 }

@@ -198,20 +198,20 @@ E2E 내 기본 조작성 스모크: 시나리오 1을 키보드만으로 완주�
 - 크로스 브라우저 전수 매트릭스(Firefox는 스모크 수동 1회만), 시각 회귀 스냅샷 인프라, 부하 테스트, 엔진 property-based testing(골든+계약 테스트로 충분).
 - 하니스(`harness/`)에서 제외하는 자동화는 **UI Playwright E2E와 visual regression뿐**이다. §4의 순수 G2 schema/holdout/slot/overlap/leakage/metric/tie/null/canonical JSON 테스트와 aggregator 경계·변조 거부·CLI·골든 테스트는 필수이며 제외 대상이 아니다.
 
-## 8. Catalog authoring / SQLite shadow
+## 8. Catalog authoring / SQLite authority
 
-`09-catalog-authoring-authority.md`의 S0~S5는 기존 제품 E2E 수를 늘리지 않고 build-time 계약 테스트로 검증한다.
+`09-catalog-authoring-authority.md`의 S0~S5 cutover proof와 S6 ongoing authority는 기존 제품 E2E 수를 늘리지 않고 build-time 계약 테스트로 검증한다.
 
 ### S0 문서 gate
 
 - [ ] `02`와 factor dictionary가 모델 candidate를 Catalog 사실·판정 권한으로 인정하지 않는다.
 - [ ] 기존 `authorizedModelPanel` 1,481행, evidence provenance, Gold 150, G2 human-not-run 경계가 legacy snapshot으로 보존된다.
-- [ ] S0~S5의 source-of-truth는 `data/source/`이고 S6은 별도 사용자 승인 전 중지한다.
+- [ ] S0~S5 당시 9개 CSV source-of-truth가 유지됐고, S6 진입은 별도 사용자 승인 기록에 결속된다.
 
-### S1 `pnpm catalog:shadow` gate
+### S1 `pnpm catalog:shadow` historical cutover gate
 
 - [ ] Node 24 LTS에서 실행하고 다른 major는 source mutation 전에 실패한다. 실제 Node/SQLite/OS/architecture는 audit metadata에만 있으며 semantic digest에는 없다.
-- [ ] `data/source/` regular file을 재귀 탐색해 현재 commit의 정확한 21-path golden을 확인하고 모든 raw SHA-256·length를 기록한다.
+- [ ] 고정 parent Git snapshot의 `data/source/` regular file을 OS temp에 복원해 정확한 21-path golden을 확인하고 모든 raw SHA-256·length를 기록한다.
 - [ ] 9개 CSV를 fatal UTF-8, first-header-only BOM 제거, strict malformed/header/열 수 검증, `trim=false` lexical cell, 1-based `sourceOrdinal`, audit-only physical `sourceLine`으로 import한다. 12개 opaque file은 raw BLOB으로 import한다.
 - [ ] SQLite `integrity_check`, close, read-only reopen을 통과한다.
 - [ ] 9개 CSV는 table column에서 export하고 12개 opaque file은 BLOB에서 export한다. BLOB/table mutation isolation probe를 통과한다.
@@ -250,3 +250,14 @@ E2E 내 기본 조작성 스모크: 시나리오 1을 키보드만으로 완주�
 - [ ] candidate-free와 maximal-candidate fresh shadow의 1,614개 judgment row·digest가 exact 동일하다. 6개 legacy registry CSV 각각의 cell mutation과 frozen row reorder는 고정 `legacy-registry-evidence-v1` gate에서 insert 전에 실패하고 table은 0행이다.
 - [ ] malformed row·중복 digest의 전체 insert는 rollback되어 0행이고, 성공 insert 직후와 close/read-only reopen 뒤 app-level validation·exact readback·identity 재계산을 통과한다.
 - [ ] source export, generated artifacts, serialized promotion registry, Gold 150 / verified 1,291 / blocked 173 / pending 0, tracked source/tree가 불변이며 임시 DB·journal/export residue가 없다. S6 authoring cutover는 수행하지 않는다.
+
+### S6 SQLite authority gate
+
+- [ ] `data/source/`에는 `catalog.sqlite`와 고정 opaque Markdown 12개만 있고 삭제된 9개 CSV, journal sidecar, 다른 regular file은 없다. DB와 CSV가 함께 있으면 primary loader와 verifier가 실패한다.
+- [ ] DB는 `user_version=1`, 정확히 9개 `STRICT` rowid source table, 기준 DDL의 `CHECK`·column·type·PK를 가지며 view·trigger가 없다. `integrity_check`, FK check, close/read-only reopen을 통과한다.
+- [ ] direct SQLite loader로 Catalog validate/build, promotion registry와 frozen check를 실행해 cutover 전 generated artifact bytes, Gold 150 / verified 1,291 / blocked 173 / pending 0, 1,614개 judgment와 digest를 보존한다.
+- [ ] `catalog:authority:verify-cutover`가 parent `2b3cd10523b15ad131871e2f3bb202494119133d`의 9개 Git CSV blob과 lexical tuple·row count·canonical projection byte parity를 증명한다. 이 고정 proof와 `catalog:shadow`는 ongoing authoring CI가 아니다.
+- [ ] legitimate write는 candidate DB의 `BEGIN IMMEDIATE` 전체 교체·검증·commit·read-only exact readback 뒤에만 원자적으로 publish한다. 실패 probe는 기존 canonical DB bytes와 opaque files를 보존하고 temp DB·CSV·sidecar를 제거한다.
+- [ ] model-derived public writer는 root I/O 전에 계속 실패하며 candidate provider·model·attempt·순서·수·confidence·citation 변화가 accepted fact, promotion 결과, `judgmentInputDigest`, `decisionDigest`를 바꾸지 않는다.
+- [ ] 제품 runtime bundle과 server route는 SQLite를 import/open하지 않고 생성된 정적 JSON과 순수 TypeScript만 사용한다.
+- [ ] Node 24 LTS에서 typecheck, lint, unit tests, authority verify, Catalog validate/build, product build가 통과하고 generated artifact diff와 LF/whitespace 오류가 없다.

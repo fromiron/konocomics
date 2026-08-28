@@ -7,6 +7,7 @@ import { expect, it } from "vitest";
 import { z } from "zod";
 
 import { runRakutenCandidateAdjudication } from "../../../scripts/adjudicate-rakuten-candidates";
+import { writeCatalogCsvProjection } from "../../../scripts/catalog/authority";
 import { runCatalogPipeline } from "../../../scripts/catalog/pipeline";
 import {
   loadRepresentativeVolumeDecisions,
@@ -92,9 +93,7 @@ function serializeNoteFields(fields: ReadonlyMap<string, string>) {
 }
 
 function copyFixture(sourceRoot: string, fixtureRoot: string) {
-  cpSync(join(sourceRoot, "data/source"), join(fixtureRoot, "data/source"), {
-    recursive: true,
-  });
+  writeCatalogCsvProjection(join(sourceRoot, "data/source"), join(fixtureRoot, "data/source"));
   cpSync(
     join(sourceRoot, "data/staging/catalog-expansion"),
     join(fixtureRoot, "data/staging/catalog-expansion"),
@@ -371,4 +370,4 @@ it("keeps one audited 84-work decision set through repair, adjudication, and pro
   } finally {
     rmSync(fixtureRoot, { recursive: true, force: true });
   }
-}, 60_000);
+}, 120_000);

@@ -15,6 +15,13 @@ import { parse } from "csv-parse/sync";
 import { z } from "zod";
 
 import { runCatalogPipeline } from "./catalog/pipeline";
+import {
+  CATALOG_DATABASE_FILE,
+  catalogSourceSnapshotDigest,
+  finalizeCatalogAuthorityProjection,
+  sha256,
+  writeCatalogCsvProjection,
+} from "./catalog/authority";
 import { formatSourceIssue, hasErrors } from "./catalog/report";
 import { runPromotionRegistry } from "./build-promotion-registry";
 import { publishDirectorySet } from "./promote-g2-catalog";
@@ -205,7 +212,7 @@ function validateRepair(root: string) {
     );
   }
   validateCatalogExpansion(loadCatalogExpansion(join(root, STAGING_DIRECTORY)));
-  if (existsSync(join(root, PROMOTION_REGISTRY_FILE))) runPromotionRegistry("check", root);
+  if (existsSync(join(root, PROMOTION_REGISTRY_FILE))) runPromotionRegistry("check", root, "csv");
 }
 
 function prepareRepair(root: string, repairs: readonly CanonicalRepair[]) {
@@ -362,7 +369,7 @@ function prepareRepair(root: string, repairs: readonly CanonicalRepair[]) {
   return { removedRows, rewrittenRows: repairs.length * 2 };
 }
 
-export function repairCatalogExpansionCanonical(
+function repairCatalogExpansionCanonicalFromCsv(
   mode: RepairMode = "dry-run",
   root = process.cwd(),
 ) {
@@ -427,6 +434,77 @@ export function repairCatalogExpansionCanonical(
       changedFiles,
       pairCount: pendingRepairs.length,
       ...counts,
+    };
+  } finally {
+    rmSync(temporaryRoot, { recursive: true, force: true });
+  }
+}
+
+export function repairCatalogExpansionCanonical(
+  mode: RepairMode = "dry-run",
+  root = process.cwd(),
+) {
+  const resolvedRoot = resolve(root);
+  const sourceDirectory = join(resolvedRoot, SOURCE_DIRECTORY);
+  if (!existsSync(join(sourceDirectory, CATALOG_DATABASE_FILE))) {
+    return repairCatalogExpansionCanonicalFromCsv(mode, resolvedRoot);
+  }
+
+  const sourceSnapshot = catalogSourceSnapshotDigest(sourceDirectory);
+  const stagingDirectory = join(resolvedRoot, STAGING_DIRECTORY);
+  const stagingSnapshot = new Map(
+    csvFiles(stagingDirectory).map((path) => [
+      relative(stagingDirectory, path),
+      sha256(readFileSync(path)),
+    ]),
+  );
+  const temporaryRoot = mkdtempSync(join(resolvedRoot, ".catalog-canonical-authority-"));
+  try {
+    writeCatalogCsvProjection(sourceDirectory, join(temporaryRoot, SOURCE_DIRECTORY));
+    cpSync(stagingDirectory, join(temporaryRoot, STAGING_DIRECTORY), { recursive: true });
+    const result = repairCatalogExpansionCanonicalFromCsv(mode, temporaryRoot);
+    if (mode === "apply" && !result.alreadyApplied) {
+      const candidateSource = join(temporaryRoot, SOURCE_DIRECTORY);
+      finalizeCatalogAuthorityProjection(sourceDirectory, candidateSource);
+      const currentStaging = new Map(
+        csvFiles(stagingDirectory).map((path) => [
+          relative(stagingDirectory, path),
+          sha256(readFileSync(path)),
+        ]),
+      );
+      if (
+        catalogSourceSnapshotDigest(sourceDirectory) !== sourceSnapshot ||
+        currentStaging.size !== stagingSnapshot.size ||
+        [...stagingSnapshot].some(([path, digest]) => currentStaging.get(path) !== digest)
+      ) {
+        throw new Error("Concurrent catalog source or staging change detected");
+      }
+      const stagingFiles = result.changedFiles.filter((path) =>
+        path.startsWith(`${STAGING_DIRECTORY}/`),
+      );
+      const swaps = [
+        {
+          candidate: candidateSource,
+          output: sourceDirectory,
+          backup: join(temporaryRoot, "backups", SOURCE_DIRECTORY),
+        },
+        ...stagingFiles.map((path) => ({
+          candidate: join(temporaryRoot, path),
+          output: join(resolvedRoot, path),
+          backup: join(temporaryRoot, "backups", path),
+        })),
+      ];
+      for (const swap of swaps) mkdirSync(dirname(swap.backup), { recursive: true });
+      publishDirectorySet(swaps);
+    }
+    return {
+      ...result,
+      changedFiles: result.changedFiles.some((path) => path.startsWith(`${SOURCE_DIRECTORY}/`))
+        ? [
+            `${SOURCE_DIRECTORY}/${CATALOG_DATABASE_FILE}`,
+            ...result.changedFiles.filter((path) => path.startsWith(`${STAGING_DIRECTORY}/`)),
+          ]
+        : result.changedFiles,
     };
   } finally {
     rmSync(temporaryRoot, { recursive: true, force: true });

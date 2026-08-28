@@ -10,11 +10,11 @@ import {
   calculateAxisValueRanges,
   calculateWorkCoverage,
 } from "../src/domain/catalog/coverage";
-import { runCatalogPipeline } from "./catalog/pipeline";
+import { runCatalogPipelineFromAuthority } from "./catalog/pipeline";
 import { formatSourceIssue, hasErrors } from "./catalog/report";
 
 const sourceDirectory = resolve(process.cwd(), "data/source");
-const { catalog, issues } = runCatalogPipeline(sourceDirectory);
+const { catalog, issues } = runCatalogPipelineFromAuthority(sourceDirectory);
 
 for (const validationIssue of issues) {
   console.log(formatSourceIssue(validationIssue));

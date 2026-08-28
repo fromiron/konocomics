@@ -2,11 +2,11 @@ import { resolve } from "node:path";
 
 import { normalizeTitle } from "../src/domain/catalog/normalize";
 import { evaluateGroupingCandidate } from "../src/domain/catalog/grouping";
-import { loadCatalogSource } from "./catalog/load-source";
+import { loadCatalogAuthority } from "./catalog/load-source";
 import { formatSourceIssue, hasErrors } from "./catalog/report";
 
 const sourceDirectory = resolve(process.cwd(), "data/source");
-const loaded = loadCatalogSource(sourceDirectory);
+const loaded = loadCatalogAuthority(sourceDirectory);
 
 for (const validationIssue of loaded.issues) {
   console.log(formatSourceIssue(validationIssue));

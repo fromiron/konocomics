@@ -1,4 +1,12 @@
-import { cpSync, mkdtempSync, readFileSync, renameSync, rmSync, writeFileSync } from "node:fs";
+import {
+  cpSync,
+  existsSync,
+  mkdtempSync,
+  readFileSync,
+  renameSync,
+  rmSync,
+  writeFileSync,
+} from "node:fs";
 import { tmpdir } from "node:os";
 import { join, resolve } from "node:path";
 
@@ -22,6 +30,7 @@ import {
 } from "./build-promotion-registry";
 import { loadCatalogSource } from "./catalog/load-source";
 import { assertLegacyModelWriteMode } from "./catalog/candidate-quarantine";
+import { CATALOG_DATABASE_FILE, withCatalogCsvProjection } from "./catalog/authority";
 import { runCatalogPipeline } from "./catalog/pipeline";
 import { compareCodeUnit } from "./catalog/promotion-judgment";
 import { formatSourceIssue } from "./catalog/report";
@@ -282,15 +291,13 @@ function validateRows(rows: AdjudicationRow[], frozen: FrozenRow[]) {
   });
 }
 
-export function runCommunityAdjudicationBatch(
+function runCommunityAdjudicationBatchFromSource(
   batchId: string,
   mode: "check" | "write",
-  root = process.cwd(),
+  canonicalRoot: string,
+  sourceRoot: string,
 ) {
-  assertLegacyModelWriteMode(mode);
   if (!/^batch-\d{3}$/u.test(batchId)) throw new Error("Batch ID must match batch-NNN");
-  const canonicalRoot = resolve(root);
-  const sourceRoot = join(canonicalRoot, "data/source");
   const batchRoot = join(canonicalRoot, "data/staging/catalog-expansion/batches", batchId);
   const frozen = readMatrix(join(batchRoot, "frozen-work-set.csv"), FROZEN_HEADERS);
   const reviewed = validateRows(
@@ -500,6 +507,21 @@ export function runCommunityAdjudicationBatch(
     for (const [path, content] of outputs) atomicWrite(path, content);
   }
   return { batchId, verified: verified.length, pending: pending.length };
+}
+
+export function runCommunityAdjudicationBatch(
+  batchId: string,
+  mode: "check" | "write",
+  root = process.cwd(),
+) {
+  assertLegacyModelWriteMode(mode);
+  const canonicalRoot = resolve(root);
+  const sourceRoot = join(canonicalRoot, "data/source");
+  return existsSync(join(sourceRoot, CATALOG_DATABASE_FILE))
+    ? withCatalogCsvProjection(sourceRoot, (projected) =>
+        runCommunityAdjudicationBatchFromSource(batchId, mode, canonicalRoot, projected),
+      )
+    : runCommunityAdjudicationBatchFromSource(batchId, mode, canonicalRoot, sourceRoot);
 }
 
 const [modeArgument, batchArgument] = process.argv.slice(2);

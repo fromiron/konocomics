@@ -28,9 +28,16 @@ import { runBatch002Promotion } from "../../../scripts/promote-batch-002";
 import { promoteG2Catalog } from "../../../scripts/promote-g2-catalog";
 import { runPilotPromotion } from "../../../scripts/promote-pilot-001";
 
-const schemaPath = fileURLToPath(
-  new URL("../../../scripts/sql/catalog-shadow/001-init.sql", import.meta.url),
+const authoritySchemaPath = fileURLToPath(
+  new URL("../../../scripts/sql/catalog-authority/001-init.sql", import.meta.url),
 );
+const proofSchemaPath = fileURLToPath(
+  new URL("../../../scripts/sql/catalog-shadow/002-proof.sql", import.meta.url),
+);
+const schemaSql = `${readFileSync(authoritySchemaPath, "utf8")}\n${readFileSync(
+  proofSchemaPath,
+  "utf8",
+)}`;
 
 describe("catalog SQLite shadow adapter", () => {
   it("rejects non-24 runtimes without using runtime metadata in semantic digests", () => {
@@ -93,7 +100,7 @@ describe("catalog SQLite shadow adapter", () => {
   it("rejects malformed candidates and every model-derived authoring writer before I/O", () => {
     const database = new DatabaseSync(":memory:");
     database.exec("PRAGMA foreign_keys = ON");
-    database.exec(readFileSync(schemaPath, "utf8"));
+    database.exec(schemaSql);
     database
       .prepare(
         `INSERT INTO source_import (
@@ -173,7 +180,7 @@ describe("catalog SQLite shadow adapter", () => {
 
   it("enforces the motionImpact notApplicable rule in SQLite", () => {
     const database = new DatabaseSync(":memory:");
-    database.exec(readFileSync(schemaPath, "utf8"));
+    database.exec(schemaSql);
     const insert = database.prepare(
       `INSERT INTO fact_resolution (
         fact_key, state, value_type, lexical_value, authority_kind,

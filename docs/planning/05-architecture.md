@@ -16,13 +16,13 @@
 | Validation | Zod v4 | Catalog·API 응답·Import 전 경계 검증 |
 | Local DB | Dexie + dexie-react-hooks | IndexedDB + `useLiveQuery` 반응성 |
 | Local Search | Fuse.js | Catalog 검색(온보딩·Library) |
-| Catalog Build | tsx + csv-parse | CSV→zod→JSON 파이프라인 |
-| Catalog Shadow | Node 24 `node:sqlite` | OS 임시 import/export parity gate. 제품 build 입력이 아님. `09` 참조 |
+| Catalog Build | Node 24 `node:sqlite` + tsx + Zod | tracked SQLite→zod→정적 JSON 파이프라인 |
+| Catalog Cutover Proof | `node:sqlite` + csv-parse | OS 임시 CSV projection/shadow의 일회성 이관 parity gate. `09` 참조 |
 | Test | Vitest / Testing Library / Playwright | `07` 참조 |
 | Hosting | Vercel Git Integration + TanStack Start Nitro output | `main` Production + 브랜치·PR별 Preview 배포 |
 | PWA | manifest 우선, service worker adapter는 framework migration 뒤 별도 결정 | 현재 local-first·offline 경계를 보존하고 Next 전용 adapter를 이식하지 않음 |
 
-**의도적으로 없는 것:** TanStack Query(단일 프록시 + 기존 provider cache로 충분) / Zustand(지속=Dexie, 일시=React state) / 제품 runtime·서버 DB·Auth / i18n 라이브러리(중앙 문자열 테이블) / 분석 SDK / React Bits·Embla·Swiper·NumberFlow·AutoAnimate(`01` V2~V6) / theme switcher / NDL 연동(DEFER). `09`의 SQLite는 OS 임시 디렉터리에서만 쓰는 빌드 타임 shadow다.
+**의도적으로 없는 것:** TanStack Query(단일 프록시 + 기존 provider cache로 충분) / Zustand(지속=Dexie, 일시=React state) / 제품 runtime·서버 DB·Auth / i18n 라이브러리(중앙 문자열 테이블) / 분석 SDK / React Bits·Embla·Swiper·NumberFlow·AutoAnimate(`01` V2~V6) / theme switcher / NDL 연동(DEFER). `09`의 tracked SQLite는 빌드 타임 Catalog authority일 뿐 제품 runtime이나 server DB가 아니다.
 
 ### 1.1 Vercel 배포 계약
 
@@ -45,7 +45,7 @@ Rakuten 계약 검토일(2026-08-14): [Rakuten Books Book Search API 2017-04-04]
 
 ```text
 [빌드 타임 - 제품]                       [런타임 - 브라우저]
-data/source/** (S0~S5 권한 원천)          root: catalogVersion+전체 workIds+profileWorkIds만 직렬화
+data/source/catalog.sqlite (S6 권한 원천) root: catalogVersion+전체 workIds+profileWorkIds만 직렬화
    │  scripts/normalize-works.ts             ├→ landing: 소형 showcase projection
    │  scripts/validate-catalog.ts            ├→ route-scoped bundled Catalog: 온보딩·DNA·Library·Catalog 상세
    │  scripts/build-catalog.ts               └→ /recommendations: content-addressed public Catalog fetch
@@ -63,9 +63,9 @@ data/generated/catalog-v1.json                  Recommendation Engine (순수 �
                                            userWorks / externalWorks / profile /
                                            onboardingDraft / recommendationCache / meta
 
-[빌드 타임 - 병렬 shadow gate, 제품 build 입력 아님]
-data/source/** → OS 임시 SQLite → 격리 export → 기존 loader/validator/builder parity → 폐기
-                 (`catalog:shadow`; source를 덮어쓰지 않음)
+[빌드 타임 - cutover proof/legacy 호환, ongoing 제품 build 입력 아님]
+고정 parent Git CSV snapshot → OS 임시 shadow → S0~S5 cutoff parity → 폐기
+                              (`catalog:shadow`; canonical source를 덮어쓰지 않음)
 [런타임 - TanStack Start server route(유일)]
 /api/rakuten/search|item  ← 브라우저 fetch
    │ zod로 쿼리 검증 → Rakuten Books API 호출(App ID·Access Key 서버 보관)
@@ -100,9 +100,9 @@ deterministic Markdown 집계 리포트(stdout 또는 reports/local/)
 
 | 데이터 | 원천 | 변환 | 소유 계층 | 저장 |
 |---|---|---|---|---|
-| Work metadata | `data/source/`의 권한 사실과 legacy snapshot | CSV→zod 검증→byte-identical bundled/public JSON + 소형 identity/landing projection | 빌드 스크립트 | route-scoped 번들 + content-addressed 정적 자산 |
+| Work metadata | `data/source/catalog.sqlite`의 9개 `STRICT` source table + 12개 opaque 문서 | SQLite→zod 검증→bundled/public JSON + 소형 identity/landing projection | 빌드 스크립트 | route-scoped 번들 + content-addressed 정적 자산 |
 | Model candidate | source 밖 격리 artifact | 진단만; resolution·promotion 입력에서 제외 | 로컬 authoring 도구 | runtime·source에 저장 안 함 |
-| Legacy resolution | 고정 cutoff source manifest | Factor·present Theme·present Genre만 canonical 8-field tuple로 bootstrap | build-time SQLite shadow | OS 임시 `fact_resolution`; digest 재계산 후 폐기 |
+| Legacy resolution | 고정 S0~S5 cutoff source manifest | Factor·present Theme·present Genre만 canonical 8-field tuple로 bootstrap | one-time build-time shadow | OS 임시 `fact_resolution`; digest 재계산 후 폐기 |
 | ProviderListing | Rakuten API | 필드 축소·URL 재작성·브라우저 workId 결합·normalized ISBN in-flight 합류 | Start server route + infrastructure/rakuten | Dexie providerCache (가격·재고 24h / 기타 90일) |
 | 사용자 프로필·기록 | 사용자 입력 | UI 이벤트→도메인 타입 | features 계층 | Dexie (영구) |
 | External 작품 | Rakuten 축소 DTO | ISBN 대조→v1 canonical key/hash identity→원자적 insert/readback | domain/catalog + infrastructure/db | Dexie externalWorks |

@@ -4,7 +4,7 @@
   "private": true,
   "type": "module",
   "engines": {
-    "node": ">=22.12.0"
+    "node": ">=24.0.0 <25"
   },
   "scripts": {
     "dev": "vite dev",
@@ -13,6 +13,8 @@
     "catalog:normalize": "tsx scripts/normalize-works.ts",
     "catalog:validate": "tsx scripts/validate-catalog.ts",
     "catalog:build": "tsx scripts/build-catalog.ts",
+    "catalog:authority:verify": "node --import tsx scripts/catalog-authority.mjs verify",
+    "catalog:authority:verify-cutover": "node --import tsx scripts/catalog-authority.mjs verify-cutover",
     "catalog:shadow": "node --import tsx scripts/catalog-shadow.mjs",
     "catalog:expansion:validate": "tsx scripts/validate-catalog-expansion.ts",
     "catalog:expansion:import-dc": "tsx scripts/import-dc-monthly-comics-sheet.ts",
@@ -81,7 +83,7 @@
     "@tailwindcss/vite": "4.3.3",
     "@testing-library/dom": "^10.4.1",
     "@testing-library/react": "^16.3.2",
-    "@types/node": "^20",
+    "@types/node": "^24",
     "@types/react": "^19",
     "@types/react-dom": "^19",
     "@vitejs/plugin-react": "6.0.5",
