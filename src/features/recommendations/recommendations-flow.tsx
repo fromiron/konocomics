@@ -376,6 +376,17 @@ export function RecommendationsFlow({
     featuredEntries.find(({ entry }) => entry.workId === selectedFeaturedWorkId) ??
     featuredEntries[0] ??
     null;
+  const closeFeaturedDetail = () => {
+    if (selectedFeaturedItem === null) return;
+    const selectedWorkId = selectedFeaturedItem.entry.workId;
+    setFeaturedDetailOpen(false);
+    window.requestAnimationFrame(() => {
+      articleRefs.current
+        .get(selectedWorkId)
+        ?.querySelector<HTMLButtonElement>("[data-recommendation-detail-trigger]")
+        ?.focus();
+    });
+  };
   const resolvedExpandedFeaturedWorkId =
     expandedFeaturedWorkId === null
       ? null
@@ -1143,7 +1154,20 @@ export function RecommendationsFlow({
                 </p>
               </FeaturedRecommendationState>
             ) : (
-              <>
+              <div
+                onKeyDown={(event) => {
+                  if (
+                    event.defaultPrevented ||
+                    event.key !== "Escape" ||
+                    !featuredDetailOpen ||
+                    selectedFeaturedItem === null
+                  ) {
+                    return;
+                  }
+                  event.preventDefault();
+                  closeFeaturedDetail();
+                }}
+              >
                 <span
                   aria-hidden="true"
                   className="scroll-mt-[calc(var(--desktop-navigation-height)+var(--space-4))]"
@@ -1191,18 +1215,7 @@ export function RecommendationsFlow({
                       }
                       coverUrl={recommendationCoverUrls.get(selectedFeaturedItem.entry.workId)}
                       entry={selectedFeaturedItem.entry}
-                      onClose={() => {
-                        const selectedWorkId = selectedFeaturedItem.entry.workId;
-                        setFeaturedDetailOpen(false);
-                        window.requestAnimationFrame(() => {
-                          articleRefs.current
-                            .get(selectedWorkId)
-                            ?.querySelector<HTMLButtonElement>(
-                              "[data-recommendation-detail-trigger]",
-                            )
-                            ?.focus();
-                        });
-                      }}
+                      onClose={closeFeaturedDetail}
                       onCompleted={() =>
                         void removeForFeedback(selectedFeaturedItem.entry, "completed")
                       }
@@ -1216,7 +1229,7 @@ export function RecommendationsFlow({
                     />
                   </div>
                 ) : null}
-              </>
+              </div>
             )}
 
             <span

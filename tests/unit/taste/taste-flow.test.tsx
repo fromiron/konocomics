@@ -162,6 +162,27 @@ afterEach(() => {
 });
 
 describe("TasteFlow", () => {
+  it("shows the evidence-ranked representative five works", async () => {
+    testState.userWorks = [
+      ...testState.userWorks,
+      {
+        workId: "work-6",
+        readingState: "completed",
+        reaction: "favorite",
+        updatedAt: "2026-08-13T00:00:00.000Z",
+      },
+    ];
+
+    render(<TasteFlow />);
+
+    const anchorRegion = await screen.findByRole("region", { name: "好みを代表する5作品" });
+    expect(
+      within(anchorRegion)
+        .getAllByRole("link")
+        .map((link) => link.querySelector("strong")?.textContent),
+    ).toEqual(["作品6", "作品1", "作品2", "作品3", "作品4"]);
+  });
+
   it("renders cached Rakuten covers for positive anchor works", async () => {
     const catalog = testState.catalog as ReturnType<typeof createTestCatalog>;
     const work = catalog.works[0]!;
@@ -292,7 +313,7 @@ describe("TasteFlow", () => {
     expect(radar.querySelector(".sr-only")?.textContent).toContain("描き込みの密度：ほどほど");
     expect(within(radar).queryByText("全体平均")).toBeNull();
     expect(radar.querySelector(".taste-radar__value-dot")).toBeTruthy();
-    const anchorRegion = screen.getByRole("region", { name: "選んだマンガ" });
+    const anchorRegion = screen.getByRole("region", { name: "好みを代表する5作品" });
     expect(within(anchorRegion).queryByRole("img")).toBeNull();
     expect(anchorRegion.querySelectorAll("li > a")).toHaveLength(5);
     expect(anchorRegion.querySelector("li > .visually-hidden")).toBeNull();

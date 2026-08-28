@@ -627,6 +627,15 @@ describe("RecommendationsFlow", () => {
           ?.getAttribute("data-personalized-recommendation-detail"),
       ).toBe(secondWorkId);
     });
+
+    const closeButton = screen.getByRole("button", { name: "おすすめ詳細を閉じる" });
+    closeButton.focus();
+    fireEvent.keyDown(closeButton, { key: "Escape" });
+    await waitFor(() => {
+      expect(container.querySelector("[data-personalized-recommendation-detail]")).toBeNull();
+      expect(secondSelect.getAttribute("aria-expanded")).toBe("false");
+      expect(document.activeElement).toBe(secondSelect);
+    });
   });
 
   it("unlocks cover resolution from the first recommendation visible after genre filtering", async () => {

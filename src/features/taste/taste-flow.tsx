@@ -777,10 +777,22 @@ export function TasteFlow({
     () => summarizeMangaDna(catalog.works, profileRecords),
     [catalog.works, profileRecords],
   );
-  const anchors = useMemo(
-    () => positiveAnchorWorks(profileRecords, worksById).slice(0, 5),
-    [profileRecords, worksById],
-  );
+  const anchors = useMemo(() => {
+    const positiveWorks = positiveAnchorWorks(profileRecords, worksById);
+    const positiveWorksById = new Map(positiveWorks.map((work) => [work.id, work] as const));
+    const seen = new Set<string>();
+    return [
+      ...summary.topPreferences.flatMap((preference) => preference.anchorWorkIds),
+      ...positiveWorks.map((work) => work.id),
+    ]
+      .flatMap((workId): Work[] => {
+        const work = positiveWorksById.get(workId);
+        if (work === undefined || seen.has(workId)) return [];
+        seen.add(workId);
+        return [work];
+      })
+      .slice(0, 5);
+  }, [profileRecords, summary.topPreferences, worksById]);
   const anchorEvidenceLabels = useMemo(() => {
     const labels = new Map<string, string>();
     for (const preference of summary.topPreferences) {

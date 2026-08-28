@@ -545,7 +545,7 @@ export const tasteStrings = {
     normal: "ふつう",
     low: "低め(データ収集中)",
   },
-  anchorsHeading: "選んだマンガ",
+  anchorsHeading: "好みを代表する5作品",
   radarHeading: "好みの分布",
   radarPending: "確認できる好みの軸を分析しています。",
   radarAxisSummary: (label: string, value: string) => `${label}：${value}`,
