@@ -1,75 +1,93 @@
-<div align="center">
+<p align="center">
+  <a href="https://konocomics.vercel.app">
+    <img src="./docs/assets/readme/konocomics-hero.webp" alt="Open konocomics — Manga DNA and recommendation reasons" width="1600" />
+  </a>
+</p>
 
-# konocomics
+<h1 align="center">konocomics</h1>
 
-**Know your manga taste. Find the next work that fits it.**
+<p align="center"><strong>Know your manga taste. Find your next read—with reasons.</strong></p>
 
-A local-first web app for Japanese manga taste analysis and explainable recommendations.
+<p align="center">
+  A local-first web app that turns the manga you liked into a 17-axis Manga DNA profile and explainable recommendations.
+</p>
 
-[Live app](https://konocomics.vercel.app)
+<p align="center">
+  <a href="https://konocomics.vercel.app"><strong>Open the app</strong></a>
+  · <a href="#how-it-works">How it works</a>
+  · <a href="#run-locally">Run locally</a>
+</p>
 
-</div>
+<p align="center">
+  <strong>English</strong> · <a href="./README.ko.md">한국어</a> · <a href="./README.ja.md">日本語</a>
+</p>
 
-## Overview
+<p align="center"><sub><strong>kono</strong> + <strong>mi</strong> = konomi (好み, “taste”). The product is hidden in the name.</sub></p>
 
-konocomics turns a reader's preferences into a structured **Manga DNA** profile and recommends works from a curated catalog. Recommendation scores and explanations are deterministic: the product does not call an LLM at runtime and does not invent reasons that are absent from the scoring evidence.
+## Why konocomics is different
 
-The app is designed around three constraints:
+### Taste beyond genre
 
-- **Explainable recommendations** — recommendation copy is generated only from measured factor contributions.
-- **Unknown is not dislike** — missing factor data is excluded from scoring rather than treated as a negative preference.
-- **Local-first ownership** — profiles, library state, feedback, and imported external works stay in IndexedDB and can be exported or deleted by the user.
+Manga DNA models narrative, pace, relationships, tone, mental load, and art across **17 observable axes**.
 
-## Product capabilities
+### Reasons with provenance
 
-- Guided taste onboarding and a reusable 17-axis preference profile
-- Ranked recommendations with factor-level contribution explanations
-- Bundled catalog of 150 curated manga works
-- Catalog and external-work detail pages with stable URL contracts
-- Rakuten Books search and item lookup through server-only proxy routes
-- Local library, reading state, preference feedback, and backfill behavior
-- Versioned export/import and complete local-data deletion
-- Keyboard-accessible, responsive dark-only interface
-- Deterministic catalog validation and recommendation experiment tooling
+Every recommendation sentence is derived from the scoring engine's returned factor contributions. A runtime LLM does not choose the rank or write the reason.
 
-## Architecture
+### Local by default
+
+Profiles, reading records, feedback, and settings stay in **IndexedDB**. There is no account or server-side product database.
+
+## How it works
+
+1. **Choose 5–10 manga you enjoyed.** Optionally add up to three works you disliked or dropped, together with the reason.
+2. **Read and tune your Manga DNA.** See the strongest factors, their supporting works, and how each factor affects recommendations.
+3. **Explore 10 ranked candidates.** Open the reasons, save a work to your library, or tell the engine what did not fit.
+
+The interface is currently Japanese. This README is available in English, Korean, and Japanese.
+
+## The recommendation contract
+
+The ranking rules are product contracts, not hidden heuristics:
+
+- **Unknown is not dislike.** An unknown factor never becomes a negative preference. Low-coverage groups contract toward neutral `0.5`; their weight is not reassigned elsewhere.
+- **Multiple tastes stay distinct.** Best Positive Anchor matching avoids flattening every liked work into one average vector.
+- **Taste leads the rank.** Fixed factor-group weights determine taste fit. Market signals are used only to break close ties.
+- **Reasons come from evidence.** Explanations and cautions are built only from the selected work's contribution ledger and supporting anchors.
+- **Same input, same result.** Recommendation and explanation code is pure and deterministic: no clock, randomness, I/O, or runtime model call inside the domain layer.
+
+The factor vocabulary is explicit: **10 genres, 22 themes, and 17 axes**, each with known, unknown, and not-applicable states.
+
+## Catalog and architecture
+
+The current generated catalog contains **1,614 works**: **1,441 recommendation-eligible** works and **173 library-only** records. Eligibility is explicit, so a work can live in the library without silently entering taste analysis.
 
 ```text
-routes
-  └─ features
-       ├─ domain            # deterministic recommendation and profile logic
-       └─ infrastructure    # IndexedDB, Rakuten boundary, import/export
+data/source/catalog.sqlite → validation → static JSON → browser
+browser IndexedDB → profiles, library, feedback, settings
+Rakuten Books API → /api/rakuten/search | /api/rakuten/item → browser
 ```
 
-The browser owns the product state. The only server boundaries are:
+The tracked SQLite catalog is a **build-time authority**, not a runtime user database. The browser owns personal state. The only runtime server routes validate and reduce Rakuten Books search and item responses while keeping provider credentials server-side.
 
-```text
-/api/rakuten/search
-/api/rakuten/item
-```
+Key contracts:
 
-Bundled work detail pages are prerendered. External works use a fixed client-resolved shell and remain local to the user's browser.
+- [Product specification](./docs/planning/02-product-spec.md)
+- [Factor dictionary](./docs/factors/factor-dictionary.md)
+- [Architecture](./docs/planning/05-architecture.md)
+- [Catalog authoring authority](./docs/planning/09-catalog-authoring-authority.md)
+- [UX screen contracts](./docs/planning/03-ux-screen-contracts.md)
 
-## Tech stack
+## Run locally
 
-- **Application:** TanStack Start, TanStack Router, React 19, TypeScript, Vite
-- **UI:** Tailwind CSS 4, Base UI primitives, Motion, Lucide
-- **Local data:** Dexie / IndexedDB
-- **Validation and search:** Zod, Fuse.js
-- **Testing:** Vitest, Testing Library, Playwright
-- **Deployment target:** Vercel
-
-## Development
-
-Requires Node.js 24 LTS and pnpm 10.
+Requires **Node.js 24** and **pnpm 10**.
 
 ```bash
 pnpm install
-cp .env.example .env.local
 pnpm dev
 ```
 
-Rakuten-backed search requires the server-side values documented in `.env.example`. The local profile, bundled catalog, recommendation engine, and library do not require a remote database.
+The bundled catalog, Manga DNA, recommendations, and local library work without a remote database. To enable Rakuten-backed search and item lookup, copy `.env.example` to `.env.local` and provide the documented server-only values.
 
 ### Quality gates
 
@@ -83,20 +101,6 @@ pnpm catalog:authority:verify
 pnpm catalog:validate
 ```
 
-Catalog and experiment utilities are also available through the `catalog:*`, `experiment:*`, and `g2:*` scripts in `package.json`.
+## Stack
 
-## Recommendation contract
-
-The scoring model, factor dictionary, unknown-data behavior, and explanation provenance are treated as versioned product contracts. The current model uses:
-
-- 17 observable preference axes
-- explicit known / unknown factor coverage
-- deterministic similarity and contribution calculations
-- explanations derived only from returned contribution evidence
-- no runtime generative model in ranking or explanation generation
-
-The product documents and validates changes to these contracts before changing generated catalog data or recommendation snapshots.
-
-## Privacy
-
-konocomics has no account system and no product database. Personal taste data and library state are stored locally in the browser. Rakuten credentials remain server-side and are not included in the client bundle.
+TanStack Start · TanStack Router · React 19 · TypeScript · Tailwind CSS 4 · Base UI · Motion · Dexie · Zod · Fuse.js · Vitest · Playwright
