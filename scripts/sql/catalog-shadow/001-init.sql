@@ -183,7 +183,7 @@ CREATE TABLE fact_resolution (
   lexical_value TEXT NOT NULL,
   authority_kind TEXT NOT NULL CHECK (authority_kind = 'legacySnapshot'),
   authority_artifact_digest TEXT NOT NULL CHECK (
-    authority_artifact_digest = '6a79d82878a75a5acd7f8e20e54bcaf8208c123ac08db89f2d707b899208431f'
+    authority_artifact_digest = 'adf3f21c1be5ce6cb5691bd97cb4a03dc1bfd828c76697445621c9bf12171542'
     AND length(authority_artifact_digest) = 64
     AND authority_artifact_digest NOT GLOB '*[^0-9a-f]*'
   ),

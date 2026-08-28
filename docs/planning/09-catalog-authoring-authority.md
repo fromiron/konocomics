@@ -105,7 +105,7 @@ S4 canonical encoding은 다음과 같다.
 | 존재하는 Theme | `accepted` | `integer` | 원본 lexical `1|2` |
 | 존재하는 Genre membership | `accepted` | `boolean` | `true` |
 
-Factor `notApplicable`은 Factor Dictionary v1의 조건부 축인 `motionImpact`에만 허용하며 다른 Axis와의 조합은 첫 resolution insert 전에 거부한다. 모든 legacy tuple은 `authorityKind=legacySnapshot`, `authorityArtifactDigest=6a79d82878a75a5acd7f8e20e54bcaf8208c123ac08db89f2d707b899208431f`, `citationSetDigest=4f53cda18c2baa0c0354bb5f9a3ecbe5ed12ab4d8e11ba873c2f11161202b945`(`SHA-256(JSON.stringify([]))`), `reasonCode=LEGACY_SNAPSHOT_CUTOFF`를 쓴다. cutoff baseline commit은 `b8463b31ff58332fee8762dccb733ac902982cea`다.
+Factor `notApplicable`은 Factor Dictionary v1의 조건부 축인 `motionImpact`에만 허용하며 다른 Axis와의 조합은 첫 resolution insert 전에 거부한다. 모든 legacy tuple은 `authorityKind=legacySnapshot`, `authorityArtifactDigest=adf3f21c1be5ce6cb5691bd97cb4a03dc1bfd828c76697445621c9bf12171542`, `citationSetDigest=4f53cda18c2baa0c0354bb5f9a3ecbe5ed12ab4d8e11ba873c2f11161202b945`(`SHA-256(JSON.stringify([]))`), `reasonCode=LEGACY_SNAPSHOT_CUTOFF`를 쓴다. cutoff baseline commit은 `b8463b31ff58332fee8762dccb733ac902982cea`다.
 
 Bootstrap은 `source_import`의 저장값만 신뢰하지 않는다. 첫 insert 직전에 현재 SQLite의 `source_*` lexical row와 opaque `source_file` BLOB에서 source manifest를 다시 계산하고, 재계산값·저장된 manifest·고정 cutoff manifest 및 저장된 baseline commit·고정 cutoff commit이 모두 일치해야 한다. `fact_resolution`은 하나의 `STRICT` table만 두며 비어 있지 않으면 교체하지 않고 실패한다. 두 resolution digest는 저장된 8-field tuple에서 매번 재계산하고 별도 digest cache table을 두지 않는다.
 

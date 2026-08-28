@@ -8,7 +8,7 @@ import { factorSourceRowSchema, themeSourceRowSchema } from "./source-schema";
 
 export const LEGACY_CUTOFF_BASELINE_COMMIT = "b8463b31ff58332fee8762dccb733ac902982cea";
 export const LEGACY_CUTOFF_SOURCE_MANIFEST =
-  "6a79d82878a75a5acd7f8e20e54bcaf8208c123ac08db89f2d707b899208431f";
+  "adf3f21c1be5ce6cb5691bd97cb4a03dc1bfd828c76697445621c9bf12171542";
 export const EMPTY_CITATION_SET_DIGEST =
   "4f53cda18c2baa0c0354bb5f9a3ecbe5ed12ab4d8e11ba873c2f11161202b945";
 export const LEGACY_SNAPSHOT_REASON = "LEGACY_SNAPSHOT_CUTOFF";
