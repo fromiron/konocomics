@@ -47,6 +47,7 @@ export type PromotionOverlayConfig = {
   terminalQaFiles?: readonly string[];
   blockerAdjudicationFile?: string;
   allowDefaultBlockers?: boolean;
+  legacyArtRequired?: boolean;
   sceneContexts: ReadonlyMap<string, string>;
   motionReferences: ReadonlyMap<string, string>;
 };
@@ -486,6 +487,7 @@ function coverageDeficiency(
 function finalOverlay(root: string, config: PromotionOverlayConfig) {
   const outputRoot = `${config.batchRoot}/final-overlay`;
   const batch = join(root, config.batchRoot);
+  const legacyArtRequired = config.legacyArtRequired === true;
   const frozen = readCsv(join(batch, "frozen-work-set.csv"));
   const frozenIds = new Set(frozen.map((row) => row.workId ?? ""));
   if (
@@ -566,6 +568,11 @@ function finalOverlay(root: string, config: PromotionOverlayConfig) {
       if (!frozenIds.has(workId))
         throw new Error(`${label} contains an out-of-batch work: ${workId}`);
     }
+  }
+  if (legacyArtRequired && preflight.size !== config.targetWorkCount) {
+    throw new Error(
+      `Art preflight must contain exactly the ${String(config.targetWorkCount)} frozen works`,
+    );
   }
   if ([...preflight.keys()].some((workId) => !frozenIds.has(workId))) {
     throw new Error("Art preflight contains an out-of-batch work");
@@ -658,6 +665,7 @@ function finalOverlay(root: string, config: PromotionOverlayConfig) {
     if (
       sourceWork === undefined ||
       registryRow === undefined ||
+      (legacyArtRequired && artSource === undefined) ||
       primary === undefined ||
       registryRow.plannedBatch !== config.batchId ||
       registryRow.safetyStatus !== "safe" ||
@@ -731,6 +739,7 @@ function finalOverlay(root: string, config: PromotionOverlayConfig) {
     const deficiencies = [
       ...coverageDeficiency("Narrative", narrative, COVERAGE_THRESHOLDS.narrative),
       ...coverageDeficiency("Tone", tone, COVERAGE_THRESHOLDS.tone),
+      ...(legacyArtRequired ? coverageDeficiency("Art", art, COVERAGE_THRESHOLDS.art) : []),
       ...(workGenres.length === 0 ? ["Genre 0"] : []),
       ...(workThemes.length === 0 ? ["Theme 0"] : []),
     ];
@@ -742,7 +751,7 @@ function finalOverlay(root: string, config: PromotionOverlayConfig) {
           )}. Unknown is not a low value and no value was filled to meet a quota.${config.allowDefaultBlockers === true ? " Art is optional and was not used as a blocker." : ""}`;
     let blockerRecords: CsvRow[] = [];
     if (deficiencies.length > 0) {
-      const source = primarySources.get(workId);
+      const source = legacyArtRequired && art.ratio < COVERAGE_THRESHOLDS.art ? artSource : primary;
       if (source === undefined) throw new Error(`Blocker evidence is missing: ${workId}`);
       const publication = evidencePublishedAt(
         source.publishedAt ?? "",
@@ -750,6 +759,11 @@ function finalOverlay(root: string, config: PromotionOverlayConfig) {
         workId,
       );
       const recheck = [
+        ...(legacyArtRequired && art.ratio < COVERAGE_THRESHOLDS.art
+          ? [
+              "Provide an edition-mapped official internal preview with at least 6 readable pages, 2 scene contexts, and Local Codex plus Gemini pixel quorum",
+            ]
+          : []),
         ...(narrative.ratio < COVERAGE_THRESHOLDS.narrative
           ? [
               "Provide direct entry-range evidence for enough remaining Narrative axes to reach the frozen coverage threshold",
@@ -897,7 +911,7 @@ function finalOverlay(root: string, config: PromotionOverlayConfig) {
       extractorVersion: `${config.batchId}-text-overlay-v1`,
       reviewedByHuman: "false",
       confidence: String(Math.min(...claimConfidences)),
-      notes: `reviewedByHuman=false; primary source lead/index=${primary.sourceName}; source published=${primary.publishedAt}; retrieved=${primary.retrievedAt}; the sourceUrl is a research lead/index and is not asserted as the sole support for every Axis or Theme. Supporting official, annotation, review, and adjudication packets are immutably bound under final-overlay-validation.json inputBindings; combined input/review packet SHA-256=${bindings.combinedSha256}. Official-first entry-range research, independent Pass B, and Local Codex Pass C were combined claim by claim. Repeated bounded independent community observations may support text or Art claims only where recorded; selection provenance was not reused as Factor evidence.`,
+      notes: `reviewedByHuman=false; primary source lead/index=${primary.sourceName}; source published=${primary.publishedAt}; retrieved=${primary.retrievedAt}; the sourceUrl is a research lead/index and is not asserted as the sole support for every Axis or Theme. Supporting official, annotation, review, and adjudication packets are immutably bound under final-overlay-validation.json inputBindings; combined input/review packet SHA-256=${bindings.combinedSha256}. Official-first entry-range research, independent Pass B, and Local Codex Pass C were combined claim by claim. ${legacyArtRequired ? "Multiple independent user observations were supplemental only where recorded" : "Repeated bounded independent community observations may support text or Art claims only where recorded"}; selection provenance was not reused as Factor evidence.`,
     });
 
     const sortedArt = [...workArt].sort(
@@ -1032,7 +1046,11 @@ function finalOverlay(root: string, config: PromotionOverlayConfig) {
     recommendationContext.length !== verifiedIds.length ||
     evidence.length !== verifiedIds.length + artManifest.length ||
     JSON.stringify(blockerWorkIds) !== JSON.stringify(blockedIds) ||
-    blockedIds.length + verifiedIds.length + pendingIds.length !== config.targetWorkCount
+    blockedIds.length + verifiedIds.length + pendingIds.length !== config.targetWorkCount ||
+    (legacyArtRequired &&
+      (artManifest.length !== verifiedIds.length * ART_AXIS_IDS.length ||
+        evidence.length !== verifiedIds.length * 5 ||
+        pendingIds.length !== 0))
   ) {
     throw new Error(`${config.batchLabel} overlay cardinality or canonical order is invalid`);
   }
@@ -1080,24 +1098,35 @@ function finalOverlay(root: string, config: PromotionOverlayConfig) {
   }
   const validation = `${JSON.stringify(
     {
-      schemaVersion: 3,
+      schemaVersion: legacyArtRequired ? 2 : 3,
       batchId: config.batchId,
       reviewedByHuman: false,
       humanValidation: "NOT_RUN",
       targetWorkCount: config.targetWorkCount,
       recommendationVerified: verifiedIds.length,
       promotionBlocked: blockedIds.length,
-      pending: pendingIds.length,
+      ...(legacyArtRequired ? {} : { pending: pendingIds.length }),
       expectedVerifiedPositions: config.expectedVerifiedPositions,
-      promotionCoverageThresholds: {
-        narrative: COVERAGE_THRESHOLDS.narrative,
-        tone: COVERAGE_THRESHOLDS.tone,
-        denominator: "known+unknown; notApplicable excluded",
-      },
-      scoringCoverageThresholds: {
-        art: COVERAGE_THRESHOLDS.art,
-        effect: "neutral shrink only; not a promotion gate",
-      },
+      ...(legacyArtRequired
+        ? {
+            coverageThresholds: {
+              narrative: COVERAGE_THRESHOLDS.narrative,
+              tone: COVERAGE_THRESHOLDS.tone,
+              art: COVERAGE_THRESHOLDS.art,
+              denominator: "known+unknown; notApplicable excluded",
+            },
+          }
+        : {
+            promotionCoverageThresholds: {
+              narrative: COVERAGE_THRESHOLDS.narrative,
+              tone: COVERAGE_THRESHOLDS.tone,
+              denominator: "known+unknown; notApplicable excluded",
+            },
+            scoringCoverageThresholds: {
+              art: COVERAGE_THRESHOLDS.art,
+              effect: "neutral shrink only; not a promotion gate",
+            },
+          }),
       inputBindings: bindings,
       known: {
         text: factors.filter(

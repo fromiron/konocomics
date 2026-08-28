@@ -45,6 +45,18 @@ describe("Pilot 001 raw CSV promotion", () => {
         allowedCurrentMatchCounts: [1],
       }),
     ).toBe('id,value\nkeep,"line 1\nline 2"\ntarget,new\ntail,unchanged\n');
+
+    const alreadyApplied =
+      "id,value\nkeep,one\ntarget-a,approved-a\nmiddle,two\ntarget-b,approved-b\ntail,three\n";
+    expect(
+      mergeRawCsv({
+        current: alreadyApplied,
+        overlay: "id,value\ntarget-a,approved-a\ntarget-b,approved-b\n",
+        headers: ["id", "value"],
+        matches: (row) => row[0]?.startsWith("target-") ?? false,
+        allowedCurrentMatchCounts: [2],
+      }),
+    ).toBe(alreadyApplied);
   });
 
   it("rejects a pre-existing approved ID with different bytes", () => {
@@ -148,6 +160,27 @@ describe("Pilot 001 raw CSV promotion", () => {
       const prepared = preparePilotPromotion(root);
       expect(prepared.state).toBe("exactlyApplied");
       rmSync(prepared.temporaryRoot, { recursive: true, force: true });
+
+      const legacyReview = join(
+        root,
+        "data/staging/catalog-expansion/pilots/pilot-001/reviews/art-salvage-four/eleven-gemini-counted.log",
+      );
+      writeFileSync(legacyReview, "not the frozen diagnostic log\n", "utf8");
+      expect(() => preparePilotPromotion(root)).toThrow(
+        "Model-panel review hash mismatch: data/staging/catalog-expansion/pilots/pilot-001/reviews/art-salvage-four/eleven-gemini-counted.log",
+      );
+      rmSync(legacyReview);
+
+      const requiredReview = join(
+        root,
+        "data/staging/catalog-expansion/pilots/pilot-001/reviews/art-barakamon-pass-c-adjudication.md",
+      );
+      const requiredReviewBytes = readFileSync(requiredReview);
+      rmSync(requiredReview);
+      expect(() => preparePilotPromotion(root)).toThrow(
+        "Model-panel review is missing: data/staging/catalog-expansion/pilots/pilot-001/reviews/art-barakamon-pass-c-adjudication.md",
+      );
+      writeFileSync(requiredReview, requiredReviewBytes);
 
       const baseline = getPilotPublishDigests(root);
       const drift = join(root, "data/source/.pilot-test-drift");

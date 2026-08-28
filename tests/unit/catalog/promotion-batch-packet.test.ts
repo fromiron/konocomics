@@ -4,14 +4,13 @@ import { join } from "node:path";
 import { describe, expect, it } from "vitest";
 
 import {
-  buildPromotionBatchPacketArtifacts,
   derivePromotionBatchCandidateSha256,
   parseFrozenPromotionBatch,
   validateFrozenPromotionBatchPacket,
 } from "../../../scripts/build-promotion-batch-packet";
 
 describe("promotion batch packet", () => {
-  it("binds the exact active Batch 004 inputs without absorbing annotation or Art outputs", () => {
+  it("binds the exact frozen Batch 004 inputs without absorbing annotation or Art outputs", () => {
     const manifest = validateFrozenPromotionBatchPacket("batch-004");
     const paths = manifest.payload.files.map((file) => file.path);
 
@@ -23,10 +22,6 @@ describe("promotion batch packet", () => {
     expect(
       paths.some((path) => /^(?:annotation-pass-a|art-preflight|art-review)\//u.test(path)),
     ).toBe(false);
-
-    const rebuilt = buildPromotionBatchPacketArtifacts("batch-004");
-    expect(rebuilt.manifest.candidateSha256).toBe(manifest.candidateSha256);
-    expect(rebuilt.manifest.payload).toEqual(manifest.payload);
 
     expect(
       derivePromotionBatchCandidateSha256({

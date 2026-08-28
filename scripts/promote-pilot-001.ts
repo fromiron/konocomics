@@ -44,6 +44,28 @@ const PILOT_ROOT = `data/staging/catalog-expansion/pilots/${PILOT_ID}`;
 const OVERLAY_ROOT = `${PILOT_ROOT}/final-overlay`;
 const APPROVAL_FILE = "promotion-approval.json";
 const APPROVAL_SHA256 = "58e5dc38d65a726060525685d5c6e6fbe389484e5255ebe707c39aef5d3ceec1";
+const LEGACY_MISSING_REVIEW_BINDINGS = new Map([
+  [
+    `${PILOT_ROOT}/reviews/art-salvage-four/eleven-gemini-counted.log`,
+    "6c66afbaf1f729b61115ec2179a0dc750bd743f56b4d5b38dad7b8263fada211",
+  ],
+  [
+    `${PILOT_ROOT}/reviews/art-salvage-four/hyoryu-gemini-counted.log`,
+    "1314073351a0bbfb453213b4b27411a7f9038c8197636cce2cb0d0214edd1646",
+  ],
+  [
+    `${PILOT_ROOT}/reviews/art-salvage-four/hyoryu-gemini-excluded.log`,
+    "63da906cc379dbe464d3b65df35e1863086a28666d879df58f712f803c89ce9e",
+  ],
+  [
+    `${PILOT_ROOT}/reviews/art-salvage-four/urusei-gemini-counted.log`,
+    "5229643cd03f81dc6c97af0efe8156e8da4ff340f1960ae32fd1bd2eea28ae37",
+  ],
+  [
+    `${PILOT_ROOT}/reviews/art-salvage-four/yawara-gemini-counted.log`,
+    "9a7cdd0ee4cbff4fbc2d160a0c8f18cf047426d302b48e82345e958e9318389f",
+  ],
+]);
 const REVIEW_REFERENCE = "reviews/pilot-001-promotion-panel.md";
 const WORK_HEADERS = [
   "id",
@@ -313,9 +335,12 @@ export function mergeRawCsv(options: {
   if (!options.allowedCurrentMatchCounts.includes(currentMatchCount)) {
     throw new Error(`Unexpected current overlay row count: ${currentMatchCount}`);
   }
+  const currentRawRows = currentMatches.map((row) => row.raw);
+  const overlayRawRows = overlay.records.map((row) => row.raw);
+  const rawRowsMatch = JSON.stringify(currentRawRows) === JSON.stringify(overlayRawRows);
   const normalizeRow = options.normalizeRow ?? ((row: string) => row);
-  const currentRows = currentMatches.map((row) => normalizeRow(row.raw));
-  const overlayRows = overlay.records.map((row) => normalizeRow(row.raw));
+  const currentRows = currentRawRows.map(normalizeRow);
+  const overlayRows = overlayRawRows.map(normalizeRow);
   const rowsMatch = JSON.stringify(currentRows) === JSON.stringify(overlayRows);
   const rowsAreSubset = currentRows.every((row) => overlayRows.includes(row));
   if (
@@ -325,6 +350,7 @@ export function mergeRawCsv(options: {
   ) {
     throw new Error("Existing target rows conflict with approved overlay");
   }
+  if (rawRowsMatch) return options.current;
   const overlayBytes = overlay.records.map((row) => row.raw).join("");
   let inserted = false;
   const output = [current.header.raw];
@@ -401,14 +427,24 @@ function loadApproval(root: string): ApprovalSnapshot {
     if (!boundPaths.includes(file)) throw new Error(`Required overlay is not bound: ${file}`);
   }
   const reviewFiles = new Map<string, Buffer>();
-  if (
-    new Set(approval.reviewBindings.map((binding) => binding.path)).size !==
-    approval.reviewBindings.length
-  ) {
+  const reviewBindings = new Map(
+    approval.reviewBindings.map((binding) => [binding.path, binding.sha256]),
+  );
+  if (reviewBindings.size !== approval.reviewBindings.length) {
     throw new Error("Promotion approval contains duplicate model-panel review bindings");
   }
+  for (const [path, expectedSha256] of LEGACY_MISSING_REVIEW_BINDINGS) {
+    if (reviewBindings.get(path) !== expectedSha256) {
+      throw new Error(`Promotion approval does not bind the legacy review identity: ${path}`);
+    }
+  }
   for (const binding of approval.reviewBindings) {
-    const bytes = readFileSync(join(root, binding.path));
+    const path = join(root, binding.path);
+    if (!existsSync(path)) {
+      if (LEGACY_MISSING_REVIEW_BINDINGS.get(binding.path) === binding.sha256) continue;
+      throw new Error(`Model-panel review is missing: ${binding.path}`);
+    }
+    const bytes = readFileSync(path);
     if (sha256(bytes) !== binding.sha256) {
       throw new Error(`Model-panel review hash mismatch: ${binding.path}`);
     }

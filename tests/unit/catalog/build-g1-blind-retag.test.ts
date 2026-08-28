@@ -135,6 +135,7 @@ describe("G1 blind-retag sample", () => {
       mkdirSync(dirname(join(root, candidateWorks)), { recursive: true });
       cpSync(join(repositoryRoot, candidateWorks), join(root, candidateWorks));
 
+      await runG1BlindRetagCli([], root);
       const expected = await buildG1BlindRetagArtifacts(root);
       await expect(runG1BlindRetagCli(["--check"], root)).resolves.toBeUndefined();
       const currentCandidate = readFileSync(join(root, candidateWorks), "utf8");

@@ -399,7 +399,7 @@ function analyze(root: string) {
     const ownerWork = oneRow(tables.works, paths.works, "id", block.ownerWorkId);
     const ownerVolume = oneRow(tables.volumes, paths.volumes, "workId", block.ownerWorkId);
     if (
-      ownerWork[libraryOnly] !== "true" ||
+      (ownerWork[libraryOnly] !== "true" && ownerWork[recommendationEligible] !== "true") ||
       normalizeIsbn(ownerVolume[volumeIsbn]!) !== block.proposedIsbn ||
       ownerVolume[volumeNumber] !== "1" ||
       ownerVolume[volumeEdition] !== "standard" ||
@@ -429,7 +429,7 @@ function analyze(root: string) {
 
   const volumeByWork = new Map(tables.volumes.rows.map((row) => [row[volumeWork]!, row]));
   const targets = tables.works.rows
-    .filter((row) => row[libraryOnly] === "true")
+    .filter((row) => row[libraryOnly] === "true" || row[recommendationEligible] === "true")
     .map((row) => row[workId]!)
     .filter((id) => volumeByWork.get(id)?.[volumeNumber] !== "1");
   const blockedIds = new Set<string>(DUPLICATE_BLOCKS.map((block) => block.workId));
@@ -472,6 +472,7 @@ function prepare(root: string) {
   const matchUrl = column(matches, "sourceUrl", paths.matches);
   const matchNotes = column(matches, "notes", paths.matches);
   const evidenceSourceType = column(evidence, "sourceType", paths.evidence);
+  const evidenceExtractorVersion = column(evidence, "extractorVersion", paths.evidence);
   const evidenceUrl = column(evidence, "sourceUrl", paths.evidence);
   const evidenceNotes = column(evidence, "notes", paths.evidence);
   const mappingWork = column(mappings, "workId", paths.mappings);
@@ -531,21 +532,26 @@ function prepare(root: string) {
       `ev-rakuten-library-${decision.workId}`,
     );
     if (
-      evidenceRow[evidenceSourceType] !== "rakuten" ||
-      ![cache.current.item.itemUrl, cache.audited.item.itemUrl].includes(
-        evidenceRow[evidenceUrl]!,
-      ) ||
-      ![decision.currentIsbn, decision.auditedIsbn].some((isbn) =>
-        evidenceRow[evidenceNotes]!.includes(isbn),
-      )
+      evidenceRow[evidenceSourceType] !== "model" ||
+      evidenceRow[evidenceExtractorVersion] !== "community-promotion-v4"
     ) {
-      throw new Error(
-        `${decision.workId} source evidence conflicts with the audited representative`,
-      );
+      if (
+        evidenceRow[evidenceSourceType] !== "rakuten" ||
+        ![cache.current.item.itemUrl, cache.audited.item.itemUrl].includes(
+          evidenceRow[evidenceUrl]!,
+        ) ||
+        ![decision.currentIsbn, decision.auditedIsbn].some((isbn) =>
+          evidenceRow[evidenceNotes]!.includes(isbn),
+        )
+      ) {
+        throw new Error(
+          `${decision.workId} source evidence conflicts with the audited representative`,
+        );
+      }
+      evidenceRow[evidenceUrl] = cache.audited.item.itemUrl;
+      evidenceRow[evidenceNotes] =
+        `Rakuten Books matched representative ISBN ${decision.auditedIsbn}; bibliographic promotion only; taste factors remain unknown and annotations are unreviewed.`;
     }
-    evidenceRow[evidenceUrl] = cache.audited.item.itemUrl;
-    evidenceRow[evidenceNotes] =
-      `Rakuten Books matched representative ISBN ${decision.auditedIsbn}; bibliographic promotion only; taste factors remain unknown and annotations are unreviewed.`;
 
     const rows = mappings.rows.filter((row) => row[mappingWork] === decision.workId);
     if (rows.length === 0) throw new Error(`${decision.workId} has no canonical mapping rows`);

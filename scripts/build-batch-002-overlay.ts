@@ -70,6 +70,7 @@ const batch002Config: PromotionOverlayConfig = {
   reviewReference: "reviews/batch-002-promotion-panel.md",
   reviewedAt: "2026-08-23T00:00:00+09:00",
   targetWorkCount: 50,
+  legacyArtRequired: true,
   expectedVerifiedPositions: [
     2, 3, 4, 6, 9, 10, 12, 13, 15, 17, 18, 20, 22, 24, 25, 26, 28, 29, 32, 33, 35, 36, 37, 38, 39,
     40, 41, 42, 43, 44, 45, 46, 48,

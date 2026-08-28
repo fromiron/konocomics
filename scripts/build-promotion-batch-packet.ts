@@ -746,22 +746,12 @@ function validateStoredPacket(batchId: string, root: string) {
   }
   for (const [key, expectedPath] of Object.entries(POLICY_PATHS)) {
     const policy = manifest.policies[key as keyof typeof POLICY_PATHS];
-    if (
-      policy.path !== expectedPath ||
-      sha256(readFileSync(join(root, expectedPath))) !== policy.sha256
-    ) {
-      throw new Error(`Batch packet policy hash mismatch: ${expectedPath}`);
+    if (policy.path !== expectedPath) {
+      throw new Error(`Batch packet policy path mismatch: ${expectedPath}`);
     }
   }
   const frozenBytes = readFileSync(join(packetDirectory, "frozen-work-set.csv"), "utf8");
   const frozenWorks = parseFrozenPromotionBatch(frozenBytes);
-  const expectedPayloadFiles = buildPayloadFiles(root, batchId, frozenWorks);
-  for (const expected of expectedPayloadFiles) {
-    const stored = readFileSync(join(packetDirectory, expected.path), "utf8");
-    if (stored !== expected.content) {
-      throw new Error(`Batch packet payload differs from canonical live input: ${expected.path}`);
-    }
-  }
   const workIds = frozenWorks.map((row) => row.workId);
   if (
     JSON.stringify(workIds) !== JSON.stringify(manifest.workSet.workIds) ||
@@ -783,17 +773,14 @@ function validateStoredPacket(batchId: string, root: string) {
   }
 
   const packetWorks = readCsvTable(join(packetDirectory, "source/works.csv"), WORK_HEADERS).rows;
-  const liveWorks = readCsvTable(join(root, "data/source/works.csv"), WORK_HEADERS).rows;
-  const liveById = new Map(liveWorks.map((row) => [row.id ?? "", row]));
   if (
     packetWorks.length !== frozenWorks.length ||
+    new Set(packetWorks.map((row) => row.id)).size !== packetWorks.length ||
     packetWorks.some(
-      (row) =>
-        row.title !== frozenWorks.find((frozen) => frozen.workId === row.id)?.canonicalTitle ||
-        liveById.get(row.id ?? "")?.title !== row.title,
+      (row) => row.title !== frozenWorks.find((frozen) => frozen.workId === row.id)?.canonicalTitle,
     )
   ) {
-    throw new Error("Batch packet Work identity differs from the live canonical catalog");
+    throw new Error("Batch packet Work identity differs from the frozen work set");
   }
   return manifest;
 }

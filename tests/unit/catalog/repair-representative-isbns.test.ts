@@ -171,13 +171,18 @@ function restorePreRepairProjection(root: string) {
     setCell(tables.volumes, volume, "releaseDate", dates.releaseDate);
 
     const evidence = oneRow(tables.evidence, "id", `ev-rakuten-library-${decision.workId}`);
-    setCell(tables.evidence, evidence, "sourceUrl", resolved.current.item.itemUrl);
-    setCell(
-      tables.evidence,
-      evidence,
-      "notes",
-      `Rakuten Books matched representative ISBN ${decision.currentIsbn}; bibliographic promotion only; taste factors remain unknown and annotations are unreviewed.`,
-    );
+    if (
+      evidence[column(tables.evidence, "sourceType")] !== "model" ||
+      evidence[column(tables.evidence, "extractorVersion")] !== "community-promotion-v4"
+    ) {
+      setCell(tables.evidence, evidence, "sourceUrl", resolved.current.item.itemUrl);
+      setCell(
+        tables.evidence,
+        evidence,
+        "notes",
+        `Rakuten Books matched representative ISBN ${decision.currentIsbn}; bibliographic promotion only; taste factors remain unknown and annotations are unreviewed.`,
+      );
+    }
 
     const match = oneRow(tables.matches, "candidateId", decision.candidateId);
     setCell(tables.matches, match, "isbn", decision.currentIsbn);
@@ -254,6 +259,18 @@ it("keeps one audited 84-work decision set through repair, adjudication, and pro
         .map((decision) => decision.workId),
     );
     const before = new Map(TARGET_FILES.map((file) => [file, readCsv(join(fixtureRoot, file))]));
+    const beforeEvidence = before.get(TARGET_FILES[2])!;
+    const beforeEvidenceId = column(beforeEvidence, "id");
+    const beforeEvidenceWorkId = column(beforeEvidence, "workId");
+    const beforeEvidenceSourceType = column(beforeEvidence, "sourceType");
+    const beforeEvidenceExtractorVersion = column(beforeEvidence, "extractorVersion");
+    const downstreamEvidenceRows = beforeEvidence.rows.filter(
+      (row) =>
+        workIds.has(row[beforeEvidenceWorkId]!) &&
+        row[beforeEvidenceSourceType] === "model" &&
+        row[beforeEvidenceExtractorVersion] === "community-promotion-v4",
+    );
+    expect(downstreamEvidenceRows).toHaveLength(71);
     const bytes = new Map(
       TARGET_FILES.map((file) => [file, readFileSync(join(fixtureRoot, file), "utf8")]),
     );
@@ -274,6 +291,10 @@ it("keeps one audited 84-work decision set through repair, adjudication, and pro
       volumeCorrections: 56,
     });
     const after = new Map(TARGET_FILES.map((file) => [file, readCsv(join(fixtureRoot, file))]));
+    const afterEvidence = after.get(TARGET_FILES[2])!;
+    for (const row of downstreamEvidenceRows) {
+      expect(oneRow(afterEvidence, "id", row[beforeEvidenceId]!)).toEqual(row);
+    }
     const candidates = readCsv(join(staging, "candidates.csv"));
     let replacementMappingRows = 0;
     for (const decision of decisions) {
@@ -335,6 +356,18 @@ it("keeps one audited 84-work decision set through repair, adjudication, and pro
     writeGeneratedArtifacts(fixtureRoot);
     const expansion = runLibraryOnlyExpansion("--check", fixtureRoot);
     expect(expansion.committedCount).toBe(expansion.expectedCount);
+
+    const corruptedEvidence = readCsv(join(fixtureRoot, TARGET_FILES[2]));
+    const corruptedRow = oneRow(
+      corruptedEvidence,
+      "id",
+      downstreamEvidenceRows[0]![beforeEvidenceId]!,
+    );
+    setCell(corruptedEvidence, corruptedRow, "extractorVersion", "community-promotion-v3");
+    writeCsv(join(fixtureRoot, TARGET_FILES[2]), corruptedEvidence);
+    expect(() => runLibraryOnlyExpansion("--check", fixtureRoot)).toThrow(
+      'sourceType ("model" !== "rakuten")',
+    );
   } finally {
     rmSync(fixtureRoot, { recursive: true, force: true });
   }

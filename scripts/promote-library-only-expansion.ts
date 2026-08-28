@@ -499,11 +499,20 @@ function assertCommittedPlan(plan: PromotionPlan, source: SourceTables) {
   ) {
     throw new Error(`Committed library-only Factor matrix changed shape: ${plan.workId}`);
   }
+  const evidenceRows = rowsFor(source.evidence, "id", plan.rows.evidence.id);
+  const evidenceSourceType = tableIndex(source.evidence, "sourceType");
+  const evidenceExtractorVersion = tableIndex(source.evidence, "extractorVersion");
+  const isCommunityPromotion =
+    evidenceRows.length === 1 &&
+    evidenceRows[0]![evidenceSourceType] === "model" &&
+    evidenceRows[0]![evidenceExtractorVersion] === "community-promotion-v4";
   assertSeedFields(
-    rowsFor(source.evidence, "id", plan.rows.evidence.id),
+    evidenceRows,
     recordToRow(EVIDENCE_HEADERS, plan.rows.evidence),
     source.evidence.headers,
-    ["id", "workId", "targetType", "targetId", "sourceType", "sourceUrl"],
+    isCommunityPromotion
+      ? ["id", "workId", "targetType", "targetId"]
+      : ["id", "workId", "targetType", "targetId", "sourceType", "sourceUrl"],
     `${plan.workId}/evidence.csv`,
   );
 }
