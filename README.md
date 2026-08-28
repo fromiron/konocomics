@@ -1,6 +1,6 @@
 <p align="center">
   <a href="https://konocomics.vercel.app">
-    <img src="./docs/assets/readme/konocomics-hero.webp" alt="Open konocomics — Manga DNA and recommendation reasons" width="1600" />
+    <img src="./docs/assets/readme/konocomics-hero.webp" alt="Open konocomics" width="1600" />
   </a>
 </p>
 
