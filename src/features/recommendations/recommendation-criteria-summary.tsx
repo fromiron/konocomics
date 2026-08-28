@@ -36,7 +36,7 @@ export function RecommendationCriteriaSummary({
     <section className="mb-[var(--space-3)] overflow-hidden rounded-[var(--radius-card)] border border-line/80 bg-surface-1">
       <header className="flex min-h-[var(--control-min-size)] min-w-0 items-center justify-between gap-[var(--space-3)] border-b border-line/80 px-[var(--space-3)] py-0">
         <div className="flex min-w-0 items-center gap-[var(--space-2)]">
-          <InfoIcon aria-hidden="true" className="size-4 shrink-0 text-accent" />
+          <InfoIcon aria-hidden="true" className="size-4 shrink-0 text-text-muted" />
           <div className="flex min-w-0 items-baseline gap-[var(--space-2)]">
             <h2 className="whitespace-nowrap text-[length:var(--font-size-16)] font-bold text-text-strong">
               {recommendationStrings.criteria.heading}
@@ -61,7 +61,7 @@ export function RecommendationCriteriaSummary({
             className="grid min-h-[var(--control-min-size)] min-w-0 grid-cols-1 items-center gap-[var(--space-2)] px-[var(--space-2)] py-0 sm:grid-cols-[auto_minmax(0,1fr)] md:px-[var(--space-4)]"
             key={label}
           >
-            <Icon aria-hidden="true" className="hidden size-4 shrink-0 text-accent sm:block" />
+            <Icon aria-hidden="true" className="hidden size-4 shrink-0 text-text-muted sm:block" />
             <div className="grid min-w-0 gap-px">
               <dt className="truncate text-[length:var(--text-caption-size)] font-medium text-text-muted">
                 {label}

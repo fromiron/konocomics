@@ -45,7 +45,7 @@ export function SettingsPanel({
           <span
             aria-hidden="true"
             className={cn(
-              "mt-[var(--space-1)] flex size-[var(--control-min-size)] shrink-0 items-center justify-center rounded-[var(--radius-control)] border border-line-accent-subtle bg-accent-soft text-accent",
+              "mt-[var(--space-1)] flex size-[var(--control-min-size)] shrink-0 items-center justify-center rounded-[var(--radius-control)] border border-line bg-surface-2 text-text-muted",
               tone === "danger" && "border-line-danger bg-surface-danger-soft text-danger",
             )}
           >

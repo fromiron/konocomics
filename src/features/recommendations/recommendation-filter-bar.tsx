@@ -153,7 +153,7 @@ export function RecommendationFilterBar({
         variant="ghost"
       >
         <span className="inline-flex items-center gap-[var(--space-2)] font-bold">
-          <FilterIcon aria-hidden="true" className="size-4 text-accent" />
+          <FilterIcon aria-hidden="true" className="size-4 text-text-muted" />
           {recommendationStrings.filters.heading}
         </span>
         <span className="inline-flex items-center gap-[var(--space-2)] text-[length:var(--text-caption-size)] text-text-muted">
@@ -176,10 +176,10 @@ export function RecommendationFilterBar({
         id="recommendation-filter-controls"
       >
         <div className="hidden min-h-[var(--control-min-size)] items-center gap-[var(--space-2)] whitespace-nowrap border-r border-line/80 px-[var(--space-4)] text-[length:var(--font-size-14)] font-bold text-text-strong md:flex">
-          <FilterIcon aria-hidden="true" className="size-4 text-accent" />
+          <FilterIcon aria-hidden="true" className="size-4 text-text-muted" />
           <span>{recommendationStrings.filters.heading}</span>
         </div>
-        <div className="grid grid-cols-2 border-b border-line/80 md:grid-cols-[minmax(0,1fr)_minmax(0,1.2fr)_auto] md:border-r md:border-b-0">
+        <div className="grid grid-cols-2 border-b border-line/80 md:grid-cols-2 md:border-r md:border-b-0">
           <FilterMenu
             disabled={disabled}
             label={recommendationStrings.filters.genre}
@@ -194,12 +194,6 @@ export function RecommendationFilterBar({
             options={shelfOptions}
             value={shelf}
           />
-          <div className="hidden min-w-0 content-center gap-px px-[var(--space-3)] text-[length:var(--font-size-12)] leading-tight text-text-muted md:grid">
-            <span>{recommendationStrings.filters.sort}</span>
-            <span className="font-bold text-text-strong">
-              {recommendationStrings.filters.recommended}
-            </span>
-          </div>
         </div>
         <fieldset className="m-0 min-w-0 border-0 border-b border-line/80 px-[var(--space-3)] py-0 md:border-r md:border-b-0">
           <legend className="mb-[var(--space-content-tight)] p-0 text-[length:var(--font-size-12)] font-bold text-text-strong md:sr-only">

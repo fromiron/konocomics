@@ -5,7 +5,6 @@ import { type Ref } from "react";
 import { CoverImage } from "@/components/cover/CoverImage";
 import { Button } from "@/components/design-system/button";
 import { ExpandableMediaCard } from "@/components/media/expandable-media-card";
-import { HeroBackdrop } from "@/components/media/hero-backdrop";
 import { ConfidenceLabel } from "@/components/media/recommendation-evidence";
 import { StateActionRow } from "@/components/media/state-action-row";
 import type { Work } from "@/domain/catalog/types";
@@ -120,7 +119,7 @@ function RecommendationCardCopy({
         </p>
       ) : (
         <p
-          className="hidden line-clamp-2 border-l-2 border-accent/70 pl-[var(--space-2)] text-[length:var(--font-size-12)] font-medium leading-[1.45] text-text-strong [@media(min-width:768px)_and_(hover:hover)_and_(pointer:fine)]:group-data-[expanded]/card:block"
+          className="hidden line-clamp-2 border-l-2 border-line pl-[var(--space-2)] text-[length:var(--font-size-12)] font-medium leading-[1.45] text-text-strong [@media(min-width:768px)_and_(hover:hover)_and_(pointer:fine)]:group-data-[expanded]/card:block"
           data-contribution-summary={serializeContributionSummary(leadReason)}
           data-recommendation-evidence-summary
         >
@@ -275,118 +274,113 @@ export function RecommendationDetailPanel({
   return (
     <section
       aria-labelledby="personalized-recommendation-detail-title"
-      className="relative isolate hidden overflow-hidden rounded-[var(--radius-card)] border border-line-accent bg-surface-1 [@media(min-width:768px)_and_(hover:hover)_and_(pointer:fine)]:block"
+      className="relative isolate hidden overflow-hidden rounded-[var(--radius-card)] border border-line bg-surface-1 [@media(min-width:768px)_and_(hover:hover)_and_(pointer:fine)]:block"
       data-personalized-recommendation-detail={work.id}
       id="personalized-recommendation-detail"
     >
-      <HeroBackdrop
-        className="min-h-[calc(var(--control-min-size)*4.5)] [&>img]:opacity-80 [&>img]:blur-[var(--space-2)] [&>span:first-of-type]:opacity-55"
-        coverUrl={coverUrl}
-      >
-        <div className="relative grid min-h-[calc(var(--control-min-size)*4.5)] grid-cols-[8rem_minmax(13rem,1.15fr)_minmax(13rem,1fr)]">
-          <Button
-            aria-label={recommendationStrings.showcase.close}
-            className="absolute top-[var(--space-2)] right-[var(--space-2)] z-30 rounded-[var(--radius-pill)] border border-line bg-canvas/75 hover:bg-surface-2"
-            onClick={onClose}
-            size="icon"
-            type="button"
-            variant="ghost"
-          >
-            <XIcon aria-hidden="true" className="size-4" />
-          </Button>
+      <div className="relative grid min-h-[calc(var(--control-min-size)*4.5)] grid-cols-[8rem_minmax(13rem,1.15fr)_minmax(13rem,1fr)]">
+        <Button
+          aria-label={recommendationStrings.showcase.close}
+          className="absolute top-[var(--space-2)] right-[var(--space-2)] z-30 rounded-[var(--radius-pill)] border border-line bg-surface-1 hover:bg-surface-2"
+          onClick={onClose}
+          size="icon"
+          type="button"
+          variant="ghost"
+        >
+          <XIcon aria-hidden="true" className="size-4" />
+        </Button>
 
-          <div className="grid place-items-center border-r border-line/80 bg-canvas/55 p-[var(--space-3)]">
-            <CoverImage
-              className="w-24 max-w-24 aspect-[30/43] overflow-hidden rounded-[var(--radius-cover)] border border-line shadow-[var(--shadow-level-1)]"
-              coverUrl={coverUrl}
-              creators={work.creators}
-              requestedSize={400}
-              title={work.title}
-            />
-          </div>
-
-          <div className="grid min-w-0 content-center gap-[var(--space-2)] border-r border-line/80 bg-canvas/78 p-[var(--space-4)]">
-            <p className="line-clamp-1 text-[length:var(--text-caption-size)] text-text-muted">
-              {coverStrings.creatorLine(work.creators)}
-              <span aria-hidden="true"> · </span>
-              {recommendationStrings.workStatus[work.status]}
-              <span aria-hidden="true"> · </span>
-              {recommendationStrings.volumeCount(volumeCount)}
-            </p>
-            <Link
-              className="w-fit text-[length:var(--font-size-22)] leading-tight font-black text-text-strong hover:text-accent focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-focus-ring"
-              id="personalized-recommendation-detail-title"
-              params={{ workId: work.id }}
-              preload={false}
-              to="/works/$workId"
-            >
-              {work.title}
-            </Link>
-            <ConfidenceLabel
-              label={explanation.confidence.label}
-              prefix={recommendationStrings.confidenceHeading}
-            />
-            <p
-              className="line-clamp-2 text-[length:var(--font-size-14)] leading-[1.5] font-medium text-text"
-              data-contribution-summary={
-                leadReason === undefined ? undefined : serializeContributionSummary(leadReason)
-              }
-            >
-              {leadReason?.text ?? recommendationStrings.reasonUnavailable}
-            </p>
-            <StateActionRow
-              busy={busy}
-              className="!gap-[var(--space-content-tight)]"
-              onCompleted={onCompleted}
-              onHidden={onHidden}
-              onPlanned={onPlanned}
-              onRemovalIntent={onRemovalIntent}
-              planned={planned}
-            />
-          </div>
-
-          <div className="grid min-w-0 content-center gap-[var(--space-2)] bg-canvas/25 p-[var(--space-4)] pr-[var(--space-8)]">
-            <h3 className="text-[length:var(--font-size-14)] font-bold tracking-wide text-accent">
-              {recommendationStrings.showcase.points}
-            </h3>
-            {reasons.length === 0 ? (
-              <p className="text-[length:var(--font-size-14)] text-text-muted">
-                {recommendationStrings.reasonUnavailable}
-              </p>
-            ) : (
-              <ul className="m-0 grid list-none gap-[var(--space-content-tight)] p-0">
-                {reasons.map((reason) => (
-                  <li
-                    className="grid grid-cols-[auto_minmax(0,1fr)] items-start gap-[var(--space-2)] text-[length:var(--font-size-12)] leading-[1.45] text-text-strong"
-                    data-contribution-summary={serializeContributionSummary(reason)}
-                    data-recommendation-evidence-support
-                    key={`${reason.source}:${reason.group}:${reason.factorId}`}
-                  >
-                    <CheckIcon
-                      aria-hidden="true"
-                      className="mt-[var(--space-1)] size-3.5 shrink-0 text-accent"
-                    />
-                    <span className="line-clamp-2">{reason.text}</span>
-                  </li>
-                ))}
-              </ul>
-            )}
-            {explanation.caution === undefined ? null : (
-              <div
-                className="border-l-[length:var(--space-content-tight)] border-warn bg-surface-danger-soft px-[var(--space-3)] py-[var(--space-2)]"
-                data-recommendation-evidence-caution
-              >
-                <h4 className="text-[length:var(--font-size-12)] font-bold text-warn">
-                  {recommendationStrings.cautionHeading}
-                </h4>
-                <p className="mt-[var(--space-1)] line-clamp-2 text-[length:var(--text-caption-size)] leading-[1.4] text-text">
-                  {explanation.caution.text}
-                </p>
-              </div>
-            )}
-          </div>
+        <div className="grid place-items-center border-r border-line/80 bg-surface-1 p-[var(--space-3)]">
+          <CoverImage
+            className="w-24 max-w-24 aspect-[30/43] overflow-hidden rounded-[var(--radius-cover)] border border-line"
+            coverUrl={coverUrl}
+            creators={work.creators}
+            requestedSize={400}
+            title={work.title}
+          />
         </div>
-      </HeroBackdrop>
+
+        <div className="grid min-w-0 content-center gap-[var(--space-2)] border-r border-line/80 bg-surface-1 p-[var(--space-4)]">
+          <p className="line-clamp-1 text-[length:var(--text-caption-size)] text-text-muted">
+            {coverStrings.creatorLine(work.creators)}
+            <span aria-hidden="true"> · </span>
+            {recommendationStrings.workStatus[work.status]}
+            <span aria-hidden="true"> · </span>
+            {recommendationStrings.volumeCount(volumeCount)}
+          </p>
+          <Link
+            className="w-fit text-[length:var(--font-size-22)] leading-tight font-black text-text-strong hover:text-accent focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-focus-ring"
+            id="personalized-recommendation-detail-title"
+            params={{ workId: work.id }}
+            preload={false}
+            to="/works/$workId"
+          >
+            {work.title}
+          </Link>
+          <ConfidenceLabel
+            label={explanation.confidence.label}
+            prefix={recommendationStrings.confidenceHeading}
+          />
+          <p
+            className="line-clamp-2 text-[length:var(--font-size-14)] leading-[1.5] font-medium text-text"
+            data-contribution-summary={
+              leadReason === undefined ? undefined : serializeContributionSummary(leadReason)
+            }
+          >
+            {leadReason?.text ?? recommendationStrings.reasonUnavailable}
+          </p>
+          <StateActionRow
+            busy={busy}
+            className="!gap-[var(--space-content-tight)]"
+            onCompleted={onCompleted}
+            onHidden={onHidden}
+            onPlanned={onPlanned}
+            onRemovalIntent={onRemovalIntent}
+            planned={planned}
+          />
+        </div>
+
+        <div className="grid min-w-0 content-center gap-[var(--space-2)] bg-surface-1 p-[var(--space-4)] pr-[var(--space-8)]">
+          <h3 className="text-[length:var(--font-size-14)] font-bold tracking-wide text-text-strong">
+            {recommendationStrings.showcase.points}
+          </h3>
+          {reasons.length === 0 ? (
+            <p className="text-[length:var(--font-size-14)] text-text-muted">
+              {recommendationStrings.reasonUnavailable}
+            </p>
+          ) : (
+            <ul className="m-0 grid list-none gap-[var(--space-content-tight)] p-0">
+              {reasons.map((reason) => (
+                <li
+                  className="grid grid-cols-[auto_minmax(0,1fr)] items-start gap-[var(--space-2)] text-[length:var(--font-size-12)] leading-[1.45] text-text-strong"
+                  data-contribution-summary={serializeContributionSummary(reason)}
+                  data-recommendation-evidence-support
+                  key={`${reason.source}:${reason.group}:${reason.factorId}`}
+                >
+                  <CheckIcon
+                    aria-hidden="true"
+                    className="mt-[var(--space-1)] size-3.5 shrink-0 text-text-muted"
+                  />
+                  <span className="line-clamp-2">{reason.text}</span>
+                </li>
+              ))}
+            </ul>
+          )}
+          {explanation.caution === undefined ? null : (
+            <div
+              className="border-l-[length:var(--space-content-tight)] border-warn bg-surface-danger-soft px-[var(--space-3)] py-[var(--space-2)]"
+              data-recommendation-evidence-caution
+            >
+              <h4 className="text-[length:var(--font-size-12)] font-bold text-warn">
+                {recommendationStrings.cautionHeading}
+              </h4>
+              <p className="mt-[var(--space-1)] line-clamp-2 text-[length:var(--text-caption-size)] leading-[1.4] text-text">
+                {explanation.caution.text}
+              </p>
+            </div>
+          )}
+        </div>
+      </div>
     </section>
   );
 }

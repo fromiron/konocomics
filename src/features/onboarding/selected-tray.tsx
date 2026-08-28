@@ -99,7 +99,7 @@ export function SelectedTray({
         </div>
         <div
           className={cn(
-            "selected-tray__works flex min-h-[calc(var(--space-7)*2)] min-w-0 flex-auto items-center gap-[var(--space-content)] overflow-x-auto md:min-h-[calc(var(--space-8)*2+var(--space-1))]",
+            "selected-tray__works flex min-h-[calc(var(--space-7)*2)] min-w-0 flex-auto items-center gap-[var(--space-content)] overflow-x-auto [scrollbar-width:none] md:min-h-[calc(var(--space-8)*2+var(--space-1))] [&::-webkit-scrollbar]:hidden",
             selections.length === 0 && "overflow-x-hidden",
           )}
         >
@@ -150,7 +150,7 @@ export function SelectedTray({
                   />
                   <span
                     aria-hidden="true"
-                    className="selected-tray__remove absolute -top-1 -right-1 grid size-[22px] place-items-center rounded-full border border-line bg-surface-1 font-bold text-text-strong [&>svg]:size-4"
+                    className="selected-tray__remove absolute -top-1 -right-1 grid size-7 place-items-center rounded-full border border-line bg-surface-1 font-bold text-text-strong [&>svg]:size-4"
                   >
                     <XIcon />
                   </span>
