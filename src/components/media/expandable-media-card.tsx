@@ -67,27 +67,6 @@ function measureCover(card: HTMLElement): VisualRect | null {
   return { height: rect.height, left: rect.left, top: rect.top, width: rect.width };
 }
 
-function measurePositionParts(card: HTMLElement): PositionSnapshot[] {
-  return Array.from(card.querySelectorAll<HTMLElement>("[data-expandable-position-part]")).flatMap(
-    (element) => {
-      const rect = element.getBoundingClientRect();
-      return rect.width <= 0 || rect.height <= 0
-        ? []
-        : [
-            {
-              element,
-              rect: {
-                height: rect.height,
-                left: rect.left,
-                top: rect.top,
-                width: rect.width,
-              },
-            },
-          ];
-    },
-  );
-}
-
 function measureSiblingPositions(item: HTMLElement, track: HTMLElement): PositionSnapshot[] {
   if (track.dataset.recommendationMotion === "enabled") return [];
   return Array.from(track.children).flatMap((element) => {
@@ -180,21 +159,14 @@ function animateCover(card: HTMLElement, from: VisualRect | null) {
   if (to.width <= 0 || to.height <= 0) return null;
   const deltaX = from.left - to.left;
   const deltaY = from.top - to.top;
-  const scaleX = from.width / to.width;
-  const scaleY = from.height / to.height;
+  if (Math.abs(deltaX) < 0.5 && Math.abs(deltaY) < 0.5) return null;
   const timing = readMotionTiming(card, "--motion-duration-value", "--motion-ease-signature", {
     duration: 240,
     easing: "cubic-bezier(0.2, 0, 0, 1)",
   });
 
   return frame.animate(
-    [
-      {
-        transform: `translate(${deltaX}px, ${deltaY}px) scale(${scaleX}, ${scaleY})`,
-        transformOrigin: "top left",
-      },
-      { transform: "none", transformOrigin: "top left" },
-    ],
+    [{ transform: `translate(${deltaX}px, ${deltaY}px)` }, { transform: "none" }],
     timing,
   );
 }
@@ -225,7 +197,7 @@ function animatePositionSnapshots(
     if (!element.isConnected || typeof element.animate !== "function") return [];
     const to = element.getBoundingClientRect();
     if (to.width <= 0 || to.height <= 0) return [];
-    const deltaX = element.dataset.expandablePositionAxis === "block" ? 0 : from.left - to.left;
+    const deltaX = from.left - to.left;
     const deltaY = from.top - to.top;
     if (Math.abs(deltaX) < 0.5 && Math.abs(deltaY) < 0.5) return [];
     return [
@@ -237,13 +209,12 @@ function animatePositionSnapshots(
   });
 }
 
-function animateExpandedReveal(card: HTMLElement, side: ExpansionSide): Animation[] {
+function animateExpandedReveal(card: HTMLElement): Animation[] {
   if (prefersReducedMotion()) return [];
   const timing = readMotionTiming(card, "--motion-duration-page", "--motion-ease-direct", {
     duration: 160,
     easing: "ease-out",
   });
-  const offset = side === "right" ? -6 : 6;
 
   return Array.from(card.querySelectorAll<HTMLElement>("[data-expandable-reveal]")).flatMap(
     (element) => {
@@ -251,13 +222,11 @@ function animateExpandedReveal(card: HTMLElement, side: ExpansionSide): Animatio
       const rect = element.getBoundingClientRect();
       if (rect.width <= 0 || rect.height <= 0) return [];
       return [
-        element.animate(
-          [
-            { opacity: 0, transform: `translateX(${offset}px)` },
-            { opacity: 1, transform: "none" },
-          ],
-          { ...timing, delay: 80, fill: "backwards" },
-        ),
+        element.animate([{ opacity: 0 }, { opacity: 1 }], {
+          ...timing,
+          delay: 80,
+          fill: "backwards",
+        }),
       ];
     },
   );
@@ -312,7 +281,6 @@ export function ExpandableMediaCard({
   const coverAnimation = useRef<Animation | null>(null);
   const spatialAnimations = useRef<Animation[]>([]);
   const expansionContext = useRef<ExpansionContext | null>(null);
-  const positionSnapshots = useRef<PositionSnapshot[]>([]);
   const siblingSnapshots = useRef<PositionSnapshot[]>([]);
   const adjustedScrollLeft = useRef<number | null>(null);
   const hoverTimer = useRef<number | null>(null);
@@ -328,7 +296,6 @@ export function ExpandableMediaCard({
     collapseCoverRect.current = null;
     expansionContext.current = next.context;
     adjustedScrollLeft.current = null;
-    positionSnapshots.current = measurePositionParts(card);
     siblingSnapshots.current =
       next.context === null ? [] : measureSiblingPositions(next.context.item, next.context.track);
     setExpansionSide(next.side);
@@ -339,7 +306,6 @@ export function ExpandableMediaCard({
   const collapseCard = (card: HTMLElement) => {
     if (card.dataset.expanded !== "true") return;
     collapseCoverRect.current = measureCover(card);
-    positionSnapshots.current = measurePositionParts(card);
     const context = expansionContext.current;
     siblingSnapshots.current =
       context === null ? [] : measureSiblingPositions(context.item, context.track);
@@ -379,11 +345,9 @@ export function ExpandableMediaCard({
       coverAnimation.current = animateCover(card, context.coverRect);
       spatialAnimations.current = [
         animateArticleWidth(card, context.collapsedWidth),
-        ...animatePositionSnapshots(card, positionSnapshots.current),
         ...animatePositionSnapshots(card, siblingSnapshots.current),
-        ...animateExpandedReveal(card, context.side),
+        ...animateExpandedReveal(card),
       ].filter((animation): animation is Animation => animation !== null);
-      positionSnapshots.current = [];
       siblingSnapshots.current = [];
       return;
     }
@@ -393,12 +357,8 @@ export function ExpandableMediaCard({
     coverAnimation.current?.cancel();
     const card = context.item.querySelector<HTMLElement>("article") ?? context.item;
     coverAnimation.current = animateCover(card, collapseCoverRect.current);
-    spatialAnimations.current = [
-      ...animatePositionSnapshots(card, positionSnapshots.current),
-      ...animatePositionSnapshots(card, siblingSnapshots.current),
-    ];
+    spatialAnimations.current = [...animatePositionSnapshots(card, siblingSnapshots.current)];
     collapseCoverRect.current = null;
-    positionSnapshots.current = [];
     siblingSnapshots.current = [];
     adjustedScrollLeft.current = null;
     expansionContext.current = null;

@@ -30,8 +30,8 @@ export function StateActionRow({
     if (!busy && (event.key === "Enter" || event.key === " ")) onRemovalIntent?.();
   };
   const baseButtonClass =
-    "flex min-h-[var(--control-min-size)] min-w-0 items-center justify-center gap-[var(--space-1)] rounded-[var(--radius-cover)] border text-[length:var(--font-size-12)] font-bold";
-  const iconClassName = compact ? "size-2.5 shrink-0" : "size-4 shrink-0";
+    "flex min-h-[var(--control-min-size)] min-w-0 items-center justify-center gap-[var(--space-1)] text-[length:var(--font-size-12)] font-bold";
+  const iconClassName = "size-4 shrink-0";
   const compactLabelClassName = compact
     ? "hidden text-[length:var(--text-caption-size)] leading-tight whitespace-nowrap [@media(min-width:768px)_and_(hover:hover)_and_(pointer:fine)]:inline"
     : undefined;
@@ -40,7 +40,7 @@ export function StateActionRow({
     <div
       className={cn(
         compact
-          ? "grid grid-cols-3 items-center gap-[var(--space-content-tight)] border-t border-line/70 bg-canvas/70 p-[var(--space-content-tight)] [@media(min-width:768px)_and_(hover:hover)_and_(pointer:fine)]:grid-cols-[minmax(0,1.35fr)_minmax(0,0.9fr)_minmax(0,1.05fr)] [@media(min-width:768px)_and_(hover:hover)_and_(pointer:fine)]:gap-[var(--space-2)]"
+          ? "grid h-11 w-full grid-cols-3 items-stretch [@media(min-width:768px)_and_(hover:hover)_and_(pointer:fine)]:w-[calc(var(--control-min-size)*5.5)]"
           : "grid grid-cols-[minmax(0,1fr)_auto_auto] gap-[var(--space-2)]",
         className,
       )}
@@ -57,8 +57,8 @@ export function StateActionRow({
         className={cn(
           baseButtonClass,
           compact
-            ? "px-[var(--space-content-tight)] py-1 [@media(min-width:768px)_and_(hover:hover)_and_(pointer:fine)]:px-[var(--space-2)]"
-            : "px-[var(--space-3)] py-1.5",
+            ? "h-11 rounded-none border-0 px-[var(--space-content-tight)]"
+            : "rounded-[var(--radius-cover)] border px-[var(--space-3)] py-1.5",
           "border-accent bg-accent !text-on-accent hover:bg-accent-hover",
         )}
         busy={busy}
@@ -66,7 +66,7 @@ export function StateActionRow({
         type="button"
       >
         <BookmarkIcon aria-hidden="true" className={cn(iconClassName, planned && "fill-current")} />
-        <span className={compactLabelClassName} data-expandable-reveal={compact || undefined}>
+        <span className={compactLabelClassName}>
           {compact && planned
             ? recommendationStrings.actions.plannedConfirmation
             : recommendationStrings.actions.planned}
@@ -77,9 +77,8 @@ export function StateActionRow({
         className={cn(
           baseButtonClass,
           compact
-            ? "px-[var(--space-content-tight)] py-1 [@media(min-width:768px)_and_(hover:hover)_and_(pointer:fine)]:px-[var(--space-2)]"
-            : "px-[var(--space-3)] py-1.5",
-          "border-line/80 bg-transparent text-text-muted hover:border-line-accent-subtle hover:bg-surface-2 hover:text-text-strong",
+            ? "h-11 rounded-none border-0 bg-transparent px-[var(--space-content-tight)] text-text-muted hover:bg-transparent hover:text-text-strong"
+            : "rounded-[var(--radius-cover)] border border-line/80 px-[var(--space-3)] py-1.5 bg-transparent text-text-muted hover:border-line-accent-subtle hover:bg-surface-2 hover:text-text-strong",
         )}
         data-recommendation-action="completed"
         busy={busy}
@@ -90,21 +89,18 @@ export function StateActionRow({
         onKeyDown={prepareKeyboardRemoval}
         onPointerDown={busy ? undefined : onRemovalIntent}
         type="button"
-        variant="outline"
+        variant={compact ? "ghost" : "outline"}
       >
         <CircleCheckIcon aria-hidden="true" className={iconClassName} />
-        <span className={compactLabelClassName} data-expandable-reveal={compact || undefined}>
-          {recommendationStrings.actions.completed}
-        </span>
+        <span className={compactLabelClassName}>{recommendationStrings.actions.completed}</span>
       </Button>
       <Button
         aria-label={compact ? recommendationStrings.actions.hidden : undefined}
         className={cn(
           baseButtonClass,
           compact
-            ? "px-[var(--space-content-tight)] py-1 [@media(min-width:768px)_and_(hover:hover)_and_(pointer:fine)]:px-[var(--space-2)]"
-            : "px-[var(--space-3)] py-1.5",
-          "border-line/80 bg-transparent text-text-muted hover:border-warn hover:bg-surface-danger-soft hover:text-warn",
+            ? "h-11 rounded-none border-0 bg-transparent px-[var(--space-content-tight)] text-text-muted hover:bg-transparent hover:text-warn focus-visible:text-warn"
+            : "rounded-[var(--radius-cover)] border border-line/80 px-[var(--space-3)] py-1.5 bg-transparent text-text-muted hover:border-warn hover:bg-surface-danger-soft hover:text-warn",
         )}
         data-recommendation-action="hidden"
         busy={busy}
@@ -115,12 +111,10 @@ export function StateActionRow({
         onKeyDown={prepareKeyboardRemoval}
         onPointerDown={busy ? undefined : onRemovalIntent}
         type="button"
-        variant="outline"
+        variant={compact ? "ghost" : "outline"}
       >
         <CircleXIcon aria-hidden="true" className={iconClassName} />
-        <span className={compactLabelClassName} data-expandable-reveal={compact || undefined}>
-          {recommendationStrings.actions.hidden}
-        </span>
+        <span className={compactLabelClassName}>{recommendationStrings.actions.hidden}</span>
       </Button>
     </div>
   );

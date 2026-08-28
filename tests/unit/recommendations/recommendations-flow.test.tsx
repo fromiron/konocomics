@@ -440,6 +440,53 @@ describe("RecommendationsFlow", () => {
       "true",
     );
     expect(firstCard.querySelector(".lucide-circle-x")?.getAttribute("aria-hidden")).toBe("true");
+    const copy = firstCard.querySelector(".recommendation-card__copy");
+    expect(copy?.className).not.toContain("group-data-[expanded]/card:w-");
+    expect(copy?.className).not.toContain("group-data-[expanded]/card:p-");
+    expect(copy?.className).not.toContain("group-data-[expanded]/card:text-");
+    const coverFrame = firstCard.querySelector(".recommendation-card__cover-frame");
+    expect(coverFrame?.className).toContain("aspect-[30/43]");
+    expect(coverFrame?.className).toContain("h-full");
+    expect(coverFrame?.className).toContain("w-auto");
+    expect(coverFrame?.className).not.toContain("aspect-auto");
+    expect(coverFrame?.className).not.toContain("group-data-[expanded]/card:w-");
+    const detailTrigger = firstCard.querySelector("[data-recommendation-detail-trigger]");
+    expect(detailTrigger?.className).toContain("!text-[length:var(--text-caption-size)]");
+    expect(detailTrigger?.className).toContain("min-h-[var(--control-min-size)]");
+    expect(detailTrigger?.className).toContain(
+      "left-[calc(var(--space-7)+var(--space-3))]",
+    );
+    expect(detailTrigger?.querySelector("span")?.className).toContain("px-[var(--space-1)]");
+    expect(detailTrigger?.querySelector("span")?.className).not.toContain("px-[var(--space-2)]");
+    const plannedAction = within(firstCard).getByRole("button", { name: "読みたい" });
+    expect(plannedAction.parentElement?.className).toContain("h-11");
+    expect(plannedAction.parentElement?.className).toContain(
+      "w-[calc(var(--control-min-size)*5.5)]",
+    );
+    expect(plannedAction.parentElement?.className).not.toContain("border-t");
+    expect(plannedAction.parentElement?.className).not.toContain("bg-canvas/70");
+    expect(plannedAction.parentElement?.className).not.toContain("p-[var(--space-content-tight)]");
+    expect(firstCard.querySelector("h3")?.className).toContain("line-clamp-2");
+    expect(firstCard.querySelector("h3")?.className).toContain("min-h-[2lh]");
+    expect(firstCard.querySelector("h3")?.className).toContain(
+      "[@media(min-width:768px)_and_(hover:hover)_and_(pointer:fine)]:min-h-0",
+    );
+    const backdrop = firstCard.querySelector(".recommendation-card__backdrop");
+    expect(backdrop?.className).toContain("[&>img]:!opacity-20");
+    expect(backdrop?.className).toContain(
+      "[&>img]:![filter:blur(var(--space-12))_saturate(0.35)]",
+    );
+    expect(backdrop?.className).toContain("[&>span]:!opacity-80");
+    expect(backdrop?.className).toContain("[&>div]:!hidden");
+    expect(backdrop?.className).not.toContain("hero-blur]:opacity-70");
+    expect(backdrop?.className).not.toContain("hero-paper]:opacity-35");
+    expect(firstCard.querySelector(".lucide-bookmark")?.getAttribute("class")).toContain("size-4");
+    expect(firstCard.querySelector(".lucide-circle-check")?.getAttribute("class")).toContain(
+      "size-4",
+    );
+    expect(firstCard.querySelector(".lucide-circle-x")?.getAttribute("class")).toContain("size-4");
+    expect(within(firstCard).getByRole("button", { name: "読んだ" })).toBeTruthy();
+    expect(within(firstCard).getByRole("button", { name: "興味なし" })).toBeTruthy();
     expect(container.querySelector("main")?.getAttribute("data-recommendation-input-hash")).toBe(
       INPUT_HASH,
     );

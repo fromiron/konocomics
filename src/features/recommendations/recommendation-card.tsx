@@ -95,38 +95,33 @@ function RecommendationCardCopy({
 }>) {
   const leadReason = explanation.positiveReasons[0];
   return (
-    <div
-      className="recommendation-card__copy relative z-10 grid min-w-0 content-end gap-[var(--space-content-tight)] p-[var(--space-3)] [@media(min-width:768px)_and_(hover:hover)_and_(pointer:fine)]:h-full [@media(min-width:768px)_and_(hover:hover)_and_(pointer:fine)]:w-[70%] [@media(min-width:768px)_and_(hover:hover)_and_(pointer:fine)]:content-end [@media(min-width:768px)_and_(hover:hover)_and_(pointer:fine)]:bg-gradient-to-r [@media(min-width:768px)_and_(hover:hover)_and_(pointer:fine)]:from-canvas/85 [@media(min-width:768px)_and_(hover:hover)_and_(pointer:fine)]:via-canvas/60 [@media(min-width:768px)_and_(hover:hover)_and_(pointer:fine)]:to-transparent [@media(min-width:768px)_and_(hover:hover)_and_(pointer:fine)]:group-data-[expanded]/card:w-[54%] [@media(min-width:768px)_and_(hover:hover)_and_(pointer:fine)]:group-data-[expanded]/card:content-center [@media(min-width:768px)_and_(hover:hover)_and_(pointer:fine)]:group-data-[expanded]/card:p-[var(--space-4)]"
-      data-expandable-position-axis="block"
-      data-expandable-position-part
-    >
-      <p className="line-clamp-1 text-[length:var(--text-caption-size)] font-medium text-text-muted">
-        {recommendationStrings.workStatus[work.status]}
-        <span aria-hidden="true"> · </span>
-        {recommendationStrings.volumeCount(volumeCount)}
+    <>
+      <div className="recommendation-card__copy relative z-10 grid min-w-0 content-end gap-[var(--space-content-tight)] p-[var(--space-3)] [@media(min-width:768px)_and_(hover:hover)_and_(pointer:fine)]:h-full [@media(min-width:768px)_and_(hover:hover)_and_(pointer:fine)]:w-[calc(var(--control-min-size)*5.5-((var(--recommendation-card-height)-var(--control-min-size))*30/43))] [@media(min-width:768px)_and_(hover:hover)_and_(pointer:fine)]:content-end [@media(min-width:768px)_and_(hover:hover)_and_(pointer:fine)]:bg-gradient-to-r [@media(min-width:768px)_and_(hover:hover)_and_(pointer:fine)]:from-canvas/85 [@media(min-width:768px)_and_(hover:hover)_and_(pointer:fine)]:via-canvas/60 [@media(min-width:768px)_and_(hover:hover)_and_(pointer:fine)]:to-transparent">
+        <p className="line-clamp-1 text-[length:var(--text-caption-size)] font-medium text-text-muted">
+          {recommendationStrings.workStatus[work.status]}
+          <span aria-hidden="true"> · </span>
+          {recommendationStrings.volumeCount(volumeCount)}
+        </p>
+        <h3 className="line-clamp-2 min-h-[2lh] text-[length:var(--font-size-14)] leading-tight font-bold text-text-strong [@media(min-width:768px)_and_(hover:hover)_and_(pointer:fine)]:min-h-0">
+          {work.title}
+        </h3>
+        <ConfidenceLabel
+          className="max-w-full overflow-hidden px-[var(--space-2)] text-ellipsis"
+          label={explanation.confidence.label}
+          prefix={recommendationStrings.confidenceHeading}
+        />
+      </div>
+      <p
+        className="pointer-events-none hidden min-w-0 overflow-hidden p-[var(--space-3)] text-[length:var(--font-size-12)] leading-[1.45] text-text-strong opacity-0 [@media(min-width:768px)_and_(hover:hover)_and_(pointer:fine)]:absolute [@media(min-width:768px)_and_(hover:hover)_and_(pointer:fine)]:inset-y-0 [@media(min-width:768px)_and_(hover:hover)_and_(pointer:fine)]:left-[calc(var(--control-min-size)*5.5-((var(--recommendation-card-height)-var(--control-min-size))*30/43))] [@media(min-width:768px)_and_(hover:hover)_and_(pointer:fine)]:right-[calc((var(--recommendation-card-height)-var(--control-min-size))*30/43)] [@media(min-width:768px)_and_(hover:hover)_and_(pointer:fine)]:z-10 [@media(min-width:768px)_and_(hover:hover)_and_(pointer:fine)]:block [@media(min-width:768px)_and_(hover:hover)_and_(pointer:fine)]:line-clamp-3 [@media(min-width:768px)_and_(hover:hover)_and_(pointer:fine)]:border-l-2 [@media(min-width:768px)_and_(hover:hover)_and_(pointer:fine)]:border-line [@media(min-width:768px)_and_(hover:hover)_and_(pointer:fine)]:pl-[var(--space-2)] [@media(min-width:768px)_and_(hover:hover)_and_(pointer:fine)]:font-medium [@media(min-width:768px)_and_(hover:hover)_and_(pointer:fine)]:group-data-[expanded]/card:pointer-events-auto [@media(min-width:768px)_and_(hover:hover)_and_(pointer:fine)]:group-data-[expanded]/card:opacity-100"
+        data-contribution-summary={
+          leadReason === undefined ? undefined : serializeContributionSummary(leadReason)
+        }
+        data-expandable-reveal
+        data-recommendation-evidence-summary={leadReason === undefined ? undefined : true}
+      >
+        {leadReason?.text ?? recommendationStrings.reasonUnavailable}
       </p>
-      <h3 className="line-clamp-2 text-[length:var(--font-size-14)] leading-tight font-bold text-text-strong [@media(min-width:768px)_and_(hover:hover)_and_(pointer:fine)]:group-data-[expanded]/card:text-[length:var(--font-size-16)]">
-        {work.title}
-      </h3>
-      <ConfidenceLabel
-        className="max-w-full overflow-hidden px-[var(--space-2)] text-ellipsis"
-        label={explanation.confidence.label}
-        prefix={recommendationStrings.confidenceHeading}
-      />
-      {leadReason === undefined ? (
-        <p className="hidden line-clamp-2 border-t border-line/70 pt-[var(--space-content-tight)] text-[length:var(--font-size-12)] leading-[1.45] text-text-muted [@media(min-width:768px)_and_(hover:hover)_and_(pointer:fine)]:group-data-[expanded]/card:block">
-          {recommendationStrings.reasonUnavailable}
-        </p>
-      ) : (
-        <p
-          className="hidden line-clamp-2 border-l-2 border-line pl-[var(--space-2)] text-[length:var(--font-size-12)] font-medium leading-[1.45] text-text-strong [@media(min-width:768px)_and_(hover:hover)_and_(pointer:fine)]:group-data-[expanded]/card:block"
-          data-contribution-summary={serializeContributionSummary(leadReason)}
-          data-recommendation-evidence-summary
-        >
-          {leadReason.text}
-        </p>
-      )}
-    </div>
+    </>
   );
 }
 
@@ -182,7 +177,7 @@ export function RecommendationCard({
             to="/works/$workId"
           >
             <CoverImage
-              className="recommendation-card__backdrop pointer-events-none absolute inset-0 hidden !h-full !max-h-none !rounded-none !border-0 [@media(min-width:768px)_and_(hover:hover)_and_(pointer:fine)]:grid [&_.cover-image__hero-blur]:opacity-70 [&_.cover-image__hero-frame]:hidden [&_.cover-image__hero-paper]:opacity-35"
+              className="recommendation-card__backdrop pointer-events-none absolute inset-0 hidden !h-full !max-h-none !rounded-none !border-0 [@media(min-width:768px)_and_(hover:hover)_and_(pointer:fine)]:grid [&>img]:!opacity-20 [&>img]:![filter:blur(var(--space-12))_saturate(0.35)] [&>span]:!opacity-80 [&>div]:!hidden"
               coverUrl={coverUrl}
               creators={work.creators}
               decorative
@@ -198,7 +193,7 @@ export function RecommendationCard({
               {position}
             </span>
             <span
-              className="recommendation-card__cover-frame relative block aspect-[30/43] w-full overflow-hidden [@media(min-width:768px)_and_(hover:hover)_and_(pointer:fine)]:absolute [@media(min-width:768px)_and_(hover:hover)_and_(pointer:fine)]:inset-y-0 [@media(min-width:768px)_and_(hover:hover)_and_(pointer:fine)]:right-0 [@media(min-width:768px)_and_(hover:hover)_and_(pointer:fine)]:aspect-auto [@media(min-width:768px)_and_(hover:hover)_and_(pointer:fine)]:w-[48%] [@media(min-width:768px)_and_(hover:hover)_and_(pointer:fine)]:group-data-[expanded]/card:w-[50%]"
+              className="recommendation-card__cover-frame relative block aspect-[30/43] w-full overflow-hidden [@media(min-width:768px)_and_(hover:hover)_and_(pointer:fine)]:absolute [@media(min-width:768px)_and_(hover:hover)_and_(pointer:fine)]:inset-y-0 [@media(min-width:768px)_and_(hover:hover)_and_(pointer:fine)]:right-0 [@media(min-width:768px)_and_(hover:hover)_and_(pointer:fine)]:h-full [@media(min-width:768px)_and_(hover:hover)_and_(pointer:fine)]:w-auto"
               data-expandable-cover-frame
             >
               <CoverImage
@@ -227,13 +222,13 @@ export function RecommendationCard({
             }
             aria-expanded={selected && detailOpen}
             aria-label={recommendationStrings.showcase.select(position, work.title)}
-            className="absolute top-[var(--space-2)] left-[calc(var(--space-7)+var(--space-3))] z-30 hidden min-h-[var(--control-min-size)] border-0 bg-transparent px-0 text-[length:var(--text-caption-size)] font-bold text-accent hover:bg-transparent [@media(min-width:768px)_and_(hover:hover)_and_(pointer:fine)]:group-data-[expanded]/card:inline-flex"
+            className="absolute top-[var(--space-2)] left-[calc(var(--space-7)+var(--space-3))] z-30 hidden min-h-[var(--control-min-size)] border-0 bg-transparent px-0 !text-[length:var(--text-caption-size)] font-bold text-accent hover:bg-transparent [@media(min-width:768px)_and_(hover:hover)_and_(pointer:fine)]:group-data-[expanded]/card:inline-flex"
             data-recommendation-detail-trigger
             onClick={onSelect}
             type="button"
             variant="outline"
           >
-            <span className="rounded-[var(--radius-cover)] border border-line-accent-subtle bg-accent-soft px-[var(--space-2)] py-[var(--space-1)]">
+            <span className="rounded-[var(--radius-cover)] border border-line-accent-subtle bg-accent-soft px-[var(--space-1)] py-[var(--space-1)]">
               {recommendationStrings.reasonHeading}
             </span>
           </Button>
