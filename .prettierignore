@@ -32,7 +32,9 @@ data/staging/catalog-expansion/pilots/**/reviews/**
 data/staging/catalog-expansion/pilots/**/final-overlay/**
 data/staging/catalog-expansion/batches/**/reviews/**
 data/staging/catalog-expansion/batches/**/selection-report.md
-data/staging/catalog-expansion/batches/**/art-review/**/gemini-response-*.json
+data/staging/catalog-expansion/batches/**/art-preflight/**
+data/staging/catalog-expansion/batches/**/art-review/**
+data/staging/catalog-expansion/batches/**/research/**
 data/staging/catalog-expansion/batches/**/final-overlay/**
 src/data/generated
 src/routeTree.gen.ts

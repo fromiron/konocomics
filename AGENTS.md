@@ -34,8 +34,8 @@
 
 ## 2. 작업 절차
 
-- Catalog authoring은 `09`의 **S0~S6 순서**를 따른다. S0~S5는 `data/source/` 권한을 유지하는 shadow 작업이고, S6 권한 전환은 별도 사용자 승인 전에는 시작하지 않는다.
-- `06-implementation-plan.md`의 **M0~M10 순서를 따르고, 한 단계의 완료 기준을 끝낸 뒤 다음으로 넘어간다.** framework migration과 7화면 redesign을 하나의 대형 PR로 합치지 않는다.
+- Catalog authoring은 `09`의 **`S0~S6` 순서**를 따른다. `S0~S5`는 `data/source/` 권한을 유지하는 shadow 작업이고, `S6` 권한 전환은 별도 사용자 승인 전에는 시작하지 않는다.
+- `06-implementation-plan.md`의 **`M0~M10` 순서를 따르고, 한 단계의 완료 기준을 끝낸 뒤 다음으로 넘어간다.** framework migration과 7화면 redesign을 하나의 대형 PR로 합치지 않는다.
 - **게이트 G1(50작품 sanity)·G2(블라인드 GO/NO-GO)는 사람·데이터 작업이다.** 게이트 도달 시 멈추고 사용자에게 보고한다. G2 통과 전에 UI 슬라이스(5~)를 시작하지 않는다.
 - Model-panel evidence 검토에서 Local/Gemini/Grok CLI에는 ZIP이 아니라 canonical uncompressed directory와 exact request·complete payload ledger·root identity를 제공한다. ChatGPT.com GPT-5.6 Pro Oracle에만 같은 payload의 deterministic ZIP을 제공한다.
 - Oracle에 코드만 첨부할 때는 전역 `repomix`로 단일 context 파일을 만들고, 이미지도 필요하면 그 context와 대상 이미지를 ZIP으로 묶거나 각각 파일로 첨부한다.
@@ -74,6 +74,6 @@ pnpm --silent experiment:baseline # Taste vs Baseline CLI 비교 리포트(stdou
 - 사람 블라인드 검증은 실행하지 않았다. `humanValidation: "not-run"`, human metrics `null`, synthetic pilot human `0` / pilot `1` / verdict `INCOMPLETE` 경계를 유지한다.
 - 슬라이스 5(앱 셸·토큰·온보딩), 6(`/taste`), 7(`/recommendations`), 8(Rakuten 프록시·Catalog 작품 상세), 9(`/library`·external 작품), 10(`/settings`·Export/Import·전체 삭제·정적 랜딩)을 완료했다. 데스크톱·390×844 Playwright에서 키보드 온보딩→DNA→추천, 정책 저장·피드백 백필, Catalog/external Library 영속성, provider 장애, canonical external URL과 동시 편집 ISBN 보존, seven-store Export→삭제→Import와 손상·Catalog mismatch·pre-profile draft 분기를 검증했다.
 - Catalog 상세은 현재 모든 bundled ID를 prerender하고 unknown ID는 닫으며, external은 고정 정적 셸 `/works/external?workId=<ExternalWorkId>`에서만 client lookup한다. 기존 150작품은 추천 Gold Set으로 동결하고, 검증된 확장 작품은 주석 게이트 전까지 `libraryOnly`로만 수용한다. external v1 ID/key는 immutable이며 Export/Import 호환을 유지한다.
-- 슬라이스 11까지의 Next.js 제품이 migration baseline이다. 현재 선행 작업은 `09`의 Catalog authoring S0~S5이고 S6에서 멈춘다. 이후 `08`의 M0~M10 TanStack Start migration과 dark-only 7화면 redesign을 진행하며, 추천/Dexie/Rakuten 계약은 동결한다.
+- 슬라이스 11까지의 Next.js 제품이 migration baseline이다. 현재 선행 작업은 `09`의 Catalog authoring `S0~S5`이고 `S6`에서 멈춘다. 이후 `08`의 `M0~M10` TanStack Start migration과 dark-only 7화면 redesign을 진행하며, 추천/Dexie/Rakuten 계약은 동결한다.
 - 향후 릴리스 대상은 Vercel로 확정됐지만 현재 배포 권한은 열지 않았다. GitHub의 현재 Slice 5~11 commit·PR·`main` merge만 2026-08-16 사용자 승인 범위이며, Vercel Project 연결·Preview·Production은 별도 승인 작업이다. 로컬 build/Playwright나 GitHub merge를 배포 증거로 간주하지 않는다.
 - 미해결 사용자 소유 항목: 상표·도메인 확인, 라쿠텐 App ID 발급, 향후 사람 블라인드 테스트 참가자 모집.
