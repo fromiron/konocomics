@@ -16,7 +16,6 @@ import { explanationLexicon, recommendationStrings } from "@/lib/strings";
 type RecommendationCardProps = Readonly<{
   entry: RecommendationPlanEntry;
   work: Work;
-  position: number;
   volumeCount: number;
   resolveTitle: (workId: string) => string | undefined;
   planned: boolean;
@@ -80,7 +79,6 @@ export function RecommendationCard({
   onPreview,
   onRemovalIntent,
   planned,
-  position,
   priority,
   resolveTitle,
   volumeCount,
@@ -119,17 +117,6 @@ export function RecommendationCard({
             requestedSize={400}
             title={work.title}
           />
-          <span
-            aria-hidden="true"
-            className="pointer-events-none absolute inset-x-0 top-0 h-14 bg-gradient-to-b from-canvas/70 to-transparent"
-          />
-          <span
-            aria-label={recommendationStrings.showcase.rank(position)}
-            className="absolute top-[var(--space-2)] left-[var(--space-2)] font-display text-[length:var(--font-size-20)] leading-none font-black text-text-strong tabular-nums [text-shadow:0_1px_8px_color-mix(in_oklch,var(--canvas)_75%,transparent)]"
-            role="img"
-          >
-            {position}
-          </span>
         </Link>
         <span
           aria-hidden="true"

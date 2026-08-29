@@ -1,12 +1,27 @@
 "use client";
 
 import { Link } from "@tanstack/react-router";
-import type { ComponentType, ReactNode } from "react";
-import { useCallback, useEffect, useLayoutEffect, useMemo, useRef, useState } from "react";
+import {
+  useCallback,
+  useEffect,
+  useLayoutEffect,
+  useMemo,
+  useRef,
+  useState,
+  type ComponentType,
+  type ReactNode,
+} from "react";
 import { flushSync } from "react-dom";
 
 import { Button } from "@/components/design-system/button";
-import { MediaShelf } from "@/components/media/media-shelf";
+import {
+  carouselCloneProps,
+  carouselLoopCopies,
+  cloneCarouselTrailing,
+  duplicateCarouselContent,
+  MediaShelf,
+  shouldLoopCarousel,
+} from "@/components/media/media-shelf";
 import { QuickPreviewDialog } from "@/components/media/quick-preview-dialog";
 import { RankingCard } from "@/components/media/ranking-card";
 import { RankingShelf } from "@/components/media/ranking-shelf";
@@ -64,6 +79,9 @@ import type {
   RecommendationMotionListProps,
 } from "./recommendation-motion-list";
 
+const RECOMMENDATION_CAROUSEL_TRACK_CLASSNAME =
+  "recommendations-list items-stretch gap-[var(--space-3)] [--featured-card-basis:clamp(10.75rem,calc((100%-var(--space-3))/1.8),13.5rem)] [@media(min-width:768px)_and_(hover:hover)_and_(pointer:fine)]:[--featured-card-basis:clamp(12.5rem,calc((100%+var(--media-shelf-edge-fade-width)-(var(--space-3)*4))/4.5),18rem)]";
+
 const DEFAULT_POLICIES: RecommendationPolicies = {
   preferCompleted: false,
   preferHidden: false,
@@ -94,18 +112,22 @@ function StaticRecommendationItems({
   items,
   shortage,
 }: Readonly<{ items: readonly RecommendationMotionItem[]; shortage: ReactNode }>) {
+  const copies = shouldLoopCarousel(items.length) ? carouselLoopCopies : ([1] as const);
   return (
     <>
-      {items.map((item) => (
-        <li
-          className="basis-[var(--featured-card-basis)] shrink-0 snap-start overflow-visible"
-          data-recommendation-work-id={item.workId}
-          key={item.workId}
-        >
-          {item.content}
-        </li>
-      ))}
-      {shortage}
+      {copies.flatMap((copy) => [
+        ...items.map((item) => (
+          <li
+            className="basis-[var(--featured-card-basis)] shrink-0 snap-start overflow-visible"
+            data-recommendation-work-id={item.workId}
+            key={`${String(copy)}-${item.workId}`}
+            {...carouselCloneProps(copy)}
+          >
+            {duplicateCarouselContent(item.content, copy)}
+          </li>
+        )),
+        cloneCarouselTrailing(shortage, copy),
+      ])}
     </>
   );
 }
@@ -946,7 +968,6 @@ export function RecommendationsFlow({
           onPreview={() => openPreview(entry.workId)}
           onRemovalIntent={requestRemovalMotion}
           planned={plannedIds.has(entry.workId)}
-          position={index + 1}
           priority={index === 0}
           resolveTitle={(workId) => worksById.get(workId)?.title}
           volumeCount={metadata.volumeCount}
@@ -1125,7 +1146,7 @@ export function RecommendationsFlow({
                   listType="unordered"
                   compactHeading
                   title={recommendationStrings.shelves.featured.title}
-                  trackClassName="recommendations-list items-stretch gap-[var(--space-3)] [--featured-card-basis:clamp(10.75rem,calc((100%-var(--space-3))/1.8),13.5rem)] [@media(min-width:768px)_and_(hover:hover)_and_(pointer:fine)]:[--featured-card-basis:clamp(14rem,calc((100%-(var(--space-3)*3))/4.05),16rem)]"
+                  trackClassName={RECOMMENDATION_CAROUSEL_TRACK_CLASSNAME}
                   trackData={{
                     "data-recommendation-motion": MotionList === null ? "static" : "enabled",
                   }}
@@ -1154,6 +1175,7 @@ export function RecommendationsFlow({
             <MediaShelf
               className="mt-[var(--space-4)] scroll-mt-[calc(var(--desktop-navigation-height)+var(--space-4))]"
               compactHeading
+              controlsPlacement="overlay"
               description={recommendationStrings.shelves.anchor.description}
               title={recommendationStrings.shelves.anchor.title}
               trackClassName="!pb-[var(--space-1)]"
@@ -1169,6 +1191,7 @@ export function RecommendationsFlow({
             <MediaShelf
               className="mt-[var(--space-2)] scroll-mt-[calc(var(--desktop-navigation-height)+var(--space-4))]"
               compactHeading
+              controlsPlacement="overlay"
               description={recommendationStrings.shelves.discovery.description}
               title={recommendationStrings.shelves.discovery.title}
               trackClassName="!pb-[var(--space-1)]"
@@ -1184,6 +1207,7 @@ export function RecommendationsFlow({
             <MediaShelf
               className="mt-[var(--space-2)] scroll-mt-[calc(var(--desktop-navigation-height)+var(--space-4))]"
               compactHeading
+              controlsPlacement="overlay"
               description={recommendationStrings.shelves.completed.description}
               title={recommendationStrings.shelves.completed.title}
               trackClassName="!pb-[var(--space-1)]"
@@ -1199,6 +1223,7 @@ export function RecommendationsFlow({
             <RankingShelf
               className="mt-[var(--space-2)] scroll-mt-[calc(var(--desktop-navigation-height)+var(--space-4))]"
               compactHeading
+              controlsPlacement="overlay"
               description={recommendationStrings.shelves.ranking.description}
               rankingKind="personalized-ranking"
               title={recommendationStrings.shelves.ranking.title}

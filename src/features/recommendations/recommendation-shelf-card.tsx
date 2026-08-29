@@ -2,6 +2,7 @@ import { Link } from "@tanstack/react-router";
 
 import { CoverImage } from "@/components/cover/CoverImage";
 import { Button } from "@/components/design-system/button";
+import type { CarouselLoopCopy } from "@/components/media/media-shelf";
 import type { Work } from "@/domain/catalog/types";
 import { generateTasteExplanation } from "@/domain/explanation/generate";
 import type { RecommendationPlanEntry } from "@/domain/recommendation/types";
@@ -17,11 +18,19 @@ type RecommendationShelfCardProps = Readonly<{
   variant: "anchor" | "discovery" | "completed";
   resolveTitle: (workId: string) => string | undefined;
   onPreview: () => void;
+  "aria-hidden"?: boolean;
+  "data-carousel-clone"?: "";
+  "data-carousel-copy"?: CarouselLoopCopy;
+  inert?: boolean;
 }>;
 
 export function RecommendationShelfCard({
+  "aria-hidden": ariaHidden,
   coverUrl,
+  "data-carousel-clone": carouselClone,
+  "data-carousel-copy": carouselCopy,
   entry,
+  inert,
   onPreview,
   priority = false,
   resolveTitle,
@@ -46,14 +55,18 @@ export function RecommendationShelfCard({
 
   return (
     <article
+      aria-hidden={ariaHidden}
       className={cn(
         "shrink-0 snap-start overflow-hidden rounded-[var(--radius-card)] border border-line/80 bg-surface-1 transition-colors duration-[var(--motion-duration-feedback)] hover:border-line-accent motion-reduce:transition-none",
         widthClass,
       )}
+      data-carousel-clone={carouselClone}
+      data-carousel-copy={carouselCopy}
       data-lead-anchor-work-ids={
         variant === "anchor" ? leadSentence?.anchorWorkIds.join(" ") : undefined
       }
       data-recommendation-shelf-card={variant}
+      inert={inert}
     >
       <Link
         aria-label={mediaStrings.openDetails(work.title)}

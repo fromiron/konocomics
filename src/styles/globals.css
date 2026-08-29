@@ -359,6 +359,34 @@ h1[tabindex="-1"]:focus {
   }
 }
 
+/* Overlay carousel: dissolve the peeking card into the canvas so a
+   hard clip at the track edge does not look like a broken layout. */
+.media-shelf-edge-fade {
+  width: var(--media-shelf-edge-fade-width, var(--layout-page-padding));
+}
+
+.media-shelf-edge-fade--end {
+  background: linear-gradient(
+    to right,
+    transparent 0%,
+    color-mix(in oklch, var(--canvas) 38%, transparent) 24%,
+    color-mix(in oklch, var(--canvas) 86%, transparent) 54%,
+    var(--canvas) 82%,
+    var(--canvas) 100%
+  );
+}
+
+.media-shelf-edge-fade--start {
+  background: linear-gradient(
+    to left,
+    transparent 0%,
+    color-mix(in oklch, var(--canvas) 38%, transparent) 24%,
+    color-mix(in oklch, var(--canvas) 86%, transparent) 54%,
+    var(--canvas) 82%,
+    var(--canvas) 100%
+  );
+}
+
 /* Featured recommendation card: cover dissolves into the info panel so
    labelled actions sit on a readable seam, not on busy artwork. */
 .recommendation-featured-card__seam {
