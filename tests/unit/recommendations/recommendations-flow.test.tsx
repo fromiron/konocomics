@@ -1,7 +1,7 @@
 // @vitest-environment jsdom
 
 import { act, cleanup, fireEvent, render, screen, waitFor, within } from "@testing-library/react";
-import { type MouseEventHandler, type ReactNode, useEffect } from "react";
+import { type ComponentProps, type MouseEventHandler, type ReactNode, useEffect } from "react";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 
 import {
@@ -18,7 +18,7 @@ import type { RecommendationPolicies, UserWorkRecord } from "@/domain/profile/ty
 import { recommendationContextSchema } from "@/domain/recommendation/context-schema";
 import type { RecommendationPlanEntry } from "@/domain/recommendation/types";
 import type { RecommendationMotionListProps } from "@/features/recommendations/recommendation-motion-list";
-import { RecommendationsFlow } from "@/features/recommendations/recommendations-flow";
+import { RecommendationsFlow as RecommendationsFlowComponent } from "@/features/recommendations/recommendations-flow";
 
 const featuredItemSelector = "li[data-recommendation-work-id]:not([data-carousel-clone])";
 
@@ -103,6 +103,9 @@ function TestMotionList({ items, shortage }: RecommendationMotionListProps) {
 
 vi.mock("@/domain/recommendation/rank", () => ({
   buildRecommendationPlan: testState.buildPlan,
+}));
+
+vi.mock("@/domain/recommendation/ordering", () => ({
   selectRecommendationPlanEntries: (plan: readonly RecommendationPlanEntry[]) => plan.slice(0, 10),
   backfillRecommendationPlanEntries: ({
     excludedWorkIds,
@@ -183,6 +186,12 @@ vi.mock("@/infrastructure/db", () => ({
 const catalog = catalogV1Schema.parse(catalogJson);
 const recommendationContext = recommendationContextSchema.parse(recommendationContextJson);
 const INPUT_HASH = "0".repeat(64);
+
+function RecommendationsFlow(
+  props: Omit<ComponentProps<typeof RecommendationsFlowComponent>, "context"> = {},
+) {
+  return <RecommendationsFlowComponent {...props} context={recommendationContext} />;
+}
 
 const representativeWorkByIsbn = new Map(
   catalog.works.flatMap((work) => {
@@ -288,11 +297,11 @@ function makePlanWithExpandedEvidence(includeCaution: boolean): RecommendationPl
   return plan.map((entry, index) => (index === 0 ? { ...entry, contributions } : entry));
 }
 
-function cacheRecord(plan: readonly RecommendationPlanEntry[]) {
+function cacheRecord(plan: readonly RecommendationPlanEntry[], inputHash = INPUT_HASH) {
   return {
     schemaVersion: 1 as const,
     engineVersion: "taste-v1" as const,
-    inputHash: INPUT_HASH,
+    inputHash,
     plan: [...plan],
     computedAt: "2026-08-14T10:00:00+09:00",
   };
@@ -382,6 +391,47 @@ afterEach(() => {
 });
 
 describe("RecommendationsFlow", () => {
+  it("reuses the exact cached plan when Update applies a changed input hash", async () => {
+    const nextHash = "01".repeat(32);
+    const plan = makePlan();
+    vi.mocked(globalThis.crypto.subtle.digest)
+      .mockReset()
+      .mockResolvedValueOnce(new Uint8Array(32).buffer)
+      .mockResolvedValue(new Uint8Array(32).fill(1).buffer);
+    testState.getRecommendationCache.mockImplementation(async (inputHash: string) =>
+      cacheRecord(plan, inputHash),
+    );
+
+    const { container, rerender } = render(<RecommendationsFlow />);
+    await waitFor(() => {
+      expect(
+        container
+          .querySelector("main[data-recommendation-input-hash]")
+          ?.getAttribute("data-recommendation-input-hash"),
+      ).toBe(INPUT_HASH);
+    });
+
+    testState.userWorks = testState.userWorks.map((record, index) =>
+      index === 0 ? { ...record, reaction: "favorite" } : record,
+    );
+    rerender(<RecommendationsFlow />);
+    const update = screen.getByRole<HTMLButtonElement>("button", { name: "更新" });
+    await waitFor(() => expect(update.disabled).toBe(false));
+    fireEvent.click(update);
+
+    await waitFor(() => {
+      expect(
+        container
+          .querySelector("main[data-recommendation-input-hash]")
+          ?.getAttribute("data-recommendation-input-hash"),
+      ).toBe(nextHash);
+    });
+    expect(testState.getRecommendationCache).toHaveBeenCalledWith(nextHash);
+    expect(testState.buildPlan).not.toHaveBeenCalled();
+    expect(testState.saveRecommendationCache).not.toHaveBeenCalled();
+    expect(screen.getByText("おすすめを更新しました。")).toBeTruthy();
+  });
+
   it("renders a cache hit as a grounded list with stable provenance hooks", async () => {
     const { container } = render(<RecommendationsFlow />);
 
@@ -408,95 +458,23 @@ describe("RecommendationsFlow", () => {
     if (selectButton === null || selectedWorkId === null) {
       throw new Error("Expected a selectable personalized recommendation");
     }
-    expect(firstCard.querySelector("article")?.getAttribute("data-expanded")).toBe("true");
-    expect(cards[1]?.querySelector("article")?.getAttribute("data-expanded")).toBeNull();
-    const secondIdentity = cards[1]?.querySelector<HTMLAnchorElement>(
-      "[data-recommendation-select]",
-    );
-    if (secondIdentity === null || secondIdentity === undefined) {
-      throw new Error("Expected a second selectable personalized recommendation");
-    }
-    const originalMatches = secondIdentity.matches.bind(secondIdentity);
-    vi.spyOn(secondIdentity, "matches").mockImplementation(
-      (selector) => selector === ":focus-visible" || originalMatches(selector),
-    );
-    fireEvent.focus(secondIdentity);
-    expect(cards[1]?.querySelector("article")?.getAttribute("data-expanded")).toBe("true");
-    expect(firstCard.querySelector("article")?.getAttribute("data-expanded")).toBeNull();
-    const originalFirstMatches = selectButton.matches.bind(selectButton);
-    vi.spyOn(selectButton, "matches").mockImplementation(
-      (selector) => selector === ":focus-visible" || originalFirstMatches(selector),
-    );
-    fireEvent.focus(selectButton);
-    expect(firstCard.querySelector("article")?.getAttribute("data-expanded")).toBe("true");
-    expect(cards[1]?.querySelector("article")?.getAttribute("data-expanded")).toBeNull();
-    expect(
-      firstCard
-        .querySelector("[data-personalized-recommendation-card]")
-        ?.getAttribute("data-selected"),
-    ).toBe("true");
+    const article = firstCard.querySelector("article");
+    expect(article?.getAttribute("data-personalized-recommendation-card")).toBe(selectedWorkId);
+    expect(article?.getAttribute("tabindex")).toBe("-1");
+    expect(article?.hasAttribute("data-expanded")).toBe(false);
     expect(selectButton.getAttribute("href")).toBe(`/works/${selectedWorkId}`);
-    expect(within(selectButton).getByText(/分析の確信度: ふつう/u)).toBeTruthy();
+    expect(within(firstCard).getByText(/分析の確信度: ふつう/u)).toBeTruthy();
     expect(firstCard.querySelector("details")).toBeNull();
-    expect(within(firstCard).getAllByRole("button")).toHaveLength(4);
-    const detail = container.querySelector<HTMLElement>(
-      `[data-personalized-recommendation-detail='${selectedWorkId}']`,
-    );
-    if (detail === null) throw new Error("Expected selected recommendation detail");
-    expect(
-      within(detail)
-        .getByRole("link", {
-          name: catalog.works.find((work) => work.id === selectedWorkId)?.title,
-        })
-        .getAttribute("href"),
-    ).toBe(`/works/${selectedWorkId}`);
-    expect(within(detail).getAllByRole("button")).toHaveLength(4);
+    expect(within(firstCard).getAllByRole("button")).toHaveLength(3);
+    expect(container.querySelector("[data-personalized-recommendation-detail]")).toBeNull();
     expect(firstCard.querySelector(".lucide-bookmark")?.getAttribute("aria-hidden")).toBe("true");
-    expect(firstCard.querySelector(".lucide-circle-check")?.getAttribute("aria-hidden")).toBe(
-      "true",
-    );
-    expect(firstCard.querySelector(".lucide-circle-x")?.getAttribute("aria-hidden")).toBe("true");
-    const copy = firstCard.querySelector(".recommendation-card__copy");
-    expect(copy?.className).not.toContain("group-data-[expanded]/card:w-");
-    expect(copy?.className).not.toContain("group-data-[expanded]/card:p-");
-    expect(copy?.className).not.toContain("group-data-[expanded]/card:text-");
-    const coverFrame = firstCard.querySelector(".recommendation-card__cover-frame");
-    expect(coverFrame?.className).toContain("aspect-[30/43]");
-    expect(coverFrame?.className).toContain("h-full");
-    expect(coverFrame?.className).toContain("w-auto");
-    expect(coverFrame?.className).not.toContain("aspect-auto");
-    expect(coverFrame?.className).not.toContain("group-data-[expanded]/card:w-");
-    const detailTrigger = firstCard.querySelector("[data-recommendation-detail-trigger]");
-    expect(detailTrigger?.className).toContain("!text-[length:var(--text-caption-size)]");
-    expect(detailTrigger?.className).toContain("min-h-[var(--control-min-size)]");
-    expect(detailTrigger?.className).toContain("left-[calc(var(--space-7)+var(--space-3))]");
-    expect(detailTrigger?.querySelector("span")?.className).toContain("px-[var(--space-1)]");
-    expect(detailTrigger?.querySelector("span")?.className).not.toContain("px-[var(--space-2)]");
     const plannedAction = within(firstCard).getByRole("button", { name: "読みたい" });
-    expect(plannedAction.parentElement?.className).toContain("h-11");
-    expect(plannedAction.parentElement?.className).toContain(
-      "w-[calc(var(--control-min-size)*5.5)]",
-    );
-    expect(plannedAction.parentElement?.className).not.toContain("border-t");
-    expect(plannedAction.parentElement?.className).not.toContain("bg-canvas/70");
-    expect(plannedAction.parentElement?.className).not.toContain("p-[var(--space-content-tight)]");
+    expect(plannedAction.className).toContain("cover-save-toggle");
+    expect(plannedAction.className).toContain("size-[var(--control-min-size)]");
+    expect(plannedAction.getAttribute("aria-pressed")).toBe("false");
     expect(firstCard.querySelector("h3")?.className).toContain("line-clamp-2");
-    expect(firstCard.querySelector("h3")?.className).toContain("min-h-[2lh]");
-    expect(firstCard.querySelector("h3")?.className).toContain(
-      "[@media(min-width:768px)_and_(hover:hover)_and_(pointer:fine)]:min-h-0",
-    );
-    const backdrop = firstCard.querySelector(".recommendation-card__backdrop");
-    expect(backdrop?.className).toContain("[&>img]:!opacity-20");
-    expect(backdrop?.className).toContain("[&>img]:![filter:blur(var(--space-12))_saturate(0.35)]");
-    expect(backdrop?.className).toContain("[&>span]:!opacity-80");
-    expect(backdrop?.className).toContain("[&>div]:!hidden");
-    expect(backdrop?.className).not.toContain("hero-blur]:opacity-70");
-    expect(backdrop?.className).not.toContain("hero-paper]:opacity-35");
-    expect(firstCard.querySelector(".lucide-bookmark")?.getAttribute("class")).toContain("size-4");
-    expect(firstCard.querySelector(".lucide-circle-check")?.getAttribute("class")).toContain(
-      "size-4",
-    );
-    expect(firstCard.querySelector(".lucide-circle-x")?.getAttribute("class")).toContain("size-4");
+    expect(firstCard.querySelector(".recommendation-featured-card__seam")).toBeTruthy();
+    expect(firstCard.querySelector(".lucide-bookmark")?.getAttribute("class")).toContain("size-5");
     expect(within(firstCard).getByRole("button", { name: "読んだ" })).toBeTruthy();
     expect(within(firstCard).getByRole("button", { name: "興味なし" })).toBeTruthy();
     expect(container.querySelector("main")?.getAttribute("data-recommendation-input-hash")).toBe(
@@ -512,10 +490,8 @@ describe("RecommendationsFlow", () => {
     expect(firstRankingCard?.className).toContain("w-[calc(var(--control-min-size)*1.75)]");
     expect(firstRankingCard?.className).not.toContain("md:min-w-[4.5rem]");
     expect(firstRankingCard?.getAttribute("data-ranking-kind")).toBe("personalized-ranking");
-    expect(
-      firstRankingCard?.querySelector('[data-ranking-personalized-crown="true"]'),
-    ).toBeTruthy();
-    expect(firstRankingCard?.querySelector('[data-ranking-first-swash="true"]')).toBeNull();
+    expect(firstRankingCard?.getAttribute("data-ranking-position")).toBe("1");
+    expect(firstRankingCard?.querySelector('[data-ranking-editorial-position="true"]')).toBeNull();
     const anchorCards = container.querySelectorAll('[data-recommendation-shelf-card="anchor"]');
     expect(anchorCards.length).toBeGreaterThan(0);
     for (const anchorCard of anchorCards) {
@@ -524,25 +500,35 @@ describe("RecommendationsFlow", () => {
     expect(list.getAttribute("data-recommendation-motion")).toBe("static");
     expect(testState.loadMotionList).not.toHaveBeenCalled();
     expect(
-      firstCard.querySelector(".recommendation-card__cover")?.getAttribute("data-cover-priority"),
+      firstCard
+        .querySelector("[data-recommendation-select] [role='img']")
+        ?.getAttribute("data-cover-priority"),
     ).toBe("high");
     expect(
-      cards[1]?.querySelector(".recommendation-card__cover")?.getAttribute("data-cover-priority"),
+      cards[1]
+        ?.querySelector("[data-recommendation-select] [role='img']")
+        ?.getAttribute("data-cover-priority"),
     ).toBe("normal");
     expect(
-      cards[1]?.querySelector(".recommendation-card__cover")?.getAttribute("data-cover-settlement"),
+      cards[1]
+        ?.querySelector("[data-recommendation-select] [role='img']")
+        ?.getAttribute("data-cover-settlement"),
     ).toBe("deferred");
     await waitFor(() => {
       expect(
-        firstCard.querySelector(".recommendation-card__cover")?.getAttribute("data-cover-url"),
+        firstCard
+          .querySelector("[data-recommendation-select] [role='img']")
+          ?.getAttribute("data-cover-url"),
       ).toBe(`https://thumbnail.image.rakuten.co.jp/${makePlan()[0]!.workId}.jpg`);
       expect(
         firstCard
-          .querySelector(".recommendation-card__cover")
+          .querySelector("[data-recommendation-select] [role='img']")
           ?.getAttribute("data-cover-settlement"),
       ).toBe("tracked");
       expect(firstCard.querySelector('[data-recommendation-backdrop="true"]')).toBeNull();
-      expect(firstCard.querySelectorAll(".recommendation-card__cover")).toHaveLength(1);
+      expect(firstCard.querySelectorAll("[data-recommendation-select] [role='img']")).toHaveLength(
+        1,
+      );
     });
 
     const completed = within(firstCard).getByRole("button", { name: "読んだ" });
@@ -551,7 +537,7 @@ describe("RecommendationsFlow", () => {
     expect(testState.loadMotionList).not.toHaveBeenCalled();
   });
 
-  it("keeps selected recommendation evidence visible and the full mobile preview reachable", async () => {
+  it("keeps lead evidence visible and the full mobile preview reachable", async () => {
     const plan = makePlanWithExpandedEvidence(true);
     const first = plan[0];
     if (first === undefined) throw new Error("Missing caution fixture entry");
@@ -568,30 +554,10 @@ describe("RecommendationsFlow", () => {
       return element as HTMLElement;
     });
     const selectButton = firstCard.querySelector<HTMLAnchorElement>("[data-recommendation-select]");
-    const detail = container.querySelector<HTMLElement>(
-      `[data-personalized-recommendation-detail='${first.workId}']`,
-    );
-    if (selectButton === null || detail === null) {
-      throw new Error("Missing selected recommendation experience");
-    }
-    expect(
-      firstCard
-        .querySelector("[data-personalized-recommendation-card]")
-        ?.getAttribute("data-selected"),
-    ).toBe("true");
+    if (selectButton === null) throw new Error("Missing recommendation identity link");
     expect(selectButton.getAttribute("href")).toBe(`/works/${first.workId}`);
-    expect(within(detail).getByRole("link").getAttribute("href")).toBe(`/works/${first.workId}`);
-    expect(firstCard.querySelectorAll(".recommendation-card__cover")).toHaveLength(1);
-    expect(detail.querySelectorAll("[data-recommendation-evidence-support]")).toHaveLength(2);
-    const caution = detail.querySelector<HTMLElement>("[data-recommendation-evidence-caution]");
-    if (caution === null) throw new Error("Missing selected recommendation caution");
-    expect(within(detail).getByText(/描き込みの密度/u)).toBeTruthy();
-
-    const cautionHeading = within(caution).getByRole("heading", { name: "好みと異なる点" });
-    const cautionText = cautionHeading.parentElement?.querySelector("p")?.textContent;
-    if (cautionText === undefined || cautionText === null) {
-      throw new Error("Missing caution copy");
-    }
+    expect(firstCard.querySelectorAll("[data-contribution-summary]")).toHaveLength(1);
+    expect(firstCard.querySelectorAll("[data-recommendation-select] [role='img']")).toHaveLength(1);
 
     selectButton.focus();
     expect(document.activeElement).toBe(selectButton);
@@ -606,10 +572,16 @@ describe("RecommendationsFlow", () => {
       <RecommendationsFlow onPreviewOpen={onPreviewOpen} previewWorkId={first.workId} />,
     );
     const dialog = await screen.findByRole("dialog");
-    expect(within(dialog).getByText(cautionText)).toBeTruthy();
+    expect(within(dialog).getByRole("heading", { name: "おすすめ理由" })).toBeTruthy();
     expect(within(dialog).getByText(/描き込みの密度/u)).toBeTruthy();
+    expect(within(dialog).getByRole("heading", { name: "好みと異なる点" })).toBeTruthy();
+    expect(within(dialog).getByRole("link", { name: "作品詳細を見る" }).getAttribute("href")).toBe(
+      `/works/${first.workId}`,
+    );
+    expect(within(dialog).getAllByRole("button")).toHaveLength(4);
 
     view.rerender(<RecommendationsFlow onPreviewOpen={onPreviewOpen} />);
+    await waitFor(() => expect(screen.queryByRole("dialog")).toBeNull());
     await waitFor(() => expect(document.activeElement).toBe(selectButton));
   });
 
@@ -617,84 +589,66 @@ describe("RecommendationsFlow", () => {
     const plan = makePlanWithExpandedEvidence(false);
     testState.getRecommendationCache.mockResolvedValue(cacheRecord(plan));
 
-    const { container } = render(<RecommendationsFlow onPreviewOpen={vi.fn()} />);
-    const firstCard = await waitFor(() => {
-      const element = container.querySelector<HTMLElement>(
-        `ul.recommendations-list ${featuredItemSelector}`,
-      );
-      expect(element).toBeTruthy();
-      return element as HTMLElement;
-    });
-    const workId = firstCard.getAttribute("data-recommendation-work-id");
-    const detail = container.querySelector<HTMLElement>(
-      `[data-personalized-recommendation-detail='${workId ?? ""}']`,
-    );
-    if (detail === null) throw new Error("Missing selected recommendation detail");
-    expect(detail.querySelectorAll("[data-recommendation-evidence-support]")).toHaveLength(2);
-    expect(detail.querySelector("[data-recommendation-evidence-caution]")).toBeNull();
-    expect(detail.querySelectorAll("[data-contribution-summary]")).toHaveLength(3);
+    const first = plan[0];
+    if (first === undefined) throw new Error("Missing recommendation fixture");
+    render(<RecommendationsFlow onPreviewClose={vi.fn()} previewWorkId={first.workId} />);
+
+    const dialog = await screen.findByRole("dialog");
+    const reasons = within(dialog).getByRole("heading", { name: "おすすめ理由" }).parentElement;
+    if (reasons === null) throw new Error("Missing recommendation reasons");
+    expect(within(reasons).getAllByRole("listitem")).toHaveLength(3);
+    expect(within(dialog).queryByRole("heading", { name: "好みと異なる点" })).toBeNull();
   });
 
-  it("switches the selected detail by activation and closes it back to its trigger", async () => {
-    const { container } = render(<RecommendationsFlow />);
+  it("opens the requested touch preview and closes it back to its trigger", async () => {
+    vi.stubGlobal("matchMedia", (query: string) => ({
+      matches: query.includes("hover: none") || query.includes("pointer: coarse"),
+      addEventListener: () => undefined,
+      removeEventListener: () => undefined,
+    }));
+    const onPreviewClose = vi.fn();
+    const onPreviewOpen = vi.fn();
+    const view = render(
+      <RecommendationsFlow onPreviewClose={onPreviewClose} onPreviewOpen={onPreviewOpen} />,
+    );
+    const { container } = view;
     const cards = await waitFor(() => {
-      const elements = container.querySelectorAll<HTMLElement>(
-        "[data-personalized-recommendation-card]",
-      );
+      const elements = container.querySelectorAll<HTMLElement>(featuredItemSelector);
       expect(elements.length).toBeGreaterThan(1);
       return elements;
     });
-    const firstSelect = cards[0]?.querySelector<HTMLButtonElement>(
-      "[data-recommendation-detail-trigger]",
-    );
-    const secondSelect = cards[1]?.querySelector<HTMLButtonElement>(
-      "[data-recommendation-detail-trigger]",
-    );
-    const secondWorkId = cards[1]?.dataset.personalizedRecommendationCard;
+    const secondSelect = cards[1]?.querySelector<HTMLAnchorElement>("[data-recommendation-select]");
+    const secondWorkId = cards[1]?.dataset.recommendationWorkId;
+    const secondTitle = cards[1]?.querySelector("h3")?.textContent;
     if (
-      firstSelect === null ||
-      firstSelect === undefined ||
       secondSelect === null ||
       secondSelect === undefined ||
-      secondWorkId === undefined
+      secondWorkId === undefined ||
+      secondTitle === null ||
+      secondTitle === undefined
     ) {
-      throw new Error("Missing recommendation selection controls");
+      throw new Error("Missing recommendation preview control");
     }
 
+    secondSelect.focus();
     fireEvent.click(secondSelect);
-    await waitFor(() => {
-      expect(firstSelect.getAttribute("aria-expanded")).toBe("false");
-      expect(secondSelect.getAttribute("aria-expanded")).toBe("true");
-      expect(
-        container
-          .querySelector("[data-personalized-recommendation-detail]")
-          ?.getAttribute("data-personalized-recommendation-detail"),
-      ).toBe(secondWorkId);
-    });
+    expect(onPreviewOpen).toHaveBeenCalledWith(secondWorkId);
+    view.rerender(
+      <RecommendationsFlow
+        onPreviewClose={onPreviewClose}
+        onPreviewOpen={onPreviewOpen}
+        previewWorkId={secondWorkId}
+      />,
+    );
+    const dialog = await screen.findByRole("dialog");
+    expect(within(dialog).getByRole("heading", { name: secondTitle })).toBeTruthy();
 
-    fireEvent.click(screen.getByRole("button", { name: "おすすめ詳細を閉じる" }));
-    await waitFor(() => {
-      expect(container.querySelector("[data-personalized-recommendation-detail]")).toBeNull();
-      expect(document.activeElement).toBe(secondSelect);
-    });
-
-    fireEvent.click(secondSelect);
-    await waitFor(() => {
-      expect(
-        container
-          .querySelector("[data-personalized-recommendation-detail]")
-          ?.getAttribute("data-personalized-recommendation-detail"),
-      ).toBe(secondWorkId);
-    });
-
-    const closeButton = screen.getByRole("button", { name: "おすすめ詳細を閉じる" });
-    closeButton.focus();
-    fireEvent.keyDown(closeButton, { key: "Escape" });
-    await waitFor(() => {
-      expect(container.querySelector("[data-personalized-recommendation-detail]")).toBeNull();
-      expect(secondSelect.getAttribute("aria-expanded")).toBe("false");
-      expect(document.activeElement).toBe(secondSelect);
-    });
+    fireEvent.click(within(dialog).getByRole("button", { name: "閉じる" }));
+    await waitFor(() => expect(onPreviewClose).toHaveBeenCalledOnce());
+    view.rerender(
+      <RecommendationsFlow onPreviewClose={onPreviewClose} onPreviewOpen={onPreviewOpen} />,
+    );
+    await waitFor(() => expect(document.activeElement).toBe(secondSelect));
   });
 
   it("unlocks cover resolution from the first recommendation visible after genre filtering", async () => {
@@ -724,7 +678,9 @@ describe("RecommendationsFlow", () => {
     });
     await waitFor(() => {
       expect(
-        firstCard.querySelector(".recommendation-card__cover")?.getAttribute("data-cover-url"),
+        firstCard
+          .querySelector("[data-recommendation-select] [role='img']")
+          ?.getAttribute("data-cover-url"),
       ).toBe(`https://thumbnail.image.rakuten.co.jp/${expectedVisible.workId}.jpg`);
     });
     const ranking = screen.getByRole("list", { name: "あなたの Top 10" });
@@ -890,7 +846,9 @@ describe("RecommendationsFlow", () => {
     });
     await waitFor(() => {
       expect(document.activeElement).toBe(
-        container.querySelector(`[data-recommendation-work-id='${makePlan()[1]!.workId}'] article`),
+        container.querySelector(
+          `${featuredItemSelector}[data-recommendation-work-id='${makePlan()[1]!.workId}'] article`,
+        ),
       );
     });
   });
@@ -925,7 +883,9 @@ describe("RecommendationsFlow", () => {
     fireEvent.click(screen.getByRole("button", { name: "スキップ" }));
     await waitFor(() => {
       expect(document.activeElement).toBe(
-        container.querySelector(`[data-recommendation-work-id='${focusWorkId}'] article`),
+        container.querySelector(
+          `${featuredItemSelector}[data-recommendation-work-id='${focusWorkId}'] article`,
+        ),
       );
     });
   });
@@ -983,7 +943,7 @@ describe("RecommendationsFlow", () => {
     fireEvent.click(screen.getByRole("button", { name: "スキップ" }));
     const survivorWorkId = makePlan()[1]!.workId;
     const survivor = container.querySelector(
-      `[data-recommendation-work-id='${survivorWorkId}']`,
+      `${featuredItemSelector}[data-recommendation-work-id='${survivorWorkId}']`,
     ) as HTMLElement;
     const hidden = within(survivor).getByRole("button", { name: "興味なし" });
     hidden.focus();
@@ -1002,7 +962,7 @@ describe("RecommendationsFlow", () => {
       expect(document.activeElement).toBe(
         within(
           container.querySelector(
-            `[data-recommendation-work-id='${survivorWorkId}']`,
+            `${featuredItemSelector}[data-recommendation-work-id='${survivorWorkId}']`,
           ) as HTMLElement,
         ).getByRole("button", { name: "興味なし" }),
       );
@@ -1052,7 +1012,9 @@ describe("RecommendationsFlow", () => {
     fireEvent.click(screen.getByRole("button", { name: "スキップ" }));
     await waitFor(() => {
       expect(document.activeElement).toBe(
-        container.querySelector(`[data-recommendation-work-id='${makePlan()[1]!.workId}'] article`),
+        container.querySelector(
+          `${featuredItemSelector}[data-recommendation-work-id='${makePlan()[1]!.workId}'] article`,
+        ),
       );
     });
   });

@@ -3,8 +3,11 @@
 import { type ReactNode, useEffect, useState } from "react";
 
 import { Button } from "@/components/design-system/button";
+import recommendationContextAssetUrl from "@/data/generated/recommendation-context-v1.json?url";
 import { catalogV1Schema } from "@/domain/catalog/schema";
 import type { CatalogV1 } from "@/domain/catalog/types";
+import { recommendationContextSchema } from "@/domain/recommendation/context-schema";
+import type { RecommendationContext } from "@/domain/recommendation/types";
 import { catalogAssetUrl } from "@/lib/catalog-asset";
 import { catalogStrings } from "@/lib/strings";
 
@@ -13,11 +16,16 @@ import { CatalogProvider, useCatalogIdentity } from "./catalog-provider";
 
 type CatalogLoadState =
   | Readonly<{ kind: "loading"; requestKey: string }>
-  | Readonly<{ kind: "ready"; requestKey: string; catalog: CatalogV1 }>
+  | Readonly<{
+      kind: "ready";
+      requestKey: string;
+      catalog: CatalogV1;
+      context: RecommendationContext;
+    }>
   | Readonly<{ kind: "error"; requestKey: string }>;
 
 type StaticAssetCatalogProviderProps = Readonly<{
-  children: ReactNode;
+  children: (context: RecommendationContext) => ReactNode;
 }>;
 
 export function StaticAssetCatalogProvider({ children }: StaticAssetCatalogProviderProps) {
@@ -34,17 +42,40 @@ export function StaticAssetCatalogProvider({ children }: StaticAssetCatalogProvi
     const controller = new AbortController();
     let active = true;
 
-    void fetch(catalogAssetUrl(identity.catalogVersion), {
-      cache: requestCache,
-      signal: controller.signal,
-    })
-      .then(async (response) => {
-        if (!response.ok) throw new Error("Catalog asset request failed");
-        const result = catalogV1Schema.safeParse(await response.json());
-        if (!result.success || !catalogMatchesIdentity(result.data, identity)) {
+    void Promise.all([
+      fetch(catalogAssetUrl(identity.catalogVersion), {
+        cache: requestCache,
+        signal: controller.signal,
+      }),
+      fetch(recommendationContextAssetUrl, {
+        cache: requestCache,
+        signal: controller.signal,
+      }),
+    ])
+      .then(async ([catalogResponse, contextResponse]) => {
+        if (!catalogResponse.ok || !contextResponse.ok) {
+          throw new Error("Recommendation asset request failed");
+        }
+        const [catalogResult, contextResult] = await Promise.all([
+          catalogResponse.json().then((value) => catalogV1Schema.safeParse(value)),
+          contextResponse.json().then((value) => recommendationContextSchema.safeParse(value)),
+        ]);
+        if (
+          !catalogResult.success ||
+          !contextResult.success ||
+          !catalogMatchesIdentity(catalogResult.data, identity) ||
+          contextResult.data.marketSnapshot.catalogVersion !== identity.catalogVersion
+        ) {
           throw new Error("Catalog asset identity mismatch");
         }
-        if (active) setState({ kind: "ready", requestKey, catalog: result.data });
+        if (active) {
+          setState({
+            kind: "ready",
+            requestKey,
+            catalog: catalogResult.data,
+            context: contextResult.data,
+          });
+        }
       })
       .catch(() => {
         if (active) setState({ kind: "error", requestKey });
@@ -85,5 +116,5 @@ export function StaticAssetCatalogProvider({ children }: StaticAssetCatalogProvi
     );
   }
 
-  return <CatalogProvider catalog={state.catalog}>{children}</CatalogProvider>;
+  return <CatalogProvider catalog={state.catalog}>{children(state.context)}</CatalogProvider>;
 }

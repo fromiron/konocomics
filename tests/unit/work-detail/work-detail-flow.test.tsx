@@ -197,15 +197,8 @@ describe("WorkDetailFlow", () => {
     testState.userWorks = undefined;
     renderDetail();
 
-    const select = screen.getByRole<HTMLSelectElement>("combobox", {
-      name: workDetailStrings.state.label,
-    });
-    const planned = screen.getByRole<HTMLButtonElement>("button", {
-      name: workDetailStrings.state.plannedAdd,
-    });
-    expect(select.disabled).toBe(true);
-    expect(planned.disabled).toBe(true);
-    fireEvent.click(planned);
+    expect(screen.queryByRole("radiogroup", { name: workDetailStrings.state.heading })).toBeNull();
+    expect(screen.getByText(workDetailStrings.state.loading)).toBeTruthy();
     expect(testState.saveUserWork).not.toHaveBeenCalled();
     expect(testState.removeMinimalPlannedUserWork).not.toHaveBeenCalled();
   });
@@ -221,9 +214,7 @@ describe("WorkDetailFlow", () => {
     ];
     renderDetail();
 
-    fireEvent.change(screen.getByRole("combobox", { name: workDetailStrings.state.label }), {
-      target: { value: "reading" },
-    });
+    fireEvent.click(screen.getByRole("radio", { name: workDetailStrings.state.options.reading }));
 
     await waitFor(() => expect(testState.saveUserWork).toHaveBeenCalledTimes(1));
     const saved = testState.saveUserWork.mock.calls[0]![0];
@@ -240,7 +231,9 @@ describe("WorkDetailFlow", () => {
         }),
     );
     renderDetail();
-    const planned = screen.getByRole("button", { name: workDetailStrings.state.plannedAdd });
+    const planned = screen.getByRole("radio", {
+      name: workDetailStrings.state.options.planned,
+    });
 
     fireEvent.click(planned);
     fireEvent.click(planned);
@@ -251,7 +244,7 @@ describe("WorkDetailFlow", () => {
 
   it("persists and authoritatively removes a minimal planned record", async () => {
     const view = renderDetail();
-    fireEvent.click(screen.getByRole("button", { name: workDetailStrings.state.plannedAdd }));
+    fireEvent.click(screen.getByRole("radio", { name: workDetailStrings.state.options.planned }));
     await waitFor(() => expect(testState.saveUserWork).toHaveBeenCalledTimes(1));
     const plannedRecord = testState.saveUserWork.mock.calls[0]![0];
     expect(plannedRecord).toMatchObject({ workId: target.id, readingState: "planned" });
@@ -262,7 +255,7 @@ describe("WorkDetailFlow", () => {
         <WorkDetailFlow workId={target.id} />
       </CatalogProvider>,
     );
-    fireEvent.click(screen.getByRole("button", { name: workDetailStrings.state.plannedRemove }));
+    fireEvent.click(screen.getByRole("radio", { name: workDetailStrings.state.options.planned }));
     await waitFor(() =>
       expect(testState.removeMinimalPlannedUserWork).toHaveBeenCalledWith(target.id),
     );
@@ -280,7 +273,7 @@ describe("WorkDetailFlow", () => {
     testState.removeMinimalPlannedUserWork.mockResolvedValue("preserved-conflict");
     renderDetail();
 
-    fireEvent.click(screen.getByRole("button", { name: workDetailStrings.state.plannedRemove }));
+    fireEvent.click(screen.getByRole("radio", { name: workDetailStrings.state.options.planned }));
 
     expect(await screen.findByText(workDetailStrings.state.plannedPreservedConflict)).toBeTruthy();
     expect(screen.queryByText(workDetailStrings.state.plannedRemoved)).toBeNull();
@@ -298,7 +291,7 @@ describe("WorkDetailFlow", () => {
     testState.removeMinimalPlannedUserWork.mockResolvedValue("already-absent");
     renderDetail();
 
-    fireEvent.click(screen.getByRole("button", { name: workDetailStrings.state.plannedRemove }));
+    fireEvent.click(screen.getByRole("radio", { name: workDetailStrings.state.options.planned }));
 
     expect(await screen.findByText(workDetailStrings.state.plannedAlreadyAbsent)).toBeTruthy();
     expect(screen.queryByText(workDetailStrings.state.plannedRemoved)).toBeNull();

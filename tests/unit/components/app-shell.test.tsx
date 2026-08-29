@@ -2,21 +2,18 @@
 
 import { cleanup, render, screen, waitFor } from "@testing-library/react";
 import type { ReactNode } from "react";
-import type * as ReactDomModule from "react-dom";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 
 import type { UserWorkRecord } from "@/domain/profile/types";
 import { AppShell } from "@/components/nav/app-shell";
 import { catalogIdentityFromCatalog } from "@/features/catalog/catalog-identity";
 import { CatalogIdentityProvider } from "@/features/catalog/catalog-provider";
-import { catalogAssetUrl } from "@/lib/catalog-asset";
 import { navigationStrings } from "@/lib/strings";
 import { createTestCatalog, createTestWork } from "../../helpers/catalog";
 
 const testState = vi.hoisted(() => ({
   pathname: "/recommendations",
   navigate: vi.fn(),
-  preload: vi.fn(),
   userWorks: undefined as readonly UserWorkRecord[] | undefined,
 }));
 
@@ -37,11 +34,6 @@ vi.mock("@tanstack/react-router", () => ({
 vi.mock("@/infrastructure/db", () => ({
   usePersistence: () => ({ userWorks: testState.userWorks }),
 }));
-
-vi.mock("react-dom", async (importOriginal) => {
-  const actual = await importOriginal<typeof ReactDomModule>();
-  return { ...actual, preload: testState.preload };
-});
 
 const works = Array.from({ length: 5 }, (_, index) =>
   createTestWork({ id: `shell-work-${String(index + 1)}` }),
@@ -103,7 +95,6 @@ function expectFatalOnlyDom() {
 beforeEach(() => {
   testState.pathname = "/recommendations";
   testState.navigate.mockReset();
-  testState.preload.mockReset();
   testState.userWorks = undefined;
 });
 
@@ -112,6 +103,13 @@ afterEach(() => {
 });
 
 describe("AppShell recommendation guard", () => {
+  it("keeps recommendations hidden while the profile guard is still reading storage", () => {
+    renderShell();
+
+    expect(screen.getByText(navigationStrings.profileLoading)).toBeTruthy();
+    expectFatalOnlyDom();
+  });
+
   it("redirects first-run state without rendering the protected shell", async () => {
     testState.userWorks = [];
 
@@ -124,17 +122,12 @@ describe("AppShell recommendation guard", () => {
     );
   });
 
-  it("preloads the recommendation Catalog while the route owns its provider", async () => {
+  it("renders the protected shell when the profile is usable", async () => {
     testState.userWorks = profile;
 
     renderShell();
 
     expect(await screen.findByText("recommendations-flow")).toBeTruthy();
-    expect(testState.preload).toHaveBeenCalledWith(catalogAssetUrl(identity.catalogVersion), {
-      as: "fetch",
-      crossOrigin: "anonymous",
-      fetchPriority: "high",
-    });
     expect(screen.getByText(navigationStrings.skipLink)).toBeTruthy();
     expect(
       screen.getByText(

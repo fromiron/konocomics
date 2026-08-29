@@ -155,6 +155,7 @@ const contracts = [
         "src/routes/__root.tsx",
         "src/routes/index.tsx",
         "src/routes/settings.tsx",
+        "src/routes/works/$workId.tsx",
         "src/components/nav/app-shell.tsx",
         "src/features/landing/landing-flow.tsx",
       ]) {
@@ -173,6 +174,11 @@ const contracts = [
         catalogJson.catalogVersion,
       );
       expect(source("src/routes/recommendations.tsx")).toContain("<StaticAssetCatalogProvider>");
+      expect(source("src/routes/__root.tsx")).toContain(
+        'import catalogIdentityJson from "@/data/generated/catalog-identity-v1.json"',
+      );
+      expect(source("src/routes/__root.tsx")).not.toContain("Route.useLoaderData()");
+      expect(source("src/routes/__root.tsx")).toContain("recommendation-context-v1.json?url");
     },
   },
 ] as const;

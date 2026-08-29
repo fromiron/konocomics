@@ -10,6 +10,8 @@ import type {
 } from "@/domain/profile/types";
 import type { ExternalWorkId } from "@/domain/catalog/external-work";
 
+export const DATABASE_SCHEMA_VERSION = 2 as const;
+
 export type ExternalWorkRecord = {
   id: ExternalWorkId;
   normalizedKey: string;

@@ -26,36 +26,39 @@ function RecommendationsPage() {
       }
     >
       <StaticAssetCatalogProvider>
-        <RecommendationsFlow
-          genre={search.genre}
-          onGenreChange={(genre) => {
-            void navigate({
-              resetScroll: false,
-              search: (current) => ({ ...current, genre }),
-            });
-          }}
-          onPreviewClose={() => {
-            void navigate({
-              replace: true,
-              resetScroll: false,
-              search: (current) => ({ ...current, preview: undefined }),
-            });
-          }}
-          onPreviewOpen={(preview) => {
-            void navigate({
-              resetScroll: false,
-              search: (current) => ({ ...current, preview }),
-            });
-          }}
-          onShelfChange={(shelf) => {
-            void navigate({
-              resetScroll: false,
-              search: (current) => ({ ...current, shelf }),
-            });
-          }}
-          previewWorkId={search.preview}
-          shelf={search.shelf}
-        />
+        {(context) => (
+          <RecommendationsFlow
+            context={context}
+            genre={search.genre}
+            onGenreChange={(genre) => {
+              void navigate({
+                resetScroll: false,
+                search: (current) => ({ ...current, genre }),
+              });
+            }}
+            onPreviewClose={() => {
+              void navigate({
+                replace: true,
+                resetScroll: false,
+                search: (current) => ({ ...current, preview: undefined }),
+              });
+            }}
+            onPreviewOpen={(preview) => {
+              void navigate({
+                resetScroll: false,
+                search: (current) => ({ ...current, preview }),
+              });
+            }}
+            onShelfChange={(shelf) => {
+              void navigate({
+                resetScroll: false,
+                search: (current) => ({ ...current, shelf }),
+              });
+            }}
+            previewWorkId={search.preview}
+            shelf={search.shelf}
+          />
+        )}
       </StaticAssetCatalogProvider>
     </Suspense>
   );

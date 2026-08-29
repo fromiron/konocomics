@@ -2,7 +2,7 @@
 
 ## 목표
 
-확정 이미지의 criteria summary, filter bar, 확장형 추천 card, Quick Preview, 이유별 Shelf, hidden-gem/completed Shelf, personalized Top 10, 피드백 반영 summary를 구현합니다. 추천 계산과 순위는 절대 변경하지 않습니다.
+확정 이미지의 criteria summary, filter bar, 고정 cover-forward 추천 card, Quick Preview, 이유별 Shelf, hidden-gem/completed Shelf, personalized Top 10, 피드백 반영 summary를 구현합니다. 추천 계산과 순위는 절대 변경하지 않습니다.
 
 ## 현재 소스
 
@@ -30,7 +30,7 @@ RecommendationsFlow
   RecommendationCriteriaSummary
   RecommendationFilterBar
   FeaturedRecommendationShelf
-    ExpandableRecommendationCard
+    RecommendationCard
   QuickPreviewDialog/Sheet
   AnchorReasonShelf
   DiscoveryShelf
@@ -51,15 +51,13 @@ RecommendationsFlow
 
 Grouping을 위해 ranking score를 다시 계산하거나 새 가중치를 만들지 않습니다.
 
-## Expandable card
+## Featured card
 
-- desktop fine pointer: 200ms hover intent
-- keyboard focus: 즉시 확장
-- 첫 진입의 1위 card는 확장 상태, 2·3위는 같은 viewport에 접힌 상태로 표시
-- 접힘 220–250px, 확장 300–360px
-- Shelf 높이 212px 사전 예약
-- title/reason/action control은 scale하지 않고 reflow
-- touch: 고정 card + Quick Preview sheet
+- desktop fine pointer와 keyboard focus에서도 card geometry와 정보량 고정
+- 약 4.5장이 보이는 고정 폭 poster Shelf
+- title/reason/confidence/action을 하단 seam 위에 항상 표시
+- hover/focus는 border·shadow와 작은 cover scale만 사용
+- touch: identity link에서 Quick Preview sheet
 
 ## Quick Preview
 
@@ -72,7 +70,7 @@ Grouping을 위해 ranking score를 다시 계산하거나 새 가중치를 만�
 ## 구현 단계
 
 1. 현재 plan work IDs/order regression test 추가
-2. 공통 MediaShelf/ExpandableCard 적용
+2. 공통 MediaShelf/고정 RecommendationCard 적용
 3. Quick Preview 연결
 4. Top 10 `<ol>` 구현
 5. presentation selector로 이유별 Shelf 구성
@@ -91,8 +89,8 @@ Grouping을 위해 ranking score를 다시 계산하거나 새 가중치를 만�
 
 - 동일 fixture에서 work ID/order 불변
 - 10개 미만 ranking
-- hover/focus expansion과 collapse
-- active card viewport 보정
+- hover/focus에서 고정 geometry와 focus-visible 유지
+- card·Shelf overflow와 viewport 폭 검증
 - card 제거 중 focus 보존 및 backfill
 - dialog/sheet 반복 open/close
 - completed/hidden feedback flow
@@ -101,6 +99,6 @@ Grouping을 위해 ranking score를 다시 계산하거나 새 가중치를 만�
 
 ## 수용 기준
 
-- 한 viewport에서 여러 작품을 탐색하면서 확장 card로 이유 확인 가능
+- 한 viewport에서 여러 작품과 각 lead reason을 별도 확장 없이 확인 가능
 - 상세 이동 없이 주요 reading action 수행 가능
 - recommendation engine output은 변경 전과 동일

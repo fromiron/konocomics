@@ -18,7 +18,7 @@ const NOW = "2026-08-15T00:00:00.000Z";
 const catalog = catalogV1Schema.parse(catalogJson);
 const targets = createRecommendationCoverTargets(
   catalog,
-  catalog.works.slice(5, 9).map((work) => work.id),
+  catalog.works.slice(5, 12).map((work) => work.id),
 );
 
 function itemFor(target: RecommendationCoverTarget, image = true): RakutenBookItem {
@@ -175,34 +175,58 @@ describe("recommendation cover resolver", () => {
     expect(saveProviderCache).not.toHaveBeenCalled();
   });
 
-  it("waits for the first rendered cover to settle before starting the remaining providers", async () => {
+  it("commits the first metadata result before resolving the rest four at a time", async () => {
     const firstCache = deferred<ProviderCacheRecord | null>();
+    const remainingCaches = new Map(
+      targets.slice(1).map((target) => [target.isbn, deferred<ProviderCacheRecord | null>()]),
+    );
+    let activeRemaining = 0;
+    let maximumActiveRemaining = 0;
+    let firstCommittedBeforeRemaining = false;
+    let currentCoverUrls = (): ReadonlyMap<string, string | null> => new Map();
     const getProviderCache = vi.fn((isbn: string) => {
       const target = targets.find((candidate) => candidate.isbn === isbn)!;
-      return target === targets[0]
-        ? firstCache.promise
-        : Promise.resolve<ProviderCacheRecord | null>(cacheFor(target));
+      if (target === targets[0]) return firstCache.promise;
+      firstCommittedBeforeRemaining ||= currentCoverUrls().has(targets[0]!.workId);
+      activeRemaining += 1;
+      maximumActiveRemaining = Math.max(maximumActiveRemaining, activeRemaining);
+      return remainingCaches.get(isbn)!.promise.finally(() => {
+        activeRemaining -= 1;
+      });
     });
     const saveProviderCache = vi.fn(async (record: ProviderCacheRecord) => record);
-    const visibleTargets = targets.slice(0, 3);
+    const visibleTargets = targets.slice(0, 7);
     const { result } = renderHook(() =>
       useRecommendationCovers({ targets: visibleTargets, getProviderCache, saveProviderCache }),
     );
+    currentCoverUrls = () => result.current.coverUrls;
 
     await waitFor(() => expect(getProviderCache).toHaveBeenCalledTimes(1));
     expect(getProviderCache).toHaveBeenCalledWith(visibleTargets[0]!.isbn);
     expect(result.current.coverUrls.size).toBe(0);
 
     act(() => firstCache.resolve(cacheFor(visibleTargets[0]!)));
-    await waitFor(() => expect(result.current.coverUrls.size).toBe(1));
-    expect(getProviderCache).toHaveBeenCalledTimes(1);
+    await waitFor(() => expect(getProviderCache).toHaveBeenCalledTimes(5));
     expect(result.current.coverUrls.get(visibleTargets[0]!.workId)).toContain(
       visibleTargets[0]!.workId,
     );
+    expect(firstCommittedBeforeRemaining).toBe(true);
+    expect(maximumActiveRemaining).toBe(4);
 
-    act(() => result.current.notifyCoverSettled(visibleTargets[0]!));
-    await waitFor(() => expect(getProviderCache).toHaveBeenCalledTimes(3));
-    await waitFor(() => expect(result.current.coverUrls.size).toBe(3));
+    const outOfOrderTarget = visibleTargets[2]!;
+    act(() => remainingCaches.get(outOfOrderTarget.isbn)!.resolve(cacheFor(outOfOrderTarget)));
+    await waitFor(() => expect(result.current.coverUrls.has(outOfOrderTarget.workId)).toBe(true));
+    await waitFor(() => expect(getProviderCache).toHaveBeenCalledTimes(6));
+    expect(result.current.coverUrls.size).toBe(2);
+    expect(maximumActiveRemaining).toBe(4);
+
+    act(() => {
+      visibleTargets.slice(1).forEach((target) => {
+        remainingCaches.get(target.isbn)!.resolve(cacheFor(target));
+      });
+    });
+    await waitFor(() => expect(result.current.coverUrls.size).toBe(visibleTargets.length));
+    expect(maximumActiveRemaining).toBe(4);
   });
 
   it("retains survivor URLs and resolves only a newly backfilled work", async () => {
@@ -221,14 +245,11 @@ describe("recommendation cover resolver", () => {
         }),
       { initialProps: { visibleTargets: initial } },
     );
-    await waitFor(() => expect(result.current.coverUrls.size).toBe(1));
-    act(() => result.current.notifyCoverSettled(initial[0]!));
     await waitFor(() => expect(result.current.coverUrls.size).toBe(2));
     const survivorUrl = result.current.coverUrls.get(initial[1]!.workId);
     getProviderCache.mockClear();
 
     rerender({ visibleTargets: [initial[1]!, targets[2]!] });
-    act(() => result.current.notifyCoverSettled(initial[1]!));
     await waitFor(() =>
       expect(result.current.coverUrls.get(targets[2]!.workId)).toContain(targets[2]!.workId),
     );
@@ -269,12 +290,13 @@ describe("recommendation cover resolver", () => {
     expect(getProviderCache).not.toHaveBeenCalledWith(targets[1]!.isbn);
   });
 
-  it("can reuse an exact in-flight result when its target becomes current again", async () => {
-    const firstCache = deferred<ProviderCacheRecord | null>();
+  it("restarts a stale provider resolution when its target becomes current again", async () => {
+    const providerResponse = deferred<Response>();
+    vi.spyOn(globalThis, "fetch").mockImplementation(() => providerResponse.promise);
     const getProviderCache = vi.fn((isbn: string) => {
       const target = targets.find((candidate) => candidate.isbn === isbn)!;
       return target === targets[0]
-        ? firstCache.promise
+        ? Promise.resolve<ProviderCacheRecord | null>(null)
         : Promise.resolve<ProviderCacheRecord | null>(cacheFor(target));
     });
     const saveProviderCache = vi.fn(async (record: ProviderCacheRecord) => record);
@@ -292,13 +314,16 @@ describe("recommendation cover resolver", () => {
     rerender({ visibleTargets: [targets[1]!] });
     await waitFor(() => expect(result.current.coverUrls.has(targets[1]!.workId)).toBe(true));
     rerender({ visibleTargets: [targets[0]!] });
-    act(() => firstCache.resolve(cacheFor(targets[0]!)));
+    await waitFor(() => {
+      expect(
+        getProviderCache.mock.calls.filter(([isbn]) => isbn === targets[0]!.isbn),
+      ).toHaveLength(2);
+    });
+    act(() => providerResponse.resolve(Response.json({ listing: itemFor(targets[0]!) })));
 
     await waitFor(() => {
       expect(result.current.coverUrls.get(targets[0]!.workId)).toContain(targets[0]!.workId);
     });
-    expect(getProviderCache.mock.calls.filter(([isbn]) => isbn === targets[0]!.isbn)).toHaveLength(
-      1,
-    );
+    expect(saveProviderCache).toHaveBeenCalledOnce();
   });
 });

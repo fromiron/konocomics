@@ -125,9 +125,9 @@
 
 - shadcn CLI가 Base UI 기반 primitive를 `src/components/ui/**`에 생성한다. 이 파일은 vendored primitive이며 제품 token이나 feature 의미를 직접 소유하지 않는다.
 - `src/components/design-system/**` wrapper가 위 primitive에 dark semantic token, 최소 44px target, focus-visible, disabled/busy 상태와 size variant를 적용한다. route/feature는 wrapper를 소비한다.
-- Shelf는 CSS scroll-snap + `ResizeObserver` + 기존 Motion만 사용한다. desktop fine pointer는 200ms hover intent 뒤 expanded card를 열고 keyboard focus는 즉시 연다. touch는 card를 확장하지 않고 Quick Preview sheet를 연다.
-- expanded/focus/scroll/dialog animation과 focus restoration은 React local state다. Quick Preview 대상만 deep-link 가치가 있어 `/recommendations?preview=<workId>`로 표현할 수 있다.
-- Shelf 높이를 미리 예약하고 expansion 정보는 이미 보유한 local data만 사용한다. hover network fetch, autoplay, 스크롤 하이재킹은 없다.
+- Shelf는 CSS scroll-snap + `ResizeObserver` + 기존 Motion만 사용한다. 추천 featured card는 desktop fine pointer와 keyboard focus에서도 고정 geometry를 유지하고, touch에서는 identity link가 Quick Preview sheet를 연다.
+- scroll/dialog animation과 focus restoration은 React local state다. Quick Preview 대상만 deep-link 가치가 있어 `/recommendations?preview=<workId>`로 표현할 수 있다.
+- Shelf와 card 크기를 미리 예약한다. hover network fetch, autoplay, 스크롤 하이재킹은 없다.
 
 ---
 
@@ -271,4 +271,4 @@ Shelf 구현 계약(캐러셀 대체): `overflow-x: auto` + `scroll-snap-type: x
 
 ## 9. 조용한 표면 선언
 
-다음 화면·영역에는 시그니처·B 진입·장식을 **의도적으로 두지 않는다**: 랜딩의 A 외 별도 B, Library, 설정, 온보딩 STEP 2(불호 입력은 감정적으로 중립해야 함), 모든 dialog·panel·sheet. 추천 피드는 §2.8의 기능적 expanded card와 C 제거/백필만 허용한다. Quick Preview와 Library sheet/panel entry, cover/image load opacity fade는 금지하고 최종 상태로 즉시 연다.
+다음 화면·영역에는 시그니처·B 진입·장식을 **의도적으로 두지 않는다**: 랜딩의 A 외 별도 B, Library, 설정, 온보딩 STEP 2(불호 입력은 감정적으로 중립해야 함), 모든 dialog·panel·sheet. 추천 피드는 §2.8의 고정 poster 직접 피드백과 C 제거/백필만 허용한다. Quick Preview와 Library sheet/panel entry, cover/image load opacity fade는 금지하고 최종 상태로 즉시 연다.

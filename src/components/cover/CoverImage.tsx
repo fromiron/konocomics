@@ -174,7 +174,7 @@ export function CoverImage({
             className="cover-image__image absolute inset-0 size-full object-contain"
             data-cover-source={currentSource}
             data-loaded={loaded ? "true" : "false"}
-            decoding={priority ? "sync" : "async"}
+            decoding="async"
             draggable={false}
             fetchPriority={priority ? "high" : "auto"}
             height={Math.round((requestedSize * 43) / 30)}
@@ -213,7 +213,7 @@ export function CoverImage({
         alt={decorative ? "" : coverStrings.alt(title)}
         className="cover-image__image absolute inset-0 size-full object-contain"
         data-loaded={loaded ? "true" : "false"}
-        decoding={priority ? "sync" : "async"}
+        decoding="async"
         draggable={false}
         fetchPriority={priority ? "high" : "auto"}
         height={Math.round((requestedSize * 43) / 30)}

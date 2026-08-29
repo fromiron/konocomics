@@ -2,6 +2,8 @@
 
 import { Link } from "@tanstack/react-router";
 import {
+  lazy,
+  Suspense,
   useCallback,
   useEffect,
   useLayoutEffect,
@@ -22,10 +24,8 @@ import {
   MediaShelf,
   shouldLoopCarousel,
 } from "@/components/media/media-shelf";
-import { QuickPreviewDialog } from "@/components/media/quick-preview-dialog";
 import { RankingCard } from "@/components/media/ranking-card";
 import { RankingShelf } from "@/components/media/ranking-shelf";
-import recommendationContextJson from "@/data/generated/recommendation-context-v1.json";
 import type { GenreTag } from "@/domain/catalog/types";
 import type { ExplanationFactorId } from "@/domain/explanation";
 import { generateTasteExplanation } from "@/domain/explanation/generate";
@@ -41,7 +41,6 @@ import type {
   RecommendationPolicies,
   UserWorkRecord,
 } from "@/domain/profile/types";
-import { recommendationContextSchema } from "@/domain/recommendation/context-schema";
 import {
   RECOMMENDATION_CACHE_SCHEMA_VERSION,
   RECOMMENDATION_ENGINE_VERSION,
@@ -49,15 +48,18 @@ import {
 } from "@/domain/recommendation/input-hash";
 import {
   backfillRecommendationPlanEntries,
-  buildRecommendationPlan,
   selectRecommendationPlanEntries,
-} from "@/domain/recommendation/rank";
-import type { RecommendationInput, RecommendationPlanEntry } from "@/domain/recommendation/types";
+} from "@/domain/recommendation/ordering";
+import type {
+  RecommendationContext,
+  RecommendationInput,
+  RecommendationPlanEntry,
+} from "@/domain/recommendation/types";
 import { useCatalog } from "@/features/catalog/catalog-provider";
 import { usePersistence } from "@/infrastructure/db";
 import { recommendationStrings, explanationLexicon } from "@/lib/strings";
 
-import { FeedbackDialog, type PendingRecommendationFeedback } from "./feedback-dialog";
+import type { PendingRecommendationFeedback } from "./feedback-dialog";
 import { FeedbackImpactSummary } from "./feedback-impact-summary";
 import { RecommendationCard } from "./recommendation-card";
 import { RecommendationCriteriaSummary } from "./recommendation-criteria-summary";
@@ -90,15 +92,21 @@ const DEFAULT_POLICIES: RecommendationPolicies = {
 };
 const EMPTY_ADJUSTMENTS: ProfileAdjustments = { axes: {}, themes: {} };
 const EMPTY_RECORDS: readonly UserWorkRecord[] = [];
-const parsedRecommendationContext =
-  recommendationContextSchema.safeParse(recommendationContextJson);
-
 type RecommendationMotionListComponent = ComponentType<RecommendationMotionListProps>;
+const FeedbackDialog = lazy(async () => {
+  const module = await import("./feedback-dialog");
+  return { default: module.FeedbackDialog };
+});
+const QuickPreviewDialog = lazy(async () => {
+  const module = await import("@/components/media/quick-preview-dialog");
+  return { default: module.QuickPreviewDialog };
+});
 type MotionFocusTarget = Readonly<{
   workId: string;
   action: "completed" | "hidden" | null;
 }>;
 type RecommendationsFlowProps = Readonly<{
+  context: RecommendationContext | null;
   previewWorkId?: string;
   genre?: GenreTag;
   shelf?: string;
@@ -225,6 +233,7 @@ function RecommendationsSkeleton() {
 }
 
 export function RecommendationsFlow({
+  context,
   genre,
   onGenreChange,
   onPreviewClose,
@@ -232,7 +241,7 @@ export function RecommendationsFlow({
   onShelfChange,
   previewWorkId,
   shelf,
-}: RecommendationsFlowProps = {}) {
+}: RecommendationsFlowProps) {
   const catalog = useCatalog();
   const {
     adjustments: storedAdjustments,
@@ -301,7 +310,7 @@ export function RecommendationsFlow({
       userWorks === undefined ||
       storedAdjustments === undefined ||
       storedPolicies === undefined ||
-      !parsedRecommendationContext.success
+      context === null
     ) {
       return null;
     }
@@ -310,9 +319,9 @@ export function RecommendationsFlow({
       records: userWorks,
       adjustments,
       policies,
-      context: parsedRecommendationContext.data,
+      context,
     };
-  }, [adjustments, catalog, policies, storedAdjustments, storedPolicies, userWorks]);
+  }, [adjustments, catalog, context, policies, storedAdjustments, storedPolicies, userWorks]);
   const dnaSummary = useMemo(
     () => summarizeMangaDna(catalog.works, profileRecords),
     [catalog.works, profileRecords],
@@ -334,9 +343,7 @@ export function RecommendationsFlow({
   } = useMemo(() => {
     const nextRenderedEntries = visibleEntries.flatMap((entry) => {
       const work = worksById.get(entry.workId);
-      const metadata = parsedRecommendationContext.success
-        ? parsedRecommendationContext.data.constraintByWorkId[entry.workId]
-        : undefined;
+      const metadata = context?.constraintByWorkId[entry.workId];
       return work === undefined || metadata === undefined ? [] : [{ entry, metadata, work }];
     });
     const nextFeaturedEntries =
@@ -346,9 +353,7 @@ export function RecommendationsFlow({
     const nextAllPlanEntries = (plan ?? []).flatMap((entry) => {
       if (excludedWorkIds.has(entry.workId)) return [];
       const work = worksById.get(entry.workId);
-      const metadata = parsedRecommendationContext.success
-        ? parsedRecommendationContext.data.constraintByWorkId[entry.workId]
-        : undefined;
+      const metadata = context?.constraintByWorkId[entry.workId];
       return work === undefined || metadata === undefined ? [] : [{ entry, metadata, work }];
     });
     const visibleWorkIds = new Set(visibleEntries.map((entry) => entry.workId));
@@ -357,17 +362,19 @@ export function RecommendationsFlow({
         !visibleWorkIds.has(entry.workId) && (genre === undefined || work.genres.includes(genre)),
     );
     const usedAuxiliaryIds = new Set<string>();
-    const nextAnchorEntries = auxiliaryEntries
-      .filter(({ entry }) => {
-        const leadReason = generateTasteExplanation({
-          contributions: entry.contributions,
-          confidenceLevel: entry.confidenceLevel,
-          lexicon: explanationLexicon,
-          resolveTitle: (workId) => worksById.get(workId)?.title,
-        }).positiveReasons[0];
-        return leadReason !== undefined && leadReason.anchorWorkIds.length > 0;
-      })
-      .slice(0, 8);
+    const nextAnchorEntries: typeof auxiliaryEntries = [];
+    for (const candidate of auxiliaryEntries) {
+      if (nextAnchorEntries.length === 8) break;
+      const leadReason = generateTasteExplanation({
+        contributions: candidate.entry.contributions,
+        confidenceLevel: candidate.entry.confidenceLevel,
+        lexicon: explanationLexicon,
+        resolveTitle: (workId) => worksById.get(workId)?.title,
+      }).positiveReasons[0];
+      if (leadReason !== undefined && leadReason.anchorWorkIds.length > 0) {
+        nextAnchorEntries.push(candidate);
+      }
+    }
     nextAnchorEntries.forEach(({ entry }) => usedAuxiliaryIds.add(entry.workId));
     const nextDiscoveryEntries = auxiliaryEntries
       .filter(({ entry }) => entry.isDiscovery && !usedAuxiliaryIds.has(entry.workId))
@@ -387,7 +394,7 @@ export function RecommendationsFlow({
       previewEntry: nextAllPlanEntries.find(({ entry }) => entry.workId === previewWorkId) ?? null,
       renderedEntries: nextRenderedEntries,
     };
-  }, [excludedWorkIds, genre, plan, previewWorkId, visibleEntries, worksById]);
+  }, [context, excludedWorkIds, genre, plan, previewWorkId, visibleEntries, worksById]);
   const coverWorkIds = useMemo(() => {
     const orderedIds = [
       ...featuredEntries.map(({ entry }) => entry.workId),
@@ -592,7 +599,9 @@ export function RecommendationsFlow({
         const cached = options.allowCache ? await getRecommendationCache(inputHash) : null;
         const cachedPlanIsUsable =
           cached !== null && planReferencesCurrentInput(cached.plan, input);
-        const nextPlan = cachedPlanIsUsable ? cached.plan : buildRecommendationPlan(input);
+        const nextPlan = cachedPlanIsUsable
+          ? cached.plan
+          : (await import("@/domain/recommendation/rank")).buildRecommendationPlan(input);
         if (!planReferencesCurrentInput(nextPlan, input)) {
           throw new Error("Recommendation plan does not match the current catalog context");
         }
@@ -884,7 +893,7 @@ export function RecommendationsFlow({
       return;
     }
     await loadPlan(recommendationInput, currentHash, {
-      allowCache: false,
+      allowCache: true,
       announcement: recommendationStrings.announcements.updated,
     });
   };
@@ -924,8 +933,7 @@ export function RecommendationsFlow({
         });
   const hasInvalidEntry = renderedEntries.length !== visibleEntries.length;
   const showInitialError =
-    (!parsedRecommendationContext.success || calculationError !== "" || hasInvalidEntry) &&
-    plan === null;
+    (context === null || calculationError !== "" || hasInvalidEntry) && plan === null;
   const updateDisabled =
     isComputing ||
     isPolicySaving ||
@@ -1258,47 +1266,48 @@ export function RecommendationsFlow({
           </div>
         </div>
 
-        <FeedbackDialog
-          busy={feedbackBusy}
-          errorMessage={feedbackError}
-          feedback={feedback}
-          onSaveCompleted={(reaction) => void saveCompletedFeedback(reaction)}
-          onSaveHidden={(reasons) => void saveHiddenFeedback(reasons)}
-          onSkip={closeFeedback}
-        />
-        <QuickPreviewDialog
-          busy={
-            previewEntry === null ||
-            isComputing ||
-            isPolicySaving ||
-            feedbackBaseBusy ||
-            busyWorkIds.has(previewEntry.entry.workId)
-          }
-          coverUrl={
-            previewEntry === null ? null : recommendationCoverUrls.get(previewEntry.entry.workId)
-          }
-          explanation={previewExplanation}
-          onCompleted={() => {
-            if (previewEntry === null) return;
-            onPreviewClose?.();
-            void removeForFeedback(previewEntry.entry, "completed");
-          }}
-          onHidden={() => {
-            if (previewEntry === null) return;
-            onPreviewClose?.();
-            void removeForFeedback(previewEntry.entry, "hidden");
-          }}
-          onOpenChange={(open) => {
-            if (!open) onPreviewClose?.();
-          }}
-          onPlanned={() => {
-            if (previewEntry !== null) void savePlanned(previewEntry.entry);
-          }}
-          open={previewEntry !== null}
-          planned={previewEntry !== null && plannedIds.has(previewEntry.entry.workId)}
-          volumeCount={previewEntry?.metadata.volumeCount ?? null}
-          work={previewEntry?.work ?? null}
-        />
+        {feedback !== null || previewEntry !== null ? (
+          <Suspense fallback={null}>
+            {feedback !== null ? (
+              <FeedbackDialog
+                busy={feedbackBusy}
+                errorMessage={feedbackError}
+                feedback={feedback}
+                onSaveCompleted={(reaction) => void saveCompletedFeedback(reaction)}
+                onSaveHidden={(reasons) => void saveHiddenFeedback(reasons)}
+                onSkip={closeFeedback}
+              />
+            ) : null}
+            {previewEntry !== null ? (
+              <QuickPreviewDialog
+                busy={
+                  isComputing ||
+                  isPolicySaving ||
+                  feedbackBaseBusy ||
+                  busyWorkIds.has(previewEntry.entry.workId)
+                }
+                coverUrl={recommendationCoverUrls.get(previewEntry.entry.workId)}
+                explanation={previewExplanation}
+                onCompleted={() => {
+                  onPreviewClose?.();
+                  void removeForFeedback(previewEntry.entry, "completed");
+                }}
+                onHidden={() => {
+                  onPreviewClose?.();
+                  void removeForFeedback(previewEntry.entry, "hidden");
+                }}
+                onOpenChange={(open) => {
+                  if (!open) onPreviewClose?.();
+                }}
+                onPlanned={() => void savePlanned(previewEntry.entry)}
+                open
+                planned={plannedIds.has(previewEntry.entry.workId)}
+                volumeCount={previewEntry.metadata.volumeCount}
+                work={previewEntry.work}
+              />
+            ) : null}
+          </Suspense>
+        ) : null}
         <p
           aria-atomic="true"
           aria-live="polite"

@@ -1,7 +1,5 @@
 // @vitest-environment jsdom
 
-import { readFileSync } from "node:fs";
-import { resolve } from "node:path";
 import type { ReactNode } from "react";
 import { cleanup, render } from "@testing-library/react";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
@@ -41,7 +39,7 @@ beforeEach(() => {
 afterEach(cleanup);
 
 describe("RecommendationMotionList", () => {
-  it("contains the only permitted height-collapse owner without size containment", () => {
+  it("keeps its height-collapse item free of size containment", () => {
     render(
       <RecommendationMotionList
         items={[{ workId: "work-1", animateIn: true, content: <article>Work</article> }]}
@@ -50,20 +48,11 @@ describe("RecommendationMotionList", () => {
       />,
     );
 
-    const itemClassName = motionState.itemProps[0]?.className;
+    const itemProps = motionState.itemProps[0];
+    const itemClassName = itemProps?.className;
     expect(itemClassName).toContain("[contain:layout_paint]");
     expect(itemClassName).not.toContain("contain:size");
-
-    const cardSource = readFileSync(
-      resolve(process.cwd(), "src/features/recommendations/recommendation-card.tsx"),
-      "utf8",
-    );
-    expect(cardSource).toContain("<ExpandableMediaCard");
-    const expandableCardSource = readFileSync(
-      resolve(process.cwd(), "src/components/media/expandable-media-card.tsx"),
-      "utf8",
-    );
-    expect(expandableCardSource).toContain("prefersReducedMotion()");
+    expect(itemProps?.exit).toMatchObject({ height: 0 });
   });
 
   it("uses local domMax layout motion only in the no-preference path", () => {

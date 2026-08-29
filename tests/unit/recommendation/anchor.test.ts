@@ -4,6 +4,7 @@ import { AXIS_IDS } from "@/domain/catalog/constants";
 import type { ScaleValue } from "@/domain/catalog/types";
 import {
   calculatePositiveAnchorScore,
+  preparePositiveAnchorScorer,
   type PositiveAnchorInput,
 } from "@/domain/recommendation/anchor";
 import { workSimilarity } from "@/domain/recommendation/similarity";
@@ -190,6 +191,34 @@ describe("positive anchor aggregation", () => {
     expect(result?.appliedConsensusBonus).toBe(0);
 
     expect(calculatePositiveAnchorScore(candidate, [...anchors].reverse())).toEqual(result);
+  });
+
+  it("keeps prepared scoring byte-equivalent across reversed anchors and candidates", () => {
+    const anchors: PositiveAnchorInput[] = [
+      { work: uniformWork("anchor-c", 3), reaction: "liked" },
+      { work: uniformWork("anchor-a", 2), reaction: "favorite" },
+      { work: uniformWork("anchor-b", 2), reaction: "liked" },
+      { work: uniformWork("anchor-far", 0, false), reaction: "favorite" },
+    ];
+    const candidates = [
+      uniformWork("candidate-a", 2),
+      uniformWork("candidate-b", 4),
+      uniformWork("candidate-c", 0, false),
+    ];
+    const expected = candidates.map((candidate) =>
+      calculatePositiveAnchorScore(candidate, anchors),
+    );
+
+    const score = preparePositiveAnchorScorer(anchors);
+    expect(JSON.stringify(candidates.map((candidate) => score(candidate)))).toBe(
+      JSON.stringify(expected),
+    );
+
+    const reversedCandidates = [...candidates].reverse();
+    const reversedScore = preparePositiveAnchorScorer([...anchors].reverse());
+    expect(JSON.stringify(reversedCandidates.map((candidate) => reversedScore(candidate)))).toBe(
+      JSON.stringify([...expected].reverse()),
+    );
   });
 
   it("caps the nominal consensus bonus at 0.05", () => {

@@ -33,7 +33,7 @@ vi.mock("@tanstack/react-router", () => ({
 afterEach(cleanup);
 
 describe("media card anatomy", () => {
-  it("renders the default editorial spotlight plate without changing card geometry", () => {
+  it("renders the first editorial rank on a cover-forward card", () => {
     const { container } = render(
       <ol>
         <RankingCard
@@ -49,27 +49,13 @@ describe("media card anatomy", () => {
       </ol>,
     );
 
-    const topTenPlate = screen.getByText("TOP").parentElement;
-    expect(topTenPlate?.textContent).toBe("TOP10");
-    expect(screen.getAllByText("1")).toHaveLength(2);
+    expect(screen.getAllByText("1")).toHaveLength(1);
     expect(screen.getByText("作品名")).toBeTruthy();
     expect(screen.getByText("高い確信")).toBeTruthy();
-    expect(container.querySelector(".lucide-crown")).toBeTruthy();
-    expect(container.querySelector('[data-ranking-first-swash="true"]')).toBeTruthy();
-    const accessory = container.querySelector<HTMLElement>(
-      '[data-ranking-editorial-accessory="true"]',
-    );
-    const accessoryPosition = container.querySelector<HTMLElement>(
-      '[data-ranking-editorial-accessory-position="true"]',
-    );
     const basePosition = container.querySelector<HTMLElement>(
       '[data-ranking-editorial-position="true"]',
     );
-    expect(accessory).toBeTruthy();
-    expect(accessoryPosition?.className).toContain("text-[length:var(--font-size-32)]");
-    expect(accessoryPosition?.className).not.toContain("scale-x-");
     expect(basePosition?.className).toContain("text-[length:var(--font-size-32)]");
-    expect(accessoryPosition?.className).toContain("font-display");
     expect(basePosition?.className).toContain("font-display");
     expect(container.querySelector("li")?.getAttribute("data-ranking-position")).toBe("1");
     expect(basePosition).toBeTruthy();
@@ -78,17 +64,16 @@ describe("media card anatomy", () => {
     expect(container.querySelectorAll("img")).toHaveLength(1);
     expect(container.querySelector("img")?.getAttribute("loading")).toBe("eager");
     const rankingCover = container.querySelector<HTMLElement>(".cover-image");
-    expect(rankingCover?.className).toContain("[&>img]:!object-cover");
-    expect(rankingCover?.className).toContain("[&>img]:!object-top");
+    expect(rankingCover?.className).toContain("aspect-[30/43]");
+    expect(container.querySelector("img")?.className).toContain("object-contain");
     expect(container.querySelector('[data-cover-backdrop="true"]')).toBeNull();
     expect(container.querySelector("li")?.classList.contains("w-24")).toBe(true);
     expect(container.querySelector("li")?.classList.contains("sm:w-28")).toBe(true);
-    expect(container.querySelector("a")?.classList.contains("aspect-[18/25]")).toBe(true);
-    expect(container.querySelector('[data-media-meta-line="true"]')).toBeTruthy();
+    expect(container.querySelector('[data-media-meta-line="true"]')).toBeNull();
     expect(container.querySelector(".lucide-circle")).toBeNull();
   });
 
-  it("gives later editorial ranks the same movable spotlight plate and geometry", () => {
+  it("gives later editorial ranks the same cover-forward geometry", () => {
     const { container } = render(
       <ol>
         <RankingCard
@@ -104,17 +89,18 @@ describe("media card anatomy", () => {
       </ol>,
     );
 
-    expect(screen.getByText("TOP")).toBeTruthy();
-    expect(screen.getAllByText("2")).toHaveLength(2);
-    expect(container.querySelector('[data-ranking-first-swash="true"]')).toBeTruthy();
+    expect(screen.getAllByText("2")).toHaveLength(1);
+    expect(container.querySelector('[data-ranking-editorial-position="true"]')).toBeTruthy();
     expect(container.querySelector("li")?.getAttribute("data-ranking-position")).toBe("2");
     expect(container.querySelector("img")?.getAttribute("loading")).toBe("lazy");
     expect(container.querySelector("li")?.classList.contains("w-24")).toBe(true);
     expect(container.querySelector("li")?.classList.contains("sm:w-28")).toBe(true);
-    expect(container.querySelector("a")?.classList.contains("aspect-[18/25]")).toBe(true);
+    expect(container.querySelector(".cover-image")?.classList.contains("aspect-[30/43]")).toBe(
+      true,
+    );
   });
 
-  it("keeps the personalized first-place crown persistent without the editorial plate", () => {
+  it("renders personalized first place without an editorial marker", () => {
     const { container } = render(
       <ol>
         <RankingCard
@@ -130,13 +116,15 @@ describe("media card anatomy", () => {
     );
 
     expect(screen.getByRole("link").getAttribute("aria-label")).toMatch(/^1位/u);
-    expect(container.querySelector('[data-ranking-personalized-crown="true"]')).toBeTruthy();
-    expect(container.querySelector('[data-ranking-first-swash="true"]')).toBeNull();
+    expect(screen.getAllByText("1")).toHaveLength(1);
+    expect(container.querySelector('[data-ranking-editorial-position="true"]')).toBeNull();
     expect(screen.getByRole("link").className).not.toContain("translate-y");
     expect(container.querySelector("li")?.className).toContain(
       "w-[calc(var(--control-min-size)*1.75)]",
     );
-    expect(container.querySelector("a")?.classList.contains("aspect-[30/43]")).toBe(true);
+    expect(container.querySelector(".cover-image")?.classList.contains("aspect-[30/43]")).toBe(
+      true,
+    );
   });
 
   it("renders the overlay poster hierarchy inside the full-cover card", () => {
@@ -190,7 +178,7 @@ describe("media card anatomy", () => {
     expect(poster?.classList.contains("sm:w-38")).toBe(false);
   });
 
-  it("renders a layered featured showcase card with truthful overlay content", () => {
+  it("renders a cover-forward featured showcase card with truthful supporting text", () => {
     const { container } = render(
       <ShowcaseCard
         coverUrl="https://example.com/cover.jpg"
@@ -214,42 +202,17 @@ describe("media card anatomy", () => {
     expect(container.querySelector('[data-card-presentation="showcase"]')).toBeTruthy();
     expect(container.querySelector('[data-featured="true"]')).toBeTruthy();
     expect(screen.getByRole("link").className).not.toContain("hover:-translate-y");
-    expect(container.querySelectorAll(".cover-image")).toHaveLength(2);
-    expect(container.querySelectorAll("img")).toHaveLength(2);
-    const layers = container.querySelectorAll(".cover-image");
-    const backdrop = layers[0] as HTMLElement;
-    const foreground = layers[1] as HTMLElement;
-    // first layer is blurred decorative backdrop and has direct-child object-cover
-    expect(backdrop.className).toContain("[&>img]:!object-cover");
-    expect(backdrop.className).toContain("blur-[16px]");
-    expect(backdrop.className).toContain("opacity-[0.55]");
-    // The wrapper shrink-wraps the intrinsic cover while radius and depth live on the actual image.
-    expect(foreground.className).toContain("[&>img]:!object-contain");
-    expect(foreground.className).toContain("h-[88%]");
-    expect(foreground.className).toContain("w-auto");
-    expect(foreground.className).toContain("!aspect-auto");
-    expect(foreground.className).toContain("[&>img]:!static");
-    expect(foreground.className).toContain("[&>img]:!h-full");
-    expect(foreground.className).toContain("[&>img]:!w-auto");
-    expect(foreground.className).toContain("[&>img]:!rounded-[var(--radius-cover)]");
-    expect(foreground.className).toContain("rotate-[4deg]");
-    expect(foreground.className).toContain("right-[var(--space-3)]");
-    expect(foreground.className).toContain("!bg-transparent");
-    expect(foreground.className).toContain("!border-0");
-    expect(foreground.className).not.toContain("mask");
-    expect(foreground.className).not.toContain("[mask-image");
-    expect(foreground.className).not.toContain("[&>img]:!object-cover");
-    expect(foreground.className).not.toContain("will-change");
-    expect(foreground.className).not.toContain("transition");
-    expect(foreground.className).not.toContain("shadow-[var(--shadow-raised)]");
-    // base img class remains object-contain and direct-child selector holds
-    expect(container.querySelectorAll(".cover-image > img.cover-image__image")).toHaveLength(2);
-    for (const img of Array.from(container.querySelectorAll(".cover-image__image"))) {
-      expect((img as HTMLElement).className).toContain("object-contain");
-    }
+    expect(container.querySelector("article")?.classList.contains("md:w-56")).toBe(true);
+    expect(container.querySelectorAll(".cover-image")).toHaveLength(1);
+    expect(container.querySelectorAll("img")).toHaveLength(1);
+    expect(container.querySelector(".cover-image")?.className).toContain("aspect-[30/43]");
+    expect(container.querySelector("img")?.className).toContain("object-contain");
+    expect(screen.getByRole("heading", { name: "注目作品" }).className).toContain(
+      "text-[length:var(--font-size-16)]",
+    );
   });
 
-  it("keeps the collapsed portrait contained over a full-bleed backdrop", () => {
+  it("keeps the collapsed showcase on the compact cover-forward geometry", () => {
     const { container } = render(
       <ShowcaseCard
         coverUrl="https://example.com/cover.jpg"
@@ -261,37 +224,13 @@ describe("media card anatomy", () => {
     );
 
     expect(container.querySelector('[data-featured="true"]')).toBeNull();
-    expect(container.querySelectorAll(".cover-image")).toHaveLength(2);
-    const layers = container.querySelectorAll(".cover-image");
-    const backdrop = layers[0] as HTMLElement;
-    const foreground = layers[1] as HTMLElement;
-    // first layer is blurred decorative backdrop and has direct-child object-cover
-    expect(backdrop.className).toContain("[&>img]:!object-cover");
-    expect(backdrop.className).toContain("blur-[16px]");
-    // The wrapper shrink-wraps the intrinsic cover while radius and depth live on the actual image.
-    expect(foreground.className).toContain("[&>img]:!object-contain");
-    expect(foreground.className).toContain("h-[88%]");
-    expect(foreground.className).toContain("w-auto");
-    expect(foreground.className).toContain("!aspect-auto");
-    expect(foreground.className).toContain("[&>img]:!static");
-    expect(foreground.className).toContain("[&>img]:!h-full");
-    expect(foreground.className).toContain("[&>img]:!w-auto");
-    expect(foreground.className).toContain("[&>img]:!rounded-[var(--radius-cover)]");
-    expect(foreground.className).toContain("rotate-[4deg]");
-    expect(foreground.className).toContain("right-[var(--space-3)]");
-    expect(foreground.className).toContain("!bg-transparent");
-    expect(foreground.className).toContain("!border-0");
-    expect(foreground.className).not.toContain("mask");
-    expect(foreground.className).not.toContain("[mask-image");
-    expect(foreground.className).not.toContain("[&>img]:!object-cover");
-    expect(foreground.className).not.toContain("will-change");
-    expect(foreground.className).not.toContain("transition");
-    expect(foreground.className).not.toContain("shadow-[var(--shadow-raised)]");
-    // base img class remains object-contain and direct-child selector holds
-    expect(container.querySelectorAll(".cover-image > img.cover-image__image")).toHaveLength(2);
-    for (const img of Array.from(container.querySelectorAll(".cover-image__image"))) {
-      expect((img as HTMLElement).className).toContain("object-contain");
-    }
+    expect(container.querySelector("article")?.classList.contains("md:w-44")).toBe(true);
+    expect(container.querySelectorAll(".cover-image")).toHaveLength(1);
+    expect(container.querySelector(".cover-image")?.className).toContain("aspect-[30/43]");
+    expect(container.querySelector("img")?.className).toContain("object-contain");
+    expect(screen.getByRole("heading", { name: "通常作品" }).className).toContain(
+      "text-[length:var(--font-size-14)]",
+    );
   });
 
   it("keeps foreground img node and src stable when featured toggles and requestedSize stays 400", () => {
@@ -306,19 +245,11 @@ describe("media card anatomy", () => {
       />,
     );
 
-    const layersBefore = container.querySelectorAll(".cover-image");
-    const foregroundBefore = layersBefore[1] as HTMLElement;
-    const imgBefore = foregroundBefore.querySelector("img.cover-image__image") as HTMLImageElement;
+    const coverBefore = container.querySelector(".cover-image") as HTMLElement;
+    const imgBefore = coverBefore.querySelector("img.cover-image__image") as HTMLImageElement;
     const srcBefore = imgBefore.getAttribute("src") ?? "";
     expect(srcBefore).toContain("_ex=400x400");
     expect(srcBefore).not.toContain("_ex=600x600");
-
-    const backdropBefore = layersBefore[0] as HTMLElement;
-    const backdropImgBefore = backdropBefore.querySelector(
-      "img.cover-image__image",
-    ) as HTMLImageElement;
-    const backdropSrcBefore = backdropImgBefore.getAttribute("src") ?? "";
-    expect(backdropSrcBefore).toContain("_ex=400x400");
 
     rerender(
       <ShowcaseCard
@@ -330,26 +261,15 @@ describe("media card anatomy", () => {
       />,
     );
 
-    const layersAfter = container.querySelectorAll(".cover-image");
-    const foregroundAfter = layersAfter[1] as HTMLElement;
-    const imgAfter = foregroundAfter.querySelector("img.cover-image__image") as HTMLImageElement;
+    const coverAfter = container.querySelector(".cover-image") as HTMLElement;
+    const imgAfter = coverAfter.querySelector("img.cover-image__image") as HTMLImageElement;
     const srcAfter = imgAfter.getAttribute("src") ?? "";
+    expect(coverAfter).toBe(coverBefore);
     expect(imgAfter).toBe(imgBefore);
     expect(srcAfter).toBe(srcBefore);
     expect(srcAfter).toContain("_ex=400x400");
-
-    const backdropAfter = layersAfter[0] as HTMLElement;
-    const backdropImgAfter = backdropAfter.querySelector(
-      "img.cover-image__image",
-    ) as HTMLImageElement;
-    expect(backdropImgAfter.getAttribute("src")).toBe(backdropSrcBefore);
-
-    // geometry remains identical after toggle
-    expect(foregroundAfter.className).toContain("h-[88%]");
-    expect(foregroundAfter.className).toContain("w-auto");
-    expect(foregroundAfter.className).toContain("!aspect-auto");
-    expect(foregroundAfter.className).toContain("[&>img]:!rounded-[var(--radius-cover)]");
-    expect(foregroundAfter.className).toContain("rotate-[4deg]");
+    expect(coverAfter.className).toContain("aspect-[30/43]");
+    expect(container.querySelector("article")?.classList.contains("md:w-44")).toBe(true);
   });
 
   it("renders the dark semantic fallback when cover artwork is missing while preserving title and metadata", () => {
@@ -364,23 +284,25 @@ describe("media card anatomy", () => {
       />,
     );
 
-    // No external image should be requested; ShowcaseCard must use its no-cover dark branch.
+    // No external image should be requested; CoverImage renders the local semantic placeholder.
     expect(container.querySelectorAll("img")).toHaveLength(0);
-    expect(container.querySelectorAll(".cover-image")).toHaveLength(0);
+    expect(container.querySelectorAll(".cover-image")).toHaveLength(1);
     expect(container.innerHTML).not.toContain("placehold.co");
     expect(container.innerHTML).not.toContain("TEST");
     expect(container.innerHTML).not.toContain("https://");
-    // Dark semantic fallback gradient is present (existing no-cover branch).
+    // The dark semantic placeholder retains the local screentone treatment.
     expect(container.innerHTML).toContain("radial-gradient");
-    expect(container.innerHTML).toContain("ellipse_68%");
     // Real Japanese title/creator/metadata remain truthful and visible.
-    expect(screen.getByText("テストタイトル")).toBeTruthy();
-    expect(screen.getByText("作者 テスト作者")).toBeTruthy();
+    expect(screen.getAllByText("テストタイトル")).toHaveLength(2);
+    expect(screen.getAllByText("作者 テスト作者")).toHaveLength(2);
     expect(screen.getByText("ファンタジー · 完結")).toBeTruthy();
     expect(screen.getByText("2")).toBeTruthy();
-    // CoverImage global contract remains contain; only the decorative backdrop overrides it to cover.
-    // This fallback path must not introduce a CoverImage placeholder with external src.
-    expect(container.querySelector(".cover-image--placeholder")).toBeNull();
+    expect(container.querySelector(".cover-image--placeholder")).toBeTruthy();
+    expect(
+      screen.getByRole("img", {
+        name: "テストタイトルの表紙画像はありません。作者 テスト作者",
+      }),
+    ).toBeTruthy();
   });
 
   it("HomeShowcaseShelf does not construct external placeholder URLs and falls back to dark semantics", () => {
@@ -401,13 +323,14 @@ describe("media card anatomy", () => {
     expect(container.innerHTML).not.toContain("TEST");
     // No external image for missing artwork.
     expect(container.querySelectorAll("img")).toHaveLength(0);
-    expect(container.querySelectorAll(".cover-image")).toHaveLength(0);
-    // Dark fallback still present with radial gradient.
+    expect(container.querySelectorAll(".cover-image")).toHaveLength(1);
+    expect(container.querySelector(".cover-image--placeholder")).toBeTruthy();
+    // Dark fallback still presents its local screentone.
     expect(container.innerHTML).toContain("radial-gradient");
     // Truthful Japanese title/creator/metadata preserved.
-    expect(screen.getByText("プレースホルダなし作品")).toBeTruthy();
+    expect(screen.getAllByText("プレースホルダなし作品")).toHaveLength(2);
     // creatorLine via coverStrings: "作者 " + join
-    expect(screen.getByText("作者 宮崎駿")).toBeTruthy();
+    expect(screen.getAllByText("作者 宮崎駿")).toHaveLength(2);
   });
 
   it("shares a text-only catalog metadata contract while preserving multi-genre detail", () => {
@@ -438,7 +361,7 @@ describe("media card anatomy", () => {
     if (discovery === null || discovery === undefined) return;
     expect(within(ranking).getByText("アクション +2")).toBeTruthy();
     expect(within(discovery).getByText("アクション ほか2 · 完結")).toBeTruthy();
-    expect(ranking.querySelector('[data-media-meta-line="true"]')).toBeTruthy();
+    expect(ranking.querySelector('[data-media-meta-line="true"]')).toBeNull();
     expect(discovery.querySelector('[data-media-meta-line="true"]')).toBeTruthy();
     expect(ranking.querySelector(".lucide-circle")).toBeNull();
     expect(discovery.querySelector(".lucide-book-open")).toBeNull();
