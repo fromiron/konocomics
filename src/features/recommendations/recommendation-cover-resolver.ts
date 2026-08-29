@@ -132,7 +132,7 @@ type InFlightCoverResolution = Readonly<{
   request: Promise<RecommendationCoverResolution>;
 }>;
 
-const REMAINING_COVER_CONCURRENCY = 4;
+const COVER_RESOLUTION_CONCURRENCY = 4;
 
 export function useRecommendationCovers({
   targets,
@@ -194,11 +194,7 @@ export function useRecommendationCovers({
 
     void (async () => {
       if (first === undefined) return;
-      if (!completedRef.current.has(targetKey(first))) {
-        const firstResolution = await resolveShared(first);
-        if (!commit([firstResolution], true)) return;
-      }
-      if (generationRef.current !== generation) return;
+      const firstRequest = completedRef.current.has(targetKey(first)) ? null : resolveShared(first);
       const pending = targets
         .slice(1)
         .filter((target) => !completedRef.current.has(targetKey(target)));
@@ -212,9 +208,23 @@ export function useRecommendationCovers({
           if (!commit([resolution])) return;
         }
       };
-      await Promise.all(
-        Array.from({ length: Math.min(REMAINING_COVER_CONCURRENCY, pending.length) }, resolveNext),
+      const remainingWorkers = Array.from(
+        {
+          length: Math.min(
+            pending.length,
+            COVER_RESOLUTION_CONCURRENCY - (firstRequest === null ? 0 : 1),
+          ),
+        },
+        resolveNext,
       );
+
+      if (firstRequest !== null) {
+        const firstResolution = await firstRequest;
+        if (!commit([firstResolution], true)) return;
+        if (nextIndex < pending.length) remainingWorkers.push(resolveNext());
+      }
+
+      await Promise.all(remainingWorkers);
     })();
 
     return () => {

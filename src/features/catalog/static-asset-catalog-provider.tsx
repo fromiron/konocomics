@@ -13,6 +13,7 @@ import { catalogStrings } from "@/lib/strings";
 
 import { catalogMatchesIdentity } from "./catalog-identity";
 import { CatalogProvider, useCatalogIdentity } from "./catalog-provider";
+import { getValidatedSessionCatalog, setValidatedSessionCatalog } from "./validated-catalog-cache";
 
 type CatalogLoadState =
   | Readonly<{ kind: "loading"; requestKey: string }>
@@ -41,38 +42,45 @@ export function StaticAssetCatalogProvider({ children }: StaticAssetCatalogProvi
   useEffect(() => {
     const controller = new AbortController();
     let active = true;
+    const cachedCatalog =
+      requestCache === "force-cache" ? getValidatedSessionCatalog(identity) : null;
+    const catalogRequest =
+      cachedCatalog === null
+        ? fetch(catalogAssetUrl(identity.catalogVersion), {
+            cache: requestCache,
+            signal: controller.signal,
+          }).then(async (response) => {
+            if (!response.ok) throw new Error("Recommendation Catalog request failed");
+            const result = catalogV1Schema.safeParse(await response.json());
+            if (!result.success || !catalogMatchesIdentity(result.data, identity)) {
+              throw new Error("Catalog asset identity mismatch");
+            }
+            return result.data;
+          })
+        : Promise.resolve(cachedCatalog);
 
     void Promise.all([
-      fetch(catalogAssetUrl(identity.catalogVersion), {
-        cache: requestCache,
-        signal: controller.signal,
-      }),
+      catalogRequest,
       fetch(recommendationContextAssetUrl, {
         cache: requestCache,
         signal: controller.signal,
       }),
     ])
-      .then(async ([catalogResponse, contextResponse]) => {
-        if (!catalogResponse.ok || !contextResponse.ok) {
-          throw new Error("Recommendation asset request failed");
-        }
-        const [catalogResult, contextResult] = await Promise.all([
-          catalogResponse.json().then((value) => catalogV1Schema.safeParse(value)),
-          contextResponse.json().then((value) => recommendationContextSchema.safeParse(value)),
-        ]);
+      .then(async ([catalog, contextResponse]) => {
+        if (!contextResponse.ok) throw new Error("Recommendation context request failed");
+        const contextResult = recommendationContextSchema.safeParse(await contextResponse.json());
         if (
-          !catalogResult.success ||
           !contextResult.success ||
-          !catalogMatchesIdentity(catalogResult.data, identity) ||
           contextResult.data.marketSnapshot.catalogVersion !== identity.catalogVersion
         ) {
           throw new Error("Catalog asset identity mismatch");
         }
         if (active) {
+          setValidatedSessionCatalog(catalog);
           setState({
             kind: "ready",
             requestKey,
-            catalog: catalogResult.data,
+            catalog,
             context: contextResult.data,
           });
         }

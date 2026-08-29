@@ -14,6 +14,7 @@ import { AppShell } from "@/components/nav/app-shell";
 import catalogIdentityJson from "@/data/generated/catalog-identity-v1.json";
 import recommendationContextAssetUrl from "@/data/generated/recommendation-context-v1.json?url";
 import { CatalogIdentityProvider } from "@/features/catalog/catalog-provider";
+import { getValidatedSessionCatalog } from "@/features/catalog/validated-catalog-cache";
 import {
   type CurrentCatalogIdentity,
   parseCurrentCatalogIdentity,
@@ -96,11 +97,13 @@ function RootDocument() {
     currentCatalogIdentity !== null &&
     (pathname === "/recommendations" || pathname.startsWith("/recommendations/"))
   ) {
-    preload(catalogAssetUrl(currentCatalogIdentity.catalogVersion), {
-      as: "fetch",
-      crossOrigin: "anonymous",
-      fetchPriority: "high",
-    });
+    if (getValidatedSessionCatalog(currentCatalogIdentity) === null) {
+      preload(catalogAssetUrl(currentCatalogIdentity.catalogVersion), {
+        as: "fetch",
+        crossOrigin: "anonymous",
+        fetchPriority: "high",
+      });
+    }
     preload(recommendationContextAssetUrl, {
       as: "fetch",
       crossOrigin: "anonymous",

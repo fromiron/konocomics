@@ -294,8 +294,8 @@ Shelf grouping은 presentation-only selector다. main Shelf 사이에는 work ID
 
 ### 리스트 동작 계약
 
-- 진입 시: 프로필 입력 해시가 저장된 계산 해시와 다르면 재계산, 같으면 저장된 plan을 표시한다. 재계산 시 200ms 미만이면 로딩 UI를 생략하고, 이상이면 현재 Shelf/card silhouette의 skeleton을 표시한다.
-- 보이는 카드의 표지는 순위 순 `workId → representativeVolume ISBN`으로 해석한다. 1위의 exact-workId fresh metadata를 cache 또는 provider 갱신+저장 readback까지 먼저 확정한 뒤 2~10위를 병렬로 해석하고, 백필 때는 생존 카드 URL을 유지한 채 새 카드만 해석한다. fresh no-image와 cache/provider 실패는 placeholder로 끝내되 카드·이유·액션을 제거하지 않는다.
+- 진입 시: 프로필 입력 해시가 저장된 계산 해시와 다르면 재계산, 같으면 저장된 plan을 표시한다. 표시할 plan이 없는 최초 계산만 200ms 미만이면 로딩 UI를 생략하고, 이상이면 현재 Shelf/card silhouette의 skeleton을 표시한다. 기존 plan을 갱신할 때는 Shelf와 계산 해시를 유지하고 기존 「更新しています…」 busy 상태만 표시한 뒤 성공한 새 plan을 한 번에 교체하며, 실패하면 기존 plan을 보존한다.
+- 보이는 카드의 표지는 순위 순 `workId → representativeVolume ISBN`으로 해석한다. 1위 metadata를 첫 전용 lane에서 우선 시작하고 동시에 후속 3개 lane을 시작해 첫 요청 지연을 전파하지 않는다. 1위가 끝나면 후속 네 번째 lane을 열되 전체 해석 상한은 4이며 각 결과를 도착 즉시 commit한다. 백필 때는 생존 카드 URL을 유지한 채 새 카드만 해석한다. fresh no-image와 cache/provider 실패는 placeholder로 끝내되 카드·이유·액션을 제거하지 않는다.
 - `読んだ` / `興味なし`: 영속 쓰기 성공 뒤 카드 제거(Motion layout, 240ms) → 최초 계산에서 보존한 전체 후보 plan의 다음 순위로 즉시 백필한다(점수 재계산 없음, 리스트는 항상 10개 유지, 후보 소진 시 예외). `読んだ`는 `completed`로 저장한 뒤 후속 시트의 `最高/良かった/普通/いまいち`를 `favorite/liked/neutral/disliked`에 대응하며 스킵은 reaction 없음이다. `興味なし`는 `hidden`으로 저장하고, 이유 칩을 고른 경우만 `disliked + negativeReasons`를 추가한다. 스킵은 reaction·reason 없음이며 `vagueDislike`를 합성하지 않는다.
 - `読みたい`: 카드 유지, 버튼이 확정 상태로 변경 + Library(planned)에 추가.
 - 「更新」: 현재 `inputHash`의 유효한 전체 plan cache가 있으면 재사용하고, 없으면 전체 재계산한다. 이전 목록과 동일 입력이면 동일 결과(결정론)임을 전제로, 버튼은 입력 변경이 있을 때만 활성화.
@@ -331,7 +331,7 @@ Shelf grouping은 presentation-only selector다. main Shelf 사이에는 work ID
 - [ ] 카드 제거→후속 시트→백필이 키보드 포커스를 잃지 않는다(시트가 열리면 내부로, 닫히면 제거된 카드 다음 카드로 복귀).
 - [ ] 정책 칩 변경 시 목록이 재계산되고 칩 상태가 Dexie에 저장된다.
 - [ ] 1위 카드 표지는 첫 viewport의 LCP 후보로 eager/high-priority 요청되고 나머지 표지는 lazy loading을 유지한다.
-- [ ] 1위 `target[0]`의 exact-workId metadata를 cache 또는 provider 갱신·저장 readback까지 해석·commit하기 전에 2~10위 요청을 시작하지 않는다. 실제 `<img>` load/error는 기다리지 않으며, 나머지는 최대 4개를 동시에 해석하고 각 결과를 도착 즉시 commit한다. expired/mismatched/miss만 갱신하고 fresh exact-workId no-image는 재요청하지 않는다.
+- [ ] 1위 `target[0]`의 exact-workId metadata를 첫 lane에서 가장 먼저 요청하고 2~10위용 3개 lane을 즉시 함께 시작한다. 1위가 끝나면 후속 네 번째 lane을 열되 전체 동시 해석은 4개를 넘지 않고 각 결과를 도착 즉시 commit한다. 실제 `<img>` load/error는 기다리지 않으며 expired/mismatched/miss만 갱신하고 fresh exact-workId no-image는 재요청하지 않는다.
 - [ ] hover/focus로 card 크기나 정보량이 바뀌지 않으며 touch Quick Preview가 닫힌 뒤 opener focus가 복원된다.
 - [ ] presentation Shelf를 추가해도 동일 fixture의 canonical Top 10 work ID 순서가 바뀌지 않는다.
 

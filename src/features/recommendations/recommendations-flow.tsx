@@ -67,6 +67,7 @@ import {
   createRecommendationCoverTargets,
   useRecommendationCovers,
 } from "./recommendation-cover-resolver";
+import { RecommendationPlanWorkerClient } from "./recommendation-plan-worker-client";
 import {
   RecommendationFilterBar,
   recommendationShelves,
@@ -278,6 +279,7 @@ export function RecommendationsFlow({
   const [feedbackBaseBusy, setFeedbackBaseBusy] = useState(false);
   const [feedbackError, setFeedbackError] = useState("");
   const [MotionList, setMotionList] = useState<RecommendationMotionListComponent | null>(null);
+  const [recommendationPlanWorker] = useState(() => new RecommendationPlanWorkerClient());
   const calculationSequence = useRef(0);
   const calculationInFlight = useRef(false);
   const hashSequence = useRef(0);
@@ -439,6 +441,14 @@ export function RecommendationsFlow({
     setLiveAnnouncement((current) => ({ sequence: current.sequence + 1, text }));
   }, []);
 
+  useEffect(
+    () => () => {
+      calculationSequence.current += 1;
+      recommendationPlanWorker.terminate();
+    },
+    [recommendationPlanWorker],
+  );
+
   const captureMotionFocus = useCallback((): MotionFocusTarget | null => {
     const activeElement = document.activeElement;
     if (!(activeElement instanceof HTMLElement)) return null;
@@ -583,6 +593,7 @@ export function RecommendationsFlow({
       inputHash: string,
       options: Readonly<{ allowCache: boolean; announcement?: string }>,
     ) => {
+      const isInitialCalculation = plan === null;
       const sequence = calculationSequence.current + 1;
       const startedAt = performance.now();
       calculationSequence.current = sequence;
@@ -592,16 +603,19 @@ export function RecommendationsFlow({
       setIsComputing(true);
       setShowSkeleton(false);
       const skeletonTimer = window.setTimeout(() => {
-        if (calculationSequence.current === sequence) setShowSkeleton(true);
+        if (isInitialCalculation && calculationSequence.current === sequence) {
+          setShowSkeleton(true);
+        }
       }, 200);
 
       try {
         const cached = options.allowCache ? await getRecommendationCache(inputHash) : null;
+        if (calculationSequence.current !== sequence) return false;
         const cachedPlanIsUsable =
           cached !== null && planReferencesCurrentInput(cached.plan, input);
         const nextPlan = cachedPlanIsUsable
           ? cached.plan
-          : (await import("@/domain/recommendation/rank")).buildRecommendationPlan(input);
+          : await recommendationPlanWorker.build(input);
         if (!planReferencesCurrentInput(nextPlan, input)) {
           throw new Error("Recommendation plan does not match the current catalog context");
         }
@@ -615,7 +629,11 @@ export function RecommendationsFlow({
             computedAt: new Date().toISOString(),
           }).catch(() => undefined);
         }
-        if (performance.now() - startedAt >= 200 && calculationSequence.current === sequence) {
+        if (
+          isInitialCalculation &&
+          performance.now() - startedAt >= 200 &&
+          calculationSequence.current === sequence
+        ) {
           setShowSkeleton(true);
           await new Promise<void>((resolve) => {
             window.requestAnimationFrame(() => resolve());
@@ -645,7 +663,14 @@ export function RecommendationsFlow({
         }
       }
     },
-    [announce, deactivateMotionList, getRecommendationCache, saveRecommendationCache],
+    [
+      announce,
+      deactivateMotionList,
+      getRecommendationCache,
+      plan,
+      recommendationPlanWorker,
+      saveRecommendationCache,
+    ],
   );
 
   useEffect(() => {
@@ -1118,7 +1143,7 @@ export function RecommendationsFlow({
                   </Button>
                 </section>
               </FeaturedRecommendationState>
-            ) : plan === null || isComputing ? (
+            ) : plan === null ? (
               <FeaturedRecommendationState>{null}</FeaturedRecommendationState>
             ) : renderedEntries.length === 0 ? (
               <FeaturedRecommendationState>
