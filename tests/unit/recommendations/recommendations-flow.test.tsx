@@ -432,6 +432,83 @@ describe("RecommendationsFlow", () => {
     expect(screen.getByText("おすすめを更新しました。")).toBeTruthy();
   });
 
+  it("keeps the displayed plan while a changed input recomputes", async () => {
+    const nextHash = "01".repeat(32);
+    const initialPlan = makePlan();
+    const nextPlan = [...initialPlan].reverse();
+    const pendingCache = deferred<ReturnType<typeof cacheRecord>>();
+    vi.mocked(globalThis.crypto.subtle.digest)
+      .mockReset()
+      .mockResolvedValueOnce(new Uint8Array(32).buffer)
+      .mockResolvedValue(new Uint8Array(32).fill(1).buffer);
+    testState.getRecommendationCache.mockImplementation((inputHash: string) =>
+      inputHash === INPUT_HASH ? Promise.resolve(cacheRecord(initialPlan)) : pendingCache.promise,
+    );
+
+    const { container, rerender } = render(<RecommendationsFlow />);
+    await waitFor(() => {
+      expect(container.querySelectorAll(featuredItemSelector)).toHaveLength(10);
+    });
+    const initialIds = [...container.querySelectorAll<HTMLElement>(featuredItemSelector)].map(
+      (element) => element.dataset.recommendationWorkId,
+    );
+
+    testState.userWorks = testState.userWorks.map((record, index) =>
+      index === 0 ? { ...record, reaction: "favorite" } : record,
+    );
+    rerender(<RecommendationsFlow />);
+    const update = screen.getByRole<HTMLButtonElement>("button", { name: "更新" });
+    await waitFor(() => expect(update.disabled).toBe(false));
+    fireEvent.click(update);
+
+    const updating = await screen.findByRole<HTMLButtonElement>("button", {
+      name: "更新しています…",
+    });
+    expect(updating.disabled).toBe(true);
+    expect(updating.getAttribute("aria-busy")).toBe("true");
+    await act(() => new Promise((resolve) => window.setTimeout(resolve, 225)));
+    expect(screen.queryByText("おすすめを計算しています…")).toBeNull();
+    expect(
+      [...container.querySelectorAll<HTMLElement>(featuredItemSelector)].map(
+        (element) => element.dataset.recommendationWorkId,
+      ),
+    ).toEqual(initialIds);
+    expect(container.querySelector("main")?.getAttribute("data-recommendation-input-hash")).toBe(
+      INPUT_HASH,
+    );
+
+    await act(async () => {
+      pendingCache.resolve(cacheRecord(nextPlan, nextHash));
+      await pendingCache.promise;
+    });
+    await waitFor(() => {
+      expect(container.querySelector("main")?.getAttribute("data-recommendation-input-hash")).toBe(
+        nextHash,
+      );
+    });
+    expect(
+      [...container.querySelectorAll<HTMLElement>(featuredItemSelector)].map(
+        (element) => element.dataset.recommendationWorkId,
+      ),
+    ).toEqual(nextPlan.slice(0, 10).map((entry) => entry.workId));
+    expect(screen.getByText("おすすめを更新しました。")).toBeTruthy();
+  });
+
+  it("does not start a calculation after unmounting during a cache read", async () => {
+    const pendingCache = deferred<ReturnType<typeof cacheRecord> | null>();
+    testState.getRecommendationCache.mockReturnValue(pendingCache.promise);
+    const { unmount } = render(<RecommendationsFlow />);
+
+    await waitFor(() => expect(testState.getRecommendationCache).toHaveBeenCalledOnce());
+    unmount();
+    await act(async () => {
+      pendingCache.resolve(null);
+      await pendingCache.promise;
+    });
+
+    expect(testState.buildPlan).not.toHaveBeenCalled();
+  });
+
   it("renders a cache hit as a grounded list with stable provenance hooks", async () => {
     const { container } = render(<RecommendationsFlow />);
 

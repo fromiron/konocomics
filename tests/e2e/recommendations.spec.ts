@@ -852,15 +852,14 @@ test.describe("Slice 7 recommendation journeys", () => {
     await expect(landingLogo).toHaveAttribute("data-phase", "complete");
     await expect(landingCta).toBeFocused();
 
-    await expect.poll(() => itemRequests.length).toBe(1);
+    await expect.poll(() => itemRequests.length).toBeGreaterThan(1);
     await page.evaluate(
       () =>
         new Promise<void>((resolve) => {
           requestAnimationFrame(() => requestAnimationFrame(() => resolve()));
         }),
     );
-    expect(itemRequests).toHaveLength(1);
-    expect(laterRequestStartedBeforeFirstResponse).toBe(false);
+    expect(laterRequestStartedBeforeFirstResponse).toBe(true);
     firstResponseReleased = true;
     resolveFirstResponse();
     await page.waitForLoadState("networkidle");

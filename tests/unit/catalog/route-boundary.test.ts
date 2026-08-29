@@ -179,6 +179,9 @@ const contracts = [
       );
       expect(source("src/routes/__root.tsx")).not.toContain("Route.useLoaderData()");
       expect(source("src/routes/__root.tsx")).toContain("recommendation-context-v1.json?url");
+      expect(source("src/routes/__root.tsx")).toContain(
+        "getValidatedSessionCatalog(currentCatalogIdentity) === null",
+      );
     },
   },
 ] as const;

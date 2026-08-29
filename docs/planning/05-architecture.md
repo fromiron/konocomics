@@ -48,13 +48,15 @@ Rakuten 계약 검토일(2026-08-14): [Rakuten Books Book Search API 2017-04-04]
 data/source/catalog.sqlite (S6 권한 원천) root: catalogVersion+전체 workIds+profileWorkIds identity
    │  scripts/normalize-works.ts             ├→ landing: 소형 showcase projection
    │  scripts/validate-catalog.ts            ├→ route-scoped bundled Catalog: 온보딩·DNA·Library·Catalog 상세
-   │  scripts/build-catalog.ts               └→ /recommendations: content-addressed public Catalog +
-   │  scripts/build-catalog.ts                  Vite hashed recommendation context 동시 fetch
+   │  scripts/build-catalog.ts               └→ /recommendations: 같은 탭의 검증 완료 bundled Catalog 재사용,
+   │  scripts/build-catalog.ts                  없으면 content-addressed public Catalog fetch +
+   │  scripts/build-catalog.ts                  Vite hashed recommendation context fetch
    ▼                                            strict zod+exact identity 확인 뒤
-data/generated/catalog-v1.json                  Recommendation Engine (순수 함수)
-   ├→ src/data/generated/catalog-v1.json        입력: catalog + Dexie 스냅샷(프로필·기록)
-   └→ public/catalog/catalog-v1.<version>.json  출력: RankedRecommendation[] (contributions 포함)
-   (세 Catalog artifact는 byte-identical)       ▼
+data/generated/catalog-v1.json                  module Worker에 catalog+context를 mount당 1회 전달
+   ├→ src/data/generated/catalog-v1.json        이후 입력: Dexie 스냅샷(프로필·기록)+adjustments+policies
+   └→ public/catalog/catalog-v1.<version>.json  Recommendation Engine (같은 순수 함수)
+   (세 Catalog artifact는 byte-identical)       출력: RankedRecommendation[] (contributions 포함)
+                                                ▼
    ├→ src/data/generated/catalog-identity-v1.json
    └→ src/data/generated/landing-v1.json
    └→ data/generated/recommendation-profile-{catalog,context}-v1.json
@@ -271,6 +273,7 @@ db.version(2).stores({
 - 추가 모드의 일반 닫기는 draft를 보존한다. 명시적 폐기만 draft 단일 행을 삭제한다. 성공한 추가는 새 anchor가 `inputHash`를 바꾸지만 reveal marker와 최초 완료 시각은 바꾸지 않는다.
 - 호환 프로필 resolver는 현재 bundled Catalog 중 `recommendationEligible`인 서로 다른 favorite/liked record 수만 센다. `libraryOnly` 기록은 보존·표시하지만 프로필·DNA·입력 hash의 record payload·추천에는 쓰지 않는다. 전체 `catalogVersion` 변경은 추천 캐시를 한 번 무효화한다. 5개 이상이면 `profile.onboardingCompletedAt` 유무와 무관하게 usable profile, 5개 미만+marker 존재면 `add` recovery, 5개 미만+marker `null`이면 `firstRun`이다. recovery path는 first-run 트랜잭션을 다시 호출하지 않고 insert-only 추가만 허용한다.
 - recommendation cache의 `plan`은 점수 재계산 없는 백필을 위해 전체 정렬 후보를 보존한다. 각 항목은 공개 추천 결과(contributions 포함)와 `isDiscovery / majorThemeKey / seriesGroupId` 제약 metadata를 가지며 렌더링된 설명 문장은 저장하지 않는다. 최초 10개와 이후 백필은 같은 plan에서만 고른다.
+- `/recommendations`의 cache miss 계산은 browser module Worker에서 같은 순수 추천 함수를 호출한다. 화면 mount의 첫 요청만 검증 완료 `catalog + context`를 보내고 이후 요청은 `records + adjustments + policies`만 보낸다. 응답은 request ID로 대응하고 Worker crash·message 실패 시 pending 요청을 모두 실패 처리한 뒤 다음 요청에서 새 Worker를 만든다. Worker API가 없는 테스트 환경은 같은 함수를 동적 import해 결정론을 유지한다.
 - `inputHash` = `hash(engineVersion + catalogVersion + 정렬된 anchor·reaction + 부정 항목·disposition·이유 + adjustments + policies + 제외 workId 목록)`. 추천 재계산 판정의 단일 기준(`03` §5)이다. `updatedAt`·진행률·자유 positive text·추천 산식에 영향을 주지 않는 planned-only record는 hash에서 제외한다.
 - 추천 카드 피드백은 record 쓰기와 authoritative readback이 성공한 뒤에만 화면에 반영한다. `読んだ`는 completed + 선택 reaction(스킵 시 없음), `興味なし`는 hidden + 선택 이유가 있을 때만 disliked/negativeReasons(스킵 시 둘 다 없음)이다. 현재 세션은 기존 plan으로 백필하고 기존 계산 hash를 유지해 입력 변경 상태를 정직하게 표시하며, 재진입이나 명시적 更新에서 새 `inputHash`의 유효한 전체 plan cache를 재사용하고 cache miss일 때만 계산한다.
 - 마이그레이션: Dexie version() 체인 사용. 파괴적 변경 시 meta.schemaVersion 확인 후 변환.

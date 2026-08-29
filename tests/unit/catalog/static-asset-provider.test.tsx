@@ -9,6 +9,10 @@ import recommendationContextAssetUrl from "@/data/generated/recommendation-conte
 import { catalogIdentityFromCatalog } from "@/features/catalog/catalog-identity";
 import { CatalogIdentityProvider, useCatalog } from "@/features/catalog/catalog-provider";
 import { StaticAssetCatalogProvider } from "@/features/catalog/static-asset-catalog-provider";
+import {
+  clearValidatedSessionCatalog,
+  setValidatedSessionCatalog,
+} from "@/features/catalog/validated-catalog-cache";
 import { catalogAssetUrl } from "@/lib/catalog-asset";
 import { catalogStrings } from "@/lib/strings";
 
@@ -54,10 +58,12 @@ function CatalogBoundary({
 }
 
 beforeEach(() => {
+  clearValidatedSessionCatalog();
   vi.stubGlobal("fetch", vi.fn());
 });
 
 afterEach(() => {
+  clearValidatedSessionCatalog();
   cleanup();
   vi.unstubAllGlobals();
 });
@@ -84,6 +90,58 @@ describe("StaticAssetCatalogProvider", () => {
     });
     expect(fetchMock).toHaveBeenCalledWith(recommendationContextAssetUrl, {
       cache: "force-cache",
+      signal: expect.any(AbortSignal),
+    });
+  });
+
+  it("reuses the validated Catalog after remounting but still reloads the context", async () => {
+    const fetchMock = vi.mocked(fetch);
+    fetchMock.mockImplementation((input) =>
+      Promise.resolve(
+        String(input) === recommendationContextAssetUrl
+          ? responseWith(recommendationContextFor())
+          : responseWith(catalog),
+      ),
+    );
+
+    const first = render(<CatalogBoundary />);
+    expect(await screen.findByText("v1-test:test-work")).toBeTruthy();
+    first.unmount();
+
+    render(<CatalogBoundary />);
+    expect(await screen.findByText("v1-test:test-work")).toBeTruthy();
+
+    expect(
+      fetchMock.mock.calls.filter(
+        ([input]) => String(input) === catalogAssetUrl(identity.catalogVersion),
+      ),
+    ).toHaveLength(1);
+    expect(
+      fetchMock.mock.calls.filter(([input]) => String(input) === recommendationContextAssetUrl),
+    ).toHaveLength(2);
+  });
+
+  it("bypasses a cached Catalog when the user retries", async () => {
+    setValidatedSessionCatalog(catalog);
+    const fetchMock = vi.mocked(fetch);
+    let contextAttempt = 0;
+    fetchMock.mockImplementation((input) => {
+      if (String(input) !== recommendationContextAssetUrl) {
+        return Promise.resolve(responseWith(catalog));
+      }
+      contextAttempt += 1;
+      return Promise.resolve(
+        contextAttempt === 1 ? responseWith({}, false) : responseWith(recommendationContextFor()),
+      );
+    });
+
+    render(<CatalogBoundary />);
+    expect(await screen.findByRole("heading", { name: catalogStrings.loadError })).toBeTruthy();
+    fireEvent.click(screen.getByRole("button", { name: catalogStrings.retry }));
+    expect(await screen.findByText("v1-test:test-work")).toBeTruthy();
+
+    expect(fetchMock).toHaveBeenCalledWith(catalogAssetUrl(identity.catalogVersion), {
+      cache: "reload",
       signal: expect.any(AbortSignal),
     });
   });
@@ -135,6 +193,7 @@ describe("StaticAssetCatalogProvider", () => {
   });
 
   it("rejects an asset whose recommendation-profile identity does not match", async () => {
+    setValidatedSessionCatalog(catalog);
     const fetchMock = vi.mocked(fetch);
     fetchMock.mockImplementation((input) =>
       Promise.resolve(
@@ -148,6 +207,10 @@ describe("StaticAssetCatalogProvider", () => {
 
     expect(await screen.findByRole("heading", { name: catalogStrings.loadError })).toBeTruthy();
     expect(screen.queryByText("v1-test:test-work")).toBeNull();
+    expect(fetchMock).toHaveBeenCalledWith(catalogAssetUrl(identity.catalogVersion), {
+      cache: "force-cache",
+      signal: expect.any(AbortSignal),
+    });
   });
 
   it.each([

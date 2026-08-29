@@ -7,8 +7,12 @@ import { catalogV1Schema } from "@/domain/catalog/schema";
 
 import { catalogMatchesIdentity } from "./catalog-identity";
 import { CatalogFailure, CatalogProvider, useCatalogIdentity } from "./catalog-provider";
+import { setValidatedSessionCatalog } from "./validated-catalog-cache";
 
 const catalogResult = catalogV1Schema.safeParse(catalogJson);
+if (catalogResult.success && typeof window !== "undefined") {
+  setValidatedSessionCatalog(catalogResult.data);
+}
 
 type BundledCatalogProviderProps = Readonly<{
   children: ReactNode;
