@@ -2,13 +2,11 @@
 
 import { useNavigate, useRouterState } from "@tanstack/react-router";
 import { type ReactNode, useEffect, useMemo } from "react";
-import { preload } from "react-dom";
 
 import { SiteFooter } from "@/components/layout/site-footer";
 import { hasCatalogBackedProfileById } from "@/domain/profile/catalog-profile";
 import { useCatalogIdentity } from "@/features/catalog/catalog-provider";
 import { usePersistence } from "@/infrastructure/db";
-import { catalogAssetUrl } from "@/lib/catalog-asset";
 import { navigationStrings } from "@/lib/strings";
 import { cn } from "@/lib/utils";
 
@@ -37,10 +35,6 @@ function requiresProfile(pathname: string) {
     pathname === "/taste" ||
     pathname.startsWith("/taste/")
   );
-}
-
-function requiresRecommendationCatalog(pathname: string) {
-  return pathname === "/recommendations" || pathname.startsWith("/recommendations/");
 }
 
 function getRouteLabel(pathname: string) {
@@ -123,7 +117,6 @@ export function AppShell({ children }: AppShellProps) {
     [catalogIdentity.profileWorkIds, userWorks],
   );
   const guarded = requiresProfile(pathname);
-  const recommendationCatalog = requiresRecommendationCatalog(pathname);
   const showDesktopNavigation = true;
   const showMobileNavigation = !isImmersivePath(pathname);
 
@@ -153,14 +146,6 @@ export function AppShell({ children }: AppShellProps) {
       {children}
     </AppShellContent>
   );
-
-  if (recommendationCatalog) {
-    preload(catalogAssetUrl(catalogIdentity.catalogVersion), {
-      as: "fetch",
-      crossOrigin: "anonymous",
-      fetchPriority: "high",
-    });
-  }
 
   return shell;
 }

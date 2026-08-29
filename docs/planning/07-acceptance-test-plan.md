@@ -47,13 +47,13 @@
 ## 3. Catalog·데이터 유닛 테스트
 
 - zod 스키마 라운드트립(catalog JSON, Export v1, Rakuten 응답 축소형).
-- 추천용 `/catalog/catalog-v1.<catalogVersion>.json`은 bundled Catalog와 byte·strict schema·semantic validation·DNA·추천 plan이 동일하다. client provider는 exact URL, HTTP/JSON/schema/version/workIds mismatch, 실제 retry, abort와 late stale completion 차단을 검증한다. 공통 shell/랜딩/settings는 full Catalog client import가 없고 onboarding/DNA/Library/Catalog 상세만 bundled provider를 갖는 route source 계약을 고정한다.
+- 추천용 `/catalog/catalog-v1.<catalogVersion>.json`은 bundled Catalog와 byte·strict schema·semantic validation·DNA·추천 plan이 동일하다. client provider는 Vite hashed recommendation context와 두 자산을 동시 요청하고 exact URL, HTTP/JSON/schema/version/workIds mismatch, 실제 retry, abort와 late stale completion 차단을 검증한다. root는 생성된 identity projection만 공유하고 작품 상세 prerender를 유지한다. 공통 shell/랜딩/settings는 full Catalog client import가 없고 onboarding/DNA/Library/Catalog 상세만 bundled provider를 갖는 route source 계약을 고정한다.
 - 일본어 정규화 골든 케이스(NFKC·가나·전각/반각·권수 토큰 10례 이상).
 - Art 4축이 모두 `unknown`인 Work도 다른 네 필수 그룹을 충족하면 `recommendationEligible`을 통과한다. 커뮤니티 근거의 Art는 이미지 manifest 없이 허용하고, publisher/manual 이미지 근거의 known Art는 기존 manifest·표본·맥락 검사를 그대로 통과해야 한다.
 - Export→Import 라운드트립: 임의 사용자 상태 생성 → export → import → userWorks/externalWorks/profile/draft 동등, cache empty와 current runtime meta 확인.
 - Import 거부: schemaVersion 2 / 필드 손상 / 부분 손상 배열 — mutation 전 전체 거부와 일곱 store 불변.
 - providerCache TTL: 주입 시간 기준 가격·재고 24시간 / 기타 metadata 90일의 직전·정확 경계, 상업 필드만 먼저 숨기는 상태, legacy 단일 `expiresAt` cache miss.
-- 추천 표지 resolver: 표시 순 representative ISBN, 1위 완료 전 2~10위 미시작, fresh exact-workId/no-image terminal, expired·mismatch·miss 갱신+저장 readback, 실패 placeholder, stale generation 차단, 백필 survivor URL 보존·신규만 요청. normalized ISBN 동시 요청은 한 provider 호출에 합류하고 settle 뒤 재시도 가능하다.
+- 추천 표지 resolver: 표시 순 representative ISBN, 1위 metadata resolve·commit 전 나머지 미시작(실제 이미지 load/error는 기다리지 않음), 이후 최대 4개 동시 처리와 결과별 commit, fresh exact-workId/no-image terminal, expired·mismatch·miss 갱신+저장 readback, 실패 placeholder, stale generation 차단, 백필 survivor URL 보존·신규만 요청. normalized ISBN 동시 요청은 한 provider 호출에 합류하고 settle 뒤 재시도 가능하다.
 - TanStack Start server route: 기존 URL의 쿼리 검증 400, App ID·Access Key 비노출, 필드 축소, `_ex=600x600` 재작성, cache header, 타임아웃→502, 자동 재시도 0회.
 
 ### Slice 10 데이터 주권·호환 프로필 추가 계약

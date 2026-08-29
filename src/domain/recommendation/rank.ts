@@ -8,7 +8,12 @@ import {
 } from "../profile/confidence";
 import type { ProfileAdjustments, RecommendationPolicies, UserWorkRecord } from "../profile/types";
 import { calculateExplicitAdjustment, isHardExcluded } from "./adjustment";
-import { calculatePositiveAnchorScore, type PositiveAnchorInput } from "./anchor";
+import {
+  calculatePositiveAnchorScore,
+  preparePositiveAnchorScorer,
+  type PositiveAnchorInput,
+  type PositiveAnchorScorer,
+} from "./anchor";
 import { COMPLETED_POLICY_PENALTY } from "./constants";
 import { assertRecommendationContext, constraintMetadataFor, marketSignalFor } from "./context";
 import { calculateBayesianRating, calculateMaturity } from "./market";
@@ -138,15 +143,23 @@ function baselineContribution(weight: number): GroupContribution {
 
 function scoreCandidate(options: {
   work: Work;
-  anchors: readonly PositiveAnchorInput[];
+  positiveAnchorScoreFor: PositiveAnchorScorer;
   records: readonly UserWorkRecord[];
   worksById: Readonly<Record<string, Work>>;
   profileConfidence: number;
   input: RecommendationInput;
   popularWorkIds: ReadonlySet<string>;
 }): ScoredRecommendation | null {
-  const { anchors, input, popularWorkIds, profileConfidence, records, work, worksById } = options;
-  const anchorScore = calculatePositiveAnchorScore(work, anchors);
+  const {
+    input,
+    positiveAnchorScoreFor,
+    popularWorkIds,
+    profileConfidence,
+    records,
+    work,
+    worksById,
+  } = options;
+  const anchorScore = positiveAnchorScoreFor(work);
   if (anchorScore === null) {
     return null;
   }
@@ -302,10 +315,11 @@ export function buildRecommendationPlan(input: RecommendationInput): Recommendat
     input.context,
   );
   const profileConfidence = calculateProfileConfidence(catalogRecords);
+  const positiveAnchorScoreFor = preparePositiveAnchorScorer(anchors);
   const scored = candidates.flatMap<ScoredRecommendation>((work) => {
     const result = scoreCandidate({
       work,
-      anchors,
+      positiveAnchorScoreFor,
       records: catalogRecords,
       worksById,
       profileConfidence,
@@ -347,7 +361,7 @@ export function scoreWorkCompatibility(
   });
   const candidate = scoreCandidate({
     work,
-    anchors,
+    positiveAnchorScoreFor: (candidateWork) => calculatePositiveAnchorScore(candidateWork, anchors),
     records: catalogRecords,
     worksById,
     profileConfidence: calculateProfileConfidence(catalogRecords),

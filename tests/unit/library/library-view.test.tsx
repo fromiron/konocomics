@@ -104,17 +104,14 @@ function renderLibrary(options?: {
 afterEach(cleanup);
 
 describe("LibraryView", () => {
-  it("bottom-aligns the route footer without duplicating the shell mobile-navigation clearance", () => {
+  it("leaves the footer and mobile-navigation clearance to the app shell", () => {
     renderLibrary({ externalWorks: [], showFooter: true });
 
     const main = screen.getByRole("main");
-    const frame = main.parentElement;
 
-    expect(frame?.className).toContain(
-      "min-h-[calc(100dvh-var(--layout-mobile-navigation-clearance))]",
-    );
+    expect(main.className).toContain("flex-1");
     expect(main.className).not.toContain("layout-mobile-navigation-clearance");
-    expect(main.nextElementSibling?.tagName).toBe("FOOTER");
+    expect(document.querySelector("footer")).toBeNull();
   });
 
   it("uses role-specific cards for recent, reading, planned, status, and favorite records", () => {

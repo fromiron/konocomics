@@ -3,13 +3,16 @@ import Dexie, { type Table } from "dexie";
 import type { OnboardingDraft } from "@/domain/profile/onboarding";
 import type { UserWorkRecord } from "@/domain/profile/types";
 
-import type {
-  ExternalWorkRecord,
-  MetaRecord,
-  ProfileRecord,
-  ProviderCacheRecord,
-  RecommendationCacheRecord,
+import {
+  DATABASE_SCHEMA_VERSION,
+  type ExternalWorkRecord,
+  type MetaRecord,
+  type ProfileRecord,
+  type ProviderCacheRecord,
+  type RecommendationCacheRecord,
 } from "./records";
+
+export { DATABASE_SCHEMA_VERSION } from "./records";
 
 export const DATABASE_NAME = "konocomics";
 
@@ -27,8 +30,6 @@ export const DATABASE_SCHEMA_V2 = {
   ...DATABASE_SCHEMA_V1,
   providerCache: "isbn",
 } as const;
-
-export const DATABASE_SCHEMA_VERSION = 2;
 
 export class KonocomicsDatabase extends Dexie {
   userWorks!: Table<UserWorkRecord, string>;

@@ -1,6 +1,7 @@
 "use client";
 
 import { useCallback, useLayoutEffect, useMemo, useRef, useState } from "react";
+import { flushSync } from "react-dom";
 
 import { normalizeIsbn } from "@/domain/catalog/normalize";
 import type { CatalogV1 } from "@/domain/catalog/types";
@@ -126,10 +127,12 @@ type RecommendationCoverState = Readonly<{
   notifyCoverSettled(target: RecommendationCoverTarget): void;
 }>;
 
-type CoverSettlementWaiter = Readonly<{
-  key: string;
-  resolve(): void;
+type InFlightCoverResolution = Readonly<{
+  generation: number;
+  request: Promise<RecommendationCoverResolution>;
 }>;
+
+const REMAINING_COVER_CONCURRENCY = 4;
 
 export function useRecommendationCovers({
   targets,
@@ -138,20 +141,11 @@ export function useRecommendationCovers({
 }: UseRecommendationCoversInput): RecommendationCoverState {
   const generationRef = useRef(0);
   const completedRef = useRef(new Map<string, string | null>());
-  const inFlightRef = useRef(new Map<string, Promise<RecommendationCoverResolution>>());
-  const settledRef = useRef(new Set<string>());
-  const settlementWaiterRef = useRef<CoverSettlementWaiter | null>(null);
+  const inFlightRef = useRef(new Map<string, InFlightCoverResolution>());
   const [resolvedByTarget, setResolvedByTarget] = useState<ReadonlyMap<string, string | null>>(
     () => new Map(),
   );
-  const notifyCoverSettled = useCallback((target: RecommendationCoverTarget) => {
-    const key = targetKey(target);
-    settledRef.current.add(key);
-    const waiter = settlementWaiterRef.current;
-    if (waiter?.key !== key) return;
-    settlementWaiterRef.current = null;
-    waiter.resolve();
-  }, []);
+  const notifyCoverSettled = useCallback(() => undefined, []);
 
   useLayoutEffect(() => {
     const generation = generationRef.current + 1;
@@ -161,65 +155,69 @@ export function useRecommendationCovers({
     const resolveShared = (target: RecommendationCoverTarget) => {
       const key = targetKey(target);
       const existing = inFlightRef.current.get(key);
-      if (existing !== undefined) return existing;
+      if (existing?.generation === generation) return existing.request;
       const request = resolveRecommendationCover(target, {
         getProviderCache,
         isActive: () => generationRef.current === generation,
         saveProviderCache,
       });
-      inFlightRef.current.set(key, request);
+      const inFlight = { generation, request };
+      inFlightRef.current.set(key, inFlight);
       void request.finally(() => {
-        if (inFlightRef.current.get(key) === request) inFlightRef.current.delete(key);
+        if (inFlightRef.current.get(key) === inFlight) inFlightRef.current.delete(key);
       });
       return request;
     };
 
-    const commit = (resolutions: readonly RecommendationCoverResolution[]) => {
+    const commit = (
+      resolutions: readonly RecommendationCoverResolution[],
+      flushBeforeContinuing = false,
+    ) => {
       if (generationRef.current !== generation) return false;
       resolutions.forEach((resolution) => {
         completedRef.current.set(targetKey(resolution.target), resolution.coverUrl);
       });
-      setResolvedByTarget((current) => {
-        const next = new Map(current);
-        resolutions.forEach((resolution) => {
-          const key = targetKey(resolution.target);
-          next.set(key, resolution.coverUrl);
+      const update = () => {
+        setResolvedByTarget((current) => {
+          const next = new Map(current);
+          resolutions.forEach((resolution) => {
+            const key = targetKey(resolution.target);
+            next.set(key, resolution.coverUrl);
+          });
+          return next;
         });
-        return next;
-      });
+      };
+      if (flushBeforeContinuing) flushSync(update);
+      else update();
       return true;
-    };
-
-    const waitForFirstCover = (target: RecommendationCoverTarget) => {
-      const key = targetKey(target);
-      if (settledRef.current.has(key)) return Promise.resolve();
-      return new Promise<void>((resolve) => {
-        settlementWaiterRef.current = { key, resolve };
-      });
     };
 
     void (async () => {
       if (first === undefined) return;
       if (!completedRef.current.has(targetKey(first))) {
         const firstResolution = await resolveShared(first);
-        if (!commit([firstResolution])) return;
+        if (!commit([firstResolution], true)) return;
       }
-      await waitForFirstCover(first);
       if (generationRef.current !== generation) return;
       const pending = targets
         .slice(1)
         .filter((target) => !completedRef.current.has(targetKey(target)));
-      if (pending.length === 0) return;
-      const remaining = await Promise.all(pending.map(resolveShared));
-      commit(remaining);
+      let nextIndex = 0;
+      const resolveNext = async () => {
+        while (generationRef.current === generation) {
+          const target = pending[nextIndex];
+          if (target === undefined) return;
+          nextIndex += 1;
+          const resolution = await resolveShared(target);
+          if (!commit([resolution])) return;
+        }
+      };
+      await Promise.all(
+        Array.from({ length: Math.min(REMAINING_COVER_CONCURRENCY, pending.length) }, resolveNext),
+      );
     })();
 
     return () => {
-      const waiter = settlementWaiterRef.current;
-      if (waiter !== null) {
-        settlementWaiterRef.current = null;
-        waiter.resolve();
-      }
       if (generationRef.current === generation) {
         generationRef.current += 1;
       }

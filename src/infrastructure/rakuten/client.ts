@@ -24,10 +24,36 @@ export class RakutenClientError extends Error {
 
 const providerRequests = new Map<string, Promise<RakutenBookItem>>();
 const RAKUTEN_REQUEST_INTERVAL_MS = import.meta.env.MODE === "development" ? 1_000 : 0;
+const MAX_CONCURRENT_PROVIDER_REQUESTS = 4;
 let providerRequestQueue: Promise<void> = Promise.resolve();
 let nextProviderRequestAt = 0;
+let activeProviderRequests = 0;
+const pendingProviderRequests: Array<() => void> = [];
+
+function runWithProviderSlot<T>(request: () => Promise<T>): Promise<T> {
+  return new Promise<T>((resolve, reject) => {
+    const run = () => {
+      activeProviderRequests += 1;
+      void (async () => {
+        try {
+          resolve(await request());
+        } catch (error) {
+          reject(error);
+        } finally {
+          activeProviderRequests -= 1;
+          pendingProviderRequests.shift()?.();
+        }
+      })();
+    };
+
+    if (activeProviderRequests < MAX_CONCURRENT_PROVIDER_REQUESTS) run();
+    else pendingProviderRequests.push(run);
+  });
+}
 
 function scheduleProviderRequest<T>(request: () => Promise<T>): Promise<T> {
+  if (RAKUTEN_REQUEST_INTERVAL_MS === 0) return runWithProviderSlot(request);
+
   const scheduled = providerRequestQueue.then(async () => {
     const delay = nextProviderRequestAt - Date.now();
     if (delay > 0) {

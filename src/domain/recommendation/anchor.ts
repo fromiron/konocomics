@@ -37,6 +37,8 @@ type CandidateAnchorMatch = {
   similarity: WorkSimilarityResult;
 };
 
+export type PositiveAnchorScorer = (candidate: Work) => PositiveAnchorScoreResult | null;
+
 function normalizedAnchors(anchors: readonly PositiveAnchorInput[]) {
   const sorted = [...anchors].sort((left, right) => {
     const idOrder = compareText(left.work.id, right.work.id);
@@ -92,11 +94,11 @@ function sortMatchCohorts<Value>(
   return sorted;
 }
 
-export function calculatePositiveAnchorScore(
+function calculatePositiveAnchorScoreWithPreparedAnchors(
   candidate: Work,
-  anchors: readonly PositiveAnchorInput[],
+  positiveAnchors: readonly PositiveAnchorInput[],
+  supporterIdsByBestAnchorId?: ReadonlyMap<string, ReadonlySet<string>>,
 ): PositiveAnchorScoreResult | null {
-  const positiveAnchors = normalizedAnchors(anchors);
   if (positiveAnchors.length === 0) {
     return null;
   }
@@ -120,15 +122,18 @@ export function calculatePositiveAnchorScore(
     return null;
   }
 
+  const preparedSupporterIds = supporterIdsByBestAnchorId?.get(best.anchor.work.id);
+
   const supporterMatches = sortMatchCohorts(
     candidateMatches
       .filter(
         (candidateMatch) =>
           candidateMatch.anchor.work.id !== best.anchor.work.id &&
-          meetsFloatingPointThreshold(
-            workSimilarity(best.anchor.work, candidateMatch.anchor.work).score,
-            CONSENSUS_CLUSTER_THRESHOLD,
-          ),
+          (preparedSupporterIds?.has(candidateMatch.anchor.work.id) ??
+            meetsFloatingPointThreshold(
+              workSimilarity(best.anchor.work, candidateMatch.anchor.work).score,
+              CONSENSUS_CLUSTER_THRESHOLD,
+            )),
       )
       .map<SupporterMatch>((candidateMatch) => ({
         match: candidateMatch.match,
@@ -156,4 +161,41 @@ export function calculatePositiveAnchorScore(
     support,
     supporterMatches,
   };
+}
+
+export function preparePositiveAnchorScorer(
+  anchors: readonly PositiveAnchorInput[],
+): PositiveAnchorScorer {
+  const positiveAnchors = normalizedAnchors(anchors);
+  const supporterIdsByBestAnchorId = new Map<string, ReadonlySet<string>>();
+
+  for (const anchor of positiveAnchors) {
+    const supporterIds = new Set<string>();
+    for (const otherAnchor of positiveAnchors) {
+      if (
+        otherAnchor.work.id !== anchor.work.id &&
+        meetsFloatingPointThreshold(
+          workSimilarity(anchor.work, otherAnchor.work).score,
+          CONSENSUS_CLUSTER_THRESHOLD,
+        )
+      ) {
+        supporterIds.add(otherAnchor.work.id);
+      }
+    }
+    supporterIdsByBestAnchorId.set(anchor.work.id, supporterIds);
+  }
+
+  return (candidate) =>
+    calculatePositiveAnchorScoreWithPreparedAnchors(
+      candidate,
+      positiveAnchors,
+      supporterIdsByBestAnchorId,
+    );
+}
+
+export function calculatePositiveAnchorScore(
+  candidate: Work,
+  anchors: readonly PositiveAnchorInput[],
+): PositiveAnchorScoreResult | null {
+  return calculatePositiveAnchorScoreWithPreparedAnchors(candidate, normalizedAnchors(anchors));
 }

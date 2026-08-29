@@ -72,12 +72,12 @@
 - `docs/planning/03-ux-screen-contracts.md`
   - dark-only shell
   - desktop GNB / mobile bottom navigation 상호 배타
-  - Shelf, expanded card, ranking, Quick Preview 계약
+  - Shelf, fixed recommendation card, ranking, Quick Preview 계약
   - 7개 route의 최종 정보 구조
 - `docs/planning/04-visual-interaction-spec.md`
   - dark semantic token
   - image overlay gradient 예외
-  - hover intent, focus expansion, reduced-motion
+  - fixed-card hover/focus feedback, reduced-motion
 - `docs/planning/06-implementation-plan.md`
   - 아래 R1–R10 단계 반영
 - `docs/planning/07-acceptance-test-plan.md`
@@ -161,9 +161,9 @@ src/components/search/
 - Media 컴포넌트는 추천 계산이나 Dexie 접근을 소유하지 않음
 - route flow가 data를 준비하고 presentational props로 전달
 - Shelf는 `ResizeObserver`, CSS scroll-snap, 기존 Motion만 사용
-- desktop hover는 200ms intent, focus는 즉시 확장
-- touch에서는 확장하지 않고 Quick Preview sheet를 엶
-- expanded card의 상세 정보는 local data로만 표시하며 hover network 요청 금지
+- 추천 featured card는 desktop hover/focus에서도 고정 geometry를 유지
+- touch에서는 identity link로 Quick Preview sheet를 엶
+- card의 상세 정보는 local data로만 표시하며 hover network 요청 금지
 - Ranking은 `<ol>`과 텍스트 순위를 사용
 - Quick Preview 닫기 후 opener focus 복원
 

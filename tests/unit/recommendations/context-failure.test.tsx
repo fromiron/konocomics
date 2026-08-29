@@ -12,10 +12,6 @@ vi.mock("@tanstack/react-router", () => ({
   Link: ({ children, to }: { children: ReactNode; to: string }) => <a href={to}>{children}</a>,
 }));
 
-vi.mock("@/data/generated/recommendation-context-v1.json", () => ({
-  default: { invalid: true },
-}));
-
 vi.mock("@/features/catalog/catalog-provider", () => ({
   useCatalog: () => catalogV1Schema.parse(catalogJson),
 }));
@@ -43,9 +39,9 @@ afterEach(() => {
   vi.unstubAllGlobals();
 });
 
-describe("RecommendationsFlow bundled context failure", () => {
+describe("RecommendationsFlow context failure", () => {
   it("renders a fatal calculation state with a real retry control", () => {
-    render(<RecommendationsFlow />);
+    render(<RecommendationsFlow context={null} />);
 
     expect(screen.getByRole("heading", { name: "おすすめを計算できませんでした。" })).toBeTruthy();
     const retry = screen.getByRole("button", { name: "再試行" });

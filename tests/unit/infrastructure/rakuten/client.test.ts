@@ -76,7 +76,7 @@ describe("Rakuten client", () => {
     expect(routeFetch).toHaveBeenCalledTimes(2);
   });
 
-  it("serializes distinct provider requests through one client queue", async () => {
+  it("does not serialize distinct provider requests outside development", async () => {
     const otherItem = { ...ITEM, isbn: "9784091380135" };
     let resolveFirst!: (response: Response) => void;
     const firstResponse = new Promise<Response>((resolve) => {
@@ -90,12 +90,40 @@ describe("Rakuten client", () => {
 
     const first = fetchRakutenBook(ITEM.isbn);
     const second = fetchRakutenBook(otherItem.isbn);
-    await vi.waitFor(() => expect(routeFetch).toHaveBeenCalledOnce());
+    await vi.waitFor(() => expect(routeFetch).toHaveBeenCalledTimes(2));
 
     resolveFirst(Response.json({ listing: ITEM }));
     await expect(first).resolves.toEqual(ITEM);
     await expect(second).resolves.toEqual(otherItem);
     expect(routeFetch).toHaveBeenCalledTimes(2);
+  });
+
+  it("limits distinct provider requests to four and releases a slot after settlement", async () => {
+    const isbns = [
+      "9784091855312",
+      "9784091380135",
+      "9784047260764",
+      "9784065114698",
+      "9784065180624",
+    ];
+    const responders = new Map<string, (response: Response) => void>();
+    const routeFetch = vi.fn((input: string | URL | Request) => {
+      const isbn = new URL(String(input), "http://localhost").searchParams.get("isbn")!;
+      return new Promise<Response>((resolve) => responders.set(isbn, resolve));
+    });
+    vi.stubGlobal("fetch", routeFetch);
+
+    const requests = isbns.map((isbn) => fetchRakutenBook(isbn));
+    await vi.waitFor(() => expect(routeFetch).toHaveBeenCalledTimes(4));
+    expect(responders.has(isbns[4]!)).toBe(false);
+
+    responders.get(isbns[0]!)!(Response.json({ listing: { ...ITEM, isbn: isbns[0]! } }));
+    await vi.waitFor(() => expect(routeFetch).toHaveBeenCalledTimes(5));
+
+    isbns.slice(1).forEach((isbn) => {
+      responders.get(isbn)!(Response.json({ listing: { ...ITEM, isbn } }));
+    });
+    await expect(Promise.all(requests)).resolves.toHaveLength(isbns.length);
   });
 
   it("clears a rejected in-flight request so a later call can retry", async () => {

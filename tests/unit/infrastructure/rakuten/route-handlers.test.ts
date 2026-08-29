@@ -177,6 +177,7 @@ describe("Rakuten Route Handlers", () => {
   });
 
   it("maps missing server credentials and upstream failures to the exact 502 contract", async () => {
+    vi.stubEnv("RAKUTEN_APPLICATION_ID", "");
     const providerFetch = vi.fn();
     vi.stubGlobal("fetch", providerFetch);
 

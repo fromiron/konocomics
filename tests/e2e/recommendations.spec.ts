@@ -503,10 +503,10 @@ type LateFactorProbe = {
 };
 
 async function verifyLateViewportFactorReveal(page: Page) {
-  const narrativeDisclosure = page.getByRole("button", { name: "展開の詳細設定" });
-  await expect(narrativeDisclosure).toHaveAttribute("aria-expanded", "false");
-  await narrativeDisclosure.dispatchEvent("click");
-  await expect(narrativeDisclosure).toHaveAttribute("aria-expanded", "true");
+  const factorDisclosure = page.getByRole("button", { name: "トーン・関係の詳細設定" });
+  await expect(factorDisclosure).toHaveAttribute("aria-expanded", "false");
+  await factorDisclosure.dispatchEvent("click");
+  await expect(factorDisclosure).toHaveAttribute("aria-expanded", "true");
   await expect(page.locator("[data-reveal-ready='true']").first()).toBeAttached({
     timeout: 3_000,
   });
@@ -693,8 +693,8 @@ async function verifyLateViewportFactorReveal(page: Page) {
       );
     }),
   ).toBe(true);
-  await narrativeDisclosure.dispatchEvent("click");
-  await expect(narrativeDisclosure).toHaveAttribute("aria-expanded", "false");
+  await factorDisclosure.dispatchEvent("click");
+  await expect(factorDisclosure).toHaveAttribute("aria-expanded", "false");
   await expect(page).toHaveURL(/\/taste$/u);
 }
 
@@ -1006,13 +1006,13 @@ test.describe("Slice 7 recommendation journeys", () => {
 
     for (let index = 0; index < 10; index += 1) {
       const card = cards.nth(index);
-      const cover = card.locator(".recommendation-card__cover img.cover-image__image");
+      const cover = card.getByRole("img");
       await cover.scrollIntoViewIfNeeded();
       await expect(cover).toBeVisible();
       await expect(cover).toHaveAttribute("data-loaded", "true", { timeout: 60_000 });
       await expect(cover).toHaveAttribute("loading", index === 0 ? "eager" : "lazy");
       await expect(cover).toHaveAttribute("fetchpriority", index === 0 ? "high" : "auto");
-      await expect(cover).toHaveAttribute("decoding", index === 0 ? "sync" : "async");
+      await expect(cover).toHaveAttribute("decoding", "async");
     }
     const requestedWorkIds = itemRequests.map((request) => request.workId);
     expect(initialIds.every((workId) => requestedWorkIds.includes(workId))).toBe(true);
@@ -1101,108 +1101,32 @@ test.describe("Slice 7 recommendation journeys", () => {
         .locator("li[data-recommendation-work-id]:not([data-carousel-clone])")
         .nth(1)
         .locator("article");
-      await expect(firstCard).toHaveAttribute("data-expanded", "true");
-      await secondCard.getByRole("link").focus();
-      await expect(secondCard).toHaveAttribute("data-expanded", "true");
-      await expect(firstCard).not.toHaveAttribute("data-expanded");
-      await firstCardLink.focus();
-      await expect(firstCard).toHaveAttribute("data-expanded", "true");
-      await expect(secondCard).not.toHaveAttribute("data-expanded");
-      await expect(firstCard.locator("[data-recommendation-evidence-summary]")).toBeVisible();
-      await expect
-        .poll(async () => (await firstCard.boundingBox())?.width ?? 0)
-        .toBeGreaterThanOrEqual(300);
-      const initialExpandedBox = await firstCard.boundingBox();
-      expect(initialExpandedBox?.width).toBeGreaterThanOrEqual(300);
-      expect(initialExpandedBox?.width).toBeLessThanOrEqual(360);
-      await page.evaluate(() => {
-        if (document.activeElement instanceof HTMLElement) document.activeElement.blur();
-      });
-      await firstCard.hover();
-      await page.mouse.move(0, 0);
-      await expect(firstCard).not.toHaveAttribute("data-expanded");
-      await expect
-        .poll(async () => (await firstCard.boundingBox())?.width ?? Infinity)
-        .toBeLessThanOrEqual(250);
-      const collapsedBox = await firstCard.boundingBox();
-      expect(collapsedBox?.width).toBeGreaterThanOrEqual(220);
-      expect(collapsedBox?.width).toBeLessThanOrEqual(250);
-      expect(
-        Math.abs((initialExpandedBox?.height ?? 0) - (collapsedBox?.height ?? 0)),
-      ).toBeLessThanOrEqual(1);
-
-      await page.waitForTimeout(300);
-      await secondCard.hover();
-      await page.waitForTimeout(100);
-      await expect(secondCard).not.toHaveAttribute("data-expanded");
-      await expect(secondCard).toHaveAttribute("data-expanded", "true");
-      await expect(firstCard.locator("[data-recommendation-backdrop]")).toHaveCount(0);
-      await expect(firstCard.locator(".recommendation-card__cover")).toHaveCount(1);
-
-      await page.mouse.move(0, 0);
-      await expect(secondCard).not.toHaveAttribute("data-expanded");
-      await page.evaluate(() => {
-        if (document.activeElement instanceof HTMLElement) document.activeElement.blur();
-      });
+      const secondCardLink = secondCard.getByRole("link", { name: /作品詳細を見る$/u });
+      await expect(firstCardLink).toBeVisible();
       await firstCardLink.focus();
       await expect(firstCardLink).toBeFocused();
-      await expect(firstCard).toHaveAttribute("data-expanded", "true", { timeout: 150 });
-
-      await page.mouse.move(0, 0);
-      await page.evaluate(() => {
-        if (document.activeElement instanceof HTMLElement) document.activeElement.blur();
-      });
-      await expect(firstCard).not.toHaveAttribute("data-expanded");
-      const recommendationShelf = page.getByRole("list", {
-        name: "あなたのために選んだ作品",
-      });
-      const rightEdgeItem = recommendationShelf
-        .locator("li[data-recommendation-work-id]:not([data-carousel-clone])")
-        .last();
-      await rightEdgeItem.scrollIntoViewIfNeeded();
-      const rightEdgeCard = rightEdgeItem.locator("article");
-      const rightEdgeCover = rightEdgeCard.locator("[data-expandable-cover-frame]");
-      const rightEdgeCopy = rightEdgeCard.locator(
-        ".recommendation-card__identity > div:last-child",
-      );
-      const collapsedEdgeCardBox = await rightEdgeCard.boundingBox();
-      const collapsedEdgeCoverBox = await rightEdgeCover.boundingBox();
-
-      await rightEdgeCard.hover();
-      await expect(rightEdgeCard).toHaveAttribute("data-expansion-side", "left", {
-        timeout: 1_000,
-      });
-      await page.waitForTimeout(300);
-      const shelfBox = await recommendationShelf.boundingBox();
-      const expandedEdgeCardBox = await rightEdgeCard.boundingBox();
-      const expandedEdgeCoverBox = await rightEdgeCover.boundingBox();
-      const expandedEdgeCopyBox = await rightEdgeCopy.boundingBox();
-      expect(expandedEdgeCardBox?.x).toBeGreaterThanOrEqual((shelfBox?.x ?? 0) - 1);
-      expect((expandedEdgeCardBox?.x ?? 0) + (expandedEdgeCardBox?.width ?? 0)).toBeLessThanOrEqual(
-        (shelfBox?.x ?? 0) + (shelfBox?.width ?? 0) + 1,
-      );
-      expect(expandedEdgeCoverBox?.x).toBeGreaterThan(expandedEdgeCopyBox?.x ?? Infinity);
-      expect(expandedEdgeCoverBox?.width).toBeGreaterThan(collapsedEdgeCoverBox?.width ?? 0);
-      expect(
-        Math.abs((expandedEdgeCardBox?.height ?? 0) - (collapsedEdgeCardBox?.height ?? 0)),
-      ).toBeLessThanOrEqual(1);
+      await secondCardLink.focus();
+      await expect(secondCardLink).toBeFocused();
+      await expect(firstCard.locator("[data-recommendation-evidence-summary]")).toBeVisible();
+      await expect(firstCard.locator("[data-recommendation-backdrop]")).toHaveCount(0);
+      await expect(firstCard.getByRole("img")).toHaveCount(1);
       expect(
         await page.evaluate(
           () => document.documentElement.scrollWidth === document.documentElement.clientWidth,
         ),
       ).toBe(true);
-
-      await page.mouse.move(0, 0);
-      await expect(rightEdgeCard).not.toHaveAttribute("data-expanded");
     }
 
     if (testInfo.project.name === "mobile-chromium") {
       const previewWorkId = initialIds[0];
       expect(previewWorkId).toBeTruthy();
-      const previewOpener = page
-        .locator(`li[data-recommendation-work-id='${previewWorkId}']`)
-        .getByRole("link");
-      const previewTitle = (await previewOpener.locator("h3").textContent())?.trim();
+      const previewItem = page.locator(
+        `li[data-recommendation-work-id='${previewWorkId}']:not([data-carousel-clone])`,
+      );
+      const previewOpener = previewItem.getByRole("link", { name: /作品詳細を見る$/u });
+      const previewTitle = (
+        await previewItem.getByRole("heading", { level: 3 }).textContent()
+      )?.trim();
       expect(previewTitle).toBeTruthy();
       const previewDialog = page.getByRole("dialog", { name: previewTitle });
 
@@ -1486,8 +1410,9 @@ test.describe("Slice 8 provider and work-detail journey", () => {
     expect(searchUrl.searchParams.get("sitem")).toBe(providerTitle);
     expect(searchRequests).toHaveLength(0);
 
-    const planned = detail.getByRole("button", { name: "読みたい", exact: true });
+    const planned = detail.getByRole("radio", { name: "読みたい", exact: true });
     await planned.click();
+    await expect(planned).toBeChecked();
     await expect(detail.getByRole("status")).toHaveText("読みたいに追加しました。");
     await expect
       .poll(async () =>
@@ -1499,18 +1424,14 @@ test.describe("Slice 8 provider and work-detail journey", () => {
     await stalePage.goto(`/works/${workId}`);
     const staleDetail = stalePage.locator(`main[data-work-detail-id='${workId}']`);
     await expect(staleDetail.getByRole("heading", { level: 1, name: providerTitle })).toBeVisible();
-    await expect(staleDetail.getByLabel("読書状態を変更")).toHaveValue("planned");
-    await expect(
-      staleDetail.getByRole("button", { name: "読みたいから外す", exact: true }),
-    ).toHaveAttribute("aria-pressed", "true");
+    await expect(staleDetail.getByRole("radio", { name: "読みたい", exact: true })).toBeChecked();
 
     providerAvailable = true;
     await page.reload();
     const restoredDetail = page.locator(`main[data-work-detail-id='${workId}']`);
-    await expect(restoredDetail.getByLabel("読書状態を変更")).toHaveValue("planned");
     await expect(
-      restoredDetail.getByRole("button", { name: "読みたいから外す", exact: true }),
-    ).toHaveAttribute("aria-pressed", "true");
+      restoredDetail.getByRole("radio", { name: "読みたい", exact: true }),
+    ).toBeChecked();
     await expect
       .poll(async () =>
         (await readProductState(page)).userWorks.find((record) => record.workId === workId),
@@ -1542,11 +1463,9 @@ test.describe("Slice 8 provider and work-detail journey", () => {
       .poll(() => imageRequests.map((url) => new URL(url).searchParams.get("_ex")).sort())
       .toEqual(expect.arrayContaining(["200x200", "600x600"]));
 
-    const readingState = restoredDetail.getByRole("combobox", {
-      name: "読書状態を変更",
-    });
-    await readingState.selectOption("completed");
-    await expect(readingState).toHaveValue("completed");
+    const completedState = restoredDetail.getByRole("radio", { name: "読んだ", exact: true });
+    await completedState.click();
+    await expect(completedState).toBeChecked();
     await expect(restoredDetail.getByRole("status")).toHaveText("読書状態を保存しました。");
     await expect
       .poll(async () =>
@@ -1554,11 +1473,11 @@ test.describe("Slice 8 provider and work-detail journey", () => {
       )
       .toEqual(expect.objectContaining({ workId, readingState: "completed" }));
 
-    await staleDetail.getByRole("button", { name: "読みたいから外す", exact: true }).click();
+    await staleDetail.getByRole("radio", { name: "読みたい", exact: true }).click();
     await expect(staleDetail.getByRole("status")).toHaveText(
       "別の画面で更新された記録を残しました。最新の読書状態を表示しています。",
     );
-    await expect(staleDetail.getByLabel("読書状態を変更")).toHaveValue("completed");
+    await expect(staleDetail.getByRole("radio", { name: "読んだ", exact: true })).toBeChecked();
     await expect
       .poll(async () =>
         (await readProductState(stalePage)).userWorks.find((record) => record.workId === workId),

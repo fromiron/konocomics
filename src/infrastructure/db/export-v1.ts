@@ -7,9 +7,8 @@ import type {
   UserWorkRecord,
 } from "@/domain/profile/types";
 
-import { DATABASE_SCHEMA_VERSION } from "./database";
 import { hasValidExternalWorkIdentity } from "./external-work";
-import type { ExternalWorkRecord } from "./records";
+import { DATABASE_SCHEMA_VERSION, type ExternalWorkRecord } from "./records";
 import {
   createDefaultRecommendationPolicies,
   createEmptyProfileAdjustments,

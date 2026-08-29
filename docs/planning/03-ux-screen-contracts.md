@@ -53,7 +53,7 @@ CTA 버튼 1개: **「好きなマンガから始める」** → /onboarding.
 1. 실제 Catalog 표지의 hero backdrop/mosaic + konomi 2톤 로고와 태그라인 「好みから見つける、次のマンガ。」
 2. CTA와 데이터가 브라우저에만 저장된다는 짧은 privacy benefit
 3. 개인화라고 주장하지 않는 Catalog showcase Shelf
-4. 첫 방문자를 위해 명시적으로 큐레이션한 editorial Top 10 ranking(`<ol>`). 시장 popularity나 개인화 결과로 주장하지 않고 「今週の人気」 같은 문구는 쓰지 않는다. 1위 card는 Top 10 crown accessory의 기본 spotlight이며, 다른 card의 fine-pointer hover 또는 keyboard focus 동안 accessory가 해당 순위로 이동하고 이탈 시 1위로 돌아온다. generic card Y축 lift는 적용하지 않는다.
+4. 첫 방문자를 위해 명시적으로 큐레이션한 editorial Top 10 ranking(`<ol>`). 시장 popularity나 개인화 결과로 주장하지 않고 「今週の人気」 같은 문구는 쓰지 않는다. 각 card는 표지 위에 큰 텍스트 순위를 고정 표시하며 generic card Y축 lift는 적용하지 않는다.
 5. discovery Shelf와 3단 설명: 選ぶ → 好みが見える → 理由つきでおすすめ
 6. 실제 route만 연결한 footer + `Supported by Rakuten Developers`
 
@@ -272,12 +272,12 @@ CTA 버튼 1개: **「好きなマンガから始める」** → /onboarding.
 
 ### 주요 액션
 
-카드별 3버튼: **読みたい**(주요) / 読んだ / 興味なし. 페이지 레벨 액션: 정책 선택 칩(완결 우선/숨은 작품/검증작), 「更新」 버튼(수동 재계산).
+카드별 3버튼: **読みたい**(주요) / 読んだ / 興味なし. 페이지 레벨 액션: 정책 선택 칩(완결 우선/숨은 작품/검증작), 「更新」 버튼(현재 입력의 유효 cache 재사용 또는 수동 재계산).
 
 ### 정보 위계
 
 1. 현재 적용 중인 정성 기준/policy 요약과 presentation filter bar
-2. plan order 상위 작품의 `FeaturedRecommendationShelf` + expandable card
+2. plan order 상위 작품의 `FeaturedRecommendationShelf` + cover-forward poster card
 3. lead contribution의 anchor/reason별 Shelf
 4. engine plan에서 이미 discovery/completed 성격인 항목을 추출한 Shelf
 5. canonical plan 첫 10개를 그대로 보여 주는 personalized Top 10(`<ol>`)
@@ -285,11 +285,11 @@ CTA 버튼 1개: **「好きなマンガから始める」** → /onboarding.
 
 Shelf grouping은 presentation-only selector다. main Shelf 사이에는 work ID를 dedupe할 수 있지만 Top 10은 canonical summary이므로 중복을 허용한다. score를 다시 계산하거나 새로운 가중치·인기 순위를 만들지 않는다.
 
-### Expandable card·Quick Preview
+### Featured card·Quick Preview
 
 - 카드에는 원본 비율 표지, 제목/저자/메타, 실제 `contributions[]` 기반 lead reason, 정성 confidence와 reading action을 표시한다.
-- desktop fine pointer의 첫 진입은 1위 card를 300~360px 확장 상태로 보여 주고, 같은 viewport에 220~250px의 접힌 2·3위 card가 함께 보이게 한다. 접힌 card는 200ms hover intent 뒤 확장하고 keyboard focus는 즉시 확장한다. Shelf 높이는 212px로 미리 예약하며 기존 제목·메타·확신도·action의 폭·패딩·정렬·글자 크기·줄바꿈은 접힌 상태와 동일하게 유지한다. 실제 article 경계만 240ms 동안 확장하고, 전경 표지는 하나의 30:43 고정 크기 DOM으로 이동하는 가장자리를 따라 translate만 하며 scale하지 않는다. backdrop은 동일 URL 표지를 낮춘 채도로 blur한다. 추천 이유는 새로 열린 영역에만 opacity로 나타나며 기존 카피를 밀지 않는다. compact action은 정확히 44px 레일과 16px 아이콘이며 접근 가능한 이름·pressed/busy 상태를 유지한다. 왼쪽 확장에서는 card가 shelf 밖으로 넘치지 않게 scroll 위치를 보정한다.
-- touch에서는 card를 확장하지 않고 Quick Preview sheet를 연다. desktop preview는 Base UI Dialog wrapper를 사용한다.
+- featured card는 30:43 표지 하나를 쓰는 고정 폭 poster다. 제목·상태·lead reason·정성 confidence와 44px reading action을 하단 seam 위에 항상 표시한다. desktop fine pointer hover/focus는 card 크기나 정보량을 바꾸지 않고 border·shadow와 표지 scale만 직접 피드백으로 사용한다.
+- touch에서 표지 identity link는 상세 route로 바로 이동하지 않고 Quick Preview sheet를 연다. desktop의 같은 link는 작품 상세로 이동한다.
 - Quick Preview는 cover, lead reasons, caution, 정성 confidence, reading action, 상세 링크만 가진다. 닫으면 opener focus를 복원한다. 대상 work ID만 `?preview=<workId>`로 복원할 수 있고 animation/focus state는 local state다.
 
 ### 리스트 동작 계약
@@ -298,7 +298,7 @@ Shelf grouping은 presentation-only selector다. main Shelf 사이에는 work ID
 - 보이는 카드의 표지는 순위 순 `workId → representativeVolume ISBN`으로 해석한다. 1위의 exact-workId fresh metadata를 cache 또는 provider 갱신+저장 readback까지 먼저 확정한 뒤 2~10위를 병렬로 해석하고, 백필 때는 생존 카드 URL을 유지한 채 새 카드만 해석한다. fresh no-image와 cache/provider 실패는 placeholder로 끝내되 카드·이유·액션을 제거하지 않는다.
 - `読んだ` / `興味なし`: 영속 쓰기 성공 뒤 카드 제거(Motion layout, 240ms) → 최초 계산에서 보존한 전체 후보 plan의 다음 순위로 즉시 백필한다(점수 재계산 없음, 리스트는 항상 10개 유지, 후보 소진 시 예외). `読んだ`는 `completed`로 저장한 뒤 후속 시트의 `最高/良かった/普通/いまいち`를 `favorite/liked/neutral/disliked`에 대응하며 스킵은 reaction 없음이다. `興味なし`는 `hidden`으로 저장하고, 이유 칩을 고른 경우만 `disliked + negativeReasons`를 추가한다. 스킵은 reaction·reason 없음이며 `vagueDislike`를 합성하지 않는다.
 - `読みたい`: 카드 유지, 버튼이 확정 상태로 변경 + Library(planned)에 추가.
-- 「更新」: 전체 재계산. 이전 목록과 동일 입력이면 동일 결과(결정론)임을 전제로, 버튼은 입력 변경이 있을 때만 활성화.
+- 「更新」: 현재 `inputHash`의 유효한 전체 plan cache가 있으면 재사용하고, 없으면 전체 재계산한다. 이전 목록과 동일 입력이면 동일 결과(결정론)임을 전제로, 버튼은 입력 변경이 있을 때만 활성화.
 
 ### 상태
 
@@ -309,8 +309,8 @@ Shelf grouping은 presentation-only selector다. main Shelf 사이에는 work ID
 
 ### 반응형
 
-- mobile: 2.4장 이상 보이는 poster Shelf + 고정 compact card를 사용하고 상세 정보는 Quick Preview sheet에서 제공한다. action target은 모두 44px 이상이다.
-- desktop: 최대폭 1200px에서 가로 Shelf와 expandable card를 사용한다. canonical Top 10은 ranking Shelf/row로 순위를 명확히 표시한다.
+- mobile: 약 1.8장이 보이는 고정 poster Shelf를 사용하고 추가 상세 정보는 Quick Preview sheet에서 제공한다. action target은 모두 44px 이상이다.
+- desktop: 최대폭 1200px에서 약 4.5장이 보이는 고정 poster Shelf를 사용한다. canonical Top 10은 ranking Shelf/row로 순위를 명확히 표시한다.
 
 ### 인터랙션·접근성
 
@@ -320,19 +320,19 @@ Shelf grouping은 presentation-only selector다. main Shelf 사이에는 work ID
 
 ### 모션
 
-카드 제거/백필은 해당 Shelf owner의 C만 사용한다. expandable card는 실제 article 경계를 240ms signature easing으로 확장하는 `04` §6의 한정 예외를 사용하고, 전경 표지는 가장자리 translate만 보간하며 기존 카피·action 기하는 고정한다. 추천 이유만 새로 노출된 공간에서 opacity로 나타나며 가변 폭에 맞춘 text reflow는 노출하지 않는다. reduced-motion에서는 확장과 표지 이동·reveal을 모두 즉시 반영한다. hover intent는 network 요청 없이 local detail을 열고, generic hover Y축 lift는 사용하지 않는다. Quick Preview는 진입 keyframe 없이 최종 상태로 열린다. 추천 화면에는 B 페이지 진입 모션을 적용하지 않는다.
+카드 제거/백필은 해당 Shelf owner의 C만 사용한다. featured card는 hover/focus에서 article 경계를 바꾸지 않고 표지의 작은 scale과 border·shadow만 직접 피드백으로 사용하며 reduced-motion에서는 transform을 제거한다. generic hover Y축 lift는 사용하지 않는다. Quick Preview는 진입 keyframe 없이 최종 상태로 열린다. 추천 화면에는 B 페이지 진입 모션을 적용하지 않는다.
 
 ### 수용 기준
 
 - [ ] 동일 프로필 입력에서 새로고침해도 목록·순서가 동일하다.
-- [ ] desktop 첫 진입에서 1위 card가 확장되어 있고 2·3위 접힌 card와 선택된 상세 panel이 함께 보인다.
+- [ ] desktop 첫 진입에서 고정 폭 featured card 약 4.5장이 보이고, 모든 card의 lead reason·정성 confidence·reading action이 별도 확장 없이 노출된다.
 - [ ] `読んだ` 처리한 작품이 이후 어떤 추천에도 다시 나타나지 않는다.
 - [ ] 각 카드의 이유가 해당 카드 contribution 데이터와 일치한다(E2E에서 data-attribute 대조).
 - [ ] 카드 제거→후속 시트→백필이 키보드 포커스를 잃지 않는다(시트가 열리면 내부로, 닫히면 제거된 카드 다음 카드로 복귀).
 - [ ] 정책 칩 변경 시 목록이 재계산되고 칩 상태가 Dexie에 저장된다.
 - [ ] 1위 카드 표지는 첫 viewport의 LCP 후보로 eager/high-priority 요청되고 나머지 표지는 lazy loading을 유지한다.
-- [ ] 1위 표지 해석이 끝나기 전에 2~10위 provider 요청이 시작되지 않으며, expired/mismatched/miss만 갱신하고 fresh exact-workId no-image는 재요청하지 않는다.
-- [ ] hover/focus expansion과 touch Quick Preview가 같은 정보·action을 제공하고 닫은 뒤 opener focus가 복원된다.
+- [ ] 1위 `target[0]`의 exact-workId metadata를 cache 또는 provider 갱신·저장 readback까지 해석·commit하기 전에 2~10위 요청을 시작하지 않는다. 실제 `<img>` load/error는 기다리지 않으며, 나머지는 최대 4개를 동시에 해석하고 각 결과를 도착 즉시 commit한다. expired/mismatched/miss만 갱신하고 fresh exact-workId no-image는 재요청하지 않는다.
+- [ ] hover/focus로 card 크기나 정보량이 바뀌지 않으며 touch Quick Preview가 닫힌 뒤 opener focus가 복원된다.
 - [ ] presentation Shelf를 추가해도 동일 fixture의 canonical Top 10 work ID 순서가 바뀌지 않는다.
 
 ---
@@ -498,7 +498,7 @@ Base UI primitive는 shadcn CLI로 `src/components/ui/**`에 생성하고 `src/c
 |---|---|---|
 | `CoverImage` | 모든 표지 렌더 | 원본 비율(object-contain), radius 4px, 1px `--line` 테두리, 로드 실패 시 타이포 placeholder, `_ex` 크기 프리셋(thumb 200/card 400/hero 600), lazy loading |
 | `MediaShelf` | 가로 탐색 | CSS scroll-snap + ResizeObserver, overflow일 때만 control, reduced-motion instant scroll, Embla/Swiper 없음 |
-| `ExpandableMediaCard` | desktop 탐색 | pointer-fine 200ms intent, focus 즉시 확장, local data만 사용, touch에서는 Quick Preview |
+| `RecommendationCard` | 추천 featured 탐색 | 고정 cover-forward poster, contribution 기반 lead reason과 44px action 상시 노출, touch에서는 Quick Preview |
 | `RankingShelf` | Top 10 | `<ol>` + 화면에 보이는 텍스트 순위, canonical plan 순서 유지 |
 | `QuickPreview` | 상세 전 주요 정보/action | desktop Dialog/mobile Sheet wrapper, `?preview` 대상만 URL, focus trap/opener 복원 |
 | `ReasonChips` | 이유·주의점 표시 | contribution 데이터에서만 생성, cluster당 1개, 최대 3+1 |

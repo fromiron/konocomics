@@ -45,11 +45,11 @@ Rakuten 계약 검토일(2026-08-14): [Rakuten Books Book Search API 2017-04-04]
 
 ```text
 [빌드 타임 - 제품]                       [런타임 - 브라우저]
-data/source/catalog.sqlite (S6 권한 원천) root: catalogVersion+전체 workIds+profileWorkIds만 직렬화
+data/source/catalog.sqlite (S6 권한 원천) root: catalogVersion+전체 workIds+profileWorkIds identity
    │  scripts/normalize-works.ts             ├→ landing: 소형 showcase projection
    │  scripts/validate-catalog.ts            ├→ route-scoped bundled Catalog: 온보딩·DNA·Library·Catalog 상세
-   │  scripts/build-catalog.ts               └→ /recommendations: content-addressed public Catalog fetch
-   │  scripts/build-catalog.ts                  (`/catalog/catalog-v1.<catalogVersion>.json`)
+   │  scripts/build-catalog.ts               └→ /recommendations: content-addressed public Catalog +
+   │  scripts/build-catalog.ts                  Vite hashed recommendation context 동시 fetch
    ▼                                            strict zod+exact identity 확인 뒤
 data/generated/catalog-v1.json                  Recommendation Engine (순수 함수)
    ├→ src/data/generated/catalog-v1.json        입력: catalog + Dexie 스냅샷(프로필·기록)
@@ -100,7 +100,7 @@ deterministic Markdown 집계 리포트(stdout 또는 reports/local/)
 
 | 데이터 | 원천 | 변환 | 소유 계층 | 저장 |
 |---|---|---|---|---|
-| Work metadata | `data/source/catalog.sqlite`의 9개 `STRICT` source table + 12개 opaque 문서 | SQLite→zod 검증→bundled/public JSON + 소형 identity/landing projection | 빌드 스크립트 | route-scoped 번들 + content-addressed 정적 자산 |
+| Work metadata | `data/source/catalog.sqlite`의 9개 `STRICT` source table + 12개 opaque 문서 | SQLite→zod 검증→bundled/public JSON + 소형 identity/landing projection | 빌드 스크립트 | root identity bundle + route-scoped 번들 + content-addressed/hashed 정적 자산 |
 | Model candidate | source 밖 격리 artifact | 진단만; resolution·promotion 입력에서 제외 | 로컬 authoring 도구 | runtime·source에 저장 안 함 |
 | Legacy resolution | 고정 S0~S5 cutoff source manifest | Factor·present Theme·present Genre만 canonical 8-field tuple로 bootstrap | one-time build-time shadow | OS 임시 `fact_resolution`; digest 재계산 후 폐기 |
 | ProviderListing | Rakuten API | 필드 축소·URL 재작성·브라우저 workId 결합·normalized ISBN in-flight 합류 | Start server route + infrastructure/rakuten | Dexie providerCache (가격·재고 24h / 기타 90일) |
@@ -142,7 +142,7 @@ groupingScore =
 
 1. TanStack Router는 pathname/path params, Zod search params, loader data, route boundary와 metadata만 소유한다. Dexie 사용자 상태, 추천 결과/policy/cache, form·animation·scroll·mutation state는 소유하지 않는다(`08` §1~2).
 2. `/`는 공개 prerender shell, `/works/$workId`는 bundled Catalog ID만 prerender한다. `/onboarding`·`/taste`·`/recommendations`·`/library`·`/settings`는 `ssr: false` route 또는 client boundary이고 `/works/external`은 고정 static shell + hydration 뒤 IndexedDB lookup이다.
-3. shared root document는 server-safe하게 유지한다. persistence provider는 server render 중 memory 상태만 만들고 hydration effect에서만 Dexie backend를 생성·연다. Dexie profile guard를 server loader/`beforeLoad`에서 실행하지 않는다. Router context는 repository/client/config dependency injection에만 쓰며 mutable UI·사용자 state를 넣지 않는다.
+3. shared root document는 server-safe하게 유지한다. persistence provider는 server render 중 memory 상태만 만들고 hydration effect에서 별도 browser chunk의 Dexie backend를 동적 import해 생성·연다. Dexie profile guard를 server loader/`beforeLoad`에서 실행하지 않는다. Router context는 repository/client/config dependency injection에만 쓰며 mutable UI·사용자 state를 넣지 않는다.
 4. **서버 코드는 `/api/rakuten/*` Start server route 단 둘(search, item)이다.** App ID·Access Key 은닉과 CDN cache를 위한 경계이며 임의 server function·새 server route를 추가하지 않는다.
 5. **추천 엔진·설명 엔진은 순수·결정론 함수다.** `Date.now()`·난수·I/O 접근 금지. 시간 의존 값(예: TTL 판정)은 인자로 주입. 동일 입력 → 동일 출력을 단위 테스트로 강제한다.
 6. Dexie 접근은 `infrastructure/db` 모듈을 통해서만 한다. 컴포넌트가 Dexie를 직접 import하지 않는다(`useLiveQuery` 훅 래퍼 경유).
@@ -272,7 +272,7 @@ db.version(2).stores({
 - 호환 프로필 resolver는 현재 bundled Catalog 중 `recommendationEligible`인 서로 다른 favorite/liked record 수만 센다. `libraryOnly` 기록은 보존·표시하지만 프로필·DNA·입력 hash의 record payload·추천에는 쓰지 않는다. 전체 `catalogVersion` 변경은 추천 캐시를 한 번 무효화한다. 5개 이상이면 `profile.onboardingCompletedAt` 유무와 무관하게 usable profile, 5개 미만+marker 존재면 `add` recovery, 5개 미만+marker `null`이면 `firstRun`이다. recovery path는 first-run 트랜잭션을 다시 호출하지 않고 insert-only 추가만 허용한다.
 - recommendation cache의 `plan`은 점수 재계산 없는 백필을 위해 전체 정렬 후보를 보존한다. 각 항목은 공개 추천 결과(contributions 포함)와 `isDiscovery / majorThemeKey / seriesGroupId` 제약 metadata를 가지며 렌더링된 설명 문장은 저장하지 않는다. 최초 10개와 이후 백필은 같은 plan에서만 고른다.
 - `inputHash` = `hash(engineVersion + catalogVersion + 정렬된 anchor·reaction + 부정 항목·disposition·이유 + adjustments + policies + 제외 workId 목록)`. 추천 재계산 판정의 단일 기준(`03` §5)이다. `updatedAt`·진행률·자유 positive text·추천 산식에 영향을 주지 않는 planned-only record는 hash에서 제외한다.
-- 추천 카드 피드백은 record 쓰기와 authoritative readback이 성공한 뒤에만 화면에 반영한다. `読んだ`는 completed + 선택 reaction(스킵 시 없음), `興味なし`는 hidden + 선택 이유가 있을 때만 disliked/negativeReasons(스킵 시 둘 다 없음)이다. 현재 세션은 기존 plan으로 백필하고 기존 계산 hash를 유지해 입력 변경 상태를 정직하게 표시하며, 재진입이나 명시적 更新에서 새 hash로 계산한다.
+- 추천 카드 피드백은 record 쓰기와 authoritative readback이 성공한 뒤에만 화면에 반영한다. `読んだ`는 completed + 선택 reaction(스킵 시 없음), `興味なし`는 hidden + 선택 이유가 있을 때만 disliked/negativeReasons(스킵 시 둘 다 없음)이다. 현재 세션은 기존 plan으로 백필하고 기존 계산 hash를 유지해 입력 변경 상태를 정직하게 표시하며, 재진입이나 명시적 更新에서 새 `inputHash`의 유효한 전체 plan cache를 재사용하고 cache miss일 때만 계산한다.
 - 마이그레이션: Dexie version() 체인 사용. 파괴적 변경 시 meta.schemaVersion 확인 후 변환.
 
 ## 7. Export / Import (v1 계약)

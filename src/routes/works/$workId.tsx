@@ -1,17 +1,15 @@
 import { createFileRoute, Link, notFound } from "@tanstack/react-router";
 
-import catalogJson from "@/data/generated/catalog-v1.json";
+import catalogIdentity from "@/data/generated/catalog-identity-v1.json";
 import { BundledCatalogProvider } from "@/features/catalog/bundled-catalog-provider";
 import { WorkDetailFlow } from "@/features/work-detail/work-detail-flow";
 import { emptySearchSchema } from "@/lib/route-search";
 import { workDetailStrings } from "@/lib/strings";
 
-const catalogWorkIds = new Set(catalogJson.works.map((work) => work.id));
-
 export const Route = createFileRoute("/works/$workId")({
   validateSearch: (search) => emptySearchSchema.parse(search),
   loader: ({ params }) => {
-    if (!catalogWorkIds.has(params.workId)) {
+    if (!catalogIdentity.workIds.includes(params.workId)) {
       throw notFound();
     }
     return { workId: params.workId };

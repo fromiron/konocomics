@@ -14,7 +14,6 @@ import {
   type MinimalPlannedRemovalResult,
   type PersistenceBackend,
 } from "./backend";
-import { DexiePersistenceBackend } from "./dexie-backend";
 import {
   createExportFileV1,
   DataSnapshotUnavailableError,
@@ -158,7 +157,7 @@ export interface Persistence {
 }
 
 type ResilientPersistenceOptions = {
-  primaryFactory?: () => PersistenceBackend;
+  primaryFactory?: () => PersistenceBackend | Promise<PersistenceBackend>;
   memoryBackend?: MemoryPersistenceBackend;
 };
 
@@ -171,7 +170,7 @@ const INITIAL_STATUS: PersistenceStatus = {
 export class ResilientPersistence implements Persistence {
   private readonly listeners = new Set<PersistenceStatusListener>();
   private readonly memoryBackend: MemoryPersistenceBackend;
-  private readonly primaryFactory: () => PersistenceBackend;
+  private readonly primaryFactory: () => PersistenceBackend | Promise<PersistenceBackend>;
   private activeBackend: PersistenceBackend;
   private primaryBackend: PersistenceBackend | null = null;
   private initialization: Promise<void> | null = null;
@@ -180,7 +179,12 @@ export class ResilientPersistence implements Persistence {
 
   constructor(options: ResilientPersistenceOptions = {}) {
     this.memoryBackend = options.memoryBackend ?? new MemoryPersistenceBackend();
-    this.primaryFactory = options.primaryFactory ?? (() => new DexiePersistenceBackend());
+    this.primaryFactory =
+      options.primaryFactory ??
+      (() =>
+        import("./dexie-backend").then(
+          ({ DexiePersistenceBackend }) => new DexiePersistenceBackend(),
+        ));
     this.activeBackend = this.memoryBackend;
   }
 
@@ -868,7 +872,7 @@ export class ResilientPersistence implements Persistence {
   private async initializeOnce(): Promise<void> {
     await this.memoryBackend.open();
     try {
-      const primaryBackend = this.primaryFactory();
+      const primaryBackend = await this.primaryFactory();
       this.primaryBackend = primaryBackend;
       await primaryBackend.open();
       this.activeBackend = primaryBackend;

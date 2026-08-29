@@ -68,7 +68,7 @@ describe("CoverImage accessibility contract", () => {
     const priorityImage = priority.container.querySelector("img");
     expect(priorityImage?.getAttribute("loading")).toBe("eager");
     expect(priorityImage?.getAttribute("fetchpriority")).toBe("high");
-    expect(priorityImage?.getAttribute("decoding")).toBe("sync");
+    expect(priorityImage?.getAttribute("decoding")).toBe("async");
     priority.unmount();
 
     const deferred = render(
