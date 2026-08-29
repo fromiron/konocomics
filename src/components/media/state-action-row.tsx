@@ -1,121 +1,191 @@
-import { BookmarkIcon, CircleCheckIcon, CircleXIcon } from "lucide-react";
-import type { KeyboardEvent } from "react";
+import { BookmarkIcon } from "lucide-react";
+import type { ComponentPropsWithoutRef, KeyboardEvent } from "react";
 
 import { Button } from "@/components/design-system/button";
 import { recommendationStrings } from "@/lib/strings";
 import { cn } from "@/lib/utils";
 
-type StateActionRowProps = Readonly<{
+type RemovalActionProps = Readonly<{
   busy: boolean;
-  planned: boolean;
-  compact?: boolean;
   className?: string;
-  onPlanned: () => void;
   onCompleted: () => void;
   onHidden: () => void;
   onRemovalIntent?: () => void;
+  surface?: "page" | "cover";
 }>;
 
+type StateActionRowProps = Omit<RemovalActionProps, "surface"> &
+  Readonly<{
+    planned: boolean;
+    onPlanned: () => void;
+  }>;
+
+type QuietTextActionProps = ComponentPropsWithoutRef<"button"> &
+  Readonly<{
+    danger?: boolean;
+    surface?: "page" | "cover";
+  }>;
+
+function removalHandlersFor({
+  busy,
+  onRemovalIntent,
+}: Pick<RemovalActionProps, "busy" | "onRemovalIntent">) {
+  return {
+    onKeyDown: (event: KeyboardEvent<HTMLButtonElement>) => {
+      if (!busy && (event.key === "Enter" || event.key === " ")) onRemovalIntent?.();
+    },
+    onPointerDown: busy ? undefined : onRemovalIntent,
+  };
+}
+
+/**
+ * Secondary shelf actions: labelled, always visible, no button chrome.
+ * These remove the work from the recommendation shelf, so they must not
+ * compete with the primary save affordance.
+ */
+function QuietTextAction({
+  className,
+  danger = false,
+  surface = "page",
+  ...props
+}: QuietTextActionProps) {
+  const onCover = surface === "cover";
+
+  return (
+    <button
+      {...props}
+      className={cn(
+        "quiet-text-action inline-flex min-h-[var(--control-min-size)] min-w-[var(--control-min-size)] items-center px-[var(--space-1)] text-left transition-colors duration-[var(--motion-duration-feedback)] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-focus-ring disabled:cursor-not-allowed disabled:opacity-45 motion-reduce:transition-none",
+        onCover && "quiet-text-action--cover focus-visible:ring-offset-0",
+        !onCover && "focus-visible:ring-offset-2 focus-visible:ring-offset-canvas",
+        danger && "quiet-text-action--danger",
+        className,
+      )}
+      type="button"
+    />
+  );
+}
+
+/**
+ * Preview/dialog row: one primary save control, then quiet corrective actions.
+ * Not three equal buttons.
+ */
 export function StateActionRow({
   busy,
   className,
-  compact = false,
   onCompleted,
   onHidden,
   onPlanned,
   onRemovalIntent,
   planned,
 }: StateActionRowProps) {
-  const prepareKeyboardRemoval = (event: KeyboardEvent<HTMLButtonElement>) => {
-    if (!busy && (event.key === "Enter" || event.key === " ")) onRemovalIntent?.();
-  };
-  const baseButtonClass =
-    "flex min-h-[var(--control-min-size)] min-w-0 items-center justify-center gap-[var(--space-1)] text-[length:var(--font-size-12)] font-bold";
-  const iconClassName = "size-4 shrink-0";
-  const compactLabelClassName = compact
-    ? "hidden text-[length:var(--text-caption-size)] leading-tight whitespace-nowrap [@media(min-width:768px)_and_(hover:hover)_and_(pointer:fine)]:inline"
-    : undefined;
-
   return (
     <div
       className={cn(
-        compact
-          ? "grid h-11 w-full grid-cols-3 items-stretch [@media(min-width:768px)_and_(hover:hover)_and_(pointer:fine)]:w-[calc(var(--control-min-size)*5.5)]"
-          : "grid grid-cols-[minmax(0,1fr)_auto_auto] gap-[var(--space-2)]",
+        "flex flex-col gap-[var(--space-2)] sm:flex-row sm:items-center sm:justify-between",
         className,
       )}
     >
       <Button
-        aria-label={
-          compact
-            ? planned
-              ? `${recommendationStrings.actions.planned}、${recommendationStrings.actions.plannedConfirmation}`
-              : recommendationStrings.actions.planned
-            : undefined
-        }
         aria-pressed={planned}
-        className={cn(
-          baseButtonClass,
-          compact
-            ? "h-11 rounded-none border-0 px-[var(--space-content-tight)]"
-            : "rounded-[var(--radius-cover)] border px-[var(--space-3)] py-1.5",
-          "border-accent bg-accent !text-on-accent hover:bg-accent-hover",
-        )}
         busy={busy}
+        className="w-fit justify-self-start aria-pressed:border-accent aria-pressed:bg-accent aria-pressed:text-on-accent"
         onClick={onPlanned}
         type="button"
       >
-        <BookmarkIcon aria-hidden="true" className={cn(iconClassName, planned && "fill-current")} />
-        <span className={compactLabelClassName}>
-          {compact && planned
-            ? recommendationStrings.actions.plannedConfirmation
-            : recommendationStrings.actions.planned}
-        </span>
+        <BookmarkIcon aria-hidden="true" className={cn("size-4", planned && "fill-current")} />
+        {recommendationStrings.actions.planned}
       </Button>
-      <Button
-        aria-label={compact ? recommendationStrings.actions.completed : undefined}
-        className={cn(
-          baseButtonClass,
-          compact
-            ? "h-11 rounded-none border-0 bg-transparent px-[var(--space-content-tight)] text-text-muted hover:bg-transparent hover:text-text-strong"
-            : "rounded-[var(--radius-cover)] border border-line/80 px-[var(--space-3)] py-1.5 bg-transparent text-text-muted hover:border-line-accent-subtle hover:bg-surface-2 hover:text-text-strong",
-        )}
-        data-recommendation-action="completed"
+      <RecommendationFeedbackActions
         busy={busy}
+        onCompleted={onCompleted}
+        onHidden={onHidden}
+        onRemovalIntent={onRemovalIntent}
+      />
+    </div>
+  );
+}
+
+/**
+ * Save affordance for cover-forward cards. Parent positions it; accent fill
+ * appears only once a work is actually saved.
+ */
+export function CoverSaveToggle({
+  busy,
+  className,
+  onPlanned,
+  planned,
+}: Readonly<{
+  busy: boolean;
+  className?: string;
+  onPlanned: () => void;
+  planned: boolean;
+}>) {
+  return (
+    <button
+      aria-busy={busy || undefined}
+      aria-label={
+        planned
+          ? `${recommendationStrings.actions.planned}、${recommendationStrings.actions.plannedConfirmation}`
+          : recommendationStrings.actions.planned
+      }
+      aria-pressed={planned}
+      className={cn(
+        "cover-save-toggle grid size-[var(--control-min-size)] shrink-0 place-items-center rounded-full transition-colors duration-[var(--motion-duration-feedback)] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-focus-ring focus-visible:ring-offset-0 disabled:cursor-not-allowed disabled:opacity-45 motion-reduce:transition-none",
+        className,
+      )}
+      disabled={busy}
+      onClick={onPlanned}
+      type="button"
+    >
+      <BookmarkIcon aria-hidden="true" className={cn("size-5", planned && "fill-current")} />
+    </button>
+  );
+}
+
+/**
+ * Corrective feedback for a recommended work: both actions remove the entry
+ * from the shelf, so they stay quiet and secondary to the save affordance.
+ */
+export function RecommendationFeedbackActions({
+  busy,
+  className,
+  onCompleted,
+  onHidden,
+  onRemovalIntent,
+  surface = "page",
+}: RemovalActionProps) {
+  const removalHandlers = removalHandlersFor({ busy, onRemovalIntent });
+
+  return (
+    <div className={cn("flex items-center gap-[var(--space-1)]", className)}>
+      <QuietTextAction
+        aria-busy={busy || undefined}
+        data-recommendation-action="completed"
+        disabled={busy}
         onClick={() => {
           onRemovalIntent?.();
           onCompleted();
         }}
-        onKeyDown={prepareKeyboardRemoval}
-        onPointerDown={busy ? undefined : onRemovalIntent}
-        type="button"
-        variant={compact ? "ghost" : "outline"}
+        surface={surface}
+        {...removalHandlers}
       >
-        <CircleCheckIcon aria-hidden="true" className={iconClassName} />
-        <span className={compactLabelClassName}>{recommendationStrings.actions.completed}</span>
-      </Button>
-      <Button
-        aria-label={compact ? recommendationStrings.actions.hidden : undefined}
-        className={cn(
-          baseButtonClass,
-          compact
-            ? "h-11 rounded-none border-0 bg-transparent px-[var(--space-content-tight)] text-text-muted hover:bg-transparent hover:text-warn focus-visible:text-warn"
-            : "rounded-[var(--radius-cover)] border border-line/80 px-[var(--space-3)] py-1.5 bg-transparent text-text-muted hover:border-warn hover:bg-surface-danger-soft hover:text-warn",
-        )}
+        {recommendationStrings.actions.completed}
+      </QuietTextAction>
+      <QuietTextAction
+        aria-busy={busy || undefined}
+        danger
         data-recommendation-action="hidden"
-        busy={busy}
+        disabled={busy}
         onClick={() => {
           onRemovalIntent?.();
           onHidden();
         }}
-        onKeyDown={prepareKeyboardRemoval}
-        onPointerDown={busy ? undefined : onRemovalIntent}
-        type="button"
-        variant={compact ? "ghost" : "outline"}
+        surface={surface}
+        {...removalHandlers}
       >
-        <CircleXIcon aria-hidden="true" className={iconClassName} />
-        <span className={compactLabelClassName}>{recommendationStrings.actions.hidden}</span>
-      </Button>
+        {recommendationStrings.actions.hidden}
+      </QuietTextAction>
     </div>
   );
 }

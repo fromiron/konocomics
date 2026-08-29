@@ -19,7 +19,7 @@ function SettingsPage() {
     <SettingsFlow
       activeSection={search.section}
       onSectionChange={(section) => {
-        void navigate({ search: { section } });
+        void navigate({ resetScroll: false, search: { section } });
       }}
     />
   );

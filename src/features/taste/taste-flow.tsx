@@ -29,7 +29,6 @@ import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 
 import { Button, buttonClassName } from "@/components/design-system/button";
 import { CoverImage } from "@/components/cover/CoverImage";
-import { SiteFooter } from "@/components/layout/site-footer";
 import { MediaShelf } from "@/components/media/media-shelf";
 import { usePageEntryMotion } from "@/components/motion/use-page-entry-motion";
 import recommendationContextJson from "@/data/generated/recommendation-context-v1.json";
@@ -135,7 +134,7 @@ function factorLabel(factorId: ExplanationFactorId) {
 function TopPreferenceIcon({ preference }: Readonly<{ preference: DnaTopPreference }>) {
   const iconProps = {
     "aria-hidden": true,
-    className: "taste-top-card__icon size-[var(--space-8)] shrink-0 text-accent",
+    className: "taste-top-card__icon size-[var(--space-5)] shrink-0 text-text-muted",
     strokeWidth: 1.75,
   } as const;
 
@@ -233,7 +232,7 @@ function AnchorStrip({
 }>) {
   const shelf = (
     <MediaShelf
-      className="taste-anchor-strip mb-[var(--space-content)] min-w-0 rounded-[var(--radius-card)] border border-line bg-surface-1 p-[var(--space-3)]"
+      className="taste-anchor-strip mb-[var(--space-content)] min-w-0"
       compactHeading
       listType="unordered"
       title={tasteStrings.anchorsHeading}
@@ -246,7 +245,7 @@ function AnchorStrip({
         >
           <Link
             aria-label={mediaStrings.openDetails(work.title)}
-            className="group/evidence relative block h-44 min-h-[var(--control-min-size)] overflow-hidden rounded-[var(--radius-card)] border border-line bg-surface-2 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-ring"
+            className="group/evidence relative block h-44 min-h-[var(--control-min-size)] overflow-hidden rounded-[var(--radius-cover)] bg-surface-1 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-ring"
             params={{ workId: work.id }}
             preload={false}
             to="/works/$workId"
@@ -269,7 +268,7 @@ function AnchorStrip({
               className="pointer-events-none absolute inset-0 bg-[linear-gradient(to_top,var(--canvas)_0%,color-mix(in_oklch,var(--canvas)_88%,transparent)_34%,transparent_70%)]"
             />
             <span className="absolute inset-0 z-10 flex min-w-0 flex-col justify-between p-[var(--space-3)]">
-              <span className="w-fit rounded-[var(--radius-pill)] border border-line-accent-subtle bg-surface-overlay px-[var(--space-2)] py-[var(--space-1)] text-[length:var(--font-size-12)] font-bold text-accent">
+              <span className="w-fit rounded-[var(--radius-pill)] bg-surface-overlay px-[var(--space-2)] py-[var(--space-1)] text-[length:var(--font-size-12)] font-bold text-text-strong">
                 {evidenceLabels.get(work.id)}
               </span>
               <strong className="line-clamp-2 max-w-[88%] text-[length:var(--font-size-14)] leading-tight text-text-strong">
@@ -314,23 +313,25 @@ function TopPreferenceCard({
   });
   const label = factorLabel(preference.factorId);
   const cardClassName =
-    "taste-top-card surface-card flex h-full min-w-0 flex-col items-center gap-[var(--space-content)] rounded-[var(--radius-card)] border border-line bg-surface-2 px-[var(--space-2)] py-[var(--space-3)] text-center";
+    "taste-top-card flex h-full min-w-0 flex-col items-start gap-[var(--space-content-tight)] border-t border-line/70 px-0 pt-[var(--space-3)] pb-[var(--space-2)] text-left";
 
   const content = (
     <>
-      <TopPreferenceIcon preference={preference} />
-      <h3
-        className={cn(
-          "relative flex min-h-[calc(var(--space-5)*2)] min-w-0 items-center justify-center text-[length:var(--font-size-14)] leading-tight text-text-strong",
-          animateReveal &&
-            "taste-top-card__label--reveal after:absolute after:right-0 after:-bottom-[3px] after:left-0 after:h-0.5 after:origin-left after:scale-x-0 after:bg-accent after:content-[''] motion-safe:after:animate-[taste-underline-reveal_300ms_500ms_ease-out_forwards]",
-          animateReveal && index === 1 && "after:[animation-delay:680ms]",
-          animateReveal && index === 2 && "after:[animation-delay:860ms]",
-        )}
-      >
-        {label}
-      </h3>
-      <strong className="taste-top-card__level shrink-0 whitespace-nowrap text-[length:var(--text-subheading-size)] leading-none text-text-strong">
+      <span className="flex items-center gap-[var(--space-content-tight)] text-text-muted">
+        <TopPreferenceIcon preference={preference} />
+        <h3
+          className={cn(
+            "relative min-w-0 text-[length:var(--font-size-14)] leading-tight font-bold text-text-strong",
+            animateReveal &&
+              "taste-top-card__label--reveal after:absolute after:right-0 after:-bottom-[3px] after:left-0 after:h-0.5 after:origin-left after:scale-x-0 after:bg-accent after:content-[''] motion-safe:after:animate-[taste-underline-reveal_300ms_500ms_ease-out_forwards]",
+            animateReveal && index === 1 && "after:[animation-delay:680ms]",
+            animateReveal && index === 2 && "after:[animation-delay:860ms]",
+          )}
+        >
+          {label}
+        </h3>
+      </span>
+      <strong className="taste-top-card__level shrink-0 whitespace-nowrap font-display text-[length:var(--font-size-28)] leading-none text-text-strong">
         {tasteStrings.factorValue(preference.value)}
       </strong>
       <p className="mt-auto line-clamp-2 min-h-[calc(var(--font-size-12)*var(--line-height-body)*2)] text-[length:var(--font-size-12)] leading-[var(--line-height-body)] text-text-muted">
@@ -434,12 +435,12 @@ function FactorGroup<FactorId extends ExplanationFactorId>({
   return (
     <section
       aria-labelledby={`taste-group-${id}`}
-      className="taste-factor-group surface-card m-0 h-fit min-w-0 overflow-clip rounded-[var(--radius-card)] border border-line bg-surface-1"
+      className="taste-factor-group m-0 h-fit min-w-0 border-t border-line/70 pt-[var(--space-3)]"
     >
-      <header className="grid grid-cols-[auto_minmax(0,1fr)] items-center gap-[var(--space-3)] p-[var(--space-4)] sm:grid-cols-[auto_minmax(0,1fr)_auto]">
+      <header className="grid grid-cols-[auto_minmax(0,1fr)] items-center gap-[var(--space-3)] py-[var(--space-content)] sm:grid-cols-[auto_minmax(0,1fr)_auto]">
         <span
           aria-hidden="true"
-          className="taste-factor-group__icon grid size-[var(--space-12)] place-items-center rounded-[var(--radius-control)] border border-line bg-surface-2 text-accent"
+          className="taste-factor-group__icon grid size-[var(--space-8)] place-items-center text-text-muted"
         >
           <FactorGroupIcon id={id} />
         </span>
@@ -459,7 +460,7 @@ function FactorGroup<FactorId extends ExplanationFactorId>({
             aria-controls={detailsId}
             aria-expanded={open}
             aria-label={tasteStrings.groupDetailsLabel(title, open)}
-            className="shrink-0 gap-[var(--space-content-tight)] px-[var(--space-2)] text-[length:var(--font-size-12)] font-bold text-accent"
+            className="shrink-0 gap-[var(--space-content-tight)] px-[var(--space-2)] text-[length:var(--font-size-12)] font-bold text-text-strong"
             onClick={() => onOpenChange(!open)}
             type="button"
             variant="ghost"
@@ -477,7 +478,7 @@ function FactorGroup<FactorId extends ExplanationFactorId>({
       </header>
       <div
         className={cn(
-          "taste-factor-group__details taste-factor-group__rows grid border-t border-line bg-surface-2 px-[var(--space-3)]",
+          "taste-factor-group__details taste-factor-group__rows grid px-0 pb-[var(--space-3)]",
           isAnalysisOnly
             ? "taste-factor-group__rows--analysis grid-cols-1 md:grid-cols-2 md:gap-x-[var(--space-4)]"
             : "grid-cols-1",
@@ -488,7 +489,7 @@ function FactorGroup<FactorId extends ExplanationFactorId>({
         {isAnalysisOnly ? null : (
           <div
             aria-hidden="true"
-            className="taste-factor-group__column-headings sticky top-[var(--desktop-navigation-height)] z-10 hidden grid-cols-[minmax(12rem,0.75fr)_minmax(0,1.25fr)] items-center gap-[var(--space-content)] border-b border-line bg-surface-2 py-[var(--space-content)] text-[length:var(--font-size-12)] font-bold text-text-muted md:grid"
+            className="taste-factor-group__column-headings sticky top-[var(--desktop-navigation-height)] z-10 hidden grid-cols-[minmax(12rem,0.75fr)_minmax(0,1.25fr)] items-center gap-[var(--space-content)] border-b border-line/70 bg-canvas py-[var(--space-content)] text-[length:var(--font-size-12)] font-bold text-text-muted md:grid"
           >
             <span>{tasteStrings.analysisColumnHeading}</span>
             <span className="taste-factor-group__column-adjustment border-l border-line pl-[var(--space-content-loose)]">
@@ -672,13 +673,13 @@ function RecentFeedbackSummary({
 
   return items.length === 0 ? null : (
     <section
-      className="taste-negative-summary mt-[var(--space-4)] grid gap-[var(--space-content)] rounded-[var(--radius-card)] border border-line bg-surface-1 p-[var(--space-4)]"
+      className="taste-negative-summary mt-[var(--space-5)] grid gap-[var(--space-content)] border-t border-line/70 pt-[var(--space-4)]"
       aria-labelledby="taste-negative-heading"
     >
       <header className="flex flex-wrap items-center justify-between gap-[var(--space-content)]">
         <h2 id="taste-negative-heading">{tasteStrings.recentFeedbackHeading}</h2>
         <Link
-          className="taste-add-link interactive-press inline-flex min-h-[var(--control-min-size)] items-center font-bold text-accent underline underline-offset-4 transition-[opacity,transform] duration-[var(--motion-duration-feedback)] ease-[var(--motion-ease-direct)] active:scale-[0.97] motion-reduce:transform-none"
+          className="taste-add-link interactive-press inline-flex min-h-[var(--control-min-size)] items-center font-bold text-text-strong underline underline-offset-4 transition-[opacity,transform] duration-[var(--motion-duration-feedback)] ease-[var(--motion-ease-direct)] active:scale-[0.97] motion-reduce:transform-none"
           preload={false}
           to="/onboarding"
         >
@@ -688,7 +689,7 @@ function RecentFeedbackSummary({
       <ul className="m-0 grid list-none grid-cols-1 gap-[var(--space-content)] p-0 md:grid-cols-3">
         {items.map(({ record, work }) => (
           <li
-            className="grid min-h-[var(--control-min-size)] grid-cols-[var(--space-12)_minmax(0,1fr)] items-center gap-[var(--space-3)] rounded-[var(--radius-card)] border border-line bg-surface-2 px-[var(--space-3)] py-[var(--space-content)]"
+            className="grid min-h-[var(--control-min-size)] grid-cols-[var(--space-12)_minmax(0,1fr)] items-center gap-[var(--space-3)] py-[var(--space-content)]"
             key={work.id}
           >
             <CoverImage
@@ -978,7 +979,7 @@ export function TasteFlow({
     revealExperience === null
   ) {
     return (
-      <main className="taste-page taste-page--loading mx-auto grid min-h-dvh w-[min(100%,var(--layout-width-taste))] place-items-center px-[var(--layout-page-padding)] py-[var(--layout-page-block-start)] text-text-muted">
+      <main className="taste-page taste-page--loading mx-auto grid min-h-dvh w-[min(100%,var(--layout-width-media))] place-items-center px-[var(--layout-page-padding)] py-[var(--layout-page-block-start)] text-text-muted">
         <p aria-live="polite">{tasteStrings.loading}</p>
       </main>
     );
@@ -988,7 +989,7 @@ export function TasteFlow({
     <LazyMotion features={domAnimation} strict>
       <main
         className={cn(
-          "taste-page mx-auto min-h-dvh w-[min(100%,var(--layout-width-taste))] px-[var(--layout-page-padding)] pt-[var(--space-4)] pb-[var(--space-section)] text-text md:pt-[var(--space-content)]",
+          "taste-page mx-auto min-h-dvh w-[min(100%,var(--layout-width-media))] px-[var(--layout-page-padding)] pt-[var(--space-4)] pb-[var(--space-section)] text-text md:pt-[var(--space-content)]",
           revealExperience.entry &&
             "taste-page--with-action pb-[var(--layout-taste-action-clearance)]",
           !revealExperience.entry &&
@@ -999,8 +1000,8 @@ export function TasteFlow({
       >
         <header className="taste-header mb-[var(--space-content)] grid items-stretch gap-[var(--space-3)] md:grid-cols-[minmax(0,0.95fr)_minmax(0,1.05fr)]">
           <div className="grid content-start gap-[var(--space-content)] md:grid-rows-[auto_1fr]">
-            <div className="taste-header__copy grid content-center gap-[var(--space-content-tight)] border-l-2 border-accent px-[var(--space-3)] py-[var(--space-content)]">
-              <p className="taste-header__eyebrow text-[length:var(--text-caption-size)] font-bold tracking-[0.08em] text-accent">
+            <div className="taste-header__copy grid content-center gap-[var(--space-content-tight)] py-[var(--space-content)]">
+              <p className="taste-header__eyebrow text-[length:var(--text-caption-size)] font-bold tracking-[0.08em] text-text-muted">
                 {tasteStrings.eyebrow}
               </p>
               <h1 className="font-display text-[length:var(--text-page-title-size)]">
@@ -1009,12 +1010,12 @@ export function TasteFlow({
               <p className="max-w-[48ch] text-[length:var(--text-caption-size)] font-normal text-text-muted">
                 {tasteStrings.description}
               </p>
-              <strong className="taste-confidence w-fit rounded-full border border-line bg-surface-1 px-[var(--space-3)] py-[var(--space-content-tight)] text-[length:var(--text-caption-size)] text-accent">
+              <strong className="taste-confidence w-fit text-[length:var(--text-caption-size)] font-medium text-text-muted">
                 {tasteStrings.confidence}: {tasteStrings.confidenceLabels[confidenceLevel]}
               </strong>
             </div>
             <section
-              className="taste-top-summary grid gap-[var(--space-2)] rounded-[var(--radius-card)] border border-line bg-surface-1 p-[var(--space-3)] md:grid-rows-[auto_1fr]"
+              className="taste-top-summary grid content-start gap-[var(--space-3)]"
               aria-labelledby="taste-top-heading"
             >
               <h2 className="text-[length:var(--text-subheading-size)]" id="taste-top-heading">
@@ -1023,7 +1024,7 @@ export function TasteFlow({
               {summary.topPreferences.length === 0 ? (
                 <p>{tasteStrings.topPreferencePending}</p>
               ) : (
-                <div className="taste-top-summary__grid grid grid-cols-3 gap-[var(--space-content)]">
+                <div className="taste-top-summary__grid grid grid-cols-3 gap-[var(--space-content-loose)]">
                   {summary.topPreferences.map((preference, index) => (
                     <TopPreferenceCard
                       animateReveal={revealExperience.animate}
@@ -1071,9 +1072,9 @@ export function TasteFlow({
             className="taste-workspace grid gap-[var(--space-3)]"
             data-taste-mode={mode}
           >
-            <header className="taste-workspace__header flex flex-wrap items-baseline gap-x-[var(--space-3)] gap-y-[var(--space-content-tight)] border-l-2 border-accent pl-[var(--space-3)]">
+            <header className="taste-workspace__header flex flex-wrap items-baseline gap-x-[var(--space-3)] gap-y-[var(--space-content-tight)]">
               <h2
-                className="text-[length:var(--text-subheading-size)]"
+                className="text-[length:var(--text-section-title-size)] tracking-tight text-text-strong"
                 id="taste-workspace-heading"
               >
                 {tasteStrings.workspaceHeading}
@@ -1132,7 +1133,6 @@ export function TasteFlow({
         >
           {message}
         </p>
-        <SiteFooter className="taste-footer mx-[calc(var(--layout-page-padding)*-1)] mt-[var(--space-6)] md:[&>div]:py-[var(--space-4)]" />
       </main>
     </LazyMotion>
   );

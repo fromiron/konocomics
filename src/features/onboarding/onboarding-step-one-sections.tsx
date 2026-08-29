@@ -77,7 +77,7 @@ export function OnboardingIntro({ addMode, headingRef }: OnboardingIntroProps) {
   return (
     <div className="onboarding-hero__copy min-w-0">
       <header className="onboarding-header mb-[var(--space-3)] grid max-w-[var(--layout-width-reading)] gap-[var(--space-content-tight)]">
-        <p className="font-display text-[length:var(--text-caption-size)] font-bold tracking-[0.08em] text-accent">
+        <p className="font-display text-[length:var(--text-caption-size)] font-bold tracking-[0.08em] text-text-muted">
           {addMode ? onboardingStrings.addMode.eyebrow : onboardingStrings.step1.eyebrow}
         </p>
         <h1
@@ -102,7 +102,7 @@ export function OnboardingIntro({ addMode, headingRef }: OnboardingIntroProps) {
               >
                 <span
                   aria-hidden="true"
-                  className="grid size-[var(--space-8)] place-items-center rounded-full border border-line bg-surface-2 text-accent [&>svg]:size-4"
+                  className="grid size-[var(--space-8)] place-items-center rounded-full border border-line/70 bg-surface-1 text-text-muted [&>svg]:size-4"
                 >
                   <BenefitIcon />
                 </span>
@@ -224,7 +224,7 @@ export function OnboardingCollectionGrid({
                   />
                 ))}
               </span>
-              <span className="onboarding-collection__action text-start text-[length:var(--text-caption-size)] font-bold text-accent">
+              <span className="onboarding-collection__action text-start text-[length:var(--text-caption-size)] font-bold text-text-strong">
                 {copy.action}
               </span>
             </Button>
@@ -255,7 +255,7 @@ export function OnboardingSelectionGuidance() {
             >
               <span
                 aria-hidden="true"
-                className="grid size-[var(--space-8)] place-items-center rounded-full border border-line bg-surface-2 text-accent [&>svg]:size-4"
+                className="grid size-[var(--space-8)] place-items-center rounded-full border border-line/70 bg-surface-1 text-text-muted [&>svg]:size-4"
               >
                 <GuidanceIcon />
               </span>

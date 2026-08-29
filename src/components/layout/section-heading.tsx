@@ -23,30 +23,27 @@ export function SectionHeading({
     <header
       className={cn(
         "flex min-w-0 items-end justify-between gap-[var(--space-4)]",
-        compact ? "mb-[var(--space-2)]" : "mb-[var(--space-3)]",
+        compact ? "mb-[var(--space-2)]" : "mb-[var(--space-4)]",
         className,
       )}
     >
-      <div className="flex min-w-0 items-start gap-[var(--space-3)]">
-        <span
-          aria-hidden="true"
+      <div className="grid min-w-0 gap-[var(--space-content-tight)]">
+        <h2
           className={cn(
-            "mt-[3px] w-[var(--space-1)] shrink-0 rounded-[var(--radius-pill)] bg-accent",
+            "tracking-tight text-text-strong",
             compact
-              ? "h-[calc(var(--text-subheading-size)*1.3)]"
-              : "h-[calc(var(--text-section-title-size)*1.3)]",
+              ? "text-[length:var(--text-subheading-size)]"
+              : "text-[length:var(--text-section-title-size)]",
           )}
-        />
-        <div className="grid min-w-0 gap-[var(--space-content-tight)] md:flex md:items-baseline md:gap-[var(--space-4)]">
-          <h2 className={cn(compact && "text-[length:var(--text-subheading-size)]")} id={id}>
-            {title}
-          </h2>
-          {description === undefined ? null : (
-            <p className="max-w-[var(--layout-width-reading)] text-[length:var(--text-caption-size)] text-text-muted">
-              {description}
-            </p>
-          )}
-        </div>
+          id={id}
+        >
+          {title}
+        </h2>
+        {description === undefined ? null : (
+          <p className="max-w-[var(--layout-width-reading)] text-[length:var(--font-size-14)] leading-[var(--line-height-body)] text-text-muted">
+            {description}
+          </p>
+        )}
       </div>
       {action === undefined ? null : (
         <div className="flex shrink-0 items-center gap-[var(--space-content-tight)]">{action}</div>

@@ -4,7 +4,6 @@ import { useNavigate } from "@tanstack/react-router";
 import { useEffect, useMemo } from "react";
 
 import { coverSourceForSize } from "@/components/cover/CoverImage";
-import { SiteFooter } from "@/components/layout/site-footer";
 import { BrandWordmark } from "@/components/nav/brand-wordmark";
 import { hasCatalogBackedProfileById } from "@/domain/profile/catalog-profile";
 import { useCatalogIdentity } from "@/features/catalog/catalog-provider";
@@ -103,8 +102,6 @@ export function LandingFlow({
         <HomeDiscoveryShelf coverUrls={coverUrls} works={discoveryWorks} />
         <HomeHowItWorks />
       </div>
-
-      <SiteFooter />
     </main>
   );
 }

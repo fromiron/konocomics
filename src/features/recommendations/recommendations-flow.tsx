@@ -6,7 +6,6 @@ import { useCallback, useEffect, useLayoutEffect, useMemo, useRef, useState } fr
 import { flushSync } from "react-dom";
 
 import { Button } from "@/components/design-system/button";
-import { SiteFooter } from "@/components/layout/site-footer";
 import { MediaShelf } from "@/components/media/media-shelf";
 import { QuickPreviewDialog } from "@/components/media/quick-preview-dialog";
 import { RankingCard } from "@/components/media/ranking-card";
@@ -45,7 +44,7 @@ import { recommendationStrings, explanationLexicon } from "@/lib/strings";
 
 import { FeedbackDialog, type PendingRecommendationFeedback } from "./feedback-dialog";
 import { FeedbackImpactSummary } from "./feedback-impact-summary";
-import { RecommendationCard, RecommendationDetailPanel } from "./recommendation-card";
+import { RecommendationCard } from "./recommendation-card";
 import { RecommendationCriteriaSummary } from "./recommendation-criteria-summary";
 import {
   createRecommendationCoverTargets,
@@ -99,7 +98,7 @@ function StaticRecommendationItems({
     <>
       {items.map((item) => (
         <li
-          className="basis-[var(--featured-card-basis)] shrink-0 snap-start overflow-visible [@media(min-width:768px)_and_(hover:hover)_and_(pointer:fine)]:h-[var(--recommendation-card-height)] [@media(min-width:768px)_and_(hover:hover)_and_(pointer:fine)]:has-[article[data-expanded]]:basis-[var(--featured-expanded-basis)]"
+          className="basis-[var(--featured-card-basis)] shrink-0 snap-start overflow-visible"
           data-recommendation-work-id={item.workId}
           key={item.workId}
         >
@@ -247,11 +246,6 @@ export function RecommendationsFlow({
   const [feedbackBusy, setFeedbackBusy] = useState(false);
   const [feedbackBaseBusy, setFeedbackBaseBusy] = useState(false);
   const [feedbackError, setFeedbackError] = useState("");
-  const [selectedFeaturedWorkId, setSelectedFeaturedWorkId] = useState<string | null>(null);
-  const [expandedFeaturedWorkId, setExpandedFeaturedWorkId] = useState<string | null | undefined>(
-    undefined,
-  );
-  const [featuredDetailOpen, setFeaturedDetailOpen] = useState(true);
   const [MotionList, setMotionList] = useState<RecommendationMotionListComponent | null>(null);
   const calculationSequence = useRef(0);
   const calculationInFlight = useRef(false);
@@ -372,27 +366,6 @@ export function RecommendationsFlow({
       renderedEntries: nextRenderedEntries,
     };
   }, [excludedWorkIds, genre, plan, previewWorkId, visibleEntries, worksById]);
-  const selectedFeaturedItem =
-    featuredEntries.find(({ entry }) => entry.workId === selectedFeaturedWorkId) ??
-    featuredEntries[0] ??
-    null;
-  const closeFeaturedDetail = () => {
-    if (selectedFeaturedItem === null) return;
-    const selectedWorkId = selectedFeaturedItem.entry.workId;
-    setFeaturedDetailOpen(false);
-    window.requestAnimationFrame(() => {
-      articleRefs.current
-        .get(selectedWorkId)
-        ?.querySelector<HTMLButtonElement>("[data-recommendation-detail-trigger]")
-        ?.focus();
-    });
-  };
-  const resolvedExpandedFeaturedWorkId =
-    expandedFeaturedWorkId === null
-      ? null
-      : featuredEntries.some(({ entry }) => entry.workId === expandedFeaturedWorkId)
-        ? expandedFeaturedWorkId
-        : (featuredEntries[0]?.entry.workId ?? null);
   const coverWorkIds = useMemo(() => {
     const orderedIds = [
       ...featuredEntries.map(({ entry }) => entry.workId),
@@ -960,9 +933,7 @@ export function RecommendationsFlow({
           }}
           busy={isComputing || isPolicySaving || feedbackBaseBusy || busyWorkIds.has(entry.workId)}
           coverUrl={recommendationCoverUrls.get(entry.workId)}
-          detailOpen={featuredDetailOpen && selectedFeaturedItem?.entry.workId === entry.workId}
           entry={entry}
-          expanded={resolvedExpandedFeaturedWorkId === entry.workId}
           onCompleted={() => void removeForFeedback(entry, "completed")}
           onCoverSettled={
             entry.workId === firstRecommendationCoverWorkId &&
@@ -971,26 +942,13 @@ export function RecommendationsFlow({
               : undefined
           }
           onHidden={() => void removeForFeedback(entry, "hidden")}
-          onExpansionChange={(expanded) => {
-            setExpandedFeaturedWorkId((current) => {
-              if (expanded) return entry.workId;
-              const currentWorkId =
-                current === undefined ? featuredEntries[0]?.entry.workId : current;
-              return currentWorkId === entry.workId ? null : current;
-            });
-          }}
           onPlanned={() => void savePlanned(entry)}
           onPreview={() => openPreview(entry.workId)}
           onRemovalIntent={requestRemovalMotion}
-          onSelect={() => {
-            setSelectedFeaturedWorkId(entry.workId);
-            setFeaturedDetailOpen(true);
-          }}
           planned={plannedIds.has(entry.workId)}
           position={index + 1}
           priority={index === 0}
           resolveTitle={(workId) => worksById.get(workId)?.title}
-          selected={selectedFeaturedItem?.entry.workId === entry.workId}
           volumeCount={metadata.volumeCount}
           work={work}
         />
@@ -1042,7 +1000,7 @@ export function RecommendationsFlow({
   return (
     <>
       <main
-        className="mx-auto w-full max-w-[var(--layout-width-media)] bg-canvas px-[var(--layout-page-padding)] pt-[var(--layout-page-block-start)] pb-[calc(var(--layout-mobile-navigation-clearance)+var(--space-8))] md:pt-0 md:pb-[var(--space-6)] [--recommendation-cover-width:104px]"
+        className="mx-auto w-full max-w-[var(--layout-width-media)] bg-canvas px-[var(--layout-page-padding)] pt-[var(--layout-page-block-start)] pb-[var(--space-8)] md:pt-0 md:pb-[var(--space-6)] [--recommendation-cover-width:104px]"
         data-recommendation-input-hash={displayedHash ?? undefined}
       >
         <div className="block w-full min-w-0">
@@ -1154,20 +1112,7 @@ export function RecommendationsFlow({
                 </p>
               </FeaturedRecommendationState>
             ) : (
-              <div
-                onKeyDown={(event) => {
-                  if (
-                    event.defaultPrevented ||
-                    event.key !== "Escape" ||
-                    !featuredDetailOpen ||
-                    selectedFeaturedItem === null
-                  ) {
-                    return;
-                  }
-                  event.preventDefault();
-                  closeFeaturedDetail();
-                }}
-              >
+              <div>
                 <span
                   aria-hidden="true"
                   className="scroll-mt-[calc(var(--desktop-navigation-height)+var(--space-4))]"
@@ -1179,14 +1124,8 @@ export function RecommendationsFlow({
                   description={recommendationStrings.shelves.featured.description}
                   listType="unordered"
                   compactHeading
-                  onPageChange={(firstVisibleIndex) => {
-                    const firstVisible = featuredEntries[firstVisibleIndex];
-                    if (firstVisible === undefined) return;
-                    setSelectedFeaturedWorkId(firstVisible.entry.workId);
-                    setFeaturedDetailOpen(true);
-                  }}
                   title={recommendationStrings.shelves.featured.title}
-                  trackClassName="recommendations-list min-h-[calc(var(--control-min-size)*6.5)] items-stretch gap-[var(--space-3)] [--featured-card-basis:clamp(calc(var(--control-min-size)*2.5),calc((100%-(var(--space-3)*2))/2.4),calc(var(--control-min-size)*3.5))] [--featured-expanded-basis:calc(var(--control-min-size)*8)] [--recommendation-card-height:212px] [@media(min-width:768px)_and_(hover:hover)_and_(pointer:fine)]:min-h-[var(--recommendation-card-height)] [@media(min-width:768px)_and_(hover:hover)_and_(pointer:fine)]:[--featured-card-basis:calc(var(--control-min-size)*5.5)]"
+                  trackClassName="recommendations-list items-stretch gap-[var(--space-3)] [--featured-card-basis:clamp(10.75rem,calc((100%-var(--space-3))/1.8),13.5rem)] [@media(min-width:768px)_and_(hover:hover)_and_(pointer:fine)]:[--featured-card-basis:clamp(14rem,calc((100%-(var(--space-3)*3))/4.05),16rem)]"
                   trackData={{
                     "data-recommendation-motion": MotionList === null ? "static" : "enabled",
                   }}
@@ -1204,31 +1143,6 @@ export function RecommendationsFlow({
                     />
                   )}
                 </MediaShelf>
-                {featuredDetailOpen && selectedFeaturedItem !== null ? (
-                  <div className="mt-[var(--space-2)]">
-                    <RecommendationDetailPanel
-                      busy={
-                        isComputing ||
-                        isPolicySaving ||
-                        feedbackBaseBusy ||
-                        busyWorkIds.has(selectedFeaturedItem.entry.workId)
-                      }
-                      coverUrl={recommendationCoverUrls.get(selectedFeaturedItem.entry.workId)}
-                      entry={selectedFeaturedItem.entry}
-                      onClose={closeFeaturedDetail}
-                      onCompleted={() =>
-                        void removeForFeedback(selectedFeaturedItem.entry, "completed")
-                      }
-                      onHidden={() => void removeForFeedback(selectedFeaturedItem.entry, "hidden")}
-                      onPlanned={() => void savePlanned(selectedFeaturedItem.entry)}
-                      onRemovalIntent={requestRemovalMotion}
-                      planned={plannedIds.has(selectedFeaturedItem.entry.workId)}
-                      resolveTitle={(workId) => worksById.get(workId)?.title}
-                      volumeCount={selectedFeaturedItem.metadata.volumeCount}
-                      work={selectedFeaturedItem.work}
-                    />
-                  </div>
-                ) : null}
               </div>
             )}
 
@@ -1370,7 +1284,6 @@ export function RecommendationsFlow({
           )}
         </p>
       </main>
-      {plan === null ? null : <SiteFooter className="[&>div]:py-[var(--space-5)]" />}
     </>
   );
 }

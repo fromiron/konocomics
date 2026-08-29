@@ -29,19 +29,29 @@ function RecommendationsPage() {
         <RecommendationsFlow
           genre={search.genre}
           onGenreChange={(genre) => {
-            void navigate({ search: (current) => ({ ...current, genre }) });
+            void navigate({
+              resetScroll: false,
+              search: (current) => ({ ...current, genre }),
+            });
           }}
           onPreviewClose={() => {
             void navigate({
               replace: true,
+              resetScroll: false,
               search: (current) => ({ ...current, preview: undefined }),
             });
           }}
           onPreviewOpen={(preview) => {
-            void navigate({ search: (current) => ({ ...current, preview }) });
+            void navigate({
+              resetScroll: false,
+              search: (current) => ({ ...current, preview }),
+            });
           }}
           onShelfChange={(shelf) => {
-            void navigate({ search: (current) => ({ ...current, shelf }) });
+            void navigate({
+              resetScroll: false,
+              search: (current) => ({ ...current, shelf }),
+            });
           }}
           previewWorkId={search.preview}
           shelf={search.shelf}

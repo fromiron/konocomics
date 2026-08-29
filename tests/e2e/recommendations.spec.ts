@@ -1198,10 +1198,19 @@ test.describe("Slice 7 recommendation journeys", () => {
       expect(previewTitle).toBeTruthy();
       const previewDialog = page.getByRole("dialog", { name: previewTitle });
 
+      await previewOpener.scrollIntoViewIfNeeded();
+      await page.evaluate(() => window.scrollTo(0, 200));
       await previewOpener.focus();
+      const scrollYBeforePreview = await page.evaluate(() => window.scrollY);
+      expect(scrollYBeforePreview).toBeGreaterThan(0);
       await previewOpener.click();
       expect(new URL(page.url()).searchParams.get("preview")).toBe(previewWorkId);
       await expect(previewDialog).toBeVisible();
+      await expect
+        .poll(async () =>
+          Math.abs((await page.evaluate(() => window.scrollY)) - scrollYBeforePreview),
+        )
+        .toBeLessThanOrEqual(1);
 
       await page.goBack();
       await expect(previewDialog).toBeHidden();

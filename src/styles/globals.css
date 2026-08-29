@@ -12,18 +12,12 @@
   --text: oklch(0.86 0.012 250);
   --text-muted: oklch(0.67 0.018 250);
   --line: oklch(0.29 0.025 250);
-  --accent: oklch(0.7525 0.1382 236.09);
-  --accent-hover: oklch(0.8 0.135 236.09);
-  --accent-active: oklch(0.69 0.14 236.09);
-  --accent-soft: oklch(0.22 0.055 236.09);
-  --on-accent: oklch(0.15 0.02 250);
+  --accent: oklch(0.76 0.11 72);
+  --accent-hover: oklch(0.81 0.11 74);
+  --accent-active: oklch(0.7 0.12 70);
+  --accent-soft: oklch(0.27 0.05 70);
+  --on-accent: oklch(0.22 0.03 65);
   --danger: oklch(0.65 0.22 25);
-  --rank-highlight: oklch(0.82 0.16 78);
-  --rank-first-surface: oklch(0.79 0.16 78);
-  --rank-first-number: oklch(0.81 0.19 79);
-  --rank-first-ink: oklch(0.53 0.105 79);
-  --rank-first-shadow: color-mix(in oklch, var(--rank-first-surface) 24%, var(--canvas));
-  --on-rank-highlight: oklch(0.19 0.045 78);
   --line-accent: color-mix(in oklch, var(--accent) 48%, var(--line));
   --line-accent-subtle: color-mix(in oklch, var(--accent) 32%, var(--line));
   --line-danger: color-mix(in oklch, var(--danger) 56%, var(--line));
@@ -66,14 +60,17 @@
   --font-size-28: 1.75rem;
   --font-size-32: 2rem;
   --font-size-40: 2.5rem;
+  --font-size-56: 3.5rem;
   --line-height-body: 1.7;
   --line-height-heading: 1.3;
+  --line-height-display: 1.12;
   --text-caption-size: var(--font-size-12);
   --text-body-size: var(--font-size-14);
   --text-subheading-size: var(--font-size-16);
   --text-section-title-size: var(--font-size-20);
   --text-page-title-size: var(--font-size-28);
   --text-display-size: var(--font-size-40);
+  --text-hero-size: var(--font-size-40);
 
   --space-1: 4px;
   --space-2: 8px;
@@ -119,6 +116,7 @@
   --motion-duration-page: 160ms;
   --motion-duration-value: 240ms;
   --motion-duration-reveal-step: 400ms;
+  --motion-duration-cinematic: 640ms;
   --motion-ease-direct: ease-out;
   --motion-ease-value: ease-in-out;
   --motion-ease-signature: cubic-bezier(0.2, 0, 0, 1);
@@ -221,74 +219,6 @@ body {
   background-size: 8px 8px;
 }
 
-.ranking-card__first-swash {
-  aspect-ratio: 1;
-  width: 58%;
-  background: var(--rank-first-surface);
-  filter: drop-shadow(
-    0 var(--space-2) var(--space-3) color-mix(in oklch, var(--rank-first-shadow) 62%, transparent)
-  );
-  -webkit-mask: url("/media/ranking-first-swash.svg") left top / 100% 100% no-repeat;
-  mask: url("/media/ranking-first-swash.svg") left top / 100% 100% no-repeat;
-}
-
-/* The editorial Top 10 keeps rank one spotlighted until another card is explored. */
-[data-ranking-shelf="editorial-ranking"] [data-ranking-editorial-accessory="true"] {
-  opacity: 0;
-}
-
-[data-ranking-shelf="editorial-ranking"] [data-ranking-editorial-position="true"] {
-  opacity: 1;
-}
-
-[data-ranking-shelf="editorial-ranking"]
-  [data-ranking-position="1"]
-  [data-ranking-editorial-accessory="true"] {
-  opacity: 1;
-}
-
-[data-ranking-shelf="editorial-ranking"]
-  [data-ranking-position="1"]
-  [data-ranking-editorial-position="true"] {
-  opacity: 0;
-}
-
-[data-ranking-shelf="editorial-ranking"]:has(a:focus-visible)
-  [data-ranking-editorial-accessory="true"] {
-  opacity: 0;
-}
-
-[data-ranking-shelf="editorial-ranking"]:has(a:focus-visible)
-  [data-ranking-editorial-position="true"] {
-  opacity: 1;
-}
-
-[data-ranking-shelf="editorial-ranking"] a:focus-visible [data-ranking-editorial-accessory="true"] {
-  opacity: 1;
-}
-
-[data-ranking-shelf="editorial-ranking"] a:focus-visible [data-ranking-editorial-position="true"] {
-  opacity: 0;
-}
-
-@media (hover: hover) and (pointer: fine) {
-  [data-ranking-shelf="editorial-ranking"]:has(a:hover) [data-ranking-editorial-accessory="true"] {
-    opacity: 0;
-  }
-
-  [data-ranking-shelf="editorial-ranking"]:has(a:hover) [data-ranking-editorial-position="true"] {
-    opacity: 1;
-  }
-
-  [data-ranking-shelf="editorial-ranking"] a:hover [data-ranking-editorial-accessory="true"] {
-    opacity: 1;
-  }
-
-  [data-ranking-shelf="editorial-ranking"] a:hover [data-ranking-editorial-position="true"] {
-    opacity: 0;
-  }
-}
-
 button,
 input,
 select,
@@ -299,6 +229,52 @@ textarea {
 
 button {
   cursor: pointer;
+}
+
+/* Unlayered so these beat the `font: inherit` reset above. Quiet actions
+   must not pick up body 16px, or they read as a chrome toolbar. */
+button.quiet-text-action {
+  color: var(--text-muted);
+  font-size: var(--font-size-12);
+  line-height: 1;
+  text-decoration: none;
+}
+
+button.quiet-text-action:hover,
+button.quiet-text-action:focus-visible {
+  color: var(--text-strong);
+}
+
+button.quiet-text-action--cover {
+  color: var(--text-strong);
+}
+
+button.quiet-text-action--cover:hover,
+button.quiet-text-action--cover:focus-visible {
+  color: var(--accent);
+}
+
+button.quiet-text-action--danger:hover,
+button.quiet-text-action--danger:focus-visible {
+  color: var(--warn);
+}
+
+button.cover-save-toggle {
+  color: var(--text-strong);
+  background: color-mix(in oklch, var(--canvas) 70%, transparent);
+}
+
+button.cover-save-toggle:hover {
+  background: var(--canvas);
+}
+
+button.cover-save-toggle[aria-pressed="true"] {
+  color: var(--on-accent);
+  background: var(--accent);
+}
+
+button.cover-save-toggle[aria-pressed="true"]:hover {
+  background: var(--accent-hover);
 }
 
 a {
@@ -383,6 +359,32 @@ h1[tabindex="-1"]:focus {
   }
 }
 
+/* Featured recommendation card: cover dissolves into the info panel so
+   labelled actions sit on a readable seam, not on busy artwork. */
+.recommendation-featured-card__seam {
+  height: 62%;
+  background: linear-gradient(
+    to top,
+    var(--surface-1) 0%,
+    var(--surface-1) 32%,
+    color-mix(in oklch, var(--surface-1) 82%, transparent) 58%,
+    color-mix(in oklch, var(--surface-1) 28%, transparent) 82%,
+    transparent 100%
+  );
+}
+
+/* Featured recommendation card: gently enlarge the cover on hover/focus (motion-safe only). */
+@media (prefers-reduced-motion: no-preference) {
+  .recommendation-featured-card .cover-image__image {
+    transition: transform var(--motion-duration-cinematic) var(--motion-ease-signature);
+  }
+
+  .recommendation-featured-card:hover .cover-image__image,
+  .recommendation-featured-card:focus-within .cover-image__image {
+    transform: scale(1.06);
+  }
+}
+
 @keyframes selected-tray-limit-0 {
   0%,
   100% {
@@ -457,6 +459,7 @@ h1[tabindex="-1"]:focus {
     --text-subheading-size: var(--font-size-20);
     --text-section-title-size: var(--font-size-28);
     --text-page-title-size: var(--font-size-40);
+    --text-hero-size: var(--font-size-56);
     --layout-taste-action-clearance: 120px;
   }
 

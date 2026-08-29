@@ -95,9 +95,12 @@ export function DnaRadarChart({ axes }: Readonly<Pick<MangaDnaSummary, "axes">>)
   return (
     <section
       aria-labelledby="taste-radar-heading"
-      className="taste-overview taste-radar surface-card grid content-start gap-[var(--space-3)] rounded-[var(--radius-card)] border border-line bg-surface-1 p-[var(--space-3)] md:p-[var(--space-4)]"
+      className="taste-overview taste-radar grid content-start gap-[var(--space-3)]"
     >
-      <h2 className="text-[length:var(--text-subheading-size)]" id="taste-radar-heading">
+      <h2
+        className="text-[length:var(--text-subheading-size)] text-text-strong"
+        id="taste-radar-heading"
+      >
         {tasteStrings.radarHeading}
       </h2>
       {confirmedAxes.length === 0 ? (
@@ -232,9 +235,9 @@ function WorkPreviewList({
   return (
     <section
       aria-label={label}
-      className="taste-recommendation-preview__list grid min-w-0 content-start gap-[var(--space-content)] rounded-[var(--radius-card)] border border-line bg-surface-2 p-[var(--space-3)]"
+      className="taste-recommendation-preview__list grid min-w-0 content-start gap-[var(--space-content)]"
     >
-      <h3 className="border-b border-line pb-[var(--space-content-tight)] text-[length:var(--font-size-14)]">
+      <h3 className="border-b border-line/70 pb-[var(--space-content-tight)] text-[length:var(--font-size-14)] text-text-strong">
         {label}
       </h3>
       {ids.length === 0 ? (
@@ -306,13 +309,13 @@ export function RecommendationDiffPreview({
     <section
       aria-labelledby="taste-recommendation-preview-heading"
       className={cn(
-        "taste-recommendation-preview surface-card mt-[var(--space-4)] grid gap-[var(--space-3)] rounded-[var(--radius-card)] border border-line bg-surface-1 p-[var(--space-3)]",
+        "taste-recommendation-preview mt-[var(--space-5)] grid gap-[var(--space-3)] border-t border-line/70 pt-[var(--space-4)]",
         className,
       )}
     >
       <div className="grid gap-[var(--space-content-tight)]">
         <h2
-          className="text-[length:var(--text-subheading-size)]"
+          className="text-[length:var(--text-subheading-size)] text-text-strong"
           id="taste-recommendation-preview-heading"
         >
           {tasteStrings.previewHeading}
@@ -323,7 +326,7 @@ export function RecommendationDiffPreview({
       </div>
       {available ? (
         <div className="taste-recommendation-preview__body grid gap-[var(--space-content)]">
-          <div className="taste-recommendation-preview__columns grid grid-cols-1 items-start gap-[var(--space-content)] md:grid-cols-2">
+          <div className="taste-recommendation-preview__columns grid grid-cols-1 items-start gap-[var(--space-content-loose)] md:grid-cols-2">
             <WorkPreviewList
               coverUrls={coverUrls}
               ids={before}
@@ -342,7 +345,7 @@ export function RecommendationDiffPreview({
           <p
             aria-atomic="true"
             aria-live="polite"
-            className="taste-recommendation-preview__status rounded-[var(--radius-card)] border border-line bg-surface-2 px-[var(--space-3)] py-[var(--space-2)] text-[length:var(--font-size-12)] font-bold text-accent"
+            className="taste-recommendation-preview__status text-[length:var(--font-size-12)] font-bold text-text-muted"
           >
             {unchanged ? tasteStrings.previewUnchanged : tasteStrings.previewChanged}
           </p>

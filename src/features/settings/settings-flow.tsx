@@ -1,11 +1,9 @@
 "use client";
 
 import { Link } from "@tanstack/react-router";
-import { DnaIcon, InfoIcon, LockKeyholeIcon } from "lucide-react";
 import type { ReactNode } from "react";
 
 import { buttonClassName } from "@/components/design-system/button";
-import { SiteFooter } from "@/components/layout/site-footer";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/design-system/tabs";
 import { useCatalogIdentity } from "@/features/catalog/catalog-provider";
 import { usePersistence } from "@/infrastructure/db";
@@ -20,8 +18,8 @@ const SETTINGS_SECTIONS = ["policies", "data", "app"] as const;
 
 function AppInfo({ storageDegraded }: Readonly<{ storageDegraded: boolean }>) {
   return (
-    <SettingsPanel headingId="settings-app-title" icon={InfoIcon} title={settingsStrings.app.title}>
-      <dl className="m-0 grid gap-[var(--space-content)] sm:grid-cols-2 md:grid-cols-5 [&>div]:grid [&>div]:min-w-0 [&>div]:content-start [&>div]:gap-[var(--space-content-tight)] [&>div]:rounded-[var(--radius-card)] [&>div]:border [&>div]:border-line [&>div]:bg-surface-2 [&>div]:p-[var(--space-3)] [&_dd]:m-0 [&_dd]:min-w-0 [&_dd]:text-[length:var(--text-caption-size)] [&_dd]:text-text-strong [&_dd]:[overflow-wrap:anywhere] [&_dt]:text-[length:var(--text-caption-size)] [&_dt]:font-bold [&_dt]:text-text-muted">
+    <SettingsPanel headingId="settings-app-title" title={settingsStrings.app.title}>
+      <dl className="m-0 grid gap-[var(--space-4)] sm:grid-cols-2 md:grid-cols-5 [&>div]:grid [&>div]:min-w-0 [&>div]:content-start [&>div]:gap-[var(--space-content-tight)] [&_dd]:m-0 [&_dd]:min-w-0 [&_dd]:text-[length:var(--text-caption-size)] [&_dd]:text-text-strong [&_dd]:[overflow-wrap:anywhere] [&_dt]:text-[length:var(--text-caption-size)] [&_dt]:font-bold [&_dt]:text-text-muted">
         <div>
           <dt>{settingsStrings.app.versionLabel}</dt>
           <dd>{settingsStrings.app.version}</dd>
@@ -92,12 +90,10 @@ export function SettingsFlow({
       className="h-full"
       description={settingsStrings.dna.description}
       headingId="settings-dna-title"
-      icon={DnaIcon}
       title={settingsStrings.dna.title}
-      tone="accent"
     >
       <div className="grid gap-[var(--space-4)] sm:grid-cols-[minmax(0,1fr)_auto] sm:items-center">
-        <p className="min-w-0 rounded-[var(--radius-control)] border border-line-accent-subtle bg-accent-soft px-[var(--space-4)] py-[var(--space-3)] text-text-strong [overflow-wrap:anywhere]">
+        <p className="min-w-0 font-bold text-text-strong [overflow-wrap:anywhere]">
           {settingsStrings.dna.adjustmentCount(adjustmentCount)}
         </p>
         <Link
@@ -121,13 +117,9 @@ export function SettingsFlow({
         storageDegraded ? settingsStrings.storage.sessionOnly : settingsStrings.storage.browserOnly
       }
       headingId="settings-local-data-title"
-      icon={LockKeyholeIcon}
       title={settingsStrings.localData.title}
-      tone={storageDegraded ? "danger" : "accent"}
     >
-      <p className="rounded-[var(--radius-control)] border border-line-accent-subtle bg-accent-soft px-[var(--space-4)] py-[var(--space-3)] text-text-strong">
-        {settingsStrings.localData.privacy}
-      </p>
+      <p className="text-text-muted">{settingsStrings.localData.privacy}</p>
     </SettingsPanel>
   );
   const dataSettingsPanel = (
@@ -160,7 +152,7 @@ export function SettingsFlow({
 
   return (
     <>
-      <main className="mx-auto grid w-full max-w-[var(--layout-width-media)] gap-[var(--space-section)] px-[var(--layout-page-padding)] pt-[var(--layout-page-block-start)] pb-[calc(var(--layout-mobile-navigation-clearance)+var(--space-8))] md:px-[var(--space-8)] md:pt-[var(--space-6)] md:pb-[var(--space-section-large)]">
+      <main className="mx-auto grid w-full max-w-[var(--layout-width-media)] gap-[var(--space-section)] px-[var(--layout-page-padding)] pt-[var(--layout-page-block-start)] pb-[var(--space-8)] md:px-[var(--space-8)] md:pt-[var(--space-6)] md:pb-[var(--space-section-large)]">
         <header className="grid min-w-0 max-w-[var(--layout-width-reading)] gap-[var(--space-content-loose)]">
           <h1 className="text-[length:var(--text-page-title-size)] text-text-strong md:text-[length:var(--font-size-32)]">
             {settingsStrings.title}
@@ -178,9 +170,9 @@ export function SettingsFlow({
         ) : null}
 
         {activeSection === undefined ? (
-          <div className="grid gap-[var(--space-4)] md:gap-[var(--space-6)]">
+          <div className="grid gap-[var(--space-8)] md:gap-[var(--space-10)]">
             {policySettingsPanel}
-            <div className="grid gap-[var(--space-6)] md:grid-cols-2 md:items-stretch">
+            <div className="grid gap-[var(--space-8)] md:grid-cols-2 md:items-start md:gap-[var(--space-6)]">
               {dnaPanel}
               {localDataPanel}
             </div>
@@ -217,7 +209,6 @@ export function SettingsFlow({
           </Tabs>
         )}
       </main>
-      <SiteFooter />
     </>
   );
 }

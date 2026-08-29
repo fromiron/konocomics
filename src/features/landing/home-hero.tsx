@@ -1,4 +1,4 @@
-import { ArrowRightIcon, HardDriveIcon, HeartIcon, ShieldCheckIcon } from "lucide-react";
+import { ArrowRightIcon } from "lucide-react";
 
 import { CoverImage } from "@/components/cover/CoverImage";
 import { buttonClassName } from "@/components/design-system/button";
@@ -8,20 +8,6 @@ import { landingStrings } from "@/lib/strings";
 
 import { LandingLogoReveal } from "./landing-logo-reveal";
 import type { LandingWork } from "./landing-types";
-
-const HERO_COVER_CLASS_NAMES = [
-  "absolute top-1/2 left-1/2 z-30 w-[min(46%,12.5rem)] -translate-x-1/2 -translate-y-1/2",
-  "absolute bottom-[5%] left-[1%] z-20 w-[38%] -rotate-6 opacity-90",
-  "absolute right-[1%] bottom-[5%] z-20 w-[38%] rotate-6 opacity-90",
-] as const;
-
-const HERO_FALLBACK_TINTS = [
-  "bg-accent-soft/55 border-line-accent/45",
-  "bg-surface-2/90 border-line/80",
-  "bg-surface-2/90 border-line/80",
-] as const;
-
-const trustIcons = [HeartIcon, HardDriveIcon, ShieldCheckIcon] as const;
 
 type HomeHeroProps = Readonly<{
   works: readonly LandingWork[];
@@ -38,31 +24,34 @@ export function HomeHero({
   staticLogo = false,
   works,
 }: HomeHeroProps) {
+  const [leadWork, ...supportWorks] = works;
+
   return (
-    <HeroBackdrop className="border-b border-line" coverUrl={backdropUrl} priority>
+    <HeroBackdrop coverUrl={backdropUrl} priority>
       <section
         aria-labelledby="landing-title"
-        className="mx-auto grid w-full max-w-[var(--layout-width-media)] gap-[var(--space-4)] px-[var(--layout-page-padding)] py-[var(--space-5)] md:grid-cols-[minmax(19rem,0.78fr)_minmax(24rem,1.22fr)] md:items-center md:gap-x-[var(--space-8)] md:gap-y-[var(--space-3)]"
+        className="mx-auto grid w-full max-w-[var(--layout-width-media)] content-center gap-[var(--space-6)] px-[var(--layout-page-padding)] pt-[var(--space-8)] pb-[var(--space-12)] md:min-h-[68vh] md:grid-cols-[minmax(0,1.05fr)_minmax(0,0.95fr)] md:items-center md:gap-[var(--space-8)] md:pt-[var(--space-12)]"
       >
-        <div className="grid max-w-[36rem] justify-items-start gap-[var(--space-2)]">
-          <div className="flex flex-wrap items-end gap-x-[var(--space-4)] gap-y-[var(--space-content)] [&_.landing-logo-reveal]:!flex [&_.landing-logo-reveal]:items-baseline [&_.landing-logo-reveal]:gap-[var(--space-content)]">
-            <LandingLogoReveal staticPresentation={staticLogo} />
-            <p className="pb-[var(--space-content-tight)] text-[length:var(--text-caption-size)] font-bold text-accent">
+        <div className="grid max-w-[38rem] justify-items-start gap-[var(--space-4)]">
+          <LandingLogoReveal staticPresentation={staticLogo} />
+          <div className="grid gap-[var(--space-3)]">
+            <p className="text-[length:var(--text-caption-size)] font-bold tracking-[0.14em] text-accent">
               {landingStrings.hero.eyebrow}
             </p>
+            <h1
+              className="max-w-[16ch] font-display text-[length:var(--text-hero-size)] leading-[var(--line-height-display)] font-bold text-balance text-text-strong"
+              id="landing-title"
+            >
+              {landingStrings.tagline}
+            </h1>
+            <p className="max-w-[32rem] text-[length:var(--text-body-size)] leading-[var(--line-height-body)] text-text-muted">
+              {landingStrings.description.join("")}
+            </p>
           </div>
-          <h1
-            className="max-w-[17ch] font-display text-[length:var(--text-display-size)] text-balance"
-            id="landing-title"
-          >
-            {landingStrings.tagline}
-          </h1>
-          <p className="max-w-[34rem] text-[length:var(--text-body-size)] leading-[var(--line-height-body)] text-text-muted">
-            {landingStrings.description.join("")}
-          </p>
           <Link
             className={buttonClassName({
-              className: "gap-[var(--space-content)] px-[var(--space-5)] font-bold",
+              className:
+                "mt-[var(--space-2)] gap-[var(--space-content)] px-[var(--space-6)] py-[var(--space-3)] text-[length:var(--font-size-16)] font-bold",
             })}
             preload={false}
             to="/onboarding"
@@ -70,46 +59,49 @@ export function HomeHero({
             {landingStrings.cta}
             <ArrowRightIcon aria-hidden="true" className="size-4" />
           </Link>
-          <ul className="mt-[var(--space-2)] grid list-none gap-x-[var(--space-5)] gap-y-[var(--space-content)] p-0 text-[length:var(--text-caption-size)] text-text-muted sm:grid-cols-3 md:flex md:flex-wrap md:items-start">
-            {landingStrings.hero.trust.map((benefit, index) => {
-              const Icon = trustIcons[index];
-              return (
-                <li className="flex min-w-0 items-start gap-[var(--space-content)]" key={benefit}>
-                  {Icon === undefined ? null : (
-                    <Icon
-                      aria-hidden="true"
-                      className="mt-[3px] size-4 shrink-0 text-text-strong"
-                    />
-                  )}
-                  <span>{benefit}</span>
-                </li>
-              );
-            })}
+          <ul className="mt-[var(--space-4)] flex list-none flex-wrap items-center gap-x-[var(--space-5)] gap-y-[var(--space-content)] p-0 text-[length:var(--text-caption-size)] text-text-muted">
+            {landingStrings.hero.trust.map((benefit) => (
+              <li
+                className="flex min-w-0 items-center gap-[var(--space-content)] before:inline-block before:size-1 before:shrink-0 before:rounded-full before:bg-text-muted/60"
+                key={benefit}
+              >
+                {benefit}
+              </li>
+            ))}
           </ul>
         </div>
 
         <div
           aria-hidden="true"
-          className="relative mx-auto h-52 w-full max-w-[23rem] md:h-72 md:max-w-[34rem]"
+          className="relative mx-auto flex w-full max-w-[24rem] items-end justify-center gap-[var(--space-3)] md:max-w-none md:gap-[var(--space-4)]"
         >
-          {works.slice(0, HERO_COVER_CLASS_NAMES.length).map((work, index) => {
-            const coverUrl = coverUrls.get(work.id);
-            const fallbackTint = HERO_FALLBACK_TINTS[index] ?? HERO_FALLBACK_TINTS[1];
-
-            return (
-              <CoverImage
-                className={`${HERO_COVER_CLASS_NAMES[index]} shadow-[var(--shadow-raised)] ${coverUrl ? "" : `!border ${fallbackTint}`.trim()} ${coverUrl ? "" : "[&_.cover-image__placeholder-content]:bg-[radial-gradient(ellipse_at_top,color-mix(in_oklch,var(--accent)_10%,transparent),transparent_62%)]"}`}
-                coverUrl={coverUrl}
-                creators={work.creators}
-                decorative
-                key={work.id}
-                onSettled={index === 0 ? onFirstCoverSettled : undefined}
-                priority={index === 0}
-                requestedSize={index === 0 ? 600 : 400}
-                title={work.title}
-              />
-            );
-          })}
+          {supportWorks.slice(0, 2).map((work, index) => (
+            <CoverImage
+              className={
+                index === 0
+                  ? "w-[30%] shrink-0 opacity-80 saturate-[0.85] md:mb-[var(--space-6)]"
+                  : "order-last w-[30%] shrink-0 opacity-80 saturate-[0.85] md:mb-[var(--space-6)]"
+              }
+              coverUrl={coverUrls.get(work.id)}
+              creators={work.creators}
+              decorative
+              key={work.id}
+              requestedSize={400}
+              title={work.title}
+            />
+          ))}
+          {leadWork === undefined ? null : (
+            <CoverImage
+              className="z-10 w-[46%] shrink-0 shadow-[0_24px_64px_color-mix(in_oklch,var(--canvas)_78%,transparent)] md:w-[52%]"
+              coverUrl={coverUrls.get(leadWork.id)}
+              creators={leadWork.creators}
+              decorative
+              onSettled={onFirstCoverSettled}
+              priority
+              requestedSize={600}
+              title={leadWork.title}
+            />
+          )}
         </div>
       </section>
     </HeroBackdrop>

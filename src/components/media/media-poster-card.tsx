@@ -46,13 +46,13 @@ export function MediaPosterCard({
               ? mediaStrings.openDetails(title)
               : `${mediaStrings.openDetails(title)} · ${metadataAccessibleLabel}`
           }
-          className="group/card relative block min-h-[var(--control-min-size)] overflow-hidden rounded-[var(--radius-card)] border border-line bg-surface-1 focus-visible:border-line-accent [@media(hover:hover)_and_(pointer:fine)]:hover:border-line-accent [@media(hover:hover)_and_(pointer:fine)]:hover:shadow-[var(--shadow-raised)]"
+          className="group/card relative block min-h-[var(--control-min-size)] overflow-hidden rounded-[var(--radius-cover)] focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-ring"
           params={{ workId }}
           preload={false}
           to="/works/$workId"
         >
           <CoverImage
-            className="rounded-none border-0 [&>img]:!object-cover [&>img]:!object-top"
+            className="rounded-none border-0 transition-transform duration-[var(--motion-duration-value)] ease-[var(--motion-ease-direct)] motion-reduce:transition-none [@media(hover:hover)_and_(pointer:fine)]:group-hover/card:scale-[1.03] [&>img]:!object-cover [&>img]:!object-top"
             coverUrl={coverUrl}
             creators={creators}
             decorative
@@ -65,7 +65,7 @@ export function MediaPosterCard({
             className="pointer-events-none absolute inset-0 bg-[linear-gradient(to_top,var(--canvas)_0%,color-mix(in_oklch,var(--canvas)_92%,transparent)_30%,color-mix(in_oklch,var(--canvas)_45%,transparent)_52%,transparent_72%)]"
           />
           {badge === undefined ? null : (
-            <span className="absolute top-[var(--space-2)] right-[var(--space-2)] z-10 rounded-[var(--radius-pill)] border border-line bg-surface-overlay px-[var(--space-2)] py-[var(--space-1)] text-[length:var(--text-caption-size)] font-bold text-text-strong shadow-[var(--shadow-level-1)]">
+            <span className="absolute top-[var(--space-2)] right-[var(--space-2)] z-10 rounded-[var(--radius-pill)] bg-surface-overlay px-[var(--space-2)] py-[var(--space-1)] text-[length:var(--text-caption-size)] font-bold text-text-strong">
               {badge}
             </span>
           )}
@@ -103,7 +103,7 @@ export function MediaPosterCard({
       >
         <div className="relative">
           <CoverImage
-            className="[@media(hover:hover)_and_(pointer:fine)]:group-hover/card:shadow-[var(--shadow-raised)]"
+            className="transition-transform duration-[var(--motion-duration-value)] ease-[var(--motion-ease-direct)] motion-reduce:transition-none [@media(hover:hover)_and_(pointer:fine)]:group-hover/card:scale-[1.03]"
             coverUrl={coverUrl}
             creators={creators}
             priority={priority}
@@ -111,7 +111,7 @@ export function MediaPosterCard({
             title={title}
           />
           {badge === undefined ? null : (
-            <span className="absolute right-[var(--space-2)] bottom-[var(--space-2)] rounded-[var(--radius-pill)] bg-surface-1 px-[var(--space-2)] py-[var(--space-1)] text-[length:var(--text-caption-size)] font-bold text-text-strong shadow-[var(--shadow-level-1)]">
+            <span className="absolute right-[var(--space-2)] bottom-[var(--space-2)] rounded-[var(--radius-pill)] bg-surface-overlay px-[var(--space-2)] py-[var(--space-1)] text-[length:var(--text-caption-size)] font-bold text-text-strong">
               {badge}
             </span>
           )}

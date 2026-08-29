@@ -12,7 +12,6 @@ import {
 } from "react";
 
 import { Button } from "@/components/design-system/button";
-import { SiteFooter } from "@/components/layout/site-footer";
 import { usePageEntryMotion } from "@/components/motion/use-page-entry-motion";
 import type { GenreTag, Work } from "@/domain/catalog/types";
 import { hasCatalogBackedProfile } from "@/domain/profile/catalog-profile";
@@ -719,7 +718,7 @@ export function OnboardingFlow({
             </div>
           ) : null}
 
-          <div className="onboarding-discovery grid gap-[var(--space-6)] [&>.work-search]:m-0 [&>.work-search]:max-w-none [&_.work-search__label]:sr-only [&_.work-search__input]:min-h-[var(--control-min-size)] [&_.work-search__input]:border-accent [&_.work-search__input]:bg-surface-1 [&_.work-search__input]:shadow-[0_0_0_1px_var(--accent-soft)] motion-reduce:[&_.work-search__input]:transition-none">
+          <div className="onboarding-discovery grid gap-[var(--space-6)] [&>.work-search]:m-0 [&>.work-search]:max-w-none [&_.work-search__label]:sr-only [&_.work-search__input]:min-h-[var(--control-min-size)] [&_.work-search__input]:bg-surface-1 motion-reduce:[&_.work-search__input]:transition-none">
             <WorkSearchInput
               key="positive-search"
               label={onboardingStrings.step1.searchLabel}
@@ -937,7 +936,6 @@ export function OnboardingFlow({
           </div>
         </fieldset>
       )}
-      <SiteFooter className="onboarding-footer mx-[calc(var(--layout-page-padding)*-1)] mt-[var(--space-section-large)] [&>div]:py-[var(--space-4)]" />
     </ResolvedOnboardingPage>
   );
 }
