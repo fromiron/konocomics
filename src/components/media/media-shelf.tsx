@@ -376,7 +376,12 @@ export function MediaShelf({
       <ol
         {...trackData}
         aria-label={title}
-        className={cn(trackClassName, "m-0 list-none p-0", customTrackClassName, overlayGutterClassName)}
+        className={cn(
+          trackClassName,
+          "m-0 list-none p-0",
+          customTrackClassName,
+          overlayGutterClassName,
+        )}
         data-media-shelf-track
         data-overflow={scrollState.hasOverflow || undefined}
         onKeyDown={moveCardFocus}
@@ -389,7 +394,12 @@ export function MediaShelf({
       <ul
         {...trackData}
         aria-label={title}
-        className={cn(trackClassName, "m-0 list-none p-0", customTrackClassName, overlayGutterClassName)}
+        className={cn(
+          trackClassName,
+          "m-0 list-none p-0",
+          customTrackClassName,
+          overlayGutterClassName,
+        )}
         data-media-shelf-track
         data-overflow={scrollState.hasOverflow || undefined}
         onKeyDown={moveCardFocus}

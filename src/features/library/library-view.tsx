@@ -181,9 +181,7 @@ export function LibraryView({
 
   if (rows === undefined) {
     return (
-      <main
-        className="mx-auto grid w-full max-w-[var(--layout-width-media)] flex-1 place-items-center px-[var(--layout-page-padding)] pt-[var(--layout-page-block-start)] pb-[var(--space-8)] text-text-muted md:pb-[var(--space-section-large)]"
-      >
+      <main className="mx-auto grid w-full max-w-[var(--layout-width-media)] flex-1 place-items-center px-[var(--layout-page-padding)] pt-[var(--layout-page-block-start)] pb-[var(--space-8)] text-text-muted md:pb-[var(--space-section-large)]">
         <p aria-live="polite">{libraryStrings.loading}</p>
       </main>
     );
@@ -231,9 +229,7 @@ export function LibraryView({
       : [{ state: activeState, rows: visibleRows }];
 
   const page = (
-    <main
-      className="mx-auto w-full max-w-[var(--layout-width-media)] flex-1 px-[var(--layout-page-padding)] pt-[var(--layout-page-block-start)] pb-[var(--space-8)] md:pb-[var(--space-section-large)]"
-    >
+    <main className="mx-auto w-full max-w-[var(--layout-width-media)] flex-1 px-[var(--layout-page-padding)] pt-[var(--layout-page-block-start)] pb-[var(--space-8)] md:pb-[var(--space-section-large)]">
       <LibraryOverviewHeader
         onAddWork={(nextOpener) => {
           setOpener(nextOpener);

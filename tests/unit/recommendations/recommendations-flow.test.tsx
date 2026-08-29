@@ -469,9 +469,7 @@ describe("RecommendationsFlow", () => {
     const detailTrigger = firstCard.querySelector("[data-recommendation-detail-trigger]");
     expect(detailTrigger?.className).toContain("!text-[length:var(--text-caption-size)]");
     expect(detailTrigger?.className).toContain("min-h-[var(--control-min-size)]");
-    expect(detailTrigger?.className).toContain(
-      "left-[calc(var(--space-7)+var(--space-3))]",
-    );
+    expect(detailTrigger?.className).toContain("left-[calc(var(--space-7)+var(--space-3))]");
     expect(detailTrigger?.querySelector("span")?.className).toContain("px-[var(--space-1)]");
     expect(detailTrigger?.querySelector("span")?.className).not.toContain("px-[var(--space-2)]");
     const plannedAction = within(firstCard).getByRole("button", { name: "読みたい" });
@@ -489,9 +487,7 @@ describe("RecommendationsFlow", () => {
     );
     const backdrop = firstCard.querySelector(".recommendation-card__backdrop");
     expect(backdrop?.className).toContain("[&>img]:!opacity-20");
-    expect(backdrop?.className).toContain(
-      "[&>img]:![filter:blur(var(--space-12))_saturate(0.35)]",
-    );
+    expect(backdrop?.className).toContain("[&>img]:![filter:blur(var(--space-12))_saturate(0.35)]");
     expect(backdrop?.className).toContain("[&>span]:!opacity-80");
     expect(backdrop?.className).toContain("[&>div]:!hidden");
     expect(backdrop?.className).not.toContain("hero-blur]:opacity-70");
@@ -1127,9 +1123,7 @@ describe("RecommendationsFlow", () => {
       updatedAt: expect.any(String),
     });
 
-    const nextCard = [
-      ...container.querySelectorAll<HTMLElement>(featuredItemSelector),
-    ].find(
+    const nextCard = [...container.querySelectorAll<HTMLElement>(featuredItemSelector)].find(
       (card) =>
         card.dataset.recommendationWorkId !== selectedReasonWorkId &&
         !within(card).getByRole<HTMLButtonElement>("button", { name: "興味なし" }).disabled,

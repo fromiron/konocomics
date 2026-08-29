@@ -78,9 +78,7 @@ export function ShowcaseCard({
         <h3
           className={cn(
             "line-clamp-2 leading-snug font-bold text-text-strong [overflow-wrap:anywhere]",
-            featured
-              ? "text-[length:var(--font-size-16)]"
-              : "text-[length:var(--font-size-14)]",
+            featured ? "text-[length:var(--font-size-16)]" : "text-[length:var(--font-size-14)]",
           )}
         >
           {title}
