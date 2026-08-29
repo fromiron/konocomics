@@ -7,7 +7,6 @@ import { Button } from "@/components/design-system/button";
 import { Input } from "@/components/design-system/input";
 import { NativeSelect } from "@/components/design-system/native-select";
 import { Tabs, TabsList, TabsTrigger } from "@/components/design-system/tabs";
-import { SiteFooter } from "@/components/layout/site-footer";
 import { MediaShelf } from "@/components/media/media-shelf";
 import { parseExternalWorkId, type ExternalWorkId } from "@/domain/catalog/external-work";
 import { isbnIdentityKey } from "@/domain/catalog/normalize";
@@ -82,6 +81,7 @@ type LibraryViewProps = Readonly<{
     record: ExternalWorkRecord["record"],
   ): Promise<void>;
   saveUserWork(record: UserWorkRecord): Promise<void>;
+  // Accepted for test compatibility; the footer is now rendered once by the app shell.
   showFooter?: boolean;
   sort?: LibrarySort;
   storageDegraded: boolean;
@@ -104,7 +104,6 @@ export function LibraryView({
   query = "",
   saveExternalUserRecord,
   saveUserWork,
-  showFooter = false,
   sort = "updated",
   storageDegraded,
   userWorks,
@@ -181,26 +180,10 @@ export function LibraryView({
   const showOverviewShelves = controlledActiveState !== undefined && activeState === null;
 
   if (rows === undefined) {
-    const loadingPage = (
-      <main
-        className={cn(
-          "mx-auto grid w-full max-w-[var(--layout-width-media)] flex-1 place-items-center px-[var(--layout-page-padding)] pt-[var(--layout-page-block-start)] text-text-muted",
-          showFooter
-            ? "pb-[var(--space-8)] md:pb-[var(--space-section-large)]"
-            : "min-h-dvh pb-[calc(var(--layout-mobile-navigation-clearance)+var(--space-8))] md:pb-[var(--space-section-large)]",
-        )}
-      >
+    return (
+      <main className="mx-auto grid w-full max-w-[var(--layout-width-media)] flex-1 place-items-center px-[var(--layout-page-padding)] pt-[var(--layout-page-block-start)] pb-[var(--space-8)] text-text-muted md:pb-[var(--space-section-large)]">
         <p aria-live="polite">{libraryStrings.loading}</p>
       </main>
-    );
-
-    return showFooter ? (
-      <div className="flex min-h-[calc(100dvh-var(--layout-mobile-navigation-clearance))] flex-col md:min-h-[calc(100dvh-var(--desktop-navigation-height))]">
-        {loadingPage}
-        <SiteFooter className="mt-auto shrink-0" />
-      </div>
-    ) : (
-      loadingPage
     );
   }
 
@@ -246,14 +229,7 @@ export function LibraryView({
       : [{ state: activeState, rows: visibleRows }];
 
   const page = (
-    <main
-      className={cn(
-        "mx-auto w-full max-w-[var(--layout-width-media)] flex-1 px-[var(--layout-page-padding)] pt-[var(--layout-page-block-start)]",
-        showFooter
-          ? "pb-[var(--space-8)] md:pb-[var(--space-section-large)]"
-          : "min-h-dvh pb-[calc(var(--layout-mobile-navigation-clearance)+var(--space-section-large))]",
-      )}
-    >
+    <main className="mx-auto w-full max-w-[var(--layout-width-media)] flex-1 px-[var(--layout-page-padding)] pt-[var(--layout-page-block-start)] pb-[var(--space-8)] md:pb-[var(--space-section-large)]">
       <LibraryOverviewHeader
         onAddWork={(nextOpener) => {
           setOpener(nextOpener);
@@ -629,12 +605,5 @@ export function LibraryView({
     </main>
   );
 
-  return showFooter ? (
-    <div className="flex min-h-[calc(100dvh-var(--layout-mobile-navigation-clearance))] flex-col md:min-h-[calc(100dvh-var(--desktop-navigation-height))]">
-      {page}
-      <SiteFooter className="mt-auto shrink-0" />
-    </div>
-  ) : (
-    page
-  );
+  return page;
 }

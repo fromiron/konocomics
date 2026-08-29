@@ -21,23 +21,26 @@ function LibraryPage() {
       <LibraryFlow
         activeState={search.state ?? null}
         query={search.q}
-        showFooter
         sort={search.sort ?? "updated"}
         view={search.view ?? "grid"}
         onActiveStateChange={(state) => {
-          void navigate({ search: { ...search, state: state ?? undefined } });
+          void navigate({
+            resetScroll: false,
+            search: { ...search, state: state ?? undefined },
+          });
         }}
         onQueryChange={(query) => {
           void navigate({
             replace: true,
+            resetScroll: false,
             search: { ...search, q: query.trim() === "" ? undefined : query },
           });
         }}
         onSortChange={(sort) => {
-          void navigate({ search: { ...search, sort } });
+          void navigate({ resetScroll: false, search: { ...search, sort } });
         }}
         onViewChange={(view) => {
-          void navigate({ search: { ...search, view } });
+          void navigate({ resetScroll: false, search: { ...search, view } });
         }}
       />
     </BundledCatalogProvider>

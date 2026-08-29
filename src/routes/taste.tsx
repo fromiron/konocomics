@@ -30,13 +30,17 @@ function TastePage() {
           group={search.group}
           mode={search.mode ?? "summary"}
           onGroupChange={(group) => {
-            void navigate({ search: { ...search, group } });
+            void navigate({ resetScroll: false, search: { ...search, group } });
           }}
           onModeChange={(mode) => {
-            void navigate({ search: { ...search, mode } });
+            void navigate({ resetScroll: false, search: { ...search, mode } });
           }}
           onRevealConsumed={() => {
-            void navigate({ search: { ...search, reveal: undefined }, replace: true });
+            void navigate({
+              replace: true,
+              resetScroll: false,
+              search: { ...search, reveal: undefined },
+            });
           }}
           reveal={search.reveal}
         />

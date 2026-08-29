@@ -53,11 +53,11 @@ export function LibraryOverviewHeader({
       {total === 0 ? null : (
         <section
           aria-label={libraryStrings.summary.heading}
-          className="grid grid-cols-2 overflow-hidden rounded-[var(--radius-card)] border border-line bg-surface-1 sm:grid-cols-3 md:grid-cols-6 [&>div]:relative [&>div]:grid [&>div]:min-h-[calc(var(--control-min-size)*2)] [&>div]:content-center [&>div]:justify-items-center [&>div]:gap-[var(--space-content-tight)] [&>div]:border-r [&>div]:border-b [&>div]:border-line [&>div]:p-[var(--space-3)] md:[&>div]:border-b-0"
+          className="grid grid-cols-2 overflow-hidden rounded-[var(--radius-card)] border border-line/70 bg-surface-1 sm:grid-cols-3 md:grid-cols-6 [&>div]:relative [&>div]:grid [&>div]:min-h-[calc(var(--control-min-size)*2)] [&>div]:content-center [&>div]:justify-items-center [&>div]:gap-[var(--space-content-tight)] [&>div]:border-r [&>div]:border-b [&>div]:border-line/60 [&>div]:p-[var(--space-3)] md:[&>div]:border-b-0"
         >
           {STATE_SUMMARIES.map(({ icon: Icon, state }) => (
             <div key={state}>
-              <Icon aria-hidden="true" className="size-[var(--space-5)] text-accent" />
+              <Icon aria-hidden="true" className="size-[var(--space-5)] text-text-muted" />
               <span className="text-center text-[length:var(--text-caption-size)] text-text-muted">
                 {libraryStrings.tabs[state]}
               </span>
@@ -67,7 +67,7 @@ export function LibraryOverviewHeader({
             </div>
           ))}
           <div className="border-r-0 bg-surface-2">
-            <LibraryBigIcon aria-hidden="true" className="size-[var(--space-5)] text-accent" />
+            <LibraryBigIcon aria-hidden="true" className="size-[var(--space-5)] text-text-muted" />
             <span className="text-center text-[length:var(--text-caption-size)] text-text-muted">
               {libraryStrings.summary.total}
             </span>

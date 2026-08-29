@@ -4,6 +4,7 @@ import { useNavigate, useRouterState } from "@tanstack/react-router";
 import { type ReactNode, useEffect, useMemo } from "react";
 import { preload } from "react-dom";
 
+import { SiteFooter } from "@/components/layout/site-footer";
 import { hasCatalogBackedProfileById } from "@/domain/profile/catalog-profile";
 import { useCatalogIdentity } from "@/features/catalog/catalog-provider";
 import { usePersistence } from "@/infrastructure/db";
@@ -94,7 +95,7 @@ function AppShellContent({
       ) : null}
       <div
         className={cn(
-          "app-shell__content min-h-dvh",
+          "app-shell__content flex min-h-dvh flex-col",
           showMobileNavigation && "pb-[var(--layout-mobile-navigation-clearance)]",
           showDesktopNavigation &&
             "md:min-h-[calc(100dvh-var(--desktop-navigation-height))] md:pb-0",
@@ -102,7 +103,8 @@ function AppShellContent({
         id="app-content"
         tabIndex={-1}
       >
-        {children}
+        <div className="flex flex-1 flex-col">{children}</div>
+        <SiteFooter />
       </div>
       {showMobileNavigation ? (
         <PostOnboardingNavigation activePathname={pathname} variant="mobile" />

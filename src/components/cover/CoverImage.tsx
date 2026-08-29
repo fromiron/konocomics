@@ -83,14 +83,14 @@ export function CoverImage({
       return (
         <div
           className={cn(
-            "cover-image cover-image--hero relative isolate grid h-[40vh] max-h-[40vh] w-full place-items-center overflow-hidden rounded-[var(--radius-card)] border border-line bg-surface-1",
+            "cover-image cover-image--hero relative isolate grid h-[40vh] max-h-[40vh] w-full place-items-center overflow-hidden rounded-[var(--radius-card)] border border-line/50 bg-surface-1",
             className,
           )}
         >
           <div
             aria-hidden={decorative || undefined}
             aria-label={decorative ? undefined : coverStrings.placeholderLabel(title, creatorLine)}
-            className="cover-image__hero-frame cover-image--placeholder relative z-10 h-[calc(100%-var(--space-8))] w-auto max-w-[calc(100%-var(--space-8))] overflow-hidden rounded-[var(--radius-cover)] border border-line bg-surface-1 text-text-muted shadow-[var(--shadow-raised)] aspect-[30/43]"
+            className="cover-image__hero-frame cover-image--placeholder relative z-10 h-[calc(100%-var(--space-8))] w-auto max-w-[calc(100%-var(--space-8))] overflow-hidden rounded-[var(--radius-cover)] border border-line/50 bg-surface-1 text-text-muted shadow-[var(--shadow-raised)] aspect-[30/43]"
             role={decorative ? undefined : "img"}
           >
             <span
@@ -118,7 +118,7 @@ export function CoverImage({
         aria-hidden={decorative || undefined}
         aria-label={decorative ? undefined : coverStrings.placeholderLabel(title, creatorLine)}
         className={cn(
-          "cover-image cover-image--placeholder relative isolate block w-full overflow-hidden rounded-[var(--radius-cover)] border border-line bg-surface-1 text-text-muted aspect-[30/43]",
+          "cover-image cover-image--placeholder relative isolate block w-full overflow-hidden rounded-[var(--radius-cover)] border border-line/50 bg-surface-1 text-text-muted aspect-[30/43]",
           className,
         )}
         role={decorative ? undefined : "img"}
@@ -146,7 +146,7 @@ export function CoverImage({
     return (
       <div
         className={cn(
-          "cover-image cover-image--hero relative isolate grid h-[40vh] max-h-[40vh] w-full place-items-center overflow-hidden rounded-[var(--radius-card)] border border-line bg-surface-1",
+          "cover-image cover-image--hero relative isolate grid h-[40vh] max-h-[40vh] w-full place-items-center overflow-hidden rounded-[var(--radius-card)] border border-line/50 bg-surface-1",
           className,
         )}
       >
@@ -162,7 +162,7 @@ export function CoverImage({
           aria-hidden="true"
           className="cover-image__hero-paper pointer-events-none absolute inset-0 z-0 bg-cover-paper"
         />
-        <div className="cover-image__hero-frame relative z-10 h-[calc(100%-var(--space-8))] w-auto max-w-[calc(100%-var(--space-8))] overflow-hidden rounded-[var(--radius-cover)] border border-line bg-surface-1 shadow-[var(--shadow-raised)] aspect-[30/43]">
+        <div className="cover-image__hero-frame relative z-10 h-[calc(100%-var(--space-8))] w-auto max-w-[calc(100%-var(--space-8))] overflow-hidden rounded-[var(--radius-cover)] border border-line/50 bg-surface-1 shadow-[var(--shadow-raised)] aspect-[30/43]">
           {loaded ? null : (
             <span
               aria-hidden="true"
@@ -199,7 +199,7 @@ export function CoverImage({
   return (
     <span
       className={cn(
-        "cover-image relative isolate block w-full overflow-hidden rounded-[var(--radius-cover)] border border-line bg-surface-1 aspect-[30/43]",
+        "cover-image relative isolate block w-full overflow-hidden rounded-[var(--radius-cover)] border border-line/50 bg-surface-1 aspect-[30/43]",
         className,
       )}
     >

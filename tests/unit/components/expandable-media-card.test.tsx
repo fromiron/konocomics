@@ -37,9 +37,7 @@ function renderCard(
               <div data-expandable-cover-frame>
                 <img alt="cover" src="/cover.jpg" />
               </div>
-              <div data-expandable-position-axis="block" data-expandable-position-part>
-                identity copy
-              </div>
+              <div>identity copy</div>
               <button type="button">state action</button>
               <span data-expandable-reveal>expanded detail</span>
             </div>
@@ -52,17 +50,9 @@ function renderCard(
   const item = view.container.querySelector("li");
   const article = view.container.querySelector("article");
   const frame = view.container.querySelector<HTMLElement>("[data-expandable-cover-frame]");
-  const positionPart = view.container.querySelector<HTMLElement>("[data-expandable-position-part]");
   const reveal = view.container.querySelector<HTMLElement>("[data-expandable-reveal]");
   const cover = view.getByRole("img", { name: "cover" });
-  if (
-    track === null ||
-    item === null ||
-    article === null ||
-    frame === null ||
-    positionPart === null ||
-    reveal === null
-  ) {
+  if (track === null || item === null || article === null || frame === null || reveal === null) {
     throw new Error("Missing card fixture");
   }
 
@@ -89,20 +79,19 @@ function renderCard(
     rect(left, article.hasAttribute("data-expanded") ? 352 : 154),
   );
   vi.spyOn(frame, "getBoundingClientRect").mockImplementation(() =>
-    rect(left, article.hasAttribute("data-expanded") ? 104 : 144, 206),
-  );
-  vi.spyOn(positionPart, "getBoundingClientRect").mockImplementation(() =>
-    rect(left, 120, 80, article.hasAttribute("data-expanded") ? 40 : 180),
+    rect(
+      article.hasAttribute("data-expanded") ? left + 40 : left,
+      article.hasAttribute("data-expanded") ? 104 : 144,
+      206,
+    ),
   );
   vi.spyOn(reveal, "getBoundingClientRect").mockImplementation(() => rect(left + 108, 120, 40));
   const cancelAnimation = vi.fn();
   const animate = vi.fn(() => ({ cancel: cancelAnimation }) as unknown as Animation);
   const articleAnimate = vi.fn(() => ({ cancel: vi.fn() }) as unknown as Animation);
-  const positionAnimate = vi.fn(() => ({ cancel: vi.fn() }) as unknown as Animation);
   const revealAnimate = vi.fn(() => ({ cancel: vi.fn() }) as unknown as Animation);
   Object.defineProperty(frame, "animate", { configurable: true, value: animate });
   Object.defineProperty(article, "animate", { configurable: true, value: articleAnimate });
-  Object.defineProperty(positionPart, "animate", { configurable: true, value: positionAnimate });
   Object.defineProperty(reveal, "animate", { configurable: true, value: revealAnimate });
 
   return {
@@ -111,7 +100,6 @@ function renderCard(
     articleAnimate,
     cover,
     item,
-    positionAnimate,
     revealAnimate,
     track,
     unmount: view.unmount,
@@ -154,8 +142,7 @@ describe("ExpandableMediaCard", () => {
   });
 
   it("keeps the same cover node and expands right after the 200ms intent delay", () => {
-    const { article, articleAnimate, cover, positionAnimate, revealAnimate, track } =
-      renderCard(20);
+    const { animate, article, articleAnimate, cover, revealAnimate, track } = renderCard(20);
 
     fireEvent.pointerEnter(article);
     act(() => vi.advanceTimersByTime(199));
@@ -171,17 +158,17 @@ describe("ExpandableMediaCard", () => {
       duration: 240,
       easing: "cubic-bezier(0.2, 0, 0, 1)",
     });
-    expect(positionAnimate).toHaveBeenCalledWith(
-      [{ transform: "translate(0px, 140px)" }, { transform: "none" }],
+    expect(animate).toHaveBeenCalledWith(
+      [{ transform: "translate(-40px, 0px)" }, { transform: "none" }],
       { duration: 240, easing: "cubic-bezier(0.2, 0, 0, 1)" },
     );
-    expect(revealAnimate).toHaveBeenCalledWith(
-      [
-        { opacity: 0, transform: "translateX(-6px)" },
-        { opacity: 1, transform: "none" },
-      ],
-      { delay: 80, duration: 160, easing: "ease-out", fill: "backwards" },
-    );
+    expect(JSON.stringify(animate.mock.calls)).not.toMatch(/scale/i);
+    expect(revealAnimate).toHaveBeenCalledWith([{ opacity: 0 }, { opacity: 1 }], {
+      delay: 80,
+      duration: 160,
+      easing: "ease-out",
+      fill: "backwards",
+    });
   });
 
   it("reports the expanded state so a consuming shelf can synchronize its detail panel", () => {
@@ -246,6 +233,7 @@ describe("ExpandableMediaCard", () => {
 
     fireEvent.pointerLeave(article);
     expect(animate).toHaveBeenCalledTimes(2);
+    expect(JSON.stringify(animate.mock.calls)).not.toMatch(/scale/i);
   });
 
   it("uses the final cover layout without FLIP when reduced motion is requested", () => {
@@ -259,7 +247,7 @@ describe("ExpandableMediaCard", () => {
       removeEventListener: vi.fn(),
       removeListener: vi.fn(),
     }));
-    const { animate, article, articleAnimate, positionAnimate, revealAnimate } = renderCard(20);
+    const { animate, article, articleAnimate, revealAnimate } = renderCard(20);
 
     fireEvent.pointerEnter(article);
     act(() => vi.advanceTimersByTime(200));
@@ -267,7 +255,6 @@ describe("ExpandableMediaCard", () => {
 
     expect(animate).not.toHaveBeenCalled();
     expect(articleAnimate).not.toHaveBeenCalled();
-    expect(positionAnimate).not.toHaveBeenCalled();
     expect(revealAnimate).not.toHaveBeenCalled();
   });
 

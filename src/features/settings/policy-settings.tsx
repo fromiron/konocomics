@@ -1,7 +1,6 @@
 "use client";
 
 import { useRef, useState } from "react";
-import { SlidersHorizontalIcon } from "lucide-react";
 
 import { Switch } from "@/components/design-system/switch";
 import type { RecommendationPolicies } from "@/domain/profile/types";
@@ -48,7 +47,6 @@ export function PolicySettings({ policies, savePolicies }: PolicySettingsProps) 
       className="md:gap-[var(--space-6)]"
       description={settingsStrings.policies.description}
       headingId="settings-policies-title"
-      icon={SlidersHorizontalIcon}
       title={settingsStrings.policies.title}
     >
       <fieldset

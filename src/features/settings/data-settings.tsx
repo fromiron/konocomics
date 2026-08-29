@@ -1,7 +1,6 @@
 "use client";
 
 import { useNavigate } from "@tanstack/react-router";
-import { DatabaseBackupIcon } from "lucide-react";
 import { type ChangeEvent, useRef, useState } from "react";
 
 import {
@@ -231,7 +230,6 @@ export function DataSettings({
       <SettingsPanel
         description={settingsStrings.data.description}
         headingId="settings-data-title"
-        icon={DatabaseBackupIcon}
         title={settingsStrings.data.title}
       >
         <div className="grid gap-[var(--space-5)]">

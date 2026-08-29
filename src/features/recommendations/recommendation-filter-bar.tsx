@@ -59,7 +59,7 @@ function FilterMenu<Value extends string>({
 
   return (
     <details
-      className="group/filter-menu relative min-w-0 border-r border-line/80 last:border-r-0"
+      className="group/filter-menu relative min-w-0 border-r border-line/50 last:border-r-0"
       ref={detailsRef}
     >
       <summary
@@ -139,7 +139,7 @@ export function RecommendationFilterBar({
   return (
     <section
       aria-labelledby="recommendation-policy-heading"
-      className="relative z-20 isolate mb-[var(--space-3)] overflow-visible rounded-[var(--radius-card)] border border-line/80 bg-surface-1"
+      className="relative z-20 isolate mb-[var(--space-5)] overflow-visible border-b border-line/60"
     >
       <h2 className="sr-only" id="recommendation-policy-heading">
         {recommendationStrings.filters.heading}
@@ -175,11 +175,11 @@ export function RecommendationFilterBar({
         )}
         id="recommendation-filter-controls"
       >
-        <div className="hidden min-h-[var(--control-min-size)] items-center gap-[var(--space-2)] whitespace-nowrap border-r border-line/80 px-[var(--space-4)] text-[length:var(--font-size-14)] font-bold text-text-strong md:flex">
+        <div className="hidden min-h-[var(--control-min-size)] items-center gap-[var(--space-2)] whitespace-nowrap border-r border-line/50 px-[var(--space-4)] text-[length:var(--font-size-14)] font-bold text-text-strong md:flex">
           <FilterIcon aria-hidden="true" className="size-4 text-text-muted" />
           <span>{recommendationStrings.filters.heading}</span>
         </div>
-        <div className="grid grid-cols-2 border-b border-line/80 md:grid-cols-2 md:border-r md:border-b-0">
+        <div className="grid grid-cols-2 border-b border-line/50 md:grid-cols-2 md:border-r md:border-b-0">
           <FilterMenu
             disabled={disabled}
             label={recommendationStrings.filters.genre}
@@ -195,7 +195,7 @@ export function RecommendationFilterBar({
             value={shelf}
           />
         </div>
-        <fieldset className="m-0 min-w-0 border-0 border-b border-line/80 px-[var(--space-3)] py-0 md:border-r md:border-b-0">
+        <fieldset className="m-0 min-w-0 border-0 border-b border-line/50 px-[var(--space-3)] py-0 md:border-r md:border-b-0">
           <legend className="mb-[var(--space-content-tight)] p-0 text-[length:var(--font-size-12)] font-bold text-text-strong md:sr-only">
             {recommendationStrings.policiesHeading}
           </legend>
@@ -203,7 +203,7 @@ export function RecommendationFilterBar({
             {visiblePolicyKeys.map((key) => (
               <ChoiceChipCheckbox
                 checked={policies[key]}
-                chipClassName="!min-h-8 !min-w-0 !justify-start !rounded-[var(--radius-cover)] !border-line/80 !bg-transparent !px-[var(--space-2)] !py-0 text-left text-[length:var(--font-size-12)] leading-tight whitespace-nowrap text-text-muted peer-data-checked:!border-line-accent-subtle peer-data-checked:!bg-accent-soft peer-data-checked:!font-bold peer-data-checked:!text-accent"
+                chipClassName="!min-h-8 !min-w-0 !justify-start !rounded-[var(--radius-cover)] !border-line/50 !bg-transparent !px-[var(--space-2)] !py-0 text-left text-[length:var(--font-size-12)] leading-tight whitespace-nowrap text-text-muted peer-data-checked:!border-line-accent-subtle peer-data-checked:!bg-accent-soft peer-data-checked:!font-bold peer-data-checked:!text-accent"
                 className="!min-h-[var(--control-min-size)] min-w-0"
                 disabled={disabled}
                 key={key}
@@ -231,7 +231,7 @@ export function RecommendationFilterBar({
             className={
               pending
                 ? "min-h-[var(--control-min-size)] min-w-[calc(var(--control-min-size)*2)] border-accent bg-accent !text-on-accent px-[var(--space-4)] py-[var(--space-content)] font-black hover:bg-accent-hover"
-                : "min-h-[var(--control-min-size)] min-w-[calc(var(--control-min-size)*2)] border-line/80 bg-transparent px-[var(--space-3)] py-[var(--space-content)] font-bold hover:bg-surface-2"
+                : "min-h-[var(--control-min-size)] min-w-[calc(var(--control-min-size)*2)] border-line/50 bg-transparent px-[var(--space-3)] py-[var(--space-content)] font-bold hover:bg-surface-2"
             }
             busy={updating}
             disabled={updateDisabled}

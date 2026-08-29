@@ -27,7 +27,6 @@ function nowIso() {
 export function LibraryFlow({
   activeState,
   query,
-  showFooter = false,
   sort,
   view,
   onActiveStateChange,
@@ -37,7 +36,6 @@ export function LibraryFlow({
 }: Readonly<{
   activeState?: ReadingState | null;
   query?: string;
-  showFooter?: boolean;
   sort?: "updated" | "title";
   view?: "list" | "grid";
   onActiveStateChange?: (state: ReadingState | null) => void;
@@ -133,7 +131,6 @@ export function LibraryFlow({
       query={query}
       saveExternalUserRecord={saveExternalRecord}
       saveUserWork={saveCatalogRecord}
-      showFooter={showFooter}
       sort={sort}
       storageDegraded={status.state === "degraded"}
       userWorks={userWorks}

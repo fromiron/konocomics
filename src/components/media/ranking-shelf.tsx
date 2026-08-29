@@ -9,6 +9,7 @@ type RankingShelfProps = Readonly<{
   children: ReactNode;
   className?: string;
   compactHeading?: boolean;
+  controlsPlacement?: "heading" | "overlay";
   trackClassName?: string;
 }>;
 
@@ -16,6 +17,7 @@ export function RankingShelf({
   children,
   className,
   compactHeading = false,
+  controlsPlacement = "heading",
   description,
   rankingKind,
   title,
@@ -25,7 +27,9 @@ export function RankingShelf({
     <MediaShelf
       className={className}
       compactHeading={compactHeading}
+      controlsPlacement={controlsPlacement}
       description={description}
+      enableLoop={false}
       listType="ordered"
       title={title}
       trackClassName={trackClassName}

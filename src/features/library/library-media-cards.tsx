@@ -195,7 +195,7 @@ export function LibraryRecentCard({
     >
       <Button
         aria-label={rowOpenLabel(row)}
-        className="group/card relative block h-auto min-h-[var(--control-min-size)] w-full overflow-hidden rounded-[var(--radius-card)] border border-line bg-surface-1 p-0 text-start whitespace-normal text-text shadow-[var(--shadow-level-1)] hover:border-line-accent-subtle"
+        className="group/card relative block h-auto min-h-[var(--control-min-size)] w-full overflow-hidden rounded-[var(--radius-card)] border border-line/70 bg-surface-1 p-0 text-start whitespace-normal text-text shadow-[var(--shadow-level-1)] hover:border-line"
         onClick={(event) => onOpen(event.currentTarget, row)}
         type="button"
         variant="ghost"
@@ -207,7 +207,7 @@ export function LibraryRecentCard({
           requestedSize={400}
           row={row}
         />
-        <span className="absolute top-[var(--space-2)] left-[var(--space-2)] rounded-[var(--radius-pill)] border border-line-accent-subtle bg-surface-overlay px-[var(--space-2)] py-[var(--space-1)] text-[length:var(--text-caption-size)] font-bold text-accent">
+        <span className="absolute top-[var(--space-2)] left-[var(--space-2)] rounded-[var(--radius-pill)] border border-line/60 bg-surface-overlay px-[var(--space-2)] py-[var(--space-1)] text-[length:var(--text-caption-size)] font-bold text-text-strong">
           {libraryStrings.tabs[row.record.readingState]}
         </span>
         <span className="absolute inset-x-0 bottom-0 grid gap-[var(--space-content-tight)] bg-[linear-gradient(to_top,var(--canvas)_0%,color-mix(in_oklch,var(--canvas)_94%,transparent)_62%,transparent_100%)] px-[var(--space-3)] pt-[var(--space-6)] pb-[var(--space-3)]">
@@ -239,7 +239,7 @@ function LibraryReadingProgressCard({
     >
       <Button
         aria-label={rowOpenLabel(row)}
-        className="group/card !grid h-full min-h-[var(--control-min-size)] w-full grid-cols-[5.25rem_minmax(0,1fr)] items-start justify-stretch gap-[var(--space-3)] rounded-[var(--radius-card)] border border-line bg-surface-1 p-[var(--space-3)] text-start whitespace-normal text-text hover:border-line-accent-subtle"
+        className="group/card !grid h-full min-h-[var(--control-min-size)] w-full grid-cols-[5.25rem_minmax(0,1fr)] items-start justify-stretch gap-[var(--space-3)] rounded-[var(--radius-card)] border border-line/70 bg-surface-1 p-[var(--space-3)] text-start whitespace-normal text-text hover:border-line"
         onClick={(event) => onOpen(event.currentTarget, row)}
         type="button"
         variant="ghost"
@@ -258,7 +258,7 @@ function LibraryReadingProgressCard({
             <CreatorLine row={row} />
           </span>
           <ProgressDisplay row={row} volumeCountByWorkId={volumeCountByWorkId} />
-          <span className="inline-flex min-h-[var(--control-min-size)] w-full items-center justify-center rounded-[var(--radius-control)] border border-line-accent px-[var(--space-2)] text-[length:var(--text-caption-size)] font-bold text-accent">
+          <span className="inline-flex min-h-[var(--control-min-size)] w-full items-center justify-center rounded-[var(--radius-control)] border border-line/70 px-[var(--space-2)] text-[length:var(--text-caption-size)] font-bold text-text-strong">
             {libraryStrings.editor.heading}
           </span>
         </span>
@@ -330,7 +330,7 @@ function LibraryStatusCard({
     >
       <Button
         aria-label={rowOpenLabel(row)}
-        className="group/card !grid h-full min-h-[var(--control-min-size)] w-full justify-stretch gap-[var(--space-content)] rounded-[var(--radius-card)] border border-line bg-surface-1 p-[var(--space-3)] text-start whitespace-normal text-text hover:border-line-accent-subtle"
+        className="group/card !grid h-full min-h-[var(--control-min-size)] w-full justify-stretch gap-[var(--space-content)] rounded-[var(--radius-card)] border border-line/70 bg-surface-1 p-[var(--space-3)] text-start whitespace-normal text-text hover:border-line"
         onClick={(event) => onOpen(event.currentTarget, row)}
         type="button"
         variant="ghost"
@@ -416,7 +416,7 @@ export function LibraryListCard(props: LibraryCardProps) {
     >
       <Button
         aria-label={rowOpenLabel(props.row)}
-        className="!grid h-full min-h-[var(--control-min-size)] w-full grid-cols-[5rem_minmax(0,1fr)] items-start justify-stretch gap-[var(--space-3)] rounded-[var(--radius-card)] border border-line bg-surface-1 p-[var(--space-3)] text-start whitespace-normal text-text hover:border-line-accent-subtle"
+        className="!grid h-full min-h-[var(--control-min-size)] w-full grid-cols-[5rem_minmax(0,1fr)] items-start justify-stretch gap-[var(--space-3)] rounded-[var(--radius-card)] border border-line/70 bg-surface-1 p-[var(--space-3)] text-start whitespace-normal text-text hover:border-line"
         onClick={(event) => props.onOpen(event.currentTarget, props.row)}
         type="button"
         variant="ghost"

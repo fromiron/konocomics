@@ -3,6 +3,14 @@
 import { AnimatePresence, LazyMotion, domMax, m } from "motion/react";
 import type { ReactNode } from "react";
 
+import {
+  carouselCloneProps,
+  carouselLoopCopies,
+  cloneCarouselTrailing,
+  duplicateCarouselContent,
+  shouldLoopCarousel,
+} from "@/components/media/media-shelf";
+
 export type RecommendationMotionItem = Readonly<{
   workId: string;
   animateIn: boolean;
@@ -20,28 +28,29 @@ export function RecommendationMotionList({
   reducedMotion,
   shortage,
 }: RecommendationMotionListProps) {
+  const copies = shouldLoopCarousel(items.length) ? carouselLoopCopies : ([1] as const);
   return (
     <LazyMotion features={domMax} strict>
-      <>
-        <AnimatePresence initial={false}>
-          {items.map((item) => (
+      <AnimatePresence initial={false}>
+        {copies.flatMap((copy) => [
+          ...items.map((item) => (
             <m.li
-              animate={reducedMotion ? { opacity: 1 } : { opacity: 1, y: 0 }}
-              className="basis-[var(--featured-card-basis)] shrink-0 snap-start overflow-visible [contain:layout_paint] [@media(min-width:768px)_and_(hover:hover)_and_(pointer:fine)]:h-[var(--recommendation-card-height)] [@media(min-width:768px)_and_(hover:hover)_and_(pointer:fine)]:has-[article[data-expanded]]:basis-[var(--featured-expanded-basis)]"
+              animate={copy === 1 && !reducedMotion ? { opacity: 1, y: 0 } : { opacity: 1 }}
+              className="basis-[var(--featured-card-basis)] shrink-0 snap-start overflow-visible [contain:layout_paint]"
               data-recommendation-work-id={item.workId}
-              exit={reducedMotion ? undefined : { height: 0, opacity: 0 }}
+              exit={copy === 1 && !reducedMotion ? { height: 0, opacity: 0 } : undefined}
               initial={
-                item.animateIn && !reducedMotion
+                copy === 1 && item.animateIn && !reducedMotion
                   ? {
                       opacity: 0,
                       y: 8,
                     }
                   : false
               }
-              key={item.workId}
-              layout={reducedMotion ? false : "position"}
+              key={`${String(copy)}-${item.workId}`}
+              layout={copy === 1 && !reducedMotion ? "position" : false}
               transition={
-                reducedMotion
+                reducedMotion || copy !== 1
                   ? { duration: 0 }
                   : {
                       height: { duration: 0.24, ease: "easeOut" },
@@ -50,13 +59,14 @@ export function RecommendationMotionList({
                       layout: { duration: 0.24, ease: [0.2, 0, 0, 1] },
                     }
               }
+              {...carouselCloneProps(copy)}
             >
-              {item.content}
+              {duplicateCarouselContent(item.content, copy)}
             </m.li>
-          ))}
-        </AnimatePresence>
-        {shortage}
-      </>
+          )),
+          cloneCarouselTrailing(shortage, copy),
+        ])}
+      </AnimatePresence>
     </LazyMotion>
   );
 }

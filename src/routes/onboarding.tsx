@@ -21,16 +21,17 @@ function OnboardingPage() {
       <OnboardingFlow
         genre={search.genre}
         onGenreChange={(genre) => {
-          void navigate({ search: { ...search, genre } });
+          void navigate({ resetScroll: false, search: { ...search, genre } });
         }}
         onQueryChange={(query) => {
           void navigate({
             replace: true,
+            resetScroll: false,
             search: { ...search, q: query.trim().length > 0 ? query : undefined },
           });
         }}
         onShelfChange={(shelf) => {
-          void navigate({ search: { ...search, shelf } });
+          void navigate({ resetScroll: false, search: { ...search, shelf } });
         }}
         query={search.q ?? ""}
         shelf={search.shelf}

@@ -4,7 +4,6 @@ import { Link } from "@tanstack/react-router";
 import { useEffect, useRef, useState } from "react";
 
 import { coverSourceForSize } from "@/components/cover/CoverImage";
-import { SiteFooter } from "@/components/layout/site-footer";
 import { usePageEntryMotion } from "@/components/motion/use-page-entry-motion";
 import { parseExternalWorkDetailQuery } from "@/domain/catalog/external-work";
 import { LibraryRecordEditor } from "@/features/library/record-editor";
@@ -64,7 +63,6 @@ function ExternalDetailMessage({
           {copy.library}
         </Link>
       </main>
-      <SiteFooter />
     </>
   );
 }
@@ -81,7 +79,6 @@ function ExternalDetailLoading() {
           <p aria-live="polite">{externalDetailStrings.loading}</p>
         </header>
       </main>
-      <SiteFooter />
     </>
   );
 }
@@ -155,9 +152,14 @@ function ExternalDetailRecord({
 
           <section
             aria-labelledby="external-work-state-heading"
-            className="grid gap-[var(--space-4)] rounded-[var(--radius-card)] border border-line bg-surface-overlay p-[var(--space-5)]"
+            className="grid gap-[var(--space-4)]"
           >
-            <h2 id="external-work-state-heading">{workDetailStrings.state.heading}</h2>
+            <h2
+              className="text-[length:var(--font-size-16)] font-bold text-text-strong"
+              id="external-work-state-heading"
+            >
+              {workDetailStrings.state.heading}
+            </h2>
             <LibraryRecordEditor
               busy={busy}
               key={`${record.id}:${record.record.updatedAt}`}
@@ -174,7 +176,6 @@ function ExternalDetailRecord({
           </section>
         </WorkDetailShell>
       </main>
-      <SiteFooter />
     </>
   );
 }

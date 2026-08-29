@@ -5,8 +5,6 @@ import { useEffect, useMemo, useRef, useState } from "react";
 
 import { CoverImage, coverSourceForSize } from "@/components/cover/CoverImage";
 import { Button, buttonClassName } from "@/components/design-system/button";
-import { NativeSelect } from "@/components/design-system/native-select";
-import { SiteFooter } from "@/components/layout/site-footer";
 import { MediaPosterCard } from "@/components/media/media-poster-card";
 import { MediaShelf } from "@/components/media/media-shelf";
 import { ConfidenceLabel, ReasonChips } from "@/components/media/recommendation-evidence";
@@ -80,10 +78,6 @@ function freshnessChanged(previous: ProviderCacheState, next: ProviderCacheState
     previous.commercialFresh !== next.commercialFresh ||
     previous.metadataFresh !== next.metadataFresh
   );
-}
-
-function isReadingState(value: string): value is ReadingState {
-  return READING_STATES.some((state) => state === value);
 }
 
 function isMinimalPlannedRecord(record: UserWorkRecord | undefined) {
@@ -242,7 +236,6 @@ function WorkStateControls({
   >();
   const actionInFlight = useRef(false);
   const minimalPlanned = isMinimalPlannedRecord(record);
-  const plannedToggleUnavailable = record !== undefined && !minimalPlanned;
 
   const saveReadingState = async (readingState: ReadingState) => {
     if (!recordsReady || actionInFlight.current || record?.readingState === readingState) return;
@@ -257,7 +250,13 @@ function WorkStateControls({
         readingState,
         updatedAt: new Date().toISOString(),
       });
-      setMessage({ kind: "status", text: workDetailStrings.state.saved });
+      setMessage({
+        kind: "status",
+        text:
+          readingState === "planned"
+            ? workDetailStrings.state.plannedSaved
+            : workDetailStrings.state.saved,
+      });
     } catch {
       setMessage({ kind: "error", text: workDetailStrings.state.error });
     } finally {
@@ -266,96 +265,82 @@ function WorkStateControls({
     }
   };
 
-  const togglePlanned = async () => {
-    if (!recordsReady || actionInFlight.current || plannedToggleUnavailable) return;
+  const removePlanned = async () => {
+    if (!recordsReady || actionInFlight.current) return;
     actionInFlight.current = true;
     setBusy(true);
     setMessage(undefined);
     try {
-      if (minimalPlanned) {
-        const result = await removeMinimalPlannedUserWork(workId);
-        setMessage({
-          kind: "status",
-          text:
-            result === "removed"
-              ? workDetailStrings.state.plannedRemoved
-              : result === "already-absent"
-                ? workDetailStrings.state.plannedAlreadyAbsent
-                : workDetailStrings.state.plannedPreservedConflict,
-        });
-      } else {
-        await saveUserWork({
-          workId,
-          readingState: "planned",
-          updatedAt: new Date().toISOString(),
-        });
-        setMessage({ kind: "status", text: workDetailStrings.state.plannedSaved });
-      }
+      const result = await removeMinimalPlannedUserWork(workId);
+      setMessage({
+        kind: "status",
+        text:
+          result === "removed"
+            ? workDetailStrings.state.plannedRemoved
+            : result === "already-absent"
+              ? workDetailStrings.state.plannedAlreadyAbsent
+              : workDetailStrings.state.plannedPreservedConflict,
+      });
     } catch {
       setMessage({ kind: "error", text: workDetailStrings.state.error });
     } finally {
       actionInFlight.current = false;
       setBusy(false);
     }
+  };
+
+  const handleStateSelect = (state: ReadingState) => {
+    if (state === "planned" && minimalPlanned) {
+      void removePlanned();
+      return;
+    }
+    void saveReadingState(state);
   };
 
   return (
     <section
       aria-labelledby="work-state-heading"
-      className="grid gap-[var(--space-3)] rounded-[var(--radius-card)] border border-line bg-surface-overlay p-[var(--space-4)] md:gap-[var(--space-2)]"
+      className="grid gap-[var(--space-3)]"
       data-slot="work-state-controls"
     >
       <h2
-        className="border-l-[length:var(--space-content-tight)] border-accent pl-[var(--space-3)] text-[length:var(--font-size-16)]"
+        className="text-[length:var(--font-size-16)] font-bold text-text-strong"
         id="work-state-heading"
       >
         {workDetailStrings.state.heading}
       </h2>
-      <div className="grid gap-[var(--space-content-loose)] min-[360px]:grid-cols-[minmax(0,1fr)_auto] min-[360px]:items-end">
-        <label className="grid min-w-0 gap-[var(--space-content-tight)] text-[length:var(--text-caption-size)] font-bold text-text-muted">
-          <span>{workDetailStrings.state.label}</span>
-          <NativeSelect
-            className="[&_[data-slot=native-select]]:min-h-[var(--control-min-size)] [&_[data-slot=native-select]]:border-line [&_[data-slot=native-select]]:bg-surface-2 [&_[data-slot=native-select]]:text-[length:var(--font-size-14)] [&_[data-slot=native-select]]:font-bold [&_[data-slot=native-select]]:text-text-strong"
-            disabled={busy || !recordsReady}
-            onChange={(event) => {
-              if (isReadingState(event.target.value)) {
-                void saveReadingState(event.target.value);
-              }
-            }}
-            value={record?.readingState ?? ""}
-          >
-            <option disabled value="">
-              {workDetailStrings.state.prompt}
-            </option>
-            {READING_STATES.map((state) => (
-              <option key={state} value={state}>
-                {workDetailStrings.state.options[state]}
-              </option>
-            ))}
-          </NativeSelect>
-        </label>
-        <Button
-          aria-pressed={minimalPlanned}
-          className="min-w-[8rem] aria-pressed:border-accent aria-pressed:bg-accent aria-pressed:text-on-accent"
-          disabled={busy || !recordsReady || plannedToggleUnavailable}
-          onClick={() => void togglePlanned()}
-          type="button"
-          variant="outline"
-        >
-          {minimalPlanned
-            ? workDetailStrings.state.plannedRemove
-            : workDetailStrings.state.plannedAdd}
-        </Button>
-      </div>
       {!recordsReady ? (
         <p aria-live="polite" className="text-[length:var(--text-caption-size)] text-text-muted">
           {workDetailStrings.state.loading}
         </p>
-      ) : plannedToggleUnavailable ? (
-        <p className="text-[length:var(--text-caption-size)] text-text-muted">
-          {workDetailStrings.state.managedByState}
-        </p>
-      ) : null}
+      ) : (
+        <div
+          aria-labelledby="work-state-heading"
+          className="flex flex-wrap gap-[var(--space-content)]"
+          role="radiogroup"
+        >
+          {READING_STATES.map((state) => {
+            const selected = record?.readingState === state;
+            return (
+              <button
+                aria-checked={selected}
+                className={`inline-flex min-h-[var(--control-min-size)] items-center rounded-[var(--radius-pill)] border px-[var(--space-4)] text-[length:var(--font-size-14)] font-bold transition-[border-color,background-color,color] duration-[var(--motion-duration-feedback)] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-focus-ring focus-visible:ring-offset-2 focus-visible:ring-offset-canvas disabled:cursor-not-allowed disabled:opacity-55 motion-reduce:transition-none ${
+                  selected
+                    ? "border-accent bg-accent text-on-accent"
+                    : "border-line/70 bg-transparent text-text-muted hover:border-line-accent hover:text-text-strong"
+                }`}
+                disabled={busy}
+                key={state}
+                onClick={() => handleStateSelect(state)}
+                role="radio"
+                type="button"
+              >
+                {workDetailStrings.state.options[state]}
+              </button>
+            );
+          })}
+        </div>
+      )}
       {busy ? (
         <p aria-live="polite" className="text-[length:var(--text-caption-size)] text-text-muted">
           {workDetailStrings.state.saving}
@@ -390,11 +375,11 @@ function CompatibilitySection({
   return (
     <section
       aria-labelledby="work-compatibility-heading"
-      className="grid gap-[var(--space-3)] rounded-[var(--radius-card)] border border-line-accent bg-surface-overlay p-[var(--space-4)] md:grid-cols-[minmax(0,2fr)_minmax(13rem,1fr)] md:gap-[var(--space-2)] md:p-[var(--space-3)]"
+      className="grid gap-[var(--space-3)] border-t border-line/70 pt-[var(--space-4)] md:grid-cols-[minmax(0,2fr)_minmax(13rem,1fr)] md:gap-[var(--space-5)]"
       data-slot="work-compatibility"
     >
       <h2
-        className="border-l-[length:var(--space-content-tight)] border-accent pl-[var(--space-3)] text-[length:var(--font-size-16)] md:col-span-2"
+        className="text-[length:var(--text-section-title-size)] tracking-tight text-text-strong md:col-span-2"
         id="work-compatibility-heading"
       >
         {workDetailStrings.compatibility.heading}
@@ -431,7 +416,7 @@ function CompatibilitySection({
                     );
                     return (
                       <li
-                        className="grid max-w-full grid-cols-[var(--control-min-size)_minmax(0,1fr)] items-center gap-[var(--space-content)] rounded-[var(--radius-card)] border border-line bg-surface-2 p-[var(--space-content-tight)]"
+                        className="grid max-w-full grid-cols-[var(--control-min-size)_minmax(0,1fr)] items-center gap-[var(--space-content)] py-[var(--space-content-tight)]"
                         key={anchor.workId}
                       >
                         <CoverImage
@@ -683,12 +668,12 @@ function WorkDetailContent({ catalog, work }: Readonly<{ catalog: CatalogV1; wor
             compatibility.explanation.positiveReasons[0] !== undefined ? (
               <section
                 aria-label={workDetailStrings.compatibility.reasons}
-                className="grid gap-[var(--space-content-tight)] border-l-[length:var(--space-1)] border-accent bg-surface-2 p-[var(--space-3)] md:hidden"
+                className="grid gap-[var(--space-content-tight)] border-t border-line/70 pt-[var(--space-3)] md:hidden"
               >
-                <h2 className="text-[length:var(--font-size-14)]">
+                <h2 className="text-[length:var(--font-size-14)] font-bold text-text-strong">
                   {workDetailStrings.compatibility.reasons}
                 </h2>
-                <p>{compatibility.explanation.positiveReasons[0].text}</p>
+                <p className="text-text">{compatibility.explanation.positiveReasons[0].text}</p>
               </section>
             ) : null}
           </header>
@@ -720,27 +705,39 @@ function WorkDetailContent({ catalog, work }: Readonly<{ catalog: CatalogV1; wor
             state={compatibility}
           />
 
-          <div className="grid overflow-hidden rounded-[var(--radius-card)] border border-line bg-surface-overlay md:grid-cols-[minmax(0,1.08fr)_minmax(0,0.92fr)]">
+          <div className="grid gap-[var(--space-5)] border-t border-line/70 pt-[var(--space-4)] md:grid-cols-[minmax(0,1.08fr)_minmax(0,0.92fr)] md:gap-[var(--space-5)]">
             <section
               aria-labelledby="work-synopsis-heading"
-              className="grid content-start gap-[var(--space-3)] p-[var(--space-4)]"
+              className="grid content-start gap-[var(--space-3)]"
             >
-              <h2 id="work-synopsis-heading">{workDetailStrings.synopsis.heading}</h2>
-              <p>{metadata?.itemCaption ?? workDetailStrings.synopsis.unavailable}</p>
+              <h2
+                className="text-[length:var(--font-size-16)] font-bold text-text-strong"
+                id="work-synopsis-heading"
+              >
+                {workDetailStrings.synopsis.heading}
+              </h2>
+              <p className="leading-[var(--line-height-body)] text-text">
+                {metadata?.itemCaption ?? workDetailStrings.synopsis.unavailable}
+              </p>
             </section>
 
             <section
               aria-labelledby="work-factors-heading"
-              className="grid content-start gap-[var(--space-3)] border-t border-line bg-surface-1 p-[var(--space-4)] md:border-t-0 md:border-l"
+              className="grid content-start gap-[var(--space-3)]"
             >
-              <h2 id="work-factors-heading">{workDetailStrings.factors.heading}</h2>
+              <h2
+                className="text-[length:var(--font-size-16)] font-bold text-text-strong"
+                id="work-factors-heading"
+              >
+                {workDetailStrings.factors.heading}
+              </h2>
               {factorIds.length === 0 ? (
                 <p>{workDetailStrings.factors.empty}</p>
               ) : (
                 <ul className="m-0 flex list-none flex-wrap gap-[var(--space-content)] p-0">
                   {factorIds.map((factorId) => (
                     <li
-                      className="inline-flex min-h-[var(--space-8)] items-center rounded-[var(--radius-pill)] border border-line bg-surface-2 px-[var(--space-3)] py-[var(--space-content-tight)] text-[length:var(--font-size-12)] font-bold"
+                      className="inline-flex min-h-[var(--space-8)] items-center rounded-[var(--radius-pill)] border border-line/60 px-[var(--space-3)] py-[var(--space-content-tight)] text-[length:var(--font-size-12)] font-bold text-text"
                       key={factorId}
                     >
                       {explanationLexicon.factorLabels[factorId]}
@@ -753,9 +750,14 @@ function WorkDetailContent({ catalog, work }: Readonly<{ catalog: CatalogV1; wor
 
           <section
             aria-labelledby="work-provider-heading"
-            className="grid gap-[var(--space-content)] rounded-[var(--radius-card)] border border-line bg-surface-overlay p-[var(--space-4)] md:grid-cols-[minmax(0,1fr)_auto] md:[&>h2]:col-span-2"
+            className="grid gap-[var(--space-content)] border-t border-line/70 pt-[var(--space-4)] md:grid-cols-[minmax(0,1fr)_auto] md:[&>h2]:col-span-2"
           >
-            <h2 id="work-provider-heading">{workDetailStrings.provider.heading}</h2>
+            <h2
+              className="text-[length:var(--font-size-16)] font-bold text-text-strong"
+              id="work-provider-heading"
+            >
+              {workDetailStrings.provider.heading}
+            </h2>
             <div className="flex flex-wrap content-start gap-x-[var(--space-6)] gap-y-[var(--space-content)]">
               {visibleProvider.phase === "loading" ? (
                 <p aria-live="polite">{workDetailStrings.provider.loading}</p>
@@ -871,7 +873,6 @@ function WorkDetailContent({ catalog, work }: Readonly<{ catalog: CatalogV1; wor
           </MediaShelf>
         </div>
       </main>
-      <SiteFooter />
     </>
   );
 }
