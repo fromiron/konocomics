@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useRef, useState } from "react";
+import { useCallback, useEffect, useRef, useState, type PointerEvent } from "react";
 
 import { MediaPosterCard } from "@/components/media/media-poster-card";
 import { MediaShelf } from "@/components/media/media-shelf";
@@ -17,6 +17,7 @@ import type { LandingWork } from "./landing-types";
 type HomeShelfProps = Readonly<{
   works: readonly LandingWork[];
   coverUrls: ReadonlyMap<string, string | null>;
+  onCoverVisible?(workId: string): void;
 }>;
 
 function genreLine(work: LandingWork) {
@@ -41,7 +42,7 @@ function catalogMetadata(work: LandingWork, density: "compact" | "standard") {
   } as const;
 }
 
-export function HomeShowcaseShelf({ coverUrls, works }: HomeShelfProps) {
+export function HomeShowcaseShelf({ coverUrls, onCoverVisible, works }: HomeShelfProps) {
   const [expandedIndex, setExpandedIndex] = useState(0);
   const hoverTimerRef = useRef<number | null>(null);
   const isCoarsePointer = useRef(false);
@@ -73,10 +74,18 @@ export function HomeShowcaseShelf({ coverUrls, works }: HomeShelfProps) {
     [cancelHover],
   );
 
-  const handleTrackLeave = useCallback(() => {
-    cancelHover();
-    setExpandedIndex(0);
-  }, [cancelHover]);
+  const handleTrackLeave = useCallback(
+    (event: PointerEvent<HTMLDivElement>) => {
+      cancelHover();
+      const track = event.currentTarget.querySelector("[data-media-shelf-track]");
+      const active = document.activeElement;
+      if (track instanceof HTMLElement && active instanceof Node && track.contains(active)) {
+        return;
+      }
+      setExpandedIndex(0);
+    },
+    [cancelHover],
+  );
 
   useEffect(
     () => () => {
@@ -93,7 +102,7 @@ export function HomeShowcaseShelf({ coverUrls, works }: HomeShelfProps) {
           setExpandedIndex(0);
         }
       }}
-      onMouseLeave={handleTrackLeave}
+      onPointerLeave={handleTrackLeave}
     >
       <MediaShelf
         compactHeading
@@ -112,7 +121,14 @@ export function HomeShowcaseShelf({ coverUrls, works }: HomeShelfProps) {
               featured={isExpanded}
               key={work.id}
               metadata={metadata === "" ? undefined : metadata}
-              onFocus={() => setExpandedIndex(index)}
+              onFocus={(event) => {
+                if (!(event.target instanceof Element) || !event.target.matches(":focus-visible")) {
+                  return;
+                }
+                cancelHover();
+                setExpandedIndex(index);
+              }}
+              onCoverVisible={() => onCoverVisible?.(work.id)}
               onPointerCancel={cancelHover}
               onPointerEnter={() => scheduleExpand(index)}
               onPointerLeave={cancelHover}
@@ -128,7 +144,7 @@ export function HomeShowcaseShelf({ coverUrls, works }: HomeShelfProps) {
   );
 }
 
-export function HomeRankingShelf({ coverUrls, works }: HomeShelfProps) {
+export function HomeRankingShelf({ coverUrls, onCoverVisible, works }: HomeShelfProps) {
   return (
     <RankingShelf
       compactHeading
@@ -147,6 +163,7 @@ export function HomeRankingShelf({ coverUrls, works }: HomeShelfProps) {
             key={work.id}
             metadata={metadata.visible}
             metadataAccessibleLabel={metadata.accessible}
+            onCoverVisible={() => onCoverVisible?.(work.id)}
             position={index + 1}
             rankingKind="editorial-ranking"
             title={work.title}
@@ -158,7 +175,7 @@ export function HomeRankingShelf({ coverUrls, works }: HomeShelfProps) {
   );
 }
 
-export function HomeDiscoveryShelf({ coverUrls, works }: HomeShelfProps) {
+export function HomeDiscoveryShelf({ coverUrls, onCoverVisible, works }: HomeShelfProps) {
   return (
     <MediaShelf
       compactHeading
@@ -176,6 +193,7 @@ export function HomeDiscoveryShelf({ coverUrls, works }: HomeShelfProps) {
             key={work.id}
             metadata={metadata.visible}
             metadataAccessibleLabel={metadata.accessible}
+            onCoverVisible={() => onCoverVisible?.(work.id)}
             presentation="cover-overlay"
             title={work.title}
             workId={work.id}

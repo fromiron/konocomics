@@ -16,6 +16,7 @@ type MediaPosterCardProps = Readonly<{
   metadataAccessibleLabel?: string;
   presentation?: "standard" | "cover-overlay";
   priority?: boolean;
+  onCoverVisible?: () => void;
   className?: string;
 }>;
 
@@ -26,6 +27,7 @@ export function MediaPosterCard({
   creators,
   metadata,
   metadataAccessibleLabel,
+  onCoverVisible,
   presentation = "standard",
   priority = false,
   title,
@@ -52,10 +54,12 @@ export function MediaPosterCard({
           to="/works/$workId"
         >
           <CoverImage
-            className="rounded-none border-0 transition-transform duration-[var(--motion-duration-value)] ease-[var(--motion-ease-direct)] motion-reduce:transition-none [@media(hover:hover)_and_(pointer:fine)]:group-hover/card:scale-[1.03] [&>img]:!object-cover [&>img]:!object-top"
+            className="rounded-none border-0 transition-transform duration-[var(--motion-duration-value)] ease-[var(--motion-ease-direct)] motion-reduce:transition-none [@media(hover:hover)_and_(pointer:fine)]:group-hover/card:scale-[1.03]"
             coverUrl={coverUrl}
             creators={creators}
             decorative
+            matchSourceAspectRatio
+            onVisible={onCoverVisible}
             priority={priority}
             requestedSize={400}
             title={title}
@@ -106,6 +110,8 @@ export function MediaPosterCard({
             className="transition-transform duration-[var(--motion-duration-value)] ease-[var(--motion-ease-direct)] motion-reduce:transition-none [@media(hover:hover)_and_(pointer:fine)]:group-hover/card:scale-[1.03]"
             coverUrl={coverUrl}
             creators={creators}
+            matchSourceAspectRatio
+            onVisible={onCoverVisible}
             priority={priority}
             requestedSize={400}
             title={title}

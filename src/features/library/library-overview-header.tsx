@@ -41,19 +41,21 @@ export function LibraryOverviewHeader({
           {libraryStrings.title}
         </h1>
         <p className="max-w-[42rem] text-text-muted">{libraryStrings.description}</p>
-        <Button
-          className="mt-[var(--space-content)]"
-          onClick={(event) => onAddWork(event.currentTarget)}
-          type="button"
-        >
-          {libraryStrings.addWork}
-        </Button>
+        {total === 0 ? null : (
+          <Button
+            className="mt-[var(--space-content)]"
+            onClick={(event) => onAddWork(event.currentTarget)}
+            type="button"
+          >
+            {libraryStrings.addWork}
+          </Button>
+        )}
       </div>
 
       {total === 0 ? null : (
         <section
           aria-label={libraryStrings.summary.heading}
-          className="grid grid-cols-2 overflow-hidden rounded-[var(--radius-card)] border border-line/70 bg-surface-1 sm:grid-cols-3 md:grid-cols-6 [&>div]:relative [&>div]:grid [&>div]:min-h-[calc(var(--control-min-size)*2)] [&>div]:content-center [&>div]:justify-items-center [&>div]:gap-[var(--space-content-tight)] [&>div]:border-r [&>div]:border-b [&>div]:border-line/60 [&>div]:p-[var(--space-3)] md:[&>div]:border-b-0"
+          className="hidden overflow-hidden rounded-[var(--radius-card)] border border-line/70 bg-surface-1 md:grid md:grid-cols-6 [&>div]:relative [&>div]:grid [&>div]:min-h-[calc(var(--control-min-size)*2)] [&>div]:content-center [&>div]:justify-items-center [&>div]:gap-[var(--space-content-tight)] [&>div]:border-r [&>div]:border-line/60 [&>div]:p-[var(--space-3)] md:[&>div]:border-b-0"
         >
           {STATE_SUMMARIES.map(({ icon: Icon, state }) => (
             <div key={state}>

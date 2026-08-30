@@ -226,7 +226,9 @@ async function deleteAllDataThroughSettings(page: Page) {
 }
 
 async function openSettingsFromLanding(page: Page) {
-  const settingsLink = page.getByRole("link", { name: "設定・データ管理", exact: true });
+  const settingsLink = page
+    .getByRole("contentinfo")
+    .getByRole("link", { name: "設定", exact: true });
   await expect(settingsLink).toHaveAttribute("href", "/settings");
   await settingsLink.click();
   await expect(page).toHaveURL(/\/settings$/u);
@@ -486,11 +488,6 @@ async function openRecommendationFilters(page: Page) {
 async function openRecommendationDetail(page: Page, workId: string) {
   const item = page.locator(`li[data-recommendation-work-id='${workId}']`);
   await item.getByRole("link", { name: /作品詳細を見る$/u }).click();
-  if (await page.evaluate(() => window.matchMedia("(hover: none), (pointer: coarse)").matches)) {
-    const preview = page.getByRole("dialog");
-    await expect(preview).toBeVisible();
-    await preview.getByRole("link", { name: "作品詳細を見る", exact: true }).click();
-  }
   await expect(page).toHaveURL(new RegExp(`/works/${workId}$`, "u"));
 }
 
@@ -995,18 +992,15 @@ test.describe("Slice 7 recommendation journeys", () => {
       .locator("main[data-recommendation-input-hash]")
       .getAttribute("data-recommendation-input-hash");
 
-    await expect
-      .poll(
-        () =>
-          initialIds.every((workId) => itemRequests.some((request) => request.workId === workId)),
-        { timeout: 45_000 },
-      )
-      .toBe(true);
-
     for (let index = 0; index < 10; index += 1) {
       const card = cards.nth(index);
       const cover = card.getByRole("img");
       await cover.scrollIntoViewIfNeeded();
+      await expect
+        .poll(() => itemRequests.some((request) => request.workId === initialIds[index]), {
+          timeout: 45_000,
+        })
+        .toBe(true);
       await expect(cover).toBeVisible();
       await expect(cover).toHaveAttribute("data-loaded", "true", { timeout: 60_000 });
       await expect(cover).toHaveAttribute("loading", index === 0 ? "eager" : "lazy");
@@ -1116,44 +1110,65 @@ test.describe("Slice 7 recommendation journeys", () => {
       ).toBe(true);
     }
 
-    if (testInfo.project.name === "mobile-chromium") {
-      const previewWorkId = initialIds[0];
-      expect(previewWorkId).toBeTruthy();
-      const previewItem = page.locator(
-        `li[data-recommendation-work-id='${previewWorkId}']:not([data-carousel-clone])`,
-      );
-      const previewOpener = previewItem.getByRole("link", { name: /作品詳細を見る$/u });
-      const previewTitle = (
-        await previewItem.getByRole("heading", { level: 3 }).textContent()
-      )?.trim();
-      expect(previewTitle).toBeTruthy();
-      const previewDialog = page.getByRole("dialog", { name: previewTitle });
+    const previewWorkId = initialIds[0];
+    expect(previewWorkId).toBeTruthy();
+    const previewItem = page.locator(
+      `li[data-recommendation-work-id='${previewWorkId}']:not([data-carousel-clone])`,
+    );
+    const previewOpener = previewItem.getByRole("button", { name: /クイック表示/u });
+    const previewTitle = (
+      await previewItem.getByRole("heading", { level: 3 }).textContent()
+    )?.trim();
+    expect(previewTitle).toBeTruthy();
+    const previewDialog = page.getByRole("dialog", { name: previewTitle });
 
-      await previewOpener.scrollIntoViewIfNeeded();
-      await page.evaluate(() => window.scrollTo(0, 200));
-      await previewOpener.focus();
-      const scrollYBeforePreview = await page.evaluate(() => window.scrollY);
-      expect(scrollYBeforePreview).toBeGreaterThan(0);
-      await previewOpener.click();
-      expect(new URL(page.url()).searchParams.get("preview")).toBe(previewWorkId);
-      await expect(previewDialog).toBeVisible();
-      await expect
-        .poll(async () =>
-          Math.abs((await page.evaluate(() => window.scrollY)) - scrollYBeforePreview),
-        )
-        .toBeLessThanOrEqual(1);
+    await previewOpener.scrollIntoViewIfNeeded();
+    await page.evaluate(() => window.scrollTo(0, 200));
+    await previewOpener.focus();
+    const scrollYBeforePreview = await page.evaluate(() => window.scrollY);
+    expect(scrollYBeforePreview).toBeGreaterThan(0);
+    await previewOpener.click();
+    expect(new URL(page.url()).searchParams.get("preview")).toBe(previewWorkId);
+    await expect(previewDialog).toBeVisible();
+    await expect
+      .poll(async () =>
+        Math.abs((await page.evaluate(() => window.scrollY)) - scrollYBeforePreview),
+      )
+      .toBeLessThanOrEqual(1);
 
-      await page.goBack();
-      await expect(previewDialog).toBeHidden();
-      await expect(previewOpener).toBeFocused();
+    await previewDialog.getByRole("button", { name: "閉じる" }).focus();
+    await page.keyboard.press("Tab");
+    await page.evaluate(
+      () =>
+        new Promise<void>((resolve) => {
+          requestAnimationFrame(() => requestAnimationFrame(() => resolve()));
+        }),
+    );
+    expect(await previewDialog.evaluate((dialog) => dialog.contains(document.activeElement))).toBe(
+      true,
+    );
+    await previewDialog.getByRole("link", { name: "作品詳細を見る" }).focus();
+    await page.keyboard.press("Shift+Tab");
+    await page.evaluate(
+      () =>
+        new Promise<void>((resolve) => {
+          requestAnimationFrame(() => requestAnimationFrame(() => resolve()));
+        }),
+    );
+    expect(await previewDialog.evaluate((dialog) => dialog.contains(document.activeElement))).toBe(
+      true,
+    );
 
-      await page.goForward();
-      await expect(previewDialog).toBeVisible();
-      await page.reload();
-      await expect(previewDialog).toBeVisible();
-      await page.goBack();
-      await expect(previewDialog).toBeHidden();
-    }
+    await page.goBack();
+    await expect(previewDialog).toBeHidden();
+    await expect(previewOpener).toBeFocused();
+
+    await page.goForward();
+    await expect(previewDialog).toBeVisible();
+    await page.reload();
+    await expect(previewDialog).toBeVisible();
+    await page.goBack();
+    await expect(previewDialog).toBeHidden();
 
     await openRecommendationFilters(page);
     await tabUntil(page, /^\s*完結作を優先\s*$/u, 120);
@@ -1829,7 +1844,7 @@ test.describe("Slice 9 library and external-work journey", () => {
 
     const cleanProviderRequests: string[] = [];
     const cleanContext = await browser.newContext({
-      baseURL: "http://localhost:3000",
+      baseURL: "http://localhost:3030",
       viewport: appPage.viewportSize() ?? undefined,
     });
     await cleanContext.route(/\/api\/rakuten\/(?:search|item)(?:\?|$)/u, async (route) => {
@@ -2254,7 +2269,7 @@ test.describe("Slice 10 data-sovereignty journey", () => {
     );
 
     const preProfileContext = await browser.newContext({
-      baseURL: "http://localhost:3000",
+      baseURL: "http://localhost:3030",
       viewport: page.viewportSize() ?? undefined,
     });
     try {

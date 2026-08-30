@@ -19,7 +19,6 @@ import { Button } from "@/components/design-system/button";
 import {
   carouselCloneProps,
   carouselLoopCopies,
-  cloneCarouselTrailing,
   duplicateCarouselContent,
   MediaShelf,
   shouldLoopCarousel,
@@ -57,7 +56,7 @@ import type {
 } from "@/domain/recommendation/types";
 import { useCatalog } from "@/features/catalog/catalog-provider";
 import { usePersistence } from "@/infrastructure/db";
-import { recommendationStrings, explanationLexicon } from "@/lib/strings";
+import { explanationLexicon, onboardingStrings, recommendationStrings } from "@/lib/strings";
 
 import type { PendingRecommendationFeedback } from "./feedback-dialog";
 import { FeedbackImpactSummary } from "./feedback-impact-summary";
@@ -83,7 +82,7 @@ import type {
 } from "./recommendation-motion-list";
 
 const RECOMMENDATION_CAROUSEL_TRACK_CLASSNAME =
-  "recommendations-list items-stretch gap-[var(--space-3)] [--featured-card-basis:clamp(10.75rem,calc((100%-var(--space-3))/1.8),13.5rem)] [@media(min-width:768px)_and_(hover:hover)_and_(pointer:fine)]:[--featured-card-basis:clamp(12.5rem,calc((100%+var(--media-shelf-edge-fade-width)-(var(--space-3)*4))/4.5),18rem)]";
+  "recommendations-list relative items-stretch gap-[var(--space-3)] [--featured-card-basis:17rem] sm:[--featured-card-basis:19rem] [@media(min-width:768px)_and_(hover:hover)_and_(pointer:fine)]:[--featured-card-basis:21.5rem]";
 
 const DEFAULT_POLICIES: RecommendationPolicies = {
   preferCompleted: false,
@@ -119,13 +118,12 @@ type RecommendationsFlowProps = Readonly<{
 
 function StaticRecommendationItems({
   items,
-  shortage,
-}: Readonly<{ items: readonly RecommendationMotionItem[]; shortage: ReactNode }>) {
+}: Readonly<{ items: readonly RecommendationMotionItem[] }>) {
   const copies = shouldLoopCarousel(items.length) ? carouselLoopCopies : ([1] as const);
   return (
     <>
-      {copies.flatMap((copy) => [
-        ...items.map((item) => (
+      {copies.flatMap((copy) =>
+        items.map((item) => (
           <li
             className="basis-[var(--featured-card-basis)] shrink-0 snap-start overflow-visible"
             data-recommendation-work-id={item.workId}
@@ -135,8 +133,7 @@ function StaticRecommendationItems({
             {duplicateCarouselContent(item.content, copy)}
           </li>
         )),
-        cloneCarouselTrailing(shortage, copy),
-      ])}
+      )}
     </>
   );
 }
@@ -294,8 +291,7 @@ export function RecommendationsFlow({
   const loadedMotionList = useRef<RecommendationMotionListComponent | null>(null);
   const motionListRequest = useRef<Promise<void> | null>(null);
   const pendingMotionFocus = useRef<MotionFocusTarget | null>(null);
-  const previewOpener = useRef<HTMLElement | null>(null);
-  const previousPreviewWorkId = useRef<string | null>(null);
+  const [previewOpener, setPreviewOpener] = useState<HTMLElement | null>(null);
   const records = userWorks ?? EMPTY_RECORDS;
   const profileRecords = useMemo(
     () => recommendationProfileRecords(records, catalog.works),
@@ -419,24 +415,11 @@ export function RecommendationsFlow({
     () => createRecommendationCoverTargets(catalog, coverWorkIds),
     [catalog, coverWorkIds],
   );
-  const { coverUrls: recommendationCoverUrls, notifyCoverSettled } = useRecommendationCovers({
+  const { coverUrls: recommendationCoverUrls, requestCover } = useRecommendationCovers({
     targets: recommendationCoverTargets,
     getProviderCache,
     saveProviderCache,
   });
-  const recommendationCoverTargetsByWorkId = useMemo(
-    () => new Map(recommendationCoverTargets.map((target) => [target.workId, target] as const)),
-    [recommendationCoverTargets],
-  );
-  const firstRecommendationCoverWorkId = recommendationCoverTargets[0]?.workId;
-  const settleRecommendationCover = useCallback(
-    (workId: string) => {
-      if (workId !== firstRecommendationCoverWorkId) return;
-      const target = recommendationCoverTargetsByWorkId.get(workId);
-      if (target !== undefined) notifyCoverSettled(target);
-    },
-    [firstRecommendationCoverWorkId, notifyCoverSettled, recommendationCoverTargetsByWorkId],
-  );
   const announce = useCallback((text: string) => {
     setLiveAnnouncement((current) => ({ sequence: current.sequence + 1, text }));
   }, []);
@@ -535,22 +518,6 @@ export function RecommendationsFlow({
     if (action !== null && !action.disabled) action.focus();
     else article.focus();
   }, [MotionList]);
-
-  useLayoutEffect(() => {
-    const currentPreviewWorkId = previewWorkId ?? null;
-    if (previousPreviewWorkId.current !== null && currentPreviewWorkId === null) {
-      const opener = previewOpener.current;
-      previewOpener.current = null;
-      if (opener?.isConnected) {
-        window.requestAnimationFrame(() => {
-          window.requestAnimationFrame(() => {
-            if (opener.isConnected) opener.focus();
-          });
-        });
-      }
-    }
-    previousPreviewWorkId.current = currentPreviewWorkId;
-  }, [previewWorkId]);
 
   useEffect(() => {
     if (shelf === undefined) return;
@@ -924,13 +891,7 @@ export function RecommendationsFlow({
   };
 
   const openPreview = (workId: string) => {
-    const activeElement =
-      document.activeElement instanceof HTMLElement ? document.activeElement : null;
-    previewOpener.current = activeElement?.matches("[data-recommendation-evidence-disclosure]")
-      ? (activeElement
-          .closest("article")
-          ?.querySelector<HTMLElement>("[data-recommendation-identity-rail]") ?? activeElement)
-      : activeElement;
+    setPreviewOpener(document.activeElement instanceof HTMLElement ? document.activeElement : null);
     onPreviewOpen?.(workId);
   };
 
@@ -990,12 +951,7 @@ export function RecommendationsFlow({
           coverUrl={recommendationCoverUrls.get(entry.workId)}
           entry={entry}
           onCompleted={() => void removeForFeedback(entry, "completed")}
-          onCoverSettled={
-            entry.workId === firstRecommendationCoverWorkId &&
-            recommendationCoverUrls.has(entry.workId)
-              ? () => settleRecommendationCover(entry.workId)
-              : undefined
-          }
+          onCoverVisible={() => requestCover(entry.workId)}
           onHidden={() => void removeForFeedback(entry, "hidden")}
           onPlanned={() => void savePlanned(entry)}
           onPreview={() => openPreview(entry.workId)}
@@ -1009,32 +965,13 @@ export function RecommendationsFlow({
       ),
     }),
   );
-  const shortageItem =
-    renderedEntries.length < 10 ? (
-      <li
-        className="grid basis-[var(--featured-card-basis)] shrink-0 snap-start gap-[var(--space-3)] overflow-visible rounded-[var(--radius-card)] border border-line bg-surface-1 p-[var(--space-6)]"
-        key="recommendation-shortage"
-      >
-        <h2>{recommendationStrings.shortage.title}</h2>
-        <p>{recommendationStrings.shortage.description}</p>
-        <div className="flex flex-wrap gap-[var(--space-content)]">
-          <Link
-            className="inline-flex min-h-[var(--control-min-size)] items-center font-bold text-accent underline underline-offset-[var(--space-content-tight)] transition-transform duration-[var(--motion-duration-press)] active:scale-[0.97] motion-reduce:transform-none motion-reduce:transition-none"
-            preload={false}
-            to="/onboarding"
-          >
-            {recommendationStrings.shortage.addWorks}
-          </Link>
-          <Link
-            className="inline-flex min-h-[var(--control-min-size)] items-center font-bold text-accent underline underline-offset-[var(--space-content-tight)] transition-transform duration-[var(--motion-duration-press)] active:scale-[0.97] motion-reduce:transform-none motion-reduce:transition-none"
-            preload={false}
-            to="/taste"
-          >
-            {recommendationStrings.shortage.reviewTaste}
-          </Link>
-        </div>
-      </li>
-    ) : null;
+  const showShortageBanner =
+    plan !== null &&
+    !showInitialError &&
+    calculationError === "" &&
+    renderedEntries.length >= 1 &&
+    renderedEntries.length <= 9 &&
+    recommendationItems.length > 0;
   const renderShelfCard = (
     { entry, metadata, work }: (typeof anchorEntries)[number],
     variant: "anchor" | "discovery" | "completed",
@@ -1043,6 +980,7 @@ export function RecommendationsFlow({
       coverUrl={recommendationCoverUrls.get(entry.workId)}
       entry={entry}
       key={entry.workId}
+      onCoverVisible={() => requestCover(entry.workId)}
       onPreview={() => openPreview(entry.workId)}
       resolveTitle={(workId) => worksById.get(workId)?.title}
       variant={variant}
@@ -1054,14 +992,16 @@ export function RecommendationsFlow({
   return (
     <>
       <main
-        className="mx-auto w-full max-w-[var(--layout-width-media)] bg-canvas px-[var(--layout-page-padding)] pt-[var(--layout-page-block-start)] pb-[var(--space-8)] md:pt-0 md:pb-[var(--space-6)] [--recommendation-cover-width:104px]"
+        className="mx-auto w-full max-w-[var(--layout-width-media)] bg-canvas px-[var(--layout-page-padding)] pt-[var(--layout-page-block-start)] pb-[var(--space-8)] md:pb-[var(--space-6)] [--recommendation-cover-width:104px]"
         data-recommendation-input-hash={displayedHash ?? undefined}
       >
         <div className="block w-full min-w-0">
           <div className="block w-full min-w-0">
-            <header className="mb-[var(--space-5)] grid gap-[var(--space-content)] md:sr-only">
-              <h1 className="font-display">{recommendationStrings.title}</h1>
-              <p className="text-text-muted">{recommendationStrings.description}</p>
+            <header className="mb-[var(--space-5)] grid gap-[var(--space-content)]">
+              <h1 className="font-display md:text-[length:var(--text-section-title-size)]">
+                {recommendationStrings.title}
+              </h1>
+              <p className="text-text-muted md:sr-only">{recommendationStrings.description}</p>
             </header>
 
             <RecommendationCriteriaSummary
@@ -1176,6 +1116,7 @@ export function RecommendationsFlow({
                   className="scroll-mt-[calc(var(--desktop-navigation-height)+var(--space-4))]"
                   controlsPlacement="overlay"
                   description={recommendationStrings.shelves.featured.description}
+                  enableLoop
                   listType="unordered"
                   compactHeading
                   title={recommendationStrings.shelves.featured.title}
@@ -1185,18 +1126,55 @@ export function RecommendationsFlow({
                   }}
                 >
                   {MotionList === null ? (
-                    <StaticRecommendationItems
-                      items={recommendationItems}
-                      shortage={shortageItem}
-                    />
+                    <StaticRecommendationItems items={recommendationItems} />
                   ) : (
-                    <MotionList
-                      items={recommendationItems}
-                      reducedMotion={false}
-                      shortage={shortageItem}
-                    />
+                    <MotionList items={recommendationItems} reducedMotion={false} shortage={null} />
                   )}
                 </MediaShelf>
+                {showShortageBanner ? (
+                  <section
+                    aria-labelledby="recommendation-shortage-heading"
+                    className="relative mt-[var(--space-4)] h-[150px] overflow-hidden rounded-[var(--radius-card)] md:h-[176px]"
+                  >
+                    <img
+                      alt=""
+                      aria-hidden="true"
+                      className="pointer-events-none absolute inset-0 size-full object-cover object-[78%_50%]"
+                      src="/media/recommendations-shortage-books.png"
+                    />
+                    <div
+                      aria-hidden="true"
+                      className="pointer-events-none absolute inset-0 bg-gradient-to-r from-canvas from-35% to-transparent to-70%"
+                    />
+                    <div className="relative z-10 grid h-full content-center justify-items-start gap-[var(--space-2)] p-[var(--space-3)] md:max-w-[55%] md:p-[var(--space-5)]">
+                      <h2
+                        className="text-[length:var(--font-size-14)] leading-snug font-bold text-text-strong md:text-[length:var(--text-subheading-size)]"
+                        id="recommendation-shortage-heading"
+                      >
+                        {recommendationStrings.shortage.title}
+                      </h2>
+                      <p className="hidden text-text-muted md:block">
+                        {recommendationStrings.shortage.description}
+                      </p>
+                      <div className="flex flex-nowrap items-center gap-x-[var(--space-4)]">
+                        <Link
+                          className="inline-flex min-h-[var(--control-min-size)] shrink-0 items-center font-bold text-accent underline underline-offset-[var(--space-content-tight)] transition-transform duration-[var(--motion-duration-press)] active:scale-[0.97] motion-reduce:transform-none motion-reduce:transition-none"
+                          preload={false}
+                          to="/onboarding"
+                        >
+                          {recommendationStrings.shortage.addWorks}
+                        </Link>
+                        <Link
+                          className="inline-flex min-h-[var(--control-min-size)] shrink-0 items-center font-bold text-accent underline underline-offset-[var(--space-content-tight)] transition-transform duration-[var(--motion-duration-press)] active:scale-[0.97] motion-reduce:transform-none motion-reduce:transition-none"
+                          preload={false}
+                          to="/taste"
+                        >
+                          {recommendationStrings.shortage.reviewTaste}
+                        </Link>
+                      </div>
+                    </div>
+                  </section>
+                ) : null}
               </div>
             )}
 
@@ -1206,10 +1184,11 @@ export function RecommendationsFlow({
               id="recommendation-shelf-anchor"
             />
             <MediaShelf
-              className="mt-[var(--space-4)] scroll-mt-[calc(var(--desktop-navigation-height)+var(--space-4))]"
+              className="mt-[var(--space-section)] scroll-mt-[calc(var(--desktop-navigation-height)+var(--space-4))]"
               compactHeading
               controlsPlacement="overlay"
               description={recommendationStrings.shelves.anchor.description}
+              enableLoop={false}
               title={recommendationStrings.shelves.anchor.title}
               trackClassName="!pb-[var(--space-1)]"
             >
@@ -1222,10 +1201,11 @@ export function RecommendationsFlow({
               id="recommendation-shelf-discovery"
             />
             <MediaShelf
-              className="mt-[var(--space-2)] scroll-mt-[calc(var(--desktop-navigation-height)+var(--space-4))]"
+              className="mt-[var(--space-section)] scroll-mt-[calc(var(--desktop-navigation-height)+var(--space-4))]"
               compactHeading
               controlsPlacement="overlay"
               description={recommendationStrings.shelves.discovery.description}
+              enableLoop={false}
               title={recommendationStrings.shelves.discovery.title}
               trackClassName="!pb-[var(--space-1)]"
             >
@@ -1238,10 +1218,11 @@ export function RecommendationsFlow({
               id="recommendation-shelf-completed"
             />
             <MediaShelf
-              className="mt-[var(--space-2)] scroll-mt-[calc(var(--desktop-navigation-height)+var(--space-4))]"
+              className="mt-[var(--space-section)] scroll-mt-[calc(var(--desktop-navigation-height)+var(--space-4))]"
               compactHeading
               controlsPlacement="overlay"
               description={recommendationStrings.shelves.completed.description}
+              enableLoop={false}
               title={recommendationStrings.shelves.completed.title}
               trackClassName="!pb-[var(--space-1)]"
             >
@@ -1254,7 +1235,7 @@ export function RecommendationsFlow({
               id="recommendation-shelf-ranking"
             />
             <RankingShelf
-              className="mt-[var(--space-2)] scroll-mt-[calc(var(--desktop-navigation-height)+var(--space-4))]"
+              className="mt-[var(--space-section)] scroll-mt-[calc(var(--desktop-navigation-height)+var(--space-4))]"
               compactHeading
               controlsPlacement="overlay"
               description={recommendationStrings.shelves.ranking.description}
@@ -1262,25 +1243,28 @@ export function RecommendationsFlow({
               title={recommendationStrings.shelves.ranking.title}
               trackClassName="!pb-[var(--space-1)]"
             >
-              {renderedEntries.slice(0, 10).map(({ entry, work }, index) => (
-                <RankingCard
-                  coverUrl={recommendationCoverUrls.get(entry.workId)}
-                  creators={work.creators}
-                  key={entry.workId}
-                  metadata={explanationLexicon.confidenceLabels[entry.confidenceLevel]}
-                  onCoverSettled={
-                    entry.workId === firstRecommendationCoverWorkId &&
-                    recommendationCoverUrls.has(entry.workId)
-                      ? () => settleRecommendationCover(entry.workId)
-                      : undefined
-                  }
-                  position={index + 1}
-                  priority={featuredEntries.length === 0 && index === 0}
-                  rankingKind="personalized-ranking"
-                  title={work.title}
-                  workId={work.id}
-                />
-              ))}
+              {renderedEntries.slice(0, 10).map(({ entry, work }, index) => {
+                const genreLabels = work.genres
+                  .slice(0, 3)
+                  .map((genre) => onboardingStrings.step1.genreLabels[genre])
+                  .join(" · ");
+
+                return (
+                  <RankingCard
+                    coverUrl={recommendationCoverUrls.get(entry.workId)}
+                    creators={work.creators}
+                    key={entry.workId}
+                    metadata={genreLabels}
+                    metadataAccessibleLabel={genreLabels}
+                    onCoverVisible={() => requestCover(entry.workId)}
+                    position={index + 1}
+                    priority={featuredEntries.length === 0 && index === 0}
+                    rankingKind="personalized-ranking"
+                    title={work.title}
+                    workId={work.id}
+                  />
+                );
+              })}
             </RankingShelf>
             <FeedbackImpactSummary
               completedCount={
@@ -1313,6 +1297,7 @@ export function RecommendationsFlow({
                 }
                 coverUrl={recommendationCoverUrls.get(previewEntry.entry.workId)}
                 explanation={previewExplanation}
+                opener={previewOpener}
                 onCompleted={() => {
                   onPreviewClose?.();
                   void removeForFeedback(previewEntry.entry, "completed");
@@ -1321,10 +1306,12 @@ export function RecommendationsFlow({
                   onPreviewClose?.();
                   void removeForFeedback(previewEntry.entry, "hidden");
                 }}
+                onCoverVisible={() => requestCover(previewEntry.entry.workId)}
                 onOpenChange={(open) => {
                   if (!open) onPreviewClose?.();
                 }}
                 onPlanned={() => void savePlanned(previewEntry.entry)}
+                onRemovalIntent={requestRemovalMotion}
                 open
                 planned={plannedIds.has(previewEntry.entry.workId)}
                 volumeCount={previewEntry.metadata.volumeCount}

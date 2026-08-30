@@ -19,7 +19,7 @@ type SelectedTrayProps = Readonly<{
   continueLabel: string;
   countLabel?: string;
   coverUrls?: ReadonlyMap<string, string | null>;
-  onCoverSettled?: (workId: string) => void;
+  onCoverVisible?: (workId: string) => void;
   onRemove: (workId: string) => void;
   onContinue: () => void;
   disabled: boolean;
@@ -36,7 +36,7 @@ export function SelectedTray({
   continueLabel,
   countLabel,
   coverUrls,
-  onCoverSettled,
+  onCoverVisible,
   onRemove,
   onContinue,
   disabled,
@@ -144,7 +144,7 @@ export function SelectedTray({
                   <CoverImage
                     coverUrl={coverUrls?.get(work.id)}
                     creators={work.creators}
-                    onSettled={() => onCoverSettled?.(work.id)}
+                    onVisible={() => onCoverVisible?.(work.id)}
                     requestedSize={200}
                     title={work.title}
                   />

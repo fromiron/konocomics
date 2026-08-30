@@ -23,7 +23,6 @@ import { useCatalog } from "@/features/catalog/catalog-provider";
 import { WorkDetailShell } from "@/features/work-detail/work-detail-shell";
 import {
   createRecommendationCoverTargets,
-  type RecommendationCoverTarget,
   useRecommendationCovers,
 } from "@/features/recommendations/recommendation-cover-resolver";
 import { usePersistence, type ProviderCacheRecord } from "@/infrastructure/db";
@@ -327,7 +326,7 @@ function WorkStateControls({
                 className={`inline-flex min-h-[var(--control-min-size)] items-center rounded-[var(--radius-pill)] border px-[var(--space-4)] text-[length:var(--font-size-14)] font-bold transition-[border-color,background-color,color] duration-[var(--motion-duration-feedback)] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-focus-ring focus-visible:ring-offset-2 focus-visible:ring-offset-canvas disabled:cursor-not-allowed disabled:opacity-55 motion-reduce:transition-none ${
                   selected
                     ? "border-accent bg-accent text-on-accent"
-                    : "border-line/70 bg-transparent text-text-muted hover:border-line-accent hover:text-text-strong"
+                    : "border-line/70 bg-transparent text-text-muted hover:text-text-strong"
                 }`}
                 disabled={busy}
                 key={state}
@@ -358,16 +357,14 @@ function WorkStateControls({
 }
 
 function CompatibilitySection({
-  anchorCoverTargets,
   anchorCoverUrls,
   catalog,
-  notifyAnchorCoverSettled,
+  onAnchorCoverVisible,
   state,
 }: Readonly<{
-  anchorCoverTargets: readonly RecommendationCoverTarget[];
   anchorCoverUrls: ReadonlyMap<string, string | null>;
   catalog: CatalogV1;
-  notifyAnchorCoverSettled(target: RecommendationCoverTarget): void;
+  onAnchorCoverVisible(workId: string): void;
   state: CompatibilityState;
 }>) {
   if (state.kind === "hidden") return null;
@@ -411,9 +408,6 @@ function CompatibilitySection({
                   {state.explanation.anchors.map((anchor) => {
                     const anchorWork = catalog.works.find((work) => work.id === anchor.workId);
                     if (anchorWork === undefined) return null;
-                    const coverTarget = anchorCoverTargets.find(
-                      (target) => target.workId === anchor.workId,
-                    );
                     return (
                       <li
                         className="grid max-w-full grid-cols-[var(--control-min-size)_minmax(0,1fr)] items-center gap-[var(--space-content)] py-[var(--space-content-tight)]"
@@ -424,11 +418,7 @@ function CompatibilitySection({
                           coverUrl={anchorCoverUrls.get(anchor.workId)}
                           creators={anchorWork.creators}
                           decorative
-                          onSettled={
-                            coverTarget === undefined
-                              ? undefined
-                              : () => notifyAnchorCoverSettled(coverTarget)
-                          }
+                          onVisible={() => onAnchorCoverVisible(anchor.workId)}
                           requestedSize={200}
                           title={anchorWork.title}
                         />
@@ -504,16 +494,11 @@ function WorkDetailContent({ catalog, work }: Readonly<{ catalog: CatalogV1; wor
     ];
     return createRecommendationCoverTargets(catalog, orderedWorkIds);
   }, [catalog, compatibility, relatedGroups]);
-  const { coverUrls, notifyCoverSettled } = useRecommendationCovers({
+  const { coverUrls, requestCover } = useRecommendationCovers({
     targets: coverTargets,
     getProviderCache,
     saveProviderCache,
   });
-
-  useEffect(() => {
-    const first = coverTargets[0];
-    if (first !== undefined && coverUrls.has(first.workId)) notifyCoverSettled(first);
-  }, [coverTargets, coverUrls, notifyCoverSettled]);
 
   useEffect(() => {
     if (status.state === "initializing" || isbn === null) return;
@@ -698,10 +683,9 @@ function WorkDetailContent({ catalog, work }: Readonly<{ catalog: CatalogV1; wor
 
         <div className="mx-auto grid w-full max-w-[var(--layout-width-detail)] gap-[var(--space-4)] px-[var(--layout-page-padding)] pt-[var(--space-6)]">
           <CompatibilitySection
-            anchorCoverTargets={coverTargets}
             anchorCoverUrls={coverUrls}
             catalog={catalog}
-            notifyAnchorCoverSettled={notifyCoverSettled}
+            onAnchorCoverVisible={requestCover}
             state={compatibility}
           />
 
@@ -849,6 +833,7 @@ function WorkDetailContent({ catalog, work }: Readonly<{ catalog: CatalogV1; wor
                 coverUrl={coverUrls.get(related.id)}
                 creators={related.creators}
                 key={related.id}
+                onCoverVisible={() => requestCover(related.id)}
                 presentation="cover-overlay"
                 title={related.title}
                 workId={related.id}
@@ -865,6 +850,7 @@ function WorkDetailContent({ catalog, work }: Readonly<{ catalog: CatalogV1; wor
                 coverUrl={coverUrls.get(related.id)}
                 creators={related.creators}
                 key={related.id}
+                onCoverVisible={() => requestCover(related.id)}
                 presentation="cover-overlay"
                 title={related.title}
                 workId={related.id}

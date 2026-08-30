@@ -16,6 +16,9 @@ export type CoverImageProps = Readonly<{
   className?: string;
   decorative?: boolean;
   variant?: "standard" | "hero";
+  fit?: "contain" | "cover";
+  matchSourceAspectRatio?: boolean;
+  onVisible?: () => void;
   onSettled?: () => void;
 }>;
 
@@ -23,6 +26,8 @@ type FailureState = Readonly<{
   primarySource: string;
   stage: "requested" | "fallback";
 }>;
+
+const COVER_FRAME_ASPECT_RATIO = 30 / 43;
 
 export function coverSourceForSize(source: string, size: CoverImageSize) {
   if (/^(?:blob|data):/iu.test(source)) {
@@ -48,7 +53,10 @@ export function CoverImage({
   priority = false,
   className,
   decorative = false,
+  fit = "contain",
+  matchSourceAspectRatio = false,
   variant = "standard",
+  onVisible,
   onSettled,
 }: CoverImageProps) {
   const normalizedCoverUrl = coverUrl?.trim() ?? "";
@@ -58,7 +66,16 @@ export function CoverImage({
   const fallbackSource = normalizedCoverUrl ? coverSourceForSize(normalizedCoverUrl, 200) : "";
   const [failure, setFailure] = useState<FailureState | null>(null);
   const [loadedSource, setLoadedSource] = useState<string | null>(null);
+  const [sourceAspectRatio, setSourceAspectRatio] = useState<{
+    source: string;
+    value: number;
+  } | null>(null);
   const settledSourceRef = useRef<string | null>(null);
+  const visibilityRootRef = useRef<HTMLElement | null>(null);
+  const visibilityReportedRef = useRef(false);
+  const setVisibilityRoot = useCallback((node: HTMLElement | null) => {
+    visibilityRootRef.current = node;
+  }, []);
   const failureStage = failure?.primarySource === requestedSource ? failure.stage : null;
   const requestedAndFallbackMatch = requestedSource === fallbackSource;
   const showPlaceholder =
@@ -67,6 +84,16 @@ export function CoverImage({
     (failureStage === "requested" && requestedAndFallbackMatch);
   const currentSource = failureStage === "requested" ? fallbackSource : requestedSource;
   const loaded = loadedSource === currentSource;
+  const activeSourceAspectRatio =
+    sourceAspectRatio?.source === currentSource ? sourceAspectRatio.value : undefined;
+  const frameAspectRatio =
+    fit === "contain" && matchSourceAspectRatio ? activeSourceAspectRatio : undefined;
+  const artworkStyle =
+    fit === "cover" || activeSourceAspectRatio === undefined
+      ? undefined
+      : activeSourceAspectRatio <= COVER_FRAME_ASPECT_RATIO
+        ? { aspectRatio: activeSourceAspectRatio, height: "100%", width: "auto" }
+        : { aspectRatio: activeSourceAspectRatio, height: "auto", width: "100%" };
   const creatorLine = coverStrings.creatorLine(creators);
   const notifySettled = useCallback(() => {
     if (onSettled === undefined || settledSourceRef.current === requestedSource) return;
@@ -78,10 +105,36 @@ export function CoverImage({
     if (showPlaceholder || loaded) notifySettled();
   }, [loaded, notifySettled, showPlaceholder]);
 
+  useEffect(() => {
+    const node = visibilityRootRef.current;
+    if (onVisible === undefined || node === null || visibilityReportedRef.current) return;
+
+    const notifyVisible = () => {
+      if (visibilityReportedRef.current) return;
+      visibilityReportedRef.current = true;
+      onVisible();
+    };
+    if (typeof IntersectionObserver === "undefined") {
+      notifyVisible();
+      return;
+    }
+
+    const observer = new IntersectionObserver((entries) => {
+      if (visibilityReportedRef.current || !entries.some((entry) => entry.isIntersecting)) {
+        return;
+      }
+      observer.disconnect();
+      notifyVisible();
+    });
+    observer.observe(node);
+    return () => observer.disconnect();
+  }, [onVisible]);
+
   if (showPlaceholder) {
     if (variant === "hero") {
       return (
         <div
+          ref={setVisibilityRoot}
           className={cn(
             "cover-image cover-image--hero relative isolate grid h-[40vh] max-h-[40vh] w-full place-items-center overflow-hidden rounded-[var(--radius-card)] border border-line/50 bg-surface-1",
             className,
@@ -115,6 +168,7 @@ export function CoverImage({
 
     return (
       <span
+        ref={setVisibilityRoot}
         aria-hidden={decorative || undefined}
         aria-label={decorative ? undefined : coverStrings.placeholderLabel(title, creatorLine)}
         className={cn(
@@ -145,6 +199,7 @@ export function CoverImage({
   if (variant === "hero") {
     return (
       <div
+        ref={setVisibilityRoot}
         className={cn(
           "cover-image cover-image--hero relative isolate grid h-[40vh] max-h-[40vh] w-full place-items-center overflow-hidden rounded-[var(--radius-card)] border border-line/50 bg-surface-1",
           className,
@@ -198,10 +253,12 @@ export function CoverImage({
 
   return (
     <span
+      ref={setVisibilityRoot}
       className={cn(
-        "cover-image relative isolate block w-full overflow-hidden rounded-[var(--radius-cover)] border border-line/50 bg-surface-1 aspect-[30/43]",
+        "cover-image relative isolate grid w-full place-items-center overflow-hidden rounded-[var(--radius-cover)] border border-line/50 bg-surface-1 aspect-[30/43]",
         className,
       )}
+      style={frameAspectRatio === undefined ? undefined : { aspectRatio: frameAspectRatio }}
     >
       {loaded ? null : (
         <span
@@ -209,27 +266,48 @@ export function CoverImage({
           className="cover-image__skeleton absolute inset-0 bg-line motion-safe:[animation:cover-skeleton-pulse_1.2s_ease-in-out_infinite_alternate] motion-reduce:opacity-65"
         />
       )}
-      <img
-        alt={decorative ? "" : coverStrings.alt(title)}
-        className="cover-image__image absolute inset-0 size-full object-contain"
-        data-loaded={loaded ? "true" : "false"}
-        decoding="async"
-        draggable={false}
-        fetchPriority={priority ? "high" : "auto"}
-        height={Math.round((requestedSize * 43) / 30)}
-        loading={priority ? "eager" : "lazy"}
-        onError={() => {
-          setFailure({
-            primarySource: requestedSource,
-            stage: failureStage === "requested" ? "fallback" : "requested",
-          });
-        }}
-        onLoad={() => {
-          setLoadedSource(currentSource);
-        }}
-        src={currentSource}
-        width={requestedSize}
-      />
+      <span
+        className={cn(
+          "cover-image__artwork relative z-[1] block max-h-full max-w-full overflow-hidden rounded-[var(--radius-cover)]",
+          (fit === "cover" || activeSourceAspectRatio === undefined) && "absolute inset-0",
+        )}
+        style={artworkStyle}
+      >
+        <img
+          alt={decorative ? "" : coverStrings.alt(title)}
+          className={cn(
+            "cover-image__image absolute inset-0 size-full rounded-[var(--radius-cover)]",
+            fit === "cover" ? "object-cover" : "object-contain",
+          )}
+          data-loaded={loaded ? "true" : "false"}
+          decoding="async"
+          draggable={false}
+          fetchPriority={priority ? "high" : "auto"}
+          height={Math.round((requestedSize * 43) / 30)}
+          loading={priority ? "eager" : "lazy"}
+          onError={() => {
+            setFailure({
+              primarySource: requestedSource,
+              stage: failureStage === "requested" ? "fallback" : "requested",
+            });
+          }}
+          onLoad={(event) => {
+            if (
+              fit === "contain" &&
+              event.currentTarget.naturalWidth > 0 &&
+              event.currentTarget.naturalHeight > 0
+            ) {
+              setSourceAspectRatio({
+                source: currentSource,
+                value: event.currentTarget.naturalWidth / event.currentTarget.naturalHeight,
+              });
+            }
+            setLoadedSource(currentSource);
+          }}
+          src={currentSource}
+          width={requestedSize}
+        />
+      </span>
     </span>
   );
 }

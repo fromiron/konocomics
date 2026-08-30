@@ -49,13 +49,14 @@ data/source/catalog.sqlite (S6 권한 원천) root: catalogVersion+전체 workId
    │  scripts/normalize-works.ts             ├→ landing: 소형 showcase projection
    │  scripts/validate-catalog.ts            ├→ route-scoped bundled Catalog: 온보딩·DNA·Library·Catalog 상세
    │  scripts/build-catalog.ts               └→ /recommendations: 같은 탭의 검증 완료 bundled Catalog 재사용,
-   │  scripts/build-catalog.ts                  없으면 content-addressed public Catalog fetch +
-   │  scripts/build-catalog.ts                  Vite hashed recommendation context fetch
+   │  scripts/build-catalog.ts                  없으면 versioned public Catalog + recommendation
+   │  scripts/build-catalog.ts                  context를 병렬 fetch
    ▼                                            strict zod+exact identity 확인 뒤
 data/generated/catalog-v1.json                  module Worker에 catalog+context를 mount당 1회 전달
    ├→ src/data/generated/catalog-v1.json        이후 입력: Dexie 스냅샷(프로필·기록)+adjustments+policies
-   └→ public/catalog/catalog-v1.<version>.json  Recommendation Engine (같은 순수 함수)
-   (세 Catalog artifact는 byte-identical)       출력: RankedRecommendation[] (contributions 포함)
+   ├→ public/catalog/catalog-v1.<version>.json  Recommendation Engine (같은 순수 함수)
+   └→ public/catalog/recommendation-context-v1.<version>.json
+   (Catalog 세 artifact는 byte-identical)       출력: RankedRecommendation[] (contributions 포함)
                                                 ▼
    ├→ src/data/generated/catalog-identity-v1.json
    └→ src/data/generated/landing-v1.json

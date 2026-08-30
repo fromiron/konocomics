@@ -104,6 +104,8 @@
   --radius-cover-selection: calc(var(--radius-cover) + 2px);
   --radius: var(--radius-card);
   --shadow-level-1: 0 4px 16px oklch(0 0 0 / 0.08);
+  --shadow-cover-featured: 0 8px 24px oklch(0 0 0 / 0.5);
+  --shadow-floating-action: 0 8px 8px oklch(0 0 0 / 0.3);
   --shadow-raised: var(--shadow-level-1);
   --surface-page: var(--canvas);
   --surface-raised: var(--surface-1);
@@ -114,6 +116,7 @@
   --motion-duration-press: 80ms;
   --motion-duration-feedback: 120ms;
   --motion-duration-page: 160ms;
+  --motion-duration-floating-action: 200ms;
   --motion-duration-value: 240ms;
   --motion-duration-reveal-step: 400ms;
   --motion-duration-cinematic: 640ms;
@@ -219,20 +222,12 @@ body {
   background-size: 8px 8px;
 }
 
-button,
-input,
-select,
-textarea {
-  color: inherit;
-  font: inherit;
-}
-
 button {
   cursor: pointer;
 }
 
-/* Unlayered so these beat the `font: inherit` reset above. Quiet actions
-   must not pick up body 16px, or they read as a chrome toolbar. */
+/* Unlayered so these beat the `@layer base` font inherit reset.
+   Quiet actions must not pick up body 16px, or they read as a chrome toolbar. */
 button.quiet-text-action {
   color: var(--text-muted);
   font-size: var(--font-size-12);
@@ -277,11 +272,6 @@ button.cover-save-toggle[aria-pressed="true"]:hover {
   background: var(--accent-hover);
 }
 
-a {
-  color: inherit;
-  text-decoration: none;
-}
-
 img,
 svg {
   display: block;
@@ -295,6 +285,19 @@ p {
 }
 
 @layer base {
+  button,
+  input,
+  select,
+  textarea {
+    color: inherit;
+    font: inherit;
+  }
+
+  a {
+    color: inherit;
+    text-decoration: none;
+  }
+
   h1,
   h2,
   h3 {
@@ -359,8 +362,12 @@ h1[tabindex="-1"]:focus {
   }
 }
 
-/* Overlay carousel: dissolve the peeking card into the canvas so a
-   hard clip at the track edge does not look like a broken layout. */
+/* Overlay carousel: keep cards aligned to the shell while the fade and
+   scroll viewport bleed into the outer gutter. */
+.media-shelf-overlay {
+  --media-shelf-edge-fade-width: var(--layout-page-padding);
+}
+
 .media-shelf-edge-fade {
   width: var(--media-shelf-edge-fade-width, var(--layout-page-padding));
 }
@@ -387,29 +394,118 @@ h1[tabindex="-1"]:focus {
   );
 }
 
-/* Featured recommendation card: cover dissolves into the info panel so
-   labelled actions sit on a readable seam, not on busy artwork. */
-.recommendation-featured-card__seam {
-  height: 62%;
+@media (min-width: 768px) and (hover: hover) and (pointer: fine) {
+  .media-shelf-overlay {
+    --media-shelf-edge-fade-width: clamp(
+      var(--layout-page-padding),
+      calc((100vw - var(--layout-width-media)) / 2 + var(--layout-page-padding) - var(--space-2)),
+      calc(var(--space-12) + var(--space-12))
+    );
+    margin-inline: calc(0px - var(--media-shelf-edge-fade-width));
+  }
+
+  .media-shelf-overlay > [data-media-shelf-track] {
+    padding-inline: var(--media-shelf-edge-fade-width);
+    scroll-padding-inline: var(--media-shelf-edge-fade-width);
+  }
+}
+
+/* Featured card: fixed Spotify-style frame; the inner information density changes. */
+.recommendation-featured-card {
   background: linear-gradient(
-    to top,
-    var(--surface-1) 0%,
-    var(--surface-1) 32%,
-    color-mix(in oklch, var(--surface-1) 82%, transparent) 58%,
-    color-mix(in oklch, var(--surface-1) 28%, transparent) 82%,
-    transparent 100%
+    180deg,
+    color-mix(in oklch, var(--accent) 16%, var(--surface-1)) 0%,
+    var(--surface-1) 72%
   );
 }
 
-/* Featured recommendation card: gently enlarge the cover on hover/focus (motion-safe only). */
-@media (prefers-reduced-motion: no-preference) {
-  .recommendation-featured-card .cover-image__image {
-    transition: transform var(--motion-duration-cinematic) var(--motion-ease-signature);
+.recommendation-featured-card__actions {
+  pointer-events: auto;
+}
+
+@media (hover: hover) and (pointer: fine) {
+  .recommendation-featured-card__actions {
+    height: 0;
+    min-height: 0;
+    margin-top: 0;
+    overflow: hidden;
+    opacity: 0;
+    pointer-events: none;
+    visibility: hidden;
   }
 
-  .recommendation-featured-card:hover .cover-image__image,
-  .recommendation-featured-card:focus-within .cover-image__image {
-    transform: scale(1.06);
+  .recommendation-featured-card__reason {
+    -webkit-line-clamp: 1;
+    line-clamp: 1;
+    max-height: 1.45em;
+  }
+
+  .recommendation-featured-card:hover .recommendation-featured-card__actions,
+  .recommendation-featured-card:focus-within .recommendation-featured-card__actions {
+    height: var(--control-min-size);
+    min-height: var(--control-min-size);
+    margin-top: var(--space-2);
+    overflow: visible;
+    opacity: 1;
+    pointer-events: auto;
+    visibility: visible;
+  }
+
+  .recommendation-featured-card:hover .recommendation-featured-card__reason,
+  .recommendation-featured-card:focus-within .recommendation-featured-card__reason {
+    -webkit-line-clamp: 3;
+    line-clamp: 3;
+    max-height: 4.35em;
+  }
+}
+
+@media (prefers-reduced-motion: no-preference) {
+  .recommendation-featured-card__reason {
+    transition: max-height var(--motion-duration-reveal-step) var(--motion-ease-direct);
+  }
+
+  .recommendation-featured-card__actions {
+    transition:
+      height var(--motion-duration-reveal-step) var(--motion-ease-direct),
+      min-height var(--motion-duration-reveal-step) var(--motion-ease-direct),
+      margin var(--motion-duration-reveal-step) var(--motion-ease-direct),
+      opacity var(--motion-duration-reveal-step) var(--motion-ease-direct),
+      visibility 0s linear var(--motion-duration-reveal-step);
+  }
+
+  .recommendation-featured-card:hover .recommendation-featured-card__actions,
+  .recommendation-featured-card:focus-within .recommendation-featured-card__actions {
+    transition:
+      height var(--motion-duration-reveal-step) var(--motion-ease-direct),
+      min-height var(--motion-duration-reveal-step) var(--motion-ease-direct),
+      margin var(--motion-duration-reveal-step) var(--motion-ease-direct),
+      opacity var(--motion-duration-reveal-step) var(--motion-ease-direct),
+      visibility 0s;
+  }
+
+  .onboarding-collection-panel {
+    animation: collection-panel-enter var(--motion-duration-value) var(--motion-ease-direct) both;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .recommendation-featured-card__reason,
+  .recommendation-featured-card__actions,
+  .recommendation-featured-card:hover .recommendation-featured-card__actions,
+  .recommendation-featured-card:focus-within .recommendation-featured-card__actions {
+    transition: none;
+  }
+}
+
+@keyframes collection-panel-enter {
+  from {
+    opacity: 0;
+    transform: translateY(8px);
+  }
+
+  to {
+    opacity: 1;
+    transform: none;
   }
 }
 

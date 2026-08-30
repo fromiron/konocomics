@@ -60,12 +60,11 @@ export function LandingFlow({
       work.isbn === undefined ? [] : [{ workId: work.id, isbn: work.isbn }],
     );
   }, [editorialRankingWorks, heroWorks]);
-  const { coverUrls, notifyCoverSettled } = useRecommendationCovers({
+  const { coverUrls, requestCover } = useRecommendationCovers({
     targets: coverTargets,
     getProviderCache,
     saveProviderCache: skipProviderCacheWrite,
   });
-  const firstCoverTarget = coverTargets[0];
   const heroWork = heroWorks[0];
   const heroCoverSource = heroWork === undefined ? null : coverUrls.get(heroWork.id);
   const heroCoverUrl = heroCoverSource ? coverSourceForSize(heroCoverSource, 600) : null;
@@ -87,19 +86,27 @@ export function LandingFlow({
       <HomeHero
         backdropUrl={heroCoverUrl}
         coverUrls={coverUrls}
-        onFirstCoverSettled={
-          firstCoverTarget === undefined || !coverUrls.has(firstCoverTarget.workId)
-            ? undefined
-            : () => notifyCoverSettled(firstCoverTarget)
-        }
+        onCoverVisible={requestCover}
         staticLogo={showIntroduction}
         works={heroWorks}
       />
 
       <div className="mx-auto grid w-full max-w-[var(--layout-width-media)] gap-[var(--space-section)] px-[var(--layout-page-padding)] py-[var(--space-section)]">
-        <HomeShowcaseShelf coverUrls={coverUrls} works={showcaseWorks} />
-        <HomeRankingShelf coverUrls={coverUrls} works={editorialRankingWorks} />
-        <HomeDiscoveryShelf coverUrls={coverUrls} works={discoveryWorks} />
+        <HomeShowcaseShelf
+          coverUrls={coverUrls}
+          onCoverVisible={requestCover}
+          works={showcaseWorks}
+        />
+        <HomeRankingShelf
+          coverUrls={coverUrls}
+          onCoverVisible={requestCover}
+          works={editorialRankingWorks}
+        />
+        <HomeDiscoveryShelf
+          coverUrls={coverUrls}
+          onCoverVisible={requestCover}
+          works={discoveryWorks}
+        />
         <HomeHowItWorks />
       </div>
     </main>

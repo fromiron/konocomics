@@ -30,6 +30,7 @@ TasteFlow
   DnaTopFactors
   DnaRadarChart
   EvidenceWorkShelf
+  ConfidenceCoachBanner (general-entry normal only; /onboarding)
   AdjustmentEditor
     AdjustmentCategorySummary × 5
     AdjustmentCategoryDetails × 1 open
@@ -56,7 +57,7 @@ TasteFlow
 ## 구현 단계
 
 1. 기존 DNA summary output snapshot test 고정
-2. top factors와 qualitative confidence를 hero 영역으로 이동
+2. top factors와 qualitative confidence를 hero 영역으로 이동한다. mobile `<768` 상위 취향은 3열·가로 snap이 아니라 순위 1열 행(레이블 14px 최대 2줄, 강도 16px nowrap, 근거 제목 1–2줄)이고, `>=768`만 기존 3열 카드와 28px 강도를 유지한다. Reveal A는 행 단위다.
 3. radar component 구현 + accessible text alternative
 4. representative anchor works를 MediaShelf로 표시
 5. workspace를 「おすすめを調整」로 명명하고 분석값은 불변이며 설정만 추천에 반영된다는 설명을 제공한다. 5개 범주의 compact summary row를 먼저 표시하고 명시적인 「詳細設定」 disclosure로 한 범주의 상세만 연다. 장르는 분석 전용 desktop 2열/mobile 1열 meter grid를 사용하고 adjustment control을 추가하지 않는다. 나머지 네 범주의 desktop 상세은 `分析した好み` / `おすすめへの反映` 열과 divider로 분석/설정을 분리하고, mobile은 각 FactorBar 아래 visible 반영 label을 둔다. 기존 5단 radiogroup은 반복 segmented box 대신 unboxed marker + label 행으로 표시한다. `除外`는 구분선 뒤에 두고 선택될 때만 warning token을 사용한다.
@@ -70,6 +71,7 @@ TasteFlow
 - 존재하지 않는 자동학습 on/off 설정 추가 금지
 - 가상 insight 문구를 생성하지 않고 existing lexicon/template 사용
 - 추천 preview는 설명 가능한 실제 result만 표시
+- confidence coaching banner는 일반 진입의 기존 정성 level normal에서만 근거 Shelf 뒤에 두고 `/onboarding`으로 연결한다. 최초 reveal과 high에서는 숨기고 최근 feedback의 동일 목적 링크를 중복하지 않는다. 현재 profile guard에서 low는 도달 불가능하므로 별도 UI state를 만들지 않는다
 
 ## 테스트
 

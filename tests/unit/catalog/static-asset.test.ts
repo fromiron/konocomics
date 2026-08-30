@@ -4,9 +4,15 @@ import { resolve } from "node:path";
 import { describe, expect, it } from "vitest";
 
 import catalogJson from "@/data/generated/catalog-v1.json";
+import recommendationContextJson from "@/data/generated/recommendation-context-v1.json";
 import { catalogV1Schema } from "@/domain/catalog/schema";
 import { validateCatalog } from "@/domain/catalog/validate";
-import { catalogAssetFilename, catalogAssetUrl } from "@/lib/catalog-asset";
+import {
+  catalogAssetFilename,
+  catalogAssetUrl,
+  recommendationContextAssetFilename,
+  recommendationContextAssetUrl,
+} from "@/lib/catalog-asset";
 
 const bundledBytes = readFileSync(resolve(process.cwd(), "src/data/generated/catalog-v1.json"));
 const dataBytes = readFileSync(resolve(process.cwd(), "data/generated/catalog-v1.json"));
@@ -18,6 +24,12 @@ const assetPath = resolve(
 );
 const assetBytes = readFileSync(assetPath);
 const assetCatalog = catalogV1Schema.parse(JSON.parse(assetBytes.toString("utf8")));
+const contextAssetPath = resolve(
+  process.cwd(),
+  "public/catalog",
+  recommendationContextAssetFilename(bundledCatalog.catalogVersion),
+);
+const contextAssetBytes = readFileSync(contextAssetPath);
 const viteConfigSource = readFileSync(resolve(process.cwd(), "vite.config.ts"), "utf8");
 
 describe("versioned static Catalog asset", () => {
@@ -29,12 +41,23 @@ describe("versioned static Catalog asset", () => {
     expect(catalogAssetUrl(bundledCatalog.catalogVersion)).toBe(
       `/catalog/catalog-v1.${bundledCatalog.catalogVersion}.json`,
     );
+    expect(
+      contextAssetBytes.equals(
+        Buffer.from(`${JSON.stringify(recommendationContextJson, null, 2)}\n`),
+      ),
+    ).toBe(true);
+    expect(recommendationContextAssetUrl(bundledCatalog.catalogVersion)).toBe(
+      `/catalog/recommendation-context-v1.${bundledCatalog.catalogVersion}.json`,
+    );
   });
 
   it("applies immutable Nitro caching only to the exact current content-addressed asset", () => {
     expect(viteConfigSource).toMatch(
       /\[catalogAssetUrl\(catalogJson\.catalogVersion\)\]:\s*\{\s*headers:\s*\{\s*"cache-control":\s*"public, max-age=31536000, immutable"\s*\}/u,
     );
-    expect(viteConfigSource.match(/"cache-control"/gu)).toHaveLength(1);
+    expect(viteConfigSource).toMatch(
+      /\[recommendationContextAssetUrl\(catalogJson\.catalogVersion\)\]:\s*\{\s*headers:\s*\{\s*"cache-control":\s*"public, max-age=31536000, immutable"\s*\}/u,
+    );
+    expect(viteConfigSource.match(/"cache-control"/gu)).toHaveLength(2);
   });
 });

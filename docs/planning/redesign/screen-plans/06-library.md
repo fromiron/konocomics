@@ -38,15 +38,14 @@
 ```text
 LibraryFlow
   LibraryHeader
-  StateCountSummary
-  LibraryToolbar
+  LibraryToolbar (mobile wrapping tablist with counts; desktop count matrix + label tabs)
   RecentUpdatedShelf
   ReadingShelf
   PlannedShelf
   CompletedShelf
   FavoriteShelf
   RecentActivityPanel
-  LibraryTools
+  LibraryDataBanner (populated only; /settings?section=data)
   ModalSurface
     LibraryRecordEditor / WorkSearchSheet
   SiteFooter
@@ -56,6 +55,8 @@ LibraryFlow
 
 - rows를 readingState별로 group하여 계산
 - 전체 수는 Catalog + external record의 union
+- mobile `<768`은 별도 6칸 matrix를 두지 않고 `すべて`+5 readingState wrapping tablist에 count를 붙인다. `role="tablist"` / `?state=`는 유지하고 favorite는 탭이 아니라 Shelf다.
+- desktop은 읽기 전용 6칸 matrix를 유지하고 탭에는 count를 반복하지 않는다
 - 통계는 count와 progress 존재 여부까지만
 - `updatedAt`으로 recent activity 구성
 
@@ -70,13 +71,13 @@ LibraryFlow
 ## 구현 단계
 
 1. current union/sort/state filtering tests 고정
-2. flat tab list를 summary + grouped shelves로 재구성
+2. mobile에서 잘리는 상태 탭을 wrapping tablist(건수 포함)로 합치고, desktop count matrix는 유지한다
 3. tab/filter는 전체 Shelf의 표시 필터로 유지
 4. progress component 추가
 5. recent activity는 updatedAt 기반으로 구성
 6. favorite shelf 추가
 7. add/search/editor modal 재사용
-8. export/import는 Settings 링크로 연결하고 중복 구현하지 않음
+8. export/import는 Settings 링크로 연결하고 중복 구현하지 않음. populated 화면의 tools 카드는 data-portability half-shell banner로 대체한다
 9. sparse/empty/degraded UI 구현
 
 ## 이미지에서 제거/교정

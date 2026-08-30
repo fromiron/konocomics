@@ -223,14 +223,14 @@ function WorkPreviewList({
   coverUrls,
   ids,
   label,
-  onCoverSettled,
+  onCoverVisible,
   worksById,
 }: Readonly<{
   ids: readonly string[];
   label: string;
   worksById: ReadonlyMap<string, Work>;
   coverUrls: ReadonlyMap<string, string | null>;
-  onCoverSettled(workId: string): void;
+  onCoverVisible(workId: string): void;
 }>) {
   return (
     <section
@@ -265,7 +265,7 @@ function WorkPreviewList({
                       coverUrl={coverUrls.get(workId)}
                       creators={work.creators}
                       decorative
-                      onSettled={() => onCoverSettled(workId)}
+                      onVisible={() => onCoverVisible(workId)}
                       requestedSize={200}
                       title={work.title}
                     />
@@ -289,7 +289,7 @@ export function RecommendationDiffPreview({
   before,
   className,
   coverUrls,
-  onCoverSettled,
+  onCoverVisible,
   worksById,
 }: Readonly<{
   after: readonly string[] | null;
@@ -297,7 +297,7 @@ export function RecommendationDiffPreview({
   className?: string;
   worksById: ReadonlyMap<string, Work>;
   coverUrls: ReadonlyMap<string, string | null>;
-  onCoverSettled(workId: string): void;
+  onCoverVisible(workId: string): void;
 }>) {
   const available = before !== null && after !== null;
   const unchanged =
@@ -331,14 +331,14 @@ export function RecommendationDiffPreview({
               coverUrls={coverUrls}
               ids={before}
               label={tasteStrings.previewBefore}
-              onCoverSettled={onCoverSettled}
+              onCoverVisible={onCoverVisible}
               worksById={worksById}
             />
             <WorkPreviewList
               coverUrls={coverUrls}
               ids={after}
               label={tasteStrings.previewAfter}
-              onCoverSettled={onCoverSettled}
+              onCoverVisible={onCoverVisible}
               worksById={worksById}
             />
           </div>

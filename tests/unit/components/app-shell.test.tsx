@@ -136,5 +136,30 @@ describe("AppShell recommendation guard", () => {
     ).toBeTruthy();
     expect(screen.getByRole("navigation", { name: navigationStrings.desktopLabel })).toBeTruthy();
     expect(screen.getByRole("navigation", { name: navigationStrings.mobileLabel })).toBeTruthy();
+    const footer = document.querySelector("footer");
+    expect(footer).not.toBeNull();
+    expect(
+      Array.from(footer?.querySelectorAll("a[href='/settings']") ?? []).some((link) =>
+        link.className.includes("md:hidden"),
+      ),
+    ).toBe(false);
+    for (const nav of footer?.querySelectorAll("nav") ?? []) {
+      expect(nav.className).toContain("hidden");
+      expect(nav.className).toContain("md:block");
+    }
+  });
+
+  it("adds the compact settings link only on immersive paths", async () => {
+    testState.pathname = "/";
+
+    renderShell();
+
+    expect(await screen.findByText("recommendations-flow")).toBeTruthy();
+    const footer = document.querySelector("footer");
+    expect(
+      Array.from(footer?.querySelectorAll("a[href='/settings']") ?? []).some((link) =>
+        link.className.includes("md:hidden"),
+      ),
+    ).toBe(true);
   });
 });

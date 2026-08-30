@@ -175,7 +175,7 @@ describe("recommendation cover resolver", () => {
     expect(saveProviderCache).not.toHaveBeenCalled();
   });
 
-  it("starts the first metadata with three hedged resolutions and caps total concurrency at four", async () => {
+  it("starts only the first metadata, then caps visible requests at four", async () => {
     const caches = new Map(
       targets.map((target) => [target.isbn, deferred<ProviderCacheRecord | null>()]),
     );
@@ -194,15 +194,20 @@ describe("recommendation cover resolver", () => {
       useRecommendationCovers({ targets: visibleTargets, getProviderCache, saveProviderCache }),
     );
 
-    await waitFor(() => expect(getProviderCache).toHaveBeenCalledTimes(4));
-    expect(getProviderCache.mock.calls.map(([isbn]) => isbn)).toEqual(
-      visibleTargets.slice(0, 4).map((target) => target.isbn),
-    );
+    await waitFor(() => expect(getProviderCache).toHaveBeenCalledOnce());
+    expect(getProviderCache).toHaveBeenCalledWith(visibleTargets[0]!.isbn);
     expect(result.current.coverUrls.size).toBe(0);
+
+    act(() => {
+      visibleTargets.slice(1).forEach((target) => result.current.requestCover(target.workId));
+    });
+    await waitFor(() => expect(getProviderCache).toHaveBeenCalledTimes(4));
     expect(maximumActive).toBe(4);
 
     const outOfOrderTarget = visibleTargets[2]!;
-    act(() => caches.get(outOfOrderTarget.isbn)!.resolve(cacheFor(outOfOrderTarget)));
+    act(() =>
+      caches.get(outOfOrderTarget.isbn)!.resolve(cacheFor(outOfOrderTarget, { image: false })),
+    );
     await waitFor(() => expect(getProviderCache).toHaveBeenCalledTimes(5));
     await waitFor(() => expect(result.current.coverUrls.has(outOfOrderTarget.workId)).toBe(true));
     expect(result.current.coverUrls.has(visibleTargets[0]!.workId)).toBe(false);
@@ -224,6 +229,9 @@ describe("recommendation cover resolver", () => {
     });
     await waitFor(() => expect(result.current.coverUrls.size).toBe(visibleTargets.length));
     expect(maximumActive).toBe(4);
+    expect(getProviderCache).toHaveBeenCalledTimes(visibleTargets.length);
+    act(() => result.current.requestCover(outOfOrderTarget.workId));
+    expect(getProviderCache).toHaveBeenCalledTimes(visibleTargets.length);
   });
 
   it("retains survivor URLs and resolves only a newly backfilled work", async () => {
@@ -242,8 +250,10 @@ describe("recommendation cover resolver", () => {
         }),
       { initialProps: { visibleTargets: initial } },
     );
+    act(() => result.current.requestCover(initial[1]!.workId));
     await waitFor(() => expect(result.current.coverUrls.size).toBe(2));
     const survivorUrl = result.current.coverUrls.get(initial[1]!.workId);
+    act(() => result.current.requestCover(targets[2]!.workId));
     getProviderCache.mockClear();
 
     rerender({ visibleTargets: [initial[1]!, targets[2]!] });
@@ -275,6 +285,9 @@ describe("recommendation cover resolver", () => {
         }),
       { initialProps: { visibleTargets: initial } },
     );
+    act(() => {
+      initial.slice(1).forEach((target) => result.current.requestCover(target.workId));
+    });
     await waitFor(() => expect(getProviderCache).toHaveBeenCalledTimes(4));
     expect(getProviderCache).not.toHaveBeenCalledWith(initial[4]!.isbn);
 

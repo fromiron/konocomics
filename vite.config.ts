@@ -5,7 +5,7 @@ import { nitro } from "nitro/vite";
 import { defineConfig } from "vite";
 
 import catalogJson from "./src/data/generated/catalog-v1.json" with { type: "json" };
-import { catalogAssetUrl } from "./src/lib/catalog-asset.ts";
+import { catalogAssetUrl, recommendationContextAssetUrl } from "./src/lib/catalog-asset.ts";
 
 export const prerenderPaths = [
   "/",
@@ -36,9 +36,12 @@ export default defineConfig({
         [catalogAssetUrl(catalogJson.catalogVersion)]: {
           headers: { "cache-control": "public, max-age=31536000, immutable" },
         },
+        [recommendationContextAssetUrl(catalogJson.catalogVersion)]: {
+          headers: { "cache-control": "public, max-age=31536000, immutable" },
+        },
       },
     }),
   ],
   resolve: { tsconfigPaths: true },
-  server: { port: 3000 },
+  server: { port: 3030, strictPort: true },
 });

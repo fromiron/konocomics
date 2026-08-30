@@ -330,7 +330,6 @@ export const landingStrings = {
   footer: {
     credit: "Supported by Rakuten Developers",
     storage: "データはこのブラウザにだけ保存されます。",
-    settings: "設定・データ管理",
   },
 } as const;
 
@@ -451,6 +450,9 @@ export const onboardingStrings = {
     featuredHeading: "選びやすい作品",
     noFilteredWorks: "この条件で選べる作品はありません。条件を変えてください。",
     collectionsHeading: "コレクションから探す",
+    showMore: "もっと見る",
+    collectionVisibleCount: (count: number) => `${String(count)}件表示`,
+    collectionEmpty: "このコレクションで選べる作品はありません。",
     collections: {
       momentum: {
         title: "勢いのある物語",
@@ -639,6 +641,11 @@ export const tasteStrings = {
   feedbackWithReason: (status: string, reason: string) => `${status} · ${reason}`,
   addWorks: "作品を追加して精度を上げる",
   recommendations: "おすすめを見る",
+  coach: {
+    heading: "Manga DNAを、もう少し鮮明に。",
+    description: "好きな作品を追加すると、好みの輪郭が深まります。",
+    action: "作品を追加",
+  },
 } as const;
 
 export const recommendationStrings = {
@@ -697,6 +704,7 @@ export const recommendationStrings = {
   },
   quickPreview: {
     open: (title: string) => `「${title}」をクイック表示`,
+    openLabel: "クイック表示",
     description: "おすすめ理由と読書状態を、詳細へ移動せずに確認できます。",
     details: "作品詳細を見る",
   },
@@ -1042,6 +1050,7 @@ export const libraryStrings = {
     dropped: "途中でやめた",
     hidden: "非表示",
   },
+  tabWithCount: (label: string, count: number) => `${label}、${String(count)}作品`,
   listLabel: (state: string) => `${state}作品`,
   summary: {
     heading: "読書状態の件数",
@@ -1066,8 +1075,8 @@ export const libraryStrings = {
     description: "感想を「最高」にした作品です。",
   },
   tools: {
-    heading: "ライブラリ管理",
-    description: "エクスポート、インポート、全削除は設定で管理します。",
+    heading: "本棚を、いつでも持ち運ぶ。",
+    description: "エクスポートとインポートは、設定からローカルに管理できます。",
     openSettings: "データ設定を開く",
   },
   progress: (volume: number | undefined, chapter: number | undefined) =>

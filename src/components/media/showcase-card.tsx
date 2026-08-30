@@ -1,5 +1,5 @@
 import { Link } from "@tanstack/react-router";
-import type { ReactNode } from "react";
+import type { FocusEventHandler, ReactNode } from "react";
 
 import { CoverImage } from "@/components/cover/CoverImage";
 import { coverStrings, mediaStrings } from "@/lib/strings";
@@ -15,10 +15,11 @@ type ShowcaseCardProps = Readonly<{
   featured?: boolean;
   priority?: boolean;
   className?: string;
+  onCoverVisible?: () => void;
   onPointerEnter?: () => void;
   onPointerLeave?: () => void;
   onPointerCancel?: () => void;
-  onFocus?: () => void;
+  onFocus?: FocusEventHandler<HTMLElement>;
 }>;
 
 export function ShowcaseCard({
@@ -27,6 +28,7 @@ export function ShowcaseCard({
   creators,
   featured = false,
   metadata,
+  onCoverVisible,
   onFocus,
   onPointerCancel,
   onPointerEnter,
@@ -39,7 +41,7 @@ export function ShowcaseCard({
   return (
     <article
       className={cn(
-        "group/showcase-card relative isolate w-[calc((100vw-(var(--layout-page-padding)*2)-(var(--space-content-loose)*2))/2.6)] shrink-0 snap-start",
+        "group/showcase-card relative isolate w-[calc((100vw-(var(--layout-page-padding)*2)-(var(--space-content-loose)*2))/2.6)] shrink-0 snap-start md:transition-[width] md:duration-[var(--motion-duration-value)] md:ease-[var(--motion-ease-value)] motion-reduce:transition-none",
         featured ? "md:w-56" : "md:w-44",
         className,
       )}
@@ -58,9 +60,10 @@ export function ShowcaseCard({
         to="/works/$workId"
       >
         <CoverImage
-          className="w-full transition-transform duration-[var(--motion-duration-value)] ease-[var(--motion-ease-direct)] motion-reduce:transition-none [@media(hover:hover)_and_(pointer:fine)]:group-hover/showcase:scale-[1.03]"
+          className="w-full motion-safe:transition-transform motion-safe:duration-[var(--motion-duration-value)] motion-safe:ease-[var(--motion-ease-direct)] motion-safe:[@media(hover:hover)_and_(pointer:fine)]:group-hover/showcase:scale-[1.03]"
           coverUrl={coverUrl}
           creators={creators}
+          onVisible={onCoverVisible}
           priority={priority}
           requestedSize={400}
           title={title}

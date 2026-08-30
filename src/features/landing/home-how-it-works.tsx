@@ -1,4 +1,3 @@
-import { Link } from "@tanstack/react-router";
 import { landingStrings } from "@/lib/strings";
 
 export function HomeHowItWorks() {
@@ -35,13 +34,6 @@ export function HomeHowItWorks() {
       </div>
       <div className="flex flex-wrap items-center justify-between gap-[var(--space-content)] border-t border-line pt-[var(--space-4)] text-[length:var(--text-caption-size)] text-text-muted">
         <p>{landingStrings.footer.storage}</p>
-        <Link
-          className="inline-flex min-h-[var(--control-min-size)] items-center font-bold text-text-strong underline-offset-4 hover:underline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-ring"
-          preload={false}
-          to="/settings"
-        >
-          {landingStrings.footer.settings}
-        </Link>
       </div>
     </section>
   );

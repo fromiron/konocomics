@@ -3,7 +3,7 @@ import { dirname, resolve } from "node:path";
 import { pathToFileURL } from "node:url";
 
 import { landingEditorialRankingIds } from "../src/data/landing-showcase";
-import { catalogAssetFilename } from "../src/lib/catalog-asset";
+import { catalogAssetFilename, recommendationContextAssetFilename } from "../src/lib/catalog-asset";
 import { assignJointVersion } from "./catalog/compile";
 import { runCatalogPipelineFromAuthority, runCatalogPipelineFromCsv } from "./catalog/pipeline";
 import { formatSourceIssue, hasErrors } from "./catalog/report";
@@ -94,6 +94,11 @@ export function buildCatalog(root = process.cwd(), sourceKind: "authority" | "cs
     "public/catalog",
     catalogAssetFilename(catalog.catalogVersion),
   );
+  const publicContextOutput = resolve(
+    canonicalRoot,
+    "public/catalog",
+    recommendationContextAssetFilename(catalog.catalogVersion),
+  );
 
   for (const validationIssue of issues) {
     console.log(formatSourceIssue(validationIssue));
@@ -106,6 +111,7 @@ export function buildCatalog(root = process.cwd(), sourceKind: "authority" | "cs
     ...catalogOutputs.map((output) => ({ output, value: catalog })),
     { output: publicCatalogOutput, value: catalog },
     ...contextOutputs.map((output) => ({ output, value: context })),
+    { output: publicContextOutput, value: context },
     {
       output: resolve(canonicalRoot, "data/generated/recommendation-profile-catalog-v1.json"),
       value: recommendationProjection.catalog,

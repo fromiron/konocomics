@@ -5,7 +5,6 @@ import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 
 import { createTestCatalog, createTestWork } from "../../helpers/catalog";
 import recommendationContextJson from "@/data/generated/recommendation-context-v1.json";
-import recommendationContextAssetUrl from "@/data/generated/recommendation-context-v1.json?url";
 import { catalogIdentityFromCatalog } from "@/features/catalog/catalog-identity";
 import { CatalogIdentityProvider, useCatalog } from "@/features/catalog/catalog-provider";
 import { StaticAssetCatalogProvider } from "@/features/catalog/static-asset-catalog-provider";
@@ -13,11 +12,16 @@ import {
   clearValidatedSessionCatalog,
   setValidatedSessionCatalog,
 } from "@/features/catalog/validated-catalog-cache";
-import { catalogAssetUrl } from "@/lib/catalog-asset";
+import { catalogAssetUrl, recommendationContextAssetUrl } from "@/lib/catalog-asset";
 import { catalogStrings } from "@/lib/strings";
 
 const catalog = createTestCatalog();
 const identity = catalogIdentityFromCatalog(catalog);
+const contextAssetUrl = recommendationContextAssetUrl(identity.catalogVersion);
+
+function isContextAsset(input: RequestInfo | URL): boolean {
+  return String(input).startsWith("/catalog/recommendation-context-v1.");
+}
 
 function recommendationContextFor(catalogVersion = identity.catalogVersion) {
   return {
@@ -73,9 +77,7 @@ describe("StaticAssetCatalogProvider", () => {
     const fetchMock = vi.mocked(fetch);
     fetchMock.mockImplementation((input) =>
       Promise.resolve(
-        String(input) === recommendationContextAssetUrl
-          ? responseWith(recommendationContextFor())
-          : responseWith(catalog),
+        isContextAsset(input) ? responseWith(recommendationContextFor()) : responseWith(catalog),
       ),
     );
 
@@ -88,7 +90,7 @@ describe("StaticAssetCatalogProvider", () => {
       cache: "force-cache",
       signal: expect.any(AbortSignal),
     });
-    expect(fetchMock).toHaveBeenCalledWith(recommendationContextAssetUrl, {
+    expect(fetchMock).toHaveBeenCalledWith(contextAssetUrl, {
       cache: "force-cache",
       signal: expect.any(AbortSignal),
     });
@@ -98,9 +100,7 @@ describe("StaticAssetCatalogProvider", () => {
     const fetchMock = vi.mocked(fetch);
     fetchMock.mockImplementation((input) =>
       Promise.resolve(
-        String(input) === recommendationContextAssetUrl
-          ? responseWith(recommendationContextFor())
-          : responseWith(catalog),
+        isContextAsset(input) ? responseWith(recommendationContextFor()) : responseWith(catalog),
       ),
     );
 
@@ -116,9 +116,7 @@ describe("StaticAssetCatalogProvider", () => {
         ([input]) => String(input) === catalogAssetUrl(identity.catalogVersion),
       ),
     ).toHaveLength(1);
-    expect(
-      fetchMock.mock.calls.filter(([input]) => String(input) === recommendationContextAssetUrl),
-    ).toHaveLength(2);
+    expect(fetchMock.mock.calls.filter(([input]) => isContextAsset(input))).toHaveLength(2);
   });
 
   it("bypasses a cached Catalog when the user retries", async () => {
@@ -126,7 +124,7 @@ describe("StaticAssetCatalogProvider", () => {
     const fetchMock = vi.mocked(fetch);
     let contextAttempt = 0;
     fetchMock.mockImplementation((input) => {
-      if (String(input) !== recommendationContextAssetUrl) {
+      if (!isContextAsset(input)) {
         return Promise.resolve(responseWith(catalog));
       }
       contextAttempt += 1;
@@ -150,7 +148,7 @@ describe("StaticAssetCatalogProvider", () => {
     const fetchMock = vi.mocked(fetch);
     let catalogAttempt = 0;
     fetchMock.mockImplementation((input) => {
-      if (String(input) === recommendationContextAssetUrl) {
+      if (isContextAsset(input)) {
         return Promise.resolve(responseWith(recommendationContextFor()));
       }
       catalogAttempt += 1;
@@ -180,7 +178,7 @@ describe("StaticAssetCatalogProvider", () => {
     const fetchMock = vi.mocked(fetch);
     fetchMock.mockImplementation((input) =>
       Promise.resolve(
-        String(input) === recommendationContextAssetUrl
+        isContextAsset(input)
           ? responseWith(recommendationContextFor())
           : responseWith({ ...catalog, catalogVersion: "v1-other" }),
       ),
@@ -197,9 +195,7 @@ describe("StaticAssetCatalogProvider", () => {
     const fetchMock = vi.mocked(fetch);
     fetchMock.mockImplementation((input) =>
       Promise.resolve(
-        String(input) === recommendationContextAssetUrl
-          ? responseWith(recommendationContextFor())
-          : responseWith(catalog),
+        isContextAsset(input) ? responseWith(recommendationContextFor()) : responseWith(catalog),
       ),
     );
 
@@ -229,11 +225,7 @@ describe("StaticAssetCatalogProvider", () => {
   ])("rejects %s without exposing children", async (_label, response) => {
     const fetchMock = vi.mocked(fetch);
     fetchMock.mockImplementation((input) =>
-      Promise.resolve(
-        String(input) === recommendationContextAssetUrl
-          ? responseWith(recommendationContextFor())
-          : response,
-      ),
+      Promise.resolve(isContextAsset(input) ? responseWith(recommendationContextFor()) : response),
     );
 
     render(<CatalogBoundary />);
@@ -248,9 +240,7 @@ describe("StaticAssetCatalogProvider", () => {
   ])("rejects recommendation context with %s", async (_label, response) => {
     const fetchMock = vi.mocked(fetch);
     fetchMock.mockImplementation((input) =>
-      Promise.resolve(
-        String(input) === recommendationContextAssetUrl ? response : responseWith(catalog),
-      ),
+      Promise.resolve(isContextAsset(input) ? response : responseWith(catalog)),
     );
 
     render(<CatalogBoundary />);
@@ -274,7 +264,7 @@ describe("StaticAssetCatalogProvider", () => {
     let catalogAttempt = 0;
     let contextAttempt = 0;
     fetchMock.mockImplementation((input, init) => {
-      if (String(input) === recommendationContextAssetUrl) {
+      if (isContextAsset(input)) {
         contextAttempt += 1;
         return Promise.resolve(
           responseWith(

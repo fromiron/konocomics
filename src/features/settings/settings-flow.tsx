@@ -170,7 +170,7 @@ export function SettingsFlow({
         ) : null}
 
         {activeSection === undefined ? (
-          <div className="grid gap-[var(--space-8)] md:gap-[var(--space-10)]">
+          <div className="grid gap-[var(--space-section)] md:gap-[var(--space-section-large)]">
             {policySettingsPanel}
             <div className="grid gap-[var(--space-8)] md:grid-cols-2 md:items-start md:gap-[var(--space-6)]">
               {dnaPanel}

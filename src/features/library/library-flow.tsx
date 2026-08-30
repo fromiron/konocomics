@@ -1,6 +1,6 @@
 "use client";
 
-import { useCallback, useEffect, useMemo } from "react";
+import { useCallback, useMemo } from "react";
 
 import type { ExternalWorkId } from "@/domain/catalog/external-work";
 import type { Work } from "@/domain/catalog/types";
@@ -61,21 +61,15 @@ export function LibraryFlow({
         catalog,
         [...(userWorks ?? [])]
           .sort((left, right) => Date.parse(right.updatedAt) - Date.parse(left.updatedAt))
-          .slice(0, 12)
           .map((record) => record.workId),
       ),
     [catalog, userWorks],
   );
-  const { coverUrls, notifyCoverSettled } = useRecommendationCovers({
+  const { coverUrls, requestCover } = useRecommendationCovers({
     targets: coverTargets,
     getProviderCache,
     saveProviderCache,
   });
-
-  useEffect(() => {
-    const first = coverTargets[0];
-    if (first !== undefined && coverUrls.has(first.workId)) notifyCoverSettled(first);
-  }, [coverTargets, coverUrls, notifyCoverSettled]);
 
   const addCatalogWork = useCallback(
     async (work: Work): Promise<LibraryAddOutcome> => {
@@ -124,10 +118,7 @@ export function LibraryFlow({
       catalog={catalog}
       catalogCoverUrls={coverUrls}
       externalWorks={externalWorks}
-      notifyCatalogCoverSettled={(workId) => {
-        const target = coverTargets.find((candidate) => candidate.workId === workId);
-        if (target !== undefined) notifyCoverSettled(target);
-      }}
+      onCatalogCoverVisible={requestCover}
       query={query}
       saveExternalUserRecord={saveExternalRecord}
       saveUserWork={saveCatalogRecord}

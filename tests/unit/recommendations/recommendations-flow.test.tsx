@@ -19,6 +19,7 @@ import { recommendationContextSchema } from "@/domain/recommendation/context-sch
 import type { RecommendationPlanEntry } from "@/domain/recommendation/types";
 import type { RecommendationMotionListProps } from "@/features/recommendations/recommendation-motion-list";
 import { RecommendationsFlow as RecommendationsFlowComponent } from "@/features/recommendations/recommendations-flow";
+import { onboardingStrings, recommendationStrings } from "@/lib/strings";
 
 const featuredItemSelector = "li[data-recommendation-work-id]:not([data-carousel-clone])";
 
@@ -128,31 +129,32 @@ vi.mock("@/domain/recommendation/ordering", () => ({
 }));
 
 vi.mock("@/components/cover/CoverImage", () => ({
-  coverSourceForSize: (coverUrl: string) => coverUrl,
+  coverSourceForSize: (source: string, size: number) =>
+    `${source}${source.includes("?") ? "&" : "?"}_ex=${String(size)}x${String(size)}`,
   CoverImage: function MockCoverImage({
     className,
     coverUrl,
-    onSettled,
+    onVisible,
     priority = false,
     title,
   }: {
     className?: string;
     coverUrl?: string | null;
-    onSettled?: () => void;
+    onVisible?: () => void;
     priority?: boolean;
     title: string;
   }) {
     testState.coverPriorities.push(priority);
     testState.coverUrls.push(coverUrl);
     useEffect(() => {
-      onSettled?.();
-    }, [onSettled]);
+      onVisible?.();
+    }, [onVisible]);
     return (
       <span
         aria-label={title}
         className={className}
         data-cover-priority={priority ? "high" : "normal"}
-        data-cover-settlement={onSettled === undefined ? "deferred" : "tracked"}
+        data-cover-visibility={onVisible === undefined ? "untracked" : "tracked"}
         data-cover-url={coverUrl ?? undefined}
         role="img"
       />
@@ -517,7 +519,18 @@ describe("RecommendationsFlow", () => {
       expect(element).toBeTruthy();
       return element as HTMLUListElement;
     });
-    expect(within(list).getAllByRole("listitem").slice(0, 10)).toHaveLength(10);
+    expect(list.querySelectorAll("[data-carousel-copy='1']")).toHaveLength(10);
+    expect(list.querySelectorAll("[data-carousel-clone]")).toHaveLength(20);
+    for (const clone of list.querySelectorAll("[data-carousel-clone]")) {
+      expect(clone.getAttribute("aria-hidden")).toBe("true");
+      expect(clone.hasAttribute("inert")).toBe(true);
+    }
+    expect(
+      list.querySelectorAll("[data-carousel-clone] [data-cover-visibility='tracked']"),
+    ).toHaveLength(0);
+    expect(
+      list.querySelectorAll("[data-carousel-clone] [data-cover-priority='high']"),
+    ).toHaveLength(0);
     expect(testState.buildPlan).not.toHaveBeenCalled();
     const cards = list.querySelectorAll(featuredItemSelector);
     expect(cards).toHaveLength(10);
@@ -542,7 +555,7 @@ describe("RecommendationsFlow", () => {
     expect(selectButton.getAttribute("href")).toBe(`/works/${selectedWorkId}`);
     expect(within(firstCard).getByText(/分析の確信度: ふつう/u)).toBeTruthy();
     expect(firstCard.querySelector("details")).toBeNull();
-    expect(within(firstCard).getAllByRole("button")).toHaveLength(3);
+    expect(within(firstCard).getAllByRole("button")).toHaveLength(4);
     expect(container.querySelector("[data-personalized-recommendation-detail]")).toBeNull();
     expect(firstCard.querySelector(".lucide-bookmark")?.getAttribute("aria-hidden")).toBe("true");
     const plannedAction = within(firstCard).getByRole("button", { name: "読みたい" });
@@ -550,8 +563,39 @@ describe("RecommendationsFlow", () => {
     expect(plannedAction.className).toContain("size-[var(--control-min-size)]");
     expect(plannedAction.getAttribute("aria-pressed")).toBe("false");
     expect(firstCard.querySelector("h3")?.className).toContain("line-clamp-2");
-    expect(firstCard.querySelector(".recommendation-featured-card__seam")).toBeTruthy();
+    expect(lead?.className).toContain("recommendation-featured-card__reason");
+    expect(lead?.className).toContain("line-clamp-3");
+    expect(selectButton.className).toContain("recommendation-featured-card__artwork");
+    expect(selectButton.className).toContain("w-fit");
+    expect(selectButton.querySelector('[role="img"]')?.className).toContain(
+      "shadow-[var(--shadow-cover-featured)]",
+    );
+    expect(article?.className).toContain("md:h-[28rem]");
+    expect(article?.className).toContain("overflow-hidden");
+    expect(article?.className).not.toContain("hover:border");
+    const title = firstCard.querySelector("h3");
+    const actionRail = firstCard.querySelector(".recommendation-featured-card__actions");
+    if (title === null || lead === null || lead === undefined || actionRail === null) {
+      throw new Error("Expected featured card title, reason, and action rail");
+    }
+    expect(title.className).toContain("md:h-[4.75rem]");
+    expect(title.compareDocumentPosition(selectButton) & Node.DOCUMENT_POSITION_FOLLOWING).toBe(
+      Node.DOCUMENT_POSITION_FOLLOWING,
+    );
+    expect(selectButton.compareDocumentPosition(lead) & Node.DOCUMENT_POSITION_FOLLOWING).toBe(
+      Node.DOCUMENT_POSITION_FOLLOWING,
+    );
+    expect(lead.compareDocumentPosition(actionRail) & Node.DOCUMENT_POSITION_FOLLOWING).toBe(
+      Node.DOCUMENT_POSITION_FOLLOWING,
+    );
+    expect(actionRail?.className).toContain("flex-nowrap");
+    expect(actionRail?.className).toContain("min-h-[var(--control-min-size)]");
+    expect(actionRail?.contains(plannedAction)).toBe(true);
+    expect(
+      actionRail?.contains(within(firstCard).getByRole("button", { name: /をクイック表示$/u })),
+    ).toBe(true);
     expect(firstCard.querySelector(".lucide-bookmark")?.getAttribute("class")).toContain("size-5");
+    expect(plannedAction.className).not.toContain("absolute");
     expect(within(firstCard).getByRole("button", { name: "読んだ" })).toBeTruthy();
     expect(within(firstCard).getByRole("button", { name: "興味なし" })).toBeTruthy();
     expect(container.querySelector("main")?.getAttribute("data-recommendation-input-hash")).toBe(
@@ -562,13 +606,22 @@ describe("RecommendationsFlow", () => {
     expect(container.querySelectorAll('[data-cover-priority="high"]')).toHaveLength(1);
     const ranking = screen.getByRole("list", { name: "あなたの Top 10" });
     expect(within(ranking).getAllByRole("link", { name: /^\d+位/u })).toHaveLength(10);
+    expect(within(ranking).queryByRole("button", { name: /クイック表示/u })).toBeNull();
     expect(within(list).queryAllByRole("link", { name: /^\d+位/u })).toHaveLength(0);
     const firstRankingCard = within(ranking).getAllByRole("listitem")[0];
-    expect(firstRankingCard?.className).toContain("w-[calc(var(--control-min-size)*1.75)]");
+    expect(firstRankingCard?.className).toContain("w-44");
     expect(firstRankingCard?.className).not.toContain("md:min-w-[4.5rem]");
     expect(firstRankingCard?.getAttribute("data-ranking-kind")).toBe("personalized-ranking");
     expect(firstRankingCard?.getAttribute("data-ranking-position")).toBe("1");
     expect(firstRankingCard?.querySelector('[data-ranking-editorial-position="true"]')).toBeNull();
+    const firstRankingWork = catalog.works.find((work) => work.id === selectedWorkId);
+    if (firstRankingWork === undefined) throw new Error("Missing first ranking work");
+    expect(firstRankingCard?.querySelector('[data-ranking-label="true"]')?.textContent).toBe(
+      firstRankingWork.genres
+        .slice(0, 3)
+        .map((genre) => onboardingStrings.step1.genreLabels[genre])
+        .join(" · "),
+    );
     const anchorCards = container.querySelectorAll('[data-recommendation-shelf-card="anchor"]');
     expect(anchorCards.length).toBeGreaterThan(0);
     for (const anchorCard of anchorCards) {
@@ -589,8 +642,8 @@ describe("RecommendationsFlow", () => {
     expect(
       cards[1]
         ?.querySelector("[data-recommendation-select] [role='img']")
-        ?.getAttribute("data-cover-settlement"),
-    ).toBe("deferred");
+        ?.getAttribute("data-cover-visibility"),
+    ).toBe("tracked");
     await waitFor(() => {
       expect(
         firstCard
@@ -600,11 +653,23 @@ describe("RecommendationsFlow", () => {
       expect(
         firstCard
           .querySelector("[data-recommendation-select] [role='img']")
-          ?.getAttribute("data-cover-settlement"),
+          ?.getAttribute("data-cover-visibility"),
       ).toBe("tracked");
       expect(firstCard.querySelector('[data-recommendation-backdrop="true"]')).toBeNull();
       expect(firstCard.querySelectorAll("[data-recommendation-select] [role='img']")).toHaveLength(
         1,
+      );
+      const backdrop = firstCard.querySelector<HTMLImageElement>(
+        "[data-recommendation-card-backdrop]",
+      );
+      expect(backdrop?.getAttribute("src")).toBe(
+        `https://thumbnail.image.rakuten.co.jp/${makePlan()[0]!.workId}.jpg?_ex=400x400`,
+      );
+      expect(backdrop?.getAttribute("alt")).toBe("");
+      expect(backdrop?.getAttribute("aria-hidden")).toBe("true");
+      expect(backdrop?.getAttribute("loading")).toBe("lazy");
+      expect(firstCard.querySelector("[data-recommendation-card-scrim]")?.className).toContain(
+        "bg-hero-scrim",
       );
     });
 
@@ -620,8 +685,11 @@ describe("RecommendationsFlow", () => {
     if (first === undefined) throw new Error("Missing caution fixture entry");
     testState.getRecommendationCache.mockResolvedValue(cacheRecord(plan));
 
+    const onPreviewClose = vi.fn();
     const onPreviewOpen = vi.fn();
-    const view = render(<RecommendationsFlow onPreviewOpen={onPreviewOpen} />);
+    const view = render(
+      <RecommendationsFlow onPreviewClose={onPreviewClose} onPreviewOpen={onPreviewOpen} />,
+    );
     const { container } = view;
     const firstCard = await waitFor(() => {
       const element = container.querySelector<HTMLElement>(
@@ -636,17 +704,25 @@ describe("RecommendationsFlow", () => {
     expect(firstCard.querySelectorAll("[data-contribution-summary]")).toHaveLength(1);
     expect(firstCard.querySelectorAll("[data-recommendation-select] [role='img']")).toHaveLength(1);
 
-    selectButton.focus();
-    expect(document.activeElement).toBe(selectButton);
-    vi.stubGlobal("matchMedia", (query: string) => ({
-      matches: query.includes("hover: none") || query.includes("pointer: coarse"),
-      addEventListener: () => undefined,
-      removeEventListener: () => undefined,
-    }));
-    fireEvent.click(selectButton);
+    const featuredTitle = firstCard.querySelector("h3")?.textContent ?? "";
+    const previewButton = within(firstCard).getByRole("button", {
+      name: `「${featuredTitle}」をクイック表示`,
+    });
+    expect(previewButton.getAttribute("aria-label")).toBe(`「${featuredTitle}」をクイック表示`);
+    expect(previewButton.textContent?.replaceAll(/\s+/gu, "")).toBe("");
+    expect(previewButton.textContent).not.toContain(featuredTitle);
+    expect(previewButton.className).toContain("size-[var(--control-min-size)]");
+    expect(previewButton.querySelector("svg")?.getAttribute("aria-hidden")).toBe("true");
+    previewButton.focus();
+    expect(document.activeElement).toBe(previewButton);
+    fireEvent.click(previewButton);
     expect(onPreviewOpen).toHaveBeenCalledWith(first.workId);
     view.rerender(
-      <RecommendationsFlow onPreviewOpen={onPreviewOpen} previewWorkId={first.workId} />,
+      <RecommendationsFlow
+        onPreviewClose={onPreviewClose}
+        onPreviewOpen={onPreviewOpen}
+        previewWorkId={first.workId}
+      />,
     );
     const dialog = await screen.findByRole("dialog");
     expect(within(dialog).getByRole("heading", { name: "おすすめ理由" })).toBeTruthy();
@@ -657,9 +733,11 @@ describe("RecommendationsFlow", () => {
     );
     expect(within(dialog).getAllByRole("button")).toHaveLength(4);
 
-    view.rerender(<RecommendationsFlow onPreviewOpen={onPreviewOpen} />);
+    view.rerender(
+      <RecommendationsFlow onPreviewClose={onPreviewClose} onPreviewOpen={onPreviewOpen} />,
+    );
     await waitFor(() => expect(screen.queryByRole("dialog")).toBeNull());
-    await waitFor(() => expect(document.activeElement).toBe(selectButton));
+    await waitFor(() => expect(document.activeElement).toBe(previewButton));
   });
 
   it("shows distinct supporting reasons without inventing a caution", async () => {
@@ -677,12 +755,7 @@ describe("RecommendationsFlow", () => {
     expect(within(dialog).queryByRole("heading", { name: "好みと異なる点" })).toBeNull();
   });
 
-  it("opens the requested touch preview and closes it back to its trigger", async () => {
-    vi.stubGlobal("matchMedia", (query: string) => ({
-      matches: query.includes("hover: none") || query.includes("pointer: coarse"),
-      addEventListener: () => undefined,
-      removeEventListener: () => undefined,
-    }));
+  it("opens the requested preview and closes it back to its trigger", async () => {
     const onPreviewClose = vi.fn();
     const onPreviewOpen = vi.fn();
     const view = render(
@@ -694,21 +767,18 @@ describe("RecommendationsFlow", () => {
       expect(elements.length).toBeGreaterThan(1);
       return elements;
     });
-    const secondSelect = cards[1]?.querySelector<HTMLAnchorElement>("[data-recommendation-select]");
-    const secondWorkId = cards[1]?.dataset.recommendationWorkId;
-    const secondTitle = cards[1]?.querySelector("h3")?.textContent;
-    if (
-      secondSelect === null ||
-      secondSelect === undefined ||
-      secondWorkId === undefined ||
-      secondTitle === null ||
-      secondTitle === undefined
-    ) {
+    const secondCard = cards[1];
+    const secondWorkId = secondCard?.dataset.recommendationWorkId;
+    const secondTitle = secondCard?.querySelector("h3")?.textContent;
+    if (secondCard === undefined || secondWorkId === undefined || secondTitle == null) {
       throw new Error("Missing recommendation preview control");
     }
+    const secondPreview = within(secondCard).getByRole("button", {
+      name: `「${secondTitle}」をクイック表示`,
+    });
 
-    secondSelect.focus();
-    fireEvent.click(secondSelect);
+    secondPreview.focus();
+    fireEvent.click(secondPreview);
     expect(onPreviewOpen).toHaveBeenCalledWith(secondWorkId);
     view.rerender(
       <RecommendationsFlow
@@ -725,7 +795,45 @@ describe("RecommendationsFlow", () => {
     view.rerender(
       <RecommendationsFlow onPreviewClose={onPreviewClose} onPreviewOpen={onPreviewOpen} />,
     );
-    await waitFor(() => expect(document.activeElement).toBe(secondSelect));
+    await waitFor(() => expect(document.activeElement).toBe(secondPreview));
+  });
+
+  it("uses the same animated removal path from quick preview", async () => {
+    const first = makePlan()[0];
+    if (first === undefined) throw new Error("Missing recommendation fixture");
+    const onPreviewClose = vi.fn();
+    const { container } = render(
+      <RecommendationsFlow onPreviewClose={onPreviewClose} previewWorkId={first.workId} />,
+    );
+    const preview = await screen.findByRole("dialog");
+    const completed = within(preview).getByRole("button", { name: "読んだ" });
+
+    fireEvent.pointerDown(completed);
+    fireEvent.click(completed);
+
+    await waitFor(() => expect(testState.loadMotionList).toHaveBeenCalledOnce());
+    await waitFor(() => {
+      expect(
+        container
+          .querySelector("ul.recommendations-list")
+          ?.getAttribute("data-recommendation-motion"),
+      ).toBe("enabled");
+    });
+    expect(onPreviewClose).toHaveBeenCalled();
+    expect(
+      container.querySelector(
+        `${featuredItemSelector}[data-recommendation-work-id='${first.workId}']`,
+      ),
+    ).toBeNull();
+
+    fireEvent.click(await screen.findByRole("button", { name: "スキップ" }));
+    await waitFor(() => {
+      expect(document.activeElement).toBe(
+        container.querySelector(
+          `${featuredItemSelector}[data-recommendation-work-id='${makePlan()[1]!.workId}'] article`,
+        ),
+      );
+    });
   });
 
   it("unlocks cover resolution from the first recommendation visible after genre filtering", async () => {
@@ -800,11 +908,52 @@ describe("RecommendationsFlow", () => {
     await waitFor(() => {
       expect(container.querySelectorAll(featuredItemSelector)).toHaveLength(9);
     });
-    expect(screen.getByRole("heading", { name: "おすすめ候補が少なくなっています" })).toBeTruthy();
+    const shortageHeading = screen.getByRole("heading", {
+      name: "おすすめ候補が少なくなっています",
+    });
+    expect(shortageHeading.closest("li")).toBeNull();
+    expect(
+      container
+        .querySelector('img[src="/media/recommendations-shortage-books.png"]')
+        ?.getAttribute("aria-hidden"),
+    ).toBe("true");
     expect(screen.getByRole("link", { name: "好きな作品を追加" }).getAttribute("href")).toBe(
       "/onboarding",
     );
     expect(screen.getByRole("link", { name: "好みを見直す" }).getAttribute("href")).toBe("/taste");
+  });
+
+  it("hides the shortage banner when a later calculation error keeps the previous short plan", async () => {
+    const shortPlan = makePlan().slice(0, 9);
+    vi.mocked(globalThis.crypto.subtle.digest)
+      .mockReset()
+      .mockResolvedValueOnce(new Uint8Array(32).buffer)
+      .mockResolvedValue(new Uint8Array(32).fill(1).buffer);
+    testState.getRecommendationCache.mockImplementation((inputHash: string) =>
+      inputHash === INPUT_HASH ? Promise.resolve(cacheRecord(shortPlan)) : Promise.resolve(null),
+    );
+    testState.buildPlan.mockImplementation(() => {
+      throw new Error("calculation failed");
+    });
+
+    const { container, rerender } = render(<RecommendationsFlow />);
+    await waitFor(() => {
+      expect(container.querySelectorAll(featuredItemSelector)).toHaveLength(9);
+    });
+    expect(screen.getByRole("heading", { name: "おすすめ候補が少なくなっています" })).toBeTruthy();
+
+    testState.userWorks = testState.userWorks.map((record, index) =>
+      index === 0 ? { ...record, reaction: "favorite" } : record,
+    );
+    rerender(<RecommendationsFlow />);
+    const update = screen.getByRole<HTMLButtonElement>("button", { name: "更新" });
+    await waitFor(() => expect(update.disabled).toBe(false));
+    fireEvent.click(update);
+
+    await waitFor(() => {
+      expect(screen.getByText("おすすめを計算できませんでした。")).toBeTruthy();
+    });
+    expect(screen.queryByRole("heading", { name: "おすすめ候補が少なくなっています" })).toBeNull();
   });
 
   it("treats a referentially invalid cache plan as a miss and replaces it", async () => {
@@ -819,12 +968,66 @@ describe("RecommendationsFlow", () => {
     await waitFor(() => {
       expect(container.querySelectorAll(featuredItemSelector)).toHaveLength(10);
     });
+    expect(screen.queryByRole("heading", { name: "おすすめ候補が少なくなっています" })).toBeNull();
     expect(testState.buildPlan).toHaveBeenCalledTimes(1);
     expect(testState.saveRecommendationCache).toHaveBeenCalledWith(
       expect.objectContaining({ inputHash: INPUT_HASH, plan: validPlan }),
     );
     expect(
       container.querySelector("[data-recommendation-work-id='missing-current-work']"),
+    ).toBeNull();
+  });
+
+  it("shows a full-width feedback banner with counts and a taste link when completed records exist", async () => {
+    const { container } = render(<RecommendationsFlow />);
+
+    await waitFor(() => {
+      expect(container.querySelectorAll(featuredItemSelector)).toHaveLength(10);
+    });
+    const heading = screen.getByRole("heading", {
+      name: recommendationStrings.feedbackSummary.heading,
+    });
+    const banner = heading.closest("section");
+    expect(banner).not.toBeNull();
+    expect(
+      container
+        .querySelector('img[src="/media/recommendations-feedback-manga-v4.png"]')
+        ?.getAttribute("aria-hidden"),
+    ).toBe("true");
+    expect(
+      within(banner as HTMLElement).getByText(recommendationStrings.actions.completed),
+    ).toBeTruthy();
+    expect(
+      within(banner as HTMLElement).getByText(recommendationStrings.actions.hidden),
+    ).toBeTruthy();
+    expect(
+      within(banner as HTMLElement).getByText(recommendationStrings.feedbackSummary.count(5)),
+    ).toBeTruthy();
+    expect(
+      within(banner as HTMLElement).getByText(recommendationStrings.feedbackSummary.count(0)),
+    ).toBeTruthy();
+    expect(
+      within(banner as HTMLElement)
+        .getByRole("link", { name: recommendationStrings.tasteSummary.link })
+        .getAttribute("href"),
+    ).toBe("/taste");
+  });
+
+  it("hides the feedback image banner when completed and hidden counts are both zero", async () => {
+    testState.userWorks = testState.userWorks.map((record) => ({
+      ...record,
+      readingState: "planned",
+    }));
+    const { container } = render(<RecommendationsFlow />);
+
+    await waitFor(() => {
+      expect(container.querySelectorAll(featuredItemSelector)).toHaveLength(10);
+    });
+    expect(
+      screen.queryByRole("heading", { name: recommendationStrings.feedbackSummary.heading }),
+    ).toBeNull();
+    expect(
+      container.querySelector('img[src="/media/recommendations-feedback-manga-v4.png"]'),
     ).toBeNull();
   });
 

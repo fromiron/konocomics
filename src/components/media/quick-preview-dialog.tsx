@@ -16,6 +16,7 @@ import { recommendationStrings } from "@/lib/strings";
 
 type QuickPreviewDialogProps = Readonly<{
   open: boolean;
+  opener: HTMLElement | null;
   explanation: TasteRecommendationExplanation | null;
   work: Work | null;
   volumeCount: number | null;
@@ -26,16 +27,21 @@ type QuickPreviewDialogProps = Readonly<{
   onPlanned: () => void;
   onCompleted: () => void;
   onHidden: () => void;
+  onRemovalIntent: () => void;
+  onCoverVisible?: () => void;
 }>;
 
 export function QuickPreviewDialog({
   busy,
   coverUrl,
   explanation,
+  opener,
   onCompleted,
+  onCoverVisible,
   onHidden,
   onOpenChange,
   onPlanned,
+  onRemovalIntent,
   open,
   planned,
   volumeCount,
@@ -45,12 +51,18 @@ export function QuickPreviewDialog({
 
   return (
     <Dialog onOpenChange={onOpenChange} open={open}>
-      <DialogContent className="recommendation-quick-preview !top-auto bottom-0 !max-h-[calc(100dvh-var(--space-4))] w-full max-w-full -translate-x-1/2 translate-y-0 rounded-t-[var(--radius-card)] rounded-b-none !transition-none !animate-none data-open:!animate-none data-closed:!animate-none sm:max-w-full [@media(min-width:768px)_and_(hover:hover)_and_(pointer:fine)]:!top-1/2 [@media(min-width:768px)_and_(hover:hover)_and_(pointer:fine)]:bottom-auto [@media(min-width:768px)_and_(hover:hover)_and_(pointer:fine)]:w-[min(calc(100%-var(--space-8)),var(--layout-width-reading))] [@media(min-width:768px)_and_(hover:hover)_and_(pointer:fine)]:max-w-[var(--layout-width-reading)] [@media(min-width:768px)_and_(hover:hover)_and_(pointer:fine)]:-translate-y-1/2 [@media(min-width:768px)_and_(hover:hover)_and_(pointer:fine)]:rounded-[var(--radius-card)]">
+      <DialogContent
+        className="recommendation-quick-preview !top-auto bottom-0 !max-h-[calc(100dvh-var(--space-4))] w-full max-w-full -translate-x-1/2 translate-y-0 rounded-t-[var(--radius-card)] rounded-b-none !transition-none !animate-none data-open:!animate-none data-closed:!animate-none sm:max-w-full [@media(min-width:768px)_and_(hover:hover)_and_(pointer:fine)]:!top-1/2 [@media(min-width:768px)_and_(hover:hover)_and_(pointer:fine)]:bottom-auto [@media(min-width:768px)_and_(hover:hover)_and_(pointer:fine)]:w-[min(calc(100%-var(--space-8)),var(--layout-width-reading))] [@media(min-width:768px)_and_(hover:hover)_and_(pointer:fine)]:max-w-[var(--layout-width-reading)] [@media(min-width:768px)_and_(hover:hover)_and_(pointer:fine)]:-translate-y-1/2 [@media(min-width:768px)_and_(hover:hover)_and_(pointer:fine)]:rounded-[var(--radius-card)]"
+        finalFocus={() => (opener?.isConnected === true ? opener : null)}
+      >
         <div className="grid grid-cols-[minmax(0,calc(var(--control-min-size)*2.5))_minmax(0,1fr)] gap-[var(--space-4)]">
           <CoverImage
             className="w-full"
             coverUrl={coverUrl}
             creators={work.creators}
+            key={work.id}
+            matchSourceAspectRatio
+            onVisible={onCoverVisible}
             requestedSize={400}
             title={work.title}
           />
@@ -94,6 +106,7 @@ export function QuickPreviewDialog({
           onCompleted={onCompleted}
           onHidden={onHidden}
           onPlanned={onPlanned}
+          onRemovalIntent={onRemovalIntent}
           planned={planned}
         />
       </DialogContent>

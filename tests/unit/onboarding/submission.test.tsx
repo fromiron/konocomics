@@ -191,6 +191,72 @@ describe("OnboardingFlow finalization", () => {
     expect(screen.getByText("まだ選ばれていません")).toBeTruthy();
   });
 
+  it("adds a collection panel pick to the tray, draft, and live message, then enforces the 10-work limit", () => {
+    const selectedWorks = Array.from({ length: 9 }, (_, index) => ({
+      ...createTestWork({ id: `positive-${String(index + 1)}`, genres: ["fantasy"] }),
+      title: `好きな作品${String(index + 1)}`,
+    }));
+    const panelWorks = Array.from({ length: 12 }, (_, index) => ({
+      ...createTestWork({
+        id: `horror-${String(index + 1)}`,
+        genres: ["horror" as const],
+      }),
+      title: `緊張作品${String(index + 1)}`,
+    }));
+    const featuredOther = {
+      ...createTestWork({ id: "fantasy-featured", genres: ["fantasy"] }),
+      title: "選びやすい別作品",
+    };
+    const actionOnly = {
+      ...createTestWork({ id: "action-only", genres: ["action"] }),
+      title: "勢いだけの作品",
+    };
+    const baseCatalog = createTestCatalog(featuredOther);
+    testState.catalog = {
+      ...baseCatalog,
+      works: [featuredOther, actionOnly, ...selectedWorks, ...panelWorks],
+    };
+    testState.draft = {
+      id: "current",
+      mode: "firstRun",
+      step: 1,
+      positiveEntries: selectedWorks.map((work) => ({
+        workId: work.id,
+        reaction: "liked" as const,
+      })),
+      negativeEntries: [],
+      updatedAt: "2026-08-14T00:00:00+09:00",
+    };
+    testState.saveOnboardingDraft.mockResolvedValue(undefined);
+
+    render(<OnboardingFlow genre="action" shelf="mysteries" />);
+
+    expect(screen.getByRole("heading", { name: "選びやすい作品" })).toBeTruthy();
+    expect(screen.getByRole("button", { name: "選びやすい別作品 — 好きに追加" })).toBeTruthy();
+    expect(screen.getByRole("button", { name: "勢いだけの作品 — 好きに追加" })).toBeTruthy();
+    expect(screen.queryByRole("heading", { name: "謎と緊張を楽しむ", level: 2 })).toBeNull();
+
+    const panel = screen.getByRole("region", { name: "謎と緊張を楽しむ" });
+    fireEvent.click(within(panel).getByRole("button", { name: "緊張作品1 — 好きに追加" }));
+
+    expect(screen.getByText("10 / 10 作品")).toBeTruthy();
+    expect(screen.getByText("「緊張作品1」は選択済みです。")).toBeTruthy();
+    expect(testState.saveOnboardingDraft.mock.calls.at(-1)?.[0]).toMatchObject({
+      positiveEntries: expect.arrayContaining([{ workId: "horror-1", reaction: "liked" }]),
+    });
+    expect(testState.saveOnboardingDraft.mock.calls.at(-1)?.[0].positiveEntries).toHaveLength(10);
+
+    fireEvent.click(within(panel).getByRole("button", { name: "緊張作品2 — 好きに追加" }));
+
+    expect(screen.getByRole("status").textContent).toContain("最大 10 作品までです");
+    expect(testState.saveOnboardingDraft.mock.calls.at(-1)?.[0].positiveEntries).toHaveLength(10);
+    expect(
+      testState.saveOnboardingDraft.mock.calls
+        .at(-1)?.[0]
+        .positiveEntries.some((entry: { workId: string }) => entry.workId === "horror-2"),
+    ).toBe(false);
+  });
+
   it("clears a Step 1 limit message when moving to Step 2", () => {
     const selectedWorks = Array.from({ length: 10 }, (_, index) => ({
       ...createTestWork({ id: `positive-${String(index + 1)}` }),

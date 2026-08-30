@@ -1,5 +1,268 @@
 # Design QA — `temp/design` component-fidelity redesign
 
+## 2026-08-30 hover-border contract and Completed surface parity — final
+
+### Source truth and implementation evidence
+
+- Source visual truth: Spotify album-card normal and hover captures
+  `C:/Users/Bell/AppData/Local/Temp/codex-clipboard-f272844b-da7a-480e-b47a-0cff15a634b4.png`
+  (192 × 237) and
+  `C:/Users/Bell/AppData/Local/Temp/codex-clipboard-d9e2cf05-235d-4638-a455-b6db39e535ee.png`
+  (196 × 247).
+- Implementation captures:
+  `outputs/recommendations-hover-border-qa-normal.png` and
+  `outputs/recommendations-hover-border-qa-completed-hover.png`, both 1644 ×
+  1093 from a 1659 × 1103 CSS viewport at DPR 1.5. Upper-section evidence is
+  `outputs/recommendations-hover-border-qa-upper-normal.png` and
+  `outputs/recommendations-hover-border-qa-anchor-hover.png` at the same pixel
+  size.
+- Source normal/hover and implementation normal/hover were opened together in
+  one comparison input. The completed card was also readable at its rendered
+  240 × 160.73 px size, so a separate raster crop was not needed.
+
+### Findings and comparison history
+
+- No P0/P1/P2 finding remained in the first post-fix comparison. The user also
+  confirmed the hover-border result in the live in-app browser.
+- Completed normal → hover changed only background from transparent to
+  `oklch(0.2 0.024 250)`, matching the Top 10 surface token. Border stayed
+  transparent and the 240 × 160.73 px card rect did not move.
+- Featured and Anchor cards retained identical border colors and rects before
+  and after hover. A source audit found no remaining hover-driven border-color
+  state in product `src/**`; selected, validation, and keyboard-focus states
+  remain separate.
+
+### Required fidelity surfaces and verification
+
+- Typography and copy: unchanged. Spacing/layout: hover rects and sibling
+  positions unchanged. Colors/tokens: Completed uses the same `--surface-2`
+  hover surface as Top 10. Images/assets: unchanged. Radius and shadows:
+  unchanged.
+- Interactions tested: Completed, Featured, Anchor, and Top 10 normal/hover.
+  Browser logs contained no errors or warnings.
+- Focused Vitest: 7 files, 104 tests passed. `pnpm typecheck`, `pnpm lint`, and
+  `pnpm build` passed; build prerendered 1621 pages. The shell retains the known
+  Node engine warning because Node 26.3.0 is active while the package declares
+  Node 24.
+
+final result: passed
+
+## 2026-08-30 Top 10 floating rank exit-motion parity — final
+
+### Source truth and implementation evidence
+
+- Live source: signed-in Spotify `人気アルバム及びシングル` card in the user-selected in-app browser.
+- Source captures: `C:/Users/Bell/AppData/Local/Temp/spotify-rank-motion-normal-reference.png` and `C:/Users/Bell/AppData/Local/Temp/spotify-rank-motion-hover-reference.png`, both 1280 × 720 px from a 1280 × 720 CSS viewport at DPR 1.5.
+- Final captures: `C:/Users/Bell/AppData/Local/Temp/konocomics-rank-motion-normal-final.png` and `C:/Users/Bell/AppData/Local/Temp/konocomics-rank-motion-hover-final.png`, both 1265 × 712 px from a 1265 × 720 CSS content viewport at DPR 1.5.
+- Source and final normal/hover captures were opened together in one comparison input. The focused floating-action geometry and state were compared rather than claiming full-shell pixel parity across the different products.
+
+### Findings, fixes, and post-fix evidence
+
+1. **P1 — the rank circle's travel snapped on hover exit.** Tailwind emitted the initial offset as the individual `translate` property (`translate: 0 8px`), while the component transitioned `transform`. The offset therefore changed instantly and only opacity animated. The rank accessory now uses `transform: translateY(8px)` and transitions `transform, opacity`, matching Spotify's property contract.
+2. **P2 — timing did not match the selected reference.** Konocomics used the generic 240ms value transition; Spotify computed to 200ms ease-out with no delay. The scoped `--motion-duration-floating-action` token now supplies the measured 200ms duration.
+3. **Final computed-style parity.** Normal state on both products is 48 × 48 px, opacity 0, and `matrix(1, 0, 0, 1, 0, 8)`; hover is opacity 1 and `matrix(1, 0, 0, 1, 0, 0)`. Both report `transform, opacity`, `0.2s`, `ease-out`, and the measured `0 8px 8px / 30%` shadow. Pointer-exit samples showed both properties progressing together instead of a snapped offset.
+
+### Motion necessity and required fidelity surfaces
+
+- Purpose/decision: keep as nonessential direct hover and focus feedback for the ranking accessory; it does not autoplay or repeat.
+- Static equivalent: card order and the link's accessible rank label remain available without motion. Keyboard focus reveals the same state.
+- Reduced motion: the accessory has no travel and changes state immediately through `transition: none` plus a zero transform.
+- Typography, cover geometry, color, imagery, and copy are unchanged. Spacing, 48px circle size, 8px travel, 4px cover radius, and shadow/elevation remain aligned with the prior accepted Top 10 treatment.
+
+### Verification
+
+- In-app browser normal, hover, and pointer-exit states exercised; browser console errors/warnings: none.
+- Focused Vitest: 2 files, 43 tests passed. `pnpm typecheck`, targeted ESLint, scoped Prettier, `git diff --check`, and `pnpm build` passed; build prerendered 1621 pages.
+- The shell retains the known engine warning because Node 26.3.0 is active while the package declares Node 24.
+
+No scoped P0/P1/P2 finding remains.
+
+final result: passed
+
+## 2026-08-30 Top 10 fixed cover and floating rank shadow — final
+
+### Source truth and render evidence
+
+- User cover references: `C:/Users/Bell/AppData/Local/Temp/codex-clipboard-71679849-b928-4893-bc3d-743c41c0c802.png`, `C:/Users/Bell/AppData/Local/Temp/codex-clipboard-8ef5cd14-702d-47be-b357-0ca2a74f8f84.png`, and `C:/Users/Bell/AppData/Local/Temp/codex-clipboard-ea773f32-ea54-42c2-9867-9088da55279c.png`.
+- User fixed-rhythm reference: `C:/Users/Bell/AppData/Local/Temp/codex-clipboard-f4ec5a4a-710b-49e9-a41b-1793aa1a7c4c.png` (945 × 299).
+- Final dark-theme hover capture: `C:/Users/Bell/AppData/Local/Temp/konocomics-top10-fixed-cover-shadow-final.png` (1472 × 1092) from `/recommendations` at a 1487 × 1103 CSS px viewport.
+- Live Spotify reference: the signed-in `人気アルバム及びシングル` card was inspected in the user-selected in-app browser. Its floating 48 × 48 px action wrapper computed to `border-radius: 500px` and `box-shadow: rgba(0, 0, 0, 0.3) 0 8px 8px`.
+- The user reference and final implementation were reviewed together as a component treatment comparison. States checked were Top 10 normal and fifth-card hover; the full view also served as the surrounding-layout regression pass.
+
+### Findings and resolution
+
+1. **P2 — a rounded frame still exposed square raster corners.** `CoverImage` now gives the actual artwork box and image the shared 4px cover radius and clips that box itself.
+2. **P1 — source-sized Top 10 frames broke the shelf rhythm.** Per the final user decision, personalized ranking cards alone use one 30:43 tankōbon frame and `object-cover`. The first five live frames all measured 152 × 217.86 px despite source ratios of 0.64, 1.0, and 0.6325. Other recommendation/poster surfaces keep their contain behavior.
+3. **P2 — the rank circle had only the faint generic raised shadow.** A scoped semantic token now matches Spotify's measured `0 8px 8px / 30%` floating-action depth; the existing 48px circle, reveal motion, and focus-visible state are unchanged.
+
+### Required fidelity surfaces
+
+- Typography and copy: unchanged; no new labels or claims were introduced.
+- Spacing and layout: card shells and text slots remain unchanged; all Top 10 cover frames now share the same 30:43 geometry.
+- Colors and tokens: the accent circle is unchanged; only its shadow uses the new measured semantic token.
+- Images/assets: Top 10 intentionally fills and clips to the universal frame; the raster edge and artwork wrapper both retain the 4px radius. No source asset was synthesized or stretched.
+- Interaction and accessibility: Top 10 hover still reveals the rank badge, image alt text remains exposed, and the browser console reported no errors or warnings.
+
+### Comparison history and verification
+
+- First correction rounded the raster but followed each source ratio; the user comparison showed that this broke the Top 10 row. The final pass fixed that row to 30:43 and filled it without changing sibling card sizes.
+- Live computed-style readback confirmed all first five frames at the same size, `object-fit: cover`, 4px image radius, and the fifth hovered badge at full opacity with `0 8px 8px / 30%` shadow. Browser logs contained no errors or warnings.
+- Focused Vitest: 4 files, 63 tests passed; the final media-card-only run passed 15 tests. `pnpm typecheck`, targeted ESLint, scoped formatting, `git diff --check`, and `pnpm build` passed; build prerendered 1621 pages. The shell still reports the repository's existing Node engine warning because Node 26.3.0 is active while the package declares Node 24.
+
+No scoped P0/P1/P2 finding remains.
+
+final result: passed
+
+## 2026-08-30 recommendations cover-derived card treatment — final
+
+This cycle adapts the verified Spotify episode-card treatment to the fixed
+konocomics recommendation card without changing recommendation order, evidence,
+or actions.
+
+### Source and comparison evidence
+
+- Live reference: `https://open.spotify.com/`, the signed-in `2026.8.23` episode
+  card inspected in the user-selected Codex in-app browser.
+- Reference capture:
+  `outputs/spotify-2026-card-shadow-reference.png` at 1642 × 1272.
+- Before capture: `outputs/recommendations-cover-backdrop-before.png` at
+  1265 × 712.
+- Final normal capture: `outputs/recommendations-cover-backdrop-after.png` at
+  1627 × 1260.
+- Final hover capture: `outputs/recommendations-cover-backdrop-hover.png` at
+  1627 × 1260.
+- The live reference and final implementation were reviewed together in the
+  same comparison input. They were captured from the same browser window, but
+  the two sites expose slightly different raster viewports, so this is a
+  treatment comparison rather than a pixel-parity claim.
+- Spotify computed reference: image wrapper radius `6px`, shadow
+  `rgba(0,0,0,.5) 0 8px 24px`. Konocomics keeps its 4px print-cover radius and
+  matches the measured `0 8px 24px / 50%` depth.
+
+### Findings and resolution
+
+1. **P1 — all featured cards shared one dark accent gradient.** Each resolved
+   cover now reuses the same 400px URL as an `alt=""`, `aria-hidden`, lazy local
+   backdrop beneath the 72% semantic `--hero-scrim`. No client palette
+   extraction or additional unique image request was added.
+2. **P1 — the foreground cover merged into its derived backdrop.** The cover
+   container now uses `--shadow-cover-featured: 0 8px 24px oklch(0 0 0 / .5)`,
+   matching Spotify's measured depth while the card and carousel remain
+   shadowless.
+3. **P2 — unsoftened cover reuse exposed oversized cover lettering.** A bounded
+   local blur is retained under the dark scrim; there is no `will-change` or
+   palette computation.
+
+### Five-surface review
+
+- Typography: title, metadata, evidence, and action labels are unchanged and
+  remain readable over the semantic scrim.
+- Spacing: the 344 × 448 desktop article and internal 4px-grid slots remain
+  fixed in normal and hover states.
+- Colors/tokens: cover-derived color varies by work; text colors, scrim, border,
+  and the new cover shadow use semantic tokens.
+- Image quality: foreground covers keep original aspect ratio and 400px source;
+  the decorative layer reuses that source and preserves the fallback path.
+- Copy: no new explanatory copy or unsupported recommendation claim was added.
+
+### Interaction and verification
+
+- Normal and hover were exercised in the in-app browser. Hover kept the article
+  at 344 × 448, opened the 44px action rail, expanded the reason to three lines,
+  and retained the measured cover shadow.
+- The 3-copy carousel settled back on canonical copy `1`; root horizontal
+  overflow remained `0`. Resolved clone backdrops were lazy and decorative.
+- Console warning/error log: empty.
+- Targeted result: 3 test files, 33 tests passed; scoped ESLint and Prettier
+  passed; TypeScript passed. The local Node 26.3.0 engine warning remains because
+  the repository declares Node 24.x.
+
+final result: passed
+
+## 2026-08-30 — Spotify-derived personalized Top 10 card
+
+### Source and comparison evidence
+
+- Source visual truth: `C:\Users\Bell\AppData\Local\Temp\codex-clipboard-f272844b-da7a-480e-b47a-0cff15a634b4.png`
+  (normal, 192 × 237 px) and
+  `C:\Users\Bell\AppData\Local\Temp\codex-clipboard-d9e2cf05-235d-4638-a455-b6db39e535ee.png`
+  (hover, 196 × 247 px).
+- Browser-rendered implementation: `http://localhost:3030/recommendations`.
+  Full-view captures are
+  `C:\Users\Bell\AppData\Local\Temp\konocomics-top10-genres-normal.jpg` and
+  `C:\Users\Bell\AppData\Local\Temp\konocomics-top10-genres-hover.jpg`
+  (1472 × 1092 px each), captured from the Codex in-app browser at a
+  1487 × 1103 CSS px viewport with reported DPR 1.5.
+- Focused component evidence:
+  `C:\Users\Bell\AppData\Local\Temp\konocomics-top10-genres-card-normal.jpg` and
+  `C:\Users\Bell\AppData\Local\Temp\konocomics-top10-genres-card-hover.jpg`
+  (174 × 311 px each). The source and implementation normal/hover pairs were
+  opened together in one comparison input at native size. The crop was aligned
+  to the complete card; no density rescaling was used.
+- State: personalized Top 10, first card, normal and fine-pointer hover. The
+  source square art and the implementation's required 30:43 manga cover ratio
+  are intentionally different product-content constraints.
+
+### Findings and comparison history
+
+- The first post-implementation comparison found no actionable P0/P1/P2
+  mismatch, so no corrective visual iteration was required.
+- A user follow-up replaced the visible `1位 · 高い` line with up to three
+  localized genres. The revised normal/hover pair was compared again; all
+  requested genres remain visible within at most two lines without changing
+  the cover or hover-action geometry.
+- The Spotify structure is preserved: transparent normal card, 12 px internal
+  padding, cover-first hierarchy, title and muted metadata, highlighted hover
+  surface, and a 48 px action disc that rises 8 px while fading in.
+- Intentional product adaptations are the Kono accent color, a rank numeral in
+  place of Spotify's play icon, the uncropped 30:43 cover, and localized genre
+  metadata in place of the artist line. The canonical rank remains in the
+  accessible link name and hover/focus disc. The shelf's edge arrow remains
+  outside the card contract and was not moved in this scoped pass.
+
+### Required fidelity surfaces
+
+- Typography: existing Japanese display/body families remain intact; title is
+  16 px medium and genre metadata is 14 px, matching the source's two-level
+  hierarchy without copying its Latin content.
+- Spacing and layout: the card is 176 CSS px wide with 12 px padding and an
+  8 px product-token radius. The cover is 152 px wide; the 48 px rank disc is
+  inset 8 px from the cover edge. Normal and hover geometry do not reflow.
+- Colors and tokens: normal background is transparent; hover resolves to
+  `--surface-2`; the action disc uses `--accent` and `--on-accent`. No new raw
+  color or shadow value was introduced.
+- Images/assets: the existing `CoverImage` path preserves the manga cover's
+  ratio with `object-contain`, and the existing featured-cover shadow token is
+  applied. No placeholder, fabricated icon, or generated image was added.
+- Copy/content: title, canonical rank, and the first one to three Catalog genres
+  remain product data. Genre tags use centralized Japanese labels, and no
+  Spotify copy was imported.
+- Interaction and accessibility: hover measured background highlight,
+  `opacity: 1`, and `translate: 0`; normal measured `opacity: 0` and an 8 px
+  downward offset. The same state CSS is generated for `:focus-visible`, the
+  entire card remains one named link, the badge is decorative, its accessible
+  name retains canonical rank and visible genres, and reduced motion removes
+  the transition.
+
+The component crops already expose the full card, typography, cover edge,
+shadow, radius, and action disc at readable size, so no smaller focused region
+was needed. In-app-browser console readback contained no errors or warnings.
+
+### Verification
+
+- Focused Vitest: 2 files, 43 tests passed. The single earlier async dialog
+  timeout passed alone and in the complete focused rerun.
+- `pnpm typecheck`: passed.
+- Targeted ESLint for the four scoped source/test files: passed.
+- `pnpm build`: passed; the shell reported the repository's existing Node
+  engine warning because Node 26.3.0 is active while the package declares
+  Node 24.
+- `git diff --check`: passed before this report append.
+
+No scoped P0/P1/P2 finding remains.
+
+final result: passed
+
 ## 2026-08-20 recommendations full-fidelity follow-up — final
 
 This cycle supersedes the recommendation findings immediately below while
@@ -1616,5 +1879,74 @@ unrelated icon treatments with one always-visible, text-only catalog contract.
 No scoped P0/P1/P2 finding remains. The live 390 px viewport capture remains a
 documented verification limit; the compact string is bounded by direct text and
 content-width measurement rather than an unverified visual claim.
+
+final result: passed
+
+## 2026-08-30 — Functional contextual image banners
+
+### Scope and authority
+
+- Product decision: a required functional banner outranks the no-decoration rule. The exception is limited to a real state, a real existing-route CTA, and supporting status or metrics; an ornamental banner remains prohibited.
+- `/recommendations`: full-shell feedback summary only when recommendations are complete and hidden feedback exists.
+- `/taste`: desktop half-shell/mobile full-width confidence coach only on a normal-confidence general entry. It is absent from the first reveal and high confidence; the profile guard makes low confidence unreachable.
+- `/library`: the existing populated-state data tools surface is upgraded to a desktop half-shell/mobile full-width portability banner. It is absent from the overall-empty state.
+
+### Assets and comparison evidence
+
+- Source assets: `public/media/recommendations-feedback-manga-v4.png`, `public/media/taste-dna-coach.png`, and `public/media/library-data-portability.png` (1774 × 887 px each).
+- Desktop captures: `.qa/banner-system-2026-08-30/recommendations-feedback-desktop.png`, `.qa/banner-system-2026-08-30/taste-coach-desktop.png`, and `.qa/banner-system-2026-08-30/library-portability-desktop.png` at a 1440 × 1000 CSS px viewport.
+- Mobile captures: `.qa/banner-system-2026-08-30/recommendations-feedback-mobile.png`, `.qa/banner-system-2026-08-30/taste-coach-mobile.png`, and `.qa/banner-system-2026-08-30/library-portability-mobile.png` at a 390 × 844 CSS px viewport.
+- Combined source/desktop/mobile review board: `.qa/banner-system-2026-08-30/functional-banner-comparison.png`.
+
+### Findings and fixes
+
+1. **P1 — generated images loaded eagerly.** All three decorative images now use lazy loading, async decoding, and low fetch priority so below-fold media does not compete with primary content.
+2. **P2 — the Taste coach competed with first-reveal and recent-feedback CTAs.** The coach is hidden during reveal and owns the add-works CTA only in the reachable normal-confidence state; the existing recent-feedback CTA remains for all other states.
+3. **P1 — `/recommendations` failed in the real dev route.** Recommendation context now uses the same immutable versioned public-asset contract as the catalog instead of a Vite source URL that TanStack Start interpreted as an application route.
+
+### Visual and interaction verdict
+
+- Source art, desktop rendering, and mobile rendering were judged together in one comparison input. The text-safe gradients, image crops, and full/half-shell hierarchy remain legible at both viewports.
+- Copy is DOM text rather than baked into images. Decorative images use empty alt text and `aria-hidden`; all CTAs retain visible names, focus-visible treatment, and a minimum 44 px target.
+- No autoplay, looping motion, Spotify trademark treatment, fabricated metrics, or purely ornamental banner was added.
+
+### Verification
+
+- Banner unit scope: 3 files, 52 tests passed.
+- Versioned recommendation-context scope: 4 files, 20 tests passed.
+- `pnpm typecheck`: passed.
+- Targeted ESLint for changed banner/runtime files: passed.
+- `pnpm build` under the declared Node 24 runtime: passed.
+- `git diff --check`: passed.
+- Full-repository lint remains outside this scoped claim because an unrelated dirty `.qa/catalog-5000-madb-20260830/compare_adjudication.ts` file fails it.
+
+No scoped P0/P1/P2 finding remains.
+
+final result: passed
+
+## 2026-08-30 — Spotify-derived featured recommendation card
+
+### Source and final evidence
+
+- Reference captures: `outputs/spotify-2026-card-normal-1645.png` and `outputs/spotify-2026-card-hover-1645.png`.
+- Final local captures: `outputs/konocomics-featured-card-normal-344x448-v3.png` and `outputs/konocomics-featured-card-hover-344x448-v2.png`.
+- Same-state comparison boards: `outputs/featured-card-comparison-normal-final.png` and `outputs/featured-card-comparison-hover-final.png`. Both products were captured at 1645×1272 CSS px before the relevant cards were compared together.
+
+### Findings and fixes
+
+1. **P1 — the former compact card exposed controls before its cover could establish hierarchy.** The featured card now keeps a fixed outer frame and uses the Spotify sequence: title/meta → dominant cover → short reason; fine-pointer hover/focus shrinks the cover while opening the longer reason and action rail.
+2. **P2 — mechanical percentage scaling produced arbitrary dimensions.** The responsive frames now use a 4px grid: 272×356, 304×396, and desktop 344×448 px. Desktop card geometry and sibling positions remain fixed between states.
+3. **P1 — fixed 30:43 frames left some real covers visibly underfilled.** This featured surface reads the loaded source ratio and fits the frame to it while retaining `object-contain`; observed examples matched 0.64, 0.7075, and 0.63 source ratios without cropping.
+4. **P2 — shadows competed across the carousel.** Card and carousel-control shadows are removed. The cover alone retains the existing 4px radius and local level-1 shadow.
+
+### Measured result and verification
+
+- Desktop outer frame: exactly 344×448 px. The second cover measured 179.69×253.98 px normally and 128.5×181.7 px in the expanded state, a 0.715 height ratio; the article remained fixed and its outer `box-shadow` was `none`.
+- The action rail resolves to 44 px and the reason clamp changes from one line to at most three. Coarse-pointer CSS exposes the final information/action state without hover; reduced motion removes the transition. A fresh coarse-pointer or reduced-motion browser capture was not taken in this pass.
+- Grok 4.6 Extra High independently advised that the fixed frame, manga portrait substitution, card ratio, and cover shrink ratio preserve the reference structure; its sole check was that long reasons can consume the expanded slot, which the three-line CSS contract and focused tests retain.
+- In-app-browser console readback at `/recommendations`: no errors or warnings.
+- Focused Vitest: 4 files, 43 tests passed. `pnpm typecheck`, targeted ESLint, and `git diff --check` passed. Typecheck reported the repository's existing Node engine warning because the current shell is Node 26.3.0 while the package declares Node 24.
+
+No scoped P0/P1/P2 finding remains.
 
 final result: passed

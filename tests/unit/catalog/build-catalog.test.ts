@@ -4,7 +4,7 @@ import { join, resolve } from "node:path";
 
 import { afterEach, describe, expect, it, vi } from "vitest";
 
-import { catalogAssetFilename } from "@/lib/catalog-asset";
+import { catalogAssetFilename, recommendationContextAssetFilename } from "@/lib/catalog-asset";
 import { buildCatalog } from "../../../scripts/build-catalog";
 
 const temporaryRoots: string[] = [];
@@ -31,6 +31,11 @@ describe("catalog build", () => {
       resolve(root, "public/catalog", catalogAssetFilename(result.catalog.catalogVersion)),
       resolve(root, "data/generated/recommendation-context-v1.json"),
       resolve(root, "src/data/generated/recommendation-context-v1.json"),
+      resolve(
+        root,
+        "public/catalog",
+        recommendationContextAssetFilename(result.catalog.catalogVersion),
+      ),
       resolve(root, "data/generated/recommendation-profile-catalog-v1.json"),
       resolve(root, "data/generated/recommendation-profile-context-v1.json"),
       resolve(root, "src/data/generated/catalog-identity-v1.json"),

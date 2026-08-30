@@ -1,8 +1,8 @@
 import { Link } from "@tanstack/react-router";
+import { ScanSearchIcon } from "lucide-react";
 
 import { CoverImage } from "@/components/cover/CoverImage";
-import { Button } from "@/components/design-system/button";
-import type { CarouselLoopCopy } from "@/components/media/media-shelf";
+import { QuietTextAction } from "@/components/media/state-action-row";
 import type { Work } from "@/domain/catalog/types";
 import { generateTasteExplanation } from "@/domain/explanation/generate";
 import type { RecommendationPlanEntry } from "@/domain/recommendation/types";
@@ -18,19 +18,13 @@ type RecommendationShelfCardProps = Readonly<{
   variant: "anchor" | "discovery" | "completed";
   resolveTitle: (workId: string) => string | undefined;
   onPreview: () => void;
-  "aria-hidden"?: boolean;
-  "data-carousel-clone"?: "";
-  "data-carousel-copy"?: CarouselLoopCopy;
-  inert?: boolean;
+  onCoverVisible?: () => void;
 }>;
 
 export function RecommendationShelfCard({
-  "aria-hidden": ariaHidden,
   coverUrl,
-  "data-carousel-clone": carouselClone,
-  "data-carousel-copy": carouselCopy,
   entry,
-  inert,
+  onCoverVisible,
   onPreview,
   priority = false,
   resolveTitle,
@@ -46,37 +40,53 @@ export function RecommendationShelfCard({
   });
   const leadSentence = explanation.positiveReasons[0];
   const leadReason = leadSentence?.text ?? recommendationStrings.reasonUnavailable;
+  const confidenceLabel = explanationLexicon.confidenceLabels[entry.confidenceLevel];
+  const compact = variant !== "anchor";
+  const morphDiscoveryCover = variant === "discovery" && Boolean(coverUrl?.trim());
   const widthClass =
     variant === "anchor"
       ? "w-[calc((100vw-(var(--layout-page-padding)*2)-(var(--space-content-loose)*2))/2.4)] max-w-44 sm:w-32 md:w-[calc((100%-var(--space-content-loose)*7)/8)] md:min-w-24 md:max-w-28"
-      : variant === "discovery"
-        ? "w-[calc((100vw-(var(--layout-page-padding)*2)-(var(--space-content-loose)*2))/1.8)] max-w-72 sm:w-64 md:w-[calc((100%-var(--space-content-loose)*4)/5)] md:min-w-[10.5rem]"
-        : "w-[calc((100vw-(var(--layout-page-padding)*2)-(var(--space-content-loose)*2))/1.8)] max-w-72 sm:w-64 md:w-[calc((100%-var(--space-content-loose)*4)/5)] md:min-w-[10.5rem]";
+      : "w-[calc((100vw-(var(--layout-page-padding)*2)-(var(--space-content-loose)*2))/1.8)] max-w-72 sm:w-64 md:w-[calc((100%-var(--space-content-loose)*4)/5)] md:min-w-60";
+  const previewControl = (
+    <QuietTextAction
+      aria-label={recommendationStrings.quickPreview.open(work.title)}
+      className={cn("gap-[var(--space-1)] whitespace-nowrap", compact && "mt-auto self-start px-0")}
+      onClick={onPreview}
+    >
+      <ScanSearchIcon aria-hidden="true" className="size-4" />
+      {recommendationStrings.quickPreview.openLabel}
+    </QuietTextAction>
+  );
+  const identityLinkClassName =
+    "min-h-[var(--control-min-size)] focus-visible:outline-2 focus-visible:outline-offset-[-2px] focus-visible:outline-ring";
+  const titleClassName = cn(
+    "line-clamp-2 text-[length:var(--font-size-14)] leading-tight font-bold text-text-strong",
+    variant === "anchor" &&
+      "group-focus-within/shelf-card:text-accent [@media(hover:hover)_and_(pointer:fine)]:group-hover/shelf-card:text-accent",
+  );
 
   return (
     <article
-      aria-hidden={ariaHidden}
       className={cn(
-        "shrink-0 snap-start overflow-hidden rounded-[var(--radius-card)] border border-line/80 bg-surface-1 transition-colors duration-[var(--motion-duration-feedback)] hover:border-line-accent motion-reduce:transition-none",
+        "group/shelf-card shrink-0 snap-start overflow-hidden rounded-[var(--radius-card)] border",
+        variant === "anchor"
+          ? "border-line/80 bg-surface-1 focus-within:border-line-accent"
+          : "border-transparent bg-transparent transition-colors duration-[var(--motion-duration-value)] ease-[var(--motion-ease-direct)] focus-within:bg-surface-2 motion-reduce:transition-none [@media(hover:hover)_and_(pointer:fine)]:hover:bg-surface-2",
         widthClass,
+        compact &&
+          "grid grid-rows-[auto_minmax(0,1fr)] gap-[var(--space-2)] p-[var(--space-2)] md:grid-cols-[auto_minmax(0,1fr)] md:grid-rows-1 md:items-stretch md:py-[var(--space-3)]",
       )}
-      data-carousel-clone={carouselClone}
-      data-carousel-copy={carouselCopy}
       data-lead-anchor-work-ids={
         variant === "anchor" ? leadSentence?.anchorWorkIds.join(" ") : undefined
       }
       data-recommendation-shelf-card={variant}
-      inert={inert}
     >
       <Link
         aria-label={mediaStrings.openDetails(work.title)}
         className={cn(
-          "group/shelf-card grid min-h-[var(--control-min-size)] gap-[var(--space-2)] p-[var(--space-2)] focus-visible:outline-2 focus-visible:outline-offset-[-2px] focus-visible:outline-ring",
-          variant === "anchor" && "relative !block !p-0",
-          variant === "discovery" &&
-            "md:grid-cols-[3.5rem_minmax(0,1fr)] md:gap-[var(--space-2)] md:p-[var(--space-2)]",
-          variant === "completed" &&
-            "md:grid-cols-[3.5rem_minmax(0,1fr)] md:gap-[var(--space-2)] md:p-[var(--space-2)]",
+          identityLinkClassName,
+          compact && "min-h-0 md:h-full md:w-auto md:aspect-[30/43]",
+          variant === "anchor" && "relative !block",
         )}
         params={{ workId: work.id }}
         preload={false}
@@ -84,25 +94,39 @@ export function RecommendationShelfCard({
       >
         <CoverImage
           className={cn(
-            "w-full overflow-hidden rounded-[var(--radius-cover)] border border-line/60",
-            "aspect-[30/43]",
+            "aspect-[30/43] w-full overflow-hidden rounded-[var(--radius-cover)] border border-line/60",
+            compact && "md:h-full md:w-full",
+            morphDiscoveryCover &&
+              "border-transparent [clip-path:inset(15.116279%_0_round_50%_/_34.883721%)] transition-[clip-path] duration-[var(--motion-duration-value)] ease-linear group-focus-within/shelf-card:[clip-path:inset(0_round_var(--radius-cover))] motion-reduce:transition-none [@media(hover:hover)_and_(pointer:fine)]:group-hover/shelf-card:[clip-path:inset(0_round_var(--radius-cover))]",
           )}
           coverUrl={coverUrl}
           creators={work.creators}
+          fit={morphDiscoveryCover ? "cover" : "contain"}
+          matchSourceAspectRatio
+          onVisible={onCoverVisible}
           priority={priority}
           requestedSize={400}
           title={work.title}
         />
-        <div
-          className={cn(
-            "grid min-w-0 content-start gap-[var(--space-1)]",
-            variant === "anchor" &&
-              "absolute inset-x-0 bottom-0 z-10 bg-gradient-to-t from-canvas via-canvas/85 to-transparent p-[var(--space-2)] pt-[var(--space-6)]",
-          )}
-        >
-          <h3 className="line-clamp-2 text-[length:var(--font-size-14)] leading-tight font-bold text-text-strong transition-colors group-hover/shelf-card:text-accent">
-            {work.title}
-          </h3>
+        {compact ? null : (
+          <div className="absolute inset-x-0 bottom-0 z-10 grid gap-[var(--space-1)] bg-gradient-to-t from-canvas via-canvas/85 to-transparent p-[var(--space-2)] pt-[var(--space-6)]">
+            <h3 className={titleClassName}>{work.title}</h3>
+            <p className="text-[length:var(--text-caption-size)] leading-tight font-bold text-accent">
+              {confidenceLabel}
+            </p>
+          </div>
+        )}
+      </Link>
+      {compact ? (
+        <div className="flex h-full min-h-0 min-w-0 flex-col gap-[var(--space-1)]">
+          <Link
+            className={cn(identityLinkClassName, "min-w-0")}
+            params={{ workId: work.id }}
+            preload={false}
+            to="/works/$workId"
+          >
+            <h3 className={titleClassName}>{work.title}</h3>
+          </Link>
           {variant === "completed" ? (
             <p className="hidden text-[length:var(--text-caption-size)] font-medium text-text-muted md:line-clamp-1">
               {recommendationStrings.workStatus.completed}
@@ -110,24 +134,21 @@ export function RecommendationShelfCard({
               {recommendationStrings.volumeCount(volumeCount)}
             </p>
           ) : null}
-          <p className="text-[length:var(--text-caption-size)] leading-tight font-bold text-accent">
-            {explanationLexicon.confidenceLabels[entry.confidenceLevel]}
-          </p>
+          {variant === "completed" ? (
+            <p className="text-[length:var(--text-caption-size)] leading-tight font-bold text-accent">
+              {confidenceLabel}
+            </p>
+          ) : null}
           {variant === "discovery" ? (
             <p className="hidden border-l-2 border-accent/50 pl-[var(--space-2)] text-[length:var(--text-caption-size)] leading-[1.4] text-text-muted md:line-clamp-2">
               {leadReason}
             </p>
           ) : null}
+          {previewControl}
         </div>
-      </Link>
-      <Button
-        className="w-full min-h-[var(--control-min-size)] rounded-none border-x-0 border-b-0 md:hidden"
-        onClick={onPreview}
-        type="button"
-        variant="outline"
-      >
-        <span className="line-clamp-1">{recommendationStrings.quickPreview.open(work.title)}</span>
-      </Button>
+      ) : (
+        previewControl
+      )}
     </article>
   );
 }

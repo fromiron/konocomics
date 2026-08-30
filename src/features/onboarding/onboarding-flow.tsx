@@ -40,7 +40,14 @@ import { onboardingStrings } from "@/lib/strings";
 import { cn } from "@/lib/utils";
 
 import { AnchorCoverCard } from "./anchor-cover-card";
-import { isOnboardingCollectionId, onboardingCollections } from "./onboarding-collections";
+import {
+  COLLECTION_EXPANDED_LIMIT,
+  COLLECTION_TRIGGER_COVER_COUNT,
+  exclusiveOnboardingSearch,
+  isOnboardingCollectionId,
+  onboardingCollections,
+  worksForOnboardingCollection,
+} from "./onboarding-collections";
 import {
   OnboardingCollectionGrid,
   OnboardingGenreChips,
@@ -210,29 +217,28 @@ export function OnboardingFlow({
     () => onboardingEligibleCatalogWorks.filter((work) => !persistedWorkIds.has(work.id)),
     [onboardingEligibleCatalogWorks, persistedWorkIds],
   );
-  const selectedCollection = isOnboardingCollectionId(shelf)
-    ? onboardingCollections.find((collection) => collection.id === shelf)
+  const discoverySearch = exclusiveOnboardingSearch({ genre, q: query, shelf });
+  const selectedCollection = isOnboardingCollectionId(discoverySearch.shelf)
+    ? onboardingCollections.find((collection) => collection.id === discoverySearch.shelf)
     : undefined;
-  const filteredPositiveWorks = useMemo(
+  const activeGenre = discoverySearch.genre;
+  const featuredWorks = useMemo(
     () =>
-      onboardingEligibleWorks
-        .filter((work) => genre === undefined || work.genres.includes(genre))
-        .filter(
-          (work) =>
-            selectedCollection === undefined ||
-            work.genres.some((workGenre) =>
-              selectedCollection.genres.some((collectionGenre) => collectionGenre === workGenre),
-            ),
-        ),
-    [genre, onboardingEligibleWorks, selectedCollection],
+      [
+        ...new Map(
+          onboardingEligibleWorks
+            .filter((work) => activeGenre === undefined || work.genres.includes(activeGenre))
+            .map((work) => [work.id, work] as const),
+        ).values(),
+      ].slice(0, 18),
+    [activeGenre, onboardingEligibleWorks],
   );
-  const browseWorks = useMemo(
+  const collectionPanelWorks = useMemo(
     () =>
-      [...new Map(filteredPositiveWorks.map((work) => [work.id, work] as const)).values()].slice(
-        0,
-        18,
-      ),
-    [filteredPositiveWorks],
+      selectedCollection === undefined
+        ? []
+        : worksForOnboardingCollection(onboardingEligibleWorks, selectedCollection),
+    [onboardingEligibleWorks, selectedCollection],
   );
   const collectionPreviewWorks = useMemo(
     () =>
@@ -241,13 +247,10 @@ export function OnboardingFlow({
           (collection) =>
             [
               collection.id,
-              onboardingEligibleWorks
-                .filter((work) =>
-                  work.genres.some((workGenre) =>
-                    collection.genres.some((collectionGenre) => collectionGenre === workGenre),
-                  ),
-                )
-                .slice(0, 6),
+              worksForOnboardingCollection(onboardingEligibleWorks, collection).slice(
+                0,
+                COLLECTION_TRIGGER_COVER_COUNT,
+              ),
             ] as const,
         ),
       ),
@@ -294,17 +297,19 @@ export function OnboardingFlow({
     const ordered = [
       ...(draft?.positiveEntries.map((entry) => entry.workId) ?? []),
       ...(draft?.negativeEntries.map((entry) => entry.workId) ?? []),
-      ...stepOneSearch.results.slice(0, 8).map((work) => work.id),
-      ...stepTwoSearch.results.slice(0, 8).map((work) => work.id),
-      ...browseWorks.slice(0, 12).map((work) => work.id),
+      ...stepOneSearch.results.map((work) => work.id),
+      ...stepTwoSearch.results.map((work) => work.id),
+      ...featuredWorks.map((work) => work.id),
+      ...collectionPanelWorks.slice(0, COLLECTION_EXPANDED_LIMIT).map((work) => work.id),
       ...onboardingCollections.flatMap((collection) =>
         (collectionPreviewWorks.get(collection.id) ?? []).map((work) => work.id),
       ),
     ];
-    return [...new Set(ordered)].slice(0, 18);
+    return [...new Set(ordered)];
   }, [
-    browseWorks,
+    collectionPanelWorks,
     collectionPreviewWorks,
+    featuredWorks,
     draft?.negativeEntries,
     draft?.positiveEntries,
     stepOneSearch.results,
@@ -317,23 +322,11 @@ export function OnboardingFlow({
         : [],
     [catalog, coverWorkIds, getProviderCache, saveProviderCache],
   );
-  const { coverUrls, notifyCoverSettled } = useRecommendationCovers({
+  const { coverUrls, requestCover } = useRecommendationCovers({
     targets: coverTargets,
     getProviderCache,
     saveProviderCache,
   });
-  const coverTargetsByWorkId = useMemo(
-    () => new Map(coverTargets.map((target) => [target.workId, target] as const)),
-    [coverTargets],
-  );
-  const handleCoverSettled = useCallback(
-    (workId: string) => {
-      const target = coverTargetsByWorkId.get(workId);
-      if (target !== undefined) notifyCoverSettled(target);
-    },
-    [coverTargetsByWorkId, notifyCoverSettled],
-  );
-
   useEffect(() => {
     if (currentStep !== undefined) {
       headingRef.current?.focus();
@@ -686,7 +679,7 @@ export function OnboardingFlow({
               }
               limitActive={limitMessage !== ""}
               onContinue={continueFromStepOne}
-              onCoverSettled={handleCoverSettled}
+              onCoverVisible={requestCover}
               onRemove={togglePositiveSelection}
               removeLabel={onboardingStrings.step1.remove}
               selections={draft.positiveEntries}
@@ -726,7 +719,7 @@ export function OnboardingFlow({
               onSearchStateChange={setStepOneSearch}
               placeholder={onboardingStrings.step1.searchPlaceholder}
               query={query}
-              works={filteredPositiveWorks}
+              works={onboardingEligibleWorks}
             />
             <p aria-atomic="true" aria-live="polite" className="visually-hidden sr-only">
               {stepOneSearch.query.trim().length > 0
@@ -734,7 +727,7 @@ export function OnboardingFlow({
                 : ""}
             </p>
 
-            <OnboardingGenreChips genre={genre} onChange={onGenreChange} />
+            <OnboardingGenreChips genre={activeGenre} onChange={onGenreChange} />
 
             {stepOneSearch.query.trim().length > 0 ? (
               stepOneSearch.results.length > 0 ? (
@@ -747,7 +740,7 @@ export function OnboardingFlow({
                       coverUrl={coverUrls.get(work.id)}
                       key={work.id}
                       labels={ANCHOR_CARD_LABELS}
-                      onCoverSettled={() => handleCoverSettled(work.id)}
+                      onCoverVisible={() => requestCover(work.id)}
                       onToggleFavorite={toggleFavorite}
                       onToggleSelection={togglePositiveSelection}
                       selection={positiveByWorkId.get(work.id)}
@@ -763,7 +756,7 @@ export function OnboardingFlow({
               )
             ) : (
               <div className="onboarding-shelves grid gap-[var(--space-section)]">
-                {browseWorks.length === 0 ? (
+                {featuredWorks.length === 0 ? (
                   <div className="onboarding-empty grid gap-[var(--space-content-tight)] rounded-[var(--radius-card)] border border-line bg-surface-1 px-[var(--space-5)] py-[var(--space-7)] text-text-muted">
                     <p>{onboardingStrings.step1.noFilteredWorks}</p>
                   </div>
@@ -771,25 +764,26 @@ export function OnboardingFlow({
                   <WorkShelf
                     coverUrls={coverUrls}
                     labels={ANCHOR_CARD_LABELS}
-                    onCoverSettled={handleCoverSettled}
+                    onCoverVisible={requestCover}
                     onToggleFavorite={toggleFavorite}
                     onToggleSelection={togglePositiveSelection}
                     selectionsByWorkId={positiveByWorkId}
-                    title={
-                      selectedCollection === undefined
-                        ? onboardingStrings.step1.featuredHeading
-                        : onboardingStrings.step1.collections[selectedCollection.id].title
-                    }
-                    works={browseWorks}
+                    title={onboardingStrings.step1.featuredHeading}
+                    works={featuredWorks}
                   />
                 )}
 
                 <OnboardingCollectionGrid
                   activeId={selectedCollection?.id}
                   coverUrls={coverUrls}
-                  onCoverSettled={handleCoverSettled}
+                  labels={ANCHOR_CARD_LABELS}
+                  onCoverVisible={requestCover}
                   onSelect={onShelfChange}
+                  onToggleFavorite={toggleFavorite}
+                  onToggleSelection={togglePositiveSelection}
+                  panelWorks={collectionPanelWorks}
                   previewWorks={collectionPreviewWorks}
+                  selectionsByWorkId={positiveByWorkId}
                 />
 
                 <OnboardingSelectionGuidance />
@@ -846,7 +840,7 @@ export function OnboardingFlow({
                       externalHelper: onboardingStrings.step2.externalHelper,
                       remove: onboardingStrings.step2.remove,
                     }}
-                    onCoverSettled={() => handleCoverSettled(work.id)}
+                    onCoverVisible={() => requestCover(work.id)}
                     onDispositionChange={changeNegativeDisposition}
                     onReasonToggle={toggleNegativeReason}
                     onRemove={removeNegative}
@@ -901,7 +895,7 @@ export function OnboardingFlow({
                     dropped: onboardingStrings.step2.dropped,
                   }}
                   onAdd={addNegative}
-                  onCoverSettled={() => handleCoverSettled(work.id)}
+                  onCoverVisible={() => requestCover(work.id)}
                   work={work}
                 />
               ))}
@@ -912,7 +906,7 @@ export function OnboardingFlow({
             <Button
               className={cn(
                 draft.negativeEntries.length === 0 &&
-                  "onboarding-step-actions__primary [@media(hover:hover)_and_(pointer:fine)]:hover:border-accent-hover [@media(hover:hover)_and_(pointer:fine)]:hover:bg-accent-hover",
+                  "onboarding-step-actions__primary [@media(hover:hover)_and_(pointer:fine)]:hover:bg-accent-hover",
               )}
               disabled={submitting}
               onClick={() => void complete(false)}
@@ -924,7 +918,7 @@ export function OnboardingFlow({
             <Button
               className={cn(
                 draft.negativeEntries.length > 0 &&
-                  "onboarding-step-actions__primary [@media(hover:hover)_and_(pointer:fine)]:hover:border-accent-hover [@media(hover:hover)_and_(pointer:fine)]:hover:bg-accent-hover",
+                  "onboarding-step-actions__primary [@media(hover:hover)_and_(pointer:fine)]:hover:bg-accent-hover",
               )}
               disabled={submitting}
               onClick={() => void complete(true)}

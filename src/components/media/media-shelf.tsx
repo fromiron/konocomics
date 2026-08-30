@@ -54,8 +54,6 @@ const initialScrollState: ScrollState = {
 const focusableCardTarget =
   'a[href], button:not([disabled]), input:not([disabled]), select:not([disabled]), textarea:not([disabled]), [tabindex]:not([tabindex="-1"])';
 
-const overlayDesktop = "[@media(min-width:768px)_and_(hover:hover)_and_(pointer:fine)]";
-
 export function carouselCloneProps(copy: CarouselLoopCopy) {
   if (copy === 1) {
     return { "data-carousel-copy": copy } as const;
@@ -94,7 +92,7 @@ export function duplicateCarouselContent(content: ReactNode, copy: CarouselLoopC
   if (copy === 1 || !isValidElement(content)) return content;
   return cloneElement(content as ReactElement<Record<string, unknown>>, {
     articleRef: undefined,
-    onCoverSettled: undefined,
+    onCoverVisible: undefined,
     priority: false,
   });
 }
@@ -130,6 +128,26 @@ function jumpScroll(track: HTMLElement, left: number) {
     track.style.scrollBehavior = "";
     track.style.scrollSnapType = "";
   }, 32);
+}
+
+function preserveLoopPosition(track: HTMLElement, copy1ScrollRef: { current: number | null }) {
+  const metrics = getLoopMetrics(track);
+  if (metrics === null) {
+    copy1ScrollRef.current = null;
+    return;
+  }
+
+  const previousCopy1Scroll = copy1ScrollRef.current;
+  copy1ScrollRef.current = metrics.copy1Scroll;
+  if (previousCopy1Scroll === null) {
+    jumpScroll(track, metrics.copy1Scroll);
+    return;
+  }
+
+  const copyStartDelta = metrics.copy1Scroll - previousCopy1Scroll;
+  if (Math.abs(copyStartDelta) > 1) {
+    jumpScroll(track, track.scrollLeft + copyStartDelta);
+  }
 }
 
 function wrapLoopedTrack(track: HTMLElement, wrappingRef: { current: boolean }) {
@@ -220,10 +238,10 @@ export function MediaShelf({
   const headingId = useId();
   const trackRef = useRef<HTMLElement | null>(null);
   const wrappingRef = useRef(false);
+  const copy1ScrollRef = useRef<number | null>(null);
   const [scrollState, setScrollState] = useState(initialScrollState);
   const loopingChildren =
     controlsPlacement === "overlay" && enableLoop ? loopOverlayChildren(children) : children;
-  const loopSignatureRef = useRef<string | null>(null);
   const updateScrollState = useCallback(() => {
     const track = trackRef.current;
     if (track === null) return;
@@ -275,6 +293,7 @@ export function MediaShelf({
               updateScrollState();
               return;
             }
+            preserveLoopPosition(track, copy1ScrollRef);
             wrapLoopedTrack(track, wrappingRef);
             updateScrollState();
           });
@@ -292,23 +311,8 @@ export function MediaShelf({
   useLayoutEffect(() => {
     const track = trackRef.current;
     if (track === null) return;
-    const metrics = getLoopMetrics(track);
-    if (metrics === null) {
-      loopSignatureRef.current = null;
-      return;
-    }
-    const signature = Array.from(track.querySelectorAll<HTMLElement>("[data-carousel-copy='1']"))
-      .map(
-        (node) =>
-          node.getAttribute("data-recommendation-work-id") ??
-          node.querySelector("a")?.getAttribute("href") ??
-          "",
-      )
-      .join("|");
-    if (loopSignatureRef.current === signature) return;
-    loopSignatureRef.current = signature;
     wrappingRef.current = true;
-    jumpScroll(track, metrics.copy1Scroll);
+    preserveLoopPosition(track, copy1ScrollRef);
     wrappingRef.current = false;
     updateScrollState();
   }, [children, updateScrollState]);
@@ -352,7 +356,9 @@ export function MediaShelf({
     if (currentIndex < 0) return;
 
     const direction = event.key === "ArrowRight" ? 1 : -1;
-    const nextCard = cards[(currentIndex + direction + cards.length) % cards.length];
+    const nextIndex = currentIndex + direction;
+    if (nextIndex < 0 || nextIndex >= cards.length) return;
+    const nextCard = cards[nextIndex];
     const nextTarget = nextCard?.querySelector<HTMLElement>(focusableCardTarget);
     if (nextTarget === undefined || nextTarget === null) return;
 
@@ -360,10 +366,6 @@ export function MediaShelf({
     nextTarget.focus({ preventScroll: true });
     nextTarget.scrollIntoView?.({ block: "nearest", inline: "nearest" });
   };
-  const overlayGutterClassName =
-    controlsPlacement === "overlay"
-      ? `${overlayDesktop}:px-[var(--media-shelf-edge-fade-width)] ${overlayDesktop}:scroll-px-[var(--media-shelf-edge-fade-width)]`
-      : undefined;
   const trackClassName = cn(
     "flex snap-x gap-[var(--space-content-loose)] overflow-x-auto overscroll-x-contain scroll-smooth pb-[var(--space-3)] [scrollbar-width:none] motion-reduce:scroll-auto [&::-webkit-scrollbar]:hidden",
     controlsPlacement === "overlay" && enableLoop ? "snap-proximity" : "snap-mandatory",
@@ -376,12 +378,7 @@ export function MediaShelf({
       <ol
         {...trackData}
         aria-label={title}
-        className={cn(
-          trackClassName,
-          "m-0 list-none p-0",
-          customTrackClassName,
-          overlayGutterClassName,
-        )}
+        className={cn(trackClassName, "m-0 list-none p-0", customTrackClassName)}
         data-media-shelf-track
         data-overflow={scrollState.hasOverflow || undefined}
         onKeyDown={moveCardFocus}
@@ -394,12 +391,7 @@ export function MediaShelf({
       <ul
         {...trackData}
         aria-label={title}
-        className={cn(
-          trackClassName,
-          "m-0 list-none p-0",
-          customTrackClassName,
-          overlayGutterClassName,
-        )}
+        className={cn(trackClassName, "m-0 list-none p-0", customTrackClassName)}
         data-media-shelf-track
         data-overflow={scrollState.hasOverflow || undefined}
         onKeyDown={moveCardFocus}
@@ -412,7 +404,7 @@ export function MediaShelf({
       <div
         {...trackData}
         aria-label={title}
-        className={cn(trackClassName, customTrackClassName, overlayGutterClassName)}
+        className={cn(trackClassName, customTrackClassName)}
         data-media-shelf-track
         data-overflow={scrollState.hasOverflow || undefined}
         onKeyDown={moveCardFocus}
@@ -426,7 +418,7 @@ export function MediaShelf({
       aria-label={direction === -1 ? mediaStrings.previous(title) : mediaStrings.next(title)}
       className={
         controlsPlacement === "overlay"
-          ? "pointer-events-auto rounded-[var(--radius-pill)] border-line bg-surface-overlay shadow-[var(--shadow-level-1)]"
+          ? "pointer-events-auto rounded-[var(--radius-pill)] border-line bg-surface-overlay"
           : undefined
       }
       disabled={direction === -1 ? !scrollState.canScrollBack : !scrollState.canScrollForward}
@@ -463,22 +455,28 @@ export function MediaShelf({
         title={title}
       />
       {controlsPlacement === "overlay" ? (
-        <div className="relative [--media-shelf-edge-fade-width:clamp(3.52rem,11.52%,6.4rem)]">
+        <div className="media-shelf-overlay relative">
           {track}
           {scrollState.hasOverflow ? (
             <span className="pointer-events-none absolute inset-0 z-30 hidden [@media(min-width:768px)_and_(hover:hover)_and_(pointer:fine)]:block">
               <span
                 aria-hidden="true"
-                className="media-shelf-edge-fade media-shelf-edge-fade--start absolute inset-y-0 left-0"
+                className={cn(
+                  "media-shelf-edge-fade media-shelf-edge-fade--start absolute inset-y-0 left-0",
+                  !scrollState.canScrollBack && "hidden",
+                )}
               />
               <span
                 aria-hidden="true"
-                className="media-shelf-edge-fade media-shelf-edge-fade--end absolute inset-y-0 right-0"
+                className={cn(
+                  "media-shelf-edge-fade media-shelf-edge-fade--end absolute inset-y-0 right-0",
+                  !scrollState.canScrollForward && "hidden",
+                )}
               />
-              <span className="absolute top-1/2 -left-[var(--space-6)] z-10 -translate-y-1/2">
+              <span className="absolute top-1/2 left-[var(--media-shelf-edge-fade-width)] z-10 -translate-x-1/2 -translate-y-1/2">
                 {scrollButton(-1)}
               </span>
-              <span className="absolute top-1/2 -right-[var(--space-6)] z-10 -translate-y-1/2">
+              <span className="absolute top-1/2 right-[var(--media-shelf-edge-fade-width)] z-10 translate-x-1/2 -translate-y-1/2">
                 {scrollButton(1)}
               </span>
             </span>

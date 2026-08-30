@@ -14,7 +14,7 @@ export function BrandMark({ className }: BrandMarkProps) {
     <Link
       aria-label={navigationStrings.brandLinkLabel}
       className={cn(
-        "brand-mark inline-flex min-h-[var(--control-min-size)] min-w-[var(--control-min-size)] items-center px-[var(--space-1)] font-display text-[length:var(--font-size-20)] leading-none tracking-[-0.01em] transition-[opacity,transform] duration-[var(--motion-duration-feedback)] ease-[var(--motion-ease-direct)] active:scale-[0.97] motion-reduce:active:scale-100 [@media(hover:hover)_and_(pointer:fine)]:hover:bg-surface-3",
+        "brand-mark inline-flex w-fit min-h-[var(--control-min-size)] min-w-[var(--control-min-size)] justify-self-start items-center px-[var(--space-1)] font-display text-[length:var(--font-size-20)] leading-none tracking-[-0.01em] transition-opacity duration-[var(--motion-duration-feedback)] ease-[var(--motion-ease-direct)] motion-reduce:transition-none [@media(hover:hover)_and_(pointer:fine)]:hover:opacity-80",
         className,
       )}
       preload={false}

@@ -23,7 +23,7 @@ vi.mock("@tanstack/react-router", () => ({
     children: ReactNode;
     className?: string;
     params?: { workId: string };
-    search?: { workId: string };
+    search?: { workId?: string; section?: string };
     to: string;
   }) => {
     const path = params === undefined ? to : to.replace("$workId", params.workId);
@@ -145,16 +145,51 @@ describe("LibraryView", () => {
     ).toBe(libraryStrings.progress(1, 4));
   });
 
-  it("renders the five state tabs and discloses external rows and exclusion in detail", () => {
-    renderLibrary();
-    expect(screen.getAllByRole("tab")).toHaveLength(5);
+  it("renders all six state tabs on the controlled overview path and discloses external rows and exclusion in detail", () => {
+    renderLibrary({ activeState: null });
+    const tablist = screen.getByRole("tablist", { name: libraryStrings.tablistLabel });
+    expect(tablist.className).toContain("flex-wrap");
+    expect(screen.getAllByRole("tab")).toHaveLength(6);
     expect(
-      screen.getByRole("tab", { name: libraryStrings.tabs.planned }).getAttribute("aria-selected"),
+      screen.getByRole("tab", { name: libraryStrings.tabWithCount(libraryStrings.tabsAll, 2) }),
+    ).toBeTruthy();
+    expect(
+      screen.getByRole("tab", {
+        name: libraryStrings.tabWithCount(libraryStrings.tabs.planned, 2),
+      }),
+    ).toBeTruthy();
+    expect(
+      screen.getByRole("tab", {
+        name: libraryStrings.tabWithCount(libraryStrings.tabs.reading, 0),
+      }),
+    ).toBeTruthy();
+    expect(
+      screen.getByRole("tab", {
+        name: libraryStrings.tabWithCount(libraryStrings.tabs.completed, 0),
+      }),
+    ).toBeTruthy();
+    expect(
+      screen.getByRole("tab", {
+        name: libraryStrings.tabWithCount(libraryStrings.tabs.dropped, 0),
+      }),
+    ).toBeTruthy();
+    expect(
+      screen.getByRole("tab", {
+        name: libraryStrings.tabWithCount(libraryStrings.tabs.hidden, 0),
+      }),
+    ).toBeTruthy();
+    expect(screen.getByRole("group", { name: libraryStrings.toolbar.viewLabel })).toBeTruthy();
+    expect(
+      screen
+        .getByRole("tab", { name: libraryStrings.tabWithCount(libraryStrings.tabsAll, 2) })
+        .getAttribute("aria-selected"),
     ).toBe("true");
 
-    fireEvent.click(
-      screen.getByRole("button", { name: libraryStrings.openRecord(externalRecord.title) }),
-    );
+    const [externalRecordButton] = screen.getAllByRole("button", {
+      name: libraryStrings.openRecord(externalRecord.title),
+    });
+    if (externalRecordButton === undefined) throw new Error("Missing external record button");
+    fireEvent.click(externalRecordButton);
     expect(screen.getByRole("dialog", { name: externalRecord.title })).toBeTruthy();
     expect(screen.getAllByText(libraryStrings.externalBadge).length).toBeGreaterThan(0);
     expect(screen.getByText(libraryStrings.externalExclusion)).toBeTruthy();
@@ -214,11 +249,44 @@ describe("LibraryView", () => {
   it("shows the contracted overall and per-tab empty states", () => {
     renderLibrary({ externalWorks: [], userWorks: [] });
     expect(screen.getByText(libraryStrings.overallEmpty.description)).toBeTruthy();
+    expect(screen.getAllByRole("button", { name: libraryStrings.addWork }).length).toBeGreaterThan(
+      0,
+    );
+    expect(
+      document
+        .querySelector('img[src="/media/library-empty-shelf.png"]')
+        ?.getAttribute("aria-hidden"),
+    ).toBe("true");
+    expect(document.querySelector('img[src="/media/library-data-portability.png"]')).toBeNull();
+    expect(
+      screen.queryByRole("link", { name: libraryStrings.tools.openSettings }),
+    ).toBeNull();
 
     cleanup();
     renderLibrary({ externalWorks: [], userWorks: [catalogRecord] });
-    fireEvent.click(screen.getByRole("tab", { name: libraryStrings.tabs.completed }));
+    fireEvent.click(
+      screen.getByRole("tab", {
+        name: libraryStrings.tabWithCount(libraryStrings.tabs.completed, 0),
+      }),
+    );
     expect(screen.getByText(libraryStrings.tabEmpty.completed)).toBeTruthy();
+    expect(document.querySelector('img[src="/media/library-empty-shelf.png"]')).toBeNull();
+  });
+
+  it("shows a populated data-portability banner that opens settings data", () => {
+    renderLibrary({ externalWorks: [], userWorks: [catalogRecord] });
+
+    expect(screen.getByRole("heading", { name: libraryStrings.tools.heading })).toBeTruthy();
+    expect(screen.getByText(libraryStrings.tools.description)).toBeTruthy();
+    expect(
+      screen.getByRole("link", { name: libraryStrings.tools.openSettings }).getAttribute("href"),
+    ).toBe("/settings?section=data");
+    expect(
+      document
+        .querySelector('img[src="/media/library-data-portability.png"]')
+        ?.getAttribute("aria-hidden"),
+    ).toBe("true");
+    expect(document.querySelector('img[src="/media/library-empty-shelf.png"]')).toBeNull();
   });
 
   it("keeps an imported current-Catalog-missing record visible and editable without fake details", async () => {

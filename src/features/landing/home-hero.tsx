@@ -13,14 +13,14 @@ type HomeHeroProps = Readonly<{
   works: readonly LandingWork[];
   coverUrls: ReadonlyMap<string, string | null>;
   backdropUrl?: string | null;
-  onFirstCoverSettled?: () => void;
+  onCoverVisible(workId: string): void;
   staticLogo?: boolean;
 }>;
 
 export function HomeHero({
   backdropUrl,
   coverUrls,
-  onFirstCoverSettled,
+  onCoverVisible,
   staticLogo = false,
   works,
 }: HomeHeroProps) {
@@ -86,6 +86,7 @@ export function HomeHero({
               creators={work.creators}
               decorative
               key={work.id}
+              onVisible={() => onCoverVisible(work.id)}
               requestedSize={400}
               title={work.title}
             />
@@ -96,7 +97,7 @@ export function HomeHero({
               coverUrl={coverUrls.get(leadWork.id)}
               creators={leadWork.creators}
               decorative
-              onSettled={onFirstCoverSettled}
+              onVisible={() => onCoverVisible(leadWork.id)}
               priority
               requestedSize={600}
               title={leadWork.title}

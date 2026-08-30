@@ -3,12 +3,11 @@
 import { type ReactNode, useEffect, useState } from "react";
 
 import { Button } from "@/components/design-system/button";
-import recommendationContextAssetUrl from "@/data/generated/recommendation-context-v1.json?url";
 import { catalogV1Schema } from "@/domain/catalog/schema";
 import type { CatalogV1 } from "@/domain/catalog/types";
 import { recommendationContextSchema } from "@/domain/recommendation/context-schema";
 import type { RecommendationContext } from "@/domain/recommendation/types";
-import { catalogAssetUrl } from "@/lib/catalog-asset";
+import { catalogAssetUrl, recommendationContextAssetUrl } from "@/lib/catalog-asset";
 import { catalogStrings } from "@/lib/strings";
 
 import { catalogMatchesIdentity } from "./catalog-identity";
@@ -61,7 +60,7 @@ export function StaticAssetCatalogProvider({ children }: StaticAssetCatalogProvi
 
     void Promise.all([
       catalogRequest,
-      fetch(recommendationContextAssetUrl, {
+      fetch(recommendationContextAssetUrl(identity.catalogVersion), {
         cache: requestCache,
         signal: controller.signal,
       }),

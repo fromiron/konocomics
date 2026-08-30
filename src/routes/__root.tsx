@@ -12,7 +12,6 @@ import { preload } from "react-dom";
 import { Button } from "@/components/design-system/button";
 import { AppShell } from "@/components/nav/app-shell";
 import catalogIdentityJson from "@/data/generated/catalog-identity-v1.json";
-import recommendationContextAssetUrl from "@/data/generated/recommendation-context-v1.json?url";
 import { CatalogIdentityProvider } from "@/features/catalog/catalog-provider";
 import { getValidatedSessionCatalog } from "@/features/catalog/validated-catalog-cache";
 import {
@@ -20,7 +19,7 @@ import {
   parseCurrentCatalogIdentity,
   PersistenceProvider,
 } from "@/infrastructure/db";
-import { catalogAssetUrl } from "@/lib/catalog-asset";
+import { catalogAssetUrl, recommendationContextAssetUrl } from "@/lib/catalog-asset";
 import { coreStrings, routeBoundaryStrings, workDetailStrings } from "@/lib/strings";
 
 import globalStyles from "../styles/globals.css?url";
@@ -104,7 +103,7 @@ function RootDocument() {
         fetchPriority: "high",
       });
     }
-    preload(recommendationContextAssetUrl, {
+    preload(recommendationContextAssetUrl(currentCatalogIdentity.catalogVersion), {
       as: "fetch",
       crossOrigin: "anonymous",
     });

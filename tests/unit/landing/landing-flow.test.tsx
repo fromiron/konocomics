@@ -116,9 +116,6 @@ describe("LandingFlow profile routing", () => {
     expect(within(editorialRanking).getAllByRole("link", { name: /^おすすめ\d+位/u })).toHaveLength(
       4,
     );
-    expect(
-      screen.getByRole("link", { name: landingStrings.footer.settings }).getAttribute("href"),
-    ).toBe("/settings");
     expect(testState.navigate).not.toHaveBeenCalled();
   });
 

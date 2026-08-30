@@ -23,7 +23,7 @@ type AnchorCoverCardProps = Readonly<{
   selection?: PositiveOnboardingEntry;
   coverUrl?: string | null;
   labels: AnchorCardLabels;
-  onCoverSettled?: () => void;
+  onCoverVisible?: () => void;
   onToggleSelection: (workId: string) => void;
   onToggleFavorite: (workId: string) => void;
   tabIndex?: number;
@@ -37,7 +37,7 @@ export function AnchorCoverCard({
   selection,
   coverUrl,
   labels,
-  onCoverSettled,
+  onCoverVisible,
   onToggleSelection,
   onToggleFavorite,
   tabIndex = 0,
@@ -76,7 +76,7 @@ export function AnchorCoverCard({
           <CoverImage
             coverUrl={coverUrl}
             creators={work.creators}
-            onSettled={onCoverSettled}
+            onVisible={onCoverVisible}
             requestedSize={400}
             title={work.title}
           />

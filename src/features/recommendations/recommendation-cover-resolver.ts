@@ -124,7 +124,7 @@ type UseRecommendationCoversInput = Readonly<{
 
 type RecommendationCoverState = Readonly<{
   coverUrls: ReadonlyMap<string, string | null>;
-  notifyCoverSettled(target: RecommendationCoverTarget): void;
+  requestCover(workId: string): void;
 }>;
 
 type InFlightCoverResolution = Readonly<{
@@ -142,15 +142,24 @@ export function useRecommendationCovers({
   const generationRef = useRef(0);
   const completedRef = useRef(new Map<string, string | null>());
   const inFlightRef = useRef(new Map<string, InFlightCoverResolution>());
+  const demandedWorkIdsRef = useRef(new Set<string>());
+  const enqueueRef = useRef<((workId: string) => void) | null>(null);
   const [resolvedByTarget, setResolvedByTarget] = useState<ReadonlyMap<string, string | null>>(
     () => new Map(),
   );
-  const notifyCoverSettled = useCallback(() => undefined, []);
+  const requestCover = useCallback((workId: string) => {
+    demandedWorkIdsRef.current.add(workId);
+    enqueueRef.current?.(workId);
+  }, []);
 
   useLayoutEffect(() => {
     const generation = generationRef.current + 1;
     generationRef.current = generation;
     const first = targets[0];
+    const targetsByWorkId = new Map(targets.map((target) => [target.workId, target] as const));
+    const pending: RecommendationCoverTarget[] = [];
+    const scheduledKeys = new Set<string>();
+    let active = 0;
 
     const resolveShared = (target: RecommendationCoverTarget) => {
       const key = targetKey(target);
@@ -169,21 +178,14 @@ export function useRecommendationCovers({
       return request;
     };
 
-    const commit = (
-      resolutions: readonly RecommendationCoverResolution[],
-      flushBeforeContinuing = false,
-    ) => {
+    const commit = (resolution: RecommendationCoverResolution, flushBeforeContinuing = false) => {
       if (generationRef.current !== generation) return false;
-      resolutions.forEach((resolution) => {
-        completedRef.current.set(targetKey(resolution.target), resolution.coverUrl);
-      });
+      const key = targetKey(resolution.target);
+      completedRef.current.set(key, resolution.coverUrl);
       const update = () => {
         setResolvedByTarget((current) => {
           const next = new Map(current);
-          resolutions.forEach((resolution) => {
-            const key = targetKey(resolution.target);
-            next.set(key, resolution.coverUrl);
-          });
+          next.set(key, resolution.coverUrl);
           return next;
         });
       };
@@ -192,42 +194,44 @@ export function useRecommendationCovers({
       return true;
     };
 
-    void (async () => {
-      if (first === undefined) return;
-      const firstRequest = completedRef.current.has(targetKey(first)) ? null : resolveShared(first);
-      const pending = targets
-        .slice(1)
-        .filter((target) => !completedRef.current.has(targetKey(target)));
-      let nextIndex = 0;
-      const resolveNext = async () => {
-        while (generationRef.current === generation) {
-          const target = pending[nextIndex];
-          if (target === undefined) return;
-          nextIndex += 1;
-          const resolution = await resolveShared(target);
-          if (!commit([resolution])) return;
-        }
-      };
-      const remainingWorkers = Array.from(
-        {
-          length: Math.min(
-            pending.length,
-            COVER_RESOLUTION_CONCURRENCY - (firstRequest === null ? 0 : 1),
-          ),
-        },
-        resolveNext,
-      );
-
-      if (firstRequest !== null) {
-        const firstResolution = await firstRequest;
-        if (!commit([firstResolution], true)) return;
-        if (nextIndex < pending.length) remainingWorkers.push(resolveNext());
+    const pump = () => {
+      while (generationRef.current === generation && active < COVER_RESOLUTION_CONCURRENCY) {
+        const target = pending.shift();
+        if (target === undefined) return;
+        const key = targetKey(target);
+        active += 1;
+        void resolveShared(target)
+          .then((resolution) => commit(resolution, target === first))
+          .finally(() => {
+            active -= 1;
+            scheduledKeys.delete(key);
+            pump();
+          });
       }
+    };
 
-      await Promise.all(remainingWorkers);
-    })();
+    const enqueue = (workId: string) => {
+      const target = targetsByWorkId.get(workId);
+      if (target === undefined) return;
+      const key = targetKey(target);
+      if (
+        completedRef.current.has(key) ||
+        scheduledKeys.has(key) ||
+        inFlightRef.current.get(key)?.generation === generation
+      ) {
+        return;
+      }
+      scheduledKeys.add(key);
+      pending.push(target);
+      pump();
+    };
+
+    enqueueRef.current = enqueue;
+    if (first !== undefined) enqueue(first.workId);
+    demandedWorkIdsRef.current.forEach(enqueue);
 
     return () => {
+      if (enqueueRef.current === enqueue) enqueueRef.current = null;
       if (generationRef.current === generation) {
         generationRef.current += 1;
       }
@@ -245,5 +249,5 @@ export function useRecommendationCovers({
     return visible;
   }, [resolvedByTarget, targets]);
 
-  return useMemo(() => ({ coverUrls, notifyCoverSettled }), [coverUrls, notifyCoverSettled]);
+  return useMemo(() => ({ coverUrls, requestCover }), [coverUrls, requestCover]);
 }

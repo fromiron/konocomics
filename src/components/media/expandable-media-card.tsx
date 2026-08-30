@@ -366,7 +366,7 @@ export function ExpandableMediaCard({
 
   return (
     <article
-      className="group/card relative isolate w-full overflow-hidden rounded-[var(--radius-card)] border border-line bg-surface-1 p-0 [@media(min-width:768px)_and_(hover:hover)_and_(pointer:fine)]:h-full [@media(min-width:768px)_and_(hover:hover)_and_(pointer:fine)]:data-[expanded]:border-accent [@media(min-width:768px)_and_(hover:hover)_and_(pointer:fine)]:data-[expanded]:shadow-[var(--shadow-level-1)] [@media(min-width:768px)_and_(hover:hover)_and_(pointer:fine)]:data-[expansion-side=left]:ml-auto"
+      className="group/card relative isolate w-full overflow-hidden rounded-[var(--radius-card)] border border-line bg-surface-1 p-0 [@media(min-width:768px)_and_(hover:hover)_and_(pointer:fine)]:h-full [@media(min-width:768px)_and_(hover:hover)_and_(pointer:fine)]:data-[expanded]:shadow-[var(--shadow-level-1)] [@media(min-width:768px)_and_(hover:hover)_and_(pointer:fine)]:data-[expansion-side=left]:ml-auto"
       data-expanded={expanded || undefined}
       data-expansion-side={expanded ? expansionSide : undefined}
       onBlurCapture={collapseAfterFocusLeaves}

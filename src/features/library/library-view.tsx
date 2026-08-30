@@ -69,7 +69,7 @@ type LibraryViewProps = Readonly<{
   catalog: CatalogV1;
   catalogCoverUrls?: ReadonlyMap<string, string | null>;
   externalWorks: readonly ExternalWorkRecord[] | undefined;
-  notifyCatalogCoverSettled?(workId: string): void;
+  onCatalogCoverVisible?(workId: string): void;
   onActiveStateChange?(state: LibraryStateFilter): void;
   onQueryChange?(query: string): void;
   onSortChange?(sort: LibrarySort): void;
@@ -96,7 +96,7 @@ export function LibraryView({
   catalog,
   catalogCoverUrls = new Map(),
   externalWorks,
-  notifyCatalogCoverSettled,
+  onCatalogCoverVisible,
   onActiveStateChange,
   onQueryChange,
   onSortChange,
@@ -250,18 +250,33 @@ export function LibraryView({
       ) : null}
 
       {rows.length === 0 ? (
-        <section className="grid justify-items-start gap-[var(--space-3)] py-[var(--space-8)]">
-          <h2>{libraryStrings.overallEmpty.title}</h2>
-          <p className="text-text-muted">{libraryStrings.overallEmpty.description}</p>
-          <Button
-            onClick={(event) => {
-              setOpener(event.currentTarget);
-              setPanel("search");
-            }}
-            type="button"
-          >
-            {libraryStrings.addWork}
-          </Button>
+        <section
+          aria-labelledby="library-empty-heading"
+          className="relative min-h-[calc(var(--control-min-size)*5)] overflow-hidden rounded-[var(--radius-card)] md:min-h-[calc(var(--space-12)*5)]"
+        >
+          <img
+            alt=""
+            aria-hidden="true"
+            className="pointer-events-none absolute inset-0 size-full object-cover object-[82%_50%]"
+            src="/media/library-empty-shelf.png"
+          />
+          <div
+            aria-hidden="true"
+            className="pointer-events-none absolute inset-0 bg-gradient-to-r from-canvas from-40% via-canvas/80 via-55% to-transparent to-78%"
+          />
+          <div className="relative z-10 grid h-full min-h-[calc(var(--control-min-size)*5)] content-center justify-items-start gap-[var(--space-3)] p-[var(--space-4)] md:min-h-[calc(var(--space-12)*5)] md:max-w-[55%] md:p-[var(--space-6)]">
+            <h2 id="library-empty-heading">{libraryStrings.overallEmpty.title}</h2>
+            <p className="text-text-muted">{libraryStrings.overallEmpty.description}</p>
+            <Button
+              onClick={(event) => {
+                setOpener(event.currentTarget);
+                setPanel("search");
+              }}
+              type="button"
+            >
+              {libraryStrings.addWork}
+            </Button>
+          </div>
         </section>
       ) : (
         <>
@@ -276,19 +291,26 @@ export function LibraryView({
             >
               <TabsList
                 aria-label={libraryStrings.tablistLabel}
-                className="m-0 w-full max-w-full justify-start overflow-x-auto overflow-y-hidden [scrollbar-width:none] [&::-webkit-scrollbar]:hidden"
+                className="m-0 flex h-auto w-full max-w-full flex-wrap justify-start gap-[var(--space-content-tight)] overflow-visible"
               >
                 {tabStates.map((state) => {
                   const id = state ?? "all";
+                  const label =
+                    state === null ? libraryStrings.tabsAll : libraryStrings.tabs[state];
+                  const count = state === null ? rows.length : stateCounts[state];
                   return (
                     <TabsTrigger
                       aria-controls={`library-tabpanel-${id}`}
-                      className="min-w-max shrink-0 px-[var(--space-content)]"
+                      aria-label={libraryStrings.tabWithCount(label, count)}
+                      className="min-h-[var(--control-min-size)] min-w-max shrink-0 px-[var(--space-content)]"
                       id={`library-tab-${id}`}
                       key={id}
                       value={id}
                     >
-                      {state === null ? libraryStrings.tabsAll : libraryStrings.tabs[state]}
+                      {label}
+                      <span aria-hidden="true" className="md:hidden">
+                        {` ${String(count)}`}
+                      </span>
                     </TabsTrigger>
                   );
                 })}
@@ -318,6 +340,7 @@ export function LibraryView({
             <div
               aria-label={libraryStrings.toolbar.viewLabel}
               className="flex gap-[var(--space-content)]"
+              role="group"
             >
               {(["grid", "list"] as const).map((mode) => (
                 <Button
@@ -345,7 +368,7 @@ export function LibraryView({
                 <LibraryRecentCard
                   catalogCoverUrls={catalogCoverUrls}
                   key={`recent:${row.kind}:${row.id}`}
-                  onCoverSettled={notifyCatalogCoverSettled}
+                  onCoverVisible={onCatalogCoverVisible}
                   onOpen={openRow}
                   row={row}
                   volumeCountByWorkId={volumeCountByWorkId}
@@ -387,7 +410,7 @@ export function LibraryView({
                     >
                       <LibraryStateCard
                         catalogCoverUrls={catalogCoverUrls}
-                        onCoverSettled={notifyCatalogCoverSettled}
+                        onCoverVisible={onCatalogCoverVisible}
                         onOpen={openRow}
                         row={row}
                         volumeCountByWorkId={volumeCountByWorkId}
@@ -432,7 +455,7 @@ export function LibraryView({
                           {view === "list" ? (
                             <LibraryListCard
                               catalogCoverUrls={catalogCoverUrls}
-                              onCoverSettled={notifyCatalogCoverSettled}
+                              onCoverVisible={onCatalogCoverVisible}
                               onOpen={openRow}
                               row={row}
                               volumeCountByWorkId={volumeCountByWorkId}
@@ -440,7 +463,7 @@ export function LibraryView({
                           ) : (
                             <LibraryStateCard
                               catalogCoverUrls={catalogCoverUrls}
-                              onCoverSettled={notifyCatalogCoverSettled}
+                              onCoverVisible={onCatalogCoverVisible}
                               onOpen={openRow}
                               row={row}
                               volumeCountByWorkId={volumeCountByWorkId}
@@ -467,7 +490,7 @@ export function LibraryView({
                   <LibraryFavoriteCard
                     catalogCoverUrls={catalogCoverUrls}
                     key={`favorite:${row.kind}:${row.id}`}
-                    onCoverSettled={notifyCatalogCoverSettled}
+                    onCoverVisible={onCatalogCoverVisible}
                     onOpen={openRow}
                     row={row}
                     volumeCountByWorkId={volumeCountByWorkId}
@@ -477,20 +500,41 @@ export function LibraryView({
             </div>
           )}
 
-          <section className="mt-[var(--space-6)] grid gap-[var(--space-4)] rounded-[var(--radius-card)] border border-line-accent-subtle bg-surface-1 p-[var(--space-4)] md:grid-cols-[minmax(0,1fr)_auto] md:items-center">
-            <div className="grid gap-[var(--space-content)]">
-              <h2>{libraryStrings.tools.heading}</h2>
-              <p className="max-w-[var(--layout-width-reading)] text-text-muted">
+          <section
+            aria-labelledby="library-data-heading"
+            className="relative mt-[var(--space-6)] min-h-[128px] w-full overflow-hidden rounded-[var(--radius-card)] md:min-h-[136px] md:w-1/2"
+          >
+            <img
+              alt=""
+              aria-hidden="true"
+              className="pointer-events-none absolute inset-0 size-full object-cover object-[88%_50%] md:object-[82%_48%]"
+              decoding="async"
+              fetchPriority="low"
+              loading="lazy"
+              src="/media/library-data-portability.png"
+            />
+            <div
+              aria-hidden="true"
+              className="pointer-events-none absolute inset-0 bg-gradient-to-r from-canvas from-38% via-canvas/80 via-56% to-transparent to-80%"
+            />
+            <div className="relative z-10 grid h-full min-h-[128px] content-center justify-items-start gap-[var(--space-2)] p-[var(--space-3)] md:min-h-[136px] md:max-w-[70%] md:p-[var(--space-4)]">
+              <h2
+                className="text-[length:var(--font-size-14)] leading-snug font-bold text-text-strong md:text-[length:var(--text-subheading-size)]"
+                id="library-data-heading"
+              >
+                {libraryStrings.tools.heading}
+              </h2>
+              <p className="text-[length:var(--text-caption-size)] text-text-muted">
                 {libraryStrings.tools.description}
               </p>
+              <Link
+                className="inline-flex min-h-[var(--control-min-size)] w-fit items-center rounded-[var(--radius-control)] border border-accent px-[var(--space-4)] font-bold text-accent hover:bg-accent-soft focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-focus-ring"
+                search={{ section: "data" }}
+                to="/settings"
+              >
+                {libraryStrings.tools.openSettings}
+              </Link>
             </div>
-            <Link
-              className="inline-flex min-h-[var(--control-min-size)] w-fit items-center rounded-[var(--radius-control)] border border-accent px-[var(--space-4)] font-bold text-accent hover:bg-accent-soft focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-focus-ring"
-              search={{ section: "data" }}
-              to="/settings"
-            >
-              {libraryStrings.tools.openSettings}
-            </Link>
           </section>
         </>
       )}
@@ -536,7 +580,7 @@ export function LibraryView({
             <div className="grid grid-cols-[88px_minmax(0,1fr)] items-start gap-[var(--space-4)]">
               <RowMedia
                 catalogCoverUrls={catalogCoverUrls}
-                onCoverSettled={notifyCatalogCoverSettled}
+                onCoverVisible={onCatalogCoverVisible}
                 row={selectedRow}
               />
               <div className="grid min-w-0 gap-[var(--space-content)]">

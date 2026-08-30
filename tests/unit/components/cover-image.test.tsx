@@ -6,7 +6,10 @@ import { afterEach, describe, expect, it, vi } from "vitest";
 import { CoverImage } from "@/components/cover/CoverImage";
 import { HeroBackdrop } from "@/components/media/hero-backdrop";
 
-afterEach(cleanup);
+afterEach(() => {
+  cleanup();
+  vi.unstubAllGlobals();
+});
 
 describe("CoverImage accessibility contract", () => {
   it("keeps the hero backdrop on the 200px fallback and removes a broken fallback", () => {
@@ -80,16 +83,52 @@ describe("CoverImage accessibility contract", () => {
     expect(deferredImage?.getAttribute("decoding")).toBe("async");
   });
 
+  it("reports visibility once and falls back when observation is unavailable", () => {
+    let observerCallback: IntersectionObserverCallback | undefined;
+    const disconnect = vi.fn();
+    const observe = vi.fn();
+    vi.stubGlobal(
+      "IntersectionObserver",
+      class {
+        constructor(callback: IntersectionObserverCallback) {
+          observerCallback = callback;
+        }
+
+        disconnect = disconnect;
+        observe = observe;
+      },
+    );
+    const onVisible = vi.fn();
+    const observed = render(
+      <CoverImage creators={["作者"]} onVisible={onVisible} title="表示対象" />,
+    );
+    expect(observe).toHaveBeenCalledOnce();
+    expect(onVisible).not.toHaveBeenCalled();
+
+    observerCallback?.([{ isIntersecting: true } as IntersectionObserverEntry], {} as never);
+    observerCallback?.([{ isIntersecting: true } as IntersectionObserverEntry], {} as never);
+    expect(onVisible).toHaveBeenCalledOnce();
+    expect(disconnect).toHaveBeenCalledOnce();
+    observed.unmount();
+
+    vi.stubGlobal("IntersectionObserver", undefined);
+    const fallbackVisible = vi.fn();
+    render(<CoverImage creators={["作者"]} onVisible={fallbackVisible} title="代替" />);
+    expect(fallbackVisible).toHaveBeenCalledOnce();
+  });
+
   it("keeps the real image paintable above its skeleton before load settles", () => {
     const { container } = render(
       <CoverImage coverUrl="https://example.com/cover.jpg" creators={["作者"]} title="作品" />,
     );
     const image = container.querySelector<HTMLImageElement>(".cover-image__image");
+    const artwork = container.querySelector(".cover-image__artwork");
     const skeleton = container.querySelector(".cover-image__skeleton");
 
     expect(image?.dataset.loaded).toBe("false");
     expect(skeleton).toBeTruthy();
-    expect(skeleton?.nextElementSibling).toBe(image);
+    expect(skeleton?.nextElementSibling).toBe(artwork);
+    expect(artwork?.contains(image ?? null)).toBe(true);
     expect(image?.hidden).toBe(false);
     expect(image?.getAttribute("aria-hidden")).toBeNull();
   });
@@ -115,6 +154,57 @@ describe("CoverImage accessibility contract", () => {
 
     fireEvent.load(image);
     expect(onSettled).toHaveBeenCalledOnce();
+  });
+
+  it("can match the frame to the source ratio without cropping", () => {
+    const { container } = render(
+      <CoverImage
+        coverUrl="https://example.com/cover.jpg"
+        creators={["作者"]}
+        matchSourceAspectRatio
+        title="作品"
+      />,
+    );
+    const image = container.querySelector<HTMLImageElement>(".cover-image__image");
+    const frame = container.querySelector<HTMLElement>(".cover-image");
+    const artwork = container.querySelector<HTMLElement>(".cover-image__artwork");
+    if (image === null || frame === null || artwork === null) {
+      throw new Error("Expected the cover frame");
+    }
+    Object.defineProperties(image, {
+      naturalHeight: { configurable: true, value: 250 },
+      naturalWidth: { configurable: true, value: 160 },
+    });
+
+    fireEvent.load(image);
+
+    expect(frame.style.aspectRatio).toBe("0.64 / 1");
+    expect(artwork.style.aspectRatio).toBe("0.64 / 1");
+    expect(artwork.style.height).toBe("100%");
+    expect(artwork.style.width).toBe("auto");
+    expect(artwork.className).toContain("overflow-hidden");
+    expect(artwork.className).toContain("rounded-[var(--radius-cover)]");
+    expect(image.className).toContain("object-contain");
+    expect(image.className).toContain("rounded-[var(--radius-cover)]");
+  });
+
+  it("fits a wider source inside the fixed frame with a rounded source-sized box", () => {
+    const { container } = render(
+      <CoverImage coverUrl="https://example.com/wide.jpg" creators={["作者"]} title="作品" />,
+    );
+    const image = container.querySelector<HTMLImageElement>(".cover-image__image");
+    const artwork = container.querySelector<HTMLElement>(".cover-image__artwork");
+    if (image === null || artwork === null) throw new Error("Expected the cover artwork");
+    Object.defineProperties(image, {
+      naturalHeight: { configurable: true, value: 400 },
+      naturalWidth: { configurable: true, value: 282 },
+    });
+
+    fireEvent.load(image);
+
+    expect(artwork.style.aspectRatio).toBe("0.705 / 1");
+    expect(artwork.style.height).toBe("auto");
+    expect(artwork.style.width).toBe("100%");
   });
 
   it("waits through the 400 to 200 fallback and releases a terminal placeholder failure", () => {

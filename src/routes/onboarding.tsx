@@ -1,13 +1,14 @@
 import { createFileRoute } from "@tanstack/react-router";
 
 import { BundledCatalogProvider } from "@/features/catalog/bundled-catalog-provider";
+import { exclusiveOnboardingSearch } from "@/features/onboarding/onboarding-collections";
 import { OnboardingFlow } from "@/features/onboarding/onboarding-flow";
 import { onboardingSearchSchema } from "@/lib/route-search";
 import { onboardingStrings } from "@/lib/strings";
 
 export const Route = createFileRoute("/onboarding")({
   ssr: false,
-  validateSearch: (search) => onboardingSearchSchema.parse(search),
+  validateSearch: (search) => exclusiveOnboardingSearch(onboardingSearchSchema.parse(search)),
   head: () => ({ meta: [{ title: onboardingStrings.metadataTitle }] }),
   component: OnboardingPage,
 });
@@ -21,17 +22,25 @@ function OnboardingPage() {
       <OnboardingFlow
         genre={search.genre}
         onGenreChange={(genre) => {
-          void navigate({ resetScroll: false, search: { ...search, genre } });
+          void navigate({
+            resetScroll: false,
+            search: exclusiveOnboardingSearch({ genre }),
+          });
         }}
         onQueryChange={(query) => {
           void navigate({
             replace: true,
             resetScroll: false,
-            search: { ...search, q: query.trim().length > 0 ? query : undefined },
+            search: exclusiveOnboardingSearch({
+              q: query.trim().length > 0 ? query : undefined,
+            }),
           });
         }}
         onShelfChange={(shelf) => {
-          void navigate({ resetScroll: false, search: { ...search, shelf } });
+          void navigate({
+            resetScroll: false,
+            search: exclusiveOnboardingSearch({ shelf }),
+          });
         }}
         query={search.q ?? ""}
         shelf={search.shelf}

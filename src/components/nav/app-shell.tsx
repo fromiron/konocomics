@@ -98,7 +98,7 @@ function AppShellContent({
         tabIndex={-1}
       >
         <div className="flex flex-1 flex-col">{children}</div>
-        <SiteFooter />
+        <SiteFooter immersive={!showMobileNavigation} />
       </div>
       {showMobileNavigation ? (
         <PostOnboardingNavigation activePathname={pathname} variant="mobile" />

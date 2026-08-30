@@ -7,7 +7,7 @@ export default defineConfig({
   retries: process.env.CI ? 2 : 0,
   reporter: process.env.CI ? "github" : "list",
   use: {
-    baseURL: "http://localhost:3000",
+    baseURL: "http://localhost:3030",
     trace: "on-first-retry",
   },
   projects: [
@@ -31,7 +31,8 @@ export default defineConfig({
   ],
   webServer: {
     command: "pnpm start",
-    url: "http://localhost:3000",
+    env: { PORT: "3030" },
+    url: "http://localhost:3030",
     reuseExistingServer: false,
   },
 });

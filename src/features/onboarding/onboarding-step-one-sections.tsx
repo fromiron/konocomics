@@ -1,4 +1,6 @@
-import type { Ref } from "react";
+"use client";
+
+import { type Ref, useEffect, useRef, useState } from "react";
 import {
   BookmarkIcon,
   Clock3Icon,
@@ -14,9 +16,22 @@ import { Button } from "@/components/design-system/button";
 import { SectionHeading } from "@/components/layout/section-heading";
 import { GENRE_TAGS } from "@/domain/catalog/constants";
 import type { GenreTag, Work } from "@/domain/catalog/types";
+import type { PositiveOnboardingEntry } from "@/domain/profile/onboarding";
 import { onboardingStrings } from "@/lib/strings";
 
-import { onboardingCollections, type OnboardingCollectionId } from "./onboarding-collections";
+import { AnchorCoverCard } from "./anchor-cover-card";
+import {
+  COLLECTION_DESKTOP_QUERY,
+  COLLECTION_EXPANDED_LIMIT,
+  COLLECTION_PANEL_ID,
+  COLLECTION_PANEL_TITLE_ID,
+  COLLECTION_PREVIEW_LIMIT_DESKTOP,
+  COLLECTION_PREVIEW_LIMIT_MOBILE,
+  COLLECTION_TRIGGER_COVER_COUNT,
+  collectionPreviewLimitForViewport,
+  onboardingCollections,
+  type OnboardingCollectionId,
+} from "./onboarding-collections";
 
 export function OnboardingStepProgress() {
   const steps = [
@@ -28,7 +43,7 @@ export function OnboardingStepProgress() {
   return (
     <ol
       aria-label={onboardingStrings.stepProgress.label}
-      className="onboarding-progress mx-auto mb-[var(--space-4)] flex max-w-[var(--layout-width-form)] list-none items-center overflow-x-auto p-0 text-text-muted md:mb-[var(--space-4)]"
+      className="onboarding-progress mx-auto mb-[var(--space-2)] flex max-w-[var(--layout-width-form)] list-none flex-wrap items-center justify-center gap-y-[var(--space-1)] p-0 text-[length:var(--text-caption-size)] text-text-muted md:mb-[var(--space-4)] md:text-[length:var(--text-body-size)]"
     >
       {steps.map((step, index) => (
         <li
@@ -39,14 +54,14 @@ export function OnboardingStepProgress() {
           {index === 0 ? null : (
             <span
               aria-hidden="true"
-              className="mx-[var(--space-3)] h-px w-[var(--space-8)] bg-line"
+              className="mx-[var(--space-1)] h-px w-[var(--space-3)] bg-line md:mx-[var(--space-3)] md:w-[var(--space-8)]"
             />
           )}
           <span
             className={
               index === 0
-                ? "grid size-[var(--space-8)] place-items-center rounded-full border border-accent bg-accent-soft font-display font-bold text-accent"
-                : "grid size-[var(--space-8)] place-items-center rounded-full border border-line font-display font-bold"
+                ? "grid size-[var(--space-7)] place-items-center rounded-full border border-accent bg-accent-soft font-display font-bold text-accent md:size-[var(--space-8)]"
+                : "grid size-[var(--space-7)] place-items-center rounded-full border border-line font-display font-bold md:size-[var(--space-8)]"
             }
           >
             {index + 1}
@@ -136,11 +151,15 @@ export function OnboardingGenreChips({ genre, onChange }: OnboardingGenreChipsPr
         id="onboarding-genre-heading"
         title={onboardingStrings.step1.genreHeading}
       />
-      <div className="flex gap-[var(--space-content)] overflow-x-auto pb-[var(--space-content)] [scrollbar-width:none] [&::-webkit-scrollbar]:hidden [&>button[aria-pressed=true]]:border-accent [&>button[aria-pressed=true]]:text-accent">
+      <div className="flex flex-wrap gap-[var(--space-content)] pb-[var(--space-content)] [&>button[aria-pressed=true]]:border-accent [&>button[aria-pressed=true]]:text-accent">
         <Button
           aria-pressed={genre === undefined}
           className="shrink-0"
-          onClick={() => onChange?.(undefined)}
+          onClick={() => {
+            if (genre !== undefined) {
+              onChange?.(undefined);
+            }
+          }}
           type="button"
           variant={genre === undefined ? "secondary" : "outline"}
         >
@@ -163,21 +182,139 @@ export function OnboardingGenreChips({ genre, onChange }: OnboardingGenreChipsPr
   );
 }
 
+type OnboardingCollectionPanelProps = Readonly<{
+  collectionId: OnboardingCollectionId;
+  panelWorks: readonly Work[];
+  previewLimit: number;
+  coverUrls: ReadonlyMap<string, string | null>;
+  onCoverVisible: (workId: string) => void;
+  selectionsByWorkId: ReadonlyMap<string, PositiveOnboardingEntry>;
+  labels: Parameters<typeof AnchorCoverCard>[0]["labels"];
+  onToggleSelection: (workId: string) => void;
+  onToggleFavorite: (workId: string) => void;
+}>;
+
+function OnboardingCollectionPanel({
+  collectionId,
+  coverUrls,
+  labels,
+  onCoverVisible,
+  onToggleFavorite,
+  onToggleSelection,
+  panelWorks,
+  previewLimit,
+  selectionsByWorkId,
+}: OnboardingCollectionPanelProps) {
+  const [expanded, setExpanded] = useState(false);
+  const expandedStatusRef = useRef<HTMLParagraphElement>(null);
+  const visibleWorks = panelWorks.slice(0, expanded ? COLLECTION_EXPANDED_LIMIT : previewLimit);
+  const canShowMore = !expanded && panelWorks.length > previewLimit;
+
+  useEffect(() => {
+    if (!expanded) {
+      return;
+    }
+    expandedStatusRef.current?.focus();
+  }, [expanded]);
+
+  return (
+    <section
+      aria-labelledby={COLLECTION_PANEL_TITLE_ID}
+      className="onboarding-collection-panel mt-[var(--space-content-loose)] min-w-0 rounded-[var(--radius-card)] border border-line bg-surface-1 p-[var(--space-4)]"
+      id={COLLECTION_PANEL_ID}
+    >
+      <h3
+        className="mb-[var(--space-3)] text-[length:var(--text-subheading-size)] tracking-tight text-text-strong"
+        id={COLLECTION_PANEL_TITLE_ID}
+      >
+        {onboardingStrings.step1.collections[collectionId].title}
+      </h3>
+      {visibleWorks.length === 0 ? (
+        <p className="text-text-muted">{onboardingStrings.step1.collectionEmpty}</p>
+      ) : (
+        <div className="onboarding-collection-panel__works grid grid-cols-[repeat(auto-fill,minmax(104px,1fr))] gap-x-[var(--space-3)] gap-y-[var(--space-5)] [&>.anchor-card]:w-full [&>.anchor-card]:min-w-0 md:grid-cols-[repeat(auto-fill,minmax(128px,1fr))] md:gap-x-[var(--space-4)] md:gap-y-[var(--space-6)]">
+          {visibleWorks.map((work) => (
+            <AnchorCoverCard
+              coverUrl={coverUrls.get(work.id)}
+              key={work.id}
+              labels={labels}
+              onCoverVisible={() => onCoverVisible(work.id)}
+              onToggleFavorite={onToggleFavorite}
+              onToggleSelection={onToggleSelection}
+              selection={selectionsByWorkId.get(work.id)}
+              work={work}
+            />
+          ))}
+        </div>
+      )}
+      {canShowMore ? (
+        <Button
+          className="mt-[var(--space-4)]"
+          onClick={() => setExpanded(true)}
+          type="button"
+          variant="outline"
+        >
+          {onboardingStrings.step1.showMore}
+        </Button>
+      ) : expanded ? (
+        <p
+          className="mt-[var(--space-4)] w-fit max-w-full text-[length:var(--text-caption-size)] text-text-muted"
+          ref={expandedStatusRef}
+          role="status"
+          tabIndex={-1}
+        >
+          {onboardingStrings.step1.collectionVisibleCount(visibleWorks.length)}
+        </p>
+      ) : null}
+    </section>
+  );
+}
+
 type OnboardingCollectionGridProps = Readonly<{
   activeId?: OnboardingCollectionId;
   previewWorks: ReadonlyMap<OnboardingCollectionId, readonly Work[]>;
+  panelWorks: readonly Work[];
   coverUrls: ReadonlyMap<string, string | null>;
-  onCoverSettled: (workId: string) => void;
+  onCoverVisible: (workId: string) => void;
   onSelect?: (id: OnboardingCollectionId | undefined) => void;
+  selectionsByWorkId: ReadonlyMap<string, PositiveOnboardingEntry>;
+  labels: Parameters<typeof AnchorCoverCard>[0]["labels"];
+  onToggleSelection: (workId: string) => void;
+  onToggleFavorite: (workId: string) => void;
 }>;
 
 export function OnboardingCollectionGrid({
   activeId,
   coverUrls,
-  onCoverSettled,
+  labels,
+  onCoverVisible,
   onSelect,
+  onToggleFavorite,
+  onToggleSelection,
+  panelWorks,
   previewWorks,
+  selectionsByWorkId,
 }: OnboardingCollectionGridProps) {
+  const [previewLimit, setPreviewLimit] = useState(() => collectionPreviewLimitForViewport());
+  const activeCollection =
+    activeId === undefined
+      ? undefined
+      : onboardingCollections.find((collection) => collection.id === activeId);
+
+  useEffect(() => {
+    if (typeof window.matchMedia !== "function") {
+      return;
+    }
+    const mediaQuery = window.matchMedia(COLLECTION_DESKTOP_QUERY);
+    const sync = () => {
+      setPreviewLimit(
+        mediaQuery.matches ? COLLECTION_PREVIEW_LIMIT_DESKTOP : COLLECTION_PREVIEW_LIMIT_MOBILE,
+      );
+    };
+    mediaQuery.addEventListener("change", sync);
+    return () => mediaQuery.removeEventListener("change", sync);
+  }, []);
+
   return (
     <section
       aria-labelledby="onboarding-collections-heading"
@@ -188,49 +325,68 @@ export function OnboardingCollectionGrid({
         id="onboarding-collections-heading"
         title={onboardingStrings.step1.collectionsHeading}
       />
-      <div className="onboarding-collections__grid grid gap-[var(--space-content-loose)] md:grid-cols-2">
+      <div className="onboarding-collections__grid grid grid-cols-2 gap-[var(--space-content)] md:gap-[var(--space-4)]">
         {onboardingCollections.map((collection) => {
           const copy = onboardingStrings.step1.collections[collection.id];
-          const works = previewWorks.get(collection.id) ?? [];
-          const active = activeId === collection.id;
+          const covers = (previewWorks.get(collection.id) ?? []).slice(
+            0,
+            COLLECTION_TRIGGER_COVER_COUNT,
+          );
+          const expandedTrigger = activeId === collection.id;
           return (
             <Button
-              aria-pressed={active}
-              className="onboarding-collection grid h-auto min-h-[calc(var(--space-12)*4+var(--space-2))] grid-rows-[auto_1fr_auto] justify-items-stretch gap-[var(--space-4)] whitespace-normal p-[var(--space-4)] aria-pressed:border-accent aria-pressed:bg-accent-soft"
+              aria-controls={expandedTrigger ? COLLECTION_PANEL_ID : undefined}
+              aria-expanded={expandedTrigger}
+              className="onboarding-collection grid h-auto min-h-[var(--control-min-size)] min-w-0 w-full shrink grid-rows-[auto_auto] items-start justify-stretch justify-items-stretch gap-[var(--space-content)] whitespace-normal p-[var(--space-3)] text-start aria-expanded:border-accent aria-expanded:bg-accent-soft aria-expanded:text-text-strong"
               key={collection.id}
-              onClick={() => onSelect?.(active ? undefined : collection.id)}
+              onClick={() => onSelect?.(expandedTrigger ? undefined : collection.id)}
               type="button"
-              variant={active ? "secondary" : "outline"}
+              variant={expandedTrigger ? "secondary" : "outline"}
             >
-              <span className="onboarding-collection__copy grid gap-[var(--space-content-tight)] text-start">
-                <strong className="text-text-strong">{copy.title}</strong>
-                <span className="text-[length:var(--text-caption-size)] text-text-muted">
+              <span className="onboarding-collection__copy grid min-w-0 gap-[var(--space-content-tight)]">
+                <strong className="line-clamp-2 text-[length:var(--font-size-14)] text-text-strong">
+                  {copy.title}
+                </strong>
+                <span className="line-clamp-2 text-[length:var(--text-caption-size)] leading-[1.45] text-text-muted">
                   {copy.description}
                 </span>
               </span>
-              <span
-                aria-hidden="true"
-                className="onboarding-collection__covers pointer-events-none grid min-w-0 grid-cols-6 gap-[var(--space-content-tight)] [&>.cover-image]:min-w-0"
-              >
-                {works.map((work) => (
-                  <CoverImage
-                    coverUrl={coverUrls.get(work.id)}
-                    creators={work.creators}
-                    decorative
-                    key={work.id}
-                    onSettled={() => onCoverSettled(work.id)}
-                    requestedSize={200}
-                    title={work.title}
-                  />
-                ))}
-              </span>
-              <span className="onboarding-collection__action text-start text-[length:var(--text-caption-size)] font-bold text-text-strong">
-                {copy.action}
-              </span>
+              {covers.length === 0 ? null : (
+                <span
+                  aria-hidden="true"
+                  className="onboarding-collection__covers pointer-events-none grid w-full min-w-0 grid-cols-3 gap-[var(--space-content-tight)] [&>.cover-image]:min-w-0"
+                >
+                  {covers.map((work) => (
+                    <CoverImage
+                      coverUrl={coverUrls.get(work.id)}
+                      creators={work.creators}
+                      decorative
+                      key={work.id}
+                      onVisible={() => onCoverVisible(work.id)}
+                      requestedSize={200}
+                      title={work.title}
+                    />
+                  ))}
+                </span>
+              )}
             </Button>
           );
         })}
       </div>
+      {activeCollection === undefined ? null : (
+        <OnboardingCollectionPanel
+          collectionId={activeCollection.id}
+          coverUrls={coverUrls}
+          key={activeCollection.id}
+          labels={labels}
+          onCoverVisible={onCoverVisible}
+          onToggleFavorite={onToggleFavorite}
+          onToggleSelection={onToggleSelection}
+          panelWorks={panelWorks}
+          previewLimit={previewLimit}
+          selectionsByWorkId={selectionsByWorkId}
+        />
+      )}
     </section>
   );
 }

@@ -43,7 +43,7 @@ function removalHandlersFor({
  * These remove the work from the recommendation shelf, so they must not
  * compete with the primary save affordance.
  */
-function QuietTextAction({
+export function QuietTextAction({
   className,
   danger = false,
   surface = "page",

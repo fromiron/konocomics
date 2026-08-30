@@ -17,7 +17,7 @@ import type { NegativeReasonId } from "@/domain/profile/types";
 type NegativeWorkCardProps = Readonly<{
   work: Work;
   coverUrl?: string | null;
-  onCoverSettled?: () => void;
+  onCoverVisible?: () => void;
   disabled: boolean;
   isPositive: boolean;
   isSelected: boolean;
@@ -34,7 +34,7 @@ type NegativeWorkCardProps = Readonly<{
 export function NegativeWorkCard({
   work,
   coverUrl,
-  onCoverSettled,
+  onCoverVisible,
   disabled,
   isPositive,
   isSelected,
@@ -53,7 +53,7 @@ export function NegativeWorkCard({
         className="[grid-row:1/span_3]"
         coverUrl={coverUrl}
         creators={work.creators}
-        onSettled={onCoverSettled}
+        onVisible={onCoverVisible}
         requestedSize={400}
         title={work.title}
       />
@@ -105,7 +105,7 @@ export type NegativeReasonOption = Readonly<{
 type NegativeEntryEditorProps = Readonly<{
   work: Work;
   coverUrl?: string | null;
-  onCoverSettled?: () => void;
+  onCoverVisible?: () => void;
   disabled: boolean;
   entry: NegativeOnboardingEntry;
   focusDisposition?: NegativeDisposition;
@@ -127,7 +127,7 @@ type NegativeEntryEditorProps = Readonly<{
 export function NegativeEntryEditor({
   work,
   coverUrl,
-  onCoverSettled,
+  onCoverVisible,
   disabled,
   entry,
   focusDisposition,
@@ -156,7 +156,7 @@ export function NegativeEntryEditor({
         <CoverImage
           coverUrl={coverUrl}
           creators={work.creators}
-          onSettled={onCoverSettled}
+          onVisible={onCoverVisible}
           requestedSize={200}
           title={work.title}
         />

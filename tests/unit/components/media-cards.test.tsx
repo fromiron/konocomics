@@ -1,8 +1,8 @@
 // @vitest-environment jsdom
 
-import { cleanup, render, screen, within } from "@testing-library/react";
+import { act, cleanup, fireEvent, render, screen, within } from "@testing-library/react";
 import type { ReactNode } from "react";
-import { afterEach, describe, expect, it, vi } from "vitest";
+import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 
 import { MediaPosterCard } from "@/components/media/media-poster-card";
 import { RankingCard } from "@/components/media/ranking-card";
@@ -106,7 +106,8 @@ describe("media card anatomy", () => {
         <RankingCard
           coverUrl="https://example.com/cover.jpg"
           creators={["作者"]}
-          metadata="高い確信"
+          metadata="アクション · コメディ · ファンタジー"
+          metadataAccessibleLabel="アクション · コメディ · ファンタジー"
           position={1}
           rankingKind="personalized-ranking"
           title="推薦作品"
@@ -116,15 +117,54 @@ describe("media card anatomy", () => {
     );
 
     expect(screen.getByRole("link").getAttribute("aria-label")).toMatch(/^1位/u);
-    expect(screen.getAllByText("1")).toHaveLength(1);
+    expect(screen.queryByText("1位")).toBeNull();
+    expect(screen.getByText("1")).toBeTruthy();
     expect(container.querySelector('[data-ranking-editorial-position="true"]')).toBeNull();
-    expect(screen.getByRole("link").className).not.toContain("translate-y");
-    expect(container.querySelector("li")?.className).toContain(
-      "w-[calc(var(--control-min-size)*1.75)]",
-    );
+    const link = screen.getByRole("link");
+    expect(link.className).toContain("p-[var(--space-3)]");
+    expect(link.className).toContain("hover:bg-surface-2");
+    expect(link.className).toContain("focus-visible:bg-surface-2");
+    expect(container.querySelector("li")?.className).toContain("w-44");
     expect(container.querySelector(".cover-image")?.classList.contains("aspect-[30/43]")).toBe(
       true,
     );
+    expect(container.querySelector(".cover-image")?.className).toContain(
+      "shadow-[var(--shadow-cover-featured)]",
+    );
+    const rankingImage = container.querySelector<HTMLImageElement>(".cover-image__image");
+    const rankingArtwork = container.querySelector<HTMLElement>(".cover-image__artwork");
+    if (rankingImage === null || rankingArtwork === null) {
+      throw new Error("Expected the ranking cover");
+    }
+    Object.defineProperties(rankingImage, {
+      naturalHeight: { configurable: true, value: 160 },
+      naturalWidth: { configurable: true, value: 160 },
+    });
+    fireEvent.load(rankingImage);
+    expect(rankingImage.className).toContain("object-cover");
+    expect(rankingArtwork.className).toContain("absolute inset-0");
+    expect(rankingArtwork.style.aspectRatio).toBe("");
+    expect(container.querySelector<HTMLElement>(".cover-image")?.style.aspectRatio).toBe("");
+    const hoverPosition = container.querySelector<HTMLElement>(
+      '[data-ranking-hover-position="true"]',
+    );
+    expect(hoverPosition?.className).toContain("opacity-0");
+    expect(hoverPosition?.className).toContain("[transform:translateY(var(--space-2))]");
+    expect(hoverPosition?.className).toContain("transition-[transform,opacity]");
+    expect(hoverPosition?.className).toContain("duration-[var(--motion-duration-floating-action)]");
+    expect(hoverPosition?.className).toContain("shadow-[var(--shadow-floating-action)]");
+    expect(hoverPosition?.className).toContain("group-hover/ranking:opacity-100");
+    expect(hoverPosition?.className).toContain("group-hover/ranking:[transform:translateY(0)]");
+    expect(hoverPosition?.className).toContain("group-focus-visible/ranking:opacity-100");
+    expect(hoverPosition?.className).toContain("motion-reduce:[transform:translateY(0)]");
+    expect(hoverPosition?.className).toContain("motion-reduce:transition-none");
+    expect(container.querySelector('[data-ranking-label="true"]')?.textContent).toBe(
+      "アクション · コメディ · ファンタジー",
+    );
+    expect(container.querySelector('[data-ranking-label="true"]')?.className).toContain(
+      "line-clamp-2",
+    );
+    expect(container.querySelector("button")).toBeNull();
   });
 
   it("renders the overlay poster hierarchy inside the full-cover card", () => {
@@ -158,8 +198,11 @@ describe("media card anatomy", () => {
     );
     const posterCover = container.querySelector<HTMLElement>(".cover-image");
     expect(container.querySelectorAll("img")).toHaveLength(1);
-    expect(posterCover?.className).toContain("[&>img]:!object-cover");
-    expect(posterCover?.className).toContain("[&>img]:!object-top");
+    expect(posterCover?.className).not.toContain("object-cover");
+    expect(container.querySelector(".cover-image__artwork")?.className).toContain(
+      "rounded-[var(--radius-cover)]",
+    );
+    expect(container.querySelector(".cover-image__image")?.className).toContain("object-contain");
     expect(container.querySelector('[data-cover-backdrop="true"]')).toBeNull();
   });
 
@@ -203,6 +246,16 @@ describe("media card anatomy", () => {
     expect(container.querySelector('[data-featured="true"]')).toBeTruthy();
     expect(screen.getByRole("link").className).not.toContain("hover:-translate-y");
     expect(container.querySelector("article")?.classList.contains("md:w-56")).toBe(true);
+    expect(container.querySelector("article")?.className).toContain("md:transition-[width]");
+    expect(container.querySelector("article")?.className).toContain(
+      "motion-reduce:transition-none",
+    );
+    expect(container.querySelector(".cover-image")?.className).toContain(
+      "motion-safe:[@media(hover:hover)_and_(pointer:fine)]:group-hover/showcase:scale-[1.03]",
+    );
+    expect(container.querySelector(".cover-image")?.className).not.toContain(
+      "motion-reduce:transition-none [@media(hover:hover)_and_(pointer:fine)]:group-hover/showcase:scale-[1.03]",
+    );
     expect(container.querySelectorAll(".cover-image")).toHaveLength(1);
     expect(container.querySelectorAll("img")).toHaveLength(1);
     expect(container.querySelector(".cover-image")?.className).toContain("aspect-[30/43]");
@@ -371,5 +424,126 @@ describe("media card anatomy", () => {
     expect(within(discovery).getByRole("link").getAttribute("aria-label")).toContain(
       "ジャンル アクション、ファンタジー、ホラー。刊行状況 完結",
     );
+  });
+});
+
+const showcaseWorks = [
+  {
+    id: "showcase-one",
+    title: "作品1",
+    creators: ["作者"],
+    genres: ["action" as const],
+    status: "completed" as const,
+  },
+  {
+    id: "showcase-two",
+    title: "作品2",
+    creators: ["作者"],
+    genres: ["fantasy" as const],
+    status: "completed" as const,
+  },
+  {
+    id: "showcase-three",
+    title: "作品3",
+    creators: ["作者"],
+    genres: ["mystery" as const],
+    status: "completed" as const,
+  },
+];
+
+function showcaseCards(container: HTMLElement) {
+  return [...container.querySelectorAll<HTMLElement>('[data-card-presentation="showcase"]')];
+}
+
+function focusShowcaseLink(card: HTMLElement, focusVisible: boolean) {
+  const link = within(card).getByRole("link");
+  vi.spyOn(link, "matches").mockImplementation((selector: string) => {
+    if (selector === ":focus-visible") return focusVisible;
+    return Element.prototype.matches.call(link, selector);
+  });
+  act(() => {
+    link.focus();
+  });
+  return link;
+}
+
+describe("HomeShowcaseShelf featured handoff", () => {
+  beforeEach(() => {
+    vi.useFakeTimers();
+  });
+
+  afterEach(() => {
+    vi.useRealTimers();
+  });
+
+  it("forwards the React focus event from the showcase card", () => {
+    const onFocus = vi.fn();
+    render(
+      <ShowcaseCard
+        coverUrl="https://example.com/cover.jpg"
+        creators={["作者"]}
+        onFocus={onFocus}
+        title="注目作品"
+        workId="test-work"
+      />,
+    );
+
+    const link = screen.getByRole("link");
+    fireEvent.focus(link);
+
+    expect(onFocus).toHaveBeenCalledTimes(1);
+    expect(onFocus.mock.calls[0]?.[0]).toMatchObject({ target: link });
+  });
+
+  it("cancels a pending hover handoff when keyboard focus-visible arrives", () => {
+    const { container } = render(<HomeShowcaseShelf coverUrls={new Map()} works={showcaseWorks} />);
+    const cards = showcaseCards(container);
+    expect(cards[0]?.getAttribute("data-featured")).toBe("true");
+
+    fireEvent.pointerEnter(cards[1]!);
+    focusShowcaseLink(cards[2]!, true);
+
+    expect(cards[2]?.getAttribute("data-featured")).toBe("true");
+    expect(cards[0]?.getAttribute("data-featured")).toBeNull();
+    expect(cards[1]?.getAttribute("data-featured")).toBeNull();
+
+    act(() => {
+      vi.advanceTimersByTime(140);
+    });
+
+    expect(cards[2]?.getAttribute("data-featured")).toBe("true");
+    expect(cards[1]?.getAttribute("data-featured")).toBeNull();
+  });
+
+  it("keeps the focused card when the pointer leaves the track", () => {
+    const { container } = render(<HomeShowcaseShelf coverUrls={new Map()} works={showcaseWorks} />);
+    const cards = showcaseCards(container);
+    const wrapper = container.firstElementChild;
+    if (!(wrapper instanceof HTMLElement)) throw new Error("Missing showcase wrapper");
+
+    focusShowcaseLink(cards[1]!, true);
+    expect(cards[1]?.getAttribute("data-featured")).toBe("true");
+
+    fireEvent.pointerLeave(wrapper);
+
+    expect(cards[1]?.getAttribute("data-featured")).toBe("true");
+    expect(cards[0]?.getAttribute("data-featured")).toBeNull();
+  });
+
+  it("does not treat pointer click focus as a keyboard-driven expansion", () => {
+    const { container } = render(<HomeShowcaseShelf coverUrls={new Map()} works={showcaseWorks} />);
+    const cards = showcaseCards(container);
+
+    focusShowcaseLink(cards[1]!, false);
+
+    expect(cards[0]?.getAttribute("data-featured")).toBe("true");
+    expect(cards[1]?.getAttribute("data-featured")).toBeNull();
+
+    act(() => {
+      vi.advanceTimersByTime(140);
+    });
+
+    expect(cards[0]?.getAttribute("data-featured")).toBe("true");
+    expect(cards[1]?.getAttribute("data-featured")).toBeNull();
   });
 });

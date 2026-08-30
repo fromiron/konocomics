@@ -31,16 +31,16 @@ export function RecommendationMotionList({
   const copies = shouldLoopCarousel(items.length) ? carouselLoopCopies : ([1] as const);
   return (
     <LazyMotion features={domMax} strict>
-      <AnimatePresence initial={false}>
+      <AnimatePresence initial={false} mode="popLayout">
         {copies.flatMap((copy) => [
           ...items.map((item) => (
             <m.li
-              animate={copy === 1 && !reducedMotion ? { opacity: 1, y: 0 } : { opacity: 1 }}
+              animate={!reducedMotion ? { opacity: 1, scale: 1, y: 0 } : { opacity: 1 }}
               className="basis-[var(--featured-card-basis)] shrink-0 snap-start overflow-visible [contain:layout_paint]"
               data-recommendation-work-id={item.workId}
-              exit={copy === 1 && !reducedMotion ? { height: 0, opacity: 0 } : undefined}
+              exit={!reducedMotion ? { opacity: 0, scale: 0.92 } : undefined}
               initial={
-                copy === 1 && item.animateIn && !reducedMotion
+                item.animateIn && !reducedMotion
                   ? {
                       opacity: 0,
                       y: 8,
@@ -48,15 +48,15 @@ export function RecommendationMotionList({
                   : false
               }
               key={`${String(copy)}-${item.workId}`}
-              layout={copy === 1 && !reducedMotion ? "position" : false}
+              layout={!reducedMotion ? "position" : false}
               transition={
-                reducedMotion || copy !== 1
+                reducedMotion
                   ? { duration: 0 }
                   : {
-                      height: { duration: 0.24, ease: "easeOut" },
+                      layout: { damping: 32, stiffness: 350, type: "spring" },
                       opacity: { duration: item.animateIn ? 0.2 : 0.24, ease: "easeOut" },
+                      scale: { duration: 0.24, ease: [0.2, 0, 0, 1] },
                       y: { duration: 0.2, ease: "easeOut" },
-                      layout: { duration: 0.24, ease: [0.2, 0, 0, 1] },
                     }
               }
               {...carouselCloneProps(copy)}

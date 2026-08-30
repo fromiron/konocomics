@@ -222,17 +222,17 @@ function AnchorStrip({
   animateReveal,
   coverUrls,
   evidenceLabels,
-  onCoverSettled,
+  onCoverVisible,
 }: Readonly<{
   anchors: Work[];
   animateReveal: boolean;
   coverUrls: ReadonlyMap<string, string | null>;
   evidenceLabels: ReadonlyMap<string, string>;
-  onCoverSettled(workId: string): void;
+  onCoverVisible(workId: string): void;
 }>) {
   const shelf = (
     <MediaShelf
-      className="taste-anchor-strip mb-[var(--space-content)] min-w-0"
+      className="taste-anchor-strip mb-[var(--space-section)] min-w-0"
       compactHeading
       listType="unordered"
       title={tasteStrings.anchorsHeading}
@@ -255,7 +255,7 @@ function AnchorStrip({
               coverUrl={coverUrls.get(work.id)}
               creators={work.creators}
               decorative
-              onSettled={() => onCoverSettled(work.id)}
+              onVisible={() => onCoverVisible(work.id)}
               requestedSize={200}
               title={work.title}
             />
@@ -313,30 +313,35 @@ function TopPreferenceCard({
   });
   const label = factorLabel(preference.factorId);
   const cardClassName =
-    "taste-top-card flex h-full min-w-0 flex-col items-start gap-[var(--space-content-tight)] border-t border-line/70 px-0 pt-[var(--space-3)] pb-[var(--space-2)] text-left";
+    "taste-top-card grid min-w-0 grid-cols-[auto_minmax(0,1fr)] items-start gap-x-[var(--space-content)] gap-y-[var(--space-content-tight)] border-t border-line/70 px-0 pt-[var(--space-3)] pb-[var(--space-2)] text-left md:flex md:h-full md:flex-col md:items-start";
 
   const content = (
     <>
-      <span className="flex items-center gap-[var(--space-content-tight)] text-text-muted">
-        <TopPreferenceIcon preference={preference} />
-        <h3
-          className={cn(
-            "relative min-w-0 text-[length:var(--font-size-14)] leading-tight font-bold text-text-strong",
-            animateReveal &&
-              "taste-top-card__label--reveal after:absolute after:right-0 after:-bottom-[3px] after:left-0 after:h-0.5 after:origin-left after:scale-x-0 after:bg-accent after:content-[''] motion-safe:after:animate-[taste-underline-reveal_300ms_500ms_ease-out_forwards]",
-            animateReveal && index === 1 && "after:[animation-delay:680ms]",
-            animateReveal && index === 2 && "after:[animation-delay:860ms]",
-          )}
-        >
-          {label}
-        </h3>
+      <span className="taste-top-card__rank font-display text-[length:var(--text-subheading-size)] leading-none text-text-muted md:hidden">
+        {String(index + 1)}
       </span>
-      <strong className="taste-top-card__level shrink-0 whitespace-nowrap font-display text-[length:var(--font-size-28)] leading-none text-text-strong">
-        {tasteStrings.factorValue(preference.value)}
-      </strong>
-      <p className="mt-auto line-clamp-2 min-h-[calc(var(--font-size-12)*var(--line-height-body)*2)] text-[length:var(--font-size-12)] leading-[var(--line-height-body)] text-text-muted">
-        {tasteStrings.topPreferenceEvidence(evidenceWorks.map((work) => work.title))}
-      </p>
+      <div className="grid min-w-0 gap-[var(--space-content-tight)] md:contents">
+        <span className="flex items-center gap-[var(--space-content-tight)] text-text-muted">
+          <TopPreferenceIcon preference={preference} />
+          <h3
+            className={cn(
+              "relative min-w-0 line-clamp-2 text-[length:var(--font-size-14)] leading-tight font-bold text-text-strong",
+              animateReveal &&
+                "taste-top-card__label--reveal after:absolute after:right-0 after:-bottom-[3px] after:left-0 after:h-0.5 after:origin-left after:scale-x-0 after:bg-accent after:content-[''] motion-safe:after:animate-[taste-underline-reveal_300ms_500ms_ease-out_forwards]",
+              animateReveal && index === 1 && "after:[animation-delay:680ms]",
+              animateReveal && index === 2 && "after:[animation-delay:860ms]",
+            )}
+          >
+            {label}
+          </h3>
+        </span>
+        <strong className="taste-top-card__level shrink-0 whitespace-nowrap font-display text-[length:var(--text-subheading-size)] leading-none text-text-strong md:text-[length:var(--font-size-28)]">
+          {tasteStrings.factorValue(preference.value)}
+        </strong>
+        <p className="mt-auto line-clamp-2 min-h-[calc(var(--font-size-12)*var(--line-height-body)*2)] text-[length:var(--font-size-12)] leading-[var(--line-height-body)] text-text-muted">
+          {tasteStrings.topPreferenceEvidence(evidenceWorks.map((work) => work.title))}
+        </p>
+      </div>
     </>
   );
 
@@ -634,18 +639,64 @@ function FactorPanels({
   );
 }
 
+function ConfidenceCoachBanner() {
+  return (
+    <section
+      aria-labelledby="taste-coach-heading"
+      className="relative mb-[var(--space-section)] min-h-[128px] w-full overflow-hidden rounded-[var(--radius-card)] md:min-h-[136px] md:w-1/2"
+    >
+      <img
+        alt=""
+        aria-hidden="true"
+        className="pointer-events-none absolute inset-0 size-full object-cover object-[88%_50%] md:object-[82%_48%]"
+        decoding="async"
+        fetchPriority="low"
+        loading="lazy"
+        src="/media/taste-dna-coach.png"
+      />
+      <div
+        aria-hidden="true"
+        className="pointer-events-none absolute inset-0 bg-gradient-to-r from-canvas from-38% via-canvas/80 via-56% to-transparent to-80%"
+      />
+      <div className="relative z-10 grid h-full min-h-[128px] content-center justify-items-start gap-[var(--space-2)] p-[var(--space-3)] md:min-h-[136px] md:max-w-[70%] md:p-[var(--space-4)]">
+        <h2
+          className="text-[length:var(--font-size-14)] leading-snug font-bold text-text-strong md:text-[length:var(--text-subheading-size)]"
+          id="taste-coach-heading"
+        >
+          {tasteStrings.coach.heading}
+        </h2>
+        <p className="text-[length:var(--text-caption-size)] text-text-muted">
+          {tasteStrings.coach.description}
+        </p>
+        <Link
+          className={buttonClassName({
+            className: "w-fit px-[var(--space-4)] font-bold",
+            variant: "outline",
+          })}
+          preload={false}
+          to="/onboarding"
+        >
+          {tasteStrings.coach.action}
+        </Link>
+      </div>
+    </section>
+  );
+}
+
 type RecentFeedbackSummaryProps = Readonly<{
   records: readonly UserWorkRecord[];
   worksById: ReadonlyMap<string, Work>;
   coverUrls: ReadonlyMap<string, string | null>;
-  onCoverSettled(workId: string): void;
+  onCoverVisible(workId: string): void;
+  showAddWorksLink: boolean;
 }>;
 
 function RecentFeedbackSummary({
   records,
   worksById,
   coverUrls,
-  onCoverSettled,
+  onCoverVisible,
+  showAddWorksLink,
 }: RecentFeedbackSummaryProps) {
   const items = [...records]
     .sort(
@@ -678,13 +729,15 @@ function RecentFeedbackSummary({
     >
       <header className="flex flex-wrap items-center justify-between gap-[var(--space-content)]">
         <h2 id="taste-negative-heading">{tasteStrings.recentFeedbackHeading}</h2>
-        <Link
-          className="taste-add-link interactive-press inline-flex min-h-[var(--control-min-size)] items-center font-bold text-text-strong underline underline-offset-4 transition-[opacity,transform] duration-[var(--motion-duration-feedback)] ease-[var(--motion-ease-direct)] active:scale-[0.97] motion-reduce:transform-none"
-          preload={false}
-          to="/onboarding"
-        >
-          {tasteStrings.addWorks}
-        </Link>
+        {showAddWorksLink ? (
+          <Link
+            className="taste-add-link interactive-press inline-flex min-h-[var(--control-min-size)] items-center font-bold text-text-strong underline underline-offset-4 transition-[opacity,transform] duration-[var(--motion-duration-feedback)] ease-[var(--motion-ease-direct)] active:scale-[0.97] motion-reduce:transform-none"
+            preload={false}
+            to="/onboarding"
+          >
+            {tasteStrings.addWorks}
+          </Link>
+        ) : null}
       </header>
       <ul className="m-0 grid list-none grid-cols-1 gap-[var(--space-content)] p-0 md:grid-cols-3">
         {items.map(({ record, work }) => (
@@ -697,7 +750,7 @@ function RecentFeedbackSummary({
               coverUrl={coverUrls.get(work.id)}
               creators={work.creators}
               decorative
-              onSettled={() => onCoverSettled(work.id)}
+              onVisible={() => onCoverVisible(work.id)}
               requestedSize={200}
               title={work.title}
             />
@@ -840,22 +893,11 @@ export function TasteFlow({
       ]),
     [afterPreviewWorkIds, anchors, beforePreviewWorkIds, catalog, recentFeedbackWorkIds],
   );
-  const { coverUrls, notifyCoverSettled } = useRecommendationCovers({
+  const { coverUrls, requestCover } = useRecommendationCovers({
     targets: coverTargets,
     getProviderCache,
     saveProviderCache,
   });
-  const coverTargetsByWorkId = useMemo(
-    () => new Map(coverTargets.map((target) => [target.workId, target] as const)),
-    [coverTargets],
-  );
-  const handleCoverSettled = useCallback(
-    (workId: string) => {
-      const target = coverTargetsByWorkId.get(workId);
-      if (target !== undefined) notifyCoverSettled(target);
-    },
-    [coverTargetsByWorkId, notifyCoverSettled],
-  );
   useEffect(() => {
     if (baselineAdjustments !== null || storedAdjustments === undefined) return;
     let active = true;
@@ -989,7 +1031,7 @@ export function TasteFlow({
     <LazyMotion features={domAnimation} strict>
       <main
         className={cn(
-          "taste-page mx-auto min-h-dvh w-[min(100%,var(--layout-width-media))] px-[var(--layout-page-padding)] pt-[var(--space-4)] pb-[var(--space-section)] text-text md:pt-[var(--space-content)]",
+          "taste-page mx-auto min-h-dvh w-[min(100%,var(--layout-width-media))] px-[var(--layout-page-padding)] pt-[var(--layout-page-block-start)] pb-[var(--space-section)] text-text",
           revealExperience.entry &&
             "taste-page--with-action pb-[var(--layout-taste-action-clearance)]",
           !revealExperience.entry &&
@@ -998,7 +1040,7 @@ export function TasteFlow({
         )}
         onAnimationEnd={pageEntryMotion.onAnimationEnd}
       >
-        <header className="taste-header mb-[var(--space-content)] grid items-stretch gap-[var(--space-3)] md:grid-cols-[minmax(0,0.95fr)_minmax(0,1.05fr)]">
+        <header className="taste-header mb-[var(--space-section)] grid items-stretch gap-[var(--space-3)] md:grid-cols-[minmax(0,0.95fr)_minmax(0,1.05fr)]">
           <div className="grid content-start gap-[var(--space-content)] md:grid-rows-[auto_1fr]">
             <div className="taste-header__copy grid content-center gap-[var(--space-content-tight)] py-[var(--space-content)]">
               <p className="taste-header__eyebrow text-[length:var(--text-caption-size)] font-bold tracking-[0.08em] text-text-muted">
@@ -1024,17 +1066,18 @@ export function TasteFlow({
               {summary.topPreferences.length === 0 ? (
                 <p>{tasteStrings.topPreferencePending}</p>
               ) : (
-                <div className="taste-top-summary__grid grid grid-cols-3 gap-[var(--space-content-loose)]">
+                <ol className="taste-top-summary__grid m-0 grid list-none grid-cols-1 gap-[var(--space-content-loose)] p-0 md:grid-cols-3">
                   {summary.topPreferences.map((preference, index) => (
-                    <TopPreferenceCard
-                      animateReveal={revealExperience.animate}
-                      index={index}
-                      key={`${preference.kind}:${preference.factorId}`}
-                      preference={preference}
-                      worksById={worksById}
-                    />
+                    <li className="min-w-0" key={`${preference.kind}:${preference.factorId}`}>
+                      <TopPreferenceCard
+                        animateReveal={revealExperience.animate}
+                        index={index}
+                        preference={preference}
+                        worksById={worksById}
+                      />
+                    </li>
                   ))}
-                </div>
+                </ol>
               )}
             </section>
           </div>
@@ -1063,8 +1106,12 @@ export function TasteFlow({
           animateReveal={revealExperience.animate}
           coverUrls={coverUrls}
           evidenceLabels={anchorEvidenceLabels}
-          onCoverSettled={handleCoverSettled}
+          onCoverVisible={requestCover}
         />
+
+        {confidenceLevel !== "normal" || revealExperience.entry ? null : (
+          <ConfidenceCoachBanner />
+        )}
 
         <div className="taste-workspace-layout grid items-start gap-[var(--space-4)]">
           <section
@@ -1101,15 +1148,16 @@ export function TasteFlow({
             before={beforePreviewWorkIds}
             className="mt-0"
             coverUrls={coverUrls}
-            onCoverSettled={handleCoverSettled}
+            onCoverVisible={requestCover}
             worksById={worksById}
           />
         </div>
 
         <RecentFeedbackSummary
           coverUrls={coverUrls}
-          onCoverSettled={handleCoverSettled}
+          onCoverVisible={requestCover}
           records={catalogRecords}
+          showAddWorksLink={confidenceLevel !== "normal" || revealExperience.entry}
           worksById={worksById}
         />
         {revealExperience.entry ? (

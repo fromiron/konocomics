@@ -47,13 +47,13 @@
 ## 3. Catalog·데이터 유닛 테스트
 
 - zod 스키마 라운드트립(catalog JSON, Export v1, Rakuten 응답 축소형).
-- 추천용 `/catalog/catalog-v1.<catalogVersion>.json`은 bundled Catalog와 byte·strict schema·semantic validation·DNA·추천 plan이 동일하다. client provider는 같은 탭에서 strict 검증된 bundled/public Catalog가 exact identity와 맞으면 그 객체를 재사용하고 Vite hashed recommendation context만 요청하며, 없으면 두 자산을 동시에 요청한다. exact URL, HTTP/JSON/schema/version/workIds mismatch, 실제 retry, abort와 late stale completion 차단을 검증한다. root는 생성된 identity projection만 공유하고 cache miss에서만 Catalog preload하며 작품 상세 prerender를 유지한다. 공통 shell/랜딩/settings는 full Catalog client import가 없고 onboarding/DNA/Library/Catalog 상세만 bundled provider를 갖는 route source 계약을 고정한다.
+- 추천용 `/catalog/catalog-v1.<catalogVersion>.json`은 bundled Catalog와 byte·strict schema·semantic validation·DNA·추천 plan이 동일하다. recommendation context도 같은 catalogVersion의 versioned public JSON으로 생성한다. client provider는 같은 탭에서 strict 검증된 bundled/public Catalog가 exact identity와 맞으면 그 객체를 재사용하고 context만 요청하며, 없으면 두 자산을 동시에 요청한다. 두 자산의 exact URL, HTTP/JSON/schema/version/workIds mismatch, 실제 retry, abort와 late stale completion 차단을 검증한다. root는 생성된 identity projection만 공유하고 cache miss에서만 Catalog preload하며 작품 상세 prerender를 유지한다. 공통 shell/랜딩/settings는 full Catalog client import가 없고 onboarding/DNA/Library/Catalog 상세만 bundled provider를 갖는 route source 계약을 고정한다.
 - 일본어 정규화 골든 케이스(NFKC·가나·전각/반각·권수 토큰 10례 이상).
 - Art 4축이 모두 `unknown`인 Work도 다른 네 필수 그룹을 충족하면 `recommendationEligible`을 통과한다. 커뮤니티 근거의 Art는 이미지 manifest 없이 허용하고, publisher/manual 이미지 근거의 known Art는 기존 manifest·표본·맥락 검사를 그대로 통과해야 한다.
 - Export→Import 라운드트립: 임의 사용자 상태 생성 → export → import → userWorks/externalWorks/profile/draft 동등, cache empty와 current runtime meta 확인.
 - Import 거부: schemaVersion 2 / 필드 손상 / 부분 손상 배열 — mutation 전 전체 거부와 일곱 store 불변.
 - providerCache TTL: 주입 시간 기준 가격·재고 24시간 / 기타 metadata 90일의 직전·정확 경계, 상업 필드만 먼저 숨기는 상태, legacy 단일 `expiresAt` cache miss.
-- 추천 표지 resolver: 표시 순 representative ISBN, 1위 metadata 첫 lane 우선 시작 + 후속 3개 lane 즉시 시작, 1위 settle 뒤 후속 네 번째 lane 개방, 전체 최대 4개 동시 처리와 결과별 commit(실제 이미지 load/error는 기다리지 않음), fresh exact-workId/no-image terminal, expired·mismatch·miss 갱신+저장 readback, 실패 placeholder, stale generation 차단, 백필 survivor URL 보존·신규만 요청. normalized ISBN 동시 요청은 한 provider 호출에 합류하고 settle 뒤 재시도 가능하다.
+- 추천 표지 resolver: 표시 순 representative ISBN registry, 첫 `target[0]` metadata만 자동 시작, 후속 target은 `CoverImage` viewport 진입 요청 뒤 시작, 전체 최대 4개 동시 처리와 결과별 commit(실제 이미지 load/error는 기다리지 않음), 동일 target 중복 수요 dedupe, fresh exact-workId/no-image와 실패 결과 terminal, expired·mismatch·miss 갱신+저장 readback, stale generation 차단, generation 전환 동안 가시성 수요와 survivor URL 보존. normalized ISBN 동시 요청은 한 provider 호출에 합류한다.
 - 추천 계산 Worker client: 첫 요청만 `catalog + context`를 포함하고 이후 요청은 동적 입력만 보내며 request ID로 응답을 연결한다. crash·message 실패는 pending 요청 전체를 reject하고 Worker를 reset하며 다음 요청은 정적 입력부터 다시 시작한다. Worker API 부재 환경은 같은 순수 추천 함수 fallback을 사용한다.
 - TanStack Start server route: 기존 URL의 쿼리 검증 400, App ID·Access Key 비노출, 필드 축소, `_ex=600x600` 재작성, cache header, 타임아웃→502, 자동 재시도 0회.
 
@@ -133,13 +133,14 @@
 - 같은 frozen fixture에서 migration 전후 추천 work ID 순서, contribution, confidence level, explanation source를 byte-equivalent하게 비교한다. 새 산식 테스트를 복제하지 않는다.
 - 기존 Export/Import/external identity/Rakuten server-route 테스트를 그대로 통과시킨다. 1초 client throttle은 development에서만 활성이고 production/test에는 지연이 없음을 한 기존 client test에 추가한다.
 - source contract는 feature/route가 `src/components/ui/**` primitive를 직접 import하지 않고 `src/components/design-system/**` wrapper를 쓰는지 확인한다. 새 visual-regression infrastructure는 만들지 않는다.
+- 추천 피드백 full-shell, DNA coaching half-shell, Library data-portability half-shell의 표시 조건·CTA 경로·decorative `img`를 기존 flow 유닛 테스트로 회귀한다. 새 제품 E2E 시나리오를 추가하지 않는다.
 
 ## 5. 제품 E2E (Playwright — 5 시나리오 고정, 확장 금지)
 
 Chromium + 모바일 뷰포트(390×844) 프로젝트 2개로 실행. 라쿠텐은 라우트 모킹.
 
 1. **핵심 여정:** 일반 first-run resolved landing의 marker 선기록·CTA 상시 조작·비소비 스킵·reload 정적 상태를 같은 시나리오의 격리 분기에서 확인 → typed `q/genre/shelf`가 back/forward에 복원되는 온보딩(검색 포함 8작품, 1 favorite) → `合わなかった` 1개+이유 → DNA reveal(`?reveal` 즉시 제거 뒤 local decision으로 계속, 1200ms 뒤 late-viewport FactorBar 즉시 시작) → 추천 Top 10, 1위 이유와 contribution data 일치.
-2. **피드백 루프:** desktop focus expansion/mobile Quick Preview open-close와 opener 복원 → 추천 1위를 読んだ 처리 → 카드 제거·백필 → 재계산 후에도 해당 작품 미등장. `?preview` back/forward는 대상만 복원하고 dialog animation/focus state를 복원하지 않는다.
+2. **피드백 루프:** desktop/mobile의 명시적 Quick Preview open-close, modal focus containment와 opener 복원 → 추천 1위를 読んだ 처리 → 카드 제거·백필 → 재계산 후에도 해당 작품 미등장. `?preview` back/forward는 대상만 복원하고 dialog animation/focus state를 복원하지 않는다.
 3. **영속성:** Catalog와 external 기록 생성 → 컨텍스트 재시작 → Library·DNA 유지. Library typed filter/search가 reload/back에 복원된다. 같은 브라우저의 canonical external URL reload는 같은 row를 표시하고, row 없는 독립 context는 local-missing을 표시하며 provider로 복원하지 않는다.
 4. **Provider 장애:** `/api/rakuten/*` 전부 502 모킹 → placeholder 표지로 온보딩·추천·상세 성립, 구매 버튼 폴백.
 5. **데이터 주권:** usable profile의 모든 정책·Catalog/external 기록을 Export → 전체 삭제(여섯 non-meta store empty + current meta readback, 랜딩/가드 확인) → `/settings`에서 Import → 추천·Library·정책과 exact external URL/identity 원상 복구. 같은 시나리오의 격리된 분기로 (a) 손상 external/profile/draft 파일의 whole-file 거부와 일곱 store 무변경, (b) 과거 catalogVersion 경고와 「カタログ外」 record 보존, (c) completion marker가 `null`인 pre-profile first-run draft의 Export→삭제→Import와 합성 시각 없음, (d) `?landing=1` 소개 전후 `logoRevealed` sentinel과 나머지 로컬 상태가 byte-identical임을 검증한다.
@@ -153,12 +154,12 @@ E2E 내 기본 조작성 스모크: 시나리오 1을 키보드만으로 완주�
 - [ ] 온보딩 Shelf 스와이프·스크롤 스냅 자연스러움, 터치 타깃 44px 실측.
 - [ ] 하단 탭 바가 키보드(가상)·세이프 에어리어와 충돌하지 않음.
 - [ ] 작품 상세 블러 배경의 스크롤 성능(프레임 드랍 육안 확인).
-- [ ] touch card는 hover 확장 없이 Quick Preview sheet를 열고 닫은 뒤 opener로 복귀.
+- [ ] mobile의 명시적 Quick Preview control은 sheet를 열고, 닫은 뒤 같은 opener로 복귀.
 
 ### 키보드·포커스·DOM 시맨틱 (데스크톱)
 
 - [ ] 전 화면 focus-visible 링 표시, 시트·다이얼로그 포커스 트랩과 복귀.
-- [ ] desktop fine-pointer card는 200ms intent 뒤 확장되고 keyboard focus는 즉시 같은 정보를 노출한다.
+- [ ] desktop의 명시적 Quick Preview control은 dialog를 열고, Tab/Shift+Tab focus containment와 opener 복귀를 유지한다.
 - [ ] FactorBar 확인값이 접근 가능한 이름 「戦略的な展開」과 정성 값 「強め」를 중복 없이 노출하고, 미확인 축은 「戦略的な展開: まだ分析中」인 비수치 DOM 상태를 노출한다.
 - [ ] 추천 카드 제거 시 `aria-live` 메시지의 DOM 갱신과 포커스 이동.
 

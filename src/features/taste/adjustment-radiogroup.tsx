@@ -39,7 +39,7 @@ export function AdjustmentRadiogroup({
           chipClassName={cn(
             "h-full min-h-[var(--control-min-size)] gap-[var(--space-content-tight)] whitespace-nowrap rounded-none border-0 bg-transparent px-[var(--space-content-tight)] py-0 text-[length:var(--font-size-12)] font-medium leading-none text-text-muted",
             "peer-data-checked:border-transparent peer-data-checked:bg-transparent peer-data-checked:font-bold peer-data-checked:text-text-strong",
-            "[@media(hover:hover)_and_(pointer:fine)]:group-hover/choice:border-transparent [@media(hover:hover)_and_(pointer:fine)]:group-hover/choice:bg-transparent [@media(hover:hover)_and_(pointer:fine)]:group-hover/choice:text-text",
+            "[@media(hover:hover)_and_(pointer:fine)]:group-hover/choice:bg-transparent [@media(hover:hover)_and_(pointer:fine)]:group-hover/choice:text-text",
             option === "exclude" && "peer-data-checked:text-warn",
           )}
           className={cn(

@@ -15,7 +15,7 @@ type WorkShelfProps = Readonly<{
   selectionsByWorkId: ReadonlyMap<string, PositiveOnboardingEntry>;
   labels: Parameters<typeof AnchorCoverCard>[0]["labels"];
   coverUrls?: ReadonlyMap<string, string | null>;
-  onCoverSettled?: (workId: string) => void;
+  onCoverVisible?: (workId: string) => void;
   onToggleSelection: (workId: string) => void;
   onToggleFavorite: (workId: string) => void;
 }>;
@@ -26,7 +26,7 @@ export function WorkShelf({
   selectionsByWorkId,
   labels,
   coverUrls,
-  onCoverSettled,
+  onCoverVisible,
   onToggleSelection,
   onToggleFavorite,
 }: WorkShelfProps) {
@@ -62,7 +62,7 @@ export function WorkShelf({
           coverUrl={coverUrls?.get(work.id)}
           key={work.id}
           labels={labels}
-          onCoverSettled={() => onCoverSettled?.(work.id)}
+          onCoverVisible={() => onCoverVisible?.(work.id)}
           onSelectionFocus={() => setActiveIndex(index)}
           onSelectionKeyDown={(event) => {
             if (event.key === "ArrowRight") {

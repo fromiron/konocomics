@@ -13,6 +13,7 @@
 
 - `>=768px`: dark 상단 GNB만 표시한다. 좌측 로고(**kono**co**mi**cs), 우측 `おすすめ`(/recommendations), `DNA`(/taste), `ライブラリ`(/library), `設定`(/settings)을 둔다.
 - `<768px`: post-onboarding route에서 하단 탭 바 4개만 표시한다. 높이 64px, 아이콘+레이블, 터치 타깃 ≥44×44다. `/`와 `/onboarding`은 immersive route라 bottom navigation을 표시하지 않는다.
+- post-onboarding 모바일 footer는 Discover/Understand/Manage 라우트 그룹 없이 local-first 1줄과 `Supported by Rakuten Developers`만 둔다. immersive `/`·`/onboarding` 모바일 footer는 같은 두 줄에 設定 링크를 더한다. `>=768px` footer sitemap은 유지한다.
 - 두 navigation은 CSS media query로 상호 배타적으로 숨기며 숨겨진 쪽은 accessibility tree에도 남기지 않는다. 로그인·계정·아바타·알림 control은 없다. Global Search는 실제 dialog/sheet 기능이 연결된 경우에만 표시한다.
 - Catalog 상세 `/works/[workId]`와 고정 external 상세 `/works/external?workId=<ExternalWorkId>`는 탭 바를 유지한 채 스택처럼 열린다. 뒤로가기는 브라우저 history다.
 
@@ -25,7 +26,7 @@
 ### URL 상태
 
 - 모든 route는 Zod `validateSearch`를 갖고 malformed 값은 안전한 기본값으로 정규화한다.
-- `/onboarding`: `q`, `genre`, `shelf`; `/taste`: `mode`, `group`; `/recommendations`: `preview`, `genre`, `sort`, `shelf`; `/library`: `state`, `q`, `sort`, `view`; `/settings`: `section`.
+- `/onboarding`: `q`, `genre`, `shelf`는 **서로 배타적인 discovery mode 하나**다. 쓰기와 해석은 `q` > 유효한 collection `shelf` > `genre` 우선이며 AND 교집합 필터를 쓰지 않는다. `q` 입력은 genre/shelf를 제거하고, genre는 q/shelf를, collection은 q/genre를, 닫기는 shelf를 제거한다. 혼합 URL은 같은 우선순위로 정규화한다. back/forward는 그 mode와 collection panel을 복원한다. `/taste`: `mode`, `group`; `/recommendations`: `preview`, `genre`, `sort`, `shelf`; `/library`: `state`, `q`, `sort`, `view`; `/settings`: `section`.
 - `?landing=1`과 `?reveal=1`은 기존 호환 계약을 유지한다. `/works/external`의 typed `workId`는 missing/duplicate/empty/malformed를 기본값으로 덮지 않고 invalid-link 상태로 보낸다.
 - 선택 작품, DNA adjustment, 추천 policy/result, provider cache, 편집 draft, mutation/animation/scroll state는 URL에 넣지 않는다.
 
@@ -101,32 +102,39 @@ CTA 버튼 1개: **「好きなマンガから始める」** → /onboarding.
 
 1. 안내 1줄: 「好きなマンガを 5〜10 作品えらんでください」
 2. 검색 입력(Fuse.js, Catalog의 onboardingEligible 대상)
-3. 장르별 가로 Shelf (CSS scroll-snap): アクション / ファンタジー / 歴史 / SF / ミステリー / その他
-4. 하단 고정 Selected Tray: 선택된 표지 썸네일 + 개수 + 진행 버튼
+3. 장르 칩: アクション / ファンタジー / 歴史 / SF / ミステリー / その他
+4. 주 탐색 Shelf 「選びやすい作品」. collection panel이 열려도 이 제목과 작품은 교체되거나 사라지지 않는다.
+5. 「コレクションから探す」 compact 2열 disclosure trigger. 클릭은 새 route/modal/배너/hero가 아니라 트리거 아래 full-width inline region 하나를 연다. 같은 trigger 재클릭은 닫고, 다른 trigger는 같은 region 내용을 교체한다.
+6. 하단 고정 Selected Tray: 선택된 표지 썸네일 + 개수 + 진행 버튼
+
+이 viewport의 편집적 순간은 위 inline collection 자체다. 온보딩에 새 배너나 hero를 추가하지 않는다. 브랜드 복제(Spotify Green/로고/재생 UI/정확한 그래픽)가 아니라 discovery → 즉시 저장되는 큐레이션 흐름이다.
 
 ### 컴포넌트 책임
 
 - `WorkSearchInput`: 300ms 디바운스, NFKC·가나 정규화 질의, 결과는 Shelf 영역을 대체하는 그리드로 표시. 비우면 Shelf 복귀.
-- `AnchorCoverCard`: 표지 + 제목. 상태 unselected / selected(liked) / selected(favorite). 선택 카드에서 별 아이콘 탭 → favorite 토글. 선택 시 체크 오버레이 + 테두리 accent.
+- `AnchorCoverCard`: 표지 + 제목. 상태 unselected / selected(liked) / selected(favorite). 선택 카드에서 별 아이콘 탭 → favorite 토글. 선택 시 체크 오버레이 + 테두리 accent. collection panel 카드도 같은 컴포넌트와 `togglePositiveSelection` / `positiveByWorkId`를 재사용한다.
 - `SelectedTray`: 썸네일 탭 → 선택 해제. 가로 스크롤. Motion layout으로 추가/제거 재배치.
+- `OnboardingCollectionGrid`: compact 2열 `type="button"` disclosure. `aria-expanded`와 공통 `aria-controls`. 열린 panel은 고정 id + 보이는 제목을 `aria-labelledby`로 연결한 named region. 트리거 장식 표지는 `aria-hidden`. nested interactive 금지.
 
 ### 상태
 
-- initial: Shelf 표시, tray 비어 있음 + 「まだ選ばれていません」.
+- initial: 「選びやすい作品」 Shelf 표시, collection trigger는 접힘, tray 비어 있음 + 「まだ選ばれていません」.
 - 검색 결과 없음: 「見つかりませんでした。別の書き方で試してください」 + Catalog에 없는 작품은 라이브러리에서 나중에 추가할 수 있다는 1줄 안내.
-- 10개 도달: 추가 선택 시 카드가 선택되지 않고 tray가 짧게 흔들리며(4px, 120ms×2) 안내 토스트 「最大 10 作品までです」.
-- 중단·복귀: `OnboardingDraft.positiveEntries[]`에 `workId`와 `favorite | liked` reaction을 함께 담아 매 변경 시 Dexie에 저장. 재진입 시 reaction까지 복원.
+- collection panel: onboarding·recommendation eligible, persisted work 제외, workId 중복 제거, 해당 preset만 적용. 표시는 desktop `min(12, available)`, mobile `min(8, available)`. 「もっと見る」 1회로 `min(40, available)`까지이며 40 초과 금지. 후보 0이면 named empty state.
+- 10개 도달: 추가 선택 시 카드가 선택되지 않고 tray가 짧게 흔들리며(4px, 120ms×2) 안내 토스트 「最大 10 作品までです」. panel 선택도 같은 10개 limit·draft·aria-live·favorite 경로를 쓴다.
+- 중단·복귀: `OnboardingDraft.positiveEntries[]`에 `workId`와 `favorite | liked` reaction을 함께 담아 매 변경 시 Dexie에 저장. 재진입 시 reaction까지 복원. collection 공개 여부는 URL `shelf`로 복원한다.
 - 표지 로드 실패: 타이포그래피 placeholder(`04` §4.3). 선택 기능은 동일.
 
 ### 반응형
 
-- mobile: Shelf 카드 폭 ~104px(표지 3:4.3 비율), 한 화면에 3.5장 보이게(스크롤 가능성 암시). tray 높이 88px.
-- desktop: Shelf 대신 장르 섹션별 그리드(6~8열)로 전개해도 좋으나, **Shelf 유지 + 카드 폭 128px**로 통일한다(구현 단순화, 좌우 화살표 버튼 표시).
+- mobile: Shelf 카드 폭 ~104px(표지 3:4.3 비율), 한 화면에 3.5장 보이게(스크롤 가능성 암시). tray 높이 88px. 장르 칩은 wrap하고 단계 progress는 compact 처리해 가로 스크롤 영역이 되지 않게 한다. Selected Tray와 work shelf는 시맨틱이 다른 가로 영역으로 유지한다. collection trigger는 320px에서도 2열로 줄바꿈되며 가로 오버플로를 만들지 않는다.
+- desktop: Shelf 대신 장르 섹션별 그리드(6~8열)로 전개해도 좋으나, **Shelf 유지 + 카드 폭 128px**로 통일한다(구현 단순화, 좌우 화살표 버튼 표시). collection trigger도 같은 2열 compact disclosure다.
 
 ### 인터랙션
 
-- 키보드: 카드로 Tab 이동, Enter/Space 선택 토글. Shelf 내 좌우 화살표로 이동(roving tabindex). 검색 입력 `/` 단축키 없음(일본어 IME 간섭 방지).
-- 카드에 `aria-pressed` 상태. 선택 시 「選択済み」 어나운스.
+- 키보드: 카드로 Tab 이동, Enter/Space 선택 토글. Shelf 내 좌우 화살표로 이동(roving tabindex). 검색 입력 `/` 단축키 없음(일본어 IME 간섭 방지). collection trigger는 포커스를 유지하고, Tab으로 같은 페이지의 named panel에 진입한다. 포커스를 panel로 옮기지 않는다.
+- 작품 카드에 `aria-pressed` 상태. 선택 시 「選択済み」 어나운스. collection trigger는 `aria-expanded`이며 `aria-pressed`를 쓰지 않는다.
+- collection trigger·panel 컨트롤은 44px, `focus-visible` 링, 장식 `aria-hidden`, `prefers-reduced-motion`에서 panel 입장 모션 생략.
 
 ### 모션
 
@@ -139,6 +147,8 @@ CTA 버튼 1개: **「好きなマンガから始める」** → /onboarding.
 - [ ] 「ダンジョン飯」를 히라가나(だんじょんめし)로 검색해도 찾을 수 있다(가나 필드).
 - [ ] 새로고침 후 선택 상태가 복원된다.
 - [ ] 키보드만으로 8개 선택 → 다음 단계 진행이 가능하다.
+- [ ] 「選びやすい作品」는 collection panel이 열려도 유지되고, panel에서 고른 작품이 tray/draft/aria-live/10개 limit에 즉시 반영된다.
+- [ ] collection URL `shelf`와 검색 `q`·장르 `genre`는 한 번에 하나만 유효하며 back/forward가 panel 공개를 복원한다.
 
 ### 기존 프로필 작품 추가 모드
 
@@ -211,12 +221,13 @@ CTA 버튼 1개: **「好きなマンガから始める」** → /onboarding.
 ### 정보 위계
 
 1. 헤더: 「あなたの Manga DNA」 + 프로필 확신도 레이블(高い/ふつう/低め)
-2. **상위 취향 3개 요약 카드**: 취향 레이블 + 근거 Anchor 표지 칩 1~3개 ("『キングダム』『ダンジョン飯』から")
+2. **상위 취향 3개**: 취향 레이블 + 근거 제목 1~2줄. mobile `<768`은 순위 있는 1열 행(가로 snap 없음)이고 desktop `>=768`은 기존 3열 카드다.
 3. 동일 deterministic profile의 대표 축을 요약한 radar. 새 chart dependency 없이 inline SVG/CSS로 그리고 같은 데이터를 text list로 제공한다.
 4. 근거 작품 `MediaShelf`
-5. 5개 범주(장르/테마/전개/톤·관계/작화)의 compact summary row. 각 row는 범주 icon, 실제 profile에서 계산한 대표 factor, 조정 상태, 명시적인 「詳細設定」 disclosure를 제공한다. 초기에는 모두 접고 한 번에 한 범주의 상세만 연다. 장르는 분석 전용으로 가로 막대(0~4) + 일본어 레이블만 제공하고 보정 control을 만들지 않는다. 나머지 네 범주의 열린 상세에는 기존 5단 보정 control을 그대로 제공한다.
-6. 보정 전후 같은 recommendation engine을 local에서 실행해 work ID 변화만 보여 주는 preview. network 요청과 별도 추천 산식은 없다.
-7. `UserWorkRecord.updatedAt`과 기존 reasons로 구성한 최근 feedback 요약 + 「作品を追加して精度を上げる」 링크
+5. 일반 진입에서 확신도가 `normal`일 때만 근거 Shelf 뒤에 두는 coaching banner. CTA는 `/onboarding` 「作品を追加」. `high`, 최초 reveal, 학습/AI 암시는 없다. 현재 profile guard를 통과한 사용자의 최저 확신도가 `normal`이므로 도달 불가능한 `low` UI 상태는 만들지 않는다.
+6. 5개 범주(장르/테마/전개/톤·관계/작화)의 compact summary row. 각 row는 범주 icon, 실제 profile에서 계산한 대표 factor, 조정 상태, 명시적인 「詳細設定」 disclosure를 제공한다. 초기에는 모두 접고 한 번에 한 범주의 상세만 연다. 장르는 분석 전용으로 가로 막대(0~4) + 일본어 레이블만 제공하고 보정 control을 만들지 않는다. 나머지 네 범주의 열린 상세에는 기존 5단 보정 control을 그대로 제공한다.
+7. 보정 전후 같은 recommendation engine을 local에서 실행해 work ID 변화만 보여 주는 preview. network 요청과 별도 추천 산식은 없다.
+8. `UserWorkRecord.updatedAt`과 기존 reasons로 구성한 최근 feedback 요약. 「作品を追加して精度を上げる」 링크는 coaching banner가 숨는 `high` 또는 최초 reveal에서만 유지한다.
 
 ### 막대 규칙
 
@@ -230,12 +241,14 @@ CTA 버튼 1개: **「好きなマンガから始める」** → /onboarding.
 
 - reveal(1회): §`04` 5.2의 시퀀스. `?reveal=1`을 발견하면 현재 mount의 reveal 여부를 local state/ref에 먼저 고정하고 같은 effect에서 query를 즉시 `replaceState`로 제거한다. 이후 A 시퀀스는 고정된 판정으로 계속하며 URL을 진행 중 상태나 재생 token으로 사용하지 않는다.
 - 보정 변경 직후: 선택 marker와 text 상태를 즉시 반영하고, 저장 성공 시 어떤 factor를 어떤 값으로 변경했는지 `aria-live` snackbar로 알린다. FactorBar에는 보정 성공 highlight나 값 전이를 적용하지 않는다.
+- 분석 확신도 `normal`: 일반 진입에서 헤더의 정성 레이블과 근거 Shelf를 유지한 채, 근거 Shelf 뒤·조정 workspace 앞에 desktop half-shell·mobile full-width coaching banner를 둔다. 기존 `calculateProfileConfidence` + `getConfidenceLevel`만 사용하고 상위 취향/근거 Shelf takeover는 금지한다. CTA는 `/onboarding`뿐이며, 최근 feedback의 동일 목적 링크는 숨긴다. 최초 reveal에서는 배너를 숨긴다. 현재 profile guard에서 `low`는 도달 불가능하므로 별도 배너 상태를 만들지 않는다.
+- 분석 확신도 `high`: coaching banner를 표시하지 않는다.
 - anchor < 5 (가드 통과 못함): /onboarding 리다이렉트.
 
 ### 반응형
 
-- mobile: 5개 범주 summary를 1열로 쌓고 한 범주의 상세만 연다. 열린 상세은 각 FactorBar 아래에 visible `おすすめへの反映` micro-label과 줄바꿈 없는 가로 스크롤 radio 행을 둔다.
-- desktop: 최대폭 960px의 full-width 범주 row를 사용하고 한 범주의 상세만 연다. 분석 전용 장르 상세은 2열 meter grid로 10개 항목을 5행에 배치한다. 보정 가능한 네 범주는 sticky `分析した好み` / `おすすめへの反映` 열 제목 아래 FactorBar + 5단 control 행을 유지한다.
+- mobile: 상위 취향 3개는 순위 1열 행이다. 각 행은 순위 `1–3`, 팩터 레이블(최대 2줄, 14px/bold), 강도 16px nowrap(28px 금지), 기존 근거 제목 1–2줄이다. 5개 범주 summary를 1열로 쌓고 한 범주의 상세만 연다. 열린 상세은 각 FactorBar 아래에 visible `おすすめへの反映` micro-label과 줄바꿈 없는 가로 스크롤 radio 행을 둔다.
+- desktop: 상위 취향 3개는 기존 3열 카드와 28px 강도를 유지한다. 최대폭 960px의 full-width 범주 row를 사용하고 한 범주의 상세만 연다. 분석 전용 장르 상세은 2열 meter grid로 10개 항목을 5행에 배치한다. 보정 가능한 네 범주는 sticky `分析した好み` / `おすすめへの反映` 열 제목 아래 FactorBar + 5단 control 행을 유지한다.
 
 ### 접근성
 
@@ -259,7 +272,8 @@ CTA 버튼 1개: **「好きなマンガから始める」** → /onboarding.
 - [ ] 열린 범주의 모든 기존 5단 보정 control을 keyboard로 접근할 수 있고 접고 다시 열어도 값이 유지된다.
 - [ ] 보정 칩 변경 → Dexie 반영 → /recommendations 재진입 시 추천이 변한다.
 - [ ] 미확인 축이 0값 축과 시각·접근성 DOM 시맨틱 모두에서 구분된다. 실제 스크린리더 낭독 검증은 제품 완료 후 선택적 접근성 감사 범위다.
-- [ ] 상위 취향 3개 각각에 근거 Anchor 칩이 표시된다.
+- [ ] 상위 취향 3개 각각에 근거 제목이 표시된다.
+- [ ] 일반 진입의 `normal` coaching banner는 근거 Shelf 뒤에서 `/onboarding` CTA와 DOM 문구만 사용하고, 최근 feedback의 동일 목적 링크를 중복하지 않는다. `high`와 최초 reveal에서는 숨긴다. 도달 불가능한 `low` UI fixture는 추가하지 않는다.
 - [ ] 보정 preview의 before/after work ID가 동일 engine input에서 결정론적으로 계산되고 영속 추천 결과를 URL이나 Router context에 저장하지 않는다.
 
 ---
@@ -276,64 +290,70 @@ CTA 버튼 1개: **「好きなマンガから始める」** → /onboarding.
 
 ### 정보 위계
 
-1. 현재 적용 중인 정성 기준/policy 요약과 presentation filter bar
-2. plan order 상위 작품의 `FeaturedRecommendationShelf` + cover-forward poster card
-3. lead contribution의 anchor/reason별 Shelf
-4. engine plan에서 이미 discovery/completed 성격인 항목을 추출한 Shelf
-5. canonical plan 첫 10개를 그대로 보여 주는 personalized Top 10(`<ol>`)
-6. 피드백 반영 요약과 footer
+1. 페이지 h1 「あなたへのおすすめ」(desktop는 28px 한 줄). 인접 설명은 기준 요약과 겹치면 desktop에서만 숨긴다.
+2. 현재 적용 중인 정성 기준/policy 요약과 presentation filter bar
+3. plan order 상위 작품의 `FeaturedRecommendationShelf` + cover-forward poster card
+4. lead contribution의 anchor/reason별 Shelf
+5. engine plan에서 이미 discovery/completed 성격인 항목을 추출한 Shelf
+6. canonical plan 첫 10개를 그대로 보여 주는 personalized Top 10(`<ol>`)
+7. 피드백 반영 요약과 footer. `completed`+`hidden` 합이 0보다 클 때만 ranking 뒤 콘텐츠 폭 full-width image banner로 표시한다.
 
 Shelf grouping은 presentation-only selector다. main Shelf 사이에는 work ID를 dedupe할 수 있지만 Top 10은 canonical summary이므로 중복을 허용한다. score를 다시 계산하거나 새로운 가중치·인기 순위를 만들지 않는다.
 
 ### Featured card·Quick Preview
 
 - 카드에는 원본 비율 표지, 제목/저자/메타, 실제 `contributions[]` 기반 lead reason, 정성 confidence와 reading action을 표시한다.
-- featured card는 30:43 표지 하나를 쓰는 고정 폭 poster다. 제목·상태·lead reason·정성 confidence와 44px reading action을 하단 seam 위에 항상 표시한다. desktop fine pointer hover/focus는 card 크기나 정보량을 바꾸지 않고 border·shadow와 표지 scale만 직접 피드백으로 사용한다.
-- touch에서 표지 identity link는 상세 route로 바로 이동하지 않고 Quick Preview sheet를 연다. desktop의 같은 link는 작품 상세로 이동한다.
+- featured card는 외곽 344×448px desktop poster를 기준으로 한 고정 geometry다. 반응형 width/height, padding, title slot은 4px grid에 맞춘다. 정상 상태는 2줄 title slot → 상태·권수·정성 confidence → 원본 비율 표지 → contribution 기반 lead reason 1줄 순서다. 표지 URL이 있으면 같은 400px source를 `aria-hidden`·lazy decorative backdrop으로 재사용하고 작은 local blur와 72% `--hero-scrim` 아래에 둔다. 별도 palette 추출은 하지 않으며 URL이 없거나 실패하면 기존 accent/surface 배경으로 끝낸다. 카드·Shelf control에는 shadow를 두지 않고 표지에만 4px radius와 `--shadow-cover-featured`(`0 8px 24px / 50%`) local shadow를 둔다. desktop fine pointer hover/focus는 article 경계를 움직이지 않은 채 표지 영역을 약 71% 높이로 줄이고 reason을 최대 3줄로 늘리며 44px action rail을 연다. coarse pointer에서는 같은 정보와 action을 처음부터 표시한다.
+- 표지 identity `Link`는 mouse·keyboard·touch·pen 모두 `/works/[workId]`로 이동한다. Quick Preview는 action rail의 별도 44px icon-only quiet control이며 `ScanSearchIcon`은 `aria-hidden`, 접근 이름은 `「{title}」をクイック表示`다. `読みたい`·`読んだ`·`興味なし`도 같은 rail에 둔다. Top 10 ranking card에는 Quick Preview가 없다. `matchMedia`로 identity 클릭을 가로채지 않는다.
 - Quick Preview는 cover, lead reasons, caution, 정성 confidence, reading action, 상세 링크만 가진다. 닫으면 opener focus를 복원한다. 대상 work ID만 `?preview=<workId>`로 복원할 수 있고 animation/focus state는 local state다.
+- Discovery Shelf의 resolved 표지는 hover 최종 크기인 30:43 slot을 항상 예약한다. 기본은 같은 slot 중앙을 정확한 원으로 center-crop하고 fine-pointer hover·keyboard `focus-within`에서 4px radius의 전체 직사각형으로 펼친다. 원의 시작 radius는 30:43 frame의 실제 수평·수직 반경(`50% / 34.883721%`)이며 `clip-path`는 240ms linear로 보간해 pill radius 제한 때문에 마지막에 형태 변화가 몰리지 않게 한다. article·cover Link·형제 위치는 상태 전후 고정한다. 카드 표면은 personalized Top 10과 같이 transparent → `--surface-2`로 바꾸고 hover border·title accent는 추가하지 않는다. 문맥 없는 confidence 단독 레이블(`高い`/`ふつう`/`低め`)은 Discovery 카드에서만 생략하며 lead contribution 설명과 Quick Preview는 유지한다. 표지 부재·실패 placeholder는 직사각형과 contain 경로를 유지한다.
+- 추천 카드 hover는 전역 계약대로 border color를 바꾸지 않는다. Completed Shelf는 personalized Top 10처럼 투명한 기본 표면에서 `--surface-2`로만 바뀌며 title accent를 추가하지 않는다. Anchor Shelf와 Featured card는 기존 기본 border·surface를 유지하고 hover 시 border color만 고정한다. keyboard focus 표현은 별도 접근성 상태로 유지한다.
 
 ### 리스트 동작 계약
 
 - 진입 시: 프로필 입력 해시가 저장된 계산 해시와 다르면 재계산, 같으면 저장된 plan을 표시한다. 표시할 plan이 없는 최초 계산만 200ms 미만이면 로딩 UI를 생략하고, 이상이면 현재 Shelf/card silhouette의 skeleton을 표시한다. 기존 plan을 갱신할 때는 Shelf와 계산 해시를 유지하고 기존 「更新しています…」 busy 상태만 표시한 뒤 성공한 새 plan을 한 번에 교체하며, 실패하면 기존 plan을 보존한다.
-- 보이는 카드의 표지는 순위 순 `workId → representativeVolume ISBN`으로 해석한다. 1위 metadata를 첫 전용 lane에서 우선 시작하고 동시에 후속 3개 lane을 시작해 첫 요청 지연을 전파하지 않는다. 1위가 끝나면 후속 네 번째 lane을 열되 전체 해석 상한은 4이며 각 결과를 도착 즉시 commit한다. 백필 때는 생존 카드 URL을 유지한 채 새 카드만 해석한다. fresh no-image와 cache/provider 실패는 placeholder로 끝내되 카드·이유·액션을 제거하지 않는다.
+- Featured Shelf는 3-copy scroll-snap 루프다. 가운데 copy만 canonical·interactive이고 양쪽 copy는 `aria-hidden`·`inert`이며 표지 가시성 요청과 ref 등록을 하지 않는다. 초기 진입과 scroll settle 뒤 같은 위치의 가운데 copy로 보이지 않게 점프한다. Featured 화살표·touch scroll은 순환하지만 키보드는 canonical 실카드만 대상으로 하고 끝에서 순환하지 않는다. Anchor·Discovery·Completed·Top 10은 유한 트랙이며 끝에서 화살표가 disabled되고 wrap하지 않는다. 네이티브 가로 snap은 유지하되 전용 swipe 제스처는 도입하지 않는다.
+- 렌더 대상 카드의 표지는 표시 순 `workId → representativeVolume ISBN` registry로 해석한다. 첫 `target[0]` metadata만 LCP lane에서 자동 시작하고, 나머지는 각 표지 root가 실제 viewport에 진입할 때 요청한다. 전체 해석 상한은 4이며 각 결과를 도착 즉시 commit한다. 가시성 수요는 target generation이 바뀌어도 유지해 백필 때 생존 카드 URL을 보존하고 새로 보인 카드만 해석한다. fresh no-image와 cache/provider 실패는 같은 `workId + ISBN`에서 재시도 없이 placeholder로 끝내되 카드·이유·액션을 제거하지 않는다.
 - `読んだ` / `興味なし`: 영속 쓰기 성공 뒤 카드 제거(Motion layout, 240ms) → 최초 계산에서 보존한 전체 후보 plan의 다음 순위로 즉시 백필한다(점수 재계산 없음, 리스트는 항상 10개 유지, 후보 소진 시 예외). `読んだ`는 `completed`로 저장한 뒤 후속 시트의 `最高/良かった/普通/いまいち`를 `favorite/liked/neutral/disliked`에 대응하며 스킵은 reaction 없음이다. `興味なし`는 `hidden`으로 저장하고, 이유 칩을 고른 경우만 `disliked + negativeReasons`를 추가한다. 스킵은 reaction·reason 없음이며 `vagueDislike`를 합성하지 않는다.
 - `読みたい`: 카드 유지, 버튼이 확정 상태로 변경 + Library(planned)에 추가.
 - 「更新」: 현재 `inputHash`의 유효한 전체 plan cache가 있으면 재사용하고, 없으면 전체 재계산한다. 이전 목록과 동일 입력이면 동일 결과(결정론)임을 전제로, 버튼은 입력 변경이 있을 때만 활성화.
 
 ### 상태
 
-- 후보 부족(<10): 있는 만큼 표시 + 말미 카드 「候補を増やすには: 好きな作品を追加 / 除外条件をゆるめる」.
+- 후보 부족(실제 표시 결과 1–9): Featured Shelf 직후·후속 shelves 앞에, snap list 밖의 콘텐츠 폭 full-width contextual banner를 둔다. 기존 shortage 안내와 `/onboarding`(好きな作品を追加)·`/taste`(好みを見直す)만 사용한다. 0건, 10건 이상, filter-empty, 계산 오류, 초기 오류에서는 표시하지 않는다.
+- 피드백 반영(`completed`+`hidden` 합 > 0): ranking Shelf 뒤 콘텐츠 폭 full-width image banner. `/media/recommendations-feedback-manga-v4.png`, DOM 제목/설명/読んだ·興味なし count, `/taste` CTA. 합이 0이면 큰 이미지 배너를 숨긴다. 후보 부족 배너보다 아래·짧게 두어 같은 화면에서 경쟁하지 않게 하며, 후보 부족 조건은 바꾸지 않는다.
 - 후보 0: 빈 상태 일러스트 + 위 안내 + /taste 링크.
 - 오프라인/이미지 실패: placeholder 표지, 이유·액션은 정상.
 - 계산 오류(스키마 불일치 등): 오류 카드 + 再試行. Library는 영향 없음.
 
 ### 반응형
 
-- mobile: 약 1.8장이 보이는 고정 poster Shelf를 사용하고 추가 상세 정보는 Quick Preview sheet에서 제공한다. action target은 모두 44px 이상이다.
-- desktop: 최대폭 1200px에서 약 4.5장이 보이는 고정 poster Shelf를 사용한다. canonical Top 10은 ranking Shelf/row로 순위를 명확히 표시한다.
+- mobile: 390×844에서 272×356px snap-aligned 활성 카드 1장과 다음 카드 peek가 보인다. hover가 없는 환경은 reason 최대 3줄과 preview/feedback action을 처음부터 표시하며 action target은 모두 44px 이상이다. 추가 상세 정보는 Quick Preview sheet에서 제공한다.
+- desktop: 최대폭 1200px에서 344×448px poster 약 3장과 다음 카드 일부가 보이는 Shelf를 사용한다. 페이지 h1은 28px 한 줄로 보이고 인접 설명은 숨긴다. canonical Top 10은 ranking Shelf/row로 순위를 명확히 표시한다.
 
 ### 인터랙션·접근성
 
-- Slice 7에서는 아직 존재하지 않는 `/works/[id]` 404나 가짜 상세 셸을 노출하지 않도록 표지·제목·메타 identity 영역을 비대화형으로 둔다. Slice 8에서 실제 상세 계약이 구현되는 순간 이 identity 영역 전체를 `/works/[id]` 링크로 승격하고 버튼 영역의 이벤트를 분리한다.
 - Top 10만 `<ol>`로 순위 의미를 부여한다. 카드 제거·백필 시 `aria-live="polite"`로 「1件を除外し、新しい候補を追加しました」.
 - 스와이프 제스처는 도입하지 않는다(발견 가능성 낮고 오조작 위험).
 
 ### 모션
 
-카드 제거/백필은 해당 Shelf owner의 C만 사용한다. featured card는 hover/focus에서 article 경계를 바꾸지 않고 표지의 작은 scale과 border·shadow만 직접 피드백으로 사용하며 reduced-motion에서는 transform을 제거한다. generic hover Y축 lift는 사용하지 않는다. Quick Preview는 진입 keyframe 없이 최종 상태로 열린다. 추천 화면에는 B 페이지 진입 모션을 적용하지 않는다.
+카드 제거/백필은 해당 Shelf owner의 C만 사용한다. featured card는 desktop fine pointer hover/focus에서 article 경계를 바꾸지 않고 표지 stage·reason max-height·action rail을 400ms로 함께 전환한다. Discovery resolved 표지의 원→직사각형은 사용자 요청의 좁은 D 예외로 `clip-path`만 240ms ease-in-out 전환하고, 카드 표면색은 personalized Top 10과 같은 240ms ease-out을 쓴다. card/캐러셀 shadow와 generic hover Y축 lift는 사용하지 않는다. reduced-motion은 같은 최종 상태를 즉시 표시한다. Quick Preview는 진입 keyframe 없이 최종 상태로 열린다. 추천 화면에는 B 페이지 진입 모션을 적용하지 않는다.
 
 ### 수용 기준
 
 - [ ] 동일 프로필 입력에서 새로고침해도 목록·순서가 동일하다.
-- [ ] desktop 첫 진입에서 고정 폭 featured card 약 4.5장이 보이고, 모든 card의 lead reason·정성 confidence·reading action이 별도 확장 없이 노출된다.
+- [ ] desktop 첫 진입에서 344×448px featured card 3장 이상과 다음 카드 일부가 보이고, 정상 상태는 표지가 주된 면적이며 hover/focus는 외곽 geometry를 바꾸지 않고 reason과 action rail을 연다.
 - [ ] `読んだ` 처리한 작품이 이후 어떤 추천에도 다시 나타나지 않는다.
 - [ ] 각 카드의 이유가 해당 카드 contribution 데이터와 일치한다(E2E에서 data-attribute 대조).
 - [ ] 카드 제거→후속 시트→백필이 키보드 포커스를 잃지 않는다(시트가 열리면 내부로, 닫히면 제거된 카드 다음 카드로 복귀).
 - [ ] 정책 칩 변경 시 목록이 재계산되고 칩 상태가 Dexie에 저장된다.
 - [ ] 1위 카드 표지는 첫 viewport의 LCP 후보로 eager/high-priority 요청되고 나머지 표지는 lazy loading을 유지한다.
-- [ ] 1위 `target[0]`의 exact-workId metadata를 첫 lane에서 가장 먼저 요청하고 2~10위용 3개 lane을 즉시 함께 시작한다. 1위가 끝나면 후속 네 번째 lane을 열되 전체 동시 해석은 4개를 넘지 않고 각 결과를 도착 즉시 commit한다. 실제 `<img>` load/error는 기다리지 않으며 expired/mismatched/miss만 갱신하고 fresh exact-workId no-image는 재요청하지 않는다.
-- [ ] hover/focus로 card 크기나 정보량이 바뀌지 않으며 touch Quick Preview가 닫힌 뒤 opener focus가 복원된다.
+- [ ] 1위 `target[0]`의 exact-workId metadata만 첫 lane에서 자동 요청하고 나머지는 표지가 실제 viewport에 진입한 뒤 요청한다. 전체 동시 해석은 4개를 넘지 않고 각 결과를 도착 즉시 commit한다. 실제 `<img>` load/error는 기다리지 않으며 expired/mismatched/miss만 갱신하고 fresh exact-workId no-image와 실패 결과는 같은 `workId + ISBN`에서 재요청하지 않는다.
+- [ ] hover/focus로 card 외곽 크기와 형제 위치가 바뀌지 않고 표지 축소분이 reason/action 영역으로 전환되며 Quick Preview가 닫힌 뒤 opener focus가 복원된다.
 - [ ] presentation Shelf를 추가해도 동일 fixture의 canonical Top 10 work ID 순서가 바뀌지 않는다.
+- [ ] 피드백 image banner는 실제 completed/hidden count와 `/taste` CTA를 유지하고, 둘 다 0이면 큰 이미지 배너를 표시하지 않는다.
+- [ ] Discovery 카드는 기본 정원과 hover/focus 직사각형 사이에서 article·cover Link·형제 rect가 변하지 않고, 표면색만 transparent → `--surface-2`로 바뀌며 단독 confidence 레이블을 표시하지 않는다. placeholder는 crop하지 않는다.
 
 ---
 
@@ -407,11 +427,12 @@ Catalog 작품은 추천 근거를 깊이 확인하고 구매(라쿠텐)로 연�
 
 ### 정보 위계
 
-1. 실제 Catalog+external union에서 계산한 상태별 count summary와 filter/tab toolbar
+1. filter/tab toolbar. mobile은 별도 6칸 count matrix 없이 `すべて`+5 readingState를 건수와 함께 보여주는 wrapping `tablist`다. desktop은 읽기 전용 count matrix와 라벨만 있는 탭을 나란히 둔다. favorite는 탭이 아니라 Shelf다.
 2. `updatedAt` 기반 최근 변경 Shelf
 3. 読んでる / 読みたい / 読んだ / favorite(`reaction === favorite`) grouped Shelf. 선택 filter에 따라 해당 Shelf만 줄일 수 있다.
 4. 읽는 중 card의 volume/chapter progress와 상태 badge. 메모·읽은 시간·cloud 통계는 만들지 않는다.
 5. card/행 탭 → 상세 시트: readingState / reaction / 진행 권수 / 이유 편집. Catalog는 `/works/{catalogWorkId}`, external은 `/works/external?workId={encodedExternalWorkId}` 링크를 사용한다.
+6. populated(`rows.length > 0`)일 때만 최근/상태 Shelf 아래 data-portability banner. 기존 `/settings?section=data` 링크만 재사용한다.
 
 ### 검색·추가 계약
 
@@ -423,18 +444,19 @@ Catalog 작품은 추천 근거를 깊이 확인하고 구매(라쿠텐)로 연�
 
 ### 상태
 
-- 전체 빈 상태: 「読んだ作品を記録すると、おすすめから自動的に外れます」 + 추가 버튼.
+- 전체 빈 상태: 승인된 `library-empty-shelf` image-half + 「読んだ作品を記録すると、おすすめから自動的に外れます」 + 추가 버튼. data-portability banner와 동시에 쓰지 않는다.
+- populated: 최근/상태 Shelf보다 약한 desktop half-shell·mobile full-width data-portability banner. `/media/library-data-portability.png`, DOM 제목/설명, `/settings?section=data` 「データ設定を開く」. 별도 export/import/delete UI와 중복 tools 카드는 두지 않는다.
 - 탭별 빈 상태: 탭 의미에 맞는 1줄 안내.
 - 라쿠텐 검색 실패/오프라인: 「今はカタログ内の作品だけ追加できます」 안내, 로컬 검색은 정상.
 
 ### 반응형
 
-- mobile: poster Shelf/compact row를 상태별로 쌓고 상세는 bottom sheet다. 하단 navigation clearance를 보장한다.
-- desktop: 최대폭 1200px grouped Shelf와 count summary를 사용하고 상세는 dialog다.
+- mobile: 상태 탭은 wrap하고 count를 탭 레이블에 붙인다. poster Shelf/compact row를 상태별로 쌓고 상세는 bottom sheet다. 하단 navigation clearance를 보장한다.
+- desktop: 최대폭 1200px grouped Shelf와 count summary를 사용하고 상세는 dialog다. 데스크톱 탭에는 count를 반복하지 않는다.
 
 ### 접근성
 
-- 상태 탭은 `role="tablist"`. 행은 버튼(전체 탭 가능). 시트 열림 시 포커스 트랩, 닫힘 시 원 위치 복귀.
+- 상태 탭은 `role="tablist"`이며 keyboard·`?state=` 계약을 유지한다. 표시 방법 컨트롤은 `role="group"`이다. 행은 버튼(전체 탭 가능). 시트 열림 시 포커스 트랩, 닫힘 시 원 위치 복귀.
 
 ### 모션
 
@@ -448,6 +470,7 @@ Library와 상세 panel·bottom sheet·dialog는 조용한 표면이다. panel/s
 - [ ] 하차 이유 편집이 다음 추천 감점에 반영된다.
 - [ ] Catalog 행 링크는 기존 `/works/{catalogWorkId}`를 유지하고 external 행만 canonical fixed-query URL을 사용한다.
 - [ ] 상태 count·recent/favorite Shelf는 실제 record와 `updatedAt`/reaction만 사용하고 memo·시간 통계를 합성하지 않는다.
+- [ ] populated data-portability banner는 `/settings?section=data`만 열고 overall-empty image-half와 동시에 보이지 않는다.
 
 ---
 
@@ -497,10 +520,10 @@ Base UI primitive는 shadcn CLI로 `src/components/ui/**`에 생성하고 `src/c
 | 컴포넌트 | 책임 | 핵심 규칙 |
 |---|---|---|
 | `CoverImage` | 모든 표지 렌더 | 원본 비율(object-contain), radius 4px, 1px `--line` 테두리, 로드 실패 시 타이포 placeholder, `_ex` 크기 프리셋(thumb 200/card 400/hero 600), lazy loading |
-| `MediaShelf` | 가로 탐색 | CSS scroll-snap + ResizeObserver, overflow일 때만 control, reduced-motion instant scroll, Embla/Swiper 없음 |
-| `RecommendationCard` | 추천 featured 탐색 | 고정 cover-forward poster, contribution 기반 lead reason과 44px action 상시 노출, touch에서는 Quick Preview |
-| `RankingShelf` | Top 10 | `<ol>` + 화면에 보이는 텍스트 순위, canonical plan 순서 유지 |
-| `QuickPreview` | 상세 전 주요 정보/action | desktop Dialog/mobile Sheet wrapper, `?preview` 대상만 URL, focus trap/opener 복원 |
+| `MediaShelf` | 가로 탐색 | CSS scroll-snap + ResizeObserver. Featured는 inert/aria-hidden clone을 둔 3-copy pointer/touch 루프이고 키보드는 canonical card 끝에서 비순환한다. 나머지 Shelf는 끝에서 화살표·키보드 비순환이다. overlay variant는 track 시작선을 콘텐츠 shell에 유지한 채 좌우 fade 폭만큼 viewport와 fade를 negative gutter로 확장한다. reduced-motion instant scroll, Embla/Swiper 없음 |
+| `RecommendationCard` | 추천 featured 탐색 | 4px-grid 고정 poster(Desktop 344×448), 2줄 title slot·메타/confidence·원본비율 표지·lead reason. fine pointer hover/focus는 외곽 고정 상태에서 표지를 줄이고 최대 3줄 reason+44px icon action rail을 열며 coarse pointer는 rail을 상시 표시한다. identity는 상세, Quick Preview는 작품 단위 접근 이름을 가진 ScanSearch icon control |
+| `RankingShelf` | Top 10 | `<ol>` + 화면에 보이는 텍스트 순위, canonical plan 순서 유지. Quick Preview 없음 |
+| `QuickPreview` | 상세 전 주요 정보/action | desktop Dialog/mobile Sheet wrapper, `?preview` 대상만 URL, focus trap/opener 복원. opener는 동일 ScanSearch+「クイック表示」 quiet 컨트롤이며 identity `Link` 밖에 둔다. Top 10에는 없다 |
 | `ReasonChips` | 이유·주의점 표시 | contribution 데이터에서만 생성, cluster당 1개, 최대 3+1 |
 | `ConfidenceLabel` | 확신도 표시 | 3단 레이블만, 숫자·퍼센트 금지 |
 | `WorkSearchSheet` | 검색·추가 | 로컬 우선 → 라쿠텐 확장, ISBN 대조 |

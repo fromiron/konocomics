@@ -12,6 +12,7 @@ import type {
   UserWorkRecord,
 } from "@/domain/profile/types";
 import { TasteFlow } from "@/features/taste/taste-flow";
+import { tasteStrings } from "@/lib/strings";
 import { createTestAxes, createTestCatalog, createTestWork } from "../../helpers/catalog";
 
 const testState = vi.hoisted(() => ({
@@ -238,6 +239,40 @@ describe("TasteFlow", () => {
     expect(await screen.findByText("分析の確信度: ふつう")).toBeTruthy();
   });
 
+  it("shows a coaching banner for normal confidence that adds works through onboarding", async () => {
+    render(<TasteFlow />);
+
+    expect(await screen.findByRole("heading", { name: tasteStrings.coach.heading })).toBeTruthy();
+    expect(screen.getByText(tasteStrings.coach.description)).toBeTruthy();
+    expect(screen.getByRole("link", { name: tasteStrings.coach.action }).getAttribute("href")).toBe(
+      "/onboarding",
+    );
+    expect(
+      document.querySelector('img[src="/media/taste-dna-coach.png"]')?.getAttribute("aria-hidden"),
+    ).toBe("true");
+    expect(screen.getByText("分析の確信度: ふつう")).toBeTruthy();
+    expect(screen.queryByRole("link", { name: tasteStrings.addWorks })).toBeNull();
+  });
+
+  it("hides the coaching banner when profile confidence is high", async () => {
+    const catalog = testState.catalog as ReturnType<typeof createTestCatalog>;
+    const extra = { ...createTestWork({ id: "work-8" }), title: "作品8" };
+    testState.catalog = { ...catalog, works: [...catalog.works, extra] };
+    testState.userWorks = [...catalog.works, extra].map((work) => ({
+      workId: work.id,
+      readingState: "completed" as const,
+      reaction: "liked" as const,
+      updatedAt: "2026-08-14T00:00:00.000Z",
+    }));
+
+    render(<TasteFlow />);
+
+    expect(await screen.findByText("分析の確信度: 高い")).toBeTruthy();
+    expect(screen.queryByRole("heading", { name: tasteStrings.coach.heading })).toBeNull();
+    expect(document.querySelector('img[src="/media/taste-dna-coach.png"]')).toBeNull();
+    expect(screen.getByRole("link", { name: tasteStrings.addWorks })).toBeTruthy();
+  });
+
   it("shows five compact group summaries and opens one labelled detail panel at a time", async () => {
     const onGroupChange = vi.fn();
     const { container } = render(<TasteFlow onGroupChange={onGroupChange} />);
@@ -317,13 +352,24 @@ describe("TasteFlow", () => {
     expect(within(anchorRegion).queryByRole("img")).toBeNull();
     expect(anchorRegion.querySelectorAll("li > a")).toHaveLength(5);
     expect(anchorRegion.querySelector("li > .visually-hidden")).toBeNull();
+    const topPreferenceGrid = container.querySelector(".taste-top-summary__grid");
+    expect(topPreferenceGrid?.tagName).toBe("OL");
+    expect(topPreferenceGrid?.className).toContain("grid-cols-1");
+    expect(topPreferenceGrid?.className).toContain("md:grid-cols-3");
+    expect(topPreferenceGrid?.querySelectorAll(":scope > li")).toHaveLength(3);
     const topPreferenceCards = container.querySelectorAll(".taste-top-card");
     expect(topPreferenceCards).toHaveLength(3);
     expect(
       [...topPreferenceCards].every(
-        (card) =>
-          card.querySelector("h3") !== null &&
-          card.querySelector(".taste-top-card__level") !== null &&
+        (card, index) =>
+          card.querySelector("h3")?.className.includes("line-clamp-2") === true &&
+          card.querySelector(".taste-top-card__rank")?.textContent === String(index + 1) &&
+          card.querySelector(".taste-top-card__rank")?.getAttribute("aria-hidden") !== "true" &&
+          card
+            .querySelector(".taste-top-card__level")
+            ?.className.includes("--text-subheading-size") === true &&
+          card.querySelector(".taste-top-card__level")?.className.includes("--font-size-28") ===
+            true &&
           card.querySelector(".taste-top-card__icon[aria-hidden='true']") !== null &&
           card.querySelector("p") !== null,
       ),
@@ -560,6 +606,8 @@ describe("TasteFlow", () => {
     });
 
     expect(screen.getByRole("link", { name: "おすすめを見る" })).toBeTruthy();
+    expect(screen.queryByRole("heading", { name: tasteStrings.coach.heading })).toBeNull();
+    expect(document.querySelector('img[src="/media/taste-dna-coach.png"]')).toBeNull();
     expect(window.sessionStorage.getItem("konocomics:manga-dna-reveal:v1")).toBe(
       "2026-08-14T02:00:00.000Z",
     );

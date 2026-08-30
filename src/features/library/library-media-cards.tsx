@@ -66,13 +66,13 @@ function formatUpdatedAt(value: string) {
 export function RowMedia({
   catalogCoverUrls,
   className,
-  onCoverSettled,
+  onCoverVisible,
   requestedSize = 200,
   row,
 }: Readonly<{
   catalogCoverUrls: ReadonlyMap<string, string | null>;
   className?: string;
-  onCoverSettled?(workId: string): void;
+  onCoverVisible?(workId: string): void;
   requestedSize?: 200 | 400;
   row: LibraryRow;
 }>) {
@@ -96,7 +96,7 @@ export function RowMedia({
       className={className}
       coverUrl={rowCoverUrl(row, catalogCoverUrls)}
       creators={rowCreators(row)}
-      onSettled={row.kind === "catalog" ? () => onCoverSettled?.(row.id) : undefined}
+      onVisible={row.kind === "catalog" ? () => onCoverVisible?.(row.id) : undefined}
       requestedSize={requestedSize}
       title={rowTitle(row)}
     />
@@ -174,7 +174,7 @@ function ProgressDisplay({
 
 type LibraryCardProps = Readonly<{
   catalogCoverUrls: ReadonlyMap<string, string | null>;
-  onCoverSettled?(workId: string): void;
+  onCoverVisible?(workId: string): void;
   onOpen(opener: HTMLElement, row: LibraryRow): void;
   row: LibraryRow;
   volumeCountByWorkId: ReadonlyMap<string, number>;
@@ -182,7 +182,7 @@ type LibraryCardProps = Readonly<{
 
 export function LibraryRecentCard({
   catalogCoverUrls,
-  onCoverSettled,
+  onCoverVisible,
   onOpen,
   row,
 }: LibraryCardProps) {
@@ -195,7 +195,7 @@ export function LibraryRecentCard({
     >
       <Button
         aria-label={rowOpenLabel(row)}
-        className="group/card relative block h-auto min-h-[var(--control-min-size)] w-full overflow-hidden rounded-[var(--radius-card)] border border-line/70 bg-surface-1 p-0 text-start whitespace-normal text-text shadow-[var(--shadow-level-1)] hover:border-line"
+        className="group/card relative block h-auto min-h-[var(--control-min-size)] w-full overflow-hidden rounded-[var(--radius-card)] border border-line/70 bg-surface-1 p-0 text-start whitespace-normal text-text focus-visible:shadow-[var(--shadow-raised)] [@media(hover:hover)_and_(pointer:fine)]:hover:shadow-[var(--shadow-raised)]"
         onClick={(event) => onOpen(event.currentTarget, row)}
         type="button"
         variant="ghost"
@@ -203,7 +203,7 @@ export function LibraryRecentCard({
         <RowMedia
           catalogCoverUrls={catalogCoverUrls}
           className="rounded-none border-0"
-          onCoverSettled={onCoverSettled}
+          onCoverVisible={onCoverVisible}
           requestedSize={400}
           row={row}
         />
@@ -225,7 +225,7 @@ export function LibraryRecentCard({
 
 function LibraryReadingProgressCard({
   catalogCoverUrls,
-  onCoverSettled,
+  onCoverVisible,
   onOpen,
   row,
   volumeCountByWorkId,
@@ -239,7 +239,7 @@ function LibraryReadingProgressCard({
     >
       <Button
         aria-label={rowOpenLabel(row)}
-        className="group/card !grid h-full min-h-[var(--control-min-size)] w-full grid-cols-[5.25rem_minmax(0,1fr)] items-start justify-stretch gap-[var(--space-3)] rounded-[var(--radius-card)] border border-line/70 bg-surface-1 p-[var(--space-3)] text-start whitespace-normal text-text hover:border-line"
+        className="group/card !grid h-full min-h-[var(--control-min-size)] w-full grid-cols-[5.25rem_minmax(0,1fr)] items-start justify-stretch gap-[var(--space-3)] rounded-[var(--radius-card)] border border-line/70 bg-surface-1 p-[var(--space-3)] text-start whitespace-normal text-text focus-visible:shadow-[var(--shadow-raised)] [@media(hover:hover)_and_(pointer:fine)]:hover:shadow-[var(--shadow-raised)]"
         onClick={(event) => onOpen(event.currentTarget, row)}
         type="button"
         variant="ghost"
@@ -247,7 +247,7 @@ function LibraryReadingProgressCard({
         <RowMedia
           catalogCoverUrls={catalogCoverUrls}
           className="self-start"
-          onCoverSettled={onCoverSettled}
+          onCoverVisible={onCoverVisible}
           row={row}
         />
         <span className="grid min-w-0 content-between gap-[var(--space-content)] py-[var(--space-1)]">
@@ -269,7 +269,7 @@ function LibraryReadingProgressCard({
 
 function LibraryPlannedCompactCard({
   catalogCoverUrls,
-  onCoverSettled,
+  onCoverVisible,
   onOpen,
   row,
 }: LibraryCardProps) {
@@ -287,10 +287,10 @@ function LibraryPlannedCompactCard({
         type="button"
         variant="ghost"
       >
-        <span className="relative block w-full overflow-hidden rounded-[var(--radius-cover)] shadow-[var(--shadow-level-1)]">
+        <span className="relative block w-full overflow-hidden rounded-[var(--radius-cover)] group-focus-visible/card:shadow-[var(--shadow-raised)] [@media(hover:hover)_and_(pointer:fine)]:group-hover/card:shadow-[var(--shadow-raised)]">
           <RowMedia
             catalogCoverUrls={catalogCoverUrls}
-            onCoverSettled={onCoverSettled}
+            onCoverVisible={onCoverVisible}
             requestedSize={400}
             row={row}
           />
@@ -315,7 +315,7 @@ function LibraryPlannedCompactCard({
 
 function LibraryStatusCard({
   catalogCoverUrls,
-  onCoverSettled,
+  onCoverVisible,
   onOpen,
   row,
   volumeCountByWorkId,
@@ -330,7 +330,7 @@ function LibraryStatusCard({
     >
       <Button
         aria-label={rowOpenLabel(row)}
-        className="group/card !grid h-full min-h-[var(--control-min-size)] w-full justify-stretch gap-[var(--space-content)] rounded-[var(--radius-card)] border border-line/70 bg-surface-1 p-[var(--space-3)] text-start whitespace-normal text-text hover:border-line"
+        className="group/card !grid h-full min-h-[var(--control-min-size)] w-full justify-stretch gap-[var(--space-content)] rounded-[var(--radius-card)] border border-line/70 bg-surface-1 p-[var(--space-3)] text-start whitespace-normal text-text focus-visible:shadow-[var(--shadow-raised)] [@media(hover:hover)_and_(pointer:fine)]:hover:shadow-[var(--shadow-raised)]"
         onClick={(event) => onOpen(event.currentTarget, row)}
         type="button"
         variant="ghost"
@@ -338,7 +338,7 @@ function LibraryStatusCard({
         <span className="relative block w-full">
           <RowMedia
             catalogCoverUrls={catalogCoverUrls}
-            onCoverSettled={onCoverSettled}
+            onCoverVisible={onCoverVisible}
             requestedSize={400}
             row={row}
           />
@@ -373,7 +373,7 @@ export function LibraryStateCard(props: LibraryCardProps) {
 
 export function LibraryFavoriteCard({
   catalogCoverUrls,
-  onCoverSettled,
+  onCoverVisible,
   onOpen,
   row,
 }: LibraryCardProps) {
@@ -393,8 +393,8 @@ export function LibraryFavoriteCard({
       >
         <RowMedia
           catalogCoverUrls={catalogCoverUrls}
-          className="shadow-[var(--shadow-level-1)]"
-          onCoverSettled={onCoverSettled}
+          className="group-focus-visible/card:shadow-[var(--shadow-raised)] [@media(hover:hover)_and_(pointer:fine)]:group-hover/card:shadow-[var(--shadow-raised)]"
+          onCoverVisible={onCoverVisible}
           requestedSize={400}
           row={row}
         />
@@ -416,14 +416,14 @@ export function LibraryListCard(props: LibraryCardProps) {
     >
       <Button
         aria-label={rowOpenLabel(props.row)}
-        className="!grid h-full min-h-[var(--control-min-size)] w-full grid-cols-[5rem_minmax(0,1fr)] items-start justify-stretch gap-[var(--space-3)] rounded-[var(--radius-card)] border border-line/70 bg-surface-1 p-[var(--space-3)] text-start whitespace-normal text-text hover:border-line"
+        className="!grid h-full min-h-[var(--control-min-size)] w-full grid-cols-[5rem_minmax(0,1fr)] items-start justify-stretch gap-[var(--space-3)] rounded-[var(--radius-card)] border border-line/70 bg-surface-1 p-[var(--space-3)] text-start whitespace-normal text-text focus-visible:shadow-[var(--shadow-raised)] [@media(hover:hover)_and_(pointer:fine)]:hover:shadow-[var(--shadow-raised)]"
         onClick={(event) => props.onOpen(event.currentTarget, props.row)}
         type="button"
         variant="ghost"
       >
         <RowMedia
           catalogCoverUrls={props.catalogCoverUrls}
-          onCoverSettled={props.onCoverSettled}
+          onCoverVisible={props.onCoverVisible}
           row={props.row}
         />
         <span className="grid min-w-0 content-start gap-[var(--space-content-tight)]">
