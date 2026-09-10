@@ -43,5 +43,18 @@ export default defineConfig({
     }),
   ],
   resolve: { tsconfigPaths: true },
-  server: { port: 3030, strictPort: true },
+  server: {
+    port: 3030,
+    strictPort: true,
+    watch: {
+      ignored: [
+        "**/.tmp/**",
+        "**/.output/**",
+        "**/.pnpm-store/**",
+        "**/.qa/**",
+        "**/.playwright-cli/**",
+        "**/handoff/**",
+      ],
+    },
+  },
 });
