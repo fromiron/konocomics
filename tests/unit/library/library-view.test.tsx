@@ -258,9 +258,7 @@ describe("LibraryView", () => {
         ?.getAttribute("aria-hidden"),
     ).toBe("true");
     expect(document.querySelector('img[src="/media/library-data-portability.png"]')).toBeNull();
-    expect(
-      screen.queryByRole("link", { name: libraryStrings.tools.openSettings }),
-    ).toBeNull();
+    expect(screen.queryByRole("link", { name: libraryStrings.tools.openSettings })).toBeNull();
 
     cleanup();
     renderLibrary({ externalWorks: [], userWorks: [catalogRecord] });

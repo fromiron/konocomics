@@ -1109,9 +1109,7 @@ export function TasteFlow({
           onCoverVisible={requestCover}
         />
 
-        {confidenceLevel !== "normal" || revealExperience.entry ? null : (
-          <ConfidenceCoachBanner />
-        )}
+        {confidenceLevel !== "normal" || revealExperience.entry ? null : <ConfidenceCoachBanner />}
 
         <div className="taste-workspace-layout grid items-start gap-[var(--space-4)]">
           <section
