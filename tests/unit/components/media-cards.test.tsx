@@ -167,6 +167,31 @@ describe("media card anatomy", () => {
     expect(container.querySelector("button")).toBeNull();
   });
 
+  it("reserves a decorative crown for personalized first place without replacing rank text", () => {
+    const { container, rerender } = render(<ol />);
+    for (const position of [1, 2, 3, 4, 10]) {
+      rerender(
+        <ol>
+          <RankingCard
+            creators={["作者"]}
+            position={position}
+            rankingKind="personalized-ranking"
+            title="推薦作品"
+            workId="test-work"
+          />
+        </ol>,
+      );
+      expect(screen.getByText(String(position))).toBeTruthy();
+      expect(screen.getByRole("link").getAttribute("aria-label")).toMatch(
+        new RegExp(`^${String(position)}位`, "u"),
+      );
+      expect(container.querySelectorAll(".ranking-crown")).toHaveLength(position === 1 ? 1 : 0);
+      if (position === 1) {
+        expect(container.querySelector(".ranking-crown")?.getAttribute("aria-hidden")).toBe("true");
+      }
+    }
+  });
+
   it("renders the overlay poster hierarchy inside the full-cover card", () => {
     const { container } = render(
       <MediaPosterCard

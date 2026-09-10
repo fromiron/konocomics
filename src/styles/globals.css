@@ -117,6 +117,7 @@
   --motion-duration-feedback: 120ms;
   --motion-duration-page: 160ms;
   --motion-duration-floating-action: 200ms;
+  --motion-delay-rank-crown: 150ms;
   --motion-duration-value: 240ms;
   --motion-duration-reveal-step: 400ms;
   --motion-duration-cinematic: 640ms;
@@ -494,6 +495,51 @@ h1[tabindex="-1"]:focus {
   .recommendation-featured-card:hover .recommendation-featured-card__actions,
   .recommendation-featured-card:focus-within .recommendation-featured-card__actions {
     transition: none;
+  }
+}
+
+.ranking-crown {
+  position: absolute;
+  bottom: calc(100% - var(--space-1));
+  left: calc(50% - var(--space-3));
+  width: var(--space-6);
+  height: var(--space-6);
+  color: var(--accent);
+  opacity: 0;
+  transform-origin: center bottom;
+}
+
+.ranking-card-link:focus-visible .ranking-crown {
+  opacity: 1;
+  animation: var(--ranking-crown-animation, none);
+}
+
+@media (hover: hover) and (pointer: fine) {
+  .ranking-card-link:hover .ranking-crown {
+    opacity: 1;
+    animation: var(--ranking-crown-animation, none);
+  }
+}
+
+@media (prefers-reduced-motion: no-preference) {
+  .ranking-crown {
+    --ranking-crown-animation: ranking-crown-pop var(--motion-duration-value)
+      var(--motion-ease-direct) var(--motion-delay-rank-crown) both;
+  }
+}
+
+@keyframes ranking-crown-pop {
+  from {
+    opacity: 0;
+    transform: translateY(var(--space-1)) scale(0.5);
+  }
+  65% {
+    opacity: 1;
+    transform: translateY(calc(-1 * var(--space-1))) scale(1.16);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0) scale(1);
   }
 }
 

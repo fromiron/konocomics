@@ -1,4 +1,5 @@
 import { Link } from "@tanstack/react-router";
+import { CrownIcon } from "lucide-react";
 import type { ReactNode } from "react";
 
 import { CoverImage } from "@/components/cover/CoverImage";
@@ -92,7 +93,7 @@ export function RankingCard({
         <article className="min-w-0">
           <Link
             aria-label={linkLabel}
-            className="group/ranking relative grid min-h-[var(--control-min-size)] gap-[var(--space-2)] rounded-[var(--radius-card)] bg-transparent p-[var(--space-3)] transition-colors duration-[var(--motion-duration-value)] ease-[var(--motion-ease-direct)] focus-visible:bg-surface-2 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-ring motion-reduce:transition-none [@media(hover:hover)_and_(pointer:fine)]:hover:bg-surface-2"
+            className="ranking-card-link group/ranking relative grid min-h-[var(--control-min-size)] gap-[var(--space-2)] rounded-[var(--radius-card)] bg-transparent p-[var(--space-3)] transition-colors duration-[var(--motion-duration-value)] ease-[var(--motion-ease-direct)] focus-visible:bg-surface-2 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-ring motion-reduce:transition-none [@media(hover:hover)_and_(pointer:fine)]:hover:bg-surface-2"
             params={{ workId }}
             preload={false}
             to="/works/$workId"
@@ -114,6 +115,15 @@ export function RankingCard({
                 data-ranking-hover-position="true"
               >
                 {position}
+                {position === 1 ? (
+                  <CrownIcon
+                    aria-hidden="true"
+                    className="ranking-crown"
+                    fill="currentColor"
+                    stroke="var(--canvas)"
+                    strokeWidth={1.5}
+                  />
+                ) : null}
               </span>
             </span>
             <span className="grid min-w-0 gap-[var(--space-content-tight)]">

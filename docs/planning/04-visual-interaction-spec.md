@@ -105,6 +105,8 @@
 
 모션 값도 의미 역할로 소비한다: `--motion-duration-page` 160ms, `--motion-duration-floating-action` 200ms, `--motion-duration-value` 240ms, `--motion-duration-reveal-step` 400ms, `--motion-ease-direct` ease-out, `--motion-ease-value` ease-in-out, `--motion-ease-signature` cubic-bezier(0.2, 0, 0, 1). 이 값은 아래 A~F 분류를 대체하지 않고 구현 간 별칭 드리프트만 막는다. Top 10의 floating rank accessory는 `transform`·`opacity`만 200ms ease-out으로 전환하고 reduced motion에서는 이동 없이 즉시 상태를 바꾼다.
 
+개인화 Top 10은 2026-09-10 사용자 승인에 따라 모든 순위 배경에 기존 프라이머리 `--accent`를 사용하고 숫자는 어두운 `--on-accent`로 표시한다. 1위만 숫자를 유지한 채 작은 장식 왕관을 배지 위에 추가한다. D 입력 피드백으로 fine-pointer hover·keyboard focus-visible 진입 시 배지가 먼저 나타나고, `--motion-delay-rank-crown` 150ms 후 왕관이 `--motion-duration-value` 240ms 동안 opacity·translate·scale로 한 번 튀어나와 정착한다. 이탈 시 숨기고 재진입 시 다시 한 번 재생하며 상시 반복하지 않는다. reduced-motion에서는 배지·왕관을 지연·이동 없이 즉시 표시한다. 왕관은 `aria-hidden`이며 순위 이름·상세 링크·카드 외곽 geometry는 유지한다.
+
 ### 2.6 리뷰 통합 토큰·예산 경계
 
 - 위 dark primitive + semantic 명칭이 migration 이후 권위다. 구현 원본은 framework-neutral global stylesheet의 `:root`이며 wide/narrow/reduced-motion에서 검증한다. 이전 light token과 `src/app/globals.css`는 migration baseline일 뿐 새 구현 권위가 아니다.
