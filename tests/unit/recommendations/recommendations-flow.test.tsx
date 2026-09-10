@@ -24,6 +24,7 @@ import { onboardingStrings, recommendationStrings } from "@/lib/strings";
 const featuredItemSelector = "li[data-recommendation-work-id]:not([data-carousel-clone])";
 
 vi.mock("@tanstack/react-router", () => ({
+  useRouterState: () => testState.searchStr,
   Link: ({
     "aria-label": ariaLabel,
     children,
@@ -65,6 +66,7 @@ const testState = vi.hoisted(() => ({
   getProviderCache: vi.fn(),
   loadMotionList: vi.fn(),
   motionListRenders: [] as string[][],
+  searchStr: "",
   policies: {
     preferCompleted: false,
     preferHidden: false,
@@ -354,6 +356,7 @@ beforeEach(() => {
   testState.loadMotionList.mockReset();
   testState.loadMotionList.mockResolvedValue(TestMotionList);
   testState.motionListRenders.length = 0;
+  testState.searchStr = "";
   motionPreferenceListener = null;
   vi.stubGlobal("crypto", {
     subtle: {
@@ -390,6 +393,7 @@ afterEach(() => {
   vi.clearAllTimers();
   vi.useRealTimers();
   vi.unstubAllGlobals();
+  vi.restoreAllMocks();
 });
 
 describe("RecommendationsFlow", () => {
@@ -413,12 +417,14 @@ describe("RecommendationsFlow", () => {
       ).toBe(INPUT_HASH);
     });
 
+    expect(screen.queryByRole("button", { name: "更新" })).toBeNull();
     testState.userWorks = testState.userWorks.map((record, index) =>
       index === 0 ? { ...record, reaction: "favorite" } : record,
     );
     rerender(<RecommendationsFlow />);
-    const update = screen.getByRole<HTMLButtonElement>("button", { name: "更新" });
+    const update = await screen.findByRole<HTMLButtonElement>("button", { name: "更新" });
     await waitFor(() => expect(update.disabled).toBe(false));
+    update.focus();
     fireEvent.click(update);
 
     await waitFor(() => {
@@ -432,6 +438,10 @@ describe("RecommendationsFlow", () => {
     expect(testState.buildPlan).not.toHaveBeenCalled();
     expect(testState.saveRecommendationCache).not.toHaveBeenCalled();
     expect(screen.getByText("おすすめを更新しました。")).toBeTruthy();
+    expect(screen.queryByRole("button", { name: "更新" })).toBeNull();
+    await waitFor(() =>
+      expect(document.activeElement).toBe(screen.getByRole("heading", { level: 1 })),
+    );
   });
 
   it("keeps the displayed plan while a changed input recomputes", async () => {
@@ -459,8 +469,9 @@ describe("RecommendationsFlow", () => {
       index === 0 ? { ...record, reaction: "favorite" } : record,
     );
     rerender(<RecommendationsFlow />);
-    const update = screen.getByRole<HTMLButtonElement>("button", { name: "更新" });
+    const update = await screen.findByRole<HTMLButtonElement>("button", { name: "更新" });
     await waitFor(() => expect(update.disabled).toBe(false));
+    update.focus();
     fireEvent.click(update);
 
     const updating = await screen.findByRole<HTMLButtonElement>("button", {
@@ -468,6 +479,8 @@ describe("RecommendationsFlow", () => {
     });
     expect(updating.disabled).toBe(true);
     expect(updating.getAttribute("aria-busy")).toBe("true");
+    const tasteLink = screen.getByRole("link", { name: "Manga DNA" });
+    tasteLink.focus();
     await act(() => new Promise((resolve) => window.setTimeout(resolve, 225)));
     expect(screen.queryByText("おすすめを計算しています…")).toBeNull();
     expect(
@@ -494,6 +507,7 @@ describe("RecommendationsFlow", () => {
       ),
     ).toEqual(nextPlan.slice(0, 10).map((entry) => entry.workId));
     expect(screen.getByText("おすすめを更新しました。")).toBeTruthy();
+    expect(document.activeElement).toBe(tasteLink);
   });
 
   it("does not start a calculation after unmounting during a cache read", async () => {
@@ -601,7 +615,7 @@ describe("RecommendationsFlow", () => {
     expect(container.querySelector("main")?.getAttribute("data-recommendation-input-hash")).toBe(
       INPUT_HASH,
     );
-    expect(screen.getAllByRole("checkbox", { name: /優先/u })).toHaveLength(3);
+    expect(screen.getAllByRole("checkbox", { name: /優先|重視/u })).toHaveLength(3);
     expect(screen.queryByRole("checkbox", { name: /未完/u })).toBeNull();
     expect(container.querySelectorAll('[data-cover-priority="high"]')).toHaveLength(1);
     const ranking = screen.getByRole("list", { name: "あなたの Top 10" });
@@ -836,6 +850,89 @@ describe("RecommendationsFlow", () => {
     });
   });
 
+  it("keeps genre filtering separate from canonical ranking and repeats shelf jumps", async () => {
+    const onGenreChange = vi.fn();
+    const onShelfChange = vi.fn();
+    const { container, rerender } = render(
+      <RecommendationsFlow onGenreChange={onGenreChange} onShelfChange={onShelfChange} />,
+    );
+    await waitFor(() => expect(container.querySelectorAll(featuredItemSelector)).toHaveLength(10));
+    const rankingIds = () =>
+      [...screen.getByRole("list", { name: "あなたの Top 10" }).querySelectorAll("a")].map((link) =>
+        link.getAttribute("href"),
+      );
+    const originalIds = rankingIds();
+    fireEvent.change(screen.getByRole("combobox", { name: "ジャンル" }), {
+      target: { value: "action" },
+    });
+    expect(onGenreChange).toHaveBeenCalledWith("action");
+    testState.searchStr = "?genre=action";
+    rerender(
+      <RecommendationsFlow
+        genre="action"
+        onGenreChange={onGenreChange}
+        onShelfChange={onShelfChange}
+      />,
+    );
+    expect(rankingIds()).toEqual(originalIds);
+    expect(screen.getByText(recommendationStrings.filters.rankingScope)).toBeTruthy();
+    expect(testState.buildPlan).not.toHaveBeenCalled();
+    expect(screen.queryByRole("combobox", { name: "棚へ移動" })).toBeNull();
+
+    const intro = container.querySelector<HTMLElement>("#recommendation-intro");
+    const navigation = container.querySelector<HTMLElement>("#recommendation-navigation");
+    if (intro === null || navigation?.parentElement === null || navigation === null) {
+      throw new Error("Missing recommendation navigation");
+    }
+    expect(navigation.getAttribute("aria-hidden")).toBe("true");
+    navigation.parentElement.style.top = "64px";
+    vi.spyOn(intro, "getBoundingClientRect").mockReturnValue(new DOMRect(0, -100, 800, 100));
+    vi.spyOn(document.documentElement, "scrollHeight", "get").mockReturnValue(4000);
+    for (const [index, target] of [
+      ...container.querySelectorAll<HTMLElement>('[id^="recommendation-shelf-"]'),
+    ].entries()) {
+      vi.spyOn(target, "getBoundingClientRect").mockReturnValue(
+        new DOMRect(0, index * 400 - 100, 800, 0),
+      );
+    }
+    fireEvent.scroll(window);
+    await waitFor(() => expect(navigation.getAttribute("aria-hidden")).toBe("false"));
+
+    const anchor = container.querySelector<HTMLElement>("#recommendation-shelf-ranking");
+    if (anchor === null) throw new Error("Missing ranking shelf target");
+    anchor.scrollIntoView = vi.fn();
+    const jump = within(navigation).getByRole("link", { name: "あなたの Top 10" });
+    expect(jump.getAttribute("href")).toBe("/recommendations?genre=action&shelf=ranking");
+    for (let index = 0; index < 2; index += 1) {
+      fireEvent.click(jump);
+      expect(document.activeElement).toBe(screen.getByRole("heading", { name: "あなたの Top 10" }));
+    }
+    expect(anchor.scrollIntoView).toHaveBeenCalledTimes(2);
+    expect(onShelfChange).toHaveBeenNthCalledWith(2, "ranking");
+
+    vi.mocked(anchor.getBoundingClientRect).mockReturnValue(new DOMRect(0, -10, 800, 0));
+    fireEvent.scroll(window);
+    await waitFor(() => expect(jump.getAttribute("aria-current")).toBe("location"));
+    expect(onShelfChange).toHaveBeenCalledTimes(2);
+    expect(document.activeElement).toBe(screen.getByRole("heading", { name: "あなたの Top 10" }));
+  });
+
+  it("omits navigation for a single empty shelf and still restores its URL destination", async () => {
+    testState.getRecommendationCache.mockResolvedValue(cacheRecord([]));
+    const { container, rerender } = render(<RecommendationsFlow />);
+    await waitFor(() =>
+      expect(container.querySelector("main")?.getAttribute("data-recommendation-input-hash")).toBe(
+        INPUT_HASH,
+      ),
+    );
+    expect(screen.queryByRole("navigation", { name: "おすすめの棚" })).toBeNull();
+    const featured = container.querySelector<HTMLElement>("#recommendation-shelf-featured");
+    if (featured === null) throw new Error("Missing featured empty state");
+    featured.scrollIntoView = vi.fn();
+    rerender(<RecommendationsFlow shelf="featured" />);
+    expect(featured.scrollIntoView).toHaveBeenCalledOnce();
+  });
+
   it("unlocks cover resolution from the first recommendation visible after genre filtering", async () => {
     const plan = makePlan();
     const canonicalFirst = catalog.works.find((work) => work.id === plan[0]?.workId);
@@ -920,7 +1017,11 @@ describe("RecommendationsFlow", () => {
     expect(screen.getByRole("link", { name: "好きな作品を追加" }).getAttribute("href")).toBe(
       "/onboarding",
     );
-    expect(screen.getByRole("link", { name: "好みを見直す" }).getAttribute("href")).toBe("/taste");
+    expect(
+      within(screen.getByRole("region", { name: "おすすめ候補が少なくなっています" }))
+        .getByRole("link", { name: "好みを見直す" })
+        .getAttribute("href"),
+    ).toBe("/taste");
   });
 
   it("hides the shortage banner when a later calculation error keeps the previous short plan", async () => {
@@ -946,7 +1047,7 @@ describe("RecommendationsFlow", () => {
       index === 0 ? { ...record, reaction: "favorite" } : record,
     );
     rerender(<RecommendationsFlow />);
-    const update = screen.getByRole<HTMLButtonElement>("button", { name: "更新" });
+    const update = await screen.findByRole<HTMLButtonElement>("button", { name: "更新" });
     await waitFor(() => expect(update.disabled).toBe(false));
     fireEvent.click(update);
 
@@ -1406,18 +1507,14 @@ describe("RecommendationsFlow", () => {
     expect(testState.loadMotionList).not.toHaveBeenCalled();
   });
 
-  it("counts the hidden compatibility policy without exposing a fourth policy control", async () => {
+  it("keeps the criteria concise without exposing a fourth policy control", async () => {
     testState.policies = { ...testState.policies, excludeIncomplete: true };
     render(<RecommendationsFlow />);
 
-    const criteriaHeading = await screen.findByRole("heading", {
-      name: "今回のおすすめ基準",
-    });
-    const criteria = criteriaHeading.closest("section");
-    if (criteria === null) throw new Error("Expected recommendation criteria summary");
-
-    expect(within(criteria).getByText("1件を反映")).toBeTruthy();
-    expect(screen.getAllByRole("checkbox", { name: /優先/u })).toHaveLength(3);
+    const criteria = await screen.findByRole("region", { name: "今回のおすすめ基準" });
+    expect(within(criteria).getByText("5作品から")).toBeTruthy();
+    expect(criteria.textContent).not.toMatch(/あなた|反映|方針|自動/u);
+    expect(screen.getAllByRole("checkbox", { name: /優先|重視/u })).toHaveLength(3);
     expect(screen.queryByRole("checkbox", { name: "刊行情報が不明な作品を除外" })).toBeNull();
   });
 
@@ -1451,13 +1548,25 @@ describe("RecommendationsFlow", () => {
     });
   });
 
-  it("freezes card feedback while a policy save and recomputation are in flight", async () => {
+  it("keeps policy progress in place and the displayed plan unchanged until recomputation succeeds", async () => {
     const policyWrite = deferred<void>();
+    const policyCalculation = deferred<ReturnType<typeof cacheRecord>>();
+    testState.policies = { ...testState.policies, preferVerified: true };
+    vi.mocked(globalThis.crypto.subtle.digest)
+      .mockReset()
+      .mockResolvedValueOnce(new Uint8Array(32).buffer)
+      .mockResolvedValue(new Uint8Array(32).fill(1).buffer);
+    testState.getRecommendationCache
+      .mockResolvedValueOnce(cacheRecord(makePlan()))
+      .mockReturnValueOnce(policyCalculation.promise);
     testState.savePolicies.mockReturnValueOnce(policyWrite.promise);
     const { container } = render(<RecommendationsFlow />);
     await waitFor(() => {
       expect(container.querySelectorAll(featuredItemSelector)).toHaveLength(10);
     });
+    const policySection = screen.getByRole("region", { name: "おすすめの方針" });
+    const policyHint = within(policySection).getByRole("status");
+    expect(policyHint.textContent).toBe("");
 
     fireEvent.click(screen.getByRole("checkbox", { name: "完結作を優先" }));
     const firstCard = container.querySelector(featuredItemSelector) as HTMLElement;
@@ -1465,6 +1574,14 @@ describe("RecommendationsFlow", () => {
       name: "読んだ",
     });
     await waitFor(() => expect(completedButton.disabled).toBe(true));
+    expect(policyHint.textContent).toBe("並べ直しています…");
+    expect(within(policySection).queryByRole("button", { name: /更新/u })).toBeNull();
+    expect(container.querySelector("main")?.getAttribute("data-recommendation-input-hash")).toBe(
+      INPUT_HASH,
+    );
+    for (const chip of within(policySection).getAllByRole("checkbox")) {
+      expect(chip.getAttribute("aria-disabled")).toBe("true");
+    }
     fireEvent.pointerDown(completedButton);
     fireEvent.click(completedButton);
     expect(testState.saveUserWork).not.toHaveBeenCalled();
@@ -1474,6 +1591,27 @@ describe("RecommendationsFlow", () => {
       policyWrite.resolve();
       await policyWrite.promise;
     });
+    await waitFor(() => expect(testState.getRecommendationCache).toHaveBeenCalledTimes(2));
+    expect(within(policySection).getByRole("status")).toBe(policyHint);
+    expect(policyHint.textContent).toBe("並べ直しています…");
+    expect(within(policySection).queryByRole("button", { name: /更新/u })).toBeNull();
+    expect(container.querySelector("main")?.getAttribute("data-recommendation-input-hash")).toBe(
+      INPUT_HASH,
+    );
+    expect(completedButton.disabled).toBe(true);
+
+    await act(async () => {
+      policyCalculation.resolve(cacheRecord(makePlan(), "01".repeat(32)));
+      await policyCalculation.promise;
+    });
     await waitFor(() => expect(completedButton.disabled).toBe(false));
+    expect(container.querySelector("main")?.getAttribute("data-recommendation-input-hash")).toBe(
+      "01".repeat(32),
+    );
+    expect(policyHint.textContent).toBe("");
+    expect(within(policySection).queryByRole("button", { name: /更新/u })).toBeNull();
+    for (const chip of within(policySection).getAllByRole("checkbox")) {
+      expect(chip.getAttribute("aria-disabled")).not.toBe("true");
+    }
   });
 });

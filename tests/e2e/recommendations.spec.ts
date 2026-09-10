@@ -477,14 +477,6 @@ async function recommendationIds(page: Page) {
     );
 }
 
-async function openRecommendationFilters(page: Page) {
-  if ((page.viewportSize()?.width ?? Number.POSITIVE_INFINITY) >= 768) return;
-  const toggle = page.getByRole("button", { name: /絞り込み/u });
-  await expect(toggle).toBeVisible();
-  if ((await toggle.getAttribute("aria-expanded")) !== "true") await toggle.click();
-  await expect(toggle).toHaveAttribute("aria-expanded", "true");
-}
-
 async function openRecommendationDetail(page: Page, workId: string) {
   const item = page.locator(`li[data-recommendation-work-id='${workId}']`);
   await item.getByRole("link", { name: /作品詳細を見る$/u }).click();
@@ -1170,7 +1162,6 @@ test.describe("Slice 7 recommendation journeys", () => {
     await page.goBack();
     await expect(previewDialog).toBeHidden();
 
-    await openRecommendationFilters(page);
     await tabUntil(page, /^\s*完結作を優先\s*$/u, 120);
     await page.keyboard.press("Space");
     await expect(page.getByRole("checkbox", { name: "完結作を優先" })).toBeChecked();
@@ -1197,12 +1188,56 @@ test.describe("Slice 7 recommendation journeys", () => {
     const policyIds = await recommendationIds(page);
 
     await page.reload();
-    await openRecommendationFilters(page);
     await expect(page.getByRole("checkbox", { name: "完結作を優先" })).toBeChecked();
     await expect(
       page.locator("li[data-recommendation-work-id]:not([data-carousel-clone])"),
     ).toHaveCount(10);
     expect(await recommendationIds(page)).toEqual(policyIds);
+
+    const shelfNavigation = page.getByRole("navigation", { name: "おすすめの棚" });
+    await page.getByRole("heading", { level: 1, name: "あなたへのおすすめ" }).focus();
+    await page.keyboard.press("Control+Home");
+    await expect(shelfNavigation).toBeHidden();
+    await expect(page.getByRole("combobox", { name: "棚へ移動" })).toHaveCount(0);
+    const rankingLinks = page.getByRole("list", { name: "あなたの Top 10" }).getByRole("link");
+    const canonicalDestinations = await rankingLinks.evaluateAll((links) =>
+      links.map((link) => link.getAttribute("href")),
+    );
+    await page
+      .getByRole("combobox", { name: "ジャンル", exact: true })
+      .selectOption("scienceFiction");
+    await expect(page.getByText("Top 10は全ジャンルの順位です。", { exact: true })).toBeVisible();
+    expect(
+      await rankingLinks.evaluateAll((links) => links.map((link) => link.getAttribute("href"))),
+    ).toEqual(canonicalDestinations);
+    if (testInfo.project.name === "chromium") {
+      await page.mouse.wheel(0, 600);
+      await expect(shelfNavigation).toBeVisible();
+      const rankingLink = shelfNavigation.getByRole("link", { name: "あなたの Top 10" });
+      const rankingHeading = page.getByRole("heading", { level: 2, name: "あなたの Top 10" });
+      await rankingLink.click();
+      await expect(rankingHeading).toBeFocused();
+      await expect(rankingLink).toHaveAttribute("aria-current", "location");
+      expect(new URL(page.url()).searchParams.get("genre")).toBe("scienceFiction");
+      expect(new URL(page.url()).searchParams.get("shelf")).toBe("ranking");
+      const navigationBounds = await shelfNavigation.boundingBox();
+      const headingBounds = await rankingHeading.boundingBox();
+      expect(headingBounds!.y).toBeGreaterThanOrEqual(
+        navigationBounds!.y + navigationBounds!.height,
+      );
+      await rankingLink.click();
+      await expect(rankingHeading).toBeFocused();
+      await page.keyboard.press("Control+Home");
+      await expect(shelfNavigation).toBeHidden();
+      expect(new URL(page.url()).searchParams.get("shelf")).toBe("ranking");
+      await page.reload();
+      await expect(shelfNavigation).toBeVisible();
+      await expect(rankingLink).toHaveAttribute("aria-current", "location");
+      await expect(rankingHeading).toBeInViewport();
+    } else {
+      await page.mouse.wheel(0, 600);
+      await expect(shelfNavigation).toBeHidden();
+    }
 
     await page.goto(
       "/recommendations?preview=first&preview=second&genre=invalid&sort=invalid&shelf=%20",
@@ -1243,6 +1278,7 @@ test.describe("Slice 7 recommendation journeys", () => {
     const firstCard = page
       .locator("li[data-recommendation-work-id]:not([data-carousel-clone])")
       .first();
+    await firstCard.getByRole("link", { name: /作品詳細を見る$/u }).focus();
     await firstCard.getByRole("button", { name: "読んだ" }).click();
     const dialog = page.getByRole("dialog");
     await expect(dialog).toBeVisible();
@@ -1273,11 +1309,12 @@ test.describe("Slice 7 recommendation journeys", () => {
       )
       .toEqual(expect.objectContaining({ readingState: "completed" }));
 
-    await openRecommendationFilters(page);
     const update = page.getByRole("button", { name: "更新" });
     await expect(update).toBeEnabled();
     await update.click();
     await expect(page.getByText("おすすめを更新しました。", { exact: true })).toBeVisible();
+    await expect(update).toHaveCount(0);
+    await expect(page.getByRole("heading", { level: 1, name: "あなたへのおすすめ" })).toBeFocused();
     await expect(page.locator(`li[data-recommendation-work-id='${removedWorkId}']`)).toHaveCount(0);
     const displayedHash = await page
       .locator("main[data-recommendation-input-hash]")
@@ -2062,7 +2099,7 @@ test.describe("Slice 10 data-sovereignty journey", () => {
     await expect(page.getByRole("heading", { level: 1, name: "設定" })).toBeVisible({
       timeout: 15_000,
     });
-    const verifiedPolicy = page.getByRole("switch", { name: "検証済み作品を優先" });
+    const verifiedPolicy = page.getByRole("switch", { name: "評価・実績を重視" });
     await expect(verifiedPolicy).not.toBeChecked();
     await verifiedPolicy.click();
     await expect(verifiedPolicy).toBeChecked();
@@ -2148,7 +2185,7 @@ test.describe("Slice 10 data-sovereignty journey", () => {
     expect(importedState.recommendationCache).toEqual([]);
     expect(importedState.providerCache).toEqual([]);
     expectCurrentRuntimeMeta(importedState, exported.file.catalogVersion);
-    await expect(page.getByRole("switch", { name: "検証済み作品を優先" })).toBeChecked();
+    await expect(page.getByRole("switch", { name: "評価・実績を重視" })).toBeChecked();
 
     const beforeIntroductionBypass = stateBytes(importedState);
     await page.goto("/?landing=1");

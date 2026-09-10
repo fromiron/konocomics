@@ -9,6 +9,7 @@ import { catalogV1Schema } from "@/domain/catalog/schema";
 import { RecommendationsFlow } from "@/features/recommendations/recommendations-flow";
 
 vi.mock("@tanstack/react-router", () => ({
+  useRouterState: () => "",
   Link: ({ children, to }: { children: ReactNode; to: string }) => <a href={to}>{children}</a>,
 }));
 

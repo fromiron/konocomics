@@ -101,7 +101,7 @@ const yenFormatter = new Intl.NumberFormat("ja-JP", {
 const recommendationPolicyLabels = {
   preferCompleted: "完結作を優先",
   preferHidden: "隠れた作品を優先",
-  preferVerified: "検証済み作品を優先",
+  preferVerified: "評価・実績を重視",
   excludeIncomplete: "刊行情報が不明な作品を除外",
 } as const;
 
@@ -657,6 +657,7 @@ export const recommendationStrings = {
   storageWarning:
     "このブラウザでは変更を保存できません。このセッション中だけおすすめを利用できます。",
   policiesHeading: "おすすめの方針",
+  policiesUpdating: "並べ直しています…",
   policyLabels: recommendationPolicyLabels,
   update: "更新",
   updating: "更新しています…",
@@ -665,42 +666,50 @@ export const recommendationStrings = {
     heading: "今回のおすすめ基準",
     description: "保存した読書記録、Manga DNA、おすすめ方針だけを使っています。",
     records: "読書記録",
-    recordCount: (count: number) => `${String(count)}作品を反映`,
-    preferences: "上位の好み",
+    recordCount: (count: number) => `${String(count)}作品から`,
+    dnaLink: "Manga DNA",
     policies: "適用中の条件",
-    policyCount: (count: number) => (count === 0 ? "標準の並び順" : `${String(count)}件を反映`),
   },
   filters: {
     heading: "絞り込み",
     genre: "ジャンル",
     allGenres: "すべて",
-    shelf: "表示位置",
-    allShelves: "すべての棚",
+    rankingScope: "Top 10は全ジャンルの順位です。",
     sort: "並び順",
     recommended: "おすすめ順",
     empty: "この条件で表示できる作品はありません。ジャンルを変えてお試しください。",
   },
   shelves: {
     featured: {
+      navigationLabel: "上位",
       title: "あなたのために選んだ作品",
       description: "上位の作品を選ぶと、あなたの好みとの接点と読書アクションを確認できます。",
     },
     anchor: {
+      navigationLabel: "好きな作品から",
       title: "好きな作品から広げる",
       description: "推薦プランの順番を保ったまま、根拠作品から次の候補を探せます。",
     },
     discovery: {
+      navigationLabel: "隠れた候補",
       title: "隠れた候補",
       description: "推薦エンジンが discovery とした候補だけを表示しています。",
     },
     completed: {
+      navigationLabel: "完結",
       title: "完結作から選ぶ",
       description: "推薦プラン内の完結作品です。順位の再計算はしていません。",
     },
     ranking: {
+      navigationLabel: "Top 10",
       title: "あなたの Top 10",
       description: "現在の推薦結果をそのまま1位から並べています。",
     },
+  },
+  shelfNavigation: {
+    label: "おすすめの棚",
+    accessibleLabel: (shortLabel: string, title: string) =>
+      title.includes(shortLabel) ? title : `${shortLabel}：${title}`,
   },
   quickPreview: {
     open: (title: string) => `「${title}」をクイック表示`,
@@ -716,8 +725,8 @@ export const recommendationStrings = {
     close: "おすすめ詳細を閉じる",
   },
   feedbackSummary: {
-    heading: "記録した内容を反映しています",
-    description: "読了と興味なしの記録は、次回のおすすめ更新に使われます。",
+    heading: "読んだ・興味なしの記録",
+    description: "記録した作品は、おすすめから外しています。",
     count: (count: number) => `${String(count)}作品`,
   },
   reasonHeading: "おすすめ理由",
@@ -742,7 +751,7 @@ export const recommendationStrings = {
   tasteSummary: {
     heading: "あなたの上位の好み",
     empty: "作品を追加すると、好みの特徴がここに表示されます。",
-    link: "Manga DNA を見る",
+    link: "好みを見直す",
   },
   shortage: {
     title: "おすすめ候補が少なくなっています",
@@ -911,7 +920,7 @@ export const settingsStrings = {
     descriptions: {
       preferCompleted: "完結まで読める作品を上位に寄せます。",
       preferHidden: "知名度だけに偏らない候補を優先します。",
-      preferVerified: "ファクター確認済みの作品を優先します。",
+      preferVerified: "好みの近さが同程度の作品では、レビュー評価や刊行実績を重視します。",
       excludeIncomplete: "刊行状況を確認できない作品を候補から外します。",
     },
     loading: "保存した方針を読み込んでいます…",

@@ -290,7 +290,7 @@ CTA 버튼 1개: **「好きなマンガから始める」** → /onboarding.
 
 ### 정보 위계
 
-1. 페이지 h1 「あなたへのおすすめ」(desktop는 28px 한 줄). 인접 설명은 기준 요약과 겹치면 desktop에서만 숨긴다.
+1. 페이지 h1 「あなたへのおすすめ」(desktop는 28px 한 줄). 중복 설명은 시각적으로 숨기고 접근성 DOM에 유지한다.
 2. 현재 적용 중인 정성 기준/policy 요약과 presentation filter bar
 3. plan order 상위 작품의 `FeaturedRecommendationShelf` + cover-forward poster card
 4. lead contribution의 anchor/reason별 Shelf
@@ -299,6 +299,25 @@ CTA 버튼 1개: **「好きなマンガから始める」** → /onboarding.
 7. 피드백 반영 요약과 footer. `completed`+`hidden` 합이 0보다 클 때만 ranking 뒤 콘텐츠 폭 full-width image banner로 표시한다.
 
 Shelf grouping은 presentation-only selector다. main Shelf 사이에는 work ID를 dedupe할 수 있지만 Top 10은 canonical summary이므로 중복을 허용한다. score를 다시 계산하거나 새로운 가중치·인기 순위를 만들지 않는다.
+
+### 추천 헤더 (2026-09-10 사용자 위임 개선)
+
+- 제목 옆에는 아이콘 없는 `Manga DNA` 링크를 두고, 그 아래 실제 기록 수의 `N作品から`와 근거 팩터 요약을 표시한다. `あなたの好み` 제목과 적용 방침 수 캡션은 표시하지 않는다. `おすすめの方針`은 독립된 44px 선택 칩으로 유지한다.
+- `検証済み作品を優先`의 표시 레이블은 추천·설정에서 공통으로 `評価・実績を重視`를 사용한다. `preferVerified` key와 Bayesian 평가·maturity tie-break 의미는 바꾸지 않는다.
+- 장르는 별도 표시 제어이며 `ジャンル` label과 연결한 기존 공통 NativeSelect만 왼쪽에 둔다. 장르 줄에는 선반 점프 컨트롤을 두지 않는다. 기존 genre/shelf URL 복원 계약은 유지한다.
+- Top 10은 전체 순위 요약을 유지한다. 장르 선택 중에는 `Top 10は全ジャンルの順位です。`를 표시해 적용 범위를 알린다.
+- 방침의 기본 안내 문구는 표시하지 않는다. 자동 반영 중에는 제목 줄의 고정된 상태 요소에서 `並べ直しています…`만 표시하며 줄이나 버튼 행을 추가하지 않는다. 저장부터 재계산까지 칩·장르·선반 제어를 비활성으로 표시하고, 계산 성공 후 표시된 plan을 교체한다.
+- `更新`는 표시된 plan과 현재 입력의 hash가 다른 수동 갱신에만 나타나며 방침 자동 반영 중에는 표시하지 않는다. 기존 hash/cache·busy·오류 복구 계약을 유지하며 성공 후 버튼이 사라지면 그 버튼에 있던 포커스를 페이지 제목으로 복원한다. 후속 시트의 기존 카드 복귀가 불가능하고 갱신 버튼도 없으면 페이지 제목에 복귀한다.
+- 모바일에서도 방침·장르를 항상 표시한다. 칩은 44px 영역과 체크/비선택 표식을 유지하고 폭에 따라 줄바꿈한다. 펼침 상태에 선택 정보를 숨기지 않는다.
+
+### 추천 선반 내비게이션 (2026-09-10 사용자 위임 조건)
+
+- `/recommendations`에만 데스크톱(`md` 이상) 페이지 내 목차를 제공한다. 목적지가 두 개 미만이면 생략한다. 없는 선반은 목록에서 제외하고 모바일 점프 UI는 두지 않는다. 앱 셸·DNA·Library 내비게이션은 변경하지 않는다.
+- 인트로의 끝이 GNB 아래 목차 영역의 하단을 통과하면 표시한다. 44px 목차는 높이 0인 sticky 홀더에서 겹쳐 표시하므로 첫 화면이나 표시 전환 시 Featured를 밀지 않는다. 상단으로 돌아오면 숨기고 포커스·접근 트리에서도 제외한다.
+- 표시 라벨은 `上位` / `好きな作品から` / `隠れた候補` / `完結` / `Top 10`이다. 모든 선반이 계속 보이므로 ARIA tab/tabpanel 대신 nav의 링크와 `aria-current="location"`을 사용한다. 현재 선반은 밑줄·굵기·색으로 표시한다. 접근 이름에는 표시 라벨과 기존 선반 제목을 포함하되 중복 문구는 합친다.
+- 명시적 링크 선택은 기존 search를 보존한 채 `?shelf`를 변경하고 `scrollIntoView` 뒤 목적지 `h2`에 포커스한다. 같은 선반도 다시 선택할 수 있다. 일반 스크롤은 현재 선반 강조만 갱신하며 URL·포커스를 변경하지 않는다. fragment를 별도의 URL 상태로 추가하지 않는다.
+- 초기 진입·새로고침의 `?shelf`는 표시 가능한 목적지로 이동한다. 뒤로가기·앞으로가기는 URL 상태와 기존 Router의 저장된 스크롤 위치 복원을 유지한다. 같은 URL의 방침 재계산은 사용자의 현재 스크롤 위치를 보존한다. 모바일에서도 URL 복원을 유지한다.
+- 데스크톱의 기존 전역 GNB scroll-padding을 재사용하고 추천 선반 scroll-margin에는 목차 높이와 추가 간격만 둔다. GNB 높이를 중복 계산하지 않는다. 모바일은 상단 GNB·목차가 없으므로 기본 간격만 둔다.
 
 ### Featured card·Quick Preview
 
@@ -311,7 +330,7 @@ Shelf grouping은 presentation-only selector다. main Shelf 사이에는 work ID
 
 ### 리스트 동작 계약
 
-- 진입 시: 프로필 입력 해시가 저장된 계산 해시와 다르면 재계산, 같으면 저장된 plan을 표시한다. 표시할 plan이 없는 최초 계산만 200ms 미만이면 로딩 UI를 생략하고, 이상이면 현재 Shelf/card silhouette의 skeleton을 표시한다. 기존 plan을 갱신할 때는 Shelf와 계산 해시를 유지하고 기존 「更新しています…」 busy 상태만 표시한 뒤 성공한 새 plan을 한 번에 교체하며, 실패하면 기존 plan을 보존한다.
+- 진입 시: 프로필 입력 해시가 저장된 계산 해시와 다르면 재계산, 같으면 저장된 plan을 표시한다. 표시할 plan이 없는 최초 계산만 200ms 미만이면 로딩 UI를 생략하고, 이상이면 현재 Shelf/card silhouette의 skeleton을 표시한다. 기존 plan을 갱신할 때는 Shelf와 계산 해시를 유지한다. 방침 자동 반영은 제목 줄의 「並べ直しています…」, 수동 갱신은 기존 버튼의 「更新しています…」 상태를 표시한 뒤 성공한 새 plan을 한 번에 교체하며, 실패하면 기존 plan을 보존한다.
 - Featured Shelf는 3-copy scroll-snap 루프다. 가운데 copy만 canonical·interactive이고 양쪽 copy는 `aria-hidden`·`inert`이며 표지 가시성 요청과 ref 등록을 하지 않는다. 초기 진입과 scroll settle 뒤 같은 위치의 가운데 copy로 보이지 않게 점프한다. Featured 화살표·touch scroll은 순환하지만 키보드는 canonical 실카드만 대상으로 하고 끝에서 순환하지 않는다. Anchor·Discovery·Completed·Top 10은 유한 트랙이며 끝에서 화살표가 disabled되고 wrap하지 않는다. 네이티브 가로 snap은 유지하되 전용 swipe 제스처는 도입하지 않는다.
 - 렌더 대상 카드의 표지는 표시 순 `workId → representativeVolume ISBN` registry로 해석한다. 첫 `target[0]` metadata만 LCP lane에서 자동 시작하고, 나머지는 각 표지 root가 실제 viewport에 진입할 때 요청한다. 전체 해석 상한은 4이며 각 결과를 도착 즉시 commit한다. 가시성 수요는 target generation이 바뀌어도 유지해 백필 때 생존 카드 URL을 보존하고 새로 보인 카드만 해석한다. fresh no-image와 cache/provider 실패는 같은 `workId + ISBN`에서 재시도 없이 placeholder로 끝내되 카드·이유·액션을 제거하지 않는다.
 - `読んだ` / `興味なし`: 영속 쓰기 성공 뒤 카드 제거(Motion layout, 240ms) → 최초 계산에서 보존한 전체 후보 plan의 다음 순위로 즉시 백필한다(점수 재계산 없음, 리스트는 항상 10개 유지, 후보 소진 시 예외). `読んだ`는 `completed`로 저장한 뒤 후속 시트의 `最高/良かった/普通/いまいち`를 `favorite/liked/neutral/disliked`에 대응하며 스킵은 reaction 없음이다. `興味なし`는 `hidden`으로 저장하고, 이유 칩을 고른 경우만 `disliked + negativeReasons`를 추가한다. 스킵은 reaction·reason 없음이며 `vagueDislike`를 합성하지 않는다.
@@ -321,7 +340,7 @@ Shelf grouping은 presentation-only selector다. main Shelf 사이에는 work ID
 ### 상태
 
 - 후보 부족(실제 표시 결과 1–9): Featured Shelf 직후·후속 shelves 앞에, snap list 밖의 콘텐츠 폭 full-width contextual banner를 둔다. 기존 shortage 안내와 `/onboarding`(好きな作品を追加)·`/taste`(好みを見直す)만 사용한다. 0건, 10건 이상, filter-empty, 계산 오류, 초기 오류에서는 표시하지 않는다.
-- 피드백 반영(`completed`+`hidden` 합 > 0): ranking Shelf 뒤 콘텐츠 폭 full-width image banner. `/media/recommendations-feedback-manga-v4.png`, DOM 제목/설명/読んだ·興味なし count, `/taste` CTA. 합이 0이면 큰 이미지 배너를 숨긴다. 후보 부족 배너보다 아래·짧게 두어 같은 화면에서 경쟁하지 않게 하며, 후보 부족 조건은 바꾸지 않는다.
+- 피드백 기록(`completed`+`hidden` 합 > 0): ranking Shelf 뒤 콘텐츠 폭 full-width image banner. `/media/recommendations-feedback-manga-v4.png`는 장식 이미지이며 제목·설명·수치는 DOM으로 제공한다. 제목은 `読んだ・興味なしの記録`, 설명은 `記録した作品は、おすすめから外しています。`를 사용한다. 수치는 추천 카드에서 제거한 이력만이 아니라 온보딩·Library를 포함한 전체 현재 기록의 読んだ·興味なし count다. 수치 아래에 별도 44px outline 링크 `好みを見直す`(`/taste`)를 둔다. 152px 고정 높이는 두지 않고 내용에 맞춰 늘린다. Top 10과의 위 간격 및 푸터까지의 아래 실제 간격은 사용자 추가 지시에 따라 `--space-section-xl`(96px)다. 아래 간격은 기존 main padding과 합산하며 중복해서 더하지 않는다. 합이 0이면 배너를 숨기고 후보 부족 조건은 바꾸지 않는다.
 - 후보 0: 빈 상태 일러스트 + 위 안내 + /taste 링크.
 - 오프라인/이미지 실패: placeholder 표지, 이유·액션은 정상.
 - 계산 오류(스키마 불일치 등): 오류 카드 + 再試行. Library는 영향 없음.

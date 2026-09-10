@@ -67,13 +67,11 @@ import {
   useRecommendationCovers,
 } from "./recommendation-cover-resolver";
 import { RecommendationPlanWorkerClient } from "./recommendation-plan-worker-client";
+import { RecommendationFilterBar, type VisiblePolicyKey } from "./recommendation-filter-bar";
 import {
-  RecommendationFilterBar,
-  recommendationShelves,
+  RecommendationShelfNavigation,
   type RecommendationShelf,
-  type VisiblePolicyKey,
-  visiblePolicyKeys,
-} from "./recommendation-filter-bar";
+} from "./recommendation-shelf-navigation";
 import { loadRecommendationMotionList } from "./recommendation-motion-loader";
 import { RecommendationShelfCard } from "./recommendation-shelf-card";
 import type {
@@ -83,6 +81,17 @@ import type {
 
 const RECOMMENDATION_CAROUSEL_TRACK_CLASSNAME =
   "recommendations-list relative items-stretch gap-[var(--space-3)] [--featured-card-basis:17rem] sm:[--featured-card-basis:19rem] [@media(min-width:768px)_and_(hover:hover)_and_(pointer:fine)]:[--featured-card-basis:21.5rem]";
+
+function scrollToRecommendationShelf(shelf: string, focus = false) {
+  const target = document.getElementById(`recommendation-shelf-${shelf}`);
+  const heading = target?.querySelector("h2") ?? target?.nextElementSibling?.querySelector("h2");
+  if (target === null || !(heading instanceof HTMLElement)) return;
+  target.scrollIntoView({ block: "start" });
+  if (focus) {
+    heading.tabIndex = -1;
+    heading.focus({ preventScroll: true });
+  }
+}
 
 const DEFAULT_POLICIES: RecommendationPolicies = {
   preferCompleted: false,
@@ -142,7 +151,7 @@ function FeaturedRecommendationState({ children }: Readonly<{ children: ReactNod
   return (
     <section
       aria-labelledby="recommendation-featured-heading"
-      className="grid scroll-mt-[calc(var(--desktop-navigation-height)+var(--space-4))] gap-[var(--space-content)]"
+      className="grid scroll-mt-[var(--space-4)] md:scroll-mt-[calc(var(--control-min-size)+var(--space-2))] gap-[var(--space-content)]"
       id="recommendation-shelf-featured"
     >
       <header className="grid gap-[var(--space-content-tight)]">
@@ -254,6 +263,8 @@ export function RecommendationsFlow({
     userWorks,
   } = usePersistence();
   const [localPolicies, setLocalPolicies] = useState<RecommendationPolicies | null>(null);
+  const introRef = useRef<HTMLDivElement>(null);
+  const restoredShelf = useRef<string | undefined>(undefined);
   const [isPolicySaving, setIsPolicySaving] = useState(false);
   const [plan, setPlan] = useState<RecommendationPlanEntry[] | null>(null);
   const [planPolicies, setPlanPolicies] = useState<RecommendationPolicies | null>(null);
@@ -286,6 +297,7 @@ export function RecommendationsFlow({
   const [excludedWorkIds, setExcludedWorkIds] = useState<ReadonlySet<string>>(new Set());
   const articleRefs = useRef(new Map<string, HTMLElement>());
   const updateButtonRef = useRef<HTMLButtonElement>(null);
+  const restoreUpdateFocus = useRef(false);
   const motionAllowed = useRef(false);
   const motionListActive = useRef(false);
   const loadedMotionList = useRef<RecommendationMotionListComponent | null>(null);
@@ -393,6 +405,21 @@ export function RecommendationsFlow({
       renderedEntries: nextRenderedEntries,
     };
   }, [context, excludedWorkIds, genre, plan, previewWorkId, visibleEntries, worksById]);
+  const shelfAvailability = useMemo(
+    () => ({
+      featured: true,
+      anchor: anchorEntries.length > 0,
+      discovery: discoveryEntries.length > 0,
+      completed: completedEntries.length > 0,
+      ranking: renderedEntries.length > 0,
+    }),
+    [
+      anchorEntries.length,
+      completedEntries.length,
+      discoveryEntries.length,
+      renderedEntries.length,
+    ],
+  );
   const coverWorkIds = useMemo(() => {
     const orderedIds = [
       ...featuredEntries.map(({ entry }) => entry.workId),
@@ -520,9 +547,24 @@ export function RecommendationsFlow({
   }, [MotionList]);
 
   useEffect(() => {
-    if (shelf === undefined) return;
-    document.getElementById(`recommendation-shelf-${shelf}`)?.scrollIntoView({ block: "start" });
+    if (plan === null || restoredShelf.current === shelf) return;
+    restoredShelf.current = shelf;
+    if (shelf !== undefined) scrollToRecommendationShelf(shelf);
   }, [plan, shelf]);
+
+  useLayoutEffect(() => {
+    if (isComputing || !restoreUpdateFocus.current) return;
+    restoreUpdateFocus.current = false;
+    if (
+      document.activeElement !== document.body &&
+      document.activeElement !== updateButtonRef.current
+    ) {
+      return;
+    }
+    (updateButtonRef.current ?? document.getElementById("recommendation-page-heading"))?.focus({
+      preventScroll: true,
+    });
+  }, [calculationError, displayedHash, isComputing]);
 
   useEffect(() => {
     if (
@@ -668,7 +710,8 @@ export function RecommendationsFlow({
         if (workId !== null && articleRefs.current.get(workId)?.isConnected) {
           articleRefs.current.get(workId)?.focus();
         } else {
-          updateButtonRef.current?.focus();
+          if (updateButtonRef.current !== null) updateButtonRef.current.focus();
+          else document.getElementById("recommendation-page-heading")?.focus();
         }
       });
     });
@@ -884,6 +927,7 @@ export function RecommendationsFlow({
     ) {
       return;
     }
+    restoreUpdateFocus.current = document.activeElement === updateButtonRef.current;
     await loadPlan(recommendationInput, currentHash, {
       allowCache: true,
       announcement: recommendationStrings.announcements.updated,
@@ -997,67 +1041,85 @@ export function RecommendationsFlow({
       >
         <div className="block w-full min-w-0">
           <div className="block w-full min-w-0">
-            <header className="mb-[var(--space-5)] grid gap-[var(--space-content)]">
-              <h1 className="font-display md:text-[length:var(--text-section-title-size)]">
-                {recommendationStrings.title}
-              </h1>
-              <p className="text-text-muted md:sr-only">{recommendationStrings.description}</p>
-            </header>
-
-            <RecommendationCriteriaSummary
-              activePolicyCount={
-                visiblePolicyKeys.filter((key) => policies[key]).length +
-                Number(policies.excludeIncomplete)
-              }
-              preferenceSummary={preferenceSummary}
-              recordCount={profileRecords.length}
-            />
-
-            {status.state === "degraded" ? (
-              <p
-                className="mb-[var(--space-4)] rounded-[var(--radius-card)] border border-warn bg-surface-1 px-[var(--space-4)] py-[var(--space-3)]"
-                role="status"
-              >
-                {recommendationStrings.storageWarning}
-              </p>
-            ) : null}
-
-            <RecommendationFilterBar
+            <RecommendationShelfNavigation
+              availability={shelfAvailability}
               disabled={isComputing || isPolicySaving || feedbackBaseBusy}
-              genre={genre}
-              onGenreChange={onGenreChange}
-              onPolicyToggle={(key) => void togglePolicy(key)}
-              onShelfChange={onShelfChange}
-              onUpdate={() => {
-                if (recommendationInput === null) window.location.reload();
-                else void updateRecommendations();
+              introRef={introRef}
+              onSelect={(nextShelf) => {
+                restoredShelf.current = nextShelf;
+                onShelfChange?.(nextShelf);
+                scrollToRecommendationShelf(nextShelf, true);
               }}
-              pending={
-                displayedHash !== null && currentHash !== null && displayedHash !== currentHash
-              }
-              policies={policies}
-              shelf={recommendationShelves.find((candidate) => candidate === shelf)}
-              updateButtonRef={updateButtonRef}
-              updateDisabled={updateDisabled}
-              updating={isComputing}
             />
+            <div className="mb-[var(--space-6)]" id="recommendation-intro" ref={introRef}>
+              <header className="mb-[var(--space-4)] flex flex-wrap items-center justify-between gap-x-[var(--space-4)] gap-y-[var(--space-2)]">
+                <h1
+                  className="font-display text-[length:var(--font-size-28)] focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-ring"
+                  id="recommendation-page-heading"
+                  tabIndex={-1}
+                >
+                  {recommendationStrings.title}
+                </h1>
+                <Link
+                  className="inline-flex min-h-[var(--control-min-size)] shrink-0 items-center text-[length:var(--font-size-14)] font-bold text-text underline-offset-4 hover:underline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-ring"
+                  preload={false}
+                  to="/taste"
+                >
+                  {recommendationStrings.criteria.dnaLink}
+                </Link>
+                <p className="sr-only">{recommendationStrings.description}</p>
+              </header>
 
-            {actionError ? (
-              <p
-                className="mb-[var(--space-4)] rounded-[var(--radius-card)] border border-warn bg-surface-1 px-[var(--space-4)] py-[var(--space-3)]"
-                role="alert"
-              >
-                {actionError}
-              </p>
-            ) : null}
-            {calculationError && plan !== null ? (
-              <p
-                className="mb-[var(--space-4)] rounded-[var(--radius-card)] border border-warn bg-surface-1 px-[var(--space-4)] py-[var(--space-3)]"
-                role="alert"
-              >
-                {calculationError}
-              </p>
-            ) : null}
+              <RecommendationCriteriaSummary
+                preferenceSummary={preferenceSummary}
+                recordCount={profileRecords.length}
+              />
+
+              {status.state === "degraded" ? (
+                <p
+                  className="mb-[var(--space-4)] rounded-[var(--radius-card)] border border-warn bg-surface-1 px-[var(--space-4)] py-[var(--space-3)]"
+                  role="status"
+                >
+                  {recommendationStrings.storageWarning}
+                </p>
+              ) : null}
+
+              <RecommendationFilterBar
+                disabled={isComputing || isPolicySaving || feedbackBaseBusy}
+                genre={genre}
+                onGenreChange={onGenreChange}
+                onPolicyToggle={(key) => void togglePolicy(key)}
+                onUpdate={() => {
+                  if (recommendationInput === null) window.location.reload();
+                  else void updateRecommendations();
+                }}
+                pending={
+                  displayedHash !== null && currentHash !== null && displayedHash !== currentHash
+                }
+                policies={policies}
+                policyUpdating={isPolicySaving}
+                updateButtonRef={updateButtonRef}
+                updateDisabled={updateDisabled}
+                updating={isComputing}
+              />
+
+              {actionError ? (
+                <p
+                  className="mt-[var(--space-4)] rounded-[var(--radius-card)] border border-warn bg-surface-1 px-[var(--space-4)] py-[var(--space-3)]"
+                  role="alert"
+                >
+                  {actionError}
+                </p>
+              ) : null}
+              {calculationError && plan !== null ? (
+                <p
+                  className="mt-[var(--space-4)] rounded-[var(--radius-card)] border border-warn bg-surface-1 px-[var(--space-4)] py-[var(--space-3)]"
+                  role="alert"
+                >
+                  {calculationError}
+                </p>
+              ) : null}
+            </div>
 
             {showSkeleton ? (
               <FeaturedRecommendationState>
@@ -1109,11 +1171,11 @@ export function RecommendationsFlow({
               <div>
                 <span
                   aria-hidden="true"
-                  className="scroll-mt-[calc(var(--desktop-navigation-height)+var(--space-4))]"
+                  className="scroll-mt-[var(--space-4)] md:scroll-mt-[calc(var(--control-min-size)+var(--space-2))]"
                   id="recommendation-shelf-featured"
                 />
                 <MediaShelf
-                  className="scroll-mt-[calc(var(--desktop-navigation-height)+var(--space-4))]"
+                  className="scroll-mt-[var(--space-4)] md:scroll-mt-[calc(var(--control-min-size)+var(--space-2))]"
                   controlsPlacement="overlay"
                   description={recommendationStrings.shelves.featured.description}
                   enableLoop
@@ -1180,11 +1242,11 @@ export function RecommendationsFlow({
 
             <span
               aria-hidden="true"
-              className="scroll-mt-[calc(var(--desktop-navigation-height)+var(--space-4))]"
+              className="scroll-mt-[var(--space-4)] md:scroll-mt-[calc(var(--control-min-size)+var(--space-2))]"
               id="recommendation-shelf-anchor"
             />
             <MediaShelf
-              className="mt-[var(--space-section)] scroll-mt-[calc(var(--desktop-navigation-height)+var(--space-4))]"
+              className="mt-[var(--space-section)] scroll-mt-[var(--space-4)] md:scroll-mt-[calc(var(--control-min-size)+var(--space-2))]"
               compactHeading
               controlsPlacement="overlay"
               description={recommendationStrings.shelves.anchor.description}
@@ -1197,11 +1259,11 @@ export function RecommendationsFlow({
 
             <span
               aria-hidden="true"
-              className="scroll-mt-[calc(var(--desktop-navigation-height)+var(--space-4))]"
+              className="scroll-mt-[var(--space-4)] md:scroll-mt-[calc(var(--control-min-size)+var(--space-2))]"
               id="recommendation-shelf-discovery"
             />
             <MediaShelf
-              className="mt-[var(--space-section)] scroll-mt-[calc(var(--desktop-navigation-height)+var(--space-4))]"
+              className="mt-[var(--space-section)] scroll-mt-[var(--space-4)] md:scroll-mt-[calc(var(--control-min-size)+var(--space-2))]"
               compactHeading
               controlsPlacement="overlay"
               description={recommendationStrings.shelves.discovery.description}
@@ -1214,11 +1276,11 @@ export function RecommendationsFlow({
 
             <span
               aria-hidden="true"
-              className="scroll-mt-[calc(var(--desktop-navigation-height)+var(--space-4))]"
+              className="scroll-mt-[var(--space-4)] md:scroll-mt-[calc(var(--control-min-size)+var(--space-2))]"
               id="recommendation-shelf-completed"
             />
             <MediaShelf
-              className="mt-[var(--space-section)] scroll-mt-[calc(var(--desktop-navigation-height)+var(--space-4))]"
+              className="mt-[var(--space-section)] scroll-mt-[var(--space-4)] md:scroll-mt-[calc(var(--control-min-size)+var(--space-2))]"
               compactHeading
               controlsPlacement="overlay"
               description={recommendationStrings.shelves.completed.description}
@@ -1231,11 +1293,11 @@ export function RecommendationsFlow({
 
             <span
               aria-hidden="true"
-              className="scroll-mt-[calc(var(--desktop-navigation-height)+var(--space-4))]"
+              className="scroll-mt-[var(--space-4)] md:scroll-mt-[calc(var(--control-min-size)+var(--space-2))]"
               id="recommendation-shelf-ranking"
             />
             <RankingShelf
-              className="mt-[var(--space-section)] scroll-mt-[calc(var(--desktop-navigation-height)+var(--space-4))]"
+              className="mt-[var(--space-section)] scroll-mt-[var(--space-4)] md:scroll-mt-[calc(var(--control-min-size)+var(--space-2))]"
               compactHeading
               controlsPlacement="overlay"
               description={recommendationStrings.shelves.ranking.description}
