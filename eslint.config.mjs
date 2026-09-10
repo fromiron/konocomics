@@ -133,6 +133,7 @@ export default defineConfig([
     },
   },
   globalIgnores([
+    ".tmp/**",
     ".next/**",
     ".nitro/**",
     ".output/**",
@@ -141,6 +142,7 @@ export default defineConfig([
     "data/generated/**",
     "harness/.next/**",
     "harness/out/**",
+    "handoff/**",
     "node_modules/**",
     "out/**",
     "playwright-report/**",

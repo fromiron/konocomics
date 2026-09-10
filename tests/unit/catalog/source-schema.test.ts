@@ -118,6 +118,20 @@ describe("CSV diagnostics", () => {
     );
   });
 
+  it("accepts the authorized evidence panel with explicit review provenance", () => {
+    const result = parseCsvContent(
+      "works.csv",
+      [
+        "id,title,titleKana,creators,publisher,demographic,status,firstPublishedYear,genres,factorScope,onboardingEligible,recommendationEligible,libraryOnly,metadataConfidence,groupingConfidence,sourceAgreement,annotationReviewMethod,annotationReviewedAt,annotationReviewReference,evidenceId",
+        "work,作品,,作者,出版社,general,completed,2020,fantasy,entry_1_3_volumes,true,true,false,0.9,0.9,0.9,authorizedEvidencePanel,2026-09-01T00:00:00+09:00,reviews/authorized-evidence-panel-v1.md,evidence",
+      ].join("\n"),
+      workSourceRowSchema,
+    );
+
+    expect(result.issues).toEqual([]);
+    expect(result.rows[0]?.value.annotationReviewMethod).toBe("authorizedEvidencePanel");
+  });
+
   it("parses blank optional market values and rejects invalid recommendation context bounds", () => {
     const valid = parseCsvContent(
       "recommendation-context.csv",

@@ -275,6 +275,42 @@ describe("catalog compilation", () => {
     );
   });
 
+  it("accepts authorized evidence-panel review without claiming human review", () => {
+    const source = createValidSource();
+    const work = source.works[0];
+    const evidence = source.evidence[0];
+    if (work === undefined || evidence === undefined) {
+      throw new Error("Expected the review fixtures");
+    }
+    source.works[0] = {
+      ...work,
+      value: { ...work.value, annotationReviewMethod: "authorizedEvidencePanel" },
+    };
+    source.evidence[0] = {
+      ...evidence,
+      value: { ...evidence.value, reviewedByHuman: false },
+    };
+
+    const issues = compileCatalog(source).issues;
+    expect(issues).toContainEqual(
+      expect.objectContaining({
+        severity: "warning",
+        code: "AUTHORIZED_EVIDENCE_PANEL_REVIEW",
+        field: "annotationReviewMethod",
+      }),
+    );
+    expect(issues.filter((issue) => issue.severity === "error")).toEqual([]);
+
+    source.evidence[0] = evidence;
+    expect(compileCatalog(source).issues).toContainEqual(
+      expect.objectContaining({
+        severity: "error",
+        code: "EVIDENCE_PANEL_HUMAN_REVIEW_CONFLICT",
+        field: "annotationReviewMethod",
+      }),
+    );
+  });
+
   it("locates evidence target and representative-volume failures", () => {
     const source = createValidSource();
     const evidence = source.evidence[0];

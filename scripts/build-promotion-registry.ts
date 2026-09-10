@@ -6,6 +6,7 @@ import { parse } from "csv-parse/sync";
 import { z } from "zod";
 
 import {
+  ANNOTATION_REVIEW_METHODS,
   ART_AXIS_IDS,
   AXIS_IDS,
   COVERAGE_THRESHOLDS,
@@ -145,6 +146,8 @@ const batchLedgerRowSchema = z
     }
   });
 
+const PROMOTION_REVIEW_STATUSES = [...ANNOTATION_REVIEW_METHODS, "invalid"] as const;
+
 const promotionRegistryRowSchema = z.strictObject({
   workId: z.string().min(1),
   canonicalTitle: z.string().min(1),
@@ -156,7 +159,7 @@ const promotionRegistryRowSchema = z.strictObject({
   canonicalStatus: z.enum(["verified", "missing", "conflict", "frozen"]),
   representativeIsbnStatus: z.enum(["verified", "missing", "invalid", "conflict"]),
   annotationStatus: z.enum(["complete", "draft", "missing"]),
-  reviewStatus: z.enum(["unreviewed", "human", "authorizedModelPanel", "invalid"]),
+  reviewStatus: z.enum(PROMOTION_REVIEW_STATUSES),
   evidenceStatus: z.enum(["complete", "missing", "invalid"]),
   recommendationContextStatus: z.enum(["complete", "missing", "invalid"]),
   onboardingEligibilityStatus: z.enum(["eligible", "ineligible", "conflict"]),
@@ -354,6 +357,9 @@ function reviewStatus(
     return "invalid";
   }
   if (work.annotationReviewMethod === "human" && !workEvidence.reviewedByHuman) return "invalid";
+  if (work.annotationReviewMethod === "authorizedEvidencePanel" && workEvidence.reviewedByHuman) {
+    return "invalid";
+  }
   return work.annotationReviewMethod;
 }
 
@@ -392,7 +398,11 @@ function registryReasonCodes(
   }
   if (row.annotationStatus === "missing") reasons.push("ANNOTATION_MISSING");
   if (row.annotationStatus === "draft") reasons.push("ANNOTATION_INCOMPLETE");
-  if (row.reviewStatus !== "human" && row.reviewStatus !== "authorizedModelPanel") {
+  if (
+    row.reviewStatus !== "human" &&
+    row.reviewStatus !== "authorizedModelPanel" &&
+    row.reviewStatus !== "authorizedEvidencePanel"
+  ) {
     reasons.push("REVIEW_NOT_ACCEPTED");
   }
   if (row.evidenceStatus !== "complete") reasons.push("EVIDENCE_INCOMPLETE");

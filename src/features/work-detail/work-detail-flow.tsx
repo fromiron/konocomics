@@ -99,6 +99,7 @@ function withoutDroppedReasons(record: UserWorkRecord | undefined) {
 }
 
 function majorFactorIds(work: Work): ExplanationFactorId[] {
+  if (!work.eligibility.recommendationEligible) return [];
   const centralThemes = new Set(
     work.themes.filter((theme) => theme.centrality === 2).map((theme) => theme.id),
   );
@@ -115,6 +116,7 @@ function compareWorkIds(left: Work, right: Work) {
 }
 
 function relatedWorkGroups(catalog: CatalogV1, source: Work) {
+  if (!source.eligibility.recommendationEligible) return { themeRanked: [], moodRanked: [] };
   const sourceThemes = new Set(
     source.themes.filter((theme) => theme.centrality > 0).map((theme) => theme.id),
   );

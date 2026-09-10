@@ -28,8 +28,69 @@ import { runCatalogPipelineFromAuthority } from "../../../scripts/catalog/pipeli
 
 const repositoryRoot = resolve(import.meta.dirname, "../../..");
 const repositorySource = join(repositoryRoot, "data/source");
+const dynamicReviewReference = "reviews/authorized-evidence-panel-v1.md";
+
+function createAuthorityWithDynamicReview() {
+  const root = mkdtempSync(join(tmpdir(), "konocomics-authority-dynamic-review-"));
+  const source = join(root, "data/source");
+  writeCatalogCsvProjection(repositorySource, source);
+  const works = join(source, "works.csv");
+  writeFileSync(
+    works,
+    readFileSync(works, "utf8").replace("reviews/g1-sanity-panel.md", dynamicReviewReference),
+    "utf8",
+  );
+  writeFileSync(join(source, dynamicReviewReference), "# Authorized evidence panel\n", "utf8");
+  finalizeCatalogAuthorityProjection(repositorySource, source);
+  return { root, source, review: join(source, dynamicReviewReference) };
+}
 
 describe("SQLite Catalog authority", () => {
+  it("binds referenced review reports into the ongoing authority digest", () => {
+    const { root, review } = createAuthorityWithDynamicReview();
+    try {
+      const before = verifyCatalogAuthority(root);
+      expect(before.opaqueFiles).toBe(13);
+      writeFileSync(review, "# Changed authorized evidence panel\n", "utf8");
+      expect(verifyCatalogAuthority(root).sourceManifestDigest).not.toBe(
+        before.sourceManifestDigest,
+      );
+    } finally {
+      rmSync(root, { recursive: true, force: true });
+    }
+  }, 120_000);
+
+  it("rejects a missing referenced review report", () => {
+    const { root, review } = createAuthorityWithDynamicReview();
+    try {
+      rmSync(review);
+      expect(() => verifyCatalogAuthority(root)).toThrow(
+        "fixed plus referenced opaque Markdown files",
+      );
+    } finally {
+      rmSync(root, { recursive: true, force: true });
+    }
+  }, 120_000);
+
+  it("rejects unreferenced review reports and root duplicates", () => {
+    const { root, source } = createAuthorityWithDynamicReview();
+    try {
+      const unreferenced = join(source, "reviews/unreferenced-panel.md");
+      writeFileSync(unreferenced, "# Unreferenced\n", "utf8");
+      expect(() => verifyCatalogAuthority(root)).toThrow(
+        "fixed plus referenced opaque Markdown files",
+      );
+      rmSync(unreferenced);
+
+      writeFileSync(join(source, "authorized-evidence-panel-v1.md"), "# Duplicate\n", "utf8");
+      expect(() => verifyCatalogAuthority(root)).toThrow(
+        "fixed plus referenced opaque Markdown files",
+      );
+    } finally {
+      rmSync(root, { recursive: true, force: true });
+    }
+  }, 120_000);
+
   it("rejects dual authority and SQLite sidecars", () => {
     const root = mkdtempSync(join(tmpdir(), "konocomics-authority-verify-"));
     const source = join(root, "data/source");

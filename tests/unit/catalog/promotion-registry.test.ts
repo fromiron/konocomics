@@ -236,6 +236,46 @@ describe("promotion registry", () => {
         expectedWorkIds,
       ),
     ).not.toThrow();
+    const evidencePanelReady = {
+      ...verificationReady,
+      reviewStatus: "authorizedEvidencePanel" as const,
+      onboardingEligibilityStatus: "eligible" as const,
+    };
+    expect(promotionJudgmentForRegistryRow(evidencePanelReady)).toMatchObject({
+      currentStatus: "recommendationVerified",
+      promotionOutcome: "recommendationVerified",
+      reasonCodes: [],
+      blockerCodes: [],
+    });
+    expect(() =>
+      validatePromotionRegistry(
+        rows.map((row) => (row.workId === nonGold.workId ? evidencePanelReady : row)),
+        expectedWorkIds,
+      ),
+    ).not.toThrow();
+    const panelHumanConflict = buildPromotionRegistry({
+      ...input,
+      source: {
+        ...input.source,
+        works: input.source.works.map((work) =>
+          work.value.id === nonGold.workId
+            ? {
+                ...work,
+                value: {
+                  ...work.value,
+                  annotationReviewMethod: "authorizedEvidencePanel" as const,
+                },
+              }
+            : work,
+        ),
+        evidence: input.source.evidence.map((evidence) =>
+          evidence.value.workId === nonGold.workId
+            ? { ...evidence, value: { ...evidence.value, reviewedByHuman: true } }
+            : evidence,
+        ),
+      },
+    }).find((row) => row.workId === nonGold.workId);
+    expect(panelHumanConflict?.reviewStatus).toBe("invalid");
 
     const annotatedButBlocked = buildPromotionRegistry({
       ...input,

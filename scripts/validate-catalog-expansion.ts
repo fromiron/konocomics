@@ -6,6 +6,8 @@ import { pathToFileURL } from "node:url";
 import { parse } from "csv-parse/sync";
 import { z } from "zod";
 
+import { ANNOTATION_REVIEW_METHODS } from "../src/domain/catalog/constants";
+
 import {
   assertRepresentativeDecisionIdentity,
   loadRepresentativeVolumeDecisions,
@@ -303,7 +305,7 @@ const annotationStatusSchema = z.strictObject({
   themeStatus: progressStatusSchema,
   evidenceStatus: progressStatusSchema,
   artEvidenceStatus: progressStatusSchema,
-  reviewStatus: z.enum(["unreviewed", "human", "authorizedModelPanel"]),
+  reviewStatus: z.enum(ANNOTATION_REVIEW_METHODS),
   reviewReference: z.string(),
   updatedAt: date,
   notes: z.string(),

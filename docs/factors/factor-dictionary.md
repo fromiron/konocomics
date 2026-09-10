@@ -165,6 +165,7 @@ Library-only 작품      → 서지와 Work 연결만 유지 (팩터 불요)
 - 금지: 런타임 후보 생성, 최종 순위 결정, 근거 없는 특성 생성, 미확인 작품 설명 생성.
 - candidate는 모델·응답 수·일치 여부와 무관하게 Catalog 사실이나 판정 권한이 아니며 `09`의 candidate-independent 비모델 resolution 없이는 추천에 쓰지 않는다.
 - 기존 `authorizedModelPanel` 행은 legacy provenance로 동결하며 신규 주석의 일반 승인 경로로 재사용하지 않는다.
+- 예외적으로 사용자 승인 `authorizedEvidencePanel`은 원시 candidate가 아니라 동결 evidence packet에서 0/2/4 기준을 claim별로 다시 판정한 별도 artifact다. `authorized-evidence-panel-v1`의 manifest·작품 소유 URL·entry 범위·coverage 검사를 모두 통과한 resolution만 추천에 사용할 수 있으며 `reviewedByHuman=false`를 유지한다.
 
 ### 자기 취향 편향 방지
 

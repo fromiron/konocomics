@@ -24,6 +24,8 @@
 !.env.example
 /data/local/experiment-profiles/
 /data/local/g2-results/
+/data/local/catalog-authoring/
+/scripts/__pycache__/
 /reports/local/
 
 # package manager and debug logs

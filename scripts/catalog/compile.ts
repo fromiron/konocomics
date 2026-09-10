@@ -575,6 +575,28 @@ export function compileCatalog(source: CatalogSource): CompileResult {
         ),
       );
     }
+    if (row.value.annotationReviewMethod === "authorizedEvidencePanel") {
+      if (workEvidence !== undefined && workEvidence.value.reviewedByHuman) {
+        issues.push(
+          issue(
+            row,
+            "error",
+            "EVIDENCE_PANEL_HUMAN_REVIEW_CONFLICT",
+            `${row.value.id} declares non-human evidence-panel review but its evidence is human-reviewed`,
+            "annotationReviewMethod",
+          ),
+        );
+      }
+      issues.push(
+        issue(
+          row,
+          "warning",
+          "AUTHORIZED_EVIDENCE_PANEL_REVIEW",
+          `${row.value.id} was approved by the user-authorized evidence panel, not a human`,
+          "annotationReviewMethod",
+        ),
+      );
+    }
     const axisEntries: [string, AxisFactor][] = AXIS_IDS.map((axisId) => {
       const factorRow = factorByWorkAndAxis.get(`${row.value.id}\u0000${axisId}`);
       if (factorRow === undefined) {

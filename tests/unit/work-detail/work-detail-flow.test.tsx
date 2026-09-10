@@ -312,6 +312,59 @@ describe("WorkDetailFlow", () => {
     expect(screen.getByRole("button", { name: workDetailStrings.provider.retry })).toBeTruthy();
   });
 
+  it("keeps library-only records and metadata without using retained factors for detail recommendations", async () => {
+    testState.status = { state: "ready", mode: "indexeddb", warning: null };
+    const record: UserWorkRecord = {
+      workId: target.id,
+      readingState: "completed",
+      reaction: "favorite",
+      updatedAt: "2026-08-14T00:00:00.000Z",
+    };
+    testState.userWorks = [record];
+    const view = renderDetail();
+    await screen.findByRole("button", { name: workDetailStrings.provider.retry });
+    expect(view.container.querySelectorAll('a[href^="/works/"]').length).toBeGreaterThan(0);
+    expect(
+      view.container.querySelector("#work-factors-heading")?.parentElement?.querySelector("li"),
+    ).not.toBeNull();
+
+    const libraryCatalog = {
+      ...catalog,
+      works: catalog.works.map((work) =>
+        work.id === target.id
+          ? {
+              ...work,
+              eligibility: {
+                onboardingEligible: false,
+                recommendationEligible: false,
+                libraryOnly: true,
+              },
+            }
+          : work,
+      ),
+    };
+    view.rerender(
+      <CatalogProvider catalog={libraryCatalog}>
+        <WorkDetailFlow workId={target.id} />
+      </CatalogProvider>,
+    );
+
+    expect(screen.getByRole("heading", { name: target.title })).toBeTruthy();
+    expect(
+      screen
+        .getByRole("radio", { name: workDetailStrings.state.options.completed })
+        .getAttribute("aria-checked"),
+    ).toBe("true");
+    expect(screen.getByText(workDetailStrings.factors.empty)).toBeTruthy();
+    expect(view.container.querySelectorAll('a[href^="/works/"]')).toHaveLength(0);
+    expect(testState.userWorks).toEqual([record]);
+    expect(testState.saveUserWork).not.toHaveBeenCalled();
+    expect(libraryCatalog.works.find((work) => work.id === target.id)?.axes).toEqual(target.axes);
+    expect(libraryCatalog.works.find((work) => work.id === target.id)?.themes).toEqual(
+      target.themes,
+    );
+  });
+
   it("keeps fresh metadata but hides expired commercial data after refresh failure", async () => {
     testState.status = { state: "ready", mode: "indexeddb", warning: null };
     const cached = providerCacheRecord({ commercialFresh: false, metadataFresh: true });

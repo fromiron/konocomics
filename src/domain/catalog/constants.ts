@@ -83,6 +83,13 @@ export const EDITION_KINDS = [
 
 export const FACTOR_SOURCE_TYPES = ["rakuten", "publisher", "manual", "model"] as const;
 
+export const ANNOTATION_REVIEW_METHODS = [
+  "unreviewed",
+  "human",
+  "authorizedModelPanel",
+  "authorizedEvidencePanel",
+] as const;
+
 export const COVERAGE_GROUPS = ["genre", "theme", "narrative", "tone", "art"] as const;
 
 export const PROMOTION_REQUIRED_COVERAGE_GROUPS = ["genre", "theme", "narrative", "tone"] as const;

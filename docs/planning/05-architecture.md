@@ -104,7 +104,7 @@ deterministic Markdown 집계 리포트(stdout 또는 reports/local/)
 | 데이터 | 원천 | 변환 | 소유 계층 | 저장 |
 |---|---|---|---|---|
 | Work metadata | `data/source/catalog.sqlite`의 9개 `STRICT` source table + 12개 opaque 문서 | SQLite→zod 검증→bundled/public JSON + 소형 identity/landing projection | 빌드 스크립트 | root identity bundle + route-scoped 번들 + content-addressed/hashed 정적 자산 |
-| Model candidate | source 밖 격리 artifact | 진단만; resolution·promotion 입력에서 제외 | 로컬 authoring 도구 | runtime·source에 저장 안 함 |
+| Model candidate 및 authoring 작업 원본 | source 밖 격리 artifact | candidate는 진단만; 별도 동결 판정의 기존 권한 검증은 유지 | 로컬 authoring 도구 | `data/local/catalog-authoring/workspace.sqlite`에 원본·버전 보존, `.tmp`는 작업 사본. runtime·canonical source와 분리 |
 | Legacy resolution | 고정 S0~S5 cutoff source manifest | Factor·present Theme·present Genre만 canonical 8-field tuple로 bootstrap | one-time build-time shadow | OS 임시 `fact_resolution`; digest 재계산 후 폐기 |
 | ProviderListing | Rakuten API | 필드 축소·URL 재작성·브라우저 workId 결합·normalized ISBN in-flight 합류 | Start server route + infrastructure/rakuten | Dexie providerCache (가격·재고 24h / 기타 90일) |
 | 사용자 프로필·기록 | 사용자 입력 | UI 이벤트→도메인 타입 | features 계층 | Dexie (영구) |

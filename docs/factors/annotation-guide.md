@@ -30,6 +30,8 @@
 | 한계 | 확인하지 못한 범위와 `unknown`으로 남긴 이유    |
 | 검수 | 검수자와 검수 시각, 블라인드 재태깅 여부        |
 
+비인간 `authorizedEvidencePanel` 검수는 사람 검수와 구분한다. panel은 동결된 evidence packet에서 claim을 다시 판정하고 exact evidence ID·URL·entry 범위·관찰·한계를 기록하며 `reviewedByHuman=false`를 유지한다. 원시 candidate 값의 단순 승인이나 모델 간 일치율만으로는 완료할 수 없다.
+
 줄거리 요약만으로 작화의 `motionImpact`를 확정하지 않는다. 표지 한 장만으로 전체 작화 축을 확정하지 않는다. Art는 승격의 필수 coverage가 아니며 이미지와 커뮤니티 중 어느 근거 경로도 없으면 `unknown`으로 둔다.
 
 ### Art 4축 선택 근거 경로
@@ -83,3 +85,4 @@
 - [ ] Theme centrality 1·2의 차이가 근거에 드러난다.
 - [ ] eligibility 값끼리 충돌하지 않는다.
 - [ ] 검수 상태와 confidence가 기록됐다.
+- [ ] `authorizedEvidencePanel`인 경우 panel ledger·입력 manifest·review reference가 일치하고 `reviewedByHuman=false`다.

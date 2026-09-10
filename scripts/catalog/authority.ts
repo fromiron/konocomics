@@ -467,17 +467,38 @@ export function readCatalogAuthorityRecords(sourceDirectory: string) {
   ) as ReadonlyMap<string, AuthorityRecord[]>;
 }
 
-function opaqueIdentities(sourceDirectory: string): OpaqueIdentity[] {
-  return CATALOG_OPAQUE_PATHS.map((path) => {
+function catalogOpaquePaths(tables: readonly LexicalTable[]) {
+  const works = tables.find((table) => table.path === "works.csv");
+  assert(works !== undefined, "Catalog authority is missing works.csv");
+  const referenceIndex = works.headers.indexOf("annotationReviewReference");
+  assert(referenceIndex >= 0, "works.csv is missing annotationReviewReference");
+  const paths = new Set<string>(CATALOG_OPAQUE_PATHS);
+  for (const row of works.rows) {
+    const reference = row.values[referenceIndex] ?? "";
+    if (reference === "") continue;
+    assert.match(
+      reference,
+      /^reviews\/[a-z0-9]+(?:-[a-z0-9]+)*\.md$/u,
+      `works.csv:${row.sourceLine}: invalid annotationReviewReference`,
+    );
+    paths.add(reference);
+  }
+  return [...paths].sort(compareText);
+}
+
+function opaqueIdentities(sourceDirectory: string, paths: readonly string[]): OpaqueIdentity[] {
+  return paths.map((path) => {
     const bytes = readFileSync(join(sourceDirectory, path));
     return { path, rawSha256: sha256(bytes), byteLength: bytes.length };
   });
 }
 
 export function catalogSourceManifestDigest(sourceDirectory: string) {
+  const tables = readCatalogAuthority(sourceDirectory);
+  assertCatalogAuthorityLayout(sourceDirectory, tables);
   return sourceManifestDigest(
-    readCatalogAuthority(sourceDirectory),
-    opaqueIdentities(sourceDirectory),
+    tables,
+    opaqueIdentities(sourceDirectory, catalogOpaquePaths(tables)),
   );
 }
 
@@ -500,7 +521,7 @@ export function catalogSourceSnapshotDigest(sourceDirectory: string) {
       );
   const known = new Set([
     ...(hasDatabase ? [CATALOG_DATABASE_FILE] : csvPaths),
-    ...CATALOG_OPAQUE_PATHS,
+    ...catalogOpaquePaths(tables),
   ]);
   const extras = files
     .filter((path) => !known.has(path))
@@ -509,7 +530,10 @@ export function catalogSourceSnapshotDigest(sourceDirectory: string) {
       return [path, sha256(bytes), bytes.length] as const;
     });
   return jsonDigest({
-    sourceManifestDigest: sourceManifestDigest(tables, opaqueIdentities(sourceDirectory)),
+    sourceManifestDigest: sourceManifestDigest(
+      tables,
+      opaqueIdentities(sourceDirectory, catalogOpaquePaths(tables)),
+    ),
     extras,
   });
 }
@@ -539,12 +563,21 @@ export function assertNoCatalogSidecars(databasePath: string) {
   }
 }
 
-function assertCatalogAuthorityLayout(sourceDirectory: string) {
+function assertCatalogAuthorityLayout(sourceDirectory: string, tables: readonly LexicalTable[]) {
+  assertNoCatalogSidecars(join(sourceDirectory, CATALOG_DATABASE_FILE));
+  assert.deepEqual(
+    discoverFiles(sourceDirectory),
+    [CATALOG_DATABASE_FILE, ...catalogOpaquePaths(tables)].sort(compareText),
+    "data/source must contain one SQLite authority and exactly the fixed plus referenced opaque Markdown files",
+  );
+}
+
+function assertCatalogCutoverLayout(sourceDirectory: string) {
   assertNoCatalogSidecars(join(sourceDirectory, CATALOG_DATABASE_FILE));
   assert.deepEqual(
     discoverFiles(sourceDirectory),
     [CATALOG_DATABASE_FILE, ...CATALOG_OPAQUE_PATHS].sort(compareText),
-    "data/source must contain one SQLite authority and the 12 opaque Markdown files",
+    "S6 cutover source must contain one SQLite authority and the 12 historical opaque Markdown files",
   );
 }
 
@@ -638,13 +671,17 @@ export function verifyCatalogAuthority(repoRoot = process.cwd()) {
   const canonicalRoot = resolve(repoRoot);
   const sourceDirectory = join(canonicalRoot, "data/source");
   const databasePath = join(sourceDirectory, CATALOG_DATABASE_FILE);
-  assertCatalogAuthorityLayout(sourceDirectory);
   const tables = readCatalogAuthority(sourceDirectory);
+  const opaquePaths = catalogOpaquePaths(tables);
+  assertCatalogAuthorityLayout(sourceDirectory, tables);
   return {
     databasePath,
-    sourceManifestDigest: sourceManifestDigest(tables, opaqueIdentities(sourceDirectory)),
+    sourceManifestDigest: sourceManifestDigest(
+      tables,
+      opaqueIdentities(sourceDirectory, opaquePaths),
+    ),
     tables: tables.length,
-    opaqueFiles: CATALOG_OPAQUE_PATHS.length,
+    opaqueFiles: opaquePaths.length,
     rows: Object.fromEntries(tables.map((table) => [table.path, table.rows.length])),
   };
 }
@@ -653,9 +690,10 @@ export function verifyCatalogCutover(
   repoRoot = process.cwd(),
   againstGit = CATALOG_CUTOVER_SOURCE_COMMIT,
 ) {
+  assertNode24();
   const canonicalRoot = resolve(repoRoot);
   const sourceDirectory = join(canonicalRoot, "data/source");
-  const result = verifyCatalogAuthority(canonicalRoot);
+  assertCatalogCutoverLayout(sourceDirectory);
   const tables = readCatalogAuthority(sourceDirectory, true);
   for (const table of tables) {
     assert(
@@ -663,18 +701,28 @@ export function verifyCatalogCutover(
       `${table.path}: S6 parent Git-blob parity failed`,
     );
   }
-  return result;
+  return {
+    databasePath: join(sourceDirectory, CATALOG_DATABASE_FILE),
+    sourceManifestDigest: sourceManifestDigest(
+      tables,
+      opaqueIdentities(sourceDirectory, CATALOG_OPAQUE_PATHS),
+    ),
+    tables: tables.length,
+    opaqueFiles: CATALOG_OPAQUE_PATHS.length,
+    rows: Object.fromEntries(tables.map((table) => [table.path, table.rows.length])),
+  };
 }
 
 export function writeCatalogCsvProjection(sourceDirectory: string, outputDirectory: string) {
-  assertCatalogAuthorityLayout(sourceDirectory);
   const tables = readCatalogAuthority(sourceDirectory, false);
+  const opaquePaths = catalogOpaquePaths(tables);
+  assertCatalogAuthorityLayout(sourceDirectory, tables);
   for (const table of tables) {
     const output = join(outputDirectory, table.path);
     mkdirSync(dirname(output), { recursive: true });
     writeFileSync(output, serializeCsv(table));
   }
-  for (const path of CATALOG_OPAQUE_PATHS) {
+  for (const path of opaquePaths) {
     const output = join(outputDirectory, path);
     mkdirSync(dirname(output), { recursive: true });
     copyFileSync(join(sourceDirectory, path), output);
@@ -686,8 +734,9 @@ export function finalizeCatalogAuthorityProjection(
   projectedSourceDirectory: string,
 ) {
   assertNode24();
-  assertCatalogAuthorityLayout(currentSourceDirectory);
   const currentDatabase = join(currentSourceDirectory, CATALOG_DATABASE_FILE);
+  const currentTables = readCatalogAuthority(currentSourceDirectory, false);
+  assertCatalogAuthorityLayout(currentSourceDirectory, currentTables);
   const candidateDatabase = join(projectedSourceDirectory, CATALOG_DATABASE_FILE);
   if (existsSync(candidateDatabase)) {
     throw new Error(`Refusing to overwrite projected Catalog database: ${candidateDatabase}`);
@@ -698,6 +747,12 @@ export function finalizeCatalogAuthorityProjection(
       readFileSync(join(projectedSourceDirectory, config.path)),
       config.headers,
     ),
+  );
+  const projectedOpaquePaths = catalogOpaquePaths(tables);
+  assert.deepEqual(
+    discoverFiles(projectedSourceDirectory),
+    [...CATALOG_TABLES.map((config) => config.path), ...projectedOpaquePaths].sort(compareText),
+    "Projected Catalog source must contain exactly nine CSV tables and the fixed plus referenced opaque Markdown files",
   );
   copyFileSync(currentDatabase, candidateDatabase);
   let db: DatabaseSync | undefined;
@@ -731,7 +786,7 @@ export function finalizeCatalogAuthorityProjection(
     }
     assert.deepEqual(
       discoverFiles(projectedSourceDirectory),
-      [CATALOG_DATABASE_FILE, ...CATALOG_OPAQUE_PATHS].sort(compareText),
+      [CATALOG_DATABASE_FILE, ...projectedOpaquePaths].sort(compareText),
       "Projected Catalog authority contains unexpected files",
     );
     return candidateDatabase;

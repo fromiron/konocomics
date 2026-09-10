@@ -23,7 +23,7 @@
 - **결정론:** `src/domain/**`은 순수 함수만. React/Dexie/TanStack/`Date.now()`/난수/I-O import 금지(ESLint로 강제). 시간은 인자로 주입. 동일 입력 → 동일 출력.
 - **설명은 근거에서만:** 추천 이유 문장은 엔진이 반환한 `contributions[]`에서만 생성한다. 임의 문구·하드코딩 설명 금지.
 - **데이터 없음 ≠ 불호:** `unknown` 팩터는 유사도·감점·보정 어디에도 수치로 쓰지 않는다. Coverage 미달 그룹은 0.5로 수축만 하고 **가중치를 다른 그룹에 재분배하지 않는다.**
-- **LLM 권한 금지.** 런타임 추천·순위·설명 생성에 LLM API를 호출하지 않는다. 오프라인 모델 출력도 `09`의 격리된 candidate일 뿐 Catalog 사실·판정의 권한이 아니다.
+- **런타임 LLM 권한 금지.** 런타임 추천·순위·설명 생성에 LLM API를 호출하지 않는다. 원시 오프라인 모델 출력은 `09`의 격리된 candidate일 뿐이다. 다만 사용자가 2026-09-01 승인한 `authorizedEvidencePanel`은 `docs/catalog-expansion/02-authorized-evidence-panel-v1.md`의 동결 근거·claim 재판정·manifest 계약을 전부 통과한 별도 오프라인 adjudication artifact에 한해 신규 Catalog 판정 권한을 가진다. 사람 검수로 표시하지 않는다.
 - **서버 경계:** 서버 코드는 TanStack Start server route의 `/api/rakuten/search`·`/api/rakuten/item` 둘뿐. 임의 server function·새 server route·runtime database·auth·runtime LLM 추가 금지. `09`의 tracked SQLite authority와 OS 임시 shadow는 빌드 타임에만 존재하며 `08` §3의 route별 SSR/client 경계를 바꾸지 않는다.
 - **의존성 추가 금지(허용 목록 외):** TanStack Start/Router, Vite/React plugin/Nitro, react, tailwindcss v4, shadcn Base UI 계열, motion, zod, dexie(+react-hooks), fuse.js, tsx, csv-parse, vitest, @testing-library/*, playwright. 그 외가 필요하면 **추가하지 말고 사유를 남기고 사용자에게 물어라.** React Bits·NumberFlow·Embla·Swiper·AutoAnimate·GSAP·TanStack Query·Zustand·next-themes는 추가하지 않는다. 별도 G2 harness의 동결된 Next dependency는 제품 M9와 격리한다.
 - **UI primitive:** shadcn CLI의 Base UI 기반 primitive를 필요한 것만 `src/components/ui/**`에 생성하고, 시맨틱 dark token과 접근성 기본값은 `src/components/design-system/**` wrapper에서 적용한다. route/feature가 생성 primitive를 직접 소비하지 않는다.
@@ -35,9 +35,11 @@
 ## 2. 작업 절차
 
 - Catalog authoring은 `09`의 **`S0~S6` 순서**를 따른다. `S0~S5` shadow와 별도 승인된 `S6` 전환은 완료됐으며, 이후 table-backed 단일 권한은 `data/source/catalog.sqlite`다. 9개 authoritative CSV를 복구하거나 DB와 함께 두지 않는다.
+- 조사·후보 팩터·동결 입력/판정·HOLD/실패·발행 자료는 `docs/catalog-expansion/03-local-authoring-storage.md`에 따라 source 밖의 로컬 작업용 SQLite에 원본·버전을 영구 보존한다. `.tmp`는 복원 가능한 작업 사본이며 유일한 보존 위치로 쓰지 않는다. 인계·단계 완료·STATE 갱신 전에 저장/백업 receipt를 확인한다. 저장 성공으로 판정 권한이나 승격을 대체하지 않는다.
+- Catalog 확장의 작업 배정·검증 책임·재검토·보고는 `docs/catalog-expansion/01a-promotion-method-operational-amendment.md`의 **현재 실행 규칙(2026-09-09)**을 따른다. 활성 서브에이전트 최대 5명, Luna Max 수집·Sol High 검토와 준비, Sol 결과의 조정자 중복 검증 금지를 적용한다. 실제 발행·최종 제품 확인과 상위 사양·안전성 계약은 유지한다.
 - `06-implementation-plan.md`의 **`M0~M10` 순서를 따르고, 한 단계의 완료 기준을 끝낸 뒤 다음으로 넘어간다.** framework migration과 7화면 redesign을 하나의 대형 PR로 합치지 않는다.
 - **게이트 G1(50작품 sanity)·G2(블라인드 GO/NO-GO)는 사람·데이터 작업이다.** 게이트 도달 시 멈추고 사용자에게 보고한다. G2 통과 전에 UI 슬라이스(5~)를 시작하지 않는다.
-- Model-panel evidence 검토에서 Local/Gemini/Grok CLI에는 ZIP이 아니라 canonical uncompressed directory와 exact request·complete payload ledger·root identity를 제공한다. ChatGPT.com GPT-5.6 Pro Oracle에만 같은 payload의 deterministic ZIP을 제공한다.
+- Model-panel evidence 검토에서 Local/Gemini/Grok CLI에는 ZIP이 아니라 canonical uncompressed directory와 exact request·complete payload ledger·root identity를 제공한다. ChatGPT.com Oracle에만 같은 payload의 deterministic ZIP을 제공한다. 이후 모든 Oracle 검토 모델은 사용자 2026-09-09 지시에 따라 ChatGPT UI의 6 Pro를 사용한다.
 - Oracle에 코드만 첨부할 때는 전역 `repomix`로 단일 context 파일을 만들고, 이미지도 필요하면 그 context와 대상 이미지를 ZIP으로 묶거나 각각 파일로 첨부한다.
 - 화면 구현 시 `03-ux-screen-contracts.md`의 해당 섹션 **수용 기준 체크리스트를 그대로 검증**하고, 완료 보고에 항목별 충족 여부를 남긴다.
 - 산식 수치(감점값·cap·임계 등)를 조정해야 할 근거가 생기면: 코드만 바꾸지 말고 `02-product-spec.md` §6의 표를 함께 갱신하고 골든 스냅샷을 재생성한다.

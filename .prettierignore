@@ -1,4 +1,6 @@
 .next
+.tmp
+handoff
 coverage
 data/generated
 data/staging/g2/candidate-generated

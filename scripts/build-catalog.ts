@@ -7,8 +7,14 @@ import { catalogAssetFilename, recommendationContextAssetFilename } from "../src
 import { assignJointVersion } from "./catalog/compile";
 import { runCatalogPipelineFromAuthority, runCatalogPipelineFromCsv } from "./catalog/pipeline";
 import { formatSourceIssue, hasErrors } from "./catalog/report";
+import { validateCatalogArtifacts } from "./validate-catalog";
+import { reportCoverage } from "./report-coverage";
 
-export function buildCatalog(root = process.cwd(), sourceKind: "authority" | "csv" = "authority") {
+export function buildCatalog(
+  root = process.cwd(),
+  sourceKind: "authority" | "csv" = "authority",
+  options: { compact?: boolean; verify?: boolean } = {},
+) {
   const canonicalRoot = resolve(root);
   const sourceDirectory = resolve(canonicalRoot, "data/source");
   const catalogOutputs = [
@@ -101,7 +107,9 @@ export function buildCatalog(root = process.cwd(), sourceKind: "authority" | "cs
   );
 
   for (const validationIssue of issues) {
-    console.log(formatSourceIssue(validationIssue));
+    if (!options.compact || validationIssue.severity === "error") {
+      console.log(formatSourceIssue(validationIssue));
+    }
   }
 
   if (hasErrors(issues)) {
@@ -138,14 +146,25 @@ export function buildCatalog(root = process.cwd(), sourceKind: "authority" | "cs
   console.log(
     `Built ${catalog.catalogVersion} with ${catalog.works.length} works and recommendation context.`,
   );
-  return { catalog, context, artifactPaths: artifacts.map(({ output }) => output) };
+  const result = { catalog, context, issues, artifactPaths: artifacts.map(({ output }) => output) };
+  if (options.verify) {
+    const validation = validateCatalogArtifacts(canonicalRoot, result, options.compact);
+    const coverage = reportCoverage(result, options.compact);
+    if (validation.errorCount > 0 || coverage.sourceErrors || coverage.failCount > 0) {
+      throw new Error("Catalog build verification failed.");
+    }
+  }
+  return result;
 }
 
 const invokedPath =
   process.argv[1] === undefined ? undefined : pathToFileURL(resolve(process.argv[1])).href;
 if (invokedPath === import.meta.url) {
   try {
-    buildCatalog();
+    buildCatalog(process.cwd(), "authority", {
+      verify: process.argv.includes("--verify"),
+      compact: process.argv.includes("--compact"),
+    });
   } catch (error) {
     console.error(error instanceof Error ? error.message : String(error));
     process.exitCode = 1;

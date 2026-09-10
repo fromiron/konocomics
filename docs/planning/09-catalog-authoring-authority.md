@@ -1,6 +1,6 @@
 # 09 — Catalog authoring 권한과 SQLite source-of-truth
 
-> 목표는 어떤 모델을 candidate 생성에 사용해도 동일한 canonical source와 동일한 비모델 권한 입력이면 동일한 사실·판정·승격 결과를 만드는 것이다. S0~S5의 shadow 증명을 마친 뒤 2026-08-28 승인된 S6에서 `data/source/catalog.sqlite`가 table-backed Catalog의 유일한 원천이 됐다.
+> 목표는 어떤 모델을 candidate 생성에 사용해도 동일한 canonical source와 동일한 accepted authority 입력이면 동일한 사실·판정·승격 결과를 만드는 것이다. S0~S5의 shadow 증명을 마친 뒤 2026-08-28 승인된 S6에서 `data/source/catalog.sqlite`가 table-backed Catalog의 유일한 원천이 됐다.
 
 ## 1. 범위와 우선순위
 
@@ -8,15 +8,29 @@
 - 이 문서는 Catalog authoring 권한, source snapshot, 판정 digest, SQLite authority/shadow의 단일 계약이며 framework migration보다 우선한다.
 - 제품 런타임은 생성된 정적 JSON과 순수 TypeScript만 사용한다. Dexie schema, 두 Rakuten server route, 추천 산식, 설명 생성, Export/Import는 바꾸지 않는다.
 - tracked SQLite는 빌드 타임 Catalog 원천 하나만 허용한다. ORM, 새 의존성, runtime database, runtime LLM은 추가하지 않는다.
+- 2026-09-09 사용자 승인: source 밖의 로컬 작업용 SQLite는 조사·후보·동결 판정·실패 이력의 영구 보존에 별도로 사용한다. tracked canonical authority를 추가하는 것이 아니며 저장 성공은 accepted authority가 아니다. 저장·백업·복원 계약은 `docs/catalog-expansion/03-local-authoring-storage.md`를 따른다.
 
 ## 2. 권한 계약
 
 1. S6의 table-backed 쓰기 권한과 최종 진실 원천은 `data/source/catalog.sqlite`다. 12개 Markdown 근거 문서는 같은 디렉터리의 opaque authority로 남는다. 삭제된 9개 CSV를 canonical source로 다시 두거나 SQLite와 함께 두는 dual authority는 거부한다.
-2. 새 모델 출력은 `data/source/` 밖의 격리된 candidate artifact다. candidate의 존재·부재·순서·충돌·confidence·provider·model·attempt·citation은 accepted fact, `manualReview`, eligibility, blocker, promotion, semantic digest, verdict에 영향을 주지 않는다.
+2. 새 원시 모델 출력은 `data/source/` 밖의 격리된 candidate artifact이며 로컬 작업용 SQLite에 원본과 버전을 보존한다. `.tmp`는 저장된 artifact의 작업 사본일 뿐 유일한 보존 위치가 아니다. candidate의 존재·부재·순서·충돌·confidence·provider·model·attempt·citation은 accepted fact, `manualReview`, eligibility, blocker, promotion, semantic digest, verdict에 영향을 주지 않는다.
 3. candidate 간 충돌은 진단 정보일 뿐 `manualReview`나 `pending`을 만들지 않는다.
-4. 사실 resolution은 candidate와 독립적으로 고정된 비모델 권한이나 candidate-independent 결정론적 source 검증만 만들 수 있다. 모델이 제안한 값을 단순 승인하는 절차는 권한이 아니다.
-5. `accepted`, `explicitUnknown`, `notApplicable`, `rejected`, `manualReview`는 비모델 resolution 상태다. 모델 수·모델명·응답 일치율로 이 상태를 정하지 않는다.
+4. 사실 resolution은 고정된 비모델 권한, candidate-independent 결정론적 source 검증, 또는 §2.1의 사용자 승인 `authorizedEvidencePanelV1`만 만들 수 있다. 모델이 제안한 값을 단순 승인하는 절차는 권한이 아니다.
+5. `accepted`, `explicitUnknown`, `notApplicable`, `rejected`, `manualReview`는 accepted authority resolution 상태다. 원시 모델 수·모델명·응답 일치율로 이 상태를 정하지 않는다.
 6. 기존 `authorizedModelPanel` 1,481행은 완료된 legacy provenance로 보존한다. 이 값은 신규 주석의 일반 권한 경로가 아니며 S0~S5에서 재판정하거나 `human`으로 바꾸지 않는다.
+
+### 2.1 Authorized Evidence Panel V1
+
+사용자는 2026-09-01 신규 확장 작품에 대한 `authorizedEvidencePanel`을 정식 비인간 판정 권한으로 승인했다. 이 권한은 `docs/catalog-expansion/02-authorized-evidence-panel-v1.md`를 모두 충족한 별도 adjudication artifact에만 적용한다.
+
+- 원시 candidate 값을 그대로 승인하지 않고 동결된 evidence packet에서 각 Genre·Theme·Axis claim을 다시 판정한다.
+- 작품 선정·팬덤 지지 provenance는 선정 근거로 보존하되, 해당 URL이 실제 팩터 관찰을 포함하지 않으면 Factor evidence로 재사용하지 않는다.
+- 모든 accepted claim은 작품·초반 1~3권 범위, 관찰, 한계, exact evidence ID와 URL, panel decision을 가진다.
+- panel artifact와 입력 manifest가 일치하지 않거나 claim 소유권·범위·coverage 검사가 실패하면 권한은 0건이며 candidate 상태를 유지한다.
+- `annotationReviewMethod="authorizedEvidencePanel"`, `reviewedByHuman=false`를 사용한다. `human`이나 legacy `authorizedModelPanel`로 표시하지 않는다.
+- 격리된 별도 에이전트는 필수 조건이 아니다. 같은 실행 안에서도 수집 artifact와 판정 artifact를 분리하고 동결된 입력 digest를 결속하면 된다.
+- 2026-09-09 승인된 Factor 003 소실 사건의 후보 격리·새 전체 판정은 `docs/catalog-expansion/04-loss-recovery-v1.md`를 따른다. 사건·승인·scope·before snapshot에 결속한 예외이며 일반 missing-prior 실패, Gold/legacy 보호와 canonical 전환 승인 경계를 변경하지 않는다.
+- Grok은 이 권한의 조사·판정·교차검증에 사용하지 않는다. AniList는 사용자가 허용한 1회성 참고조사만 가능하고, 유료 API·과금 자료는 금지한다.
 
 S4는 cutoff manifest의 exact path·hash·row tuple과 일치하는 기존 값에만 `authorityKind=legacySnapshot` 호환 resolution을 만들 수 있다. 이는 현재 결과를 재현하기 위한 candidate-independent 고정 입력이며 과거 모델 패널을 비모델 evidence나 사람 검수로 재분류하지 않는다. 새 사실을 수용하거나 cutoff 범위를 확장할 수 없고, 이후 정정은 별도 비모델 resolution로 provenance를 보존해 supersede한다.
 
@@ -49,7 +63,7 @@ S3부터 동결된 model-panel 경로의 read-only `--check`는 보존하되 새
 
 ## 5. Source snapshot과 row identity
 
-`data/source/` 아래 regular file을 재귀 탐색하고 `/` 구분의 상대 경로를 code-unit 순으로 정렬한다. S6의 허용 layout은 `catalog.sqlite` 하나와 opaque Markdown 12개, 총 13개 파일이다.
+`data/source/` 아래 regular file을 재귀 탐색하고 `/` 구분의 상대 경로를 code-unit 순으로 정렬한다. historical S1~S6 cutover proof의 허용 layout은 `catalog.sqlite` 하나와 opaque Markdown 12개, 총 13개 파일로 동결한다. ongoing authority는 이 12개에 `source_works.annotationReviewReference`가 선언한 exact `reviews/<lowercase-hyphen-slug>.md`만 중복 제거·code-unit 정렬해 추가하며, 모두 source manifest에 raw hash와 byte length를 결속한다. 선언된 파일의 누락, 미참조 review, 루트 중복은 거부한다.
 
 - SQLite table 9개: `source_works`, `source_aliases`, `source_volumes`, `source_factors`, `source_themes`, `source_recommendation_context`, `source_recommendation_config`, `source_evidence`, `source_art_evidence_manifest`. 각각의 logical projection path는 이전의 `works.csv`, `aliases.csv`, `volumes.csv`, `factors.csv`, `themes.csv`, `recommendation-context.csv`, `recommendation-config.csv`, `evidence/evidence.csv`, `evidence/art-evidence-manifest.csv`다.
 - opaque file 12개: `README.md`, `evidence/seed-annotations.md`, `reviews/*.md` 10개.
@@ -64,7 +78,7 @@ Bootstrap과 임시 CSV projection은 fatal UTF-8로 decode한다. 선두 UTF-8 
 ## 6. 임시 projection과 parity
 
 - 기존 CSV-shaped validator·staging 도구가 필요할 때만 9개 logical CSV를 OS 임시 디렉터리에 투영한다. canonical source에는 남기지 않는다.
-- 12개 opaque file은 canonical 파일에서 byte-for-byte 복사한다. S0~S5 proof shadow에서는 `source_file.raw_bytes`에서 export한다.
+- historical 12개와 ongoing DB가 참조한 review file은 canonical 파일에서 byte-for-byte 복사한다. S0~S5 proof shadow에서는 동결된 12개만 `source_file.raw_bytes`에서 export한다.
 - CSV serializer는 UTF-8 without BOM, LF, 고정 header 순서, source 순서, 정확히 마지막 LF 하나를 사용한다. comma·quote·CR·LF가 있는 cell만 quote하고 내부 quote는 두 번 쓴다.
 - 일반 valid CSV의 semantic parity는 `[normalizedPath, sourceOrdinal, columnName, lexicalValue]` tuple digest로 비교한다. quote/BOM/빈 줄·checkout EOL 표기 차이는 의미가 아니다.
 - S1 baseline의 9개 CSV는 별도 golden probe에서 export bytes가 baseline HEAD `b8463b31ff58332fee8762dccb733ac902982cea`의 canonical Git blob과 정확히 같아야 한다. working-tree raw snapshot은 별도로 보존하며, golden 불일치를 semantic parity로 낮춰 통과시키지 않는다.
@@ -81,7 +95,7 @@ Bootstrap과 임시 CSV projection은 fatal UTF-8로 decode한다. 선두 UTF-8 
 - `acceptedFactsDigest`: effective `accepted|explicitUnknown|notApplicable` resolution tuple 배열의 digest. 신규 resolution은 비모델 권한만, legacy는 위 cutoff-bound `legacySnapshot`만 허용한다.
 - `resolutionSetDigest`: effective 다섯 상태 전체의 resolution tuple 배열 digest.
 - source manifest는 candidate·diagnostic 경로를 제외한 `data/source/`만 포함한다. table CSV entry field 순서는 `[path, "tableCsv", headerArray, lexicalRowTupleDigest]`, opaque entry는 `[path, "opaqueFile", rawSha256, byteLength]`이며 canonical entry 문자열을 code-unit 순으로 정렬한다.
-- 모델 candidate·모델 공급 citation·diagnostic과 최종 promotion reason/blocker code는 source manifest와 두 resolution digest에서 모두 제외한다.
+- 원시 모델 candidate·candidate citation·diagnostic과 최종 promotion reason/blocker code는 source manifest와 두 resolution digest에서 모두 제외한다. `authorizedEvidencePanelV1`의 accepted resolution은 panel packet manifest SHA-256을 `authorityArtifactDigest`, claim의 정렬된 exact URL 집합 digest를 `citationSetDigest`, 고정 `authorityKind=authorizedEvidencePanelV1`로 결속한다.
 - `judgmentInputDigest` tuple field 순서는 `[targetType, targetId, sourceManifestDigest, acceptedFactsDigest, resolutionSetDigest, factorDictionaryIdentity, annotationGuideIdentity, policyIdentity, decisionSchemaIdentity, engineManifestDigest, contextMarketIdentity, goldManifestIdentity, legacyRegistryEvidenceIdentity]`다. 기존 12개 위치는 유지하고 legacy registry 입력 identity를 13번째에 추가한다. 각 `*Identity`는 `[version, exactArtifactDigest]`이고 `engineManifestDigest`는 normalization과 판정 커널의 transitive source manifest를 결속한다.
 - `decisionDigest` tuple field 순서는 `[judgmentInputDigest, verdict, sortedUniqueReasonCodes, sortedUniqueBlockerCodes]`다. 두 code 배열은 각각 code-unit 순으로 정렬한다.
 
@@ -109,7 +123,7 @@ Factor `notApplicable`은 Factor Dictionary v1의 조건부 축인 `motionImpact
 
 Bootstrap은 `source_import`의 저장값만 신뢰하지 않는다. 첫 insert 직전에 현재 SQLite의 `source_*` lexical row와 opaque `source_file` BLOB에서 source manifest를 다시 계산하고, 재계산값·저장된 manifest·고정 cutoff manifest 및 저장된 baseline commit·고정 cutoff commit이 모두 일치해야 한다. `fact_resolution`은 하나의 `STRICT` table만 두며 비어 있지 않으면 교체하지 않고 실패한다. 두 resolution digest는 저장된 8-field tuple에서 매번 재계산하고 별도 digest cache table을 두지 않는다.
 
-S3 candidate ingest는 `work:<workId>:factor:<axisId>`, `work:<workId>:theme:<themeId>`, `work:<workId>:genre:<genreId>`만 허용한다. `workId`는 현재 shadow의 `source_works`에 정확히 한 행이어야 하고 나머지 ID는 각각 고정 Axis·Theme·Genre vocabulary에 속해야 한다. ingest의 source manifest 표기는 현재 `source_import.source_manifest_digest`와 일치해야 하며, candidate citation은 URL 배열을 exact 중복 제거·code-unit 정렬한 compact JSON이다. 이 검증은 candidate에 source 권한을 주지 않고 잘못된 diagnostic provenance와 decision field 위장을 거부하기 위한 경계다.
+S3 candidate ingest는 `work:<workId>:factor:<axisId>`, `work:<workId>:theme:<themeId>`, `work:<workId>:genre:<genreId>`만 허용한다. `workId`는 현재 shadow의 `source_works`에 정확히 한 행이어야 하고 나머지 ID는 각각 고정 Axis·Theme·Genre vocabulary에 속해야 한다. ingest의 source manifest 표기는 현재 `source_import.source_manifest_digest`와 일치해야 하며, candidate citation은 URL 배열을 exact 중복 제거·code-unit 정렬한 compact JSON이다. 이 검증은 candidate에 source 권한을 주지 않고 잘못된 diagnostic provenance와 decision field 위장을 거부하기 위한 경계다. `authorizedEvidencePanelV1` publication은 이 candidate ingest와 별도이며, frozen evidence manifest와 claim-level panel ledger를 검증한 뒤에만 resolution을 만든다.
 
 ## 8. S0~S5 one-time cutover proof
 
@@ -138,6 +152,6 @@ S1은 저장소 전체 pairwise 조합을 새로 전수 검사하지 않는다. 
 - ongoing `pnpm catalog:authority:verify`는 layout, integrity, schema identity, 연속 `sourceOrdinal`, canonical `sourceLine`, opaque path set을 검증한다. `pnpm catalog:authority:verify-cutover`와 `pnpm catalog:shadow`는 삭제된 9개 CSV 및 S0~S5 cutoff와의 일회성 이관 증명이다.
 - 일반 reader는 SQLite를 직접 읽는다. CSV compatibility가 필요한 frozen validator·staging 흐름은 OS 임시 projection만 사용하고 성공·실패 모두 제거한다.
 - legitimate writer는 현재 DB를 candidate로 복사하고 `BEGIN IMMEDIATE` 안에서 table을 교체한 뒤 전체 schema·Catalog 검증을 수행한다. commit·close 뒤 read-only exact readback과 sidecar 부재를 확인한 candidate만 canonical DB와 원자적으로 교체한다. 검증 실패 전에는 현재 DB가 바뀌지 않는다.
-- model-derived writer는 파일 I/O 전에 계속 실패한다. candidate 입력의 provider·model·attempt·순서·수·confidence·citation은 accepted fact나 판정 digest에 포함되지 않는다.
+- 원시 model-candidate writer는 파일 I/O 전에 계속 실패한다. 전용 `authorizedEvidencePanelV1` publisher만 frozen evidence manifest·claim ledger·review reference·coverage·ownership 검사를 통과한 accepted resolution을 쓸 수 있다. candidate 입력의 provider·model·attempt·순서·수·confidence는 accepted fact나 판정 digest에 포함되지 않는다.
 - runtime은 SQLite를 열지 않는다. build가 생성한 정적 JSON과 순수 TypeScript 추천 커널만 배포한다.
 - 이관 자체의 rollback은 정확한 이전 Git commit revert다. authoring 중 실패 rollback은 미게시 candidate 삭제이며, publish 중 실패는 공용 atomic publish helper가 기존 source를 복구한다.

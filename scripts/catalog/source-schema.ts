@@ -1,6 +1,7 @@
 import { z } from "zod";
 
 import {
+  ANNOTATION_REVIEW_METHODS,
   AXIS_IDS,
   DEMOGRAPHICS,
   EDITION_KINDS,
@@ -68,7 +69,7 @@ export const workSourceRowSchema = z
     metadataConfidence: confidence,
     groupingConfidence: confidence,
     sourceAgreement: confidence,
-    annotationReviewMethod: z.enum(["unreviewed", "human", "authorizedModelPanel"]),
+    annotationReviewMethod: z.enum(ANNOTATION_REVIEW_METHODS),
     annotationReviewedAt: z.union([
       z.literal("").transform(() => undefined),
       z.iso.datetime({ offset: true }),
