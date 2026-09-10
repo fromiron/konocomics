@@ -42,3 +42,8 @@ next-env.d.ts
 
 # temp files
 /temp/
+
+# local working artifacts
+/.tmp/
+/.playwright-mcp/
+/.review-*/
