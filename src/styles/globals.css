@@ -2,6 +2,13 @@
 @import "tailwindcss" source("../");
 @import "tw-animate-css";
 
+/* Complementary card expansions must reserve exactly the same total width each frame. */
+@property --media-card-expansion {
+  syntax: "<integer>";
+  inherits: false;
+  initial-value: 0;
+}
+
 :root {
   color-scheme: dark;
   --canvas: oklch(0.12 0.018 250);

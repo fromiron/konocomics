@@ -1119,7 +1119,8 @@ test.describe("Slice 7 recommendation journeys", () => {
     await previewOpener.focus();
     const scrollYBeforePreview = await page.evaluate(() => window.scrollY);
     expect(scrollYBeforePreview).toBeGreaterThan(0);
-    await previewOpener.click();
+    // Activate the focused opener without Playwright's click auto-scrolling before activation.
+    await previewOpener.press("Enter");
     expect(new URL(page.url()).searchParams.get("preview")).toBe(previewWorkId);
     await expect(previewDialog).toBeVisible();
     await expect
@@ -1192,6 +1193,165 @@ test.describe("Slice 7 recommendation journeys", () => {
     await expect(
       page.locator("li[data-recommendation-work-id]:not([data-carousel-clone])"),
     ).toHaveCount(10);
+    expect(await recommendationIds(page)).toEqual(policyIds);
+
+    const anchorCards = page.locator('[data-recommendation-shelf-card="anchor"]');
+    const anchorCard = anchorCards.first();
+    await expect(anchorCard).toBeVisible();
+    await anchorCard.scrollIntoViewIfNeeded();
+    const anchorPanel = anchorCard.locator("[data-expandable-panel]");
+    const anchorPreview = anchorCard.getByRole("button");
+    const anchorTitle = (await anchorCard.getByRole("heading", { level: 3 }).textContent())!.trim();
+    const anchorReason = anchorPanel.locator("[data-contribution-summary]");
+    const anchorSummary = JSON.parse(
+      (await anchorReason.getAttribute("data-contribution-summary")) ?? "null",
+    ) as { text: string; anchorWorkIds: string[] };
+    expect((await anchorReason.textContent())?.trim()).toBe(anchorSummary.text);
+    expect(await anchorCard.getAttribute("data-lead-anchor-work-ids")).toBe(
+      anchorSummary.anchorWorkIds.join(" "),
+    );
+    await expect(anchorPanel).toBeHidden();
+    if (testInfo.project.name === "chromium") {
+      // Real input through the production shelf; the DOM readback observes its geometry.
+      const beforeExpansion = await anchorCards.evaluateAll((elements) => {
+        const track = elements[0]?.parentElement;
+        if (track == null) throw new Error("Missing Anchor track");
+        return {
+          rects: elements.map((element) => element.getBoundingClientRect().toJSON()),
+          scrollLeft: track.scrollLeft,
+          scrollWidth: track.scrollWidth,
+        };
+      });
+      // The cover root persists when its placeholder resolves to an image after becoming visible.
+      const cover = await anchorCard.locator(".cover-image").elementHandle();
+      await anchorCard.hover();
+      await expect(anchorPanel).toBeVisible();
+      await anchorPanel.hover();
+      await expect(anchorPanel).toBeVisible();
+      expect(
+        await anchorCard
+          .locator(".cover-image")
+          .evaluate((image, original) => image === original, cover),
+      ).toBe(true);
+      await expect
+        .poll(async () => (await anchorCard.boundingBox())!.width)
+        .toBeCloseTo(beforeExpansion.rects[0]!.width + 264, 0);
+      const afterExpansion = await anchorCards.evaluateAll((elements) => {
+        const track = elements[0]?.parentElement;
+        if (track == null) throw new Error("Missing Anchor track");
+        return {
+          rects: elements.map((element) => element.getBoundingClientRect().toJSON()),
+          scrollLeft: track.scrollLeft,
+          scrollWidth: track.scrollWidth,
+        };
+      });
+      expect(afterExpansion.rects[0]!.width).toBeCloseTo(beforeExpansion.rects[0]!.width + 264, 0);
+      expect(afterExpansion.rects[0]!.height).toBeCloseTo(beforeExpansion.rects[0]!.height, 0);
+      expect(afterExpansion.scrollLeft).toBe(beforeExpansion.scrollLeft);
+      for (let index = 1; index < afterExpansion.rects.length; index += 1) {
+        expect(afterExpansion.rects[index]!.x).toBeCloseTo(
+          beforeExpansion.rects[index]!.x + 264,
+          0,
+        );
+      }
+      const nextAnchor = anchorCards.nth(1);
+      const nextCover = nextAnchor.getByRole("link");
+      const nextPosition = await nextCover.boundingBox();
+      await nextCover.hover();
+      const followingFrames = await anchorCards.evaluateAll(async (elements) => {
+        const positions: number[][] = [];
+        const until = performance.now() + 500;
+        while (performance.now() < until) {
+          await new Promise<void>((resolve) => requestAnimationFrame(() => resolve()));
+          positions.push(elements.slice(2).map((element) => element.getBoundingClientRect().x));
+        }
+        return positions;
+      });
+      // Fractional width loss can shift an entire rendered cover by one physical pixel.
+      for (const positions of followingFrames) {
+        expect(positions).toEqual(afterExpansion.rects.slice(2).map((rect) => rect.x));
+      }
+      await expect(nextAnchor).toHaveAttribute("data-expanded", "true");
+      await expect(anchorPanel).toBeHidden();
+      await expect
+        .poll(async () => (await nextCover.boundingBox())!.x)
+        .toBeCloseTo(nextPosition!.x, 0);
+      const nextTitle = (await nextAnchor.getByRole("heading", { level: 3 }).textContent())!.trim();
+      await nextAnchor.getByRole("button").click();
+      const nextDialog = page.getByRole("dialog", { name: nextTitle, exact: true });
+      await expect(nextDialog).toBeVisible();
+      await nextDialog.getByRole("button", { name: "閉じる", exact: true }).click();
+      await expect(nextAnchor.getByRole("button")).toBeFocused();
+      await page.keyboard.press("Escape");
+      await expect(anchorPanel).toBeHidden();
+      await anchorPreview.focus();
+      await page.keyboard.press("Shift+Tab");
+      await expect(anchorCard.getByRole("link")).toBeFocused();
+      await expect(anchorPanel).toBeVisible();
+      await page.keyboard.press("Tab");
+      await expect(anchorPreview).toBeFocused();
+      await page.keyboard.press("Escape");
+      await expect(anchorPanel).toBeHidden();
+      await expect(anchorPreview).toBeFocused();
+      await page.emulateMedia({ reducedMotion: "reduce" });
+      await anchorCard.hover();
+      await expect(anchorPanel).toBeVisible();
+      expect(
+        await anchorCard.evaluate((card) => card.getAnimations({ subtree: true }).length),
+      ).toBe(0);
+      await page.keyboard.press("Escape");
+      await page.emulateMedia({ reducedMotion: "no-preference" });
+
+      const lastAnchor = anchorCards.last();
+      const precedingAnchor = anchorCards.nth((await anchorCards.count()) - 2);
+      for (const handoff of [false, true]) {
+        await page.getByRole("heading", { name: "好きな作品から広げる", exact: true }).click();
+        await expect(
+          page.locator('[data-recommendation-shelf-card="anchor"][data-expansion-active]'),
+        ).toHaveCount(0);
+        const closedWidth = (await lastAnchor.boundingBox())!.width;
+        if (handoff) {
+          const precedingWidth = (await precedingAnchor.boundingBox())!.width;
+          await precedingAnchor.getByRole("link").hover();
+          await expect
+            .poll(async () => (await precedingAnchor.boundingBox())!.width)
+            .toBeCloseTo(precedingWidth + 264, 0);
+        }
+        const visible = await lastAnchor.evaluate((card) => {
+          const track = card.parentElement!;
+          const rect = track.getBoundingClientRect();
+          const style = getComputedStyle(track);
+          return {
+            left: rect.left + Number.parseFloat(style.scrollPaddingLeft),
+            right: rect.right - Number.parseFloat(style.scrollPaddingRight),
+          };
+        });
+        const lastCover = (await lastAnchor.getByRole("link").boundingBox())!;
+        expect(lastCover.x).toBeLessThan(visible.right);
+        // Use the visible cover directly; locator.hover() could scroll it before the product acts.
+        await page.mouse.move(
+          Math.min(lastCover.x + lastCover.width / 2, visible.right - 2),
+          lastCover.y + 20,
+        );
+        await expect(lastAnchor).toHaveAttribute("data-expanded", "true");
+        await expect
+          .poll(async () => (await lastAnchor.boundingBox())!.width)
+          .toBeCloseTo(closedWidth + 264, 0);
+        await expect
+          .poll(async () => {
+            const rect = (await lastAnchor.boundingBox())!;
+            return rect.x >= visible.left - 1 && rect.x + rect.width <= visible.right + 1;
+          })
+          .toBe(true);
+      }
+      await page.keyboard.press("Escape");
+    }
+    await anchorPreview.click();
+    const anchorDialog = page.getByRole("dialog", { name: anchorTitle, exact: true });
+    await expect(anchorDialog).toBeVisible();
+    await anchorDialog.getByRole("button", { name: "閉じる", exact: true }).click();
+    await expect(anchorDialog).toBeHidden();
+    await expect(anchorPreview).toBeFocused();
     expect(await recommendationIds(page)).toEqual(policyIds);
 
     const shelfNavigation = page.getByRole("navigation", { name: "おすすめの棚" });

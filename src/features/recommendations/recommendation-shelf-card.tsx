@@ -2,6 +2,7 @@ import { Link } from "@tanstack/react-router";
 import { ScanSearchIcon } from "lucide-react";
 
 import { CoverImage } from "@/components/cover/CoverImage";
+import { ExpandableMediaCard } from "@/components/media/expandable-media-card";
 import { QuietTextAction } from "@/components/media/state-action-row";
 import type { Work } from "@/domain/catalog/types";
 import { generateTasteExplanation } from "@/domain/explanation/generate";
@@ -11,6 +12,8 @@ import { cn } from "@/lib/utils";
 
 type RecommendationShelfCardProps = Readonly<{
   entry: RecommendationPlanEntry;
+  expanded?: boolean;
+  onExpandedChange?: (expanded: boolean) => void;
   work: Work;
   coverUrl?: string | null;
   priority?: boolean;
@@ -24,6 +27,8 @@ type RecommendationShelfCardProps = Readonly<{
 export function RecommendationShelfCard({
   coverUrl,
   entry,
+  expanded = false,
+  onExpandedChange,
   onCoverVisible,
   onPreview,
   priority = false,
@@ -40,6 +45,14 @@ export function RecommendationShelfCard({
   });
   const leadSentence = explanation.positiveReasons[0];
   const leadReason = leadSentence?.text ?? recommendationStrings.reasonUnavailable;
+  const anchorTitle =
+    leadSentence?.source === "similarity"
+      ? leadSentence.anchorWorkIds
+          .map(resolveTitle)
+          .find((title) => title !== undefined && title !== "")
+      : undefined;
+  const anchorMention = anchorTitle ?? "";
+  const anchorMentionIndex = anchorMention === "" ? -1 : leadReason.indexOf(anchorMention);
   const confidenceLabel = explanationLexicon.confidenceLabels[entry.confidenceLevel];
   const compact = variant !== "anchor";
   const morphDiscoveryCover = variant === "discovery" && Boolean(coverUrl?.trim());
@@ -65,22 +78,17 @@ export function RecommendationShelfCard({
       "group-focus-within/shelf-card:text-accent [@media(hover:hover)_and_(pointer:fine)]:group-hover/shelf-card:text-accent",
   );
 
-  return (
-    <article
-      className={cn(
-        "group/shelf-card shrink-0 snap-start overflow-hidden rounded-[var(--radius-card)] border",
-        variant === "anchor"
-          ? "border-line/80 bg-surface-1 focus-within:border-line-accent"
-          : "border-transparent bg-transparent transition-colors duration-[var(--motion-duration-value)] ease-[var(--motion-ease-direct)] focus-within:bg-surface-2 motion-reduce:transition-none [@media(hover:hover)_and_(pointer:fine)]:hover:bg-surface-2",
-        widthClass,
-        compact &&
-          "grid grid-rows-[auto_minmax(0,1fr)] gap-[var(--space-2)] p-[var(--space-2)] md:grid-cols-[auto_minmax(0,1fr)] md:grid-rows-1 md:items-stretch md:py-[var(--space-3)]",
-      )}
-      data-lead-anchor-work-ids={
-        variant === "anchor" ? leadSentence?.anchorWorkIds.join(" ") : undefined
-      }
-      data-recommendation-shelf-card={variant}
-    >
+  const cardClassName = cn(
+    "group/shelf-card shrink-0 snap-start overflow-hidden rounded-[var(--radius-card)] border",
+    variant === "anchor"
+      ? "border-line/80 bg-surface-1 focus-within:border-line-accent"
+      : "border-transparent bg-transparent transition-colors duration-[var(--motion-duration-value)] ease-[var(--motion-ease-direct)] focus-within:bg-surface-2 motion-reduce:transition-none [@media(hover:hover)_and_(pointer:fine)]:hover:bg-surface-2",
+    widthClass,
+    compact &&
+      "grid grid-rows-[auto_minmax(0,1fr)] gap-[var(--space-2)] p-[var(--space-2)] md:grid-cols-[auto_minmax(0,1fr)] md:grid-rows-1 md:items-stretch md:py-[var(--space-3)]",
+  );
+  const content = (
+    <>
       <Link
         aria-label={mediaStrings.openDetails(work.title)}
         className={cn(
@@ -149,6 +157,43 @@ export function RecommendationShelfCard({
       ) : (
         previewControl
       )}
+    </>
+  );
+
+  return variant === "anchor" ? (
+    <ExpandableMediaCard
+      className={cardClassName}
+      data-lead-anchor-work-ids={leadSentence?.anchorWorkIds.join(" ")}
+      data-recommendation-shelf-card={variant}
+      expanded={expanded}
+      onExpandedChange={(next) => onExpandedChange?.(next)}
+      panel={
+        <div className="flex min-h-full flex-col justify-center gap-[var(--space-3)]">
+          <h4 className="text-[length:var(--text-caption-size)] font-medium text-text-muted">
+            {recommendationStrings.shelves.anchor.connectionHeading}
+          </h4>
+          <p
+            className="text-[length:var(--font-size-14)] leading-[var(--line-height-body)] text-text"
+            data-contribution-summary={JSON.stringify(leadSentence ?? null)}
+          >
+            {anchorMentionIndex < 0 ? (
+              leadReason
+            ) : (
+              <>
+                {leadReason.slice(0, anchorMentionIndex)}
+                <strong className="font-bold text-text-strong">{anchorMention}</strong>
+                {leadReason.slice(anchorMentionIndex + anchorMention.length)}
+              </>
+            )}
+          </p>
+        </div>
+      }
+    >
+      {content}
+    </ExpandableMediaCard>
+  ) : (
+    <article className={cardClassName} data-recommendation-shelf-card={variant}>
+      {content}
     </article>
   );
 }

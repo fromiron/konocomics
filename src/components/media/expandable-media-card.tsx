@@ -5,405 +5,302 @@ import {
   useLayoutEffect,
   useRef,
   useState,
-  type FocusEvent,
-  type MouseEvent,
+  type ComponentPropsWithoutRef,
   type ReactNode,
-  type Ref,
 } from "react";
 
-type ExpansionSide = "left" | "right";
+import { cn } from "@/lib/utils";
 
-type VisualRect = Readonly<{
-  height: number;
-  left: number;
-  top: number;
-  width: number;
-}>;
+type ExpandableMediaCardProps = ComponentPropsWithoutRef<"article"> &
+  Readonly<{
+    expanded: boolean;
+    onExpandedChange: (expanded: boolean) => void;
+    panel: ReactNode;
+  }>;
 
-type PositionSnapshot = Readonly<{
-  element: HTMLElement;
-  rect: VisualRect;
-}>;
-
-type MotionTiming = Readonly<{
-  duration: number;
-  easing: string;
-}>;
-
-type ExpansionContext = Readonly<{
-  collapsedWidth: number;
-  coverRect: VisualRect | null;
-  item: HTMLElement;
-  originScrollLeft: number;
-  side: ExpansionSide;
-  track: HTMLElement;
-}>;
-
-type ExpansionControls = Readonly<{
-  expanded: boolean;
-  onPreviewClick(event: MouseEvent<HTMLElement>): void;
-}>;
-
-type ExpandableMediaCardProps = Readonly<{
-  articleRef: Ref<HTMLElement>;
-  children(controls: ExpansionControls): ReactNode;
-  expanded?: boolean;
-  initiallyExpanded?: boolean;
-  onExpandedChange?: (expanded: boolean) => void;
-  onPreview?: () => void;
-}>;
-
-function usesTouchPresentation() {
+function supportsExpansion() {
   return (
-    typeof window.matchMedia === "function" &&
-    window.matchMedia("(hover: none), (pointer: coarse)").matches
+    window.matchMedia?.("(min-width: 768px) and (hover: hover) and (pointer: fine)").matches ??
+    false
   );
-}
-
-function measureCover(card: HTMLElement): VisualRect | null {
-  const frame = card.querySelector<HTMLElement>("[data-expandable-cover-frame]");
-  if (frame === null) return null;
-  const rect = frame.getBoundingClientRect();
-  return { height: rect.height, left: rect.left, top: rect.top, width: rect.width };
-}
-
-function measureSiblingPositions(item: HTMLElement, track: HTMLElement): PositionSnapshot[] {
-  if (track.dataset.recommendationMotion === "enabled") return [];
-  return Array.from(track.children).flatMap((element) => {
-    if (!(element instanceof HTMLElement) || element === item) return [];
-    const rect = element.getBoundingClientRect();
-    return rect.width <= 0 || rect.height <= 0
-      ? []
-      : [
-          {
-            element,
-            rect: {
-              height: rect.height,
-              left: rect.left,
-              top: rect.top,
-              width: rect.width,
-            },
-          },
-        ];
-  });
-}
-
-function readDuration(value: string) {
-  const normalized = value.trim();
-  if (normalized.endsWith("ms")) return Number.parseFloat(normalized);
-  if (normalized.endsWith("s")) return Number.parseFloat(normalized) * 1000;
-  return Number.NaN;
-}
-
-function readMotionTiming(
-  card: HTMLElement,
-  durationToken: string,
-  easingToken: string,
-  fallback: MotionTiming,
-): MotionTiming {
-  const styles = window.getComputedStyle(card);
-  const duration = readDuration(styles.getPropertyValue(durationToken));
-  const easing = styles.getPropertyValue(easingToken).trim();
-  return {
-    duration: Number.isFinite(duration) ? duration : fallback.duration,
-    easing: easing === "" ? fallback.easing : easing,
-  };
-}
-
-function prefersReducedMotion() {
-  return window.matchMedia?.("(prefers-reduced-motion: reduce)").matches ?? false;
-}
-
-function setScrollLeftInstant(track: HTMLElement, left: number) {
-  const previous = track.style.scrollBehavior;
-  track.style.scrollBehavior = "auto";
-  track.scrollLeft = left;
-  if (previous === "") track.style.removeProperty("scroll-behavior");
-  else track.style.scrollBehavior = previous;
-}
-
-function restoreOwnedScroll(context: ExpansionContext | null, adjustedScrollLeft: number | null) {
-  if (
-    context?.side !== "left" ||
-    adjustedScrollLeft === null ||
-    Math.abs(context.track.scrollLeft - adjustedScrollLeft) > 2
-  ) {
-    return;
-  }
-  const maximum = Math.max(0, context.track.scrollWidth - context.track.clientWidth);
-  setScrollLeftInstant(context.track, Math.min(maximum, context.originScrollLeft));
-}
-
-function anotherExpandedCardOwnsFocus(card: HTMLElement) {
-  const track = card.closest<HTMLElement>("[data-media-shelf-track]");
-  const activeElement = document.activeElement;
-  if (track === null || !(activeElement instanceof HTMLElement)) return false;
-
-  return Array.from(track.querySelectorAll<HTMLElement>('article[data-expanded="true"]')).some(
-    (candidate) => candidate !== card && candidate.contains(activeElement),
-  );
-}
-
-function animateCover(card: HTMLElement, from: VisualRect | null) {
-  const frame = card.querySelector<HTMLElement>("[data-expandable-cover-frame]");
-  if (
-    frame === null ||
-    from === null ||
-    typeof frame.animate !== "function" ||
-    prefersReducedMotion()
-  ) {
-    return null;
-  }
-
-  const to = frame.getBoundingClientRect();
-  if (to.width <= 0 || to.height <= 0) return null;
-  const deltaX = from.left - to.left;
-  const deltaY = from.top - to.top;
-  if (Math.abs(deltaX) < 0.5 && Math.abs(deltaY) < 0.5) return null;
-  const timing = readMotionTiming(card, "--motion-duration-value", "--motion-ease-signature", {
-    duration: 240,
-    easing: "cubic-bezier(0.2, 0, 0, 1)",
-  });
-
-  return frame.animate(
-    [{ transform: `translate(${deltaX}px, ${deltaY}px)` }, { transform: "none" }],
-    timing,
-  );
-}
-
-function animateArticleWidth(card: HTMLElement, fromWidth: number) {
-  if (typeof card.animate !== "function" || prefersReducedMotion()) return null;
-  const toWidth = card.getBoundingClientRect().width;
-  if (fromWidth <= 0 || toWidth <= 0 || Math.abs(fromWidth - toWidth) < 0.5) return null;
-  const timing = readMotionTiming(card, "--motion-duration-value", "--motion-ease-signature", {
-    duration: 240,
-    easing: "cubic-bezier(0.2, 0, 0, 1)",
-  });
-
-  return card.animate([{ width: `${fromWidth}px` }, { width: `${toWidth}px` }], timing);
-}
-
-function animatePositionSnapshots(
-  card: HTMLElement,
-  snapshots: readonly PositionSnapshot[],
-): Animation[] {
-  if (prefersReducedMotion()) return [];
-  const timing = readMotionTiming(card, "--motion-duration-value", "--motion-ease-signature", {
-    duration: 240,
-    easing: "cubic-bezier(0.2, 0, 0, 1)",
-  });
-
-  return snapshots.flatMap(({ element, rect: from }) => {
-    if (!element.isConnected || typeof element.animate !== "function") return [];
-    const to = element.getBoundingClientRect();
-    if (to.width <= 0 || to.height <= 0) return [];
-    const deltaX = from.left - to.left;
-    const deltaY = from.top - to.top;
-    if (Math.abs(deltaX) < 0.5 && Math.abs(deltaY) < 0.5) return [];
-    return [
-      element.animate(
-        [{ transform: `translate(${deltaX}px, ${deltaY}px)` }, { transform: "none" }],
-        timing,
-      ),
-    ];
-  });
-}
-
-function animateExpandedReveal(card: HTMLElement): Animation[] {
-  if (prefersReducedMotion()) return [];
-  const timing = readMotionTiming(card, "--motion-duration-page", "--motion-ease-direct", {
-    duration: 160,
-    easing: "ease-out",
-  });
-
-  return Array.from(card.querySelectorAll<HTMLElement>("[data-expandable-reveal]")).flatMap(
-    (element) => {
-      if (typeof element.animate !== "function") return [];
-      const rect = element.getBoundingClientRect();
-      if (rect.width <= 0 || rect.height <= 0) return [];
-      return [
-        element.animate([{ opacity: 0 }, { opacity: 1 }], {
-          ...timing,
-          delay: 80,
-          fill: "backwards",
-        }),
-      ];
-    },
-  );
-}
-
-function chooseExpansionSide(card: HTMLElement): {
-  context: ExpansionContext | null;
-  side: ExpansionSide;
-} {
-  const item = card.closest<HTMLElement>("li");
-  const track = item?.closest<HTMLElement>("[data-media-shelf-track]");
-  if (item === null || item === undefined || track === null || track === undefined) {
-    return { context: null, side: "right" };
-  }
-
-  const itemRect = item.getBoundingClientRect();
-  const trackRect = track.getBoundingClientRect();
-  const controlSize = Number.parseFloat(
-    window.getComputedStyle(card).getPropertyValue("--control-min-size"),
-  );
-  const expandedWidth = Number.isFinite(controlSize) ? controlSize * 8 : itemRect.width;
-  const growth = Math.max(0, expandedWidth - itemRect.width);
-  const availableLeft = Math.max(0, itemRect.left - trackRect.left);
-  const availableRight = Math.max(0, trackRect.right - itemRect.right);
-  const side = availableRight >= growth || availableRight >= availableLeft ? "right" : "left";
-
-  return {
-    context: {
-      collapsedWidth: itemRect.width,
-      coverRect: measureCover(card),
-      item,
-      originScrollLeft: track.scrollLeft,
-      side,
-      track,
-    },
-    side,
-  };
 }
 
 export function ExpandableMediaCard({
-  articleRef,
   children,
-  expanded: controlledExpanded,
-  initiallyExpanded = false,
+  className,
+  expanded,
   onExpandedChange,
-  onPreview,
+  panel,
+  style,
+  ...props
 }: ExpandableMediaCardProps) {
-  const [internalExpanded, setInternalExpanded] = useState(initiallyExpanded);
-  const expanded = controlledExpanded ?? internalExpanded;
-  const [expansionSide, setExpansionSide] = useState<ExpansionSide>("right");
-  const collapseCoverRect = useRef<VisualRect | null>(null);
-  const coverAnimation = useRef<Animation | null>(null);
-  const spatialAnimations = useRef<Animation[]>([]);
-  const expansionContext = useRef<ExpansionContext | null>(null);
-  const siblingSnapshots = useRef<PositionSnapshot[]>([]);
-  const adjustedScrollLeft = useRef<number | null>(null);
-  const hoverTimer = useRef<number | null>(null);
+  const cardRef = useRef<HTMLElement>(null);
+  const contentRef = useRef<HTMLDivElement>(null);
+  const hoverTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const scroll = useRef({ origin: 0, target: 0, last: 0, owned: false });
+  const [geometry, setGeometry] = useState<{
+    width: number;
+    contentWidth: number;
+    panelWidth: number;
+  } | null>(null);
+  const [side, setSide] = useState<"left" | "right">("right");
+
   const cancelHoverIntent = () => {
-    if (hoverTimer.current === null) return;
-    window.clearTimeout(hoverTimer.current);
+    if (hoverTimer.current !== null) clearTimeout(hoverTimer.current);
     hoverTimer.current = null;
   };
-
-  const expandCard = (card: HTMLElement) => {
-    if (card.dataset.expanded === "true") return;
-    const next = chooseExpansionSide(card);
-    collapseCoverRect.current = null;
-    expansionContext.current = next.context;
-    adjustedScrollLeft.current = null;
-    siblingSnapshots.current =
-      next.context === null ? [] : measureSiblingPositions(next.context.item, next.context.track);
-    setExpansionSide(next.side);
-    if (controlledExpanded === undefined) setInternalExpanded(true);
-    onExpandedChange?.(true);
+  const open = (card: HTMLElement) => {
+    if (!supportsExpansion() || expanded) return;
+    const track = card.closest<HTMLElement>("[data-media-shelf-track]");
+    if (track?.hasAttribute("data-expansion-manual-scroll")) return;
+    const previous = track?.querySelector<HTMLElement>('article[data-expanded="true"]');
+    if (previous?.contains(document.activeElement)) return;
+    const rect = card.getBoundingClientRect();
+    const content = contentRef.current?.getBoundingClientRect() ?? rect;
+    const bounds = track?.getBoundingClientRect();
+    const trackStyle = track ? getComputedStyle(track) : null;
+    const visibleLeft =
+      (bounds?.left ?? 0) + (Number.parseFloat(trackStyle?.scrollPaddingLeft ?? "0") || 0);
+    const visibleRight =
+      (bounds?.right ?? window.innerWidth) -
+      (Number.parseFloat(trackStyle?.scrollPaddingRight ?? "0") || 0);
+    const panelWidth =
+      Number.parseFloat(getComputedStyle(card).getPropertyValue("--control-min-size")) * 6;
+    const right = visibleRight - rect.right;
+    const left = rect.left - visibleLeft;
+    if (geometry === null) {
+      // Start at the used width; the responsive width can be larger before max-width clamps it.
+      card.style.transitionProperty = "none";
+      card.style.width = `${rect.width}px`;
+      void card.offsetWidth;
+      card.style.transitionProperty = "";
+    }
+    // Keep the next cover under the pointer while the previous card gives up its space.
+    const previousBefore = Boolean(
+      previous && previous.compareDocumentPosition(card) & Node.DOCUMENT_POSITION_FOLLOWING,
+    );
+    const opensLeft = previous ? previousBefore : right < panelWidth && left > right;
+    const previousExpansion = previous
+      ? Number.parseFloat(getComputedStyle(previous).getPropertyValue("--media-card-expansion")) ||
+        0
+      : 0;
+    const currentExpansion =
+      Number.parseFloat(getComputedStyle(card).getPropertyValue("--media-card-expansion")) || 0;
+    const width = geometry?.width ?? rect.width;
+    const finalLeft = rect.left - (previousBefore ? previousExpansion : 0);
+    const origin = track?.scrollLeft ?? 0;
+    const maximumScroll = track
+      ? Math.max(
+          0,
+          track.scrollWidth - track.clientWidth + panelWidth - previousExpansion - currentExpansion,
+        )
+      : 0;
+    // Keep the whole expanded card inside the shelf's unfaded area, including handoffs.
+    const minimumVisibleScroll = origin + finalLeft + width + panelWidth - visibleRight;
+    const maximumVisibleScroll = origin + finalLeft - visibleLeft;
+    const preferredScroll = origin + (opensLeft && !previous ? panelWidth : 0);
+    const target = Math.max(
+      0,
+      Math.min(
+        maximumScroll,
+        maximumVisibleScroll,
+        Math.max(minimumVisibleScroll, preferredScroll),
+      ),
+    );
+    setGeometry({
+      width,
+      contentWidth: geometry?.contentWidth ?? content.width,
+      panelWidth,
+    });
+    scroll.current = {
+      origin,
+      target,
+      last: origin,
+      owned: true,
+    };
+    setSide(opensLeft ? "left" : "right");
+    onExpandedChange(true);
+  };
+  const queueHover = (card: HTMLElement) => {
+    cancelHoverIntent();
+    hoverTimer.current = setTimeout(() => {
+      hoverTimer.current = null;
+      open(card);
+    }, 200);
   };
 
-  const collapseCard = (card: HTMLElement) => {
-    if (card.dataset.expanded !== "true") return;
-    collapseCoverRect.current = measureCover(card);
-    const context = expansionContext.current;
-    siblingSnapshots.current =
-      context === null ? [] : measureSiblingPositions(context.item, context.track);
-    if (controlledExpanded === undefined) setInternalExpanded(false);
-    onExpandedChange?.(false);
-  };
+  useEffect(() => () => cancelHoverIntent(), []);
 
-  const collapseAfterFocusLeaves = (event: FocusEvent<HTMLElement>) => {
-    if (!event.currentTarget.contains(event.relatedTarget)) collapseCard(event.currentTarget);
-  };
-
-  useEffect(
-    () => () => {
-      cancelHoverIntent();
-      coverAnimation.current?.cancel();
-      spatialAnimations.current.forEach((animation) => animation.cancel());
-      restoreOwnedScroll(expansionContext.current, adjustedScrollLeft.current);
-    },
-    [],
-  );
+  useEffect(() => {
+    const card = cardRef.current;
+    if (
+      !expanded &&
+      geometry !== null &&
+      card &&
+      Number.parseFloat(getComputedStyle(card).getPropertyValue("--media-card-expansion")) === 0
+    ) {
+      // A motion-free or zero-distance close has no transitionend event.
+      const frame = requestAnimationFrame(() => setGeometry(null));
+      return () => cancelAnimationFrame(frame);
+    }
+  }, [expanded, geometry]);
 
   useLayoutEffect(() => {
-    const context = expansionContext.current;
-    if (context === null) return;
-
-    if (expanded) {
-      if (context.side === "left") {
-        const growth = Math.max(0, context.item.offsetWidth - context.collapsedWidth);
-        const maximum = Math.max(0, context.track.scrollWidth - context.track.clientWidth);
-        const nextScrollLeft = Math.min(maximum, context.originScrollLeft + growth);
-        setScrollLeftInstant(context.track, nextScrollLeft);
-        adjustedScrollLeft.current = nextScrollLeft;
-      }
-      spatialAnimations.current.forEach((animation) => animation.cancel());
-      coverAnimation.current?.cancel();
-      const card = context.item.querySelector<HTMLElement>("article") ?? context.item;
-      coverAnimation.current = animateCover(card, context.coverRect);
-      spatialAnimations.current = [
-        animateArticleWidth(card, context.collapsedWidth),
-        ...animatePositionSnapshots(card, siblingSnapshots.current),
-        ...animateExpandedReveal(card),
-      ].filter((animation): animation is Animation => animation !== null);
-      siblingSnapshots.current = [];
+    const card = cardRef.current;
+    const track = card?.closest<HTMLElement>("[data-media-shelf-track]");
+    const position = scroll.current;
+    if (geometry == null) return;
+    if (card == null || track == null || !position.owned) return;
+    if (!expanded && track.querySelector('article[data-expanded="true"]')) {
+      position.owned = false;
       return;
     }
+    let frame = 0;
+    const compensate = () => {
+      const maximum = Math.max(0, track.scrollWidth - track.clientWidth);
+      if (Math.abs(track.scrollLeft - Math.min(maximum, position.last)) > 2) {
+        position.owned = false;
+        return;
+      }
+      const growth = card.getBoundingClientRect().width - geometry.width;
+      const progress = Math.max(0, Math.min(1, growth / geometry.panelWidth));
+      track.scrollTo({
+        left: Math.min(maximum, position.origin + (position.target - position.origin) * progress),
+        behavior: "instant",
+      });
+      position.last = track.scrollLeft;
+      if (expanded ? progress < 1 : progress > 0) frame = requestAnimationFrame(compensate);
+    };
+    compensate();
+    return () => cancelAnimationFrame(frame);
+  }, [expanded, geometry, side]);
 
-    restoreOwnedScroll(context, adjustedScrollLeft.current);
-    spatialAnimations.current.forEach((animation) => animation.cancel());
-    coverAnimation.current?.cancel();
-    const card = context.item.querySelector<HTMLElement>("article") ?? context.item;
-    coverAnimation.current = animateCover(card, collapseCoverRect.current);
-    spatialAnimations.current = [...animatePositionSnapshots(card, siblingSnapshots.current)];
-    collapseCoverRect.current = null;
-    siblingSnapshots.current = [];
-    adjustedScrollLeft.current = null;
-    expansionContext.current = null;
-  }, [expanded]);
+  useEffect(() => {
+    const card = cardRef.current;
+    const track = card?.closest<HTMLElement>("[data-media-shelf-track]");
+    const dismiss = () => onExpandedChange(false);
+    const onKeyDown = (event: KeyboardEvent) => {
+      if (event.key === "Escape") dismiss();
+    };
+    const onPointerDown = (event: PointerEvent) => {
+      if (event.target instanceof Node && !card?.contains(event.target)) dismiss();
+    };
+    const onResize = () => {
+      if (card) card.style.transitionProperty = "none";
+      track?.removeAttribute("data-expansion-manual-scroll");
+      setGeometry(null);
+      cancelHoverIntent();
+      dismiss();
+    };
+    const releaseScroll = () => {
+      scroll.current.owned = false;
+    };
+    const onWheel = () => {
+      releaseScroll();
+      cancelHoverIntent();
+      track?.setAttribute("data-expansion-manual-scroll", "");
+    };
+    window.addEventListener("resize", onResize);
+    if (expanded) {
+      document.addEventListener("keydown", onKeyDown);
+      document.addEventListener("pointerdown", onPointerDown);
+      track?.addEventListener("wheel", onWheel, { passive: true });
+      track?.addEventListener("pointerdown", releaseScroll);
+    }
+    return () => {
+      window.removeEventListener("resize", onResize);
+      document.removeEventListener("keydown", onKeyDown);
+      document.removeEventListener("pointerdown", onPointerDown);
+      track?.removeEventListener("wheel", onWheel);
+      track?.removeEventListener("pointerdown", releaseScroll);
+    };
+  }, [expanded, onExpandedChange]);
 
   return (
     <article
-      className="group/card relative isolate w-full overflow-hidden rounded-[var(--radius-card)] border border-line bg-surface-1 p-0 [@media(min-width:768px)_and_(hover:hover)_and_(pointer:fine)]:h-full [@media(min-width:768px)_and_(hover:hover)_and_(pointer:fine)]:data-[expanded]:shadow-[var(--shadow-level-1)] [@media(min-width:768px)_and_(hover:hover)_and_(pointer:fine)]:data-[expansion-side=left]:ml-auto"
+      {...props}
+      className={cn(
+        className,
+        "relative overflow-hidden transition-[--media-card-expansion] duration-[var(--motion-duration-value)] ease-[var(--motion-ease-signature)] motion-reduce:transition-none",
+      )}
       data-expanded={expanded || undefined}
-      data-expansion-side={expanded ? expansionSide : undefined}
-      onBlurCapture={collapseAfterFocusLeaves}
+      data-expansion-active={geometry !== null || undefined}
+      data-expansion-side={side}
+      onBlurCapture={(event) => {
+        if (!event.currentTarget.contains(event.relatedTarget)) {
+          cancelHoverIntent();
+          onExpandedChange(false);
+        }
+      }}
       onFocusCapture={(event) => {
         if (
-          !usesTouchPresentation() &&
-          event.target instanceof HTMLElement &&
+          !event.currentTarget.contains(event.relatedTarget) &&
           event.target.matches(":focus-visible")
         ) {
-          expandCard(event.currentTarget);
+          cancelHoverIntent();
+          event.currentTarget
+            .closest<HTMLElement>("[data-media-shelf-track]")
+            ?.removeAttribute("data-expansion-manual-scroll");
+          open(event.currentTarget);
         }
       }}
       onPointerEnter={(event) => {
         cancelHoverIntent();
-        if (usesTouchPresentation()) return;
-        const card = event.currentTarget;
-        hoverTimer.current = window.setTimeout(() => {
-          if (!anotherExpandedCardOwnsFocus(card)) expandCard(card);
-        }, 200);
+        if (!supportsExpansion() || event.pointerType === "touch" || event.pointerType === "pen")
+          return;
+        queueHover(event.currentTarget);
       }}
-      onPointerLeave={(event) => {
-        cancelHoverIntent();
-        if (!event.currentTarget.contains(document.activeElement))
-          collapseCard(event.currentTarget);
+      onPointerLeave={cancelHoverIntent}
+      onPointerMove={(event) => {
+        if (event.pointerType !== "mouse" || (!event.movementX && !event.movementY)) return;
+        const track = event.currentTarget.closest<HTMLElement>("[data-media-shelf-track]");
+        if (!track?.hasAttribute("data-expansion-manual-scroll")) return;
+        track.removeAttribute("data-expansion-manual-scroll");
+        queueHover(event.currentTarget);
       }}
-      ref={articleRef}
-      tabIndex={-1}
+      onTransitionEnd={(event) => {
+        if (
+          event.target === event.currentTarget &&
+          event.propertyName === "--media-card-expansion" &&
+          !expanded
+        ) {
+          setGeometry(null);
+        }
+      }}
+      ref={cardRef}
+      style={{
+        ...style,
+        ...{ "--media-card-expansion": geometry && expanded ? geometry.panelWidth : 0 },
+        width: geometry
+          ? `calc(${geometry.width}px + var(--media-card-expansion) * 1px)`
+          : undefined,
+        minWidth: geometry ? 0 : undefined,
+        maxWidth: geometry ? "none" : undefined,
+      }}
     >
-      {children({
-        expanded,
-        onPreviewClick: (event) => {
-          if (onPreview === undefined || !usesTouchPresentation()) return;
-          event.preventDefault();
-          if (controlledExpanded === undefined) setInternalExpanded(false);
-          onPreview();
-        },
-      })}
+      <div
+        className={cn("w-full", side === "left" && "ml-auto")}
+        ref={contentRef}
+        style={{
+          width: geometry?.contentWidth,
+        }}
+      >
+        {children}
+      </div>
+      <div
+        aria-hidden={!expanded}
+        className={cn(
+          "absolute inset-y-0 w-[calc(var(--control-min-size)*6)] overflow-y-auto overscroll-contain bg-surface-1 p-[var(--space-4)]",
+          !expanded && "invisible",
+        )}
+        data-expandable-panel
+        inert={!expanded}
+        style={
+          side === "right" ? { left: geometry?.contentWidth } : { right: geometry?.contentWidth }
+        }
+      >
+        {panel}
+      </div>
     </article>
   );
 }

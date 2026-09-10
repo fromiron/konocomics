@@ -263,6 +263,7 @@ export function RecommendationsFlow({
     userWorks,
   } = usePersistence();
   const [localPolicies, setLocalPolicies] = useState<RecommendationPolicies | null>(null);
+  const [expandedAnchorId, setExpandedAnchorId] = useState<string | null>(null);
   const introRef = useRef<HTMLDivElement>(null);
   const restoredShelf = useRef<string | undefined>(undefined);
   const [isPolicySaving, setIsPolicySaving] = useState(false);
@@ -1023,8 +1024,14 @@ export function RecommendationsFlow({
     <RecommendationShelfCard
       coverUrl={recommendationCoverUrls.get(entry.workId)}
       entry={entry}
+      expanded={variant === "anchor" && expandedAnchorId === entry.workId}
       key={entry.workId}
       onCoverVisible={() => requestCover(entry.workId)}
+      onExpandedChange={(expanded) =>
+        setExpandedAnchorId((current) =>
+          expanded ? entry.workId : current === entry.workId ? null : current,
+        )
+      }
       onPreview={() => openPreview(entry.workId)}
       resolveTitle={(workId) => worksById.get(workId)?.title}
       variant={variant}
@@ -1245,17 +1252,25 @@ export function RecommendationsFlow({
               className="scroll-mt-[var(--space-4)] md:scroll-mt-[calc(var(--control-min-size)+var(--space-2))]"
               id="recommendation-shelf-anchor"
             />
-            <MediaShelf
-              className="mt-[var(--space-section)] scroll-mt-[var(--space-4)] md:scroll-mt-[calc(var(--control-min-size)+var(--space-2))]"
-              compactHeading
-              controlsPlacement="overlay"
-              description={recommendationStrings.shelves.anchor.description}
-              enableLoop={false}
-              title={recommendationStrings.shelves.anchor.title}
-              trackClassName="!pb-[var(--space-1)]"
+            <div
+              onPointerLeave={(event) => {
+                if (!event.currentTarget.contains(document.activeElement))
+                  setExpandedAnchorId(null);
+              }}
             >
-              {anchorEntries.map((item) => renderShelfCard(item, "anchor"))}
-            </MediaShelf>
+              <MediaShelf
+                className="mt-[var(--space-section)] scroll-mt-[var(--space-4)] md:scroll-mt-[calc(var(--control-min-size)+var(--space-2))]"
+                compactHeading
+                controlsPlacement="overlay"
+                description={recommendationStrings.shelves.anchor.description}
+                enableLoop={false}
+                onPageChange={() => setExpandedAnchorId(null)}
+                title={recommendationStrings.shelves.anchor.title}
+                trackClassName="!pb-[var(--space-1)] has-[[data-expansion-active]]:!snap-none"
+              >
+                {anchorEntries.map((item) => renderShelfCard(item, "anchor"))}
+              </MediaShelf>
+            </div>
 
             <span
               aria-hidden="true"

@@ -328,6 +328,15 @@ Shelf grouping은 presentation-only selector다. main Shelf 사이에는 work ID
 - Discovery Shelf의 resolved 표지는 hover 최종 크기인 30:43 slot을 항상 예약한다. 기본은 같은 slot 중앙을 정확한 원으로 center-crop하고 fine-pointer hover·keyboard `focus-within`에서 4px radius의 전체 직사각형으로 펼친다. 원의 시작 radius는 30:43 frame의 실제 수평·수직 반경(`50% / 34.883721%`)이며 `clip-path`는 240ms linear로 보간해 pill radius 제한 때문에 마지막에 형태 변화가 몰리지 않게 한다. article·cover Link·형제 위치는 상태 전후 고정한다. 카드 표면은 personalized Top 10과 같이 transparent → `--surface-2`로 바꾸고 hover border·title accent는 추가하지 않는다. 문맥 없는 confidence 단독 레이블(`高い`/`ふつう`/`低め`)은 Discovery 카드에서만 생략하며 lead contribution 설명과 Quick Preview는 유지한다. 표지 부재·실패 placeholder는 직사각형과 contain 경로를 유지한다.
 - 추천 카드 hover는 전역 계약대로 border color를 바꾸지 않는다. Completed Shelf는 personalized Top 10처럼 투명한 기본 표면에서 `--surface-2`로만 바뀌며 title accent를 추가하지 않는다. Anchor Shelf와 Featured card는 기존 기본 border·surface를 유지하고 hover 시 border color만 고정한다. keyboard focus 표현은 별도 접근성 상태로 유지한다.
 
+### Anchor Shelf 옆 패널 (2026-09-10 사용자 승인)
+
+- `好きな作品から広げる`의 `ExpandableMediaCard`는 세로 표지 크기와 카드 높이를 유지하면서 설명 패널 폭만큼 실제 article 폭을 늘린다. 뒤쪽 카드도 같은 폭만큼 이동해 이웃 표지를 가리지 않는다. 2026-09-10 후속 사용자 지시로 overlay 안을 대체한다. 한 번에 하나만 열고, 선반 안에서 다음 표지로 이동하는 동안 기존 패널을 유지한 뒤 새 카드로 전환한다.
+- desktop `min-width:768px` + fine pointer + hover에서 200ms 의도 확인 후 연다. 패널 폭은 `--control-min-size × 6`, 높이는 현재 카드 높이이며 기본 오른쪽, 트랙 오른쪽 공간이 부족하면 왼쪽으로 연다. 패널은 트랙 안에 두고 긴 문구는 패널 내부에서 스크롤할 수 있다. 표지 DOM·비율·상세 Link·상시 44px Quick Preview를 유지한다.
+- 패널에는 `好きな作品との接点`과 같은 `generateTasteExplanation(...).positiveReasons[0]` 문장을 표시한다. 좋아한 작품명과 공통 팩터는 해당 contribution에서만 나온다. 별도 추천 산식·목록 정렬·설명 문구 생성 경로를 추가하지 않는다.
+- keyboard focus-visible 진입에서도 열고, 선반 안 포인터 또는 카드 안 포커스가 유지되는 동안 읽을 수 있다. Escape와 바깥 클릭은 포커스를 옮기지 않고 닫는다. 카드 밖으로 포커스가 이동하면 닫고, 한 expanded 카드에 포커스가 있으면 다른 카드의 hover 확장을 막는다. 선반 밖 포인터 이동과 페이지 화살표는 패널을 닫는다.
+- 새 카드가 기존 열린 카드의 뒤에 있으면 왼쪽 패널로 공간을 이어받는다. 확장 방향과 가로 스크롤은 `scroll-padding` 안쪽의 가시 영역을 기준으로 정하며, 단독 진입과 카드 간 전환 모두 펼쳐진 카드 전체가 보이도록 폭 전환에 맞춰 위치를 보정한다. 사용자가 직접 가로 스크롤한 뒤에는 원래 위치로 되돌리지 않는다. 펼친 동안 snap을 일시 해제하고 닫으면 기존 유한 트랙 snap을 복원한다.
+- mobile·coarse pointer는 펼치지 않으며 기존 Quick Preview에서 같은 근거를 확인한다. 패널 공개는 D의 승인된 240ms 직접 피드백이다. article의 `width`만 보간하고 패널은 고정 폭으로 그린 뒤 article overflow로 드러낸다. 표지·문구·control 크기는 보간하지 않는다. reduced-motion에서는 즉시 표시하고 Quick Preview 자체의 진입 모션은 추가하지 않는다.
+
 ### 리스트 동작 계약
 
 - 진입 시: 프로필 입력 해시가 저장된 계산 해시와 다르면 재계산, 같으면 저장된 plan을 표시한다. 표시할 plan이 없는 최초 계산만 200ms 미만이면 로딩 UI를 생략하고, 이상이면 현재 Shelf/card silhouette의 skeleton을 표시한다. 기존 plan을 갱신할 때는 Shelf와 계산 해시를 유지한다. 방침 자동 반영은 제목 줄의 「並べ直しています…」, 수동 갱신은 기존 버튼의 「更新しています…」 상태를 표시한 뒤 성공한 새 plan을 한 번에 교체하며, 실패하면 기존 plan을 보존한다.
@@ -369,10 +378,11 @@ Shelf grouping은 presentation-only selector다. main Shelf 사이에는 work ID
 - [ ] 정책 칩 변경 시 목록이 재계산되고 칩 상태가 Dexie에 저장된다.
 - [ ] 1위 카드 표지는 첫 viewport의 LCP 후보로 eager/high-priority 요청되고 나머지 표지는 lazy loading을 유지한다.
 - [ ] 1위 `target[0]`의 exact-workId metadata만 첫 lane에서 자동 요청하고 나머지는 표지가 실제 viewport에 진입한 뒤 요청한다. 전체 동시 해석은 4개를 넘지 않고 각 결과를 도착 즉시 commit한다. 실제 `<img>` load/error는 기다리지 않으며 expired/mismatched/miss만 갱신하고 fresh exact-workId no-image와 실패 결과는 같은 `workId + ISBN`에서 재요청하지 않는다.
-- [ ] hover/focus로 card 외곽 크기와 형제 위치가 바뀌지 않고 표지 축소분이 reason/action 영역으로 전환되며 Quick Preview가 닫힌 뒤 opener focus가 복원된다.
+- [ ] Featured의 hover/focus로 card 외곽 크기와 형제 위치가 바뀌지 않고 표지 축소분이 reason/action 영역으로 전환되며 Quick Preview가 닫힌 뒤 opener focus가 복원된다.
 - [ ] presentation Shelf를 추가해도 동일 fixture의 canonical Top 10 work ID 순서가 바뀌지 않는다.
 - [ ] 피드백 image banner는 실제 completed/hidden count와 `/taste` CTA를 유지하고, 둘 다 0이면 큰 이미지 배너를 표시하지 않는다.
 - [ ] Discovery 카드는 기본 정원과 hover/focus 직사각형 사이에서 article·cover Link·형제 rect가 변하지 않고, 표면색만 transparent → `--surface-2`로 바뀌며 단독 confidence 레이블을 표시하지 않는다. placeholder는 crop하지 않는다.
+- [ ] Anchor 옆 패널은 contribution의 좋아한 작품·공통 근거를 표시하고, 표지 크기·DOM·카드 높이를 유지하면서 확장 폭만큼 뒤쪽 카드를 이동시켜 다음 표지를 가리지 않는다. 선반 안 연속 hover·keyboard 진입·Escape 닫기·모바일 Quick Preview·reduced-motion이 같은 정보 경로를 보존하며, 오른쪽 끝의 왼쪽 확장 보정은 사용자 직접 스크롤을 덮어쓰지 않는다.
 
 ---
 
