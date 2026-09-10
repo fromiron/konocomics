@@ -50,7 +50,7 @@ describe("SQLite Catalog authority", () => {
     const { root, review } = createAuthorityWithDynamicReview();
     try {
       const before = verifyCatalogAuthority(root);
-      expect(before.opaqueFiles).toBe(13);
+      expect(before.opaqueFiles).toBe(verifyCatalogAuthority(repositoryRoot).opaqueFiles + 1);
       writeFileSync(review, "# Changed authorized evidence panel\n", "utf8");
       expect(verifyCatalogAuthority(root).sourceManifestDigest).not.toBe(
         before.sourceManifestDigest,
