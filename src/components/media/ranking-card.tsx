@@ -28,7 +28,7 @@ type RankingCardProps = Readonly<{
         rankingKind: "editorial-ranking" | "personalized-ranking";
         position: number;
       }>
-    | Readonly<{ variant: "evidence"; rankingKind?: never; position?: never }>
+    | Readonly<{ variant: "evidence" | "unranked"; rankingKind?: never; position?: never }>
   );
 
 export function RankingCard(props: RankingCardProps | EvidencePlaceholderProps) {
@@ -151,7 +151,7 @@ export function RankingCard(props: RankingCardProps | EvidencePlaceholderProps) 
                 requestedSize={400}
                 title={title}
               />
-              {isEvidence ? null : (
+              {position === undefined ? null : (
                 <span
                   aria-hidden="true"
                   className="pointer-events-none absolute right-[var(--space-2)] bottom-[var(--space-2)] grid size-[var(--space-12)] place-items-center rounded-full bg-accent font-display text-[length:var(--font-size-16)] leading-none font-black text-on-accent opacity-0 shadow-[var(--shadow-floating-action)] transition-[transform,opacity] duration-[var(--motion-duration-floating-action)] ease-[var(--motion-ease-direct)] [transform:translateY(var(--space-2))] tabular-nums group-focus-visible/ranking:opacity-100 group-focus-visible/ranking:[transform:translateY(0)] motion-reduce:transition-none motion-reduce:[transform:translateY(0)] [@media(hover:hover)_and_(pointer:fine)]:group-hover/ranking:opacity-100 [@media(hover:hover)_and_(pointer:fine)]:group-hover/ranking:[transform:translateY(0)]"
@@ -188,7 +188,7 @@ export function RankingCard(props: RankingCardProps | EvidencePlaceholderProps) 
                     ? "order-first text-[length:var(--text-caption-size)]"
                     : "line-clamp-2 text-[length:var(--font-size-14)]",
                 )}
-                data-ranking-label={isEvidence ? undefined : "true"}
+                data-ranking-label={variant === "ranking" ? "true" : undefined}
               >
                 {metadata}
               </span>

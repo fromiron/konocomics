@@ -167,6 +167,28 @@ describe("media card anatomy", () => {
     expect(container.querySelector("button")).toBeNull();
   });
 
+  it("opens unranked works without announcing or decorating a rank", () => {
+    const { container } = render(
+      <ul>
+        <RankingCard
+          creators={["著者"]}
+          metadata="作者 著者"
+          metadataAccessibleLabel="作者 著者"
+          title="候補作品"
+          variant="unranked"
+          workId="test-work"
+        />
+      </ul>,
+    );
+
+    expect(
+      screen.getByRole("link", { name: "「候補作品」の作品詳細を見る · 作者 著者" }),
+    ).toBeTruthy();
+    expect(screen.getByRole("listitem").hasAttribute("data-ranking-kind")).toBe(false);
+    expect(screen.getByRole("listitem").hasAttribute("data-ranking-position")).toBe(false);
+    expect(container.querySelector("[data-ranking-hover-position], .ranking-crown")).toBeNull();
+  });
+
   it("reserves a decorative crown for personalized first place without replacing rank text", () => {
     const { container, rerender } = render(<ol />);
     for (const position of [1, 2, 3, 4, 10]) {

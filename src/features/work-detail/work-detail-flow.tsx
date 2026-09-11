@@ -5,7 +5,6 @@ import { useEffect, useMemo, useRef, useState } from "react";
 
 import { coverSourceForSize } from "@/components/cover/CoverImage";
 import { Button, buttonClassName } from "@/components/design-system/button";
-import { MediaPosterCard } from "@/components/media/media-poster-card";
 import { MediaShelf } from "@/components/media/media-shelf";
 import { RankingCard } from "@/components/media/ranking-card";
 import { ReasonChips } from "@/components/media/recommendation-evidence";
@@ -1092,16 +1091,19 @@ function WorkDetailContent({ catalog, work }: Readonly<{ catalog: CatalogV1; wor
           <MediaShelf
             compactHeading
             description={workDetailStrings.related.description}
+            listType="unordered"
             title={workDetailStrings.related.heading}
           >
             {relatedGroups.themeRanked.map((related) => (
-              <MediaPosterCard
+              <RankingCard
                 coverUrl={coverUrls.get(related.id)}
                 creators={related.creators}
                 key={related.id}
+                metadata={coverStrings.creatorLine(related.creators)}
+                metadataAccessibleLabel={coverStrings.creatorLine(related.creators)}
                 onCoverVisible={() => requestCover(related.id)}
-                presentation="cover-overlay"
                 title={related.title}
+                variant="unranked"
                 workId={related.id}
               />
             ))}
@@ -1109,16 +1111,19 @@ function WorkDetailContent({ catalog, work }: Readonly<{ catalog: CatalogV1; wor
           <MediaShelf
             compactHeading
             description={workDetailStrings.sameMood.description}
+            listType="unordered"
             title={workDetailStrings.sameMood.heading}
           >
             {relatedGroups.moodRanked.map((related) => (
-              <MediaPosterCard
+              <RankingCard
                 coverUrl={coverUrls.get(related.id)}
                 creators={related.creators}
                 key={related.id}
+                metadata={coverStrings.creatorLine(related.creators)}
+                metadataAccessibleLabel={coverStrings.creatorLine(related.creators)}
                 onCoverVisible={() => requestCover(related.id)}
-                presentation="cover-overlay"
                 title={related.title}
+                variant="unranked"
                 workId={related.id}
               />
             ))}

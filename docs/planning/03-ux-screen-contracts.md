@@ -439,7 +439,7 @@ Catalog 작품은 추천 근거를 깊이 확인하고 구매(라쿠텐)로 연�
 5. **「あなたとの相性」 섹션** (프로필 존재 시): desktop은 같은 폭의 2열로 왼쪽에 제목·핵심 이유와 보조 포인트·주의점 최대 1, 오른쪽에 「根拠になった作品」 배너를 배치한다. 이유 표현은 아래 계약을 따른다. 2026-09-11 사용자 선택 이미지 1의 회청색 표면·흰 카드 구성을 적용하며 `あなたの Top 10`의 `RankingCard`를 `evidence` variant로 재사용한다. 근거 카드는 §6.9의 실제 Anchor 최대 3개이고 원본 비율 표지·역할·제목 전체가 Catalog 상세 링크다. 순위·왕관은 표시하지 않는다. 후속 사용자 지시에 따라 이 섹션의 「分析の確信度」 레이블과 전용 구분선은 표시하지 않는다. mobile은 이유 다음에 배너를 쌓으며 아래의 실제 근거 개수별 배치를 따른다. 확장 카드는 `完結作から選ぶ`의 표지 왼쪽·제목과 정보 오른쪽 배치를 사용한다. 부족한 개수를 가짜 근거로 채우지 않는다.
 6. 구매 링크 + 가격·재고(ProviderListing, TTL 내) + `Supported by Rakuten Developers`
 7. 같은 작가의 다른 작품 배너: 2026-09-11 사용자 선택 이미지 1의 본문 전체폭 구성. 왼쪽 실제 책, 오른쪽 「{作者}の、もう一冊」·작품명·「作品を見る」를 표시하고 전체 배너가 해당 Catalog 상세로 이동한다. 기존 creator 정규화로 같은 저자임을 확인한 다른 `recommendationEligible` 작품 중 Work ID code-unit 순서의 첫 작품을 택하며 현재 작품·libraryOnly·external을 제외한다. 대상이 없으면 생략한다.
-8. Catalog 작품만 deterministic known factor/theme selector로 구성한 관련/Same Mood Shelf. core 추천 순위는 변경하지 않으며 external에는 factor를 추측하지 않는다.
+8. Catalog 작품만 deterministic known factor/theme selector로 구성한 관련/Same Mood Shelf. 2026-09-11 사용자 지시에 따라 「似た作品」·「同じ雰囲気の作品」은 `あなたの Top 10`과 같은 `RankingCard`의 `unranked` variant를 사용한다. 카드 폭·표지·제목·hover/focus 표현을 공유하고 저자를 본문 아래 metadata로 표시한다. 순위 숫자·왕관·순위 접근성 이름은 없으며 목록은 순서 없는 목록이다. core 추천 순위는 변경하지 않으며 external에는 factor를 추측하지 않는다.
 
 ### 상성 이유 표현 (2026-09-11 사용자 승인)
 
@@ -505,6 +505,7 @@ Catalog 작품은 추천 근거를 깊이 확인하고 구매(라쿠텐)로 연�
 - [ ] 같은 URL을 해당 row가 없는 브라우저에서 열면 local-missing 상태가 되고 provider로 복원하지 않는다.
 - [ ] malformed query는 해당 값으로 ID별 local lookup/provider 요청을 하지 않고, corrupt row는 provider 요청과 questionable 서지 렌더링을 하지 않는다.
 - [ ] 관련 Shelf selector는 동일 입력에서 같은 work ID 순서이고 external 작품에는 표시되지 않는다.
+- [ ] 「似た作品」·「同じ雰囲気の作品」은 Top 10과 같은 카드 컴포넌트의 순위 없는 상태로 표시한다. 표지·제목·저자·상세 링크·키보드 탐색을 유지하며 순위 효과와 순위 안내를 표시하지 않는다.
 - [ ] 정상 API 응답에서도 소개가 없으면 같은 ISBN의 수집 소개를 표시하며, 양쪽에 값이 있는 항목은 라쿠텐 값을 선택한다. 다른 Work·ISBN의 수집 정보는 결합하지 않는다.
 - [ ] 본문 전체폭의 같은 작가 배너가 실제 다른 Catalog 상세로 이동한다. mobile에서도 책과 문구를 나란히 표시하며 가로 넘침·hover 전용 조작이 없다.
 
