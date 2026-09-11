@@ -15,7 +15,7 @@ import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import catalogJson from "@/data/generated/catalog-v1.json";
 import recommendationContextJson from "@/data/generated/recommendation-context-v1.json";
 import { catalogV1Schema } from "@/domain/catalog/schema";
-import { generateTasteExplanation } from "@/domain/explanation";
+import { explanationClusterFor, generateTasteExplanation } from "@/domain/explanation";
 import type { UserWorkRecord } from "@/domain/profile/types";
 import { recommendationContextSchema } from "@/domain/recommendation/context-schema";
 import { scoreWorkCompatibility } from "@/domain/recommendation/rank";
@@ -172,6 +172,49 @@ afterEach(() => {
 });
 
 describe("WorkDetailFlow", () => {
+  it("expands and closes a long synopsis without changing its source text or link", async () => {
+    const readStyle = window.getComputedStyle;
+    const styleSpy = vi.spyOn(window, "getComputedStyle").mockImplementation((...args) => {
+      const style = readStyle(...args);
+      style.lineHeight = "24px";
+      return style;
+    });
+    const heightSpy = vi.spyOn(HTMLElement.prototype, "scrollHeight", "get").mockReturnValue(300);
+    const cached = {
+      ...providerCacheRecord({ commercialFresh: true, metadataFresh: true }),
+      itemCaption:
+        "旅のはじまり。\n仲間との出会い。\n最初の冒険。\n思いがけない再会。\n次の目的地へ。\n物語は続く。",
+    };
+    testState.status = { state: "ready", mode: "indexeddb", warning: null };
+    testState.getProviderCache.mockResolvedValue(cached);
+
+    try {
+      renderDetail();
+      const button = await screen.findByRole("button", {
+        name: workDetailStrings.synopsis.readMore,
+      });
+      const paragraph = document.getElementById(button.getAttribute("aria-controls")!);
+      expect(button.getAttribute("aria-expanded")).toBe("false");
+      expect(paragraph?.textContent).toBe(cached.itemCaption);
+      fireEvent.click(button);
+      expect(button.getAttribute("aria-expanded")).toBe("true");
+      expect(button.textContent).toBe(workDetailStrings.synopsis.readLess);
+      fireEvent.click(button);
+      expect(button.getAttribute("aria-expanded")).toBe("false");
+      expect(paragraph?.textContent).toBe(cached.itemCaption);
+      expect(
+        screen
+          .getByRole("link", {
+            name: workDetailStrings.metadata.sourceOpen(workDetailStrings.synopsis.source.rakuten),
+          })
+          .getAttribute("href"),
+      ).toBe(cached.itemUrl);
+    } finally {
+      styleSpy.mockRestore();
+      heightSpy.mockRestore();
+    }
+  });
+
   it("fills an omitted caption after a successful Rakuten response and links the same author work", async () => {
     const workId = "work-9b42e9cda7743bba0f9b";
     const volume = catalog.volumes.find(
@@ -508,7 +551,7 @@ describe("WorkDetailFlow", () => {
     ).toBe(cached.itemUrl);
   });
 
-  it("renders profile compatibility and resolves its anchor cover", async () => {
+  it("renders a lead compatibility sentence with remaining evidence labels and its anchor cover", async () => {
     testState.userWorks = catalog.works.slice(0, 5).map((work, index) => ({
       workId: work.id,
       readingState: "completed" as const,
@@ -547,12 +590,31 @@ describe("WorkDetailFlow", () => {
 
     const view = renderDetail();
 
+    const heading = screen.getByRole("heading", { name: workDetailStrings.compatibility.heading });
+    const summary = heading.parentElement!;
+    const leadReason = expected.positiveReasons[0]!;
+    expect(summary.querySelector("p")?.textContent).toBe(leadReason.text);
+    const leadAnchorTitle = leadReason.anchorWorkIds
+      .map((workId) => catalog.works.find((work) => work.id === workId)?.title)
+      .find(Boolean);
+    if (leadReason.source === "similarity" && leadAnchorTitle !== undefined) {
+      expect(summary.querySelector("strong")?.textContent).toBe(leadAnchorTitle);
+    }
     expect(
-      screen.getByRole("heading", { name: workDetailStrings.compatibility.heading }),
-    ).toBeTruthy();
-    expected.positiveReasons.forEach((reason) => {
-      expect(screen.getAllByText(reason.text).length).toBeGreaterThan(0);
+      screen.queryByRole("heading", { name: workDetailStrings.compatibility.reasons }),
+    ).toBeNull();
+    expected.positiveReasons.slice(1).forEach((reason) => {
+      const cluster = explanationClusterFor(reason.factorId);
+      const label =
+        cluster === undefined
+          ? explanationLexicon.factorLabels[reason.factorId]
+          : explanationLexicon.clusterLabels[cluster];
+      expect(summary.textContent).toContain(
+        reason.axisPreferenceDirection === "lower" ? reason.text : (label ?? reason.text),
+      );
     });
+    if (expected.caution !== undefined)
+      expect(summary.textContent).toContain(expected.caution.text);
     expect(
       screen.queryByText(workDetailStrings.compatibility.confidence, { exact: false }),
     ).toBeNull();
@@ -567,6 +629,9 @@ describe("WorkDetailFlow", () => {
     expect(evidence?.querySelectorAll("a")).toHaveLength(expected.anchors.length);
     expect(evidence?.querySelector("ul")?.getAttribute("data-evidence-count")).toBe(
       String(expected.anchors.length),
+    );
+    expect(evidence?.querySelectorAll(".work-detail-evidence__details")).toHaveLength(
+      expected.anchors.length === 1 || expected.anchors.length === 3 ? 1 : 0,
     );
     const emptySlots = evidence?.querySelectorAll('li[aria-hidden="true"]') ?? [];
     expect(emptySlots).toHaveLength(3 - expected.anchors.length);

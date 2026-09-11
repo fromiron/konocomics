@@ -864,6 +864,8 @@ export const workDetailStrings = {
   synopsis: {
     heading: "作品紹介",
     unavailable: "作品紹介を取得できませんでした。",
+    readMore: "続きを読む",
+    readLess: "閉じる",
     source: { rakuten: "楽天ブックスの紹介", publisher: "出版社の紹介" },
   },
   factors: {

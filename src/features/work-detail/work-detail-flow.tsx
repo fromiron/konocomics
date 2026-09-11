@@ -68,6 +68,48 @@ function providerNow() {
   return new Date(Date.now()).toISOString();
 }
 
+function WorkSynopsis({ caption }: Readonly<{ caption: string }>) {
+  const paragraphRef = useRef<HTMLParagraphElement>(null);
+  const [expanded, setExpanded] = useState(false);
+  const [canExpand, setCanExpand] = useState(false);
+
+  useEffect(() => {
+    const paragraph = paragraphRef.current;
+    if (paragraph === null) return;
+    const measure = () => {
+      const collapsedHeight = Number.parseFloat(getComputedStyle(paragraph).lineHeight) * 5;
+      setCanExpand(paragraph.scrollHeight > collapsedHeight + 1);
+    };
+    measure();
+    const observer = typeof ResizeObserver === "undefined" ? null : new ResizeObserver(measure);
+    observer?.observe(paragraph);
+    return () => observer?.disconnect();
+  }, []);
+
+  return (
+    <>
+      <p
+        className={`whitespace-pre-line leading-[var(--line-height-body)] text-text${expanded ? "" : " line-clamp-5"}`}
+        id="work-synopsis-content"
+        ref={paragraphRef}
+      >
+        {caption}
+      </p>
+      {canExpand ? (
+        <Button
+          aria-controls="work-synopsis-content"
+          aria-expanded={expanded}
+          className="w-fit"
+          onClick={() => setExpanded((current) => !current)}
+          variant="ghost"
+        >
+          {expanded ? workDetailStrings.synopsis.readLess : workDetailStrings.synopsis.readMore}
+        </Button>
+      ) : null}
+    </>
+  );
+}
+
 function nextProviderExpiry(
   record: ProviderCacheRecord,
   cache: ProviderCacheState,
@@ -365,6 +407,90 @@ function WorkStateControls({
   );
 }
 
+function explanationFactorLabel(factorId: ExplanationFactorId) {
+  const cluster = explanationClusterFor(factorId);
+  return cluster === undefined
+    ? explanationLexicon.factorLabels[factorId]
+    : explanationLexicon.clusterLabels[cluster];
+}
+
+function CompatibilitySummary({
+  catalog,
+  explanation,
+  mobileAnchorFactorLabels,
+}: Readonly<{
+  catalog: CatalogV1;
+  explanation: TasteRecommendationExplanation;
+  mobileAnchorFactorLabels: readonly string[];
+}>) {
+  const leadReason = explanation.positiveReasons[0];
+  const leadText = leadReason?.text ?? recommendationStrings.reasonUnavailable;
+  const anchorTitle =
+    leadReason?.source === "similarity"
+      ? leadReason.anchorWorkIds
+          .map((workId) => catalog.works.find((work) => work.id === workId)?.title)
+          .find((title) => title !== undefined && title !== "")
+      : undefined;
+  const anchorMention = anchorTitle ?? "";
+  const anchorMentionIndex = anchorMention === "" ? -1 : leadText.indexOf(anchorMention);
+  const leadLabel =
+    leadReason === undefined ? undefined : explanationFactorLabel(leadReason.factorId);
+  const additionalReasons = explanation.positiveReasons.slice(1).map((reason) => ({
+    reason,
+    label: explanationFactorLabel(reason.factorId),
+  }));
+  const fullReasons = additionalReasons.filter(
+    ({ reason, label }) => reason.axisPreferenceDirection === "lower" || label === undefined,
+  );
+  const labels = [
+    ...new Set(
+      additionalReasons.flatMap(({ reason, label }) =>
+        reason.axisPreferenceDirection === "lower" || label === undefined || label === leadLabel
+          ? []
+          : [label],
+      ),
+    ),
+  ];
+  const desktopLabelText = labels.join(" · ");
+  const mobileLabelText = labels
+    .filter((label) => !mobileAnchorFactorLabels.includes(label))
+    .join(" · ");
+
+  return (
+    <div className="grid content-start gap-[var(--space-3)] text-[length:var(--text-body-size)] leading-[var(--line-height-body)] text-text">
+      <p className={leadReason === undefined ? "text-text-muted" : undefined}>
+        {anchorMentionIndex < 0 ? (
+          leadText
+        ) : (
+          <>
+            {leadText.slice(0, anchorMentionIndex)}
+            <strong className="font-bold text-text-strong">{anchorMention}</strong>
+            {leadText.slice(anchorMentionIndex + anchorMention.length)}
+          </>
+        )}
+      </p>
+      {fullReasons.map(({ reason }) => (
+        <p key={`${reason.source}:${reason.group}:${reason.factorId}`}>{reason.text}</p>
+      ))}
+      {desktopLabelText === "" ? null : (
+        <p className={desktopLabelText === mobileLabelText ? undefined : "hidden md:block"}>
+          {desktopLabelText}
+        </p>
+      )}
+      {mobileLabelText === "" || desktopLabelText === mobileLabelText ? null : (
+        <p className="md:hidden">{mobileLabelText}</p>
+      )}
+      {explanation.caution === undefined ? null : (
+        <ReasonChips
+          caution={explanation.caution}
+          cautionLabel={workDetailStrings.compatibility.caution}
+          reasons={[]}
+        />
+      )}
+    </div>
+  );
+}
+
 function CompatibilitySection({
   anchorCoverUrls,
   catalog,
@@ -387,6 +513,27 @@ function CompatibilitySection({
           .flatMap((reason) => reason.anchorWorkIds)
       : [],
   );
+  const anchorCards =
+    state.kind !== "ready"
+      ? []
+      : state.explanation.anchors.flatMap((anchor) => {
+          const work = catalog.works.find((candidate) => candidate.id === anchor.workId);
+          if (work === undefined) return [];
+          const factorLabels = state.explanation.positiveReasons
+            .filter(
+              (reason) =>
+                reason.source === "similarity" && reason.anchorWorkIds.includes(anchor.workId),
+            )
+            .flatMap((reason) => {
+              const label = explanationFactorLabel(reason.factorId);
+              return label === undefined ? [] : [label];
+            });
+          return [{ work, factorLabels }];
+        });
+  const showMobileAnchorDetails = anchorCards.length === 1 || anchorCards.length === 3;
+  const mobileAnchorFactorLabels = showMobileAnchorDetails
+    ? (anchorCards[0]?.factorLabels ?? [])
+    : [];
 
   return (
     <section
@@ -396,7 +543,7 @@ function CompatibilitySection({
     >
       <div className="grid min-w-0 content-start gap-[var(--space-6)]">
         <h2
-          className="text-[length:var(--text-page-title-size)] font-bold tracking-tight text-text-strong"
+          className="text-[length:var(--text-section-title-size)] font-bold tracking-tight text-text-strong"
           id="work-compatibility-heading"
         >
           {workDetailStrings.compatibility.heading}
@@ -404,21 +551,14 @@ function CompatibilitySection({
         {state.kind === "unavailable" ? (
           <p>{workDetailStrings.compatibility.unavailable}</p>
         ) : (
-          <div className="grid content-start gap-[var(--space-3)]">
-            <h3 className="text-[length:var(--text-subheading-size)] font-bold text-text-strong">
-              {workDetailStrings.compatibility.reasons}
-            </h3>
-            <ReasonChips
-              caution={state.explanation.caution}
-              cautionLabel={workDetailStrings.compatibility.caution}
-              emptyText={recommendationStrings.reasonUnavailable}
-              presentation="feature-cards"
-              reasons={state.explanation.positiveReasons}
-            />
-          </div>
+          <CompatibilitySummary
+            catalog={catalog}
+            explanation={state.explanation}
+            mobileAnchorFactorLabels={mobileAnchorFactorLabels}
+          />
         )}
       </div>
-      {state.kind !== "ready" || state.explanation.anchors.length === 0 ? null : (
+      {anchorCards.length === 0 ? null : (
         <aside
           aria-labelledby="work-evidence-heading"
           className="work-detail-evidence grid min-w-0 gap-[var(--space-4)] rounded-[var(--radius-card)] p-[var(--space-3)] sm:p-[var(--space-4)]"
@@ -431,34 +571,19 @@ function CompatibilitySection({
           </h3>
           <ul
             className="m-0 grid list-none grid-cols-2 gap-[var(--space-2)] p-0 md:grid-cols-3"
-            data-evidence-count={state.explanation.anchors.length}
+            data-evidence-count={anchorCards.length}
           >
-            {state.explanation.anchors.map((anchor, index) => {
-              const anchorWork = catalog.works.find((work) => work.id === anchor.workId);
-              if (anchorWork === undefined) return null;
-              const isPrimary = primaryAnchorIds.has(anchor.workId);
+            {anchorCards.map(({ work: anchorWork, factorLabels }, index) => {
+              const isPrimary = primaryAnchorIds.has(anchorWork.id);
               const roleLabel = isPrimary
                 ? workDetailStrings.compatibility.primaryAnchor
                 : workDetailStrings.compatibility.supportingAnchor;
-              const factorLabels = state.explanation.positiveReasons
-                .filter(
-                  (reason) =>
-                    reason.source === "similarity" && reason.anchorWorkIds.includes(anchor.workId),
-                )
-                .flatMap((reason) => {
-                  const cluster = explanationClusterFor(reason.factorId);
-                  const label =
-                    cluster === undefined
-                      ? explanationLexicon.factorLabels[reason.factorId]
-                      : explanationLexicon.clusterLabels[cluster];
-                  return label === undefined ? [] : [label];
-                });
               return (
                 <RankingCard
                   className="work-detail-compatibility__anchor-cover"
-                  coverUrl={anchorCoverUrls.get(anchor.workId)}
+                  coverUrl={anchorCoverUrls.get(anchorWork.id)}
                   creators={anchorWork.creators}
-                  key={anchor.workId}
+                  key={anchorWork.id}
                   metadata={
                     <>
                       <span
@@ -467,7 +592,7 @@ function CompatibilitySection({
                       >
                         {roleLabel}
                       </span>
-                      {index === 0 ? (
+                      {index === 0 && showMobileAnchorDetails ? (
                         <span className="work-detail-evidence__details mt-[var(--space-3)] grid gap-[var(--space-3)] leading-[var(--line-height-body)] md:hidden">
                           <span>{coverStrings.creatorLine(anchorWork.creators)}</span>
                           {factorLabels.length === 0 ? null : (
@@ -491,14 +616,14 @@ function CompatibilitySection({
                         ].join(" · ")
                       : roleLabel
                   }
-                  onCoverVisible={() => onAnchorCoverVisible(anchor.workId)}
+                  onCoverVisible={() => onAnchorCoverVisible(anchorWork.id)}
                   title={anchorWork.title}
                   variant="evidence"
-                  workId={anchor.workId}
+                  workId={anchorWork.id}
                 />
               );
             })}
-            {[0, 1, 2].slice(state.explanation.anchors.length).map((slot) => (
+            {[0, 1, 2].slice(anchorCards.length).map((slot) => (
               <RankingCard key={`empty-evidence-${slot}`} variant="evidence-placeholder" />
             ))}
           </ul>
@@ -731,18 +856,6 @@ function WorkDetailContent({ catalog, work }: Readonly<{ catalog: CatalogV1; wor
                 <dd>{recommendationStrings.volumeCount(volumeCount)}</dd>
               </div>
             </dl>
-            {compatibility.kind === "ready" &&
-            compatibility.explanation.positiveReasons[0] !== undefined ? (
-              <section
-                aria-label={workDetailStrings.compatibility.reasons}
-                className="grid gap-[var(--space-content-tight)] border-t border-line/70 pt-[var(--space-3)] md:hidden"
-              >
-                <h2 className="text-[length:var(--font-size-14)] font-bold text-text-strong">
-                  {workDetailStrings.compatibility.reasons}
-                </h2>
-                <p className="text-text">{compatibility.explanation.positiveReasons[0].text}</p>
-              </section>
-            ) : null}
           </header>
 
           {status.state === "degraded" ? (
@@ -775,9 +888,10 @@ function WorkDetailContent({ catalog, work }: Readonly<{ catalog: CatalogV1; wor
               >
                 {workDetailStrings.synopsis.heading}
               </h2>
-              <p className="whitespace-pre-line leading-[var(--line-height-body)] text-text">
-                {bookMetadata.itemCaption ?? workDetailStrings.synopsis.unavailable}
-              </p>
+              <WorkSynopsis
+                caption={bookMetadata.itemCaption ?? workDetailStrings.synopsis.unavailable}
+                key={bookMetadata.itemCaption}
+              />
               {bookMetadata.itemCaption === undefined ||
               bookMetadata.captionSourceUrl === undefined ? null : (
                 <a
