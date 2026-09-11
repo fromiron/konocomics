@@ -227,7 +227,7 @@ CTA 버튼 1개: **「好きなマンガから始める」** → /onboarding.
 4. 근거 작품 `MediaShelf`
 5. 일반 진입에서 확신도가 `normal`일 때만 근거 Shelf 뒤에 두는 coaching banner. CTA는 `/onboarding` 「作品を追加」. `high`, 최초 reveal, 학습/AI 암시는 없다. 현재 profile guard를 통과한 사용자의 최저 확신도가 `normal`이므로 도달 불가능한 `low` UI 상태는 만들지 않는다.
 6. 5개 범주(장르/테마/전개/톤·관계/작화)의 compact summary row. 각 row는 범주 icon, 실제 profile에서 계산한 대표 factor, 조정 상태, 명시적인 「詳細設定」 disclosure를 제공한다. 초기에는 모두 접고 한 번에 한 범주의 상세만 연다. 장르는 분석 전용으로 가로 막대(0~4) + 일본어 레이블만 제공하고 보정 control을 만들지 않는다. 나머지 네 범주의 열린 상세에는 기존 5단 보정 control을 그대로 제공한다.
-7. 보정 전후 같은 recommendation engine을 local에서 실행해 work ID 변화만 보여 주는 preview. network 요청과 별도 추천 산식은 없다.
+7. 같은 최신 Catalog·기록·추천 정책에 페이지에서 처음 읽은 보정 설정과 현재 보정 설정을 각각 적용하는 preview. 동일 recommendation engine의 선두 최대 4개 work ID와 순서만 비교하고, 사용자는 제목·표지·해당 범위의 상태를 본다. 방문 당시 추천 목록을 동결하는 기능이 아니며 새로고침하면 저장된 현재 보정이 새 기준이다. 같으면 현재 목록 하나, 다르면 기준/현재 두 목록, 양쪽 0개면 빈 안내 한 번, 한쪽만 0개면 비교와 빈 쪽 안내를 제공한다. 계산 불가는 빈 결과·변화 없음과 구분하고 작품 정보가 없으면 ID 대신 이름 있는 안내로 해당 자리를 유지한다. network 요청과 별도 추천 산식은 없다.
 8. `UserWorkRecord.updatedAt`과 기존 reasons로 구성한 최근 feedback 요약. 「作品を追加して精度を上げる」 링크는 coaching banner가 숨는 `high` 또는 최초 reveal에서만 유지한다.
 
 ### 막대 규칙
@@ -257,6 +257,7 @@ CTA 버튼 1개: **「好きなマンガから始める」** → /onboarding.
 - radar와 동일한 값은 keyboard/screen reader가 읽을 수 있는 text list로 중복 제공하고 SVG 자체는 장식으로 처리한다.
 - 각 범주의 「詳細設定」은 범주명을 포함한 accessible name, `aria-expanded`, `aria-controls`, visible focus를 가진 44px 이상 button이다. 접힌 상세의 control은 accessibility tree에서 제외한다.
 - 보정 선택은 `「{factor}」のおすすめへの反映を設定` 형식의 이름을 가진 radiogroup이며 각 선택은 44px 이상 target, visible label, outline/filled marker, `aria-checked`, visible focus를 제공한다. 선택 상태는 색만으로 전달하지 않는다. 미확인 막대는 가짜 0을 넣지 않고, 축 이름과 「まだ分析中」을 함께 읽는 비수치 group 상태로 노출한다.
+- 미리보기에서 현재 목록은 같은 컴포넌트 위치·작품 key를 유지한다. 갱신 상태 문장만 `aria-live`로 알리고 전체 작품 목록을 반복 낭독하거나 보정 radio의 focus·스크롤을 강제로 이동하지 않는다. 사용자에게 raw work ID를 출력하지 않는다.
 - reveal 애니메이션은 정보 추가 없음 — reduced-motion 시 즉시 완성 상태.
 
 ### 수용 기준
@@ -269,13 +270,13 @@ CTA 버튼 1개: **「好きなマンガから始める」** → /onboarding.
 - [ ] 장르 상세은 desktop 2열/mobile 1열 meter grid이며 radiogroup이 없다. 다른 네 범주의 5단 보정 control에는 영향이 없다.
 - [ ] 보정 radiogroup은 반복 segmented container나 선택 pill 없이 marker + label로 표시되고, 선택값은 filled marker와 text weight로도 구분된다. `除外` warning은 선택 시에만 표시된다.
 - [ ] 열린 보정 범주는 desktop에서 `分析した好み` / `おすすめへの反映` 열 제목과 divider, mobile에서 행별 `おすすめへの反映` label을 제공한다. workspace heading과 설명은 분석값과 추천 설정을 별개로 설명한다.
-- [ ] radio 변경 전후 해당 FactorBar의 `aria-valuenow`와 시각 길이는 동일하며, 막대 highlight 대신 구체적인 저장 `aria-live` message와 recommendation preview가 실제 영향을 전달한다.
+- [ ] radio 변경 전후 해당 FactorBar의 `aria-valuenow`와 시각 길이는 동일하며, 막대 highlight 대신 구체적인 저장 `aria-live` message와 선두 최대 4작품의 recommendation preview가 해당 표시 범위의 영향을 전달한다.
 - [ ] 열린 범주의 모든 기존 5단 보정 control을 keyboard로 접근할 수 있고 접고 다시 열어도 값이 유지된다.
 - [ ] 보정 칩 변경 → Dexie 반영 → /recommendations 재진입 시 추천이 변한다.
 - [ ] 미확인 축이 0값 축과 시각·접근성 DOM 시맨틱 모두에서 구분된다. 실제 스크린리더 낭독 검증은 제품 완료 후 선택적 접근성 감사 범위다.
 - [ ] 상위 취향 3개 각각에 근거 제목이 표시된다.
 - [ ] 일반 진입의 `normal` coaching banner는 근거 Shelf 뒤에서 `/onboarding` CTA와 DOM 문구만 사용하고, 최근 feedback의 동일 목적 링크를 중복하지 않는다. `high`와 최초 reveal에서는 숨긴다. 도달 불가능한 `low` UI fixture는 추가하지 않는다.
-- [ ] 보정 preview의 before/after work ID가 동일 engine input에서 결정론적으로 계산되고 영속 추천 결과를 URL이나 Router context에 저장하지 않는다.
+- [ ] 보정 preview의 before/after work ID가 같은 최신 기록·정책에 각 보정 설정을 적용해 결정론적으로 계산되고 영속 추천 결과를 URL이나 Router context에 저장하지 않는다. 동일/변경/양쪽 빈 목록/한쪽 빈 목록/계산 불가를 구분하며 사용자 표시는 제목·표지·선두 최대 4작품의 상태다.
 
 ---
 

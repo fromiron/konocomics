@@ -19,7 +19,7 @@
 - `veryLike | like | auto | less | exclude`를 축소하지 않음
 - 분석 신뢰도는 기존 정성 label 사용
 - 이미지의 92% 같은 수치는 표시하지 않음
-- 추천 변화 preview는 같은 recommendation engine을 local에서 재실행해 work ID 변화만 표시
+- 추천 변화 preview는 같은 최신 Catalog·기록·정책에 방문 시 처음 읽은 보정과 현재 보정을 각각 적용한 동일 engine의 선두 최대 4개 ID·순서를 비교한다. 표시는 제목·표지·범위를 명시한 상태이며 ID를 사용자에게 노출하지 않는다. 같으면 현재 목록 하나, 달라지면 두 목록, 양쪽 0개는 빈 안내 한 번, 한쪽 0개는 비교 유지, 계산 불가는 별도 안내다. 현재 목록의 컴포넌트 위치·작품 key와 조작 focus를 유지한다
 - feedback history가 별도 event log가 아니므로 `UserWorkRecord.updatedAt`과 reasons로 최근 변경을 구성
 
 ## 제안 컴포넌트
@@ -61,7 +61,7 @@ TasteFlow
 3. radar component 구현 + accessible text alternative
 4. representative anchor works를 MediaShelf로 표시
 5. workspace를 「おすすめを調整」로 명명하고 분석값은 불변이며 설정만 추천에 반영된다는 설명을 제공한다. 5개 범주의 compact summary row를 먼저 표시하고 명시적인 「詳細設定」 disclosure로 한 범주의 상세만 연다. 장르는 분석 전용 desktop 2열/mobile 1열 meter grid를 사용하고 adjustment control을 추가하지 않는다. 나머지 네 범주의 desktop 상세은 `分析した好み` / `おすすめへの反映` 열과 divider로 분석/설정을 분리하고, mobile은 각 FactorBar 아래 visible 반영 label을 둔다. 기존 5단 radiogroup은 반복 segmented box 대신 unboxed marker + label 행으로 표시한다. `除外`는 구분선 뒤에 두고 선택될 때만 warning token을 사용한다.
-6. adjustment 변경 시 preview를 memoized/debounced local 계산
+6. adjustment 변경 시 preview를 기존 memoized local 계산으로 갱신한다. 별도 debounce·추천 목록 영속화는 추가하지 않는다. 기준은 보정 설정만 동결하며 새로고침 후 현재 저장값이 새 기준이다
 7. persistence는 현재 save API 유지; network 요청 없음
 8. recent feedback는 지원되는 records만 표시하고 empty state 제공
 

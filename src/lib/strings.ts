@@ -572,7 +572,7 @@ export const tasteStrings = {
   modeDescriptions: {
     summary: "現在の分析をグループごとに確認できます。",
     adjust:
-      "分析結果は変わりません。設定は自動保存され、次のおすすめにだけ反映されます。「自動」は分析結果に合わせます。",
+      "分析結果は変わりません。設定は自動保存され、次のおすすめにだけ反映されます。「自動」は分析結果に合わせます。結果は下の比較で確認できます。",
   },
   groupFactorSummary: (labels: readonly string[], remaining: number) =>
     remaining > 0 ? `${labels.join("、")} ほか${String(remaining)}項目` : labels.join("、"),
@@ -603,14 +603,16 @@ export const tasteStrings = {
   },
   adjustmentSaved: (factorLabel: string, optionLabel: string) =>
     `「${factorLabel}」のおすすめへの反映を「${optionLabel}」に変更しました。`,
-  previewHeading: "好み調整後のおすすめ変化",
-  previewDescription: "同じおすすめ計算で、ページを開いた時と現在の work ID を比較します。",
-  previewBefore: "ページを開いた時",
-  previewAfter: "現在の調整",
+  previewHeading: "おすすめへの反映を比較",
+  previewDescription:
+    "今の記録とおすすめ方針に、それぞれの反映設定を適用した結果です。先頭の最大4作品を比べます。",
+  previewBefore: "開いたときの反映設定で",
+  previewAfter: "現在の反映設定で",
   previewEmpty: "表示できる候補はありません。",
   previewUnavailable: "おすすめの変化を計算できませんでした。",
-  previewUnchanged: "おすすめ順に変化はありません。",
-  previewChanged: "おすすめ順に変化があります。",
+  previewWorkUnavailable: "この作品の情報を表示できません。",
+  previewUnchanged: "先頭の最大4作品に変化はありません。",
+  previewChanged: "先頭の最大4作品の顔ぶれや並びが変わりました。",
   recentFeedbackHeading: "最近の記録",
   feedbackLabels: {
     favorite: "大好き",

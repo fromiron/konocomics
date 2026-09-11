@@ -249,9 +249,9 @@ function WorkPreviewList({
             return (
               <li className="min-w-0" key={workId}>
                 {work === undefined ? (
-                  <code className="text-[length:var(--text-caption-size)] text-text-strong [overflow-wrap:anywhere]">
-                    {workId}
-                  </code>
+                  <p className="text-[length:var(--text-caption-size)] text-text-muted">
+                    {tasteStrings.previewWorkUnavailable}
+                  </p>
                 ) : (
                   <Link
                     aria-label={mediaStrings.openDetails(work.title)}
@@ -272,7 +272,6 @@ function WorkPreviewList({
                     <strong className="line-clamp-2 text-[length:var(--font-size-12)] leading-tight text-text-strong">
                       {work.title}
                     </strong>
-                    <code className="sr-only">{workId}</code>
                   </Link>
                 )}
               </li>
@@ -324,19 +323,25 @@ export function RecommendationDiffPreview({
           {tasteStrings.previewDescription}
         </p>
       </div>
-      {available ? (
+      {available && before.length === 0 && after.length === 0 ? (
+        <p className="text-text-muted">{tasteStrings.previewEmpty}</p>
+      ) : available ? (
         <div className="taste-recommendation-preview__body grid gap-[var(--space-content)]">
           <div className="taste-recommendation-preview__columns grid grid-cols-1 items-start gap-[var(--space-content-loose)] md:grid-cols-2">
-            <WorkPreviewList
-              coverUrls={coverUrls}
-              ids={before}
-              label={tasteStrings.previewBefore}
-              onCoverVisible={onCoverVisible}
-              worksById={worksById}
-            />
+            {unchanged ? null : (
+              <WorkPreviewList
+                coverUrls={coverUrls}
+                ids={before}
+                key="baseline"
+                label={tasteStrings.previewBefore}
+                onCoverVisible={onCoverVisible}
+                worksById={worksById}
+              />
+            )}
             <WorkPreviewList
               coverUrls={coverUrls}
               ids={after}
+              key="current"
               label={tasteStrings.previewAfter}
               onCoverVisible={onCoverVisible}
               worksById={worksById}

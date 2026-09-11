@@ -12,6 +12,7 @@ import type {
   UserWorkRecord,
 } from "@/domain/profile/types";
 import { TasteFlow } from "@/features/taste/taste-flow";
+import { RecommendationDiffPreview } from "@/features/taste/taste-insights";
 import { tasteStrings } from "@/lib/strings";
 import { createTestAxes, createTestCatalog, createTestWork } from "../../helpers/catalog";
 
@@ -163,6 +164,56 @@ afterEach(() => {
 });
 
 describe("TasteFlow", () => {
+  it.each([
+    { before: ["work-6"], after: ["work-6"], lists: 1, message: tasteStrings.previewUnchanged },
+    {
+      before: ["work-6", "work-7"],
+      after: ["work-7", "work-6"],
+      lists: 2,
+      message: tasteStrings.previewChanged,
+    },
+    { before: [], after: [], lists: 0, message: tasteStrings.previewEmpty },
+    { before: [], after: ["work-6"], lists: 2, message: tasteStrings.previewChanged },
+    { before: ["work-6"], after: [], lists: 2, message: tasteStrings.previewChanged },
+    { before: null, after: ["work-6"], lists: 0, message: tasteStrings.previewUnavailable },
+    {
+      before: ["missing-work"],
+      after: ["missing-work"],
+      lists: 1,
+      message: tasteStrings.previewUnchanged,
+    },
+  ])(
+    "distinguishes preview results without duplicate lists or raw IDs: $before → $after",
+    ({ before, after, lists, message }) => {
+      const works = [6, 7].map((number) => ({
+        ...createTestWork({ id: `work-${String(number)}` }),
+        title: `作品${String(number)}`,
+      }));
+      const { container } = render(
+        <RecommendationDiffPreview
+          after={after}
+          before={before}
+          coverUrls={new Map()}
+          onCoverVisible={() => undefined}
+          worksById={new Map(works.map((work) => [work.id, work]))}
+        />,
+      );
+
+      expect(screen.queryAllByRole("list")).toHaveLength(lists);
+      expect(screen.getAllByText(message)).toHaveLength(1);
+      expect(container.querySelector("code")).toBeNull();
+      expect(screen.queryByText("missing-work")).toBeNull();
+      if (after?.includes("missing-work")) {
+        expect(screen.getByText(tasteStrings.previewWorkUnavailable)).toBeTruthy();
+        expect(screen.queryByRole("link")).toBeNull();
+      }
+      if (lists === 0) {
+        expect(screen.queryByText(tasteStrings.previewUnchanged)).toBeNull();
+        expect(screen.queryByText(tasteStrings.previewChanged)).toBeNull();
+      }
+    },
+  );
+
   it("shows the evidence-ranked representative five works", async () => {
     testState.userWorks = [
       ...testState.userWorks,
@@ -331,11 +382,7 @@ describe("TasteFlow", () => {
 
     expect(await screen.findByRole("heading", { name: "あなたの Manga DNA" })).toBeTruthy();
     expect(screen.getByRole("heading", { name: "おすすめを調整" })).toBeTruthy();
-    expect(
-      screen.getByText(
-        "分析結果は変わりません。設定は自動保存され、次のおすすめにだけ反映されます。「自動」は分析結果に合わせます。",
-      ),
-    ).toBeTruthy();
+    expect(screen.getByText(tasteStrings.modeDescriptions.adjust)).toBeTruthy();
     expect(container.querySelector(".taste-page--with-action")).toBeNull();
     expect(container.querySelector("main")?.classList.contains("page-entry-b")).toBe(true);
     const radar = screen.getByRole("region", { name: "好みの分布" });
@@ -443,10 +490,10 @@ describe("TasteFlow", () => {
         .closest("label")
         ?.className.includes("border-l"),
     ).toBe(true);
-    const beforePreview = screen.getByRole("region", { name: "ページを開いた時" });
-    const afterPreview = screen.getByRole("region", { name: "現在の調整" });
-    expect(within(beforePreview).getByText("work-6")).toBeTruthy();
-    expect(within(afterPreview).getByText("work-6")).toBeTruthy();
+    expect(screen.queryByRole("region", { name: tasteStrings.previewBefore })).toBeNull();
+    const afterPreview = screen.getByRole("region", { name: tasteStrings.previewAfter });
+    expect(within(afterPreview).getByText("作品6")).toBeTruthy();
+    expect(within(afterPreview).queryByText("work-6")).toBeNull();
     fireEvent.click(within(strategyGroup).getByRole("radio", { name: "除外" }));
 
     await waitFor(() => {
@@ -473,9 +520,11 @@ describe("TasteFlow", () => {
           ?.getAttribute("style"),
       ).toBe(strategyMeterTransformBeforeAdjustment);
       expect(container.querySelector(".taste-factor-bar--highlighted")).toBeNull();
-      expect(within(beforePreview).getByText("work-6")).toBeTruthy();
-      expect(within(afterPreview).queryByText("work-6")).toBeNull();
-      expect(within(afterPreview).getByText("work-7")).toBeTruthy();
+      const beforePreview = screen.getByRole("region", { name: tasteStrings.previewBefore });
+      expect(within(beforePreview).getByText("作品6")).toBeTruthy();
+      expect(within(afterPreview).queryByText("作品6")).toBeNull();
+      expect(within(afterPreview).getByText("作品7")).toBeTruthy();
+      expect(screen.getByRole("region", { name: tasteStrings.previewAfter })).toBe(afterPreview);
     });
   });
 
