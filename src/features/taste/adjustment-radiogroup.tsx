@@ -29,7 +29,7 @@ export function AdjustmentRadiogroup({
   return (
     <ChoiceChipRadioGroup
       aria-label={tasteStrings.adjustmentGroupLabel(factorLabel)}
-      className="taste-adjustment-group flex w-full flex-nowrap items-stretch justify-between gap-[var(--space-content-tight)] overflow-x-auto overscroll-x-contain bg-transparent p-0 [scrollbar-width:none] [&::-webkit-scrollbar]:hidden"
+      className="taste-adjustment-group flex w-full flex-nowrap items-stretch justify-between gap-[var(--space-content-tight)] overflow-x-auto overscroll-x-contain bg-transparent p-[var(--space-1)] [scrollbar-width:none] [&::-webkit-scrollbar]:hidden"
       name={`taste-adjustment-${factorId}`}
       onValueChange={onChange}
       value={value}

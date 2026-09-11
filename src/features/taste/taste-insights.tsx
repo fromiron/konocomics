@@ -110,7 +110,7 @@ export function DnaRadarChart({ axes }: Readonly<Pick<MangaDnaSummary, "axes">>)
           {canDrawRadar ? (
             <svg
               aria-hidden="true"
-              className="w-full justify-self-center overflow-visible"
+              className="w-full max-w-[calc(var(--layout-width-taste)/2)] justify-self-center overflow-visible"
               focusable="false"
               viewBox={`0 0 ${String(RADAR_VIEWBOX_WIDTH)} ${String(RADAR_VIEWBOX_HEIGHT)}`}
             >

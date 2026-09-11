@@ -549,7 +549,7 @@ export const tasteStrings = {
     low: "低め(データ収集中)",
   },
   anchorsHeading: "好みを代表する5作品",
-  radarHeading: "好みの分布",
+  radarHeading: "代表的な軸の傾向",
   radarPending: "確認できる好みの軸を分析しています。",
   radarAxisSummary: (label: string, value: string) => `${label}：${value}`,
   topPreferencesHeading: "あなたの上位の好み",
@@ -578,7 +578,10 @@ export const tasteStrings = {
     remaining > 0 ? `${labels.join("、")} ほか${String(remaining)}項目` : labels.join("、"),
   groupAdjustmentAuto: "すべて自動",
   groupAdjustmentCount: (count: number) => `${String(count)}項目を調整中`,
-  groupAnalysisCount: (count: number) => `${String(count)}項目を分析`,
+  groupAnalysisCount: (count: number) => `分析のみ（${String(count)}項目）`,
+  groupAnalysisDetails: "内訳を見る",
+  groupAnalysisDetailsLabel: (title: string, open: boolean) =>
+    open ? `${title}の分析の内訳を閉じる` : `${title}の分析の内訳を見る`,
   groupDetails: "詳細設定",
   groupClose: "閉じる",
   groupDetailsLabel: (title: string, open: boolean) =>

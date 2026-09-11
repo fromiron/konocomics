@@ -57,13 +57,13 @@ TasteFlow
 ## 구현 단계
 
 1. 기존 DNA summary output snapshot test 고정
-2. top factors와 qualitative confidence를 hero 영역으로 이동한다. mobile `<768` 상위 취향은 3열·가로 snap이 아니라 순위 1열 행(레이블 14px 최대 2줄, 강도 16px nowrap, 근거 제목 1–2줄)이고, `>=768`만 기존 3열 카드와 28px 강도를 유지한다. Reveal A는 행 단위다.
-3. radar component 구현 + accessible text alternative
-4. representative anchor works를 MediaShelf로 표시
-5. workspace를 「おすすめを調整」로 명명하고 분석값은 불변이며 설정만 추천에 반영된다는 설명을 제공한다. 5개 범주의 compact summary row를 먼저 표시하고 명시적인 「詳細設定」 disclosure로 한 범주의 상세만 연다. 장르는 분석 전용 desktop 2열/mobile 1열 meter grid를 사용하고 adjustment control을 추가하지 않는다. 나머지 네 범주의 desktop 상세은 `分析した好み` / `おすすめへの反映` 열과 divider로 분석/설정을 분리하고, mobile은 각 FactorBar 아래 visible 반영 label을 둔다. 기존 5단 radiogroup은 반복 segmented box 대신 unboxed marker + label 행으로 표시한다. `除外`는 구분선 뒤에 두고 선택될 때만 warning token을 사용한다.
+2. 전체 Taste shell은 기존 960px 상한을 사용한다. mobile `<768` 상위 취향은 순위 1열 행이다. 첫 줄에 순위·레이블 14px 최대 2줄·강도 16px nowrap을 두고 다음 줄에 근거 제목 1–2줄을 표시한다. `>=768`의 3열 카드·28px 강도와 행 단위 Reveal A를 유지한다. 요약/레이더는 1024px부터 2열이며 그 아래에서는 쌓아 강도 문구 겹침을 막는다.
+3. 「代表的な軸の傾向」 radar + accessible text alternative. 차트 최대폭은 기존 Taste 폭의 절반(480px)이며 SVG 좌표·대표 축·글자 크기를 유지한다
+4. representative anchor works를 기존 MediaShelf로 표시한다. 390px에는 두 작품과 다음 표지 일부, 320px에는 한 작품과 다음 작품 일부를 보여 준다. 마지막 작품까지 키보드 이동과 전체 focus ring을 유지한다
+5. workspace를 「おすすめを調整」로 명명하고 분석값은 불변이며 설정만 추천에 반영된다는 설명을 제공한다. 5개 범주의 compact summary row를 먼저 표시하고 한 범주의 상세만 연다. 분석 전용 장르는 「分析のみ（10項目）」와 「内訳を見る」 disclosure, desktop 2열/mobile 1열 meter grid를 사용하며 adjustment control을 추가하지 않는다. 나머지 네 범주는 「詳細設定」을 사용하고, desktop 상세은 `分析した好み` / `おすすめへの反映` 열과 divider, mobile은 각 FactorBar 아래 visible 반영 label을 둔다. 기존 5단 radiogroup은 unboxed marker + label 행으로 표시한다. `除外`는 구분선 뒤에 두고 선택될 때만 warning token을 사용한다. URL 범주 변경에 disclosure를 다시 마운트하지 않는다
 6. adjustment 변경 시 preview를 기존 memoized local 계산으로 갱신한다. 별도 debounce·추천 목록 영속화는 추가하지 않는다. 기준은 보정 설정만 동결하며 새로고침 후 현재 저장값이 새 기준이다
 7. persistence는 현재 save API 유지; network 요청 없음
-8. recent feedback는 지원되는 records만 표시하고 empty state 제공
+8. recent feedback는 지원되는 records만 표시하고 empty state를 제공한다. 제목은 미리보기와 같은 subheading 크기(desktop 20px/mobile 16px)를 사용한다
 
 ## 이미지에서 제거/교정
 

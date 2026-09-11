@@ -236,11 +236,11 @@ function AnchorStrip({
       compactHeading
       listType="unordered"
       title={tasteStrings.anchorsHeading}
-      trackClassName="pt-[var(--space-content-tight)]"
+      trackClassName="-mx-[var(--space-1)] p-[var(--space-1)]"
     >
       {anchors.map((work) => (
         <li
-          className="relative w-[calc((100%-(var(--space-content-loose)*4))/5)] min-w-[10.5rem] snap-start"
+          className="relative w-[calc((100%-(var(--space-content-loose)*2)-var(--space-8))/2)] min-w-[calc(var(--space-12)*3)] snap-start md:w-[calc((100%-(var(--space-content-loose)*4))/5)]"
           key={work.id}
         >
           <Link
@@ -313,15 +313,15 @@ function TopPreferenceCard({
   });
   const label = factorLabel(preference.factorId);
   const cardClassName =
-    "taste-top-card grid min-w-0 grid-cols-[auto_minmax(0,1fr)] items-start gap-x-[var(--space-content)] gap-y-[var(--space-content-tight)] border-t border-line/70 px-0 pt-[var(--space-3)] pb-[var(--space-2)] text-left md:flex md:h-full md:flex-col md:items-start";
+    "taste-top-card grid min-w-0 grid-cols-[auto_minmax(0,1fr)_auto] items-start gap-x-[var(--space-content)] gap-y-[var(--space-content-tight)] border-t border-line/70 px-0 pt-[var(--space-3)] pb-[var(--space-2)] text-left md:flex md:h-full md:flex-col md:items-start";
 
   const content = (
     <>
       <span className="taste-top-card__rank font-display text-[length:var(--text-subheading-size)] leading-none text-text-muted md:hidden">
         {String(index + 1)}
       </span>
-      <div className="grid min-w-0 gap-[var(--space-content-tight)] md:contents">
-        <span className="flex items-center gap-[var(--space-content-tight)] text-text-muted">
+      <div className="contents">
+        <span className="flex min-w-0 items-center gap-[var(--space-content-tight)] text-text-muted">
           <TopPreferenceIcon preference={preference} />
           <h3
             className={cn(
@@ -338,7 +338,7 @@ function TopPreferenceCard({
         <strong className="taste-top-card__level shrink-0 whitespace-nowrap font-display text-[length:var(--text-subheading-size)] leading-none text-text-strong md:text-[length:var(--font-size-28)]">
           {tasteStrings.factorValue(preference.value)}
         </strong>
-        <p className="mt-auto line-clamp-2 min-h-[calc(var(--font-size-12)*var(--line-height-body)*2)] text-[length:var(--font-size-12)] leading-[var(--line-height-body)] text-text-muted">
+        <p className="col-span-2 col-start-2 line-clamp-2 text-[length:var(--font-size-12)] leading-[var(--line-height-body)] text-text-muted md:mt-auto md:min-h-[calc(var(--font-size-12)*var(--line-height-body)*2)]">
           {tasteStrings.topPreferenceEvidence(evidenceWorks.map((work) => work.title))}
         </p>
       </div>
@@ -464,13 +464,21 @@ function FactorGroup<FactorId extends ExplanationFactorId>({
           <Button
             aria-controls={detailsId}
             aria-expanded={open}
-            aria-label={tasteStrings.groupDetailsLabel(title, open)}
+            aria-label={
+              isAnalysisOnly
+                ? tasteStrings.groupAnalysisDetailsLabel(title, open)
+                : tasteStrings.groupDetailsLabel(title, open)
+            }
             className="shrink-0 gap-[var(--space-content-tight)] px-[var(--space-2)] text-[length:var(--font-size-12)] font-bold text-text-strong"
             onClick={() => onOpenChange(!open)}
             type="button"
             variant="ghost"
           >
-            {open ? tasteStrings.groupClose : tasteStrings.groupDetails}
+            {open
+              ? tasteStrings.groupClose
+              : isAnalysisOnly
+                ? tasteStrings.groupAnalysisDetails
+                : tasteStrings.groupDetails}
             <ChevronDownIcon
               aria-hidden="true"
               className={cn(
@@ -572,12 +580,13 @@ function FactorPanels({
   const narrative = summary.axes.filter((preference) => NARRATIVE_IDS.has(preference.factorId));
   const tone = summary.axes.filter((preference) => TONE_IDS.has(preference.factorId));
   const art = summary.axes.filter((preference) => ART_IDS.has(preference.factorId));
-  const [openGroup, setOpenGroup] = useState<CoverageGroup | null>(group ?? null);
+  const [localOpenGroup, setLocalOpenGroup] = useState<CoverageGroup | null>(group ?? null);
+  const openGroup = onGroupChange === undefined ? localOpenGroup : (group ?? null);
 
   const setGroupOpen = (candidate: CoverageGroup, open: boolean) => {
     const nextGroup = open ? candidate : null;
-    setOpenGroup(nextGroup);
-    onGroupChange?.(nextGroup ?? undefined);
+    if (onGroupChange === undefined) setLocalOpenGroup(nextGroup);
+    else onGroupChange(nextGroup ?? undefined);
   };
 
   return (
@@ -728,7 +737,9 @@ function RecentFeedbackSummary({
       aria-labelledby="taste-negative-heading"
     >
       <header className="flex flex-wrap items-center justify-between gap-[var(--space-content)]">
-        <h2 id="taste-negative-heading">{tasteStrings.recentFeedbackHeading}</h2>
+        <h2 className="text-[length:var(--text-subheading-size)]" id="taste-negative-heading">
+          {tasteStrings.recentFeedbackHeading}
+        </h2>
         {showAddWorksLink ? (
           <Link
             className="taste-add-link interactive-press inline-flex min-h-[var(--control-min-size)] items-center font-bold text-text-strong underline underline-offset-4 transition-[opacity,transform] duration-[var(--motion-duration-feedback)] ease-[var(--motion-ease-direct)] active:scale-[0.97] motion-reduce:transform-none"
@@ -800,6 +811,29 @@ export function TasteFlow({
   const [message, setMessage] = useState("");
   const [errorMessage, setErrorMessage] = useState("");
   const messageTimer = useRef<number | null>(null);
+  const snackbarRef = useRef<HTMLParagraphElement>(null);
+  const keepFocusAboveSnackbar = useCallback(() => {
+    const snackbar = snackbarRef.current;
+    const focused = document.activeElement;
+    if (
+      !snackbar?.textContent ||
+      !(focused instanceof HTMLElement) ||
+      !focused.closest(".taste-page")
+    )
+      return;
+    const target = focused.closest("label") ?? focused;
+    const targetRect = target.getBoundingClientRect();
+    const snackbarRect = snackbar.getBoundingClientRect();
+    if (
+      targetRect.bottom > snackbarRect.top &&
+      targetRect.top < snackbarRect.bottom &&
+      targetRect.right > snackbarRect.left &&
+      targetRect.left < snackbarRect.right
+    ) {
+      target.scrollIntoView?.({ block: "center", inline: "nearest" });
+    }
+  }, []);
+  useEffect(keepFocusAboveSnackbar, [keepFocusAboveSnackbar, message]);
   const saveSequence = useRef(0);
   const revealDecision = useRef<RevealExperience | null>(null);
   const revealQueryConsumedRef = useRef(false);
@@ -1021,7 +1055,7 @@ export function TasteFlow({
     revealExperience === null
   ) {
     return (
-      <main className="taste-page taste-page--loading mx-auto grid min-h-dvh w-[min(100%,var(--layout-width-media))] place-items-center px-[var(--layout-page-padding)] py-[var(--layout-page-block-start)] text-text-muted">
+      <main className="taste-page taste-page--loading mx-auto grid min-h-dvh w-[min(100%,var(--layout-width-taste))] place-items-center px-[var(--layout-page-padding)] py-[var(--layout-page-block-start)] text-text-muted">
         <p aria-live="polite">{tasteStrings.loading}</p>
       </main>
     );
@@ -1031,7 +1065,7 @@ export function TasteFlow({
     <LazyMotion features={domAnimation} strict>
       <main
         className={cn(
-          "taste-page mx-auto min-h-dvh w-[min(100%,var(--layout-width-media))] px-[var(--layout-page-padding)] pt-[var(--layout-page-block-start)] pb-[var(--space-section)] text-text",
+          "taste-page mx-auto min-h-dvh w-[min(100%,var(--layout-width-taste))] px-[var(--layout-page-padding)] pt-[var(--layout-page-block-start)] pb-[var(--space-section)] text-text",
           revealExperience.entry &&
             "taste-page--with-action pb-[var(--layout-taste-action-clearance)]",
           !revealExperience.entry &&
@@ -1039,8 +1073,9 @@ export function TasteFlow({
             "page-entry-b motion-safe:animate-[page-entry-b-enter_var(--motion-duration-page)_var(--motion-ease-direct)_both]",
         )}
         onAnimationEnd={pageEntryMotion.onAnimationEnd}
+        onFocus={keepFocusAboveSnackbar}
       >
-        <header className="taste-header mb-[var(--space-section)] grid items-stretch gap-[var(--space-3)] md:grid-cols-[minmax(0,0.95fr)_minmax(0,1.05fr)]">
+        <header className="taste-header mb-[var(--space-section)] grid items-stretch gap-[var(--space-3)] lg:grid-cols-[minmax(0,1.1fr)_minmax(0,0.9fr)]">
           <div className="grid content-start gap-[var(--space-content)] md:grid-rows-[auto_1fr]">
             <div className="taste-header__copy grid content-center gap-[var(--space-content-tight)] py-[var(--space-content)]">
               <p className="taste-header__eyebrow text-[length:var(--text-caption-size)] font-bold tracking-[0.08em] text-text-muted">
@@ -1134,7 +1169,6 @@ export function TasteFlow({
               animateReveal={revealExperience.animate}
               factorRevealReady={factorRevealReady}
               group={group}
-              key={group ?? "collapsed"}
               onAdjustment={updateAdjustment}
               onGroupChange={onGroupChange}
               summary={summary}
@@ -1176,6 +1210,7 @@ export function TasteFlow({
           aria-atomic="true"
           aria-live="polite"
           className="taste-snackbar fixed right-[var(--layout-page-padding)] bottom-[calc(var(--layout-mobile-navigation-clearance)+var(--space-12)+var(--space-7))] z-40 max-w-[min(360px,calc(100vw-(var(--layout-page-padding)*2)))] rounded-[var(--radius-card)] border border-l-[length:var(--space-1)] border-line border-l-accent bg-surface-1 px-[var(--space-4)] py-[var(--space-3)] font-bold shadow-[var(--shadow-raised)] empty:hidden md:bottom-[calc(var(--layout-page-padding)+var(--control-min-size)+var(--space-5))]"
+          ref={snackbarRef}
         >
           {message}
         </p>

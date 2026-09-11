@@ -223,12 +223,12 @@ CTA 버튼 1개: **「好きなマンガから始める」** → /onboarding.
 
 1. 헤더: 「あなたの Manga DNA」 + 프로필 확신도 레이블(高い/ふつう/低め)
 2. **상위 취향 3개**: 취향 레이블 + 근거 제목 1~2줄. mobile `<768`은 순위 있는 1열 행(가로 snap 없음)이고 desktop `>=768`은 기존 3열 카드다.
-3. 동일 deterministic profile의 대표 축을 요약한 radar. 새 chart dependency 없이 inline SVG/CSS로 그리고 같은 데이터를 text list로 제공한다.
-4. 근거 작품 `MediaShelf`
+3. 동일 deterministic profile의 대표 축을 요약한 「代表的な軸の傾向」 radar. 새 chart dependency 없이 inline SVG/CSS로 그리고 같은 데이터를 text list로 제공한다.
+4. 근거 작품 `MediaShelf`. mobile 390px에서는 두 작품과 다음 작품 일부를, 320px에서는 한 작품과 다음 작품 일부를 보여 준다. 기존 가로 스크롤과 키보드 이동으로 마지막 작품까지 접근한다.
 5. 일반 진입에서 확신도가 `normal`일 때만 근거 Shelf 뒤에 두는 coaching banner. CTA는 `/onboarding` 「作品を追加」. `high`, 최초 reveal, 학습/AI 암시는 없다. 현재 profile guard를 통과한 사용자의 최저 확신도가 `normal`이므로 도달 불가능한 `low` UI 상태는 만들지 않는다.
-6. 5개 범주(장르/테마/전개/톤·관계/작화)의 compact summary row. 각 row는 범주 icon, 실제 profile에서 계산한 대표 factor, 조정 상태, 명시적인 「詳細設定」 disclosure를 제공한다. 초기에는 모두 접고 한 번에 한 범주의 상세만 연다. 장르는 분석 전용으로 가로 막대(0~4) + 일본어 레이블만 제공하고 보정 control을 만들지 않는다. 나머지 네 범주의 열린 상세에는 기존 5단 보정 control을 그대로 제공한다.
+6. 5개 범주(장르/테마/전개/톤·관계/작화)의 compact summary row. 각 row는 범주 icon, 실제 profile에서 계산한 대표 factor, 조정 상태, 명시적인 disclosure를 제공한다. 장르는 「分析のみ（10項目）」와 「内訳を見る」, 나머지 범주는 「詳細設定」을 사용한다. 초기에는 모두 접고 한 번에 한 범주의 상세만 연다. 장르는 분석 전용으로 가로 막대(0~4) + 일본어 레이블만 제공하고 보정 control을 만들지 않는다. 나머지 네 범주의 열린 상세에는 기존 5단 보정 control을 그대로 제공한다.
 7. 같은 최신 Catalog·기록·추천 정책에 페이지에서 처음 읽은 보정 설정과 현재 보정 설정을 각각 적용하는 preview. 동일 recommendation engine의 선두 최대 4개 work ID와 순서만 비교하고, 사용자는 제목·표지·해당 범위의 상태를 본다. 방문 당시 추천 목록을 동결하는 기능이 아니며 새로고침하면 저장된 현재 보정이 새 기준이다. 같으면 현재 목록 하나, 다르면 기준/현재 두 목록, 양쪽 0개면 빈 안내 한 번, 한쪽만 0개면 비교와 빈 쪽 안내를 제공한다. 계산 불가는 빈 결과·변화 없음과 구분하고 작품 정보가 없으면 ID 대신 이름 있는 안내로 해당 자리를 유지한다. network 요청과 별도 추천 산식은 없다.
-8. `UserWorkRecord.updatedAt`과 기존 reasons로 구성한 최근 feedback 요약. 「作品を追加して精度を上げる」 링크는 coaching banner가 숨는 `high` 또는 최초 reveal에서만 유지한다.
+8. `UserWorkRecord.updatedAt`과 기존 reasons로 구성한 최근 feedback 요약. 제목은 미리보기와 같은 subheading 크기(desktop 20px/mobile 16px)다. 「作品を追加して精度を上げる」 링크는 coaching banner가 숨는 `high` 또는 최초 reveal에서만 유지한다.
 
 ### 막대 규칙
 
@@ -248,16 +248,17 @@ CTA 버튼 1개: **「好きなマンガから始める」** → /onboarding.
 
 ### 반응형
 
-- mobile: 상위 취향 3개는 순위 1열 행이다. 각 행은 순위 `1–3`, 팩터 레이블(최대 2줄, 14px/bold), 강도 16px nowrap(28px 금지), 기존 근거 제목 1–2줄이다. 5개 범주 summary를 1열로 쌓고 한 범주의 상세만 연다. 열린 상세은 각 FactorBar 아래에 visible `おすすめへの反映` micro-label과 줄바꿈 없는 가로 스크롤 radio 행을 둔다.
-- desktop: 상위 취향 3개는 기존 3열 카드와 28px 강도를 유지한다. 최대폭 960px의 full-width 범주 row를 사용하고 한 범주의 상세만 연다. 분석 전용 장르 상세은 2열 meter grid로 10개 항목을 5행에 배치한다. 보정 가능한 네 범주는 sticky `分析した好み` / `おすすめへの反映` 열 제목 아래 FactorBar + 5단 control 행을 유지한다.
+- 전체 Taste shell은 loading/일반 화면 모두 최대 960px다. 헤더는 1024px부터 요약/레이더 2열이며, 그 미만에서는 두 영역을 쌓는다. 레이더는 최대 480px로 제한하되 SVG 좌표·라벨 크기·축 선택은 유지한다.
+- mobile: 상위 취향 3개는 순위 1열 행이다. 각 행의 첫 줄은 순위 `1–3`, 팩터 레이블(최대 2줄, 14px/bold), 강도 16px nowrap(28px 금지)이며 다음 줄은 기존 근거 제목 1–2줄이다. 한 줄 근거에 두 줄 높이를 강제하지 않는다. 5개 범주 summary를 1열로 쌓고 한 범주의 상세만 연다. 열린 상세은 각 FactorBar 아래에 visible `おすすめへの反映` micro-label과 줄바꿈 없는 가로 스크롤 radio 행을 둔다.
+- desktop `>=768`: 상위 취향 3개는 기존 3열 카드와 28px 강도를 유지한다. 최대폭 960px의 full-width 범주 row를 사용하고 한 범주의 상세만 연다. 분석 전용 장르 상세은 2열 meter grid로 10개 항목을 5행에 배치한다. 보정 가능한 네 범주는 sticky `分析した好み` / `おすすめへの反映` 열 제목 아래 FactorBar + 5단 control 행을 유지한다.
 
 ### 접근성
 
 - 확인된 막대는 축 레이블만 접근 가능한 이름으로 사용하고 `role="meter"` + `aria-valuemin/max/now`를 제공한다. `aria-valuetext`는 중복된 축 이름이나 숫자 없이 위 정성 레이블만 제공한다(예: 이름 `戦略的な展開`, `aria-valuetext="強め"`).
 - radar와 동일한 값은 keyboard/screen reader가 읽을 수 있는 text list로 중복 제공하고 SVG 자체는 장식으로 처리한다.
-- 각 범주의 「詳細設定」은 범주명을 포함한 accessible name, `aria-expanded`, `aria-controls`, visible focus를 가진 44px 이상 button이다. 접힌 상세의 control은 accessibility tree에서 제외한다.
+- 각 범주의 disclosure는 범주명을 포함한 accessible name, `aria-expanded`, `aria-controls`, visible focus를 가진 44px 이상 button이다. 장르는 분석 내역을 여는 의미를 사용한다. URL의 열린 범주가 바뀌어도 button을 다시 마운트하지 않아 포커스를 유지하며, 접힌 상세의 control은 accessibility tree에서 제외한다.
 - 보정 선택은 `「{factor}」のおすすめへの反映を設定` 형식의 이름을 가진 radiogroup이며 각 선택은 44px 이상 target, visible label, outline/filled marker, `aria-checked`, visible focus를 제공한다. 선택 상태는 색만으로 전달하지 않는다. 미확인 막대는 가짜 0을 넣지 않고, 축 이름과 「まだ分析中」을 함께 읽는 비수치 group 상태로 노출한다.
-- 미리보기에서 현재 목록은 같은 컴포넌트 위치·작품 key를 유지한다. 갱신 상태 문장만 `aria-live`로 알리고 전체 작품 목록을 반복 낭독하거나 보정 radio의 focus·스크롤을 강제로 이동하지 않는다. 사용자에게 raw work ID를 출력하지 않는다.
+- 미리보기에서 현재 목록은 같은 컴포넌트 위치·작품 key를 유지한다. 갱신 상태 문장만 `aria-live`로 알리고 전체 작품 목록을 반복 낭독하거나 갱신을 이유로 보정 radio의 focus·스크롤을 강제로 이동하지 않는다. 키보드로 선택한 칩은 표시 레이블과 4px focus outline까지 스크롤 영역 안에 드러내며, 저장 스낵바가 현재 포커스와 실제로 겹칠 때만 스크롤로 가림을 해소한다. 포커스 대상은 바꾸지 않는다. 사용자에게 raw work ID를 출력하지 않는다.
 - reveal 애니메이션은 정보 추가 없음 — reduced-motion 시 즉시 완성 상태.
 
 ### 수용 기준

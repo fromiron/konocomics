@@ -326,7 +326,7 @@ describe("TasteFlow", () => {
 
   it("shows five compact group summaries and opens one labelled detail panel at a time", async () => {
     const onGroupChange = vi.fn();
-    const { container } = render(<TasteFlow onGroupChange={onGroupChange} />);
+    const { container, rerender } = render(<TasteFlow onGroupChange={onGroupChange} />);
 
     expect(await screen.findByRole("heading", { name: "あなたの Manga DNA" })).toBeTruthy();
     expect(
@@ -344,13 +344,16 @@ describe("TasteFlow", () => {
     );
     expect(screen.queryByRole("radiogroup")).toBeNull();
 
-    const genreDetailsButton = screen.getByRole("button", { name: "ジャンルの詳細設定" });
+    const genreDetailsButton = screen.getByRole("button", { name: "ジャンルの分析の内訳を見る" });
     const themeDetails = screen.getByRole("button", { name: "テーマの詳細設定" });
     const narrativeDetails = screen.getByRole("button", { name: "展開の詳細設定" });
+    genreDetailsButton.focus();
     fireEvent.click(genreDetailsButton);
+    rerender(<TasteFlow group="genre" onGroupChange={onGroupChange} />);
 
     const genreDetails = container.querySelector<HTMLElement>("#taste-group-genre-details");
     expect(onGroupChange).toHaveBeenLastCalledWith("genre");
+    expect(document.activeElement).toBe(genreDetailsButton);
     expect(genreDetailsButton.getAttribute("aria-expanded")).toBe("true");
     expect(genreDetails?.classList.contains("taste-factor-group__rows--analysis")).toBe(true);
     expect(genreDetails?.className).toContain("md:grid-cols-2");
@@ -358,9 +361,12 @@ describe("TasteFlow", () => {
     expect(within(genreDetails as HTMLElement).queryByRole("radiogroup")).toBeNull();
 
     expect(themeDetails.getAttribute("aria-expanded")).toBe("false");
+    themeDetails.focus();
     fireEvent.click(themeDetails);
+    rerender(<TasteFlow group="theme" onGroupChange={onGroupChange} />);
 
     expect(onGroupChange).toHaveBeenLastCalledWith("theme");
+    expect(document.activeElement).toBe(themeDetails);
     expect(genreDetailsButton.getAttribute("aria-expanded")).toBe("false");
     expect(themeDetails.getAttribute("aria-expanded")).toBe("true");
     expect(container.querySelectorAll(".taste-factor-group__details:not([hidden])")).toHaveLength(
@@ -368,13 +374,42 @@ describe("TasteFlow", () => {
     );
     expect(screen.getAllByRole("radiogroup").length).toBeGreaterThan(0);
 
+    narrativeDetails.focus();
     fireEvent.click(narrativeDetails);
+    rerender(<TasteFlow group="narrative" onGroupChange={onGroupChange} />);
     expect(onGroupChange).toHaveBeenLastCalledWith("narrative");
+    expect(document.activeElement).toBe(narrativeDetails);
     expect(themeDetails.getAttribute("aria-expanded")).toBe("false");
     expect(narrativeDetails.getAttribute("aria-expanded")).toBe("true");
     expect(container.querySelectorAll(".taste-factor-group__details:not([hidden])")).toHaveLength(
       1,
     );
+    rerender(<TasteFlow onGroupChange={onGroupChange} />);
+    expect(narrativeDetails.getAttribute("aria-expanded")).toBe("false");
+    expect(document.activeElement).toBe(narrativeDetails);
+  });
+
+  it("keeps the focused adjustment visible when the save message covers it", async () => {
+    const { container } = render(<TasteFlow group="narrative" />);
+    const group = await screen.findByRole("radiogroup", {
+      name: tasteStrings.adjustmentGroupLabel("戦略的な展開"),
+    });
+    const radio = within(group).getByRole("radio", { name: "除外" });
+    const label = radio.closest("label");
+    const snackbar = container.querySelector(".taste-snackbar");
+    if (label === null || snackbar === null) throw new Error("Missing adjustment UI");
+    const scrollIntoView = vi.fn();
+    Object.defineProperty(label, "scrollIntoView", { value: scrollIntoView });
+    vi.spyOn(label, "getBoundingClientRect").mockReturnValue(new DOMRect(200, 600, 60, 44));
+    vi.spyOn(snackbar, "getBoundingClientRect").mockReturnValue(new DOMRect(16, 580, 300, 80));
+
+    radio.focus();
+    expect(scrollIntoView).toHaveBeenLastCalledWith({ block: "nearest", inline: "nearest" });
+    fireEvent.click(radio);
+    await waitFor(() =>
+      expect(scrollIntoView).toHaveBeenLastCalledWith({ block: "center", inline: "nearest" }),
+    );
+    expect(document.activeElement).toBe(radio);
   });
 
   it("renders the selected labelled group and saves Axis adjustments immediately", async () => {
@@ -385,7 +420,7 @@ describe("TasteFlow", () => {
     expect(screen.getByText(tasteStrings.modeDescriptions.adjust)).toBeTruthy();
     expect(container.querySelector(".taste-page--with-action")).toBeNull();
     expect(container.querySelector("main")?.classList.contains("page-entry-b")).toBe(true);
-    const radar = screen.getByRole("region", { name: "好みの分布" });
+    const radar = screen.getByRole("region", { name: tasteStrings.radarHeading });
     expect(radar.querySelector("svg")?.getAttribute("aria-hidden")).toBe("true");
     expect(
       [...radar.querySelectorAll(".taste-radar__label")].some((label) =>

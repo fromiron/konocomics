@@ -37,9 +37,12 @@ export function ChoiceChipRadio<Value>({
   return (
     <label
       className={cn(
-        "group/choice relative inline-flex min-h-[var(--control-min-size)] cursor-pointer items-center has-[[data-disabled]]:cursor-not-allowed",
+        "group/choice relative inline-flex min-h-[var(--control-min-size)] scroll-m-[var(--space-1)] cursor-pointer items-center has-[[data-disabled]]:cursor-not-allowed",
         className,
       )}
+      onFocus={(event) =>
+        event.currentTarget.scrollIntoView?.({ block: "nearest", inline: "nearest" })
+      }
     >
       <RadioGroupItem className="peer sr-only absolute size-px" {...props} />
       <span
@@ -66,9 +69,12 @@ export function ChoiceChipCheckbox({
   return (
     <label
       className={cn(
-        "group/choice relative inline-flex min-h-[var(--control-min-size)] cursor-pointer items-center has-[[data-disabled]]:cursor-not-allowed",
+        "group/choice relative inline-flex min-h-[var(--control-min-size)] scroll-m-[var(--space-1)] cursor-pointer items-center has-[[data-disabled]]:cursor-not-allowed",
         className,
       )}
+      onFocus={(event) =>
+        event.currentTarget.scrollIntoView?.({ block: "nearest", inline: "nearest" })
+      }
     >
       <Checkbox className="peer sr-only absolute size-px" {...props} />
       <span
