@@ -1,6 +1,6 @@
 {
   "schemaVersion": 1,
-  "catalogVersion": "v1-dcb321425c4a",
+  "catalogVersion": "v1-e012674fda6f",
   "factorDictionaryVersion": "v1",
   "works": [
     {
@@ -186163,7 +186163,17 @@
       "volumeNumber": 1,
       "isbn": "9784063409116",
       "releaseDate": "2013-06-13",
-      "editionKind": "standard"
+      "editionKind": "standard",
+      "metadata": {
+        "publisherName": "講談社",
+        "itemCaption": "仕事を失ったみくりは、父の紹介で津崎の家事を引き受けることに。再就職が難しいなかで始まった関係は、彼からのある提案をきっかけに変わっていく。",
+        "salesDate": "2013-06-13",
+        "imageUrl": "https://dvs-cover.kodansha.co.jp/0000036370/5cODc94WhksoC7b3iHYigjhVDxrR6Nz5wE8iYqoS.jpg",
+        "imprint": "KC KISS",
+        "pageCount": 168,
+        "sourceUrl": "https://www.kodansha.co.jp/comic/products/0000036370",
+        "fetchedAt": "2026-09-11T07:43:01.986Z"
+      }
     },
     {
       "id": "the-golden-sheep-v1",
@@ -192890,7 +192900,17 @@
       "workId": "work-9b42e9cda7743bba0f9b",
       "volumeNumber": 1,
       "isbn": "9784063404456",
-      "editionKind": "standard"
+      "editionKind": "standard",
+      "metadata": {
+        "publisherName": "講談社",
+        "itemCaption": "高校生たちの恋や人間関係を、さまざまな視点から描くオムニバス。第1巻には、姉弟の関係を描く「イノセント・インセスト」など4編を収録。",
+        "salesDate": "2003-08-06",
+        "imageUrl": "https://dvs-cover.kodansha.co.jp/0000035910/OBnxMjxCCuwYiX2NgUoQNoOzyHeWPRZBUHQjTgov.jpg",
+        "imprint": "KC KISS",
+        "pageCount": 208,
+        "sourceUrl": "https://www.kodansha.co.jp/comic/products/0000035910",
+        "fetchedAt": "2026-09-11T07:43:01.523Z"
+      }
     },
     {
       "id": "work-9b486df34cdf8853a038-representative",

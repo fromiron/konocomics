@@ -11,6 +11,7 @@ import {
   WORK_STATUSES,
 } from "../../src/domain/catalog/constants";
 import { isValidIsbn, normalizeIsbn } from "../../src/domain/catalog/normalize";
+import { bookMetadataSchema } from "../../src/domain/catalog/schema";
 
 const requiredText = z.string().trim().min(1);
 const catalogSourceId = requiredText.regex(/^[a-z0-9]+(?:-[a-z0-9]+)*$/u, {
@@ -125,6 +126,17 @@ export const volumeSourceRowSchema = z.strictObject({
   editionKind: z.enum(EDITION_KINDS),
   isRepresentative: csvBoolean,
   evidenceId: catalogSourceId,
+});
+
+export const bookMetadataSourceRowSchema = bookMetadataSchema.extend({
+  workId: catalogSourceId,
+  isbn: volumeSourceRowSchema.shape.isbn,
+  publisherName: optionalText.pipe(bookMetadataSchema.shape.publisherName),
+  itemCaption: optionalText.pipe(bookMetadataSchema.shape.itemCaption),
+  salesDate: optionalText.pipe(bookMetadataSchema.shape.salesDate),
+  imageUrl: optionalText.pipe(bookMetadataSchema.shape.imageUrl),
+  imprint: optionalText.pipe(bookMetadataSchema.shape.imprint),
+  pageCount: optionalCsvInteger.pipe(bookMetadataSchema.shape.pageCount),
 });
 
 const factorCommon = {

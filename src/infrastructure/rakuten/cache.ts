@@ -26,6 +26,8 @@ export type ProviderCacheState = Readonly<{
     affiliateUrl?: string;
     chirayomiUrl?: string;
     itemCaption?: string;
+    publisherName?: string;
+    salesDate?: string;
     reviewAverage?: number;
     reviewCount?: number;
   }> | null;
@@ -54,6 +56,8 @@ export function createProviderCacheRecord({
     affiliateUrl: parsedItem.affiliateUrl,
     chirayomiUrl: parsedItem.chirayomiUrl,
     itemCaption: parsedItem.itemCaption,
+    publisherName: parsedItem.publisherName,
+    salesDate: parsedItem.salesDate,
     itemPrice: parsedItem.itemPrice,
     availability: parsedItem.availability,
     reviewAverage: parsedItem.reviewAverage,
@@ -82,6 +86,8 @@ export function inspectProviderCache(record: ProviderCacheRecord, now: string): 
           affiliateUrl: record.affiliateUrl,
           chirayomiUrl: record.chirayomiUrl,
           itemCaption: record.itemCaption,
+          publisherName: record.publisherName,
+          salesDate: record.salesDate,
           reviewAverage: record.reviewAverage,
           reviewCount: record.reviewCount,
         }

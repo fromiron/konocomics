@@ -2,6 +2,7 @@ import type { z } from "zod";
 
 import type {
   aliasSourceRowSchema,
+  bookMetadataSourceRowSchema,
   evidenceSourceRowSchema,
   factorSourceRowSchema,
   recommendationConfigSourceRowSchema,
@@ -21,6 +22,7 @@ export type Located<T> = {
 export type WorkSourceRow = z.infer<typeof workSourceRowSchema>;
 export type AliasSourceRow = z.infer<typeof aliasSourceRowSchema>;
 export type VolumeSourceRow = z.infer<typeof volumeSourceRowSchema>;
+export type BookMetadataSourceRow = z.infer<typeof bookMetadataSourceRowSchema>;
 export type FactorSourceRow = z.infer<typeof factorSourceRowSchema>;
 export type ThemeSourceRow = z.infer<typeof themeSourceRowSchema>;
 export type RecommendationContextSourceRow = z.infer<typeof recommendationContextSourceRowSchema>;
@@ -31,6 +33,7 @@ export type CatalogSource = {
   works: Located<WorkSourceRow>[];
   aliases: Located<AliasSourceRow>[];
   volumes: Located<VolumeSourceRow>[];
+  bookMetadata?: Located<BookMetadataSourceRow>[];
   factors: Located<FactorSourceRow>[];
   themes: Located<ThemeSourceRow>[];
   recommendationContext: Located<RecommendationContextSourceRow>[];

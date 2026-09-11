@@ -2,6 +2,7 @@ import { describe, expect, it } from "vitest";
 
 import { compileCatalog } from "../../../scripts/catalog/compile";
 import {
+  bookMetadataSourceRowSchema,
   evidenceSourceRowSchema,
   factorSourceRowSchema,
   recommendationConfigSourceRowSchema,
@@ -113,6 +114,32 @@ function createValidSource(): CatalogSource {
 }
 
 describe("catalog compilation", () => {
+  it("binds collected book metadata to its exact work and ISBN and rejects a mismatched target", () => {
+    const source = createValidSource();
+    const metadata = bookMetadataSourceRowSchema.parse({
+      workId: "test-work",
+      isbn: "9780306406157",
+      publisherName: "",
+      itemCaption: "出版社の紹介",
+      salesDate: "",
+      imageUrl: "",
+      imprint: "",
+      pageCount: "",
+      sourceUrl: "https://example.com/book",
+      fetchedAt: "2026-09-11T07:43:01.523Z",
+    });
+    source.bookMetadata = [located("book-metadata.csv", 2, metadata)];
+    expect(compileCatalog(source).catalog.volumes[0]?.metadata?.itemCaption).toBe("出版社の紹介");
+    source.bookMetadata = [
+      located("book-metadata.csv", 2, { ...metadata, workId: "another-work" }),
+    ];
+    const rejected = compileCatalog(source);
+    expect(rejected.issues).toContainEqual(
+      expect.objectContaining({ code: "BOOK_METADATA_TARGET_MISMATCH", severity: "error" }),
+    );
+    expect(rejected.catalog.volumes[0]?.metadata).toBeUndefined();
+  });
+
   it("is deterministic for the same source", () => {
     const source = createValidSource();
     const first = compileCatalog(source);

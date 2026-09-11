@@ -280,6 +280,8 @@ const providerCacheRecordSchema: z.ZodType<ProviderCacheRecord> = z
     affiliateUrl: httpsUrlSchema.optional(),
     chirayomiUrl: httpsUrlSchema.optional(),
     itemCaption: z.string().trim().min(1).optional(),
+    publisherName: z.string().trim().min(1).optional(),
+    salesDate: z.string().trim().min(1).optional(),
     itemPrice: z.number().int().nonnegative().optional(),
     availability: rakutenAvailabilitySchema.optional(),
     reviewAverage: z.number().finite().min(0).max(5).optional(),

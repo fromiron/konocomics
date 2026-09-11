@@ -44,6 +44,8 @@ export type ProviderCacheRecord = {
   affiliateUrl?: string;
   chirayomiUrl?: string;
   itemCaption?: string;
+  publisherName?: string;
+  salesDate?: string;
   itemPrice?: number;
   availability?: 1 | 2 | 3 | 4 | 5 | 6;
   reviewAverage?: number;

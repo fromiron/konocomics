@@ -103,7 +103,7 @@ deterministic Markdown 집계 리포트(stdout 또는 reports/local/)
 
 | 데이터 | 원천 | 변환 | 소유 계층 | 저장 |
 |---|---|---|---|---|
-| Work metadata | `data/source/catalog.sqlite`의 9개 `STRICT` source table + 12개 opaque 문서 | SQLite→zod 검증→bundled/public JSON + 소형 identity/landing projection | 빌드 스크립트 | root identity bundle + route-scoped 번들 + content-addressed/hashed 정적 자산 |
+| Work metadata | `data/source/catalog.sqlite` v2의 10개 `STRICT` source table + opaque 문서 | SQLite→zod 검증→bundled/public JSON + 소형 identity/landing projection | 빌드 스크립트 | root identity bundle + route-scoped 번들 + content-addressed/hashed 정적 자산 |
 | Model candidate 및 authoring 작업 원본 | source 밖 격리 artifact | candidate는 진단만; 별도 동결 판정의 기존 권한 검증은 유지 | 로컬 authoring 도구 | `data/local/catalog-authoring/workspace.sqlite`에 원본·버전 보존, `.tmp`는 작업 사본. runtime·canonical source와 분리 |
 | Legacy resolution | 고정 S0~S5 cutoff source manifest | Factor·present Theme·present Genre만 canonical 8-field tuple로 bootstrap | one-time build-time shadow | OS 임시 `fact_resolution`; digest 재계산 후 폐기 |
 | ProviderListing | Rakuten API | 필드 축소·URL 재작성·브라우저 workId 결합·normalized ISBN in-flight 합류 | Start server route + infrastructure/rakuten | Dexie providerCache (가격·재고 24h / 기타 90일) |
@@ -115,6 +115,8 @@ deterministic Markdown 집계 리포트(stdout 또는 reports/local/)
 | G2 집계 | G2 result+동결 catalog/context | 결과 전 항목 재계산→지표·verdict | domain G2 모듈(순수)+scripts I/O | stdout 또는 gitignore된 로컬 리포트 |
 
 90일은 `02`의 기타 metadata 3개월을 시간 주입으로 결정론적으로 검사하기 위한 v1 고정값이다. 가격·재고가 만료되면 화면에서 숨긴다. metadata 만료는 사용자 액션/화면 진입에서 단 한 번의 갱신을 시도하는 경계이며, 실패하면 `03` 계약대로 기존 `itemUrl`만 stale purchase fallback으로 유지하고 만료된 소개·이미지·리뷰는 표시하지 않는다.
+
+2026-09-11 상세 보완: `source_book_metadata`는 Work·ISBN이 일치하는 Volume의 선택적 `metadata`로만 생성하며 출처 URL·수집 시각을 포함한다. 화면에서 최신 API의 각 유효 항목을 우선하고 결측만 수집 서지로 보완한다. API 캐시에는 선택적 `publisherName`·`salesDate`를 추가해 원본을 유지하며 기존 레코드도 읽는다. 해당 필드가 없는 이전 캐시는 상세 진입 때 한 번 갱신한다. TTL·Dexie 버전·Export v1·두 server route·추천 산식은 변경하지 않는다. 수집 소개는 선택 출처를 표시하고 상업 정보나 팩터 근거를 만들지 않는다.
 
 ### 2.1 Catalog 빌드 파이프라인 상세 (normalize-works)
 

@@ -434,11 +434,19 @@ Catalog 작품은 추천 근거를 깊이 확인하고 구매(라쿠텐)로 연�
 
 1. 히어로: 동일 표지 URL의 강한 블러 배경(`aria-hidden`) 위에 원본 비율 표지(고해상도 `_ex=600x600`)
 2. 제목·저자·출판사·연재 상태·권수
-3. **「あなたとの相性」 섹션** (프로필 존재 시): 이유 3 + 주의점 1 + 근거 Anchor 표지 칩 + 확신도 레이블
-4. 작품 소개문(라쿠텐 itemCaption)
-5. 이 작품의 주요 팩터 요약(레이블 칩: 戦略 / 群像劇 / ダークめ 등 — 값 ≥3 또는 centrality 2인 것만)
+3. 작품 소개와 대표권 정보(발매일·레이블·페이지 수). 소개와 서지는 아래 항목별 우선순위를 따른다.
+4. 이 작품의 주요 팩터 요약(레이블 칩: 戦略 / 群像劇 / ダークめ 등 — 값 ≥3 또는 centrality 2인 것만). desktop에서는 소개·서지 오른쪽에 표시한다.
+5. **「あなたとの相性」 섹션** (프로필 존재 시): 이유 3 + 주의점 1 + 근거 Anchor 표지 칩 + 확신도 레이블
 6. 구매 링크 + 가격·재고(ProviderListing, TTL 내) + `Supported by Rakuten Developers`
-7. Catalog 작품만 deterministic known factor/theme selector로 구성한 관련/Same Mood Shelf. core 추천 순위는 변경하지 않으며 external에는 factor를 추측하지 않는다.
+7. 같은 작가의 다른 작품 배너: 2026-09-11 사용자 선택 이미지 1의 본문 전체폭 구성. 왼쪽 실제 책, 오른쪽 「{作者}の、もう一冊」·작품명·「作品を見る」를 표시하고 전체 배너가 해당 Catalog 상세로 이동한다. 기존 creator 정규화로 같은 저자임을 확인한 다른 `recommendationEligible` 작품 중 Work ID code-unit 순서의 첫 작품을 택하며 현재 작품·libraryOnly·external을 제외한다. 대상이 없으면 생략한다.
+8. Catalog 작품만 deterministic known factor/theme selector로 구성한 관련/Same Mood Shelf. core 추천 순위는 변경하지 않으며 external에는 factor를 추측하지 않는다.
+
+### 소개·서지 우선순위 (2026-09-11 사용자 승인)
+
+- 같은 Work·대표권·ISBN에 결속된 유효한 항목별로 **TTL 내 라쿠텐 API > 출판사 수집 Catalog > 기존 Catalog 서지 또는 미확인** 순으로 표시한다. HTTP 200만으로 모든 항목이 있다고 판단하지 않는다. 공백 문자열·null·누락은 결측이며 유효한 숫자 0은 결측이 아니다.
+- 양쪽 값이 있으면 라쿠텐 값을 선택한다. 소개를 이어 붙이거나 길이로 고르지 않는다. 출처 URL·수집일을 원천별로 보존하고 수집 자료를 Rakuten 캐시에 쓰지 않는다. 소개 옆에는 실제 선택한 출처 링크를 같은 형식의 「楽天ブックスの紹介」 / 「出版社の紹介」로 표시한다. 출판사 요약 여부와 원문은 authoring 자료에 보존한다.
+- 수집 서지는 빌드 전용 `source_book_metadata`에서 해당 Volume의 선택적 `metadata`로 생성한다. 표지는 원본 URL을 사용하며 이미지 파일을 복제하지 않는다. 발매일은 API의 「頃」 등 원래 정밀도를 유지한다.
+- 가격·재고·리뷰·구매 링크는 기존 ProviderListing 경로만 사용한다. 수집값으로 만료된 상업 정보를 대체하지 않는다. 시리즈 전체 권수·상태와 canonical 제목·저자는 Catalog가 소유하며 단권 API 응답의 제목이나 권수를 시리즈 사실로 해석하지 않는다.
 
 ### 상태
 
@@ -475,6 +483,8 @@ Catalog 작품은 추천 근거를 깊이 확인하고 구매(라쿠텐)로 연�
 - [ ] 같은 URL을 해당 row가 없는 브라우저에서 열면 local-missing 상태가 되고 provider로 복원하지 않는다.
 - [ ] malformed query는 해당 값으로 ID별 local lookup/provider 요청을 하지 않고, corrupt row는 provider 요청과 questionable 서지 렌더링을 하지 않는다.
 - [ ] 관련 Shelf selector는 동일 입력에서 같은 work ID 순서이고 external 작품에는 표시되지 않는다.
+- [ ] 정상 API 응답에서도 소개가 없으면 같은 ISBN의 수집 소개를 표시하며, 양쪽에 값이 있는 항목은 라쿠텐 값을 선택한다. 다른 Work·ISBN의 수집 정보는 결합하지 않는다.
+- [ ] 본문 전체폭의 같은 작가 배너가 실제 다른 Catalog 상세로 이동한다. mobile에서도 책과 문구를 나란히 표시하며 가로 넘침·hover 전용 조작이 없다.
 
 ---
 

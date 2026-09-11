@@ -164,6 +164,8 @@
 
 공통 바탕은 `/media/book-base-small.webp`(256×256), `book-base-medium.webp`(512×512), `book-base-large.webp`(1024×1024) 세 크기다. 모든 크기의 투명도·구도는 같으며 `srcSet`과 lazy 이미지의 `sizes="auto, 225px"`로 브라우저가 표시 크기와 픽셀 밀도에 맞게 고른다. 다른 위치에서도 같은 `BookCover`와 자산을 재사용하고, CSS `--book-cover-width`로 크기를 조정한다. 원본과 크기별 생성 근거는 `outputs/design/book-base-source-20260911.png`와 `design-qa.md`에 보존한다.
 
+같은 작가 배너는 2026-09-11 사용자가 선택한 이미지 1의 본문 전체폭·왼쪽 책·오른쪽 문구 구성이다. 구매 영역과 관련 Shelf 사이에 `--surface-1`·`--radius-card`를 사용하고 실제 작품명·저자명·기존 `--accent` 이동 링크만 표시한다. desktop 최소 높이는 256px, 책 기준 폭은 176px이며 mobile은 최소 192px 안에 책과 줄바꿈 가능한 문구를 나란히 둔다. 단일 Link 전체가 조작 영역이고 keyboard focus outline을 제공한다. 공통 `BookCover`를 정적으로 재사용하며 이 배너의 책은 수직 중앙에 둔다. 반복·hover 이동·새 이미지 자산은 추가하지 않는다.
+
 ### 4.1 기본 규칙
 
 - 항상 원본 비율(`object-fit: contain`), 크롭 금지. 프레임 비율은 3:4.3 고정 박스에 contain.

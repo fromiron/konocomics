@@ -15,10 +15,12 @@ import { describe, expect, it } from "vitest";
 
 import {
   CATALOG_AUTHORITY_SCHEMA_PATH,
+  CATALOG_BOOK_METADATA_TABLE,
   CATALOG_DATABASE_FILE,
   CATALOG_TABLES,
   finalizeCatalogAuthorityProjection,
   readCatalogAuthority,
+  serializeCsv,
   sha256,
   verifyCatalogAuthority,
   writeCatalogCsvProjection,
@@ -46,6 +48,63 @@ function createAuthorityWithDynamicReview() {
 }
 
 describe("SQLite Catalog authority", () => {
+  it("migrates a v1 authoring projection to v2 and preserves metadata on the next ordinary edit", () => {
+    const root = mkdtempSync(join(tmpdir(), "konocomics-authority-book-metadata-"));
+    const legacy = join(root, "legacy/data/source");
+    try {
+      cpSync(repositorySource, legacy, { recursive: true });
+      const db = new DatabaseSync(join(legacy, CATALOG_DATABASE_FILE));
+      db.exec("DROP TABLE IF EXISTS source_book_metadata; PRAGMA user_version=1");
+      db.close();
+      expect(verifyCatalogAuthority(join(root, "legacy")).tables).toBe(9);
+      const originalDigest = sha256(readFileSync(join(legacy, CATALOG_DATABASE_FILE)));
+      const candidate = join(root, "candidate/data/source");
+      writeCatalogCsvProjection(legacy, candidate);
+      const table = {
+        path: CATALOG_BOOK_METADATA_TABLE.path,
+        headers: CATALOG_BOOK_METADATA_TABLE.headers,
+        rows: [
+          {
+            sourceOrdinal: 1,
+            sourceLine: 2,
+            values: [
+              "work-9b42e9cda7743bba0f9b",
+              "9784063404456",
+              "講談社",
+              "出版社の紹介",
+              "2003-08-06",
+              "",
+              "KC KISS",
+              "208",
+              "https://www.kodansha.co.jp/comic/products/0000035910",
+              "2026-09-11T07:43:01.523Z",
+            ],
+          },
+        ],
+      };
+      writeFileSync(join(candidate, table.path), serializeCsv(table));
+      finalizeCatalogAuthorityProjection(legacy, candidate);
+      expect(verifyCatalogAuthority(join(root, "candidate")).tables).toBe(10);
+      expect(sha256(readFileSync(join(legacy, CATALOG_DATABASE_FILE)))).toBe(originalDigest);
+      expect(
+        runCatalogPipelineFromAuthority(candidate).catalog.volumes.find(
+          (volume) => volume.isbn === "9784063404456",
+        )?.metadata?.pageCount,
+      ).toBe(208);
+      const next = join(root, "next/data/source");
+      writeCatalogCsvProjection(candidate, next);
+      writeFileSync(
+        join(next, "aliases.csv"),
+        `${readFileSync(join(next, "aliases.csv"), "utf8").trimEnd()}\ndungeon-meshi,ダンジョン飯テスト\n`,
+      );
+      finalizeCatalogAuthorityProjection(candidate, next);
+      expect(readCatalogAuthority(next).find((entry) => entry.path === table.path)).toEqual(table);
+      expect(existsSync(join(next, table.path))).toBe(false);
+    } finally {
+      rmSync(root, { recursive: true, force: true });
+    }
+  }, 120_000);
+
   it("binds referenced review reports into the ongoing authority digest", () => {
     const { root, review } = createAuthorityWithDynamicReview();
     try {
@@ -96,7 +155,7 @@ describe("SQLite Catalog authority", () => {
     const source = join(root, "data/source");
     try {
       cpSync(repositorySource, source, { recursive: true });
-      expect(verifyCatalogAuthority(root).tables).toBe(9);
+      expect(verifyCatalogAuthority(root).tables).toBe(10);
 
       const projected = join(root, "projected");
       writeCatalogCsvProjection(source, projected);

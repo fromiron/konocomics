@@ -25,6 +25,9 @@ export const CATALOG_CUTOVER_SOURCE_COMMIT = "2b3cd10523b15ad131871e2f3bb2024941
 export const CATALOG_AUTHORITY_SCHEMA_PATH = fileURLToPath(
   new URL("../sql/catalog-authority/001-init.sql", import.meta.url),
 );
+export const CATALOG_BOOK_METADATA_SCHEMA_PATH = fileURLToPath(
+  new URL("../sql/catalog-authority/002-book-metadata.sql", import.meta.url),
+);
 
 export const CATALOG_TABLES = [
   {
@@ -148,6 +151,26 @@ export const CATALOG_TABLES = [
     ],
   },
 ] as const;
+
+export const CATALOG_BOOK_METADATA_TABLE = {
+  path: "book-metadata.csv",
+  table: "source_book_metadata",
+  expectedRows: 0,
+  headers: [
+    "workId",
+    "isbn",
+    "publisherName",
+    "itemCaption",
+    "salesDate",
+    "imageUrl",
+    "imprint",
+    "pageCount",
+    "sourceUrl",
+    "fetchedAt",
+  ],
+} as const;
+
+const ALL_CATALOG_TABLES = [...CATALOG_TABLES, CATALOG_BOOK_METADATA_TABLE];
 
 export const CATALOG_OPAQUE_PATHS = [
   "README.md",
@@ -315,7 +338,7 @@ function sqliteText(value: unknown, label: string) {
   return value;
 }
 
-function tableRows(db: DatabaseSync, config: (typeof CATALOG_TABLES)[number]): LexicalRow[] {
+function tableRows(db: DatabaseSync, config: (typeof ALL_CATALOG_TABLES)[number]): LexicalRow[] {
   const columns = ["sourceOrdinal", "sourceLine", ...config.headers];
   return db
     .prepare(
@@ -344,10 +367,13 @@ function schemaDefinitions(db: DatabaseSync) {
     .sort((left, right) => compareText(left[0]!, right[0]!));
 }
 
-function expectedSchemaDefinitions() {
+function expectedSchemaDefinitions(version: number) {
   const expected = new DatabaseSync(":memory:");
   try {
     expected.exec(readFileSync(CATALOG_AUTHORITY_SCHEMA_PATH, "utf8"));
+    if (version === 2) {
+      expected.exec(readFileSync(CATALOG_BOOK_METADATA_SCHEMA_PATH, "utf8"));
+    }
     return schemaDefinitions(expected);
   } finally {
     expected.close();
@@ -358,11 +384,13 @@ function databaseTables(db: DatabaseSync, enforceCutoverCounts: boolean): Lexica
   const integrity = db.prepare("PRAGMA integrity_check").get();
   assert.equal(integrity?.integrity_check, "ok", "SQLite integrity_check failed");
   assert.equal(db.prepare("PRAGMA foreign_key_check").all().length, 0, "SQLite FK check failed");
-  assert.equal(
+  const version = sqliteNumber(
     db.prepare("PRAGMA user_version").get()?.user_version,
-    1,
-    "Unexpected schema version",
+    "schema version",
   );
+  assert(version === 1 || version === 2, "Unexpected schema version");
+  if (enforceCutoverCounts) assert.equal(version, 1, "Cutover proof requires schema version 1");
+  const configs = version === 1 ? CATALOG_TABLES : ALL_CATALOG_TABLES;
 
   const tableNames = db
     .prepare("SELECT name FROM sqlite_schema WHERE type = 'table' AND name NOT LIKE 'sqlite_%'")
@@ -371,8 +399,8 @@ function databaseTables(db: DatabaseSync, enforceCutoverCounts: boolean): Lexica
     .sort(compareText);
   assert.deepEqual(
     tableNames,
-    CATALOG_TABLES.map((config) => config.table).sort(compareText),
-    "Catalog authority must contain exactly nine source tables",
+    configs.map((config) => config.table).sort(compareText),
+    "Catalog authority tables must match its schema version",
   );
   const tableNameSet = new Set<string>(tableNames);
   const tableList = db
@@ -388,14 +416,14 @@ function databaseTables(db: DatabaseSync, enforceCutoverCounts: boolean): Lexica
     .sort((left, right) => compareText(String(left[0]), String(right[0])));
   assert.deepEqual(
     tableList,
-    CATALOG_TABLES.map((config) => [config.table, "table", 1, 0]).sort((left, right) =>
-      compareText(String(left[0]), String(right[0])),
-    ),
+    configs
+      .map((config) => [config.table, "table", 1, 0])
+      .sort((left, right) => compareText(String(left[0]), String(right[0]))),
     "Catalog authority tables must remain STRICT rowid tables",
   );
   assert.deepEqual(
     schemaDefinitions(db),
-    expectedSchemaDefinitions(),
+    expectedSchemaDefinitions(version),
     "Catalog authority DDL drift",
   );
   assert.equal(
@@ -406,7 +434,7 @@ function databaseTables(db: DatabaseSync, enforceCutoverCounts: boolean): Lexica
     "Catalog authority must not contain views or triggers",
   );
 
-  return CATALOG_TABLES.map((config) => {
+  return configs.map((config) => {
     const columns = db
       .prepare(`PRAGMA table_info(${quoteIdentifier(config.table)})`)
       .all()
@@ -505,14 +533,17 @@ export function catalogSourceManifestDigest(sourceDirectory: string) {
 export function catalogSourceSnapshotDigest(sourceDirectory: string) {
   const files = discoverFiles(sourceDirectory);
   const hasDatabase = files.includes(CATALOG_DATABASE_FILE);
-  const csvPaths = CATALOG_TABLES.map((config) => config.path);
+  const configs = files.includes(CATALOG_BOOK_METADATA_TABLE.path)
+    ? ALL_CATALOG_TABLES
+    : CATALOG_TABLES;
+  const csvPaths = configs.map((config) => config.path);
   const hasCsv = csvPaths.some((path) => files.includes(path));
   if (hasDatabase === hasCsv) {
     throw new Error("Catalog source snapshot must contain exactly one authority representation");
   }
   const tables = hasDatabase
     ? readCatalogAuthority(sourceDirectory)
-    : CATALOG_TABLES.map((config) =>
+    : configs.map((config) =>
         parseLexicalCsv(
           config.path,
           readFileSync(join(sourceDirectory, config.path)),
@@ -591,7 +622,7 @@ function gitBlob(repoRoot: string, commit: string, logicalPath: string) {
 
 function insertTableRows(db: DatabaseSync, tables: readonly LexicalTable[]) {
   for (const table of tables) {
-    const config = CATALOG_TABLES.find((candidate) => candidate.path === table.path);
+    const config = ALL_CATALOG_TABLES.find((candidate) => candidate.path === table.path);
     assert(config !== undefined);
     const columns = ["sourceOrdinal", "sourceLine", ...config.headers];
     const insert = db.prepare(
@@ -741,7 +772,11 @@ export function finalizeCatalogAuthorityProjection(
   if (existsSync(candidateDatabase)) {
     throw new Error(`Refusing to overwrite projected Catalog database: ${candidateDatabase}`);
   }
-  const tables = CATALOG_TABLES.map((config) =>
+  const hasBookMetadata =
+    currentTables.some((table) => table.path === CATALOG_BOOK_METADATA_TABLE.path) ||
+    existsSync(join(projectedSourceDirectory, CATALOG_BOOK_METADATA_TABLE.path));
+  const configs = hasBookMetadata ? ALL_CATALOG_TABLES : CATALOG_TABLES;
+  const tables = configs.map((config) =>
     parseLexicalCsv(
       config.path,
       readFileSync(join(projectedSourceDirectory, config.path)),
@@ -751,8 +786,8 @@ export function finalizeCatalogAuthorityProjection(
   const projectedOpaquePaths = catalogOpaquePaths(tables);
   assert.deepEqual(
     discoverFiles(projectedSourceDirectory),
-    [...CATALOG_TABLES.map((config) => config.path), ...projectedOpaquePaths].sort(compareText),
-    "Projected Catalog source must contain exactly nine CSV tables and the fixed plus referenced opaque Markdown files",
+    [...configs.map((config) => config.path), ...projectedOpaquePaths].sort(compareText),
+    "Projected Catalog source must contain its schema's CSV tables and the fixed plus referenced opaque Markdown files",
   );
   copyFileSync(currentDatabase, candidateDatabase);
   let db: DatabaseSync | undefined;
@@ -760,7 +795,10 @@ export function finalizeCatalogAuthorityProjection(
     db = new DatabaseSync(candidateDatabase);
     db.exec("PRAGMA foreign_keys = ON; PRAGMA journal_mode = DELETE; BEGIN IMMEDIATE");
     try {
-      for (const config of CATALOG_TABLES) {
+      if (hasBookMetadata && db.prepare("PRAGMA user_version").get()?.user_version === 1) {
+        db.exec(readFileSync(CATALOG_BOOK_METADATA_SCHEMA_PATH, "utf8"));
+      }
+      for (const config of configs) {
         db.exec(`DELETE FROM ${quoteIdentifier(config.table)}`);
       }
       insertTableRows(db, tables);
@@ -781,7 +819,7 @@ export function finalizeCatalogAuthorityProjection(
         );
       }
     });
-    for (const config of CATALOG_TABLES) {
+    for (const config of configs) {
       rmSync(join(projectedSourceDirectory, config.path));
     }
     assert.deepEqual(

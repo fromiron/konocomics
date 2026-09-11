@@ -65,10 +65,11 @@ S3부터 동결된 model-panel 경로의 read-only `--check`는 보존하되 새
 
 `data/source/` 아래 regular file을 재귀 탐색하고 `/` 구분의 상대 경로를 code-unit 순으로 정렬한다. historical S1~S6 cutover proof의 허용 layout은 `catalog.sqlite` 하나와 opaque Markdown 12개, 총 13개 파일로 동결한다. ongoing authority는 이 12개에 `source_works.annotationReviewReference`가 선언한 exact `reviews/<lowercase-hyphen-slug>.md`만 중복 제거·code-unit 정렬해 추가하며, 모두 source manifest에 raw hash와 byte length를 결속한다. 선언된 파일의 누락, 미참조 review, 루트 중복은 거부한다.
 
-- SQLite table 9개: `source_works`, `source_aliases`, `source_volumes`, `source_factors`, `source_themes`, `source_recommendation_context`, `source_recommendation_config`, `source_evidence`, `source_art_evidence_manifest`. 각각의 logical projection path는 이전의 `works.csv`, `aliases.csv`, `volumes.csv`, `factors.csv`, `themes.csv`, `recommendation-context.csv`, `recommendation-config.csv`, `evidence/evidence.csv`, `evidence/art-evidence-manifest.csv`다.
+- 기존 SQLite table 9개: `source_works`, `source_aliases`, `source_volumes`, `source_factors`, `source_themes`, `source_recommendation_context`, `source_recommendation_config`, `source_evidence`, `source_art_evidence_manifest`. 각각의 logical projection path는 이전의 `works.csv`, `aliases.csv`, `volumes.csv`, `factors.csv`, `themes.csv`, `recommendation-context.csv`, `recommendation-config.csv`, `evidence/evidence.csv`, `evidence/art-evidence-manifest.csv`다.
+- 2026-09-11 사용자가 승인한 API 우선·수집 서지 보완을 위해 schema v2에 `source_book_metadata`(logical projection `book-metadata.csv`)를 추가한다. `workId`·`isbn`으로 같은 Volume을 확인하고 `publisherName`, `itemCaption`, `salesDate`, `imageUrl`, `imprint`, `pageCount`, `sourceUrl`, `fetchedAt`을 보존한다. ISBN 중복·다른 Work 결합은 Catalog 오류다. 추천 팩터·주석 판정·상업 정보의 새 권한이 아니다.
 - opaque file 12개: `README.md`, `evidence/seed-annotations.md`, `reviews/*.md` 10개.
 
-canonical DB에는 위 9개 `STRICT` source table만 있고 `source_file`, `source_import`, candidate, resolution, judgment, view, trigger를 두지 않는다. S0~S5 증명용 OS 임시 shadow만 opaque raw bytes와 proof table을 가진다.
+canonical DB v2에는 위 10개 `STRICT` source table만 있고 `source_file`, `source_import`, candidate, resolution, judgment, view, trigger를 두지 않는다. S0~S5 증명용 OS 임시 shadow만 opaque raw bytes와 proof table을 가진다.
 
 Bootstrap과 임시 CSV projection은 fatal UTF-8로 decode한다. 선두 UTF-8 BOM은 첫 header 이름에서만 제외하고, malformed quoting·열 수 불일치·빈 header·중복 header는 거부한다. 빈 record는 건너뛰되 physical line 계산에는 포함하며, cell은 `trim`·타입 강제 변환 없이 lexical string으로 저장한다. 각 SQLite record에는 다음 두 순서를 둔다.
 
@@ -77,7 +78,7 @@ Bootstrap과 임시 CSV projection은 fatal UTF-8로 decode한다. 선두 UTF-8 
 
 ## 6. 임시 projection과 parity
 
-- 기존 CSV-shaped validator·staging 도구가 필요할 때만 9개 logical CSV를 OS 임시 디렉터리에 투영한다. canonical source에는 남기지 않는다.
+- 기존 CSV-shaped validator·staging 도구가 필요할 때만 현재 schema의 logical CSV(v1 9개, v2 10개)를 임시 디렉터리에 투영한다. canonical source에는 남기지 않으며 후속 authoring도 수집 서지를 보존한다.
 - historical 12개와 ongoing DB가 참조한 review file은 canonical 파일에서 byte-for-byte 복사한다. S0~S5 proof shadow에서는 동결된 12개만 `source_file.raw_bytes`에서 export한다.
 - CSV serializer는 UTF-8 without BOM, LF, 고정 header 순서, source 순서, 정확히 마지막 LF 하나를 사용한다. comma·quote·CR·LF가 있는 cell만 quote하고 내부 quote는 두 번 쓴다.
 - 일반 valid CSV의 semantic parity는 `[normalizedPath, sourceOrdinal, columnName, lexicalValue]` tuple digest로 비교한다. quote/BOM/빈 줄·checkout EOL 표기 차이는 의미가 아니다.
@@ -148,7 +149,7 @@ S1은 저장소 전체 pairwise 조합을 새로 전수 검사하지 않는다. 
 
 ## 10. S6 SQLite authority
 
-- canonical authority는 `data/source/catalog.sqlite` 하나다. `PRAGMA user_version=1`, 정확히 9개 `STRICT` rowid table, 기준 DDL의 `CHECK`·column·type·PK와 일치해야 하며 view·trigger·journal sidecar를 허용하지 않는다.
+- canonical authority는 `data/source/catalog.sqlite` 하나다. S6 이관의 `user_version=1`·9개 table 증명은 동결한다. 현재 서지 확장은 `001-init.sql` + `002-book-metadata.sql`의 `PRAGMA user_version=2`·10개 `STRICT` rowid table이며 해당 버전 DDL의 `CHECK`·column·type·PK와 일치해야 한다. view·trigger·journal sidecar를 허용하지 않는다. v1→v2는 공용 authoring candidate transaction 안에서 수행하며 과거 DB도 읽을 수 있다.
 - ongoing `pnpm catalog:authority:verify`는 layout, integrity, schema identity, 연속 `sourceOrdinal`, canonical `sourceLine`, opaque path set을 검증한다. `pnpm catalog:authority:verify-cutover`와 `pnpm catalog:shadow`는 삭제된 9개 CSV 및 S0~S5 cutoff와의 일회성 이관 증명이다.
 - 일반 reader는 SQLite를 직접 읽는다. CSV compatibility가 필요한 frozen validator·staging 흐름은 OS 임시 projection만 사용하고 성공·실패 모두 제거한다.
 - legitimate writer는 현재 DB를 candidate로 복사하고 `BEGIN IMMEDIATE` 안에서 table을 교체한 뒤 전체 schema·Catalog 검증을 수행한다. commit·close 뒤 read-only exact readback과 sidecar 부재를 확인한 candidate만 canonical DB와 원자적으로 교체한다. 검증 실패 전에는 현재 DB가 바뀌지 않는다.

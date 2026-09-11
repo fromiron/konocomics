@@ -82,6 +82,21 @@ export const workSchema = z.strictObject({
   evidence: workEvidenceSchema,
 });
 
+const httpsUrlSchema = z.url().refine((value) => new URL(value).protocol === "https:", {
+  message: "Book metadata URLs must use HTTPS",
+});
+
+export const bookMetadataSchema = z.strictObject({
+  publisherName: z.string().trim().min(1).optional(),
+  itemCaption: z.string().trim().min(1).optional(),
+  salesDate: z.iso.date().optional(),
+  imageUrl: httpsUrlSchema.optional(),
+  imprint: z.string().trim().min(1).optional(),
+  pageCount: z.number().int().positive().optional(),
+  sourceUrl: httpsUrlSchema,
+  fetchedAt: z.iso.datetime({ offset: true }),
+});
+
 export const volumeSchema = z.strictObject({
   id: catalogIdSchema,
   workId: catalogIdSchema,
@@ -92,6 +107,7 @@ export const volumeSchema = z.strictObject({
     .refine(isValidIsbn, { message: "ISBN checksum is invalid" }),
   releaseDate: z.iso.date().optional(),
   editionKind: z.enum(EDITION_KINDS),
+  metadata: bookMetadataSchema.optional(),
 });
 
 export const factorEvidenceSchema = z.strictObject({

@@ -11,6 +11,7 @@ import { ConfidenceLabel, ReasonChips } from "@/components/media/recommendation-
 import { usePageEntryMotion } from "@/components/motion/use-page-entry-motion";
 import recommendationContextJson from "@/data/generated/recommendation-context-v1.json";
 import { AXIS_IDS, THEME_TAGS } from "@/domain/catalog/constants";
+import { normalizeIsbn } from "@/domain/catalog/normalize";
 import type { CatalogV1, Work } from "@/domain/catalog/types";
 import { generateTasteExplanation } from "@/domain/explanation";
 import type { ExplanationFactorId, TasteRecommendationExplanation } from "@/domain/explanation";
@@ -21,6 +22,11 @@ import { scoreWorkCompatibility } from "@/domain/recommendation/rank";
 import type { RecommendationInput } from "@/domain/recommendation/types";
 import { useCatalog } from "@/features/catalog/catalog-provider";
 import { WorkDetailShell } from "@/features/work-detail/work-detail-shell";
+import { SameAuthorBanner } from "@/features/work-detail/same-author-banner";
+import {
+  resolveWorkBookMetadata,
+  selectSameAuthorWork,
+} from "@/features/work-detail/work-detail-data";
 import {
   createRecommendationCoverTargets,
   useRecommendationCovers,
@@ -482,6 +488,13 @@ function WorkDetailContent({ catalog, work }: Readonly<{ catalog: CatalogV1; wor
     [adjustments, catalog, policies, userWorks, work.id],
   );
   const relatedGroups = useMemo(() => relatedWorkGroups(catalog, work), [catalog, work]);
+  const sameAuthor = useMemo(() => selectSameAuthorWork(catalog, work), [catalog, work]);
+  const sameAuthorVolume =
+    sameAuthor === null
+      ? undefined
+      : catalog.volumes.find(
+          (volume) => volume.id === catalog.representativeVolumeByWorkId[sameAuthor.work.id],
+        );
   const coverTargets = useMemo(() => {
     const anchorWorkIds =
       compatibility.kind === "ready"
@@ -490,12 +503,13 @@ function WorkDetailContent({ catalog, work }: Readonly<{ catalog: CatalogV1; wor
     const orderedWorkIds = [
       ...new Set([
         ...anchorWorkIds,
+        ...(sameAuthor === null ? [] : [sameAuthor.work.id]),
         ...relatedGroups.themeRanked.map((related) => related.id),
         ...relatedGroups.moodRanked.map((related) => related.id),
       ]),
     ];
     return createRecommendationCoverTargets(catalog, orderedWorkIds);
-  }, [catalog, compatibility, relatedGroups]);
+  }, [catalog, compatibility, relatedGroups, sameAuthor]);
   const { coverUrls, requestCover } = useRecommendationCovers({
     targets: coverTargets,
     getProviderCache,
@@ -572,12 +586,20 @@ function WorkDetailContent({ catalog, work }: Readonly<{ catalog: CatalogV1; wor
     void (async () => {
       try {
         const cached = await getProviderCache(providerIsbn);
-        if (cached !== null && cached.workId === work.id) {
+        if (
+          cached !== null &&
+          cached.workId === work.id &&
+          normalizeIsbn(cached.isbn) === normalizeIsbn(providerIsbn)
+        ) {
           const cachedState = inspectProviderCache(cached, providerNow());
           if (active) {
             setProviderLoad({ isbn: providerIsbn, phase: "loading", cache: cachedState });
           }
-          if (cachedState.metadataFresh && cachedState.commercialFresh) {
+          if (
+            cachedState.metadataFresh &&
+            cachedState.commercialFresh &&
+            cached.publisherName !== undefined
+          ) {
             if (active) {
               setProviderLoad({ isbn: providerIsbn, phase: "ready", cache: cachedState });
               scheduleExpiry(cached, cachedState, true);
@@ -604,6 +626,7 @@ function WorkDetailContent({ catalog, work }: Readonly<{ catalog: CatalogV1; wor
       ? providerLoad
       : { isbn, phase: isbn === null ? "error" : "loading", cache: null };
   const metadata = visibleProvider.cache?.metadata ?? null;
+  const bookMetadata = resolveWorkBookMetadata(work, representativeVolume, metadata);
   const commercial = visibleProvider.cache?.commercial ?? null;
   const directUrl =
     metadata?.affiliateUrl ?? metadata?.itemUrl ?? visibleProvider.cache?.fallbackItemUrl;
@@ -613,7 +636,7 @@ function WorkDetailContent({ catalog, work }: Readonly<{ catalog: CatalogV1; wor
     ? (parsedRecommendationContext.data.constraintByWorkId[work.id]?.volumeCount ?? 0)
     : catalog.volumes.filter((volume) => volume.workId === work.id).length;
   const heroCoverUrl =
-    metadata?.imageUrl === undefined ? null : coverSourceForSize(metadata.imageUrl, 600);
+    bookMetadata.imageUrl === undefined ? null : coverSourceForSize(bookMetadata.imageUrl, 600);
 
   return (
     <>
@@ -640,7 +663,7 @@ function WorkDetailContent({ catalog, work }: Readonly<{ catalog: CatalogV1; wor
             <dl className="m-0 flex flex-wrap gap-x-[var(--space-6)] gap-y-[var(--space-3)] p-0 [&>div]:grid [&>div]:gap-[var(--space-content-tight)] [&_dd]:m-0 [&_dd]:font-bold [&_dd]:text-text-strong [&_dt]:text-[length:var(--text-caption-size)] [&_dt]:font-medium [&_dt]:text-text-muted">
               <div>
                 <dt>{workDetailStrings.metadata.publisher}</dt>
-                <dd>{work.publisher ?? workDetailStrings.metadata.unknownPublisher}</dd>
+                <dd>{bookMetadata.publisherName ?? workDetailStrings.metadata.unknownPublisher}</dd>
               </div>
               <div>
                 <dt>{workDetailStrings.metadata.status}</dt>
@@ -684,13 +707,6 @@ function WorkDetailContent({ catalog, work }: Readonly<{ catalog: CatalogV1; wor
         </WorkDetailShell>
 
         <div className="mx-auto grid w-full max-w-[var(--layout-width-detail)] gap-[var(--space-4)] px-[var(--layout-page-padding)] pt-[var(--space-6)]">
-          <CompatibilitySection
-            anchorCoverUrls={coverUrls}
-            catalog={catalog}
-            onAnchorCoverVisible={requestCover}
-            state={compatibility}
-          />
-
           <div className="grid gap-[var(--space-5)] border-t border-line/70 pt-[var(--space-4)] md:grid-cols-[minmax(0,1.08fr)_minmax(0,0.92fr)] md:gap-[var(--space-5)]">
             <section
               aria-labelledby="work-synopsis-heading"
@@ -702,9 +718,71 @@ function WorkDetailContent({ catalog, work }: Readonly<{ catalog: CatalogV1; wor
               >
                 {workDetailStrings.synopsis.heading}
               </h2>
-              <p className="leading-[var(--line-height-body)] text-text">
-                {metadata?.itemCaption ?? workDetailStrings.synopsis.unavailable}
+              <p className="whitespace-pre-line leading-[var(--line-height-body)] text-text">
+                {bookMetadata.itemCaption ?? workDetailStrings.synopsis.unavailable}
               </p>
+              {bookMetadata.itemCaption === undefined ||
+              bookMetadata.captionSourceUrl === undefined ? null : (
+                <a
+                  aria-label={workDetailStrings.metadata.sourceOpen(
+                    workDetailStrings.synopsis.source[bookMetadata.captionSource],
+                  )}
+                  className="inline-flex min-h-[var(--control-min-size)] w-fit items-center text-[length:var(--text-caption-size)] text-text-muted underline decoration-line underline-offset-4 hover:text-accent focus-visible:rounded-[var(--radius-control)] focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-focus-ring"
+                  href={bookMetadata.captionSourceUrl}
+                  rel="noreferrer"
+                  target="_blank"
+                >
+                  {workDetailStrings.synopsis.source[bookMetadata.captionSource]}
+                </a>
+              )}
+              {bookMetadata.salesDate === undefined &&
+              bookMetadata.imprint === undefined &&
+              bookMetadata.pageCount === undefined ? null : (
+                <section
+                  aria-labelledby="work-book-info-heading"
+                  className="grid gap-[var(--space-3)] pt-[var(--space-3)]"
+                >
+                  <h3
+                    className="text-[length:var(--font-size-14)] font-bold text-text-strong"
+                    id="work-book-info-heading"
+                  >
+                    {workDetailStrings.metadata.bookHeading(representativeVolume?.volumeNumber)}
+                  </h3>
+                  <dl className="m-0 flex flex-wrap gap-x-[var(--space-6)] gap-y-[var(--space-3)] p-0 [&>div]:grid [&>div]:gap-[var(--space-content-tight)] [&_dd]:m-0 [&_dd]:text-text [&_dt]:text-[length:var(--text-caption-size)] [&_dt]:text-text-muted">
+                    {bookMetadata.salesDate === undefined ? null : (
+                      <div>
+                        <dt>{workDetailStrings.metadata.releaseDate}</dt>
+                        <dd>{workDetailStrings.metadata.date(bookMetadata.salesDate)}</dd>
+                      </div>
+                    )}
+                    {bookMetadata.imprint === undefined ? null : (
+                      <div>
+                        <dt>{workDetailStrings.metadata.imprint}</dt>
+                        <dd>{bookMetadata.imprint}</dd>
+                      </div>
+                    )}
+                    {bookMetadata.pageCount === undefined ? null : (
+                      <div>
+                        <dt>{workDetailStrings.metadata.pages}</dt>
+                        <dd>{workDetailStrings.metadata.pageCount(bookMetadata.pageCount)}</dd>
+                      </div>
+                    )}
+                  </dl>
+                  {bookMetadata.collectedSourceUrl === undefined ? null : (
+                    <a
+                      aria-label={workDetailStrings.metadata.sourceOpen(
+                        workDetailStrings.metadata.publisherSource,
+                      )}
+                      className="inline-flex min-h-[var(--control-min-size)] w-fit items-center text-[length:var(--text-caption-size)] text-text-muted underline decoration-line underline-offset-4 hover:text-accent focus-visible:rounded-[var(--radius-control)] focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-focus-ring"
+                      href={bookMetadata.collectedSourceUrl}
+                      rel="noreferrer"
+                      target="_blank"
+                    >
+                      {workDetailStrings.metadata.publisherSource}
+                    </a>
+                  )}
+                </section>
+              )}
             </section>
 
             <section
@@ -733,6 +811,13 @@ function WorkDetailContent({ catalog, work }: Readonly<{ catalog: CatalogV1; wor
               )}
             </section>
           </div>
+
+          <CompatibilitySection
+            anchorCoverUrls={coverUrls}
+            catalog={catalog}
+            onAnchorCoverVisible={requestCover}
+            state={compatibility}
+          />
 
           <section
             aria-labelledby="work-provider-heading"
@@ -822,6 +907,14 @@ function WorkDetailContent({ catalog, work }: Readonly<{ catalog: CatalogV1; wor
               </p>
             </div>
           </section>
+          {sameAuthor === null ? null : (
+            <SameAuthorBanner
+              author={sameAuthor.author}
+              coverUrl={coverUrls.get(sameAuthor.work.id) ?? sameAuthorVolume?.metadata?.imageUrl}
+              onCoverVisible={() => requestCover(sameAuthor.work.id)}
+              work={sameAuthor.work}
+            />
+          )}
         </div>
 
         <div className="mx-auto grid w-full max-w-[var(--layout-width-media)] gap-[var(--space-6)] px-[var(--layout-page-padding)] pt-[var(--space-6)]">

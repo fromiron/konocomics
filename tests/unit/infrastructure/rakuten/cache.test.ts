@@ -42,6 +42,8 @@ describe("Rakuten provider cache", () => {
       affiliateUrl: undefined,
       chirayomiUrl: undefined,
       itemCaption: "世界の終わりが始まる。",
+      publisherName: "小学館",
+      salesDate: "2000年01月",
       itemPrice: 770,
       availability: 1,
       reviewAverage: 4.5,
@@ -73,6 +75,8 @@ describe("Rakuten provider cache", () => {
       metadata: {
         itemUrl: ITEM.itemUrl,
         itemCaption: ITEM.itemCaption,
+        publisherName: ITEM.publisherName,
+        salesDate: ITEM.salesDate,
       },
       fallbackItemUrl: ITEM.itemUrl,
     });

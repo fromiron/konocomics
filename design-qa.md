@@ -1,5 +1,35 @@
 # Design QA — `temp/design` component-fidelity redesign
 
+## 2026-09-11 작품 정보 보완·같은 작가 배너 — 최종
+
+- 사용자 선택은 생성 이미지 1 (`exec-11120b84-5cbe-48e3-a4b8-30dd0a328859.png`)의 본문 전체폭 배너다. 반폭 배너 안은 폐기했다. 소개·대표권 서지를 상성보다 먼저 배치하고, 구매 영역 아래에 같은 작가의 다른 작품 상세로 가는 단일 Link를 추가했다. 출처 링크는 후속 사용자 지시에 따라 「楽天ブックスの紹介」 / 「出版社の紹介」로 통일했다.
+- `回転銀河`와 `逃げるは恥だが役に立つ`의 대표 ISBN을 출판사 종이책 페이지와 대조해 소개 요약·발매일·레이블·페이지 수·표지 URL을 수집했다. 원문·출처·수집 시각·응답 hash는 로컬 authoring SQLite에 보존했다. Catalog v2의 `source_book_metadata` 2행과 해당 Volume의 선택적 metadata를 사용하며 API 캐시에 수집값을 쓰지 않는다. 권수 1→6은 출판사 6권 근거로 정정했고 완결 여부·팩터·주석 판정은 유지했다.
+- 실제 페이지에서 `回転銀河`의 Rakuten cache(ISBN 9784063404456, fetchedAt `2026-09-11T08:00:38.987Z`)는 `itemCaption` 없음, 출판사 講談社, 발매일 `2003年08月08日頃`이었다. 화면은 출판사 요약·208페이지·KC KISS와 라쿠텐 발매일을 함께 표시했다. 양쪽에 소개가 있는 `逃げるは恥だが役に立つ`는 「楽天ブックスの紹介」와 실제 Rakuten item URL을 표시했다. 단권 판매일과 전체 시리즈 권수를 혼동하지 않는다.
+- [P2, 해결] 초기 배너의 책과 높이(192px)가 선택 시안에 비해 작았다. desktop 높이 256px·책 기준 폭 176px로 조정하고 바탕과 앞면을 함께 수직 중앙에 맞췄다. 중간 확대본에서 책이 아래로 돌출한 문제도 배너 안의 중앙 정렬로 해소했다. 공통 책 바탕의 각도는 사용자 제공 자산 그대로이며 생성 시안과 픽셀 단위 동일함을 주장하지 않는다.
+- 비교 입력에는 선택 원본과 `.tmp/detail-information-20260911/desktop-final-cdp.png`, `mobile-final-cdp.png`를 함께 사용했다. 원본은 desktop/mobile 합성 1536×1024로 정확한 CSS viewport가 지정된 설계도는 아니다. 같은 상세·저자·대상 작품·dark 상태의 배너 영역과 반응형 구성을 비교했다. desktop은 CSS 1495×1272·DPR 1.5(원본 캡처 2243×1908), mobile은 CSS/PNG 390×844·DPR 1이다. 잘못 축소된 중간 native clip/mobile 캡처는 최종 판정에서 제외했다.
+- 다섯 표면: 기존 Noto Sans JP·white title·muted author·accent CTA의 위계를 유지했다. desktop은 본문 너비 992px, mobile은 책과 줄바꿈 제목을 나란히 배치했다. surface/radius/focus는 기존 token을 사용했다. 실제 ISBN 표지와 투명 3D 바탕은 원본 비율·S/M/L 선택·400→200 경로를 유지하며 새 표지 파일을 복제하지 않았다. 문구는 실제 저자·작품명과 같은 형식의 출처 링크다. 남은 P0/P1/P2 시각 결함은 발견하지 않았다.
+- 키보드 구매 링크 다음 Tab에서 배너가 focus-visible 2px outline을 얻고, Enter로 `/works/the-full-time-wife-escapist`에 이동했다. 해당 h1·출처 링크를 확인한 뒤 Back으로 원래 작품에 복귀했다. source 링크와 CTA는 최소 44px이다. 390px 및 실제 mobile emulation의 320px에서 `scrollWidth === clientWidth`였고 하단 내비게이션을 유지했다. 검사 후 viewport/기기 override를 제거하고 원래 상세를 열어 두었다.
+- IndexedDB read-only 확인: 기존 userWorks 17개(완독 15·읽을 예정 2) 유지. 마지막 브라우저 error/warn 조회는 빈 결과다. 이 확인을 새 독서 기록 mutation이나 배포 검증으로 집계하지 않는다.
+- 검증: 전체 typecheck·lint PASS, 최종 변경 TSX/strings/test의 scoped lint PASS, 최종 상세/우선순위/cache 3개 파일·21개 테스트 PASS, 표지/공유 resolver 2개 파일·27개 테스트 PASS, `pnpm build` PASS. 초기 관련 49개 파일·350개 테스트 실행은 347 PASS·3 FAIL이었으며 추가 회귀 테스트의 불완전한 API fixture(필수 review 필드 누락)를 수정해 해당 상세 15개 테스트를 재실행했다. 남은 2개는 기존 `promotion-registry.test.ts`의 pending 0→13과 `promote-pilot-001.test.ts`의 stale registry로, 변경 전 `commit-tests.log`에도 동일 실패가 있다. 전체 테스트 PASS로 보고하지 않는다.
+- Catalog candidate build/coverage·canonical authority/validate·Gold Set 150 보존·publish 후 byte readback PASS. 1627작품·1631권, 검증 오류 0·기존 경고 4608이다. 현재 Catalog는 `v1-e012674fda6f`, authority source digest는 `a8ee70f77b34561f5481099adc154a151ef7c9b821b540bc99450c17d2550737`이다. 동작 확인 대상은 local `main` / `def4559451229e55ecfdaaec84bdefd6aa8e2c4c` 위 미커밋 작업이며 GitHub·배포는 수행하지 않았다. `handoff/`와 기존 비추적 자료를 보존했다.
+
+`03` §6 수용 기준(변경하지 않은 기능은 이번에 실제 mutation을 수행했다고 해석하지 않는다):
+
+| 계약 항목                                                                                                                                                       | 이번 확인                                                                                           |
+| --------------------------------------------------------------------------------------------------------------------------------------------------------------- | --------------------------------------------------------------------------------------------------- |
+| 블러 배경과 전경이 동일 URL이며 추가 이미지 요청이 없다(같은 캐시 항목).                                                                                        | PASS: 동일 hero source를 사용하는 구현 경로와 기존 CoverImage 회귀 검사.                            |
+| `_ex=600x600` 로드 실패 시 200x200으로 자동 폴백된다.                                                                                                           | PASS: 기존 CoverImage 회귀 검사. 실제 provider 장애를 일으키지는 않았다.                            |
+| 상성 섹션 문구가 /recommendations 카드의 이유와 동일 소스(contribution)에서 생성된다.                                                                           | PASS: 기존 WorkDetailFlow 비교 검사와 실제 상성 표시.                                               |
+| 읽음 상태 변경이 Library와 다음 추천에 반영된다.                                                                                                                | 관련 DB/상태 회귀 검사 PASS. 이번 브라우저에서는 기존 기록 readback만 수행했다.                     |
+| 같은 브라우저에서 external 상세 URL을 새로고침해도 같은 로컬 record와 사용자 상태를 읽는다.                                                                     | External 상세·DB 회귀 검사 PASS. 이번 브라우저에서 external 재등록·새로고침을 별도 실행하지 않았다. |
+| 같은 URL을 해당 row가 없는 브라우저에서 열면 local-missing 상태가 되고 provider로 복원하지 않는다.                                                              | 기존 external 상세 회귀 검사 PASS.                                                                  |
+| malformed query는 해당 값으로 ID별 local lookup/provider 요청을 하지 않고, corrupt row는 provider 요청과 questionable 서지 렌더링을 하지 않는다.                | 기존 external 상세 회귀 검사 PASS.                                                                  |
+| 관련 Shelf selector는 동일 입력에서 같은 work ID 순서이고 external 작품에는 표시되지 않는다.                                                                    | 기존 상세/selector 회귀 검사 PASS. 실제 Catalog Shelf 표시 확인.                                    |
+| 정상 API 응답에서도 소개가 없으면 같은 ISBN의 수집 소개를 표시하며, 양쪽에 값이 있는 항목은 라쿠텐 값을 선택한다. 다른 Work·ISBN의 수집 정보는 결합하지 않는다. | PASS: 실제 두 작품 표시·cache readback, resolver/compile 회귀 검사.                                 |
+| 본문 전체폭의 같은 작가 배너가 실제 다른 Catalog 상세로 이동한다. mobile에서도 책과 문구를 나란히 표시하며 가로 넘침·hover 전용 조작이 없다.                    | PASS: desktop/mobile 비교, Tab·Enter·Back, 390/320px 검사.                                          |
+
+final result: passed
+
 ## 2026-09-11 판매순 발견 배너 커밋 검증
 
 - 전체 `pnpm typecheck`·`pnpm lint` PASS. `pnpm test`는 112개 파일 중 107개 PASS·5개 FAIL, 테스트 876개 PASS·5개 FAIL이다. 이번 변경의 테스트 파일은 실패 목록에 없다.

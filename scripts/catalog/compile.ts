@@ -5,6 +5,7 @@ import { isbnIdentityKey } from "../../src/domain/catalog/normalize";
 import { catalogV1Schema, workAxesSchema } from "../../src/domain/catalog/schema";
 import type {
   AxisFactor,
+  BookMetadata,
   CatalogV1,
   ThemeFactor,
   Volume,
@@ -385,6 +386,33 @@ export function compileCatalog(source: CatalogSource): CompileResult {
     "DUPLICATE_VOLUME_ID",
     issues,
   );
+  const bookMetadataRows = collectFirstByKey(
+    source.bookMetadata ?? [],
+    (row) => isbnIdentityKey(row.isbn),
+    "DUPLICATE_BOOK_METADATA_ISBN",
+    issues,
+  );
+  const sourceVolumeByIsbn = new Map(
+    source.volumes.map((row) => [isbnIdentityKey(row.value.isbn), row.value]),
+  );
+  const bookMetadataByIsbn = new Map<string, BookMetadata>();
+  for (const [isbnKey, row] of bookMetadataRows) {
+    const { workId, isbn, ...metadata } = row.value;
+    const volume = sourceVolumeByIsbn.get(isbnKey);
+    if (volume === undefined || volume.workId !== workId) {
+      issues.push(
+        issue(
+          row,
+          "error",
+          "BOOK_METADATA_TARGET_MISMATCH",
+          `Book metadata for ${isbn} must match a volume belonging to ${workId}`,
+          "isbn",
+        ),
+      );
+      continue;
+    }
+    bookMetadataByIsbn.set(isbnKey, metadata);
+  }
   const axisIds = new Set<string>(AXIS_IDS);
   const themeIds = new Set<string>(THEME_TAGS);
   const referencedEvidenceIds = new Set([
@@ -519,6 +547,9 @@ export function compileCatalog(source: CatalogSource): CompileResult {
       isbn: row.value.isbn,
       ...(row.value.releaseDate === undefined ? {} : { releaseDate: row.value.releaseDate }),
       editionKind: row.value.editionKind,
+      ...(bookMetadataByIsbn.has(isbnIdentity)
+        ? { metadata: bookMetadataByIsbn.get(isbnIdentity)! }
+        : {}),
     });
   }
 

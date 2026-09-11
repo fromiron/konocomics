@@ -826,6 +826,15 @@ export const workDetailStrings = {
     status: "刊行状況",
     volumes: "巻数",
     unknownPublisher: "出版社不明",
+    bookHeading: (volumeNumber?: number) =>
+      volumeNumber === undefined ? "書誌情報" : `第${String(volumeNumber)}巻の情報`,
+    releaseDate: "発売日",
+    imprint: "レーベル",
+    pages: "ページ数",
+    pageCount: (count: number) => `${String(count)}ページ`,
+    publisherSource: "出版社の書誌情報",
+    date: (value: string) => value.replace(/^(\d{4})-(\d{2})-(\d{2})$/u, "$1年$2月$3日"),
+    sourceOpen: (source: string) => `${source}（新しいタブ）`,
   },
   compatibility: {
     heading: "あなたとの相性",
@@ -843,9 +852,15 @@ export const workDetailStrings = {
     heading: "同じ雰囲気の作品",
     description: "確認済みの作品ファクターが近いカタログ作品です。",
   },
+  sameAuthor: {
+    heading: (author: string) => `${author}の、もう一冊`,
+    view: "作品を見る",
+    open: (title: string) => `「${title}」の作品詳細を見る`,
+  },
   synopsis: {
     heading: "作品紹介",
     unavailable: "作品紹介を取得できませんでした。",
+    source: { rakuten: "楽天ブックスの紹介", publisher: "出版社の紹介" },
   },
   factors: {
     heading: "この作品の主要ファクター",

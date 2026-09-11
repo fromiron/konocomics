@@ -7,6 +7,7 @@
 - `catalog.sqlite/source_works`: Work 서지, eligibility, 주석 검토 provenance
 - `catalog.sqlite/source_aliases`: Work 검색 별칭
 - `catalog.sqlite/source_volumes`: Work에 속한 권과 대표권
+- `catalog.sqlite/source_book_metadata`: 정확한 Work·ISBN에 결속한 출판사 수집 소개·서지·표지 URL, 출처 URL·수집 시각
 - `catalog.sqlite/source_factors`: 17개 Axis의 known/unknown/notApplicable 값
 - `catalog.sqlite/source_themes`: Theme 중심성 1/2
 - `catalog.sqlite/source_recommendation_context`: 작품별 catalog 역할·시리즈·권수와 선택적 market snapshot 값
@@ -67,7 +68,7 @@
 ## SQLite authority와 projection 경계
 
 - 허용 regular file은 `catalog.sqlite` 하나와 opaque Markdown 12개, 총 13개다. 삭제된 9개 authoritative CSV나 SQLite journal sidecar가 함께 있으면 검증에 실패한다.
-- canonical DB에는 정확히 9개 `STRICT` source table만 둔다. proof/candidate/resolution/judgment table, view, trigger는 넣지 않는다.
+- canonical DB는 `user_version=2`이며 기존 9개와 `source_book_metadata`를 합한 10개 `STRICT` source table만 둔다. proof/candidate/resolution/judgment table, view, trigger는 넣지 않는다.
 - row order는 1-based `sourceOrdinal`이 결정한다. `sourceLine`은 canonical CSV projection에서 record가 끝나는 physical line이며 오류·감사에만 쓰고 digest나 정렬에는 쓰지 않는다.
 - 일반 reader·validator·builder·promotion registry는 SQLite를 직접 읽는다. CSV-shaped frozen 도구만 sibling OS temp에 projection하며 기존 `data/source/`를 덮어쓰지 않고 성공·실패 모두 temp와 sidecar를 제거한다.
 - legitimate write는 현재 DB를 candidate로 복사해 한 transaction에서 변경·전체 검증하고, close/read-only exact readback 뒤에만 원자적으로 교체한다. 모델 출력 기반 writer는 I/O 전에 거부한다.
@@ -80,3 +81,10 @@
 ## 그룹핑
 
 `catalog:normalize`은 제목 정규화 결과와 서로 다른 Work 사이의 잠재 중복 후보를 함께 출력한다. 그룹핑 점수는 아키텍처 §2.1의 다섯 신호와 고정 가중치만 사용한다. 런타임에서는 자동 그룹핑하지 않는다.
+
+## 상세의 수집 서지 (2026-09-11)
+
+- `source_book_metadata`는 `002-book-metadata.sql`로 확장한 ISBN 단위 source이며 같은 Work·판본의 Volume에만 결합한다. 라쿠텐 캐시와 합치거나 팩터 주석의 근거로 사용하지 않는다.
+- 화면은 유효한 라쿠텐 항목 > 수집 항목 순으로 선택한다. 빈 문자열·누락만 보완하고, 양쪽 원본과 출처·수집일을 보존한다. 가격·재고·리뷰는 라쿠텐 전용이다.
+- `回転銀河` 1권(ISBN 9784063404456)과 `逃げるは恥だが役に立つ` 1권(ISBN 9784063409116)의 출판사 소개를 요약하고 종이책 서지·표지 URL을 수집했다. 원문과 응답 hash는 별도 로컬 authoring 저장소에 보존한다.
+- `回転銀河`의 권수는 출판사 6권 페이지 <https://www.kodansha.co.jp/comic/products/0000036217> (ISBN 9784063407556, 2026-09-11 수집)에 근거하여 1→6으로 정정했다. 완결 여부와 기존 팩터·주석 권한은 변경하지 않았다.

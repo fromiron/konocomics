@@ -67,6 +67,17 @@ export type Work = {
   evidence: WorkEvidence;
 };
 
+export type BookMetadata = {
+  publisherName?: string;
+  itemCaption?: string;
+  salesDate?: string;
+  imageUrl?: string;
+  imprint?: string;
+  pageCount?: number;
+  sourceUrl: string;
+  fetchedAt: string;
+};
+
 export type Volume = {
   id: string;
   workId: string;
@@ -74,6 +85,7 @@ export type Volume = {
   isbn: string;
   releaseDate?: string;
   editionKind: EditionKind;
+  metadata?: BookMetadata;
 };
 
 export type FactorEvidence = {

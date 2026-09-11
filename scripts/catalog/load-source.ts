@@ -6,6 +6,7 @@ import { z } from "zod";
 
 import {
   aliasSourceRowSchema,
+  bookMetadataSourceRowSchema,
   evidenceSourceRowSchema,
   factorSourceRowSchema,
   recommendationConfigSourceRowSchema,
@@ -18,6 +19,7 @@ import { ART_EVIDENCE_MANIFEST_FILE, artEvidenceManifestRowSchema } from "./art-
 import type { CatalogSource, Located, SourceIssue, SourceLoadResult } from "./types";
 import {
   CATALOG_DATABASE_FILE,
+  CATALOG_BOOK_METADATA_TABLE,
   CATALOG_TABLES,
   readCatalogAuthorityRecords,
   type AuthorityRecord,
@@ -145,6 +147,7 @@ function finishLoad(
     works: LoadedRows<z.infer<typeof workSourceRowSchema>>;
     aliases: LoadedRows<z.infer<typeof aliasSourceRowSchema>>;
     volumes: LoadedRows<z.infer<typeof volumeSourceRowSchema>>;
+    bookMetadata: LoadedRows<z.infer<typeof bookMetadataSourceRowSchema>>;
     factors: LoadedRows<z.infer<typeof factorSourceRowSchema>>;
     themes: LoadedRows<z.infer<typeof themeSourceRowSchema>>;
     recommendationContext: LoadedRows<z.infer<typeof recommendationContextSourceRowSchema>>;
@@ -157,6 +160,7 @@ function finishLoad(
     works,
     aliases,
     volumes,
+    bookMetadata,
     factors,
     themes,
     recommendationContext,
@@ -168,6 +172,7 @@ function finishLoad(
     works: works.rows,
     aliases: aliases.rows,
     volumes: volumes.rows,
+    bookMetadata: bookMetadata.rows,
     factors: factors.rows,
     themes: themes.rows,
     recommendationContext: recommendationContext.rows,
@@ -198,6 +203,7 @@ function finishLoad(
       ...works.issues,
       ...aliases.issues,
       ...volumes.issues,
+      ...bookMetadata.issues,
       ...factors.issues,
       ...themes.issues,
       ...recommendationContext.issues,
@@ -214,6 +220,9 @@ export function loadCatalogSourceFromCsv(sourceDirectory: string): SourceLoadRes
     works: loadFile(sourceDirectory, "works.csv", workSourceRowSchema),
     aliases: loadFile(sourceDirectory, "aliases.csv", aliasSourceRowSchema),
     volumes: loadFile(sourceDirectory, "volumes.csv", volumeSourceRowSchema),
+    bookMetadata: existsSync(join(sourceDirectory, CATALOG_BOOK_METADATA_TABLE.path))
+      ? loadFile(sourceDirectory, CATALOG_BOOK_METADATA_TABLE.path, bookMetadataSourceRowSchema)
+      : { rows: [], issues: [] },
     factors: loadFile(sourceDirectory, "factors.csv", factorSourceRowSchema),
     themes: loadFile(sourceDirectory, "themes.csv", themeSourceRowSchema),
     recommendationContext: loadFile(
@@ -236,7 +245,11 @@ export function loadCatalogSourceFromCsv(sourceDirectory: string): SourceLoadRes
 }
 
 export function loadCatalogAuthority(sourceDirectory: string): SourceLoadResult {
-  if (CATALOG_TABLES.some((table) => existsSync(join(sourceDirectory, table.path)))) {
+  if (
+    [...CATALOG_TABLES, CATALOG_BOOK_METADATA_TABLE].some((table) =>
+      existsSync(join(sourceDirectory, table.path)),
+    )
+  ) {
     return {
       source: emptyCatalogSource(),
       artEvidence: [],
@@ -273,6 +286,7 @@ export function loadCatalogAuthority(sourceDirectory: string): SourceLoadResult 
     works: load("works.csv", workSourceRowSchema),
     aliases: load("aliases.csv", aliasSourceRowSchema),
     volumes: load("volumes.csv", volumeSourceRowSchema),
+    bookMetadata: load(CATALOG_BOOK_METADATA_TABLE.path, bookMetadataSourceRowSchema),
     factors: load("factors.csv", factorSourceRowSchema),
     themes: load("themes.csv", themeSourceRowSchema),
     recommendationContext: load("recommendation-context.csv", recommendationContextSourceRowSchema),

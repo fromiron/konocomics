@@ -4821,7 +4821,7 @@
     "work-9b42e9cda7743bba0f9b": {
       "workId": "work-9b42e9cda7743bba0f9b",
       "catalogRole": "discovery",
-      "volumeCount": 1
+      "volumeCount": 6
     },
     "work-9b486df34cdf8853a038": {
       "workId": "work-9b486df34cdf8853a038",
@@ -7480,7 +7480,7 @@
     }
   },
   "marketSnapshot": {
-    "catalogVersion": "v1-dcb321425c4a",
+    "catalogVersion": "v1-e012674fda6f",
     "catalogAverageRating": 4.367959183673469,
     "byWorkId": {
       "20th-century-boys": {

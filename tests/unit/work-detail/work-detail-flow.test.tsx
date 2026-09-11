@@ -9,7 +9,7 @@ import {
   screen,
   waitFor,
 } from "@testing-library/react";
-import type { ReactNode } from "react";
+import type { AnchorHTMLAttributes } from "react";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 
 import catalogJson from "@/data/generated/catalog-v1.json";
@@ -27,7 +27,18 @@ import { buildRakutenBooksSearchUrl } from "@/infrastructure/rakuten";
 import { coverStrings, workDetailStrings, explanationLexicon } from "@/lib/strings";
 
 vi.mock("@tanstack/react-router", () => ({
-  Link: ({ children, to }: { children: ReactNode; to: string }) => <a href={to}>{children}</a>,
+  Link: ({
+    to,
+    params,
+    ...props
+  }: AnchorHTMLAttributes<HTMLAnchorElement> & {
+    to: string;
+    params?: { workId: string };
+    preload?: boolean;
+  }) => {
+    delete props.preload;
+    return <a {...props} href={to.replace("$workId", params?.workId ?? "")} />;
+  },
 }));
 
 type TestStatus =
@@ -92,6 +103,7 @@ function providerCacheRecord(options: {
     itemUrl: "https://books.rakuten.co.jp/rb/123/",
     affiliateUrl: "https://hb.afl.rakuten.co.jp/example",
     itemCaption: "期限境界を確認するための作品紹介です。",
+    publisherName: "講談社",
     itemPrice: 770,
     availability: 1,
     reviewAverage: 4.8,
@@ -160,6 +172,51 @@ afterEach(() => {
 });
 
 describe("WorkDetailFlow", () => {
+  it("fills an omitted caption after a successful Rakuten response and links the same author work", async () => {
+    const workId = "work-9b42e9cda7743bba0f9b";
+    const volume = catalog.volumes.find(
+      (volume) => volume.id === catalog.representativeVolumeByWorkId[workId],
+    )!;
+    testState.status = { state: "ready", mode: "indexeddb", warning: null };
+    testState.saveProviderCache.mockImplementation(async (record: ProviderCacheRecord) => record);
+    testState.requestRakutenBook.mockResolvedValue({
+      title: "回転銀河（1）",
+      author: "海野つなみ",
+      publisherName: "講談社",
+      isbn: volume.isbn,
+      salesDate: "2003年08月08日頃",
+      itemPrice: 440,
+      reviewAverage: 0,
+      reviewCount: 0,
+      availability: 1,
+      itemUrl: "https://books.rakuten.co.jp/rb/1585697/",
+    });
+    renderDetail(workId);
+
+    expect(await screen.findByText("2003年08月08日頃")).toBeTruthy();
+    expect(screen.getByText(volume.metadata!.itemCaption!)).toBeTruthy();
+    expect(screen.getByText("208ページ")).toBeTruthy();
+    expect(
+      screen
+        .getByRole("link", {
+          name: workDetailStrings.metadata.sourceOpen(workDetailStrings.synopsis.source.publisher),
+        })
+        .getAttribute("href"),
+    ).toBe(volume.metadata!.sourceUrl);
+    expect(
+      screen
+        .getByRole("link", { name: workDetailStrings.sameAuthor.open("逃げるは恥だが役に立つ") })
+        .getAttribute("href"),
+    ).toBe("/works/the-full-time-wife-escapist");
+    expect(testState.saveProviderCache).toHaveBeenCalledWith(
+      expect.objectContaining({
+        isbn: volume.isbn,
+        publisherName: "講談社",
+        itemCaption: undefined,
+      }),
+    );
+  });
+
   it("applies B entry only to a resolved valid catalog detail", () => {
     const resolved = renderDetail();
 
