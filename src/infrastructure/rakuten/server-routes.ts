@@ -1,24 +1,33 @@
 import "@tanstack/react-start/server-only";
 
-import { fetchRakutenBooks, RAKUTEN_CDN_CACHE_CONTROL, readRakutenCredentials } from "./server";
+import {
+  fetchRakutenBooks,
+  RAKUTEN_CDN_CACHE_CONTROL,
+  readRakutenCredentials,
+  type RakutenBooksQuery,
+} from "./server";
 import { rakutenIsbnSchema, rakutenTitleQuerySchema } from "./schema";
 
 const invalidRequest = () => Response.json({ error: "invalid_request" }, { status: 400 });
 const providerUnavailable = () => Response.json({ error: "provider_unavailable" }, { status: 502 });
 
 export async function handleRakutenSearch(request: Request): Promise<Response> {
-  const title = rakutenTitleQuerySchema.safeParse(new URL(request.url).searchParams.get("title"));
-  if (!title.success) return invalidRequest();
+  const parameters = new URL(request.url).searchParams;
+  const popular = parameters.get("sort") === "sales";
+  const title = rakutenTitleQuerySchema.safeParse(parameters.get("title"));
+  const query: RakutenBooksQuery | null =
+    popular && parameters.size === 1
+      ? { kind: "popular" }
+      : !parameters.has("sort") && title.success
+        ? { kind: "search", title: title.data }
+        : null;
+  if (query === null) return invalidRequest();
 
   const credentials = readRakutenCredentials();
   if (credentials === null) return providerUnavailable();
 
   try {
-    const items = await fetchRakutenBooks(
-      { kind: "search", title: title.data },
-      credentials,
-      request,
-    );
+    const items = await fetchRakutenBooks(query, credentials, request);
     return Response.json({ items }, { headers: { "Cache-Control": RAKUTEN_CDN_CACHE_CONTROL } });
   } catch {
     return providerUnavailable();

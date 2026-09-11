@@ -157,15 +157,16 @@ groupingScore =
 
 ```text
 GET /api/rakuten/search?title=...        → { items: RakutenBookItem[] }
+GET /api/rakuten/search?sort=sales       → { items: RakutenBookItem[] }
 GET /api/rakuten/item?isbn=...           → { listing: RakutenBookItem }
 ```
 
 - 응답 헤더: `Cache-Control: public, s-maxage=86400, stale-while-revalidate=604800` (Vercel CDN 캐시로 라쿠텐 호출 절감). 응답은 사용자별 정보가 없는 공용 Rakuten 축소 응답만 담는다.
-- Catalog 대표권이 품절이어도 메타데이터를 조회할 수 있도록 `outOfStockFlag=1`을 고정한다. 공급자의 현재 `Items`와 이전 `items` envelope를 모두 경계에서 정규화하고, 빈 availability는 미확인으로 보존하며 숫자 문자열 reviewAverage는 검증 후 number로 변환한다.
+- 제목·ISBN 조회는 Catalog 대표권이 품절이어도 메타데이터를 조회할 수 있도록 `outOfStockFlag=1`을 고정한다. 판매순 발견 조회는 `size=9`(만화), `sort=sales`, `hits=30`, `outOfStockFlag=0`을 서버에서 고정하며 사용자 프로필을 보내지 않는다. 공급자의 현재 `Items`와 이전 `items` envelope를 모두 경계에서 정규화하고, 빈 availability는 미확인으로 보존하며 숫자 문자열 reviewAverage는 검증 후 number로 변환한다.
 - 라쿠텐 응답에서 필요한 필드만 추출(§`02` 5). `largeImageUrl`은 `_ex=600x600`으로 정규화해 `imageUrl`로 반환하고, 클라이언트 `CoverImage`가 같은 원본 URL에서 200/400/600 preset을 파생한다. 600 로드 실패 시 같은 URL의 200x200으로 폴백한다.
 - 실패 처리: 라쿠텐 4xx/5xx·타임아웃(5s) → `502 { error: "provider_unavailable" }`. 클라이언트는 placeholder 폴백(`03` 각 화면). 재시도는 사용자 액션으로만(자동 재시도 없음).
 - 요청 간격: 공통 Rakuten 클라이언트 큐의 1초 간격은 개발 중 provider 보호용으로 development에서만 적용한다. production/test에는 강제 지연하지 않는다. 동일 ISBN의 동시 요청은 기존 in-flight 합류를 우선하며 짧은 placeholder 노출은 허용한다.
-- 요청 검증: title 1~100자 / isbn 형식. 미통과 400. (공개 프록시 남용 방지 겸)
+- 요청 검증: title 1~100자 / isbn 형식. 판매순은 추가 인자 없는 단일 `sort=sales`만 허용한다. 미통과 400. 판매순 응답은 브라우저 모듈에서도 24h 동안 요청·결과를 합류하며 별도 서버 route·저장소를 추가하지 않는다.
 
 ## 5. 소스 구조
 

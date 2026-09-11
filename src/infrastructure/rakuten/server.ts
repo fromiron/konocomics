@@ -39,7 +39,9 @@ const credentialsSchema = z.strictObject({
 });
 
 export type RakutenBooksQuery =
-  Readonly<{ kind: "search"; title: string }> | Readonly<{ kind: "item"; isbn: string }>;
+  | Readonly<{ kind: "search"; title: string }>
+  | Readonly<{ kind: "popular" }>
+  | Readonly<{ kind: "item"; isbn: string }>;
 
 const optionalTextSchema = z.string().transform((value) => {
   const trimmed = value.trim();
@@ -142,6 +144,11 @@ function buildRakutenUrl(query: RakutenBooksQuery, credentials: RakutenCredentia
   }
   if (query.kind === "search") {
     url.searchParams.set("title", query.title);
+  } else if (query.kind === "popular") {
+    url.searchParams.set("size", "9");
+    url.searchParams.set("sort", "sales");
+    url.searchParams.set("hits", "30");
+    url.searchParams.set("outOfStockFlag", "0");
   } else {
     url.searchParams.set("isbn", query.isbn);
   }

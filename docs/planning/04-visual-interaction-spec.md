@@ -160,6 +160,10 @@
 
 ## 4. 표지 표현
 
+2026-09-11 사용자 선택 시안의 판매순 발견 배너는 흰색 `--discovery-paper`와 어두운 `--discovery-ink`, 보라색 답변 표식·하늘색 제목 밑줄을 쓰는 한정된 밝은 표면이다. 앱 전역의 dark theme은 유지한다. `BookCover`는 사용자가 제공한 투명 3D 책 바탕과 그 앞면에 맞춘 실제 `CoverImage`를 합성한다. 종이 단면·둥근 왼쪽 아래 제본·오른쪽 옆면·그림자는 공통 바탕 이미지에 포함하며 서로 끊기지 않아야 한다. 표지 내용이 없는 공통 3D 바탕만 제품 asset으로 보존하며, 실제 작품 표지는 저장소에 복제하거나 새 글자를 합성하지 않는다. 원본 비율·400→200 fallback을 유지한다. 앞면은 원본 1254×1254 이미지의 네 모서리에 맞춘 고정 투영을 사용하고 다른 비율의 표지는 contain으로 보존한다. 배너에는 장식 애니메이션·배경 gradient·별도 3D 라이브러리를 추가하지 않는다.
+
+공통 바탕은 `/media/book-base-small.webp`(256×256), `book-base-medium.webp`(512×512), `book-base-large.webp`(1024×1024) 세 크기다. 모든 크기의 투명도·구도는 같으며 `srcSet`과 lazy 이미지의 `sizes="auto, 225px"`로 브라우저가 표시 크기와 픽셀 밀도에 맞게 고른다. 다른 위치에서도 같은 `BookCover`와 자산을 재사용하고, CSS `--book-cover-width`로 크기를 조정한다. 원본과 크기별 생성 근거는 `outputs/design/book-base-source-20260911.png`와 `design-qa.md`에 보존한다.
+
 ### 4.1 기본 규칙
 
 - 항상 원본 비율(`object-fit: contain`), 크롭 금지. 프레임 비율은 3:4.3 고정 박스에 contain.

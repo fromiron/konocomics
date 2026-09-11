@@ -43,6 +43,34 @@ afterEach(() => {
 });
 
 describe("Rakuten Route Handlers", () => {
+  it("serves an unpersonalized comic sales list through the existing search route", async () => {
+    enableCredentials();
+    const providerFetch = vi
+      .fn<(url: URL) => Promise<Response>>()
+      .mockResolvedValue(Response.json({ items: [upstreamItem()] }));
+    vi.stubGlobal("fetch", providerFetch);
+    const response = await searchItems(
+      new Request("http://localhost/api/rakuten/search?sort=sales"),
+    );
+    expect(response.status).toBe(200);
+    const url = providerFetch.mock.calls[0]![0];
+    expect(url.searchParams.get("sort")).toBe("sales");
+    expect(url.searchParams.get("size")).toBe("9");
+    expect(url.searchParams.get("hits")).toBe("30");
+    expect(url.searchParams.has("title")).toBe(false);
+    for (const query of [
+      "sort=rating",
+      "sort=sales&title=test",
+      "sort=sales&size=10",
+      "sort=sales&sort=sales",
+    ]) {
+      expect(
+        (await searchItems(new Request(`http://localhost/api/rakuten/search?${query}`))).status,
+      ).toBe(400);
+    }
+    expect(providerFetch).toHaveBeenCalledOnce();
+  });
+
   it("validates search input before any provider request", async () => {
     enableCredentials();
     const providerFetch = vi.fn();

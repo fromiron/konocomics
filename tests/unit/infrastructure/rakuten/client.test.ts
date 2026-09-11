@@ -3,6 +3,7 @@ import { afterEach, describe, expect, it, vi } from "vitest";
 import {
   buildRakutenBooksSearchUrl,
   fetchRakutenBook,
+  fetchPopularRakutenBooks,
   requestRakutenBook,
   searchRakutenBooks,
   type RakutenBookItem,
@@ -25,6 +26,27 @@ afterEach(() => {
 });
 
 describe("Rakuten client", () => {
+  it("shares the sales request and expires it after a day without sending profile data", async () => {
+    vi.useFakeTimers();
+    try {
+      const routeFetch = vi.fn(async () => Response.json({ items: [ITEM] }));
+      vi.stubGlobal("fetch", routeFetch);
+      const first = fetchPopularRakutenBooks();
+      expect(fetchPopularRakutenBooks()).toBe(first);
+      await expect(first).resolves.toEqual([ITEM]);
+      await fetchPopularRakutenBooks();
+      expect(routeFetch).toHaveBeenCalledOnce();
+      expect(routeFetch).toHaveBeenCalledWith("/api/rakuten/search?sort=sales", {
+        headers: { Accept: "application/json" },
+      });
+      vi.setSystemTime(Date.now() + 24 * 60 * 60 * 1_000);
+      await fetchPopularRakutenBooks();
+      expect(routeFetch).toHaveBeenCalledTimes(2);
+    } finally {
+      vi.useRealTimers();
+    }
+  });
+
   it("builds the grounded Rakuten Books manga title fallback URL", () => {
     const url = new URL(buildRakutenBooksSearchUrl(" 20世紀少年 "));
     expect(url.origin).toBe("https://books.rakuten.co.jp");

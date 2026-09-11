@@ -1197,6 +1197,23 @@ export const libraryStrings = {
   },
 } as const;
 
+export const popularWorkStrings = {
+  source: "楽天ブックスで売れている作品",
+  question: "は読んだことがありますか？",
+  title: (title: string) => `『${title}』`,
+  read: "読んだことがある",
+  unread: "まだ読んでいない",
+  dismiss: "この案内を閉じる",
+  back: "作品の案内に戻る",
+  preview: (title: string) => `「${title}」の作品紹介`,
+  record: (title: string) => `「${title}」の読書記録`,
+  independent: "好みとは別に、楽天ブックスの売上順から紹介しています。",
+  recordPrompt: "読書状態と感想を確認して保存してください。",
+  listing: (title: string) => `表示している本：${title}`,
+  rakuten: "楽天ブックスで見る",
+  alreadyAdded: "この作品はすでにライブラリにあります。既存の記録を保ちました。",
+} as const;
+
 export const externalDetailStrings = {
   metadataTitle: "カタログ外作品 | konocomics",
   loading: "カタログ外作品を読み込んでいます…",

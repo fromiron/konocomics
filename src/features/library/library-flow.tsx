@@ -6,6 +6,7 @@ import type { ExternalWorkId } from "@/domain/catalog/external-work";
 import type { Work } from "@/domain/catalog/types";
 import type { ReadingState, UserWorkRecord } from "@/domain/profile/types";
 import { useCatalog } from "@/features/catalog/catalog-provider";
+import { PopularWorkDiscovery } from "@/features/discovery/popular-work-discovery";
 import {
   createRecommendationCoverTargets,
   useRecommendationCovers,
@@ -116,6 +117,7 @@ export function LibraryFlow({
       addCatalogWork={addCatalogWork}
       addExternalWork={addExternalWork}
       catalog={catalog}
+      discoveryContent={<PopularWorkDiscovery embedded />}
       catalogCoverUrls={coverUrls}
       externalWorks={externalWorks}
       onCatalogCoverVisible={requestCover}

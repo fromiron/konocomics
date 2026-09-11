@@ -1,6 +1,6 @@
 "use client";
 
-import { useMemo, useRef, useState } from "react";
+import { useMemo, useRef, useState, type ReactNode } from "react";
 
 import { CoverImage } from "@/components/cover/CoverImage";
 import { Button } from "@/components/design-system/button";
@@ -21,6 +21,7 @@ export type LibraryAddOutcome = "added" | "already-exists" | "preserved-unknown"
 
 type WorkSearchSheetProps = Readonly<{
   catalog: CatalogV1;
+  emptyContent?: ReactNode;
   isCatalogAdded(workId: string): boolean;
   isExternalAdded(item: RakutenBookItem): boolean;
   onAddCatalog(work: Work): Promise<LibraryAddOutcome>;
@@ -29,6 +30,7 @@ type WorkSearchSheetProps = Readonly<{
 
 export function WorkSearchSheet({
   catalog,
+  emptyContent,
   isCatalogAdded,
   isExternalAdded,
   onAddCatalog,
@@ -202,7 +204,10 @@ export function WorkSearchSheet({
           ) : null}
         </section>
       ) : (
-        <p className="text-text-muted">{libraryStrings.search.prompt}</p>
+        <div className="work-search-empty">
+          {emptyContent}
+          <p className="text-text-muted">{libraryStrings.search.prompt}</p>
+        </div>
       )}
 
       {hasQuery ? (

@@ -55,6 +55,7 @@ import type {
   RecommendationPlanEntry,
 } from "@/domain/recommendation/types";
 import { useCatalog } from "@/features/catalog/catalog-provider";
+import { PopularWorkDiscovery } from "@/features/discovery/popular-work-discovery";
 import { usePersistence } from "@/infrastructure/db";
 import { explanationLexicon, onboardingStrings, recommendationStrings } from "@/lib/strings";
 
@@ -1297,6 +1298,8 @@ export function RecommendationsFlow({
                 {anchorEntries.map((item) => renderShelfCard(item, "anchor"))}
               </MediaShelf>
             </div>
+
+            <PopularWorkDiscovery />
 
             <span
               aria-hidden="true"

@@ -39,7 +39,7 @@
 - **서버 경계:** 서버 코드는 TanStack Start server route의 `/api/rakuten/search`·`/api/rakuten/item` 둘뿐. 임의 server function·새 server route·runtime database·auth·runtime LLM 추가 금지. `09`의 tracked SQLite authority와 OS 임시 shadow는 빌드 타임에만 존재하며 `08` §3의 route별 SSR/client 경계를 바꾸지 않는다.
 - **의존성 추가 금지(허용 목록 외):** TanStack Start/Router, Vite/React plugin/Nitro, react, tailwindcss v4, shadcn Base UI 계열, motion, zod, dexie(+react-hooks), fuse.js, tsx, csv-parse, vitest, @testing-library/*, playwright. 그 외가 필요하면 **추가하지 말고 사유를 남기고 사용자에게 물어라.** React Bits·NumberFlow·Embla·Swiper·AutoAnimate·GSAP·TanStack Query·Zustand·next-themes는 추가하지 않는다. 별도 G2 harness의 동결된 Next dependency는 제품 M9와 격리한다.
 - **UI primitive:** shadcn CLI의 Base UI 기반 primitive를 필요한 것만 `src/components/ui/**`에 생성하고, 시맨틱 dark token과 접근성 기본값은 `src/components/design-system/**` wrapper에서 적용한다. route/feature가 생성 primitive를 직접 소비하지 않는다.
-- **dark-only:** theme selector와 light token을 만들지 않는다. 확정 primary는 `oklch(0.7525 0.1382 236.09)`이며 accent 위 텍스트는 어두운 `--on-accent`를 쓴다.
+- **dark-only:** theme selector와 전역 light theme을 만들지 않는다. 2026-09-11 사용자가 선택한 판매순 발견 배너에만 밝은 `--discovery-*` 표면·텍스트 토큰을 허용한다. 확정 primary는 `oklch(0.7525 0.1382 236.09)`이며 accent 위 텍스트는 어두운 `--on-accent`를 쓴다.
 - **표지 이미지:** 원본 비율 유지(크롭·누끼·텍스트 합성 금지), 블러 배경은 동일 URL + `aria-hidden`, 자체 저장소 복제 금지. `_ex` 확대는 로드 실패 시 200x200 폴백 필수.
 - **비밀키:** `RAKUTEN_APPLICATION_ID` 등은 서버 전용. 클라이언트 번들·커밋에 포함 금지.
 - **UI 언어는 일본어**, 문자열은 전부 `src/lib/strings.ts` 경유. 코드·주석·커밋은 영어, 문서는 한국어.

@@ -23,6 +23,8 @@ export class RakutenClientError extends Error {
 }
 
 const providerRequests = new Map<string, Promise<RakutenBookItem>>();
+let popularBooksRequest: Promise<RakutenBookItem[]> | undefined;
+let popularBooksExpiresAt = 0;
 const RAKUTEN_REQUEST_INTERVAL_MS = import.meta.env.MODE === "development" ? 1_000 : 0;
 const MAX_CONCURRENT_PROVIDER_REQUESTS = 4;
 let providerRequestQueue: Promise<void> = Promise.resolve();
@@ -120,6 +122,24 @@ export async function searchRakutenBooks(title: string): Promise<RakutenBookItem
     throw new RakutenClientError("invalid_response", 200);
   }
   return response.data.items;
+}
+
+export function fetchPopularRakutenBooks(): Promise<RakutenBookItem[]> {
+  if (popularBooksRequest !== undefined && Date.now() < popularBooksExpiresAt) {
+    return popularBooksRequest;
+  }
+  popularBooksExpiresAt = Date.now() + 24 * 60 * 60 * 1_000;
+  popularBooksRequest = fetchJson("/api/rakuten/search?sort=sales")
+    .then((payload) => {
+      const response = rakutenSearchResponseSchema.safeParse(payload);
+      if (!response.success) throw new RakutenClientError("invalid_response", 200);
+      return response.data.items;
+    })
+    .catch((error: unknown) => {
+      popularBooksRequest = undefined;
+      throw error;
+    });
+  return popularBooksRequest;
 }
 
 export async function fetchRakutenBook(isbn: string): Promise<RakutenBookItem> {

@@ -1,7 +1,7 @@
 "use client";
 
 import { Link } from "@tanstack/react-router";
-import { useMemo, useRef, useState } from "react";
+import { useMemo, useRef, useState, type ReactNode } from "react";
 
 import { Button } from "@/components/design-system/button";
 import { Input } from "@/components/design-system/input";
@@ -63,6 +63,7 @@ function parseLibraryState(value: unknown): LibraryStateFilter | undefined {
 }
 
 type LibraryViewProps = Readonly<{
+  discoveryContent?: ReactNode;
   activeState?: LibraryStateFilter;
   addCatalogWork(work: Work): Promise<LibraryAddOutcome>;
   addExternalWork(item: RakutenBookItem): Promise<LibraryAddOutcome>;
@@ -90,6 +91,7 @@ type LibraryViewProps = Readonly<{
 }>;
 
 export function LibraryView({
+  discoveryContent,
   activeState: controlledActiveState,
   addCatalogWork,
   addExternalWork,
@@ -548,6 +550,7 @@ export function LibraryView({
         >
           <WorkSearchSheet
             catalog={catalog}
+            emptyContent={discoveryContent}
             isCatalogAdded={(workId) =>
               userWorks?.some((record) => record.workId === workId) === true
             }

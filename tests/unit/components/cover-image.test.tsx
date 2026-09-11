@@ -4,6 +4,7 @@ import { cleanup, fireEvent, render, screen } from "@testing-library/react";
 import { afterEach, describe, expect, it, vi } from "vitest";
 
 import { CoverImage } from "@/components/cover/CoverImage";
+import { BookCover } from "@/components/cover/BookCover";
 import { HeroBackdrop } from "@/components/media/hero-backdrop";
 
 afterEach(() => {
@@ -12,6 +13,23 @@ afterEach(() => {
 });
 
 describe("CoverImage accessibility contract", () => {
+  it("keeps the book base decorative and preserves the cover fallback inside a button", () => {
+    const { container } = render(
+      <button type="button">
+        <BookCover coverUrl="https://example.com/cover.jpg" creators={["作者"]} title="作品" />
+      </button>,
+    );
+    const cover = screen.getByRole("img", { name: "作品 表紙" });
+    expect(screen.getAllByRole("img")).toHaveLength(1);
+    expect(container.querySelector(".book-cover__base")?.getAttribute("aria-hidden")).toBe("true");
+    expect(cover.getAttribute("src")).toContain("_ex=400x400");
+    fireEvent.error(cover);
+    expect(cover.getAttribute("src")).toContain("_ex=200x200");
+    fireEvent.error(cover);
+    expect(screen.getByRole("img", { name: "作品の表紙画像はありません。作者 作者" })).toBeTruthy();
+    expect(container.querySelector(".book-cover .cover-image")?.tagName).toBe("SPAN");
+  });
+
   it("keeps the hero backdrop on the 200px fallback and removes a broken fallback", () => {
     const { container } = render(
       <HeroBackdrop coverUrl="https://example.com/cover.jpg?_ex=600x600">

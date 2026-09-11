@@ -8,6 +8,7 @@ export type { ProviderCacheState } from "./cache";
 export {
   buildRakutenBooksSearchUrl,
   fetchRakutenBook,
+  fetchPopularRakutenBooks,
   RakutenClientError,
   requestRakutenBook,
   searchRakutenBooks,
