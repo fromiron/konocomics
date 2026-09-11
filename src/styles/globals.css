@@ -217,6 +217,7 @@
 
 html {
   min-width: 320px;
+  scrollbar-gutter: stable;
   background: var(--surface-page);
   color: var(--ink);
   scroll-padding-bottom: var(--layout-mobile-navigation-clearance);

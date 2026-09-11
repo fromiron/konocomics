@@ -58,7 +58,7 @@ function rowOpenLabel(row: LibraryRow) {
     : libraryStrings.openRecord(rowTitle(row));
 }
 
-function formatUpdatedAt(value: string) {
+export function formatUpdatedAt(value: string) {
   const time = Date.parse(value);
   return Number.isFinite(time) ? updatedAtFormatter.format(new Date(time)) : value;
 }
@@ -66,12 +66,14 @@ function formatUpdatedAt(value: string) {
 export function RowMedia({
   catalogCoverUrls,
   className,
+  coverUrl,
   onCoverVisible,
-  requestedSize = 200,
+  requestedSize = 400,
   row,
 }: Readonly<{
   catalogCoverUrls: ReadonlyMap<string, string | null>;
   className?: string;
+  coverUrl?: string;
   onCoverVisible?(workId: string): void;
   requestedSize?: 200 | 400;
   row: LibraryRow;
@@ -94,7 +96,7 @@ export function RowMedia({
   return (
     <CoverImage
       className={className}
-      coverUrl={rowCoverUrl(row, catalogCoverUrls)}
+      coverUrl={coverUrl ?? rowCoverUrl(row, catalogCoverUrls)}
       creators={rowCreators(row)}
       onVisible={row.kind === "catalog" ? () => onCoverVisible?.(row.id) : undefined}
       requestedSize={requestedSize}
@@ -113,12 +115,21 @@ function CreatorLine({ row }: Readonly<{ row: LibraryRow }>) {
   );
 }
 
-function RowBadges({ row }: Readonly<{ row: LibraryRow }>) {
+function RowBadges({ row, showState }: Readonly<{ row: LibraryRow; showState: boolean }>) {
   return (
     <span className="flex min-w-0 flex-wrap gap-[var(--space-content-tight)] text-[length:var(--text-caption-size)]">
-      <span className="rounded-[var(--radius-pill)] border border-line bg-surface-2 px-[var(--space-2)] py-[var(--space-1)] text-text">
-        {libraryStrings.tabs[row.record.readingState]}
-      </span>
+      {showState ? (
+        <span className="text-text">{libraryStrings.tabs[row.record.readingState]}</span>
+      ) : null}
+      {row.record.reaction === undefined ? null : (
+        <span
+          className={
+            row.record.reaction === "favorite" ? "font-bold text-accent" : "text-text-muted"
+          }
+        >
+          {libraryStrings.reactions[row.record.reaction]}
+        </span>
+      )}
       {row.kind === "external" ? (
         <span className="rounded-[var(--radius-pill)] border border-line px-[var(--space-2)] py-[var(--space-1)] text-text-muted">
           {libraryStrings.externalBadge}
@@ -147,7 +158,10 @@ function ProgressDisplay({
   const label = libraryStrings.progress(volume, chapter);
   const total = row.kind === "catalog" ? volumeCountByWorkId.get(row.id) : undefined;
   const percentage =
-    volume === undefined || total === undefined || total < 1
+    row.record.readingState !== "reading" ||
+    volume === undefined ||
+    total === undefined ||
+    total < 1
       ? undefined
       : Math.min(100, Math.round((volume / total) * 100));
 
@@ -177,262 +191,47 @@ type LibraryCardProps = Readonly<{
   onCoverVisible?(workId: string): void;
   onOpen(opener: HTMLElement, row: LibraryRow): void;
   row: LibraryRow;
+  showState: boolean;
+  view: "grid" | "list";
   volumeCountByWorkId: ReadonlyMap<string, number>;
 }>;
 
-export function LibraryRecentCard({
+export function LibraryStateCard({
   catalogCoverUrls,
   onCoverVisible,
   onOpen,
   row,
-}: LibraryCardProps) {
-  return (
-    <article
-      className="w-[min(44vw,10.5rem)] shrink-0 snap-start md:w-36"
-      data-library-card-role="recent"
-      data-library-row-kind={row.kind}
-      data-work-id={row.id}
-    >
-      <Button
-        aria-label={rowOpenLabel(row)}
-        className="group/card relative block h-auto min-h-[var(--control-min-size)] w-full overflow-hidden rounded-[var(--radius-card)] border border-line/70 bg-surface-1 p-0 text-start whitespace-normal text-text focus-visible:shadow-[var(--shadow-raised)] [@media(hover:hover)_and_(pointer:fine)]:hover:shadow-[var(--shadow-raised)]"
-        onClick={(event) => onOpen(event.currentTarget, row)}
-        type="button"
-        variant="ghost"
-      >
-        <RowMedia
-          catalogCoverUrls={catalogCoverUrls}
-          className="rounded-none border-0"
-          onCoverVisible={onCoverVisible}
-          requestedSize={400}
-          row={row}
-        />
-        <span className="absolute top-[var(--space-2)] left-[var(--space-2)] rounded-[var(--radius-pill)] border border-line/60 bg-surface-overlay px-[var(--space-2)] py-[var(--space-1)] text-[length:var(--text-caption-size)] font-bold text-text-strong">
-          {libraryStrings.tabs[row.record.readingState]}
-        </span>
-        <span className="absolute inset-x-0 bottom-0 grid gap-[var(--space-content-tight)] bg-[linear-gradient(to_top,var(--canvas)_0%,color-mix(in_oklch,var(--canvas)_94%,transparent)_62%,transparent_100%)] px-[var(--space-3)] pt-[var(--space-6)] pb-[var(--space-3)]">
-          <strong className="line-clamp-2 leading-[var(--line-height-heading)] text-text-strong">
-            {rowTitle(row)}
-          </strong>
-          <span className="line-clamp-1 text-[length:var(--text-caption-size)] text-text-muted">
-            {libraryStrings.updatedAt(formatUpdatedAt(row.record.updatedAt))}
-          </span>
-        </span>
-      </Button>
-    </article>
-  );
-}
-
-function LibraryReadingProgressCard({
-  catalogCoverUrls,
-  onCoverVisible,
-  onOpen,
-  row,
+  showState,
+  view,
   volumeCountByWorkId,
 }: LibraryCardProps) {
   return (
     <article
       className="h-full min-w-0"
-      data-library-card-role="reading-progress"
-      data-library-row-kind={row.kind}
-      data-work-id={row.id}
-    >
-      <Button
-        aria-label={rowOpenLabel(row)}
-        className="group/card !grid h-full min-h-[var(--control-min-size)] w-full grid-cols-[5.25rem_minmax(0,1fr)] items-start justify-stretch gap-[var(--space-3)] rounded-[var(--radius-card)] border border-line/70 bg-surface-1 p-[var(--space-3)] text-start whitespace-normal text-text focus-visible:shadow-[var(--shadow-raised)] [@media(hover:hover)_and_(pointer:fine)]:hover:shadow-[var(--shadow-raised)]"
-        onClick={(event) => onOpen(event.currentTarget, row)}
-        type="button"
-        variant="ghost"
-      >
-        <RowMedia
-          catalogCoverUrls={catalogCoverUrls}
-          className="self-start"
-          onCoverVisible={onCoverVisible}
-          row={row}
-        />
-        <span className="grid min-w-0 content-between gap-[var(--space-content)] py-[var(--space-1)]">
-          <span className="grid min-w-0 gap-[var(--space-content-tight)]">
-            <strong className="line-clamp-2 leading-[var(--line-height-heading)] text-text-strong">
-              {rowTitle(row)}
-            </strong>
-            <CreatorLine row={row} />
-          </span>
-          <ProgressDisplay row={row} volumeCountByWorkId={volumeCountByWorkId} />
-          <span className="inline-flex min-h-[var(--control-min-size)] w-full items-center justify-center rounded-[var(--radius-control)] border border-line/70 px-[var(--space-2)] text-[length:var(--text-caption-size)] font-bold text-text-strong">
-            {libraryStrings.editor.heading}
-          </span>
-        </span>
-      </Button>
-    </article>
-  );
-}
-
-function LibraryPlannedCompactCard({
-  catalogCoverUrls,
-  onCoverVisible,
-  onOpen,
-  row,
-}: LibraryCardProps) {
-  return (
-    <article
-      className="h-full min-w-0"
-      data-library-card-role="planned-compact"
-      data-library-row-kind={row.kind}
-      data-work-id={row.id}
-    >
-      <Button
-        aria-label={rowOpenLabel(row)}
-        className="group/card !grid h-full min-h-[var(--control-min-size)] w-full justify-stretch gap-[var(--space-content)] rounded-[var(--radius-card)] bg-transparent p-0 text-start whitespace-normal text-text"
-        onClick={(event) => onOpen(event.currentTarget, row)}
-        type="button"
-        variant="ghost"
-      >
-        <span className="relative block w-full overflow-hidden rounded-[var(--radius-cover)] group-focus-visible/card:shadow-[var(--shadow-raised)] [@media(hover:hover)_and_(pointer:fine)]:group-hover/card:shadow-[var(--shadow-raised)]">
-          <RowMedia
-            catalogCoverUrls={catalogCoverUrls}
-            onCoverVisible={onCoverVisible}
-            requestedSize={400}
-            row={row}
-          />
-          {row.kind === "external" || row.kind === "catalog-missing" ? (
-            <span className="absolute right-[var(--space-2)] bottom-[var(--space-2)] rounded-[var(--radius-pill)] border border-line bg-surface-overlay px-[var(--space-2)] py-[var(--space-1)] text-[length:var(--text-caption-size)] text-text-muted">
-              {row.kind === "external"
-                ? libraryStrings.externalBadge
-                : libraryStrings.catalogMissing.badge}
-            </span>
-          ) : null}
-        </span>
-        <span className="grid min-w-0 content-start gap-[var(--space-content-tight)]">
-          <strong className="line-clamp-2 leading-[var(--line-height-heading)] text-text-strong">
-            {rowTitle(row)}
-          </strong>
-          <CreatorLine row={row} />
-        </span>
-      </Button>
-    </article>
-  );
-}
-
-function LibraryStatusCard({
-  catalogCoverUrls,
-  onCoverVisible,
-  onOpen,
-  row,
-  volumeCountByWorkId,
-}: LibraryCardProps) {
-  return (
-    <article
-      className="h-full min-w-0"
-      data-library-card-role="status"
       data-library-row-kind={row.kind}
       data-reading-state={row.record.readingState}
       data-work-id={row.id}
     >
       <Button
         aria-label={rowOpenLabel(row)}
-        className="group/card !grid h-full min-h-[var(--control-min-size)] w-full justify-stretch gap-[var(--space-content)] rounded-[var(--radius-card)] border border-line/70 bg-surface-1 p-[var(--space-3)] text-start whitespace-normal text-text focus-visible:shadow-[var(--shadow-raised)] [@media(hover:hover)_and_(pointer:fine)]:hover:shadow-[var(--shadow-raised)]"
+        className={cn(
+          "group/card !grid h-full min-h-[var(--control-min-size)] w-full items-start justify-stretch gap-[var(--space-3)] rounded-[var(--radius-card)] border border-line/70 bg-surface-1 p-[var(--space-3)] text-start whitespace-normal text-text focus-visible:shadow-[var(--shadow-raised)] [@media(hover:hover)_and_(pointer:fine)]:hover:shadow-[var(--shadow-raised)]",
+          view === "list" ? "grid-cols-[calc(var(--space-8)*2)_minmax(0,1fr)]" : "content-start",
+        )}
         onClick={(event) => onOpen(event.currentTarget, row)}
         type="button"
         variant="ghost"
       >
-        <span className="relative block w-full">
-          <RowMedia
-            catalogCoverUrls={catalogCoverUrls}
-            onCoverVisible={onCoverVisible}
-            requestedSize={400}
-            row={row}
-          />
-          <span className="absolute right-[var(--space-2)] bottom-[var(--space-2)] rounded-[var(--radius-pill)] border border-line bg-surface-overlay px-[var(--space-2)] py-[var(--space-1)] text-[length:var(--text-caption-size)] font-bold text-text-strong">
-            {libraryStrings.tabs[row.record.readingState]}
-          </span>
-        </span>
+        <RowMedia catalogCoverUrls={catalogCoverUrls} onCoverVisible={onCoverVisible} row={row} />
         <span className="grid min-w-0 content-start gap-[var(--space-content-tight)]">
-          <strong className="line-clamp-2 leading-[var(--line-height-heading)] text-text-strong">
+          <strong className="[overflow-wrap:anywhere] leading-[var(--line-height-heading)] text-text-strong">
             {rowTitle(row)}
           </strong>
           <CreatorLine row={row} />
+          <RowBadges row={row} showState={showState} />
           <ProgressDisplay row={row} volumeCountByWorkId={volumeCountByWorkId} />
-          <span className="line-clamp-1 text-[length:var(--text-caption-size)] text-text-muted">
-            {libraryStrings.updatedAt(formatUpdatedAt(row.record.updatedAt))}
-          </span>
-        </span>
-      </Button>
-    </article>
-  );
-}
-
-export function LibraryStateCard(props: LibraryCardProps) {
-  if (props.row.record.readingState === "reading") {
-    return <LibraryReadingProgressCard {...props} />;
-  }
-  if (props.row.record.readingState === "planned") {
-    return <LibraryPlannedCompactCard {...props} />;
-  }
-  return <LibraryStatusCard {...props} />;
-}
-
-export function LibraryFavoriteCard({
-  catalogCoverUrls,
-  onCoverVisible,
-  onOpen,
-  row,
-}: LibraryCardProps) {
-  return (
-    <article
-      className="w-28 shrink-0 snap-start sm:w-32"
-      data-library-card-role="favorite"
-      data-library-row-kind={row.kind}
-      data-work-id={row.id}
-    >
-      <Button
-        aria-label={rowOpenLabel(row)}
-        className="group/card !grid h-auto min-h-[var(--control-min-size)] w-full justify-stretch gap-[var(--space-content-tight)] rounded-[var(--radius-card)] bg-transparent p-0 text-start whitespace-normal text-text"
-        onClick={(event) => onOpen(event.currentTarget, row)}
-        type="button"
-        variant="ghost"
-      >
-        <RowMedia
-          catalogCoverUrls={catalogCoverUrls}
-          className="group-focus-visible/card:shadow-[var(--shadow-raised)] [@media(hover:hover)_and_(pointer:fine)]:group-hover/card:shadow-[var(--shadow-raised)]"
-          onCoverVisible={onCoverVisible}
-          requestedSize={400}
-          row={row}
-        />
-        <strong className="line-clamp-1 text-[length:var(--text-caption-size)] text-text-strong">
-          {rowTitle(row)}
-        </strong>
-      </Button>
-    </article>
-  );
-}
-
-export function LibraryListCard(props: LibraryCardProps) {
-  return (
-    <article
-      className="h-full min-w-0"
-      data-library-card-role="list"
-      data-library-row-kind={props.row.kind}
-      data-work-id={props.row.id}
-    >
-      <Button
-        aria-label={rowOpenLabel(props.row)}
-        className="!grid h-full min-h-[var(--control-min-size)] w-full grid-cols-[5rem_minmax(0,1fr)] items-start justify-stretch gap-[var(--space-3)] rounded-[var(--radius-card)] border border-line/70 bg-surface-1 p-[var(--space-3)] text-start whitespace-normal text-text focus-visible:shadow-[var(--shadow-raised)] [@media(hover:hover)_and_(pointer:fine)]:hover:shadow-[var(--shadow-raised)]"
-        onClick={(event) => props.onOpen(event.currentTarget, props.row)}
-        type="button"
-        variant="ghost"
-      >
-        <RowMedia
-          catalogCoverUrls={props.catalogCoverUrls}
-          onCoverVisible={props.onCoverVisible}
-          row={props.row}
-        />
-        <span className="grid min-w-0 content-start gap-[var(--space-content-tight)]">
-          <strong className="line-clamp-2 text-text-strong">{rowTitle(props.row)}</strong>
-          <CreatorLine row={props.row} />
-          <RowBadges row={props.row} />
-          <ProgressDisplay row={props.row} volumeCountByWorkId={props.volumeCountByWorkId} />
-          <span className="line-clamp-1 text-[length:var(--text-caption-size)] text-text-muted">
-            {libraryStrings.updatedAt(formatUpdatedAt(props.row.record.updatedAt))}
+          <span className="text-[length:var(--text-caption-size)] text-text-muted">
+            {libraryStrings.editRecord}
           </span>
         </span>
       </Button>

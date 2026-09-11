@@ -1,6 +1,6 @@
 "use client";
 
-import { useCallback, useMemo } from "react";
+import { useCallback, useMemo, useState } from "react";
 
 import type { ExternalWorkId } from "@/domain/catalog/external-work";
 import type { Work } from "@/domain/catalog/types";
@@ -27,24 +27,36 @@ function nowIso() {
 
 export function LibraryFlow({
   activeState,
+  favoriteOnly,
+  page,
   query,
   sort,
   view,
   onActiveStateChange,
+  onFavoriteOnlyChange,
+  onClearFilters,
   onQueryChange,
+  onPageChange,
   onSortChange,
   onViewChange,
 }: Readonly<{
   activeState?: ReadingState | null;
+  favoriteOnly?: boolean;
+  page?: number;
   query?: string;
   sort?: "updated" | "title";
   view?: "list" | "grid";
   onActiveStateChange?: (state: ReadingState | null) => void;
+  onFavoriteOnlyChange?: (favoriteOnly: boolean) => void;
+  onClearFilters?: () => void;
   onQueryChange?: (query: string) => void;
+  onPageChange?: (page: number, replace?: boolean) => void;
   onSortChange?: (sort: "updated" | "title") => void;
   onViewChange?: (view: "list" | "grid") => void;
 }> = {}) {
   const catalog = useCatalog();
+  const [searchWorkIds, setSearchWorkIds] = useState<readonly string[]>([]);
+  const [pageWorkIds, setPageWorkIds] = useState<readonly string[]>([]);
   const {
     status,
     userWorks,
@@ -58,13 +70,8 @@ export function LibraryFlow({
   } = usePersistence();
   const coverTargets = useMemo(
     () =>
-      createRecommendationCoverTargets(
-        catalog,
-        [...(userWorks ?? [])]
-          .sort((left, right) => Date.parse(right.updatedAt) - Date.parse(left.updatedAt))
-          .map((record) => record.workId),
-      ),
-    [catalog, userWorks],
+      createRecommendationCoverTargets(catalog, [...new Set([...pageWorkIds, ...searchWorkIds])]),
+    [catalog, pageWorkIds, searchWorkIds],
   );
   const { coverUrls, requestCover } = useRecommendationCovers({
     targets: coverTargets,
@@ -114,6 +121,8 @@ export function LibraryFlow({
   return (
     <LibraryView
       activeState={activeState}
+      favoriteOnly={favoriteOnly}
+      page={page}
       addCatalogWork={addCatalogWork}
       addExternalWork={addExternalWork}
       catalog={catalog}
@@ -121,6 +130,8 @@ export function LibraryFlow({
       catalogCoverUrls={coverUrls}
       externalWorks={externalWorks}
       onCatalogCoverVisible={requestCover}
+      onSearchResultsChange={setSearchWorkIds}
+      onPageWorkIdsChange={setPageWorkIds}
       query={query}
       saveExternalUserRecord={saveExternalRecord}
       saveUserWork={saveCatalogRecord}
@@ -129,7 +140,10 @@ export function LibraryFlow({
       userWorks={userWorks}
       view={view}
       onActiveStateChange={onActiveStateChange}
+      onFavoriteOnlyChange={onFavoriteOnlyChange}
+      onClearFilters={onClearFilters}
       onQueryChange={onQueryChange}
+      onPageChange={onPageChange}
       onSortChange={onSortChange}
       onViewChange={onViewChange}
     />

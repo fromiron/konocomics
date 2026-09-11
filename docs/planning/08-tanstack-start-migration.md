@@ -15,16 +15,16 @@ TanStack Router는 route contract이며 범용 global state store가 아니다.
 
 공유·새로고침·back/forward 복원 가치가 있는 상태만 search params로 둔다. 모든 route는 Zod `validateSearch`를 정의하고 malformed 값은 안전한 기본값으로 정규화한다.
 
-| Route | URL state | URL 밖의 상태 |
-|---|---|---|
-| `/` | 호환용 `landing` (`?landing=1`) | profile guard와 reveal marker |
-| `/onboarding` | `q`, `genre`, `shelf` | 선택 작품과 draft는 Dexie |
-| `/taste` | `mode: summary \| adjust`, `group`, 호환용 `reveal` (`?reveal=1`) | DNA 값과 adjustment는 Dexie |
-| `/recommendations` | `preview: workId`, `genre`, `sort`, `shelf` | 추천 policy와 결과는 Dexie/local state |
-| `/library` | `state`, `q`, `sort`, `view` | record와 편집 draft는 Dexie/local state |
-| `/settings` | `section` | form/mutation 상태는 local state |
-| `/works/$workId` | canonical path param | 개인 기록은 Dexie |
-| `/works/external` | 기존 계약의 typed `workId` search param | external record는 Dexie |
+| Route              | URL state                                                              | URL 밖의 상태                                                                                                                                                                     |
+| ------------------ | ---------------------------------------------------------------------- | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `/`                | 호환용 `landing` (`?landing=1`)                                        | profile guard와 reveal marker                                                                                                                                                     |
+| `/onboarding`      | `q`, `genre`, `shelf`                                                  | 선택 작품과 draft는 Dexie                                                                                                                                                         |
+| `/taste`           | `mode: summary \| adjust`, `group`, 호환용 `reveal` (`?reveal=1`)      | DNA 값과 adjustment는 Dexie                                                                                                                                                       |
+| `/recommendations` | `preview: workId`, `genre`, `sort`, `shelf`                            | 추천 policy와 결과는 Dexie/local state                                                                                                                                            |
+| `/library`         | `state`, `q`, `sort`, `view`, 선택 시 `favorite=1`, 2페이지부터 `page` | record와 편집 draft는 Dexie/local state. 24개 단위이며 q/state/favorite/sort 변경 시 page를 초기화하고 view 변경은 유지한다. 범위 초과 page는 마지막 페이지로 replace 정규화한다. |
+| `/settings`        | `section`                                                              | form/mutation 상태는 local state                                                                                                                                                  |
+| `/works/$workId`   | canonical path param                                                   | 개인 기록은 Dexie                                                                                                                                                                 |
+| `/works/external`  | 기존 계약의 typed `workId` search param                                | external record는 Dexie                                                                                                                                                           |
 
 `/works/external`의 missing/duplicate/empty/malformed `workId`는 모두 기존 invalid-link 상태로 수렴하며 lookup이나 provider 요청을 시작하지 않는다. 추천 `sort`는 산식 순서를 바꾸지 않는 presentation-only 값만 허용한다.
 

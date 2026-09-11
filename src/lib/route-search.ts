@@ -52,6 +52,13 @@ export const recommendationsSearchSchema = z.object({
 });
 
 export const librarySearchSchema = z.object({
+  favorite: legacyOne,
+  page: z
+    .preprocess(
+      (value) => (typeof value === "string" && /^\d+$/u.test(value) ? Number(value) : value),
+      z.number().int().min(2).max(Number.MAX_SAFE_INTEGER).optional(),
+    )
+    .catch(undefined),
   state: z
     .enum(["planned", "reading", "completed", "dropped", "hidden"])
     .optional()

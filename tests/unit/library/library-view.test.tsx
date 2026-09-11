@@ -74,6 +74,10 @@ const externalRecord: ExternalWorkRecord = {
 
 function renderLibrary(options?: {
   activeState?: ReadingState | null;
+  favoriteOnly?: boolean;
+  page?: number;
+  query?: string;
+  view?: "grid" | "list";
   externalWorks?: ExternalWorkRecord[];
   showFooter?: boolean;
   userWorks?: UserWorkRecord[];
@@ -87,6 +91,10 @@ function renderLibrary(options?: {
   render(
     <LibraryView
       activeState={options?.activeState}
+      favoriteOnly={options?.favoriteOnly}
+      page={options?.page}
+      query={options?.query}
+      view={options?.view}
       addCatalogWork={vi.fn().mockResolvedValue("added")}
       addExternalWork={vi.fn().mockResolvedValue("added")}
       catalog={catalog}
@@ -104,6 +112,29 @@ function renderLibrary(options?: {
 afterEach(cleanup);
 
 describe("LibraryView", () => {
+  it("paginates after filtering and keeps global counts with a bounded last page", () => {
+    const records: UserWorkRecord[] = catalog.works.slice(0, 50).map((work, index) => ({
+      workId: work.id,
+      readingState: index < 26 ? "completed" : "planned",
+      updatedAt: new Date(Date.UTC(2026, 8, 1, 0, 0, index)).toISOString(),
+    }));
+    renderLibrary({ activeState: "completed", page: 2, userWorks: records, externalWorks: [] });
+
+    expect(
+      screen.getByRole("tab", { name: libraryStrings.tabWithCount("すべて", 50) }),
+    ).toBeTruthy();
+    expect(screen.getByText(libraryStrings.pagination.resultRange(25, 26, 26))).toBeTruthy();
+    expect(
+      [...document.querySelectorAll("[data-work-id]")].map((row) =>
+        row.getAttribute("data-work-id"),
+      ),
+    ).toEqual([records[1]!.workId, records[0]!.workId]);
+    expect(
+      screen.getByRole<HTMLButtonElement>("button", { name: libraryStrings.pagination.next })
+        .disabled,
+    ).toBe(true);
+  });
+
   it("leaves the footer and mobile-navigation clearance to the app shell", () => {
     renderLibrary({ externalWorks: [], showFooter: true });
 
@@ -114,36 +145,41 @@ describe("LibraryView", () => {
     expect(document.querySelector("footer")).toBeNull();
   });
 
-  it("uses role-specific cards for recent, reading, planned, status, and favorite records", () => {
-    const readingRecord: UserWorkRecord = {
-      workId: readingTarget.id,
-      readingState: "reading",
-      progress: { volume: 1, chapter: 4 },
-      updatedAt: "2026-08-15T00:00:00.000Z",
-    };
-    const completedRecord: UserWorkRecord = {
-      workId: completedTarget.id,
-      readingState: "completed",
-      updatedAt: "2026-08-13T00:00:00.000Z",
-    };
+  it.each(["grid", "list"] as const)(
+    "shows each record once in updated order in the %s collection",
+    (view) => {
+      const readingRecord: UserWorkRecord = {
+        workId: readingTarget.id,
+        readingState: "reading",
+        progress: { volume: 1, chapter: 4 },
+        updatedAt: "2026-08-15T00:00:00.000Z",
+      };
+      const completedRecord: UserWorkRecord = {
+        workId: completedTarget.id,
+        readingState: "completed",
+        updatedAt: "2026-08-13T00:00:00.000Z",
+      };
 
-    renderLibrary({
-      activeState: null,
-      externalWorks: [],
-      userWorks: [{ ...catalogRecord, reaction: "favorite" }, readingRecord, completedRecord],
-    });
+      renderLibrary({
+        activeState: null,
+        view,
+        externalWorks: [],
+        userWorks: [{ ...catalogRecord, reaction: "favorite" }, readingRecord, completedRecord],
+      });
 
-    expect(document.querySelectorAll('[data-library-card-role="recent"]')).toHaveLength(3);
-    expect(document.querySelector('[data-library-card-role="planned-compact"]')).not.toBeNull();
-    expect(document.querySelector('[data-library-card-role="reading-progress"]')).not.toBeNull();
-    expect(document.querySelector('[data-library-card-role="status"]')).not.toBeNull();
-    expect(document.querySelector('[data-library-card-role="favorite"]')).not.toBeNull();
-    expect(
-      screen
-        .getByRole("progressbar", { name: libraryStrings.editor.progress })
-        .getAttribute("aria-valuetext"),
-    ).toBe(libraryStrings.progress(1, 4));
-  });
+      expect(
+        [...document.querySelectorAll("[data-library-row-kind]")].map((row) =>
+          row.getAttribute("data-work-id"),
+        ),
+      ).toEqual([readingRecord.workId, catalogRecord.workId, completedRecord.workId]);
+      expect(screen.getAllByRole("button", { name: /の記録を編集$/u })).toHaveLength(3);
+      expect(
+        screen
+          .getByRole("progressbar", { name: libraryStrings.editor.progress })
+          .getAttribute("aria-valuetext"),
+      ).toBe(libraryStrings.progress(1, 4));
+    },
+  );
 
   it("renders all six state tabs on the controlled overview path and discloses external rows and exclusion in detail", () => {
     renderLibrary({ activeState: null });
@@ -219,7 +255,7 @@ describe("LibraryView", () => {
       />,
     );
     fireEvent.click(screen.getByRole("button", { name: libraryStrings.openRecord(target.title) }));
-    fireEvent.change(screen.getAllByRole<HTMLSelectElement>("combobox")[0]!, {
+    fireEvent.change(screen.getByRole("combobox", { name: libraryStrings.editor.readingState }), {
       target: { value: "completed" },
     });
     fireEvent.click(screen.getByRole("button", { name: libraryStrings.editor.save }));
@@ -310,7 +346,7 @@ describe("LibraryView", () => {
     );
     expect(screen.queryByRole("link")).toBeNull();
     expect(screen.getByText(libraryStrings.catalogMissing.description)).toBeTruthy();
-    fireEvent.change(screen.getAllByRole<HTMLSelectElement>("combobox")[0]!, {
+    fireEvent.change(screen.getByRole("combobox", { name: libraryStrings.editor.readingState }), {
       target: { value: "completed" },
     });
     fireEvent.click(screen.getByRole("button", { name: libraryStrings.editor.save }));
@@ -323,5 +359,44 @@ describe("LibraryView", () => {
         }),
       ),
     );
+  });
+  it("distinguishes empty search results from an empty library while retaining registered counts", () => {
+    renderLibrary({ activeState: "completed", query: "zzzz", externalWorks: [] });
+    expect(screen.getByText(libraryStrings.filteredEmpty.search("zzzz"))).toBeTruthy();
+    expect(screen.getByText(libraryStrings.toolbar.resultCount(0))).toBeTruthy();
+    expect(
+      screen.getByRole("tab", { name: libraryStrings.tabWithCount(libraryStrings.tabsAll, 1) }),
+    ).toBeTruthy();
+    expect(
+      screen.getByRole("button", { name: libraryStrings.filteredEmpty.clearSearch }),
+    ).toBeTruthy();
+    expect(
+      screen.getByRole("button", { name: libraryStrings.filteredEmpty.clearFilters }),
+    ).toBeTruthy();
+    expect(screen.queryByText(libraryStrings.tabEmpty.completed)).toBeNull();
+    expect(screen.queryByRole("link", { name: libraryStrings.tools.openSettings })).toBeNull();
+  });
+
+  it("combines favorite with state and search without repeating the selected state on each card", () => {
+    renderLibrary({
+      activeState: "planned",
+      favoriteOnly: true,
+      query: target.title,
+      externalWorks: [],
+      userWorks: [
+        { ...catalogRecord, reaction: "favorite" },
+        {
+          workId: readingTarget.id,
+          readingState: "completed",
+          reaction: "favorite",
+          updatedAt: catalogRecord.updatedAt,
+        },
+      ],
+    });
+    const rows = document.querySelectorAll("[data-library-row-kind]");
+    expect(rows).toHaveLength(1);
+    expect(rows[0]?.getAttribute("data-work-id")).toBe(target.id);
+    expect(rows[0]?.textContent).not.toContain(libraryStrings.tabs.planned);
+    expect(screen.getByText(libraryStrings.toolbar.resultCount(1))).toBeTruthy();
   });
 });

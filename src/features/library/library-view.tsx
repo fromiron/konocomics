@@ -1,13 +1,12 @@
 "use client";
 
 import { Link } from "@tanstack/react-router";
-import { useMemo, useRef, useState, type ReactNode } from "react";
+import { useEffect, useMemo, useRef, useState, type ReactNode } from "react";
 
 import { Button } from "@/components/design-system/button";
 import { Input } from "@/components/design-system/input";
 import { NativeSelect } from "@/components/design-system/native-select";
 import { Tabs, TabsList, TabsTrigger } from "@/components/design-system/tabs";
-import { MediaShelf } from "@/components/media/media-shelf";
 import { parseExternalWorkId, type ExternalWorkId } from "@/domain/catalog/external-work";
 import { isbnIdentityKey } from "@/domain/catalog/normalize";
 import type { CatalogV1, Work } from "@/domain/catalog/types";
@@ -18,9 +17,7 @@ import { libraryStrings } from "@/lib/strings";
 import { cn } from "@/lib/utils";
 
 import {
-  LibraryFavoriteCard,
-  LibraryListCard,
-  LibraryRecentCard,
+  formatUpdatedAt,
   type LibraryRow,
   LibraryStateCard,
   RowMedia,
@@ -33,8 +30,11 @@ import { LibraryRecordEditor } from "./record-editor";
 import { WorkSearchSheet, type LibraryAddOutcome } from "./work-search-sheet";
 
 const READING_STATES = ["planned", "reading", "completed", "dropped", "hidden"] as const;
+const PAGE_SIZE = 24;
 export type { LibraryRow } from "./library-media-cards";
-type SelectedRow = Readonly<Pick<LibraryRow, "id" | "kind">>;
+type SelectedRow = Readonly<
+  Pick<LibraryRow, "id" | "kind"> & { coverSize: 200 | 400; coverUrl?: string }
+>;
 type LibrarySort = "updated" | "title";
 type LibraryViewMode = "list" | "grid";
 type LibraryStateFilter = ReadingState | null;
@@ -65,6 +65,8 @@ function parseLibraryState(value: unknown): LibraryStateFilter | undefined {
 type LibraryViewProps = Readonly<{
   discoveryContent?: ReactNode;
   activeState?: LibraryStateFilter;
+  favoriteOnly?: boolean;
+  page?: number;
   addCatalogWork(work: Work): Promise<LibraryAddOutcome>;
   addExternalWork(item: RakutenBookItem): Promise<LibraryAddOutcome>;
   catalog: CatalogV1;
@@ -72,6 +74,11 @@ type LibraryViewProps = Readonly<{
   externalWorks: readonly ExternalWorkRecord[] | undefined;
   onCatalogCoverVisible?(workId: string): void;
   onActiveStateChange?(state: LibraryStateFilter): void;
+  onFavoriteOnlyChange?(favoriteOnly: boolean): void;
+  onClearFilters?(): void;
+  onSearchResultsChange?(workIds: readonly string[]): void;
+  onPageWorkIdsChange?(workIds: readonly string[]): void;
+  onPageChange?(page: number, replace?: boolean): void;
   onQueryChange?(query: string): void;
   onSortChange?(sort: LibrarySort): void;
   onViewChange?(view: LibraryViewMode): void;
@@ -93,6 +100,8 @@ type LibraryViewProps = Readonly<{
 export function LibraryView({
   discoveryContent,
   activeState: controlledActiveState,
+  favoriteOnly = false,
+  page = 1,
   addCatalogWork,
   addExternalWork,
   catalog,
@@ -100,6 +109,11 @@ export function LibraryView({
   externalWorks,
   onCatalogCoverVisible,
   onActiveStateChange,
+  onFavoriteOnlyChange,
+  onClearFilters,
+  onSearchResultsChange,
+  onPageWorkIdsChange,
+  onPageChange,
   onQueryChange,
   onSortChange,
   onViewChange,
@@ -111,7 +125,7 @@ export function LibraryView({
   userWorks,
   view = "grid",
 }: LibraryViewProps) {
-  const [localActiveState, setLocalActiveState] = useState<ReadingState>("planned");
+  const [localActiveState, setLocalActiveState] = useState<LibraryStateFilter>(null);
   const activeState =
     controlledActiveState === undefined ? localActiveState : controlledActiveState;
   const [panel, setPanel] = useState<"search" | SelectedRow>();
@@ -121,6 +135,7 @@ export function LibraryView({
     Readonly<{ kind: "status" | "error"; text: string }> | undefined
   >();
   const saveInFlight = useRef(false);
+  const resultsRef = useRef<HTMLDivElement>(null);
   const workById = useMemo(
     () => new Map(catalog.works.map((work) => [work.id, work] as const)),
     [catalog.works],
@@ -148,12 +163,17 @@ export function LibraryView({
     });
     return next;
   }, [externalWorks, userWorks, workById]);
-  const searchedRows = useMemo(
+  const visibleRows = useMemo(
     () =>
       rows
-        ?.filter((row) => matchesQuery(row, query))
+        ?.filter(
+          (row) =>
+            matchesQuery(row, query) &&
+            (activeState === null || row.record.readingState === activeState) &&
+            (!favoriteOnly || row.record.reaction === "favorite"),
+        )
         .sort((left, right) => compareRows(left, right, sort)) ?? [],
-    [query, rows, sort],
+    [activeState, favoriteOnly, query, rows, sort],
   );
   const stateCounts = useMemo(
     () =>
@@ -165,21 +185,31 @@ export function LibraryView({
       ) as Record<ReadingState, number>,
     [rows],
   );
-  const visibleRows =
-    activeState === null
-      ? searchedRows
-      : searchedRows.filter((row) => row.record.readingState === activeState);
-  const recentRows = [...searchedRows]
-    .sort((left, right) => compareRows(left, right, "updated"))
-    .slice(0, 8);
-  const favoriteRows = searchedRows.filter((row) => row.record.reaction === "favorite");
   const selectedRow =
     panel === undefined || panel === "search"
       ? undefined
       : rows?.find((row) => row.kind === panel.kind && row.id === panel.id);
-  const tabStates: readonly LibraryStateFilter[] =
-    controlledActiveState === undefined ? READING_STATES : [null, ...READING_STATES];
-  const showOverviewShelves = controlledActiveState !== undefined && activeState === null;
+  const pageCount = Math.max(1, Math.ceil(visibleRows.length / PAGE_SIZE));
+  const currentPage = Math.min(page, pageCount);
+  const pageRows = useMemo(
+    () => visibleRows.slice((currentPage - 1) * PAGE_SIZE, currentPage * PAGE_SIZE),
+    [currentPage, visibleRows],
+  );
+  const selectedWorkId = selectedRow?.kind === "catalog" ? selectedRow.id : undefined;
+  useEffect(() => {
+    onPageWorkIdsChange?.([
+      ...new Set([
+        ...pageRows.filter((row) => row.kind === "catalog").map((row) => row.id),
+        ...(selectedWorkId === undefined ? [] : [selectedWorkId]),
+      ]),
+    ]);
+  }, [onPageWorkIdsChange, pageRows, selectedWorkId]);
+  useEffect(() => {
+    if (rows !== undefined && page !== currentPage) onPageChange?.(currentPage, true);
+  }, [currentPage, onPageChange, page, rows]);
+  const tabStates: readonly LibraryStateFilter[] = [null, ...READING_STATES];
+  const hasQuery = query.trim().length > 0;
+  const hasFilters = activeState !== null || favoriteOnly;
 
   if (rows === undefined) {
     return (
@@ -194,8 +224,17 @@ export function LibraryView({
     setMessage(undefined);
   };
   const selectActiveState = (state: LibraryStateFilter) => {
-    if (controlledActiveState === undefined && state !== null) setLocalActiveState(state);
+    if (controlledActiveState === undefined) setLocalActiveState(state);
     onActiveStateChange?.(state);
+  };
+  const clearFilters = () => {
+    setLocalActiveState(null);
+    onClearFilters?.();
+  };
+  const changePage = (nextPage: number) => {
+    onPageChange?.(nextPage);
+    resultsRef.current?.focus({ preventScroll: true });
+    resultsRef.current?.scrollIntoView({ block: "start" });
   };
   const saveSelectedRecord = async (record: UserWorkRecord) => {
     if (selectedRow === undefined || busy || saveInFlight.current) return;
@@ -220,17 +259,16 @@ export function LibraryView({
   const openRow = (nextOpener: HTMLElement, row: LibraryRow) => {
     setOpener(nextOpener);
     setMessage(undefined);
-    setPanel({ id: row.id, kind: row.kind });
+    const coverSource =
+      nextOpener.querySelector<HTMLImageElement>("img.cover-image__image")?.currentSrc;
+    setPanel({
+      id: row.id,
+      kind: row.kind,
+      coverSize: coverSource?.includes("_ex=200x200") ? 200 : 400,
+      coverUrl: coverSource || undefined,
+    });
   };
-  const shelves =
-    activeState === null
-      ? READING_STATES.map((state) => ({
-          state,
-          rows: searchedRows.filter((row) => row.record.readingState === state),
-        })).filter((shelf) => shelf.rows.length > 0)
-      : [{ state: activeState, rows: visibleRows }];
-
-  const page = (
+  return (
     <main className="mx-auto w-full max-w-[var(--layout-width-media)] flex-1 px-[var(--layout-page-padding)] pt-[var(--layout-page-block-start)] pb-[var(--space-8)] md:pb-[var(--space-section-large)]">
       <LibraryOverviewHeader
         onAddWork={(nextOpener) => {
@@ -238,7 +276,6 @@ export function LibraryView({
           setMessage(undefined);
           setPanel("search");
         }}
-        stateCounts={stateCounts}
         total={rows.length}
       />
 
@@ -282,43 +319,8 @@ export function LibraryView({
         </section>
       ) : (
         <>
-          <div className="mb-[var(--space-4)] grid grid-cols-2 gap-[var(--space-3)] rounded-[var(--radius-card)] border border-line bg-surface-1 p-[var(--space-3)] md:grid-cols-[minmax(0,1fr)_minmax(12rem,18rem)_auto_auto] md:items-center">
-            <Tabs
-              className="col-span-2 w-full min-w-0 md:col-span-1"
-              onValueChange={(value) => {
-                const state = parseLibraryState(value);
-                if (state !== undefined) selectActiveState(state);
-              }}
-              value={activeState ?? "all"}
-            >
-              <TabsList
-                aria-label={libraryStrings.tablistLabel}
-                className="m-0 flex h-auto w-full max-w-full flex-wrap justify-start gap-[var(--space-content-tight)] overflow-visible"
-              >
-                {tabStates.map((state) => {
-                  const id = state ?? "all";
-                  const label =
-                    state === null ? libraryStrings.tabsAll : libraryStrings.tabs[state];
-                  const count = state === null ? rows.length : stateCounts[state];
-                  return (
-                    <TabsTrigger
-                      aria-controls={`library-tabpanel-${id}`}
-                      aria-label={libraryStrings.tabWithCount(label, count)}
-                      className="min-h-[var(--control-min-size)] min-w-max shrink-0 px-[var(--space-content)]"
-                      id={`library-tab-${id}`}
-                      key={id}
-                      value={id}
-                    >
-                      {label}
-                      <span aria-hidden="true" className="md:hidden">
-                        {` ${String(count)}`}
-                      </span>
-                    </TabsTrigger>
-                  );
-                })}
-              </TabsList>
-            </Tabs>
-            <label className="col-span-2 min-w-0 md:col-span-1">
+          <div className="mb-[var(--space-4)] grid gap-[var(--space-3)]">
+            <label className="min-w-0">
               <span className="sr-only">{libraryStrings.toolbar.searchLabel}</span>
               <Input
                 className="w-full bg-surface-2 text-text-strong"
@@ -328,222 +330,247 @@ export function LibraryView({
                 value={query}
               />
             </label>
-            <label className="min-w-0">
-              <span className="sr-only">{libraryStrings.toolbar.sortLabel}</span>
-              <NativeSelect
-                className="[&_[data-slot=native-select]]:bg-surface-2 [&_[data-slot=native-select]]:text-text-strong"
-                onChange={(event) => onSortChange?.(event.currentTarget.value as LibrarySort)}
-                value={sort}
-              >
-                <option value="updated">{libraryStrings.toolbar.sortUpdated}</option>
-                <option value="title">{libraryStrings.toolbar.sortTitle}</option>
-              </NativeSelect>
-            </label>
-            <div
-              aria-label={libraryStrings.toolbar.viewLabel}
-              className="flex gap-[var(--space-content)]"
-              role="group"
+            <Tabs
+              className="w-full min-w-0"
+              onValueChange={(value) => {
+                const state = parseLibraryState(value);
+                if (state !== undefined) selectActiveState(state);
+              }}
+              value={activeState ?? "all"}
             >
-              {(["grid", "list"] as const).map((mode) => (
-                <Button
-                  aria-pressed={view === mode}
-                  className="aria-pressed:border-accent aria-pressed:bg-accent-soft aria-pressed:text-accent"
-                  key={mode}
-                  onClick={() => onViewChange?.(mode)}
-                  type="button"
-                  variant="outline"
+              <TabsList
+                aria-label={libraryStrings.tablistLabel}
+                className="m-0 flex h-auto w-fit max-w-full flex-wrap justify-start gap-[var(--space-content-tight)] overflow-visible"
+              >
+                {tabStates.map((state) => {
+                  const id = state ?? "all";
+                  const label =
+                    state === null ? libraryStrings.tabsAll : libraryStrings.tabs[state];
+                  const count = state === null ? rows.length : stateCounts[state];
+                  return (
+                    <TabsTrigger
+                      aria-controls="library-results"
+                      aria-label={libraryStrings.tabWithCount(label, count)}
+                      className="h-auto min-h-[var(--control-min-size)] min-w-max flex-none px-[var(--space-content)]"
+                      id={"library-tab-" + id}
+                      key={id}
+                      value={id}
+                    >
+                      {label}
+                      <span aria-hidden="true" className="tabular-nums">
+                        {count}
+                      </span>
+                    </TabsTrigger>
+                  );
+                })}
+              </TabsList>
+            </Tabs>
+            <div className="grid grid-cols-[minmax(0,1fr)_auto] items-center gap-[var(--space-content)] md:grid-cols-[auto_minmax(0,1fr)_auto_auto]">
+              <Button
+                aria-pressed={favoriteOnly}
+                className="order-1 justify-self-start rounded-[var(--radius-pill)] aria-pressed:border-accent aria-pressed:bg-accent-soft aria-pressed:text-accent"
+                onClick={() => onFavoriteOnlyChange?.(!favoriteOnly)}
+                type="button"
+                variant="outline"
+              >
+                {libraryStrings.toolbar.favoriteOnly}
+              </Button>
+              <label className="order-2 min-w-0 justify-self-end md:order-3">
+                <span className="sr-only">{libraryStrings.toolbar.sortLabel}</span>
+                <NativeSelect
+                  onChange={(event) =>
+                    onSortChange?.(event.currentTarget.value === "title" ? "title" : "updated")
+                  }
+                  value={sort}
                 >
-                  {libraryStrings.toolbar.views[mode]}
-                </Button>
-              ))}
+                  <option value="updated">{libraryStrings.toolbar.sortUpdated}</option>
+                  <option value="title">{libraryStrings.toolbar.sortTitle}</option>
+                </NativeSelect>
+              </label>
+              <p
+                aria-live="polite"
+                aria-atomic="true"
+                className="order-3 text-[length:var(--text-caption-size)] text-text-muted md:order-2 md:pl-[var(--space-content)]"
+              >
+                {pageCount === 1
+                  ? libraryStrings.toolbar.resultCount(visibleRows.length)
+                  : libraryStrings.pagination.resultRange(
+                      (currentPage - 1) * PAGE_SIZE + 1,
+                      Math.min(currentPage * PAGE_SIZE, visibleRows.length),
+                      visibleRows.length,
+                    )}
+              </p>
+              <div
+                aria-label={libraryStrings.toolbar.viewLabel}
+                className="order-4 flex gap-[var(--space-content)]"
+                role="group"
+              >
+                {(["grid", "list"] as const).map((mode) => (
+                  <Button
+                    aria-pressed={view === mode}
+                    className="aria-pressed:border-accent aria-pressed:bg-accent-soft aria-pressed:text-accent"
+                    key={mode}
+                    onClick={() => onViewChange?.(mode)}
+                    type="button"
+                    variant="outline"
+                  >
+                    {libraryStrings.toolbar.views[mode]}
+                  </Button>
+                ))}
+              </div>
             </div>
           </div>
-
-          {!showOverviewShelves || recentRows.length === 0 ? null : (
-            <MediaShelf
-              className="mt-[var(--space-6)] [&_h2]:text-text-strong"
-              compactHeading
-              description={libraryStrings.recent.description}
-              title={libraryStrings.recent.heading}
-            >
-              {recentRows.map((row) => (
-                <LibraryRecentCard
-                  catalogCoverUrls={catalogCoverUrls}
-                  key={`recent:${row.kind}:${row.id}`}
-                  onCoverVisible={onCatalogCoverVisible}
-                  onOpen={openRow}
-                  row={row}
-                  volumeCountByWorkId={volumeCountByWorkId}
-                />
-              ))}
-            </MediaShelf>
-          )}
-
           <div
-            aria-labelledby={activeState === null ? "library-tab-all" : undefined}
+            aria-labelledby={"library-tab-" + (activeState ?? "all")}
             data-library-view={view}
-            id={activeState === null ? "library-tabpanel-all" : undefined}
-            role={activeState === null ? "tabpanel" : undefined}
-            tabIndex={activeState === null ? 0 : undefined}
+            id="library-results"
+            ref={resultsRef}
+            role="tabpanel"
+            tabIndex={0}
           >
-            {shelves.map((shelf) =>
-              activeState === null && view === "grid" && shelf.rows.length > 0 ? (
-                <MediaShelf
-                  action={
-                    <span className="text-text-muted tabular-nums">
-                      {libraryStrings.summary.count(shelf.rows.length)}
-                    </span>
-                  }
-                  className="mt-[var(--space-6)]"
-                  compactHeading
-                  key={shelf.state}
-                  title={libraryStrings.tabs[shelf.state]}
-                  trackClassName="items-stretch"
-                >
-                  {shelf.rows.map((row) => (
-                    <div
-                      className={cn(
-                        "h-auto shrink-0 snap-start",
-                        shelf.state === "reading"
-                          ? "w-[min(78vw,17rem)] md:w-[calc((100%-(var(--space-content-loose)*3))/4)] md:min-w-[15rem]"
-                          : "w-[calc((100vw-(var(--layout-page-padding)*2)-(var(--space-content-loose)*2))/2.4)] max-w-40 md:w-[calc((100%-(var(--space-content-loose)*5))/6)] md:min-w-[8.5rem]",
-                      )}
-                      key={`${row.kind}:${row.id}`}
-                    >
-                      <LibraryStateCard
-                        catalogCoverUrls={catalogCoverUrls}
-                        onCoverVisible={onCatalogCoverVisible}
-                        onOpen={openRow}
-                        row={row}
-                        volumeCountByWorkId={volumeCountByWorkId}
-                      />
-                    </div>
-                  ))}
-                </MediaShelf>
-              ) : (
-                <section
-                  aria-labelledby={activeState === null ? undefined : `library-tab-${shelf.state}`}
-                  className="mt-[var(--space-6)]"
-                  id={activeState === null ? undefined : `library-tabpanel-${shelf.state}`}
-                  key={shelf.state}
-                  role={activeState === null ? undefined : "tabpanel"}
-                  tabIndex={activeState === null ? undefined : 0}
-                >
-                  <header className="mb-[var(--space-4)] flex items-center justify-between gap-[var(--space-3)]">
-                    <h2 className="border-l-[length:var(--space-content-tight)] border-accent pl-[var(--space-3)] text-text-strong">
-                      {libraryStrings.tabs[shelf.state]}
-                    </h2>
-                    <span className="text-text-muted tabular-nums">
-                      {libraryStrings.summary.count(shelf.rows.length)}
-                    </span>
-                  </header>
-                  {shelf.rows.length === 0 ? (
-                    <div className="grid justify-items-start gap-[var(--space-3)] py-[var(--space-8)]">
-                      <p className="text-text-muted">{libraryStrings.tabEmpty[shelf.state]}</p>
-                    </div>
-                  ) : (
-                    <ul
-                      className={cn(
-                        "m-0 grid list-none gap-[var(--space-4)] border-0 p-0",
-                        view === "list"
-                          ? "grid-cols-1"
-                          : shelf.state === "reading"
-                            ? "grid-cols-1 md:grid-cols-4"
-                            : "grid-cols-2 sm:grid-cols-3 md:grid-cols-6",
-                      )}
-                    >
-                      {shelf.rows.map((row) => (
-                        <li className="min-w-0" key={`${row.kind}:${row.id}`}>
-                          {view === "list" ? (
-                            <LibraryListCard
-                              catalogCoverUrls={catalogCoverUrls}
-                              onCoverVisible={onCatalogCoverVisible}
-                              onOpen={openRow}
-                              row={row}
-                              volumeCountByWorkId={volumeCountByWorkId}
-                            />
-                          ) : (
-                            <LibraryStateCard
-                              catalogCoverUrls={catalogCoverUrls}
-                              onCoverVisible={onCatalogCoverVisible}
-                              onOpen={openRow}
-                              row={row}
-                              volumeCountByWorkId={volumeCountByWorkId}
-                            />
-                          )}
-                        </li>
-                      ))}
-                    </ul>
-                  )}
-                </section>
-              ),
+            {visibleRows.length === 0 ? (
+              <div className="grid justify-items-start gap-[var(--space-3)] py-[var(--space-8)]">
+                <p className="[overflow-wrap:anywhere] text-text-strong">
+                  {hasQuery
+                    ? libraryStrings.filteredEmpty.search(query.trim())
+                    : favoriteOnly
+                      ? libraryStrings.filteredEmpty.favorite
+                      : activeState === null
+                        ? libraryStrings.overallEmpty.title
+                        : libraryStrings.tabEmpty[activeState]}
+                </p>
+                {hasFilters ? (
+                  <p className="text-text-muted">
+                    {libraryStrings.filteredEmpty.conditions(
+                      activeState === null
+                        ? libraryStrings.tabsAll
+                        : libraryStrings.tabs[activeState],
+                      favoriteOnly,
+                    )}
+                  </p>
+                ) : null}
+                <div className="flex flex-wrap gap-[var(--space-content)]">
+                  {hasQuery ? (
+                    <Button onClick={() => onQueryChange?.("")} type="button" variant="outline">
+                      {libraryStrings.filteredEmpty.clearSearch}
+                    </Button>
+                  ) : null}
+                  {hasFilters ? (
+                    <Button onClick={clearFilters} type="button" variant="outline">
+                      {hasQuery
+                        ? libraryStrings.filteredEmpty.clearFilters
+                        : libraryStrings.filteredEmpty.showAll}
+                    </Button>
+                  ) : null}
+                </div>
+              </div>
+            ) : (
+              <ul
+                className={cn(
+                  "m-0 grid list-none gap-[var(--space-4)] p-0",
+                  view === "list"
+                    ? "grid-cols-1"
+                    : "grid-cols-2 sm:grid-cols-3 md:grid-cols-4 xl:grid-cols-6",
+                )}
+              >
+                {pageRows.map((row) => (
+                  <li className="min-w-0" key={row.kind + ":" + row.id}>
+                    <LibraryStateCard
+                      catalogCoverUrls={catalogCoverUrls}
+                      onCoverVisible={onCatalogCoverVisible}
+                      onOpen={openRow}
+                      row={row}
+                      showState={activeState === null}
+                      view={view}
+                      volumeCountByWorkId={volumeCountByWorkId}
+                    />
+                  </li>
+                ))}
+              </ul>
             )}
           </div>
 
-          {!showOverviewShelves || favoriteRows.length === 0 ? null : (
-            <div className="mt-[var(--space-6)] rounded-[var(--radius-card)] border border-line bg-surface-1 p-[var(--space-4)]">
-              <MediaShelf
-                className="[&_h2]:text-text-strong"
-                compactHeading
-                description={libraryStrings.favorites.description}
-                title={libraryStrings.favorites.heading}
+          {pageCount > 1 ? (
+            <nav
+              aria-label={libraryStrings.pagination.label}
+              className="mt-[var(--space-6)] flex flex-wrap items-center justify-center gap-[var(--space-3)]"
+            >
+              <Button
+                disabled={currentPage === 1}
+                onClick={() => changePage(currentPage - 1)}
+                type="button"
+                variant="outline"
               >
-                {favoriteRows.map((row) => (
-                  <LibraryFavoriteCard
-                    catalogCoverUrls={catalogCoverUrls}
-                    key={`favorite:${row.kind}:${row.id}`}
-                    onCoverVisible={onCatalogCoverVisible}
-                    onOpen={openRow}
-                    row={row}
-                    volumeCountByWorkId={volumeCountByWorkId}
-                  />
+                {libraryStrings.pagination.previous}
+              </Button>
+              <NativeSelect
+                aria-label={libraryStrings.pagination.label}
+                className="w-auto"
+                onChange={(event) => changePage(Number(event.currentTarget.value))}
+                value={currentPage}
+              >
+                {Array.from({ length: pageCount }, (_, index) => (
+                  <option key={index + 1} value={index + 1}>
+                    {libraryStrings.pagination.page(index + 1, pageCount)}
+                  </option>
                 ))}
-              </MediaShelf>
-            </div>
-          )}
+              </NativeSelect>
+              <Button
+                disabled={currentPage === pageCount}
+                onClick={() => changePage(currentPage + 1)}
+                type="button"
+                variant="outline"
+              >
+                {libraryStrings.pagination.next}
+              </Button>
+            </nav>
+          ) : null}
 
-          <section
-            aria-labelledby="library-data-heading"
-            className="relative mt-[var(--space-6)] min-h-[128px] w-full overflow-hidden rounded-[var(--radius-card)] md:min-h-[136px] md:w-1/2"
-          >
-            <img
-              alt=""
-              aria-hidden="true"
-              className="pointer-events-none absolute inset-0 size-full object-cover object-[88%_50%] md:object-[82%_48%]"
-              decoding="async"
-              fetchPriority="low"
-              loading="lazy"
-              src="/media/library-data-portability.png"
-            />
-            <div
-              aria-hidden="true"
-              className="pointer-events-none absolute inset-0 bg-gradient-to-r from-canvas from-38% via-canvas/80 via-56% to-transparent to-80%"
-            />
-            <div className="relative z-10 grid h-full min-h-[128px] content-center justify-items-start gap-[var(--space-2)] p-[var(--space-3)] md:min-h-[136px] md:max-w-[70%] md:p-[var(--space-4)]">
-              <h2
-                className="text-[length:var(--font-size-14)] leading-snug font-bold text-text-strong md:text-[length:var(--text-subheading-size)]"
-                id="library-data-heading"
-              >
-                {libraryStrings.tools.heading}
-              </h2>
-              <p className="text-[length:var(--text-caption-size)] text-text-muted">
-                {libraryStrings.tools.description}
-              </p>
-              <Link
-                className="inline-flex min-h-[var(--control-min-size)] w-fit items-center rounded-[var(--radius-control)] border border-accent px-[var(--space-4)] font-bold text-accent hover:bg-accent-soft focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-focus-ring"
-                search={{ section: "data" }}
-                to="/settings"
-              >
-                {libraryStrings.tools.openSettings}
-              </Link>
-            </div>
-          </section>
+          {!hasQuery && visibleRows.length > 0 ? (
+            <section
+              aria-labelledby="library-data-heading"
+              className="relative mt-[var(--space-6)] min-h-[128px] w-full overflow-hidden rounded-[var(--radius-card)] md:min-h-[136px]"
+            >
+              <img
+                alt=""
+                aria-hidden="true"
+                className="pointer-events-none absolute inset-0 size-full object-cover object-[88%_50%] md:object-[82%_48%]"
+                decoding="async"
+                fetchPriority="low"
+                loading="lazy"
+                src="/media/library-data-portability.png"
+              />
+              <div
+                aria-hidden="true"
+                className="pointer-events-none absolute inset-0 bg-gradient-to-r from-canvas from-38% via-canvas/80 via-56% to-transparent to-80%"
+              />
+              <div className="relative z-10 grid h-full min-h-[128px] content-center justify-items-start gap-[var(--space-2)] p-[var(--space-3)] md:min-h-[136px] md:max-w-[70%] md:p-[var(--space-4)]">
+                <h2
+                  className="text-[length:var(--font-size-14)] leading-snug font-bold text-text-strong md:text-[length:var(--text-subheading-size)]"
+                  id="library-data-heading"
+                >
+                  {libraryStrings.tools.heading}
+                </h2>
+                <p className="text-[length:var(--text-caption-size)] text-text-muted">
+                  {libraryStrings.tools.description}
+                </p>
+                <Link
+                  className="inline-flex min-h-[var(--control-min-size)] w-fit items-center rounded-[var(--radius-control)] border border-accent px-[var(--space-4)] font-bold text-accent hover:bg-accent-soft focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-focus-ring"
+                  search={{ section: "data" }}
+                  to="/settings"
+                >
+                  {libraryStrings.tools.openSettings}
+                </Link>
+              </div>
+            </section>
+          ) : null}
         </>
       )}
 
       {panel === "search" ? (
         <ModalSurface
           labelledBy="library-search-title"
+          initialFocusId="library-add-search"
           onClose={closePanel}
           opener={opener}
           variant="search"
@@ -551,6 +578,9 @@ export function LibraryView({
           <WorkSearchSheet
             catalog={catalog}
             emptyContent={discoveryContent}
+            catalogCoverUrls={catalogCoverUrls}
+            onCatalogCoverVisible={onCatalogCoverVisible}
+            onSearchResultsChange={onSearchResultsChange}
             isCatalogAdded={(workId) =>
               userWorks?.some((record) => record.workId === workId) === true
             }
@@ -569,6 +599,7 @@ export function LibraryView({
 
       {selectedRow === undefined ? null : (
         <ModalSurface
+          initialFocusId="library-detail-title"
           fallbackFocusId={`library-tab-${activeState ?? "all"}`}
           label={
             selectedRow.kind === "catalog-missing"
@@ -583,17 +614,22 @@ export function LibraryView({
             <div className="grid grid-cols-[88px_minmax(0,1fr)] items-start gap-[var(--space-4)]">
               <RowMedia
                 catalogCoverUrls={catalogCoverUrls}
+                coverUrl={typeof panel === "object" ? panel.coverUrl : undefined}
                 onCoverVisible={onCatalogCoverVisible}
+                requestedSize={typeof panel === "object" ? panel.coverSize : 400}
                 row={selectedRow}
               />
               <div className="grid min-w-0 gap-[var(--space-content)]">
-                <h2 className="[overflow-wrap:anywhere]" id="library-detail-title">
+                <h2 className="[overflow-wrap:anywhere]" id="library-detail-title" tabIndex={-1}>
                   {rowTitle(selectedRow)}
                 </h2>
                 <p className="text-text-muted">
                   {selectedRow.kind === "catalog-missing"
                     ? libraryStrings.catalogMissing.workId(selectedRow.id)
                     : rowCreators(selectedRow).join("・") || libraryStrings.unknownCreator}
+                </p>
+                <p className="text-[length:var(--text-caption-size)] text-text-muted">
+                  {libraryStrings.updatedAt(formatUpdatedAt(selectedRow.record.updatedAt))}
                 </p>
                 {selectedRow.kind === "external" ? (
                   <>
@@ -651,6 +687,4 @@ export function LibraryView({
       )}
     </main>
   );
-
-  return page;
 }

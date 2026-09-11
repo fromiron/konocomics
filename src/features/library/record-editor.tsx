@@ -40,6 +40,17 @@ function isReaction(value: string): value is Reaction {
   return REACTIONS.some((reaction) => reaction === value);
 }
 
+function editableValues(record: UserWorkRecord) {
+  return JSON.stringify([
+    record.readingState,
+    record.reaction ?? "",
+    record.progress?.volume,
+    record.progress?.chapter,
+    record.reaction === "disliked" ? [...(record.negativeReasons ?? [])].sort() : [],
+    record.readingState === "dropped" ? [...(record.droppedReasons ?? [])].sort() : [],
+  ]);
+}
+
 function toggleReason(
   current: readonly NegativeReasonId[],
   other: readonly NegativeReasonId[],
@@ -110,11 +121,17 @@ function ReasonPicker({
 
 type LibraryRecordEditorProps = Readonly<{
   busy: boolean;
+  isNewRecord?: boolean;
   onSave(record: UserWorkRecord): Promise<void>;
   record: UserWorkRecord;
 }>;
 
-export function LibraryRecordEditor({ busy, onSave, record }: LibraryRecordEditorProps) {
+export function LibraryRecordEditor({
+  busy,
+  isNewRecord = false,
+  onSave,
+  record,
+}: LibraryRecordEditorProps) {
   const [readingState, setReadingState] = useState<ReadingState>(record.readingState);
   const [reaction, setReaction] = useState<Reaction | "">(record.reaction ?? "");
   const [volume, setVolume] = useState(
@@ -129,39 +146,45 @@ export function LibraryRecordEditor({ busy, onSave, record }: LibraryRecordEdito
   const [droppedReasons, setDroppedReasons] = useState<NegativeReasonId[]>(
     record.droppedReasons ?? [],
   );
+  const [progressOpen, setProgressOpen] = useState(
+    record.readingState === "reading" ||
+      record.progress?.volume !== undefined ||
+      record.progress?.chapter !== undefined,
+  );
 
+  const next: UserWorkRecord = {
+    ...record,
+    workId: record.workId,
+    readingState,
+  };
+  if (reaction === "") {
+    delete next.reaction;
+    delete next.negativeReasons;
+  } else {
+    next.reaction = reaction;
+    if (reaction === "disliked" && negativeReasons.length > 0) {
+      next.negativeReasons = [...negativeReasons];
+    } else {
+      delete next.negativeReasons;
+    }
+  }
+  if (readingState === "dropped" && droppedReasons.length > 0) {
+    next.droppedReasons = [...droppedReasons];
+  } else {
+    delete next.droppedReasons;
+  }
+  const nextVolume = optionalInteger(volume);
+  const nextChapter = optionalInteger(chapter);
+  if (nextVolume === undefined && nextChapter === undefined) {
+    delete next.progress;
+  } else {
+    next.progress = { volume: nextVolume, chapter: nextChapter };
+  }
+  const hasChanges = editableValues(next) !== editableValues(record);
   const submit = (event: FormEvent<HTMLFormElement>) => {
     event.preventDefault();
-    const next: UserWorkRecord = {
-      ...record,
-      workId: record.workId,
-      readingState,
-      updatedAt: new Date().toISOString(),
-    };
-    if (reaction === "") {
-      delete next.reaction;
-      delete next.negativeReasons;
-    } else {
-      next.reaction = reaction;
-      if (reaction === "disliked" && negativeReasons.length > 0) {
-        next.negativeReasons = [...negativeReasons];
-      } else {
-        delete next.negativeReasons;
-      }
-    }
-    if (readingState === "dropped" && droppedReasons.length > 0) {
-      next.droppedReasons = [...droppedReasons];
-    } else {
-      delete next.droppedReasons;
-    }
-    const nextVolume = optionalInteger(volume);
-    const nextChapter = optionalInteger(chapter);
-    if (nextVolume === undefined && nextChapter === undefined) {
-      delete next.progress;
-    } else {
-      next.progress = { volume: nextVolume, chapter: nextChapter };
-    }
-    void onSave(next);
+    if (busy || (!isNewRecord && !hasChanges)) return;
+    void onSave({ ...next, updatedAt: new Date().toISOString() });
   };
 
   return (
@@ -179,6 +202,7 @@ export function LibraryRecordEditor({ busy, onSave, record }: LibraryRecordEdito
             onChange={(event) => {
               if (isReadingState(event.currentTarget.value)) {
                 setReadingState(event.currentTarget.value);
+                if (event.currentTarget.value === "reading") setProgressOpen(true);
               }
             }}
             value={readingState}
@@ -209,35 +233,40 @@ export function LibraryRecordEditor({ busy, onSave, record }: LibraryRecordEdito
           </NativeSelect>
         </label>
       </div>
-      <fieldset className="m-0 grid grid-cols-2 gap-[var(--space-3)] border-0 p-0">
-        <legend className="col-span-full mb-[var(--space-content)] font-bold text-text-strong">
-          {libraryStrings.editor.progress}
-        </legend>
-        <label className="grid gap-[var(--space-content-tight)] text-[length:var(--text-caption-size)] font-bold text-text-muted">
-          <span>{libraryStrings.editor.volume}</span>
-          <Input
-            disabled={busy}
-            inputMode="numeric"
-            min="0"
-            onChange={(event) => setVolume(event.currentTarget.value)}
-            step="1"
-            type="number"
-            value={volume}
-          />
-        </label>
-        <label className="grid gap-[var(--space-content-tight)] text-[length:var(--text-caption-size)] font-bold text-text-muted">
-          <span>{libraryStrings.editor.chapter}</span>
-          <Input
-            disabled={busy}
-            inputMode="numeric"
-            min="0"
-            onChange={(event) => setChapter(event.currentTarget.value)}
-            step="1"
-            type="number"
-            value={chapter}
-          />
-        </label>
-      </fieldset>
+      <details open={progressOpen} onToggle={(event) => setProgressOpen(event.currentTarget.open)}>
+        <summary className="min-h-[var(--control-min-size)] cursor-pointer content-center rounded-[var(--radius-control)] font-bold text-text-strong focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-focus-ring">
+          {libraryStrings.editor.progressOptional}
+        </summary>
+        <fieldset
+          aria-label={libraryStrings.editor.progress}
+          className="m-0 grid grid-cols-2 gap-[var(--space-3)] border-0 pt-[var(--space-content)]"
+        >
+          <label className="grid gap-[var(--space-content-tight)] text-[length:var(--text-caption-size)] font-bold text-text-muted">
+            <span>{libraryStrings.editor.volume}</span>
+            <Input
+              disabled={busy}
+              inputMode="numeric"
+              min="0"
+              onChange={(event) => setVolume(event.currentTarget.value)}
+              step="1"
+              type="number"
+              value={volume}
+            />
+          </label>
+          <label className="grid gap-[var(--space-content-tight)] text-[length:var(--text-caption-size)] font-bold text-text-muted">
+            <span>{libraryStrings.editor.chapter}</span>
+            <Input
+              disabled={busy}
+              inputMode="numeric"
+              min="0"
+              onChange={(event) => setChapter(event.currentTarget.value)}
+              step="1"
+              type="number"
+              value={chapter}
+            />
+          </label>
+        </fieldset>
+      </details>
       {reaction === "disliked" ? (
         <ReasonPicker
           descriptionId={`library-negative-reasons-${record.workId}`}
@@ -262,7 +291,11 @@ export function LibraryRecordEditor({ busy, onSave, record }: LibraryRecordEdito
           }}
         />
       ) : null}
-      <Button className="justify-self-start" disabled={busy} type="submit">
+      <Button
+        className="justify-self-start"
+        disabled={busy || (!isNewRecord && !hasChanges)}
+        type="submit"
+      >
         {busy ? libraryStrings.editor.saving : libraryStrings.editor.save}
       </Button>
     </form>

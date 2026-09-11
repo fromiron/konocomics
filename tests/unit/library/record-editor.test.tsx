@@ -10,6 +10,69 @@ import { libraryStrings } from "@/lib/strings";
 afterEach(cleanup);
 
 describe("LibraryRecordEditor", () => {
+  it("prevents unchanged writes, including reverted fields, while preserving collapsed progress", async () => {
+    const onSave = vi.fn<(record: UserWorkRecord) => Promise<void>>().mockResolvedValue();
+    render(
+      <LibraryRecordEditor
+        busy={false}
+        onSave={onSave}
+        record={{
+          workId: "existing",
+          readingState: "completed",
+          reaction: "liked",
+          progress: { volume: 3, chapter: 24 },
+          updatedAt: "2026-08-14T00:00:00.000Z",
+        }}
+      />,
+    );
+    const save = screen.getByRole<HTMLButtonElement>("button", {
+      name: libraryStrings.editor.save,
+    });
+    expect(save.disabled).toBe(true);
+    fireEvent.submit(save.closest("form")!);
+    expect(onSave).not.toHaveBeenCalled();
+    const state = screen.getByRole("combobox", { name: libraryStrings.editor.readingState });
+    fireEvent.change(state, { target: { value: "reading" } });
+    expect(save.disabled).toBe(false);
+    fireEvent.change(state, { target: { value: "completed" } });
+    expect(save.disabled).toBe(true);
+    fireEvent.click(screen.getByText(libraryStrings.editor.progressOptional));
+    fireEvent.change(screen.getByRole("combobox", { name: libraryStrings.editor.reaction }), {
+      target: { value: "favorite" },
+    });
+    fireEvent.click(save);
+    await waitFor(() =>
+      expect(onSave).toHaveBeenCalledWith(
+        expect.objectContaining({
+          reaction: "favorite",
+          progress: { volume: 3, chapter: 24 },
+        }),
+      ),
+    );
+  });
+
+  it("allows explicit confirmation of a new discovery record without changing its defaults", async () => {
+    const onSave = vi.fn<(record: UserWorkRecord) => Promise<void>>().mockResolvedValue();
+    render(
+      <LibraryRecordEditor
+        busy={false}
+        isNewRecord
+        onSave={onSave}
+        record={{
+          workId: "new",
+          readingState: "completed",
+          updatedAt: "2026-08-14T00:00:00.000Z",
+        }}
+      />,
+    );
+    fireEvent.click(screen.getByRole("button", { name: libraryStrings.editor.save }));
+    await waitFor(() =>
+      expect(onSave).toHaveBeenCalledWith(
+        expect.objectContaining({ workId: "new", readingState: "completed" }),
+      ),
+    );
+  });
+
   it("edits state, reaction, progress, and reasons as one valid record", async () => {
     const onSave = vi.fn<(record: UserWorkRecord) => Promise<void>>().mockResolvedValue();
     render(

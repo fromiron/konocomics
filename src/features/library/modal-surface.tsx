@@ -13,6 +13,7 @@ type ModalSurfaceName =
 type ModalSurfaceProps = Readonly<{
   children: ReactNode;
   fallbackFocusId?: string;
+  initialFocusId: string;
   onClose(): void;
   opener: HTMLElement | null;
   variant: "detail" | "search";
@@ -22,6 +23,7 @@ type ModalSurfaceProps = Readonly<{
 export function ModalSurface({
   children,
   fallbackFocusId,
+  initialFocusId,
   label,
   labelledBy,
   onClose,
@@ -40,6 +42,7 @@ export function ModalSurface({
         aria-labelledby={labelledBy}
         className="fixed top-auto bottom-0 left-1/2 z-50 max-h-[88dvh] w-full max-w-[var(--layout-width-library)] -translate-x-1/2 translate-y-0 overflow-y-auto rounded-t-[var(--radius-card)] rounded-b-none bg-surface-1 px-[var(--layout-page-padding)] pt-[var(--space-6)] pb-[calc(var(--space-6)+var(--layout-safe-area-bottom))] !transition-none data-closed:!animate-none data-open:!animate-none sm:max-w-[var(--layout-width-library)] md:top-1/2 md:bottom-auto md:-translate-y-1/2 md:rounded-[var(--radius-card)]"
         data-library-panel={variant}
+        initialFocus={() => document.getElementById(initialFocusId)}
         finalFocus={() =>
           opener?.isConnected === true
             ? opener

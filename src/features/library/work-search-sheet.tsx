@@ -1,6 +1,6 @@
 "use client";
 
-import { useMemo, useRef, useState, type ReactNode } from "react";
+import { useEffect, useMemo, useRef, useState, type ReactNode } from "react";
 
 import { CoverImage } from "@/components/cover/CoverImage";
 import { Button } from "@/components/design-system/button";
@@ -21,6 +21,9 @@ export type LibraryAddOutcome = "added" | "already-exists" | "preserved-unknown"
 
 type WorkSearchSheetProps = Readonly<{
   catalog: CatalogV1;
+  catalogCoverUrls?: ReadonlyMap<string, string | null>;
+  onCatalogCoverVisible?(workId: string): void;
+  onSearchResultsChange?(workIds: readonly string[]): void;
   emptyContent?: ReactNode;
   isCatalogAdded(workId: string): boolean;
   isExternalAdded(item: RakutenBookItem): boolean;
@@ -30,6 +33,9 @@ type WorkSearchSheetProps = Readonly<{
 
 export function WorkSearchSheet({
   catalog,
+  catalogCoverUrls,
+  onCatalogCoverVisible,
+  onSearchResultsChange,
   emptyContent,
   isCatalogAdded,
   isExternalAdded,
@@ -48,6 +54,11 @@ export function WorkSearchSheet({
   const providerRequestSequence = useRef(0);
   const localResults = useMemo(() => search.search(query), [query, search]);
   const hasQuery = query.trim().length > 0;
+
+  useEffect(() => {
+    onSearchResultsChange?.(localResults.map((work) => work.id));
+  }, [localResults, onSearchResultsChange]);
+  useEffect(() => () => onSearchResultsChange?.([]), [onSearchResultsChange]);
 
   const runProviderSearch = async () => {
     if (!hasQuery || provider.phase === "loading" || providerInFlight.current) return;
@@ -137,6 +148,7 @@ export function WorkSearchSheet({
       <label className="grid gap-[var(--space-content-tight)] font-bold text-text-strong">
         <span>{libraryStrings.search.label}</span>
         <Input
+          id="library-add-search"
           className="w-full"
           autoComplete="off"
           onChange={(event) => {
@@ -174,7 +186,13 @@ export function WorkSearchSheet({
                     key={work.id}
                   >
                     <div className="w-14">
-                      <CoverImage creators={work.creators} requestedSize={200} title={work.title} />
+                      <CoverImage
+                        coverUrl={catalogCoverUrls?.get(work.id)}
+                        creators={work.creators}
+                        onVisible={() => onCatalogCoverVisible?.(work.id)}
+                        requestedSize={400}
+                        title={work.title}
+                      />
                     </div>
                     <div className="grid min-w-0 gap-[var(--space-content-tight)]">
                       <h4 className="m-0 [overflow-wrap:anywhere] text-[length:var(--font-size-14)] leading-[var(--line-height-heading)] text-text-strong">

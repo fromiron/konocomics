@@ -232,7 +232,7 @@ export function PopularWorkDiscovery({ embedded = false }: Readonly<{ embedded?:
           </div>
         </div>
         {selection.mode === "record" ? (
-          <LibraryRecordEditor busy={busy} onSave={save} record={selection.record} />
+          <LibraryRecordEditor busy={busy} isNewRecord onSave={save} record={selection.record} />
         ) : (
           <>
             <section className="grid gap-[var(--space-2)]">

@@ -61,13 +61,22 @@ const routedSearchCases = [
   },
   {
     parse: (input: unknown) => librarySearchSchema.parse(input),
-    valid: { state: "reading", q: "monster", sort: "title", view: "grid" },
-    malformed: { state: ["reading"], q: ["monster"], sort: ["title"], view: ["grid"] },
+    valid: { state: "reading", q: "monster", sort: "title", view: "grid", favorite: "1", page: 2 },
+    malformed: {
+      state: ["reading"],
+      q: ["monster"],
+      sort: ["title"],
+      view: ["grid"],
+      favorite: ["1"],
+      page: ["2"],
+    },
     malformedDefault: {
       state: undefined,
       q: undefined,
       sort: undefined,
       view: undefined,
+      favorite: undefined,
+      page: undefined,
     },
   },
   {
@@ -86,6 +95,12 @@ const contracts = [
       expect(landingSearchSchema.parse({ landing: 1 })).toEqual({ landing: "1" });
       expect(tasteSearchSchema.parse({ reveal: "1" }).reveal).toBe("1");
       expect(tasteSearchSchema.parse({ reveal: 1 }).reveal).toBe("1");
+      expect(librarySearchSchema.parse({ favorite: 1 }).favorite).toBe("1");
+      expect(librarySearchSchema.parse({ favorite: "yes" }).favorite).toBeUndefined();
+      expect(librarySearchSchema.parse({ page: "2" }).page).toBe(2);
+      for (const page of [1, 0, -1, 2.5, "2.5", "all", true]) {
+        expect(librarySearchSchema.parse({ page }).page).toBeUndefined();
+      }
     },
   },
   {

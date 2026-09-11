@@ -16,6 +16,7 @@
 - post-onboarding 모바일 footer는 Discover/Understand/Manage 라우트 그룹 없이 local-first 1줄과 `Supported by Rakuten Developers`만 둔다. immersive `/`·`/onboarding` 모바일 footer는 같은 두 줄에 設定 링크를 더한다. `>=768px` footer sitemap은 유지한다.
 - 두 navigation은 CSS media query로 상호 배타적으로 숨기며 숨겨진 쪽은 accessibility tree에도 남기지 않는다. 로그인·계정·아바타·알림 control은 없다. Global Search는 실제 dialog/sheet 기능이 연결된 경우에만 표시한다.
 - Catalog 상세 `/works/[workId]`와 고정 external 상세 `/works/external?workId=<ExternalWorkId>`는 탭 바를 유지한 채 스택처럼 열린다. 뒤로가기는 브라우저 history다.
+- 2026-09-11 사용자 지시에 따라 전역 document scroll container는 `scrollbar-gutter: stable`로 스크롤바 자리를 확보한다. 필터·페이지 이동으로 세로 스크롤바가 생기거나 사라져도 본문 가로 폭·중앙 정렬은 유지한다. overlay scrollbar 환경에는 불필요한 별도 여백을 더하지 않는다.
 
 ### 전역 상태
 
@@ -26,7 +27,7 @@
 ### URL 상태
 
 - 모든 route는 Zod `validateSearch`를 갖고 malformed 값은 안전한 기본값으로 정규화한다.
-- `/onboarding`: `q`, `genre`, `shelf`는 **서로 배타적인 discovery mode 하나**다. 쓰기와 해석은 `q` > 유효한 collection `shelf` > `genre` 우선이며 AND 교집합 필터를 쓰지 않는다. `q` 입력은 genre/shelf를 제거하고, genre는 q/shelf를, collection은 q/genre를, 닫기는 shelf를 제거한다. 혼합 URL은 같은 우선순위로 정규화한다. back/forward는 그 mode와 collection panel을 복원한다. `/taste`: `mode`, `group`; `/recommendations`: `preview`, `genre`, `sort`, `shelf`; `/library`: `state`, `q`, `sort`, `view`; `/settings`: `section`.
+- `/onboarding`: `q`, `genre`, `shelf`는 **서로 배타적인 discovery mode 하나**다. 쓰기와 해석은 `q` > 유효한 collection `shelf` > `genre` 우선이며 AND 교집합 필터를 쓰지 않는다. `q` 입력은 genre/shelf를 제거하고, genre는 q/shelf를, collection은 q/genre를, 닫기는 shelf를 제거한다. 혼합 URL은 같은 우선순위로 정규화한다. back/forward는 그 mode와 collection panel을 복원한다. `/taste`: `mode`, `group`; `/recommendations`: `preview`, `genre`, `sort`, `shelf`; `/library`: `state`, `q`, `sort`, `view`, 선택 시 `favorite=1`, 2페이지부터 `page`; `/settings`: `section`.
 - `?landing=1`과 `?reveal=1`은 기존 호환 계약을 유지한다. `/works/external`의 typed `workId`는 missing/duplicate/empty/malformed를 기본값으로 덮지 않고 invalid-link 상태로 보낸다.
 - 선택 작품, DNA adjustment, 추천 policy/result, provider cache, 편집 draft, mutation/animation/scroll state는 URL에 넣지 않는다.
 
@@ -515,20 +516,23 @@ Catalog 작품은 추천 근거를 깊이 확인하고 구매(라쿠텐)로 연�
 
 ### 목적
 
-읽은/읽는 중/하차 기록의 관리와 추천 제외 목록의 투명성. 기록 축적이 추천을 개선한다는 감각을 만든다(가설 C).
+내 책 찾기 → 상태 확인 → 기록 수정이 주 작업이다. 읽음/읽는 중/하차 기록과 추천 제외 상태를 투명하게 관리한다(가설 C).
 
 ### 주요 액션
 
 「作品を追加」 버튼 → 검색 시트(로컬 Catalog 우선, 하단 「楽天ブックスで探す」 확장).
 
-### 정보 위계
+### 정보 위계 (2026-09-11 관리 흐름 개선 승인)
 
-1. filter/tab toolbar. mobile은 별도 6칸 count matrix 없이 `すべて`+5 readingState를 건수와 함께 보여주는 wrapping `tablist`다. desktop은 읽기 전용 count matrix와 라벨만 있는 탭을 나란히 둔다. favorite는 탭이 아니라 Shelf다.
-2. `updatedAt` 기반 최근 변경 Shelf
-3. 読んでる / 読みたい / 読んだ / favorite(`reaction === favorite`) grouped Shelf. 선택 filter에 따라 해당 Shelf만 줄일 수 있다.
-4. 읽는 중 card의 volume/chapter progress와 상태 badge. 메모·읽은 시간·cloud 통계는 만들지 않는다.
-5. card/행 탭 → 상세 시트: readingState / reaction / 진행 권수 / 이유 편집. Catalog는 `/works/{catalogWorkId}`, external은 `/works/external?workId={encodedExternalWorkId}` 링크를 사용한다.
-6. populated(`rows.length > 0`)일 때만 최근/상태 Shelf 아래 data-portability banner. 기존 `/settings?section=data` 링크만 재사용한다.
+1. 간결한 제목과 「作品を追加」 → 내 기록 검색 → 상태 탭 → 즐겨찾기 조건·정렬·보기·표시 건수 → 하나의 작품 목록 순서다. 읽기 전용 count matrix와 중복 페이지 설명은 사용하지 않는다.
+2. 모든 크기에서 `すべて`+readingState 5종에 **전체 등록 수**를 붙인다. mobile 탭은 높이 최소 44px로 wrap하며 검색·다른 조작과 겹치지 않는다. `favorite=1`은 `reaction === "favorite"`인 기록만 고르는 별도 조건이며 탭이나 readingState가 아니다. 잘못된 값은 무시한다.
+3. 검색·상태·favorite 조건을 AND로 적용하고, `最近更新` / `タイトル順`으로 정렬한 **동일 결과 배열**을 grid/list에 표시한다. 같은 기록을 최근·상태별·favorite Shelf에 반복하지 않는다. 결과 수는 목록 위에 짧게 표시하고 `aria-live`로 알린다. 기존 Catalog/external union과 identity는 유지한다.
+4. 카드는 표지·제목·감상·있는 진행 기록을 보여준다. 전체 보기에는 상태를 포함하고 단일 상태 필터에서는 같은 상태를 반복하지 않는다. Catalog/external/catalog-missing 구분은 유지한다. 읽는 중 진행 막대는 입력된 volume과 확인된 총 권수가 있을 때만 표시한다. 없는 메모·시간·날짜·진행을 만들지 않는다.
+5. 카드/행 전체는 「記録を編集」 버튼이며 작은 문구로 동작을 보인다. 상세 시트에는 기존 기록의 `updatedAt`을 업데이트 날짜로 표시한다. Catalog는 `/works/{catalogWorkId}`, external은 `/works/external?workId={encodedExternalWorkId}` 링크를 사용한다.
+6. 기존 기록은 실제 편집 값이 달라야 저장한다. 수정 후 원복하면 다시 비활성화하며 `updatedAt`만 바꾸는 저장을 실행하지 않는다. 판매순 발견의 신규 기록은 기본 상태를 확인하여 저장할 수 있어야 한다. 진행 입력은 「進み具合（任意）」로 접을 수 있고 읽는 중/기존 진행 값이 있으면 기본 펼침이다. 접기는 값을 삭제하지 않는다.
+7. populated 목록 하단에는 기존 `/settings?section=data` 안내를 약하게 둔다. 검색 중이거나 표시 결과 0건이면 숨긴다.
+8. 2026-09-11 추가 사용자 결정: 전체 기록에 검색·필터·정렬을 적용한 뒤 **24개 단위 페이지네이션**을 한다. 200개면 9페이지이며 한 페이지에 카드가 최대 24개다. 1페이지는 page를 생략하고 2페이지부터 `page`를 URL에 저장한다. q/state/favorite/sort 변경은 1페이지로, grid/list 변경은 현재 페이지를 유지한다. 잘못된 page는 무시하고 결과 범위를 넘으면 마지막 페이지로 replace 정규화한다. 2페이지 이상일 때 `1–24 / 200作品`처럼 표시 범위·전체 결과 수와 이전/페이지 선택/다음을 제공한다. 페이지 조작 후 목록에 포커스를 이동하고 목록 위로 스크롤한다.
+9. Library cover resolver의 대상은 현재 페이지와 열린 편집/추가 검색 결과로 한정한다. 기존 visibility demand·cache·ISBN 요청 중복 제거·동시 요청 제한을 재사용한다. 페이지 이동은 이전 resolver generation의 대기 작업을 중단하며 이미 시작한 요청은 기존 제한 아래 완료한다. 모든 기록을 미리 렌더하거나 모든 표지 API를 동시에 호출하지 않는다.
 
 ### 검색·추가 계약
 
@@ -543,18 +547,18 @@ Catalog 작품은 추천 근거를 깊이 확인하고 구매(라쿠텐)로 연�
 ### 상태
 
 - 전체 빈 상태: 승인된 `library-empty-shelf` image-half + 「読んだ作品を記録すると、おすすめから自動的に外れます」 + 추가 버튼. data-portability banner와 동시에 쓰지 않는다.
-- populated: 최근/상태 Shelf보다 약한 desktop half-shell·mobile full-width data-portability banner. `/media/library-data-portability.png`, DOM 제목/설명, `/settings?section=data` 「データ設定を開く」. 별도 export/import/delete UI와 중복 tools 카드는 두지 않는다.
-- 탭별 빈 상태: 탭 의미에 맞는 1줄 안내.
+- populated: 검색어가 없고 표시 결과가 있을 때 목록보다 약한 data-portability banner. 2026-09-11 추가 사용자 지시에 따라 desktop/mobile 모두 목록과 같은 본문 전체 폭을 쓴다. `/media/library-data-portability.png`, DOM 제목/설명, `/settings?section=data` 「データ設定を開く」. 별도 export/import/delete UI와 중복 tools 카드는 두지 않는다.
+- 등록 기록은 있지만 표시 결과가 0이면 원인과 다음 행동을 안내한다. 검색어가 있으면 그 검색어와 「検索をクリア」를 표시하고, 상태/favorite 조건이 있으면 적용 조건과 「絞り込みを解除」를 함께 제공한다. 검색어가 없으면 상태/favorite의 빈 안내와 「すべての作品を見る」를 제공한다. 검색 해제는 q만, 조건 해제는 state/favorite만 지우고 sort/view를 보존한다.
 - 라쿠텐 검색 실패/오프라인: 「今はカタログ内の作品だけ追加できます」 안내, 로컬 검색은 정상.
 
 ### 반응형
 
-- mobile: 상태 탭은 wrap하고 count를 탭 레이블에 붙인다. poster Shelf/compact row를 상태별로 쌓고 상세는 bottom sheet다. 하단 navigation clearance를 보장한다.
-- desktop: 최대폭 1200px grouped Shelf와 count summary를 사용하고 상세는 dialog다. 데스크톱 탭에는 count를 반복하지 않는다.
+- mobile: 검색 위에 탭을 겹쳐 놓지 않는다. 상태 탭은 44px 이상 높이로 wrap하고 count를 레이블에 붙인다. grid는 두 열의 세로 목록, list는 조밀한 행이다. 즐겨찾기 조건은 정렬·보기와 별도 행으로 wrap할 수 있다. 상세는 bottom sheet이며 마지막 카드·포커스 조작의 하단 navigation clearance를 보장한다.
+- desktop: 기존 media 최대폭 안의 단일 grid/list와 건수가 있는 상태 탭을 사용하고 상세는 dialog다. grid/list 전환으로 ID·순서·필터는 바뀌지 않는다.
 
 ### 접근성
 
-- 상태 탭은 `role="tablist"`이며 keyboard·`?state=` 계약을 유지한다. 표시 방법 컨트롤은 `role="group"`이다. 행은 버튼(전체 탭 가능). 시트 열림 시 포커스 트랩, 닫힘 시 원 위치 복귀.
+- 상태 탭은 `role="tablist"`이며 keyboard·`?state=` 계약을 유지한다. 표시 방법 컨트롤은 `role="group"`, 즐겨찾기는 눌림 상태를 가진 별도 조건 버튼이다. 행은 버튼(전체 탭 가능). 편집창의 초기 포커스는 제목(`tabIndex=-1`), 추가 시트는 검색 입력이다. 포커스 트랩과 Escape 닫기를 유지하고 원래 카드가 없어졌으면 활성 상태 탭으로 돌아간다. 편집 표지는 목록에서 이미 로드한 URL·크기를 재사용하며 200px fallback을 유지한다.
 
 ### 모션
 
@@ -567,8 +571,12 @@ Library와 상세 panel·bottom sheet·dialog는 조용한 표면이다. panel/s
 - [ ] external entry가 Export에 포함되고 Import로 복원된다.
 - [ ] 하차 이유 편집이 다음 추천 감점에 반영된다.
 - [ ] Catalog 행 링크는 기존 `/works/{catalogWorkId}`를 유지하고 external 행만 canonical fixed-query URL을 사용한다.
-- [ ] 상태 count·recent/favorite Shelf는 실제 record와 `updatedAt`/reaction만 사용하고 memo·시간 통계를 합성하지 않는다.
-- [ ] populated data-portability banner는 `/settings?section=data`만 열고 overall-empty image-half와 동시에 보이지 않는다.
+- [ ] 상태 count는 등록 기록, 결과 count/범위는 필터 결과와 현재 페이지에 일치한다. 전체 기록을 필터·정렬한 뒤 최대 24개를 표시하며 grid/list의 ID·순서·페이지가 같다. 페이지 이동/새로고침/범위 초과를 복원·정규화하고 현재 페이지 밖 표지를 일괄 요청하지 않는다. `updatedAt`/reaction/progress 외의 memo·시간 통계를 합성하지 않는다.
+- [ ] 모바일 검색·wrap 탭·정렬·보기와 마지막 카드가 조작 가능하고 겹치지 않는다.
+- [ ] 검색 0건·빈 상태/favorite 조건을 구분하고 해제 시 관련 URL 조건만 변경한다.
+- [ ] 무변경 저장과 수정 후 원복 저장을 막고, 접힌 진행 값을 보존한다. 신규 기록의 명시적 확인·저장은 유지한다.
+- [ ] 편집 제목/추가 검색으로 초기 포커스가 이동하고 Escape·포커스 복귀가 동작한다. 추가 검색 결과와 편집창에 같은 작품의 표지가 표시된다.
+- [ ] populated data-portability banner는 `/settings?section=data`만 열고 overall-empty image-half·검색 중·필터 결과 0건과 동시에 보이지 않는다.
 
 ---
 
@@ -615,15 +623,15 @@ Library와 상세 panel·bottom sheet·dialog는 조용한 표면이다. panel/s
 
 Base UI primitive는 shadcn CLI로 `src/components/ui/**`에 생성하고 `src/components/design-system/**` wrapper가 dark token, 44px target, focus/disabled/busy contract를 적용한다. feature는 wrapper를 통해서만 primitive를 사용한다.
 
-| 컴포넌트 | 책임 | 핵심 규칙 |
-|---|---|---|
-| `CoverImage` | 모든 표지 렌더 | 원본 비율(object-contain), radius 4px, 1px `--line` 테두리, 로드 실패 시 타이포 placeholder, `_ex` 크기 프리셋(thumb 200/card 400/hero 600), lazy loading |
-| `MediaShelf` | 가로 탐색 | CSS scroll-snap + ResizeObserver. Featured는 inert/aria-hidden clone을 둔 3-copy pointer/touch 루프이고 키보드는 canonical card 끝에서 비순환한다. 나머지 Shelf는 끝에서 화살표·키보드 비순환이다. overlay variant는 track 시작선을 콘텐츠 shell에 유지한 채 좌우 fade 폭만큼 viewport와 fade를 negative gutter로 확장한다. reduced-motion instant scroll, Embla/Swiper 없음 |
-| `RecommendationCard` | 추천 featured 탐색 | 4px-grid 고정 poster(Desktop 344×448), 2줄 title slot·메타/confidence·원본비율 표지·lead reason. fine pointer hover/focus는 외곽 고정 상태에서 표지를 줄이고 최대 3줄 reason+44px icon action rail을 열며 coarse pointer는 rail을 상시 표시한다. identity는 상세, Quick Preview는 작품 단위 접근 이름을 가진 ScanSearch icon control |
-| `RankingShelf` | Top 10 | `<ol>` + 화면에 보이는 텍스트 순위, canonical plan 순서 유지. Quick Preview 없음 |
-| `QuickPreview` | 상세 전 주요 정보/action | desktop Dialog/mobile Sheet wrapper, `?preview` 대상만 URL, focus trap/opener 복원. opener는 동일 ScanSearch+「クイック表示」 quiet 컨트롤이며 identity `Link` 밖에 둔다. Top 10에는 없다 |
-| `ReasonChips` | 이유·주의점 표시 | contribution 데이터에서만 생성, cluster당 1개, 최대 3+1 |
-| `ConfidenceLabel` | 확신도 표시 | 3단 레이블만, 숫자·퍼센트 금지 |
-| `WorkSearchSheet` | 검색·추가 | 로컬 우선 → 라쿠텐 확장, ISBN 대조 |
-| `StateActionRow` | 読みたい/読んだ/興味なし | 44px 타깃, 처리 후 후속 시트(스킵 가능) |
-| `FactorBar` | DNA 막대 | 확인값=meter 시맨틱, 미확인=이름 있는 비수치 상태+윤곽선, 값 표기는 레이블 |
+| 컴포넌트             | 책임                     | 핵심 규칙                                                                                                                                                                                                                                                                                                                                                                    |
+| -------------------- | ------------------------ | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `CoverImage`         | 모든 표지 렌더           | 원본 비율(object-contain), radius 4px, 1px `--line` 테두리, 로드 실패 시 타이포 placeholder, `_ex` 크기 프리셋(thumb 200/card 400/hero 600), lazy loading                                                                                                                                                                                                                    |
+| `MediaShelf`         | 가로 탐색                | CSS scroll-snap + ResizeObserver. Featured는 inert/aria-hidden clone을 둔 3-copy pointer/touch 루프이고 키보드는 canonical card 끝에서 비순환한다. 나머지 Shelf는 끝에서 화살표·키보드 비순환이다. overlay variant는 track 시작선을 콘텐츠 shell에 유지한 채 좌우 fade 폭만큼 viewport와 fade를 negative gutter로 확장한다. reduced-motion instant scroll, Embla/Swiper 없음 |
+| `RecommendationCard` | 추천 featured 탐색       | 4px-grid 고정 poster(Desktop 344×448), 2줄 title slot·메타/confidence·원본비율 표지·lead reason. fine pointer hover/focus는 외곽 고정 상태에서 표지를 줄이고 최대 3줄 reason+44px icon action rail을 열며 coarse pointer는 rail을 상시 표시한다. identity는 상세, Quick Preview는 작품 단위 접근 이름을 가진 ScanSearch icon control                                         |
+| `RankingShelf`       | Top 10                   | `<ol>` + 화면에 보이는 텍스트 순위, canonical plan 순서 유지. Quick Preview 없음                                                                                                                                                                                                                                                                                             |
+| `QuickPreview`       | 상세 전 주요 정보/action | desktop Dialog/mobile Sheet wrapper, `?preview` 대상만 URL, focus trap/opener 복원. opener는 동일 ScanSearch+「クイック表示」 quiet 컨트롤이며 identity `Link` 밖에 둔다. Top 10에는 없다                                                                                                                                                                                    |
+| `ReasonChips`        | 이유·주의점 표시         | contribution 데이터에서만 생성, cluster당 1개, 최대 3+1                                                                                                                                                                                                                                                                                                                      |
+| `ConfidenceLabel`    | 확신도 표시              | 3단 레이블만, 숫자·퍼센트 금지                                                                                                                                                                                                                                                                                                                                               |
+| `WorkSearchSheet`    | 검색·추가                | 로컬 우선 → 라쿠텐 확장, ISBN 대조                                                                                                                                                                                                                                                                                                                                           |
+| `StateActionRow`     | 読みたい/読んだ/興味なし | 44px 타깃, 처리 후 후속 시트(스킵 가능)                                                                                                                                                                                                                                                                                                                                      |
+| `FactorBar`          | DNA 막대                 | 확인값=meter 시맨틱, 미확인=이름 있는 비수치 상태+윤곽선, 값 표기는 레이블                                                                                                                                                                                                                                                                                                   |

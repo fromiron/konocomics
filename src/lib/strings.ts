@@ -1089,12 +1089,22 @@ export const libraryStrings = {
   },
   toolbar: {
     searchLabel: "ライブラリ内を検索",
-    searchPlaceholder: "タイトル・作者で検索",
+    searchPlaceholder: "ライブラリ内の作品・作者を検索",
+    favoriteOnly: "お気に入りのみ",
+    resultCount: (count: number) => `${String(count)}作品を表示`,
     sortLabel: "並び順",
     sortUpdated: "最近更新",
     sortTitle: "タイトル順",
     viewLabel: "表示方法",
     views: { grid: "グリッド", list: "リスト" },
+  },
+  pagination: {
+    label: "作品一覧のページ",
+    previous: "前へ",
+    next: "次へ",
+    page: (page: number, total: number) => `${String(page)} / ${String(total)}`,
+    resultRange: (start: number, end: number, total: number) =>
+      `${String(start)}–${String(end)} / ${String(total)}作品`,
   },
   recent: {
     heading: "最近更新した作品",
@@ -1117,6 +1127,16 @@ export const libraryStrings = {
       .filter((value): value is string => value !== null)
       .join("・"),
   openRecord: (title: string) => `「${title}」の記録を編集`,
+  editRecord: "記録を編集",
+  filteredEmpty: {
+    search: (query: string) => `「${query}」に一致する作品は見つかりませんでした。`,
+    favorite: "お気に入りの作品はありません。",
+    conditions: (state: string, favoriteOnly: boolean) =>
+      `絞り込み：${state}${favoriteOnly ? "・お気に入りのみ" : ""}`,
+    clearSearch: "検索をクリア",
+    clearFilters: "絞り込みを解除",
+    showAll: "すべての作品を見る",
+  },
   updatedAt: (date: string) => `更新 ${date}`,
   overallEmpty: {
     title: "まだ作品がありません",
@@ -1161,6 +1181,7 @@ export const libraryStrings = {
     reaction: "感想",
     reactionPrompt: "感想を記録しない",
     progress: "進み具合",
+    progressOptional: "進み具合（任意）",
     volume: "巻",
     chapter: "話",
     reasonDisliked: "合わなかった理由",
@@ -1191,7 +1212,7 @@ export const libraryStrings = {
   search: {
     heading: "作品を追加",
     label: "タイトル・作者名で検索",
-    placeholder: "作品名または作者名",
+    placeholder: "追加する作品名・作者名",
     prompt: "作品名や作者名を入力してください。",
     localHeading: "カタログの作品",
     localResults: (count: number) => `カタログから ${String(count)} 作品見つかりました。`,
