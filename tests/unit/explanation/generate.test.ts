@@ -75,6 +75,63 @@ function baselineIdentityExists(
 }
 
 describe("Taste explanations", () => {
+  it("adds only applied consensus supporters after rendered anchors without changing reasons", () => {
+    const primary = tasteContribution({ anchorWorkIds: ["primary"] });
+    const consensus = tasteContribution({
+      source: "consensus",
+      group: "overall",
+      factorId: "consensus",
+      value: 0.03,
+      anchorWorkIds: ["support-a", "support-b"],
+      explainable: false,
+    });
+    const input = {
+      confidenceLevel: "high" as const,
+      lexicon: explanationLexicon,
+      resolveTitle: titleResolver({
+        primary: "主な作品",
+        "support-a": "支えた作品A",
+        "support-b": "支えた作品B",
+        unused: "使われなかった作品",
+      }),
+    };
+    const original = generateTasteExplanation({ ...input, contributions: [primary] });
+    const contributions = [primary, consensus];
+    const result = generateTasteExplanation({ ...input, contributions });
+
+    expect(result.anchors.map(({ workId }) => workId)).toEqual([
+      "primary",
+      "support-a",
+      "support-b",
+    ]);
+    expect(result.positiveReasons).toEqual(original.positiveReasons);
+    expect(result.caution).toEqual(original.caution);
+    expect(
+      generateTasteExplanation({ ...input, contributions: [...contributions].reverse() }),
+    ).toEqual(result);
+    for (const excluded of [
+      { ...consensus, value: 0 },
+      { ...consensus, value: -0.01 },
+      { ...consensus, source: "penalty" as const },
+    ]) {
+      expect(
+        generateTasteExplanation({ ...input, contributions: [primary, excluded] }).anchors,
+      ).toEqual(original.anchors);
+    }
+    expect(
+      generateTasteExplanation({
+        ...input,
+        contributions: [
+          primary,
+          {
+            ...consensus,
+            anchorWorkIds: ["missing", "primary", "support-a", "support-b", "unused"],
+          },
+        ],
+      }).anchors,
+    ).toEqual(result.anchors);
+  });
+
   it("drops the global caution after a stronger positive wins its group without backfilling", () => {
     const contributions = [
       tasteContribution({

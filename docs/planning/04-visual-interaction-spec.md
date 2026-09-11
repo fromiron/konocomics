@@ -45,6 +45,7 @@
 - 본문/보조 텍스트와 모든 interaction state는 구현 viewport에서 WCAG AA 대비를 확인한다. cyan accent 채움 위에는 흰색이 아니라 `--on-accent`를 사용한다.
 - `--accent-hover`는 두 번째 accent가 아니라 같은 hue/chroma 계열의 주요 CTA 포인터 상태다. `--surface-hover`는 outline/ghost와 중립 인터랙션에만 쓰며 accent 채움 CTA에 적용하지 않는다.
 - 장식용 전면 gradient 금지. 읽기 대비를 위한 hero image overlay gradient, 표지 블러 배경(§4.2), 스크린톤은 예외다.
+- 2026-09-11 사용자 선택 이미지 1의 상세 근거 배너에만 `--evidence-surface: oklch(0.8 0.018 215)` 회청색 표면을 허용한다. 기존 `--discovery-*`의 흰 카드·짙은 글자·옅은 경계 토큰을 배너 내부에만 매핑한다. 전역 dark theme은 유지하며 `RankingCard`의 `evidence` variant는 원본 비율 표지, 역할 pill, 제목 링크를 공유하고 순위 장식을 생략한다.
 
 ### 2.2 타이포그래피
 

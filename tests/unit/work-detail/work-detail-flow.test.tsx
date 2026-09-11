@@ -24,7 +24,7 @@ import { WorkDetailFlow } from "@/features/work-detail/work-detail-flow";
 import type { ProviderCacheRecord } from "@/infrastructure/db";
 import type * as RakutenExports from "@/infrastructure/rakuten";
 import { buildRakutenBooksSearchUrl } from "@/infrastructure/rakuten";
-import { coverStrings, workDetailStrings, explanationLexicon } from "@/lib/strings";
+import { coverStrings, workDetailStrings, explanationLexicon, mediaStrings } from "@/lib/strings";
 
 vi.mock("@tanstack/react-router", () => ({
   Link: ({
@@ -553,13 +553,31 @@ describe("WorkDetailFlow", () => {
     expected.positiveReasons.forEach((reason) => {
       expect(screen.getAllByText(reason.text).length).toBeGreaterThan(0);
     });
-    expect(screen.getByText(expected.confidence.label, { exact: false })).toBeTruthy();
+    expect(
+      screen.queryByText(workDetailStrings.compatibility.confidence, { exact: false }),
+    ).toBeNull();
     await waitFor(() => {
       expect(
         view.container
           .querySelector(".work-detail-compatibility__anchor-cover img")
           ?.getAttribute("src"),
-      ).toContain("_ex=200x200");
+      ).toContain("_ex=400x400");
     });
+    const evidence = view.container.querySelector(".work-detail-evidence");
+    expect(evidence?.querySelectorAll("a")).toHaveLength(expected.anchors.length);
+    expect(evidence?.querySelector("ul")?.getAttribute("data-evidence-count")).toBe(
+      String(expected.anchors.length),
+    );
+    const emptySlots = evidence?.querySelectorAll('li[aria-hidden="true"]') ?? [];
+    expect(emptySlots).toHaveLength(3 - expected.anchors.length);
+    for (const slot of emptySlots) {
+      expect(slot.textContent).toBe(mediaStrings.evidencePlaceholder);
+      expect(slot.querySelector("img, a, button, [tabindex]")).toBeNull();
+    }
+    expect(evidence?.querySelector("a")?.getAttribute("href")).toBe(`/works/${anchorWorkId}`);
+    expect(evidence?.querySelector('[data-evidence-role="primary"]')?.textContent).toBe(
+      workDetailStrings.compatibility.primaryAnchor,
+    );
+    expect(evidence?.querySelector("[data-ranking-position]")).toBeNull();
   });
 });

@@ -40,6 +40,7 @@
   --discovery-button-hover: oklch(0.95 0.015 260);
   --discovery-action: oklch(0.49 0.19 290);
   --discovery-link: oklch(0.78 0.105 238);
+  --evidence-surface: oklch(0.8 0.018 215);
   --book-cover-width: 96px;
   --discovery-question-size: 18px;
   --dialog-overlay: color-mix(in oklch, var(--canvas) 72%, transparent);
@@ -514,6 +515,58 @@ h1[tabindex="-1"]:focus {
   .recommendation-featured-card:hover .recommendation-featured-card__actions,
   .recommendation-featured-card:focus-within .recommendation-featured-card__actions {
     transition: none;
+  }
+}
+
+.work-detail-evidence {
+  --surface-1: var(--discovery-button);
+  --surface-2: var(--discovery-paper);
+  --text-strong: var(--discovery-ink);
+  --text: var(--discovery-ink);
+  --text-muted: var(--discovery-muted);
+  --line: var(--discovery-line);
+  --ring: var(--discovery-ink);
+  --focus-ring: var(--discovery-ink);
+  --shadow-cover-featured: var(--shadow-level-1);
+  background: var(--evidence-surface);
+}
+
+.work-detail-evidence__role {
+  display: inline-block;
+  border-radius: var(--radius-pill);
+  padding: var(--space-1) var(--space-2);
+  background: var(--line);
+  color: var(--text-strong);
+  font-weight: 700;
+  overflow-wrap: anywhere;
+}
+
+.work-detail-evidence__role[data-evidence-role="primary"] {
+  background: color-mix(in oklab, var(--accent) 44%, var(--surface-1));
+}
+
+@media (width < 48rem) {
+  .work-detail-evidence > ul > li[aria-hidden="true"],
+  .work-detail-evidence > ul[data-evidence-count="2"] .work-detail-evidence__details {
+    display: none;
+  }
+
+  .work-detail-evidence > ul:not([data-evidence-count="2"]) > li:first-child {
+    grid-column: 1 / -1;
+  }
+
+  .work-detail-evidence > ul:not([data-evidence-count="2"]) > li:first-child .ranking-card-link {
+    grid-template-columns: minmax(0, 3fr) minmax(0, 2fr);
+    align-items: start;
+    padding: var(--space-3);
+  }
+
+  .work-detail-evidence > ul:not([data-evidence-count="2"]) > li:first-child .ranking-card-meta {
+    order: 0;
+  }
+
+  .work-detail-evidence > ul:not([data-evidence-count="2"]) > li:first-child .ranking-card-title {
+    font-size: var(--text-subheading-size);
   }
 }
 

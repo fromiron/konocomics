@@ -207,15 +207,18 @@ function tasteSentenceFor(options: {
 }
 
 function collectAnchors(
-  sentences: readonly (TasteExplanationSentence | BaselineExplanationSentence)[],
-  allowedSource: "similarity" | "genre",
+  sentences: readonly Pick<
+    TasteExplanationSentence | BaselineExplanationSentence,
+    "source" | "anchorWorkIds"
+  >[],
+  allowedSources: readonly string[],
   resolveTitle: WorkTitleResolver,
 ) {
   const seen = new Set<string>();
   const anchors: ExplanationAnchor[] = [];
 
   for (const sentence of sentences) {
-    if (sentence.source !== allowedSource) {
+    if (!allowedSources.includes(sentence.source)) {
       continue;
     }
     for (const workId of sentence.anchorWorkIds) {
@@ -322,8 +325,20 @@ export function generateTasteExplanation({
     positiveReasons,
     ...(caution === undefined ? {} : { caution }),
     anchors: collectAnchors(
-      [...positiveReasons, ...(caution === undefined ? [] : [caution])],
-      "similarity",
+      [
+        ...positiveReasons,
+        ...(caution === undefined ? [] : [caution]),
+        ...contributions
+          .filter(
+            (entry) =>
+              entry.source === "consensus" &&
+              entry.group === "overall" &&
+              entry.factorId === "consensus" &&
+              entry.value > 0,
+          )
+          .sort(compareTasteContributionIdentity),
+      ],
+      ["similarity", "consensus"],
       resolveTitle,
     ),
     confidence: {
@@ -355,6 +370,6 @@ export function generateBaselineExplanation({
   });
   return {
     reason,
-    anchors: collectAnchors([reason], "genre", resolveTitle),
+    anchors: collectAnchors([reason], ["genre"], resolveTitle),
   };
 }

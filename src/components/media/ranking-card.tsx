@@ -1,14 +1,17 @@
 import { Link } from "@tanstack/react-router";
-import { CrownIcon } from "lucide-react";
+import { BookOpen, CrownIcon } from "lucide-react";
 import type { ReactNode } from "react";
 
 import { CoverImage } from "@/components/cover/CoverImage";
 import { mediaStrings } from "@/lib/strings";
 import { cn } from "@/lib/utils";
 
+type EvidencePlaceholderProps = Readonly<{
+  variant: "evidence-placeholder";
+  className?: string;
+}>;
+
 type RankingCardProps = Readonly<{
-  rankingKind: "editorial-ranking" | "personalized-ranking";
-  position: number;
   workId: string;
   title: string;
   creators: readonly string[];
@@ -18,33 +21,67 @@ type RankingCardProps = Readonly<{
   priority?: boolean;
   onCoverVisible?: () => void;
   className?: string;
-}>;
+}> &
+  (
+    | Readonly<{
+        variant?: "ranking";
+        rankingKind: "editorial-ranking" | "personalized-ranking";
+        position: number;
+      }>
+    | Readonly<{ variant: "evidence"; rankingKind?: never; position?: never }>
+  );
 
-export function RankingCard({
-  className,
-  coverUrl,
-  creators,
-  metadata,
-  metadataAccessibleLabel,
-  onCoverVisible,
-  position,
-  priority = false,
-  rankingKind,
-  title,
-  workId,
-}: RankingCardProps) {
+export function RankingCard(props: RankingCardProps | EvidencePlaceholderProps) {
+  if (props.variant === "evidence-placeholder") {
+    return (
+      <li
+        aria-hidden="true"
+        className={cn(
+          "grid min-w-0 place-items-center rounded-[var(--radius-card)] bg-surface-1/40 p-[var(--space-2)] text-text-muted",
+          props.className,
+        )}
+      >
+        <span className="grid aspect-[30/43] w-full content-center justify-items-center gap-[var(--space-2)] text-center text-[length:var(--text-caption-size)] font-medium">
+          <BookOpen aria-hidden="true" className="size-[var(--space-6)]" strokeWidth={1.5} />
+          <span>{mediaStrings.evidencePlaceholder}</span>
+        </span>
+      </li>
+    );
+  }
+
+  const {
+    className,
+    coverUrl,
+    creators,
+    metadata,
+    metadataAccessibleLabel,
+    onCoverVisible,
+    position,
+    priority = false,
+    rankingKind,
+    title,
+    variant = "ranking",
+    workId,
+  } = props;
+  const isEvidence = variant === "evidence";
   const isEditorialRanking = rankingKind === "editorial-ranking";
-  const positionLabel = isEditorialRanking
-    ? mediaStrings.editorialRank(position)
-    : mediaStrings.rank(position);
-  const linkLabel =
-    metadataAccessibleLabel === undefined
-      ? `${positionLabel} · ${mediaStrings.openDetails(title)}`
-      : `${positionLabel} · ${mediaStrings.openDetails(title)} · ${metadataAccessibleLabel}`;
+  const positionLabel =
+    position === undefined
+      ? undefined
+      : isEditorialRanking
+        ? mediaStrings.editorialRank(position)
+        : mediaStrings.rank(position);
+  const linkLabel = [positionLabel, mediaStrings.openDetails(title), metadataAccessibleLabel]
+    .filter(Boolean)
+    .join(" · ");
 
   return (
     <li
-      className={cn("shrink-0 snap-start", isEditorialRanking ? "w-24 sm:w-28" : "w-44", className)}
+      className={cn(
+        "min-w-0",
+        !isEvidence && ["shrink-0 snap-start", isEditorialRanking ? "w-24 sm:w-28" : "w-44"],
+        className,
+      )}
       data-ranking-kind={rankingKind}
       data-ranking-position={position}
     >
@@ -90,10 +127,15 @@ export function RankingCard({
           </div>
         </article>
       ) : (
-        <article className="min-w-0">
+        <article className={cn("min-w-0", isEvidence && "h-full")}>
           <Link
             aria-label={linkLabel}
-            className="ranking-card-link group/ranking relative grid min-h-[var(--control-min-size)] gap-[var(--space-2)] rounded-[var(--radius-card)] bg-transparent p-[var(--space-3)] transition-colors duration-[var(--motion-duration-value)] ease-[var(--motion-ease-direct)] focus-visible:bg-surface-2 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-ring motion-reduce:transition-none [@media(hover:hover)_and_(pointer:fine)]:hover:bg-surface-2"
+            className={cn(
+              "ranking-card-link group/ranking relative grid min-h-[var(--control-min-size)] gap-[var(--space-2)] rounded-[var(--radius-card)] transition-colors duration-[var(--motion-duration-value)] ease-[var(--motion-ease-direct)] focus-visible:bg-surface-2 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-ring motion-reduce:transition-none [@media(hover:hover)_and_(pointer:fine)]:hover:bg-surface-2",
+              isEvidence
+                ? "h-full content-start bg-surface-1 p-[var(--space-2)]"
+                : "bg-transparent p-[var(--space-3)]",
+            )}
             params={{ workId }}
             preload={false}
             to="/works/$workId"
@@ -103,36 +145,50 @@ export function RankingCard({
                 className="w-full shadow-[var(--shadow-cover-featured)]"
                 coverUrl={coverUrl}
                 creators={creators}
-                fit="cover"
+                fit={isEvidence ? "contain" : "cover"}
                 onVisible={onCoverVisible}
                 priority={priority && position === 1}
                 requestedSize={400}
                 title={title}
               />
-              <span
-                aria-hidden="true"
-                className="pointer-events-none absolute right-[var(--space-2)] bottom-[var(--space-2)] grid size-[var(--space-12)] place-items-center rounded-full bg-accent font-display text-[length:var(--font-size-16)] leading-none font-black text-on-accent opacity-0 shadow-[var(--shadow-floating-action)] transition-[transform,opacity] duration-[var(--motion-duration-floating-action)] ease-[var(--motion-ease-direct)] [transform:translateY(var(--space-2))] tabular-nums group-focus-visible/ranking:opacity-100 group-focus-visible/ranking:[transform:translateY(0)] motion-reduce:transition-none motion-reduce:[transform:translateY(0)] [@media(hover:hover)_and_(pointer:fine)]:group-hover/ranking:opacity-100 [@media(hover:hover)_and_(pointer:fine)]:group-hover/ranking:[transform:translateY(0)]"
-                data-ranking-hover-position="true"
-              >
-                {position}
-                {position === 1 ? (
-                  <CrownIcon
-                    aria-hidden="true"
-                    className="ranking-crown"
-                    fill="currentColor"
-                    stroke="var(--canvas)"
-                    strokeWidth={1.5}
-                  />
-                ) : null}
-              </span>
+              {isEvidence ? null : (
+                <span
+                  aria-hidden="true"
+                  className="pointer-events-none absolute right-[var(--space-2)] bottom-[var(--space-2)] grid size-[var(--space-12)] place-items-center rounded-full bg-accent font-display text-[length:var(--font-size-16)] leading-none font-black text-on-accent opacity-0 shadow-[var(--shadow-floating-action)] transition-[transform,opacity] duration-[var(--motion-duration-floating-action)] ease-[var(--motion-ease-direct)] [transform:translateY(var(--space-2))] tabular-nums group-focus-visible/ranking:opacity-100 group-focus-visible/ranking:[transform:translateY(0)] motion-reduce:transition-none motion-reduce:[transform:translateY(0)] [@media(hover:hover)_and_(pointer:fine)]:group-hover/ranking:opacity-100 [@media(hover:hover)_and_(pointer:fine)]:group-hover/ranking:[transform:translateY(0)]"
+                  data-ranking-hover-position="true"
+                >
+                  {position}
+                  {position === 1 ? (
+                    <CrownIcon
+                      aria-hidden="true"
+                      className="ranking-crown"
+                      fill="currentColor"
+                      stroke="var(--canvas)"
+                      strokeWidth={1.5}
+                    />
+                  ) : null}
+                </span>
+              )}
             </span>
             <span className="grid min-w-0 gap-[var(--space-content-tight)]">
-              <span className="line-clamp-2 text-[length:var(--font-size-16)] leading-snug font-medium text-text-strong [overflow-wrap:anywhere]">
+              <span
+                className={cn(
+                  "ranking-card-title leading-snug text-text-strong [overflow-wrap:anywhere]",
+                  isEvidence
+                    ? "line-clamp-3 text-[length:var(--font-size-14)] font-bold"
+                    : "line-clamp-2 text-[length:var(--font-size-16)] font-medium",
+                )}
+              >
                 {title}
               </span>
               <span
-                className="line-clamp-2 text-[length:var(--font-size-14)] leading-snug text-text-muted"
-                data-ranking-label="true"
+                className={cn(
+                  "ranking-card-meta leading-snug text-text-muted",
+                  isEvidence
+                    ? "order-first text-[length:var(--text-caption-size)]"
+                    : "line-clamp-2 text-[length:var(--font-size-14)]",
+                )}
+                data-ranking-label={isEvidence ? undefined : "true"}
               >
                 {metadata}
               </span>

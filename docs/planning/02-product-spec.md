@@ -484,7 +484,7 @@ type RecommendationWorkMarketSignal = {
 - 안정 fallback은 `source → group → factorId → axisPreferenceDirection → anchorWorkIds.join("\\0") → negativeReasonId` 오름차순이다. 음수 similarity를 `value asc → fallback`으로 정렬한 첫 1개만 global caution 후보로 둔다.
 - 모든 positive와 global caution 하나를 `abs(value) desc → fallback`으로 순회한다. 이미 쓴 group/Cluster는 건너뛰고 positive 최대 3, caution 최대 1을 고른다. caution이 더 강한 positive와 충돌하면 다른 음수로 백필하지 않고 생략한다.
 - 렌더링 가능한 factor는 `ExplanationLexicon.factorLabels`에 정의된 Axis/Genre/Theme뿐이다. Cluster 소속 factor는 cluster label, 나머지는 factor label을 쓰되 구조화 identity에는 원래 factorId를 보존한다.
-- 근거 Anchor는 렌더링된 positive 순서 뒤 caution 순서에서 `source=similarity` contribution의 실제 `anchorWorkIds`만 distinct 1~3개 수집한다. penalty source·미렌더 contribution·제목 미해결 ID는 제외하고, 0개면 bestAnchorId를 보충하지 않은 채 Anchor 구역을 생략한다.
+- 근거 Anchor는 렌더링된 positive 순서 뒤 caution 순서에서 `source=similarity`의 실제 `anchorWorkIds`를 먼저 수집한다. 2026-09-11 사용자 승인에 따라 이후 `source=consensus, group=overall, factorId=consensus, value>0`인 실제 적용 bonus의 supporter ID를 안정 identity 순서로 추가한다. 제목이 해결된 distinct 최대 3개이며 similarity는 「主な根拠」, consensus만으로 추가된 작품은 「好みのつながり」로 구분한다. consensus의 `explainable=false`와 이유 문장 선택·추천 산식은 유지한다. penalty·미렌더 similarity·0 이하 bonus·제목 미해결 ID는 제외하고, 0개면 bestAnchorId나 무관한 작품을 보충하지 않은 채 Anchor 구역을 생략한다.
 - confidence는 Taste에만 정확히 `高い / ふつう / 低め(データ収集中)`로 표시한다. 모든 일본어 label/template은 `src/lib/strings.ts`가 소유하고 순수 설명기에 lexicon으로 주입한다.
 - placeholder는 원본 template의 `{factorLabel}`·`{anchorTitle}` token을 단일 비재귀 pass로 치환한다. 주입 값 안의 같은 token bytes는 다시 해석하지 않는다.
 

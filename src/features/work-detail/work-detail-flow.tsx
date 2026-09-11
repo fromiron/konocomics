@@ -3,17 +3,18 @@
 import { Link } from "@tanstack/react-router";
 import { useEffect, useMemo, useRef, useState } from "react";
 
-import { CoverImage, coverSourceForSize } from "@/components/cover/CoverImage";
+import { coverSourceForSize } from "@/components/cover/CoverImage";
 import { Button, buttonClassName } from "@/components/design-system/button";
 import { MediaPosterCard } from "@/components/media/media-poster-card";
 import { MediaShelf } from "@/components/media/media-shelf";
-import { ConfidenceLabel, ReasonChips } from "@/components/media/recommendation-evidence";
+import { RankingCard } from "@/components/media/ranking-card";
+import { ReasonChips } from "@/components/media/recommendation-evidence";
 import { usePageEntryMotion } from "@/components/motion/use-page-entry-motion";
 import recommendationContextJson from "@/data/generated/recommendation-context-v1.json";
 import { AXIS_IDS, THEME_TAGS } from "@/domain/catalog/constants";
 import { normalizeIsbn } from "@/domain/catalog/normalize";
 import type { CatalogV1, Work } from "@/domain/catalog/types";
-import { generateTasteExplanation } from "@/domain/explanation";
+import { explanationClusterFor, generateTasteExplanation } from "@/domain/explanation";
 import type { ExplanationFactorId, TasteRecommendationExplanation } from "@/domain/explanation";
 import { hasCatalogBackedProfile } from "@/domain/profile/catalog-profile";
 import type { ReadingState, UserWorkRecord } from "@/domain/profile/types";
@@ -376,76 +377,132 @@ function CompatibilitySection({
   state: CompatibilityState;
 }>) {
   if (state.kind === "hidden") return null;
+  const primaryAnchorIds = new Set(
+    state.kind === "ready"
+      ? [
+          ...state.explanation.positiveReasons,
+          ...(state.explanation.caution ? [state.explanation.caution] : []),
+        ]
+          .filter((reason) => reason.source === "similarity")
+          .flatMap((reason) => reason.anchorWorkIds)
+      : [],
+  );
 
   return (
     <section
       aria-labelledby="work-compatibility-heading"
-      className="grid gap-[var(--space-3)] border-t border-line/70 pt-[var(--space-4)] md:grid-cols-[minmax(0,2fr)_minmax(13rem,1fr)] md:gap-[var(--space-5)]"
+      className="grid items-start gap-[var(--space-6)] border-t border-line/70 pt-[var(--space-6)] md:grid-cols-2"
       data-slot="work-compatibility"
     >
-      <h2
-        className="text-[length:var(--text-section-title-size)] tracking-tight text-text-strong md:col-span-2"
-        id="work-compatibility-heading"
-      >
-        {workDetailStrings.compatibility.heading}
-      </h2>
-      {state.kind === "unavailable" ? (
-        <p>{workDetailStrings.compatibility.unavailable}</p>
-      ) : (
-        <>
-          <div className="grid content-start gap-[var(--space-content)]">
-            <h3 className="text-[length:var(--font-size-14)]">
+      <div className="grid min-w-0 content-start gap-[var(--space-6)]">
+        <h2
+          className="text-[length:var(--text-page-title-size)] font-bold tracking-tight text-text-strong"
+          id="work-compatibility-heading"
+        >
+          {workDetailStrings.compatibility.heading}
+        </h2>
+        {state.kind === "unavailable" ? (
+          <p>{workDetailStrings.compatibility.unavailable}</p>
+        ) : (
+          <div className="grid content-start gap-[var(--space-3)]">
+            <h3 className="text-[length:var(--text-subheading-size)] font-bold text-text-strong">
               {workDetailStrings.compatibility.reasons}
             </h3>
             <ReasonChips
               caution={state.explanation.caution}
               cautionLabel={workDetailStrings.compatibility.caution}
-              className="[&_li]:text-[length:var(--text-caption-size)] [&_li]:leading-[1.45]"
               emptyText={recommendationStrings.reasonUnavailable}
               presentation="feature-cards"
               reasons={state.explanation.positiveReasons}
             />
           </div>
-          <div className="grid content-start gap-[var(--space-content-tight)]">
-            {state.explanation.anchors.length === 0 ? null : (
-              <>
-                <h3 className="text-[length:var(--font-size-14)]">
-                  {workDetailStrings.compatibility.anchors}
-                </h3>
-                <ul className="m-0 flex list-none flex-wrap gap-[var(--space-content)] p-0">
-                  {state.explanation.anchors.map((anchor) => {
-                    const anchorWork = catalog.works.find((work) => work.id === anchor.workId);
-                    if (anchorWork === undefined) return null;
-                    return (
-                      <li
-                        className="grid max-w-full grid-cols-[var(--control-min-size)_minmax(0,1fr)] items-center gap-[var(--space-content)] py-[var(--space-content-tight)]"
-                        key={anchor.workId}
+        )}
+      </div>
+      {state.kind !== "ready" || state.explanation.anchors.length === 0 ? null : (
+        <aside
+          aria-labelledby="work-evidence-heading"
+          className="work-detail-evidence grid min-w-0 gap-[var(--space-4)] rounded-[var(--radius-card)] p-[var(--space-3)] sm:p-[var(--space-4)]"
+        >
+          <h3
+            className="text-[length:var(--text-section-title-size)] font-bold text-text-strong"
+            id="work-evidence-heading"
+          >
+            {workDetailStrings.compatibility.anchors}
+          </h3>
+          <ul
+            className="m-0 grid list-none grid-cols-2 gap-[var(--space-2)] p-0 md:grid-cols-3"
+            data-evidence-count={state.explanation.anchors.length}
+          >
+            {state.explanation.anchors.map((anchor, index) => {
+              const anchorWork = catalog.works.find((work) => work.id === anchor.workId);
+              if (anchorWork === undefined) return null;
+              const isPrimary = primaryAnchorIds.has(anchor.workId);
+              const roleLabel = isPrimary
+                ? workDetailStrings.compatibility.primaryAnchor
+                : workDetailStrings.compatibility.supportingAnchor;
+              const factorLabels = state.explanation.positiveReasons
+                .filter(
+                  (reason) =>
+                    reason.source === "similarity" && reason.anchorWorkIds.includes(anchor.workId),
+                )
+                .flatMap((reason) => {
+                  const cluster = explanationClusterFor(reason.factorId);
+                  const label =
+                    cluster === undefined
+                      ? explanationLexicon.factorLabels[reason.factorId]
+                      : explanationLexicon.clusterLabels[cluster];
+                  return label === undefined ? [] : [label];
+                });
+              return (
+                <RankingCard
+                  className="work-detail-compatibility__anchor-cover"
+                  coverUrl={anchorCoverUrls.get(anchor.workId)}
+                  creators={anchorWork.creators}
+                  key={anchor.workId}
+                  metadata={
+                    <>
+                      <span
+                        className="work-detail-evidence__role"
+                        data-evidence-role={isPrimary ? "primary" : "supporting"}
                       >
-                        <CoverImage
-                          className="work-detail-compatibility__anchor-cover w-[var(--control-min-size)]"
-                          coverUrl={anchorCoverUrls.get(anchor.workId)}
-                          creators={anchorWork.creators}
-                          decorative
-                          onVisible={() => onAnchorCoverVisible(anchor.workId)}
-                          requestedSize={200}
-                          title={anchorWork.title}
-                        />
-                        <span className="[overflow-wrap:anywhere] text-[length:var(--text-caption-size)] font-bold">
-                          {anchorWork.title}
+                        {roleLabel}
+                      </span>
+                      {index === 0 ? (
+                        <span className="work-detail-evidence__details mt-[var(--space-3)] grid gap-[var(--space-3)] leading-[var(--line-height-body)] md:hidden">
+                          <span>{coverStrings.creatorLine(anchorWork.creators)}</span>
+                          {factorLabels.length === 0 ? null : (
+                            <span className="grid gap-[var(--space-1)]">
+                              <span className="font-bold text-text-strong">
+                                {workDetailStrings.compatibility.anchorFactors}
+                              </span>
+                              <span>{factorLabels.join(" · ")}</span>
+                            </span>
+                          )}
                         </span>
-                      </li>
-                    );
-                  })}
-                </ul>
-              </>
-            )}
-            <ConfidenceLabel
-              className="mt-[var(--space-content-tight)]"
-              label={state.explanation.confidence.label}
-              prefix={workDetailStrings.compatibility.confidence}
-            />
-          </div>
-        </>
+                      ) : null}
+                    </>
+                  }
+                  metadataAccessibleLabel={
+                    index === 0
+                      ? [
+                          roleLabel,
+                          coverStrings.creatorLine(anchorWork.creators),
+                          ...factorLabels,
+                        ].join(" · ")
+                      : roleLabel
+                  }
+                  onCoverVisible={() => onAnchorCoverVisible(anchor.workId)}
+                  title={anchorWork.title}
+                  variant="evidence"
+                  workId={anchor.workId}
+                />
+              );
+            })}
+            {[0, 1, 2].slice(state.explanation.anchors.length).map((slot) => (
+              <RankingCard key={`empty-evidence-${slot}`} variant="evidence-placeholder" />
+            ))}
+          </ul>
+        </aside>
       )}
     </section>
   );
@@ -874,7 +931,7 @@ function WorkDetailContent({ catalog, work }: Readonly<{ catalog: CatalogV1; wor
                 }
                 className={buttonClassName({
                   className:
-                    "w-fit min-w-[min(100%,16rem)] px-[var(--space-4)] py-[var(--space-content)] font-bold",
+                    "w-full min-w-[min(100%,16rem)] px-[var(--space-4)] py-[var(--space-content)] font-bold md:w-fit",
                 })}
                 href={providerHref}
                 rel="noreferrer"

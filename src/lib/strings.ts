@@ -235,6 +235,7 @@ export const designSystemStrings = {
 
 export const mediaStrings = {
   openDetails: (title: string) => `「${title}」の作品詳細を見る`,
+  evidencePlaceholder: "追加の根拠なし",
   previous: (title: string) => `${title}を前へ送る`,
   next: (title: string) => `${title}を次へ送る`,
   rank: (position: number) => `${String(position)}位`,
@@ -841,6 +842,9 @@ export const workDetailStrings = {
     reasons: "合いそうな理由",
     caution: "好みと異なる点",
     anchors: "根拠になった作品",
+    primaryAnchor: "主な根拠",
+    supportingAnchor: "好みのつながり",
+    anchorFactors: "近いポイント",
     confidence: "分析の確信度",
     unavailable: "現在の好みから相性を表示できません。",
   },
