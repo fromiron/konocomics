@@ -5,7 +5,7 @@
 - 200개 중 한 페이지의 24개 DOM에 대해 화면에 들어온 12개 표지 API 요청만 관찰됐고 페이지 밖 요청은 0개였다. 실제 개발 요청의 겹침 최대값은 1, 시작 간격은 약 1초였다. 일반 실행의 동시 최대 4개는 기존 client/resolver 소스 확인이며 운영 환경 부하 검증으로 확대하지 않는다. 관찰 원본: `.tmp/library-management-20260911/200-pagination-request-observation.json`.
 - 전역 `html { scrollbar-gutter: stable }`로 모든 route에 스크롤바 공간을 유지한다. 1280×1000에서 Library 검색 0건(scrollHeight 1000)과 긴 목록(2413)의 body 폭은 모두 1264.6667px, main 폭 1200px·좌측 32.3333px였다. 모달 열림과 Settings도 같은 body 폭이며 별도 보정 여백을 추가하지 않았다. 원본: `.tmp/library-management-20260911/scrollbar-gutter-observation.json`.
 - 실제 desktop 전체 폭 배너 캡처 `.tmp/library-management-20260911/09-desktop-fullwidth-banner.png`는 확인했다. 이후 개발 탭의 `10`·`11` 캡처는 하단 이미지 반복이 있는 캡처 오류여서 최종 시각 증거로 채택하지 않는다. 실제 DOM 제목은 1개이고 중복 카드 없음은 DOM/ID로 확인했다. 390px의 조작 배치와 폭은 실제 DOM 측정이며 픽셀 일치 주장이 아니다.
-- 구현 중 페이지 번호와 기존 JSX 변수의 이름 충돌로 Vite 변환이 한 번 실패했다. 불필요한 JSX 변수를 제거한 뒤 정상 진입·200개 흐름을 다시 확인하고 수정 파일 ESLint를 통과했다. 사용자 지시대로 unit/E2E·typecheck·build는 실행하지 않았다. 커밋·푸시·배포도 하지 않았다. 브라우저 재시작, 실제 200% 확대, 물리 터치/키보드, 강제 provider·이미지 실패, 스크린리더 전체 순회는 이번 증거에 포함하지 않는다.
+- 구현 중 페이지 번호와 기존 JSX 변수의 이름 충돌로 Vite 변환이 한 번 실패했다. 불필요한 JSX 변수를 제거한 뒤 정상 진입·200개 흐름을 다시 확인하고 수정 파일 ESLint를 통과했다. 사용자 지시대로 unit/E2E·typecheck·build는 실행하지 않았다. 검증 후 사용자 지시에 따라 `a729d58`로 로컬 커밋했다. 푸시·배포는 하지 않았다. 브라우저 재시작, 실제 200% 확대, 물리 터치/키보드, 강제 provider·이미지 실패, 스크린리더 전체 순회는 이번 증거에 포함하지 않는다.
 
 ### `03-ux-screen-contracts.md` §7 수용 기준 원문과 이번 결과
 
