@@ -16,7 +16,7 @@ export type CoverImageProps = Readonly<{
   className?: string;
   decorative?: boolean;
   variant?: "standard" | "hero";
-  fit?: "contain" | "cover";
+  fit?: "contain" | "cover" | "cover-square";
   matchSourceAspectRatio?: boolean;
   onVisible?: () => void;
   onSettled?: () => void;
@@ -86,10 +86,11 @@ export function CoverImage({
   const loaded = loadedSource === currentSource;
   const activeSourceAspectRatio =
     sourceAspectRatio?.source === currentSource ? sourceAspectRatio.value : undefined;
+  const coverFit = fit === "cover" || (fit === "cover-square" && activeSourceAspectRatio === 1);
   const frameAspectRatio =
-    fit === "contain" && matchSourceAspectRatio ? activeSourceAspectRatio : undefined;
+    !coverFit && matchSourceAspectRatio ? activeSourceAspectRatio : undefined;
   const artworkStyle =
-    fit === "cover" || activeSourceAspectRatio === undefined
+    coverFit || activeSourceAspectRatio === undefined
       ? undefined
       : activeSourceAspectRatio <= COVER_FRAME_ASPECT_RATIO
         ? { aspectRatio: activeSourceAspectRatio, height: "100%", width: "auto" }
@@ -269,7 +270,7 @@ export function CoverImage({
       <span
         className={cn(
           "cover-image__artwork relative z-[1] block max-h-full max-w-full overflow-hidden rounded-[var(--radius-cover)]",
-          (fit === "cover" || activeSourceAspectRatio === undefined) && "absolute inset-0",
+          (coverFit || activeSourceAspectRatio === undefined) && "absolute inset-0",
         )}
         style={artworkStyle}
       >
@@ -277,7 +278,7 @@ export function CoverImage({
           alt={decorative ? "" : coverStrings.alt(title)}
           className={cn(
             "cover-image__image absolute inset-0 size-full rounded-[var(--radius-cover)]",
-            fit === "cover" ? "object-cover" : "object-contain",
+            coverFit ? "object-cover object-center" : "object-contain",
           )}
           data-loaded={loaded ? "true" : "false"}
           decoding="async"
@@ -293,7 +294,7 @@ export function CoverImage({
           }}
           onLoad={(event) => {
             if (
-              fit === "contain" &&
+              fit !== "cover" &&
               event.currentTarget.naturalWidth > 0 &&
               event.currentTarget.naturalHeight > 0
             ) {

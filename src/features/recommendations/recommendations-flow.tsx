@@ -443,7 +443,11 @@ export function RecommendationsFlow({
     () => createRecommendationCoverTargets(catalog, coverWorkIds),
     [catalog, coverWorkIds],
   );
-  const { coverUrls: recommendationCoverUrls, requestCover } = useRecommendationCovers({
+  const {
+    coverUrls: recommendationCoverUrls,
+    itemCaptions,
+    requestCover,
+  } = useRecommendationCovers({
     targets: recommendationCoverTargets,
     getProviderCache,
     saveProviderCache,
@@ -708,8 +712,15 @@ export function RecommendationsFlow({
   const focusAfterDialog = (workId: string | null) => {
     window.requestAnimationFrame(() => {
       window.requestAnimationFrame(() => {
-        if (workId !== null && articleRefs.current.get(workId)?.isConnected) {
-          articleRefs.current.get(workId)?.focus();
+        const target =
+          workId === null
+            ? null
+            : (articleRefs.current.get(workId) ??
+              document
+                .getElementById(`recommendation-shelf-work-${workId}`)
+                ?.querySelector<HTMLAnchorElement>("a"));
+        if (target?.isConnected) {
+          target.focus();
         } else {
           if (updateButtonRef.current !== null) updateButtonRef.current.focus();
           else document.getElementById("recommendation-page-heading")?.focus();
@@ -809,8 +820,17 @@ export function RecommendationsFlow({
           .filter((candidate) => !survivorIds.has(candidate.workId))
           .map((candidate) => candidate.workId),
       );
-      const focusEntry = nextEntries[Math.min(Math.max(removedIndex, 0), nextEntries.length - 1)];
-      activateLoadedMotionList();
+      const shelf = [anchorEntries, discoveryEntries, completedEntries].find((entries) =>
+        entries.some((candidate) => candidate.entry.workId === entry.workId),
+      );
+      const shelfIndex = shelf?.findIndex((candidate) => candidate.entry.workId === entry.workId);
+      const shelfNeighbor =
+        shelfIndex === undefined ? undefined : (shelf?.[shelfIndex + 1] ?? shelf?.[shelfIndex - 1]);
+      const focusEntry =
+        shelfNeighbor?.entry ??
+        nextEntries[Math.min(Math.max(removedIndex, 0), nextEntries.length - 1)];
+      if (removedIndex >= 0) activateLoadedMotionList();
+      setExpandedAnchorId(null);
       setExcludedWorkIds(nextExcludedWorkIds);
       setBackfillIds(addedIds);
       setVisibleEntries(nextEntries);
@@ -1022,17 +1042,23 @@ export function RecommendationsFlow({
     variant: "anchor" | "discovery" | "completed",
   ) => (
     <RecommendationShelfCard
+      busy={isComputing || isPolicySaving || feedbackBaseBusy || busyWorkIds.has(entry.workId)}
       coverUrl={recommendationCoverUrls.get(entry.workId)}
       entry={entry}
       expanded={variant === "anchor" && expandedAnchorId === entry.workId}
+      itemCaption={itemCaptions.get(entry.workId)}
       key={entry.workId}
+      onCompleted={() => void removeForFeedback(entry, "completed")}
       onCoverVisible={() => requestCover(entry.workId)}
       onExpandedChange={(expanded) =>
         setExpandedAnchorId((current) =>
           expanded ? entry.workId : current === entry.workId ? null : current,
         )
       }
+      onHidden={() => void removeForFeedback(entry, "hidden")}
+      onPlanned={() => void savePlanned(entry)}
       onPreview={() => openPreview(entry.workId)}
+      planned={plannedIds.has(entry.workId)}
       resolveTitle={(workId) => worksById.get(workId)?.title}
       variant={variant}
       volumeCount={metadata.volumeCount}

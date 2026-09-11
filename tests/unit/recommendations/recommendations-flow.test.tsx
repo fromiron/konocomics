@@ -213,6 +213,7 @@ function freshProviderRecord(isbn: string) {
     provider: "rakuten" as const,
     isbn,
     imageUrl: `https://thumbnail.image.rakuten.co.jp/${work.id}.jpg`,
+    itemCaption: `${work.title}の作品紹介です。`,
     fetchedAt: "2026-08-15T00:00:00.000Z",
     commercialExpiresAt: "2099-08-15T00:00:00.000Z",
     metadataExpiresAt: "2099-08-15T00:00:00.000Z",
@@ -636,10 +637,25 @@ describe("RecommendationsFlow", () => {
         .map((genre) => onboardingStrings.step1.genreLabels[genre])
         .join(" · "),
     );
-    const anchorCards = container.querySelectorAll('[data-recommendation-shelf-card="anchor"]');
+    const anchorCards = container.querySelectorAll<HTMLElement>(
+      '[data-recommendation-shelf-card="anchor"]',
+    );
     expect(anchorCards.length).toBeGreaterThan(0);
     for (const anchorCard of anchorCards) {
       expect(anchorCard.getAttribute("data-lead-anchor-work-ids")).not.toBe("");
+      expect(within(anchorCard).getByRole("button", { name: /クイック表示/u })).toBeTruthy();
+      expect(within(anchorCard).queryByText(/^(高い|ふつう|低め)$/u)).toBeNull();
+      expect(within(anchorCard).queryByText("好きな作品との接点")).toBeNull();
+      const title = within(anchorCard).getByRole("heading", { level: 3 });
+      expect(within(anchorCard).getByRole("link").contains(title)).toBe(true);
+      const reason = anchorCard.querySelector("[data-contribution-summary]");
+      const anchorTitle = reason?.querySelector("strong")?.textContent;
+      expect(anchorTitle).toBeTruthy();
+      await waitFor(() => {
+        expect(anchorCard.querySelector("[data-expandable-panel]")?.textContent).toContain(
+          `${title.textContent}の作品紹介です。`,
+        );
+      });
     }
     expect(list.getAttribute("data-recommendation-motion")).toBe("static");
     expect(testState.loadMotionList).not.toHaveBeenCalled();

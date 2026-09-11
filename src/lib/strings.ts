@@ -689,7 +689,6 @@ export const recommendationStrings = {
       navigationLabel: "好きな作品から",
       title: "好きな作品から広げる",
       description: "推薦プランの順番を保ったまま、根拠作品から次の候補を探せます。",
-      connectionHeading: "好きな作品との接点",
     },
     discovery: {
       navigationLabel: "隠れた候補",

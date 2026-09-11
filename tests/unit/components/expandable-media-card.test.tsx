@@ -20,7 +20,14 @@ function Shelf({ onPreview }: { onPreview: () => void }) {
           onExpandedChange={(next) =>
             setActive((current) => (next ? index : current === index ? null : current))
           }
-          panel={<p>Connection {index}</p>}
+          panel={
+            <>
+              <p>Connection {index}</p>
+              <button onClick={onPreview} type="button">
+                Save {index}
+              </button>
+            </>
+          }
         >
           <a href={`/works/${index}`}>
             <img alt={`cover ${index}`} src="/cover.jpg" />
@@ -111,6 +118,11 @@ describe("ExpandableMediaCard", () => {
     expect(track.querySelectorAll('[data-expanded="true"]')).toHaveLength(1);
     fireEvent.keyDown(document, { key: "Escape" });
     expect(track.querySelectorAll('[data-expanded="true"]')).toHaveLength(0);
+    // A reduced-motion change can cancel an in-flight close without transitionend.
+    const cancelled = new Event("transitioncancel", { bubbles: true });
+    Object.defineProperty(cancelled, "propertyName", { value: "--media-card-expansion" });
+    fireEvent(articles[1]!, cancelled);
+    expect(articles[1]?.hasAttribute("data-expansion-active")).toBe(false);
     act(() => vi.advanceTimersByTime(20));
     expect(track.querySelectorAll("[data-expansion-active]")).toHaveLength(0);
   });
@@ -153,6 +165,13 @@ describe("ExpandableMediaCard", () => {
     fireEvent.keyDown(preview, { key: "Escape" });
     expect(panel.getAttribute("aria-hidden")).toBe("true");
     expect(document.activeElement).toBe(preview);
+    fireEvent.pointerEnter(article);
+    act(() => vi.advanceTimersByTime(200));
+    const panelAction = getByRole("button", { name: "Save 0" });
+    act(() => panelAction.focus());
+    fireEvent.keyDown(panelAction, { key: "Escape" });
+    expect(panel.getAttribute("aria-hidden")).toBe("true");
+    expect(document.activeElement).toBe(link);
   });
 
   it("cancels abandoned intent and closes outside the shelf", () => {

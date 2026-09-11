@@ -22,6 +22,7 @@ export type RecommendationCoverTarget = Readonly<{
 type RecommendationCoverResolution = Readonly<{
   target: RecommendationCoverTarget;
   coverUrl: string | null;
+  itemCaption?: string;
   source: "fresh-cache" | "refreshed" | "unavailable";
 }>;
 
@@ -82,6 +83,7 @@ export async function resolveRecommendationCover(
         return {
           target,
           coverUrl: normalizedImageUrl(cache.metadata?.imageUrl),
+          itemCaption: cache.metadata?.itemCaption,
           source: "fresh-cache",
         };
       }
@@ -109,6 +111,7 @@ export async function resolveRecommendationCover(
     return {
       target,
       coverUrl: normalizedImageUrl(savedCache.metadata?.imageUrl),
+      itemCaption: savedCache.metadata?.itemCaption,
       source: "refreshed",
     };
   } catch {
@@ -124,6 +127,7 @@ type UseRecommendationCoversInput = Readonly<{
 
 type RecommendationCoverState = Readonly<{
   coverUrls: ReadonlyMap<string, string | null>;
+  itemCaptions: ReadonlyMap<string, string>;
   requestCover(workId: string): void;
 }>;
 
@@ -144,9 +148,9 @@ export function useRecommendationCovers({
   const inFlightRef = useRef(new Map<string, InFlightCoverResolution>());
   const demandedWorkIdsRef = useRef(new Set<string>());
   const enqueueRef = useRef<((workId: string) => void) | null>(null);
-  const [resolvedByTarget, setResolvedByTarget] = useState<ReadonlyMap<string, string | null>>(
-    () => new Map(),
-  );
+  const [resolvedByTarget, setResolvedByTarget] = useState<
+    ReadonlyMap<string, RecommendationCoverResolution>
+  >(() => new Map());
   const requestCover = useCallback((workId: string) => {
     demandedWorkIdsRef.current.add(workId);
     enqueueRef.current?.(workId);
@@ -185,7 +189,7 @@ export function useRecommendationCovers({
       const update = () => {
         setResolvedByTarget((current) => {
           const next = new Map(current);
-          next.set(key, resolution.coverUrl);
+          next.set(key, resolution);
           return next;
         });
       };
@@ -238,16 +242,17 @@ export function useRecommendationCovers({
     };
   }, [getProviderCache, saveProviderCache, targets]);
 
-  const coverUrls = useMemo(() => {
-    const visible = new Map<string, string | null>();
+  const metadata = useMemo(() => {
+    const coverUrls = new Map<string, string | null>();
+    const itemCaptions = new Map<string, string>();
     targets.forEach((target) => {
-      const coverUrl = resolvedByTarget.get(targetKey(target));
-      if (coverUrl !== undefined || resolvedByTarget.has(targetKey(target))) {
-        visible.set(target.workId, coverUrl ?? null);
-      }
+      const resolution = resolvedByTarget.get(targetKey(target));
+      if (resolution === undefined) return;
+      coverUrls.set(target.workId, resolution.coverUrl);
+      if (resolution.itemCaption) itemCaptions.set(target.workId, resolution.itemCaption);
     });
-    return visible;
+    return { coverUrls, itemCaptions };
   }, [resolvedByTarget, targets]);
 
-  return useMemo(() => ({ coverUrls, requestCover }), [coverUrls, requestCover]);
+  return useMemo(() => ({ ...metadata, requestCover }), [metadata, requestCover]);
 }

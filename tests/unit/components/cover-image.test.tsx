@@ -42,6 +42,31 @@ describe("CoverImage accessibility contract", () => {
     expect(screen.getByRole("img", { name: "作品の表紙画像はありません。作者 作者" })).toBeTruthy();
   });
 
+  it.each([
+    ["contain", 160, 160, "object-contain"],
+    ["cover-square", 160, 160, "object-cover"],
+    ["cover-square", 282, 400, "object-contain"],
+  ] as const)("renders %s at %d x %d with %s", (fit, width, height, expectedFit) => {
+    const { container } = render(
+      <CoverImage
+        coverUrl="https://example.com/cover.jpg"
+        creators={["作者"]}
+        fit={fit}
+        title="作品"
+      />,
+    );
+    const image = container.querySelector<HTMLImageElement>("img");
+    if (image === null) throw new Error("Missing cover image");
+    Object.defineProperties(image, {
+      naturalWidth: { configurable: true, value: width },
+      naturalHeight: { configurable: true, value: height },
+    });
+    fireEvent.load(image);
+    expect(image.className).toContain(expectedFit);
+    if (expectedFit === "object-cover") expect(image.className).toContain("object-center");
+    expect(image.alt).toBe("作品 表紙");
+  });
+
   it("keeps the standard cover root valid inside native buttons", () => {
     const actual = render(
       <button type="button">

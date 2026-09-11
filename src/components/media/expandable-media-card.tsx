@@ -180,7 +180,11 @@ export function ExpandableMediaCard({
     const track = card?.closest<HTMLElement>("[data-media-shelf-track]");
     const dismiss = () => onExpandedChange(false);
     const onKeyDown = (event: KeyboardEvent) => {
-      if (event.key === "Escape") dismiss();
+      if (event.key !== "Escape") return;
+      if (card?.querySelector("[data-expandable-panel]")?.contains(document.activeElement)) {
+        contentRef.current?.querySelector<HTMLElement>("a, button")?.focus({ preventScroll: true });
+      }
+      dismiss();
     };
     const onPointerDown = (event: PointerEvent) => {
       if (event.target instanceof Node && !card?.contains(event.target)) dismiss();
@@ -267,6 +271,18 @@ export function ExpandableMediaCard({
           setGeometry(null);
         }
       }}
+      onTransitionCancel={(event) => {
+        if (
+          event.target === event.currentTarget &&
+          event.nativeEvent.propertyName === "--media-card-expansion" &&
+          !expanded &&
+          Number.parseFloat(
+            getComputedStyle(event.currentTarget).getPropertyValue("--media-card-expansion"),
+          ) === 0
+        ) {
+          setGeometry(null);
+        }
+      }}
       ref={cardRef}
       style={{
         ...style,
@@ -290,7 +306,7 @@ export function ExpandableMediaCard({
       <div
         aria-hidden={!expanded}
         className={cn(
-          "absolute inset-y-0 w-[calc(var(--control-min-size)*6)] overflow-y-auto overscroll-contain bg-surface-1 p-[var(--space-4)]",
+          "absolute inset-y-0 w-[calc(var(--control-min-size)*6)] overflow-y-auto overscroll-contain bg-inherit p-[var(--space-3)]",
           !expanded && "invisible",
         )}
         data-expandable-panel

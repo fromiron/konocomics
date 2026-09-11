@@ -27,6 +27,7 @@ function itemFor(target: RecommendationCoverTarget, image = true): RakutenBookIt
     author: "作者",
     publisherName: "出版社",
     isbn: target.isbn,
+    itemCaption: `${target.workId}の作品紹介です。`,
     itemPrice: 770,
     itemUrl: `https://books.rakuten.co.jp/rb/${target.workId}/`,
     availability: 1,
@@ -50,6 +51,7 @@ function cacheFor(
     provider: "rakuten",
     isbn: target.isbn,
     imageUrl: item.imageUrl,
+    itemCaption: item.itemCaption,
     fetchedAt: NOW,
     commercialExpiresAt: "2099-08-15T00:00:00.000Z",
     metadataExpiresAt: options.metadataExpiresAt ?? "2099-08-15T00:00:00.000Z",
@@ -95,6 +97,7 @@ describe("recommendation cover resolver", () => {
       }),
     ).resolves.toMatchObject({
       coverUrl: `https://thumbnail.image.rakuten.co.jp/${target.workId}.jpg`,
+      itemCaption: itemFor(target).itemCaption,
       source: "fresh-cache",
     });
     await expect(
@@ -132,6 +135,7 @@ describe("recommendation cover resolver", () => {
 
       expect(result).toMatchObject({
         coverUrl: `https://thumbnail.image.rakuten.co.jp/${target.workId}.jpg`,
+        itemCaption: itemFor(target).itemCaption,
         source: "refreshed",
       });
       expect(requestBook).toHaveBeenCalledWith(target.isbn);
@@ -156,6 +160,7 @@ describe("recommendation cover resolver", () => {
     });
 
     expect(result).toMatchObject({ coverUrl: null, source: "unavailable" });
+    expect(result.itemCaption).toBeUndefined();
     expect(saveProviderCache).not.toHaveBeenCalled();
   });
 
@@ -228,6 +233,9 @@ describe("recommendation cover resolver", () => {
       });
     });
     await waitFor(() => expect(result.current.coverUrls.size).toBe(visibleTargets.length));
+    expect(result.current.itemCaptions.get(visibleTargets[0]!.workId)).toBe(
+      itemFor(visibleTargets[0]!).itemCaption,
+    );
     expect(maximumActive).toBe(4);
     expect(getProviderCache).toHaveBeenCalledTimes(visibleTargets.length);
     act(() => result.current.requestCover(outOfOrderTarget.workId));

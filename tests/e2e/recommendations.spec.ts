@@ -804,6 +804,7 @@ test.describe("Slice 7 recommendation journeys", () => {
         body: JSON.stringify({
           listing: {
             title: `${work.title} 1`,
+            itemCaption: `${work.title}の紹介文です。作品の物語と登場人物について紹介します。`,
             author: work.creators.join("・"),
             publisherName: work.publisher ?? "E2E 出版社",
             isbn,
@@ -1123,11 +1124,80 @@ test.describe("Slice 7 recommendation journeys", () => {
     await previewOpener.press("Enter");
     expect(new URL(page.url()).searchParams.get("preview")).toBe(previewWorkId);
     await expect(previewDialog).toBeVisible();
+    await expect(
+      previewDialog.getByRole("heading", { name: previewTitle, exact: true }),
+    ).toBeFocused();
     await expect
       .poll(async () =>
         Math.abs((await page.evaluate(() => window.scrollY)) - scrollYBeforePreview),
       )
       .toBeLessThanOrEqual(1);
+
+    if (testInfo.project.name === "mobile-chromium") {
+      const originalViewport = page.viewportSize()!;
+      const readingBody = previewDialog
+        .getByRole("heading", { name: "おすすめ理由" })
+        .locator("../..");
+      for (const viewport of [originalViewport, { width: 320, height: 480 }]) {
+        await page.setViewportSize(viewport);
+        await expect.poll(() => readingBody.evaluate((body) => body.scrollTop)).toBe(0);
+        const layout = await previewDialog.evaluate((dialog) => {
+          const rect = dialog.getBoundingClientRect();
+          const title = dialog.querySelector("h2")!.getBoundingClientRect();
+          const cover = dialog.querySelector(".cover-image")!.getBoundingClientRect();
+          const body = dialog.querySelector("section")!.parentElement!;
+          const close = dialog.querySelector<HTMLButtonElement>('button[aria-label="閉じる"]')!;
+          const closeRect = close.getBoundingClientRect();
+          return {
+            dialog: rect.toJSON(),
+            body: body.getBoundingClientRect().toJSON(),
+            bodyClient: body.clientHeight,
+            bodyScroll: body.scrollHeight,
+            horizontalOverflow: dialog.scrollWidth > dialog.clientWidth,
+            coverBottom: cover.bottom,
+            titleRight: title.right,
+            close: closeRect.toJSON(),
+            buttons: [...dialog.querySelectorAll("button")].map((button) =>
+              button.getBoundingClientRect().toJSON(),
+            ),
+          };
+        });
+        expect(layout.dialog.x).toBeGreaterThanOrEqual(0);
+        expect(layout.dialog.right).toBeLessThanOrEqual(viewport.width);
+        expect(layout.dialog.bottom).toBeLessThanOrEqual(viewport.height + 1);
+        expect(layout.dialog.y).toBeGreaterThanOrEqual(0);
+        expect(layout.horizontalOverflow).toBe(false);
+        expect(layout.body.width).toBeGreaterThan(layout.dialog.width - 40);
+        expect(layout.body.y).toBeGreaterThanOrEqual(layout.coverBottom);
+        expect(layout.titleRight).toBeLessThan(layout.close.x);
+        for (const button of layout.buttons) {
+          expect(button.width).toBeGreaterThanOrEqual(44);
+          expect(button.height).toBeGreaterThanOrEqual(44);
+          expect(button.y).toBeGreaterThanOrEqual(layout.dialog.y);
+          expect(button.bottom).toBeLessThanOrEqual(layout.dialog.bottom);
+        }
+        if (viewport.height === 480) {
+          await readingBody.hover();
+          await page.mouse.wheel(0, 1200);
+          await expect
+            .poll(() =>
+              readingBody.evaluate((body) =>
+                Math.abs(body.scrollTop - (body.scrollHeight - body.clientHeight)),
+              ),
+            )
+            .toBeLessThanOrEqual(1);
+          const buttonsAfterScroll = await previewDialog
+            .getByRole("button")
+            .evaluateAll((buttons) => buttons.map((button) => button.getBoundingClientRect().y));
+          expect(buttonsAfterScroll).toEqual(layout.buttons.map((button) => button.y));
+          await expect(previewDialog.getByRole("link", { name: "作品詳細を見る" })).toBeVisible();
+        }
+        await previewDialog.screenshot({
+          path: testInfo.outputPath(`quick-preview-${viewport.width}x${viewport.height}.png`),
+        });
+      }
+      await page.setViewportSize(originalViewport);
+    }
 
     await previewDialog.getByRole("button", { name: "閉じる" }).focus();
     await page.keyboard.press("Tab");
@@ -1200,7 +1270,7 @@ test.describe("Slice 7 recommendation journeys", () => {
     await expect(anchorCard).toBeVisible();
     await anchorCard.scrollIntoViewIfNeeded();
     const anchorPanel = anchorCard.locator("[data-expandable-panel]");
-    const anchorPreview = anchorCard.getByRole("button");
+    const anchorLink = anchorCard.getByRole("link");
     const anchorTitle = (await anchorCard.getByRole("heading", { level: 3 }).textContent())!.trim();
     const anchorReason = anchorPanel.locator("[data-contribution-summary]");
     const anchorSummary = JSON.parse(
@@ -1211,7 +1281,25 @@ test.describe("Slice 7 recommendation journeys", () => {
       anchorSummary.anchorWorkIds.join(" "),
     );
     await expect(anchorPanel).toBeHidden();
+    await expect(anchorCards.getByText(/^(高い|ふつう|低め)$/u)).toHaveCount(0);
+    await expect(anchorPanel.getByText("好きな作品との接点", { exact: true })).toHaveCount(0);
+    const anchorFrames = await anchorCards.evaluateAll((elements) =>
+      elements.map((element) => ({
+        cover: element.querySelector(".cover-image")!.getBoundingClientRect().toJSON(),
+        title: element.querySelector("h3")!.getBoundingClientRect().toJSON(),
+        card: element.getBoundingClientRect().toJSON(),
+      })),
+    );
+    for (const frame of anchorFrames) {
+      expect(frame.cover.height).toBeCloseTo(anchorFrames[0]!.cover.height, 1);
+      expect(frame.title.y).toBeCloseTo(anchorFrames[0]!.title.y, 1);
+      expect(frame.title.height).toBe(35);
+      expect(frame.title.y - frame.cover.bottom).toBeCloseTo(8, 1);
+      expect(frame.card.height).toBeCloseTo(anchorFrames[0]!.card.height, 1);
+    }
+    const anchorPreview = anchorCard.getByRole("button", { name: /クイック表示/u });
     if (testInfo.project.name === "chromium") {
+      await expect(anchorPreview).toBeHidden();
       // Real input through the production shelf; the DOM readback observes its geometry.
       const beforeExpansion = await anchorCards.evaluateAll((elements) => {
         const track = elements[0]?.parentElement;
@@ -1228,6 +1316,20 @@ test.describe("Slice 7 recommendation journeys", () => {
       await expect(anchorPanel).toBeVisible();
       await anchorPanel.hover();
       await expect(anchorPanel).toBeVisible();
+      await expect(
+        anchorPanel.getByText(
+          `${anchorTitle}の紹介文です。作品の物語と登場人物について紹介します。`,
+        ),
+      ).toBeVisible();
+      for (const label of ["読みたい", "読んだ", "興味なし"]) {
+        const button = anchorPanel.getByRole("button", { name: label, exact: true });
+        await expect(button).toBeVisible();
+        const rect = (await button.boundingBox())!;
+        const panelRect = (await anchorPanel.boundingBox())!;
+        expect(rect.height).toBeGreaterThanOrEqual(44);
+        expect(rect.width).toBeGreaterThanOrEqual(44);
+        expect(rect.y + rect.height).toBeLessThanOrEqual(panelRect.y + panelRect.height);
+      }
       expect(
         await anchorCard
           .locator(".cover-image")
@@ -1276,23 +1378,26 @@ test.describe("Slice 7 recommendation journeys", () => {
       await expect
         .poll(async () => (await nextCover.boundingBox())!.x)
         .toBeCloseTo(nextPosition!.x, 0);
-      const nextTitle = (await nextAnchor.getByRole("heading", { level: 3 }).textContent())!.trim();
-      await nextAnchor.getByRole("button").click();
-      const nextDialog = page.getByRole("dialog", { name: nextTitle, exact: true });
-      await expect(nextDialog).toBeVisible();
-      await nextDialog.getByRole("button", { name: "閉じる", exact: true }).click();
-      await expect(nextAnchor.getByRole("button")).toBeFocused();
       await page.keyboard.press("Escape");
       await expect(anchorPanel).toBeHidden();
-      await anchorPreview.focus();
+      await nextCover.focus();
       await page.keyboard.press("Shift+Tab");
-      await expect(anchorCard.getByRole("link")).toBeFocused();
+      await expect(anchorLink).toBeFocused();
       await expect(anchorPanel).toBeVisible();
       await page.keyboard.press("Tab");
-      await expect(anchorPreview).toBeFocused();
+      await expect(
+        anchorPanel.getByRole("button", { name: "読みたい", exact: true }),
+      ).toBeFocused();
       await page.keyboard.press("Escape");
+      await expect(anchorLink).toBeFocused();
       await expect(anchorPanel).toBeHidden();
-      await expect(anchorPreview).toBeFocused();
+      await page.keyboard.press("Tab");
+      await expect(nextCover).toBeFocused();
+      await expect(nextAnchor.locator("[data-expandable-panel]")).toBeVisible();
+      await page.keyboard.press("Escape");
+      await expect(nextAnchor.locator("[data-expandable-panel]")).toBeHidden();
+      await expect(nextCover).toBeFocused();
+      await page.getByRole("heading", { name: "好きな作品から広げる", exact: true }).click();
       await page.emulateMedia({ reducedMotion: "reduce" });
       await anchorCard.hover();
       await expect(anchorPanel).toBeVisible();
@@ -1345,13 +1450,33 @@ test.describe("Slice 7 recommendation journeys", () => {
           .toBe(true);
       }
       await page.keyboard.press("Escape");
+    } else {
+      await expect(anchorPreview).toBeVisible();
+      await anchorLink.hover();
+      await expect(anchorPanel).toBeHidden();
+      await anchorPreview.focus();
+      await anchorPreview.press("Enter");
+      const preview = page.getByRole("dialog");
+      await expect(preview.getByRole("heading", { name: anchorTitle, exact: true })).toBeVisible();
+      await expect(preview.getByText(anchorSummary.text, { exact: true })).toBeVisible();
+      for (const label of ["読みたい", "読んだ", "興味なし"]) {
+        await expect(preview.getByRole("button", { name: label, exact: true })).toBeVisible();
+      }
+      await page.keyboard.press("Escape");
+      await expect(preview).toBeHidden();
+      await expect(anchorPreview).toBeFocused();
     }
-    await anchorPreview.click();
-    const anchorDialog = page.getByRole("dialog", { name: anchorTitle, exact: true });
-    await expect(anchorDialog).toBeVisible();
-    await anchorDialog.getByRole("button", { name: "閉じる", exact: true }).click();
-    await expect(anchorDialog).toBeHidden();
-    await expect(anchorPreview).toBeFocused();
+    const anchorDestination = await anchorLink.getAttribute("href");
+    await anchorLink.click();
+    await expect(page).toHaveURL(new RegExp(`${anchorDestination}$`, "u"));
+    const anchorDetail = page.locator("main[data-work-detail-id]");
+    await expect(anchorDetail.getByRole("heading", { level: 1, name: anchorTitle })).toBeVisible();
+    const compatibility = anchorDetail.getByRole("region", { name: "あなたとの相性" });
+    await expect(compatibility.getByText(anchorSummary.text, { exact: true })).toBeVisible();
+    await expect(compatibility.getByText(/分析の確信度/u)).toBeVisible();
+    await expect(anchorDetail.getByRole("radio", { name: "読みたい", exact: true })).toBeVisible();
+    await page.goBack();
+    await expect(anchorCard).toBeVisible();
     expect(await recommendationIds(page)).toEqual(policyIds);
 
     const shelfNavigation = page.getByRole("navigation", { name: "おすすめの棚" });
@@ -1429,7 +1554,8 @@ test.describe("Slice 7 recommendation journeys", () => {
 
   test("completed feedback removes, backfills, persists, and stays excluded after update", async ({
     page,
-  }) => {
+  }, testInfo) => {
+    test.setTimeout(120_000);
     await completeKeyboardOnboarding(page);
     const initialIds = await recommendationIds(page);
     const removedWorkId = initialIds[0];
@@ -1493,6 +1619,62 @@ test.describe("Slice 7 recommendation journeys", () => {
     ).toHaveCount(10);
     expect(await recommendationIds(page)).toEqual(updatedIds);
     expect(await recommendationIds(page)).not.toContain(removedWorkId);
+
+    const excludedAnchorIds: string[] = [];
+    for (const [label, readingState] of [
+      ["読んだ", "completed"],
+      ["興味なし", "hidden"],
+    ]) {
+      const anchors = page.locator('[data-recommendation-shelf-card="anchor"]');
+      const anchor = anchors.first();
+      const link = anchor.getByRole("link");
+      const workId = (await link.getAttribute("href"))!.split("/").at(-1)!;
+      const neighborId = await anchors.nth(1).getAttribute("id");
+      excludedAnchorIds.push(workId);
+      await link.scrollIntoViewIfNeeded();
+      let actions = anchor.locator("[data-expandable-panel]");
+      if (testInfo.project.name === "chromium") {
+        await link.hover();
+      } else {
+        await anchor.getByRole("button", { name: /クイック表示/u }).click();
+        actions = page.getByRole("dialog");
+      }
+      await expect(actions).toBeVisible();
+      const planned = actions.getByRole("button", { name: "読みたい", exact: true });
+      await planned.click();
+      await expect(planned).toHaveAttribute("aria-pressed", "true");
+      await expect
+        .poll(async () =>
+          (await readProductState(page)).userWorks.find((record) => record.workId === workId),
+        )
+        .toEqual(expect.objectContaining({ readingState: "planned" }));
+      await actions.getByRole("button", { name: label, exact: true }).click();
+      await expect(page.getByRole("dialog")).toBeVisible();
+      await expect
+        .poll(async () =>
+          (await readProductState(page)).userWorks.find((record) => record.workId === workId),
+        )
+        .toEqual(expect.objectContaining({ readingState }));
+      await page.keyboard.press("Escape");
+      await expect(page.getByRole("dialog")).toBeHidden();
+      await expect(page.locator(`[id='${neighborId}']`).getByRole("link")).toBeFocused();
+      await expect(page.locator(`[id='recommendation-shelf-work-${workId}']`)).toHaveCount(0);
+      expect(await recommendationIds(page)).toEqual(updatedIds);
+    }
+    await page.getByRole("button", { name: "更新", exact: true }).click();
+    await expect(page.getByText("おすすめを更新しました。", { exact: true })).toBeVisible();
+    await page.reload();
+    await expect(page.locator('[data-recommendation-shelf-card="anchor"]').first()).toBeVisible();
+    for (const workId of excludedAnchorIds) {
+      await expect(page.locator(`a[href='/works/${workId}']`)).toHaveCount(0);
+    }
+    const anchorFeedbackState = await readProductState(page);
+    expect(
+      excludedAnchorIds.map(
+        (workId) =>
+          anchorFeedbackState.userWorks.find((record) => record.workId === workId)?.readingState,
+      ),
+    ).toEqual(["completed", "hidden"]);
   });
 });
 

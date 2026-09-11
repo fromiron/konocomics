@@ -36,7 +36,7 @@ vi.mock("@/components/cover/CoverImage", () => ({
     title,
   }: {
     className?: string;
-    fit?: "contain" | "cover";
+    fit?: "contain" | "cover" | "cover-square";
     title: string;
   }) => <span aria-label={title} className={className} data-cover-fit={fit} role="img" />,
 }));
@@ -76,9 +76,14 @@ function renderShelfCard(
 ) {
   return render(
     <RecommendationShelfCard
+      busy={false}
       coverUrl={coverUrl}
       entry={entry}
+      onCompleted={vi.fn()}
+      onHidden={vi.fn()}
+      onPlanned={vi.fn()}
       onPreview={vi.fn()}
+      planned={false}
       resolveTitle={() => work.title}
       variant={variant}
       volumeCount={12}
@@ -159,13 +164,19 @@ describe("RecommendationShelfCard", () => {
     expect(cover.className).toContain("motion-reduce:transition-none");
   });
 
-  it("keeps the anchor border static on hover", () => {
+  it("keeps the anchor identity plain and reserves the full reason for expansion", () => {
     const { container } = renderShelfCard("anchor");
     const card = container.querySelector<HTMLElement>('[data-recommendation-shelf-card="anchor"]');
     if (card === null) throw new Error("Missing anchor shelf card");
 
-    expect(card.className).toContain("border-line/80");
+    expect(card.className).toContain("border-transparent");
+    expect(card.className).toContain("bg-transparent");
     expect(card.className).not.toContain("hover:border");
+    expect(within(card).queryByText("ふつう")).toBeNull();
+    expect(within(card).getByRole("button", { name: /クイック表示/u })).toBeTruthy();
+    expect(within(card).getByRole("img").getAttribute("data-cover-fit")).toBe("cover-square");
+    expect(card.querySelector("[data-expandable-panel]")?.getAttribute("aria-hidden")).toBe("true");
+    expect(card.querySelectorAll("[data-expandable-panel] p")).toHaveLength(1);
   });
 
   it("keeps a missing discovery cover rectangular and uncropped", () => {
@@ -219,9 +230,13 @@ describe("RecommendationShelfCard", () => {
       const title = within(card).getByRole("heading", { level: 3, name: work.title });
       const titleLink = title.closest("a");
       expect(titleLink?.getAttribute("href")).toBe(detailsHref);
-      const preview = within(card).getByRole("button", {
+      const preview = within(card).queryByRole("button", {
         name: `「${work.title}」をクイック表示`,
       });
+      if (variant === "anchor") {
+        expect(titleLink).toBe(coverLink);
+      }
+      expect(preview).not.toBeNull();
       expect(coverLink.contains(preview)).toBe(false);
       expect(titleLink?.contains(preview)).toBe(false);
     },
