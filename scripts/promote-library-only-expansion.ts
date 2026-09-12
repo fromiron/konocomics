@@ -356,7 +356,7 @@ export function buildLibraryOnlyRows(input: LibraryOnlyBuildInput) {
     status: input.candidate.publicationStatus,
     firstPublishedYear: input.candidate.firstPublishedYear,
     genres: "",
-    factorScope: "entry_1_3_volumes",
+    factorScope: "whole_work",
     onboardingEligible: "false",
     recommendationEligible: "false",
     libraryOnly: "true",

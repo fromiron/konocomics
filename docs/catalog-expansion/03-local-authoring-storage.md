@@ -69,7 +69,7 @@ node --import tsx scripts/import-publisher-book-metadata.ts --input <collection>
 
 DB의 `blob`은 SHA-256별 원본 바이트를 zlib으로 압축해 중복 없이 저장한다. `snapshot`과 `entry`는 저장 시점·label·원래 저장소 경로·정확한 파일 집합·해시를 연결한다. 줄바꿈, JSON 필드 순서, CSV 순서, manifest 내용은 바꾸지 않는다. 수정본은 새 snapshot에 추가하며 이전 행의 UPDATE/DELETE는 DB trigger로 거부한다. Artifact를 별도 팩터 테이블로 재해석하지 않으므로 판정의 두 번째 진실 원천을 만들지 않는다.
 
-초안은 아직 저장하지 않은 편집 내용이다. 중요한 내용을 작성한 즉시 `save`하고, 수집 결과를 인계하거나 다음 단계로 넘어가기 전에 저장·백업 receipt를 확인한다. 메시지에만 있는 HOLD 정보는 `STATE.json`에 반영하고 저장해야 한다.
+초안은 아직 저장하지 않은 편집 내용이다. 원본은 작업 입력에 포함해 보존하고, 인계·작업 종료 전에 저장·백업 receipt를 확인한다. 같은 연속 작업의 내부 단계마다 별도 `save`·백업을 반복하지 않는다. 메시지에만 있는 HOLD 정보는 `STATE.json`에 반영하고 작업 결과와 함께 저장해야 한다.
 
 인계 확인은 해당 입력·결과의 snapshot과 `BACKED_UP` receipt를 사용한다. `verify`는 저장된 모든 snapshot과 blob을 읽는 전체 작업 저장소 감사이며, 매 수집·동결·봉인 뒤에 반복하는 게이트가 아니다. 복원·손상 의심·명시적 전체 감사 때 실행한다. 자동 검사와 백업이 끝난 고정 수집분은 담당 검토자에게 즉시 전달하고, 이후 REPORT 수정은 별도 저장하되 인계를 지연시키지 않는다.
 
@@ -101,6 +101,16 @@ python scripts/catalog_workspace.py backup --destination C:/Toys/konocomics-auth
 DB 파일 자체를 잃었을 때는 백업을 읽는 `--database <backup.sqlite>`로 `verify`, `list`, `restore`, `checkout`을 실행할 수 있다. 작업 DB 교체는 writer가 없는 상태에서 검증된 백업을 새 파일로 복원한 뒤 수행한다. 운영 중인 DB 파일이나 WAL 일부만 임의 복사하지 않는다.
 
 ## 기존 실행 경로 연결
+
+### 작업 단위 저장·백업 — 2026-09-12 사용자 변경
+
+저장·백업 단위는 작품이나 내부 명령이 아니라 **한 번에 받은 처리분**이다. 오라클의 최종 원장 9작품을 받았다면 seal → 직렬 publish → 제품 readback → STATE 갱신을 하나의 로컬 작업으로 묶는다. 원격 요청·담당자 인계는 작업 경계이며 원격 응답을 기다리는 동안 작업을 열어 두지 않는다.
+
+새 도구 없이 기존 `catalog_workspace.py run`을 바깥에서 한 번 사용한다. 해당 처리분의 원본·기준 pair·코드·동결 입력을 `--input`에, 생성될 각 batch·publication·validation 경로와 STATE를 `--output`에 지정한다. 전체 작업 저장소나 전체 runs를 지정하지 않는다. 내부 authoring CLI는 상위 run의 `KONOCOMICS_AUTHORING_RECORDED`를 상속해 중복 저장을 생략한다. 제품 readback에도 안쪽 `catalog_workspace.py run`을 다시 추가하지 않는다. 이 환경변수만 수동 설정해 저장을 우회하지 않는다.
+
+입력 저장·백업 한 번과 종료 결과·실패·명령 출력 저장·백업 한 번, 즉 **작업 전체의 시작/종료 두 번**으로 묶는다. 중간 artifact는 고유 경로에 남기고 단계별 명령·종료코드·원시 출력도 상위 결과에 포함한다. 실패 시 의존 실행을 멈추고 부분 결과를 보존한다. 최종 BACKED_UP 전에는 작업 완료를 보고하지 않는다. 강제 종료로 마지막 저장이 없으면 미완료로 남기고 실제 상태를 읽은 뒤 재개한다. 단독 명령의 자동 저장과 물리 백업 두 세대는 유지한다.
+
+출처·동결 membership·별도 판정·safety·coverage·발행 충돌·Gold·제품 readback은 유지한다. 오라클의 유효한 의미 판정을 조정자가 반복 심사하지 않으며 기존 검사가 통과하면 발행한다. 아래 명령 전후 저장 설명은 단독 명령 또는 위의 작업 전체에 적용하며 내부 단계별 백업 의무가 아니다.
 
 수집 검사는 내용의 진실성을 대신하지 않고, SQLite 저장은 수집 검사도 대신하지 않는다. 기존 `validate_factor_collection_batch.mjs --research=... --require-source-audit`와 `prepare_factor_batch.py freeze / seal-result / publish`, registry correction의 판정·검증·직렬 발행 순서를 유지한다.
 

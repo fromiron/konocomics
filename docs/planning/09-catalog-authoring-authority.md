@@ -25,7 +25,7 @@
 
 - 원시 candidate 값을 그대로 승인하지 않고 동결된 evidence packet에서 각 Genre·Theme·Axis claim을 다시 판정한다.
 - 작품 선정·팬덤 지지 provenance는 선정 근거로 보존하되, 해당 URL이 실제 팩터 관찰을 포함하지 않으면 Factor evidence로 재사용하지 않는다.
-- 모든 accepted claim은 작품·초반 1~3권 범위, 관찰, 한계, exact evidence ID와 URL, panel decision을 가진다.
+- 모든 accepted claim은 작품·실제 근거 범위(작품 전체 리뷰 또는 확인한 구간; 권수 미상 허용), 관찰, 한계, exact evidence ID와 URL, panel decision을 가진다.
 - panel artifact와 입력 manifest가 일치하지 않거나 claim 소유권·범위·coverage 검사가 실패하면 권한은 0건이며 candidate 상태를 유지한다.
 - `annotationReviewMethod="authorizedEvidencePanel"`, `reviewedByHuman=false`를 사용한다. `human`이나 legacy `authorizedModelPanel`로 표시하지 않는다.
 - 격리된 별도 에이전트는 필수 조건이 아니다. 같은 실행 안에서도 수집 artifact와 판정 artifact를 분리하고 동결된 입력 digest를 결속하면 된다.

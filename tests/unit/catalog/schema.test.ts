@@ -9,6 +9,22 @@ describe("catalog schema", () => {
     expect(catalogV1Schema.parse(JSON.parse(JSON.stringify(catalog)))).toEqual(catalog);
   });
 
+  it("accepts whole-work scope while preserving legacy factor confidence and eligibility", () => {
+    const legacy = createTestCatalog();
+    expect(catalogV1Schema.parse(legacy)).toEqual(legacy);
+    const whole = {
+      ...legacy,
+      works: legacy.works.map((work) => ({ ...work, factorScope: "whole_work" })),
+    };
+    expect(catalogV1Schema.parse(whole)).toEqual(whole);
+    expect(
+      catalogV1Schema.safeParse({
+        ...whole,
+        works: whole.works.map((work) => ({ ...work, factorScope: "invented" })),
+      }).success,
+    ).toBe(false);
+  });
+
   it("requires every v1 axis and rejects extra axis keys", () => {
     const work = createTestWork();
     const missingAxis = Object.fromEntries(

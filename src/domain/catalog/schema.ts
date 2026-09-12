@@ -77,7 +77,7 @@ export const workSchema = z.strictObject({
   genres: z.array(genreTagSchema),
   themes: z.array(themeFactorSchema),
   axes: workAxesSchema,
-  factorScope: z.literal("entry_1_3_volumes"),
+  factorScope: z.enum(["whole_work", "entry_1_3_volumes"]),
   eligibility: catalogEligibilitySchema,
   evidence: workEvidenceSchema,
 });

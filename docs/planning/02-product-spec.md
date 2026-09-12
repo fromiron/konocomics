@@ -35,7 +35,7 @@
 6. 추천 설명은 실제 점수 기여 요소에서만 생성한다.
 7. 런타임 LLM이 후보·순위를 결정하지 않는다.
 8. 다중 취향을 하나의 평균 벡터로 뭉개지 않는다 (Best Anchor).
-9. 팩터는 초반 1~3권 진입 경험만 기준으로 태깅한다.
+9. 팩터는 작품 전체의 전반적인 특성을 평가하며 초반 1~3권이나 전권 확인을 요구하지 않는다. 구체적인 리뷰에서 확인한 변화만 기존 팩터의 근거에 반영하고 별도 변화 축은 만들지 않는다. 범위 변경으로 기존 승격 데이터의 신뢰성·confidence·추천 자격을 낮추지 않는다. 상세 범위와 호환은 팩터 사전 §1을 따른다.
 10. 데이터가 부족한 작품을 높은 확신으로 추천하지 않는다.
 11. MVP 투자는 인프라가 아니라 Catalog와 추천 정확도에 집중한다.
 12. 확신도(Confidence)는 확률 숫자가 아니라 단계 레이블로 표시한다.
@@ -137,7 +137,7 @@ type Work = {
   genres: GenreTag[];
   themes: ThemeFactor[];       // { id, centrality: 1|2, confidence }
   axes: WorkAxes;              // 17개 AxisFactor — 정의는 팩터 사전
-  factorScope: "entry_1_3_volumes";
+  factorScope: "whole_work" | "entry_1_3_volumes"; // Legacy scope preserves provenance and trust.
   eligibility: CatalogEligibility;
   evidence: WorkEvidence;
 };

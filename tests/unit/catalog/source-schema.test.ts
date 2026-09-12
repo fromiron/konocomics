@@ -11,6 +11,12 @@ import {
 } from "../../../scripts/catalog/source-schema";
 
 describe("CSV diagnostics", () => {
+  it("accepts both scope generations without rewriting source scope", () => {
+    for (const scope of ["whole_work", "entry_1_3_volumes"]) {
+      expect(workSourceRowSchema.shape.factorScope.parse(scope)).toBe(scope);
+    }
+    expect(workSourceRowSchema.shape.factorScope.safeParse("invented").success).toBe(false);
+  });
   it("reports an invalid axis value at the exact data row and field", () => {
     for (const value of ["5", ""]) {
       const result = parseCsvContent(

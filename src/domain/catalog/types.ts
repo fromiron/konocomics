@@ -62,7 +62,7 @@ export type Work = {
   genres: GenreTag[];
   themes: ThemeFactor[];
   axes: WorkAxes;
-  factorScope: "entry_1_3_volumes";
+  factorScope: "whole_work" | "entry_1_3_volumes";
   eligibility: CatalogEligibility;
   evidence: WorkEvidence;
 };

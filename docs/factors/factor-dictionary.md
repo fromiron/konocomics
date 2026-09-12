@@ -8,13 +8,15 @@
 
 ## 1. 팩터 범위 (Scope)
 
-모든 팩터는 **초반 1~3권 또는 첫 주요 에피소드의 진입 경험**만을 기준으로 태깅한다.
+모든 팩터는 **작품 전체의 전반적인 분위기·장르·특성**을 평가 대상으로 삼는다. 초반 1~3권 제한과 전권·전체 줄거리 확인 의무는 없다. 확보한 공식 소개·독립 리뷰·사용자 리뷰의 구체적인 관찰로 판단하며, 권수가 불명확하다는 이유만으로 같은 작품의 리뷰를 제외하지 않는다.
 
 ```ts
-type WorkFactorScope = "entry_1_3_volumes";
+type WorkFactorScope = "whole_work" | "entry_1_3_volumes";
 ```
 
-장편의 1권과 30권은 전개·톤·관계가 크게 다를 수 있다. 후반부 인상을 섞지 않는다. Phase별 팩터(`entry / middle / late / ending`)는 실제 필요가 검증된 뒤에만 확장한다.
+신규 Work의 기본값은 `whole_work`다. 기존 `entry_1_3_volumes`는 최초 기록 범위를 보존하는 호환 값이며 이후 자료 수집이나 판정을 제한하지 않는다. 2026-09-12 사용자 승인에 따라 이미 승격된 팩터 값·confidence·판정 권한·추천 자격의 신뢰성은 그대로 유지한다. 범위 변경만으로 재검토·감점·강등하지 않고, 과거 동결 입력·판정·manifest와 Gold 데이터도 다시 쓰지 않는다. 이는 과거 판정을 전권 재검토했다고 주장하는 것이 아니다.
+
+초반·후반 변화는 독립 축이나 필수 조사 항목으로 만들지 않는다. 확보한 사용자 리뷰 등에서 변화가 구체적으로 확인되는 경우에만 관련 기존 팩터의 관찰·한계에 반영한다. 모든 권의 전개를 추적하거나 변화가 있을 것으로 추정해 값을 만들지 않는다. 일부 구간의 인상을 작품 전체의 확정적 특성으로 과장하지 않으며, 실제 반대 근거가 있으면 해당 claim만 검토한다.
 
 ## 2. Axis 값 체계
 
@@ -114,7 +116,7 @@ type ThemeTag =
 
 † **조건부 축:** `motionImpact`는 전투 또는 동적 장면이 존재할 때만 평가하며(없으면 `notApplicable`), 줄거리·표지만으로 자동 확정하지 않는다.
 
-Art는 추천·Gold-quality 승격의 선택 축이다. 이미지 분석과 복수 독립 커뮤니티 평은 동급의 대체 근거 경로이며 둘 중 하나도 없으면 네 축을 `unknown`으로 둘 수 있다. 커뮤니티 경로는 초반 평가 범위가 확인되고 같은 구체적 시각 관찰이 서로 복제되지 않은 두 출처 이상에서 반복될 때만 0/2/4 기준에 매핑한다. 단순한 “그림이 예쁘다”, “액션이 좋다”, 별점·순위는 값 근거가 아니다. 출처끼리 충돌하면 adjudication 또는 `unknown`으로 종결한다.
+Art는 추천·Gold-quality 승격의 선택 축이다. 이미지 분석과 복수 독립 커뮤니티 평은 동급의 대체 근거 경로이며 둘 중 하나도 없으면 네 축을 `unknown`으로 둘 수 있다. 커뮤니티 경로는 해당 만화 작품에 대한 평가임이 확인되고 같은 구체적 시각 관찰이 서로 복제되지 않은 두 출처 이상에서 반복될 때만 0/2/4 기준에 매핑한다. 단순한 “그림이 예쁘다”, “액션이 좋다”, 별점·순위는 값 근거가 아니다. 출처끼리 충돌하면 adjudication 또는 `unknown`으로 종결한다.
 
 ## 6. Axis 거리 종류 (엔진 계약)
 
@@ -165,7 +167,7 @@ Library-only 작품      → 서지와 Work 연결만 유지 (팩터 불요)
 - 금지: 런타임 후보 생성, 최종 순위 결정, 근거 없는 특성 생성, 미확인 작품 설명 생성.
 - candidate는 모델·응답 수·일치 여부와 무관하게 Catalog 사실이나 판정 권한이 아니며 `09`의 candidate-independent 비모델 resolution 없이는 추천에 쓰지 않는다.
 - 기존 `authorizedModelPanel` 행은 legacy provenance로 동결하며 신규 주석의 일반 승인 경로로 재사용하지 않는다.
-- 예외적으로 사용자 승인 `authorizedEvidencePanel`은 원시 candidate가 아니라 동결 evidence packet에서 0/2/4 기준을 claim별로 다시 판정한 별도 artifact다. `authorized-evidence-panel-v1`의 manifest·작품 소유 URL·entry 범위·coverage 검사를 모두 통과한 resolution만 추천에 사용할 수 있으며 `reviewedByHuman=false`를 유지한다.
+- 예외적으로 사용자 승인 `authorizedEvidencePanel`은 원시 candidate가 아니라 동결 evidence packet에서 0/2/4 기준을 claim별로 다시 판정한 별도 artifact다. `authorized-evidence-panel-v1`의 manifest·작품 소유 URL·실제 근거 범위·coverage 검사를 모두 통과한 resolution만 추천에 사용할 수 있으며 `reviewedByHuman=false`를 유지한다.
 
 ### 자기 취향 편향 방지
 

@@ -63,7 +63,7 @@ export const workSourceRowSchema = z
     status: z.enum(WORK_STATUSES),
     firstPublishedYear: optionalCsvInteger.pipe(z.number().int().min(1800).max(2200).optional()),
     genres: csvList.pipe(z.array(z.enum(GENRE_TAGS))),
-    factorScope: z.literal("entry_1_3_volumes"),
+    factorScope: z.enum(["whole_work", "entry_1_3_volumes"]),
     onboardingEligible: csvBoolean,
     recommendationEligible: csvBoolean,
     libraryOnly: csvBoolean,

@@ -23,7 +23,7 @@
 - 대표 일반판 volume과 유효 ISBN
 - 비성인 일본 만화 scope와 safety 근거
 - 특정 팬덤·장르·연령·성별 등 지지 cohort와 선정 근거 URL
-- 초반 1~3권 또는 첫 주요 에피소드 범위가 명시된 Factor evidence
+- 해당 만화 작품의 Factor evidence와 실제 관찰 범위. 작품 전체 리뷰·후반 권 자료도 허용하고 권수 확인이나 전권 독해를 의무화하지 않는다
 - evidence ID, 작품 소유 URL, 게시·조회일, 관찰, 한계
 - Factor Dictionary, Annotation Guide, 이 정책 문서의 SHA-256
 - 전체 입력 파일의 `PANEL-INPUT.sha256`
@@ -35,7 +35,7 @@
 Panel은 작품마다 다음 순서로 처리한다.
 
 1. identity·판본·ISBN·scope·safety를 확인한다.
-2. evidence URL이 해당 작품과 entry 범위를 소유하는지 확인한다.
+2. evidence URL이 해당 만화 작품의 실제 관찰을 담고 있는지 확인한다.
 3. Genre와 Theme centrality를 판정한다.
 4. 17 Axis를 `0/2/4` 기준에 먼저 대조하고 사이값일 때만 `1/3`을 사용한다.
 5. 근거 부족은 낮은 값이 아니라 `unknown`으로 둔다. `notApplicable`은 `motionImpact`에만 허용한다.
@@ -49,6 +49,10 @@ Panel은 작품마다 다음 순서로 처리한다.
 - Narrative: 6축 중 known 4개 이상
 - Tone/Relationship: 7축 중 known 5개 이상
 - Art: 선택 축이며 전부 `unknown`이어도 허용
+
+기존 승격 데이터의 신뢰성은 범위 변경으로 낮추지 않는다. 초반·후반 변화는 독립 축이나 필수 조사 항목이 아니며, 확보한 구체적인 리뷰에서 확인되는 경우에만 관련 기존 팩터의 근거에 반영한다. 과거 판정·manifest는 원본 그대로 검증한다.
+
+`entryScope` 필드명은 저장 호환을 위해 유지한다. 신규 작품 단위 판정은 `whole_work`를 사용한다. 이는 평가 대상이 작품이라는 뜻이며 전권을 읽었다는 주장이 아니다. source 행에는 실제 확인 범위를 그대로 남기며, 작품 단위 리뷰의 권수를 알 수 없으면 `whole_work`와 그 한계를 기록한다. claim 범위는 인용한 모든 source 범위를 포함해야 한다.
 
 ## 4. 필수 산출물
 
