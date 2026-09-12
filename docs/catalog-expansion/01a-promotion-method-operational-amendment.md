@@ -1,10 +1,10 @@
 # 승격 방법론 운영 보충
 
-현재 운영 지침 갱신일: `2026-09-09`
+현재 운영 지침 갱신일: `2026-09-12`
 
 이 문서는 Catalog 확장의 작업 배정·검증 책임·보고 방식을 정한다. Factor 정의와 추천 산식은 기존 상위 사양을 따르고, 별도 동결 판정은 [authorizedEvidencePanel 계약](02-authorized-evidence-panel-v1.md)을 따른다. 아래의 2026-08-26 기록은 과거 방식이며 현재 모델 배정이나 필수 처리 단계로 사용하지 않는다.
 
-## 현재 실행 규칙 — 2026-09-09
+## 현재 실행 규칙 — 2026-09-12
 
 1. **목표와 권한:** 검증 가능한 모든 in-scope 고유 작품을 후보 Catalog의 추천 가능 레벨로 승격한다. 추천 가능 작품 수 확대를 우선하며 Gold 150과 legacy authority를 보존한다. canonical 전환·GitHub 쓰기·배포는 별도 승인 없이는 하지 않는다.
 2. **배정:** 활성 서브에이전트는 최대 5명이다. 단순 텍스트 정보 수집은 Luna Max(`gpt-5.6-luna`, reasoning effort `max`), 출처 의미 검토·준비·동결 후 수치 판정은 Sol High가 맡는다. Luna Max는 2026-09-09 사용자 변경 지시 이후 새로 배정하는 작업부터 적용하며, 이전 실행 기록과 동결 산출물의 모델 표기는 소급 변경하지 않는다. Grok·유료 출처는 사용하지 않는다. 서사 근거를 이미지에서 추출하지 않으며 선택적인 Art도 텍스트 근거를 먼저 사용한다.
@@ -23,6 +23,18 @@
 15. **Prior와 측정 경계:** 대상별 탐색을 재사용해도 참조 bundle의 전체 manifest·원본 claim 결속은 검증한다. 현재 manifest 누락은 FAIL이며 별도 bundle의 완전한 membership·권한 의존 관계를 입증하지 못하면 비관련이나 prior 없음으로 추정하지 않는다. 준비 재고 연결 시험은 신규 처리량에서 제외한다. 신규 처리량은 60분 이상 실제 발행·최종 제품 readback을 마친 고유 신규 eligible 수/전체 경과 시간으로 측정하고 eligible 순증·시작/종료 WIP·실패·수정·대기를 함께 기록한다. 역할 배분별 용량 상한은 그 구성에만 적용하며 목표 미달로 기준을 낮추지 않는다.
 
 현재 수집 형식과 기존 실행 명령은 작업 디렉터리의 `FACTOR-COLLECTOR-INSTRUCTIONS.md`와 `AUTHORING.md`에 둔다. 이 절은 운영 방식을 정하며, 해당 문서나 검사 도구가 제품 사양·근거 권한·안전성 계약을 대신하지 않는다.
+
+### 재개·인계 연결 — 2026-09-12
+
+- **현재와 이력:** 재개 시 기존 `STATE.json`의 `canonical`·`latestCandidate`·`agentPolicy`·`nextActions`를 현재 DB hash/수량과 현행 배정 규칙에 맞춘다. candidate의 Catalog·registry·manifest는 같은 검증 publication을 가리켜야 한다. 과거 배정의 ACTIVE 문구로 담당자의 현재 가동을 추정하지 않는다. canonical 변경 뒤의 미발행 bundle은 원래 frozen identity를 보존하고 기존 lineage 조건을 확인할 대상으로 표시한다. 이력의 모델·판정·동결 파일을 소급 변경하지 않는다.
+- **대상 선택:** 현재 candidate에서 이미 eligible인 작품을 먼저 제외한다. 현재 DB의 미승격 목록에는 과거 planner에 없는 작품도 포함한다. 과거 protected 표시의 개수를 현재 전체 보호 범위로 간주하지 않으며, 기존 epoch·Gold·human·legacy 검사와 누락 prior 차단을 유지한다. 과거 planner는 출처를 찾는 지도이며 READY나 `evidence-review`만으로 재배정하지 않는다. 남은 대상의 가장 최근 담당자 결과를 연구 경로/hash와 대조한다. 동일 입력의 HOLD는 그 gap·retryCondition을 재사용한다. 구체적인 새 관찰 또는 해석 오류·사양 오적용이 있을 때 해당 부분만 반환하며, 후자는 새 수집을 요구하지 않는다. 파일명/hash 변경만으로 새 관찰을 인정하지 않는다. 과거 판정 권한 조회와 검토 완료 여부의 운영 기록은 서로 대체하지 않는다. 원본 소실 때문에 전체 planner를 검증할 수 없어도 독립된 대상의 새 근거 수집을 막지 않는다.
+- **수집과 검토:** 완결된 작품을 반환할 때 담당 Sol·원문 경로/hash·검토 여부·남은 gap/재시도 조건을 기존 배정/STATE에 연결한다. claimCandidates는 탐색 힌트이며 실제 확보한 관찰의 판정 범위를 제한하지 않는다. 같은 Sol이 준비와 동결 후 별도 판정을 이어가되, 동일 근거를 다른 담당자에게 재검토시키는 인계 단계를 추가하지 않는다.
+- **형식 실패:** 새 job/ledger는 `AUTHORING.md`에 연결된 기존 CSV/JSON writer로 작성한다. safety의 명시적 출처 분류와 claim의 범위는 담당자가 원문에서 판단한다. 도구가 문구를 만들어 안전성을 통과시키거나 scope를 넓히지 않는다. 새 claim과 job.safety.claim의 evidenceIds/citationUrls 목록 정렬은 작성 단계에서 처리하고 보존 prior·이미 correction hash에 결속한 행의 의미 필드와 순서는 바꾸지 않는다. 새 research의 날짜는 readAudit에 한 번만 작성하고, 최상위에도 존재하는 기존 값은 실제 관측값과 문자열까지 일치해야 한다. 누락 원문·cross-work·baseline 충돌은 형식 보정으로 처리하지 않는다.
+- **대기와 저장:** Luna 2/Sol 3은 시작 배분이며 가동 인원 목표가 아니다. 검토 대기가 쌓이면 새 수집 배정을 줄이고, 실제 발행 가능한 sealed가 쌓이면 조정자가 먼저 발행/readback을 처리한다. 1작품의 완결분을 5작품이 될 때까지 기다리지 않는다. 기존 자동 저장 명령의 정확한 입력·결과 snapshot과 백업 receipt가 있으면 같은 바이트를 인계용으로 다시 save하지 않는다. 이후 변경한 STATE·HOLD·새 원문은 별도로 저장·백업한다. 명령 전후의 자동 백업 두 번을 줄이거나 백업 실패를 성공으로 표시하지 않는다. 공유 workspace 잠금 충돌이 관찰되면 wrapper의 최종 receipt와 종료 → 필요한 STATE 저장·백업 → 다음 저장 명령 순서로 조정한다. collector direct 검사·Sol freeze/seal도 포함하며 조사·의미 판정은 계속 병행할 수 있다.
+
+미검토 대상·조건이 충족된 재시도·준비/발행/readback 대기가 남으면 연속 실행을 이어간다. 남은 대상을 실제 HOLD·보호·lineage 보류로 설명할 수 있고 진행 중 작업도 없을 때만 현 근거·권한에서 가능한 처리가 끝났다고 보고한다. 사용자 중단 시에는 재개 pair와 미완료를 보존하며 전체 승격 완료로 바꾸지 않는다.
+
+이번 연결 정리는 새 승격·시간당 처리량 개선의 증거가 아니다. 실제 신규 구간의 측정 기준은 위 15항을 유지한다. [2026-09-12 Oracle 6 Pro 상담](https://chatgpt.com/c/6aa4cc89-4a60-83ee-a91f-790fe03b7b2b)은 현재 정보·HOLD 소비·기존 writer 안내를 우선하도록 권고했고, 반영본 재검토에서 추가 필수 수정 없이 확정 가능하다고 판단했다. 현재 DB와 STATE 일치 및 변경 전 snapshot의 나머지 이력 값 보존은 로컬에서 별도로 확인했다. 입력·반영본·readback은 작업 디렉터리 `planning/strategy-optimization-20260912/`에 보존한다.
 
 2026-09-09 사용자 승인된 Factor 003 소실 사건에는 [복구 계약](04-loss-recovery-v1.md)을 추가 적용한다. 일반 누락 manifest 실패를 완화하지 않으며, 동결된 사건·대상에 대한 명시적 새 권한 전환만 허용한다.
 

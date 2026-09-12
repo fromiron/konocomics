@@ -12,6 +12,54 @@
 
 서비스 런타임은 기존대로 정적 JSON을 사용한다. 사용자 Library·취향의 Dexie와 두 Rakuten route는 바꾸지 않는다. 작업 DB는 Git에 올리지 않는 로컬 저장소이며, canonical DB와 섞거나 대체하지 않는다.
 
+## 출판사 소개를 수집과 함께 저장 — 2026-09-12
+
+사용자 요청에 따라 출판사 작품·판본 페이지를 읽는 같은 수집분에서 소개 원문도 보존한다. Factor 관찰 요약을 공식 소개로 전용하지 않는다. 조정자는 정확한 Work·ISBN과 소개 구간을 확인한 서지 입력을 기존 직렬 발행 경계에서 canonical `source_book_metadata`에 반영한다. 이 요청은 소개·서지 추가 범위이며 Factor 승격이나 과거 frozen candidate 수정 권한이 아니다.
+
+수집 디렉터리에 원본 HTTP 응답, 수집 receipt, `publisher-metadata.json`을 함께 둔다. receipt는 `url`, `resolvedUrl`, 실제 `fetchedAt`(offset 포함 ISO 시각), `status`, 원본 `sha256`, `bytes`를 기록한다. 이미 보존한 응답은 다시 요청하지 않으며, 정확한 수집시각이 없거나 접근에 실패한 자료는 기록만 보존한다. 소개 텍스트는 해당 판본의 실제 소개 구간 전체에서 추출하고 HTML 정리·trim 후 표시값과 원본 바이트를 구분한다.
+
+`publisher-metadata.json`은 다음 객체의 배열이다. `metadata`는 기존 source row 형식이므로 선택 값도 문자열로 입력하고 확인하지 못한 값은 `""`로 둔다. `sourceUrl`과 `fetchedAt`은 입력하지 않고 검증한 receipt의 최종 URL과 시각을 사용한다.
+
+```json
+[
+  {
+    "metadata": {
+      "workId": "exact-catalog-work-id",
+      "isbn": "exact-volume-isbn",
+      "publisherName": "",
+      "itemCaption": "抽出した紹介本文",
+      "salesDate": "",
+      "imageUrl": "",
+      "imprint": "",
+      "pageCount": ""
+    },
+    "sourceFile": "publisher.html",
+    "receiptFile": "publisher.receipt.json",
+    "receiptSha256": "64-character-sha256-of-receipt-bytes",
+    "captionKind": "original",
+    "originalItemCaption": "抽出した紹介本文"
+  }
+]
+```
+
+`captionKind="summary"`로 요약을 표시할 때도 `originalItemCaption`에는 추출한 원문을 남긴다. 출판사 여부·동일 판본·소개 의미의 검토는 수집·서지 검토 담당자의 책임이다. hash와 ISBN 구조 검사가 그 의미 검토를 대체하지 않는다. 입력의 원문·receipt 경로는 같은 수집 디렉터리 내부의 파일이어야 한다.
+
+```bash
+node --import tsx scripts/import-publisher-book-metadata.ts --input <collection>/publisher-metadata.json --output .tmp/<new-publication-directory>
+```
+
+이 명령은 입력 디렉터리·현재 source·도구를 기존 작업 SQLite에 저장·백업한 후 실행하고, 결과·실패·canonical DB readback을 다시 저장·백업한 뒤 반환한다. 기존 collection 저장 후 서지 파일을 추가했다면 새 snapshot이 필요하다. 단순 수집 단계에서도 기존 `catalog_workspace.py save` 또는 direct collection의 디렉터리 저장을 사용한다.
+
+- metadata 행이 없고 같은 Work·ISBN Volume이 존재하며 소개가 유효하면 한 응답에서 확인한 필드만 추가한다. 중복 ISBN·다른 Work 충돌·receipt/원문 hash 불일치는 발행 전에 실패한다.
+- 기존 metadata 행은 빈 필드까지 그대로 보존한다. 같은 URL의 다른 수집분을 섞거나 수집일만 갱신하지 않는다. 기존 행의 갱신은 유지할 모든 필드를 한 응답에서 재확인하는 별도 완결 검토가 필요하다.
+- 아직 canonical에 없는 ISBN은 `deferred-missing-volume`, 빈 소개는 `skipped-empty-caption`으로 보존한다. 정식 Work·Volume 추가 뒤 같은 입력을 다시 반영할 수 있다. 소개를 위해 Factor 승격을 요구하지 않는다.
+- 기존 authority projection·finalize·build와 `publishDirectorySet`을 재사용한다. 다른 9개 table과 opaque 문서는 보존하고 baseline DB·source manifest 및 준비 artifact hash를 교체 전에 확인한다. 작업은 직렬로 실행하며 진행 중 Factor bundle의 frozen identity를 갱신하지 않는다.
+- `receipt.json`의 실제 disposition, `published` 및 DB/생성 파일 readback을 확인한다. 생성된 `Volume.metadata`는 기존 상세 경로에서 유효한 Rakuten 항목 뒤의 fallback으로 사용한다. 로컬 발행은 GitHub 발행·배포 증거가 아니다.
+
+2026-09-12 Oracle 후속 검토로 입력 파싱과 SHA를 같은 Buffer에 결속하고, candidate의 opaque 경로·원문 hash가 기준 source와 같은지 비교하도록 보완했다. 시간이 걸리는 검사를 끝낸 뒤 실제 발행용 복사본과 canonical DB hash를 재확인한다. `verifyCatalogAuthority`에서 이미 검증한 tables를 선택적으로 받아 인접한 전체 DB 읽기 두 번만 제거했으며, 기존 요약 출력과 transaction·재개방·build·발행 직전/직후 검증은 유지한다. 새 캐시·동시 writer 지원은 추가하지 않았다.
+
+실제 『花野井くんと恋の病』1권(ISBN9784065114698)의 [출판사 소개](https://www.kodansha.co.jp/comic/products/0000116236)를 수집해 기존2행을 보존하며3행으로 늘렸다. Catalog `v1-a80698134140`은1700작품/1568추천가능을 유지하고 Gold150·build/coverage와 생성 대표권의 기존 상세 fallback을 확인했다. 최종 Node24 관련 검사4건과 lint는 통과했으며 전체 typecheck는 기존 `taste-flow.test.tsx:206` 오류1건으로 실패했다. 같은 입력의 정상 CLI 재실행은 `preserved-existing-metadata`/`published:false`였고 저장1014~1016·백업1016을 확인했다. [Oracle 최종 검토](https://chatgpt.com/c/6aa4cc89-4a60-83ee-a91f-790fe03b7b2b)는 추가 필수 수정 없음이지만 정적 코드·로그 확인이며 독립 실물 재실행은 아니다. 처리량 향상·브라우저·실제 API·배포는 이 검증에 포함하지 않는다.
+
 ## 무엇을 영구 보존하는가
 
 - 다른 사람이 작성한 원문, 재수집을 보장할 수 없는 출처 응답, 관찰·범위·한계, 실제 출처 URL·날짜.
@@ -23,6 +71,8 @@ DB의 `blob`은 SHA-256별 원본 바이트를 zlib으로 압축해 중복 없�
 
 초안은 아직 저장하지 않은 편집 내용이다. 중요한 내용을 작성한 즉시 `save`하고, 수집 결과를 인계하거나 다음 단계로 넘어가기 전에 저장·백업 receipt를 확인한다. 메시지에만 있는 HOLD 정보는 `STATE.json`에 반영하고 저장해야 한다.
 
+인계 확인은 해당 입력·결과의 snapshot과 `BACKED_UP` receipt를 사용한다. `verify`는 저장된 모든 snapshot과 blob을 읽는 전체 작업 저장소 감사이며, 매 수집·동결·봉인 뒤에 반복하는 게이트가 아니다. 복원·손상 의심·명시적 전체 감사 때 실행한다. 자동 검사와 백업이 끝난 고정 수집분은 담당 검토자에게 즉시 전달하고, 이후 REPORT 수정은 별도 저장하되 인계를 지연시키지 않는다.
+
 ## 기본 명령
 
 저장소 루트에서 Python 3.13 표준 라이브러리만 사용한다.
@@ -32,7 +82,7 @@ DB의 `blob`은 SHA-256별 원본 바이트를 zlib으로 압축해 중복 없�
 python scripts/catalog_workspace.py save --label collection-handoff .tmp/catalog-expansion-continuation-20260902/research/<assignment>
 python scripts/catalog_workspace.py save --label state-update .tmp/catalog-expansion-continuation-20260902/STATE.json
 
-# 저장된 revision과 전체 DB 바이트/manifest 무결성 확인
+# 저장된 revision 목록. verify는 복원·손상 의심·명시적 전체 감사 때만 실행.
 python scripts/catalog_workspace.py list
 python scripts/catalog_workspace.py verify
 

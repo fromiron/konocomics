@@ -1,6 +1,6 @@
 {
   "schemaVersion": 1,
-  "catalogVersion": "v1-f0eb4a703b40",
+  "catalogVersion": "v1-9902e9918115",
   "factorDictionaryVersion": "v1",
   "works": [
     {
@@ -183381,7 +183381,16 @@
       "volumeNumber": 1,
       "isbn": "9784065114698",
       "releaseDate": "2018-05-11",
-      "editionKind": "standard"
+      "editionKind": "standard",
+      "metadata": {
+        "publisherName": "講談社",
+        "itemCaption": "高校1年生の冬、隣のクラスの花野井くんに何気なく傘を貸したのがきっかけで、「僕と付き合ってください」と告白されてしまった日生ほたる。好きな子のためならなんでもしてあげたい花野井くんに戸惑ってばかりだけど、恋する気持ちを知りたいほたるは期間限定の「お試し」で付き合うことになって……!?　『おはよう、いばら姫』の森野萌最新作は、恋を知らない女子×愛が重すぎる男子の初恋ピュアラブストーリー！",
+        "salesDate": "2018-05-11",
+        "imageUrl": "https://dvs-cover.kodansha.co.jp/0000116236/GXVGqPSGSIDRXoTHCs4vVpxENnk4TXOHvykmIL1N.jpg",
+        "pageCount": 192,
+        "sourceUrl": "https://www.kodansha.co.jp/comic/products/0000116236",
+        "fetchedAt": "2026-09-12T05:21:02.090487Z"
+      }
     },
     {
       "id": "a-sign-of-affection-v1",

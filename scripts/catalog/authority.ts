@@ -694,7 +694,10 @@ export function bootstrapCatalogAuthority(repoRoot: string, fromGit: string, out
   };
 }
 
-export function verifyCatalogAuthority(repoRoot = process.cwd()) {
+export function verifyCatalogAuthority(
+  repoRoot = process.cwd(),
+  options: { includeSourceData?: boolean } = {},
+) {
   assertNode24();
   const canonicalRoot = resolve(repoRoot);
   const sourceDirectory = join(canonicalRoot, "data/source");
@@ -702,15 +705,14 @@ export function verifyCatalogAuthority(repoRoot = process.cwd()) {
   const tables = readCatalogAuthority(sourceDirectory);
   const opaquePaths = catalogOpaquePaths(tables);
   assertCatalogAuthorityLayout(sourceDirectory, tables);
+  const opaqueFiles = opaqueIdentities(sourceDirectory, opaquePaths);
   return {
     databasePath,
-    sourceManifestDigest: sourceManifestDigest(
-      tables,
-      opaqueIdentities(sourceDirectory, opaquePaths),
-    ),
+    sourceManifestDigest: sourceManifestDigest(tables, opaqueFiles),
     tables: tables.length,
     opaqueFiles: opaquePaths.length,
     rows: Object.fromEntries(tables.map((table) => [table.path, table.rows.length])),
+    ...(options.includeSourceData ? { sourceData: { tables, opaqueFiles } } : {}),
   };
 }
 
