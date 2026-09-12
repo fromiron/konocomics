@@ -56,6 +56,8 @@ DB 파일 자체를 잃었을 때는 백업을 읽는 `--database <backup.sqlite
 
 연결된 명령은 입력을 DB에 저장·백업한 뒤 원래 구현을 실행하고, 실제 결과 또는 남아 있는 실패 출력을 다시 저장·백업한 뒤 결과를 보고한다. SQLite 기록에는 단계별 snapshot ID가 남으며, 명령 인자·작업 경로·종료 코드와 stdout/stderr 원본도 중간 파일 없이 DB에 직접 기록한다. 저장·백업 실패는 정상 완료로 보고하지 않으며 기존 원본과 부분 결과를 보존한다. 발행 성공 뒤 저장 실패가 나면 실제 후보 DB가 존재할 수 있으므로 **같은 출력을 무조건 재실행하지 말고 먼저 readback**한다. current 갱신은 기존 최종 제품 검증 이후에만 한다.
 
+`command.json`의 `timingsSeconds`는 단조 시계로 측정한 `inputSave`, `inputBackup`, `command`, `outputSave`를 보존한다. 마지막 stderr의 `authoringStorage.timingsSeconds`에는 `operationSave`, `outputBackup`, `total`도 포함한다. 마지막 백업의 시간은 그 백업 안에 소급 저장할 수 없으므로 최종 receipt에만 남으며, 진단값을 위해 추가 백업을 만들지 않는다. `total`은 입력 저장 시작부터 마지막 백업 완료까지이며 참조 입력 탐색·결과 출력 시간은 제외한다. 두 번의 백업과 원본·membership 검증은 유지한다.
+
 자동 연결되지 않은 일회성 authoring 명령은 같은 저장 경로로 감싼다. 입력에는 원본 job·연구·계약·참조 bundle을, 출력에는 실제 생성 디렉터리를 명시한다. 임의 명령의 부작용을 이 wrapper가 허가하거나 되돌려 주지는 않는다.
 
 ```powershell
@@ -86,3 +88,10 @@ python scripts/catalog_workspace.py run --label <stage> --input <input-directory
 - 복원한 후보로 기존 `build-catalog.ts --verify --compact`를 실행했다. `v1-f362d9abe22e3304`, 3,308작품, 0 errors / 22,264 warnings, eligible 1,914개 coverage PASS였다. authority 9개 table·23개 opaque source와 Gold Set 150개 검증을 통과했다. 생성된 실제 Catalog·추천 context를 기존 추천 함수에 입력하여 1,909개 후보 계획과 상위 10개 결과를 확인했고 복원 대상 2작품 모두 추천 후보에 도달했다. 브라우저 UI나 배포 검증으로 주장하지 않는다.
 - 저장 회귀 6개, 기존 prepare 회귀 17개, registry correction 회귀 27개, collection validator 회귀, `typecheck`, `lint`를 통과했다. Node 24.19.0 전체 `pnpm test` 재실행은 **868 PASS / 4 FAIL**: Windows 파일 mode·경로·`spawn npm ENOENT` 3건과 recommendations-flow의 dialog 대기 실패 1건이다. UI 관련 두 파일의 별도 실행은 48개 통과했지만 전체 실행 실패를 해소한 것으로 간주하지 않는다. 관련 없는 제품 코드·테스트는 변경하지 않았다.
 - canonical Catalog, current 233 후보·registry와 `handoff/`를 보존했다. GitHub 쓰기·배포·신규 작품 승격은 수행하지 않았다. 기존 `factor-rescue-003`의 누락된 `panel-input-v2`/`panel-result-v2`는 이관으로 복구되지 않으며 별도 원본 소실 한계로 유지한다.
+
+### 2026-09-12 계측·최적화 확인
+
+- 기준은 `ca308e7`과 로컬 수정본이다. [Oracle 세션](https://chatgpt.com/c/6aa4cc89-4a60-83ee-a91f-790fe03b7b2b)에 repomix 원문을 직접 전달했다. digest·저장 계측을 채택하고, 추가로 지적된 HTTP-date의 UTC/유효성 검사와 빈 대상 캐시 보존을 수정했다. 최종 파일 검토에서 두 결함 해소·추가 필수 수정 없음 판정을 받았다. Oracle의 분리 실행은 Node 22이며 아래 로컬 실행은 Node 24.19.0이다.
+- 실제 1작품 collection CLI의 저장 wrapper는 입력 저장 **0.0385초**, 입력 백업 **14.1266초**, 원래 명령 **0.0889초**, operation 저장 **0.0114초**, 출력 백업 **12.7194초**, 합계 **26.9848초**였다. 당시 작업 DB는 **1,710,477,312바이트**였다. 입력 snapshot **1006**과 operation **1007**을 백업하고, 백업에서 각각 **4파일·3파일**을 기존 `restore`로 복원해 저장 SHA-256과 입력 원본 바이트를 확인했다. 이 작은 실행의 비용 측정이며 신규 작품 수집·판정·발행 처리량은 아니다. 백업 횟수·검사·보존 범위는 유지했다.
+- 실제 canonical **10개 table·358,424 cells**의 digest는 모두 동일했다. 같은 입력의 3회 측정 중앙값은 **1,050.97ms → 278.19ms**로 감소했다. 최종 기존 build/verify는 `v1-a6997804fb18`, **1,700작품**, **0 errors / 10,378 warnings**, eligible **1,568 PASS / 0 FAIL**이었다. canonical SQLite와 추적된 생성 파일 **8개**는 빌드 후에도 기존 바이트와 같았다. README 수정에 따른 source manifest와 엔진 소스 identity 변경은 데이터 digest 호환성과 별개이며 과거 동결 manifest를 다시 쓰지 않았다.
+- 저장 회귀 **7개**, 최종 Rakuten 회귀 **14개**, 기존 캐시 **2,114 queries / 0 fetched** 확인을 통과했다. 앞선 관련 TS 실행은 **31 PASS / 1 FAIL**이며 실패는 별칭 179개에 한 개를 추가하면서 총 179개를 기대하는 기존 authority 테스트다. `typecheck`는 수정하지 않은 `taste-flow.test.tsx:206`의 `missing-work`/`never` 오류로 실패했다. 두 별도 결함을 이번 최적화에 섞지 않았으며 CI·E2E·전체 테스트·실제 API 재수집·GitHub 발행·배포는 수행하지 않았다.

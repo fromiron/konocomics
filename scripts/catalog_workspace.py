@@ -19,6 +19,7 @@ import zlib
 from contextlib import closing
 from datetime import datetime, timezone
 from pathlib import Path, PurePosixPath
+from time import perf_counter
 
 REPO = Path(__file__).resolve().parents[1]
 APPLICATION_ID = 0x4B435753
@@ -375,24 +376,35 @@ def recorded_run(command: list[str], inputs: list[Path], outputs: list[Path], la
                  workspace: Workspace | None = None) -> int:
     """Persist before execution and before reporting success, including failed outputs."""
     workspace = workspace or Workspace()
+    started = perf_counter()
     before = workspace.save(inputs, label + ":input")
+    saved_input = perf_counter()
     workspace.backup()
+    backed_up_input = perf_counter()
     child_env = {**os.environ, "KONOCOMICS_AUTHORING_RECORDED": "1", "PYTHONDONTWRITEBYTECODE": "1"}
     # ponytail: authoring reports are small; spool logs to disk if output becomes large.
     result = subprocess.run(command, env=child_env, capture_output=True)
+    command_finished = perf_counter()
     after_roots = [path for path in outputs if path.exists()]
     after = workspace.save(after_roots, label + (":output" if result.returncode == 0 else ":failed-output")) if after_roots else None
+    saved_output = perf_counter()
+    timings = {"inputSave": saved_input - started, "inputBackup": backed_up_input - saved_input,
+               "command": command_finished - backed_up_input, "outputSave": saved_output - command_finished}
     receipt_root = "data/local/catalog-authoring/operations/" + uuid.uuid4().hex
     operation = workspace.save_bytes({
-        receipt_root + "/command.json": json.dumps({"argv": command, "cwd": os.getcwd(), "inputSnapshot": before["snapshotId"], "outputSnapshot": after["snapshotId"] if after else None, "exitCode": result.returncode, "finishedAt": utc_now()}, ensure_ascii=True).encode(),
+        receipt_root + "/command.json": json.dumps({"argv": command, "cwd": os.getcwd(), "inputSnapshot": before["snapshotId"], "outputSnapshot": after["snapshotId"] if after else None, "exitCode": result.returncode, "finishedAt": utc_now(), "timingsSeconds": timings}, ensure_ascii=True).encode(),
         receipt_root + "/stdout.bin": result.stdout,
         receipt_root + "/stderr.bin": result.stderr,
     }, label + ":exit-" + str(result.returncode))
+    saved_operation = perf_counter()
     backup = workspace.backup()
+    backed_up_output = perf_counter()
+    timings.update(operationSave=saved_operation - saved_output, outputBackup=backed_up_output - saved_operation,
+                   total=backed_up_output - started)
     # Publication PASS is not emitted until its actual result is saved and backed up.
     sys.stdout.buffer.write(result.stdout)
     sys.stderr.buffer.write(result.stderr)
-    print(json.dumps({"authoringStorage": {"input": before, "output": after, "operation": operation, "backup": backup}}, ensure_ascii=True), file=sys.stderr)
+    print(json.dumps({"authoringStorage": {"input": before, "output": after, "operation": operation, "backup": backup, "timingsSeconds": timings}}, ensure_ascii=True), file=sys.stderr)
     return result.returncode
 
 

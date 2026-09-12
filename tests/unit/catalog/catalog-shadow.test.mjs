@@ -81,6 +81,22 @@ describe("catalog SQLite shadow adapter", () => {
     );
   });
 
+  it("keeps the frozen lexical digest for escaped cells and multi-digit ordinals", () => {
+    const parsed = {
+      path: '表\\".csv',
+      headers: ["z", "a"],
+      rows: [
+        { sourceOrdinal: 2, sourceLine: 1, values: [' quote"\\\n\t', "日本語😀\ud800"] },
+        { sourceOrdinal: 10, sourceLine: 2, values: ["", "é\u0000"] },
+        { sourceOrdinal: 1, sourceLine: 3, values: ["2", "10"] },
+      ],
+    };
+    expect(lexicalTupleDigest(parsed)).toBe(
+      "83cdcd9237c88fa42428b0f4b2411d873f2e43a78b7f8a706e91e7f014af49a3",
+    );
+    expect(lexicalTupleDigest({ ...parsed, rows: [] })).toBe(sha256("[]"));
+  });
+
   it("canonicalizes identity text without trimming or inventing a terminal newline", () => {
     expect(canonicalTextBytes("policy.md", Buffer.from(" a\r\n b\r\n"))).toEqual(
       Buffer.from(" a\n b\n"),

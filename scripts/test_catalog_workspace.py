@@ -89,9 +89,14 @@ class WorkspaceTest(unittest.TestCase):
             label = db.execute("SELECT label FROM snapshot ORDER BY id DESC LIMIT 1").fetchone()[0]
             self.assertEqual(label, "failure:exit-7")
             receipt_sha = db.execute("SELECT sha256 FROM entry WHERE path LIKE '%/command.json'").fetchone()[0]
-            self.assertEqual(json.loads(self.workspace.read_blob(db, receipt_sha))["exitCode"], 7)
+            receipt = json.loads(self.workspace.read_blob(db, receipt_sha))
+            self.assertEqual(receipt["exitCode"], 7)
+            self.assertEqual(set(receipt["timingsSeconds"]), {"inputSave", "inputBackup", "command", "outputSave"})
+            self.assertTrue(all(value >= 0 for value in receipt["timingsSeconds"].values()))
         backups = list((self.root / "repo-authoring-backups").glob("*.sqlite"))
         self.assertEqual(len(backups), 2)
+        with closing(Workspace(self.repo, self.root / "repo-authoring-backups/latest.sqlite").connect()) as db:
+            self.assertEqual(json.loads(self.workspace.read_blob(db, receipt_sha)), receipt)
 
     def test_concurrent_writers_keep_both_snapshots(self):
         self.workspace.save([self.inputs], "initialize")

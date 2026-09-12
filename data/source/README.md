@@ -25,15 +25,16 @@
 
 ## 주석 검토 상태
 
-`annotationReviewMethod`은 다음 세 값만 사용한다.
+`annotationReviewMethod`은 다음 네 값을 사용한다.
 
 - `unreviewed`: 주석 게이트 미통과. onboarding/recommendation eligibility를 켜면 validation 오류다.
 - `human`: 실제 사람이 검토했다. work evidence의 `reviewedByHuman=true`, 검토 시각, 보고서가 모두 필요하다.
 - `authorizedModelPanel`: 과거 사용자 승인 대체 판정의 legacy provenance. 기존 행은 `reviewedByHuman=false`로 보존하며 신규 주석에 사용하지 않는다.
+- `authorizedEvidencePanel`: 2026-09-01 사용자가 승인한 신규 확장 작품의 별도 비인간 판정. [panel 계약](../../docs/catalog-expansion/02-authorized-evidence-panel-v1.md)의 동결 근거·claim별 별도 재판정·입력/결과 manifest 검증을 통과해야 하며 `reviewedByHuman=false`로 기록한다.
 
 검토 완료 상태에는 `annotationReviewedAt`과 `annotationReviewReference`가 모두 필요하며, 참조 보고서가 실제로 존재하지 않으면 validation이 실패한다.
 
-신규 모델 출력은 `data/source/` 밖의 candidate이며, 모델 수·일치·confidence·citation으로 주석 사실이나 판정을 승인하지 않는다. 신규 resolution은 `docs/planning/09-catalog-authoring-authority.md`의 candidate-independent 비모델 권한만 만들 수 있다.
+원시 모델 출력은 `data/source/` 밖의 candidate이며, 모델 수·일치·confidence·citation만으로 주석 사실이나 판정을 승인하지 않는다. 신규 resolution은 [authoring 권한 계약](../../docs/planning/09-catalog-authoring-authority.md)의 고정 비모델 권한, candidate-independent 결정론적 source 검증 또는 §2.1의 `authorizedEvidencePanelV1` 경로만 만들 수 있다. 작업 DB에 저장한 것만으로 판정 권한이 생기지 않는다.
 
 ## G1 동결·빌드 계약
 
@@ -62,7 +63,7 @@
 - 총 작품 수 1,000은 최소값이고 상한은 없다. 외부 목록 원문 항목은 terminal membership 상태 없이 누락할 수 없다.
 - 안전·canonical identity·선정 provenance·대표 ISBN을 확인한 신규 작품은 보수적으로 `libraryOnly=true`로 승격할 수 있다. 이 단계에서는 17축을 모두 명시적 `unknown`으로 두고 Theme·추천 context를 만들지 않으며 `onboardingEligible`과 `recommendationEligible`을 모두 끈다.
 - Rakuten 응답에 없는 원산지 국적·원작 형식은 추론하지 않는다. staging에는 `unknown`으로 남기고, 별도 공식 근거로 세로형임을 확인한 항목만 제외한다. 따라서 `libraryOnly` 승격을 페이지형·일본 제작 검증 완료로 표현하지 않는다.
-- `libraryOnly` 기록은 Library 검색·상세·Export/Import에만 참여한다. `09`의 candidate-independent 비모델 resolution 전에는 프로필 수, DNA, confidence, 입력 hash의 record payload, Baseline/Taste 순위와 설명 근거에 참여하지 않는다. 다만 전체 `catalogVersion` 변경은 캐시를 한 번 무효화한다.
+- `libraryOnly` 기록은 Library 검색·상세·Export/Import에만 참여한다. `09`의 허용된 resolution과 주석 검증·승격 전에는 프로필 수, DNA, confidence, 입력 hash의 record payload, Baseline/Taste 순위와 설명 근거에 참여하지 않는다. 다만 전체 `catalogVersion` 변경은 캐시를 한 번 무효화한다.
 - `data/staging/`의 연구·배치 원천은 CSV, 중첩된 Rakuten 응답 캐시는 JSONL로 유지한다. canonical Catalog는 tracked SQLite이고, OS 임시 CSV projection/shadow는 frozen staging 도구와 one-time cutover proof에만 사용한다.
 
 ## SQLite authority와 projection 경계
@@ -71,7 +72,7 @@
 - canonical DB는 `user_version=2`이며 기존 9개와 `source_book_metadata`를 합한 10개 `STRICT` source table만 둔다. proof/candidate/resolution/judgment table, view, trigger는 넣지 않는다.
 - row order는 1-based `sourceOrdinal`이 결정한다. `sourceLine`은 canonical CSV projection에서 record가 끝나는 physical line이며 오류·감사에만 쓰고 digest나 정렬에는 쓰지 않는다.
 - 일반 reader·validator·builder·promotion registry는 SQLite를 직접 읽는다. CSV-shaped frozen 도구만 sibling OS temp에 projection하며 기존 `data/source/`를 덮어쓰지 않고 성공·실패 모두 temp와 sidecar를 제거한다.
-- legitimate write는 현재 DB를 candidate로 복사해 한 transaction에서 변경·전체 검증하고, close/read-only exact readback 뒤에만 원자적으로 교체한다. 모델 출력 기반 writer는 I/O 전에 거부한다.
+- legitimate write는 현재 DB를 candidate로 복사해 한 transaction에서 변경·전체 검증하고, close/read-only exact readback 뒤에만 원자적으로 교체한다. 원시 모델 candidate writer는 I/O 전에 거부하며, `authorizedEvidencePanelV1` 전용 publisher만 동결 근거·claim ledger·review reference·coverage·ownership 검증을 통과한 accepted resolution을 쓴다.
 - S0~S5의 9개 CSV byte golden과 shadow judgment는 고정 parent Git snapshot에서 실행하는 one-time cutover proof다. ongoing authority는 `pnpm catalog:authority:verify`로 schema·layout·integrity를 검증한다.
 
 ## 추천 context

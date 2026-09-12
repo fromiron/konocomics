@@ -294,15 +294,12 @@ export function serializeCsv(parsed: LexicalTable) {
 
 export function lexicalTupleDigest(parsed: LexicalTable) {
   const tuples = parsed.rows.flatMap((row) =>
-    parsed.headers.map((header, index) => [
-      parsed.path,
-      row.sourceOrdinal,
-      header,
-      row.values[index],
-    ]),
+    parsed.headers.map((header, index) =>
+      JSON.stringify([parsed.path, row.sourceOrdinal, header, row.values[index]]),
+    ),
   );
-  tuples.sort((left, right) => compareText(JSON.stringify(left), JSON.stringify(right)));
-  return jsonDigest(tuples);
+  tuples.sort(compareText);
+  return sha256(`[${tuples.join(",")}]`);
 }
 
 export function sourceManifestDigest(

@@ -13,7 +13,6 @@ import {
   type RakutenCredentials,
 } from "../src/infrastructure/rakuten/server";
 
-const RETRIEVED_AT = "2026-08-22";
 const REQUEST_INTERVAL_MS = 1_200;
 const SELECTION_POLICY =
   "konomanga-all;tsugimanga-comics-all;shogakukan-all;bookseller-all;mangataisho-finalists-all-and-first-selection-2008-2015";
@@ -151,13 +150,20 @@ function loadCache(path: string): CacheRecord[] {
   }
 }
 
+function latestRetrievedAt(records: CacheRecord[]) {
+  return records.reduce(
+    (latest, record) => (record.retrievedAt > latest ? record.retrievedAt : latest),
+    "",
+  );
+}
+
 function assertCacheManifest(directory: string, records: CacheRecord[]) {
   const cacheBytes = readFileSync(join(directory, CACHE_FILE), "utf8");
   const manifest: z.infer<typeof manifestSchema> = manifestSchema.parse(
     JSON.parse(readFileSync(join(directory, MANIFEST_FILE), "utf8")) as unknown,
   );
   if (
-    manifest.retrievedThrough !== RETRIEVED_AT ||
+    (records.length > 0 && manifest.retrievedThrough !== latestRetrievedAt(records)) ||
     manifest.queryCount !== records.length ||
     manifest.sourceItemCount !== new Set(records.flatMap((record) => record.sourceItemIds)).size ||
     manifest.sha256 !== sha256(cacheBytes)
@@ -203,6 +209,35 @@ function wait(milliseconds: number) {
   return new Promise((resolve) => setTimeout(resolve, milliseconds));
 }
 
+function retryAfterDelay(value: string, now: number) {
+  if (/^\d+$/u.test(value)) return Number(value) * 1_000;
+  // HTTP dates use GMT, including the obsolete asctime form without a zone suffix.
+  const date = new Date(value.endsWith(" GMT") ? value : `${value} GMT`);
+  if (!Number.isFinite(date.getTime())) return NaN;
+  if (/^[A-Za-z]+, \d{2}-[A-Za-z]{3}-\d{2} /u.test(value)) {
+    const limit = new Date(now);
+    const currentYear = limit.getUTCFullYear();
+    date.setUTCFullYear(currentYear - (currentYear % 100) + (date.getUTCFullYear() % 100));
+    limit.setUTCFullYear(currentYear + 50);
+    if (date > limit) date.setUTCFullYear(date.getUTCFullYear() - 100);
+  }
+  const canonical = date.toUTCString();
+  const [weekday, day, month, year, time] = canonical.split(" ");
+  const fullWeekday = [
+    "Sunday",
+    "Monday",
+    "Tuesday",
+    "Wednesday",
+    "Thursday",
+    "Friday",
+    "Saturday",
+  ][date.getUTCDay()];
+  const obsolete = `${fullWeekday}, ${day}-${month}-${year!.slice(-2)} ${time} GMT`;
+  const asctime = `${weekday!.slice(0, -1)} ${month} ${day!.padStart(2, " ").replace(/^0/u, " ")} ${time} ${year}`;
+  // Round-trip all three HTTP date forms; Date.parse alone also accepts non-HTTP and invalid dates.
+  return [canonical, obsolete, asctime].includes(value) ? date.getTime() - now : NaN;
+}
+
 let lastRequestAt = 0;
 
 async function searchRakuten(title: string, credentials: RakutenCredentials) {
@@ -237,10 +272,13 @@ async function searchRakuten(title: string, credentials: RakutenCredentials) {
     if (response.status !== 429 && response.status < 500) {
       throw new Error(`Rakuten search failed for ${title}: HTTP ${response.status}`);
     }
-    const retryAfter = Number(response.headers.get("retry-after"));
-    await wait(
-      Number.isFinite(retryAfter) ? Math.min(retryAfter * 1_000, 30_000) : 2 ** attempt * 1_000,
-    );
+    if (attempt === 3) break;
+    const retryAfter = response.headers.get("retry-after")?.trim() ?? "";
+    const delay = retryAfterDelay(retryAfter, Date.now());
+    // Node timers overflow above this range; fail instead of retrying before the server allows.
+    if (delay > 2_147_483_647)
+      throw new Error("Rakuten Retry-After exceeds the supported timer range");
+    await wait(Number.isFinite(delay) ? Math.max(0, delay) : 2 ** attempt * 1_000);
   }
   throw new Error(`Rakuten search retries exhausted for ${title}`);
 }
@@ -260,7 +298,7 @@ function writeCache(directory: string, records: CacheRecord[]) {
     booksGenreId: "001001",
     bookSize: 9,
     selectionPolicy: SELECTION_POLICY,
-    retrievedThrough: RETRIEVED_AT,
+    retrievedThrough: latestRetrievedAt(sorted),
     queryCount: sorted.length,
     sourceItemCount: new Set(sorted.flatMap((record) => record.sourceItemIds)).size,
     sha256: sha256(jsonl),
@@ -300,6 +338,7 @@ export async function runRakutenExpansionCache(mode: "--check" | "--write", root
     assertCacheManifest(directory, records);
     return { queryCount: records.length, fetched: 0 };
   }
+  if (groups.length === 0) throw new Error("No eligible Rakuten queries; cache left unchanged");
 
   const credentials = readRakutenCredentials();
   if (credentials === null) throw new Error("Rakuten credentials are unavailable");
@@ -321,7 +360,7 @@ export async function runRakutenExpansionCache(mode: "--check" | "--write", root
       queryKey: group.queryKey,
       queryTitle: group.titles[0]!,
       sourceItemIds: group.sourceItemIds,
-      retrievedAt: RETRIEVED_AT,
+      retrievedAt: new Date().toISOString().slice(0, 10),
       outcome: result.outcome,
       responseSha256: sha256(`${JSON.stringify(result)}\n`),
       items: result.items,
