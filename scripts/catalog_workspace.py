@@ -20,6 +20,7 @@ from contextlib import closing
 from datetime import datetime, timezone
 from pathlib import Path, PurePosixPath
 from time import perf_counter
+from workspace_paths import is_workspace_alias
 
 REPO = Path(__file__).resolve().parents[1]
 APPLICATION_ID = 0x4B435753
@@ -69,7 +70,7 @@ def key_path(value: str) -> str:
 def unlinked(path: Path) -> Path:
     path = Path(os.path.abspath(path))
     for parent in (path, *path.parents):
-        if parent.is_symlink() or parent.is_junction():
+        if (parent.is_symlink() or parent.is_junction()) and not is_workspace_alias(parent):
             raise ValueError(f"Linked path is not allowed: {parent}")
     return path
 
@@ -90,7 +91,7 @@ def manifest_digest(entries) -> str:
 class Workspace:
     def __init__(self, repo: Path = REPO, database: Path | None = None):
         self.repo = unlinked(repo)
-        self.database = unlinked(database or self.repo / "data/local/catalog-authoring/workspace.sqlite")
+        self.database = unlinked(database or self.repo / ".workspace/catalog-authoring/workspace.sqlite")
         if self.database.is_relative_to(self.repo / ".tmp") or self.database.is_relative_to(self.repo / "data/source"):
             raise ValueError("The working database must be outside .tmp and data/source")
 
@@ -98,8 +99,10 @@ class Workspace:
         path = unlinked(path)
         if not path.is_relative_to(self.repo) or path == self.repo:
             raise ValueError(f"Artifact must be a bounded path inside {self.repo}: {path}")
-        if path == self.database or self.database.is_relative_to(path):
+        if self.database.resolve().is_relative_to(path.resolve()):
             raise ValueError("Cannot capture the workspace database or its parent")
+        if path.resolve().is_relative_to(self.repo / ".workspace/backups"):
+            raise ValueError("Cannot capture workspace backups")
         relative = key_path(path.relative_to(self.repo).as_posix())
         if any(p in {".git", "node_modules"} or p.startswith(".env") for p in PurePosixPath(relative).parts):
             raise ValueError(f"Not an authoring artifact: {relative}")
@@ -342,12 +345,12 @@ class Workspace:
 
     def _backup_locked(self, destination: Path | None) -> dict:
         automatic = destination is None
-        backup_root = unlinked(self.repo.parent / (self.repo.name + "-authoring-backups"))
+        backup_root = unlinked(self.repo / ".workspace/backups")
         if destination is None:
             destination = backup_root / ("pending-" + uuid.uuid4().hex + ".sqlite")
         destination = unlinked(destination)
-        if destination.is_relative_to(self.repo) or destination == self.database:
-            raise ValueError("Backup must be outside the working repository and separate from the database")
+        if (destination.is_relative_to(self.repo) and not destination.is_relative_to(backup_root)) or destination == self.database:
+            raise ValueError("Backup must be in .workspace/backups or outside the repository, separate from the database")
         destination.parent.mkdir(parents=True, exist_ok=True)
         with destination.open("xb"):
             pass
@@ -390,7 +393,7 @@ def recorded_run(command: list[str], inputs: list[Path], outputs: list[Path], la
     saved_output = perf_counter()
     timings = {"inputSave": saved_input - started, "inputBackup": backed_up_input - saved_input,
                "command": command_finished - backed_up_input, "outputSave": saved_output - command_finished}
-    receipt_root = "data/local/catalog-authoring/operations/" + uuid.uuid4().hex
+    receipt_root = ".workspace/catalog-authoring/operations/" + uuid.uuid4().hex
     operation = workspace.save_bytes({
         receipt_root + "/command.json": json.dumps({"argv": command, "cwd": os.getcwd(), "inputSnapshot": before["snapshotId"], "outputSnapshot": after["snapshotId"] if after else None, "exitCode": result.returncode, "finishedAt": utc_now(), "timingsSeconds": timings}, ensure_ascii=True).encode(),
         receipt_root + "/stdout.bin": result.stdout,
@@ -479,7 +482,7 @@ def record_arguments(script: Path, args: argparse.Namespace, argv: list[str] | N
                 inputs.append(path.parent if path.suffix == ".sqlite" else path)
                 if field in {"job", "ledger", "changes", "research"} and path.is_file():
                     inputs.append(path.parent)
-    for name in ("docs/factors", "docs/catalog-expansion", "docs/planning/09-catalog-authoring-authority.md", "scripts/catalog_workspace.py"):
+    for name in ("docs/factors", "docs/catalog-expansion", "docs/planning/09-catalog-authoring-authority.md", "scripts/catalog_workspace.py", "scripts/workspace_paths.py"):
         inputs.append(workspace.repo / name)
     label = script.stem + ":" + getattr(args, "action", "run")
     return recorded_run([sys.executable, str(script.resolve()), *(sys.argv[1:] if argv is None else argv)], authoring_inputs(inputs, workspace), outputs, label, workspace)
@@ -494,7 +497,7 @@ def main() -> int:
     save.add_argument("paths", type=Path, nargs="+")
     sub.add_parser("verify", help="Verify all blob bytes and snapshot memberships")
     sub.add_parser("list", help="List saved snapshots")
-    backup = sub.add_parser("backup", help="Make a new consistent SQLite backup outside the repository")
+    backup = sub.add_parser("backup", help="Make a consistent backup in .workspace/backups or an explicit external destination")
     backup.add_argument("--destination", type=Path)
     restore = sub.add_parser("restore", help="Restore an exact snapshot under a NEW directory, never overwrite")
     restore.add_argument("--snapshot", type=int, required=True)

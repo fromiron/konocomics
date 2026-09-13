@@ -5,13 +5,34 @@ import subprocess
 import sys
 import tempfile
 import unittest
+from unittest.mock import patch
 from contextlib import closing
 from pathlib import Path
 
 from catalog_workspace import Workspace, authoring_inputs, key_path, recorded_run
+from workspace_paths import aliases, restore_links
 
 
 class WorkspaceTest(unittest.TestCase):
+    def test_workspace_links_preserve_legacy_keys_and_reject_wrong_targets(self):
+        repo = self.root / "moved-repo"
+        evidence = repo / ".workspace/job/original.txt"
+        evidence.parent.mkdir(parents=True)
+        evidence.write_bytes(b"frozen original")
+        paths = aliases(repo)
+        restore_links(repo)
+        store = Workspace(repo)
+        with patch("workspace_paths.aliases", return_value=paths):
+            store.save([repo / ".tmp/job"], "legacy input")
+            self.assertEqual(store.verify()["blobs"], 1)
+            with self.assertRaises(ValueError):
+                store.save([repo / ".tmp"], "must not capture database")
+        wrong = {**paths, repo / ".tmp": repo / "other"}
+        (repo / "other").mkdir()
+        with patch("workspace_paths.aliases", return_value=wrong):
+            with self.assertRaises(ValueError):
+                store.save([repo / ".tmp/job"], "wrong alias")
+
     def setUp(self):
         self.temp = tempfile.TemporaryDirectory(prefix="catalog-workspace-test-")
         self.addCleanup(self.temp.cleanup)
@@ -93,9 +114,9 @@ class WorkspaceTest(unittest.TestCase):
             self.assertEqual(receipt["exitCode"], 7)
             self.assertEqual(set(receipt["timingsSeconds"]), {"inputSave", "inputBackup", "command", "outputSave"})
             self.assertTrue(all(value >= 0 for value in receipt["timingsSeconds"].values()))
-        backups = list((self.root / "repo-authoring-backups").glob("*.sqlite"))
+        backups = list((self.repo / ".workspace/backups").glob("*.sqlite"))
         self.assertEqual(len(backups), 2)
-        with closing(Workspace(self.repo, self.root / "repo-authoring-backups/latest.sqlite").connect()) as db:
+        with closing(Workspace(self.repo, self.repo / ".workspace/backups/latest.sqlite").connect()) as db:
             self.assertEqual(json.loads(self.workspace.read_blob(db, receipt_sha)), receipt)
 
     def test_concurrent_writers_keep_both_snapshots(self):
@@ -105,7 +126,7 @@ class WorkspaceTest(unittest.TestCase):
         for process in processes:
             self.assertEqual(process.wait(timeout=30), 0)
         self.assertEqual(self.workspace.verify()["snapshots"], 3)
-        latest = self.root / "repo-authoring-backups/latest.sqlite"
+        latest = self.repo / ".workspace/backups/latest.sqlite"
         self.assertEqual(Workspace(self.repo, latest).verify()["snapshots"], 3)
 
     def test_job_and_prior_references_are_saved_not_only_their_paths(self):
