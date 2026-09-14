@@ -1,8 +1,18 @@
 # 승격 방법론 운영 보충
 
-현재 운영 지침 갱신일: `2026-09-13`
+현재 운영 지침 갱신일: `2026-09-14`
 
 이 문서는 Catalog 확장의 작업 배정·검증 책임·보고 방식을 정한다. Factor 정의와 추천 산식은 기존 상위 사양을 따르고, 별도 동결 판정은 [authorizedEvidencePanel 계약](02-authorized-evidence-panel-v1.md)을 따른다. 아래의 2026-08-26 기록은 과거 방식이며 현재 모델 배정이나 필수 처리 단계로 사용하지 않는다.
+
+## 일반 승격 최적화 — 2026-09-14 사용자 승인
+
+사용자가 일반 승격의 병목 제거를 포괄 승인했다. Oracle 대량 처리의 별도 절차는 이번 변경 범위에서 제외한다. 아래는 기존 단계에 적용하는 실행 규칙이며 검토 단계를 추가하지 않는다.
+
+- **보충 근거는 누적한다.** 새 v3 job은 `researchRef` 대신 `researchRefs: [{path, sha256}, ...]`로 기존 원문과 보충 원문을 함께 결속할 수 있다. 같은 URL의 동일 관찰은 한 번만 투영하고 다른 관찰이 충돌하면 명시적으로 통합한 새 snapshot을 요구한다. 이전 URL의 재검색 금지는 그 URL의 보존된 유효 근거를 폐기하라는 뜻이 아니다. 수집의 status·gap·claimCandidates는 안내이며 전체 작품의 새 판정이 아니다. 과거 숫자를 합산해 PASS를 만들지 않는다.
+- **수치 원장은 동결 뒤 한 번 작성한다.** 동결 전에는 identity·출처·safety·필수 coverage의 가능 여부만 확인한다. `adjudicated-ledger.draft.csv`와 같은 내용의 final ledger, 수치 판정 전체를 되풀이하는 PREPARATION/SOL 보고서는 새로 요구하지 않는다. 실제 freeze/seal의 자동 report·manifest와 원본은 보존한다. 동일 입력·동일 계약의 Sol 판정은 조정자가 다시 심사하지 않는다.
+- **형식과 경로는 도구가 처리한다.** 새 결속 전 claim의 evidenceIds/citationUrls 집합은 seal에서 정렬하고 digest를 결속한다. 중복 ID·누락 축·판정값은 자동 보정하지 않으며 prior/correction 또는 이미 digest가 있는 claim은 그대로 검증한다. `seal-result`는 frozen lineage에서 기준 pair를 읽으므로 baseline 인자를 생략한다. `publish`는 현재 pair를 받고 원래 frozen pair를 자동 참조한다. 잘못된 파일 인자는 저장·백업 전에 거부한다.
+- **전체 이력을 매번 재수집하지 않는다.** 실행 입력과 직접 lineage bundle을 저장하고, 실제 prior authority/job/recovery 의존은 계속 추적한다. 과거 버전은 append-only 작업 DB에 보존한다. 백업은 두 개의 완전한 SQLite 세대를 유지하면서 새 blob·snapshot만 트랜잭션으로 반영·검증한다. 전체 감사와 복원 검사는 [저장 계약](03-local-authoring-storage.md)을 따른다.
+- **판정 기준은 실제 사전에 맞춘다.** whole_work에 초반 3권 조건, 전권 독해, 선택적 Art 정족수를 덧붙이지 않는다. Narrative 4/6·Tone 5/7·Genre/Theme 각 1개, 근거·safety·unknown 의미는 유지한다. 구체적 남은 gap만 수집하고 충분하면 멈춘다. 새 관찰이나 확인된 판단 오류가 없는 HOLD는 재검토하지 않는다.
 
 ## 사용자 승인 검토 조정 — 2026-09-13
 

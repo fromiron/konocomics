@@ -143,7 +143,9 @@ python scripts/catalog_workspace.py run --label <stage> --input <input-directory
 ## 백업과 안전성
 
 - 자동 백업은 `.workspace/backups/`에 생성한다. 사용자가 작업 환경을 옮길 때 `.workspace` 전체를 직접 백업한다.
-- SQLite Backup API로 일관된 새 파일을 만들고 무결성을 검사한 뒤 `latest.sqlite`로 교체한다. 바로 이전 정상 세대는 `previous.sqlite`로 유지한다. 자동 물리 백업은 두 세대이며 **각 파일 안에 그 시점까지의 모든 논리 snapshot·원본 버전이 들어 있다.** 이름을 지정한 수동 checkpoint는 자동 교체하지 않는다.
+- 2026-09-14 최적화: 초기 세대와 별도 수동 checkpoint는 SQLite Backup API와 전체 SQLite 무결성 검사로 생성한다. 정상 자동 백업은 source writer를 직렬 잠그고 이전 세대의 schema·snapshot prefix·membership 수를 대조한 뒤 추가 blob·snapshot·entry를 하나의 트랜잭션으로 반영한다. 새 snapshot이 참조하는 모든 blob(기존 blob 포함)의 원문 SHA/압축 해제, 새 snapshot 전체 membership/manifest, FK 제약과 commit readback을 확인한다. 실패하면 rollback하고 최신 세대는 교체하지 않는다. 성공 후 `latest.sqlite`/`previous.sqlite`를 회전하며 **각 파일 안에 그 시점까지의 모든 논리 snapshot·원본 버전이 들어 있다.** 이름을 지정한 수동 checkpoint는 자동 교체하지 않는다.
+- 변경되지 않은 과거 데이터의 전체 SQLite/원문/manifest 감사는 `verify`로 수행한다. 자동 백업마다 전 이력을 재검사하지 않는다. 손상 의심·복구·명시적 전체 감사에는 `verify`를 실행하며 복원은 항상 대상 원문 SHA를 재검증한다. 전체 검사와 증분 검사의 범위를 같은 증거로 표시하지 않는다.
+- 자동 입력 저장은 명시된 실행 입력과 직접 참조한 lineage bundle을 완전히 저장한다. lineage의 provenance 조상을 끝없이 따라 재수집하지 않는다. 명시적 prior authority·researchRef/researchRefs·recovery 의존은 계속 확장하며 원본·해시·역사적 snapshot은 삭제하지 않는다. 저장 범위 최적화는 실제 발행 validator의 권한/manifest 검사를 생략하는 옵션이 아니다.
 - 작업 저장소의 트랜잭션은 부분 저장을 성공으로 노출하지 않는다. 원본 파일이 읽는 도중 바뀌거나 파일 집합이 달라지면 저장을 거부한다. 아직 writer가 있거나 journal sidecar가 남은 원천 SQLite는 exact-byte 이관 전에 닫고 상태를 확인한다.
 - 복원은 SHA-256을 재계산하고 기존 경로 덮어쓰기·경로 이탈·symlink/junction을 거부한다. DB에 존재하지 않는 판정·근거는 합성하지 않는다.
 - 동일 디스크에 둔 별도 폴더는 `.tmp` 정리 사고에는 유용하지만 디스크 고장·랜섬웨어의 독립 백업이 아니다. 다른 디스크나 외부 백업은 별도 목적지 승인이 필요하며, 이번 전환은 로컬 백업까지만 수행한다.

@@ -346,6 +346,27 @@ class Workspace:
     def _backup_locked(self, destination: Path | None) -> dict:
         automatic = destination is None
         backup_root = unlinked(self.repo / ".workspace/backups")
+        latest, previous = backup_root / "latest.sqlite", backup_root / "previous.sqlite"
+        if automatic and self.database in {latest, previous}:
+            raise ValueError("An automatic backup cannot rotate its own source; use an explicit new destination")
+        if automatic and latest.exists() and previous.exists():
+            # Each generation remains a complete SQLite database. Append only the
+            # delta to the older one; the latest stays untouched until commit.
+            for reserved in (latest, previous):
+                unlinked(reserved)
+                # mode=rw lets SQLite recover an interrupted rollback journal,
+                # but never creates or initializes an unrelated reserved file.
+                with closing(sqlite3.connect(reserved.as_uri() + "?mode=rw", uri=True)) as old:
+                    if (old.execute("PRAGMA application_id").fetchone()[0] != APPLICATION_ID
+                            or old.execute("PRAGMA user_version").fetchone()[0] != SCHEMA_VERSION):
+                        raise ValueError(f"Refusing to replace an unrelated backup: {reserved}")
+            snapshot, added = self._extend_backup(previous)
+            pending = backup_root / ("pending-" + uuid.uuid4().hex + ".sqlite")
+            os.replace(previous, pending)
+            os.replace(latest, previous)
+            os.replace(pending, latest)
+            return {"status": "BACKED_UP", "mode": "append-only", "destination": str(latest),
+                    "latestSnapshotId": snapshot[0], "snapshots": snapshot[1], "addedSnapshots": added}
         if destination is None:
             destination = backup_root / ("pending-" + uuid.uuid4().hex + ".sqlite")
         destination = unlinked(destination)
@@ -361,7 +382,6 @@ class Workspace:
             snapshot = target.execute("SELECT max(id),count(*) FROM snapshot").fetchone()
         if automatic:
             # All logical versions live inside each backup; keep two physical generations.
-            latest, previous = backup_root / "latest.sqlite", backup_root / "previous.sqlite"
             for reserved in (latest, previous):
                 unlinked(reserved)
                 if reserved.exists():
@@ -372,7 +392,53 @@ class Workspace:
                 os.replace(latest, previous)
             os.replace(destination, latest)
             destination = latest
-        return {"status": "BACKED_UP", "destination": str(destination), "latestSnapshotId": snapshot[0], "snapshots": snapshot[1]}
+        return {"status": "BACKED_UP", "mode": "full", "destination": str(destination), "latestSnapshotId": snapshot[0], "snapshots": snapshot[1]}
+
+    def _extend_backup(self, destination: Path) -> tuple[tuple, int]:
+        """Extend a verified append-only generation atomically, without rescanning history.
+
+        Full audits remain available through verify; all blobs referenced by new
+        snapshots are checked here, and restore always checks original hashes.
+        """
+        with closing(Workspace(self.repo, destination).connect(write=True)) as target:
+            target.execute("ATTACH DATABASE ? AS origin", (self.database.as_uri() + "?mode=ro",))
+            try:
+                # The caller holds the source writer lock. A deferred transaction
+                # writes only main, leaving the read-only attachment unlocked.
+                target.execute("BEGIN")
+                schema = "SELECT type,name,tbl_name,sql FROM {}.sqlite_master ORDER BY type,name"
+                if target.execute(schema.format("main")).fetchall() != target.execute(schema.format("origin")).fetchall():
+                    raise ValueError("Backup schema differs from append-only source")
+                headers = target.execute("SELECT * FROM snapshot ORDER BY id").fetchall()
+                last = headers[-1][0] if headers else 0
+                if headers != target.execute("SELECT * FROM origin.snapshot WHERE id<=? ORDER BY id", (last,)).fetchall():
+                    raise ValueError("Backup history is not a prefix of the source")
+                if target.execute("SELECT count(*) FROM entry").fetchone()[0] != sum(row[4] for row in headers):
+                    raise ValueError("Backup snapshot membership count mismatch")
+                new_headers = target.execute("SELECT * FROM origin.snapshot WHERE id>? ORDER BY id", (last,)).fetchall()
+                referenced = target.execute("SELECT DISTINCT sha256 FROM origin.entry WHERE snapshot_id>?", (last,)).fetchall()
+                target.executemany("""INSERT INTO blob SELECT b.* FROM origin.blob b
+                    WHERE b.sha256=? AND NOT EXISTS (SELECT 1 FROM blob old WHERE old.sha256=b.sha256)""", referenced)
+                for (sha,) in referenced:
+                    self.read_blob(target, sha)
+                target.execute("INSERT INTO snapshot SELECT * FROM origin.snapshot WHERE id>?", (last,))
+                target.execute("INSERT INTO entry SELECT * FROM origin.entry WHERE snapshot_id>?", (last,))
+                for row in new_headers:
+                    entries = target.execute("SELECT path,sha256 FROM entry WHERE snapshot_id=?", (row[0],)).fetchall()
+                    for path, _ in entries:
+                        key_path(path)
+                    if len(entries) != row[4] or manifest_digest(entries) != row[5]:
+                        raise ValueError(f"Backup snapshot manifest mismatch: {row[0]}")
+                target.commit()
+            except BaseException:
+                target.rollback()
+                raise
+        with closing(Workspace(self.repo, destination).connect()) as readback:
+            snapshot = readback.execute("SELECT max(id),count(*) FROM snapshot").fetchone()
+            expected = ((new_headers or headers)[-1][0] if new_headers or headers else None, len(headers) + len(new_headers))
+            if snapshot != expected:
+                raise ValueError("Backup commit readback failed")
+        return snapshot, len(new_headers)
 
 
 def recorded_run(command: list[str], inputs: list[Path], outputs: list[Path], label: str,
@@ -414,13 +480,17 @@ def recorded_run(command: list[str], inputs: list[Path], outputs: list[Path], la
 def authoring_inputs(paths: list[Path], workspace: Workspace | None = None) -> list[Path]:
     """Capture known job/lineage dependencies without interpreting evidence or claims."""
     workspace = workspace or Workspace()
-    pending, visited = list(paths), set()
+    pending, visited, expanded = [(path, True) for path in paths], set(), set()
     while pending:
-        root = unlinked(pending.pop())
-        if root in visited:
+        item, expand = pending.pop()
+        root = unlinked(item)
+        if root in expanded or (root in visited and not expand):
             continue
         workspace.key(root)
         visited.add(root)
+        if not expand:
+            continue
+        expanded.add(root)
         for path in workspace.files([root]):
             if path.suffix != ".json" or (path != root and not path.name.startswith("records") and path.name not in {"authoring-job.json", "external-prior-authority.json", "external-lineage.json", "recovery-epoch.json", "recovery-declaration.json"}):
                 continue
@@ -437,9 +507,10 @@ def authoring_inputs(paths: list[Path], workspace: Workspace | None = None) -> l
                         references.append(Path(value[field]))
             if value.get("schemaVersion") == "factor-authoring-job-v3":
                 for work in value.get("works", []) if isinstance(value.get("works"), list) else []:
-                    reference = work.get("researchRef", {}) if isinstance(work, dict) else {}
-                    if isinstance(reference, dict) and isinstance(reference.get("path"), str):
-                        references.append(path.parent / reference["path"])
+                    refs = work.get("researchRefs", [work.get("researchRef", {})]) if isinstance(work, dict) else []
+                    for reference in refs if isinstance(refs, list) else []:
+                        if isinstance(reference, dict) and isinstance(reference.get("path"), str):
+                            references.append(path.parent / reference["path"])
             if path.name == "external-prior-authority.json":
                 for bundle in value.get("bundles", []) if isinstance(value.get("bundles"), list) else []:
                     if isinstance(bundle, dict) and isinstance(bundle.get("root"), str):
@@ -454,7 +525,12 @@ def authoring_inputs(paths: list[Path], workspace: Workspace | None = None) -> l
                     references.extend(Path(item) for item in bindings if isinstance(item, str) and Path(item).is_file())
             for reference in references:
                 workspace.key(reference)
-                pending.append(reference.parent if reference.suffix == ".sqlite" else reference)
+                # Lineage points to provenance, not an instruction to re-ingest
+                # every ancestor. Capture its direct bundle in full; historical
+                # versions remain in the workspace. Explicit prior authority and
+                # job/recovery dependencies still expand normally.
+                pending.append((reference.parent if reference.suffix == ".sqlite" else reference,
+                                path.name != "external-lineage.json"))
     return existing_parents(list(visited))
 
 

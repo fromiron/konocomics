@@ -5,6 +5,7 @@ import subprocess
 import sys
 import tempfile
 import unittest
+import zlib
 from unittest.mock import patch
 from contextlib import closing
 from pathlib import Path
@@ -101,6 +102,48 @@ class WorkspaceTest(unittest.TestCase):
         with self.assertRaises(ValueError):
             self.workspace.backup(self.repo / "backup.sqlite")
 
+    def test_incremental_backup_is_complete_and_failure_preserves_both_generations(self):
+        first = self.workspace.save([self.inputs], "first")
+        self.workspace.backup()
+        self.workspace.backup()
+        previous = self.repo / ".workspace/backups/previous.sqlite"
+        latest = self.repo / ".workspace/backups/latest.sqlite"
+        before = (latest.read_bytes(), previous.read_bytes())
+        self.file.write_bytes(b"new original observation")
+        second = self.workspace.save([self.inputs], "second")
+        with patch.object(Workspace, "read_blob", side_effect=ValueError("corrupt delta")):
+            with self.assertRaisesRegex(ValueError, "corrupt delta"):
+                self.workspace.backup()
+        self.assertEqual((latest.read_bytes(), previous.read_bytes()), before)
+        with closing(sqlite3.connect(previous)) as db:
+            trigger = db.execute("SELECT sql FROM sqlite_master WHERE name='blob_no_update'").fetchone()[0]
+            db.execute("DROP TRIGGER blob_no_update")
+            db.execute("UPDATE blob SET content=X'00'")
+            db.execute(trigger)
+            db.commit()
+        # A new snapshot can reference an old blob: that byte content must be
+        # checked too, even though its header and schema still match.
+        self.file.write_bytes('音\r\n{"value":"unknown"}\n'.encode())
+        self.workspace.save([self.inputs], "references old blob")
+        with self.assertRaises((ValueError, zlib.error)):
+            self.workspace.backup()
+        previous.write_bytes(before[1])
+        receipt = self.workspace.backup()
+        self.assertEqual((receipt["mode"], receipt["addedSnapshots"]), ("append-only", 2))
+        self.assertEqual(Workspace(self.repo, previous).verify()["snapshots"], 1)
+        restored = Workspace(self.repo, latest)
+        self.assertEqual(restored.verify(), self.workspace.verify())
+        for snapshot in (first, second):
+            out = self.root / str(snapshot["snapshotId"])
+            restored.restore(snapshot["snapshotId"], out)
+        self.assertEqual((self.root / str(second["snapshotId"]) / ".tmp/job/原文.jsonl").read_bytes(), b"new original observation")
+        with closing(sqlite3.connect(previous)) as db:
+            db.execute("DROP TRIGGER snapshot_no_update")
+            db.commit()
+        with self.assertRaisesRegex(ValueError, "Backup schema"):
+            self.workspace.backup()
+        self.assertEqual(restored.verify(), self.workspace.verify())
+
     def test_failed_command_retains_input_and_partial_result(self):
         output = self.repo / ".tmp/output"
         command = [sys.executable, "-c", "import pathlib,sys; p=pathlib.Path(sys.argv[1]); p.mkdir(); (p/'failure.txt').write_text('real partial output'); sys.exit(7)", str(output)]
@@ -159,6 +202,22 @@ class WorkspaceTest(unittest.TestCase):
             db.commit()
         with self.assertRaisesRegex(ValueError, "Corrupt blob"):
             self.workspace.verify()
+
+    def test_direct_lineage_is_saved_without_recapturing_transitive_history(self):
+        baseline = self.repo / ".tmp/baseline"
+        baseline.mkdir()
+        (baseline / "catalog.sqlite").write_bytes(b"direct baseline bytes")
+        (baseline / "external-lineage.json").write_text(json.dumps({"baselineRoot": str(self.repo / ".tmp/historical-only")}))
+        (self.inputs / "external-lineage.json").write_text(json.dumps({"baselineRoot": str(baseline)}))
+        roots = authoring_inputs([self.inputs], self.workspace)
+        snapshot = self.workspace.save(roots, "direct lineage")
+        self.assertEqual(snapshot["files"], 4)
+        # A direct missing dependency still fails; only its older provenance is not executed.
+        (baseline / "catalog.sqlite").unlink()
+        (baseline / "external-lineage.json").unlink()
+        baseline.rmdir()
+        with self.assertRaises(FileNotFoundError):
+            self.workspace.save(authoring_inputs([self.inputs], self.workspace), "missing direct dependency")
 
     def test_recovery_declaration_preserves_epoch_scope_and_policy(self):
         epoch = self.repo / ".tmp/recovery-epoch.json"
