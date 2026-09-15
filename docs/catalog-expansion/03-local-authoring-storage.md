@@ -16,7 +16,7 @@
 | ----------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------ | ------------------------------------------------------------------------------------ |
 | `data/source/catalog.sqlite`                    | 검증·승격된 Catalog 작품·팩터·근거                                                                                       | 기존의 유일한 canonical Catalog 원천. 스키마·발행 권한 불변                          |
 | `.workspace/catalog-authoring/workspace.sqlite` | 수집 원문, 출처, 후보 팩터, job, 동결 입력, 판정 원장, 수정·HOLD·실패 기록, baseline/registry 및 재현에 필요한 계약·도구 | **저장된 작업 원본의 영구 저장소**. 저장 성공은 사실 검증·판정 승인·승격 성공이 아님 |
-| `.workspace` (기존 `.tmp` 연결 경로 포함)                                          | 기존 도구가 읽고 쓰는 JSON/CSV/Markdown/SQLite 작업 사본, 재생성 가능한 빌드·검토 출력                                   | 미저장 초안 또는 DB에서 복원한 투영. 유일한 보존 위치로 사용 금지                    |
+| `.workspace` (기존 `.tmp` 연결 경로 포함)       | 기존 도구가 읽고 쓰는 JSON/CSV/Markdown/SQLite 작업 사본, 재생성 가능한 빌드·검토 출력                                   | 미저장 초안 또는 DB에서 복원한 투영. 유일한 보존 위치로 사용 금지                    |
 
 서비스 런타임은 기존대로 정적 JSON을 사용한다. 사용자 Library·취향의 Dexie와 두 Rakuten route는 바꾸지 않는다. 작업 DB는 Git에 올리지 않는 로컬 저장소이며, canonical DB와 섞거나 대체하지 않는다.
 
@@ -130,9 +130,9 @@ DB 파일 자체를 잃었을 때는 백업을 읽는 `--database <backup.sqlite
 
 수집 검사는 내용의 진실성을 대신하지 않고, SQLite 저장은 수집 검사도 대신하지 않는다. 기존 `validate_factor_collection_batch.mjs --research=... --require-source-audit`와 `prepare_factor_batch.py freeze / seal-result / publish`, registry correction의 판정·검증·직렬 발행 순서를 유지한다.
 
-연결된 명령은 입력을 DB에 저장·백업한 뒤 원래 구현을 실행하고, 실제 결과 또는 남아 있는 실패 출력을 다시 저장·백업한 뒤 결과를 보고한다. SQLite 기록에는 단계별 snapshot ID가 남으며, 명령 인자·작업 경로·종료 코드와 stdout/stderr 원본도 중간 파일 없이 DB에 직접 기록한다. 저장·백업 실패는 정상 완료로 보고하지 않으며 기존 원본과 부분 결과를 보존한다. 발행 성공 뒤 저장 실패가 나면 실제 후보 DB가 존재할 수 있으므로 **같은 출력을 무조건 재실행하지 말고 먼저 readback**한다. current 갱신은 기존 최종 제품 검증 이후에만 한다.
+연결된 명령은 입력을 DB에 저장·백업한 뒤 원래 구현을 실행하고, 실제 결과 또는 남아 있는 실패 출력을 다시 저장·백업한 뒤 결과를 보고한다. SQLite 기록에는 단계별 snapshot ID가 남는다. 기존 operation 디렉터리에 실행 전 상태를 만들고 입력 snapshot에 포함한다. stdout/stderr는 실행 중부터 원시 파일로 기록하고, 정상 종료·실행 시작 실패·처리 가능한 인터럽트 뒤 실제 종료 상태와 남아 있는 부분 결과를 DB에 보존한다. 산출물 저장이 거부되면 `OUTPUT_SAVE_FAILED`와 원래 child 종료 코드·오류를 기록하고 operation/log 저장 및 백업은 진행한 뒤 원래 저장 실패를 반환한다. 이때 child stdout은 성공 응답으로 전달하지 않으며 보존된 원시 로그에서 확인한다. 이미 child가 삭제한 파생 stage까지 복구되는 것은 아니다. 인터럽트 시 subprocess.run이 직접 child의 종료를 확인한 뒤 저장한다. 강제 종료·전원 손실이나 별도로 분리된 descendant의 종료까지 보장하지 않으며, 남은 파일·프로세스와 실제 결과를 읽고 재개한다. 저장·백업 실패는 정상 완료로 보고하지 않으며 기존 원본과 부분 결과를 보존한다. 발행 성공 뒤 저장 실패가 나면 실제 후보 DB가 존재할 수 있으므로 **같은 출력을 무조건 재실행하지 말고 먼저 readback**한다. current 갱신은 기존 최종 제품 검증 이후에만 한다.
 
-`command.json`의 `timingsSeconds`는 단조 시계로 측정한 `inputSave`, `inputBackup`, `command`, `outputSave`를 보존한다. 마지막 stderr의 `authoringStorage.timingsSeconds`에는 `operationSave`, `outputBackup`, `total`도 포함한다. 마지막 백업의 시간은 그 백업 안에 소급 저장할 수 없으므로 최종 receipt에만 남으며, 진단값을 위해 추가 백업을 만들지 않는다. `total`은 입력 저장 시작부터 마지막 백업 완료까지이며 참조 입력 탐색·결과 출력 시간은 제외한다. 두 번의 백업과 원본·membership 검증은 유지한다.
+`command.json`의 `timingsSeconds`는 단조 시계로 측정한 `inputDiscovery`, `inputSave`, `inputBackup`, `command`, `outputSave`를 보존한다. 마지막 stderr의 `authoringStorage.timingsSeconds`에는 `operationSave`, `outputBackup`, `total`도 포함한다. 마지막 백업의 시간은 그 백업 안에 소급 저장할 수 없으므로 최종 receipt에만 남으며, 진단값을 위해 추가 백업을 만들지 않는다. `total`은 계측한 참조 입력 탐색부터 마지막 백업 완료까지다. 최종 stdout/stderr 출력과 원격 수집·모델 의미 판정·배정 대기는 제외한다. 이전 receipt의 total에는 입력 탐색이 빠져 있으므로 직접 같은 범위로 비교하지 않는다. 두 번의 백업과 원본·membership 검증은 유지한다.
 
 자동 연결되지 않은 일회성 authoring 명령은 같은 저장 경로로 감싼다. 입력에는 원본 job·연구·계약·참조 bundle을, 출력에는 실제 생성 디렉터리를 명시한다. 임의 명령의 부작용을 이 wrapper가 허가하거나 되돌려 주지는 않는다.
 
@@ -144,8 +144,11 @@ python scripts/catalog_workspace.py run --label <stage> --input <input-directory
 
 - 자동 백업은 `.workspace/backups/`에 생성한다. 사용자가 작업 환경을 옮길 때 `.workspace` 전체를 직접 백업한다.
 - 2026-09-14 최적화: 초기 세대와 별도 수동 checkpoint는 SQLite Backup API와 전체 SQLite 무결성 검사로 생성한다. 정상 자동 백업은 source writer를 직렬 잠그고 이전 세대의 schema·snapshot prefix·membership 수를 대조한 뒤 추가 blob·snapshot·entry를 하나의 트랜잭션으로 반영한다. 새 snapshot이 참조하는 모든 blob(기존 blob 포함)의 원문 SHA/압축 해제, 새 snapshot 전체 membership/manifest, FK 제약과 commit readback을 확인한다. 실패하면 rollback하고 최신 세대는 교체하지 않는다. 성공 후 `latest.sqlite`/`previous.sqlite`를 회전하며 **각 파일 안에 그 시점까지의 모든 논리 snapshot·원본 버전이 들어 있다.** 이름을 지정한 수동 checkpoint는 자동 교체하지 않는다.
+- 백업의 `pending.sqlite`는 교대 중인 완전 세대 또는 미완료 사본이다. 다음 자동 실행은 같은 writer lock 아래에서 SQLite/schema·source snapshot prefix를 확인해 중단된 이름 교대를 재개한다. 부분·무관·모호한 상태는 파일을 삭제하지 않고 실패시킨다. 기존 pending-* 사본은 임의로 삭제하지 않는다. 이 복구 확인은 pending이 남은 경우에만 수행하며 정상 백업에 전체 감사를 추가하지 않는다.
 - 변경되지 않은 과거 데이터의 전체 SQLite/원문/manifest 감사는 `verify`로 수행한다. 자동 백업마다 전 이력을 재검사하지 않는다. 손상 의심·복구·명시적 전체 감사에는 `verify`를 실행하며 복원은 항상 대상 원문 SHA를 재검증한다. 전체 검사와 증분 검사의 범위를 같은 증거로 표시하지 않는다.
 - 자동 입력 저장은 명시된 실행 입력과 직접 참조한 lineage bundle을 완전히 저장한다. lineage의 provenance 조상을 끝없이 따라 재수집하지 않는다. 명시적 prior authority·researchRef/researchRefs·recovery 의존은 계속 확장하며 원본·해시·역사적 snapshot은 삭제하지 않는다. 저장 범위 최적화는 실제 발행 validator의 권한/manifest 검사를 생략하는 옵션이 아니다.
+- 수집 검사에는 실제 collection validator와 storage/path helper를 보존하며 발행 helper·canonical을 요구하지 않는다. Factor prepare/publish/validation 등 해당 실행 스크립트에는 현재 사용하는 공통 코드와 기본 publisher, 역사 validator, integrator, safety validator 및 Gold·canonical·panel request를 연결한다. tools 디렉터리를 명시적으로 지정하면 전체 도구 묶음의 의존을 보존하므로 일반 명령은 실제 실행 파일을 입력으로 지정한다. 새로운 dependency crawler나 과거 전체 재수집은 하지 않는다. 외부 명령을 감싼 상위 run도 실제 tools/실행 스크립트를 --input에 포함한다. 저장 snapshot의 각 경로·SHA는 이번에 사용한 버전의 복원 연결이며 과거 다른 snapshot에 존재한다는 추정으로 대신하지 않는다.
+- `collect_factor_evidence.mjs`의 일반 취득·기록은 담당 디렉터리에만 쓰며 공유 writer를 시작하지 않는다. 원문 bytes, 구분된 browser/search 텍스트, draft/메모, session/events와 최종 JSONL을 완결된 전달분으로 함께 저장한다. `collection-session.json`이 있는 direct collection CLI는 실제 helper도 실행 입력에 포함하고, helper의 의존은 기존 collection validator까지만 확장한다. 취득/기록 보존에 publication·canonical 의존을 다시 연결하지 않는다. 실패 초안은 기존 save로 보존하고 정상 인계는 기존 직렬 run/백업 receipt를 확인한다.
 - 작업 저장소의 트랜잭션은 부분 저장을 성공으로 노출하지 않는다. 원본 파일이 읽는 도중 바뀌거나 파일 집합이 달라지면 저장을 거부한다. 아직 writer가 있거나 journal sidecar가 남은 원천 SQLite는 exact-byte 이관 전에 닫고 상태를 확인한다.
 - 복원은 SHA-256을 재계산하고 기존 경로 덮어쓰기·경로 이탈·symlink/junction을 거부한다. DB에 존재하지 않는 판정·근거는 합성하지 않는다.
 - 동일 디스크에 둔 별도 폴더는 `.tmp` 정리 사고에는 유용하지만 디스크 고장·랜섬웨어의 독립 백업이 아니다. 다른 디스크나 외부 백업은 별도 목적지 승인이 필요하며, 이번 전환은 로컬 백업까지만 수행한다.

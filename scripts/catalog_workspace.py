@@ -10,6 +10,7 @@ import argparse
 import hashlib
 import json
 import os
+import shutil
 import sqlite3
 import stat
 import subprocess
@@ -347,8 +348,35 @@ class Workspace:
         automatic = destination is None
         backup_root = unlinked(self.repo / ".workspace/backups")
         latest, previous = backup_root / "latest.sqlite", backup_root / "previous.sqlite"
-        if automatic and self.database in {latest, previous}:
+        pending = backup_root / "pending.sqlite"
+        if automatic and self.database in {latest, previous, pending}:
             raise ValueError("An automatic backup cannot rotate its own source; use an explicit new destination")
+        if automatic and pending.exists():
+            # A fixed pending name makes each interrupted rename resumable under
+            # the same writer lock. Never discard an ambiguous or partial copy.
+            if latest.exists() and previous.exists():
+                raise ValueError(f"Ambiguous backup rotation; all copies retained: {pending}")
+            unlinked(pending)
+            with closing(sqlite3.connect(pending.as_uri() + "?mode=rw", uri=True)) as recovery:
+                if (recovery.execute("PRAGMA application_id").fetchone()[0] != APPLICATION_ID
+                        or recovery.execute("PRAGMA user_version").fetchone()[0] != SCHEMA_VERSION
+                        or recovery.execute("PRAGMA integrity_check").fetchall() != [("ok",)]
+                        or recovery.execute("PRAGMA foreign_key_check").fetchall()):
+                    raise ValueError(f"Incomplete backup rotation; partial copy retained: {pending}")
+            snapshot, added = self._extend_backup(pending)
+            for reserved in (latest, previous):
+                unlinked(reserved)
+                if reserved.exists():
+                    with closing(Workspace(self.repo, reserved).connect()) as old, closing(self.connect()) as source:
+                        headers = old.execute("SELECT * FROM snapshot ORDER BY id").fetchall()
+                        last = headers[-1][0] if headers else 0
+                        if headers != source.execute("SELECT * FROM snapshot WHERE id<=? ORDER BY id", (last,)).fetchall():
+                            raise ValueError(f"Backup rotation history mismatch; copies retained: {reserved}")
+            if latest.exists():
+                os.replace(latest, previous)
+            os.replace(pending, latest)
+            return {"status": "BACKED_UP", "mode": "recovered-rotation", "destination": str(latest),
+                    "latestSnapshotId": snapshot[0], "snapshots": snapshot[1], "addedSnapshots": added}
         if automatic and latest.exists() and previous.exists():
             # Each generation remains a complete SQLite database. Append only the
             # delta to the older one; the latest stays untouched until commit.
@@ -361,14 +389,13 @@ class Workspace:
                             or old.execute("PRAGMA user_version").fetchone()[0] != SCHEMA_VERSION):
                         raise ValueError(f"Refusing to replace an unrelated backup: {reserved}")
             snapshot, added = self._extend_backup(previous)
-            pending = backup_root / ("pending-" + uuid.uuid4().hex + ".sqlite")
             os.replace(previous, pending)
             os.replace(latest, previous)
             os.replace(pending, latest)
             return {"status": "BACKED_UP", "mode": "append-only", "destination": str(latest),
                     "latestSnapshotId": snapshot[0], "snapshots": snapshot[1], "addedSnapshots": added}
         if destination is None:
-            destination = backup_root / ("pending-" + uuid.uuid4().hex + ".sqlite")
+            destination = pending
         destination = unlinked(destination)
         if (destination.is_relative_to(self.repo) and not destination.is_relative_to(backup_root)) or destination == self.database:
             raise ValueError("Backup must be in .workspace/backups or outside the repository, separate from the database")
@@ -442,39 +469,71 @@ class Workspace:
 
 
 def recorded_run(command: list[str], inputs: list[Path], outputs: list[Path], label: str,
-                 workspace: Workspace | None = None) -> int:
+                 workspace: Workspace | None = None, *, input_discovery_seconds: float = 0) -> int:
     """Persist before execution and before reporting success, including failed outputs."""
     workspace = workspace or Workspace()
+    if not inputs:
+        raise ValueError("Run requires explicit inputs")
     started = perf_counter()
-    before = workspace.save(inputs, label + ":input")
+    receipt_root = unlinked(workspace.repo / ".workspace/catalog-authoring/operations" / uuid.uuid4().hex)
+    workspace.key(receipt_root)
+    receipt_root.mkdir(parents=True, exist_ok=False)
+    receipt_path = receipt_root / "command.json"
+    receipt = {"argv": command, "cwd": os.getcwd(), "status": "PREPARED", "preparedAt": utc_now()}
+    receipt_path.write_text(json.dumps(receipt, ensure_ascii=True), encoding="utf-8")
+    before = workspace.save([*inputs, receipt_root], label + ":input")
     saved_input = perf_counter()
     workspace.backup()
     backed_up_input = perf_counter()
     child_env = {**os.environ, "KONOCOMICS_AUTHORING_RECORDED": "1", "PYTHONDONTWRITEBYTECODE": "1"}
-    # ponytail: authoring reports are small; spool logs to disk if output becomes large.
-    result = subprocess.run(command, env=child_env, capture_output=True)
+    receipt.update(inputSnapshot=before["snapshotId"], startedAt=utc_now(), status="RUNNING")
+    receipt_path.write_text(json.dumps(receipt, ensure_ascii=True), encoding="utf-8")
+    stdout_path, stderr_path = receipt_root / "stdout.bin", receipt_root / "stderr.bin"
+    with stdout_path.open("xb") as stdout, stderr_path.open("xb") as stderr:
+        try:
+            # subprocess.run kills and waits for its child on a handled interrupt.
+            # File-backed logs also survive an abrupt loss of this parent process.
+            exit_code = subprocess.run(command, env=child_env, stdout=stdout, stderr=stderr).returncode
+        except (OSError, KeyboardInterrupt) as error:
+            exit_code = 130 if isinstance(error, KeyboardInterrupt) else 127
+            receipt["executionError"] = f"{type(error).__name__}: {error}"
+            stderr.write((receipt["executionError"] + "\n").encode("utf-8"))
+        finally:
+            for stream in (stdout, stderr):
+                stream.flush()
+                os.fsync(stream.fileno())
     command_finished = perf_counter()
+    receipt.update(status="EXITED", exitCode=exit_code, finishedAt=utc_now())
+    receipt_path.write_text(json.dumps(receipt, ensure_ascii=True), encoding="utf-8")
     after_roots = [path for path in outputs if path.exists()]
-    after = workspace.save(after_roots, label + (":output" if result.returncode == 0 else ":failed-output")) if after_roots else None
+    after, output_error = None, None
+    try:
+        after = workspace.save(after_roots, label + (":output" if exit_code == 0 else ":failed-output")) if after_roots else None
+    except Exception as error:
+        # A rejected partial SQLite must not prevent durable logs and exit state.
+        output_error = error
+        receipt.update(status="OUTPUT_SAVE_FAILED", outputStorageError=f"{type(error).__name__}: {error}")
     saved_output = perf_counter()
-    timings = {"inputSave": saved_input - started, "inputBackup": backed_up_input - saved_input,
+    timings = {"inputDiscovery": input_discovery_seconds, "inputSave": saved_input - started, "inputBackup": backed_up_input - saved_input,
                "command": command_finished - backed_up_input, "outputSave": saved_output - command_finished}
-    receipt_root = ".workspace/catalog-authoring/operations/" + uuid.uuid4().hex
-    operation = workspace.save_bytes({
-        receipt_root + "/command.json": json.dumps({"argv": command, "cwd": os.getcwd(), "inputSnapshot": before["snapshotId"], "outputSnapshot": after["snapshotId"] if after else None, "exitCode": result.returncode, "finishedAt": utc_now(), "timingsSeconds": timings}, ensure_ascii=True).encode(),
-        receipt_root + "/stdout.bin": result.stdout,
-        receipt_root + "/stderr.bin": result.stderr,
-    }, label + ":exit-" + str(result.returncode))
+    receipt.update(outputSnapshot=after["snapshotId"] if after else None, timingsSeconds=timings)
+    receipt_path.write_text(json.dumps(receipt, ensure_ascii=True), encoding="utf-8")
+    operation = workspace.save([receipt_root], label + ":exit-" + str(exit_code))
     saved_operation = perf_counter()
     backup = workspace.backup()
     backed_up_output = perf_counter()
     timings.update(operationSave=saved_operation - saved_output, outputBackup=backed_up_output - saved_operation,
-                   total=backed_up_output - started)
+                   total=input_discovery_seconds + backed_up_output - started)
     # Publication PASS is not emitted until its actual result is saved and backed up.
-    sys.stdout.buffer.write(result.stdout)
-    sys.stderr.buffer.write(result.stderr)
+    for path, stream in ((stdout_path, sys.stdout.buffer), (stderr_path, sys.stderr.buffer)):
+        if path == stdout_path and output_error is not None:
+            continue
+        with path.open("rb") as content:
+            shutil.copyfileobj(content, stream)
     print(json.dumps({"authoringStorage": {"input": before, "output": after, "operation": operation, "backup": backup, "timingsSeconds": timings}}, ensure_ascii=True), file=sys.stderr)
-    return result.returncode
+    if output_error is not None:
+        raise output_error
+    return exit_code
 
 
 def authoring_inputs(paths: list[Path], workspace: Workspace | None = None) -> list[Path]:
@@ -491,6 +550,34 @@ def authoring_inputs(paths: list[Path], workspace: Workspace | None = None) -> l
         if not expand:
             continue
         expanded.add(root)
+        tools_root = workspace.repo / ".workspace/catalog-expansion-continuation-20260902/tools"
+        if root.resolve() == workspace.repo / "scripts/catalog_workspace.py":
+            pending.append((workspace.repo / "scripts/workspace_paths.py", False))
+        if root.resolve() == tools_root / "collect_factor_evidence.mjs":
+            pending.append((tools_root / "validate_factor_collection_batch.mjs", False))
+        if root.resolve() == workspace.repo / "scripts/catalog_authoring_runner.py":
+            pending.extend((path, True) for path in (tools_root / "prepare_factor_batch.py", workspace.repo / "scripts/readback-catalog-authoring.mts"))
+        if root.resolve() == tools_root or (root.resolve().parent == tools_root and root.name in {
+            "prepare_factor_batch.py", "publish_factor_batch.py", "correct_factor_registry.py",
+            "validate_factor_panel.py", "plan_factor_backlog.py", "prepare_factor_rescue_004.py",
+        }):
+            # Factor operators use these helpers. A collector does not read them
+            # and must remain usable when publication inputs are unavailable.
+            backend = workspace.repo / ".tmp/catalog-followup/batch001-20260902/konocomics-v5-panel-batch-001-of-008"
+            runtime_inputs = [
+                *(tools_root / name for name in (
+                    "prepare_factor_batch.py", "publish_factor_batch.py", "validate_factor_panel.py",
+                    "factor_recovery.py", "factor_single_pass.py", "prepare_factor_rescue_004.py", "prepare_ready_safety.py",
+                )),
+                backend / "followup-panel-tools/publish_authorized_followup.py",
+                backend / "followup-panel-tools/validate_panel_results.py",
+                backend / "integration-publisher-v1/integrate.py",
+                backend / "safety-recheck-v1/tools/validate_safety_recheck.py",
+                tools_root.parent / "FACTOR-PANEL-REQUEST.md",
+                workspace.repo / "data/staging/catalog-expansion/gold-set-manifest.json",
+                workspace.repo / "data/source/catalog.sqlite",
+            ]
+            pending.extend((path, False) for path in runtime_inputs)
         for path in workspace.files([root]):
             if path.suffix != ".json" or (path != root and not path.name.startswith("records") and path.name not in {"authoring-job.json", "external-prior-authority.json", "external-lineage.json", "recovery-epoch.json", "recovery-declaration.json"}):
                 continue
@@ -505,7 +592,7 @@ def authoring_inputs(paths: list[Path], workspace: Workspace | None = None) -> l
                 for field in ("epochPath", "scopePath", "policyPath"):
                     if isinstance(value.get(field), str):
                         references.append(Path(value[field]))
-            if value.get("schemaVersion") == "factor-authoring-job-v3":
+            if value.get("schemaVersion") in {"factor-authoring-job-v3", "factor-authoring-job-v4"}:
                 for work in value.get("works", []) if isinstance(value.get("works"), list) else []:
                     refs = work.get("researchRefs", [work.get("researchRef", {})]) if isinstance(work, dict) else []
                     for reference in refs if isinstance(refs, list) else []:
@@ -539,7 +626,7 @@ def record_arguments(script: Path, args: argparse.Namespace, argv: list[str] | N
     if os.environ.get("KONOCOMICS_AUTHORING_RECORDED") == "1":
         return None
     workspace = Workspace()
-    inputs, outputs = [script.resolve().parent], []
+    inputs, outputs = [script.resolve()], []
 
     def paths(value):
         if isinstance(value, Path):
@@ -550,18 +637,21 @@ def record_arguments(script: Path, args: argparse.Namespace, argv: list[str] | N
 
     for field, value in vars(args).items():
         for path in paths(value):
-            if field in {"output_root", "publication_root", "output_dir"}:
+            if field in {"output_root", "publication_root", "output_dir", "result_output_root"}:
                 outputs.append(path)
                 if path.exists():
                     inputs.append(path)
             else:
                 inputs.append(path.parent if path.suffix == ".sqlite" else path)
-                if field in {"job", "ledger", "changes", "research"} and path.is_file():
+                if field in {"job", "ledger", "decisions", "changes", "research"} and path.is_file():
                     inputs.append(path.parent)
     for name in ("docs/factors", "docs/catalog-expansion", "docs/planning/09-catalog-authoring-authority.md", "scripts/catalog_workspace.py", "scripts/workspace_paths.py"):
         inputs.append(workspace.repo / name)
     label = script.stem + ":" + getattr(args, "action", "run")
-    return recorded_run([sys.executable, str(script.resolve()), *(sys.argv[1:] if argv is None else argv)], authoring_inputs(inputs, workspace), outputs, label, workspace)
+    discovery_started = perf_counter()
+    inputs = authoring_inputs(inputs, workspace)
+    return recorded_run([sys.executable, str(script.resolve()), *(sys.argv[1:] if argv is None else argv)], inputs, outputs, label, workspace,
+                        input_discovery_seconds=perf_counter() - discovery_started)
 
 
 def main() -> int:
@@ -607,7 +697,10 @@ def main() -> int:
         command = args.argv[1:] if args.argv[:1] == ["--"] else args.argv
         if not command:
             parser.error("run requires an existing command after --")
-        return recorded_run(command, authoring_inputs(args.input, workspace), args.output, args.label, workspace)
+        discovery_started = perf_counter()
+        inputs = authoring_inputs(args.input, workspace)
+        return recorded_run(command, inputs, args.output, args.label, workspace,
+                            input_discovery_seconds=perf_counter() - discovery_started)
     print(json.dumps(result, ensure_ascii=True))
     return 0
 

@@ -1,5 +1,6 @@
 """Run with: python scripts/test_catalog_workspace.py (stdlib only)."""
 import json
+import os
 import sqlite3
 import subprocess
 import sys
@@ -81,6 +82,9 @@ class WorkspaceTest(unittest.TestCase):
             self.workspace.backup(backup)
 
     def test_invalid_paths_missing_files_and_active_sqlite_fail_closed(self):
+        with self.assertRaisesRegex(ValueError, "explicit inputs"):
+            recorded_run([sys.executable], [], [], "missing input", self.workspace)
+        self.assertFalse((self.repo / ".workspace/catalog-authoring/operations").exists())
         for key in ("../escape", "/absolute", "C:/root", "a/../b", "a\\b", "a//b", "a/./b"):
             with self.assertRaises(ValueError):
                 key_path(key)
@@ -152,15 +156,85 @@ class WorkspaceTest(unittest.TestCase):
         with closing(self.workspace.connect()) as db:
             label = db.execute("SELECT label FROM snapshot ORDER BY id DESC LIMIT 1").fetchone()[0]
             self.assertEqual(label, "failure:exit-7")
-            receipt_sha = db.execute("SELECT sha256 FROM entry WHERE path LIKE '%/command.json'").fetchone()[0]
+            receipt_sha = db.execute("SELECT sha256 FROM entry WHERE path LIKE '%/command.json' ORDER BY snapshot_id DESC LIMIT 1").fetchone()[0]
             receipt = json.loads(self.workspace.read_blob(db, receipt_sha))
             self.assertEqual(receipt["exitCode"], 7)
-            self.assertEqual(set(receipt["timingsSeconds"]), {"inputSave", "inputBackup", "command", "outputSave"})
+            self.assertEqual(set(receipt["timingsSeconds"]), {"inputDiscovery", "inputSave", "inputBackup", "command", "outputSave"})
             self.assertTrue(all(value >= 0 for value in receipt["timingsSeconds"].values()))
         backups = list((self.repo / ".workspace/backups").glob("*.sqlite"))
         self.assertEqual(len(backups), 2)
         with closing(Workspace(self.repo, self.repo / ".workspace/backups/latest.sqlite").connect()) as db:
             self.assertEqual(json.loads(self.workspace.read_blob(db, receipt_sha)), receipt)
+
+    def test_backup_resumes_each_interrupted_rotation_without_losing_versions(self):
+        replace = os.replace
+        for fail_at in range(3):
+            with self.subTest(rename=fail_at):
+                repo = self.root / f"rotation-{fail_at}"
+                repo.mkdir()
+                artifact = repo / "original.txt"
+                artifact.write_bytes(b"original")
+                store = Workspace(repo)
+                first = store.save([artifact], "first")
+                store.backup()
+                store.backup()
+                artifact.write_bytes(b"second")
+                second = store.save([artifact], "second")
+                calls = 0
+
+                def interrupted_replace(source, target):
+                    nonlocal calls
+                    step = calls
+                    calls += 1
+                    if step == fail_at:
+                        raise OSError("interrupted rotation")
+                    replace(source, target)
+
+                with patch("catalog_workspace.os.replace", side_effect=interrupted_replace):
+                    with self.assertRaisesRegex(OSError, "interrupted rotation"):
+                        store.backup()
+                receipt = store.backup()
+                self.assertEqual(receipt["latestSnapshotId"], second["snapshotId"])
+                self.assertFalse((repo / ".workspace/backups/pending.sqlite").exists())
+                restored = Workspace(repo, Path(receipt["destination"]))
+                self.assertEqual(restored.verify(), store.verify())
+                for snapshot, expected in ((first, b"original"), (second, b"second")):
+                    destination = repo / f"restore-{snapshot['snapshotId']}"
+                    restored.restore(snapshot["snapshotId"], destination)
+                    self.assertEqual((destination / "original.txt").read_bytes(), expected)
+
+    def test_incomplete_backup_rotation_is_retained_and_rejected(self):
+        self.workspace.save([self.inputs], "first")
+        latest = Path(self.workspace.backup()["destination"])
+        before = latest.read_bytes()
+        pending = latest.with_name("pending.sqlite")
+        pending.write_bytes(b"")
+        with self.assertRaisesRegex(ValueError, "partial copy retained"):
+            self.workspace.backup()
+        self.assertEqual(latest.read_bytes(), before)
+        self.assertEqual(pending.read_bytes(), b"")
+
+    def test_launch_failure_and_handled_interrupt_leave_durable_receipts_and_logs(self):
+        self.assertEqual(recorded_run([str(self.root / "missing.exe")], [self.inputs], [], "launch", self.workspace), 127)
+        output = self.repo / "interrupted-output"
+
+        def interrupted(*_args, **kwargs):
+            output.mkdir()
+            (output / "partial.txt").write_bytes(b"partial result")
+            kwargs["stdout"].write(b"output before interrupt\n")
+            raise KeyboardInterrupt()
+
+        with patch("catalog_workspace.subprocess.run", side_effect=interrupted):
+            self.assertEqual(recorded_run([sys.executable], [self.inputs], [output], "interrupt", self.workspace), 130)
+        backup = Workspace(self.repo, self.repo / ".workspace/backups/latest.sqlite")
+        with closing(backup.connect()) as db:
+            receipts = [json.loads(backup.read_blob(db, sha)) for (sha,) in db.execute(
+                "SELECT sha256 FROM entry WHERE path LIKE '%/command.json' ORDER BY snapshot_id")]
+            self.assertEqual([row["exitCode"] for row in receipts if row["status"] == "EXITED"], [127, 130])
+            self.assertEqual(sum(row["status"] == "PREPARED" for row in receipts), 2)
+            paths = {path: backup.read_blob(db, sha) for path, sha in db.execute("SELECT path,sha256 FROM entry")}
+            self.assertEqual(paths["interrupted-output/partial.txt"], b"partial result")
+            self.assertIn(b"output before interrupt\n", paths.values())
 
     def test_concurrent_writers_keep_both_snapshots(self):
         self.workspace.save([self.inputs], "initialize")
@@ -178,11 +252,12 @@ class WorkspaceTest(unittest.TestCase):
         (prior / "MANIFEST.sha256").write_text("actual manifest fixture")
         source = self.repo / ".tmp/research.jsonl"
         source.write_text("actual source bytes")
-        (self.inputs / "records.json").write_text(json.dumps({"schemaVersion": "factor-authoring-job-v3", "works": [{"researchRef": {"path": "../research.jsonl"}}]}))
         (self.inputs / "external-prior-authority.json").write_text(json.dumps({"bundles": [{"root": str(prior)}]}))
-        roots = authoring_inputs([self.inputs], self.workspace)
-        snapshot = self.workspace.save(roots, "with dependencies")
-        self.assertEqual(snapshot["files"], 5)
+        for version in ("factor-authoring-job-v3", "factor-authoring-job-v4"):
+            (self.inputs / "records.json").write_text(json.dumps({"schemaVersion": version, "works": [{"researchRef": {"path": "../research.jsonl"}}]}))
+            roots = authoring_inputs([self.inputs], self.workspace)
+            snapshot = self.workspace.save(roots, "with dependencies")
+            self.assertEqual(snapshot["files"], 5)
         source.unlink()
         with self.assertRaises(FileNotFoundError):
             authoring_inputs([self.inputs], self.workspace)
@@ -218,6 +293,51 @@ class WorkspaceTest(unittest.TestCase):
         baseline.rmdir()
         with self.assertRaises(FileNotFoundError):
             self.workspace.save(authoring_inputs([self.inputs], self.workspace), "missing direct dependency")
+
+    def test_collection_capture_does_not_require_publication_dependencies(self):
+        script = self.repo / ".workspace/catalog-expansion-continuation-20260902/tools/validate_factor_collection_batch.mjs"
+        script.parent.mkdir(parents=True)
+        script.write_text("// collection validator bytes\n")
+        helper = self.repo / "scripts/catalog_workspace.py"
+        helper.parent.mkdir()
+        helper.write_text("# storage helper bytes\n")
+        paths = helper.with_name("workspace_paths.py")
+        paths.write_text("# path helper bytes\n")
+        collector = script.with_name("collect_factor_evidence.mjs")
+        collector.write_text("// acquisition and recording helper bytes\n")
+        canonical = self.repo / "data/source/catalog.sqlite"
+        canonical.parent.mkdir(parents=True)
+        canonical.write_bytes(b"unrelated active canonical")
+        Path(str(canonical) + "-wal").touch()
+        roots = authoring_inputs([self.inputs, script, helper], self.workspace)
+        saved = self.workspace.save(roots, "collection without publishing")
+        self.assertEqual(saved["files"], 4)
+        with closing(self.workspace.connect()) as db:
+            captured = {row[0] for row in db.execute("SELECT path FROM entry")}
+        self.assertIn(self.workspace.key(paths), captured)
+        self.assertNotIn(self.workspace.key(canonical), captured)
+        recording_roots = authoring_inputs([self.inputs, collector, helper], self.workspace)
+        recording = self.workspace.save(recording_roots, "recording includes its validator")
+        self.assertEqual(recording["files"], 5)
+        self.assertIn(script, recording_roots)
+        self.assertNotIn(canonical, recording_roots)
+
+    def test_output_capture_failure_still_backs_up_exit_state_and_logs(self):
+        output = self.repo / ".tmp/partial.sqlite"
+        command = [sys.executable, "-c", "import pathlib,sys; p=pathlib.Path(sys.argv[1]); p.write_bytes(b'partial'); pathlib.Path(str(p)+'-wal').touch(); print('child output'); sys.exit(7)", str(output)]
+        with self.assertRaisesRegex(ValueError, "Close/checkpoint"):
+            recorded_run(command, [self.inputs], [output], "uncapturable result", self.workspace)
+        backup = Workspace(self.repo, self.repo / ".workspace/backups/latest.sqlite")
+        with closing(backup.connect()) as db:
+            path, sha = db.execute("SELECT path,sha256 FROM entry WHERE path LIKE '%/command.json' ORDER BY snapshot_id DESC LIMIT 1").fetchone()
+            receipt = json.loads(backup.read_blob(db, sha))
+            self.assertEqual((receipt["status"], receipt["exitCode"]), ("OUTPUT_SAVE_FAILED", 7))
+            self.assertIn("Close/checkpoint", receipt["outputStorageError"])
+            self.assertIsNone(receipt["outputSnapshot"])
+            sha = db.execute("SELECT sha256 FROM entry WHERE path=? ORDER BY snapshot_id DESC LIMIT 1", (str(Path(path).with_name("stdout.bin")).replace("\\", "/"),)).fetchone()[0]
+            self.assertIn(b"child output", backup.read_blob(db, sha))
+        self.assertEqual(output.read_bytes(), b"partial")
+        self.assertTrue(Path(str(output) + "-wal").exists())
 
     def test_recovery_declaration_preserves_epoch_scope_and_policy(self):
         epoch = self.repo / ".tmp/recovery-epoch.json"

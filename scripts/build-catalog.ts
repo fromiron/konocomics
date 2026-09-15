@@ -116,37 +116,43 @@ export function buildCatalog(
     throw new Error("Catalog build refused because validation failed.");
   }
   const artifacts = [
-    ...catalogOutputs.map((output) => ({ output, value: catalog })),
-    { output: publicCatalogOutput, value: catalog },
-    ...contextOutputs.map((output) => ({ output, value: context })),
-    { output: publicContextOutput, value: context },
+    { outputs: [...catalogOutputs, publicCatalogOutput], value: catalog },
+    { outputs: [...contextOutputs, publicContextOutput], value: context },
     {
-      output: resolve(canonicalRoot, "data/generated/recommendation-profile-catalog-v1.json"),
+      outputs: [resolve(canonicalRoot, "data/generated/recommendation-profile-catalog-v1.json")],
       value: recommendationProjection.catalog,
     },
     {
-      output: resolve(canonicalRoot, "data/generated/recommendation-profile-context-v1.json"),
+      outputs: [resolve(canonicalRoot, "data/generated/recommendation-profile-context-v1.json")],
       value: recommendationProjection.context,
     },
     {
-      output: resolve(canonicalRoot, "src/data/generated/catalog-identity-v1.json"),
+      outputs: [resolve(canonicalRoot, "src/data/generated/catalog-identity-v1.json")],
       value: catalogIdentity,
     },
     {
-      output: resolve(canonicalRoot, "src/data/generated/landing-v1.json"),
+      outputs: [resolve(canonicalRoot, "src/data/generated/landing-v1.json")],
       value: landingProjection,
     },
   ];
-  for (const { output, value } of artifacts) {
-    mkdirSync(dirname(output), { recursive: true });
-    const temporaryOutput = `${output}.tmp`;
-    writeFileSync(temporaryOutput, `${JSON.stringify(value, null, 2)}\n`, "utf8");
-    renameSync(temporaryOutput, output);
+  for (const { outputs, value } of artifacts) {
+    const content = `${JSON.stringify(value, null, 2)}\n`;
+    for (const output of outputs) {
+      mkdirSync(dirname(output), { recursive: true });
+      const temporaryOutput = `${output}.tmp`;
+      writeFileSync(temporaryOutput, content, "utf8");
+      renameSync(temporaryOutput, output);
+    }
   }
   console.log(
     `Built ${catalog.catalogVersion} with ${catalog.works.length} works and recommendation context.`,
   );
-  const result = { catalog, context, issues, artifactPaths: artifacts.map(({ output }) => output) };
+  const result = {
+    catalog,
+    context,
+    issues,
+    artifactPaths: artifacts.flatMap(({ outputs }) => outputs),
+  };
   if (options.verify) {
     const validation = validateCatalogArtifacts(canonicalRoot, result, options.compact);
     const coverage = reportCoverage(result, options.compact);
