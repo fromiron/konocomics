@@ -1,6 +1,6 @@
 # konocomics Taste vs Baseline レポート
 
-- カタログバージョン: v1\-dcba494b009a
+- カタログバージョン: v1\-9902e9918115
 - ファクター辞書バージョン: v1
 - Baseline バージョン: v1
 - プロフィール数: 3
@@ -446,7 +446,7 @@
   - 「頭脳で解決する展開」があなたの好みに合う作品です。
   - 『DEATH NOTE』で好きだった「描き込みの密度」に近い作品です。
 - 注意点: ただし「ホラー」は、『DEATH NOTE』で好きだった傾向と少し異なります。
-- 根拠アンカー: DEATH NOTE (death\-note)
+- 根拠アンカー: DEATH NOTE (death\-note), MONSTER (monster)
 - 適用された減点: なし
 - カバレッジ警告:
   - PARTIAL / tone / coverage=0.714285714286 / threshold=0.6 / adjustedScore=0.728855721393
@@ -471,7 +471,7 @@
   - 「捜査・調査」があなたの好みに合う作品です。
   - 『DEATH NOTE』で好きだった「ホラー」に近い作品です。
 - 注意点: なし
-- 根拠アンカー: DEATH NOTE (death\-note)
+- 根拠アンカー: DEATH NOTE (death\-note), MONSTER (monster)
 - 適用された減点: なし
 - カバレッジ警告:
   - PARTIAL / art / coverage=0.75 / threshold=0.3 / adjustedScore=0.916666666667
@@ -495,7 +495,7 @@
   - 「頭脳で解決する展開」があなたの好みに合う作品です。
   - 『DEATH NOTE』で好きだった「ホラー」に近い作品です。
 - 注意点: なし
-- 根拠アンカー: DEATH NOTE (death\-note)
+- 根拠アンカー: DEATH NOTE (death\-note), MONSTER (monster)
 - 適用された減点: なし
 - カバレッジ警告:
   - PARTIAL / art / coverage=0.75 / threshold=0.3 / adjustedScore=0.916666666667
@@ -519,7 +519,7 @@
   - 「頭脳で解決する展開」があなたの好みに合う作品です。
   - 『DEATH NOTE』で好きだった「リアル寄りの絵」に近い作品です。
 - 注意点: ただし「ホラー」は、『DEATH NOTE』で好きだった傾向と少し異なります。
-- 根拠アンカー: DEATH NOTE (death\-note)
+- 根拠アンカー: DEATH NOTE (death\-note), MONSTER (monster)
 - 適用された減点: なし
 - カバレッジ警告:
   - PARTIAL / narrative / coverage=0.833333333333 / threshold=0.6 / adjustedScore=0.808791208791
@@ -594,7 +594,7 @@
   - 『ダンジョン飯』で好きだった「リアル寄りの絵」に近い作品です。
   - 『ダンジョン飯』で好きだった「アクション」に近い作品です。
 - 注意点: ただし「料理」は、『ダンジョン飯』で好きだった傾向と少し異なります。
-- 根拠アンカー: ダンジョン飯 (dungeon\-meshi)
+- 根拠アンカー: ダンジョン飯 (dungeon\-meshi), 鋼の錬金術師 (fullmetal\-alchemist)
 - 適用された減点: なし
 - カバレッジ警告:
   - PARTIAL / tone / coverage=0.857142857143 / threshold=0.6 / adjustedScore=0.789883268482
@@ -619,7 +619,7 @@
   - 「頭脳で解決する展開」があなたの好みに合う作品です。
   - 『鋼の錬金術師』で好きだった「アクション」に近い作品です。
 - 注意点: なし
-- 根拠アンカー: 鋼の錬金術師 (fullmetal\-alchemist)
+- 根拠アンカー: 鋼の錬金術師 (fullmetal\-alchemist), ダンジョン飯 (dungeon\-meshi)
 - 適用された減点: なし
 - カバレッジ警告: なし
 - 寄与度上位5件:

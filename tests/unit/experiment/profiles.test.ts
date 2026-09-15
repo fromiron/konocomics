@@ -38,7 +38,7 @@ describe("experiment profile loading", () => {
   it("resolves explicit paths without discovering defaults", async () => {
     await expect(
       resolveExperimentProfilePaths(["custom/profile.json"], "/workspace"),
-    ).resolves.toEqual(["/workspace/custom/profile.json"]);
+    ).resolves.toEqual([resolve("/workspace", "custom/profile.json")]);
   });
 
   it("discovers the approved fixture paths when profiles are omitted", async () => {

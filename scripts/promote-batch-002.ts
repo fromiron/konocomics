@@ -1093,7 +1093,7 @@ export function prepareBatch002Promotion(root = process.cwd()): PreparedPromotio
     const summary = assertRegistryTransition(canonicalRoot, candidateRoot, overlay);
     const built = buildCatalog(candidateRoot, "csv");
     const profile = z
-      .object({ works: z.array(z.unknown()) })
+      .object({ works: z.array(z.object({ id: z.string() })) })
       .parse(
         JSON.parse(
           readFileSync(
@@ -1102,12 +1102,22 @@ export function prepareBatch002Promotion(root = process.cwd()): PreparedPromotio
           ),
         ) as unknown,
       );
+    const currentWorks = loadCatalogSource(join(canonicalRoot, "data/source")).source.works;
+    const verifiedIds = new Set(overlay.verifiedIds);
+    // Preserve non-target eligibility; the legacy registry cannot count later approvals.
+    const expectedProfileIds = currentWorks
+      .map((row) => row.value)
+      .filter((work) => work.recommendationEligible || verifiedIds.has(work.id))
+      .map((work) => work.id)
+      .sort();
     if (
-      built.catalog.works.length !==
-        loadCatalogSource(join(canonicalRoot, "data/source")).source.works.length ||
-      profile.works.length !== summary.goldCount + summary.verifiedCount
+      built.catalog.works.length !== currentWorks.length ||
+      JSON.stringify(profile.works.map((work) => work.id).sort()) !==
+        JSON.stringify(expectedProfileIds)
     ) {
-      throw new Error("Generated recommendation projection disagrees with Batch 002 registry");
+      throw new Error(
+        "Generated recommendation projection disagrees with approved Batch 002 source transition",
+      );
     }
     assertPilotPublishSnapshot(
       getPilotPublishDigests(canonicalRoot),

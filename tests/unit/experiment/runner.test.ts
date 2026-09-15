@@ -37,10 +37,17 @@ describe("baseline experiment runner", () => {
 
   it("keeps the documented silent package-manager stdout byte-identical", async () => {
     const golden = await readFile(goldenPath, "utf8");
-    const result = await execFileAsync("npm", ["run", "--silent", "experiment:baseline"], {
-      cwd: process.cwd(),
-      maxBuffer: 1024 * 1024,
-    });
+    expect(process.env.npm_execpath).toBeTruthy();
+    const packageManager = process.env.npm_execpath!;
+    const javascriptEntry = /\.[cm]?js$/u.test(packageManager);
+    const result = await execFileAsync(
+      javascriptEntry ? process.execPath : packageManager,
+      [...(javascriptEntry ? [packageManager] : []), "--silent", "experiment:baseline"],
+      {
+        cwd: process.cwd(),
+        maxBuffer: 1024 * 1024,
+      },
+    );
 
     expect(result.stdout).toBe(golden);
     expect(result.stderr).toBe("");

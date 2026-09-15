@@ -41,7 +41,16 @@ describe("promotion registry", () => {
     expect(rows.filter((row) => row.promotionOutcome === "gold")).toHaveLength(150);
     expect(verifiedRows).toHaveLength(1_291);
     expect(blockedRows).toHaveLength(173);
-    expect(rows.filter((row) => row.promotionOutcome === "pending")).toHaveLength(0);
+    // Newly imported works without this registry's source mapping must stay pending.
+    const mappedIds = new Set(input.expansion.mappings.map((mapping) => mapping.workId));
+    const blockedIds = new Set(input.blockers.map((blocker) => blocker.workId));
+    expect(
+      rows.filter((row) => row.promotionOutcome === "pending").map((row) => row.workId),
+    ).toEqual(
+      expectedWorkIds.filter(
+        (id) => !input.goldWorkIds.includes(id) && !mappedIds.has(id) && !blockedIds.has(id),
+      ),
+    );
     expect(rows.filter((row) => row.promotionOutcome === "pending")).toHaveLength(
       expectedWorkIds.length - input.goldWorkIds.length - verifiedRows.length - blockedRows.length,
     );

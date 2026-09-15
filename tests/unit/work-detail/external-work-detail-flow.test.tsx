@@ -235,6 +235,14 @@ describe("ExternalWorkDetailFlow", () => {
     render(<ExternalDetailFromLocation />);
 
     await screen.findByRole("heading", { level: 1, name: record.title });
+    const saveButton = screen.getByRole<HTMLButtonElement>("button", {
+      name: libraryStrings.editor.save,
+    });
+    expect(saveButton.disabled).toBe(true);
+    fireEvent.change(screen.getAllByRole<HTMLSelectElement>("combobox")[0]!, {
+      target: { value: "completed" },
+    });
+    expect(saveButton.disabled).toBe(false);
     const form = screen.getByRole("button", { name: libraryStrings.editor.save }).closest("form")!;
     fireEvent.submit(form);
     fireEvent.submit(form);
@@ -255,6 +263,14 @@ describe("ExternalWorkDetailFlow", () => {
     render(<ExternalDetailFromLocation />);
 
     await screen.findByRole("heading", { level: 1, name: record.title });
+    const saveButton = screen.getByRole<HTMLButtonElement>("button", {
+      name: libraryStrings.editor.save,
+    });
+    expect(saveButton.disabled).toBe(true);
+    fireEvent.change(screen.getAllByRole<HTMLSelectElement>("combobox")[0]!, {
+      target: { value: "completed" },
+    });
+    expect(saveButton.disabled).toBe(false);
     fireEvent.click(screen.getByRole("button", { name: libraryStrings.editor.save }));
 
     expect((await screen.findByRole("alert")).textContent).toBe(externalDetailStrings.state.error);

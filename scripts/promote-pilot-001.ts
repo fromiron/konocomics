@@ -898,7 +898,7 @@ export function preparePilotPromotion(root = process.cwd()): PreparedPromotion {
     const summary = assertRegistryTransition(canonicalRoot, candidateRoot, approval.targetWorkIds);
     const built = buildCatalog(candidateRoot, "csv");
     const profile = z
-      .object({ works: z.array(z.unknown()) })
+      .object({ works: z.array(z.object({ id: z.string() })) })
       .parse(
         JSON.parse(
           readFileSync(
@@ -908,11 +908,21 @@ export function preparePilotPromotion(root = process.cwd()): PreparedPromotion {
         ) as unknown,
       );
     const profileWorkCount = profile.works.length;
+    // The legacy registry has a narrower provenance scope than the current Catalog.
+    // Preserve all eligible non-target works and admit exactly the approved targets.
+    const targetIds = new Set(approval.targetWorkIds);
+    const expectedProfileIds = [...currentWorks.values()]
+      .filter((work) => work.recommendationEligible || targetIds.has(work.id))
+      .map((work) => work.id)
+      .sort();
     if (
       built.catalog.works.length !== currentWorks.size ||
-      profileWorkCount !== summary.goldCount + summary.verifiedCount
+      JSON.stringify(profile.works.map((work) => work.id).sort()) !==
+        JSON.stringify(expectedProfileIds)
     ) {
-      throw new Error("Generated recommendation projection disagrees with promotion registry");
+      throw new Error(
+        "Generated recommendation projection disagrees with approved source transition",
+      );
     }
     assertPilotPublishSnapshot(
       getPilotPublishDigests(canonicalRoot),

@@ -114,7 +114,10 @@ describe("atomic experiment output", () => {
 
     await expect(readFile(output, "utf8")).resolves.toBe("second");
     await expect(readFile(`${output}.tmp`, "utf8")).rejects.toBeDefined();
-    expect((await stat(output)).mode & 0o777).toBe(0o600);
+    // Windows exposes writable/readable bits, not POSIX owner/group permissions.
+    if (process.platform !== "win32") {
+      expect((await stat(output)).mode & 0o777).toBe(0o600);
+    }
   });
 
   it("rejects a symlinked output parent that aliases an input target", async () => {

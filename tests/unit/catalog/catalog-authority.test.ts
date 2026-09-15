@@ -203,6 +203,9 @@ describe("SQLite Catalog authority", () => {
     const originalDatabase = join(repositorySource, CATALOG_DATABASE_FILE);
     const originalDigest = sha256(readFileSync(originalDatabase));
     try {
+      const originalAliases = readCatalogAuthority(repositorySource).find(
+        (table) => table.path === "aliases.csv",
+      )!.rows;
       writeCatalogCsvProjection(repositorySource, projected);
       const aliases = join(projected, "aliases.csv");
       writeFileSync(
@@ -216,7 +219,14 @@ describe("SQLite Catalog authority", () => {
       expect(existsSync(aliases)).toBe(false);
       expect(
         readCatalogAuthority(projected).find((table) => table.path === "aliases.csv")?.rows,
-      ).toHaveLength(179);
+      ).toEqual([
+        ...originalAliases,
+        {
+          sourceOrdinal: originalAliases.length + 1,
+          sourceLine: originalAliases.length + 2,
+          values: ["dungeon-meshi", "ダンジョン飯テスト"],
+        },
+      ]);
       expect(sha256(readFileSync(originalDatabase))).toBe(originalDigest);
     } finally {
       rmSync(root, { recursive: true, force: true });

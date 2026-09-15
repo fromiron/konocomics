@@ -1,6 +1,6 @@
 // @vitest-environment jsdom
 
-import { StrictMode, type ReactNode } from "react";
+import { StrictMode, type AnchorHTMLAttributes } from "react";
 import { act, cleanup, fireEvent, render, screen, waitFor, within } from "@testing-library/react";
 import type * as MotionReact from "motion/react";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
@@ -13,7 +13,7 @@ import type {
 } from "@/domain/profile/types";
 import { TasteFlow } from "@/features/taste/taste-flow";
 import { RecommendationDiffPreview } from "@/features/taste/taste-insights";
-import { tasteStrings } from "@/lib/strings";
+import { tasteStrings, mediaStrings } from "@/lib/strings";
 import { createTestAxes, createTestCatalog, createTestWork } from "../../helpers/catalog";
 
 const testState = vi.hoisted(() => ({
@@ -56,11 +56,23 @@ vi.mock("@/data/generated/recommendation-context-v1.json", () => ({
 }));
 
 vi.mock("@tanstack/react-router", () => ({
-  Link: ({ children, className, to }: { children: ReactNode; className?: string; to: string }) => (
-    <a className={className} href={to}>
-      {children}
-    </a>
-  ),
+  Link: ({
+    children,
+    to,
+    params,
+    ...props
+  }: AnchorHTMLAttributes<HTMLAnchorElement> & {
+    to: string;
+    params?: { workId: string };
+    preload?: boolean;
+  }) => {
+    delete props.preload;
+    return (
+      <a {...props} href={to.replace("$workId", params?.workId ?? "")}>
+        {children}
+      </a>
+    );
+  },
 }));
 
 vi.mock("@/features/catalog/catalog-provider", () => ({
@@ -173,8 +185,8 @@ describe("TasteFlow", () => {
       message: tasteStrings.previewChanged,
     },
     { before: [], after: [], lists: 0, message: tasteStrings.previewEmpty },
-    { before: [], after: ["work-6"], lists: 2, message: tasteStrings.previewChanged },
-    { before: ["work-6"], after: [], lists: 2, message: tasteStrings.previewChanged },
+    { before: [], after: ["work-6"], lists: 1, message: tasteStrings.previewChanged },
+    { before: ["work-6"], after: [], lists: 1, message: tasteStrings.previewChanged },
     { before: null, after: ["work-6"], lists: 0, message: tasteStrings.previewUnavailable },
     {
       before: ["missing-work"],
@@ -201,6 +213,18 @@ describe("TasteFlow", () => {
 
       expect(screen.queryAllByRole("list")).toHaveLength(lists);
       expect(screen.getAllByText(message)).toHaveLength(1);
+      if (before !== null && after !== null && before.length !== after.length) {
+        const emptyLabel =
+          before.length === 0 ? tasteStrings.previewBefore : tasteStrings.previewAfter;
+        const populatedLabel =
+          before.length === 0 ? tasteStrings.previewAfter : tasteStrings.previewBefore;
+        const empty = screen.getByRole("region", { name: emptyLabel });
+        expect(within(empty).getByText(tasteStrings.previewEmpty)).toBeTruthy();
+        expect(within(empty).queryByRole("list")).toBeNull();
+        expect(
+          within(screen.getByRole("region", { name: populatedLabel })).getByRole("list"),
+        ).toBeTruthy();
+      }
       expect(container.querySelector("code")).toBeNull();
       expect(screen.queryByText("missing-work")).toBeNull();
       if (after?.some((workId) => workId === "missing-work")) {
@@ -527,7 +551,9 @@ describe("TasteFlow", () => {
     ).toBe(true);
     expect(screen.queryByRole("region", { name: tasteStrings.previewBefore })).toBeNull();
     const afterPreview = screen.getByRole("region", { name: tasteStrings.previewAfter });
-    expect(within(afterPreview).getByText("作品6")).toBeTruthy();
+    expect(
+      within(afterPreview).getByRole("link", { name: mediaStrings.openDetails("作品6") }),
+    ).toBeTruthy();
     expect(within(afterPreview).queryByText("work-6")).toBeNull();
     fireEvent.click(within(strategyGroup).getByRole("radio", { name: "除外" }));
 
@@ -556,9 +582,15 @@ describe("TasteFlow", () => {
       ).toBe(strategyMeterTransformBeforeAdjustment);
       expect(container.querySelector(".taste-factor-bar--highlighted")).toBeNull();
       const beforePreview = screen.getByRole("region", { name: tasteStrings.previewBefore });
-      expect(within(beforePreview).getByText("作品6")).toBeTruthy();
-      expect(within(afterPreview).queryByText("作品6")).toBeNull();
-      expect(within(afterPreview).getByText("作品7")).toBeTruthy();
+      expect(
+        within(beforePreview).getByRole("link", { name: mediaStrings.openDetails("作品6") }),
+      ).toBeTruthy();
+      expect(
+        within(afterPreview).queryByRole("link", { name: mediaStrings.openDetails("作品6") }),
+      ).toBeNull();
+      expect(
+        within(afterPreview).getByRole("link", { name: mediaStrings.openDetails("作品7") }),
+      ).toBeTruthy();
       expect(screen.getByRole("region", { name: tasteStrings.previewAfter })).toBe(afterPreview);
     });
   });

@@ -190,7 +190,12 @@ describe("WorkDetailFlow", () => {
 
     try {
       renderDetail();
-      const button = await screen.findByRole("button", {
+      await waitFor(() => {
+        expect(document.getElementById("work-synopsis-content")?.textContent).toBe(
+          cached.itemCaption,
+        );
+      });
+      const button = screen.getByRole("button", {
         name: workDetailStrings.synopsis.readMore,
       });
       const paragraph = document.getElementById(button.getAttribute("aria-controls")!);
