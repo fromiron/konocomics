@@ -2,31 +2,28 @@
 
 승인일: `2026-09-09`. 사용자는 Catalog와 조사·판정 작업 자료를 분리하고, 중요 자료를 `.tmp`가 아닌 로컬 SQLite에 영구 보존하는 전환과 문서화를 승인했다. 새 서버·ORM·패키지는 추가하지 않는다.
 
-## 작업 위치와 수동 인계 — 2026-09-12 사용자 변경
+## 작업 위치와 수동 인계 — 2026-09-15 사용자 변경
 
-작업 자료는 `.workspace/`, 작업 DB는 `.workspace/catalog-authoring/workspace.sqlite`, 자동 백업은 `.workspace/backups/`에 둔다. 별도 handoff·research·reviews 자료는 `.workspace/local/`에 보존한다. `.workspace/` 전체는 Git에서 제외하고 제품용 `data/source/catalog.sqlite`만 기존대로 추적한다.
+`.workspace/`에는 임시 자료만 둔다. 실행에 필요한 도구는 `scripts/catalog_authoring/`에서 Git으로 추적한다. 영구 작업 DB는 `data/local/catalog-authoring/workspace.sqlite`, 백업은 같은 디렉터리의 `backups/`, 원본·동결본·판정·실패·인계 자료는 `artifacts/`에 둔다. 이 로컬 데이터 전체는 Git에서 제외한다.
 
-`.tmp`와 옛 자료 경로는 `.workspace`의 정확한 위치를 가리키는 연결이다. 동결 파일의 내용·절대 경로·manifest를 변경하지 않는다. 저장 도구는 지정된 연결만 허용하고 다른 링크 및 작업 DB·백업의 재수집은 거부한다.
+일반 authoring 진입점은 `python -X utf8 scripts/catalog_authoring_runner.py run`이다. 수집 helper와 prepare/publish/validator 및 필요한 기존 backend도 `scripts/catalog_authoring/`를 사용한다. 과거 자료에 들어 있는 도구 사본은 역사적 실행 근거이며 새 실행 코드의 원천이 아니다.
 
-환경 이전 시 수집·발행·DB 쓰기를 종료한 후 `.workspace` 전체를 직접 복사한다. 새 저장소 루트에 붙여 넣고 `python scripts/workspace_paths.py`로 경로 연결을 다시 만든다. 기존 실물 디렉터리는 덮어쓰지 않는다. 연결 자체는 백업하지 않아도 된다. 과거 동결 자료에는 `C:/Toys/konocomics`의 절대 경로가 있으므로 기존 발행을 그대로 재개할 때는 같은 Windows 경로를 사용한다. 다른 루트·OS에서는 자료 복원이 가능하지만 동결 명령의 실행 호환을 별도로 확인해야 한다.
+과거 동결 파일의 내용·경로 문자열·manifest는 변경하지 않는다. `.tmp`, `.workspace`, handoff 등의 호환 연결·심링크는 제거한다. 과거 artifact에 기록된 경로는 저장·판정 코드의 읽기 경계에서 `workspace_paths.artifact_path()`로 영구 디렉터리에 해석한다. 파일시스템 링크나 원문 재작성 없이 기존 SHA 결속을 검증한다. 새 작업은 새 경로만 기록하며 임의 링크는 저장 대상으로 허용하지 않는다.
+
+환경 이전 시 수집·발행·DB 쓰기를 종료한 후 `data/local/catalog-authoring/` 전체를 복사하고, 같은 버전의 추적 코드를 체크아웃한다. 연결 복원 명령은 사용하지 않는다. 기존 동결 자료의 절대 경로가 저장소 루트까지 바뀌는 경우에는 별도 위치 매핑과 검증이 필요하다.
 
 ## 저장 경계
 
-| 저장소                                          | 보관 내용                                                                                                                | 권한                                                                                 |
-| ----------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------ | ------------------------------------------------------------------------------------ |
-| `data/source/catalog.sqlite`                    | 검증·승격된 Catalog 작품·팩터·근거                                                                                       | 기존의 유일한 canonical Catalog 원천. 스키마·발행 권한 불변                          |
-| `.workspace/catalog-authoring/workspace.sqlite` | 수집 원문, 출처, 후보 팩터, job, 동결 입력, 판정 원장, 수정·HOLD·실패 기록, baseline/registry 및 재현에 필요한 계약·도구 | **저장된 작업 원본의 영구 저장소**. 저장 성공은 사실 검증·판정 승인·승격 성공이 아님 |
-| `.workspace` (기존 `.tmp` 연결 경로 포함)       | 기존 도구가 읽고 쓰는 JSON/CSV/Markdown/SQLite 작업 사본, 재생성 가능한 빌드·검토 출력                                   | 미저장 초안 또는 DB에서 복원한 투영. 유일한 보존 위치로 사용 금지                    |
+| 저장소                                          | 내용과 권한                                                            |
+| ----------------------------------------------- | ---------------------------------------------------------------------- |
+| `data/source/catalog.sqlite`                    | 기존의 유일한 canonical Catalog. 스키마·발행 권한 불변                 |
+| `scripts/catalog_authoring/`                    | 추적되는 실행 코드·관련 회귀 검사                                      |
+| `data/local/catalog-authoring/workspace.sqlite` | 작업 원본의 버전별 영구 저장소. 저장 성공은 판정 승인·승격 성공이 아님 |
+| `data/local/catalog-authoring/artifacts/`       | 원문·동결 입력·판정·후보·실패·인계 자료. 저장·백업 receipt 유지        |
+| `data/local/catalog-authoring/backups/`         | 검증된 물리 백업과 기존 백업 이력                                      |
+| `.workspace/`                                   | 재생성 가능한 임시 출력만 보관                                         |
 
-서비스 런타임은 기존대로 정적 JSON을 사용한다. 사용자 Library·취향의 Dexie와 두 Rakuten route는 바꾸지 않는다. 작업 DB는 Git에 올리지 않는 로컬 저장소이며, canonical DB와 섞거나 대체하지 않는다.
-
-## 작업 파일 위치와 수동 인계 — 2026-09-12 사용자 변경
-
-작업 자료는 `.workspace/`, 작업 DB는 `.workspace/catalog-authoring/workspace.sqlite`, 자동 백업은 `.workspace/backups/`에 둔다. 수집·판정 작업 디렉터리와 원본·manifest의 바이트는 그대로 유지한다. 별도로 존재하던 handoff·research·reviews 자료는 `.workspace/local/` 아래에 보존한다. `.workspace/` 전체는 Git에서 제외하며 제품용 `data/source/catalog.sqlite`의 추적은 유지한다.
-
-기존 `.tmp` 및 옛 작업 자료 경로는 정확한 `.workspace` 위치를 가리키는 디렉터리 연결이다. 동결 JSON의 절대 경로와 해시를 고쳐 쓰지 않는다. 저장 도구는 이 지정된 연결만 허용하고 다른 링크 및 작업 DB·백업의 재수집은 거부한다.
-
-환경 이전 시 실행 중인 수집·발행·DB 쓰기를 종료한 후 `.workspace` 전체를 복사한다. 새 저장소 루트에 붙여 넣고 `python scripts/workspace_paths.py`로 예전 경로 연결을 다시 만든다. 기존 실물 디렉터리를 덮어쓰지 않으므로 경로가 이미 있으면 먼저 내용을 확인한다. 연결 자체를 별도로 백업할 필요는 없다. 과거 동결 자료에는 `C:/Toys/konocomics`의 절대 경로가 있으므로 기존 발행을 그대로 재개할 때는 같은 Windows 경로를 사용한다. 다른 루트·OS에서도 자료 복원은 가능하지만 과거 동결 명령의 실행 호환은 별도로 확인해야 한다.
+서비스 런타임은 기존대로 정적 JSON을 사용한다. Library·취향의 Dexie와 두 Rakuten route는 바꾸지 않는다. 작업 DB는 canonical을 대체하지 않는다. 아래 과거 검증 기록의 옛 경로는 당시 artifact 식별자이며 재작성하지 않는다.
 
 ## 출판사 소개를 수집과 함께 저장 — 2026-09-12
 
@@ -61,7 +58,7 @@
 `captionKind="summary"`로 요약을 표시할 때도 `originalItemCaption`에는 추출한 원문을 남긴다. 출판사 여부·동일 판본·소개 의미의 검토는 수집·서지 검토 담당자의 책임이다. hash와 ISBN 구조 검사가 그 의미 검토를 대체하지 않는다. 입력의 원문·receipt 경로는 같은 수집 디렉터리 내부의 파일이어야 한다.
 
 ```bash
-node --import tsx scripts/import-publisher-book-metadata.ts --input <collection>/publisher-metadata.json --output .tmp/<new-publication-directory>
+node --import tsx scripts/import-publisher-book-metadata.ts --input <collection>/publisher-metadata.json --output .workspace/<new-publication-directory>
 ```
 
 이 명령은 입력 디렉터리·현재 source·도구를 기존 작업 SQLite에 저장·백업한 후 실행하고, 결과·실패·canonical DB readback을 다시 저장·백업한 뒤 반환한다. 기존 collection 저장 후 서지 파일을 추가했다면 새 snapshot이 필요하다. 단순 수집 단계에서도 기존 `catalog_workspace.py save` 또는 direct collection의 디렉터리 저장을 사용한다.
@@ -95,24 +92,24 @@ DB의 `blob`은 SHA-256별 원본 바이트를 zlib으로 압축해 중복 없�
 
 ```powershell
 # 작성·수정된 자료 저장. 같은 경로를 다시 저장해도 이전 버전이 남는다.
-python scripts/catalog_workspace.py save --label collection-handoff .tmp/catalog-expansion-continuation-20260902/research/<assignment>
-python scripts/catalog_workspace.py save --label state-update .tmp/catalog-expansion-continuation-20260902/STATE.json
+python scripts/catalog_workspace.py save --label collection-handoff data/local/catalog-authoring/artifacts/catalog-expansion-continuation-20260902/research/<assignment>
+python scripts/catalog_workspace.py save --label state-update data/local/catalog-authoring/artifacts/catalog-expansion-continuation-20260902/STATE.json
 
 # 저장된 revision 목록. verify는 복원·손상 의심·명시적 전체 감사 때만 실행.
 python scripts/catalog_workspace.py list
 python scripts/catalog_workspace.py verify
 
 # 기존 파일을 건드리지 않는 별도 디렉터리 복원
-python scripts/catalog_workspace.py restore --snapshot <id> --destination <new-directory> --prefix .tmp/catalog-expansion-continuation-20260902/research/<assignment>
+python scripts/catalog_workspace.py restore --snapshot <id> --destination <new-directory> --prefix data/local/catalog-authoring/artifacts/catalog-expansion-continuation-20260902/research/<assignment>
 
 # 원래 경로가 통째로 없어졌을 때만 해당 경로 복구. 기존 대상 덮어쓰기 금지.
-python scripts/catalog_workspace.py checkout --snapshot <id> --prefix .tmp/catalog-expansion-continuation-20260902/research/<assignment>
+python scripts/catalog_workspace.py checkout --snapshot <id> --prefix data/local/catalog-authoring/artifacts/catalog-expansion-continuation-20260902/research/<assignment>
 
 # 별도 이름으로 보존하는 수동 checkpoint 백업. 기존 파일 덮어쓰기 금지.
-python scripts/catalog_workspace.py backup --destination C:/Toys/konocomics/.workspace/backups/<checkpoint>.sqlite
+python scripts/catalog_workspace.py backup --destination C:/Toys/konocomics/data/local/catalog-authoring/backups/<checkpoint>.sqlite
 ```
 
-`restore`는 원래 repository-relative 구조를 새 디렉터리 아래 재현한다. 복원 파일을 원래 파일과 비교하고 필요한 범위만 사용한다. 역사적 artifact의 절대 경로 참조까지 문자열 치환하지 않는다. 기존 실행을 재개하려면 `checkout`으로 **원래 저장소 경로**에 복원한다. 다른 위치로 영구 이전하는 것은 별도의 경로 호환 작업이다. canonical `data/source`는 `checkout`으로 변경할 수 없다.
+`restore`는 원래 repository-relative 구조를 새 디렉터리 아래 재현한다. 복원 파일을 원래 파일과 비교하고 필요한 범위만 사용한다. 역사적 artifact의 절대 경로 참조까지 문자열 치환하지 않는다. 기존 실행을 재개할 때 `checkout`은 과거 저장 키를 현재 영구 디렉터리로 해석해 복원하며, 옛 디렉터리나 호환 링크를 다시 만들지 않는다. canonical `data/source`는 `checkout`으로 변경할 수 없다.
 
 DB 파일 자체를 잃었을 때는 백업을 읽는 `--database <backup.sqlite>`로 `verify`, `list`, `restore`, `checkout`을 실행할 수 있다. 작업 DB 교체는 writer가 없는 상태에서 검증된 백업을 새 파일로 복원한 뒤 수행한다. 운영 중인 DB 파일이나 WAL 일부만 임의 복사하지 않는다.
 
@@ -142,7 +139,7 @@ python scripts/catalog_workspace.py run --label <stage> --input <input-directory
 
 ## 백업과 안전성
 
-- 자동 백업은 `.workspace/backups/`에 생성한다. 사용자가 작업 환경을 옮길 때 `.workspace` 전체를 직접 백업한다.
+- 자동 백업은 `data/local/catalog-authoring/backups/`에 생성한다. 환경 이전 시 `data/local/catalog-authoring/` 전체를 직접 백업한다.
 - 2026-09-14 최적화: 초기 세대와 별도 수동 checkpoint는 SQLite Backup API와 전체 SQLite 무결성 검사로 생성한다. 정상 자동 백업은 source writer를 직렬 잠그고 이전 세대의 schema·snapshot prefix·membership 수를 대조한 뒤 추가 blob·snapshot·entry를 하나의 트랜잭션으로 반영한다. 새 snapshot이 참조하는 모든 blob(기존 blob 포함)의 원문 SHA/압축 해제, 새 snapshot 전체 membership/manifest, FK 제약과 commit readback을 확인한다. 실패하면 rollback하고 최신 세대는 교체하지 않는다. 성공 후 `latest.sqlite`/`previous.sqlite`를 회전하며 **각 파일 안에 그 시점까지의 모든 논리 snapshot·원본 버전이 들어 있다.** 이름을 지정한 수동 checkpoint는 자동 교체하지 않는다.
 - 백업의 `pending.sqlite`는 교대 중인 완전 세대 또는 미완료 사본이다. 다음 자동 실행은 같은 writer lock 아래에서 SQLite/schema·source snapshot prefix를 확인해 중단된 이름 교대를 재개한다. 부분·무관·모호한 상태는 파일을 삭제하지 않고 실패시킨다. 기존 pending-* 사본은 임의로 삭제하지 않는다. 이 복구 확인은 pending이 남은 경우에만 수행하며 정상 백업에 전체 감사를 추가하지 않는다.
 - 변경되지 않은 과거 데이터의 전체 SQLite/원문/manifest 감사는 `verify`로 수행한다. 자동 백업마다 전 이력을 재검사하지 않는다. 손상 의심·복구·명시적 전체 감사에는 `verify`를 실행하며 복원은 항상 대상 원문 SHA를 재검증한다. 전체 검사와 증분 검사의 범위를 같은 증거로 표시하지 않는다.

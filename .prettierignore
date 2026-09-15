@@ -1,5 +1,7 @@
 .next
 .tmp
+.workspace
+data/local/catalog-authoring
 handoff
 coverage
 data/generated

@@ -12,7 +12,7 @@
 
 새로운 독립 수집 배정은 Luna Max를 `fork_turns="none"`으로 시작하고 현재 작품 brief·미소비 researchRefs·최신 HOLD/반대 근거 경로·출력 경로를 전달한다. 이전 실험 대화·전체 planner·완료 보고서를 누적 전달하지 않는다. 동일 관찰의 국소 보정은 기존 담당자가 계속할 수 있고 필요한 원본은 참조로 열어 읽는다. 모델/품질 기준·활성 합계 5명은 유지한다.
 
-검색·열람의 실제 반환값은 같은 실행에서 기존 helper의 `recordWebResponse`로 저장한다. 다중 출처 결과를 임의의 한 source에 귀속하거나 원문을 모델이 다시 출력하지 않는다. source별 관찰·읽은 범위만 한 번 작성해 기존 객체 writer로 직렬화한다. 직접 도구 연결과 필요한 수집 규칙은 `FACTOR-COLLECTOR-INSTRUCTIONS.md`에 통합한다. 연결 미지원 도구의 일반 수집 경로와 명시적 한계는 보존한다.
+검색·열람의 실제 반환값은 같은 실행에서 기존 helper의 `recordWebResponse`로 저장한다. 다중 출처 결과를 임의의 한 source에 귀속하거나 원문을 모델이 다시 출력하지 않는다. source별 관찰·읽은 범위만 한 번 작성해 기존 객체 writer로 직렬화한다. 직접 도구 연결과 필요한 수집 규칙은 `docs/catalog-expansion/factor-collector-instructions.md`에 통합한다. 연결 미지원 도구의 일반 수집 경로와 명시적 한계는 보존한다.
 
 ### 동결 뒤 통합 판정과 자동 실행 — 2026-09-14 후속 승인
 
@@ -33,9 +33,9 @@
 ## 실행 책임과 측정 구분 — 2026-09-14 Oracle 후속 검토
 
 - **결과 형식 실패는 같은 동결에서 재개:** 신규 `factor-adjudication-v2`의 unknownGroups는 명시적 축·이유만 받아 빈 근거 표현을 도구가 생성한다. v1의 비어 있지 않은 unknown 근거는 조기 거부하며 의미를 바꿔 자동 보정하지 않는다. 실패한 seal은 기존 `--output-root`와 새 `--result-output-root`로 재시도하고 발행에도 같은 두 경로를 전달한다. 원래 frozenAt/input digest와 실패본을 보존하며 단순 형식 수정 때문에 재동결·수치 재판정을 하지 않는다. 원문·판정 근거가 달라지면 기존 재판정 규칙을 유지한다.
-- **실제 도구 반환값의 직접 보존:** functions.exec/Node REPL 지원 환경에서는 웹 도구 반환 객체를 코드에서 기존 recordCapture로 바로 전달한다. 본문을 모델이 다시 타이핑하지 않으며 기록 실패 시 메모리에 남은 같은 반환값으로 재시도한다. 도구의 캐시·부분 본문은 HTTP 원문이나 최신 취득 시각으로 승격하지 않는다. 확인된 호출 예와 미지원 브라우저 경계는 `FACTOR-COLLECTOR-INSTRUCTIONS.md`를 따른다.
+- **실제 도구 반환값의 직접 보존:** functions.exec/Node REPL 지원 환경에서는 웹 도구 반환 객체를 코드에서 기존 recordCapture로 바로 전달한다. 본문을 모델이 다시 타이핑하지 않으며 기록 실패 시 메모리에 남은 같은 반환값으로 재시도한다. 도구의 캐시·부분 본문은 HTTP 원문이나 최신 취득 시각으로 승격하지 않는다. 확인된 호출 예와 미지원 브라우저 경계는 `docs/catalog-expansion/factor-collector-instructions.md`를 따른다.
 
-- **일반 수집의 기록 자동화:** 신규 collector는 로컬 `tools/collect_factor_evidence.mjs`에서 실제 시작을 기록하고 현재 brief/researchRefs·최신 HOLD를 소비한다. 실제 도구가 반환한 원문 구간은 재서술 없이 보존하고 의미 관찰은 한 번만 작성한다. 모델 요약을 원문 capture로 쓰지 않는다. `readAudit`의 읽은 범위와 capture의 보존 범위를 구분하며 발췌 길이·`complete`만으로 전체 독해 여부를 단정하지 않는다. 검색·독해·작품 일치·중단은 모델 판단이다. 이미 받은 자료를 재취득하지 않으며 선택적 HTTP·객체 writer는 기존 도구를 유지한다. 현재 사용법은 `FACTOR-COLLECTOR-INSTRUCTIONS.md` 한 곳에서 제공하고 같은 버전의 이력·규칙을 매 작업마다 다시 읽게 하지 않는다.
+- **일반 수집의 기록 자동화:** 신규 collector는 `scripts/catalog_authoring/collect_factor_evidence.mjs`에서 실제 시작을 기록하고 현재 brief/researchRefs·최신 HOLD를 소비한다. 실제 도구가 반환한 원문 구간은 재서술 없이 보존하고 의미 관찰은 한 번만 작성한다. 모델 요약을 원문 capture로 쓰지 않는다. `readAudit`의 읽은 범위와 capture의 보존 범위를 구분하며 발췌 길이·`complete`만으로 전체 독해 여부를 단정하지 않는다. 검색·독해·작품 일치·중단은 모델 판단이다. 이미 받은 자료를 재취득하지 않으며 선택적 HTTP·객체 writer는 기존 도구를 유지한다. 현재 사용법은 `docs/catalog-expansion/factor-collector-instructions.md` 한 곳에서 제공하고 같은 버전의 이력·규칙을 매 작업마다 다시 읽게 하지 않는다.
 
 - **Sol은 검토·국소 보정 소유자, 조정자는 공유 명령 실행자다.** 같은 Sol이 준비 중 직접 의미와 범위를 결정한 정정은 원본 SHA·필드·expected-before를 확인해 기존 객체의 새 snapshot에 반영한다. 원본·비대상 필드·원문·날짜를 보존하고 기존 writer/구조 검사·실제 diff로 확인한다. 새 독해가 필요하지 않은 정정을 Luna에게 다시 장문으로 쓰게 하거나 같은 Sol에게 재승인시키지 않는다. 새 해석·원문 확인이 필요한 관찰만 해당 담당자에게 반환한다. 지정 보정의 완료는 source 전체 인증이 아니다. 조정자는 저장·백업 receipt와 실제 freeze/seal/publish를 직렬 실행해 즉시 반환하고, 같은 Sol이 준비 → 동결 뒤 별도 판정 → seal까지 이어간다.
 - 원격 수집·모델 판정·응답 대기는 공유 run 밖에서 진행한다. 준비된 1~5작품은 즉시 넘기며 하나의 형식/metadata 문제 때문에 다른 준비 대상을 기다리게 하지 않는다. 현재 직렬 writer 정책은 유지하고 5명 동시 writer나 새 orchestrator를 추가하지 않는다.
@@ -101,7 +101,7 @@ Luna는 아래 읽기 전용 함수로 실제 수집분을 확인한다. Sol은 
 14. **Registry 누적:** 검증된 publication pair (C0,R0)에서 R0에 직접 결속한 공통 correction R*를 만들고, 변경되는 모든 Work를 포함한 원래 job·연구 입력을 보존한다. 하나의 호환 request schema로 표현 가능한 수정만 합친다. 독립 job은 같은 (C0,R*)로 동결할 수 있지만 발행은 직렬이며, 첫 실제 publication/readback 후 다음 검증 pair에서만 후속 correction을 시작한다. current/frozen이 다르면 current Catalog·registry는 같은 publication 디렉터리 pair다. registry branch 병합·registry-only 가짜 publication은 하지 않는다.
 15. **Prior와 측정 경계:** 대상별 탐색을 재사용해도 참조 bundle의 전체 manifest·원본 claim 결속은 검증한다. 현재 manifest 누락은 FAIL이며 별도 bundle의 완전한 membership·권한 의존 관계를 입증하지 못하면 비관련이나 prior 없음으로 추정하지 않는다. 준비 재고 연결 시험은 신규 처리량에서 제외한다. 신규 처리량은 60분 이상 실제 발행·최종 제품 readback을 마친 고유 신규 eligible 수/전체 경과 시간으로 측정하고 eligible 순증·시작/종료 WIP·실패·수정·대기를 함께 기록한다. 역할 배분별 용량 상한은 그 구성에만 적용하며 목표 미달로 기준을 낮추지 않는다.
 
-현재 수집 형식과 기존 실행 명령은 작업 디렉터리의 `FACTOR-COLLECTOR-INSTRUCTIONS.md`와 `AUTHORING.md`에 둔다. 이 절은 운영 방식을 정하며, 해당 문서나 검사 도구가 제품 사양·근거 권한·안전성 계약을 대신하지 않는다.
+현재 수집 형식과 기존 실행 명령은 작업 디렉터리의 `docs/catalog-expansion/factor-collector-instructions.md`와 `AUTHORING.md`에 둔다. 이 절은 운영 방식을 정하며, 해당 문서나 검사 도구가 제품 사양·근거 권한·안전성 계약을 대신하지 않는다.
 
 ### 재개·인계 연결 — 2026-09-12
 
@@ -117,7 +117,7 @@ Luna는 아래 읽기 전용 함수로 실제 수집분을 확인한다. Sol은 
 
 2026-09-09 사용자 승인된 Factor 003 소실 사건에는 [복구 계약](04-loss-recovery-v1.md)을 추가 적용한다. 일반 누락 manifest 실패를 완화하지 않으며, 동결된 사건·대상에 대한 명시적 새 권한 전환만 허용한다.
 
-2026-09-09 사용자 승인으로 [로컬 작업 저장소 계약](03-local-authoring-storage.md)을 적용한다. 수집 원문·후보·준비 job·동결 입력·별도 판정·HOLD/실패·발행 자료는 `data/local/catalog-authoring/workspace.sqlite`에 원본 바이트와 버전을 보존하고, `.tmp`는 복원 가능한 작업 사본으로만 사용한다. 인계 전에 저장·백업 receipt를 확인하며 `STATE.json` 변경도 저장한다. 기존 판정/승격 게이트와 최종 제품 readback은 그대로 유지한다. 초기 자료 소실을 저장소 전환으로 해결된 것으로 표시하지 않는다.
+2026-09-09 사용자 승인으로 [로컬 작업 저장소 계약](03-local-authoring-storage.md)을 적용한다. 수집 원문·후보·준비 job·동결 입력·별도 판정·HOLD/실패·발행 자료는 `data/local/catalog-authoring/workspace.sqlite`에 원본 바이트와 버전을 보존하고, 영구 자료는 `data/local/catalog-authoring/artifacts/`, 임시 출력은 `.workspace/`에 둔다. 파일시스템 호환 연결은 사용하지 않는다. 인계 전에 저장·백업 receipt를 확인하며 `STATE.json` 변경도 저장한다. 기존 판정/승격 게이트와 최종 제품 readback은 그대로 유지한다. 초기 자료 소실을 저장소 전환으로 해결된 것으로 표시하지 않는다.
 
 ## Oracle GO 이후 실행 — 2026-09-09
 

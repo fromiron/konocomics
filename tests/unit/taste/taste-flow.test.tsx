@@ -203,7 +203,7 @@ describe("TasteFlow", () => {
       expect(screen.getAllByText(message)).toHaveLength(1);
       expect(container.querySelector("code")).toBeNull();
       expect(screen.queryByText("missing-work")).toBeNull();
-      if (after?.includes("missing-work")) {
+      if (after?.some((workId) => workId === "missing-work")) {
         expect(screen.getByText(tasteStrings.previewWorkUnavailable)).toBeTruthy();
         expect(screen.queryByRole("link")).toBeNull();
       }

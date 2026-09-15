@@ -134,6 +134,8 @@ export default defineConfig([
   },
   globalIgnores([
     ".tmp/**",
+    ".workspace/**",
+    "data/local/catalog-authoring/**",
     ".next/**",
     ".nitro/**",
     ".output/**",

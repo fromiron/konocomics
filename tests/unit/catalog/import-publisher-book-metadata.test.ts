@@ -62,7 +62,7 @@ it("adds a captured introduction without losing metadata, and rejects damaged or
     };
     const input = join(folder, "publisher-metadata.json");
     const run = (name: string) =>
-      importPublisherBookMetadata(input, join(root, ".tmp", name), root);
+      importPublisherBookMetadata(input, join(root, ".workspace", name), root);
     const databaseHash = () => sha256(readFileSync(join(source, "catalog.sqlite")));
     const originalHash = databaseHash();
     writeFileSync(input, JSON.stringify([entry, entry]));
@@ -79,7 +79,7 @@ it("adds a captured introduction without losing metadata, and rejects damaged or
     writeFileSync(join(folder, "source.html"), html);
     const verify = authority.verifyCatalogAuthority;
     for (const mode of ["opaque", "publish-copy"]) {
-      const output = join(root, ".tmp", mode);
+      const output = join(root, ".workspace", mode);
       const spy = vi
         .spyOn(authority, "verifyCatalogAuthority")
         .mockImplementation((sourceRoot, options) => {

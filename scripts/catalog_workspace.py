@@ -21,7 +21,7 @@ from contextlib import closing
 from datetime import datetime, timezone
 from pathlib import Path, PurePosixPath
 from time import perf_counter
-from workspace_paths import is_workspace_alias
+from workspace_paths import artifact_path
 
 REPO = Path(__file__).resolve().parents[1]
 APPLICATION_ID = 0x4B435753
@@ -71,7 +71,7 @@ def key_path(value: str) -> str:
 def unlinked(path: Path) -> Path:
     path = Path(os.path.abspath(path))
     for parent in (path, *path.parents):
-        if (parent.is_symlink() or parent.is_junction()) and not is_workspace_alias(parent):
+        if parent.is_symlink() or parent.is_junction():
             raise ValueError(f"Linked path is not allowed: {parent}")
     return path
 
@@ -92,9 +92,9 @@ def manifest_digest(entries) -> str:
 class Workspace:
     def __init__(self, repo: Path = REPO, database: Path | None = None):
         self.repo = unlinked(repo)
-        self.database = unlinked(database or self.repo / ".workspace/catalog-authoring/workspace.sqlite")
-        if self.database.is_relative_to(self.repo / ".tmp") or self.database.is_relative_to(self.repo / "data/source"):
-            raise ValueError("The working database must be outside .tmp and data/source")
+        self.database = unlinked(database or self.repo / "data/local/catalog-authoring/workspace.sqlite")
+        if any(self.database.is_relative_to(self.repo / name) for name in (".tmp", ".workspace", "data/source")):
+            raise ValueError("The working database must be outside .tmp, .workspace and data/source")
 
     def key(self, path: Path) -> str:
         path = unlinked(path)
@@ -102,7 +102,9 @@ class Workspace:
             raise ValueError(f"Artifact must be a bounded path inside {self.repo}: {path}")
         if self.database.resolve().is_relative_to(path.resolve()):
             raise ValueError("Cannot capture the workspace database or its parent")
-        if path.resolve().is_relative_to(self.repo / ".workspace/backups"):
+        if path.resolve() == self.repo / "data/local/catalog-authoring/artifacts":
+            raise ValueError("Capture bounded authoring artifacts, not the entire archive")
+        if path.resolve().is_relative_to(self.repo / "data/local/catalog-authoring/backups"):
             raise ValueError("Cannot capture workspace backups")
         relative = key_path(path.relative_to(self.repo).as_posix())
         if any(p in {".git", "node_modules"} or p.startswith(".env") for p in PurePosixPath(relative).parts):
@@ -257,6 +259,32 @@ class Workspace:
             raise ValueError(f"Corrupt blob: {sha}")
         return content
 
+    def verify_saved(self, snapshot: dict, roots: list[Path]) -> None:
+        """Check a saved receipt and the requested original bytes, read-only."""
+        files = self.files(roots)
+        expected = {self.key(path): digest(path.read_bytes()) for path in files}
+        with closing(self.connect()) as db:
+            header = db.execute("SELECT file_count,manifest_sha256 FROM snapshot WHERE id=?", (snapshot["snapshotId"],)).fetchone()
+            if header != (snapshot["files"], snapshot["manifestSha256"]):
+                raise ValueError("Saved snapshot receipt mismatch")
+            rows = db.execute("SELECT path,sha256 FROM entry WHERE snapshot_id=?", (snapshot["snapshotId"],)).fetchall()
+            if len(rows) != header[0] or manifest_digest(rows) != header[1]:
+                raise ValueError("Saved snapshot membership mismatch")
+            # Old snapshot keys stay immutable; the preserved artifact location table
+            # can resolve their location to the relocated original bytes.
+            indexed = {}
+            for path, sha in rows:
+                resolved = unlinked(artifact_path(self.repo / key_path(path), self.repo)).resolve()
+                if resolved in indexed and indexed[resolved] != sha:
+                    raise ValueError("Saved paths disagree on artifact bytes")
+                indexed[resolved] = sha
+            if any(indexed.get((self.repo / path).resolve()) != sha for path, sha in expected.items()):
+                raise ValueError("Requested artifacts differ from saved snapshot")
+            for sha in set(expected.values()):
+                self.read_blob(db, sha)
+        if files != self.files(roots) or any(digest(path.read_bytes()) != expected[self.key(path)] for path in files):
+            raise ValueError("Requested artifacts changed during saved readback")
+
     def verify(self) -> dict:
         with closing(self.connect()) as db:
             db.execute("BEGIN")
@@ -308,7 +336,7 @@ class Workspace:
     def checkout(self, snapshot_id: int, prefix: str) -> dict:
         """Recover one missing working-copy subtree at its original logical path."""
         prefix = key_path(prefix)
-        target = unlinked(self.repo / prefix)
+        target = unlinked(artifact_path(self.repo / prefix, self.repo))
         self.key(target)
         if target.is_relative_to(self.repo / "data/source"):
             raise ValueError("Canonical source recovery is a separate authorized operation")
@@ -323,7 +351,7 @@ class Workspace:
             if not selected:
                 raise ValueError("No artifacts in the requested snapshot/prefix; missing history is not synthesized")
             for path, sha in selected:
-                output = unlinked(self.repo / path)
+                output = unlinked(artifact_path(self.repo / path, self.repo))
                 output.parent.mkdir(parents=True, exist_ok=True)
                 with output.open("xb") as stream:
                     stream.write(self.read_blob(db, sha))
@@ -346,7 +374,7 @@ class Workspace:
 
     def _backup_locked(self, destination: Path | None) -> dict:
         automatic = destination is None
-        backup_root = unlinked(self.repo / ".workspace/backups")
+        backup_root = unlinked(self.repo / "data/local/catalog-authoring/backups")
         latest, previous = backup_root / "latest.sqlite", backup_root / "previous.sqlite"
         pending = backup_root / "pending.sqlite"
         if automatic and self.database in {latest, previous, pending}:
@@ -398,7 +426,7 @@ class Workspace:
             destination = pending
         destination = unlinked(destination)
         if (destination.is_relative_to(self.repo) and not destination.is_relative_to(backup_root)) or destination == self.database:
-            raise ValueError("Backup must be in .workspace/backups or outside the repository, separate from the database")
+            raise ValueError("Backup must be in data/local/catalog-authoring/backups or outside the repository, separate from the database")
         destination.parent.mkdir(parents=True, exist_ok=True)
         with destination.open("xb"):
             pass
@@ -469,13 +497,14 @@ class Workspace:
 
 
 def recorded_run(command: list[str], inputs: list[Path], outputs: list[Path], label: str,
-                 workspace: Workspace | None = None, *, input_discovery_seconds: float = 0) -> int:
+                 workspace: Workspace | None = None, *, input_discovery_seconds: float = 0,
+                 receipt_out: dict | None = None) -> int:
     """Persist before execution and before reporting success, including failed outputs."""
     workspace = workspace or Workspace()
     if not inputs:
         raise ValueError("Run requires explicit inputs")
     started = perf_counter()
-    receipt_root = unlinked(workspace.repo / ".workspace/catalog-authoring/operations" / uuid.uuid4().hex)
+    receipt_root = unlinked(workspace.repo / "data/local/catalog-authoring/operations" / uuid.uuid4().hex)
     workspace.key(receipt_root)
     receipt_root.mkdir(parents=True, exist_ok=False)
     receipt_path = receipt_root / "command.json"
@@ -533,6 +562,8 @@ def recorded_run(command: list[str], inputs: list[Path], outputs: list[Path], la
     print(json.dumps({"authoringStorage": {"input": before, "output": after, "operation": operation, "backup": backup, "timingsSeconds": timings}}, ensure_ascii=True), file=sys.stderr)
     if output_error is not None:
         raise output_error
+    if receipt_out is not None:
+        receipt_out.update(input=before, output=after, operation=operation, backup=backup)
     return exit_code
 
 
@@ -542,7 +573,7 @@ def authoring_inputs(paths: list[Path], workspace: Workspace | None = None) -> l
     pending, visited, expanded = [(path, True) for path in paths], set(), set()
     while pending:
         item, expand = pending.pop()
-        root = unlinked(item)
+        root = unlinked(artifact_path(item, workspace.repo))
         if root in expanded or (root in visited and not expand):
             continue
         workspace.key(root)
@@ -550,11 +581,14 @@ def authoring_inputs(paths: list[Path], workspace: Workspace | None = None) -> l
         if not expand:
             continue
         expanded.add(root)
-        tools_root = workspace.repo / ".workspace/catalog-expansion-continuation-20260902/tools"
+        tools_root = workspace.repo / "scripts/catalog_authoring"
         if root.resolve() == workspace.repo / "scripts/catalog_workspace.py":
             pending.append((workspace.repo / "scripts/workspace_paths.py", False))
         if root.resolve() == tools_root / "collect_factor_evidence.mjs":
             pending.append((tools_root / "validate_factor_collection_batch.mjs", False))
+        if root.resolve() == workspace.repo / "scripts/readback-catalog-authoring.mts":
+            from catalog_readback_identity import execution_inputs
+            pending.extend((path, False) for path in execution_inputs(workspace.repo))
         if root.resolve() == workspace.repo / "scripts/catalog_authoring_runner.py":
             pending.extend((path, True) for path in (tools_root / "prepare_factor_batch.py", workspace.repo / "scripts/readback-catalog-authoring.mts"))
         if root.resolve() == tools_root or (root.resolve().parent == tools_root and root.name in {
@@ -563,17 +597,17 @@ def authoring_inputs(paths: list[Path], workspace: Workspace | None = None) -> l
         }):
             # Factor operators use these helpers. A collector does not read them
             # and must remain usable when publication inputs are unavailable.
-            backend = workspace.repo / ".tmp/catalog-followup/batch001-20260902/konocomics-v5-panel-batch-001-of-008"
+            backend = tools_root / "legacy"
             runtime_inputs = [
                 *(tools_root / name for name in (
-                    "prepare_factor_batch.py", "publish_factor_batch.py", "validate_factor_panel.py",
-                    "factor_recovery.py", "factor_single_pass.py", "prepare_factor_rescue_004.py", "prepare_ready_safety.py",
+                    "prepare_factor_batch.py", "publish_factor_batch.py", "validate_factor_panel.py", "correct_factor_registry.py",
+                    "factor_recovery.py", "factor_single_pass.py", "factor_model_input.py", "prepare_factor_rescue_004.py", "prepare_ready_safety.py", "authoring_paths.py",
                 )),
                 backend / "followup-panel-tools/publish_authorized_followup.py",
                 backend / "followup-panel-tools/validate_panel_results.py",
                 backend / "integration-publisher-v1/integrate.py",
                 backend / "safety-recheck-v1/tools/validate_safety_recheck.py",
-                tools_root.parent / "FACTOR-PANEL-REQUEST.md",
+                workspace.repo / "docs/catalog-expansion/factor-panel-request.md",
                 workspace.repo / "data/staging/catalog-expansion/gold-set-manifest.json",
                 workspace.repo / "data/source/catalog.sqlite",
             ]
@@ -591,7 +625,7 @@ def authoring_inputs(paths: list[Path], workspace: Workspace | None = None) -> l
             if value.get("schemaVersion") in {"factor-loss-recovery-v1", "factor-loss-recovery-epoch-v1"}:
                 for field in ("epochPath", "scopePath", "policyPath"):
                     if isinstance(value.get(field), str):
-                        references.append(Path(value[field]))
+                        references.append(artifact_path(value[field], workspace.repo))
             if value.get("schemaVersion") in {"factor-authoring-job-v3", "factor-authoring-job-v4"}:
                 for work in value.get("works", []) if isinstance(value.get("works"), list) else []:
                     refs = work.get("researchRefs", [work.get("researchRef", {})]) if isinstance(work, dict) else []
@@ -601,15 +635,15 @@ def authoring_inputs(paths: list[Path], workspace: Workspace | None = None) -> l
             if path.name == "external-prior-authority.json":
                 for bundle in value.get("bundles", []) if isinstance(value.get("bundles"), list) else []:
                     if isinstance(bundle, dict) and isinstance(bundle.get("root"), str):
-                        references.append(Path(bundle["root"]))
+                        references.append(artifact_path(bundle["root"], workspace.repo))
             if path.name == "external-lineage.json":
                 for field in ("baselineRoot", "registryPath"):
                     if isinstance(value.get(field), str):
-                        references.append(Path(value[field]))
+                        references.append(artifact_path(value[field], workspace.repo))
                 # The fully frozen v2 packet does not depend on later draft changes.
                 bindings = value.get("sourceInputBindings", {})
                 if isinstance(bindings, dict):
-                    references.extend(Path(item) for item in bindings if isinstance(item, str) and Path(item).is_file())
+                    references.extend(artifact_path(item, workspace.repo) for item in bindings if isinstance(item, str) and artifact_path(item, workspace.repo).is_file())
             for reference in references:
                 workspace.key(reference)
                 # Lineage points to provenance, not an instruction to re-ingest
@@ -663,7 +697,7 @@ def main() -> int:
     save.add_argument("paths", type=Path, nargs="+")
     sub.add_parser("verify", help="Verify all blob bytes and snapshot memberships")
     sub.add_parser("list", help="List saved snapshots")
-    backup = sub.add_parser("backup", help="Make a consistent backup in .workspace/backups or an explicit external destination")
+    backup = sub.add_parser("backup", help="Make a consistent backup in data/local/catalog-authoring/backups or an explicit external destination")
     backup.add_argument("--destination", type=Path)
     restore = sub.add_parser("restore", help="Restore an exact snapshot under a NEW directory, never overwrite")
     restore.add_argument("--snapshot", type=int, required=True)

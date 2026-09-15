@@ -12,28 +12,36 @@ from contextlib import closing
 from pathlib import Path
 
 from catalog_workspace import Workspace, authoring_inputs, key_path, recorded_run
-from workspace_paths import aliases, restore_links
+from workspace_paths import artifact_path
 
 
 class WorkspaceTest(unittest.TestCase):
-    def test_workspace_links_preserve_legacy_keys_and_reject_wrong_targets(self):
+    def test_relocated_snapshot_reads_original_keys_without_links(self):
         repo = self.root / "moved-repo"
-        evidence = repo / ".workspace/job/original.txt"
-        evidence.parent.mkdir(parents=True)
-        evidence.write_bytes(b"frozen original")
-        paths = aliases(repo)
-        restore_links(repo)
+        old = repo / ".workspace/catalog-expansion-continuation-20260902"
+        old.mkdir(parents=True)
+        (old / "original.txt").write_bytes(b"frozen original")
         store = Workspace(repo)
-        with patch("workspace_paths.aliases", return_value=paths):
-            store.save([repo / ".tmp/job"], "legacy input")
-            self.assertEqual(store.verify()["blobs"], 1)
-            with self.assertRaises(ValueError):
-                store.save([repo / ".tmp"], "must not capture database")
-        wrong = {**paths, repo / ".tmp": repo / "other"}
-        (repo / "other").mkdir()
-        with patch("workspace_paths.aliases", return_value=wrong):
-            with self.assertRaises(ValueError):
-                store.save([repo / ".tmp/job"], "wrong alias")
+        receipt = store.save([old], "before relocation")
+        destination = repo / "data/local/catalog-authoring/artifacts/catalog-expansion-continuation-20260902"
+        destination.parent.mkdir(parents=True)
+        old.rename(destination)
+        self.assertFalse(old.exists())
+        self.assertFalse(old.is_symlink() or old.is_junction())
+        self.assertEqual(artifact_path(old / "original.txt", repo), destination / "original.txt")
+        store.verify_saved(receipt, [destination])
+        with self.assertRaises(ValueError):
+            store.save([destination.parent], "must not capture entire archive")
+        (destination / "original.txt").write_bytes(b"changed")
+        with self.assertRaisesRegex(ValueError, "differ"):
+            store.verify_saved(receipt, [destination])
+        (destination / "original.txt").unlink()
+        destination.rmdir()
+        store.checkout(receipt["snapshotId"], ".workspace/catalog-expansion-continuation-20260902")
+        self.assertEqual((destination / "original.txt").read_bytes(), b"frozen original")
+        self.assertFalse(old.exists())
+        outside = self.root / "other/.workspace/job/original.txt"
+        self.assertEqual(artifact_path(outside, repo), outside)
 
     def setUp(self):
         self.temp = tempfile.TemporaryDirectory(prefix="catalog-workspace-test-")
@@ -41,11 +49,14 @@ class WorkspaceTest(unittest.TestCase):
         self.root = Path(self.temp.name)
         self.repo = self.root / "repo"
         self.repo.mkdir()
-        self.inputs = self.repo / ".tmp/job"
+        self.inputs = self.repo / "data/local/catalog-authoring/artifacts/job"
         self.inputs.mkdir(parents=True)
         self.file = self.inputs / "原文.jsonl"
         self.file.write_bytes('音\r\n{"value":"unknown"}\n'.encode())
         self.workspace = Workspace(self.repo)
+        for directory in (".tmp", ".workspace", "data/source"):
+            with self.assertRaises(ValueError):
+                Workspace(self.repo, self.repo / directory / "workspace.sqlite")
 
     def test_versions_backup_and_exact_restore_without_source(self):
         original = self.file.read_bytes()
@@ -66,16 +77,16 @@ class WorkspaceTest(unittest.TestCase):
         restored = Workspace(self.repo, backup)
         destination = self.root / "restored"
         restored.restore(first["snapshotId"], destination)
-        self.assertEqual((destination / ".tmp/job/原文.jsonl").read_bytes(), original)
+        self.assertEqual((destination / "data/local/catalog-authoring/artifacts/job/原文.jsonl").read_bytes(), original)
         restored.restore(second["snapshotId"], self.root / "restored-new")
-        self.assertEqual((self.root / "restored-new/.tmp/job/原文.jsonl").read_bytes(), b"second\x00version")
+        self.assertEqual((self.root / "restored-new/data/local/catalog-authoring/artifacts/job/原文.jsonl").read_bytes(), b"second\x00version")
         self.assertEqual(restored.verify()["snapshots"], 2)
-        restored.checkout(first["snapshotId"], ".tmp/job/原文.jsonl")
+        restored.checkout(first["snapshotId"], "data/local/catalog-authoring/artifacts/job/原文.jsonl")
         self.assertEqual(self.file.read_bytes(), original)
         with self.assertRaises(FileExistsError):
-            restored.checkout(second["snapshotId"], ".tmp/job/原文.jsonl")
+            restored.checkout(second["snapshotId"], "data/local/catalog-authoring/artifacts/job/原文.jsonl")
         with self.assertRaisesRegex(ValueError, "not synthesized"):
-            restored.checkout(first["snapshotId"], ".tmp/lost-original")
+            restored.checkout(first["snapshotId"], "data/local/catalog-authoring/artifacts/lost-original")
         with self.assertRaises(FileExistsError):
             restored.restore(first["snapshotId"], destination)
         with self.assertRaises(FileExistsError):
@@ -84,7 +95,7 @@ class WorkspaceTest(unittest.TestCase):
     def test_invalid_paths_missing_files_and_active_sqlite_fail_closed(self):
         with self.assertRaisesRegex(ValueError, "explicit inputs"):
             recorded_run([sys.executable], [], [], "missing input", self.workspace)
-        self.assertFalse((self.repo / ".workspace/catalog-authoring/operations").exists())
+        self.assertFalse((self.repo / "data/local/catalog-authoring/operations").exists())
         for key in ("../escape", "/absolute", "C:/root", "a/../b", "a\\b", "a//b", "a/./b"):
             with self.assertRaises(ValueError):
                 key_path(key)
@@ -110,8 +121,8 @@ class WorkspaceTest(unittest.TestCase):
         first = self.workspace.save([self.inputs], "first")
         self.workspace.backup()
         self.workspace.backup()
-        previous = self.repo / ".workspace/backups/previous.sqlite"
-        latest = self.repo / ".workspace/backups/latest.sqlite"
+        previous = self.repo / "data/local/catalog-authoring/backups/previous.sqlite"
+        latest = self.repo / "data/local/catalog-authoring/backups/latest.sqlite"
         before = (latest.read_bytes(), previous.read_bytes())
         self.file.write_bytes(b"new original observation")
         second = self.workspace.save([self.inputs], "second")
@@ -140,7 +151,7 @@ class WorkspaceTest(unittest.TestCase):
         for snapshot in (first, second):
             out = self.root / str(snapshot["snapshotId"])
             restored.restore(snapshot["snapshotId"], out)
-        self.assertEqual((self.root / str(second["snapshotId"]) / ".tmp/job/原文.jsonl").read_bytes(), b"new original observation")
+        self.assertEqual((self.root / str(second["snapshotId"]) / "data/local/catalog-authoring/artifacts/job/原文.jsonl").read_bytes(), b"new original observation")
         with closing(sqlite3.connect(previous)) as db:
             db.execute("DROP TRIGGER snapshot_no_update")
             db.commit()
@@ -149,7 +160,7 @@ class WorkspaceTest(unittest.TestCase):
         self.assertEqual(restored.verify(), self.workspace.verify())
 
     def test_failed_command_retains_input_and_partial_result(self):
-        output = self.repo / ".tmp/output"
+        output = self.repo / "data/local/catalog-authoring/artifacts/output"
         command = [sys.executable, "-c", "import pathlib,sys; p=pathlib.Path(sys.argv[1]); p.mkdir(); (p/'failure.txt').write_text('real partial output'); sys.exit(7)", str(output)]
         self.assertEqual(recorded_run(command, [self.inputs], [output], "failure", self.workspace), 7)
         self.assertEqual(self.workspace.verify()["snapshots"], 3)
@@ -161,9 +172,9 @@ class WorkspaceTest(unittest.TestCase):
             self.assertEqual(receipt["exitCode"], 7)
             self.assertEqual(set(receipt["timingsSeconds"]), {"inputDiscovery", "inputSave", "inputBackup", "command", "outputSave"})
             self.assertTrue(all(value >= 0 for value in receipt["timingsSeconds"].values()))
-        backups = list((self.repo / ".workspace/backups").glob("*.sqlite"))
+        backups = list((self.repo / "data/local/catalog-authoring/backups").glob("*.sqlite"))
         self.assertEqual(len(backups), 2)
-        with closing(Workspace(self.repo, self.repo / ".workspace/backups/latest.sqlite").connect()) as db:
+        with closing(Workspace(self.repo, self.repo / "data/local/catalog-authoring/backups/latest.sqlite").connect()) as db:
             self.assertEqual(json.loads(self.workspace.read_blob(db, receipt_sha)), receipt)
 
     def test_backup_resumes_each_interrupted_rotation_without_losing_versions(self):
@@ -195,7 +206,7 @@ class WorkspaceTest(unittest.TestCase):
                         store.backup()
                 receipt = store.backup()
                 self.assertEqual(receipt["latestSnapshotId"], second["snapshotId"])
-                self.assertFalse((repo / ".workspace/backups/pending.sqlite").exists())
+                self.assertFalse((repo / "data/local/catalog-authoring/backups/pending.sqlite").exists())
                 restored = Workspace(repo, Path(receipt["destination"]))
                 self.assertEqual(restored.verify(), store.verify())
                 for snapshot, expected in ((first, b"original"), (second, b"second")):
@@ -226,7 +237,7 @@ class WorkspaceTest(unittest.TestCase):
 
         with patch("catalog_workspace.subprocess.run", side_effect=interrupted):
             self.assertEqual(recorded_run([sys.executable], [self.inputs], [output], "interrupt", self.workspace), 130)
-        backup = Workspace(self.repo, self.repo / ".workspace/backups/latest.sqlite")
+        backup = Workspace(self.repo, self.repo / "data/local/catalog-authoring/backups/latest.sqlite")
         with closing(backup.connect()) as db:
             receipts = [json.loads(backup.read_blob(db, sha)) for (sha,) in db.execute(
                 "SELECT sha256 FROM entry WHERE path LIKE '%/command.json' ORDER BY snapshot_id")]
@@ -243,14 +254,14 @@ class WorkspaceTest(unittest.TestCase):
         for process in processes:
             self.assertEqual(process.wait(timeout=30), 0)
         self.assertEqual(self.workspace.verify()["snapshots"], 3)
-        latest = self.repo / ".workspace/backups/latest.sqlite"
+        latest = self.repo / "data/local/catalog-authoring/backups/latest.sqlite"
         self.assertEqual(Workspace(self.repo, latest).verify()["snapshots"], 3)
 
     def test_job_and_prior_references_are_saved_not_only_their_paths(self):
-        prior = self.repo / ".tmp/prior"
+        prior = self.repo / "data/local/catalog-authoring/artifacts/prior"
         prior.mkdir()
         (prior / "MANIFEST.sha256").write_text("actual manifest fixture")
-        source = self.repo / ".tmp/research.jsonl"
+        source = self.repo / "data/local/catalog-authoring/artifacts/research.jsonl"
         source.write_text("actual source bytes")
         (self.inputs / "external-prior-authority.json").write_text(json.dumps({"bundles": [{"root": str(prior)}]}))
         for version in ("factor-authoring-job-v3", "factor-authoring-job-v4"):
@@ -279,10 +290,10 @@ class WorkspaceTest(unittest.TestCase):
             self.workspace.verify()
 
     def test_direct_lineage_is_saved_without_recapturing_transitive_history(self):
-        baseline = self.repo / ".tmp/baseline"
+        baseline = self.repo / "data/local/catalog-authoring/artifacts/baseline"
         baseline.mkdir()
         (baseline / "catalog.sqlite").write_bytes(b"direct baseline bytes")
-        (baseline / "external-lineage.json").write_text(json.dumps({"baselineRoot": str(self.repo / ".tmp/historical-only")}))
+        (baseline / "external-lineage.json").write_text(json.dumps({"baselineRoot": str(self.repo / "data/local/catalog-authoring/artifacts/historical-only")}))
         (self.inputs / "external-lineage.json").write_text(json.dumps({"baselineRoot": str(baseline)}))
         roots = authoring_inputs([self.inputs], self.workspace)
         snapshot = self.workspace.save(roots, "direct lineage")
@@ -295,11 +306,11 @@ class WorkspaceTest(unittest.TestCase):
             self.workspace.save(authoring_inputs([self.inputs], self.workspace), "missing direct dependency")
 
     def test_collection_capture_does_not_require_publication_dependencies(self):
-        script = self.repo / ".workspace/catalog-expansion-continuation-20260902/tools/validate_factor_collection_batch.mjs"
+        script = self.repo / "scripts/catalog_authoring/validate_factor_collection_batch.mjs"
         script.parent.mkdir(parents=True)
         script.write_text("// collection validator bytes\n")
         helper = self.repo / "scripts/catalog_workspace.py"
-        helper.parent.mkdir()
+        helper.parent.mkdir(exist_ok=True)
         helper.write_text("# storage helper bytes\n")
         paths = helper.with_name("workspace_paths.py")
         paths.write_text("# path helper bytes\n")
@@ -323,11 +334,11 @@ class WorkspaceTest(unittest.TestCase):
         self.assertNotIn(canonical, recording_roots)
 
     def test_output_capture_failure_still_backs_up_exit_state_and_logs(self):
-        output = self.repo / ".tmp/partial.sqlite"
+        output = self.repo / "data/local/catalog-authoring/artifacts/partial.sqlite"
         command = [sys.executable, "-c", "import pathlib,sys; p=pathlib.Path(sys.argv[1]); p.write_bytes(b'partial'); pathlib.Path(str(p)+'-wal').touch(); print('child output'); sys.exit(7)", str(output)]
         with self.assertRaisesRegex(ValueError, "Close/checkpoint"):
             recorded_run(command, [self.inputs], [output], "uncapturable result", self.workspace)
-        backup = Workspace(self.repo, self.repo / ".workspace/backups/latest.sqlite")
+        backup = Workspace(self.repo, self.repo / "data/local/catalog-authoring/backups/latest.sqlite")
         with closing(backup.connect()) as db:
             path, sha = db.execute("SELECT path,sha256 FROM entry WHERE path LIKE '%/command.json' ORDER BY snapshot_id DESC LIMIT 1").fetchone()
             receipt = json.loads(backup.read_blob(db, sha))
@@ -340,9 +351,9 @@ class WorkspaceTest(unittest.TestCase):
         self.assertTrue(Path(str(output) + "-wal").exists())
 
     def test_recovery_declaration_preserves_epoch_scope_and_policy(self):
-        epoch = self.repo / ".tmp/recovery-epoch.json"
-        scope = self.repo / ".tmp/recovery-scope.jsonl"
-        policy = self.repo / ".tmp/recovery-policy.md"
+        epoch = self.repo / "data/local/catalog-authoring/artifacts/recovery-epoch.json"
+        scope = self.repo / "data/local/catalog-authoring/artifacts/recovery-scope.jsonl"
+        policy = self.repo / "data/local/catalog-authoring/artifacts/recovery-policy.md"
         scope.write_text("scope bytes\n")
         policy.write_text("approved policy bytes\n")
         epoch.write_text(json.dumps({"schemaVersion": "factor-loss-recovery-epoch-v1", "scopePath": str(scope), "policyPath": str(policy)}))
@@ -351,7 +362,7 @@ class WorkspaceTest(unittest.TestCase):
         self.workspace.save(roots, "recovery dependencies")
         with closing(self.workspace.connect()) as db:
             paths = {row[0] for row in db.execute("SELECT path FROM entry")}
-        self.assertTrue({".tmp/recovery-epoch.json", ".tmp/recovery-scope.jsonl", ".tmp/recovery-policy.md"} <= paths)
+        self.assertTrue({"data/local/catalog-authoring/artifacts/recovery-epoch.json", "data/local/catalog-authoring/artifacts/recovery-scope.jsonl", "data/local/catalog-authoring/artifacts/recovery-policy.md"} <= paths)
         scope.unlink()
         with self.assertRaises(FileNotFoundError):
             authoring_inputs([self.inputs], self.workspace)

@@ -26,6 +26,8 @@
 /data/local/g2-results/
 /data/local/catalog-authoring/
 /scripts/__pycache__/
+/scripts/catalog_authoring/**/__pycache__/
+/scripts/catalog_authoring/__pycache__/
 /reports/local/
 
 # package manager and debug logs

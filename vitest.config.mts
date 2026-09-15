@@ -9,6 +9,13 @@ export default defineConfig({
     },
   },
   test: {
-    exclude: [...configDefaults.exclude, "tests/e2e/**", ".tmp/**", "handoff/**"],
+    exclude: [
+      ...configDefaults.exclude,
+      "tests/e2e/**",
+      ".tmp/**",
+      ".workspace/**",
+      "data/local/catalog-authoring/**",
+      "handoff/**",
+    ],
   },
 });

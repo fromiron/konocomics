@@ -1,49 +1,59 @@
-"""Restore exact legacy directory aliases after copying the local .workspace."""
+"""Locate preserved artifact references without filesystem links or rewriting bytes."""
 from pathlib import Path
-import os
-import subprocess
 
 REPO = Path(__file__).resolve().parents[1]
+# Known moved roots also resolve when the entire working copy needs recovery.
+MOVED_WORKSPACE_ROOTS = {
+    'authoring-optimization-20260912',
+    'banner-placement-20260911',
+    'catalog-expansion-continuation-20260902',
+    'catalog-expansion-continuation-20260912',
+    'catalog-followup',
+    'catalog-storage-verification-20260909',
+    'compatibility-counts-20260911',
+    'compatibility-implementation-20260911',
+    'detail-information-20260911',
+    'detail-related-cards-20260911',
+    'implementation-continuation-20260915T024613Z',
+    'library-management-20260911',
+    'library-ux-audit-20260911',
+    'local',
+    'mobile-quick-preview-20260910',
+    'optimization-restored-20260914',
+    'popular-discovery-20260911',
+    'prepared-resume-improvement-20260915T031306Z',
+    'publisher-metadata-push-20260912',
+    'taste-implementation-20260912',
+    'taste-plan-review-20260912',
+    'taste-review-20260912',
+    'verify-batch008',
+    'whole-work-scope-20260912',
+    'workspace-migration-20260912',
+}
 
 
-def aliases(repo: Path = REPO) -> dict[Path, Path]:
-    workspace = repo / ".workspace"
-    paths = {
-        repo / ".tmp": workspace,
-        repo / "data/local/catalog-authoring": workspace / "catalog-authoring",
-        repo.parent / (repo.name + "-authoring-backups"): workspace / "backups",
+def artifact_path(value: str | Path, repo: Path = REPO) -> Path:
+    path = Path(value)
+    persistent = repo / "data/local/catalog-authoring"
+    artifacts = persistent / "artifacts"
+    mappings = {
+        repo / ".workspace/catalog-authoring": persistent,
+        repo / ".workspace/backups": persistent / "backups",
+        repo / ".tmp/catalog-authoring": persistent,
+        repo / ".tmp/backups": persistent / "backups",
+        repo / ".tmp": artifacts,
+        repo.parent / (repo.name + "-authoring-backups"): persistent / "backups",
     }
     for name in ("handoff", "research", "R/research", "reviews", "konocomics-production-audit-agent-ready"):
-        paths[repo / name] = workspace / "local" / name
-    return paths
-
-
-def is_workspace_alias(path: Path) -> bool:
-    target = aliases().get(path)
-    return target is not None and target.is_dir() and not any(
-        p.is_symlink() or p.is_junction() for p in (target, *target.parents)
-    ) and path.resolve() == target.resolve()
-
-
-def restore_links(repo: Path = REPO) -> None:
-    for path, target in aliases(repo).items():
-        if not target.is_dir():
-            continue
-        if path.exists() or path.is_symlink() or path.is_junction():
-            if (path.is_symlink() or path.is_junction()) and path.resolve() == target.resolve():
-                continue
-            raise FileExistsError(f"Existing path is not the expected workspace alias: {path}")
-        path.parent.mkdir(parents=True, exist_ok=True)
-        if os.name == "nt":
-            quote = lambda p: "'" + str(p).replace("'", "''") + "'"
-            subprocess.run(["powershell", "-NoProfile", "-Command",
-                            f"$ErrorActionPreference='Stop'; New-Item -ItemType Junction -Path {quote(path)} -Target {quote(target)} | Out-Null"], check=True)
-        else:
-            path.symlink_to(target, target_is_directory=True)
-        if path.resolve() != target.resolve():
-            raise ValueError(f"Workspace alias readback failed: {path}")
-        print(f"{path} -> {target}")
-
-
-if __name__ == "__main__":
-    restore_links()
+        mappings[repo / name] = artifacts / "local" / name
+    for old, current in mappings.items():
+        if path.is_relative_to(old):
+            return current / path.relative_to(old)
+    if path.is_relative_to(repo / ".workspace"):
+        relative = path.relative_to(repo / ".workspace")
+        if relative.parts and (relative.parts[0] in MOVED_WORKSPACE_ROOTS or (artifacts / relative.parts[0]).is_dir()):
+            return artifacts / relative
+        original = artifacts / "workspace-root-originals" / relative
+        if original.is_file():
+            return original
+    return path

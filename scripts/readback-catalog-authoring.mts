@@ -1,7 +1,8 @@
 import assert from "node:assert/strict";
 import { createHash } from "node:crypto";
+import { spawnSync } from "node:child_process";
 import { copyFileSync, existsSync, mkdirSync, readFileSync, writeFileSync } from "node:fs";
-import { dirname, join, resolve } from "node:path";
+import { dirname, join, relative, resolve } from "node:path";
 import { DatabaseSync } from "node:sqlite";
 import { parse } from "csv-parse/sync";
 import { z } from "zod";
@@ -22,13 +23,34 @@ const [publication, resultRoot, output] = z
   .parse(process.argv.slice(2))
   .map((p) => resolve(p));
 assert(publication && resultRoot && output);
+assert.equal(process.versions.node.split(".")[0], "24", "Catalog readback requires Node 24");
 const repo = process.cwd();
+const executionIdentity = () => {
+  const result = spawnSync(
+    "python",
+    ["-B", "-X", "utf8", join(repo, "scripts/catalog_readback_identity.py"), repo],
+    { encoding: "utf8", windowsHide: true },
+  );
+  if (result.error) throw result.error;
+  assert.equal(result.status, 0, result.stderr);
+  return z
+    .strictObject({
+      schemaVersion: z.literal("catalog-readback-code-v1"),
+      files: z.array(
+        z.strictObject({ path: z.string(), sha256: z.string().regex(/^[a-f0-9]{64}$/u) }),
+      ),
+    })
+    .parse(JSON.parse(result.stdout));
+};
 const started = performance.now();
+const codeIdentity = executionIdentity();
 const sha = (path: string) => createHash("sha256").update(readFileSync(path)).digest("hex");
 const canonical = join(repo, "data/source/catalog.sqlite");
 const canonicalSha = sha(canonical);
 const candidate = join(publication, "catalog-expanded.candidate.sqlite");
 const candidateSha = sha(candidate);
+const publicationManifestSha = sha(join(publication, "MANIFEST.sha256"));
+const resultManifestSha = sha(join(resultRoot, "chunk-01/PANEL-RESULT.sha256"));
 const registrySha = sha(join(publication, "catalog-source-registry.candidate.sqlite"));
 const records = (path: string) =>
   z
@@ -153,7 +175,18 @@ for (const wid of targets) {
 }
 assert.equal(sha(candidate), candidateSha);
 assert.equal(sha(canonical), canonicalSha);
+assert.equal(sha(join(publication, "catalog-source-registry.candidate.sqlite")), registrySha);
+assert.deepEqual(executionIdentity(), codeIdentity, "Readback execution inputs changed");
+assert.equal(sha(join(publication, "MANIFEST.sha256")), publicationManifestSha);
+assert.equal(sha(join(resultRoot, "chunk-01/PANEL-RESULT.sha256")), resultManifestSha);
 const report = {
+  executionIdentity: codeIdentity,
+  publicationManifestSha256: publicationManifestSha,
+  resultManifestSha256: resultManifestSha,
+  artifacts: built.artifactPaths.map((path) => ({
+    path: relative(output, path).replaceAll("\\", "/"),
+    sha256: sha(path),
+  })),
   status: "SQL_BUILD_COVERAGE_ENGINE_VERIFIED",
   publicationRoot: publication,
   resultRoot,

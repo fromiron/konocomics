@@ -94,7 +94,7 @@ export function importPublisherBookMetadata(input: string, output: string, root 
   input = resolve(input);
   output = resolve(output);
   root = resolve(root);
-  within(join(root, ".tmp"), output);
+  within(join(root, ".workspace"), output);
   assert(!existsSync(output), "Use a new authoring output directory");
   const inputBytes = readFileSync(input);
   const rows = readIntake(input, inputBytes);
@@ -267,11 +267,11 @@ if (process.argv[1] && import.meta.url === pathToFileURL(resolve(process.argv[1]
   });
   assert(
     values.input && values.output,
-    "Usage: node --import tsx scripts/import-publisher-book-metadata.ts --input <json> --output <new .tmp directory>",
+    "Usage: node --import tsx scripts/import-publisher-book-metadata.ts --input <json> --output <new .workspace directory>",
   );
   const root = resolve(import.meta.dirname, "..");
   const input = within(root, realpathSync(resolve(values.input)));
-  const output = within(join(root, ".tmp"), resolve(values.output));
+  const output = within(join(root, ".workspace"), resolve(values.output));
   if (process.env.KONOCOMICS_AUTHORING_RECORDED !== "1") {
     const result = spawnSync(
       "python",

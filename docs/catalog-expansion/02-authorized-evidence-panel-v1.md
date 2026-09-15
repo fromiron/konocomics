@@ -65,7 +65,7 @@ Panel은 작품마다 다음 순서로 처리한다.
 
 각 accepted ledger 행은 최소 `workId`, `factKey`, `state`, `value`, `confidence`, `evidenceIds`, `citationUrls`, `entryScope`, `observation`, `limitation`, `decision`, `reasonCode`를 가진다.
 
-2026-09-09 사용자 승인으로 위 산출물과 입력 근거의 영구 보존 위치는 [로컬 작업용 SQLite](03-local-authoring-storage.md)다. 파일명·원본 바이트·manifest·입력/결과 분리는 그대로 유지하며 `.tmp`의 파일은 작업 사본이다. 저장 DB에 후보와 판정이 함께 있어도 후보에 판정 권한이 생기지 않는다. 원문·참조 bundle까지 보존하며 경로 문자열만 저장하는 것으로 보존을 충족하지 않는다.
+2026-09-09 사용자 승인으로 위 산출물과 입력 근거의 영구 보존 위치는 [로컬 작업용 SQLite](03-local-authoring-storage.md)다. 파일명·원본 바이트·manifest·입력/결과 분리는 그대로 유지하며 영구 원본은 `data/local/catalog-authoring/artifacts/`에, 재생성 가능한 임시 사본만 `.workspace/`에 둔다. 호환 연결·심링크를 만들지 않는다. 저장 DB에 후보와 판정이 함께 있어도 후보에 판정 권한이 생기지 않는다. 원문·참조 bundle까지 보존하며 경로 문자열만 저장하는 것으로 보존을 충족하지 않는다.
 
 ## 5. 조사 제한
 
