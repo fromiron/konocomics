@@ -46,10 +46,12 @@
 
 ## 2. 작업 절차
 
+- **2026-09-15 후속 수집 시험:** 신규 작품은 고정 Sol medium 채팅이 수집하고 조정자의 저장·동결 후 같은 채팅에서 판정하는 시험을 우선한다. 상세는 운영 보충의 「Sol 수집·판정 연속 시험」을 따른다. 수집→동결 대기 중 해당 Sol 방은 같은 작품에 예약하며 다른 작품을 배정하지 않는다. 이미 실행 중인 Luna 수집은 보존·소비하고 신규 Luna 수집을 자동 보충하지 않는다.
+
 - Catalog authoring은 `09`의 **`S0~S6` 순서**를 따른다. `S0~S5` shadow와 별도 승인된 `S6` 전환은 완료됐으며, 이후 table-backed 단일 권한은 `data/source/catalog.sqlite`다. 9개 authoritative CSV를 복구하거나 DB와 함께 두지 않는다.
 - 조사·후보 팩터·동결 입력/판정·HOLD/실패·발행 자료는 `docs/catalog-expansion/03-local-authoring-storage.md`에 따라 source 밖의 로컬 작업용 SQLite에 원본·버전을 영구 보존한다. `.tmp`는 복원 가능한 작업 사본이며 유일한 보존 위치로 쓰지 않는다. 인계·단계 완료·STATE 갱신 전에 저장/백업 receipt를 확인한다. 저장 성공으로 판정 권한이나 승격을 대체하지 않는다.
 - 출판사 판본 페이지 수집 시 소개 원문·수집 receipt·서지 입력도 같은 수집분에 보존한다. 정확한 Work·ISBN 검토 후 `scripts/import-publisher-book-metadata.ts`로 기존 metadata를 보존하며 직렬 반영한다. 입력·저장·갱신 경계는 위 저장 계약의 「출판사 소개를 수집과 함께 저장」를 따른다.
-- Catalog 확장의 작업 배정·검증 책임·재검토·보고는 `docs/catalog-expansion/01a-promotion-method-operational-amendment.md`의 **현재 실행 규칙(2026-09-14)**을 따른다. 활성 서브에이전트 최대 5명, Luna Max 수집·Sol High 검토와 준비, Sol 결과의 조정자 중복 검증 금지를 적용한다. 보충 근거 누적·동결 후 수치 원장 한 번 작성·작업 단위 증분 백업을 사용하며 실제 발행·최종 제품 확인과 상위 사양·안전성 계약은 유지한다.
+- Catalog 확장의 작업 배정·검증 책임·재검토·보고는 `docs/catalog-expansion/01a-promotion-method-operational-amendment.md`의 **현재 실행 규칙(2026-09-15)**을 따른다. 조정자 포함 활성 모델 작업 최대 17개 안에서 Luna xhigh 수집 서브에이전트와 사용자 지정 **솔1·솔2·솔3 기존 채팅(Sol medium)**을 사용한다. Sol 판정용 서브에이전트·일회성 CLI·앱 채팅의 CLI resume는 사용하지 않는다. 세 채팅의 고정 ID·완료 통지 형식은 해당 문서의 「현재 Sol 판정 실행 경로」를 따른다. 고정 ID로 세션을 확인할 수 없으면 해당 배정을 보류하고 사용자에게 직접 채팅을 만들어 ID를 제공하거나 에이전트의 새 Sol medium 채팅 생성을 허가해 달라고 명시적으로 묻는다. 허가 없이 대체 채팅을 생성하거나 다른 실행 경로로 전환하지 않는다. 방당 한 작품을 배정하고 Sol이 부모 채팅에 보내는 완료 큐 메시지로 직렬 후처리와 다음 배정을 이어간다. 승격 예약 automation은 삭제됐으며 재생성하지 않는다. 기존 runner의 정상 job 조립과 예외 검토, Sol 결과의 조정자 중복 검증 금지를 적용한다. 보충 근거 누적·동결 후 수치 원장 한 번 작성·작업 단위 증분 백업을 사용하며 실제 발행·최종 제품 확인과 상위 사양·안전성 계약은 유지한다.
 - `06-implementation-plan.md`의 단계별 완료 기준과 `08`의 **`M0~M10` 순서**를 보존한다. 완료된 단계는 일반 유지보수에서 처음부터 재실행하지 않고 변경이 영향을 주는 계약을 검증한다. framework migration과 7화면 redesign을 하나의 대형 PR로 합치지 않는다.
 - **게이트 G1(50작품 sanity)·G2(GO/NO-GO)**의 미충족 조건에 도달하면 의존 작업을 멈추고 보고한다. 기존 G2 제품 방향·Slice 5 승인은 §5의 model-panel artifact 범위에서 적용하며 재승인을 요구하지 않는다. 이를 사람 블라인드 검증 완료나 다른 범위의 승인으로 확대하지 않는다.
 - Model-panel evidence 검토에서 Local/Gemini/Grok CLI에는 ZIP이 아니라 canonical uncompressed directory와 exact request·complete payload ledger·root identity를 제공한다. ChatGPT.com Oracle에만 같은 payload의 deterministic ZIP을 제공한다. 이후 모든 Oracle 검토 모델은 사용자 2026-09-09 지시에 따라 ChatGPT UI의 6 Pro를 사용한다.

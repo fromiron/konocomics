@@ -931,6 +931,20 @@ def _backend_module(
         item.strip() for item in re.split(r"[;|]" if separator == "|" else re.escape(separator), str(value or "")) if item.strip()
     }
 
+    original_find_repo_file = module._find_repo_file
+    moved_followup_root = artifact_path(
+        repo / ".workspace/catalog-followup/batch001-20260902/konocomics-v5-panel-batch-001-of-008"
+    ).resolve()
+
+    def find_repo_file(relative: Path) -> Path | None:
+        found = original_find_repo_file(relative)
+        if found is not None or Path(relative) != module.ALIAS_RESOLUTION_RELATIVE:
+            return found
+        candidate = (moved_followup_root / relative).resolve()
+        return candidate if candidate.is_file() and not candidate.is_symlink() else None
+
+    module._find_repo_file = find_repo_file
+
     original_find_review = module._find_review_source
     original_reviews_verified = False
 
@@ -1841,6 +1855,65 @@ def _registry_correction_slice(
     return root / "source-registry.csv"
 
 
+def _rebase_registry_correction(
+    frozen_baseline: Path,
+    frozen_registry: Path,
+    registry: Path,
+    output: Path,
+    target_ids: set[str],
+) -> bool:
+    """Replay a verified frozen correction onto a newer cumulative registry."""
+    source_registry = frozen_baseline.parent / "catalog-source-registry.candidate.sqlite"
+    if frozen_registry == source_registry:
+        shutil.copy2(registry, output)
+        return False
+
+    import correct_factor_registry as correction
+    root = frozen_registry.parent
+    if correction.verify_correction(root, source_registry, frozen_baseline).resolve() != frozen_registry:
+        raise ValidationError("verified registry correction target mismatch")
+    ledger = _read_json(root / "correction-ledger.json")
+    changes = ledger.get("changes")
+    if not isinstance(changes, list) or not changes:
+        raise ValidationError("verified registry correction has no changes")
+    if any(
+        not isinstance(change, dict)
+        or set(change) != {"sourceRowId", "workId", "field", "before", "after"}
+        or change["workId"] not in target_ids
+        or not all(isinstance(change[key], str) for key in change)
+        for change in changes
+    ):
+        raise ValidationError("registry correction exceeds frozen target scope")
+
+    before = correction.snapshot(registry)
+    expected = copy.deepcopy(before)
+    rows = {row["sourceRowId"]: row for row in expected["tables"]["registry_source_rows"]["rows"]}
+    pending = []
+    for change in changes:
+        row = rows.get(change["sourceRowId"])
+        if row is None or row.get("canonicalWorkId") != change["workId"] or change["field"] not in row:
+            raise ValidationError("registry correction target row changed during rebase")
+        current = row[change["field"]]
+        if current == change["after"]:
+            continue
+        if current != change["before"]:
+            raise ValidationError("registry correction target field changed during rebase")
+        row[change["field"]] = change["after"]
+        pending.append(change)
+
+    shutil.copy2(registry, output)
+    with closing(sqlite3.connect(output)) as connection, connection:
+        for change in pending:
+            updated = connection.execute(
+                f'update registry_source_rows set "{change["field"]}"=? where sourceRowId=? and canonicalWorkId=? and "{change["field"]}"=?',
+                (change["after"], change["sourceRowId"], change["workId"], change["before"]),
+            )
+            if updated.rowcount != 1:
+                raise ValidationError("registry correction rebase lost its exact target row")
+    correction.preservation(before, correction.snapshot(output), expected, pending)
+    return True
+
+
 def _verify_input_identities(input_root: Path, baseline: Path, registry: Path, repo: Path) -> Path | None:
     value = _read_json(input_root / "panel-input.json")
     expected = {
@@ -2331,7 +2404,9 @@ def publish_batch(
     try:
         stage.mkdir(parents=True)
         registry_output = stage / "catalog-source-registry.candidate.sqlite"
-        shutil.copy2(registry, registry_output)
+        correction_rebased = _rebase_registry_correction(
+            frozen_baseline, frozen_registry, registry, registry_output, target_ids
+        )
         candidate = stage / "catalog-expanded.candidate.sqlite"
         # Backend preflight repeats full panel validation immediately before
         # planning; the earlier pass binds the scoped prior-authority targets.
@@ -2340,7 +2415,7 @@ def publish_batch(
             result_root,
             baseline,
             candidate,
-            registry,
+            registry_output,
             reviewed_at=reviewed_at,
             review_reference=f"reviews/authorized-evidence-panel-v1-batch-{batch_id}.md",
             gold_manifest=repo / "data" / "staging" / "catalog-expansion" / "gold-set-manifest.json",
@@ -2348,7 +2423,7 @@ def publish_batch(
         )
         if sha256(baseline) != baseline_before or sha256(registry) != registry_before or sha256(canonical) != canonical_before:
             raise ValidationError("immutable baseline, registry, or canonical catalog changed during publication")
-        if sha256(registry_output) != registry_before:
+        if not correction_rebased and sha256(registry_output) != registry_before:
             raise ValidationError("published registry is not byte-identical")
         if _sidecars(candidate) or _sidecars(registry_output) or _sidecars(canonical):
             raise ValidationError("SQLite sidecar exists after publication")

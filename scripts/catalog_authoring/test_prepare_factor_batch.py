@@ -16,6 +16,23 @@ import prepare_factor_batch as batch
 
 
 class RetainedOperatorTest(unittest.TestCase):
+    def test_freeze_rejects_recursive_provenance_before_reading_or_copying(self):
+        with tempfile.TemporaryDirectory() as directory:
+            root = Path(directory)
+            with self.assertRaisesRegex(ValueError, "outside provenance"):
+                batch.freeze(root / "missing-job.json", root, root / "missing.sqlite", root / "output", provenance=root)
+            self.assertFalse((root / "output").exists())
+
+    def test_backend_resolves_moved_v4_alias_boundary_artifact(self):
+        backend = batch.publisher._backend_module()
+        expected = artifact_path(
+            REPO / ".workspace/catalog-followup/batch001-20260902/konocomics-v5-panel-batch-001-of-008"
+            / backend.ALIAS_RESOLUTION_RELATIVE
+        ).resolve()
+        self.assertEqual(backend._find_repo_file(backend.ALIAS_RESOLUTION_RELATIVE), expected)
+        self.assertTrue(expected.is_file())
+        self.assertFalse(expected.is_symlink())
+
     def test_structured_decisions_preserve_prior_and_require_explicit_complete_axes(self):
         wid = "work-aaaaaaaaaaaaaaaaaaaa"
         original = dict(zip(batch.panel.SEMANTIC_FIELDS, (

@@ -98,7 +98,7 @@ def project(input_root: Path, value: dict):
 
         identity = panel.exact_dict(decision["identity"], {"outcome", "evidenceIds", "observation", "limitation"}, "identity decision")
         require(identity["outcome"] in {"MATCH", "HOLD"} and all(isinstance(identity[k], str) and identity[k] for k in ("observation", "limitation")), "invalid identity decision")
-        ids, _, _ = selected(identity["evidenceIds"], "identity")
+        ids, _, identity_urls = selected(identity["evidenceIds"], "identity")
         require(identity["outcome"] != "MATCH" or bool(ids), "identity MATCH lacks source evidence")
         codes = [] if identity["outcome"] == "MATCH" else ["TARGET_IDENTITY_UNRESOLVED"]
         packet = panel.read_json(input_root / f"chunks/chunk-01/packets/{wid}/packet.json")
@@ -130,7 +130,7 @@ def project(input_root: Path, value: dict):
         for row in decision["claims"]:
             selected(row.get("evidenceIds"), "factor")
         factor_works.append({key: decision[key] for key in ("workId", "claims", "retainedClaims", "unknownGroups")})
-        projected.append({**work, "context": context_row, "safety": {"claim": claim, "evidence": evidence}})
+        projected.append({**work, "identitySourceUrl": identity_urls[0] if identity_urls else "", "context": context_row, "safety": {"claim": claim, "evidence": evidence}})
         blockers[wid] = sorted(codes)
     output = {**job, "works": projected}
     validated_safety(output)

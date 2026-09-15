@@ -46,6 +46,11 @@ class SinglePassTest(unittest.TestCase):
             self.assertEqual(blockers[wid], [])
             self.assertEqual(projected["works"][0]["context"]["citationUrls"], url)
             self.assertEqual(before, {p: p.read_bytes() for p in before})
+            safety_root = root / "safety"
+            target = {"batchId": "r-test-revision", "ordinal": "1", "workId": wid, "title": "Example", "representativeIsbn": "9784199804953", "packetDigest": "a" * 64}
+            prepare.materialize_safety(projected, [target], {wid}, safety_root)
+            safety_targets = panel.read_csv(safety_root / "targets.csv", prepare.publisher.SAFETY_TARGET_FIELDS)
+            self.assertEqual(safety_targets[0]["identityUrl"], url)
             for defect in ("wrong-use", "unknown-id", "duplicate", "wrong-work", "mixed-version"):
                 bad = copy.deepcopy(value)
                 work = bad["works"][0]
