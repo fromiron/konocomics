@@ -1,6 +1,7 @@
 """Transport/projection regression; real model and publication checks run separately."""
 import copy
 import json
+import re
 import tempfile
 import unittest
 from pathlib import Path
@@ -12,6 +13,19 @@ import validate_factor_panel as panel
 
 
 class SinglePassTest(unittest.TestCase):
+    def test_confidence_schema_matches_publisher_validation(self):
+        schema = single.output_schema()["properties"]["works"]["items"]["anyOf"][0]
+        confidence = schema["properties"]["claims"]["items"]["properties"]["confidence"]
+        self.assertEqual(confidence["type"], "string")
+        for value in ("0", "0.0", "0.75", "1", "1.00", "medium", "low", "", "NaN", "-0.1", "1.01", ".5", "1e0", "00", "0.5\n", " 0.5"):
+            with self.subTest(value=value):
+                try:
+                    panel.confidence(value, "test")
+                    valid = True
+                except panel.ValidationError:
+                    valid = False
+                self.assertEqual(re.search(confidence["pattern"], value) is not None, valid)
+
     def test_source_purposes_hold_and_input_immutability(self):
         wid, eid, url = "work-aaaaaaaaaaaaaaaaaaaa", "ev-source-one", "https://example.test/manga"
         with tempfile.TemporaryDirectory() as directory:
