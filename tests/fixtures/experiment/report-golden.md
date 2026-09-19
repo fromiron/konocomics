@@ -1,6 +1,6 @@
 # konocomics Taste vs Baseline レポート
 
-- カタログバージョン: v1\-9902e9918115
+- カタログバージョン: v1\-7e3b9b071a98
 - ファクター辞書バージョン: v1
 - Baseline バージョン: v1
 - プロフィール数: 3
@@ -1067,31 +1067,7 @@
 | 4 | -0.033333333333 | similarity | theme | exploration | yotsuba\-to | なし | はい |
 | 5 | -0.033333333333 | similarity | theme | foundFamily | yotsuba\-to | なし | はい |
 
-#### 9. Dr\.STONE (dr\-stone)
-
-- スコア: 0.484708120813
-- 確信度: 高い
-- 最も近いアンカー: ダンジョン飯 (dungeon\-meshi)
-- おすすめ理由:
-  - 「あたたかさ・癒やし」があなたの好みに合う作品です。
-  - 『ダンジョン飯』で好きだった「頭脳で解決する展開」に近い作品です。
-  - 『ダンジョン飯』で好きだった「リアル寄りの絵」に近い作品です。
-- 注意点: ただし「ファンタジー」は、『ダンジョン飯』で好きだった傾向と少し異なります。
-- 根拠アンカー: ダンジョン飯 (dungeon\-meshi)
-- 適用された減点: 絵柄が合わない
-- カバレッジ警告:
-  - PARTIAL / tone / coverage=0.857142857143 / threshold=0.6 / adjustedScore=0.956378986867
-- 寄与度上位5件:
-
-| 順位 | 寄与 | source | group | factorId | anchorWorkIds | negativeReasonId | 説明対象 |
-| -: | -: | --- | --- | --- | --- | --- | --- |
-| 1 | 0.4 | baseline | overall | neutralBaseline | なし | なし | いいえ |
-| 2 | -0.08 | penalty | art | artStyleDislike | chainsaw\-man | artStyleDislike | はい |
-| 3 | 0.06 | adjustment | tone | emotionalWarmth | なし | なし | はい |
-| 4 | -0.03 | adjustment | art | visualSoftness | なし | なし | はい |
-| 5 | 0.017915904936 | similarity | narrative | problemSolving | dungeon\-meshi | なし | はい |
-
-#### 10. モブサイコ100 (mob\-psycho\-100)
+#### 9. モブサイコ100 (mob\-psycho\-100)
 
 - スコア: 0.499854613655
 - 確信度: ふつう
@@ -1114,6 +1090,30 @@
 | 3 | 0.06 | adjustment | tone | emotionalWarmth | なし | なし | はい |
 | 4 | -0.03 | adjustment | art | visualSoftness | なし | なし | はい |
 | 5 | 0.03 | adjustment | theme | foundFamily | なし | なし | はい |
+
+#### 10. Dr\.STONE (dr\-stone)
+
+- スコア: 0.484708120813
+- 確信度: 高い
+- 最も近いアンカー: ダンジョン飯 (dungeon\-meshi)
+- おすすめ理由:
+  - 「あたたかさ・癒やし」があなたの好みに合う作品です。
+  - 『ダンジョン飯』で好きだった「頭脳で解決する展開」に近い作品です。
+  - 『ダンジョン飯』で好きだった「リアル寄りの絵」に近い作品です。
+- 注意点: ただし「ファンタジー」は、『ダンジョン飯』で好きだった傾向と少し異なります。
+- 根拠アンカー: ダンジョン飯 (dungeon\-meshi)
+- 適用された減点: 絵柄が合わない
+- カバレッジ警告:
+  - PARTIAL / tone / coverage=0.857142857143 / threshold=0.6 / adjustedScore=0.956378986867
+- 寄与度上位5件:
+
+| 順位 | 寄与 | source | group | factorId | anchorWorkIds | negativeReasonId | 説明対象 |
+| -: | -: | --- | --- | --- | --- | --- | --- |
+| 1 | 0.4 | baseline | overall | neutralBaseline | なし | なし | いいえ |
+| 2 | -0.08 | penalty | art | artStyleDislike | chainsaw\-man | artStyleDislike | はい |
+| 3 | 0.06 | adjustment | tone | emotionalWarmth | なし | なし | はい |
+| 4 | -0.03 | adjustment | art | visualSoftness | なし | なし | はい |
+| 5 | 0.017915904936 | similarity | narrative | problemSolving | dungeon\-meshi | なし | はい |
 
 ### Baseline Top 10 (10/10)
 

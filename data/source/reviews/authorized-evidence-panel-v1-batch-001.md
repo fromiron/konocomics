@@ -1,0 +1,86 @@
+# Authorized evidence panel — integrated Batch001
+
+- Decision authority: authorizedEvidencePanel (non-human evidence panel)
+- candidateOnly: true
+- reviewedByHuman: false
+- Grok used: false
+- AniList authorizing evidence: none
+- Canonical immutable Catalog SHA256/blob: `78888710f280f9a10ab3f93f94c63ea80e897c4fc4cff9416c9ef33fb618f83b` / `f7fb73662572f496ca3cfb701b3eeed6d1f2bd93`
+- Frozen cumulative Batch008 candidate SHA256: `405a31f9dc33580b5bbd5d2805cb3a4d46491a749f00558b13b41eda9b862f98`
+- Frozen source registry SHA256: `8610b7b740462f0a287f29541c858b274a8b6f0e3350283ed6e4dc4df9813e7e`
+- Gold manifest / alias-resolution SHA256: `eee9030933949bd92fbb48d0a94610ed933d2aaa76d620b86fec6c4a44b18fe2` / `c6ab3d41c96690bc979b7c7e5b93949b9ec184ea19e09d54533a0c54ae0ad289`
+- COMBINED-INPUT.sha256 file SHA256: `1a76d0be6537468335e2c64710bb583197cb2d8387fe05c0ef5c8ff9c91f03e3`
+- Original Batch001 claim ledger SHA256: `333d479eb57473b0baa090d76e21bd243133dc2a478f75bbc9f81321221860f2`
+- Original Batch001 200 packet-manifest aggregate SHA256: `7b76a339ddd199bcf6cc26c29b3a3da0997dc15545feb8fa82eb4c2a55b17435`
+- Review set aggregate digest: `0f4d2b1bc922c0433de039e52f29e3ef0ee4cb5474624ed634dd9fb647d72333`
+- Final outcome: 131 PASS / 69 BLOCKED_FACTOR
+- Unknown-factor adjudication ledger SHA256: `9027a91924ca6dcbb51656d226c98b2d304d90d88e07f06fb57c46b577c86a8f` (658 exact bindings; factor value/confidence remain blank)
+- Generated followup claim fetchedAt normalization: 28 rows, recorded per row in the unknown-factor adjudication ledger
+- Global schema compatibility ledgers: sourceType `0e16ac9bb15fa38e850966bd27626f1c6c3322efbdef9a12176457c7096a0b3d`, fetchedAt `aa19e4d72801774756b35df63f1fab0eea31e33b079725c3e3424b6e96aca69c`, evidence confidence `c2d3ac3a3b03b94d08ec0b8caee20dceec131b7a19594e7950cf84c715792e7b`, evidence ID `0954a6c8dbedea7f6f7aa41d728de63b38b3ccd58b59eb48b5b984a8cbe76f2e`, combined `cc819f637cfb14c43acf6bc851d1a0984160b347055c6f9ad01ce3041b3b790c`
+- Structural projection exception: source_themes and source_recommendation_context sourceOrdinal/sourceLine only; all non-target semantic columns, keys, order, and counts remain exact
+- Compatibility distribution: outside Batch001 only 1,368 cohortSupport sourceType projections and three malformed evidence IDs/references; all 225 fetchedAt lexical projections and the remaining 173 sourceType projections belong to Batch001.
+- BLOCKED_FACTOR means factor evidence is incomplete; it is not a support rejection.
+
+## Frozen panel/result manifests
+
+  - `correction/TARGETS.sha256`: `48c28409ecb6ea81bd422ecb10fb5ed9b1c0dc2e42d10066826460ea3f146715`
+  - `correction/result/chunk-01/MANIFEST.sha256`: `a74b33c7e7a8f60625468fca3b5b566f92768c781380fa18853363932ba6e31b`
+  - `correction/result/chunk-02/MANIFEST.sha256`: `7b0ef9e91b36c0bc5c4f180b29fd7e0e044eaac1d04d98c00e4ebe5f988601c3`
+  - `correction/result/chunk-03/MANIFEST.sha256`: `714b129638a6f5e2faa449e880f85d70df9405bc2909922695271650794a25b3`
+  - `correction/result/chunk-04/MANIFEST.sha256`: `6e451b989fa911a88e366bc03ddfa84fbd94e23ca52e7dd654b428c7a10cceea`
+  - `correction/result/chunk-05/MANIFEST.sha256`: `6bcdf210a918e95ee3cc13143c7c0af702423a77f81fab82974ad1534466dd55`
+  - `correction/result/chunk-06/MANIFEST.sha256`: `4777ac36cd25af8fa5bdf86909c2b5c0f51c0e9835179238c80e76d5290290b8`
+  - `correction/result/chunk-07/MANIFEST.sha256`: `c50e22da57edffa2a6f0e1e598cf2b6e0b1dff6cd7f06b8910ff1ad8eb99f5bc`
+  - `correction/result/chunk-08/MANIFEST.sha256`: `5b89a82cb2818092a6a9d187f7cdb964f12e7f1e0bd744f85bee2e6bca06218e`
+  - `correction/result/chunk-09/MANIFEST.sha256`: `c4c15043cfd21d246595cabc12791c8e1e29c2251c30a14c59a0cc72c83e9ea9`
+  - `correction/result/chunk-10/MANIFEST.sha256`: `30f724030fe65d430b2480ba49a0d27ee15bbfec0c9fbe2b4a93e1e4e84fbcd1`
+  - `followup/PANEL-INPUT.sha256`: `94c8a86acfc4ff6d9bdd6960b5bc94dee617218bbb156e84cb61d7330fa4ac84`
+  - `followup/result/chunk-01/PANEL-RESULT.sha256`: `34347b0a255964bc44ef33b7b2996e3463095e170ed5d5d5646da58fe6c337e3`
+  - `followup/result/chunk-02/PANEL-RESULT.sha256`: `2663de4e6760f79121b2eda663be84cbac3855bec7c7587319fd0a7ba5bd95e8`
+  - `followup/result/chunk-03/PANEL-RESULT.sha256`: `d49a60838c218bdc96b6c3f2858d4ee4433ced2c8a4b83c6faf6dd8157c583ed`
+  - `followup/result/chunk-04/PANEL-RESULT.sha256`: `673942ede09a15986092ee9cf434d174148796a80aaffa4c4edec7c226646f34`
+  - `followup/result/chunk-05/PANEL-RESULT.sha256`: `0a01fd86811c4a66e889e75de1bc1b8f01592faf2a2f2a122bbefff84b690909`
+  - `followup/result/chunk-06/PANEL-RESULT.sha256`: `4f25751a6a6a5c23293d0f7815ee1ab5b1c98484b7df7ea6720039251e8c5a43`
+  - `followup/result/chunk-07/PANEL-RESULT.sha256`: `00aa4460219a0a219dc2a687bb81696c4b2dd5b25bc0da284ba568c31c95ebc5`
+  - `followup/result/chunk-08/PANEL-RESULT.sha256`: `1910e9c03a09d6d2398f0089abdc009de5f8f931cce7050484ce190ff2985ca4`
+  - `followup/result/chunk-09/PANEL-RESULT.sha256`: `8159f825a6198c4c3fb875a43bab17ae62043b55cdf52aff121937313ad0398b`
+  - `followup/result/chunk-10/PANEL-RESULT.sha256`: `701066743658b9ba1f5133f63d81253208654f4900a2939caebf57d793962ca6`
+  - `safety/MANIFEST.sha256`: `dc320d2612954e9e58d214465f8915dc4083df8a32d522881bd3740babc74757`
+  - `safety/result/chunk-01/MANIFEST.sha256`: `c5967f90c13acbe1dbef515b0f4ec9a8ad3c3eb28caefbc24fb1f8c51ab93ff7`
+  - `safety/result/chunk-02/MANIFEST.sha256`: `707013e2220ba09528472ac12faf5224502dc953384677aaddad6306f7cd2585`
+  - `safety/result/chunk-03/MANIFEST.sha256`: `95d803a5f36ce2296571fa49e24c347d40b1a4d7d96cc09e5c07943e9c955255`
+  - `safety/result/chunk-04/MANIFEST.sha256`: `e855cf6257ae7adca221e4d209f24e31445af65317f3fc076a0e6b890a4ef972`
+  - `safety/result/chunk-05/MANIFEST.sha256`: `75e37790376196d40239831ad457b3a86c7f3ccad08f608fa2885fc99bd18029`
+  - `safety/result/chunk-06/MANIFEST.sha256`: `8d5bc5b292065855859efc93a0f7447286bf980ac2f9c2ebff83899ae5536134`
+  - `safety/result/chunk-07/MANIFEST.sha256`: `116749361b562fec568c72824af3b9293b5678b6cfb6e95b60f187d05e3b49c5`
+  - `safety/result/chunk-08/MANIFEST.sha256`: `f8961827dcd8d2bc66ccd07f17fd4323e51e33f87b348c90105c6f0ba0ca08cd`
+  - `safety/result/chunk-09/MANIFEST.sha256`: `1ee9fe30766f795136c9a52755f1d8cc301df17548eae851cc63a6d2e5274556`
+
+## Independent review digests
+
+  - `effective-url-repair-v1/independent-review`: `9c22b96b2dbeafa91895c4e2e27c15b98a78514a5dfec576543367f5b83acddb`
+  - `followup-panel-review-v1/chunk-01`: `887c150ed469e9093d14a826d2bec52b7a34664c09d678fdf8077458e9aad25c`
+  - `followup-panel-review-v1/chunk-02`: `7974160f3d365e4da2ad7908a972777370e7c6212c8a977af315ef268b9dd205`
+  - `followup-panel-review-v1/chunk-03`: `a1c1d2a48cf5ad11fe14a9ab4fb37b12230c209c2fca2066452f47440ce82a3b`
+  - `followup-panel-review-v1/chunk-04`: `07c78bf300e21e719d1a430900591ec1739e47b698973d4db2d3d63b96afce3d`
+  - `followup-panel-review-v1/chunk-05`: `8cfc97002847f0f5770cca2b94b3d3ec3796c193e8353ddda344190151429cee`
+  - `followup-panel-review-v1/chunk-06`: `202a32569fa2c407719ac5dd24a7a70b197df576f32032ebfd03cf9c246d673c`
+  - `followup-panel-review-v1/chunk-07`: `5124d0aaa9e8d48150f770aa4c9851a3336d6cbe51c653acf0c3081b82839f24`
+  - `followup-panel-review-v1/chunk-08`: `955c2eeae1a6664c7468356009dfd9eb508e9a08a1701dee3c4e299bfb86ffec`
+  - `followup-panel-review-v1/chunk-09`: `59d6120d369e892eb83e4b3103bd82563ba5b8b38006c14938e178cd28545203`
+  - `followup-panel-review-v1/chunk-10`: `16cb475bfe70e46e84e23aa65b8d2fa3d66f30a9767c4f4d235767402ba292b3`
+  - `followup-review-hash-addendum-v1/chunk-03`: `af3e6759da51dbaecab762a622bae26bd75ca7d56797a1e841a1388db2fea79f`
+  - `followup-review-hash-addendum-v1/chunk-05`: `36ada4d54a5ece52f5bd4cf8baedfa860492cfea26b469f62733d18f08f1ee29`
+  - `followup-review-hash-addendum-v1/chunk-07`: `6645d29ae6294d9b9f37f19e0ff7645c441808822e2b9e5beb503fff10dfddb4`
+  - `followup-review-hash-addendum-v1/chunk-10`: `b2f09944c50b834d882a083d722cd7f18ab60ce6470cef7b68d9e8922af2ddb4`
+  - `initial-pass-correction-v1/review-01-02`: `b856b60e79f7d9bc772e356836e08bd327ffd649ed984c3024c692c2b1301b14`
+  - `initial-pass-correction-v1/review-03-04`: `758b1991031b3a6fbd8f511165f93b83c2da2def22a49c6c0d785b549da48f19`
+  - `initial-pass-correction-v1/review-05-07`: `2d90ab0eb582fccbcf048abbb203bed3205d37dc1b92c08e62c33fca2c072984`
+  - `initial-pass-correction-v1/review-06-09`: `4b460cc04856e9dfd22ba0d1bc5dfac07b244574c62266f1670d239060925bae`
+  - `initial-pass-correction-v1/review-08`: `2d3385440923eadf2d4b9e78e9337583042d72fa0c5b5904eaf36ae784ea841c`
+  - `initial-pass-correction-v1/review-10`: `719f2b49f70ac6cdb4d0d90bc9e47535865aca7fb93943e1058779447eb6a126`
+  - `safety-recheck-v1/review-01-05`: `952f5be2efd3f1515190e22e9fb2e694cb62c986351f7a0a36cca7d9e950f0c8`
+  - `safety-recheck-v1/review-02`: `51fc0d7d9513ea7ec82272893914d402a132b038a7440787935fcdedb7a4f802`
+  - `safety-recheck-v1/review-03-07`: `a504dd77c79ab521fc24763e15d9ba1269f0ad0b081fdc85dda933f9741f7f4c`
+  - `safety-recheck-v1/review-04-08`: `a1da836c971ebd02b08103e493b58b23e9442c39eca54efe191d4c5736532171`
+  - `safety-recheck-v1/review-06-09`: `24ef25f2d92852682935665a388e2a82e0449da2b33584b490f4e62447a01985`

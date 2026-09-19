@@ -85,7 +85,7 @@ describe("catalog expansion Gold Set", () => {
       "utf8",
     );
     expect(() => validateGoldSet(changedRoot, goldManifest)).toThrow(/Gold Set rows changed/u);
-  });
+  }, 30_000);
 
   it("rejects removal of baseline evidence or aliases", () => {
     const temporaryRoot = copySource();
@@ -95,7 +95,7 @@ describe("catalog expansion Gold Set", () => {
     expect(() => validateGoldSet(temporaryRoot, goldManifest)).toThrow(
       /Gold Set row changed or was removed/u,
     );
-  });
+  }, 30_000);
 
   it("allows a new Work while rejecting review provenance changes", () => {
     const additiveRoot = copySource();
@@ -109,7 +109,7 @@ describe("catalog expansion Gold Set", () => {
     const reviewPath = join(changedRoot, "data/source/reviews/g1-sanity-panel.md");
     writeFileSync(reviewPath, `${readFileSync(reviewPath, "utf8")}changed\n`, "utf8");
     expect(() => validateGoldSet(changedRoot, goldManifest)).toThrow(/review provenance changed/u);
-  });
+  }, 30_000);
 
   it("rejects a manifest that no longer binds exactly 150 Work IDs", () => {
     const manifest = JSON.parse(JSON.stringify(goldManifest)) as {

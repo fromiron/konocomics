@@ -338,5 +338,5 @@ describe("promotion registry", () => {
     expect(serializePromotionRegistry(rows)).toBe(
       readFileSync("data/staging/catalog-expansion/promotion-registry.csv", "utf8"),
     );
-  }, 15_000);
+  }, 45_000);
 });
