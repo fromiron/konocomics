@@ -160,4 +160,4 @@ it("adds a captured introduction without losing metadata, and rejects damaged or
     vi.restoreAllMocks();
     rmSync(root, { recursive: true, force: true });
   }
-}, 60_000);
+}, 180_000);

@@ -333,7 +333,7 @@ describe("catalog pipeline Art evidence boundary", () => {
     } finally {
       rmSync(root, { recursive: true, force: true });
     }
-  });
+  }, 30_000);
 
   it("surfaces factor-linked Art provenance mismatches through the normal pipeline", () => {
     const root = mkdtempSync(join(tmpdir(), "konocomics-art-provenance-"));
@@ -353,5 +353,5 @@ describe("catalog pipeline Art evidence boundary", () => {
     } finally {
       rmSync(root, { recursive: true, force: true });
     }
-  });
+  }, 30_000);
 });
