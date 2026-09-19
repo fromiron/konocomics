@@ -31,10 +31,12 @@ the complete raw events. No Factor job, legacy import, or canonical identity is
 inferred, and repeat event receipts are preserved without duplicate insertion.
 
 Identity wrong-mapping --changes uses
-factor-registry-identity-mapping-correction-request-v1 without a Factor job or
-panel. It restores only the unresolved status already preserved by the row's
-exact research attempt after binding raw identity, actual source membership,
-expectedBefore, registry, and catalog. No new identity is adjudicated.
+factor-registry-identity-mapping-correction-request-v1 or v2 without a Factor
+job or panel. v1 restores only the unresolved status already preserved by the
+row's exact research attempt. v2 also restores a resolved attempt when exact
+source and mapped-Work identity proof demonstrates a creator mismatch. Both
+bind raw identity, actual source membership, expectedBefore, registry, and
+catalog. No new identity is adjudicated.
 """
 from __future__ import annotations
 
@@ -73,6 +75,8 @@ ORICON_LEDGER = 'factor-registry-oricon-correction-v1'
 DISCOVERY_REQUEST = 'factor-registry-oricon-discovery-request-v1'
 DISCOVERY_LEDGER = 'factor-registry-oricon-discovery-v1'
 IDENTITY_MAPPING_REQUEST = 'factor-registry-identity-mapping-correction-request-v1'
+IDENTITY_MAPPING_RESOLVED_REQUEST = 'factor-registry-identity-mapping-correction-request-v2'
+IDENTITY_MAPPING_REQUESTS = {IDENTITY_MAPPING_REQUEST, IDENTITY_MAPPING_RESOLVED_REQUEST}
 IDENTITY_MAPPING_LEDGER = 'factor-registry-identity-mapping-correction-v1'
 IDENTITY_MAPPING_PREFLIGHT = 'factor-registry-identity-mapping-correction-preflight-v1'
 IDENTITY_MAPPING_FIELDS = {
@@ -84,6 +88,10 @@ IDENTITY_ATTEMPT_PROOF_FIELDS = {
     'attemptId', 'sourceRowId', 'rawTitle', 'rawCreator',
     'originalTerminalStatus', 'sourceItemIds', 'attemptedUrls', 'matchOutcome',
     'matchBasis', 'resolvedWorkId', 'mismatchReason', 'finalTerminalStatus',
+}
+RESOLVED_MISMATCH_PROOF_FIELDS = {
+    'sourceUrl', 'sourceTitle', 'sourceCreators', 'mappedIdentityUrl',
+    'mappedTitle', 'mappedCreators', 'mappedIsbn', 'observation',
 }
 DISCOVERY_MARKER = 'oriconSourceDiscoveryV1='
 ORICON_SOURCE = 'oricon-reader-survey-2026'
@@ -150,13 +158,15 @@ def text_members(value: str) -> list[str]:
 
 
 def validate_identity_mapping_request(value: object) -> dict:
-    require(isinstance(value, dict) and set(value) == {'schemaVersion', 'sourceRegistrySha256', 'catalogSha256', 'changes'} and value.get('schemaVersion') == IDENTITY_MAPPING_REQUEST, 'Invalid identity mapping correction request')
+    require(isinstance(value, dict) and set(value) == {'schemaVersion', 'sourceRegistrySha256', 'catalogSha256', 'changes'} and value.get('schemaVersion') in IDENTITY_MAPPING_REQUESTS, 'Invalid identity mapping correction request')
+    resolved_mode = value['schemaVersion'] == IDENTITY_MAPPING_RESOLVED_REQUEST
     for key in ('sourceRegistrySha256', 'catalogSha256'):
         require(isinstance(value[key], str) and re.fullmatch('[0-9a-f]{64}', value[key]) is not None, f'Invalid hash: {key}')
     require(isinstance(value['changes'], list) and bool(value['changes']), 'Empty identity mapping corrections')
     ids = set()
     for change in value['changes']:
-        require(isinstance(change, dict) and set(change) == {'sourceRowId', 'rawIdentity', 'actualSourceProof', 'expectedAttempt', 'expectedBefore', 'updates', 'observation'}, 'Unexpected identity mapping change fields')
+        change_fields = {'sourceRowId', 'rawIdentity', 'actualSourceProof', 'expectedAttempt', 'expectedBefore', 'updates', 'observation'} | ({'resolvedMismatchProof'} if resolved_mode else set())
+        require(isinstance(change, dict) and set(change) == change_fields, 'Unexpected identity mapping change fields')
         rid = change['sourceRowId']
         require(isinstance(rid, str) and bool(rid) and rid not in ids, 'Duplicate or empty sourceRowId')
         ids.add(rid)
@@ -167,7 +177,14 @@ def validate_identity_mapping_request(value: object) -> dict:
         require(all(isinstance(v, str) and bool(v.strip()) for v in source.values()) and valid_url(source['supportEvidenceUrl']) and valid_url(source['attemptedUrl']), 'Incomplete actual source proof')
         attempt = change['expectedAttempt']
         require(isinstance(attempt, dict) and set(attempt) == IDENTITY_ATTEMPT_PROOF_FIELDS and all(isinstance(v, str) for v in attempt.values()), 'Invalid expected research attempt')
-        require(attempt['sourceRowId'] == rid and attempt['attemptId'] and attempt['rawTitle'] and attempt['mismatchReason'].strip(), 'Incomplete expected research attempt')
+        require(attempt['sourceRowId'] == rid and attempt['attemptId'] and attempt['rawTitle'], 'Incomplete expected research attempt')
+        if resolved_mode:
+            proof = change['resolvedMismatchProof']
+            require(isinstance(proof, dict) and set(proof) == RESOLVED_MISMATCH_PROOF_FIELDS, 'Invalid resolved mismatch proof')
+            require(all(isinstance(proof[key], str) and proof[key].strip() for key in RESOLVED_MISMATCH_PROOF_FIELDS), 'Incomplete resolved mismatch proof')
+            require(valid_url(proof['sourceUrl']) and valid_url(proof['mappedIdentityUrl']) and re.fullmatch(r'\d{13}', proof['mappedIsbn']) is not None, 'Invalid resolved mismatch identity proof')
+        else:
+            require(attempt['mismatchReason'].strip(), 'Incomplete expected research attempt')
         before, updates = change['expectedBefore'], change['updates']
         require(isinstance(before, dict) and isinstance(updates, dict) and set(before) == set(updates) == IDENTITY_MAPPING_FIELDS, 'Identity mapping reset must bind every mutable mapping field')
         require(all(isinstance(v, str) for v in [*before.values(), *updates.values()]), 'Identity mapping values must be strings')
@@ -181,6 +198,7 @@ def identity_mapping_plan(before: dict, request: dict) -> tuple[dict, list[dict]
     expected = copy.deepcopy(before)
     rows = {row['sourceRowId']: row for row in expected['tables']['registry_source_rows']['rows']}
     attempts = expected['tables']['registry_research_attempts']['rows']
+    resolved_mode = request['schemaVersion'] == IDENTITY_MAPPING_RESOLVED_REQUEST
     require(len(rows) == len(expected['tables']['registry_source_rows']['rows']), 'Nonunique registry sourceRowId')
     changes = []
     for item in request['changes']:
@@ -198,7 +216,10 @@ def identity_mapping_plan(before: dict, request: dict) -> tuple[dict, list[dict]
         attempt = matched[0]
         require(all(attempt[field] == value for field, value in item['expectedAttempt'].items()), f'Preserved research attempt mismatch: {rid}')
         require(attempt['rawTitle'] == row['rawTitle'] and attempt['rawCreator'] == row['rawCreator'], f'Research attempt raw identity mismatch: {rid}')
-        require(attempt['originalTerminalStatus'] == attempt['finalTerminalStatus'] == 'UNRESOLVED_IDENTITY' and attempt['matchOutcome'] == 'NO_EXACT_IDENTITY_AFTER_FINITE_CHECK' and not attempt['matchBasis'] and not attempt['resolvedWorkId'], f'Research attempt did not preserve unresolved identity: {rid}')
+        if resolved_mode:
+            require(attempt['originalTerminalStatus'] == 'UNRESOLVED_IDENTITY' and attempt['finalTerminalStatus'] == 'MAPPED_EXISTING_CATALOG' and attempt['matchOutcome'] == 'RESOLVED_TO_EXISTING_OR_V3_CANDIDATE' and attempt['matchBasis'] and attempt['resolvedWorkId'] == row['canonicalWorkId'], f'Research attempt is not the resolved mapping being corrected: {rid}')
+        else:
+            require(attempt['originalTerminalStatus'] == attempt['finalTerminalStatus'] == 'UNRESOLVED_IDENTITY' and attempt['matchOutcome'] == 'NO_EXACT_IDENTITY_AFTER_FINITE_CHECK' and not attempt['matchBasis'] and not attempt['resolvedWorkId'], f'Research attempt did not preserve unresolved identity: {rid}')
         proof = item['actualSourceProof']
         require(proof['sourceId'] in text_members(row['sourceIds']), f'Actual source id absent from row: {rid}')
         require(proof['sourceItemId'] in text_members(attempt['sourceItemIds']), f'Actual source item absent from attempt: {rid}')
@@ -206,6 +227,11 @@ def identity_mapping_plan(before: dict, request: dict) -> tuple[dict, list[dict]
         require(proof['attemptedUrl'] in url_members(attempt['attemptedUrls']), f'Attempted source URL absent from research attempt: {rid}')
         require(proof['supportEvidenceUrl'] == proof['attemptedUrl'], f'Row and attempt do not bind the same actual source: {rid}')
         require(all(row[field] == value for field, value in item['expectedBefore'].items()), f'expectedBefore mismatch: {rid}')
+        if resolved_mode:
+            mismatch = item['resolvedMismatchProof']
+            require(mismatch['sourceUrl'] == proof['supportEvidenceUrl'] and mismatch['sourceTitle'] == row['rawTitle'] and mismatch['sourceCreators'] == row['rawCreator'], f'Resolved mismatch source proof does not bind raw identity: {rid}')
+            require(mismatch['mappedIdentityUrl'] in url_members(row['identityEvidenceUrls']) and mismatch['mappedTitle'] == row['canonicalTitleJa'] and mismatch['mappedCreators'] == row['canonicalCreatorsJa'] and mismatch['mappedIsbn'] == row['representativeIsbn'], f'Resolved mismatch proof does not bind mapped identity: {rid}')
+            require(creator_names(mismatch['sourceCreators']) != creator_names(mismatch['mappedCreators']), f'Resolved mapping proof has no creator mismatch: {rid}')
         derived = {
             'canonicalWorkId': '',
             'canonicalTitleJa': row['rawTitle'],
@@ -213,7 +239,7 @@ def identity_mapping_plan(before: dict, request: dict) -> tuple[dict, list[dict]
             'existingCatalogWorkId': '',
             'identityEvidenceUrls': '',
             'representativeIsbn': '',
-            'terminalStatus': attempt['finalTerminalStatus'],
+            'terminalStatus': 'UNRESOLVED_IDENTITY',
             'blocker': 'IDENTITY_EVIDENCE_REQUIRED',
         }
         require(item['updates'] == derived, f'Request does not restore the preserved unresolved identity exactly: {rid}')
@@ -982,6 +1008,7 @@ def correct_identity_mapping(source_registry: Path, catalog: Path, changes_path:
         'afterSnapshotSha256': json_sha(expected),
         'changedRowCount': len(request['changes']),
     }
+    scope = ('Exact request-bound reversal of a resolved same-title creator mismatch. Raw/source/research provenance, non-target rows, Catalog, and all other fields are unchanged.' if request['schemaVersion'] == IDENTITY_MAPPING_RESOLVED_REQUEST else 'Exact request-bound restoration of a preserved unresolved identity decision. Raw/source/research provenance, non-target rows, Catalog, and all other fields are unchanged.')
     write_json(output_root / 'correction-ledger.json', {
         'schemaVersion': IDENTITY_MAPPING_LEDGER,
         'candidateOnly': True,
@@ -992,7 +1019,7 @@ def correct_identity_mapping(source_registry: Path, catalog: Path, changes_path:
         'genericToolSha256': sha256(Path(__file__).resolve()),
         'changes': changes,
         'preservation': proof,
-        'scope': 'Exact request-bound restoration of a preserved unresolved identity decision. Raw/source/research provenance, non-target rows, Catalog, and all other fields are unchanged.',
+        'scope': scope,
     })
     report = {
         'schemaVersion': IDENTITY_MAPPING_PREFLIGHT,
@@ -1237,7 +1264,7 @@ def main():
         require(args.input_root is None and args.job is None, 'Source discovery ingestion does not use a Factor job or panel')
         print(json.dumps(ingest_discoveries(args.source_registry, args.catalog, args.changes, args.output_root), ensure_ascii=False, separators=(',', ':')))
         return
-    if args.changes is not None and json.loads(args.changes.read_text(encoding='utf-8')).get('schemaVersion') == IDENTITY_MAPPING_REQUEST:
+    if args.changes is not None and json.loads(args.changes.read_text(encoding='utf-8')).get('schemaVersion') in IDENTITY_MAPPING_REQUESTS:
         require(args.input_root is None and args.job is None, 'Identity mapping correction does not use a Factor job or panel')
         print(json.dumps(correct_identity_mapping(args.source_registry, args.catalog, args.changes, args.output_root), ensure_ascii=False, separators=(',', ':')))
         return

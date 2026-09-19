@@ -1,6 +1,7 @@
 """Transport/projection regression; real model and publication checks run separately."""
 import copy
 import json
+import re
 import tempfile
 import unittest
 from pathlib import Path
@@ -12,6 +13,19 @@ import validate_factor_panel as panel
 
 
 class SinglePassTest(unittest.TestCase):
+    def test_confidence_schema_matches_publisher_validation(self):
+        schema = single.output_schema()["properties"]["works"]["items"]["anyOf"][0]
+        confidence = schema["properties"]["claims"]["items"]["properties"]["confidence"]
+        self.assertEqual(confidence["type"], "string")
+        for value in ("0", "0.0", "0.75", "1", "1.00", "medium", "low", "", "NaN", "-0.1", "1.01", ".5", "1e0", "00", "0.5\n", " 0.5"):
+            with self.subTest(value=value):
+                try:
+                    panel.confidence(value, "test")
+                    valid = True
+                except panel.ValidationError:
+                    valid = False
+                self.assertEqual(re.search(confidence["pattern"], value) is not None, valid)
+
     def test_source_purposes_hold_and_input_immutability(self):
         wid, eid, url = "work-aaaaaaaaaaaaaaaaaaaa", "ev-source-one", "https://example.test/manga"
         with tempfile.TemporaryDirectory() as directory:
@@ -46,6 +60,11 @@ class SinglePassTest(unittest.TestCase):
             self.assertEqual(blockers[wid], [])
             self.assertEqual(projected["works"][0]["context"]["citationUrls"], url)
             self.assertEqual(before, {p: p.read_bytes() for p in before})
+            safety_root = root / "safety"
+            target = {"batchId": "r-test-revision", "ordinal": "1", "workId": wid, "title": "Example", "representativeIsbn": "9784199804953", "packetDigest": "a" * 64}
+            prepare.materialize_safety(projected, [target], {wid}, safety_root)
+            safety_targets = panel.read_csv(safety_root / "targets.csv", prepare.publisher.SAFETY_TARGET_FIELDS)
+            self.assertEqual(safety_targets[0]["identityUrl"], url)
             for defect in ("wrong-use", "unknown-id", "duplicate", "wrong-work", "mixed-version"):
                 bad = copy.deepcopy(value)
                 work = bad["works"][0]

@@ -291,6 +291,8 @@ def safety_validator():
 
 def freeze(job_path: Path, baseline: Path, registry_path: Path, output: Path, provenance: Path | None = None, prior_bundles: tuple[Path, ...] = (), recovery_epoch: Path | None = None) -> dict:
     require(not output.exists(), f"refusing overwrite: {output}")
+    if provenance is not None:
+        require(not output.resolve().is_relative_to(provenance.resolve()), "freeze output must be outside provenance directory")
     input_bindings: dict[Path, str] = {}
     if recovery_epoch is not None:
         import factor_recovery
@@ -377,7 +379,7 @@ def materialize_safety(job: dict, targets: list[dict], passed: set[str], root: P
     rows = []
     for ordinal, target in enumerate(sorted((t for t in targets if t["workId"] in passed), key=lambda t: t["workId"]), 1):
         work = works[target["workId"]]
-        identity = next((e["sourceUrl"] for e in work["evidence"] if e["targetType"] == "work" and e["sourceUrl"]), "")
+        identity = work["identitySourceUrl"] if job["schemaVersion"] == single.FROZEN_JOB else next((e["sourceUrl"] for e in work["evidence"] if e["targetType"] == "work" and e["sourceUrl"]), "")
         rows.append(dict(zip(publisher.SAFETY_TARGET_FIELDS, (str(ordinal), target["batchId"], target["ordinal"], "PASS", target["workId"], target["title"], identity, target["representativeIsbn"], work["safety"]["claim"]["evidenceIds"], target["packetDigest"], "true", "false"))))
     write_csv(root / "targets.csv", publisher.SAFETY_TARGET_FIELDS, rows)
     write_csv(root / "chunks/chunk-01.csv", publisher.SAFETY_TARGET_FIELDS, rows)

@@ -98,7 +98,7 @@ def project(input_root: Path, value: dict):
 
         identity = panel.exact_dict(decision["identity"], {"outcome", "evidenceIds", "observation", "limitation"}, "identity decision")
         require(identity["outcome"] in {"MATCH", "HOLD"} and all(isinstance(identity[k], str) and identity[k] for k in ("observation", "limitation")), "invalid identity decision")
-        ids, _, _ = selected(identity["evidenceIds"], "identity")
+        ids, _, identity_urls = selected(identity["evidenceIds"], "identity")
         require(identity["outcome"] != "MATCH" or bool(ids), "identity MATCH lacks source evidence")
         codes = [] if identity["outcome"] == "MATCH" else ["TARGET_IDENTITY_UNRESOLVED"]
         packet = panel.read_json(input_root / f"chunks/chunk-01/packets/{wid}/packet.json")
@@ -130,7 +130,7 @@ def project(input_root: Path, value: dict):
         for row in decision["claims"]:
             selected(row.get("evidenceIds"), "factor")
         factor_works.append({key: decision[key] for key in ("workId", "claims", "retainedClaims", "unknownGroups")})
-        projected.append({**work, "context": context_row, "safety": {"claim": claim, "evidence": evidence}})
+        projected.append({**work, "identitySourceUrl": identity_urls[0] if identity_urls else "", "context": context_row, "safety": {"claim": claim, "evidence": evidence}})
         blockers[wid] = sorted(codes)
     output = {**job, "works": projected}
     validated_safety(output)
@@ -204,7 +204,10 @@ def output_schema(job=None, packets=None):
         return {"type": "array", "items": item}
     explanation = {"observation": string, "limitation": string}
     fact_key = {"type": "string", "enum": [*("axis:" + key for key in panel.AXES), *("genre:" + key for key in sorted(panel.GENRES)), *("theme:" + key for key in sorted(panel.THEMES))]}
-    claim = obj({"factKey": fact_key, "state": {"enum": ["known", "notApplicable"]}, "value": string, "confidence": string, "evidenceIds": strings, "entryScope": string, **explanation, "reasonCode": string})
+    # JSON Schema uses search semantics; reject a trailing newline as fullmatch does.
+    confidence = {"type": "string", "pattern": panel.DECIMAL_RE.pattern + r"(?![\s\S])",
+                  "description": 'Canonical decimal in 0..1, e.g. "0", "0.75", "1"; never low/medium/high.'}
+    claim = obj({"factKey": fact_key, "state": {"enum": ["known", "notApplicable"]}, "value": string, "confidence": confidence, "evidenceIds": strings, "entryScope": string, **explanation, "reasonCode": string})
     work = obj({"workId": string, "disposition": {"enum": ["adjudicated"]}, "sourceDecisions": array(obj({"evidenceId": string, "uses": array({"enum": ["identity", "safety", "context", "factor"]}), "reason": string})), "identity": obj({"outcome": {"enum": ["MATCH", "HOLD"]}, "evidenceIds": strings, **explanation}), "safety": obj({"outcome": {"enum": ["SAFE", "BLOCKED_SAFETY"]}, "reasonCode": string, "sources": array(obj({"evidenceId": string, "classificationKind": string, **explanation})), **explanation}), "context": obj({"evidenceId": string, "condition": string, "catalogRole": string, **explanation}), "claims": array(claim), "retainedClaims": strings, "unknownGroups": array(obj({"axes": strings, "entryScope": string, **explanation, "reasonCode": string}))})
     hold = obj({"workId": string, "disposition": {"enum": ["hold"]}, "reason": string, "retryCondition": string})
     result = obj({"schemaVersion": {"enum": [DECISIONS]}, "inputManifestSha256": string, "works": array({"anyOf": [work, hold]})})
