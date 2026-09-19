@@ -54,3 +54,6 @@ tests/fixtures/experiment/report-golden.md
 tests/fixtures/experiment/coverage-warning-golden.md
 tests/fixtures/g2/aggregate-golden.md
 pnpm-lock.yaml
+
+# Preserve the sealed evidence artifact bytes.
+data/source/reviews/authorized-evidence-panel-v1-batch-001.md
