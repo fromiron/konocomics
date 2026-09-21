@@ -27,6 +27,7 @@ python -X utf8 scripts/catalog_authoring/notification_guard.py register --sessio
 
 - `COLLECTION_READY`: 배정·경로·SHA 대조 → 기존 helper/runner로 저장·백업·동결 → 같은 Luna 작업방에 frozen prompt/schema/input 전달. 수집 원문을 전수 재검토하지 않는다.
 - `SOL_COMPLETE`: 배정·경로·SHA 대조 → 기존 `catalog_authoring_runner.py run --decisions` 경로. 정확한 옵션은 기존 RUN/job와 `--help`에서 확인하며 임의 inline 발행 절차를 만들지 않는다.
+- runner는 판정이 없으면 오류로 종료한다. 일반 Luna 후처리에는 `--allow-model`을 사용하지 않는다. 별도 승인된 Sol 실행만 이 옵션으로 허용하며, `--model-session`·`--retry-model`만으로 모델 실행이 허용되지는 않는다.
 - runner는 유효 HOLD와 일반 봉인을 이미 분기한다. `seal-result` 직접 호출로 이를 우회하지 않는다. 정상 PASS는 승인 범위에서 직렬 발행·제품 readback·저장·백업까지 확인한다. canonical/GitHub/배포 권한은 확대하지 않는다.
 - 중복 이벤트는 `FINISHED.json`·해시로 구별한다. 완료된 판정은 재사용한다. 정상 결과의 중복 의미 검토와 주기적 상태 질문은 하지 않는다. 구체적인 오류만 원본·실패·보정 diff와 함께 처리한다.
 - 후처리 확인 후 감지를 해제하고 빈 방에 다음 승인된 작품을 배정한다. 상태 질문·문서 수정이 끼어들어도 미소비 완료 이벤트와 완료된 방의 다음 배정을 같은 처리 주기에서 마무리한다. 종료 전 현재 배정 5개의 FINISHED/단계 전환 상태를 짧게 대조하며, 완료 결과가 있는데 STATE만 실행 중이면 부모의 처리 누락으로 복구한다. 통지 실패와 부모 미처리를 혼동하지 않는다. 예약 automation은 만들지 않는다.

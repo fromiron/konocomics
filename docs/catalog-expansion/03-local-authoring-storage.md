@@ -8,6 +8,8 @@
 
 일반 authoring 진입점은 `python -X utf8 scripts/catalog_authoring_runner.py run`이다. 수집 helper와 prepare/publish/validator 및 필요한 기존 backend도 `scripts/catalog_authoring/`를 사용한다. 과거 자료에 들어 있는 도구 사본은 역사적 실행 근거이며 새 실행 코드의 원천이 아니다.
 
+2026-09-21 변경: 일반 실행은 `--decisions <판정 파일>` 또는 기존 RUN의 저장된 판정을 사용하며, 판정 누락 시 모델을 자동 호출하지 않는다. 별도 승인된 Sol medium 실행에는 `--allow-model`이 필요하다. `--model-session`·`--retry-model`도 이 명시적 허용 아래에서만 사용한다. 일반 Luna 결과 후처리에 이 옵션을 추가하지 않는다.
+
 과거 동결 파일의 내용·경로 문자열·manifest는 변경하지 않는다. `.tmp`, `.workspace`, handoff 등의 호환 연결·심링크는 제거한다. 과거 artifact에 기록된 경로는 저장·판정 코드의 읽기 경계에서 `workspace_paths.artifact_path()`로 영구 디렉터리에 해석한다. 파일시스템 링크나 원문 재작성 없이 기존 SHA 결속을 검증한다. 새 작업은 새 경로만 기록하며 임의 링크는 저장 대상으로 허용하지 않는다.
 
 환경 이전 시 수집·발행·DB 쓰기를 종료한 후 `data/local/catalog-authoring/` 전체를 복사하고, 같은 버전의 추적 코드를 체크아웃한다. 연결 복원 명령은 사용하지 않는다. 기존 동결 자료의 절대 경로가 저장소 루트까지 바뀌는 경우에는 별도 위치 매핑과 검증이 필요하다.

@@ -2,7 +2,8 @@
 
 실행 코드와 필요한 기존 발행 backend를 이 디렉터리에서 추적한다. 원문·동결 입력·판정·후보·작업 DB는 Git에 포함하지 않는다.
 
-- 일반 진입점: `python -X utf8 scripts/catalog_authoring_runner.py run --run-root <영구 planning 경로> --job <job.json>`
+- 일반 진입점: `python -X utf8 scripts/catalog_authoring_runner.py run --run-root <영구 planning 경로> --job <job.json> --decisions <판정.json>`
+- 기본 실행은 제공되거나 RUN에 저장된 판정만 사용한다. 판정 누락 시 모델을 자동 호출하지 않는다. 별도 승인된 Sol medium 실행만 `--allow-model`로 명시한다. `--model-session`·`--retry-model`도 이 옵션이 필요하며, `--decisions`와 함께 사용할 수 없다.
 - 수집: `node scripts/catalog_authoring/collect_factor_evidence.mjs`
 - 독립 준비/발행: `python -X utf8 scripts/catalog_authoring/prepare_factor_batch.py --help`
 - 영구 자료: `data/local/catalog-authoring/artifacts/catalog-expansion-continuation-20260902/`

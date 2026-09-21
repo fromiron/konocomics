@@ -41,8 +41,51 @@ class RunnerTest(unittest.TestCase):
         with self.assertRaises(ValueError):
             runner.model_command("codex", Path("schema.json"), Path("out.json"), "--last")
 
+    def test_default_missing_decisions_never_prepares_or_calls_model(self):
+        for extra in ({}, {"retry_model": True}, {"model_session": "aaaaaaaa-bbbb-cccc-dddd-eeeeeeeeeeee"},
+                      {"decisions": self.run_root / "missing.json"}):
+            with self.subTest(extra=extra):
+                args = SimpleNamespace(**dict({"run_root": self.run_root, "job": None,
+                    "decisions": None, "retry_model": False}, **extra))
+                before = (self.run_root / "RUN.json").read_bytes()
+                with patch.object(runner, "ensure_frozen") as freeze, \
+                     patch.object(runner, "invoke_model") as model:
+                    with self.assertRaises(ValueError):
+                        runner.run_job(args)
+                    freeze.assert_not_called()
+                    model.assert_not_called()
+                self.assertEqual((self.run_root / "RUN.json").read_bytes(), before)
+
+    def test_decision_handoff_and_explicit_model_execution(self):
+        decision = self.run_root / "external.json"
+        runner.write(decision, {})
+        runner.write(self.frozen / "panel-input/authoring-job.json",
+                     {"works": [{"workId": "work-aaaaaaaaaaaaaaaaaaaa"}]})
+        for mode in ("supplied", "saved", "explicit"):
+            with self.subTest(mode=mode):
+                config = dict(self.config)
+                if mode == "saved":
+                    config.update(decisionsPath=str(decision), decisionsSha256=runner.panel.sha256(decision))
+                runner.write(self.run_root / "RUN.json", config)
+                args = SimpleNamespace(run_root=self.run_root, job=None,
+                    decisions=decision if mode == "supplied" else None,
+                    retry_model=False, allow_model=mode == "explicit")
+                with patch.object(runner, "ensure_frozen", return_value=self.frozen), \
+                     patch.object(runner, "invoke_model", return_value=decision) as model, \
+                     patch.object(runner, "stored") as finish, \
+                     patch.object(runner, "completion", return_value={"status": "HOLD"}), \
+                     patch("builtins.print"):
+                    runner.run_job(args)
+                    if mode == "explicit":
+                        model.assert_called_once_with(self.run_root, self.frozen, False, session_id=None)
+                    else:
+                        model.assert_not_called()
+                    finish.assert_called_once()
+                saved = runner.panel.read_json(self.run_root / "RUN.json")
+                self.assertEqual(saved["decisionsSha256"], runner.panel.sha256(decision))
+
     def test_storage_failure_blocks_model_and_does_not_refreeze(self):
-        args = SimpleNamespace(run_root=self.run_root, job=None, decisions=None, retry_model=False)
+        args = SimpleNamespace(run_root=self.run_root, job=None, decisions=None, retry_model=False, allow_model=True)
         with patch.object(runner.publisher, "validate_input", return_value=({}, [], "a" * 64)), \
              patch.object(runner, "authoring_inputs", side_effect=lambda p, *_: p), \
              patch.object(runner, "preserve", side_effect=OSError("backup failed")), \
@@ -85,7 +128,7 @@ class RunnerTest(unittest.TestCase):
         runner.write(self.frozen / "panel-input/authoring-job.json", {"works": [{"workId": wid}]})
         other = self.root / "planning/other-run"
         runner.write(other / "RUN.json", self.config)
-        args = SimpleNamespace(run_root=other, job=None, decisions=None, retry_model=False)
+        args = SimpleNamespace(run_root=other, job=None, decisions=None, retry_model=False, allow_model=True)
         lock = self.repo / "data/local/catalog-authoring/locks" / (wid + ".lock")
         with runner.exclusive(lock), patch.object(runner, "ensure_frozen", return_value=self.frozen), \
              patch.object(runner, "invoke_model") as model:

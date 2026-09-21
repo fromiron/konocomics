@@ -446,14 +446,21 @@ def assemble_job(job_path, research):
 
 
 def run_job(args):
+    allow_model = getattr(args, "allow_model", False)
+    prepare.require(not (args.decisions and allow_model), "choose --decisions or --allow-model")
+    prepare.require(allow_model or not (args.retry_model or getattr(args, "model_session", None)), "--retry-model and --model-session require --allow-model")
+    if args.decisions:
+        prepare.require(args.decisions.is_file(), "--decisions file does not exist; no model will be called")
     run = artifact_path(args.run_root).resolve()
     prepare.require(run.is_relative_to(ROOT / "runs") or run.is_relative_to(ROOT / "planning"), "run root must be in authoring runs/planning")
     # Windows byte locks deny reads; keep live locks outside snapshot inputs.
     lock_root = REPO / "data/local/catalog-authoring/locks"
     with exclusive(lock_root / (panel.sha256_bytes(os.path.normcase(str(run)).encode()) + ".lock")), ExitStack() as leases:
         config_path = run / "RUN.json"
+        config = panel.read_json(config_path) if config_path.exists() else {}
+        prepare.require(args.decisions or config.get("decisionsPath") or allow_model,
+                        "Missing decisions: supply --decisions; model execution requires explicit --allow-model")
         if config_path.exists():
-            config = panel.read_json(config_path)
             if getattr(args, "model_session", None):
                 prepare.require(config.get("modelSession") == args.model_session, "resume model session changed")
             if getattr(args, "work_id", None):
@@ -552,8 +559,9 @@ def main():
     parser.add_argument("--recovery-epoch", type=Path)
     parser.add_argument("--provenance-root", type=Path)
     parser.add_argument("--decisions", type=Path, help="Use an existing decision for this unchanged frozen input; never refreeze on output failure")
-    parser.add_argument("--model-session", help="Continue an explicitly selected persistent Sol session; each Work remains bound to its own frozen input")
-    parser.add_argument("--retry-model", action="store_true")
+    parser.add_argument("--allow-model", action="store_true", help="Explicitly allow Sol medium execution; default uses supplied or saved decisions only")
+    parser.add_argument("--model-session", help="Requires --allow-model: continue a selected persistent Sol session")
+    parser.add_argument("--retry-model", action="store_true", help="Requires --allow-model: explicitly retry a model attempt")
     args = parser.parse_args()
     try:
         if args.action == "finish":
