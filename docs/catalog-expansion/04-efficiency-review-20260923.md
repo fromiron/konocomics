@@ -4,17 +4,17 @@
 
 ## 판단과 변경
 
-| 지적 | 판단·조치 |
-|---|---|
-| 수집 원문이 frozen에서 누락됨 | 타당. runner가 명시 provenance만 전달하던 것이 원인이다. 새 run은 direct research collection의 session Work·research SHA·receipt SHA/bytes를 확인하여 원문을 결속한다. 복수 collection의 동일 파일명·상대 rawPath는 별도 경로로 보존한다. 자동 parent 통째 복사는 하지 않는다. |
-| 기존 run에서 새 provenance/registry/recovery 옵션이 무시됨 | 타당. 다른 인자를 주면 새 run/input revision을 요구한다. 기존 PREPARED 프롬프트도 재생성하지 않는다. |
-| 동결 원문 접근 상태가 불명확함 | 타당. reading view와 신규 PREPARED에 inputAccess, 각 출처에 rawAccess/rawLookupPaths를 제공한다. observations-only는 접근 제한이지 근거 없음·자동 HOLD가 아니다. 기존 PASS를 무효화하지 않는다. |
-| 배정 전 authority/registry 라우팅 | 타당. `plan_dispatch.py`가 기존 packet/baseline 검사·notification_guard를 재사용한다. eligible, 보호 대상, AEP prior 복구, registry 정정, 신규 수집을 구분한다. 유효 요약의 READY만 재사용 표시하며 복합 정정 필요를 유지한다. 기존 배정은 변경하지 않는다. |
-| 반복 snapshot 입력 저장 | 병목 근거가 있다. snapshot 15852의 9,928개와 15856의 9,906개 중 9,902개가 같은 path+SHA였다. 큰 root만 참조로 분리하려면 inputSnapshot·복원·백업 소비자 계약을 함께 변경해야 하므로 refs-V2 개편은 보류한다. 기존 두 세대 증분 백업·old blob 검증·논리 이력은 유지한다. |
-| safety 프롬프트가 구 non-adult 기준임 | 타당. 동결 schema와 policy에 맞춰 새 입력은 porn/non-porn 기준을 설명한다. 출판사·해당 레이블로 충분하며 성인등급·성적 장면·표현 강도 미확인만으로 막지 않는다. 기존 동결 계약에는 그 계약의 설명을 유지한다. |
-| inputDiscovery=0 | 실제 전달 누락을 수정했다. runner가 탐색 시간을 측정해 recorded_run에 넘긴다. 기존 최종 timing 8항목을 반환 객체와 다음 정상 frozen checkpoint에 포함하며, 계측만을 위한 추가 save/backup은 하지 않는다. |
-| EVIDENCE_FOUND/hint=[]와 coverage readiness | EVIDENCE_FOUND는 충분성 판정이 아니라는 지적이 타당하다. 별도 모델·숫자 판정·readiness schema는 추가하지 않았다. 기존 observation/limitation/remainingGaps로 구체적 보완·출처 소진을 기록한다. 빈 hint를 자동 HOLD로 바꾸지 않는다. |
-| progress counter 결함 | 확정할 근거 없음. 배정 집합·명시 CHECKED·SHA·결정·동결·백업을 검증하는 기존 notification_guard를 재사용하며, 제공된 processedCount/resultCounts도 같은 요약의 결과 집합과 일치하는지 검사한다. mtime나 파일 개수로 현재 판정을 선택하지 않는다. |
+| 지적                                                       | 판단·조치                                                                                                                                                                                                                                                                      |
+| ---------------------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ |
+| 수집 원문이 frozen에서 누락됨                              | 타당. runner가 명시 provenance만 전달하던 것이 원인이다. 새 run은 direct research collection의 session Work·research SHA·receipt SHA/bytes를 확인하여 원문을 결속한다. 복수 collection의 동일 파일명·상대 rawPath는 별도 경로로 보존한다. 자동 parent 통째 복사는 하지 않는다. |
+| 기존 run에서 새 provenance/registry/recovery 옵션이 무시됨 | 타당. 다른 인자를 주면 새 run/input revision을 요구한다. 기존 PREPARED 프롬프트도 재생성하지 않는다.                                                                                                                                                                           |
+| 동결 원문 접근 상태가 불명확함                             | 타당. reading view와 신규 PREPARED에 inputAccess, 각 출처에 rawAccess/rawLookupPaths를 제공한다. observations-only는 접근 제한이지 근거 없음·자동 HOLD가 아니다. 기존 PASS를 무효화하지 않는다.                                                                                |
+| 배정 전 authority/registry 라우팅                          | 타당. `plan_dispatch.py`가 기존 packet/baseline 검사·notification_guard를 재사용한다. eligible, 보호 대상, AEP prior 복구, registry 정정, 신규 수집을 구분한다. 유효 요약의 READY만 재사용 표시하며 복합 정정 필요를 유지한다. 기존 배정은 변경하지 않는다.                    |
+| 반복 snapshot 입력 저장                                    | 병목 근거가 있다. snapshot 15852의 9,928개와 15856의 9,906개 중 9,902개가 같은 path+SHA였다. 큰 root만 참조로 분리하려면 inputSnapshot·복원·백업 소비자 계약을 함께 변경해야 하므로 refs-V2 개편은 보류한다. 기존 두 세대 증분 백업·old blob 검증·논리 이력은 유지한다.        |
+| safety 프롬프트가 구 non-adult 기준임                      | 타당. 동결 schema와 policy에 맞춰 새 입력은 porn/non-porn 기준을 설명한다. 출판사·해당 레이블로 충분하며 성인등급·성적 장면·표현 강도 미확인만으로 막지 않는다. 기존 동결 계약에는 그 계약의 설명을 유지한다.                                                                  |
+| inputDiscovery=0                                           | 실제 전달 누락을 수정했다. runner가 탐색 시간을 측정해 recorded_run에 넘긴다. 기존 최종 timing 8항목을 반환 객체와 다음 정상 frozen checkpoint에 포함하며, 계측만을 위한 추가 save/backup은 하지 않는다.                                                                       |
+| EVIDENCE_FOUND/hint=[]와 coverage readiness                | EVIDENCE_FOUND는 충분성 판정이 아니라는 지적이 타당하다. 별도 모델·숫자 판정·readiness schema는 추가하지 않았다. 기존 observation/limitation/remainingGaps로 구체적 보완·출처 소진을 기록한다. 빈 hint를 자동 HOLD로 바꾸지 않는다.                                            |
+| progress counter 결함                                      | 확정할 근거 없음. 배정 집합·명시 CHECKED·SHA·결정·동결·백업을 검증하는 기존 notification_guard를 재사용하며, 제공된 processedCount/resultCounts도 같은 요약의 결과 집합과 일치하는지 검사한다. mtime나 파일 개수로 현재 판정을 선택하지 않는다.                                |
 
 보고서의 Narrative 4/Tone 5를 항상 유지하자는 부분은, **추가 조사 후에도 N/T만 부족하면 unknown을 유지하며 승격한다**는 사용자 결정과 충돌한다. 이 제안을 새로운 차단 조건으로 채택하지 않았다. 1차 원문 패치 시점에는 그 사용자 예외가 별도 미완료였다. 아래 후속 수정에서 코드 연결을 구현했으며, 실행 검증과 실제 처리량 검증은 아직 미완료다. Genre/Theme·작품 식별·추천 맥락·porn 분류와 Art 제외 경계는 별개다.
 
@@ -22,10 +22,10 @@
 
 아래 새 run은 기존 runner의 `prepare`를 사용했다. 새 모델 호출·판정·발행은 하지 않았다.
 
-| Work | 기존 rawCaptures | 새 rawCaptures | 신규 frozen manifest SHA |
-|---|---:|---:|---|
-| `work-0341d443a460fc74086a` | 0 | 5 | `617136db01ad16418890b23d7e9c70225afd9378877cec30c8411eda8b4a992d` |
-| `work-3f07e8ec5a3154380b0f` | 0 | 7 | `24b3023622426db4ad10ab9ac1ff63edae4b46499ceb828a02dbf1daf1f29c1e` |
+| Work                        | 기존 rawCaptures | 새 rawCaptures | 신규 frozen manifest SHA                                           |
+| --------------------------- | ---------------: | -------------: | ------------------------------------------------------------------ |
+| `work-0341d443a460fc74086a` |                0 |              5 | `617136db01ad16418890b23d7e9c70225afd9378877cec30c8411eda8b4a992d` |
+| `work-3f07e8ec5a3154380b0f` |                0 |              7 | `24b3023622426db4ad10ab9ac1ff63edae4b46499ceb828a02dbf1daf1f29c1e` |
 
 첫 표본의 5개는 모두 원 receipt SHA·길이 일치, 신규 non-porn prompt 생성과 lookup 4개 출처 연결을 확인했다. 두 번째도 원문 7개 전부 SHA·길이 일치와 PREPARED·저장/백업 snapshot 16015를 확인했다. 기존 run에 새 provenance를 추가하는 실제 명령은 거부됐고 원 RUN·frozen manifest·프롬프트 SHA는 모두 불변이었다. 이 readback과 Sol3 계획은 snapshot 16031로 저장·백업했다. 작업 폴더는 `data/local/catalog-authoring/artifacts/catalog-expansion-continuation-20260902/planning/provenance-repair-20260923/`다. 128 KiB inline 한도를 넘는 원문은 삭제·잘림 없이 rawLookupPaths로 남는다.
 

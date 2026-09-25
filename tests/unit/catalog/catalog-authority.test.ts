@@ -55,7 +55,10 @@ describe("SQLite Catalog authority", () => {
     try {
       mkdirSync(source, { recursive: true });
       expect(join(source, CATALOG_DATABASE_FILE).length).toBeGreaterThan(260);
-      copyFileSync(join(repositorySource, CATALOG_DATABASE_FILE), join(source, CATALOG_DATABASE_FILE));
+      copyFileSync(
+        join(repositorySource, CATALOG_DATABASE_FILE),
+        join(source, CATALOG_DATABASE_FILE),
+      );
       expect(readCatalogAuthority(source).length).toBeGreaterThan(0);
     } finally {
       rmSync(root, { recursive: true, force: true });

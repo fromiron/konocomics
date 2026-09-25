@@ -11,11 +11,9 @@ description: konocomics의 고정 작업 세션에서 배정된 작품 목록을
 
 대표 ISBN이 3권·6권 등 중간 권이면 그 권의 제목·권수·URL을 정확히 결속하면 충분하며 1권으로 교체하지 않는다. 기존 ISBN과 권수의 연결이 틀렸다면 새 수집 revision과 배치 summary에 정정 근거·경로·SHA를 남기고 다음 동결에 반영한다. 과거 원문·동결·판정은 보존한다.
 
-
 ## 2026-09-21 현재 배치: Art 작업 전면 제외
 
 사용자 지시로 이번 수집·승격 작업에서 Art 4축(`artRealism`, `artDensity`, `visualSoftness`, `motionImpact`)은 조사·판정 대상에서 제외한다. Art용 이미지 확인, 리뷰 근거 평가, 독립 출처/정족수 확인, 추가 검색, 신규 known claim을 수행하지 않는다. 기존 원문에 Art 서술이 있어도 별도 분석하지 않는다. 스키마가 요구하는 새 Art 축 표기는 `unknown`으로 유지하고 이번 범위 제외임을 기록한다. 기존 accepted prior·동결 입력·판정은 보존만 하며 변경하지 않는다. Art gap은 추가 수집 목록·재시도 조건·승격 차단·미완료 사유에 넣지 않는다. 이미 완료된 유효 결과는 이 지시만으로 재판정하지 않는다. 향후 Art 작업은 별도 사용자 요청 때 진행한다.
-
 
 ## 2026-09-21 사용자 확정: 포르노 작품만 제외
 
@@ -23,8 +21,7 @@ Catalog의 성적 콘텐츠 제외 기준은 **porn / non-porn**이다. 성인�
 
 새 판정은 `non-pornographic-work` → `non-porn` / `SAFE`, `pornographic-work` → `porn` / `BLOCKED_SAFETY` (`SAFETY_PORNOGRAPHIC_WORK`)를 사용한다. 판단 불명은 `classification-unresolved`로 보존한다. SAFE는 아동 적합성이나 무폭력 인증이 아니다. 기존 `non-adult` 등 분류는 과거 artifact 호환용으로 유지하며 성인등급만으로 차단한 HOLD는 새 계약을 동결한 revision에서 재검토한다. 과거 frozen·판정은 수정하지 않는다.
 
-
-현재 목표는 루나1~6의 신규 50작품 묶음 처리다. 모델은 루나1~6 모두 **GPT-6 Luna(`gpt-6-luna`) / xhigh**다. 현재 세션명·ID는 [배치 계획 §3](../../../docs/catalog-expansion/01c-sol-batch-promotion-plan.md#3-역할과-세션)을 따른다. 루나4·5·6은 기존 솔1·2·3과 동일한 세션이다. 모델·추론 설정은 부모가 **새 턴마다 도구 인자로 명시**한다. 이미 실행 중인 턴과 기존 100작품 배정·checkpoint·모델 기록은 보존한다. **한 번에는 한 작품**만 읽는다. [배치 계획](../../../docs/catalog-expansion/01c-sol-batch-promotion-plan.md)의 준비 상태를 확인하고 사용자 승인 배정 범위에서 실행한다. 작업자는 구현된 runner `prepare`와 `check`를 사용한다. 명령/receipt 계약은 [runner README](../../../scripts/catalog_authoring/README.md)를 따른다. `run --decisions`는 조정자의 발행 명령이다. 문서 변경만으로 중단된 큐를 재개하지 않는다.
+현재 목표는 루나1~~6의 신규 50작품 묶음 처리다. 모델은 루나1~~6 모두 **GPT-6 Luna(`gpt-6-luna`) / xhigh**다. 현재 세션명·ID는 [배치 계획 §3](../../../docs/catalog-expansion/01c-sol-batch-promotion-plan.md#3-역할과-세션)을 따른다. 루나4·5·6은 기존 솔1·2·3과 동일한 세션이다. 모델·추론 설정은 부모가 **새 턴마다 도구 인자로 명시**한다. 이미 실행 중인 턴과 기존 100작품 배정·checkpoint·모델 기록은 보존한다. **한 번에는 한 작품**만 읽는다. [배치 계획](../../../docs/catalog-expansion/01c-sol-batch-promotion-plan.md)의 준비 상태를 확인하고 사용자 승인 배정 범위에서 실행한다. 작업자는 구현된 runner `prepare`와 `check`를 사용한다. 명령/receipt 계약은 [runner README](../../../scripts/catalog_authoring/README.md)를 따른다. `run --decisions`는 조정자의 발행 명령이다. 문서 변경만으로 중단된 큐를 재개하지 않는다.
 
 ## 배치 단계 순서 — 2026-09-21 사용자 정정
 

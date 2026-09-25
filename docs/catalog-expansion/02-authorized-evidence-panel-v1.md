@@ -10,13 +10,11 @@
 
 검사·발행은 동일 결속 기록을 읽는다. 발행은 기존 `source_evidence`에 `narrativeToneExhaustionV1` 기록을 추가하여 실제 조사 기록·입력 SHA·조사 SHA·review reference를 보존한다. 빌드는 현재 AEP review·대표 ISBN·기록 해시가 일치할 때만 `eligibility.narrativeToneException`을 생성한다. 과거 review의 예외는 새 review에 자동 승계되지 않는다. SQL schema/table 추가는 없다. 최종 readback은 unknown 보존 및 예외 메타데이터 유무에 따른 추천 산식 동일성을 확인한다.
 
-
 ## 2026-09-21 사용자 확정: 포르노 작품만 제외
 
 Catalog의 성적 콘텐츠 제외 기준은 **porn / non-porn**이다. 성인등급, 폭력·출혈·잔혹 묘사, 노출·성적 장면의 존재 자체는 제외 사유가 아니다. 『베르세르크』처럼 성인등급인 비포르노 서사 만화는 허용한다. 작품의 주된 성격이 포르노인지 확인하며 별도의 비성인·일반 독자 등급 증명 수집은 요구하지 않는다. 해당 작품의 출판사·레이블 분류로 비포르노임이 확인되면 충분하며 그 확인으로 종료한다. 여러 레이블을 가진 출판사는 해당 작품의 레이블만 확인한다. 성적 소재·노출·성적 장면은 작품적 표현으로 허용하며, 에피소드별 표현 강도·무해성·전연령 적합성을 추가 조사하거나 미확인 gap/HOLD 사유로 삼지 않는다. 실제 포르노 분류 충돌이나 작품/레이블 식별 불가가 있을 때만 그 분류를 좁게 확인한다. 추천 선정 맥락과 팩터 근거는 별도 계약이다.
 
 새 판정은 `non-pornographic-work` → `non-porn` / `SAFE`, `pornographic-work` → `porn` / `BLOCKED_SAFETY` (`SAFETY_PORNOGRAPHIC_WORK`)를 사용한다. 판단 불명은 `classification-unresolved`로 보존한다. SAFE는 아동 적합성이나 무폭력 인증이 아니다. 기존 `non-adult` 등 분류는 과거 artifact 호환용으로 유지하며 성인등급만으로 차단한 HOLD는 새 계약을 동결한 revision에서 재검토한다. 과거 frozen·판정은 수정하지 않는다.
-
 
 정책 ID: `authorized-evidence-panel-v1`
 

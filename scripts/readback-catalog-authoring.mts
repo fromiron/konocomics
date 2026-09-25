@@ -119,13 +119,19 @@ try {
     let axes = new Map(
       claims.map((claim) => [
         claim.factKey!.slice(5),
-        rowSchema.parse({ state: claim.state!, value: claim.value!, confidence: claim.confidence! }),
+        rowSchema.parse({
+          state: claim.state!,
+          value: claim.value!,
+          confidence: claim.confidence!,
+        }),
       ]),
     );
     const batchPublication = batchPublications?.works.find((row) => row.workId === wid);
     if (batchPublication) {
       const published = new DatabaseSync(
-        toNamespacedPath(join(resolve(batchPublication.publicationRoot), "catalog-expanded.candidate.sqlite")),
+        toNamespacedPath(
+          join(resolve(batchPublication.publicationRoot), "catalog-expanded.candidate.sqlite"),
+        ),
         { readOnly: true },
       );
       try {
