@@ -16,7 +16,10 @@ import { dirname, isAbsolute, join, relative, resolve, sep } from "node:path";
 import { setTimeout as delay } from "node:timers/promises";
 import { fileURLToPath, pathToFileURL } from "node:url";
 import { z } from "zod";
-import { validateResearchRow } from "./validate_factor_collection_batch.mjs";
+import {
+  validateResearchRow,
+  validateExhaustionRecord,
+} from "./validate_factor_collection_batch.mjs";
 
 const root = resolve(
   import.meta.dirname,
@@ -482,6 +485,10 @@ export function writeResearchSnapshot(directory, draft) {
   const started = session(directory);
   try {
     assert(
+      !existsSync(privatePath(directory, "COLLECTION-HANDOFF.json")),
+      "Partial handoff exists; preserve it and use a new collection revision",
+    );
+    assert(
       draft && typeof draft === "object" && !Array.isArray(draft),
       "Draft must be an agent-authored object",
     );
@@ -490,6 +497,7 @@ export function writeResearchSnapshot(directory, draft) {
       "Draft/session work identity mismatch",
     );
     assert(draft.elapsedSeconds === undefined, "Elapsed time is measured from startCollection");
+    const { narrativeToneExhaustion, ...observations } = draft;
     const measuredSeconds = (Date.now() - Date.parse(started.startedAt)) / 1000;
     const elapsedSeconds = measuredSeconds >= 0 ? measuredSeconds : null;
     if (elapsedSeconds === null)
@@ -504,7 +512,7 @@ export function writeResearchSnapshot(directory, draft) {
       remainingGaps: [],
       retryCondition: "",
       notes: "",
-      ...draft,
+      ...observations,
       sources: Array.isArray(draft.sources)
         ? draft.sources.map((source) => ({ independentFrom: [], claimCandidates: [], ...source }))
         : draft.sources,
@@ -513,6 +521,19 @@ export function writeResearchSnapshot(directory, draft) {
     validateResearchRow(row, new Set(), true);
     const bytes = Buffer.from(json(row));
     const path = privatePath(directory, "research.jsonl");
+    let handoffSha256;
+    // The optional sidecar is an agent's actual record, never generated exhaustion.
+    // Write it first: a partial write cannot leave completed research without it.
+    if (narrativeToneExhaustion !== undefined) {
+      validateExhaustionRecord(narrativeToneExhaustion, row);
+      const handoff = json({
+        schemaVersion: "factor-collection-handoff-v1",
+        researchSha256: sha256(bytes),
+        narrativeToneExhaustion,
+      });
+      writeFileSync(privatePath(directory, "COLLECTION-HANDOFF.json"), handoff, { flag: "wx" });
+      handoffSha256 = sha256(Buffer.from(handoff));
+    }
     writeFileSync(path, bytes, { flag: "wx" });
     const receipt = {
       path,
@@ -521,6 +542,7 @@ export function writeResearchSnapshot(directory, draft) {
       elapsedSeconds,
       semanticReviewRequired: true,
       sharedStorageRequired: true,
+      ...(handoffSha256 ? { handoffSha256 } : {}),
     };
     event(directory, { kind: "research-written", ...receipt });
     return receipt;

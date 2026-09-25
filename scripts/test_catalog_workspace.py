@@ -92,6 +92,38 @@ class WorkspaceTest(unittest.TestCase):
         with self.assertRaises(FileExistsError):
             self.workspace.backup(backup)
 
+    def test_compact_restore_follows_exact_members_and_retains_source_versions(self):
+        import hashlib
+        original = self.file.read_bytes()
+        first = self.workspace.save([self.file], "original source")
+        self.file.write_bytes(b"new source revision")
+        second = self.workspace.save([self.file], "updated source")
+        key = self.workspace.key(self.file)
+        old_sha = hashlib.sha256(original).hexdigest()
+        new_sha = hashlib.sha256(self.file.read_bytes()).hexdigest()
+        publication = self.inputs / "publication/COMPACT-PUBLICATION.json"
+        publication.parent.mkdir()
+        value = {"schemaVersion": "catalog-compact-publication-v1",
+                 "dependencies": [{"snapshot": second, "members": {key: new_sha}}],
+                 "sources": {"catalog": {"path": key, "sha256": old_sha, "snapshot": first}}}
+        publication.write_text(json.dumps(value), encoding="utf-8")
+        saved = self.workspace.save([publication], "compact publication")
+        backup = Workspace(self.repo, Path(self.workspace.backup()["destination"]))
+        destination = self.repo / ".workspace/compact-restored"
+        result = backup.restore(saved["snapshotId"], destination)
+        self.assertEqual(result["files"], 3)
+        self.assertEqual((destination / key).read_bytes(), b"new source revision")
+        self.assertEqual((destination / "data/local/catalog-authoring/restored-versions" / old_sha).read_bytes(), original)
+        self.assertEqual(artifact_path(self.file, destination), destination / key)
+        self.assertEqual(artifact_path(destination / key, destination), destination / key)
+        self.assertEqual(self.file.read_bytes(), b"new source revision")
+        # An explicit reference cannot borrow an unrelated member from the store.
+        value["sources"]["catalog"]["sha256"] = new_sha
+        publication.write_text(json.dumps(value), encoding="utf-8")
+        broken = self.workspace.save([publication], "invalid dependency")
+        with self.assertRaisesRegex(ValueError, "dependency member changed"):
+            self.workspace.restore(broken["snapshotId"], self.root / "refused")
+
     def test_invalid_paths_missing_files_and_active_sqlite_fail_closed(self):
         with self.assertRaisesRegex(ValueError, "explicit inputs"):
             recorded_run([sys.executable], [], [], "missing input", self.workspace)
@@ -145,6 +177,9 @@ class WorkspaceTest(unittest.TestCase):
         previous.write_bytes(before[1])
         receipt = self.workspace.backup()
         self.assertEqual((receipt["mode"], receipt["addedSnapshots"]), ("append-only", 2))
+        timings = receipt["timingsSeconds"]
+        self.assertTrue({"headerMembership", "blobCopy", "blobReadback", "newMembership", "commit", "commitReadback", "rotation"} <= timings.keys())
+        self.assertTrue(all(0 <= value <= timings["totalElapsed"] for value in timings.values()))
         self.assertEqual(Workspace(self.repo, previous).verify()["snapshots"], 1)
         restored = Workspace(self.repo, latest)
         self.assertEqual(restored.verify(), self.workspace.verify())
@@ -158,6 +193,32 @@ class WorkspaceTest(unittest.TestCase):
         with self.assertRaisesRegex(ValueError, "Backup schema"):
             self.workspace.backup()
         self.assertEqual(restored.verify(), self.workspace.verify())
+
+    def test_version_one_index_migration_resumes_across_backup_generations(self):
+        snapshot = self.workspace.save([self.inputs], "index migration")
+        self.workspace.backup()
+        self.workspace.backup()
+        backups = self.repo / "data/local/catalog-authoring/backups"
+        databases = [self.workspace.database, backups / "latest.sqlite", backups / "previous.sqlite"]
+        for path in databases:
+            with closing(sqlite3.connect(path)) as db, db:
+                db.execute("drop index entry_snapshot")
+                db.execute("pragma user_version=1")
+            Workspace(self.repo, path).verify_saved(snapshot, [self.inputs])
+        connect = Workspace.connect
+        def interrupted(workspace, **kwargs):
+            if workspace.database == databases[2] and kwargs.get("write"):
+                raise OSError("migration interrupted between generations")
+            return connect(workspace, **kwargs)
+        with patch.object(Workspace, "connect", interrupted):
+            with self.assertRaisesRegex(OSError, "migration interrupted"):
+                self.workspace.backup()
+        self.workspace.backup()
+        for path in databases:
+            with closing(sqlite3.connect(path)) as db:
+                self.assertEqual(db.execute("pragma user_version").fetchone()[0], 2)
+                self.assertIn("entry_snapshot", db.execute("explain query plan select count(*) from entry").fetchone()[3])
+            Workspace(self.repo, path).verify_saved(snapshot, [self.inputs])
 
     def test_failed_command_retains_input_and_partial_result(self):
         output = self.repo / "data/local/catalog-authoring/artifacts/output"
@@ -363,6 +424,25 @@ class WorkspaceTest(unittest.TestCase):
         self.assertIn(script, recording_roots)
         self.assertNotIn(canonical, recording_roots)
 
+    def test_collection_handoff_is_saved_with_compact_job_and_missing_binding_fails(self):
+        collection = self.inputs.parent / "collection"
+        collection.mkdir()
+        research = collection / "research.jsonl"
+        research.write_text('{"workId":"work-a"}\n', encoding="utf-8")
+        handoff = collection / "COLLECTION-HANDOFF.json"
+        handoff.write_text('{"fixture":true}\n', encoding="utf-8")
+        job = self.inputs / "job.json"
+        job.write_text(json.dumps({"schemaVersion": "factor-authoring-job-v4", "works": [{
+            "researchRefs": [{"path": str(research), "handoffSha256": "bound-by-job-reader"}]
+        }]}), encoding="utf-8")
+        roots = authoring_inputs([job], self.workspace)
+        self.assertIn(handoff, roots)
+        snapshot = self.workspace.save(roots, "test collection handoff closure")
+        self.workspace.verify_saved(snapshot, [job, research, handoff])
+        handoff.unlink()
+        with self.assertRaises(FileNotFoundError):
+            self.workspace.save(authoring_inputs([job], self.workspace), "missing handoff")
+
     def test_output_capture_failure_still_backs_up_exit_state_and_logs(self):
         output = self.repo / "data/local/catalog-authoring/artifacts/partial.sqlite"
         command = [sys.executable, "-c", "import pathlib,sys; p=pathlib.Path(sys.argv[1]); p.write_bytes(b'partial'); pathlib.Path(str(p)+'-wal').touch(); print('child output'); sys.exit(7)", str(output)]
@@ -386,13 +466,23 @@ class WorkspaceTest(unittest.TestCase):
         policy = self.repo / "data/local/catalog-authoring/artifacts/recovery-policy.md"
         scope.write_text("scope bytes\n")
         policy.write_text("approved policy bytes\n")
-        epoch.write_text(json.dumps({"schemaVersion": "factor-loss-recovery-epoch-v1", "scopePath": str(scope), "policyPath": str(policy)}))
+        history = self.repo / "data/local/catalog-authoring/artifacts/catalog-expansion-continuation-20260902/runs"
+        originals = [history / "continuation-factor-233-publication-20260909-v1/catalog-expanded.candidate.sqlite",
+                     history / "canonical-promotion-20260910-v2/before/data/source/catalog.sqlite"]
+        for path in originals:
+            path.parent.mkdir(parents=True)
+            path.write_bytes(b"exact historical bytes")
+        (originals[0].parent / "external-lineage.json").write_text(json.dumps({
+            "baselineRoot": str(history / "historical-working-copy-no-longer-required"),
+        }))
+        epoch.write_text(json.dumps({"schemaVersion": "factor-loss-recovery-epoch-v1", "epochId": "factor-003-recovery-20260909-v1", "scopePath": str(scope), "policyPath": str(policy)}))
         (self.inputs / "recovery-declaration.json").write_text(json.dumps({"schemaVersion": "factor-loss-recovery-v1", "epochPath": str(epoch)}))
         roots = authoring_inputs([self.inputs], self.workspace)
         self.workspace.save(roots, "recovery dependencies")
         with closing(self.workspace.connect()) as db:
             paths = {row[0] for row in db.execute("SELECT path FROM entry")}
         self.assertTrue({"data/local/catalog-authoring/artifacts/recovery-epoch.json", "data/local/catalog-authoring/artifacts/recovery-scope.jsonl", "data/local/catalog-authoring/artifacts/recovery-policy.md"} <= paths)
+        self.assertTrue({self.workspace.key(path) for path in originals} <= paths)
         scope.unlink()
         with self.assertRaises(FileNotFoundError):
             authoring_inputs([self.inputs], self.workspace)

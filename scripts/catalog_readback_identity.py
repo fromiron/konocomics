@@ -55,6 +55,9 @@ def execution_inputs(repo: Path) -> list[Path]:
         raise ValueError("Missing Catalog authority schema inputs")
     visited.update(schema_root.glob("*.sql"))
     visited.update((repo / "data/source").rglob("*.md"))
+    if "--compact" in (repo / ENTRY).read_text(encoding="utf-8"):
+        visited.update(path for path in (repo / "scripts/catalog_authoring").rglob("*.py") if not path.name.startswith("test_"))
+        visited.update(repo / "scripts" / name for name in ("catalog_workspace.py", "workspace_paths.py", "catalog_authoring_runner.py", "catalog_authoring_batch_publish.py"))
     return sorted(visited, key=lambda p: p.relative_to(repo).as_posix())
 
 
@@ -115,4 +118,9 @@ def readback_matches(path: Path, repo: Path, publication: Path, result: Path) ->
 
 
 if __name__ == "__main__":
-    print(json.dumps(execution_identity(Path(sys.argv[1]).resolve()), ensure_ascii=True))
+    if sys.argv[1] == "--compact":
+        sys.path.insert(0, str(Path(__file__).resolve().parent / "catalog_authoring"))
+        from compact_publication import verify_publication
+        print(json.dumps(verify_publication(Path(sys.argv[2])), ensure_ascii=True))
+    else:
+        print(json.dumps(execution_identity(Path(sys.argv[1]).resolve()), ensure_ascii=True))

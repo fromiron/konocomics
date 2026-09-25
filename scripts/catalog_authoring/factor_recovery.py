@@ -44,8 +44,11 @@ def read_json(path: Path) -> dict:
     return value
 
 
-def target_snapshot(path: Path, work_id: str) -> dict:
-    with closing(sqlite3.connect(f"file:{path.resolve().as_posix()}?mode=ro", uri=True)) as con:
+def target_snapshot(path: Path | sqlite3.Connection, work_id: str) -> dict:
+    owned = not isinstance(path, sqlite3.Connection)
+    con = sqlite3.connect(f"file:{path.resolve().as_posix()}?mode=ro", uri=True) if owned else path
+    previous_factory = con.row_factory
+    try:
         con.row_factory = sqlite3.Row
         tables = {}
         for table in TABLES:
@@ -56,6 +59,10 @@ def target_snapshot(path: Path, work_id: str) -> dict:
             semantic = [key for key in columns if key not in {"sourceOrdinal", "sourceLine"}]
             rows = [{key: row[key] for key in semantic} for row in con.execute(f'select * from "{table}" where "{owner}"=?', (work_id,))]
             tables[table] = sorted(rows, key=lambda row: json.dumps(row, ensure_ascii=False, sort_keys=True, separators=(",", ":")))
+    finally:
+        con.row_factory = previous_factory
+        if owned:
+            con.close()
     digest = hashlib.sha256(json.dumps(tables, ensure_ascii=False, sort_keys=True, separators=(",", ":")).encode()).hexdigest()
     return {"tables": tables, "sha256": digest}
 
@@ -171,9 +178,9 @@ def validate_retained_request(
         raise ValueError("invalid retained review reference")
     if before.get("annotationReviewReference") != reference or authoritative.get("annotationReviewReference") != reference:
         raise ValueError("retained review reference changed")
-    relative_review = Path("authorized-evidence-panel-v1/data/source") / reference
     for root in (baseline.parent, original_publication):
-        review = root / relative_review
+        review_root = "data/source" if (root / "COMPACT-PUBLICATION.json").is_file() else "authorized-evidence-panel-v1/data/source"
+        review = root / review_root / reference
         if not review.is_file() or review.is_symlink() or sha256(review) != value["reviewSha256"]:
             raise ValueError("retained review artifact binding mismatch")
 

@@ -421,6 +421,43 @@ def ensure_baseline(path: Path) -> dict[str, object]:
         con.close()
 
 
+def registry_facts(metadata: dict, columns: list[str], rows: list[dict], target_ids: set[str], baseline_sha: str | None = None) -> dict:
+    """Validate the current registry rows, including a transaction's planned corrections."""
+    registry_baseline_sha = metadata.get("baselineSha256", "").lower()
+    if not re.fullmatch(r"[0-9a-f]{64}", registry_baseline_sha):
+        raise PublishError("registry baselineSha256 metadata is missing or malformed")
+    if not {"canonicalWorkId", "canonicalTitleJa", "canonicalCreatorsJa", "identityEvidenceUrls", "representativeIsbn", "volumeNumber", "editionKind", "supportEvidenceUrls"} <= set(columns):
+        raise PublishError("registry_source_rows lacks identity/bibliography provenance columns")
+    mapped = {
+        str(row["canonicalWorkId"])
+        for row in rows
+        if str(row.get("canonicalWorkId", ""))
+    }
+    missing = sorted(target_ids - mapped)
+    if missing:
+        raise PublishError(f"registry does not map target works: {missing[:5]}")
+    by_work: dict[str, list[dict[str, object]]] = {}
+    for row in rows:
+        work_id = str(row.get("canonicalWorkId", ""))
+        if not work_id:
+            continue
+        by_work.setdefault(work_id, []).append(row)
+    # Duplicate source rows are expected for repeated nominations.  Packet
+    # binding below requires the manifest-frozen complete same-work set,
+    # one bibliography, and the union of its provenance.
+    return {
+        "baselineSha256": metadata.get("baselineSha256", ""),
+        "baselineMatchesInput": bool(
+            baseline_sha is None or registry_baseline_sha == baseline_sha.lower()
+        ),
+        "columns": columns,
+        "rowCount": len(mapped),
+        "rowsByWork": {key: sorted(value, key=lambda item: str(item.get("sourceRowId", ""))) for key, value in sorted(by_work.items())},
+        # Backwards-compatible first-row view for diagnostics only.
+        "rows": {key: sorted(value, key=lambda item: str(item.get("sourceRowId", "")))[0] for key, value in sorted(by_work.items())},
+    }
+
+
 def ensure_registry(path: Path, target_ids: set[str], baseline_sha: str | None = None) -> dict[str, object]:
     path = path.resolve()
     if not path.is_file() or path.is_symlink():
@@ -436,49 +473,10 @@ def ensure_registry(path: Path, target_ids: set[str], baseline_sha: str | None =
         if _table_names(con) != {"registry_meta", "registry_source_rows", "registry_research_attempts"}:
             raise PublishError("registry schema/table set mismatch")
         metadata = dict(con.execute("select key,value from registry_meta"))
-        registry_baseline_sha = metadata.get("baselineSha256", "").lower()
-        if not re.fullmatch(r"[0-9a-f]{64}", registry_baseline_sha):
-            raise PublishError("registry baselineSha256 metadata is missing or malformed")
-        if "canonicalWorkId" not in _columns(con, "registry_source_rows"):
-            raise PublishError("registry_source_rows lacks canonicalWorkId")
         columns = sorted(_columns(con, "registry_source_rows"))
-        if not {"canonicalWorkId", "canonicalTitleJa", "canonicalCreatorsJa", "identityEvidenceUrls", "representativeIsbn", "volumeNumber", "editionKind", "supportEvidenceUrls"} <= set(columns):
-            raise PublishError("registry_source_rows lacks identity/bibliography provenance columns")
-        rows = [
-            dict(zip(columns, row))
-            for row in con.execute(
-                "select " + ",".join(f'\"{column}\"' for column in columns) + " from registry_source_rows"
-            )
-        ]
-        mapped = {
-            str(row["canonicalWorkId"])
-            for row in rows
-            if str(row.get("canonicalWorkId", ""))
-        }
-        missing = sorted(target_ids - mapped)
-        if missing:
-            raise PublishError(f"registry does not map target works: {missing[:5]}")
-        by_work: dict[str, list[dict[str, object]]] = {}
-        for row in rows:
-            work_id = str(row.get("canonicalWorkId", ""))
-            if not work_id:
-                continue
-            by_work.setdefault(work_id, []).append(row)
-        # Duplicate source rows are expected for repeated nominations.  Packet
-        # binding below requires the manifest-frozen complete same-work set,
-        # one bibliography, and the union of its provenance.
-        return {
-            "sha256": sha256(path),
-            "baselineSha256": metadata.get("baselineSha256", ""),
-            "baselineMatchesInput": bool(
-                baseline_sha is None or registry_baseline_sha == baseline_sha.lower()
-            ),
-            "columns": columns,
-            "rowCount": len(mapped),
-            "rowsByWork": {key: sorted(value, key=lambda item: str(item.get("sourceRowId", ""))) for key, value in sorted(by_work.items())},
-            # Backwards-compatible first-row view for diagnostics only.
-            "rows": {key: sorted(value, key=lambda item: str(item.get("sourceRowId", "")))[0] for key, value in sorted(by_work.items())},
-        }
+        rows = [dict(zip(columns, row)) for row in con.execute(
+            "select " + ",".join(f'\"{column}\"' for column in columns) + " from registry_source_rows")]
+        return {"sha256": sha256(path), **registry_facts(metadata, columns, rows, target_ids, baseline_sha)}
     finally:
         con.close()
 
@@ -651,8 +649,10 @@ def _load_panel(
     return rows, promotion, work_chunk, result_summary
 
 
-def _baseline_facts(path: Path) -> dict[str, object]:
-    con = sqlite3.connect(_db_uri(path), uri=True)
+def _baseline_facts(path: Path | sqlite3.Connection) -> dict[str, object]:
+    owned = not isinstance(path, sqlite3.Connection)
+    con = sqlite3.connect(_db_uri(path), uri=True) if owned else path
+    previous_factory = con.row_factory
     con.row_factory = sqlite3.Row
     try:
         works = {row["id"]: dict(row) for row in con.execute("select * from source_works")}
@@ -687,7 +687,30 @@ def _baseline_facts(path: Path) -> dict[str, object]:
             "volumeRows": volume_rows,
         }
     finally:
-        con.close()
+        con.row_factory = previous_factory
+        if owned:
+            con.close()
+
+
+def _baseline_facts_from_snapshot(snapshot: dict) -> dict:
+    """Build fresh planner dictionaries from an already read, immutable row view."""
+    def rows(table):
+        columns, values = snapshot[table]
+        return [dict(zip(columns, row)) for row in values]
+
+    contexts, volume_rows = {}, {}
+    for row in rows("source_recommendation_context"):
+        contexts.setdefault(row["workId"], []).append(row)
+    for row in rows("source_volumes"):
+        volume_rows.setdefault(row["workId"], []).append(row)
+    return {
+        "works": {row["id"]: row for row in rows("source_works")},
+        "factors": {(row["workId"], row["axisId"]): row for row in rows("source_factors")},
+        "themes": {(row["workId"], row["themeId"]): row for row in rows("source_themes")},
+        "evidence": {row["id"]: row for row in rows("source_evidence")},
+        "contexts": contexts, "volumeRows": volume_rows,
+        "volumes": {wid: len(values) for wid, values in volume_rows.items()},
+    }
 
 
 def _normalise_isbn(value: object) -> str:
@@ -863,10 +886,15 @@ def _validate_packet_baseline_binding(
                 )
 
 
-def _snapshot_db(path: Path) -> dict[str, tuple[tuple[str, ...], tuple[tuple[object, ...], ...]]]:
+def _snapshot_db(path: Path | sqlite3.Connection) -> dict[str, tuple[tuple[str, ...], tuple[tuple[object, ...], ...]]]:
     """Capture every source row for post-write exact-preservation checks."""
 
-    con = sqlite3.connect(_db_uri(path), uri=True)
+    if isinstance(path, dict):
+        return path  # One immutable after-view is shared by stacked verifiers.
+
+    owned = not isinstance(path, sqlite3.Connection)
+    con = sqlite3.connect(_db_uri(path), uri=True) if owned else path
+    previous_factory = con.row_factory
     try:
         snapshot: dict[str, tuple[tuple[str, ...], tuple[tuple[object, ...], ...]]] = {}
         tables = {row[0] for row in con.execute("select name from sqlite_master where type='table'")}
@@ -879,7 +907,9 @@ def _snapshot_db(path: Path) -> dict[str, tuple[tuple[str, ...], tuple[tuple[obj
             snapshot[table] = (columns, rows)
         return snapshot
     finally:
-        con.close()
+        con.row_factory = previous_factory
+        if owned:
+            con.close()
 
 
 def _json_sha(value: object) -> str:
@@ -1721,69 +1751,87 @@ def _build_plan(
     }
 
 
-def _apply_plan(db_path: Path, plan: dict[str, object]) -> None:
+def apply_plan_in_transaction(con: sqlite3.Connection, plan: dict[str, object]) -> None:
+    """Apply validated rows on the caller's open transaction; never commit here."""
+    if not con.in_transaction:
+        raise PublishError("plan application requires a caller-owned transaction")
+    evidence_rows: dict[str, dict[str, str]] = plan["newEvidence"]  # type: ignore[assignment]
+    next_evidence = con.execute("select coalesce(max(sourceOrdinal),0)+1 from source_evidence").fetchone()[0]
+    next_line = con.execute("select coalesce(max(sourceLine),1)+1 from source_evidence").fetchone()[0]
+    for evidence_id in sorted(evidence_rows):
+        row = evidence_rows[evidence_id]
+        con.execute(
+            "insert into source_evidence values(?,?,?,?,?,?,?,?,?,?,?,?,?)",
+            (next_evidence, next_line, row["id"], row["workId"], row["targetType"], row["targetId"], row["sourceType"], row["sourceUrl"], row["fetchedAt"], row["extractorVersion"], row["reviewedByHuman"], row["confidence"], row["notes"]),
+        )
+        next_evidence += 1
+        next_line += 1
+    normalizations: dict[str, dict[str, str]] = plan.get("evidenceNormalizations", {})  # type: ignore[assignment]
+    for evidence_id in sorted(normalizations):
+        row = normalizations[evidence_id]
+        con.execute(
+            "update source_evidence set sourceType=?,notes=? where id=?",
+            (row["sourceType"], row["notes"], evidence_id),
+        )
+    updates: dict[str, dict[str, str]] = plan.get("evidenceUpdates", {})  # type: ignore[assignment]
+    for evidence_id in sorted(updates):
+        row = updates[evidence_id]
+        con.execute(
+            "update source_evidence set sourceType=?,notes=? where id=?",
+            (row["sourceType"], row["notes"], evidence_id),
+        )
+    for row in plan["factorUpdates"]:  # type: ignore[union-attr]
+        cur = con.execute("update source_factors set state=?,value=?,confidence=?,evidenceId=? where workId=? and axisId=? and state='unknown'", (row["state"], row["value"], row["confidence"], row["evidenceId"], row["workId"], row["axisId"]))
+        if cur.rowcount != 1:
+            raise PublishError(f"factor update lost unknown row: {row['workId']} {row['axisId']}")
+    next_theme = con.execute("select coalesce(max(sourceOrdinal),0)+1 from source_themes").fetchone()[0]
+    next_theme_line = con.execute("select coalesce(max(sourceLine),1)+1 from source_themes").fetchone()[0]
+    for row in plan["themeInserts"]:  # type: ignore[union-attr]
+        con.execute("insert into source_themes values(?,?,?,?,?,?,?)", (next_theme, next_theme_line, row["workId"], row["themeId"], row["centrality"], row["confidence"], row["evidenceId"]))
+        next_theme += 1
+        next_theme_line += 1
+    for work_id, genres in sorted(plan["genreUpdates"].items()):  # type: ignore[union-attr]
+        con.execute("update source_works set genres=? where id=?", (genres, work_id))
+    next_context = con.execute("select coalesce(max(sourceOrdinal),0)+1 from source_recommendation_context").fetchone()[0]
+    next_context_line = con.execute("select coalesce(max(sourceLine),1)+1 from source_recommendation_context").fetchone()[0]
+    for row in plan["contextInserts"]:  # type: ignore[union-attr]
+        con.execute("insert into source_recommendation_context values(?,?,?,?,?,?,?,?)", (next_context, next_context_line, row["workId"], row["catalogRole"], row["seriesGroupId"], row["volumeCount"], row["reviewAverage"], row["reviewCount"]))
+        next_context += 1
+        next_context_line += 1
+    for row in plan["workUpdates"]:  # type: ignore[union-attr]
+        cur = con.execute("update source_works set onboardingEligible='true',recommendationEligible='true',libraryOnly='false',annotationReviewMethod='authorizedEvidencePanel',annotationReviewedAt=?,annotationReviewReference=? where id=?", (row["annotationReviewedAt"], row["annotationReviewReference"], row["id"]))
+        if cur.rowcount != 1:
+            raise PublishError(f"work update lost row: {row['id']}")
+    for work_id in plan.get("legacyPassIds", []):  # type: ignore[union-attr]
+        cur = con.execute(
+            "update source_works set onboardingEligible='true' where id=? and annotationReviewMethod='authorizedEvidencePanel' and recommendationEligible='true' and libraryOnly='false'",
+            (work_id,),
+        )
+        if cur.rowcount != 1:
+            raise PublishError(f"legacy PASS eligibility repair lost row: {work_id}")
+
+
+def verify_expected_after(con: sqlite3.Connection, before: dict, plan: dict, gold_ids: set[str]) -> None:
+    if not con.in_transaction:
+        raise PublishError("expected-after verification requires a caller-owned transaction")
+    _verify_preservation(before, con, plan, gold_ids)
+    if con.execute("pragma integrity_check").fetchone()[0] != "ok" or con.execute("pragma foreign_key_check").fetchall():
+        raise PublishError("published candidate SQLite integrity failure")
+
+
+def _apply_plan(db_path: Path, plan: dict[str, object], *, before: dict | None = None, gold_ids: set[str] | None = None) -> None:
+    """Standalone compatibility entry point owns exactly one transaction."""
     con = sqlite3.connect(db_path)
     try:
         con.execute("pragma journal_mode=DELETE")
         con.execute("begin immediate")
-        evidence_rows: dict[str, dict[str, str]] = plan["newEvidence"]  # type: ignore[assignment]
-        next_evidence = con.execute("select coalesce(max(sourceOrdinal),0)+1 from source_evidence").fetchone()[0]
-        next_line = con.execute("select coalesce(max(sourceLine),1)+1 from source_evidence").fetchone()[0]
-        for evidence_id in sorted(evidence_rows):
-            row = evidence_rows[evidence_id]
-            con.execute(
-                "insert into source_evidence values(?,?,?,?,?,?,?,?,?,?,?,?,?)",
-                (next_evidence, next_line, row["id"], row["workId"], row["targetType"], row["targetId"], row["sourceType"], row["sourceUrl"], row["fetchedAt"], row["extractorVersion"], row["reviewedByHuman"], row["confidence"], row["notes"]),
-            )
-            next_evidence += 1
-            next_line += 1
-        normalizations: dict[str, dict[str, str]] = plan.get("evidenceNormalizations", {})  # type: ignore[assignment]
-        for evidence_id in sorted(normalizations):
-            row = normalizations[evidence_id]
-            con.execute(
-                "update source_evidence set sourceType=?,notes=? where id=?",
-                (row["sourceType"], row["notes"], evidence_id),
-            )
-        updates: dict[str, dict[str, str]] = plan.get("evidenceUpdates", {})  # type: ignore[assignment]
-        for evidence_id in sorted(updates):
-            row = updates[evidence_id]
-            con.execute(
-                "update source_evidence set sourceType=?,notes=? where id=?",
-                (row["sourceType"], row["notes"], evidence_id),
-            )
-        for row in plan["factorUpdates"]:  # type: ignore[union-attr]
-            cur = con.execute("update source_factors set state=?,value=?,confidence=?,evidenceId=? where workId=? and axisId=? and state='unknown'", (row["state"], row["value"], row["confidence"], row["evidenceId"], row["workId"], row["axisId"]))
-            if cur.rowcount != 1:
-                raise PublishError(f"factor update lost unknown row: {row['workId']} {row['axisId']}")
-        next_theme = con.execute("select coalesce(max(sourceOrdinal),0)+1 from source_themes").fetchone()[0]
-        next_theme_line = con.execute("select coalesce(max(sourceLine),1)+1 from source_themes").fetchone()[0]
-        for row in plan["themeInserts"]:  # type: ignore[union-attr]
-            con.execute("insert into source_themes values(?,?,?,?,?,?,?)", (next_theme, next_theme_line, row["workId"], row["themeId"], row["centrality"], row["confidence"], row["evidenceId"]))
-            next_theme += 1
-            next_theme_line += 1
-        for work_id, genres in sorted(plan["genreUpdates"].items()):  # type: ignore[union-attr]
-            con.execute("update source_works set genres=? where id=?", (genres, work_id))
-        next_context = con.execute("select coalesce(max(sourceOrdinal),0)+1 from source_recommendation_context").fetchone()[0]
-        next_context_line = con.execute("select coalesce(max(sourceLine),1)+1 from source_recommendation_context").fetchone()[0]
-        for row in plan["contextInserts"]:  # type: ignore[union-attr]
-            con.execute("insert into source_recommendation_context values(?,?,?,?,?,?,?,?)", (next_context, next_context_line, row["workId"], row["catalogRole"], row["seriesGroupId"], row["volumeCount"], row["reviewAverage"], row["reviewCount"]))
-            next_context += 1
-            next_context_line += 1
-        for row in plan["workUpdates"]:  # type: ignore[union-attr]
-            cur = con.execute("update source_works set onboardingEligible='true',recommendationEligible='true',libraryOnly='false',annotationReviewMethod='authorizedEvidencePanel',annotationReviewedAt=?,annotationReviewReference=? where id=?", (row["annotationReviewedAt"], row["annotationReviewReference"], row["id"]))
-            if cur.rowcount != 1:
-                raise PublishError(f"work update lost row: {row['id']}")
-        for work_id in plan.get("legacyPassIds", []):  # type: ignore[union-attr]
-            cur = con.execute(
-                "update source_works set onboardingEligible='true' where id=? and annotationReviewMethod='authorizedEvidencePanel' and recommendationEligible='true' and libraryOnly='false'",
-                (work_id,),
-            )
-            if cur.rowcount != 1:
-                raise PublishError(f"legacy PASS eligibility repair lost row: {work_id}")
+        current = _snapshot_db(con)
+        if before is not None and current != before:
+            raise PublishError("candidate changed after current-state planning")
+        apply_plan_in_transaction(con, plan)
+        verify_expected_after(con, current, plan, gold_ids or set())
         con.commit()
-        if con.execute("pragma integrity_check").fetchone()[0] != "ok" or con.execute("pragma foreign_key_check").fetchall():
-            raise PublishError("published candidate SQLite integrity failure")
-    except Exception:
+    except BaseException:
         con.rollback()
         raise
     finally:
@@ -1866,6 +1914,7 @@ def _prepare_review_artifacts(
     baseline_sha: str,
     reviewed_at: str,
     review_reference: str,
+    reuse_reviews: dict[str, str] | None = None,
 ) -> dict[str, object]:
     """Copy referenced legacy reviews and create the current review artifact.
 
@@ -1884,6 +1933,11 @@ def _prepare_review_artifacts(
     for reference in sorted(refs):
         destination = review_root / reference
         destination.parent.mkdir(parents=True, exist_ok=True)
+        if reuse_reviews is not None and reference in reuse_reviews:
+            if not destination.is_file() or sha256(destination) != reuse_reviews[reference]:
+                raise PublishError(f"previously verified review changed: {reference}")
+            copied[reference] = reuse_reviews[reference]
+            continue
         if reference == review_reference and reference not in _review_references(baseline_snapshot):
             continue
         source = _find_review_source(
@@ -1922,7 +1976,11 @@ def _prepare_review_artifacts(
         ]
         destination = review_root / review_reference
         destination.parent.mkdir(parents=True, exist_ok=True)
-        destination.write_text("\n".join(lines), encoding="utf-8", newline="\n")
+        body = "\n".join(lines).encode("utf-8")
+        if destination.exists() and destination.read_bytes() != body:
+            raise PublishError(f"current review changed on resume: {review_reference}")
+        if not destination.exists():
+            destination.write_bytes(body)
         copied[review_reference] = sha256(destination)
     for reference in sorted(refs):
         destination = review_root / reference
@@ -2000,6 +2058,36 @@ def _write_reports(
     return diff, report, manifest
 
 
+def verify_immutable(input_root: Path, result_root: Path) -> dict:
+    """Verify frozen inputs and decisions; this does not certify current DB compatibility."""
+    try:
+        panel_input, chunks, input_digest = panel.validate_input(input_root)
+    except (OSError, panel.ValidationError, ValueError) as error:
+        raise PublishError(f"frozen panel input validation failed: {error}") from error
+    target_ids, target_chunks, contexts, supplemental, prior, frozen, packets = _load_frozen(chunks)
+    rows, promotion, output_chunks, result_summary = _load_panel(input_root, result_root, chunks)
+    if set(promotion) != target_ids or set(output_chunks) != target_ids:
+        raise PublishError("panel outputs do not cover exact frozen target works")
+    return {"panelInput": panel_input, "chunks": chunks, "inputManifestSha256": input_digest,
+            "targetIds": target_ids, "targetChunks": target_chunks, "contexts": contexts,
+            "supplemental": supplemental, "prior": prior, "frozen": frozen, "packets": packets,
+            "rows": rows, "promotion": promotion, "panelResult": result_summary}
+
+
+def plan_against_current(con: sqlite3.Connection, verified: dict, registry: dict | None,
+                         reviewed_at: str, review_reference: str, gold_ids: set[str], *,
+                         baseline_snapshot: dict | None = None) -> tuple[dict, dict, dict]:
+    if not con.in_transaction:
+        raise PublishError("current-state planning requires a caller-owned transaction")
+    baseline = _baseline_facts(con) if baseline_snapshot is None else _baseline_facts_from_snapshot(baseline_snapshot)
+    chunk_digests = {wid: sha256(chunk / "CHUNK.sha256") for wid, chunk in verified["targetChunks"].items()}
+    plan = _build_plan(verified["rows"], verified["promotion"], verified["contexts"], verified["supplemental"],
+                       verified["frozen"], baseline, reviewed_at, review_reference,
+                       packets=verified["packets"], chunk_digests=chunk_digests, registry=registry,
+                       gold_ids=gold_ids, prior=verified["prior"])
+    return plan, baseline, chunk_digests
+
+
 def preflight(
     input_root: Path,
     result_root: Path,
@@ -2013,28 +2101,24 @@ def preflight(
     input_root = input_root.resolve()
     result_root = result_root.resolve()
     baseline_db = baseline_db.resolve()
-    try:
-        panel_input, chunks, input_digest = panel.validate_input(input_root)
-    except (OSError, panel.ValidationError, ValueError) as error:
-        raise PublishError(f"frozen panel input validation failed: {error}") from error
-    target_ids, target_chunks, contexts, supplemental, prior, frozen, packets = _load_frozen(chunks)
-    rows, promotion, output_chunks, result_summary = _load_panel(input_root, result_root, chunks)
-    if set(promotion) != target_ids or set(output_chunks) != target_ids:
-        raise PublishError("panel outputs do not cover exact frozen target works")
+    verified = verify_immutable(input_root, result_root)
+    panel_input, input_digest = verified["panelInput"], verified["inputManifestSha256"]
+    target_ids, target_chunks = verified["targetIds"], verified["targetChunks"]
+    packets, contexts, rows = verified["packets"], verified["contexts"], verified["rows"]
+    promotion, result_summary = verified["promotion"], verified["panelResult"]
     baseline_meta = ensure_baseline(baseline_db)
     registry_meta = ensure_registry(registry_db, target_ids, str(baseline_meta["sha256"])) if registry_db else None
     if registry_meta is not None:
         registry_meta = _bind_frozen_registry(input_root, target_ids, registry_meta, registry_slice)
-    baseline = _baseline_facts(baseline_db)
     gold_ids = _load_gold_ids(gold_manifest)
     alias_audit = _validate_alias_boundary(baseline_db, gold_manifest, gold_ids)
-    chunk_digests = {work_id: sha256(chunk / "CHUNK.sha256") for work_id, chunk in target_chunks.items()}
-    plan = _build_plan(
-        rows, promotion, contexts, supplemental, frozen, baseline,
-        reviewed_at, review_reference, packets=packets,
-        chunk_digests=chunk_digests, registry=registry_meta, gold_ids=gold_ids,
-        prior=prior,
-    )
+    con = sqlite3.connect(_db_uri(baseline_db), uri=True)
+    try:
+        con.execute("begin")
+        plan, baseline, chunk_digests = plan_against_current(con, verified, registry_meta, reviewed_at, review_reference, gold_ids)
+        baseline_snapshot = _snapshot_db(con)
+    finally:
+        con.close()
     before = sha256(baseline_db)
     if before != baseline_meta["sha256"]:
         raise PublishError("baseline hash changed during read-only preflight")
@@ -2054,8 +2138,101 @@ def preflight(
         "rows": rows,
         "promotion": promotion,
         "baselineFacts": baseline,
-        "baselineSnapshot": _snapshot_db(baseline_db),
+        "baselineSnapshot": baseline_snapshot,
     }, plan
+
+
+def finalize_projection(input_root: Path, result_root: Path, baseline_db: Path, output_db: Path,
+                        db_tmp: Path, prepared: dict, plan: dict, reviewed_at: str,
+                        review_reference: str, registry_slice: Path | None = None) -> dict[str, object]:
+    """Emit the existing full publication layout after transaction verification."""
+    artifact_root = output_db.parent / "authorized-evidence-panel-v1"
+    artifact_tmp = artifact_root.with_name(f".{artifact_root.name}.tmp")
+    promotion_path = output_db.parent / "promotion-ledger.csv"
+    promotion_tmp = output_db.parent / ".promotion-ledger.csv.tmp"
+    before = prepared["baseline"]["sha256"]
+    shutil.copytree(
+        input_root,
+        artifact_tmp / "input" / "followup-panel-input-v1",
+        symlinks=False,
+    )
+    if registry_slice is not None:
+        registry_copy = artifact_tmp / "input" / "registry-correction" / "source-registry.csv"
+        registry_copy.parent.mkdir(parents=True)
+        shutil.copy2(registry_slice, registry_copy)
+        if sha256(registry_copy) != prepared["registry"]["frozenSliceSha256"]:
+            raise PublishError("registry correction changed after preflight")
+    shutil.copytree(
+        result_root,
+        artifact_tmp / "result" / "followup-panel-output-v1",
+        symlinks=False,
+    )
+    for path in artifact_tmp.rglob("*"):
+        if path.is_symlink():
+            raise PublishError(f"panel artifact contains symlink: {path}")
+    review_info = _prepare_review_artifacts(
+        artifact_tmp,
+        input_root=input_root,
+        result_root=result_root,
+        baseline_db=baseline_db,
+        baseline_snapshot=prepared["baselineSnapshot"],  # type: ignore[arg-type]
+        prepared=prepared,
+        plan=plan,
+        baseline_sha=before,
+        reviewed_at=reviewed_at,
+        review_reference=review_reference,
+    )
+    artifact_report = artifact_tmp / "PUBLISHER-INPUT.json"
+    artifact_report.write_text(
+        json.dumps(
+            {
+                "baselineSha256": before,
+                "inputManifestSha256": prepared["inputManifestSha256"],
+                "targetCount": prepared["targetCount"],
+                "reviewedAt": reviewed_at,
+                "reviewReference": review_reference,
+                "registryBaselineSha256": (
+                    prepared["registry"].get("baselineSha256")
+                    if prepared.get("registry") is not None else None
+                ),
+                "registryBaselineMatchesInput": (
+                    prepared["registry"].get("baselineMatchesInput")
+                    if prepared.get("registry") is not None else None
+                ),
+                "registrySliceSha256": (
+                    prepared["registry"].get("frozenSliceSha256")
+                    if prepared.get("registry") is not None else None
+                ),
+                **review_info,
+            },
+            ensure_ascii=False,
+            sort_keys=True,
+            separators=(",", ":"),
+        ) + "\n",
+        encoding="utf-8",
+        newline="\n",
+    )
+    _write_promotion_ledger(promotion_tmp, prepared["promotion"])  # type: ignore[arg-type]
+    os.replace(db_tmp, output_db)
+    os.replace(artifact_tmp, artifact_root)
+    os.replace(promotion_tmp, promotion_path)
+    _write_reports(output_db.parent, plan, before, output_db, artifact_root)
+    _verify_db(output_db)
+    _verify_preservation(
+        prepared["baselineSnapshot"],  # type: ignore[arg-type]
+        output_db,
+        plan,
+        set(prepared["goldIds"]),  # type: ignore[arg-type]
+    )
+    return {
+        "status": "PUBLISHED",
+        "outputDb": str(output_db),
+        "outputSha256": sha256(output_db),
+        "artifactRoot": str(artifact_root),
+        "acceptedClaimCount": plan["acceptedClaimCount"],
+        "changedClaimCount": plan["changedClaimCount"],
+        "targetCount": prepared["targetCount"],
+    }
 
 
 def publish(
@@ -2115,91 +2292,12 @@ def publish(
     published = False
     try:
         shutil.copy2(baseline_db, db_tmp)
-        _apply_plan(db_tmp, plan)
+        _apply_plan(db_tmp, plan, before=prepared["baselineSnapshot"], gold_ids=set(prepared["goldIds"]))
         _verify_db(db_tmp)
-        shutil.copytree(
-            input_root,
-            artifact_tmp / "input" / "followup-panel-input-v1",
-            symlinks=False,
-        )
-        if registry_slice is not None:
-            registry_copy = artifact_tmp / "input" / "registry-correction" / "source-registry.csv"
-            registry_copy.parent.mkdir(parents=True)
-            shutil.copy2(registry_slice, registry_copy)
-            if sha256(registry_copy) != prepared["registry"]["frozenSliceSha256"]:
-                raise PublishError("registry correction changed after preflight")
-        shutil.copytree(
-            result_root,
-            artifact_tmp / "result" / "followup-panel-output-v1",
-            symlinks=False,
-        )
-        for path in artifact_tmp.rglob("*"):
-            if path.is_symlink():
-                raise PublishError(f"panel artifact contains symlink: {path}")
-        review_info = _prepare_review_artifacts(
-            artifact_tmp,
-            input_root=input_root,
-            result_root=result_root,
-            baseline_db=baseline_db,
-            baseline_snapshot=prepared["baselineSnapshot"],  # type: ignore[arg-type]
-            prepared=prepared,
-            plan=plan,
-            baseline_sha=before,
-            reviewed_at=reviewed_at,
-            review_reference=review_reference,
-        )
-        artifact_report = artifact_tmp / "PUBLISHER-INPUT.json"
-        artifact_report.write_text(
-            json.dumps(
-                {
-                    "baselineSha256": before,
-                    "inputManifestSha256": prepared["inputManifestSha256"],
-                    "targetCount": prepared["targetCount"],
-                    "reviewedAt": reviewed_at,
-                    "reviewReference": review_reference,
-                    "registryBaselineSha256": (
-                        prepared["registry"].get("baselineSha256")
-                        if prepared.get("registry") is not None else None
-                    ),
-                    "registryBaselineMatchesInput": (
-                        prepared["registry"].get("baselineMatchesInput")
-                        if prepared.get("registry") is not None else None
-                    ),
-                    "registrySliceSha256": (
-                        prepared["registry"].get("frozenSliceSha256")
-                        if prepared.get("registry") is not None else None
-                    ),
-                    **review_info,
-                },
-                ensure_ascii=False,
-                sort_keys=True,
-                separators=(",", ":"),
-            ) + "\n",
-            encoding="utf-8",
-            newline="\n",
-        )
-        _write_promotion_ledger(promotion_tmp, prepared["promotion"])  # type: ignore[arg-type]
-        os.replace(db_tmp, output_db)
-        os.replace(artifact_tmp, artifact_root)
-        os.replace(promotion_tmp, promotion_path)
-        _write_reports(output_db.parent, plan, before, output_db, artifact_root)
-        _verify_db(output_db)
-        _verify_preservation(
-            prepared["baselineSnapshot"],  # type: ignore[arg-type]
-            output_db,
-            plan,
-            set(prepared["goldIds"]),  # type: ignore[arg-type]
-        )
+        result = finalize_projection(input_root, result_root, baseline_db, output_db, db_tmp,
+                                     prepared, plan, reviewed_at, review_reference, registry_slice)
         published = True
-        return {
-            "status": "PUBLISHED",
-            "outputDb": str(output_db),
-            "outputSha256": sha256(output_db),
-            "artifactRoot": str(artifact_root),
-            "acceptedClaimCount": plan["acceptedClaimCount"],
-            "changedClaimCount": plan["changedClaimCount"],
-            "targetCount": prepared["targetCount"],
-        }
+        return result
     finally:
         for path in (db_tmp, artifact_tmp, promotion_tmp):
             if path.exists():

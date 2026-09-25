@@ -50,6 +50,8 @@ Catalog의 성적 콘텐츠 제외 기준은 **porn / non-porn**이다. 성인�
 
 ## 3. Panel 판정
 
+2026-09-25 수집 인계 형식: 새 수집 helper는 조사자가 작성한 기존 `narrative-tone-exhaustion-v1` 기록을 선택 sidecar `COLLECTION-HANDOFF.json`으로 전달한다. `schemaVersion=factor-collection-handoff-v1`, 정확한 `researchSha256`, `narrativeToneExhaustion` 세 필드를 가진다. Work·대표 ISBN·실제 source URL·attempt/stopReason은 기존 계약 그대로 검증한다. 신규 v4 research ref의 선택 `handoffSha256`과 frozen sourceInputBindings/provenance가 원본을 보존하며 기록 충돌이나 SHA 불일치는 준비 오류다. 이 형식은 소진 사실이나 판정 권한을 생성하지 않고 과거 collector/frozen/HOLD를 변경하지 않는다. 중국어 원문 언어는 `zh`로 기록한다.
+
 Panel은 작품마다 다음 순서로 처리한다.
 
 1. identity·판본·ISBN·scope·safety를 확인한다.
@@ -109,3 +111,5 @@ in-scope 고유 작품은 다음을 모두 만족할 때만 `recommendationVerif
 - hard blocker가 없음
 
 중복·별칭·실제 비만화·포르노·비일본 작품은 별도 추천 Work로 만들지 않는다. 근거를 끝내 확보하지 못한 작품은 지지도 탈락으로 삭제하지 않고 코드·근거·재검토 경로가 있는 `promotionBlocked`로 보존한다.
+
+수집 완료 receipt의 `handoffSha256`은 최초 조립 전에도 예상 sidecar 원본을 식별한다. `collection-events.jsonl`의 같은 research 완료 기록을 `collectionReceiptSha256`으로 결속하며, 예상 sidecar 누락/변경은 입력 복구 대상이다. 과거 sidecar 없는 수집분을 자동 조사 소진으로 해석하지 않는다.

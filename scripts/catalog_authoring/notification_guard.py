@@ -13,6 +13,24 @@ from pathlib import Path
 from authoring_paths import REPO, ROOT
 
 STATE = REPO / "data/local/catalog-authoring/notifications"
+EVENT = "catalog-notification-v1"
+
+
+def digest(value):
+    return hashlib.sha256(json.dumps(value, ensure_ascii=False, sort_keys=True).encode()).hexdigest()
+
+
+def notification_identity(assignment, checkpoint_sha, kind):
+    bound = {key: assignment[key] for key in ("sessionId", "parentThreadId", "workId", "phase", "runRoot")}
+    bound.update({key: assignment[key] for key in ("dispatchPath", "dispatchSha256") if key in assignment})
+    return {"schemaVersion": EVENT, "assignment": bound,
+            "generation": assignment.get("generation", digest(bound)),
+            "kind": kind, "checkpointSha256": checkpoint_sha}
+
+
+def locked(path):
+    from catalog_authoring_runner import exclusive
+    return exclusive(path.with_suffix(".lock"), wait=True)
 
 
 def read(path):
@@ -20,10 +38,17 @@ def read(path):
 
 
 def write(path, value):
+    write_bytes(path, (json.dumps(value, ensure_ascii=False, indent=2) + "\n").encode("utf-8"))
+
+
+def write_bytes(path, body):
     path.parent.mkdir(parents=True, exist_ok=True)
     temporary = path.with_suffix(f".{uuid.uuid4().hex}.tmp")
     try:
-        temporary.write_text(json.dumps(value, ensure_ascii=False, indent=2) + "\n", encoding="utf-8")
+        with temporary.open("xb") as stream:
+            stream.write(body)
+            stream.flush()
+            os.fsync(stream.fileno())
         os.replace(temporary, path)
     finally:
         temporary.unlink(missing_ok=True)
@@ -31,6 +56,60 @@ def write(path, value):
 
 def state_path(session, directory=STATE):
     return directory / (str(uuid.UUID(session)) + ".json")
+
+
+def remember_assignment(assignment, directory):
+    identity = notification_identity(assignment, "", "complete")
+    value = {"assignment": identity["assignment"], "generation": identity["generation"]}
+    path = directory / "roots" / assignment["parentThreadId"] / (digest(value) + ".json")
+    if path.exists():
+        if read(path) != value:
+            raise ValueError("Registered notification root changed")
+    else:
+        write(path, value)
+
+
+def registered_events(parent, directory):
+    """Only registered notification directories; never scan the Catalog archive."""
+    assignments = []
+    for path in directory.glob("*.json"):
+        value = read(path)
+        if value.get("sessionId") == path.stem and value.get("parentThreadId") == parent:
+            assignments.append(value)
+    for assignment in assignments:
+        remember_assignment(assignment, directory)
+    found = {}
+    for registration in (directory / "roots" / parent).glob("*.json"):
+        record = read(registration)
+        assignment = record["assignment"]
+        if assignment["parentThreadId"] != parent or digest(record) != registration.stem:
+            raise ValueError("Notification root registration mismatch")
+        root = Path(assignment["runRoot"])
+        for path in (root / "notification-events").glob("*/event.json"):
+            value = read(path)
+            if value.get("assignment") == assignment and value.get("generation") == record["generation"]:
+                if value["eventId"] != path.parent.name:
+                    raise ValueError("Registered event directory mismatch")
+                found[str(path)] = path
+    return sorted(found.values(), key=str)
+
+
+def index_event(path, directory):
+    value = read(path)
+    parent = value["assignment"]["parentThreadId"]
+    index = directory / "inbox" / parent / (value["eventId"] + ".json")
+    ref = {"path": str(path), "sha256": hashlib.sha256(path.read_bytes()).hexdigest()}
+    if index.exists():
+        if read(index) != ref:
+            raise ValueError("Inbox index differs from immutable event")
+    else:
+        verify_event(value)
+        write(index, ref)
+    return index
+
+
+def reconcile(parent, directory=STATE):
+    return [index_event(path, directory) for path in registered_events(str(uuid.UUID(parent)), directory)]
 
 
 def result_identity(assignment):
@@ -195,6 +274,9 @@ def register_batch(session, parent, dispatch, artifact, run, directory=STATE, ar
     if "dispatchSha256" in value and any(value.get(k) != v for k, v in binding.items()):
         raise ValueError("Registered batch changed")
     value.update(binding)
+    value["generation"] = digest({key: value[key] for key in
+                                  ("sessionId", "parentThreadId", "workId", "phase", "runRoot", "dispatchSha256")})
+    remember_assignment(value, directory)
     write(path, value)
 
 
@@ -208,18 +290,315 @@ def register(session, parent, work, phase, artifact, run, directory=STATE, artif
              "phase": phase, "artifact": str(artifact), "runRoot": str(run), "active": True}
     if path.exists():
         old = read(path)
-        if all(old.get(k) == v for k, v in value.items()):
+        remember_assignment(old, directory)
+        reconcile(old["parentThreadId"], directory)
+        if all(old.get(k) == v for k, v in value.items() if k != "active"):
             return  # Preserve successful sends and the one-reminder flag on retry.
         if old.get("active") and not old.get("notifiedSha256"):
-            raise ValueError("Previous assignment still active; finish or explicitly clear it")
+            previous = Path(old["artifact"])
+            if not previous.is_file():
+                raise ValueError("Previous assignment still active; finish or explicitly clear it")
+            identity = notification_identity(old, hashlib.sha256(previous.read_bytes()).hexdigest(), "complete")
+            queued = Path(old["runRoot"]) / "notification-events" / digest(identity) / "event.json"
+            if not queued.is_file():
+                raise ValueError("Previous assignment still active; enqueue completion or explicitly clear it")
+            completion = read(queued)
+            if completion["eventId"] != digest(identity):
+                raise ValueError("Previous completion identity changed")
+            verify_event(completion)
+            index_event(queued, directory)
+    remember_assignment(value, directory)
     write(path, value)
 
 
-def acknowledge(session, sha, tool_result, directory=STATE):
+def arm(session, directory=STATE, *, resume=False):
+    """Explicit execution opt-in for the current prompt, never for report turns."""
     path = state_path(session, directory)
-    assignment = read(path)
-    if not assignment.get("active") or result_identity(assignment) != sha.lower():
-        raise ValueError("Acknowledgement is not for the current saved result")
+    with locked(path):
+        value = read(path)
+        turn = read(directory / "turns" / path.name)
+        if not value.get("active") or value.get("suspended"):
+            if not resume:
+                raise ValueError("Assignment stopped; only an explicitly authorized resume may arm it")
+            generation = notification_identity(value, "", "complete")["generation"]
+            if (not value.get("stoppedTurnId") or value["stoppedTurnId"] == turn["turnId"]
+                    or value.get("stoppedGeneration") != generation):
+                raise ValueError("Resume requires a new turn and the same stopped assignment generation")
+        if "dispatchPath" in value and hashlib.sha256(Path(value["dispatchPath"]).read_bytes()).hexdigest() != value["dispatchSha256"]:
+            raise ValueError("Execution assignment changed")
+        value["executionTurnId"] = turn["turnId"]
+        value["suspended"] = False
+        value["active"] = True
+        write(path, value)
+
+
+def validate_partial(assignment, summary):
+    dispatch = read(Path(assignment["dispatchPath"]))
+    if hashlib.sha256(Path(assignment["dispatchPath"]).read_bytes()).hexdigest() != assignment["dispatchSha256"]:
+        raise ValueError("Partial report dispatch changed")
+    if any(summary.get(key) != assignment[field] for key, field in
+           (("batchId", "workId"), ("ownerThreadId", "sessionId"), ("parentThreadId", "parentThreadId"), ("phase", "phase"))):
+        raise ValueError("Partial report ownership/phase mismatch")
+    count = summary.get("processedCount")
+    if (type(count) is not int or not 0 <= count <= len(dispatch["works"])
+            or type(summary.get("needsResume")) is not bool
+            or not isinstance(summary.get("exactReason"), str) or not summary["exactReason"].strip()
+            or summary.get("nextWorkId") not in {None, *[row["workId"] for row in dispatch["works"]]}):
+        raise ValueError("Partial report checkpoint is incomplete")
+
+
+def enqueue(session, directory=STATE, *, checkpoint=None, kind="complete"):
+    assignment = read(state_path(session, directory))
+    if (not assignment.get("active") and kind != "user-stop") or kind not in {"complete", "partial-stop", "user-stop"}:
+        raise ValueError("Inactive assignment or invalid notification kind")
+    source = Path(checkpoint or assignment["artifact"]).resolve()
+    if not source.is_relative_to(Path(assignment["runRoot"]).resolve()):
+        raise ValueError("Checkpoint outside assigned run")
+    body = source.read_bytes()
+    identity = notification_identity(assignment, hashlib.sha256(body).hexdigest(), kind)
+    remember_assignment(assignment, directory)
+    event_id = digest(identity)
+    folder = Path(assignment["runRoot"]) / "notification-events" / event_id
+    path = folder / "event.json"
+    saved = folder / "checkpoint.json"
+    if (not assignment.get("active") and not path.is_file()
+            and assignment.get("stoppedCheckpointSha256") != identity["checkpointSha256"]):
+        raise ValueError("Stopped assignment cannot enqueue a new checkpoint")
+    if kind == "user-stop":
+        clear(session, directory, checkpoint_sha=identity["checkpointSha256"])
+    with locked(path):
+        if saved.exists() and saved.read_bytes() != body:
+            raise ValueError("Immutable notification checkpoint changed")
+        if not saved.exists():
+            write_bytes(saved, body)
+        value = {**identity, "eventId": event_id, "checkpointPath": str(saved)}
+        verify_event(value)
+        if path.exists() and read(path) != value:
+            raise ValueError("Immutable notification event changed")
+        write(path, value)
+    index_event(path, directory)
+    return path, value
+
+
+def verify_event(value):
+    identity = {key: value[key] for key in ("schemaVersion", "assignment", "generation", "kind", "checkpointSha256")}
+    if value["schemaVersion"] != EVENT or digest(identity) != value["eventId"]:
+        raise ValueError("Notification identity changed")
+    assignment = {**value["assignment"], "artifact": value["checkpointPath"]}
+    path = Path(value["checkpointPath"]).resolve()
+    if not path.is_relative_to(Path(assignment["runRoot"]).resolve()):
+        raise ValueError("Notification checkpoint outside run")
+    if hashlib.sha256(path.read_bytes()).hexdigest() != value["checkpointSha256"]:
+        raise ValueError("Notification checkpoint SHA mismatch")
+    if value["kind"] == "complete":
+        result_identity(assignment)
+    elif value["kind"] in {"partial-stop", "user-stop"}:
+        validate_partial(assignment, read(path))
+        if value["kind"] == "user-stop" and read(path)["needsResume"]:
+            raise ValueError("User stop cannot request automatic resume")
+    else:
+        raise ValueError("Unknown notification kind")
+
+
+def pending(parent, directory=STATE):
+    reconcile(parent, directory)
+    rows = []
+    for index in sorted((directory / "inbox" / str(uuid.UUID(parent))).glob("*.json")):
+        ref = read(index)
+        path = Path(ref["path"])
+        if hashlib.sha256(path.read_bytes()).hexdigest() != ref["sha256"]:
+            raise ValueError("Inbox event SHA mismatch")
+        value = read(path)
+        if value["assignment"]["parentThreadId"] != parent or value["eventId"] != index.stem:
+            raise ValueError("Inbox parent mismatch")
+        if (path.parent / "consumed.json").exists():
+            ack = read(path.parent / "consumed.json")
+            effect = path.parent / "handling.json"
+            if ack != {"eventId": value["eventId"], "handlingSha256": hashlib.sha256(effect.read_bytes()).hexdigest()}:
+                raise ValueError("Consumed acknowledgement changed")
+            continue
+        verify_event(value)
+        handling = read(effect) if (effect := path.parent / "handling.json").exists() else {}
+        rows.append({"eventId": value["eventId"], "path": str(path), "kind": value["kind"],
+                     "checkpointSha256": value["checkpointSha256"], "batchId": value["assignment"]["workId"],
+                     "handlingRecorded": bool(handling),
+                     **handling.get("publicationCoverage", {})})
+    return rows
+
+
+def publication_coverage(value, handling):
+    from authoring_paths import artifact_path
+    import catalog_authoring_batch_publish as batch
+    if value["kind"] != "complete" or value["assignment"]["phase"] != "batch":
+        raise ValueError("Only completed adjudication batches can acknowledge publication")
+    original = read(Path(value["checkpointPath"]))
+    ready = {row["workId"] for row in original["works"] if row["status"] == "READY_FOR_PUBLICATION"}
+    publications = handling.get("publications", [{"summaryPath": value["checkpointPath"], "summarySha256": value["checkpointSha256"]}])
+    if not isinstance(publications, list) or not publications:
+        raise ValueError("Publication summaries are required")
+    ledger = read(ROOT / "STATE.json").get("publicationBatches", {})
+    published, seen = set(), set()
+    for reference in publications:
+        if set(reference) != {"summaryPath", "summarySha256"}:
+            raise ValueError("Invalid publication summary reference")
+        path, sha = artifact_path(reference["summaryPath"]), reference["summarySha256"]
+        if sha in seen or hashlib.sha256(path.read_bytes()).hexdigest() != sha:
+            raise ValueError("Duplicate or changed publication summary")
+        seen.add(sha)
+        summary, chain_sha, visited = read(path), sha, set()
+        node = summary
+        while chain_sha != value["checkpointSha256"]:
+            if chain_sha in visited or "sourceSummary" not in node:
+                raise ValueError("Publication subset does not descend from this checkpoint")
+            visited.add(chain_sha)
+            source = node["sourceSummary"]
+            parent_path = artifact_path(source["path"])
+            if hashlib.sha256(parent_path.read_bytes()).hexdigest() != source["sha256"]:
+                raise ValueError("Publication source summary changed")
+            parent = read(parent_path)
+            rows = node["works"]
+            if len({row["workId"] for row in rows}) != len(rows) or any(row not in parent["works"] for row in rows):
+                raise ValueError("Publication subset changed exact source rows")
+            node, chain_sha = parent, source["sha256"]
+        if node != original:
+            raise ValueError("Publication origin differs from checkpoint")
+        applied = ledger.get(sha)
+        if not applied:
+            raise ValueError("No authoritative publication for this summary")
+        batch.verify_completed(Path(applied["batchRoot"]), applied)
+        receipt = read(Path(applied["batchRoot"]) / "BATCH-FINISHED.json")
+        rows = receipt["works"]
+        ids = {row["workId"] for row in rows}
+        allowed = {row["workId"] for row in summary["works"] if row["status"] == "READY_FOR_PUBLICATION"}
+        if (receipt["summarySha256"] != sha or not ids or len(ids) != len(rows)
+                or not ids <= allowed <= ready or ids & published):
+            raise ValueError("Publication applied Work set differs or overlaps")
+        published.update(ids)
+    remaining = ready - published
+    if ((handling["decision"] == "published" and remaining)
+            or (handling["decision"] == "partially-published" and not remaining)):
+        raise ValueError("Publication decision does not match remaining READY Works")
+    return {"publishedWorkIds": sorted(published), "remainingReadyWorkIds": sorted(remaining)}
+
+
+def consume(parent, event_id, effect, directory=STATE):
+    if len(event_id) != 64 or any(char not in "0123456789abcdef" for char in event_id):
+        raise ValueError("Invalid event ID")
+    reconcile(parent, directory)
+    index = directory / "inbox" / str(uuid.UUID(parent)) / (event_id + ".json")
+    ref = read(index)
+    path = Path(ref["path"])
+    with locked(path):
+        if hashlib.sha256(path.read_bytes()).hexdigest() != ref["sha256"]:
+            raise ValueError("Inbox event SHA mismatch")
+        value = read(path)
+        if value["eventId"] != event_id:
+            raise ValueError("Inbox event ID mismatch")
+        verify_event(value)
+        handling = read(Path(effect))
+        if (handling.get("schemaVersion") != "catalog-notification-handling-v1"
+                or handling.get("eventId") != event_id or handling.get("parentThreadId") != parent
+                or value["assignment"]["parentThreadId"] != parent
+                or handling.get("decision") not in {"deferred", "stopped", "stage-reviewed", "published", "partially-published"}
+                or not isinstance(handling.get("reason"), str) or not handling["reason"].strip()):
+            raise ValueError("Handling decision is not bound to this event and parent")
+        if handling["decision"] in {"published", "partially-published"}:
+            handling["publicationCoverage"] = publication_coverage(value, handling)
+        elif "publicationCoverage" in handling or "publications" in handling:
+            raise ValueError("Publication coverage requires a publication decision")
+        saved = path.parent / "handling.json"
+        if saved.exists() and read(saved) != handling:
+            previous = read(saved)
+            if (previous["decision"] != "partially-published" or handling["decision"] not in {"published", "partially-published"}
+                    or not set(previous["publicationCoverage"]["publishedWorkIds"]) <= set(handling["publicationCoverage"]["publishedWorkIds"])):
+                raise ValueError("Handling already recorded; reconcile it instead of repeating the effect")
+        history = path.parent / "handling" / (digest(handling) + ".json")
+        if not history.exists():
+            write(history, handling)
+        if not saved.exists() or read(saved) != handling:
+            write(saved, handling)
+        if handling["decision"] == "partially-published":
+            return {"eventId": event_id, "status": "PARTIALLY_PUBLISHED", **handling["publicationCoverage"]}
+        ack = {"eventId": event_id, "handlingSha256": hashlib.sha256(saved.read_bytes()).hexdigest()}
+        if not (path.parent / "consumed.json").exists():
+            write(path.parent / "consumed.json", ack)
+        elif read(path.parent / "consumed.json") != ack:
+            raise ValueError("Consumed acknowledgement changed")
+        return ack
+
+
+def clear(session, directory=STATE, *, checkpoint_sha=None):
+    path = state_path(session, directory)
+    with locked(path):
+        value = read(path)
+        if value.get("active") and not value.get("suspended"):
+            turn_path = directory / "turns" / path.name
+            value["stoppedTurnId"] = value.get("executionTurnId") or (read(turn_path)["turnId"] if turn_path.exists() else None)
+            value["stoppedGeneration"] = notification_identity(value, "", "complete")["generation"]
+        if checkpoint_sha is not None:
+            value["stoppedCheckpointSha256"] = checkpoint_sha
+        value.update(active=False, suspended=True, executionTurnId=None)
+        write(path, value)
+
+
+def on_prompt(event, directory=STATE):
+    session = str(uuid.UUID(event["session_id"]))
+    if not event.get("turn_id"):
+        return {}
+    write(directory / "turns" / (session + ".json"), {"turnId": event["turn_id"]})
+    path = state_path(session, directory)
+    if path.exists():
+        with locked(path):
+            value = read(path)
+            value["executionTurnId"] = None
+            write(path, value)
+    events = registered_events(session, directory)
+    if (any(not (path.parent / "consumed.json").exists() for path in events)
+            or any(not (Path(read(index)["path"]).parent / "consumed.json").exists()
+                   for index in (directory / "inbox" / session).glob("*.json"))):
+        return {"hookSpecificOutput": {"hookEventName": "UserPromptSubmit", "additionalContext":
+                "Catalog inbox may contain unconsumed checkpoints. Run notification_guard.py drain "
+                f"--parent {session}; reconcile recorded handling/publication before any repeated effect. "
+                "An inbox event does not authorize resuming a stopped assignment."}}
+    return {}
+
+
+def on_interrupt(event, directory=STATE):
+    path = state_path(event["session_id"], directory)
+    if path.exists():
+        with locked(path):
+            value = read(path)
+            if event.get("turn_id") and value.get("executionTurnId") == event["turn_id"]:
+                value.update(executionTurnId=None, suspended=True, stoppedTurnId=event["turn_id"],
+                             stoppedGeneration=notification_identity(value, "", "complete")["generation"])
+                write(path, value)
+    return {}
+
+
+def acknowledge(session, sha, tool_result, directory=STATE, *, event_id=None):
+    path = state_path(session, directory)
+    current = read(path)
+    if event_id is None:
+        if not current.get("active") or result_identity(current) != sha.lower():
+            raise ValueError("Acknowledgement is not for the current saved result")
+        event_path, value = enqueue(session, directory)
+    else:
+        if len(event_id) != 64 or any(char not in "0123456789abcdef" for char in event_id):
+            raise ValueError("Invalid event ID")
+        for parent in (directory / "roots").glob("*"):
+            reconcile(parent.name, directory)
+        indexes = list((directory / "inbox").glob(f"*/{event_id}.json"))
+        if len(indexes) != 1:
+            raise ValueError("Event ACK needs one indexed event")
+        ref = read(indexes[0])
+        event_path = Path(ref["path"])
+        value = read(event_path)
+        if (hashlib.sha256(event_path.read_bytes()).hexdigest() != ref["sha256"]
+                or value["eventId"] != event_id or value["assignment"]["sessionId"] != session
+                or value["checkpointSha256"] != sha.lower()):
+            raise ValueError("Event ACK identity mismatch")
+        verify_event(value)
+    assignment = value["assignment"]
     # Accept the actual app tool envelope or its decoded text payload, not an invented flag.
     if tool_result.get("isError"):
         raise ValueError("Queue send failed")
@@ -231,8 +610,12 @@ def acknowledge(session, sha, tool_result, directory=STATE):
         payload = json.loads(texts[0])
     if payload.get("threadId") != assignment["parentThreadId"]:
         raise ValueError("Queue response does not confirm the assigned parent")
-    assignment.update(notifiedSha256=sha.lower(), queueResponse=tool_result)
-    write(path, assignment)
+    write(event_path.parent / "transport.json", {"eventId": value["eventId"], "checkpointSha256": sha.lower(), "queueResponse": tool_result})
+    with locked(path):
+        current = read(path)
+        if (value["kind"] == "complete" and notification_identity(current, sha.lower(), "complete")["generation"] == value["generation"]):
+            current.update(notifiedSha256=sha.lower(), queueResponse=tool_result)
+            write(path, current)
 
 
 def on_stop(event, directory=STATE):
@@ -242,51 +625,21 @@ def on_stop(event, directory=STATE):
     if not path.exists():
         return {}
     assignment = read(path)
-    if assignment.get("active") and assignment.get("phase") in {"batch", "collection-batch"}:
-        # Stop re-entry is suppressed by stop_hook_active above, not a lifetime flag:
-        # a later turn can stop with unfinished work even after an earlier report.
-        return {"decision": "block", "reason": (
-            "This hook is not an instruction to stop authorized work. If unfinished work is "
-            "authorized and no real blocker or user stop exists, continue from the current "
-            "checkpoint now; do not end merely to deliver a stop report. A newer parent stage "
-            "assignment takes precedence over the historical registration shown below. "
-            f"Registered Catalog batch: {assignment['workId']}. Only when actually stopping, "
-            f"send_message_to_thread to parent {assignment['parentThreadId']} with destination "
-            "model=gpt-5.6-sol and thinking=high, plus the actual current "
-            f"checkpoint under {assignment['runRoot']}. If assigned work remains, send "
-            "CATALOG_PARTIAL_STOP with batchId, processedCount, nextWorkId, checkpoint path, "
-            "exactReason and needsResume. Use needsResume=false for a user-requested stop or an "
-            "unresolved blocker; do not resume against a user stop. Do not invent a platform limit. "
-            "If the assigned stage is finished, report its actual completion and whether parent "
-            "action is needed; use COLLECTION_STAGE_COMPLETE for collection-only batches and "
-            "CATALOG_BATCH_COMPLETE for adjudication batches, with the existing ack command only "
-            "after the matching phase validator passes. If already sent this turn for this checkpoint, "
-            "retain that successful tool response instead of sending twice. Confirm the send result; "
-            "on failure preserve the error and state delivery failed in the final response. "
-            "Do not repeat completed work or publish merely to satisfy this hook. This does not "
-            "prohibit continuing unfinished collection or adjudication already authorized by the parent."
-        )}
-    if not assignment.get("active") or assignment.get("reminded") or not Path(assignment["artifact"]).is_file():
+    if (not assignment.get("active") or assignment.get("suspended") or not event.get("turn_id")
+            or assignment.get("executionTurnId") != event["turn_id"]
+            or not Path(assignment["artifact"]).is_file()):
         return {}
     sha = result_identity(assignment)
-    if assignment.get("notifiedSha256") == sha:
+    event_path, _ = enqueue(event["session_id"], directory)
+    if assignment.get("notifiedSha256") == sha or (event_path.parent / "consumed.json").exists():
         return {}
-    # One reminder per explicitly registered stage, even if its file later changes.
-    # A per-session exclusive claim prevents concurrent Stop deliveries from doubling it.
-    marker = path.with_suffix(".reminding")
-    try:
-        claim = marker.open("x")
-    except FileExistsError:
-        return {}
-    try:
-        with claim:
-            current = read(path)
-            if current.get("reminded") or current.get("notifiedSha256") == sha:
-                return {}
-            current["reminded"] = True
-            write(path, current)
-    finally:
-        marker.unlink(missing_ok=True)
+    with locked(path):
+        current = read(path)
+        if (current.get("remindedSha256") == sha or current.get("notifiedSha256") == sha
+                or current.get("executionTurnId") != event["turn_id"] or current.get("suspended")):
+            return {}
+        current["remindedSha256"] = sha
+        write(path, current)
     kind = ("CATALOG_BATCH_COMPLETE" if assignment["phase"] == "batch" else
             "COLLECTION_STAGE_COMPLETE" if assignment["phase"] == "collection-batch" else
             "COLLECTION_READY" if assignment["phase"] == "collection" else "SOL_COMPLETE")
@@ -312,9 +665,22 @@ def main():
     batch = commands.add_parser("register-batch")
     for name in ("session", "parent", "dispatch", "artifact", "run"):
         batch.add_argument("--" + name, required=True)
+    execution = commands.add_parser("arm")
+    execution.add_argument("--session", required=True)
+    execution.add_argument("--resume", action="store_true")
+    queue = commands.add_parser("enqueue")
+    queue.add_argument("--session", required=True)
+    queue.add_argument("--checkpoint", type=Path)
+    queue.add_argument("--kind", choices=("complete", "partial-stop", "user-stop"), default="complete")
+    drain = commands.add_parser("drain")
+    drain.add_argument("--parent", required=True)
+    consume_command = commands.add_parser("consume")
+    for name in ("parent", "event", "effect"):
+        consume_command.add_argument("--" + name, required=True)
     ack = commands.add_parser("ack")
     ack.add_argument("--session", required=True)
     ack.add_argument("--sha", required=True)
+    ack.add_argument("--event", help="Acknowledge a saved complete, partial-stop or user-stop event")
     clear = commands.add_parser("clear")
     clear.add_argument("--session", required=True)
     args = parser.parse_args()
@@ -322,16 +688,24 @@ def main():
         register(args.session, args.parent, args.work, args.phase, args.artifact, args.run)
     elif args.action == "register-batch":
         register_batch(args.session, args.parent, args.dispatch, args.artifact, args.run)
+    elif args.action == "arm":
+        arm(args.session, resume=args.resume)
+    elif args.action == "enqueue":
+        path, value = enqueue(args.session, checkpoint=args.checkpoint, kind=args.kind)
+        print(json.dumps({"eventId": value["eventId"], "path": str(path)}, ensure_ascii=False))
+    elif args.action == "drain":
+        print(json.dumps(pending(args.parent), ensure_ascii=False))
+    elif args.action == "consume":
+        print(json.dumps(consume(args.parent, args.event, args.effect), ensure_ascii=False))
     elif args.action == "ack":
-        acknowledge(args.session, args.sha, json.load(sys.stdin))
+        acknowledge(args.session, args.sha, json.load(sys.stdin), event_id=args.event)
     elif args.action == "clear":
-        path = state_path(args.session)
-        value = read(path)
-        value["active"] = False
-        write(path, value)
+        clear(args.session)
     else:
         try:
-            print(json.dumps(on_stop(json.load(sys.stdin)), ensure_ascii=False))
+            event = json.load(sys.stdin)
+            handler = {"UserPromptSubmit": on_prompt, "Interrupt": on_interrupt}.get(event.get("hook_event_name"), on_stop)
+            print(json.dumps(handler(event), ensure_ascii=False))
         except (OSError, ValueError, KeyError, TypeError) as error:
             print(json.dumps({"systemMessage": f"Catalog notification guard skipped: {error}"}))
 

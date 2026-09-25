@@ -125,18 +125,26 @@ def read_only(path: Path):
     return sqlite3.connect(path.resolve().as_uri() + '?mode=ro', uri=True)
 
 
-def snapshot(path: Path) -> dict:
+def snapshot(path: Path | sqlite3.Connection, *, namespace="main", integrity=True) -> dict:
     """Compare all registry data and schema, including unrelated rows and metadata."""
-    with closing(read_only(path)) as db:
-        require(db.execute('pragma integrity_check').fetchone()[0] == 'ok' and not db.execute('pragma foreign_key_check').fetchall(), 'Registry integrity failure')
-        schema = db.execute('select type,name,tbl_name,sql from sqlite_schema order by type,name').fetchall()
+    require(namespace in {"main", "registry"}, 'Invalid registry schema')
+    owned = not isinstance(path, sqlite3.Connection)
+    db = read_only(path) if owned else path
+    try:
+        if integrity:
+            require(db.execute(f'pragma {namespace}.integrity_check').fetchone()[0] == 'ok' and not db.execute(f'pragma {namespace}.foreign_key_check').fetchall(), 'Registry integrity failure')
+        schema = db.execute(f'select type,name,tbl_name,sql from {namespace}.sqlite_schema order by type,name').fetchall()
         names = [row[1] for row in schema if row[0] == 'table']
         require(set(names) == {'registry_meta', 'registry_research_attempts', 'registry_source_rows'}, 'Unexpected registry table set')
         tables = {}
         for name in names:
-            columns = [r[1] for r in db.execute(f'pragma table_info("{name}")')]
-            tables[name] = {'columns': columns, 'rows': [dict(zip(columns, r)) for r in db.execute(f'select * from "{name}" order by "{columns[0]}"')]}
-        return {'schema': schema, 'userVersion': db.execute('pragma user_version').fetchone()[0], 'applicationId': db.execute('pragma application_id').fetchone()[0], 'tables': tables}
+            columns = [r[1] for r in db.execute(f'pragma {namespace}.table_info("{name}")')]
+            tables[name] = {'columns': columns, 'rows': [dict(zip(columns, r)) for r in db.execute(f'select * from {namespace}."{name}" order by "{columns[0]}"')]}
+        return {'schema': schema, 'userVersion': db.execute(f'pragma {namespace}.user_version').fetchone()[0], 'applicationId': db.execute(f'pragma {namespace}.application_id').fetchone()[0], 'tables': tables}
+    finally:
+        if owned:
+            db.close()
+
 
 
 def valid_url(value: object) -> bool:

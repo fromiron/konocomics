@@ -50,6 +50,13 @@ const executionIdentity = () => {
     .parse(JSON.parse(result.stdout));
 };
 const started = performance.now();
+const timingsSeconds: Record<string, number> = {};
+let phaseStarted = started;
+const phase = (name: string) => {
+  const now = performance.now();
+  timingsSeconds[name] = (now - phaseStarted) / 1000;
+  phaseStarted = now;
+};
 const codeIdentity = executionIdentity();
 const sha = (path: string) => createHash("sha256").update(readFileSync(path)).digest("hex");
 const canonical = join(repo, "data/source/catalog.sqlite");
@@ -61,6 +68,47 @@ const resultManifestShas = resultRoots.map((root) =>
   sha(join(root, "chunk-01/PANEL-RESULT.sha256")),
 );
 const registrySha = sha(join(publication, "catalog-source-registry.candidate.sqlite"));
+phase("initialIdentity");
+const compact = existsSync(join(publication, "COMPACT-PUBLICATION.json"))
+  ? (() => {
+      const verified = spawnSync(
+        "python",
+        [
+          "-B",
+          "-X",
+          "utf8",
+          join(repo, "scripts/catalog_readback_identity.py"),
+          "--compact",
+          publication,
+        ],
+        { encoding: "utf8", windowsHide: true, maxBuffer: 32 * 1024 * 1024 },
+      );
+      if (verified.error) throw verified.error;
+      assert.equal(verified.status, 0, verified.stderr);
+      const value = z
+        .object({
+          schemaVersion: z.literal("catalog-compact-publication-v1"),
+          manifestSha256: z.string(),
+          works: z.record(
+            z.string(),
+            z.object({
+              source_factors: z.array(
+                z.object({
+                  axisId: z.string(),
+                  state: z.string(),
+                  value: z.string(),
+                  confidence: z.string(),
+                }),
+              ),
+            }),
+          ),
+        })
+        .parse(JSON.parse(verified.stdout));
+      assert.equal(value.manifestSha256, publicationManifestSha);
+      return value;
+    })()
+  : undefined;
+phase("independentAuthorityReplay");
 const records = (path: string) =>
   z
     .array(z.record(z.string(), z.string()))
@@ -93,6 +141,12 @@ const promotion = promotionsByRoot.flat();
 const targets = promotion.filter((row) => row.panelOutcome === "PASS").map((row) => row.workId!);
 assert(targets.length > 0);
 assert.equal(new Set(targets).size, targets.length, "Duplicate batch target");
+if (compact)
+  assert.deepEqual(
+    Object.keys(compact.works).sort(),
+    [...targets].sort(),
+    "Compact target set differs",
+  );
 const ledger = resultRoots.flatMap((root) =>
   records(join(root, "chunk-01/evidence-panel-ledger.csv")),
 );
@@ -127,7 +181,10 @@ try {
       ]),
     );
     const batchPublication = batchPublications?.works.find((row) => row.workId === wid);
-    if (batchPublication) {
+    if (compact) {
+      axes = new Map(compact.works[wid]!.source_factors.map((fact) => [fact.axisId, fact]));
+      assert.equal(axes.size, 17, `Verified compact Axis snapshot mismatch: ${wid}`);
+    } else if (batchPublication) {
       const published = new DatabaseSync(
         toNamespacedPath(
           join(resolve(batchPublication.publicationRoot), "catalog-expanded.candidate.sqlite"),
@@ -190,7 +247,11 @@ try {
       CATALOG_OPAQUE_PATHS.some((path) => path === reference) ||
         /^reviews\/[a-z0-9]+(?:-[a-z0-9]+)*\.md$/u.test(reference),
     );
-    const published = join(publication, "authorized-evidence-panel-v1/data/source", reference);
+    const published = join(
+      publication,
+      compact ? "data/source" : "authorized-evidence-panel-v1/data/source",
+      reference,
+    );
     const origin = existsSync(published) ? published : join(repo, "data/source", reference);
     const destination = join(source, reference);
     mkdirSync(dirname(destination), { recursive: true });
@@ -207,7 +268,9 @@ const gold = validateGoldSet(
     readFileSync(join(repo, "data/staging/catalog-expansion/gold-set-manifest.json"), "utf8"),
   ),
 );
+phase("sqlGoldAndAuthority");
 const built = buildCatalog(output, "authority", { verify: true, compact: true });
+phase("buildAndCoverage");
 // Exercise the product engine with the existing representative taste profile.
 const catalog = catalogV1Schema.parse(
   JSON.parse(
@@ -272,6 +335,7 @@ for (const wid of targets) {
   assert(Number.isFinite(entry.tasteScore));
   assert(entry.contributions.length > 0);
 }
+phase("engineAndUnknownChecks");
 assert.equal(sha(candidate), candidateSha);
 assert.equal(sha(canonical), canonicalSha);
 assert.equal(sha(join(publication, "catalog-source-registry.candidate.sqlite")), registrySha);
@@ -315,5 +379,7 @@ const report = {
   verifiedAt: new Date().toISOString(),
   elapsedSeconds: (performance.now() - started) / 1000,
 };
+phase("finalIdentityAndArtifacts");
 writeFileSync(join(output, "READBACK.json"), `${JSON.stringify(report, null, 2)}\n`);
+console.log(JSON.stringify({ readbackTimingsSeconds: timingsSeconds }));
 console.log(JSON.stringify(report));

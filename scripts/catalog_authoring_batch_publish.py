@@ -10,6 +10,7 @@ from pathlib import Path
 import sqlite3
 import subprocess
 import sys
+import time
 import uuid
 
 import catalog_authoring_runner as runner
@@ -38,31 +39,92 @@ def checked_backup_status(row):
 
 
 def code_identity():
-    return {"python": {
+    files = {
         path.relative_to(runner.REPO).as_posix(): runner.panel.sha256(path)
         for path in sorted((runner.REPO / "scripts/catalog_authoring").rglob("*.py"))
         if not path.name.startswith("test_")
-    }}
+    }
+    dependencies = ["scripts/workspace_paths.py", "scripts/catalog_workspace.py",
+                    "scripts/catalog_authoring_runner.py", "scripts/catalog_authoring_batch_publish.py",
+                    "scripts/catalog_readback_identity.py", "data/staging/catalog-expansion/gold-set-manifest.json"]
+    dependencies.extend(source for source, _ in runner.prepare.CONTRACTS.values())
+    dependencies.extend(path.relative_to(runner.REPO).as_posix()
+                        for path in sorted((runner.REPO / "scripts/sql").rglob("*.sql")))
+    files.update({str(name): runner.panel.sha256(runner.REPO / name) for name in dependencies})
+    return {"protocol": "catalog-preflight-v2", "files": files,
+            "pythonVersion": sys.version, "sqliteVersion": sqlite3.sqlite_version}
 
 
-def preflight_result(identity, command, validate_input=None):
-    identity = {**identity, "command": command}
+def preflight_result(identity, command, validate_input=None, *, attempt="initial"):
+    started = time.perf_counter()
+    identity = {**identity, "protocol": "catalog-preflight-v2", "command": command, "attempt": attempt}
     key = runner.panel.sha256_bytes(json.dumps(identity, sort_keys=True).encode())
     path = runner.ROOT / "planning/publication-preflight" / (key + ".json")
-    if path.exists():
-        check = runner.panel.read_json(path)
-        runner.prepare.require(check["identity"] == identity, "preflight receipt identity changed")
-        runner.prepare.require(check["status"] in {"PASS", "BLOCKED"}, "invalid preflight receipt status")
-        runner.prepare.require(check["scope"] == (preflight_scope(check["error"], identity["workId"]) if check["status"] == "BLOCKED" else None), "preflight failure scope changed")
-    else:
+    lock_requested = time.perf_counter()
+    with runner.exclusive(path.with_suffix(".lock"), wait=True):
+        acquired = time.perf_counter()
+        # A persisted manifest digest is not proof that its member bytes survived.
         if validate_input is not None:
             validate_input()
-        result = subprocess.run(command, cwd=runner.REPO, capture_output=True, text=True)
-        check = {"identity": identity, "status": "PASS" if result.returncode == 0 else "BLOCKED",
-                 "error": result.stderr.strip(), "checkedAt": runner.utc_now()}
-        check["scope"] = preflight_scope(check["error"], identity["workId"]) if result.returncode else None
-        runner.write(path, check)
-    return path, check
+        validated = time.perf_counter()
+        reused = path.exists()
+        if reused:
+            check = runner.panel.read_json(path)
+            runner.prepare.require(check["identity"] == identity, "preflight receipt identity changed")
+            runner.prepare.require(check["status"] in {"PASS", "BLOCKED"}, "invalid preflight receipt status")
+            runner.prepare.require(check["scope"] == (preflight_scope(check["error"], identity["workId"]) if check["status"] == "BLOCKED" else None), "preflight failure scope changed")
+        else:
+            execution_started = time.perf_counter()
+            try:
+                result = subprocess.run(command, cwd=runner.REPO, capture_output=True, text=True)
+                code, error = result.returncode, result.stderr.strip()
+            except OSError as failure:
+                code, error = 1, f"{type(failure).__name__}: {failure}"
+            execution_finished = time.perf_counter()
+            check = {"identity": identity, "status": "PASS" if code == 0 else "BLOCKED",
+                     "error": error, "checkedAt": runner.utc_now(),
+                     "elapsedSeconds": execution_finished - acquired,
+                     "executionSeconds": execution_finished - execution_started}
+            check["scope"] = preflight_scope(check["error"], identity["workId"]) if code else None
+            runner.write(path, check)
+        finished = time.perf_counter()
+    return path, {**check, "cacheHit": reused, "originalCheckSeconds": check["elapsedSeconds"],
+                  "originalExecutionSeconds": check.get("executionSeconds"),
+                  "timingsSeconds": {"lockWait": acquired - lock_requested,
+                    "validationElapsed": validated - acquired,
+                    "subprocessElapsed": 0 if reused else execution_finished - execution_started,
+                    "lookupElapsed": finished - validated if reused else execution_started - validated,
+                    "totalElapsed": time.perf_counter() - started}}
+
+
+def retry_attempts(values, work_ids):
+    attempts = {}
+    for value in values:
+        work_id, separator, attempt = value.partition("=")
+        runner.prepare.require(separator and attempt.strip() and work_id in work_ids and work_id not in attempts,
+                               "preflight retry must name a unique assigned Work and explicit attempt: WORK=ATTEMPT")
+        attempts[work_id] = attempt
+    return attempts
+
+
+def preserve_preflight(batch, summary_path, summary_sha, summary, checks):
+    report = {"sourceSummary": {"path": str(summary_path), "sha256": summary_sha},
+              "checks": [{key: row[key] for key in ("workId", "path", "sha256", "status", "scope")} for row in checks]}
+    report_sha = runner.panel.sha256_bytes(json.dumps(report, sort_keys=True).encode())
+    report_root = batch / "preflight" / report_sha
+    common_failure = any(item["scope"] == "BATCH" for item in checks)
+    passed = {item["workId"] for item in checks if item["status"] == "PASS"}
+    outputs = {report_root / "PREFLIGHT.json": report}
+    if passed and not common_failure:
+        outputs[report_root / "PASS-SUBSET.json"] = {"sourceSummary": report["sourceSummary"],
+            "preflight": str(report_root / "PREFLIGHT.json"), "works": [row for row in summary["works"] if row["workId"] in passed]}
+    for path, value in outputs.items():
+        if path.exists():
+            runner.prepare.require(runner.panel.read_json(path) == value, "saved preflight result changed")
+        else:
+            runner.write(path, value)
+    runner.preserve([*outputs, *(Path(item["path"]) for item in checks)], "batch-publication:preflight", reuse=True)
+    return report_root, passed, common_failure
 
 
 def verify_storage(storage, paths):
@@ -104,7 +166,8 @@ def verify_completed(batch, applied):
             runner.prepare.require(entry == (value["stateSha256"],), "saved STATE binding changed")
             state = json.loads(workspace.read_blob(db, entry[0]))
             runner.prepare.require(state.get("publicationBatches", {}).get(saved["summarySha256"]) == applied, "saved STATE does not acknowledge this batch")
-    runner.preserve([completed], "batch-publication:completed-recovery")
+    if not runner.receipt_backed_up(completed):
+        runner.preserve([completed], "batch-publication:completed-recovery")
 
 
 def main() -> None:
@@ -112,6 +175,10 @@ def main() -> None:
     parser.add_argument("--batch-summary", type=Path, required=True)
     parser.add_argument("--batch-root", type=Path, required=True)
     parser.add_argument("--preflight-only", action="store_true", help="Persist current checks and an explicit independent PASS subset without publishing")
+    parser.add_argument("--preflight-attempt", default="initial", help="Explicit retry identity; retains earlier blocked receipts")
+    parser.add_argument("--preflight-retry", action="append", default=[], metavar="WORK=ATTEMPT", help="Retry only named Works, preserving other receipt keys")
+    parser.add_argument("--publication-format", choices=("compact", "full"), default="compact", help="Compact batch publication; full keeps the historical format")
+    parser.add_argument("--checkpoint-every", type=int, default=10, help="Full pair checkpoint interval for compact publication")
     args = parser.parse_args()
     summary_path = args.batch_summary.resolve()
     batch = args.batch_root.resolve()
@@ -152,6 +219,7 @@ def main() -> None:
         entries.append((row["workId"], run, frozen, sealed))
     runner.prepare.require(entries, "no unpublished READY results")
     runner.prepare.require(len({item[0] for item in entries}) == len(entries), "duplicate Work in batch")
+    attempts = retry_attempts(args.preflight_retry, {item[0] for item in entries})
 
     lock_root = runner.REPO / "data/local/catalog-authoring/locks"
     with runner.exclusive(lock_root / "publication.lock", wait=True), runner.publisher.panel_validation.manifest_verification_cache():
@@ -178,7 +246,7 @@ def main() -> None:
                 )
                 storage_path = batch / "BATCH-STORAGE.json"
                 runner.publisher._verify_result_manifest(current_root)
-                runner.prepare.require(runner.readback_matches(Path(saved["readback"]), runner.REPO, current_root, entries[-1][3] / "panel-result"), "completed batch readback needs refresh")
+                runner.prepare.require(runner.readback_matches(Path(saved["readback"]), runner.REPO, current_root, next(item[3] for item in entries if item[0] == saved["works"][-1]["workId"]) / "panel-result"), "completed batch readback needs refresh")
                 storage = runner.panel.read_json(storage_path) if storage_path.exists() else runner.preserve([batch], "batch-publication:verified-recovery")
                 verify_storage(storage, [existing_receipt, Path(saved["readback"]), current_root])
                 if not storage_path.exists():
@@ -196,87 +264,89 @@ def main() -> None:
         checks = []
         identity = code_identity()
         canonical_sha = runner.panel.sha256(runner.REPO / "data/source/catalog.sqlite")
-        for work_id, run, frozen, sealed in entries:
-            if existing_receipt.exists() and not args.preflight_only:
-                continue  # Resume the already published/readback-bound outputs below.
-            lineage = runner.panel.read_json(frozen / "panel-input/external-lineage.json")
-            command = [
-                sys.executable, "-B", "-X", "utf8", str(runner.REPO / "scripts/catalog_authoring/publish_factor_batch.py"),
-                "--validate-only", "--input-root", str(frozen / "panel-input"),
-                "--panel-output-root", str(sealed / "panel-result"),
-                "--previous-catalog", str(initial / "catalog-expanded.candidate.sqlite"),
-                "--previous-registry", str(initial / "catalog-source-registry.candidate.sqlite"),
-                "--frozen-baseline", str(runner.artifact_path(lineage["baselineRoot"]) / "catalog-expanded.candidate.sqlite"),
-                "--frozen-registry", str(runner.artifact_path(lineage["registryPath"])),
-                "--safety-root", str(sealed / "safety-recheck-v1"),
-                "--output-root", str(batch / "validate-only-unused"),
-            ]
-            key_input = {"workId": work_id, "frozenRoot": str(frozen), "sealedRoot": str(sealed),
-                         "inputSha256": runner.panel.sha256(frozen / "panel-input/PANEL-INPUT.sha256"),
-                         "resultSha256": runner.panel.sha256(sealed / "MANIFEST.sha256"),
-                         "checkedSha256": runner.panel.sha256(run / "CHECKED.json"),
-                         "catalogSha256": state["latestCandidate"]["catalogSha256"],
-                         "registrySha256": state["latestCandidate"]["registrySha256"],
-                         "canonicalSha256": canonical_sha,
-                         "frozenCatalogSha256": runner.panel.sha256(runner.artifact_path(lineage["baselineRoot"]) / "catalog-expanded.candidate.sqlite"),
-                         "frozenRegistrySha256": runner.panel.sha256(runner.artifact_path(lineage["registryPath"])),
-                         "code": identity}
-            check_path, check = preflight_result(
-                key_input, command,
-                lambda root=frozen / "panel-input": runner.publisher.validate_input(root),
-            )
-            checks.append({"workId": work_id, "path": str(check_path), "sha256": runner.panel.sha256(check_path), "status": check["status"], "scope": check["scope"]})
-            if check["status"] != "PASS":
-                preflight_errors.append({"workId": work_id, "error": check["error"], "scope": check["scope"]})
-            print(json.dumps({"preflight": work_id, "status": check["status"]}, ensure_ascii=False), flush=True)
-        if checks:
-            runner.prepare.require(code_identity() == identity and runner.panel.sha256(runner.REPO / "data/source/catalog.sqlite") == canonical_sha, "preflight code/canonical changed during batch")
-            runner.prepare.require(runner.panel.sha256(runner.ROOT / "STATE.json") == state_sha, "current advanced during preflight")
-            report = {"sourceSummary": {"path": str(summary_path), "sha256": summary_sha}, "checks": checks}
-            report_sha = runner.panel.sha256_bytes(json.dumps(report, sort_keys=True).encode())
-            report_root = batch / "preflight" / report_sha
-            runner.write(report_root / "PREFLIGHT.json", report)
-            common_failure = any(item["scope"] == "BATCH" for item in preflight_errors)
-            passed = {item["workId"] for item in checks if item["status"] == "PASS"}
-            if passed and not common_failure:
-                runner.write(report_root / "PASS-SUBSET.json", {"sourceSummary": report["sourceSummary"], "preflight": str(report_root / "PREFLIGHT.json"), "works": [row for row in summary["works"] if row["workId"] in passed]})
-            runner.preserve([report_root, *(Path(item["path"]) for item in checks)], "batch-publication:preflight")
-            if args.preflight_only:
-                print(json.dumps({"status": "BLOCKED" if common_failure else "PREFLIGHT_COMPLETE", "reportRoot": str(report_root), "passed": len(passed), "blocked": len(preflight_errors)}), flush=True)
-                return
+        if args.preflight_only or args.publication_format == "full":
+            for work_id, run, frozen, sealed in entries:
+                if existing_receipt.exists() and not args.preflight_only:
+                    continue  # Resume the already published/readback-bound outputs below.
+                lineage = runner.panel.read_json(frozen / "panel-input/external-lineage.json")
+                command = [
+                    sys.executable, "-B", "-X", "utf8", str(runner.REPO / "scripts/catalog_authoring/publish_factor_batch.py"),
+                    "--validate-only", "--input-root", str(frozen / "panel-input"),
+                    "--panel-output-root", str(sealed / "panel-result"),
+                    "--previous-catalog", str(initial / "catalog-expanded.candidate.sqlite"),
+                    "--previous-registry", str(initial / "catalog-source-registry.candidate.sqlite"),
+                    "--frozen-baseline", str(runner.artifact_path(lineage["baselineRoot"]) / "catalog-expanded.candidate.sqlite"),
+                    "--frozen-registry", str(runner.artifact_path(lineage["registryPath"])),
+                    "--safety-root", str(sealed / "safety-recheck-v1"),
+                    "--output-root", str(batch / "validate-only-unused"),
+                ]
+                key_input = {"workId": work_id, "frozenRoot": str(frozen), "sealedRoot": str(sealed),
+                             "inputSha256": runner.panel.sha256(frozen / "panel-input/PANEL-INPUT.sha256"),
+                             "resultSha256": runner.panel.sha256(sealed / "MANIFEST.sha256"),
+                             "checkedSha256": runner.panel.sha256(run / "CHECKED.json"),
+                             "catalogSha256": state["latestCandidate"]["catalogSha256"],
+                             "registrySha256": state["latestCandidate"]["registrySha256"],
+                             "canonicalSha256": canonical_sha,
+                             "frozenCatalogSha256": runner.panel.sha256(runner.artifact_path(lineage["baselineRoot"]) / "catalog-expanded.candidate.sqlite"),
+                             "frozenRegistrySha256": runner.panel.sha256(runner.artifact_path(lineage["registryPath"])),
+                             "code": identity}
+                check_path, check = preflight_result(
+                    key_input, command,
+                    lambda root=frozen / "panel-input": runner.publisher.validate_input(root),
+                    attempt=attempts.get(work_id, args.preflight_attempt),
+                )
+                checks.append({"workId": work_id, "path": str(check_path), "sha256": runner.panel.sha256(check_path), "status": check["status"], "scope": check["scope"], "cacheHit": check["cacheHit"], "originalCheckSeconds": check["originalCheckSeconds"], "originalExecutionSeconds": check["originalExecutionSeconds"], "timingsSeconds": check["timingsSeconds"]})
+                if check["status"] != "PASS":
+                    preflight_errors.append({"workId": work_id, "error": check["error"], "scope": check["scope"]})
+                print(json.dumps({"preflight": work_id, **{key: check[key] for key in
+                    ("status", "cacheHit", "originalCheckSeconds", "originalExecutionSeconds", "timingsSeconds")}}, ensure_ascii=False), flush=True)
+            if checks:
+                runner.prepare.require(code_identity() == identity and runner.panel.sha256(runner.REPO / "data/source/catalog.sqlite") == canonical_sha, "preflight code/canonical changed during batch")
+                runner.prepare.require(runner.panel.sha256(runner.ROOT / "STATE.json") == state_sha, "current advanced during preflight")
+                report_root, passed, common_failure = preserve_preflight(batch, summary_path, summary_sha, summary, checks)
+                if args.preflight_only:
+                    print(json.dumps({"status": "BLOCKED" if common_failure else "PREFLIGHT_COMPLETE", "reportRoot": str(report_root), "passed": len(passed), "blocked": len(preflight_errors)}), flush=True)
+                    return
         runner.prepare.require(not preflight_errors, "batch publisher preflight blocked before mutation: " + json.dumps(preflight_errors, ensure_ascii=False))
         first_sha = state["latestCandidate"]["catalogSha256"]
         registry = initial / "catalog-source-registry.candidate.sqlite"
         publications = []
-        for index, (work_id, run, frozen, sealed) in enumerate(entries, 1):
-            output = batch / f"publication-{index:03d}"
-            intent_path = batch / f"intent-{index:03d}.json"
-            lineage = runner.panel.read_json(frozen / "panel-input/external-lineage.json")
-            intent = {
-                "workId": work_id, "runRoot": str(run), "baselineRoot": str(initial if index == 1 else publications[-1][1]),
-                "beforeCatalogSha256": runner.panel.sha256((initial if index == 1 else publications[-1][1]) / "catalog-expanded.candidate.sqlite"),
-                "resultManifestSha256": runner.panel.sha256(sealed / "MANIFEST.sha256"),
-                "reviewedAt": runner.utc_now(),
-            }
-            if intent_path.exists():
-                prior = runner.panel.read_json(intent_path)
-                runner.prepare.require({k: prior[k] for k in intent if k != "reviewedAt"} == {k: v for k, v in intent.items() if k != "reviewedAt"}, "batch publication intent changed")
-                intent = prior
-            else:
-                runner.write(intent_path, intent)
-            baseline = initial if index == 1 else publications[-1][1]
-            registry = baseline / "catalog-source-registry.candidate.sqlite"
-            if not output.exists():
-                runner.publisher.publish_batch(
-                    frozen / "panel-input", sealed / "panel-result",
-                    baseline / "catalog-expanded.candidate.sqlite", registry,
-                    sealed / "safety-recheck-v1", output, intent["reviewedAt"],
-                    runner.artifact_path(lineage["baselineRoot"]) / "catalog-expanded.candidate.sqlite",
-                    runner.artifact_path(lineage["registryPath"]),
-                )
-            runner.publisher._verify_result_manifest(output)
-            publications.append((work_id, output, sealed))
-            print(json.dumps({"published": index, "workId": work_id}, ensure_ascii=False), flush=True)
+        if args.publication_format == "compact":
+            sys.path.insert(0, str(runner.REPO / "scripts/catalog_authoring"))
+            import compact_publication
+            output, published_ids, compact_failures = compact_publication.publish(batch, entries, initial, summary_sha,
+                checkpoint_every=args.checkpoint_every)
+            publications = [(work_id, output, sealed) for work_id, run, frozen, sealed in entries if work_id in set(published_ids)]
+        else:
+            for index, (work_id, run, frozen, sealed) in enumerate(entries, 1):
+                output = batch / f"publication-{index:03d}"
+                intent_path = batch / f"intent-{index:03d}.json"
+                lineage = runner.panel.read_json(frozen / "panel-input/external-lineage.json")
+                intent = {
+                    "workId": work_id, "runRoot": str(run), "baselineRoot": str(initial if index == 1 else publications[-1][1]),
+                    "beforeCatalogSha256": runner.panel.sha256((initial if index == 1 else publications[-1][1]) / "catalog-expanded.candidate.sqlite"),
+                    "resultManifestSha256": runner.panel.sha256(sealed / "MANIFEST.sha256"),
+                    "reviewedAt": runner.utc_now(),
+                }
+                if intent_path.exists():
+                    prior = runner.panel.read_json(intent_path)
+                    runner.prepare.require({k: prior[k] for k in intent if k != "reviewedAt"} == {k: v for k, v in intent.items() if k != "reviewedAt"}, "batch publication intent changed")
+                    intent = prior
+                else:
+                    runner.write(intent_path, intent)
+                baseline = initial if index == 1 else publications[-1][1]
+                registry = baseline / "catalog-source-registry.candidate.sqlite"
+                if not output.exists():
+                    runner.publisher.publish_batch(
+                        frozen / "panel-input", sealed / "panel-result",
+                        baseline / "catalog-expanded.candidate.sqlite", registry,
+                        sealed / "safety-recheck-v1", output, intent["reviewedAt"],
+                        runner.artifact_path(lineage["baselineRoot"]) / "catalog-expanded.candidate.sqlite",
+                        runner.artifact_path(lineage["registryPath"]),
+                    )
+                runner.publisher._verify_result_manifest(output)
+                publications.append((work_id, output, sealed))
+                print(json.dumps({"published": index, "workId": work_id}, ensure_ascii=False), flush=True)
 
         last = publications[-1][1]
         readback = batch / "readback/READBACK.json"

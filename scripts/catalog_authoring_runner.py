@@ -3,7 +3,7 @@
 from __future__ import annotations
 
 import argparse
-from contextlib import contextmanager, ExitStack
+from contextlib import closing, contextmanager, ExitStack
 import json
 import os
 import re
@@ -14,7 +14,7 @@ import sys
 import time
 import uuid
 
-from catalog_workspace import Workspace, authoring_inputs, recorded_run, utc_now
+from catalog_workspace import Workspace, authoring_inputs, exclusive_file, recorded_run, utc_now
 from catalog_readback_identity import execution_identity, readback_matches
 from workspace_paths import artifact_path
 
@@ -77,8 +77,43 @@ def exclusive(path, wait=False):
                 fcntl.flock(handle, fcntl.LOCK_UN)
 
 
-def preserve(paths, label):
+def preserve(paths, label, *, reuse=False, metrics=None):
     workspace = Workspace(REPO)
+    if reuse:
+        inventory = workspace._inventory(paths, metrics)
+        started = time.perf_counter()
+        groups, missing = workspace._saved_files(inventory)
+        if metrics is not None:
+            metrics.update(lookupSeconds=time.perf_counter() - started, lookupFiles=len(inventory), missingFiles=len(missing))
+        if missing:
+            groups.append((workspace.save(missing, label), missing))
+        workspace._verify_groups(groups, inventory, metrics.setdefault("source", {}) if metrics is not None else None)
+        backup_store = Workspace(REPO, REPO / "data/local/catalog-authoring/backups/latest.sqlite")
+        lock = backup_store.database.parent / "rotation.lock"
+        started = time.perf_counter()
+        with exclusive_file(lock):
+            needs_backup = not backup_store.database.is_file()
+            if not needs_backup:
+                with closing(backup_store.connect()) as db:
+                    for snapshot, _ in groups:
+                        header = db.execute("SELECT file_count,manifest_sha256 FROM snapshot WHERE id=?", (snapshot["snapshotId"],)).fetchone()
+                        if header is None:
+                            needs_backup = True
+                        elif header != (snapshot["files"], snapshot["manifestSha256"]):
+                            raise ValueError("Saved snapshot receipt mismatch")
+        if metrics is not None:
+            metrics["backupReadinessSeconds"] = time.perf_counter() - started
+        # All readers are closed before backup takes the same rotation lock.
+        backup = workspace.backup() if needs_backup else {"status": "BACKED_UP", "mode": "reused", "destination": str(backup_store.database)}
+        with exclusive_file(lock):
+            backup_store._verify_groups(groups, inventory, metrics.setdefault("backup", {}) if metrics is not None else None)
+        workspace._assert_inventory(paths, inventory, metrics)
+        snapshots = [snapshot for snapshot, _ in groups]
+        references = [{"snapshot": snapshot, "members": {
+            path.relative_to(REPO).as_posix(): inventory[path][0] for path in members
+        }} for snapshot, members in groups]
+        return {**({"snapshot": snapshots[0]} if len(snapshots) == 1 else {"snapshots": snapshots}),
+                "backup": backup, "references": references}
     snapshot = workspace.save(paths, label)
     backup = workspace.backup()
     return {"snapshot": snapshot, "backup": backup}
@@ -415,6 +450,37 @@ def check_result(run, config):
     return {"status": "READY_FOR_PUBLICATION", "decisionsSha256": config["decisionsSha256"], "sealedRoot": str(sealed), "resultManifestSha256": panel.sha256(sealed / "MANIFEST.sha256"), "works": report["works"]}
 
 
+def receipt_backed_up(receipt):
+    backup = Workspace(REPO, REPO / "data/local/catalog-authoring/backups/latest.sqlite")
+    snapshot = backup.saved_file_snapshot(receipt)
+    if snapshot is None:
+        return False
+    Workspace(REPO).verify_saved(snapshot, [receipt])
+    return True
+
+
+def store_checked(run, config, checked):
+    receipt = run / "CHECK-STORAGE.json"
+    paths = [run / "CHECKED.json", run / "RUN.json", frozen_path(run, config), artifact_path(config["decisionsPath"])]
+    if checked.get("sealedRoot"):
+        paths.append(artifact_path(checked["sealedRoot"]))
+    if receipt.is_file():
+        previous = panel.read_json(receipt)
+        if (previous.get("schemaVersion") == "catalog-check-storage-v2"
+                and previous["checkedSha256"] == panel.sha256(run / "CHECKED.json")):
+            storage = previous["storage"]
+            prepare.require(storage["backup"]["status"] == "BACKED_UP", "check backup incomplete")
+            for database in (None, REPO / "data/local/catalog-authoring/backups/latest.sqlite"):
+                Workspace(REPO, database).verify_saved(storage["snapshot"], paths)
+            if not receipt_backed_up(receipt):
+                preserve([receipt], "single-pass:check-receipt")
+            return storage
+    storage = preserve([run, artifact_path(config["decisionsPath"])], "single-pass:check")
+    write(receipt, {"schemaVersion": "catalog-check-storage-v2", "checkedSha256": panel.sha256(run / "CHECKED.json"), "storage": storage})
+    preserve([receipt], "single-pass:check-receipt")
+    return storage
+
+
 def finish(run):
     """Called inside the existing recorded_run, with no model/network work."""
     config = panel.read_json(run / "RUN.json")
@@ -452,7 +518,7 @@ def finish(run):
 
 
 def research_bindings(paths):
-    return [{"path": str(path.resolve()), "sha256": panel.sha256(path)} for path in paths]
+    return [prepare.nt.bind_collection_handoff(path.resolve(), {"path": str(path.resolve()), "sha256": panel.sha256(path)}) for path in paths]
 
 
 def unadjudicated_job(baseline, work_id, research, recovery_epoch=None):
@@ -487,16 +553,26 @@ def assemble_job(job_path, research):
     combined = {}
     for ref in refs:
         prepare.require(isinstance(ref, dict), "missing research reference")
-        path = (job_path.resolve().parent / ref["path"]).resolve()
+        path = artifact_path(job_path.resolve().parent / ref["path"]).resolve()
         prepare.require(panel.sha256(path) == ref["sha256"], "research reference SHA mismatch")
-        combined[str(path)] = {"path": str(path), "sha256": ref["sha256"]}
+        if "handoffSha256" in ref:
+            handoff = path.with_name("COLLECTION-HANDOFF.json")
+            prepare.require(handoff.is_file() and panel.sha256(handoff) == ref["handoffSha256"], "INPUT_NEEDS_REPAIR: collection handoff SHA mismatch")
+        combined[str(path)] = {**ref, "path": str(path)}
     for ref in research:
         previous = combined.get(ref["path"])
-        prepare.require(previous is None or previous == ref, "conflicting research reference SHA")
-        combined[ref["path"]] = ref
-    if research:
+        prepare.require(previous is None or previous["sha256"] == ref["sha256"], "conflicting research reference SHA")
+        combined[ref["path"]] = previous or ref
+    # Empty bindings mean unassembled input. A nonempty explicit selection stays
+    # selected; only explicitly added CLI research may introduce more sources.
+    if not work.get("sourceBindings") or research:
+        work.setdefault("sourceBindings", [])
         bound = {row["sourceUrl"] for row in work["sourceBindings"]}
+        additions = {str(Path(ref["path"]).resolve()) for ref in research}
+        bind_all = not bound
         for ref in combined.values():
+            if not bind_all and ref["path"] not in additions:
+                continue
             path = Path(ref["path"])
             body = path.read_bytes()
             prepare.require(panel.sha256_bytes(body) == ref["sha256"], "research changed during job assembly")
@@ -513,6 +589,13 @@ def assemble_job(job_path, research):
                     bound.add(url)
     work.pop("researchRef", None)
     work["researchRefs"] = list(combined.values())
+    for ref in work["researchRefs"]:
+        ref.update(prepare.nt.bind_collection_handoff(Path(ref["path"]), ref))
+        handoff = Path(ref["path"]).with_name("COLLECTION-HANDOFF.json")
+        if handoff.is_file():
+            handoff_sha = panel.sha256(handoff)
+            prepare.require(ref.get("handoffSha256", handoff_sha) == handoff_sha, "INPUT_NEEDS_REPAIR: collection handoff changed during assembly")
+            ref["handoffSha256"] = handoff_sha
     raw["batchId"] = "r-" + uuid.uuid4().hex
     return raw
 
@@ -601,8 +684,9 @@ def run_job(args):
             else:
                 identity = prepare_session_input(run / "session-input", frozen / "panel-input")
             receipt = {"status": "PREPARED", "workId": work_id, "runRoot": str(run), "frozenRoot": str(frozen), **identity}
-            write(run / "PREPARED.json", receipt)
-            storage = preserve([run], "single-pass:session-prepare")
+            if not previous.is_file() or panel.read_json(previous) != receipt:
+                write(previous, receipt)
+            storage = preserve([run], "single-pass:session-prepare", reuse=True)
             print(json.dumps({**receipt, "storage": storage}, ensure_ascii=False))
             return
         if args.decisions:
@@ -627,9 +711,7 @@ def run_job(args):
                 write(run / "CHECKED.json", {"status": "ERROR", "workId": work_id, "decisionsSha256": config["decisionsSha256"], "error": str(error)})
                 preserve([run], "single-pass:check-error")
                 raise
-            storage = preserve([run], "single-pass:check")
-            write(run / "CHECK-STORAGE.json", {"checkedSha256": panel.sha256(run / "CHECKED.json"), "storage": storage})
-            preserve([run / "CHECK-STORAGE.json"], "single-pass:check-receipt")
+            storage = store_checked(run, config, checked)
             print(json.dumps({**checked, "storage": storage}, ensure_ascii=False))
             return
         # ponytail: one publisher for all runners; batch transactions only if measured writer capacity requires them.

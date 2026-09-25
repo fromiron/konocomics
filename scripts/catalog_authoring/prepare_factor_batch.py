@@ -52,7 +52,7 @@ def expand_compact_job(job: dict, directory: Path, bindings: dict[Path, str]) ->
         require(isinstance(references, list) and bool(references), "research references must be a nonempty list")
         merged_sources = {}
         for reference in references:
-            panel.exact_dict(reference, {"path", "sha256"}, "research reference")
+            panel.exact_dict(reference, {"path", "sha256"} | ({"handoffSha256", "collectionReceiptSha256"} & reference.keys()), "research reference")
             require(isinstance(reference["path"], str) and bool(reference["path"]), "missing research reference path")
             require(isinstance(reference["sha256"], str) and panel.SHA_RE.fullmatch(reference["sha256"]) is not None, "invalid research reference SHA")
             source_path = artifact_path(directory / reference["path"]).resolve()
@@ -71,6 +71,10 @@ def expand_compact_job(job: dict, directory: Path, bindings: dict[Path, str]) ->
                 require(type(research.get(field)) is type(expected) and research[field] == expected, f"collector authority mismatch: {raw['workId']} {field}")
             for field, expected in (("title", raw["title"]), ("isbn13", raw["representativeIsbn"])):
                 require(field not in research or research[field] == expected, f"TARGET_IDENTITY_MISMATCH: research {field}")
+            if job["schemaVersion"] == single.JOB:
+                record = nt.collection_record(source_path, reference, raw, research, bindings)
+                if record is not None:
+                    raw["narrativeToneExhaustion"] = record
             require(isinstance(research.get("sources"), list), "missing referenced sources")
             seen_urls = set()
             for source in research["sources"]:
@@ -237,6 +241,15 @@ def preflight(job: dict, baseline: Path, registry_path: Path, *, recovery: bool 
     packets = build_packets(job, facts, registry)
     backend._validate_packet_baseline_binding(packets, facts, registry)
     if job["schemaVersion"] == single.FROZEN_JOB:
+        errors = []
+        for row in job["works"]:
+            sources = row["evidence"] + row["supplementalEvidence"]
+            ids = [source.get("evidenceId", source.get("id")) for source in sources]
+            if len(ids) != len(set(ids)):
+                errors.append(f"{row['workId']}: duplicate evidence ID across original and supplemental sources")
+            if not any(source["sourceUrl"] in packets[row["workId"]]["supportEvidenceUrls"] for source in sources):
+                errors.append(f"{row['workId']}: no same-Work evidence bound to an exact supportEvidenceUrl; repair binding or collect the missing context")
+        require(not errors, "INPUT_NEEDS_REPAIR: " + "; ".join(errors))
         return packets, facts, registry
     validate_context_evidence(job, facts, packets)
     validated = validated_safety(job)
@@ -368,6 +381,16 @@ def capture_bindings(job_path: Path, provenance=None) -> list[dict]:
                     f"NEEDS_PROVENANCE_BINDING: research/collection Work mismatch: {path}")
             files[Path(path).relative_to(root).as_posix()] = digest
         files.update(capture_files(root))
+        handoff = unlinked(root / "COLLECTION-HANDOFF.json")
+        if handoff.is_file():
+            files[handoff.name] = panel.sha256(handoff)
+        for row in raw["works"]:
+            for ref in row.get("researchRefs", [row["researchRef"]] if "researchRef" in row else []):
+                if ("collectionReceiptSha256" in ref
+                        and artifact_path(job_path.resolve().parent / ref["path"]).parent.resolve() == root):
+                    receipt = unlinked(root / "collection-events.jsonl")
+                    require(receipt.is_file() and panel.sha256(receipt) == ref["collectionReceiptSha256"], "INPUT_NEEDS_REPAIR: collection receipt changed")
+                    files[receipt.name] = ref["collectionReceiptSha256"]
         bindings.append({"root": str(root), "workId": work_id, "researchBindings": refs, "files": files})
     return bindings
 

@@ -19,7 +19,7 @@ import sqlite3
 import subprocess
 import sys
 import types
-from contextlib import closing
+from contextlib import closing, nullcontext
 from pathlib import Path, PurePosixPath
 from authoring_paths import REPO, ROOT, LEGACY, artifact_path
 from typing import Iterable
@@ -751,7 +751,7 @@ def _load_conflict_adjudication(
     return {(row["workId"], row["factKey"]): row for row in rows}, root
 
 
-def _target_semantic_snapshot(path: Path, work_id: str) -> dict[str, object]:
+def _target_semantic_snapshot(path: Path | sqlite3.Connection, work_id: str) -> dict[str, object]:
     """Read every work-owned source row without projection ordinals/line numbers."""
 
     tables = (
@@ -759,7 +759,9 @@ def _target_semantic_snapshot(path: Path, work_id: str) -> dict[str, object]:
         "source_themes", "source_evidence", "source_recommendation_context",
         "source_art_evidence_manifest",
     )
-    connection = sqlite3.connect(f"file:{path.resolve().as_posix()}?mode=ro", uri=True)
+    owned = not isinstance(path, sqlite3.Connection)
+    connection = sqlite3.connect(f"file:{path.resolve().as_posix()}?mode=ro", uri=True) if owned else path
+    previous_factory = connection.row_factory
     connection.row_factory = sqlite3.Row
     try:
         snapshot: dict[str, list[dict[str, object]]] = {}
@@ -783,7 +785,9 @@ def _target_semantic_snapshot(path: Path, work_id: str) -> dict[str, object]:
             )
         return {"tables": snapshot, "sha256": sha256_bytes(json.dumps(snapshot, ensure_ascii=False, sort_keys=True, separators=(",", ":")).encode("utf-8"))}
     finally:
-        connection.close()
+        connection.row_factory = previous_factory
+        if owned:
+            connection.close()
 
 
 def _protected_snapshot_evidence(row: dict[str, object]) -> bool:
@@ -960,6 +964,9 @@ def _backend_module(
         if found is not None:
             return found
         baseline_db = Path(kwargs["baseline_db"])
+        compact_review = _safe_child(baseline_db.resolve().parent / "data/source", reference)
+        if (baseline_db.parent / "COMPACT-PUBLICATION.json").is_file() and compact_review.is_file() and not compact_review.is_symlink():
+            return compact_review.resolve()
         review_root = baseline_db.resolve().parent / "authorized-evidence-panel-v1" / "data" / "source"
         candidate = _safe_child(review_root, reference)
         if candidate.is_file() and not candidate.is_symlink():
@@ -1349,7 +1356,7 @@ def _install_recovery_materializer(module: types.ModuleType) -> None:
     assert spec and spec.loader
     integration = importlib.util.module_from_spec(spec)
     spec.loader.exec_module(integration)
-    original_apply, original_verify = module._apply_plan, module._verify_preservation
+    original_apply, original_verify = module.apply_plan_in_transaction, module._verify_preservation
 
     def without_recovery(plan):
         ids = set(plan["recoverySnapshots"])
@@ -1368,54 +1375,46 @@ def _install_recovery_materializer(module: types.ModuleType) -> None:
                 "annotationReviewMethod": "authorizedEvidencePanel",
                 "annotationReviewedAt": plan["recoveryReviewedAt"], "annotationReviewReference": plan["recoveryReviewReference"]}
 
-    def apply(output, plan):
+    def apply(con, plan):
         snapshots = plan["recoverySnapshots"]
         for wid, snapshot in snapshots.items():
-            if _target_semantic_snapshot(output, wid)["sha256"] != snapshot["bindingSha256"]:
+            if _target_semantic_snapshot(con, wid)["sha256"] != snapshot["bindingSha256"]:
                 raise module.PublishError(f"recovery target changed before apply: {wid}")
-        original_apply(output, without_recovery(plan))
-        con = sqlite3.connect(output)
-        try:
-            con.execute("begin immediate")
-            for wid, snapshot in sorted(snapshots.items()):
-                for item in snapshot["factorRows"]:
-                    before, after = item["before"], item["after"]
-                    values = tuple(after[k] for k in ("state", "value", "confidence", "evidenceId")) + (wid, after["axisId"]) + tuple(before[k] for k in ("state", "value", "confidence", "evidenceId"))
-                    if con.execute("update source_factors set state=?,value=?,confidence=?,evidenceId=? where workId=? and axisId=? and state=? and value=? and confidence=? and evidenceId=?", values).rowcount != 1:
-                        raise module.PublishError(f"recovery exact factor binding lost: {wid}")
-                con.execute("delete from source_themes where workId=?", (wid,))
-                ordinal = con.execute("select coalesce(max(sourceOrdinal),0)+1 from source_themes").fetchone()[0]
-                for row in snapshot["afterThemes"]:
-                    con.execute("insert into source_themes values(?,?,?,?,?,?,?)", (ordinal, ordinal + 1, wid, row["themeId"], row["centrality"], row["confidence"], row["evidenceId"]))
-                    ordinal += 1
-                con.execute("delete from source_recommendation_context where workId=?", (wid,))
-                contexts = [row for row in plan["contextInserts"] if row["workId"] == wid]
-                active = plan["recoveryPromotions"][wid]["panelOutcome"] == "PASS"
-                if len(contexts) != (1 if active else 0):
-                    raise module.PublishError(f"recovery exact context plan mismatch: {wid}")
-                for row in contexts:
-                    ordinal = con.execute("select coalesce(max(sourceOrdinal),0)+1 from source_recommendation_context").fetchone()[0]
-                    con.execute("insert into source_recommendation_context values(?,?,?,?,?,?,?,?)", (ordinal, ordinal + 1, wid, row["catalogRole"], row["seriesGroupId"], row["volumeCount"], row["reviewAverage"], row["reviewCount"]))
-                before = snapshot["beforeSnapshot"]["tables"]["source_works"][0]
-                final = expected_work(before, wid, plan)
-                fields = ("genres", "onboardingEligible", "recommendationEligible", "libraryOnly", "annotationReviewMethod", "annotationReviewedAt", "annotationReviewReference")
-                if con.execute("update source_works set " + ",".join(f'"{key}"=?' for key in fields) + " where id=?", (*[final[key] for key in fields], wid)).rowcount != 1:
-                    raise module.PublishError(f"recovery work missing: {wid}")
-                *_, blockers = integration.coverage(con, wid)
-                blockers = nt.filter_blockers(blockers, plan.get("narrativeToneExceptions", {}).get(wid))
-                if active and blockers:
-                    raise module.PublishError(f"recovery PASS coverage readback failed: {wid}")
-                expected_codes = set(plan["recoveryPromotions"][wid]["panelBlockerCode"].split(";")) - {"", "BLOCKED_SAFETY"}
-                if set(blockers) != expected_codes:
-                    raise module.PublishError(f"recovery coverage/result mismatch: {wid}")
-            integration.reindex_authority_projection(con, {"source_themes", "source_recommendation_context"})
-            integration.validate_authority_projection(con)
-            con.commit()
-        except Exception:
-            con.rollback()
-            raise
-        finally:
-            con.close()
+        original_apply(con, without_recovery(plan))
+        for wid, snapshot in sorted(snapshots.items()):
+            for item in snapshot["factorRows"]:
+                before, after = item["before"], item["after"]
+                values = tuple(after[k] for k in ("state", "value", "confidence", "evidenceId")) + (wid, after["axisId"]) + tuple(before[k] for k in ("state", "value", "confidence", "evidenceId"))
+                if con.execute("update source_factors set state=?,value=?,confidence=?,evidenceId=? where workId=? and axisId=? and state=? and value=? and confidence=? and evidenceId=?", values).rowcount != 1:
+                    raise module.PublishError(f"recovery exact factor binding lost: {wid}")
+            con.execute("delete from source_themes where workId=?", (wid,))
+            ordinal = con.execute("select coalesce(max(sourceOrdinal),0)+1 from source_themes").fetchone()[0]
+            for row in snapshot["afterThemes"]:
+                con.execute("insert into source_themes values(?,?,?,?,?,?,?)", (ordinal, ordinal + 1, wid, row["themeId"], row["centrality"], row["confidence"], row["evidenceId"]))
+                ordinal += 1
+            con.execute("delete from source_recommendation_context where workId=?", (wid,))
+            contexts = [row for row in plan["contextInserts"] if row["workId"] == wid]
+            active = plan["recoveryPromotions"][wid]["panelOutcome"] == "PASS"
+            if len(contexts) != (1 if active else 0):
+                raise module.PublishError(f"recovery exact context plan mismatch: {wid}")
+            for row in contexts:
+                ordinal = con.execute("select coalesce(max(sourceOrdinal),0)+1 from source_recommendation_context").fetchone()[0]
+                con.execute("insert into source_recommendation_context values(?,?,?,?,?,?,?,?)", (ordinal, ordinal + 1, wid, row["catalogRole"], row["seriesGroupId"], row["volumeCount"], row["reviewAverage"], row["reviewCount"]))
+            before = snapshot["beforeSnapshot"]["tables"]["source_works"][0]
+            final = expected_work(before, wid, plan)
+            fields = ("genres", "onboardingEligible", "recommendationEligible", "libraryOnly", "annotationReviewMethod", "annotationReviewedAt", "annotationReviewReference")
+            if con.execute("update source_works set " + ",".join(f'"{key}"=?' for key in fields) + " where id=?", (*[final[key] for key in fields], wid)).rowcount != 1:
+                raise module.PublishError(f"recovery work missing: {wid}")
+            *_, blockers = integration.coverage(con, wid)
+            blockers = nt.filter_blockers(blockers, plan.get("narrativeToneExceptions", {}).get(wid))
+            if active and blockers:
+                raise module.PublishError(f"recovery PASS coverage readback failed: {wid}")
+            expected_codes = set(plan["recoveryPromotions"][wid]["panelBlockerCode"].split(";")) - {"", "BLOCKED_SAFETY"}
+            if set(blockers) != expected_codes:
+                raise module.PublishError(f"recovery coverage/result mismatch: {wid}")
+        integration.reindex_authority_projection(con, {"source_themes", "source_recommendation_context"})
+        integration.validate_authority_projection(con)
+
 
     def verify(before, output, plan, gold_ids):
         after = module._snapshot_db(output)
@@ -1471,7 +1470,7 @@ def _install_recovery_materializer(module: types.ModuleType) -> None:
             after_snapshots[wid] = {"sha256": sha256_bytes(json.dumps(tables, ensure_ascii=False, sort_keys=True, separators=(",", ":")).encode("utf-8")), "work": tables["source_works"][0]}
         module.recovery_readback = {"workIds": sorted(ids), "demotedWorkIds": sorted(wid for wid in ids if plan["recoverySnapshots"][wid]["beforeSnapshot"]["tables"]["source_works"][0]["recommendationEligible"] == "true" and plan["recoveryPromotions"][wid]["panelOutcome"] != "PASS"), "snapshots": plan["recoverySnapshots"], "promotions": plan["recoveryPromotions"], "afterSnapshots": after_snapshots}
 
-    module._apply_plan, module._verify_preservation = apply, verify
+    module.apply_plan_in_transaction, module._verify_preservation = apply, verify
 
 
 def _materialize_existing_context_evidence(module, plan, promotion, contexts, supplemental, frozen, baseline, packets, digests, review_reference):
@@ -1532,25 +1531,21 @@ def _materialize_existing_context_evidence(module, plan, promotion, contexts, su
 
 
 def _install_context_evidence_materializer(module):
-    original_apply, original_review, original_verify = module._apply_plan, module._prepare_review_artifacts, module._verify_preservation
+    original_apply, original_review, original_verify = module.apply_plan_in_transaction, module._prepare_review_artifacts, module._verify_preservation
 
-    def apply(output, plan):
+    def apply(con, plan):
         retained = plan.get("contextOnlyWorkUpdates", {})
-        original_apply(output, {**plan, "workUpdates": [r for r in plan["workUpdates"] if r["id"] not in retained]})
+        original_apply(con, {**plan, "workUpdates": [r for r in plan["workUpdates"] if r["id"] not in retained]})
         if retained:
-            con = sqlite3.connect(output)
-            try:
-                with con:
-                    for update in plan["workUpdates"]:
-                        wid = update["id"]
-                        if wid not in retained:
-                            continue
-                        old = retained[wid]
-                        changed = con.execute("update source_works set annotationReviewedAt=?,annotationReviewReference=? where id=? and annotationReviewedAt=? and annotationReviewReference=?", (update["annotationReviewedAt"], update["annotationReviewReference"], wid, old["annotationReviewedAt"], old["annotationReviewReference"]))
-                        if changed.rowcount != 1:
-                            raise module.PublishError(f"context-only review update lost exact baseline: {wid}")
-            finally:
-                con.close()
+            for update in plan["workUpdates"]:
+                wid = update["id"]
+                if wid not in retained:
+                    continue
+                old = retained[wid]
+                changed = con.execute("update source_works set annotationReviewedAt=?,annotationReviewReference=? where id=? and annotationReviewedAt=? and annotationReviewReference=?", (update["annotationReviewedAt"], update["annotationReviewReference"], wid, old["annotationReviewedAt"], old["annotationReviewReference"]))
+                if changed.rowcount != 1:
+                    raise module.PublishError(f"context-only review update lost exact baseline: {wid}")
+
 
     def review(artifact_root, **kwargs):
         info = original_review(artifact_root, **kwargs)
@@ -1597,7 +1592,7 @@ def _install_context_evidence_materializer(module):
             if tuple(r for r in before["source_recommendation_context"][1] if r[index] == wid) != tuple(r for r in after["source_recommendation_context"][1] if r[index] == wid):
                 raise module.PublishError(f"existing numeric context changed: {wid}")
 
-    module._apply_plan, module._prepare_review_artifacts, module._verify_preservation = apply, review, verify
+    module.apply_plan_in_transaction, module._prepare_review_artifacts, module._verify_preservation = apply, review, verify
 
 
 def _validate_axis_corrections(input_root: Path, result_root: Path, frozen_baseline: Path, baseline: Path) -> dict[tuple[str, str], dict[str, object]]:
@@ -1610,7 +1605,9 @@ def _validate_axis_corrections(input_root: Path, result_root: Path, frozen_basel
     corrections = {}
     gold_ids = set(_read_json(_repo_root() / "data/staging/catalog-expansion/gold-set-manifest.json")["workIds"])
     for database in dict.fromkeys((frozen_baseline, baseline)):
-        connection = sqlite3.connect(f"file:{database.resolve().as_posix()}?mode=ro", uri=True)
+        owned = not isinstance(database, sqlite3.Connection)
+        connection = sqlite3.connect(f"file:{database.resolve().as_posix()}?mode=ro", uri=True) if owned else database
+        previous_factory = connection.row_factory
         connection.row_factory = sqlite3.Row
         try:
             for key, decision in decisions.items():
@@ -1642,7 +1639,9 @@ def _validate_axis_corrections(input_root: Path, result_root: Path, frozen_basel
                 panel_validation.preserved_prior(prior, result, decisions)
                 corrections[key] = {"decision": decision, "before": before, "prior": prior, "result": result, "coverage": coverage[key[0]]}
         finally:
-            connection.close()
+            connection.row_factory = previous_factory
+            if owned:
+                connection.close()
     return corrections
 
 
@@ -1654,9 +1653,9 @@ def _install_correction_materializer(module: types.ModuleType) -> None:
         raise ValidationError(f"correction integration backend missing: {path}")
     integration = importlib.util.module_from_spec(spec)
     spec.loader.exec_module(integration)
-    original_apply, original_verify = module._apply_plan, module._verify_preservation
+    original_apply, original_verify = module.apply_plan_in_transaction, module._verify_preservation
 
-    def apply(db_path: Path, plan: dict[str, object]) -> None:
+    def apply(con: sqlite3.Connection, plan: dict[str, object]) -> None:
         corrections = plan["priorCorrections"]
         keys = {(row["after"]["workId"], row["after"]["axisId"]) for row in corrections}
         snapshots = plan.get("freshSnapshots", {})
@@ -1668,11 +1667,10 @@ def _install_correction_materializer(module: types.ModuleType) -> None:
             "themeInserts": [row for row in plan["themeInserts"] if row["workId"] not in snapshot_ids],
             "genreUpdates": {work_id: genres for work_id, genres in plan["genreUpdates"].items() if work_id not in snapshot_ids},
         }
-        original_apply(db_path, normal)
-        con = sqlite3.connect(db_path)
+        original_apply(con, normal)
+        previous_factory = con.row_factory
         con.row_factory = sqlite3.Row
         try:
-            con.execute("begin immediate")
             for correction in corrections:
                 before, after = correction["before"], correction["after"]
                 values = tuple(after[field] for field in ("state", "value", "confidence", "evidenceId", "workId", "axisId")) + tuple(before[field] for field in ("state", "value", "confidence", "evidenceId"))
@@ -1731,13 +1729,9 @@ def _install_correction_materializer(module: types.ModuleType) -> None:
             if plan["correctionBlockedIds"]:
                 integration.reindex_authority_projection(con, {"source_recommendation_context"})
             integration.validate_authority_projection(con)
-            con.commit()
             module.correction_coverage = coverage_readback
-        except Exception:
-            con.rollback()
-            raise
         finally:
-            con.close()
+            con.row_factory = previous_factory
 
     def verify(before: dict, output: Path, plan: dict, gold_ids: set[str]) -> None:
         projected = dict(before)
@@ -1818,7 +1812,7 @@ def _install_correction_materializer(module: types.ModuleType) -> None:
         prior_works = module._rows_by_key(before, "source_works", "id")
         module.correction_readback = {"corrections": [*plan["priorCorrections"], *plan["tagCorrections"]], "axisUpdates": plan["correctionAxisUpdates"], "coverageReadback": module.correction_coverage, "blockedWorkIds": sorted(blocked), "demotedWorkIds": sorted(work_id for work_id in blocked if prior_works[work_id]["recommendationEligible"] == "true"), "removedContexts": [dict(zip(before["source_recommendation_context"][0], row)) for row in before["source_recommendation_context"][1] if row[before["source_recommendation_context"][0].index("workId")] in blocked], "scope": "Axis-corrected works materialize the validated final Axis snapshot. Genre/Theme corrections preserve old evidence, publish absent-tag replacements only on PASS, and retain existing stored tags only for storage-identical REPLACE decisions. Exact tag membership/value readback is verified. Other BLOCKED publication behavior is unchanged; panel and database coverage are reported separately."}
 
-    module._apply_plan, module._verify_preservation = apply, verify
+    module.apply_plan_in_transaction, module._verify_preservation = apply, verify
 
 
 def _registry_correction_slice(
@@ -1869,18 +1863,10 @@ def _registry_correction_slice(
     return root / "source-registry.csv"
 
 
-def _rebase_registry_correction(
-    frozen_baseline: Path,
-    frozen_registry: Path,
-    registry: Path,
-    output: Path,
-    target_ids: set[str],
-) -> bool:
-    """Replay a verified frozen correction onto a newer cumulative registry."""
+def registry_correction_changes(frozen_baseline: Path, frozen_registry: Path, target_ids: set[str]) -> list[dict]:
     source_registry = frozen_baseline.parent / "catalog-source-registry.candidate.sqlite"
     if frozen_registry == source_registry:
-        shutil.copy2(registry, output)
-        return False
+        return []
 
     import correct_factor_registry as correction
     root = frozen_registry.parent
@@ -1899,7 +1885,10 @@ def _rebase_registry_correction(
     ):
         raise ValidationError("registry correction exceeds frozen target scope")
 
-    before = correction.snapshot(registry)
+    return changes
+
+
+def plan_registry_correction(changes: list[dict], before: dict) -> tuple[dict, list[dict]]:
     expected = copy.deepcopy(before)
     rows = {row["sourceRowId"]: row for row in expected["tables"]["registry_source_rows"]["rows"]}
     pending = []
@@ -1915,24 +1904,43 @@ def _rebase_registry_correction(
         row[change["field"]] = change["after"]
         pending.append(change)
 
+    return expected, pending
+
+
+def apply_registry_correction(connection: sqlite3.Connection, pending: list[dict], schema="main") -> None:
+    if not connection.in_transaction or schema not in {"main", "registry"}:
+        raise ValidationError("registry application requires an owned pair transaction")
+    for change in pending:
+        updated = connection.execute(
+            f'update {schema}.registry_source_rows set "{change["field"]}"=? where sourceRowId=? and canonicalWorkId=? and "{change["field"]}"=?',
+            (change["after"], change["sourceRowId"], change["workId"], change["before"]),
+        )
+        if updated.rowcount != 1:
+            raise ValidationError("registry correction rebase lost its exact target row")
+
+
+def _rebase_registry_correction(frozen_baseline: Path, frozen_registry: Path, registry: Path, output: Path, target_ids: set[str]) -> bool:
+    changes = registry_correction_changes(frozen_baseline, frozen_registry, target_ids)
+    if not changes:
+        shutil.copy2(registry, output)
+        return False
+    import correct_factor_registry as correction
+    before = correction.snapshot(registry)
+    expected, pending = plan_registry_correction(changes, before)
     shutil.copy2(registry, output)
     with closing(sqlite3.connect(output)) as connection, connection:
-        for change in pending:
-            updated = connection.execute(
-                f'update registry_source_rows set "{change["field"]}"=? where sourceRowId=? and canonicalWorkId=? and "{change["field"]}"=?',
-                (change["after"], change["sourceRowId"], change["workId"], change["before"]),
-            )
-            if updated.rowcount != 1:
-                raise ValidationError("registry correction rebase lost its exact target row")
-    correction.preservation(before, correction.snapshot(output), expected, pending)
+        connection.execute("begin immediate")
+        apply_registry_correction(connection, pending)
+        correction.preservation(before, correction.snapshot(connection), expected, pending)
     return True
 
 
-def _verify_input_identities(input_root: Path, baseline: Path, registry: Path, repo: Path) -> Path | None:
+
+def _verify_input_identities(input_root: Path, baseline: Path, registry: Path, repo: Path, *, canonical_sha: str | None = None) -> Path | None:
     value = _read_json(input_root / "panel-input.json")
     expected = {
         "baselineCandidateSha256": sha256(baseline),
-        "canonicalSha256": sha256(repo / "data" / "source" / "catalog.sqlite"),
+        "canonicalSha256": canonical_sha or sha256(repo / "data" / "source" / "catalog.sqlite"),
         "goldManifestSha256": sha256(repo / "data" / "staging" / "catalog-expansion" / "gold-set-manifest.json"),
     }
     for key, digest in expected.items():
@@ -2363,18 +2371,22 @@ def publish_retained_authority(
         raise
 
 
-def preserve_book_metadata(candidate: Path, canonical: Path, backend) -> dict:
+def preserve_book_metadata(candidate: Path | sqlite3.Connection, canonical: Path | sqlite3.Connection, backend) -> dict:
     """Carry current canonical metadata into a candidate without replacing newer candidate rows."""
     before = backend._snapshot_db(candidate)
-    with closing(sqlite3.connect(f"file:{canonical.resolve().as_posix()}?mode=ro", uri=True)) as source:
+    canonical_owned = not isinstance(canonical, sqlite3.Connection)
+    with closing(sqlite3.connect(f"file:{canonical.resolve().as_posix()}?mode=ro", uri=True)) if canonical_owned else nullcontext(canonical) as source:
         backend._validate_schema(source, "canonical")
         if source.execute("pragma user_version").fetchone()[0] == 1:
             return {"status": "UNCHANGED", "rows": 0}
         columns = [row[1] for row in source.execute("pragma table_info(source_book_metadata)")]
         canonical_rows = [dict(zip(columns, row)) for row in source.execute("select * from source_book_metadata order by sourceOrdinal")]
         ddl = source.execute("select sql from sqlite_master where name='source_book_metadata'").fetchone()[0]
-    with closing(sqlite3.connect(candidate)) as target:
-        with target:
+    owned = not isinstance(candidate, sqlite3.Connection)
+    if not owned and not candidate.in_transaction:
+        raise ValidationError("metadata preservation requires a caller-owned transaction")
+    with closing(sqlite3.connect(candidate)) if owned else nullcontext(candidate) as target:
+        with target if owned else nullcontext():
             if target.execute("pragma user_version").fetchone()[0] == 1:
                 target.execute(ddl)
                 target.execute("pragma user_version=2")
@@ -2393,6 +2405,8 @@ def preserve_book_metadata(candidate: Path, canonical: Path, backend) -> dict:
                     continue
                 if previous:
                     row = {**row, "sourceOrdinal": previous["sourceOrdinal"], "sourceLine": previous["sourceLine"]}
+                    if row == previous:
+                        continue
                     target.execute("delete from source_book_metadata where isbn=?", (isbn,))
                 else:
                     row = {**row, "sourceOrdinal": next_ordinal, "sourceLine": next_ordinal + 1}
@@ -2403,7 +2417,7 @@ def preserve_book_metadata(candidate: Path, canonical: Path, backend) -> dict:
     for table, rows in before.items():
         if table != "source_book_metadata" and rows != after[table]:
             raise ValidationError("metadata preservation changed another source table")
-    return {"status": "PRESERVED", "canonicalSha256": sha256(canonical), "rows": len(after["source_book_metadata"][1])}
+    return {"status": "PRESERVED", "canonicalSha256": sha256(canonical) if canonical_owned else None, "rows": len(after["source_book_metadata"][1])}
 
 
 def publish_batch(

@@ -19,6 +19,76 @@ import prepare_factor_batch as batch
 
 
 class RetainedOperatorTest(unittest.TestCase):
+    def test_caller_rollback_covers_all_materializers_and_failed_expected_after(self):
+        """A late adapter failure must not commit the earlier common evidence insert."""
+        with tempfile.TemporaryDirectory() as folder:
+            candidate = Path(folder) / "candidate.sqlite"
+            shutil.copyfile(REPO / "data/source/catalog.sqlite", candidate)
+            for kind in ("context", "correction", "recovery"):
+                with self.subTest(kind=kind):
+                    backend = batch.publisher._backend_module()
+                    before = backend._snapshot_db(candidate)
+                    columns, rows = before["source_evidence"]
+                    evidence = {**dict(zip(columns, rows[0])), "id": "test-transaction-evidence"}
+                    wid = evidence["workId"]
+                    factor_columns, factors = before["source_factors"]
+                    factor = next(dict(zip(factor_columns, row)) for row in factors if row[factor_columns.index("workId")] == wid)
+                    stale = {**factor, "evidenceId": "test-stale-before"}
+                    plan = {"newEvidence": {evidence["id"]: evidence}, "factorUpdates": [], "themeInserts": [],
+                            "genreUpdates": {}, "contextInserts": [], "workUpdates": [], "passIds": [], "targetIds": [], "blockedIds": []}
+                    if kind == "context":
+                        plan["contextOnlyWorkUpdates"] = {wid: {"annotationReviewedAt": "test-stale-before", "annotationReviewReference": "test"}}
+                        plan["workUpdates"] = [{"id": wid, "annotationReviewedAt": "2026-09-25", "annotationReviewReference": "test"}]
+                        error = "context-only review update lost exact baseline"
+                    elif kind == "correction":
+                        batch.publisher._install_correction_materializer(backend)
+                        plan["priorCorrections"] = [{"before": stale, "after": factor}]
+                        error = "correction lost exact baseline row"
+                    else:
+                        batch.publisher._install_recovery_materializer(backend)
+                        snapshot = batch.publisher._target_semantic_snapshot(candidate, wid)
+                        plan["recoverySnapshots"] = {wid: {"bindingSha256": snapshot["sha256"], "factorRows": [{"before": stale, "after": factor}]}}
+                        error = "recovery exact factor binding lost"
+                    with contextlib.closing(sqlite3.connect(candidate)) as connection:
+                        connection.execute("begin immediate")
+                        connection.execute("savepoint work")
+                        with self.assertRaisesRegex(ValueError, error):
+                            backend.apply_plan_in_transaction(connection, plan)
+                        self.assertTrue(connection.in_transaction)
+                        self.assertEqual(connection.execute("select count(*) from source_evidence where id=?", (evidence["id"],)).fetchone()[0], 1)
+                        with contextlib.closing(sqlite3.connect(candidate)) as reader:
+                            self.assertEqual(reader.execute("select count(*) from source_evidence where id=?", (evidence["id"],)).fetchone()[0], 0)
+                        connection.execute("rollback to work")
+                        self.assertEqual(backend._snapshot_db(connection), before)
+                        connection.rollback()
+                    with self.assertRaisesRegex(ValueError, error):
+                        backend._apply_plan(candidate, plan, before=before)
+                    self.assertEqual(backend._snapshot_db(candidate), before)
+            backend = batch.publisher._backend_module()
+            bad_plan = {"newEvidence": {}, "factorUpdates": [], "themeInserts": [], "genreUpdates": {wid: "test-unplanned"},
+                        "contextInserts": [], "workUpdates": [], "passIds": [], "targetIds": [], "blockedIds": []}
+            with self.assertRaisesRegex(ValueError, "non-target/BLOCKED work changed"):
+                backend._apply_plan(candidate, bad_plan, before=before)
+            self.assertEqual(backend._snapshot_db(candidate), before)
+
+    def test_exact_context_binding_is_required_before_new_input_freeze(self):
+        import catalog_authoring_runner as runner
+        source = batch.ROOT / "planning/priority-recovery-20260923/루나5/batch-01/work-7a156f0d2233a11ec519/run-v3"
+        if not (source / "job.json").is_file():
+            self.skipTest("Preserved Luna5 binding regression input unavailable")
+        config = batch.panel.read_json(source / "RUN.json")
+        raw = runner.assemble_job(source / "job.json", [])
+        self.assertTrue(raw["works"][0]["sourceBindings"])
+        raw["works"][0]["sourceBindings"] = []
+        raw["works"][0]["evidence"] = []
+        with tempfile.TemporaryDirectory() as directory:
+            path = Path(directory) / "job.json"
+            batch.write_json(path, raw)
+            output = Path(directory) / "frozen"
+            with self.assertRaisesRegex(ValueError, "INPUT_NEEDS_REPAIR.*exact supportEvidenceUrl"):
+                batch.freeze(path, artifact_path(config["baselineRoot"]), artifact_path(config["registryPath"]), output)
+            self.assertFalse(output.exists())
+
     def test_collection_binding_preserves_multiple_roots_and_rejects_bad_capture(self):
         with tempfile.TemporaryDirectory() as directory:
             root = Path(directory)
@@ -117,7 +187,17 @@ class RetainedOperatorTest(unittest.TestCase):
             self.assertEqual(receipt["status"], "PRESERVED")
             self.assertEqual(after["source_book_metadata"], backend._snapshot_db(canonical)["source_book_metadata"])
             self.assertEqual(before, {key: value for key, value in after.items() if key != "source_book_metadata"})
-            batch.publisher.preserve_book_metadata(candidate, canonical, backend)
+            before_sha = batch.publisher.sha256(candidate)
+            statements = []
+            connect = sqlite3.connect
+            def traced(*args, **kwargs):
+                connection = connect(*args, **kwargs)
+                connection.set_trace_callback(statements.append)
+                return connection
+            with mock.patch.object(sqlite3, "connect", side_effect=traced):
+                batch.publisher.preserve_book_metadata(candidate, canonical, backend)
+            self.assertFalse(any(s.lower().startswith(("delete ", "insert ", "update ")) for s in statements))
+            self.assertEqual(batch.publisher.sha256(candidate), before_sha)
             self.assertEqual(after, backend._snapshot_db(candidate))
 
     def test_freeze_rejects_recursive_provenance_before_reading_or_copying(self):

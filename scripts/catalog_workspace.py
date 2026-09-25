@@ -26,7 +26,7 @@ from workspace_paths import artifact_path
 
 REPO = Path(__file__).resolve().parents[1]
 APPLICATION_ID = 0x4B435753
-SCHEMA_VERSION = 1
+SCHEMA_VERSION = 2
 SCHEMA = """
 CREATE TABLE blob (
     sha256 TEXT PRIMARY KEY CHECK(length(sha256) = 64),
@@ -48,6 +48,7 @@ CREATE TABLE entry (
     PRIMARY KEY(snapshot_id, path)
 ) STRICT;
 CREATE INDEX entry_path ON entry(path, snapshot_id DESC);
+CREATE INDEX entry_snapshot ON entry(snapshot_id);
 """
 
 
@@ -114,11 +115,15 @@ def key_path(value: str) -> str:
     return value
 
 
-def unlinked(path: Path) -> Path:
+def unlinked(path: Path, checked: set[Path] | None = None) -> Path:
     path = Path(os.path.abspath(path))
     for parent in (path, *path.parents):
+        if checked is not None and parent in checked:
+            continue
         if parent.is_symlink() or parent.is_junction():
             raise ValueError(f"Linked path is not allowed: {parent}")
+        if checked is not None:
+            checked.add(parent)
     return path
 
 
@@ -142,15 +147,15 @@ class Workspace:
         if any(self.database.is_relative_to(self.repo / name) for name in (".tmp", ".workspace", "data/source")):
             raise ValueError("The working database must be outside .tmp, .workspace and data/source")
 
-    def key(self, path: Path) -> str:
-        path = unlinked(path)
+    def key(self, path: Path, *, checked: set[Path] | None = None) -> str:
+        path = unlinked(path, checked)
         if not path.is_relative_to(self.repo) or path == self.repo:
             raise ValueError(f"Artifact must be a bounded path inside {self.repo}: {path}")
-        if self.database.resolve().is_relative_to(path.resolve()):
+        if self.database.is_relative_to(path):
             raise ValueError("Cannot capture the workspace database or its parent")
-        if path.resolve() == self.repo / "data/local/catalog-authoring/artifacts":
+        if path == self.repo / "data/local/catalog-authoring/artifacts":
             raise ValueError("Capture bounded authoring artifacts, not the entire archive")
-        if path.resolve().is_relative_to(self.repo / "data/local/catalog-authoring/backups"):
+        if path.is_relative_to(self.repo / "data/local/catalog-authoring/backups"):
             raise ValueError("Cannot capture workspace backups")
         relative = key_path(path.relative_to(self.repo).as_posix())
         if any(p in {".git", "node_modules"} or p.startswith(".env") for p in PurePosixPath(relative).parts):
@@ -179,10 +184,20 @@ class Workspace:
                 db.executescript(f"BEGIN IMMEDIATE;{SCHEMA}{guards}"
                                  f"PRAGMA application_id={APPLICATION_ID};PRAGMA user_version={SCHEMA_VERSION};COMMIT;")
             if (db.execute("PRAGMA application_id").fetchone()[0] != APPLICATION_ID
-                    or db.execute("PRAGMA user_version").fetchone()[0] != SCHEMA_VERSION):
+                    or db.execute("PRAGMA user_version").fetchone()[0] not in (1, SCHEMA_VERSION)):
                 raise ValueError("Not a supported Catalog authoring workspace database")
             if write:
                 db.execute("PRAGMA synchronous=FULL")
+                if db.execute("PRAGMA user_version").fetchone()[0] == 1:
+                    try:
+                        db.execute("BEGIN IMMEDIATE")
+                        if db.execute("PRAGMA user_version").fetchone()[0] == 1:
+                            db.execute("CREATE INDEX entry_snapshot ON entry(snapshot_id)")
+                            db.execute(f"PRAGMA user_version={SCHEMA_VERSION}")
+                        db.commit()
+                    except BaseException:
+                        db.rollback()
+                        raise
             return db
         except BaseException:
             db.close()
@@ -190,6 +205,7 @@ class Workspace:
 
     def files(self, roots: list[Path]) -> list[Path]:
         found = {}
+        checked = set()  # One traversal only; subsequent readback checks afresh.
 
         def walk(directory):
             # scandir caches Windows reparse/type metadata; do not stat every ancestor per file.
@@ -208,8 +224,8 @@ class Workspace:
                         raise ValueError(f"Not a regular artifact: {path}")
 
         for root in roots:
-            root = unlinked(root)
-            self.key(root)
+            root = unlinked(root, checked)
+            self.key(root, checked=checked)
             if not root.exists():
                 raise FileNotFoundError(root)
             candidates = walk(root) if root.is_dir() else (root,)
@@ -325,34 +341,114 @@ class Workspace:
             raise ValueError(f"Corrupt blob: {sha}")
         return content
 
-    def verify_saved(self, snapshot: dict, roots: list[Path]) -> None:
-        """Check a saved receipt and the requested original bytes, read-only."""
-        files = self.files(roots)
-        expected = {self.key(path): digest(path.read_bytes()) for path in files}
-        with closing(self.connect()) as db:
-            header = db.execute("SELECT file_count,manifest_sha256 FROM snapshot WHERE id=?", (snapshot["snapshotId"],)).fetchone()
-            if header != (snapshot["files"], snapshot["manifestSha256"]):
-                raise ValueError("Saved snapshot receipt mismatch")
-            rows = db.execute("SELECT path,sha256 FROM entry WHERE snapshot_id=?", (snapshot["snapshotId"],)).fetchall()
-            if len(rows) != header[0] or manifest_digest(rows) != header[1]:
-                raise ValueError("Saved snapshot membership mismatch")
-            # Old snapshot keys stay immutable; the preserved artifact location table
-            # can resolve their location to the relocated original bytes.
-            indexed = {}
-            for path, sha in rows:
-                # Compare stored names without stat-ing every ancestor of every
-                # snapshot member. files(roots) validates the actual read paths,
-                # including links, before and after this readback.
-                resolved = Path(os.path.abspath(artifact_path(self.repo / key_path(path), self.repo)))
-                if resolved in indexed and indexed[resolved] != sha:
-                    raise ValueError("Saved paths disagree on artifact bytes")
-                indexed[resolved] = sha
-            if any(indexed.get((self.repo / path).resolve()) != sha for path, sha in expected.items()):
-                raise ValueError("Requested artifacts differ from saved snapshot")
-            for sha in set(expected.values()):
-                self.read_blob(db, sha)
-        if files != self.files(roots) or any(digest(path.read_bytes()) != expected[self.key(path)] for path in files):
+    def _inventory(self, roots, metrics=None):
+        """Call-local actual bytes, never an mtime-based content cache."""
+        started = perf_counter()
+        inventory = {}
+        for path in self.files(roots):
+            body = path.read_bytes()
+            inventory[path] = (digest(body), len(body))
+        if metrics is not None:
+            metrics["hashCalls"] = metrics.get("hashCalls", 0) + len(inventory)
+            metrics["hashBytes"] = metrics.get("hashBytes", 0) + sum(size for _, size in inventory.values())
+            metrics["inventoryPasses"] = metrics.get("inventoryPasses", 0) + 1
+            metrics["inventorySeconds"] = metrics.get("inventorySeconds", 0) + perf_counter() - started
+        return inventory
+
+    def _assert_inventory(self, roots, inventory, metrics=None):
+        if self._inventory(roots, metrics) != inventory:
             raise ValueError("Requested artifacts changed during saved readback")
+
+    def _verify_groups(self, groups, inventory, metrics=None):
+        """One read transaction; no verified blob or membership escapes this view."""
+        started = perf_counter()
+        with closing(self.connect()) as db:
+            db.execute("BEGIN")
+            snapshots, blobs, locations = {}, {}, {}
+            for snapshot, members in groups:
+                identity = (snapshot["snapshotId"], snapshot["files"], snapshot["manifestSha256"])
+                if identity not in snapshots:
+                    header = db.execute("SELECT file_count,manifest_sha256 FROM snapshot WHERE id=?", (identity[0],)).fetchone()
+                    if header != identity[1:]:
+                        raise ValueError("Saved snapshot receipt mismatch")
+                    rows = db.execute("SELECT path,sha256 FROM entry WHERE snapshot_id=?", (identity[0],)).fetchall()
+                    if len(rows) != header[0] or manifest_digest(rows) != header[1]:
+                        raise ValueError("Saved snapshot membership mismatch")
+                    indexed = {}
+                    for path, sha in rows:
+                        if path not in locations:
+                            locations[path] = Path(os.path.abspath(artifact_path(self.repo / key_path(path), self.repo)))
+                        resolved = locations[path]
+                        if resolved in indexed and indexed[resolved] != sha:
+                            raise ValueError("Saved paths disagree on artifact bytes")
+                        indexed[resolved] = sha
+                    snapshots[identity] = indexed
+                    if metrics is not None:
+                        metrics["snapshots"] = metrics.get("snapshots", 0) + 1
+                        metrics["membershipRows"] = metrics.get("membershipRows", 0) + len(rows)
+                indexed = snapshots[identity]
+                for path in members:
+                    sha, size = inventory[path]
+                    if indexed.get(path) != sha:
+                        raise ValueError("Requested artifacts differ from saved snapshot")
+                    if sha not in blobs:
+                        blobs[sha] = len(self.read_blob(db, sha))
+                        if metrics is not None:
+                            metrics["blobs"] = metrics.get("blobs", 0) + 1
+                            metrics["blobBytes"] = metrics.get("blobBytes", 0) + blobs[sha]
+                    if blobs[sha] != size:
+                        raise ValueError("Requested artifact length differs from stored blob")
+        if metrics is not None:
+            metrics["seconds"] = perf_counter() - started
+
+    def verify_saved(self, snapshot: dict, roots: list[Path]) -> None:
+        """Standalone callers always check actual files before and after storage."""
+        inventory = self._inventory(roots)
+        self._verify_groups([(snapshot, list(inventory))], inventory)
+        self._assert_inventory(roots, inventory)
+
+    def saved_file_snapshot(self, path: Path) -> dict | None:
+        """Find and verify an existing exact file using the indexed snapshot ledger."""
+        key, sha = self.key(path), digest(path.read_bytes())
+        with closing(self.connect()) as db:
+            row = db.execute("""SELECT s.id,s.file_count,s.manifest_sha256
+                FROM entry e JOIN snapshot s ON s.id=e.snapshot_id
+                WHERE e.path=? AND e.sha256=? ORDER BY e.snapshot_id DESC LIMIT 1""", (key, sha)).fetchone()
+        if row is None:
+            return None
+        snapshot = dict(zip(("snapshotId", "files", "manifestSha256"), row))
+        self.verify_saved(snapshot, [path])
+        return snapshot
+
+    def saved_files(self, roots: list[Path]) -> tuple[list[tuple[dict, list[Path]]], list[Path]]:
+        """Reuse exact stored members; group readback by the existing snapshot."""
+        inventory = self._inventory(roots)
+        groups, missing = self._saved_files(inventory)
+        if groups:
+            self._verify_groups(groups, inventory)
+        self._assert_inventory(roots, inventory)
+        return groups, missing
+
+    def _saved_files(self, inventory):
+        """Lookup only: the caller must verify the final source and backup views."""
+        if not self.database.is_file():
+            return [], list(inventory)
+        groups, missing = {}, []
+        with closing(self.connect()) as db:
+            db.execute("BEGIN")
+            for path, (sha, _) in inventory.items():
+                row = db.execute("""SELECT s.id,s.file_count,s.manifest_sha256
+                    FROM entry e JOIN snapshot s ON s.id=e.snapshot_id
+                    WHERE e.path=? AND e.sha256=? ORDER BY e.snapshot_id DESC LIMIT 1""",
+                    (path.relative_to(self.repo).as_posix(), sha)).fetchone()
+                if row is None:
+                    missing.append(path)
+                else:
+                    if row[0] not in groups:
+                        snapshot = dict(zip(("snapshotId", "files", "manifestSha256"), row))
+                        groups[row[0]] = ({**snapshot, "database": str(self.database)}, [])
+                    groups[row[0]][1].append(path)
+        return list(groups.values()), missing
 
     def verify(self) -> dict:
         with closing(self.connect()) as db:
@@ -389,18 +485,51 @@ class Workspace:
             if not selected:
                 raise ValueError("No artifacts in the requested snapshot/prefix")
             destination.mkdir(parents=True, exist_ok=False)
+            seen, originals, restored_count = set(), {str(self.repo)}, 0
+            compact_restored = False
             for index, (path, sha) in enumerate(selected, 1):
+                if (path, sha) in seen:
+                    continue
+                seen.add((path, sha))
+                body = self.read_blob(db, sha)
                 target = unlinked(destination / path)
+                if target.exists() and digest(target.read_bytes()) != sha:
+                    target = unlinked(destination / "data/local/catalog-authoring/restored-versions" / sha)
                 target.parent.mkdir(parents=True, exist_ok=True)
-                with target.open("xb") as stream:
-                    stream.write(self.read_blob(db, sha))
-                    stream.flush()
-                    os.fsync(stream.fileno())
+                if not target.exists():
+                    with target.open("xb") as stream:
+                        stream.write(body)
+                        stream.flush()
+                        os.fsync(stream.fileno())
+                    restored_count += 1
                 if digest(target.read_bytes()) != sha:
                     raise ValueError(f"Restored artifact readback failed: {path}")
+                if Path(path).name in {"COMPACT-PUBLICATION.json", "CHECKPOINT.json"}:
+                    value = json.loads(body)
+                    if Path(path).name == "CHECKPOINT.json" and value.get("schemaVersion") != "catalog-compact-publication-v1":
+                        continue
+                    if value.get("schemaVersion") != "catalog-compact-publication-v1":
+                        raise ValueError("Unknown compact restore format")
+                    compact_restored = True
+                    references = [*value["dependencies"], *({"snapshot": ref["snapshot"], "members": {ref["path"]: ref["sha256"]}} for ref in value["sources"].values())]
+                    for reference in references:
+                        header = reference["snapshot"]
+                        saved = db.execute("SELECT file_count,manifest_sha256,roots_json FROM snapshot WHERE id=?", (header["snapshotId"],)).fetchone()
+                        members = db.execute("SELECT path,sha256 FROM entry WHERE snapshot_id=?", (header["snapshotId"],)).fetchall()
+                        if (saved is None or saved[:2] != (header["files"], header["manifestSha256"])
+                                or len(members) != saved[0] or manifest_digest(members) != saved[1]):
+                            raise ValueError("Compact restore dependency snapshot changed")
+                        originals.add(json.loads(saved[2])["repository"])
+                        actual = dict(members)
+                        for key, expected in reference["members"].items():
+                            if actual.get(key) != expected:
+                                raise ValueError("Compact restore dependency member changed")
+                            selected.append((key_path(key), expected))
                 if index % 10000 == 0:
                     print(f"authoring restore: {index}/{len(selected)} files", file=sys.stderr, flush=True)
-        return {"status": "RESTORED", "snapshotId": snapshot_id, "files": len(selected), "destination": str(destination)}
+            if compact_restored:
+                (destination / ".catalog-restore.json").write_text(json.dumps({"schemaVersion": "catalog-restored-workspace-v1", "originalRepositories": sorted(originals)}), encoding="utf-8")
+        return {"status": "RESTORED", "snapshotId": snapshot_id, "files": restored_count, "destination": str(destination)}
 
     def checkout(self, snapshot_id: int, prefix: str) -> dict:
         """Recover one missing working-copy subtree at its original logical path."""
@@ -431,22 +560,41 @@ class Workspace:
         return {"status": "CHECKED_OUT", "snapshotId": snapshot_id, "files": len(selected), "path": str(target)}
 
     def backup(self, destination: Path | None = None) -> dict:
+        started = perf_counter()
         if not self.database.is_file():
             raise FileNotFoundError(self.database)
         # Backup generations share their own physical names, so serialize only
         # rotation. SQLite read snapshots keep the append-only source coherent
         # while independent workers continue saving new workspace snapshots.
         lock = self.repo / "data/local/catalog-authoring/backups/rotation.lock"
+        requested = perf_counter()
         with exclusive_file(lock):
-            return self._backup_locked(destination)
+            acquired = perf_counter()
+            timings = {key: 0.0 for key in ("headerMembership", "blobCopy", "blobReadback", "newMembership", "commit", "commitReadback", "rotation", "fullCopyIntegrity")}
+            result = self._backup_locked(destination, timings)
+            result["timingsSeconds"] = {**timings, "lockWait": acquired - requested, "totalElapsed": perf_counter() - started}
+            return result
 
-    def _backup_locked(self, destination: Path | None) -> dict:
+    def _backup_locked(self, destination: Path | None, timings: dict | None = None) -> dict:
+        timings = {} if timings is None else timings
         automatic = destination is None
         backup_root = unlinked(self.repo / "data/local/catalog-authoring/backups")
         latest, previous = backup_root / "latest.sqlite", backup_root / "previous.sqlite"
         pending = backup_root / "pending.sqlite"
         if automatic and self.database in {latest, previous, pending}:
             raise ValueError("An automatic backup cannot rotate its own source; use an explicit new destination")
+        migration_started = perf_counter()
+        # Each index migration commits atomically; interrupted mixed generations
+        # are readable and finish migration before the exact schema comparison.
+        for database in (self.database, latest, previous, pending) if automatic else (self.database,):
+            if database.exists():
+                with closing(sqlite3.connect(unlinked(database).as_uri() + "?mode=rw", uri=True)) as existing:
+                    if (existing.execute("PRAGMA application_id").fetchone()[0] != APPLICATION_ID
+                            or existing.execute("PRAGMA user_version").fetchone()[0] not in (1, SCHEMA_VERSION)):
+                        raise ValueError(f"Incomplete backup rotation; unrelated or partial copy retained: {database}")
+                with closing(Workspace(self.repo, database).connect(write=True)):
+                    pass
+        timings["schemaMigration"] = perf_counter() - migration_started
         if automatic and pending.exists():
             # A fixed pending name makes each interrupted rename resumable under
             # the same writer lock. Never discard an ambiguous or partial copy.
@@ -459,7 +607,7 @@ class Workspace:
                         or recovery.execute("PRAGMA integrity_check").fetchall() != [("ok",)]
                         or recovery.execute("PRAGMA foreign_key_check").fetchall()):
                     raise ValueError(f"Incomplete backup rotation; partial copy retained: {pending}")
-            snapshot, added = self._extend_backup(pending)
+            snapshot, added = self._extend_backup(pending, timings=timings)
             for reserved in (latest, previous):
                 unlinked(reserved)
                 if reserved.exists():
@@ -468,9 +616,11 @@ class Workspace:
                         last = headers[-1][0] if headers else 0
                         if headers != source.execute("SELECT * FROM snapshot WHERE id<=? ORDER BY id", (last,)).fetchall():
                             raise ValueError(f"Backup rotation history mismatch; copies retained: {reserved}")
+            rotation = perf_counter()
             if latest.exists():
                 replace_busy_backup(latest, previous)
             replace_busy_backup(pending, latest)
+            timings["rotation"] = perf_counter() - rotation
             return {"status": "BACKED_UP", "mode": "recovered-rotation", "destination": str(latest),
                     "latestSnapshotId": snapshot[0], "snapshots": snapshot[1], "addedSnapshots": added}
         if automatic and latest.exists() and previous.exists():
@@ -484,10 +634,12 @@ class Workspace:
                     if (old.execute("PRAGMA application_id").fetchone()[0] != APPLICATION_ID
                             or old.execute("PRAGMA user_version").fetchone()[0] != SCHEMA_VERSION):
                         raise ValueError(f"Refusing to replace an unrelated backup: {reserved}")
-            snapshot, added = self._extend_backup(previous)
+            snapshot, added = self._extend_backup(previous, timings=timings)
+            rotation = perf_counter()
             replace_busy_backup(previous, pending)
             replace_busy_backup(latest, previous)
             replace_busy_backup(pending, latest)
+            timings["rotation"] = perf_counter() - rotation
             return {"status": "BACKED_UP", "mode": "append-only", "destination": str(latest),
                     "latestSnapshotId": snapshot[0], "snapshots": snapshot[1], "addedSnapshots": added}
         if destination is None:
@@ -498,11 +650,13 @@ class Workspace:
         destination.parent.mkdir(parents=True, exist_ok=True)
         with destination.open("xb"):
             pass
+        copying = perf_counter()
         with closing(self.connect()) as source, closing(sqlite3.connect(destination)) as target:
             source.backup(target)
             if target.execute("PRAGMA integrity_check").fetchall() != [("ok",)] or target.execute("PRAGMA foreign_key_check").fetchall():
                 raise ValueError(f"Backup integrity failure; partial file retained: {destination}")
             snapshot = target.execute("SELECT max(id),count(*) FROM snapshot").fetchone()
+        timings["fullCopyIntegrity"] = perf_counter() - copying
         if automatic:
             # All logical versions live inside each backup; keep two physical generations.
             for reserved in (latest, previous):
@@ -511,39 +665,54 @@ class Workspace:
                     with closing(sqlite3.connect(reserved.as_uri() + "?mode=ro", uri=True)) as old:
                         if old.execute("PRAGMA application_id").fetchone()[0] != APPLICATION_ID:
                             raise ValueError(f"Refusing to replace an unrelated backup: {reserved}")
+            rotation = perf_counter()
             if latest.exists():
                 replace_busy_backup(latest, previous)
             replace_busy_backup(destination, latest)
+            timings["rotation"] = perf_counter() - rotation
             destination = latest
         return {"status": "BACKED_UP", "mode": "full", "destination": str(destination), "latestSnapshotId": snapshot[0], "snapshots": snapshot[1]}
 
-    def _extend_backup(self, destination: Path) -> tuple[tuple, int]:
+    def _extend_backup(self, destination: Path, *, timings: dict | None = None) -> tuple[tuple, int]:
         """Extend a verified append-only generation atomically, without rescanning history.
 
         Full audits remain available through verify; all blobs referenced by new
         snapshots are checked here, and restore always checks original hashes.
         """
+        timings = {} if timings is None else timings
+        started = perf_counter()
         with closing(Workspace(self.repo, destination).connect(write=True)) as target:
             target.execute("ATTACH DATABASE ? AS origin", (self.database.as_uri() + "?mode=ro",))
             try:
-                # The caller holds the source writer lock. A deferred transaction
-                # writes only main, leaving the read-only attachment unlocked.
+                # Rotation is locked by the caller. This transaction writes only
+                # main and reads a consistent snapshot of the source attachment.
                 target.execute("BEGIN")
                 schema = "SELECT type,name,tbl_name,sql FROM {}.sqlite_master ORDER BY type,name"
                 if target.execute(schema.format("main")).fetchall() != target.execute(schema.format("origin")).fetchall():
                     raise ValueError("Backup schema differs from append-only source")
+                timings["connectSchema"] = perf_counter() - started
+                headers_started = perf_counter()
                 headers = target.execute("SELECT * FROM snapshot ORDER BY id").fetchall()
                 last = headers[-1][0] if headers else 0
                 if headers != target.execute("SELECT * FROM origin.snapshot WHERE id<=? ORDER BY id", (last,)).fetchall():
                     raise ValueError("Backup history is not a prefix of the source")
+                new_headers = target.execute("SELECT * FROM origin.snapshot WHERE id>? ORDER BY id", (last,)).fetchall()
+                timings["historyHeaders"] = perf_counter() - headers_started
+                count_started = perf_counter()
                 if target.execute("SELECT count(*) FROM entry").fetchone()[0] != sum(row[4] for row in headers):
                     raise ValueError("Backup snapshot membership count mismatch")
-                new_headers = target.execute("SELECT * FROM origin.snapshot WHERE id>? ORDER BY id", (last,)).fetchall()
+                timings["historyMembershipCount"] = perf_counter() - count_started
+                timings["headerMembership"] = perf_counter() - started
+                started = perf_counter()
                 referenced = target.execute("SELECT DISTINCT sha256 FROM origin.entry WHERE snapshot_id>?", (last,)).fetchall()
                 target.executemany("""INSERT INTO blob SELECT b.* FROM origin.blob b
                     WHERE b.sha256=? AND NOT EXISTS (SELECT 1 FROM blob old WHERE old.sha256=b.sha256)""", referenced)
+                timings["blobCopy"] = perf_counter() - started
+                started = perf_counter()
                 for (sha,) in referenced:
                     self.read_blob(target, sha)
+                timings["blobReadback"] = perf_counter() - started
+                started = perf_counter()
                 target.execute("INSERT INTO snapshot SELECT * FROM origin.snapshot WHERE id>?", (last,))
                 target.execute("INSERT INTO entry SELECT * FROM origin.entry WHERE snapshot_id>?", (last,))
                 for row in new_headers:
@@ -552,15 +721,20 @@ class Workspace:
                         key_path(path)
                     if len(entries) != row[4] or manifest_digest(entries) != row[5]:
                         raise ValueError(f"Backup snapshot manifest mismatch: {row[0]}")
+                timings["newMembership"] = perf_counter() - started
+                started = perf_counter()
                 target.commit()
+                timings["commit"] = perf_counter() - started
             except BaseException:
                 target.rollback()
                 raise
+        started = perf_counter()
         with closing(Workspace(self.repo, destination).connect()) as readback:
             snapshot = readback.execute("SELECT max(id),count(*) FROM snapshot").fetchone()
             expected = ((new_headers or headers)[-1][0] if new_headers or headers else None, len(headers) + len(new_headers))
             if snapshot != expected:
                 raise ValueError("Backup commit readback failed")
+        timings["commitReadback"] = perf_counter() - started
         return snapshot, len(new_headers)
 
 
@@ -695,16 +869,31 @@ def authoring_inputs(paths: list[Path], workspace: Workspace | None = None) -> l
                 for field in ("epochPath", "scopePath", "policyPath"):
                     if isinstance(value.get(field), str):
                         references.append(artifact_path(value[field], workspace.repo))
+                if value.get("epochId") == "factor-003-recovery-20260909-v1":
+                    # load_epoch verifies these exact historical versions too;
+                    # they are not replaceable by the current canonical/pair.
+                    history = workspace.repo / "data/local/catalog-authoring/artifacts/catalog-expansion-continuation-20260902/runs"
+                    pending.extend((source, False) for source in (
+                        history / "continuation-factor-233-publication-20260909-v1",
+                        history / "canonical-promotion-20260910-v2/before/data/source/catalog.sqlite"))
             if value.get("schemaVersion") in {"factor-authoring-job-v3", "factor-authoring-job-v4"}:
                 for work in value.get("works", []) if isinstance(value.get("works"), list) else []:
                     refs = work.get("researchRefs", [work.get("researchRef", {})]) if isinstance(work, dict) else []
                     for reference in refs if isinstance(refs, list) else []:
                         if isinstance(reference, dict) and isinstance(reference.get("path"), str):
                             references.append(path.parent / reference["path"])
+                            handoff = artifact_path(path.parent / reference["path"], workspace.repo).with_name("COLLECTION-HANDOFF.json")
+                            if "handoffSha256" in reference or handoff.is_file():
+                                references.append(handoff)
+                            if "collectionReceiptSha256" in reference:
+                                references.append(handoff.with_name("collection-events.jsonl"))
             if path.name == "external-prior-authority.json":
                 for bundle in value.get("bundles", []) if isinstance(value.get("bundles"), list) else []:
                     if isinstance(bundle, dict) and isinstance(bundle.get("root"), str):
                         references.append(artifact_path(bundle["root"], workspace.repo))
+            if value.get("schemaVersion") == "catalog-compact-work-v1":
+                for field in ("input", "authority"):
+                    references.append(artifact_path(value[field]["root"], workspace.repo))
             if path.name == "external-lineage.json":
                 for field in ("baselineRoot", "registryPath"):
                     if isinstance(value.get(field), str):

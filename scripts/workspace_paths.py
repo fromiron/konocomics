@@ -1,5 +1,21 @@
 """Locate preserved artifact references without filesystem links or rewriting bytes."""
 from pathlib import Path
+from functools import lru_cache
+import json
+
+
+@lru_cache(maxsize=16)
+def restored_origins(repo: Path) -> tuple[Path, ...]:
+    marker = repo / ".catalog-restore.json"
+    if not marker.is_file():
+        return ()
+    value = json.loads(marker.read_text(encoding="utf-8"))
+    if value.get("schemaVersion") != "catalog-restored-workspace-v1":
+        raise ValueError("Unknown authoring restore mapping")
+    roots = tuple(Path(item) for item in value["originalRepositories"])
+    if any(not root.is_absolute() for root in roots):
+        raise ValueError("Invalid authoring restore origin")
+    return roots
 
 REPO = Path(__file__).resolve().parents[1]
 # Known moved roots also resolve when the entire working copy needs recovery.
@@ -34,6 +50,17 @@ MOVED_WORKSPACE_ROOTS = {
 
 def artifact_path(value: str | Path, repo: Path = REPO) -> Path:
     path = Path(value)
+    if not path.is_relative_to(repo):
+        for original in restored_origins(repo):
+            if original != repo and path.is_relative_to(original):
+                path = repo / path.relative_to(original)
+                break
+    if path.is_relative_to(repo):
+        relative = path.relative_to(repo)
+        if relative.parts and relative.parts[0] not in {
+            ".workspace", ".tmp", "handoff", "research", "R", "reviews", "konocomics-production-audit-agent-ready",
+        }:
+            return path  # Current storage/code paths have no legacy relocation.
     persistent = repo / "data/local/catalog-authoring"
     artifacts = persistent / "artifacts"
     mappings = {

@@ -8,6 +8,7 @@ POLICY = "narrative-tone-exhaustion-v1"
 EXTRACTOR = "narrativeToneExhaustionV1"
 REASON = "NARRATIVE_TONE_RESEARCH_EXHAUSTED"
 NT_BLOCKERS = {"NARRATIVE_COVERAGE_INCOMPLETE", "TONE_COVERAGE_INCOMPLETE"}
+HANDOFF = "factor-collection-handoff-v1"
 
 
 def require(ok, message):
@@ -30,6 +31,62 @@ def validate_record(work):
         panel.exact_dict(attempt, {"sourceUrl", "gap", "outcome", "observation"}, "N/T research attempt")
         require(attempt["sourceUrl"] in urls and attempt["gap"] in {"narrative", "tone"}, "N/T research attempt must bind a same-work frozen source and N/T gap")
         require(attempt["outcome"] in {"insufficient", "unavailable", "duplicate", "resolved"} and isinstance(attempt["observation"], str) and bool(attempt["observation"].strip()), "N/T research attempt lacks its actual outcome")
+    return record
+
+
+def bind_collection_handoff(path, reference, bindings=None):
+    """Carry the collector's already saved receipt, including an expected missing sidecar."""
+    import validate_factor_panel as panel
+    from authoring_paths import artifact_path
+    receipt = path.with_name("collection-events.jsonl")
+    require(receipt.is_file() or "collectionReceiptSha256" not in reference,
+            "INPUT_NEEDS_REPAIR: collection completion receipt missing")
+    if not receipt.is_file():
+        return reference
+    body = receipt.read_bytes()
+    sha = panel.sha256_bytes(body)
+    require(reference.get("collectionReceiptSha256", sha) == sha,
+            "INPUT_NEEDS_REPAIR: collection completion receipt SHA mismatch")
+    rows = [json.loads(line) for line in body.decode("utf-8").splitlines() if line.strip()]
+    matches = [row for row in rows if row.get("kind") == "research-written" and row.get("sha256") == reference["sha256"]
+               and isinstance(row.get("path"), str) and artifact_path(row["path"]).resolve() == path.resolve()]
+    require(len(matches) <= 1 and (matches or "collectionReceiptSha256" not in reference),
+            "INPUT_NEEDS_REPAIR: collection completion receipt identity mismatch")
+    if not matches:
+        return reference  # Older manually stored collections have no completion receipt.
+    reference = {**reference, "collectionReceiptSha256": sha}
+    expected = matches[0].get("handoffSha256")
+    if expected is not None:
+        handoff = path.with_name("COLLECTION-HANDOFF.json")
+        require(reference.get("handoffSha256", expected) == expected and handoff.is_file()
+                and panel.sha256(handoff) == expected, "INPUT_NEEDS_REPAIR: collection handoff SHA mismatch (missing or changed)")
+        reference["handoffSha256"] = expected
+    if bindings is not None:
+        bindings[receipt.resolve()] = sha
+    return reference
+
+
+def collection_record(path, reference, work, research, bindings):
+    """Transfer recorded research only; never infer exhaustion from missing axes."""
+    import validate_factor_panel as panel
+    reference = bind_collection_handoff(path, reference, bindings)
+    handoff = path.with_name("COLLECTION-HANDOFF.json")
+    require(handoff.is_file() or "handoffSha256" not in reference,
+            "INPUT_NEEDS_REPAIR: collection handoff missing")
+    if not handoff.is_file():
+        return None
+    digest = panel.sha256(handoff)
+    require(reference.get("handoffSha256", digest) == digest,
+            "INPUT_NEEDS_REPAIR: collection handoff SHA mismatch")
+    value = panel.exact_dict(panel.read_json(handoff),
+                            {"schemaVersion", "researchSha256", "narrativeToneExhaustion"}, "collection handoff")
+    require(value["schemaVersion"] == HANDOFF and value["researchSha256"] == reference["sha256"],
+            "INPUT_NEEDS_REPAIR: collection handoff research mismatch")
+    record = value["narrativeToneExhaustion"]
+    validate_record({**work, "research": research, "narrativeToneExhaustion": record})
+    require("narrativeToneExhaustion" not in work or work["narrativeToneExhaustion"] == record,
+            "INPUT_NEEDS_REPAIR: conflicting N/T handoff and job records")
+    bindings[handoff.resolve()] = digest
     return record
 
 

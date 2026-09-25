@@ -1,8 +1,11 @@
 """Isolated runner regressions: no model, live publication, or STATE writes."""
 import json
+import os
 import sqlite3
 import tempfile
+import subprocess
 import unittest
+import zlib
 from contextlib import closing
 from pathlib import Path
 from types import SimpleNamespace
@@ -14,6 +17,223 @@ from catalog_readback_identity import execution_identity, readback_matches
 
 
 class RunnerTest(unittest.TestCase):
+    def test_preserve_shares_reads_across_snapshots_but_not_stores_or_calls(self):
+        first, second = self.repo / "first.txt", self.repo / "second.txt"
+        first.write_bytes(b"same original bytes")
+        second.write_bytes(first.read_bytes())
+        store = Workspace(self.repo)
+        store.save([first], "first")
+        store.save([second], "second")
+        store.backup()
+        counts, metrics = {first: 0, second: 0}, {}
+        original = Path.read_bytes
+        def read(path):
+            if path in counts:
+                counts[path] += 1
+            return original(path)
+        with patch.object(Path, "read_bytes", read), patch.object(Workspace, "backup", side_effect=AssertionError("unneeded backup")):
+            receipt = runner.preserve([first, second], "reuse", reuse=True, metrics=metrics)
+        self.assertEqual(counts, {first: 2, second: 2})
+        self.assertEqual(metrics["hashCalls"], 4)
+        self.assertEqual(len(receipt["references"]), 2)
+        for name in ("source", "backup"):
+            self.assertEqual(metrics[name]["blobs"], 1)
+            self.assertEqual(metrics[name]["snapshots"], 2)
+            self.assertEqual(metrics[name]["membershipRows"], 2)
+        # A later generation must have a fresh read view, even at the same path.
+        third = self.repo / "third.txt"
+        third.write_bytes(b"new generation")
+        store.save([third], "third")
+        metrics = {}
+        runner.preserve([first, second, third], "rotate", reuse=True, metrics=metrics)
+        self.assertEqual(metrics["backup"]["snapshots"], 3)
+        backup = self.repo / "data/local/catalog-authoring/backups/latest.sqlite"
+        with closing(sqlite3.connect(backup)) as db, db:
+            db.execute("drop trigger blob_no_update")
+            db.execute("update blob set content=x'00' where sha256=?", (runner.panel.sha256(first),))
+        with self.assertRaises((ValueError, zlib.error)):
+            runner.preserve([first], "corrupt new generation", reuse=True)
+
+    def test_preserve_rejects_source_backup_membership_and_blob_corruption(self):
+        for store_name in ("workspace.sqlite", "backups/latest.sqlite"):
+            for damage in ("blob", "entry"):
+                with self.subTest(store=store_name, damage=damage), tempfile.TemporaryDirectory() as folder:
+                    repo = Path(folder)
+                    path = repo / "original.txt"
+                    path.write_bytes(b"original")
+                    extra = repo / "other.txt"
+                    extra.write_bytes(b"also in the manifest")
+                    store = Workspace(repo)
+                    store.save([path, extra], "original")
+                    store.backup()
+                    database = repo / "data/local/catalog-authoring" / store_name
+                    with closing(sqlite3.connect(database)) as db, db:
+                        if damage == "blob":
+                            db.execute("drop trigger blob_no_update")
+                            db.execute("update blob set content=x'00'")
+                        else:
+                            db.execute("drop trigger entry_no_update")
+                            db.execute("update entry set path='different.txt' where path='other.txt'")
+                    with patch.object(runner, "REPO", repo), self.assertRaises((ValueError, zlib.error)):
+                        runner.preserve([path], "must fail", reuse=True)
+
+    def test_preserve_rejects_actual_byte_changes_even_with_restored_mtime(self):
+        path = self.repo / "original.txt"
+        path.write_bytes(b"old bytes")
+        runner.preserve([path], "original", reuse=True)
+        original = Workspace._verify_groups
+        def changed(workspace, *args, **kwargs):
+            original(workspace, *args, **kwargs)
+            if workspace.database.name == "latest.sqlite":
+                stamp = path.stat()
+                path.write_bytes(b"new bytes")
+                os.utime(path, ns=(stamp.st_atime_ns, stamp.st_mtime_ns))
+        with patch.object(Workspace, "_verify_groups", changed), self.assertRaisesRegex(ValueError, "changed during"):
+            runner.preserve([path], "race", reuse=True)
+        # Saving a missing member cannot silently replace the initial inventory.
+        missing = self.repo / "missing.txt"
+        missing.write_bytes(b"before save")
+        save = Workspace.save
+        def changed_before_save(workspace, paths, label):
+            missing.write_bytes(b"during save")
+            return save(workspace, paths, label)
+        with patch.object(Workspace, "save", changed_before_save), self.assertRaisesRegex(ValueError, "differ"):
+            runner.preserve([missing], "missing race", reuse=True)
+
+    def test_job_research_bindings_are_assembled_without_cli_and_preserve_selection(self):
+        wid = "work-aaaaaaaaaaaaaaaaaaaa"
+        source = self.repo / "research.jsonl"
+        urls = ["https://example.test/selected", "https://example.test/excluded"]
+        source.write_text(json.dumps({"workId": wid, "sources": [{"url": url} for url in urls]}) + "\n", encoding="utf-8")
+        job = self.repo / "job.json"
+        raw = {"schemaVersion": runner.single.JOB, "batchId": "r-test", "works": [{
+            "workId": wid, "sourceBindings": [], "researchRefs": [{"path": str(source), "sha256": runner.panel.sha256(source)}],
+        }]}
+        runner.write(job, raw)
+        self.assertEqual({row["sourceUrl"] for row in runner.assemble_job(job, [])["works"][0]["sourceBindings"]}, set(urls))
+        raw["works"][0]["sourceBindings"] = [{"evidenceId": "explicit-source", "sourceUrl": urls[0]}]
+        runner.write(job, raw)
+        self.assertEqual(runner.assemble_job(job, [])["works"][0]["sourceBindings"], raw["works"][0]["sourceBindings"])
+        extra = self.repo / "extra.jsonl"
+        extra.write_text(json.dumps({"workId": wid, "sources": [{"url": "https://example.test/addition"}]}) + "\n", encoding="utf-8")
+        assembled = runner.assemble_job(job, runner.research_bindings([extra]))
+        self.assertEqual({row["sourceUrl"] for row in assembled["works"][0]["sourceBindings"]}, {urls[0], "https://example.test/addition"})
+
+    def test_collector_handoff_reaches_job_with_exact_sha_and_no_invented_exception(self):
+        wid, isbn = "work-aaaaaaaaaaaaaaaaaaaa", "9781234567897"
+        url = "https://example.test/volume-6"
+        record = {"policy": "narrative-tone-exhaustion-v1", "workId": wid, "representativeIsbn": isbn,
+                  "attempts": [{"sourceUrl": url, "gap": "tone", "outcome": "insufficient", "observation": "Test fixture records a tone gap"}],
+                  "stopReason": "Test-only exhausted source; never production authority"}
+        draft = {"status": "EVIDENCE_FOUND", "title": "Test volume 6", "isbn13": isbn,
+                 "narrativeToneExhaustion": record, "sources": [{"url": url, "sourceFamily": "publisher", "language": "zh",
+                 "entryScope": "volume_6", "workOwned": True, "observation": "Test-only source observation", "limitation": "Fixture, not actual research",
+                 "readAudit": {"access": "partial-body", "author": "", "authorRole": "unknown", "coveredSections": ["description"],
+                               "excludedSections": [], "pageTitle": "Test", "publishedAt": "", "retrievedAt": "2026-09-25", "scopeLocator": "volume 6"}}]}
+        planning = runner.prepare.ROOT / "planning"
+        planning.mkdir(parents=True, exist_ok=True)
+        with tempfile.TemporaryDirectory(prefix="handoff-regression-", dir=planning) as folder:
+            root = Path(folder)
+            script = runner.prepare.REPO / "scripts/catalog_authoring/collect_factor_evidence.mjs"
+            for name, with_record in (("recorded", True), ("no-exception", False)):
+                collection = root / name
+                subprocess.run(["node", str(script), "start", str(collection), wid], check=True, capture_output=True)
+                value = dict(draft)
+                if not with_record:
+                    del value["narrativeToneExhaustion"]
+                (collection / "draft.mjs").write_text("export default " + json.dumps(value, ensure_ascii=False), encoding="utf-8")
+                result = subprocess.run(["node", str(script), "write", str(collection), "draft.mjs"], check=True, capture_output=True)
+                receipt = json.loads(result.stdout)
+                research = collection / "research.jsonl"
+                before = research.read_bytes()
+                source_job, assembled_job = root / "source-job.json", root / "assembled.json"
+                runner.write(source_job, {"schemaVersion": runner.single.JOB, "batchId": "r-test", "works": [{
+                    "workId": wid, "title": draft["title"], "representativeIsbn": isbn,
+                    "researchRefs": [{"path": str(research), "sha256": runner.panel.sha256(research)}], "sourceBindings": [],
+                    "evidence": [], "priorClaims": [], "priorDecisions": [],
+                }]})
+                if with_record:
+                    handoff = collection / "COLLECTION-HANDOFF.json"
+                    original_handoff = handoff.read_bytes()
+                    self.assertEqual(receipt["handoffSha256"], runner.panel.sha256(handoff))
+                    handoff.unlink()
+                    with self.assertRaisesRegex(ValueError, "INPUT_NEEDS_REPAIR: collection handoff"):
+                        runner.assemble_job(source_job, [])
+                    handoff.write_bytes(original_handoff)
+                runner.write(assembled_job, runner.assemble_job(source_job, []))
+                bindings = {}
+                work = runner.prepare.read_job(assembled_job, bindings)["works"][0]
+                self.assertEqual(work.get("narrativeToneExhaustion"), record if with_record else None)
+                self.assertEqual(work["research"]["sources"][0]["language"], "zh")
+                self.assertEqual(work["supplementalEvidence"][0]["sourceUrl"], url)
+                self.assertEqual(research.read_bytes(), before)
+                validation = self.repo / name
+                validation.mkdir()
+                (validation / "research.jsonl").write_bytes(before)
+                if with_record:
+                    handoff = collection / "COLLECTION-HANDOFF.json"
+                    (validation / handoff.name).write_bytes(handoff.read_bytes())
+                    self.assertIn(handoff.resolve(), bindings)
+                    captured = runner.prepare.capture_bindings(assembled_job)
+                    self.assertIn(handoff.name, captured[0]["files"])
+                    handoff.write_text("{}", encoding="utf-8")
+                    with self.assertRaisesRegex(ValueError, "handoff SHA mismatch"):
+                        runner.prepare.read_job(assembled_job)
+                    with self.assertRaisesRegex(ValueError, "handoff SHA mismatch"):
+                        runner.assemble_job(assembled_job, [])
+                command = ["node", str(script.with_name("validate_factor_collection_batch.mjs")),
+                           "--research=" + str(validation / "research.jsonl"), "--require-source-audit"]
+                result = subprocess.run(command, check=True, capture_output=True, text=True, encoding="utf-8")
+                self.assertEqual(json.loads(result.stdout)["status"], "PASS")
+                if with_record:
+                    bad = runner.panel.read_json(validation / "COLLECTION-HANDOFF.json")
+                    bad["narrativeToneExhaustion"]["stopReason"] = ""
+                    runner.write(validation / "COLLECTION-HANDOFF.json", bad)
+                    failed = subprocess.run(command, capture_output=True, text=True, encoding="utf-8")
+                    self.assertNotEqual(failed.returncode, 0)
+                    self.assertIn("stop reason missing", failed.stderr)
+
+    def test_checked_storage_reuses_verified_bytes_and_repairs_only_receipt_backup(self):
+        decision = self.run_root / "decisions.json"
+        runner.write(decision, {"fixture": True})
+        config = {**self.config, "decisionsPath": str(decision)}
+        runner.write(self.run_root / "RUN.json", config)
+        checked = {"status": "HOLD"}
+        runner.write(self.run_root / "CHECKED.json", checked)
+        stored = runner.store_checked(self.run_root, config, checked)
+        databases = [self.repo / "data/local/catalog-authoring/workspace.sqlite", self.repo / "data/local/catalog-authoring/backups/latest.sqlite"]
+        before = [runner.panel.sha256(path) for path in databases]
+        with patch.object(runner, "preserve", wraps=runner.preserve) as save:
+            self.assertEqual(runner.store_checked(self.run_root, config, checked), stored)
+            save.assert_not_called()
+        self.assertEqual([runner.panel.sha256(path) for path in databases], before)
+        decision.write_text("changed", encoding="utf-8")
+        with self.assertRaisesRegex(ValueError, "differ from saved snapshot"):
+            runner.store_checked(self.run_root, config, checked)
+
+    def test_checked_receipt_backup_failure_repairs_only_missing_receipt_once(self):
+        decision = self.run_root / "decisions.json"
+        runner.write(decision, {"fixture": True})
+        config = {**self.config, "decisionsPath": str(decision)}
+        runner.write(self.run_root / "RUN.json", config)
+        checked = {"status": "HOLD"}
+        runner.write(self.run_root / "CHECKED.json", checked)
+        preserve = runner.preserve
+        def fail_receipt(paths, label):
+            if label == "single-pass:check-receipt":
+                raise OSError("receipt backup interrupted")
+            return preserve(paths, label)
+        with patch.object(runner, "preserve", side_effect=fail_receipt):
+            with self.assertRaisesRegex(OSError, "receipt backup interrupted"):
+                runner.store_checked(self.run_root, config, checked)
+        with patch.object(runner, "preserve", wraps=preserve) as save:
+            runner.store_checked(self.run_root, config, checked)
+            self.assertEqual(save.call_count, 1)
+            self.assertEqual(save.call_args.args[0], [self.run_root / "CHECK-STORAGE.json"])
+        with patch.object(runner, "preserve", wraps=preserve) as save:
+            runner.store_checked(self.run_root, config, checked)
+            save.assert_not_called()
+
     def test_same_prepare_resumes_auto_and_explicit_collections_but_rejects_option_change(self):
         wid = "work-aaaaaaaaaaaaaaaaaaaa"
         automatic, explicit = self.repo / "collection", self.repo / "supplement"
@@ -118,6 +338,39 @@ class RunnerTest(unittest.TestCase):
         self.assertFalse((self.run_root / "FINISHED.json").exists())
         self.assertFalse((self.root / "STATE.json").exists())
         self.assertEqual(runner.panel.read_json(self.run_root / "CHECKED.json")["status"], "HOLD")
+
+    def test_same_prepare_reuses_storage_and_saves_only_new_members(self):
+        runner.write(self.frozen / "panel-input/authoring-job.json", {"works": [{"workId": "work-aaaaaaaaaaaaaaaaaaaa"}]})
+        args = SimpleNamespace(action="prepare", run_root=self.run_root, job=None, decisions=None, retry_model=False)
+        identity = {"inputManifestSha256": runner.panel.sha256(self.frozen / "panel-input/PANEL-INPUT.sha256")}
+        with patch.object(runner, "ensure_frozen", return_value=self.frozen), \
+             patch.object(runner, "prepare_session_input", return_value=identity) as generate, patch("builtins.print"):
+            with patch.object(Workspace, "backup", side_effect=OSError("backup unavailable")):
+                with self.assertRaisesRegex(OSError, "backup unavailable"):
+                    runner.run_job(args)
+            with patch.object(Workspace, "save", side_effect=AssertionError("duplicate snapshot")):
+                runner.run_job(args)  # Repair the already saved input's missing backup only.
+            databases = [self.repo / "data/local/catalog-authoring/workspace.sqlite", self.repo / "data/local/catalog-authoring/backups/latest.sqlite"]
+            before = [runner.panel.sha256(p) for p in databases]
+            with patch.object(Workspace, "save", side_effect=AssertionError("duplicate snapshot")), \
+                 patch.object(Workspace, "backup", side_effect=AssertionError("duplicate backup")), \
+                 patch.object(runner, "write", side_effect=AssertionError("duplicate write")):
+                runner.run_job(args)
+            self.assertEqual(before, [runner.panel.sha256(p) for p in databases])
+            generate.assert_called_once()
+            extra = self.run_root / "new-observation.txt"
+            extra.write_text("new test-only information")
+            original = Workspace.save
+            saved = []
+            def save(workspace, paths, label):
+                saved.append(paths)
+                return original(workspace, paths, label)
+            with patch.object(Workspace, "save", save):
+                runner.run_job(args)
+            self.assertEqual(saved, [[extra]])
+            (self.frozen / "panel-input/PANEL-INPUT.sha256").write_text("changed")
+            with self.assertRaisesRegex(ValueError, "prepared input changed"):
+                runner.run_job(args)
 
     def test_prior_bundles_bind_freeze_input_and_reject_changed_resume(self):
         originals = [self.repo / "original-a", self.repo / "original-b"]

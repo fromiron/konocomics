@@ -25,7 +25,9 @@ class CoverageExceptionTest(unittest.TestCase):
             codes = ["GENRE_COVERAGE_MISSING", "THEME_COVERAGE_MISSING", "TARGET_IDENTITY_UNRESOLVED", "RECOMMENDATION_CONTEXT_MISSING", "BLOCKED_SAFETY", *sorted(nt.NT_BLOCKERS)]
             self.assertEqual(nt.filter_blockers(codes, record), [code for code in codes if code != "NARRATIVE_COVERAGE_INCOMPLETE"])
             self.assertEqual(nt.filter_blockers(codes, None), codes)
-            for change in ({"workId": "other"}, {"representativeIsbn": "other"}, {"attempts": []}, {"attempts": [{**record["attempts"][0], "sourceUrl": "https://example.test/foreign"}]}):
+            for change in ({"workId": "other"}, {"representativeIsbn": "other"}, {"attempts": []}, {"stopReason": ""},
+                           {"attempts": [{**record["attempts"][0], "gap": "art"}]},
+                           {"attempts": [{**record["attempts"][0], "sourceUrl": "https://example.test/foreign"}]}):
                 bad = copy.deepcopy(work)
                 bad["narrativeToneExhaustion"].update(change)
                 with self.assertRaises(ValueError):

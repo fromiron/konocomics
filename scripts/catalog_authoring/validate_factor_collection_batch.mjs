@@ -1,4 +1,5 @@
 import assert from "node:assert/strict";
+import { createHash } from "node:crypto";
 import { fileURLToPath } from "node:url";
 import { existsSync, readFileSync, readdirSync } from "node:fs";
 import { dirname, isAbsolute, join, relative, resolve } from "node:path";
@@ -167,7 +168,7 @@ function validateSource(source, workId, requireSourceAudit = false) {
     ["publisher", "independent-review", "other"].includes(source.sourceFamily),
     `${workId} sourceFamily`,
   );
-  assert(["ja", "ko", "en"].includes(source.language), `${workId} language`);
+  assert(["ja", "ko", "en", "zh"].includes(source.language), `${workId} language`);
   const scope = typeof source.entryScope === "string" ? source.entryScope.replaceAll("_", " ") : "";
   const range =
     /^(?:entry )?([1-9]\d*)(?: ([1-9]\d*))? volumes?$/u.exec(scope) ??
@@ -250,6 +251,61 @@ export function validateResearchRow(row, seenWorkIds, requireSourceAudit = false
   return row.sources.length;
 }
 
+export function validateExhaustionRecord(record, row) {
+  assert.deepEqual(Object.keys(record).sort(), [
+    "attempts",
+    "policy",
+    "representativeIsbn",
+    "stopReason",
+    "workId",
+  ]);
+  assert.equal(record.policy, "narrative-tone-exhaustion-v1");
+  assert.equal(record.workId, row.workId);
+  assert.equal(typeof row.isbn13, "string", "N/T handoff requires the representative ISBN");
+  assert.equal(record.representativeIsbn, row.isbn13);
+  assert(
+    typeof record.stopReason === "string" && record.stopReason.trim(),
+    "N/T stop reason missing",
+  );
+  assert(Array.isArray(record.attempts) && record.attempts.length, "N/T actual attempts missing");
+  for (const attempt of record.attempts) {
+    assert.deepEqual(Object.keys(attempt).sort(), ["gap", "observation", "outcome", "sourceUrl"]);
+    assert(
+      row.sources.some((source) => source.url === attempt.sourceUrl),
+      "N/T same-work source missing",
+    );
+    assert(["narrative", "tone"].includes(attempt.gap), "N/T gap invalid");
+    assert(
+      ["insufficient", "unavailable", "duplicate", "resolved"].includes(attempt.outcome),
+      "N/T outcome invalid",
+    );
+    assert(
+      typeof attempt.observation === "string" && attempt.observation.trim(),
+      "N/T observation missing",
+    );
+  }
+}
+
+export function validateCollectionHandoff(researchPath, rows) {
+  const path = join(dirname(researchPath), "COLLECTION-HANDOFF.json");
+  if (!existsSync(path)) return;
+  const handoff = JSON.parse(readFileSync(path, "utf8"));
+  assert.deepEqual(Object.keys(handoff).sort(), [
+    "narrativeToneExhaustion",
+    "researchSha256",
+    "schemaVersion",
+  ]);
+  assert.equal(handoff.schemaVersion, "factor-collection-handoff-v1");
+  assert.equal(
+    handoff.researchSha256,
+    createHash("sha256").update(readFileSync(researchPath)).digest("hex"),
+    "INPUT_NEEDS_REPAIR: handoff research SHA mismatch",
+  );
+  const matches = rows.filter((row) => row.workId === handoff.narrativeToneExhaustion.workId);
+  assert.equal(matches.length, 1, "INPUT_NEEDS_REPAIR: handoff Work mismatch");
+  validateExhaustionRecord(handoff.narrativeToneExhaustion, matches[0]);
+}
+
 function main() {
   const batchRootArg = process.argv
     .find((value) => value.startsWith("--batch-root="))
@@ -302,6 +358,7 @@ function main() {
   }
   if (researchArg) {
     const rows = parseResearch(resolve(researchArg));
+    validateCollectionHandoff(resolve(researchArg), rows);
     assert(rows.length >= 1 && rows.length <= 200, "research requires 1..200 works");
     let sourceCount = 0;
     const seenWorkIds = new Set();
@@ -385,6 +442,7 @@ function main() {
       continue;
     }
     const rows = parseResearch(researchPath);
+    validateCollectionHandoff(researchPath, rows);
     assert.equal(rows.length, targets.length, `chunk ${index} research row count`);
     assert.deepEqual(
       rows.map((row) => row.workId),

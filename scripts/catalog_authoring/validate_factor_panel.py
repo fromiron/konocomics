@@ -624,6 +624,7 @@ def load_prior_authority(
     extra_bundles: tuple[tuple[Path, str], ...] = (),
     work_ids: set[str] | None = None,
     *, _active_roots: frozenset[Path] = frozenset(),
+    _sealed_inputs: dict[Path, Path] | None = None,
 ) -> dict[str, object]:
     """Resolve prior claims from manifest-bound source bundles, never labels."""
     from factor_recovery import validate_input_context
@@ -695,8 +696,53 @@ def load_prior_authority(
             raise ValidationError(f"prior bundle manifest binding mismatch: {root}")
         members = {path.relative_to(root).as_posix() for path in root.rglob("*") if path.is_file() and path != manifest}
         verify_manifest(root, manifest, members)
+        compact_path = root / "COMPACT-PUBLICATION.json"
+        if compact_path.is_file():
+            from compact_publication import FORMAT, CATALOG, resolve_reference
+            compact = read_json(compact_path)
+            if compact.get("schemaVersion") != FORMAT:
+                raise ValidationError("unsupported compact prior publication")
+            seen = set()
+            for step in compact["works"]:
+                wid = step["workId"]
+                if wid in seen:
+                    raise ValidationError("duplicate compact prior Work")
+                seen.add(wid)
+                if work_ids is not None and wid not in work_ids:
+                    continue
+                receipt = _safe_child(root, step["receipt"])
+                if sha256(receipt) != step["sha256"]:
+                    raise ValidationError("compact prior receipt changed")
+                saved = read_json(receipt)
+                original_input = resolve_reference(saved["input"])
+                original = resolve_reference(saved["authority"])
+                targets = {row["workId"] for chunk in (original_input / "chunks").glob("chunk-??") for row in read_csv(chunk / "targets.csv", TARGET_FIELDS)}
+                if saved["workId"] != wid or targets != {wid} or (original_input / "PANEL-INPUT.sha256").read_bytes() != (original / "panel-result/chunk-01/PANEL-INPUT.sha256").read_bytes():
+                    raise ValidationError("compact prior frozen/Work binding differs")
+                authority = load_prior_authority(root, extra_bundles=((original, saved["authority"]["sha256"]),),
+                    work_ids={wid}, _active_roots=_active_roots | {root}, _sealed_inputs={original: original_input})
+                for originals in authority["claims"].values():
+                    for claim in originals.values():
+                        add_claim(claim)
+                for source in authority["evidence"].values():
+                    merge_prior_evidence(evidence, source)
+            remaining = None if work_ids is None else work_ids - seen
+            if remaining is None or remaining:
+                baseline_root = resolve_reference(compact["baseline"])
+                if sha256(baseline_root / CATALOG) != compact["sources"]["catalog"]["sha256"]:
+                    raise ValidationError("compact prior baseline differs")
+                authority = load_prior_authority(root, extra_bundles=((baseline_root, compact["baseline"]["sha256"]),),
+                    work_ids=remaining, _active_roots=_active_roots | {root})
+                for originals in authority["claims"].values():
+                    for claim in originals.values():
+                        if claim["workId"] not in seen:
+                            add_claim(claim)
+                for source in authority["evidence"].values():
+                    if source["workId"] not in seen:
+                        merge_prior_evidence(evidence, source)
+            continue
         modern = root / "authorized-evidence-panel-v1"
-        sealed_input = root / "panel-input"
+        sealed_input = (_sealed_inputs or {}).get(root, root / "panel-input")
         sealed_result = root / "panel-result"
         has_sealed_layout = sealed_input.exists() or sealed_result.exists()
         if modern.is_dir() and has_sealed_layout:

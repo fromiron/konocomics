@@ -162,6 +162,17 @@ python scripts/catalog_workspace.py run --label <stage> --input <input-directory
 - 동일 디스크에 둔 별도 폴더는 `.tmp` 정리 사고에는 유용하지만 디스크 고장·랜섬웨어의 독립 백업이 아니다. 다른 디스크나 외부 백업은 별도 목적지 승인이 필요하며, 이번 전환은 로컬 백업까지만 수행한다.
 - 정상 도구의 append-only 제약은 OS 관리자나 임의 SQL 조작을 막는 보안 경계가 아니다. 실행 도구의 제한된 경로 처리와 별도 백업을 함께 유지한다.
 
+## Compact 배치 저장과 복원 — 2026-09-25
+
+- batch publisher의 기본 `catalog-compact-publication-v1`은 private catalog/registry 한 쌍을 사용한다. 작품별 두 DB 변경과 승인 plan의 expected-after 검사를 동일한 attached SQLite transaction에서 수행한다. canonical과 기존 publication은 변경하지 않는다.
+- 공통 입력·실행 코드·원본 frozen/판정은 기존 workspace의 정확한 snapshot/member SHA로 참조한다. 새 파일만 저장하고 source와 latest backup에서 원문·membership을 확인한다. 단순 경로 또는 manifest 파일 SHA만으로 원본 보존을 대신하지 않는다.
+- recovery epoch가 실제로 읽는 원래 233 publication과 당시 canonical도 저장한다. 고정된 역사 bundle 자체를 보존하며 사용하지 않는 과거 작업 사본의 lineage까지 다시 추적하지 않는다. 복원 위치가 원래 저장소 내부여도 이미 복원된 경로를 다시 이동하지 않는다.
+- `works/<workId>.json`의 `catalog-compact-work-v1`에는 원본 input/authority 참조, 검토 시각, 승인 plan, before/after 의미 digest, 논리 delta와 expected-after가 있다. 원래 판정을 다시 검증한 planner로 기대 상태를 재구성하므로 actual self-hash만 확인하는 형식이 아니다. 과거 SQLite의 물리 bytes와 같다고 주장하지 않는다.
+- 기본 checkpoint 간격은 10작품(`--checkpoint-every`)이다. 완전히 저장·백업된 checkpoint의 pair와 receipt만 재개의 기준이며 이후 미완료 작업은 같은 불변 intent로 재적용한다. 최종 projection·제품 readback·backup이 완료된 뒤 기존 STATE/completion 경로가 진행한다. 사용자가 지정한 최초 차등 비교는 보존된 5작품으로 제한하며, 시험에서는 중간 재개를 확인할 수 있도록 간격 2를 사용한다.
+- 새 prior reader는 compact receipt가 가리키는 원래 sealed 판정을 읽는다. review는 publication의 `data/source/reviews/`에서 직접 읽는다. readback은 compact 기대 상태를 사용하며 구 full reader도 유지한다. 중간 full publication을 흉내 낸 디렉터리는 만들지 않는다.
+- 기존 `restore`는 compact publication/checkpoint의 정확한 dependency snapshot/member까지 복원한다. 같은 경로의 서로 다른 원본 버전은 `data/local/catalog-authoring/restored-versions/<sha256>`에 함께 남기며 `.catalog-restore.json`으로 원래 절대 경로를 복원 위치에 연결한다. 어느 쪽 원문도 덮어쓰지 않는다. 누락·손상된 snapshot/member/blob은 복원 실패이며 원본 판정을 합성하지 않는다.
+- workspace schema v2의 `entry(snapshot_id)`는 기존 정확한 `COUNT(*)`의 짧은 covering index다. source와 latest/previous/pending 세대는 백업 lock 아래에서 각각 transaction으로 마이그레이션하고 schema/prefix/실제 membership count 검사는 유지한다. 중단된 마이그레이션은 완료된 세대를 그대로 두고 나머지를 이어간다.
+
 ## 이관과 검증
 
 원본 보존 → 현재 자료 저장 → DB 바이트/집합 검증 → 별도 위치의 실제 백업 복원 → 기존 명령 실행·readback 순서다. 이관 중 `.tmp` 원본을 삭제하거나 과거 manifest를 다시 생성하지 않는다.
