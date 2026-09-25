@@ -115,6 +115,7 @@ def reading_view(input_root: Path) -> dict:
             # Exact URL occurrence is navigation, not evidence of claim support.
             projected["rawLookupPaths"] = [item["path"] for body, item in captures
                 if url and (url in (item.get("url"), item.get("resolvedUrl")) or url.encode("utf-8") in body)]
+            projected["rawAccess"] = "frozen-raw-available" if projected["rawLookupPaths"] else "observations-only"
             sources.append(projected)
         bound_urls = {s["sourceUrl"] for s in sources}
         works.append({
@@ -123,6 +124,7 @@ def reading_view(input_root: Path) -> dict:
             "unboundCollectorObservations": [{k: v for k, v in s.items() if k != "claimCandidates"}
                 for s in observations if s.get("url", s.get("sourceUrl")) not in bound_urls],
             "priorClaims": row["priorClaims"], "priorDecisions": row["priorDecisions"],
+            **({"narrativeToneExhaustion": row["narrativeToneExhaustion"]} if "narrativeToneExhaustion" in row else {}),
         })
     indexed_paths = {item[key] for _, item in captures for key in ("path", "receiptPath")}
     routine = {"draft.mjs", "collection-session.json", "collection-events.jsonl", "research.jsonl"}
@@ -137,6 +139,11 @@ def reading_view(input_root: Path) -> dict:
         "inputManifestSha256": panel.sha256(input_root / "PANEL-INPUT.sha256"),
         "contracts": contracts, "works": works,
         "rawCaptures": [item for _, item in captures],
+        "inputAccess": {
+            "rawCaptureCount": len(captures),
+            "sourcesWithoutRawLookup": sum(not source["rawLookupPaths"] for work in works for source in work["sources"]),
+            "limitation": "Observations-only means no indexed raw lookup in this input. It does not invalidate the observation, prove evidence absence or automatically require HOLD.",
+        },
         "additionalProvenanceFiles": additional,
         "authorityContractPath": "contracts/09-catalog-authoring-authority.md",
         "priorAuthorityPaths": [name for name in ("prior-authority.json", "external-prior-authority.json") if (input_root / name).is_file()],

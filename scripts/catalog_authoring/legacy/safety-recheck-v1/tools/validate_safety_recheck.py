@@ -35,11 +35,14 @@ REVIEW_KEYS = {
 CHUNK_FILES = {"evidence.csv", "claims.csv", "REVIEW.json", "REPORT.md", "MANIFEST.sha256"}
 SOURCE_TYPES = {"publisher", "rakuten", "manual"}
 AFFIRMATIVE_KINDS = {
+    "non-pornographic-work",
     "official-non-adult-label",
     "licensed-general-audience-label",
     "mainstream-selection-and-manga-category",
 }
 CLASSIFICATIONS = {
+    "non-pornographic-work": "non-porn",
+    "pornographic-work": "porn",
     "official-non-adult-label": "non-adult",
     "licensed-general-audience-label": "non-adult",
     "mainstream-selection-and-manga-category": "non-adult",
@@ -47,6 +50,7 @@ CLASSIFICATIONS = {
     "adult-or-scope-excluded": "adult",
 }
 BLOCK_REASONS = {
+    "SAFETY_PORNOGRAPHIC_WORK",
     "SAFETY_EVIDENCE_INSUFFICIENT",
     "SAFETY_CLASSIFICATION_AMBIGUOUS",
     "SAFETY_ADULT_OR_SCOPE_EXCLUDED",

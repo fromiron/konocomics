@@ -162,7 +162,12 @@ class WorkspaceTest(unittest.TestCase):
     def test_failed_command_retains_input_and_partial_result(self):
         output = self.repo / "data/local/catalog-authoring/artifacts/output"
         command = [sys.executable, "-c", "import pathlib,sys; p=pathlib.Path(sys.argv[1]); p.mkdir(); (p/'failure.txt').write_text('real partial output'); sys.exit(7)", str(output)]
-        self.assertEqual(recorded_run(command, [self.inputs], [output], "failure", self.workspace), 7)
+        reported = {}
+        self.assertEqual(recorded_run(command, [self.inputs], [output], "failure", self.workspace,
+                                      receipt_out=reported), 7)
+        self.assertEqual(set(reported["timingsSeconds"]), {"inputDiscovery", "inputSave", "inputBackup", "command",
+                                                           "outputSave", "operationSave", "outputBackup", "total"})
+        self.assertEqual(reported["backup"]["status"], "BACKED_UP")
         self.assertEqual(self.workspace.verify()["snapshots"], 3)
         with closing(self.workspace.connect()) as db:
             label = db.execute("SELECT label FROM snapshot ORDER BY id DESC LIMIT 1").fetchone()[0]
@@ -213,6 +218,31 @@ class WorkspaceTest(unittest.TestCase):
                     destination = repo / f"restore-{snapshot['snapshotId']}"
                     restored.restore(snapshot["snapshotId"], destination)
                     self.assertEqual((destination / "original.txt").read_bytes(), expected)
+
+    def test_backup_retries_transient_windows_reader(self):
+        self.workspace.save([self.inputs], "first")
+        self.workspace.backup()
+        self.workspace.backup()
+        self.file.write_bytes(b"next observation")
+        saved = self.workspace.save([self.inputs], "next")
+        replace = os.replace
+        attempts = 0
+
+        def busy_once(source, target):
+            nonlocal attempts
+            if source.name == "latest.sqlite" and target.name == "previous.sqlite":
+                attempts += 1
+                if attempts == 1:
+                    error = PermissionError("backup reader still open")
+                    error.winerror = 32
+                    raise error
+            replace(source, target)
+
+        with patch("catalog_workspace.os.replace", side_effect=busy_once):
+            receipt = self.workspace.backup()
+        self.assertEqual(attempts, 2)
+        self.assertEqual(receipt["latestSnapshotId"], saved["snapshotId"])
+        Workspace(self.repo, Path(receipt["destination"])).verify_saved(saved, [self.inputs])
 
     def test_incomplete_backup_rotation_is_retained_and_rejected(self):
         self.workspace.save([self.inputs], "first")

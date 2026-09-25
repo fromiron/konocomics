@@ -1,15 +1,12 @@
 import { resolve } from "node:path";
 import { pathToFileURL } from "node:url";
 
-import {
-  AXIS_IDS,
-  COVERAGE_THRESHOLDS,
-  PROMOTION_REQUIRED_COVERAGE_GROUPS,
-} from "../src/domain/catalog/constants";
+import { AXIS_IDS } from "../src/domain/catalog/constants";
 import {
   calculateAxisCorrelations,
   calculateAxisValueRanges,
   calculateWorkCoverage,
+  promotionCoverageFailures,
 } from "../src/domain/catalog/coverage";
 import { runCatalogPipelineFromAuthority } from "./catalog/pipeline";
 import { formatSourceIssue, hasErrors } from "./catalog/report";
@@ -41,9 +38,7 @@ export function reportCoverage(
     if (!compact) console.log("workId\tgenre\ttheme\tnarrative\ttone\tart\tstatus");
     for (const work of recommendationWorks) {
       const coverage = calculateWorkCoverage(work);
-      const passes = PROMOTION_REQUIRED_COVERAGE_GROUPS.every(
-        (group) => coverage[group] >= COVERAGE_THRESHOLDS[group],
-      );
+      const passes = promotionCoverageFailures(work).length === 0;
       if (passes) passCount += 1;
       else failCount += 1;
       if (!compact || !passes)

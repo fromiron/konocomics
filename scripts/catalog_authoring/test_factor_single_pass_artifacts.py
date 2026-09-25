@@ -3,6 +3,8 @@ import json
 import shutil
 import tempfile
 import unittest
+import copy
+import subprocess
 from pathlib import Path
 from authoring_paths import REPO, ROOT, LEGACY, artifact_path
 import factor_single_pass as single
@@ -20,6 +22,52 @@ class SinglePassArtifactsTest(unittest.TestCase):
             raise unittest.SkipTest("Preserved Candy v3 artifact unavailable")
         cls.input = cls.run_root / "frozen/panel-input"
         cls.wid = "work-593252c1d560872fb254"
+
+    def test_nt_exception_check_publish_and_product_readback_preserve_unknown(self):
+        """Private copies and explicit test decisions, never a new model attestation."""
+        import prepare_factor_batch as prepare
+        import catalog_authoring_runner as runner
+        import coverage_exception as nt
+        config = panel.read_json(self.run_root / "RUN.json")
+        baseline, registry = artifact_path(config["baselineRoot"]), artifact_path(config["registryPath"])
+        protected = [REPO / "data/source/catalog.sqlite", ROOT / "STATE.json", baseline / "catalog-expanded.candidate.sqlite", registry]
+        before = {path: panel.sha256(path) for path in protected}
+        original_input = {path: panel.sha256(path) for path in self.input.rglob("*") if path.is_file()}
+        job = panel.read_json(self.input / "authoring-job.json")
+        job["batchId"] = "r-nt-exception-regression"
+        work = job["works"][0]
+        work["narrativeToneExhaustion"] = {
+            "policy": nt.POLICY, "workId": self.wid, "representativeIsbn": work["representativeIsbn"],
+            "attempts": [{"sourceUrl": work["research"]["sources"][0]["url"], "gap": group, "outcome": "insufficient", "observation": "Test-only exhaustion fixture; not a real research attestation"} for group in ("narrative", "tone")],
+            "stopReason": "Test-only eligibility exception, never publish this fixture to canonical",
+        }
+        with tempfile.TemporaryDirectory(prefix="nt-exception-regression-") as folder:
+            run = Path(folder)
+            prepare.write_json(run / "job.json", job)
+            prepare.freeze(run / "job.json", baseline, registry, run / "frozen",
+                           recovery_epoch=artifact_path(config["recoveryEpoch"]) if config.get("recoveryEpoch") else None)
+            value = copy.deepcopy(panel.read_json(self.publication / "authorized-evidence-panel-v1/result/followup-panel-output-v1/chunk-01/adjudication.json"))
+            value["inputManifestSha256"] = panel.sha256(run / "frozen/panel-input/PANEL-INPUT.sha256")
+            decision = value["works"][0]
+            nt_axes = panel.NARRATIVE | panel.TONE
+            decision["claims"] = [row for row in decision["claims"] if row["factKey"] not in {"axis:" + axis for axis in nt_axes}]
+            decision["unknownGroups"] = [{**row, "axes": [axis for axis in row["axes"] if axis not in nt_axes]} for row in decision["unknownGroups"] if set(row["axes"]) - nt_axes]
+            decision["unknownGroups"].append({"axes": sorted(nt_axes), "entryScope": "whole_work", "observation": "Test-only insufficient N/T evidence", "limitation": "Synthetic regression decision; not model authority", "reasonCode": "FACTOR_EVIDENCE_INSUFFICIENT"})
+            prepare.write_json(run / "test-decisions.json", value)
+            checked = runner.check_result(run, {"decisionsPath": str(run / "test-decisions.json"), "decisionsSha256": panel.sha256(run / "test-decisions.json")})
+            self.assertEqual(checked["status"], "READY_FOR_PUBLICATION")
+            sealed = Path(checked["sealedRoot"])
+            self.assertEqual(panel.read_csv(sealed / "panel-result/chunk-01/promotion-ledger.csv", panel.PROMOTION_FIELDS)[0]["reasonCode"], nt.REASON)
+            publication = run / "publication"
+            prepare.publisher.publish_batch(run / "frozen/panel-input", sealed / "panel-result", baseline / "catalog-expanded.candidate.sqlite", registry,
+                                             sealed / "safety-recheck-v1", publication, "2026-09-23T00:00:00Z")
+            # Existing readback builds from the private authority DB and exercises
+            # the real recommendation engine, including explicit unknown checks.
+            result = subprocess.run(["node", "--import", "tsx", str(REPO / "scripts/readback-catalog-authoring.mts"), str(publication), str(sealed / "panel-result"), str(run / "readback")],
+                                    cwd=REPO, capture_output=True, text=True, encoding="utf-8")
+            self.assertEqual(result.returncode, 0, result.stdout + result.stderr)
+        self.assertEqual(before, {path: panel.sha256(path) for path in protected})
+        self.assertEqual(original_input, {path: panel.sha256(path) for path in original_input})
 
     def test_general_consumer_accepts_v3_and_scopes_returned_authority(self):
         with tempfile.TemporaryDirectory() as temporary:

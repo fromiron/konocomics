@@ -1,4 +1,7 @@
 """Regression checks using the real operator records and existing publication flow."""
+import shutil
+import sqlite3
+import csv
 import copy
 import argparse
 import contextlib
@@ -16,6 +19,107 @@ import prepare_factor_batch as batch
 
 
 class RetainedOperatorTest(unittest.TestCase):
+    def test_collection_binding_preserves_multiple_roots_and_rejects_bad_capture(self):
+        with tempfile.TemporaryDirectory() as directory:
+            root = Path(directory)
+            wid = "work-aaaaaaaaaaaaaaaaaaaa"
+            refs = []
+            for name in ("original", "supplement"):
+                collection = root / name
+                collection.mkdir()
+                batch.write_json(collection / "collection-session.json", {"workId": wid})
+                research = collection / "research.jsonl"
+                research.write_text(json.dumps({"workId": wid, "sources": []}), encoding="utf-8")
+                refs.append({"path": str(research), "sha256": batch.panel.sha256(research)})
+                body = collection / "capture-same.body"
+                body.write_bytes(name.encode())
+                batch.write_json(collection / "capture-same.json", {"rawPath": body.name, "sha256": batch.panel.sha256(body), "bytes": body.stat().st_size})
+                (collection / "unrelated.txt").write_text("must not be copied")
+            job = root / "job.json"
+            batch.write_json(job, {"works": [{"workId": wid, "researchRefs": refs}]})
+            bindings = batch.capture_bindings(job)
+            self.assertEqual(len(bindings), 2)
+            self.assertNotEqual(bindings[0]["files"]["capture-same.body"], bindings[1]["files"]["capture-same.body"])
+            self.assertTrue(all("unrelated.txt" not in item["files"] for item in bindings))
+            # A revision may replace observations while retaining the original raw dependency.
+            batch.write_json(job, {"works": [{"workId": wid, "researchRefs": [refs[1]]}]})
+            inherited = batch.capture_bindings(job, [root / "original", root / "supplement"])
+            self.assertEqual({item["root"] for item in inherited}, {str(root / name) for name in ("original", "supplement")})
+            self.assertTrue(all("capture-same.body" in item["files"] for item in inherited))
+            batch.write_json(job, {"works": [{"workId": wid, "researchRefs": refs}]})
+            receipt_path = root / "original/capture-same.json"
+            original = batch.panel.read_json(receipt_path)
+            for change in ({"sha256": "0" * 64}, {"bytes": 0}, {"rawPath": "../outside.body"}, {"rawPath": "missing.body"}):
+                batch.write_json(receipt_path, {**original, **change})
+                with self.assertRaises(ValueError):
+                    batch.capture_bindings(job)
+            batch.write_json(receipt_path, original)
+            session = root / "original/collection-session.json"
+            batch.write_json(session, {"workId": "work-bbbbbbbbbbbbbbbbbbbb"})
+            with self.assertRaisesRegex(ValueError, "Work mismatch"):
+                batch.capture_bindings(job)
+            session.unlink()
+            with self.assertRaisesRegex(ValueError, "NEEDS_PROVENANCE_BINDING"):
+                batch.capture_bindings(job)
+            explicit = batch.capture_bindings(job, root / "original")
+            self.assertEqual(explicit[0]["bindingKind"], "explicit-legacy")
+            batch.write_json(session, {"workId": wid})
+            research = root / "original/research.jsonl"
+            research.write_text("\n".join(json.dumps({"workId": item, "sources": []}) for item in (wid, "work-bbbbbbbbbbbbbbbbbbbb")), encoding="utf-8")
+            refs[0]["sha256"] = batch.panel.sha256(research)
+            batch.write_json(job, {"works": [{"workId": wid, "researchRefs": refs}]})
+            self.assertEqual(len(batch.capture_bindings(job)), 2)
+
+    def test_gold_alias_boundary_accepts_applied_delta_and_rejects_changes(self):
+        backend = batch.publisher._backend_module()
+        with tempfile.TemporaryDirectory() as directory:
+            root = Path(directory)
+            baseline, canonical = root / "candidate.sqlite", root / "canonical.sqlite"
+            original = {("gold", "original")}
+            approved = {("gold", f"approved-{i}") for i in range(20)}
+            def database(path, rows):
+                with contextlib.closing(sqlite3.connect(path)) as db, db:
+                    db.execute("create table if not exists source_aliases (workId text, alias text)")
+                    db.execute("delete from source_aliases")
+                    db.executemany("insert into source_aliases values (?,?)", sorted(rows))
+            manifest = {"datasets": {"aliases.csv": {"headerSha256": backend._json_sha(["workId", "alias"]),
+                "rowSha256": [backend._json_sha(list(row)) for row in original], "rowCount": 1}}}
+            resolution = root / "resolution.csv"
+            with resolution.open("w", newline="", encoding="utf-8") as stream:
+                writer = csv.writer(stream)
+                writer.writerow(["workId", "alias", "provenance", "sourceRowId", "action", "collisionWith"])
+                writer.writerows([wid, alias, "source", str(i), "inserted", ""] for i, (wid, alias) in enumerate(sorted(approved)))
+            with mock.patch.object(backend, "_load_gold_manifest", return_value=manifest), \
+                 mock.patch.object(backend, "_find_repo_catalog", return_value=canonical), \
+                 mock.patch.object(backend, "_find_repo_file", return_value=resolution):
+                database(baseline, original | approved)
+                for count in (0, 7, 20):
+                    database(canonical, original | set(sorted(approved)[:count]))
+                    self.assertEqual(backend._validate_alias_boundary(baseline, None, {"gold"})["goldAliasAdditionCount"], 20-count)
+                for bad in ((original | approved) - {("gold", "approved-0")}, original | approved | {("gold", "unauthorized")}, approved):
+                    database(baseline, bad)
+                    with self.assertRaises(backend.PublishError):
+                        backend._validate_alias_boundary(baseline, None, {"gold"})
+
+    def test_latest_metadata_survives_old_candidate_publication(self):
+        backend = batch.publisher._backend_module()
+        with tempfile.TemporaryDirectory() as folder:
+            root = Path(folder)
+            candidate = root / "candidate.sqlite"
+            canonical = REPO / "data/source/catalog.sqlite"
+            shutil.copyfile(canonical, candidate)
+            with contextlib.closing(sqlite3.connect(candidate)) as db, db:
+                db.execute("drop table source_book_metadata")
+                db.execute("pragma user_version=1")
+            before = backend._snapshot_db(candidate)
+            receipt = batch.publisher.preserve_book_metadata(candidate, canonical, backend)
+            after = backend._snapshot_db(candidate)
+            self.assertEqual(receipt["status"], "PRESERVED")
+            self.assertEqual(after["source_book_metadata"], backend._snapshot_db(canonical)["source_book_metadata"])
+            self.assertEqual(before, {key: value for key, value in after.items() if key != "source_book_metadata"})
+            batch.publisher.preserve_book_metadata(candidate, canonical, backend)
+            self.assertEqual(after, backend._snapshot_db(candidate))
+
     def test_freeze_rejects_recursive_provenance_before_reading_or_copying(self):
         with tempfile.TemporaryDirectory() as directory:
             root = Path(directory)

@@ -14,7 +14,7 @@ import {
   writeFileSync,
 } from "node:fs";
 import { tmpdir } from "node:os";
-import { basename, dirname, join, relative, resolve } from "node:path";
+import { basename, dirname, join, relative, resolve, toNamespacedPath } from "node:path";
 import { DatabaseSync } from "node:sqlite";
 import { fileURLToPath } from "node:url";
 
@@ -464,7 +464,7 @@ function databaseTables(db: DatabaseSync, enforceCutoverCounts: boolean): Lexica
 }
 
 function withReadOnlyDatabase<T>(path: string, callback: (db: DatabaseSync) => T) {
-  const db = new DatabaseSync(path, { readOnly: true });
+  const db = new DatabaseSync(toNamespacedPath(path), { readOnly: true });
   try {
     db.exec("PRAGMA foreign_keys = ON");
     return callback(db);
@@ -665,7 +665,7 @@ export function bootstrapCatalogAuthority(repoRoot: string, fromGit: string, out
   const candidate = join(temporaryDirectory, CATALOG_DATABASE_FILE);
   let db: DatabaseSync | undefined;
   try {
-    db = new DatabaseSync(candidate);
+    db = new DatabaseSync(toNamespacedPath(candidate));
     db.exec("PRAGMA foreign_keys = ON; PRAGMA journal_mode = DELETE");
     db.exec(readFileSync(CATALOG_AUTHORITY_SCHEMA_PATH, "utf8"));
     insertTables(db, tables);
@@ -791,7 +791,7 @@ export function finalizeCatalogAuthorityProjection(
   copyFileSync(currentDatabase, candidateDatabase);
   let db: DatabaseSync | undefined;
   try {
-    db = new DatabaseSync(candidateDatabase);
+    db = new DatabaseSync(toNamespacedPath(candidateDatabase));
     db.exec("PRAGMA foreign_keys = ON; PRAGMA journal_mode = DELETE; BEGIN IMMEDIATE");
     try {
       if (hasBookMetadata && db.prepare("PRAGMA user_version").get()?.user_version === 1) {

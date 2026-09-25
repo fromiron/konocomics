@@ -11,6 +11,7 @@ from unittest.mock import patch
 from contextlib import closing
 from pathlib import Path
 from authoring_paths import REPO, ROOT, LEGACY, artifact_path
+import validate_factor_panel as panel
 
 from validate_factor_panel import (
     AXES,
@@ -142,6 +143,20 @@ class FactorPanelValidatorTest(unittest.TestCase):
             (root / "MANIFEST.sha256").write_text(f"{digest(payload)}  nested/../nested/data.txt\n", encoding="ascii", newline="\n")
             with self.assertRaises(ValidationError):
                 verify_manifest(root, root / "MANIFEST.sha256", {"nested/../nested/data.txt"})
+
+    def test_locked_batch_reuses_exact_manifest_verification(self) -> None:
+        with tempfile.TemporaryDirectory() as temporary:
+            root = Path(temporary)
+            payload = root / "data.txt"
+            payload.write_text("fixed", encoding="utf-8")
+            (root / "MANIFEST.sha256").write_text(
+                f"{digest(payload)}  data.txt\n", encoding="ascii", newline="\n"
+            )
+            with patch.object(panel, "sha256", wraps=panel.sha256) as sha:
+                with panel.manifest_verification_cache():
+                    panel.verify_manifest(root, root / "MANIFEST.sha256", {"data.txt"})
+                    panel.verify_manifest(root, root / "MANIFEST.sha256", {"data.txt"})
+            self.assertEqual(sha.call_count, 1)
 
     def setUp(self) -> None:
         self.temporary = tempfile.TemporaryDirectory()

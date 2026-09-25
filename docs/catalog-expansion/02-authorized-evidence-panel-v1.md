@@ -1,5 +1,23 @@
 # Authorized Evidence Panel V1
 
+## 2026-09-23 추가 조사 후 N/T 승격 예외 — narrative-tone-exhaustion-v1
+
+추가 조사·출처 소진 후에도 Narrative/Tone만 부족하면 해당 축을 `unknown`으로 유지하며 추천 승격할 수 있다. Genre/Theme, 작품·대표 ISBN 식별, 추천 맥락, porn/non-porn, 기존 권한·Gold 보호와 입력 결속은 그대로 검사한다. 아래 기본 N≥4/T≥5 규칙에 대한 작품별 예외이며, 추천 엔진의 coverage 임계·0.5 수축·고정 가중치는 바꾸지 않는다. Gold 인증을 부여하지 않는다.
+
+새 v4 job의 해당 work에 선택 필드 `narrativeToneExhaustion`을 넣는다. `policy`, `workId`, `representativeIsbn`, `attempts`, `stopReason`을 기록한다. 각 attempt는 실제 추가 조사한 동결 research의 `sourceUrl`, `gap`(`narrative` 또는 `tone`), `outcome`(`insufficient`/`unavailable`/`duplicate`/`resolved`), 구체적 `observation`이다. 조사한 그룹만 예외 대상이다. 횟수·검색 키워드·문구 자동 매칭으로 완료를 추정하거나 실제 조사 없이 기록을 만들지 않는다. 기존 기록이 있으면 그 실제 결과를 재사용한다. Art·전권·성적 표현강도는 조사 대상으로 추가하지 않는다.
+
+예외는 이 정책이 동결된 새 입력 revision에서만 유효하다. 이전 frozen/PREPARED/판정 SHA를 바꾸거나 새 입력에 옛 판정의 SHA만 교체하지 않는다. 기본 기준이 충족되면 `COVERAGE_COMPLETE`, 예외로 승격하면 `NARRATIVE_TONE_RESEARCH_EXHAUSTED`를 기록한다. 별도 `disposition=hold`는 자동으로 PASS로 바꾸지 않는다.
+
+검사·발행은 동일 결속 기록을 읽는다. 발행은 기존 `source_evidence`에 `narrativeToneExhaustionV1` 기록을 추가하여 실제 조사 기록·입력 SHA·조사 SHA·review reference를 보존한다. 빌드는 현재 AEP review·대표 ISBN·기록 해시가 일치할 때만 `eligibility.narrativeToneException`을 생성한다. 과거 review의 예외는 새 review에 자동 승계되지 않는다. SQL schema/table 추가는 없다. 최종 readback은 unknown 보존 및 예외 메타데이터 유무에 따른 추천 산식 동일성을 확인한다.
+
+
+## 2026-09-21 사용자 확정: 포르노 작품만 제외
+
+Catalog의 성적 콘텐츠 제외 기준은 **porn / non-porn**이다. 성인등급, 폭력·출혈·잔혹 묘사, 노출·성적 장면의 존재 자체는 제외 사유가 아니다. 『베르세르크』처럼 성인등급인 비포르노 서사 만화는 허용한다. 작품의 주된 성격이 포르노인지 확인하며 별도의 비성인·일반 독자 등급 증명 수집은 요구하지 않는다. 해당 작품의 출판사·레이블 분류로 비포르노임이 확인되면 충분하며 그 확인으로 종료한다. 여러 레이블을 가진 출판사는 해당 작품의 레이블만 확인한다. 성적 소재·노출·성적 장면은 작품적 표현으로 허용하며, 에피소드별 표현 강도·무해성·전연령 적합성을 추가 조사하거나 미확인 gap/HOLD 사유로 삼지 않는다. 실제 포르노 분류 충돌이나 작품/레이블 식별 불가가 있을 때만 그 분류를 좁게 확인한다. 추천 선정 맥락과 팩터 근거는 별도 계약이다.
+
+새 판정은 `non-pornographic-work` → `non-porn` / `SAFE`, `pornographic-work` → `porn` / `BLOCKED_SAFETY` (`SAFETY_PORNOGRAPHIC_WORK`)를 사용한다. 판단 불명은 `classification-unresolved`로 보존한다. SAFE는 아동 적합성이나 무폭력 인증이 아니다. 기존 `non-adult` 등 분류는 과거 artifact 호환용으로 유지하며 성인등급만으로 차단한 HOLD는 새 계약을 동결한 revision에서 재검토한다. 과거 frozen·판정은 수정하지 않는다.
+
+
 정책 ID: `authorized-evidence-panel-v1`
 
 적용일: `2026-09-01`
@@ -21,7 +39,7 @@
 
 - canonical Work identity, 일본어 제목, creator, source identity
 - 대표 일반판 volume과 유효 ISBN
-- 비성인 일본 만화 scope와 safety 근거
+- 비포르노 일본 만화 scope 확인(기존 작품 자료 재사용)
 - 특정 팬덤·장르·연령·성별 등 지지 cohort와 선정 근거 URL
 - 해당 만화 작품의 Factor evidence와 실제 관찰 범위. 작품 전체 리뷰·후반 권 자료도 허용하고 권수 확인이나 전권 독해를 의무화하지 않는다
 - evidence ID, 작품 소유 URL, 게시·조회일, 관찰, 한계
@@ -29,6 +47,8 @@
 - 전체 입력 파일의 `PANEL-INPUT.sha256`
 
 선정 근거는 작품이 Catalog에 들어갈 이유를 증명한다. 해당 자료에 실제 사건 구조·빈도·반복 관찰이 없으면 Axis나 Theme 값 근거로 재사용하지 않는다.
+
+같은 리뷰·수상/선정 페이지 URL은 출처 주소이므로 여러 작품이나 새 판정에서 다시 인용할 수 있다. 다만 각 작품이 그 페이지에 실제 등장하는지, 인용한 관찰·범위를 작품별로 확인한다. `evidenceId`는 URL 자체가 아니라 저장된 근거 행의 식별자다. 기존 ID는 Work·source URL/유형과 저장된 추천 문맥 결속(`factKey`, citation, scope, observation, limitation 등)이 동일할 때만 그대로 쓴다. 같은 URL이어도 새 판정이 다른 결속을 만들거나 기존 ID가 선정 provenance 등 다른 용도로 저장돼 있으면 새 ID와 입력 revision을 만들고 기존 행·동결·판정을 보존한다. URL 재인용만으로 새 raw capture가 생긴 것으로 기록하지 않는다.
 
 ## 3. Panel 판정
 
@@ -90,4 +110,4 @@ in-scope 고유 작품은 다음을 모두 만족할 때만 `recommendationVerif
 - `recommendationEligible=true`, `libraryOnly=false`
 - hard blocker가 없음
 
-중복·별칭·실제 비만화·성인·비일본 작품은 별도 추천 Work로 만들지 않는다. 근거를 끝내 확보하지 못한 작품은 지지도 탈락으로 삭제하지 않고 코드·근거·재검토 경로가 있는 `promotionBlocked`로 보존한다.
+중복·별칭·실제 비만화·포르노·비일본 작품은 별도 추천 Work로 만들지 않는다. 근거를 끝내 확보하지 못한 작품은 지지도 탈락으로 삭제하지 않고 코드·근거·재검토 경로가 있는 `promotionBlocked`로 보존한다.

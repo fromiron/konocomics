@@ -56,6 +56,7 @@ MISSING_FIELDS = (
     "candidateOnly", "reviewedByHuman",
 )
 AFFIRMATIVE_KINDS = {
+    "non-pornographic-work",
     "official-non-adult-label", "licensed-general-audience-label",
     "mainstream-selection-and-manga-category",
 }
@@ -200,7 +201,7 @@ def _qualifies(target: dict[str, str], claim: dict[str, str], evidence: dict[str
     return all(
         row["workId"] == target["workId"] and row["sourceType"] in SOURCE_TYPES
         and row["classificationKind"] in AFFIRMATIVE_KINDS
-        and row["audienceClassification"] == "non-adult"
+        and row["audienceClassification"] == ("non-porn" if row["classificationKind"] == "non-pornographic-work" else "non-adult")
         and row["candidateOnly"] == "true" and row["reviewedByHuman"] == "false"
         and not DENY_RE.search(" ".join(row.values()))
         and row["sourceUrl"] in urls

@@ -332,16 +332,26 @@ def _read_csv(path: Path, fields: tuple[str, ...]) -> list[dict[str, str]]:
 
 
 def _validate_schema(con: sqlite3.Connection, label: str) -> None:
-    if con.execute("pragma user_version").fetchone()[0] != 1:
-        raise PublishError(f"{label} SQLite user_version must be 1")
+    version = con.execute("pragma user_version").fetchone()[0]
+    if version not in (1, 2):
+        raise PublishError(f"{label} SQLite user_version must be 1 or 2")
+    expected_ddl = dict(EXPECTED_DDL)
+    expected_tables = set(SOURCE_TABLES)
+    if version == 2:
+        migration = _find_repo_file(Path("scripts/sql/catalog-authority/002-book-metadata.sql"))
+        if migration is None:
+            raise PublishError("book metadata migration is missing")
+        ddl = migration.read_text(encoding="utf-8").split("CREATE TABLE", 1)[1]
+        expected_ddl["source_book_metadata"] = _normalise_sql("CREATE TABLE" + ddl)
+        expected_tables.add("source_book_metadata")
     object_rows = con.execute(
         "select type,name,sql from sqlite_master order by type,name"
     ).fetchall()
     table_rows = [(name, sql) for kind, name, sql in object_rows if kind == "table"]
     actual_tables = {name for name, _sql in table_rows}
-    if actual_tables != SOURCE_TABLES or len(table_rows) != len(SOURCE_TABLES):
+    if actual_tables != expected_tables or len(table_rows) != len(expected_tables):
         raise PublishError(
-            f"{label} schema/table set mismatch: expected={sorted(SOURCE_TABLES)}, "
+            f"{label} schema/table set mismatch: expected={sorted(expected_tables)}, "
             f"actual={sorted(actual_tables)}"
         )
     extras = [
@@ -352,7 +362,7 @@ def _validate_schema(con: sqlite3.Connection, label: str) -> None:
     if extras:
         raise PublishError(f"{label} has non-table SQLite objects: {extras}")
     for name, sql in table_rows:
-        if sql is None or _normalise_sql(sql) != EXPECTED_DDL[name]:
+        if sql is None or _normalise_sql(sql) != expected_ddl[name]:
             raise PublishError(f"{label} DDL mismatch: {name}")
         if " without rowid" in _normalise_sql(sql):
             raise PublishError(f"{label} table must remain a rowid table: {name}")
@@ -859,7 +869,8 @@ def _snapshot_db(path: Path) -> dict[str, tuple[tuple[str, ...], tuple[tuple[obj
     con = sqlite3.connect(_db_uri(path), uri=True)
     try:
         snapshot: dict[str, tuple[tuple[str, ...], tuple[tuple[object, ...], ...]]] = {}
-        for table in sorted(SOURCE_TABLES):
+        tables = {row[0] for row in con.execute("select name from sqlite_master where type='table'")}
+        for table in sorted(tables):
             columns = tuple(row[1] for row in con.execute(f'pragma table_info("{table}")'))
             rows = tuple(
                 tuple(row)
@@ -933,9 +944,14 @@ def _validate_alias_boundary(
     if len(inserted) != sum(1 for row in resolution if row.get("action") == "inserted" and not row.get("collisionWith")):
         raise PublishError("v4-final alias-resolution.csv has duplicate inserted aliases")
     gold_inserted = {row for row in inserted if row[0] in gold_ids}
-    if len(gold_added) != 20 or gold_added != gold_inserted or not gold_added <= candidate_aliases:
+    canonical_gold = {row for row in canonical_aliases if row[0] in gold_ids}
+    approved_hashes = {_json_sha(list(row)) for row in gold_inserted}
+    expected_hashes = set(str(item) for item in expected_rows) | approved_hashes
+    if (len(gold_inserted) != 20 or set(candidate_hashes) != expected_hashes
+            or not canonical_gold <= candidate_gold
+            or gold_added != gold_inserted - canonical_gold):
         raise PublishError(
-            f"Gold alias additions mismatch: expected 20 v4 inserted rows, "
+            f"Gold alias additions mismatch: require original Gold plus exactly 20 approved v4 aliases, "
             f"candidate={len(gold_added)} resolution={len(gold_inserted)}"
         )
     return {
@@ -967,6 +983,8 @@ def _verify_preservation(
     after = _snapshot_db(output_db)
     if set(after) != set(baseline_snapshot):
         raise PublishError("published candidate source table membership changed")
+    if baseline_snapshot.get("source_book_metadata") != after.get("source_book_metadata"):
+        raise PublishError("published candidate book metadata changed")
     target_ids = set(plan.get("targetIds", []))
     blocked_ids = set(plan.get("blockedIds", []))
     pass_ids = set(plan.get("passIds", []))
@@ -1378,7 +1396,7 @@ def _coverage(
 
 
 SAFETY_POSITIVE_RE = re.compile(
-    r"(?:non[- ]adult|nonadult|general[- ]audience|all[- ]ages|"
+    r"(?:non[- ]porn(?:ographic)?|非ポルノ|비포르노|non[- ]adult|nonadult|general[- ]audience|all[- ]ages|"
     r"全年齢|一般向け|成人向けでは(?:ない|ありません)|成人作品では(?:ない|ありません))",
     re.IGNORECASE,
 )
@@ -1397,7 +1415,8 @@ def _validate_safety_gate(
     A legacy identity lookup saying that no bibliography or scope hold was
     found is not an affirmative safety review.  Promotion requires at least
     one frozen, same-work evidence row from a non-model source whose
-    observation explicitly supports a non-adult/general-audience scope.
+    observation supports non-pornographic scope. Legacy non-adult classifications
+    remain readable; an adult age rating alone does not exclude a work.
     """
 
     claim = prior.get(f"{work_id}\x1fscope:safety")

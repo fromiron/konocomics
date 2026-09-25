@@ -1261,10 +1261,14 @@ def set_final_statuses(
     work_results: dict[str, dict[str, str]],
     reviewed_at: str,
     onboarding: dict[str, str],
+    *, nt_exceptions=(),
 ) -> dict[str, tuple[int, int, int, int]]:
     counts: dict[str, tuple[int, int, int, int]] = {}
     for work_id in sorted(final):
         narrative, tone, genres, themes, blockers = coverage(con, work_id)
+        if work_id in nt_exceptions:
+            from coverage_exception import filter_blockers
+            blockers = filter_blockers(blockers, nt_exceptions[work_id])
         expected = final[work_id]
         actual = "BLOCKED_FACTOR" if blockers else "PASS"
         if actual != expected:

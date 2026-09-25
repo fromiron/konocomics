@@ -14,6 +14,74 @@ from catalog_readback_identity import execution_identity, readback_matches
 
 
 class RunnerTest(unittest.TestCase):
+    def test_same_prepare_resumes_auto_and_explicit_collections_but_rejects_option_change(self):
+        wid = "work-aaaaaaaaaaaaaaaaaaaa"
+        automatic, explicit = self.repo / "collection", self.repo / "supplement"
+        for folder in (automatic, explicit):
+            runner.write(folder / "collection-session.json", {"workId": wid})
+            (folder / "research.jsonl").write_text(json.dumps({"workId": wid, "sources": []}) + "\n", encoding="utf-8")
+        research = automatic / "research.jsonl"
+        research.write_text(json.dumps({"workId": wid, "sources": []}) + "\n", encoding="utf-8")
+        job = self.repo / "source-job.json"
+        runner.write(job, {"schemaVersion": runner.single.JOB, "batchId": "r-test-collections", "works": [{
+            "workId": wid, "researchRefs": [{"path": str(research), "sha256": runner.panel.sha256(research)}],
+        }]})
+        baseline = self.repo / "baseline"
+        runner.write(baseline / "catalog-source-registry.candidate.sqlite", {})
+        (self.run_root / "RUN.json").unlink()
+        runner.write(self.frozen / "panel-input/authoring-job.json", {"works": [{"workId": wid}]})
+        args = SimpleNamespace(action="prepare", run_root=self.run_root, job=job, decisions=None,
+                               retry_model=False, registry=None, recovery_epoch=None, provenance_root=[explicit])
+        with patch.object(runner, "current", return_value=({}, baseline)), \
+             patch.object(runner, "ensure_frozen", return_value=self.frozen), \
+             patch.object(runner, "prepare_session_input", return_value={"inputManifestSha256": runner.panel.sha256(self.frozen / "panel-input/PANEL-INPUT.sha256")}), \
+             patch.object(runner, "preserve", return_value={}), patch("builtins.print"):
+            runner.run_job(args)
+            config = runner.panel.read_json(self.run_root / "RUN.json")
+            self.assertEqual(config["requestedProvenanceRoots"], [str(explicit.resolve())])
+            self.assertEqual(set(config["provenanceRoots"]), {str(automatic.resolve()), str(explicit.resolve())})
+            before = (self.run_root / "RUN.json").read_bytes()
+            runner.run_job(args)
+            self.assertEqual((self.run_root / "RUN.json").read_bytes(), before)
+            args.provenance_root = [automatic]
+            with self.assertRaisesRegex(ValueError, "resume provenance changed"):
+                runner.run_job(args)
+            self.assertEqual((self.run_root / "RUN.json").read_bytes(), before)
+
+    def test_resume_rejects_changed_provenance_registry_and_recovery_before_freeze(self):
+        for option in ("provenance_root", "registry", "recovery_epoch"):
+            args = SimpleNamespace(action="prepare", run_root=self.run_root, job=None, decisions=None, retry_model=False)
+            setattr(args, option, [self.repo / "other"] if option == "provenance_root" else self.repo / "other")
+            before = (self.run_root / "RUN.json").read_bytes()
+            with patch.object(runner, "ensure_frozen") as freeze:
+                with self.assertRaisesRegex(ValueError, "resume .* changed"):
+                    runner.run_job(args)
+                freeze.assert_not_called()
+            self.assertEqual((self.run_root / "RUN.json").read_bytes(), before)
+
+    def test_safety_prompt_uses_frozen_schema_and_policy(self):
+        root = self.frozen / "panel-input"
+        schema = root / "DECISION-SCHEMA.json"
+        runner.write(schema, {"classificationKind": {"enum": ["official-non-adult-label"]}})
+        self.assertIn("label=<actually displayed label>", runner.safety_instructions(root))
+        runner.write(schema, {"classificationKind": {"enum": ["non-pornographic-work", "pornographic-work"]}})
+        with self.assertRaisesRegex(ValueError, "frozen safety schema/policy mismatch"):
+            runner.safety_instructions(root)
+        policy = root / "contracts/02-authorized-evidence-panel-v1.md"
+        policy.parent.mkdir()
+        policy.write_text("non-pornographic-work is SAFE", encoding="utf-8")
+        self.assertIn("SAFETY_PORNOGRAPHIC_WORK", runner.safety_instructions(root))
+        self.assertNotIn("label=<actually displayed label>", runner.safety_instructions(root))
+
+    def test_stored_reports_discovery_time_without_an_extra_storage_cycle(self):
+        with patch.object(runner, "authoring_inputs", return_value=[]) as discover, \
+             patch.object(runner, "recorded_run", return_value=0) as recorded, \
+             patch.object(runner.time, "perf_counter", side_effect=[10, 12]):
+            runner.stored(["command"], [], [], "measurement")
+        discover.assert_called_once()
+        recorded.assert_called_once()
+        self.assertEqual(recorded.call_args.kwargs["input_discovery_seconds"], 2)
+
     def setUp(self):
         self.temp = tempfile.TemporaryDirectory()
         self.addCleanup(self.temp.cleanup)
@@ -30,6 +98,55 @@ class RunnerTest(unittest.TestCase):
         runner.write(self.frozen / "INPUT-PREPARATION-REPORT.json", {"inputManifestSha256": "a" * 64})
         (self.frozen / "panel-input").mkdir()
         (self.frozen / "panel-input/PANEL-INPUT.sha256").write_text("manifest\n")
+
+    def test_prepare_and_check_never_publish_or_execute_models(self):
+        decision = self.run_root / "external.json"
+        runner.write(decision, {})
+        runner.write(self.frozen / "panel-input/authoring-job.json", {"works": [{"workId": "work-aaaaaaaaaaaaaaaaaaaa"}]})
+        for action in ("prepare", "check"):
+            args = SimpleNamespace(action=action, run_root=self.run_root, job=None,
+                decisions=decision if action == "check" else None, retry_model=False)
+            with patch.object(runner, "ensure_frozen", return_value=self.frozen), \
+                 patch.object(runner, "prepare_session_input", return_value={}), \
+                 patch.object(runner, "check_result", return_value={"status": "HOLD"}), \
+                 patch.object(runner, "preserve", return_value={"backup": {"status": "BACKED_UP"}}), \
+                 patch.object(runner, "stored") as publication, \
+                 patch.object(runner, "invoke_model") as model, patch("builtins.print"):
+                runner.run_job(args)
+                model.assert_not_called()
+                publication.assert_not_called()
+        self.assertFalse((self.run_root / "FINISHED.json").exists())
+        self.assertFalse((self.root / "STATE.json").exists())
+        self.assertEqual(runner.panel.read_json(self.run_root / "CHECKED.json")["status"], "HOLD")
+
+    def test_prior_bundles_bind_freeze_input_and_reject_changed_resume(self):
+        originals = [self.repo / "original-a", self.repo / "original-b"]
+        for root in originals:
+            root.mkdir()
+            (root / "MANIFEST.sha256").write_text(root.name + "\n")
+        bindings = runner.prior_bundle_bindings(originals)
+        self.config["priorBundleBindings"] = bindings
+        runner.write(self.run_root / "RUN.json", self.config)
+        (self.frozen / "INPUT-PREPARATION-REPORT.json").unlink()
+
+        def freeze(command, inputs, outputs, _label, direct_inputs=()):
+            self.assertEqual([command[i + 1] for i, arg in enumerate(command) if arg == "--prior-bundle"], [item["root"] for item in bindings])
+            self.assertEqual(list(direct_inputs), originals)
+            runner.write(outputs[0] / "INPUT-PREPARATION-REPORT.json", {"inputManifestSha256": "a" * 64})
+            return {"output": {}, "backup": {}}
+
+        with patch.object(runner.publisher, "validate_input", return_value=({}, [], "a" * 64)), \
+             patch.object(runner, "stored", side_effect=freeze):
+            runner.ensure_frozen(self.run_root, self.config)
+        args = SimpleNamespace(action="prepare", run_root=self.run_root, job=None, decisions=None,
+                               retry_model=False, prior_bundle=[originals[0]])
+        with patch.object(runner, "ensure_frozen") as prepare_input:
+            with self.assertRaisesRegex(ValueError, "resume prior bundles changed"):
+                runner.run_job(args)
+            prepare_input.assert_not_called()
+        (originals[0] / "MANIFEST.sha256").write_text("changed\n")
+        with self.assertRaisesRegex(ValueError, "prior bundle changed"):
+            runner.ensure_frozen(self.run_root, self.config)
 
     def test_persistent_session_command_keeps_model_schema_and_read_only(self):
         session = "aaaaaaaa-bbbb-cccc-dddd-eeeeeeeeeeee"
@@ -112,7 +229,7 @@ class RunnerTest(unittest.TestCase):
     def test_partial_freeze_keeps_original_path_and_starts_new_attempt(self):
         (self.frozen / "INPUT-PREPARATION-REPORT.json").unlink()
         original = self.frozen / "partial.txt"; original.write_bytes(b"partial")
-        def freeze(_command, inputs, outputs, _label):
+        def freeze(_command, inputs, outputs, _label, direct_inputs=()):
             self.assertIn(self.frozen, inputs)
             self.assertNotEqual(outputs[0], self.frozen)
             runner.write(outputs[0] / "INPUT-PREPARATION-REPORT.json", {"inputManifestSha256": "a" * 64})
@@ -139,8 +256,8 @@ class RunnerTest(unittest.TestCase):
     def model_receipt(self, status="COMPLETED", output="{}"):
         attempt = self.run_root / "model-001"; attempt.mkdir()
         (attempt / "PROMPT.md").write_text("original prompt")
-        (attempt / "schema.json").write_text("{}")
-        (self.frozen / "panel-input/DECISION-SCHEMA.json").write_text("{}")
+        runner.write(attempt / "schema.json", {})
+        runner.write(self.frozen / "panel-input/DECISION-SCHEMA.json", {})
         (attempt / "decisions.json").write_text(output)
         receipt = {"status": status, "inputManifestSha256": "a" * 64,
                    "outputSha256": runner.panel.sha256(attempt / "decisions.json"),
@@ -276,7 +393,7 @@ class RunnerTest(unittest.TestCase):
     def test_interrupted_model_preparation_keeps_files_and_uses_new_attempt(self):
         orphan = self.run_root / "model-001"
         runner.write(orphan / "schema.json", {"prepared": True})
-        (self.frozen / "panel-input/DECISION-SCHEMA.json").write_text("{}")
+        runner.write(self.frozen / "panel-input/DECISION-SCHEMA.json", {})
         before = (orphan / "schema.json").read_bytes()
         def model(command, **_kwargs):
             Path(command[command.index("-o") + 1]).write_text("{}")
@@ -300,7 +417,7 @@ class RunnerTest(unittest.TestCase):
             process.assert_not_called()
 
     def test_prepared_backup_failure_resumes_same_attempt(self):
-        (self.frozen / "panel-input/DECISION-SCHEMA.json").write_text("{}")
+        runner.write(self.frozen / "panel-input/DECISION-SCHEMA.json", {})
         for retry in (False, True):
             with self.subTest(retry=retry):
                 run = self.run_root / str(retry)
@@ -368,7 +485,7 @@ class RunnerTest(unittest.TestCase):
             self.assertFalse(old.exists())
 
     def test_prepared_resume_rejects_uncertain_or_changed_request(self):
-        (self.frozen / "panel-input/DECISION-SCHEMA.json").write_text("{}")
+        runner.write(self.frozen / "panel-input/DECISION-SCHEMA.json", {})
         defects = ("events.jsonl", "stderr.log", "decisions.json", "RUNNING", "startedAt", "prompt", "schema", "input", "command", "executionKey")
         for defect in defects:
             with self.subTest(defect=defect):
@@ -402,7 +519,7 @@ class RunnerTest(unittest.TestCase):
                     self.assertFalse((run / "model-002").exists())
 
     def test_prepared_resume_backup_failure_and_post_save_change_block_launch(self):
-        (self.frozen / "panel-input/DECISION-SCHEMA.json").write_text("{}")
+        runner.write(self.frozen / "panel-input/DECISION-SCHEMA.json", {})
         with patch.object(runner.publisher, "validate_input", return_value=({}, [], "a" * 64)), \
              patch.object(runner, "reading_view", return_value={}), \
              patch.object(runner.shutil, "which", return_value="codex"), \
@@ -423,7 +540,7 @@ class RunnerTest(unittest.TestCase):
             self.assertFalse((attempt / "events.jsonl").exists())
 
     def test_frozen_change_during_prepared_storage_blocks_model(self):
-        (self.frozen / "panel-input/DECISION-SCHEMA.json").write_text("{}")
+        runner.write(self.frozen / "panel-input/DECISION-SCHEMA.json", {})
         with patch.object(runner.publisher, "validate_input", side_effect=[({}, [], "a" * 64), ({}, [], "b" * 64)]), \
              patch.object(runner, "reading_view", return_value={}), \
              patch.object(runner, "preserve"), patch.object(runner.shutil, "which", return_value="codex"), \

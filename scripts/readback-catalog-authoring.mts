@@ -2,7 +2,7 @@ import assert from "node:assert/strict";
 import { createHash } from "node:crypto";
 import { spawnSync } from "node:child_process";
 import { copyFileSync, existsSync, mkdirSync, readFileSync, writeFileSync } from "node:fs";
-import { dirname, join, relative, resolve } from "node:path";
+import { dirname, join, relative, resolve, toNamespacedPath } from "node:path";
 import { DatabaseSync } from "node:sqlite";
 import { parse } from "csv-parse/sync";
 import { z } from "zod";
@@ -16,13 +16,20 @@ import {
 } from "../src/infrastructure/db/validation.ts";
 import { catalogV1Schema } from "../src/domain/catalog/schema.ts";
 import { parseRecommendationContext } from "../src/domain/recommendation/context-schema.ts";
+import { AXIS_IDS } from "../src/domain/catalog/constants.ts";
+import { workSimilarity } from "../src/domain/recommendation/similarity.ts";
 
-const [publication, resultRoot, output] = z
+const argv = z.array(z.string().min(1)).parse(process.argv.slice(2));
+const batchFlag = argv.indexOf("--batch-publications");
+assert(batchFlag === -1 || batchFlag === argv.length - 2, "Invalid batch publication argument");
+const batchPublicationPath = batchFlag === -1 ? undefined : resolve(argv[batchFlag + 1]!);
+const [publication, resultRoot, output, ...additionalResults] = z
   .array(z.string().min(1))
-  .length(3)
-  .parse(process.argv.slice(2))
+  .min(3)
+  .parse(batchFlag === -1 ? argv : argv.slice(0, batchFlag))
   .map((p) => resolve(p));
 assert(publication && resultRoot && output);
+const resultRoots = [...additionalResults, resultRoot];
 assert.equal(process.versions.node.split(".")[0], "24", "Catalog readback requires Node 24");
 const repo = process.cwd();
 const executionIdentity = () => {
@@ -50,18 +57,48 @@ const canonicalSha = sha(canonical);
 const candidate = join(publication, "catalog-expanded.candidate.sqlite");
 const candidateSha = sha(candidate);
 const publicationManifestSha = sha(join(publication, "MANIFEST.sha256"));
-const resultManifestSha = sha(join(resultRoot, "chunk-01/PANEL-RESULT.sha256"));
+const resultManifestShas = resultRoots.map((root) =>
+  sha(join(root, "chunk-01/PANEL-RESULT.sha256")),
+);
 const registrySha = sha(join(publication, "catalog-source-registry.candidate.sqlite"));
 const records = (path: string) =>
   z
     .array(z.record(z.string(), z.string()))
     .parse(parse(readFileSync(path, "utf8"), { columns: true, skip_empty_lines: true }));
-const promotion = records(join(resultRoot, "chunk-01/promotion-ledger.csv"));
+const promotionsByRoot = resultRoots.map((root) =>
+  records(join(root, "chunk-01/promotion-ledger.csv")),
+);
+const batchPublications = batchPublicationPath
+  ? z
+      .strictObject({
+        works: z.array(
+          z.strictObject({
+            workId: z.string().min(1),
+            publicationRoot: z.string().min(1),
+            resultRoot: z.string().min(1),
+          }),
+        ),
+      })
+      .parse(JSON.parse(readFileSync(batchPublicationPath, "utf8")))
+  : undefined;
+if (batchPublications) {
+  assert.equal(batchPublications.works.length, resultRoots.length);
+  assert.deepEqual(
+    batchPublications.works.map((row) => resolve(row.resultRoot)),
+    resultRoots,
+    "Batch result roots changed",
+  );
+}
+const promotion = promotionsByRoot.flat();
 const targets = promotion.filter((row) => row.panelOutcome === "PASS").map((row) => row.workId!);
 assert(targets.length > 0);
-const ledger = records(join(resultRoot, "chunk-01/evidence-panel-ledger.csv"));
-const db = new DatabaseSync(candidate, { readOnly: true });
+assert.equal(new Set(targets).size, targets.length, "Duplicate batch target");
+const ledger = resultRoots.flatMap((root) =>
+  records(join(root, "chunk-01/evidence-panel-ledger.csv")),
+);
+const db = new DatabaseSync(toNamespacedPath(candidate), { readOnly: true });
 const rowSchema = z.record(z.string(), z.string());
+const expectedAxes = new Map<string, Map<string, z.infer<typeof rowSchema>>>();
 let counts;
 try {
   assert.equal(db.prepare("pragma integrity_check").get()?.integrity_check, "ok");
@@ -77,13 +114,42 @@ try {
     assert.equal(work.recommendationEligible, "true");
     assert.equal(work.libraryOnly, "false");
     assert.equal(work.annotationReviewMethod, "authorizedEvidencePanel");
-    const axes = ledger.filter((row) => row.workId === wid && row.factKey?.startsWith("axis:"));
-    assert.equal(axes.length, 17);
-    for (const claim of axes) {
+    const claims = ledger.filter((row) => row.workId === wid && row.factKey?.startsWith("axis:"));
+    assert.equal(claims.length, 17);
+    let axes = new Map(
+      claims.map((claim) => [
+        claim.factKey!.slice(5),
+        rowSchema.parse({ state: claim.state!, value: claim.value!, confidence: claim.confidence! }),
+      ]),
+    );
+    const batchPublication = batchPublications?.works.find((row) => row.workId === wid);
+    if (batchPublication) {
+      const published = new DatabaseSync(
+        toNamespacedPath(join(resolve(batchPublication.publicationRoot), "catalog-expanded.candidate.sqlite")),
+        { readOnly: true },
+      );
+      try {
+        axes = new Map(
+          z
+            .array(rowSchema)
+            .parse(
+              published
+                .prepare("select axisId,state,value,confidence from source_factors where workId=?")
+                .all(wid),
+            )
+            .map((fact) => [fact.axisId!, fact]),
+        );
+      } finally {
+        published.close();
+      }
+      assert.equal(axes.size, 17, `Published Axis snapshot mismatch: ${wid}`);
+    }
+    expectedAxes.set(wid, axes);
+    for (const [axis, claim] of axes) {
       const fact = rowSchema.parse(
         db
           .prepare("select state,value,confidence from source_factors where workId=? and axisId=?")
-          .get(wid, claim.factKey!.slice(5)),
+          .get(wid, axis),
       );
       for (const key of ["state", "value", "confidence"]) assert.equal(fact[key], claim[key]);
     }
@@ -168,6 +234,33 @@ const plan = buildRecommendationPlan({
   policies: createDefaultRecommendationPolicies(),
 });
 for (const wid of targets) {
+  const work = catalog.works.find((row) => row.id === wid);
+  assert(work, `Published work absent from compiled catalog: ${wid}`);
+  if (
+    promotion.find((row) => row.workId === wid)?.reasonCode === "NARRATIVE_TONE_RESEARCH_EXHAUSTED"
+  ) {
+    const source = resultRoots.find((_, index) =>
+      promotionsByRoot[index]!.some((row) => row.workId === wid && row.panelOutcome === "PASS"),
+    );
+    assert(source);
+    assert.equal(work.eligibility.narrativeToneException?.workId, wid);
+    assert.equal(
+      work.eligibility.narrativeToneException?.inputManifestSha256,
+      sha(join(source, "chunk-01/PANEL-INPUT.sha256")),
+    );
+    // Eligibility metadata cannot change similarity, coverage or contributions.
+    const { narrativeToneException, ...ordinaryEligibility } = work.eligibility;
+    assert(narrativeToneException);
+    assert.deepEqual(
+      workSimilarity(work, work),
+      workSimilarity({ ...work, eligibility: ordinaryEligibility }, work),
+    );
+  }
+  for (const [axisId, fact] of expectedAxes.get(wid) ?? []) {
+    if (fact.state !== "unknown") continue;
+    const axis = z.enum(AXIS_IDS).parse(axisId);
+    assert.deepEqual(work.axes[axis], { state: "unknown" });
+  }
   const entry = plan.find((row) => row.workId === wid);
   assert(entry, `Published work absent from recommendation plan: ${wid}`);
   assert(Number.isFinite(entry.tasteScore));
@@ -178,11 +271,25 @@ assert.equal(sha(canonical), canonicalSha);
 assert.equal(sha(join(publication, "catalog-source-registry.candidate.sqlite")), registrySha);
 assert.deepEqual(executionIdentity(), codeIdentity, "Readback execution inputs changed");
 assert.equal(sha(join(publication, "MANIFEST.sha256")), publicationManifestSha);
-assert.equal(sha(join(resultRoot, "chunk-01/PANEL-RESULT.sha256")), resultManifestSha);
+assert.deepEqual(
+  resultRoots.map((root) => sha(join(root, "chunk-01/PANEL-RESULT.sha256"))),
+  resultManifestShas,
+);
 const report = {
   executionIdentity: codeIdentity,
   publicationManifestSha256: publicationManifestSha,
-  resultManifestSha256: resultManifestSha,
+  resultManifestSha256: resultManifestShas.at(-1),
+  resultRoots: resultRoots.map((root, index) => ({ root, sha256: resultManifestShas[index] })),
+  batchPublications: batchPublicationPath
+    ? {
+        path: batchPublicationPath,
+        sha256: sha(batchPublicationPath),
+        works: batchPublications!.works.map((row) => ({
+          ...row,
+          publicationManifestSha256: sha(join(resolve(row.publicationRoot), "MANIFEST.sha256")),
+        })),
+      }
+    : undefined,
   artifacts: built.artifactPaths.map((path) => ({
     path: relative(output, path).replaceAll("\\", "/"),
     sha256: sha(path),

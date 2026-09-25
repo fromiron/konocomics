@@ -8,7 +8,15 @@
 
 일반 authoring 진입점은 `python -X utf8 scripts/catalog_authoring_runner.py run`이다. 수집 helper와 prepare/publish/validator 및 필요한 기존 backend도 `scripts/catalog_authoring/`를 사용한다. 과거 자료에 들어 있는 도구 사본은 역사적 실행 근거이며 새 실행 코드의 원천이 아니다.
 
-2026-09-21 변경: 일반 실행은 `--decisions <판정 파일>` 또는 기존 RUN의 저장된 판정을 사용하며, 판정 누락 시 모델을 자동 호출하지 않는다. 별도 승인된 Sol medium 실행에는 `--allow-model`이 필요하다. `--model-session`·`--retry-model`도 이 명시적 허용 아래에서만 사용한다. 일반 Luna 결과 후처리에 이 옵션을 추가하지 않는다.
+2026-09-21 변경: 일반 실행은 `--decisions <판정 파일>` 또는 기존 RUN의 저장된 판정을 사용하며, 판정 누락 시 모델을 자동 호출하지 않는다. 별도 승인된 Sol medium 실행에는 `--allow-model`이 필요하다. `--model-session`·`--retry-model`도 이 명시적 허용 아래에서만 사용한다. 고정 채팅 결과 후처리에 이 옵션을 추가하지 않는다.
+
+## Sol 배치 운영의 저장 경계 — 2026-09-21
+
+[약 100작품 배치 계획](01c-sol-batch-promotion-plan.md)은 배정·부모 확인 주기를 묶는다. 작품별 수집→동결→판정→비발행 검사 결과는 **각 작품 완료 시** 기존 wrapper로 저장·백업하고 checkpoint를 기록한다. 100개가 끝날 때까지 원본·결과를 메모리나 `.tmp`에만 두지 않는다. 공유 작업 DB·백업 쓰기는 기존 잠금으로 짧게 직렬화하며 모델/네트워크 대기 동안 잠금을 잡지 않는다. 새 수집 revision과 기존 판정·실패 이력은 append-only로 보존한다.
+
+배치 summary는 작품별 원본/입력/결과/검사 SHA와 snapshot·backup receipt를 참조하며 판정·발행 권한 자체가 아니다. READY는 아직 미발행이다. Astra는 배치 확인 뒤 기존 경로로 최신 candidate/registry에 직렬 반영하고 실제 readback·백업 완료만 VERIFIED로 기록한다. 단계 내부 중복 백업은 아래 기존 작업 단위 규칙으로 줄이되 배치 종료까지 영구 보존을 미루지 않는다. 일부 실패가 있으면 완료분과 미완료분을 분리해 같은 결과를 재발행하지 않는다.
+
+현재 `run --decisions`는 검사와 발행을 함께 수행한다. 비발행 prepare/check 및 배치 통지·receipt는 선행 구현 대상이며 아직 이 문서만으로 사용할 수 있는 CLI가 아니다. 이 운영 계약은 아래 역사적 ‘조정자에게 매 작품 인계’ 주기를 대체하지만 원본 보존·동결·승격 검사를 생략하지 않는다.
 
 과거 동결 파일의 내용·경로 문자열·manifest는 변경하지 않는다. `.tmp`, `.workspace`, handoff 등의 호환 연결·심링크는 제거한다. 과거 artifact에 기록된 경로는 저장·판정 코드의 읽기 경계에서 `workspace_paths.artifact_path()`로 영구 디렉터리에 해석한다. 파일시스템 링크나 원문 재작성 없이 기존 SHA 결속을 검증한다. 새 작업은 새 경로만 기록하며 임의 링크는 저장 대상으로 허용하지 않는다.
 
@@ -131,7 +139,7 @@ DB 파일 자체를 잃었을 때는 백업을 읽는 `--database <backup.sqlite
 
 연결된 명령은 입력을 DB에 저장·백업한 뒤 원래 구현을 실행하고, 실제 결과 또는 남아 있는 실패 출력을 다시 저장·백업한 뒤 결과를 보고한다. SQLite 기록에는 단계별 snapshot ID가 남는다. 기존 operation 디렉터리에 실행 전 상태를 만들고 입력 snapshot에 포함한다. stdout/stderr는 실행 중부터 원시 파일로 기록하고, 정상 종료·실행 시작 실패·처리 가능한 인터럽트 뒤 실제 종료 상태와 남아 있는 부분 결과를 DB에 보존한다. 산출물 저장이 거부되면 `OUTPUT_SAVE_FAILED`와 원래 child 종료 코드·오류를 기록하고 operation/log 저장 및 백업은 진행한 뒤 원래 저장 실패를 반환한다. 이때 child stdout은 성공 응답으로 전달하지 않으며 보존된 원시 로그에서 확인한다. 이미 child가 삭제한 파생 stage까지 복구되는 것은 아니다. 인터럽트 시 subprocess.run이 직접 child의 종료를 확인한 뒤 저장한다. 강제 종료·전원 손실이나 별도로 분리된 descendant의 종료까지 보장하지 않으며, 남은 파일·프로세스와 실제 결과를 읽고 재개한다. 저장·백업 실패는 정상 완료로 보고하지 않으며 기존 원본과 부분 결과를 보존한다. 발행 성공 뒤 저장 실패가 나면 실제 후보 DB가 존재할 수 있으므로 **같은 출력을 무조건 재실행하지 말고 먼저 readback**한다. current 갱신은 기존 최종 제품 검증 이후에만 한다.
 
-`command.json`의 `timingsSeconds`는 단조 시계로 측정한 `inputDiscovery`, `inputSave`, `inputBackup`, `command`, `outputSave`를 보존한다. 마지막 stderr의 `authoringStorage.timingsSeconds`에는 `operationSave`, `outputBackup`, `total`도 포함한다. 마지막 백업의 시간은 그 백업 안에 소급 저장할 수 없으므로 최종 receipt에만 남으며, 진단값을 위해 추가 백업을 만들지 않는다. `total`은 계측한 참조 입력 탐색부터 마지막 백업 완료까지다. 최종 stdout/stderr 출력과 원격 수집·모델 의미 판정·배정 대기는 제외한다. 이전 receipt의 total에는 입력 탐색이 빠져 있으므로 직접 같은 범위로 비교하지 않는다. 두 번의 백업과 원본·membership 검증은 유지한다.
+`command.json`의 `timingsSeconds`는 단조 시계로 측정한 `inputDiscovery`, `inputSave`, `inputBackup`, `command`, `outputSave`를 보존한다. 마지막 stderr의 `authoringStorage.timingsSeconds`에는 `operationSave`, `outputBackup`, `total`도 포함한다. 마지막 백업의 시간은 그 백업 안에 소급 저장할 수 없으므로 최종 receipt와 `recorded_run(receipt_out=...)` 반환 객체에 남긴다. 2026-09-23부터 runner는 실제 입력 탐색 시간을 전달하고, 이 최종 timing을 다음 정상 `FROZEN-STORAGE.json` checkpoint에 함께 보존한다. 진단값을 위해 추가 저장·백업을 만들지 않는다. `total`은 계측한 참조 입력 탐색부터 마지막 백업 완료까지다. 최종 stdout/stderr 출력과 원격 수집·모델 의미 판정·배정 대기는 제외한다. 이전 receipt의 total에는 입력 탐색이 빠져 있으므로 직접 같은 범위로 비교하지 않는다. 두 번의 백업과 원본·membership 검증은 유지한다.
 
 자동 연결되지 않은 일회성 authoring 명령은 같은 저장 경로로 감싼다. 입력에는 원본 job·연구·계약·참조 bundle을, 출력에는 실제 생성 디렉터리를 명시한다. 임의 명령의 부작용을 이 wrapper가 허가하거나 되돌려 주지는 않는다.
 
@@ -142,6 +150,7 @@ python scripts/catalog_workspace.py run --label <stage> --input <input-directory
 ## 백업과 안전성
 
 - 자동 백업은 `data/local/catalog-authoring/backups/`에 생성한다. 환경 이전 시 `data/local/catalog-authoring/` 전체를 직접 백업한다.
+- 2026-09-21 사용자 요청에 따라 정상 운영의 물리 백업은 최신 `latest.sqlite`와 직전 `previous.sqlite` 두 세대만 유지한다. 기존 자동 회전 기능을 재사용하며 불필요한 이름별 전체 checkpoint를 추가하지 않는다. 과거 수동 checkpoint·고아 pending 사본은 writer lock 아래 최신 백업에 snapshot·entry·blob 해시/길이가 모두 포함되는지 확인한 뒤 삭제한다. 고유 이력·불일치·열린 journal/WAL이 있는 사본과 회전 중인 `pending.sqlite`는 삭제하지 않는다. 각 세대 안의 논리 snapshot·수집 원문·판정 이력은 유지한다.
 - 2026-09-14 최적화: 초기 세대와 별도 수동 checkpoint는 SQLite Backup API와 전체 SQLite 무결성 검사로 생성한다. 정상 자동 백업은 source writer를 직렬 잠그고 이전 세대의 schema·snapshot prefix·membership 수를 대조한 뒤 추가 blob·snapshot·entry를 하나의 트랜잭션으로 반영한다. 새 snapshot이 참조하는 모든 blob(기존 blob 포함)의 원문 SHA/압축 해제, 새 snapshot 전체 membership/manifest, FK 제약과 commit readback을 확인한다. 실패하면 rollback하고 최신 세대는 교체하지 않는다. 성공 후 `latest.sqlite`/`previous.sqlite`를 회전하며 **각 파일 안에 그 시점까지의 모든 논리 snapshot·원본 버전이 들어 있다.** 이름을 지정한 수동 checkpoint는 자동 교체하지 않는다.
 - 백업의 `pending.sqlite`는 교대 중인 완전 세대 또는 미완료 사본이다. 다음 자동 실행은 같은 writer lock 아래에서 SQLite/schema·source snapshot prefix를 확인해 중단된 이름 교대를 재개한다. 부분·무관·모호한 상태는 파일을 삭제하지 않고 실패시킨다. 기존 pending-* 사본은 임의로 삭제하지 않는다. 이 복구 확인은 pending이 남은 경우에만 수행하며 정상 백업에 전체 감사를 추가하지 않는다.
 - 변경되지 않은 과거 데이터의 전체 SQLite/원문/manifest 감사는 `verify`로 수행한다. 자동 백업마다 전 이력을 재검사하지 않는다. 손상 의심·복구·명시적 전체 감사에는 `verify`를 실행하며 복원은 항상 대상 원문 SHA를 재검증한다. 전체 검사와 증분 검사의 범위를 같은 증거로 표시하지 않는다.

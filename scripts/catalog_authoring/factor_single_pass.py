@@ -7,6 +7,7 @@ from pathlib import Path
 from authoring_paths import REPO, ROOT, LEGACY, artifact_path
 
 import validate_factor_panel as panel
+import coverage_exception as nt
 
 JOB = "factor-authoring-job-v4"
 FROZEN_JOB = "factor-authoring-observations-v1"
@@ -118,7 +119,7 @@ def project(input_root: Path, value: dict):
             _, rows, _ = selected([item["evidenceId"]], "safety")
             source = rows[0]
             kind = item["classificationKind"]
-            classification = {"official-non-adult-label": "non-adult", "licensed-general-audience-label": "non-adult", "mainstream-selection-and-manga-category": "non-adult", "classification-unresolved": "unknown", "adult-or-scope-excluded": "adult"}.get(kind)
+            classification = {"non-pornographic-work": "non-porn", "pornographic-work": "porn", "official-non-adult-label": "non-adult", "licensed-general-audience-label": "non-adult", "mainstream-selection-and-manga-category": "non-adult", "classification-unresolved": "unknown", "adult-or-scope-excluded": "adult"}.get(kind)
             require(classification is not None, "invalid safety classification")
             evidence.append({"evidenceId": f"ev-{job['batchId']}-{panel.sha256_bytes(item['evidenceId'].encode())[:16]}-safety", "workId": wid, "sourceType": source["sourceType"], "sourceUrl": source["sourceUrl"], "classificationKind": kind, "audienceClassification": classification, "observation": item["observation"], "limitation": item["limitation"], "retrievedAt": source.get("retrievedAt") or source.get("fetchedAt", ""), "candidateOnly": "true", "reviewedByHuman": "false"})
         safe = safety["outcome"] == "SAFE"
@@ -193,6 +194,35 @@ def install_backend(module, input_root, result_root):
 
     module._load_frozen = load
 
+    exceptions = nt.from_input(input_root)
+    if exceptions:
+        original_coverage, original_build = module._coverage, module._build_plan
+
+        def coverage(work_id, *args):
+            return nt.filter_blockers(original_coverage(work_id, *args), exceptions.get(work_id))
+
+        def build(*args, **kwargs):
+            plan = original_build(*args, **kwargs)
+            plan["narrativeToneExceptions"] = exceptions
+            for wid, record in exceptions.items():
+                promotion = args[1][wid]
+                if promotion["panelOutcome"] != "PASS" or promotion["reasonCode"] != nt.REASON:
+                    continue
+                payload = nt.persisted_record(input_root, wid, record, args[7])
+                notes = json.dumps(payload, ensure_ascii=False, sort_keys=True, separators=(",", ":"))
+                eid = "ev-nt-exhaustion-" + panel.sha256_bytes(notes.encode("utf-8"))
+                require(eid not in args[5]["evidence"] and eid not in plan["newEvidence"], "N/T exception evidence collision")
+                plan["newEvidence"][eid] = {
+                    "id": eid, "workId": wid, "targetType": "work", "targetId": wid,
+                    "sourceType": "manual", "sourceUrl": record["attempts"][0]["sourceUrl"],
+                    "fetchedAt": args[6] if "T" in args[6] else args[6] + "T00:00:00Z",
+                    "extractorVersion": nt.EXTRACTOR, "reviewedByHuman": "false",
+                    "confidence": "0", "notes": notes,
+                }
+            return plan
+
+        module._coverage, module._build_plan = coverage, build
+
 
 def output_schema(job=None, packets=None):
     """Transport schema only. Existing semantic validators remain authoritative."""
@@ -213,7 +243,7 @@ def output_schema(job=None, packets=None):
     result = obj({"schemaVersion": {"enum": [DECISIONS]}, "inputManifestSha256": string, "works": array({"anyOf": [work, hold]})})
     work["properties"]["unknownGroups"]["items"]["properties"]["axes"] = array({"type": "string", "enum": list(panel.AXES)})
     safety_source = work["properties"]["safety"]["properties"]["sources"]["items"]["properties"]
-    safety_source["classificationKind"] = {"enum": ["official-non-adult-label", "licensed-general-audience-label", "mainstream-selection-and-manga-category", "classification-unresolved", "adult-or-scope-excluded"]}
+    safety_source["classificationKind"] = {"enum": ["non-pornographic-work", "pornographic-work", "official-non-adult-label", "licensed-general-audience-label", "mainstream-selection-and-manga-category", "classification-unresolved", "adult-or-scope-excluded"]}
     if job is not None:
         require(len(job["works"]) == 1, "model schema needs one frozen Work")
         row = job["works"][0]

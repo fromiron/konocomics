@@ -5,6 +5,12 @@
 
 ---
 
+## 2026-09-21 사용자 확정: 포르노 작품만 제외
+
+Catalog의 성적 콘텐츠 제외 기준은 **porn / non-porn**이다. 성인등급, 폭력·출혈·잔혹 묘사, 노출·성적 장면의 존재 자체는 제외 사유가 아니다. 『베르세르크』처럼 성인등급인 비포르노 서사 만화는 허용한다. 작품의 주된 성격이 포르노인지 확인하며 별도의 비성인·일반 독자 등급 증명 수집은 요구하지 않는다. 해당 작품의 출판사·레이블 분류로 비포르노임이 확인되면 충분하며 그 확인으로 종료한다. 여러 레이블을 가진 출판사는 해당 작품의 레이블만 확인한다. 성적 소재·노출·성적 장면은 작품적 표현으로 허용하며, 에피소드별 표현 강도·무해성·전연령 적합성을 추가 조사하거나 미확인 gap/HOLD 사유로 삼지 않는다. 실제 포르노 분류 충돌이나 작품/레이블 식별 불가가 있을 때만 그 분류를 좁게 확인한다. 추천 선정 맥락과 팩터 근거는 별도 계약이다.
+
+새 판정은 `non-pornographic-work` → `non-porn` / `SAFE`, `pornographic-work` → `porn` / `BLOCKED_SAFETY` (`SAFETY_PORNOGRAPHIC_WORK`)를 사용한다. 판단 불명은 `classification-unresolved`로 보존한다. SAFE는 아동 적합성이나 무폭력 인증이 아니다. 기존 `non-adult` 등 분류는 과거 artifact 호환용으로 유지하며 성인등급만으로 차단한 HOLD는 새 계약을 동결한 revision에서 재검토한다. 과거 frozen·판정은 수정하지 않는다.
+
 ## 1. 제품 테제
 
 **konocomics**는 사용자가 좋아하거나 싫어한 만화로부터 장르가 아니라 **전개·문제 해결·전략·관계·톤·심리적 피로도·작화 성향**을 추론하고, 아직 읽지 않은 만화를 **왜 추천했는지 설명하면서** 제시하는 개인 만화 취향 서비스다.
@@ -64,7 +70,7 @@
 ### Catalog 범위
 
 - 우선 장르: 액션·판타지·역사·SF·미스터리 / 인접: 코미디·무술·호러·일상·로맨스·스포츠
-- 규모: sanity check는 동결된 정확히 50개의 서로 다른 `recommendationEligible` Work → 블라인드 테스트·공개 MVP의 Gold Set 150 (Anchor 30~40 / Bridge 30~40 / Discovery 70+) → 비성인 일본 만화 총 1,000작품 이상으로 확장. 1,000은 최소값이며 상한은 두지 않는다.
+- 규모: sanity check는 동결된 정확히 50개의 서로 다른 `recommendationEligible` Work → 블라인드 테스트·공개 MVP의 Gold Set 150 (Anchor 30~40 / Bridge 30~40 / Discovery 70+) → 비포르노 일본 만화 총 1,000작품 이상으로 확장. 1,000은 최소값이며 상한은 두지 않는다.
 - 역할 분리: `onboardingEligible` / `recommendationEligible` / `libraryOnly`
 - 기존 Gold Set 150작품은 ID·주석·추천 계약을 동결한다. 확장 작품은 안전·canonical identity·선정 provenance·대표 ISBN을 검증해 `libraryOnly`로 먼저 수용할 수 있으며, 17축을 명시적 `unknown`으로 둔다. 신규 주석은 `09`의 비모델 resolution 또는 사용자 승인 `authorizedEvidencePanel` resolution 전에는 온보딩·DNA·추천 산식에 사용하지 않는다. 기존 `authorizedModelPanel`은 legacy provenance로만 보존한다.
 - 외부 API가 제공하지 않는 원산지 국적과 원작 레이아웃 형식은 추론하지 않고 staging에서 `unknown`으로 유지한다. 별도 공식 근거로 세로 스크롤 우선 작품임이 확인된 경우에만 `excluded-webtoon`으로 제외한다.
@@ -319,6 +325,7 @@ Genre 10종, Theme 22종(centrality 1|2), Axis 17종(Narrative 6 / Tone·Relatio
 - 그룹 비중 고정: Genre 15% / Theme 25% / Narrative 25% / Tone·Relationship 20% / Art 15%.
 - Coverage 임계: Genre 0.80 / Theme 0.60 / Narrative 0.60 / Tone 0.60 / Art 0.30. 미달 그룹만 `0.5 + (score−0.5) × min(1, coverage/threshold)`. **가중치 재분배 금지.**
 - 위 임계는 추천 유사도의 수축 계약이다. `recommendationEligible`·Gold-quality 승격의 필수 coverage는 Genre / Theme / Narrative / Tone만이며 Art는 선택 축이다. Art가 없으면 네 축을 `unknown`으로 유지하고 Art 그룹만 0.5로 수축하며 다른 그룹에 15%를 재분배하지 않는다.
+- 2026-09-23 사용자 승인: 추가 조사·출처 소진 기록이 동결된 AEP 작품은 조사한 Narrative/Tone 그룹에 한해 승격 최소치 예외를 허용한다. Genre/Theme·identity·context·porn 분류와 기존 권한 보호는 유지한다. `unknown`은 그대로이며 위 추천 수축 임계·가중치는 변경하지 않는다. `eligibility.narrativeToneException`은 입력·조사 SHA와 작품·그룹을 결속한 승격 자격 메타데이터다. 세부 계약은 `02-authorized-evidence-panel-v1.md`의 `narrative-tone-exhaustion-v1`을 따른다. Gold 승인으로 확대하지 않는다.
 
 ### 6.3 Positive Anchor
 

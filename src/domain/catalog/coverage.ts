@@ -1,4 +1,11 @@
-import { ART_AXIS_IDS, AXIS_IDS, NARRATIVE_AXIS_IDS, TONE_AXIS_IDS } from "./constants";
+import {
+  ART_AXIS_IDS,
+  AXIS_IDS,
+  NARRATIVE_AXIS_IDS,
+  TONE_AXIS_IDS,
+  COVERAGE_THRESHOLDS,
+  PROMOTION_REQUIRED_COVERAGE_GROUPS,
+} from "./constants";
 import type { AxisId, CatalogV1, Work, WorkCoverage } from "./types";
 
 function axisCoverage(work: Work, axisIds: readonly AxisId[]) {
@@ -27,6 +34,21 @@ export function calculateWorkCoverage(work: Work): WorkCoverage {
     tone: axisCoverage(work, TONE_AXIS_IDS),
     art: axisCoverage(work, ART_AXIS_IDS),
   };
+}
+
+export function promotionCoverageFailures(work: Work) {
+  const coverage = calculateWorkCoverage(work);
+  const exception = work.eligibility.narrativeToneException;
+  return PROMOTION_REQUIRED_COVERAGE_GROUPS.filter(
+    (group) =>
+      coverage[group] < COVERAGE_THRESHOLDS[group] &&
+      !(
+        exception?.policy === "narrative-tone-exhaustion-v1" &&
+        exception.workId === work.id &&
+        (group === "narrative" || group === "tone") &&
+        exception.groups.includes(group)
+      ),
+  );
 }
 
 export function pearsonCorrelation(pairs: readonly (readonly [number, number])[]) {
