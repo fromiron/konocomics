@@ -7,6 +7,7 @@ This store never interprets claims or grants publication authority.
 from __future__ import annotations
 
 import argparse
+import errno
 import hashlib
 import json
 import os
@@ -17,10 +18,10 @@ import subprocess
 import sys
 import uuid
 import zlib
-from contextlib import closing
+from contextlib import closing, contextmanager, nullcontext
 from datetime import datetime, timezone
 from pathlib import Path, PurePosixPath
-from time import perf_counter
+from time import perf_counter, sleep
 from workspace_paths import artifact_path
 
 REPO = Path(__file__).resolve().parents[1]
@@ -52,6 +53,51 @@ CREATE INDEX entry_path ON entry(path, snapshot_id DESC);
 
 def digest(content: bytes) -> str:
     return hashlib.sha256(content).hexdigest()
+
+
+def replace_busy_backup(source: Path, target: Path) -> None:
+    """Wait briefly for Windows readers before rotating a verified backup."""
+    deadline = perf_counter() + 300
+    while True:
+        try:
+            os.replace(source, target)
+            return
+        except OSError as error:
+            if getattr(error, "winerror", None) != 32 or perf_counter() >= deadline:
+                raise
+            sleep(0.1)
+
+
+@contextmanager
+def exclusive_file(path: Path):
+    """Serialize physical backup rotation without blocking workspace writers."""
+    path.parent.mkdir(parents=True, exist_ok=True)
+    with path.open("a+b") as handle:
+        if handle.tell() == 0:
+            handle.write(b"0")
+            handle.flush()
+        handle.seek(0)
+        if os.name == "nt":
+            import msvcrt
+            while True:
+                try:
+                    msvcrt.locking(handle.fileno(), msvcrt.LK_NBLCK, 1)
+                    break
+                except OSError as error:
+                    if error.errno not in {errno.EACCES, errno.EDEADLK}:
+                        raise
+                    sleep(0.2)
+        else:
+            import fcntl
+            fcntl.flock(handle, fcntl.LOCK_EX)
+        try:
+            yield
+        finally:
+            handle.seek(0)
+            if os.name == "nt":
+                msvcrt.locking(handle.fileno(), msvcrt.LK_UNLCK, 1)
+            else:
+                fcntl.flock(handle, fcntl.LOCK_UN)
 
 
 def utc_now() -> str:
@@ -117,7 +163,8 @@ class Workspace:
         elif not self.database.is_file():
             raise FileNotFoundError(self.database)
         uri = self.database.as_uri() + ("?mode=rwc" if write else "?mode=ro")
-        db = sqlite3.connect(uri, uri=True, timeout=30)
+        # ponytail: one shared writer; wait for the current save/backup turn instead of retrying failed jobs.
+        db = sqlite3.connect(uri, uri=True, timeout=300)
         try:
             db.execute("PRAGMA foreign_keys=ON")
             app_id = db.execute("PRAGMA application_id").fetchone()[0]
@@ -216,26 +263,45 @@ class Workspace:
         if not roots or not label.strip():
             raise ValueError("Save requires explicit roots and a nonempty label")
         files = self.files(roots)
-        rows, stats = [], {}
+        rows, stats, pending_blobs = [], {}, {}
+        existing_context = closing(self.connect()) if self.database.is_file() else nullcontext(None)
+        with existing_context as existing:
+            for index, path in enumerate(files, 1):
+                before = path.lstat()
+                if not stat.S_ISREG(before.st_mode) or getattr(before, "st_file_attributes", 0) & stat.FILE_ATTRIBUTE_REPARSE_POINT:
+                    raise ValueError(f"Not a regular unlinked artifact: {path}")
+                if path.suffix == ".sqlite" and any(Path(str(path) + suffix).exists() for suffix in ("-wal", "-shm", "-journal")):
+                    raise ValueError(f"Close/checkpoint the source SQLite before capturing exact bytes: {path}")
+                content = path.read_bytes()
+                after = path.stat()
+                stamp = (before.st_size, before.st_mtime_ns, before.st_ino)
+                if stamp != (after.st_size, after.st_mtime_ns, after.st_ino) or len(content) != before.st_size:
+                    raise ValueError(f"Artifact changed while reading: {path}")
+                sha = digest(content)
+                old = existing.execute("SELECT byte_length FROM blob WHERE sha256=?", (sha,)).fetchone() if existing else None
+                if old is None:
+                    if sha not in pending_blobs:
+                        compressed = zlib.compress(content, level=1)
+                        if zlib.decompress(compressed) != content:
+                            raise ValueError("Compression readback failed")
+                        pending_blobs[sha] = (len(content), compressed)
+                elif old[0] != len(content) or self.read_blob(existing, sha) != content:
+                    raise ValueError(f"Stored blob conflict: {sha}")
+                rows.append((key_path(path.relative_to(self.repo).as_posix()), sha))
+                stats[path] = stamp
+                if index % 10000 == 0:
+                    print(f"authoring scan: {index}/{len(files)} files", file=sys.stderr, flush=True)
+        # The slow file reads, hashing and compression above do not occupy the
+        # single SQLite writer slot shared by independent Catalog workers.
         with closing(self.connect(write=True)) as db:
             try:
                 db.execute("BEGIN IMMEDIATE")
-                for index, path in enumerate(files, 1):
-                    before = path.lstat()
-                    if not stat.S_ISREG(before.st_mode) or getattr(before, "st_file_attributes", 0) & stat.FILE_ATTRIBUTE_REPARSE_POINT:
-                        raise ValueError(f"Not a regular unlinked artifact: {path}")
-                    if path.suffix == ".sqlite" and any(Path(str(path) + suffix).exists() for suffix in ("-wal", "-shm", "-journal")):
-                        raise ValueError(f"Close/checkpoint the source SQLite before capturing exact bytes: {path}")
-                    content = path.read_bytes()
-                    after = path.stat()
-                    stamp = (before.st_size, before.st_mtime_ns, before.st_ino)
-                    if stamp != (after.st_size, after.st_mtime_ns, after.st_ino) or len(content) != before.st_size:
-                        raise ValueError(f"Artifact changed while reading: {path}")
-                    sha = self.add_blob(db, content)
-                    rows.append((key_path(path.relative_to(self.repo).as_posix()), sha))
-                    stats[path] = stamp
-                    if index % 10000 == 0:
-                        print(f"authoring save: {index}/{len(files)} files", file=sys.stderr, flush=True)
+                for sha, (length, compressed) in pending_blobs.items():
+                    old = db.execute("SELECT byte_length FROM blob WHERE sha256=?", (sha,)).fetchone()
+                    if old is None:
+                        db.execute("INSERT INTO blob VALUES (?, ?, ?)", (sha, length, compressed))
+                    elif old[0] != length:
+                        raise ValueError(f"Stored blob conflict: {sha}")
                 # The snapshot describes this exact membership, not a mix of directory versions.
                 if self.files(roots) != files:
                     raise ValueError("Artifact membership changed while saving")
@@ -274,7 +340,10 @@ class Workspace:
             # can resolve their location to the relocated original bytes.
             indexed = {}
             for path, sha in rows:
-                resolved = unlinked(artifact_path(self.repo / key_path(path), self.repo)).resolve()
+                # Compare stored names without stat-ing every ancestor of every
+                # snapshot member. files(roots) validates the actual read paths,
+                # including links, before and after this readback.
+                resolved = Path(os.path.abspath(artifact_path(self.repo / key_path(path), self.repo)))
                 if resolved in indexed and indexed[resolved] != sha:
                     raise ValueError("Saved paths disagree on artifact bytes")
                 indexed[resolved] = sha
@@ -362,15 +431,14 @@ class Workspace:
         return {"status": "CHECKED_OUT", "snapshotId": snapshot_id, "files": len(selected), "path": str(target)}
 
     def backup(self, destination: Path | None = None) -> dict:
-        # Serialize backup rotation with normal writers, without writing source rows.
         if not self.database.is_file():
             raise FileNotFoundError(self.database)
-        with closing(self.connect(write=True)) as lock:
-            lock.execute("BEGIN IMMEDIATE")
-            try:
-                return self._backup_locked(destination)
-            finally:
-                lock.rollback()
+        # Backup generations share their own physical names, so serialize only
+        # rotation. SQLite read snapshots keep the append-only source coherent
+        # while independent workers continue saving new workspace snapshots.
+        lock = self.repo / "data/local/catalog-authoring/backups/rotation.lock"
+        with exclusive_file(lock):
+            return self._backup_locked(destination)
 
     def _backup_locked(self, destination: Path | None) -> dict:
         automatic = destination is None
@@ -401,8 +469,8 @@ class Workspace:
                         if headers != source.execute("SELECT * FROM snapshot WHERE id<=? ORDER BY id", (last,)).fetchall():
                             raise ValueError(f"Backup rotation history mismatch; copies retained: {reserved}")
             if latest.exists():
-                os.replace(latest, previous)
-            os.replace(pending, latest)
+                replace_busy_backup(latest, previous)
+            replace_busy_backup(pending, latest)
             return {"status": "BACKED_UP", "mode": "recovered-rotation", "destination": str(latest),
                     "latestSnapshotId": snapshot[0], "snapshots": snapshot[1], "addedSnapshots": added}
         if automatic and latest.exists() and previous.exists():
@@ -417,9 +485,9 @@ class Workspace:
                             or old.execute("PRAGMA user_version").fetchone()[0] != SCHEMA_VERSION):
                         raise ValueError(f"Refusing to replace an unrelated backup: {reserved}")
             snapshot, added = self._extend_backup(previous)
-            os.replace(previous, pending)
-            os.replace(latest, previous)
-            os.replace(pending, latest)
+            replace_busy_backup(previous, pending)
+            replace_busy_backup(latest, previous)
+            replace_busy_backup(pending, latest)
             return {"status": "BACKED_UP", "mode": "append-only", "destination": str(latest),
                     "latestSnapshotId": snapshot[0], "snapshots": snapshot[1], "addedSnapshots": added}
         if destination is None:
@@ -444,8 +512,8 @@ class Workspace:
                         if old.execute("PRAGMA application_id").fetchone()[0] != APPLICATION_ID:
                             raise ValueError(f"Refusing to replace an unrelated backup: {reserved}")
             if latest.exists():
-                os.replace(latest, previous)
-            os.replace(destination, latest)
+                replace_busy_backup(latest, previous)
+            replace_busy_backup(destination, latest)
             destination = latest
         return {"status": "BACKED_UP", "mode": "full", "destination": str(destination), "latestSnapshotId": snapshot[0], "snapshots": snapshot[1]}
 
@@ -563,7 +631,8 @@ def recorded_run(command: list[str], inputs: list[Path], outputs: list[Path], la
     if output_error is not None:
         raise output_error
     if receipt_out is not None:
-        receipt_out.update(input=before, output=after, operation=operation, backup=backup)
+        receipt_out.update(input=before, output=after, operation=operation, backup=backup,
+                           timingsSeconds=timings)
     return exit_code
 
 

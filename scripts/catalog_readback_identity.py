@@ -84,6 +84,20 @@ def readback_matches(path: Path, repo: Path, publication: Path, result: Path) ->
             return False
     if value.get("resultManifestSha256") != digest(result / "chunk-01/PANEL-RESULT.sha256"):
         return False
+    for item in value.get("resultRoots", []):
+        root = Path(item["root"])
+        if not root.is_dir() or item["sha256"] != digest(root / "chunk-01/PANEL-RESULT.sha256"):
+            return False
+    batch = value.get("batchPublications")
+    if batch is not None:
+        batch_path = Path(batch.get("path", ""))
+        if not batch_path.is_file() or batch.get("sha256") != digest(batch_path):
+            return False
+        for item in batch.get("works", []):
+            root = Path(item["publicationRoot"])
+            manifest = root / "MANIFEST.sha256"
+            if not manifest.is_file() or item.get("publicationManifestSha256") != digest(manifest):
+                return False
     if value.get("publicationManifestSha256") != digest(publication / "MANIFEST.sha256"):
         return False
     artifacts = value.get("artifacts", [])

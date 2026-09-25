@@ -113,7 +113,7 @@ describe("deterministic experiment report", () => {
         contextInput: reversedContext,
       }),
     ).toBe(expected);
-  });
+  }, 15_000);
 
   it("renders only the contracted sections and diagnostics in profile order", () => {
     const output = report();

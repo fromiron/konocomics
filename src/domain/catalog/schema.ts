@@ -51,10 +51,22 @@ export const themeFactorSchema = z.strictObject({
   confidence: confidenceSchema,
 });
 
+export const narrativeToneExceptionSchema = z.strictObject({
+  policy: z.literal("narrative-tone-exhaustion-v1"),
+  workId: catalogIdSchema,
+  inputManifestSha256: z.string().regex(/^[a-f0-9]{64}$/u),
+  researchSha256: z.string().regex(/^[a-f0-9]{64}$/u),
+  groups: z
+    .array(z.enum(["narrative", "tone"]))
+    .min(1)
+    .max(2),
+});
+
 export const catalogEligibilitySchema = z.strictObject({
   onboardingEligible: z.boolean(),
   recommendationEligible: z.boolean(),
   libraryOnly: z.boolean(),
+  narrativeToneException: narrativeToneExceptionSchema.optional(),
 });
 
 export const workEvidenceSchema = z.strictObject({

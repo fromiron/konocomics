@@ -40,6 +40,13 @@ export type CatalogEligibility = {
   onboardingEligible: boolean;
   recommendationEligible: boolean;
   libraryOnly: boolean;
+  narrativeToneException?: Readonly<{
+    policy: "narrative-tone-exhaustion-v1";
+    workId: string;
+    inputManifestSha256: string;
+    researchSha256: string;
+    groups: readonly ("narrative" | "tone")[];
+  }>;
 };
 
 export type WorkEvidence = {

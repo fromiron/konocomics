@@ -46,14 +46,21 @@
 
 ## 2. 작업 절차
 
-- **Catalog 실행 스킬:** 조정자는 [.agents/skills/catalog-coordinator/SKILL.md](.agents/skills/catalog-coordinator/SKILL.md), 고정 Luna max 작업자는 [.agents/skills/catalog-worker/SKILL.md](.agents/skills/catalog-worker/SKILL.md)를 현재 단계에 사용한다. 기존 runner·수집 helper를 재사용하고 과거 운영 이력 전체를 작업 지시로 복사하지 않는다. 통지 감지는 배정 시 명시적으로 등록하며, 훅 신뢰 상태와 무관하게 완료 큐 통지 책임은 유지된다.
+- **Catalog 실행 스킬:** 조정자는 [.agents/skills/catalog-coordinator/SKILL.md](.agents/skills/catalog-coordinator/SKILL.md), 작업자는 [.agents/skills/catalog-worker/SKILL.md](.agents/skills/catalog-worker/SKILL.md)를 사용한다. 현재 목표는 고정 세션 배치 운영이며 기존 runner·수집 helper를 재사용한다. 코드의 비발행 단계·배치 통지 준비 상태를 확인하고 과거 운영 이력 전체를 작업 지시로 복사하지 않는다.
 
-- **현재 운영 결정 — 2026-09-19:** 사용자 지시로 일반 수집·판정을 **루나1~5 고정 작업방(Luna max, `gpt-5.6-luna` / `max`)의 수집 → 조정자 저장·동결 → 같은 Luna 작업방 판정**으로 운영한다. [이전 3작품 시험](docs/catalog-expansion/01b-luna-max-transition-trial.md)은 종료 이력이며 현재 모델 선택을 제한하지 않는다. 조정자는 Astra low이며 정상 결과의 전수 의미 재검토를 추가하지 않는다. 기존 근거·HOLD·실패·모델 설정 이력은 보존한다. 수집·동결 대기 중 해당 방은 같은 작품에 예약한다.
+- **현재 운영 목표 — 2026-09-24:** 사용자 요청으로 **부모 오케스트레이터 세션 `01a0a3b8-5162-78f0-ac39-4e17f730a70a`의 GPT-5.6 Sol(`gpt-5.6-sol`) / high + 루나1~6 고정 작업 세션의 GPT-6 Luna(`gpt-6-luna`) / xhigh + 신규 배정당 50작품**을 운영한다. 오케스트레이터 모델 설정은 루나 작업 세션에 전달하지 않는다. 루나4·5·6은 이전 솔1·2·3과 같은 thread ID다. 조정자는 [배치 계획 §3](docs/catalog-expansion/01c-sol-batch-promotion-plan.md)의 현재 6개 ID를 확인하고 **루나 작업 세션에 보내는 매 새 턴에만** `model="gpt-6-luna"`, `thinking="xhigh"`를 명시한다. 부모 세션에 보내는 메시지에는 이 작업자 모델을 사용하지 않는다. 기존 세션 설정·메모리·과거 이름에서 모델을 추정하지 않는다. 이미 실행 중인 턴, 배정된 100작품 묶음, 기존 판정·모델 이력은 보존한다. 각 세션은 자기 배치 전체를 로컬 원문 우선으로 수집·보완·저장한 뒤 판정 단계로 전환한다. 수집과 판정을 작품마다 교차하지 않는다. 판정은 작품별 동결 입력으로 연속 처리하고, 판정 배치 완료 후 조정자가 집계·예외 확인과 직렬 승격을 담당한다. 매 작품 부모 왕복·정상 결과 전수 의미 재검토는 하지 않는다. 추가 검색 횟수 상한은 폐지하고 구체적 gap·새 정보·출처 소진으로 종료한다. 기존 근거·HOLD·실패·모델 이력은 보존한다. 지침 갱신만으로 중단된 큐를 재개하지 않는다.
+
+- **세션 간 메시지 모델:** `send_message_to_thread`의 model/thinking은 받는 세션에 적용한다. 부모 `01a0a3b8-5162-78f0-ac39-4e17f730a70a` → 루나1~~6은 `gpt-6-luna` / `xhigh`, 루나1~~6 → 부모의 진행·완료·부분 중단 보고는 `gpt-5.6-sol` / `high`를 지정한다. 작업자 모델을 부모 보고에 넣지 않는다.
+- **현재 수집 범위 — 2026-09-21:** 대표 ISBN과 해당 판본만 정확히 결속하며 전권·완결권 확인을 요구하지 않는다. 중간 권 ISBN을 1권으로 바꾸지 않는다. 추가 조사는 구체적 필수 팩터 gap에 한정한다. 안전 분류는 출판사·해당 레이블 근거에 따른 porn/non-porn이며 성인등급·성적 소재·표현강도 미확인은 HOLD 사유가 아니다. Art 4축은 수집·판정·정족수 검사에서 전면 제외하고 신규 표기는 unknown으로 유지한다. 기존 근거를 재사용하고 정정은 새 revision으로 남기며 과거 frozen·판정은 보존한다.
+
+- **현재 N/T·추천 문맥 처리:** 추가 조사를 마쳤는데 서사·톤만 부족하면 실제 조사 시도와 출처 소진을 새 v4 job의 `narrativeToneExhaustion`에 결속하고 해당 축을 `unknown`으로 둔 채 추천 승격을 진행한다. 조사 기록 없는 자동 예외나 다른 차단의 면제는 허용하지 않는다. 수집 완료 전 registry `supportEvidenceUrls`의 정확한 URL이 작품 선정 사실을 보여주는지 확인하고, 캡처 원문뿐 아니라 같은 작품 research·evidence ID까지 결속한다. 정확한 URL에 작품 근거가 없으면 추천 문맥 gap 또는 registry 정정 대상으로 남기며 URL을 임의 대체하지 않는다. 기존 frozen·HOLD는 새 입력 revision으로만 복구한다.
+
+- **우선 복구 — 2026-09-23:** 직전 HOLD 263건에서 분류한 N/T-only 120건과 추천 URL 결속 누락 70건을 신규 작품보다 먼저 검토한다. 현재 배정은 완료하고 각 세션의 완료 보고 뒤 최신 candidate·registry·중복 배정·유효 READY를 대조해 최대 50작품씩 복구를 배정한다. 190은 검토 후보 수이지 승격 확정 수가 아니다. 복구된 작품만 기존 비발행 검사와 조정자의 직렬 발행·readback을 거쳐 집계한다.
 
 - Catalog authoring은 `09`의 **`S0~S6` 순서**를 따른다. `S0~S5` shadow와 별도 승인된 `S6` 전환은 완료됐으며, 이후 table-backed 단일 권한은 `data/source/catalog.sqlite`다. 9개 authoritative CSV를 복구하거나 DB와 함께 두지 않는다.
 - 조사·후보 팩터·동결 입력/판정·HOLD/실패·발행 자료는 `docs/catalog-expansion/03-local-authoring-storage.md`에 따라 source 밖의 로컬 작업용 SQLite에 원본·버전을 영구 보존한다. `.tmp`는 복원 가능한 작업 사본이며 유일한 보존 위치로 쓰지 않는다. 인계·단계 완료·STATE 갱신 전에 저장/백업 receipt를 확인한다. 저장 성공으로 판정 권한이나 승격을 대체하지 않는다.
 - 출판사 판본 페이지 수집 시 소개 원문·수집 receipt·서지 입력도 같은 수집분에 보존한다. 정확한 Work·ISBN 검토 후 `scripts/import-publisher-book-metadata.ts`로 기존 metadata를 보존하며 직렬 반영한다. 입력·저장·갱신 경계는 위 저장 계약의 「출판사 소개를 수집과 함께 저장」를 따른다.
-- Catalog 확장의 작업 배정·검증 책임·재검토·보고는 `docs/catalog-expansion/01a-promotion-method-operational-amendment.md`의 **현재 실행 규칙(2026-09-19)**을 따른다. 조정자 포함 활성 모델 작업 최대 17개는 상한이며, 일반 작업은 사용자 지정 **루나1·루나2·루나3·루나4·루나5 고정 작업방(Luna max)**에서 방당 한 작품씩 처리한다. 사용자 지정 5개 방에서만 완료 통지에 따라 다음 작품을 배정한다. Luna 판정용 서브에이전트·일회성 CLI·앱 채팅의 CLI resume는 사용하지 않는다. 다섯 작업방의 고정 ID·완료 통지 형식은 해당 문서의 「현재 Luna 수집·판정 실행 경로」를 따른다. 고정 ID로 세션을 확인할 수 없으면 해당 배정을 보류하고 사용자에게 직접 채팅을 만들어 ID를 제공하거나 에이전트의 새 Luna max 채팅 생성을 허가해 달라고 명시적으로 묻는다. 허가 없이 대체 채팅을 생성하거나 다른 실행 경로로 전환하지 않는다. 방당 한 작품을 배정하고 Luna가 부모 채팅에 보내는 완료 큐 메시지로 직렬 후처리와 다음 배정을 이어간다. 승격 예약 automation은 삭제됐으며 재생성하지 않는다. 기존 runner의 정상 job 조립과 예외 검토, Luna 결과의 조정자 중복 검증 금지를 적용한다. 보충 근거 누적·동결 후 수치 원장 한 번 작성·작업 단위 증분 백업을 사용하며 실제 발행·최종 제품 확인과 상위 사양·안전성 계약은 유지한다.
+- Catalog 배정·보고·발행은 [배치 계획](docs/catalog-expansion/01c-sol-batch-promotion-plan.md)의 **현재 세션 표**와 [운영 보충](docs/catalog-expansion/01a-promotion-method-operational-amendment.md)의 최신 절을 따른다. 사용자 지정 루나1~6 고정 채팅을 재사용하며 판정용 서브에이전트·일회성 CLI·앱 채팅의 CLI resume로 대체하지 않는다. 지정 ID 확인 불가 시 해당 배정만 보류하고 사용자에게 새 ID 또는 세션 생성 허가를 명시적으로 요청한다. 허가 없이 방을 만들거나 옛 Luna 방을 전용하지 않는다. 신규 배정 50작품은 목록·확인 단위이며 기존 100작품 배정은 완료 또는 부분 checkpoint까지 보존한다. 작품별 입력·기계 검사·checkpoint·백업을 유지한다. 한 세션의 배치가 끝나면 다른 방을 기다리지 않고 확인·발행한다. `run --decisions`는 발행 경로이므로 작업자의 검사 전용 명령으로 쓰지 않는다. 일반 배치에서는 `--allow-model`을 사용하지 않는다. 공유 DB·registry·STATE·발행은 기존 잠금 아래 직렬 처리하고, 완료 판정 재사용·최신 서지 보존·제품 readback을 지킨다. 예약 automation은 만들지 않는다. 과거 Luna 5개 방·매 작품 통지는 이력으로만 보존한다.
 - `06-implementation-plan.md`의 단계별 완료 기준과 `08`의 **`M0~M10` 순서**를 보존한다. 완료된 단계는 일반 유지보수에서 처음부터 재실행하지 않고 변경이 영향을 주는 계약을 검증한다. framework migration과 7화면 redesign을 하나의 대형 PR로 합치지 않는다.
 - **게이트 G1(50작품 sanity)·G2(GO/NO-GO)**의 미충족 조건에 도달하면 의존 작업을 멈추고 보고한다. 기존 G2 제품 방향·Slice 5 승인은 §5의 model-panel artifact 범위에서 적용하며 재승인을 요구하지 않는다. 이를 사람 블라인드 검증 완료나 다른 범위의 승인으로 확대하지 않는다.
 - Model-panel evidence 검토에서 Local/Gemini/Grok CLI에는 ZIP이 아니라 canonical uncompressed directory와 exact request·complete payload ledger·root identity를 제공한다. ChatGPT.com Oracle에만 같은 payload의 deterministic ZIP을 제공한다. 이후 모든 Oracle 검토 모델은 사용자 2026-09-09 지시에 따라 ChatGPT UI의 6 Pro를 사용한다.
@@ -77,7 +84,7 @@ pnpm catalog:coverage       # 팩터 coverage·상관 진단 리포트
 pnpm --silent experiment:baseline # Taste vs Baseline CLI 비교 리포트(stdout은 Markdown만)
 ```
 
-푸시 전 최소: `typecheck` + `lint` + `test` + (catalog 변경 시) `catalog:validate`. 2026-09-11 사용자 지시에 따라 이 필수 검사는 푸시 직전에 실행하며, 로컬 커밋의 조건으로 실행하지 않는다.
+푸시 전 최소: `typecheck` + `lint` + `test` + (catalog 변경 시) `catalog:validate`. 일반 작업에서는 푸시 직전에 실행하며 로컬 커밋의 조건으로 실행하지 않는다. **2026-09-21 사용자 예외 승인:** 현재 연속 Catalog 승격 작업은 완료 묶음마다 조정자가 DB 반영·커밋·푸시한다. 중간 테스트·CI/CD는 실행하지 않고 전체 작업 완료 후 최종 검증·테스트를 수행한다. 중간에도 입력 결속·DB 무결성·잠금·반영 readback·저장/백업은 유지한다. 작업 브랜치를 사용하고 커밋에 `[skip ci]`를 넣으며 자동 배포 경로는 실행하지 않는다. 중간 푸시는 검증 완료나 릴리스 완료로 보고하지 않는다.
 
 ### 검증 범위와 종료 조건
 

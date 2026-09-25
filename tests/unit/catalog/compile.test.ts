@@ -1,4 +1,5 @@
 import { describe, expect, it } from "vitest";
+import { createHash } from "node:crypto";
 
 import { compileCatalog } from "../../../scripts/catalog/compile";
 import {
@@ -13,6 +14,8 @@ import {
 } from "../../../scripts/catalog/source-schema";
 import type { CatalogSource, Located } from "../../../scripts/catalog/types";
 import { AXIS_IDS } from "@/domain/catalog/constants";
+import { calculateWorkCoverage, promotionCoverageFailures } from "@/domain/catalog/coverage";
+import { workSimilarity } from "@/domain/recommendation/similarity";
 
 function located<T>(file: string, row: number, value: T): Located<T> {
   return { file, row, value };
@@ -114,6 +117,84 @@ function createValidSource(): CatalogSource {
 }
 
 describe("catalog compilation", () => {
+  it("accepts bound N/T exhaustion without fabricating axes or waiving Genre/Theme", () => {
+    const source = createValidSource();
+    const work = source.works[0]!;
+    work.value.annotationReviewMethod = "authorizedEvidencePanel";
+    source.evidence[0]!.value.reviewedByHuman = false;
+    source.factors = source.factors.map((row) => ({
+      ...row,
+      value: factorSourceRowSchema.parse({
+        workId: row.value.workId,
+        axisId: row.value.axisId,
+        state: "unknown",
+        value: "",
+        confidence: "",
+        evidenceId: row.value.evidenceId,
+      }),
+    }));
+    const hash = (value: string) => createHash("sha256").update(value).digest("hex");
+    // Sorted keys match the persisted Python record; this is test evidence only.
+    const research = {
+      attempts: ["narrative", "tone"].map((gap) => ({
+        gap,
+        observation: "Test-only exhausted source",
+        outcome: "insufficient",
+        sourceUrl: "https://example.com/source",
+      })),
+      policy: "narrative-tone-exhaustion-v1",
+      representativeIsbn: "9780306406157",
+      stopReason: "Test-only exhaustion; no real source attestation",
+      workId: "test-work",
+    };
+    const payload = {
+      policy: research.policy,
+      workId: research.workId,
+      representativeIsbn: research.representativeIsbn,
+      inputManifestSha256: "a".repeat(64),
+      researchSha256: hash(JSON.stringify(research)),
+      reviewReference: work.value.annotationReviewReference,
+      research,
+    };
+    const notes = JSON.stringify(payload);
+    source.evidence.push(
+      located("evidence/evidence.csv", 3, {
+        ...source.evidence[0]!.value,
+        id: `ev-nt-exhaustion-${hash(notes)}`,
+        extractorVersion: "narrativeToneExhaustionV1",
+        notes,
+      }),
+    );
+    const compiled = compileCatalog(source);
+    expect(compiled.issues.filter((issue) => issue.severity === "error")).toEqual([]);
+    const actual = compiled.catalog.works[0]!;
+    expect(promotionCoverageFailures(actual)).toEqual([]);
+    expect(calculateWorkCoverage(actual)).toMatchObject({ narrative: 0, tone: 0 });
+    expect(Object.values(actual.axes).every((factor) => factor.state === "unknown")).toBe(true);
+    const similarity = workSimilarity(actual, actual);
+    expect(similarity.groups.narrative.adjustedScore).toBe(0.5);
+    expect(similarity.groups.tone.adjustedScore).toBe(0.5);
+    const { narrativeToneException, ...eligibility } = actual.eligibility;
+    expect(narrativeToneException).toBeDefined();
+    expect(workSimilarity({ ...actual, eligibility }, actual)).toEqual(similarity);
+    expect(promotionCoverageFailures({ ...actual, genres: [], themes: [] })).toEqual([
+      "genre",
+      "theme",
+    ]);
+    source.evidence.at(-1)!.value.notes = notes.replace(
+      '"workId":"test-work"',
+      '"workId":"other-work"',
+    );
+    expect(
+      compileCatalog(source).issues.some((issue) => issue.code === "INVALID_NT_COVERAGE_EXCEPTION"),
+    ).toBe(true);
+    source.evidence.at(-1)!.value.notes = notes;
+    work.value.annotationReviewReference = "reviews/new-review.md";
+    expect(
+      compileCatalog(source).issues.some((issue) => issue.code === "COVERAGE_BELOW_THRESHOLD"),
+    ).toBe(true);
+  });
+
   it("binds collected book metadata to its exact work and ISBN and rejects a mismatched target", () => {
     const source = createValidSource();
     const metadata = bookMetadataSourceRowSchema.parse({

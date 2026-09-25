@@ -1,8 +1,13 @@
 import { createHash } from "node:crypto";
+import { z } from "zod";
 
 import { AXIS_IDS, THEME_TAGS } from "../../src/domain/catalog/constants";
 import { isbnIdentityKey } from "../../src/domain/catalog/normalize";
-import { catalogV1Schema, workAxesSchema } from "../../src/domain/catalog/schema";
+import {
+  catalogV1Schema,
+  workAxesSchema,
+  narrativeToneExceptionSchema,
+} from "../../src/domain/catalog/schema";
 import type {
   AxisFactor,
   BookMetadata,
@@ -27,6 +32,27 @@ type CompileResult = {
   context: RecommendationContext;
   issues: SourceIssue[];
 };
+
+const exhaustionEvidenceSchema = narrativeToneExceptionSchema.omit({ groups: true }).extend({
+  representativeIsbn: z.string().min(1),
+  reviewReference: z.string().min(1),
+  research: z.strictObject({
+    policy: z.literal("narrative-tone-exhaustion-v1"),
+    workId: z.string().min(1),
+    representativeIsbn: z.string().min(1),
+    stopReason: z.string().trim().min(1),
+    attempts: z
+      .array(
+        z.strictObject({
+          sourceUrl: z.url(),
+          gap: z.enum(["narrative", "tone"]),
+          outcome: z.enum(["insufficient", "unavailable", "duplicate", "resolved"]),
+          observation: z.string().trim().min(1),
+        }),
+      )
+      .min(1),
+  }),
+});
 
 function issue(
   located: Pick<Located<unknown>, "file" | "row">,
@@ -280,6 +306,62 @@ export function compileCatalog(source: CatalogSource): CompileResult {
     issues,
   );
   const warnedUnreviewedEvidenceIds = new Set<string>();
+  const exceptions = new Map<string, z.infer<typeof narrativeToneExceptionSchema>>();
+  for (const row of source.evidence.filter(
+    (item) => item.value.extractorVersion === "narrativeToneExhaustionV1",
+  )) {
+    try {
+      const value = exhaustionEvidenceSchema.parse(JSON.parse(row.value.notes));
+      const work = workRows.get(value.workId)?.value;
+      const researchSha = createHash("sha256")
+        .update(JSON.stringify(canonicalize(value.research)))
+        .digest("hex");
+      const evidenceSha = createHash("sha256").update(row.value.notes).digest("hex");
+      if (
+        row.value.id !== `ev-nt-exhaustion-${evidenceSha}` ||
+        researchSha !== value.researchSha256 ||
+        row.value.workId !== value.workId ||
+        row.value.targetType !== "work" ||
+        row.value.targetId !== value.workId ||
+        row.value.reviewedByHuman ||
+        row.value.sourceType !== "manual" ||
+        value.research.workId !== value.workId ||
+        value.research.representativeIsbn !== value.representativeIsbn ||
+        !value.research.attempts.some((attempt) => attempt.sourceUrl === row.value.sourceUrl) ||
+        work === undefined
+      ) {
+        throw new Error("N/T exhaustion evidence identity/hash mismatch");
+      }
+      // Superseded records remain history, never authority for a later review.
+      if (value.reviewReference !== work.annotationReviewReference) continue;
+      const editions = source.volumes.filter(
+        (item) => item.value.workId === value.workId && item.value.isRepresentative,
+      );
+      if (
+        work.annotationReviewMethod !== "authorizedEvidencePanel" ||
+        !work.recommendationEligible ||
+        editions.length !== 1 ||
+        isbnIdentityKey(editions[0]!.value.isbn) !== isbnIdentityKey(value.representativeIsbn) ||
+        exceptions.has(value.workId)
+      ) {
+        throw new Error(
+          "N/T exhaustion evidence must bind one current AEP review and representative edition",
+        );
+      }
+      exceptions.set(
+        value.workId,
+        narrativeToneExceptionSchema.parse({
+          policy: value.policy,
+          workId: value.workId,
+          inputManifestSha256: value.inputManifestSha256,
+          researchSha256: value.researchSha256,
+          groups: [...new Set(value.research.attempts.map((attempt) => attempt.gap))].sort(),
+        }),
+      );
+    } catch (error) {
+      issues.push(issue(row, "error", "INVALID_NT_COVERAGE_EXCEPTION", String(error), "notes"));
+    }
+  }
   const aliasKeys = new Set<string>();
   const aliasesByWork = new Map<string, string[]>();
   for (const row of source.aliases) {
@@ -480,7 +562,10 @@ export function compileCatalog(source: CatalogSource): CompileResult {
         ),
       );
     }
-    if (!referencedEvidenceIds.has(row.value.id)) {
+    if (
+      !referencedEvidenceIds.has(row.value.id) &&
+      row.value.extractorVersion !== "narrativeToneExhaustionV1"
+    ) {
       issues.push(
         issue(
           row,
@@ -677,6 +762,9 @@ export function compileCatalog(source: CatalogSource): CompileResult {
         onboardingEligible: row.value.onboardingEligible,
         recommendationEligible: row.value.recommendationEligible,
         libraryOnly: row.value.libraryOnly,
+        ...(exceptions.has(row.value.id)
+          ? { narrativeToneException: exceptions.get(row.value.id)! }
+          : {}),
       },
       evidence: {
         metadataConfidence: row.value.metadataConfidence,

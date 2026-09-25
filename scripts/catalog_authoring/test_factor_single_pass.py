@@ -60,9 +60,21 @@ class SinglePassTest(unittest.TestCase):
             self.assertEqual(blockers[wid], [])
             self.assertEqual(projected["works"][0]["context"]["citationUrls"], url)
             self.assertEqual(before, {p: p.read_bytes() for p in before})
+            mature = copy.deepcopy(value)
+            mature_source = mature["works"][0]["safety"]["sources"][0]
+            mature_source.update(classificationKind="non-pornographic-work", observation="Adult-rated violent fantasy narrative; non-pornographic work.")
+            mature_projected, _, mature_blockers = single.project(root, mature)
+            self.assertEqual(mature_blockers[wid], [])
+            self.assertEqual(mature_projected["works"][0]["safety"]["evidence"][0]["audienceClassification"], "non-porn")
+            mature_source["classificationKind"] = "pornographic-work"
+            with self.assertRaises(ValueError):
+                single.project(root, mature)
+            mature["works"][0]["safety"].update(outcome="BLOCKED_SAFETY", reasonCode="SAFETY_PORNOGRAPHIC_WORK")
+            _, _, porn_blockers = single.project(root, mature)
+            self.assertIn("BLOCKED_SAFETY", porn_blockers[wid])
             safety_root = root / "safety"
             target = {"batchId": "r-test-revision", "ordinal": "1", "workId": wid, "title": "Example", "representativeIsbn": "9784199804953", "packetDigest": "a" * 64}
-            prepare.materialize_safety(projected, [target], {wid}, safety_root)
+            prepare.materialize_safety(mature_projected, [target], {wid}, safety_root)
             safety_targets = panel.read_csv(safety_root / "targets.csv", prepare.publisher.SAFETY_TARGET_FIELDS)
             self.assertEqual(safety_targets[0]["identityUrl"], url)
             for defect in ("wrong-use", "unknown-id", "duplicate", "wrong-work", "mixed-version"):

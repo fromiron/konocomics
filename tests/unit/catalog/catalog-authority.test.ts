@@ -2,6 +2,7 @@ import {
   copyFileSync,
   cpSync,
   existsSync,
+  mkdirSync,
   mkdtempSync,
   readFileSync,
   rmSync,
@@ -48,6 +49,22 @@ function createAuthorityWithDynamicReview() {
 }
 
 describe("SQLite Catalog authority", () => {
+  it("opens a Catalog SQLite file beyond the Windows path limit", () => {
+    const root = mkdtempSync(join(tmpdir(), "konocomics-long-path-"));
+    const source = join(root, ...Array.from({ length: 4 }, () => "nested-path-".padEnd(58, "x")));
+    try {
+      mkdirSync(source, { recursive: true });
+      expect(join(source, CATALOG_DATABASE_FILE).length).toBeGreaterThan(260);
+      copyFileSync(
+        join(repositorySource, CATALOG_DATABASE_FILE),
+        join(source, CATALOG_DATABASE_FILE),
+      );
+      expect(readCatalogAuthority(source).length).toBeGreaterThan(0);
+    } finally {
+      rmSync(root, { recursive: true, force: true });
+    }
+  }, 120_000);
+
   it("migrates a v1 authoring projection to v2 and preserves metadata on the next ordinary edit", () => {
     const root = mkdtempSync(join(tmpdir(), "konocomics-authority-book-metadata-"));
     const legacy = join(root, "legacy/data/source");

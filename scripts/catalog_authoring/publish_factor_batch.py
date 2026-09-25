@@ -3,6 +3,8 @@
 
 from __future__ import annotations
 
+import coverage_exception as nt
+
 import argparse
 import csv
 import copy
@@ -544,6 +546,8 @@ def _validate_ledger(
         if work_id in safety_blocked:
             codes.append("BLOCKED_SAFETY")
         blockers[work_id] = sorted(codes)
+    exceptions = nt.from_input(chunk.parent.parent)
+    blockers = {wid: nt.filter_blockers(codes, exceptions.get(wid)) for wid, codes in blockers.items()}
     return coverage, blockers
 
 
@@ -552,6 +556,7 @@ def _validate_promotion(
     targets: list[dict[str, str]],
     contexts: list[dict[str, str]],
     blockers: dict[str, list[str]],
+    pass_reasons=None,
 ) -> None:
     rows = read_csv(result / "promotion-ledger.csv", PROMOTION_FIELDS)
     target_ids = {row["workId"] for row in targets}
@@ -576,7 +581,7 @@ def _validate_promotion(
             "recommendationContextCondition": "planned-after-coverage-pass" if codes else "fulfilled-after-coverage-pass",
             "contextEvidenceIds": context["evidenceIds"],
             "contextCitationUrls": context["citationUrls"],
-            "reasonCode": "BLOCKED_SAFETY" if "BLOCKED_SAFETY" in codes else "FACTOR_COVERAGE_INCOMPLETE" if codes else "COVERAGE_COMPLETE",
+            "reasonCode": "BLOCKED_SAFETY" if "BLOCKED_SAFETY" in codes else "FACTOR_COVERAGE_INCOMPLETE" if codes else (pass_reasons or {}).get(work_id, "COVERAGE_COMPLETE"),
         }
         if row != expected:
             raise ValidationError(f"promotion semantics mismatch: {work_id}")
@@ -632,6 +637,7 @@ def validate(
     prior_authority: dict[str, object] | None = None,
 ) -> dict[str, int | str]:
     panel_input, chunks, input_digest = validate_input(input_root)
+    exceptions = nt.from_input(input_root)
     targets_all = {row["workId"] for chunk in chunks for row in read_csv(chunk / "targets.csv", TARGET_FIELDS)}
     authority = prior_authority or panel_validation.load_prior_authority(input_root, work_ids=targets_all)
     if any(key[0] not in targets_all for key in panel_validation.load_prior_decisions(input_root)):
@@ -658,7 +664,7 @@ def validate(
         targets = read_csv(chunk / "targets.csv", TARGET_FIELDS)
         coverage, blockers = _validate_ledger(chunk, result, targets, artifact_digest, prior_evidence, authority)
         contexts = list(single.contexts(chunk, result, targets, blockers, authority).values()) if panel_input["schemaVersion"] == single.INPUT else read_csv(chunk / "recommendation-context-condition.csv", CONTEXT_FIELDS)
-        _validate_promotion(result, targets, contexts, blockers)
+        _validate_promotion(result, targets, contexts, blockers, {wid: nt.pass_reason(item, wid in exceptions) for wid, item in coverage.items()})
         passed, blocked = _validate_summary(
             result / "evidence-panel-summary.json", panel_input,
             chunk.name.removeprefix("chunk-"), input_digest, artifact_digest,
@@ -1396,6 +1402,7 @@ def _install_recovery_materializer(module: types.ModuleType) -> None:
                 if con.execute("update source_works set " + ",".join(f'"{key}"=?' for key in fields) + " where id=?", (*[final[key] for key in fields], wid)).rowcount != 1:
                     raise module.PublishError(f"recovery work missing: {wid}")
                 *_, blockers = integration.coverage(con, wid)
+                blockers = nt.filter_blockers(blockers, plan.get("narrativeToneExceptions", {}).get(wid))
                 if active and blockers:
                     raise module.PublishError(f"recovery PASS coverage readback failed: {wid}")
                 expected_codes = set(plan["recoveryPromotions"][wid]["panelBlockerCode"].split(";")) - {"", "BLOCKED_SAFETY"}
@@ -1509,9 +1516,15 @@ def _materialize_existing_context_evidence(module, plan, promotion, contexts, su
         context_only = not any(r["workId"] == wid for key in ("factorUpdates", "themeInserts", "contextInserts") for r in plan.get(key, [])) and wid not in plan.get("genreUpdates", {})
         if context_only:
             work = baseline["works"][wid]
-            if work.get("recommendationEligible") != "true" or work.get("libraryOnly") != "false" or work.get("annotationReviewMethod") != "authorizedEvidencePanel":
-                raise module.PublishError(f"context-only correction requires an already eligible AEP work: {wid}")
-            plan["contextOnlyWorkUpdates"][wid] = {k: work[k] for k in ("annotationReviewedAt", "annotationReviewReference")}
+            if work.get("annotationReviewMethod") != "authorizedEvidencePanel":
+                raise module.PublishError(f"context correction requires an existing AEP work: {wid}")
+            if work.get("recommendationEligible") == "true" and work.get("libraryOnly") == "false":
+                plan["contextOnlyWorkUpdates"][wid] = {k: work[k] for k in ("annotationReviewedAt", "annotationReviewReference")}
+            elif work.get("recommendationEligible") == "false" and work.get("libraryOnly") == "true":
+                # A new context may promote an otherwise unchanged, previously blocked AEP work.
+                context_only = False
+            else:
+                raise module.PublishError(f"context correction baseline eligibility conflict: {wid}")
         linkage["contextOnly"] = context_only
         row["notes"] += " | contextSupersessionV1|" + json.dumps(linkage, ensure_ascii=False, sort_keys=True, separators=(",", ":"))
         plan["newEvidence"][stored_id] = row
@@ -1710,10 +1723,11 @@ def _install_correction_materializer(module: types.ModuleType) -> None:
                 if actual_axes != plan["correctionAxisSnapshot"][work_id]:
                     raise module.PublishError(f"correction final Axis snapshot mismatch: {work_id}")
                 narrative, tone, genres, themes, blockers = integration.coverage(con, work_id)
+                blockers = nt.filter_blockers(blockers, plan.get("narrativeToneExceptions", {}).get(work_id))
                 coverage_readback[work_id] = {"panelCoverage": plan["correctionPanelCoverage"][work_id], "databaseCoverage": {"narrativeKnown": narrative, "toneKnown": tone, "genreCount": genres, "themeCount": themes, "artKnown": sum(actual_axes[axis]["state"] == "known" for axis in ART)}, "databaseBlockerCodes": blockers}
             final = {work_id: "BLOCKED_FACTOR" if work_id in plan["correctionBlockedIds"] else "PASS" for work_id in ids}
             integration.REVIEW_REFERENCE = plan["correctionReviewReference"]
-            integration.set_final_statuses(con, final, {}, plan["correctionReviewedAt"], {work_id: "true" if status == "PASS" else "false" for work_id, status in final.items()})
+            integration.set_final_statuses(con, final, {}, plan["correctionReviewedAt"], {work_id: "true" if status == "PASS" else "false" for work_id, status in final.items()}, nt_exceptions=plan.get("narrativeToneExceptions", {}))
             if plan["correctionBlockedIds"]:
                 integration.reindex_authority_projection(con, {"source_recommendation_context"})
             integration.validate_authority_projection(con)
@@ -2349,6 +2363,49 @@ def publish_retained_authority(
         raise
 
 
+def preserve_book_metadata(candidate: Path, canonical: Path, backend) -> dict:
+    """Carry current canonical metadata into a candidate without replacing newer candidate rows."""
+    before = backend._snapshot_db(candidate)
+    with closing(sqlite3.connect(f"file:{canonical.resolve().as_posix()}?mode=ro", uri=True)) as source:
+        backend._validate_schema(source, "canonical")
+        if source.execute("pragma user_version").fetchone()[0] == 1:
+            return {"status": "UNCHANGED", "rows": 0}
+        columns = [row[1] for row in source.execute("pragma table_info(source_book_metadata)")]
+        canonical_rows = [dict(zip(columns, row)) for row in source.execute("select * from source_book_metadata order by sourceOrdinal")]
+        ddl = source.execute("select sql from sqlite_master where name='source_book_metadata'").fetchone()[0]
+    with closing(sqlite3.connect(candidate)) as target:
+        with target:
+            if target.execute("pragma user_version").fetchone()[0] == 1:
+                target.execute(ddl)
+                target.execute("pragma user_version=2")
+            existing = {row[3]: dict(zip(columns, row)) for row in target.execute("select * from source_book_metadata")}
+            next_ordinal = max((row["sourceOrdinal"] for row in existing.values()), default=0) + 1
+            for row in canonical_rows:
+                isbn = row["isbn"]
+                previous = existing.get(isbn)
+                if previous and previous["workId"] != row["workId"]:
+                    raise ValidationError("metadata Work/ISBN conflict")
+                binding = target.execute("select workId from source_volumes where isbn=?", (isbn,)).fetchall()
+                if binding != [(row["workId"],)]:
+                    raise ValidationError("metadata ISBN does not identify exactly one candidate Work")
+                # Keep newer candidate metadata, preserve canonical on equal-time disagreement.
+                if previous and previous["fetchedAt"] > row["fetchedAt"]:
+                    continue
+                if previous:
+                    row = {**row, "sourceOrdinal": previous["sourceOrdinal"], "sourceLine": previous["sourceLine"]}
+                    target.execute("delete from source_book_metadata where isbn=?", (isbn,))
+                else:
+                    row = {**row, "sourceOrdinal": next_ordinal, "sourceLine": next_ordinal + 1}
+                    next_ordinal += 1
+                target.execute("insert into source_book_metadata values (" + ",".join("?" for _ in columns) + ")", [row[key] for key in columns])
+            backend._validate_schema(target, "candidate")
+    after = backend._snapshot_db(candidate)
+    for table, rows in before.items():
+        if table != "source_book_metadata" and rows != after[table]:
+            raise ValidationError("metadata preservation changed another source table")
+    return {"status": "PRESERVED", "canonicalSha256": sha256(canonical), "rows": len(after["source_book_metadata"][1])}
+
+
 def publish_batch(
     input_root: Path,
     result_root: Path,
@@ -2428,6 +2485,8 @@ def publish_batch(
         if _sidecars(candidate) or _sidecars(registry_output) or _sidecars(canonical):
             raise ValidationError("SQLite sidecar exists after publication")
         _verify_result_manifest(stage)
+        metadata_receipt = preserve_book_metadata(candidate, canonical, backend)
+        (stage / "book-metadata-preservation.json").write_text(json.dumps(metadata_receipt, ensure_ascii=False, indent=2) + "\n", encoding="utf-8")
         if corrections:
             correction_report = {"schemaVersion": "factor-prior-correction-publication-v1", "status": "PASS", "baselineSha256": baseline_before, "candidateSha256": sha256(candidate), "inputManifestSha256": sha256(input_root / "PANEL-INPUT.sha256"), "candidateOnly": True, "reviewedByHuman": False, **backend.correction_readback}
             (stage / "prior-correction-ledger.json").write_text(json.dumps(correction_report, ensure_ascii=False, indent=2, sort_keys=True)+"\n", encoding="utf-8", newline="\n")

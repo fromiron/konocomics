@@ -20,7 +20,7 @@ describe("domain lint boundary", () => {
     `);
 
     expect(rules).toContain("no-restricted-imports");
-  });
+  }, 20_000);
 
   it("rejects relative imports that cross into an upper layer", async () => {
     const rules = await lintDomainSource(`

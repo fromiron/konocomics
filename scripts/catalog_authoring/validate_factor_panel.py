@@ -3,6 +3,8 @@
 
 from __future__ import annotations
 
+import coverage_exception as nt
+
 import argparse
 import csv
 import hashlib
@@ -14,7 +16,7 @@ import sqlite3
 import sys
 import types
 from collections import defaultdict
-from contextlib import closing
+from contextlib import closing, contextmanager
 from pathlib import Path, PurePosixPath
 from authoring_paths import REPO, ROOT, LEGACY, artifact_path
 from urllib.parse import urlsplit
@@ -119,6 +121,23 @@ class ValidationError(ValueError):
     pass
 
 
+_manifest_verification_cache: dict[tuple[str, str], dict[str, str]] | None = None
+
+
+@contextmanager
+def manifest_verification_cache():
+    """Reuse exact manifest checks only inside one locked publication batch."""
+    global _manifest_verification_cache
+    previous = _manifest_verification_cache
+    if previous is None:
+        _manifest_verification_cache = {}
+    try:
+        yield
+    finally:
+        if previous is None:
+            _manifest_verification_cache = None
+
+
 def sha256_bytes(data: bytes) -> str:
     return hashlib.sha256(data).hexdigest()
 
@@ -154,6 +173,12 @@ def verify_manifest(base: Path, manifest: Path, expected_paths: set[str]) -> dic
         raise ValidationError(f"invalid manifest {manifest}: {error}") from error
     if not raw or b"\r" in raw or not raw.endswith(b"\n") or raw.endswith(b"\n\n"):
         raise ValidationError(f"non-canonical manifest bytes: {manifest}")
+    cache_key = (str(resolved_base), sha256_bytes(raw))
+    if _manifest_verification_cache is not None and cache_key in _manifest_verification_cache:
+        entries = _manifest_verification_cache[cache_key]
+        if set(entries) != expected_paths:
+            raise ValidationError(f"manifest membership mismatch: {manifest}")
+        return dict(entries)
     entries: dict[str, str] = {}
     for number, line in enumerate(text.splitlines(), 1):
         match = SHA_ROW.fullmatch(line)
@@ -173,6 +198,8 @@ def verify_manifest(base: Path, manifest: Path, expected_paths: set[str]) -> dic
         raise ValidationError(f"manifest paths are not sorted: {manifest}")
     if set(entries) != expected_paths:
         raise ValidationError(f"manifest membership mismatch: {manifest}")
+    if _manifest_verification_cache is not None:
+        _manifest_verification_cache[cache_key] = dict(entries)
     return entries
 
 
@@ -1161,6 +1188,8 @@ def validate_ledger(chunk: Path, result: Path, targets: list[dict[str, str]], ar
         if item["toneKnown"] < 5: codes.append("TONE_COVERAGE_INCOMPLETE")
         coverage[work_id] = item
         blockers[work_id] = sorted(codes, key=code_unit_key)
+    exceptions = nt.from_input(chunk.parent.parent)
+    blockers = {wid: nt.filter_blockers(codes, exceptions.get(wid)) for wid, codes in blockers.items()}
     return coverage, blockers
 
 
@@ -1183,7 +1212,7 @@ def validate_contexts(chunk: Path, targets: list[dict[str, str]], blockers: dict
     return contexts
 
 
-def validate_promotion(result: Path, targets: list[dict[str, str]], contexts: dict[str, dict[str, str]], blockers: dict[str, list[str]]) -> None:
+def validate_promotion(result: Path, targets: list[dict[str, str]], contexts: dict[str, dict[str, str]], blockers: dict[str, list[str]], pass_reasons=None) -> None:
     rows = read_csv(result / "promotion-ledger.csv", PROMOTION_FIELDS)
     target_ids = {row["workId"] for row in targets}
     if len(rows) != len(target_ids) or {row["workId"] for row in rows} != target_ids:
@@ -1205,7 +1234,7 @@ def validate_promotion(result: Path, targets: list[dict[str, str]], contexts: di
             "recommendationContextCondition": "planned-after-coverage-pass" if codes else "fulfilled-after-coverage-pass",
             "contextEvidenceIds": context["evidenceIds"],
             "contextCitationUrls": context["citationUrls"],
-            "reasonCode": "BLOCKED_SAFETY" if "BLOCKED_SAFETY" in codes else "FACTOR_COVERAGE_INCOMPLETE" if codes else "COVERAGE_COMPLETE",
+            "reasonCode": "BLOCKED_SAFETY" if "BLOCKED_SAFETY" in codes else "FACTOR_COVERAGE_INCOMPLETE" if codes else (pass_reasons or {}).get(work_id, "COVERAGE_COMPLETE"),
         }
         if row != expected:
             raise ValidationError(f"promotion semantics mismatch: {work_id}")
@@ -1249,6 +1278,7 @@ def validate_summary(path: Path, panel: dict[str, object], chunk_id: str, input_
 def validate(input_root: Path, result_root: Path, prior_authority: dict[str, object] | None = None) -> dict[str, int | str]:
     import factor_single_pass as single
     panel, chunks, input_digest = validate_input(input_root)
+    exceptions = nt.from_input(input_root)
     targets_all = {row["workId"] for chunk in chunks for row in read_csv(chunk / "targets.csv", TARGET_FIELDS)}
     authority = prior_authority or load_prior_authority(input_root, work_ids=targets_all)
     if any(key[0] not in targets_all for key in load_prior_decisions(input_root)):
@@ -1282,7 +1312,7 @@ def validate(input_root: Path, result_root: Path, prior_authority: dict[str, obj
         artifact_digest = sha256(chunk / "CHUNK.sha256")
         coverage, blockers = validate_ledger(chunk, result, targets, artifact_digest, authority)
         contexts = single.contexts(chunk, result, targets, blockers, authority)
-        validate_promotion(result, targets, contexts, blockers)
+        validate_promotion(result, targets, contexts, blockers, {wid: nt.pass_reason(item, wid in exceptions) for wid, item in coverage.items()})
         passed, blocked = validate_summary(result / "evidence-panel-summary.json", panel, chunk.name.removeprefix("chunk-"), input_digest, artifact_digest, coverage, blockers)
         totals["targetCount"] += len(targets)
         totals["passCount"] += passed

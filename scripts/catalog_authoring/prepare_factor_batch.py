@@ -15,10 +15,12 @@ from pathlib import Path
 import publish_factor_batch as publisher
 import validate_factor_panel as panel
 import factor_single_pass as single
+import coverage_exception as nt
 from prepare_factor_rescue_004 import CONTRACTS, coverage, write_text
 from prepare_ready_safety import manifest, write_csv, write_json, _qualifies
 
 from authoring_paths import REPO, ROOT, LEGACY, artifact_path
+from catalog_workspace import unlinked
 WORK_KEYS = {"workId", "title", "representativeIsbn", "research", "supplementalEvidence", "context", "evidence", "priorClaims", "priorDecisions", "safety"}
 
 
@@ -44,6 +46,7 @@ def expand_compact_job(job: dict, directory: Path, bindings: dict[Path, str]) ->
         keys = (WORK_KEYS - {"research", "supplementalEvidence"}) | {reference_key, "sourceBindings"}
         if job["schemaVersion"] == single.JOB:
             keys -= {"context", "safety"}
+        keys |= {"narrativeToneExhaustion"} if "narrativeToneExhaustion" in raw and job["schemaVersion"] == single.JOB else set()
         panel.exact_dict(raw, keys | ({"registryVolumeProofs"} if "registryVolumeProofs" in raw else set()), "compact authoring work")
         references = raw[reference_key] if reference_key == "researchRefs" else [raw[reference_key]]
         require(isinstance(references, list) and bool(references), "research references must be a nonempty list")
@@ -123,7 +126,9 @@ def read_job(path: Path, input_bindings: dict[Path, str] | None = None, *, recov
     seen = set()
     for raw in job["works"]:
         keys = (WORK_KEYS - ({"context", "safety"} if deferred else set())) | ({"registryVolumeProofs"} if proof_mode else set())
+        keys |= {"narrativeToneExhaustion"} if deferred and "narrativeToneExhaustion" in raw else set()
         row = panel.exact_dict(raw, keys, "authoring work")
+        nt.validate_record(row)
         wid = row["workId"]
         require(isinstance(wid, str) and re.fullmatch(r"work-[0-9a-f]{20}", wid) is not None and wid not in seen, "invalid or duplicate work ID")
         seen.add(wid)
@@ -289,10 +294,88 @@ def safety_validator():
     return module
 
 
-def freeze(job_path: Path, baseline: Path, registry_path: Path, output: Path, provenance: Path | None = None, prior_bundles: tuple[Path, ...] = (), recovery_epoch: Path | None = None) -> dict:
+def provenance_roots(value):
+    return sorted({unlinked(artifact_path(p)).resolve() for p in ([value] if isinstance(value, (str, Path)) else value or [])}, key=str)
+
+
+def capture_files(root: Path, *, recursive=False) -> dict:
+    files = {}
+    for receipt_path in sorted(root.rglob("*.json") if recursive else root.glob("*.json")):
+        if not receipt_path.name.startswith(("capture-", "web-response-")) or receipt_path.name.endswith(".publisher-receipt.json"):
+            continue
+        receipt = panel.read_json(unlinked(receipt_path))
+        files[receipt_path.relative_to(root).as_posix()] = panel.sha256(receipt_path)
+        if not receipt.get("rawPath"):
+            continue  # Failed access remains recorded; it is not invented raw evidence.
+        body_path = unlinked(panel._safe_child(receipt_path.parent, receipt["rawPath"]))
+        require(body_path.is_file(), f"NEEDS_PROVENANCE_BINDING: missing raw body: {body_path}")
+        body = body_path.read_bytes()
+        require(panel.sha256_bytes(body) == receipt.get("sha256") and len(body) == receipt.get("bytes"),
+                f"NEEDS_PROVENANCE_BINDING: raw capture/receipt mismatch: {receipt_path}")
+        files[body_path.relative_to(root).as_posix()] = receipt["sha256"]
+    return files
+
+
+def capture_bindings(job_path: Path, provenance=None) -> list[dict]:
+    """Bind completed, same-Work collections; never copy a research parent blindly."""
+    raw = panel.read_json(job_path)
+    works = {row["workId"]: row for row in raw["works"]}
+    explicit = set(provenance_roots(provenance))
+    roots = set(explicit)
+    research = {}
+    for row in raw["works"]:
+        for ref in row.get("researchRefs", [row["researchRef"]] if "researchRef" in row else []):
+            path = unlinked(artifact_path(job_path.resolve().parent / ref["path"]))
+            require(panel.sha256(path) == ref["sha256"], "research reference SHA mismatch")
+            research.setdefault(path.parent.resolve(), {})[str(path.resolve())] = ref["sha256"]
+            covered = any(path.parent.is_relative_to(root) for root in explicit)
+            if (path.parent / "collection-session.json").is_file() and not covered:
+                roots.add(path.parent.resolve())
+            elif not covered:
+                require(not any(path.parent.glob("capture-*.json")) and not any(path.parent.glob("web-response-*.json")),
+                        f"NEEDS_PROVENANCE_BINDING: raw receipts without a collection session: {path.parent}")
+    bindings = []
+    for root in sorted(roots, key=str):
+        require(root.is_dir() and not root.is_symlink() and not root.is_junction(), f"NEEDS_PROVENANCE_BINDING: invalid collection: {root}")
+        session = unlinked(root / "collection-session.json")
+        if not session.is_file():
+            # Existing explicit legacy roots remain usable, never auto-discovered.
+            # Their files are operator-bound input, not certified same-Work evidence.
+            require(root in explicit, f"NEEDS_PROVENANCE_BINDING: missing collection session: {root}")
+            files = {}
+            for path in root.rglob("*"):
+                unlinked(path)
+                if path.is_file():
+                    files[path.relative_to(root).as_posix()] = panel.sha256(path)
+            require(bool(files), f"NEEDS_PROVENANCE_BINDING: empty explicit provenance: {root}")
+            for name in files:
+                if Path(name).name == "collection-session.json":
+                    require(panel.read_json(root / name).get("workId") in works, f"NEEDS_PROVENANCE_BINDING: collection Work mismatch: {root / name}")
+            files.update(capture_files(root, recursive=True))
+            bindings.append({"root": str(root), "bindingKind": "explicit-legacy", "workIds": sorted(works), "files": files})
+            continue
+        work_id = panel.read_json(session).get("workId")
+        require(work_id in works, f"NEEDS_PROVENANCE_BINDING: collection Work mismatch: {root}")
+        refs = research.get(root, {})
+        if not refs:
+            path = unlinked(root / "research.jsonl")
+            require(path.is_file(), f"NEEDS_PROVENANCE_BINDING: collection research missing: {root}")
+            refs = {str(path): panel.sha256(path)}
+        files = {"collection-session.json": panel.sha256(session)}
+        for path, digest in refs.items():
+            rows = [json.loads(line) for line in Path(path).read_text(encoding="utf-8").splitlines() if line.strip()]
+            require(all(isinstance(row, dict) for row in rows) and sum(row.get("workId") == work_id for row in rows) == 1,
+                    f"NEEDS_PROVENANCE_BINDING: research/collection Work mismatch: {path}")
+            files[Path(path).relative_to(root).as_posix()] = digest
+        files.update(capture_files(root))
+        bindings.append({"root": str(root), "workId": work_id, "researchBindings": refs, "files": files})
+    return bindings
+
+
+def freeze(job_path: Path, baseline: Path, registry_path: Path, output: Path, provenance=None, prior_bundles: tuple[Path, ...] = (), recovery_epoch: Path | None = None) -> dict:
     require(not output.exists(), f"refusing overwrite: {output}")
-    if provenance is not None:
-        require(not output.resolve().is_relative_to(provenance.resolve()), "freeze output must be outside provenance directory")
+    for root in provenance_roots(provenance):
+        require(not output.resolve().is_relative_to(root), "freeze output must be outside provenance directory")
     input_bindings: dict[Path, str] = {}
     if recovery_epoch is not None:
         import factor_recovery
@@ -300,6 +383,11 @@ def freeze(job_path: Path, baseline: Path, registry_path: Path, output: Path, pr
         input_bindings[recovery_epoch.resolve()] = panel.sha256(recovery_epoch)
         input_bindings[artifact_path(epoch["originalCanonicalPath"]).resolve()] = epoch["canonicalSha256"]
     job = read_job(job_path, input_bindings, recovery=recovery_epoch is not None)
+    captures = capture_bindings(job_path, provenance)
+    for binding in captures:
+        root = Path(binding["root"])
+        require(not output.resolve().is_relative_to(root), "freeze output must be outside provenance directory")
+        input_bindings.update({root / name: digest for name, digest in binding["files"].items()})
     if job["schemaVersion"] == single.FROZEN_JOB:
         require(len(job["works"]) == 1, "single-pass revisions isolate one Work; queue independent revisions")
     declaration = None
@@ -326,10 +414,16 @@ def freeze(job_path: Path, baseline: Path, registry_path: Path, output: Path, pr
         roots = sorted(({baseline.resolve()} if declaration is None else set()) | {p.resolve() for p in prior_bundles}, key=str)
         write_json(input_root / "external-prior-authority.json", {"schemaVersion": "factor-external-prior-authority-v1", "bundles": [{"root": str(p), "manifestSha256": panel.sha256(p / "MANIFEST.sha256")} for p in roots]})
     write_json(input_root / "external-lineage.json", {"baselineRoot": str(baseline.resolve()), "baselineManifestSha256": panel.sha256(baseline / "MANIFEST.sha256"), "registryPath": str(registry_path.resolve()), "sourceJobSha256": input_bindings[job_path.resolve()], "sourceInputBindings": {str(path): digest for path, digest in input_bindings.items()}, "historicalExecutionReplayed": False})
-    if provenance is not None:
-        require(provenance.is_dir() and not provenance.is_symlink(), "invalid provenance directory")
-        require(not any(p.is_symlink() for p in provenance.rglob("*")), "linked provenance is not allowed")
-        shutil.copytree(provenance, input_root / "provenance")
+    for binding in captures:
+        root = Path(binding["root"])
+        # Separate namespaces preserve relative rawPath and same-named captures.
+        namespace = panel.sha256_bytes(str(root).encode())[:16]
+        for name, digest in binding["files"].items():
+            destination = input_root / "provenance" / namespace / name
+            destination.parent.mkdir(parents=True, exist_ok=True)
+            shutil.copyfile(root / name, destination)
+            require(panel.sha256(destination) == digest, "provenance changed during freeze")
+    write_json(input_root / "provenance-bindings.json", {"collections": captures})
     registry_rows = sorted([r for wid in packets for r in registry["rowsByWork"][wid]], key=lambda r: int(r["sourceOrdinal"]))
     require(bool(registry_rows), "missing frozen registry rows")
     write_csv(input_root / "source-registry.csv", tuple(registry_rows[0]), registry_rows)
@@ -520,6 +614,7 @@ def seal_result(output: Path, ledger_path: Path | None, baseline: Path, registry
     # Validate actual decisions before deriving any promotion or PASS summary.
     counts, blockers = panel.validate_ledger(chunk, result, targets, artifact, authority)
     contexts = single.contexts(chunk, result, targets, blockers, authority)
+    exceptions = nt.from_input(input_root)
     if info["schemaVersion"] == single.INPUT:
         facts = publisher._backend_module()._baseline_facts(baseline / "catalog-expanded.candidate.sqlite")
         packets = {wid: panel.read_json(chunk / f"packets/{wid}/packet.json") for wid in ids}
@@ -531,7 +626,7 @@ def seal_result(output: Path, ledger_path: Path | None, baseline: Path, registry
         context = contexts[wid]
         summaries.append({"workId": wid, "outcome": "PASS" if passed else "BLOCKED", "blockerCodes": blockers[wid], "coverage": counts[wid], "recommendationEligible": passed, "libraryOnly": not passed})
         safety_blocked = "BLOCKED_SAFETY" in blockers[wid]
-        promotions.append({"workId": wid, "adjudicationStatus": "recommendationVerified" if passed else "BLOCKED_SAFETY" if safety_blocked else "BLOCKED_FACTOR", "panelOutcome": "PASS" if passed else "BLOCKED", "panelBlockerCode": ";".join(blockers[wid]), "recommendationEligible": "true" if passed else "false", "libraryOnly": "false" if passed else "true", "annotationReviewMethod": "authorizedEvidencePanel", "reviewedByHuman": "false", "candidateOnly": "true", "recommendationContextCondition": "fulfilled-after-coverage-pass" if passed else "planned-after-coverage-pass", "contextEvidenceIds": context["evidenceIds"], "contextCitationUrls": context["citationUrls"], "reasonCode": "COVERAGE_COMPLETE" if passed else "BLOCKED_SAFETY" if safety_blocked else "FACTOR_COVERAGE_INCOMPLETE"})
+        promotions.append({"workId": wid, "adjudicationStatus": "recommendationVerified" if passed else "BLOCKED_SAFETY" if safety_blocked else "BLOCKED_FACTOR", "panelOutcome": "PASS" if passed else "BLOCKED", "panelBlockerCode": ";".join(blockers[wid]), "recommendationEligible": "true" if passed else "false", "libraryOnly": "false" if passed else "true", "annotationReviewMethod": "authorizedEvidencePanel", "reviewedByHuman": "false", "candidateOnly": "true", "recommendationContextCondition": "fulfilled-after-coverage-pass" if passed else "planned-after-coverage-pass", "contextEvidenceIds": context["evidenceIds"], "contextCitationUrls": context["citationUrls"], "reasonCode": nt.pass_reason(counts[wid], wid in exceptions) if passed else "BLOCKED_SAFETY" if safety_blocked else "FACTOR_COVERAGE_INCOMPLETE"})
     write_csv(result / "promotion-ledger.csv", panel.PROMOTION_FIELDS, promotions)
     shutil.copyfile(input_root / "PANEL-INPUT.sha256", result / "PANEL-INPUT.sha256")
     passed = {r["workId"] for r in summaries if r["outcome"] == "PASS"}
@@ -567,7 +662,7 @@ def main() -> int:
     adjudication = parser.add_mutually_exclusive_group()
     adjudication.add_argument("--ledger", type=input_file)
     adjudication.add_argument("--decisions", type=input_file, help="Explicit factor-adjudication-v1/v2 JSON projected into the complete existing ledger")
-    parser.add_argument("--provenance-root", type=artifact_path)
+    parser.add_argument("--provenance-root", type=artifact_path, action="append", help="Repeat for explicitly bound completed collections; direct research collections are discovered and verified")
     parser.add_argument("--publication-root", type=artifact_path)
     parser.add_argument("--prior-bundle", type=artifact_path, action="append", default=[])
     parser.add_argument("--recovery-epoch", type=input_file)
