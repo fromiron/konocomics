@@ -1,21 +1,28 @@
-# Catalog 작업 저장소 보존 정책 전환 결과
+# Catalog 저장소 최신 검증 요약
 
-2026-09-26 · 브랜치 `authoring-retention-compaction`
+문서 갱신일: 2026-09-26 · 마지막 운영 검증일: 2026-09-26
 
-Oracle의 [불필요 데이터 개선 계획](https://chatgpt.com/c/6ab34eb0-9c64-83ee-adc0-13eacd080a36)을 검토하고 현재 큐레이션·근거·미완료 작업을 보존하는 schema v3으로 실제 전환했다. canonical Catalog의 내용은 변경하지 않았다.
+현재 저장 규칙은 [저장 계약](03-local-authoring-storage.md)에서 관리한다. 이 문서는 확정된 최신 검증 결과·대상 identity·남은 한계만 갱신한다. 과거 결과는 Git 이력에서 확인한다. 경로는 기존 참조 호환을 위해 유지한다.
 
-## 적용 결과
+## 대상과 판정
 
-| 항목      |                        전환 전 |                         전환 후 |
-| --------- | -----------------------------: | ------------------------------: |
-| 작업 DB   |           17,303,666,688 bytes |             3,395,698,688 bytes |
-| 정규 백업 | latest + previous, 약 34.61 GB | latest 1개, 3,395,694,592 bytes |
-| 합계      |           51,909,914,624 bytes |             6,791,393,280 bytes |
-| 순감소    |                              — |   45,118,521,344 bytes (86.92%) |
+- 구현을 포함한 문서 정리 기준 HEAD: `73efd0eb32746c5b5c44b9544aeade7706a7f5db`. 당시 실행 기록의 작업 브랜치는 `authoring-retention-compaction`이며 각 검사 시점의 정확한 코드 SHA는 아래 원시 기록에 명시된 범위로만 해석한다.
+- 활성화된 저장 세대: schema v3, generation `53d00f3c-e974-417e-a145-6f7d487b144a`.
+- 전환 시 준비 DB SHA: `01b90783f7a370760c37166ce6827b64842377eef68a9e0dc725cfcb9ae2ca69`. 이후 저장으로 DB bytes는 달라질 수 있으므로 이를 현재 DB SHA로 사용하지 않는다.
+- 판정: 저장소 전환·보존·대표 재개/중복 처리 검증 완료. **새 작품의 판정·승격과 배포는 검증 범위 밖**이며 아래 private 발행 표본은 차단됐다.
+- 이번 문서 정리는 기존 실행 기록을 대조한 것이며 운영 검사·모델 판정·발행을 다시 실행한 PASS가 아니다. 구현·세대·관련 입력이 달라지면 해당 검증을 미확인으로 표시하고 필요한 대표 경로를 다시 검증한다.
 
-구 작업 DB·latest·previous 세 파일은 새 세대의 readback 뒤 실제 삭제했다. `RETENTION-PRUNE.json`에 정확한 경로·크기·삭제 전 SHA를 남겼다. 원문·미완료 의존·명시적 legacy pin·사용자 제공 자료·`handoff/`는 유지했다. 별도 작업 사본 전체의 일괄 정리는 수행하지 않았다.
+## 마지막 검증 시 저장 상태
 
-## 변경 내용
+| 항목         | 확인 결과                                                              |
+| ------------ | ---------------------------------------------------------------------- |
+| 작업 DB      | 3,395,698,688 bytes                                                    |
+| 정규 백업    | latest 1개, 3,395,694,592 bytes                                        |
+| 구 세대 정리 | cutover가 지정한 구 작업 DB/latest/previous 세 파일 제거·readback 확인 |
+| 보호 대상    | 원문·미완료 의존·legacy pin·사용자 제공 자료·handoff 보존              |
+| 미수행       | 별도 작업 사본 전체 일괄 정리, 독립 디스크 백업                        |
+
+## 검증된 저장 구조
 
 - SHA/zlib blob은 공유하고 revision/head/직접 근거 참조를 사용한다. generation `53d00f3c-e974-417e-a145-6f7d487b144a`가 활성 상태다. 옛 snapshot 번호는 필요한 실제 member만 legacy pin으로 보존한다.
 - 원래 input/result manifest와 현행 SQL 행을 대조해 AEP claim 8,783개를 결속했다. 동일 의미 중복을 합치고 검증된 legacy claim을 포함한 prior 조회는 8,781개다. legacy 후보 값을 새 승인 판정으로 만들지 않았다.
@@ -41,6 +48,8 @@ Oracle의 [불필요 데이터 개선 계획](https://chatgpt.com/c/6ab34eb0-9c6
 
 기존 READY 한 건의 private 발행은 `canonicalSha256`이 현재 canonical과 달라 차단됐다. 이 입력의 새 발행은 검증하지 못했다. 과거 frozen/판정 SHA를 바꾸지 않았고 current/canonical도 그대로다. 실제 신규 판정·승격이나 모델 호출은 수행하지 않았다. 다음 승격은 원래 정책대로 유효한 새 입력 revision과 판정 결속이 필요하다.
 
-## 보존된 실행 근거
+## 상세 실행 근거
 
 로컬 `.workspace/authoring-retention-20260925/`의 `retention-plan.json`, `verified-build.json`, `retired-inaccessible-verification.json`, `representative-verification.json`, `new-input-verification.json`, `no-op-verification.json`, `completed-batch-replay.json`, `published-basis-advance-verification.json`, `private-publication-verification.json`, `final-python-tests.log`, `final-storage.json`에 상세 근거를 남겼다. 운영 receipt는 `data/local/catalog-authoring/RETENTION-CUTOVER.json`과 `RETENTION-PRUNE.json`이다.
+
+상세 파일은 로컬 실행 근거이며 현재 사양의 추가 지시가 아니다. `verified-build.json`의 `VERIFIED_NOT_ACTIVATED`는 활성화 전 검사 단계이고 최종 전환은 `RETENTION-CUTOVER.json`으로 구분한다. 임시 경로 참조만으로 해당 원본의 영구 백업을 보장하지 않는다. 상세 원본 보존 여부와 이 요약의 Git 이력은 별도이며, 원본 부재 시 독립 재검증 가능한 범위를 제한해 보고한다.

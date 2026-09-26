@@ -1,40 +1,36 @@
 # Factor evidence collection — non-authorizing input
 
-## 2026-09-21 수집 범위: 전권 확인 금지
+현재 확정 사양 · 갱신일: 2026-09-26
+
+이 문서는 수집 단계의 실행·원문·관찰 계약이다. 사전 리드의 JSON 규격·자료 적격성은 [사전 수집 리드 규격](user-source-leads.md)에 정의한다. 과거 규칙은 Git 이력에서 확인한다.
+
+## 수집 범위
 
 모든 권을 순서대로 확인하거나 전체 권수·완결권·전권 독해를 승격 완료 조건으로 삼지 않는다. 대표 ISBN과 해당 판본의 서지를 확인하고, 확보된 작품 소개·리뷰로 필요한 관찰이 충분하면 수집을 종료한다. 구체적인 필수 판정 gap을 해결할 가능성이 있는 특정 권 소개·리뷰만 선택적으로 추가 확인한다. `whole_work`는 주장의 범위이며 모든 권을 읽었다는 증명 요구가 아니다. 실제 읽은 범위와 한계는 정확히 남기되 전권 미확인 자체는 HOLD·재시도·추가 수집 사유가 아니다.
 
 대표 ISBN이 3권·6권 등 중간 권이면 그 권의 제목·권수·URL을 정확히 결속하면 충분하며 1권으로 교체하지 않는다. 기존 ISBN과 권수의 연결이 틀렸다면 새 수집 revision과 배치 summary에 정정 근거·경로·SHA를 남기고 다음 동결에 반영한다. 과거 원문·동결·판정은 보존한다.
 
-## 2026-09-21 현재 배치: Art 작업 전면 제외
+## Art 제외 범위
 
 사용자 지시로 이번 수집·승격 작업에서 Art 4축(`artRealism`, `artDensity`, `visualSoftness`, `motionImpact`)은 조사·판정 대상에서 제외한다. Art용 이미지 확인, 리뷰 근거 평가, 독립 출처/정족수 확인, 추가 검색, 신규 known claim을 수행하지 않는다. 기존 원문에 Art 서술이 있어도 별도 분석하지 않는다. 스키마가 요구하는 새 Art 축 표기는 `unknown`으로 유지하고 이번 범위 제외임을 기록한다. 기존 accepted prior·동결 입력·판정은 보존만 하며 변경하지 않는다. Art gap은 추가 수집 목록·재시도 조건·승격 차단·미완료 사유에 넣지 않는다. 이미 완료된 유효 결과는 이 지시만으로 재판정하지 않는다. 향후 Art 작업은 별도 사용자 요청 때 진행한다.
 
-## 2026-09-21 사용자 확정: 포르노 작품만 제외
+## 안전 분류
 
 Catalog의 성적 콘텐츠 제외 기준은 **porn / non-porn**이다. 성인등급, 폭력·출혈·잔혹 묘사, 노출·성적 장면의 존재 자체는 제외 사유가 아니다. 『베르세르크』처럼 성인등급인 비포르노 서사 만화는 허용한다. 작품의 주된 성격이 포르노인지 확인하며 별도의 비성인·일반 독자 등급 증명 수집은 요구하지 않는다. 해당 작품의 출판사·레이블 분류로 비포르노임이 확인되면 충분하며 그 확인으로 종료한다. 여러 레이블을 가진 출판사는 해당 작품의 레이블만 확인한다. 성적 소재·노출·성적 장면은 작품적 표현으로 허용하며, 에피소드별 표현 강도·무해성·전연령 적합성을 추가 조사하거나 미확인 gap/HOLD 사유로 삼지 않는다. 실제 포르노 분류 충돌이나 작품/레이블 식별 불가가 있을 때만 그 분류를 좁게 확인한다. 추천 선정 맥락과 팩터 근거는 별도 계약이다.
 
 새 판정은 `non-pornographic-work` → `non-porn` / `SAFE`, `pornographic-work` → `porn` / `BLOCKED_SAFETY` (`SAFETY_PORNOGRAPHIC_WORK`)를 사용한다. 판단 불명은 `classification-unresolved`로 보존한다. SAFE는 아동 적합성이나 무폭력 인증이 아니다. 기존 `non-adult` 등 분류는 과거 artifact 호환용으로 유지하며 성인등급만으로 차단한 HOLD는 새 계약을 동결한 revision에서 재검토한다. 과거 frozen·판정은 수정하지 않는다.
 
-## 현재 실행 목표 — 2026-09-24
+## 역할과 배치 경계
 
-반복 작업의 진입점은 [catalog-worker 스킬](../../.agents/skills/catalog-worker/SKILL.md)이다. 이 문서는 수집 단계의 상세 근거·저장 계약으로 참조하며 판정 단계에는 배정된 frozen 입력을 사용한다.
+반복 작업은 [catalog-worker 스킬](../../.agents/skills/catalog-worker/SKILL.md)과 [배치 계약](01c-sol-batch-promotion-plan.md)을 따른다. 고정 세션·모델·배정 수는 배치 계약 §3을 기준으로 읽고 이 문서에서 재정의하지 않는다. 배치 전체 수집·저장/백업 보고 뒤 부모의 단계 전환을 받아 같은 세션에서 작품별 frozen 판정을 진행한다. 작품마다 수집·판정을 교차하거나 정상 작품마다 부모 응답을 기다리지 않는다.
 
-사용자 요청에 따라 다음 운영은 **루나1~6 고정 세션에 신규 50작품씩 배정 → 배치 전체 수집·저장 완료 → 부모의 단계 전환 뒤 작품별 동결·판정·비발행 검사 → GPT-5.6 Sol / high 조정자의 배치 확인·직렬 승격**을 목표로 한다. 조정자는 [현재 세션명·ID 표](01c-sol-batch-promotion-plan.md#3-역할과-세션)를 사용하고 루나 작업 세션에 보내는 다음 턴마다 `model="gpt-6-luna"`, `thinking="xhigh"`를 명시한다. 부모 오케스트레이터의 모델은 별개다. 기존 100작품 배정과 진행 중인 턴은 중단하지 않는다. 이 문서 변경만으로 사용자 중단 큐를 재개하지 않는다.
+수집자의 책임은 자료 선택·실제 독해·출처별 관찰·불확실성이다. 경로·시각·receipt·JSON 직렬화는 기존 helper에 맡긴다. 현재 작품의 brief·미소비 research·반대 근거·최신 HOLD·원문/receipt를 읽으며 전체 STATE·과거 대화·다른 작품 판정을 근거로 넘기지 않는다. 동일 관찰의 국소 보정은 담당자가 계속할 수 있다.
 
-작업자는 유효 수집의 저장·백업 receipt를 확인한 뒤 같은 세션에서 동결·판정을 이어간다. 정상 작품마다 부모의 응답을 기다리지 않는다. 작품별 checkpoint를 보존하고 배치 완료·공통 오류·중단을 부모에 통지한다. 원문 보존·동결 전 수치 판정 금지·공유 DB 수동 수정 금지는 유지한다. 저장 helper의 잠금 아래 DB 기록은 수동 수정과 구분한다.
+대상 선정은 조정자가 최신 canonical/candidate·registry·유효 미발행 READY·활성 배정을 대조해 수행한다. 옛 backlog는 위치 안내일 뿐 현재 미수집의 증거가 아니다. 이미 출처를 소진한 HOLD는 새 관찰·접근 변화·확인된 오류가 있을 때 해당 부분만 재개한다. 지침 갱신은 사용자 중단 큐의 재개 승인이 아니다.
 
-정상 수집에서 모델의 책임은 자료 선택·실제 독해·출처별 관찰·불확실성이다. 경로·시각·receipt·JSON 직렬화는 아래 기존 helper에 맡긴다. 같은 관찰을 인계 문서·별도 준비 보고서·반복 상태 메시지로 다시 작성하지 않는다. 종료 시 research 경로·SHA·구체적 남은 gap/재개 조건만 반환한다. 이미 충분한 일반 근거를 모았다면 이번 범위에서 제외된 Art나 전권 미독해 때문에 연장하지 않는다. 비는 작업 용량만큼만 새 작품을 배정한다.
+## 로컬 원문·사전 수집 자료 우선
 
-수집자는 공개된 동일 만화 자료를 읽고 원문·출처별 관찰을 남긴다. 판정은 별도 동결 뒤 배정된 동일 루나 세션이 담당하고 승격은 조정자의 배치 발행 경계에서 수행한다. 50개 목록 중 한 작품만 작업 문맥에 넣는다. 조정자 포함 17개는 상한이며 인원을 채우기 위한 신규 위임은 하지 않는다. 일반 작업은 이 파일과 배정 brief/researchRefs를 읽는다. 이전 실험 대화·전체 STATE·planner·완료한 판정 보고서를 새 작품 맥락으로 넘기거나 반복해서 읽지 않는다.
-
-조정자는 배치 인덱스에 각 작품의 ID·정체/ISBN·gap·기존 research/HOLD·원문/receipt·출력 경로를 연결한다. 작업자는 현재 작품에 도달했을 때 그 자료를 읽는다. 연결된 미소비 관찰·반대 근거·최신 HOLD는 생략하지 않으며 필요하면 원본 경로로 읽는다. 동일 자료의 국소 보정은 원래 담당자가 계속할 수 있다. 의미 있는 맥락을 자르는 토큰 상한이나 출처 제한은 만들지 않는다.
-
-최신 canonical/candidate에서 이미 eligible인 작품과 유효 미발행 PASS·활성 배정을 제외하고 최신 work별 기록을 확인한다. 옛 backlog는 위치 안내이며 현재 미수집의 증거가 아니다. 기존 `evidence-review`는 관찰 검토, `gate-review`는 남은 승격 조건, `metadata-review`는 정체/서지 보완으로 보내며 일괄 재수집하지 않는다. 과거 검색 상한으로 조기 종료했고 구체적 미탐색 경로가 남은 HOLD는 추가 수집 대상으로 배정할 수 있다. 이미 출처를 소진한 HOLD는 새 관찰·접근 변화·확인된 오류가 있을 때 재개한다. 새 근거 없이 같은 판정만 반복하지 않는다.
-
-## 로컬 원문·사전 수집 자료 우선 — 2026-09-21
-
-기존 유효 raw·research·receipt를 먼저 재사용한다. `.workspace/user-sources/<workId>.json`이 있으면 그 다음으로 제공 URL을 검증한다. README는 리드 작성 규격이며 JSON의 요약·서지 값 자체가 판정 근거나 현재 Catalog 정체성을 대체하지 않는다.
+기존 유효 raw·research·receipt를 먼저 재사용한다. `.workspace/user-sources/<workId>.json`이 있으면 그 다음으로 제공 URL을 검증한다. [정식 리드 규격](user-source-leads.md)은 작성 형식을 정하며 JSON의 요약·서지 값 자체가 판정 근거나 현재 Catalog 정체성을 대체하지 않는다.
 
 - 해당 작품 파일과 기존 유효 수집만 읽고, 알려진 URL을 직접 열어 실제 본문·대상 작품·권/판본·리뷰 독립성과 읽은 범위를 확인한다. 기존 helper로 실제 반환 원문과 관찰을 보존한다. 기존 유효 캡처를 다시 취득하지 않는다.
 - 공식 서지·안전 분류와 registry의 정확한 support URL 문맥을 먼저 확인하고, 제공된 리뷰 중 필요한 근거를 읽는다. 자료가 충분하면 목록 전체를 소진하거나 더 좋은 리뷰를 찾지 않고 종료한다. Art·전권 독해·출처 수 늘리기는 추가 조사 사유가 아니다.
@@ -115,7 +111,7 @@ await eval(load("collector-web"))({
   sources: [{
     url: "https://실제-출처",
     sourceFamily: "publisher", // or independent-review / other
-    language: "ja", // or ko / en
+    language: "ja", // or ko / en / zh
     entryScope: "whole_work", // 실제 source의 권/회차 범위는 아래에 보존
     workOwned: true,
     observation: "해당 source에서 확인한 구체적 내용 한 번",
@@ -145,14 +141,14 @@ write는 기존 구조 검사를 한 번 수행하고 성공 JSONL을 덮어쓰�
 
 ## 완료·영구 보존
 
-helper의 research-written 이벤트가 완료 통지다. 성공 경로/SHA를 즉시 반환하고 별도 REPORT·전체 저장소 감사·추가 메시지를 기다리지 않는다. 닫힌 디렉터리에 append하지 않는다. 조정자는 실제 파일/이벤트 SHA를 대조한 뒤 기존 direct collection CLI로 짧은 구조 확인·SQLite 저장/백업을 수행한다. 수집자는 공유 writer·freeze·seal·publish를 실행하지 않는다.
+helper의 research-written 이벤트는 해당 collection 작성 완료다. 실제 경로·SHA를 확인하고 별도 REPORT·전체 저장소 감사를 추가 게이트로 만들지 않는다. 닫힌 디렉터리에 append하지 않고 보충/정정은 새 revision에 남긴다. 고정 작업자는 기존 direct collection/저장 helper로 원본·관찰·receipt를 즉시 PERSISTED로 보존한다. 수집 배치 완료·종료/부분 중단에서 실제 BACKED_UP을 확인하고 기존 배치 통지 경로로 보고한다. 수집 단계에서는 수치 판정·seal·publish를 하지 않는다. 부모의 판정 전환 후 같은 작업자가 prepare/check를 수행한다.
 
 실제 접근/독해/작성 전환에만 `recordProgress(directory, phase, note?)`를 쓸 수 있다. phase는 access-started/access-changed/reading-finished/writing-started다. 의무 검증 단계가 아니며 과거 시각을 추정하지 않는다. 동시 작업 elapsed를 합산 worker 시간으로 보고하지 않는다.
 
-출판사 판본 페이지를 취득했다면 같은 응답의 소개 원문·정확한 Work/ISBN·서지 입력을 함께 보존한다. 완전한 HTTPS 200 HTTP bytes와 실제 시각의 기존 publisher receipt만 사용하고 browser 발췌를 그 receipt로 바꾸지 않는다. 해당 시각/응답 결속이 없으면 서지 미완료 한계를 적고 Factor를 다시 수집하지 않는다. 상세 필드가 필요할 때만 docs/catalog-expansion/03-local-authoring-storage.md의 출판사 소개 절을 읽는다. 서지 반영은 조정자가 기존 직렬 importer로 수행한다.
+출판사 판본 페이지를 취득했다면 같은 응답의 소개 원문·정확한 Work/ISBN·서지 입력을 함께 보존한다. 완전한 HTTPS 200 HTTP bytes와 실제 시각의 기존 publisher receipt만 사용하고 browser 발췌를 그 receipt로 바꾸지 않는다. 해당 시각/응답 결속이 없으면 서지 미완료 한계를 적고 Factor를 다시 수집하지 않는다. 상세 필드가 필요할 때만 [저장 계약의 출판사 소개 절](03-local-authoring-storage.md#출판사-소개를-수집과-함께-저장)을 읽는다. 서지 반영은 조정자가 기존 직렬 importer로 수행한다.
 
-자료는 source 밖 로컬 작업 SQLite에 영구 저장·백업하며 `.workspace`에는 임시 출력만 두고 원본은 `data/local/catalog-authoring/`에 보존한다. 호환 링크를 생성하지 않는다. 변경 전 원문·실패본·형식·시각을 보존한다. 현재 원본/보충 raw 전체는 기존 provenance-root로 동결 입력에 전달할 수 있다. 보존 성공·구조 PASS는 출처의 진실성이나 판정 권한이 아니다.
+자료는 source 밖 로컬 작업 SQLite에 즉시 저장하고 [저장 계약](03-local-authoring-storage.md)의 명시적 단계 경계에서 백업한다. 원본은 `data/local/catalog-authoring/`에 보존하며 `.workspace/user-sources/`의 사용자 제공 자료도 보호한다. 호환 링크를 생성하지 않는다. 변경 전 원문·실패본·형식·시각을 보존한다. 현재 원본/보충 raw 전체는 기존 provenance-root로 동결 입력에 전달할 수 있다. 보존 성공·구조 PASS는 출처의 진실성이나 판정 권한이 아니다.
 
-## N/T 추가 조사 종료 기록 — 2026-09-23
+## N/T 추가 조사 종료 기록
 
 N/T만 근거가 부족하여 추가 조사를 종료한 경우, 실제 확인한 출처와 결과를 보존하고 새 job의 `narrativeToneExhaustion`으로 전달한다. [AEP 계약](02-authorized-evidence-panel-v1.md)의 필드를 사용한다. 해당 그룹을 조사한 기록이 있어야 예외가 적용된다. 승격을 위해 exhausted 상태를 꾸미거나, 추가 확인 없이 기존 URL 목록만 복사하지 않는다. 판정 값은 부여하지 않으며 최종 unknown은 유지한다.
