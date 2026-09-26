@@ -5,6 +5,10 @@ description: konocomics의 고정 작업 세션에 작품 묶음을 배정하고
 
 # Catalog 조정자
 
+## 2026-09-26 저장과 백업 경계
+
+schema v3에서는 [현재 저장 정책](../../../docs/catalog-expansion/03-local-authoring-storage.md)을 우선한다. 단계 내부 `PERSISTED`와 단계 완료·인계의 실제 `BACKED_UP`을 구분한다. 수집/판정 배치 완료·발행 완료·종료/부분 중단 때 백업하고 source/latest의 필요한 원문을 확인한다. 매 작품/명령의 대형 백업을 다시 추가하지 않는다. 중복 완료는 `STATE.publicationBatches`와 작은 `completion` revision을 먼저 대조하며 오래된 전체 발행 트리를 다시 열지 않는다. 현재 기준점은 검증된 큐레이션 revision이고 과거 frozen과 미완료 의존의 pin을 보존한다. 보존 정책 변경은 재판정·큐 재개·권한 확대가 아니다.
+
 ## 2026-09-24 현재 고정 세션 설정
 
 부모 오케스트레이터 세션 `01a0a3b8-5162-78f0-ac39-4e17f730a70a`는 `gpt-5.6-sol` / `high`로 고정하며 이 설정을 작업자 메시지의 모델 인자로 전파하지 않는다. 현재 배정 풀은 [배치 계획 §3의 검증된 ID 표](../../../docs/catalog-expansion/01c-sol-batch-promotion-plan.md#3-역할과-세션)에 있는 **루나1~6**이다. 루나4·5·6은 이전 솔1·2·3과 같은 thread ID다. 신규 배정은 세션당 50작품이며, **루나1~6에 보내는 모든 새 턴의 `send_message_to_thread`에 `model="gpt-6-luna"`, `thinking="xhigh"`를 명시한다. 부모 세션에는 이 작업자 설정을 전달하지 않는다.** 작업이 이미 진행 중인 방에도 다음 턴부터 적용하고 이전 대화 설정·이름·메모리에서 모델을 추정하지 않는다. 기존 100작품 배정·완료 판정·실제 모델 기록을 보존하며 사용자 중단 세션은 지침 변경만으로 재개하지 않는다.

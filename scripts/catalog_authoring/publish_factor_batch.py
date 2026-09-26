@@ -965,7 +965,7 @@ def _backend_module(
             return found
         baseline_db = Path(kwargs["baseline_db"])
         compact_review = _safe_child(baseline_db.resolve().parent / "data/source", reference)
-        if (baseline_db.parent / "COMPACT-PUBLICATION.json").is_file() and compact_review.is_file() and not compact_review.is_symlink():
+        if any((baseline_db.parent / name).is_file() for name in ("COMPACT-PUBLICATION.json", "CURATION-BASELINE.json")) and compact_review.is_file() and not compact_review.is_symlink():
             return compact_review.resolve()
         review_root = baseline_db.resolve().parent / "authorized-evidence-panel-v1" / "data" / "source"
         candidate = _safe_child(review_root, reference)
@@ -2259,9 +2259,16 @@ def publish_retained_authority(
         shutil.copy2(baseline, candidate)
         shutil.copy2(registry, registry_output)
         reviews = baseline.parent / "authorized-evidence-panel-v1"
-        if not reviews.is_dir() or any(path.is_symlink() for path in reviews.rglob("*")):
-            raise ValidationError("retained current review tree is missing or linked")
-        shutil.copytree(reviews, stage / reviews.name, symlinks=False)
+        retained_basis = (baseline.parent / "CURATION-BASELINE.json").is_file()
+        if retained_basis:
+            reviews = baseline.parent / "data/source/reviews"
+            if not reviews.is_dir() or any(path.is_symlink() for path in reviews.rglob("*")):
+                raise ValidationError("retained current review tree is missing or linked")
+            shutil.copytree(reviews, stage / "data/source/reviews", symlinks=False)
+        else:
+            if not reviews.is_dir() or any(path.is_symlink() for path in reviews.rglob("*")):
+                raise ValidationError("retained current review tree is missing or linked")
+            shutil.copytree(reviews, stage / reviews.name, symlinks=False)
         shutil.copytree(retained["safetyRoot"], stage / "safety-recheck-v1", symlinks=False)
         shutil.copy2(request_path.resolve(), stage / "retained-authority-request.json")
         connection = sqlite3.connect(candidate)
@@ -2357,6 +2364,12 @@ def publish_retained_authority(
         _verify_result_manifest(stage)
         os.replace(stage, output_root)
         _verify_result_manifest(output_root)
+        if retained_basis:
+            from catalog_retention import advance_metadata_basis
+            basis = advance_metadata_basis(repo, baseline.parent, output_root, {work_id})
+            shutil.copyfile(basis / "CURATION-BASELINE.json", output_root / "CURATION-BASELINE.json")
+            _write_result_manifest(output_root)
+            _verify_result_manifest(output_root)
         return {
             "status": "PUBLISHED", "mode": "retained-authority", "workId": work_id,
             "outputRoot": str(output_root), "candidateSha256": sha256(output_root / candidate.name),

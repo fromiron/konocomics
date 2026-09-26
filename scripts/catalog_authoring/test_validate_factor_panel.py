@@ -628,13 +628,32 @@ class IntegratedCorrectionLineageTest(unittest.TestCase):
 
     def test_real_original_binds_all_historical_integrated_wrappers(self) -> None:
         wrappers = {}
-        batches = self.ROOT / "batches"
-        for batch in ("factor-rescue-001", "factor-rescue-002"):
-            for path in (batches / batch / "panel-input/chunks").glob("*/prior-panel-claims.csv"):
-                for row in read_csv(path, PRIOR_FIELDS):
-                    if row["decision"] == "accepted" and row["reasonCode"] == "PRESERVED_VERIFIED_INTEGRATED_PANEL_CLAIM":
-                        require_prior_claim(row, self.authority)
-                        wrappers[(row["workId"], row["factKey"])] = row
+        batches = ROOT / "batches"
+        retained_rows = []
+        if not all((batches / name / "panel-input/chunks").is_dir() for name in ("factor-rescue-001", "factor-rescue-002")):
+            # Retired materializations are no longer the evidence source. Read
+            # the same original CSV bytes from the retained revision instead.
+            from catalog_workspace import Workspace
+            store = Workspace(REPO)
+            if not getattr(store, "is_revision_store", False):
+                self.skipTest("Historical wrapper files are unavailable")
+            receipt = store.current_revision("collection", "retained-originals")
+            members = store.get_revision(receipt)["members"]
+            prefixes = [(batches / name / "panel-input/chunks").relative_to(REPO).as_posix() + "/" for name in ("factor-rescue-001", "factor-rescue-002")]
+            with tempfile.TemporaryDirectory() as folder, closing(store.connect()) as db:
+                path = Path(folder) / "original.csv"
+                for name, sha in members.items():
+                    if name.endswith("/prior-panel-claims.csv") and any(name.startswith(prefix) for prefix in prefixes):
+                        path.write_bytes(store.read_blob(db, sha))
+                        retained_rows.extend(read_csv(path, PRIOR_FIELDS))
+        else:
+            for batch in ("factor-rescue-001", "factor-rescue-002"):
+                for path in (batches / batch / "panel-input/chunks").glob("*/prior-panel-claims.csv"):
+                    retained_rows.extend(read_csv(path, PRIOR_FIELDS))
+        for row in retained_rows:
+            if row["decision"] == "accepted" and row["reasonCode"] == "PRESERVED_VERIFIED_INTEGRATED_PANEL_CLAIM":
+                require_prior_claim(row, self.authority)
+                wrappers[(row["workId"], row["factKey"])] = row
         self.assertEqual(len(wrappers), 16)
         self.assertEqual(wrappers[("work-600d24b85d5e4e0d968c", "theme:war")]["value"], "1")
         corrections = {

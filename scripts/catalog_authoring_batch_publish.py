@@ -5,6 +5,7 @@ from __future__ import annotations
 import argparse
 from contextlib import closing
 import json
+import os
 import re
 from pathlib import Path
 import sqlite3
@@ -45,6 +46,7 @@ def code_identity():
         if not path.name.startswith("test_")
     }
     dependencies = ["scripts/workspace_paths.py", "scripts/catalog_workspace.py",
+                    "scripts/catalog_revision_store.py", "scripts/catalog_retention.py",
                     "scripts/catalog_authoring_runner.py", "scripts/catalog_authoring_batch_publish.py",
                     "scripts/catalog_readback_identity.py", "data/staging/catalog-expansion/gold-set-manifest.json"]
     dependencies.extend(source for source, _ in runner.prepare.CONTRACTS.values())
@@ -128,8 +130,10 @@ def preserve_preflight(batch, summary_path, summary_sha, summary, checks):
 
 
 def verify_storage(storage, paths):
-    runner.prepare.require(storage["backup"]["status"] == "BACKED_UP", "backup incomplete")
-    for database in (None, runner.REPO / "data/local/catalog-authoring/backups/latest.sqlite"):
+    persisted = (storage["backup"]["status"] == "PERSISTED"
+                 and storage["snapshot"].get("schemaVersion") == "catalog-authoring-revision-v1")
+    runner.prepare.require(persisted or storage["backup"]["status"] == "BACKED_UP", "backup incomplete")
+    for database in ((None,) if persisted else (None, runner.REPO / "data/local/catalog-authoring/backups/latest.sqlite")):
         runner.Workspace(runner.REPO, database).verify_saved(storage["snapshot"], paths)
 
 
@@ -138,6 +142,26 @@ def complete_batch(batch, receipt, storage):
     state_path = runner.ROOT / "STATE.json"
     state_storage = runner.preserve([state_path], "batch-publication:current")
     verify_storage(state_storage, [state_path])
+    workspace = runner.Workspace(runner.REPO)
+    if getattr(workspace, "is_revision_store", False):
+        finished = runner.panel.read_json(receipt)
+        state = runner.panel.read_json(state_path)
+        applied = state["publicationBatches"][finished["summarySha256"]]
+        runner.prepare.require(applied["receiptSha256"] == runner.panel.sha256(receipt), "completion STATE binding changed")
+        readback = Path(finished["readback"])
+        runner.prepare.require(runner.panel.sha256(readback) == finished["readbackSha256"], "completion readback changed")
+        retained = workspace.save([receipt, readback], "publication:completion-proof")
+        completion = workspace.put_revision("completion", finished["summarySha256"],
+            {"status": "VERIFIED", "summarySha256": finished["summarySha256"], "applied": applied,
+             "finished": finished, "stateSha256": runner.panel.sha256(state_path),
+             "catalogSha256": state["latestCandidate"]["catalogSha256"], "registrySha256": state["latestCandidate"]["registrySha256"]},
+            workspace.get_revision(retained)["members"])
+        completed = batch / "BATCH-COMPLETED.json"
+        runner.write(completed, {"status": "VERIFIED", "receiptSha256": applied["receiptSha256"], "revision": completion})
+        workspace.save([completed], "publication:completed")
+        backup = workspace.backup()
+        verify_completion_revision(finished["summarySha256"], applied)
+        return {**state_storage, "backup": backup, "completion": completion}
     completed = batch / "BATCH-COMPLETED.json"
     value = {"status": "VERIFIED", "receiptSha256": runner.panel.sha256(receipt),
              "batchStorage": storage, "stateSha256": runner.panel.sha256(state_path), "stateStorage": state_storage}
@@ -148,6 +172,24 @@ def complete_batch(batch, receipt, storage):
     completion_storage = runner.preserve([completed], "batch-publication:completed")
     runner.prepare.require(completion_storage["backup"]["status"] == "BACKED_UP", "completion backup incomplete")
     return state_storage
+
+
+def verify_completion_revision(summary_sha, applied):
+    workspace = runner.Workspace(runner.REPO)
+    if not getattr(workspace, "is_revision_store", False):
+        return False
+    receipt = workspace.current_revision("completion", summary_sha)
+    if receipt is None:
+        return False
+    for source in (workspace, runner.Workspace(runner.REPO, runner.REPO / "data/local/catalog-authoring/backups/latest.sqlite")):
+        value = source.get_revision(receipt)
+        payload = value["payload"]
+        runner.prepare.require(payload["status"] == "VERIFIED" and payload["summarySha256"] == summary_sha
+                               and payload["applied"] == applied, "completion ledger differs from STATE")
+        with closing(source.connect()) as db:
+            for sha in set(value["members"].values()):
+                source.read_blob(db, sha)
+    return True
 
 
 def verify_completed(batch, applied):
@@ -186,6 +228,19 @@ def main() -> None:
     runner.prepare.require(summary_path.is_file(), "batch summary missing")
     summary_sha = runner.panel.sha256(summary_path)
     summary = runner.panel.read_json(summary_path)
+    workspace = runner.Workspace(runner.REPO)
+    if getattr(workspace, "is_revision_store", False):
+        with runner.exclusive(runner.REPO / "data/local/catalog-authoring/locks/publication.lock", wait=True):
+            state, _ = runner.current()
+            applied = state.get("publicationBatches", {}).get(summary_sha)
+            completion = workspace.current_revision("completion", summary_sha) if applied else None
+            if completion:
+                backup = runner.Workspace(runner.REPO, runner.REPO / "data/local/catalog-authoring/backups/latest.sqlite")
+                if not backup.database.is_file() or backup.current_revision("completion", summary_sha) != {**completion, "database": str(backup.database)}:
+                    workspace.backup()
+                verify_completion_revision(summary_sha, applied)
+                print(json.dumps({"status": "ALREADY_APPLIED", "batchRoot": applied["batchRoot"]}), flush=True)
+                return
     if "sourceSummary" in summary:
         source = summary["sourceSummary"]
         source_path = runner.artifact_path(source["path"])
@@ -201,7 +256,10 @@ def main() -> None:
         checked = runner.panel.read_json(checked_path)
         runner.prepare.require(checked["status"] == row["status"] and checked["workId"] == row["workId"], "summary CHECKED identity changed")
         backup_status = checked_backup_status(row)
-        runner.prepare.require(backup_status == "BACKED_UP", "CHECKED input was not backed up")
+        if getattr(workspace, "is_revision_store", False):
+            runner.verify_check_storage(checked_path.parent, require_backup=True)
+        else:
+            runner.prepare.require(backup_status == "BACKED_UP", "CHECKED input was not backed up")
         run = checked_path.parent
         if (run / "FINISHED.json").exists():
             runner.prepare.require(runner.completion(run)["status"] == "VERIFIED", "existing completion is not verified")
@@ -232,12 +290,18 @@ def main() -> None:
         if applied:
             runner.prepare.require(Path(applied["batchRoot"]).resolve() == batch, "resume incomplete batch in its original batch root")
         for digest, pending in state.get("publicationBatches", {}).items():
-            runner.prepare.require(digest == summary_sha or (Path(pending["batchRoot"]) / "BATCH-COMPLETED.json").is_file(), "finish pending batch STATE backup before publishing another batch")
+            runner.prepare.require(digest == summary_sha or verify_completion_revision(digest, pending)
+                                   or (Path(pending["batchRoot"]) / "BATCH-COMPLETED.json").is_file(), "finish pending batch STATE backup before publishing another batch")
         existing_receipt = batch / "BATCH-FINISHED.json"
         if existing_receipt.exists() and not args.preflight_only:
             saved = runner.panel.read_json(existing_receipt)
             state, current_root = runner.current()
-            if current_root == Path(saved["finalPublicationRoot"]).resolve():
+            original_publication = Path(saved["finalPublicationRoot"]).resolve()
+            retained_current = False
+            if (current_root / "CURATION-BASELINE.json").is_file():
+                basis = workspace.get_revision(runner.panel.read_json(current_root / "CURATION-BASELINE.json")["revision"])["payload"]
+                retained_current = basis.get("provenance", {}).get("publicationManifestSha256") == saved["publicationManifestSha256"]
+            if current_root == original_publication or retained_current:
                 runner.prepare.require(
                     state["latestCandidate"]["catalogSha256"] == runner.panel.sha256(current_root / "catalog-expanded.candidate.sqlite")
                     and saved["summarySha256"] == summary_sha
@@ -245,10 +309,10 @@ def main() -> None:
                     "completed batch identity changed",
                 )
                 storage_path = batch / "BATCH-STORAGE.json"
-                runner.publisher._verify_result_manifest(current_root)
-                runner.prepare.require(runner.readback_matches(Path(saved["readback"]), runner.REPO, current_root, next(item[3] for item in entries if item[0] == saved["works"][-1]["workId"]) / "panel-result"), "completed batch readback needs refresh")
+                runner.publisher._verify_result_manifest(original_publication)
+                runner.prepare.require(runner.readback_matches(Path(saved["readback"]), runner.REPO, original_publication, next(item[3] for item in entries if item[0] == saved["works"][-1]["workId"]) / "panel-result"), "completed batch readback needs refresh")
                 storage = runner.panel.read_json(storage_path) if storage_path.exists() else runner.preserve([batch], "batch-publication:verified-recovery")
-                verify_storage(storage, [existing_receipt, Path(saved["readback"]), current_root])
+                verify_storage(storage, [existing_receipt, Path(saved["readback"]), original_publication])
                 if not storage_path.exists():
                     runner.write(storage_path, storage)
                 applied = {"batchRoot": str(batch), "receiptSha256": runner.panel.sha256(existing_receipt)}
@@ -390,16 +454,21 @@ def main() -> None:
         # The complete publication and readback are backed up before STATE can point to them.
         storage_path = batch / "BATCH-STORAGE.json"
         storage = runner.panel.read_json(storage_path) if storage_path.exists() else runner.preserve([batch], "batch-publication:verified")
-        runner.prepare.require(storage["backup"]["status"] == "BACKED_UP", "batch backup incomplete")
+        runner.prepare.require(storage["backup"]["status"] == "BACKED_UP" or
+                               (getattr(workspace, "is_revision_store", False) and storage["backup"]["status"] == "PERSISTED"), "batch persistence incomplete")
         verify_storage(storage, [receipt, readback, last])
         if not storage_path.exists():
             runner.write(storage_path, storage)
         latest_state, latest = runner.current()
         runner.prepare.require(runner.panel.sha256(runner.ROOT / "STATE.json") == state_sha and latest == initial, "current advanced during batch")
+        if getattr(workspace, "is_revision_store", False):
+            from catalog_retention import advance_basis
+            selected_entries = [entry for entry in entries if entry[0] in {work_id for work_id, _, _ in publications}]
+            last = advance_basis(runner.REPO, initial, last, selected_entries)
         previous_count = latest_state["latestCandidate"]["recommendationEligibleCount"]
         latest_state["latestCandidate"] = {
-            "root": str(last.relative_to(runner.ROOT)).replace("\\", "/"),
-            "previousBaselineRoot": str(initial.relative_to(runner.ROOT)).replace("\\", "/"),
+            "root": os.path.relpath(last, runner.ROOT).replace("\\", "/"),
+            "previousBaselineRoot": os.path.relpath(initial, runner.ROOT).replace("\\", "/"),
             "catalogSha256": verified["catalogSha256"], "registrySha256": verified["registrySha256"],
             "canonicalSha256": verified["canonicalSha256"],
             "manifestSha256": runner.panel.sha256(last / "MANIFEST.sha256"),

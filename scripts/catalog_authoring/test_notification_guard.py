@@ -169,7 +169,11 @@ class NotificationGuardTest(unittest.TestCase):
             guard.register_batch(session, parent, dispatch, summary, root, state, root)
             assignment = guard.read(guard.state_path(session, state))
             self.assertEqual(assignment["phase"], "collection-batch")
-            self.assertEqual(guard.result_identity(assignment), hashlib.sha256(summary.read_bytes()).hexdigest())
+            from catalog_revision_store import RevisionWorkspace
+            store = RevisionWorkspace.create(root, root / "data/local/catalog-authoring/workspace.sqlite")
+            store.persist([collection], "collection", phase_boundary=True)
+            with patch("catalog_workspace.Workspace", side_effect=lambda repo=None, database=None: RevisionWorkspace(root, database or store.database)):
+                self.assertEqual(guard.result_identity(assignment), hashlib.sha256(summary.read_bytes()).hexdigest())
 
     def test_batch_requires_complete_unique_bound_results_and_ack(self):
         session = "01a0c194-1e06-77c3-bb1c-7c0afccca19b"

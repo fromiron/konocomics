@@ -203,6 +203,8 @@ def read_stored_file(reference, *, backup=False):
                     return body
         raise ValueError("Restored compact source version missing or changed")
     snapshot = reference["snapshot"]
+    if getattr(workspace, "is_revision_store", False):
+        return workspace.stored_bytes(reference)
     with closing(workspace.connect()) as db:
         header = db.execute("SELECT file_count,manifest_sha256 FROM snapshot WHERE id=?", (snapshot["snapshotId"],)).fetchone()
         rows = db.execute("SELECT path,sha256 FROM entry WHERE snapshot_id=?", (snapshot["snapshotId"],)).fetchall()
@@ -219,6 +221,11 @@ def stored_reference(path, sha=None, *, backup=False):
     workspace = Workspace(REPO, REPO / "data/local/catalog-authoring/backups/latest.sqlite" if backup else None)
     key = workspace.key(path)
     sha = sha or publisher.sha256(path)
+    if getattr(workspace, "is_revision_store", False):
+        reference = workspace.file_reference(path, sha)
+        if reference is None:
+            raise ValueError(f"Compact source is not durably stored: {path}")
+        return reference
     with closing(workspace.connect()) as db:
         row = db.execute("""SELECT s.id,s.file_count,s.manifest_sha256 FROM entry e
             JOIN snapshot s ON s.id=e.snapshot_id WHERE e.path=? AND e.sha256=?

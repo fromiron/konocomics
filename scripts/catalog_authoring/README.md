@@ -2,6 +2,8 @@
 
 실행 코드와 필요한 기존 발행 backend를 이 디렉터리에서 추적한다. 원문·동결 입력·판정·후보·작업 DB는 Git에 포함하지 않는다.
 
+2026-09-26 schema v3: [보존 정책과 전환 명령](../../docs/catalog-expansion/03-local-authoring-storage.md#현재-보존-정책--2026-09-26)을 따른다. 내부 `prepare`/`check`/`save`는 `PERSISTED`, 명시적 수집·판정·발행/중단 경계는 실제 `BACKED_UP`으로 구분한다. `notification_guard.py enqueue`와 명시적 `catalog_workspace.py backup`이 단계 백업을 수행하며 hook은 무거운 백업을 실행하지 않는다. `catalog_workspace.py run --phase-boundary`는 독립 실행 하나가 발행/인계 경계인 경우에만 사용한다. 현재 기준점은 `CURATION-BASELINE.json`과 generation/revision receipt이며, 완료 배치는 작은 completion 기록으로 중복을 차단한다. 아래 과거 snapshot 설명은 v2 호환이며 숫자 snapshot을 새 revision ID로 바꾸지 않는다.
+
 - 일반 진입점: `python -X utf8 scripts/catalog_authoring_runner.py run --run-root <영구 planning 경로> --job <job.json> --decisions <판정.json>`
   - 여러 작품의 봉인된 READY가 모이면 조정자는 `python -B -X utf8 scripts/catalog_authoring_batch_publish.py --batch-summary <BATCH-SUMMARY.json> --batch-root <새 planning 디렉터리>`를 사용한다. 기본 compact 경로는 작품별 동결 입력·판정·현재 상태를 검사하며 private pair에 직렬 적용하고 최종 제품 빌드·추천 readback을 한 번 수행한다. 별도 publisher 사전검사 루프는 `--preflight-only` 또는 과거 `--publication-format full` 경로에서만 실행한다. 오류가 섞인 완료 묶음은 먼저 `--preflight-only`로 검사한다. 결과는 입력·결과·코드·candidate/registry·canonical SHA에 결속되고 같은 조합만 재사용한다. 알려진 Work별 prior/registry 충돌만 격리한 `PASS-SUBSET.json`을 원 summary SHA와 함께 저장하며, 공통·미분류 오류가 있으면 subset을 만들지 않는다. subset을 별도 batch root로 발행해 정상 작품의 동반 대기를 해소한다.
   - `BATCH-FINISHED.json`은 readback 완료 기록이다. 발행·readback 백업, STATE 반영·백업, `BATCH-COMPLETED.json`의 저장·백업까지 완료해야 최종 성공이다. 마지막 작은 영수증만 별도 저장하고 대규모 배치 snapshot은 재사용한다. STATE 쓰기 실패는 같은 명령으로 재개하며 이미 발행한 결과를 재판정·재발행하지 않는다. `STATE.publicationBatches`가 같은 summary의 적용 사실을 보존해 후속 current 이후에도 중복 적용을 막는다. 옛 receipt의 적용 계보가 불명확하면 자동 재발행하지 않는다.

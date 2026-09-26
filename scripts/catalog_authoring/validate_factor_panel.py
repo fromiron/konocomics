@@ -687,6 +687,41 @@ def load_prior_authority(
     for root, expected_digest in bundles:
         if root in _active_roots:
             raise ValidationError(f"cyclic prior authority: {root}")
+        if (root / "CURATION-BASELINE.json").is_file():
+            from catalog_retention import load_basis
+            if expected_digest is not None and sha256(root / "MANIFEST.sha256") != expected_digest:
+                raise ValidationError("curation basis manifest binding mismatch")
+            authority = load_basis(root, work_ids)
+            for originals in authority["claims"].values():
+                for claim in originals.values():
+                    add_claim(claim)
+            for source in authority["evidence"].values():
+                merge_prior_evidence(evidence, source)
+            if authority["legacyBundles"]:
+                pins = {}
+                current_sources = {}
+                for item in authority["legacyBundles"]:
+                    pins.setdefault((item["root"], item["manifestSha256"]), {}).setdefault(item["workId"], set()).update(item["claimDigests"])
+                    current_sources[item["workId"]] = set(item["currentEvidenceIds"])
+                for (legacy_root, legacy_sha), selected in pins.items():
+                    retained = load_prior_authority(root, extra_bundles=((artifact_path(legacy_root), legacy_sha),), work_ids=set(selected),
+                        _active_roots=_active_roots | {root})
+                    found = {wid: set() for wid in selected}
+                    for originals in retained["claims"].values():
+                        for claim in originals.values():
+                            semantic = claim_semantic_digest(claim)
+                            if semantic in selected.get(claim["workId"], set()):
+                                require_prior_claim(claim, retained)
+                                found[claim["workId"]].add(semantic)
+                                ids = split_list(claim["evidenceIds"], "retained legacy evidence", require_sorted=False)
+                                if not set(ids) <= current_sources[claim["workId"]]:
+                                    continue  # A later accepted revision replaced this legacy value.
+                                add_claim(claim)
+                                for eid in ids:
+                                    merge_prior_evidence(evidence, retained["evidence"][eid])
+                    if found != selected:
+                        raise ValidationError("Retained legacy authority is incomplete")
+            continue
         if not root.is_dir() or root.is_symlink() or any(path.is_symlink() for path in root.rglob("*")):
             raise ValidationError(f"prior bundle missing or linked: {root}")
         manifest = root / "MANIFEST.sha256"

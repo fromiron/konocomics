@@ -5,6 +5,10 @@ description: konocomics의 고정 작업 세션에서 배정된 작품 목록을
 
 # Catalog 작업자
 
+## 2026-09-26 저장과 백업 경계
+
+schema v3에서는 [현재 저장 정책](../../../docs/catalog-expansion/03-local-authoring-storage.md)을 우선한다. 원문·frozen·판정은 즉시 `PERSISTED`로 저장하고 수집/판정 완료와 종료·부분 중단 경계에서 실제 `BACKED_UP`을 확인한다. 아래 과거의 작품별 저장·백업 문구를 매 내부 명령의 물리 백업 지시로 적용하지 않는다. 명시적 `enqueue`는 단계 백업을 수행하며 Stop/Interrupt hook은 백업하지 않는다. receipt의 generation/revision과 실제 SHA를 사용하고 옛 snapshot ID를 새 ID로 만들거나 PERSISTED를 BACKED_UP으로 고치지 않는다. 기존 frozen과 최신 유효 READY/HOLD·미완료 의존을 보존하며 전체 과거 실행 복원은 요구하지 않는다. 이 변경으로 중단된 큐를 재개하지 않는다.
+
 ## 2026-09-21 수집 범위: 전권 확인 금지
 
 모든 권을 순서대로 확인하거나 전체 권수·완결권·전권 독해를 승격 완료 조건으로 삼지 않는다. 대표 ISBN과 해당 판본의 서지를 확인하고, 확보된 작품 소개·리뷰로 필요한 관찰이 충분하면 수집을 종료한다. 구체적인 필수 판정 gap을 해결할 가능성이 있는 특정 권 소개·리뷰만 선택적으로 추가 확인한다. `whole_work`는 주장의 범위이며 모든 권을 읽었다는 증명 요구가 아니다. 실제 읽은 범위와 한계는 정확히 남기되 전권 미확인 자체는 HOLD·재시도·추가 수집 사유가 아니다.

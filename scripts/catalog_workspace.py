@@ -141,6 +141,19 @@ def manifest_digest(entries) -> str:
 
 
 class Workspace:
+    def __new__(cls, repo: Path = REPO, database: Path | None = None):
+        if cls is Workspace:
+            path = Path(database or Path(repo) / "data/local/catalog-authoring/workspace.sqlite")
+            if path.is_file():
+                with closing(sqlite3.connect(unlinked(path).as_uri() + "?mode=ro", uri=True)) as db:
+                    revision_format = db.execute("PRAGMA user_version").fetchone()[0] == 3
+                if revision_format:
+                    from catalog_revision_store import RevisionWorkspace
+                    # Executing this file as __main__ creates a distinct class
+                    # from the imported base; initialize the returned store now.
+                    return RevisionWorkspace(repo, database)
+        return object.__new__(cls)
+
     def __init__(self, repo: Path = REPO, database: Path | None = None):
         self.repo = unlinked(repo)
         self.database = unlinked(database or self.repo / "data/local/catalog-authoring/workspace.sqlite")
@@ -163,6 +176,10 @@ class Workspace:
         return relative
 
     def connect(self, *, write=False):
+        if write and self.database == self.repo / "data/local/catalog-authoring/workspace.sqlite" and (self.database.parent / "RETENTION-MAINTENANCE.json").exists():
+            raise ValueError("Authoring retention cutover is in progress; resume after its STATE/backup readback")
+        if write and not self.database.exists() and self.database == self.repo / "data/local/catalog-authoring/workspace.sqlite" and (self.database.parent / "RETENTION-CUTOVER.json").exists():
+            raise ValueError("Activated authoring store is missing; restore its verified backup instead of initializing v2")
         if write:
             self.database.parent.mkdir(parents=True, exist_ok=True)
         elif not self.database.is_file():
@@ -740,7 +757,7 @@ class Workspace:
 
 def recorded_run(command: list[str], inputs: list[Path], outputs: list[Path], label: str,
                  workspace: Workspace | None = None, *, input_discovery_seconds: float = 0,
-                 receipt_out: dict | None = None) -> int:
+                 receipt_out: dict | None = None, phase_boundary: bool = False) -> int:
     """Persist before execution and before reporting success, including failed outputs."""
     workspace = workspace or Workspace()
     if not inputs:
@@ -751,13 +768,20 @@ def recorded_run(command: list[str], inputs: list[Path], outputs: list[Path], la
     receipt_root.mkdir(parents=True, exist_ok=False)
     receipt_path = receipt_root / "command.json"
     receipt = {"argv": command, "cwd": os.getcwd(), "status": "PREPARED", "preparedAt": utc_now()}
+    if getattr(workspace, "is_revision_store", False):
+        git = subprocess.run(["git", "rev-parse", "HEAD"], cwd=workspace.repo, capture_output=True, text=True)
+        dirty = subprocess.run(["git", "status", "--porcelain", "--untracked-files=no", "--", "scripts"], cwd=workspace.repo, capture_output=True, text=True)
+        receipt["codeVersion"] = {"gitCommit": git.stdout.strip() if git.returncode == 0 else None,
+                                  "uncommittedCode": bool(dirty.stdout.strip()) if dirty.returncode == 0 else None}
     receipt_path.write_text(json.dumps(receipt, ensure_ascii=True), encoding="utf-8")
-    before = workspace.save([*inputs, receipt_root], label + ":input")
+    revision_store = getattr(workspace, "is_revision_store", False)
+    before = workspace.save(inputs if revision_store else [*inputs, receipt_root], label + ":input")
     saved_input = perf_counter()
-    workspace.backup()
+    if not revision_store:
+        workspace.backup()
     backed_up_input = perf_counter()
     child_env = {**os.environ, "KONOCOMICS_AUTHORING_RECORDED": "1", "PYTHONDONTWRITEBYTECODE": "1"}
-    receipt.update(inputSnapshot=before["snapshotId"], startedAt=utc_now(), status="RUNNING")
+    receipt.update(inputSnapshot=before.get("snapshotId", before), startedAt=utc_now(), status="RUNNING")
     receipt_path.write_text(json.dumps(receipt, ensure_ascii=True), encoding="utf-8")
     stdout_path, stderr_path = receipt_root / "stdout.bin", receipt_root / "stderr.bin"
     with stdout_path.open("xb") as stdout, stderr_path.open("xb") as stderr:
@@ -787,11 +811,11 @@ def recorded_run(command: list[str], inputs: list[Path], outputs: list[Path], la
     saved_output = perf_counter()
     timings = {"inputDiscovery": input_discovery_seconds, "inputSave": saved_input - started, "inputBackup": backed_up_input - saved_input,
                "command": command_finished - backed_up_input, "outputSave": saved_output - command_finished}
-    receipt.update(outputSnapshot=after["snapshotId"] if after else None, timingsSeconds=timings)
+    receipt.update(outputSnapshot=after.get("snapshotId", after) if after else None, timingsSeconds=timings)
     receipt_path.write_text(json.dumps(receipt, ensure_ascii=True), encoding="utf-8")
-    operation = workspace.save([receipt_root], label + ":exit-" + str(exit_code))
+    operation = workspace.save([receipt_root], label + ":exit-" + str(exit_code), **({"kind": "execution", "terminal": exit_code == 0} if revision_store else {}))
     saved_operation = perf_counter()
-    backup = workspace.backup()
+    backup = {"status": "PERSISTED", "generation": operation["generation"]} if revision_store and not phase_boundary else workspace.backup()
     backed_up_output = perf_counter()
     timings.update(operationSave=saved_operation - saved_output, outputBackup=backed_up_output - saved_operation,
                    total=input_discovery_seconds + backed_up_output - started)
@@ -813,10 +837,16 @@ def recorded_run(command: list[str], inputs: list[Path], outputs: list[Path], la
 def authoring_inputs(paths: list[Path], workspace: Workspace | None = None) -> list[Path]:
     """Capture known job/lineage dependencies without interpreting evidence or claims."""
     workspace = workspace or Workspace()
+    revision_store = getattr(workspace, "is_revision_store", False)
     pending, visited, expanded = [(path, True) for path in paths], set(), set()
     while pending:
         item, expand = pending.pop()
         root = unlinked(artifact_path(item, workspace.repo))
+        # Executable versions live in Git. Actual frozen contracts stay in input
+        # artifacts; whole tool/doc trees are no longer execution snapshots.
+        if revision_store and (root.is_relative_to(workspace.repo / "scripts")
+                or root in {workspace.repo / "docs/catalog-expansion", workspace.repo / "docs/factors"}):
+            continue
         if root in expanded or (root in visited and not expand):
             continue
         workspace.key(root)
@@ -943,7 +973,9 @@ def record_arguments(script: Path, args: argparse.Namespace, argv: list[str] | N
     discovery_started = perf_counter()
     inputs = authoring_inputs(inputs, workspace)
     return recorded_run([sys.executable, str(script.resolve()), *(sys.argv[1:] if argv is None else argv)], inputs, outputs, label, workspace,
-                        input_discovery_seconds=perf_counter() - discovery_started)
+                        input_discovery_seconds=perf_counter() - discovery_started,
+                        phase_boundary=script.name in {"publish_factor_batch.py", "correct_factor_registry.py"}
+                        and not getattr(args, "validate_only", False))
 
 
 def main() -> int:
@@ -958,33 +990,38 @@ def main() -> int:
     backup = sub.add_parser("backup", help="Make a consistent backup in data/local/catalog-authoring/backups or an explicit external destination")
     backup.add_argument("--destination", type=Path)
     restore = sub.add_parser("restore", help="Restore an exact snapshot under a NEW directory, never overwrite")
-    restore.add_argument("--snapshot", type=int, required=True)
+    restore.add_argument("--snapshot", required=True, help="Legacy integer snapshot or generation-bound revision UUID")
     restore.add_argument("--destination", type=Path, required=True)
     restore.add_argument("--prefix")
     checkout = sub.add_parser("checkout", help="Recover one ABSENT working-copy path from an exact snapshot")
-    checkout.add_argument("--snapshot", type=int, required=True)
+    checkout.add_argument("--snapshot", required=True)
     checkout.add_argument("--prefix", required=True)
     run = sub.add_parser("run", help="Persist inputs and outputs around an existing authoring command")
     run.add_argument("--label", required=True)
     run.add_argument("--input", type=Path, action="append", required=True)
     run.add_argument("--output", type=Path, action="append", default=[])
+    run.add_argument("--phase-boundary", action="store_true", help="Back up the completed operation as an explicit phase boundary")
     run.add_argument("argv", nargs=argparse.REMAINDER)
     args = parser.parse_args()
     workspace = Workspace(database=args.database)
+    revision_store = getattr(workspace, "is_revision_store", False)
     if args.command == "save":
         result = workspace.save(args.paths, args.label)
-        result["backup"] = workspace.backup()
+        result["backup"] = {"status": "PERSISTED", "generation": result["generation"]} if revision_store else workspace.backup()
     elif args.command == "verify":
         result = workspace.verify()
     elif args.command == "list":
         with closing(workspace.connect()) as db:
-            result = [dict(zip(("id", "createdAt", "label", "files", "manifestSha256"), row)) for row in db.execute("SELECT id,created_at,label,file_count,manifest_sha256 FROM snapshot ORDER BY id")]
+            if revision_store:
+                result = [dict(zip(("id", "kind", "subject", "payloadSha256", "createdAt"), row)) for row in db.execute("SELECT id,kind,subject,payload_sha256,created_at FROM revision ORDER BY rowid")]
+            else:
+                result = [dict(zip(("id", "createdAt", "label", "files", "manifestSha256"), row)) for row in db.execute("SELECT id,created_at,label,file_count,manifest_sha256 FROM snapshot ORDER BY id")]
     elif args.command == "backup":
         result = workspace.backup(args.destination)
     elif args.command == "restore":
-        result = workspace.restore(args.snapshot, args.destination, args.prefix)
+        result = workspace.restore(args.snapshot if revision_store else int(args.snapshot), args.destination, args.prefix)
     elif args.command == "checkout":
-        result = workspace.checkout(args.snapshot, args.prefix)
+        result = workspace.checkout(args.snapshot if revision_store else int(args.snapshot), args.prefix)
     else:
         command = args.argv[1:] if args.argv[:1] == ["--"] else args.argv
         if not command:
@@ -992,7 +1029,7 @@ def main() -> int:
         discovery_started = perf_counter()
         inputs = authoring_inputs(args.input, workspace)
         return recorded_run(command, inputs, args.output, args.label, workspace,
-                            input_discovery_seconds=perf_counter() - discovery_started)
+                            input_discovery_seconds=perf_counter() - discovery_started, phase_boundary=args.phase_boundary)
     print(json.dumps(result, ensure_ascii=True))
     return 0
 

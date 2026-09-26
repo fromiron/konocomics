@@ -249,7 +249,9 @@ try {
     );
     const published = join(
       publication,
-      compact ? "data/source" : "authorized-evidence-panel-v1/data/source",
+      compact || existsSync(join(publication, "CURATION-BASELINE.json"))
+        ? "data/source"
+        : "authorized-evidence-panel-v1/data/source",
       reference,
     );
     const origin = existsSync(published) ? published : join(repo, "data/source", reference);

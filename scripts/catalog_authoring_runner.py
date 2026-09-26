@@ -77,8 +77,10 @@ def exclusive(path, wait=False):
                 fcntl.flock(handle, fcntl.LOCK_UN)
 
 
-def preserve(paths, label, *, reuse=False, metrics=None):
+def preserve(paths, label, *, reuse=False, metrics=None, phase_boundary=False):
     workspace = Workspace(REPO)
+    if getattr(workspace, "is_revision_store", False):
+        return workspace.persist(paths, label, phase_boundary=phase_boundary, reuse=reuse)
     if reuse:
         inventory = workspace._inventory(paths, metrics)
         started = time.perf_counter()
@@ -216,7 +218,8 @@ def ensure_frozen(run, config):
         prepare.require(saved["inputManifestSha256"] == digest, "frozen storage binding changed")
         storage = saved["storage"]
         Workspace(REPO).verify_saved(storage["snapshot"], [frozen])
-        Workspace(REPO, REPO / "data/local/catalog-authoring/backups/latest.sqlite").verify_saved(storage["snapshot"], [frozen])
+        if storage["backup"]["status"] == "BACKED_UP":
+            Workspace(REPO, REPO / "data/local/catalog-authoring/backups/latest.sqlite").verify_saved(storage["snapshot"], [frozen])
     elif storage is None:
         # The previous command may have finished before storage/backup failed.
         # Save those same valid bytes; never call freeze or the model again here.
@@ -459,6 +462,26 @@ def receipt_backed_up(receipt):
     return True
 
 
+def verify_check_storage(run, *, require_backup=False):
+    value = panel.read_json(run / "CHECK-STORAGE.json")
+    prepare.require(value["checkedSha256"] == panel.sha256(run / "CHECKED.json"), "check storage binding changed")
+    config, checked = panel.read_json(run / "RUN.json"), panel.read_json(run / "CHECKED.json")
+    paths = [run / "CHECKED.json", run / "RUN.json", frozen_path(run, config), artifact_path(config["decisionsPath"])]
+    if checked.get("sealedRoot"):
+        paths.append(artifact_path(checked["sealedRoot"]))
+    storage = value["storage"]
+    workspace = Workspace(REPO)
+    if storage["backup"]["status"] == "PERSISTED":
+        prepare.require(getattr(workspace, "is_revision_store", False)
+                        and storage["snapshot"].get("schemaVersion") == "catalog-authoring-revision-v1", "PERSISTED requires a revision receipt")
+    else:
+        prepare.require(storage["backup"]["status"] == "BACKED_UP", "check storage incomplete")
+    workspace.verify_saved(storage["snapshot"], paths)
+    if require_backup:
+        Workspace(REPO, REPO / "data/local/catalog-authoring/backups/latest.sqlite").verify_saved(storage["snapshot"], paths)
+    return storage
+
+
 def store_checked(run, config, checked):
     receipt = run / "CHECK-STORAGE.json"
     paths = [run / "CHECKED.json", run / "RUN.json", frozen_path(run, config), artifact_path(config["decisionsPath"])]
@@ -469,10 +492,8 @@ def store_checked(run, config, checked):
         if (previous.get("schemaVersion") == "catalog-check-storage-v2"
                 and previous["checkedSha256"] == panel.sha256(run / "CHECKED.json")):
             storage = previous["storage"]
-            prepare.require(storage["backup"]["status"] == "BACKED_UP", "check backup incomplete")
-            for database in (None, REPO / "data/local/catalog-authoring/backups/latest.sqlite"):
-                Workspace(REPO, database).verify_saved(storage["snapshot"], paths)
-            if not receipt_backed_up(receipt):
+            verify_check_storage(run, require_backup=storage["backup"]["status"] == "BACKED_UP")
+            if storage["backup"]["status"] == "BACKED_UP" and not receipt_backed_up(receipt):
                 preserve([receipt], "single-pass:check-receipt")
             return storage
     storage = preserve([run, artifact_path(config["decisionsPath"])], "single-pass:check")
@@ -745,10 +766,14 @@ def run_job(args):
                 else:
                     prepare.require(state["latestCandidate"]["catalogSha256"] == intent["beforeCatalogSha256"] and state["latestCandidate"]["registrySha256"] == intent["beforeRegistrySha256"], "current advanced: preserve verified candidate for explicit rebase; do not regress pointer")
                     previous_count = state["latestCandidate"]["recommendationEligibleCount"]
-                    state["latestCandidate"] = {"root": str((run / "publication").relative_to(ROOT)).replace("\\", "/"), "previousBaselineRoot": str(baseline.relative_to(ROOT)).replace("\\", "/"), "catalogSha256": verified["catalogSha256"], "registrySha256": verified["registrySha256"], "canonicalSha256": verified["canonicalSha256"], "manifestSha256": panel.sha256(run / "publication/MANIFEST.sha256"), "catalogVersion": verified["catalogVersion"], "workCount": verified["counts"]["works"], "recommendationEligibleCount": verified["counts"]["eligible"], "libraryOnlyCount": verified["counts"]["libraryOnly"], "promotedWorkCount": verified["counts"]["eligible"] - previous_count, "state": verified["status"], "readback": str(artifact_path(finished["readback"]).resolve().relative_to(ROOT)).replace("\\", "/"), "verifiedAt": verified["verifiedAt"]}
+                    publication = run / "publication"
+                    if getattr(Workspace(REPO), "is_revision_store", False):
+                        from catalog_retention import advance_basis
+                        publication = advance_basis(REPO, baseline, publication, [(work_id, run, frozen, artifact_path(finished["sealedRoot"]))])
+                    state["latestCandidate"] = {"root": os.path.relpath(publication, ROOT).replace("\\", "/"), "previousBaselineRoot": os.path.relpath(baseline, ROOT).replace("\\", "/"), "catalogSha256": verified["catalogSha256"], "registrySha256": verified["registrySha256"], "canonicalSha256": verified["canonicalSha256"], "manifestSha256": panel.sha256(publication / "MANIFEST.sha256"), "catalogVersion": verified["catalogVersion"], "workCount": verified["counts"]["works"], "recommendationEligibleCount": verified["counts"]["eligible"], "libraryOnlyCount": verified["counts"]["libraryOnly"], "promotedWorkCount": verified["counts"]["eligible"] - previous_count, "state": verified["status"], "readback": str(artifact_path(finished["readback"]).resolve().relative_to(ROOT)).replace("\\", "/"), "verifiedAt": verified["verifiedAt"]}
                     state["updatedAt"] = utc_now()
                     write(ROOT / "STATE.json", state, expected_sha=state_sha)
-                storage = preserve([ROOT / "STATE.json", run / "FINISHED.json"], "single-pass:current")
+                storage = preserve([ROOT / "STATE.json", run / "FINISHED.json"], "single-pass:current", phase_boundary=True)
                 print(json.dumps({**finished, "current": state["latestCandidate"], "storage": storage}, ensure_ascii=False))
             else:
                 print(json.dumps(finished, ensure_ascii=False))

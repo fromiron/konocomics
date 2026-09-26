@@ -2,6 +2,37 @@
 
 승인일: `2026-09-09`. 사용자는 Catalog와 조사·판정 작업 자료를 분리하고, 중요 자료를 `.tmp`가 아닌 로컬 SQLite에 영구 보존하는 전환과 문서화를 승인했다. 새 서버·ORM·패키지는 추가하지 않는다.
 
+## 현재 보존 정책 — 2026-09-26
+
+Oracle의 불필요 데이터 개선 계획에 따른 **schema v3 세대부터 이 절을 우선 적용한다**. 아래 schema v1/v2의 전체 snapshot·실행 코드·두 개의 대형 백업 영구 보존 설명은 이전 세대의 운영 이력이다. 아직 v2인 저장소에는 기존 동작을 유지하며, 명시적 검증·전환 없이 같은 파일을 v3으로 해석하지 않는다.
+
+- 보존 대상은 현재 큐레이션, 실제 원문·관찰·범위·한계, 의미 있는 판정 변경, 최신 유효 READY/HOLD, 미완료 작업 의존과 중복 발행 방지 기록이다. `revision`·`head`·`revision_blob`과 기존 SHA-256/zlib blob을 사용한다. 같은 내용의 재저장은 같은 revision을 반환한다. UUID와 generation을 사용하며 옛 snapshot 번호를 새 번호로 재사용하지 않는다.
+- 현재 기준점은 원래 result/input manifest·claim·원문 기록과 현행 SQL 행을 대조한 `CURATION-BASELINE.json`이다. 값만 읽어 새 승인 판정을 만들지 않는다. AEP·기존 모델 판정·미검토·Gold 구분과 unknown을 보존한다. 일부 legacy 권한은 검증된 원래 adapter와 작은 명시적 bundle pin으로 유지한다. 새 prior reader는 이 기준점에서 필요한 작품을 읽으며 과거 전체 publication 계보를 순회하지 않는다.
+- 원본·frozen·판정은 즉시 SQLite에 commit하고 `PERSISTED`를 반환한다. 내부 prepare/check/명령마다 물리 백업을 만들지 않는다. 수집 완료·판정 완료·발행 완료·작업 종료/부분 중단의 **명시적 단계 경계**에서 백업하고 실제 저장본을 대조한 뒤 `BACKED_UP`으로 보고한다. 마지막 경계 이후 자료는 작업 DB에는 있으나 그 백업에는 없을 수 있다. 디스크 장애까지 보장하는 독립 백업은 아니다.
+- 작업자는 내부 receipt의 `PERSISTED`를 `BACKED_UP`으로 고치지 않는다. 기존 `catalog_workspace.py backup` 또는 명시적 `notification_guard.py enqueue`가 경계 백업을 수행한다. Stop/Interrupt hook은 무거운 백업을 실행하지 않는다. collection summary는 새 세대에서 `workspaceAndBackupReadbackVerified`를 사용할 수 있으며, 검사는 실제 source/latest의 원문 SHA를 확인한다.
+- 정상 운영은 검증된 `backups/latest.sqlite` 하나를 유지한다. 같은 세대는 검증된 이전 백업에 새 immutable revision/blob과 현재 head를 반영하고 필요한 원문을 readback한다. 새 세대의 첫 백업은 별도로 만들고 전체 검증한다. 삭제된 옛 세대에 v2의 append-only 확장을 적용하지 않는다. 변경 없는 경계는 복사/rotation을 하지 않는다. 전체 blob 감사와 해당 단계 원문 검사는 서로 다른 검증 범위다.
+- 완료 배치는 `completion` revision의 summary SHA·실제 발행/readback·STATE 적용 기록으로 중복을 차단한다. 재수신 때문에 오래된 전체 STATE와 publication 디렉터리를 다시 열지 않는다. 작은 원래 receipt는 보존한다.
+- GC는 성공 종료 후 7일이 지난 비고정 execution 기록과 참조가 없는 blob만 제거한다. 의미 있는 큐레이션 이력·미해결 실패·활성/legacy pin은 시간이나 mtime만으로 제거하지 않는다. 수명이 확정되지 않은 자료는 보수적으로 유지하며 배치마다 VACUUM을 실행하지 않는다.
+
+전환은 read-only retention plan → `workspace.next.sqlite` 선택 복사 → 현재 값·원문·실제 prior/재개 경로 검증 → 별도 새 백업 → writer 중지 경계의 DB/STATE 전환 순서다. `RETENTION-MAINTENANCE.json`은 원래/새 DB·백업·STATE identity와 재개 정보를 남긴다. DB pathname 교체는 atomic이지만 **DB와 STATE 전체가 하나의 atomic transaction은 아니다**. 중단 시 같은 intent로 재개하며 새 세대를 이해하지 못하는 코드는 schema 검사에서 거부된다.
+
+새 경로의 검증과 readback 뒤에만 plan에서 재생성 가능/실행 만료로 분류한 옛 DB·백업·물리 사본을 정리한다. `.workspace/user-sources/`, `handoff/`, 미분류 사용자 자료와 활성 의존은 유지한다. 축소 후에는 폐기된 전체 실행 디렉터리의 exact replay를 보장하지 않는다. 남긴 원문·판정과 명시적 pin의 정확한 바이트 보존을 보장한다. 오래된 파일을 archive라는 이름으로 옮긴 것만으로 축소 완료를 보고하지 않는다.
+
+schema v3 명령은 다음과 같다. `build`는 v2 이관용이며 활성 v3의 정상 정리는 `gc`를 사용한다. 기존 integrated authority가 있으면 원래 검증 bundle을 `--legacy-integrated`로 지정해야 한다. 입력 plan이 만들어진 뒤 old snapshot 또는 보호 파일이 바뀌면 다시 선별한다.
+
+```powershell
+python -B -X utf8 scripts/catalog_retention.py plan --output <retention-plan.json>
+python -B -X utf8 scripts/catalog_retention.py build --plan <retention-plan.json> --legacy-integrated <원래-result-root> --report <build.json>
+python -B -X utf8 scripts/catalog_retention.py verify --build <build.json> --report <verified.json>
+python -B -X utf8 scripts/catalog_workspace.py --database data/local/catalog-authoring/workspace.next.sqlite backup --destination data/local/catalog-authoring/backups/retention-next.sqlite
+# 모든 writer 종료를 확인한 뒤 실행. 중단된 같은 전환에는 --resume 사용.
+python -B -X utf8 scripts/catalog_retention.py activate --build <build.json> --verification <verified.json>
+# 실제 current/재개/중복 처리 readback 뒤, 명시적으로 남긴 구 v2 파일 세 개만 정리.
+python -B -X utf8 scripts/catalog_retention.py prune-retired --cutover data/local/catalog-authoring/RETENTION-CUTOVER.json
+python -B -X utf8 scripts/catalog_retention.py gc
+python -B -X utf8 scripts/catalog_retention.py gc --apply
+```
+
 ## 작업 위치와 수동 인계 — 2026-09-15 사용자 변경
 
 `.workspace/`에는 임시 자료만 둔다. 실행에 필요한 도구는 `scripts/catalog_authoring/`에서 Git으로 추적한다. 영구 작업 DB는 `data/local/catalog-authoring/workspace.sqlite`, 백업은 같은 디렉터리의 `backups/`, 원본·동결본·판정·실패·인계 자료는 `artifacts/`에 둔다. 이 로컬 데이터 전체는 Git에서 제외한다.

@@ -282,6 +282,7 @@ if (process.argv[1] && import.meta.url === pathToFileURL(resolve(process.argv[1]
         "run",
         "--label",
         "publisher-book-metadata",
+        "--phase-boundary",
         "--input",
         dirname(input),
         "--input",

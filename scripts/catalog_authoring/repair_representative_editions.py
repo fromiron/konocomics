@@ -122,13 +122,17 @@ def main() -> None:
         readback = runner.product_readback(output.parent, output, result_root)
         verified = runner.panel.read_json(readback)
         runner.prepare.require(verified["status"] == "SQL_BUILD_COVERAGE_ENGINE_VERIFIED" and verified["catalogSha256"] == digest(output / "catalog-expanded.candidate.sqlite") and verified["registrySha256"] == digest(output / "catalog-source-registry.candidate.sqlite"), "edition readback identity mismatch")
-        storage = runner.preserve([output.parent], "representative-edition-correction:verified")
+        storage = runner.preserve([output.parent], "representative-edition-correction:verified", phase_boundary=True)
         runner.prepare.require(storage["backup"]["status"] == "BACKED_UP" and digest(runner.ROOT / "STATE.json") == state_sha, "correction backup or STATE changed")
         previous_count = state["latestCandidate"]["recommendationEligibleCount"]
-        state["latestCandidate"] = {"root": str(output.relative_to(runner.ROOT)).replace("\\", "/"), "previousBaselineRoot": str(baseline.relative_to(runner.ROOT)).replace("\\", "/"), "catalogSha256": verified["catalogSha256"], "registrySha256": verified["registrySha256"], "canonicalSha256": verified["canonicalSha256"], "manifestSha256": digest(output / "MANIFEST.sha256"), "catalogVersion": verified["catalogVersion"], "workCount": verified["counts"]["works"], "recommendationEligibleCount": verified["counts"]["eligible"], "libraryOnlyCount": verified["counts"]["libraryOnly"], "promotedWorkCount": verified["counts"]["eligible"] - previous_count, "state": verified["status"], "readback": str(readback.relative_to(runner.ROOT)).replace("\\", "/"), "verifiedAt": verified["verifiedAt"]}
+        current_output = output
+        if getattr(runner.Workspace(runner.REPO), "is_revision_store", False):
+            from catalog_retention import advance_metadata_basis
+            current_output = advance_metadata_basis(runner.REPO, baseline, output, {row["workId"] for row in changes})
+        state["latestCandidate"] = {"root": os.path.relpath(current_output, runner.ROOT).replace("\\", "/"), "previousBaselineRoot": os.path.relpath(baseline, runner.ROOT).replace("\\", "/"), "catalogSha256": verified["catalogSha256"], "registrySha256": verified["registrySha256"], "canonicalSha256": verified["canonicalSha256"], "manifestSha256": digest(current_output / "MANIFEST.sha256"), "catalogVersion": verified["catalogVersion"], "workCount": verified["counts"]["works"], "recommendationEligibleCount": verified["counts"]["eligible"], "libraryOnlyCount": verified["counts"]["libraryOnly"], "promotedWorkCount": verified["counts"]["eligible"] - previous_count, "state": verified["status"], "readback": str(readback.relative_to(runner.ROOT)).replace("\\", "/"), "verifiedAt": verified["verifiedAt"]}
         state["updatedAt"] = runner.utc_now()
         runner.write(runner.ROOT / "STATE.json", state, expected_sha=state_sha)
-        state_storage = runner.preserve([runner.ROOT / "STATE.json"], "representative-edition-correction:current")
+        state_storage = runner.preserve([runner.ROOT / "STATE.json"], "representative-edition-correction:current", phase_boundary=True)
         print(json.dumps({"status": "VERIFIED", "works": [row["workId"] for row in changes], "eligible": verified["counts"]["eligible"], "publication": str(output), "storage": storage, "stateStorage": state_storage}, ensure_ascii=False), flush=True)
 
 

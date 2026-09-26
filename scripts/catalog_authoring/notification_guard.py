@@ -167,8 +167,13 @@ def validate_batch(assignment, summary):
                 raise ValueError("Batch error reason is missing")
             continue
         storage = read(path.parent / "CHECK-STORAGE.json")
-        if storage["checkedSha256"] != row["checkedSha256"] or storage["storage"]["backup"]["status"] != "BACKED_UP":
+        if storage["checkedSha256"] != row["checkedSha256"]:
             raise ValueError("Batch check backup binding mismatch")
+        if storage["storage"]["backup"]["status"] == "PERSISTED":
+            import catalog_authoring_runner as runner
+            runner.verify_check_storage(path.parent, require_backup=True)
+        elif storage["storage"]["backup"]["status"] != "BACKED_UP":
+            raise ValueError("Batch check backup is incomplete")
         config = read(path.parent / "RUN.json")
         from authoring_paths import artifact_path
         decision = artifact_path(config["decisionsPath"])
@@ -186,6 +191,9 @@ def validate_batch(assignment, summary):
 
 
 def validate_collection_batch(assignment, summary):
+    from catalog_workspace import Workspace
+    workspace = Workspace()
+    revision_store = getattr(workspace, "is_revision_store", False)
     dispatch_path = Path(assignment["dispatchPath"])
     if hashlib.sha256(dispatch_path.read_bytes()).hexdigest() != assignment["dispatchSha256"]:
         raise ValueError("Collection dispatch changed")
@@ -215,7 +223,8 @@ def validate_collection_batch(assignment, summary):
             or validator.get("allAssignedResearchRowsPresent") is not True
             or validator.get("dispatchIdentityAndUserSourceShaVerified") is not True
             or validator.get("rawReceiptBytesAndShaVerified") is not True
-            or validator.get("workspaceAndAppendOnlyBackupReadbackVerified") is not True
+            or not (validator.get("workspaceAndAppendOnlyBackupReadbackVerified") is True
+                    or (revision_store and validator.get("workspaceAndBackupReadbackVerified") is True))
             or validator.get("backupStatus") != "BACKED_UP"):
         raise ValueError("Collection validation or backup receipt is incomplete")
     for row in rows:
@@ -235,7 +244,17 @@ def validate_collection_batch(assignment, summary):
         if not research.is_relative_to(collection) or hashlib.sha256(research.read_bytes()).hexdigest() != row["researchSha256"]:
             raise ValueError("Collection research path or SHA mismatch")
         storage = row.get("storage", {})
-        if storage.get("researchSha256Matches") is not True or storage.get("workspaceSnapshotId") != storage.get("backupSnapshotId"):
+        if storage.get("researchSha256Matches") is not True:
+            raise ValueError("Collection work backup binding mismatch")
+        if revision_store:
+            # Legacy summaries may still contain numeric IDs. Actual retained
+            # bytes, not renamed IDs or status flags, establish the new backup.
+            reference = workspace.saved_file_snapshot(research)
+            if reference is None:
+                raise ValueError("Collection research is not persisted")
+            backup = Workspace(workspace.repo, workspace.repo / "data/local/catalog-authoring/backups/latest.sqlite")
+            backup.verify_saved(reference, [research])
+        elif storage.get("workspaceSnapshotId") != storage.get("backupSnapshotId"):
             raise ValueError("Collection work backup binding mismatch")
         receipts = row.get("sourceReceiptBindings")
         if not isinstance(receipts, list) or type(row.get("sourceCount")) is not int or len(receipts) != row["sourceCount"]:
@@ -257,6 +276,13 @@ def validate_collection_batch(assignment, summary):
                     raise ValueError("Collection source body length mismatch")
             elif not receipt.get("error"):
                 raise ValueError("Collection source body is missing without an error receipt")
+            if revision_store:
+                retained_paths = [receipt_path] + ([raw] if raw_path and raw_sha else [])
+                groups, missing = workspace.saved_files(retained_paths)
+                if missing:
+                    raise ValueError("Collection original bytes are not persisted")
+                for reference, paths in groups:
+                    backup.verify_saved(reference, paths)
 
 
 def register_batch(session, parent, dispatch, artifact, run, directory=STATE, artifact_root=ROOT):
@@ -347,7 +373,7 @@ def validate_partial(assignment, summary):
         raise ValueError("Partial report checkpoint is incomplete")
 
 
-def enqueue(session, directory=STATE, *, checkpoint=None, kind="complete"):
+def enqueue(session, directory=STATE, *, checkpoint=None, kind="complete", phase_boundary=False):
     assignment = read(state_path(session, directory))
     if (not assignment.get("active") and kind != "user-stop") or kind not in {"complete", "partial-stop", "user-stop"}:
         raise ValueError("Inactive assignment or invalid notification kind")
@@ -355,6 +381,19 @@ def enqueue(session, directory=STATE, *, checkpoint=None, kind="complete"):
     if not source.is_relative_to(Path(assignment["runRoot"]).resolve()):
         raise ValueError("Checkpoint outside assigned run")
     body = source.read_bytes()
+    if phase_boundary:
+        # Explicit CLI handoff is a backup boundary. Stop/Interrupt hooks never
+        # perform a large backup or turn a PERSISTED receipt into a claimed backup.
+        from catalog_workspace import Workspace
+        workspace = Workspace()
+        if getattr(workspace, "is_revision_store", False):
+            roots = [source, Path(assignment["dispatchPath"])] if assignment.get("dispatchPath") else [source]
+            summary = json.loads(body)
+            for row in summary.get("works", []):
+                for key in ("checkedPath", "researchPath"):
+                    if row.get(key):
+                        roots.append(Path(row[key]).parent)
+            workspace.persist(roots, "phase:" + assignment["phase"], phase_boundary=True, reuse=True)
     identity = notification_identity(assignment, hashlib.sha256(body).hexdigest(), kind)
     remember_assignment(assignment, directory)
     event_id = digest(identity)
@@ -691,7 +730,7 @@ def main():
     elif args.action == "arm":
         arm(args.session, resume=args.resume)
     elif args.action == "enqueue":
-        path, value = enqueue(args.session, checkpoint=args.checkpoint, kind=args.kind)
+        path, value = enqueue(args.session, checkpoint=args.checkpoint, kind=args.kind, phase_boundary=True)
         print(json.dumps({"eventId": value["eventId"], "path": str(path)}, ensure_ascii=False))
     elif args.action == "drain":
         print(json.dumps(pending(args.parent), ensure_ascii=False))
