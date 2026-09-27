@@ -16,6 +16,8 @@ description: konocomics의 고정 작업 세션에서 배정된 작품 목록을
 
 **한 세션의 현재 배치 전체 수집·gap 보완을 먼저 끝낸 뒤 판정 단계로 전환한다.** 작품마다 수집→판정을 교차하지 않는다. 수집 단계에서는 독립 URL 요청과 읽기 전용 검사를 안전하게 묶고, 공통 선정/추천 원문은 한 번 저장한 자료를 작품별 실제 연결 근거와 함께 재사용한다. 원문·scope·출처 독립성 검사는 생략하지 않는다. 수집 완료는 URL 확보만이 아니라 판정에 필요한 자료 확인 또는 출처 소진에 따른 INSUFFICIENT의 기록이다. PASS 목표치를 강제하지 않는다.
 
+`planningRequirements`에 `prior-recovery`가 있어도 수집 면제가 아니다. dispatch의 해당 `collectionOutput`에 user-source·기존 원문·필요 보완을 검증한 새 수집 결과를 만들고, 다른 작품과 함께 collection summary 전건에 포함한다. prior recovery map과 `--prior-bundle`은 이후 판정 freeze에서 accepted claim을 보존하는 결속이며 빈 collection 폴더나 수집 결과의 합성을 허용하지 않는다.
+
 수집 배치 완료·검증·백업·통지 후 dispatch 정책으로 전환한다. 새 일반 배정의 `phase="collection"`, `transitionPolicy="auto-after-collection"`은 기존 `transition-collection` 명령이 현재 turn·generation·중단 상태·실제 완료 receipt를 확인한 뒤 같은 세션에서 판정으로 전환한다. 명시적 `collection-only`와 정책이 없는 기존 배정은 부모 신호를 기다린다. 판정 dispatch는 원 summary path/SHA와 collection ERROR를 보존하고 오류 작품을 제외한다. 공통 오류·전건 오류·사용자 중단이면 자동 전환하지 않는다. 판정 단계에서는 작품별 frozen 입력만 읽고 prepare/check를 연속 수행하며 정상 작품마다 부모와 왕복하지 않는다. 기존 유효 판정은 재사용한다. 조정자는 판정 배치 완료 후 확인·직렬 승격하며 다른 세션의 완료를 기다리지 않는다.
 
 ## 시작·재개

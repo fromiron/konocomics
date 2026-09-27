@@ -58,6 +58,7 @@
 2. 이미 eligible인 작품, 유효 미발행 READY, 다른 세션의 배정을 중복 판정에서 제외한다. AEP prior 복구·registry 정정·미확인을 fresh로 취급하지 않는다.
 3. 기존 배정 완료 후 N/T-only·추천 URL 결속 누락 복구 대상을 신규 작품보다 먼저 검토한다. 과거 190개 목록은 검토 후보이며 실제 남은 수나 승격 확정 수가 아니다. 최신 상태를 대조해 최대 50개씩 배정한다.
 4. 배치 ID·owner/parent·기준 pair/계약 SHA·작품 ID·정체/대표 ISBN·gap·기존 research/prior/HOLD·원문/receipt·리드·출력 경로와 단계 전환 정책을 연결한다. 새 일반 수집은 `auto-after-collection`, 수집만 요청된 배정은 `collection-only`로 구분한다. 배치 전체 raw를 프롬프트에 넣지 않고 현재 작품에 도달했을 때 읽는다.
+   - `prior-recovery` 작품도 `collectionOutput`과 실제 수집 결과를 가지며 배치 전체 collection summary에 포함한다. SHA 결속 prior recovery map은 이후 판정 freeze에서 accepted claim을 보존하는 입력이고, 수집 면제나 합성 결과를 허용하지 않는다.
 5. 동일 선정 URL의 원문은 재사용하되 각 Work의 실제 언급·scope·evidence ID 결속을 확인한다. `COLLECTION-CONTEXT.json`은 dispatch/registry SHA와 원 registry 행을 보존한 lookup이며 판정 권한이 아니다.
 6. 목록 밖 작품을 가져오지 않는다. 빈 방과 필요한 용량에만 배정하고 마지막 50개 미만 목록도 같은 절차로 처리한다. 단순히 인원 상한을 채우려고 추가 위임하지 않는다.
 
