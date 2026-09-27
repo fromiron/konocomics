@@ -146,6 +146,48 @@ def snapshot(path: Path | sqlite3.Connection, *, namespace="main", integrity=Tru
             db.close()
 
 
+class RegistryState:
+    """One batch view; copy and inspect only the rows owned by a Work."""
+
+    def __init__(self, value: dict):
+        self.header = {key: value[key] for key in ("schema", "userVersion", "applicationId")}
+        self.columns = {name: table["columns"] for name, table in value["tables"].items()}
+        self.rows = {name: {row[table["columns"][0]]: dict(row) for row in table["rows"]}
+                     for name, table in value["tables"].items()}
+        self.owners = {}
+        for rid, row in self.rows["registry_source_rows"].items():
+            self.owners.setdefault(row.get("canonicalWorkId"), []).append(rid)
+
+    def scope(self, work_id: str) -> dict:
+        tables = {}
+        for name, rows in self.rows.items():
+            selected = (rows.values() if name == "registry_meta" else
+                        (rows[rid] for rid in self.owners.get(work_id, []))
+                        if name == "registry_source_rows" else ())
+            tables[name] = {"columns": self.columns[name], "rows": [dict(row) for row in selected]}
+        return {**self.header, "tables": tables}
+
+    def apply(self, changes: list[dict]) -> None:
+        for item in changes:
+            row = self.rows["registry_source_rows"].get(item["sourceRowId"])
+            require(row is not None and row.get("canonicalWorkId") == item["workId"]
+                    and row.get(item["field"]) == item["before"], "Registry plan lost its expected row")
+            require(item["field"] in ALLOWED, "Registry plan changes an unauthorized field")
+            row[item["field"]] = item["after"]
+
+    def snapshot(self) -> dict:
+        return {**self.header, "tables": {
+            name: {"columns": self.columns[name], "rows": [dict(rows[key]) for key in sorted(rows)]}
+            for name, rows in self.rows.items()}}
+
+    def verify_touched(self, connection: sqlite3.Connection, changes: list[dict]) -> None:
+        columns = self.columns["registry_source_rows"]
+        for rid in sorted({item["sourceRowId"] for item in changes}):
+            rows = connection.execute("select * from registry.registry_source_rows where sourceRowId=?", (rid,)).fetchall()
+            require(rows == [tuple(self.rows["registry_source_rows"][rid][key] for key in columns)],
+                    "Registry write differs from sealed correction plan")
+
+
 
 def valid_url(value: object) -> bool:
     if not isinstance(value, str) or value != value.strip() or any(c.isspace() for c in value):
@@ -1131,7 +1173,12 @@ def verify_correction(root: Path, source_registry: Path, catalog: Path) -> Path:
         backend._bind_frozen_registry(input_root, targets, backend.ensure_registry(source_registry, targets, catalog_sha))
         registry = backend._bind_frozen_registry(input_root, targets, backend.ensure_registry(output_db, targets, catalog_sha), output_csv)
         backend._validate_packet_baseline_binding(packets, baseline, registry)
-        require(publisher._verify_input_identities(input_root, catalog, output_db, publisher._repo_root()) == output_csv, 'Existing publisher rejected correction slice')
+        # This is readback of the manifest-bound historical correction, not
+        # permission to publish it against today's canonical authority. The
+        # current seal/publication gates separately prove relevant dependencies.
+        require(publisher._verify_input_identities(input_root, catalog, output_db, publisher._repo_root(),
+                                                  canonical_sha=spec['canonicalSha256']) == output_csv,
+                'Existing publisher rejected correction slice')
     require(sha256(source_registry) == source_sha and sha256(catalog) == catalog_sha, 'Read-only verification inputs changed')
     return output_db
 

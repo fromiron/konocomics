@@ -11,11 +11,29 @@ from unittest.mock import patch
 from contextlib import closing
 from pathlib import Path
 
-from catalog_workspace import Workspace, authoring_inputs, key_path, recorded_run
+from catalog_workspace import Workspace, authoring_inputs, existing_parents, key_path, recorded_run
 from workspace_paths import artifact_path
 
 
 class WorkspaceTest(unittest.TestCase):
+    def test_dependency_roots_keep_component_boundaries_and_platform_identity(self):
+        paths = [self.repo / 'a/file.txt', self.repo / 'ab/file.txt', self.repo / 'a',
+                 self.repo / 'z/deep/file.txt', self.repo / 'z/deep', self.repo / 'ab/file.txt']
+        if os.name == 'nt':
+            paths.append(self.repo / 'A/other.txt')
+        unique = sorted(set(paths), key=lambda p: (len(p.parts), str(p)))
+        expected = [root for index, root in enumerate(unique)
+                    if not any(root.is_relative_to(parent) for parent in unique[:index])]
+        self.assertEqual(existing_parents(list(reversed(paths))), expected)
+
+    def test_large_flat_dependency_set_does_not_compare_all_sibling_pairs(self):
+        paths = [self.repo / 'frozen' / f'{index:05d}.json' for index in range(5000)]
+        # This guards the reproduced O(n^2) path-component comparisons, not a
+        # machine-specific deadline. All real path/link checks still execute.
+        with patch.object(Path, 'is_relative_to', side_effect=AssertionError('pairwise sibling scan')):
+            actual = existing_parents(paths + paths[:10])
+        self.assertEqual(actual, paths)
+
     def test_relocated_snapshot_reads_original_keys_without_links(self):
         repo = self.root / "moved-repo"
         old = repo / ".workspace/catalog-expansion-continuation-20260902"

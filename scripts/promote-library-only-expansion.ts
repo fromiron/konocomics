@@ -38,6 +38,11 @@ import {
 import { formatSourceIssue } from "./catalog/report";
 import { publishDirectorySet } from "./promote-g2-catalog";
 import {
+  libraryExpansionResultSchema,
+  maintenanceLockHeld,
+  runLockedMaintenance,
+} from "./catalog-maintenance";
+import {
   loadCatalogExpansion,
   runCatalogExpansionValidation,
   validateGoldSet,
@@ -983,6 +988,13 @@ function runLibraryOnlyExpansionFromSource(
 
 export function runLibraryOnlyExpansion(mode: "--check" | "--write", root = process.cwd()) {
   const canonicalRoot = resolve(root);
+  if (mode === "--write" && !maintenanceLockHeld(canonicalRoot)) {
+    return {
+      ...runLockedMaintenance(canonicalRoot, "library-expansion", libraryExpansionResultSchema),
+      expectedCount: undefined,
+      committedCount: undefined,
+    };
+  }
   const sourceDirectory = join(canonicalRoot, "data/source");
   return existsSync(join(sourceDirectory, CATALOG_DATABASE_FILE))
     ? withCatalogCsvProjection(sourceDirectory, (projected) =>

@@ -16,10 +16,33 @@ import uuid
 
 from catalog_workspace import Workspace, authoring_inputs, exclusive_file, recorded_run, utc_now
 from catalog_readback_identity import execution_identity, readback_matches
-from workspace_paths import artifact_path
+from workspace_paths import artifact_path as _artifact_path
 
 REPO = Path(__file__).resolve().parents[1]
 ROOT = REPO / "data/local/catalog-authoring/artifacts/catalog-expansion-continuation-20260902"
+
+
+def artifact_path(value):
+    """Interpret preserved locations in this repository without rewriting their identities."""
+    return _artifact_path(value, REPO)
+
+
+def binding_locations(bindings):
+    """Compare saved bindings at their restored locations; retain all original bytes."""
+    if bindings is None:
+        return None
+    result = []
+    for binding in bindings:
+        value = dict(binding)
+        for key in ("root", "path"):
+            if key in value:
+                value[key] = str(artifact_path(value[key]).resolve())
+        if "researchBindings" in value:
+            value["researchBindings"] = {str(artifact_path(path).resolve()): sha
+                                         for path, sha in value["researchBindings"].items()}
+        result.append(value)
+    return sorted(result, key=lambda item: item["root"]) if all("root" in item for item in result) else result
+
 sys.path.insert(0, str(REPO / "scripts/catalog_authoring"))
 import prepare_factor_batch as prepare
 import factor_single_pass as single
@@ -46,35 +69,28 @@ def write(path, value, *, expected_sha=None):
 
 
 @contextmanager
-def exclusive(path, wait=False):
-    """OS lock releases on process death; the file is not a stale lease."""
-    path.parent.mkdir(parents=True, exist_ok=True)
-    with path.open("a+b") as handle:
-        if handle.tell() == 0:
-            handle.write(b"0")
-            handle.flush()
-        handle.seek(0)
-        while True:
-            try:
-                if os.name == "nt":
-                    import msvcrt
-                    msvcrt.locking(handle.fileno(), msvcrt.LK_NBLCK, 1)
-                else:
-                    import fcntl
-                    fcntl.flock(handle, fcntl.LOCK_EX | fcntl.LOCK_NB)
-                break
-            except OSError:
-                if not wait:
-                    raise
-                time.sleep(0.2)
-        try:
-            yield
-        finally:
-            handle.seek(0)
-            if os.name == "nt":
-                msvcrt.locking(handle.fileno(), msvcrt.LK_UNLCK, 1)
-            else:
-                fcntl.flock(handle, fcntl.LOCK_UN)
+def exclusive(path, wait=False, *, timeout=300, metadata=None):
+    """Use the same bounded OS lock implementation as every authoring writer."""
+    from catalog_authoring_locks import acquire
+    with acquire(path, wait=wait, timeout=timeout, metadata=metadata) as lease:
+        yield lease
+
+
+def commit_state(value, *, expected_sha, canonical_sha=None, baseline=None):
+    """Commit a prepared pointer only while its shared source identities still match."""
+    from catalog_authoring_locks import assert_no_pending
+    lock = REPO / "data/local/catalog-authoring/locks/publication.lock"
+    with exclusive(lock, wait=True, metadata={"operation": "candidate-state-commit"}):
+        assert_no_pending(REPO)
+        prepare.require(panel.sha256(ROOT / "STATE.json") == expected_sha,
+                        "current advanced during preparation; rebase the saved decisions")
+        if canonical_sha is not None:
+            prepare.require(panel.sha256(REPO / "data/source/catalog.sqlite") == canonical_sha,
+                            "canonical advanced during preparation; rebase the saved decisions")
+        if baseline is not None:
+            _, actual = current()
+            prepare.require(actual == baseline, "current pair changed during preparation")
+        write(ROOT / "STATE.json", value, expected_sha=expected_sha)
 
 
 def preserve(paths, label, *, reuse=False, metrics=None, phase_boundary=False):
@@ -137,7 +153,7 @@ def stored(command, inputs, outputs, label, direct_inputs=()):
 def current():
     state = json.loads((ROOT / "STATE.json").read_text(encoding="utf-8"))
     candidate = state["latestCandidate"]
-    baseline = (ROOT / candidate["root"]).resolve()
+    baseline = artifact_path(ROOT / candidate["root"]).resolve()
     prepare.require(panel.sha256(baseline / "catalog-expanded.candidate.sqlite") == candidate["catalogSha256"], "current catalog identity mismatch")
     prepare.require(panel.sha256(baseline / "catalog-source-registry.candidate.sqlite") == candidate["registrySha256"], "current registry identity mismatch")
     return state, baseline
@@ -167,7 +183,7 @@ def ensure_frozen(run, config):
     completed = (run / "FINISHED.json").is_file()
     prior_bundles = config.get("priorBundleBindings", [])
     prepare.require(isinstance(prior_bundles, list) and all(isinstance(item, dict) and set(item) == {"root", "manifestSha256"} for item in prior_bundles), "invalid saved prior bundles")
-    prepare.require(prior_bundle_bindings([item["root"] for item in prior_bundles]) == prior_bundles, "prior bundle changed since run creation")
+    prepare.require(prior_bundle_bindings([item["root"] for item in prior_bundles]) == binding_locations(prior_bundles), "prior bundle changed since run creation")
     partial_inputs = []
     prepare.require(not checkpoint.is_file() or report_path.is_file(), "saved frozen input is incomplete; restore it instead of refreezing")
     if not report_path.is_file() and frozen.exists():
@@ -185,7 +201,7 @@ def ensure_frozen(run, config):
                 prepare.require(panel.sha256(artifact_path(config[key])) == config[key + "Sha256"], f"{key} changed since run creation; use a new run")
         roots = config.get("provenanceRoots", prepare.provenance_roots(config.get("provenanceRoot")))
         if "provenanceBindings" in config:
-            prepare.require(prepare.capture_bindings(run / "job.json", roots) == config["provenanceBindings"], "provenance changed since run creation; use a new run")
+            prepare.require(prepare.capture_bindings(run / "job.json", roots) == binding_locations(config["provenanceBindings"]), "provenance changed since run creation; use a new run")
         command = [sys.executable, "-X", "utf8", str(REPO / "scripts/catalog_authoring/prepare_factor_batch.py"), "freeze", "--job", str(run / "job.json"), "--baseline-root", str(artifact_path(config["baselineRoot"])), "--registry", str(artifact_path(config["registryPath"])), "--output-root", str(frozen)]
         inputs = [REPO / "scripts/catalog_authoring/prepare_factor_batch.py", run / "job.json", artifact_path(config["baselineRoot"]), artifact_path(config["registryPath"])]
         inputs.extend(partial_inputs)
@@ -194,9 +210,9 @@ def ensure_frozen(run, config):
             command.extend(["--recovery-epoch", str(artifact_path(config["recoveryEpoch"]))])
             inputs.append(artifact_path(config["recoveryEpoch"]))
         for root in roots:
-            command.extend(["--provenance-root", str(root)])
+            command.extend(["--provenance-root", str(artifact_path(root))])
         for binding in config.get("provenanceBindings", []):
-            inputs.extend(Path(binding["root"]) / name for name in binding["files"])
+            inputs.extend(artifact_path(binding["root"]) / name for name in binding["files"])
         if "provenanceBindings" not in config:
             inputs.extend(artifact_path(root) for root in roots)
         direct_prior = [artifact_path(item["root"]) for item in prior_bundles]
@@ -204,8 +220,8 @@ def ensure_frozen(run, config):
             command.extend(["--prior-bundle", str(root)])
         receipt = stored(command, inputs, [frozen], "single-pass:freeze", direct_inputs=direct_prior)
         if "provenanceBindings" in config:
-            prepare.require(prepare.capture_bindings(run / "job.json", roots) == config["provenanceBindings"], "provenance changed during freeze; preserve the partial run")
-        prepare.require(prior_bundle_bindings([item["root"] for item in prior_bundles]) == prior_bundles, "prior bundle changed during freeze")
+            prepare.require(prepare.capture_bindings(run / "job.json", roots) == binding_locations(config["provenanceBindings"]), "provenance changed during freeze; preserve the partial run")
+        prepare.require(prior_bundle_bindings([item["root"] for item in prior_bundles]) == binding_locations(prior_bundles), "prior bundle changed during freeze")
         storage = {"snapshot": receipt["output"], "backup": receipt["backup"]}
         if "timingsSeconds" in receipt:
             storage["timingsSeconds"] = receipt["timingsSeconds"]
@@ -539,7 +555,8 @@ def finish(run):
 
 
 def research_bindings(paths):
-    return [prepare.nt.bind_collection_handoff(path.resolve(), {"path": str(path.resolve()), "sha256": panel.sha256(path)}) for path in paths]
+    resolved = [artifact_path(path).resolve() for path in paths]
+    return [prepare.nt.bind_collection_handoff(path, {"path": str(path), "sha256": panel.sha256(path)}) for path in resolved]
 
 
 def unadjudicated_job(baseline, work_id, research, recovery_epoch=None):
@@ -629,7 +646,7 @@ def run_job(args):
     prepare.require(not (args.decisions and allow_model), "choose --decisions or --allow-model")
     prepare.require(allow_model or not (args.retry_model or getattr(args, "model_session", None)), "--retry-model and --model-session require --allow-model")
     if args.decisions:
-        prepare.require(args.decisions.is_file(), "--decisions file does not exist; no model will be called")
+        prepare.require(artifact_path(args.decisions).is_file(), "--decisions file does not exist; no model will be called")
     run = artifact_path(args.run_root).resolve()
     prepare.require(run.is_relative_to(ROOT / "runs") or run.is_relative_to(ROOT / "planning"), "run root must be in authoring runs/planning")
     # Windows byte locks deny reads; keep live locks outside snapshot inputs.
@@ -651,22 +668,23 @@ def run_job(args):
                     if config.get(key + "Sha256"):
                         prepare.require(panel.sha256(artifact_path(requested)) == config[key + "Sha256"], f"resume {argument} bytes changed; use a new run/input revision")
             if requested_prior:
-                prepare.require(prior_bundle_bindings(requested_prior) == config.get("priorBundleBindings", []), "resume prior bundles changed; use a new run")
+                prepare.require(prior_bundle_bindings(requested_prior) == binding_locations(config.get("priorBundleBindings", [])), "resume prior bundles changed; use a new run")
             if getattr(args, "model_session", None):
                 prepare.require(config.get("modelSession") == args.model_session, "resume model session changed")
             if getattr(args, "work_id", None):
                 prepare.require(panel.read_json(run / "job.json")["works"][0]["workId"] == args.work_id, "resume Work changed; use a new run")
             if args.job:
-                prepare.require(panel.sha256(args.job) == config["sourceJobSha256"], "resume job changed; use a new run/input revision")
+                prepare.require(panel.sha256(artifact_path(args.job)) == config["sourceJobSha256"], "resume job changed; use a new run/input revision")
             if getattr(args, "research", None):
-                prepare.require(research_bindings(args.research) == config.get("sourceResearchBindings"), "resume research changed; use a new run/input revision")
+                prepare.require(research_bindings(args.research) == binding_locations(config.get("sourceResearchBindings")), "resume research changed; use a new run/input revision")
         else:
             research = research_bindings(getattr(args, "research", None) or [])
             prior_bundles = prior_bundle_bindings(requested_prior or [])
             _, baseline = current()
-            job_path = args.job
+            job_path = artifact_path(args.job) if args.job else None
             if job_path is None:
-                raw = unadjudicated_job(baseline, getattr(args, "work_id", None), research, args.recovery_epoch)
+                raw = unadjudicated_job(baseline, getattr(args, "work_id", None), research,
+                                       artifact_path(args.recovery_epoch) if args.recovery_epoch else None)
                 job_path = run / "source-job.json"
                 write(job_path, raw)
             else:
@@ -675,7 +693,7 @@ def run_job(args):
             write(run / "job.json", raw)
             captures = prepare.capture_bindings(run / "job.json", getattr(args, "provenance_root", None))
             roots = [item["root"] for item in captures]
-            config = {"schemaVersion": "catalog-authoring-run-v1", "sourceJobSha256": panel.sha256(job_path), "baselineRoot": str(baseline), "registryPath": str((args.registry or baseline / "catalog-source-registry.candidate.sqlite").resolve()), "recoveryEpoch": str(args.recovery_epoch.resolve()) if args.recovery_epoch else None, "provenanceRoot": roots[0] if len(roots) == 1 else None, "provenanceRoots": roots, "provenanceBindings": captures, "priorBundleBindings": prior_bundles, "createdAt": utc_now()}
+            config = {"schemaVersion": "catalog-authoring-run-v1", "sourceJobSha256": panel.sha256(job_path), "baselineRoot": str(baseline), "registryPath": str(artifact_path(args.registry or baseline / "catalog-source-registry.candidate.sqlite").resolve()), "recoveryEpoch": str(artifact_path(args.recovery_epoch).resolve()) if args.recovery_epoch else None, "provenanceRoot": roots[0] if len(roots) == 1 else None, "provenanceRoots": roots, "provenanceBindings": captures, "priorBundleBindings": prior_bundles, "createdAt": utc_now()}
             config["requestedProvenanceRoots"] = [str(root) for root in prepare.provenance_roots(getattr(args, "provenance_root", None))]
             for key in ("registryPath", "recoveryEpoch"):
                 if config[key]:
@@ -705,13 +723,16 @@ def run_job(args):
             else:
                 identity = prepare_session_input(run / "session-input", frozen / "panel-input")
             receipt = {"status": "PREPARED", "workId": work_id, "runRoot": str(run), "frozenRoot": str(frozen), **identity}
-            if not previous.is_file() or panel.read_json(previous) != receipt:
+            preserved = panel.read_json(previous) if previous.is_file() else None
+            located = ({**preserved, "runRoot": str(artifact_path(preserved["runRoot"])),
+                        "frozenRoot": str(artifact_path(preserved["frozenRoot"]))} if preserved else None)
+            if located != receipt:
                 write(previous, receipt)
             storage = preserve([run], "single-pass:session-prepare", reuse=True)
             print(json.dumps({**receipt, "storage": storage}, ensure_ascii=False))
             return
         if args.decisions:
-            decisions = args.decisions.resolve()
+            decisions = artifact_path(args.decisions).resolve()
         elif args.retry_model and not (run / "FINISHED.json").is_file():
             decisions = invoke_model(run, frozen, retry=True, session_id=config.get("modelSession"))
         elif config.get("decisionsPath"):
@@ -721,13 +742,22 @@ def run_job(args):
             decisions = invoke_model(run, frozen, args.retry_model, session_id=config.get("modelSession"))
         if (run / "FINISHED.json").is_file():
             prepare.require(panel.read_json(run / "FINISHED.json")["decisionsSha256"] == panel.sha256(decisions), "completed run is immutable; use a new run for changed decisions")
-        config.update(decisionsPath=str(decisions), decisionsSha256=panel.sha256(decisions))
-        write(config_path, config)
+        selected_sha = panel.sha256(decisions)
+        if not config.get("decisionsPath") or artifact_path(config["decisionsPath"]).resolve() != decisions.resolve() or config.get("decisionsSha256") != selected_sha:
+            config.update(decisionsPath=str(decisions), decisionsSha256=selected_sha)
+            write(config_path, config)
         if action == "check":
             try:
                 checked = check_result(run, config)
                 checked.update(workId=work_id, inputManifestSha256=panel.sha256(frozen / "panel-input/PANEL-INPUT.sha256"))
-                write(run / "CHECKED.json", checked)
+                previous = panel.read_json(run / "CHECKED.json") if (run / "CHECKED.json").is_file() else None
+                located = dict(previous) if previous else None
+                if located and located.get("sealedRoot"):
+                    located["sealedRoot"] = str(artifact_path(located["sealedRoot"]))
+                if located == checked:
+                    checked = previous
+                else:
+                    write(run / "CHECKED.json", checked)
             except (OSError, ValueError, KeyError, TypeError) as error:
                 write(run / "CHECKED.json", {"status": "ERROR", "workId": work_id, "decisionsSha256": config["decisionsSha256"], "error": str(error)})
                 preserve([run], "single-pass:check-error")
@@ -735,8 +765,9 @@ def run_job(args):
             storage = store_checked(run, config, checked)
             print(json.dumps({**checked, "storage": storage}, ensure_ascii=False))
             return
-        # ponytail: one publisher for all runners; batch transactions only if measured writer capacity requires them.
-        with exclusive(lock_root / "publication.lock", wait=True):
+        # Private preparation and readback have one owner, but do not reserve
+        # the shared canonical/STATE commit lock.
+        with exclusive(lock_root / "publication-owner.lock", wait=True, metadata={"operation": "single-publication", "runRoot": str(run)}):
             completed = completion(run) if (run / "FINISHED.json").is_file() else None
             if completed:
                 prepare.require(completed["decisionsSha256"] == config["decisionsSha256"], "completed run is immutable; use a new run for changed decisions")
@@ -762,7 +793,7 @@ def run_job(args):
                     if state["latestCandidate"].get("readback") != str(artifact_path(finished["readback"]).resolve().relative_to(ROOT)).replace("\\", "/"):
                         state["latestCandidate"].update(readback=str(artifact_path(finished["readback"]).resolve().relative_to(ROOT)).replace("\\", "/"), verifiedAt=verified["verifiedAt"])
                         state["updatedAt"] = utc_now()
-                        write(ROOT / "STATE.json", state, expected_sha=state_sha)
+                        commit_state(state, expected_sha=state_sha, canonical_sha=verified["canonicalSha256"], baseline=baseline)
                 else:
                     prepare.require(state["latestCandidate"]["catalogSha256"] == intent["beforeCatalogSha256"] and state["latestCandidate"]["registrySha256"] == intent["beforeRegistrySha256"], "current advanced: preserve verified candidate for explicit rebase; do not regress pointer")
                     previous_count = state["latestCandidate"]["recommendationEligibleCount"]
@@ -772,7 +803,7 @@ def run_job(args):
                         publication = advance_basis(REPO, baseline, publication, [(work_id, run, frozen, artifact_path(finished["sealedRoot"]))])
                     state["latestCandidate"] = {"root": os.path.relpath(publication, ROOT).replace("\\", "/"), "previousBaselineRoot": os.path.relpath(baseline, ROOT).replace("\\", "/"), "catalogSha256": verified["catalogSha256"], "registrySha256": verified["registrySha256"], "canonicalSha256": verified["canonicalSha256"], "manifestSha256": panel.sha256(publication / "MANIFEST.sha256"), "catalogVersion": verified["catalogVersion"], "workCount": verified["counts"]["works"], "recommendationEligibleCount": verified["counts"]["eligible"], "libraryOnlyCount": verified["counts"]["libraryOnly"], "promotedWorkCount": verified["counts"]["eligible"] - previous_count, "state": verified["status"], "readback": str(artifact_path(finished["readback"]).resolve().relative_to(ROOT)).replace("\\", "/"), "verifiedAt": verified["verifiedAt"]}
                     state["updatedAt"] = utc_now()
-                    write(ROOT / "STATE.json", state, expected_sha=state_sha)
+                    commit_state(state, expected_sha=state_sha, canonical_sha=verified["canonicalSha256"], baseline=baseline)
                 storage = preserve([ROOT / "STATE.json", run / "FINISHED.json"], "single-pass:current", phase_boundary=True)
                 print(json.dumps({**finished, "current": state["latestCandidate"], "storage": storage}, ensure_ascii=False))
             else:
@@ -801,7 +832,23 @@ def main():
     try:
         if args.action == "finish":
             prepare.require(os.environ.get("KONOCOMICS_AUTHORING_RECORDED") == "1", "finish is an internal recorded phase; use run")
-            finish(args.run_root.resolve())
+        from catalog_retention import prepare_restored_operation
+        inputs = [path for path in (args.job, args.registry, args.recovery_epoch, args.decisions) if path]
+        inputs.extend(args.research or [])
+        inputs.extend(args.provenance_root or [])
+        inputs.extend(args.prior_bundle or [])
+        restored = prepare_restored_operation(REPO, {
+            "operation": "runner", "action": args.action, "runRoot": str(args.run_root),
+            "workId": args.work_id, "inputPaths": [str(path) for path in inputs],
+            "jobPath": str(args.job) if args.job else None,
+            "registryPath": str(args.registry) if args.registry else None,
+            "researchPaths": [str(path) for path in args.research or []],
+            "decisionsPath": str(args.decisions) if args.decisions else None,
+        })
+        if restored["status"] == "MATERIALIZED" and restored.get("needsBackup") and not (REPO / "data/local/catalog-authoring/backups/latest.sqlite").is_file():
+            Workspace(REPO).backup()
+        if args.action == "finish":
+            finish(artifact_path(args.run_root).resolve())
         else:
             run_job(args)
     except (OSError, ValueError, subprocess.SubprocessError) as error:

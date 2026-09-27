@@ -9,6 +9,7 @@
 - 제품 런타임은 생성된 정적 JSON과 순수 TypeScript만 사용한다. Dexie schema, 두 Rakuten server route, 추천 산식, 설명 생성, Export/Import는 바꾸지 않는다.
 - tracked SQLite는 빌드 타임 Catalog 원천 하나만 허용한다. ORM, 새 의존성, runtime database, runtime LLM은 추가하지 않는다.
 - 2026-09-09 사용자 승인: source 밖의 로컬 작업용 SQLite는 조사·후보·동결 판정·실패 이력의 영구 보존에 별도로 사용한다. tracked canonical authority를 추가하는 것이 아니며 저장 성공은 accepted authority가 아니다. 저장·백업·복원 계약은 `docs/catalog-expansion/03-local-authoring-storage.md`를 따른다.
+- 2026-09-26 사용자 승인: 작업 저장소 v4의 변경 순번·증분 백업·workspace WAL은 작업 저장 경계에만 적용한다. canonical/registry pair의 DELETE transaction과 정적 런타임 경계는 유지한다. 완료 배치의 `--apply-canonical`은 기존 권한 검사를 통과한 대상과 필요한 근거만 정식 DB·생성 데이터에 반영한다. candidate 전체 복사·권한 재분류·GitHub 쓰기·배포를 허용하는 변경이 아니다. schema 전환과 정식 반영 완료는 각각 실제 receipt/readback으로 확인한다.
 
 ## 2. 권한 계약
 
@@ -153,6 +154,7 @@ S1은 저장소 전체 pairwise 조합을 새로 전수 검사하지 않는다. 
 - ongoing `pnpm catalog:authority:verify`는 layout, integrity, schema identity, 연속 `sourceOrdinal`, canonical `sourceLine`, opaque path set을 검증한다. `pnpm catalog:authority:verify-cutover`와 `pnpm catalog:shadow`는 삭제된 9개 CSV 및 S0~S5 cutoff와의 일회성 이관 증명이다.
 - 일반 reader는 SQLite를 직접 읽는다. CSV compatibility가 필요한 frozen validator·staging 흐름은 OS 임시 projection만 사용하고 성공·실패 모두 제거한다.
 - legitimate writer는 현재 DB를 candidate로 복사하고 `BEGIN IMMEDIATE` 안에서 table을 교체한 뒤 전체 schema·Catalog 검증을 수행한다. commit·close 뒤 read-only exact readback과 sidecar 부재를 확인한 candidate만 canonical DB와 원자적으로 교체한다. 검증 실패 전에는 현재 DB가 바뀌지 않는다.
+- private 준비·검사·빌드는 공유 commit 락 밖에서 수행하고 교체 직전 현재 canonical·registry·STATE 기준을 다시 확인한다. 정식 DB·생성 artifact를 함께 반영하는 intent의 미완료 상태는 같은 intent로 복구하며 다른 shared writer는 완료까지 차단한다. 원래 frozen identity와 실제 관련 의존을 보존하는 rebase receipt 없이 새 기준으로 판정을 재결속하지 않는다.
 - 원시 model-candidate writer는 파일 I/O 전에 계속 실패한다. 전용 `authorizedEvidencePanelV1` publisher만 frozen evidence manifest·claim ledger·review reference·coverage·ownership 검사를 통과한 accepted resolution을 쓸 수 있다. candidate 입력의 provider·model·attempt·순서·수·confidence는 accepted fact나 판정 digest에 포함되지 않는다.
 - runtime은 SQLite를 열지 않는다. build가 생성한 정적 JSON과 순수 TypeScript 추천 커널만 배포한다.
 - 이관 자체의 rollback은 정확한 이전 Git commit revert다. authoring 중 실패 rollback은 미게시 candidate 삭제이며, publish 중 실패는 공용 atomic publish helper가 기존 source를 복구한다.

@@ -4,6 +4,7 @@ import hashlib
 import json
 import re
 import sys
+from workspace_paths import artifact_path
 
 ENTRY = "scripts/readback-catalog-authoring.mts"
 # Same static import/export closure used by catalog-shadow, with @/ aliases.
@@ -43,8 +44,11 @@ def execution_inputs(repo: Path) -> list[Path]:
                 raise ValueError(f"Unsupported readback module: {resolved}")
             pending.append(resolved)
     # Non-module inputs read by authority/schema verification and the toolchain.
-    required = ["scripts/catalog_readback_identity.py", "package.json", "pnpm-lock.yaml", "tsconfig.json",
-                "data/staging/catalog-expansion/gold-set-manifest.json"]
+    required = ["scripts/catalog_readback_identity.py", "scripts/workspace_paths.py", "package.json", "pnpm-lock.yaml", "tsconfig.json",
+                "data/staging/catalog-expansion/gold-set-manifest.json",
+                "docs/factors/factor-dictionary.md", "docs/factors/annotation-guide.md",
+                "docs/catalog-expansion/02-authorized-evidence-panel-v1.md",
+                "docs/planning/09-catalog-authoring-authority.md"]
     for name in required:
         path = repo / name
         if not path.is_file():
@@ -57,7 +61,7 @@ def execution_inputs(repo: Path) -> list[Path]:
     visited.update((repo / "data/source").rglob("*.md"))
     if "--compact" in (repo / ENTRY).read_text(encoding="utf-8"):
         visited.update(path for path in (repo / "scripts/catalog_authoring").rglob("*.py") if not path.name.startswith("test_"))
-        visited.update(repo / "scripts" / name for name in ("catalog_workspace.py", "catalog_revision_store.py", "catalog_retention.py", "workspace_paths.py", "catalog_authoring_runner.py", "catalog_authoring_batch_publish.py"))
+        visited.update(repo / "scripts" / name for name in ("catalog_workspace.py", "catalog_revision_store.py", "catalog_retention.py", "catalog_recovery.py", "workspace_paths.py", "catalog_authoring_runner.py", "catalog_authoring_batch_publish.py", "catalog_authoring_locks.py", "catalog_python.py"))
     return sorted(visited, key=lambda p: p.relative_to(repo).as_posix())
 
 
@@ -88,16 +92,16 @@ def readback_matches(path: Path, repo: Path, publication: Path, result: Path) ->
     if value.get("resultManifestSha256") != digest(result / "chunk-01/PANEL-RESULT.sha256"):
         return False
     for item in value.get("resultRoots", []):
-        root = Path(item["root"])
+        root = artifact_path(item["root"], repo)
         if not root.is_dir() or item["sha256"] != digest(root / "chunk-01/PANEL-RESULT.sha256"):
             return False
     batch = value.get("batchPublications")
     if batch is not None:
-        batch_path = Path(batch.get("path", ""))
+        batch_path = artifact_path(batch.get("path", ""), repo)
         if not batch_path.is_file() or batch.get("sha256") != digest(batch_path):
             return False
         for item in batch.get("works", []):
-            root = Path(item["publicationRoot"])
+            root = artifact_path(item["publicationRoot"], repo)
             manifest = root / "MANIFEST.sha256"
             if not manifest.is_file() or item.get("publicationManifestSha256") != digest(manifest):
                 return False

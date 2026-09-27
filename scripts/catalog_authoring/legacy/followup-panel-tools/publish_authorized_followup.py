@@ -1915,6 +1915,7 @@ def _prepare_review_artifacts(
     reviewed_at: str,
     review_reference: str,
     reuse_reviews: dict[str, str] | None = None,
+    verified_review_references: set[str] | None = None,
 ) -> dict[str, object]:
     """Copy referenced legacy reviews and create the current review artifact.
 
@@ -1929,12 +1930,13 @@ def _prepare_review_artifacts(
     refs = _review_references(baseline_snapshot)
     refs.add(review_reference)
     review_root = artifact_root / "data" / "source"
-    copied: dict[str, str] = {}
+    copied: dict[str, str] = dict(reuse_reviews or {})
     for reference in sorted(refs):
         destination = review_root / reference
         destination.parent.mkdir(parents=True, exist_ok=True)
         if reuse_reviews is not None and reference in reuse_reviews:
-            if not destination.is_file() or sha256(destination) != reuse_reviews[reference]:
+            if (verified_review_references is None or reference not in verified_review_references) and (
+                    not destination.is_file() or sha256(destination) != reuse_reviews[reference]):
                 raise PublishError(f"previously verified review changed: {reference}")
             copied[reference] = reuse_reviews[reference]
             continue
@@ -1988,6 +1990,8 @@ def _prepare_review_artifacts(
             raise PublishError(f"review artifact was not preserved: {reference}")
         if reference not in copied:
             copied[reference] = sha256(destination)
+    if verified_review_references is not None:
+        verified_review_references.update(refs)
     return {
         "reviewReferences": sorted(copied),
         "reviewArtifacts": {key: copied[key] for key in sorted(copied)},

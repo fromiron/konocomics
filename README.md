@@ -101,6 +101,21 @@ pnpm catalog:authority:verify
 pnpm catalog:validate
 ```
 
+### Catalog 작업 이어가기
+
+수집·판정 작업의 [저장·이관 계약](./docs/catalog-expansion/03-local-authoring-storage.md#다른-환경으로-코드와-작업-db-이전)을 따른다. Git은 실행 코드와 정식 Catalog를 전달하며, 진행 중인 원문·판정·checkpoint가 든 작업 DB는 별도로 전달한다. 공개 저장소에 작업 DB를 추가하지 않는다.
+
+Linux/WSL에서는 Node.js 24, pnpm 10, Python 3.12+와 gcc를 준비한 뒤 저장소 루트에서 실행한다. 시스템 Python이나 SQLite를 교체하지 않고 전용 SQLite 3.53.4 runtime을 설치한다.
+
+```bash
+git pull --ff-only
+pnpm install --frozen-lockfile
+python3 scripts/setup_catalog_runtime.py
+python3 scripts/catalog_python.py -c 'import sqlite3; print(sqlite3.sqlite_version)'
+```
+
+Windows에서는 위 Python 명령의 `python3`를 `python`으로 바꾼다. 다른 OS의 runtime 디렉터리를 복사해 실행하지 않는다. 작업 DB를 이전할 때는 인계 manifest의 commit·DB SHA·generation을 확인하고 기존 DB를 덮어쓰지 않는다. 복구는 작업자를 자동 재개하지 않으며 실제 대상·원본 경로 mapping·단계 백업 확인 뒤 기존 명령으로 이어간다.
+
 ## Stack
 
 TanStack Start · TanStack Router · React 19 · TypeScript · Tailwind CSS 4 · Base UI · Motion · Dexie · Zod · Fuse.js · Vitest · Playwright

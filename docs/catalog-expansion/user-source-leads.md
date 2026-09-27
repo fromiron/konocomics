@@ -1,6 +1,6 @@
 # 사전 수집 리드 규격
 
-현재 확정 사양 · 갱신일: 2026-09-26
+현재 확정 사양 · 갱신일: 2026-09-27
 
 이 문서는 `.workspace/user-sources/<workId>.json`의 작성 규격과 자료 채택 기준이다. 리드는 실제 원문을 찾는 안내이며 판정·동결·발행 권한이 아니다. 수집 실행과 원문 보존은 [수집 지침](factor-collector-instructions.md), 판정은 [AEP 계약](02-authorized-evidence-panel-v1.md)을 따른다. 규칙 변경은 이 문서에 반영하고 이전 규칙은 Git 이력에서 확인한다.
 
@@ -10,6 +10,7 @@
 - 현재 canonical/candidate·registry·배정에서 Work와 대표 ISBN을 확인한다. 과거 후보 DB 경로나 리드의 서지 값을 현재 정체성의 근거로 사용하지 않는다.
 - 기존 유효 raw·research·receipt를 먼저 재사용하고, 그 다음 이 리드의 URL을 확인한다. URL 확보나 `points` 작성만으로 실제 독해·수집 완료를 보고하지 않는다.
 - 리드 JSON·수집 캐시·사용자 제공 원문은 Git에 포함하지 않는다. 사용한 자료와 의미 있는 변경은 [저장 계약](03-local-authoring-storage.md)에 따라 보존한다. `.workspace/user-sources/`는 보호 대상이며 임시 폴더라는 이유로 삭제하지 않는다.
+- 새 freeze에 이 정식 리드 루트를 전달해도 현재 Work의 `<workId>.json`만 형식·Work를 검증해 결속한다. 다른 작품의 리드나 전체 폴더를 반복 복사하지 않는다. 별도 PDF·메모·raw는 [수집 지침](factor-collector-instructions.md)의 collector `start --input <정확한-파일>`로 Work collection에 명시적으로 결속한다. 이 파일 선택은 자료 채택·의미 판정 권한이 아니다.
 
 ## 2. 표준 JSON 스키마 및 작성 예시
 

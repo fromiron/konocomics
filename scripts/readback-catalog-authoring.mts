@@ -6,7 +6,9 @@ import { dirname, join, relative, resolve, toNamespacedPath } from "node:path";
 import { DatabaseSync } from "node:sqlite";
 import { parse } from "csv-parse/sync";
 import { z } from "zod";
+import { catalogPython } from "./catalog-python.ts";
 import { CATALOG_OPAQUE_PATHS, verifyCatalogAuthority } from "./catalog/authority.ts";
+import { resolveCanonicalPath } from "./catalog/canonical-publication.ts";
 import { validateGoldSet } from "./validate-catalog-expansion.ts";
 import { buildCatalog } from "./build-catalog.ts";
 import { buildRecommendationPlan } from "../src/domain/recommendation/rank.ts";
@@ -34,7 +36,7 @@ assert.equal(process.versions.node.split(".")[0], "24", "Catalog readback requir
 const repo = process.cwd();
 const executionIdentity = () => {
   const result = spawnSync(
-    "python",
+    catalogPython(repo),
     ["-B", "-X", "utf8", join(repo, "scripts/catalog_readback_identity.py"), repo],
     { encoding: "utf8", windowsHide: true },
   );
@@ -72,7 +74,7 @@ phase("initialIdentity");
 const compact = existsSync(join(publication, "COMPACT-PUBLICATION.json"))
   ? (() => {
       const verified = spawnSync(
-        "python",
+        catalogPython(repo),
         [
           "-B",
           "-X",
@@ -87,7 +89,10 @@ const compact = existsSync(join(publication, "COMPACT-PUBLICATION.json"))
       assert.equal(verified.status, 0, verified.stderr);
       const value = z
         .object({
-          schemaVersion: z.literal("catalog-compact-publication-v1"),
+          schemaVersion: z.enum([
+            "catalog-compact-publication-v1",
+            "catalog-compact-publication-v2",
+          ]),
           manifestSha256: z.string(),
           works: z.record(
             z.string(),
@@ -132,7 +137,7 @@ const batchPublications = batchPublicationPath
 if (batchPublications) {
   assert.equal(batchPublications.works.length, resultRoots.length);
   assert.deepEqual(
-    batchPublications.works.map((row) => resolve(row.resultRoot)),
+    batchPublications.works.map((row) => resolveCanonicalPath(row.resultRoot, repo)),
     resultRoots,
     "Batch result roots changed",
   );
@@ -187,7 +192,10 @@ try {
     } else if (batchPublication) {
       const published = new DatabaseSync(
         toNamespacedPath(
-          join(resolve(batchPublication.publicationRoot), "catalog-expanded.candidate.sqlite"),
+          join(
+            resolveCanonicalPath(batchPublication.publicationRoot, repo),
+            "catalog-expanded.candidate.sqlite",
+          ),
         ),
         { readOnly: true },
       );
@@ -358,7 +366,9 @@ const report = {
         sha256: sha(batchPublicationPath),
         works: batchPublications!.works.map((row) => ({
           ...row,
-          publicationManifestSha256: sha(join(resolve(row.publicationRoot), "MANIFEST.sha256")),
+          publicationManifestSha256: sha(
+            join(resolveCanonicalPath(row.publicationRoot, repo), "MANIFEST.sha256"),
+          ),
         })),
       }
     : undefined,

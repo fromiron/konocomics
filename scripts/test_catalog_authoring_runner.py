@@ -1,6 +1,7 @@
 """Isolated runner regressions: no model, live publication, or STATE writes."""
 import json
 import os
+import shutil
 import sqlite3
 import tempfile
 import subprocess
@@ -17,6 +18,75 @@ from catalog_readback_identity import execution_identity, readback_matches
 
 
 class RunnerTest(unittest.TestCase):
+    def test_nested_restore_origins_use_the_most_specific_binding_without_writes(self):
+        original = self.repo.with_name(self.repo.name + "-original")
+        first_restore = original / ".workspace/first-restore"
+        marker = self.repo / ".catalog-restore.json"
+        runner.write(marker, {"schemaVersion": "catalog-restored-workspace-v1",
+            "originalRepositories": [str(original), str(first_restore)]})
+        before = marker.read_bytes()
+        path = "data/local/catalog-authoring/artifacts/new-run/RUN.json"
+        self.assertEqual(runner.artifact_path(first_restore / path), self.repo / path)
+        self.assertEqual(runner.artifact_path(original / "data/source/catalog.sqlite"),
+                         self.repo / "data/source/catalog.sqlite")
+        self.assertEqual(runner.artifact_path(self.repo / path), self.repo / path)
+        self.assertEqual(marker.read_bytes(), before)
+        self.assertFalse((self.repo / path).exists())
+        self.assertFalse((self.repo / "data/source").exists())
+
+    def test_restored_binding_comparisons_preserve_saved_locations(self):
+        original_repo = self.repo.with_name(self.repo.name + "-original-location")
+        prior = self.repo / "prior"
+        prior.mkdir()
+        (prior / "MANIFEST.sha256").write_bytes(b"original manifest\n")
+        research = prior / "research.jsonl"
+        research.write_bytes(b"original research\n")
+        saved = [{"root": str(original_repo / "prior"), "manifestSha256": runner.panel.sha256(prior / "MANIFEST.sha256")}]
+        provenance = [{"root": str(original_repo / "prior"),
+                       "researchBindings": {str(original_repo / "prior/research.jsonl"): runner.panel.sha256(research)},
+                       "files": {"research.jsonl": runner.panel.sha256(research)}}]
+        encoded = json.dumps([saved, provenance], sort_keys=True)
+        runner.write(self.repo / ".catalog-restore.json", {
+            "schemaVersion": "catalog-restored-workspace-v1", "originalRepositories": [str(original_repo)]})
+        self.assertEqual(runner.prior_bundle_bindings([saved[0]["root"]]), runner.binding_locations(saved))
+        located = runner.binding_locations(provenance)[0]
+        self.assertEqual(located["root"], str(prior))
+        self.assertEqual(located["researchBindings"], {str(research): runner.panel.sha256(research)})
+        self.assertEqual(json.dumps([saved, provenance], sort_keys=True), encoded)
+
+    def test_state_commit_rejects_stale_source_and_partial_canonical_publish(self):
+        canonical = self.repo / "data/source/catalog.sqlite"
+        canonical.parent.mkdir(parents=True)
+        canonical.write_bytes(b"first canonical")
+        state_path = self.root / "STATE.json"
+        runner.write(state_path, {"current": "first"})
+        state_sha = runner.panel.sha256(state_path)
+        source_sha = runner.panel.sha256(canonical)
+        canonical.write_bytes(b"concurrent canonical")
+        with self.assertRaisesRegex(ValueError, "canonical advanced"):
+            runner.commit_state({"current": "second"}, expected_sha=state_sha, canonical_sha=source_sha)
+        self.assertEqual(runner.panel.sha256(state_path), state_sha)
+        pending = self.repo / "data/local/catalog-authoring/locks/publication.pending.json"
+        runner.write(pending, {"preparedPath": "interrupted-canonical"})
+        with self.assertRaises(ValueError):
+            runner.commit_state({"current": "second"}, expected_sha=state_sha)
+        self.assertEqual(runner.panel.sha256(state_path), state_sha)
+        pending.unlink()
+        runner.commit_state({"current": "second"}, expected_sha=state_sha,
+                            canonical_sha=runner.panel.sha256(canonical))
+        self.assertEqual(runner.panel.read_json(state_path), {"current": "second"})
+        with self.assertRaisesRegex(ValueError, "current advanced"):
+            runner.commit_state({"current": "stale"}, expected_sha=state_sha)
+
+    def test_private_publisher_owner_does_not_hold_shared_commit_lock(self):
+        lock_root = self.repo / "data/local/catalog-authoring/locks"
+        with runner.exclusive(lock_root / "publication-owner.lock", wait=False):
+            with runner.exclusive(lock_root / "publication.lock", wait=False):
+                pass
+            with self.assertRaises(OSError):
+                with runner.exclusive(lock_root / "publication-owner.lock", wait=False):
+                    self.fail("a second publisher acquired the same owner lock")
+
     def test_preserve_shares_reads_across_snapshots_but_not_stores_or_calls(self):
         first, second = self.repo / "first.txt", self.repo / "second.txt"
         first.write_bytes(b"same original bytes")
@@ -881,7 +951,9 @@ class RunnerTest(unittest.TestCase):
         files = {"scripts/readback-catalog-authoring.mts": 'import "./worker";',
                  "scripts/worker.ts": 'import "@/domain/value";',
                  "src/domain/value.ts": "export const value = 1;"}
-        for path in ("scripts/catalog_readback_identity.py", "package.json", "pnpm-lock.yaml", "tsconfig.json",
+        for path in ("scripts/catalog_readback_identity.py", "scripts/workspace_paths.py", "package.json", "pnpm-lock.yaml", "tsconfig.json",
+                     "docs/factors/factor-dictionary.md", "docs/factors/annotation-guide.md",
+                     "docs/catalog-expansion/02-authorized-evidence-panel-v1.md", "docs/planning/09-catalog-authoring-authority.md",
                      "data/staging/catalog-expansion/gold-set-manifest.json",
                      "scripts/sql/catalog-authority/001-init.sql", "scripts/sql/catalog-authority/002-book-metadata.sql"):
             files[path] = "fixture"
@@ -933,6 +1005,43 @@ class RunnerTest(unittest.TestCase):
         artifact = report.parent / "data/generated/recommendation-profile-catalog-v1.json"
         artifact.write_text("changed")
         self.assertFalse(readback_matches(report, self.repo, pub, result))
+
+    def test_restored_readback_keeps_original_absolute_bindings_without_original_reads(self):
+        report, pub, result, _ = self.readback_fixture()
+        mapping = self.run_root / "READBACK-PUBLICATIONS.json"
+        rows = [{"workId": "work-a", "publicationRoot": str(pub), "resultRoot": str(result)}]
+        runner.write(mapping, {"works": rows})
+        value = runner.panel.read_json(report)
+        value.update(resultRoots=[{"root": str(result), "sha256": value["resultManifestSha256"]}],
+            batchPublications={"path": str(mapping), "sha256": runner.panel.sha256(mapping),
+                "works": [{**rows[0], "publicationManifestSha256": value["publicationManifestSha256"]}]})
+        runner.write(report, value)
+        temporary = tempfile.TemporaryDirectory()
+        self.addCleanup(temporary.cleanup)
+        restored = Path(temporary.name) / "restored"
+        shutil.copytree(self.repo, restored)
+        runner.write(restored / ".catalog-restore.json", {
+            "schemaVersion": "catalog-restored-workspace-v1", "originalRepositories": [str(self.repo)]})
+        relocated = lambda path: restored / path.relative_to(self.repo)
+        original = report.read_bytes()
+        original_open = Path.open
+        def local_only(path, *args, **kwargs):
+            if path.resolve().is_relative_to(self.repo):
+                raise AssertionError("Readback accessed original repository: " + str(path))
+            return original_open(path, *args, **kwargs)
+        with patch.object(Path, "open", local_only):
+            self.assertTrue(readback_matches(relocated(report), restored, relocated(pub), relocated(result)))
+            self.assertEqual(relocated(report).read_bytes(), original)
+            (relocated(result) / "chunk-01/PANEL-RESULT.sha256").write_bytes(b"changed")
+            self.assertFalse(readback_matches(relocated(report), restored, relocated(pub), relocated(result)))
+
+    def test_policy_change_invalidates_readback_without_a_canonical_change(self):
+        report, pub, result, databases = self.readback_fixture()
+        before = databases["canonicalSha256"].read_bytes()
+        self.assertTrue(readback_matches(report, self.repo, pub, result))
+        (self.repo / "docs/factors/annotation-guide.md").write_text("changed accepted annotation rule")
+        self.assertFalse(readback_matches(report, self.repo, pub, result))
+        self.assertEqual(databases["canonicalSha256"].read_bytes(), before)
 
     def test_readback_checks_actual_catalog_registry_and_canonical_bytes(self):
         report, pub, result, databases = self.readback_fixture()

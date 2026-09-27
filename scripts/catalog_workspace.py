@@ -11,6 +11,7 @@ import errno
 import hashlib
 import json
 import os
+import re
 import shutil
 import sqlite3
 import stat
@@ -71,34 +72,10 @@ def replace_busy_backup(source: Path, target: Path) -> None:
 
 @contextmanager
 def exclusive_file(path: Path):
-    """Serialize physical backup rotation without blocking workspace writers."""
-    path.parent.mkdir(parents=True, exist_ok=True)
-    with path.open("a+b") as handle:
-        if handle.tell() == 0:
-            handle.write(b"0")
-            handle.flush()
-        handle.seek(0)
-        if os.name == "nt":
-            import msvcrt
-            while True:
-                try:
-                    msvcrt.locking(handle.fileno(), msvcrt.LK_NBLCK, 1)
-                    break
-                except OSError as error:
-                    if error.errno not in {errno.EACCES, errno.EDEADLK}:
-                        raise
-                    sleep(0.2)
-        else:
-            import fcntl
-            fcntl.flock(handle, fcntl.LOCK_EX)
-        try:
-            yield
-        finally:
-            handle.seek(0)
-            if os.name == "nt":
-                msvcrt.locking(handle.fileno(), msvcrt.LK_UNLCK, 1)
-            else:
-                fcntl.flock(handle, fcntl.LOCK_UN)
+    """Bounded backup rotation lock, independent of workspace SQLite writers."""
+    from catalog_authoring_locks import acquire
+    with acquire(path, wait=True, timeout=300):
+        yield
 
 
 def utc_now() -> str:
@@ -129,8 +106,17 @@ def unlinked(path: Path, checked: set[Path] | None = None) -> Path:
 
 def existing_parents(paths: list[Path]) -> list[Path]:
     """Keep parent directories once, so reports/source bodies accompany each input."""
-    roots = sorted({unlinked(path) for path in paths}, key=lambda p: (len(p.parts), str(p)))
-    return [root for index, root in enumerate(roots) if not any(root.is_relative_to(parent) for parent in roots[:index])]
+    checked: set[Path] = set()
+    roots = sorted({unlinked(path, checked) for path in paths}, key=lambda p: (len(p.parts), str(p)))
+    selected: set[Path] = set()
+    result = []
+    for root in roots:
+        # Path hashing preserves platform case rules and component boundaries.
+        # Compare ancestors, not every earlier sibling in a large frozen input.
+        if not any(parent in selected for parent in root.parents):
+            selected.add(root)
+            result.append(root)
+    return result
 
 
 def manifest_digest(entries) -> str:
@@ -146,7 +132,7 @@ class Workspace:
             path = Path(database or Path(repo) / "data/local/catalog-authoring/workspace.sqlite")
             if path.is_file():
                 with closing(sqlite3.connect(unlinked(path).as_uri() + "?mode=ro", uri=True)) as db:
-                    revision_format = db.execute("PRAGMA user_version").fetchone()[0] == 3
+                    revision_format = db.execute("PRAGMA user_version").fetchone()[0] in (3, 4)
                 if revision_format:
                     from catalog_revision_store import RevisionWorkspace
                     # Executing this file as __main__ creates a distinct class
@@ -523,9 +509,9 @@ class Workspace:
                     raise ValueError(f"Restored artifact readback failed: {path}")
                 if Path(path).name in {"COMPACT-PUBLICATION.json", "CHECKPOINT.json"}:
                     value = json.loads(body)
-                    if Path(path).name == "CHECKPOINT.json" and value.get("schemaVersion") != "catalog-compact-publication-v1":
+                    if Path(path).name == "CHECKPOINT.json" and value.get("schemaVersion") not in {"catalog-compact-publication-v1", "catalog-compact-publication-v2"}:
                         continue
-                    if value.get("schemaVersion") != "catalog-compact-publication-v1":
+                    if value.get("schemaVersion") not in {"catalog-compact-publication-v1", "catalog-compact-publication-v2"}:
                         raise ValueError("Unknown compact restore format")
                     compact_restored = True
                     references = [*value["dependencies"], *({"snapshot": ref["snapshot"], "members": {ref["path"]: ref["sha256"]}} for ref in value["sources"].values())]
@@ -755,6 +741,81 @@ class Workspace:
         return snapshot, len(new_headers)
 
 
+FROZEN_POLICIES = {
+    "factorDictionary": ("docs/factors/factor-dictionary.md", "factor-dictionary.md"),
+    "annotationGuide": ("docs/factors/annotation-guide.md", "annotation-guide.md"),
+    "authorizedEvidencePanel": ("docs/catalog-expansion/02-authorized-evidence-panel-v1.md", "02-authorized-evidence-panel-v1.md"),
+    "authoringAuthority": ("docs/planning/09-catalog-authoring-authority.md", "09-catalog-authoring-authority.md"),
+}
+
+
+def authoring_alias_source(repo: Path) -> Path:
+    """Use the publisher's in-repository lookup order and preserved alias location."""
+    relative = Path("overlay/data/staging/catalog-expansion/v4-final/alias-resolution.csv")
+    backend = repo / "scripts/catalog_authoring/legacy/followup-panel-tools"
+    roots = [repo, backend, *(parent for parent in backend.parents if parent.is_relative_to(repo))]
+    candidates = [root / relative for root in roots]
+    candidates.append(artifact_path(repo / ".workspace/catalog-followup/batch001-20260902/konocomics-v5-panel-batch-001-of-008" / relative, repo))
+    for candidate in candidates:
+        if candidate.is_file():
+            return unlinked(candidate)
+    raise FileNotFoundError("Approved authoring alias-resolution.csv is required before freezing")
+
+
+def authoring_data_inputs(repo: Path) -> list[Path]:
+    """Actual mutable data must survive even when executable code stays in Git."""
+    return [repo / "data/source/catalog.sqlite", repo / "data/staging/catalog-expansion/gold-set-manifest.json",
+            authoring_alias_source(repo), *(repo / path for path, _ in FROZEN_POLICIES.values()),
+            repo / "docs/catalog-expansion/factor-panel-request.md"]
+
+
+def pin_frozen_dependencies(workspace, before, after, outputs):
+    """Bind original inputs to successful frozen bytes without rewriting the panel."""
+    inputs = workspace.get_revision(before)["members"]
+    frozen = workspace.get_revision(after)["members"]
+    alias_key = workspace.key(authoring_alias_source(workspace.repo))
+    pins = []
+    with closing(workspace.connect()) as db:
+        for output in outputs:
+            root = output if output.name == "panel-input" else output / "panel-input"
+            metadata_key = workspace.key(root / "panel-input.json")
+            manifest_key = workspace.key(root / "PANEL-INPUT.sha256")
+            if metadata_key not in frozen or manifest_key not in frozen:
+                continue
+            metadata = json.loads(workspace.read_blob(db, frozen[metadata_key]))
+            members = {metadata_key: frozen[metadata_key], manifest_key: frozen[manifest_key]}
+            for field, name in (("canonicalSha256", "data/source/catalog.sqlite"),
+                                ("goldManifestSha256", "data/staging/catalog-expansion/gold-set-manifest.json")):
+                if inputs.get(name) != metadata.get(field):
+                    raise ValueError(f"Frozen {field} has no matching exact captured original")
+                members[name] = inputs[name]
+            if alias_key not in inputs:
+                raise ValueError("Frozen input has no captured alias authority")
+            members[alias_key] = inputs[alias_key]
+            for policy, (source, filename) in FROZEN_POLICIES.items():
+                key = workspace.key(root / "contracts" / filename)
+                expected = metadata.get("policyDigests", {}).get(policy)
+                if expected is None or inputs.get(source) != expected or frozen.get(key) != expected:
+                    raise ValueError(f"Frozen policy has no matching exact captured original: {policy}")
+                members[source] = expected
+                members[key] = expected
+            request_key = workspace.key(root / "PANEL-REQUEST.md")
+            source_request = "docs/catalog-expansion/factor-panel-request.md"
+            if frozen.get(request_key) != inputs.get(source_request) or source_request not in inputs:
+                raise ValueError("Frozen panel request differs from its captured original")
+            members[source_request] = inputs[source_request]
+            members[request_key] = frozen[request_key]
+            for sha in set(members.values()):
+                workspace.read_blob(db, sha)
+            pins.append((frozen[manifest_key], members))
+    if not pins:
+        raise ValueError("Successful freeze did not produce a retained panel input")
+    return [workspace.put_revision("active", "frozen-dependencies:" + manifest_sha,
+                {"schemaVersion": "catalog-frozen-dependencies-v1", "inputManifestSha256": manifest_sha,
+                 "inputRevision": before, "frozenRevision": after}, members, pinned=True)
+            for manifest_sha, members in pins]
+
+
 def recorded_run(command: list[str], inputs: list[Path], outputs: list[Path], label: str,
                  workspace: Workspace | None = None, *, input_discovery_seconds: float = 0,
                  receipt_out: dict | None = None, phase_boundary: bool = False) -> int:
@@ -801,9 +862,13 @@ def recorded_run(command: list[str], inputs: list[Path], outputs: list[Path], la
     receipt.update(status="EXITED", exitCode=exit_code, finishedAt=utc_now())
     receipt_path.write_text(json.dumps(receipt, ensure_ascii=True), encoding="utf-8")
     after_roots = [path for path in outputs if path.exists()]
-    after, output_error = None, None
+    after, output_error, frozen_dependencies = None, None, []
     try:
         after = workspace.save(after_roots, label + (":output" if exit_code == 0 else ":failed-output")) if after_roots else None
+        if (revision_store and exit_code == 0 and after is not None and "freeze" in command
+                and any(Path(arg).name == "prepare_factor_batch.py" for arg in command)):
+            frozen_dependencies = pin_frozen_dependencies(workspace, before, after, after_roots)
+            receipt["frozenDependencies"] = frozen_dependencies
     except Exception as error:
         # A rejected partial SQLite must not prevent durable logs and exit state.
         output_error = error
@@ -813,7 +878,9 @@ def recorded_run(command: list[str], inputs: list[Path], outputs: list[Path], la
                "command": command_finished - backed_up_input, "outputSave": saved_output - command_finished}
     receipt.update(outputSnapshot=after.get("snapshotId", after) if after else None, timingsSeconds=timings)
     receipt_path.write_text(json.dumps(receipt, ensure_ascii=True), encoding="utf-8")
-    operation = workspace.save([receipt_root], label + ":exit-" + str(exit_code), **({"kind": "execution", "terminal": exit_code == 0} if revision_store else {}))
+    operation = workspace.save([receipt_root], label + ":exit-" + str(exit_code), **({"kind": "execution", "terminal": exit_code == 0 and output_error is None} if revision_store else {}))
+    if revision_store:
+        workspace.own_execution_artifacts(operation, [before, after])
     saved_operation = perf_counter()
     backup = {"status": "PERSISTED", "generation": operation["generation"]} if revision_store and not phase_boundary else workspace.backup()
     backed_up_output = perf_counter()
@@ -830,116 +897,211 @@ def recorded_run(command: list[str], inputs: list[Path], outputs: list[Path], la
         raise output_error
     if receipt_out is not None:
         receipt_out.update(input=before, output=after, operation=operation, backup=backup,
-                           timingsSeconds=timings)
+                           timingsSeconds=timings, frozenDependencies=frozen_dependencies)
     return exit_code
 
 
-def authoring_inputs(paths: list[Path], workspace: Workspace | None = None) -> list[Path]:
-    """Capture known job/lineage dependencies without interpreting evidence or claims."""
+def authoring_inputs(paths: list[Path], workspace: Workspace | None = None, *, retained: list | None = None) -> list[Path]:
+    """Capture direct inputs and the prior-authority DAG without replaying provenance."""
     workspace = workspace or Workspace()
     revision_store = getattr(workspace, "is_revision_store", False)
-    pending, visited, expanded = [(path, True) for path in paths], set(), set()
-    while pending:
-        item, expand = pending.pop()
-        root = unlinked(artifact_path(item, workspace.repo))
-        # Executable versions live in Git. Actual frozen contracts stay in input
-        # artifacts; whole tool/doc trees are no longer execution snapshots.
-        if revision_store and (root.is_relative_to(workspace.repo / "scripts")
-                or root in {workspace.repo / "docs/catalog-expansion", workspace.repo / "docs/factors"}):
-            continue
-        if root in expanded or (root in visited and not expand):
-            continue
-        workspace.key(root)
-        visited.add(root)
-        if not expand:
-            continue
-        expanded.add(root)
-        tools_root = workspace.repo / "scripts/catalog_authoring"
-        if root.resolve() == workspace.repo / "scripts/catalog_workspace.py":
-            pending.append((workspace.repo / "scripts/workspace_paths.py", False))
-        if root.resolve() == tools_root / "collect_factor_evidence.mjs":
-            pending.append((tools_root / "validate_factor_collection_batch.mjs", False))
-        if root.resolve() == workspace.repo / "scripts/readback-catalog-authoring.mts":
-            from catalog_readback_identity import execution_inputs
-            pending.extend((path, False) for path in execution_inputs(workspace.repo))
-        if root.resolve() == workspace.repo / "scripts/catalog_authoring_runner.py":
-            pending.extend((path, True) for path in (tools_root / "prepare_factor_batch.py", workspace.repo / "scripts/readback-catalog-authoring.mts"))
-        if root.resolve() == tools_root or (root.resolve().parent == tools_root and root.name in {
-            "prepare_factor_batch.py", "publish_factor_batch.py", "correct_factor_registry.py",
-            "validate_factor_panel.py", "plan_factor_backlog.py", "prepare_factor_rescue_004.py",
-        }):
-            # Factor operators use these helpers. A collector does not read them
-            # and must remain usable when publication inputs are unavailable.
-            backend = tools_root / "legacy"
-            runtime_inputs = [
-                *(tools_root / name for name in (
-                    "prepare_factor_batch.py", "publish_factor_batch.py", "validate_factor_panel.py", "correct_factor_registry.py",
-                    "factor_recovery.py", "factor_single_pass.py", "factor_model_input.py", "prepare_factor_rescue_004.py", "prepare_ready_safety.py", "authoring_paths.py",
-                )),
-                backend / "followup-panel-tools/publish_authorized_followup.py",
-                backend / "followup-panel-tools/validate_panel_results.py",
-                backend / "integration-publisher-v1/integrate.py",
-                backend / "safety-recheck-v1/tools/validate_safety_recheck.py",
-                workspace.repo / "docs/catalog-expansion/factor-panel-request.md",
-                workspace.repo / "data/staging/catalog-expansion/gold-set-manifest.json",
-                workspace.repo / "data/source/catalog.sqlite",
-            ]
-            pending.extend((path, False) for path in runtime_inputs)
-        for path in workspace.files([root]):
-            if path.suffix != ".json" or (path != root and not path.name.startswith("records") and path.name not in {"authoring-job.json", "external-prior-authority.json", "external-lineage.json", "recovery-epoch.json", "recovery-declaration.json"}):
+    capture, prior, full = 0, 1, 2
+    explicit = {unlinked(artifact_path(path, workspace.repo)) for path in paths}
+    pending = [(path, full, None) for path in sorted(explicit, key=lambda value: len(value.parts), reverse=True)]
+    visited, explored, walked, parsed, expected_manifests = set(), {}, {}, set(), {}
+    tools_root = workspace.repo / "scripts/catalog_authoring"
+    operator_names = {"prepare_factor_batch.py", "publish_factor_batch.py", "correct_factor_registry.py",
+                      "validate_factor_panel.py", "prepare_factor_rescue_004.py", "prepare_ready_safety.py"}
+    if revision_store and retained is not None:
+        from catalog_revision_store import RetainedInputContext
+        retained_context = RetainedInputContext(workspace, retained)
+    else:
+        retained_context = nullcontext(None)
+
+    def append(path, mode=full, binding=None):
+        pending.append((path, mode, binding))
+
+    def compact_reference(value):
+        if not isinstance(value, dict) or not isinstance(value.get("root"), str):
+            return
+        manifest = key_path(value.get("manifest", "MANIFEST.sha256"))
+        append(artifact_path(value["root"], workspace.repo), prior, (manifest, value["sha256"]))
+
+    with retained_context as saved_inputs:
+        while pending:
+            item, mode, binding = pending.pop()
+            root = unlinked(artifact_path(item, workspace.repo))
+            if binding is not None:
+                name, expected = binding
+                manifest = root / name if name is not None else root
+                if not isinstance(expected, str) or not re.fullmatch("[0-9a-f]{64}", expected):
+                    raise ValueError("Invalid prior dependency manifest binding")
+                previous = expected_manifests.get(manifest)
+                if previous is not None and previous != expected:
+                    raise ValueError("Conflicting prior dependency manifest bindings")
+                if previous is None and digest(manifest.read_bytes()) != expected:
+                    raise ValueError("Prior dependency manifest differs from its frozen binding")
+                expected_manifests[manifest] = expected
+            # Code remains in Git; its actual data inputs remain durable.
+            if revision_store and (root.is_relative_to(workspace.repo / "scripts")
+                    or root in {workspace.repo / "docs/catalog-expansion", workspace.repo / "docs/factors"}):
+                if (root == workspace.repo / "scripts/catalog_authoring_runner.py" or root == tools_root
+                        or root.parent == tools_root and root.name in operator_names):
+                    pending.extend((path, capture, None) for path in authoring_data_inputs(workspace.repo))
                 continue
-            try:
-                value = json.loads(path.read_bytes())
-            except (ValueError, UnicodeError):
-                continue  # Preserve invalid raw input; the original validator reports its error.
-            if not isinstance(value, dict):
+            # A publication supplied directly is already historical authority.
+            # Its embedded original inputs do not make provenance another input.
+            if (revision_store and mode == full and (root / "MANIFEST.sha256").is_file()
+                    and ((root / "authorized-evidence-panel-v1").is_dir() or (root / "panel-result").is_dir()
+                         or (root / "COMPACT-PUBLICATION.json").is_file() or (root / "CURATION-BASELINE.json").is_file())):
+                mode = prior
+            if explored.get(root, -1) >= mode:
                 continue
-            references = []
-            if value.get("schemaVersion") in {"factor-loss-recovery-v1", "factor-loss-recovery-epoch-v1"}:
-                for field in ("epochPath", "scopePath", "policyPath"):
-                    if isinstance(value.get(field), str):
-                        references.append(artifact_path(value[field], workspace.repo))
-                if value.get("epochId") == "factor-003-recovery-20260909-v1":
-                    # load_epoch verifies these exact historical versions too;
-                    # they are not replaceable by the current canonical/pair.
-                    history = workspace.repo / "data/local/catalog-authoring/artifacts/catalog-expansion-continuation-20260902/runs"
-                    pending.extend((source, False) for source in (
-                        history / "continuation-factor-233-publication-20260909-v1",
-                        history / "canonical-promotion-20260910-v2/before/data/source/catalog.sqlite"))
-            if value.get("schemaVersion") in {"factor-authoring-job-v3", "factor-authoring-job-v4"}:
-                for work in value.get("works", []) if isinstance(value.get("works"), list) else []:
-                    refs = work.get("researchRefs", [work.get("researchRef", {})]) if isinstance(work, dict) else []
-                    for reference in refs if isinstance(refs, list) else []:
-                        if isinstance(reference, dict) and isinstance(reference.get("path"), str):
-                            references.append(path.parent / reference["path"])
-                            handoff = artifact_path(path.parent / reference["path"], workspace.repo).with_name("COLLECTION-HANDOFF.json")
-                            if "handoffSha256" in reference or handoff.is_file():
-                                references.append(handoff)
-                            if "collectionReceiptSha256" in reference:
-                                references.append(handoff.with_name("collection-events.jsonl"))
-            if path.name == "external-prior-authority.json":
-                for bundle in value.get("bundles", []) if isinstance(value.get("bundles"), list) else []:
-                    if isinstance(bundle, dict) and isinstance(bundle.get("root"), str):
-                        references.append(artifact_path(bundle["root"], workspace.repo))
-            if value.get("schemaVersion") == "catalog-compact-work-v1":
-                for field in ("input", "authority"):
-                    references.append(artifact_path(value[field]["root"], workspace.repo))
-            if path.name == "external-lineage.json":
-                for field in ("baselineRoot", "registryPath"):
-                    if isinstance(value.get(field), str):
-                        references.append(artifact_path(value[field], workspace.repo))
-                # The fully frozen v2 packet does not depend on later draft changes.
-                bindings = value.get("sourceInputBindings", {})
-                if isinstance(bindings, dict):
-                    references.extend(artifact_path(item, workspace.repo) for item in bindings if isinstance(item, str) and artifact_path(item, workspace.repo).is_file())
-            for reference in references:
-                workspace.key(reference)
-                # Lineage points to provenance, not an instruction to re-ingest
-                # every ancestor. Capture its direct bundle in full; historical
-                # versions remain in the workspace. Explicit prior authority and
-                # job/recovery dependencies still expand normally.
-                pending.append((reference.parent if reference.suffix == ".sqlite" else reference,
-                                path.name != "external-lineage.json"))
+            explored[root] = mode
+            workspace.key(root)
+            retained_files = saved_inputs.resolve(root) if saved_inputs is not None and root not in explicit else None
+            if retained_files is None:
+                visited.add(root)
+            if mode == capture:
+                continue
+            if mode == full:
+                if root == workspace.repo / "scripts/catalog_workspace.py":
+                    append(workspace.repo / "scripts/workspace_paths.py", capture)
+                if root == tools_root / "collect_factor_evidence.mjs":
+                    append(tools_root / "validate_factor_collection_batch.mjs", capture)
+                if root == workspace.repo / "scripts/readback-catalog-authoring.mts":
+                    from catalog_readback_identity import execution_inputs
+                    pending.extend((path, capture, None) for path in execution_inputs(workspace.repo))
+                if root == workspace.repo / "scripts/catalog_authoring_runner.py":
+                    append(tools_root / "prepare_factor_batch.py")
+                    append(workspace.repo / "scripts/readback-catalog-authoring.mts")
+                if root == tools_root or root.parent == tools_root and root.name in operator_names | {"plan_factor_backlog.py"}:
+                    backend = tools_root / "legacy"
+                    runtime_inputs = [*(tools_root / name for name in (
+                        "prepare_factor_batch.py", "publish_factor_batch.py", "validate_factor_panel.py", "correct_factor_registry.py",
+                        "factor_recovery.py", "factor_single_pass.py", "factor_model_input.py", "prepare_factor_rescue_004.py", "prepare_ready_safety.py", "authoring_paths.py")),
+                        backend / "followup-panel-tools/publish_authorized_followup.py", backend / "followup-panel-tools/validate_panel_results.py",
+                        backend / "integration-publisher-v1/integrate.py", backend / "safety-recheck-v1/tools/validate_safety_recheck.py",
+                        workspace.repo / "docs/catalog-expansion/factor-panel-request.md", workspace.repo / "data/staging/catalog-expansion/gold-set-manifest.json",
+                        workspace.repo / "data/source/catalog.sqlite"]
+                    pending.extend((path, capture, None) for path in runtime_inputs)
+            if retained_files is not None:
+                candidates = retained_files
+            else:
+                ancestor = next((parent for parent in walked if root == parent or root.is_relative_to(parent)), None)
+                if ancestor is not None:
+                    files = [path for path in walked[ancestor] if path == root or path.is_relative_to(root)]
+                else:
+                    files = workspace.files([root])
+                    walked[root] = files
+                candidates = [(path, None) for path in files]
+            for path, stored_sha in candidates:
+                authority_sidecars = {"prior-authority.json", "external-prior-authority.json", "COMPACT-PUBLICATION.json",
+                                      "recovery-epoch.json", "recovery-declaration.json"}
+                normal_sidecars = authority_sidecars | {"authoring-job.json", "external-lineage.json"}
+                if path.suffix != ".json":
+                    continue
+                if mode == prior and path != root and path.name not in authority_sidecars:
+                    continue
+                if mode == full and path != root and not path.name.startswith("records") and path.name not in normal_sidecars:
+                    continue
+                parse_key = path, stored_sha, mode
+                if parse_key in parsed:
+                    continue
+                parsed.add(parse_key)
+                try:
+                    value = json.loads(saved_inputs.read(stored_sha) if stored_sha is not None else path.read_bytes())
+                except (ValueError, UnicodeError):
+                    continue  # Preserve invalid raw input for its original validator.
+                if not isinstance(value, dict):
+                    continue
+                if path.name in {"prior-authority.json", "external-prior-authority.json"}:
+                    for bundle in value.get("bundles", []) if isinstance(value.get("bundles"), list) else []:
+                        if isinstance(bundle, dict) and isinstance(bundle.get("root"), str):
+                            reference = (path.parent / key_path(bundle["root"]) if path.name == "prior-authority.json"
+                                         else artifact_path(bundle["root"], workspace.repo))
+                            append(reference, prior if revision_store else full,
+                                   ("MANIFEST.sha256", bundle["manifestSha256"]) if bundle.get("manifestSha256") else None)
+                if value.get("schemaVersion") in {"catalog-compact-work-v1", "catalog-compact-work-v2"}:
+                    for field in ("input", "authority"):
+                        compact_reference(value[field])
+                if value.get("schemaVersion") in {"catalog-compact-publication-v1", "catalog-compact-publication-v2"}:
+                    compact_reference(value.get("baseline"))
+                    for work in value.get("works", []):
+                        append(path.parent / key_path(work["receipt"]), prior, (None, work["sha256"]))
+                    if saved_inputs is not None:
+                        declarations = [*value.get("dependencies", []), *({"snapshot": ref["snapshot"], "members": {ref["path"]: ref["sha256"]}}
+                                        for ref in value.get("sources", {}).values())]
+                        saved_inputs.retain_exact(declarations)
+                if value.get("schemaVersion") in {"factor-loss-recovery-v1", "factor-loss-recovery-epoch-v1"}:
+                    # Recovery is authority, including when nested in a prior
+                    # publication. Its incident inputs are not optional history.
+                    for field in ("epochPath", "scopePath", "policyPath"):
+                        if isinstance(value.get(field), str):
+                            expected = value.get(field.removesuffix("Path") + "Sha256")
+                            append(artifact_path(value[field], workspace.repo), prior,
+                                   (None, expected) if expected is not None else None)
+                    if value.get("schemaVersion") == "factor-loss-recovery-v1" and "supersededAuthorityRoots" in value:
+                        # The recovery reader uses this frozen SQL basis for its
+                        # target snapshot. Capture its bound member, not the
+                        # publication's unrelated provenance or research history.
+                        lineage_path = path.parent.parent.parent / "external-lineage.json"
+                        lineage = json.loads(lineage_path.read_bytes())
+                        baseline = artifact_path(lineage["baselineRoot"], workspace.repo).resolve()
+                        superseded = value["supersededAuthorityRoots"]
+                        if (not isinstance(superseded, list) or len(superseded) != 1
+                                or artifact_path(superseded[0], workspace.repo).resolve() != baseline):
+                            raise ValueError("Recovery frozen basis differs from its declaration")
+                        manifest = baseline / "MANIFEST.sha256"
+                        manifest_sha = lineage["baselineManifestSha256"]
+                        body = manifest.read_bytes()
+                        if digest(body) != manifest_sha:
+                            raise ValueError("Recovery frozen basis manifest changed")
+                        members = [line.partition("  ") for line in body.decode("ascii").splitlines()]
+                        catalog_shas = [sha for sha, separator, name in members
+                                        if separator and name == "catalog-expanded.candidate.sqlite"]
+                        if len(catalog_shas) != 1:
+                            raise ValueError("Recovery frozen basis has no unique Catalog member")
+                        append(lineage_path, capture)
+                        append(manifest, capture, (None, manifest_sha))
+                        append(baseline / "catalog-expanded.candidate.sqlite", capture, (None, catalog_shas[0]))
+                    if value.get("epochId") == "factor-003-recovery-20260909-v1":
+                        history = workspace.repo / "data/local/catalog-authoring/artifacts/catalog-expansion-continuation-20260902/runs"
+                        append(history / "continuation-factor-233-publication-20260909-v1", capture)
+                        append(history / "canonical-promotion-20260910-v2/before/data/source/catalog.sqlite", capture)
+                if mode != full:
+                    continue
+                references = []
+                if value.get("schemaVersion") in {"factor-authoring-job-v3", "factor-authoring-job-v4"}:
+                    for work in value.get("works", []) if isinstance(value.get("works"), list) else []:
+                        refs = work.get("researchRefs", [work.get("researchRef", {})]) if isinstance(work, dict) else []
+                        for reference in refs if isinstance(refs, list) else []:
+                            if isinstance(reference, dict) and isinstance(reference.get("path"), str):
+                                references.append(artifact_path(path.parent / reference["path"], workspace.repo))
+                                handoff = artifact_path(path.parent / reference["path"], workspace.repo).with_name("COLLECTION-HANDOFF.json")
+                                if "handoffSha256" in reference or handoff.is_file():
+                                    references.append(handoff)
+                                if "collectionReceiptSha256" in reference:
+                                    references.append(handoff.with_name("collection-events.jsonl"))
+                if path.name == "external-lineage.json":
+                    baseline = value.get("baselineRoot")
+                    if isinstance(baseline, str):
+                        append(artifact_path(baseline, workspace.repo), prior if revision_store else capture,
+                               ("MANIFEST.sha256", value["baselineManifestSha256"]) if value.get("baselineManifestSha256") else None)
+                    if isinstance(value.get("registryPath"), str):
+                        append(artifact_path(value["registryPath"], workspace.repo).parent, capture)
+                    bindings = value.get("sourceInputBindings", {})
+                    if isinstance(bindings, dict):
+                        for item in bindings:
+                            if isinstance(item, str) and artifact_path(item, workspace.repo).is_file():
+                                append(artifact_path(item, workspace.repo), capture)
+                    continue
+                for reference in references:
+                    workspace.key(reference)
+                    append(reference.parent if reference.suffix == ".sqlite" else reference)
+        for manifest, expected in expected_manifests.items():
+            if digest(manifest.read_bytes()) != expected:
+                raise ValueError("Prior dependency manifest changed during discovery")
     return existing_parents(list(visited))
 
 
@@ -949,6 +1111,11 @@ def record_arguments(script: Path, args: argparse.Namespace, argv: list[str] | N
         return None
     workspace = Workspace()
     inputs, outputs = [script.resolve()], []
+    prepared_freeze = script.name == "prepare_factor_batch.py" and getattr(args, "action", None) == "freeze" and getattr(args, "job", None) is not None
+    if prepared_freeze:
+        from prepare_factor_batch import capture_bindings
+        provenance = capture_bindings(args.job, getattr(args, "provenance_root", None))
+        inputs.extend(Path(binding["root"]) / name for binding in provenance for name in binding["files"])
 
     def paths(value):
         if isinstance(value, Path):
@@ -958,6 +1125,8 @@ def record_arguments(script: Path, args: argparse.Namespace, argv: list[str] | N
                 yield from paths(item)
 
     for field, value in vars(args).items():
+        if prepared_freeze and field == "provenance_root":
+            continue  # The existing freeze schema owns exact same-Work files.
         for path in paths(value):
             if field in {"output_root", "publication_root", "output_dir", "result_output_root"}:
                 outputs.append(path)
@@ -965,7 +1134,7 @@ def record_arguments(script: Path, args: argparse.Namespace, argv: list[str] | N
                     inputs.append(path)
             else:
                 inputs.append(path.parent if path.suffix == ".sqlite" else path)
-                if field in {"job", "ledger", "decisions", "changes", "research"} and path.is_file():
+                if field in {"job", "ledger", "decisions", "changes", "research"} and path.is_file() and not (prepared_freeze and field == "job"):
                     inputs.append(path.parent)
     for name in ("docs/factors", "docs/catalog-expansion", "docs/planning/09-catalog-authoring-authority.md", "scripts/catalog_workspace.py", "scripts/workspace_paths.py"):
         inputs.append(workspace.repo / name)
@@ -989,10 +1158,12 @@ def main() -> int:
     sub.add_parser("list", help="List saved snapshots")
     backup = sub.add_parser("backup", help="Make a consistent backup in data/local/catalog-authoring/backups or an explicit external destination")
     backup.add_argument("--destination", type=Path)
-    restore = sub.add_parser("restore", help="Restore an exact snapshot under a NEW directory, never overwrite")
-    restore.add_argument("--snapshot", required=True, help="Legacy integer snapshot or generation-bound revision UUID")
+    restore = sub.add_parser("restore", help="Restore under a NEW directory, or use --into-checkout for a current database and --snapshot for history")
+    restore.add_argument("--snapshot", help="Explicit historical replay: legacy integer snapshot or generation-bound revision UUID")
     restore.add_argument("--destination", type=Path, required=True)
     restore.add_argument("--prefix")
+    restore.add_argument("--into-checkout", action="store_true",
+                         help="Restore only the current database into an existing Git checkout with no authoring data (runtime allowed)")
     checkout = sub.add_parser("checkout", help="Recover one ABSENT working-copy path from an exact snapshot")
     checkout.add_argument("--snapshot", required=True)
     checkout.add_argument("--prefix", required=True)
@@ -1003,6 +1174,8 @@ def main() -> int:
     run.add_argument("--phase-boundary", action="store_true", help="Back up the completed operation as an explicit phase boundary")
     run.add_argument("argv", nargs=argparse.REMAINDER)
     args = parser.parse_args()
+    if args.command == "restore" and args.into_checkout and (args.snapshot is not None or args.prefix is not None):
+        parser.error("--into-checkout cannot be combined with --snapshot or --prefix")
     workspace = Workspace(database=args.database)
     revision_store = getattr(workspace, "is_revision_store", False)
     if args.command == "save":
@@ -1019,7 +1192,13 @@ def main() -> int:
     elif args.command == "backup":
         result = workspace.backup(args.destination)
     elif args.command == "restore":
-        result = workspace.restore(args.snapshot if revision_store else int(args.snapshot), args.destination, args.prefix)
+        if args.snapshot is None:
+            if not revision_store or args.prefix is not None:
+                parser.error("current restore requires a revision store and does not accept --prefix; use --snapshot for historical recovery")
+            from catalog_retention import restore_current
+            result = restore_current(workspace, args.destination, into_checkout=args.into_checkout)
+        else:
+            result = workspace.restore(args.snapshot if revision_store else int(args.snapshot), args.destination, args.prefix)
     elif args.command == "checkout":
         result = workspace.checkout(args.snapshot if revision_store else int(args.snapshot), args.prefix)
     else:

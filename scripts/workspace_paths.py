@@ -1,21 +1,49 @@
 """Locate preserved artifact references without filesystem links or rewriting bytes."""
-from pathlib import Path
+from pathlib import Path, PurePath, PurePosixPath, PureWindowsPath
 from functools import lru_cache
 import json
+import os
+import re
+
+
+def path_identity(value: str | PurePath) -> PurePath:
+    """Parse a saved path without applying the current operating system's rules."""
+    raw = str(value)
+    components = raw.replace("\\", "/").split("/")
+    if "\0" in raw or ".." in components or raw.startswith(("\\\\?\\", "\\\\.\\", "//?/", "//./")):
+        raise ValueError("Invalid authoring artifact identity")
+    if re.match(r"^[A-Za-z]:", raw) or raw.startswith(("\\\\", "//")):
+        path = PureWindowsPath(raw)
+        if not path.is_absolute() or any(":" in part for part in path.parts[1:]):
+            raise ValueError("Invalid absolute authoring artifact identity")
+        return path
+    if raw.startswith("\\") or any(":" in part for part in components):
+        raise ValueError("Invalid authoring artifact identity")
+    return PurePosixPath(raw.replace("\\", "/"))
+
+
+def absolute_identity(value: str | PurePath) -> PurePath:
+    path = path_identity(value)
+    if not path.is_absolute():
+        raise ValueError("Invalid authoring restore origin")
+    return path
 
 
 @lru_cache(maxsize=16)
-def restored_origins(repo: Path) -> tuple[Path, ...]:
+def restored_origins(repo: Path) -> tuple[PurePath, ...]:
     marker = repo / ".catalog-restore.json"
     if not marker.is_file():
         return ()
     value = json.loads(marker.read_text(encoding="utf-8"))
     if value.get("schemaVersion") != "catalog-restored-workspace-v1":
         raise ValueError("Unknown authoring restore mapping")
-    roots = tuple(Path(item) for item in value["originalRepositories"])
-    if any(not root.is_absolute() for root in roots):
+    if not isinstance(value.get("originalRepositories"), list) or any(
+            not isinstance(item, str) for item in value["originalRepositories"]):
         raise ValueError("Invalid authoring restore origin")
-    return roots
+    roots = tuple(absolute_identity(item) for item in value["originalRepositories"])
+    # A restored repository may itself live inside an older repository. Resolve
+    # its own saved paths against the most specific declared origin first.
+    return tuple(sorted(roots, key=lambda root: len(root.parts), reverse=True))
 
 REPO = Path(__file__).resolve().parents[1]
 # Known moved roots also resolve when the entire working copy needs recovery.
@@ -49,12 +77,28 @@ MOVED_WORKSPACE_ROOTS = {
 
 
 def artifact_path(value: str | Path, repo: Path = REPO) -> Path:
-    path = Path(value)
-    if not path.is_relative_to(repo):
-        for original in restored_origins(repo):
-            if original != repo and path.is_relative_to(original):
-                path = repo / path.relative_to(original)
-                break
+    # STATE roots are repository-relative and can contain bounded parent steps.
+    # Resolve these already-local joins lexically; saved foreign identities must
+    # still pass the strict parser before any origin mapping.
+    if isinstance(value, Path) and value.is_absolute() and value.is_relative_to(repo) and ".." in value.parts:
+        value = Path(os.path.abspath(value))
+        if not value.is_relative_to(repo):
+            raise ValueError("Artifact path escapes its repository")
+    identity = path_identity(value)
+    current = absolute_identity(repo)
+    origins = restored_origins(repo)
+    if identity.is_relative_to(current):
+        path = repo.joinpath(*identity.relative_to(current).parts)
+    elif identity.is_absolute():
+        original = next((root for root in origins if identity.is_relative_to(root)), None)
+        if original is not None:
+            path = repo.joinpath(*identity.relative_to(original).parts)
+        elif origins or type(identity) is not type(current):
+            raise ValueError("Artifact identity is outside its registered restore origins")
+        else:
+            path = Path(value)
+    else:
+        path = Path(*identity.parts)
     if path.is_relative_to(repo):
         relative = path.relative_to(repo)
         if relative.parts and relative.parts[0] not in {

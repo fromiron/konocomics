@@ -37,8 +37,9 @@ def plan(dispatch_path: Path, summary_path: Path | None = None) -> dict:
     dispatch_sha = prepare.panel.sha256(dispatch_path)
     dispatch = notifications.read(dispatch_path)
     phase = dispatch.get("phase")
-    require(phase in {"collection-only", "adjudication-only", "freeze-adjudicate-check"}, "unsupported dispatch phase")
-    adjudication = phase != "collection-only"
+    require(phase in notifications.COLLECTION_PHASES | notifications.ADJUDICATION_PHASES, "unsupported dispatch phase")
+    policy = notifications.transition_policy(dispatch)
+    adjudication = phase not in notifications.COLLECTION_PHASES
     for key in ("ownerThreadId", "parentThreadId"):
         require(str(uuid.UUID(dispatch[key])) == dispatch[key], f"invalid {key}")
     rows = dispatch.get("works")
@@ -69,11 +70,9 @@ def plan(dispatch_path: Path, summary_path: Path | None = None) -> dict:
             notifications.validate_batch(assignment, summary)
             summary_rows = {row["workId"]: row for row in summary["works"]}
         else:
-            require(summary.get("batchId") == dispatch["batchId"] and summary.get("dispatchSha256") == dispatch_sha
-                    and summary.get("ownerThreadId") == dispatch["ownerThreadId"] and summary.get("parentThreadId") == dispatch["parentThreadId"]
-                    and summary.get("processedCount") == len(ids) and summary.get("validation", {}).get("status") == "PASS"
-                    and [row.get("workId") for row in summary.get("works", [])] == ids,
-                    "collection summary binding mismatch")
+            notifications.validate_collection_batch({"dispatchPath": str(dispatch_path), "dispatchSha256": dispatch_sha,
+                                                       "sessionId": dispatch["ownerThreadId"], "parentThreadId": dispatch["parentThreadId"],
+                                                       "runRoot": str(dispatch_path.parent)}, summary)
 
     state_path = ROOT / "STATE.json"
     state_sha = prepare.panel.sha256(state_path)
@@ -155,7 +154,7 @@ def plan(dispatch_path: Path, summary_path: Path | None = None) -> dict:
     if assignment_binding is not None:
         require(prepare.panel.sha256(Path(assignment_binding["path"])) == assignment_binding["sha256"], "stale registered assignment")
     return {"schemaVersion": "catalog-dispatch-plan-v1", "batchId": dispatch["batchId"],
-            "phase": phase, "ownerThreadId": dispatch["ownerThreadId"], "parentThreadId": dispatch["parentThreadId"], "baselineRoot": str(baseline),
+            "phase": phase, "transitionPolicy": policy, "ownerThreadId": dispatch["ownerThreadId"], "parentThreadId": dispatch["parentThreadId"], "baselineRoot": str(baseline),
             "bindings": bindings, "summaryValidated": summary_path is not None,
             "workCount": len(results), "works": results,
             "verificationLimit": "Read-only identity/bibliography preflight; research, prior authority, safety, adjudication, and publication are not assessed."}

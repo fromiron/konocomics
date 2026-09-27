@@ -3,16 +3,19 @@ import { createHash, randomUUID } from "node:crypto";
 import { lookup } from "node:dns";
 import {
   appendFileSync,
+  constants,
+  copyFileSync,
   existsSync,
   lstatSync,
   mkdirSync,
   readFileSync,
+  readdirSync,
   writeFileSync,
 } from "node:fs";
 import http from "node:http";
 import https from "node:https";
 import { BlockList, isIP } from "node:net";
-import { dirname, isAbsolute, join, relative, resolve, sep } from "node:path";
+import { basename, dirname, isAbsolute, join, relative, resolve, sep } from "node:path";
 import { setTimeout as delay } from "node:timers/promises";
 import { fileURLToPath, pathToFileURL } from "node:url";
 import { z } from "zod";
@@ -28,8 +31,18 @@ const root = resolve(
 const iso = () => new Date().toISOString();
 const sha256 = (bytes) => createHash("sha256").update(bytes).digest("hex");
 const json = (value) => JSON.stringify(value) + "\n";
+const supplementalSchema = z.strictObject({
+  path: z.string().regex(/^supplemental\/input-\d+-[^/\\]+$/u),
+  originalPath: z.string().refine(isAbsolute),
+  sha256: z.string().regex(/^[a-f0-9]{64}$/u),
+  bytes: z.number().int().nonnegative(),
+});
 const sessionSchema = z
-  .object({ workId: z.string().trim().min(1), startedAt: z.iso.datetime() })
+  .object({
+    workId: z.string().trim().min(1),
+    startedAt: z.iso.datetime(),
+    supplementalFiles: z.array(supplementalSchema).optional(),
+  })
   .strict();
 const captureSchema = z
   .object({
@@ -70,9 +83,35 @@ function session(directory) {
     !existsSync(privatePath(directory, "research.jsonl")),
     "Completed research is immutable; use a new assignment directory",
   );
-  return sessionSchema.parse(
+  const value = sessionSchema.parse(
     JSON.parse(readFileSync(privatePath(directory, "collection-session.json"), "utf8")),
   );
+  const seen = new Set(),
+    originals = new Set();
+  for (const item of value.supplementalFiles ?? []) {
+    const path = privatePath(directory, item.path);
+    const resolvedOriginal = resolve(item.originalPath);
+    const original =
+      process.platform === "win32" ? resolvedOriginal.toLowerCase() : resolvedOriginal;
+    assert(!seen.has(item.path) && !originals.has(original), "Duplicate supplemental binding");
+    seen.add(item.path);
+    originals.add(original);
+    assert(existsSync(path) && lstatSync(path).isFile(), "Missing supplemental input");
+    const bytes = readFileSync(path);
+    assert(
+      bytes.length === item.bytes && sha256(bytes) === item.sha256,
+      "Supplemental input changed",
+    );
+  }
+  const supplemental = privatePath(directory, "supplemental");
+  const actual = existsSync(supplemental)
+    ? readdirSync(supplemental).map((name) => `supplemental/${name}`)
+    : [];
+  assert(
+    actual.length === seen.size && actual.every((name) => seen.has(name)),
+    "Supplemental membership changed",
+  );
+  return value;
 }
 
 function event(directory, value) {
@@ -88,12 +127,46 @@ export function recordProgress(directory, phase, note = "") {
   return event(directory, { kind: "collection-progress", phase, note });
 }
 
-export function startCollection(directory, workId) {
-  const value = sessionSchema.parse({ workId, startedAt: iso() });
+export function startCollection(directory, workId, inputs = []) {
+  z.array(z.string().min(1)).parse(inputs);
+  const seen = new Set();
+  const supplementalFiles = inputs.map((input, index) => {
+    const originalPath = resolve(input);
+    const identity = process.platform === "win32" ? originalPath.toLowerCase() : originalPath;
+    assert(!seen.has(identity), "Duplicate supplemental input; list each exact file once");
+    seen.add(identity);
+    for (let current = originalPath; current !== dirname(current); current = dirname(current)) {
+      if (existsSync(current))
+        assert(!lstatSync(current).isSymbolicLink(), `Linked input: ${current}`);
+    }
+    assert(lstatSync(originalPath).isFile(), "Supplemental input must be an exact regular file");
+    const bytes = readFileSync(originalPath);
+    // Prefixing avoids the reader's reserved routine/capture filenames. A
+    // literal publisher-receipt filename is still ordinary supplied material.
+    const name = basename(originalPath);
+    const suffix = name.endsWith(".publisher-receipt.json") ? ".source" : "";
+    return {
+      path: `supplemental/input-${String(index + 1).padStart(4, "0")}-${name}${suffix}`,
+      originalPath,
+      sha256: sha256(bytes),
+      bytes: bytes.length,
+    };
+  });
+  const value = sessionSchema.parse({
+    workId,
+    startedAt: iso(),
+    ...(supplementalFiles.length ? { supplementalFiles } : {}),
+  });
   const path = privatePath(directory, "collection-session.json");
   mkdirSync(dirname(path), { recursive: true });
   assert(!existsSync(privatePath(directory, "research.jsonl")), "Completed research is immutable");
   writeFileSync(path, json(value), { flag: "wx" });
+  for (const item of supplementalFiles) {
+    const destination = privatePath(directory, item.path);
+    mkdirSync(dirname(destination), { recursive: true });
+    copyFileSync(item.originalPath, destination, constants.COPYFILE_EXCL);
+  }
+  session(directory); // A partial copy remains visibly incomplete, never ready.
   return value;
 }
 
@@ -556,11 +629,19 @@ async function main() {
   const [command, directory, ...args] = process.argv.slice(2);
   assert(
     directory,
-    "Usage: collect_factor_evidence.mjs start <assigned-dir> <workId> | fetch <assigned-dir> <URL...> | progress <assigned-dir> <phase> [note] | write <assigned-dir> <draft.mjs>",
+    "Usage: collect_factor_evidence.mjs start <assigned-dir> <workId> [--input <exact-file> ...] | fetch <assigned-dir> <URL...> | progress <assigned-dir> <phase> [note] | write <assigned-dir> <draft.mjs>",
   );
   if (command === "start") {
-    assert.equal(args.length, 1);
-    return startCollection(directory, args[0]);
+    assert(
+      args.length >= 1 && args.length % 2 === 1,
+      "start requires a Work and repeated --input <exact-file> pairs",
+    );
+    const inputs = [];
+    for (let index = 1; index < args.length; index += 2) {
+      assert.equal(args[index], "--input");
+      inputs.push(args[index + 1]);
+    }
+    return startCollection(directory, args[0], inputs);
   }
   if (command === "fetch") return fetchSelectedSources(directory, args);
   if (command === "progress") {

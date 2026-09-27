@@ -31,12 +31,22 @@
 ## 동결 후 최신 후보가 전진한 경우
 
 1. correction 출력의 `catalog-source-registry.candidate.sqlite`를 동결에 전달한다. 같은 폴더의 `source-registry.csv`를 registry DB 대신 쓰지 않는다. 동결 전에 기준이 달라졌으면 최신 pair 기준 정정을 준비한다.
-2. 발행 잠금 안에서 최신 catalog/registry를 같은 검증 publication pair로 읽는다. 검증된 서지 정정을 최신 registry에 재적용하고 원본·동결 정정본·최신본의 의미를 비교한다. 무관한 Work 변경은 보존하고 같은 행·필드 충돌은 해당 발행을 차단한다.
+2. publisher 독점 아래 최신 catalog/registry를 같은 검증 publication pair로 읽고 private 준비를 수행한다. 검증된 서지 정정을 최신 registry에 재적용하고 원본·동결 정정본·최신본의 의미를 비교한다. 공유 commit 락에서는 직전 STATE/canonical/registry 기준을 재확인하고 변경한다. 무관한 Work 변경은 보존하고 같은 행·필드 충돌은 해당 발행을 차단한다.
 3. 최신 registry 전체를 과거 정정본으로 교체하거나 정정을 조용히 버리지 않는다. registry-only 가짜 publication·수동 STATE 수정·후보 롤백으로 검사를 우회하지 않는다.
 4. 기존 판정·frozen·sealed·실패를 보존한다. 무관한 후보 전진만으로 모델 판정을 다시 하지 않으며, 원본 manifest가 다른 입력에 예전 판정을 붙이지 않는다.
 5. 기존 발행 경로에서 대상 정정·비대상 변경·catalog/registry 결속·제품 readback·경계 백업을 확인한 뒤 STATE를 전진시킨다. 단순 문서화는 복구 완료가 아니다.
 
+canonical 전체 SHA의 변경만으로 유효 판정을 폐기하지 않는다. 기존 발행 경로의 `canonical-rebase-v1` 검사가 원래 바이트 결속과 현재 대상·Gold·alias·대표판·prior·schema/정책 의존을 확인하고 무관한 전진을 새 receipt에 보존한다. 실제 관련 충돌만 보류한다. 원래 frozen SHA·manifest를 수정하거나 관계없는 후보 DB를 canonical 대신 읽지 않는다.
+
 하나의 호환 correction request로 표현할 수 있는 공통 수정은 검증 pair (C0,R0)에서 R0에 결속한 R*로 준비하고 영향받는 모든 Work의 원래 입력을 보존한다. 독립 job은 같은 (C0,R*)로 동결할 수 있지만 발행은 직렬이다. 후속 correction은 실제 publication/readback 후 다음 검증 pair에서 시작한다.
+
+## 단계·반영 중단의 복구
+
+- collection 등록을 adjudication으로 잘못 해석한 구 등록은 `reconcile-registration --expected-sha`로 원본 등록을 보존하고 새 revision을 만든다. 실제 summary·근거·백업이 부족하면 먼저 누락 원인을 해결하며 `checkedPath`·백업 문자열을 합성하지 않는다. 새 등록은 명시 실행 턴에서 arm하고 사용자 중단 상태는 유지한다.
+- 시스템 오류는 `ERROR`와 실제 실패 artifact·재개 조건으로 남긴다. 출처를 소진한 `INSUFFICIENT`로 바꾸지 않는다. 개별 작품 오류를 보존하고 나머지를 처리하되 공통 저장·무결성 오류는 자동 판정 전환을 막는다.
+- compact의 실제 `BACKED_UP` checkpoint부터 재개한다. 판정·봉인·이미 commit한 작품을 다시 만들지 않으며 부분 checkpoint의 불변 intent와 실제 pair를 대조한다. 일반 검증의 독립 plan checker와 명시 audit의 SQL replay를 구분한다.
+- `--apply-canonical` 중단은 같은 summary·batch root·옵션으로 재개한다. candidate 완료가 있으면 그 결과를 재사용하고 정식 DB·생성 artifact·백업의 남은 경계만 복구한다. `publication.pending.json`이 있으면 같은 준비 intent의 `--commit-prepared` 복구 전 다른 shared writer를 실행하지 않는다. 후보 완료를 canonical 완료로 보고하지 않는다.
+- 작업 저장소는 v4 변경 순번·backup cursor로 증분 복구한다. 백업 실패는 직전 latest transaction을 보존하며 source의 PERSISTED 결과를 다시 수집/판정하지 않는다. schema 전환은 `catalog_retention.py upgrade-v4 --enable-wal [--resume]`의 유지보수 경계로만 수행한다. 기존 writer를 임의 종료하거나 운영 중 DB 파일을 수동 교체하지 않는다.
 
 ## 재검토와 독립 작업
 

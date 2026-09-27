@@ -11,8 +11,10 @@ from time import perf_counter
 
 from authoring_paths import REPO, artifact_path
 
-FORMAT = "catalog-compact-publication-v1"
-WORK_FORMAT = "catalog-compact-work-v1"
+LEGACY_FORMAT = "catalog-compact-publication-v1"
+LEGACY_WORK_FORMAT = "catalog-compact-work-v1"
+FORMAT = "catalog-compact-publication-v2"
+WORK_FORMAT = "catalog-compact-work-v2"
 CATALOG = "catalog-expanded.candidate.sqlite"
 REGISTRY = "catalog-source-registry.candidate.sqlite"
 
@@ -58,6 +60,31 @@ def resolve_reference(value):
     return root
 
 
+def verify_source_references(entries):
+    """Recheck the saved original source bytes once at the batch boundary.
+
+    Recursive semantic validation may reuse immutable prior authority within
+    the batch. This direct check deliberately avoids that cache before sealing
+    the completed publication, and does not repeat the prior authority graph.
+    """
+    import publish_factor_batch as publisher
+    from catalog_workspace import unlinked
+    seen = set()
+    for entry in entries:
+        for field in ("input", "authority"):
+            value = entry[field]
+            key = (value["root"], value["manifest"], value["sha256"])
+            if key in seen:
+                continue
+            seen.add(key)
+            root = unlinked(artifact_path(value["root"]))
+            manifest = root / value["manifest"]
+            if manifest.is_symlink() or publisher.sha256(manifest) != value["sha256"]:
+                raise ValueError("Compact original source manifest changed during publication")
+            members = {path.relative_to(root).as_posix() for path in root.rglob("*") if path.is_file() and path != manifest}
+            publisher.verify_manifest(root, manifest, members)
+
+
 def target_view(snapshot, work_id):
     result = {}
     for table, (columns, rows) in snapshot.items():
@@ -82,7 +109,16 @@ def logical_delta(before, after):
     return changes
 
 
-def prepare_work(entry, connection, registry_before, canonical_sha, reviewed_at, before):
+def verify_reviews(root, reviews):
+    import publish_factor_batch as publisher
+    for reference, sha in reviews.items():
+        path = publisher._safe_child(root / "data/source", reference)
+        if not path.is_file() or path.is_symlink() or publisher.sha256(path) != sha:
+            raise ValueError(f"Compact referenced review changed: {reference}")
+
+
+def prepare_work(entry, connection, registry_before, canonical_sha, reviewed_at, before, *, canonical_bytes=None,
+                 immutable_source_hashes=None, policy_documents=None):
     """Validate immutable authority once, then plan against this serial pair state."""
     import correct_factor_registry as correction
     import factor_single_pass as single
@@ -103,7 +139,19 @@ def prepare_work(entry, connection, registry_before, canonical_sha, reviewed_at,
     conflicts, _ = publisher._load_conflict_adjudication(input_root, result_root, frozen_baseline)
     if (set(fresh) & {key[0] for key in conflicts}) or (recovery and (corrections or conflicts)):
         raise ValueError("Incompatible compact correction/recovery scope")
-    registry_slice = publisher._verify_input_identities(input_root, frozen_baseline, frozen_registry, publisher._repo_root(), canonical_sha=canonical_sha)
+    from canonical_rebase import validate_rebase
+    rebase = validate_rebase(input_root, canonical_sha, canonical_bytes=canonical_bytes,
+                             policy_documents=policy_documents)
+    original_canonical_sha = publisher._read_json(input_root / "panel-input.json")["canonicalSha256"]
+    if immutable_source_hashes is None:
+        baseline_sha = None
+    else:
+        key = frozen_baseline.resolve()
+        if key not in immutable_source_hashes:
+            immutable_source_hashes[key] = publisher.sha256(key)
+        baseline_sha = immutable_source_hashes[key]
+    registry_slice = publisher._verify_input_identities(input_root, frozen_baseline, frozen_registry, publisher._repo_root(),
+                                                       canonical_sha=original_canonical_sha, baseline_sha=baseline_sha)
     safety = publisher._publication_safety(sealed / "safety-recheck-v1", input_root, result_root, recovery)
     backend = publisher._backend_module(safety, prior["evidence"], conflicts, prior, corrections, fresh, recovery)
     single.install_backend(backend, input_root, result_root)
@@ -123,7 +171,7 @@ def prepare_work(entry, connection, registry_before, canonical_sha, reviewed_at,
                                              baseline_snapshot=before)
     return {"backend": backend, "verified": verified, "plan": plan, "gold": gold,
             "registryAfter": registry_after, "registryChanges": pending, "reviewReference": review_reference,
-            "inputRoot": input_root, "resultRoot": result_root, "safety": safety}
+            "inputRoot": input_root, "resultRoot": result_root, "safety": safety, "canonicalRebase": rebase}
 
 
 def _pair_version(connection):
@@ -173,7 +221,7 @@ def apply_work(entry, connection, canonical_sha, reviewed_at, *, _previous=None,
     correction.preservation(registry_before, registry_after, prepared["registryAfter"], prepared["registryChanges"])
     timings["preservation"] = perf_counter() - started
     started = perf_counter()
-    receipt = {"schemaVersion": WORK_FORMAT, "workId": entry["workId"], "input": entry["input"],
+    receipt = {"schemaVersion": LEGACY_WORK_FORMAT, "workId": entry["workId"], "input": entry["input"],
                "authority": entry["authority"], "reviewedAt": reviewed_at,
                "beforeSemanticSha256": before_sha or object_sha(before), "afterSemanticSha256": object_sha(after),
                "plan": plan, "delta": logical_delta(before, after),
@@ -184,6 +232,96 @@ def apply_work(entry, connection, canonical_sha, reviewed_at, *, _previous=None,
         _metrics.update(timingsSeconds=timings, sourceSnapshots=1 + int(not reused),
                         semanticHashes=1 + int(not reused), reusedBefore=reused, plannerSourceQueries=0)
     return prepared, receipt, before
+
+
+class BatchView:
+    """Batch-owned indexed state, derived from one actual read of each database."""
+
+    def __init__(self, connection, *, gold=()):
+        from compact_plan import CatalogState
+        from correct_factor_registry import RegistryState, snapshot
+        import publish_factor_batch as publisher
+        self.catalog = CatalogState(publisher._backend_module()._snapshot_db(connection), gold_ids=gold)
+        self.registry = RegistryState(snapshot(connection, namespace="registry", integrity=False))
+        self.connection = connection
+        self.version = _pair_version(connection)
+        self.immutable_source_hashes = {}
+
+    def require_current(self, connection):
+        if self.connection is not connection or self.version != _pair_version(connection):
+            raise ValueError("Compact pair changed outside the batch owner")
+
+    def committed(self, connection):
+        version = _pair_version(connection)
+        connection.commit()
+        self.version = version
+
+    def verify_final(self, connection):
+        import correct_factor_registry as correction
+        import publish_factor_batch as publisher
+        if self.catalog.snapshot() != publisher._backend_module()._snapshot_db(connection):
+            raise ValueError("Compact final Catalog differs from independent sealed plans")
+        if self.registry.snapshot() != correction.snapshot(connection, namespace="registry", integrity=False):
+            raise ValueError("Compact final registry differs from independent sealed corrections")
+        self.verify_sources()
+
+    def verify_sources(self):
+        import publish_factor_batch as publisher
+        for path, sha in self.immutable_source_hashes.items():
+            if publisher.sha256(path) != sha:
+                raise ValueError("Compact immutable source changed during publication")
+
+
+def _read_target(connection, template, work_id):
+    """Read the direct user-visible Work rows without rescanning unrelated works."""
+    result = {}
+    for table, (columns, _) in template.items():
+        owner = "id" if table == "source_works" else "workId"
+        if owner in columns:
+            rows = connection.execute(f'SELECT * FROM "{table}" WHERE "{owner}"=? ORDER BY sourceOrdinal', (work_id,)).fetchall()
+            result[table] = (tuple(columns), tuple(tuple(row) for row in rows))
+    return result
+
+
+def prepare_work_v2(entry, connection, canonical_sha, reviewed_at, view, *, canonical_bytes=None,
+                    policy_documents=None):
+    """Seal the authority-derived plan before any database mutation."""
+    view.require_current(connection)
+    before = view.catalog.scope({entry["workId"]})
+    prepared = prepare_work(entry, connection, view.registry.scope(entry["workId"]), canonical_sha, reviewed_at,
+                            before, canonical_bytes=canonical_bytes, immutable_source_hashes=view.immutable_source_hashes,
+                            policy_documents=policy_documents)
+    prepared["backend"].defer_full_projection_validation = True
+    seal = {"schemaVersion": "catalog-compact-plan-v2", **entry, "reviewedAt": reviewed_at,
+            "beforeTargetSha256": object_sha(target_view(before, entry["workId"])),
+            "plan": prepared["plan"], "registryChanges": prepared["registryChanges"],
+            "canonicalRebase": prepared.get("canonicalRebase")}
+    return prepared, seal, before
+
+
+def apply_work_v2(entry, connection, prepared, seal, view):
+    """Predict independently, then compare actual touched rows and final full state."""
+    import publish_factor_batch as publisher
+    if not connection.in_transaction:
+        raise ValueError("Compact application requires an owned pair transaction")
+    view.require_current(connection)
+    if seal["plan"] != prepared["plan"] or seal["registryChanges"] != prepared["registryChanges"]:
+        raise ValueError("Compact plan changed after sealing")
+    view.catalog.apply(seal["plan"])
+    view.registry.apply(seal["registryChanges"])
+    publisher.apply_registry_correction(connection, seal["registryChanges"], "registry")
+    prepared["backend"].apply_plan_in_transaction(connection, seal["plan"])
+    expected = view.catalog.scope({entry["workId"]})
+    actual = _read_target(connection, expected, entry["workId"])
+    expected_target = {name: value for name, value in expected.items()
+                       if ("id" if name == "source_works" else "workId") in value[0]}
+    if actual != expected_target:
+        raise ValueError("Compact Work write differs from independent sealed plan")
+    view.registry.verify_touched(connection, seal["registryChanges"])
+    return {"schemaVersion": WORK_FORMAT, **entry, "reviewedAt": seal["reviewedAt"],
+            "planSha256": object_sha(seal), "plan": seal["plan"],
+            "registryChanges": seal["registryChanges"], "canonicalRebase": seal["canonicalRebase"],
+            "beforeTargetSha256": seal["beforeTargetSha256"], "expectedAfter": target_view(expected, entry["workId"])}
 
 
 def read_stored_file(reference, *, backup=False):
@@ -235,6 +373,24 @@ def stored_reference(path, sha=None, *, backup=False):
     return {"path": key, "sha256": sha, "snapshot": dict(zip(("snapshotId", "files", "manifestSha256"), row))}
 
 
+def publication_policies(sources):
+    """Use publication-time policies on audit, with ordinary source retention."""
+    from canonical_rebase import POLICIES
+    names = {"policy-" + name for name in POLICIES}
+    present = {name for name in sources if name.startswith("policy-")}
+    if not present:
+        return None  # Older publications retain their original policy lookup.
+    if present != names:
+        raise ValueError("Compact publication policy sources are incomplete")
+    result = {}
+    for name, relative in POLICIES.items():
+        reference = sources["policy-" + name]
+        if reference["path"] != relative:
+            raise ValueError("Compact publication policy source path changed")
+        result[name] = read_stored_file(reference)
+    return result
+
+
 def restore_missing(path, sha):
     import publish_factor_batch as publisher
     if path.exists():
@@ -255,13 +411,15 @@ def dependency_storage(paths):
     from catalog_workspace import Workspace, authoring_inputs
     workspace = Workspace(REPO)
     started = perf_counter()
-    roots = authoring_inputs(paths, workspace)
-    metrics = {"closureSeconds": perf_counter() - started, "roots": len(roots)}
+    retained = []
+    roots = authoring_inputs(paths, workspace, retained=retained)
+    metrics = {"closureSeconds": perf_counter() - started, "roots": len(roots),
+               "retainedReferences": len(retained), "retainedFiles": sum(len(ref["members"]) for ref in retained)}
     started = perf_counter()
     references = runner.preserve(roots, "compact-publication:inputs", reuse=True, metrics=metrics)["references"]
     metrics["preserveSeconds"] = perf_counter() - started
     print(json.dumps({"compactDependencyStorage": metrics}), flush=True)
-    return references
+    return [*references, *retained]
 
 
 def copy_checkpoint_pair(stage, root):
@@ -275,7 +433,38 @@ def copy_checkpoint_pair(stage, root):
             raise ValueError("Compact checkpoint pair changed")
 
 
-def publish(batch, entries, initial, summary_sha, *, checkpoint_every=10):
+def transient_subject(workspace, batch):
+    return "compact-publication:" + workspace.key(batch.resolve())
+
+
+def durable_batch_paths(batch):
+    """Exclude only an explicitly registered execution's disposable copies."""
+    import catalog_authoring_runner as runner
+    workspace = runner.Workspace(runner.REPO)
+    if not getattr(workspace, "is_revision_store", False):
+        return [batch]
+    execution = workspace.current_revision("execution", transient_subject(workspace, batch))
+    if execution is None:
+        return [batch]
+    roots = workspace._transient_roots(workspace.get_revision(execution)["payload"])
+    return [path for path in workspace.files([batch]) if not workspace._within_transient(workspace.key(path), roots)]
+
+
+def complete_transient_lifetime(batch):
+    """Called only after the requested candidate/canonical effects and backups."""
+    import catalog_authoring_runner as runner
+    workspace = runner.Workspace(runner.REPO)
+    if not getattr(workspace, "is_revision_store", False):
+        return None
+    execution = workspace.current_revision("execution", transient_subject(workspace, batch))
+    if execution is None:
+        return None  # Older publications have no disposable scope grant.
+    workspace.close_transient_execution(execution)
+    workspace.backup()
+    return workspace.retire_transient_files(execution)
+
+
+def _publish(batch, entries, initial, summary_sha, *, checkpoint_every=10):
     """Apply saved READY decisions serially, retaining one full pair per checkpoint."""
     import catalog_authoring_batch_publish as batch_publisher
     import catalog_authoring_runner as runner
@@ -299,6 +488,18 @@ def publish(batch, entries, initial, summary_sha, *, checkpoint_every=10):
             raise ValueError("Compact completed publication identity changed")
         value = publisher._read_json(output / "COMPACT-PUBLICATION.json")
         return output, [row["workId"] for row in value["works"]], value["failures"]
+    from catalog_workspace import Workspace
+    workspace = Workspace(REPO)
+    execution = None
+    if getattr(workspace, "is_revision_store", False):
+        payload = {"schemaVersion": "authoring-transient-execution-v1", "identitySha256": object_sha(identity),
+                   "disposableRoots": [workspace.key(stage), workspace.key(checkpoints)]}
+        subject = transient_subject(workspace, batch)
+        execution = workspace.current_revision("execution", subject)
+        if execution is None:
+            execution = workspace.put_revision("execution", subject, {**payload, "startedAt": runner.utc_now()})
+        elif {key: value for key, value in workspace.get_revision(execution)["payload"].items() if key != "startedAt"} != payload:
+            raise ValueError("Compact transient execution identity changed")
     stage.mkdir(parents=True, exist_ok=True)
     write_once(stage / "IDENTITY.json", identity)
     storage_file = stage / "DEPENDENCIES.json"
@@ -319,9 +520,24 @@ def publish(batch, entries, initial, summary_sha, *, checkpoint_every=10):
         write_once(storage_file, dependencies)
     sources = {"catalog": stored_reference(initial / CATALOG), "registry": stored_reference(initial / REGISTRY),
                "canonical": stored_reference(canonical)}
+    from canonical_rebase import POLICIES
+    sources.update({"policy-" + name: stored_reference(REPO / relative, identity["code"]["files"][relative])
+                    for name, relative in POLICIES.items()})
+    policy_documents = publication_policies(sources)
+    # Rebase verification needs the original exact bytes after later canonical
+    # publications and retention. Pin immutable file references separately from
+    # the deterministic semantic receipt (whose meaning cannot depend on which
+    # matching revision happened to be selected).
+    for row in selected:
+        info = publisher._read_json(artifact_path(row["input"]["root"]) / "panel-input.json")
+        original_sha = info["canonicalSha256"]
+        if original_sha != identity["canonicalSha256"]:
+            key = "canonical-original-" + original_sha
+            if key not in sources:
+                sources[key] = stored_reference(REPO / "data/source/catalog.sqlite", original_sha)
     pair_catalog, pair_registry = stage / CATALOG, stage / REGISTRY
     records, failures, reviews, completed = [], [], {}, 0
-    for name in ("works", "intents", "data", "failures"):
+    for name in ("works", "plans", "intents", "data", "failures"):
         (stage / name).mkdir(exist_ok=True)
     # Only a fully backed checkpoint advances the resume prefix. Later private
     # commits are replayed from their immutable intents, never applied twice.
@@ -336,6 +552,7 @@ def publish(batch, entries, initial, summary_sha, *, checkpoint_every=10):
                 restore_missing(path.parent / name, sha)
             for row in records:
                 restore_missing(stage / row["receipt"], row["sha256"])
+                restore_missing(stage / row["plan"], row["planSha256"])
             for name, sha in reviews.items():
                 restore_missing(stage / "data/source" / name, sha)
             checkpoint_pair = path.parent
@@ -364,7 +581,9 @@ def publish(batch, entries, initial, summary_sha, *, checkpoint_every=10):
             connection.execute("begin immediate")
             publisher.preserve_book_metadata(connection, canonical, backend)
             connection.commit()
-        previous = None  # A restored pair always starts with a fresh actual view.
+        view = BatchView(connection, gold=gold)
+        baseline_reviews = view.catalog.snapshot()
+        verified_reviews = set()  # Only references read in this process may be reused.
         for index, entry in enumerate(selected):
             if index < completed:
                 continue
@@ -374,16 +593,14 @@ def publish(batch, entries, initial, summary_sha, *, checkpoint_every=10):
             if {key: intent[key] for key in entry} != entry:
                 raise ValueError("Compact Work intent changed")
             write_once(intent_path, intent)
-            before_sha = publisher.sha256(pair_catalog)
             connection.execute("begin immediate")
             work_metrics = {}
+            started = perf_counter()
             try:
-                prepared, receipt, before = apply_work(entry, connection, identity["canonicalSha256"], intent["reviewedAt"],
-                    _previous=previous, _metrics=work_metrics)
-                previous = _commit_view(connection, prepared, receipt)
+                prepared, seal, before = prepare_work_v2(entry, connection, identity["canonicalSha256"], intent["reviewedAt"], view,
+                                                       policy_documents=policy_documents)
             except BaseException as error:
                 connection.rollback()
-                previous = None
                 if isinstance(error, ValueError) and batch_publisher.preflight_scope(str(error), wid) == "WORK":
                     failure = {"workId": wid, "error": str(error), "scope": "WORK"}
                     failures.append(failure)
@@ -391,17 +608,33 @@ def publish(batch, entries, initial, summary_sha, *, checkpoint_every=10):
                 else:
                     raise
             else:
+                work_metrics["authorityAndPlanSeconds"] = perf_counter() - started
+                plan_path = stage / "plans" / (wid + ".json")
+                write_once(plan_path, seal)
+                started = perf_counter()
+                # Failures after a plan is sealed are product/IO failures, never
+                # a per-Work HOLD. Discard this private attempt and replay its
+                # immutable prefix after recovery instead of continuing a stale view.
+                receipt = apply_work_v2(entry, connection, prepared, seal, view)
+                view.committed(connection)
+                work_metrics.update(applyAndReadbackSeconds=perf_counter() - started,
+                                    fullCatalogReads=0, fullRegistryReads=0, fullCatalogHashes=0)
                 work_backend = prepared["backend"]
                 verified = prepared["verified"]
                 review_info = work_backend._prepare_review_artifacts(stage,
                     input_root=prepared["inputRoot"], result_root=prepared["resultRoot"], baseline_db=initial / CATALOG,
-                    baseline_snapshot=before, prepared={"panelResult": verified["panelResult"], "targetCount": 1,
+                    baseline_snapshot=baseline_reviews if baseline_reviews is not None else before,
+                    prepared={"panelResult": verified["panelResult"], "targetCount": 1,
                     "inputManifestSha256": verified["inputManifestSha256"]}, plan=prepared["plan"],
-                    baseline_sha=before_sha, reviewed_at=intent["reviewedAt"], review_reference=prepared["reviewReference"], reuse_reviews=reviews)
+                    baseline_sha=sources["catalog"]["sha256"], reviewed_at=intent["reviewedAt"],
+                    review_reference=prepared["reviewReference"], reuse_reviews=reviews,
+                    verified_review_references=verified_reviews)
+                baseline_reviews = None
                 reviews = review_info["reviewArtifacts"]
                 path = stage / "works" / (wid + ".json")
                 write_once(path, receipt)
-                records.append({"workId": wid, "receipt": path.relative_to(stage).as_posix(), "sha256": publisher.sha256(path)})
+                records.append({"workId": wid, "receipt": path.relative_to(stage).as_posix(), "sha256": publisher.sha256(path),
+                                "plan": plan_path.relative_to(stage).as_posix(), "planSha256": publisher.sha256(plan_path)})
             if (index + 1) % checkpoint_every == 0 and index + 1 < len(selected):
                 root = checkpoints / f"{index + 1:04d}"
                 copy_checkpoint_pair(stage, root)
@@ -410,13 +643,29 @@ def publish(batch, entries, initial, summary_sha, *, checkpoint_every=10):
                     "dependencies": dependencies, "sources": sources,
                     "works": records, "failures": failures, "reviews": reviews}
                 write_once(root / "CHECKPOINT.json", checkpoint)
-                runner.preserve([root, stage / "works", stage / "intents", stage / "data", stage / "failures", storage_file, stage / "IDENTITY.json"],
-                                "compact-publication:checkpoint", reuse=True)
+                checkpoint_paths = [root, stage / "works", stage / "plans", stage / "intents", stage / "data", stage / "failures", storage_file, stage / "IDENTITY.json"]
+                # A checkpoint can follow an isolated failure before any Work
+                # published. Its JSON and failure bytes bind that empty result;
+                # the byte store must not certify unrepresented empty folders.
+                checkpoint_paths = [path for path in checkpoint_paths if path.is_file() or workspace.files([path])]
+                if execution is None:
+                    runner.preserve(checkpoint_paths, "compact-publication:checkpoint", reuse=True, phase_boundary=True)
+                else:
+                    workspace.persist(checkpoint_paths, "compact-publication:checkpoint", execution=execution, phase_boundary=True)
             print(json.dumps({"compactProcessed": index + 1, "workId": wid, "published": len(records), "blocked": len(failures),
                               "metrics": work_metrics}), flush=True)
         if not records:
             raise ValueError("Compact publication has no applicable READY Work")
+        view.verify_final(connection)
         backend._validate_schema(connection, "compact final candidate")
+        # Correction/recovery materializers defer their repeated global scan.
+        # Verify the actual complete projection once at the publication boundary.
+        import importlib.util
+        projection_path = publisher.LEGACY / "integration-publisher-v1/integrate.py"
+        spec = importlib.util.spec_from_file_location("_compact_final_projection", projection_path)
+        projection = importlib.util.module_from_spec(spec)
+        spec.loader.exec_module(projection)
+        projection.validate_authority_projection(connection)
         for namespace in ("main", "registry"):
             if (connection.execute(f"pragma {namespace}.integrity_check").fetchone()[0] != "ok"
                     or connection.execute(f"pragma {namespace}.foreign_key_check").fetchall()):
@@ -427,6 +676,8 @@ def publish(batch, entries, initial, summary_sha, *, checkpoint_every=10):
             or batch_publisher.code_identity() != identity["code"]):
         raise ValueError("Compact execution code or canonical identity changed")
     resolve_reference(identity["baseline"])
+    verify_source_references(selected)
+    verify_reviews(stage, reviews)
     value = {"schemaVersion": FORMAT, "baseline": identity["baseline"], "sources": sources, "dependencies": dependencies,
              "works": records, "failures": failures, "reviews": reviews}
     write_once(stage / "COMPACT-PUBLICATION.json", value)
@@ -437,14 +688,23 @@ def publish(batch, entries, initial, summary_sha, *, checkpoint_every=10):
     return output, [row["workId"] for row in records], failures
 
 
-def verify_publication(root):
+def publish(batch, entries, initial, summary_sha, *, checkpoint_every=10):
+    from canonical_rebase import validation_cache
+    import publish_factor_batch as publisher
+    import validate_factor_panel as panel
+    with validation_cache(), publisher.panel_validation.manifest_verification_cache(), panel.manifest_verification_cache():
+        return _publish(batch, entries, initial, summary_sha, checkpoint_every=checkpoint_every)
+
+
+def _verify_publication_v1(root):
     """Reconstruct expected state from original decisions, never trust an actual-row hash."""
     import publish_factor_batch as publisher
     root = root.resolve()
     publisher._verify_result_manifest(root)
     metadata = publisher._read_json(root / "COMPACT-PUBLICATION.json")
-    if metadata["schemaVersion"] != FORMAT:
+    if metadata["schemaVersion"] != LEGACY_FORMAT:
         raise ValueError("Unknown compact publication version")
+    verify_reviews(root, metadata["reviews"])
     baseline = resolve_reference(metadata["baseline"])
     for name, filename in (("catalog", CATALOG), ("registry", REGISTRY)):
         if publisher.sha256(baseline / filename) != metadata["sources"][name]["sha256"]:
@@ -481,8 +741,94 @@ def verify_publication(root):
         import correct_factor_registry as correction
         if correction.snapshot(connection, namespace="registry") != correction.snapshot(root / REGISTRY):
             raise ValueError("Compact final registry differs from verified serial plans")
+        return {"schemaVersion": LEGACY_FORMAT, "works": expectations,
+                "manifestSha256": publisher.sha256(root / "MANIFEST.sha256")}
+    finally:
+        canonical.close()
+        connection.close()
+
+
+def _verify_publication(root, *, audit=False):
+    """Re-derive plans from original authority and predict rows without SQL replay.
+
+    Legacy v1 keeps its original replay reader. Explicit v2 audits additionally
+    replay the production materializer; ordinary v2 checks compare one complete
+    final snapshot to the independent model built from the sealed plans.
+    """
+    import publish_factor_batch as publisher
+    root = root.resolve()
+    publisher._verify_result_manifest(root)
+    metadata = publisher._read_json(root / "COMPACT-PUBLICATION.json")
+    if metadata["schemaVersion"] == LEGACY_FORMAT:
+        return _verify_publication_v1(root)
+    if metadata["schemaVersion"] != FORMAT:
+        raise ValueError("Unknown compact publication version")
+    verify_reviews(root, metadata["reviews"])
+    policy_documents = publication_policies(metadata["sources"])
+    baseline = resolve_reference(metadata["baseline"])
+    for name, filename in (("catalog", CATALOG), ("registry", REGISTRY)):
+        if publisher.sha256(baseline / filename) != metadata["sources"][name]["sha256"]:
+            raise ValueError("Compact saved source differs from its baseline manifest")
+    connection = sqlite3.connect(":memory:")
+    canonical = sqlite3.connect(":memory:")
+    try:
+        connection.deserialize(read_stored_file(metadata["sources"]["catalog"]))
+        connection.execute("attach database ':memory:' as registry")
+        connection.deserialize(read_stored_file(metadata["sources"]["registry"]), name="registry")
+        canonical_bytes = read_stored_file(metadata["sources"]["canonical"])
+        canonical.deserialize(canonical_bytes)
+        backend = publisher._backend_module()
+        connection.execute("begin")
+        publisher.preserve_book_metadata(connection, canonical, backend)
+        connection.commit()
+        gold = backend._load_gold_ids(publisher._repo_root() / "data/staging/catalog-expansion/gold-set-manifest.json")
+        view = BatchView(connection, gold=gold)
+        expectations = {}
+        with publisher.panel_validation.manifest_verification_cache():
+            for step in metadata["works"]:
+                path, plan_path = (publisher._safe_child(root, step[key]) for key in ("receipt", "plan"))
+                if publisher.sha256(path) != step["sha256"] or publisher.sha256(plan_path) != step["planSha256"]:
+                    raise ValueError("Compact work receipt or sealed plan changed")
+                saved, seal = publisher._read_json(path), publisher._read_json(plan_path)
+                if saved["schemaVersion"] != WORK_FORMAT or saved["workId"] != step["workId"] or saved["workId"] in expectations:
+                    raise ValueError("Duplicate or mismatched compact Work")
+                entry = {key: saved[key] for key in ("workId", "input", "authority")}
+                connection.execute("begin")
+                prepared, derived, _ = prepare_work_v2(entry, connection, metadata["sources"]["canonical"]["sha256"],
+                    saved["reviewedAt"], view, canonical_bytes=canonical_bytes, policy_documents=policy_documents)
+                if encoded(derived) != encoded(seal) or saved["planSha256"] != object_sha(seal):
+                    raise ValueError("Compact sealed plan differs from original authority")
+                if audit:
+                    actual = apply_work_v2(entry, connection, prepared, seal, view)
+                    view.committed(connection)
+                else:
+                    view.catalog.apply(seal["plan"])
+                    view.registry.apply(seal["registryChanges"])
+                    actual = {"schemaVersion": WORK_FORMAT, **entry, "reviewedAt": seal["reviewedAt"],
+                              "planSha256": object_sha(seal), "plan": seal["plan"],
+                              "registryChanges": seal["registryChanges"], "canonicalRebase": seal["canonicalRebase"],
+                              "beforeTargetSha256": seal["beforeTargetSha256"],
+                              "expectedAfter": target_view(view.catalog.scope({entry["workId"]}), entry["workId"])}
+                    connection.rollback()
+                if encoded(actual) != encoded(saved):
+                    raise ValueError("Compact expected-after differs from original authority and sealed plan")
+                expectations[saved["workId"]] = actual["expectedAfter"]
+        if view.catalog.snapshot() != backend._snapshot_db(root / CATALOG):
+            raise ValueError("Compact final Catalog differs from independent sealed plans")
+        import correct_factor_registry as correction
+        if view.registry.snapshot() != correction.snapshot(root / REGISTRY):
+            raise ValueError("Compact final registry differs from independent sealed corrections")
+        view.verify_sources()
         return {"schemaVersion": FORMAT, "works": expectations,
                 "manifestSha256": publisher.sha256(root / "MANIFEST.sha256")}
     finally:
         canonical.close()
         connection.close()
+
+
+def verify_publication(root, *, audit=False):
+    from canonical_rebase import validation_cache
+    import publish_factor_batch as publisher
+    import validate_factor_panel as panel
+    with validation_cache(), publisher.panel_validation.manifest_verification_cache(), panel.manifest_verification_cache():
+        return _verify_publication(root, audit=audit)

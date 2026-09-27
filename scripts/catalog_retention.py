@@ -13,12 +13,14 @@ import json
 import os
 from pathlib import Path
 import sqlite3
+import sys
 import time
 from bisect import bisect_left
 import hashlib
 
 from catalog_workspace import Workspace, digest, key_path, manifest_digest, unlinked, utc_now
-from workspace_paths import artifact_path
+from workspace_paths import absolute_identity, artifact_path, path_identity
+from catalog_authoring_locks import acquire, assert_no_pending
 
 PLAN = "catalog-retention-plan-v1"
 BASE = "data/local/catalog-authoring"
@@ -35,6 +37,1133 @@ def read(path):
 def write(path, value):
     from catalog_authoring_runner import write as atomic_write
     atomic_write(path, value)
+
+
+def retain_completed_identities(store, state):
+    """Preserve each completion's small re-reception packet exactly once."""
+    import catalog_authoring.validate_factor_panel as panel
+    for summary_sha, applied in state.get("publicationBatches", {}).items():
+        completion = store.current_revision("completion", summary_sha)
+        if completion is None:
+            continue  # An interrupted current publication retains its live tree.
+        subject = "completion-identity:" + summary_sha
+        previous = store.current_revision("active", subject)
+        if previous is not None:
+            payload = store.get_revision(previous)["payload"]
+            if (payload.get("completion", {}).get("revisionId") != completion["revisionId"]
+                    or payload["completion"].get("payloadSha256") != completion["payloadSha256"]
+                    or payload.get("applied") != applied):
+                raise ValueError("Retained completion identity differs from its original completion")
+            continue
+        proof = store.get_revision(completion)["payload"]
+        if proof.get("status") != "VERIFIED" or proof.get("applied") != applied or proof.get("summarySha256") != summary_sha:
+            raise ValueError("Completion identity differs from committed STATE")
+        finished = proof["finished"]
+        if not finished.get("summaryPath"):
+            continue  # Older non-batch records have no summary re-reception.
+        expected, bodies, physical = {}, {}, set()
+
+        def bind(path, sha=None):
+            path = unlinked(artifact_path(path, store.repo))
+            if path.is_file():
+                body = path.read_bytes()
+                physical.add(path)
+            else:
+                # Retention may already have retired a completed working copy.
+                # Only its exact proof-bound blob or saved path is reusable.
+                with closing(store.connect()) as db:
+                    if sha is None:
+                        row = db.execute("SELECT b.sha256 FROM revision_blob b JOIN revision r ON r.id=b.revision_id WHERE b.path=? ORDER BY r.rowid DESC LIMIT 1", (store.key(path),)).fetchone()
+                        if row is None:
+                            raise ValueError(f"Completed identity is unavailable: {path}")
+                        sha = row[0]
+                    body = store.read_blob(db, sha)
+            actual = digest(body)
+            if sha is not None and actual != sha:
+                raise ValueError(f"Completed identity changed: {path}")
+            if expected.setdefault(path, actual) != actual:
+                raise ValueError("Completed identity changed during discovery")
+            bodies[store.key(path)] = body
+            return body
+
+        def manifest(root, name, sha):
+            entries = {}
+            for line in bind(root / name, sha).decode("ascii").splitlines():
+                match = panel.SHA_ROW.fullmatch(line)
+                if match is None or match[2] in entries:
+                    raise ValueError("Invalid completed identity manifest")
+                entries[key_path(match[2])] = match[1]
+            return entries
+
+        summary = json.loads(bind(finished["summaryPath"], summary_sha))
+        published = {row["workId"] for row in finished.get("works", [])}
+        for row in summary.get("works", []):
+            if row.get("workId") not in published or not row.get("checkedPath"):
+                continue
+            checked_path = unlinked(artifact_path(row["checkedPath"], store.repo))
+            checked = json.loads(bind(checked_path, row["checkedSha256"]))
+            if checked.get("workId") != row["workId"] or checked.get("status") != "READY_FOR_PUBLICATION":
+                raise ValueError("Completed identity is not the originally checked Work")
+            run = checked_path.parent
+            config = json.loads(bind(run / "RUN.json"))
+            frozen_name = config.get("frozenDirectory", "frozen")
+            if not isinstance(frozen_name, str) or "/" in frozen_name or "\\" in frozen_name or frozen_name in {".", ".."}:
+                raise ValueError("Completed frozen directory escapes its run")
+            frozen = run / frozen_name / "panel-input"
+            inputs = manifest(frozen, "PANEL-INPUT.sha256", checked["inputManifestSha256"])
+            bind(frozen / "authoring-job.json", inputs["authoring-job.json"])
+            if config["decisionsSha256"] != checked["decisionsSha256"]:
+                raise ValueError("Completed decisions differ from the checked identity")
+            bind(config["decisionsPath"], checked["decisionsSha256"])
+            sealed = unlinked(artifact_path(checked["sealedRoot"], store.repo))
+            for name, sha in manifest(sealed, "MANIFEST.sha256", checked["resultManifestSha256"]).items():
+                bind(sealed / name, sha)
+        retained = store.save_bytes(bodies, "recovery:completed-identity:" + summary_sha)
+        members = store.get_revision(retained)["members"]
+        if (members != {store.key(path): sha for path, sha in expected.items()}
+                or any(digest(path.read_bytes()) != expected[path] for path in physical)):
+            raise ValueError("Completed identity changed during preservation")
+        store.put_revision("active", subject, {"schemaVersion": "catalog-completion-identity-v1", "summarySha256": summary_sha,
+            "completion": completion, "applied": applied}, members, expected_head=None)
+
+
+def _metadata_recovery_inputs(repo, prepared_path, publication):
+    """Keep the existing metadata command's exact request and raw captures."""
+    if publication.get("kind") != "publisher-metadata":
+        return set(), {}
+    observed = {}
+
+    def bind(path, expected=None):
+        path = unlinked(artifact_path(path, repo))
+        body = path.read_bytes()
+        sha = digest(body)
+        if expected is not None and expected != sha:
+            raise ValueError("Metadata recovery input binding changed")
+        observed[path] = sha
+        return body
+
+    receipt = json.loads(bind(prepared_path.parent / "receipt.json"))
+    if receipt.get("inputSha256") != publication["requestSha256"]:
+        raise ValueError("Metadata recovery receipt differs from its prepared request")
+    input_path = unlinked(artifact_path(receipt["input"], repo))
+    entries = json.loads(bind(input_path, receipt["inputSha256"]))
+    for entry in entries:
+        receipt_path = unlinked((input_path.parent / entry["receiptFile"]).resolve())
+        source_path = unlinked((input_path.parent / entry["sourceFile"]).resolve())
+        if not receipt_path.is_relative_to(input_path.parent) or not source_path.is_relative_to(input_path.parent):
+            raise ValueError("Metadata recovery capture escapes its input folder")
+        capture = json.loads(bind(receipt_path, entry["receiptSha256"]))
+        body = bind(source_path, capture["sha256"])
+        if len(body) != capture["bytes"]:
+            raise ValueError("Metadata recovery capture length changed")
+    return set(observed), observed
+
+
+def retain_live_declared_inputs(store, registrations, controls, observed):
+    """Fill only missing SHA-bound files declared by current work and delivery."""
+    expected, missing, contexts, run_roots = {}, {}, [], set()
+    with closing(store.connect()) as db:
+        db.execute("BEGIN")
+        view = _RecoveryFiles(store, db)
+        completed = {Path(path).parent.as_posix() for path, in db.execute("SELECT DISTINCT b.path FROM revision_blob b JOIN head h ON h.revision_id=b.revision_id WHERE h.kind='active' AND h.subject LIKE 'completion-identity:%' AND b.path LIKE '%/CHECKED.json'")}
+
+        def load(path, sha=None):
+            path = unlinked(artifact_path(path, store.repo))
+            body = path.read_bytes()
+            actual = digest(body)
+            if sha is not None and actual != sha:
+                raise ValueError("Live dependency declaration changed")
+            if observed.setdefault(path, actual) != actual:
+                raise ValueError("Live dependency scope changed during discovery")
+            return json.loads(body)
+
+        def declare(path, sha):
+            if not isinstance(sha, str) or len(sha) != 64 or any(char not in "0123456789abcdef" for char in sha):
+                raise ValueError("Live dependency has an invalid declared SHA")
+            name = view.key(path)
+            if expected.setdefault(name, sha) != sha:
+                raise ValueError("Live work requires conflicting versions of a declared path: " + name)
+
+        for name in registrations:
+            registration = load(store.repo / name)
+            if not registration.get("active") and not registration.get("suspended"):
+                continue
+            root = view.key(registration["runRoot"])
+            dispatch = load(artifact_path(registration["dispatchPath"], store.repo), registration["dispatchSha256"]) if registration.get("dispatchPath") else {"works": [{"workId": registration.get("workId")}]}
+            contexts.append((dispatch, root))
+            run_roots.update(view.live_runs(root, {row.get("workId") for row in dispatch.get("works", [])}, completed))
+            artifact = artifact_path(registration["artifact"], store.repo) if registration.get("artifact") else None
+            if artifact is not None and artifact.is_file():
+                contexts.append((load(artifact), root))
+            for path in controls:
+                if path.parent == store.repo / root and ("CHECKPOINT" in path.name or "PROGRESS" in path.name):
+                    contexts.append((load(path), root))
+        for path in controls:
+            if path.name != "event.json" or not path.is_file():
+                continue
+            event = load(path)
+            if event.get("schemaVersion") == "catalog-notification-v1":
+                checkpoint = artifact_path(event["checkpointPath"], store.repo)
+                contexts.append((load(checkpoint, event["checkpointSha256"]), view.key(event["assignment"]["runRoot"])))
+        while contexts:
+            value, root = contexts.pop()
+            if isinstance(value, list):
+                contexts.extend((item, root) for item in value)
+                continue
+            if not isinstance(value, dict):
+                continue
+            # These are the inputs read by dispatch/progress, freeze and resume.
+            # Historical selection hints (for example priorSourcePath) do not
+            # authorize replay of an earlier mutable progress document.
+            for field in ("checkedPath", "researchPath", "decisionPath", "decisionsPath", "userSourcesPath", "collectionSummaryPath"):
+                path = value.get(field)
+                sha = value.get(field.removesuffix("Path") + "Sha256")
+                if isinstance(path, str) and sha is not None:
+                    declare(view.assignment_path(path, root), sha)
+            for field in ("collectionSummary", "sourceCollectionSummary"):
+                reference = value.get(field)
+                if isinstance(reference, dict) and reference.get("path") and reference.get("sha256"):
+                    declare(view.assignment_path(reference["path"], root), reference["sha256"])
+            if value.get("checkedPath") and value.get("checkedSha256"):
+                run = Path(view.assignment_path(value["checkedPath"], root)).parent.as_posix()
+                if run not in completed:
+                    run_roots.add(run)
+            contexts.extend((item, root) for field, item in value.items()
+                            if field != "preservedEarlierRevisions" and isinstance(item, (list, dict)))
+        for run in sorted(run_roots):
+            config_name = run + "/RUN.json"
+            if config_name in view.latest:
+                config = json.loads(store.read_blob(db, view.latest[config_name]))
+            else:
+                continue  # A reported failed preparation has no saved RUN authority.
+            for field in ("registryPath", "recoveryEpoch", "decisionsPath"):
+                if config.get(field) and config.get(field + "Sha256"):
+                    declare(config[field], config[field + "Sha256"])
+            if config.get("decisionsPath") and config.get("decisionsSha256"):
+                declare(config["decisionsPath"], config["decisionsSha256"])
+            for binding in config.get("sourceResearchBindings", []):
+                declare(binding["path"], binding["sha256"])
+                for field, filename in (("collectionReceiptSha256", "collection-events.jsonl"),
+                                        ("handoffSha256", "COLLECTION-HANDOFF.json")):
+                    if binding.get(field):
+                        declare(Path(binding["path"]).with_name(filename), binding[field])
+            for binding in config.get("provenanceBindings", []):
+                for member, sha in binding["files"].items():
+                    declare(Path(binding["root"]) / key_path(member), sha)
+            for binding in config.get("priorBundleBindings", []):
+                declare(artifact_path(binding["root"], store.repo) / "MANIFEST.sha256", binding["manifestSha256"])
+        for name, sha in expected.items():
+            if db.execute("SELECT 1 FROM revision_blob b JOIN blob v ON v.sha256=b.sha256 WHERE b.path=? AND b.sha256=? LIMIT 1", (name, sha)).fetchone():
+                continue  # Actual immutable membership, never a status flag.
+            path = unlinked(store.repo / name)
+            if path.is_file():
+                body = path.read_bytes()
+                if digest(body) != sha:
+                    raise ValueError("Live declared input differs from its original SHA: " + name)
+                if observed.setdefault(path, sha) != sha:
+                    raise ValueError("Live declared input changed during discovery")
+            else:
+                body = store.read_blob(db, sha)  # Only the exact declared original.
+            missing[name] = body
+    if missing:
+        saved = store.save_bytes(missing, "recovery:live-declared-inputs")
+        if store.get_revision(saved)["members"] != {name: expected[name] for name in missing}:
+            raise ValueError("Live dependency preservation readback differs from its declarations")
+    current = store.current_revision("active", "current-live-declared-inputs")
+    if current is not None and store.get_revision(current)["members"] == expected:
+        return current
+    return store.put_revision("active", "current-live-declared-inputs", {"schemaVersion": "catalog-live-declared-inputs-v1"}, expected,
+                              expected_head=current["revisionId"] if current else None)
+
+
+def retain_recovery_controls(store):
+    """Bind mutable operator controls at the same boundary as their backup.
+
+    No filesystem hashing or JSON reads happen under the SQLite writer. These
+    bytes preserve interrupts and dispatch generations; they never resume work.
+    """
+    # In a DB-only restore the filesystem is a cache, not the complete logical
+    # control set. Explicit operation deltas update that set; absent cache files
+    # never replace it with an empty physical directory inventory.
+    if sparse_restore_marker(store) is not None:
+        return store.current_revision("active", "current-recovery-controls")
+    repo = store.repo
+    if (repo / BASE / "RETENTION-MAINTENANCE.json").exists():
+        return None  # Cutover backs up before its guarded STATE transition.
+    with closing(store.connect()) as db:
+        if db.execute("PRAGMA user_version").fetchone()[0] != 4:
+            return None
+        previous = db.execute("SELECT revision_id FROM head WHERE kind='active' AND subject='current-recovery-controls'").fetchone()
+        expected_head = previous[0] if previous else None
+    state_path = repo / CONTINUATION / "STATE.json"
+    if not state_path.is_file():
+        return None
+    state = read(state_path)
+    if not state.get("latestCandidate"):
+        return None
+    basis = unlinked((repo / CONTINUATION / state["latestCandidate"]["root"]).resolve())
+    marker = basis / "CURATION-BASELINE.json"
+    if not marker.is_file():
+        return None  # An unmigrated store still uses explicit historical restore.
+    retain_completed_identities(store, state)
+    paths = {state_path, marker, basis / "MANIFEST.sha256"}
+    canonical_path = repo / "data/source/catalog.sqlite"
+    canonical_targets, canonical_version, canonical_observed = set(), None, {}
+    if canonical_path.is_file():
+        from catalog_authoring.catalog_completed_checks import _STATIC_ARTIFACTS
+        paths.add(repo / "data/source")
+        canonical_targets.update(repo / name for name in _STATIC_ARTIFACTS)
+        identity_path = repo / "src/data/generated/catalog-identity-v1.json"
+        if identity_path.is_file():
+            body = identity_path.read_bytes()
+            canonical_observed[identity_path] = digest(body)
+            canonical_version = json.loads(body).get("catalogVersion")
+            if (not isinstance(canonical_version, str) or not canonical_version
+                    or any(char not in "abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789-_." for char in canonical_version)):
+                raise ValueError("Invalid current generated Catalog version")
+            canonical_targets.update(repo / "public/catalog" / f"{name}.{canonical_version}.json"
+                                     for name in ("catalog-v1", "recommendation-context-v1"))
+        paths.update(path for path in canonical_targets if path.is_file())
+    for name in ("data/staging/catalog-expansion/gold-set-manifest.json", "docs/factors/factor-dictionary.md",
+                 "docs/factors/annotation-guide.md", "docs/catalog-expansion/02-authorized-evidence-panel-v1.md",
+                 "docs/planning/09-catalog-authoring-authority.md"):
+        if (repo / name).is_file():
+            paths.add(repo / name)
+    notification_paths, registrations, watched, observed = recovery_notification_paths(repo)
+    observed.update(canonical_observed)
+    paths.update(notification_paths)
+    for root in (repo / BASE, repo / BASE / "locks"):
+        watched[root] = ("*.json", tuple(sorted(str(path) for path in root.glob("*.json") if path.is_file())))
+    for root in {path.parent for path in canonical_targets}:
+        watched[root] = ("*.json", tuple(sorted(str(path) for path in root.glob("*.json") if path.is_file())))
+    for name in ("locks/publication.pending.json", "RETENTION-MAINTENANCE.json"):
+        path = repo / BASE / name
+        if path.is_file():
+            paths.add(path)
+            if name == "locks/publication.pending.json":
+                pending = read(path)
+                prepared = unlinked(artifact_path(pending["preparedPath"], repo))
+                if digest(prepared.read_bytes()) != pending["preparedSha256"]:
+                    raise ValueError("Pending canonical recovery input changed")
+                paths.add(prepared.parent)
+                publication = read(prepared)
+                metadata_paths, metadata_observed = _metadata_recovery_inputs(repo, prepared, publication)
+                paths.update(metadata_paths)
+                observed.update(metadata_observed)
+                if artifact_path(publication["root"], repo).resolve() != repo:
+                    raise ValueError("Pending canonical recovery belongs to another repository")
+                for item in publication["artifacts"]:
+                    target = unlinked(repo / key_path(path_identity(item["path"]).as_posix()))
+                    if target.exists():
+                        paths.add(target)  # Directory swaps recover whole targets.
+    completed_pointer = repo / BASE / "locks/publication.completed.json"
+    if completed_pointer.is_file():
+        body = completed_pointer.read_bytes()
+        pointer = json.loads(body)
+        if pointer.get("schemaVersion") != "catalog-canonical-completion-pointer-v1":
+            raise ValueError("Unknown current canonical completion pointer")
+        observed[completed_pointer] = digest(body)
+        paths.add(completed_pointer)
+        for field in ("prepared", "completion"):
+            path = unlinked(artifact_path(pointer[field + "Path"], repo))
+            content = path.read_bytes()
+            if digest(content) != pointer[field + "Sha256"]:
+                raise ValueError("Current canonical completion pointer changed")
+            observed[path] = pointer[field + "Sha256"]
+            paths.add(path)
+        prepared = unlinked(artifact_path(pointer["preparedPath"], repo))
+        metadata_paths, metadata_observed = _metadata_recovery_inputs(repo, prepared, read(prepared))
+        paths.update(metadata_paths)
+        observed.update(metadata_observed)
+    roots = sorted(paths, key=str)
+    live_inputs = retain_live_declared_inputs(store, registrations, paths, observed)
+    inventory = store._inventory(roots)
+    if any(digest(path.read_bytes()) != sha for path, sha in observed.items()):
+        raise ValueError("Recovery control changed after scope discovery")
+    retained = store.save(roots, "recovery:current-controls")
+    store._assert_inventory(roots, inventory)
+    if (read(state_path) != state or any(digest(path.read_bytes()) != sha for path, sha in observed.items())
+            or any(names != tuple(sorted(str(path) for path in root.glob(pattern) if path.is_file()))
+                   for root, (pattern, names) in watched.items())):
+        raise ValueError("Recovery control scope changed during backup preparation")
+    members = store.get_revision(retained)["members"]
+    canonical_members = {store.key(path): sha for path, (sha, _) in inventory.items()
+                         if path.is_relative_to(repo / "data/source") or path in canonical_targets}
+    from workspace_paths import restored_origins
+    return store.put_revision("active", "current-recovery-controls", {
+        "schemaVersion": "catalog-current-recovery-controls-v1",
+        "statePath": relative(repo, state_path), "stateSha256": inventory[state_path][0],
+        "basisRoot": relative(repo, basis), "basis": read(marker)["revision"],
+        "registrations": sorted(registrations),
+        "liveDeclaredInputs": live_inputs,
+        "originalRepositories": sorted({str(repo), *(str(root) for root in restored_origins(repo))}),
+        "canonicalSha256": inventory[canonical_path][0] if canonical_path in inventory else None,
+        "currentCanonical": {"members": canonical_members, "staticCatalogVersion": canonical_version,
+                             "staticComplete": bool(canonical_version) and canonical_targets <= set(inventory)},
+    }, members, expected_head=expected_head)
+
+
+class _LatestSavedPaths:
+    """Indexed, lazy lookups; a restore does not enumerate the entire archive."""
+
+    def __init__(self, db):
+        self.db, self.cache = db, {}
+
+    def get(self, name, default=None):
+        if name not in self.cache:
+            row = self.db.execute("SELECT b.sha256 FROM revision_blob b JOIN revision r ON r.id=b.revision_id WHERE b.path=? ORDER BY r.rowid DESC LIMIT 1", (name,)).fetchone()
+            self.cache[name] = row[0] if row else None
+        return self.cache[name] or default
+
+    def __contains__(self, name):
+        return self.get(name) is not None
+
+    def __getitem__(self, name):
+        value = self.get(name)
+        if value is None:
+            raise KeyError(name)
+        return value
+
+
+class _RecoveryFiles:
+    """Read saved paths once; materialize only the selected current/live closure."""
+
+    def __init__(self, store, db):
+        self.store, self.db = store, db
+        from catalog_revision_store import VerificationContext
+        self.verification = VerificationContext(store, [])
+        self.view = (store, db, {}, {})
+        self.latest = _LatestSavedPaths(db)
+        self.members, self.walked, self.historical_versions = {}, set(), set()
+        self._key_cache = {}
+
+    def current(self, kind, subject):
+        row = self.db.execute("SELECT revision_id FROM head WHERE kind=? AND subject=?", (kind, subject)).fetchone()
+        return self.store._receipt(self.db, row[0]) if row else None
+
+    def revision(self, receipt):
+        return self.verification._revision(self.view, receipt)
+
+    def key(self, path):
+        original = str(path)
+        if original in self._key_cache:
+            return self._key_cache[original]
+        path = artifact_path(path, self.store.repo)
+        if not path.is_absolute():
+            path = self.store.repo / path
+        # This resolves a saved database name, not a live filesystem object.
+        # Inspect links only at actual source reads and destination writes.
+        path = Path(os.path.abspath(path))
+        if not path.is_relative_to(self.store.repo) or path == self.store.repo:
+            raise ValueError("Recovery artifact must stay inside its repository")
+        if (self.store.database.is_relative_to(path)
+                or path == self.store.repo / BASE / "artifacts"
+                or path.is_relative_to(self.store.repo / BASE / "backups")):
+            raise ValueError("Recovery artifact cannot capture its database or archive")
+        name = key_path(path.relative_to(self.store.repo).as_posix())
+        if any(part in {".git", "node_modules"} or part.startswith(".env") for part in Path(name).parts):
+            raise ValueError("Not a recovery artifact: " + name)
+        for alias in (original, path, Path(name)):
+            self._key_cache[str(alias)] = name
+        return name
+
+    def assignment_path(self, value, root):
+        """Keep serialized repository paths distinct from assignment paths."""
+        identity = path_identity(value)
+        path = artifact_path(value, self.store.repo)
+        repository_roots = {"data", ".workspace", ".tmp", "handoff", "research", "R", "reviews", "konocomics-production-audit-agent-ready"}
+        if not identity.is_absolute() and path.parts and path.parts[0] not in repository_roots:
+            path = artifact_path(root, self.store.repo) / path
+        return self.key(path)
+
+    def progress(self, value, root, completed_runs):
+        """Read both current and pending-event paths in their assignment context."""
+        pending = [value]
+        while pending:
+            value = pending.pop()
+            if isinstance(value, list):
+                pending.extend(value)
+                continue
+            if not isinstance(value, dict):
+                continue
+            if value.get("checkedPath") and value.get("checkedSha256"):
+                path = self.assignment_path(value["checkedPath"], root)
+                checked = json.loads(self.file(path, value.get("checkedSha256")))
+                run = Path(path).parent.as_posix()
+                if run not in completed_runs:
+                    self.root(run)
+                    if checked.get("sealedRoot"):
+                        self.root(checked["sealedRoot"], checked.get("resultManifestSha256"), follow=False)
+            if value.get("collectionPath"):
+                self.root(self.assignment_path(value["collectionPath"], root), follow=False)
+            for field in ("researchPath", "decisionPath", "decisionsPath", "collectionSummaryPath"):
+                sha = value.get(field.removesuffix("Path") + "Sha256")
+                if value.get(field) and sha:
+                    self.file(self.assignment_path(value[field], root), sha)
+            for field in ("collectionSummary", "sourceCollectionSummary"):
+                reference = value.get(field)
+                if isinstance(reference, dict) and reference.get("path") and reference.get("sha256"):
+                    self.file(self.assignment_path(reference["path"], root), reference["sha256"])
+            for attempted in value.get("captureAttemptPaths", []):
+                self.root(self.assignment_path(attempted, root), follow=False)
+            # This container records superseded captures, not current work.
+            # Its raw JSON and original blobs remain preserved independently.
+            pending.extend(item for field, item in value.items()
+                           if field != "preservedEarlierRevisions" and isinstance(item, (list, dict)))
+
+    def live_runs(self, root, assigned_ids, completed_runs):
+        """Share the current READY/HOLD/preparation selection with backup."""
+        selected, preparing = {}, {}
+        prefix = self.key(root) + "/"
+        paths = [name for name, in self.db.execute("SELECT DISTINCT path FROM revision_blob WHERE path>=? AND path<? AND (path LIKE '%/RUN.json' OR path LIKE '%/CHECKED.json') ORDER BY path", (prefix, prefix + "\uffff"))]
+        checked_runs = {Path(path).parent.as_posix() for path in paths if Path(path).name == "CHECKED.json"}
+        for run in sorted(checked_runs):
+            checked = json.loads(self.store.read_blob(self.db, self.latest[run + "/CHECKED.json"]))
+            if (checked.get("status") not in {"READY_FOR_PUBLICATION", "HOLD"}
+                    or checked.get("workId") not in assigned_ids):
+                continue
+            config_path = run + "/RUN.json"
+            if config_path not in self.latest:
+                raise ValueError("A live checked result has no preserved RUN binding")
+            config = json.loads(self.store.read_blob(self.db, self.latest[config_path]))
+            key, entry = checked["workId"], (config.get("createdAt", ""), run)
+            if key not in selected or entry > selected[key]:
+                selected[key] = entry
+        for path in paths:
+            if Path(path).name != "RUN.json":
+                continue
+            run = Path(path).parent.as_posix()
+            if run in completed_runs or run in checked_runs:
+                continue
+            job_path = run + "/job.json"
+            if job_path not in self.latest:
+                continue
+            job = json.loads(self.store.read_blob(self.db, self.latest[job_path]))
+            works = job.get("works", [])
+            if len(works) != 1 or works[0].get("workId") not in assigned_ids:
+                continue
+            config = json.loads(self.store.read_blob(self.db, self.latest[path]))
+            wid, entry = works[0]["workId"], (config.get("createdAt", ""), run)
+            if wid not in preparing or entry > preparing[wid]:
+                preparing[wid] = entry
+        # A completed latest decision supersedes its older unfinished copies.
+        # Explicit pending checkpoints are expanded separately by progress().
+        return ({entry[1] for entry in selected.values() if entry[1] not in completed_runs}
+                | {entry[1] for wid, entry in preparing.items() if wid not in selected or entry > selected[wid]})
+
+    def file(self, path, sha=None, *, historical=False):
+        name = self.key(path)
+        sha = sha or self.latest.get(name)
+        if sha is None or self.db.execute("SELECT 1 FROM revision_blob WHERE path=? AND sha256=? LIMIT 1", (name, sha)).fetchone() is None:
+            raise ValueError(f"Current recovery requires an unpreserved file: {name}")
+        body = self.store.read_blob(self.db, sha)
+        previous = self.members.setdefault(name, sha)
+        if previous != sha:
+            if historical:
+                # Compact readers address their original versions by receipt
+                # and SHA in the copied DB, not through the current pathname.
+                self.historical_versions.add((name, sha))
+                return body
+            raise ValueError(f"Current recovery has conflicting live versions: {name}")
+        return body
+
+    def target(self, name, sha):
+        """Materialize a prepared artifact at its proven canonical target."""
+        name = key_path(name)
+        self.store.read_blob(self.db, sha)
+        if self.members.setdefault(name, sha) != sha:
+            raise ValueError(f"Current recovery has conflicting target effects: {name}")
+
+    def children(self, path):
+        prefix = self.key(path) + "/"
+        for name, in self.db.execute("SELECT DISTINCT path FROM revision_blob WHERE path>=? AND path<? ORDER BY path", (prefix, prefix + "\uffff")):
+            if name.startswith(prefix):
+                yield name
+
+    def root(self, path, expected=None, *, follow=True, prior=False):
+        name = self.key(path)
+        if (name, expected, follow, prior) in self.walked:
+            return
+        self.walked.add((name, expected, follow, prior))
+        if name in self.latest:
+            self.file(name, expected)
+            if Path(name).name in {"recovery-epoch.json", "recovery-declaration.json"}:
+                self.dependencies(name)
+            return
+        manifest_name = next((value for value in ("MANIFEST.sha256", "PANEL-INPUT.sha256", "PANEL-RESULT.sha256")
+                              if name + "/" + value in self.latest), None)
+        if manifest_name is not None:
+            import catalog_authoring.validate_factor_panel as panel
+            body = self.file(name + "/" + manifest_name, expected)
+            names = []
+            for line in body.decode("ascii").splitlines():
+                match = panel.SHA_ROW.fullmatch(line)
+                if match is None:
+                    raise ValueError("Invalid current recovery manifest")
+                child = name + "/" + key_path(match[2])
+                self.file(child, match[1])
+                names.append(child)
+        else:
+            names = list(self.children(name))
+            if not names:
+                raise ValueError(f"Current recovery scope is unavailable: {name}")
+            for child in names:
+                self.file(child)
+        if follow:
+            for child in names:
+                sidecars = {"external-prior-authority.json", "prior-authority.json", "COMPACT-PUBLICATION.json", "CHECKPOINT.json", "recovery-epoch.json", "recovery-declaration.json"}
+                if not prior:
+                    sidecars |= {"RUN.json", "external-lineage.json"}
+                if Path(child).name in sidecars:
+                    self.dependencies(child)
+
+    def dependencies(self, path):
+        name = self.key(path)
+        if ("dependencies", name) in self.walked:
+            return
+        self.walked.add(("dependencies", name))
+        value = json.loads(self.file(name))
+        filename = Path(name).name
+        if filename == "RUN.json":
+            for field in ("baselineRoot", "registryPath", "recoveryEpoch"):
+                if value.get(field):
+                    self.root(value[field], value.get(field + "Sha256"), prior=field == "baselineRoot")
+                    if field == "recoveryEpoch":
+                        self.dependencies(value[field])
+            if value.get("decisionsPath"):
+                decision_sha = value.get("decisionsSha256")
+                checked_path = Path(name).parent / "CHECKED.json"
+                if decision_sha is None and self.key(checked_path) in self.latest:
+                    decision_sha = json.loads(self.file(checked_path)).get("decisionsSha256")
+                self.file(value["decisionsPath"], decision_sha)
+            for binding in value.get("sourceResearchBindings", []):
+                self.file(binding["path"], binding["sha256"])
+                for field, filename in (("collectionReceiptSha256", "collection-events.jsonl"),
+                                        ("handoffSha256", "COLLECTION-HANDOFF.json")):
+                    if binding.get(field):
+                        self.file(Path(binding["path"]).with_name(filename), binding[field])
+            for binding in value.get("provenanceBindings", []):
+                for member, sha in binding["files"].items():
+                    self.file(Path(binding["root"]) / key_path(member), sha)
+            for binding in value.get("priorBundleBindings", []):
+                self.root(binding["root"], binding["manifestSha256"], prior=True)
+        elif filename == "external-lineage.json":
+            if value.get("baselineRoot"):
+                self.root(value["baselineRoot"], value.get("baselineManifestSha256"), prior=True)
+            if value.get("registryPath"):
+                input_root = Path(name).parent
+                manifest_name = (input_root / "PANEL-INPUT.sha256").as_posix()
+                manifest_sha = self.members.get(manifest_name)
+                if manifest_sha is None:
+                    raise ValueError("Frozen registry requires its bound input manifest")
+                input_members = source_manifest(self.store, self.db, manifest_sha, retained=set(), selected=())
+                if input_members.get("external-lineage.json") != self.members.get(name) or "panel-input.json" not in input_members:
+                    raise ValueError("Frozen registry metadata is outside its input manifest")
+                metadata = json.loads(self.file(input_root / "panel-input.json", input_members["panel-input.json"]))
+                registry_sha = metadata.get("registrySha256")
+                if (not isinstance(registry_sha, str) or len(registry_sha) != 64
+                        or any(char not in "0123456789abcdef" for char in registry_sha)):
+                    raise ValueError("Frozen registry has no exact SHA binding")
+                source_sha = value.get("sourceInputBindings", {}).get(value["registryPath"])
+                if source_sha is not None and source_sha != registry_sha:
+                    raise ValueError("Frozen registry binding differs from its input metadata")
+                self.file(value["registryPath"], registry_sha)
+            for source, sha in value.get("sourceInputBindings", {}).items():
+                self.file(source, sha)
+        elif filename in {"external-prior-authority.json", "prior-authority.json"}:
+            for binding in value.get("bundles", []):
+                root = artifact_path(binding["root"], self.store.repo)
+                self.root(root if root.is_absolute() else Path(name).parent / root, binding["manifestSha256"], prior=True)
+        elif value.get("schemaVersion") in {"factor-loss-recovery-v1", "factor-loss-recovery-epoch-v1"}:
+            for field in ("epochPath", "scopePath", "policyPath"):
+                if value.get(field):
+                    self.root(value[field], value.get(field.removesuffix("Path") + "Sha256"))
+            if value.get("epochId") == "factor-003-recovery-20260909-v1":
+                history = self.store.repo / CONTINUATION / "runs"
+                self.root(history / "continuation-factor-233-publication-20260909-v1", follow=False)
+                self.file(history / "canonical-promotion-20260910-v2/before/data/source/catalog.sqlite")
+        elif value.get("schemaVersion") in {"catalog-compact-publication-v1", "catalog-compact-publication-v2"}:
+            nested = []
+            for reference in value["dependencies"]:
+                saved = self.verification._revision(self.view, reference["snapshot"])["members"]
+                for member, sha in reference["members"].items():
+                    if saved.get(member) != sha:
+                        raise ValueError("Live checkpoint dependency differs from its receipt")
+                    self.file(member, sha, historical=True)
+                    if Path(member).name in {"COMPACT-PUBLICATION.json", "CHECKPOINT.json"}:
+                        nested.append(member)
+            for source in value["sources"].values():
+                saved = self.verification._revision(self.view, source["snapshot"])["members"]
+                if saved.get(source["path"]) != source["sha256"]:
+                    raise ValueError("Live compact source differs from its receipt")
+                self.file(source["path"], source["sha256"], historical=True)
+            for member in nested:
+                self.dependencies(member)
+
+
+def _current_canonical_members(files, value, applied, finished):
+    """Use the existing canonical effect's prepared-tree digest contract."""
+    from catalog_authoring.catalog_completed_checks import _STATIC_ARTIFACTS, _tree_digest
+    payload = value["payload"]
+    output = files.key(payload["outputRoot"])
+    prefix = output + "/candidate/"
+    members = {name[len(prefix):]: sha for name, sha in value["members"].items() if name.startswith(prefix)}
+    if payload.get("status") != "APPLIED" or payload.get("candidateReceiptSha256") != applied["receiptSha256"]:
+        raise ValueError("Canonical recovery effect differs from its candidate completion")
+
+    def bound_json(path, sha):
+        if value["members"].get(path) != sha:
+            raise ValueError("Canonical recovery proof is outside its original revision")
+        return json.loads(files.store.read_blob(files.db, sha))
+
+    completed = bound_json(output + "/completion.json", payload["completionSha256"])
+    prepared = bound_json(output + "/prepared.json", completed["preparedSha256"])
+    if (completed.get("schemaVersion") != "catalog-canonical-completion-v1" or completed.get("status") != "APPLIED"
+            or completed.get("readback") != "PASS" or prepared.get("schemaVersion") != "catalog-canonical-publication-v1"
+            or artifact_path(prepared["root"], files.store.repo).resolve() != files.store.repo
+            or files.key(prepared["output"]) != output
+            or any(completed.get(key) != prepared.get(key) for key in ("artifacts", "workIds", "catalogVersion", "sourceManifestDigest"))
+            or set(prepared["workIds"]) != {row["workId"] for row in finished["works"]}):
+        raise ValueError("Canonical recovery prepared/completion binding changed")
+    artifacts = {key_path(path_identity(item["path"]).as_posix()): item["sha256"] for item in prepared["artifacts"]}
+    version = prepared["catalogVersion"]
+    expected = _STATIC_ARTIFACTS | {"data/source", f"public/catalog/catalog-v1.{version}.json", f"public/catalog/recommendation-context-v1.{version}.json"}
+    source = {name[len("data/source/"):]: sha for name, sha in members.items() if name.startswith("data/source/")}
+    generated = {name: sha for name, sha in members.items() if not name.startswith("data/source/")}
+    if (len(artifacts) != len(prepared["artifacts"]) or set(artifacts) != expected or not source
+            or _tree_digest(source) != artifacts["data/source"]
+            or generated != {name: sha for name, sha in artifacts.items() if name != "data/source"}):
+        raise ValueError("Canonical recovery members differ from the prepared artifact tree")
+    return members
+
+
+def _restore_completed_canonical_pointer(files, control):
+    """Verify a current metadata/adjudication effect without archive searching."""
+    from catalog_authoring.catalog_completed_checks import _STATIC_ARTIFACTS, _tree_digest
+    name = BASE + "/locks/publication.completed.json"
+    if name not in control["members"]:
+        return None
+    pointer = json.loads(files.file(name, control["members"][name]))
+    if pointer.get("schemaVersion") != "catalog-canonical-completion-pointer-v1":
+        raise ValueError("Unknown restored canonical completion pointer")
+    prepared = json.loads(files.file(pointer["preparedPath"], pointer["preparedSha256"]))
+    completed = json.loads(files.file(pointer["completionPath"], pointer["completionSha256"]))
+    output = Path(files.key(pointer["preparedPath"])).parent.as_posix()
+    if (prepared.get("schemaVersion") != "catalog-canonical-publication-v1"
+            or prepared.get("kind") not in {"adjudication", "publisher-metadata"}
+            or files.key(prepared["output"]) != output
+            or artifact_path(prepared["root"], files.store.repo).resolve() != files.store.repo
+            or files.key(pointer["completionPath"]) != output + "/completion.json"
+            or completed.get("schemaVersion") != "catalog-canonical-completion-v1"
+            or completed.get("status") != "APPLIED" or completed.get("readback") != "PASS"
+            or completed.get("preparedSha256") != pointer["preparedSha256"]
+            or any(completed.get(key) != prepared.get(key) for key in ("artifacts", "workIds", "catalogVersion", "sourceManifestDigest"))):
+        raise ValueError("Restored canonical completion pointer binding changed")
+    members = control["payload"].get("currentCanonical", {}).get("members", {})
+    source = {name[len("data/source/"):]: sha for name, sha in members.items() if name.startswith("data/source/")}
+    generated = {name: sha for name, sha in members.items() if not name.startswith("data/source/")}
+    artifacts = {key_path(path_identity(item["path"]).as_posix()): item["sha256"] for item in prepared["artifacts"]}
+    version = prepared["catalogVersion"]
+    expected = _STATIC_ARTIFACTS | {"data/source", f"public/catalog/catalog-v1.{version}.json", f"public/catalog/recommendation-context-v1.{version}.json"}
+    if (len(artifacts) != len(prepared["artifacts"]) or set(artifacts) != expected or not source
+            or _tree_digest(source) != artifacts["data/source"]
+            or generated != {name: sha for name, sha in artifacts.items() if name != "data/source"}):
+        return None  # Preserve actual newer/incomplete bytes, not a false effect.
+    # Existing historical verification reads this one completed candidate tree.
+    # Its bytes are already preserved under the current target keys, once.
+    for name, sha in members.items():
+        files.target(output + "/candidate/" + name, sha)
+    return {"kind": prepared["kind"], "completionSha256": pointer["completionSha256"], "catalogVersion": version}
+
+
+def sparse_restore_marker(store):
+    """Identify a DB-only cache without treating absent files as deleted state."""
+    path = store.repo / ".catalog-restore.json"
+    if not path.is_file():
+        return None
+    value = read(unlinked(path))
+    if value.get("materialization") != "on-demand":
+        return None
+    with closing(store.connect()) as db:
+        generation = db.execute("SELECT value FROM store_meta WHERE key='generation'").fetchone()[0]
+    if (value.get("schemaVersion") != "catalog-restored-workspace-v1"
+            or value.get("generation") != generation):
+        raise ValueError("Sparse restore mapping differs from its database generation")
+    return value
+
+
+def sparse_control_base(store):
+    """Capture the logical baseline before preparing an explicit file save."""
+    if sparse_restore_marker(store) is None:
+        return None
+    receipt = store.current_revision("active", "current-recovery-controls")
+    if receipt is None:
+        return {"receipt": None, "members": {}, "payload": {
+            "schemaVersion": "catalog-current-recovery-controls-v1", "statePath": None, "stateSha256": None,
+            "basisRoot": None, "basis": None, "registrations": [],
+            "originalRepositories": sparse_restore_marker(store)["originalRepositories"],
+            "canonicalSha256": None, "currentCanonical": {"members": {}, "staticCatalogVersion": None, "staticComplete": False}}}
+    return {"receipt": receipt, **store.get_revision(receipt)}
+
+
+def prepare_control_delta(store, base, updates, read_body, *, deleted=()):
+    """Merge explicit current writes; unmaterialized paths are never deletions."""
+    if base is None:
+        return None
+    deleted = dict(deleted) if isinstance(deleted, dict) else {name: base["members"].get(name) for name in deleted}
+    current = sparse_control_base(store)
+    if current is not None and current["receipt"] != base["receipt"]:
+        # Another completed write can be unrelated, or can already contain this
+        # same operation's exact bytes. Neither permits replacing a newer value.
+        for name, sha in updates.items():
+            before, now = base["members"].get(name), current["members"].get(name)
+            if now not in (before, sha) and (name in base["members"] or name in current["members"]):
+                raise ValueError("Current control changed after operation preparation: " + name)
+        for name, before in deleted.items():
+            now = current["members"].get(name)
+            if (now is not None and now != before
+                    or current["payload"].get("deletedPaths", {}).get(name, before) != before):
+                raise ValueError("Current control deletion conflicts with a newer value: " + name)
+        base = current
+    from catalog_authoring.catalog_completed_checks import _STATIC_ARTIFACTS
+    info = json.loads(json.dumps(base["payload"]))
+    members = dict(base["members"])
+    tombstones = dict(info.get("deletedPaths", {}))
+    notifications = BASE + "/notifications/"
+    state_path = info.get("statePath") or CONTINUATION + "/STATE.json"
+
+    def current_path(name):
+        return (name in members or name in tombstones or name == state_path or name.startswith(notifications)
+                or name.startswith("data/source/") or name in _STATIC_ARTIFACTS
+                or name.startswith("public/catalog/")
+                or name in {BASE + "/locks/publication.pending.json", BASE + "/locks/publication.completed.json"})
+
+    changed = {name: sha for name, sha in updates.items() if current_path(name) and members.get(name) != sha}
+    removed = {key_path(name) for name, sha in deleted.items()
+               if sha is not None and (name in members or tombstones.get(name) != sha)}
+    if not changed and not removed:
+        return None
+    if state_path in removed:
+        raise ValueError("A current STATE cannot be retired by an artifact-cache deletion")
+    for name in removed:
+        tombstones[name] = deleted[name]
+        members.pop(name, None)
+    members.update(changed)
+    for name in changed:
+        tombstones.pop(name, None)
+    if state_path in changed:
+        state = json.loads(read_body(changed[state_path]))
+        if state.get("authoringStore", {}).get("generation") != store._generation:
+            raise ValueError("Explicit STATE change belongs to another generation")
+        info.update(statePath=state_path, stateSha256=changed[state_path])
+        candidate = state.get("latestCandidate")
+        if candidate is not None:
+            with closing(store.connect()) as db:
+                files = _RecoveryFiles(store, db)
+                basis = files.key(store.repo / CONTINUATION / candidate["root"])
+                marker_name = basis + "/CURATION-BASELINE.json"
+                marker = json.loads(files.file(marker_name))
+                files.file(basis + "/MANIFEST.sha256", candidate["manifestSha256"])
+                info.update(basisRoot=basis, basis=marker["revision"])
+                members.update(files.members)
+    registrations = set(info.get("registrations", [])) - removed
+    for name, sha in changed.items():
+        if name.startswith(notifications) and "/" not in name[len(notifications):]:
+            value = json.loads(read_body(sha))
+            if value.get("sessionId") == Path(name).stem:
+                registrations.add(name)
+    info["registrations"] = sorted(registrations)
+    canonical = info.get("currentCanonical")
+    if canonical is not None:
+        current = canonical["members"]
+        for name in removed:
+            current.pop(name, None)
+        for name, sha in changed.items():
+            if name.startswith("data/source/") or name in _STATIC_ARTIFACTS or name.startswith("public/catalog/"):
+                current[name] = sha
+        source_changed = any(name.startswith("data/source/") for name in changed.keys() | removed)
+        if "data/source/catalog.sqlite" in changed:
+            info["canonicalSha256"] = changed["data/source/catalog.sqlite"]
+        elif "data/source/catalog.sqlite" in removed:
+            info["canonicalSha256"] = None
+        identity = "src/data/generated/catalog-identity-v1.json"
+        if identity in changed:
+            canonical["staticCatalogVersion"] = json.loads(read_body(changed[identity]))["catalogVersion"]
+        version = canonical.get("staticCatalogVersion")
+        static = {*_STATIC_ARTIFACTS, *(f"public/catalog/{name}.{version}.json" for name in ("catalog-v1", "recommendation-context-v1"))}
+        if source_changed or any(name in static for name in changed.keys() | removed):
+            canonical["staticComplete"] = bool(version) and static <= changed.keys()
+    if tombstones:
+        info["deletedPaths"] = tombstones
+    else:
+        info.pop("deletedPaths", None)
+    return {"payload": info, "members": members, "expectedHead": base["receipt"]["revisionId"] if base["receipt"] else None}
+
+
+def prepare_restored_operation(repo, request):
+    """Explicit existing-command boundary; path/read helpers remain read-only."""
+    from catalog_recovery import prepare_restored_operation as prepare
+    return prepare(Path(repo), request)
+
+
+def record_restored_operation(repo, preparation, written_paths, deleted_paths=()):
+    """Persist only writes/deletions reported by the actual requested operation."""
+    from catalog_revision_store import RevisionWorkspace
+    repo = unlinked(Path(repo))
+    if not preparation or preparation.get("status") != "MATERIALIZED":
+        return {"status": "NOT_REQUIRED"}
+    store = RevisionWorkspace(repo, repo / BASE / "workspace.sqlite")
+    marker = sparse_restore_marker(store)
+    if marker is None or marker["generation"] != preparation.get("generation"):
+        raise ValueError("Operation recording belongs to another restored generation")
+    receipt = preparation.get("controlBase")
+    base = {"receipt": receipt, **store.get_revision(receipt)} if receipt else sparse_control_base(store)
+    roots = sorted({unlinked(artifact_path(path, repo)) for path in written_paths}, key=str)
+    removed = {}
+    with closing(store.connect()) as db:
+        db.execute("BEGIN")
+        files = _RecoveryFiles(store, db)
+        for raw in deleted_paths:
+            path = unlinked(artifact_path(raw, repo))
+            name = store.key(path)
+            if path.exists():
+                raise ValueError("Reported control deletion still exists: " + name)
+            # The producer reports an actual successful unlink/rename. Select
+            # only that exact old file or bounded source directory from the DB.
+            names = [name] if name in files.latest else list(files.children(name))
+            for member in names:
+                removed[member] = base["members"].get(member) or files.latest[member]
+    saved = None
+    if roots:
+        saved = store.save(roots, "recovery:explicit-operation-writes", control_base=base, control_deleted=removed)
+    elif removed:
+        update = prepare_control_delta(store, base, {}, lambda sha: None, deleted=removed)
+        if update is not None:
+            saved = store.put_revision("active", "current-recovery-controls", update["payload"], update["members"],
+                                       expected_head=update["expectedHead"])
+    return {"status": "PERSISTED", "controlPersistence": "PERSISTED", "snapshot": saved,
+            "controls": store.current_revision("active", "current-recovery-controls")}
+
+
+def restore_current(store, destination, *, into_checkout=False):
+    """Restore the database; existing operations extract their own artifacts."""
+    from catalog_revision_store import RevisionWorkspace, VERSION
+    from catalog_workspace import APPLICATION_ID
+    from workspace_paths import restored_origins
+    started = time.perf_counter()
+    destination = unlinked(Path(destination))
+    if into_checkout:
+        import subprocess
+        if not destination.is_dir() or not (destination / ".git").exists():
+            raise ValueError("--into-checkout requires the exact existing Git checkout root")
+        checkout = subprocess.run(["git", "-C", str(destination), "rev-parse", "--show-toplevel"],
+                                  capture_output=True, text=True, encoding="utf-8")
+        if checkout.returncode or unlinked(Path(checkout.stdout.strip())) != destination:
+            raise ValueError("--into-checkout requires the exact existing Git checkout root")
+        marker = unlinked(destination / ".catalog-restore.json")
+        authoring = unlinked(destination / BASE)
+        if marker.exists() or (authoring.exists() and (not authoring.is_dir() or any(
+                path.name != "runtime" or not unlinked(path).is_dir() for path in authoring.iterdir()))):
+            raise ValueError("Checkout already contains authoring data or recovery metadata; nothing was overwritten")
+        if destination.is_relative_to(store.repo / "data/source"):
+            raise ValueError("Database recovery requires a non-canonical destination")
+    elif (destination.exists() or destination == store.repo or store.repo.is_relative_to(destination)
+          or destination.is_relative_to(store.repo / "data/source")):
+        raise ValueError("Database recovery requires a new non-canonical destination")
+    database = destination / BASE / "workspace.sqlite"
+    origins = {str(store.repo), *(str(root) for root in restored_origins(store.repo))}
+    with closing(store.connect()) as source:
+        source.execute("BEGIN")
+        version = source.execute("PRAGMA user_version").fetchone()[0]
+        if version != VERSION or source.execute("PRAGMA application_id").fetchone()[0] != APPLICATION_ID:
+            raise ValueError("Database recovery requires an authoring schema v4 store")
+        generation = source.execute("SELECT value FROM store_meta WHERE key='generation'").fetchone()[0]
+        revision_ids = [row[0] for row in source.execute("SELECT id FROM revision ORDER BY id")]
+        sequence = source.execute("SELECT coalesce(max(seq),0) FROM change_log").fetchone()[0]
+        # Only the current mapping metadata is needed. Do not walk its members,
+        # basis, assignments or historical publication dependencies.
+        control = source.execute("SELECT r.payload_sha256 FROM head h JOIN revision r ON r.id=h.revision_id WHERE h.kind='active' AND h.subject='current-recovery-controls'").fetchone()
+        if control is not None:
+            info = json.loads(store.read_blob(source, control[0]))["payload"]
+            for original in info.get("originalRepositories", []):
+                if not isinstance(original, str):
+                    raise ValueError("Invalid saved recovery repository identity")
+                absolute_identity(original)
+                origins.add(original)
+        database.parent.mkdir(parents=True, exist_ok=into_checkout)
+        with database.open("xb"):
+            pass
+        with closing(sqlite3.connect(database)) as target:
+            source.backup(target)
+            if (target.execute("PRAGMA user_version").fetchone()[0] != version
+                    or target.execute("PRAGMA application_id").fetchone()[0] != APPLICATION_ID
+                    or target.execute("SELECT value FROM store_meta WHERE key='generation'").fetchone()[0] != generation
+                    or [row[0] for row in target.execute("SELECT id FROM revision ORDER BY id")] != revision_ids
+                    or target.execute("SELECT coalesce(max(seq),0) FROM change_log").fetchone()[0] != sequence):
+                raise ValueError("Recovered database identity differs from its source snapshot")
+            if target.execute("PRAGMA integrity_check").fetchall() != [("ok",)]:
+                raise ValueError("Recovered database failed SQLite integrity readback")
+            if target.execute("PRAGMA foreign_key_check").fetchall():
+                raise ValueError("Recovered database failed foreign-key readback")
+            journal_mode = target.execute("PRAGMA journal_mode").fetchone()[0]
+    mapping = {"schemaVersion": "catalog-restored-workspace-v1", "originalRepositories": sorted(origins),
+               "materialization": "on-demand", "generation": generation}
+    write(destination / ".catalog-restore.json", mapping)
+    report = {"status": "DATABASE_RESTORED", "schemaVersion": version, "generation": generation,
+        "revisionCount": len(revision_ids), "revisionIdsSha256": digest(json.dumps(revision_ids, separators=(",", ":")).encode()),
+        "committedSequence": sequence, "integrityCheck": "PASS", "foreignKeyCheck": "PASS",
+        "artifactFiles": 0, "workersResumed": False, "historicalSnapshotReplay": False,
+        "verificationScope": "SQLite integrity, foreign keys and committed database identity; not a full blob or semantic audit",
+        "runtime": {"python": sys.version.split()[0], "sqlite": sqlite3.sqlite_version, "executable": sys.executable},
+        "codeSha256": digest(Path(__file__).read_bytes()), "workspaceJournalMode": journal_mode,
+        "databaseBytes": database.stat().st_size, "destination": str(destination),
+        "timingsSeconds": {"totalElapsed": time.perf_counter() - started}}
+    write(destination / BASE / "CURRENT-RESTORE.json", report)
+    return report
+
+
+def recovery_notification_paths(repo):
+    """Select current controls and pending delivery dependencies, not their history."""
+    from catalog_authoring import notification_guard as guard
+    notifications = repo / BASE / "notifications"
+    paths, registrations, observed = set(), [], {}
+    watched = {}
+    selected_events, candidate_events = set(), set()
+
+    def watch(root, pattern):
+        scope = (pattern, tuple(sorted(str(path) for path in root.glob(pattern) if path.is_file())))
+        if watched.setdefault(root, scope) != scope:
+            raise ValueError("Recovery notification scope changed during discovery: " + str(root))
+
+    for root, pattern in ((notifications, "*.json"), (notifications / "turns", "*.json"),
+                          (notifications / "roots", "*/*.json"), (notifications / "inbox", "*/*.json")):
+        watch(root, pattern)
+
+    def actual(path):
+        return unlinked(artifact_path(path, repo))
+
+    def load(path, *, retain=False, expected=None):
+        path = actual(path)
+        body = path.read_bytes()
+        sha = digest(body)
+        if expected is not None and sha != expected:
+            raise ValueError("Recovery notification binding changed: " + str(path))
+        if observed.setdefault(path, sha) != sha:
+            raise ValueError("Recovery notification changed during discovery: " + str(path))
+        if retain:
+            paths.add(path)
+        return json.loads(body)
+
+    def event_path(assignment, sha, kind="complete"):
+        identity = guard.notification_identity(assignment, sha, kind)
+        return actual(Path(assignment["runRoot"]) / "notification-events" / guard.digest(identity) / "event.json")
+
+    for path in notifications.glob("*.json"):
+        value = load(path)
+        if value.get("sessionId") != path.stem:
+            continue
+        paths.add(path)
+        registrations.append(relative(repo, path))
+        turn = notifications / "turns" / path.name
+        if turn.is_file():
+            load(turn, retain=True)
+        if value.get("dispatchPath"):
+            load(value["dispatchPath"], retain=True, expected=value["dispatchSha256"])
+        if value.get("runRoot"):
+            root = actual(value["runRoot"])
+            watch(root, "*.json")
+            watch(root / "notification-events", "*/*.json")
+            candidate_events.update((root / "notification-events").glob("*/event.json"))
+            for checkpoint in root.glob("*.json"):
+                if "CHECKPOINT" in checkpoint.name or "PROGRESS" in checkpoint.name:
+                    load(checkpoint, retain=True)
+        if value.get("artifact") and actual(value["artifact"]).is_file():
+            artifact = actual(value["artifact"])
+            load(artifact, retain=True)
+            current_event = event_path(value, observed[artifact])
+            if current_event.is_file():
+                selected_events.add(current_event)
+        identity = guard.notification_identity(value, "", "complete")
+        record = {"assignment": identity["assignment"], "generation": identity["generation"]}
+        root_index = notifications / "roots" / value["parentThreadId"] / (guard.digest(record) + ".json")
+        if root_index.is_file():
+            if load(root_index, retain=True) != record:
+                raise ValueError("Recovery current notification root changed")
+        if value.get("transitionReceipt"):
+            reference = value["transitionReceipt"]
+            transition = load(reference["path"], retain=True, expected=reference["sha256"])
+            source = transition.get("collectionSummary")
+            if source is not None:
+                load(source["path"], retain=True, expected=source["sha256"])
+            selected_events.add(actual(transition["collectionEventPath"]))
+
+    # Root registrations recover an event whose inbox index was not committed.
+    for path in (notifications / "roots").glob("*/*.json"):
+        record = load(path)
+        if guard.digest(record) != path.stem or record["assignment"]["parentThreadId"] != path.parent.name:
+            raise ValueError("Recovery notification root identity changed")
+        root = actual(record["assignment"]["runRoot"]) / "notification-events"
+        watch(root, "*/*.json")
+        candidate_events.update(root.glob("*/event.json"))
+    for path in (notifications / "inbox").glob("*/*.json"):
+        reference = load(path)
+        source = actual(reference["path"])
+        event = load(source, expected=reference["sha256"])
+        if event["eventId"] != path.stem or event["assignment"]["parentThreadId"] != path.parent.name:
+            raise ValueError("Recovery inbox identity changed")
+        candidate_events.add(source)
+
+    for path in sorted(candidate_events | selected_events, key=str):
+        watch(path.parent, "*.json")
+        value = load(path)
+        identity = {key: value[key] for key in ("schemaVersion", "assignment", "generation", "kind", "checkpointSha256")}
+        if (value["schemaVersion"] != guard.EVENT or guard.digest(identity) != value["eventId"]
+                or path.parent.name != value["eventId"]):
+            raise ValueError("Recovery notification event identity changed")
+        consumed, handling = path.parent / "consumed.json", path.parent / "handling.json"
+        if consumed.is_file():
+            ack = load(consumed)
+            load(handling)
+            if ack != {"eventId": value["eventId"], "handlingSha256": observed[handling]}:
+                raise ValueError("Recovery notification consumed acknowledgement changed")
+            if path not in selected_events:
+                continue
+            paths.update((consumed, handling))
+        paths.add(path)
+        checkpoint = actual(value["checkpointPath"])
+        if not checkpoint.is_relative_to(path.parent):
+            raise ValueError("Recovery notification checkpoint outside its event")
+        load(checkpoint, retain=True, expected=value["checkpointSha256"])
+        if value.get("validationSha256"):
+            validation = load(path.parent / "validation.json", retain=True, expected=value["validationSha256"])
+            if (validation.get("eventId") != value["eventId"]
+                    or validation.get("checkpointSha256") != value["checkpointSha256"]
+                    or validation.get("dispatchSha256") != value["assignment"].get("dispatchSha256")):
+                raise ValueError("Recovery notification validation identity changed")
+        if value["assignment"].get("dispatchPath"):
+            load(value["assignment"]["dispatchPath"], retain=True, expected=value["assignment"]["dispatchSha256"])
+        for name in ("transport.json", "handling.json"):
+            item = path.parent / name
+            if not item.is_file():
+                continue
+            content = load(item, retain=True)
+            if content.get("eventId") != value["eventId"]:
+                raise ValueError("Recovery notification effect identity changed")
+            if name == "transport.json":
+                if content.get("checkpointSha256") != value["checkpointSha256"]:
+                    raise ValueError("Recovery notification transport checkpoint changed")
+                guard.validate_queue_response(content.get("queueResponse"), value["assignment"]["parentThreadId"])
+        record = {"assignment": value["assignment"], "generation": value["generation"]}
+        root_index = notifications / "roots" / value["assignment"]["parentThreadId"] / (guard.digest(record) + ".json")
+        if root_index.is_file():
+            if load(root_index, retain=True) != record:
+                raise ValueError("Recovery pending notification root changed")
+        index = notifications / "inbox" / value["assignment"]["parentThreadId"] / (value["eventId"] + ".json")
+        if index.is_file():
+            reference = load(index, retain=True)
+            if actual(reference["path"]) != path or reference["sha256"] != observed[path]:
+                raise ValueError("Recovery pending notification inbox changed")
+    return paths, sorted(registrations), watched, observed
 
 
 def relative(repo, path):
@@ -486,14 +1615,22 @@ def verify_claim_note(claim, source):
         raise ValueError("Original claim authority boundary changed")
 
 
-def load_basis(root, work_ids=None):
+def load_basis(root, work_ids=None, *, metrics=None):
     """The regular prior reader consumes retained revisions, not retired directories."""
     import catalog_authoring.validate_factor_panel as panel
     from catalog_revision_store import RevisionWorkspace
     marker = read(root / "CURATION-BASELINE.json")
     if marker.get("schemaVersion") != "curation-baseline-anchor-v1":
         raise ValueError("Unknown curation basis format")
+    original_repo = absolute_identity(marker["repository"])
+    # Restores preserve the signed marker bytes. Resolve its repository through
+    # the existing restore mapping instead of reading the original live store.
+    from workspace_paths import restored_origins
     repo = Path(marker["repository"])
+    for parent in root.resolve().parents:
+        if (parent / ".catalog-restore.json").is_file() and original_repo in restored_origins(parent):
+            repo = parent
+            break
     if not root.resolve().is_relative_to((repo / BASE).resolve()):
         raise ValueError("Curation basis is outside the authoring store")
     store = None
@@ -502,7 +1639,7 @@ def load_basis(root, work_ids=None):
         if not database.is_file():
             continue
         with closing(sqlite3.connect(database.as_uri() + "?mode=ro", uri=True)) as connection:
-            if connection.execute("PRAGMA user_version").fetchone()[0] != 3:
+            if connection.execute("PRAGMA user_version").fetchone()[0] not in (3, 4):
                 continue
             generation = connection.execute("SELECT value FROM store_meta WHERE key='generation'").fetchone()[0]
         if generation == marker["revision"]["generation"]:
@@ -510,19 +1647,23 @@ def load_basis(root, work_ids=None):
             break
     if store is None:
         raise ValueError("Curation basis generation is unavailable")
-    manifest = root / "MANIFEST.sha256"
-    panel.verify_manifest(root, manifest, {path.relative_to(root).as_posix() for path in root.rglob("*") if path.is_file() and path != manifest})
     anchor = store.get_revision(marker["revision"])["payload"]
-    for name, sha in anchor["pair"].items():
-        if digest((root / name).read_bytes()) != sha:
-            raise ValueError("Curation basis pair changed")
-    for name, sha in anchor.get("reviews", {}).items():
-        if digest((root / key_path(name)).read_bytes()) != sha:
-            raise ValueError("Curation review artifact changed")
+    if work_ids is None:
+        # A full audit still verifies the whole publication. A Work prior is
+        # proven by its stored revision, exact current rows and original sources.
+        manifest = root / "MANIFEST.sha256"
+        panel.verify_manifest(root, manifest, {path.relative_to(root).as_posix() for path in root.rglob("*") if path.is_file() and path != manifest})
+        for name, sha in anchor["pair"].items():
+            if digest(unlinked(root / key_path(name)).read_bytes()) != sha:
+                raise ValueError("Curation basis pair changed")
+        for name, sha in anchor.get("reviews", {}).items():
+            if digest(unlinked(root / key_path(name)).read_bytes()) != sha:
+                raise ValueError("Curation review artifact changed")
     selected = set(anchor["works"]) if work_ids is None else work_ids & set(anchor["works"])
     claims, evidence, legacy = {}, {}, []
-    with closing(store.connect()) as db, closing(sqlite3.connect((root / "catalog-expanded.candidate.sqlite").as_uri() + "?mode=ro", uri=True)) as actual_db:
+    with closing(store.connect()) as db, closing(sqlite3.connect(unlinked(root / "catalog-expanded.candidate.sqlite").as_uri() + "?mode=ro", uri=True)) as actual_db:
         db.execute("BEGIN")
+        actual_db.execute("BEGIN")
         verified = set()
         manifests, csv_cache = {}, {}
 
@@ -539,7 +1680,12 @@ def load_basis(root, work_ids=None):
             owner = "id" if name == "source_works" else "workId"
             if owner in columns:
                 grouped = {}
-                for row in actual_db.execute(f'SELECT * FROM "{name}" ORDER BY sourceOrdinal'):
+                quoted_name = name.replace('"', '""')
+                where = "" if work_ids is None else f' WHERE "{owner}" IN ({",".join("?" for _ in selected)})'
+                for row in actual_db.execute(f'SELECT * FROM "{quoted_name}"{where} ORDER BY sourceOrdinal',
+                                             () if work_ids is None else tuple(sorted(selected))):
+                    if metrics is not None:
+                        metrics["rowsRead"] = metrics.get("rowsRead", 0) + 1
                     item = dict(zip(columns, row))
                     if item[owner] in selected:
                         grouped.setdefault(item[owner], []).append(item)
@@ -551,6 +1697,14 @@ def load_basis(root, work_ids=None):
             work = payload["tables"]["source_works"]
             if len(work) != 1 or work[0]["id"] != wid or work[0]["annotationReviewMethod"] != payload["authorityKind"]:
                 raise ValueError("Curation basis authority kind changed")
+            review = work[0].get("annotationReviewReference")
+            if work_ids is not None and review:
+                name = "data/source/" + key_path(review)
+                expected = anchor.get("reviews", {}).get(name)
+                if expected is None or digest(unlinked(root / key_path(name)).read_bytes()) != expected:
+                    raise ValueError("Curation review artifact changed")
+                if metrics is not None:
+                    metrics["reviewsRead"] = metrics.get("reviewsRead", 0) + 1
             for name, grouped in actual_tables.items():
                 rows = grouped.get(wid, [])
                 if semantic_rows(payload["tables"].get(name, [])) != semantic_rows(rows):
@@ -713,7 +1867,7 @@ def active_dependencies(plan):
             if not isinstance(value, dict):
                 continue
             schema = value.get("schemaVersion")
-            if name.endswith("-STORAGE.json") or name == "CHECKPOINT.json" or schema in {"catalog-compact-work-v1", "catalog-compact-publication-v1"}:
+            if name.endswith("-STORAGE.json") or name == "CHECKPOINT.json" or schema in {"catalog-compact-work-v1", "catalog-compact-work-v2", "catalog-compact-publication-v1", "catalog-compact-publication-v2"}:
                 storage_refs(value)
             if name in {"RUN.json", "external-lineage.json"}:
                 for field in ("baselineRoot", "registryPath", "decisionsPath", "recoveryEpoch"):
@@ -739,7 +1893,7 @@ def active_dependencies(plan):
                     runs = repo / CONTINUATION / "runs"
                     need(runs / "continuation-factor-233-publication-20260909-v1")
                     need(runs / "canonical-promotion-20260910-v2/before/data/source/catalog.sqlite")
-            if schema == "catalog-compact-work-v1":
+            if schema in {"catalog-compact-work-v1", "catalog-compact-work-v2"}:
                 for field in ("input", "authority"):
                     need(value[field]["root"])
             if name == "COMPACT-PUBLICATION.json":
@@ -1059,7 +2213,8 @@ def activate_store(build, verification, *, resume=False):
     active, pending = base / "workspace.sqlite", base / "workspace.next.sqlite"
     backup, next_backup = base / "backups/latest.sqlite", base / "backups/retention-next.sqlite"
     old, old_backup = base / "workspace.retired-v2.sqlite", base / "backups/latest.retired-v2.sqlite"
-    with exclusive(base / "locks/publication.lock", wait=False), exclusive_file(base / "backups/rotation.lock"):
+    with acquire(base / "locks/publication-owner.lock", wait=False), exclusive(base / "locks/publication.lock", wait=False), exclusive_file(base / "backups/rotation.lock"):
+        assert_no_pending(repo)
         if intent_path.exists():
             if not resume:
                 raise ValueError("Interrupted retention cutover exists; use activate --resume with the same build")
@@ -1083,16 +2238,24 @@ def activate_store(build, verification, *, resume=False):
                 if next_store._generation != build["generation"]:
                     raise ValueError("New generation backup is missing or different")
                 with closing(RevisionWorkspace(repo, pending).connect()) as source:
-                    for table, order in (("revision", "id"), ("head", "kind,subject"), ("store_meta", "key")):
+                    for table, order in (("revision", "id"), ("head", "kind,subject")):
                         if source.execute(f"SELECT * FROM {table} ORDER BY {order}").fetchall() != db.execute(f"SELECT * FROM {table} ORDER BY {order}").fetchall():
                             raise ValueError("New backup does not contain the complete staged generation")
+                    source_meta = dict(source.execute("SELECT * FROM store_meta"))
+                    backup_meta = dict(db.execute("SELECT * FROM store_meta"))
+                    if any(backup_meta.get(key) != value for key, value in source_meta.items() if key != "backup_cursor"):
+                        raise ValueError("New backup metadata differs from staged generation")
+                    if source.execute("PRAGMA user_version").fetchone()[0] == 4:
+                        sequence = source.execute("SELECT coalesce(max(seq),0) FROM change_log").fetchone()[0]
+                        if backup_meta.get("backup_cursor") != str(sequence):
+                            raise ValueError("New backup cursor is incomplete")
             if old.exists() or old_backup.exists():
                 raise ValueError("Earlier retired generation still occupies rollback paths")
             state = read(state_path)
             original_state_sha = digest(state_path.read_bytes())
             state["latestCandidate"].update(root=os.path.relpath(build["anchor"], repo / CONTINUATION).replace("\\", "/"),
                 manifestSha256=verification["anchorManifestSha256"], curationBasisGeneration=build["generation"])
-            state["authoringStore"] = {"schemaVersion": 3, "generation": build["generation"], "policy": "curation-evidence-active-v1"}
+            state["authoringStore"] = {"schemaVersion": 4, "generation": build["generation"], "policy": "curation-evidence-active-v1"}
             state["updatedAt"] = utc_now()
             intent = {"schemaVersion": "catalog-retention-cutover-v1", "generation": build["generation"],
                       "oldDatabaseSha256": file_sha(active), "newDatabaseSha256": verification["databaseSha256"],
@@ -1148,7 +2311,8 @@ def prune_retired(cutover_path):
     base = repo / BASE
     if cutover_path.resolve() != (base / "RETENTION-CUTOVER.json").resolve() or cutover["status"] != "ACTIVATED":
         raise ValueError("Only a completed repository retention cutover may be pruned")
-    with exclusive(base / "locks/publication.lock", wait=False):
+    with acquire(base / "locks/publication-owner.lock", wait=False), exclusive(base / "locks/publication.lock", wait=False):
+        assert_no_pending(repo)
         if (base / "RETENTION-MAINTENANCE.json").exists():
             raise ValueError("Finish the pending cutover first")
         state, root = current()
@@ -1194,6 +2358,95 @@ def prune_retired(cutover_path):
         return result
 
 
+def upgrade_store_v4(repo, *, enable_wal=False, resume=False):
+    """One stopped-writer transition with a complete pre-upgrade recovery image."""
+    from catalog_revision_store import RevisionWorkspace, wal_runtime_supported
+    repo = Path(repo).resolve()
+    base = repo / BASE
+    source = base / "workspace.sqlite"
+    state_path = repo / CONTINUATION / "STATE.json"
+    maintenance = base / "RETENTION-MAINTENANCE.json"
+    completed = base / "STORAGE-V4-UPGRADE.json"
+    recovery = base / "backups/pre-v4.sqlite"
+    if enable_wal and not wal_runtime_supported():
+        raise ValueError("Use the configured patched SQLite runtime before enabling WAL")
+    with acquire(base / "locks/publication-owner.lock", wait=False), acquire(base / "locks/publication.lock", wait=False):
+        assert_no_pending(repo)
+        if completed.is_file() and not maintenance.is_file():
+            result = read(completed)
+            with closing(sqlite3.connect(source.as_uri() + "?mode=ro", uri=True)) as db:
+                if db.execute("PRAGMA user_version").fetchone()[0] != 4:
+                    raise ValueError("Completed migration no longer matches the active schema")
+            if read(state_path).get("authoringStore", {}).get("generation") != result["generation"]:
+                raise ValueError("Completed migration no longer matches STATE")
+        else:
+            if maintenance.is_file():
+                if not resume:
+                    raise ValueError("Interrupted storage upgrade exists; use upgrade-v4 --resume")
+                intent = read(maintenance)
+                if intent.get("schemaVersion") != "catalog-storage-v4-upgrade-v1":
+                    raise ValueError("Another retention operation owns the maintenance boundary")
+                if intent["enableWal"] != enable_wal:
+                    raise ValueError("Resume must retain the original journal mode choice")
+            else:
+                with closing(sqlite3.connect(source.as_uri() + "?mode=ro", uri=True)) as db:
+                    if db.execute("PRAGMA user_version").fetchone()[0] != 3:
+                        raise ValueError("Only the current v3 store can start this transition")
+                    generation = db.execute("SELECT value FROM store_meta WHERE key='generation'").fetchone()[0]
+                if recovery.exists():
+                    raise ValueError("An unbound pre-v4 recovery image already exists; inspect it before transition")
+                intent = {"schemaVersion": "catalog-storage-v4-upgrade-v1", "generation": generation,
+                          "enableWal": enable_wal, "oldStateSha256": file_sha(state_path),
+                          "oldState": read(state_path), "recovery": str(recovery), "createdAt": utc_now()}
+                write(maintenance, intent)
+            if not intent.get("recoverySha256"):
+                recovery.parent.mkdir(parents=True, exist_ok=True)
+                # Recreating this named, unverified copy cannot discard evidence:
+                # the primary has not yet been upgraded and stays maintenance-locked.
+                with closing(sqlite3.connect(source.as_uri() + "?mode=ro", uri=True)) as original:
+                    if original.execute("PRAGMA user_version").fetchone()[0] != 3:
+                        raise ValueError("Missing recovery proof after source transition")
+                    with closing(sqlite3.connect(recovery)) as saved:
+                        original.backup(saved)
+                        if saved.execute("PRAGMA integrity_check").fetchall() != [("ok",)]:
+                            raise ValueError("Pre-upgrade recovery image is corrupt")
+                        for table, order in (("revision", "id"), ("head", "kind,subject")):
+                            query = f"SELECT * FROM {table} ORDER BY {order}"
+                            if original.execute(query).fetchall() != saved.execute(query).fetchall():
+                                raise ValueError("Pre-upgrade recovery image is incomplete")
+                intent["recoverySha256"] = file_sha(recovery)
+                write(maintenance, intent)
+            elif file_sha(recovery) != intent["recoverySha256"]:
+                raise ValueError("Pre-upgrade recovery image changed")
+            store = RevisionWorkspace(repo, source)
+            upgraded = store.upgrade_v4(enable_wal=enable_wal)
+            if upgraded["generation"] != intent["generation"]:
+                raise ValueError("Storage generation changed during schema transition")
+            initial_backup = store.backup()
+            current = read(state_path)
+            if current == intent["oldState"]:
+                if file_sha(state_path) != intent["oldStateSha256"]:
+                    raise ValueError("STATE bytes changed during storage transition")
+                next_state = {**current, "authoringStore": {"schemaVersion": 4,
+                    "generation": intent["generation"], "policy": "curation-evidence-active-v1",
+                    "journalMode": upgraded["journalMode"], "sqliteVersion": sqlite3.sqlite_version}}
+                write(state_path, next_state)
+            elif (current.get("authoringStore", {}).get("schemaVersion") != 4
+                  or current["authoringStore"]["generation"] != intent["generation"]):
+                raise ValueError("STATE advanced outside the stopped-writer transition")
+            for database in (source, base / "backups/latest.sqlite"):
+                with closing(RevisionWorkspace(repo, database).connect()) as db:
+                    if db.execute("PRAGMA user_version").fetchone()[0] != 4:
+                        raise ValueError("Storage upgrade readback failed")
+            result = {**intent, **upgraded, "status": "ACTIVATED", "stateSha256": file_sha(state_path),
+                      "backup": initial_backup, "completedAt": utc_now()}
+            write(completed, result)
+            maintenance.unlink()
+    # A failed final boundary resumes here without repeating the schema change.
+    result["storage"] = RevisionWorkspace(repo, source).persist([state_path, completed], "storage-v4:activated", phase_boundary=True)
+    return result
+
+
 def main():
     import argparse
     from catalog_revision_store import RevisionWorkspace
@@ -1216,6 +2469,9 @@ def main():
     prune.add_argument("--cutover", type=Path, required=True)
     gc = commands.add_parser("gc")
     gc.add_argument("--apply", action="store_true")
+    upgrade = commands.add_parser("upgrade-v4")
+    upgrade.add_argument("--enable-wal", action="store_true")
+    upgrade.add_argument("--resume", action="store_true")
     args = parser.parse_args()
     if args.action == "plan":
         result = make_plan(Path(__file__).resolve().parents[1], args.output)
@@ -1235,13 +2491,20 @@ def main():
         result = activate_store(read(args.build), read(args.verification), resume=args.resume)
     elif args.action == "prune-retired":
         result = prune_retired(args.cutover)
+    elif args.action == "upgrade-v4":
+        result = upgrade_store_v4(Path(__file__).resolve().parents[1], enable_wal=args.enable_wal, resume=args.resume)
+        result = {key: result[key] for key in ("status", "schemaVersion", "generation", "journalMode", "recovery", "recoverySha256", "storage")}
     else:
         store = Workspace()
         if not getattr(store, "is_revision_store", False):
             raise ValueError("GC requires an activated revision store")
-        result = store.gc(apply=args.apply)
         if args.apply:
+            with acquire(store.repo / BASE / "locks/publication-owner.lock"), acquire(store.repo / BASE / "locks/publication.lock"):
+                assert_no_pending(store.repo)
+                result = store.gc(apply=True)
             result["backup"] = store.backup()
+        else:
+            result = store.gc()
     print(json.dumps(result, ensure_ascii=False))
 
 

@@ -5,12 +5,14 @@ from __future__ import annotations
 import argparse
 import importlib.util
 import json
+import os
 import re
 import shutil
 import sys
 import time
 from datetime import datetime, timezone
 from pathlib import Path
+from urllib.parse import urlsplit
 
 import publish_factor_batch as publisher
 import validate_factor_panel as panel
@@ -226,14 +228,14 @@ def validate_context_evidence(job: dict, facts: dict, packets: dict) -> None:
 
 def preflight(job: dict, baseline: Path, registry_path: Path, *, recovery: bool = False) -> tuple[dict, dict, dict]:
     """Check real publisher identity/bibliography before freezing or numerical review."""
-    publisher._verify_result_manifest(baseline)
+    ids = {row["workId"] for row in job["works"]}
+    publisher._verify_result_manifest(baseline, work_ids=ids)
     catalog_path = baseline / "catalog-expanded.candidate.sqlite"
     if registry_path.resolve() != (baseline / "catalog-source-registry.candidate.sqlite").resolve():
         from correct_factor_registry import verify_correction
         verified = verify_correction(registry_path.parent, baseline / "catalog-source-registry.candidate.sqlite", catalog_path)
         require(verified.resolve() == registry_path.resolve(), "registry correction target mismatch")
     backend = publisher._backend_module()
-    ids = {row["workId"] for row in job["works"]}
     require(not ids.intersection(panel.read_json(REPO / "data/staging/catalog-expansion/gold-set-manifest.json")["workIds"]), "protected Gold work")
     facts = backend._baseline_facts(catalog_path)
     registry = backend.ensure_registry(registry_path, ids, panel.sha256(catalog_path))
@@ -313,6 +315,33 @@ def provenance_roots(value):
 
 def capture_files(root: Path, *, recursive=False) -> dict:
     files = {}
+    session_path = unlinked(root / "collection-session.json")
+    session = panel.read_json(session_path) if session_path.is_file() else {}
+    supplemental = session.get("supplementalFiles", [])
+    require(isinstance(supplemental, list), "NEEDS_PROVENANCE_BINDING: invalid supplemental files")
+    declared, originals = set(), set()
+    for item in supplemental:
+        panel.exact_dict(item, {"path", "sha256", "bytes", "originalPath"}, "supplemental provenance")
+        require(isinstance(item["path"], str) and re.fullmatch(r"supplemental/input-\d+-[^/\\]+", item["path"]),
+                "NEEDS_PROVENANCE_BINDING: invalid supplemental path")
+        path = unlinked(panel._safe_child(root, item["path"]))
+        require(path.is_relative_to(root / "supplemental") and item["path"] not in declared,
+                "NEEDS_PROVENANCE_BINDING: duplicate or invalid supplemental path")
+        require(isinstance(item["originalPath"], str) and Path(item["originalPath"]).is_absolute()
+                and type(item["bytes"]) is int and item["bytes"] >= 0 and isinstance(item["sha256"], str)
+                and panel.SHA_RE.fullmatch(item["sha256"]), "NEEDS_PROVENANCE_BINDING: invalid supplemental binding")
+        original = os.path.normcase(os.path.normpath(item["originalPath"]))
+        require(original not in originals, "NEEDS_PROVENANCE_BINDING: duplicate supplemental original")
+        originals.add(original)
+        require(path.is_file(), f"NEEDS_PROVENANCE_BINDING: missing supplemental file: {path}")
+        body = path.read_bytes()
+        require(len(body) == item["bytes"] and panel.sha256_bytes(body) == item["sha256"],
+                f"NEEDS_PROVENANCE_BINDING: supplemental bytes changed: {path}")
+        declared.add(item["path"])
+        files[item["path"]] = item["sha256"]
+    supplemental_root = unlinked(root / "supplemental")
+    actual = {unlinked(path).relative_to(root).as_posix() for path in supplemental_root.iterdir()} if supplemental_root.exists() else set()
+    require(actual == declared, "NEEDS_PROVENANCE_BINDING: supplemental membership changed")
     for receipt_path in sorted(root.rglob("*.json") if recursive else root.glob("*.json")):
         if not receipt_path.name.startswith(("capture-", "web-response-")) or receipt_path.name.endswith(".publisher-receipt.json"):
             continue
@@ -326,7 +355,38 @@ def capture_files(root: Path, *, recursive=False) -> dict:
         require(panel.sha256_bytes(body) == receipt.get("sha256") and len(body) == receipt.get("bytes"),
                 f"NEEDS_PROVENANCE_BINDING: raw capture/receipt mismatch: {receipt_path}")
         files[body_path.relative_to(root).as_posix()] = receipt["sha256"]
+        publisher_receipt = unlinked(receipt_path.with_name(receipt_path.stem + ".publisher-receipt.json"))
+        if publisher_receipt.is_file():
+            published = panel.read_json(publisher_receipt)
+            require(all(published.get(key) == receipt.get(key) for key in ("url", "resolvedUrl", "status", "sha256", "bytes"))
+                    and published.get("fetchedAt") == receipt.get("observedAt") and receipt.get("kind") == "http-body"
+                    and receipt.get("status") == 200 and receipt.get("complete") is True,
+                    f"NEEDS_PROVENANCE_BINDING: publisher receipt differs from raw capture: {publisher_receipt}")
+            files[publisher_receipt.relative_to(root).as_posix()] = panel.sha256(publisher_receipt)
     return files
+
+
+def user_source_binding(root: Path, works: dict) -> dict:
+    """The documented per-Work lead namespace is a hint, never authority."""
+    files = {}
+    for wid in sorted(works):
+        require(re.fullmatch(r"work-[0-9a-f]{20}", wid) is not None, "invalid user-source Work")
+        path = unlinked(panel._safe_child(root, wid + ".json"))
+        require(path.is_file(), f"NEEDS_PROVENANCE_BINDING: no user-source lead for {wid}; omit this optional lead root")
+        value = panel.read_json(path)
+        panel.exact_dict(value, {"workId", "title", "creators", "publisher", "isbn", "sources"}, "user-source lead")
+        require(value["workId"] == wid and all(isinstance(value[key], str) for key in ("title", "creators", "publisher", "isbn"))
+                and re.fullmatch(r"[0-9]{13}", value["isbn"]) is not None and isinstance(value["sources"], list),
+                f"NEEDS_PROVENANCE_BINDING: user-source Work/schema mismatch: {path}")
+        for source in value["sources"]:
+            require(isinstance(source, dict), "invalid user-source entry")
+            panel.exact_dict(source, {"url", "kind", "points"} | ({"readingScope"} if "readingScope" in source else set()), "user-source entry")
+            url = urlsplit(source["url"]) if isinstance(source["url"], str) else None
+            require(url is not None and url.scheme in {"http", "https"} and bool(url.hostname)
+                    and source["kind"] in {"official", "review"} and isinstance(source["points"], str)
+                    and (source.get("readingScope") is None or isinstance(source["readingScope"], str)), "invalid user-source entry")
+        files[path.name] = panel.sha256(path)
+    return {"root": str(root), "bindingKind": "user-source-leads", "workIds": sorted(works), "files": files}
 
 
 def capture_bindings(job_path: Path, provenance=None) -> list[dict]:
@@ -352,21 +412,12 @@ def capture_bindings(job_path: Path, provenance=None) -> list[dict]:
         require(root.is_dir() and not root.is_symlink() and not root.is_junction(), f"NEEDS_PROVENANCE_BINDING: invalid collection: {root}")
         session = unlinked(root / "collection-session.json")
         if not session.is_file():
-            # Existing explicit legacy roots remain usable, never auto-discovered.
-            # Their files are operator-bound input, not certified same-Work evidence.
-            require(root in explicit, f"NEEDS_PROVENANCE_BINDING: missing collection session: {root}")
-            files = {}
-            for path in root.rglob("*"):
-                unlinked(path)
-                if path.is_file():
-                    files[path.relative_to(root).as_posix()] = panel.sha256(path)
-            require(bool(files), f"NEEDS_PROVENANCE_BINDING: empty explicit provenance: {root}")
-            for name in files:
-                if Path(name).name == "collection-session.json":
-                    require(panel.read_json(root / name).get("workId") in works, f"NEEDS_PROVENANCE_BINDING: collection Work mismatch: {root / name}")
-            files.update(capture_files(root, recursive=True))
-            bindings.append({"root": str(root), "bindingKind": "explicit-legacy", "workIds": sorted(works), "files": files})
-            continue
+            if root == artifact_path(REPO / ".workspace/user-sources").resolve():
+                bindings.append(user_source_binding(root, works))
+                continue
+            raise panel.ValidationError(f"NEEDS_PROVENANCE_BINDING: {root} has no Work-bound collection session; "
+                "use collect_factor_evidence.mjs start <assigned-dir> <workId> --input <exact-file> (repeat as needed), "
+                "complete its research through the existing write command, and use that collection as --provenance-root")
         work_id = panel.read_json(session).get("workId")
         require(work_id in works, f"NEEDS_PROVENANCE_BINDING: collection Work mismatch: {root}")
         refs = research.get(root, {})
@@ -598,7 +649,7 @@ def seal_result(output: Path, ledger_path: Path | None, baseline: Path, registry
     require(not result_root.exists(), f"refusing result overwrite: {result_root}")
     info, chunks, digest = publisher.validate_input(input_root)
     require(len(chunks) == 1, "this data entry point emits one bounded chunk")
-    publisher._verify_input_identities(input_root, baseline / "catalog-expanded.candidate.sqlite", registry_path, REPO)
+    _, canonical_rebase = publisher._verify_current_input_identities(input_root, baseline / "catalog-expanded.candidate.sqlite", registry_path, REPO)
     lineage = panel.read_json(input_root / "external-lineage.json")
     require(panel.sha256(baseline / "MANIFEST.sha256") == lineage["baselineManifestSha256"], "baseline lineage changed")
     chunk = chunks[0]
@@ -663,6 +714,10 @@ def seal_result(output: Path, ledger_path: Path | None, baseline: Path, registry
     require(panel.sha256(source_path) == source_digest, "adjudication source changed during seal; partial output is not usable")
     report = {"status": "PASS", "stage": "RESULT_SEALED", "validation": validation, "works": summaries, "ledgerSourceSha256": source_digest if ledger_path else None, "adjudicationSourceKind": "structured-decisions" if decisions_path else "ledger", "adjudicationSourceSha256": source_digest, "resultManifestSha256": panel.sha256(result / "PANEL-RESULT.sha256"), "sealResultSeconds": time.perf_counter() - started, "semanticReviewSeconds": None, "published": False}
     report.update(frozenOutputRoot=str(output.resolve()), inputManifestSha256=digest)
+    if canonical_rebase is not None:
+        rebase_path = destination / "canonical-rebase.json"
+        write_json(rebase_path, canonical_rebase)
+        report["canonicalRebase"] = {"path": rebase_path.name, "sha256": panel.sha256(rebase_path)}
     write_json(destination / "PREPARATION-REPORT.json", report)
     manifest(destination)
     return report

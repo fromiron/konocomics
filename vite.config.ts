@@ -49,6 +49,8 @@ export default defineConfig({
     watch: {
       ignored: [
         "**/.tmp/**",
+        "**/.workspace/**",
+        "**/data/local/catalog-authoring/**",
         "**/.output/**",
         "**/.pnpm-store/**",
         "**/.qa/**",

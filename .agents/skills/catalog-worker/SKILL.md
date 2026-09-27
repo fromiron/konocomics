@@ -16,13 +16,15 @@ description: konocomics의 고정 작업 세션에서 배정된 작품 목록을
 
 **한 세션의 현재 배치 전체 수집·gap 보완을 먼저 끝낸 뒤 판정 단계로 전환한다.** 작품마다 수집→판정을 교차하지 않는다. 수집 단계에서는 독립 URL 요청과 읽기 전용 검사를 안전하게 묶고, 공통 선정/추천 원문은 한 번 저장한 자료를 작품별 실제 연결 근거와 함께 재사용한다. 원문·scope·출처 독립성 검사는 생략하지 않는다. 수집 완료는 URL 확보만이 아니라 판정에 필요한 자료 확인 또는 출처 소진에 따른 INSUFFICIENT의 기록이다. PASS 목표치를 강제하지 않는다.
 
-수집 배치 완료·저장/백업 보고 후 부모의 판정 전환 신호를 받는다. 판정 단계에서는 한 작품의 frozen 입력만 읽고 prepare/check를 연속 수행하며 정상 작품마다 부모와 왕복하지 않는다. 기존 유효 판정은 재사용한다. 배정된 판정 전건 완료 후 조정자가 배치 확인·직렬 승격한다. 다른 세션의 단계 완료를 기다리지는 않는다.
+수집 배치 완료·검증·백업·통지 후 dispatch 정책으로 전환한다. 새 일반 배정의 `phase="collection"`, `transitionPolicy="auto-after-collection"`은 기존 `transition-collection` 명령이 현재 turn·generation·중단 상태·실제 완료 receipt를 확인한 뒤 같은 세션에서 판정으로 전환한다. 명시적 `collection-only`와 정책이 없는 기존 배정은 부모 신호를 기다린다. 판정 dispatch는 원 summary path/SHA와 collection ERROR를 보존하고 오류 작품을 제외한다. 공통 오류·전건 오류·사용자 중단이면 자동 전환하지 않는다. 판정 단계에서는 작품별 frozen 입력만 읽고 prepare/check를 연속 수행하며 정상 작품마다 부모와 왕복하지 않는다. 기존 유효 판정은 재사용한다. 조정자는 판정 배치 완료 후 확인·직렬 승격하며 다른 세션의 완료를 기다리지 않는다.
 
 ## 시작·재개
 
 - 배치/작품 ID, 본인 threadId·부모 ID, 기준·입출력 경로를 확인한다. 불일치는 부모에 보고한다. 계약·스킬은 세션 시작 때 읽고 버전 변경 시 갱신한다.
 - 조사에 필요한 독립적인 작품·출처가 있으면 서브에이전트에 겹치지 않는 범위와 반환 근거·URL을 지정할 수 있다. 같은 작품의 근거 결속과 최종 판정은 이 세션이 맡고, 공유 DB·registry·STATE·발행 변경은 병렬 위임하지 않는다.
 - 배정 인덱스와 현재 작품의 brief·research/prior/HOLD·receipt만 읽는다. 전체 STATE·과거 채팅·전체 후보 DB를 작품마다 재탐색하지 않는다. 완료된 결과는 해시 확인 후 재사용한다.
+- 물리 작업 자료가 없으면 [저장 계약 R1~R9](../../../docs/catalog-expansion/03-local-authoring-storage.md#db-중심-복구-요구사항)에 따라 기본 `restore`로 workspace DB를 복구한 뒤 기존 runner에 명시 run/Work를 전달한다. 해당 명령이 필요한 자료만 추출하며 미추출 파일은 삭제가 아니다. 과거 전체 폴더 재생성을 선행하지 않는다. generation·turn·중단 상태를 보존하고 과거 판정을 다시 만들지 않는다.
+- 현재 판정은 완료 여부를 포함해 Work별 최신 유효 판정으로 확인한다. 최신 READY가 완료됐다는 이유로 이전 HOLD나 READY를 재개하지 않으며 READY/HOLD를 상태별로 따로 보존·재개할 대상으로 고르지 않는다. 실제 미완료 summary가 특정 CHECKED/SHA를 요구하는 경우만 그 정확한 과거 의존을 유지한다.
 - 현재 배치 단계 안에서 다음 작품은 저장된 결과/checkpoint를 남긴 뒤 자율 진행한다. 목록 밖 작품이나 다른 세션의 작업을 가져오지 않는다. 중단·문맥 압축 후에는 checkpoint와 현재 frozen 입력 경계를 확인한다.
 
 ## 수집·동결
@@ -30,11 +32,12 @@ description: konocomics의 고정 작업 세션에서 배정된 작품 목록을
 - 원문 결속: 새 run의 direct research collection은 Work/session·research SHA·raw receipt SHA/bytes 검증 후 자동 동결한다. 추가 완성 collection은 `--provenance-root`를 반복 지정한다. `MODEL-INPUT.json.inputAccess`·source별 `rawLookupPaths`를 확인하고 이미 확보한 raw가 빠졌다면 판정 전에 결속을 고친다. `NEEDS_PROVENANCE_BINDING`은 준비 오류이지 내용 HOLD가 아니다. observations-only 자료도 유효할 수 있으므로 raw 부재만으로 탈락시키지 않는다. 새 원문/registry/recovery는 새 run에 넣으며 과거 frozen·PREPARED·판정 SHA를 수정하지 않는다.
 
 - [수집 지침](../../../docs/catalog-expansion/factor-collector-instructions.md)을 따른다. 기존 유효 raw·research·receipt를 먼저 재사용하고 `.workspace/user-sources/<workId>.json`의 제공 URL을 다음으로 확인한다. points는 원문 근거가 아니다.
+- 새 freeze에 정식 리드 루트를 전달해도 현재 Work의 JSON만 결속한다. 여러 작품의 사용자 원본 폴더를 통째로 `--provenance-root`로 복사하지 않는다. session 없는 PDF·메모·raw 파일은 `collect_factor_evidence.mjs start <assigned-dir> <workId> --input <정확한-파일>`의 반복 옵션으로 해당 Work collection에 결속한 뒤 기존 research 작성과 `prepare --provenance-root <collection>`을 사용한다. 필요한 파일이 선택되지 않은 `NEEDS_PROVENANCE_BINDING`은 준비 오류이며 내용 HOLD가 아니다. 원문 의미·실제 독해·HTTP 사실은 이 파일 결속이 대신하지 않는다.
 - 추가 검색은 횟수 상한 대신 실제 gap과 새 정보로 판단한다. 구체적 gap을 해결할 새 출처·관찰이 나오면 계속하고, 충분하면 종료한다. 같은 내용만 반복되거나 관련 접근 경로를 소진하면 HOLD 사유·재개 조건을 남긴다. Art·전권·더 좋은 리뷰·known 축 최대화를 위해 연장하지 않는다.
 - 추천 맥락에 필요한 registry `supportEvidenceUrls`의 작품 선정/추천 원문도 수집·결속한다. v3의 `contextEvidenceId=null`은 의도된 미판정 상태다. schema context ID가 빈 문자열뿐이면 채택 가능한 support URL 원문이 빠졌는지 확인하고 새 research/run revision을 만든다. 스키마를 완화하거나 ID를 임의로 채우지 않는다. 낡은 registry URL로 연결할 수 없으면 정확한 gap을 보고한다.
 - 같은 리뷰·수상/선정 URL은 작품별 실제 언급과 범위를 확인해 재사용한다. URL과 `evidenceId`를 동일시하지 않는다. 기존 ID는 저장된 Work·source·추천 문맥 결속이 완전히 같을 때만 재사용한다. 같은 URL이라도 새 결속이나 기존 선정 provenance와 충돌하면 새 source ID를 새 입력 revision에 넣고 과거 행·frozen·CHECKED를 보존한다. [AEP 계약](../../../docs/catalog-expansion/02-authorized-evidence-panel-v1.md)의 근거 ID 규칙을 따른다.
 - Work·ISBN·판본·리뷰 독립성·실제 읽은 범위를 확인한다. 대표판이 6권이면 조용히 1권으로 바꾸지 않는다. 원문·관찰·출판사 소개·서지 receipt를 기존 collector helper로 보존한다. 비밀키·유료 서비스·인증/차단 우회는 조사 수단으로 추가하지 않는다.
-- 새 유효 원문·gap은 즉시 영구 저장한다. 수집 배치 완료의 백업·보고와 부모의 판정 전환 후 같은 세션이 기존 준비 helper로 동결한다. 동결 전 수치 판정이나 공유 DB 수동 수정은 하지 않는다. 수집 중 정상 작품마다 부모의 응답을 기다리지 않는다.
+- 새 유효 원문·gap은 즉시 영구 저장한다. 수집 배치 완료의 검증·백업·통지와 dispatch 정책에 따른 전환 후 같은 세션이 기존 준비 helper로 동결한다. 시스템 오류는 실제 실패 artifact·재개 조건을 가진 `ERROR`로 남기며 `INSUFFICIENT`·조사 소진으로 바꾸지 않는다. 동결 전 수치 판정이나 공유 DB 수동 수정은 하지 않는다. 수집 중 정상 작품마다 부모의 응답을 기다리지 않는다.
 
 ## 수집 반복 비용 줄이기
 
@@ -71,7 +74,7 @@ description: konocomics의 고정 작업 세션에서 배정된 작품 목록을
 - 신규 배정 50작품은 목록 크기다. 기존 100작품 배정은 완료 또는 정확한 부분 상태까지 보존한다. 모든 항목이 결과 또는 오류로 기록되면 배치 완료를 알린다. 마지막 작은 묶음도 같은 절차다. 한 작품의 유효 HOLD/개별 오류는 보존하고 다음 독립 작품을 진행한다. 여러 작품에 영향을 주는 공통 결함은 즉시 보고하고 의존 작업을 멈춘다.
 - 배치 summary와 작품별 경로·최종 SHA·입력 결속·상태·gap·단계별 시간/usage·백업 receipt를 보존한다. READY 행은 `checkedPath`·`checkedSha256`·`checkStorage`(snapshot/backup)를 포함한다. 발행 도구는 그 SHA로 검증한 CHECKED의 판정·입력 SHA를 읽으므로 `decisionsSha256`·`inputManifestSha256`의 중복 기재는 선택이며 기재 시 일치해야 한다. 필드는 실제 CHECKED와 저장 receipt에서 가져오며 누락된 backup을 문자열로 만들어 채우지 않는다. `CATALOG_BATCH_COMPLETE: batchId=...; summaryPath=...; sha256=...`를 지정 부모에 한 번 전송하고 실제 성공 응답을 확인한다. 사용자 중단·쿼터 종료는 부분 결과로 보고한다.
 - 배치 시작 시 notification_guard register-batch를 등록한다. 결과·백업 확인 뒤 `enqueue --session <ID>`로 불변 완료 이벤트를 보존하고 실제 전송 응답을 stdin으로 전달해 `ack --event <eventId> --sha <checkpoint SHA>`한다. 부분/사용자 중단도 같은 event ID로 ACK하며 중단 턴은 재활성화하지 않는다. 부분 중단은 `enqueue --checkpoint <부분 보고 JSON> --kind partial-stop`, 사용자 중단은 `--kind user-stop`으로 기록한다. 필드는 [명령 계약](../../../scripts/catalog_authoring/README.md)을 따른다. 다음 정상 배치 저장에 `notification-events/`와 부모 inbox 인덱스·roots 등록도 포함하며 이벤트마다 별도 전체 백업을 반복하지 않는다. 전송 ACK와 부모 consumed ACK는 별개이고, 통지 실패 때문에 수집·판정을 다시 하지 않는다.
-- 자체 응답 분량 판단이나 임의 소량 처리 수를 종료 사유로 삼지 않는다. 문맥 압축 후에는 checkpoint에서 계속한다. 전체 배치 판정·CHECKED·요약·백업·완료 통지를 마치고, 다음 묶음이 예약 배정되어 있으면 부모 발행을 기다리지 않고 새 수집을 시작해 전환을 보고한다. 예약 목록이 없으면 다음 배정을 요청한다. 새 배치도 전체 수집 완료 후 부모의 판정 전환 신호를 받는다. 별도 상태 질문이나 매 작품 COLLECTION_READY/SOL_COMPLETE 왕복을 추가하지 않는다. 기존 단일 작품 등록의 통지 수신은 [운영 예외 처리](../../../docs/catalog-expansion/01a-promotion-method-operational-amendment.md)의 해당 형식을 따른다.
+- 자체 응답 분량 판단이나 임의 소량 처리 수를 종료 사유로 삼지 않는다. 문맥 압축 후에는 checkpoint에서 계속한다. 전체 배치 판정·CHECKED·요약·백업·완료 통지를 마치고, 다음 묶음이 예약 배정되어 있으면 부모 발행을 기다리지 않고 새 수집을 시작해 전환을 보고한다. 예약 목록이 없으면 다음 배정을 요청한다. 새 배치도 전체 수집 완료 후 해당 dispatch 정책으로 전환한다. 별도 상태 질문이나 매 작품 COLLECTION_READY/SOL_COMPLETE 왕복을 추가하지 않는다. 기존 단일 작품 등록의 통지 수신은 [운영 예외 처리](../../../docs/catalog-expansion/01a-promotion-method-operational-amendment.md)의 해당 형식을 따른다.
 
 ## N/T 예외 입력
 

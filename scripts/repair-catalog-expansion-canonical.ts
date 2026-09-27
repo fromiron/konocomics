@@ -25,6 +25,11 @@ import {
 import { formatSourceIssue, hasErrors } from "./catalog/report";
 import { runPromotionRegistry } from "./build-promotion-registry";
 import { publishDirectorySet } from "./promote-g2-catalog";
+import {
+  canonicalRepairResultSchema,
+  maintenanceLockHeld,
+  runLockedMaintenance,
+} from "./catalog-maintenance";
 import { loadCatalogExpansion, validateCatalogExpansion } from "./validate-catalog-expansion";
 
 type CanonicalRepair = {
@@ -445,6 +450,9 @@ export function repairCatalogExpansionCanonical(
   root = process.cwd(),
 ) {
   const resolvedRoot = resolve(root);
+  if (mode === "apply" && !maintenanceLockHeld(resolvedRoot)) {
+    return runLockedMaintenance(resolvedRoot, "canonical-repair", canonicalRepairResultSchema);
+  }
   const sourceDirectory = join(resolvedRoot, SOURCE_DIRECTORY);
   if (!existsSync(join(sourceDirectory, CATALOG_DATABASE_FILE))) {
     return repairCatalogExpansionCanonicalFromCsv(mode, resolvedRoot);

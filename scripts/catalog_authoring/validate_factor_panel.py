@@ -6,6 +6,7 @@ from __future__ import annotations
 import coverage_exception as nt
 
 import argparse
+import copy
 import csv
 import hashlib
 import json
@@ -17,6 +18,7 @@ import sys
 import types
 from collections import defaultdict
 from contextlib import closing, contextmanager
+from contextvars import ContextVar
 from pathlib import Path, PurePosixPath
 from authoring_paths import REPO, ROOT, LEGACY, artifact_path
 from urllib.parse import urlsplit
@@ -121,21 +123,51 @@ class ValidationError(ValueError):
     pass
 
 
-_manifest_verification_cache: dict[tuple[str, str], dict[str, str]] | None = None
+class _ValidationScope:
+    def __init__(self):
+        self.manifests: dict[tuple[str, str], dict[str, str]] = {}
+        self.authorities: dict[tuple, tuple[dict, dict, frozenset[Path]]] = {}
+        self.frames: list[dict] = []
+
+
+_validation_scope: ContextVar[_ValidationScope | None] = ContextVar("factor_validation_scope", default=None)
+
+
+def _scope_variable():
+    # The publisher also loads this module under an isolated name. Its nested
+    # single-pass validator imports the canonical name: share one operation
+    # scope so that crossing that boundary cannot repeat the prior DAG.
+    import validate_factor_panel as canonical
+    return canonical._validation_scope
 
 
 @contextmanager
 def manifest_verification_cache():
-    """Reuse exact manifest checks only inside one locked publication batch."""
-    global _manifest_verification_cache
-    previous = _manifest_verification_cache
-    if previous is None:
-        _manifest_verification_cache = {}
+    """Reuse verified immutable artifacts only inside one publication operation.
+
+    The caller owns the immutable inputs for the scope and verifies its source
+    identities before committing. Every memo hit rechecks manifest/sidecar
+    bytes; this is not a process-wide cache or a mutable-file freshness check.
+    """
+    variable = _scope_variable()
+    token = variable.set(_ValidationScope()) if variable.get() is None else None
     try:
         yield
     finally:
-        if previous is None:
-            _manifest_verification_cache = None
+        if token is not None:
+            variable.reset(token)
+
+
+def _observe_prior_dependency(path: Path, identity: str | None) -> None:
+    scope = _scope_variable().get()
+    if scope is not None and scope.frames:
+        scope.frames[-1]["bindings"][path.absolute()] = identity
+
+
+def _prior_file_identity(path: Path) -> str | None:
+    if path.is_symlink():
+        raise ValidationError(f"linked prior authority artifact: {path}")
+    return sha256_bytes(path.read_bytes()) if path.is_file() else None
 
 
 def sha256_bytes(data: bytes) -> str:
@@ -174,8 +206,10 @@ def verify_manifest(base: Path, manifest: Path, expected_paths: set[str]) -> dic
     if not raw or b"\r" in raw or not raw.endswith(b"\n") or raw.endswith(b"\n\n"):
         raise ValidationError(f"non-canonical manifest bytes: {manifest}")
     cache_key = (str(resolved_base), sha256_bytes(raw))
-    if _manifest_verification_cache is not None and cache_key in _manifest_verification_cache:
-        entries = _manifest_verification_cache[cache_key]
+    _observe_prior_dependency(manifest, cache_key[1])
+    scope = _scope_variable().get()
+    if scope is not None and cache_key in scope.manifests:
+        entries = scope.manifests[cache_key]
         if set(entries) != expected_paths:
             raise ValidationError(f"manifest membership mismatch: {manifest}")
         return dict(entries)
@@ -198,8 +232,8 @@ def verify_manifest(base: Path, manifest: Path, expected_paths: set[str]) -> dic
         raise ValidationError(f"manifest paths are not sorted: {manifest}")
     if set(entries) != expected_paths:
         raise ValidationError(f"manifest membership mismatch: {manifest}")
-    if _manifest_verification_cache is not None:
-        _manifest_verification_cache[cache_key] = dict(entries)
+    if scope is not None:
+        scope.manifests[cache_key] = dict(entries)
     return entries
 
 
@@ -627,6 +661,71 @@ def load_prior_authority(
     _sealed_inputs: dict[Path, Path] | None = None,
 ) -> dict[str, object]:
     """Resolve prior claims from manifest-bound source bundles, never labels."""
+    scope = _scope_variable().get()
+    if scope is None:
+        return _load_prior_authority(input_root, baseline, extra_bundles, work_ids,
+            _active_roots=_active_roots, _sealed_inputs=_sealed_inputs)
+
+    input_root = input_root.resolve()
+    # Recovery reads mutable baseline rows and external epoch state. Keep that
+    # validation live, including when reached from an otherwise cacheable DAG.
+    recovery = any((input_root / "chunks").glob("chunk-??/recovery-declaration.json"))
+    paths = {input_root / name for name in (
+        "PANEL-INPUT.sha256", "prior-authority.json", "external-prior-authority.json",
+        "prior-claim-decisions.csv", "external-lineage.json",
+    )}
+    if baseline is not None:
+        paths.add(baseline.parent / "MANIFEST.sha256")
+    paths.update(artifact_path(root) / "MANIFEST.sha256" for root, _ in extra_bundles)
+    paths.update(path / "PANEL-INPUT.sha256" for path in (_sealed_inputs or {}).values())
+    bindings = {path.absolute(): _prior_file_identity(path) for path in paths}
+    key = (
+        input_root, baseline.resolve() if baseline is not None else None,
+        tuple((artifact_path(root).resolve(), digest) for root, digest in extra_bundles),
+        tuple(sorted(work_ids)) if work_ids is not None else None,
+        tuple(sorted((root.resolve(), path.resolve()) for root, path in (_sealed_inputs or {}).items())),
+        tuple(sorted(bindings.items())),
+    )
+    cached = scope.authorities.get(key) if not recovery else None
+    if cached is not None:
+        result, dependencies, roots = cached
+        # A previously completed node can become a back-edge in another
+        # traversal. Cycle rejection must precede reuse, not just first load.
+        if roots & _active_roots:
+            raise ValidationError(f"cyclic prior authority: {next(iter(roots & _active_roots))}")
+        if any(root.is_symlink() or any(parent.is_symlink() for parent in root.parents) for root in roots):
+            raise ValidationError("linked prior authority dependency")
+        if all(_prior_file_identity(path) == identity for path, identity in dependencies.items()):
+            if scope.frames:
+                scope.frames[-1]["bindings"].update(dependencies)
+                scope.frames[-1]["roots"].update(roots)
+            return copy.deepcopy(result)
+        del scope.authorities[key]
+
+    frame = {"bindings": bindings, "roots": set(), "cacheable": not recovery}
+    scope.frames.append(frame)
+    try:
+        result = _load_prior_authority(input_root, baseline, extra_bundles, work_ids,
+            _active_roots=_active_roots, _sealed_inputs=_sealed_inputs)
+        if frame["cacheable"]:
+            scope.authorities[key] = (copy.deepcopy(result), dict(frame["bindings"]), frozenset(frame["roots"]))
+        return result
+    finally:
+        scope.frames.pop()
+        if scope.frames:
+            scope.frames[-1]["bindings"].update(frame["bindings"])
+            scope.frames[-1]["roots"].update(frame["roots"])
+            scope.frames[-1]["cacheable"] &= frame["cacheable"]
+
+
+def _load_prior_authority(
+    input_root: Path,
+    baseline: Path | None = None,
+    extra_bundles: tuple[tuple[Path, str], ...] = (),
+    work_ids: set[str] | None = None,
+    *, _active_roots: frozenset[Path] = frozenset(),
+    _sealed_inputs: dict[Path, Path] | None = None,
+) -> dict[str, object]:
     from factor_recovery import validate_input_context
     import factor_single_pass as single
     recovery = validate_input_context(input_root, baseline, work_ids)
@@ -687,6 +786,10 @@ def load_prior_authority(
     for root, expected_digest in bundles:
         if root in _active_roots:
             raise ValidationError(f"cyclic prior authority: {root}")
+        scope = _scope_variable().get()
+        if scope is not None and scope.frames:
+            scope.frames[-1]["roots"].add(root)
+            _observe_prior_dependency(root / "MANIFEST.sha256", _prior_file_identity(root / "MANIFEST.sha256"))
         if (root / "CURATION-BASELINE.json").is_file():
             from catalog_retention import load_basis
             if expected_digest is not None and sha256(root / "MANIFEST.sha256") != expected_digest:
@@ -733,9 +836,9 @@ def load_prior_authority(
         verify_manifest(root, manifest, members)
         compact_path = root / "COMPACT-PUBLICATION.json"
         if compact_path.is_file():
-            from compact_publication import FORMAT, CATALOG, resolve_reference
+            from compact_publication import FORMAT, LEGACY_FORMAT, CATALOG, resolve_reference
             compact = read_json(compact_path)
-            if compact.get("schemaVersion") != FORMAT:
+            if compact.get("schemaVersion") not in {FORMAT, LEGACY_FORMAT}:
                 raise ValidationError("unsupported compact prior publication")
             seen = set()
             for step in compact["works"]:

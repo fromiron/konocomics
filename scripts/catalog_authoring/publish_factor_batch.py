@@ -1413,7 +1413,8 @@ def _install_recovery_materializer(module: types.ModuleType) -> None:
             if set(blockers) != expected_codes:
                 raise module.PublishError(f"recovery coverage/result mismatch: {wid}")
         integration.reindex_authority_projection(con, {"source_themes", "source_recommendation_context"})
-        integration.validate_authority_projection(con)
+        if not getattr(module, "defer_full_projection_validation", False):
+            integration.validate_authority_projection(con)
 
 
     def verify(before, output, plan, gold_ids):
@@ -1728,7 +1729,8 @@ def _install_correction_materializer(module: types.ModuleType) -> None:
             integration.set_final_statuses(con, final, {}, plan["correctionReviewedAt"], {work_id: "true" if status == "PASS" else "false" for work_id, status in final.items()}, nt_exceptions=plan.get("narrativeToneExceptions", {}))
             if plan["correctionBlockedIds"]:
                 integration.reindex_authority_projection(con, {"source_recommendation_context"})
-            integration.validate_authority_projection(con)
+            if not getattr(module, "defer_full_projection_validation", False):
+                integration.validate_authority_projection(con)
             module.correction_coverage = coverage_readback
         finally:
             con.row_factory = previous_factory
@@ -1936,10 +1938,11 @@ def _rebase_registry_correction(frozen_baseline: Path, frozen_registry: Path, re
 
 
 
-def _verify_input_identities(input_root: Path, baseline: Path, registry: Path, repo: Path, *, canonical_sha: str | None = None) -> Path | None:
+def _verify_input_identities(input_root: Path, baseline: Path, registry: Path, repo: Path, *, canonical_sha: str | None = None,
+                             baseline_sha: str | None = None) -> Path | None:
     value = _read_json(input_root / "panel-input.json")
     expected = {
-        "baselineCandidateSha256": sha256(baseline),
+        "baselineCandidateSha256": baseline_sha or sha256(baseline),
         "canonicalSha256": canonical_sha or sha256(repo / "data" / "source" / "catalog.sqlite"),
         "goldManifestSha256": sha256(repo / "data" / "staging" / "catalog-expansion" / "gold-set-manifest.json"),
     }
@@ -1952,6 +1955,21 @@ def _verify_input_identities(input_root: Path, baseline: Path, registry: Path, r
     return _registry_correction_slice(input_root, baseline, registry, registry_sha)
 
 
+def _verify_current_input_identities(input_root: Path, baseline: Path, registry: Path, repo: Path) -> tuple[Path | None, dict | None]:
+    """Bind the frozen identities and prove compatibility with current authority.
+
+    Callers validate the immutable input manifest before this check, and retain
+    the returned proof separately from that input. Both ordinary sealing and
+    full publication use the same dependency check as compact publication.
+    """
+    from canonical_rebase import validate_rebase
+    original_sha = _read_json(input_root / "panel-input.json")["canonicalSha256"]
+    registry_slice = _verify_input_identities(input_root, baseline, registry, repo, canonical_sha=original_sha)
+    canonical = repo / "data/source/catalog.sqlite"
+    proof = validate_rebase(input_root, sha256(canonical), canonical_path=canonical)
+    return registry_slice, proof
+
+
 def _load_prior_evidence(baseline: Path) -> dict[str, dict[str, str]]:
     return panel_validation.load_prior_authority(baseline.parent, baseline)["evidence"]
 
@@ -1960,8 +1978,41 @@ def _sidecars(path: Path) -> list[Path]:
     return [Path(f"{path}{suffix}") for suffix in SIDE_SUFFIXES if Path(f"{path}{suffix}").exists()]
 
 
-def _verify_result_manifest(root: Path) -> None:
+def _verify_result_manifest(root: Path, *, work_ids: set[str] | None = None) -> None:
     manifest = root / "MANIFEST.sha256"
+    marker_path = root / "CURATION-BASELINE.json"
+    if work_ids is not None and marker_path.is_file():
+        # A retained basis is one immutable pair plus per-Work authority. Its
+        # original manifest remains whole even when only requested reviews have
+        # been materialized after database-only recovery.
+        from catalog_retention import load_basis
+        from catalog_workspace import Workspace, unlinked
+        store = Workspace(_repo_root())
+        identity_paths = [unlinked(marker_path), unlinked(manifest)]
+        with store.verification_context(identity_paths) as verification:
+            _, missing = verification.saved_files(identity_paths)
+            if missing:
+                raise ValidationError("Curation basis identity is not retained")
+        marker = _read_json(marker_path)
+        if marker.get("schemaVersion") != "curation-baseline-anchor-v1":
+            raise ValidationError("Unknown curation basis format")
+        anchor = store.get_revision(marker["revision"])["payload"]
+        pair = anchor.get("pair", {})
+        if (anchor.get("schemaVersion") != "curation-baseline-anchor-v1"
+                or set(pair) != {"catalog-expanded.candidate.sqlite", "catalog-source-registry.candidate.sqlite"}):
+            raise ValidationError("Curation basis pair binding changed")
+        entries = {**pair, **anchor.get("reviews", {}), "CURATION-BASELINE.json": sha256(marker_path)}
+        expected = "".join(f"{sha}  {name}\n" for name, sha in sorted(entries.items())).encode("ascii")
+        if unlinked(manifest).read_bytes() != expected:
+            raise ValidationError("Curation basis manifest differs from its retained anchor")
+        for name, sha in pair.items():
+            if sha256(unlinked(_safe_child(root, name))) != sha:
+                raise ValidationError("Curation basis pair changed")
+        # This existing reader proves the requested rows, review and original
+        # evidence against their retained curation revisions, without requiring
+        # another Work's review or re-executing any decision.
+        load_basis(root, work_ids=set(work_ids))
+        return
     members = {
         path.relative_to(root).as_posix()
         for path in root.rglob("*")
@@ -2477,7 +2528,7 @@ def publish_batch(
     if recovery and (corrections or conflicts):
         raise ValidationError("recovery cannot mix prior corrections or retained conflicts")
     batch_id = str(_read_json(input_root / "panel-input.json")["batchId"])
-    registry_slice = _verify_input_identities(input_root, frozen_baseline, frozen_registry, repo)
+    registry_slice, canonical_rebase = _verify_current_input_identities(input_root, frozen_baseline, frozen_registry, repo)
     if registry != frozen_registry and baseline == frozen_baseline:
         registry_sha = str(_read_json(input_root / "panel-input.json")["registrySha256"])
         registry_slice = _registry_correction_slice(input_root, frozen_baseline, registry, registry_sha)
@@ -2514,6 +2565,8 @@ def publish_batch(
         _verify_result_manifest(stage)
         metadata_receipt = preserve_book_metadata(candidate, canonical, backend)
         (stage / "book-metadata-preservation.json").write_text(json.dumps(metadata_receipt, ensure_ascii=False, indent=2) + "\n", encoding="utf-8")
+        if canonical_rebase is not None:
+            (stage / "canonical-rebase.json").write_text(json.dumps(canonical_rebase, ensure_ascii=False, indent=2, sort_keys=True) + "\n", encoding="utf-8", newline="\n")
         if corrections:
             correction_report = {"schemaVersion": "factor-prior-correction-publication-v1", "status": "PASS", "baselineSha256": baseline_before, "candidateSha256": sha256(candidate), "inputManifestSha256": sha256(input_root / "PANEL-INPUT.sha256"), "candidateOnly": True, "reviewedByHuman": False, **backend.correction_readback}
             (stage / "prior-correction-ledger.json").write_text(json.dumps(correction_report, ensure_ascii=False, indent=2, sort_keys=True)+"\n", encoding="utf-8", newline="\n")
@@ -2558,6 +2611,7 @@ def publish_batch(
             "candidateSha256": sha256(output_root / candidate.name),
             "registrySha256": sha256(output_root / registry_output.name),
             "canonicalSha256": canonical_before,
+            "canonicalRebase": canonical_rebase,
             "targetCount": result["targetCount"],
             "acceptedClaimCount": result["acceptedClaimCount"],
             "changedClaimCount": result["changedClaimCount"],
@@ -2622,7 +2676,7 @@ def main(argv: list[str] | None = None) -> int:
             if recovery and (corrections or conflicts):
                 raise ValidationError("recovery cannot mix prior corrections or retained conflicts")
             repo = _repo_root()
-            registry_slice = _verify_input_identities(
+            registry_slice, canonical_rebase = _verify_current_input_identities(
                 args.input_root, frozen_baseline, frozen_registry, repo
             )
             if args.previous_registry.resolve() != frozen_registry.resolve() and args.previous_catalog.resolve() == frozen_baseline.resolve():
@@ -2650,6 +2704,7 @@ def main(argv: list[str] | None = None) -> int:
             result["safetyArtifactDigest"] = safety["artifactDigest"]
             result["retainedBaselineConflictCount"] = len(conflicts)
             result["freshSnapshotWorkCount"] = len(fresh_snapshots)
+            result["canonicalRebase"] = canonical_rebase
             result["status"] = "PASS"
         else:
             result = publish_batch(

@@ -7,6 +7,7 @@ import argparse
 import contextlib
 import io
 import json
+import subprocess
 import sys
 import tempfile
 import types
@@ -16,6 +17,72 @@ from authoring_paths import REPO, ROOT, LEGACY, artifact_path
 from unittest import mock
 
 import prepare_factor_batch as batch
+
+
+class CurrentInputIdentityTest(unittest.TestCase):
+    def test_ordinary_identity_check_rebases_unrelated_change_and_rejects_conflict(self):
+        """The ordinary seal/publish gate must not require whole-file equality."""
+        import canonical_rebase
+        from catalog_workspace import Workspace
+
+        with tempfile.TemporaryDirectory(prefix="factor-current-identity-") as directory:
+            repo = Path(directory)
+            canonical = repo / canonical_rebase.CANONICAL
+            canonical.parent.mkdir(parents=True)
+            shutil.copyfile(REPO / canonical_rebase.CANONICAL, canonical)
+            original = batch.panel.sha256(canonical)
+            Workspace(repo).save([canonical], "frozen canonical dependency")
+            baseline, registry = repo / "baseline.sqlite", repo / "registry.sqlite"
+            shutil.copyfile(canonical, baseline)
+            with contextlib.closing(sqlite3.connect(registry)) as db, db:
+                db.execute("CREATE TABLE identity (generation TEXT)")
+                db.execute("INSERT INTO identity VALUES ('frozen')")
+            gold = repo / canonical_rebase.GOLD
+            gold.parent.mkdir(parents=True)
+            shutil.copyfile(REPO / canonical_rebase.GOLD, gold)
+            gold_ids = set(batch.panel.read_json(gold)["workIds"])
+            with contextlib.closing(sqlite3.connect(canonical)) as db:
+                candidates = [row for row in db.execute("SELECT id, title FROM source_works ORDER BY id") if row[0] not in gold_ids]
+            (target, title), (unrelated, _) = candidates[:2]
+            frozen = repo / "input"
+            policies = {}
+            for name, relative in canonical_rebase.POLICIES.items():
+                current = repo / relative
+                current.parent.mkdir(parents=True, exist_ok=True)
+                shutil.copyfile(REPO / relative, current)
+                copied = frozen / "contracts" / Path(relative).name
+                copied.parent.mkdir(parents=True, exist_ok=True)
+                shutil.copyfile(current, copied)
+                policies[name] = batch.panel.sha256(copied)
+            batch.write_csv(frozen / "chunks/chunk-01/targets.csv", ("workId",), [{"workId": target}])
+            batch.write_json(frozen / "panel-input.json", {
+                "canonicalSha256": original, "baselineCandidateSha256": batch.panel.sha256(baseline),
+                "registrySha256": batch.panel.sha256(registry), "goldManifestSha256": batch.panel.sha256(gold),
+                "targetCount": 1, "policyDigests": policies,
+            })
+            batch.manifest(frozen, "PANEL-INPUT.sha256")
+            frozen_before = {str(path.relative_to(frozen)): path.read_bytes() for path in frozen.rglob("*") if path.is_file()}
+            with mock.patch.object(canonical_rebase, "REPO", repo):
+                self.assertEqual(batch.publisher._verify_current_input_identities(frozen, baseline, registry, repo), (None, None))
+                with contextlib.closing(sqlite3.connect(canonical)) as db, db:
+                    db.execute("UPDATE source_works SET title=title || ' unrelated update' WHERE id=?", (unrelated,))
+                registry_slice, proof = batch.publisher._verify_current_input_identities(frozen, baseline, registry, repo)
+                self.assertIsNone(registry_slice)
+                self.assertEqual(proof["originalCanonicalSha256"], original)
+                self.assertEqual(proof["currentCanonicalSha256"], batch.panel.sha256(canonical))
+                self.assertEqual(proof["targetIds"], [target])
+                with contextlib.closing(sqlite3.connect(canonical)) as db, db:
+                    db.execute("UPDATE source_works SET title=? WHERE id=?", (title + " conflicting update", target))
+                with self.assertRaisesRegex(ValueError, "relevant source changed"):
+                    batch.publisher._verify_current_input_identities(frozen, baseline, registry, repo)
+                # Historical correction readback remains bound to the exact
+                # frozen identity; it never grants current publication rights.
+                self.assertIsNone(batch.publisher._verify_input_identities(
+                    frozen, baseline, registry, repo, canonical_sha=original))
+                with self.assertRaisesRegex(ValueError, "identity mismatch: canonicalSha256"):
+                    batch.publisher._verify_input_identities(
+                        frozen, baseline, registry, repo, canonical_sha="0" * 64)
+            self.assertEqual({str(path.relative_to(frozen)): path.read_bytes() for path in frozen.rglob("*") if path.is_file()}, frozen_before)
 
 
 class RetainedOperatorTest(unittest.TestCase):
@@ -131,14 +198,108 @@ class RetainedOperatorTest(unittest.TestCase):
             session.unlink()
             with self.assertRaisesRegex(ValueError, "NEEDS_PROVENANCE_BINDING"):
                 batch.capture_bindings(job)
-            explicit = batch.capture_bindings(job, root / "original")
-            self.assertEqual(explicit[0]["bindingKind"], "explicit-legacy")
+            with self.assertRaisesRegex(ValueError, "NEEDS_PROVENANCE_BINDING.*--input"):
+                batch.capture_bindings(job, root / "original")
             batch.write_json(session, {"workId": wid})
             research = root / "original/research.jsonl"
             research.write_text("\n".join(json.dumps({"workId": item, "sources": []}) for item in (wid, "work-bbbbbbbbbbbbbbbbbbbb")), encoding="utf-8")
             refs[0]["sha256"] = batch.panel.sha256(research)
             batch.write_json(job, {"works": [{"workId": wid, "researchRefs": refs}]})
             self.assertEqual(len(batch.capture_bindings(job)), 2)
+
+    def test_shared_user_leads_select_exact_work_schema_without_scanning_siblings(self):
+        wid, other = "work-aaaaaaaaaaaaaaaaaaaa", "work-bbbbbbbbbbbbbbbbbbbb"
+        with tempfile.TemporaryDirectory() as directory:
+            repo = Path(directory)
+            root = repo / ".workspace/user-sources"
+            root.mkdir(parents=True)
+            lead = {"workId": wid, "title": "Original hint", "creators": "Author", "publisher": "Publisher",
+                    "isbn": "9780000000000", "sources": [{"url": "https://example.test/one", "kind": "review", "points": "Original hint"}]}
+            batch.write_json(root / (wid + ".json"), lead)
+            (root / (other + ".json")).write_text("unrelated invalid input", encoding="utf-8")
+            job = repo / "job.json"
+            batch.write_json(job, {"works": [{"workId": wid}]})
+            with mock.patch.object(batch, "REPO", repo), mock.patch.object(Path, "rglob", side_effect=AssertionError("shared root scan")):
+                bindings = batch.capture_bindings(job, root)
+                self.assertEqual(set(bindings[0]["files"]), {wid + ".json"})
+                self.assertEqual(bindings[0]["bindingKind"], "user-source-leads")
+                batch.write_json(root / (wid + ".json"), {**lead, "workId": other})
+                with self.assertRaisesRegex(ValueError, "Work/schema mismatch"):
+                    batch.capture_bindings(job, root)
+                batch.write_json(root / (wid + ".json"), {**lead, "sources": [{"url": "https://example.test/one", "kind": "authority", "points": "hint"}]})
+                with self.assertRaisesRegex(ValueError, "user-source entry"):
+                    batch.capture_bindings(job, root)
+
+    def test_supplemental_copy_is_bound_and_independent_of_live_original(self):
+        with tempfile.TemporaryDirectory() as directory:
+            root = Path(directory)
+            original = root / "user-note.md"
+            original.write_bytes(b"Unstructured original note\n")
+            copy = root / "collection/supplemental/input-0001-user-note.md"
+            copy.parent.mkdir(parents=True)
+            copy.write_bytes(original.read_bytes())
+            binding = {"path": copy.relative_to(root / "collection").as_posix(), "originalPath": str(original),
+                       "sha256": batch.panel.sha256(copy), "bytes": copy.stat().st_size}
+            session = {"workId": "work-aaaaaaaaaaaaaaaaaaaa", "supplementalFiles": [binding]}
+            batch.write_json(root / "collection/collection-session.json", session)
+            original.unlink()
+            self.assertEqual(batch.capture_files(root / "collection"), {binding["path"]: binding["sha256"]})
+            for changed in ({"bytes": True}, {"sha256": "0" * 64}, {"path": "../outside"},
+                            {"path": "supplemental/research.jsonl"}, {"path": "supplemental/capture-page.json"},
+                            {"path": "supplemental/input-0001/nested.md"}):
+                batch.write_json(root / "collection/collection-session.json", {**session, "supplementalFiles": [{**binding, **changed}]})
+                with self.assertRaises(ValueError):
+                    batch.capture_files(root / "collection")
+            batch.write_json(root / "collection/collection-session.json", {"workId": session["workId"]})
+            with self.assertRaisesRegex(ValueError, "membership changed"):
+                batch.capture_files(root / "collection")
+            batch.write_json(root / "collection/collection-session.json", {**session, "supplementalFiles": [binding, binding]})
+            with self.assertRaisesRegex(ValueError, "duplicate"):
+                batch.capture_files(root / "collection")
+            duplicate = {**binding, "path": "supplemental/input-0002-copy.md"}
+            batch.write_json(root / "collection/collection-session.json", {**session, "supplementalFiles": [binding, duplicate]})
+            with self.assertRaisesRegex(ValueError, "duplicate supplemental original"):
+                batch.capture_files(root / "collection")
+            batch.write_json(root / "collection/collection-session.json", session)
+            (copy.parent / "unlisted-empty-directory").mkdir()
+            with self.assertRaisesRegex(ValueError, "membership changed"):
+                batch.capture_files(root / "collection")
+
+    def test_restored_job_presave_resolves_original_research_without_rewriting(self):
+        from catalog_revision_store import RevisionWorkspace
+        from catalog_workspace import authoring_inputs
+        with tempfile.TemporaryDirectory() as directory:
+            repo = Path(directory) / "restored"
+            original = Path(directory) / "original"
+            research = repo / "collection/research.jsonl"
+            research.parent.mkdir(parents=True)
+            research.write_bytes(b'{"workId":"work-aaaaaaaaaaaaaaaaaaaa"}\n')
+            batch.write_json(repo / ".catalog-restore.json", {"schemaVersion": "catalog-restored-workspace-v1", "originalRepositories": [str(original)]})
+            job = repo / "job.json"
+            batch.write_json(job, {"schemaVersion": "factor-authoring-job-v4", "works": [{"researchRefs": [
+                {"path": str(original / "collection/research.jsonl"), "sha256": batch.panel.sha256(research)}]}]})
+            before = job.read_bytes()
+            store = RevisionWorkspace.create(repo, repo / "data/local/catalog-authoring/workspace.sqlite")
+            paths = authoring_inputs([job], store)
+            self.assertIn(research, paths)
+            self.assertEqual(job.read_bytes(), before)
+
+    def test_existing_publisher_receipt_is_kept_only_with_its_exact_capture(self):
+        with tempfile.TemporaryDirectory() as directory:
+            root = Path(directory)
+            body = root / "capture-page.body"
+            body.write_bytes(b"original response")
+            raw = {"kind": "http-body", "url": "https://example.test/book", "resolvedUrl": "https://example.test/book",
+                   "status": 200, "complete": True, "observedAt": "2026-09-28T00:00:00Z", "rawPath": body.name,
+                   "sha256": batch.panel.sha256(body), "bytes": body.stat().st_size}
+            batch.write_json(root / "capture-page.json", raw)
+            receipt = {key: raw[key] for key in ("url", "resolvedUrl", "status", "sha256", "bytes")}
+            receipt["fetchedAt"] = raw["observedAt"]
+            batch.write_json(root / "capture-page.publisher-receipt.json", receipt)
+            self.assertEqual(len(batch.capture_files(root)), 3)
+            batch.write_json(root / "capture-page.publisher-receipt.json", {**receipt, "sha256": "0" * 64})
+            with self.assertRaisesRegex(ValueError, "publisher receipt differs"):
+                batch.capture_files(root)
 
     def test_gold_alias_boundary_accepts_applied_delta_and_rejects_changes(self):
         backend = batch.publisher._backend_module()
@@ -263,12 +424,36 @@ class RetainedOperatorTest(unittest.TestCase):
                     batch.expand_decisions(bad, Path("unused"), [{"workId": wid}], authority, "a" * 64)
 
     def test_result_attempt_reuses_real_frozen_input_after_rejected_ledger(self):
+        import canonical_rebase
         source = batch.ROOT / "planning/collection-flow-validation-20260914/w2-preparation"
         frozen = source / "frozen"
         lineage = batch.panel.read_json(frozen / "panel-input/external-lineage.json")
+        identities = batch.panel.read_json(frozen / "panel-input/panel-input.json")
         before = {str(path.relative_to(frozen)): batch.panel.sha256(path) for path in frozen.rglob("*") if path.is_file()}
-        with tempfile.TemporaryDirectory(prefix="factor-result-attempt-") as directory:
+        with tempfile.TemporaryDirectory(prefix="factor-result-attempt-") as directory, contextlib.ExitStack() as stack:
             root = Path(directory)
+            # This regression exercises a historical seal retry, not permission
+            # to reuse its pre-porn-policy decision in the current catalog.
+            historical = root / "historical-repo"
+            canonical = historical / canonical_rebase.CANONICAL
+            canonical.parent.mkdir(parents=True)
+            original = subprocess.run([
+                "git", "show", "43a4cb31f988de08b37d6f2419a6040aa9477753:data/source/catalog.sqlite",
+            ], cwd=REPO, capture_output=True, check=True).stdout
+            canonical.write_bytes(original)
+            self.assertEqual(batch.panel.sha256(canonical), identities["canonicalSha256"])
+            gold = historical / canonical_rebase.GOLD
+            gold.parent.mkdir(parents=True)
+            shutil.copyfile(REPO / canonical_rebase.GOLD, gold)
+            self.assertEqual(batch.panel.sha256(gold), identities["goldManifestSha256"])
+            for name, relative in canonical_rebase.POLICIES.items():
+                policy = historical / relative
+                policy.parent.mkdir(parents=True, exist_ok=True)
+                shutil.copyfile(frozen / "panel-input/contracts" / Path(relative).name, policy)
+                self.assertEqual(batch.panel.sha256(policy), identities["policyDigests"][name])
+            historical_before = {path: batch.panel.sha256(path) for path in historical.rglob("*") if path.is_file()}
+            stack.enter_context(mock.patch.object(batch, "REPO", historical))
+            stack.enter_context(mock.patch.object(canonical_rebase, "REPO", historical))
             failed, completed = root / "failed", root / "completed"
             with self.assertRaisesRegex(ValueError, "unknown claim carries evidence"):
                 batch.seal_result(frozen, frozen / "panel-result/chunk-01/evidence-panel-ledger.csv",
@@ -285,6 +470,7 @@ class RetainedOperatorTest(unittest.TestCase):
             with self.assertRaisesRegex(ValueError, "attempt overwrite"):
                 batch.seal_result(frozen, None, artifact_path(lineage["baselineRoot"]), artifact_path(lineage["registryPath"]),
                                   decisions_path=source / "decisions-v2.json", result_output=completed)
+            self.assertEqual({path: batch.panel.sha256(path) for path in historical.rglob("*") if path.is_file()}, historical_before)
 
     def test_invalid_file_argument_fails_before_storage(self):
         with tempfile.TemporaryDirectory() as directory:
@@ -460,6 +646,8 @@ class AuthoringTest(unittest.TestCase):
     @classmethod
     def setUpClass(cls):
         cls.job_path = batch.ROOT / "jobs/hina-drifters/records.json"
+        if not cls.job_path.is_file():
+            raise unittest.SkipTest(f"Required retained local fixture unavailable: {cls.job_path}")
         cls.job = batch.read_job(cls.job_path)
         cls.baseline = batch.ROOT / "runs/factor-rescue-008-publication-20260906-v1"
         cls.registry = batch.ROOT / "registry-corrections/factor-rescue-009-v2/catalog-source-registry.candidate.sqlite"
@@ -589,6 +777,7 @@ class AuthoringTest(unittest.TestCase):
         with tempfile.TemporaryDirectory(prefix="factor-recovery-binding-test-") as directory:
             root = Path(directory)
             chunk = root / "chunks/chunk-01"
+            batch.write_json(root / "panel-input.json", {"schemaVersion": "authorized-evidence-panel-followup-v2"})
             batch.write_json(root / "external-lineage.json", {"baselineRoot": str(baseline.resolve())})
             batch.write_csv(chunk / "targets.csv", ("workId",), [{"workId": wid}])
             batch.write_json(chunk / "recovery-declaration.json", declaration)

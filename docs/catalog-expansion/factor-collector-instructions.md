@@ -1,6 +1,6 @@
 # Factor evidence collection — non-authorizing input
 
-현재 확정 사양 · 갱신일: 2026-09-26
+현재 확정 사양 · 갱신일: 2026-09-27
 
 이 문서는 수집 단계의 실행·원문·관찰 계약이다. 사전 리드의 JSON 규격·자료 적격성은 [사전 수집 리드 규격](user-source-leads.md)에 정의한다. 과거 규칙은 Git 이력에서 확인한다.
 
@@ -44,6 +44,8 @@ Catalog의 성적 콘텐츠 제외 기준은 **porn / non-porn**이다. 성인�
 ## 원문은 도구 반환값에서 바로 저장
 
 공통 진입점은 `scripts/catalog_authoring/collect_factor_evidence.mjs`다. 코드 경로는 저장소 루트 기준이며 작업 자료는 `data/local/catalog-authoring/artifacts/catalog-expansion-continuation-20260902/`에 둔다. 실제 검색 전에 `startCollection(directory, workId)` 또는 `node scripts/catalog_authoring/collect_factor_evidence.mjs start <assigned-dir> <workId>`로 시작한다.
+
+session 없는 사용자 제공 PDF·메모·raw는 `start <assigned-dir> <workId> --input <정확한-파일>`에 파일별 `--input`을 반복해 해당 Work collection에 결속한다. helper는 선택한 파일의 원본 바이트·SHA·길이를 보존하고 새 freeze에서 읽을 수 있게 한다. 이것이 실제 독해·관찰·HTTP 응답을 대신하지 않으며 source별 근거와 한계는 기존 절차로 기록한다. 큰 공유 디렉터리 전체를 매 작품 복사하거나 선택하지 않은 사용자 자료를 삭제하지 않는다. 정식 `.workspace/user-sources/` 리드 루트는 새 freeze에서 해당 Work JSON만 사용한다.
 
 **웹 도구의 검색·open·click 반환값은 다음 같은 실행에서 저장한다.** 모델이 원문을 patch·shell·별도 텍스트 파일로 다시 쓰지 않는다. 여러 출처가 든 검색 결과도 한 응답으로 보존하며 개별 source의 원문/독해 범위로 자동 인정하지 않는다. 현재 functions.exec에서 로컬 연결 코드를 **한 번만 등록**한다. directory는 배정된 실제 절대 경로다.
 
@@ -147,7 +149,7 @@ helper의 research-written 이벤트는 해당 collection 작성 완료다. 실�
 
 출판사 판본 페이지를 취득했다면 같은 응답의 소개 원문·정확한 Work/ISBN·서지 입력을 함께 보존한다. 완전한 HTTPS 200 HTTP bytes와 실제 시각의 기존 publisher receipt만 사용하고 browser 발췌를 그 receipt로 바꾸지 않는다. 해당 시각/응답 결속이 없으면 서지 미완료 한계를 적고 Factor를 다시 수집하지 않는다. 상세 필드가 필요할 때만 [저장 계약의 출판사 소개 절](03-local-authoring-storage.md#출판사-소개를-수집과-함께-저장)을 읽는다. 서지 반영은 조정자가 기존 직렬 importer로 수행한다.
 
-자료는 source 밖 로컬 작업 SQLite에 즉시 저장하고 [저장 계약](03-local-authoring-storage.md)의 명시적 단계 경계에서 백업한다. 원본은 `data/local/catalog-authoring/`에 보존하며 `.workspace/user-sources/`의 사용자 제공 자료도 보호한다. 호환 링크를 생성하지 않는다. 변경 전 원문·실패본·형식·시각을 보존한다. 현재 원본/보충 raw 전체는 기존 provenance-root로 동결 입력에 전달할 수 있다. 보존 성공·구조 PASS는 출처의 진실성이나 판정 권한이 아니다.
+자료는 source 밖 로컬 작업 SQLite에 즉시 저장하고 [저장 계약](03-local-authoring-storage.md)의 명시적 단계 경계에서 백업한다. 원본은 `data/local/catalog-authoring/`에 보존하며 `.workspace/user-sources/`의 사용자 제공 자료도 보호한다. 호환 링크를 생성하지 않는다. 변경 전 원문·실패본·형식·시각을 보존한다. 현재 Work collection에 결속된 원본·보충 raw는 기존 `--provenance-root`로 동결 입력에 전달한다. session 없는 임의 공유 디렉터리는 전체 복사나 무시 대신 `NEEDS_PROVENANCE_BINDING`으로 거부하므로 먼저 위 명시적 파일 입력을 사용한다. 보존 성공·구조 PASS는 출처의 진실성이나 판정 권한이 아니다.
 
 ## N/T 추가 조사 종료 기록
 

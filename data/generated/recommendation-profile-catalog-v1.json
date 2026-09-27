@@ -1,6 +1,6 @@
 {
   "schemaVersion": 1,
-  "catalogVersion": "v1-818991b07eda",
+  "catalogVersion": "v1-862f722c212e",
   "factorDictionaryVersion": "v1",
   "works": [
     {
@@ -226991,6 +226991,116 @@
       }
     },
     {
+      "id": "work-f6f272e478d275e1df91",
+      "title": "テセウスの船",
+      "aliases": [],
+      "creators": [
+        "東元俊哉"
+      ],
+      "publisher": "講談社",
+      "demographic": "seinen",
+      "status": "unknown",
+      "firstPublishedYear": 2017,
+      "genres": [
+        "mystery"
+      ],
+      "themes": [
+        {
+          "id": "investigation",
+          "centrality": 2,
+          "confidence": 0.89
+        },
+        {
+          "id": "timeTravel",
+          "centrality": 2,
+          "confidence": 0.88
+        }
+      ],
+      "axes": {
+        "progression": {
+          "state": "unknown"
+        },
+        "problemSolving": {
+          "state": "known",
+          "value": 2,
+          "confidence": 0.78
+        },
+        "strategy": {
+          "state": "known",
+          "value": 2,
+          "confidence": 0.72
+        },
+        "pacing": {
+          "state": "unknown"
+        },
+        "mysteryReveal": {
+          "state": "known",
+          "value": 4,
+          "confidence": 0.88
+        },
+        "worldBuilding": {
+          "state": "known",
+          "value": 2,
+          "confidence": 0.74
+        },
+        "characterArcWeight": {
+          "state": "known",
+          "value": 2,
+          "confidence": 0.72
+        },
+        "relationshipStructure": {
+          "state": "known",
+          "value": 2,
+          "confidence": 0.73
+        },
+        "comedy": {
+          "state": "unknown"
+        },
+        "darkness": {
+          "state": "known",
+          "value": 2,
+          "confidence": 0.91
+        },
+        "mentalStress": {
+          "state": "known",
+          "value": 2,
+          "confidence": 0.79
+        },
+        "romance": {
+          "state": "unknown"
+        },
+        "emotionalWarmth": {
+          "state": "known",
+          "value": 2,
+          "confidence": 0.68
+        },
+        "artRealism": {
+          "state": "unknown"
+        },
+        "artDensity": {
+          "state": "unknown"
+        },
+        "visualSoftness": {
+          "state": "unknown"
+        },
+        "motionImpact": {
+          "state": "unknown"
+        }
+      },
+      "factorScope": "entry_1_3_volumes",
+      "eligibility": {
+        "onboardingEligible": true,
+        "recommendationEligible": true,
+        "libraryOnly": false
+      },
+      "evidence": {
+        "metadataConfidence": 0.92,
+        "groupingConfidence": 0.96,
+        "sourceAgreement": 0.64,
+        "annotationReviewedAt": "2026-09-27T03:47:26.599912+00:00"
+      }
+    },
+    {
       "id": "work-f6fa4c2d3a7e1dc5257b",
       "title": "ワカコ酒",
       "aliases": [],
@@ -248856,6 +248966,13 @@
       "editionKind": "standard"
     },
     {
+      "id": "work-f6f272e478d275e1df91-v1",
+      "workId": "work-f6f272e478d275e1df91",
+      "volumeNumber": 1,
+      "isbn": "9784065103104",
+      "editionKind": "standard"
+    },
+    {
       "id": "work-f6fa4c2d3a7e1dc5257b-representative",
       "workId": "work-f6fa4c2d3a7e1dc5257b",
       "volumeNumber": 1,
@@ -251282,6 +251399,7 @@
     "work-f67b1bdb544a914684ce": "work-f67b1bdb544a914684ce-representative",
     "work-f6bd6e031ac086266cd8": "work-f6bd6e031ac086266cd8-representative",
     "work-f6cddc6b36f20bd0cc74": "work-f6cddc6b36f20bd0cc74-representative",
+    "work-f6f272e478d275e1df91": "work-f6f272e478d275e1df91-v1",
     "work-f6fa4c2d3a7e1dc5257b": "work-f6fa4c2d3a7e1dc5257b-representative",
     "work-f710745756d55f2d1e07": "work-f710745756d55f2d1e07-representative",
     "work-f722df7838dcd2bf3484": "work-f722df7838dcd2bf3484-v1",

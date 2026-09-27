@@ -25,6 +25,17 @@ jobs:
         run: corepack enable pnpm
       - name: Install dependencies
         run: pnpm install --frozen-lockfile
+      - name: Set up the private Catalog SQLite runtime
+        run: |
+          python3 scripts/setup_catalog_runtime.py
+          python3 - <<'PY'
+          import json, os
+          from pathlib import Path
+          root = Path(os.environ["GITHUB_WORKSPACE"])
+          receipt = json.loads((root / "data/local/catalog-authoring/runtime/runtime.json").read_text())
+          with open(os.environ["GITHUB_ENV"], "a") as output:
+              output.write(f"KONOCOMICS_CATALOG_PYTHON={root / receipt['python']}\n")
+          PY
       - name: Check formatting
         run: pnpm format:check
       - name: Check types

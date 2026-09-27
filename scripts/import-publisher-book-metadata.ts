@@ -24,7 +24,16 @@ import {
   writeCatalogCsvProjection,
 } from "./catalog/authority";
 import { bookMetadataSourceRowSchema, volumeSourceRowSchema } from "./catalog/source-schema";
-import { publishDirectorySet } from "./promote-g2-catalog";
+import {
+  assertNoPendingCanonicalPublication,
+  canonicalPublicationPaths,
+  publishPreparedCanonical,
+  readCanonicalPublication,
+  resolveCanonicalPath,
+  sealCanonicalPublication,
+  verifyCanonicalCompletion,
+} from "./catalog/canonical-publication";
+import { catalogPython, prepareRestoredCatalogOperation } from "./catalog-python";
 
 const digest = z.string().regex(/^[a-f0-9]{64}$/u);
 const httpsUrl = z.url().refine((value) => {
@@ -91,12 +100,42 @@ function readIntake(input: string, inputBytes: Buffer) {
 
 // Only add reviewed snapshots. Refreshing an existing row needs a separate complete-source review.
 export function importPublisherBookMetadata(input: string, output: string, root = process.cwd()) {
-  input = resolve(input);
-  output = resolve(output);
   root = resolve(root);
+  input = resolveCanonicalPath(input, root);
+  output = resolveCanonicalPath(output, root);
+  const preparedPath = join(output, "prepared.json");
+  assertNoPendingCanonicalPublication(root, preparedPath);
   within(join(root, ".workspace"), output);
-  assert(!existsSync(output), "Use a new authoring output directory");
   const inputBytes = readFileSync(input);
+  if (existsSync(preparedPath)) {
+    const prepared = readCanonicalPublication(preparedPath);
+    assert.equal(
+      canonicalPublicationPaths(prepared, preparedPath).root,
+      root,
+      "Metadata recovery root changed",
+    );
+    assert.equal(prepared.kind, "publisher-metadata", "Metadata recovery kind changed");
+    assert.equal(prepared.requestSha256, sha256(inputBytes), "Metadata recovery input changed");
+    const completionPath = join(output, "completion.json");
+    const pendingPath = join(root, "data/local/catalog-authoring/locks/publication.pending.json");
+    const historical = existsSync(completionPath) && !existsSync(pendingPath);
+    if (historical) verifyCanonicalCompletion(completionPath);
+    else publishPreparedCanonical(preparedPath);
+    const report = z
+      .object({ input: z.string(), inputSha256: digest, before: z.record(z.string(), z.unknown()) })
+      .passthrough()
+      .parse(JSON.parse(readFileSync(join(output, "receipt.json"), "utf8")));
+    const result = {
+      ...report,
+      published: true,
+      readback: "PASS",
+      ...(historical ? { verification: "HISTORICAL_COMPLETION" } : {}),
+    };
+    if (!historical && (report.published !== true || report.readback !== "PASS"))
+      writeFileSync(join(output, "receipt.json"), `${JSON.stringify(result, null, 2)}\n`);
+    return result;
+  }
+  assert(!existsSync(output), "Use a new authoring output directory");
   const rows = readIntake(input, inputBytes);
   const source = join(root, "data/source");
   const database = join(source, "catalog.sqlite");
@@ -247,7 +286,20 @@ export function importPublisherBookMetadata(input: string, output: string, root 
     originalDatabaseSha256,
     "Canonical changed before publication",
   );
-  publishDirectorySet(swaps);
+  sealCanonicalPublication(
+    {
+      root,
+      output,
+      kind: "publisher-metadata",
+      requestSha256: sha256(inputBytes),
+      workIds: [...new Set(rows.map((row) => row.workId))],
+      beforeSourceManifestDigest: before.sourceManifestDigest,
+      sourceManifestDigest: authority.sourceManifestDigest,
+      catalogVersion: built.catalog.catalogVersion,
+    },
+    artifacts.map((artifact) => artifact.path),
+  );
+  publishPreparedCanonical(join(output, "prepared.json"));
   for (const artifact of artifacts) {
     assert.equal(
       sha256(readFileSync(join(root, artifact.path))),
@@ -270,11 +322,16 @@ if (process.argv[1] && import.meta.url === pathToFileURL(resolve(process.argv[1]
     "Usage: node --import tsx scripts/import-publisher-book-metadata.ts --input <json> --output <new .workspace directory>",
   );
   const root = resolve(import.meta.dirname, "..");
-  const input = within(root, realpathSync(resolve(values.input)));
-  const output = within(join(root, ".workspace"), resolve(values.output));
+  prepareRestoredCatalogOperation(root, {
+    operation: "metadata",
+    inputPath: values.input,
+    outputRoot: values.output,
+  });
+  const input = within(root, realpathSync(resolveCanonicalPath(values.input, root)));
+  const output = within(join(root, ".workspace"), resolveCanonicalPath(values.output, root));
   if (process.env.KONOCOMICS_AUTHORING_RECORDED !== "1") {
     const result = spawnSync(
-      "python",
+      catalogPython(root),
       [
         "-X",
         "utf8",

@@ -25,6 +25,7 @@
 /data/local/experiment-profiles/
 /data/local/g2-results/
 /data/local/catalog-authoring/
+/.catalog-restore.json
 /scripts/__pycache__/
 /scripts/catalog_authoring/**/__pycache__/
 /scripts/catalog_authoring/__pycache__/

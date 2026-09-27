@@ -57,6 +57,10 @@ class RouteTest(unittest.TestCase):
             actual = planner.plan(dispatch, summary)
             self.assertEqual(actual["works"][0]["requirements"], ["reuse-checked", "registry-repair"])
             self.assertEqual(actual["bindings"]["summarySha256"], sha(summary))
+            historical = planner.notifications.read(dispatch)
+            write(dispatch, {**historical, "phase": "adjudication"})
+            self.assertEqual(planner.plan(dispatch, summary)["phase"], "adjudication")
+            write(dispatch, historical)
             write(summary, {**result, "ownerThreadId": parent})
             with self.assertRaisesRegex(ValueError, "ownership"):
                 planner.plan(dispatch, summary)
@@ -76,6 +80,14 @@ class RouteTest(unittest.TestCase):
         self.assertEqual(route_for({"recommendationEligible": "false", "annotationReviewMethod": "authorizedEvidencePanel"}, "aep", set()), ["prior-recovery"])
         self.assertEqual(route_for({"recommendationEligible": "false", "annotationReviewMethod": "unreviewed"}, "new", set()), ["fresh"])
         self.assertEqual(route_for({"recommendationEligible": "true", "annotationReviewMethod": "authorizedEvidencePanel"}, "done", set()), ["eligible"])
+
+    def test_automatic_transition_requires_explicit_general_collection_authority(self):
+        policy = planner.notifications.transition_policy
+        self.assertEqual(policy({"phase": "collection-only"}), "parent")
+        self.assertEqual(policy({"phase": "collection"}), "parent")
+        self.assertEqual(policy({"phase": "collection", "transitionPolicy": "auto-after-collection"}), "auto-after-collection")
+        with self.assertRaisesRegex(ValueError, "explicitly authorized"):
+            policy({"phase": "collection-only", "transitionPolicy": "auto-after-collection"})
 
 
 if __name__ == "__main__":

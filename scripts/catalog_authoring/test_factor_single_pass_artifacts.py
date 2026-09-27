@@ -79,17 +79,50 @@ class SinglePassArtifactsTest(unittest.TestCase):
     def test_freeze_resolves_preserved_registry_correction_without_links(self):
         import prepare_factor_batch as prepare
         config = panel.read_json(self.run_root / "RUN.json")
-        with tempfile.TemporaryDirectory() as temporary:
+        provenance = artifact_path(config["provenanceRoot"])
+        originals = sorted(path for path in provenance.rglob("*") if path.is_file())
+        registry = artifact_path(config["registryPath"])
+        protected = [*originals, self.run_root / "job.json", registry, *[path for path in self.input.rglob("*") if path.is_file()]]
+        before = {path: panel.sha256(path) for path in protected}
+        self.assertFalse(registry.is_symlink() or registry.is_junction())
+        with tempfile.TemporaryDirectory() as temporary, tempfile.TemporaryDirectory(
+            prefix="test-registry-provenance-", dir=ROOT / "planning"
+        ) as assigned:
+            collection = Path(assigned)
+            # The historic parent is not a Work binding for a new freeze. Use
+            # the existing collector CLI to bind its exact originals explicitly,
+            # then write the preserved agent-authored draft without new research.
+            helper = REPO / "scripts/catalog_authoring/collect_factor_evidence.mjs"
+            command = ["node", str(helper), "start", str(collection), self.wid]
+            for path in originals:
+                command.extend(("--input", str(path)))
+            started = subprocess.run(command, cwd=REPO, capture_output=True, text=True, encoding="utf-8")
+            self.assertEqual(started.returncode, 0, started.stdout + started.stderr)
+            session = panel.read_json(collection / "collection-session.json")
+            self.assertEqual(session["workId"], self.wid)
+            self.assertEqual({Path(item["originalPath"]): item["sha256"] for item in session["supplementalFiles"]},
+                             {path: before[path] for path in originals})
+            shutil.copyfile(provenance / "collected/draft.mjs", collection / "draft.mjs")
+            written = subprocess.run(["node", str(helper), "write", str(collection), "draft.mjs"],
+                                     cwd=REPO, capture_output=True, text=True, encoding="utf-8")
+            self.assertEqual(written.returncode, 0, written.stdout + written.stderr)
             report = prepare.freeze(
                 self.run_root / "job.json",
                 artifact_path(config["baselineRoot"]),
-                artifact_path(config["registryPath"]),
+                registry,
                 Path(temporary) / "frozen",
-                artifact_path(config["provenanceRoot"]) if config.get("provenanceRoot") else None,
+                collection,
                 recovery_epoch=artifact_path(config["recoveryEpoch"]) if config.get("recoveryEpoch") else None,
             )
             self.assertEqual(report["status"], "PASS")
             self.assertEqual(report["targetCount"], 1)
+            frozen = Path(temporary) / "frozen/panel-input"
+            self.assertEqual(panel.read_json(frozen / "panel-input.json")["registrySha256"], before[registry])
+            bindings = panel.read_json(frozen / "provenance-bindings.json")["collections"]
+            bound = next(item for item in bindings if Path(item["root"]) == collection)
+            for item in session["supplementalFiles"]:
+                self.assertEqual(bound["files"][item["path"]], item["sha256"])
+        self.assertEqual(before, {path: panel.sha256(path) for path in protected})
 
     def test_rehashed_v3_context_or_extra_file_is_not_authority(self):
         for kind in ("context", "ledger", "missing", "extra"):

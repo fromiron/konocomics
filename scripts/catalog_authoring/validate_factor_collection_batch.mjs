@@ -1,7 +1,7 @@
 import assert from "node:assert/strict";
 import { createHash } from "node:crypto";
 import { fileURLToPath } from "node:url";
-import { existsSync, readFileSync, readdirSync } from "node:fs";
+import { existsSync, readFileSync, readdirSync, realpathSync } from "node:fs";
 import { dirname, isAbsolute, join, relative, resolve } from "node:path";
 import { spawnSync } from "node:child_process";
 import { parse } from "csv-parse/sync";
@@ -233,7 +233,23 @@ export function validateResearchRow(row, seenWorkIds, requireSourceAudit = false
   assert(typeof row.workId === "string" && row.workId.trim(), "research workId missing");
   assert(!seenWorkIds.has(row.workId), `${row.workId} duplicate work`);
   seenWorkIds.add(row.workId);
-  assert(["EVIDENCE_FOUND", "INSUFFICIENT"].includes(row.status), `${row.workId} status`);
+  assert(["EVIDENCE_FOUND", "INSUFFICIENT", "ERROR"].includes(row.status), `${row.workId} status`);
+  if (row.status === "ERROR") {
+    assert(["work", "shared"].includes(row.errorScope), `${row.workId} errorScope`);
+    assert(typeof row.error === "string" && row.error.trim(), `${row.workId} actual error missing`);
+    assert(
+      typeof row.retryCondition === "string" && row.retryCondition.trim(),
+      `${row.workId} error retryCondition missing`,
+    );
+    assert(
+      Array.isArray(row.failureEvidence) && row.failureEvidence.length > 0,
+      `${row.workId} saved failureEvidence missing`,
+    );
+    for (const binding of row.failureEvidence) {
+      assert(typeof binding.path === "string" && binding.path.trim(), `${row.workId} failure path`);
+      assert(/^[0-9a-f]{64}$/u.test(binding.sha256), `${row.workId} failure SHA`);
+    }
+  }
   assert.equal(row.candidateOnly, true, `${row.workId} candidateOnly`);
   assert.equal(row.reviewedByHuman, false, `${row.workId} reviewedByHuman`);
   assert.equal(row.grokUsed, false, `${row.workId} grokUsed`);
@@ -306,6 +322,38 @@ export function validateCollectionHandoff(researchPath, rows) {
   validateExhaustionRecord(handoff.narrativeToneExhaustion, matches[0]);
 }
 
+export function validateCollectionErrors(researchPath, rows) {
+  const root = realpathSync(dirname(resolve(researchPath)));
+  for (const row of rows.filter((value) => value.status === "ERROR")) {
+    for (const binding of row.failureEvidence) {
+      const path = resolve(root, binding.path);
+      const child = relative(root, path);
+      assert(
+        child &&
+          !isAbsolute(child) &&
+          child !== ".." &&
+          !child.startsWith("../") &&
+          !child.startsWith("..\\"),
+        `${row.workId} failure evidence outside collection`,
+      );
+      const actualChild = relative(root, realpathSync(path));
+      assert(
+        actualChild &&
+          !isAbsolute(actualChild) &&
+          actualChild !== ".." &&
+          !actualChild.startsWith("../") &&
+          !actualChild.startsWith("..\\"),
+        `${row.workId} linked failure evidence outside collection`,
+      );
+      assert.equal(
+        createHash("sha256").update(readFileSync(path)).digest("hex"),
+        binding.sha256,
+        `${row.workId} failure evidence SHA mismatch`,
+      );
+    }
+  }
+}
+
 function main() {
   const batchRootArg = process.argv
     .find((value) => value.startsWith("--batch-root="))
@@ -364,6 +412,7 @@ function main() {
     const seenWorkIds = new Set();
     for (const row of rows)
       sourceCount += validateResearchRow(row, seenWorkIds, requireSourceAudit);
+    validateCollectionErrors(resolve(researchArg), rows);
     console.log(
       JSON.stringify({
         status: "PASS",
@@ -382,6 +431,7 @@ function main() {
   let completedWorks = 0;
   let found = 0;
   let insufficient = 0;
+  let errors = 0;
   let sourceCount = 0;
   const batchTargets = readCsv(join(root, "targets.csv"));
   assert(batchTargets.length >= 1 && batchTargets.length <= 200, "batch requires 1..200 targets");
@@ -443,6 +493,7 @@ function main() {
     }
     const rows = parseResearch(researchPath);
     validateCollectionHandoff(researchPath, rows);
+    validateCollectionErrors(researchPath, rows);
     assert.equal(rows.length, targets.length, `chunk ${index} research row count`);
     assert.deepEqual(
       rows.map((row) => row.workId),
@@ -460,7 +511,8 @@ function main() {
       if (row.status === "EVIDENCE_FOUND") {
         assert(row.sources.length > 0, `${row.workId} EVIDENCE_FOUND without sources`);
         found += 1;
-      } else insufficient += 1;
+      } else if (row.status === "ERROR") errors += 1;
+      else insufficient += 1;
       sourceCount += row.sources.length;
     }
     assert(readFileSync(reportPath, "utf8").trim().length > 0, `chunk ${index} empty report`);
@@ -480,6 +532,7 @@ function main() {
       missingWorks: batchTargets.length - completedWorks,
       evidenceFound: found,
       insufficient,
+      errors,
       sources: sourceCount,
       requireAll,
       requireSourceAudit,

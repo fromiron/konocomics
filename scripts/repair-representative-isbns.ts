@@ -34,6 +34,11 @@ import {
   parseRakutenVolumeNumber,
 } from "./promote-library-only-expansion";
 import { publishDirectorySet } from "./promote-g2-catalog";
+import {
+  maintenanceLockHeld,
+  representativeRepairResultSchema,
+  runLockedMaintenance,
+} from "./catalog-maintenance";
 import { loadCatalogExpansion, validateCatalogExpansion } from "./validate-catalog-expansion";
 import { normalizeIsbn } from "../src/domain/catalog/normalize";
 
@@ -685,6 +690,13 @@ function repairRepresentativeIsbnsFromCsv(mode: RepairMode = "dry-run", root = p
 
 export function repairRepresentativeIsbns(mode: RepairMode = "dry-run", root = process.cwd()) {
   const resolvedRoot = resolve(root);
+  if (mode === "apply" && !maintenanceLockHeld(resolvedRoot)) {
+    return runLockedMaintenance(
+      resolvedRoot,
+      "representative-isbns",
+      representativeRepairResultSchema,
+    );
+  }
   const sourceDirectory = join(resolvedRoot, SOURCE_DIRECTORY);
   if (!existsSync(join(sourceDirectory, CATALOG_DATABASE_FILE))) {
     return repairRepresentativeIsbnsFromCsv(mode, resolvedRoot);

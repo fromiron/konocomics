@@ -9788,6 +9788,11 @@
       "catalogRole": "discovery",
       "volumeCount": 1
     },
+    "work-f6f272e478d275e1df91": {
+      "workId": "work-f6f272e478d275e1df91",
+      "catalogRole": "discovery",
+      "volumeCount": 1
+    },
     "work-f6fa4c2d3a7e1dc5257b": {
       "workId": "work-f6fa4c2d3a7e1dc5257b",
       "catalogRole": "bridge",
@@ -10105,7 +10110,7 @@
     }
   },
   "marketSnapshot": {
-    "catalogVersion": "v1-818991b07eda",
+    "catalogVersion": "v1-862f722c212e",
     "catalogAverageRating": 4.367959183673469,
     "byWorkId": {
       "20th-century-boys": {
@@ -16091,6 +16096,9 @@
       },
       "work-f6cddc6b36f20bd0cc74": {
         "workId": "work-f6cddc6b36f20bd0cc74"
+      },
+      "work-f6f272e478d275e1df91": {
+        "workId": "work-f6f272e478d275e1df91"
       },
       "work-f6fa4c2d3a7e1dc5257b": {
         "workId": "work-f6fa4c2d3a7e1dc5257b"

@@ -14,6 +14,80 @@ import publish_factor_batch as publisher
 
 
 class CompactTransactionTest(unittest.TestCase):
+    def test_original_source_bytes_are_rechecked_after_scoped_memo_reuse(self):
+        with tempfile.TemporaryDirectory() as directory:
+            root = Path(directory)
+            source = root / "original.json"
+            source.write_text('{"original":"decision"}\n', encoding="utf-8")
+            publisher._write_result_manifest(root)
+            ref = compact.reference(root)
+            entries = [{"input": ref, "authority": ref}]
+            compact.verify_source_references(entries)
+            source.write_text('{"original":"changed"}\n', encoding="utf-8")
+            with self.assertRaisesRegex(ValueError, "mismatch"):
+                compact.verify_source_references(entries)
+
+    def test_changed_reused_review_is_rejected_at_final_boundary(self):
+        with tempfile.TemporaryDirectory() as directory:
+            root = Path(directory)
+            path = root / "data/source/reviews/saved.md"
+            path.parent.mkdir(parents=True)
+            path.write_text("original authority review", encoding="utf-8")
+            reviews = {"reviews/saved.md": publisher.sha256(path)}
+            compact.verify_reviews(root, reviews)
+            path.write_text("changed after reuse", encoding="utf-8")
+            with self.assertRaisesRegex(ValueError, "referenced review changed"):
+                compact.verify_reviews(root, reviews)
+
+    def test_v2_uses_target_readback_and_final_checker_detects_unrelated_write(self):
+        with tempfile.TemporaryDirectory() as directory:
+            catalog = Path(directory) / "pair.sqlite"
+            shutil.copyfile(REPO / "data/source/catalog.sqlite", catalog)
+            backend = publisher._backend_module()
+            with closing(sqlite3.connect(catalog)) as db:
+                db.execute("attach database ':memory:' as registry")
+                db.execute("create table registry.registry_meta(key text primary key,value text)")
+                db.execute("create table registry.registry_research_attempts(attemptId text primary key)")
+                db.execute("create table registry.registry_source_rows(sourceRowId text primary key,canonicalWorkId text,volumeNumber text)")
+                ids = [row[0] for row in db.execute("select id from source_works order by sourceOrdinal limit 2")]
+                db.execute("insert into registry.registry_source_rows values('row',?,'')", (ids[0],))
+                db.commit()
+                view = compact.BatchView(db)
+                work_id = ids[0]
+                entry = {"workId": work_id, "input": {}, "authority": {}}
+                plan = {"targetIds": [work_id], "passIds": [], "blockedIds": [], "newEvidence": {},
+                        "factorUpdates": [], "themeInserts": [], "genreUpdates": {}, "contextInserts": [], "workUpdates": []}
+                changes = [{"sourceRowId": "row", "workId": work_id, "field": "volumeNumber", "before": "", "after": "1"}]
+                prepared = {"backend": backend, "plan": plan, "registryChanges": changes}
+                seal = {"schemaVersion": "catalog-compact-plan-v2", **entry, "reviewedAt": "test",
+                        "plan": plan, "registryChanges": changes, "canonicalRebase": None,
+                        "beforeTargetSha256": compact.object_sha(compact.target_view(view.catalog.scope({work_id}), work_id))}
+                db.execute("begin immediate")
+                # A production materializer regression changes an unrelated Work.
+                # Touched-row readback alone cannot certify the full publication.
+                original_apply = backend.apply_plan_in_transaction
+                def corrupting_apply(connection, value):
+                    original_apply(connection, value)
+                    connection.execute("update source_works set title='unrelated corruption' where id=?", (ids[1],))
+                with patch.object(backend, "apply_plan_in_transaction", side_effect=corrupting_apply), patch.object(
+                        backend, "_snapshot_db", side_effect=AssertionError("per-work full scan")):
+                    receipt = compact.apply_work_v2(entry, db, prepared, seal, view)
+                self.assertEqual(receipt["schemaVersion"], compact.WORK_FORMAT)
+                self.assertEqual(db.execute("select volumeNumber from registry.registry_source_rows").fetchone()[0], "1")
+                with self.assertRaisesRegex(ValueError, "independent sealed plans"):
+                    view.verify_final(db)
+                db.rollback()
+
+    def test_v2_registry_checker_does_not_accept_unplanned_fields(self):
+        with closing(sqlite3.connect(":memory:")) as db:
+            db.execute("create table registry_meta(key text primary key,value text)")
+            db.execute("create table registry_research_attempts(attemptId text primary key)")
+            db.execute("create table registry_source_rows(sourceRowId text primary key,canonicalWorkId text,volumeNumber text)")
+            db.execute("insert into registry_source_rows values('row','work','')")
+            state = correction.RegistryState(correction.snapshot(db))
+            with self.assertRaisesRegex(ValueError, "unauthorized field"):
+                state.apply([{"sourceRowId": "row", "workId": "work", "field": "canonicalWorkId", "before": "work", "after": "another"}])
+
     def test_snapshot_facts_match_sql_and_preserve_immutable_rows(self):
         backend = publisher._backend_module()
         catalog = REPO / "data/source/catalog.sqlite"
