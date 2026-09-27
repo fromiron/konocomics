@@ -1057,6 +1057,22 @@ class NotificationGuardTest(unittest.TestCase):
             with self.assertRaisesRegex(ValueError, "new turn"):
                 guard.arm(session, root, resume=True)
 
+    def test_explicit_clear_allows_a_different_new_assignment(self):
+        session = "01a0a48a-4149-7bb3-9eba-7835dfc56ebb"
+        parent = "01a0a3b8-5162-78f0-ac39-4e17f730a70a"
+        with tempfile.TemporaryDirectory() as folder:
+            root = Path(folder)
+            first, second = root / "first.json", root / "second.json"
+            guard.write(first, {"works": [{"workId": "work-a"}]})
+            guard.register(session, parent, "work-a", "adjudication", first, root, root, root)
+            guard.clear(session, root)
+
+            guard.register(session, parent, "work-b", "collection", second, root, root, root)
+            current = guard.read(guard.state_path(session, root))
+            self.assertEqual(current["workId"], "work-b")
+            self.assertTrue(current["active"])
+            self.assertNotIn("suspended", current)
+
 
 if __name__ == "__main__":
     unittest.main()

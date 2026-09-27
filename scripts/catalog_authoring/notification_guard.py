@@ -475,8 +475,9 @@ def _register(session, parent, work, phase, artifact, run, directory, artifact_r
                for k, v in value.items() if k not in {"active", "generation"}):
             return  # Preserve successful sends and the one-reminder flag on retry.
         if old.get("suspended") or not old.get("active"):
-            raise ValueError("Previous assignment stopped; explicitly resume it in a new turn before reassignment")
-        if old.get("active"):
+            if not (old.get("suspended") and old.get("active") is False):
+                raise ValueError("Previous assignment stopped; explicitly clear it before reassignment")
+        elif old.get("active"):
             previous = artifact_path(old["artifact"])
             if not previous.is_file():
                 raise ValueError("Previous assignment still active; finish or explicitly clear it")
