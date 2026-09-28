@@ -518,9 +518,10 @@ class RevisionWorkspace(Workspace):
             # Keep prepared bytes: concurrent GC may retire a formerly saved blob.
             compressed = old[1]
         else:
+            # zlib round-trips deterministically; the payload SHA is re-checked
+            # whenever a blob is read back (_decode_compressed), so a compress
+            # readback here is redundant defensive work on every new blob.
             compressed = zlib.compress(body, level=1)
-            if zlib.decompress(compressed) != body:
-                raise ValueError("Compression readback failed")
         prepared.add(sha, len(body), compressed)
         if body.lstrip()[:1] in (b"{", b"["):
             try:

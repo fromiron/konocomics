@@ -538,7 +538,7 @@ def parse_arguments():
     parser.add_argument("--preflight-attempt", default="initial", help="Explicit retry identity; retains earlier blocked receipts")
     parser.add_argument("--preflight-retry", action="append", default=[], metavar="WORK=ATTEMPT", help="Retry only named Works, preserving other receipt keys")
     parser.add_argument("--publication-format", choices=("compact", "full"), default="compact", help="Compact batch publication; full keeps the historical format")
-    parser.add_argument("--checkpoint-every", type=int, default=10, help="Full pair checkpoint interval for compact publication")
+    parser.add_argument("--checkpoint-every", type=int, default=50, help="Full pair checkpoint interval for compact publication")
     parser.add_argument("--apply-canonical", action="store_true", help="After candidate completion, apply this verified batch to canonical source and generated product artifacts")
     return parser.parse_args()
 

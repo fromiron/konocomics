@@ -464,7 +464,7 @@ def complete_transient_lifetime(batch):
     return workspace.retire_transient_files(execution)
 
 
-def _publish(batch, entries, initial, summary_sha, *, checkpoint_every=10):
+def _publish(batch, entries, initial, summary_sha, *, checkpoint_every=50):
     """Apply saved READY decisions serially, retaining one full pair per checkpoint."""
     import catalog_authoring_batch_publish as batch_publisher
     import catalog_authoring_runner as runner
@@ -688,7 +688,7 @@ def _publish(batch, entries, initial, summary_sha, *, checkpoint_every=10):
     return output, [row["workId"] for row in records], failures
 
 
-def publish(batch, entries, initial, summary_sha, *, checkpoint_every=10):
+def publish(batch, entries, initial, summary_sha, *, checkpoint_every=50):
     from canonical_rebase import validation_cache
     import publish_factor_batch as publisher
     import validate_factor_panel as panel
