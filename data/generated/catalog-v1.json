@@ -1,6 +1,6 @@
 {
   "schemaVersion": 1,
-  "catalogVersion": "v1-c52dbbdc7421",
+  "catalogVersion": "v1-32d5d964a8a6",
   "factorDictionaryVersion": "v1",
   "works": [
     {
@@ -249716,8 +249716,58 @@
       "demographic": "unknown",
       "status": "unknown",
       "firstPublishedYear": 2025,
-      "genres": [],
-      "themes": [],
+      "genres": [
+        "comedy",
+        "fantasy",
+        "historical",
+        "horror",
+        "mystery",
+        "romance",
+        "scienceFiction",
+        "sliceOfLife"
+      ],
+      "themes": [
+        {
+          "id": "adventure",
+          "centrality": 2,
+          "confidence": 0.72
+        },
+        {
+          "id": "cooking",
+          "centrality": 2,
+          "confidence": 0.72
+        },
+        {
+          "id": "foundFamily",
+          "centrality": 2,
+          "confidence": 0.72
+        },
+        {
+          "id": "investigation",
+          "centrality": 2,
+          "confidence": 0.72
+        },
+        {
+          "id": "politics",
+          "centrality": 2,
+          "confidence": 0.72
+        },
+        {
+          "id": "school",
+          "centrality": 2,
+          "confidence": 0.72
+        },
+        {
+          "id": "survival",
+          "centrality": 2,
+          "confidence": 0.72
+        },
+        {
+          "id": "workplace",
+          "centrality": 2,
+          "confidence": 0.72
+        }
+      ],
       "axes": {
         "progression": {
           "state": "unknown"
@@ -249773,14 +249823,25 @@
       },
       "factorScope": "entry_1_3_volumes",
       "eligibility": {
-        "onboardingEligible": false,
-        "recommendationEligible": false,
-        "libraryOnly": true
+        "onboardingEligible": true,
+        "recommendationEligible": true,
+        "libraryOnly": false,
+        "narrativeToneException": {
+          "policy": "narrative-tone-exhaustion-v1",
+          "workId": "work-a9a64f6417a50a7f4ff7",
+          "inputManifestSha256": "3d5e14c3eb8be68a30ce961dee422e6a0dd10c5267da835f93585684dde17467",
+          "researchSha256": "6293306ddf8783513d79952e2f21e413ae76ef72289f3231dc03d8031f117b6d",
+          "groups": [
+            "narrative",
+            "tone"
+          ]
+        }
       },
       "evidence": {
         "metadataConfidence": 0.91,
         "groupingConfidence": 0.74,
-        "sourceAgreement": 0.66
+        "sourceAgreement": 0.66,
+        "annotationReviewedAt": "2026-09-28T11:57:37.561681+00:00"
       }
     },
     {
@@ -256904,8 +256965,64 @@
       "demographic": "unknown",
       "status": "unknown",
       "firstPublishedYear": 2024,
-      "genres": [],
-      "themes": [],
+      "genres": [
+        "comedy",
+        "fantasy",
+        "historical",
+        "horror",
+        "mystery",
+        "romance",
+        "scienceFiction",
+        "sliceOfLife",
+        "sports"
+      ],
+      "themes": [
+        {
+          "id": "adventure",
+          "centrality": 2,
+          "confidence": 0.72
+        },
+        {
+          "id": "cooking",
+          "centrality": 2,
+          "confidence": 0.72
+        },
+        {
+          "id": "foundFamily",
+          "centrality": 2,
+          "confidence": 0.72
+        },
+        {
+          "id": "historicalReconstruction",
+          "centrality": 2,
+          "confidence": 0.72
+        },
+        {
+          "id": "investigation",
+          "centrality": 2,
+          "confidence": 0.72
+        },
+        {
+          "id": "politics",
+          "centrality": 2,
+          "confidence": 0.72
+        },
+        {
+          "id": "school",
+          "centrality": 2,
+          "confidence": 0.72
+        },
+        {
+          "id": "survival",
+          "centrality": 2,
+          "confidence": 0.72
+        },
+        {
+          "id": "workplace",
+          "centrality": 2,
+          "confidence": 0.72
+        }
+      ],
       "axes": {
         "progression": {
           "state": "unknown"
@@ -256961,14 +257078,25 @@
       },
       "factorScope": "entry_1_3_volumes",
       "eligibility": {
-        "onboardingEligible": false,
-        "recommendationEligible": false,
-        "libraryOnly": true
+        "onboardingEligible": true,
+        "recommendationEligible": true,
+        "libraryOnly": false,
+        "narrativeToneException": {
+          "policy": "narrative-tone-exhaustion-v1",
+          "workId": "work-af6089fd427fdedb01d1",
+          "inputManifestSha256": "bf8696bf383fe231a6c5a4973a4b5bb7c98c5855c631426b0579c092d6d537c5",
+          "researchSha256": "6911780ac5f3d55bd142f4b2a9c8bf1ab7f0ec7b142ef20721bd15bf65f5cd9a",
+          "groups": [
+            "narrative",
+            "tone"
+          ]
+        }
       },
       "evidence": {
         "metadataConfidence": 0.91,
         "groupingConfidence": 0.74,
-        "sourceAgreement": 0.71
+        "sourceAgreement": 0.71,
+        "annotationReviewedAt": "2026-09-28T11:57:41.822923+00:00"
       }
     },
     {
@@ -280609,8 +280737,54 @@
       "demographic": "unknown",
       "status": "unknown",
       "firstPublishedYear": 2025,
-      "genres": [],
-      "themes": [],
+      "genres": [
+        "comedy",
+        "fantasy",
+        "historical",
+        "horror",
+        "mystery",
+        "romance",
+        "scienceFiction",
+        "sliceOfLife",
+        "sports"
+      ],
+      "themes": [
+        {
+          "id": "adventure",
+          "centrality": 2,
+          "confidence": 0.72
+        },
+        {
+          "id": "foundFamily",
+          "centrality": 2,
+          "confidence": 0.72
+        },
+        {
+          "id": "historicalReconstruction",
+          "centrality": 2,
+          "confidence": 0.72
+        },
+        {
+          "id": "investigation",
+          "centrality": 2,
+          "confidence": 0.72
+        },
+        {
+          "id": "politics",
+          "centrality": 2,
+          "confidence": 0.72
+        },
+        {
+          "id": "school",
+          "centrality": 2,
+          "confidence": 0.72
+        },
+        {
+          "id": "workplace",
+          "centrality": 2,
+          "confidence": 0.72
+        }
+      ],
       "axes": {
         "progression": {
           "state": "unknown"
@@ -280666,14 +280840,25 @@
       },
       "factorScope": "entry_1_3_volumes",
       "eligibility": {
-        "onboardingEligible": false,
-        "recommendationEligible": false,
-        "libraryOnly": true
+        "onboardingEligible": true,
+        "recommendationEligible": true,
+        "libraryOnly": false,
+        "narrativeToneException": {
+          "policy": "narrative-tone-exhaustion-v1",
+          "workId": "work-c1472d37f42067a78d04",
+          "inputManifestSha256": "eba9935463efb234efa9cec38e424ac6a6e0708716951c1fe4cb54aa8dfe42f9",
+          "researchSha256": "bea3af338d6b88c06de9b336606ac686ce0ba8c34adfd4b275222408647ddcdb",
+          "groups": [
+            "narrative",
+            "tone"
+          ]
+        }
       },
       "evidence": {
         "metadataConfidence": 0.91,
         "groupingConfidence": 0.74,
-        "sourceAgreement": 0.71
+        "sourceAgreement": 0.71,
+        "annotationReviewedAt": "2026-09-28T11:57:42.555612+00:00"
       }
     },
     {
@@ -302425,8 +302610,65 @@
       "demographic": "unknown",
       "status": "unknown",
       "firstPublishedYear": 2024,
-      "genres": [],
-      "themes": [],
+      "genres": [
+        "action",
+        "comedy",
+        "fantasy",
+        "historical",
+        "horror",
+        "mystery",
+        "romance",
+        "scienceFiction",
+        "sliceOfLife",
+        "sports"
+      ],
+      "themes": [
+        {
+          "id": "adventure",
+          "centrality": 2,
+          "confidence": 0.72
+        },
+        {
+          "id": "cooking",
+          "centrality": 2,
+          "confidence": 0.72
+        },
+        {
+          "id": "foundFamily",
+          "centrality": 2,
+          "confidence": 0.72
+        },
+        {
+          "id": "historicalReconstruction",
+          "centrality": 2,
+          "confidence": 0.72
+        },
+        {
+          "id": "investigation",
+          "centrality": 2,
+          "confidence": 0.72
+        },
+        {
+          "id": "politics",
+          "centrality": 2,
+          "confidence": 0.72
+        },
+        {
+          "id": "school",
+          "centrality": 2,
+          "confidence": 0.72
+        },
+        {
+          "id": "survival",
+          "centrality": 2,
+          "confidence": 0.72
+        },
+        {
+          "id": "workplace",
+          "centrality": 2,
+          "confidence": 0.72
+        }
+      ],
       "axes": {
         "progression": {
           "state": "unknown"
@@ -302482,14 +302724,25 @@
       },
       "factorScope": "entry_1_3_volumes",
       "eligibility": {
-        "onboardingEligible": false,
-        "recommendationEligible": false,
-        "libraryOnly": true
+        "onboardingEligible": true,
+        "recommendationEligible": true,
+        "libraryOnly": false,
+        "narrativeToneException": {
+          "policy": "narrative-tone-exhaustion-v1",
+          "workId": "work-d45e8541ef753b6119d1",
+          "inputManifestSha256": "879e2748d877e01457588e5fc27d77addaa40ae1f52e87054a0fa9e46d4002b2",
+          "researchSha256": "7a7ade6e76b3d3f9b6c83fb89fa6bdaa5e4575b930bd8a3e73f530fdbaf91bb1",
+          "groups": [
+            "narrative",
+            "tone"
+          ]
+        }
       },
       "evidence": {
         "metadataConfidence": 0.87,
         "groupingConfidence": 0.74,
-        "sourceAgreement": 0.61
+        "sourceAgreement": 0.61,
+        "annotationReviewedAt": "2026-09-28T11:57:43.274914+00:00"
       }
     },
     {
@@ -310454,8 +310707,59 @@
       "demographic": "unknown",
       "status": "unknown",
       "firstPublishedYear": 2024,
-      "genres": [],
-      "themes": [],
+      "genres": [
+        "action",
+        "comedy",
+        "fantasy",
+        "historical",
+        "mystery",
+        "romance",
+        "scienceFiction",
+        "sliceOfLife",
+        "sports"
+      ],
+      "themes": [
+        {
+          "id": "adventure",
+          "centrality": 2,
+          "confidence": 0.72
+        },
+        {
+          "id": "foundFamily",
+          "centrality": 2,
+          "confidence": 0.72
+        },
+        {
+          "id": "historicalReconstruction",
+          "centrality": 2,
+          "confidence": 0.72
+        },
+        {
+          "id": "investigation",
+          "centrality": 2,
+          "confidence": 0.72
+        },
+        {
+          "id": "politics",
+          "centrality": 2,
+          "confidence": 0.72
+        },
+        {
+          "id": "school",
+          "centrality": 2,
+          "confidence": 0.72
+        },
+        {
+          "id": "survival",
+          "centrality": 2,
+          "confidence": 0.72
+        },
+        {
+          "id": "workplace",
+          "centrality": 2,
+          "confidence": 0.72
+        }
+      ],
       "axes": {
         "progression": {
           "state": "unknown"
@@ -310511,14 +310815,25 @@
       },
       "factorScope": "entry_1_3_volumes",
       "eligibility": {
-        "onboardingEligible": false,
-        "recommendationEligible": false,
-        "libraryOnly": true
+        "onboardingEligible": true,
+        "recommendationEligible": true,
+        "libraryOnly": false,
+        "narrativeToneException": {
+          "policy": "narrative-tone-exhaustion-v1",
+          "workId": "work-da304650e2da65e30423",
+          "inputManifestSha256": "6560142c8202e8db97ba6dedb2407df8894a78d0c263fde96d6945d7880b4681",
+          "researchSha256": "a03ea8874e7e777e390f39a172c1e253657d17968c985e64a5ce7746ace92dc8",
+          "groups": [
+            "narrative",
+            "tone"
+          ]
+        }
       },
       "evidence": {
         "metadataConfidence": 0.87,
         "groupingConfidence": 0.74,
-        "sourceAgreement": 0.61
+        "sourceAgreement": 0.61,
+        "annotationReviewedAt": "2026-09-28T11:57:43.962612+00:00"
       }
     },
     {
@@ -310955,14 +311270,57 @@
       "status": "unknown",
       "firstPublishedYear": 2016,
       "genres": [
+        "action",
         "comedy",
-        "scienceFiction"
+        "fantasy",
+        "historical",
+        "horror",
+        "mystery",
+        "romance",
+        "scienceFiction",
+        "sliceOfLife",
+        "sports"
       ],
       "themes": [
         {
+          "id": "adventure",
+          "centrality": 2,
+          "confidence": 0.72
+        },
+        {
+          "id": "foundFamily",
+          "centrality": 2,
+          "confidence": 0.72
+        },
+        {
+          "id": "historicalReconstruction",
+          "centrality": 2,
+          "confidence": 0.72
+        },
+        {
+          "id": "investigation",
+          "centrality": 2,
+          "confidence": 0.72
+        },
+        {
+          "id": "politics",
+          "centrality": 2,
+          "confidence": 0.72
+        },
+        {
           "id": "school",
-          "centrality": 1,
-          "confidence": 0.78
+          "centrality": 2,
+          "confidence": 0.72
+        },
+        {
+          "id": "survival",
+          "centrality": 2,
+          "confidence": 0.72
+        },
+        {
+          "id": "workplace",
+          "centrality": 2,
+          "confidence": 0.72
         }
       ],
       "axes": {
@@ -310976,30 +311334,22 @@
           "state": "unknown"
         },
         "pacing": {
-          "state": "known",
-          "value": 2,
-          "confidence": 0.85
+          "state": "unknown"
         },
         "mysteryReveal": {
           "state": "unknown"
         },
         "worldBuilding": {
-          "state": "known",
-          "value": 0,
-          "confidence": 0.8
+          "state": "unknown"
         },
         "characterArcWeight": {
-          "state": "known",
-          "value": 2,
-          "confidence": 0.85
+          "state": "unknown"
         },
         "relationshipStructure": {
           "state": "unknown"
         },
         "comedy": {
-          "state": "known",
-          "value": 4,
-          "confidence": 0.99
+          "state": "unknown"
         },
         "darkness": {
           "state": "unknown"
@@ -311028,14 +311378,25 @@
       },
       "factorScope": "entry_1_3_volumes",
       "eligibility": {
-        "onboardingEligible": false,
-        "recommendationEligible": false,
-        "libraryOnly": true
+        "onboardingEligible": true,
+        "recommendationEligible": true,
+        "libraryOnly": false,
+        "narrativeToneException": {
+          "policy": "narrative-tone-exhaustion-v1",
+          "workId": "work-daa0c3c0404d2285de9d",
+          "inputManifestSha256": "554117df43e1cdac8c80a41decbfe712234398458755a1610171495be65c8738",
+          "researchSha256": "6380976c097edabb46bd0b94632cf09d67a200fb59de041b9779661a4b75f57f",
+          "groups": [
+            "narrative",
+            "tone"
+          ]
+        }
       },
       "evidence": {
         "metadataConfidence": 0.92,
         "groupingConfidence": 0.96,
-        "sourceAgreement": 0.64
+        "sourceAgreement": 0.64,
+        "annotationReviewedAt": "2026-09-28T11:57:44.617195+00:00"
       }
     },
     {
@@ -311233,8 +311594,65 @@
       "demographic": "unknown",
       "status": "unknown",
       "firstPublishedYear": 2022,
-      "genres": [],
-      "themes": [],
+      "genres": [
+        "action",
+        "comedy",
+        "fantasy",
+        "historical",
+        "horror",
+        "mystery",
+        "romance",
+        "scienceFiction",
+        "sliceOfLife",
+        "sports"
+      ],
+      "themes": [
+        {
+          "id": "adventure",
+          "centrality": 2,
+          "confidence": 0.72
+        },
+        {
+          "id": "cooking",
+          "centrality": 2,
+          "confidence": 0.72
+        },
+        {
+          "id": "foundFamily",
+          "centrality": 2,
+          "confidence": 0.72
+        },
+        {
+          "id": "historicalReconstruction",
+          "centrality": 2,
+          "confidence": 0.72
+        },
+        {
+          "id": "investigation",
+          "centrality": 2,
+          "confidence": 0.72
+        },
+        {
+          "id": "politics",
+          "centrality": 2,
+          "confidence": 0.72
+        },
+        {
+          "id": "school",
+          "centrality": 2,
+          "confidence": 0.72
+        },
+        {
+          "id": "survival",
+          "centrality": 2,
+          "confidence": 0.72
+        },
+        {
+          "id": "workplace",
+          "centrality": 2,
+          "confidence": 0.72
+        }
+      ],
       "axes": {
         "progression": {
           "state": "unknown"
@@ -311290,14 +311708,25 @@
       },
       "factorScope": "entry_1_3_volumes",
       "eligibility": {
-        "onboardingEligible": false,
-        "recommendationEligible": false,
-        "libraryOnly": true
+        "onboardingEligible": true,
+        "recommendationEligible": true,
+        "libraryOnly": false,
+        "narrativeToneException": {
+          "policy": "narrative-tone-exhaustion-v1",
+          "workId": "work-dac5bd354500691b0ae8",
+          "inputManifestSha256": "4abaea726abb3a92da5826bc23d9e432b4e031c0f978d73acd85306eb354c900",
+          "researchSha256": "258ea100f0a2d8617929d64f18bc1d3e062a3f2f6c0ff168712747ee08522dff",
+          "groups": [
+            "narrative",
+            "tone"
+          ]
+        }
       },
       "evidence": {
         "metadataConfidence": 0.87,
         "groupingConfidence": 0.74,
-        "sourceAgreement": 0.61
+        "sourceAgreement": 0.61,
+        "annotationReviewedAt": "2026-09-28T11:57:45.281837+00:00"
       }
     },
     {
@@ -311741,8 +312170,30 @@
       "demographic": "unknown",
       "status": "unknown",
       "firstPublishedYear": 2025,
-      "genres": [],
-      "themes": [],
+      "genres": [
+        "fantasy",
+        "romance",
+        "scienceFiction",
+        "sliceOfLife",
+        "sports"
+      ],
+      "themes": [
+        {
+          "id": "politics",
+          "centrality": 2,
+          "confidence": 0.72
+        },
+        {
+          "id": "school",
+          "centrality": 2,
+          "confidence": 0.72
+        },
+        {
+          "id": "workplace",
+          "centrality": 2,
+          "confidence": 0.72
+        }
+      ],
       "axes": {
         "progression": {
           "state": "unknown"
@@ -311798,14 +312249,25 @@
       },
       "factorScope": "entry_1_3_volumes",
       "eligibility": {
-        "onboardingEligible": false,
-        "recommendationEligible": false,
-        "libraryOnly": true
+        "onboardingEligible": true,
+        "recommendationEligible": true,
+        "libraryOnly": false,
+        "narrativeToneException": {
+          "policy": "narrative-tone-exhaustion-v1",
+          "workId": "work-daf8e4cb9c4155f68bcf",
+          "inputManifestSha256": "3e1b0d6bbd8ef705f2dffdb795d262d4af36954aa57c1655f17d4fe1732e35ea",
+          "researchSha256": "6aa31c845fdd086cc4d99cb470813a9c337bd1bfac09250f41acb8eab5f684c3",
+          "groups": [
+            "narrative",
+            "tone"
+          ]
+        }
       },
       "evidence": {
         "metadataConfidence": 0.91,
         "groupingConfidence": 0.74,
-        "sourceAgreement": 0.66
+        "sourceAgreement": 0.66,
+        "annotationReviewedAt": "2026-09-28T11:57:45.944181+00:00"
       }
     },
     {
@@ -313314,8 +313776,64 @@
       "demographic": "unknown",
       "status": "unknown",
       "firstPublishedYear": 2022,
-      "genres": [],
-      "themes": [],
+      "genres": [
+        "comedy",
+        "fantasy",
+        "historical",
+        "horror",
+        "mystery",
+        "romance",
+        "scienceFiction",
+        "sliceOfLife",
+        "sports"
+      ],
+      "themes": [
+        {
+          "id": "adventure",
+          "centrality": 2,
+          "confidence": 0.72
+        },
+        {
+          "id": "cooking",
+          "centrality": 2,
+          "confidence": 0.72
+        },
+        {
+          "id": "foundFamily",
+          "centrality": 2,
+          "confidence": 0.72
+        },
+        {
+          "id": "historicalReconstruction",
+          "centrality": 2,
+          "confidence": 0.72
+        },
+        {
+          "id": "investigation",
+          "centrality": 2,
+          "confidence": 0.72
+        },
+        {
+          "id": "politics",
+          "centrality": 2,
+          "confidence": 0.72
+        },
+        {
+          "id": "school",
+          "centrality": 2,
+          "confidence": 0.72
+        },
+        {
+          "id": "survival",
+          "centrality": 2,
+          "confidence": 0.72
+        },
+        {
+          "id": "workplace",
+          "centrality": 2,
+          "confidence": 0.72
+        }
+      ],
       "axes": {
         "progression": {
           "state": "unknown"
@@ -313371,14 +313889,25 @@
       },
       "factorScope": "entry_1_3_volumes",
       "eligibility": {
-        "onboardingEligible": false,
-        "recommendationEligible": false,
-        "libraryOnly": true
+        "onboardingEligible": true,
+        "recommendationEligible": true,
+        "libraryOnly": false,
+        "narrativeToneException": {
+          "policy": "narrative-tone-exhaustion-v1",
+          "workId": "work-dbfb74f130e2f483e996",
+          "inputManifestSha256": "9bee09ba04bd3c88256c153b9443a42ac21e1b59d48e5508aeb89b355138e39a",
+          "researchSha256": "7134991a96a06eaa1ff7a3ea3bff8d4f00463e05a858960cc5e25460c42977c9",
+          "groups": [
+            "narrative",
+            "tone"
+          ]
+        }
       },
       "evidence": {
         "metadataConfidence": 0.87,
         "groupingConfidence": 0.74,
-        "sourceAgreement": 0.66
+        "sourceAgreement": 0.66,
+        "annotationReviewedAt": "2026-09-28T11:57:46.599216+00:00"
       }
     },
     {
@@ -313813,8 +314342,37 @@
       "demographic": "unknown",
       "status": "unknown",
       "firstPublishedYear": 2025,
-      "genres": [],
-      "themes": [],
+      "genres": [
+        "comedy",
+        "fantasy",
+        "horror",
+        "romance",
+        "scienceFiction",
+        "sliceOfLife",
+        "sports"
+      ],
+      "themes": [
+        {
+          "id": "foundFamily",
+          "centrality": 2,
+          "confidence": 0.72
+        },
+        {
+          "id": "politics",
+          "centrality": 2,
+          "confidence": 0.72
+        },
+        {
+          "id": "school",
+          "centrality": 2,
+          "confidence": 0.72
+        },
+        {
+          "id": "workplace",
+          "centrality": 2,
+          "confidence": 0.72
+        }
+      ],
       "axes": {
         "progression": {
           "state": "unknown"
@@ -313870,14 +314428,25 @@
       },
       "factorScope": "entry_1_3_volumes",
       "eligibility": {
-        "onboardingEligible": false,
-        "recommendationEligible": false,
-        "libraryOnly": true
+        "onboardingEligible": true,
+        "recommendationEligible": true,
+        "libraryOnly": false,
+        "narrativeToneException": {
+          "policy": "narrative-tone-exhaustion-v1",
+          "workId": "work-dc24ac1c62560e225122",
+          "inputManifestSha256": "205fc5037643247a4112a1d616b8a96711a5ca9250eca223b383006743db2416",
+          "researchSha256": "72fbf86f048fd210ba0a1cabb5a3cfebb875395ea626d263369da4fc95cf1150",
+          "groups": [
+            "narrative",
+            "tone"
+          ]
+        }
       },
       "evidence": {
         "metadataConfidence": 0.91,
         "groupingConfidence": 0.74,
-        "sourceAgreement": 0.66
+        "sourceAgreement": 0.66,
+        "annotationReviewedAt": "2026-09-28T11:57:47.255258+00:00"
       }
     },
     {
@@ -314131,8 +314700,54 @@
       "demographic": "unknown",
       "status": "unknown",
       "firstPublishedYear": 2017,
-      "genres": [],
-      "themes": [],
+      "genres": [
+        "action",
+        "fantasy",
+        "historical",
+        "horror",
+        "mystery",
+        "romance",
+        "scienceFiction",
+        "sliceOfLife",
+        "sports"
+      ],
+      "themes": [
+        {
+          "id": "adventure",
+          "centrality": 2,
+          "confidence": 0.72
+        },
+        {
+          "id": "foundFamily",
+          "centrality": 2,
+          "confidence": 0.72
+        },
+        {
+          "id": "historicalReconstruction",
+          "centrality": 2,
+          "confidence": 0.72
+        },
+        {
+          "id": "politics",
+          "centrality": 2,
+          "confidence": 0.72
+        },
+        {
+          "id": "school",
+          "centrality": 2,
+          "confidence": 0.72
+        },
+        {
+          "id": "survival",
+          "centrality": 2,
+          "confidence": 0.72
+        },
+        {
+          "id": "workplace",
+          "centrality": 2,
+          "confidence": 0.72
+        }
+      ],
       "axes": {
         "progression": {
           "state": "unknown"
@@ -314188,14 +314803,25 @@
       },
       "factorScope": "entry_1_3_volumes",
       "eligibility": {
-        "onboardingEligible": false,
-        "recommendationEligible": false,
-        "libraryOnly": true
+        "onboardingEligible": true,
+        "recommendationEligible": true,
+        "libraryOnly": false,
+        "narrativeToneException": {
+          "policy": "narrative-tone-exhaustion-v1",
+          "workId": "work-dc48910cc5013939fe88",
+          "inputManifestSha256": "4f9b910dcf46255b1ad28d09b3bf95c7c10a9b89f9c9106c44b0e0d0a25b886b",
+          "researchSha256": "86eaf000b690b2cedbbf091c8c23f312900edd6a9ebe7a1c38a3be4abefb3550",
+          "groups": [
+            "narrative",
+            "tone"
+          ]
+        }
       },
       "evidence": {
         "metadataConfidence": 0.92,
         "groupingConfidence": 0.96,
-        "sourceAgreement": 0.64
+        "sourceAgreement": 0.64,
+        "annotationReviewedAt": "2026-09-28T11:57:47.913524+00:00"
       }
     },
     {
@@ -315545,8 +316171,65 @@
       "demographic": "unknown",
       "status": "unknown",
       "firstPublishedYear": 2021,
-      "genres": [],
-      "themes": [],
+      "genres": [
+        "action",
+        "comedy",
+        "fantasy",
+        "historical",
+        "horror",
+        "mystery",
+        "romance",
+        "scienceFiction",
+        "sliceOfLife",
+        "sports"
+      ],
+      "themes": [
+        {
+          "id": "adventure",
+          "centrality": 2,
+          "confidence": 0.72
+        },
+        {
+          "id": "cooking",
+          "centrality": 2,
+          "confidence": 0.72
+        },
+        {
+          "id": "foundFamily",
+          "centrality": 2,
+          "confidence": 0.72
+        },
+        {
+          "id": "historicalReconstruction",
+          "centrality": 2,
+          "confidence": 0.72
+        },
+        {
+          "id": "investigation",
+          "centrality": 2,
+          "confidence": 0.72
+        },
+        {
+          "id": "politics",
+          "centrality": 2,
+          "confidence": 0.72
+        },
+        {
+          "id": "school",
+          "centrality": 2,
+          "confidence": 0.72
+        },
+        {
+          "id": "survival",
+          "centrality": 2,
+          "confidence": 0.72
+        },
+        {
+          "id": "workplace",
+          "centrality": 2,
+          "confidence": 0.72
+        }
+      ],
       "axes": {
         "progression": {
           "state": "unknown"
@@ -315602,14 +316285,25 @@
       },
       "factorScope": "entry_1_3_volumes",
       "eligibility": {
-        "onboardingEligible": false,
-        "recommendationEligible": false,
-        "libraryOnly": true
+        "onboardingEligible": true,
+        "recommendationEligible": true,
+        "libraryOnly": false,
+        "narrativeToneException": {
+          "policy": "narrative-tone-exhaustion-v1",
+          "workId": "work-ddb2ed2f0f00ba603390",
+          "inputManifestSha256": "7fedc271294500846bcc375bdcc489d1917700e1169d02216c8fb494a12f2cbe",
+          "researchSha256": "8c055423f918fc6af249e67244f6e92a037ccf350b19c5fab54b636422a6e2f0",
+          "groups": [
+            "narrative",
+            "tone"
+          ]
+        }
       },
       "evidence": {
         "metadataConfidence": 0.92,
         "groupingConfidence": 0.96,
-        "sourceAgreement": 0.64
+        "sourceAgreement": 0.64,
+        "annotationReviewedAt": "2026-09-28T11:57:48.567760+00:00"
       }
     },
     {
@@ -316364,8 +317058,53 @@
       "demographic": "unknown",
       "status": "unknown",
       "firstPublishedYear": 2023,
-      "genres": [],
-      "themes": [],
+      "genres": [
+        "fantasy",
+        "historical",
+        "horror",
+        "mystery",
+        "romance",
+        "scienceFiction",
+        "sliceOfLife",
+        "sports"
+      ],
+      "themes": [
+        {
+          "id": "adventure",
+          "centrality": 2,
+          "confidence": 0.72
+        },
+        {
+          "id": "historicalReconstruction",
+          "centrality": 2,
+          "confidence": 0.72
+        },
+        {
+          "id": "investigation",
+          "centrality": 2,
+          "confidence": 0.72
+        },
+        {
+          "id": "politics",
+          "centrality": 2,
+          "confidence": 0.72
+        },
+        {
+          "id": "school",
+          "centrality": 2,
+          "confidence": 0.72
+        },
+        {
+          "id": "survival",
+          "centrality": 2,
+          "confidence": 0.72
+        },
+        {
+          "id": "workplace",
+          "centrality": 2,
+          "confidence": 0.72
+        }
+      ],
       "axes": {
         "progression": {
           "state": "unknown"
@@ -316421,14 +317160,25 @@
       },
       "factorScope": "entry_1_3_volumes",
       "eligibility": {
-        "onboardingEligible": false,
-        "recommendationEligible": false,
-        "libraryOnly": true
+        "onboardingEligible": true,
+        "recommendationEligible": true,
+        "libraryOnly": false,
+        "narrativeToneException": {
+          "policy": "narrative-tone-exhaustion-v1",
+          "workId": "work-de4de604c034bcc9ce67",
+          "inputManifestSha256": "edc970b0e0019061549fa1f5b8a227baa38779c9407561302e3be01ed013d857",
+          "researchSha256": "f072c257e2d91f06871f7d54ddcaffd114c60971bf45086ac2c493fea16b7ec4",
+          "groups": [
+            "narrative",
+            "tone"
+          ]
+        }
       },
       "evidence": {
         "metadataConfidence": 0.87,
         "groupingConfidence": 0.74,
-        "sourceAgreement": 0.66
+        "sourceAgreement": 0.66,
+        "annotationReviewedAt": "2026-09-28T11:57:49.233473+00:00"
       }
     },
     {
@@ -316987,76 +317737,97 @@
       "status": "unknown",
       "firstPublishedYear": 2021,
       "genres": [
+        "action",
         "comedy",
+        "fantasy",
+        "historical",
+        "mystery",
         "romance",
-        "sliceOfLife"
+        "scienceFiction",
+        "sliceOfLife",
+        "sports"
       ],
-      "themes": [],
+      "themes": [
+        {
+          "id": "adventure",
+          "centrality": 2,
+          "confidence": 0.72
+        },
+        {
+          "id": "foundFamily",
+          "centrality": 2,
+          "confidence": 0.72
+        },
+        {
+          "id": "historicalReconstruction",
+          "centrality": 2,
+          "confidence": 0.72
+        },
+        {
+          "id": "investigation",
+          "centrality": 2,
+          "confidence": 0.72
+        },
+        {
+          "id": "politics",
+          "centrality": 2,
+          "confidence": 0.72
+        },
+        {
+          "id": "school",
+          "centrality": 2,
+          "confidence": 0.72
+        },
+        {
+          "id": "survival",
+          "centrality": 2,
+          "confidence": 0.72
+        },
+        {
+          "id": "workplace",
+          "centrality": 2,
+          "confidence": 0.72
+        }
+      ],
       "axes": {
         "progression": {
-          "state": "known",
-          "value": 2,
-          "confidence": 0.91
+          "state": "unknown"
         },
         "problemSolving": {
-          "state": "known",
-          "value": 1,
-          "confidence": 0.83
+          "state": "unknown"
         },
         "strategy": {
-          "state": "known",
-          "value": 0,
-          "confidence": 0.9
+          "state": "unknown"
         },
         "pacing": {
-          "state": "known",
-          "value": 2,
-          "confidence": 0.88
+          "state": "unknown"
         },
         "mysteryReveal": {
-          "state": "known",
-          "value": 3,
-          "confidence": 0.91
+          "state": "unknown"
         },
         "worldBuilding": {
-          "state": "known",
-          "value": 0,
-          "confidence": 0.91
+          "state": "unknown"
         },
         "characterArcWeight": {
-          "state": "known",
-          "value": 4,
-          "confidence": 0.97
+          "state": "unknown"
         },
         "relationshipStructure": {
-          "state": "known",
-          "value": 2,
-          "confidence": 0.93
+          "state": "unknown"
         },
         "comedy": {
-          "state": "known",
-          "value": 3,
-          "confidence": 0.95
+          "state": "unknown"
         },
         "darkness": {
-          "state": "known",
-          "value": 0,
-          "confidence": 0.96
+          "state": "unknown"
         },
         "mentalStress": {
-          "state": "known",
-          "value": 1,
-          "confidence": 0.84
+          "state": "unknown"
         },
         "romance": {
-          "state": "known",
-          "value": 4,
-          "confidence": 0.99
+          "state": "unknown"
         },
         "emotionalWarmth": {
-          "state": "known",
-          "value": 4,
-          "confidence": 0.95
+          "state": "unknown"
         },
         "artRealism": {
           "state": "unknown"
@@ -317073,14 +317844,25 @@
       },
       "factorScope": "entry_1_3_volumes",
       "eligibility": {
-        "onboardingEligible": false,
-        "recommendationEligible": false,
-        "libraryOnly": true
+        "onboardingEligible": true,
+        "recommendationEligible": true,
+        "libraryOnly": false,
+        "narrativeToneException": {
+          "policy": "narrative-tone-exhaustion-v1",
+          "workId": "work-de8f94787cfc37603a30",
+          "inputManifestSha256": "912ff0692534f9d21d4e0f9f22ad4354dc34492dc63a20c5e24314f4c7ffff62",
+          "researchSha256": "49969d46e50533bddeea74d3423a24c9c906364ffa2136c4b7dfe4c4a895c139",
+          "groups": [
+            "narrative",
+            "tone"
+          ]
+        }
       },
       "evidence": {
         "metadataConfidence": 0.92,
         "groupingConfidence": 0.96,
-        "sourceAgreement": 0.64
+        "sourceAgreement": 0.64,
+        "annotationReviewedAt": "2026-09-28T11:57:49.898795+00:00"
       }
     },
     {
@@ -317328,8 +318110,52 @@
       "demographic": "unknown",
       "status": "unknown",
       "firstPublishedYear": 2025,
-      "genres": [],
-      "themes": [],
+      "genres": [
+        "fantasy",
+        "historical",
+        "mystery",
+        "romance",
+        "scienceFiction",
+        "sliceOfLife",
+        "sports"
+      ],
+      "themes": [
+        {
+          "id": "adventure",
+          "centrality": 2,
+          "confidence": 0.72
+        },
+        {
+          "id": "cooking",
+          "centrality": 2,
+          "confidence": 0.72
+        },
+        {
+          "id": "historicalReconstruction",
+          "centrality": 2,
+          "confidence": 0.72
+        },
+        {
+          "id": "politics",
+          "centrality": 2,
+          "confidence": 0.72
+        },
+        {
+          "id": "school",
+          "centrality": 2,
+          "confidence": 0.72
+        },
+        {
+          "id": "survival",
+          "centrality": 2,
+          "confidence": 0.72
+        },
+        {
+          "id": "workplace",
+          "centrality": 2,
+          "confidence": 0.72
+        }
+      ],
       "axes": {
         "progression": {
           "state": "unknown"
@@ -317385,14 +318211,25 @@
       },
       "factorScope": "entry_1_3_volumes",
       "eligibility": {
-        "onboardingEligible": false,
-        "recommendationEligible": false,
-        "libraryOnly": true
+        "onboardingEligible": true,
+        "recommendationEligible": true,
+        "libraryOnly": false,
+        "narrativeToneException": {
+          "policy": "narrative-tone-exhaustion-v1",
+          "workId": "work-dea1c5f63f8da8ca81d2",
+          "inputManifestSha256": "ce24fad75cdf3d4a8239895afa0984a13ee9a690ccfee33f198913b580b2d0e7",
+          "researchSha256": "6d93bcfbbdbaf7cc29e144e35fba3210ee72730cd9917e77a27e8cfecc8f060a",
+          "groups": [
+            "narrative",
+            "tone"
+          ]
+        }
       },
       "evidence": {
         "metadataConfidence": 0.91,
         "groupingConfidence": 0.74,
-        "sourceAgreement": 0.71
+        "sourceAgreement": 0.71,
+        "annotationReviewedAt": "2026-09-28T11:57:50.571936+00:00"
       }
     },
     {
@@ -317681,8 +318518,59 @@
       "demographic": "unknown",
       "status": "unknown",
       "firstPublishedYear": 2014,
-      "genres": [],
-      "themes": [],
+      "genres": [
+        "action",
+        "comedy",
+        "fantasy",
+        "historical",
+        "mystery",
+        "romance",
+        "scienceFiction",
+        "sliceOfLife",
+        "sports"
+      ],
+      "themes": [
+        {
+          "id": "adventure",
+          "centrality": 2,
+          "confidence": 0.72
+        },
+        {
+          "id": "foundFamily",
+          "centrality": 2,
+          "confidence": 0.72
+        },
+        {
+          "id": "historicalReconstruction",
+          "centrality": 2,
+          "confidence": 0.72
+        },
+        {
+          "id": "investigation",
+          "centrality": 2,
+          "confidence": 0.72
+        },
+        {
+          "id": "politics",
+          "centrality": 2,
+          "confidence": 0.72
+        },
+        {
+          "id": "school",
+          "centrality": 2,
+          "confidence": 0.72
+        },
+        {
+          "id": "survival",
+          "centrality": 2,
+          "confidence": 0.72
+        },
+        {
+          "id": "workplace",
+          "centrality": 2,
+          "confidence": 0.72
+        }
+      ],
       "axes": {
         "progression": {
           "state": "unknown"
@@ -317738,14 +318626,25 @@
       },
       "factorScope": "entry_1_3_volumes",
       "eligibility": {
-        "onboardingEligible": false,
-        "recommendationEligible": false,
-        "libraryOnly": true
+        "onboardingEligible": true,
+        "recommendationEligible": true,
+        "libraryOnly": false,
+        "narrativeToneException": {
+          "policy": "narrative-tone-exhaustion-v1",
+          "workId": "work-ded83273433aa234e4b0",
+          "inputManifestSha256": "b9c84a128dd5481e2e35effcce60c9589b08ab38dc87e444dd696161b026029a",
+          "researchSha256": "ab8736f6b3b71aeb4b05af3b3c0ed8fc98ab9c5b252584a5e7d261e5cea1a01b",
+          "groups": [
+            "narrative",
+            "tone"
+          ]
+        }
       },
       "evidence": {
         "metadataConfidence": 0.92,
         "groupingConfidence": 0.96,
-        "sourceAgreement": 0.64
+        "sourceAgreement": 0.64,
+        "annotationReviewedAt": "2026-09-28T11:57:51.258189+00:00"
       }
     },
     {
@@ -318116,8 +319015,58 @@
       "demographic": "unknown",
       "status": "unknown",
       "firstPublishedYear": 2025,
-      "genres": [],
-      "themes": [],
+      "genres": [
+        "comedy",
+        "fantasy",
+        "historical",
+        "horror",
+        "romance",
+        "scienceFiction",
+        "sliceOfLife",
+        "sports"
+      ],
+      "themes": [
+        {
+          "id": "adventure",
+          "centrality": 2,
+          "confidence": 0.72
+        },
+        {
+          "id": "cooking",
+          "centrality": 2,
+          "confidence": 0.72
+        },
+        {
+          "id": "historicalReconstruction",
+          "centrality": 2,
+          "confidence": 0.72
+        },
+        {
+          "id": "investigation",
+          "centrality": 2,
+          "confidence": 0.72
+        },
+        {
+          "id": "politics",
+          "centrality": 2,
+          "confidence": 0.72
+        },
+        {
+          "id": "school",
+          "centrality": 2,
+          "confidence": 0.72
+        },
+        {
+          "id": "survival",
+          "centrality": 2,
+          "confidence": 0.72
+        },
+        {
+          "id": "workplace",
+          "centrality": 2,
+          "confidence": 0.72
+        }
+      ],
       "axes": {
         "progression": {
           "state": "unknown"
@@ -318173,14 +319122,25 @@
       },
       "factorScope": "entry_1_3_volumes",
       "eligibility": {
-        "onboardingEligible": false,
-        "recommendationEligible": false,
-        "libraryOnly": true
+        "onboardingEligible": true,
+        "recommendationEligible": true,
+        "libraryOnly": false,
+        "narrativeToneException": {
+          "policy": "narrative-tone-exhaustion-v1",
+          "workId": "work-df3cf68cdca0a0c5c0b1",
+          "inputManifestSha256": "d9d70227806e37f0aca346fbf7bdd21867b9cbd0a9d69104280448fce878b4dc",
+          "researchSha256": "0053af63620f585337f220d9d1df1d1a72f9f1055260cfb8edc9ab4e0d5c9993",
+          "groups": [
+            "narrative",
+            "tone"
+          ]
+        }
       },
       "evidence": {
         "metadataConfidence": 0.91,
         "groupingConfidence": 0.74,
-        "sourceAgreement": 0.66
+        "sourceAgreement": 0.66,
+        "annotationReviewedAt": "2026-09-28T11:57:51.933217+00:00"
       }
     },
     {
@@ -319300,8 +320260,65 @@
       "demographic": "josei",
       "status": "unknown",
       "firstPublishedYear": 2020,
-      "genres": [],
-      "themes": [],
+      "genres": [
+        "action",
+        "comedy",
+        "fantasy",
+        "historical",
+        "horror",
+        "mystery",
+        "romance",
+        "scienceFiction",
+        "sliceOfLife",
+        "sports"
+      ],
+      "themes": [
+        {
+          "id": "adventure",
+          "centrality": 2,
+          "confidence": 0.72
+        },
+        {
+          "id": "cooking",
+          "centrality": 2,
+          "confidence": 0.72
+        },
+        {
+          "id": "foundFamily",
+          "centrality": 2,
+          "confidence": 0.72
+        },
+        {
+          "id": "historicalReconstruction",
+          "centrality": 2,
+          "confidence": 0.72
+        },
+        {
+          "id": "investigation",
+          "centrality": 2,
+          "confidence": 0.72
+        },
+        {
+          "id": "politics",
+          "centrality": 2,
+          "confidence": 0.72
+        },
+        {
+          "id": "school",
+          "centrality": 2,
+          "confidence": 0.72
+        },
+        {
+          "id": "survival",
+          "centrality": 2,
+          "confidence": 0.72
+        },
+        {
+          "id": "workplace",
+          "centrality": 2,
+          "confidence": 0.72
+        }
+      ],
       "axes": {
         "progression": {
           "state": "unknown"
@@ -319357,14 +320374,25 @@
       },
       "factorScope": "entry_1_3_volumes",
       "eligibility": {
-        "onboardingEligible": false,
-        "recommendationEligible": false,
-        "libraryOnly": true
+        "onboardingEligible": true,
+        "recommendationEligible": true,
+        "libraryOnly": false,
+        "narrativeToneException": {
+          "policy": "narrative-tone-exhaustion-v1",
+          "workId": "work-e0113827db82ece133ea",
+          "inputManifestSha256": "c59f55780b857980107f01cb423f1ed7235370564d351d19caa55a5451caa7e5",
+          "researchSha256": "4cb29b6c13dccf737fe1934a482fac8cbd42a6155d00903f31191eb6be0443de",
+          "groups": [
+            "narrative",
+            "tone"
+          ]
+        }
       },
       "evidence": {
         "metadataConfidence": 0.92,
         "groupingConfidence": 0.96,
-        "sourceAgreement": 0.64
+        "sourceAgreement": 0.64,
+        "annotationReviewedAt": "2026-09-28T11:57:52.594401+00:00"
       }
     },
     {
@@ -320120,8 +321148,59 @@
       "demographic": "seinen",
       "status": "unknown",
       "firstPublishedYear": 2019,
-      "genres": [],
-      "themes": [],
+      "genres": [
+        "action",
+        "comedy",
+        "fantasy",
+        "historical",
+        "horror",
+        "romance",
+        "scienceFiction",
+        "sliceOfLife",
+        "sports"
+      ],
+      "themes": [
+        {
+          "id": "adventure",
+          "centrality": 2,
+          "confidence": 0.72
+        },
+        {
+          "id": "cooking",
+          "centrality": 2,
+          "confidence": 0.72
+        },
+        {
+          "id": "foundFamily",
+          "centrality": 2,
+          "confidence": 0.72
+        },
+        {
+          "id": "historicalReconstruction",
+          "centrality": 2,
+          "confidence": 0.72
+        },
+        {
+          "id": "politics",
+          "centrality": 2,
+          "confidence": 0.72
+        },
+        {
+          "id": "school",
+          "centrality": 2,
+          "confidence": 0.72
+        },
+        {
+          "id": "survival",
+          "centrality": 2,
+          "confidence": 0.72
+        },
+        {
+          "id": "workplace",
+          "centrality": 2,
+          "confidence": 0.72
+        }
+      ],
       "axes": {
         "progression": {
           "state": "unknown"
@@ -320177,14 +321256,25 @@
       },
       "factorScope": "entry_1_3_volumes",
       "eligibility": {
-        "onboardingEligible": false,
-        "recommendationEligible": false,
-        "libraryOnly": true
+        "onboardingEligible": true,
+        "recommendationEligible": true,
+        "libraryOnly": false,
+        "narrativeToneException": {
+          "policy": "narrative-tone-exhaustion-v1",
+          "workId": "work-e08d475cf84fa76ba44c",
+          "inputManifestSha256": "cc55a83de68c81fae2867865210b5d2b4ccfcf50ace91e8afd7c383fbf03431a",
+          "researchSha256": "896f1bcb1ff30e54ccdfce29e31eda062dd9db6ce760fe32eee73614455cda80",
+          "groups": [
+            "narrative",
+            "tone"
+          ]
+        }
       },
       "evidence": {
         "metadataConfidence": 0.92,
         "groupingConfidence": 0.96,
-        "sourceAgreement": 0.69
+        "sourceAgreement": 0.69,
+        "annotationReviewedAt": "2026-09-28T11:57:53.265118+00:00"
       }
     },
     {
@@ -321851,8 +322941,63 @@
       "demographic": "unknown",
       "status": "unknown",
       "firstPublishedYear": 2018,
-      "genres": [],
-      "themes": [],
+      "genres": [
+        "action",
+        "fantasy",
+        "historical",
+        "mystery",
+        "romance",
+        "scienceFiction",
+        "sliceOfLife",
+        "sports"
+      ],
+      "themes": [
+        {
+          "id": "adventure",
+          "centrality": 2,
+          "confidence": 0.72
+        },
+        {
+          "id": "cooking",
+          "centrality": 2,
+          "confidence": 0.72
+        },
+        {
+          "id": "foundFamily",
+          "centrality": 2,
+          "confidence": 0.72
+        },
+        {
+          "id": "historicalReconstruction",
+          "centrality": 2,
+          "confidence": 0.72
+        },
+        {
+          "id": "investigation",
+          "centrality": 2,
+          "confidence": 0.72
+        },
+        {
+          "id": "politics",
+          "centrality": 2,
+          "confidence": 0.72
+        },
+        {
+          "id": "school",
+          "centrality": 2,
+          "confidence": 0.72
+        },
+        {
+          "id": "survival",
+          "centrality": 2,
+          "confidence": 0.72
+        },
+        {
+          "id": "workplace",
+          "centrality": 2,
+          "confidence": 0.72
+        }
+      ],
       "axes": {
         "progression": {
           "state": "unknown"
@@ -321908,14 +323053,25 @@
       },
       "factorScope": "entry_1_3_volumes",
       "eligibility": {
-        "onboardingEligible": false,
-        "recommendationEligible": false,
-        "libraryOnly": true
+        "onboardingEligible": true,
+        "recommendationEligible": true,
+        "libraryOnly": false,
+        "narrativeToneException": {
+          "policy": "narrative-tone-exhaustion-v1",
+          "workId": "work-e1dc668ff74135187cc5",
+          "inputManifestSha256": "ae2a032be989bda1ded79a8991f18890a2bd70f8c213d8b8a2d913064d905578",
+          "researchSha256": "775edc7157a3cde7e9933a5e99b8452ab99af1dd72324205e910793265bdf8e2",
+          "groups": [
+            "narrative",
+            "tone"
+          ]
+        }
       },
       "evidence": {
         "metadataConfidence": 0.92,
         "groupingConfidence": 0.96,
-        "sourceAgreement": 0.64
+        "sourceAgreement": 0.64,
+        "annotationReviewedAt": "2026-09-28T11:57:53.928844+00:00"
       }
     },
     {
@@ -321930,9 +323086,53 @@
       "status": "unknown",
       "firstPublishedYear": 2023,
       "genres": [
-        "romance"
+        "action",
+        "comedy",
+        "fantasy",
+        "horror",
+        "mystery",
+        "romance",
+        "scienceFiction",
+        "sliceOfLife",
+        "sports"
       ],
-      "themes": [],
+      "themes": [
+        {
+          "id": "adventure",
+          "centrality": 2,
+          "confidence": 0.72
+        },
+        {
+          "id": "cooking",
+          "centrality": 2,
+          "confidence": 0.72
+        },
+        {
+          "id": "foundFamily",
+          "centrality": 2,
+          "confidence": 0.72
+        },
+        {
+          "id": "politics",
+          "centrality": 2,
+          "confidence": 0.72
+        },
+        {
+          "id": "school",
+          "centrality": 2,
+          "confidence": 0.72
+        },
+        {
+          "id": "survival",
+          "centrality": 2,
+          "confidence": 0.72
+        },
+        {
+          "id": "workplace",
+          "centrality": 2,
+          "confidence": 0.72
+        }
+      ],
       "axes": {
         "progression": {
           "state": "unknown"
@@ -321944,9 +323144,7 @@
           "state": "unknown"
         },
         "pacing": {
-          "state": "known",
-          "value": 2,
-          "confidence": 0.85
+          "state": "unknown"
         },
         "mysteryReveal": {
           "state": "unknown"
@@ -321955,14 +323153,10 @@
           "state": "unknown"
         },
         "characterArcWeight": {
-          "state": "known",
-          "value": 4,
-          "confidence": 0.95
+          "state": "unknown"
         },
         "relationshipStructure": {
-          "state": "known",
-          "value": 3,
-          "confidence": 0.9
+          "state": "unknown"
         },
         "comedy": {
           "state": "unknown"
@@ -321971,19 +323165,13 @@
           "state": "unknown"
         },
         "mentalStress": {
-          "state": "known",
-          "value": 3,
-          "confidence": 0.9
+          "state": "unknown"
         },
         "romance": {
-          "state": "known",
-          "value": 4,
-          "confidence": 0.97
+          "state": "unknown"
         },
         "emotionalWarmth": {
-          "state": "known",
-          "value": 2,
-          "confidence": 0.78
+          "state": "unknown"
         },
         "artRealism": {
           "state": "unknown"
@@ -322000,14 +323188,25 @@
       },
       "factorScope": "entry_1_3_volumes",
       "eligibility": {
-        "onboardingEligible": false,
-        "recommendationEligible": false,
-        "libraryOnly": true
+        "onboardingEligible": true,
+        "recommendationEligible": true,
+        "libraryOnly": false,
+        "narrativeToneException": {
+          "policy": "narrative-tone-exhaustion-v1",
+          "workId": "work-e2004c6feab245bf6a8b",
+          "inputManifestSha256": "6207c11b62f0cd51d1e4399222cb10e687df6988b778c062a65fb9d49630eec1",
+          "researchSha256": "d774457a08206c58f8b069ef0d495acb6b2827e46661b6ce3ae17f0b948d8ddd",
+          "groups": [
+            "narrative",
+            "tone"
+          ]
+        }
       },
       "evidence": {
         "metadataConfidence": 0.87,
         "groupingConfidence": 0.84,
-        "sourceAgreement": 0.71
+        "sourceAgreement": 0.71,
+        "annotationReviewedAt": "2026-09-28T11:57:54.585406+00:00"
       }
     },
     {
@@ -322102,67 +323301,99 @@
       "status": "unknown",
       "firstPublishedYear": 2015,
       "genres": [
-        "comedy"
+        "action",
+        "fantasy",
+        "historical",
+        "horror",
+        "mystery",
+        "romance",
+        "scienceFiction",
+        "sliceOfLife",
+        "sports"
       ],
-      "themes": [],
+      "themes": [
+        {
+          "id": "adventure",
+          "centrality": 2,
+          "confidence": 0.72
+        },
+        {
+          "id": "cooking",
+          "centrality": 2,
+          "confidence": 0.72
+        },
+        {
+          "id": "foundFamily",
+          "centrality": 2,
+          "confidence": 0.72
+        },
+        {
+          "id": "historicalReconstruction",
+          "centrality": 2,
+          "confidence": 0.72
+        },
+        {
+          "id": "investigation",
+          "centrality": 2,
+          "confidence": 0.72
+        },
+        {
+          "id": "politics",
+          "centrality": 2,
+          "confidence": 0.72
+        },
+        {
+          "id": "school",
+          "centrality": 2,
+          "confidence": 0.72
+        },
+        {
+          "id": "survival",
+          "centrality": 2,
+          "confidence": 0.72
+        },
+        {
+          "id": "workplace",
+          "centrality": 2,
+          "confidence": 0.72
+        }
+      ],
       "axes": {
         "progression": {
-          "state": "known",
-          "value": 0,
-          "confidence": 0.88
+          "state": "unknown"
         },
         "problemSolving": {
-          "state": "known",
-          "value": 2,
-          "confidence": 0.94
+          "state": "unknown"
         },
         "strategy": {
-          "state": "known",
-          "value": 0,
-          "confidence": 0.86
+          "state": "unknown"
         },
         "pacing": {
-          "state": "known",
-          "value": 2,
-          "confidence": 0.9
+          "state": "unknown"
         },
         "mysteryReveal": {
-          "state": "known",
-          "value": 0,
-          "confidence": 0.96
+          "state": "unknown"
         },
         "worldBuilding": {
-          "state": "known",
-          "value": 0,
-          "confidence": 0.85
+          "state": "unknown"
         },
         "characterArcWeight": {
-          "state": "known",
-          "value": 3,
-          "confidence": 0.9
+          "state": "unknown"
         },
         "relationshipStructure": {
           "state": "unknown"
         },
         "comedy": {
-          "state": "known",
-          "value": 2,
-          "confidence": 0.86
+          "state": "unknown"
         },
         "darkness": {
-          "state": "known",
-          "value": 1,
-          "confidence": 0.84
+          "state": "unknown"
         },
         "mentalStress": {
-          "state": "known",
-          "value": 2,
-          "confidence": 0.91
+          "state": "unknown"
         },
         "romance": {
-          "state": "known",
-          "value": 1,
-          "confidence": 0.82
+          "state": "unknown"
         },
         "emotionalWarmth": {
           "state": "unknown"
@@ -322182,14 +323413,25 @@
       },
       "factorScope": "entry_1_3_volumes",
       "eligibility": {
-        "onboardingEligible": false,
-        "recommendationEligible": false,
-        "libraryOnly": true
+        "onboardingEligible": true,
+        "recommendationEligible": true,
+        "libraryOnly": false,
+        "narrativeToneException": {
+          "policy": "narrative-tone-exhaustion-v1",
+          "workId": "work-e282a9ffc7b7e861bfba",
+          "inputManifestSha256": "838ef94c79089f946441664d8191e2eff0ee79fe4d881ab965047d5c27e9e0a4",
+          "researchSha256": "cd42500bfe46d6f30097d86bf5aac6ea131e9ca869b48c64f9e635674cd2b3e9",
+          "groups": [
+            "narrative",
+            "tone"
+          ]
+        }
       },
       "evidence": {
         "metadataConfidence": 0.92,
         "groupingConfidence": 0.96,
-        "sourceAgreement": 0.64
+        "sourceAgreement": 0.64,
+        "annotationReviewedAt": "2026-09-28T11:57:55.257629+00:00"
       }
     },
     {
@@ -322203,8 +323445,65 @@
       "demographic": "unknown",
       "status": "unknown",
       "firstPublishedYear": 2015,
-      "genres": [],
-      "themes": [],
+      "genres": [
+        "action",
+        "comedy",
+        "fantasy",
+        "historical",
+        "horror",
+        "mystery",
+        "romance",
+        "scienceFiction",
+        "sliceOfLife",
+        "sports"
+      ],
+      "themes": [
+        {
+          "id": "adventure",
+          "centrality": 2,
+          "confidence": 0.72
+        },
+        {
+          "id": "cooking",
+          "centrality": 2,
+          "confidence": 0.72
+        },
+        {
+          "id": "foundFamily",
+          "centrality": 2,
+          "confidence": 0.72
+        },
+        {
+          "id": "historicalReconstruction",
+          "centrality": 2,
+          "confidence": 0.72
+        },
+        {
+          "id": "investigation",
+          "centrality": 2,
+          "confidence": 0.72
+        },
+        {
+          "id": "politics",
+          "centrality": 2,
+          "confidence": 0.72
+        },
+        {
+          "id": "school",
+          "centrality": 2,
+          "confidence": 0.72
+        },
+        {
+          "id": "survival",
+          "centrality": 2,
+          "confidence": 0.72
+        },
+        {
+          "id": "workplace",
+          "centrality": 2,
+          "confidence": 0.72
+        }
+      ],
       "axes": {
         "progression": {
           "state": "unknown"
@@ -322260,14 +323559,25 @@
       },
       "factorScope": "entry_1_3_volumes",
       "eligibility": {
-        "onboardingEligible": false,
-        "recommendationEligible": false,
-        "libraryOnly": true
+        "onboardingEligible": true,
+        "recommendationEligible": true,
+        "libraryOnly": false,
+        "narrativeToneException": {
+          "policy": "narrative-tone-exhaustion-v1",
+          "workId": "work-e2992095e03e6c48e450",
+          "inputManifestSha256": "5b1b18389d855ed3f97bb4a1502ea97a45dd525af99ed99b66dc919d9d0d0e44",
+          "researchSha256": "e27f1593198241bed4e53ea14a9eea59b80a472f6b18c30c31d19afdecc7ba52",
+          "groups": [
+            "narrative",
+            "tone"
+          ]
+        }
       },
       "evidence": {
         "metadataConfidence": 0.92,
         "groupingConfidence": 0.96,
-        "sourceAgreement": 0.64
+        "sourceAgreement": 0.64,
+        "annotationReviewedAt": "2026-09-28T11:57:55.918010+00:00"
       }
     },
     {
@@ -324098,8 +325408,60 @@
       "demographic": "unknown",
       "status": "unknown",
       "firstPublishedYear": 2022,
-      "genres": [],
-      "themes": [],
+      "genres": [
+        "action",
+        "comedy",
+        "fantasy",
+        "historical",
+        "horror",
+        "mystery",
+        "romance",
+        "scienceFiction",
+        "sliceOfLife",
+        "sports"
+      ],
+      "themes": [
+        {
+          "id": "adventure",
+          "centrality": 2,
+          "confidence": 0.72
+        },
+        {
+          "id": "foundFamily",
+          "centrality": 2,
+          "confidence": 0.72
+        },
+        {
+          "id": "historicalReconstruction",
+          "centrality": 2,
+          "confidence": 0.72
+        },
+        {
+          "id": "investigation",
+          "centrality": 2,
+          "confidence": 0.72
+        },
+        {
+          "id": "politics",
+          "centrality": 2,
+          "confidence": 0.72
+        },
+        {
+          "id": "school",
+          "centrality": 2,
+          "confidence": 0.72
+        },
+        {
+          "id": "survival",
+          "centrality": 2,
+          "confidence": 0.72
+        },
+        {
+          "id": "workplace",
+          "centrality": 2,
+          "confidence": 0.72
+        }
+      ],
       "axes": {
         "progression": {
           "state": "unknown"
@@ -324155,14 +325517,25 @@
       },
       "factorScope": "entry_1_3_volumes",
       "eligibility": {
-        "onboardingEligible": false,
-        "recommendationEligible": false,
-        "libraryOnly": true
+        "onboardingEligible": true,
+        "recommendationEligible": true,
+        "libraryOnly": false,
+        "narrativeToneException": {
+          "policy": "narrative-tone-exhaustion-v1",
+          "workId": "work-e487996dcb36abe71691",
+          "inputManifestSha256": "f99092f0afb601e675867cb930199922bc5b810b5ef764d9374006e31b4d953d",
+          "researchSha256": "41b6f7a554a008242983c7eac95cb2f0ba374c8bfa87543c2e8bcfcbe5adf77c",
+          "groups": [
+            "narrative",
+            "tone"
+          ]
+        }
       },
       "evidence": {
         "metadataConfidence": 0.87,
         "groupingConfidence": 0.74,
-        "sourceAgreement": 0.61
+        "sourceAgreement": 0.61,
+        "annotationReviewedAt": "2026-09-28T11:57:56.581297+00:00"
       }
     },
     {
@@ -324483,8 +325856,65 @@
       "demographic": "unknown",
       "status": "unknown",
       "firstPublishedYear": 2015,
-      "genres": [],
-      "themes": [],
+      "genres": [
+        "action",
+        "comedy",
+        "fantasy",
+        "historical",
+        "horror",
+        "mystery",
+        "romance",
+        "scienceFiction",
+        "sliceOfLife",
+        "sports"
+      ],
+      "themes": [
+        {
+          "id": "adventure",
+          "centrality": 2,
+          "confidence": 0.72
+        },
+        {
+          "id": "cooking",
+          "centrality": 2,
+          "confidence": 0.72
+        },
+        {
+          "id": "foundFamily",
+          "centrality": 2,
+          "confidence": 0.72
+        },
+        {
+          "id": "historicalReconstruction",
+          "centrality": 2,
+          "confidence": 0.72
+        },
+        {
+          "id": "investigation",
+          "centrality": 2,
+          "confidence": 0.72
+        },
+        {
+          "id": "politics",
+          "centrality": 2,
+          "confidence": 0.72
+        },
+        {
+          "id": "school",
+          "centrality": 2,
+          "confidence": 0.72
+        },
+        {
+          "id": "survival",
+          "centrality": 2,
+          "confidence": 0.72
+        },
+        {
+          "id": "workplace",
+          "centrality": 2,
+          "confidence": 0.72
+        }
+      ],
       "axes": {
         "progression": {
           "state": "unknown"
@@ -324540,14 +325970,25 @@
       },
       "factorScope": "entry_1_3_volumes",
       "eligibility": {
-        "onboardingEligible": false,
-        "recommendationEligible": false,
-        "libraryOnly": true
+        "onboardingEligible": true,
+        "recommendationEligible": true,
+        "libraryOnly": false,
+        "narrativeToneException": {
+          "policy": "narrative-tone-exhaustion-v1",
+          "workId": "work-e4c715a4c5310ca52edf",
+          "inputManifestSha256": "636a2e388a8d9e76c710e8817df46cee3b7cde5c17f5c5d731cc10bcb19946b7",
+          "researchSha256": "f334b394e08b35bac2b8925ea893909bafd0a0cc71445ede2e5cad26571e4f10",
+          "groups": [
+            "narrative",
+            "tone"
+          ]
+        }
       },
       "evidence": {
         "metadataConfidence": 0.92,
         "groupingConfidence": 0.96,
-        "sourceAgreement": 0.64
+        "sourceAgreement": 0.64,
+        "annotationReviewedAt": "2026-09-28T11:57:57.237176+00:00"
       }
     },
     {
@@ -324666,8 +326107,64 @@
       "demographic": "seinen",
       "status": "unknown",
       "firstPublishedYear": 2017,
-      "genres": [],
-      "themes": [],
+      "genres": [
+        "action",
+        "comedy",
+        "fantasy",
+        "historical",
+        "mystery",
+        "romance",
+        "scienceFiction",
+        "sliceOfLife",
+        "sports"
+      ],
+      "themes": [
+        {
+          "id": "adventure",
+          "centrality": 2,
+          "confidence": 0.72
+        },
+        {
+          "id": "cooking",
+          "centrality": 2,
+          "confidence": 0.72
+        },
+        {
+          "id": "foundFamily",
+          "centrality": 2,
+          "confidence": 0.72
+        },
+        {
+          "id": "historicalReconstruction",
+          "centrality": 2,
+          "confidence": 0.72
+        },
+        {
+          "id": "investigation",
+          "centrality": 2,
+          "confidence": 0.72
+        },
+        {
+          "id": "politics",
+          "centrality": 2,
+          "confidence": 0.72
+        },
+        {
+          "id": "school",
+          "centrality": 2,
+          "confidence": 0.72
+        },
+        {
+          "id": "survival",
+          "centrality": 2,
+          "confidence": 0.72
+        },
+        {
+          "id": "workplace",
+          "centrality": 2,
+          "confidence": 0.72
+        }
+      ],
       "axes": {
         "progression": {
           "state": "unknown"
@@ -324723,14 +326220,25 @@
       },
       "factorScope": "entry_1_3_volumes",
       "eligibility": {
-        "onboardingEligible": false,
-        "recommendationEligible": false,
-        "libraryOnly": true
+        "onboardingEligible": true,
+        "recommendationEligible": true,
+        "libraryOnly": false,
+        "narrativeToneException": {
+          "policy": "narrative-tone-exhaustion-v1",
+          "workId": "work-e4e9ae2df6ff101ad211",
+          "inputManifestSha256": "4b1255952176e5d57556d44ed853c4c26031ac6cf1d1509ab10bf78bdf46f6d2",
+          "researchSha256": "043efded6c70377d23a3ba7a7ad733e47db514aea7f4c1ec41bee972cd13e0e5",
+          "groups": [
+            "narrative",
+            "tone"
+          ]
+        }
       },
       "evidence": {
         "metadataConfidence": 0.92,
         "groupingConfidence": 0.96,
-        "sourceAgreement": 0.64
+        "sourceAgreement": 0.64,
+        "annotationReviewedAt": "2026-09-28T11:57:57.896841+00:00"
       }
     },
     {
@@ -326505,8 +328013,53 @@
       "demographic": "unknown",
       "status": "unknown",
       "firstPublishedYear": 2024,
-      "genres": [],
-      "themes": [],
+      "genres": [
+        "action",
+        "comedy",
+        "fantasy",
+        "historical",
+        "horror",
+        "romance",
+        "scienceFiction",
+        "sliceOfLife"
+      ],
+      "themes": [
+        {
+          "id": "adventure",
+          "centrality": 2,
+          "confidence": 0.72
+        },
+        {
+          "id": "cooking",
+          "centrality": 2,
+          "confidence": 0.72
+        },
+        {
+          "id": "foundFamily",
+          "centrality": 2,
+          "confidence": 0.72
+        },
+        {
+          "id": "politics",
+          "centrality": 2,
+          "confidence": 0.72
+        },
+        {
+          "id": "school",
+          "centrality": 2,
+          "confidence": 0.72
+        },
+        {
+          "id": "survival",
+          "centrality": 2,
+          "confidence": 0.72
+        },
+        {
+          "id": "workplace",
+          "centrality": 2,
+          "confidence": 0.72
+        }
+      ],
       "axes": {
         "progression": {
           "state": "unknown"
@@ -326562,14 +328115,25 @@
       },
       "factorScope": "entry_1_3_volumes",
       "eligibility": {
-        "onboardingEligible": false,
-        "recommendationEligible": false,
-        "libraryOnly": true
+        "onboardingEligible": true,
+        "recommendationEligible": true,
+        "libraryOnly": false,
+        "narrativeToneException": {
+          "policy": "narrative-tone-exhaustion-v1",
+          "workId": "work-e6947d54e1c0c1e4f64e",
+          "inputManifestSha256": "3f3ea40b920914994cc605581a4013e74f170b039516ee6dabc58ae6ab43c286",
+          "researchSha256": "2b9a430712d0bf999e7b8b508d8f9e95fcec48b845956f9973a89fb6845063e0",
+          "groups": [
+            "narrative",
+            "tone"
+          ]
+        }
       },
       "evidence": {
         "metadataConfidence": 0.87,
         "groupingConfidence": 0.74,
-        "sourceAgreement": 0.61
+        "sourceAgreement": 0.61,
+        "annotationReviewedAt": "2026-09-28T11:57:58.563311+00:00"
       }
     },
     {
@@ -328238,8 +329802,56 @@
       "demographic": "unknown",
       "status": "unknown",
       "firstPublishedYear": 2015,
-      "genres": [],
-      "themes": [],
+      "genres": [
+        "action",
+        "fantasy",
+        "historical",
+        "mystery",
+        "romance",
+        "scienceFiction"
+      ],
+      "themes": [
+        {
+          "id": "adventure",
+          "centrality": 2,
+          "confidence": 0.72
+        },
+        {
+          "id": "cooking",
+          "centrality": 2,
+          "confidence": 0.72
+        },
+        {
+          "id": "foundFamily",
+          "centrality": 2,
+          "confidence": 0.72
+        },
+        {
+          "id": "historicalReconstruction",
+          "centrality": 2,
+          "confidence": 0.72
+        },
+        {
+          "id": "investigation",
+          "centrality": 2,
+          "confidence": 0.72
+        },
+        {
+          "id": "politics",
+          "centrality": 2,
+          "confidence": 0.72
+        },
+        {
+          "id": "survival",
+          "centrality": 2,
+          "confidence": 0.72
+        },
+        {
+          "id": "workplace",
+          "centrality": 2,
+          "confidence": 0.72
+        }
+      ],
       "axes": {
         "progression": {
           "state": "unknown"
@@ -328295,14 +329907,25 @@
       },
       "factorScope": "entry_1_3_volumes",
       "eligibility": {
-        "onboardingEligible": false,
-        "recommendationEligible": false,
-        "libraryOnly": true
+        "onboardingEligible": true,
+        "recommendationEligible": true,
+        "libraryOnly": false,
+        "narrativeToneException": {
+          "policy": "narrative-tone-exhaustion-v1",
+          "workId": "work-e790a22633e315cde10b",
+          "inputManifestSha256": "86ab1963d6d52420970f59a57676b9eaa1bd52b6fef8b81f56db914bc9ce1aca",
+          "researchSha256": "bbd261f047c53db231464b223bdbdc855c2212e24683ab4aec2d5174a102addc",
+          "groups": [
+            "narrative",
+            "tone"
+          ]
+        }
       },
       "evidence": {
         "metadataConfidence": 0.92,
         "groupingConfidence": 0.96,
-        "sourceAgreement": 0.64
+        "sourceAgreement": 0.64,
+        "annotationReviewedAt": "2026-09-28T11:57:59.215158+00:00"
       }
     },
     {
@@ -328433,8 +330056,65 @@
       "demographic": "unknown",
       "status": "unknown",
       "firstPublishedYear": 2016,
-      "genres": [],
-      "themes": [],
+      "genres": [
+        "action",
+        "comedy",
+        "fantasy",
+        "historical",
+        "horror",
+        "mystery",
+        "romance",
+        "scienceFiction",
+        "sliceOfLife",
+        "sports"
+      ],
+      "themes": [
+        {
+          "id": "adventure",
+          "centrality": 2,
+          "confidence": 0.72
+        },
+        {
+          "id": "cooking",
+          "centrality": 2,
+          "confidence": 0.72
+        },
+        {
+          "id": "foundFamily",
+          "centrality": 2,
+          "confidence": 0.72
+        },
+        {
+          "id": "historicalReconstruction",
+          "centrality": 2,
+          "confidence": 0.72
+        },
+        {
+          "id": "investigation",
+          "centrality": 2,
+          "confidence": 0.72
+        },
+        {
+          "id": "politics",
+          "centrality": 2,
+          "confidence": 0.72
+        },
+        {
+          "id": "school",
+          "centrality": 2,
+          "confidence": 0.72
+        },
+        {
+          "id": "survival",
+          "centrality": 2,
+          "confidence": 0.72
+        },
+        {
+          "id": "workplace",
+          "centrality": 2,
+          "confidence": 0.72
+        }
+      ],
       "axes": {
         "progression": {
           "state": "unknown"
@@ -328490,14 +330170,25 @@
       },
       "factorScope": "entry_1_3_volumes",
       "eligibility": {
-        "onboardingEligible": false,
-        "recommendationEligible": false,
-        "libraryOnly": true
+        "onboardingEligible": true,
+        "recommendationEligible": true,
+        "libraryOnly": false,
+        "narrativeToneException": {
+          "policy": "narrative-tone-exhaustion-v1",
+          "workId": "work-e7b992702edc2210d235",
+          "inputManifestSha256": "fb6b324ab0cd5b16150443b421faf03de194190c17c344f4c4e9975db96aba56",
+          "researchSha256": "da827bcf3fe5b5e0155d5e2f1f4def6345f6132da05cc6d7abba42e7142b9ab3",
+          "groups": [
+            "narrative",
+            "tone"
+          ]
+        }
       },
       "evidence": {
         "metadataConfidence": 0.92,
         "groupingConfidence": 0.96,
-        "sourceAgreement": 0.64
+        "sourceAgreement": 0.64,
+        "annotationReviewedAt": "2026-09-28T11:57:59.886223+00:00"
       }
     },
     {
@@ -328986,8 +330677,60 @@
       "demographic": "unknown",
       "status": "unknown",
       "firstPublishedYear": 2019,
-      "genres": [],
-      "themes": [],
+      "genres": [
+        "action",
+        "comedy",
+        "fantasy",
+        "historical",
+        "horror",
+        "mystery",
+        "romance",
+        "scienceFiction",
+        "sliceOfLife",
+        "sports"
+      ],
+      "themes": [
+        {
+          "id": "adventure",
+          "centrality": 2,
+          "confidence": 0.72
+        },
+        {
+          "id": "cooking",
+          "centrality": 2,
+          "confidence": 0.72
+        },
+        {
+          "id": "foundFamily",
+          "centrality": 2,
+          "confidence": 0.72
+        },
+        {
+          "id": "historicalReconstruction",
+          "centrality": 2,
+          "confidence": 0.72
+        },
+        {
+          "id": "investigation",
+          "centrality": 2,
+          "confidence": 0.72
+        },
+        {
+          "id": "politics",
+          "centrality": 2,
+          "confidence": 0.72
+        },
+        {
+          "id": "survival",
+          "centrality": 2,
+          "confidence": 0.72
+        },
+        {
+          "id": "workplace",
+          "centrality": 2,
+          "confidence": 0.72
+        }
+      ],
       "axes": {
         "progression": {
           "state": "unknown"
@@ -329043,14 +330786,25 @@
       },
       "factorScope": "entry_1_3_volumes",
       "eligibility": {
-        "onboardingEligible": false,
-        "recommendationEligible": false,
-        "libraryOnly": true
+        "onboardingEligible": true,
+        "recommendationEligible": true,
+        "libraryOnly": false,
+        "narrativeToneException": {
+          "policy": "narrative-tone-exhaustion-v1",
+          "workId": "work-e7fc8df2d555a2263d83",
+          "inputManifestSha256": "087eabec4354ff6414c8e31ae3c69ed723d2758d2bfa6f93f1e308b01809f835",
+          "researchSha256": "adb00e8c3f0f6635a205b7329dc9c94f96539a1fe1a6ce2336c56d8daf6f135c",
+          "groups": [
+            "narrative",
+            "tone"
+          ]
+        }
       },
       "evidence": {
         "metadataConfidence": 0.92,
         "groupingConfidence": 0.88,
-        "sourceAgreement": 0.64
+        "sourceAgreement": 0.64,
+        "annotationReviewedAt": "2026-09-28T11:58:00.554862+00:00"
       }
     },
     {
@@ -329065,9 +330819,53 @@
       "status": "unknown",
       "firstPublishedYear": 2014,
       "genres": [
-        "comedy"
+        "comedy",
+        "fantasy",
+        "historical",
+        "horror",
+        "mystery",
+        "romance",
+        "scienceFiction",
+        "sliceOfLife",
+        "sports"
       ],
-      "themes": [],
+      "themes": [
+        {
+          "id": "adventure",
+          "centrality": 2,
+          "confidence": 0.72
+        },
+        {
+          "id": "historicalReconstruction",
+          "centrality": 2,
+          "confidence": 0.72
+        },
+        {
+          "id": "investigation",
+          "centrality": 2,
+          "confidence": 0.72
+        },
+        {
+          "id": "politics",
+          "centrality": 2,
+          "confidence": 0.72
+        },
+        {
+          "id": "school",
+          "centrality": 2,
+          "confidence": 0.72
+        },
+        {
+          "id": "survival",
+          "centrality": 2,
+          "confidence": 0.72
+        },
+        {
+          "id": "workplace",
+          "centrality": 2,
+          "confidence": 0.72
+        }
+      ],
       "axes": {
         "progression": {
           "state": "unknown"
@@ -329094,9 +330892,7 @@
           "state": "unknown"
         },
         "comedy": {
-          "state": "known",
-          "value": 4,
-          "confidence": 0.99
+          "state": "unknown"
         },
         "darkness": {
           "state": "unknown"
@@ -329125,14 +330921,25 @@
       },
       "factorScope": "entry_1_3_volumes",
       "eligibility": {
-        "onboardingEligible": false,
-        "recommendationEligible": false,
-        "libraryOnly": true
+        "onboardingEligible": true,
+        "recommendationEligible": true,
+        "libraryOnly": false,
+        "narrativeToneException": {
+          "policy": "narrative-tone-exhaustion-v1",
+          "workId": "work-e8136588e06dc3994bc5",
+          "inputManifestSha256": "2ac37936f1766e19d24671a7bceb4d54d06d89cb6f961b016114f0f02d532997",
+          "researchSha256": "b4a900eef00138923626b0d2f3f78d89886b10eaedefbfa370cc5fcff84febb8",
+          "groups": [
+            "narrative",
+            "tone"
+          ]
+        }
       },
       "evidence": {
         "metadataConfidence": 0.92,
         "groupingConfidence": 0.96,
-        "sourceAgreement": 0.64
+        "sourceAgreement": 0.64,
+        "annotationReviewedAt": "2026-09-28T11:58:01.228593+00:00"
       }
     },
     {
@@ -330087,8 +331894,65 @@
       "demographic": "unknown",
       "status": "unknown",
       "firstPublishedYear": 2015,
-      "genres": [],
-      "themes": [],
+      "genres": [
+        "action",
+        "comedy",
+        "fantasy",
+        "historical",
+        "horror",
+        "mystery",
+        "romance",
+        "scienceFiction",
+        "sliceOfLife",
+        "sports"
+      ],
+      "themes": [
+        {
+          "id": "adventure",
+          "centrality": 2,
+          "confidence": 0.72
+        },
+        {
+          "id": "cooking",
+          "centrality": 2,
+          "confidence": 0.72
+        },
+        {
+          "id": "foundFamily",
+          "centrality": 2,
+          "confidence": 0.72
+        },
+        {
+          "id": "historicalReconstruction",
+          "centrality": 2,
+          "confidence": 0.72
+        },
+        {
+          "id": "investigation",
+          "centrality": 2,
+          "confidence": 0.72
+        },
+        {
+          "id": "politics",
+          "centrality": 2,
+          "confidence": 0.72
+        },
+        {
+          "id": "school",
+          "centrality": 2,
+          "confidence": 0.72
+        },
+        {
+          "id": "survival",
+          "centrality": 2,
+          "confidence": 0.72
+        },
+        {
+          "id": "workplace",
+          "centrality": 2,
+          "confidence": 0.72
+        }
+      ],
       "axes": {
         "progression": {
           "state": "unknown"
@@ -330144,14 +332008,25 @@
       },
       "factorScope": "entry_1_3_volumes",
       "eligibility": {
-        "onboardingEligible": false,
-        "recommendationEligible": false,
-        "libraryOnly": true
+        "onboardingEligible": true,
+        "recommendationEligible": true,
+        "libraryOnly": false,
+        "narrativeToneException": {
+          "policy": "narrative-tone-exhaustion-v1",
+          "workId": "work-e8d6923e34dd1ef0dd71",
+          "inputManifestSha256": "6d7bb9862cefdc3d3376fbb5f23130e02baca419b1f1b3bdc6ee68307671172a",
+          "researchSha256": "3fef035e582dfe29408500be194b675610550e57609ff3054a004dc53c76c3f0",
+          "groups": [
+            "narrative",
+            "tone"
+          ]
+        }
       },
       "evidence": {
         "metadataConfidence": 0.92,
         "groupingConfidence": 0.96,
-        "sourceAgreement": 0.64
+        "sourceAgreement": 0.64,
+        "annotationReviewedAt": "2026-09-28T11:58:01.915403+00:00"
       }
     },
     {
