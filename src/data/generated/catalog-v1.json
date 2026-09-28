@@ -1,6 +1,6 @@
 {
   "schemaVersion": 1,
-  "catalogVersion": "v1-fd2ed06bcab0",
+  "catalogVersion": "v1-934db14bab70",
   "factorDictionaryVersion": "v1",
   "works": [
     {
@@ -36847,8 +36847,16 @@
       "publisher": "KADOKAWA",
       "demographic": "unknown",
       "status": "unknown",
-      "genres": [],
-      "themes": [],
+      "genres": [
+        "scienceFiction"
+      ],
+      "themes": [
+        {
+          "id": "war",
+          "centrality": 1,
+          "confidence": 0.86
+        }
+      ],
       "axes": {
         "progression": {
           "state": "unknown"
@@ -36866,7 +36874,9 @@
           "state": "unknown"
         },
         "worldBuilding": {
-          "state": "unknown"
+          "state": "known",
+          "value": 2,
+          "confidence": 0.72
         },
         "characterArcWeight": {
           "state": "unknown"
@@ -36878,7 +36888,9 @@
           "state": "unknown"
         },
         "darkness": {
-          "state": "unknown"
+          "state": "known",
+          "value": 2,
+          "confidence": 0.72
         },
         "mentalStress": {
           "state": "unknown"
@@ -36904,14 +36916,25 @@
       },
       "factorScope": "entry_1_3_volumes",
       "eligibility": {
-        "onboardingEligible": false,
-        "recommendationEligible": false,
-        "libraryOnly": true
+        "onboardingEligible": true,
+        "recommendationEligible": true,
+        "libraryOnly": false,
+        "narrativeToneException": {
+          "policy": "narrative-tone-exhaustion-v1",
+          "workId": "work-0ebf010ac12b9b60d80e",
+          "inputManifestSha256": "78a865b377062a9735a1a96d5001aa1692eeefb1999aa762fd4d54ce630c2f8a",
+          "researchSha256": "087717422a2561962ec87c4b6bc41955cda6a96f41673e21ff731eab1aa69a9d",
+          "groups": [
+            "narrative",
+            "tone"
+          ]
+        }
       },
       "evidence": {
         "metadataConfidence": 1,
         "groupingConfidence": 1,
-        "sourceAgreement": 1
+        "sourceAgreement": 1,
+        "annotationReviewedAt": "2026-09-28T08:35:15.016064+00:00"
       }
     },
     {
