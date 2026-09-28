@@ -126,6 +126,11 @@ def plan(dispatch_path: Path, summary_path: Path | None = None) -> dict:
                 bibliography = (str(work["title"]), str(work["creators"]), backend._normalise_isbn(volumes[0]["isbn"]), str(volumes[0]["volumeNumber"]), str(volumes[0]["editionKind"]))
                 if any(backend._registry_bibliography(source) != bibliography for source in owned):
                     requirements.append("registry-repair")
+                if not any(str(url).strip() for source in owned
+                           for url in str(source.get("supportEvidenceUrls", "")).split("|")):
+                    if "registry-repair" not in requirements:
+                        requirements.append("registry-repair")
+                    issues.append("registry supportEvidenceUrls absent; exact recommendation source must be bound before freeze")
             if not issues and not set(requirements).intersection({"protected", "eligible"}):
                 # Same packet/baseline validators as freeze; no research or model is loaded.
                 job = {"schemaVersion": single.FROZEN_JOB, "batchId": "r-" + "0" * 32,

@@ -188,7 +188,7 @@ def validate_batch(assignment, summary):
     # sourceSummary is a chain of subsets of earlier adjudication results. A
     # collection summary has different rows even when its Work IDs match.
     source = summary
-    visited = {artifact_path(assignment["artifact"]).resolve()}
+    visited = {artifact_path(assignment["artifact"]).resolve()} if assignment.get("artifact") else set()
     while "sourceSummary" in source:
         binding = source["sourceSummary"]
         if not isinstance(binding, dict) or not isinstance(binding.get("path"), str) or not isinstance(binding.get("sha256"), str):

@@ -35,7 +35,7 @@ Catalog Python 명령은 `python scripts/catalog_python.py <script> <args>`로 �
 - 저장 DB와 백업: `data/local/catalog-authoring/workspace.sqlite`, `backups/`
 - 임시 출력: `.workspace/`. 호환 링크·심링크는 생성하지 않는다.
 
-수집 배정 전 `python scripts/catalog_python.py scripts/catalog_authoring/plan_dispatch.py --dispatch <기존 COLLECTION-DISPATCH.json> --output <새 PLAN.json>`을 실행한다. 현재 candidate/registry·Gold·계약·소유권 SHA에 묶어 eligible/protected/prior-recovery/registry-repair/fresh를 구분하며 복합 문제를 유지한다. 판정 배정과 유효한 완료 요약은 `--batch-summary`로 검증해 READY 재사용을 식별한다. 자료 충분성·의미 판정은 하지 않고 기존 배정도 수정하지 않는다. 기준 SHA가 바뀌면 새 계획을 만든다.
+수집 배정 전 `python scripts/catalog_python.py scripts/catalog_authoring/plan_dispatch.py --dispatch <기존 COLLECTION-DISPATCH.json> --output <새 PLAN.json>`을 실행한다. 현재 candidate/registry·Gold·계약·소유권 SHA에 묶어 eligible/protected/prior-recovery/registry-repair/fresh를 구분하며 복합 문제를 유지한다. registry의 정확한 `supportEvidenceUrls`가 빈 Work는 `registry-repair`로 표시해 일반 fresh 판정 배정에서 제외한다. 판정 배정과 유효한 완료 요약은 `--batch-summary`로 검증해 READY 재사용을 식별한다. 자료 충분성·의미 판정은 하지 않고 기존 배정도 수정하지 않는다. 기준 SHA가 바뀌면 새 계획을 만든다.
 
 검사 범위와 실행 시점은 AGENTS.md의 현재 작업 계약을 따른다. 연속 승격의 중간 검사 예외를 일반 유지보수에 확대하지 않는다.
 

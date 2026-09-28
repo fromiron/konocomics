@@ -57,6 +57,10 @@ class RouteTest(unittest.TestCase):
             actual = planner.plan(dispatch, summary)
             self.assertEqual(actual["works"][0]["requirements"], ["reuse-checked", "registry-repair"])
             self.assertEqual(actual["bindings"]["summarySha256"], sha(summary))
+            backend._registry_bibliography = lambda row: ("Title", "Creator", "9780306406157", "1", "standard")
+            no_support = planner.plan(dispatch, summary)["works"][0]
+            self.assertEqual(no_support["requirements"], ["reuse-checked", "registry-repair"])
+            self.assertIn("registry supportEvidenceUrls absent", no_support["issues"][0])
             historical = planner.notifications.read(dispatch)
             write(dispatch, {**historical, "phase": "adjudication"})
             self.assertEqual(planner.plan(dispatch, summary)["phase"], "adjudication")
@@ -70,6 +74,7 @@ class RouteTest(unittest.TestCase):
             with self.assertRaisesRegex(ValueError, "SHA mismatch"):
                 planner.plan(dispatch, summary)
             checked.write_bytes(original)
+            backend.ensure_registry.return_value = {"rowsByWork": {wid: [{"supportEvidenceUrls": "https://example.test/selection"}]}}
             packet.side_effect = lambda *args: write(root / "STATE.json", {"changed": True}) or {}
             with self.assertRaisesRegex(ValueError, "stale input"):
                 planner.plan(dispatch, summary)
