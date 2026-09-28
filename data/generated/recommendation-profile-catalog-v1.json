@@ -1,6 +1,6 @@
 {
   "schemaVersion": 1,
-  "catalogVersion": "v1-bc640854f97c",
+  "catalogVersion": "v1-ee49bfcf0ee7",
   "factorDictionaryVersion": "v1",
   "works": [
     {
@@ -25153,6 +25153,110 @@
       }
     },
     {
+      "id": "work-04a947ff1b5d60621fd5",
+      "title": "社畜さんと家出少女",
+      "aliases": [],
+      "creators": [
+        "タツノコッソ"
+      ],
+      "publisher": "芳文社",
+      "demographic": "seinen",
+      "status": "unknown",
+      "firstPublishedYear": 2019,
+      "genres": [
+        "comedy",
+        "sliceOfLife"
+      ],
+      "themes": [
+        {
+          "id": "workplace",
+          "centrality": 1,
+          "confidence": 0.75
+        }
+      ],
+      "axes": {
+        "progression": {
+          "state": "unknown"
+        },
+        "problemSolving": {
+          "state": "unknown"
+        },
+        "strategy": {
+          "state": "unknown"
+        },
+        "pacing": {
+          "state": "unknown"
+        },
+        "mysteryReveal": {
+          "state": "unknown"
+        },
+        "worldBuilding": {
+          "state": "unknown"
+        },
+        "characterArcWeight": {
+          "state": "unknown"
+        },
+        "relationshipStructure": {
+          "state": "known",
+          "value": 2,
+          "confidence": 0.75
+        },
+        "comedy": {
+          "state": "known",
+          "value": 2,
+          "confidence": 0.75
+        },
+        "darkness": {
+          "state": "unknown"
+        },
+        "mentalStress": {
+          "state": "unknown"
+        },
+        "romance": {
+          "state": "unknown"
+        },
+        "emotionalWarmth": {
+          "state": "known",
+          "value": 2,
+          "confidence": 0.75
+        },
+        "artRealism": {
+          "state": "unknown"
+        },
+        "artDensity": {
+          "state": "unknown"
+        },
+        "visualSoftness": {
+          "state": "unknown"
+        },
+        "motionImpact": {
+          "state": "unknown"
+        }
+      },
+      "factorScope": "entry_1_3_volumes",
+      "eligibility": {
+        "onboardingEligible": true,
+        "recommendationEligible": true,
+        "libraryOnly": false,
+        "narrativeToneException": {
+          "policy": "narrative-tone-exhaustion-v1",
+          "workId": "work-04a947ff1b5d60621fd5",
+          "inputManifestSha256": "c9c8807909ef1e5e81b5b0484323bb45b858d2f833b2d2395bd256d0a8f1b948",
+          "researchSha256": "c782ffbf198336c99da7a9b00409646fb17df4c92e4d2ee85384fab7b56a7e7c",
+          "groups": [
+            "narrative",
+            "tone"
+          ]
+        }
+      },
+      "evidence": {
+        "metadataConfidence": 0.92,
+        "groupingConfidence": 0.96,
+        "sourceAgreement": 0.64,
+        "annotationReviewedAt": "2026-09-28T09:15:21.904013+00:00"
+      }
+    },
+    {
       "id": "work-04ac6ddcf1c292ee38f9",
       "title": "LIMBO THE KING",
       "aliases": [],
@@ -30365,6 +30469,110 @@
       }
     },
     {
+      "id": "work-0ab9919dee904596e8c0",
+      "title": "僕が死ぬだけの百物語",
+      "aliases": [],
+      "creators": [
+        "的野アンジ"
+      ],
+      "publisher": "小学館",
+      "demographic": "unknown",
+      "status": "unknown",
+      "firstPublishedYear": 2021,
+      "genres": [
+        "horror",
+        "mystery"
+      ],
+      "themes": [
+        {
+          "id": "investigation",
+          "centrality": 1,
+          "confidence": 0.75
+        }
+      ],
+      "axes": {
+        "progression": {
+          "state": "unknown"
+        },
+        "problemSolving": {
+          "state": "unknown"
+        },
+        "strategy": {
+          "state": "unknown"
+        },
+        "pacing": {
+          "state": "unknown"
+        },
+        "mysteryReveal": {
+          "state": "known",
+          "value": 2,
+          "confidence": 0.75
+        },
+        "worldBuilding": {
+          "state": "unknown"
+        },
+        "characterArcWeight": {
+          "state": "unknown"
+        },
+        "relationshipStructure": {
+          "state": "unknown"
+        },
+        "comedy": {
+          "state": "unknown"
+        },
+        "darkness": {
+          "state": "known",
+          "value": 4,
+          "confidence": 0.75
+        },
+        "mentalStress": {
+          "state": "known",
+          "value": 2,
+          "confidence": 0.75
+        },
+        "romance": {
+          "state": "unknown"
+        },
+        "emotionalWarmth": {
+          "state": "unknown"
+        },
+        "artRealism": {
+          "state": "unknown"
+        },
+        "artDensity": {
+          "state": "unknown"
+        },
+        "visualSoftness": {
+          "state": "unknown"
+        },
+        "motionImpact": {
+          "state": "unknown"
+        }
+      },
+      "factorScope": "entry_1_3_volumes",
+      "eligibility": {
+        "onboardingEligible": true,
+        "recommendationEligible": true,
+        "libraryOnly": false,
+        "narrativeToneException": {
+          "policy": "narrative-tone-exhaustion-v1",
+          "workId": "work-0ab9919dee904596e8c0",
+          "inputManifestSha256": "818dedebe6ce6e67fea3b81cf8b2905136bc42e2a3f3aa5e3e1bede883e69686",
+          "researchSha256": "0f380799b65bb52be4868ae3935048aa188eb3d56aaec6559a8bfdaffa595622",
+          "groups": [
+            "narrative",
+            "tone"
+          ]
+        }
+      },
+      "evidence": {
+        "metadataConfidence": 0.92,
+        "groupingConfidence": 0.96,
+        "sourceAgreement": 0.69,
+        "annotationReviewedAt": "2026-09-28T09:15:22.764363+00:00"
+      }
+    },
+    {
       "id": "work-0abc864296273b327f0e",
       "title": "放課後ていぼう日誌",
       "aliases": [],
@@ -32918,6 +33126,112 @@
         "groupingConfidence": 1,
         "sourceAgreement": 1,
         "annotationReviewedAt": "2026-08-23T00:00:00+09:00"
+      }
+    },
+    {
+      "id": "work-0e1e3d61c0fe5dbb3399",
+      "title": "寿々木君のていねいな生活",
+      "aliases": [],
+      "creators": [
+        "ふじもとゆうき"
+      ],
+      "publisher": "白泉社",
+      "demographic": "unknown",
+      "status": "unknown",
+      "firstPublishedYear": 2023,
+      "genres": [
+        "comedy",
+        "sliceOfLife"
+      ],
+      "themes": [
+        {
+          "id": "school",
+          "centrality": 2,
+          "confidence": 0.75
+        }
+      ],
+      "axes": {
+        "progression": {
+          "state": "unknown"
+        },
+        "problemSolving": {
+          "state": "unknown"
+        },
+        "strategy": {
+          "state": "unknown"
+        },
+        "pacing": {
+          "state": "unknown"
+        },
+        "mysteryReveal": {
+          "state": "unknown"
+        },
+        "worldBuilding": {
+          "state": "unknown"
+        },
+        "characterArcWeight": {
+          "state": "known",
+          "value": 2,
+          "confidence": 0.75
+        },
+        "relationshipStructure": {
+          "state": "known",
+          "value": 2,
+          "confidence": 0.75
+        },
+        "comedy": {
+          "state": "known",
+          "value": 2,
+          "confidence": 0.75
+        },
+        "darkness": {
+          "state": "unknown"
+        },
+        "mentalStress": {
+          "state": "unknown"
+        },
+        "romance": {
+          "state": "unknown"
+        },
+        "emotionalWarmth": {
+          "state": "known",
+          "value": 4,
+          "confidence": 0.75
+        },
+        "artRealism": {
+          "state": "unknown"
+        },
+        "artDensity": {
+          "state": "unknown"
+        },
+        "visualSoftness": {
+          "state": "unknown"
+        },
+        "motionImpact": {
+          "state": "unknown"
+        }
+      },
+      "factorScope": "entry_1_3_volumes",
+      "eligibility": {
+        "onboardingEligible": true,
+        "recommendationEligible": true,
+        "libraryOnly": false,
+        "narrativeToneException": {
+          "policy": "narrative-tone-exhaustion-v1",
+          "workId": "work-0e1e3d61c0fe5dbb3399",
+          "inputManifestSha256": "23c58a82ddaf91131e0729215b823b6da1d29d34c2a6827dbcb806380addc6cd",
+          "researchSha256": "e3c8d5935129c648ad4110126f93c299f9ae58c1ff44969bba6a56e05b413357",
+          "groups": [
+            "narrative",
+            "tone"
+          ]
+        }
+      },
+      "evidence": {
+        "metadataConfidence": 0.87,
+        "groupingConfidence": 0.74,
+        "sourceAgreement": 0.66,
+        "annotationReviewedAt": "2026-09-28T09:15:23.636630+00:00"
       }
     },
     {
@@ -36881,6 +37195,115 @@
         "groupingConfidence": 0.74,
         "sourceAgreement": 0.66,
         "annotationReviewedAt": "2026-09-28T08:22:53.564244+00:00"
+      }
+    },
+    {
+      "id": "work-125c0568eb0b59b0574a",
+      "title": "らーめん再遊記",
+      "aliases": [],
+      "creators": [
+        "久部緑郎",
+        "河合単"
+      ],
+      "publisher": "小学館",
+      "demographic": "unknown",
+      "status": "unknown",
+      "firstPublishedYear": 2020,
+      "genres": [
+        "sliceOfLife"
+      ],
+      "themes": [
+        {
+          "id": "cooking",
+          "centrality": 2,
+          "confidence": 0.75
+        },
+        {
+          "id": "workplace",
+          "centrality": 2,
+          "confidence": 0.75
+        }
+      ],
+      "axes": {
+        "progression": {
+          "state": "unknown"
+        },
+        "problemSolving": {
+          "state": "known",
+          "value": 2,
+          "confidence": 0.75
+        },
+        "strategy": {
+          "state": "known",
+          "value": 2,
+          "confidence": 0.75
+        },
+        "pacing": {
+          "state": "unknown"
+        },
+        "mysteryReveal": {
+          "state": "unknown"
+        },
+        "worldBuilding": {
+          "state": "unknown"
+        },
+        "characterArcWeight": {
+          "state": "known",
+          "value": 2,
+          "confidence": 0.75
+        },
+        "relationshipStructure": {
+          "state": "unknown"
+        },
+        "comedy": {
+          "state": "unknown"
+        },
+        "darkness": {
+          "state": "unknown"
+        },
+        "mentalStress": {
+          "state": "unknown"
+        },
+        "romance": {
+          "state": "unknown"
+        },
+        "emotionalWarmth": {
+          "state": "unknown"
+        },
+        "artRealism": {
+          "state": "unknown"
+        },
+        "artDensity": {
+          "state": "unknown"
+        },
+        "visualSoftness": {
+          "state": "unknown"
+        },
+        "motionImpact": {
+          "state": "unknown"
+        }
+      },
+      "factorScope": "entry_1_3_volumes",
+      "eligibility": {
+        "onboardingEligible": true,
+        "recommendationEligible": true,
+        "libraryOnly": false,
+        "narrativeToneException": {
+          "policy": "narrative-tone-exhaustion-v1",
+          "workId": "work-125c0568eb0b59b0574a",
+          "inputManifestSha256": "936675510e83b181caebfe8dc3ad0957115ae27d3df4d411adb5b50afa87b4b3",
+          "researchSha256": "4c899c31fa3f7bd1ff8178091814efb6a11b439d832bcf4c7ddb02702ea0b924",
+          "groups": [
+            "narrative",
+            "tone"
+          ]
+        }
+      },
+      "evidence": {
+        "metadataConfidence": 0.92,
+        "groupingConfidence": 0.96,
+        "sourceAgreement": 0.69,
+        "annotationReviewedAt": "2026-09-28T09:15:24.538459+00:00"
       }
     },
     {
@@ -42502,6 +42925,117 @@
       }
     },
     {
+      "id": "work-196581bf726305f010b4",
+      "title": "おいしい学び夜",
+      "aliases": [],
+      "creators": [
+        "北島和洋",
+        "大井昌和"
+      ],
+      "publisher": "講談社",
+      "demographic": "unknown",
+      "status": "unknown",
+      "firstPublishedYear": 2011,
+      "genres": [
+        "sliceOfLife"
+      ],
+      "themes": [
+        {
+          "id": "cooking",
+          "centrality": 2,
+          "confidence": 0.75
+        },
+        {
+          "id": "school",
+          "centrality": 2,
+          "confidence": 0.75
+        }
+      ],
+      "axes": {
+        "progression": {
+          "state": "known",
+          "value": 2,
+          "confidence": 0.75
+        },
+        "problemSolving": {
+          "state": "unknown"
+        },
+        "strategy": {
+          "state": "unknown"
+        },
+        "pacing": {
+          "state": "unknown"
+        },
+        "mysteryReveal": {
+          "state": "unknown"
+        },
+        "worldBuilding": {
+          "state": "unknown"
+        },
+        "characterArcWeight": {
+          "state": "known",
+          "value": 2,
+          "confidence": 0.75
+        },
+        "relationshipStructure": {
+          "state": "known",
+          "value": 2,
+          "confidence": 0.75
+        },
+        "comedy": {
+          "state": "unknown"
+        },
+        "darkness": {
+          "state": "unknown"
+        },
+        "mentalStress": {
+          "state": "unknown"
+        },
+        "romance": {
+          "state": "unknown"
+        },
+        "emotionalWarmth": {
+          "state": "known",
+          "value": 2,
+          "confidence": 0.75
+        },
+        "artRealism": {
+          "state": "unknown"
+        },
+        "artDensity": {
+          "state": "unknown"
+        },
+        "visualSoftness": {
+          "state": "unknown"
+        },
+        "motionImpact": {
+          "state": "unknown"
+        }
+      },
+      "factorScope": "entry_1_3_volumes",
+      "eligibility": {
+        "onboardingEligible": true,
+        "recommendationEligible": true,
+        "libraryOnly": false,
+        "narrativeToneException": {
+          "policy": "narrative-tone-exhaustion-v1",
+          "workId": "work-196581bf726305f010b4",
+          "inputManifestSha256": "5198fac0f1c2f0225e739e92124f6be6fcfe107de93e36d0d827cc614eb07ea4",
+          "researchSha256": "21ffbfa68550f324e3db183c41d23ca2b830900f86b496d33a7d12d7a88a0627",
+          "groups": [
+            "narrative",
+            "tone"
+          ]
+        }
+      },
+      "evidence": {
+        "metadataConfidence": 0.92,
+        "groupingConfidence": 0.86,
+        "sourceAgreement": 0.64,
+        "annotationReviewedAt": "2026-09-28T09:15:25.505629+00:00"
+      }
+    },
+    {
       "id": "work-196f917715fbb17d4d0f",
       "title": "貧乏神が！",
       "aliases": [],
@@ -42966,6 +43500,112 @@
         "groupingConfidence": 0,
         "sourceAgreement": 0,
         "annotationReviewedAt": "2026-09-12T00:00:00+09:00"
+      }
+    },
+    {
+      "id": "work-19a26f01512166856a6a",
+      "title": "銀河鉄道999",
+      "aliases": [],
+      "creators": [
+        "松本零士"
+      ],
+      "publisher": "小学館",
+      "demographic": "seinen",
+      "status": "unknown",
+      "firstPublishedYear": 1977,
+      "genres": [
+        "scienceFiction"
+      ],
+      "themes": [
+        {
+          "id": "adventure",
+          "centrality": 2,
+          "confidence": 0.75
+        },
+        {
+          "id": "exploration",
+          "centrality": 2,
+          "confidence": 0.75
+        }
+      ],
+      "axes": {
+        "progression": {
+          "state": "known",
+          "value": 2,
+          "confidence": 0.75
+        },
+        "problemSolving": {
+          "state": "unknown"
+        },
+        "strategy": {
+          "state": "unknown"
+        },
+        "pacing": {
+          "state": "unknown"
+        },
+        "mysteryReveal": {
+          "state": "unknown"
+        },
+        "worldBuilding": {
+          "state": "known",
+          "value": 2,
+          "confidence": 0.75
+        },
+        "characterArcWeight": {
+          "state": "unknown"
+        },
+        "relationshipStructure": {
+          "state": "unknown"
+        },
+        "comedy": {
+          "state": "unknown"
+        },
+        "darkness": {
+          "state": "unknown"
+        },
+        "mentalStress": {
+          "state": "unknown"
+        },
+        "romance": {
+          "state": "unknown"
+        },
+        "emotionalWarmth": {
+          "state": "unknown"
+        },
+        "artRealism": {
+          "state": "unknown"
+        },
+        "artDensity": {
+          "state": "unknown"
+        },
+        "visualSoftness": {
+          "state": "unknown"
+        },
+        "motionImpact": {
+          "state": "unknown"
+        }
+      },
+      "factorScope": "entry_1_3_volumes",
+      "eligibility": {
+        "onboardingEligible": true,
+        "recommendationEligible": true,
+        "libraryOnly": false,
+        "narrativeToneException": {
+          "policy": "narrative-tone-exhaustion-v1",
+          "workId": "work-19a26f01512166856a6a",
+          "inputManifestSha256": "b471d91e89e4788c34e77017ce2e352ecca0dc384c835ce1b152492e77ae45f9",
+          "researchSha256": "d732f8ef83385c42e6e5fdbed1d0e82452f23131701787b6b84f99f123ca7ca3",
+          "groups": [
+            "narrative",
+            "tone"
+          ]
+        }
+      },
+      "evidence": {
+        "metadataConfidence": 1,
+        "groupingConfidence": 1,
+        "sourceAgreement": 1,
+        "annotationReviewedAt": "2026-09-28T09:15:20.890729+00:00"
       }
     },
     {
@@ -45503,6 +46143,112 @@
         "groupingConfidence": 1,
         "sourceAgreement": 1,
         "annotationReviewedAt": "2026-08-26T00:00:00+09:00"
+      }
+    },
+    {
+      "id": "work-1baa190c06600d7c3f25",
+      "title": "ボンクラボンボンハウス",
+      "aliases": [],
+      "creators": [
+        "ねむようこ"
+      ],
+      "publisher": "祥伝社",
+      "demographic": "josei",
+      "status": "unknown",
+      "firstPublishedYear": 2017,
+      "genres": [
+        "romance",
+        "sliceOfLife"
+      ],
+      "themes": [
+        {
+          "id": "crafting",
+          "centrality": 2,
+          "confidence": 0.75
+        }
+      ],
+      "axes": {
+        "progression": {
+          "state": "known",
+          "value": 2,
+          "confidence": 0.75
+        },
+        "problemSolving": {
+          "state": "known",
+          "value": 2,
+          "confidence": 0.75
+        },
+        "strategy": {
+          "state": "unknown"
+        },
+        "pacing": {
+          "state": "unknown"
+        },
+        "mysteryReveal": {
+          "state": "unknown"
+        },
+        "worldBuilding": {
+          "state": "unknown"
+        },
+        "characterArcWeight": {
+          "state": "unknown"
+        },
+        "relationshipStructure": {
+          "state": "known",
+          "value": 2,
+          "confidence": 0.75
+        },
+        "comedy": {
+          "state": "unknown"
+        },
+        "darkness": {
+          "state": "unknown"
+        },
+        "mentalStress": {
+          "state": "unknown"
+        },
+        "romance": {
+          "state": "unknown"
+        },
+        "emotionalWarmth": {
+          "state": "known",
+          "value": 2,
+          "confidence": 0.75
+        },
+        "artRealism": {
+          "state": "unknown"
+        },
+        "artDensity": {
+          "state": "unknown"
+        },
+        "visualSoftness": {
+          "state": "unknown"
+        },
+        "motionImpact": {
+          "state": "unknown"
+        }
+      },
+      "factorScope": "entry_1_3_volumes",
+      "eligibility": {
+        "onboardingEligible": true,
+        "recommendationEligible": true,
+        "libraryOnly": false,
+        "narrativeToneException": {
+          "policy": "narrative-tone-exhaustion-v1",
+          "workId": "work-1baa190c06600d7c3f25",
+          "inputManifestSha256": "3e38ae0c4561b76fe50c17a927515e6711e7aa99229be48b6f13c4bb23912e24",
+          "researchSha256": "683a99796d1fecc0e711189bf2b12d2f0f33c346e6f7b3e6f0ba3caa59b5ae1a",
+          "groups": [
+            "narrative",
+            "tone"
+          ]
+        }
+      },
+      "evidence": {
+        "metadataConfidence": 0.92,
+        "groupingConfidence": 0.96,
+        "sourceAgreement": 0.64,
+        "annotationReviewedAt": "2026-09-28T09:15:26.464109+00:00"
       }
     },
     {
@@ -51200,6 +51946,112 @@
       }
     },
     {
+      "id": "work-1ff3bd76a29e0e83a6f6",
+      "title": "ケンシロウによろしく",
+      "aliases": [],
+      "creators": [
+        "ジャスミン ギュ"
+      ],
+      "publisher": "講談社",
+      "demographic": "unknown",
+      "status": "unknown",
+      "firstPublishedYear": 2020,
+      "genres": [
+        "action",
+        "comedy"
+      ],
+      "themes": [
+        {
+          "id": "revenge",
+          "centrality": 2,
+          "confidence": 0.75
+        }
+      ],
+      "axes": {
+        "progression": {
+          "state": "known",
+          "value": 2,
+          "confidence": 0.75
+        },
+        "problemSolving": {
+          "state": "unknown"
+        },
+        "strategy": {
+          "state": "unknown"
+        },
+        "pacing": {
+          "state": "unknown"
+        },
+        "mysteryReveal": {
+          "state": "unknown"
+        },
+        "worldBuilding": {
+          "state": "unknown"
+        },
+        "characterArcWeight": {
+          "state": "known",
+          "value": 2,
+          "confidence": 0.75
+        },
+        "relationshipStructure": {
+          "state": "unknown"
+        },
+        "comedy": {
+          "state": "known",
+          "value": 4,
+          "confidence": 0.75
+        },
+        "darkness": {
+          "state": "known",
+          "value": 2,
+          "confidence": 0.75
+        },
+        "mentalStress": {
+          "state": "unknown"
+        },
+        "romance": {
+          "state": "unknown"
+        },
+        "emotionalWarmth": {
+          "state": "unknown"
+        },
+        "artRealism": {
+          "state": "unknown"
+        },
+        "artDensity": {
+          "state": "unknown"
+        },
+        "visualSoftness": {
+          "state": "unknown"
+        },
+        "motionImpact": {
+          "state": "unknown"
+        }
+      },
+      "factorScope": "entry_1_3_volumes",
+      "eligibility": {
+        "onboardingEligible": true,
+        "recommendationEligible": true,
+        "libraryOnly": false,
+        "narrativeToneException": {
+          "policy": "narrative-tone-exhaustion-v1",
+          "workId": "work-1ff3bd76a29e0e83a6f6",
+          "inputManifestSha256": "493cabec2c7c60b7c906902839df8526a3707eff46a520d26d32618621fbf1e0",
+          "researchSha256": "f02e2cefe7c125b95cba1054623ac45937cf27e976c398fc46a1a9d315934d35",
+          "groups": [
+            "narrative",
+            "tone"
+          ]
+        }
+      },
+      "evidence": {
+        "metadataConfidence": 0.92,
+        "groupingConfidence": 0.96,
+        "sourceAgreement": 0.69,
+        "annotationReviewedAt": "2026-09-28T09:15:27.431536+00:00"
+      }
+    },
+    {
       "id": "work-1ffb6ba18b9d7c2daeda",
       "title": "狼と香辛料",
       "aliases": [],
@@ -56026,6 +56878,114 @@
       }
     },
     {
+      "id": "work-235525a2808021177683",
+      "title": "かぶき伊左",
+      "aliases": [],
+      "creators": [
+        "紗久楽さわ"
+      ],
+      "publisher": "角川グループパブリッシング",
+      "demographic": "unknown",
+      "status": "unknown",
+      "firstPublishedYear": 2012,
+      "genres": [
+        "historical"
+      ],
+      "themes": [
+        {
+          "id": "historicalReconstruction",
+          "centrality": 2,
+          "confidence": 0.75
+        },
+        {
+          "id": "workplace",
+          "centrality": 2,
+          "confidence": 0.75
+        }
+      ],
+      "axes": {
+        "progression": {
+          "state": "known",
+          "value": 2,
+          "confidence": 0.75
+        },
+        "problemSolving": {
+          "state": "unknown"
+        },
+        "strategy": {
+          "state": "known",
+          "value": 2,
+          "confidence": 0.75
+        },
+        "pacing": {
+          "state": "unknown"
+        },
+        "mysteryReveal": {
+          "state": "unknown"
+        },
+        "worldBuilding": {
+          "state": "unknown"
+        },
+        "characterArcWeight": {
+          "state": "known",
+          "value": 2,
+          "confidence": 0.75
+        },
+        "relationshipStructure": {
+          "state": "unknown"
+        },
+        "comedy": {
+          "state": "unknown"
+        },
+        "darkness": {
+          "state": "unknown"
+        },
+        "mentalStress": {
+          "state": "unknown"
+        },
+        "romance": {
+          "state": "unknown"
+        },
+        "emotionalWarmth": {
+          "state": "unknown"
+        },
+        "artRealism": {
+          "state": "unknown"
+        },
+        "artDensity": {
+          "state": "unknown"
+        },
+        "visualSoftness": {
+          "state": "unknown"
+        },
+        "motionImpact": {
+          "state": "unknown"
+        }
+      },
+      "factorScope": "entry_1_3_volumes",
+      "eligibility": {
+        "onboardingEligible": true,
+        "recommendationEligible": true,
+        "libraryOnly": false,
+        "narrativeToneException": {
+          "policy": "narrative-tone-exhaustion-v1",
+          "workId": "work-235525a2808021177683",
+          "inputManifestSha256": "83405fb808b6de51713ecf28bbbef49a1cab0af35528fb2935581e50d95684df",
+          "researchSha256": "bd3ba966f0c188ef49b0d1f66f4ecdd164db7f79832cbc73f23451c002464a4b",
+          "groups": [
+            "narrative",
+            "tone"
+          ]
+        }
+      },
+      "evidence": {
+        "metadataConfidence": 0.92,
+        "groupingConfidence": 0.96,
+        "sourceAgreement": 0.64,
+        "annotationReviewedAt": "2026-09-28T09:15:28.362497+00:00"
+      }
+    },
+    {
       "id": "work-2356050c72240569e1c5",
       "title": "すみれファンファーレ",
       "aliases": [],
@@ -57823,6 +58783,114 @@
         "groupingConfidence": 0.86,
         "sourceAgreement": 0.64,
         "annotationReviewedAt": "2026-09-28T08:22:58.159966+00:00"
+      }
+    },
+    {
+      "id": "work-250b08c6f92b686decf9",
+      "title": "九十九の満月",
+      "aliases": [],
+      "creators": [
+        "小雨大豆"
+      ],
+      "publisher": "講談社",
+      "demographic": "unknown",
+      "status": "unknown",
+      "firstPublishedYear": 2015,
+      "genres": [
+        "fantasy"
+      ],
+      "themes": [
+        {
+          "id": "adventure",
+          "centrality": 2,
+          "confidence": 0.75
+        },
+        {
+          "id": "foundFamily",
+          "centrality": 2,
+          "confidence": 0.75
+        }
+      ],
+      "axes": {
+        "progression": {
+          "state": "unknown"
+        },
+        "problemSolving": {
+          "state": "unknown"
+        },
+        "strategy": {
+          "state": "unknown"
+        },
+        "pacing": {
+          "state": "unknown"
+        },
+        "mysteryReveal": {
+          "state": "unknown"
+        },
+        "worldBuilding": {
+          "state": "known",
+          "value": 2,
+          "confidence": 0.75
+        },
+        "characterArcWeight": {
+          "state": "unknown"
+        },
+        "relationshipStructure": {
+          "state": "known",
+          "value": 2,
+          "confidence": 0.75
+        },
+        "comedy": {
+          "state": "unknown"
+        },
+        "darkness": {
+          "state": "unknown"
+        },
+        "mentalStress": {
+          "state": "unknown"
+        },
+        "romance": {
+          "state": "unknown"
+        },
+        "emotionalWarmth": {
+          "state": "known",
+          "value": 4,
+          "confidence": 0.75
+        },
+        "artRealism": {
+          "state": "unknown"
+        },
+        "artDensity": {
+          "state": "unknown"
+        },
+        "visualSoftness": {
+          "state": "unknown"
+        },
+        "motionImpact": {
+          "state": "unknown"
+        }
+      },
+      "factorScope": "entry_1_3_volumes",
+      "eligibility": {
+        "onboardingEligible": true,
+        "recommendationEligible": true,
+        "libraryOnly": false,
+        "narrativeToneException": {
+          "policy": "narrative-tone-exhaustion-v1",
+          "workId": "work-250b08c6f92b686decf9",
+          "inputManifestSha256": "0a593d25b841443b68a74488fd0651c3a60ad82c7356d6883ad6317b90beb5b1",
+          "researchSha256": "535c4941cc59a86d6d1aa7fc1a96125405545f8da352cac25e7a6472d7979650",
+          "groups": [
+            "narrative",
+            "tone"
+          ]
+        }
+      },
+      "evidence": {
+        "metadataConfidence": 0.92,
+        "groupingConfidence": 0.96,
+        "sourceAgreement": 0.69,
+        "annotationReviewedAt": "2026-09-28T09:15:29.322962+00:00"
       }
     },
     {
@@ -63099,6 +64167,112 @@
       }
     },
     {
+      "id": "work-2a2c3b667ff7418c7678",
+      "title": "彼女のそれにやられてる",
+      "aliases": [],
+      "creators": [
+        "大海たび"
+      ],
+      "publisher": "KADOKAWA",
+      "demographic": "unknown",
+      "status": "unknown",
+      "firstPublishedYear": 2023,
+      "genres": [
+        "comedy",
+        "romance"
+      ],
+      "themes": [
+        {
+          "id": "school",
+          "centrality": 2,
+          "confidence": 0.75
+        }
+      ],
+      "axes": {
+        "progression": {
+          "state": "unknown"
+        },
+        "problemSolving": {
+          "state": "unknown"
+        },
+        "strategy": {
+          "state": "unknown"
+        },
+        "pacing": {
+          "state": "unknown"
+        },
+        "mysteryReveal": {
+          "state": "unknown"
+        },
+        "worldBuilding": {
+          "state": "unknown"
+        },
+        "characterArcWeight": {
+          "state": "unknown"
+        },
+        "relationshipStructure": {
+          "state": "known",
+          "value": 2,
+          "confidence": 0.75
+        },
+        "comedy": {
+          "state": "known",
+          "value": 2,
+          "confidence": 0.75
+        },
+        "darkness": {
+          "state": "unknown"
+        },
+        "mentalStress": {
+          "state": "unknown"
+        },
+        "romance": {
+          "state": "known",
+          "value": 2,
+          "confidence": 0.75
+        },
+        "emotionalWarmth": {
+          "state": "known",
+          "value": 2,
+          "confidence": 0.75
+        },
+        "artRealism": {
+          "state": "unknown"
+        },
+        "artDensity": {
+          "state": "unknown"
+        },
+        "visualSoftness": {
+          "state": "unknown"
+        },
+        "motionImpact": {
+          "state": "unknown"
+        }
+      },
+      "factorScope": "entry_1_3_volumes",
+      "eligibility": {
+        "onboardingEligible": true,
+        "recommendationEligible": true,
+        "libraryOnly": false,
+        "narrativeToneException": {
+          "policy": "narrative-tone-exhaustion-v1",
+          "workId": "work-2a2c3b667ff7418c7678",
+          "inputManifestSha256": "0f8f0e99a6b838d48dfe06b21150085e596061e0af7efd21154673280f642bb3",
+          "researchSha256": "1d01c754c775059eb3e09df2d0199ede7e16893c7529ed34e5992878f51e0423",
+          "groups": [
+            "narrative",
+            "tone"
+          ]
+        }
+      },
+      "evidence": {
+        "metadataConfidence": 0.87,
+        "groupingConfidence": 0.74,
+        "sourceAgreement": 0.61,
+        "annotationReviewedAt": "2026-09-28T09:15:30.313833+00:00"
+      }
+    },
+    {
       "id": "work-2a73da617f89ddbe502d",
       "title": "＋チック姉さん",
       "aliases": [],
@@ -66869,6 +68043,116 @@
         "groupingConfidence": 1,
         "sourceAgreement": 1,
         "annotationReviewedAt": "2026-08-26T00:00:00+09:00"
+      }
+    },
+    {
+      "id": "work-2f6ca1e62f05315622e0",
+      "title": "私はシャドウ",
+      "aliases": [],
+      "creators": [
+        "粕谷紀子"
+      ],
+      "publisher": "集英社",
+      "demographic": "josei",
+      "status": "unknown",
+      "firstPublishedYear": 2008,
+      "genres": [
+        "mystery",
+        "romance"
+      ],
+      "themes": [
+        {
+          "id": "investigation",
+          "centrality": 2,
+          "confidence": 0.75
+        }
+      ],
+      "axes": {
+        "progression": {
+          "state": "known",
+          "value": 2,
+          "confidence": 0.75
+        },
+        "problemSolving": {
+          "state": "known",
+          "value": 2,
+          "confidence": 0.75
+        },
+        "strategy": {
+          "state": "unknown"
+        },
+        "pacing": {
+          "state": "unknown"
+        },
+        "mysteryReveal": {
+          "state": "unknown"
+        },
+        "worldBuilding": {
+          "state": "unknown"
+        },
+        "characterArcWeight": {
+          "state": "known",
+          "value": 4,
+          "confidence": 0.75
+        },
+        "relationshipStructure": {
+          "state": "known",
+          "value": 2,
+          "confidence": 0.75
+        },
+        "comedy": {
+          "state": "unknown"
+        },
+        "darkness": {
+          "state": "unknown"
+        },
+        "mentalStress": {
+          "state": "known",
+          "value": 2,
+          "confidence": 0.75
+        },
+        "romance": {
+          "state": "known",
+          "value": 4,
+          "confidence": 0.75
+        },
+        "emotionalWarmth": {
+          "state": "unknown"
+        },
+        "artRealism": {
+          "state": "unknown"
+        },
+        "artDensity": {
+          "state": "unknown"
+        },
+        "visualSoftness": {
+          "state": "unknown"
+        },
+        "motionImpact": {
+          "state": "unknown"
+        }
+      },
+      "factorScope": "entry_1_3_volumes",
+      "eligibility": {
+        "onboardingEligible": true,
+        "recommendationEligible": true,
+        "libraryOnly": false,
+        "narrativeToneException": {
+          "policy": "narrative-tone-exhaustion-v1",
+          "workId": "work-2f6ca1e62f05315622e0",
+          "inputManifestSha256": "403b571c8af7e74e51616e1efe3027417b82fc96f952baf966a90e3c62c1a3ae",
+          "researchSha256": "be1937c0324ea9d493f36a0adf70eae24f038ac36ee0646f5d32fd6c2513b2b4",
+          "groups": [
+            "narrative",
+            "tone"
+          ]
+        }
+      },
+      "evidence": {
+        "metadataConfidence": 0.92,
+        "groupingConfidence": 0.96,
+        "sourceAgreement": 0.64,
+        "annotationReviewedAt": "2026-09-28T09:15:31.186891+00:00"
       }
     },
     {
@@ -70717,6 +72001,111 @@
         "groupingConfidence": 1,
         "sourceAgreement": 1,
         "annotationReviewedAt": "2026-08-26T00:00:00+09:00"
+      }
+    },
+    {
+      "id": "work-33c2e28bf9484d0572be",
+      "title": "＃ギャルとギャルの百合",
+      "aliases": [],
+      "creators": [
+        "イノウエ"
+      ],
+      "publisher": "小学館",
+      "demographic": "unknown",
+      "status": "unknown",
+      "genres": [
+        "comedy",
+        "romance"
+      ],
+      "themes": [
+        {
+          "id": "school",
+          "centrality": 2,
+          "confidence": 0.75
+        }
+      ],
+      "axes": {
+        "progression": {
+          "state": "unknown"
+        },
+        "problemSolving": {
+          "state": "unknown"
+        },
+        "strategy": {
+          "state": "unknown"
+        },
+        "pacing": {
+          "state": "unknown"
+        },
+        "mysteryReveal": {
+          "state": "unknown"
+        },
+        "worldBuilding": {
+          "state": "unknown"
+        },
+        "characterArcWeight": {
+          "state": "unknown"
+        },
+        "relationshipStructure": {
+          "state": "known",
+          "value": 2,
+          "confidence": 0.75
+        },
+        "comedy": {
+          "state": "known",
+          "value": 2,
+          "confidence": 0.75
+        },
+        "darkness": {
+          "state": "unknown"
+        },
+        "mentalStress": {
+          "state": "unknown"
+        },
+        "romance": {
+          "state": "known",
+          "value": 4,
+          "confidence": 0.75
+        },
+        "emotionalWarmth": {
+          "state": "known",
+          "value": 4,
+          "confidence": 0.75
+        },
+        "artRealism": {
+          "state": "unknown"
+        },
+        "artDensity": {
+          "state": "unknown"
+        },
+        "visualSoftness": {
+          "state": "unknown"
+        },
+        "motionImpact": {
+          "state": "unknown"
+        }
+      },
+      "factorScope": "entry_1_3_volumes",
+      "eligibility": {
+        "onboardingEligible": true,
+        "recommendationEligible": true,
+        "libraryOnly": false,
+        "narrativeToneException": {
+          "policy": "narrative-tone-exhaustion-v1",
+          "workId": "work-33c2e28bf9484d0572be",
+          "inputManifestSha256": "6a26fcec7db0428c1ec918f4dc5ae1b73803e11d31906d3932eebdd7178cfe70",
+          "researchSha256": "4187297b56f04b88af6deff1b36d63e466f9a0d24c7868a3c1823c6736edf0d0",
+          "groups": [
+            "narrative",
+            "tone"
+          ]
+        }
+      },
+      "evidence": {
+        "metadataConfidence": 0.91,
+        "groupingConfidence": 0.8,
+        "sourceAgreement": 0.71,
+        "annotationReviewedAt": "2026-09-28T09:15:31.975313+00:00"
       }
     },
     {
@@ -75633,6 +77022,120 @@
       }
     },
     {
+      "id": "work-383e7cb24136859c362a",
+      "title": "スティアの魔女",
+      "aliases": [],
+      "creators": [
+        "牧瀬初雲"
+      ],
+      "publisher": "KADOKAWA",
+      "demographic": "unknown",
+      "status": "unknown",
+      "firstPublishedYear": 2023,
+      "genres": [
+        "fantasy"
+      ],
+      "themes": [
+        {
+          "id": "adventure",
+          "centrality": 2,
+          "confidence": 0.75
+        },
+        {
+          "id": "exploration",
+          "centrality": 1,
+          "confidence": 0.75
+        }
+      ],
+      "axes": {
+        "progression": {
+          "state": "known",
+          "value": 2,
+          "confidence": 0.75
+        },
+        "problemSolving": {
+          "state": "unknown"
+        },
+        "strategy": {
+          "state": "unknown"
+        },
+        "pacing": {
+          "state": "unknown"
+        },
+        "mysteryReveal": {
+          "state": "unknown"
+        },
+        "worldBuilding": {
+          "state": "known",
+          "value": 2,
+          "confidence": 0.75
+        },
+        "characterArcWeight": {
+          "state": "known",
+          "value": 2,
+          "confidence": 0.75
+        },
+        "relationshipStructure": {
+          "state": "known",
+          "value": 2,
+          "confidence": 0.75
+        },
+        "comedy": {
+          "state": "unknown"
+        },
+        "darkness": {
+          "state": "known",
+          "value": 2,
+          "confidence": 0.75
+        },
+        "mentalStress": {
+          "state": "known",
+          "value": 2,
+          "confidence": 0.75
+        },
+        "romance": {
+          "state": "unknown"
+        },
+        "emotionalWarmth": {
+          "state": "unknown"
+        },
+        "artRealism": {
+          "state": "unknown"
+        },
+        "artDensity": {
+          "state": "unknown"
+        },
+        "visualSoftness": {
+          "state": "unknown"
+        },
+        "motionImpact": {
+          "state": "unknown"
+        }
+      },
+      "factorScope": "entry_1_3_volumes",
+      "eligibility": {
+        "onboardingEligible": true,
+        "recommendationEligible": true,
+        "libraryOnly": false,
+        "narrativeToneException": {
+          "policy": "narrative-tone-exhaustion-v1",
+          "workId": "work-383e7cb24136859c362a",
+          "inputManifestSha256": "4dcaef5f42c171cd606445172ef243e7632121baf73e28d7edf7d1f567ae64d3",
+          "researchSha256": "defeca0213c0feabe7a47e089def20ba7572d294cfc7bc2ef10aebecde749fd3",
+          "groups": [
+            "narrative",
+            "tone"
+          ]
+        }
+      },
+      "evidence": {
+        "metadataConfidence": 0.87,
+        "groupingConfidence": 0.74,
+        "sourceAgreement": 0.61,
+        "annotationReviewedAt": "2026-09-28T09:15:33.025477+00:00"
+      }
+    },
+    {
       "id": "work-3849ac495a28a963f0a1",
       "title": "ものするひと",
       "aliases": [],
@@ -79744,6 +81247,123 @@
         "groupingConfidence": 0.74,
         "sourceAgreement": 0.61,
         "annotationReviewedAt": "2026-09-12T00:00:00+09:00"
+      }
+    },
+    {
+      "id": "work-3c33f528673b02f6abce",
+      "title": "ナラクノアドゥ",
+      "aliases": [],
+      "creators": [
+        "山本晋"
+      ],
+      "publisher": "KADOKAWA",
+      "demographic": "seinen",
+      "status": "unknown",
+      "firstPublishedYear": 2015,
+      "genres": [
+        "action",
+        "fantasy"
+      ],
+      "themes": [
+        {
+          "id": "adventure",
+          "centrality": 2,
+          "confidence": 0.75
+        },
+        {
+          "id": "combat",
+          "centrality": 2,
+          "confidence": 0.75
+        }
+      ],
+      "axes": {
+        "progression": {
+          "state": "known",
+          "value": 4,
+          "confidence": 0.75
+        },
+        "problemSolving": {
+          "state": "known",
+          "value": 2,
+          "confidence": 0.75
+        },
+        "strategy": {
+          "state": "unknown"
+        },
+        "pacing": {
+          "state": "unknown"
+        },
+        "mysteryReveal": {
+          "state": "unknown"
+        },
+        "worldBuilding": {
+          "state": "known",
+          "value": 2,
+          "confidence": 0.75
+        },
+        "characterArcWeight": {
+          "state": "known",
+          "value": 2,
+          "confidence": 0.75
+        },
+        "relationshipStructure": {
+          "state": "known",
+          "value": 2,
+          "confidence": 0.75
+        },
+        "comedy": {
+          "state": "unknown"
+        },
+        "darkness": {
+          "state": "known",
+          "value": 4,
+          "confidence": 0.75
+        },
+        "mentalStress": {
+          "state": "known",
+          "value": 2,
+          "confidence": 0.75
+        },
+        "romance": {
+          "state": "unknown"
+        },
+        "emotionalWarmth": {
+          "state": "unknown"
+        },
+        "artRealism": {
+          "state": "unknown"
+        },
+        "artDensity": {
+          "state": "unknown"
+        },
+        "visualSoftness": {
+          "state": "unknown"
+        },
+        "motionImpact": {
+          "state": "unknown"
+        }
+      },
+      "factorScope": "entry_1_3_volumes",
+      "eligibility": {
+        "onboardingEligible": true,
+        "recommendationEligible": true,
+        "libraryOnly": false,
+        "narrativeToneException": {
+          "policy": "narrative-tone-exhaustion-v1",
+          "workId": "work-3c33f528673b02f6abce",
+          "inputManifestSha256": "9ae38cf2ab33f3d96787ed2cb9692387f183b6d5a8023f73cacde594227efddc",
+          "researchSha256": "45f3208d318bde40abc6df88c0a1920f27bc52cda641960f4a6685b86c10a3f7",
+          "groups": [
+            "narrative",
+            "tone"
+          ]
+        }
+      },
+      "evidence": {
+        "metadataConfidence": 0.92,
+        "groupingConfidence": 0.96,
+        "sourceAgreement": 0.69,
+        "annotationReviewedAt": "2026-09-28T09:15:34.062210+00:00"
       }
     },
     {
@@ -86036,6 +87656,116 @@
         "groupingConfidence": 1,
         "sourceAgreement": 1,
         "annotationReviewedAt": "2026-08-26T00:00:00+09:00"
+      }
+    },
+    {
+      "id": "work-41c92ea0ad7a6d117fa1",
+      "title": "山賊ダイアリーSS",
+      "aliases": [],
+      "creators": [
+        "岡本健太郎"
+      ],
+      "publisher": "講談社",
+      "demographic": "unknown",
+      "status": "unknown",
+      "firstPublishedYear": 2017,
+      "genres": [
+        "sliceOfLife"
+      ],
+      "themes": [
+        {
+          "id": "exploration",
+          "centrality": 2,
+          "confidence": 0.75
+        },
+        {
+          "id": "survival",
+          "centrality": 2,
+          "confidence": 0.75
+        }
+      ],
+      "axes": {
+        "progression": {
+          "state": "known",
+          "value": 2,
+          "confidence": 0.75
+        },
+        "problemSolving": {
+          "state": "known",
+          "value": 2,
+          "confidence": 0.75
+        },
+        "strategy": {
+          "state": "unknown"
+        },
+        "pacing": {
+          "state": "unknown"
+        },
+        "mysteryReveal": {
+          "state": "unknown"
+        },
+        "worldBuilding": {
+          "state": "known",
+          "value": 2,
+          "confidence": 0.75
+        },
+        "characterArcWeight": {
+          "state": "unknown"
+        },
+        "relationshipStructure": {
+          "state": "unknown"
+        },
+        "comedy": {
+          "state": "unknown"
+        },
+        "darkness": {
+          "state": "unknown"
+        },
+        "mentalStress": {
+          "state": "known",
+          "value": 2,
+          "confidence": 0.75
+        },
+        "romance": {
+          "state": "unknown"
+        },
+        "emotionalWarmth": {
+          "state": "unknown"
+        },
+        "artRealism": {
+          "state": "unknown"
+        },
+        "artDensity": {
+          "state": "unknown"
+        },
+        "visualSoftness": {
+          "state": "unknown"
+        },
+        "motionImpact": {
+          "state": "unknown"
+        }
+      },
+      "factorScope": "entry_1_3_volumes",
+      "eligibility": {
+        "onboardingEligible": true,
+        "recommendationEligible": true,
+        "libraryOnly": false,
+        "narrativeToneException": {
+          "policy": "narrative-tone-exhaustion-v1",
+          "workId": "work-41c92ea0ad7a6d117fa1",
+          "inputManifestSha256": "04b216c8aeff9b3812d63384e5d2ef34a2685dca196706014c21ca5361309b0a",
+          "researchSha256": "4d3078fe1e74fbacba2c1ed13723455951d3389d281bca97385fc9729fe27877",
+          "groups": [
+            "narrative",
+            "tone"
+          ]
+        }
+      },
+      "evidence": {
+        "metadataConfidence": 0.92,
+        "groupingConfidence": 0.96,
+        "sourceAgreement": 0.64,
+        "annotationReviewedAt": "2026-09-28T09:15:35.029405+00:00"
       }
     },
     {
@@ -114385,6 +116115,111 @@
       }
     },
     {
+      "id": "work-5856ff038b53dec31fa9",
+      "title": "クロエの流儀",
+      "aliases": [],
+      "creators": [
+        "今井大輔"
+      ],
+      "publisher": "日本文芸社",
+      "demographic": "unknown",
+      "status": "unknown",
+      "firstPublishedYear": 2015,
+      "genres": [
+        "sliceOfLife"
+      ],
+      "themes": [
+        {
+          "id": "school",
+          "centrality": 2,
+          "confidence": 0.75
+        }
+      ],
+      "axes": {
+        "progression": {
+          "state": "unknown"
+        },
+        "problemSolving": {
+          "state": "unknown"
+        },
+        "strategy": {
+          "state": "unknown"
+        },
+        "pacing": {
+          "state": "unknown"
+        },
+        "mysteryReveal": {
+          "state": "unknown"
+        },
+        "worldBuilding": {
+          "state": "unknown"
+        },
+        "characterArcWeight": {
+          "state": "unknown"
+        },
+        "relationshipStructure": {
+          "state": "known",
+          "value": 2,
+          "confidence": 0.75
+        },
+        "comedy": {
+          "state": "known",
+          "value": 2,
+          "confidence": 0.75
+        },
+        "darkness": {
+          "state": "known",
+          "value": 2,
+          "confidence": 0.75
+        },
+        "mentalStress": {
+          "state": "known",
+          "value": 2,
+          "confidence": 0.75
+        },
+        "romance": {
+          "state": "unknown"
+        },
+        "emotionalWarmth": {
+          "state": "unknown"
+        },
+        "artRealism": {
+          "state": "unknown"
+        },
+        "artDensity": {
+          "state": "unknown"
+        },
+        "visualSoftness": {
+          "state": "unknown"
+        },
+        "motionImpact": {
+          "state": "unknown"
+        }
+      },
+      "factorScope": "entry_1_3_volumes",
+      "eligibility": {
+        "onboardingEligible": true,
+        "recommendationEligible": true,
+        "libraryOnly": false,
+        "narrativeToneException": {
+          "policy": "narrative-tone-exhaustion-v1",
+          "workId": "work-5856ff038b53dec31fa9",
+          "inputManifestSha256": "9048ed38e3d5c3957dfe35684aafe16fbc561f23d2a052a2afb7ba4f6c4633a0",
+          "researchSha256": "4d22578e5ae7acbcc8435b3ab87a25975ca9c9e738ae3379dcc4bffa6e955a66",
+          "groups": [
+            "narrative",
+            "tone"
+          ]
+        }
+      },
+      "evidence": {
+        "metadataConfidence": 0.92,
+        "groupingConfidence": 0.96,
+        "sourceAgreement": 0.64,
+        "annotationReviewedAt": "2026-09-28T09:15:36.025597+00:00"
+      }
+    },
+    {
       "id": "work-585fd80d90bf40ab23e1",
       "title": "伴天連XX",
       "aliases": [],
@@ -116452,6 +118287,112 @@
         "groupingConfidence": 0.74,
         "sourceAgreement": 0.61,
         "annotationReviewedAt": "2026-09-28T08:23:04.025468+00:00"
+      }
+    },
+    {
+      "id": "work-5a08d24f3d638926d44f",
+      "title": "ルポルタージュ",
+      "aliases": [],
+      "creators": [
+        "売野機子"
+      ],
+      "publisher": "幻冬舎",
+      "demographic": "unknown",
+      "status": "unknown",
+      "firstPublishedYear": 2017,
+      "genres": [
+        "romance",
+        "scienceFiction"
+      ],
+      "themes": [
+        {
+          "id": "workplace",
+          "centrality": 2,
+          "confidence": 0.75
+        }
+      ],
+      "axes": {
+        "progression": {
+          "state": "unknown"
+        },
+        "problemSolving": {
+          "state": "unknown"
+        },
+        "strategy": {
+          "state": "unknown"
+        },
+        "pacing": {
+          "state": "unknown"
+        },
+        "mysteryReveal": {
+          "state": "unknown"
+        },
+        "worldBuilding": {
+          "state": "known",
+          "value": 2,
+          "confidence": 0.75
+        },
+        "characterArcWeight": {
+          "state": "known",
+          "value": 2,
+          "confidence": 0.75
+        },
+        "relationshipStructure": {
+          "state": "unknown"
+        },
+        "comedy": {
+          "state": "unknown"
+        },
+        "darkness": {
+          "state": "unknown"
+        },
+        "mentalStress": {
+          "state": "known",
+          "value": 2,
+          "confidence": 0.75
+        },
+        "romance": {
+          "state": "known",
+          "value": 4,
+          "confidence": 0.75
+        },
+        "emotionalWarmth": {
+          "state": "unknown"
+        },
+        "artRealism": {
+          "state": "unknown"
+        },
+        "artDensity": {
+          "state": "unknown"
+        },
+        "visualSoftness": {
+          "state": "unknown"
+        },
+        "motionImpact": {
+          "state": "unknown"
+        }
+      },
+      "factorScope": "entry_1_3_volumes",
+      "eligibility": {
+        "onboardingEligible": true,
+        "recommendationEligible": true,
+        "libraryOnly": false,
+        "narrativeToneException": {
+          "policy": "narrative-tone-exhaustion-v1",
+          "workId": "work-5a08d24f3d638926d44f",
+          "inputManifestSha256": "c3a436a81e94550a94450800291ee0ae34580c33971945a84e24759dcec729dd",
+          "researchSha256": "6aec1ec472b2849503b4f507e3fcb8f8abc68087ff8ceda6852ac6111cf2d3b0",
+          "groups": [
+            "narrative",
+            "tone"
+          ]
+        }
+      },
+      "evidence": {
+        "metadataConfidence": 0.92,
+        "groupingConfidence": 0.96,
+        "sourceAgreement": 0.64,
+        "annotationReviewedAt": "2026-09-28T09:15:36.994614+00:00"
       }
     },
     {
@@ -121315,6 +123256,116 @@
       }
     },
     {
+      "id": "work-5d6f8a407d9410fe37ac",
+      "title": "トラとミケ",
+      "aliases": [],
+      "creators": [
+        "ねこまき"
+      ],
+      "publisher": "小学館",
+      "demographic": "unknown",
+      "status": "unknown",
+      "firstPublishedYear": 2019,
+      "genres": [
+        "sliceOfLife"
+      ],
+      "themes": [
+        {
+          "id": "cooking",
+          "centrality": 2,
+          "confidence": 0.75
+        },
+        {
+          "id": "workplace",
+          "centrality": 2,
+          "confidence": 0.75
+        }
+      ],
+      "axes": {
+        "progression": {
+          "state": "unknown"
+        },
+        "problemSolving": {
+          "state": "unknown"
+        },
+        "strategy": {
+          "state": "unknown"
+        },
+        "pacing": {
+          "state": "unknown"
+        },
+        "mysteryReveal": {
+          "state": "unknown"
+        },
+        "worldBuilding": {
+          "state": "unknown"
+        },
+        "characterArcWeight": {
+          "state": "known",
+          "value": 2,
+          "confidence": 0.75
+        },
+        "relationshipStructure": {
+          "state": "known",
+          "value": 2,
+          "confidence": 0.75
+        },
+        "comedy": {
+          "state": "known",
+          "value": 2,
+          "confidence": 0.75
+        },
+        "darkness": {
+          "state": "unknown"
+        },
+        "mentalStress": {
+          "state": "unknown"
+        },
+        "romance": {
+          "state": "unknown"
+        },
+        "emotionalWarmth": {
+          "state": "known",
+          "value": 4,
+          "confidence": 0.75
+        },
+        "artRealism": {
+          "state": "unknown"
+        },
+        "artDensity": {
+          "state": "unknown"
+        },
+        "visualSoftness": {
+          "state": "unknown"
+        },
+        "motionImpact": {
+          "state": "unknown"
+        }
+      },
+      "factorScope": "entry_1_3_volumes",
+      "eligibility": {
+        "onboardingEligible": true,
+        "recommendationEligible": true,
+        "libraryOnly": false,
+        "narrativeToneException": {
+          "policy": "narrative-tone-exhaustion-v1",
+          "workId": "work-5d6f8a407d9410fe37ac",
+          "inputManifestSha256": "eb04c65a3bd5073867b9c9c257c67075c16b5bdfbf6170349d21a521242272f3",
+          "researchSha256": "d7f69e8e46463b6aa437258270bf2b58d5d80a5f154ef8f448ebb0496a5e6044",
+          "groups": [
+            "narrative",
+            "tone"
+          ]
+        }
+      },
+      "evidence": {
+        "metadataConfidence": 0.92,
+        "groupingConfidence": 0.88,
+        "sourceAgreement": 0.64,
+        "annotationReviewedAt": "2026-09-28T09:15:37.954289+00:00"
+      }
+    },
+    {
       "id": "work-5d995257ff2c3e396c9e",
       "title": "スピカ",
       "aliases": [],
@@ -124331,6 +126382,112 @@
       }
     },
     {
+      "id": "work-5f503931a075aa5ccd13",
+      "title": "はたらけ、ケンタウロス!",
+      "aliases": [],
+      "creators": [
+        "えすとえむ"
+      ],
+      "publisher": "リブレ出版",
+      "demographic": "unknown",
+      "status": "unknown",
+      "firstPublishedYear": 2011,
+      "genres": [
+        "fantasy",
+        "sliceOfLife"
+      ],
+      "themes": [
+        {
+          "id": "workplace",
+          "centrality": 2,
+          "confidence": 0.75
+        }
+      ],
+      "axes": {
+        "progression": {
+          "state": "unknown"
+        },
+        "problemSolving": {
+          "state": "unknown"
+        },
+        "strategy": {
+          "state": "unknown"
+        },
+        "pacing": {
+          "state": "unknown"
+        },
+        "mysteryReveal": {
+          "state": "unknown"
+        },
+        "worldBuilding": {
+          "state": "known",
+          "value": 2,
+          "confidence": 0.75
+        },
+        "characterArcWeight": {
+          "state": "unknown"
+        },
+        "relationshipStructure": {
+          "state": "known",
+          "value": 2,
+          "confidence": 0.75
+        },
+        "comedy": {
+          "state": "known",
+          "value": 2,
+          "confidence": 0.75
+        },
+        "darkness": {
+          "state": "unknown"
+        },
+        "mentalStress": {
+          "state": "unknown"
+        },
+        "romance": {
+          "state": "unknown"
+        },
+        "emotionalWarmth": {
+          "state": "known",
+          "value": 2,
+          "confidence": 0.75
+        },
+        "artRealism": {
+          "state": "unknown"
+        },
+        "artDensity": {
+          "state": "unknown"
+        },
+        "visualSoftness": {
+          "state": "unknown"
+        },
+        "motionImpact": {
+          "state": "unknown"
+        }
+      },
+      "factorScope": "entry_1_3_volumes",
+      "eligibility": {
+        "onboardingEligible": true,
+        "recommendationEligible": true,
+        "libraryOnly": false,
+        "narrativeToneException": {
+          "policy": "narrative-tone-exhaustion-v1",
+          "workId": "work-5f503931a075aa5ccd13",
+          "inputManifestSha256": "7fb32b01b9bf5de9200cae454d18a2545d75c68861bb579a0b4d499bc86d6acb",
+          "researchSha256": "b1d8f370d39871bb8bd13aeab8b364e7d4a6471175b3dd758f2eab9b4c6ead67",
+          "groups": [
+            "narrative",
+            "tone"
+          ]
+        }
+      },
+      "evidence": {
+        "metadataConfidence": 0.92,
+        "groupingConfidence": 0.96,
+        "sourceAgreement": 0.69,
+        "annotationReviewedAt": "2026-09-28T09:15:38.860555+00:00"
+      }
+    },
+    {
       "id": "work-5f888deab71daaa322dc",
       "title": "美しいこと",
       "aliases": [],
@@ -126094,6 +128251,114 @@
         "groupingConfidence": 0.96,
         "sourceAgreement": 0.64,
         "annotationReviewedAt": "2026-09-21T02:16:54.166169+00:00"
+      }
+    },
+    {
+      "id": "work-6159f636e9cc8f7d6c9f",
+      "title": "楠木さんは高校デビューに失敗している",
+      "aliases": [],
+      "creators": [
+        "みいみつき"
+      ],
+      "publisher": "[頒布]講談社",
+      "demographic": "unknown",
+      "status": "unknown",
+      "firstPublishedYear": 2024,
+      "genres": [
+        "romance",
+        "sliceOfLife"
+      ],
+      "themes": [
+        {
+          "id": "school",
+          "centrality": 2,
+          "confidence": 0.75
+        }
+      ],
+      "axes": {
+        "progression": {
+          "state": "unknown"
+        },
+        "problemSolving": {
+          "state": "unknown"
+        },
+        "strategy": {
+          "state": "unknown"
+        },
+        "pacing": {
+          "state": "unknown"
+        },
+        "mysteryReveal": {
+          "state": "unknown"
+        },
+        "worldBuilding": {
+          "state": "unknown"
+        },
+        "characterArcWeight": {
+          "state": "known",
+          "value": 2,
+          "confidence": 0.75
+        },
+        "relationshipStructure": {
+          "state": "known",
+          "value": 2,
+          "confidence": 0.75
+        },
+        "comedy": {
+          "state": "known",
+          "value": 2,
+          "confidence": 0.75
+        },
+        "darkness": {
+          "state": "unknown"
+        },
+        "mentalStress": {
+          "state": "known",
+          "value": 2,
+          "confidence": 0.75
+        },
+        "romance": {
+          "state": "known",
+          "value": 2,
+          "confidence": 0.75
+        },
+        "emotionalWarmth": {
+          "state": "unknown"
+        },
+        "artRealism": {
+          "state": "unknown"
+        },
+        "artDensity": {
+          "state": "unknown"
+        },
+        "visualSoftness": {
+          "state": "unknown"
+        },
+        "motionImpact": {
+          "state": "unknown"
+        }
+      },
+      "factorScope": "entry_1_3_volumes",
+      "eligibility": {
+        "onboardingEligible": true,
+        "recommendationEligible": true,
+        "libraryOnly": false,
+        "narrativeToneException": {
+          "policy": "narrative-tone-exhaustion-v1",
+          "workId": "work-6159f636e9cc8f7d6c9f",
+          "inputManifestSha256": "b55bdbedbdb413dd168ec6684ceaca96e93a650d73ada782ca695616769cc42f",
+          "researchSha256": "48f0a78a830dec21b851c87c532862b06bed82d5785bfeb41b83e51e9969765a",
+          "groups": [
+            "narrative",
+            "tone"
+          ]
+        }
+      },
+      "evidence": {
+        "metadataConfidence": 0.87,
+        "groupingConfidence": 0.74,
+        "sourceAgreement": 0.61,
+        "annotationReviewedAt": "2026-09-28T09:15:39.828475+00:00"
       }
     },
     {
@@ -128846,6 +131111,114 @@
       }
     },
     {
+      "id": "work-653a0ee215442cb29eb7",
+      "title": "煙と蜜",
+      "aliases": [],
+      "creators": [
+        "長蔵ヒロコ"
+      ],
+      "publisher": "KADOKAWA",
+      "demographic": "unknown",
+      "status": "unknown",
+      "firstPublishedYear": 2023,
+      "genres": [
+        "historical",
+        "romance"
+      ],
+      "themes": [
+        {
+          "id": "historicalReconstruction",
+          "centrality": 2,
+          "confidence": 0.75
+        }
+      ],
+      "axes": {
+        "progression": {
+          "state": "unknown"
+        },
+        "problemSolving": {
+          "state": "unknown"
+        },
+        "strategy": {
+          "state": "unknown"
+        },
+        "pacing": {
+          "state": "unknown"
+        },
+        "mysteryReveal": {
+          "state": "unknown"
+        },
+        "worldBuilding": {
+          "state": "unknown"
+        },
+        "characterArcWeight": {
+          "state": "unknown"
+        },
+        "relationshipStructure": {
+          "state": "known",
+          "value": 2,
+          "confidence": 0.75
+        },
+        "comedy": {
+          "state": "unknown"
+        },
+        "darkness": {
+          "state": "known",
+          "value": 2,
+          "confidence": 0.75
+        },
+        "mentalStress": {
+          "state": "known",
+          "value": 2,
+          "confidence": 0.75
+        },
+        "romance": {
+          "state": "known",
+          "value": 4,
+          "confidence": 0.75
+        },
+        "emotionalWarmth": {
+          "state": "known",
+          "value": 2,
+          "confidence": 0.75
+        },
+        "artRealism": {
+          "state": "unknown"
+        },
+        "artDensity": {
+          "state": "unknown"
+        },
+        "visualSoftness": {
+          "state": "unknown"
+        },
+        "motionImpact": {
+          "state": "unknown"
+        }
+      },
+      "factorScope": "entry_1_3_volumes",
+      "eligibility": {
+        "onboardingEligible": true,
+        "recommendationEligible": true,
+        "libraryOnly": false,
+        "narrativeToneException": {
+          "policy": "narrative-tone-exhaustion-v1",
+          "workId": "work-653a0ee215442cb29eb7",
+          "inputManifestSha256": "e16c2f7f8c0cfbae36e839764a1c3b12360169e9dec33e734f3353da03fe37bd",
+          "researchSha256": "9be001ae2efeae004850c21dd5618f8ef2054e107675a720f792a5db5802f199",
+          "groups": [
+            "narrative",
+            "tone"
+          ]
+        }
+      },
+      "evidence": {
+        "metadataConfidence": 0.87,
+        "groupingConfidence": 0.74,
+        "sourceAgreement": 0.7,
+        "annotationReviewedAt": "2026-09-28T09:15:40.719638+00:00"
+      }
+    },
+    {
       "id": "work-6545b018c620e9609cf0",
       "title": "月と指先の間",
       "aliases": [],
@@ -130679,6 +133052,111 @@
         "groupingConfidence": 0.74,
         "sourceAgreement": 0.61,
         "annotationReviewedAt": "2026-09-28T08:23:07.733674+00:00"
+      }
+    },
+    {
+      "id": "work-66d3f2639b282457a75e",
+      "title": "メイドさんは食べるだけ",
+      "aliases": [],
+      "creators": [
+        "前屋進"
+      ],
+      "publisher": "講談社",
+      "demographic": "unknown",
+      "status": "unknown",
+      "firstPublishedYear": 2025,
+      "genres": [
+        "sliceOfLife"
+      ],
+      "themes": [
+        {
+          "id": "cooking",
+          "centrality": 2,
+          "confidence": 0.75
+        }
+      ],
+      "axes": {
+        "progression": {
+          "state": "unknown"
+        },
+        "problemSolving": {
+          "state": "unknown"
+        },
+        "strategy": {
+          "state": "unknown"
+        },
+        "pacing": {
+          "state": "unknown"
+        },
+        "mysteryReveal": {
+          "state": "unknown"
+        },
+        "worldBuilding": {
+          "state": "unknown"
+        },
+        "characterArcWeight": {
+          "state": "known",
+          "value": 2,
+          "confidence": 0.75
+        },
+        "relationshipStructure": {
+          "state": "known",
+          "value": 2,
+          "confidence": 0.75
+        },
+        "comedy": {
+          "state": "known",
+          "value": 2,
+          "confidence": 0.75
+        },
+        "darkness": {
+          "state": "unknown"
+        },
+        "mentalStress": {
+          "state": "unknown"
+        },
+        "romance": {
+          "state": "unknown"
+        },
+        "emotionalWarmth": {
+          "state": "known",
+          "value": 4,
+          "confidence": 0.75
+        },
+        "artRealism": {
+          "state": "unknown"
+        },
+        "artDensity": {
+          "state": "unknown"
+        },
+        "visualSoftness": {
+          "state": "unknown"
+        },
+        "motionImpact": {
+          "state": "unknown"
+        }
+      },
+      "factorScope": "entry_1_3_volumes",
+      "eligibility": {
+        "onboardingEligible": true,
+        "recommendationEligible": true,
+        "libraryOnly": false,
+        "narrativeToneException": {
+          "policy": "narrative-tone-exhaustion-v1",
+          "workId": "work-66d3f2639b282457a75e",
+          "inputManifestSha256": "d896bae63787d2052f3397f0f40b77543d5643bf38f341568b80795ef600d288",
+          "researchSha256": "c203e3a63ecaf0f811b1ad6e9d60af94dafa2b2fdd21fdec20bf10de8a418d43",
+          "groups": [
+            "narrative",
+            "tone"
+          ]
+        }
+      },
+      "evidence": {
+        "metadataConfidence": 0.91,
+        "groupingConfidence": 0.74,
+        "sourceAgreement": 0.75,
+        "annotationReviewedAt": "2026-09-28T09:15:41.627124+00:00"
       }
     },
     {
@@ -136457,6 +138935,113 @@
       }
     },
     {
+      "id": "work-6e00490165d65e05e420",
+      "title": "チハヤリスタート!",
+      "aliases": [],
+      "creators": [
+        "たけうちホロウ"
+      ],
+      "publisher": "芳文社",
+      "demographic": "unknown",
+      "status": "unknown",
+      "firstPublishedYear": 2025,
+      "genres": [
+        "sports"
+      ],
+      "themes": [
+        {
+          "id": "sportsCompetition",
+          "centrality": 2,
+          "confidence": 0.75
+        }
+      ],
+      "axes": {
+        "progression": {
+          "state": "known",
+          "value": 2,
+          "confidence": 0.75
+        },
+        "problemSolving": {
+          "state": "unknown"
+        },
+        "strategy": {
+          "state": "unknown"
+        },
+        "pacing": {
+          "state": "unknown"
+        },
+        "mysteryReveal": {
+          "state": "unknown"
+        },
+        "worldBuilding": {
+          "state": "unknown"
+        },
+        "characterArcWeight": {
+          "state": "known",
+          "value": 4,
+          "confidence": 0.75
+        },
+        "relationshipStructure": {
+          "state": "known",
+          "value": 2,
+          "confidence": 0.75
+        },
+        "comedy": {
+          "state": "unknown"
+        },
+        "darkness": {
+          "state": "unknown"
+        },
+        "mentalStress": {
+          "state": "known",
+          "value": 4,
+          "confidence": 0.75
+        },
+        "romance": {
+          "state": "unknown"
+        },
+        "emotionalWarmth": {
+          "state": "known",
+          "value": 2,
+          "confidence": 0.75
+        },
+        "artRealism": {
+          "state": "unknown"
+        },
+        "artDensity": {
+          "state": "unknown"
+        },
+        "visualSoftness": {
+          "state": "unknown"
+        },
+        "motionImpact": {
+          "state": "unknown"
+        }
+      },
+      "factorScope": "entry_1_3_volumes",
+      "eligibility": {
+        "onboardingEligible": true,
+        "recommendationEligible": true,
+        "libraryOnly": false,
+        "narrativeToneException": {
+          "policy": "narrative-tone-exhaustion-v1",
+          "workId": "work-6e00490165d65e05e420",
+          "inputManifestSha256": "95549f2afc627e5f2260e840b40a1895850f21bdddb601a7f84a2d610de80555",
+          "researchSha256": "db54edba658d390b15693ff6e20afa2e63fa29fe8ef925e539e81b7a930cf65a",
+          "groups": [
+            "narrative",
+            "tone"
+          ]
+        }
+      },
+      "evidence": {
+        "metadataConfidence": 0.91,
+        "groupingConfidence": 0.74,
+        "sourceAgreement": 0.75,
+        "annotationReviewedAt": "2026-09-28T09:15:42.492631+00:00"
+      }
+    },
+    {
       "id": "work-6e250c729c6fa1bcdc02",
       "title": "疑似ハーレム",
       "aliases": [],
@@ -138065,6 +140650,117 @@
       }
     },
     {
+      "id": "work-70279f9a3aa39355407f",
+      "title": "バックホームブルース",
+      "aliases": [],
+      "creators": [
+        "長尾謙一郎"
+      ],
+      "publisher": "小学館",
+      "demographic": "unknown",
+      "status": "unknown",
+      "firstPublishedYear": 2024,
+      "genres": [
+        "comedy",
+        "sports"
+      ],
+      "themes": [
+        {
+          "id": "sportsCompetition",
+          "centrality": 2,
+          "confidence": 0.75
+        },
+        {
+          "id": "workplace",
+          "centrality": 1,
+          "confidence": 0.75
+        }
+      ],
+      "axes": {
+        "progression": {
+          "state": "known",
+          "value": 2,
+          "confidence": 0.75
+        },
+        "problemSolving": {
+          "state": "unknown"
+        },
+        "strategy": {
+          "state": "unknown"
+        },
+        "pacing": {
+          "state": "unknown"
+        },
+        "mysteryReveal": {
+          "state": "unknown"
+        },
+        "worldBuilding": {
+          "state": "unknown"
+        },
+        "characterArcWeight": {
+          "state": "unknown"
+        },
+        "relationshipStructure": {
+          "state": "known",
+          "value": 2,
+          "confidence": 0.75
+        },
+        "comedy": {
+          "state": "known",
+          "value": 2,
+          "confidence": 0.75
+        },
+        "darkness": {
+          "state": "unknown"
+        },
+        "mentalStress": {
+          "state": "unknown"
+        },
+        "romance": {
+          "state": "unknown"
+        },
+        "emotionalWarmth": {
+          "state": "known",
+          "value": 4,
+          "confidence": 0.75
+        },
+        "artRealism": {
+          "state": "unknown"
+        },
+        "artDensity": {
+          "state": "unknown"
+        },
+        "visualSoftness": {
+          "state": "unknown"
+        },
+        "motionImpact": {
+          "state": "unknown"
+        }
+      },
+      "factorScope": "entry_1_3_volumes",
+      "eligibility": {
+        "onboardingEligible": true,
+        "recommendationEligible": true,
+        "libraryOnly": false,
+        "narrativeToneException": {
+          "policy": "narrative-tone-exhaustion-v1",
+          "workId": "work-70279f9a3aa39355407f",
+          "inputManifestSha256": "0ca8b6fe36d968ca5c718ff88f5ce7d23733cd252216745da413284215da6b10",
+          "researchSha256": "1b4a880cc73bde34806b7e6cc9eb0728cd12f283c216290d55701f42113ae031",
+          "groups": [
+            "narrative",
+            "tone"
+          ]
+        }
+      },
+      "evidence": {
+        "metadataConfidence": 0.87,
+        "groupingConfidence": 0.74,
+        "sourceAgreement": 0.66,
+        "annotationReviewedAt": "2026-09-28T09:15:43.443561+00:00"
+      }
+    },
+    {
       "id": "work-7090c81c142fd31e591a",
       "title": "バーサス",
       "aliases": [],
@@ -139633,6 +142329,112 @@
         "groupingConfidence": 0.74,
         "sourceAgreement": 0.66,
         "annotationReviewedAt": "2026-09-28T08:23:09.829006+00:00"
+      }
+    },
+    {
+      "id": "work-721c8592670d8f82c923",
+      "title": "ヴァンパイドル滾",
+      "aliases": [],
+      "creators": [
+        "島本和彦"
+      ],
+      "publisher": "小学館",
+      "demographic": "unknown",
+      "status": "unknown",
+      "firstPublishedYear": 2025,
+      "genres": [
+        "fantasy",
+        "horror"
+      ],
+      "themes": [
+        {
+          "id": "workplace",
+          "centrality": 2,
+          "confidence": 0.75
+        }
+      ],
+      "axes": {
+        "progression": {
+          "state": "unknown"
+        },
+        "problemSolving": {
+          "state": "unknown"
+        },
+        "strategy": {
+          "state": "unknown"
+        },
+        "pacing": {
+          "state": "unknown"
+        },
+        "mysteryReveal": {
+          "state": "unknown"
+        },
+        "worldBuilding": {
+          "state": "known",
+          "value": 2,
+          "confidence": 0.75
+        },
+        "characterArcWeight": {
+          "state": "unknown"
+        },
+        "relationshipStructure": {
+          "state": "known",
+          "value": 2,
+          "confidence": 0.75
+        },
+        "comedy": {
+          "state": "known",
+          "value": 2,
+          "confidence": 0.75
+        },
+        "darkness": {
+          "state": "known",
+          "value": 2,
+          "confidence": 0.75
+        },
+        "mentalStress": {
+          "state": "unknown"
+        },
+        "romance": {
+          "state": "unknown"
+        },
+        "emotionalWarmth": {
+          "state": "unknown"
+        },
+        "artRealism": {
+          "state": "unknown"
+        },
+        "artDensity": {
+          "state": "unknown"
+        },
+        "visualSoftness": {
+          "state": "unknown"
+        },
+        "motionImpact": {
+          "state": "unknown"
+        }
+      },
+      "factorScope": "entry_1_3_volumes",
+      "eligibility": {
+        "onboardingEligible": true,
+        "recommendationEligible": true,
+        "libraryOnly": false,
+        "narrativeToneException": {
+          "policy": "narrative-tone-exhaustion-v1",
+          "workId": "work-721c8592670d8f82c923",
+          "inputManifestSha256": "3ca7a335e4a312e48f23fbfc14a790d7188ecfcd6423291ab49f7c7e4cd5d263",
+          "researchSha256": "340d1e387d3463dec397acc45235a9b1fd8ef5668f6ebd10d70d1afa343111cc",
+          "groups": [
+            "narrative",
+            "tone"
+          ]
+        }
+      },
+      "evidence": {
+        "metadataConfidence": 0.91,
+        "groupingConfidence": 0.74,
+        "sourceAgreement": 0.66,
+        "annotationReviewedAt": "2026-09-28T09:15:44.343824+00:00"
       }
     },
     {
@@ -151184,6 +153986,112 @@
         "groupingConfidence": 1,
         "sourceAgreement": 1,
         "annotationReviewedAt": "2026-08-23T00:00:00+09:00"
+      }
+    },
+    {
+      "id": "work-81c561ca6bb74a301cf8",
+      "title": "ライドンキング",
+      "aliases": [],
+      "creators": [
+        "馬場 康誌"
+      ],
+      "publisher": "講談社",
+      "demographic": "seinen",
+      "status": "unknown",
+      "firstPublishedYear": 2019,
+      "genres": [
+        "fantasy"
+      ],
+      "themes": [
+        {
+          "id": "adventure",
+          "centrality": 1,
+          "confidence": 0.75
+        },
+        {
+          "id": "combat",
+          "centrality": 2,
+          "confidence": 0.75
+        }
+      ],
+      "axes": {
+        "progression": {
+          "state": "unknown"
+        },
+        "problemSolving": {
+          "state": "unknown"
+        },
+        "strategy": {
+          "state": "unknown"
+        },
+        "pacing": {
+          "state": "unknown"
+        },
+        "mysteryReveal": {
+          "state": "unknown"
+        },
+        "worldBuilding": {
+          "state": "known",
+          "value": 2,
+          "confidence": 0.75
+        },
+        "characterArcWeight": {
+          "state": "unknown"
+        },
+        "relationshipStructure": {
+          "state": "unknown"
+        },
+        "comedy": {
+          "state": "unknown"
+        },
+        "darkness": {
+          "state": "known",
+          "value": 2,
+          "confidence": 0.75
+        },
+        "mentalStress": {
+          "state": "unknown"
+        },
+        "romance": {
+          "state": "unknown"
+        },
+        "emotionalWarmth": {
+          "state": "unknown"
+        },
+        "artRealism": {
+          "state": "unknown"
+        },
+        "artDensity": {
+          "state": "unknown"
+        },
+        "visualSoftness": {
+          "state": "unknown"
+        },
+        "motionImpact": {
+          "state": "unknown"
+        }
+      },
+      "factorScope": "entry_1_3_volumes",
+      "eligibility": {
+        "onboardingEligible": true,
+        "recommendationEligible": true,
+        "libraryOnly": false,
+        "narrativeToneException": {
+          "policy": "narrative-tone-exhaustion-v1",
+          "workId": "work-81c561ca6bb74a301cf8",
+          "inputManifestSha256": "4097d8cd1bce8ae34b12bc31745865b51058f5ea7504be33d14a8bffccbfb846",
+          "researchSha256": "b830115a684e9fbde5d5a243c1918dcc2e2f50819302aa0a22477083a6c332d8",
+          "groups": [
+            "narrative",
+            "tone"
+          ]
+        }
+      },
+      "evidence": {
+        "metadataConfidence": 1,
+        "groupingConfidence": 1,
+        "sourceAgreement": 1,
+        "annotationReviewedAt": "2026-09-28T09:15:14.015219+00:00"
       }
     },
     {
@@ -198357,6 +201265,110 @@
         "groupingConfidence": 1,
         "sourceAgreement": 1,
         "annotationReviewedAt": "2026-08-26T00:00:00+09:00"
+      }
+    },
+    {
+      "id": "work-bd42208a660912d9d95d",
+      "title": "路地恋花",
+      "aliases": [],
+      "creators": [
+        "麻生みこと"
+      ],
+      "publisher": "講談社",
+      "demographic": "seinen",
+      "status": "unknown",
+      "firstPublishedYear": 2010,
+      "genres": [
+        "romance",
+        "sliceOfLife"
+      ],
+      "themes": [
+        {
+          "id": "workplace",
+          "centrality": 2,
+          "confidence": 0.75
+        }
+      ],
+      "axes": {
+        "progression": {
+          "state": "unknown"
+        },
+        "problemSolving": {
+          "state": "unknown"
+        },
+        "strategy": {
+          "state": "unknown"
+        },
+        "pacing": {
+          "state": "unknown"
+        },
+        "mysteryReveal": {
+          "state": "unknown"
+        },
+        "worldBuilding": {
+          "state": "unknown"
+        },
+        "characterArcWeight": {
+          "state": "unknown"
+        },
+        "relationshipStructure": {
+          "state": "known",
+          "value": 4,
+          "confidence": 0.75
+        },
+        "comedy": {
+          "state": "unknown"
+        },
+        "darkness": {
+          "state": "unknown"
+        },
+        "mentalStress": {
+          "state": "unknown"
+        },
+        "romance": {
+          "state": "known",
+          "value": 4,
+          "confidence": 0.75
+        },
+        "emotionalWarmth": {
+          "state": "known",
+          "value": 4,
+          "confidence": 0.75
+        },
+        "artRealism": {
+          "state": "unknown"
+        },
+        "artDensity": {
+          "state": "unknown"
+        },
+        "visualSoftness": {
+          "state": "unknown"
+        },
+        "motionImpact": {
+          "state": "unknown"
+        }
+      },
+      "factorScope": "entry_1_3_volumes",
+      "eligibility": {
+        "onboardingEligible": true,
+        "recommendationEligible": true,
+        "libraryOnly": false,
+        "narrativeToneException": {
+          "policy": "narrative-tone-exhaustion-v1",
+          "workId": "work-bd42208a660912d9d95d",
+          "inputManifestSha256": "29509a46963fc6743fd16530b9267337583d3ca681c800570f0aa8e1f3ecb4e6",
+          "researchSha256": "cadcbaac96fe4bebe1fb3ff02a12055a44affc0a4e70eb6b099289870bb0569f",
+          "groups": [
+            "narrative",
+            "tone"
+          ]
+        }
+      },
+      "evidence": {
+        "metadataConfidence": 1,
+        "groupingConfidence": 1,
+        "sourceAgreement": 1,
+        "annotationReviewedAt": "2026-09-28T09:15:19.992595+00:00"
       }
     },
     {
@@ -249042,6 +252054,13 @@
       "editionKind": "standard"
     },
     {
+      "id": "work-04a947ff1b5d60621fd5-v1",
+      "workId": "work-04a947ff1b5d60621fd5",
+      "volumeNumber": 1,
+      "isbn": "9784832271210",
+      "editionKind": "standard"
+    },
+    {
       "id": "work-04ac6ddcf1c292ee38f9-representative",
       "workId": "work-04ac6ddcf1c292ee38f9",
       "volumeNumber": 1,
@@ -249381,6 +252400,13 @@
       "editionKind": "standard"
     },
     {
+      "id": "work-0ab9919dee904596e8c0-v1",
+      "workId": "work-0ab9919dee904596e8c0",
+      "volumeNumber": 1,
+      "isbn": "9784098506590",
+      "editionKind": "standard"
+    },
+    {
       "id": "work-0abc864296273b327f0e-v1",
       "workId": "work-0abc864296273b327f0e",
       "volumeNumber": 1,
@@ -249535,6 +252561,13 @@
       "workId": "work-0e036724913c69bb937a",
       "volumeNumber": 1,
       "isbn": "9784088807317",
+      "editionKind": "standard"
+    },
+    {
+      "id": "work-0e1e3d61c0fe5dbb3399-v1",
+      "workId": "work-0e1e3d61c0fe5dbb3399",
+      "volumeNumber": 1,
+      "isbn": "9784592222514",
       "editionKind": "standard"
     },
     {
@@ -249791,6 +252824,13 @@
       "volumeNumber": 1,
       "isbn": "9784065387290",
       "releaseDate": "2025-05-09",
+      "editionKind": "standard"
+    },
+    {
+      "id": "work-125c0568eb0b59b0574a-v1",
+      "workId": "work-125c0568eb0b59b0574a",
+      "volumeNumber": 1,
+      "isbn": "9784098606306",
       "editionKind": "standard"
     },
     {
@@ -250149,6 +253189,13 @@
       "editionKind": "standard"
     },
     {
+      "id": "work-196581bf726305f010b4-v1",
+      "workId": "work-196581bf726305f010b4",
+      "volumeNumber": 1,
+      "isbn": "9784063870558",
+      "editionKind": "standard"
+    },
+    {
       "id": "work-196f917715fbb17d4d0f-representative",
       "workId": "work-196f917715fbb17d4d0f",
       "volumeNumber": 1,
@@ -250176,6 +253223,13 @@
       "workId": "work-199cc7b0aa9139ba130e",
       "volumeNumber": 1,
       "isbn": "9784253104777",
+      "editionKind": "standard"
+    },
+    {
+      "id": "work-19a26f01512166856a6a-representative",
+      "workId": "work-19a26f01512166856a6a",
+      "volumeNumber": 1,
+      "isbn": "9784091880017",
       "editionKind": "standard"
     },
     {
@@ -250343,6 +253397,13 @@
       "workId": "work-1b9fc6e13c87db1a08c4",
       "volumeNumber": 1,
       "isbn": "9784757541399",
+      "editionKind": "standard"
+    },
+    {
+      "id": "work-1baa190c06600d7c3f25-v1",
+      "workId": "work-1baa190c06600d7c3f25",
+      "volumeNumber": 1,
+      "isbn": "9784396767143",
       "editionKind": "standard"
     },
     {
@@ -250708,6 +253769,13 @@
       "editionKind": "standard"
     },
     {
+      "id": "work-1ff3bd76a29e0e83a6f6-v1",
+      "workId": "work-1ff3bd76a29e0e83a6f6",
+      "volumeNumber": 1,
+      "isbn": "9784065204658",
+      "editionKind": "standard"
+    },
+    {
       "id": "work-1ffb6ba18b9d7c2daeda-v1",
       "workId": "work-1ffb6ba18b9d7c2daeda",
       "volumeNumber": 1,
@@ -251023,6 +254091,13 @@
       "editionKind": "standard"
     },
     {
+      "id": "work-235525a2808021177683-v1",
+      "workId": "work-235525a2808021177683",
+      "volumeNumber": 1,
+      "isbn": "9784047286047",
+      "editionKind": "standard"
+    },
+    {
       "id": "work-2356050c72240569e1c5-representative",
       "workId": "work-2356050c72240569e1c5",
       "volumeNumber": 1,
@@ -251138,6 +254213,13 @@
       "workId": "work-24f5b663ba3beafd17a0",
       "volumeNumber": 1,
       "isbn": "9784063828559",
+      "editionKind": "standard"
+    },
+    {
+      "id": "work-250b08c6f92b686decf9-v1",
+      "workId": "work-250b08c6f92b686decf9",
+      "volumeNumber": 1,
+      "isbn": "9784063765267",
       "editionKind": "standard"
     },
     {
@@ -251486,6 +254568,13 @@
       "editionKind": "standard"
     },
     {
+      "id": "work-2a2c3b667ff7418c7678-v1",
+      "workId": "work-2a2c3b667ff7418c7678",
+      "volumeNumber": 1,
+      "isbn": "9784040751764",
+      "editionKind": "standard"
+    },
+    {
       "id": "work-2a73da617f89ddbe502d-representative",
       "workId": "work-2a73da617f89ddbe502d",
       "volumeNumber": 1,
@@ -251729,6 +254818,13 @@
       "editionKind": "standard"
     },
     {
+      "id": "work-2f6ca1e62f05315622e0-v1",
+      "workId": "work-2f6ca1e62f05315622e0",
+      "volumeNumber": 1,
+      "isbn": "9784086187596",
+      "editionKind": "bunko"
+    },
+    {
       "id": "work-2f799932ece28aa8c553-representative",
       "workId": "work-2f799932ece28aa8c553",
       "volumeNumber": 1,
@@ -251970,6 +255066,13 @@
       "volumeNumber": 1,
       "isbn": "9784832272828",
       "releaseDate": "2021-06-11",
+      "editionKind": "standard"
+    },
+    {
+      "id": "work-33c2e28bf9484d0572be-v1",
+      "workId": "work-33c2e28bf9484d0572be",
+      "volumeNumber": 1,
+      "isbn": "9784098543892",
       "editionKind": "standard"
     },
     {
@@ -252291,6 +255394,13 @@
       "editionKind": "standard"
     },
     {
+      "id": "work-383e7cb24136859c362a-v1",
+      "workId": "work-383e7cb24136859c362a",
+      "volumeNumber": 1,
+      "isbn": "9784046820556",
+      "editionKind": "standard"
+    },
+    {
       "id": "work-3849ac495a28a963f0a1-v1",
       "workId": "work-3849ac495a28a963f0a1",
       "volumeNumber": 1,
@@ -252554,6 +255664,13 @@
       "workId": "work-3c31e9bfc6b8c48c2685",
       "volumeNumber": 8,
       "isbn": "9784088838748",
+      "editionKind": "standard"
+    },
+    {
+      "id": "work-3c33f528673b02f6abce-v1",
+      "workId": "work-3c33f528673b02f6abce",
+      "volumeNumber": 1,
+      "isbn": "9784047341692",
       "editionKind": "standard"
     },
     {
@@ -252952,6 +256069,13 @@
       "workId": "work-41c8f07c2ed444461a1b",
       "volumeNumber": 1,
       "isbn": "9784088468020",
+      "editionKind": "standard"
+    },
+    {
+      "id": "work-41c92ea0ad7a6d117fa1-v1",
+      "workId": "work-41c92ea0ad7a6d117fa1",
+      "volumeNumber": 1,
+      "isbn": "9784063546804",
       "editionKind": "standard"
     },
     {
@@ -254733,6 +257857,13 @@
       "editionKind": "standard"
     },
     {
+      "id": "work-5856ff038b53dec31fa9-v1",
+      "workId": "work-5856ff038b53dec31fa9",
+      "volumeNumber": 1,
+      "isbn": "9784537133349",
+      "editionKind": "standard"
+    },
+    {
       "id": "work-585fd80d90bf40ab23e1-v1",
       "workId": "work-585fd80d90bf40ab23e1",
       "volumeNumber": 1,
@@ -254858,6 +257989,13 @@
       "workId": "work-59eaa556a1409299e5c8",
       "volumeNumber": 8,
       "isbn": "9784046830395",
+      "editionKind": "standard"
+    },
+    {
+      "id": "work-5a08d24f3d638926d44f-v1",
+      "workId": "work-5a08d24f3d638926d44f",
+      "volumeNumber": 1,
+      "isbn": "9784344840041",
       "editionKind": "standard"
     },
     {
@@ -255164,6 +258302,13 @@
       "editionKind": "standard"
     },
     {
+      "id": "work-5d6f8a407d9410fe37ac-v1",
+      "workId": "work-5d6f8a407d9410fe37ac",
+      "volumeNumber": 1,
+      "isbn": "9784093965446",
+      "editionKind": "standard"
+    },
+    {
       "id": "work-5d995257ff2c3e396c9e-v1",
       "workId": "work-5d995257ff2c3e396c9e",
       "volumeNumber": 1,
@@ -255356,6 +258501,13 @@
       "editionKind": "standard"
     },
     {
+      "id": "work-5f503931a075aa5ccd13-v1",
+      "workId": "work-5f503931a075aa5ccd13",
+      "volumeNumber": 1,
+      "isbn": "9784862639509",
+      "editionKind": "standard"
+    },
+    {
       "id": "work-5f888deab71daaa322dc-representative",
       "workId": "work-5f888deab71daaa322dc",
       "isbn": "9784403619052",
@@ -255467,6 +258619,13 @@
       "workId": "work-615122accda062a88516",
       "volumeNumber": 1,
       "isbn": "9784088792729",
+      "editionKind": "standard"
+    },
+    {
+      "id": "work-6159f636e9cc8f7d6c9f-v3",
+      "workId": "work-6159f636e9cc8f7d6c9f",
+      "volumeNumber": 3,
+      "isbn": "9784758018593",
       "editionKind": "standard"
     },
     {
@@ -255644,6 +258803,13 @@
       "editionKind": "standard"
     },
     {
+      "id": "work-653a0ee215442cb29eb7-v5",
+      "workId": "work-653a0ee215442cb29eb7",
+      "volumeNumber": 5,
+      "isbn": "9784047376281",
+      "editionKind": "standard"
+    },
+    {
       "id": "work-6545b018c620e9609cf0-v1",
       "workId": "work-6545b018c620e9609cf0",
       "volumeNumber": 1,
@@ -255756,6 +258922,14 @@
       "workId": "work-66c24a26d5cd1442280e",
       "volumeNumber": 13,
       "isbn": "9784088930381",
+      "editionKind": "standard"
+    },
+    {
+      "id": "work-66d3f2639b282457a75e-v5",
+      "workId": "work-66d3f2639b282457a75e",
+      "volumeNumber": 5,
+      "isbn": "9784065416419",
+      "releaseDate": "2025-11-15",
       "editionKind": "standard"
     },
     {
@@ -256132,6 +259306,14 @@
       "editionKind": "standard"
     },
     {
+      "id": "work-6e00490165d65e05e420-v2",
+      "workId": "work-6e00490165d65e05e420",
+      "volumeNumber": 2,
+      "isbn": "9784832205154",
+      "releaseDate": "2025-06-30",
+      "editionKind": "standard"
+    },
+    {
       "id": "work-6e250c729c6fa1bcdc02-representative",
       "workId": "work-6e250c729c6fa1bcdc02",
       "volumeNumber": 1,
@@ -256237,6 +259419,13 @@
       "editionKind": "standard"
     },
     {
+      "id": "work-70279f9a3aa39355407f-v1",
+      "workId": "work-70279f9a3aa39355407f",
+      "volumeNumber": 1,
+      "isbn": "9784098627943",
+      "editionKind": "standard"
+    },
+    {
       "id": "work-7090c81c142fd31e591a-v1",
       "workId": "work-7090c81c142fd31e591a",
       "volumeNumber": 1,
@@ -256337,6 +259526,14 @@
       "volumeNumber": 1,
       "isbn": "9784253281843",
       "releaseDate": "2025-01-10",
+      "editionKind": "standard"
+    },
+    {
+      "id": "work-721c8592670d8f82c923-v1",
+      "workId": "work-721c8592670d8f82c923",
+      "volumeNumber": 1,
+      "isbn": "9784098542437",
+      "releaseDate": "2025-09-13",
       "editionKind": "standard"
     },
     {
@@ -257079,6 +260276,14 @@
       "volumeNumber": 1,
       "isbn": "9784757519633",
       "releaseDate": "2007-02-27",
+      "editionKind": "standard"
+    },
+    {
+      "id": "work-81c561ca6bb74a301cf8-representative",
+      "workId": "work-81c561ca6bb74a301cf8",
+      "volumeNumber": 1,
+      "isbn": "9784065142103",
+      "releaseDate": "2019-01-09",
       "editionKind": "standard"
     },
     {
@@ -260106,6 +263311,14 @@
       "workId": "work-bcf6814e2f138e3d4b6e",
       "volumeNumber": 1,
       "isbn": "9784575843736",
+      "editionKind": "standard"
+    },
+    {
+      "id": "work-bd42208a660912d9d95d-representative",
+      "workId": "work-bd42208a660912d9d95d",
+      "volumeNumber": 1,
+      "isbn": "9784063106282",
+      "releaseDate": "2010-02-05",
       "editionKind": "standard"
     },
     {
@@ -263416,6 +266629,7 @@
     "work-048a39f42bd18cb0823e": "work-048a39f42bd18cb0823e-representative",
     "work-048e8a0ebdacd185f5f8": "work-048e8a0ebdacd185f5f8-v1",
     "work-0493a35083abd57f5a77": "work-0493a35083abd57f5a77-representative",
+    "work-04a947ff1b5d60621fd5": "work-04a947ff1b5d60621fd5-v1",
     "work-04ac6ddcf1c292ee38f9": "work-04ac6ddcf1c292ee38f9-representative",
     "work-04c7196a9e45c7d6b5da": "work-04c7196a9e45c7d6b5da-v1",
     "work-04d912698ec64a30c2d7": "work-04d912698ec64a30c2d7-representative",
@@ -263462,6 +266676,7 @@
     "work-0a6765d0188bcd568acc": "work-0a6765d0188bcd568acc-v1",
     "work-0a72f4e304b688a6d9f0": "work-0a72f4e304b688a6d9f0-representative",
     "work-0a9a06d6b235ce6ece18": "work-0a9a06d6b235ce6ece18-v1",
+    "work-0ab9919dee904596e8c0": "work-0ab9919dee904596e8c0-v1",
     "work-0abc864296273b327f0e": "work-0abc864296273b327f0e-v1",
     "work-0b358ab2fada71bc3c0f": "work-0b358ab2fada71bc3c0f-representative",
     "work-0b6d8b3f1349e5048b8b": "work-0b6d8b3f1349e5048b8b-representative",
@@ -263484,6 +266699,7 @@
     "work-0dabd1d17e5fcf2992b9": "work-0dabd1d17e5fcf2992b9-representative",
     "work-0dd1ceee981780c10491": "work-0dd1ceee981780c10491-representative",
     "work-0e036724913c69bb937a": "work-0e036724913c69bb937a-representative",
+    "work-0e1e3d61c0fe5dbb3399": "work-0e1e3d61c0fe5dbb3399-v1",
     "work-0e29e324e16f7d5cda41": "work-0e29e324e16f7d5cda41-representative",
     "work-0ebf010ac12b9b60d80e": "work-0ebf010ac12b9b60d80e-representative",
     "work-0eca5b711932593ae17f": "work-0eca5b711932593ae17f-v1",
@@ -263519,6 +266735,7 @@
     "work-11f7290fc68cdf9635aa": "work-11f7290fc68cdf9635aa-representative",
     "work-1237a0e89a427c736fac": "work-1237a0e89a427c736fac-representative",
     "work-124535cbdf6a4f78ca90": "work-124535cbdf6a4f78ca90-v1",
+    "work-125c0568eb0b59b0574a": "work-125c0568eb0b59b0574a-v1",
     "work-12a5eb9618886a507a6f": "work-12a5eb9618886a507a6f-representative",
     "work-12ac378328a589540480": "work-12ac378328a589540480-v1",
     "work-12addce786ee4fbb6a2c": "work-12addce786ee4fbb6a2c-representative",
@@ -263568,10 +266785,12 @@
     "work-1924e6c313fe8817ad37": "work-1924e6c313fe8817ad37-representative",
     "work-19252952b30088fa0ecd": "work-19252952b30088fa0ecd-v1",
     "work-192cbecc59e9c028142b": "work-192cbecc59e9c028142b-representative",
+    "work-196581bf726305f010b4": "work-196581bf726305f010b4-v1",
     "work-196f917715fbb17d4d0f": "work-196f917715fbb17d4d0f-representative",
     "work-19914389b95a96a94e2b": "work-19914389b95a96a94e2b-representative",
     "work-1998a3621df8e8cb4b95": "work-1998a3621df8e8cb4b95-representative",
     "work-199cc7b0aa9139ba130e": "work-199cc7b0aa9139ba130e-representative",
+    "work-19a26f01512166856a6a": "work-19a26f01512166856a6a-representative",
     "work-19b578d0e828242f14f3": "work-19b578d0e828242f14f3-representative",
     "work-19bf120239dd0661fdc0": "work-19bf120239dd0661fdc0-representative",
     "work-19c3e776eecdbd1e2d8f": "work-19c3e776eecdbd1e2d8f-representative",
@@ -263595,6 +266814,7 @@
     "work-1b839a7f7034e313c8d1": "work-1b839a7f7034e313c8d1-representative",
     "work-1b94cd8bacb92576eb36": "work-1b94cd8bacb92576eb36-representative",
     "work-1b9fc6e13c87db1a08c4": "work-1b9fc6e13c87db1a08c4-representative",
+    "work-1baa190c06600d7c3f25": "work-1baa190c06600d7c3f25-v1",
     "work-1bdd89da60157e62d8ae": "work-1bdd89da60157e62d8ae-representative",
     "work-1be066a96ac6272edf49": "work-1be066a96ac6272edf49-v1",
     "work-1c08e020ca3edbdb268c": "work-1c08e020ca3edbdb268c-representative",
@@ -263645,6 +266865,7 @@
     "work-1fc61ddbeb429b4a2c15": "work-1fc61ddbeb429b4a2c15-representative",
     "work-1fd6cc14c3fd93aa26c0": "work-1fd6cc14c3fd93aa26c0-representative",
     "work-1ff116a3c975bfb50a03": "work-1ff116a3c975bfb50a03-representative",
+    "work-1ff3bd76a29e0e83a6f6": "work-1ff3bd76a29e0e83a6f6-v1",
     "work-1ffb6ba18b9d7c2daeda": "work-1ffb6ba18b9d7c2daeda-v1",
     "work-200fa8832525f3437678": "work-200fa8832525f3437678-representative",
     "work-202aaafe7b597ec4e0dd": "work-202aaafe7b597ec4e0dd-representative",
@@ -263688,6 +266909,7 @@
     "work-230fbe28f180a6886e72": "work-230fbe28f180a6886e72-representative",
     "work-234314b516268e4c1f54": "work-234314b516268e4c1f54-v1",
     "work-2346e71abc96d588ca97": "work-2346e71abc96d588ca97-v1",
+    "work-235525a2808021177683": "work-235525a2808021177683-v1",
     "work-2356050c72240569e1c5": "work-2356050c72240569e1c5-representative",
     "work-2377b54ecf835fcd706a": "work-2377b54ecf835fcd706a-v1",
     "work-23851cd7ccf1d0c676cc": "work-23851cd7ccf1d0c676cc-representative",
@@ -263704,6 +266926,7 @@
     "work-24de0c652b25b9f56125": "work-24de0c652b25b9f56125-representative",
     "work-24e49de317a49e2761f1": "work-24e49de317a49e2761f1-representative",
     "work-24f5b663ba3beafd17a0": "work-24f5b663ba3beafd17a0-v1",
+    "work-250b08c6f92b686decf9": "work-250b08c6f92b686decf9-v1",
     "work-2522d95c37925aaa699a": "work-2522d95c37925aaa699a-v1",
     "work-253f5626d3ce094fb544": "work-253f5626d3ce094fb544-representative",
     "work-256eeb839e052e0b24c4": "work-256eeb839e052e0b24c4-representative",
@@ -263751,6 +266974,7 @@
     "work-29dfccf0f01f951c7624": "work-29dfccf0f01f951c7624-v1",
     "work-29e35feb768564646b6e": "work-29e35feb768564646b6e-v1",
     "work-2a26debd6be8831c18e1": "work-2a26debd6be8831c18e1-v1",
+    "work-2a2c3b667ff7418c7678": "work-2a2c3b667ff7418c7678-v1",
     "work-2a73da617f89ddbe502d": "work-2a73da617f89ddbe502d-representative",
     "work-2aa625102f57ef93a165": "work-2aa625102f57ef93a165-representative",
     "work-2aded24fd8a309ef5d2f": "work-2aded24fd8a309ef5d2f-representative",
@@ -263784,6 +267008,7 @@
     "work-2f39795212f5ad8db155": "work-2f39795212f5ad8db155-representative",
     "work-2f69c7f4b1927a0d9fee": "work-2f69c7f4b1927a0d9fee-v1",
     "work-2f6ab113628039681849": "work-2f6ab113628039681849-representative",
+    "work-2f6ca1e62f05315622e0": "work-2f6ca1e62f05315622e0-v1",
     "work-2f799932ece28aa8c553": "work-2f799932ece28aa8c553-representative",
     "work-2f96453b568685326a51": "work-2f96453b568685326a51-representative",
     "work-2fa116cf1ea7978ca4fc": "work-2fa116cf1ea7978ca4fc-v1",
@@ -263818,6 +267043,7 @@
     "work-33681c02c0ec19608511": "work-33681c02c0ec19608511-v1",
     "work-337e06498a8c95cd76cf": "work-337e06498a8c95cd76cf-v1",
     "work-33a859f6f205410851ee": "work-33a859f6f205410851ee-representative",
+    "work-33c2e28bf9484d0572be": "work-33c2e28bf9484d0572be-v1",
     "work-33d51b4d87937d96d74e": "work-33d51b4d87937d96d74e-representative",
     "work-33e6270fa16cb43e8efb": "work-33e6270fa16cb43e8efb-representative",
     "work-3419e3c5c5983389c6cf": "work-3419e3c5c5983389c6cf-representative",
@@ -263861,6 +267087,7 @@
     "work-382f938971c6642ef163": "work-382f938971c6642ef163-representative",
     "work-38324aa59e9315d424d3": "work-38324aa59e9315d424d3-v1",
     "work-3835b0468655f100816e": "work-3835b0468655f100816e-representative",
+    "work-383e7cb24136859c362a": "work-383e7cb24136859c362a-v1",
     "work-3849ac495a28a963f0a1": "work-3849ac495a28a963f0a1-v1",
     "work-387cf0f3dd400ec434b6": "work-387cf0f3dd400ec434b6-v1",
     "work-38a8f3ebc17bb7f4db44": "work-38a8f3ebc17bb7f4db44-representative",
@@ -263897,6 +267124,7 @@
     "work-3c0b05054f0af284b60d": "work-3c0b05054f0af284b60d-v1",
     "work-3c318d785a9edb674c82": "work-3c318d785a9edb674c82-representative",
     "work-3c31e9bfc6b8c48c2685": "work-3c31e9bfc6b8c48c2685-v8",
+    "work-3c33f528673b02f6abce": "work-3c33f528673b02f6abce-v1",
     "work-3c53e98cd338a3dd4681": "work-3c53e98cd338a3dd4681-representative",
     "work-3c836bbd37acf921ed12": "work-3c836bbd37acf921ed12-representative",
     "work-3cc3c96550e2acaf7249": "work-3cc3c96550e2acaf7249-v11",
@@ -263952,6 +267180,7 @@
     "work-4187a17868684165ff0d": "work-4187a17868684165ff0d-v1",
     "work-418af771ae574eb15a99": "work-418af771ae574eb15a99-representative",
     "work-41c8f07c2ed444461a1b": "work-41c8f07c2ed444461a1b-representative",
+    "work-41c92ea0ad7a6d117fa1": "work-41c92ea0ad7a6d117fa1-v1",
     "work-41fb13f75139adf6717d": "work-41fb13f75139adf6717d-v1",
     "work-4218b94a5b71e38588f6": "work-4218b94a5b71e38588f6-v1",
     "work-421de85818be3674b91f": "work-421de85818be3674b91f-v1",
@@ -264198,6 +267427,7 @@
     "work-580d12e46b72fad34332": "work-580d12e46b72fad34332-representative",
     "work-58191c032908b92d1955": "work-58191c032908b92d1955-representative",
     "work-58516b2e576ac0229077": "work-58516b2e576ac0229077-representative",
+    "work-5856ff038b53dec31fa9": "work-5856ff038b53dec31fa9-v1",
     "work-585fd80d90bf40ab23e1": "work-585fd80d90bf40ab23e1-v1",
     "work-586a25bfb9589b4ec571": "work-586a25bfb9589b4ec571-v2",
     "work-587a29e5d045707f9c8f": "work-587a29e5d045707f9c8f-representative",
@@ -264216,6 +267446,7 @@
     "work-598b59b6153e22e56da2": "work-598b59b6153e22e56da2-representative",
     "work-59cf691b7487a62a4077": "work-59cf691b7487a62a4077-representative",
     "work-59eaa556a1409299e5c8": "work-59eaa556a1409299e5c8-v8",
+    "work-5a08d24f3d638926d44f": "work-5a08d24f3d638926d44f-v1",
     "work-5a0da7e0d34693503144": "work-5a0da7e0d34693503144-v1",
     "work-5a197c8c67ae395c17be": "work-5a197c8c67ae395c17be-representative",
     "work-5a1987ed552b9080b17a": "work-5a1987ed552b9080b17a-representative",
@@ -264258,6 +267489,7 @@
     "work-5d28fafc5980b72c39b6": "work-5d28fafc5980b72c39b6-representative",
     "work-5d3fd9a936ebc90f698f": "work-5d3fd9a936ebc90f698f-v1",
     "work-5d60aac40d8bd36bb83f": "work-5d60aac40d8bd36bb83f-representative",
+    "work-5d6f8a407d9410fe37ac": "work-5d6f8a407d9410fe37ac-v1",
     "work-5d995257ff2c3e396c9e": "work-5d995257ff2c3e396c9e-v1",
     "work-5da6a2d3109cd8c58fc0": "work-5da6a2d3109cd8c58fc0-v4",
     "work-5dd63a5243d0adbf8a60": "work-5dd63a5243d0adbf8a60-representative",
@@ -264284,6 +267516,7 @@
     "work-5f2742eca4d454004a1a": "work-5f2742eca4d454004a1a-v1",
     "work-5f3fb6272009a1e925b8": "work-5f3fb6272009a1e925b8-v1",
     "work-5f4e7613821fb55ebb37": "work-5f4e7613821fb55ebb37-representative",
+    "work-5f503931a075aa5ccd13": "work-5f503931a075aa5ccd13-v1",
     "work-5f888deab71daaa322dc": "work-5f888deab71daaa322dc-representative",
     "work-5fbe9161a398e544a4dc": "work-5fbe9161a398e544a4dc-representative",
     "work-5fc6b29f8e4455352ccf": "work-5fc6b29f8e4455352ccf-representative",
@@ -264300,6 +267533,7 @@
     "work-6121d09169bb2ef0328d": "work-6121d09169bb2ef0328d-v1",
     "work-612b36fefaba0783ebc9": "work-612b36fefaba0783ebc9-representative",
     "work-615122accda062a88516": "work-615122accda062a88516-v1",
+    "work-6159f636e9cc8f7d6c9f": "work-6159f636e9cc8f7d6c9f-v3",
     "work-615bec4db774f5e01e95": "work-615bec4db774f5e01e95-v1",
     "work-6198756585c3e3cc7001": "work-6198756585c3e3cc7001-v1",
     "work-61a5fe43e48685c3fcf5": "work-61a5fe43e48685c3fcf5-representative",
@@ -264324,6 +267558,7 @@
     "work-64ac5761360bf17bba45": "work-64ac5761360bf17bba45-representative",
     "work-64cd212285dac5214c5f": "work-64cd212285dac5214c5f-representative",
     "work-650a59e662374e21ef4f": "work-650a59e662374e21ef4f-v1",
+    "work-653a0ee215442cb29eb7": "work-653a0ee215442cb29eb7-v5",
     "work-6545b018c620e9609cf0": "work-6545b018c620e9609cf0-v1",
     "work-655809e0d43ec6109015": "work-655809e0d43ec6109015-representative",
     "work-657fd4a7e4a07edf7127": "work-657fd4a7e4a07edf7127-v2",
@@ -264340,6 +267575,7 @@
     "work-6684d9f6258dfad423c9": "work-6684d9f6258dfad423c9-representative",
     "work-66a2488ed4f6bdd480e1": "work-66a2488ed4f6bdd480e1-representative",
     "work-66c24a26d5cd1442280e": "work-66c24a26d5cd1442280e-v13",
+    "work-66d3f2639b282457a75e": "work-66d3f2639b282457a75e-v5",
     "work-66d8e3f1756fcc9ce276": "work-66d8e3f1756fcc9ce276-representative",
     "work-66f7c4bac211eb37a763": "work-66f7c4bac211eb37a763-v1",
     "work-671e3453cf9e1df2ee87": "work-671e3453cf9e1df2ee87-representative",
@@ -264391,6 +267627,7 @@
     "work-6dcc492db7ae7a47bade": "work-6dcc492db7ae7a47bade-v1",
     "work-6de564a546b8bdf411b9": "work-6de564a546b8bdf411b9-representative",
     "work-6deaf9311f0e9bb0c077": "work-6deaf9311f0e9bb0c077-representative",
+    "work-6e00490165d65e05e420": "work-6e00490165d65e05e420-v2",
     "work-6e250c729c6fa1bcdc02": "work-6e250c729c6fa1bcdc02-representative",
     "work-6e3dde80b35cc4836296": "work-6e3dde80b35cc4836296-representative",
     "work-6e3e033ba6c1bdffe565": "work-6e3e033ba6c1bdffe565-representative",
@@ -264405,6 +267642,7 @@
     "work-6fd558a7d735a5b464ea": "work-6fd558a7d735a5b464ea-v1",
     "work-6fd752ecaf27a7aefa9e": "work-6fd752ecaf27a7aefa9e-representative",
     "work-6ff41232cf163c16653b": "work-6ff41232cf163c16653b-representative",
+    "work-70279f9a3aa39355407f": "work-70279f9a3aa39355407f-v1",
     "work-7090c81c142fd31e591a": "work-7090c81c142fd31e591a-v1",
     "work-7094c349d7bbcc40129b": "work-7094c349d7bbcc40129b-representative",
     "work-70d0fe9965dc9cb5e5c6": "work-70d0fe9965dc9cb5e5c6-representative",
@@ -264419,6 +267657,7 @@
     "work-719e76feacfde2877323": "work-719e76feacfde2877323-representative",
     "work-71e824df2e6bc2125294": "work-71e824df2e6bc2125294-representative",
     "work-71ee3e51a73d59a6f7c7": "work-71ee3e51a73d59a6f7c7-v1",
+    "work-721c8592670d8f82c923": "work-721c8592670d8f82c923-v1",
     "work-722055953f15b0130549": "work-722055953f15b0130549-representative",
     "work-722251ce58a03d2b6985": "work-722251ce58a03d2b6985-representative",
     "work-723a9fd1a730426c54a2": "work-723a9fd1a730426c54a2-representative",
@@ -264520,6 +267759,7 @@
     "work-80a2f62ce5073ade2ec2": "work-80a2f62ce5073ade2ec2-representative",
     "work-80e097bc189aec3797e5": "work-80e097bc189aec3797e5-representative",
     "work-8147aefccc365b0ecb4d": "work-8147aefccc365b0ecb4d-representative",
+    "work-81c561ca6bb74a301cf8": "work-81c561ca6bb74a301cf8-representative",
     "work-81cf263857ea33845b28": "work-81cf263857ea33845b28-representative",
     "work-8213f6affb514f8e1bb5": "work-8213f6affb514f8e1bb5-representative",
     "work-82d507480a16bc276099": "work-82d507480a16bc276099-v1",
@@ -264935,6 +268175,7 @@
     "work-bc8093205bdb1ae22eb2": "work-bc8093205bdb1ae22eb2-representative",
     "work-bcd43d3188c2533e1068": "work-bcd43d3188c2533e1068-representative",
     "work-bcf6814e2f138e3d4b6e": "work-bcf6814e2f138e3d4b6e-representative",
+    "work-bd42208a660912d9d95d": "work-bd42208a660912d9d95d-representative",
     "work-bd5bdc4150f30a07971b": "work-bd5bdc4150f30a07971b-representative",
     "work-bd5c323a3dbc9f3a04d4": "work-bd5c323a3dbc9f3a04d4-representative",
     "work-bda4b27fff9782fb50a4": "work-bda4b27fff9782fb50a4-v1",
