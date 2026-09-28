@@ -921,23 +921,26 @@ class RevisionWorkspace(Workspace):
 
     def backup(self, destination=None):
         operation_started = perf_counter()
+        root = self.repo / "data/local/catalog-authoring/backups"
+        root.mkdir(parents=True, exist_ok=True)
         if self.database == self.repo / "data/local/catalog-authoring/workspace.sqlite":
             from catalog_retention import retain_recovery_controls
             # Other fixed sessions can add notification/control files while the
             # read-only recovery scope is being inventoried. Rebuild that scope
-            # from current bytes; never accept the interrupted inventory.
-            for attempt in range(8):
-                try:
-                    retain_recovery_controls(self)
-                    break
-                except ValueError as error:
-                    if str(error) not in {"Recovery control changed after scope discovery",
-                                          "Recovery control scope changed during backup preparation"} or attempt == 7:
-                        raise
-                    sleep(0.05 * (attempt + 1))
+            # from current bytes; never accept the interrupted inventory. Only
+            # one backup may advance the recovery-control head at a time.
+            with exclusive_file(root / "controls.lock"):
+                for attempt in range(8):
+                    try:
+                        retain_recovery_controls(self)
+                        break
+                    except ValueError as error:
+                        if str(error) not in {"Recovery control changed after scope discovery",
+                                              "Recovery control scope changed during backup preparation",
+                                              "Authoring revision head advanced during preparation"} or attempt == 7:
+                            raise
+                        sleep(0.05 * (attempt + 1))
         controls_elapsed = perf_counter() - operation_started
-        root = self.repo / "data/local/catalog-authoring/backups"
-        root.mkdir(parents=True, exist_ok=True)
         latest = unlinked(destination or root / "latest.sqlite")
         if latest.parent != root or latest == self.database:
             raise ValueError("Revision backup must be a separate file in the configured backup directory")

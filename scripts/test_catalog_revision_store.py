@@ -269,18 +269,19 @@ class RevisionStoreTest(unittest.TestCase):
                 result = self.store.backup()
                 self.assertEqual(result["status"], "BACKED_UP")
                 self.assertEqual(result["mode"], mode)
-                self.assertEqual(result["timingsSeconds"]["controlsElapsed"], 7.0)
+                self.assertEqual(result["timingsSeconds"]["controlsElapsed"], 10.0)
                 self.assertEqual(result["timingsSeconds"]["lockWait"], 3.0)
-                self.assertEqual(result["timingsSeconds"]["totalElapsed"], 10.0)
+                self.assertEqual(result["timingsSeconds"]["totalElapsed"], 13.0)
 
     def test_backup_retries_changed_recovery_control_scope(self):
         import catalog_retention
         transient = ValueError("Recovery control scope changed during backup preparation")
-        with patch.object(catalog_retention, "retain_recovery_controls", side_effect=[transient, None]) as controls, \
+        head_race = ValueError("Authoring revision head advanced during preparation")
+        with patch.object(catalog_retention, "retain_recovery_controls", side_effect=[transient, head_race, None]) as controls, \
                 patch("catalog_revision_store.sleep") as wait:
             self.assertEqual(self.store.backup()["status"], "BACKED_UP")
-            self.assertEqual(controls.call_count, 2)
-            wait.assert_called_once()
+            self.assertEqual(controls.call_count, 3)
+            self.assertEqual(wait.call_count, 2)
         with patch.object(catalog_retention, "retain_recovery_controls", side_effect=ValueError("Corrupt recovery control")):
             with self.assertRaisesRegex(ValueError, "Corrupt recovery control"):
                 self.store.backup()
