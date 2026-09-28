@@ -6,7 +6,7 @@
 
 **2026-09-27 SDD 상태:** 아래 R1~R9에 따라 DB 전용 기본 복구·요청별 추출·부분 작업 폴더의 증분 백업을 구현하고 기존 CLI에서 검증했다. [현재 구현·검증 근거와 한계](08-structural-throughput-20260927.md)를 따른다. 과거 원본 도구 누락 검사 4개와 실제 고정 세션 자동 전환은 별도 한계이며 문서 변경으로 중단된 큐를 재개하지 않는다.
 
-**2026-09-28 경량 보존:** `scripts/catalog_authoring/lean_migration.py`가 같은 generation의 workspace에서 현재 head와 그 previous·dependency closure만 새 파일로 복사한다. 남기는 head는 Work별 `curation`, 원문 `collection`(`retained-originals`), 작은 `active` 제어, `completion`, `canonical-completion`이다. 빼는 head는 `legacy-pin`, `artifact`, `execution`, `active/migration-working-sets`다. canonical `catalog.sqlite`는 바꾸지 않는다. 과거 추출 폴더는 DB blob에 결속된 뒤 지울 수 있으며, 이후 수집·판정 파일의 위치는 계속 `artifacts/`다. prior authority의 manifest 계보 검증, freeze의 계약 문서 결속, canonical apply의 current·candidate·projection 검증, v2/v3 reader는 유지한다. 한 배치 안의 prior 재검증은 기존 `manifest_verification_cache`를 쓴다.
+**2026-09-28 경량 보존:** `scripts/catalog_authoring/lean_migration.py`는 불필요한 로컬 사본·백업·반복 검증을 줄이되, 남긴 자료를 실제로 읽고 재사용·정리할 수 있게 한다. 같은 generation에서 Work별 `curation`, 원문 `collection`(`retained-originals`), 작은 `active` 제어, `completion`, `canonical-completion`과 previous·dependency closure를 새 파일로 복사한다. 불필요한 `artifact`, 종료된 `execution`, `legacy-pin`, `active/migration-working-sets`는 독립 보존 근거로 삼지 않는다. 다만 미완료 실행과 남긴 checkpoint의 원래 소유 관계, closure에 이미 포함된 legacy pin의 조회 head는 유지한다. 이 예외로 무관한 과거 publication 사본을 복원하지 않는다. 완료 확인·GC의 구형/신규 구분은 원래 revision rowid, 생존 행 범위의 legacy watermark, 변경된 revision당 하나의 journal 표식으로 유지한다. 전체 change history를 복사하거나 새 DB에 다시 `VACUUM`하지 않는다. 원본은 한 읽기 transaction에서 선택·복사하고, 새 journal origin으로 최초 백업 후 기존 증분 백업을 사용한다. canonical `catalog.sqlite`는 바꾸지 않는다. 과거 추출 폴더는 DB blob 결속과 실제 소비 가능 범위를 확인한 뒤 정리하며, 이후 수집·판정 파일의 위치는 계속 `artifacts/`다. prior authority의 manifest 결속, freeze의 계약 문서 결속, canonical apply의 current·candidate·projection 검증, v2/v3 reader는 유지한다. 한 배치 안의 prior 재검증은 기존 `manifest_verification_cache`를 쓴다.
 
 ## 저장 경계
 
@@ -141,12 +141,12 @@
 
 ## 저장과 백업의 단계 경계
 
-| 시점                                                           | 필수 동작·상태                                                                                                            |
-| -------------------------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------- |
-| 원문 수집, prepare/check, 새 판정·실패·checkpoint 저장         | 즉시 SQLite commit 및 `PERSISTED`. 내부 명령마다 물리 백업하지 않는다.                                                    |
-| 수집 배치 완료, 판정 배치 완료, 발행 완료, 작업 종료·부분 중단 | 필요한 원본·결과·receipt를 백업하고 실제 source/latest를 대조한 뒤 `BACKED_UP`.                                           |
+| 시점                                                           | 필수 동작·상태                                                                                                                               |
+| -------------------------------------------------------------- | -------------------------------------------------------------------------------------------------------------------------------------------- |
+| 원문 수집, prepare/check, 새 판정·실패·checkpoint 저장         | 즉시 SQLite commit 및 `PERSISTED`. 내부 명령마다 물리 백업하지 않는다.                                                                       |
+| 수집 배치 완료, 판정 배치 완료, 발행 완료, 작업 종료·부분 중단 | 필요한 원본·결과·receipt를 백업하고 실제 source/latest를 대조한 뒤 `BACKED_UP`.                                                              |
 | compact 발행의 기본 50작품 checkpoint                          | pair·작품 receipt·의존을 실제 단계 백업하고 `BACKED_UP`을 확인한 지점부터 재개한다. 더 촘촘한 재개가 필요하면 `--checkpoint-every`로 줄인다. |
-| 변경 없는 재실행                                               | 실제 입력·원문·membership·receipt 결속을 확인하고 유효 결과 재사용. 불필요한 revision·백업 복사/rotation을 만들지 않는다. |
+| 변경 없는 재실행                                               | 실제 입력·원문·membership·receipt 결속을 확인하고 유효 결과 재사용. 불필요한 revision·백업 복사/rotation을 만들지 않는다.                    |
 
 신규 배정 크기와 단계 전환은 [배치 계약](01c-sol-batch-promotion-plan.md)을 따른다. 원본 저장·작품별 기계 검사·checkpoint는 배치 끝까지 미루지 않는다. `PERSISTED`는 마지막 경계 백업에 포함됐다는 뜻이 아니며 작업자가 문자열을 `BACKED_UP`으로 바꾸면 안 된다.
 

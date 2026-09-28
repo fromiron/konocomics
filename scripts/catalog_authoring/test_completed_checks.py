@@ -593,6 +593,35 @@ class CompletedCheckTest(unittest.TestCase):
         self.assertTrue(proof["legacyCompletion"])
         self.assertEqual(proof["currentCanonicalEffect"]["generatedFiles"], 10)
 
+    def lean_store(self):
+        from lean_migration import build
+        destination = self.repo / "lean.sqlite"
+        build(self.store.database, destination)
+        destination.replace(self.store.database)
+        self.store = RevisionWorkspace(self.repo, self.store.database)
+        self.store.backup()
+
+    def test_lean_migration_preserves_completed_canonical_proof(self):
+        self.migrate_legacy()
+        self.global_effect()
+        before = self.proof()[self.wid]
+        self.lean_store()
+        self.assertEqual(self.proof()[self.wid], before)
+        self.assertEqual(self.store.backup()["mode"], "reused")
+
+    def test_lean_migration_does_not_turn_changed_v4_completion_into_legacy(self):
+        self.migrate_legacy()
+        self.global_effect()
+        with closing(self.store.connect(write=True)) as db, db:
+            # Even below the old watermark, a journaled revision is not legacy.
+            db.execute("UPDATE revision SET terminal=terminal WHERE id=(SELECT revision_id FROM head WHERE kind='completion' AND subject=?)",
+                       (self.summary_sha,))
+        self.store.backup()
+        for operation in (lambda: None, self.lean_store):
+            operation()
+            with self.assertRaisesRegex(ValueError, "this completed candidate has no canonical receipt"):
+                self.proof()
+
     def test_legacy_missing_or_stale_generated_artifact_blocks_canonical_only(self):
         self.migrate_legacy()
         self.global_effect()
