@@ -28,6 +28,7 @@ description: konocomics의 고정 작업 세션에 작품 묶음을 배정하고
 - 최신 유효 판정은 완료 run까지 포함해 Work별로 먼저 고른다. 최신 판정이 완료됐다면 그 completion을 확인하고 과거 HOLD/READY를 다시 현재 미완료로 배정하지 않는다. 상태별 최신을 각각 고르는 방식은 사용하지 않는다. 실제 미완료 summary·기존 pending 처리의 exact CHECKED/SHA 의존은 별도로 보존한다.
 - 신규 배정에서는 50개씩 겹치지 않는 목록을 만들고 자료 충분/추가 수집/gap 유형을 가용한 루나1~6 방에 고르게 배분한다. 50은 신규 작업 목록 크기이며 PASS 목표가 아니다. 마지막 작은 묶음도 배정한다.
 - 배치 ID·owner/parent·기준 pair/계약 SHA·단계 전환 정책과 각 작품의 brief·prior/HOLD·원문/receipt·리드·출력 경로를 결속한다. 새 일반 수집은 `auto-after-collection`, 수집만 요청된 배정은 `collection-only`로 구분한다. 스킬과 목록 경로를 보내고 배치 전체 raw를 프롬프트에 넣지 않는다. 한 세션은 한 작품씩 처리하며 배정 목록 안에서는 다음 작품을 자율 진행한다.
+- registry의 작품별 `supportEvidenceUrls`는 `registry_source_rows.canonicalWorkId`로 조회한다. `existingCatalogWorkId`는 이 배정의 lookup 키가 아니다. collection context를 만들면 dispatch/registry SHA와 Work 전건의 URL 목록을 대조한 뒤 저장한다. 잘못 만든 context는 덮어쓰지 않고 새 revision으로 정정해 작업자에게 철회를 명시한다.
 - prior-recovery도 dispatch에 `collectionOutput`을 포함하고 배치 전체 수집·summary 검증을 거친다. prior recovery map은 판정 시 accepted claim을 보존하는 manifest 결속이며 수집 단계 생략이나 가짜 collection 결과의 근거가 아니다.
 - 필요한 경우 작업자가 독립적인 작품·출처 조사를 서브에이전트에 나누도록 허용한다. 작품·출처·반환 근거를 분리하고 같은 작품 결속·최종 판정은 고정 세션이 맡는다. 공유 DB·registry·STATE·발행 변경은 서브에이전트에 병렬 위임하지 않는다.
 - 저장된 유효 원문을 최우선 사용한다. 추가 검색 횟수 상한은 두지 않는다. [수집 지침](../../../docs/catalog-expansion/factor-collector-instructions.md)의 gap 해결·새 정보·출처 소진 종료 기준을 적용한다. 정상 수집→동결→판정마다 부모 응답을 요구하지 않는다.
