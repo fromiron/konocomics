@@ -10,7 +10,7 @@ import sqlite3
 import uuid
 import re
 import tempfile
-from time import perf_counter
+from time import perf_counter, sleep
 import zlib
 
 from catalog_workspace import Workspace, APPLICATION_ID, digest, exclusive_file, key_path, unlinked, utc_now, replace_busy_backup
@@ -923,7 +923,18 @@ class RevisionWorkspace(Workspace):
         operation_started = perf_counter()
         if self.database == self.repo / "data/local/catalog-authoring/workspace.sqlite":
             from catalog_retention import retain_recovery_controls
-            retain_recovery_controls(self)
+            # Other fixed sessions can add notification/control files while the
+            # read-only recovery scope is being inventoried. Rebuild that scope
+            # from current bytes; never accept the interrupted inventory.
+            for attempt in range(8):
+                try:
+                    retain_recovery_controls(self)
+                    break
+                except ValueError as error:
+                    if str(error) not in {"Recovery control changed after scope discovery",
+                                          "Recovery control scope changed during backup preparation"} or attempt == 7:
+                        raise
+                    sleep(0.05 * (attempt + 1))
         controls_elapsed = perf_counter() - operation_started
         root = self.repo / "data/local/catalog-authoring/backups"
         root.mkdir(parents=True, exist_ok=True)

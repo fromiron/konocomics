@@ -273,6 +273,18 @@ class RevisionStoreTest(unittest.TestCase):
                 self.assertEqual(result["timingsSeconds"]["lockWait"], 3.0)
                 self.assertEqual(result["timingsSeconds"]["totalElapsed"], 10.0)
 
+    def test_backup_retries_changed_recovery_control_scope(self):
+        import catalog_retention
+        transient = ValueError("Recovery control scope changed during backup preparation")
+        with patch.object(catalog_retention, "retain_recovery_controls", side_effect=[transient, None]) as controls, \
+                patch("catalog_revision_store.sleep") as wait:
+            self.assertEqual(self.store.backup()["status"], "BACKED_UP")
+            self.assertEqual(controls.call_count, 2)
+            wait.assert_called_once()
+        with patch.object(catalog_retention, "retain_recovery_controls", side_effect=ValueError("Corrupt recovery control")):
+            with self.assertRaisesRegex(ValueError, "Corrupt recovery control"):
+                self.store.backup()
+
     def test_backup_generation_and_corruption_are_not_receipt_flags(self):
         path = self.repo / "input.txt"
         path.write_bytes(b"retained evidence")
