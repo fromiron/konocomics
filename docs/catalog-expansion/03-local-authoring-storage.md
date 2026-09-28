@@ -1,10 +1,12 @@
 # 로컬 Catalog 작업 저장소
 
-현재 확정 사양 · 갱신일: 2026-09-27
+현재 확정 사양 · 갱신일: 2026-09-28
 
 이 문서는 저장 위치·보존 범위·백업 경계의 단일 운영 계약이다. 2026-09-26 승인한 실행 계약은 workspace schema v4이며 실제 전환 여부는 대상 DB의 schema·generation과 전환 receipt에서 확인한다. 문서 갱신을 운영 DB 전환 완료로 간주하지 않는다. [기존 검증 요약](authoring-retention-20260926.md)은 해당 실행 근거와 한계를 기록하며 이 문서의 규칙을 대신하지 않는다. 과거 규칙은 Git 이력에서 확인한다.
 
 **2026-09-27 SDD 상태:** 아래 R1~R9에 따라 DB 전용 기본 복구·요청별 추출·부분 작업 폴더의 증분 백업을 구현하고 기존 CLI에서 검증했다. [현재 구현·검증 근거와 한계](08-structural-throughput-20260927.md)를 따른다. 과거 원본 도구 누락 검사 4개와 실제 고정 세션 자동 전환은 별도 한계이며 문서 변경으로 중단된 큐를 재개하지 않는다.
+
+**2026-09-28 경량 보존:** `scripts/catalog_authoring/lean_migration.py`가 같은 generation의 workspace에서 현재 head와 그 previous·dependency closure만 새 파일로 복사한다. 남기는 head는 Work별 `curation`, 원문 `collection`(`retained-originals`), 작은 `active` 제어, `completion`, `canonical-completion`이다. 빼는 head는 `legacy-pin`, `artifact`, `execution`, `active/migration-working-sets`다. canonical `catalog.sqlite`는 바꾸지 않는다. 과거 추출 폴더는 DB blob에 결속된 뒤 지울 수 있으며, 이후 수집·판정 파일의 위치는 계속 `artifacts/`다. prior authority의 manifest 계보 검증, freeze의 계약 문서 결속, canonical apply의 current·candidate·projection 검증, v2/v3 reader는 유지한다. 한 배치 안의 prior 재검증은 기존 `manifest_verification_cache`를 쓴다.
 
 ## 저장 경계
 
@@ -143,7 +145,7 @@
 | -------------------------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------- |
 | 원문 수집, prepare/check, 새 판정·실패·checkpoint 저장         | 즉시 SQLite commit 및 `PERSISTED`. 내부 명령마다 물리 백업하지 않는다.                                                    |
 | 수집 배치 완료, 판정 배치 완료, 발행 완료, 작업 종료·부분 중단 | 필요한 원본·결과·receipt를 백업하고 실제 source/latest를 대조한 뒤 `BACKED_UP`.                                           |
-| compact 발행의 기본 10작품 checkpoint                          | pair·작품 receipt·의존을 실제 단계 백업하고 `BACKED_UP`을 확인한 지점부터 재개한다.                                       |
+| compact 발행의 기본 50작품 checkpoint                          | pair·작품 receipt·의존을 실제 단계 백업하고 `BACKED_UP`을 확인한 지점부터 재개한다. 더 촘촘한 재개가 필요하면 `--checkpoint-every`로 줄인다. |
 | 변경 없는 재실행                                               | 실제 입력·원문·membership·receipt 결속을 확인하고 유효 결과 재사용. 불필요한 revision·백업 복사/rotation을 만들지 않는다. |
 
 신규 배정 크기와 단계 전환은 [배치 계약](01c-sol-batch-promotion-plan.md)을 따른다. 원본 저장·작품별 기계 검사·checkpoint는 배치 끝까지 미루지 않는다. `PERSISTED`는 마지막 경계 백업에 포함됐다는 뜻이 아니며 작업자가 문자열을 `BACKED_UP`으로 바꾸면 안 된다.
@@ -257,7 +259,7 @@ node --import tsx scripts/import-publisher-book-metadata.ts --input <collection>
 - 변경 전에 봉인하는 `plans/<workId>.json` (`catalog-compact-plan-v2`)은 원본 input/authority 참조·검토 시각·대상 before digest·권한에서 유도한 plan·registry 변경·canonical rebase를 보존한다. `works/<workId>.json` (`catalog-compact-work-v2`)은 plan SHA와 논리 delta·expected-after를 결속한다. 독립 `CatalogState` checker가 baseline과 승인 plan으로 기대 결과를 구성하며 실제 변경 결과에서 기대값을 만들지 않는다.
 - 배치 기준 catalog/registry를 한 번 색인화하고 작품별 조회·검사는 해당 범위로 제한한다. 최종 전체 행 비교는 한 번 수행한다. 일반 검증은 원본 권한→plan 재구성과 독립 expected-after 비교를 사용하며 명시 audit는 원본 SQL materializer replay도 수행한다. 과거 SQLite의 물리 bytes와 같다고 주장하지 않는다.
 - 무관한 canonical 전진은 `canonical-rebase-v1` receipt로 결속한다. 원래 동결 SHA를 보존하고 대상·Gold·대표판·prior·alias·schema/정책 의존을 비교해 실제 충돌을 거부한다. 새 기준으로 기존 frozen SHA를 덮어쓰지 않는다.
-- 기본 checkpoint 간격은 10작품이다. 완전히 저장·백업된 checkpoint의 pair/receipt로 재개하고 이후 미완료 작업은 같은 불변 intent로 재적용한다. 최종 projection·제품 readback·backup 후 기존 STATE/completion 경로를 사용한다.
+- 기본 checkpoint 간격은 50작품이다. 완전히 저장·백업된 checkpoint의 pair/receipt로 재개하고 이후 미완료 작업은 같은 불변 intent로 재적용한다. 최종 projection·제품 readback·backup 후 기존 STATE/completion 경로를 사용한다.
 - prior/review reader는 원래 sealed 판정과 보존된 검토 문서를 읽는다. 구 full 형식도 지원하되 신규 compact를 위해 가짜 full 디렉터리를 만들지 않는다.
 - 원본 의존 복원은 정확한 member/blob을 검증한다. 같은 경로의 다른 버전은 `restored-versions/<sha256>`와 `.catalog-restore.json`으로 분리하며 누락/손상은 실패로 보고한다.
 

@@ -10,6 +10,7 @@
 - tracked SQLite는 빌드 타임 Catalog 원천 하나만 허용한다. ORM, 새 의존성, runtime database, runtime LLM은 추가하지 않는다.
 - 2026-09-09 사용자 승인: source 밖의 로컬 작업용 SQLite는 조사·후보·동결 판정·실패 이력의 영구 보존에 별도로 사용한다. tracked canonical authority를 추가하는 것이 아니며 저장 성공은 accepted authority가 아니다. 저장·백업·복원 계약은 `docs/catalog-expansion/03-local-authoring-storage.md`를 따른다.
 - 2026-09-26 사용자 승인: 작업 저장소 v4의 변경 순번·증분 백업·workspace WAL은 작업 저장 경계에만 적용한다. canonical/registry pair의 DELETE transaction과 정적 런타임 경계는 유지한다. 완료 배치의 `--apply-canonical`은 기존 권한 검사를 통과한 대상과 필요한 근거만 정식 DB·생성 데이터에 반영한다. candidate 전체 복사·권한 재분류·GitHub 쓰기·배포를 허용하는 변경이 아니다. schema 전환과 정식 반영 완료는 각각 실제 receipt/readback으로 확인한다.
+- 2026-09-28: 작업 DB의 경량 보존은 중복 publication 사본과 실행 이력을 현재 head에서 빼며, accepted authority의 원천은 계속 `data/source/catalog.sqlite`다. prior authority의 manifest 결속 검증은 그대로다.
 
 ## 2. 권한 계약
 

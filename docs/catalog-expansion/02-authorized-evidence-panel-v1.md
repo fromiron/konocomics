@@ -1,5 +1,9 @@
 # Authorized Evidence Panel V1
 
+## 2026-09-28 경량 보존과 prior 검증
+
+작업 DB 경량 보존은 [저장 계약](03-local-authoring-storage.md)의 현재 head 선택이다. `load_prior_authority`의 manifest 계보 검증은 유지한다. 한 발행 배치 안에서는 기존 `manifest_verification_cache`가 같은 불변 입력을 다시 풀지 않는다. 이 변경은 claim 재판정·정족수·safety 계약을 바꾸지 않는다.
+
 ## 2026-09-26 보존 기준점 전환
 
 [저장 정책](03-local-authoring-storage.md)의 schema v3에서는 검증된 현재 큐레이션 revision을 prior 권한의 읽기 기준점으로 사용한다. 기존 입력/결과 manifest·원래 claim·동일 Work 원문과 현재 SQL 값의 결속을 이관 때 대조하며, 숫자에서 승인 판정을 역으로 만들지 않는다. legacy·Gold·미검토 구분과 원래 관찰·한계·unknown을 유지한다. 미완료 frozen/판정은 기존 SHA와 필요한 기준 pair를 그대로 pin한다. 과거 전체 실행 사본의 영구 보존 요구는 이 보존 정책으로 대체하며, 새 판정의 근거·정족수·안전·승격 계약은 바꾸지 않는다. `PERSISTED`는 내부 영구 저장이고 `BACKED_UP`은 명시적 단계 경계에서 별도 백업과 readback을 마친 상태다.

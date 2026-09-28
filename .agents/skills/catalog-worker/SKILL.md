@@ -9,7 +9,7 @@ description: konocomics의 고정 작업 세션에서 배정된 작품 목록을
 
 - [배치 계약 §3](../../../docs/catalog-expansion/01c-sol-batch-promotion-plan.md#3-역할과-세션)에서 고정 세션 ID·모델·추론·수신자별 메시지 설정을 읽는다. 신규 50작품 목록을 사용하며 기존 100작품 배정·진행 중 턴·과거 판정은 보존한다. 이름·이전 설정에서 모델을 추정하지 않는다.
 - [수집 지침](../../../docs/catalog-expansion/factor-collector-instructions.md)과 [사전 리드 JSON·자료 적격성](../../../docs/catalog-expansion/user-source-leads.md)을 따른다. 현재 대표판을 1권으로 바꾸지 않으며 전권 확인을 요구하지 않는다. 신규 Art는 제외하고 safety는 porn/non-porn으로 판단한다.
-- [저장 계약](../../../docs/catalog-expansion/03-local-authoring-storage.md)에 따라 원문·판정·checkpoint를 즉시 PERSISTED로 보존하고 수집/판정/발행 완료·종료/부분 중단 경계에서 실제 BACKED_UP을 확인한다. 내부 명령마다 물리 백업하지 않는다. 원본 SHA·generation/revision을 보존하며 상태 문자열로 실제 백업을 대신하지 않는다.
+- [저장 계약](../../../docs/catalog-expansion/03-local-authoring-storage.md)에 따라 원문·판정·checkpoint를 즉시 PERSISTED로 보존하고 수집/판정/발행 완료·종료/부분 중단 경계에서 실제 BACKED_UP을 확인한다. 내부 명령마다 물리 백업하지 않는다. compact 발행의 기본 pair checkpoint는 50작품이다. prior authority 검증은 유지한다. 원본 SHA·generation/revision을 보존하며 상태 문자열로 실제 백업을 대신하지 않는다.
 - [runner 명령 계약](../../../scripts/catalog_authoring/README.md)을 사용한다. 작업자는 prepare/check, 조정자는 발행을 담당한다. 일반 배치에 CLI 모델·판정용 서브에이전트를 사용하지 않는다. 문서 갱신만으로 중단된 큐를 재개하지 않는다.
 
 ## 배치 단계 순서

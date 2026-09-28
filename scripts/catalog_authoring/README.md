@@ -121,7 +121,7 @@ python scripts/catalog_python.py scripts/catalog_authoring/notification_guard.py
 
 `decision`은 `deferred | stopped | stage-reviewed | published | partially-published`다. [공식 Hooks 계약](https://learn.chatgpt.com/docs/hooks)의 UserPromptSubmit/Stop `turn_id`와 Interrupt를 사용한다. 변경한 프로젝트 hook 정의는 앱의 신뢰 검토 대상이며 로컬 명령 검사와 실제 앱 hook 실행은 구분한다.
 
-현재 compact 실행 계약은 private pair·기본 10작품 백업 checkpoint·작품별 봉인 plan/논리 delta·최종 projection/readback을 사용한다. 작품별 실제 판정과 수집→판정 전환 경계는 유지한다. [과거 실행 기록](../../docs/catalog-expansion/07-pipeline-improvements-20260925.md)은 그 시점의 표본 범위로만 해석하며 신규 v4 저장·v2 발행·자동 전환의 실행 완료 증거로 쓰지 않는다.
+현재 compact 실행 계약은 private pair·기본 50작품 백업 checkpoint·작품별 봉인 plan/논리 delta·최종 projection/readback을 사용한다. 작품별 실제 판정과 수집→판정 전환 경계는 유지한다. [과거 실행 기록](../../docs/catalog-expansion/07-pipeline-improvements-20260925.md)은 그 시점의 표본 범위로만 해석하며 신규 v4 저장·v2 발행·자동 전환의 실행 완료 증거로 쓰지 않는다.
 
 ## Publisher 책임 경계
 
