@@ -454,6 +454,8 @@ class BatchPublicationTest(unittest.TestCase):
                 with self.assertRaisesRegex(ValueError, "member changed"):
                     batch.preflight_result(identity, ["publisher"], lambda: (_ for _ in ()).throw(ValueError("member changed")))
             self.assertEqual(batch.preflight_scope('{"error":"frozen registry row set mismatch: work-a"}', "work-a"), "WORK")
+            self.assertEqual(batch.preflight_scope('{"error":"fresh snapshot materialized fact has protected reviewed evidence: work-a"}', "work-a"), "WORK")
+            self.assertEqual(batch.preflight_scope('fresh snapshot materialized fact has protected reviewed evidence: work-other', "work-a"), "BATCH")
             self.assertEqual(batch.preflight_scope('Traceback\nlegacy.PublishError: accepted baseline axis conflict: work-a darkness', "work-a"), "WORK")
             self.assertEqual(batch.preflight_scope("Canonical rebase target conflict: work-a: source_factors", "work-a"), "WORK")
             self.assertEqual(batch.preflight_scope("Canonical rebase target conflict: work-other: source_factors", "work-a"), "BATCH")
