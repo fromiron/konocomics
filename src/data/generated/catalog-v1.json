@@ -1,6 +1,6 @@
 {
   "schemaVersion": 1,
-  "catalogVersion": "v1-f931b64a7c46",
+  "catalogVersion": "v1-db6867aac811",
   "factorDictionaryVersion": "v1",
   "works": [
     {
@@ -177577,11 +177577,46 @@
       "demographic": "unknown",
       "status": "unknown",
       "firstPublishedYear": 2017,
-      "genres": [],
-      "themes": [],
+      "genres": [
+        "sliceOfLife"
+      ],
+      "themes": [
+        {
+          "id": "cooking",
+          "centrality": 2,
+          "confidence": 0.72
+        },
+        {
+          "id": "crafting",
+          "centrality": 2,
+          "confidence": 0.72
+        },
+        {
+          "id": "foundFamily",
+          "centrality": 2,
+          "confidence": 0.72
+        },
+        {
+          "id": "historicalReconstruction",
+          "centrality": 2,
+          "confidence": 0.72
+        },
+        {
+          "id": "school",
+          "centrality": 2,
+          "confidence": 0.72
+        },
+        {
+          "id": "workplace",
+          "centrality": 2,
+          "confidence": 0.72
+        }
+      ],
       "axes": {
         "progression": {
-          "state": "unknown"
+          "state": "known",
+          "value": 2,
+          "confidence": 0.72
         },
         "problemSolving": {
           "state": "unknown"
@@ -177599,10 +177634,14 @@
           "state": "unknown"
         },
         "characterArcWeight": {
-          "state": "unknown"
+          "state": "known",
+          "value": 2,
+          "confidence": 0.72
         },
         "relationshipStructure": {
-          "state": "unknown"
+          "state": "known",
+          "value": 2,
+          "confidence": 0.72
         },
         "comedy": {
           "state": "unknown"
@@ -177617,7 +177656,9 @@
           "state": "unknown"
         },
         "emotionalWarmth": {
-          "state": "unknown"
+          "state": "known",
+          "value": 2,
+          "confidence": 0.72
         },
         "artRealism": {
           "state": "unknown"
@@ -177634,14 +177675,25 @@
       },
       "factorScope": "entry_1_3_volumes",
       "eligibility": {
-        "onboardingEligible": false,
-        "recommendationEligible": false,
-        "libraryOnly": true
+        "onboardingEligible": true,
+        "recommendationEligible": true,
+        "libraryOnly": false,
+        "narrativeToneException": {
+          "policy": "narrative-tone-exhaustion-v1",
+          "workId": "work-7550a406a9d9691375c6",
+          "inputManifestSha256": "a7b41680cdc01469f94769d99dbd6633c88aa0b9ed3f6ca2e6dc803851b2754e",
+          "researchSha256": "1acf2613a1c4101fd318a81bb9c56f5f30f3ca62a897cb32639da076418374cd",
+          "groups": [
+            "narrative",
+            "tone"
+          ]
+        }
       },
       "evidence": {
         "metadataConfidence": 0.92,
         "groupingConfidence": 0.96,
-        "sourceAgreement": 0.64
+        "sourceAgreement": 0.64,
+        "annotationReviewedAt": "2026-09-28T10:07:21.532169+00:00"
       }
     },
     {
@@ -178747,8 +178799,31 @@
       "demographic": "unknown",
       "status": "unknown",
       "firstPublishedYear": 2015,
-      "genres": [],
-      "themes": [],
+      "genres": [
+        "fantasy"
+      ],
+      "themes": [
+        {
+          "id": "cooking",
+          "centrality": 2,
+          "confidence": 0.72
+        },
+        {
+          "id": "historicalReconstruction",
+          "centrality": 2,
+          "confidence": 0.72
+        },
+        {
+          "id": "survival",
+          "centrality": 2,
+          "confidence": 0.72
+        },
+        {
+          "id": "workplace",
+          "centrality": 2,
+          "confidence": 0.72
+        }
+      ],
       "axes": {
         "progression": {
           "state": "unknown"
@@ -178760,34 +178835,48 @@
           "state": "unknown"
         },
         "pacing": {
-          "state": "unknown"
+          "state": "known",
+          "value": 2,
+          "confidence": 0.72
         },
         "mysteryReveal": {
           "state": "unknown"
         },
         "worldBuilding": {
-          "state": "unknown"
+          "state": "known",
+          "value": 2,
+          "confidence": 0.72
         },
         "characterArcWeight": {
-          "state": "unknown"
+          "state": "known",
+          "value": 2,
+          "confidence": 0.72
         },
         "relationshipStructure": {
-          "state": "unknown"
+          "state": "known",
+          "value": 2,
+          "confidence": 0.72
         },
         "comedy": {
           "state": "unknown"
         },
         "darkness": {
-          "state": "unknown"
+          "state": "known",
+          "value": 2,
+          "confidence": 0.72
         },
         "mentalStress": {
-          "state": "unknown"
+          "state": "known",
+          "value": 2,
+          "confidence": 0.72
         },
         "romance": {
           "state": "unknown"
         },
         "emotionalWarmth": {
-          "state": "unknown"
+          "state": "known",
+          "value": 2,
+          "confidence": 0.72
         },
         "artRealism": {
           "state": "unknown"
@@ -178804,14 +178893,25 @@
       },
       "factorScope": "entry_1_3_volumes",
       "eligibility": {
-        "onboardingEligible": false,
-        "recommendationEligible": false,
-        "libraryOnly": true
+        "onboardingEligible": true,
+        "recommendationEligible": true,
+        "libraryOnly": false,
+        "narrativeToneException": {
+          "policy": "narrative-tone-exhaustion-v1",
+          "workId": "work-766a70746f6cc2a14a0e",
+          "inputManifestSha256": "d05630f219910806bd233a68d91349706012082efc285d68dd7a31828efaf587",
+          "researchSha256": "0542d19c7fb611f5c9eacb8248dc2722d9a4a5431e1a22b01d9ce81f6594390b",
+          "groups": [
+            "narrative",
+            "tone"
+          ]
+        }
       },
       "evidence": {
         "metadataConfidence": 0.92,
         "groupingConfidence": 0.96,
-        "sourceAgreement": 0.64
+        "sourceAgreement": 0.64,
+        "annotationReviewedAt": "2026-09-28T10:07:26.880319+00:00"
       }
     },
     {
@@ -181021,8 +181121,21 @@
       "demographic": "unknown",
       "status": "unknown",
       "firstPublishedYear": 2021,
-      "genres": [],
-      "themes": [],
+      "genres": [
+        "sliceOfLife"
+      ],
+      "themes": [
+        {
+          "id": "cooking",
+          "centrality": 2,
+          "confidence": 0.72
+        },
+        {
+          "id": "workplace",
+          "centrality": 2,
+          "confidence": 0.72
+        }
+      ],
       "axes": {
         "progression": {
           "state": "unknown"
@@ -181043,7 +181156,9 @@
           "state": "unknown"
         },
         "characterArcWeight": {
-          "state": "unknown"
+          "state": "known",
+          "value": 2,
+          "confidence": 0.72
         },
         "relationshipStructure": {
           "state": "unknown"
@@ -181078,14 +181193,25 @@
       },
       "factorScope": "entry_1_3_volumes",
       "eligibility": {
-        "onboardingEligible": false,
-        "recommendationEligible": false,
-        "libraryOnly": true
+        "onboardingEligible": true,
+        "recommendationEligible": true,
+        "libraryOnly": false,
+        "narrativeToneException": {
+          "policy": "narrative-tone-exhaustion-v1",
+          "workId": "work-783ea1ebbdf006a7bc03",
+          "inputManifestSha256": "8950d6461505036ea1e121d8fd7ccbfc63d331273389bfa51c5c68fcc7d2f134",
+          "researchSha256": "0ee9e9416752720717bcce66cd81b2d22467aa75ec356985894aca8695622b5f",
+          "groups": [
+            "narrative",
+            "tone"
+          ]
+        }
       },
       "evidence": {
         "metadataConfidence": 0.92,
         "groupingConfidence": 0.96,
-        "sourceAgreement": 0.64
+        "sourceAgreement": 0.64,
+        "annotationReviewedAt": "2026-09-28T10:07:27.719893+00:00"
       }
     },
     {
@@ -181885,11 +182011,41 @@
       "demographic": "shonen",
       "status": "unknown",
       "firstPublishedYear": 2008,
-      "genres": [],
-      "themes": [],
+      "genres": [
+        "comedy"
+      ],
+      "themes": [
+        {
+          "id": "adventure",
+          "centrality": 2,
+          "confidence": 0.72
+        },
+        {
+          "id": "crafting",
+          "centrality": 2,
+          "confidence": 0.72
+        },
+        {
+          "id": "reincarnation",
+          "centrality": 2,
+          "confidence": 0.72
+        },
+        {
+          "id": "school",
+          "centrality": 2,
+          "confidence": 0.72
+        },
+        {
+          "id": "workplace",
+          "centrality": 2,
+          "confidence": 0.72
+        }
+      ],
       "axes": {
         "progression": {
-          "state": "unknown"
+          "state": "known",
+          "value": 2,
+          "confidence": 0.72
         },
         "problemSolving": {
           "state": "unknown"
@@ -181898,22 +182054,32 @@
           "state": "unknown"
         },
         "pacing": {
-          "state": "unknown"
+          "state": "known",
+          "value": 2,
+          "confidence": 0.72
         },
         "mysteryReveal": {
-          "state": "unknown"
+          "state": "known",
+          "value": 2,
+          "confidence": 0.72
         },
         "worldBuilding": {
-          "state": "unknown"
+          "state": "known",
+          "value": 2,
+          "confidence": 0.72
         },
         "characterArcWeight": {
-          "state": "unknown"
+          "state": "known",
+          "value": 2,
+          "confidence": 0.72
         },
         "relationshipStructure": {
           "state": "unknown"
         },
         "comedy": {
-          "state": "unknown"
+          "state": "known",
+          "value": 2,
+          "confidence": 0.72
         },
         "darkness": {
           "state": "unknown"
@@ -181922,7 +182088,9 @@
           "state": "unknown"
         },
         "romance": {
-          "state": "unknown"
+          "state": "known",
+          "value": 2,
+          "confidence": 0.72
         },
         "emotionalWarmth": {
           "state": "unknown"
@@ -181942,14 +182110,25 @@
       },
       "factorScope": "entry_1_3_volumes",
       "eligibility": {
-        "onboardingEligible": false,
-        "recommendationEligible": false,
-        "libraryOnly": true
+        "onboardingEligible": true,
+        "recommendationEligible": true,
+        "libraryOnly": false,
+        "narrativeToneException": {
+          "policy": "narrative-tone-exhaustion-v1",
+          "workId": "work-78efc6b4a5bac434f305",
+          "inputManifestSha256": "7e520873ab94ec798852d29816d4e8af63ddb6082b1bdb96c0afb639c1f27851",
+          "researchSha256": "0f46391c4c00b3406922cb8bbc6b6b1e704d690d2ebbdca702ee048199353d30",
+          "groups": [
+            "narrative",
+            "tone"
+          ]
+        }
       },
       "evidence": {
         "metadataConfidence": 0.92,
         "groupingConfidence": 0.96,
-        "sourceAgreement": 0.64
+        "sourceAgreement": 0.64,
+        "annotationReviewedAt": "2026-09-28T10:07:28.477979+00:00"
       }
     },
     {
@@ -183495,14 +183674,51 @@
       "demographic": "unknown",
       "status": "unknown",
       "firstPublishedYear": 2021,
-      "genres": [],
-      "themes": [],
+      "genres": [
+        "fantasy"
+      ],
+      "themes": [
+        {
+          "id": "exploration",
+          "centrality": 2,
+          "confidence": 0.72
+        },
+        {
+          "id": "historicalReconstruction",
+          "centrality": 2,
+          "confidence": 0.72
+        },
+        {
+          "id": "investigation",
+          "centrality": 2,
+          "confidence": 0.72
+        },
+        {
+          "id": "politics",
+          "centrality": 2,
+          "confidence": 0.72
+        },
+        {
+          "id": "school",
+          "centrality": 2,
+          "confidence": 0.72
+        },
+        {
+          "id": "workplace",
+          "centrality": 2,
+          "confidence": 0.72
+        }
+      ],
       "axes": {
         "progression": {
-          "state": "unknown"
+          "state": "known",
+          "value": 2,
+          "confidence": 0.72
         },
         "problemSolving": {
-          "state": "unknown"
+          "state": "known",
+          "value": 2,
+          "confidence": 0.72
         },
         "strategy": {
           "state": "unknown"
@@ -183514,10 +183730,14 @@
           "state": "unknown"
         },
         "worldBuilding": {
-          "state": "unknown"
+          "state": "known",
+          "value": 2,
+          "confidence": 0.72
         },
         "characterArcWeight": {
-          "state": "unknown"
+          "state": "known",
+          "value": 2,
+          "confidence": 0.72
         },
         "relationshipStructure": {
           "state": "unknown"
@@ -183526,13 +183746,19 @@
           "state": "unknown"
         },
         "darkness": {
-          "state": "unknown"
+          "state": "known",
+          "value": 2,
+          "confidence": 0.72
         },
         "mentalStress": {
-          "state": "unknown"
+          "state": "known",
+          "value": 2,
+          "confidence": 0.72
         },
         "romance": {
-          "state": "unknown"
+          "state": "known",
+          "value": 2,
+          "confidence": 0.72
         },
         "emotionalWarmth": {
           "state": "unknown"
@@ -183552,14 +183778,25 @@
       },
       "factorScope": "entry_1_3_volumes",
       "eligibility": {
-        "onboardingEligible": false,
-        "recommendationEligible": false,
-        "libraryOnly": true
+        "onboardingEligible": true,
+        "recommendationEligible": true,
+        "libraryOnly": false,
+        "narrativeToneException": {
+          "policy": "narrative-tone-exhaustion-v1",
+          "workId": "work-7a10316e34db3b4dd6ca",
+          "inputManifestSha256": "5f6dc7c9d946e2b3476d3d2c7b93a9c816c4783b58fdc5c21e8f01f5c51167af",
+          "researchSha256": "1375f56b4629223c4e4e01203d643fae2f9d15908f2474de7749308ce71d0649",
+          "groups": [
+            "narrative",
+            "tone"
+          ]
+        }
       },
       "evidence": {
         "metadataConfidence": 0.87,
         "groupingConfidence": 0.74,
-        "sourceAgreement": 0.7
+        "sourceAgreement": 0.7,
+        "annotationReviewedAt": "2026-09-28T10:07:29.246441+00:00"
       }
     },
     {
@@ -185495,11 +185732,31 @@
       "demographic": "unknown",
       "status": "unknown",
       "firstPublishedYear": 2016,
-      "genres": [],
-      "themes": [],
+      "genres": [
+        "action"
+      ],
+      "themes": [
+        {
+          "id": "crafting",
+          "centrality": 2,
+          "confidence": 0.72
+        },
+        {
+          "id": "exploration",
+          "centrality": 2,
+          "confidence": 0.72
+        },
+        {
+          "id": "workplace",
+          "centrality": 2,
+          "confidence": 0.72
+        }
+      ],
       "axes": {
         "progression": {
-          "state": "unknown"
+          "state": "known",
+          "value": 2,
+          "confidence": 0.72
         },
         "problemSolving": {
           "state": "unknown"
@@ -185517,19 +185774,27 @@
           "state": "unknown"
         },
         "characterArcWeight": {
-          "state": "unknown"
+          "state": "known",
+          "value": 2,
+          "confidence": 0.72
         },
         "relationshipStructure": {
           "state": "unknown"
         },
         "comedy": {
-          "state": "unknown"
+          "state": "known",
+          "value": 2,
+          "confidence": 0.72
         },
         "darkness": {
-          "state": "unknown"
+          "state": "known",
+          "value": 2,
+          "confidence": 0.72
         },
         "mentalStress": {
-          "state": "unknown"
+          "state": "known",
+          "value": 2,
+          "confidence": 0.72
         },
         "romance": {
           "state": "unknown"
@@ -185552,14 +185817,25 @@
       },
       "factorScope": "entry_1_3_volumes",
       "eligibility": {
-        "onboardingEligible": false,
-        "recommendationEligible": false,
-        "libraryOnly": true
+        "onboardingEligible": true,
+        "recommendationEligible": true,
+        "libraryOnly": false,
+        "narrativeToneException": {
+          "policy": "narrative-tone-exhaustion-v1",
+          "workId": "work-7ba49bc63a0fc0b485ac",
+          "inputManifestSha256": "c78df28a3b13202c55b24ae753fe566d3fc3e01e19533c4899987f3a72a9b0b2",
+          "researchSha256": "3463eacf53095cb073a92f47baeb67790a7d161de8f1f176218f98cd068a9c78",
+          "groups": [
+            "narrative",
+            "tone"
+          ]
+        }
       },
       "evidence": {
         "metadataConfidence": 0.92,
         "groupingConfidence": 0.96,
-        "sourceAgreement": 0.64
+        "sourceAgreement": 0.64,
+        "annotationReviewedAt": "2026-09-28T10:07:29.959605+00:00"
       }
     },
     {
@@ -186130,8 +186406,26 @@
       "demographic": "unknown",
       "status": "unknown",
       "firstPublishedYear": 2015,
-      "genres": [],
-      "themes": [],
+      "genres": [
+        "comedy"
+      ],
+      "themes": [
+        {
+          "id": "crafting",
+          "centrality": 2,
+          "confidence": 0.72
+        },
+        {
+          "id": "school",
+          "centrality": 2,
+          "confidence": 0.72
+        },
+        {
+          "id": "workplace",
+          "centrality": 2,
+          "confidence": 0.72
+        }
+      ],
       "axes": {
         "progression": {
           "state": "unknown"
@@ -186158,13 +186452,19 @@
           "state": "unknown"
         },
         "comedy": {
-          "state": "unknown"
+          "state": "known",
+          "value": 2,
+          "confidence": 0.72
         },
         "darkness": {
-          "state": "unknown"
+          "state": "known",
+          "value": 2,
+          "confidence": 0.72
         },
         "mentalStress": {
-          "state": "unknown"
+          "state": "known",
+          "value": 2,
+          "confidence": 0.72
         },
         "romance": {
           "state": "unknown"
@@ -186187,14 +186487,25 @@
       },
       "factorScope": "entry_1_3_volumes",
       "eligibility": {
-        "onboardingEligible": false,
-        "recommendationEligible": false,
-        "libraryOnly": true
+        "onboardingEligible": true,
+        "recommendationEligible": true,
+        "libraryOnly": false,
+        "narrativeToneException": {
+          "policy": "narrative-tone-exhaustion-v1",
+          "workId": "work-7c144429de8202394d96",
+          "inputManifestSha256": "0c947d0f368b0a82d5ad06d08b1fa56b9c851065aa9669d609a87d35cf1d53db",
+          "researchSha256": "1c2ad8c049f8dd3a647f160f79bcb45e64ef5c699f4eaead1aaba6551b9b0678",
+          "groups": [
+            "narrative",
+            "tone"
+          ]
+        }
       },
       "evidence": {
         "metadataConfidence": 0.92,
         "groupingConfidence": 0.96,
-        "sourceAgreement": 0.64
+        "sourceAgreement": 0.64,
+        "annotationReviewedAt": "2026-09-28T10:07:30.706639+00:00"
       }
     },
     {
@@ -186318,11 +186629,46 @@
       "demographic": "unknown",
       "status": "unknown",
       "firstPublishedYear": 2015,
-      "genres": [],
-      "themes": [],
+      "genres": [
+        "fantasy"
+      ],
+      "themes": [
+        {
+          "id": "cooking",
+          "centrality": 2,
+          "confidence": 0.72
+        },
+        {
+          "id": "exploration",
+          "centrality": 2,
+          "confidence": 0.72
+        },
+        {
+          "id": "foundFamily",
+          "centrality": 2,
+          "confidence": 0.72
+        },
+        {
+          "id": "historicalReconstruction",
+          "centrality": 2,
+          "confidence": 0.72
+        },
+        {
+          "id": "school",
+          "centrality": 2,
+          "confidence": 0.72
+        },
+        {
+          "id": "workplace",
+          "centrality": 2,
+          "confidence": 0.72
+        }
+      ],
       "axes": {
         "progression": {
-          "state": "unknown"
+          "state": "known",
+          "value": 2,
+          "confidence": 0.72
         },
         "problemSolving": {
           "state": "unknown"
@@ -186331,19 +186677,27 @@
           "state": "unknown"
         },
         "pacing": {
-          "state": "unknown"
+          "state": "known",
+          "value": 2,
+          "confidence": 0.72
         },
         "mysteryReveal": {
           "state": "unknown"
         },
         "worldBuilding": {
-          "state": "unknown"
+          "state": "known",
+          "value": 2,
+          "confidence": 0.72
         },
         "characterArcWeight": {
-          "state": "unknown"
+          "state": "known",
+          "value": 2,
+          "confidence": 0.72
         },
         "relationshipStructure": {
-          "state": "unknown"
+          "state": "known",
+          "value": 2,
+          "confidence": 0.72
         },
         "comedy": {
           "state": "unknown"
@@ -186355,10 +186709,14 @@
           "state": "unknown"
         },
         "romance": {
-          "state": "unknown"
+          "state": "known",
+          "value": 2,
+          "confidence": 0.72
         },
         "emotionalWarmth": {
-          "state": "unknown"
+          "state": "known",
+          "value": 2,
+          "confidence": 0.72
         },
         "artRealism": {
           "state": "unknown"
@@ -186375,14 +186733,25 @@
       },
       "factorScope": "entry_1_3_volumes",
       "eligibility": {
-        "onboardingEligible": false,
-        "recommendationEligible": false,
-        "libraryOnly": true
+        "onboardingEligible": true,
+        "recommendationEligible": true,
+        "libraryOnly": false,
+        "narrativeToneException": {
+          "policy": "narrative-tone-exhaustion-v1",
+          "workId": "work-7c5b5b0bbeb484783bcc",
+          "inputManifestSha256": "0a8ef23120142a62dea366d8d0787696b049c06d716253290b98be2f812035b0",
+          "researchSha256": "da0ba04fd901d8e1344ae2dda6df3ca69e528e693d07bff57d06170c0b476e79",
+          "groups": [
+            "narrative",
+            "tone"
+          ]
+        }
       },
       "evidence": {
         "metadataConfidence": 0.92,
         "groupingConfidence": 0.96,
-        "sourceAgreement": 0.64
+        "sourceAgreement": 0.64,
+        "annotationReviewedAt": "2026-09-28T10:07:31.564016+00:00"
       }
     },
     {
@@ -187316,8 +187685,16 @@
       "demographic": "unknown",
       "status": "unknown",
       "firstPublishedYear": 2025,
-      "genres": [],
-      "themes": [],
+      "genres": [
+        "sliceOfLife"
+      ],
+      "themes": [
+        {
+          "id": "cooking",
+          "centrality": 2,
+          "confidence": 0.72
+        }
+      ],
       "axes": {
         "progression": {
           "state": "unknown"
@@ -187338,7 +187715,9 @@
           "state": "unknown"
         },
         "characterArcWeight": {
-          "state": "unknown"
+          "state": "known",
+          "value": 2,
+          "confidence": 0.72
         },
         "relationshipStructure": {
           "state": "unknown"
@@ -187373,14 +187752,25 @@
       },
       "factorScope": "entry_1_3_volumes",
       "eligibility": {
-        "onboardingEligible": false,
-        "recommendationEligible": false,
-        "libraryOnly": true
+        "onboardingEligible": true,
+        "recommendationEligible": true,
+        "libraryOnly": false,
+        "narrativeToneException": {
+          "policy": "narrative-tone-exhaustion-v1",
+          "workId": "work-7cf932ccaf10de06b5e1",
+          "inputManifestSha256": "1600506e02e1d74104b9a8f64f81b750f535fae51d6133778aaefc99c2933fc3",
+          "researchSha256": "376ae7254542088bf17db4861a2de6f9a097043def32e1f82ffeab2c0e5eb961",
+          "groups": [
+            "narrative",
+            "tone"
+          ]
+        }
       },
       "evidence": {
         "metadataConfidence": 0.91,
         "groupingConfidence": 0.74,
-        "sourceAgreement": 0.66
+        "sourceAgreement": 0.66,
+        "annotationReviewedAt": "2026-09-28T10:07:32.292853+00:00"
       }
     },
     {
@@ -188249,11 +188639,31 @@
       "demographic": "unknown",
       "status": "unknown",
       "firstPublishedYear": 2025,
-      "genres": [],
-      "themes": [],
+      "genres": [
+        "fantasy"
+      ],
+      "themes": [
+        {
+          "id": "cooking",
+          "centrality": 2,
+          "confidence": 0.72
+        },
+        {
+          "id": "historicalReconstruction",
+          "centrality": 2,
+          "confidence": 0.72
+        },
+        {
+          "id": "workplace",
+          "centrality": 2,
+          "confidence": 0.72
+        }
+      ],
       "axes": {
         "progression": {
-          "state": "unknown"
+          "state": "known",
+          "value": 2,
+          "confidence": 0.72
         },
         "problemSolving": {
           "state": "unknown"
@@ -188262,16 +188672,22 @@
           "state": "unknown"
         },
         "pacing": {
-          "state": "unknown"
+          "state": "known",
+          "value": 2,
+          "confidence": 0.72
         },
         "mysteryReveal": {
           "state": "unknown"
         },
         "worldBuilding": {
-          "state": "unknown"
+          "state": "known",
+          "value": 2,
+          "confidence": 0.72
         },
         "characterArcWeight": {
-          "state": "unknown"
+          "state": "known",
+          "value": 2,
+          "confidence": 0.72
         },
         "relationshipStructure": {
           "state": "unknown"
@@ -188289,7 +188705,9 @@
           "state": "unknown"
         },
         "emotionalWarmth": {
-          "state": "unknown"
+          "state": "known",
+          "value": 2,
+          "confidence": 0.72
         },
         "artRealism": {
           "state": "unknown"
@@ -188306,14 +188724,25 @@
       },
       "factorScope": "entry_1_3_volumes",
       "eligibility": {
-        "onboardingEligible": false,
-        "recommendationEligible": false,
-        "libraryOnly": true
+        "onboardingEligible": true,
+        "recommendationEligible": true,
+        "libraryOnly": false,
+        "narrativeToneException": {
+          "policy": "narrative-tone-exhaustion-v1",
+          "workId": "work-7da78d6e23848a723768",
+          "inputManifestSha256": "a92d5e6e3b1ace3597d0617f4aa777f95fd844d531fd9fcccc3bd9e41f18c90f",
+          "researchSha256": "eb1ff910442924372c517e9b327e58d462b7b2d814ce10e957fb80beddd174ad",
+          "groups": [
+            "narrative",
+            "tone"
+          ]
+        }
       },
       "evidence": {
         "metadataConfidence": 0.91,
         "groupingConfidence": 0.74,
-        "sourceAgreement": 0.66
+        "sourceAgreement": 0.66,
+        "annotationReviewedAt": "2026-09-28T10:07:32.998482+00:00"
       }
     },
     {
@@ -188754,8 +189183,41 @@
       "demographic": "unknown",
       "status": "unknown",
       "firstPublishedYear": 2015,
-      "genres": [],
-      "themes": [],
+      "genres": [
+        "fantasy"
+      ],
+      "themes": [
+        {
+          "id": "adventure",
+          "centrality": 2,
+          "confidence": 0.72
+        },
+        {
+          "id": "foundFamily",
+          "centrality": 2,
+          "confidence": 0.72
+        },
+        {
+          "id": "reincarnation",
+          "centrality": 2,
+          "confidence": 0.72
+        },
+        {
+          "id": "school",
+          "centrality": 2,
+          "confidence": 0.72
+        },
+        {
+          "id": "war",
+          "centrality": 2,
+          "confidence": 0.72
+        },
+        {
+          "id": "workplace",
+          "centrality": 2,
+          "confidence": 0.72
+        }
+      ],
       "axes": {
         "progression": {
           "state": "unknown"
@@ -188773,28 +189235,42 @@
           "state": "unknown"
         },
         "worldBuilding": {
-          "state": "unknown"
+          "state": "known",
+          "value": 2,
+          "confidence": 0.72
         },
         "characterArcWeight": {
-          "state": "unknown"
+          "state": "known",
+          "value": 2,
+          "confidence": 0.72
         },
         "relationshipStructure": {
-          "state": "unknown"
+          "state": "known",
+          "value": 2,
+          "confidence": 0.72
         },
         "comedy": {
           "state": "unknown"
         },
         "darkness": {
-          "state": "unknown"
+          "state": "known",
+          "value": 2,
+          "confidence": 0.72
         },
         "mentalStress": {
-          "state": "unknown"
+          "state": "known",
+          "value": 2,
+          "confidence": 0.72
         },
         "romance": {
-          "state": "unknown"
+          "state": "known",
+          "value": 2,
+          "confidence": 0.72
         },
         "emotionalWarmth": {
-          "state": "unknown"
+          "state": "known",
+          "value": 2,
+          "confidence": 0.72
         },
         "artRealism": {
           "state": "unknown"
@@ -188811,14 +189287,25 @@
       },
       "factorScope": "entry_1_3_volumes",
       "eligibility": {
-        "onboardingEligible": false,
-        "recommendationEligible": false,
-        "libraryOnly": true
+        "onboardingEligible": true,
+        "recommendationEligible": true,
+        "libraryOnly": false,
+        "narrativeToneException": {
+          "policy": "narrative-tone-exhaustion-v1",
+          "workId": "work-7e10751482953bd7620b",
+          "inputManifestSha256": "ea96c0e67bca5a5dad4e9b35ba4acc3a92415302cd747be857dd5be991f8ac66",
+          "researchSha256": "14c8b372f44d7d219f732341b421882d922c748dc956414f9855d49c2f6bd9fd",
+          "groups": [
+            "narrative",
+            "tone"
+          ]
+        }
       },
       "evidence": {
         "metadataConfidence": 0.92,
         "groupingConfidence": 0.96,
-        "sourceAgreement": 0.64
+        "sourceAgreement": 0.64,
+        "annotationReviewedAt": "2026-09-28T10:07:33.907115+00:00"
       }
     },
     {
@@ -189391,11 +189878,46 @@
       "demographic": "unknown",
       "status": "unknown",
       "firstPublishedYear": 2024,
-      "genres": [],
-      "themes": [],
+      "genres": [
+        "action"
+      ],
+      "themes": [
+        {
+          "id": "adventure",
+          "centrality": 2,
+          "confidence": 0.72
+        },
+        {
+          "id": "combat",
+          "centrality": 2,
+          "confidence": 0.72
+        },
+        {
+          "id": "cooking",
+          "centrality": 2,
+          "confidence": 0.72
+        },
+        {
+          "id": "exploration",
+          "centrality": 2,
+          "confidence": 0.72
+        },
+        {
+          "id": "historicalReconstruction",
+          "centrality": 2,
+          "confidence": 0.72
+        },
+        {
+          "id": "workplace",
+          "centrality": 2,
+          "confidence": 0.72
+        }
+      ],
       "axes": {
         "progression": {
-          "state": "unknown"
+          "state": "known",
+          "value": 2,
+          "confidence": 0.72
         },
         "problemSolving": {
           "state": "unknown"
@@ -189404,31 +189926,45 @@
           "state": "unknown"
         },
         "pacing": {
-          "state": "unknown"
+          "state": "known",
+          "value": 2,
+          "confidence": 0.72
         },
         "mysteryReveal": {
           "state": "unknown"
         },
         "worldBuilding": {
-          "state": "unknown"
+          "state": "known",
+          "value": 2,
+          "confidence": 0.72
         },
         "characterArcWeight": {
-          "state": "unknown"
+          "state": "known",
+          "value": 2,
+          "confidence": 0.72
         },
         "relationshipStructure": {
           "state": "unknown"
         },
         "comedy": {
-          "state": "unknown"
+          "state": "known",
+          "value": 2,
+          "confidence": 0.72
         },
         "darkness": {
-          "state": "unknown"
+          "state": "known",
+          "value": 2,
+          "confidence": 0.72
         },
         "mentalStress": {
-          "state": "unknown"
+          "state": "known",
+          "value": 2,
+          "confidence": 0.72
         },
         "romance": {
-          "state": "unknown"
+          "state": "known",
+          "value": 2,
+          "confidence": 0.72
         },
         "emotionalWarmth": {
           "state": "unknown"
@@ -189448,14 +189984,25 @@
       },
       "factorScope": "entry_1_3_volumes",
       "eligibility": {
-        "onboardingEligible": false,
-        "recommendationEligible": false,
-        "libraryOnly": true
+        "onboardingEligible": true,
+        "recommendationEligible": true,
+        "libraryOnly": false,
+        "narrativeToneException": {
+          "policy": "narrative-tone-exhaustion-v1",
+          "workId": "work-7ea5d1bf06e3d5ed6620",
+          "inputManifestSha256": "ab2549bc95354fee34508aa5517ffed4b4c9b080a0e912d05f68b4aa983b1c7f",
+          "researchSha256": "9fa0b482b8eba8dc310aaf94530da924d0ae970c66f03060f8ac59c2e07bb36a",
+          "groups": [
+            "narrative",
+            "tone"
+          ]
+        }
       },
       "evidence": {
         "metadataConfidence": 0.87,
         "groupingConfidence": 0.74,
-        "sourceAgreement": 0.61
+        "sourceAgreement": 0.61,
+        "annotationReviewedAt": "2026-09-28T10:07:34.641217+00:00"
       }
     },
     {
@@ -190036,11 +190583,36 @@
       "demographic": "unknown",
       "status": "unknown",
       "firstPublishedYear": 2012,
-      "genres": [],
-      "themes": [],
+      "genres": [
+        "action"
+      ],
+      "themes": [
+        {
+          "id": "crafting",
+          "centrality": 2,
+          "confidence": 0.72
+        },
+        {
+          "id": "exploration",
+          "centrality": 2,
+          "confidence": 0.72
+        },
+        {
+          "id": "school",
+          "centrality": 2,
+          "confidence": 0.72
+        },
+        {
+          "id": "workplace",
+          "centrality": 2,
+          "confidence": 0.72
+        }
+      ],
       "axes": {
         "progression": {
-          "state": "unknown"
+          "state": "known",
+          "value": 2,
+          "confidence": 0.72
         },
         "problemSolving": {
           "state": "unknown"
@@ -190055,22 +190627,30 @@
           "state": "unknown"
         },
         "worldBuilding": {
-          "state": "unknown"
+          "state": "known",
+          "value": 2,
+          "confidence": 0.72
         },
         "characterArcWeight": {
-          "state": "unknown"
+          "state": "known",
+          "value": 2,
+          "confidence": 0.72
         },
         "relationshipStructure": {
           "state": "unknown"
         },
         "comedy": {
-          "state": "unknown"
+          "state": "known",
+          "value": 2,
+          "confidence": 0.72
         },
         "darkness": {
           "state": "unknown"
         },
         "mentalStress": {
-          "state": "unknown"
+          "state": "known",
+          "value": 2,
+          "confidence": 0.72
         },
         "romance": {
           "state": "unknown"
@@ -190093,14 +190673,25 @@
       },
       "factorScope": "entry_1_3_volumes",
       "eligibility": {
-        "onboardingEligible": false,
-        "recommendationEligible": false,
-        "libraryOnly": true
+        "onboardingEligible": true,
+        "recommendationEligible": true,
+        "libraryOnly": false,
+        "narrativeToneException": {
+          "policy": "narrative-tone-exhaustion-v1",
+          "workId": "work-7f335772a47843b961fd",
+          "inputManifestSha256": "aa6eeb2ef64663869daa75640c0438d83dc52dfd64afb12ce9f51136e4df59f8",
+          "researchSha256": "25d3fdf8de471af87f54f71aedcd45dffa3e9b924b90d6aac6accf191f073974",
+          "groups": [
+            "narrative",
+            "tone"
+          ]
+        }
       },
       "evidence": {
         "metadataConfidence": 0.92,
         "groupingConfidence": 0.96,
-        "sourceAgreement": 0.69
+        "sourceAgreement": 0.69,
+        "annotationReviewedAt": "2026-09-28T10:07:35.424456+00:00"
       }
     },
     {
@@ -191896,8 +192487,21 @@
       "demographic": "unknown",
       "status": "unknown",
       "firstPublishedYear": 2016,
-      "genres": [],
-      "themes": [],
+      "genres": [
+        "comedy"
+      ],
+      "themes": [
+        {
+          "id": "school",
+          "centrality": 2,
+          "confidence": 0.72
+        },
+        {
+          "id": "workplace",
+          "centrality": 2,
+          "confidence": 0.72
+        }
+      ],
       "axes": {
         "progression": {
           "state": "unknown"
@@ -191909,7 +192513,9 @@
           "state": "unknown"
         },
         "pacing": {
-          "state": "unknown"
+          "state": "known",
+          "value": 2,
+          "confidence": 0.72
         },
         "mysteryReveal": {
           "state": "unknown"
@@ -191918,13 +192524,17 @@
           "state": "unknown"
         },
         "characterArcWeight": {
-          "state": "unknown"
+          "state": "known",
+          "value": 2,
+          "confidence": 0.72
         },
         "relationshipStructure": {
           "state": "unknown"
         },
         "comedy": {
-          "state": "unknown"
+          "state": "known",
+          "value": 2,
+          "confidence": 0.72
         },
         "darkness": {
           "state": "unknown"
@@ -191933,7 +192543,9 @@
           "state": "unknown"
         },
         "romance": {
-          "state": "unknown"
+          "state": "known",
+          "value": 2,
+          "confidence": 0.72
         },
         "emotionalWarmth": {
           "state": "unknown"
@@ -191953,14 +192565,25 @@
       },
       "factorScope": "entry_1_3_volumes",
       "eligibility": {
-        "onboardingEligible": false,
-        "recommendationEligible": false,
-        "libraryOnly": true
+        "onboardingEligible": true,
+        "recommendationEligible": true,
+        "libraryOnly": false,
+        "narrativeToneException": {
+          "policy": "narrative-tone-exhaustion-v1",
+          "workId": "work-80bb2935a2db8c0e6185",
+          "inputManifestSha256": "33a6ce176c32ddd60d2ac83140265e141a7b6839c29237636b7f1bd2cdcaf9a8",
+          "researchSha256": "6fa5c71b9920afbe534d079300aab4679ee9d8d5e0ef95819eb2865c40b644b6",
+          "groups": [
+            "narrative",
+            "tone"
+          ]
+        }
       },
       "evidence": {
         "metadataConfidence": 0.92,
         "groupingConfidence": 0.96,
-        "sourceAgreement": 0.64
+        "sourceAgreement": 0.64,
+        "annotationReviewedAt": "2026-09-28T10:07:36.225726+00:00"
       }
     },
     {
@@ -192574,8 +193197,16 @@
       "demographic": "shojo",
       "status": "unknown",
       "firstPublishedYear": 2011,
-      "genres": [],
-      "themes": [],
+      "genres": [
+        "romance"
+      ],
+      "themes": [
+        {
+          "id": "workplace",
+          "centrality": 2,
+          "confidence": 0.72
+        }
+      ],
       "axes": {
         "progression": {
           "state": "unknown"
@@ -192593,7 +193224,9 @@
           "state": "unknown"
         },
         "worldBuilding": {
-          "state": "unknown"
+          "state": "known",
+          "value": 2,
+          "confidence": 0.72
         },
         "characterArcWeight": {
           "state": "unknown"
@@ -192611,7 +193244,9 @@
           "state": "unknown"
         },
         "romance": {
-          "state": "unknown"
+          "state": "known",
+          "value": 2,
+          "confidence": 0.72
         },
         "emotionalWarmth": {
           "state": "unknown"
@@ -192631,14 +193266,25 @@
       },
       "factorScope": "entry_1_3_volumes",
       "eligibility": {
-        "onboardingEligible": false,
-        "recommendationEligible": false,
-        "libraryOnly": true
+        "onboardingEligible": true,
+        "recommendationEligible": true,
+        "libraryOnly": false,
+        "narrativeToneException": {
+          "policy": "narrative-tone-exhaustion-v1",
+          "workId": "work-8132ae5e7816f6b9a7bd",
+          "inputManifestSha256": "cca4bc2506883d5ef350d13d4cef8b666a2e3586a25a4f971633a055164a5bb1",
+          "researchSha256": "79feb56c3f943e7449705b551d4a8363845987bc1476ed141b423ac76596a68d",
+          "groups": [
+            "narrative",
+            "tone"
+          ]
+        }
       },
       "evidence": {
         "metadataConfidence": 0.92,
         "groupingConfidence": 0.96,
-        "sourceAgreement": 0.69
+        "sourceAgreement": 0.69,
+        "annotationReviewedAt": "2026-09-28T10:07:36.991567+00:00"
       }
     },
     {
@@ -192730,11 +193376,36 @@
       "demographic": "seinen",
       "status": "unknown",
       "firstPublishedYear": 2015,
-      "genres": [],
-      "themes": [],
+      "genres": [
+        "fantasy"
+      ],
+      "themes": [
+        {
+          "id": "cooking",
+          "centrality": 2,
+          "confidence": 0.72
+        },
+        {
+          "id": "foundFamily",
+          "centrality": 2,
+          "confidence": 0.72
+        },
+        {
+          "id": "historicalReconstruction",
+          "centrality": 2,
+          "confidence": 0.72
+        },
+        {
+          "id": "workplace",
+          "centrality": 2,
+          "confidence": 0.72
+        }
+      ],
       "axes": {
         "progression": {
-          "state": "unknown"
+          "state": "known",
+          "value": 2,
+          "confidence": 0.72
         },
         "problemSolving": {
           "state": "unknown"
@@ -192743,19 +193414,27 @@
           "state": "unknown"
         },
         "pacing": {
-          "state": "unknown"
+          "state": "known",
+          "value": 2,
+          "confidence": 0.72
         },
         "mysteryReveal": {
-          "state": "unknown"
+          "state": "known",
+          "value": 2,
+          "confidence": 0.72
         },
         "worldBuilding": {
-          "state": "unknown"
+          "state": "known",
+          "value": 2,
+          "confidence": 0.72
         },
         "characterArcWeight": {
           "state": "unknown"
         },
         "relationshipStructure": {
-          "state": "unknown"
+          "state": "known",
+          "value": 2,
+          "confidence": 0.72
         },
         "comedy": {
           "state": "unknown"
@@ -192767,10 +193446,14 @@
           "state": "unknown"
         },
         "romance": {
-          "state": "unknown"
+          "state": "known",
+          "value": 2,
+          "confidence": 0.72
         },
         "emotionalWarmth": {
-          "state": "unknown"
+          "state": "known",
+          "value": 2,
+          "confidence": 0.72
         },
         "artRealism": {
           "state": "unknown"
@@ -192787,14 +193470,25 @@
       },
       "factorScope": "entry_1_3_volumes",
       "eligibility": {
-        "onboardingEligible": false,
-        "recommendationEligible": false,
-        "libraryOnly": true
+        "onboardingEligible": true,
+        "recommendationEligible": true,
+        "libraryOnly": false,
+        "narrativeToneException": {
+          "policy": "narrative-tone-exhaustion-v1",
+          "workId": "work-81375f4a498cf819bfcc",
+          "inputManifestSha256": "0a1b88a85814c85d9e21c59c57bce3a4020e2dce8995ef702bb425c9c824912f",
+          "researchSha256": "579006567453ddcf921c468173ddd375bd770aa44221b56c0c520c214ca919f3",
+          "groups": [
+            "narrative",
+            "tone"
+          ]
+        }
       },
       "evidence": {
         "metadataConfidence": 0.92,
         "groupingConfidence": 0.96,
-        "sourceAgreement": 0.64
+        "sourceAgreement": 0.64,
+        "annotationReviewedAt": "2026-09-28T10:07:37.745982+00:00"
       }
     },
     {
@@ -195783,11 +196477,31 @@
       "demographic": "unknown",
       "status": "unknown",
       "firstPublishedYear": 2022,
-      "genres": [],
-      "themes": [],
+      "genres": [
+        "romance"
+      ],
+      "themes": [
+        {
+          "id": "exploration",
+          "centrality": 2,
+          "confidence": 0.72
+        },
+        {
+          "id": "school",
+          "centrality": 2,
+          "confidence": 0.72
+        },
+        {
+          "id": "workplace",
+          "centrality": 2,
+          "confidence": 0.72
+        }
+      ],
       "axes": {
         "progression": {
-          "state": "unknown"
+          "state": "known",
+          "value": 2,
+          "confidence": 0.72
         },
         "problemSolving": {
           "state": "unknown"
@@ -195820,7 +196534,9 @@
           "state": "unknown"
         },
         "romance": {
-          "state": "unknown"
+          "state": "known",
+          "value": 2,
+          "confidence": 0.72
         },
         "emotionalWarmth": {
           "state": "unknown"
@@ -195840,14 +196556,25 @@
       },
       "factorScope": "entry_1_3_volumes",
       "eligibility": {
-        "onboardingEligible": false,
-        "recommendationEligible": false,
-        "libraryOnly": true
+        "onboardingEligible": true,
+        "recommendationEligible": true,
+        "libraryOnly": false,
+        "narrativeToneException": {
+          "policy": "narrative-tone-exhaustion-v1",
+          "workId": "work-849b5175c00292881b30",
+          "inputManifestSha256": "01108725ab9a71c18a15124cb4ddba2a1a6069ae55f85d1c3186ddd93839c2cf",
+          "researchSha256": "bfdb9ccc307a0bb302e42d2b180a9956e8483b596776ee443cdf6ead1dcea58d",
+          "groups": [
+            "narrative",
+            "tone"
+          ]
+        }
       },
       "evidence": {
         "metadataConfidence": 0.87,
         "groupingConfidence": 0.74,
-        "sourceAgreement": 0.66
+        "sourceAgreement": 0.66,
+        "annotationReviewedAt": "2026-09-28T10:07:38.590370+00:00"
       }
     },
     {
@@ -198905,8 +199632,16 @@
       "demographic": "unknown",
       "status": "unknown",
       "firstPublishedYear": 2024,
-      "genres": [],
-      "themes": [],
+      "genres": [
+        "fantasy"
+      ],
+      "themes": [
+        {
+          "id": "workplace",
+          "centrality": 2,
+          "confidence": 0.72
+        }
+      ],
       "axes": {
         "progression": {
           "state": "unknown"
@@ -198924,10 +199659,14 @@
           "state": "unknown"
         },
         "worldBuilding": {
-          "state": "unknown"
+          "state": "known",
+          "value": 2,
+          "confidence": 0.72
         },
         "characterArcWeight": {
-          "state": "unknown"
+          "state": "known",
+          "value": 2,
+          "confidence": 0.72
         },
         "relationshipStructure": {
           "state": "unknown"
@@ -198962,14 +199701,25 @@
       },
       "factorScope": "entry_1_3_volumes",
       "eligibility": {
-        "onboardingEligible": false,
-        "recommendationEligible": false,
-        "libraryOnly": true
+        "onboardingEligible": true,
+        "recommendationEligible": true,
+        "libraryOnly": false,
+        "narrativeToneException": {
+          "policy": "narrative-tone-exhaustion-v1",
+          "workId": "work-87192df3959113567065",
+          "inputManifestSha256": "c6e653d049e19a9998d2747774dbe3ec70614b39e69b4c50b0138204f9d99be6",
+          "researchSha256": "8f29c61c6253492c32a2f5c9fde2a430fe9210de73323bb8a1f518928fc1310e",
+          "groups": [
+            "narrative",
+            "tone"
+          ]
+        }
       },
       "evidence": {
         "metadataConfidence": 0.87,
         "groupingConfidence": 0.74,
-        "sourceAgreement": 0.66
+        "sourceAgreement": 0.66,
+        "annotationReviewedAt": "2026-09-28T10:07:39.557898+00:00"
       }
     },
     {
@@ -199307,8 +200057,21 @@
       "demographic": "unknown",
       "status": "unknown",
       "firstPublishedYear": 2025,
-      "genres": [],
-      "themes": [],
+      "genres": [
+        "comedy"
+      ],
+      "themes": [
+        {
+          "id": "school",
+          "centrality": 2,
+          "confidence": 0.72
+        },
+        {
+          "id": "workplace",
+          "centrality": 2,
+          "confidence": 0.72
+        }
+      ],
       "axes": {
         "progression": {
           "state": "unknown"
@@ -199326,7 +200089,9 @@
           "state": "unknown"
         },
         "worldBuilding": {
-          "state": "unknown"
+          "state": "known",
+          "value": 2,
+          "confidence": 0.72
         },
         "characterArcWeight": {
           "state": "unknown"
@@ -199335,13 +200100,17 @@
           "state": "unknown"
         },
         "comedy": {
-          "state": "unknown"
+          "state": "known",
+          "value": 2,
+          "confidence": 0.72
         },
         "darkness": {
           "state": "unknown"
         },
         "mentalStress": {
-          "state": "unknown"
+          "state": "known",
+          "value": 2,
+          "confidence": 0.72
         },
         "romance": {
           "state": "unknown"
@@ -199364,14 +200133,25 @@
       },
       "factorScope": "entry_1_3_volumes",
       "eligibility": {
-        "onboardingEligible": false,
-        "recommendationEligible": false,
-        "libraryOnly": true
+        "onboardingEligible": true,
+        "recommendationEligible": true,
+        "libraryOnly": false,
+        "narrativeToneException": {
+          "policy": "narrative-tone-exhaustion-v1",
+          "workId": "work-875c3d459c8dcfde43ff",
+          "inputManifestSha256": "6fececcdee9b54f2ea1a66acfbf7613d8c9a29142efa7721e9ff0c73f8152f58",
+          "researchSha256": "e6f7e46bae296268fb98f827c4630f5f55de58f5e00c94a2a553110266a87be1",
+          "groups": [
+            "narrative",
+            "tone"
+          ]
+        }
       },
       "evidence": {
         "metadataConfidence": 0.91,
         "groupingConfidence": 0.74,
-        "sourceAgreement": 0.66
+        "sourceAgreement": 0.66,
+        "annotationReviewedAt": "2026-09-28T10:07:40.514337+00:00"
       }
     },
     {
@@ -199498,11 +200278,36 @@
       "demographic": "unknown",
       "status": "unknown",
       "firstPublishedYear": 2017,
-      "genres": [],
-      "themes": [],
+      "genres": [
+        "comedy"
+      ],
+      "themes": [
+        {
+          "id": "cooking",
+          "centrality": 2,
+          "confidence": 0.72
+        },
+        {
+          "id": "crafting",
+          "centrality": 2,
+          "confidence": 0.72
+        },
+        {
+          "id": "historicalReconstruction",
+          "centrality": 2,
+          "confidence": 0.72
+        },
+        {
+          "id": "school",
+          "centrality": 2,
+          "confidence": 0.72
+        }
+      ],
       "axes": {
         "progression": {
-          "state": "unknown"
+          "state": "known",
+          "value": 2,
+          "confidence": 0.72
         },
         "problemSolving": {
           "state": "unknown"
@@ -199511,13 +200316,17 @@
           "state": "unknown"
         },
         "pacing": {
-          "state": "unknown"
+          "state": "known",
+          "value": 2,
+          "confidence": 0.72
         },
         "mysteryReveal": {
           "state": "unknown"
         },
         "worldBuilding": {
-          "state": "unknown"
+          "state": "known",
+          "value": 2,
+          "confidence": 0.72
         },
         "characterArcWeight": {
           "state": "unknown"
@@ -199526,7 +200335,9 @@
           "state": "unknown"
         },
         "comedy": {
-          "state": "unknown"
+          "state": "known",
+          "value": 2,
+          "confidence": 0.72
         },
         "darkness": {
           "state": "unknown"
@@ -199535,7 +200346,9 @@
           "state": "unknown"
         },
         "romance": {
-          "state": "unknown"
+          "state": "known",
+          "value": 2,
+          "confidence": 0.72
         },
         "emotionalWarmth": {
           "state": "unknown"
@@ -199555,14 +200368,25 @@
       },
       "factorScope": "entry_1_3_volumes",
       "eligibility": {
-        "onboardingEligible": false,
-        "recommendationEligible": false,
-        "libraryOnly": true
+        "onboardingEligible": true,
+        "recommendationEligible": true,
+        "libraryOnly": false,
+        "narrativeToneException": {
+          "policy": "narrative-tone-exhaustion-v1",
+          "workId": "work-878df9a0f964a9d3973b",
+          "inputManifestSha256": "d3094e81d6ffb73a240bd53fd216c80fd5781146b042a117bf5bdea5f03dce69",
+          "researchSha256": "80bbe5c24f3a78adbed0224f38fc4cf5a29e08a8ee0f72c7dd8566be48b46bac",
+          "groups": [
+            "narrative",
+            "tone"
+          ]
+        }
       },
       "evidence": {
         "metadataConfidence": 0.92,
         "groupingConfidence": 0.96,
-        "sourceAgreement": 0.64
+        "sourceAgreement": 0.64,
+        "annotationReviewedAt": "2026-09-28T10:07:41.483566+00:00"
       }
     },
     {
@@ -200254,11 +201078,36 @@
       "demographic": "unknown",
       "status": "unknown",
       "firstPublishedYear": 2002,
-      "genres": [],
-      "themes": [],
+      "genres": [
+        "action"
+      ],
+      "themes": [
+        {
+          "id": "exploration",
+          "centrality": 2,
+          "confidence": 0.72
+        },
+        {
+          "id": "historicalReconstruction",
+          "centrality": 2,
+          "confidence": 0.72
+        },
+        {
+          "id": "war",
+          "centrality": 2,
+          "confidence": 0.72
+        },
+        {
+          "id": "workplace",
+          "centrality": 2,
+          "confidence": 0.72
+        }
+      ],
       "axes": {
         "progression": {
-          "state": "unknown"
+          "state": "known",
+          "value": 2,
+          "confidence": 0.72
         },
         "problemSolving": {
           "state": "unknown"
@@ -200285,10 +201134,14 @@
           "state": "unknown"
         },
         "darkness": {
-          "state": "unknown"
+          "state": "known",
+          "value": 2,
+          "confidence": 0.72
         },
         "mentalStress": {
-          "state": "unknown"
+          "state": "known",
+          "value": 2,
+          "confidence": 0.72
         },
         "romance": {
           "state": "unknown"
@@ -200311,14 +201164,25 @@
       },
       "factorScope": "entry_1_3_volumes",
       "eligibility": {
-        "onboardingEligible": false,
-        "recommendationEligible": false,
-        "libraryOnly": true
+        "onboardingEligible": true,
+        "recommendationEligible": true,
+        "libraryOnly": false,
+        "narrativeToneException": {
+          "policy": "narrative-tone-exhaustion-v1",
+          "workId": "work-88a055268a36b492c1e7",
+          "inputManifestSha256": "f1846df3a598596cbe38813df76f86500417937c89c968eaa7446702da72e6b4",
+          "researchSha256": "66d6e667cbe08f624068eecf7830fca478f4964ba654df8ae033e10e54674438",
+          "groups": [
+            "narrative",
+            "tone"
+          ]
+        }
       },
       "evidence": {
         "metadataConfidence": 0.92,
         "groupingConfidence": 0.96,
-        "sourceAgreement": 0.64
+        "sourceAgreement": 0.64,
+        "annotationReviewedAt": "2026-09-28T10:07:42.237348+00:00"
       }
     },
     {
@@ -201344,8 +202208,26 @@
       "demographic": "unknown",
       "status": "unknown",
       "firstPublishedYear": 2024,
-      "genres": [],
-      "themes": [],
+      "genres": [
+        "comedy"
+      ],
+      "themes": [
+        {
+          "id": "historicalReconstruction",
+          "centrality": 2,
+          "confidence": 0.72
+        },
+        {
+          "id": "school",
+          "centrality": 2,
+          "confidence": 0.72
+        },
+        {
+          "id": "workplace",
+          "centrality": 2,
+          "confidence": 0.72
+        }
+      ],
       "axes": {
         "progression": {
           "state": "unknown"
@@ -201360,28 +202242,40 @@
           "state": "unknown"
         },
         "mysteryReveal": {
-          "state": "unknown"
+          "state": "known",
+          "value": 2,
+          "confidence": 0.72
         },
         "worldBuilding": {
           "state": "unknown"
         },
         "characterArcWeight": {
-          "state": "unknown"
+          "state": "known",
+          "value": 2,
+          "confidence": 0.72
         },
         "relationshipStructure": {
           "state": "unknown"
         },
         "comedy": {
-          "state": "unknown"
+          "state": "known",
+          "value": 2,
+          "confidence": 0.72
         },
         "darkness": {
-          "state": "unknown"
+          "state": "known",
+          "value": 2,
+          "confidence": 0.72
         },
         "mentalStress": {
-          "state": "unknown"
+          "state": "known",
+          "value": 2,
+          "confidence": 0.72
         },
         "romance": {
-          "state": "unknown"
+          "state": "known",
+          "value": 2,
+          "confidence": 0.72
         },
         "emotionalWarmth": {
           "state": "unknown"
@@ -201401,14 +202295,25 @@
       },
       "factorScope": "entry_1_3_volumes",
       "eligibility": {
-        "onboardingEligible": false,
-        "recommendationEligible": false,
-        "libraryOnly": true
+        "onboardingEligible": true,
+        "recommendationEligible": true,
+        "libraryOnly": false,
+        "narrativeToneException": {
+          "policy": "narrative-tone-exhaustion-v1",
+          "workId": "work-898ad34a5fe2a46c43af",
+          "inputManifestSha256": "f6282d1fd1102e80592e472ef595961773ac11f78b7399b237e5f7b4addfcce7",
+          "researchSha256": "28af3e24af497751a9658cec87a8042e35f2d2c4ea41c597384ff3cb26705c36",
+          "groups": [
+            "narrative",
+            "tone"
+          ]
+        }
       },
       "evidence": {
         "metadataConfidence": 0.87,
         "groupingConfidence": 0.74,
-        "sourceAgreement": 0.61
+        "sourceAgreement": 0.61,
+        "annotationReviewedAt": "2026-09-28T10:07:42.991774+00:00"
       }
     },
     {
@@ -202988,18 +203893,38 @@
       "status": "unknown",
       "firstPublishedYear": 2020,
       "genres": [
-        "historical"
+        "fantasy"
       ],
       "themes": [
         {
-          "id": "politics",
-          "centrality": 1,
-          "confidence": 0.88
+          "id": "cooking",
+          "centrality": 2,
+          "confidence": 0.72
+        },
+        {
+          "id": "crafting",
+          "centrality": 2,
+          "confidence": 0.72
+        },
+        {
+          "id": "historicalReconstruction",
+          "centrality": 2,
+          "confidence": 0.72
+        },
+        {
+          "id": "school",
+          "centrality": 2,
+          "confidence": 0.72
         },
         {
           "id": "war",
           "centrality": 2,
-          "confidence": 0.99
+          "confidence": 0.72
+        },
+        {
+          "id": "workplace",
+          "centrality": 2,
+          "confidence": 0.72
         }
       ],
       "axes": {
@@ -203007,35 +203932,41 @@
           "state": "unknown"
         },
         "problemSolving": {
-          "state": "unknown"
+          "state": "known",
+          "value": 2,
+          "confidence": 0.72
         },
         "strategy": {
           "state": "unknown"
         },
         "pacing": {
-          "state": "unknown"
+          "state": "known",
+          "value": 2,
+          "confidence": 0.72
         },
         "mysteryReveal": {
           "state": "unknown"
         },
         "worldBuilding": {
-          "state": "unknown"
+          "state": "known",
+          "value": 2,
+          "confidence": 0.72
         },
         "characterArcWeight": {
-          "state": "unknown"
+          "state": "known",
+          "value": 2,
+          "confidence": 0.72
         },
         "relationshipStructure": {
           "state": "unknown"
         },
         "comedy": {
-          "state": "known",
-          "value": 2,
-          "confidence": 0.94
+          "state": "unknown"
         },
         "darkness": {
           "state": "known",
-          "value": 4,
-          "confidence": 0.98
+          "value": 2,
+          "confidence": 0.72
         },
         "mentalStress": {
           "state": "unknown"
@@ -203061,14 +203992,25 @@
       },
       "factorScope": "entry_1_3_volumes",
       "eligibility": {
-        "onboardingEligible": false,
-        "recommendationEligible": false,
-        "libraryOnly": true
+        "onboardingEligible": true,
+        "recommendationEligible": true,
+        "libraryOnly": false,
+        "narrativeToneException": {
+          "policy": "narrative-tone-exhaustion-v1",
+          "workId": "work-8b1163d46bac30d2929a",
+          "inputManifestSha256": "f8ac72708da5f203ba064821eced0a4f1ca6acaa7ddb8a3e42885b6f5adda3df",
+          "researchSha256": "0ce5c2039656025fc7bd6fdbf4c6f3ece22626a73a7c55dc632726e856f1ca3f",
+          "groups": [
+            "narrative",
+            "tone"
+          ]
+        }
       },
       "evidence": {
         "metadataConfidence": 0.92,
         "groupingConfidence": 0.96,
-        "sourceAgreement": 0.64
+        "sourceAgreement": 0.64,
+        "annotationReviewedAt": "2026-09-28T10:07:43.762669+00:00"
       }
     },
     {
@@ -204723,11 +205665,46 @@
       "demographic": "unknown",
       "status": "unknown",
       "firstPublishedYear": 2008,
-      "genres": [],
-      "themes": [],
+      "genres": [
+        "comedy"
+      ],
+      "themes": [
+        {
+          "id": "adventure",
+          "centrality": 2,
+          "confidence": 0.72
+        },
+        {
+          "id": "crafting",
+          "centrality": 2,
+          "confidence": 0.72
+        },
+        {
+          "id": "exploration",
+          "centrality": 2,
+          "confidence": 0.72
+        },
+        {
+          "id": "historicalReconstruction",
+          "centrality": 2,
+          "confidence": 0.72
+        },
+        {
+          "id": "politics",
+          "centrality": 2,
+          "confidence": 0.72
+        },
+        {
+          "id": "school",
+          "centrality": 2,
+          "confidence": 0.72
+        }
+      ],
       "axes": {
         "progression": {
-          "state": "unknown"
+          "state": "known",
+          "value": 2,
+          "confidence": 0.72
         },
         "problemSolving": {
           "state": "unknown"
@@ -204736,22 +205713,32 @@
           "state": "unknown"
         },
         "pacing": {
-          "state": "unknown"
+          "state": "known",
+          "value": 2,
+          "confidence": 0.72
         },
         "mysteryReveal": {
-          "state": "unknown"
+          "state": "known",
+          "value": 2,
+          "confidence": 0.72
         },
         "worldBuilding": {
-          "state": "unknown"
+          "state": "known",
+          "value": 2,
+          "confidence": 0.72
         },
         "characterArcWeight": {
-          "state": "unknown"
+          "state": "known",
+          "value": 2,
+          "confidence": 0.72
         },
         "relationshipStructure": {
           "state": "unknown"
         },
         "comedy": {
-          "state": "unknown"
+          "state": "known",
+          "value": 2,
+          "confidence": 0.72
         },
         "darkness": {
           "state": "unknown"
@@ -204760,10 +205747,14 @@
           "state": "unknown"
         },
         "romance": {
-          "state": "unknown"
+          "state": "known",
+          "value": 2,
+          "confidence": 0.72
         },
         "emotionalWarmth": {
-          "state": "unknown"
+          "state": "known",
+          "value": 2,
+          "confidence": 0.72
         },
         "artRealism": {
           "state": "unknown"
@@ -204780,14 +205771,25 @@
       },
       "factorScope": "entry_1_3_volumes",
       "eligibility": {
-        "onboardingEligible": false,
-        "recommendationEligible": false,
-        "libraryOnly": true
+        "onboardingEligible": true,
+        "recommendationEligible": true,
+        "libraryOnly": false,
+        "narrativeToneException": {
+          "policy": "narrative-tone-exhaustion-v1",
+          "workId": "work-8cb335c5ac8b277a4e7c",
+          "inputManifestSha256": "47285e3fbdeb2cb12c09c2d1247b22f16de1ce337ab2c759ea113fd8826c4584",
+          "researchSha256": "3c7d3c3f9169847f133d279106f3bfec241e7344d68dea64ab577dd8f8dc21a3",
+          "groups": [
+            "narrative",
+            "tone"
+          ]
+        }
       },
       "evidence": {
         "metadataConfidence": 0.92,
         "groupingConfidence": 0.96,
-        "sourceAgreement": 0.64
+        "sourceAgreement": 0.64,
+        "annotationReviewedAt": "2026-09-28T10:07:44.685594+00:00"
       }
     },
     {
@@ -205306,14 +206308,56 @@
       "demographic": "unknown",
       "status": "unknown",
       "firstPublishedYear": 1984,
-      "genres": [],
-      "themes": [],
+      "genres": [
+        "fantasy"
+      ],
+      "themes": [
+        {
+          "id": "exploration",
+          "centrality": 2,
+          "confidence": 0.72
+        },
+        {
+          "id": "historicalReconstruction",
+          "centrality": 2,
+          "confidence": 0.72
+        },
+        {
+          "id": "investigation",
+          "centrality": 2,
+          "confidence": 0.72
+        },
+        {
+          "id": "politics",
+          "centrality": 2,
+          "confidence": 0.72
+        },
+        {
+          "id": "reincarnation",
+          "centrality": 2,
+          "confidence": 0.72
+        },
+        {
+          "id": "school",
+          "centrality": 2,
+          "confidence": 0.72
+        },
+        {
+          "id": "survival",
+          "centrality": 2,
+          "confidence": 0.72
+        }
+      ],
       "axes": {
         "progression": {
-          "state": "unknown"
+          "state": "known",
+          "value": 2,
+          "confidence": 0.72
         },
         "problemSolving": {
-          "state": "unknown"
+          "state": "known",
+          "value": 2,
+          "confidence": 0.72
         },
         "strategy": {
           "state": "unknown"
@@ -205322,28 +206366,42 @@
           "state": "unknown"
         },
         "mysteryReveal": {
-          "state": "unknown"
+          "state": "known",
+          "value": 2,
+          "confidence": 0.72
         },
         "worldBuilding": {
-          "state": "unknown"
+          "state": "known",
+          "value": 2,
+          "confidence": 0.72
         },
         "characterArcWeight": {
-          "state": "unknown"
+          "state": "known",
+          "value": 2,
+          "confidence": 0.72
         },
         "relationshipStructure": {
-          "state": "unknown"
+          "state": "known",
+          "value": 2,
+          "confidence": 0.72
         },
         "comedy": {
           "state": "unknown"
         },
         "darkness": {
-          "state": "unknown"
+          "state": "known",
+          "value": 2,
+          "confidence": 0.72
         },
         "mentalStress": {
-          "state": "unknown"
+          "state": "known",
+          "value": 2,
+          "confidence": 0.72
         },
         "romance": {
-          "state": "unknown"
+          "state": "known",
+          "value": 2,
+          "confidence": 0.72
         },
         "emotionalWarmth": {
           "state": "unknown"
@@ -205363,14 +206421,15 @@
       },
       "factorScope": "entry_1_3_volumes",
       "eligibility": {
-        "onboardingEligible": false,
-        "recommendationEligible": false,
-        "libraryOnly": true
+        "onboardingEligible": true,
+        "recommendationEligible": true,
+        "libraryOnly": false
       },
       "evidence": {
         "metadataConfidence": 0.92,
         "groupingConfidence": 0.96,
-        "sourceAgreement": 0.64
+        "sourceAgreement": 0.64,
+        "annotationReviewedAt": "2026-09-28T10:07:45.493070+00:00"
       }
     },
     {
@@ -206770,26 +207829,64 @@
       "demographic": "unknown",
       "status": "unknown",
       "firstPublishedYear": 2024,
-      "genres": [],
-      "themes": [],
+      "genres": [
+        "action"
+      ],
+      "themes": [
+        {
+          "id": "combat",
+          "centrality": 2,
+          "confidence": 0.72
+        },
+        {
+          "id": "cooking",
+          "centrality": 2,
+          "confidence": 0.72
+        },
+        {
+          "id": "exploration",
+          "centrality": 2,
+          "confidence": 0.72
+        },
+        {
+          "id": "war",
+          "centrality": 2,
+          "confidence": 0.72
+        },
+        {
+          "id": "workplace",
+          "centrality": 2,
+          "confidence": 0.72
+        }
+      ],
       "axes": {
         "progression": {
-          "state": "unknown"
+          "state": "known",
+          "value": 2,
+          "confidence": 0.72
         },
         "problemSolving": {
-          "state": "unknown"
+          "state": "known",
+          "value": 2,
+          "confidence": 0.72
         },
         "strategy": {
           "state": "unknown"
         },
         "pacing": {
-          "state": "unknown"
+          "state": "known",
+          "value": 2,
+          "confidence": 0.72
         },
         "mysteryReveal": {
-          "state": "unknown"
+          "state": "known",
+          "value": 2,
+          "confidence": 0.72
         },
         "worldBuilding": {
-          "state": "unknown"
+          "state": "known",
+          "value": 2,
+          "confidence": 0.72
         },
         "characterArcWeight": {
           "state": "unknown"
@@ -206798,16 +207895,24 @@
           "state": "unknown"
         },
         "comedy": {
-          "state": "unknown"
+          "state": "known",
+          "value": 2,
+          "confidence": 0.72
         },
         "darkness": {
-          "state": "unknown"
+          "state": "known",
+          "value": 2,
+          "confidence": 0.72
         },
         "mentalStress": {
-          "state": "unknown"
+          "state": "known",
+          "value": 2,
+          "confidence": 0.72
         },
         "romance": {
-          "state": "unknown"
+          "state": "known",
+          "value": 2,
+          "confidence": 0.72
         },
         "emotionalWarmth": {
           "state": "unknown"
@@ -206827,14 +207932,25 @@
       },
       "factorScope": "entry_1_3_volumes",
       "eligibility": {
-        "onboardingEligible": false,
-        "recommendationEligible": false,
-        "libraryOnly": true
+        "onboardingEligible": true,
+        "recommendationEligible": true,
+        "libraryOnly": false,
+        "narrativeToneException": {
+          "policy": "narrative-tone-exhaustion-v1",
+          "workId": "work-8e3556a22c1710cf772a",
+          "inputManifestSha256": "9cf45a41218ff7191fbc8e9f483960faf3fd87699aef974d13e7f20a61653a7c",
+          "researchSha256": "5fdaaf749fd40484d8f24fc60101c094b5f095fd6bcdb0d3c9b848b767b8bcc3",
+          "groups": [
+            "narrative",
+            "tone"
+          ]
+        }
       },
       "evidence": {
         "metadataConfidence": 0.87,
         "groupingConfidence": 0.74,
-        "sourceAgreement": 0.66
+        "sourceAgreement": 0.66,
+        "annotationReviewedAt": "2026-09-28T10:07:46.464350+00:00"
       }
     },
     {
@@ -207670,11 +208786,41 @@
       "demographic": "unknown",
       "status": "unknown",
       "firstPublishedYear": 2025,
-      "genres": [],
-      "themes": [],
+      "genres": [
+        "fantasy"
+      ],
+      "themes": [
+        {
+          "id": "historicalReconstruction",
+          "centrality": 2,
+          "confidence": 0.72
+        },
+        {
+          "id": "politics",
+          "centrality": 2,
+          "confidence": 0.72
+        },
+        {
+          "id": "school",
+          "centrality": 2,
+          "confidence": 0.72
+        },
+        {
+          "id": "war",
+          "centrality": 2,
+          "confidence": 0.72
+        },
+        {
+          "id": "workplace",
+          "centrality": 2,
+          "confidence": 0.72
+        }
+      ],
       "axes": {
         "progression": {
-          "state": "unknown"
+          "state": "known",
+          "value": 2,
+          "confidence": 0.72
         },
         "problemSolving": {
           "state": "unknown"
@@ -207686,16 +208832,22 @@
           "state": "unknown"
         },
         "mysteryReveal": {
-          "state": "unknown"
+          "state": "known",
+          "value": 2,
+          "confidence": 0.72
         },
         "worldBuilding": {
           "state": "unknown"
         },
         "characterArcWeight": {
-          "state": "unknown"
+          "state": "known",
+          "value": 2,
+          "confidence": 0.72
         },
         "relationshipStructure": {
-          "state": "unknown"
+          "state": "known",
+          "value": 2,
+          "confidence": 0.72
         },
         "comedy": {
           "state": "unknown"
@@ -207704,10 +208856,14 @@
           "state": "unknown"
         },
         "mentalStress": {
-          "state": "unknown"
+          "state": "known",
+          "value": 2,
+          "confidence": 0.72
         },
         "romance": {
-          "state": "unknown"
+          "state": "known",
+          "value": 2,
+          "confidence": 0.72
         },
         "emotionalWarmth": {
           "state": "unknown"
@@ -207727,14 +208883,25 @@
       },
       "factorScope": "entry_1_3_volumes",
       "eligibility": {
-        "onboardingEligible": false,
-        "recommendationEligible": false,
-        "libraryOnly": true
+        "onboardingEligible": true,
+        "recommendationEligible": true,
+        "libraryOnly": false,
+        "narrativeToneException": {
+          "policy": "narrative-tone-exhaustion-v1",
+          "workId": "work-8ede267bd8fee740822b",
+          "inputManifestSha256": "4745d9b9c0cbc7f6473e7fa9af4cba1984567978868eac693dd733dc98b0aa4a",
+          "researchSha256": "484f1fbe1741ec65dec036b131674633eb3304f40cc59ea56c4ca16c1f5c3180",
+          "groups": [
+            "narrative",
+            "tone"
+          ]
+        }
       },
       "evidence": {
         "metadataConfidence": 0.91,
         "groupingConfidence": 0.74,
-        "sourceAgreement": 0.66
+        "sourceAgreement": 0.66,
+        "annotationReviewedAt": "2026-09-28T10:07:47.757028+00:00"
       }
     },
     {
@@ -209402,11 +210569,36 @@
       "demographic": "unknown",
       "status": "unknown",
       "firstPublishedYear": 2006,
-      "genres": [],
-      "themes": [],
+      "genres": [
+        "action"
+      ],
+      "themes": [
+        {
+          "id": "foundFamily",
+          "centrality": 2,
+          "confidence": 0.72
+        },
+        {
+          "id": "historicalReconstruction",
+          "centrality": 2,
+          "confidence": 0.72
+        },
+        {
+          "id": "school",
+          "centrality": 2,
+          "confidence": 0.72
+        },
+        {
+          "id": "workplace",
+          "centrality": 2,
+          "confidence": 0.72
+        }
+      ],
       "axes": {
         "progression": {
-          "state": "unknown"
+          "state": "known",
+          "value": 2,
+          "confidence": 0.72
         },
         "problemSolving": {
           "state": "unknown"
@@ -209424,25 +210616,37 @@
           "state": "unknown"
         },
         "characterArcWeight": {
-          "state": "unknown"
+          "state": "known",
+          "value": 2,
+          "confidence": 0.72
         },
         "relationshipStructure": {
-          "state": "unknown"
+          "state": "known",
+          "value": 2,
+          "confidence": 0.72
         },
         "comedy": {
           "state": "unknown"
         },
         "darkness": {
-          "state": "unknown"
+          "state": "known",
+          "value": 2,
+          "confidence": 0.72
         },
         "mentalStress": {
-          "state": "unknown"
+          "state": "known",
+          "value": 2,
+          "confidence": 0.72
         },
         "romance": {
-          "state": "unknown"
+          "state": "known",
+          "value": 2,
+          "confidence": 0.72
         },
         "emotionalWarmth": {
-          "state": "unknown"
+          "state": "known",
+          "value": 2,
+          "confidence": 0.72
         },
         "artRealism": {
           "state": "unknown"
@@ -209459,14 +210663,25 @@
       },
       "factorScope": "entry_1_3_volumes",
       "eligibility": {
-        "onboardingEligible": false,
-        "recommendationEligible": false,
-        "libraryOnly": true
+        "onboardingEligible": true,
+        "recommendationEligible": true,
+        "libraryOnly": false,
+        "narrativeToneException": {
+          "policy": "narrative-tone-exhaustion-v1",
+          "workId": "work-901b6f67affa3eca9c4c",
+          "inputManifestSha256": "1fa7cb894fe8eaa1c6968840466d5c335f54ffcbe445538d9232fda416a68a02",
+          "researchSha256": "390a629a280d21f13d0b9a73df55e41ad02b72fa67312f69ff6bbb8f15ab70b8",
+          "groups": [
+            "narrative",
+            "tone"
+          ]
+        }
       },
       "evidence": {
         "metadataConfidence": 0.92,
         "groupingConfidence": 0.96,
-        "sourceAgreement": 0.64
+        "sourceAgreement": 0.64,
+        "annotationReviewedAt": "2026-09-28T10:07:48.639713+00:00"
       }
     },
     {
@@ -211255,11 +212470,31 @@
       "demographic": "unknown",
       "status": "unknown",
       "firstPublishedYear": 2023,
-      "genres": [],
-      "themes": [],
+      "genres": [
+        "fantasy"
+      ],
+      "themes": [
+        {
+          "id": "foundFamily",
+          "centrality": 2,
+          "confidence": 0.72
+        },
+        {
+          "id": "historicalReconstruction",
+          "centrality": 2,
+          "confidence": 0.72
+        },
+        {
+          "id": "workplace",
+          "centrality": 2,
+          "confidence": 0.72
+        }
+      ],
       "axes": {
         "progression": {
-          "state": "unknown"
+          "state": "known",
+          "value": 2,
+          "confidence": 0.72
         },
         "problemSolving": {
           "state": "unknown"
@@ -211271,16 +212506,22 @@
           "state": "unknown"
         },
         "mysteryReveal": {
-          "state": "unknown"
+          "state": "known",
+          "value": 2,
+          "confidence": 0.72
         },
         "worldBuilding": {
-          "state": "unknown"
+          "state": "known",
+          "value": 2,
+          "confidence": 0.72
         },
         "characterArcWeight": {
           "state": "unknown"
         },
         "relationshipStructure": {
-          "state": "unknown"
+          "state": "known",
+          "value": 2,
+          "confidence": 0.72
         },
         "comedy": {
           "state": "unknown"
@@ -211295,7 +212536,9 @@
           "state": "unknown"
         },
         "emotionalWarmth": {
-          "state": "unknown"
+          "state": "known",
+          "value": 2,
+          "confidence": 0.72
         },
         "artRealism": {
           "state": "unknown"
@@ -211312,14 +212555,25 @@
       },
       "factorScope": "entry_1_3_volumes",
       "eligibility": {
-        "onboardingEligible": false,
-        "recommendationEligible": false,
-        "libraryOnly": true
+        "onboardingEligible": true,
+        "recommendationEligible": true,
+        "libraryOnly": false,
+        "narrativeToneException": {
+          "policy": "narrative-tone-exhaustion-v1",
+          "workId": "work-9140056a1b18a9bf2a66",
+          "inputManifestSha256": "390d2e38fd2db95a59a2c62dbfc9fd0ab6b3cf27fdf37f385149ca05c1a85882",
+          "researchSha256": "b670e7a2bae2e3900a6c0543bd0fb619be66fb0382c3a16d29af406956821749",
+          "groups": [
+            "narrative",
+            "tone"
+          ]
+        }
       },
       "evidence": {
         "metadataConfidence": 0.87,
         "groupingConfidence": 0.74,
-        "sourceAgreement": 0.61
+        "sourceAgreement": 0.61,
+        "annotationReviewedAt": "2026-09-28T10:07:49.426163+00:00"
       }
     },
     {
@@ -211645,11 +212899,26 @@
       "demographic": "unknown",
       "status": "unknown",
       "firstPublishedYear": 2023,
-      "genres": [],
-      "themes": [],
+      "genres": [
+        "mystery"
+      ],
+      "themes": [
+        {
+          "id": "crafting",
+          "centrality": 2,
+          "confidence": 0.72
+        },
+        {
+          "id": "workplace",
+          "centrality": 2,
+          "confidence": 0.72
+        }
+      ],
       "axes": {
         "progression": {
-          "state": "unknown"
+          "state": "known",
+          "value": 2,
+          "confidence": 0.72
         },
         "problemSolving": {
           "state": "unknown"
@@ -211661,13 +212930,19 @@
           "state": "unknown"
         },
         "mysteryReveal": {
-          "state": "unknown"
+          "state": "known",
+          "value": 2,
+          "confidence": 0.72
         },
         "worldBuilding": {
-          "state": "unknown"
+          "state": "known",
+          "value": 2,
+          "confidence": 0.72
         },
         "characterArcWeight": {
-          "state": "unknown"
+          "state": "known",
+          "value": 2,
+          "confidence": 0.72
         },
         "relationshipStructure": {
           "state": "unknown"
@@ -211676,16 +212951,24 @@
           "state": "unknown"
         },
         "darkness": {
-          "state": "unknown"
+          "state": "known",
+          "value": 2,
+          "confidence": 0.72
         },
         "mentalStress": {
-          "state": "unknown"
+          "state": "known",
+          "value": 2,
+          "confidence": 0.72
         },
         "romance": {
-          "state": "unknown"
+          "state": "known",
+          "value": 2,
+          "confidence": 0.72
         },
         "emotionalWarmth": {
-          "state": "unknown"
+          "state": "known",
+          "value": 2,
+          "confidence": 0.72
         },
         "artRealism": {
           "state": "unknown"
@@ -211702,14 +212985,25 @@
       },
       "factorScope": "entry_1_3_volumes",
       "eligibility": {
-        "onboardingEligible": false,
-        "recommendationEligible": false,
-        "libraryOnly": true
+        "onboardingEligible": true,
+        "recommendationEligible": true,
+        "libraryOnly": false,
+        "narrativeToneException": {
+          "policy": "narrative-tone-exhaustion-v1",
+          "workId": "work-91a5f5434386a589e9a9",
+          "inputManifestSha256": "4bd190ccc9bcf45f6de0e6ac25014558081c3d167a6d46ef32b8149cff752b81",
+          "researchSha256": "762d9412effd1d9e256c2545c4f9cdf7908e34c67de9c2ac6eceaf4c971b7890",
+          "groups": [
+            "narrative",
+            "tone"
+          ]
+        }
       },
       "evidence": {
         "metadataConfidence": 0.87,
         "groupingConfidence": 0.74,
-        "sourceAgreement": 0.66
+        "sourceAgreement": 0.66,
+        "annotationReviewedAt": "2026-09-28T10:07:50.295831+00:00"
       }
     },
     {
