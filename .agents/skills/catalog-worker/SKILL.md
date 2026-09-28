@@ -58,6 +58,7 @@ description: konocomics의 고정 작업 세션에서 배정된 작품 목록을
 - 수집 요청·파일 검사·저장은 배치화할 수 있지만 의미 판정은 작품별 frozen 근거를 직접 읽어 수행한다. 반복문/기본값/문자열 탐지로 동일 HOLD·unknown·PASS를 대량 생성해 판정을 대신하지 않는다. 파일 수·validator PASS는 실제 의미 판정 완료가 아니다. 진짜 HOLD는 그 작품의 확인한 근거·구체적 부족·재개 조건을 남긴다.
 - collection의 `readAudit=partial-body`나 제목·meta 관찰은 판정의 독해 범위가 아니다. frozen `rawLookupPaths`에 같은 Work의 실제 소개·리뷰 본문이 있으면 관련 구간을 직접 읽고 작품별 지원 축을 판정한다. 완전한 17축 known을 요구하지 않으며 Art는 제외한다. 완료 요약에서 여러 작품의 HOLD 사유가 동일하면 저장된 원문과 판정 3건을 감사하고, 원문을 읽지 않은 일괄 HOLD는 새 revision으로 복구한다.
 - `N/T-only`는 남은 blocker 집합이 `NARRATIVE_COVERAGE_INCOMPLETE`와 `TONE_COVERAGE_INCOMPLETE`의 부분집합인 상태다. 두 blocker가 동시에 있어도 N/T-only이며, Theme·추천 문맥 등 다른 blocker가 하나라도 있으면 아니다. 실제 추가 조사와 출처 소진을 `narrativeToneExhaustion`에 결속한 새 입력에서만 예외를 적용한다.
+- N/T-only에 기존 소진 기록이 없으면 그 부재를 최종 HOLD 사유로 삼지 않는다. 해당 Work의 부족한 축을 대상으로 추가 출처를 실제 조사하고, 찾은 근거를 판정하거나 출처 소진 시도·결과를 새 수집/v4 job revision에 기록해 재동결·검사한다. 진행을 막는 외부 장애가 있으면 그 Work만 부분 중단하고 기존 결과를 보존한다.
 
 - 해당 PROMPT.md·schema.json·FROZEN_INPUT_ROOT·명시적으로 결속된 prior만 사용한다. 사전은 frozen read view에서 읽는다. 수집 대화의 기억·live 사전·추가 검색을 동결 근거로 사용하지 않는다.
 - 신규 비Art claim은 적격 관찰→정확한 앵커→실제 범위를 연결한다. unknown 전 관련 관찰을 확인하되 없으면 유지한다. unknown≠0이며 낮은 앵커에 높은 앵커의 반복성·중심성·장기성을 요구하지 않는다. 단어·형식·언급 부재만으로 known/0을 만들지 않는다.
