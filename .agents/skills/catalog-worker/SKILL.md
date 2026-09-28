@@ -69,7 +69,7 @@ description: konocomics의 고정 작업 세션에서 배정된 작품 목록을
 
 ## 배치 보고·누락 방지
 
-부모 보고의 수신자 ID·model/thinking은 [배치 계약 §3](../../../docs/catalog-expansion/01c-sol-batch-promotion-plan.md#3-역할과-세션)에서 확인해 매 전송에 명시한다. 도구 인자는 발신자가 아니라 수신 세션에 적용된다.
+부모 보고의 수신자 ID는 [배치 계약 §3](../../../docs/catalog-expansion/01c-sol-batch-promotion-plan.md#3-역할과-세션)에서 확인한다. 부모에게 보내는 `send_message_to_thread`에서는 `model`과 `thinking`을 모두 생략한다. 두 인자는 수신자인 부모 세션의 설정을 바꾼다.
 
 - 일반 중간 진행은 commentary나 부모 메시지로 보고하고 작업을 이어간다. final을 보내면 실행이 종료되므로 “진행 중”이라는 final로 연속 실행을 대신하지 않는다. 불가피한 부분 종료 시 부모에 `CATALOG_PARTIAL_STOP`과 batchId·완료 수·다음 작품·checkpoint·실제 종료 사유·needsResume를 전송한다. 입력 경로 미확인 등 해결 가능한 부분 중단은 `needsResume=true`다. 사용자 중단이면 needsResume=false이며 자동 재개하지 않는다.
 - Catalog 실행 턴에서만 `notification_guard.py arm --session <ID>`로 현재 `UserPromptSubmit.turn_id`에 등록을 결속한다. 회고·보고 전용 턴에는 arm하지 않는다. Stop은 동일 실행 턴의 검증된 새 checkpoint만 한 번 알리며 과거 active 등록으로 작업 재개나 보고를 강제하지 않는다. 사용자 중단·Interrupt 뒤에는 명시적으로 승인된 새 턴에서만 `arm --resume`을 사용한다. 전송 실패는 보존하고 종료하며 모델 판정을 반복하지 않는다.
