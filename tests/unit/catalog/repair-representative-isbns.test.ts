@@ -1,4 +1,12 @@
-import { cpSync, mkdirSync, mkdtempSync, readFileSync, rmSync, writeFileSync } from "node:fs";
+import {
+  cpSync,
+  existsSync,
+  mkdirSync,
+  mkdtempSync,
+  readFileSync,
+  rmSync,
+  writeFileSync,
+} from "node:fs";
 import { tmpdir } from "node:os";
 import { dirname, join, resolve } from "node:path";
 
@@ -7,7 +15,11 @@ import { expect, it } from "vitest";
 import { z } from "zod";
 
 import { runRakutenCandidateAdjudication } from "../../../scripts/adjudicate-rakuten-candidates";
-import { writeCatalogCsvProjection } from "../../../scripts/catalog/authority";
+import {
+  finalizeCatalogAuthorityProjection,
+  readCatalogAuthority,
+  writeCatalogCsvProjection,
+} from "../../../scripts/catalog/authority";
 import { runCatalogPipeline } from "../../../scripts/catalog/pipeline";
 import {
   loadRepresentativeVolumeDecisions,
@@ -367,6 +379,45 @@ it("keeps one audited 84-work decision set through repair, adjudication, and pro
     expect(() => runLibraryOnlyExpansion("--check", fixtureRoot)).toThrow(
       'sourceType ("model" !== "rakuten")',
     );
+  } finally {
+    rmSync(fixtureRoot, { recursive: true, force: true });
+  }
+}, 120_000);
+
+it("repairs SQLite authority through the locked entrypoint without publishing its dry-run", () => {
+  const sourceRoot = resolve(process.cwd());
+  const fixtureRoot = mkdtempSync(join(tmpdir(), "konocomics-isbn-authority-"));
+  try {
+    copyFixture(sourceRoot, fixtureRoot);
+    restorePreRepairProjection(fixtureRoot);
+    const source = join(fixtureRoot, "data/source");
+    finalizeCatalogAuthorityProjection(join(sourceRoot, "data/source"), source);
+    const database = join(source, "catalog.sqlite");
+    const before = readFileSync(database);
+    const staging = join(fixtureRoot, "data/staging/catalog-expansion");
+    const history = join(staging, "history/unrelated.txt");
+    mkdirSync(dirname(history), { recursive: true });
+    writeFileSync(history, "Unrelated historical material");
+    expect(repairRepresentativeIsbns("dry-run", fixtureRoot)).toMatchObject({
+      alreadyApplied: false,
+      replacements: 28,
+      volumeCorrections: 56,
+    });
+    expect(readFileSync(database).equals(before)).toBe(true);
+
+    expect(repairRepresentativeIsbns("apply", fixtureRoot)).toMatchObject({
+      alreadyApplied: false,
+      changedFiles: expect.arrayContaining(["data/source/catalog.sqlite"]),
+    });
+    const table = readCatalogAuthority(source).find((item) => item.path === "volumes.csv")!;
+    const volumes = { headers: [...table.headers], rows: table.rows.map((row) => row.values) };
+    for (const decision of loadRepresentativeVolumeDecisions(staging)) {
+      const volume = oneRow(volumes, "workId", decision.workId);
+      expect(normalizeIsbn(volume[column(volumes, "isbn")]!)).toBe(decision.auditedIsbn);
+      expect(volume[column(volumes, "volumeNumber")]).toBe("1");
+    }
+    expect(existsSync(join(source, "works.csv"))).toBe(false);
+    expect(readFileSync(history, "utf8")).toBe("Unrelated historical material");
   } finally {
     rmSync(fixtureRoot, { recursive: true, force: true });
   }

@@ -11,6 +11,7 @@ import { ANNOTATION_REVIEW_METHODS } from "../src/domain/catalog/constants";
 import {
   assertRepresentativeDecisionIdentity,
   loadRepresentativeVolumeDecisions,
+  REPRESENTATIVE_VOLUME_DECISIONS_FILE,
   type RepresentativeVolumeDecision,
 } from "./catalog/representative-volume-decisions";
 import { CATALOG_DATABASE_FILE, readCatalogAuthority } from "./catalog/authority";
@@ -369,49 +370,74 @@ function readCsv<T>(
   });
 }
 
+// Shared with maintenance input snapshots/copies so validation and publication
+// bind the same files without walking unrelated historical batch directories.
+export const CATALOG_EXPANSION_FILES = {
+  sources: "source-registry.csv",
+  rawItems: "raw-source-items.csv",
+  candidates: "candidates.csv",
+  memberships: "source-membership.csv",
+  mappings: "canonical-mapping.csv",
+  exclusions: "exclusions.csv",
+  safetyReviews: "safety-review.csv",
+  rakutenMatches: "rakuten-matches.csv",
+  annotationStatuses: "annotation-status.csv",
+  representativeVolumeDecisions: REPRESENTATIVE_VOLUME_DECISIONS_FILE,
+} as const;
+
 export function loadCatalogExpansion(directory: string): ExpansionData {
   return {
     sources: readCsv(
       directory,
-      "source-registry.csv",
+      CATALOG_EXPANSION_FILES.sources,
       SOURCE_REGISTRY_HEADERS,
       sourceRegistrySchema,
     ),
     rawItems: readCsv(
       directory,
-      "raw-source-items.csv",
+      CATALOG_EXPANSION_FILES.rawItems,
       RAW_SOURCE_ITEM_HEADERS,
       rawSourceItemSchema,
     ),
-    candidates: readCsv(directory, "candidates.csv", CANDIDATE_HEADERS, candidateSchema),
+    candidates: readCsv(
+      directory,
+      CATALOG_EXPANSION_FILES.candidates,
+      CANDIDATE_HEADERS,
+      candidateSchema,
+    ),
     memberships: readCsv(
       directory,
-      "source-membership.csv",
+      CATALOG_EXPANSION_FILES.memberships,
       SOURCE_MEMBERSHIP_HEADERS,
       sourceMembershipSchema,
     ),
     mappings: readCsv(
       directory,
-      "canonical-mapping.csv",
+      CATALOG_EXPANSION_FILES.mappings,
       CANONICAL_MAPPING_HEADERS,
       canonicalMappingSchema,
     ),
-    exclusions: readCsv(directory, "exclusions.csv", EXCLUSION_HEADERS, exclusionSchema),
+    exclusions: readCsv(
+      directory,
+      CATALOG_EXPANSION_FILES.exclusions,
+      EXCLUSION_HEADERS,
+      exclusionSchema,
+    ),
     safetyReviews: readCsv(
       directory,
-      "safety-review.csv",
+      CATALOG_EXPANSION_FILES.safetyReviews,
       SAFETY_REVIEW_HEADERS,
       safetyReviewSchema,
     ),
     rakutenMatches: readCsv(
       directory,
-      "rakuten-matches.csv",
+      CATALOG_EXPANSION_FILES.rakutenMatches,
       RAKUTEN_MATCH_HEADERS,
       rakutenMatchSchema,
     ),
     annotationStatuses: readCsv(
       directory,
-      "annotation-status.csv",
+      CATALOG_EXPANSION_FILES.annotationStatuses,
       ANNOTATION_STATUS_HEADERS,
       annotationStatusSchema,
     ),

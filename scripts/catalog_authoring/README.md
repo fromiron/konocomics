@@ -57,6 +57,13 @@ python scripts/catalog_python.py -m unittest discover -s scripts/catalog_authori
 - N/T 예외는 새 v4 job의 선택 `narrativeToneExhaustion`을 사용한다. [정확한 필드와 계약](../../docs/catalog-expansion/02-authorized-evidence-panel-v1.md)을 따르고 기존 `prepare --job` → 별도 실제 판정 → `check` → 조정자의 `run --decisions`/발행 → 제품 readback 순서를 유지한다. 별도 승격 명령이나 일회성 모델 호출을 추가하지 않는다.
 - 역사적 legacy validator/직접 CLI의 기본 최소치는 그대로다. 현재 single-pass 경로의 검증된 adapter만 결속된 예외를 전달한다. 판정 자료·발행 evidence·compiled eligibility를 함께 검사한다.
 
+## Catalog 유지보수 명령의 입력 범위
+
+- ISBN 수정은 전체 source와 실제로 읽는 staging 입력 12개만 반영 직전 변경 확인에 결속한다. staging 목록은 `loadCatalogExpansion`과 공유하며, 과거 배치·조사 디렉터리는 해시·임시 복사 대상에서 제외한다. 필수 입력의 누락·비정규 파일은 거부한다.
+- dry-run은 반영용 snapshot 해시를 만들지 않는다. SQLite 경로는 이미 만든 전용 CSV projection에서 계획을 적용·검증하고, 정식 반영 직전 source·staging 입력을 다시 대조한다. 공유 쓰기 잠금, 전체 Catalog 검증, 원자적 반영과 DB readback은 유지한다.
+- Library 승격은 한 호출에서 읽고 검증한 staging과 Gold Set을 재사용한다. 호출을 넘는 캐시나 검증 생략을 추가하지 않는다.
+- 전체 Vitest의 기본 병렬 설정과 timeout은 유지한다. 대용량 Catalog 검사를 포함하므로 `typecheck`·`lint`를 마친 뒤 실행해 별도 검사 프로세스와의 CPU·디스크 경합을 줄인다.
+
 ## 저장 재사용과 compact 발행
 
 - 복구의 단일 스펙은 [저장 계약 R1~R9](../../docs/catalog-expansion/03-local-authoring-storage.md#db-중심-복구-요구사항)다. `catalog_workspace.py --database <백업-SQLite> restore --destination <새-경로>`는 workspace DB와 mapping/report만 생성한다. 같은 버전의 실행 코드·전용 runtime을 준비한 뒤 기존 batch·runner·notification·metadata·canonical CLI에 요청 summary/run/Work/event/intent를 전달하면 해당 자료만 추출한다. 기존 불변 파일의 다른 bytes는 덮지 않는다. 명시적 과거 원본 export는 `restore --snapshot <revision-UUID> [--prefix <범위>] --destination <새-경로>`를 유지한다.

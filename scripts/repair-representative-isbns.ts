@@ -1,7 +1,9 @@
 import { createHash } from "node:crypto";
 import {
   cpSync,
+  copyFileSync,
   existsSync,
+  lstatSync,
   mkdirSync,
   mkdtempSync,
   readFileSync,
@@ -39,13 +41,22 @@ import {
   representativeRepairResultSchema,
   runLockedMaintenance,
 } from "./catalog-maintenance";
-import { loadCatalogExpansion, validateCatalogExpansion } from "./validate-catalog-expansion";
+import {
+  CATALOG_EXPANSION_FILES,
+  loadCatalogExpansion,
+  validateCatalogExpansion,
+} from "./validate-catalog-expansion";
 import { normalizeIsbn } from "../src/domain/catalog/normalize";
 
 const SOURCE_DIRECTORY = "data/source";
 const STAGING_DIRECTORY = "data/staging/catalog-expansion";
 const CACHE_PATH = `${STAGING_DIRECTORY}/rakuten-search-results.jsonl`;
 const CACHE_MANIFEST_PATH = `${STAGING_DIRECTORY}/rakuten-search-manifest.json`;
+const STAGING_INPUTS = [
+  ...Object.values(CATALOG_EXPANSION_FILES).map((file) => `${STAGING_DIRECTORY}/${file}`),
+  CACHE_PATH,
+  CACHE_MANIFEST_PATH,
+];
 const EXPECTED_CACHE_SHA256 = "23bb2f90b495c9be6de78736bb959302df8a18cd97c3f003898076c34dd8fc6a";
 const EXPECTED_UNSUPPORTED_COUNT = 158;
 
@@ -131,10 +142,28 @@ function filesIn(directory: string): string[] {
 
 function validationSnapshot(root: string) {
   return new Map(
-    [SOURCE_DIRECTORY, STAGING_DIRECTORY]
-      .flatMap((directory) => filesIn(join(root, directory)))
-      .map((path) => [relative(root, path), sha256(readFileSync(path))]),
+    [...filesIn(join(root, SOURCE_DIRECTORY)), ...stagingInputPaths(root)].map((path) => [
+      relative(root, path),
+      sha256(readFileSync(path)),
+    ]),
   );
+}
+
+function stagingInputPaths(root: string) {
+  return STAGING_INPUTS.map((name) => {
+    const path = join(root, name);
+    if (!lstatSync(path).isFile()) {
+      throw new Error(`Unsupported catalog filesystem entry: ${path}`);
+    }
+    return path;
+  });
+}
+
+function copyStagingInputs(root: string, destination: string) {
+  mkdirSync(join(destination, STAGING_DIRECTORY), { recursive: true });
+  for (const path of stagingInputPaths(root)) {
+    copyFileSync(path, join(destination, relative(root, path)));
+  }
 }
 
 function assertValidationSnapshot(root: string, expected: ReadonlyMap<string, string>) {
@@ -629,31 +658,41 @@ function validateCandidateRoot(root: string) {
   validateCatalogExpansion(loadCatalogExpansion(join(root, STAGING_DIRECTORY)));
 }
 
-function repairRepresentativeIsbnsFromCsv(mode: RepairMode = "dry-run", root = process.cwd()) {
+function repairRepresentativeIsbnsFromCsv(
+  mode: RepairMode = "dry-run",
+  root = process.cwd(),
+  privateProjection = false,
+) {
   const resolvedRoot = resolve(root);
   if (!existsSync(join(resolvedRoot, SOURCE_DIRECTORY))) {
     throw new Error(`Catalog source directory does not exist: ${resolvedRoot}`);
   }
-  const originalSnapshot = validationSnapshot(resolvedRoot);
+  stagingInputPaths(resolvedRoot);
+  const originalSnapshot =
+    mode === "apply" && !privateProjection ? validationSnapshot(resolvedRoot) : undefined;
   const plan = prepare(resolvedRoot);
   if (plan.alreadyApplied) {
     validateCandidateRoot(resolvedRoot);
   } else {
-    const temporaryRoot = mkdtempSync(join(resolvedRoot, ".representative-isbn-repair-"));
+    // The SQLite entrypoint already owns a disposable projection. Validate the
+    // plan there; its caller checks canonical inputs immediately before publish.
+    const temporaryRoot = privateProjection
+      ? resolvedRoot
+      : mkdtempSync(join(resolvedRoot, ".representative-isbn-repair-"));
     try {
-      cpSync(join(resolvedRoot, SOURCE_DIRECTORY), join(temporaryRoot, SOURCE_DIRECTORY), {
-        recursive: true,
-      });
-      cpSync(join(resolvedRoot, STAGING_DIRECTORY), join(temporaryRoot, STAGING_DIRECTORY), {
-        recursive: true,
-      });
+      if (!privateProjection) {
+        cpSync(join(resolvedRoot, SOURCE_DIRECTORY), join(temporaryRoot, SOURCE_DIRECTORY), {
+          recursive: true,
+        });
+        copyStagingInputs(resolvedRoot, temporaryRoot);
+      }
       for (const [path, content] of plan.outputs) {
         const candidate = join(temporaryRoot, path);
         mkdirSync(dirname(candidate), { recursive: true });
         writeFileSync(candidate, content, "utf8");
       }
       validateCandidateRoot(temporaryRoot);
-      if (mode === "apply") {
+      if (originalSnapshot !== undefined) {
         assertValidationSnapshot(resolvedRoot, originalSnapshot);
         publishDirectorySet(
           [...plan.outputs.keys()].map((path) => {
@@ -668,7 +707,7 @@ function repairRepresentativeIsbnsFromCsv(mode: RepairMode = "dry-run", root = p
         );
       }
     } finally {
-      rmSync(temporaryRoot, { recursive: true, force: true });
+      if (!privateProjection) rmSync(temporaryRoot, { recursive: true, force: true });
     }
   }
   return {
@@ -702,15 +741,13 @@ export function repairRepresentativeIsbns(mode: RepairMode = "dry-run", root = p
     return repairRepresentativeIsbnsFromCsv(mode, resolvedRoot);
   }
 
-  const originalSnapshot = validationSnapshot(resolvedRoot);
+  const originalSnapshot = mode === "apply" ? validationSnapshot(resolvedRoot) : undefined;
   const temporaryRoot = mkdtempSync(join(resolvedRoot, ".representative-isbn-authority-"));
   try {
     writeCatalogCsvProjection(sourceDirectory, join(temporaryRoot, SOURCE_DIRECTORY));
-    cpSync(join(resolvedRoot, STAGING_DIRECTORY), join(temporaryRoot, STAGING_DIRECTORY), {
-      recursive: true,
-    });
-    const result = repairRepresentativeIsbnsFromCsv(mode, temporaryRoot);
-    if (mode === "apply" && !result.alreadyApplied) {
+    copyStagingInputs(resolvedRoot, temporaryRoot);
+    const result = repairRepresentativeIsbnsFromCsv(mode, temporaryRoot, true);
+    if (originalSnapshot !== undefined && !result.alreadyApplied) {
       const candidateSource = join(temporaryRoot, SOURCE_DIRECTORY);
       finalizeCatalogAuthorityProjection(sourceDirectory, candidateSource);
       assertValidationSnapshot(resolvedRoot, originalSnapshot);

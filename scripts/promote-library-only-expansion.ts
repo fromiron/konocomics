@@ -44,7 +44,7 @@ import {
 } from "./catalog-maintenance";
 import {
   loadCatalogExpansion,
-  runCatalogExpansionValidation,
+  validateCatalogExpansion,
   validateGoldSet,
 } from "./validate-catalog-expansion";
 
@@ -913,17 +913,17 @@ function runLibraryOnlyExpansionFromSource(
 ) {
   const canonicalSourceDirectory = join(canonicalRoot, "data/source");
   const stagingDirectory = join(canonicalRoot, "data/staging/catalog-expansion");
-  const expansionValidation = runCatalogExpansionValidation(canonicalRoot);
   const expansion = loadCatalogExpansion(stagingDirectory);
-  const cache = readCache(join(stagingDirectory, CACHE_FILE));
-  const plans = buildPromotionPlans(expansion, cache);
-  if (plans.length !== expansionValidation.summary.libraryReadyCount) {
-    throw new Error(
-      `Library-ready candidate count changed across validation: ${expansionValidation.summary.libraryReadyCount} / ${plans.length}`,
-    );
-  }
+  const expansionSummary = validateCatalogExpansion(expansion);
   const goldManifestInput = parseGoldManifest(join(stagingDirectory, GOLD_MANIFEST_FILE));
   const goldManifest = validateGoldSet(canonicalRoot, goldManifestInput);
+  const cache = readCache(join(stagingDirectory, CACHE_FILE));
+  const plans = buildPromotionPlans(expansion, cache);
+  if (plans.length !== expansionSummary.libraryReadyCount) {
+    throw new Error(
+      `Library-ready candidate count changed across validation: ${expansionSummary.libraryReadyCount} / ${plans.length}`,
+    );
+  }
   const source = readSourceTables(sourceDirectory);
   const { fresh, committed } = partitionPlans(plans, source, new Set(goldManifest.workIds));
 
