@@ -59,7 +59,7 @@ description: konocomics의 고정 작업 세션에서 배정된 작품 목록을
 - collection의 `readAudit=partial-body`나 제목·meta 관찰은 판정의 독해 범위가 아니다. frozen `rawLookupPaths`에 같은 Work의 실제 소개·리뷰 본문이 있으면 관련 구간을 직접 읽고 작품별 지원 축을 판정한다. 완전한 17축 known을 요구하지 않으며 Art는 제외한다. 완료 요약에서 여러 작품의 HOLD 사유가 동일하면 저장된 원문과 판정 3건을 감사하고, 원문을 읽지 않은 일괄 HOLD는 새 revision으로 복구한다.
 - `N/T-only`는 남은 blocker 집합이 `NARRATIVE_COVERAGE_INCOMPLETE`와 `TONE_COVERAGE_INCOMPLETE`의 부분집합인 상태다. 두 blocker가 동시에 있어도 N/T-only이며, Theme·추천 문맥 등 다른 blocker가 하나라도 있으면 아니다. 실제 추가 조사와 출처 소진을 `narrativeToneExhaustion`에 결속한 새 입력에서만 예외를 적용한다.
 - N/T-only에 기존 소진 기록이 없으면 그 부재를 최종 HOLD 사유로 삼지 않는다. 해당 Work의 부족한 축을 대상으로 추가 출처를 실제 조사하고, 찾은 근거를 판정하거나 출처 소진 시도·결과를 새 수집/v4 job revision에 기록해 재동결·검사한다. 진행을 막는 외부 장애가 있으면 그 Work만 부분 중단하고 기존 결과를 보존한다.
-- 배정 이후 정식 발행으로 candidate baseline이 바뀐 새 run에서는 `registryPath`를 그 run의 `baselineRoot/catalog-source-registry.candidate.sqlite`에 맞춘다. 동일 SHA의 과거 baseline registry 경로도 correction bundle로 해석돼 `Unexpected correction membership`을 일으킬 수 있다. 실패 run은 보존하고 새 revision에서 경로를 바로잡아 첫 작품 prepare를 확인한 뒤 확장한다.
+- 배정 이후 정식 발행으로 current candidate가 바뀌어도 새 run의 `baselineRoot`와 `registryPath`는 **같은 baseline 쌍**이어야 한다. 동결 dispatch의 기준을 유지한다면 그 dispatch-bound baseline·registry를 함께 명시하고 SHA를 확인한다. 현재 기준으로 의도적으로 전환하려면 새 dispatch/input revision으로 결속한다. 한쪽만 옛 경로를 쓰면 `Unexpected correction membership`이 발생할 수 있으므로 실패 run을 보존하고 새 revision 첫 작품 prepare를 확인한 뒤 확장한다.
 
 - 해당 PROMPT.md·schema.json·FROZEN_INPUT_ROOT·명시적으로 결속된 prior만 사용한다. 사전은 frozen read view에서 읽는다. 수집 대화의 기억·live 사전·추가 검색을 동결 근거로 사용하지 않는다.
 - 신규 비Art claim은 적격 관찰→정확한 앵커→실제 범위를 연결한다. unknown 전 관련 관찰을 확인하되 없으면 유지한다. unknown≠0이며 낮은 앵커에 높은 앵커의 반복성·중심성·장기성을 요구하지 않는다. 단어·형식·언급 부재만으로 known/0을 만들지 않는다.
