@@ -1,6 +1,6 @@
 {
   "schemaVersion": 1,
-  "catalogVersion": "v1-844b23963a57",
+  "catalogVersion": "v1-b58407623edf",
   "factorDictionaryVersion": "v1",
   "works": [
     {
@@ -43260,6 +43260,119 @@
         "groupingConfidence": 1,
         "sourceAgreement": 1,
         "annotationReviewedAt": "2026-08-26T00:00:00+09:00"
+      }
+    },
+    {
+      "id": "work-1b7c4ed54d7761cd242b",
+      "title": "おかめ日和",
+      "aliases": [],
+      "creators": [
+        "入江喜和"
+      ],
+      "publisher": "講談社",
+      "demographic": "unknown",
+      "status": "unknown",
+      "firstPublishedYear": 2007,
+      "genres": [
+        "comedy",
+        "sliceOfLife"
+      ],
+      "themes": [
+        {
+          "id": "workplace",
+          "centrality": 1,
+          "confidence": 0.8
+        }
+      ],
+      "axes": {
+        "progression": {
+          "state": "known",
+          "value": 2,
+          "confidence": 0.75
+        },
+        "problemSolving": {
+          "state": "unknown"
+        },
+        "strategy": {
+          "state": "unknown"
+        },
+        "pacing": {
+          "state": "known",
+          "value": 2,
+          "confidence": 0.75
+        },
+        "mysteryReveal": {
+          "state": "unknown"
+        },
+        "worldBuilding": {
+          "state": "known",
+          "value": 2,
+          "confidence": 0.75
+        },
+        "characterArcWeight": {
+          "state": "unknown"
+        },
+        "relationshipStructure": {
+          "state": "known",
+          "value": 4,
+          "confidence": 0.75
+        },
+        "comedy": {
+          "state": "known",
+          "value": 2,
+          "confidence": 0.75
+        },
+        "darkness": {
+          "state": "known",
+          "value": 3,
+          "confidence": 0.75
+        },
+        "mentalStress": {
+          "state": "known",
+          "value": 3,
+          "confidence": 0.75
+        },
+        "romance": {
+          "state": "unknown"
+        },
+        "emotionalWarmth": {
+          "state": "known",
+          "value": 2,
+          "confidence": 0.75
+        },
+        "artRealism": {
+          "state": "unknown"
+        },
+        "artDensity": {
+          "state": "unknown"
+        },
+        "visualSoftness": {
+          "state": "unknown"
+        },
+        "motionImpact": {
+          "state": "unknown"
+        }
+      },
+      "factorScope": "entry_1_3_volumes",
+      "eligibility": {
+        "onboardingEligible": true,
+        "recommendationEligible": true,
+        "libraryOnly": false,
+        "narrativeToneException": {
+          "policy": "narrative-tone-exhaustion-v1",
+          "workId": "work-1b7c4ed54d7761cd242b",
+          "inputManifestSha256": "5e2daa830b35b2a4ba54ac5d0c45f8cf15619f687e53103687acb9a4fefa03ff",
+          "researchSha256": "8656fec896a3c29d263031e1fe1839832eb93ea33532e13220cdec00ca676829",
+          "groups": [
+            "narrative"
+          ]
+        }
+      },
+      "evidence": {
+        "metadataConfidence": 1,
+        "groupingConfidence": 1,
+        "sourceAgreement": 1,
+        "annotationReviewedAt": "2026-09-28T07:41:40.015374+00:00"
       }
     },
     {
@@ -242859,6 +242972,13 @@
       "editionKind": "standard"
     },
     {
+      "id": "work-1b7c4ed54d7761cd242b-representative",
+      "workId": "work-1b7c4ed54d7761cd242b",
+      "volumeNumber": 1,
+      "isbn": "9784063722802",
+      "editionKind": "standard"
+    },
+    {
       "id": "work-1b839a7f7034e313c8d1-representative",
       "workId": "work-1b839a7f7034e313c8d1",
       "volumeNumber": 1,
@@ -255736,6 +255856,7 @@
     "work-1b098d7492a9850e7a4d": "work-1b098d7492a9850e7a4d-v1",
     "work-1b3afe12c434a9cf7603": "work-1b3afe12c434a9cf7603-representative",
     "work-1b7812afe1c1ec2f6d03": "work-1b7812afe1c1ec2f6d03-representative",
+    "work-1b7c4ed54d7761cd242b": "work-1b7c4ed54d7761cd242b-representative",
     "work-1b839a7f7034e313c8d1": "work-1b839a7f7034e313c8d1-representative",
     "work-1b94cd8bacb92576eb36": "work-1b94cd8bacb92576eb36-representative",
     "work-1b9fc6e13c87db1a08c4": "work-1b9fc6e13c87db1a08c4-representative",
