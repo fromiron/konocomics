@@ -759,6 +759,11 @@ class NotificationGuardTest(unittest.TestCase):
                 with self.assertRaisesRegex(ValueError, "differs? from bound results"):
                     guard.validate_batch(assignment, {**value, **counts})
             guard.validate_batch(assignment, {**value, "processedCount": 1, "resultCounts": {"ERROR": 1}})
+            source = root / "collection-summary.json"
+            guard.write(source, {**value, "works": [{**row, "status": "EVIDENCE_FOUND"}]})
+            with self.assertRaisesRegex(ValueError, "sourceSummary changed result rows"):
+                guard.validate_batch(assignment, {**value, "sourceSummary": {
+                    "path": str(source), "sha256": hashlib.sha256(source.read_bytes()).hexdigest()}})
             guard.write(summary, value)
             sha = guard.result_identity(assignment)
             event = {"hook_event_name": "Stop", "session_id": session, "turn_id": "execution-1"}

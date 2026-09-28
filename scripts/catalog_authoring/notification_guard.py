@@ -185,6 +185,29 @@ def validate_batch(assignment, summary):
         statuses = {"READY_FOR_PUBLICATION", "HOLD", "ERROR"}
         if not isinstance(counts, dict) or set(counts) - statuses or any(type(counts.get(status, 0)) is not int or counts.get(status, 0) != sum(row["status"] == status for row in rows) for status in statuses):
             raise ValueError("Batch resultCounts differ from bound results")
+    # sourceSummary is a chain of subsets of earlier adjudication results. A
+    # collection summary has different rows even when its Work IDs match.
+    source = summary
+    visited = {artifact_path(assignment["artifact"]).resolve()}
+    while "sourceSummary" in source:
+        binding = source["sourceSummary"]
+        if not isinstance(binding, dict) or not isinstance(binding.get("path"), str) or not isinstance(binding.get("sha256"), str):
+            raise ValueError("Invalid adjudication sourceSummary binding")
+        previous_path = artifact_path(binding["path"]).resolve()
+        if previous_path in visited or not previous_path.is_relative_to(artifact_path(assignment["runRoot"]).resolve()):
+            raise ValueError("Adjudication sourceSummary cycle or outside assigned run")
+        visited.add(previous_path)
+        previous_bytes = previous_path.read_bytes()
+        if hashlib.sha256(previous_bytes).hexdigest() != binding["sha256"]:
+            raise ValueError("Adjudication sourceSummary SHA mismatch")
+        previous = json.loads(previous_bytes)
+        if (previous.get("batchId") != dispatch["batchId"]
+                or previous.get("ownerThreadId") != assignment["sessionId"]
+                or previous.get("parentThreadId") != assignment["parentThreadId"]
+                or not isinstance(previous.get("works"), list)
+                or any(row not in previous["works"] for row in source["works"])):
+            raise ValueError("Adjudication sourceSummary changed result rows")
+        source = previous
     from catalog_completed_checks import completed_checks
     summary_sha = hashlib.sha256(artifact_path(assignment["artifact"]).read_bytes()).hexdigest() if assignment.get("artifact") else None
     historical = completed_checks(rows, summary_sha=summary_sha)
@@ -475,7 +498,8 @@ def _register(session, parent, work, phase, artifact, run, directory, artifact_r
                for k, v in value.items() if k not in {"active", "generation"}):
             return  # Preserve successful sends and the one-reminder flag on retry.
         if old.get("suspended") or not old.get("active"):
-            if not (old.get("suspended") and old.get("active") is False):
+            if (old.get("stoppedCheckpointSha256")
+                    or not (old.get("suspended") and old.get("active") is False)):
                 raise ValueError("Previous assignment stopped; explicitly clear it before reassignment")
         elif old.get("active"):
             previous = artifact_path(old["artifact"])

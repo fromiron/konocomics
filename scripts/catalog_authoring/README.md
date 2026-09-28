@@ -96,6 +96,8 @@ python scripts/catalog_python.py scripts/catalog_authoring/notification_guard.py
 
 구 phase/summary 등록의 정정은 `reconcile-registration --session <ID> --expected-sha <원 등록 SHA> [--summary <새 검증 가능 summary>]`를 사용한다. 기존 등록 전체와 SHA를 별도 revision에 보존하고 실제 근거·백업을 검증한 뒤 새 등록을 만든다. 부족한 필드는 합성하지 않는다. 새 등록은 arm되지 않으며 명시 실행 턴에서 `arm`이 필요하다. 중단 상태는 보존한다.
 
+판정 완료 summary의 `sourceSummary`는 이전 판정 summary의 **동일한 결과 행**만 추린 경우에 사용한다. 수집 summary는 판정 dispatch의 `collectionSummary`에 결속하며 완료 판정 summary의 `sourceSummary`로 쓰지 않는다. 완료 등록 검사는 source 체인의 SHA와 원 행을 확인해 잘못된 결속을 발행 단계 전에 거부한다. 결과 행이 바뀐 완료분은 새 full 판정 summary로 등록하고 원본을 보존한다.
+
 ## 입력 결속과 통지
 
 - 신규 v4 job의 빈 `sourceBindings`는 job 자체의 SHA-bound `researchRefs`에서도 조립한다. 비어 있지 않은 명시 선택은 보존하고, `--research`로 명시 추가한 자료만 추가 결속한다. source 채택 용도는 독립 판정의 `sourceDecisions.uses`가 정한다. 동결 전 원본/보충 evidence ID 중복과 정확한 registry support URL의 같은 Work 연결 누락은 `INPUT_NEEDS_REPAIR`로 보고한다. URL alias를 추정하거나 원문 접근 제한만으로 HOLD를 만들지 않는다.
