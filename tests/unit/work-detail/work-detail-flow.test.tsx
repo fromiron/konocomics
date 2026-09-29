@@ -203,8 +203,11 @@ describe("WorkDetailFlow", () => {
     const hidden = await screen.findByRole("radio", {
       name: workDetailStrings.state.options.hidden,
     });
-    expect(hidden.className).toContain("border-transparent");
-    expect(hidden.previousElementSibling?.getAttribute("aria-hidden")).toBe("true");
+    // Reading progress is one segmented control; the exclusion stays outside it.
+    const segments = document.querySelector('[data-slot="work-reading-segments"]');
+    expect(segments?.querySelectorAll('[role="radio"]')).toHaveLength(4);
+    expect(hidden.closest('[data-slot="work-reading-segments"]')).toBeNull();
+    expect(hidden.className).not.toContain("bg-accent");
     expect(screen.queryByText(workDetailStrings.state.ongoingHint)).toBeNull();
 
     view.unmount();

@@ -926,7 +926,7 @@ export const workDetailStrings = {
     plannedRemove: "読みたいから外す",
     managedByState: "現在の記録は読書状態から変更できます。",
     ongoingHint: "連載中の作品は、最新刊まで読んだら「読んだ」を選べます。",
-    reactionGroup: "読んだ作品の感想",
+    reactionGroup: "読んだ感想",
     reactionSaved: (label: string) => `「読んだ・${label}」を保存しました。`,
     reactionCleared: "感想を外しました。「読んだ」はそのままです。",
     saving: "保存しています…",

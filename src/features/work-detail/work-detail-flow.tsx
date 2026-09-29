@@ -1,7 +1,7 @@
 "use client";
 
 import { Link } from "@tanstack/react-router";
-import { BookmarkIcon } from "lucide-react";
+import { BookmarkIcon, EyeOffIcon } from "lucide-react";
 import { useEffect, useMemo, useRef, useState } from "react";
 
 import { coverSourceForSize } from "@/components/cover/CoverImage";
@@ -411,22 +411,20 @@ function WorkStateControls({
   };
 
   const completed = record?.readingState === "completed";
-  const stateButton = (state: ReadingState) => {
+  const excluded = record?.readingState === "hidden";
+  const interactive =
+    "transition-[background-color,color] duration-[var(--motion-duration-feedback)] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-focus-ring focus-visible:ring-offset-2 focus-visible:ring-offset-canvas disabled:cursor-not-allowed disabled:opacity-55 motion-reduce:transition-none";
+
+  // Reading progress is one segmented control: a single frame, the selection filled.
+  const segment = (state: Exclude<ReadingState, "hidden">) => {
     const selected = record?.readingState === state;
-    // 「興味なし」 excludes the work from recommendations rather than tracking reading,
-    // so it stays a quiet choice and never takes the accent fill.
-    const exclusion = state === "hidden";
     return (
       <button
         aria-checked={selected}
-        className={`inline-flex min-h-[var(--control-min-size)] items-center gap-[var(--space-2)] rounded-[var(--radius-pill)] border px-[var(--space-4)] text-[length:var(--font-size-14)] font-bold transition-[border-color,background-color,color] duration-[var(--motion-duration-feedback)] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-focus-ring focus-visible:ring-offset-2 focus-visible:ring-offset-canvas disabled:cursor-not-allowed disabled:opacity-55 motion-reduce:transition-none ${
-          exclusion
-            ? selected
-              ? "border-line bg-surface-2 text-text-strong"
-              : "border-transparent bg-transparent text-text-muted hover:text-text-strong"
-            : selected
-              ? "border-accent bg-accent text-on-accent"
-              : "border-line/70 bg-transparent text-text-muted hover:text-text-strong"
+        className={`inline-flex min-h-[var(--control-min-size)] items-center justify-center gap-[var(--space-2)] rounded-[var(--radius-control)] px-[var(--space-4)] text-[length:var(--font-size-14)] font-bold whitespace-nowrap ${interactive} ${
+          selected
+            ? "bg-accent text-on-accent"
+            : "text-text-muted hover:bg-surface-2 hover:text-text-strong"
         }`}
         data-reading-state={state}
         disabled={busy}
@@ -459,56 +457,71 @@ function WorkStateControls({
           {workDetailStrings.state.loading}
         </p>
       ) : (
-        <div
-          aria-labelledby="work-state-heading"
-          className="grid justify-items-start gap-[var(--space-3)]"
-          role="radiogroup"
-        >
+        <>
           <div
-            className={`flex w-full flex-wrap items-center gap-[var(--space-2)] rounded-[var(--radius-card)] border p-[var(--space-2)] sm:inline-flex sm:w-auto sm:max-w-full transition-colors duration-[var(--motion-duration-feedback)] motion-reduce:transition-none ${
-              completed ? "border-accent/70" : "border-line"
-            }`}
-            data-slot="work-completed-reactions"
+            aria-labelledby="work-state-heading"
+            className="flex flex-wrap items-center gap-x-[var(--space-4)] gap-y-[var(--space-2)]"
+            role="radiogroup"
           >
-            {stateButton("completed")}
-            <span aria-hidden="true" className="hidden h-[var(--space-6)] w-px bg-line sm:block" />
             <div
-              aria-label={workDetailStrings.state.reactionGroup}
-              className="flex flex-wrap gap-[var(--space-1)]"
-              role="group"
+              className="grid w-full grid-cols-2 gap-[var(--space-1)] rounded-[calc(var(--radius-control)+var(--space-1))] bg-surface-2/70 p-[var(--space-1)] sm:inline-flex sm:w-auto"
+              data-slot="work-reading-segments"
             >
-              {REACTIONS.map((reaction) => {
-                const pressed = completed && record?.reaction === reaction;
-                return (
-                  <button
-                    aria-pressed={pressed}
-                    className={`inline-flex min-h-[var(--control-min-size)] items-center rounded-[var(--radius-pill)] px-[var(--space-3)] text-[length:var(--font-size-14)] font-bold transition-[background-color,color] duration-[var(--motion-duration-feedback)] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-focus-ring focus-visible:ring-offset-2 focus-visible:ring-offset-canvas disabled:cursor-not-allowed disabled:opacity-55 motion-reduce:transition-none ${
-                      pressed
-                        ? "bg-accent-soft text-accent"
-                        : "text-text-muted hover:bg-surface-2 hover:text-text-strong"
-                    }`}
-                    disabled={busy}
-                    key={reaction}
-                    onClick={() => void saveCompletedReaction(reaction)}
-                    type="button"
-                  >
-                    {libraryStrings.reactions[reaction]}
-                  </button>
-                );
-              })}
+              {segment("planned")}
+              {segment("reading")}
+              {segment("completed")}
+              {segment("dropped")}
             </div>
+            {/* 「興味なし」 excludes the work from recommendations rather than tracking reading. */}
+            <button
+              aria-checked={excluded}
+              className={`inline-flex min-h-[var(--control-min-size)] items-center gap-[var(--space-2)] rounded-[var(--radius-control)] px-[var(--space-3)] text-[length:var(--font-size-14)] font-bold ${interactive} ${
+                excluded
+                  ? "bg-surface-2 text-text-strong"
+                  : "text-text-muted hover:text-text-strong"
+              }`}
+              data-reading-state="hidden"
+              disabled={busy}
+              onClick={() => handleStateSelect("hidden")}
+              role="radio"
+              type="button"
+            >
+              <EyeOffIcon aria-hidden="true" className="size-4" />
+              {workDetailStrings.state.options.hidden}
+            </button>
           </div>
-          <div className="flex flex-wrap items-center gap-[var(--space-content)]">
-            {stateButton("planned")}
-            {stateButton("reading")}
-            {stateButton("dropped")}
+          <div
+            aria-labelledby="work-reaction-label"
+            className="grid w-full grid-cols-4 items-center gap-[var(--space-1)] sm:flex sm:w-auto"
+            role="group"
+          >
             <span
-              aria-hidden="true"
-              className="mx-[var(--space-1)] h-[var(--space-6)] w-px bg-line"
-            />
-            {stateButton("hidden")}
+              className="col-span-4 text-[length:var(--text-caption-size)] font-bold text-text-muted sm:mr-[var(--space-2)]"
+              id="work-reaction-label"
+            >
+              {workDetailStrings.state.reactionGroup}
+            </span>
+            {REACTIONS.map((reaction) => {
+              const pressed = completed && record?.reaction === reaction;
+              return (
+                <button
+                  aria-pressed={pressed}
+                  className={`inline-flex min-h-[var(--control-min-size)] items-center justify-center rounded-[var(--radius-control)] px-[var(--space-3)] text-[length:var(--font-size-14)] font-bold whitespace-nowrap ${interactive} ${
+                    pressed
+                      ? "bg-accent-soft text-accent"
+                      : "text-text-muted hover:bg-surface-2 hover:text-text-strong"
+                  }`}
+                  disabled={busy}
+                  key={reaction}
+                  onClick={() => void saveCompletedReaction(reaction)}
+                  type="button"
+                >
+                  {libraryStrings.reactions[reaction]}
+                </button>
+              );
+            })}
           </div>
-        </div>
+        </>
       )}
       {seriesContinues && recordsReady ? (
         <p className="text-[length:var(--text-caption-size)] text-text-muted">
