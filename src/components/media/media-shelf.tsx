@@ -31,6 +31,7 @@ type MediaShelfProps = Readonly<{
     [key: `data-${string}`]: string | boolean | undefined;
   }>;
   compactHeading?: boolean;
+  headingLevel?: 2 | 3;
   controlsPlacement?: "heading" | "overlay";
   enableLoop?: boolean;
   onPageChange?: (firstVisibleIndex: number) => void;
@@ -226,6 +227,7 @@ export function MediaShelf({
   children,
   className,
   compactHeading = false,
+  headingLevel = 2,
   controlsPlacement = "heading",
   enableLoop = true,
   description,
@@ -451,6 +453,7 @@ export function MediaShelf({
         }
         compact={compactHeading}
         description={description}
+        headingLevel={headingLevel}
         id={headingId}
         title={title}
       />

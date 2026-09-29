@@ -30,17 +30,33 @@ export function resolveWorkBookMetadata(
   };
 }
 
-export function selectSameAuthorWork(catalog: CatalogV1, source: Work) {
+/**
+ * The author's other Catalog works for the detail page. The featured work is the recommendable
+ * one with the most Rakuten reviews (ties by work ID); the rest follow in the same order and
+ * may include library-only works. Deterministic so prerendered and hydrated output match.
+ */
+export function selectSameAuthorWorks(
+  catalog: CatalogV1,
+  source: Work,
+  reviewCountOf: (workId: string) => number | undefined,
+) {
   if (!source.eligibility.recommendationEligible) return null;
   const authors = new Map(source.creators.map((author) => [normalizeCreator(author), author]));
-  const candidates = catalog.works.filter(
-    (work) =>
-      work.id !== source.id &&
-      work.eligibility.recommendationEligible &&
-      work.creators.some((author) => authors.has(normalizeCreator(author))),
-  );
-  candidates.sort((left, right) => (left.id < right.id ? -1 : left.id > right.id ? 1 : 0));
-  const work = candidates[0];
-  const author = work?.creators.map((name) => authors.get(normalizeCreator(name))).find(Boolean);
-  return work === undefined || author === undefined ? null : { work, author };
+  const byReviewsThenId = (left: Work, right: Work) =>
+    (reviewCountOf(right.id) ?? -1) - (reviewCountOf(left.id) ?? -1) ||
+    (left.id < right.id ? -1 : left.id > right.id ? 1 : 0);
+  const candidates = catalog.works
+    .filter(
+      (work) =>
+        work.id !== source.id &&
+        work.creators.some((author) => authors.has(normalizeCreator(author))),
+    )
+    .sort(byReviewsThenId);
+  const featured = candidates.find((work) => work.eligibility.recommendationEligible);
+  const others = candidates.filter((work) => work !== featured);
+  const sample = featured ?? others[0];
+  const author = sample?.creators.map((name) => authors.get(normalizeCreator(name))).find(Boolean);
+  return sample === undefined || author === undefined
+    ? null
+    : { author, featured: featured ?? null, others };
 }

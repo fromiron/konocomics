@@ -8,6 +8,7 @@ import {
   render,
   screen,
   waitFor,
+  within,
 } from "@testing-library/react";
 import type { AnchorHTMLAttributes } from "react";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
@@ -172,6 +173,45 @@ afterEach(() => {
 });
 
 describe("WorkDetailFlow", () => {
+  it("groups the author's other works under one section with a featured book and a shelf", async () => {
+    testState.status = { state: "ready", mode: "indexeddb", warning: null };
+    renderDetail("monster");
+
+    const heading = await screen.findByRole("heading", {
+      level: 2,
+      name: workDetailStrings.sameAuthor.heading("浦沢直樹"),
+    });
+    const section = heading.closest("section");
+    if (section === null) throw new Error("Missing same-author section");
+    expect(
+      within(section).getByRole("heading", {
+        level: 3,
+        name: workDetailStrings.sameAuthor.othersHeading,
+      }),
+    ).toBeTruthy();
+    const links = within(section)
+      .getAllByRole("link")
+      .map((link) => link.getAttribute("href"));
+    expect(links).not.toContain("/works/monster");
+    expect(new Set(links).size).toBe(links.length);
+  });
+
+  it("sets the recommendation exclusion apart and explains 「読んだ」 only for continuing series", async () => {
+    testState.status = { state: "ready", mode: "indexeddb", warning: null };
+    const view = renderDetail("monster");
+
+    const hidden = await screen.findByRole("radio", {
+      name: workDetailStrings.state.options.hidden,
+    });
+    expect(hidden.className).toContain("border-transparent");
+    expect(hidden.previousElementSibling?.getAttribute("aria-hidden")).toBe("true");
+    expect(screen.queryByText(workDetailStrings.state.ongoingHint)).toBeNull();
+
+    view.unmount();
+    renderDetail("a-brides-story");
+    expect(await screen.findByText(workDetailStrings.state.ongoingHint)).toBeTruthy();
+  });
+
   it("expands and closes a long synopsis without changing its source text or link", async () => {
     const readStyle = window.getComputedStyle;
     const styleSpy = vi.spyOn(window, "getComputedStyle").mockImplementation((...args) => {

@@ -871,7 +871,10 @@ export const workDetailStrings = {
     description: "確認済みの作品ファクターが近いカタログ作品です。",
   },
   sameAuthor: {
-    heading: (author: string) => `${author}の、もう一冊`,
+    heading: (author: string) => `${author}の作品`,
+    othersHeading: "そのほかの作品",
+    reviews: (average: number, count: number) =>
+      `楽天レビュー ${average.toFixed(1)} · ${String(count)}件`,
     view: "作品を見る",
     open: (title: string) => `「${title}」の作品詳細を見る`,
   },
@@ -922,6 +925,7 @@ export const workDetailStrings = {
     plannedAdd: "読みたい",
     plannedRemove: "読みたいから外す",
     managedByState: "現在の記録は読書状態から変更できます。",
+    ongoingHint: "連載中の作品は、最新刊まで読んだら「読んだ」を選べます。",
     saving: "保存しています…",
     saved: "読書状態を保存しました。",
     plannedSaved: "読みたいに追加しました。",

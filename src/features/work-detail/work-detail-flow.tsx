@@ -1,7 +1,8 @@
 "use client";
 
 import { Link } from "@tanstack/react-router";
-import { useEffect, useMemo, useRef, useState } from "react";
+import { BookmarkIcon } from "lucide-react";
+import { Fragment, useEffect, useMemo, useRef, useState } from "react";
 
 import { coverSourceForSize } from "@/components/cover/CoverImage";
 import { Button, buttonClassName } from "@/components/design-system/button";
@@ -26,12 +27,12 @@ import { scoreWorkCompatibility } from "@/domain/recommendation/rank";
 import type { RecommendationInput } from "@/domain/recommendation/types";
 import { useCatalog } from "@/features/catalog/catalog-provider";
 import { WorkDetailShell } from "@/features/work-detail/work-detail-shell";
-import { SameAuthorBanner } from "@/features/work-detail/same-author-banner";
+import { SameAuthorSection } from "@/features/work-detail/same-author-banner";
 import { ShareButton } from "@/features/work-detail/share-button";
 import { WorkTraits } from "@/features/work-detail/work-traits";
 import {
   resolveWorkBookMetadata,
-  selectSameAuthorWork,
+  selectSameAuthorWorks,
 } from "@/features/work-detail/work-detail-data";
 import {
   createRecommendationCoverTargets,
@@ -164,6 +165,20 @@ function genreThemeIds(work: Work): ExplanationFactorId[] {
   ];
 }
 
+function sameAuthorMeta(work: Work) {
+  const context = parsedRecommendationContext.success ? parsedRecommendationContext.data : null;
+  const market = context?.marketSnapshot.byWorkId[work.id];
+  if (market?.reviewAverage !== undefined && market.reviewCount !== undefined) {
+    return workDetailStrings.sameAuthor.reviews(market.reviewAverage, market.reviewCount);
+  }
+  // Without reviews, fall back to known series facts only; an unknown status adds nothing.
+  const volumeCount = context?.constraintByWorkId[work.id]?.volumeCount ?? 0;
+  return [
+    ...(work.status === "unknown" ? [] : [recommendationStrings.workStatus[work.status]]),
+    ...(volumeCount < 1 ? [] : [recommendationStrings.volumeCount(volumeCount)]),
+  ].join(" · ");
+}
+
 function compareWorkIds(left: Work, right: Work) {
   return left.id < right.id ? -1 : left.id === right.id ? 0 : 1;
 }
@@ -270,6 +285,8 @@ function compatibilityFor(options: {
 type WorkStateControlsProps = Readonly<{
   record: UserWorkRecord | undefined;
   recordsReady: boolean;
+  /** Ongoing or paused series: 「読んだ」 means caught up to the latest volume. */
+  seriesContinues: boolean;
   workId: string;
   removeMinimalPlannedUserWork(
     workId: string,
@@ -282,6 +299,7 @@ function WorkStateControls({
   recordsReady,
   removeMinimalPlannedUserWork,
   saveUserWork,
+  seriesContinues,
   workId,
 }: WorkStateControlsProps) {
   const [busy, setBusy] = useState(false);
@@ -375,26 +393,52 @@ function WorkStateControls({
         >
           {READING_STATES.map((state) => {
             const selected = record?.readingState === state;
+            // 「興味なし」 excludes the work from recommendations rather than tracking reading,
+            // so it sits apart as a quiet choice and never takes the accent fill.
+            const exclusion = state === "hidden";
             return (
-              <button
-                aria-checked={selected}
-                className={`inline-flex min-h-[var(--control-min-size)] items-center rounded-[var(--radius-pill)] border px-[var(--space-4)] text-[length:var(--font-size-14)] font-bold transition-[border-color,background-color,color] duration-[var(--motion-duration-feedback)] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-focus-ring focus-visible:ring-offset-2 focus-visible:ring-offset-canvas disabled:cursor-not-allowed disabled:opacity-55 motion-reduce:transition-none ${
-                  selected
-                    ? "border-accent bg-accent text-on-accent"
-                    : "border-line/70 bg-transparent text-text-muted hover:text-text-strong"
-                }`}
-                disabled={busy}
-                key={state}
-                onClick={() => handleStateSelect(state)}
-                role="radio"
-                type="button"
-              >
-                {workDetailStrings.state.options[state]}
-              </button>
+              <Fragment key={state}>
+                {exclusion ? (
+                  <span
+                    aria-hidden="true"
+                    className="mx-[var(--space-1)] h-[var(--space-6)] w-px self-center bg-line"
+                  />
+                ) : null}
+                <button
+                  aria-checked={selected}
+                  className={`inline-flex min-h-[var(--control-min-size)] items-center gap-[var(--space-2)] rounded-[var(--radius-pill)] border px-[var(--space-4)] text-[length:var(--font-size-14)] font-bold transition-[border-color,background-color,color] duration-[var(--motion-duration-feedback)] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-focus-ring focus-visible:ring-offset-2 focus-visible:ring-offset-canvas disabled:cursor-not-allowed disabled:opacity-55 motion-reduce:transition-none ${
+                    exclusion
+                      ? selected
+                        ? "border-line bg-surface-2 text-text-strong"
+                        : "border-transparent bg-transparent text-text-muted hover:text-text-strong"
+                      : selected
+                        ? "border-accent bg-accent text-on-accent"
+                        : "border-line/70 bg-transparent text-text-muted hover:text-text-strong"
+                  }`}
+                  data-reading-state={state}
+                  disabled={busy}
+                  onClick={() => handleStateSelect(state)}
+                  role="radio"
+                  type="button"
+                >
+                  {state === "planned" ? (
+                    <BookmarkIcon
+                      aria-hidden="true"
+                      className={`size-4 ${selected ? "fill-current" : ""}`}
+                    />
+                  ) : null}
+                  {workDetailStrings.state.options[state]}
+                </button>
+              </Fragment>
             );
           })}
         </div>
       )}
+      {seriesContinues && recordsReady ? (
+        <p className="text-[length:var(--text-caption-size)] text-text-muted">
+          {workDetailStrings.state.ongoingHint}
+        </p>
+      ) : null}
       {busy ? (
         <p aria-live="polite" className="text-[length:var(--text-caption-size)] text-text-muted">
           {workDetailStrings.state.saving}
@@ -683,13 +727,15 @@ function WorkDetailContent({ catalog, work }: Readonly<{ catalog: CatalogV1; wor
     [adjustments, catalog, policies, userWorks, work.id],
   );
   const relatedGroups = useMemo(() => relatedWorkGroups(catalog, work), [catalog, work]);
-  const sameAuthor = useMemo(() => selectSameAuthorWork(catalog, work), [catalog, work]);
-  const sameAuthorVolume =
-    sameAuthor === null
-      ? undefined
-      : catalog.volumes.find(
-          (volume) => volume.id === catalog.representativeVolumeByWorkId[sameAuthor.work.id],
-        );
+  const sameAuthor = useMemo(
+    () =>
+      selectSameAuthorWorks(catalog, work, (workId) =>
+        parsedRecommendationContext.success
+          ? parsedRecommendationContext.data.marketSnapshot.byWorkId[workId]?.reviewCount
+          : undefined,
+      ),
+    [catalog, work],
+  );
   const coverTargets = useMemo(() => {
     const anchorWorkIds =
       compatibility.kind === "ready"
@@ -698,7 +744,12 @@ function WorkDetailContent({ catalog, work }: Readonly<{ catalog: CatalogV1; wor
     const orderedWorkIds = [
       ...new Set([
         ...anchorWorkIds,
-        ...(sameAuthor === null ? [] : [sameAuthor.work.id]),
+        ...(sameAuthor === null
+          ? []
+          : [
+              ...(sameAuthor.featured === null ? [] : [sameAuthor.featured.id]),
+              ...sameAuthor.others.map((other) => other.id),
+            ]),
         ...relatedGroups.themeRanked.map((related) => related.id),
         ...relatedGroups.moodRanked.map((related) => related.id),
       ]),
@@ -964,6 +1015,7 @@ function WorkDetailContent({ catalog, work }: Readonly<{ catalog: CatalogV1; wor
             recordsReady={userWorks !== undefined}
             removeMinimalPlannedUserWork={removeMinimalPlannedUserWork}
             saveUserWork={saveUserWork}
+            seriesContinues={work.status === "ongoing" || work.status === "hiatus"}
             workId={work.id}
           />
         </WorkDetailShell>
@@ -1085,18 +1137,24 @@ function WorkDetailContent({ catalog, work }: Readonly<{ catalog: CatalogV1; wor
             onAnchorCoverVisible={requestCover}
             state={compatibility}
           />
-
-          {sameAuthor === null ? null : (
-            <SameAuthorBanner
-              author={sameAuthor.author}
-              coverUrl={coverUrls.get(sameAuthor.work.id) ?? sameAuthorVolume?.metadata?.imageUrl}
-              onCoverVisible={() => requestCover(sameAuthor.work.id)}
-              work={sameAuthor.work}
-            />
-          )}
         </div>
 
-        <div className="mx-auto grid w-full max-w-[var(--layout-width-media)] gap-[var(--space-6)] px-[var(--layout-page-padding)] pt-[var(--space-6)]">
+        <div className="mx-auto grid w-full max-w-[var(--layout-width-media)] gap-[var(--space-shelf)] px-[var(--layout-page-padding)] pt-[var(--space-shelf-group)]">
+          {sameAuthor === null ? null : (
+            <SameAuthorSection
+              author={sameAuthor.author}
+              coverUrlOf={(workId) =>
+                coverUrls.get(workId) ??
+                catalog.volumes.find(
+                  (volume) => volume.id === catalog.representativeVolumeByWorkId[workId],
+                )?.metadata?.imageUrl
+              }
+              featured={sameAuthor.featured}
+              featuredMeta={sameAuthor.featured === null ? "" : sameAuthorMeta(sameAuthor.featured)}
+              onCoverVisible={requestCover}
+              others={sameAuthor.others}
+            />
+          )}
           <MediaShelf
             compactHeading
             description={workDetailStrings.related.description}

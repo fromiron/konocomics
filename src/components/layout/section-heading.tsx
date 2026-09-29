@@ -9,6 +9,8 @@ type SectionHeadingProps = Readonly<{
   action?: ReactNode;
   className?: string;
   compact?: boolean;
+  /** Use 3 when the shelf sits inside another titled section. */
+  headingLevel?: 2 | 3;
 }>;
 
 export function SectionHeading({
@@ -16,9 +18,11 @@ export function SectionHeading({
   className,
   compact = false,
   description,
+  headingLevel = 2,
   id,
   title,
 }: SectionHeadingProps) {
+  const Heading = headingLevel === 3 ? "h3" : "h2";
   return (
     <header
       className={cn(
@@ -28,17 +32,19 @@ export function SectionHeading({
       )}
     >
       <div className="grid min-w-0 gap-[var(--space-content-tight)]">
-        <h2
+        <Heading
           className={cn(
             "tracking-tight text-text-strong",
-            compact
-              ? "text-[length:var(--text-subheading-size)]"
-              : "text-[length:var(--text-section-title-size)]",
+            headingLevel === 3
+              ? "text-[length:var(--font-size-16)]"
+              : compact
+                ? "text-[length:var(--text-subheading-size)]"
+                : "text-[length:var(--text-section-title-size)]",
           )}
           id={id}
         >
           {title}
-        </h2>
+        </Heading>
         {description === undefined ? null : (
           <p className="max-w-[var(--layout-width-reading)] text-[length:var(--font-size-14)] leading-[var(--line-height-body)] text-text-muted">
             {description}

@@ -3,7 +3,7 @@ import catalogJson from "@/data/generated/catalog-v1.json";
 import { catalogV1Schema } from "@/domain/catalog/schema";
 import {
   resolveWorkBookMetadata,
-  selectSameAuthorWork,
+  selectSameAuthorWorks,
 } from "@/features/work-detail/work-detail-data";
 
 const catalog = catalogV1Schema.parse(catalogJson);
@@ -66,24 +66,41 @@ describe("work book information", () => {
     expect(resolveWorkBookMetadata(work, undefined, null).itemCaption).toBeUndefined();
   });
 
-  it("selects a real eligible same-author work consistently and omits an empty banner", () => {
+  it("features the most-reviewed eligible same-author work and lists the rest deterministically", () => {
     const source = {
       ...work,
       id: "source",
       creators: ["作者 A"],
       eligibility: { onboardingEligible: false, recommendationEligible: true, libraryOnly: false },
     };
-    const first = { ...source, id: "a", creators: ["作者 Ａ"] };
-    const second = { ...source, id: "b" };
-    const excluded = {
+    const fewReviews = { ...source, id: "a", creators: ["作者 Ａ"] };
+    const manyReviews = { ...source, id: "b" };
+    const noReviews = { ...source, id: "c" };
+    const libraryOnly = {
       ...source,
       id: "0",
       eligibility: { ...source.eligibility, recommendationEligible: false, libraryOnly: true },
     };
-    expect(
-      selectSameAuthorWork({ ...catalog, works: [source, second, excluded, first] }, source),
-    ).toEqual({ work: first, author: "作者 A" });
-    expect(selectSameAuthorWork({ ...catalog, works: [source] }, source)).toBeNull();
-    expect(selectSameAuthorWork(catalog, excluded)).toBeNull();
+    const otherAuthor = { ...source, id: "d", creators: ["作者 B"] };
+    const reviews: Record<string, number> = { a: 3, b: 40, 0: 99 };
+    const select = (works: (typeof source)[]) =>
+      selectSameAuthorWorks({ ...catalog, works }, source, (workId) => reviews[workId]);
+
+    expect(select([source, noReviews, libraryOnly, fewReviews, manyReviews, otherAuthor])).toEqual({
+      author: "作者 A",
+      featured: manyReviews,
+      others: [libraryOnly, fewReviews, noReviews],
+    });
+    // Identical input gives an identical selection, independent of catalog order.
+    expect(select([manyReviews, fewReviews, source, noReviews, libraryOnly])).toEqual(
+      select([source, noReviews, libraryOnly, fewReviews, manyReviews]),
+    );
+    expect(select([source, libraryOnly])).toEqual({
+      author: "作者 A",
+      featured: null,
+      others: [libraryOnly],
+    });
+    expect(select([source])).toBeNull();
+    expect(selectSameAuthorWorks(catalog, libraryOnly, () => undefined)).toBeNull();
   });
 });
