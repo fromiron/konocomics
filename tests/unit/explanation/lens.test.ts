@@ -3,6 +3,7 @@ import { describe, expect, it } from "vitest";
 import {
   generateTasteExplanation,
   groupRecommendationLenses,
+  RECOMMENDATION_LENS_CANDIDATE_LIMIT,
   RECOMMENDATION_LENS_MAX_ITEMS,
   type RecommendationLens,
   type TasteExplanationSentence,
@@ -153,6 +154,25 @@ describe("groupRecommendationLenses", () => {
         workIds: likedBy("liked-a", RECOMMENDATION_LENS_MAX_ITEMS, "a").map(({ workId }) => workId),
       },
     ]);
+  });
+
+  it("only explains the top of the plan", () => {
+    let explained = 0;
+    const unexplained = Array.from({ length: RECOMMENDATION_LENS_CANDIDATE_LIMIT }, (_, index) =>
+      item(`filler-${String(index)}`, { factorId: "adventure", explainable: false }),
+    );
+    const lenses = groupRecommendationLenses({
+      items: [...unexplained, ...likedBy("liked-a", 3, "late")],
+      leadReasonOf: (entry) => {
+        explained += 1;
+        return leadReasonOf(entry);
+      },
+      lexicon: explanationLexicon,
+      resolveTitle,
+    });
+
+    expect(lenses).toEqual([]);
+    expect(explained).toBe(RECOMMENDATION_LENS_CANDIDATE_LIMIT);
   });
 
   it("keeps lower-axis preference sentences out of factor lenses", () => {

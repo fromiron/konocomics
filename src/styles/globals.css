@@ -106,6 +106,8 @@
   --space-section: var(--space-8);
   --space-section-large: var(--space-12);
   --space-section-xl: var(--space-24);
+  --space-shelf: var(--space-section-large);
+  --space-shelf-group: calc(var(--space-8) * 2);
   --layout-page-padding: var(--space-4);
   --layout-page-block-start: var(--space-8);
   --layout-width-form: 640px;

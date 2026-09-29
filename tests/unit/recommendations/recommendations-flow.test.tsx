@@ -33,6 +33,7 @@ vi.mock("@tanstack/react-router", () => ({
     "data-recommendation-select": recommendationSelect,
     onClick,
     params,
+    search,
     to,
   }: {
     "aria-label"?: string;
@@ -42,6 +43,7 @@ vi.mock("@tanstack/react-router", () => ({
     "data-recommendation-select"?: boolean;
     onClick?: MouseEventHandler<HTMLAnchorElement>;
     params?: { workId: string };
+    search?: Record<string, string>;
     to: string;
   }) => (
     <a
@@ -49,7 +51,9 @@ vi.mock("@tanstack/react-router", () => ({
       className={className}
       data-recommendation-identity-rail={identityRail || undefined}
       data-recommendation-select={recommendationSelect || undefined}
-      href={params === undefined ? to : to.replace("$workId", params.workId)}
+      href={`${params === undefined ? to : to.replace("$workId", params.workId)}${
+        search === undefined ? "" : `?${new URLSearchParams(search).toString()}`
+      }`}
       onClick={onClick}
     >
       {children}
@@ -1104,7 +1108,7 @@ describe("RecommendationsFlow", () => {
     ).toBeNull();
   });
 
-  it("shows a full-width feedback banner with counts and a taste link when completed records exist", async () => {
+  it("summarizes excluded records with library links and a taste link without decoration", async () => {
     const { container } = render(<RecommendationsFlow />);
 
     await waitFor(() => {
@@ -1113,33 +1117,27 @@ describe("RecommendationsFlow", () => {
     const heading = screen.getByRole("heading", {
       name: recommendationStrings.feedbackSummary.heading,
     });
-    const banner = heading.closest("section");
-    expect(banner).not.toBeNull();
+    const summary = heading.closest("section");
+    if (summary === null) throw new Error("Missing feedback summary");
+    expect(summary.querySelector("img")).toBeNull();
+    const completedLabel = recommendationStrings.feedbackSummary.completed(5);
     expect(
-      container
-        .querySelector('img[src="/media/recommendations-feedback-manga-v4.png"]')
-        ?.getAttribute("aria-hidden"),
-    ).toBe("true");
+      within(summary)
+        .getByRole("link", {
+          name: recommendationStrings.feedbackSummary.openLibrary(completedLabel),
+        })
+        .getAttribute("href"),
+    ).toBe("/library?state=completed");
+    expect(within(summary).queryByRole("link", { name: /興味なし/u })).toBeNull();
+    expect(summary.textContent).toContain(recommendationStrings.feedbackSummary.excluded);
     expect(
-      within(banner as HTMLElement).getByText(recommendationStrings.actions.completed),
-    ).toBeTruthy();
-    expect(
-      within(banner as HTMLElement).getByText(recommendationStrings.actions.hidden),
-    ).toBeTruthy();
-    expect(
-      within(banner as HTMLElement).getByText(recommendationStrings.feedbackSummary.count(5)),
-    ).toBeTruthy();
-    expect(
-      within(banner as HTMLElement).getByText(recommendationStrings.feedbackSummary.count(0)),
-    ).toBeTruthy();
-    expect(
-      within(banner as HTMLElement)
+      within(summary)
         .getByRole("link", { name: recommendationStrings.tasteSummary.link })
         .getAttribute("href"),
     ).toBe("/taste");
   });
 
-  it("hides the feedback image banner when completed and hidden counts are both zero", async () => {
+  it("hides the feedback summary when completed and hidden counts are both zero", async () => {
     testState.userWorks = testState.userWorks.map((record) => ({
       ...record,
       readingState: "planned",
@@ -1151,9 +1149,6 @@ describe("RecommendationsFlow", () => {
     });
     expect(
       screen.queryByRole("heading", { name: recommendationStrings.feedbackSummary.heading }),
-    ).toBeNull();
-    expect(
-      container.querySelector('img[src="/media/recommendations-feedback-manga-v4.png"]'),
     ).toBeNull();
   });
 
@@ -1537,7 +1532,12 @@ describe("RecommendationsFlow", () => {
     render(<RecommendationsFlow />);
 
     const criteria = await screen.findByRole("region", { name: "今回のおすすめ基準" });
-    expect(within(criteria).getByText("5作品から")).toBeTruthy();
+    expect(criteria.querySelector("p")?.textContent).toMatch(
+      /^5作品の(好み（.+）|記録)から選んでいます。$/u,
+    );
+    expect(within(criteria).getByRole("link", { name: "Manga DNA" }).getAttribute("href")).toBe(
+      "/taste",
+    );
     expect(criteria.textContent).not.toMatch(/あなた|反映|方針|自動/u);
     expect(screen.getAllByRole("checkbox", { name: /優先|重視/u })).toHaveLength(3);
     expect(screen.queryByRole("checkbox", { name: "刊行情報が不明な作品を除外" })).toBeNull();
@@ -1600,7 +1600,7 @@ describe("RecommendationsFlow", () => {
     });
     await waitFor(() => expect(completedButton.disabled).toBe(true));
     expect(policyHint.textContent).toBe("並べ直しています…");
-    expect(within(policySection).queryByRole("button", { name: /更新/u })).toBeNull();
+    expect(screen.queryByRole("button", { name: /更新/u })).toBeNull();
     expect(container.querySelector("main")?.getAttribute("data-recommendation-input-hash")).toBe(
       INPUT_HASH,
     );
@@ -1619,7 +1619,7 @@ describe("RecommendationsFlow", () => {
     await waitFor(() => expect(testState.getRecommendationCache).toHaveBeenCalledTimes(2));
     expect(within(policySection).getByRole("status")).toBe(policyHint);
     expect(policyHint.textContent).toBe("並べ直しています…");
-    expect(within(policySection).queryByRole("button", { name: /更新/u })).toBeNull();
+    expect(screen.queryByRole("button", { name: /更新/u })).toBeNull();
     expect(container.querySelector("main")?.getAttribute("data-recommendation-input-hash")).toBe(
       INPUT_HASH,
     );
@@ -1634,7 +1634,7 @@ describe("RecommendationsFlow", () => {
       "01".repeat(32),
     );
     expect(policyHint.textContent).toBe("");
-    expect(within(policySection).queryByRole("button", { name: /更新/u })).toBeNull();
+    expect(screen.queryByRole("button", { name: /更新/u })).toBeNull();
     for (const chip of within(policySection).getAllByRole("checkbox")) {
       expect(chip.getAttribute("aria-disabled")).not.toBe("true");
     }

@@ -1,6 +1,5 @@
 import { Link } from "@tanstack/react-router";
 
-import { buttonClassName } from "@/components/design-system/button";
 import { recommendationStrings } from "@/lib/strings";
 
 type FeedbackImpactSummaryProps = Readonly<{
@@ -8,64 +7,52 @@ type FeedbackImpactSummaryProps = Readonly<{
   hiddenCount: number;
 }>;
 
+const countLinkClassName =
+  "inline-flex min-h-[var(--control-min-size)] items-center font-bold text-text underline underline-offset-4 tabular-nums hover:text-text-strong focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-ring";
+
 export function FeedbackImpactSummary({ completedCount, hiddenCount }: FeedbackImpactSummaryProps) {
   if (completedCount + hiddenCount === 0) {
     return null;
   }
+  const strings = recommendationStrings.feedbackSummary;
+  const counts = [
+    ...(completedCount > 0
+      ? [{ state: "completed" as const, label: strings.completed(completedCount) }]
+      : []),
+    ...(hiddenCount > 0 ? [{ state: "hidden" as const, label: strings.hidden(hiddenCount) }] : []),
+  ];
 
   return (
     <section
       aria-labelledby="recommendation-feedback-heading"
-      className="relative mt-[var(--space-section-xl)] mb-[calc(var(--space-section-xl)-var(--space-8))] overflow-hidden rounded-[var(--radius-card)] md:mb-[calc(var(--space-section-xl)-var(--space-6))]"
+      className="mt-[var(--space-shelf-group)] mb-[calc(var(--space-shelf-group)-var(--space-8))] border-t border-line pt-[var(--space-6)] md:mb-[calc(var(--space-shelf-group)-var(--space-6))]"
     >
-      <img
-        alt=""
-        aria-hidden="true"
-        className="pointer-events-none absolute inset-0 size-full object-cover object-[86%_50%] md:object-[76%_46%]"
-        decoding="async"
-        fetchPriority="low"
-        loading="lazy"
-        src="/media/recommendations-feedback-manga-v4.png"
-      />
-      <div
-        aria-hidden="true"
-        className="pointer-events-none absolute inset-0 bg-gradient-to-r from-canvas from-30% via-canvas/90 via-55% to-canvas/90 to-85% md:to-transparent"
-      />
-      <div className="relative z-10 grid justify-items-start gap-[var(--space-4)] p-[var(--space-5)] md:max-w-[58%] md:p-[var(--space-6)]">
-        <div className="grid gap-[var(--space-2)]">
-          <h2
-            className="text-[length:var(--text-subheading-size)] leading-snug font-bold text-text-strong"
-            id="recommendation-feedback-heading"
-          >
-            {recommendationStrings.feedbackSummary.heading}
-          </h2>
-          <p className="text-[length:var(--font-size-14)] text-text-muted">
-            {recommendationStrings.feedbackSummary.description}
-          </p>
-        </div>
-        <dl className="m-0 flex gap-[var(--space-8)]">
-          <div className="grid gap-[var(--space-content-tight)]">
-            <dt className="text-[length:var(--text-caption-size)] font-medium text-text-muted">
-              {recommendationStrings.actions.completed}
-            </dt>
-            <dd className="m-0 text-[length:var(--font-size-16)] font-bold tracking-tight text-text-strong tabular-nums">
-              {recommendationStrings.feedbackSummary.count(completedCount)}
-            </dd>
-          </div>
-          <div className="grid gap-[var(--space-content-tight)]">
-            <dt className="text-[length:var(--text-caption-size)] font-medium text-text-muted">
-              {recommendationStrings.actions.hidden}
-            </dt>
-            <dd className="m-0 text-[length:var(--font-size-16)] font-bold tracking-tight text-text-strong tabular-nums">
-              {recommendationStrings.feedbackSummary.count(hiddenCount)}
-            </dd>
-          </div>
-        </dl>
+      <h2
+        className="text-[length:var(--text-subheading-size)] leading-snug font-bold text-text-strong"
+        id="recommendation-feedback-heading"
+      >
+        {strings.heading}
+      </h2>
+      <div className="mt-[var(--space-1)] flex flex-wrap items-center gap-x-[var(--space-6)]">
+        <p className="flex flex-wrap items-center text-[length:var(--font-size-14)] text-text-muted">
+          {counts.map(({ label, state }, index) => (
+            <span className="inline-flex items-center" key={state}>
+              {index > 0 ? <span aria-hidden="true">・</span> : null}
+              <Link
+                aria-label={strings.openLibrary(label)}
+                className={countLinkClassName}
+                preload={false}
+                search={{ state }}
+                to="/library"
+              >
+                {label}
+              </Link>
+            </span>
+          ))}
+          <span>{strings.excluded}</span>
+        </p>
         <Link
-          className={buttonClassName({
-            className: "border-line bg-surface-1 px-[var(--space-4)] font-bold text-text",
-            variant: "outline",
-          })}
+          className="inline-flex min-h-[var(--control-min-size)] items-center text-[length:var(--font-size-14)] font-bold text-accent underline-offset-4 hover:underline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-ring"
           preload={false}
           to="/taste"
         >

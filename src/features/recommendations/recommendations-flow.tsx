@@ -59,6 +59,7 @@ import { useCatalog } from "@/features/catalog/catalog-provider";
 import { PopularWorkDiscovery } from "@/features/discovery/popular-work-discovery";
 import { usePersistence } from "@/infrastructure/db";
 import { explanationLexicon, onboardingStrings, recommendationStrings } from "@/lib/strings";
+import { cn } from "@/lib/utils";
 
 import type { PendingRecommendationFeedback } from "./feedback-dialog";
 import { FeedbackImpactSummary } from "./feedback-impact-summary";
@@ -157,15 +158,12 @@ function FeaturedRecommendationState({ children }: Readonly<{ children: ReactNod
       className="grid scroll-mt-[var(--space-4)] md:scroll-mt-[calc(var(--control-min-size)+var(--space-2))] gap-[var(--space-content)]"
       id="recommendation-shelf-featured"
     >
-      <header className="grid gap-[var(--space-content-tight)]">
-        <h2
-          className="border-l-[length:var(--space-1)] border-accent pl-[var(--space-4)]"
-          id="recommendation-featured-heading"
-        >
-          {recommendationStrings.shelves.featured.title}
-        </h2>
-        <p className="text-text-muted">{recommendationStrings.shelves.featured.description}</p>
-      </header>
+      <h2
+        className="border-l-[length:var(--space-1)] border-accent pl-[var(--space-4)]"
+        id="recommendation-featured-heading"
+      >
+        {recommendationStrings.shelves.featured.title}
+      </h2>
       {children}
     </section>
   );
@@ -996,16 +994,11 @@ export function RecommendationsFlow({
     currentHash === null ||
     displayedHash === null ||
     currentHash === displayedHash;
-  const preferenceSummary =
-    dnaSummary.topPreferences.length === 0
-      ? recommendationStrings.tasteSummary.empty
-      : dnaSummary.topPreferences
-          .map(
-            (preference) =>
-              explanationLexicon.factorLabels[preference.factorId as ExplanationFactorId] ??
-              preference.factorId,
-          )
-          .join("・");
+  const preferenceLabels = dnaSummary.topPreferences.map(
+    (preference) =>
+      explanationLexicon.factorLabels[preference.factorId as ExplanationFactorId] ??
+      preference.factorId,
+  );
   const recommendationItems: RecommendationMotionItem[] = featuredEntries.map(
     ({ entry, metadata, work }, index) => ({
       workId: entry.workId,
@@ -1088,7 +1081,7 @@ export function RecommendationsFlow({
               }}
             />
             <div className="mb-[var(--space-6)]" id="recommendation-intro" ref={introRef}>
-              <header className="mb-[var(--space-4)] flex flex-wrap items-center justify-between gap-x-[var(--space-4)] gap-y-[var(--space-2)]">
+              <header>
                 <h1
                   className="font-display text-[length:var(--font-size-28)] focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-ring"
                   id="recommendation-page-heading"
@@ -1096,18 +1089,11 @@ export function RecommendationsFlow({
                 >
                   {recommendationStrings.title}
                 </h1>
-                <Link
-                  className="inline-flex min-h-[var(--control-min-size)] shrink-0 items-center text-[length:var(--font-size-14)] font-bold text-text underline-offset-4 hover:underline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-ring"
-                  preload={false}
-                  to="/taste"
-                >
-                  {recommendationStrings.criteria.dnaLink}
-                </Link>
                 <p className="sr-only">{recommendationStrings.description}</p>
               </header>
 
               <RecommendationCriteriaSummary
-                preferenceSummary={preferenceSummary}
+                preferenceLabels={preferenceLabels}
                 recordCount={profileRecords.length}
               />
 
@@ -1213,7 +1199,6 @@ export function RecommendationsFlow({
                 <MediaShelf
                   className="scroll-mt-[var(--space-4)] md:scroll-mt-[calc(var(--control-min-size)+var(--space-2))]"
                   controlsPlacement="overlay"
-                  description={recommendationStrings.shelves.featured.description}
                   enableLoop
                   listType="unordered"
                   compactHeading
@@ -1276,7 +1261,7 @@ export function RecommendationsFlow({
               </div>
             )}
 
-            {lensShelves.map((lens) => (
+            {lensShelves.map((lens, index) => (
               <div key={lens.key}>
                 <span
                   aria-hidden="true"
@@ -1290,7 +1275,10 @@ export function RecommendationsFlow({
                   }}
                 >
                   <MediaShelf
-                    className="mt-[var(--space-section)] scroll-mt-[var(--space-4)] md:scroll-mt-[calc(var(--control-min-size)+var(--space-2))]"
+                    className={cn(
+                      "scroll-mt-[var(--space-4)] md:scroll-mt-[calc(var(--control-min-size)+var(--space-2))]",
+                      index === 0 ? "mt-[var(--space-shelf-group)]" : "mt-[var(--space-shelf)]",
+                    )}
                     compactHeading
                     controlsPlacement="overlay"
                     enableLoop={false}
@@ -1312,7 +1300,7 @@ export function RecommendationsFlow({
               id="recommendation-shelf-discovery"
             />
             <MediaShelf
-              className="mt-[var(--space-section)] scroll-mt-[var(--space-4)] md:scroll-mt-[calc(var(--control-min-size)+var(--space-2))]"
+              className="mt-[var(--space-shelf-group)] scroll-mt-[var(--space-4)] md:scroll-mt-[calc(var(--control-min-size)+var(--space-2))] [.popular-work-discovery+span+&]:mt-[var(--space-shelf)]"
               compactHeading
               controlsPlacement="overlay"
               description={recommendationStrings.shelves.discovery.description}
@@ -1329,7 +1317,7 @@ export function RecommendationsFlow({
               id="recommendation-shelf-ranking"
             />
             <RankingShelf
-              className="mt-[var(--space-section)] scroll-mt-[var(--space-4)] md:scroll-mt-[calc(var(--control-min-size)+var(--space-2))]"
+              className="mt-[var(--space-shelf)] scroll-mt-[var(--space-4)] md:scroll-mt-[calc(var(--control-min-size)+var(--space-2))]"
               compactHeading
               controlsPlacement="overlay"
               description={recommendationStrings.shelves.ranking.description}

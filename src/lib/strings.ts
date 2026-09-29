@@ -672,7 +672,9 @@ export const recommendationStrings = {
     heading: "今回のおすすめ基準",
     description: "保存した読書記録、Manga DNA、おすすめ方針だけを使っています。",
     records: "読書記録",
-    recordCount: (count: number) => `${String(count)}作品から`,
+    basis: (count: number, preferences: string) =>
+      `${String(count)}作品の好み（${preferences}）から選んでいます。`,
+    basisWithoutPreferences: (count: number) => `${String(count)}作品の記録から選んでいます。`,
     dnaLink: "Manga DNA",
     policies: "適用中の条件",
   },
@@ -689,17 +691,16 @@ export const recommendationStrings = {
     featured: {
       navigationLabel: "上位",
       title: "あなたのために選んだ作品",
-      description: "上位の作品を選ぶと、あなたの好みとの接点と読書アクションを確認できます。",
     },
     discovery: {
       navigationLabel: "隠れた候補",
       title: "隠れた候補",
-      description: "推薦エンジンが discovery とした候補だけを表示しています。",
+      description: "定番作の外から、好みに近い作品を選んでいます。",
     },
     ranking: {
       navigationLabel: "Top 10",
       title: "あなたの Top 10",
-      description: "現在の推薦結果をそのまま1位から並べています。",
+      description: "おすすめ順の上位10作品です。",
     },
   },
   lensShelves: {
@@ -732,8 +733,10 @@ export const recommendationStrings = {
   },
   feedbackSummary: {
     heading: "読んだ・興味なしの記録",
-    description: "記録した作品は、おすすめから外しています。",
-    count: (count: number) => `${String(count)}作品`,
+    completed: (count: number) => `読んだ ${String(count)}作品`,
+    hidden: (count: number) => `興味なし ${String(count)}作品`,
+    excluded: "は、おすすめから外しています。",
+    openLibrary: (label: string) => `ライブラリで「${label}」を見る`,
   },
   reasonHeading: "おすすめ理由",
   openDetails: (title: string) => `「${title}」の作品詳細を見る`,

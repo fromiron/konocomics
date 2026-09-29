@@ -294,12 +294,14 @@ CTA 버튼 1개: **「好きなマンガから始める」** → /onboarding.
 ### 정보 위계
 
 1. 페이지 h1 「あなたへのおすすめ」(desktop는 28px 한 줄). 중복 설명은 시각적으로 숨기고 접근성 DOM에 유지한다.
-2. 현재 적용 중인 정성 기준/policy 요약과 presentation filter bar
+2. 근거 한 줄(기록 수·상위 팩터·`Manga DNA` 링크)과 장르·방침을 한 줄로 묶은 툴바
 3. plan order 상위 작품의 `FeaturedRecommendationShelf` + cover-forward poster card
 4. lead reason의 좋아한 작품·팩터로 묶은 관점 Shelf(아래 「관점 선반」)
 5. engine plan에서 이미 discovery 성격인 항목을 추출한 Shelf
 6. canonical plan 첫 10개를 그대로 보여 주는 personalized Top 10(`<ol>`)
-7. 피드백 반영 요약과 footer. `completed`+`hidden` 합이 0보다 클 때만 ranking 뒤 콘텐츠 폭 full-width image banner로 표시한다.
+7. 피드백 반영 요약과 footer. `completed`+`hidden` 합이 0보다 클 때만 ranking 뒤에 이미지 없는 요약 줄로 표시한다.
+
+선반 간격 (2026-09-29 사용자 위임 개선): 같은 묶음의 선반 사이는 `--space-shelf`(48px), 성격이 다른 묶음(Featured → 관점 선반 → 판매순 배너·Discovery·Top 10 → 피드백 요약) 사이는 `--space-shelf-group`(64px)을 쓴다. 두 토큰은 추천 화면 전용이며 다른 화면의 `--space-section`을 바꾸지 않는다. 선반 설명 문단은 제목만으로 의미가 부족한 Discovery·Top 10에만 두고 내부 용어(推薦エンジン・discovery・推薦プラン 등)를 쓰지 않는다.
 
 Shelf grouping은 presentation-only selector다. main Shelf 사이에는 work ID를 dedupe할 수 있지만 Top 10은 canonical summary이므로 중복을 허용한다. score를 다시 계산하거나 새로운 가중치·인기 순위를 만들지 않는다.
 
@@ -307,7 +309,7 @@ Shelf grouping은 presentation-only selector다. main Shelf 사이에는 work ID
 
 보조 선반은 같은 plan을 필터로 다시 보여 주지 않고, 행 제목 자체가 추천 이유가 되는 관점으로 묶는다. 기존 `好きな作品から広げる`·`完結作から選ぶ` 선반을 대체한다. 완결 선호는 기존 `完結作を優先` 방침으로 유지한다.
 
-- 입력은 Featured에 표시한 작품을 제외하고 장르 표시 필터를 적용한 plan 항목이며 plan 순서를 유지한다. 각 항목의 lead reason은 카드와 같은 `generateTasteExplanation(...).positiveReasons[0]`이다. 점수·가중치·정렬을 새로 만들지 않고 순수 domain 함수로 결정론적으로 묶는다.
+- 입력은 Featured에 표시한 작품을 제외하고 장르 표시 필터를 적용한 plan 항목 중 앞의 60개이며 plan 순서를 유지한다. 전체 plan에 설명을 생성하지 않는다. 각 항목의 lead reason은 카드와 같은 `generateTasteExplanation(...).positiveReasons[0]`이다. 점수·가중치·정렬을 새로 만들지 않고 순수 domain 함수로 결정론적으로 묶는다.
 - **좋아한 작품 관점:** lead reason이 `similarity`이고 문장에 실제로 쓰인 첫 좋아한 작품(제목이 해석되는 첫 `anchorWorkIds`)이 같은 항목끼리 묶는다. 제목은 「『{작품명}』が好きなら」.
 - **팩터 관점:** 좋아한 작품 관점에 배정되지 않았고, 표시된 좋아한 작품 관점의 작품을 근거로 하지 않으며, 표시된 좋아한 작품 관점 카드 문장에 이미 나온 레이블이 아닌 항목을 lead reason 문장의 팩터 레이블(Cluster 레이블 포함)로 묶는다. 제목은 「「{레이블}」で選ぶ」. 낮은 정도를 선호하는 Axis adjustment 문장(`控えめな点`)은 팩터 관점에 넣지 않는다.
 - 한 선반은 3작품 이상일 때만 표시하고 최대 8작품을 담는다. 좋아한 작품 관점은 최대 2개, 팩터 관점은 최대 1개다. 여러 후보 묶음 중에서는 첫 항목의 plan 순위가 앞선 묶음을 고른다. 한 작품은 관점 선반 중 하나에만 나오며 이후 Discovery 선반에서도 제외한다.
@@ -341,13 +343,14 @@ Shelf grouping은 presentation-only selector다. main Shelf 사이에는 work ID
 
 ### 추천 헤더 (2026-09-10 사용자 위임 개선)
 
-- 제목 옆에는 아이콘 없는 `Manga DNA` 링크를 두고, 그 아래 실제 기록 수의 `N作品から`와 근거 팩터 요약을 표시한다. `あなたの好み` 제목과 적용 방침 수 캡션은 표시하지 않는다. `おすすめの方針`은 독립된 44px 선택 칩으로 유지한다.
+- 2026-09-29 사용자 위임 개선: 제목 아래 한 줄에 실제 기록 수와 근거 팩터 요약을 「N作品の好み（…）から選んでいます。」로 표시하고, 같은 줄 끝에 아이콘 없는 `Manga DNA` 링크를 둔다. `あなたの好み` 제목과 적용 방침 수 캡션은 표시하지 않는다.
+- 장르 선택과 `おすすめの方針` 칩은 하나의 툴바 줄에 둔다(장르 → 구분선 → 방침 칩). `おすすめの方針` 제목은 fieldset legend로 접근성 DOM에 유지하고 시각적으로 숨긴다. 칩은 독립된 44px 선택 칩이다.
 - `検証済み作品を優先`의 표시 레이블은 추천·설정에서 공통으로 `評価・実績を重視`를 사용한다. `preferVerified` key와 Bayesian 평가·maturity tie-break 의미는 바꾸지 않는다.
-- 장르는 별도 표시 제어이며 `ジャンル` label과 연결한 기존 공통 NativeSelect만 왼쪽에 둔다. 장르 줄에는 선반 점프 컨트롤을 두지 않는다. 기존 genre/shelf URL 복원 계약은 유지한다.
+- 장르는 별도 표시 제어이며 `ジャンル` label과 연결한 기존 공통 NativeSelect를 툴바 왼쪽에 둔다. 장르 줄에는 선반 점프 컨트롤을 두지 않는다. 기존 genre/shelf URL 복원 계약은 유지한다.
 - Top 10은 전체 순위 요약을 유지한다. 장르 선택 중에는 `Top 10は全ジャンルの順位です。`를 표시해 적용 범위를 알린다.
-- 방침의 기본 안내 문구는 표시하지 않는다. 자동 반영 중에는 제목 줄의 고정된 상태 요소에서 `並べ直しています…`만 표시하며 줄이나 버튼 행을 추가하지 않는다. 저장부터 재계산까지 칩·장르·선반 제어를 비활성으로 표시하고, 계산 성공 후 표시된 plan을 교체한다.
+- 방침의 기본 안내 문구는 표시하지 않는다. 자동 반영 중에는 툴바 끝의 고정된 상태 요소에서 `並べ直しています…`만 표시하며 줄이나 버튼 행을 추가하지 않는다. 저장부터 재계산까지 칩·장르·선반 제어를 비활성으로 표시하고, 계산 성공 후 표시된 plan을 교체한다.
 - `更新`는 표시된 plan과 현재 입력의 hash가 다른 수동 갱신에만 나타나며 방침 자동 반영 중에는 표시하지 않는다. 기존 hash/cache·busy·오류 복구 계약을 유지하며 성공 후 버튼이 사라지면 그 버튼에 있던 포커스를 페이지 제목으로 복원한다. 후속 시트의 기존 카드 복귀가 불가능하고 갱신 버튼도 없으면 페이지 제목에 복귀한다.
-- 모바일에서도 방침·장르를 항상 표시한다. 칩은 44px 영역과 체크/비선택 표식을 유지하고 폭에 따라 줄바꿈한다. 펼침 상태에 선택 정보를 숨기지 않는다.
+- 모바일에서도 방침·장르를 항상 표시한다. 툴바는 폭에 따라 장르 줄과 방침 줄로 줄바꿈하며 구분선은 숨긴다. 칩은 44px 영역과 체크/비선택 표식을 유지하고 폭에 따라 줄바꿈한다. 펼침 상태에 선택 정보를 숨기지 않는다.
 
 ### 추천 선반 내비게이션 (2026-09-10 사용자 위임 조건)
 
@@ -397,7 +400,7 @@ Shelf grouping은 presentation-only selector다. main Shelf 사이에는 work ID
 ### 상태
 
 - 후보 부족(실제 표시 결과 1–9): Featured Shelf 직후·후속 shelves 앞에, snap list 밖의 콘텐츠 폭 full-width contextual banner를 둔다. 기존 shortage 안내와 `/onboarding`(好きな作品を追加)·`/taste`(好みを見直す)만 사용한다. 0건, 10건 이상, filter-empty, 계산 오류, 초기 오류에서는 표시하지 않는다.
-- 피드백 기록(`completed`+`hidden` 합 > 0): ranking Shelf 뒤 콘텐츠 폭 full-width image banner. `/media/recommendations-feedback-manga-v4.png`는 장식 이미지이며 제목·설명·수치는 DOM으로 제공한다. 제목은 `読んだ・興味なしの記録`, 설명은 `記録した作品は、おすすめから外しています。`를 사용한다. 수치는 추천 카드에서 제거한 이력만이 아니라 온보딩·Library를 포함한 전체 현재 기록의 読んだ·興味なし count다. 수치 아래에 별도 44px outline 링크 `好みを見直す`(`/taste`)를 둔다. 152px 고정 높이는 두지 않고 내용에 맞춰 늘린다. Top 10과의 위 간격 및 푸터까지의 아래 실제 간격은 사용자 추가 지시에 따라 `--space-section-xl`(96px)다. 아래 간격은 기존 main padding과 합산하며 중복해서 더하지 않는다. 합이 0이면 배너를 숨기고 후보 부족 조건은 바꾸지 않는다.
+- 피드백 기록(`completed`+`hidden` 합 > 0, 2026-09-29 사용자 위임 개선): ranking Shelf 뒤에 이미지 없는 요약 줄을 둔다. 제목(h2)은 `読んだ・興味なしの記録`이다. 본문은 0보다 큰 항목만 「読んだ N作品」「興味なし N作品」으로 나열하고 `は、おすすめから外しています。`로 맺는다. 각 수치는 해당 Library 목록(`/library?state=completed`·`/library?state=hidden`) 링크이며, 끝에 `好みを見直す`(`/taste`) 링크를 둔다. 수치는 온보딩·Library를 포함한 전체 현재 기록의 count다. 위 간격은 `--space-shelf-group`이고 장식 이미지는 쓰지 않는다. 합이 0이면 표시하지 않고 후보 부족 조건은 바꾸지 않는다.
 - 후보 0: 빈 상태 일러스트 + 위 안내 + /taste 링크.
 - 오프라인/이미지 실패: placeholder 표지, 이유·액션은 정상.
 - 계산 오류(스키마 불일치 등): 오류 카드 + 再試行. Library는 영향 없음.
@@ -429,7 +432,8 @@ Shelf grouping은 presentation-only selector다. main Shelf 사이에는 work ID
 - [ ] Featured의 hover/focus로 card 외곽 크기와 형제 위치가 바뀌지 않고 표지 축소분이 reason/action 영역으로 전환되며 Quick Preview가 닫힌 뒤 opener focus가 복원된다.
 - [ ] presentation Shelf를 추가해도 동일 fixture의 canonical Top 10 work ID 순서가 바뀌지 않는다.
 - [ ] 관점 선반은 3~8작품이며 좋아한 작품 관점 최대 2개·팩터 관점 최대 1개다. 행 제목의 작품명·레이블이 그 행 모든 카드의 lead reason 문장에 포함되고, 한 작품은 관점 선반·Discovery 중 한 곳에만 나온다. 같은 입력이면 같은 선반·순서를 만든다.
-- [ ] 피드백 image banner는 실제 completed/hidden count와 `/taste` CTA를 유지하고, 둘 다 0이면 큰 이미지 배너를 표시하지 않는다.
+- [ ] 피드백 요약은 0보다 큰 completed/hidden count만 해당 Library 목록 링크로 보여 주고 `/taste` 링크를 유지하며, 둘 다 0이면 표시하지 않는다. 장식 이미지는 없다.
+- [ ] desktop 1440×900 첫 화면에서 헤더(제목·근거 줄·툴바)가 Featured 제목까지 200px 이내이고, 선반 사이는 48px, 묶음 사이는 64px다.
 - [ ] Discovery 카드는 기본 정원과 hover/focus 직사각형 사이에서 article·cover Link·형제 rect가 변하지 않고, 표면색만 transparent → `--surface-2`로 바뀌며 단독 confidence 레이블을 표시하지 않는다. placeholder는 crop하지 않는다.
 - [ ] Anchor 접힌 카드는 같은 높이의 표지 프레임과 표지 밖 2줄 제목 슬롯을 사용한다. 세로형은 contain, 정사각형 원본은 중앙 cover이며 placeholder를 crop하지 않는다. 단독 confidence·제목 overlay가 없고 표지·제목 Link는 작품 상세로 이동한다. 확장 가능한 desktop에서는 접힌 카드의 Quick Preview를 표시하지 않는다.
 - [ ] Anchor 옆 패널은 contribution의 좋아한 작품·공통 근거와, 있을 때만 실제 `itemCaption` 소개 최대 3줄을 상단부터 표시한다. 표지 크기·DOM·카드 높이를 유지하면서 확장 폭만큼 뒤쪽 카드를 이동시켜 다음 표지를 가리지 않는다. 연속 hover·keyboard 진입·Escape 닫기·reduced-motion을 유지하며, 오른쪽 끝의 왼쪽 확장 보정은 사용자 직접 스크롤을 덮어쓰지 않는다.

@@ -285,7 +285,7 @@ export function PopularWorkDiscovery({ embedded = false }: Readonly<{ embedded?:
         stripVolumeAndEditionTokens(item.title));
   return (
     <div
-      className={cn("popular-work-discovery", !embedded && "mt-[var(--space-section)]")}
+      className={cn("popular-work-discovery", !embedded && "mt-[var(--space-shelf-group)]")}
       data-popular-discovery={embedded ? "library" : "recommendations"}
     >
       {!dismissed && item !== undefined ? (

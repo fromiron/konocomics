@@ -86,7 +86,7 @@
 ### 2.4 간격·레이아웃 리듬
 
 - 4px 기본 단위. primitive 간격은 `--space-1` / `--space-2` / `--space-3` / `--space-4` / `--space-5` / `--space-6` / `--space-7` / `--space-8` / `--space-12` / `--space-24` = 4/8/12/16/20/24/28/32/48/96px로 제한한다. 2/6/10/14/18px은 보더·아이콘 광학 보정·44px 타깃 내부 패딩처럼 역할이 명시된 컴포넌트 예외만 허용한다.
-- semantic 간격은 `--space-content-tight` 4, `--space-content` 8, `--space-content-loose` 12, `--space-section` 32, `--space-section-large` 48, `--space-section-xl` 96px이다. `--space-section-xl`은 추천 목록을 닫는 배너처럼 선반과 구분하는 큰 블록의 바깥 간격에 사용한다.
+- semantic 간격은 `--space-content-tight` 4, `--space-content` 8, `--space-content-loose` 12, `--space-section` 32, `--space-section-large` 48, `--space-section-xl` 96px이다. `--space-section-xl`은 선반과 구분하는 큰 블록의 바깥 간격에 사용한다. `/recommendations` 전용으로 같은 묶음의 선반 사이 `--space-shelf`(= `--space-section-large`, 48px)와 묶음 사이 `--space-shelf-group`(64px)을 둔다.
 - 화면 좌우 패딩은 `--layout-page-padding` mobile 16 / desktop 24, 페이지 시작 간격은 `--layout-page-block-start` mobile 32 / desktop 48이다. 바깥 page container가 이 값을 소유하며 내부 카드가 다시 화면 패딩을 만들지 않는다.
 - 고정 UI 회피값만 별도 semantic 역할로 둔다. `--layout-safe-area-bottom`은 기기 safe area, `--layout-mobile-navigation-clearance`는 모바일 nav+safe area, `--layout-onboarding-tray-clearance`는 선택 tray가 있는 온보딩의 하단 여백, `--layout-taste-action-clearance`는 고정 추천 CTA가 있는 취향 화면의 하단 여백을 소유한다. 마지막 두 값은 각각 mobile `calc(120px + safe area)` / `calc(160px + safe area)`이며, 취향 화면은 desktop에서 120px로 바뀐다.
 - 콘텐츠 최대폭: shelf 중심 `/recommendations`와 landing은 `--layout-width-media` 1200, `/taste` 960, 상세 1040, form 640을 기본으로 한다. 온보딩 shelf는 1120, 읽기·안내 블록은 760, 전역 nav는 1200을 사용한다.
@@ -101,7 +101,7 @@
 - selected: accent 보더 + 체크 오버레이(표지 카드) / `--accent-soft` 배경 + accent 보더·텍스트(칩). solid accent 채움은 주요 CTA에만 쓴다.
 - skeleton: `--line` 톤 펄스(1.2s), 카드 실루엣 그대로. 1초 개발 throttle 동안의 짧은 placeholder 노출은 허용한다. 스피너는 전역 치명 오류 재시도에만 쓴다.
 - empty state: 스크린톤 원 안에 아이콘 + 1줄 안내 + 1개 액션. 일러스트 신규 제작 없음. 유일한 예외는 `/library`의 전체 레코드 없음(overall-empty)뿐이며, 승인된 image-half empty-state로 기존 메시지 1개 + `作品を追加` 1개만 유지한다. 검색·탭·세그먼트 empty와 다른 화면에는 적용하지 않는다.
-- functional contextual image banners: 상태/기능/CTA가 연결된 이미지 배너다. 필요한 기능 배너는 아래 §9의 장식 억제보다 상위 계약이며, 실제 상태·기능·기존 route CTA가 없는 순수 장식 배너는 계속 금지한다. `/recommendations` 후보 부족 full-shell, `/recommendations` 피드백 요약 full-shell(`completed`+`hidden` > 0일 때만), `/taste` 일반 진입의 normal confidence half-shell, `/library` populated data-portability half-shell만 허용한다. 장식 전용 hero가 아니며 이미지 속 텍스트는 쓰지 않는다. 좌측은 DOM copy·metrics·기존 route CTA, 우측은 장식 `img`(alt="", `aria-hidden`). Spotify Green/로고/재생 UI 복제는 하지 않는다. 상시 루프 모션은 없다.
+- functional contextual image banners: 상태/기능/CTA가 연결된 이미지 배너다. 필요한 기능 배너는 아래 §9의 장식 억제보다 상위 계약이며, 실제 상태·기능·기존 route CTA가 없는 순수 장식 배너는 계속 금지한다. `/recommendations` 후보 부족 full-shell, `/taste` 일반 진입의 normal confidence half-shell, `/library` populated data-portability half-shell만 허용한다. 장식 전용 hero가 아니며 이미지 속 텍스트는 쓰지 않는다. 좌측은 DOM copy·metrics·기존 route CTA, 우측은 장식 `img`(alt="", `aria-hidden`). Spotify Green/로고/재생 UI 복제는 하지 않는다. 상시 루프 모션은 없다.
 - error: `--warn` 좌측 보더의 인라인 박스. 토스트는 성공 알림에만.
 
 모션 값도 의미 역할로 소비한다: `--motion-duration-page` 160ms, `--motion-duration-floating-action` 200ms, `--motion-duration-value` 240ms, `--motion-duration-reveal-step` 400ms, `--motion-ease-direct` ease-out, `--motion-ease-value` ease-in-out, `--motion-ease-signature` cubic-bezier(0.2, 0, 0, 1). 이 값은 아래 A~F 분류를 대체하지 않고 구현 간 별칭 드리프트만 막는다. Top 10의 floating rank accessory는 `transform`·`opacity`만 200ms ease-out으로 전환하고 reduced motion에서는 이동 없이 즉시 상태를 바꾼다.

@@ -1284,15 +1284,22 @@ test.describe("Slice 7 recommendation journeys", () => {
     await expect(anchorCards.getByText(/^(高い|ふつう|低め)$/u)).toHaveCount(0);
     await expect(anchorPanel.getByText("好きな作品との接点", { exact: true })).toHaveCount(0);
     const anchorFrames = await anchorCards.evaluateAll((elements) =>
-      elements.map((element) => ({
-        cover: element.querySelector(".cover-image")!.getBoundingClientRect().toJSON(),
-        title: element.querySelector("h3")!.getBoundingClientRect().toJSON(),
-        card: element.getBoundingClientRect().toJSON(),
-      })),
+      elements
+        .map((element) => ({
+          shelf: element.closest("[data-media-shelf-track]"),
+          cover: element.querySelector(".cover-image")!.getBoundingClientRect().toJSON(),
+          title: element.querySelector("h3")!.getBoundingClientRect().toJSON(),
+          card: element.getBoundingClientRect().toJSON(),
+        }))
+        .map(({ shelf, ...frame }, _index, frames) => ({
+          ...frame,
+          shelfFirstTitleY: frames.find((candidate) => candidate.shelf === shelf)!.title.y,
+        })),
     );
     for (const frame of anchorFrames) {
       expect(frame.cover.height).toBeCloseTo(anchorFrames[0]!.cover.height, 1);
-      expect(frame.title.y).toBeCloseTo(anchorFrames[0]!.title.y, 1);
+      // Lens shelves stack vertically, so the shared title row is per shelf.
+      expect(frame.title.y).toBeCloseTo(frame.shelfFirstTitleY, 1);
       expect(frame.title.height).toBe(35);
       expect(frame.title.y - frame.cover.bottom).toBeCloseTo(8, 1);
       expect(frame.card.height).toBeCloseTo(anchorFrames[0]!.card.height, 1);
@@ -1637,7 +1644,9 @@ test.describe("Slice 7 recommendation journeys", () => {
       const workId = (await link.getAttribute("href"))!.split("/").at(-1)!;
       const neighborId = await anchors.nth(1).getAttribute("id");
       excludedAnchorIds.push(workId);
-      await link.scrollIntoViewIfNeeded();
+      // Keep the whole card, including its panel actions, inside the viewport so clicking an
+      // action does not scroll the page away from the hovered card.
+      await anchor.evaluate((card) => card.scrollIntoView({ block: "center" }));
       let actions = anchor.locator("[data-expandable-panel]");
       if (testInfo.project.name === "chromium") {
         await link.hover();

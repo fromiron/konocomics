@@ -5,13 +5,15 @@ export const RECOMMENDATION_LENS_MIN_ITEMS = 3;
 export const RECOMMENDATION_LENS_MAX_ITEMS = 8;
 export const RECOMMENDATION_ANCHOR_LENS_LIMIT = 2;
 export const RECOMMENDATION_FACTOR_LENS_LIMIT = 1;
+/** Only the top of the plan feeds lenses, so the full plan never needs explaining. */
+export const RECOMMENDATION_LENS_CANDIDATE_LIMIT = 60;
 
 export type RecommendationLens<T> =
   | { kind: "anchor"; anchorWorkId: string; anchorTitle: string; items: T[] }
   | { kind: "factor"; factorLabel: string; items: T[] };
 
 export type GroupRecommendationLensesInput<T> = {
-  /** Plan-ordered items; the order is preserved inside every lens. */
+  /** Plan-ordered items; only the first RECOMMENDATION_LENS_CANDIDATE_LIMIT are considered. */
   items: readonly T[];
   leadReasonOf: (item: T) => TasteExplanationSentence | undefined;
   lexicon: ExplanationLexicon;
@@ -40,7 +42,7 @@ export function groupRecommendationLenses<T>({
   lexicon,
   resolveTitle,
 }: GroupRecommendationLensesInput<T>): RecommendationLens<T>[] {
-  const subjects = items.map((item) => {
+  const subjects = items.slice(0, RECOMMENDATION_LENS_CANDIDATE_LIMIT).map((item) => {
     const reason = leadReasonOf(item);
     return {
       item,
