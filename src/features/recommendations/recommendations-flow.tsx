@@ -28,6 +28,7 @@ import { RankingShelf } from "@/components/media/ranking-shelf";
 import type { GenreTag } from "@/domain/catalog/types";
 import type { ExplanationFactorId } from "@/domain/explanation";
 import { generateTasteExplanation } from "@/domain/explanation/generate";
+import { groupRecommendationLenses } from "@/domain/explanation/lens";
 import { recommendationProfileRecords } from "@/domain/profile/catalog-profile";
 import {
   createRecommendationFeedbackRecord,
@@ -72,6 +73,7 @@ import { RecommendationFilterBar, type VisiblePolicyKey } from "./recommendation
 import {
   RecommendationShelfNavigation,
   type RecommendationShelf,
+  type RecommendationShelfDestination,
 } from "./recommendation-shelf-navigation";
 import { loadRecommendationMotionList } from "./recommendation-motion-loader";
 import { RecommendationShelfCard } from "./recommendation-shelf-card";
@@ -345,101 +347,102 @@ export function RecommendationsFlow({
     });
     return ids;
   }, [optimisticPlannedIds, records]);
-  const {
-    anchorEntries,
-    completedEntries,
-    discoveryEntries,
-    featuredEntries,
-    previewEntry,
-    renderedEntries,
-  } = useMemo(() => {
-    const nextRenderedEntries = visibleEntries.flatMap((entry) => {
-      const work = worksById.get(entry.workId);
-      const metadata = context?.constraintByWorkId[entry.workId];
-      return work === undefined || metadata === undefined ? [] : [{ entry, metadata, work }];
-    });
-    const nextFeaturedEntries =
-      genre === undefined
-        ? nextRenderedEntries
-        : nextRenderedEntries.filter(({ work }) => work.genres.includes(genre));
-    const nextAllPlanEntries = (plan ?? []).flatMap((entry) => {
-      if (excludedWorkIds.has(entry.workId)) return [];
-      const work = worksById.get(entry.workId);
-      const metadata = context?.constraintByWorkId[entry.workId];
-      return work === undefined || metadata === undefined ? [] : [{ entry, metadata, work }];
-    });
-    const visibleWorkIds = new Set(visibleEntries.map((entry) => entry.workId));
-    const auxiliaryEntries = nextAllPlanEntries.filter(
-      ({ entry, work }) =>
-        !visibleWorkIds.has(entry.workId) && (genre === undefined || work.genres.includes(genre)),
-    );
-    const usedAuxiliaryIds = new Set<string>();
-    const nextAnchorEntries: typeof auxiliaryEntries = [];
-    for (const candidate of auxiliaryEntries) {
-      if (nextAnchorEntries.length === 8) break;
-      const leadReason = generateTasteExplanation({
-        contributions: candidate.entry.contributions,
-        confidenceLevel: candidate.entry.confidenceLevel,
+  const { discoveryEntries, featuredEntries, lensShelves, previewEntry, renderedEntries } =
+    useMemo(() => {
+      const nextRenderedEntries = visibleEntries.flatMap((entry) => {
+        const work = worksById.get(entry.workId);
+        const metadata = context?.constraintByWorkId[entry.workId];
+        return work === undefined || metadata === undefined ? [] : [{ entry, metadata, work }];
+      });
+      const nextFeaturedEntries =
+        genre === undefined
+          ? nextRenderedEntries
+          : nextRenderedEntries.filter(({ work }) => work.genres.includes(genre));
+      const nextAllPlanEntries = (plan ?? []).flatMap((entry) => {
+        if (excludedWorkIds.has(entry.workId)) return [];
+        const work = worksById.get(entry.workId);
+        const metadata = context?.constraintByWorkId[entry.workId];
+        return work === undefined || metadata === undefined ? [] : [{ entry, metadata, work }];
+      });
+      const visibleWorkIds = new Set(visibleEntries.map((entry) => entry.workId));
+      const auxiliaryEntries = nextAllPlanEntries.filter(
+        ({ entry, work }) =>
+          !visibleWorkIds.has(entry.workId) && (genre === undefined || work.genres.includes(genre)),
+      );
+      const resolveTitle = (workId: string) => worksById.get(workId)?.title;
+      const lenses = groupRecommendationLenses({
+        items: auxiliaryEntries,
+        leadReasonOf: ({ entry }) =>
+          generateTasteExplanation({
+            contributions: entry.contributions,
+            confidenceLevel: entry.confidenceLevel,
+            lexicon: explanationLexicon,
+            resolveTitle,
+          }).positiveReasons[0],
         lexicon: explanationLexicon,
-        resolveTitle: (workId) => worksById.get(workId)?.title,
-      }).positiveReasons[0];
-      if (leadReason !== undefined && leadReason.anchorWorkIds.length > 0) {
-        nextAnchorEntries.push(candidate);
-      }
-    }
-    nextAnchorEntries.forEach(({ entry }) => usedAuxiliaryIds.add(entry.workId));
-    const nextDiscoveryEntries = auxiliaryEntries
-      .filter(({ entry }) => entry.isDiscovery && !usedAuxiliaryIds.has(entry.workId))
-      .slice(0, 6);
-    nextDiscoveryEntries.forEach(({ entry }) => usedAuxiliaryIds.add(entry.workId));
-    const nextCompletedEntries = auxiliaryEntries
-      .filter(
-        ({ entry, work }) => work.status === "completed" && !usedAuxiliaryIds.has(entry.workId),
-      )
-      .slice(0, 6);
+        resolveTitle,
+      });
+      // Anchor lenses always precede the factor lens, so the index is the anchor ordinal.
+      const nextLensShelves = lenses.map((lens, index) => {
+        if (lens.kind === "factor") {
+          return {
+            key: "factor",
+            variant: "factor" as const,
+            navigationLabel: recommendationStrings.lensShelves.factor.navigationLabel(
+              lens.factorLabel,
+            ),
+            title: recommendationStrings.lensShelves.factor.title(lens.factorLabel),
+            items: lens.items,
+          };
+        }
+        return {
+          key: index === 0 ? "anchor" : `anchor-${String(index + 1)}`,
+          variant: "anchor" as const,
+          navigationLabel: recommendationStrings.lensShelves.anchor.navigationLabel(
+            lens.anchorTitle,
+          ),
+          title: recommendationStrings.lensShelves.anchor.title(lens.anchorTitle),
+          items: lens.items,
+        };
+      });
+      const usedAuxiliaryIds = new Set(
+        nextLensShelves.flatMap(({ items }) => items.map(({ entry }) => entry.workId)),
+      );
+      const nextDiscoveryEntries = auxiliaryEntries
+        .filter(({ entry }) => entry.isDiscovery && !usedAuxiliaryIds.has(entry.workId))
+        .slice(0, 6);
 
-    return {
-      anchorEntries: nextAnchorEntries,
-      completedEntries: nextCompletedEntries,
-      discoveryEntries: nextDiscoveryEntries,
-      featuredEntries: nextFeaturedEntries,
-      previewEntry: nextAllPlanEntries.find(({ entry }) => entry.workId === previewWorkId) ?? null,
-      renderedEntries: nextRenderedEntries,
-    };
-  }, [context, excludedWorkIds, genre, plan, previewWorkId, visibleEntries, worksById]);
-  const shelfAvailability = useMemo(
-    () => ({
-      featured: true,
-      anchor: anchorEntries.length > 0,
-      discovery: discoveryEntries.length > 0,
-      completed: completedEntries.length > 0,
-      ranking: renderedEntries.length > 0,
-    }),
-    [
-      anchorEntries.length,
-      completedEntries.length,
-      discoveryEntries.length,
-      renderedEntries.length,
-    ],
-  );
+      return {
+        discoveryEntries: nextDiscoveryEntries,
+        featuredEntries: nextFeaturedEntries,
+        lensShelves: nextLensShelves,
+        previewEntry:
+          nextAllPlanEntries.find(({ entry }) => entry.workId === previewWorkId) ?? null,
+        renderedEntries: nextRenderedEntries,
+      };
+    }, [context, excludedWorkIds, genre, plan, previewWorkId, visibleEntries, worksById]);
+  const shelfDestinations = useMemo<RecommendationShelfDestination[]>(() => {
+    const destination = (key: "featured" | "discovery" | "ranking") => ({
+      key,
+      ...recommendationStrings.shelves[key],
+    });
+    return [
+      destination("featured"),
+      ...lensShelves.map(({ key, navigationLabel, title }) => ({ key, navigationLabel, title })),
+      ...(discoveryEntries.length > 0 ? [destination("discovery")] : []),
+      ...(renderedEntries.length > 0 ? [destination("ranking")] : []),
+    ];
+  }, [discoveryEntries.length, lensShelves, renderedEntries.length]);
   const coverWorkIds = useMemo(() => {
     const orderedIds = [
       ...featuredEntries.map(({ entry }) => entry.workId),
       ...renderedEntries.map(({ entry }) => entry.workId),
-      ...anchorEntries.map(({ entry }) => entry.workId),
+      ...lensShelves.flatMap(({ items }) => items.map(({ entry }) => entry.workId)),
       ...discoveryEntries.map(({ entry }) => entry.workId),
-      ...completedEntries.map(({ entry }) => entry.workId),
       ...(previewEntry === null ? [] : [previewEntry.entry.workId]),
     ];
     return [...new Set(orderedIds)];
-  }, [
-    anchorEntries,
-    completedEntries,
-    discoveryEntries,
-    featuredEntries,
-    previewEntry,
-    renderedEntries,
-  ]);
+  }, [discoveryEntries, lensShelves, featuredEntries, previewEntry, renderedEntries]);
   const recommendationCoverTargets = useMemo(
     () => createRecommendationCoverTargets(catalog, coverWorkIds),
     [catalog, coverWorkIds],
@@ -821,7 +824,7 @@ export function RecommendationsFlow({
           .filter((candidate) => !survivorIds.has(candidate.workId))
           .map((candidate) => candidate.workId),
       );
-      const shelf = [anchorEntries, discoveryEntries, completedEntries].find((entries) =>
+      const shelf = [...lensShelves.map(({ items }) => items), discoveryEntries].find((entries) =>
         entries.some((candidate) => candidate.entry.workId === entry.workId),
       );
       const shelfIndex = shelf?.findIndex((candidate) => candidate.entry.workId === entry.workId);
@@ -1039,14 +1042,14 @@ export function RecommendationsFlow({
     renderedEntries.length <= 9 &&
     recommendationItems.length > 0;
   const renderShelfCard = (
-    { entry, metadata, work }: (typeof anchorEntries)[number],
-    variant: "anchor" | "discovery" | "completed",
+    { entry, work }: (typeof discoveryEntries)[number],
+    variant: "anchor" | "factor" | "discovery",
   ) => (
     <RecommendationShelfCard
       busy={isComputing || isPolicySaving || feedbackBaseBusy || busyWorkIds.has(entry.workId)}
       coverUrl={recommendationCoverUrls.get(entry.workId)}
       entry={entry}
-      expanded={variant === "anchor" && expandedAnchorId === entry.workId}
+      expanded={variant !== "discovery" && expandedAnchorId === entry.workId}
       itemCaption={itemCaptions.get(entry.workId)}
       key={entry.workId}
       onCompleted={() => void removeForFeedback(entry, "completed")}
@@ -1062,7 +1065,6 @@ export function RecommendationsFlow({
       planned={plannedIds.has(entry.workId)}
       resolveTitle={(workId) => worksById.get(workId)?.title}
       variant={variant}
-      volumeCount={metadata.volumeCount}
       work={work}
     />
   );
@@ -1076,7 +1078,7 @@ export function RecommendationsFlow({
         <div className="block w-full min-w-0">
           <div className="block w-full min-w-0">
             <RecommendationShelfNavigation
-              availability={shelfAvailability}
+              destinations={shelfDestinations}
               disabled={isComputing || isPolicySaving || feedbackBaseBusy}
               introRef={introRef}
               onSelect={(nextShelf) => {
@@ -1274,30 +1276,33 @@ export function RecommendationsFlow({
               </div>
             )}
 
-            <span
-              aria-hidden="true"
-              className="scroll-mt-[var(--space-4)] md:scroll-mt-[calc(var(--control-min-size)+var(--space-2))]"
-              id="recommendation-shelf-anchor"
-            />
-            <div
-              onPointerLeave={(event) => {
-                if (!event.currentTarget.contains(document.activeElement))
-                  setExpandedAnchorId(null);
-              }}
-            >
-              <MediaShelf
-                className="mt-[var(--space-section)] scroll-mt-[var(--space-4)] md:scroll-mt-[calc(var(--control-min-size)+var(--space-2))]"
-                compactHeading
-                controlsPlacement="overlay"
-                description={recommendationStrings.shelves.anchor.description}
-                enableLoop={false}
-                onPageChange={() => setExpandedAnchorId(null)}
-                title={recommendationStrings.shelves.anchor.title}
-                trackClassName="!pb-[var(--space-1)] has-[[data-expansion-active]]:!snap-none"
-              >
-                {anchorEntries.map((item) => renderShelfCard(item, "anchor"))}
-              </MediaShelf>
-            </div>
+            {lensShelves.map((lens) => (
+              <div key={lens.key}>
+                <span
+                  aria-hidden="true"
+                  className="scroll-mt-[var(--space-4)] md:scroll-mt-[calc(var(--control-min-size)+var(--space-2))]"
+                  id={`recommendation-shelf-${lens.key}`}
+                />
+                <div
+                  onPointerLeave={(event) => {
+                    if (!event.currentTarget.contains(document.activeElement))
+                      setExpandedAnchorId(null);
+                  }}
+                >
+                  <MediaShelf
+                    className="mt-[var(--space-section)] scroll-mt-[var(--space-4)] md:scroll-mt-[calc(var(--control-min-size)+var(--space-2))]"
+                    compactHeading
+                    controlsPlacement="overlay"
+                    enableLoop={false}
+                    onPageChange={() => setExpandedAnchorId(null)}
+                    title={lens.title}
+                    trackClassName="!pb-[var(--space-1)] has-[[data-expansion-active]]:!snap-none"
+                  >
+                    {lens.items.map((item) => renderShelfCard(item, lens.variant))}
+                  </MediaShelf>
+                </div>
+              </div>
+            ))}
 
             <PopularWorkDiscovery />
 
@@ -1316,23 +1321,6 @@ export function RecommendationsFlow({
               trackClassName="!pb-[var(--space-1)]"
             >
               {discoveryEntries.map((item) => renderShelfCard(item, "discovery"))}
-            </MediaShelf>
-
-            <span
-              aria-hidden="true"
-              className="scroll-mt-[var(--space-4)] md:scroll-mt-[calc(var(--control-min-size)+var(--space-2))]"
-              id="recommendation-shelf-completed"
-            />
-            <MediaShelf
-              className="mt-[var(--space-section)] scroll-mt-[var(--space-4)] md:scroll-mt-[calc(var(--control-min-size)+var(--space-2))]"
-              compactHeading
-              controlsPlacement="overlay"
-              description={recommendationStrings.shelves.completed.description}
-              enableLoop={false}
-              title={recommendationStrings.shelves.completed.title}
-              trackClassName="!pb-[var(--space-1)]"
-            >
-              {completedEntries.map((item) => renderShelfCard(item, "completed"))}
             </MediaShelf>
 
             <span

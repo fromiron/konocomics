@@ -71,7 +71,7 @@ const entry: RecommendationPlanEntry = {
 };
 
 function renderShelfCard(
-  variant: "anchor" | "discovery" | "completed",
+  variant: "anchor" | "factor" | "discovery",
   coverUrl: string | null = "https://example.com/cover.jpg",
 ) {
   return render(
@@ -86,7 +86,6 @@ function renderShelfCard(
       planned={false}
       resolveTitle={() => work.title}
       variant={variant}
-      volumeCount={12}
       work={work}
     />,
   );
@@ -95,42 +94,31 @@ function renderShelfCard(
 afterEach(cleanup);
 
 describe("RecommendationShelfCard", () => {
-  it.each(["discovery", "completed"] as const)(
-    "keeps the %s shelf card dense without losing its cover and text hierarchy",
-    (variant) => {
-      const { container } = renderShelfCard(variant);
+  it("keeps the discovery shelf card dense without losing its cover and text hierarchy", () => {
+    const { container } = renderShelfCard("discovery");
 
-      const card = container.querySelector<HTMLElement>(
-        `[data-recommendation-shelf-card="${variant}"]`,
-      );
-      if (card === null) throw new Error(`Missing ${variant} shelf card`);
-      expect(within(card).getByRole("img", { name: work.title })).toBeTruthy();
-      expect(within(card).getByRole("heading", { level: 3, name: work.title })).toBeTruthy();
-      if (variant === "completed") {
-        expect(card.textContent).toContain("ふつう");
-        expect(card.className).toContain("border-transparent");
-        expect(card.className).toContain("bg-transparent");
-        expect(card.className).toContain("hover:bg-surface-2");
-        expect(card.className).not.toContain("hover:border");
-      } else {
-        expect(card.textContent).not.toContain("ふつう");
-      }
-      expect(card.className).toContain("md:grid-cols-[auto_minmax(0,1fr)]");
-      expect(card.className).toContain("md:min-w-60");
-      expect(
-        within(card).getByRole("link", { name: mediaStrings.openDetails(work.title) }).className,
-      ).toContain("md:aspect-[30/43]");
-      expect(within(card).getByRole("img", { name: work.title }).className).toContain(
-        "aspect-[30/43]",
-      );
-      expect(within(card).getByRole("img", { name: work.title }).className).not.toContain(
-        "md:aspect-auto",
-      );
-      expect(within(card).getByRole("img", { name: work.title }).className).not.toContain(
-        "object-top",
-      );
-    },
-  );
+    const card = container.querySelector<HTMLElement>(
+      '[data-recommendation-shelf-card="discovery"]',
+    );
+    if (card === null) throw new Error("Missing discovery shelf card");
+    expect(within(card).getByRole("img", { name: work.title })).toBeTruthy();
+    expect(within(card).getByRole("heading", { level: 3, name: work.title })).toBeTruthy();
+    expect(card.textContent).not.toContain("ふつう");
+    expect(card.className).toContain("md:grid-cols-[auto_minmax(0,1fr)]");
+    expect(card.className).toContain("md:min-w-60");
+    expect(
+      within(card).getByRole("link", { name: mediaStrings.openDetails(work.title) }).className,
+    ).toContain("md:aspect-[30/43]");
+    expect(within(card).getByRole("img", { name: work.title }).className).toContain(
+      "aspect-[30/43]",
+    );
+    expect(within(card).getByRole("img", { name: work.title }).className).not.toContain(
+      "md:aspect-auto",
+    );
+    expect(within(card).getByRole("img", { name: work.title }).className).not.toContain(
+      "object-top",
+    );
+  });
 
   it("morphs only a resolved discovery cover inside its fixed card geometry", () => {
     const { container } = renderShelfCard("discovery");
@@ -164,20 +152,27 @@ describe("RecommendationShelfCard", () => {
     expect(cover.className).toContain("motion-reduce:transition-none");
   });
 
-  it("keeps the anchor identity plain and reserves the full reason for expansion", () => {
-    const { container } = renderShelfCard("anchor");
-    const card = container.querySelector<HTMLElement>('[data-recommendation-shelf-card="anchor"]');
-    if (card === null) throw new Error("Missing anchor shelf card");
+  it.each(["anchor", "factor"] as const)(
+    "keeps the %s lens identity plain and reserves the full reason for expansion",
+    (variant) => {
+      const { container } = renderShelfCard(variant);
+      const card = container.querySelector<HTMLElement>(
+        `[data-recommendation-shelf-card="${variant}"]`,
+      );
+      if (card === null) throw new Error(`Missing ${variant} shelf card`);
 
-    expect(card.className).toContain("border-transparent");
-    expect(card.className).toContain("bg-transparent");
-    expect(card.className).not.toContain("hover:border");
-    expect(within(card).queryByText("ふつう")).toBeNull();
-    expect(within(card).getByRole("button", { name: /クイック表示/u })).toBeTruthy();
-    expect(within(card).getByRole("img").getAttribute("data-cover-fit")).toBe("cover-square");
-    expect(card.querySelector("[data-expandable-panel]")?.getAttribute("aria-hidden")).toBe("true");
-    expect(card.querySelectorAll("[data-expandable-panel] p")).toHaveLength(1);
-  });
+      expect(card.className).toContain("border-transparent");
+      expect(card.className).toContain("bg-transparent");
+      expect(card.className).not.toContain("hover:border");
+      expect(within(card).queryByText("ふつう")).toBeNull();
+      expect(within(card).getByRole("button", { name: /クイック表示/u })).toBeTruthy();
+      expect(within(card).getByRole("img").getAttribute("data-cover-fit")).toBe("cover-square");
+      expect(card.querySelector("[data-expandable-panel]")?.getAttribute("aria-hidden")).toBe(
+        "true",
+      );
+      expect(card.querySelectorAll("[data-expandable-panel] p")).toHaveLength(1);
+    },
+  );
 
   it("keeps a missing discovery cover rectangular and uncropped", () => {
     const { container } = renderShelfCard("discovery", null);
@@ -191,7 +186,7 @@ describe("RecommendationShelfCard", () => {
     expect(cover.className).not.toContain("clip-path");
   });
 
-  it.each(["anchor", "discovery", "completed"] as const)(
+  it.each(["anchor", "factor", "discovery"] as const)(
     "exposes a quiet Quick Preview control on the %s shelf card",
     (variant) => {
       const { container } = renderShelfCard(variant);
@@ -213,7 +208,7 @@ describe("RecommendationShelfCard", () => {
     },
   );
 
-  it.each(["anchor", "discovery", "completed"] as const)(
+  it.each(["anchor", "factor", "discovery"] as const)(
     "sends the %s cover and title to work details without nesting Quick Preview",
     (variant) => {
       const { container } = renderShelfCard(variant);
@@ -233,7 +228,7 @@ describe("RecommendationShelfCard", () => {
       const preview = within(card).queryByRole("button", {
         name: `「${work.title}」をクイック表示`,
       });
-      if (variant === "anchor") {
+      if (variant !== "discovery") {
         expect(titleLink).toBe(coverLink);
       }
       expect(preview).not.toBeNull();

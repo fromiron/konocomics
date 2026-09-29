@@ -348,6 +348,35 @@ export function generateTasteExplanation({
   };
 }
 
+/**
+ * Returns the liked work and factor label that a taste sentence actually names, so grouped
+ * presentations can reuse them without re-deriving copy.
+ */
+export function tasteSentenceSubjects(
+  sentence: TasteExplanationSentence,
+  lexicon: ExplanationLexicon,
+  resolveTitle: WorkTitleResolver,
+): { anchorWorkId?: string; factorLabel?: string } {
+  const anchorWorkId =
+    sentence.source === "similarity"
+      ? sentence.anchorWorkIds.find((workId) => {
+          const title = resolveTitle(workId);
+          return title !== undefined && title !== "";
+        })
+      : undefined;
+  const clusterId = explanationClusterFor(sentence.factorId);
+  const factorLabel =
+    sentence.axisPreferenceDirection === "lower"
+      ? undefined
+      : clusterId === undefined
+        ? lexicon.factorLabels[sentence.factorId]
+        : lexicon.clusterLabels[clusterId];
+  return {
+    ...(anchorWorkId === undefined ? {} : { anchorWorkId }),
+    ...(factorLabel === undefined ? {} : { factorLabel }),
+  };
+}
+
 export function generateBaselineExplanation({
   bestAnchorId,
   contributions,

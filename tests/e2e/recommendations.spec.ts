@@ -1397,7 +1397,10 @@ test.describe("Slice 7 recommendation journeys", () => {
       await page.keyboard.press("Escape");
       await expect(nextAnchor.locator("[data-expandable-panel]")).toBeHidden();
       await expect(nextCover).toBeFocused();
-      await page.getByRole("heading", { name: "好きな作品から広げる", exact: true }).click();
+      await page
+        .getByRole("heading", { level: 2, name: /が好きなら$/u })
+        .first()
+        .click();
       await page.emulateMedia({ reducedMotion: "reduce" });
       await anchorCard.hover();
       await expect(anchorPanel).toBeVisible();
@@ -1410,7 +1413,10 @@ test.describe("Slice 7 recommendation journeys", () => {
       const lastAnchor = anchorCards.last();
       const precedingAnchor = anchorCards.nth((await anchorCards.count()) - 2);
       for (const handoff of [false, true]) {
-        await page.getByRole("heading", { name: "好きな作品から広げる", exact: true }).click();
+        await page
+          .getByRole("heading", { level: 2, name: /が好きなら$/u })
+          .last()
+          .click();
         await expect(
           page.locator('[data-recommendation-shelf-card="anchor"][data-expansion-active]'),
         ).toHaveCount(0);

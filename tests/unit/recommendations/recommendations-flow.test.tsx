@@ -527,6 +527,8 @@ describe("RecommendationsFlow", () => {
   });
 
   it("renders a cache hit as a grounded list with stable provenance hooks", async () => {
+    const plan = makePlan(14);
+    testState.getRecommendationCache.mockResolvedValue(cacheRecord(plan));
     const { container } = render(<RecommendationsFlow />);
 
     const list = await waitFor(() => {
@@ -640,7 +642,14 @@ describe("RecommendationsFlow", () => {
     const anchorCards = container.querySelectorAll<HTMLElement>(
       '[data-recommendation-shelf-card="anchor"]',
     );
-    expect(anchorCards.length).toBeGreaterThan(0);
+    expect(anchorCards).toHaveLength(plan.length - 10);
+    const lensAnchorTitle = catalog.works.find((work) => work.id === plan[0]?.bestAnchorId)?.title;
+    expect(
+      screen.getByRole("heading", {
+        level: 2,
+        name: recommendationStrings.lensShelves.anchor.title(lensAnchorTitle ?? ""),
+      }),
+    ).toBeTruthy();
     for (const anchorCard of anchorCards) {
       expect(anchorCard.getAttribute("data-lead-anchor-work-ids")).not.toBe("");
       expect(within(anchorCard).getByRole("button", { name: /クイック表示/u })).toBeTruthy();
@@ -650,7 +659,7 @@ describe("RecommendationsFlow", () => {
       expect(within(anchorCard).getByRole("link").contains(title)).toBe(true);
       const reason = anchorCard.querySelector("[data-contribution-summary]");
       const anchorTitle = reason?.querySelector("strong")?.textContent;
-      expect(anchorTitle).toBeTruthy();
+      expect(anchorTitle).toBe(lensAnchorTitle);
       await waitFor(() => {
         expect(anchorCard.querySelector("[data-expandable-panel]")?.textContent).toContain(
           `${title.textContent}の作品紹介です。`,

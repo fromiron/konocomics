@@ -691,25 +691,25 @@ export const recommendationStrings = {
       title: "あなたのために選んだ作品",
       description: "上位の作品を選ぶと、あなたの好みとの接点と読書アクションを確認できます。",
     },
-    anchor: {
-      navigationLabel: "好きな作品から",
-      title: "好きな作品から広げる",
-      description: "推薦プランの順番を保ったまま、根拠作品から次の候補を探せます。",
-    },
     discovery: {
       navigationLabel: "隠れた候補",
       title: "隠れた候補",
       description: "推薦エンジンが discovery とした候補だけを表示しています。",
     },
-    completed: {
-      navigationLabel: "完結",
-      title: "完結作から選ぶ",
-      description: "推薦プラン内の完結作品です。順位の再計算はしていません。",
-    },
     ranking: {
       navigationLabel: "Top 10",
       title: "あなたの Top 10",
       description: "現在の推薦結果をそのまま1位から並べています。",
+    },
+  },
+  lensShelves: {
+    anchor: {
+      navigationLabel: (anchorTitle: string) => `『${anchorTitle}』`,
+      title: (anchorTitle: string) => `『${anchorTitle}』が好きなら`,
+    },
+    factor: {
+      navigationLabel: (factorLabel: string) => `「${factorLabel}」`,
+      title: (factorLabel: string) => `「${factorLabel}」で選ぶ`,
     },
   },
   shelfNavigation: {

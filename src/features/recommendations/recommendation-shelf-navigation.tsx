@@ -4,25 +4,23 @@ import { useEffect, useMemo, useRef, useState, type RefObject } from "react";
 import { recommendationStrings } from "@/lib/strings";
 import { cn } from "@/lib/utils";
 
-export const recommendationShelves = [
-  "featured",
-  "anchor",
-  "discovery",
-  "completed",
-  "ranking",
-] as const;
+export type RecommendationShelf = string;
 
-export type RecommendationShelf = (typeof recommendationShelves)[number];
+export type RecommendationShelfDestination = Readonly<{
+  key: RecommendationShelf;
+  navigationLabel: string;
+  title: string;
+}>;
 
 type RecommendationShelfNavigationProps = Readonly<{
-  availability: Readonly<Record<RecommendationShelf, boolean>>;
+  destinations: readonly RecommendationShelfDestination[];
   disabled: boolean;
   introRef: RefObject<HTMLDivElement | null>;
   onSelect: (shelf: RecommendationShelf) => void;
 }>;
 
 export function RecommendationShelfNavigation({
-  availability,
+  destinations,
   disabled,
   introRef,
   onSelect,
@@ -32,10 +30,7 @@ export function RecommendationShelfNavigation({
   const [visible, setVisible] = useState(false);
   const [current, setCurrent] = useState<RecommendationShelf | null>(null);
   const search = useRouterState({ select: (state) => state.location.searchStr });
-  const shelves = useMemo(
-    () => recommendationShelves.filter((key) => availability[key]),
-    [availability],
-  );
+  const shelves = useMemo(() => destinations.map(({ key }) => key), [destinations]);
 
   useEffect(() => {
     const holder = holderRef.current;
@@ -103,8 +98,7 @@ export function RecommendationShelfNavigation({
         inert={!visible}
         ref={navigationRef}
       >
-        {shelves.map((key) => {
-          const { navigationLabel, title } = recommendationStrings.shelves[key];
+        {destinations.map(({ key, navigationLabel, title }) => {
           const destination = new URLSearchParams(search);
           destination.set("shelf", key);
           return (
