@@ -28,7 +28,8 @@
 
 - 모든 route는 Zod `validateSearch`를 갖고 malformed 값은 안전한 기본값으로 정규화한다.
 - `/onboarding`: `q`, `genre`, `shelf`는 **서로 배타적인 discovery mode 하나**다. 쓰기와 해석은 `q` > 유효한 collection `shelf` > `genre` 우선이며 AND 교집합 필터를 쓰지 않는다. `q` 입력은 genre/shelf를 제거하고, genre는 q/shelf를, collection은 q/genre를, 닫기는 shelf를 제거한다. 혼합 URL은 같은 우선순위로 정규화한다. back/forward는 그 mode와 collection panel을 복원한다. `/taste`: `mode`, `group`; `/recommendations`: `preview`, `genre`, `sort`, `shelf`; `/library`: `state`, `q`, `sort`, `view`, 선택 시 `favorite=1`, 2페이지부터 `page`; `/settings`: `section`.
-- `?landing=1`과 `?reveal=1`은 기존 호환 계약을 유지한다. `/works/external`의 typed `workId`는 missing/duplicate/empty/malformed를 기본값으로 덮지 않고 invalid-link 상태로 보낸다.
+- `?landing=1`과 `?reveal=1`은 기존 호환 계약을 유지한다. 2026-09-29 개선 계획 Phase 2: `/`의 `via`는 고정 값 `share-card`만 허용하고 그 밖의 값은 버린다. 공유 주소는 `/?landing=1&via=share-card`로 고정하며 사용자·작품·DNA 식별값을 넣지 않는다.
+- 검색어를 URL에 반영하는 입력(`/onboarding`의 `q`, `/library`의 `q`)은 입력값을 로컬 draft로 소유하고 URL을 뒤따라 갱신한다. 일본어 IME 조합 중에는 URL을 쓰지 않고 조합 확정 시 쓴다. 자기 자신이 쓴 URL 반영(trim된 값 포함)은 입력을 되돌리지 않으며, back/forward·모드 전환처럼 외부에서 바뀐 URL만 draft를 교체한다. 입력 길이는 URL schema와 같은 100자다. `/works/external`의 typed `workId`는 missing/duplicate/empty/malformed를 기본값으로 덮지 않고 invalid-link 상태로 보낸다.
 - 선택 작품, DNA adjustment, 추천 policy/result, provider cache, 편집 draft, mutation/animation/scroll state는 URL에 넣지 않는다.
 
 ### 접근성(전역)
@@ -49,6 +50,17 @@
 ### 주요 액션
 
 CTA **「好きなマンガから始める」** → /onboarding. 행동은 이 하나뿐이며, 2026-09-29 개선으로 같은 CTA를 hero와 페이지 끝 마무리 블록에 한 번씩 둔다.
+
+2026-09-29 개선 계획 Phase 2 — 이 하나의 CTA는 로컬 상태를 읽기만 하고 방문자 자신의 경로를 잇는다. 공유 주소나 `?landing=1`로 들어와도 데이터를 초기화하거나 온보딩을 강제로 다시 시작하지 않는다.
+
+| 방문자 상태 | CTA | 이동 |
+|---|---|---|
+| 신규(`new`) | 「好きなマンガから始める」 | `/onboarding` (first-run) |
+| 온보딩 중단(`resume`, positive가 담긴 draft) | 「選んだ作品の続きから」 + 저장 안내 1줄 | `/onboarding` (draft 복원) |
+| 사용 가능한 프로필(`profile`) | 「自分のおすすめを見る」 + 저장 안내 1줄 | `/recommendations` |
+| 복구 필요(`recovery`, 완료 marker + 현재 Catalog 5개 미만) | 「作品を追加して続ける」 + 안내 1줄 | `/onboarding` (기존 add recovery) |
+
+`via=share-card`이면 태그라인 위에 「シェアされた Manga DNA から来た方へ」 한 줄을 둔다. 경로 표지는 탭 메모리에만 기록하고(`data-entry-source`), 새로고침하면 진입 URL로 다시 판단하며 그 밖의 화면에서는 경로 미확인이다. 저장·Export·자동 집계를 하지 않는다.
 
 ### 정보 위계
 
@@ -119,7 +131,7 @@ CTA **「好きなマンガから始める」** → /onboarding. 행동은 이 �
 
 ### 컴포넌트 책임
 
-- `WorkSearchInput`: 300ms 디바운스, NFKC·가나 정규화 질의, 결과는 Shelf 영역을 대체하는 그리드로 표시. 비우면 Shelf 복귀.
+- `WorkSearchInput`: 300ms 디바운스, NFKC·가나 정규화 질의, 결과는 Shelf 영역을 대체하는 그리드로 표시. 비우면 Shelf 복귀. 입력값과 URL `q`의 관계는 §0 URL 상태의 로컬 draft 계약을 따른다.
 - `AnchorCoverCard`: 표지 + 제목. 상태 unselected / selected(liked) / selected(favorite). 선택 카드에서 별 아이콘 탭 → favorite 토글. 선택 시 체크 오버레이 + 테두리 accent. collection panel 카드도 같은 컴포넌트와 `togglePositiveSelection` / `positiveByWorkId`를 재사용한다.
 - `SelectedTray`: 썸네일 탭 → 선택 해제. 가로 스크롤. Motion layout으로 추가/제거 재배치.
 - `OnboardingCollectionGrid`: compact 2열 `type="button"` disclosure. `aria-expanded`와 공통 `aria-controls`. 열린 panel은 고정 id + 보이는 제목을 `aria-labelledby`로 연결한 named region. 트리거 장식 표지는 `aria-hidden`. nested interactive 금지.
@@ -128,6 +140,7 @@ CTA **「好きなマンガから始める」** → /onboarding. 행동은 이 �
 
 - initial: 「選びやすい作品」 Shelf 표시, collection trigger는 접힘, tray 비어 있음 + 「まだ選ばれていません」.
 - 검색 결과 없음: 「見つかりませんでした。別の書き方で試してください」 + Catalog에 없는 작품은 라이브러리에서 나중에 추가할 수 있다는 1줄 안내.
+- 2026-09-29 개선 계획 Phase -1 — 검색에서 제외된 일치 작품의 이유: 전체 Catalog 검색의 상위 8건 중 선택 대상이 아닌 작품을 최대 3개까지 「ここでは選べない作品」 영역에 표시한다. 이미 기록된 작품은 「ライブラリに登録済みです。…」와 `/library?q={제목}` 링크, 분석 대상이 아닌 작품(onboarding·recommendation 비적격)은 「好みの分析にはまだ対応していません。ライブラリには記録できます。」다. 결과가 있을 때는 결과 아래, 없을 때는 일반 0건 문구 대신 표시한다. 중복 추가 방지와 분석 자격은 바꾸지 않고, STEP 2도 같은 규칙(선택 대상 = recommendation eligible − 기록)이다.
 - collection panel: onboarding·recommendation eligible, persisted work 제외, workId 중복 제거, 해당 preset만 적용. 표시는 desktop `min(12, available)`, mobile `min(8, available)`. 「もっと見る」 1회로 `min(40, available)`까지이며 40 초과 금지. 후보 0이면 named empty state.
 - 10개 도달: 추가 선택 시 카드가 선택되지 않고 tray가 짧게 흔들리며(4px, 120ms×2) 안내 토스트 「最大 10 作品までです」. panel 선택도 같은 10개 limit·draft·aria-live·favorite 경로를 쓴다.
 - 중단·복귀: `OnboardingDraft.positiveEntries[]`에 `workId`와 `favorite | liked` reaction을 함께 담아 매 변경 시 Dexie에 저장. 재진입 시 reaction까지 복원. collection 공개 여부는 URL `shelf`로 복원한다.
@@ -157,6 +170,8 @@ CTA **「好きなマンガから始める」** → /onboarding. 행동은 이 �
 - [ ] 키보드만으로 8개 선택 → 다음 단계 진행이 가능하다.
 - [ ] 「選びやすい作品」는 collection panel이 열려도 유지되고, panel에서 고른 작품이 tray/draft/aria-live/10개 limit에 즉시 반영된다.
 - [ ] collection URL `shelf`와 검색 `q`·장르 `genre`는 한 번에 하나만 유효하며 back/forward가 panel 공개를 복원한다.
+- [ ] IME 조합 중 입력값이 되돌려지지 않고, 조합 확정 뒤에만 URL `q`가 갱신된다. 끝 공백을 입력해도 사라지지 않는다.
+- [ ] 분석 대상이 아닌 작품·이미 기록한 작품을 검색하면 선택 불가인 이유가 표시되고, 기록 작품은 Library로 이동할 수 있다.
 
 ### 기존 프로필 작품 추가 모드
 
@@ -224,6 +239,7 @@ CTA **「好きなマンガから始める」** → /onboarding. 행동은 이 �
 ### 주요 액션
 
 - reveal 모드: 하단 고정 CTA 「おすすめを見る」.
+- 보조 액션(2026-09-29 개선 계획 Phase 2): 제목 줄 오른쪽 outline 버튼 「カードで共有」. 주 CTA보다 앞서지 않으며 공유 취소·실패가 추천 탐색을 막지 않는다. 아래 「Manga DNA 카드」 참조.
 - 상시 모드: 추천 반영 radio 변경 자체가 액션. 저장 버튼 없이 즉시 Dexie에 반영하고, 성공 시 factor와 선택값을 포함한 스낵바를 제공한다(예: 「『戦略的な展開』のおすすめへの反映を『除外』に変更しました。」).
 
 ### 정보 위계
@@ -271,8 +287,19 @@ CTA **「好きなマンガから始める」** → /onboarding. 행동은 이 �
 - 미리보기에서 현재 목록은 같은 컴포넌트 위치·작품 key를 유지한다. 갱신 상태 문장만 `aria-live`로 알리고 전체 작품 목록을 반복 낭독하거나 갱신을 이유로 보정 radio의 focus·스크롤을 강제로 이동하지 않는다. 키보드로 선택한 칩은 표시 레이블과 4px focus outline까지 스크롤 영역 안에 드러내며, 저장 스낵바가 현재 포커스와 실제로 겹칠 때만 스크롤로 가림을 해소한다. 포커스 대상은 바꾸지 않는다. 사용자에게 raw work ID를 출력하지 않는다.
 - reveal 애니메이션은 정보 추가 없음 — reduced-motion 시 즉시 완성 상태.
 
+### Manga DNA 카드 (2026-09-29 개선 계획 Phase 2)
+
+- 흐름: DNA 확인 → 「カードで共有」 → dialog 미리보기 → 「カードに載せる作品」 확인 → 「画像を保存」·「紹介文とリンクをコピー」(지원 환경에서 「ほかのアプリで共有」).
+- 카드는 bento형 단일 레이아웃(1080×1350 PNG)이다(2026-09-29 사용자 재검토 3회 반영). 어두운 바탕에 은은한 골드 광원과 고정 시드 그레인, 워드마크와 `MANGA DNA` pill 아래에 둥근 타일을 둔다. ① accent 타일: 「わたしの好み」와 상위 취향 최대 3개를 **같은 크기**(모든 레이블이 한 줄에 맞는 최대 크기)로 쓰고, 강도는 각 행 아래 0–4 막대로만 보인다. ② 통계 타일: 큰 숫자 `N` + 「作品から分析」. ③ 「好きな作品に少ない要素」 타일: 확인된 Axis 중 `控えめ` 구간(<1.5)이면서 상위 취향이 아닌 것을 낮은 순 최대 3개, 레이블+막대로 보인다. 없으면 통계 타일이 전체 폭을 쓰고 채워 넣지 않는다. ④ 「分析した作品」 타일: 분석에 쓴 작품(상위 취향 근거 우선)을 칩으로 이름 붙이고, 사용자가 숨겼거나 두 줄에 들어가지 않은 작품은 「ほか N作品」 칩으로 센다. 칩 수 + N은 항상 분석 작품 수와 같다. 모든 막대에는 레이블이 있고 수치·백분율·강도 배지는 없다. 표지 합성은 楽天 이미지 CORS 미허용으로 현재 불가하며(새 이미지 프록시 route는 `AGENTS.md` 서버 경계 밖) 사용자 결정 대기다.
+- `N`은 DNA 계산 입력과 같은 규칙(현재 Catalog의 recommendation eligible favorite/liked, 중복 제거)의 `analyzedWorkIds` 수다. 근거 ID를 합산하지 않으며 작품을 숨겨도 변하지 않는다.
+- 미리보기와 저장은 같은 생성 이미지(blob)다. 브라우저 Canvas와 기존 글꼴만 쓰고 새 의존성을 두지 않는다. 일본어 글꼴은 카드 문구로 필요한 subset을 불러온 뒤 그리며, 실패하면 재시도 상태를 보이고 링크 복사는 계속 쓸 수 있다.
+- 확인된 취향이 없으면 카드를 만들지 않고 작품 추가(`/onboarding`)를 안내한다.
+- 상태 문구는 「画像の保存を始めました」「紹介文とリンクをコピーしました」「共有先のアプリに渡しました」처럼 실제로 일어난 동작만 말하고 게시 완료를 주장하지 않는다.
+
 ### 수용 기준
 
+- [ ] 카드의 취향·적은 요소·분석 작품 수가 현재 DNA와 일치하고, 이름 붙인 작품 수와 「ほか N作品」의 합이 분석 작품 수와 같다. 작품을 숨겨도 분석 작품 수가 바뀌지 않는다.
+- [ ] 유효한 취향이 없으면 빈 카드를 만들지 않고 입력 보강을 안내한다. 이미지 생성 실패에도 dialog·복사·추천 이동이 동작한다.
 - [ ] reveal이 온보딩 완료 직후 1회만 재생된다(뒤로가기·새로고침 시 재생 안 됨).
 - [ ] reveal 판정 직후 `?reveal`이 즉시 제거되지만 anchors·요약·FactorBar A 시퀀스는 local decision으로 계속된다.
 - [ ] 1200ms 전 뷰포트에 들어온 FactorBar는 전역 gate 뒤 시작하고, gate가 지난 뒤 처음 진입한 화면 밖 FactorBar는 추가 1200ms 지연 없이 섹션 내 60ms stagger만 적용해 각 1회 재생된다.
@@ -353,6 +380,15 @@ Shelf grouping은 presentation-only selector다. main Shelf 사이에는 work ID
 - [ ] 중복·동시 저장은 기존 record를 보존하고 확인 불가 결과를 성공으로 표시하지 않는다.
 - [ ] 키보드·390px/320px 화면에서 44px 답변·닫기, 소개와 편집 접근, 포커스 복원을 유지한다.
 - [ ] 공급자 실패·닫힘 상태에서도 추천·Library 검색이 정상 동작한다.
+
+### 오늘의 기분 (2026-09-29 개선 계획 Phase 3)
+
+- 툴바 아래 한 줄: 「今日の気分」 제목 + 단일 선택 칩 「指定なし / 気持ちが軽い話 / あたたかい話 / テンポが速い話」. 조건·처리 순서·수명은 `02` §6.11이다.
+- 선택 중에는 칩 아래 `aria-live`로 「「{무드}」に合う N作品から選んでいます。」, 무드가 보장하지 않는 점, 오늘 見送った 작품 수를 알린다. 메인·관점 선반·Discovery·Top 10은 같은 무드 후보만 보이며 Top 10 설명은 「今日の気分に合う作品の上位10作品です。」다.
+- 무드 중에는 카드·Quick Preview·Anchor 패널 액션에 「今日はパス」가 추가된다. 저장하지 않고 해당 무드에서만 이번 방문 동안 제외하며, 빈자리도 같은 무드 후보로만 채운다. 390px 대표 카드 rail에는 「今日はパス」와 「読んだ」만 두고 「興味なし」는 Quick Preview에서 제공한다(데스크톱은 네 액션 모두).
+- Quick Preview에는 취향 이유와 분리된 무드 충족 줄(예: 「今日の気分：精神的な重さが控えめ」)을 둔다.
+- 후보가 10개 미만이면 기존 후보 부족 배너 대신 실제 개수와 「気分の指定をやめる」를, 0개면 미분석 작품을 판단하지 않는다는 안내와 같은 버튼을 보인다. 조건을 조용히 완화하지 않는다.
+- 무드 해제 시 영구 입력이 바뀌지 않았다면 기존 기본 추천을, 바뀌었다면 기존 hash·「更新」 계약에 따른 최신 기본 추천을 보인다.
 
 ### 추천 헤더 (2026-09-10 사용자 위임 개선)
 
@@ -435,6 +471,7 @@ Shelf grouping은 presentation-only selector다. main Shelf 사이에는 work ID
 ### 수용 기준
 
 - [ ] 동일 프로필 입력에서 새로고침해도 목록·순서가 동일하다.
+- [ ] 무드 선택 시 메인·선반에 조건 밖 작품이 없고, 「今日はパス」는 해당 무드에만 적용되며 무드 재선택 시 다시 적용된다. 상세 왕복 후 유지되고 새로고침·Import·전체 삭제 후 초기화된다. 무드 상태는 Dexie·Export에 없다.
 - [ ] desktop 첫 진입에서 344×448px featured card 3장 이상과 다음 카드 일부가 보이고, 정상 상태는 표지가 주된 면적이며 hover/focus는 외곽 geometry를 바꾸지 않고 reason과 action rail을 연다.
 - [ ] `読んだ` 처리한 작품이 이후 어떤 추천에도 다시 나타나지 않는다.
 - [ ] 각 카드의 이유가 해당 카드 contribution 데이터와 일치한다(E2E에서 data-attribute 대조).

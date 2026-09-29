@@ -30,6 +30,9 @@ type QuickPreviewDialogProps = Readonly<{
   onHidden: () => void;
   onRemovalIntent: () => void;
   onCoverVisible?: () => void;
+  onDismissForToday?: () => void;
+  /** Why the work meets the chosen mood, kept apart from the taste reasons. */
+  moodLine?: string;
 }>;
 
 export function QuickPreviewDialog({
@@ -39,6 +42,8 @@ export function QuickPreviewDialog({
   opener,
   onCompleted,
   onCoverVisible,
+  onDismissForToday,
+  moodLine,
   onHidden,
   onOpenChange,
   onPlanned,
@@ -88,6 +93,14 @@ export function QuickPreviewDialog({
           </p>
         </div>
         <div className="col-span-full grid min-h-0 min-w-0 content-start gap-[var(--space-3)] overflow-y-auto overscroll-contain [@media(min-width:768px)_and_(hover:hover)_and_(pointer:fine)]:col-span-1 [@media(min-width:768px)_and_(hover:hover)_and_(pointer:fine)]:col-start-2 [&_section]:grid [&_section]:gap-[var(--space-content)]">
+          {moodLine === undefined ? null : (
+            <p
+              className="w-fit rounded-[var(--radius-pill)] border border-accent/60 px-[var(--space-3)] py-[var(--space-1)] text-[length:var(--text-caption-size)] font-bold text-accent"
+              data-recommendation-mood-match
+            >
+              {moodLine}
+            </p>
+          )}
           <section aria-labelledby="quick-preview-reasons">
             <h3 id="quick-preview-reasons">{recommendationStrings.reasonHeading}</h3>
             <ReasonChips
@@ -113,7 +126,9 @@ export function QuickPreviewDialog({
         <StateActionRow
           busy={busy}
           className="col-span-full flex-row flex-wrap items-center justify-between border-t border-line pt-[var(--space-3)]"
+          dismissForTodayLabel={recommendationStrings.mood.dismissLabel(work.title)}
           onCompleted={onCompleted}
+          onDismissForToday={onDismissForToday}
           onHidden={onHidden}
           onPlanned={onPlanned}
           onRemovalIntent={onRemovalIntent}

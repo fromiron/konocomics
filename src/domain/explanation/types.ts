@@ -15,7 +15,12 @@ export type ExplanationFactorId = AxisId | GenreTag | ThemeTag;
 
 export type ExplanationTemplateId =
   | "positiveWithAnchor"
+  | "positiveGenreWithAnchor"
+  | "positiveThemeWithAnchor"
+  | "positiveRepeatedAnchor"
   | "positiveWithoutAnchor"
+  | "positiveAxisAdjustment"
+  | "positiveThemeAdjustment"
   | "positiveLowerAxisAdjustment"
   | "cautionSimilarityWithAnchor"
   | "cautionSimilarityWithoutAnchor"

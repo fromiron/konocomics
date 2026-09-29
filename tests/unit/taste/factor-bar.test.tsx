@@ -81,6 +81,25 @@ describe("FactorBar", () => {
     expect(container.querySelectorAll(".taste-factor-bar__track--unknown")).toHaveLength(1);
   });
 
+  it("rounds the exposed meter value without changing the drawn fill", () => {
+    const { container } = render(
+      <FactorBar
+        animateReveal={false}
+        label="戦略的な展開"
+        revealReady={false}
+        state="known"
+        value={2.7384615384}
+      />,
+    );
+
+    expect(screen.getByRole("meter", { name: "戦略的な展開" }).getAttribute("aria-valuenow")).toBe(
+      "2.7",
+    );
+    expect(container.querySelector<HTMLElement>(".taste-factor-bar__fill")?.style.transform).toBe(
+      `scaleX(${String(2.7384615384 / 4)})`,
+    );
+  });
+
   it.each([
     [0.49, "ごく控えめ"],
     [0.5, "控えめ"],

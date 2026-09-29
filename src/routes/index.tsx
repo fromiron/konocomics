@@ -26,13 +26,14 @@ function LandingFallback() {
 }
 
 function HomePage() {
-  const { landing } = Route.useSearch();
+  const { landing, via } = Route.useSearch();
 
   return (
     <Suspense fallback={<LandingFallback />}>
       <LandingFlow
         discoveryWorks={discoveryWorks}
         editorialRankingWorks={editorialRankingWorks}
+        entrySource={via}
         recommendableWorkCount={recommendableWorkCount}
         sample={sample}
         showIntroduction={landing === "1"}

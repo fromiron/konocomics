@@ -29,6 +29,7 @@ type RecommendationCardProps = Readonly<{
   onCompleted: () => void;
   onHidden: () => void;
   onRemovalIntent: () => void;
+  onDismissForToday?: () => void;
   onPreview?: () => void;
   onCoverVisible?: () => void;
 }>;
@@ -69,6 +70,7 @@ export function RecommendationCard({
   entry,
   onCompleted,
   onCoverVisible,
+  onDismissForToday,
   onHidden,
   onPlanned,
   onPreview,
@@ -179,7 +181,9 @@ export function RecommendationCard({
           <RecommendationFeedbackActions
             busy={busy}
             className="pointer-events-auto ml-auto shrink-0"
+            dismissForTodayLabel={recommendationStrings.mood.dismissLabel(work.title)}
             onCompleted={onCompleted}
+            onDismissForToday={onDismissForToday}
             onHidden={onHidden}
             onRemovalIntent={onRemovalIntent}
             surface="cover"

@@ -16,7 +16,9 @@ import recommendationContextJson from "@/data/generated/recommendation-context-v
 import { catalogV1Schema } from "@/domain/catalog/schema";
 import type { RecommendationPolicies, UserWorkRecord } from "@/domain/profile/types";
 import { recommendationContextSchema } from "@/domain/recommendation/context-schema";
+import { workMatchesMood } from "@/domain/recommendation/mood";
 import type { RecommendationPlanEntry } from "@/domain/recommendation/types";
+import { resetMoodSession } from "@/features/recommendations/mood-session";
 import type { RecommendationMotionListProps } from "@/features/recommendations/recommendation-motion-list";
 import { RecommendationsFlow as RecommendationsFlowComponent } from "@/features/recommendations/recommendations-flow";
 import { onboardingStrings, recommendationStrings } from "@/lib/strings";
@@ -395,6 +397,7 @@ beforeEach(() => {
 
 afterEach(() => {
   cleanup();
+  resetMoodSession();
   vi.clearAllTimers();
   vi.useRealTimers();
   vi.unstubAllGlobals();
@@ -1025,6 +1028,57 @@ describe("RecommendationsFlow", () => {
     });
   });
 
+  it("narrows every shelf to the chosen mood and sets works aside only for that mood", async () => {
+    const plan = makePlan(40);
+    testState.getRecommendationCache.mockResolvedValue(cacheRecord(plan));
+    const worksById = new Map(catalog.works.map((work) => [work.id, work] as const));
+    const matching = new Set(
+      plan
+        .filter((entry) => {
+          const work = worksById.get(entry.workId);
+          return work !== undefined && workMatchesMood(work, "fastPaced");
+        })
+        .map((entry) => entry.workId),
+    );
+    expect(matching.size).toBeGreaterThan(1);
+    const featuredIds = (root: ParentNode) =>
+      [...root.querySelectorAll(featuredItemSelector)].map((item) =>
+        item.getAttribute("data-recommendation-work-id"),
+      );
+
+    const { container } = render(<RecommendationsFlow />);
+    await waitFor(() => {
+      expect(featuredIds(container).length).toBeGreaterThan(0);
+    });
+    const baseIds = featuredIds(container);
+
+    fireEvent.click(screen.getByRole("radio", { name: "テンポが速い話" }));
+    await waitFor(() => {
+      const ids = featuredIds(container);
+      expect(ids.length).toBeGreaterThan(0);
+      expect(ids.every((id) => id !== null && matching.has(id))).toBe(true);
+    });
+    const shelfIds = [...container.querySelectorAll('[id^="recommendation-shelf-work-"]')].map(
+      (element) => element.id.replace("recommendation-shelf-work-", ""),
+    );
+    expect(shelfIds.every((id) => matching.has(id))).toBe(true);
+    expect(screen.getByText(/「テンポが速い話」に合う \d+作品から選んでいます。/u)).toBeTruthy();
+
+    const first = container.querySelector<HTMLElement>(featuredItemSelector);
+    if (first === null) throw new Error("Expected a featured mood card");
+    const firstId = first.getAttribute("data-recommendation-work-id");
+    fireEvent.click(within(first).getByRole("button", { name: /を今日の気分では見送る$/u }));
+    await waitFor(() => {
+      expect(featuredIds(container)).not.toContain(firstId);
+    });
+    expect(testState.saveUserWork).not.toHaveBeenCalled();
+
+    fireEvent.click(screen.getByRole("radio", { name: "指定なし" }));
+    await waitFor(() => {
+      expect(featuredIds(container)).toEqual(baseIds);
+    });
+  });
+
   it("keeps an honest candidate-shortage state instead of weakening list constraints", async () => {
     const shortPlan = makePlan().slice(0, 9);
     testState.getRecommendationCache.mockResolvedValue(cacheRecord(shortPlan));
@@ -1547,7 +1601,11 @@ describe("RecommendationsFlow", () => {
     const policyWrite = deferred<void>();
     testState.savePolicies.mockReturnValueOnce(policyWrite.promise);
     render(<RecommendationsFlow />);
-    await screen.findByRole("checkbox", { name: "完結作を優先" });
+    const completedChip = await screen.findByRole("checkbox", { name: "完結作を優先" });
+    // Chips are disabled while the first plan loads; the rapid input starts once they are usable.
+    await waitFor(() => {
+      expect(completedChip.getAttribute("aria-disabled")).not.toBe("true");
+    });
 
     fireEvent.click(screen.getByRole("checkbox", { name: "完結作を優先" }));
     fireEvent.click(screen.getByRole("checkbox", { name: "隠れた作品を優先" }));

@@ -10,10 +10,12 @@ import { useCatalogIdentity } from "@/features/catalog/catalog-provider";
 import { useRecommendationCovers } from "@/features/recommendations/recommendation-cover-resolver";
 import { usePersistence, type ProviderCacheRecord } from "@/infrastructure/db";
 
-import { HomeHero } from "./home-hero";
+import { recordEntrySource } from "./entry-source";
+import { HomeHero, type LandingVisitorState } from "./home-hero";
 import { HomeClosing, HomeHowItWorks } from "./home-how-it-works";
 import { HomeDiscoveryShelf, HomeRankingShelf } from "./home-showcase";
 import type { LandingSample, LandingWork } from "./landing-types";
+import type { EntrySource } from "@/lib/route-search";
 
 function skipProviderCacheWrite(record: ProviderCacheRecord) {
   return Promise.resolve(record);
@@ -36,6 +38,7 @@ type LandingFlowProps = Readonly<{
   recommendableWorkCount: number;
   sample: LandingSample;
   showIntroduction?: boolean;
+  entrySource?: EntrySource;
 }>;
 
 export function LandingFlow({
@@ -44,14 +47,28 @@ export function LandingFlow({
   recommendableWorkCount,
   sample,
   showIntroduction = false,
+  entrySource,
 }: LandingFlowProps) {
   const navigate = useNavigate();
   const catalogIdentity = useCatalogIdentity();
-  const { getProviderCache, userWorks } = usePersistence();
+  const { getProviderCache, onboardingCompletedAt, onboardingDraft, userWorks } = usePersistence();
   const hasProfile = useMemo(
     () => hasCatalogBackedProfileById(userWorks, catalogIdentity.profileWorkIds),
     [catalogIdentity.profileWorkIds, userWorks],
   );
+  // Reading local state never changes it: the landing only picks where its one action leads.
+  const visitor: LandingVisitorState =
+    hasProfile === true
+      ? "profile"
+      : onboardingCompletedAt !== undefined && onboardingCompletedAt !== null
+        ? "recovery"
+        : (onboardingDraft?.positiveEntries.length ?? 0) > 0
+          ? "resume"
+          : "new";
+
+  useEffect(() => {
+    if (entrySource !== undefined) recordEntrySource(entrySource);
+  }, [entrySource]);
   const coverTargets = useMemo(() => {
     const uniqueWorks = new Map(
       [sample.recommendation.work, ...editorialRankingWorks, ...discoveryWorks].map(
@@ -83,14 +100,20 @@ export function LandingFlow({
   }
 
   return (
-    <main className="min-h-dvh overflow-hidden bg-canvas" data-landing-state="introduction">
+    <main
+      className="min-h-dvh overflow-hidden bg-canvas"
+      data-entry-source={entrySource}
+      data-landing-state="introduction"
+    >
       <HomeHero
         backdropUrl={heroCoverUrl}
         coverUrls={coverUrls}
         onCoverVisible={requestCover}
         recommendableWorkCount={recommendableWorkCount}
         sample={sample}
+        sharedEntry={entrySource === "share-card"}
         staticLogo={showIntroduction}
+        visitor={visitor}
       />
 
       <div className="mx-auto grid w-full max-w-[var(--layout-width-media)] gap-[var(--space-shelf-group)] px-[var(--layout-page-padding)] pt-[var(--space-shelf)] pb-[var(--space-shelf-group)]">
@@ -107,7 +130,7 @@ export function LandingFlow({
             works={discoveryWorks}
           />
         </div>
-        <HomeClosing />
+        <HomeClosing visitor={visitor} />
       </div>
     </main>
   );

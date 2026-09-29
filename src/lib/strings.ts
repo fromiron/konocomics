@@ -50,29 +50,67 @@ const explanationFactorLabels = {
   motionImpact: "迫力・スピード感",
 } as const satisfies Readonly<Record<ExplanationFactorId, string>>;
 
+const explanationClusterLabels = {
+  tacticalThinking: "頭脳で解決する展開",
+  relationshipAppeal: "人物の変化と関係性",
+  toneLoad: "物語の重さ",
+} as const;
+
+const explanationConfidenceLabels = {
+  high: "高い",
+  normal: "ふつう",
+  low: "低め(データ収集中)",
+} as const;
+
+const baselineExplanationTemplates = {
+  baselineGenreWithAnchor: "『{anchorTitle}』と「{factorLabel}」が共通しています。",
+  baselineGenreWithoutAnchor: "「{factorLabel}」のジャンル一致を順位に反映しています。",
+  baselineMarketObserved: "第1巻のレビュー情報を順位に反映しています。",
+  baselineMaturity: "刊行の蓄積を順位に反映しています。",
+} as const;
+
+/** Product copy for recommendation reasons (02 §6.8). */
 export const explanationLexicon = {
   factorLabels: explanationFactorLabels,
-  clusterLabels: {
-    tacticalThinking: "頭脳で解決する展開",
-    relationshipAppeal: "人物の変化と関係性",
-    toneLoad: "物語の重さ",
-  },
-  confidenceLabels: {
-    high: "高い",
-    normal: "ふつう",
-    low: "低め(データ収集中)",
-  },
+  clusterLabels: explanationClusterLabels,
+  confidenceLabels: explanationConfidenceLabels,
   templates: {
     positiveWithAnchor: "『{anchorTitle}』で好きだった「{factorLabel}」に近い作品です。",
+    positiveGenreWithAnchor: "『{anchorTitle}』と同じ「{factorLabel}」の作品です。",
+    positiveThemeWithAnchor: "『{anchorTitle}』と同じく「{factorLabel}」が描かれます。",
+    positiveRepeatedAnchor: "「{factorLabel}」も『{anchorTitle}』と共通しています。",
     positiveWithoutAnchor: "「{factorLabel}」があなたの好みに合う作品です。",
+    positiveAxisAdjustment: "DNAで好みに設定した「{factorLabel}」がしっかりある作品です。",
+    positiveThemeAdjustment: "DNAで好みに設定した「{factorLabel}」が描かれる作品です。",
+    positiveLowerAxisAdjustment: "「{factorLabel}」が控えめな点が、DNAで設定した好みに合います。",
+    cautionSimilarityWithAnchor:
+      "ただし「{factorLabel}」は、『{anchorTitle}』で好きだった傾向と少し異なります。",
+    cautionSimilarityWithoutAnchor: "ただし「{factorLabel}」は、あなたの好みと少し異なります。",
+    ...baselineExplanationTemplates,
+  },
+} as const satisfies ExplanationLexicon;
+
+/**
+ * The reason copy the G2 study and the Taste-vs-Baseline experiment were run with. Research
+ * tooling keeps it so reruns reproduce the recorded texts; the product uses `explanationLexicon`.
+ */
+export const frozenExperimentExplanationLexicon = {
+  factorLabels: explanationFactorLabels,
+  clusterLabels: explanationClusterLabels,
+  confidenceLabels: explanationConfidenceLabels,
+  templates: {
+    positiveWithAnchor: "『{anchorTitle}』で好きだった「{factorLabel}」に近い作品です。",
+    positiveGenreWithAnchor: "『{anchorTitle}』で好きだった「{factorLabel}」に近い作品です。",
+    positiveThemeWithAnchor: "『{anchorTitle}』で好きだった「{factorLabel}」に近い作品です。",
+    positiveRepeatedAnchor: "『{anchorTitle}』で好きだった「{factorLabel}」に近い作品です。",
+    positiveWithoutAnchor: "「{factorLabel}」があなたの好みに合う作品です。",
+    positiveAxisAdjustment: "「{factorLabel}」があなたの好みに合う作品です。",
+    positiveThemeAdjustment: "「{factorLabel}」があなたの好みに合う作品です。",
     positiveLowerAxisAdjustment: "「{factorLabel}」が控えめな点が、あなたの好みに合う作品です。",
     cautionSimilarityWithAnchor:
       "ただし「{factorLabel}」は、『{anchorTitle}』で好きだった傾向と少し異なります。",
     cautionSimilarityWithoutAnchor: "ただし「{factorLabel}」は、あなたの好みと少し異なります。",
-    baselineGenreWithAnchor: "『{anchorTitle}』と「{factorLabel}」が共通しています。",
-    baselineGenreWithoutAnchor: "「{factorLabel}」のジャンル一致を順位に反映しています。",
-    baselineMarketObserved: "第1巻のレビュー情報を順位に反映しています。",
-    baselineMaturity: "刊行の蓄積を順位に反映しています。",
+    ...baselineExplanationTemplates,
   },
 } as const satisfies ExplanationLexicon;
 
@@ -292,6 +330,18 @@ export const landingStrings = {
   description: (axisCount: number) =>
     `好きなマンガを5作品選ぶだけ。展開やトーンなど${String(axisCount)}の軸から好みを読み取り、なぜ合うのかまで説明します。`,
   cta: "好きなマンガから始める",
+  ctaByVisitor: {
+    new: "好きなマンガから始める",
+    resume: "選んだ作品の続きから",
+    profile: "自分のおすすめを見る",
+    recovery: "作品を追加して続ける",
+  },
+  visitorNote: {
+    resume: "途中まで選んだ作品は、この端末に保存されています。",
+    profile: "あなたの Manga DNA は、この端末に保存されています。",
+    recovery: "おすすめを出すには、好きな作品をもう少し追加してください。",
+  },
+  sharedEntry: "シェアされた Manga DNA から来た方へ",
   hero: {
     trust: (workCount: string) => [
       "登録なし",
@@ -388,6 +438,15 @@ export const onboardingStrings = {
     count === 0
       ? `「${query}」の検索結果はありません。`
       : `「${query}」の検索結果は ${String(count)} 作品です。`,
+  excludedMatches: {
+    heading: "ここでは選べない作品",
+    title: (title: string) => `『${title}』`,
+    reasons: {
+      registered: "ライブラリに登録済みです。感想はライブラリで更新できます。",
+      notAnalyzable: "好みの分析にはまだ対応していません。ライブラリには記録できます。",
+    },
+    openLibrary: "ライブラリで開く",
+  },
   stepProgress: {
     label: "好み登録の進み具合",
     selection: "作品を選ぶ",
@@ -561,6 +620,50 @@ export const tasteStrings = {
   topPreferenceEvidence: (titles: readonly string[]) =>
     `${titles.map((title) => `『${title}』`).join("")}から`,
   topPreferencePending: "好みの特徴を分析しています。作品を追加すると見つけやすくなります。",
+  share: {
+    open: "カードで共有",
+    title: "Manga DNA カード",
+    description: "いまの Manga DNA を1枚の画像にします。保存してそのまま投稿できます。",
+    previewAlt: "Manga DNA カードのプレビュー",
+    previewCaption: "保存される画像と同じプレビューです。",
+    worksLegend: "カードに作品名を載せる",
+    worksHelp: (count: number) =>
+      `外した作品は「ほか○作品」にまとめます。分析した${String(count)}作品の数は変わりません。`,
+    save: "画像を保存",
+    copy: "紹介文とリンクをコピー",
+    shareSheet: "ほかのアプリで共有",
+    linkLabel: "紹介リンク",
+    privacy: "リンクにはあなたの好みや作品の情報は含まれません。",
+    renderFailed: "カード画像を作れませんでした。",
+    retry: "もう一度作る",
+    empty:
+      "カードにできる好みの特徴がまだありません。好きな作品を追加すると、上位の好みが見つかります。",
+    addWorks: "好きな作品を追加",
+    shareText:
+      "好きなマンガから、わたしの好みを分析しました。あなたの Manga DNA も見てみませんか？",
+    status: {
+      saved: "画像の保存を始めました。",
+      copied: "紹介文とリンクをコピーしました。",
+      copyFailed: "コピーできませんでした。リンク欄から選択してコピーしてください。",
+      handedOff: "共有先のアプリに渡しました。",
+      shareFailed: "共有できませんでした。画像の保存かリンクのコピーをお使いください。",
+    },
+    image: {
+      brand: [
+        { text: "kono", accent: true },
+        { text: "co", accent: false },
+        { text: "mi", accent: true },
+        { text: "cs", accent: false },
+      ],
+      kicker: "MANGA DNA",
+      eyebrow: "わたしの好み",
+      analyzedUnit: "作品から分析",
+      worksHeading: "分析した作品",
+      moreWorks: (count: number) => `ほか${String(count)}作品`,
+      restrainedHeading: "好きな作品に少ない要素",
+      footerLead: "好きなマンガ5作品で、あなたの好みもわかる",
+    },
+  },
   groups: {
     theme: "テーマ",
     narrative: "展開",
@@ -718,6 +821,40 @@ export const recommendationStrings = {
       navigationLabel: (factorLabel: string) => `「${factorLabel}」`,
       title: (factorLabel: string) => `「${factorLabel}」で選ぶ`,
     },
+  },
+  mood: {
+    heading: "今日の気分",
+    none: "指定なし",
+    labels: {
+      lowStress: "気持ちが軽い話",
+      warm: "あたたかい話",
+      fastPaced: "テンポが速い話",
+    },
+    basis: (label: string, count: number) =>
+      `「${label}」に合う ${String(count)}作品から選んでいます。`,
+    limits: {
+      lowStress: "精神的な重さが控えめと分析された作品です。暗い場面がないとは限りません。",
+      warm: "あたたかさ・癒やしが強めと分析された作品です。",
+      fastPaced: "展開のテンポが速めと分析された作品です。短時間で読めるという意味ではありません。",
+    },
+    matchLine: {
+      lowStress: "今日の気分：精神的な重さが控えめ",
+      warm: "今日の気分：あたたかさ・癒やしが強め",
+      fastPaced: "今日の気分：展開のテンポが速め",
+    },
+    dismissedCount: (count: number) => `今日は見送った ${String(count)}作品を除いています。`,
+    dismiss: "今日はパス",
+    dismissLabel: (title: string) => `「${title}」を今日の気分では見送る`,
+    dismissed: (title: string) => `「${title}」を今日の気分では見送りました。`,
+    rankingDescription: "今日の気分に合う作品の上位10作品です。",
+    shortage: (label: string, count: number) =>
+      `「${label}」に合う作品は、いまのおすすめ候補の中に ${String(count)}作品あります。`,
+    empty: {
+      title: "この気分に合う作品が見つかりませんでした",
+      description:
+        "分析が済んでいない作品は、気分に合うかどうかを判断できないため表示していません。",
+    },
+    clear: "気分の指定をやめる",
   },
   shelfNavigation: {
     label: "おすすめの棚",

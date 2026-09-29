@@ -591,7 +591,9 @@ describe("OnboardingFlow add mode", () => {
     });
     await act(async () => vi.advanceTimersByTime(300));
 
-    expect(screen.getByText("見つかりませんでした。別の書き方で試してください")).toBeTruthy();
+    const notice = screen.getByRole("region", { name: "ここでは選べない作品" });
+    expect(notice.textContent).toContain("『MONSTER』");
+    expect(notice.textContent).toContain("ライブラリに登録済みです");
     expect(screen.queryByText("MONSTER")).toBeNull();
     expect(testState.saveOnboardingDraft).not.toHaveBeenCalled();
     expect(existingRecord.progress).toEqual({ volume: 7, chapter: 58 });

@@ -264,3 +264,30 @@ E2E 내 기본 조작성 스모크: 시나리오 1을 키보드만으로 완주�
 - [ ] model-derived public writer는 root I/O 전에 계속 실패하며 candidate provider·model·attempt·순서·수·confidence·citation 변화가 accepted fact, promotion 결과, `judgmentInputDigest`, `decisionDigest`를 바꾸지 않는다.
 - [ ] 제품 runtime bundle과 server route는 SQLite를 import/open하지 않고 생성된 정적 JSON과 순수 TypeScript만 사용한다.
 - [ ] Node 24 LTS에서 typecheck, lint, unit tests, authority verify, Catalog validate/build, product build가 통과하고 generated artifact diff와 LF/whitespace 오류가 없다.
+
+## 9. 2026-09-29 개선 계획 — 계약 테스트와 효과 관찰 시트
+
+### 기술 계약 테스트 (fixed 5 E2E는 늘리지 않는다)
+
+- 검색(A): `tests/unit/onboarding/search.test.tsx` — URL 지연 반영 중 끝 공백 유지, IME 조합 중 URL 미기록·확정 시 1회 기록, 자기 반영 무시·외부 URL 변경 추종, 제외 사유(`registered`/`notAnalyzable`) 분류. `submission.test.tsx` — add mode에서 기록 작품은 선택 불가이며 이유를 표시. `tests/unit/taste/factor-bar.test.tsx` — `aria-valuenow` 소수 1자리, 막대 길이 불변.
+- 설명(C): `tests/unit/explanation/generate.test.ts` — 문장 유형 표, 같은 작품명 반복 표현, 제품/동결 lexicon 사이에 선택 contribution·anchor·caution이 동일. 기존 관점 선반·카드·상세 테스트가 그대로 통과한다.
+- 공유(D·E): `tests/unit/landing/landing-flow.test.tsx` — 4개 방문자 상태 CTA, 공유 표지의 메모리 기록과 저장소 무변경. `tests/unit/profile/dna-share.test.ts` — 분석 작품 수가 근거 목록 합이 아님, 숨김이 수를 바꾸지 않음, 빈 분석 거부, `via` 허용 값. `tests/unit/taste/dna-share-dialog.test.tsx` — 실제 근거만 선택지, 생성 실패 재시도, 빈 분석 안내.
+- 무드(F·G): `tests/unit/recommendation/mood.test.ts` — `known`만 충족, plan 순서·객체 보존, 무드별 제외·세션 제외 후 목록 제약, Discovery 창이 남은 후보 기준. `tests/unit/recommendations/mood-session.test.ts` — 무드별 제외 분리·재적용, Catalog 범위, 초기화. `recommendations-flow.test.tsx` — 메인·선반이 무드 후보뿐이고 「今日はパス」가 저장하지 않으며 해제 시 기본 목록 복귀.
+
+### 효과 관찰 시트 (Phase 0 — 이 한 장만 쓴다)
+
+동의한 테스트 참여자를 관찰해 기록한다. 개발자 확인은 효과 검증이 아니다. 비교할 때 Catalog·엔진 버전(`catalogVersion`, 커밋)과 과제를 고정한다.
+
+| 지표 | 분자 / 분모 | 제외·주의 |
+|---|---|---|
+| 첫 작품 발견률 | 미독 추천작을 하나 이상 **새로** 「読みたい」 저장한 참여자 / 첫 추천을 본 참여자 | 이미 읽었거나 테스트 전에 저장한 작품 제외 |
+| 공유 유입의 작품 발견률 | 자기 DNA 생성과 신규 저장까지 도달한 참여자 / 공유 경로(`data-entry-source=share-card`로 확인)로 들어온 신규 참여자 | 기존 사용자·내부 방문은 따로 센다. 공유자별 성과·중복 방문·교차 기기 추적 없음 |
+| 후속 독서 전환 | 실제로 읽었다고 보고한 대상 작품 / 후속 확인에 응답한 참여자의 대상 작품 | 저장 후 30일 기준. 전체 대상 수·응답률을 함께 적고 미응답을 「안 읽음」으로 세지 않는다 |
+
+대표 시나리오: 알고 있는 좋아한 작품 입력 → DNA 확인 → 추천 이유를 자기 말로 설명 → 새로 읽고 싶은 작품 선택. 공유 테스트는 공유 주소 진입을 앞에 붙이고, 무드 테스트는 조건 선택 → 상세 이동·복귀 → 작품 선택 → 무드 해제를 더한다.
+
+| 날짜 | 참여자(익명 ID) | 버전 | 시나리오 | 성공 여부 | 막힌 위치 | 고르지 않은 이유 | 이유를 자기 말로 설명 | 신규 「読みたい」 | 30일 후 응답 |
+|---|---|---|---|---|---|---|---|---|---|
+| | | | | | | | | | |
+
+이미지 저장 시작·공유 동작 시작·공유 유입은 따로 적고, 외부 게시 완료를 확인하지 못하면 게시 성공으로 세지 않는다. 효과 관찰에서 핵심 경험을 막는 문제가 나오면 기능 확장보다 먼저 고친다.

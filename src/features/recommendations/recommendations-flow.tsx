@@ -52,6 +52,11 @@ import {
   backfillRecommendationPlanEntries,
   selectRecommendationPlanEntries,
 } from "@/domain/recommendation/ordering";
+import {
+  filterPlanForMood,
+  type RecommendationMood,
+  workMatchesMood,
+} from "@/domain/recommendation/mood";
 import type {
   RecommendationContext,
   RecommendationInput,
@@ -65,6 +70,7 @@ import { cn } from "@/lib/utils";
 
 import type { PendingRecommendationFeedback } from "./feedback-dialog";
 import { FeedbackImpactSummary } from "./feedback-impact-summary";
+import { dismissForMood, selectMood, useMoodSession } from "./mood-session";
 import { RecommendationCard } from "./recommendation-card";
 import { RecommendationCriteriaSummary } from "./recommendation-criteria-summary";
 import {
@@ -73,6 +79,7 @@ import {
 } from "./recommendation-cover-resolver";
 import { RecommendationPlanWorkerClient } from "./recommendation-plan-worker-client";
 import { RecommendationFilterBar, type VisiblePolicyKey } from "./recommendation-filter-bar";
+import { RecommendationMoodBar } from "./recommendation-mood-bar";
 import {
   RecommendationShelfNavigation,
   type RecommendationShelf,
@@ -347,9 +354,37 @@ export function RecommendationsFlow({
     });
     return ids;
   }, [optimisticPlannedIds, records]);
+  // Mood narrows the already ranked plan; scores, reasons, and order stay the plan's own.
+  const moodSession = useMoodSession(catalog.catalogVersion);
+  const mood = moodSession.mood;
+  const moodDismissedWorkIds = useMemo(
+    () => new Set(mood === null ? [] : (moodSession.dismissedByMood[mood] ?? [])),
+    [mood, moodSession.dismissedByMood],
+  );
+  const moodPlan = useMemo(
+    () =>
+      mood === null || plan === null
+        ? null
+        : filterPlanForMood({
+            plan,
+            worksById,
+            mood,
+            dismissedWorkIds: moodDismissedWorkIds,
+            excludedWorkIds,
+          }),
+    [excludedWorkIds, mood, moodDismissedWorkIds, plan, worksById],
+  );
+  const moodVisibleEntries = useMemo(
+    () =>
+      moodPlan === null
+        ? null
+        : selectRecommendationPlanEntries(moodPlan, planPolicies ?? policies),
+    [moodPlan, planPolicies, policies],
+  );
+  const displayedEntries = moodVisibleEntries ?? visibleEntries;
   const { discoveryEntries, featuredEntries, lensShelves, previewEntry, renderedEntries } =
     useMemo(() => {
-      const nextRenderedEntries = visibleEntries.flatMap((entry) => {
+      const nextRenderedEntries = displayedEntries.flatMap((entry) => {
         const work = worksById.get(entry.workId);
         const metadata = context?.constraintByWorkId[entry.workId];
         return work === undefined || metadata === undefined ? [] : [{ entry, metadata, work }];
@@ -358,14 +393,19 @@ export function RecommendationsFlow({
         genre === undefined
           ? nextRenderedEntries
           : nextRenderedEntries.filter(({ work }) => work.genres.includes(genre));
-      const nextAllPlanEntries = (plan ?? []).flatMap((entry) => {
-        if (excludedWorkIds.has(entry.workId)) return [];
-        const work = worksById.get(entry.workId);
-        const metadata = context?.constraintByWorkId[entry.workId];
-        return work === undefined || metadata === undefined ? [] : [{ entry, metadata, work }];
-      });
-      const visibleWorkIds = new Set(visibleEntries.map((entry) => entry.workId));
-      const auxiliaryEntries = nextAllPlanEntries.filter(
+      const withCatalogData = (entries: readonly RecommendationPlanEntry[]) =>
+        entries.flatMap((entry) => {
+          if (excludedWorkIds.has(entry.workId)) return [];
+          const work = worksById.get(entry.workId);
+          const metadata = context?.constraintByWorkId[entry.workId];
+          return work === undefined || metadata === undefined ? [] : [{ entry, metadata, work }];
+        });
+      const nextAllPlanEntries = withCatalogData(plan ?? []);
+      // Shelves draw from the same mood-filtered candidates as the main list.
+      const candidatePlanEntries =
+        moodPlan === null ? nextAllPlanEntries : withCatalogData(moodPlan);
+      const visibleWorkIds = new Set(displayedEntries.map((entry) => entry.workId));
+      const auxiliaryEntries = candidatePlanEntries.filter(
         ({ entry, work }) =>
           !visibleWorkIds.has(entry.workId) && (genre === undefined || work.genres.includes(genre)),
       );
@@ -420,7 +460,16 @@ export function RecommendationsFlow({
           nextAllPlanEntries.find(({ entry }) => entry.workId === previewWorkId) ?? null,
         renderedEntries: nextRenderedEntries,
       };
-    }, [context, excludedWorkIds, genre, plan, previewWorkId, visibleEntries, worksById]);
+    }, [
+      context,
+      displayedEntries,
+      excludedWorkIds,
+      genre,
+      moodPlan,
+      plan,
+      previewWorkId,
+      worksById,
+    ]);
   const shelfDestinations = useMemo<RecommendationShelfDestination[]>(() => {
     const destination = (key: "featured" | "discovery" | "ranking") => ({
       key,
@@ -770,6 +819,45 @@ export function RecommendationsFlow({
     }
   };
 
+  const dismissForToday = (entry: RecommendationPlanEntry) => {
+    const work = worksById.get(entry.workId);
+    if (
+      mood === null ||
+      work === undefined ||
+      calculationInFlight.current ||
+      policySaveInFlight.current ||
+      feedbackBaseInFlight.current
+    ) {
+      return;
+    }
+    const shelf = [
+      ...lensShelves.map(({ items }) => items.map(({ entry: item }) => item)),
+      discoveryEntries.map(({ entry: item }) => item),
+      displayedEntries,
+    ].find((entries) => entries.some((candidate) => candidate.workId === entry.workId));
+    const index = shelf?.findIndex((candidate) => candidate.workId === entry.workId) ?? -1;
+    const neighbor = index < 0 ? undefined : (shelf?.[index + 1] ?? shelf?.[index - 1]);
+    if (displayedEntries.some((candidate) => candidate.workId === entry.workId)) {
+      activateLoadedMotionList();
+    }
+    if (previewWorkId === entry.workId) onPreviewClose?.();
+    setExpandedAnchorId(null);
+    setBackfillIds(new Set());
+    dismissForMood(mood, entry.workId, catalog.catalogVersion);
+    announce(recommendationStrings.mood.dismissed(work.title));
+    focusAfterDialog(neighbor?.workId ?? null);
+  };
+
+  const changeMood = (nextMood: RecommendationMood | null) => {
+    if (calculationInFlight.current || policySaveInFlight.current || feedbackBaseInFlight.current) {
+      return;
+    }
+    deactivateMotionList();
+    setExpandedAnchorId(null);
+    setBackfillIds(new Set());
+    selectMood(nextMood, catalog.catalogVersion);
+  };
+
   const removeForFeedback = async (
     entry: RecommendationPlanEntry,
     kind: PendingRecommendationFeedback["kind"],
@@ -808,9 +896,6 @@ export function RecommendationsFlow({
       );
       await requestedMotionList;
       const nextExcludedWorkIds = new Set(excludedWorkIds).add(entry.workId);
-      const removedIndex = visibleEntries.findIndex(
-        (candidate) => candidate.workId === entry.workId,
-      );
       const survivors = visibleEntries.filter((candidate) => candidate.workId !== entry.workId);
       const nextEntries = backfillRecommendationPlanEntries({
         plan,
@@ -818,10 +903,31 @@ export function RecommendationsFlow({
         excludedWorkIds: [...nextExcludedWorkIds],
         policies: planPolicies ?? policies,
       });
-      const survivorIds = new Set(survivors.map((candidate) => candidate.workId));
+      const displayedIndex = displayedEntries.findIndex(
+        (candidate) => candidate.workId === entry.workId,
+      );
+      // Under a mood the featured list is re-selected from the mood's own candidates only.
+      const nextDisplayed =
+        mood === null
+          ? nextEntries
+          : selectRecommendationPlanEntries(
+              filterPlanForMood({
+                plan,
+                worksById,
+                mood,
+                dismissedWorkIds: moodDismissedWorkIds,
+                excludedWorkIds: nextExcludedWorkIds,
+              }),
+              planPolicies ?? policies,
+            );
+      const displayedSurvivorIds = new Set(
+        displayedEntries
+          .filter((candidate) => candidate.workId !== entry.workId)
+          .map((candidate) => candidate.workId),
+      );
       const addedIds = new Set(
-        nextEntries
-          .filter((candidate) => !survivorIds.has(candidate.workId))
+        nextDisplayed
+          .filter((candidate) => !displayedSurvivorIds.has(candidate.workId))
           .map((candidate) => candidate.workId),
       );
       const shelf = [...lensShelves.map(({ items }) => items), discoveryEntries].find((entries) =>
@@ -832,8 +938,8 @@ export function RecommendationsFlow({
         shelfIndex === undefined ? undefined : (shelf?.[shelfIndex + 1] ?? shelf?.[shelfIndex - 1]);
       const focusEntry =
         shelfNeighbor?.entry ??
-        nextEntries[Math.min(Math.max(removedIndex, 0), nextEntries.length - 1)];
-      if (removedIndex >= 0) activateLoadedMotionList();
+        nextDisplayed[Math.min(Math.max(displayedIndex, 0), nextDisplayed.length - 1)];
+      if (displayedIndex >= 0) activateLoadedMotionList();
       setExpandedAnchorId(null);
       setExcludedWorkIds(nextExcludedWorkIds);
       setBackfillIds(addedIds);
@@ -986,7 +1092,12 @@ export function RecommendationsFlow({
           lexicon: explanationLexicon,
           resolveTitle: (workId) => worksById.get(workId)?.title,
         });
-  const hasInvalidEntry = renderedEntries.length !== visibleEntries.length;
+  const hasInvalidEntry = renderedEntries.length !== displayedEntries.length;
+  const moodLabel = mood === null ? null : recommendationStrings.mood.labels[mood];
+  const moodDismissHandler = (entry: RecommendationPlanEntry) =>
+    mood === null ? undefined : () => dismissForToday(entry);
+  const previewMatchesMood =
+    mood !== null && previewEntry !== null && workMatchesMood(previewEntry.work, mood);
   const showInitialError =
     (context === null || calculationError !== "" || hasInvalidEntry) && plan === null;
   const updateDisabled =
@@ -1016,6 +1127,7 @@ export function RecommendationsFlow({
           entry={entry}
           onCompleted={() => void removeForFeedback(entry, "completed")}
           onCoverVisible={() => requestCover(entry.workId)}
+          onDismissForToday={moodDismissHandler(entry)}
           onHidden={() => void removeForFeedback(entry, "hidden")}
           onPlanned={() => void savePlanned(entry)}
           onPreview={() => openPreview(entry.workId)}
@@ -1030,6 +1142,7 @@ export function RecommendationsFlow({
     }),
   );
   const showShortageBanner =
+    mood === null &&
     plan !== null &&
     !showInitialError &&
     calculationError === "" &&
@@ -1049,6 +1162,7 @@ export function RecommendationsFlow({
       key={entry.workId}
       onCompleted={() => void removeForFeedback(entry, "completed")}
       onCoverVisible={() => requestCover(entry.workId)}
+      onDismissForToday={moodDismissHandler(entry)}
       onExpandedChange={(expanded) =>
         setExpandedAnchorId((current) =>
           expanded ? entry.workId : current === entry.workId ? null : current,
@@ -1123,6 +1237,14 @@ export function RecommendationsFlow({
                 updating={isComputing}
               />
 
+              <RecommendationMoodBar
+                candidateCount={moodPlan?.length ?? 0}
+                disabled={isComputing || isPolicySaving || feedbackBaseBusy || plan === null}
+                dismissedCount={moodDismissedWorkIds.size}
+                mood={mood}
+                onMoodChange={changeMood}
+              />
+
               {actionError ? (
                 <p
                   className="mt-[var(--space-4)] rounded-[var(--radius-card)] border border-warn bg-surface-1 px-[var(--space-4)] py-[var(--space-3)]"
@@ -1167,6 +1289,19 @@ export function RecommendationsFlow({
               </FeaturedRecommendationState>
             ) : plan === null ? (
               <FeaturedRecommendationState>{null}</FeaturedRecommendationState>
+            ) : renderedEntries.length === 0 && mood !== null ? (
+              <FeaturedRecommendationState>
+                <section
+                  className="grid justify-items-start gap-[var(--space-3)] rounded-[var(--radius-card)] border border-line bg-surface-1 p-[var(--space-6)]"
+                  data-recommendation-mood-empty
+                >
+                  <h2>{recommendationStrings.mood.empty.title}</h2>
+                  <p className="text-text-muted">{recommendationStrings.mood.empty.description}</p>
+                  <Button onClick={() => changeMood(null)} type="button" variant="outline">
+                    {recommendationStrings.mood.clear}
+                  </Button>
+                </section>
+              </FeaturedRecommendationState>
             ) : renderedEntries.length === 0 ? (
               <FeaturedRecommendationState>
                 <section className="grid justify-items-start gap-[var(--space-3)] rounded-[var(--radius-card)] border border-line bg-surface-1 p-[var(--space-6)]">
@@ -1256,6 +1391,19 @@ export function RecommendationsFlow({
                     </div>
                   </section>
                 ) : null}
+                {moodLabel !== null && renderedEntries.length < 10 ? (
+                  <div
+                    className="mt-[var(--space-4)] flex flex-wrap items-center justify-between gap-x-[var(--space-4)] gap-y-[var(--space-2)] rounded-[var(--radius-card)] border border-line bg-surface-1 px-[var(--space-4)] py-[var(--space-3)]"
+                    data-recommendation-mood-shortage
+                  >
+                    <p className="text-[length:var(--font-size-14)] text-text">
+                      {recommendationStrings.mood.shortage(moodLabel, moodPlan?.length ?? 0)}
+                    </p>
+                    <Button onClick={() => changeMood(null)} type="button" variant="outline">
+                      {recommendationStrings.mood.clear}
+                    </Button>
+                  </div>
+                ) : null}
               </div>
             )}
 
@@ -1318,7 +1466,11 @@ export function RecommendationsFlow({
               className="mt-[var(--space-shelf)] scroll-mt-[var(--space-4)] md:scroll-mt-[calc(var(--control-min-size)+var(--space-2))]"
               compactHeading
               controlsPlacement="overlay"
-              description={recommendationStrings.shelves.ranking.description}
+              description={
+                mood === null
+                  ? recommendationStrings.shelves.ranking.description
+                  : recommendationStrings.mood.rankingDescription
+              }
               rankingKind="personalized-ranking"
               title={recommendationStrings.shelves.ranking.title}
               trackClassName="!pb-[var(--space-1)]"
@@ -1387,6 +1539,12 @@ export function RecommendationsFlow({
                   void removeForFeedback(previewEntry.entry, "hidden");
                 }}
                 onCoverVisible={() => requestCover(previewEntry.entry.workId)}
+                onDismissForToday={
+                  previewMatchesMood ? () => dismissForToday(previewEntry.entry) : undefined
+                }
+                {...(previewMatchesMood && mood !== null
+                  ? { moodLine: recommendationStrings.mood.matchLine[mood] }
+                  : {})}
                 onOpenChange={(open) => {
                   if (!open) onPreviewClose?.();
                 }}

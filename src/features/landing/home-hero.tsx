@@ -17,10 +17,22 @@ export const landingCtaClassName = buttonClassName({
     "gap-[var(--space-content)] px-[var(--space-6)] py-[var(--space-3)] text-[length:var(--font-size-16)] font-bold",
 });
 
-export function LandingCta() {
+/**
+ * Where the visitor stands, so the single landing action continues their own path: a new visitor
+ * starts, an interrupted onboarding resumes its saved draft, a usable profile returns to its
+ * recommendations, and a profile needing works keeps the existing recovery path.
+ */
+export type LandingVisitorState = "new" | "resume" | "profile" | "recovery";
+
+export function LandingCta({ visitor = "new" }: Readonly<{ visitor?: LandingVisitorState }>) {
   return (
-    <Link className={landingCtaClassName} preload={false} to="/onboarding">
-      {landingStrings.cta}
+    <Link
+      className={landingCtaClassName}
+      data-landing-visitor={visitor}
+      preload={false}
+      to={visitor === "profile" ? "/recommendations" : "/onboarding"}
+    >
+      {landingStrings.ctaByVisitor[visitor]}
       <ArrowRightIcon aria-hidden="true" className="size-4" />
     </Link>
   );
@@ -33,6 +45,8 @@ type HomeHeroProps = Readonly<{
   backdropUrl?: string | null;
   onCoverVisible(workId: string): void;
   staticLogo?: boolean;
+  visitor?: LandingVisitorState;
+  sharedEntry?: boolean;
 }>;
 
 export function HomeHero({
@@ -41,7 +55,9 @@ export function HomeHero({
   onCoverVisible,
   recommendableWorkCount,
   sample,
+  sharedEntry = false,
   staticLogo = false,
+  visitor = "new",
 }: HomeHeroProps) {
   const recommendedId = sample.recommendation.work.id;
 
@@ -54,6 +70,11 @@ export function HomeHero({
         <div className="grid max-w-[36rem] justify-items-start gap-[var(--space-6)]">
           <LandingLogoReveal staticPresentation={staticLogo} />
           <div className="grid gap-[var(--space-4)]">
+            {sharedEntry ? (
+              <p className="text-[length:var(--text-caption-size)] font-bold text-accent">
+                {landingStrings.sharedEntry}
+              </p>
+            ) : null}
             <h1
               className="font-display text-[length:var(--text-hero-size)] leading-[var(--line-height-display)] font-bold tracking-tight text-text-strong"
               id="landing-title"
@@ -70,7 +91,12 @@ export function HomeHero({
             </p>
           </div>
           <div className="grid justify-items-start gap-[var(--space-4)]">
-            <LandingCta />
+            <LandingCta visitor={visitor} />
+            {visitor === "new" ? null : (
+              <p className="text-[length:var(--text-caption-size)] text-text">
+                {landingStrings.visitorNote[visitor]}
+              </p>
+            )}
             <p className="text-[length:var(--text-caption-size)] text-text-muted">
               {landingStrings.hero
                 .trust(workCountFormat.format(recommendableWorkCount))

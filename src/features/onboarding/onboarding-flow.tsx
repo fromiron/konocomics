@@ -60,6 +60,8 @@ import {
   type NegativeReasonOption,
   NegativeWorkCard,
 } from "./negative-work-card";
+import { ExcludedMatchNotice } from "./excluded-match-notice";
+import { createWorkSearch, findExcludedSearchMatches } from "./search";
 import { SelectedTray } from "./selected-tray";
 import { WorkSearchInput, type WorkSearchState } from "./work-search-input";
 import { WorkShelf } from "./work-shelf";
@@ -315,6 +317,31 @@ export function OnboardingFlow({
     stepOneSearch.results,
     stepTwoSearch.results,
   ]);
+  const catalogSearch = useMemo(() => createWorkSearch(allCatalogWorks), [allCatalogWorks]);
+  const stepOneExcludedMatches = useMemo(
+    () =>
+      stepOneSearch.query.trim().length === 0
+        ? []
+        : findExcludedSearchMatches({
+            catalogSearch,
+            query: stepOneSearch.query,
+            registeredWorkIds: persistedWorkIds,
+            selectableWorkIds: new Set(onboardingEligibleWorks.map((work) => work.id)),
+          }),
+    [catalogSearch, onboardingEligibleWorks, persistedWorkIds, stepOneSearch.query],
+  );
+  const stepTwoExcludedMatches = useMemo(
+    () =>
+      stepTwoSearch.query.trim().length === 0
+        ? []
+        : findExcludedSearchMatches({
+            catalogSearch,
+            query: stepTwoSearch.query,
+            registeredWorkIds: persistedWorkIds,
+            selectableWorkIds: new Set(selectableCatalogWorks.map((work) => work.id)),
+          }),
+    [catalogSearch, persistedWorkIds, selectableCatalogWorks, stepTwoSearch.query],
+  );
   const coverTargets = useMemo(
     () =>
       typeof getProviderCache === "function" && typeof saveProviderCache === "function"
@@ -731,23 +758,28 @@ export function OnboardingFlow({
 
             {stepOneSearch.query.trim().length > 0 ? (
               stepOneSearch.results.length > 0 ? (
-                <section
-                  aria-label={onboardingStrings.step1.searchLabel}
-                  className="work-search-grid grid grid-cols-[repeat(auto-fill,minmax(104px,1fr))] gap-x-[var(--space-3)] gap-y-[var(--space-5)] [&>.anchor-card]:w-full [&>.anchor-card]:min-w-0 md:grid-cols-[repeat(auto-fill,minmax(128px,1fr))] md:gap-x-[var(--space-4)] md:gap-y-[var(--space-6)]"
-                >
-                  {stepOneSearch.results.map((work) => (
-                    <AnchorCoverCard
-                      coverUrl={coverUrls.get(work.id)}
-                      key={work.id}
-                      labels={ANCHOR_CARD_LABELS}
-                      onCoverVisible={() => requestCover(work.id)}
-                      onToggleFavorite={toggleFavorite}
-                      onToggleSelection={togglePositiveSelection}
-                      selection={positiveByWorkId.get(work.id)}
-                      work={work}
-                    />
-                  ))}
-                </section>
+                <div className="grid gap-[var(--space-6)]">
+                  <section
+                    aria-label={onboardingStrings.step1.searchLabel}
+                    className="work-search-grid grid grid-cols-[repeat(auto-fill,minmax(104px,1fr))] gap-x-[var(--space-3)] gap-y-[var(--space-5)] [&>.anchor-card]:w-full [&>.anchor-card]:min-w-0 md:grid-cols-[repeat(auto-fill,minmax(128px,1fr))] md:gap-x-[var(--space-4)] md:gap-y-[var(--space-6)]"
+                  >
+                    {stepOneSearch.results.map((work) => (
+                      <AnchorCoverCard
+                        coverUrl={coverUrls.get(work.id)}
+                        key={work.id}
+                        labels={ANCHOR_CARD_LABELS}
+                        onCoverVisible={() => requestCover(work.id)}
+                        onToggleFavorite={toggleFavorite}
+                        onToggleSelection={togglePositiveSelection}
+                        selection={positiveByWorkId.get(work.id)}
+                        work={work}
+                      />
+                    ))}
+                  </section>
+                  <ExcludedMatchNotice matches={stepOneExcludedMatches} />
+                </div>
+              ) : stepOneExcludedMatches.length > 0 ? (
+                <ExcludedMatchNotice matches={stepOneExcludedMatches} />
               ) : (
                 <div className="onboarding-empty grid gap-[var(--space-content-tight)] rounded-[var(--radius-card)] border border-line bg-surface-1 px-[var(--space-5)] py-[var(--space-7)] text-text-muted">
                   <p>{onboardingStrings.step1.noResults}</p>
@@ -872,9 +904,13 @@ export function OnboardingFlow({
               {onboardingStrings.step2.emptySearch}
             </p>
           ) : stepTwoSearch.results.length === 0 ? (
-            <div className="onboarding-empty grid gap-[var(--space-content-tight)] rounded-[var(--radius-card)] border border-line bg-surface-1 px-[var(--space-5)] py-[var(--space-7)] text-text-muted">
-              <p>{onboardingStrings.step2.noResults}</p>
-            </div>
+            stepTwoExcludedMatches.length > 0 ? (
+              <ExcludedMatchNotice matches={stepTwoExcludedMatches} />
+            ) : (
+              <div className="onboarding-empty grid gap-[var(--space-content-tight)] rounded-[var(--radius-card)] border border-line bg-surface-1 px-[var(--space-5)] py-[var(--space-7)] text-text-muted">
+                <p>{onboardingStrings.step2.noResults}</p>
+              </div>
+            )
           ) : (
             <section
               aria-label={onboardingStrings.step2.searchLabel}

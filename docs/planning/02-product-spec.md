@@ -65,7 +65,7 @@ Catalog의 성적 콘텐츠 제외 기준은 **porn / non-porn**이다. 성인�
 
 ### 제외 (Non-goals)
 
-계정·서버 사용자 데이터 / 실시간 LLM / Vector DB / Collaborative Filtering / 커뮤니티 기능 / 리뷰 수집 크롤러 / 결제·광고 / 네이티브 앱 / 자체 뷰어 / 검색 서버 / **현재 Mood 모드(DEFER)** / **NDL 연동(DEFER)** / 분석 SDK(DEFER) / 한국어 UI(Phase 2).
+계정·서버 사용자 데이터 / 실시간 LLM / Vector DB / Collaborative Filtering / 커뮤니티 기능 / 리뷰 수집 크롤러 / 결제·광고 / 네이티브 앱 / 자체 뷰어 / 검색 서버 / **복합·시간 기반 Mood(DEFER — 단일 선택 3종만 §6.11)** / **NDL 연동(DEFER)** / 분석 SDK(DEFER) / 한국어 UI(Phase 2).
 
 ### Catalog 범위
 
@@ -483,7 +483,21 @@ type RecommendationWorkMarketSignal = {
 - Cluster: `tacticalThinking(problemSolving, strategy, mysteryReveal)` / `relationshipAppeal(characterArcWeight, relationshipStructure)` / `toneLoad(darkness, mentalStress)`.
 - "주의할 차이"는 best Anchor 대비 전역 최대 음(−) similarity 하나만 후보로 삼는다. 해당 후보가 없거나 아래 group/Cluster 경쟁에서 탈락하면 생략한다.
 - 템플릿 기반 일본어 문장. 예: `『{anchorTitle}』で好きだった「{factorLabel}」に近い作品です。` / 차이: `ただし「{factorLabel}」は、あなたの好みと少し異なります。`
-- `axisPreferenceDirection=lower`인 양(+)의 Axis adjustment는 `「{factorLabel}」が控えめな点が、あなたの好みに合う作品です。`로 렌더링한다. 낮은 Axis 값이 `控えめに` 선호와 맞는다는 뜻이며, factor가 많아서 맞는다는 일반 positive 문장으로 바꾸지 않는다.
+- `axisPreferenceDirection=lower`인 양(+)의 Axis adjustment는 `「{factorLabel}」が控えめな点が、DNAで設定した好みに合います。`로 렌더링한다. 낮은 Axis 값이 `控えめに` 선호와 맞는다는 뜻이며, factor가 많아서 맞는다는 일반 positive 문장으로 바꾸지 않는다.
+- 2026-09-29 개선 계획 Phase 1: 선택된 contribution·순서·개수는 그대로 두고, 이미 contribution이 가진 사실만으로 positive 문장 유형을 고른다. 추천 점수·순위·근거 선택은 바꾸지 않는다.
+
+  | 조건 (선택된 positive contribution) | 템플릿 id | 제품 문구 |
+  |---|---|---|
+  | `similarity`, 제목 해결, `group=genre` | `positiveGenreWithAnchor` | `『{anchorTitle}』と同じ「{factorLabel}」の作品です。` |
+  | `similarity`, 제목 해결, `group=theme` | `positiveThemeWithAnchor` | `『{anchorTitle}』と同じく「{factorLabel}」が描かれます。` |
+  | `similarity`, 제목 해결, 그 밖의 group | `positiveWithAnchor` | `『{anchorTitle}』で好きだった「{factorLabel}」に近い作品です。` |
+  | `similarity`, 같은 카드의 앞선 positive가 같은 작품명을 이미 썼음 | `positiveRepeatedAnchor` | `「{factorLabel}」も『{anchorTitle}』と共通しています。` |
+  | `similarity`, 제목 미해결 | `positiveWithoutAnchor` | `「{factorLabel}」があなたの好みに合う作品です。` |
+  | `adjustment`, Axis `higher` | `positiveAxisAdjustment` | `DNAで好みに設定した「{factorLabel}」がしっかりある作品です。` |
+  | `adjustment`, Theme | `positiveThemeAdjustment` | `DNAで好みに設定した「{factorLabel}」が描かれる作品です。` |
+  | `adjustment`, Axis `lower` | `positiveLowerAxisAdjustment` | 위 문장 |
+
+  Genre similarity가 양(+)이면 두 작품 모두 그 장르를 가진 경우이고, Theme similarity가 양(+)이면 비슷한 중심도로 공유한 경우이므로 「同じ」 표현은 contribution 정의에서 나온다. 첫 이유는 항상 작품명을 온전히 쓰므로 관점 선반(행 제목의 작품명·레이블 포함)과 Anchor 패널 강조 계약은 유지된다. G2·Taste-vs-Baseline 실험 도구는 기록된 문장을 재현하도록 `frozenExperimentExplanationLexicon`(개선 전 문구)을 사용한다.
 - 각 추천 결과는 `contributions[]`(팩터·그룹별 기여값)를 함께 반환하며, 설명은 이 배열에서만 생성한다. 테스트로 강제한다(`07` §2).
 
 선택·렌더링 계약:
@@ -603,6 +617,22 @@ type BaselineRecommendation = {
 - Genre 이유는 bestAnchorId 제목이 resolve되면 withAnchor, 아니면 withoutAnchor를 쓴다. market/maturity에는 placeholder가 없다. 보간은 §6.9의 단일 비재귀 pass다.
 
 ---
+
+### 6.11 무드 필터 (2026-09-29 개선 계획 Phase 3)
+
+평소 취향을 바꾸지 않고 이번 이용의 조건에 맞는 후보를 기존 추천에서 찾는다. 한 번에 하나만 고른다.
+
+| 무드 id | 표시 | 조건 (시작 정책값) | 보장하지 않는 것 |
+|---|---|---|---|
+| `lowStress` | 気持ちが軽い話 | `mentalStress`가 `known`이고 값 ≤ 1 | 잔혹·어두운 장면이 전혀 없음 |
+| `warm` | あたたかい話 | `emotionalWarmth`가 `known`이고 값 ≥ 3 | 반드시 기분이 좋아짐 |
+| `fastPaced` | テンポが速い話 | `pacing`이 `known`이고 값 ≥ 3 | 짧은 시간에 읽을 수 있음 |
+
+- 값은 검증된 사용자 효과가 아니라 시작 정책값이다(`src/domain/recommendation/mood.ts`의 `MOOD_CONDITIONS`). 후보 수를 늘리려고 자동 완화하지 않으며 변경은 코드와 이 표를 함께 고친다.
+- `unknown`은 충족도 불충족도 아니며 해당 무드에서 표시하지 않는다.
+- 처리 순서: 기존 전체 plan(§6.1~6.8) → 무드 조건 → 해당 무드의 임시 제외·이번 세션의 읽음/興味なし 제외 → §6.8 목록 제약 → 화면. Catalog를 잘라 추천 함수에 넣지 않는다. 점수·기여도·정렬·인기 판정은 plan 값을 재사용하고, Discovery 창은 무드 적용 후 남은 후보의 최고 `tasteScore` 대비 0.10이다.
+- 메인·관점 선반·Discovery·Top 10은 같은 무드 후보를 쓴다. 무드 충족 안내는 취향 이유와 분리해 표시하고 기여도처럼 설명하지 않는다.
+- 무드와 무드별 임시 제외(「今日はパス」)는 탭 메모리 상태다. 상세 왕복에는 유지되고 새로고침·새 탭·Import·전체 삭제·Catalog 교체에서 초기화한다. Dexie·Export·추천 cache·입력 hash에 넣지 않는다.
 
 ## 7. 검증 전략
 

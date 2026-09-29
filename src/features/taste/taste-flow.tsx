@@ -47,6 +47,7 @@ import { usePersistence } from "@/infrastructure/db";
 import { explanationLexicon, mediaStrings, tasteStrings } from "@/lib/strings";
 import { cn } from "@/lib/utils";
 
+import { DnaShareButton } from "./dna-share-dialog";
 import { AdjustmentRadiogroup } from "./adjustment-radiogroup";
 import { FactorBar } from "@/components/media/factor-bar";
 import { DnaAxesOverview, RecommendationDiffPreview } from "./taste-insights";
@@ -1044,6 +1045,7 @@ export function TasteFlow({
         onFocus={keepFocusAboveSnackbar}
       >
         <PageHeader
+          action={<DnaShareButton summary={summary} worksById={worksById} />}
           className="taste-header mb-[var(--space-6)]"
           description={tasteStrings.description}
           title={tasteStrings.title}

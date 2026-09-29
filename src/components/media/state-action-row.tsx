@@ -12,6 +12,9 @@ type RemovalActionProps = Readonly<{
   onHidden: () => void;
   onRemovalIntent?: () => void;
   surface?: "page" | "cover";
+  /** Present only while a mood is chosen: sets the work aside for that mood, this visit only. */
+  onDismissForToday?: () => void;
+  dismissForTodayLabel?: string;
 }>;
 
 type StateActionRowProps = Omit<RemovalActionProps, "surface"> &
@@ -73,7 +76,9 @@ export function QuietTextAction({
 export function StateActionRow({
   busy,
   className,
+  dismissForTodayLabel,
   onCompleted,
+  onDismissForToday,
   onHidden,
   onPlanned,
   onRemovalIntent,
@@ -98,7 +103,9 @@ export function StateActionRow({
       </Button>
       <RecommendationFeedbackActions
         busy={busy}
+        dismissForTodayLabel={dismissForTodayLabel}
         onCompleted={onCompleted}
+        onDismissForToday={onDismissForToday}
         onHidden={onHidden}
         onRemovalIntent={onRemovalIntent}
       />
@@ -150,7 +157,9 @@ export function CoverSaveToggle({
 export function RecommendationFeedbackActions({
   busy,
   className,
+  dismissForTodayLabel,
   onCompleted,
+  onDismissForToday,
   onHidden,
   onRemovalIntent,
   surface = "page",
@@ -159,6 +168,22 @@ export function RecommendationFeedbackActions({
 
   return (
     <div className={cn("flex items-center gap-[var(--space-1)]", className)}>
+      {onDismissForToday === undefined ? null : (
+        <QuietTextAction
+          aria-busy={busy || undefined}
+          aria-label={dismissForTodayLabel}
+          data-recommendation-action="dismiss-today"
+          disabled={busy}
+          onClick={() => {
+            onRemovalIntent?.();
+            onDismissForToday();
+          }}
+          surface={surface}
+          {...removalHandlers}
+        >
+          {recommendationStrings.mood.dismiss}
+        </QuietTextAction>
+      )}
       <QuietTextAction
         aria-busy={busy || undefined}
         data-recommendation-action="completed"
@@ -174,6 +199,11 @@ export function RecommendationFeedbackActions({
       </QuietTextAction>
       <QuietTextAction
         aria-busy={busy || undefined}
+        // A narrow cover rail cannot hold four actions; under a mood the lasting 「興味なし」
+        // stays in Quick Preview there, and the cover keeps the lighter 「今日はパス」.
+        className={
+          onDismissForToday !== undefined && surface === "cover" ? "max-md:hidden" : undefined
+        }
         danger
         data-recommendation-action="hidden"
         disabled={busy}

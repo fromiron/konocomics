@@ -1,7 +1,7 @@
 import { FactorBar } from "@/components/media/factor-bar";
 import { explanationLexicon, landingStrings } from "@/lib/strings";
 
-import { LandingCta } from "./home-hero";
+import { LandingCta, type LandingVisitorState } from "./home-hero";
 import type { LandingSample } from "./landing-types";
 
 /** Three steps beside the sample profile's real Manga DNA, so the promise is shown, not told. */
@@ -75,7 +75,7 @@ export function HomeHowItWorks({ sample }: Readonly<{ sample: LandingSample }>) 
   );
 }
 
-export function HomeClosing() {
+export function HomeClosing({ visitor = "new" }: Readonly<{ visitor?: LandingVisitorState }>) {
   return (
     <section
       aria-labelledby="landing-closing-title"
@@ -90,7 +90,7 @@ export function HomeClosing() {
       <p className="text-[length:var(--text-body-size)] text-text-muted">
         {landingStrings.closing.description}
       </p>
-      <LandingCta />
+      <LandingCta visitor={visitor} />
     </section>
   );
 }

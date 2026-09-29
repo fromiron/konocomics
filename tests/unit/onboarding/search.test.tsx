@@ -5,7 +5,7 @@ import { useCallback, useState } from "react";
 import { afterEach, describe, expect, it, vi } from "vitest";
 
 import type { Work } from "@/domain/catalog/types";
-import { createWorkSearch } from "@/features/onboarding/search";
+import { createWorkSearch, findExcludedSearchMatches } from "@/features/onboarding/search";
 import { WorkSearchInput, type WorkSearchState } from "@/features/onboarding/work-search-input";
 import { createTestWork } from "../../helpers/catalog";
 
@@ -75,5 +75,118 @@ describe("onboarding work search", () => {
 
     expect(screen.getByText("ダンジョン飯")).toBeTruthy();
     expect(screen.queryByText("別の作品")).toBeNull();
+  });
+});
+
+function UrlBackedSearchHarness({ onUrlWrite }: Readonly<{ onUrlWrite: (query: string) => void }>) {
+  const [urlQuery, setUrlQuery] = useState<string | undefined>(undefined);
+  const handleSearchStateChange = useCallback(() => undefined, []);
+
+  return (
+    <>
+      <WorkSearchInput
+        label="作品を検索"
+        onQueryChange={(query) => {
+          onUrlWrite(query);
+          // Router search updates land after the input event, and the route
+          // schema trims the stored value.
+          window.setTimeout(() => {
+            const trimmed = query.trim();
+            setUrlQuery(trimmed.length > 0 ? trimmed : undefined);
+          }, 20);
+        }}
+        onSearchStateChange={handleSearchStateChange}
+        placeholder="タイトルを入力"
+        query={urlQuery ?? ""}
+        works={[dungeonMeshi, otherWork]}
+      />
+      <button onClick={() => setUrlQuery("だんじょん")} type="button">
+        戻る
+      </button>
+    </>
+  );
+}
+
+describe("onboarding search input bound to the URL", () => {
+  it("keeps typed text, including a trailing space, while the URL catches up", async () => {
+    vi.useFakeTimers();
+    render(<UrlBackedSearchHarness onUrlWrite={() => undefined} />);
+    const input = screen.getByRole<HTMLInputElement>("searchbox", { name: "作品を検索" });
+
+    fireEvent.change(input, { target: { value: "ONE" } });
+    expect(input.value).toBe("ONE");
+    fireEvent.change(input, { target: { value: "ONE " } });
+    expect(input.value).toBe("ONE ");
+    await act(async () => vi.advanceTimersByTime(50));
+
+    expect(input.value).toBe("ONE ");
+  });
+
+  it("does not write the URL until an IME composition is committed", async () => {
+    vi.useFakeTimers();
+    const writes: string[] = [];
+    render(<UrlBackedSearchHarness onUrlWrite={(query) => writes.push(query)} />);
+    const input = screen.getByRole<HTMLInputElement>("searchbox", { name: "作品を検索" });
+
+    fireEvent.compositionStart(input);
+    fireEvent.change(input, { target: { value: "しん" } });
+    fireEvent.change(input, { target: { value: "進撃" } });
+    expect(input.value).toBe("進撃");
+    expect(writes).toEqual([]);
+    fireEvent.compositionEnd(input);
+    await act(async () => vi.advanceTimersByTime(50));
+
+    expect(writes).toEqual(["進撃"]);
+    expect(input.value).toBe("進撃");
+  });
+
+  it("ignores stale URL echoes but follows external URL changes", async () => {
+    vi.useFakeTimers();
+    render(<UrlBackedSearchHarness onUrlWrite={() => undefined} />);
+    const input = screen.getByRole<HTMLInputElement>("searchbox", { name: "作品を検索" });
+
+    fireEvent.change(input, { target: { value: "だ" } });
+    fireEvent.change(input, { target: { value: "だん" } });
+    await act(async () => vi.advanceTimersByTime(50));
+    expect(input.value).toBe("だん");
+
+    fireEvent.click(screen.getByRole("button", { name: "戻る" }));
+    expect(input.value).toBe("だんじょん");
+  });
+});
+
+describe("excluded onboarding search matches", () => {
+  const libraryOnly: Work = {
+    ...createTestWork({
+      id: "library-only",
+      eligibility: { onboardingEligible: false, recommendationEligible: false, libraryOnly: true },
+    }),
+    title: "ダンジョンの外",
+  };
+
+  it("explains registered and not-yet-analyzable matches without reporting selectable works", () => {
+    const catalogSearch = createWorkSearch([dungeonMeshi, libraryOnly, otherWork]);
+
+    const matches = findExcludedSearchMatches({
+      catalogSearch,
+      query: "だんじょん",
+      registeredWorkIds: new Set(["dungeon-meshi"]),
+      selectableWorkIds: new Set(["other-work"]),
+    });
+
+    expect(new Map(matches.map(({ work, reason }) => [work.id, reason]))).toEqual(
+      new Map([
+        ["dungeon-meshi", "registered"],
+        ["library-only", "notAnalyzable"],
+      ]),
+    );
+    expect(
+      findExcludedSearchMatches({
+        catalogSearch,
+        query: "だんじょん",
+        registeredWorkIds: new Set(),
+        selectableWorkIds: new Set(["dungeon-meshi", "library-only"]),
+      }),
+    ).toEqual([]);
   });
 });

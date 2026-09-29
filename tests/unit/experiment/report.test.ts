@@ -8,7 +8,7 @@ import {
   createExperimentProfileV1Schema,
   type ExperimentProfileV1,
 } from "@/domain/profile/experiment-schema";
-import { explanationLexicon, experimentReportStrings } from "@/lib/strings";
+import { frozenExperimentExplanationLexicon, experimentReportStrings } from "@/lib/strings";
 import { createTestAxes, createTestWork } from "../../helpers/catalog";
 import generatedCatalog from "../../../data/generated/recommendation-profile-catalog-v1.json";
 import generatedContext from "../../../data/generated/recommendation-profile-context-v1.json";
@@ -50,7 +50,7 @@ function report(
       catalog: options.catalogInput ?? catalog,
       context: options.contextInput ?? context,
       profiles: options.profiles ?? profiles,
-      lexicon: explanationLexicon,
+      lexicon: frozenExperimentExplanationLexicon,
     },
     experimentReportStrings,
   );

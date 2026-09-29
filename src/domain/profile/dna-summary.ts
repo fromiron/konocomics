@@ -21,6 +21,11 @@ export type DnaTopPreference = {
 };
 
 export type MangaDnaSummary = {
+  /**
+   * Distinct favorite/liked Catalog works the summary was computed from, in id order. This is
+   * the analysed work count; evidence lists are capped per preference and must not be summed.
+   */
+  analyzedWorkIds: string[];
   axes: DnaPreference<AxisId>[];
   themes: DnaPreference<ThemeTag>[];
   genres: DnaPreference<GenreTag>[];
@@ -214,5 +219,11 @@ export function summarizeMangaDna(
     })
     .slice(0, 3);
 
-  return { axes, themes, genres, topPreferences };
+  return {
+    analyzedWorkIds: anchors.map((anchor) => anchor.work.id),
+    axes,
+    themes,
+    genres,
+    topPreferences,
+  };
 }

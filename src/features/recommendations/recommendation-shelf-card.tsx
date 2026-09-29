@@ -25,6 +25,7 @@ type RecommendationShelfCardProps = Readonly<{
   onCompleted: () => void;
   onHidden: () => void;
   onPlanned: () => void;
+  onDismissForToday?: () => void;
   onPreview: () => void;
   onCoverVisible?: () => void;
 }>;
@@ -38,6 +39,7 @@ export function RecommendationShelfCard({
   onCompleted,
   onExpandedChange,
   onCoverVisible,
+  onDismissForToday,
   onHidden,
   onPlanned,
   onPreview,
@@ -184,7 +186,9 @@ export function RecommendationShelfCard({
           <StateActionRow
             busy={busy}
             className="shrink-0 flex-wrap sm:justify-start"
+            dismissForTodayLabel={recommendationStrings.mood.dismissLabel(work.title)}
             onCompleted={onCompleted}
+            onDismissForToday={onDismissForToday}
             onHidden={onHidden}
             onPlanned={onPlanned}
             planned={planned}

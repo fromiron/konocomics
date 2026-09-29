@@ -11,7 +11,7 @@ import type {
   TasteExplanationSentence,
 } from "@/domain/explanation";
 import type { BaselineContribution, GroupContribution } from "@/domain/recommendation/types";
-import { explanationLexicon } from "@/lib/strings";
+import { explanationLexicon, frozenExperimentExplanationLexicon } from "@/lib/strings";
 
 function tasteContribution(overrides: Partial<GroupContribution> = {}): GroupContribution {
   return {
@@ -315,7 +315,7 @@ describe("Taste explanations", () => {
     });
 
     expect(result.positiveReasons.map(({ factorId }) => factorId)).toEqual(["adventure"]);
-    expect(result.positiveReasons[0]?.text).toBe("「冒険」があなたの好みに合う作品です。");
+    expect(result.positiveReasons[0]?.text).toBe("DNAで好みに設定した「冒険」が描かれる作品です。");
     expect(result.caution?.factorId).toBe("darkness");
     expect(result.caution?.text).toBe("ただし「物語の重さ」は、あなたの好みと少し異なります。");
   });
@@ -342,7 +342,7 @@ describe("Taste explanations", () => {
     expect(result.positiveReasons).toEqual([
       {
         kind: "positive",
-        text: "「ギャグ・コメディ」が控えめな点が、あなたの好みに合う作品です。",
+        text: "「ギャグ・コメディ」が控えめな点が、DNAで設定した好みに合います。",
         source: "adjustment",
         group: "tone",
         factorId: "comedy",
@@ -380,7 +380,7 @@ describe("Taste explanations", () => {
       factorLabels: { adventure: "{anchorTitle}" },
       templates: {
         ...explanationLexicon.templates,
-        positiveWithAnchor: "『{anchorTitle}』と「{factorLabel}」",
+        positiveThemeWithAnchor: "『{anchorTitle}』と「{factorLabel}」",
       },
     };
 
@@ -398,6 +398,89 @@ describe("Taste explanations", () => {
     });
 
     expect(result.positiveReasons[0]?.text).toBe("『{factorLabel}』と「{anchorTitle}」");
+  });
+
+  it("words each reason by its source, factor family, and already named liked work", () => {
+    const contributions = [
+      tasteContribution({ group: "genre", factorId: "fantasy", value: 0.09 }),
+      tasteContribution({ group: "theme", factorId: "revenge", value: 0.08 }),
+      tasteContribution({ group: "narrative", factorId: "worldBuilding", value: 0.07 }),
+    ];
+    const resolveTitle = titleResolver({ "anchor-a": "作品A" });
+
+    const result = generateTasteExplanation({
+      contributions,
+      confidenceLevel: "normal",
+      lexicon: explanationLexicon,
+      resolveTitle,
+    });
+
+    expect(result.positiveReasons.map(({ text }) => text)).toEqual([
+      "『作品A』と同じ「ファンタジー」の作品です。",
+      "「復讐」も『作品A』と共通しています。",
+      "「世界観の作り込み」も『作品A』と共通しています。",
+    ]);
+  });
+
+  it("names the liked work in full for each reason that cites a different work", () => {
+    const result = generateTasteExplanation({
+      contributions: [
+        tasteContribution({ group: "theme", factorId: "revenge", value: 0.08 }),
+        tasteContribution({
+          source: "adjustment",
+          group: "narrative",
+          factorId: "pacing",
+          value: 0.05,
+          anchorWorkIds: [],
+          axisPreferenceDirection: "higher",
+        }),
+      ],
+      confidenceLevel: "normal",
+      lexicon: explanationLexicon,
+      resolveTitle: titleResolver({ "anchor-a": "作品A" }),
+    });
+
+    expect(result.positiveReasons.map(({ text }) => text)).toEqual([
+      "『作品A』と同じく「復讐」が描かれます。",
+      "DNAで好みに設定した「テンポの速さ」がしっかりある作品です。",
+    ]);
+  });
+
+  it("changes only wording between the product and frozen experiment copy", () => {
+    const contributions = [
+      tasteContribution({ group: "genre", factorId: "fantasy", value: 0.09 }),
+      tasteContribution({ group: "theme", factorId: "revenge", value: 0.08 }),
+      tasteContribution({
+        source: "adjustment",
+        group: "tone",
+        factorId: "comedy",
+        value: 0.06,
+        anchorWorkIds: [],
+        axisPreferenceDirection: "lower",
+      }),
+      tasteContribution({ group: "tone", factorId: "darkness", value: -0.2 }),
+    ];
+    const input = {
+      contributions,
+      confidenceLevel: "normal" as const,
+      resolveTitle: titleResolver({ "anchor-a": "作品A" }),
+    };
+    const withoutText = (sentences: readonly TasteExplanationSentence[]) =>
+      sentences.map((sentence) => ({ ...sentence, text: "" }));
+
+    const product = generateTasteExplanation({ ...input, lexicon: explanationLexicon });
+    const frozen = generateTasteExplanation({
+      ...input,
+      lexicon: frozenExperimentExplanationLexicon,
+    });
+
+    expect(withoutText(product.positiveReasons)).toEqual(withoutText(frozen.positiveReasons));
+    expect(product.anchors).toEqual(frozen.anchors);
+    expect(frozen.positiveReasons.map(({ text }) => text)).toEqual([
+      "『作品A』で好きだった「ファンタジー」に近い作品です。",
+      "『作品A』で好きだった「復讐」に近い作品です。",
+    ]);
+    expect(product.caution?.factorId).toBe(frozen.caution?.factorId);
   });
 
   it.each([

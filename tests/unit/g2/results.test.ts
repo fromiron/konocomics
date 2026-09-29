@@ -13,7 +13,7 @@ import {
   type G2ResultV1,
 } from "@/domain/g2";
 import { experimentProfileV1Schema } from "@/domain/profile/experiment-schema";
-import { explanationLexicon } from "@/lib/strings";
+import { frozenExperimentExplanationLexicon } from "@/lib/strings";
 import generatedCatalog from "../../../data/generated/recommendation-profile-catalog-v1.json";
 import generatedContext from "../../../data/generated/recommendation-profile-context-v1.json";
 import { ExperimentDataError } from "../../../scripts/experiment/errors";
@@ -65,7 +65,7 @@ beforeAll(async () => {
     catalog,
     context,
     sha256Hex,
-    lexicon: explanationLexicon,
+    lexicon: frozenExperimentExplanationLexicon,
   });
   canonicalResult = createG2Result({
     experiment,
@@ -104,7 +104,12 @@ describe("G2 canonical result boundary", () => {
     await writeFile(path, canonicalText, "utf8");
 
     await expect(
-      loadG2Results({ paths: [path], catalog, context, lexicon: explanationLexicon }),
+      loadG2Results({
+        paths: [path],
+        catalog,
+        context,
+        lexicon: frozenExperimentExplanationLexicon,
+      }),
     ).resolves.toEqual([canonicalResult]);
   });
 
@@ -122,7 +127,12 @@ describe("G2 canonical result boundary", () => {
     const path = join(directory, "invalid.json");
     await writeFile(path, build(), "utf8");
     await expect(
-      loadG2Results({ paths: [path], catalog, context, lexicon: explanationLexicon }),
+      loadG2Results({
+        paths: [path],
+        catalog,
+        context,
+        lexicon: frozenExperimentExplanationLexicon,
+      }),
     ).rejects.toBeInstanceOf(ExperimentDataError);
   });
 
@@ -134,7 +144,12 @@ describe("G2 canonical result boundary", () => {
     await writeFile(oversized, Buffer.alloc(G2_RESULT_FILE_LIMIT + 1, 0x20));
     for (const path of [malformed, oversized, directory]) {
       await expect(
-        loadG2Results({ paths: [path], catalog, context, lexicon: explanationLexicon }),
+        loadG2Results({
+          paths: [path],
+          catalog,
+          context,
+          lexicon: frozenExperimentExplanationLexicon,
+        }),
       ).rejects.toBeInstanceOf(ExperimentDataError);
     }
   });
@@ -154,7 +169,7 @@ describe("G2 canonical result boundary", () => {
       [path, hardLinkPath],
     ]) {
       await expect(
-        loadG2Results({ paths, catalog, context, lexicon: explanationLexicon }),
+        loadG2Results({ paths, catalog, context, lexicon: frozenExperimentExplanationLexicon }),
       ).rejects.toBeInstanceOf(ExperimentDataError);
     }
   });

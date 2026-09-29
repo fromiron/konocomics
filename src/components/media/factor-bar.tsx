@@ -43,7 +43,8 @@ export function FactorBar({
           "aria-label": label,
           "aria-valuemax": 4,
           "aria-valuemin": 0,
-          "aria-valuenow": knownValue ?? undefined,
+          // Exposed to assistive tech as one decimal; the fill keeps the exact value.
+          "aria-valuenow": knownValue === null ? undefined : Math.round(knownValue * 10) / 10,
           "aria-valuetext": `${valueLabel}${referenceText}`,
           role: "meter",
         } as const);

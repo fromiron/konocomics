@@ -5,7 +5,9 @@ import type { ReactNode } from "react";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 
 import type { CatalogV1 } from "@/domain/catalog/types";
+import type { OnboardingDraft } from "@/domain/profile/onboarding";
 import type { UserWorkRecord } from "@/domain/profile/types";
+import { entrySource } from "@/features/landing/entry-source";
 import { LandingFlow } from "@/features/landing/landing-flow";
 import type { LandingSample } from "@/features/landing/landing-types";
 import { coreStrings, landingStrings } from "@/lib/strings";
@@ -15,6 +17,8 @@ const testState = vi.hoisted(() => ({
   catalog: null as unknown as CatalogV1,
   navigate: vi.fn(),
   userWorks: undefined as UserWorkRecord[] | undefined,
+  onboardingDraft: null as OnboardingDraft | null | undefined,
+  onboardingCompletedAt: null as string | null | undefined,
 }));
 
 vi.mock("@tanstack/react-router", () => ({
@@ -47,7 +51,11 @@ vi.mock("@/features/catalog/catalog-provider", () => ({
 }));
 
 vi.mock("@/infrastructure/db", () => ({
-  usePersistence: () => ({ userWorks: testState.userWorks }),
+  usePersistence: () => ({
+    onboardingCompletedAt: testState.onboardingCompletedAt,
+    onboardingDraft: testState.onboardingDraft,
+    userWorks: testState.userWorks,
+  }),
 }));
 
 const works = Array.from({ length: 6 }, (_, index) =>
@@ -85,11 +93,12 @@ const sample: LandingSample = {
   ],
 };
 
-function renderLanding(showIntroduction = false) {
+function renderLanding(showIntroduction = false, via?: "share-card") {
   return render(
     <LandingFlow
       discoveryWorks={works.slice(4, 5).map(toLandingWork)}
       editorialRankingWorks={works.slice(0, 4)}
+      entrySource={via}
       recommendableWorkCount={2410}
       sample={sample}
       showIntroduction={showIntroduction}
@@ -97,11 +106,22 @@ function renderLanding(showIntroduction = false) {
   );
 }
 
+function likedRecords(count: number) {
+  return works.slice(0, count).map((work) => ({
+    workId: work.id,
+    readingState: "completed" as const,
+    reaction: "liked" as const,
+    updatedAt: "2026-08-14T00:00:00.000Z",
+  }));
+}
+
 beforeEach(() => {
   window.sessionStorage.clear();
   testState.catalog = { ...baseCatalog, works };
   testState.navigate.mockReset();
   testState.userWorks = undefined;
+  testState.onboardingDraft = null;
+  testState.onboardingCompletedAt = null;
 });
 
 afterEach(() => {
@@ -186,11 +206,63 @@ describe("LandingFlow profile routing", () => {
 
     renderLanding(true);
 
-    expect(screen.getAllByRole("link", { name: landingStrings.cta })).toHaveLength(2);
+    expect(
+      screen
+        .getAllByRole("link", { name: landingStrings.ctaByVisitor.profile })
+        .map((link) => link.getAttribute("href")),
+    ).toEqual(["/recommendations", "/recommendations"]);
     expect(testState.navigate).not.toHaveBeenCalled();
     expect(getItem).not.toHaveBeenCalled();
     expect(setItem).not.toHaveBeenCalled();
     getItem.mockRestore();
     expect(window.sessionStorage.getItem("logoRevealed")).toBe("sentinel");
+  });
+
+  it("resumes an interrupted onboarding draft without changing it", () => {
+    testState.userWorks = [];
+    testState.onboardingDraft = {
+      id: "current",
+      mode: "firstRun",
+      step: 1,
+      positiveEntries: [{ workId: works[0]!.id, reaction: "liked" }],
+      negativeEntries: [],
+      updatedAt: "2026-08-14T00:00:00.000Z",
+    };
+
+    renderLanding(true, "share-card");
+
+    expect(
+      screen
+        .getAllByRole("link", { name: landingStrings.ctaByVisitor.resume })
+        .map((link) => link.getAttribute("href")),
+    ).toEqual(["/onboarding", "/onboarding"]);
+    expect(screen.getByText(landingStrings.visitorNote.resume)).toBeTruthy();
+    expect(testState.navigate).not.toHaveBeenCalled();
+  });
+
+  it("keeps the recovery path for a completed profile below five current works", () => {
+    testState.userWorks = likedRecords(3);
+    testState.onboardingCompletedAt = "2026-08-14T00:00:00.000Z";
+
+    renderLanding(true, "share-card");
+
+    expect(
+      screen
+        .getAllByRole("link", { name: landingStrings.ctaByVisitor.recovery })
+        .map((link) => link.getAttribute("href")),
+    ).toEqual(["/onboarding", "/onboarding"]);
+  });
+
+  it("marks a share-card entry in memory only and greets a new visitor", () => {
+    testState.userWorks = [];
+    const setItem = vi.spyOn(Storage.prototype, "setItem");
+
+    renderLanding(true, "share-card");
+
+    expect(screen.getByText(landingStrings.sharedEntry)).toBeTruthy();
+    expect(screen.getAllByRole("link", { name: landingStrings.ctaByVisitor.new })).toHaveLength(2);
+    expect(entrySource()).toBe("share-card");
+    expect(document.documentElement.dataset.entrySource).toBe("share-card");
+    expect(setItem).not.toHaveBeenCalled();
   });
 });

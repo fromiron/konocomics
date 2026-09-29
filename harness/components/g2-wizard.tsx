@@ -19,7 +19,11 @@ import {
   type G2SlotId,
 } from "../../src/domain/g2";
 import type { RecommendationContext } from "../../src/domain/recommendation/types";
-import { coreStrings, explanationLexicon, g2HarnessStrings } from "../../src/lib/strings";
+import {
+  coreStrings,
+  frozenExperimentExplanationLexicon,
+  g2HarnessStrings,
+} from "../../src/lib/strings";
 
 const copy = g2HarnessStrings;
 const PROFILE_FILE_LIMIT = 1024 * 1024;
@@ -605,7 +609,7 @@ export function G2Wizard({ respondent }: G2WizardProps) {
         catalog,
         context: recommendationContext,
         sha256Hex,
-        lexicon: explanationLexicon,
+        lexicon: frozenExperimentExplanationLexicon,
       });
       setExperiment(nextExperiment);
       setStage("before");

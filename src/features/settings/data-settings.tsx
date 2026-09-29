@@ -24,6 +24,7 @@ import {
   type ExportFileV1,
   type ImportPreviewV1,
 } from "@/infrastructure/db";
+import { resetMoodSession } from "@/features/recommendations/mood-session";
 import { settingsStrings } from "@/lib/strings";
 
 import { SettingsDialog } from "./settings-dialog";
@@ -174,6 +175,7 @@ export function DataSettings({
         setError(settingsStrings.data.errors.indeterminate);
         return;
       }
+      resetMoodSession();
       setDialog(null);
       setPreview(null);
       if (fileInputRef.current !== null) fileInputRef.current.value = "";
@@ -206,6 +208,7 @@ export function DataSettings({
         setError(settingsStrings.data.errors.indeterminate);
         return;
       }
+      resetMoodSession();
       setDialog(null);
       setPreview(null);
       setDeleteConfirmation("");

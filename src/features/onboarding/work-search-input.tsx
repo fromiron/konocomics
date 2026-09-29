@@ -1,8 +1,9 @@
 "use client";
 
-import { useEffect, useId, useMemo, useState } from "react";
+import { useEffect, useId, useMemo } from "react";
 
 import { Input } from "@/components/design-system/input";
+import { useUrlSyncedQuery } from "@/components/design-system/use-url-synced-query";
 import type { Work } from "@/domain/catalog/types";
 
 import { createWorkSearch } from "./search";
@@ -28,12 +29,14 @@ export function WorkSearchInput({
   placeholder,
   onQueryChange,
   onSearchStateChange,
-  query: controlledQuery,
+  query: urlQuery,
   debounceMs = 300,
 }: WorkSearchInputProps) {
   const inputId = useId();
-  const [localQuery, setLocalQuery] = useState("");
-  const query = controlledQuery ?? localQuery;
+  const { inputProps, value: query } = useUrlSyncedQuery({
+    urlQuery,
+    onUrlQueryChange: onQueryChange,
+  });
   const search = useMemo(() => createWorkSearch(works), [works]);
 
   useEffect(() => {
@@ -50,17 +53,13 @@ export function WorkSearchInput({
         {label}
       </label>
       <Input
+        {...inputProps}
         autoComplete="off"
         className="work-search__input min-h-12 w-full"
+        enterKeyHint="search"
         id={inputId}
-        onChange={(event) => {
-          const nextQuery = event.currentTarget.value;
-          if (controlledQuery === undefined) setLocalQuery(nextQuery);
-          onQueryChange?.(nextQuery);
-        }}
         placeholder={placeholder}
         type="search"
-        value={query}
       />
     </div>
   );

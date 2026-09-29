@@ -5,6 +5,7 @@ import { useEffect, useMemo, useRef, useState, type ReactNode } from "react";
 
 import { Button } from "@/components/design-system/button";
 import { Input } from "@/components/design-system/input";
+import { useUrlSyncedQuery } from "@/components/design-system/use-url-synced-query";
 import { NativeSelect } from "@/components/design-system/native-select";
 import { Tabs, TabsList, TabsTrigger } from "@/components/design-system/tabs";
 import { SummarySection, summaryLinkClassName } from "@/components/layout/summary-section";
@@ -128,7 +129,7 @@ export function LibraryView({
   onQueryChange,
   onSortChange,
   onViewChange,
-  query = "",
+  query: urlQuery,
   saveExternalUserRecord,
   saveUserWork,
   sort = "updated",
@@ -136,6 +137,14 @@ export function LibraryView({
   userWorks,
   view = "grid",
 }: LibraryViewProps) {
+  const {
+    clear: clearQuery,
+    inputProps: queryInputProps,
+    value: query,
+  } = useUrlSyncedQuery({
+    urlQuery,
+    onUrlQueryChange: onQueryChange,
+  });
   const [localActiveState, setLocalActiveState] = useState<LibraryStateFilter>(null);
   const activeState =
     controlledActiveState === undefined ? localActiveState : controlledActiveState;
@@ -335,11 +344,11 @@ export function LibraryView({
             <label className="min-w-0">
               <span className="sr-only">{libraryStrings.toolbar.searchLabel}</span>
               <Input
+                {...queryInputProps}
                 className="w-full bg-surface-2 text-text-strong"
-                onChange={(event) => onQueryChange?.(event.currentTarget.value)}
+                enterKeyHint="search"
                 placeholder={libraryStrings.toolbar.searchPlaceholder}
                 type="search"
-                value={query}
               />
             </label>
             <Tabs
@@ -465,7 +474,7 @@ export function LibraryView({
                 ) : null}
                 <div className="flex flex-wrap gap-[var(--space-content)]">
                   {hasQuery ? (
-                    <Button onClick={() => onQueryChange?.("")} type="button" variant="outline">
+                    <Button onClick={clearQuery} type="button" variant="outline">
                       {libraryStrings.filteredEmpty.clearSearch}
                     </Button>
                   ) : null}

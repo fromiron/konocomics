@@ -29,8 +29,13 @@ const optionalShelf = z
 
 export const emptySearchSchema = z.object({});
 
+/** Entry paths a shared link may declare. Values never identify a person, work, or DNA. */
+export const ENTRY_SOURCES = ["share-card"] as const;
+export type EntrySource = (typeof ENTRY_SOURCES)[number];
+
 export const landingSearchSchema = z.object({
   landing: legacyOne,
+  via: z.enum(ENTRY_SOURCES).optional().catch(undefined),
 });
 
 export const onboardingSearchSchema = z.object({

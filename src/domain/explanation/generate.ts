@@ -9,6 +9,7 @@ import type {
   ExplanationClusterId,
   ExplanationFactorId,
   ExplanationLexicon,
+  ExplanationTemplateId,
   GenerateBaselineExplanationInput,
   GenerateTasteExplanationInput,
   TasteExplanationSentence,
@@ -163,13 +164,36 @@ function selectTasteContributions(
   return { selectedPositives, selectedCaution };
 }
 
+/**
+ * Picks the wording for a positive reason from facts the contribution already carries:
+ * whether it came from the reader's own DNA adjustment or from a liked work, which factor
+ * family matched, and whether an earlier reason on the same card already named the work.
+ * Wording never changes which contributions are selected or their order.
+ */
+function positiveTemplateIdFor(
+  contribution: GroupContribution,
+  anchorTitle: string | undefined,
+  anchorAlreadyNamed: boolean,
+): ExplanationTemplateId {
+  if (contribution.source === "adjustment") {
+    if (contribution.axisPreferenceDirection === "lower") return "positiveLowerAxisAdjustment";
+    return contribution.group === "theme" ? "positiveThemeAdjustment" : "positiveAxisAdjustment";
+  }
+  if (anchorTitle === undefined) return "positiveWithoutAnchor";
+  if (anchorAlreadyNamed) return "positiveRepeatedAnchor";
+  if (contribution.group === "genre") return "positiveGenreWithAnchor";
+  if (contribution.group === "theme") return "positiveThemeWithAnchor";
+  return "positiveWithAnchor";
+}
+
 function tasteSentenceFor(options: {
   candidate: TasteCandidate;
   kind: TasteExplanationSentence["kind"];
   lexicon: ExplanationLexicon;
   resolveTitle: WorkTitleResolver;
+  namedAnchorTitles?: ReadonlySet<string>;
 }): TasteExplanationSentence {
-  const { candidate, kind, lexicon, resolveTitle } = options;
+  const { candidate, kind, lexicon, resolveTitle, namedAnchorTitles } = options;
   const { contribution, factorId, factorLabel } = candidate;
   const anchorTitle =
     contribution.source === "similarity"
@@ -177,11 +201,13 @@ function tasteSentenceFor(options: {
       : undefined;
   const template =
     kind === "positive"
-      ? contribution.source === "adjustment" && contribution.axisPreferenceDirection === "lower"
-        ? lexicon.templates.positiveLowerAxisAdjustment
-        : anchorTitle === undefined
-          ? lexicon.templates.positiveWithoutAnchor
-          : lexicon.templates.positiveWithAnchor
+      ? lexicon.templates[
+          positiveTemplateIdFor(
+            contribution,
+            anchorTitle,
+            anchorTitle !== undefined && (namedAnchorTitles?.has(anchorTitle) ?? false),
+          )
+        ]
       : anchorTitle === undefined
         ? lexicon.templates.cautionSimilarityWithoutAnchor
         : lexicon.templates.cautionSimilarityWithAnchor;
@@ -304,14 +330,21 @@ export function generateTasteExplanation({
   resolveTitle,
 }: GenerateTasteExplanationInput): TasteRecommendationExplanation {
   const { selectedCaution, selectedPositives } = selectTasteContributions(contributions, lexicon);
-  const positiveReasons = selectedPositives.map((candidate) =>
-    tasteSentenceFor({
+  const namedAnchorTitles = new Set<string>();
+  const positiveReasons = selectedPositives.map((candidate) => {
+    const sentence = tasteSentenceFor({
       candidate,
       kind: "positive",
       lexicon,
       resolveTitle,
-    }),
-  );
+      namedAnchorTitles,
+    });
+    if (sentence.source === "similarity") {
+      const title = firstResolvedTitle(sentence.anchorWorkIds, resolveTitle);
+      if (title !== undefined) namedAnchorTitles.add(title);
+    }
+    return sentence;
+  });
   const caution =
     selectedCaution === undefined
       ? undefined
