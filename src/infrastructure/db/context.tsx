@@ -20,6 +20,7 @@ import type {
   AddIfAbsentResult,
   ExternalWorkRemovalResult,
   MinimalPlannedRemovalResult,
+  UserWorkRemovalResult,
 } from "./backend";
 import type {
   CurrentCatalogIdentity,
@@ -48,6 +49,10 @@ export type PersistenceContextValue = {
   addUserWorkIfAbsent(record: UserWorkRecord): Promise<AddIfAbsentResult<UserWorkRecord>>;
   saveUserWork(record: UserWorkRecord): Promise<UserWorkRecord>;
   removeMinimalPlannedUserWork(workId: string): Promise<MinimalPlannedRemovalResult>;
+  removeUserWorkIfUnchanged(
+    workId: string,
+    expectedUpdatedAt: string,
+  ): Promise<UserWorkRemovalResult>;
   inspectExternalWork(id: ExternalWorkId): Promise<ExternalWorkLookupResult>;
   addExternalWorkIfAbsent(
     record: ExternalWorkRecord,
@@ -221,6 +226,15 @@ export function PersistenceProvider({ children, persistence }: PersistenceProvid
     [service],
   );
 
+  const removeUserWorkIfUnchanged = useCallback(
+    async (workId: string, expectedUpdatedAt: string) => {
+      const result = await service.removeUserWorkIfUnchanged(workId, expectedUpdatedAt);
+      setUserWorks(await service.getUserWorks());
+      return result;
+    },
+    [service],
+  );
+
   const inspectExternalWork = useCallback(
     (id: ExternalWorkId) => service.inspectExternalWork(id),
     [service],
@@ -331,6 +345,7 @@ export function PersistenceProvider({ children, persistence }: PersistenceProvid
     addUserWorkIfAbsent,
     saveUserWork,
     removeMinimalPlannedUserWork,
+    removeUserWorkIfUnchanged,
     inspectExternalWork,
     addExternalWorkIfAbsent,
     saveExternalUserRecord,

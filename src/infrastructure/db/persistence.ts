@@ -13,6 +13,7 @@ import {
   type ExternalWorkRemovalResult,
   type MinimalPlannedRemovalResult,
   type PersistenceBackend,
+  type UserWorkRemovalResult,
 } from "./backend";
 import {
   createExportFileV1,
@@ -123,6 +124,10 @@ export interface Persistence {
   addUserWorkIfAbsent(record: UserWorkRecord): Promise<AddIfAbsentResult<UserWorkRecord>>;
   saveUserWork(record: UserWorkRecord): Promise<UserWorkRecord>;
   removeMinimalPlannedUserWork(workId: string): Promise<MinimalPlannedRemovalResult>;
+  removeUserWorkIfUnchanged(
+    workId: string,
+    expectedUpdatedAt: string,
+  ): Promise<UserWorkRemovalResult>;
   getExternalWorks(): Promise<ExternalWorkRecord[]>;
   inspectExternalWork(id: ExternalWorkId): Promise<ExternalWorkLookupResult>;
   addExternalWorkIfAbsent(
@@ -350,17 +355,39 @@ export class ResilientPersistence implements Persistence {
   }
 
   async removeMinimalPlannedUserWork(workId: string): Promise<MinimalPlannedRemovalResult> {
+    return this.removeUserWorkVerified(workId, (backend, validatedWorkId) =>
+      backend.removeMinimalPlannedUserWork(validatedWorkId),
+    );
+  }
+
+  async removeUserWorkIfUnchanged(
+    workId: string,
+    expectedUpdatedAt: string,
+  ): Promise<UserWorkRemovalResult> {
+    return this.removeUserWorkVerified(workId, (backend, validatedWorkId) =>
+      backend.removeUserWorkIfUnchanged(validatedWorkId, expectedUpdatedAt),
+    );
+  }
+
+  /** Runs a conditional delete and proves its outcome by reading the store back. */
+  private async removeUserWorkVerified(
+    workId: string,
+    remove: (
+      backend: PersistenceBackend,
+      validatedWorkId: string,
+    ) => Promise<UserWorkRemovalResult>,
+  ): Promise<UserWorkRemovalResult> {
     const validatedWorkId = parseWorkId(workId);
     return this.enqueue(async () => {
       await this.initialize();
       if (this.activeBackend.mode === "memory") {
-        return this.memoryBackend.removeMinimalPlannedUserWork(validatedWorkId);
+        return remove(this.memoryBackend, validatedWorkId);
       }
 
       try {
         const existingRecords = parseUserWorks(await this.activeBackend.getUserWorks());
         this.memoryBackend.synchronizeUserWorks(existingRecords);
-        const result = await this.activeBackend.removeMinimalPlannedUserWork(validatedWorkId);
+        const result = await remove(this.activeBackend, validatedWorkId);
         const records = parseUserWorks(await this.activeBackend.getUserWorks());
         const current = records.find((record) => record.workId === validatedWorkId);
         this.memoryBackend.synchronizeUserWorks(records);
@@ -376,7 +403,7 @@ export class ResilientPersistence implements Persistence {
         return result;
       } catch {
         await this.degrade("operation-failed");
-        // A failed primary mutation cannot prove that its latest row was still minimal.
+        // A failed primary mutation cannot prove that its latest row still matched.
         // Preserve the warmed mirror and require an explicit retry in degraded mode.
         return "preserved-conflict";
       }

@@ -47,6 +47,7 @@ import {
   mergeExternalWorkOnInsert,
 } from "@/infrastructure/db/external-work";
 import {
+  hasUpdatedAt,
   isMinimalPlannedUserWork,
   parseExternalUserWorkRecord,
   parseExternalWork,
@@ -314,6 +315,20 @@ class ControllableBackend implements PersistenceBackend {
   }
 
   async removeMinimalPlannedUserWork(workId: string): Promise<MinimalPlannedRemovalResult> {
+    return this.removeUserWorkWhen(workId, isMinimalPlannedUserWork);
+  }
+
+  async removeUserWorkIfUnchanged(
+    workId: string,
+    expectedUpdatedAt: string,
+  ): Promise<MinimalPlannedRemovalResult> {
+    return this.removeUserWorkWhen(workId, (current) => hasUpdatedAt(current, expectedUpdatedAt));
+  }
+
+  private async removeUserWorkWhen(
+    workId: string,
+    shouldRemove: (current: unknown) => boolean,
+  ): Promise<MinimalPlannedRemovalResult> {
     if (this.failUserWorkRemoval) {
       throw new Error("IndexedDB user work removal failed");
     }
@@ -326,7 +341,7 @@ class ControllableBackend implements PersistenceBackend {
         String(record.workId) === workId,
     );
     if (current === undefined) return "already-absent";
-    if (!isMinimalPlannedUserWork(current)) return "preserved-conflict";
+    if (!shouldRemove(current)) return "preserved-conflict";
 
     this.userWorks = this.userWorks.filter(
       (record) =>
@@ -963,6 +978,38 @@ describe("conditional minimal-planned removal backend contract", () => {
       readingState: "completed",
       reaction: "favorite",
     });
+  });
+
+  it("removes any record only while it still carries the updatedAt the caller read", async () => {
+    const read: UserWorkRecord = {
+      workId: "shared-work",
+      readingState: "completed",
+      reaction: "liked",
+      updatedAt: DRAFT_TIME,
+    };
+    const harness = createDexieRemovalHarness(read);
+
+    harness.replace({ ...read, reaction: "favorite", updatedAt: COMPLETED_TIME });
+    expect(await harness.backend.removeUserWorkIfUnchanged("shared-work", DRAFT_TIME)).toBe(
+      "preserved-conflict",
+    );
+    expect(harness.read()).toMatchObject({ reaction: "favorite" });
+
+    expect(await harness.backend.removeUserWorkIfUnchanged("shared-work", COMPLETED_TIME)).toBe(
+      "removed",
+    );
+    expect(harness.read()).toBeUndefined();
+    expect(await harness.backend.removeUserWorkIfUnchanged("shared-work", COMPLETED_TIME)).toBe(
+      "already-absent",
+    );
+
+    const memory = new MemoryPersistenceBackend();
+    await memory.upsertUserWork({ ...read, readingState: "hidden", updatedAt: COMPLETED_TIME });
+    expect(await memory.removeUserWorkIfUnchanged("shared-work", DRAFT_TIME)).toBe(
+      "preserved-conflict",
+    );
+    expect(await memory.removeUserWorkIfUnchanged("shared-work", COMPLETED_TIME)).toBe("removed");
+    expect(await memory.getUserWorks()).toEqual([]);
   });
 
   it("uses the same conflict-safe semantics in session memory", async () => {
@@ -2222,6 +2269,25 @@ describe("resilient onboarding persistence", () => {
     expect(backend.userWorks).toEqual([
       expect.objectContaining({ workId: "keep-me", reaction: "favorite" }),
     ]);
+  });
+
+  it("removes an unchanged record with readback and keeps a newer write", async () => {
+    const backend = new ControllableBackend();
+    backend.userWorks = [
+      { workId: "remove-me", readingState: "completed", reaction: "liked", updatedAt: DRAFT_TIME },
+      { workId: "keep-me", readingState: "hidden", updatedAt: DRAFT_TIME },
+    ];
+    const persistence = new ResilientPersistence({ primaryFactory: () => backend });
+
+    expect(await persistence.removeUserWorkIfUnchanged("keep-me", COMPLETED_TIME)).toBe(
+      "preserved-conflict",
+    );
+    expect(await persistence.removeUserWorkIfUnchanged("remove-me", DRAFT_TIME)).toBe("removed");
+
+    expect(await persistence.getUserWorks()).toEqual([
+      expect.objectContaining({ workId: "keep-me", readingState: "hidden" }),
+    ]);
+    expect(persistence.getStatus()).toMatchObject({ state: "ready", mode: "indexeddb" });
   });
 
   it("does not replay a failed primary removal against the warmed session mirror", async () => {

@@ -1873,9 +1873,9 @@ test.describe("Slice 8 provider and work-detail journey", () => {
       .poll(() => imageRequests.map((url) => new URL(url).searchParams.get("_ex")).sort())
       .toEqual(expect.arrayContaining(["200x200", "600x600"]));
 
-    const completedState = restoredDetail.getByRole("radio", { name: "読んだ", exact: true });
+    const completedState = restoredDetail.getByRole("button", { name: "読んだ", exact: true });
     await completedState.click();
-    await expect(completedState).toBeChecked();
+    await expect(completedState).toHaveAttribute("aria-pressed", "true");
     await expect(restoredDetail.getByRole("status")).toHaveText("読書状態を保存しました。");
     await expect
       .poll(async () =>
@@ -1887,7 +1887,10 @@ test.describe("Slice 8 provider and work-detail journey", () => {
     await expect(staleDetail.getByRole("status")).toHaveText(
       "別の画面で更新された記録を残しました。最新の読書状態を表示しています。",
     );
-    await expect(staleDetail.getByRole("radio", { name: "読んだ", exact: true })).toBeChecked();
+    await expect(staleDetail.getByRole("button", { name: "読んだ", exact: true })).toHaveAttribute(
+      "aria-pressed",
+      "true",
+    );
     await expect
       .poll(async () =>
         (await readProductState(stalePage)).userWorks.find((record) => record.workId === workId),

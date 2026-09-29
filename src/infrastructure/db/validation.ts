@@ -338,6 +338,16 @@ export function parseExternalUserWorkRecord(id: ExternalWorkId, value: unknown):
   return record;
 }
 
+/** True when a stored row still carries the `updatedAt` the caller last read. */
+export function hasUpdatedAt(value: unknown, expectedUpdatedAt: string): boolean {
+  return (
+    typeof value === "object" &&
+    value !== null &&
+    "updatedAt" in value &&
+    value.updatedAt === expectedUpdatedAt
+  );
+}
+
 export function isMinimalPlannedUserWork(value: unknown): boolean {
   const parsed = userWorkRecordSchema.safeParse(value);
   if (!parsed.success) return false;

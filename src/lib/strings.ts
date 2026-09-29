@@ -924,7 +924,6 @@ export const workDetailStrings = {
     },
     plannedAdd: "読みたい",
     plannedRemove: "読みたいから外す",
-    managedByState: "現在の記録は読書状態から変更できます。",
     ongoingHint: "連載中の作品は、最新刊まで読んだら「読んだ」を選べます。",
     reactionGroup: "感想",
     reactionSaved: (state: string, label: string) => `「${state}・${label}」を保存しました。`,
@@ -938,6 +937,10 @@ export const workDetailStrings = {
     plannedSaved: "読みたいに追加しました。",
     plannedRemoved: "読みたいから外しました。",
     plannedAlreadyAbsent: "すでに読みたいから外れています。",
+    recordCleared: (label: string) => `「${label}」を解除しました。`,
+    recordAlreadyCleared: "この作品の記録はすでにありません。",
+    recordRestored: "記録を元に戻しました。",
+    undo: "元に戻す",
     plannedPreservedConflict:
       "別の画面で更新された記録を残しました。最新の読書状態を表示しています。",
     error: "読書状態を保存できませんでした。もう一度お試しください。",

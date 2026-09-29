@@ -59,6 +59,15 @@ const testState = vi.hoisted(() => ({
   saveUserWork: vi.fn<(record: UserWorkRecord) => Promise<UserWorkRecord>>(),
   removeMinimalPlannedUserWork:
     vi.fn<(workId: string) => Promise<"removed" | "already-absent" | "preserved-conflict">>(),
+  removeUserWorkIfUnchanged:
+    vi.fn<
+      (
+        workId: string,
+        expectedUpdatedAt: string,
+      ) => Promise<"removed" | "already-absent" | "preserved-conflict">
+    >(),
+  addUserWorkIfAbsent:
+    vi.fn<(record: UserWorkRecord) => Promise<{ kind: "added" | "already-exists" }>>(),
   getProviderCache: vi.fn<(isbn: string) => Promise<ProviderCacheRecord | null>>(),
   saveProviderCache: vi.fn(),
   requestRakutenBook: vi.fn(),
@@ -72,6 +81,8 @@ vi.mock("@/infrastructure/db", () => ({
     policies: testState.policies,
     saveUserWork: testState.saveUserWork,
     removeMinimalPlannedUserWork: testState.removeMinimalPlannedUserWork,
+    removeUserWorkIfUnchanged: testState.removeUserWorkIfUnchanged,
+    addUserWorkIfAbsent: testState.addUserWorkIfAbsent,
     getProviderCache: testState.getProviderCache,
     saveProviderCache: testState.saveProviderCache,
   }),
@@ -154,6 +165,10 @@ beforeEach(() => {
   testState.saveUserWork.mockImplementation(async (record) => record);
   testState.removeMinimalPlannedUserWork.mockReset();
   testState.removeMinimalPlannedUserWork.mockResolvedValue("removed");
+  testState.removeUserWorkIfUnchanged.mockReset();
+  testState.removeUserWorkIfUnchanged.mockResolvedValue("removed");
+  testState.addUserWorkIfAbsent.mockReset();
+  testState.addUserWorkIfAbsent.mockResolvedValue({ kind: "added" });
   testState.getProviderCache.mockReset();
   testState.getProviderCache.mockResolvedValue(null);
   testState.saveProviderCache.mockReset();
@@ -200,16 +215,16 @@ describe("WorkDetailFlow", () => {
     testState.status = { state: "ready", mode: "indexeddb", warning: null };
     const view = renderDetail("monster");
 
-    const hidden = await screen.findByRole("radio", {
+    const hidden = await screen.findByRole("button", {
       name: workDetailStrings.state.options.hidden,
     });
     // Reading progress is one segmented control; the exclusion stays outside it.
     const segments = document.querySelector('[data-slot="work-reading-segments"]');
     expect(
-      [...(segments?.querySelectorAll('[role="radio"]') ?? [])].map((radio) => radio.textContent),
+      [...(segments?.querySelectorAll("button") ?? [])].map((button) => button.textContent),
     ).toEqual([workDetailStrings.state.options.completed, workDetailStrings.state.options.dropped]);
     expect(
-      screen.queryByRole("radio", { name: workDetailStrings.state.options.reading }),
+      screen.queryByRole("button", { name: workDetailStrings.state.options.reading }),
     ).toBeNull();
     expect(
       screen
@@ -270,8 +285,8 @@ describe("WorkDetailFlow", () => {
     expect(pressed.getAttribute("aria-pressed")).toBe("true");
     expect(
       screen
-        .getByRole("radio", { name: workDetailStrings.state.options.completed })
-        .getAttribute("aria-checked"),
+        .getByRole("button", { name: workDetailStrings.state.options.completed })
+        .getAttribute("aria-pressed"),
     ).toBe("true");
     await act(async () => {
       fireEvent.click(pressed);
@@ -466,10 +481,92 @@ describe("WorkDetailFlow", () => {
     testState.userWorks = undefined;
     renderDetail();
 
-    expect(screen.queryByRole("radiogroup", { name: workDetailStrings.state.heading })).toBeNull();
+    expect(screen.queryByRole("group", { name: workDetailStrings.state.heading })).toBeNull();
     expect(screen.getByText(workDetailStrings.state.loading)).toBeTruthy();
     expect(testState.saveUserWork).not.toHaveBeenCalled();
     expect(testState.removeMinimalPlannedUserWork).not.toHaveBeenCalled();
+    expect(testState.removeUserWorkIfUnchanged).not.toHaveBeenCalled();
+  });
+
+  it("clears the record when the selected state is tapped again and restores it once", async () => {
+    const record: UserWorkRecord = {
+      workId: target.id,
+      readingState: "completed",
+      reaction: "liked",
+      progress: { volume: 3 },
+      updatedAt: "2026-08-14T00:00:00.000Z",
+    };
+    testState.userWorks = [record];
+    renderDetail();
+    const completed = screen.getByRole("button", {
+      name: workDetailStrings.state.options.completed,
+    });
+    expect(completed.getAttribute("aria-pressed")).toBe("true");
+
+    await act(async () => {
+      fireEvent.click(completed);
+    });
+    expect(testState.removeUserWorkIfUnchanged).toHaveBeenCalledWith(target.id, record.updatedAt);
+    expect(testState.saveUserWork).not.toHaveBeenCalled();
+    expect(
+      screen.getByText(
+        workDetailStrings.state.recordCleared(workDetailStrings.state.options.completed),
+      ),
+    ).toBeTruthy();
+
+    await act(async () => {
+      fireEvent.click(screen.getByRole("button", { name: workDetailStrings.state.undo }));
+    });
+    const restored = testState.addUserWorkIfAbsent.mock.calls[0]![0];
+    expect(restored).toMatchObject({
+      workId: target.id,
+      readingState: "completed",
+      reaction: "liked",
+      progress: { volume: 3 },
+    });
+    expect(restored.updatedAt).not.toBe(record.updatedAt);
+    expect(screen.getByText(workDetailStrings.state.recordRestored)).toBeTruthy();
+    expect(screen.queryByRole("button", { name: workDetailStrings.state.undo })).toBeNull();
+  });
+
+  it("keeps a record changed elsewhere instead of clearing it, and offers no undo", async () => {
+    testState.userWorks = [
+      { workId: target.id, readingState: "hidden", updatedAt: "2026-08-14T00:00:00.000Z" },
+    ];
+    testState.removeUserWorkIfUnchanged.mockResolvedValue("preserved-conflict");
+    renderDetail();
+
+    await act(async () => {
+      fireEvent.click(screen.getByRole("button", { name: workDetailStrings.state.options.hidden }));
+    });
+
+    expect(screen.getByText(workDetailStrings.state.plannedPreservedConflict)).toBeTruthy();
+    expect(screen.queryByRole("button", { name: workDetailStrings.state.undo })).toBeNull();
+  });
+
+  it("clears a planned record with progress through the conditional removal", async () => {
+    testState.userWorks = [
+      {
+        workId: target.id,
+        readingState: "planned",
+        progress: { volume: 2 },
+        updatedAt: "2026-08-14T00:00:00.000Z",
+      },
+    ];
+    renderDetail();
+
+    await act(async () => {
+      fireEvent.click(
+        screen.getByRole("button", { name: workDetailStrings.state.options.planned }),
+      );
+    });
+
+    expect(testState.removeMinimalPlannedUserWork).not.toHaveBeenCalled();
+    expect(testState.removeUserWorkIfUnchanged).toHaveBeenCalledWith(
+      target.id,
+      "2026-08-14T00:00:00.000Z",
+    );
+    expect(screen.getByRole("button", { name: workDetailStrings.state.undo })).toBeTruthy();
   });
 
   it("removes dropped-only reasons when changing away from dropped", async () => {
@@ -483,7 +580,9 @@ describe("WorkDetailFlow", () => {
     ];
     renderDetail();
 
-    fireEvent.click(screen.getByRole("radio", { name: workDetailStrings.state.options.completed }));
+    fireEvent.click(
+      screen.getByRole("button", { name: workDetailStrings.state.options.completed }),
+    );
 
     await waitFor(() => expect(testState.saveUserWork).toHaveBeenCalledTimes(1));
     const saved = testState.saveUserWork.mock.calls[0]![0];
@@ -621,8 +720,8 @@ describe("WorkDetailFlow", () => {
     expect(screen.getByRole("heading", { name: target.title })).toBeTruthy();
     expect(
       screen
-        .getByRole("radio", { name: workDetailStrings.state.options.completed })
-        .getAttribute("aria-checked"),
+        .getByRole("button", { name: workDetailStrings.state.options.completed })
+        .getAttribute("aria-pressed"),
     ).toBe("true");
     expect(screen.getByText(workDetailStrings.factors.empty)).toBeTruthy();
     expect(view.container.querySelectorAll('a[href^="/works/"]')).toHaveLength(0);

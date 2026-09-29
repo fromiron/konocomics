@@ -283,39 +283,59 @@ function compatibilityFor(options: {
   }
 }
 
+type RemovalResult = "removed" | "already-absent" | "preserved-conflict";
+type StateMessage = Readonly<{ kind: "status" | "error"; text: string }>;
+
 type WorkStateControlsProps = Readonly<{
   record: UserWorkRecord | undefined;
   recordsReady: boolean;
   /** Ongoing or paused series: 「読んだ」 means caught up to the latest volume. */
   seriesContinues: boolean;
   workId: string;
-  removeMinimalPlannedUserWork(
-    workId: string,
-  ): Promise<"removed" | "already-absent" | "preserved-conflict">;
+  addUserWorkIfAbsent(
+    record: UserWorkRecord,
+  ): Promise<Readonly<{ kind: "added" | "already-exists" | "preserved-unknown" }>>;
+  removeMinimalPlannedUserWork(workId: string): Promise<RemovalResult>;
+  removeUserWorkIfUnchanged(workId: string, expectedUpdatedAt: string): Promise<RemovalResult>;
   saveUserWork(record: UserWorkRecord): Promise<UserWorkRecord>;
 }>;
 
 function WorkStateControls({
+  addUserWorkIfAbsent,
   record,
   recordsReady,
   removeMinimalPlannedUserWork,
+  removeUserWorkIfUnchanged,
   saveUserWork,
   seriesContinues,
   workId,
 }: WorkStateControlsProps) {
   const [busy, setBusy] = useState(false);
-  const [message, setMessage] = useState<
-    Readonly<{ kind: "status" | "error"; text: string }> | undefined
-  >();
+  const [message, setMessage] = useState<StateMessage | undefined>();
+  // The record removed by the last clear, restorable once via 「元に戻す」.
+  const [undoRecord, setUndoRecord] = useState<UserWorkRecord | undefined>();
   const actionInFlight = useRef(false);
   const minimalPlanned = isMinimalPlannedRecord(record);
 
-  const saveReadingState = async (readingState: ReadingState) => {
-    if (!recordsReady || actionInFlight.current || record?.readingState === readingState) return;
+  // Serializes one mutation at a time and reports its outcome.
+  const runAction = async (action: () => Promise<StateMessage>) => {
+    if (!recordsReady || actionInFlight.current) return;
     actionInFlight.current = true;
     setBusy(true);
     setMessage(undefined);
+    setUndoRecord(undefined);
     try {
+      setMessage(await action());
+    } catch {
+      setMessage({ kind: "error", text: workDetailStrings.state.error });
+    } finally {
+      actionInFlight.current = false;
+      setBusy(false);
+    }
+  };
+
+  const saveReadingState = (readingState: ReadingState) =>
+    runAction(async () => {
       const preservedRecord = readingState === "dropped" ? record : withoutDroppedReasons(record);
       await saveUserWork({
         ...preservedRecord,
@@ -323,29 +343,19 @@ function WorkStateControls({
         readingState,
         updatedAt: new Date().toISOString(),
       });
-      setMessage({
+      return {
         kind: "status",
         text:
           readingState === "planned"
             ? workDetailStrings.state.plannedSaved
             : workDetailStrings.state.saved,
-      });
-    } catch {
-      setMessage({ kind: "error", text: workDetailStrings.state.error });
-    } finally {
-      actionInFlight.current = false;
-      setBusy(false);
-    }
-  };
+      };
+    });
 
-  const removePlanned = async () => {
-    if (!recordsReady || actionInFlight.current) return;
-    actionInFlight.current = true;
-    setBusy(true);
-    setMessage(undefined);
-    try {
+  const removePlanned = () =>
+    runAction(async () => {
       const result = await removeMinimalPlannedUserWork(workId);
-      setMessage({
+      return {
         kind: "status",
         text:
           result === "removed"
@@ -353,19 +363,50 @@ function WorkStateControls({
             : result === "already-absent"
               ? workDetailStrings.state.plannedAlreadyAbsent
               : workDetailStrings.state.plannedPreservedConflict,
+      };
+    });
+
+  // Tapping the selected state resets the work to 「no record」; a newer write from another
+  // tab is never deleted, and the removed record stays restorable until the next action.
+  const clearRecord = (label: string) => {
+    const snapshot = record;
+    if (snapshot === undefined) return Promise.resolve();
+    return runAction(async () => {
+      const result = await removeUserWorkIfUnchanged(workId, snapshot.updatedAt);
+      if (result === "removed") setUndoRecord(snapshot);
+      return {
+        kind: "status",
+        text:
+          result === "removed"
+            ? workDetailStrings.state.recordCleared(label)
+            : result === "already-absent"
+              ? workDetailStrings.state.recordAlreadyCleared
+              : workDetailStrings.state.plannedPreservedConflict,
+      };
+    });
+  };
+
+  const restoreRecord = () => {
+    const snapshot = undoRecord;
+    if (snapshot === undefined) return Promise.resolve();
+    return runAction(async () => {
+      const result = await addUserWorkIfAbsent({
+        ...snapshot,
+        updatedAt: new Date().toISOString(),
       });
-    } catch {
-      setMessage({ kind: "error", text: workDetailStrings.state.error });
-    } finally {
-      actionInFlight.current = false;
-      setBusy(false);
-    }
+      return {
+        kind: "status",
+        text:
+          result.kind === "added"
+            ? workDetailStrings.state.recordRestored
+            : workDetailStrings.state.plannedPreservedConflict,
+      };
+    });
   };
 
   // A reaction keeps an in-progress, finished, or dropped state and otherwise records 「読んだ」.
   // Tapping the current reaction clears only the reaction.
-  const saveReaction = async (reaction: Reaction) => {
-    if (!recordsReady || actionInFlight.current) return;
+  const saveReaction = (reaction: Reaction) => {
     const keptState =
       record?.readingState === "reading" ||
       record?.readingState === "completed" ||
@@ -375,10 +416,7 @@ function WorkStateControls({
     const nextState = keptState ?? "completed";
     const nextReaction =
       keptState !== undefined && record?.reaction === reaction ? undefined : reaction;
-    actionInFlight.current = true;
-    setBusy(true);
-    setMessage(undefined);
-    try {
+    return runAction(async () => {
       const base = nextState === "dropped" ? record : withoutDroppedReasons(record);
       const negativeReasons = base?.negativeReasons;
       const rest = { ...base };
@@ -395,7 +433,7 @@ function WorkStateControls({
           : {}),
         updatedAt: new Date().toISOString(),
       });
-      setMessage({
+      return {
         kind: "status",
         text:
           nextReaction === undefined
@@ -404,17 +442,17 @@ function WorkStateControls({
                 workDetailStrings.state.options[nextState],
                 libraryStrings.reactions[nextReaction],
               ),
-      });
-    } catch {
-      setMessage({ kind: "error", text: workDetailStrings.state.error });
-    } finally {
-      actionInFlight.current = false;
-      setBusy(false);
-    }
+      };
+    });
   };
 
+  // State buttons toggle: selecting the current state again clears the record.
   const handleStateSelect = (state: ReadingState) => {
-    void saveReadingState(state);
+    if (record?.readingState === state) {
+      void clearRecord(workDetailStrings.state.options[state]);
+    } else {
+      void saveReadingState(state);
+    }
   };
 
   const toggleBookmark = () => {
@@ -423,7 +461,7 @@ function WorkStateControls({
     } else if (minimalPlanned) {
       void removePlanned();
     } else {
-      setMessage({ kind: "status", text: workDetailStrings.state.managedByState });
+      void clearRecord(workDetailStrings.state.options.planned);
     }
   };
 
@@ -442,7 +480,7 @@ function WorkStateControls({
     const selected = record?.readingState === state;
     return (
       <button
-        aria-checked={selected}
+        aria-pressed={selected}
         className={`inline-flex min-h-[var(--control-min-size)] items-center justify-center rounded-[var(--radius-control)] px-[var(--space-4)] text-[length:var(--font-size-14)] font-bold whitespace-nowrap ${interactive} ${
           selected
             ? "bg-accent text-on-accent"
@@ -451,7 +489,6 @@ function WorkStateControls({
         data-reading-state={state}
         disabled={busy}
         onClick={() => handleStateSelect(state)}
-        role="radio"
         type="button"
       >
         {workDetailStrings.state.options[state]}
@@ -506,7 +543,7 @@ function WorkStateControls({
             <div
               aria-labelledby="work-state-heading"
               className="flex flex-wrap items-center gap-x-[var(--space-3)] gap-y-[var(--space-2)]"
-              role="radiogroup"
+              role="group"
             >
               <div
                 className="inline-flex gap-[var(--space-1)] rounded-[calc(var(--radius-control)+var(--space-1))] bg-surface-2/70 p-[var(--space-1)]"
@@ -517,7 +554,7 @@ function WorkStateControls({
               </div>
               {/* 「興味なし」 excludes the work from recommendations rather than tracking reading. */}
               <button
-                aria-checked={excluded}
+                aria-pressed={excluded}
                 className={`inline-flex min-h-[var(--control-min-size)] items-center gap-[var(--space-2)] rounded-[var(--radius-control)] px-[var(--space-3)] text-[length:var(--font-size-14)] font-bold ${interactive} ${
                   excluded
                     ? "bg-surface-2 text-text-strong"
@@ -526,7 +563,6 @@ function WorkStateControls({
                 data-reading-state="hidden"
                 disabled={busy}
                 onClick={() => handleStateSelect("hidden")}
-                role="radio"
                 type="button"
               >
                 <EyeOffIcon aria-hidden="true" className="size-4" />
@@ -582,12 +618,24 @@ function WorkStateControls({
           {workDetailStrings.state.saving}
         </p>
       ) : message === undefined ? null : (
-        <p
-          className="text-[length:var(--text-caption-size)] text-text-muted [&[role=alert]]:border-l-[length:var(--space-content-tight)] [&[role=alert]]:border-warn [&[role=alert]]:px-[var(--space-3)] [&[role=alert]]:py-[var(--space-content)] [&[role=alert]]:text-text-strong"
-          role={message.kind === "error" ? "alert" : "status"}
-        >
-          {message.text}
-        </p>
+        <div className="flex flex-wrap items-center gap-x-[var(--space-3)]">
+          <p
+            className="text-[length:var(--text-caption-size)] text-text-muted [&[role=alert]]:border-l-[length:var(--space-content-tight)] [&[role=alert]]:border-warn [&[role=alert]]:px-[var(--space-3)] [&[role=alert]]:py-[var(--space-content)] [&[role=alert]]:text-text-strong"
+            role={message.kind === "error" ? "alert" : "status"}
+          >
+            {message.text}
+          </p>
+          {undoRecord === undefined ? null : (
+            <button
+              className={`inline-flex min-h-[var(--control-min-size)] items-center rounded-[var(--radius-control)] px-[var(--space-2)] text-[length:var(--text-caption-size)] font-bold text-text-strong underline underline-offset-4 hover:text-text ${interactive}`}
+              data-slot="work-state-undo"
+              onClick={() => void restoreRecord()}
+              type="button"
+            >
+              {workDetailStrings.state.undo}
+            </button>
+          )}
+        </div>
       )}
     </section>
   );
@@ -824,8 +872,10 @@ function WorkDetailContent({ catalog, work }: Readonly<{ catalog: CatalogV1; wor
   const {
     adjustments,
     getProviderCache,
+    addUserWorkIfAbsent,
     policies,
     removeMinimalPlannedUserWork,
+    removeUserWorkIfUnchanged,
     saveProviderCache,
     saveUserWork,
     status,
@@ -1149,9 +1199,11 @@ function WorkDetailContent({ catalog, work }: Readonly<{ catalog: CatalogV1; wor
           ) : null}
 
           <WorkStateControls
+            addUserWorkIfAbsent={addUserWorkIfAbsent}
             record={currentRecord}
             recordsReady={userWorks !== undefined}
             removeMinimalPlannedUserWork={removeMinimalPlannedUserWork}
+            removeUserWorkIfUnchanged={removeUserWorkIfUnchanged}
             saveUserWork={saveUserWork}
             seriesContinues={work.status === "ongoing" || work.status === "hiatus"}
             workId={work.id}

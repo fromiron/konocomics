@@ -17,6 +17,8 @@ import type {
 export type StorageMode = "indexeddb" | "memory";
 
 export type MinimalPlannedRemovalResult = "removed" | "already-absent" | "preserved-conflict";
+/** Result of removing a user work only if it is still the row the caller last read. */
+export type UserWorkRemovalResult = MinimalPlannedRemovalResult;
 
 export type ExternalWorkRemovalResult = "removed" | "already-absent" | "preserved-unknown";
 
@@ -65,6 +67,10 @@ export interface PersistenceBackend {
   addUserWorkIfAbsent(record: UserWorkRecord): Promise<ConfirmedAddIfAbsentResult<unknown>>;
   upsertUserWork(record: UserWorkRecord): Promise<unknown>;
   removeMinimalPlannedUserWork(workId: string): Promise<MinimalPlannedRemovalResult>;
+  removeUserWorkIfUnchanged(
+    workId: string,
+    expectedUpdatedAt: string,
+  ): Promise<UserWorkRemovalResult>;
   getExternalWorks(): Promise<unknown[]>;
   getExternalWork(id: string): Promise<unknown | null>;
   addExternalWorkIfAbsent(record: ExternalWorkRecord): Promise<ConfirmedAddIfAbsentResult<unknown>>;

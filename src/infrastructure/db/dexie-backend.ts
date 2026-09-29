@@ -11,6 +11,7 @@ import {
   OnboardingWorkConflictError,
   type ConfirmedAddIfAbsentResult,
   type MinimalPlannedRemovalResult,
+  type UserWorkRemovalResult,
   type OnboardingCommit,
   type PersistenceBackend,
 } from "./backend";
@@ -36,6 +37,7 @@ import type {
   RecommendationCacheRecord,
 } from "./records";
 import {
+  hasUpdatedAt,
   isMinimalPlannedUserWork,
   parseExternalUserWorkRecord,
   parseExternalWork,
@@ -140,10 +142,25 @@ export class DexiePersistenceBackend implements PersistenceBackend {
   }
 
   async removeMinimalPlannedUserWork(workId: string): Promise<MinimalPlannedRemovalResult> {
+    return this.removeUserWorkWhen(workId, isMinimalPlannedUserWork);
+  }
+
+  async removeUserWorkIfUnchanged(
+    workId: string,
+    expectedUpdatedAt: string,
+  ): Promise<UserWorkRemovalResult> {
+    return this.removeUserWorkWhen(workId, (current) => hasUpdatedAt(current, expectedUpdatedAt));
+  }
+
+  /** Atomically deletes the row only when it still satisfies `shouldRemove`. */
+  private async removeUserWorkWhen(
+    workId: string,
+    shouldRemove: (current: unknown) => boolean,
+  ): Promise<UserWorkRemovalResult> {
     return this.database.transaction("rw", this.database.userWorks, async () => {
       const current = await this.database.userWorks.get(workId);
       if (current === undefined) return "already-absent";
-      if (!isMinimalPlannedUserWork(current)) return "preserved-conflict";
+      if (!shouldRemove(current)) return "preserved-conflict";
 
       await this.database.userWorks.delete(workId);
       if ((await this.database.userWorks.get(workId)) !== undefined) {

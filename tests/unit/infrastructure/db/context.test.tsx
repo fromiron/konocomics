@@ -187,9 +187,24 @@ class TestPersistence implements Persistence {
 
   async removeMinimalPlannedUserWork(workId: string): Promise<MinimalPlannedRemovalResult> {
     this.calls.push("removeMinimalPlannedUserWork");
+    return this.removeWhen(workId, isMinimalPlannedUserWork);
+  }
+
+  async removeUserWorkIfUnchanged(
+    workId: string,
+    expectedUpdatedAt: string,
+  ): Promise<MinimalPlannedRemovalResult> {
+    this.calls.push("removeUserWorkIfUnchanged");
+    return this.removeWhen(workId, (current) => current.updatedAt === expectedUpdatedAt);
+  }
+
+  private removeWhen(
+    workId: string,
+    shouldRemove: (current: UserWorkRecord) => boolean,
+  ): MinimalPlannedRemovalResult {
     const current = this.records.find((record) => record.workId === workId);
     if (current === undefined) return "already-absent";
-    if (!isMinimalPlannedUserWork(current)) return "preserved-conflict";
+    if (!shouldRemove(current)) return "preserved-conflict";
 
     this.records = this.records.filter((record) => record.workId !== workId);
     return "removed";

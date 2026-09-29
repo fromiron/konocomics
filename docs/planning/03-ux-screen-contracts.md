@@ -457,7 +457,7 @@ Catalog 작품은 추천 근거를 깊이 확인하고 구매(라쿠텐)로 연�
 
 ### 주요 액션
 
-**「楽天ブックスで見る」** (affiliate 링크, 새 탭). 부가: 읽음 상태 변경 드롭다운, 読みたい 토글. 2026-09-29 개선: 읽음 상태 radiogroup은 기존 다섯 값·접근 이름·저장 계약을 유지한다. 「読みたい」는 기록이 없거나 `planned`일 때만 보이는 북마크 토글(`aria-pressed`, 최소 planned 기록만 해제하는 기존 계약 유지)이다. 상태 선택은 옅은 트랙 위 「読んだ | 途中でやめた」 세그먼트(radio)와 그 밖의 아이콘 텍스트 「興味なし」(radio, accent 채움 없음)다. Library에서 `reading`으로 기록된 작품은 상세에서 「ライブラリで「読んでいる」として記録中です（진행）」를 표시한다. 「感想」 그룹(最高·良かった·普通·いまいち, Library와 같은 라벨·`aria-pressed`)은 `reading`·`completed`·`dropped`이면 상태를 유지한 채 reaction만 저장하고, 그 밖이면 `completed`+reaction을 저장한다. 현재 감상을 다시 누르면 reaction만 제거한다. reaction이 `disliked`가 아니게 되면 `negativeReasons`를 제거하고, `dropped`의 `droppedReasons`는 유지한다. 연재 중·휴재 중 작품에는 「連載中の作品は、最新刊まで読んだら「読んだ」を選べます。」 안내를 둔다(값·라벨은 바꾸지 않는다). 토글은 record 없음 ↔ 부가 정보 없는 최소 `planned` record일 때만 양방향이며, 다른 상태·감상·진행·이유가 있는 record는 상태 드롭다운이 소유하고 삭제하지 않는다.
+**「楽天ブックスで見る」** (affiliate 링크, 새 탭). 부가: 읽음 상태 제어, 読みたい 토글. 2026-09-29 개선: 기존 다섯 값·접근 이름·저장 계약을 유지한다. 「読みたい」는 기록이 없거나 `planned`일 때만 보이는 북마크 토글(`aria-pressed`)이다. 상태 선택은 heading으로 이름 붙인 `group` 안의 옅은 트랙 위 「読んだ | 途中でやめた」 세그먼트와 그 밖의 아이콘 텍스트 「興味なし」(accent 채움 없음)이며, 모두 `aria-pressed` 토글 버튼이다. 선택되지 않은 상태를 누르면 그 상태를 저장한다. 2026-09-29 사용자 요청으로 **현재 선택된 상태(북마크 포함)를 다시 누르면 기록을 해제**해 기록 없음으로 되돌린다. 해제는 화면이 읽은 record의 `updatedAt`이 저장소에서 그대로일 때만 삭제하는 조건부 삭제(`removeUserWorkIfUnchanged`)이며, 다른 화면에서 더 새로 쓴 기록은 삭제하지 않고 「別の画面で更新された記録を残しました。…」를 표시한다. 부가 정보 없는 최소 `planned` 북마크 해제는 기존 `removeMinimalPlannedUserWork` 계약과 메시지를 그대로 쓴다. 해제 성공 시 「「{状態}」を解除しました。」와 함께 「元に戻す」를 한 번 제공한다. 「元に戻す」는 해제 직전 record 전체(감상·진행·이유 포함)를 새 `updatedAt`으로 `addUserWorkIfAbsent` 복원하며, 그 사이 다른 기록이 생겼으면 덮어쓰지 않는다. 다음 조작이 시작되면 「元に戻す」는 사라진다. Library에서 `reading`으로 기록된 작품은 상세에서 「ライブラリで「読んでいる」として記録中です（진행）」를 표시한다. 「感想」 그룹(最高·良かった·普通·いまいち, Library와 같은 라벨·`aria-pressed`)은 `reading`·`completed`·`dropped`이면 상태를 유지한 채 reaction만 저장하고, 그 밖이면 `completed`+reaction을 저장한다. 현재 감상을 다시 누르면 reaction만 제거한다. reaction이 `disliked`가 아니게 되면 `negativeReasons`를 제거하고, `dropped`의 `droppedReasons`는 유지한다. 연재 중·휴재 중 작품에는 「連載中の作品は、最新刊まで読んだら「読んだ」を選べます。」 안내를 둔다(값·라벨은 바꾸지 않는다).
 
 ### 정보 위계
 
@@ -535,6 +535,7 @@ Catalog 작품은 추천 근거를 깊이 확인하고 구매(라쿠텐)로 연�
 - [ ] mobile 확장 카드의 역할 아래에는 Catalog 저자와 「近いポイント」를 표시한다. 포인트는 해당 Anchor를 실제로 참조하는 렌더링된 positive similarity 이유의 Factor/Cluster 레이블만 사용하며, 해당 이유가 없으면 포인트 부분을 생략한다.
 - [ ] mobile의 「楽天ブックスで見る」와 검색 대체 버튼은 구매 영역의 전체 폭을 사용한다.
 - [ ] 읽음 상태 변경이 Library와 다음 추천에 반영된다.
+- [ ] 선택된 읽음 상태·북마크를 다시 누르면 기록이 해제되고 「元に戻す」로 해제 직전 record를 복원한다. 다른 화면에서 갱신된 기록은 해제·복원 어느 쪽에서도 덮어쓰거나 삭제하지 않는다.
 - [ ] 같은 브라우저에서 external 상세 URL을 새로고침해도 같은 로컬 record와 사용자 상태를 읽는다.
 - [ ] 같은 URL을 해당 row가 없는 브라우저에서 열면 local-missing 상태가 되고 provider로 복원하지 않는다.
 - [ ] malformed query는 해당 값으로 ID별 local lookup/provider 요청을 하지 않고, corrupt row는 provider 요청과 questionable 서지 렌더링을 하지 않는다.

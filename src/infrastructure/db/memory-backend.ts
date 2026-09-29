@@ -10,6 +10,7 @@ import {
   OnboardingAlreadyCompletedError,
   OnboardingWorkConflictError,
   type MinimalPlannedRemovalResult,
+  type UserWorkRemovalResult,
   type OnboardingCommit,
   type PersistenceBackend,
   type ConfirmedAddIfAbsentResult,
@@ -31,6 +32,7 @@ import {
 } from "./external-work";
 import type { ExternalWorkRecord, ProviderCacheRecord, RecommendationCacheRecord } from "./records";
 import {
+  hasUpdatedAt,
   isMinimalPlannedUserWork,
   parseExternalUserWorkRecord,
   parseExternalWork,
@@ -126,10 +128,24 @@ export class MemoryPersistenceBackend implements PersistenceBackend {
   }
 
   async removeMinimalPlannedUserWork(workId: string): Promise<MinimalPlannedRemovalResult> {
+    return this.removeUserWorkWhen(workId, isMinimalPlannedUserWork);
+  }
+
+  async removeUserWorkIfUnchanged(
+    workId: string,
+    expectedUpdatedAt: string,
+  ): Promise<UserWorkRemovalResult> {
+    return this.removeUserWorkWhen(workId, (current) => hasUpdatedAt(current, expectedUpdatedAt));
+  }
+
+  private removeUserWorkWhen(
+    workId: string,
+    shouldRemove: (current: unknown) => boolean,
+  ): UserWorkRemovalResult {
     const validatedWorkId = parseWorkId(workId);
     const current = this.userWorks.get(validatedWorkId);
     if (current === undefined) return "already-absent";
-    if (!isMinimalPlannedUserWork(current)) return "preserved-conflict";
+    if (!shouldRemove(current)) return "preserved-conflict";
 
     this.userWorks.delete(validatedWorkId);
     if (this.userWorks.has(validatedWorkId)) {
