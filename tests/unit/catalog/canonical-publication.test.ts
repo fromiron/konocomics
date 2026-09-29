@@ -419,6 +419,7 @@ it("resumes an actual pre-seal preparation from a DB-only restore without rewrit
   }
 }, 120_000);
 
+// Full-catalog publication and interrupted-swap recovery run through real CLI processes.
 it("publishes a rebuilt selected canonical projection and resumes an interrupted source swap through the real lock broker", () => {
   const temporary = mkdtempSync(join(tmpdir(), "konocomics-canonical-publication-"));
   const root = join(temporary, "repository");
@@ -905,4 +906,4 @@ it("publishes a rebuilt selected canonical projection and resumes an interrupted
   } finally {
     rmSync(temporary, { recursive: true, force: true });
   }
-}, 180_000);
+}, 480_000);

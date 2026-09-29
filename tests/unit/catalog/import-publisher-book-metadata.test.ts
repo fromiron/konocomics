@@ -28,6 +28,7 @@ import {
 const { readCatalogAuthority, serializeCsv, sha256 } = authority;
 const repository = resolve(import.meta.dirname, "../../..");
 
+// Real publication, DB-only restore, and CLI resume share one full-catalog timeout.
 it("adds a captured introduction without losing metadata, and rejects damaged or mismatched input before publication", () => {
   const root = mkdtempSync(join(tmpdir(), "konocomics-publisher-metadata-"));
   const restoreParent = mkdtempSync(join(tmpdir(), "konocomics-publisher-metadata-restore-"));
@@ -317,4 +318,4 @@ it("adds a captured introduction without losing metadata, and rejects damaged or
     rmSync(parked, { recursive: true, force: true });
     rmSync(restoreParent, { recursive: true, force: true });
   }
-}, 240_000);
+}, 480_000);

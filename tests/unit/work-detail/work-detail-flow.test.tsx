@@ -408,7 +408,8 @@ describe("WorkDetailFlow", () => {
           cached.itemCaption,
         );
       });
-      const button = screen.getByRole("button", {
+      // Caption rendering precedes the effect that measures overflow and reveals the control.
+      const button = await screen.findByRole("button", {
         name: workDetailStrings.synopsis.readMore,
       });
       const paragraph = document.getElementById(button.getAttribute("aria-controls")!);
