@@ -362,16 +362,24 @@ function WorkStateControls({
     }
   };
 
-  // One tap records 「読んだ」 with a reaction; tapping the current reaction clears it.
-  const saveCompletedReaction = async (reaction: Reaction) => {
+  // A reaction keeps an in-progress, finished, or dropped state and otherwise records 「読んだ」.
+  // Tapping the current reaction clears only the reaction.
+  const saveReaction = async (reaction: Reaction) => {
     if (!recordsReady || actionInFlight.current) return;
+    const keptState =
+      record?.readingState === "reading" ||
+      record?.readingState === "completed" ||
+      record?.readingState === "dropped"
+        ? record.readingState
+        : undefined;
+    const nextState = keptState ?? "completed";
     const nextReaction =
-      record?.readingState === "completed" && record.reaction === reaction ? undefined : reaction;
+      keptState !== undefined && record?.reaction === reaction ? undefined : reaction;
     actionInFlight.current = true;
     setBusy(true);
     setMessage(undefined);
     try {
-      const base = withoutDroppedReasons(record);
+      const base = nextState === "dropped" ? record : withoutDroppedReasons(record);
       const negativeReasons = base?.negativeReasons;
       const rest = { ...base };
       delete rest.reaction;
@@ -379,7 +387,7 @@ function WorkStateControls({
       await saveUserWork({
         ...rest,
         workId,
-        readingState: "completed",
+        readingState: nextState,
         ...(nextReaction === undefined ? {} : { reaction: nextReaction }),
         // Dislike reasons are only valid while the reaction stays 「いまいち」.
         ...(nextReaction === "disliked" && negativeReasons !== undefined
@@ -392,7 +400,10 @@ function WorkStateControls({
         text:
           nextReaction === undefined
             ? workDetailStrings.state.reactionCleared
-            : workDetailStrings.state.reactionSaved(libraryStrings.reactions[nextReaction]),
+            : workDetailStrings.state.reactionSaved(
+                workDetailStrings.state.options[nextState],
+                libraryStrings.reactions[nextReaction],
+              ),
       });
     } catch {
       setMessage({ kind: "error", text: workDetailStrings.state.error });
@@ -403,25 +414,36 @@ function WorkStateControls({
   };
 
   const handleStateSelect = (state: ReadingState) => {
-    if (state === "planned" && minimalPlanned) {
-      void removePlanned();
-      return;
-    }
     void saveReadingState(state);
   };
 
-  const completed = record?.readingState === "completed";
+  const toggleBookmark = () => {
+    if (record?.readingState !== "planned") {
+      void saveReadingState("planned");
+    } else if (minimalPlanned) {
+      void removePlanned();
+    } else {
+      setMessage({ kind: "status", text: workDetailStrings.state.managedByState });
+    }
+  };
+
+  const bookmarked = record?.readingState === "planned";
+  // 「読みたい」 is a bookmark before reading; once read or excluded it no longer applies.
+  const showBookmark = record === undefined || bookmarked;
   const excluded = record?.readingState === "hidden";
+  const rated =
+    record?.readingState === "reading" ||
+    record?.readingState === "completed" ||
+    record?.readingState === "dropped";
   const interactive =
     "transition-[background-color,color] duration-[var(--motion-duration-feedback)] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-focus-ring focus-visible:ring-offset-2 focus-visible:ring-offset-canvas disabled:cursor-not-allowed disabled:opacity-55 motion-reduce:transition-none";
 
-  // Reading progress is one segmented control: a single frame, the selection filled.
-  const segment = (state: Exclude<ReadingState, "hidden">) => {
+  const segment = (state: "completed" | "dropped") => {
     const selected = record?.readingState === state;
     return (
       <button
         aria-checked={selected}
-        className={`inline-flex min-h-[var(--control-min-size)] items-center justify-center gap-[var(--space-2)] rounded-[var(--radius-control)] px-[var(--space-4)] text-[length:var(--font-size-14)] font-bold whitespace-nowrap ${interactive} ${
+        className={`inline-flex min-h-[var(--control-min-size)] items-center justify-center rounded-[var(--radius-control)] px-[var(--space-4)] text-[length:var(--font-size-14)] font-bold whitespace-nowrap ${interactive} ${
           selected
             ? "bg-accent text-on-accent"
             : "text-text-muted hover:bg-surface-2 hover:text-text-strong"
@@ -432,13 +454,15 @@ function WorkStateControls({
         role="radio"
         type="button"
       >
-        {state === "planned" ? (
-          <BookmarkIcon aria-hidden="true" className={`size-4 ${selected ? "fill-current" : ""}`} />
-        ) : null}
         {workDetailStrings.state.options[state]}
       </button>
     );
   };
+
+  const readingProgress =
+    record?.progress === undefined
+      ? undefined
+      : libraryStrings.progress(record.progress.volume, record.progress.chapter);
 
   return (
     <section
@@ -458,38 +482,63 @@ function WorkStateControls({
         </p>
       ) : (
         <>
-          <div
-            aria-labelledby="work-state-heading"
-            className="flex flex-wrap items-center gap-x-[var(--space-4)] gap-y-[var(--space-2)]"
-            role="radiogroup"
-          >
+          <div className="flex flex-wrap items-center gap-x-[var(--space-3)] gap-y-[var(--space-2)]">
+            {showBookmark ? (
+              <button
+                aria-pressed={bookmarked}
+                className={`inline-flex min-h-[var(--control-min-size)] items-center gap-[var(--space-2)] rounded-[var(--radius-control)] px-[var(--space-4)] text-[length:var(--font-size-14)] font-bold ${interactive} ${
+                  bookmarked
+                    ? "bg-accent-soft text-accent"
+                    : "bg-surface-2/70 text-text hover:bg-surface-2 hover:text-text-strong"
+                }`}
+                data-slot="work-bookmark"
+                disabled={busy}
+                onClick={toggleBookmark}
+                type="button"
+              >
+                <BookmarkIcon
+                  aria-hidden="true"
+                  className={`size-4 ${bookmarked ? "fill-current" : ""}`}
+                />
+                {workDetailStrings.state.options.planned}
+              </button>
+            ) : null}
             <div
-              className="grid w-full grid-cols-2 gap-[var(--space-1)] rounded-[calc(var(--radius-control)+var(--space-1))] bg-surface-2/70 p-[var(--space-1)] sm:inline-flex sm:w-auto"
-              data-slot="work-reading-segments"
+              aria-labelledby="work-state-heading"
+              className="flex flex-wrap items-center gap-x-[var(--space-3)] gap-y-[var(--space-2)]"
+              role="radiogroup"
             >
-              {segment("planned")}
-              {segment("reading")}
-              {segment("completed")}
-              {segment("dropped")}
+              <div
+                className="inline-flex gap-[var(--space-1)] rounded-[calc(var(--radius-control)+var(--space-1))] bg-surface-2/70 p-[var(--space-1)]"
+                data-slot="work-reading-segments"
+              >
+                {segment("completed")}
+                {segment("dropped")}
+              </div>
+              {/* 「興味なし」 excludes the work from recommendations rather than tracking reading. */}
+              <button
+                aria-checked={excluded}
+                className={`inline-flex min-h-[var(--control-min-size)] items-center gap-[var(--space-2)] rounded-[var(--radius-control)] px-[var(--space-3)] text-[length:var(--font-size-14)] font-bold ${interactive} ${
+                  excluded
+                    ? "bg-surface-2 text-text-strong"
+                    : "text-text-muted hover:text-text-strong"
+                }`}
+                data-reading-state="hidden"
+                disabled={busy}
+                onClick={() => handleStateSelect("hidden")}
+                role="radio"
+                type="button"
+              >
+                <EyeOffIcon aria-hidden="true" className="size-4" />
+                {workDetailStrings.state.options.hidden}
+              </button>
             </div>
-            {/* 「興味なし」 excludes the work from recommendations rather than tracking reading. */}
-            <button
-              aria-checked={excluded}
-              className={`inline-flex min-h-[var(--control-min-size)] items-center gap-[var(--space-2)] rounded-[var(--radius-control)] px-[var(--space-3)] text-[length:var(--font-size-14)] font-bold ${interactive} ${
-                excluded
-                  ? "bg-surface-2 text-text-strong"
-                  : "text-text-muted hover:text-text-strong"
-              }`}
-              data-reading-state="hidden"
-              disabled={busy}
-              onClick={() => handleStateSelect("hidden")}
-              role="radio"
-              type="button"
-            >
-              <EyeOffIcon aria-hidden="true" className="size-4" />
-              {workDetailStrings.state.options.hidden}
-            </button>
           </div>
+          {record?.readingState === "reading" ? (
+            <p className="text-[length:var(--text-caption-size)] text-text-muted">
+              {workDetailStrings.state.readingNote(readingProgress)}
+            </p>
+          ) : null}
           <div
             aria-labelledby="work-reaction-label"
             className="grid w-full grid-cols-4 items-center gap-[var(--space-1)] sm:flex sm:w-auto"
@@ -502,7 +551,7 @@ function WorkStateControls({
               {workDetailStrings.state.reactionGroup}
             </span>
             {REACTIONS.map((reaction) => {
-              const pressed = completed && record?.reaction === reaction;
+              const pressed = rated && record?.reaction === reaction;
               return (
                 <button
                   aria-pressed={pressed}
@@ -513,7 +562,7 @@ function WorkStateControls({
                   }`}
                   disabled={busy}
                   key={reaction}
-                  onClick={() => void saveCompletedReaction(reaction)}
+                  onClick={() => void saveReaction(reaction)}
                   type="button"
                 >
                   {libraryStrings.reactions[reaction]}

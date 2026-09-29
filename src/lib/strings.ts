@@ -926,9 +926,13 @@ export const workDetailStrings = {
     plannedRemove: "読みたいから外す",
     managedByState: "現在の記録は読書状態から変更できます。",
     ongoingHint: "連載中の作品は、最新刊まで読んだら「読んだ」を選べます。",
-    reactionGroup: "読んだ感想",
-    reactionSaved: (label: string) => `「読んだ・${label}」を保存しました。`,
-    reactionCleared: "感想を外しました。「読んだ」はそのままです。",
+    reactionGroup: "感想",
+    reactionSaved: (state: string, label: string) => `「${state}・${label}」を保存しました。`,
+    reactionCleared: "感想を外しました。読書状態はそのままです。",
+    readingNote: (progress?: string) =>
+      progress === undefined
+        ? "ライブラリで「読んでいる」として記録中です。"
+        : `ライブラリで「読んでいる」として記録中です（${progress}）。`,
     saving: "保存しています…",
     saved: "読書状態を保存しました。",
     plannedSaved: "読みたいに追加しました。",

@@ -1487,7 +1487,7 @@ test.describe("Slice 7 recommendation journeys", () => {
     const compatibility = anchorDetail.getByRole("region", { name: "あなたとの相性" });
     await expect(compatibility.getByText(anchorSummary.text, { exact: true })).toBeVisible();
     await expect(compatibility.getByText(/分析の確信度/u)).toBeVisible();
-    await expect(anchorDetail.getByRole("radio", { name: "読みたい", exact: true })).toBeVisible();
+    await expect(anchorDetail.getByRole("button", { name: "読みたい", exact: true })).toBeVisible();
     await page.goBack();
     await expect(anchorCard).toBeVisible();
     expect(await recommendationIds(page)).toEqual(policyIds);
@@ -1818,9 +1818,9 @@ test.describe("Slice 8 provider and work-detail journey", () => {
     expect(searchUrl.searchParams.get("sitem")).toBe(providerTitle);
     expect(searchRequests).toHaveLength(0);
 
-    const planned = detail.getByRole("radio", { name: "読みたい", exact: true });
+    const planned = detail.getByRole("button", { name: "読みたい", exact: true });
     await planned.click();
-    await expect(planned).toBeChecked();
+    await expect(planned).toHaveAttribute("aria-pressed", "true");
     await expect(detail.getByRole("status")).toHaveText("読みたいに追加しました。");
     await expect
       .poll(async () =>
@@ -1832,14 +1832,16 @@ test.describe("Slice 8 provider and work-detail journey", () => {
     await stalePage.goto(`/works/${workId}`);
     const staleDetail = stalePage.locator(`main[data-work-detail-id='${workId}']`);
     await expect(staleDetail.getByRole("heading", { level: 1, name: providerTitle })).toBeVisible();
-    await expect(staleDetail.getByRole("radio", { name: "読みたい", exact: true })).toBeChecked();
+    await expect(
+      staleDetail.getByRole("button", { name: "読みたい", exact: true }),
+    ).toHaveAttribute("aria-pressed", "true");
 
     providerAvailable = true;
     await page.reload();
     const restoredDetail = page.locator(`main[data-work-detail-id='${workId}']`);
     await expect(
-      restoredDetail.getByRole("radio", { name: "読みたい", exact: true }),
-    ).toBeChecked();
+      restoredDetail.getByRole("button", { name: "読みたい", exact: true }),
+    ).toHaveAttribute("aria-pressed", "true");
     await expect
       .poll(async () =>
         (await readProductState(page)).userWorks.find((record) => record.workId === workId),
@@ -1881,7 +1883,7 @@ test.describe("Slice 8 provider and work-detail journey", () => {
       )
       .toEqual(expect.objectContaining({ workId, readingState: "completed" }));
 
-    await staleDetail.getByRole("radio", { name: "読みたい", exact: true }).click();
+    await staleDetail.getByRole("button", { name: "読みたい", exact: true }).click();
     await expect(staleDetail.getByRole("status")).toHaveText(
       "別の画面で更新された記録を残しました。最新の読書状態を表示しています。",
     );

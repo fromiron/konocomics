@@ -205,7 +205,17 @@ describe("WorkDetailFlow", () => {
     });
     // Reading progress is one segmented control; the exclusion stays outside it.
     const segments = document.querySelector('[data-slot="work-reading-segments"]');
-    expect(segments?.querySelectorAll('[role="radio"]')).toHaveLength(4);
+    expect(
+      [...(segments?.querySelectorAll('[role="radio"]') ?? [])].map((radio) => radio.textContent),
+    ).toEqual([workDetailStrings.state.options.completed, workDetailStrings.state.options.dropped]);
+    expect(
+      screen.queryByRole("radio", { name: workDetailStrings.state.options.reading }),
+    ).toBeNull();
+    expect(
+      screen
+        .getByRole("button", { name: workDetailStrings.state.options.planned })
+        .getAttribute("aria-pressed"),
+    ).toBe("false");
     expect(hidden.closest('[data-slot="work-reading-segments"]')).toBeNull();
     expect(hidden.className).not.toContain("bg-accent");
     expect(screen.queryByText(workDetailStrings.state.ongoingHint)).toBeNull();
@@ -242,7 +252,14 @@ describe("WorkDetailFlow", () => {
     });
     // Dislike reasons do not survive a reaction that is no longer 「いまいち」.
     expect(saved.negativeReasons).toBeUndefined();
-    expect(await screen.findByText(workDetailStrings.state.reactionSaved("良かった"))).toBeTruthy();
+    expect(
+      await screen.findByText(
+        workDetailStrings.state.reactionSaved(
+          workDetailStrings.state.options.completed,
+          "良かった",
+        ),
+      ),
+    ).toBeTruthy();
 
     view.unmount();
     testState.userWorks = [{ ...saved, updatedAt: "2026-08-15T00:00:00.000Z" }];
@@ -263,6 +280,60 @@ describe("WorkDetailFlow", () => {
     expect(cleared.readingState).toBe("completed");
     expect(cleared.reaction).toBeUndefined();
     expect(await screen.findByText(workDetailStrings.state.reactionCleared)).toBeTruthy();
+  });
+
+  it("keeps an in-progress or dropped state when rating and hides the bookmark once read", async () => {
+    testState.status = { state: "ready", mode: "indexeddb", warning: null };
+    testState.userWorks = [
+      {
+        workId: "monster",
+        readingState: "reading",
+        progress: { volume: 4 },
+        updatedAt: "2026-08-14T00:00:00.000Z",
+      },
+    ];
+    const view = renderDetail("monster");
+
+    expect(await screen.findByText(/「読んでいる」として記録中です/u)).toBeTruthy();
+    expect(
+      screen.queryByRole("button", { name: workDetailStrings.state.options.planned }),
+    ).toBeNull();
+    await act(async () => {
+      fireEvent.click(
+        within(
+          screen.getByRole("group", { name: workDetailStrings.state.reactionGroup }),
+        ).getByRole("button", { name: "最高" }),
+      );
+    });
+    expect(testState.saveUserWork.mock.calls.at(-1)?.[0]).toMatchObject({
+      readingState: "reading",
+      reaction: "favorite",
+      progress: { volume: 4 },
+    });
+
+    view.unmount();
+    testState.saveUserWork.mockClear();
+    testState.userWorks = [
+      {
+        workId: "monster",
+        readingState: "dropped",
+        droppedReasons: ["tooSlow"],
+        updatedAt: "2026-08-14T00:00:00.000Z",
+      },
+    ];
+    renderDetail("monster");
+    await act(async () => {
+      fireEvent.click(
+        within(
+          await screen.findByRole("group", { name: workDetailStrings.state.reactionGroup }),
+        ).getByRole("button", { name: "いまいち" }),
+      );
+    });
+    expect(testState.saveUserWork.mock.calls.at(-1)?.[0]).toMatchObject({
+      readingState: "dropped",
+      reaction: "disliked",
+      droppedReasons: ["tooSlow"],
+    });
   });
 
   it("expands and closes a long synopsis without changing its source text or link", async () => {
@@ -412,11 +483,11 @@ describe("WorkDetailFlow", () => {
     ];
     renderDetail();
 
-    fireEvent.click(screen.getByRole("radio", { name: workDetailStrings.state.options.reading }));
+    fireEvent.click(screen.getByRole("radio", { name: workDetailStrings.state.options.completed }));
 
     await waitFor(() => expect(testState.saveUserWork).toHaveBeenCalledTimes(1));
     const saved = testState.saveUserWork.mock.calls[0]![0];
-    expect(saved.readingState).toBe("reading");
+    expect(saved.readingState).toBe("completed");
     expect(saved).not.toHaveProperty("droppedReasons");
   });
 
@@ -429,7 +500,7 @@ describe("WorkDetailFlow", () => {
         }),
     );
     renderDetail();
-    const planned = screen.getByRole("radio", {
+    const planned = screen.getByRole("button", {
       name: workDetailStrings.state.options.planned,
     });
 
@@ -442,7 +513,7 @@ describe("WorkDetailFlow", () => {
 
   it("persists and authoritatively removes a minimal planned record", async () => {
     const view = renderDetail();
-    fireEvent.click(screen.getByRole("radio", { name: workDetailStrings.state.options.planned }));
+    fireEvent.click(screen.getByRole("button", { name: workDetailStrings.state.options.planned }));
     await waitFor(() => expect(testState.saveUserWork).toHaveBeenCalledTimes(1));
     const plannedRecord = testState.saveUserWork.mock.calls[0]![0];
     expect(plannedRecord).toMatchObject({ workId: target.id, readingState: "planned" });
@@ -453,7 +524,7 @@ describe("WorkDetailFlow", () => {
         <WorkDetailFlow workId={target.id} />
       </CatalogProvider>,
     );
-    fireEvent.click(screen.getByRole("radio", { name: workDetailStrings.state.options.planned }));
+    fireEvent.click(screen.getByRole("button", { name: workDetailStrings.state.options.planned }));
     await waitFor(() =>
       expect(testState.removeMinimalPlannedUserWork).toHaveBeenCalledWith(target.id),
     );
@@ -471,7 +542,7 @@ describe("WorkDetailFlow", () => {
     testState.removeMinimalPlannedUserWork.mockResolvedValue("preserved-conflict");
     renderDetail();
 
-    fireEvent.click(screen.getByRole("radio", { name: workDetailStrings.state.options.planned }));
+    fireEvent.click(screen.getByRole("button", { name: workDetailStrings.state.options.planned }));
 
     expect(await screen.findByText(workDetailStrings.state.plannedPreservedConflict)).toBeTruthy();
     expect(screen.queryByText(workDetailStrings.state.plannedRemoved)).toBeNull();
@@ -489,7 +560,7 @@ describe("WorkDetailFlow", () => {
     testState.removeMinimalPlannedUserWork.mockResolvedValue("already-absent");
     renderDetail();
 
-    fireEvent.click(screen.getByRole("radio", { name: workDetailStrings.state.options.planned }));
+    fireEvent.click(screen.getByRole("button", { name: workDetailStrings.state.options.planned }));
 
     expect(await screen.findByText(workDetailStrings.state.plannedAlreadyAbsent)).toBeTruthy();
     expect(screen.queryByText(workDetailStrings.state.plannedRemoved)).toBeNull();
