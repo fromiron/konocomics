@@ -80,6 +80,7 @@ function renderLibrary(options?: {
   view?: "grid" | "list";
   externalWorks?: ExternalWorkRecord[];
   showFooter?: boolean;
+  sort?: "updated" | "title" | "rating";
   userWorks?: UserWorkRecord[];
 }) {
   const saveUserWork = vi.fn<(record: UserWorkRecord) => Promise<void>>().mockResolvedValue();
@@ -102,6 +103,7 @@ function renderLibrary(options?: {
       saveExternalUserRecord={saveExternalUserRecord}
       saveUserWork={saveUserWork}
       showFooter={options?.showFooter}
+      sort={options?.sort}
       storageDegraded={false}
       userWorks={options?.userWorks ?? [catalogRecord]}
     />,
@@ -112,6 +114,41 @@ function renderLibrary(options?: {
 afterEach(cleanup);
 
 describe("LibraryView", () => {
+  it("sorts by rating, then by recency, and summarizes the collection in the header", () => {
+    const [first, second, third] = catalog.works;
+    if (first === undefined || second === undefined || third === undefined) {
+      throw new Error("Expected three catalog works");
+    }
+    renderLibrary({
+      externalWorks: [],
+      sort: "rating",
+      userWorks: [
+        {
+          workId: first.id,
+          readingState: "completed",
+          reaction: "liked",
+          updatedAt: "2026-08-14T00:00:03.000Z",
+        },
+        {
+          workId: second.id,
+          readingState: "completed",
+          reaction: "favorite",
+          updatedAt: "2026-08-14T00:00:01.000Z",
+        },
+        { workId: third.id, readingState: "planned", updatedAt: "2026-08-14T00:00:02.000Z" },
+      ],
+    });
+
+    expect(
+      [...document.querySelectorAll("#library-results article")].map((article) =>
+        article.getAttribute("data-work-id"),
+      ),
+    ).toEqual([second.id, first.id, third.id]);
+    expect(screen.getByText(libraryStrings.basis(3, 1))).toBeTruthy();
+    expect(screen.getByRole("option", { name: libraryStrings.toolbar.sortRating })).toBeTruthy();
+    expect(document.querySelector("#library-results")?.textContent).not.toContain("記録を編集");
+  });
+
   it("paginates after filtering and keeps global counts with a bounded last page", () => {
     const records: UserWorkRecord[] = catalog.works.slice(0, 50).map((work, index) => ({
       workId: work.id,
@@ -307,19 +344,15 @@ describe("LibraryView", () => {
     expect(document.querySelector('img[src="/media/library-empty-shelf.png"]')).toBeNull();
   });
 
-  it("shows a populated data-portability banner that opens settings data", () => {
+  it("shows an image-free backup summary that opens settings data", () => {
     renderLibrary({ externalWorks: [], userWorks: [catalogRecord] });
 
-    expect(screen.getByRole("heading", { name: libraryStrings.tools.heading })).toBeTruthy();
-    expect(screen.getByText(libraryStrings.tools.description)).toBeTruthy();
+    const heading = screen.getByRole("heading", { name: libraryStrings.tools.heading });
+    expect(screen.getByText(libraryStrings.tools.description(1))).toBeTruthy();
     expect(
       screen.getByRole("link", { name: libraryStrings.tools.openSettings }).getAttribute("href"),
     ).toBe("/settings?section=data");
-    expect(
-      document
-        .querySelector('img[src="/media/library-data-portability.png"]')
-        ?.getAttribute("aria-hidden"),
-    ).toBe("true");
+    expect(heading.closest("section")?.querySelector("img")).toBeNull();
     expect(document.querySelector('img[src="/media/library-empty-shelf.png"]')).toBeNull();
   });
 

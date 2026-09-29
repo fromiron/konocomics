@@ -1,5 +1,6 @@
 import { Link } from "@tanstack/react-router";
 
+import { SummarySection, summaryLinkClassName } from "@/components/layout/summary-section";
 import { recommendationStrings } from "@/lib/strings";
 
 type FeedbackImpactSummaryProps = Readonly<{
@@ -23,42 +24,33 @@ export function FeedbackImpactSummary({ completedCount, hiddenCount }: FeedbackI
   ];
 
   return (
-    <section
-      aria-labelledby="recommendation-feedback-heading"
-      className="mt-[var(--space-shelf-group)] mb-[calc(var(--space-shelf-group)-var(--space-8))] border-t border-line pt-[var(--space-6)] md:mb-[calc(var(--space-shelf-group)-var(--space-6))]"
-    >
-      <h2
-        className="text-[length:var(--text-subheading-size)] leading-snug font-bold text-text-strong"
-        id="recommendation-feedback-heading"
-      >
-        {strings.heading}
-      </h2>
-      <div className="mt-[var(--space-1)] flex flex-wrap items-center gap-x-[var(--space-6)]">
-        <p className="flex flex-wrap items-center text-[length:var(--font-size-14)] text-text-muted">
-          {counts.map(({ label, state }, index) => (
-            <span className="inline-flex items-center" key={state}>
-              {index > 0 ? <span aria-hidden="true">・</span> : null}
-              <Link
-                aria-label={strings.openLibrary(label)}
-                className={countLinkClassName}
-                preload={false}
-                search={{ state }}
-                to="/library"
-              >
-                {label}
-              </Link>
-            </span>
-          ))}
-          <span>{strings.excluded}</span>
-        </p>
-        <Link
-          className="inline-flex min-h-[var(--control-min-size)] items-center text-[length:var(--font-size-14)] font-bold text-accent underline-offset-4 hover:underline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-ring"
-          preload={false}
-          to="/taste"
-        >
+    <SummarySection
+      actions={
+        <Link className={summaryLinkClassName} preload={false} to="/taste">
           {recommendationStrings.tasteSummary.link}
         </Link>
-      </div>
-    </section>
+      }
+      className="mb-[calc(var(--space-shelf-group)-var(--space-8))] md:mb-[calc(var(--space-shelf-group)-var(--space-6))]"
+      headingId="recommendation-feedback-heading"
+      title={strings.heading}
+    >
+      <p className="flex flex-wrap items-center text-[length:var(--font-size-14)] text-text-muted">
+        {counts.map(({ label, state }, index) => (
+          <span className="inline-flex items-center" key={state}>
+            {index > 0 ? <span aria-hidden="true">・</span> : null}
+            <Link
+              aria-label={strings.openLibrary(label)}
+              className={countLinkClassName}
+              preload={false}
+              search={{ state }}
+              to="/library"
+            >
+              {label}
+            </Link>
+          </span>
+        ))}
+        <span>{strings.excluded}</span>
+      </p>
+    </SummarySection>
   );
 }

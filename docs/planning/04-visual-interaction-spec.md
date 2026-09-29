@@ -101,7 +101,7 @@
 - selected: accent 보더 + 체크 오버레이(표지 카드) / `--accent-soft` 배경 + accent 보더·텍스트(칩). solid accent 채움은 주요 CTA에만 쓴다.
 - skeleton: `--line` 톤 펄스(1.2s), 카드 실루엣 그대로. 1초 개발 throttle 동안의 짧은 placeholder 노출은 허용한다. 스피너는 전역 치명 오류 재시도에만 쓴다.
 - empty state: 스크린톤 원 안에 아이콘 + 1줄 안내 + 1개 액션. 일러스트 신규 제작 없음. 유일한 예외는 `/library`의 전체 레코드 없음(overall-empty)뿐이며, 승인된 image-half empty-state로 기존 메시지 1개 + `作品を追加` 1개만 유지한다. 검색·탭·세그먼트 empty와 다른 화면에는 적용하지 않는다.
-- functional contextual image banners: 상태/기능/CTA가 연결된 이미지 배너다. 필요한 기능 배너는 아래 §9의 장식 억제보다 상위 계약이며, 실제 상태·기능·기존 route CTA가 없는 순수 장식 배너는 계속 금지한다. `/recommendations` 후보 부족 full-shell, `/library` populated data-portability half-shell만 허용한다. 장식 전용 hero가 아니며 이미지 속 텍스트는 쓰지 않는다. 좌측은 DOM copy·metrics·기존 route CTA, 우측은 장식 `img`(alt="", `aria-hidden`). Spotify Green/로고/재생 UI 복제는 하지 않는다. 상시 루프 모션은 없다.
+- functional contextual image banners: 상태/기능/CTA가 연결된 이미지 배너다. 필요한 기능 배너는 아래 §9의 장식 억제보다 상위 계약이며, 실제 상태·기능·기존 route CTA가 없는 순수 장식 배너는 계속 금지한다. `/recommendations` 후보 부족 full-shell만 허용한다. 나머지 닫는 안내는 공용 `SummarySection`(이미지 없음)을 쓴다. 장식 전용 hero가 아니며 이미지 속 텍스트는 쓰지 않는다. 좌측은 DOM copy·metrics·기존 route CTA, 우측은 장식 `img`(alt="", `aria-hidden`). Spotify Green/로고/재생 UI 복제는 하지 않는다. 상시 루프 모션은 없다.
 - error: `--warn` 좌측 보더의 인라인 박스. 토스트는 성공 알림에만.
 
 모션 값도 의미 역할로 소비한다: `--motion-duration-page` 160ms, `--motion-duration-floating-action` 200ms, `--motion-duration-value` 240ms, `--motion-duration-reveal-step` 400ms, `--motion-ease-direct` ease-out, `--motion-ease-value` ease-in-out, `--motion-ease-signature` cubic-bezier(0.2, 0, 0, 1). 이 값은 아래 A~F 분류를 대체하지 않고 구현 간 별칭 드리프트만 막는다. Top 10의 floating rank accessory는 `transform`·`opacity`만 200ms ease-out으로 전환하고 reduced motion에서는 이동 없이 즉시 상태를 바꾼다.

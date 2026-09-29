@@ -64,12 +64,12 @@ export const librarySearchSchema = z.object({
     .optional()
     .catch(undefined),
   q: optionalQuery,
-  sort: z.enum(["updated", "title"]).optional().catch(undefined),
+  sort: z.enum(["updated", "title", "rating"]).optional().catch(undefined),
   view: z.enum(["list", "grid"]).optional().catch(undefined),
 });
 
 export const settingsSearchSchema = z.object({
-  section: z.enum(["policies", "data", "app"]).optional().catch(undefined),
+  section: z.enum(["policies", "dna", "data", "app"]).optional().catch(undefined),
 });
 
 export const externalWorkSearchSchema = z.object({

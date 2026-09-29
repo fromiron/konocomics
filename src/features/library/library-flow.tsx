@@ -44,14 +44,14 @@ export function LibraryFlow({
   favoriteOnly?: boolean;
   page?: number;
   query?: string;
-  sort?: "updated" | "title";
+  sort?: "updated" | "title" | "rating";
   view?: "list" | "grid";
   onActiveStateChange?: (state: ReadingState | null) => void;
   onFavoriteOnlyChange?: (favoriteOnly: boolean) => void;
   onClearFilters?: () => void;
   onQueryChange?: (query: string) => void;
   onPageChange?: (page: number, replace?: boolean) => void;
-  onSortChange?: (sort: "updated" | "title") => void;
+  onSortChange?: (sort: "updated" | "title" | "rating") => void;
   onViewChange?: (view: "list" | "grid") => void;
 }> = {}) {
   const catalog = useCatalog();

@@ -16,6 +16,7 @@ import {
 import { flushSync } from "react-dom";
 
 import { Button } from "@/components/design-system/button";
+import { PageHeader } from "@/components/layout/page-header";
 import {
   carouselCloneProps,
   carouselLoopCopies,
@@ -1081,21 +1082,17 @@ export function RecommendationsFlow({
               }}
             />
             <div className="mb-[var(--space-6)]" id="recommendation-intro" ref={introRef}>
-              <header>
-                <h1
-                  className="font-display text-[length:var(--font-size-28)] focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-ring"
-                  id="recommendation-page-heading"
-                  tabIndex={-1}
-                >
-                  {recommendationStrings.title}
-                </h1>
-                <p className="sr-only">{recommendationStrings.description}</p>
-              </header>
-
-              <RecommendationCriteriaSummary
-                preferenceLabels={preferenceLabels}
-                recordCount={profileRecords.length}
-              />
+              <PageHeader
+                description={recommendationStrings.description}
+                headingFocusable
+                headingId="recommendation-page-heading"
+                title={recommendationStrings.title}
+              >
+                <RecommendationCriteriaSummary
+                  preferenceLabels={preferenceLabels}
+                  recordCount={profileRecords.length}
+                />
+              </PageHeader>
 
               {status.state === "degraded" ? (
                 <p

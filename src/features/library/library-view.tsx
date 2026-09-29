@@ -7,6 +7,7 @@ import { Button } from "@/components/design-system/button";
 import { Input } from "@/components/design-system/input";
 import { NativeSelect } from "@/components/design-system/native-select";
 import { Tabs, TabsList, TabsTrigger } from "@/components/design-system/tabs";
+import { SummarySection, summaryLinkClassName } from "@/components/layout/summary-section";
 import { parseExternalWorkId, type ExternalWorkId } from "@/domain/catalog/external-work";
 import { isbnIdentityKey } from "@/domain/catalog/normalize";
 import type { CatalogV1, Work } from "@/domain/catalog/types";
@@ -35,11 +36,21 @@ export type { LibraryRow } from "./library-media-cards";
 type SelectedRow = Readonly<
   Pick<LibraryRow, "id" | "kind"> & { coverSize: 200 | 400; coverUrl?: string }
 >;
-type LibrarySort = "updated" | "title";
+type LibrarySort = "updated" | "title" | "rating";
 type LibraryViewMode = "list" | "grid";
 type LibraryStateFilter = ReadingState | null;
 
+const REACTION_RANK = { favorite: 0, liked: 1, neutral: 2, disliked: 3 } as const;
+
+function reactionRank(row: LibraryRow) {
+  return row.record.reaction === undefined ? 4 : REACTION_RANK[row.record.reaction];
+}
+
 function compareRows(left: LibraryRow, right: LibraryRow, sort: LibrarySort) {
+  if (sort === "rating") {
+    const byRating = reactionRank(left) - reactionRank(right);
+    if (byRating !== 0) return byRating;
+  }
   if (sort === "title") {
     const byTitle = rowTitle(left).localeCompare(rowTitle(right), "ja");
     if (byTitle !== 0) return byTitle;
@@ -271,6 +282,7 @@ export function LibraryView({
   return (
     <main className="mx-auto w-full max-w-[var(--layout-width-media)] flex-1 px-[var(--layout-page-padding)] pt-[var(--layout-page-block-start)] pb-[var(--space-8)] md:pb-[var(--space-section-large)]">
       <LibraryOverviewHeader
+        favorites={rows.filter((row) => row.record.reaction === "favorite").length}
         onAddWork={(nextOpener) => {
           setOpener(nextOpener);
           setMessage(undefined);
@@ -378,13 +390,15 @@ export function LibraryView({
               <label className="order-2 min-w-0 justify-self-end md:order-3">
                 <span className="sr-only">{libraryStrings.toolbar.sortLabel}</span>
                 <NativeSelect
-                  onChange={(event) =>
-                    onSortChange?.(event.currentTarget.value === "title" ? "title" : "updated")
-                  }
+                  onChange={(event) => {
+                    const next = event.currentTarget.value;
+                    onSortChange?.(next === "title" || next === "rating" ? next : "updated");
+                  }}
                   value={sort}
                 >
                   <option value="updated">{libraryStrings.toolbar.sortUpdated}</option>
                   <option value="title">{libraryStrings.toolbar.sortTitle}</option>
+                  <option value="rating">{libraryStrings.toolbar.sortRating}</option>
                 </NativeSelect>
               </label>
               <p
@@ -527,42 +541,19 @@ export function LibraryView({
           ) : null}
 
           {!hasQuery && visibleRows.length > 0 ? (
-            <section
-              aria-labelledby="library-data-heading"
-              className="relative mt-[var(--space-6)] min-h-[128px] w-full overflow-hidden rounded-[var(--radius-card)] md:min-h-[136px]"
-            >
-              <img
-                alt=""
-                aria-hidden="true"
-                className="pointer-events-none absolute inset-0 size-full object-cover object-[88%_50%] md:object-[82%_48%]"
-                decoding="async"
-                fetchPriority="low"
-                loading="lazy"
-                src="/media/library-data-portability.png"
-              />
-              <div
-                aria-hidden="true"
-                className="pointer-events-none absolute inset-0 bg-gradient-to-r from-canvas from-38% via-canvas/80 via-56% to-transparent to-80%"
-              />
-              <div className="relative z-10 grid h-full min-h-[128px] content-center justify-items-start gap-[var(--space-2)] p-[var(--space-3)] md:min-h-[136px] md:max-w-[70%] md:p-[var(--space-4)]">
-                <h2
-                  className="text-[length:var(--font-size-14)] leading-snug font-bold text-text-strong md:text-[length:var(--text-subheading-size)]"
-                  id="library-data-heading"
-                >
-                  {libraryStrings.tools.heading}
-                </h2>
-                <p className="text-[length:var(--text-caption-size)] text-text-muted">
-                  {libraryStrings.tools.description}
-                </p>
-                <Link
-                  className="inline-flex min-h-[var(--control-min-size)] w-fit items-center rounded-[var(--radius-control)] border border-accent px-[var(--space-4)] font-bold text-accent hover:bg-accent-soft focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-focus-ring"
-                  search={{ section: "data" }}
-                  to="/settings"
-                >
+            <SummarySection
+              actions={
+                <Link className={summaryLinkClassName} search={{ section: "data" }} to="/settings">
                   {libraryStrings.tools.openSettings}
                 </Link>
-              </div>
-            </section>
+              }
+              headingId="library-data-heading"
+              title={libraryStrings.tools.heading}
+            >
+              <p className="text-[length:var(--font-size-14)] text-text-muted">
+                {libraryStrings.tools.description(rows.length)}
+              </p>
+            </SummarySection>
           ) : null}
         </>
       )}

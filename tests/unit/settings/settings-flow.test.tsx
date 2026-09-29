@@ -27,11 +27,23 @@ const testState = vi.hoisted(() => ({
   replaceFromExport: vi.fn(),
   savePolicies: vi.fn(),
   status: { state: "ready", mode: "indexeddb", warning: null } as const,
+  userWorks: [] as { workId: string }[],
+  externalWorks: [] as { id: string }[],
 }));
 
 vi.mock("@tanstack/react-router", () => ({
-  Link: ({ children, className, to }: { children: ReactNode; className?: string; to: string }) => (
-    <a className={className} href={to}>
+  Link: ({
+    "aria-current": ariaCurrent,
+    children,
+    className,
+    to,
+  }: {
+    "aria-current"?: "location";
+    children: ReactNode;
+    className?: string;
+    to: string;
+  }) => (
+    <a aria-current={ariaCurrent} className={className} href={to}>
       {children}
     </a>
   ),
@@ -60,6 +72,8 @@ vi.mock("@/infrastructure/db", async (importOriginal) => {
       replaceFromExport: testState.replaceFromExport,
       savePolicies: testState.savePolicies,
       status: testState.status,
+      userWorks: testState.userWorks,
+      externalWorks: testState.externalWorks,
     }),
   };
 });
@@ -124,6 +138,87 @@ beforeEach(() => {
 afterEach(() => {
   cleanup();
   vi.restoreAllMocks();
+  vi.unstubAllGlobals();
+  testState.userWorks = [];
+  testState.externalWorks = [];
+});
+
+describe("SettingsFlow layout and storage", () => {
+  it("shows every section on one page with a section navigation", () => {
+    render(<SettingsFlow activeSection="data" />);
+
+    const navigation = screen.getByRole("navigation", { name: settingsStrings.sections.label });
+    expect(
+      within(navigation)
+        .getAllByRole("link")
+        .map((link) => link.textContent),
+    ).toEqual([
+      settingsStrings.sections.items.policies,
+      settingsStrings.sections.items.dna,
+      settingsStrings.sections.items.data,
+      settingsStrings.sections.items.app,
+    ]);
+    expect(
+      within(navigation)
+        .getByRole("link", { name: settingsStrings.sections.items.data })
+        .getAttribute("aria-current"),
+    ).toBe("location");
+    expect(screen.queryByRole("tablist")).toBeNull();
+    for (const title of [
+      settingsStrings.policies.title,
+      settingsStrings.dna.title,
+      settingsStrings.data.title,
+      settingsStrings.app.title,
+    ]) {
+      expect(screen.getByRole("heading", { level: 2, name: title })).toBeTruthy();
+    }
+  });
+
+  it("shows record counts and protects local data from eviction on request", async () => {
+    testState.userWorks = [{ workId: "a" }, { workId: "b" }, { workId: "c" }];
+    testState.externalWorks = [{ id: "x" }];
+    const persist = vi.fn().mockResolvedValue(true);
+    vi.stubGlobal("navigator", {
+      ...navigator,
+      storage: {
+        estimate: vi.fn().mockResolvedValue({ usage: 2 * 1024 * 1024 }),
+        persist,
+        persisted: vi.fn().mockResolvedValue(false),
+      },
+    });
+
+    render(<SettingsFlow />);
+
+    const strings = settingsStrings.storageStatus;
+    expect(await screen.findByText(strings.notPersisted)).toBeTruthy();
+    expect(
+      screen.getByText(new RegExp(strings.records(3, 1).replace(/[()（）]/gu, "."), "u")),
+    ).toBeTruthy();
+    expect(screen.getByText(/使用容量 約2 MB/u)).toBeTruthy();
+    fireEvent.click(screen.getByRole("button", { name: strings.protect }));
+    expect(await screen.findByText(strings.persisted)).toBeTruthy();
+    expect(persist).toHaveBeenCalledTimes(1);
+    expect(screen.queryByRole("button", { name: strings.protect })).toBeNull();
+  });
+
+  it("explains a denied protection request without claiming success", async () => {
+    vi.stubGlobal("navigator", {
+      ...navigator,
+      storage: {
+        estimate: vi.fn().mockResolvedValue({}),
+        persist: vi.fn().mockResolvedValue(false),
+        persisted: vi.fn().mockResolvedValue(false),
+      },
+    });
+
+    render(<SettingsFlow />);
+
+    fireEvent.click(
+      await screen.findByRole("button", { name: settingsStrings.storageStatus.protect }),
+    );
+    expect(await screen.findByText(settingsStrings.storageStatus.denied)).toBeTruthy();
+    expect(screen.queryByText(settingsStrings.storageStatus.persisted)).toBeNull();
+  });
 });
 
 describe("SettingsFlow data ownership", () => {

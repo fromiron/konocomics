@@ -6,6 +6,8 @@ import { LazyMotion, domAnimation, m, useReducedMotion } from "motion/react";
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 
 import { Button, buttonClassName } from "@/components/design-system/button";
+import { PageHeader } from "@/components/layout/page-header";
+import { SummarySection, summaryLinkClassName } from "@/components/layout/summary-section";
 import { CoverImage } from "@/components/cover/CoverImage";
 import { MediaShelf } from "@/components/media/media-shelf";
 import { usePageEntryMotion } from "@/components/motion/use-page-entry-motion";
@@ -598,29 +600,19 @@ function FactorPanels({
 
 function ConfidenceCoachSummary() {
   return (
-    <section
-      aria-labelledby="taste-coach-heading"
-      className="mt-[var(--space-shelf-group)] border-t border-line pt-[var(--space-6)]"
-    >
-      <h2
-        className="text-[length:var(--text-subheading-size)] leading-snug font-bold text-text-strong"
-        id="taste-coach-heading"
-      >
-        {tasteStrings.coach.heading}
-      </h2>
-      <div className="mt-[var(--space-1)] flex flex-wrap items-center gap-x-[var(--space-6)]">
-        <p className="text-[length:var(--font-size-14)] text-text-muted">
-          {tasteStrings.coach.description}
-        </p>
-        <Link
-          className="inline-flex min-h-[var(--control-min-size)] items-center text-[length:var(--font-size-14)] font-bold text-accent underline-offset-4 hover:underline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-ring"
-          preload={false}
-          to="/onboarding"
-        >
+    <SummarySection
+      actions={
+        <Link className={summaryLinkClassName} preload={false} to="/onboarding">
           {tasteStrings.coach.action}
         </Link>
-      </div>
-    </section>
+      }
+      headingId="taste-coach-heading"
+      title={tasteStrings.coach.heading}
+    >
+      <p className="text-[length:var(--font-size-14)] text-text-muted">
+        {tasteStrings.coach.description}
+      </p>
+    </SummarySection>
   );
 }
 
@@ -633,9 +625,6 @@ type RecentFeedbackSummaryProps = Readonly<{
 }>;
 
 const RECENT_FEEDBACK_LIMIT = 12;
-
-const summaryLinkClassName =
-  "inline-flex min-h-[var(--control-min-size)] items-center text-[length:var(--font-size-14)] font-bold text-accent underline-offset-4 hover:underline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-ring";
 
 function RecentFeedbackSummary({
   records,
@@ -866,6 +855,14 @@ export function TasteFlow({
     return labels;
   }, [profileRecords, summary.topPreferences]);
   const confidenceLevel = getConfidenceLevel(calculateProfileConfidence(profileRecords));
+  const reactionBreakdown = (["favorite", "liked", "neutral", "disliked"] as const).flatMap(
+    (reaction) => {
+      const count = profileRecords.filter((record) => record.reaction === reaction).length;
+      return count === 0
+        ? []
+        : [tasteStrings.basisReactionCount(tasteStrings.feedbackLabels[reaction], count)];
+    },
+  );
   const beforePreviewWorkIds = useMemo(() => {
     if (baselineAdjustments === null || storedPolicies === undefined) return null;
     return recommendationPreviewWorkIds(catalog, records, baselineAdjustments, storedPolicies);
@@ -1046,22 +1043,21 @@ export function TasteFlow({
         onAnimationEnd={pageEntryMotion.onAnimationEnd}
         onFocus={keepFocusAboveSnackbar}
       >
-        <header className="taste-header mb-[var(--space-6)]">
-          <h1 className="font-display text-[length:var(--font-size-28)]">{tasteStrings.title}</h1>
-          <p className="sr-only">{tasteStrings.description}</p>
-          <section
-            aria-label={tasteStrings.basisHeading}
-            className="flex min-w-0 flex-wrap items-center gap-x-[var(--space-3)]"
-          >
+        <PageHeader
+          className="taste-header mb-[var(--space-6)]"
+          description={tasteStrings.description}
+          title={tasteStrings.title}
+        >
+          <section aria-label={tasteStrings.basisHeading}>
             <p className="text-[length:var(--font-size-14)] leading-relaxed text-text-muted">
-              <span>{tasteStrings.basisCount(profileRecords.length)}</span>
+              <span>{tasteStrings.basisCount(profileRecords.length, reactionBreakdown)}</span>
               <span aria-hidden="true"> · </span>
               <span className="taste-confidence">
                 {tasteStrings.confidence}: {tasteStrings.confidenceLabels[confidenceLevel]}
               </span>
             </p>
           </section>
-        </header>
+        </PageHeader>
 
         <div className="taste-overview grid items-start gap-[var(--space-shelf)] lg:grid-cols-2 lg:gap-x-[var(--space-12)]">
           <section

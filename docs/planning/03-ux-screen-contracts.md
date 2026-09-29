@@ -223,7 +223,7 @@ CTA 버튼 1개: **「好きなマンガから始める」** → /onboarding.
 
 2026-09-29 사용자 위임 개선: `/recommendations`를 디자인 기준으로 삼아 셸 폭·타이포·간격·카드 문법을 맞춘다. 셸은 `--layout-width-media`(1200px), 페이지 제목은 28px, 모든 섹션 제목(h2)은 subheading(20px)이며 섹션 간격은 `--space-shelf`/`--space-shelf-group`을 쓴다. 장식 아이콘·이미지 배너·표지 위 그라디언트/텍스트 합성은 쓰지 않는다.
 
-1. 헤더: 「あなたの Manga DNA」 h1과 그 아래 근거 한 줄(「N作品から分析しました · 分析の確信度: 高い/ふつう」). `おすすめを見る`는 기존대로 reveal CTA에만 둔다.
+1. 헤더: 공용 `PageHeader`의 「あなたの Manga DNA」 h1과 그 아래 근거 한 줄(「N作品から分析しました（大好き N・好き N…） · 分析の確信度: 高い/ふつう」, 0인 감상은 생략). `おすすめを見る`는 기존대로 reveal CTA에만 둔다.
 2. **상위 취향 3개**: 순위·취향 레이블·강도·근거 제목 1~2줄. 아이콘은 쓰지 않는다. desktop `>=1024`에서는 「好みの軸」과 2열로 나란히 두는 순위 목록이고, 그 미만에서는 1열로 쌓는다(가로 snap 없음).
 3. 「好みの軸」: 동일 deterministic profile의 확인된 Axis를 강도 내림차순으로 최대 8개 read-only `FactorBar`로 보여 준다(동률은 factorId 오름차순). desktop은 2열 grid, mobile은 1열이다. 막대가 `role="meter"`로 값을 제공하므로 별도 radar와 중복 text list는 두지 않는다. 확인된 축이 없으면 분석 중 안내만 둔다.
 4. 근거 작품 `MediaShelf`(「好みを代表する作品」). `/recommendations` 관점 선반과 같은 원본 비율 표지 프레임 아래에 제목 2줄과 근거 팩터 레이블(없으면 감상 레이블)을 둔다. 표지 위에 그라디언트·레이블·제목을 겹치지 않는다. 기존 가로 스크롤과 키보드 이동으로 마지막 작품까지 접근한다.
@@ -552,13 +552,14 @@ Catalog 작품은 추천 근거를 깊이 확인하고 구매(라쿠텐)로 연�
 
 ### 정보 위계 (2026-09-11 관리 흐름 개선 승인)
 
+0. 2026-09-29 사용자 위임 개선: 공용 `PageHeader`(28px 제목)에 기록 요약 한 줄(「N作品を記録 · お気に入り N」, 즐겨찾기 0이면 생략)과 「作品を追加」를 둔다. 카드는 `/recommendations` 관점 선반처럼 테두리·그림자 없는 투명 표면에 30:43 표지 프레임과 2줄 제목을 쓰고 hover/focus에서만 `--surface-2`로 바뀐다. 카드마다 반복하던 「記録を編集」 문구는 두지 않고 접근 이름으로 동작을 전달한다.
 1. 간결한 제목과 「作品を追加」 → 내 기록 검색 → 상태 탭 → 즐겨찾기 조건·정렬·보기·표시 건수 → 하나의 작품 목록 순서다. 읽기 전용 count matrix와 중복 페이지 설명은 사용하지 않는다.
 2. 모든 크기에서 `すべて`+readingState 5종에 **전체 등록 수**를 붙인다. mobile 탭은 높이 최소 44px로 wrap하며 검색·다른 조작과 겹치지 않는다. `favorite=1`은 `reaction === "favorite"`인 기록만 고르는 별도 조건이며 탭이나 readingState가 아니다. 잘못된 값은 무시한다.
-3. 검색·상태·favorite 조건을 AND로 적용하고, `最近更新` / `タイトル順`으로 정렬한 **동일 결과 배열**을 grid/list에 표시한다. 같은 기록을 최근·상태별·favorite Shelf에 반복하지 않는다. 결과 수는 목록 위에 짧게 표시하고 `aria-live`로 알린다. 기존 Catalog/external union과 identity는 유지한다.
+3. 검색·상태·favorite 조건을 AND로 적용하고, `最近更新` / `タイトル順` / `評価順`(大好き→好き→ふつう→合わなかった→감상 없음, 동률은 최근 갱신)으로 정렬한 **동일 결과 배열**을 grid/list에 표시한다. 같은 기록을 최근·상태별·favorite Shelf에 반복하지 않는다. 결과 수는 목록 위에 짧게 표시하고 `aria-live`로 알린다. 기존 Catalog/external union과 identity는 유지한다.
 4. 카드는 표지·제목·감상·있는 진행 기록을 보여준다. 전체 보기에는 상태를 포함하고 단일 상태 필터에서는 같은 상태를 반복하지 않는다. Catalog/external/catalog-missing 구분은 유지한다. 읽는 중 진행 막대는 입력된 volume과 확인된 총 권수가 있을 때만 표시한다. 없는 메모·시간·날짜·진행을 만들지 않는다.
 5. 카드/행 전체는 「記録を編集」 버튼이며 작은 문구로 동작을 보인다. 상세 시트에는 기존 기록의 `updatedAt`을 업데이트 날짜로 표시한다. Catalog는 `/works/{catalogWorkId}`, external은 `/works/external?workId={encodedExternalWorkId}` 링크를 사용한다.
 6. 기존 기록은 실제 편집 값이 달라야 저장한다. 수정 후 원복하면 다시 비활성화하며 `updatedAt`만 바꾸는 저장을 실행하지 않는다. 판매순 발견의 신규 기록은 기본 상태를 확인하여 저장할 수 있어야 한다. 진행 입력은 「進み具合（任意）」로 접을 수 있고 읽는 중/기존 진행 값이 있으면 기본 펼침이다. 접기는 값을 삭제하지 않는다.
-7. populated 목록 하단에는 기존 `/settings?section=data` 안내를 약하게 둔다. 검색 중이거나 표시 결과 0건이면 숨긴다.
+7. populated 목록 하단에는 이미지 없는 공용 `SummarySection` 「記録のバックアップ」(「N作品の記録は、このブラウザにだけ保存されています。」 + `/settings?section=data` 「データ設定を開く」)을 둔다. 검색 중이거나 표시 결과 0건이면 숨긴다.
 8. 2026-09-11 추가 사용자 결정: 전체 기록에 검색·필터·정렬을 적용한 뒤 **24개 단위 페이지네이션**을 한다. 200개면 9페이지이며 한 페이지에 카드가 최대 24개다. 1페이지는 page를 생략하고 2페이지부터 `page`를 URL에 저장한다. q/state/favorite/sort 변경은 1페이지로, grid/list 변경은 현재 페이지를 유지한다. 잘못된 page는 무시하고 결과 범위를 넘으면 마지막 페이지로 replace 정규화한다. 2페이지 이상일 때 `1–24 / 200作品`처럼 표시 범위·전체 결과 수와 이전/페이지 선택/다음을 제공한다. 페이지 조작 후 목록에 포커스를 이동하고 목록 위로 스크롤한다.
 9. Library cover resolver의 대상은 현재 페이지와 열린 편집/추가 검색 결과로 한정한다. 기존 visibility demand·cache·ISBN 요청 중복 제거·동시 요청 제한을 재사용한다. 페이지 이동은 이전 resolver generation의 대기 작업을 중단하며 이미 시작한 요청은 기존 제한 아래 완료한다. 모든 기록을 미리 렌더하거나 모든 표지 API를 동시에 호출하지 않는다.
 
@@ -575,7 +576,7 @@ Catalog 작품은 추천 근거를 깊이 확인하고 구매(라쿠텐)로 연�
 ### 상태
 
 - 전체 빈 상태: 승인된 `library-empty-shelf` image-half + 「読んだ作品を記録すると、おすすめから自動的に外れます」 + 추가 버튼. data-portability banner와 동시에 쓰지 않는다.
-- populated: 검색어가 없고 표시 결과가 있을 때 목록보다 약한 data-portability banner. 2026-09-11 추가 사용자 지시에 따라 desktop/mobile 모두 목록과 같은 본문 전체 폭을 쓴다. `/media/library-data-portability.png`, DOM 제목/설명, `/settings?section=data` 「データ設定を開く」. 별도 export/import/delete UI와 중복 tools 카드는 두지 않는다.
+- populated: 검색어가 없고 표시 결과가 있을 때 목록 뒤의 이미지 없는 「記録のバックアップ」 요약. DOM 제목/설명, `/settings?section=data` 「データ設定を開く」. 별도 export/import/delete UI와 중복 tools 카드는 두지 않는다.
 - 등록 기록은 있지만 표시 결과가 0이면 원인과 다음 행동을 안내한다. 검색어가 있으면 그 검색어와 「検索をクリア」를 표시하고, 상태/favorite 조건이 있으면 적용 조건과 「絞り込みを解除」를 함께 제공한다. 검색어가 없으면 상태/favorite의 빈 안내와 「すべての作品を見る」를 제공한다. 검색 해제는 q만, 조건 해제는 state/favorite만 지우고 sort/view를 보존한다.
 - 라쿠텐 검색 실패/오프라인: 「今はカタログ内の作品だけ追加できます」 안내, 로컬 검색은 정상.
 
@@ -604,7 +605,8 @@ Library와 상세 panel·bottom sheet·dialog는 조용한 표면이다. panel/s
 - [ ] 검색 0건·빈 상태/favorite 조건을 구분하고 해제 시 관련 URL 조건만 변경한다.
 - [ ] 무변경 저장과 수정 후 원복 저장을 막고, 접힌 진행 값을 보존한다. 신규 기록의 명시적 확인·저장은 유지한다.
 - [ ] 편집 제목/추가 검색으로 초기 포커스가 이동하고 Escape·포커스 복귀가 동작한다. 추가 검색 결과와 편집창에 같은 작품의 표지가 표시된다.
-- [ ] populated data-portability banner는 `/settings?section=data`만 열고 overall-empty image-half·검색 중·필터 결과 0건과 동시에 보이지 않는다.
+- [ ] `評価順`은 감상 순위 뒤 최근 갱신 순이며 grid/list·페이지와 같은 결과 배열을 쓴다.
+- [ ] populated 「記録のバックアップ」 요약은 이미지 없이 `/settings?section=data`만 열고 overall-empty image-half·검색 중·필터 결과 0건과 동시에 보이지 않는다.
 
 ---
 
@@ -620,9 +622,12 @@ Library와 상세 panel·bottom sheet·dialog는 조용한 표면이다. panel/s
 
 ### 구성
 
+2026-09-29 사용자 위임 개선: 공용 `PageHeader`(28px) 아래에 네 섹션(おすすめの方針 · Manga DNA · データ · このアプリ)을 항상 한 페이지에 둔다. desktop(`md` 이상)은 왼쪽 sticky 섹션 목차(링크, 현재 `?section`에 `aria-current="location"`)와 오른쪽 본문 2열이며, 목차 선택과 `?section=policies|dna|data|app` 진입은 해당 섹션으로 스크롤한다. 섹션 제목은 20px, 행 제목은 16px, 섹션 간격은 `--space-shelf-group`이다. 별도 「ローカルデータとプライバシー」 섹션은 두지 않고 데이터 섹션 설명에 합친다.
+
 1. dark card 기반 **おすすめの方針**: 현재 네 boolean policy control(노출 여부는 `02` 계약) — 즉시 저장.
 2. **Manga DNA**: 현재 adjustment 요약과 `/taste?mode=adjust` 링크. 별도 자동학습/intensity slider는 없다.
 3. **データ**:
+   - 「保存の状態」: 작품 기록 수(카탈로그 외 수), 가능하면 `navigator.storage.estimate()` 사용 용량, `navigator.storage.persisted()` 보호 상태. 보호되지 않았고 `persist()`가 있으면 「データを保護する」로 브라우저에 영구 보관을 요청하고, 거부되면 정기 엑스포트를 안내한다. 성공을 합성하지 않으며 API가 없거나 session-only면 해당 표시·버튼을 생략한다.
    - 「エクスポート」 → 온보딩 전에도 `konocomics-export-YYYYMMDD.json` 다운로드. 작품 기록·external identity·adjustments·네 정책 전부·nullable 완료 시각·nullable draft를 포함한다. profile row가 아직 없으면 앱 기본 adjustments/policies를 쓰되 없는 완료 시각은 합성하지 않는다.
    - 「インポート」 → 파일 선택 → mutation 전 whole-file 검증 → 미리보기(작품 수·내보낸 날짜·Catalog version 불일치 경고) → 「置き換える」 확인 다이얼로그(현재 데이터가 대체됨을 명시).
    - 「すべて削除」 → 타이핑 확인(「削除」 입력) 다이얼로그 → 일곱 store를 한 트랜잭션으로 비우고 현재 runtime meta만 재생성 → authoritative readback 뒤 랜딩으로.
@@ -639,6 +644,8 @@ Library와 상세 panel·bottom sheet·dialog는 조용한 표면이다. panel/s
 
 ### 수용 기준
 
+- [ ] 네 섹션이 한 페이지에 보이고 desktop 목차의 현재 섹션이 표시된다. `?section`은 탭 전환 없이 해당 섹션으로 이동한다.
+- [ ] 「保存の状態」는 실제 기록 수·사용 용량·보호 상태만 보여 주고, 보호 요청의 허용/거부 결과를 그대로 표시한다.
 - [ ] usable profile에서 Export → 전체 삭제 → Import로 추천·Library·정책·canonical external URL/identity가 온보딩 없이 원상 복구된다(E2E #5).
 - [ ] pre-profile의 nullable 완료 시각과 first-run draft도 Export/Import되고, 없는 완료 시각을 합성하지 않는다.
 - [ ] 손상 JSON·external identity·profile/draft 모순 Import는 mutation 전 전체 거부되고 기존 일곱 store가 조금도 변하지 않는다.
@@ -663,3 +670,5 @@ Base UI primitive는 shadcn CLI로 `src/components/ui/**`에 생성하고 `src/c
 | `WorkSearchSheet`    | 검색·추가                | 로컬 우선 → 라쿠텐 확장, ISBN 대조                                                                                                                                                                                                                                                                                                                                           |
 | `StateActionRow`     | 読みたい/読んだ/興味なし | 44px 타깃, 처리 후 후속 시트(스킵 가능)                                                                                                                                                                                                                                                                                                                                      |
 | `FactorBar`          | DNA 막대                 | 확인값=meter 시맨틱, 미확인=이름 있는 비수치 상태+윤곽선, 값 표기는 레이블                                                                                                                                                                                                                                                                                                   |
+| `PageHeader`         | 페이지 제목 블록         | `/recommendations`·`/taste`·`/library`·`/settings` 공통. 28px h1, 선택적 스크린리더 설명, 제목 아래 근거 한 줄, 제목 줄의 주요 액션. 필요하면 포커스 복원용 `tabIndex=-1` 제목 |
+| `SummarySection`     | 닫는 한 줄 요약          | 이미지 없는 border-top 섹션. 20px 제목, 한 줄 본문, accent 텍스트 링크. 추천 기록 요약·Taste coaching·Library 백업 요약이 공유하며 장식 이미지 배너를 대체한다 |

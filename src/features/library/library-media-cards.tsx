@@ -215,24 +215,26 @@ export function LibraryStateCard({
       <Button
         aria-label={rowOpenLabel(row)}
         className={cn(
-          "group/card !grid h-full min-h-[var(--control-min-size)] w-full items-start justify-stretch gap-[var(--space-3)] rounded-[var(--radius-card)] border border-line/70 bg-surface-1 p-[var(--space-3)] text-start whitespace-normal text-text focus-visible:shadow-[var(--shadow-raised)] [@media(hover:hover)_and_(pointer:fine)]:hover:shadow-[var(--shadow-raised)]",
+          "group/card !grid h-full min-h-[var(--control-min-size)] w-full items-start justify-stretch gap-[var(--space-2)] rounded-[var(--radius-card)] border border-transparent bg-transparent p-[var(--space-2)] text-start whitespace-normal text-text transition-colors duration-[var(--motion-duration-value)] ease-[var(--motion-ease-direct)] focus-within:bg-surface-2 motion-reduce:transition-none [@media(hover:hover)_and_(pointer:fine)]:hover:bg-surface-2",
           view === "list" ? "grid-cols-[calc(var(--space-8)*2)_minmax(0,1fr)]" : "content-start",
         )}
         onClick={(event) => onOpen(event.currentTarget, row)}
         type="button"
         variant="ghost"
       >
-        <RowMedia catalogCoverUrls={catalogCoverUrls} onCoverVisible={onCoverVisible} row={row} />
+        <RowMedia
+          catalogCoverUrls={catalogCoverUrls}
+          className="aspect-[30/43] w-full overflow-hidden rounded-[var(--radius-cover)] border border-line/60"
+          onCoverVisible={onCoverVisible}
+          row={row}
+        />
         <span className="grid min-w-0 content-start gap-[var(--space-content-tight)]">
-          <strong className="[overflow-wrap:anywhere] leading-[var(--line-height-heading)] text-text-strong">
+          <strong className="line-clamp-2 text-[length:var(--font-size-14)] leading-tight [overflow-wrap:anywhere] text-text-strong">
             {rowTitle(row)}
           </strong>
           <CreatorLine row={row} />
           <RowBadges row={row} showState={showState} />
           <ProgressDisplay row={row} volumeCountByWorkId={volumeCountByWorkId} />
-          <span className="text-[length:var(--text-caption-size)] text-text-muted">
-            {libraryStrings.editRecord}
-          </span>
         </span>
       </Button>
     </article>

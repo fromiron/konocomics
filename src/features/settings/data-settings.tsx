@@ -1,7 +1,7 @@
 "use client";
 
 import { useNavigate } from "@tanstack/react-router";
-import { type ChangeEvent, useRef, useState } from "react";
+import { type ChangeEvent, type ReactNode, useRef, useState } from "react";
 
 import {
   AlertDialog,
@@ -30,6 +30,8 @@ import { SettingsDialog } from "./settings-dialog";
 import { SettingsPanel } from "./settings-panel";
 
 type DataSettingsProps = Readonly<{
+  /** Leading rows (for example the storage status) shown before export. */
+  children?: ReactNode;
   currentCatalog: CurrentCatalogIdentity;
   deleteAllData(currentCatalogVersion: string): Promise<DataMutationResult>;
   exportUserData(exportedAt: string, currentCatalog: CurrentCatalogIdentity): Promise<ExportFileV1>;
@@ -89,6 +91,7 @@ function triggerDownload(file: ExportFileV1, exportedAt: string) {
 }
 
 export function DataSettings({
+  children,
   currentCatalog,
   deleteAllData,
   exportUserData,
@@ -233,9 +236,12 @@ export function DataSettings({
         title={settingsStrings.data.title}
       >
         <div className="grid gap-[var(--space-5)]">
+          {children}
           <div className="grid gap-[var(--space-4)] border-t border-line pt-[var(--space-5)] sm:grid-cols-[minmax(0,1fr)_auto] sm:items-center">
             <div className="grid min-w-0 gap-[var(--space-content-tight)]">
-              <h3>{settingsStrings.data.export.title}</h3>
+              <h3 className="text-[length:var(--font-size-16)]">
+                {settingsStrings.data.export.title}
+              </h3>
               <p className="text-text-muted [overflow-wrap:anywhere]">
                 {settingsStrings.data.export.description}
               </p>
@@ -255,7 +261,9 @@ export function DataSettings({
 
           <div className="grid gap-[var(--space-4)] border-t border-line pt-[var(--space-5)] sm:grid-cols-[minmax(0,1fr)_auto] sm:items-center">
             <div className="grid min-w-0 gap-[var(--space-content-tight)]">
-              <h3>{settingsStrings.data.import.title}</h3>
+              <h3 className="text-[length:var(--font-size-16)]">
+                {settingsStrings.data.import.title}
+              </h3>
               <p className="text-text-muted [overflow-wrap:anywhere]">
                 {settingsStrings.data.import.description}
               </p>
@@ -315,7 +323,9 @@ export function DataSettings({
 
           <div className="grid gap-[var(--space-4)] border-t border-line-danger pt-[var(--space-5)] sm:grid-cols-[minmax(0,1fr)_auto] sm:items-center">
             <div className="grid min-w-0 gap-[var(--space-content-tight)]">
-              <h3>{settingsStrings.data.delete.title}</h3>
+              <h3 className="text-[length:var(--font-size-16)]">
+                {settingsStrings.data.delete.title}
+              </h3>
               <p className="text-text-muted [overflow-wrap:anywhere]">
                 {settingsStrings.data.delete.confirm.description}
               </p>

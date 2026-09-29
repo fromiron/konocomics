@@ -1,10 +1,10 @@
 "use client";
 
 import { Link } from "@tanstack/react-router";
-import type { ReactNode } from "react";
+import { useEffect, type ReactNode } from "react";
 
 import { buttonClassName } from "@/components/design-system/button";
-import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/design-system/tabs";
+import { PageHeader } from "@/components/layout/page-header";
 import { useCatalogIdentity } from "@/features/catalog/catalog-provider";
 import { usePersistence } from "@/infrastructure/db";
 import { settingsStrings } from "@/lib/strings";
@@ -12,9 +12,10 @@ import { settingsStrings } from "@/lib/strings";
 import { DataSettings } from "./data-settings";
 import { PolicySettings } from "./policy-settings";
 import { SettingsPanel } from "./settings-panel";
+import { StorageStatus } from "./storage-status";
 
-export type SettingsSection = "policies" | "data" | "app";
-const SETTINGS_SECTIONS = ["policies", "data", "app"] as const;
+export type SettingsSection = "policies" | "dna" | "data" | "app";
+const SETTINGS_SECTIONS = ["policies", "dna", "data", "app"] as const;
 
 function AppInfo({ storageDegraded }: Readonly<{ storageDegraded: boolean }>) {
   return (
@@ -73,142 +74,136 @@ export function SettingsFlow({
     adjustments,
     deleteAllData,
     exportUserData,
+    externalWorks,
     inspectImportJson,
     policies,
     replaceFromExport,
     savePolicies,
     status,
+    userWorks,
   } = usePersistence();
   const storageDegraded = status.state === "degraded";
   const adjustmentCount = [
     ...Object.values(adjustments?.axes ?? {}),
     ...Object.values(adjustments?.themes ?? {}),
   ].filter((value) => value !== "auto").length;
-  const policySettingsPanel = <PolicySettings policies={policies} savePolicies={savePolicies} />;
-  const dnaPanel = (
-    <SettingsPanel
-      className="h-full"
-      description={settingsStrings.dna.description}
-      headingId="settings-dna-title"
-      title={settingsStrings.dna.title}
-    >
-      <div className="grid gap-[var(--space-4)] sm:grid-cols-[minmax(0,1fr)_auto] sm:items-center">
-        <p className="min-w-0 font-bold text-text-strong [overflow-wrap:anywhere]">
-          {settingsStrings.dna.adjustmentCount(adjustmentCount)}
-        </p>
-        <Link
-          className={buttonClassName({
-            className:
-              "w-full px-[var(--space-4)] py-[var(--space-content)] text-center font-bold sm:w-fit",
-            variant: "outline",
-          })}
-          search={{ mode: "adjust" }}
-          to="/taste"
-        >
-          {settingsStrings.dna.action}
-        </Link>
-      </div>
-    </SettingsPanel>
-  );
-  const localDataPanel = (
-    <SettingsPanel
-      className="h-full"
-      description={
-        storageDegraded ? settingsStrings.storage.sessionOnly : settingsStrings.storage.browserOnly
-      }
-      headingId="settings-local-data-title"
-      title={settingsStrings.localData.title}
-    >
-      <p className="text-text-muted">{settingsStrings.localData.privacy}</p>
-    </SettingsPanel>
-  );
-  const dataSettingsPanel = (
-    <DataSettings
-      currentCatalog={catalogIdentity}
-      deleteAllData={deleteAllData}
-      exportUserData={exportUserData}
-      inspectImportJson={inspectImportJson}
-      replaceFromExport={replaceFromExport}
-    />
-  );
-  const policyPanel = (
-    <div className="grid gap-[var(--space-6)]">
-      {policySettingsPanel}
-      {dnaPanel}
-    </div>
-  );
-  const dataPanel = (
-    <div className="grid gap-[var(--space-4)] md:gap-[var(--space-6)]">
-      {localDataPanel}
-      {dataSettingsPanel}
-    </div>
-  );
-  const appPanel = <AppInfo storageDegraded={storageDegraded} />;
-  const panels: Record<SettingsSection, ReactNode> = {
-    policies: policyPanel,
-    data: dataPanel,
-    app: appPanel,
+
+  useEffect(() => {
+    if (activeSection === undefined) return;
+    document
+      .getElementById(`settings-section-${activeSection}`)
+      ?.scrollIntoView?.({ block: "start" });
+  }, [activeSection]);
+
+  const sections: Record<SettingsSection, ReactNode> = {
+    policies: <PolicySettings policies={policies} savePolicies={savePolicies} />,
+    dna: (
+      <SettingsPanel
+        description={settingsStrings.dna.description}
+        headingId="settings-dna-title"
+        title={settingsStrings.dna.title}
+      >
+        <div className="grid gap-[var(--space-4)] sm:grid-cols-[minmax(0,1fr)_auto] sm:items-center">
+          <p className="min-w-0 font-bold text-text-strong [overflow-wrap:anywhere]">
+            {settingsStrings.dna.adjustmentCount(adjustmentCount)}
+          </p>
+          <Link
+            className={buttonClassName({
+              className:
+                "w-full px-[var(--space-4)] py-[var(--space-content)] text-center font-bold sm:w-fit",
+              variant: "outline",
+            })}
+            search={{ mode: "adjust" }}
+            to="/taste"
+          >
+            {settingsStrings.dna.action}
+          </Link>
+        </div>
+      </SettingsPanel>
+    ),
+    data: (
+      <DataSettings
+        currentCatalog={catalogIdentity}
+        deleteAllData={deleteAllData}
+        exportUserData={exportUserData}
+        inspectImportJson={inspectImportJson}
+        replaceFromExport={replaceFromExport}
+      >
+        <StorageStatus
+          externalCount={externalWorks?.length ?? 0}
+          recordCount={userWorks?.length ?? 0}
+          storageDegraded={storageDegraded}
+        />
+      </DataSettings>
+    ),
+    app: <AppInfo storageDegraded={storageDegraded} />,
   };
 
   return (
-    <>
-      <main className="mx-auto grid w-full max-w-[var(--layout-width-media)] gap-[var(--space-section)] px-[var(--layout-page-padding)] pt-[var(--layout-page-block-start)] pb-[var(--space-8)] md:px-[var(--space-8)] md:pt-[var(--space-6)] md:pb-[var(--space-section-large)]">
-        <header className="grid min-w-0 max-w-[var(--layout-width-reading)] gap-[var(--space-content-loose)]">
-          <h1 className="text-[length:var(--text-page-title-size)] text-text-strong md:text-[length:var(--font-size-32)]">
-            {settingsStrings.title}
-          </h1>
-          <p className="text-text-muted">{settingsStrings.description}</p>
-        </header>
+    <main className="mx-auto w-full max-w-[var(--layout-width-media)] px-[var(--layout-page-padding)] pt-[var(--layout-page-block-start)] pb-[var(--space-8)] md:pb-[var(--space-section-large)]">
+      <PageHeader className="mb-[var(--space-6)]" title={settingsStrings.title}>
+        <p className="text-[length:var(--font-size-14)] leading-relaxed text-text-muted">
+          {settingsStrings.description}
+        </p>
+      </PageHeader>
 
-        {storageDegraded ? (
-          <p
-            className="border-l-[length:var(--space-1)] border-warn bg-surface-1 px-[var(--space-4)] py-[var(--space-3)]"
-            role="status"
-          >
-            {settingsStrings.storage.sessionOnly}
-          </p>
-        ) : null}
+      {storageDegraded ? (
+        <p
+          className="mb-[var(--space-6)] border-l-[length:var(--space-1)] border-warn bg-surface-1 px-[var(--space-4)] py-[var(--space-3)]"
+          role="status"
+        >
+          {settingsStrings.storage.sessionOnly}
+        </p>
+      ) : null}
 
-        {activeSection === undefined ? (
-          <div className="grid gap-[var(--space-section)] md:gap-[var(--space-section-large)]">
-            {policySettingsPanel}
-            <div className="grid gap-[var(--space-8)] md:grid-cols-2 md:items-start md:gap-[var(--space-6)]">
-              {dnaPanel}
-              {localDataPanel}
-            </div>
-            {dataSettingsPanel}
-            {appPanel}
-          </div>
-        ) : (
-          <Tabs
-            className="gap-[var(--space-6)]"
-            onValueChange={(value) => {
-              if (SETTINGS_SECTIONS.some((section) => section === value)) onSectionChange?.(value);
-            }}
-            value={activeSection}
-          >
-            <TabsList
-              aria-label={settingsStrings.sections.label}
-              className="w-full justify-start overflow-x-auto overflow-y-hidden"
-            >
-              {SETTINGS_SECTIONS.map((section) => (
-                <TabsTrigger
-                  className="min-w-max shrink-0 px-[var(--space-4)]"
-                  key={section}
-                  value={section}
+      <div className="grid items-start gap-x-[var(--space-12)] md:grid-cols-[calc(var(--control-min-size)*4)_minmax(0,1fr)]">
+        <nav
+          aria-label={settingsStrings.sections.label}
+          className="sticky top-[calc(var(--desktop-navigation-height)+var(--space-6))] hidden md:block"
+        >
+          <ul className="m-0 grid list-none gap-[var(--space-1)] p-0">
+            {SETTINGS_SECTIONS.map((section) => (
+              <li key={section}>
+                <Link
+                  aria-current={activeSection === section ? "location" : undefined}
+                  className="flex min-h-[var(--control-min-size)] items-center border-l-2 border-transparent pl-[var(--space-3)] text-[length:var(--font-size-14)] font-medium text-text-muted hover:text-text focus-visible:outline-2 focus-visible:-outline-offset-2 focus-visible:outline-ring aria-[current=location]:border-accent aria-[current=location]:font-bold aria-[current=location]:text-accent"
+                  onClick={(event) => {
+                    if (
+                      event.button !== 0 ||
+                      event.metaKey ||
+                      event.ctrlKey ||
+                      event.shiftKey ||
+                      event.altKey
+                    )
+                      return;
+                    event.preventDefault();
+                    onSectionChange?.(section);
+                    document
+                      .getElementById(`settings-section-${section}`)
+                      ?.scrollIntoView?.({ block: "start" });
+                  }}
+                  resetScroll={false}
+                  search={{ section }}
+                  to="/settings"
                 >
                   {settingsStrings.sections.items[section]}
-                </TabsTrigger>
-              ))}
-            </TabsList>
-            {SETTINGS_SECTIONS.map((section) => (
-              <TabsContent key={section} value={section}>
-                {panels[section]}
-              </TabsContent>
+                </Link>
+              </li>
             ))}
-          </Tabs>
-        )}
-      </main>
-    </>
+          </ul>
+        </nav>
+        <div className="grid min-w-0 gap-[var(--space-shelf-group)]">
+          {SETTINGS_SECTIONS.map((section) => (
+            <div
+              className="min-w-0 scroll-mt-[calc(var(--desktop-navigation-height)+var(--space-6))]"
+              id={`settings-section-${section}`}
+              key={section}
+            >
+              {sections[section]}
+            </div>
+          ))}
+        </div>
+      </div>
+    </main>
   );
 }

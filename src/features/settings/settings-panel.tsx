@@ -24,11 +24,16 @@ export function SettingsPanel({
       {...props}
     >
       <div className="grid min-w-0 gap-[var(--space-content)]">
-        <h2 className="[overflow-wrap:anywhere] text-text-strong" id={headingId}>
+        <h2
+          className="text-[length:var(--text-subheading-size)] leading-snug [overflow-wrap:anywhere] text-text-strong"
+          id={headingId}
+        >
           {title}
         </h2>
         {description === undefined ? null : (
-          <p className="text-text-muted [overflow-wrap:anywhere]">{description}</p>
+          <p className="text-[length:var(--font-size-14)] text-text-muted [overflow-wrap:anywhere]">
+            {description}
+          </p>
         )}
       </div>
       {children}

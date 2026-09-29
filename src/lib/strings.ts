@@ -542,7 +542,11 @@ export const tasteStrings = {
   title: "あなたの Manga DNA",
   description: "選んだ作品と読書記録から、物語・雰囲気・作画の好みを整理しました。",
   confidence: "分析の確信度",
-  basisCount: (count: number) => `${String(count)}作品から分析しました`,
+  basisCount: (count: number, breakdown: readonly string[]) =>
+    breakdown.length === 0
+      ? `${String(count)}作品から分析しました`
+      : `${String(count)}作品から分析しました（${breakdown.join("・")}）`,
+  basisReactionCount: (label: string, count: number) => `${label} ${String(count)}`,
   basisHeading: "分析の基準",
   confidenceLabels: {
     high: "高い",
@@ -961,7 +965,8 @@ export const settingsStrings = {
   sections: {
     label: "設定セクション",
     items: {
-      policies: "おすすめ",
+      policies: "おすすめの方針",
+      dna: "Manga DNA",
       data: "データ",
       app: "このアプリ",
     },
@@ -973,13 +978,23 @@ export const settingsStrings = {
       count === 0 ? "手動調整はありません。" : `${String(count)} 項目を手動調整しています。`,
     action: "おすすめを調整",
   },
-  localData: {
-    title: "ローカルデータとプライバシー",
-    privacy: "データを外部へ送信せず、この端末のブラウザ内で処理します。",
+  storageStatus: {
+    title: "保存の状態",
+    records: (count: number, external: number) =>
+      external === 0
+        ? `作品の記録 ${String(count)}件`
+        : `作品の記録 ${String(count)}件（カタログ外 ${String(external)}件）`,
+    usage: (megabytes: string) => `使用容量 約${megabytes} MB`,
+    persisted: "ブラウザの自動削除から保護されています。",
+    notPersisted: "空き容量が不足すると、ブラウザが記録を自動で削除する場合があります。",
+    denied: "このブラウザでは保護を有効にできませんでした。定期的にエクスポートしてください。",
+    protect: "データを保護する",
+    protecting: "保護を設定しています…",
   },
   data: {
     title: "データ",
-    description: "このブラウザに保存したデータを、書き出し・復元・削除できます。",
+    description:
+      "記録はこのブラウザだけに保存され、外部へ送信されません。書き出し・復元・削除ができます。",
     export: {
       title: "エクスポート",
       description: "読書記録と好みのデータを JSON ファイルに書き出します。",
@@ -1105,6 +1120,7 @@ export const libraryStrings = {
     sortLabel: "並び順",
     sortUpdated: "最近更新",
     sortTitle: "タイトル順",
+    sortRating: "評価順",
     viewLabel: "表示方法",
     views: { grid: "グリッド", list: "リスト" },
   },
@@ -1125,10 +1141,15 @@ export const libraryStrings = {
     description: "感想を「最高」にした作品です。",
   },
   tools: {
-    heading: "本棚を、いつでも持ち運ぶ。",
-    description: "エクスポートとインポートは、設定からローカルに管理できます。",
+    heading: "記録のバックアップ",
+    description: (count: number) =>
+      `${String(count)}作品の記録は、このブラウザにだけ保存されています。`,
     openSettings: "データ設定を開く",
   },
+  basis: (total: number, favorites: number) =>
+    favorites === 0
+      ? `${String(total)}作品を記録`
+      : `${String(total)}作品を記録 · お気に入り ${String(favorites)}`,
   progress: (volume: number | undefined, chapter: number | undefined) =>
     [
       volume === undefined ? null : `${String(volume)}巻`,
@@ -1137,7 +1158,6 @@ export const libraryStrings = {
       .filter((value): value is string => value !== null)
       .join("・"),
   openRecord: (title: string) => `「${title}」の記録を編集`,
-  editRecord: "記録を編集",
   filteredEmpty: {
     search: (query: string) => `「${query}」に一致する作品は見つかりませんでした。`,
     favorite: "お気に入りの作品はありません。",
