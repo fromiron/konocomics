@@ -619,6 +619,7 @@ export const tasteStrings = {
   previewUnchanged: "先頭の最大4作品に変化はありません。",
   previewChanged: "先頭の最大4作品の顔ぶれや並びが変わりました。",
   recentFeedbackHeading: "最近の記録",
+  openLibrary: "ライブラリで見る",
   feedbackLabels: {
     favorite: "大好き",
     liked: "好き",
@@ -646,7 +647,6 @@ export const tasteStrings = {
     powerInflation: "インフレ・強さの破綻",
     vagueDislike: "なんとなく合わなかった",
   },
-  feedbackWithReason: (status: string, reason: string) => `${status} · ${reason}`,
   addWorks: "作品を追加して精度を上げる",
   recommendations: "おすすめを見る",
   coach: {

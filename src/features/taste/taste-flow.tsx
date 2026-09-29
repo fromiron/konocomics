@@ -632,6 +632,11 @@ type RecentFeedbackSummaryProps = Readonly<{
   showAddWorksLink: boolean;
 }>;
 
+const RECENT_FEEDBACK_LIMIT = 12;
+
+const summaryLinkClassName =
+  "inline-flex min-h-[var(--control-min-size)] items-center text-[length:var(--font-size-14)] font-bold text-accent underline-offset-4 hover:underline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-ring";
+
 function RecentFeedbackSummary({
   records,
   worksById,
@@ -648,9 +653,11 @@ function RecentFeedbackSummary({
       const work = worksById.get(record.workId);
       return work === undefined ? [] : [{ record, work }];
     })
-    .slice(0, 3);
+    .slice(0, RECENT_FEEDBACK_LIMIT);
 
-  const feedbackLabel = (record: UserWorkRecord) => {
+  // Group by status so a shared label such as 「好き」 is written once above its covers.
+  const groups = new Map<string, { record: UserWorkRecord; work: Work; reason?: string }[]>();
+  for (const { record, work } of items) {
     const status =
       record.reaction !== undefined
         ? tasteStrings.feedbackLabels[record.reaction]
@@ -658,51 +665,83 @@ function RecentFeedbackSummary({
     const reason = [...(record.negativeReasons ?? []), ...(record.droppedReasons ?? [])].find(
       (candidate) => !isExternalNegativeReason(candidate),
     );
-    return reason === undefined
-      ? status
-      : tasteStrings.feedbackWithReason(status, tasteStrings.negativeReasonLabels[reason]);
-  };
+    const entry = {
+      record,
+      work,
+      ...(reason === undefined ? {} : { reason: tasteStrings.negativeReasonLabels[reason] }),
+    };
+    const group = groups.get(status);
+    if (group === undefined) groups.set(status, [entry]);
+    else group.push(entry);
+  }
 
   return items.length === 0 ? null : (
     <section
-      className="taste-negative-summary mt-[var(--space-shelf-group)] grid gap-[var(--space-content)]"
       aria-labelledby="taste-negative-heading"
+      className="taste-negative-summary mt-[var(--space-shelf-group)] grid gap-[var(--space-3)]"
     >
-      <header className="flex flex-wrap items-center justify-between gap-[var(--space-content)]">
-        <h2 className="text-[length:var(--text-subheading-size)]" id="taste-negative-heading">
+      <header className="flex flex-wrap items-center justify-between gap-x-[var(--space-6)]">
+        <h2
+          className="text-[length:var(--text-subheading-size)] leading-snug font-bold text-text-strong"
+          id="taste-negative-heading"
+        >
           {tasteStrings.recentFeedbackHeading}
         </h2>
-        {showAddWorksLink ? (
-          <Link
-            className="taste-add-link inline-flex min-h-[var(--control-min-size)] items-center text-[length:var(--font-size-14)] font-bold text-accent underline-offset-4 hover:underline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-ring"
-            preload={false}
-            to="/onboarding"
-          >
-            {tasteStrings.addWorks}
+        <span className="flex flex-wrap items-center gap-x-[var(--space-6)]">
+          <Link className={summaryLinkClassName} preload={false} to="/library">
+            {tasteStrings.openLibrary}
           </Link>
-        ) : null}
+          {showAddWorksLink ? (
+            <Link
+              className={cn("taste-add-link", summaryLinkClassName)}
+              preload={false}
+              to="/onboarding"
+            >
+              {tasteStrings.addWorks}
+            </Link>
+          ) : null}
+        </span>
       </header>
-      <ul className="m-0 grid list-none grid-cols-1 gap-[var(--space-content)] p-0 md:grid-cols-3">
-        {items.map(({ record, work }) => (
-          <li
-            className="grid min-h-[var(--control-min-size)] grid-cols-[var(--space-12)_minmax(0,1fr)] items-center gap-[var(--space-3)] py-[var(--space-content)]"
-            key={work.id}
-          >
-            <CoverImage
-              className="taste-feedback-cover overflow-hidden bg-surface-2"
-              coverUrl={coverUrls.get(work.id)}
-              creators={work.creators}
-              decorative
-              onVisible={() => onCoverVisible(work.id)}
-              requestedSize={200}
-              title={work.title}
-            />
-            <span className="taste-feedback-copy grid min-w-0 gap-[var(--space-content-tight)]">
-              <strong className="truncate text-text-strong">{work.title}</strong>
-              <span className="text-[length:var(--text-caption-size)] text-text-muted">
-                {feedbackLabel(record)}
-              </span>
+      <ul className="m-0 flex list-none flex-wrap gap-x-[var(--space-8)] gap-y-[var(--space-4)] p-0">
+        {[...groups].map(([status, entries]) => (
+          <li className="grid content-start gap-[var(--space-2)]" key={status}>
+            <span className="text-[length:var(--text-caption-size)] font-bold text-text-muted">
+              {status}
             </span>
+            <ul
+              aria-label={status}
+              className="m-0 flex list-none flex-wrap gap-[var(--space-3)] p-0"
+            >
+              {entries.map(({ reason, work }) => (
+                <li className="w-16 min-w-0" key={work.id}>
+                  <Link
+                    aria-label={mediaStrings.openDetails(work.title)}
+                    className="grid gap-[var(--space-1)] rounded-[var(--radius-cover)] focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-ring"
+                    params={{ workId: work.id }}
+                    preload={false}
+                    to="/works/$workId"
+                  >
+                    <CoverImage
+                      className="taste-feedback-cover aspect-[30/43] w-full overflow-hidden rounded-[var(--radius-cover)] border border-line/60"
+                      coverUrl={coverUrls.get(work.id)}
+                      creators={work.creators}
+                      decorative
+                      onVisible={() => onCoverVisible(work.id)}
+                      requestedSize={200}
+                      title={work.title}
+                    />
+                    <span className="truncate text-[length:var(--text-caption-size)] font-bold text-text-strong">
+                      {work.title}
+                    </span>
+                    {reason === undefined ? null : (
+                      <span className="truncate text-[length:var(--text-caption-size)] text-text-muted">
+                        {reason}
+                      </span>
+                    )}
+                  </Link>
+                </li>
+              ))}
+            </ul>
           </li>
         ))}
       </ul>
@@ -843,7 +882,7 @@ export function TasteFlow({
             right.updatedAt.localeCompare(left.updatedAt) ||
             left.workId.localeCompare(right.workId),
         )
-        .slice(0, 3)
+        .slice(0, RECENT_FEEDBACK_LIMIT)
         .map((record) => record.workId),
     [catalogRecords],
   );

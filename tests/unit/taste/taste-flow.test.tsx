@@ -344,6 +344,23 @@ describe("TasteFlow", () => {
     expect(await screen.findByText("分析の確信度: 高い")).toBeTruthy();
     expect(screen.queryByRole("heading", { name: tasteStrings.coach.heading })).toBeNull();
     expect(screen.getByRole("link", { name: tasteStrings.addWorks })).toBeTruthy();
+    const recent = screen
+      .getByRole("heading", { name: tasteStrings.recentFeedbackHeading })
+      .closest("section");
+    if (recent === null) throw new Error("Missing recent feedback summary");
+    // Every recent record is 「好き」, so the label appears once above all eight covers.
+    const statusGroups = within(recent).getAllByRole("list", {
+      name: tasteStrings.feedbackLabels.liked,
+    });
+    expect(statusGroups).toHaveLength(1);
+    expect(within(statusGroups[0]!).getAllByRole("link")).toHaveLength(8);
+    expect(statusGroups[0]!.querySelectorAll(".taste-feedback-cover")).toHaveLength(8);
+    expect(
+      within(recent).getAllByText(tasteStrings.feedbackLabels.liked, { exact: true }),
+    ).toHaveLength(1);
+    expect(
+      within(recent).getByRole("link", { name: tasteStrings.openLibrary }).getAttribute("href"),
+    ).toBe("/library");
   });
 
   it("shows five compact group summaries and opens one labelled detail panel at a time", async () => {
