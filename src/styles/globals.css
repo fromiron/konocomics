@@ -744,7 +744,8 @@ h1[tabindex="-1"]:focus {
   inset: 0 auto auto 0;
   width: 100px;
   height: 100px;
-  transform: scale(calc(var(--book-image-width) / 100px));
+  /* tan(atan2()) yields the unitless width ratio where length/length division is unsupported (Firefox). */
+  transform: scale(tan(atan2(var(--book-image-width), 100px)));
   transform-origin: top left;
 }
 
