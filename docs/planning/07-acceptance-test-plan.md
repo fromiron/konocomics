@@ -52,6 +52,7 @@
 - Art 4축이 모두 `unknown`인 Work도 다른 네 필수 그룹을 충족하면 `recommendationEligible`을 통과한다. 커뮤니티 근거의 Art는 이미지 manifest 없이 허용하고, publisher/manual 이미지 근거의 known Art는 기존 manifest·표본·맥락 검사를 그대로 통과해야 한다.
 - Export→Import 라운드트립: 임의 사용자 상태 생성 → export → import → userWorks/externalWorks/profile/draft 동등, cache empty와 current runtime meta 확인.
 - Import 거부: schemaVersion 2 / 필드 손상 / 부분 손상 배열 — mutation 전 전체 거부와 일곱 store 불변.
+- 4상태 정규화(2026-09-29): 이전 `reading` record는 저장 행 read·Export v1 Import preview·Library `?state=reading`에서 `completed`로 읽히고 `progress`·reaction을 보존한다.
 - providerCache TTL: 주입 시간 기준 가격·재고 24시간 / 기타 metadata 90일의 직전·정확 경계, 상업 필드만 먼저 숨기는 상태, legacy 단일 `expiresAt` cache miss.
 - 추천 표지 resolver: 표시 순 representative ISBN registry, 첫 `target[0]` metadata만 자동 시작, 후속 target은 `CoverImage` viewport 진입 요청 뒤 시작, 전체 최대 4개 동시 처리와 결과별 commit(실제 이미지 load/error는 기다리지 않음), 동일 target 중복 수요 dedupe, fresh exact-workId/no-image와 실패 결과 terminal, expired·mismatch·miss 갱신+저장 readback, stale generation 차단, generation 전환 동안 가시성 수요와 survivor URL 보존. normalized ISBN 동시 요청은 한 provider 호출에 합류한다.
 - 추천 계산 Worker client: 첫 요청만 `catalog + context`를 포함하고 이후 요청은 동적 입력만 보내며 request ID로 응답을 연결한다. crash·message 실패는 pending 요청 전체를 reject하고 Worker를 reset하며 다음 요청은 정적 입력부터 다시 시작한다. Worker API 부재 환경은 같은 순수 추천 함수 fallback을 사용한다.

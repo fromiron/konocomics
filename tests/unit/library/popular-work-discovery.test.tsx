@@ -87,14 +87,14 @@ describe("popular work discovery", () => {
     fireEvent.click(screen.getByRole("button", { name: popularWorkStrings.read }));
     const state = await screen.findByRole("combobox", { name: libraryStrings.editor.readingState });
     expect(await persistence.getUserWorks()).toEqual([]);
-    fireEvent.change(state, { target: { value: "reading" } });
+    fireEvent.change(state, { target: { value: "dropped" } });
     fireEvent.change(screen.getByRole("combobox", { name: libraryStrings.editor.reaction }), {
       target: { value: "liked" },
     });
     fireEvent.click(screen.getByRole("button", { name: libraryStrings.editor.save }));
     await screen.findByText(libraryStrings.editor.saved);
     expect(await persistence.getUserWorks()).toEqual([
-      expect.objectContaining({ workId: work.id, readingState: "reading", reaction: "liked" }),
+      expect.objectContaining({ workId: work.id, readingState: "dropped", reaction: "liked" }),
     ]);
     expect(await persistence.getExternalWorks()).toEqual([]);
   });

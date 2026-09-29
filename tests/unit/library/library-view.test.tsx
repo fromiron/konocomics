@@ -187,7 +187,7 @@ describe("LibraryView", () => {
     (view) => {
       const readingRecord: UserWorkRecord = {
         workId: readingTarget.id,
-        readingState: "reading",
+        readingState: "completed",
         progress: { volume: 1, chapter: 4 },
         updatedAt: "2026-08-15T00:00:00.000Z",
       };
@@ -218,22 +218,17 @@ describe("LibraryView", () => {
     },
   );
 
-  it("renders all six state tabs on the controlled overview path and discloses external rows and exclusion in detail", () => {
+  it("renders all five state tabs on the controlled overview path and discloses external rows and exclusion in detail", () => {
     renderLibrary({ activeState: null });
     const tablist = screen.getByRole("tablist", { name: libraryStrings.tablistLabel });
     expect(tablist.className).toContain("flex-wrap");
-    expect(screen.getAllByRole("tab")).toHaveLength(6);
+    expect(screen.getAllByRole("tab")).toHaveLength(5);
     expect(
       screen.getByRole("tab", { name: libraryStrings.tabWithCount(libraryStrings.tabsAll, 2) }),
     ).toBeTruthy();
     expect(
       screen.getByRole("tab", {
         name: libraryStrings.tabWithCount(libraryStrings.tabs.planned, 2),
-      }),
-    ).toBeTruthy();
-    expect(
-      screen.getByRole("tab", {
-        name: libraryStrings.tabWithCount(libraryStrings.tabs.reading, 0),
       }),
     ).toBeTruthy();
     expect(

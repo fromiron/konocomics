@@ -111,8 +111,7 @@ export function createRecommendationInputProjection(
         if (
           work?.eligibility.recommendationEligible !== true ||
           anchorWorkIds.has(record.workId) ||
-          (record.readingState !== "reading" &&
-            record.readingState !== "completed" &&
+          (record.readingState !== "completed" &&
             record.readingState !== "dropped" &&
             record.readingState !== "hidden" &&
             record.reaction !== "disliked")

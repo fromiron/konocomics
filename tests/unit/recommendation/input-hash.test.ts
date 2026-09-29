@@ -172,7 +172,7 @@ describe("recommendation input projection", () => {
       })(),
       (() => {
         const next = structuredClone(original);
-        next.records.find((record) => record.workId === "planned-d")!.readingState = "reading";
+        next.records.find((record) => record.workId === "planned-d")!.readingState = "completed";
         return next;
       })(),
       (() => {

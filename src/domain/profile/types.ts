@@ -1,6 +1,6 @@
 import type { AxisId, ThemeTag } from "../catalog/types";
 
-export type ReadingState = "planned" | "reading" | "completed" | "dropped" | "hidden";
+export type ReadingState = "planned" | "completed" | "dropped" | "hidden";
 export type Reaction = "favorite" | "liked" | "neutral" | "disliked";
 
 export type FactorBackedNegativeReasonId =

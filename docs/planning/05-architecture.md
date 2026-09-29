@@ -265,6 +265,7 @@ db.version(2).stores({
 });
 ```
 
+- 2026-09-29 4상태 모델(`02` §5.2): `userWorks`와 `externalWorks.record`의 zod 읽기 경계는 이전 `reading`을 `completed`로 정규화한다(`src/domain/profile/reading-state.ts`). store/index 변경이 아니므로 Dexie 버전과 Export v1의 `schemaVersion: 2`를 올리지 않으며, 저장된 이전 행은 다음 사용자 쓰기에서 정규화된 값으로 다시 저장된다. `readingState` index로 조회하는 코드는 없다. Import preview·replacement도 같은 경계를 거쳐 정규화된 값을 쓴다.
 - v2는 provider cache의 단일 `expiresAt`을 가격·재고 24시간과 기타 metadata 90일로 분리한다. 기존 v1 provider row는 새 strict schema에서 cache miss로 취급하며 프로필·기록·추천 cache를 변경하지 않는다.
 - external identity 결정은 store/index 변경이 아니므로 v2에 새 store나 index를 추가하지 않는다. `externalWorks` read/write 경계는 exact supported ID, canonical `normalizedKey`, ID/digest 일치, `record.workId === id`, distinct valid ISBN identity를 모두 검증한다. ISBN-10은 `isbnIdentityKey`로 동등한 ISBN-13에 canonicalize하고 10/13 표현 중복을 거부한다. `userWorks`는 exact `external`과 모든 `ext:` ID를 거부한다.
 - Library의 Catalog/external 추가는 각각 단일 transaction의 insert-only + authoritative readback이다. stale tab이 기존 의미 있는 record를 기본 `planned`로 덮지 않는다. 같은 external ID/key가 이미 있으면 기존 서지·사용자 record를 보존하고 incoming ISBN만 distinct union으로 합친 뒤 existing 결과를 반환하며, same-ID/different-key는 전체 write를 거부하고 suffix를 만들지 않는다. 결과를 확정할 수 없는 primary insert는 memory mirror에 재실행하지 않고 `preserved-unknown`을 반환한다.

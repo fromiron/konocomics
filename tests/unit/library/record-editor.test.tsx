@@ -32,7 +32,7 @@ describe("LibraryRecordEditor", () => {
     fireEvent.submit(save.closest("form")!);
     expect(onSave).not.toHaveBeenCalled();
     const state = screen.getByRole("combobox", { name: libraryStrings.editor.readingState });
-    fireEvent.change(state, { target: { value: "reading" } });
+    fireEvent.change(state, { target: { value: "dropped" } });
     expect(save.disabled).toBe(false);
     fireEvent.change(state, { target: { value: "completed" } });
     expect(save.disabled).toBe(true);

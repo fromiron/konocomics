@@ -25,7 +25,13 @@ import { WorkDetailFlow } from "@/features/work-detail/work-detail-flow";
 import type { ProviderCacheRecord } from "@/infrastructure/db";
 import type * as RakutenExports from "@/infrastructure/rakuten";
 import { buildRakutenBooksSearchUrl } from "@/infrastructure/rakuten";
-import { coverStrings, workDetailStrings, explanationLexicon, mediaStrings } from "@/lib/strings";
+import {
+  coverStrings,
+  explanationLexicon,
+  libraryStrings,
+  mediaStrings,
+  workDetailStrings,
+} from "@/lib/strings";
 
 vi.mock("@tanstack/react-router", () => ({
   Link: ({
@@ -223,9 +229,14 @@ describe("WorkDetailFlow", () => {
     expect(
       [...(segments?.querySelectorAll("button") ?? [])].map((button) => button.textContent),
     ).toEqual([workDetailStrings.state.options.completed, workDetailStrings.state.options.dropped]);
+    // Four states only: the 「読みたい」 bookmark plus three read outcomes.
     expect(
-      screen.queryByRole("button", { name: workDetailStrings.state.options.reading }),
-    ).toBeNull();
+      [
+        ...(screen
+          .getByRole("group", { name: workDetailStrings.state.heading })
+          .querySelectorAll("[data-reading-state]") ?? []),
+      ].map((button) => button.getAttribute("data-reading-state")),
+    ).toEqual(["planned", "completed", "dropped", "hidden"]);
     expect(
       screen
         .getByRole("button", { name: workDetailStrings.state.options.planned })
@@ -297,22 +308,45 @@ describe("WorkDetailFlow", () => {
     expect(await screen.findByText(workDetailStrings.state.reactionCleared)).toBeTruthy();
   });
 
-  it("keeps an in-progress or dropped state when rating and hides the bookmark once read", async () => {
+  it("keeps the bookmark in place after rating and keeps a read state with its progress", async () => {
     testState.status = { state: "ready", mode: "indexeddb", warning: null };
+    testState.userWorks = [];
+    let view = renderDetail("monster");
+    const bookmark = await screen.findByRole("button", {
+      name: workDetailStrings.state.options.planned,
+    });
+    await act(async () => {
+      fireEvent.click(
+        within(
+          screen.getByRole("group", { name: workDetailStrings.state.reactionGroup }),
+        ).getByRole("button", { name: "普通" }),
+      );
+    });
+    // Rating records 「読んだ」 but never removes or moves the bookmark control.
+    expect(bookmark.isConnected).toBe(true);
+    view.unmount();
+
+    testState.saveUserWork.mockClear();
     testState.userWorks = [
       {
         workId: "monster",
-        readingState: "reading",
+        readingState: "completed",
         progress: { volume: 4 },
         updatedAt: "2026-08-14T00:00:00.000Z",
       },
     ];
-    const view = renderDetail("monster");
+    view = renderDetail("monster");
 
-    expect(await screen.findByText(/「読んでいる」として記録中です/u)).toBeTruthy();
     expect(
-      screen.queryByRole("button", { name: workDetailStrings.state.options.planned }),
-    ).toBeNull();
+      await screen.findByText(
+        workDetailStrings.state.progressNote(libraryStrings.progress(4, undefined)),
+      ),
+    ).toBeTruthy();
+    expect(
+      screen
+        .getByRole("button", { name: workDetailStrings.state.options.planned })
+        .getAttribute("aria-pressed"),
+    ).toBe("false");
     await act(async () => {
       fireEvent.click(
         within(
@@ -321,7 +355,7 @@ describe("WorkDetailFlow", () => {
       );
     });
     expect(testState.saveUserWork.mock.calls.at(-1)?.[0]).toMatchObject({
-      readingState: "reading",
+      readingState: "completed",
       reaction: "favorite",
       progress: { volume: 4 },
     });
@@ -607,7 +641,7 @@ describe("WorkDetailFlow", () => {
     fireEvent.click(planned);
     expect(testState.saveUserWork).toHaveBeenCalledTimes(1);
     resolveSave?.(testState.saveUserWork.mock.calls[0]![0]);
-    await waitFor(() => expect(screen.queryByText(workDetailStrings.state.saving)).toBeNull());
+    expect(await screen.findByText(workDetailStrings.state.plannedSaved)).toBeTruthy();
   });
 
   it("persists and authoritatively removes a minimal planned record", async () => {

@@ -35,7 +35,7 @@ function externalRecord(): ExternalWorkRecord {
     isbnSamples: ["9784091855312"],
     record: {
       workId: EXTERNAL_ID,
-      readingState: "reading",
+      readingState: "completed",
       progress: { volume: 3 },
       updatedAt: EXPORTED_AT,
     },
@@ -253,6 +253,38 @@ describe("Export v1 file contract", () => {
     expect(preview.catalogVersionMismatch).toBe(true);
     expect(preview.file.userWorks).toEqual([outsideRecord]);
     expect(preview.profileState).toBe("first-run");
+  });
+
+  it("imports a legacy 「読んでいる」 record as 「読んだ」 with its progress", async () => {
+    const file = await exportFile({ userWorks: [] });
+    const legacy = {
+      ...file,
+      userWorks: [
+        {
+          workId: "one",
+          readingState: "reading",
+          progress: { volume: 4, chapter: 30 },
+          updatedAt: EXPORTED_AT,
+        },
+      ],
+      externalWorks: file.externalWorks.map((work) => ({
+        ...work,
+        record: { ...work.record, readingState: "reading" },
+      })),
+    };
+
+    const preview = await inspectExportFileV1(legacy, CURRENT_CATALOG);
+    expect(preview.file.userWorks).toEqual([
+      {
+        workId: "one",
+        readingState: "completed",
+        progress: { volume: 4, chapter: 30 },
+        updatedAt: EXPORTED_AT,
+      },
+    ]);
+    expect(preview.file.externalWorks.map((work) => work.record.readingState)).toEqual(
+      file.externalWorks.map(() => "completed"),
+    );
   });
 
   it("rejects malformed JSON and newer file or identity versions with stable diagnostics", async () => {

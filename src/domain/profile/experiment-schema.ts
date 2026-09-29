@@ -3,24 +3,17 @@ import { z, type RefinementCtx } from "zod";
 import { AXIS_IDS, THEME_TAGS } from "../catalog/constants";
 import type { CatalogV1 } from "../catalog/types";
 import { NEGATIVE_REASON_ORDER } from "./constants";
+import { LEGACY_READING_STATES, normalizeReadingState } from "./reading-state";
 import type {
   AdjustmentPreference,
   ExternalNegativeReasonId,
   NegativeReasonId,
-  ReadingState,
   Reaction,
 } from "./types";
 
 const PROFILE_ID_PATTERN = /^[a-z0-9]+(?:-[a-z0-9]+)*$/;
 const EXTERNAL_REASON_PATTERN = /^external:[a-z0-9]+(?:-[a-z0-9]+)*$/;
 
-const READING_STATES = [
-  "planned",
-  "reading",
-  "completed",
-  "dropped",
-  "hidden",
-] as const satisfies readonly ReadingState[];
 const REACTIONS = [
   "favorite",
   "liked",
@@ -66,7 +59,7 @@ const progressSchema = z.strictObject({
 
 const userWorkRecordSchema = z.strictObject({
   workId: z.string().min(1),
-  readingState: z.enum(READING_STATES),
+  readingState: z.enum(LEGACY_READING_STATES).transform(normalizeReadingState),
   reaction: z.enum(REACTIONS).optional(),
   progress: progressSchema.optional(),
   positiveReasons: z.array(z.string()).optional(),

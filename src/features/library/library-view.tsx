@@ -11,6 +11,7 @@ import { SummarySection, summaryLinkClassName } from "@/components/layout/summar
 import { parseExternalWorkId, type ExternalWorkId } from "@/domain/catalog/external-work";
 import { isbnIdentityKey } from "@/domain/catalog/normalize";
 import type { CatalogV1, Work } from "@/domain/catalog/types";
+import { READING_STATES } from "@/domain/profile/reading-state";
 import type { ReadingState, UserWorkRecord } from "@/domain/profile/types";
 import type { ExternalWorkRecord } from "@/infrastructure/db";
 import type { RakutenBookItem } from "@/infrastructure/rakuten";
@@ -30,7 +31,6 @@ import { ModalSurface } from "./modal-surface";
 import { LibraryRecordEditor } from "./record-editor";
 import { WorkSearchSheet, type LibraryAddOutcome } from "./work-search-sheet";
 
-const READING_STATES = ["planned", "reading", "completed", "dropped", "hidden"] as const;
 const PAGE_SIZE = 24;
 export type { LibraryRow } from "./library-media-cards";
 type SelectedRow = Readonly<

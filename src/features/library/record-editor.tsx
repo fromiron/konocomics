@@ -6,6 +6,7 @@ import { Button } from "@/components/design-system/button";
 import { Input } from "@/components/design-system/input";
 import { NativeSelect } from "@/components/design-system/native-select";
 import { FACTOR_BACKED_NEGATIVE_REASON_IDS } from "@/domain/profile/constants";
+import { READING_STATES } from "@/domain/profile/reading-state";
 import type {
   NegativeReasonId,
   Reaction,
@@ -14,7 +15,6 @@ import type {
 } from "@/domain/profile/types";
 import { libraryStrings } from "@/lib/strings";
 
-const READING_STATES = ["planned", "reading", "completed", "dropped", "hidden"] as const;
 const REACTIONS = ["favorite", "liked", "neutral", "disliked"] as const;
 const REASON_OPTIONS: ReadonlyArray<Readonly<{ id: NegativeReasonId; label: string }>> = [
   ...FACTOR_BACKED_NEGATIVE_REASON_IDS.map((id) => ({
@@ -147,9 +147,7 @@ export function LibraryRecordEditor({
     record.droppedReasons ?? [],
   );
   const [progressOpen, setProgressOpen] = useState(
-    record.readingState === "reading" ||
-      record.progress?.volume !== undefined ||
-      record.progress?.chapter !== undefined,
+    record.progress?.volume !== undefined || record.progress?.chapter !== undefined,
   );
 
   const next: UserWorkRecord = {
@@ -202,7 +200,6 @@ export function LibraryRecordEditor({
             onChange={(event) => {
               if (isReadingState(event.currentTarget.value)) {
                 setReadingState(event.currentTarget.value);
-                if (event.currentTarget.value === "reading") setProgressOpen(true);
               }
             }}
             value={readingState}

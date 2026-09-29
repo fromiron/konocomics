@@ -158,7 +158,7 @@ function ProgressDisplay({
   const label = libraryStrings.progress(volume, chapter);
   const total = row.kind === "catalog" ? volumeCountByWorkId.get(row.id) : undefined;
   const percentage =
-    row.record.readingState !== "reading" ||
+    (row.record.readingState !== "completed" && row.record.readingState !== "dropped") ||
     volume === undefined ||
     total === undefined ||
     total < 1

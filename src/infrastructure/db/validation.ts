@@ -6,6 +6,7 @@ import {
   type OnboardingDraft,
 } from "@/domain/profile/onboarding";
 import { AXIS_IDS, THEME_TAGS } from "@/domain/catalog/constants";
+import { LEGACY_READING_STATES, normalizeReadingState } from "@/domain/profile/reading-state";
 import {
   isExternalWorkId,
   parseExternalWorkNormalizedKeyV1,
@@ -48,7 +49,8 @@ const negativeReasonSchema: z.ZodType<NegativeReasonId> = z.union([
 const userWorkRecordSchema: z.ZodType<UserWorkRecord> = z
   .strictObject({
     workId: z.string().min(1),
-    readingState: z.enum(["planned", "reading", "completed", "dropped", "hidden"]),
+    // Records saved before the four-state model may still hold `reading`.
+    readingState: z.enum(LEGACY_READING_STATES).transform(normalizeReadingState),
     reaction: z.enum(["favorite", "liked", "neutral", "disliked"]).optional(),
     progress: z
       .strictObject({

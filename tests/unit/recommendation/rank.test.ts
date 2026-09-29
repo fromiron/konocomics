@@ -86,7 +86,7 @@ describe("rank candidate eligibility", () => {
     );
     const records = [
       createTestRecord({ workId: "anchor", reaction: "liked", readingState: "completed" }),
-      createTestRecord({ workId: "reading", reaction: "neutral", readingState: "reading" }),
+      createTestRecord({ workId: "reading", reaction: "neutral", readingState: "completed" }),
       createTestRecord({ workId: "completed", reaction: "neutral", readingState: "completed" }),
       createTestRecord({ workId: "dropped", reaction: "neutral", readingState: "dropped" }),
       createTestRecord({ workId: "hidden", reaction: "neutral", readingState: "hidden" }),

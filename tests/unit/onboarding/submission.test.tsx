@@ -413,7 +413,7 @@ describe("OnboardingFlow finalization", () => {
 describe("OnboardingFlow add mode", () => {
   const existingRecord = {
     workId: "monster",
-    readingState: "reading",
+    readingState: "completed",
     reaction: "favorite",
     progress: { volume: 7, chapter: 58 },
     positiveReasons: ["緻密な駆け引き"],

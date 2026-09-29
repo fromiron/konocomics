@@ -632,7 +632,6 @@ export const tasteStrings = {
   },
   readingStateLabels: {
     planned: "読みたい",
-    reading: "読んでいる",
     completed: "読んだ",
     dropped: "途中でやめた",
     hidden: "興味なし",
@@ -917,23 +916,18 @@ export const workDetailStrings = {
     prompt: "状態を選ぶ",
     options: {
       planned: "読みたい",
-      reading: "読んでいる",
       completed: "読んだ",
       dropped: "途中でやめた",
       hidden: "興味なし",
     },
     plannedAdd: "読みたい",
     plannedRemove: "読みたいから外す",
-    ongoingHint: "連載中の作品は、最新刊まで読んだら「読んだ」を選べます。",
+    ongoingHint: "連載中の作品も、読んだところまでを「読んだ」として記録できます。",
     reactionGroup: "感想",
     reactionSaved: (state: string, label: string) => `「${state}・${label}」を保存しました。`,
     reactionCleared: "感想を外しました。読書状態はそのままです。",
-    readingNote: (progress?: string) =>
-      progress === undefined
-        ? "ライブラリで「読んでいる」として記録中です。"
-        : `ライブラリで「読んでいる」として記録中です（${progress}）。`,
-    saving: "保存しています…",
-    saved: "読書状態を保存しました。",
+    progressNote: (progress: string) => `${progress}まで読んだ記録があります。`,
+    stateSaved: (label: string) => `「${label}」を保存しました。`,
     plannedSaved: "読みたいに追加しました。",
     plannedRemoved: "読みたいから外しました。",
     plannedAlreadyAbsent: "すでに読みたいから外れています。",
@@ -1135,10 +1129,9 @@ export const libraryStrings = {
   tabsAll: "すべて",
   tabs: {
     planned: "読みたい",
-    reading: "読んでる",
     completed: "読んだ",
     dropped: "途中でやめた",
-    hidden: "非表示",
+    hidden: "興味なし",
   },
   tabWithCount: (label: string, count: number) => `${label}、${String(count)}作品`,
   listLabel: (state: string) => `${state}作品`,
@@ -1209,10 +1202,9 @@ export const libraryStrings = {
   },
   tabEmpty: {
     planned: "読みたい作品はまだありません。",
-    reading: "読んでいる作品はまだありません。",
     completed: "読んだ作品はまだありません。",
     dropped: "途中でやめた作品はまだありません。",
-    hidden: "非表示にした作品はまだありません。",
+    hidden: "興味なしにした作品はまだありません。",
   },
   externalBadge: "カタログ外",
   externalExclusion: "この作品はおすすめ・Manga DNA の計算には使われません。",

@@ -3,6 +3,7 @@ import * as z from "zod/v4";
 import { EXTERNAL_WORK_ID_V1_PATTERN, type ExternalWorkId } from "@/domain/catalog/external-work";
 import { COVERAGE_GROUPS } from "@/domain/catalog/constants";
 import { catalogIdSchema, genreTagSchema } from "@/domain/catalog/schema";
+import { LEGACY_READING_STATES, normalizeReadingState } from "@/domain/profile/reading-state";
 
 const optionalQuery = z
   .preprocess(
@@ -59,10 +60,8 @@ export const librarySearchSchema = z.object({
       z.number().int().min(2).max(Number.MAX_SAFE_INTEGER).optional(),
     )
     .catch(undefined),
-  state: z
-    .enum(["planned", "reading", "completed", "dropped", "hidden"])
-    .optional()
-    .catch(undefined),
+  // Old links may still say `?state=reading`; it opens 「読んだ」.
+  state: z.enum(LEGACY_READING_STATES).transform(normalizeReadingState).optional().catch(undefined),
   q: optionalQuery,
   sort: z.enum(["updated", "title", "rating"]).optional().catch(undefined),
   view: z.enum(["list", "grid"]).optional().catch(undefined),

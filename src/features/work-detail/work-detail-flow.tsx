@@ -2,10 +2,11 @@
 
 import { Link } from "@tanstack/react-router";
 import { BookmarkIcon, EyeOffIcon } from "lucide-react";
-import { useEffect, useMemo, useRef, useState } from "react";
+import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 
 import { coverSourceForSize } from "@/components/cover/CoverImage";
 import { Button, buttonClassName } from "@/components/design-system/button";
+import { Snackbar, type SnackbarNotice } from "@/components/layout/snackbar";
 import { MediaShelf } from "@/components/media/media-shelf";
 import { RankingCard } from "@/components/media/ranking-card";
 import { ReasonChips } from "@/components/media/recommendation-evidence";
@@ -284,12 +285,12 @@ function compatibilityFor(options: {
 }
 
 type RemovalResult = "removed" | "already-absent" | "preserved-conflict";
-type StateMessage = Readonly<{ kind: "status" | "error"; text: string }>;
+type StateNotice = Omit<SnackbarNotice, "id">;
 
 type WorkStateControlsProps = Readonly<{
   record: UserWorkRecord | undefined;
   recordsReady: boolean;
-  /** Ongoing or paused series: 「読んだ」 means caught up to the latest volume. */
+  /** Ongoing or paused series: 「読んだ」 also covers reading up to the latest volume. */
   seriesContinues: boolean;
   workId: string;
   addUserWorkIfAbsent(
@@ -311,27 +312,32 @@ function WorkStateControls({
   workId,
 }: WorkStateControlsProps) {
   const [busy, setBusy] = useState(false);
-  const [message, setMessage] = useState<StateMessage | undefined>();
-  // The record removed by the last clear, restorable once via 「元に戻す」.
-  const [undoRecord, setUndoRecord] = useState<UserWorkRecord | undefined>();
+  const [notice, setNotice] = useState<SnackbarNotice | undefined>();
+  const noticeSequence = useRef(0);
   const actionInFlight = useRef(false);
   const minimalPlanned = isMinimalPlannedRecord(record);
 
-  // Serializes one mutation at a time and reports its outcome.
-  const runAction = async (action: () => Promise<StateMessage>) => {
+  const dismissNotice = useCallback((id: number) => {
+    setNotice((current) => (current?.id === id ? undefined : current));
+  }, []);
+
+  // Serializes one mutation at a time. Controls keep their look while saving and the outcome
+  // replaces the snackbar in place, so quick successive taps do not flash or reflow the page.
+  const runAction = async (action: () => Promise<StateNotice>) => {
     if (!recordsReady || actionInFlight.current) return;
     actionInFlight.current = true;
     setBusy(true);
-    setMessage(undefined);
-    setUndoRecord(undefined);
+    let next: StateNotice;
     try {
-      setMessage(await action());
+      next = await action();
     } catch {
-      setMessage({ kind: "error", text: workDetailStrings.state.error });
+      next = { tone: "error", text: workDetailStrings.state.error };
     } finally {
       actionInFlight.current = false;
       setBusy(false);
     }
+    noticeSequence.current += 1;
+    setNotice({ ...next, id: noticeSequence.current });
   };
 
   const saveReadingState = (readingState: ReadingState) =>
@@ -344,11 +350,11 @@ function WorkStateControls({
         updatedAt: new Date().toISOString(),
       });
       return {
-        kind: "status",
+        tone: "status",
         text:
           readingState === "planned"
             ? workDetailStrings.state.plannedSaved
-            : workDetailStrings.state.saved,
+            : workDetailStrings.state.stateSaved(workDetailStrings.state.options[readingState]),
       };
     });
 
@@ -356,7 +362,7 @@ function WorkStateControls({
     runAction(async () => {
       const result = await removeMinimalPlannedUserWork(workId);
       return {
-        kind: "status",
+        tone: "status",
         text:
           result === "removed"
             ? workDetailStrings.state.plannedRemoved
@@ -366,51 +372,53 @@ function WorkStateControls({
       };
     });
 
-  // Tapping the selected state resets the work to 「no record」; a newer write from another
-  // tab is never deleted, and the removed record stays restorable until the next action.
-  const clearRecord = (label: string) => {
-    const snapshot = record;
-    if (snapshot === undefined) return Promise.resolve();
-    return runAction(async () => {
-      const result = await removeUserWorkIfUnchanged(workId, snapshot.updatedAt);
-      if (result === "removed") setUndoRecord(snapshot);
-      return {
-        kind: "status",
-        text:
-          result === "removed"
-            ? workDetailStrings.state.recordCleared(label)
-            : result === "already-absent"
-              ? workDetailStrings.state.recordAlreadyCleared
-              : workDetailStrings.state.plannedPreservedConflict,
-      };
-    });
-  };
-
-  const restoreRecord = () => {
-    const snapshot = undoRecord;
-    if (snapshot === undefined) return Promise.resolve();
-    return runAction(async () => {
+  const restoreRecord = (snapshot: UserWorkRecord) =>
+    runAction(async () => {
       const result = await addUserWorkIfAbsent({
         ...snapshot,
         updatedAt: new Date().toISOString(),
       });
       return {
-        kind: "status",
+        tone: "status",
         text:
           result.kind === "added"
             ? workDetailStrings.state.recordRestored
             : workDetailStrings.state.plannedPreservedConflict,
       };
     });
+
+  // Tapping the selected state resets the work to 「no record」; a newer write from another
+  // tab is never deleted, and the removed record stays restorable from the snackbar.
+  const clearRecord = (label: string) => {
+    const snapshot = record;
+    if (snapshot === undefined) return Promise.resolve();
+    return runAction(async () => {
+      const result = await removeUserWorkIfUnchanged(workId, snapshot.updatedAt);
+      if (result !== "removed") {
+        return {
+          tone: "status",
+          text:
+            result === "already-absent"
+              ? workDetailStrings.state.recordAlreadyCleared
+              : workDetailStrings.state.plannedPreservedConflict,
+        };
+      }
+      return {
+        tone: "status",
+        text: workDetailStrings.state.recordCleared(label),
+        action: {
+          label: workDetailStrings.state.undo,
+          onAction: () => void restoreRecord(snapshot),
+        },
+      };
+    });
   };
 
-  // A reaction keeps an in-progress, finished, or dropped state and otherwise records 「読んだ」.
+  // A reaction keeps a finished or dropped state and otherwise records 「読んだ」.
   // Tapping the current reaction clears only the reaction.
   const saveReaction = (reaction: Reaction) => {
     const keptState =
-      record?.readingState === "reading" ||
-      record?.readingState === "completed" ||
-      record?.readingState === "dropped"
+      record?.readingState === "completed" || record?.readingState === "dropped"
         ? record.readingState
         : undefined;
     const nextState = keptState ?? "completed";
@@ -434,7 +442,7 @@ function WorkStateControls({
         updatedAt: new Date().toISOString(),
       });
       return {
-        kind: "status",
+        tone: "status",
         text:
           nextReaction === undefined
             ? workDetailStrings.state.reactionCleared
@@ -446,35 +454,22 @@ function WorkStateControls({
     });
   };
 
-  // State buttons toggle: selecting the current state again clears the record.
+  // Every state button toggles: selecting the current state again clears the record.
   const handleStateSelect = (state: ReadingState) => {
-    if (record?.readingState === state) {
-      void clearRecord(workDetailStrings.state.options[state]);
-    } else {
+    if (record?.readingState !== state) {
       void saveReadingState(state);
-    }
-  };
-
-  const toggleBookmark = () => {
-    if (record?.readingState !== "planned") {
-      void saveReadingState("planned");
-    } else if (minimalPlanned) {
+    } else if (state === "planned" && minimalPlanned) {
       void removePlanned();
     } else {
-      void clearRecord(workDetailStrings.state.options.planned);
+      void clearRecord(workDetailStrings.state.options[state]);
     }
   };
 
   const bookmarked = record?.readingState === "planned";
-  // 「読みたい」 is a bookmark before reading; once read or excluded it no longer applies.
-  const showBookmark = record === undefined || bookmarked;
   const excluded = record?.readingState === "hidden";
-  const rated =
-    record?.readingState === "reading" ||
-    record?.readingState === "completed" ||
-    record?.readingState === "dropped";
+  const rated = record?.readingState === "completed" || record?.readingState === "dropped";
   const interactive =
-    "transition-[background-color,color] duration-[var(--motion-duration-feedback)] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-focus-ring focus-visible:ring-offset-2 focus-visible:ring-offset-canvas disabled:cursor-not-allowed disabled:opacity-55 motion-reduce:transition-none";
+    "transition-[background-color,color] duration-[var(--motion-duration-feedback)] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-focus-ring focus-visible:ring-offset-2 focus-visible:ring-offset-canvas motion-reduce:transition-none";
 
   const segment = (state: "completed" | "dropped") => {
     const selected = record?.readingState === state;
@@ -487,7 +482,6 @@ function WorkStateControls({
             : "text-text-muted hover:bg-surface-2 hover:text-text-strong"
         }`}
         data-reading-state={state}
-        disabled={busy}
         onClick={() => handleStateSelect(state)}
         type="button"
       >
@@ -496,13 +490,14 @@ function WorkStateControls({
     );
   };
 
-  const readingProgress =
-    record?.progress === undefined
-      ? undefined
-      : libraryStrings.progress(record.progress.volume, record.progress.chapter);
+  const readProgress =
+    rated && record?.progress !== undefined
+      ? libraryStrings.progress(record.progress.volume, record.progress.chapter)
+      : "";
 
   return (
     <section
+      aria-busy={busy}
       aria-labelledby="work-state-heading"
       className="grid gap-[var(--space-3)]"
       data-slot="work-state-controls"
@@ -519,62 +514,53 @@ function WorkStateControls({
         </p>
       ) : (
         <>
-          <div className="flex flex-wrap items-center gap-x-[var(--space-3)] gap-y-[var(--space-2)]">
-            {showBookmark ? (
-              <button
-                aria-pressed={bookmarked}
-                className={`inline-flex min-h-[var(--control-min-size)] items-center gap-[var(--space-2)] rounded-[var(--radius-control)] px-[var(--space-4)] text-[length:var(--font-size-14)] font-bold ${interactive} ${
-                  bookmarked
-                    ? "bg-accent-soft text-accent"
-                    : "bg-surface-2/70 text-text hover:bg-surface-2 hover:text-text-strong"
-                }`}
-                data-slot="work-bookmark"
-                disabled={busy}
-                onClick={toggleBookmark}
-                type="button"
-              >
-                <BookmarkIcon
-                  aria-hidden="true"
-                  className={`size-4 ${bookmarked ? "fill-current" : ""}`}
-                />
-                {workDetailStrings.state.options.planned}
-              </button>
-            ) : null}
-            <div
-              aria-labelledby="work-state-heading"
-              className="flex flex-wrap items-center gap-x-[var(--space-3)] gap-y-[var(--space-2)]"
-              role="group"
+          {/* 「読みたい」 stays in place in every state so rating never reflows the row. */}
+          <div
+            aria-labelledby="work-state-heading"
+            className="flex flex-wrap items-center gap-x-[var(--space-3)] gap-y-[var(--space-2)]"
+            role="group"
+          >
+            <button
+              aria-pressed={bookmarked}
+              className={`inline-flex min-h-[var(--control-min-size)] items-center gap-[var(--space-2)] rounded-[var(--radius-control)] px-[var(--space-4)] text-[length:var(--font-size-14)] font-bold ${interactive} ${
+                bookmarked
+                  ? "bg-accent-soft text-accent"
+                  : "bg-surface-2/70 text-text hover:bg-surface-2 hover:text-text-strong"
+              }`}
+              data-reading-state="planned"
+              data-slot="work-bookmark"
+              onClick={() => handleStateSelect("planned")}
+              type="button"
             >
-              <div
-                className="inline-flex gap-[var(--space-1)] rounded-[calc(var(--radius-control)+var(--space-1))] bg-surface-2/70 p-[var(--space-1)]"
-                data-slot="work-reading-segments"
-              >
-                {segment("completed")}
-                {segment("dropped")}
-              </div>
-              {/* 「興味なし」 excludes the work from recommendations rather than tracking reading. */}
-              <button
-                aria-pressed={excluded}
-                className={`inline-flex min-h-[var(--control-min-size)] items-center gap-[var(--space-2)] rounded-[var(--radius-control)] px-[var(--space-3)] text-[length:var(--font-size-14)] font-bold ${interactive} ${
-                  excluded
-                    ? "bg-surface-2 text-text-strong"
-                    : "text-text-muted hover:text-text-strong"
-                }`}
-                data-reading-state="hidden"
-                disabled={busy}
-                onClick={() => handleStateSelect("hidden")}
-                type="button"
-              >
-                <EyeOffIcon aria-hidden="true" className="size-4" />
-                {workDetailStrings.state.options.hidden}
-              </button>
+              <BookmarkIcon
+                aria-hidden="true"
+                className={`size-4 ${bookmarked ? "fill-current" : ""}`}
+              />
+              {workDetailStrings.state.options.planned}
+            </button>
+            <div
+              className="inline-flex gap-[var(--space-1)] rounded-[calc(var(--radius-control)+var(--space-1))] bg-surface-2/70 p-[var(--space-1)]"
+              data-slot="work-reading-segments"
+            >
+              {segment("completed")}
+              {segment("dropped")}
             </div>
+            {/* 「興味なし」 excludes the work from recommendations rather than tracking reading. */}
+            <button
+              aria-pressed={excluded}
+              className={`inline-flex min-h-[var(--control-min-size)] items-center gap-[var(--space-2)] rounded-[var(--radius-control)] px-[var(--space-3)] text-[length:var(--font-size-14)] font-bold ${interactive} ${
+                excluded
+                  ? "bg-surface-2 text-text-strong"
+                  : "text-text-muted hover:text-text-strong"
+              }`}
+              data-reading-state="hidden"
+              onClick={() => handleStateSelect("hidden")}
+              type="button"
+            >
+              <EyeOffIcon aria-hidden="true" className="size-4" />
+              {workDetailStrings.state.options.hidden}
+            </button>
           </div>
-          {record?.readingState === "reading" ? (
-            <p className="text-[length:var(--text-caption-size)] text-text-muted">
-              {workDetailStrings.state.readingNote(readingProgress)}
-            </p>
-          ) : null}
           <div
             aria-labelledby="work-reaction-label"
             className="grid w-full grid-cols-4 items-center gap-[var(--space-1)] sm:flex sm:w-auto"
@@ -596,7 +582,6 @@ function WorkStateControls({
                       ? "bg-accent-soft text-accent"
                       : "text-text-muted hover:bg-surface-2 hover:text-text-strong"
                   }`}
-                  disabled={busy}
                   key={reaction}
                   onClick={() => void saveReaction(reaction)}
                   type="button"
@@ -606,37 +591,19 @@ function WorkStateControls({
               );
             })}
           </div>
+          {readProgress === "" ? null : (
+            <p className="text-[length:var(--text-caption-size)] text-text-muted">
+              {workDetailStrings.state.progressNote(readProgress)}
+            </p>
+          )}
+          {seriesContinues ? (
+            <p className="text-[length:var(--text-caption-size)] text-text-muted">
+              {workDetailStrings.state.ongoingHint}
+            </p>
+          ) : null}
         </>
       )}
-      {seriesContinues && recordsReady ? (
-        <p className="text-[length:var(--text-caption-size)] text-text-muted">
-          {workDetailStrings.state.ongoingHint}
-        </p>
-      ) : null}
-      {busy ? (
-        <p aria-live="polite" className="text-[length:var(--text-caption-size)] text-text-muted">
-          {workDetailStrings.state.saving}
-        </p>
-      ) : message === undefined ? null : (
-        <div className="flex flex-wrap items-center gap-x-[var(--space-3)]">
-          <p
-            className="text-[length:var(--text-caption-size)] text-text-muted [&[role=alert]]:border-l-[length:var(--space-content-tight)] [&[role=alert]]:border-warn [&[role=alert]]:px-[var(--space-3)] [&[role=alert]]:py-[var(--space-content)] [&[role=alert]]:text-text-strong"
-            role={message.kind === "error" ? "alert" : "status"}
-          >
-            {message.text}
-          </p>
-          {undoRecord === undefined ? null : (
-            <button
-              className={`inline-flex min-h-[var(--control-min-size)] items-center rounded-[var(--radius-control)] px-[var(--space-2)] text-[length:var(--text-caption-size)] font-bold text-text-strong underline underline-offset-4 hover:text-text ${interactive}`}
-              data-slot="work-state-undo"
-              onClick={() => void restoreRecord()}
-              type="button"
-            >
-              {workDetailStrings.state.undo}
-            </button>
-          )}
-        </div>
-      )}
+      <Snackbar notice={notice} onDismiss={dismissNotice} />
     </section>
   );
 }

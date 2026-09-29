@@ -1139,7 +1139,7 @@ describe("external work persistence", () => {
     await memory.addExternalWorkIfAbsent(createExternalRecord({ isbnSamples: ["9780306406157"] }));
     const userRecord: UserWorkRecord = {
       workId: EXTERNAL_ID,
-      readingState: "reading",
+      readingState: "completed",
       progress: { volume: 4 },
       updatedAt: COMPLETED_TIME,
     };
@@ -1668,7 +1668,7 @@ describe("resilient onboarding persistence", () => {
     const firstCompletionTime = "2026-08-13T09:00:00+09:00";
     const existingRecord: UserWorkRecord = {
       workId: "existing-positive",
-      readingState: "reading",
+      readingState: "completed",
       reaction: "favorite",
       progress: { volume: 7, chapter: 58 },
       positiveReasons: ["緻密な駆け引き"],
@@ -1704,7 +1704,7 @@ describe("resilient onboarding persistence", () => {
     const backend = new ControllableBackend();
     const existingRecord: UserWorkRecord = {
       workId: "existing-positive",
-      readingState: "reading",
+      readingState: "completed",
       reaction: "favorite",
       progress: { volume: 4 },
       updatedAt: DRAFT_TIME,
@@ -2269,6 +2269,31 @@ describe("resilient onboarding persistence", () => {
     expect(backend.userWorks).toEqual([
       expect.objectContaining({ workId: "keep-me", reaction: "favorite" }),
     ]);
+  });
+
+  it("reads a stored legacy 「読んでいる」 row as 「読んだ」 without losing its progress", async () => {
+    const backend = new ControllableBackend();
+    backend.userWorks = [
+      {
+        workId: "legacy-reading",
+        readingState: "reading",
+        reaction: "liked",
+        progress: { volume: 5 },
+        updatedAt: DRAFT_TIME,
+      },
+    ];
+    const persistence = new ResilientPersistence({ primaryFactory: () => backend });
+
+    expect(await persistence.getUserWorks()).toEqual([
+      {
+        workId: "legacy-reading",
+        readingState: "completed",
+        reaction: "liked",
+        progress: { volume: 5 },
+        updatedAt: DRAFT_TIME,
+      },
+    ]);
+    expect(persistence.getStatus()).toMatchObject({ state: "ready", mode: "indexeddb" });
   });
 
   it("removes an unchanged record with readback and keeps a newer write", async () => {

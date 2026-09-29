@@ -1876,7 +1876,7 @@ test.describe("Slice 8 provider and work-detail journey", () => {
     const completedState = restoredDetail.getByRole("button", { name: "読んだ", exact: true });
     await completedState.click();
     await expect(completedState).toHaveAttribute("aria-pressed", "true");
-    await expect(restoredDetail.getByRole("status")).toHaveText("読書状態を保存しました。");
+    await expect(restoredDetail.getByRole("status")).toHaveText("「読んだ」を保存しました。");
     await expect
       .poll(async () =>
         (await readProductState(page)).userWorks.find((record) => record.workId === workId),
@@ -2139,7 +2139,7 @@ test.describe("Slice 9 library and external-work journey", () => {
       name: "カタログ外作品の詳細を見る",
     });
     await expect(externalDetailLink).toHaveAttribute("href", canonicalExternalHref);
-    await externalEditor.getByRole("combobox", { name: "読書状態" }).selectOption("reading");
+    await externalEditor.getByRole("combobox", { name: "読書状態" }).selectOption("completed");
     await externalEditor.getByRole("combobox", { name: "感想" }).selectOption("favorite");
     await externalEditor.getByRole("spinbutton", { name: "巻" }).fill("3");
 
@@ -2192,7 +2192,7 @@ test.describe("Slice 9 library and external-work journey", () => {
           record: expect.objectContaining({
             progress: { volume: 3 },
             reaction: "favorite",
-            readingState: "reading",
+            readingState: "completed",
             workId: externalId,
           }),
         }),
@@ -2224,7 +2224,9 @@ test.describe("Slice 9 library and external-work journey", () => {
     await expect(
       externalDetail.getByRole("heading", { level: 1, name: externalTitle }),
     ).toBeVisible();
-    await expect(externalDetail.getByRole("combobox", { name: "読書状態" })).toHaveValue("reading");
+    await expect(externalDetail.getByRole("combobox", { name: "読書状態" })).toHaveValue(
+      "completed",
+    );
     await expect(externalDetail.getByRole("combobox", { name: "感想" })).toHaveValue("favorite");
     await expect(externalDetail.getByRole("spinbutton", { name: "巻" })).toHaveValue("3");
     expect(providerRequests).toHaveLength(providerCountBeforeDetail);
@@ -2237,7 +2239,7 @@ test.describe("Slice 9 library and external-work journey", () => {
       reloadedExternalDetail.getByRole("heading", { level: 1, name: externalTitle }),
     ).toBeVisible();
     await expect(reloadedExternalDetail.getByRole("combobox", { name: "読書状態" })).toHaveValue(
-      "reading",
+      "completed",
     );
     expect(providerRequests).toHaveLength(providerCountBeforeDetail);
 
@@ -2287,7 +2289,7 @@ test.describe("Slice 9 library and external-work journey", () => {
       },
     });
     await appPage.goto("/library");
-    await appPage.getByRole("tab", { name: "読んでる" }).click();
+    await appPage.getByRole("tab", { name: /^読んだ、/u }).click();
     await expect(
       appPage.getByRole("button", { name: `「${externalTitle}」の記録を編集` }),
     ).toBeVisible();
@@ -2432,7 +2434,7 @@ test.describe("Slice 10 data-sovereignty journey", () => {
     await expect(
       externalEditor.getByRole("link", { name: "カタログ外作品の詳細を見る" }),
     ).toHaveAttribute("href", canonicalExternalHref);
-    await externalEditor.getByRole("combobox", { name: "読書状態" }).selectOption("reading");
+    await externalEditor.getByRole("combobox", { name: "読書状態" }).selectOption("completed");
     await externalEditor.getByRole("combobox", { name: "感想" }).selectOption("favorite");
     await externalEditor.getByRole("spinbutton", { name: "巻" }).fill("3");
     await externalEditor.getByRole("button", { name: "変更を保存" }).click();
@@ -2450,7 +2452,7 @@ test.describe("Slice 10 data-sovereignty journey", () => {
           record: expect.objectContaining({
             progress: { volume: 3 },
             reaction: "favorite",
-            readingState: "reading",
+            readingState: "completed",
             workId: externalId,
           }),
         }),
@@ -2578,11 +2580,11 @@ test.describe("Slice 10 data-sovereignty journey", () => {
     await page.goto("/library");
     await page.getByRole("tab", { name: "読んだ" }).click();
     await expect(page.getByRole("button", { name: "「鋼の錬金術師」の記録を編集" })).toBeVisible();
-    await page.getByRole("tab", { name: "読んでる" }).click();
+    await page.getByRole("tab", { name: /^読んだ、/u }).click();
     await page.getByRole("button", { name: `「${externalTitle}」の記録を編集` }).click();
     const restoredExternalEditor = page.getByRole("dialog", { name: externalTitle });
     await expect(restoredExternalEditor.getByRole("combobox", { name: "読書状態" })).toHaveValue(
-      "reading",
+      "completed",
     );
     await expect(restoredExternalEditor.getByRole("combobox", { name: "感想" })).toHaveValue(
       "favorite",

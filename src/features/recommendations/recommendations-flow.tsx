@@ -15,6 +15,7 @@ import {
 } from "react";
 import { flushSync } from "react-dom";
 
+import { snackbarClassName } from "@/components/layout/snackbar";
 import { Button } from "@/components/design-system/button";
 import { PageHeader } from "@/components/layout/page-header";
 import {
@@ -1399,11 +1400,7 @@ export function RecommendationsFlow({
             ) : null}
           </Suspense>
         ) : null}
-        <p
-          aria-atomic="true"
-          aria-live="polite"
-          className="fixed right-[var(--layout-page-padding)] bottom-[calc(var(--layout-mobile-navigation-clearance)+var(--space-4))] z-40 max-w-[min(calc(var(--layout-width-form)/2),calc(100vw-(var(--layout-page-padding)*2)))] rounded-[var(--radius-card)] border border-line border-l-[length:var(--space-content-tight)] border-l-accent bg-surface-1 px-[var(--space-4)] py-[var(--space-3)] font-bold shadow-[var(--shadow-raised)] empty:hidden md:bottom-[var(--space-6)]"
-        >
+        <p aria-atomic="true" aria-live="polite" className={snackbarClassName}>
           {liveAnnouncement.text === "" ? null : (
             <span key={liveAnnouncement.sequence}>{liveAnnouncement.text}</span>
           )}

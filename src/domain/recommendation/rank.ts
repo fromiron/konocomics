@@ -32,7 +32,7 @@ import type {
   ScoredRecommendation,
 } from "./types";
 
-const EXCLUDED_READING_STATES = new Set(["reading", "completed", "dropped", "hidden"]);
+const EXCLUDED_READING_STATES = new Set(["completed", "dropped", "hidden"]);
 
 export function assertUniqueRecords(records: readonly UserWorkRecord[]) {
   const seen = new Set<string>();

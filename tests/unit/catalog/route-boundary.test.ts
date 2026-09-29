@@ -61,9 +61,9 @@ const routedSearchCases = [
   },
   {
     parse: (input: unknown) => librarySearchSchema.parse(input),
-    valid: { state: "reading", q: "monster", sort: "title", view: "grid", favorite: "1", page: 2 },
+    valid: { state: "dropped", q: "monster", sort: "title", view: "grid", favorite: "1", page: 2 },
     malformed: {
-      state: ["reading"],
+      state: ["dropped"],
       q: ["monster"],
       sort: ["title"],
       view: ["grid"],
@@ -127,6 +127,8 @@ const contracts = [
         expect(parse({})).toEqual({});
         expect(parse(malformed)).toEqual(malformedDefault);
       }
+      // Pre-four-state links keep working: 「読んでいる」 opens 「読んだ」.
+      expect(librarySearchSchema.parse({ state: "reading" }).state).toBe("completed");
     },
   },
   {

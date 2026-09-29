@@ -219,10 +219,10 @@ type WorkEvidence = {
 };
 
 // 읽기 상태와 감상을 하나의 enum에 섞지 않는다 (원칙 4).
-// 표현 예: 완독+최애 / 읽는 중+좋음 / 완독+별로 / 하차+초반은 좋았음
+// 표현 예: 읽음+최애 / 읽음(3권까지)+좋음 / 읽음+별로 / 하차+초반은 좋았음
 type UserWorkRecord = {
   workId: string;
-  readingState: "planned" | "reading" | "completed" | "dropped" | "hidden";
+  readingState: "planned" | "completed" | "dropped" | "hidden";
   reaction?: "favorite" | "liked" | "neutral" | "disliked";
   progress?: { volume?: number; chapter?: number };
   positiveReasons?: string[];
@@ -231,6 +231,8 @@ type UserWorkRecord = {
   updatedAt: string;
 };
 ```
+
+**4상태 모델 — 2026-09-29 사용자 결정:** 읽기 상태는 북마크 역할의 `planned`(読みたい)와 세 결과 `completed`(読んだ)·`dropped`(途中でやめた)·`hidden`(興味なし)뿐이다. 읽는 도중과 다 읽음을 나누면 감상을 남길 시점이 모호해지므로, 연재 중이거나 일부만 읽은 작품도 `completed`로 기록하고 어디까지 읽었는지는 `progress`로 남긴다. 이전 모델의 `reading`은 입력으로만 받는다. 저장 행·Export v1 파일·`?state=reading` URL의 `reading`은 읽기 경계에서 `progress` 등 다른 필드를 그대로 둔 채 `completed`로 정규화하며, 새로 쓰는 값에는 나타나지 않는다. 추천 제외 대상은 `completed`·`dropped`·`hidden`이며 이전 `reading`도 `completed`로 정규화되어 그대로 제외된다.
 
 `negativeReasons`는 명시적 `reaction="disliked"`와 함께 쓰며, 추천 카드의 `興味なし`는 선택 이유가 있을 때 이 조합을 `readingState="hidden"`과 함께 저장한다. 숨김만 선택하거나 이유 시트를 스킵한 record에는 reaction·reason이 없다.
 

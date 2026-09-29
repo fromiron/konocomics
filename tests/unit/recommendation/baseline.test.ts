@@ -327,7 +327,7 @@ describe("Baseline v1 input and eligibility", () => {
     ];
     const records = [
       positiveRecord(anchor.id),
-      createTestRecord({ workId: "reading", reaction: "neutral", readingState: "reading" }),
+      createTestRecord({ workId: "reading", reaction: "neutral", readingState: "completed" }),
       createTestRecord({ workId: "completed", reaction: "neutral", readingState: "completed" }),
       createTestRecord({ workId: "dropped", reaction: "neutral", readingState: "dropped" }),
       createTestRecord({ workId: "hidden", reaction: "neutral", readingState: "hidden" }),
