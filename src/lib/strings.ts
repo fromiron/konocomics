@@ -539,19 +539,19 @@ export const tasteStrings = {
   storageWarning:
     "このブラウザでは変更を保存できません。このセッション中だけ好みの調整を反映します。",
   saveError: "おすすめの設定を保存できませんでした。もう一度お試しください。",
-  eyebrow: "MANGA DNA",
   title: "あなたの Manga DNA",
   description: "選んだ作品と読書記録から、物語・雰囲気・作画の好みを整理しました。",
   confidence: "分析の確信度",
+  basisCount: (count: number) => `${String(count)}作品から分析しました`,
+  basisHeading: "分析の基準",
   confidenceLabels: {
     high: "高い",
     normal: "ふつう",
     low: "低め(データ収集中)",
   },
-  anchorsHeading: "好みを代表する5作品",
-  radarHeading: "代表的な軸の傾向",
-  radarPending: "確認できる好みの軸を分析しています。",
-  radarAxisSummary: (label: string, value: string) => `${label}：${value}`,
+  anchorsHeading: "好みを代表する作品",
+  axesHeading: "好みの軸",
+  axesPending: "確認できる好みの軸を分析しています。",
   topPreferencesHeading: "あなたの上位の好み",
   topPreferenceEvidence: (titles: readonly string[]) =>
     `${titles.map((title) => `『${title}』`).join("")}から`,
@@ -571,8 +571,7 @@ export const tasteStrings = {
   },
   modeDescriptions: {
     summary: "現在の分析をグループごとに確認できます。",
-    adjust:
-      "分析結果は変わりません。設定は自動保存され、次のおすすめにだけ反映されます。「自動」は分析結果に合わせます。結果は下の比較で確認できます。",
+    adjust: "分析結果はそのままに、おすすめへの反映だけを変えられます。変更はすぐに保存されます。",
   },
   groupFactorSummary: (labels: readonly string[], remaining: number) =>
     remaining > 0 ? `${labels.join("、")} ほか${String(remaining)}項目` : labels.join("、"),
@@ -584,6 +583,10 @@ export const tasteStrings = {
     open ? `${title}の分析の内訳を閉じる` : `${title}の分析の内訳を見る`,
   groupDetails: "詳細設定",
   groupClose: "閉じる",
+  groupShowAll: (count: number) => `すべて表示（${String(count)}項目）`,
+  groupShowFewer: "上位だけ表示",
+  groupShowAllLabel: (title: string, count: number, open: boolean) =>
+    open ? `${title}を上位だけ表示` : `${title}のすべての項目を表示（${String(count)}項目）`,
   groupDetailsLabel: (title: string, open: boolean) =>
     open ? `${title}の詳細設定を閉じる` : `${title}の詳細設定`,
   unknown: "まだ分析中",
@@ -607,8 +610,7 @@ export const tasteStrings = {
   adjustmentSaved: (factorLabel: string, optionLabel: string) =>
     `「${factorLabel}」のおすすめへの反映を「${optionLabel}」に変更しました。`,
   previewHeading: "おすすめへの反映を比較",
-  previewDescription:
-    "今の記録とおすすめ方針に、それぞれの反映設定を適用した結果です。先頭の最大4作品を比べます。",
+  previewDescription: "ページを開いたときと現在の設定で、おすすめ上位4作品を比べます。",
   previewBefore: "開いたときの反映設定で",
   previewAfter: "現在の反映設定で",
   previewEmpty: "表示できる候補はありません。",

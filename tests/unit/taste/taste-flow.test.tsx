@@ -5,6 +5,7 @@ import { act, cleanup, fireEvent, render, screen, waitFor, within } from "@testi
 import type * as MotionReact from "motion/react";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 
+import { THEME_TAGS } from "@/domain/catalog/constants";
 import { summarizeMangaDna } from "@/domain/profile/dna-summary";
 import type {
   ProfileAdjustments,
@@ -251,7 +252,7 @@ describe("TasteFlow", () => {
 
     render(<TasteFlow />);
 
-    const anchorRegion = await screen.findByRole("region", { name: "好みを代表する5作品" });
+    const anchorRegion = await screen.findByRole("region", { name: tasteStrings.anchorsHeading });
     expect(
       within(anchorRegion)
         .getAllByRole("link")
@@ -314,17 +315,15 @@ describe("TasteFlow", () => {
     expect(await screen.findByText("分析の確信度: ふつう")).toBeTruthy();
   });
 
-  it("shows a coaching banner for normal confidence that adds works through onboarding", async () => {
+  it("shows a one-line coaching summary for normal confidence that adds works through onboarding", async () => {
     render(<TasteFlow />);
 
-    expect(await screen.findByRole("heading", { name: tasteStrings.coach.heading })).toBeTruthy();
+    const coachHeading = await screen.findByRole("heading", { name: tasteStrings.coach.heading });
     expect(screen.getByText(tasteStrings.coach.description)).toBeTruthy();
     expect(screen.getByRole("link", { name: tasteStrings.coach.action }).getAttribute("href")).toBe(
       "/onboarding",
     );
-    expect(
-      document.querySelector('img[src="/media/taste-dna-coach.png"]')?.getAttribute("aria-hidden"),
-    ).toBe("true");
+    expect(coachHeading.closest("section")?.querySelector("img")).toBeNull();
     expect(screen.getByText("分析の確信度: ふつう")).toBeTruthy();
     expect(screen.queryByRole("link", { name: tasteStrings.addWorks })).toBeNull();
   });
@@ -344,7 +343,6 @@ describe("TasteFlow", () => {
 
     expect(await screen.findByText("分析の確信度: 高い")).toBeTruthy();
     expect(screen.queryByRole("heading", { name: tasteStrings.coach.heading })).toBeNull();
-    expect(document.querySelector('img[src="/media/taste-dna-coach.png"]')).toBeNull();
     expect(screen.getByRole("link", { name: tasteStrings.addWorks })).toBeTruthy();
   });
 
@@ -359,10 +357,9 @@ describe("TasteFlow", () => {
       ),
     ).toEqual(["ジャンル", "テーマ", "展開", "トーン・関係", "作画"]);
     expect(container.querySelectorAll("section.taste-factor-group")).toHaveLength(5);
-    expect(
-      container.querySelectorAll(".taste-factor-group__icon[aria-hidden='true']"),
-    ).toHaveLength(5);
-    expect(container.querySelectorAll(".taste-factor-row")).toHaveLength(49);
+    expect(container.querySelectorAll(".taste-factor-group__icon")).toHaveLength(0);
+    // Themes start with the six strongest rows; the rest open through 「すべて表示」.
+    expect(container.querySelectorAll(".taste-factor-row")).toHaveLength(32);
     expect(container.querySelectorAll(".taste-factor-group__details:not([hidden])")).toHaveLength(
       0,
     );
@@ -413,6 +410,35 @@ describe("TasteFlow", () => {
     expect(document.activeElement).toBe(narrativeDetails);
   });
 
+  it("opens the strongest six theme rows first and reveals the rest on demand", async () => {
+    const { container } = render(<TasteFlow group="theme" />);
+    await screen.findByRole("heading", { name: "あなたの Manga DNA" });
+    const details = container.querySelector<HTMLElement>("#taste-group-theme-details");
+    if (details === null) throw new Error("Missing theme details");
+    const rows = () => [...details.querySelectorAll<HTMLElement>(".taste-factor-row")];
+    const rowValues = () =>
+      rows().map((row) => {
+        const meter = row.querySelector("[role='meter']");
+        return meter === null ? -1 : Number(meter.getAttribute("aria-valuenow"));
+      });
+
+    expect(rows()).toHaveLength(6);
+    expect(rowValues()).toEqual([...rowValues()].sort((left, right) => right - left));
+    const total = THEME_TAGS.length;
+    const showAll = within(details).getByRole("button", {
+      name: tasteStrings.groupShowAllLabel("テーマ", total, false),
+    });
+    expect(showAll.getAttribute("aria-expanded")).toBe("false");
+    expect(showAll.getAttribute("aria-controls")).toBe("taste-group-theme-details");
+
+    fireEvent.click(showAll);
+    expect(rows()).toHaveLength(total);
+    expect(showAll.getAttribute("aria-expanded")).toBe("true");
+    expect(showAll.getAttribute("aria-label")).toBe(
+      tasteStrings.groupShowAllLabel("テーマ", total, true),
+    );
+  });
+
   it("keeps the focused adjustment visible when the save message covers it", async () => {
     const { container } = render(<TasteFlow group="narrative" />);
     const group = await screen.findByRole("radiogroup", {
@@ -444,24 +470,21 @@ describe("TasteFlow", () => {
     expect(screen.getByText(tasteStrings.modeDescriptions.adjust)).toBeTruthy();
     expect(container.querySelector(".taste-page--with-action")).toBeNull();
     expect(container.querySelector("main")?.classList.contains("page-entry-b")).toBe(true);
-    const radar = screen.getByRole("region", { name: tasteStrings.radarHeading });
-    expect(radar.querySelector("svg")?.getAttribute("aria-hidden")).toBe("true");
-    expect(
-      [...radar.querySelectorAll(".taste-radar__label")].some((label) =>
-        label.textContent?.includes("描き込みの密度"),
-      ),
-    ).toBe(true);
-    expect(radar.querySelector(".sr-only")?.textContent).toContain("描き込みの密度：ほどほど");
-    expect(within(radar).queryByText("全体平均")).toBeNull();
-    expect(radar.querySelector(".taste-radar__value-dot")).toBeTruthy();
-    const anchorRegion = screen.getByRole("region", { name: "好みを代表する5作品" });
+    const axes = screen.getByRole("region", { name: tasteStrings.axesHeading });
+    expect(axes.querySelector("svg")).toBeNull();
+    const axisMeters = within(axes).getAllByRole("meter");
+    expect(axisMeters.length).toBeGreaterThan(0);
+    expect(axisMeters.length).toBeLessThanOrEqual(8);
+    const axisValues = axisMeters.map((meter) => Number(meter.getAttribute("aria-valuenow")));
+    expect(axisValues).toEqual([...axisValues].sort((left, right) => right - left));
+    const anchorRegion = screen.getByRole("region", { name: tasteStrings.anchorsHeading });
     expect(within(anchorRegion).queryByRole("img")).toBeNull();
     expect(anchorRegion.querySelectorAll("li > a")).toHaveLength(5);
     expect(anchorRegion.querySelector("li > .visually-hidden")).toBeNull();
+    expect(anchorRegion.innerHTML).not.toContain("linear-gradient");
     const topPreferenceGrid = container.querySelector(".taste-top-summary__grid");
     expect(topPreferenceGrid?.tagName).toBe("OL");
     expect(topPreferenceGrid?.className).toContain("grid-cols-1");
-    expect(topPreferenceGrid?.className).toContain("md:grid-cols-3");
     expect(topPreferenceGrid?.querySelectorAll(":scope > li")).toHaveLength(3);
     const topPreferenceCards = container.querySelectorAll(".taste-top-card");
     expect(topPreferenceCards).toHaveLength(3);
@@ -471,12 +494,9 @@ describe("TasteFlow", () => {
           card.querySelector("h3")?.className.includes("line-clamp-2") === true &&
           card.querySelector(".taste-top-card__rank")?.textContent === String(index + 1) &&
           card.querySelector(".taste-top-card__rank")?.getAttribute("aria-hidden") !== "true" &&
-          card
-            .querySelector(".taste-top-card__level")
-            ?.className.includes("--text-subheading-size") === true &&
-          card.querySelector(".taste-top-card__level")?.className.includes("--font-size-28") ===
+          card.querySelector(".taste-top-card__level")?.className.includes("--font-size-14") ===
             true &&
-          card.querySelector(".taste-top-card__icon[aria-hidden='true']") !== null &&
+          card.querySelector("svg") === null &&
           card.querySelector("p") !== null,
       ),
     ).toBe(true);

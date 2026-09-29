@@ -6,80 +6,22 @@ import type { MangaDnaSummary } from "@/domain/profile/dna-summary";
 import { explanationLexicon, mediaStrings, tasteStrings } from "@/lib/strings";
 import { cn } from "@/lib/utils";
 
-const RADAR_AXIS_LIMIT = 7;
-const RADAR_VIEWBOX_WIDTH = 180;
-const RADAR_VIEWBOX_HEIGHT = 150;
-const RADAR_CENTER_X = RADAR_VIEWBOX_WIDTH / 2;
-const RADAR_CENTER_Y = 72;
-const RADAR_RADIUS = 42;
-const RADAR_LEADER_RADIUS = 49;
-const RADAR_LABEL_RADIUS = 55;
-const RADAR_MAX = 4;
-const RADAR_LABEL_LINE_LENGTH = 7;
-const RADAR_LABEL_LINE_HEIGHT = 6;
+import { FactorBar } from "./factor-bar";
 
-type RadarAxis = Readonly<{
-  factorId: MangaDnaSummary["axes"][number]["factorId"];
-  value: number;
-}>;
+const AXES_OVERVIEW_LIMIT = 8;
 
-type RadarPoint = Readonly<{
-  x: number;
-  y: number;
-}>;
-
-function radarPoint(index: number, count: number, radius: number): RadarPoint {
-  const angle = (Math.PI * 2 * index) / count - Math.PI / 2;
-  return {
-    x: RADAR_CENTER_X + Math.cos(angle) * radius,
-    y: RADAR_CENTER_Y + Math.sin(angle) * radius,
-  };
-}
-
-function radarPointValue(point: RadarPoint) {
-  return `${String(point.x)},${String(point.y)}`;
-}
-
-function radarPoints(axes: readonly RadarAxis[], radiusFor: (axis: RadarAxis) => number) {
-  return axes
-    .map((axis, index) => radarPointValue(radarPoint(index, axes.length, radiusFor(axis))))
-    .join(" ");
-}
-
-function radarLabelLines(label: string): readonly string[] {
-  if (label.length <= RADAR_LABEL_LINE_LENGTH) return [label];
-
-  const separatorIndex = label.indexOf("・");
-  if (
-    separatorIndex > 0 &&
-    separatorIndex <= RADAR_LABEL_LINE_LENGTH &&
-    label.length - separatorIndex - 1 <= RADAR_LABEL_LINE_LENGTH
-  ) {
-    return [label.slice(0, separatorIndex + 1), label.slice(separatorIndex + 1)];
+export function DnaAxesOverview({
+  animateReveal,
+  axes,
+  revealReady,
+}: Readonly<
+  Pick<MangaDnaSummary, "axes"> & {
+    animateReveal: boolean;
+    revealReady: boolean;
   }
-
-  const splitIndex = Math.ceil(label.length / 2);
-  return [label.slice(0, splitIndex), label.slice(splitIndex)];
-}
-
-function radarTextAnchor(point: RadarPoint): "end" | "middle" | "start" {
-  const horizontalDirection = (point.x - RADAR_CENTER_X) / RADAR_LABEL_RADIUS;
-  if (horizontalDirection > 0.25) return "start";
-  if (horizontalDirection < -0.25) return "end";
-  return "middle";
-}
-
-function radarLabelY(point: RadarPoint, lineCount: number) {
-  const verticalDirection = (point.y - RADAR_CENTER_Y) / RADAR_LABEL_RADIUS;
-  const blockHeight = lineCount * RADAR_LABEL_LINE_HEIGHT;
-  if (verticalDirection < -0.5) return point.y - blockHeight - 2;
-  if (verticalDirection > 0.5) return point.y + 2;
-  return point.y - blockHeight / 2;
-}
-
-export function DnaRadarChart({ axes }: Readonly<Pick<MangaDnaSummary, "axes">>) {
+>) {
   const confirmedAxes = axes
-    .flatMap<RadarAxis>((axis) =>
+    .flatMap((axis) =>
       axis.state === "known" && axis.value !== null
         ? [{ factorId: axis.factorId, value: axis.value }]
         : [],
@@ -89,131 +31,36 @@ export function DnaRadarChart({ axes }: Readonly<Pick<MangaDnaSummary, "axes">>)
         right.value - left.value ||
         (left.factorId < right.factorId ? -1 : left.factorId > right.factorId ? 1 : 0),
     )
-    .slice(0, RADAR_AXIS_LIMIT);
-  const canDrawRadar = confirmedAxes.length >= 3;
+    .slice(0, AXES_OVERVIEW_LIMIT);
 
   return (
     <section
-      aria-labelledby="taste-radar-heading"
-      className="taste-overview taste-radar grid content-start gap-[var(--space-3)]"
+      aria-labelledby="taste-axes-heading"
+      className="taste-axes grid content-start gap-[var(--space-3)]"
     >
       <h2
         className="text-[length:var(--text-subheading-size)] text-text-strong"
-        id="taste-radar-heading"
+        id="taste-axes-heading"
       >
-        {tasteStrings.radarHeading}
+        {tasteStrings.axesHeading}
       </h2>
       {confirmedAxes.length === 0 ? (
-        <p>{tasteStrings.radarPending}</p>
+        <p className="text-text-muted">{tasteStrings.axesPending}</p>
       ) : (
-        <div className="taste-radar__content grid grid-cols-1 items-center gap-[var(--space-3)]">
-          {canDrawRadar ? (
-            <svg
-              aria-hidden="true"
-              className="w-full max-w-[calc(var(--layout-width-taste)/2)] justify-self-center overflow-visible"
-              focusable="false"
-              viewBox={`0 0 ${String(RADAR_VIEWBOX_WIDTH)} ${String(RADAR_VIEWBOX_HEIGHT)}`}
-            >
-              {[1, 2, 3, 4].map((level) => (
-                <polygon
-                  className="taste-radar__grid fill-none stroke-line [stroke-width:1] [vector-effect:non-scaling-stroke]"
-                  key={level}
-                  points={radarPoints(confirmedAxes, () => (RADAR_RADIUS * level) / RADAR_MAX)}
-                />
-              ))}
-              {confirmedAxes.map((axis, index) => (
-                <g key={axis.factorId}>
-                  <line
-                    className="taste-radar__axis fill-none stroke-line [stroke-width:1] [vector-effect:non-scaling-stroke]"
-                    x1={RADAR_CENTER_X}
-                    x2={radarPoint(index, confirmedAxes.length, RADAR_RADIUS).x}
-                    y1={RADAR_CENTER_Y}
-                    y2={radarPoint(index, confirmedAxes.length, RADAR_RADIUS).y}
-                  />
-                  <line
-                    className="taste-radar__leader fill-none stroke-line [stroke-width:1] [vector-effect:non-scaling-stroke]"
-                    x1={radarPoint(index, confirmedAxes.length, RADAR_RADIUS).x}
-                    x2={radarPoint(index, confirmedAxes.length, RADAR_LEADER_RADIUS).x}
-                    y1={radarPoint(index, confirmedAxes.length, RADAR_RADIUS).y}
-                    y2={radarPoint(index, confirmedAxes.length, RADAR_LEADER_RADIUS).y}
-                  />
-                  <circle
-                    className="taste-radar__leader-dot fill-text-muted"
-                    cx={radarPoint(index, confirmedAxes.length, RADAR_LEADER_RADIUS).x}
-                    cy={radarPoint(index, confirmedAxes.length, RADAR_LEADER_RADIUS).y}
-                    r="0.9"
-                  />
-                </g>
-              ))}
-              <polygon
-                className="taste-radar__value fill-accent-soft stroke-accent [stroke-linejoin:round] [stroke-width:2] [vector-effect:non-scaling-stroke]"
-                points={radarPoints(
-                  confirmedAxes,
-                  (axis) => (RADAR_RADIUS * axis.value) / RADAR_MAX,
-                )}
+        <ul className="m-0 grid list-none grid-cols-1 gap-x-[var(--space-6)] gap-y-[var(--space-3)] p-0 sm:grid-cols-2">
+          {confirmedAxes.map((axis, index) => (
+            <li className="min-w-0" key={axis.factorId}>
+              <FactorBar
+                animateReveal={animateReveal}
+                label={explanationLexicon.factorLabels[axis.factorId]}
+                revealDelay={index * 0.06}
+                revealReady={revealReady}
+                state="known"
+                value={axis.value}
               />
-              {confirmedAxes.map((axis, index) => {
-                const valuePoint = radarPoint(
-                  index,
-                  confirmedAxes.length,
-                  (RADAR_RADIUS * axis.value) / RADAR_MAX,
-                );
-                return (
-                  <circle
-                    className="taste-radar__value-dot fill-accent"
-                    cx={valuePoint.x}
-                    cy={valuePoint.y}
-                    key={axis.factorId}
-                    r="1.6"
-                  />
-                );
-              })}
-              {confirmedAxes.map((axis, index) => {
-                const label = explanationLexicon.factorLabels[axis.factorId];
-                const labelLines = radarLabelLines(label);
-                const labelPoint = radarPoint(index, confirmedAxes.length, RADAR_LABEL_RADIUS);
-                const lineCount = labelLines.length + 1;
-                return (
-                  <text
-                    className="taste-radar__label fill-text-muted text-[5px] font-semibold"
-                    dominantBaseline="hanging"
-                    key={axis.factorId}
-                    textAnchor={radarTextAnchor(labelPoint)}
-                    x={labelPoint.x}
-                    y={radarLabelY(labelPoint, lineCount)}
-                  >
-                    {labelLines.map((line, lineIndex) => (
-                      <tspan
-                        dy={lineIndex === 0 ? 0 : RADAR_LABEL_LINE_HEIGHT}
-                        key={line}
-                        x={labelPoint.x}
-                      >
-                        {line}
-                      </tspan>
-                    ))}
-                    <tspan
-                      className="fill-accent text-[5.25px] font-bold"
-                      dy={RADAR_LABEL_LINE_HEIGHT}
-                      x={labelPoint.x}
-                    >
-                      {tasteStrings.factorValue(axis.value)}
-                    </tspan>
-                  </text>
-                );
-              })}
-            </svg>
-          ) : null}
-          <ul className="sr-only">
-            {confirmedAxes.map((axis) => (
-              <li key={axis.factorId}>
-                {tasteStrings.radarAxisSummary(
-                  explanationLexicon.factorLabels[axis.factorId],
-                  tasteStrings.factorValue(axis.value),
-                )}
-              </li>
-            ))}
-          </ul>
-        </div>
+            </li>
+          ))}
+        </ul>
       )}
     </section>
   );
@@ -307,10 +154,7 @@ export function RecommendationDiffPreview({
   return (
     <section
       aria-labelledby="taste-recommendation-preview-heading"
-      className={cn(
-        "taste-recommendation-preview mt-[var(--space-5)] grid gap-[var(--space-3)] border-t border-line/70 pt-[var(--space-4)]",
-        className,
-      )}
+      className={cn("taste-recommendation-preview grid gap-[var(--space-3)]", className)}
     >
       <div className="grid gap-[var(--space-content-tight)]">
         <h2

@@ -221,12 +221,15 @@ CTA 버튼 1개: **「好きなマンガから始める」** → /onboarding.
 
 ### 정보 위계
 
-1. 헤더: 「あなたの Manga DNA」 + 프로필 확신도 레이블(高い/ふつう/低め)
-2. **상위 취향 3개**: 취향 레이블 + 근거 제목 1~2줄. mobile `<768`은 순위 있는 1열 행(가로 snap 없음)이고 desktop `>=768`은 기존 3열 카드다.
-3. 동일 deterministic profile의 대표 축을 요약한 「代表的な軸の傾向」 radar. 새 chart dependency 없이 inline SVG/CSS로 그리고 같은 데이터를 text list로 제공한다.
-4. 근거 작품 `MediaShelf`. mobile 390px에서는 두 작품과 다음 작품 일부를, 320px에서는 한 작품과 다음 작품 일부를 보여 준다. 기존 가로 스크롤과 키보드 이동으로 마지막 작품까지 접근한다.
-5. 일반 진입에서 확신도가 `normal`일 때만 근거 Shelf 뒤에 두는 coaching banner. CTA는 `/onboarding` 「作品を追加」. `high`, 최초 reveal, 학습/AI 암시는 없다. 현재 profile guard를 통과한 사용자의 최저 확신도가 `normal`이므로 도달 불가능한 `low` UI 상태는 만들지 않는다.
-6. 5개 범주(장르/테마/전개/톤·관계/작화)의 compact summary row. 각 row는 범주 icon, 실제 profile에서 계산한 대표 factor, 조정 상태, 명시적인 disclosure를 제공한다. 장르는 「分析のみ（10項目）」와 「内訳を見る」, 나머지 범주는 「詳細設定」을 사용한다. 초기에는 모두 접고 한 번에 한 범주의 상세만 연다. 장르는 분석 전용으로 가로 막대(0~4) + 일본어 레이블만 제공하고 보정 control을 만들지 않는다. 나머지 네 범주의 열린 상세에는 기존 5단 보정 control을 그대로 제공한다.
+2026-09-29 사용자 위임 개선: `/recommendations`를 디자인 기준으로 삼아 셸 폭·타이포·간격·카드 문법을 맞춘다. 셸은 `--layout-width-media`(1200px), 페이지 제목은 28px, 모든 섹션 제목(h2)은 subheading(20px)이며 섹션 간격은 `--space-shelf`/`--space-shelf-group`을 쓴다. 장식 아이콘·이미지 배너·표지 위 그라디언트/텍스트 합성은 쓰지 않는다.
+
+1. 헤더: 「あなたの Manga DNA」 h1과 그 아래 근거 한 줄(「N作品から分析しました · 分析の確信度: 高い/ふつう」). `おすすめを見る`는 기존대로 reveal CTA에만 둔다.
+2. **상위 취향 3개**: 순위·취향 레이블·강도·근거 제목 1~2줄. 아이콘은 쓰지 않는다. desktop `>=1024`에서는 「好みの軸」과 2열로 나란히 두는 순위 목록이고, 그 미만에서는 1열로 쌓는다(가로 snap 없음).
+3. 「好みの軸」: 동일 deterministic profile의 확인된 Axis를 강도 내림차순으로 최대 8개 read-only `FactorBar`로 보여 준다(동률은 factorId 오름차순). desktop은 2열 grid, mobile은 1열이다. 막대가 `role="meter"`로 값을 제공하므로 별도 radar와 중복 text list는 두지 않는다. 확인된 축이 없으면 분석 중 안내만 둔다.
+4. 근거 작품 `MediaShelf`(「好みを代表する作品」). `/recommendations` 관점 선반과 같은 원본 비율 표지 프레임 아래에 제목 2줄과 근거 팩터 레이블(없으면 감상 레이블)을 둔다. 표지 위에 그라디언트·레이블·제목을 겹치지 않는다. 기존 가로 스크롤과 키보드 이동으로 마지막 작품까지 접근한다.
+5. 일반 진입에서 확신도가 `normal`일 때만 근거 Shelf 뒤에 두는 이미지 없는 한 줄 coaching 요약. CTA는 `/onboarding` 「作品を追加」. `high`, 최초 reveal, 학습/AI 암시는 없다. 현재 profile guard를 통과한 사용자의 최저 확신도가 `normal`이므로 도달 불가능한 `low` UI 상태는 만들지 않는다.
+6. 5개 범주(장르/테마/전개/톤·관계/작화)의 compact summary row. 범주 icon은 두지 않는다. 각 row는 범주명, 실제 profile에서 계산한 대표 factor, 조정 상태, 명시적인 disclosure를 제공한다. 장르는 「分析のみ（10項目）」와 「内訳を見る」, 나머지 범주는 「詳細設定」을 사용한다. 초기에는 모두 접고 한 번에 한 범주의 상세만 연다. 장르는 분석 전용으로 가로 막대(0~4) + 일본어 레이블만 제공하고 보정 control을 만들지 않는다. 나머지 네 범주의 열린 상세에는 기존 5단 보정 control을 그대로 제공한다.
+   2026-09-29 개선: 보정 가능한 범주의 열린 상세은 분석값 내림차순(미확인은 끝, 동률은 factorId 오름차순)으로 정렬하고, 상위 6개와 `自動`이 아닌 항목만 먼저 보인다. 나머지는 범주명을 포함한 접근 이름의 44px 「すべて表示（N項目）」 disclosure(`aria-expanded`/`aria-controls`)로 연다. 숨긴 항목의 보정값·저장 계약은 그대로다. 분석 전용 장르는 10개를 모두 보인다.
 7. 같은 최신 Catalog·기록·추천 정책에 페이지에서 처음 읽은 보정 설정과 현재 보정 설정을 각각 적용하는 preview. 동일 recommendation engine의 선두 최대 4개 work ID와 순서만 비교하고, 사용자는 제목·표지·해당 범위의 상태를 본다. 방문 당시 추천 목록을 동결하는 기능이 아니며 새로고침하면 저장된 현재 보정이 새 기준이다. 같으면 현재 목록 하나, 다르면 기준/현재 두 목록, 양쪽 0개면 빈 안내 한 번, 한쪽만 0개면 비교와 빈 쪽 안내를 제공한다. 계산 불가는 빈 결과·변화 없음과 구분하고 작품 정보가 없으면 ID 대신 이름 있는 안내로 해당 자리를 유지한다. network 요청과 별도 추천 산식은 없다.
 8. `UserWorkRecord.updatedAt`과 기존 reasons로 구성한 최근 feedback 요약. 제목은 미리보기와 같은 subheading 크기(desktop 20px/mobile 16px)다. 「作品を追加して精度を上げる」 링크는 coaching banner가 숨는 `high` 또는 최초 reveal에서만 유지한다.
 
@@ -242,20 +245,20 @@ CTA 버튼 1개: **「好きなマンガから始める」** → /onboarding.
 
 - reveal(1회): §`04` 5.2의 시퀀스. `?reveal=1`을 발견하면 현재 mount의 reveal 여부를 local state/ref에 먼저 고정하고 같은 effect에서 query를 즉시 `replaceState`로 제거한다. 이후 A 시퀀스는 고정된 판정으로 계속하며 URL을 진행 중 상태나 재생 token으로 사용하지 않는다.
 - 보정 변경 직후: 선택 marker와 text 상태를 즉시 반영하고, 저장 성공 시 어떤 factor를 어떤 값으로 변경했는지 `aria-live` snackbar로 알린다. FactorBar에는 보정 성공 highlight나 값 전이를 적용하지 않는다.
-- 분석 확신도 `normal`: 일반 진입에서 헤더의 정성 레이블과 근거 Shelf를 유지한 채, 근거 Shelf 뒤·조정 workspace 앞에 desktop half-shell·mobile full-width coaching banner를 둔다. 기존 `calculateProfileConfidence` + `getConfidenceLevel`만 사용하고 상위 취향/근거 Shelf takeover는 금지한다. CTA는 `/onboarding`뿐이며, 최근 feedback의 동일 목적 링크는 숨긴다. 최초 reveal에서는 배너를 숨긴다. 현재 profile guard에서 `low`는 도달 불가능하므로 별도 배너 상태를 만들지 않는다.
+- 분석 확신도 `normal`: 일반 진입에서 헤더의 정성 레이블과 근거 Shelf를 유지한 채, 근거 Shelf 뒤·조정 workspace 앞에 이미지 없는 한 줄 coaching 요약(제목·설명·`/onboarding` 링크)을 둔다. 기존 `calculateProfileConfidence` + `getConfidenceLevel`만 사용하고 상위 취향/근거 Shelf takeover는 금지한다. CTA는 `/onboarding`뿐이며, 최근 feedback의 동일 목적 링크는 숨긴다. 최초 reveal에서는 배너를 숨긴다. 현재 profile guard에서 `low`는 도달 불가능하므로 별도 배너 상태를 만들지 않는다.
 - 분석 확신도 `high`: coaching banner를 표시하지 않는다.
 - anchor < 5 (가드 통과 못함): /onboarding 리다이렉트.
 
 ### 반응형
 
-- 전체 Taste shell은 loading/일반 화면 모두 최대 960px다. 헤더는 1024px부터 요약/레이더 2열이며, 그 미만에서는 두 영역을 쌓는다. 레이더는 최대 480px로 제한하되 SVG 좌표·라벨 크기·축 선택은 유지한다.
-- mobile: 상위 취향 3개는 순위 1열 행이다. 각 행의 첫 줄은 순위 `1–3`, 팩터 레이블(최대 2줄, 14px/bold), 강도 16px nowrap(28px 금지)이며 다음 줄은 기존 근거 제목 1–2줄이다. 한 줄 근거에 두 줄 높이를 강제하지 않는다. 5개 범주 summary를 1열로 쌓고 한 범주의 상세만 연다. 열린 상세은 각 FactorBar 아래에 visible `おすすめへの反映` micro-label과 줄바꿈 없는 가로 스크롤 radio 행을 둔다.
-- desktop `>=768`: 상위 취향 3개는 기존 3열 카드와 28px 강도를 유지한다. 최대폭 960px의 full-width 범주 row를 사용하고 한 범주의 상세만 연다. 분석 전용 장르 상세은 2열 meter grid로 10개 항목을 5행에 배치한다. 보정 가능한 네 범주는 sticky `分析した好み` / `おすすめへの反映` 열 제목 아래 FactorBar + 5단 control 행을 유지한다.
+- 전체 Taste shell은 loading/일반 화면 모두 `/recommendations`와 같은 최대 1200px다. 상위 취향과 「好みの軸」은 1024px부터 2열이며, 그 미만에서는 쌓는다.
+- mobile: 상위 취향 3개는 순위 1열 행이다. 각 행의 첫 줄은 순위 `1–3`, 팩터 레이블(최대 2줄, 16px/bold), 강도 14px nowrap이며 다음 줄은 기존 근거 제목 1–2줄이다. 한 줄 근거에 두 줄 높이를 강제하지 않는다. 5개 범주 summary를 1열로 쌓고 한 범주의 상세만 연다. 열린 상세은 각 FactorBar 아래에 visible `おすすめへの反映` micro-label과 줄바꿈 없는 가로 스크롤 radio 행을 둔다.
+- desktop `>=768`: 상위 취향 3개는 mobile과 같은 순위 행 문법을 유지한다(강도는 제목보다 크지 않다). 셸 폭의 full-width 범주 row를 사용하고 한 범주의 상세만 연다. 분석 전용 장르 상세은 2열 meter grid로 10개 항목을 5행에 배치한다. 보정 가능한 네 범주는 sticky `分析した好み` / `おすすめへの反映` 열 제목 아래 FactorBar + 5단 control 행을 유지한다.
 
 ### 접근성
 
 - 확인된 막대는 축 레이블만 접근 가능한 이름으로 사용하고 `role="meter"` + `aria-valuemin/max/now`를 제공한다. `aria-valuetext`는 중복된 축 이름이나 숫자 없이 위 정성 레이블만 제공한다(예: 이름 `戦略的な展開`, `aria-valuetext="強め"`).
-- radar와 동일한 값은 keyboard/screen reader가 읽을 수 있는 text list로 중복 제공하고 SVG 자체는 장식으로 처리한다.
+- 「好みの軸」은 read-only `FactorBar` meter로 값을 제공한다.
 - 각 범주의 disclosure는 범주명을 포함한 accessible name, `aria-expanded`, `aria-controls`, visible focus를 가진 44px 이상 button이다. 장르는 분석 내역을 여는 의미를 사용한다. URL의 열린 범주가 바뀌어도 button을 다시 마운트하지 않아 포커스를 유지하며, 접힌 상세의 control은 accessibility tree에서 제외한다.
 - 보정 선택은 `「{factor}」のおすすめへの反映を設定` 형식의 이름을 가진 radiogroup이며 각 선택은 44px 이상 target, visible label, outline/filled marker, `aria-checked`, visible focus를 제공한다. 선택 상태는 색만으로 전달하지 않는다. 미확인 막대는 가짜 0을 넣지 않고, 축 이름과 「まだ分析中」을 함께 읽는 비수치 group 상태로 노출한다.
 - 미리보기에서 현재 목록은 같은 컴포넌트 위치·작품 key를 유지한다. 갱신 상태 문장만 `aria-live`로 알리고 전체 작품 목록을 반복 낭독하거나 갱신을 이유로 보정 radio의 focus·스크롤을 강제로 이동하지 않는다. 키보드로 선택한 칩은 표시 레이블과 4px focus outline까지 스크롤 영역 안에 드러내며, 저장 스낵바가 현재 포커스와 실제로 겹칠 때만 스크롤로 가림을 해소한다. 포커스 대상은 바꾸지 않는다. 사용자에게 raw work ID를 출력하지 않는다.
@@ -276,7 +279,10 @@ CTA 버튼 1개: **「好きなマンガから始める」** → /onboarding.
 - [ ] 보정 칩 변경 → Dexie 반영 → /recommendations 재진입 시 추천이 변한다.
 - [ ] 미확인 축이 0값 축과 시각·접근성 DOM 시맨틱 모두에서 구분된다. 실제 스크린리더 낭독 검증은 제품 완료 후 선택적 접근성 감사 범위다.
 - [ ] 상위 취향 3개 각각에 근거 제목이 표시된다.
-- [ ] 일반 진입의 `normal` coaching banner는 근거 Shelf 뒤에서 `/onboarding` CTA와 DOM 문구만 사용하고, 최근 feedback의 동일 목적 링크를 중복하지 않는다. `high`와 최초 reveal에서는 숨긴다. 도달 불가능한 `low` UI fixture는 추가하지 않는다.
+- [ ] 1440×900에서 셸 폭·페이지 제목 28px·섹션 제목 20px·섹션 간격 48/64px이 `/recommendations`와 같고, 장식 아이콘·이미지 배너·표지 위 그라디언트가 없다.
+- [ ] 「好みの軸」은 확인된 Axis 최대 8개를 강도 내림차순 meter로 보여 준다.
+- [ ] 테마처럼 7개 이상인 보정 범주는 열었을 때 상위 6개와 조정한 항목만 먼저 보이고 「すべて表示」로 나머지를 연다.
+- [ ] 일반 진입의 `normal` coaching 요약은 근거 Shelf 뒤에서 `/onboarding` 링크와 DOM 문구만 사용하고, 최근 feedback의 동일 목적 링크를 중복하지 않는다. `high`와 최초 reveal에서는 숨긴다. 도달 불가능한 `low` UI fixture는 추가하지 않는다.
 - [ ] 보정 preview의 before/after work ID가 같은 최신 기록·정책에 각 보정 설정을 적용해 결정론적으로 계산되고 영속 추천 결과를 URL이나 Router context에 저장하지 않는다. 동일/변경/양쪽 빈 목록/한쪽 빈 목록/계산 불가를 구분하며 사용자 표시는 제목·표지·선두 최대 4작품의 상태다.
 
 ---
