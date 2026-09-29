@@ -1,258 +1,6 @@
 {
   "catalogVersion": "v1-b7bed1677c64",
-  "heroWorks": [
-    {
-      "id": "a-silent-voice",
-      "title": "聲の形",
-      "creators": [
-        "大今良時"
-      ],
-      "genres": [
-        "romance",
-        "sliceOfLife"
-      ],
-      "status": "completed",
-      "isbn": "9784063949735"
-    },
-    {
-      "id": "akira",
-      "title": "AKIRA",
-      "creators": [
-        "大友克洋"
-      ],
-      "genres": [
-        "action",
-        "scienceFiction"
-      ],
-      "status": "completed",
-      "isbn": "9784061037113"
-    },
-    {
-      "id": "attack-on-titan",
-      "title": "進撃の巨人",
-      "creators": [
-        "諫山創"
-      ],
-      "genres": [
-        "action",
-        "fantasy",
-        "horror"
-      ],
-      "status": "completed",
-      "isbn": "9784063842760"
-    },
-    {
-      "id": "berserk",
-      "title": "ベルセルク",
-      "creators": [
-        "三浦建太郎",
-        "スタジオ我画",
-        "森恒二"
-      ],
-      "genres": [
-        "action",
-        "fantasy",
-        "horror"
-      ],
-      "status": "ongoing",
-      "isbn": "9784592135746"
-    },
-    {
-      "id": "blame",
-      "title": "BLAME!",
-      "creators": [
-        "弐瓶勉"
-      ],
-      "genres": [
-        "action",
-        "scienceFiction"
-      ],
-      "status": "completed",
-      "isbn": "9784063141825"
-    },
-    {
-      "id": "blue-lock",
-      "title": "ブルーロック",
-      "creators": [
-        "金城宗幸",
-        "ノ村優介"
-      ],
-      "genres": [
-        "sports"
-      ],
-      "status": "ongoing",
-      "isbn": "9784065134009"
-    },
-    {
-      "id": "cardcaptor-sakura",
-      "title": "カードキャプターさくら",
-      "creators": [
-        "CLAMP"
-      ],
-      "genres": [
-        "comedy",
-        "fantasy",
-        "romance"
-      ],
-      "status": "completed",
-      "isbn": "9784063197433"
-    },
-    {
-      "id": "chainsaw-man",
-      "title": "チェンソーマン",
-      "creators": [
-        "藤本タツキ"
-      ],
-      "genres": [
-        "action",
-        "comedy",
-        "fantasy",
-        "horror"
-      ],
-      "status": "completed",
-      "isbn": "9784088817804"
-    },
-    {
-      "id": "chihayafuru",
-      "title": "ちはやふる",
-      "creators": [
-        "末次由紀"
-      ],
-      "genres": [
-        "romance",
-        "sliceOfLife",
-        "sports"
-      ],
-      "status": "completed",
-      "isbn": "9784063192391"
-    },
-    {
-      "id": "death-note",
-      "title": "DEATH NOTE",
-      "creators": [
-        "大場つぐみ",
-        "小畑健"
-      ],
-      "genres": [
-        "horror",
-        "mystery"
-      ],
-      "status": "completed",
-      "isbn": "9784088736211"
-    },
-    {
-      "id": "dr-stone",
-      "title": "Dr.STONE",
-      "creators": [
-        "Boichi",
-        "稲垣理一郎"
-      ],
-      "genres": [
-        "action",
-        "comedy",
-        "scienceFiction"
-      ],
-      "status": "completed",
-      "isbn": "9784088811840"
-    },
-    {
-      "id": "dragon-ball",
-      "title": "DRAGON BALL",
-      "creators": [
-        "鳥山明"
-      ],
-      "genres": [
-        "action",
-        "comedy",
-        "fantasy"
-      ],
-      "status": "completed",
-      "isbn": "9784088518312"
-    },
-    {
-      "id": "dungeon-meshi",
-      "title": "ダンジョン飯",
-      "creators": [
-        "九井諒子"
-      ],
-      "genres": [
-        "action",
-        "comedy",
-        "fantasy"
-      ],
-      "status": "completed",
-      "isbn": "9784047301535"
-    },
-    {
-      "id": "fairy-tail",
-      "title": "ＦＡＩＲＹ　ＴＡＩＬ",
-      "creators": [
-        "真島ヒロ"
-      ],
-      "genres": [
-        "action",
-        "comedy",
-        "fantasy"
-      ],
-      "status": "completed",
-      "isbn": "9784063637717"
-    },
-    {
-      "id": "fire-force",
-      "title": "炎炎ノ消防隊",
-      "creators": [
-        "大久保篤"
-      ],
-      "genres": [
-        "action",
-        "fantasy",
-        "scienceFiction"
-      ],
-      "status": "completed",
-      "isbn": "9784063955675"
-    },
-    {
-      "id": "frieren",
-      "title": "葬送のフリーレン",
-      "creators": [
-        "山田鐘人",
-        "アベツカサ"
-      ],
-      "genres": [
-        "fantasy"
-      ],
-      "status": "hiatus",
-      "isbn": "9784098501809"
-    },
-    {
-      "id": "fruits-basket",
-      "title": "フルーツバスケット",
-      "creators": [
-        "高屋奈月"
-      ],
-      "genres": [
-        "comedy",
-        "fantasy",
-        "romance",
-        "sliceOfLife"
-      ],
-      "status": "completed",
-      "isbn": "9784592171614"
-    },
-    {
-      "id": "fullmetal-alchemist",
-      "title": "鋼の錬金術師",
-      "creators": [
-        "荒川弘"
-      ],
-      "genres": [
-        "action",
-        "fantasy"
-      ],
-      "status": "completed",
-      "isbn": "9784757506206"
-    }
-  ],
+  "recommendableWorkCount": 2410,
   "editorialRankingWorks": [
     {
       "id": "a-silent-voice",
@@ -393,5 +141,429 @@
       "status": "completed",
       "isbn": "9784088736211"
     }
-  ]
+  ],
+  "discoveryWorks": [
+    {
+      "id": "dr-stone",
+      "title": "Dr.STONE",
+      "creators": [
+        "Boichi",
+        "稲垣理一郎"
+      ],
+      "genres": [
+        "action",
+        "comedy",
+        "scienceFiction"
+      ],
+      "status": "completed",
+      "isbn": "9784088811840"
+    },
+    {
+      "id": "dragon-ball",
+      "title": "DRAGON BALL",
+      "creators": [
+        "鳥山明"
+      ],
+      "genres": [
+        "action",
+        "comedy",
+        "fantasy"
+      ],
+      "status": "completed",
+      "isbn": "9784088518312"
+    },
+    {
+      "id": "inuyasha",
+      "title": "犬夜叉",
+      "creators": [
+        "高橋留美子"
+      ],
+      "genres": [
+        "action",
+        "comedy",
+        "fantasy",
+        "historical",
+        "romance"
+      ],
+      "status": "completed",
+      "isbn": "9784091252012"
+    },
+    {
+      "id": "fire-force",
+      "title": "炎炎ノ消防隊",
+      "creators": [
+        "大久保篤"
+      ],
+      "genres": [
+        "action",
+        "fantasy",
+        "scienceFiction"
+      ],
+      "status": "completed",
+      "isbn": "9784063955675"
+    },
+    {
+      "id": "work-0029e59a039dce3f6e74",
+      "title": "【推しの子】",
+      "creators": [
+        "赤坂 アカ",
+        "横槍 メンゴ"
+      ],
+      "genres": [
+        "fantasy",
+        "mystery"
+      ],
+      "status": "unknown",
+      "isbn": "9784088916507"
+    },
+    {
+      "id": "initial-d",
+      "title": "頭文字Ｄ",
+      "creators": [
+        "しげの秀一"
+      ],
+      "genres": [
+        "action",
+        "sports"
+      ],
+      "status": "completed",
+      "isbn": "9784063235678"
+    },
+    {
+      "id": "dungeon-meshi",
+      "title": "ダンジョン飯",
+      "creators": [
+        "九井諒子"
+      ],
+      "genres": [
+        "action",
+        "comedy",
+        "fantasy"
+      ],
+      "status": "completed",
+      "isbn": "9784047301535"
+    },
+    {
+      "id": "work-00bb50c604411dba486f",
+      "title": "魍魎の匣",
+      "creators": [
+        "志水アキ",
+        "京極夏彦"
+      ],
+      "genres": [
+        "horror",
+        "mystery"
+      ],
+      "status": "unknown",
+      "isbn": "9784048541565"
+    }
+  ],
+  "sample": {
+    "anchorWorks": [
+      {
+        "id": "monster",
+        "title": "MONSTER",
+        "creators": [
+          "浦沢直樹"
+        ],
+        "genres": [
+          "horror",
+          "mystery"
+        ],
+        "status": "completed",
+        "isbn": "9784091836519"
+      },
+      {
+        "id": "promised-neverland",
+        "title": "約束のネバーランド",
+        "creators": [
+          "白井カイウ",
+          "出水ぽすか"
+        ],
+        "genres": [
+          "horror",
+          "mystery"
+        ],
+        "status": "completed",
+        "isbn": "9784088808727"
+      },
+      {
+        "id": "mushishi",
+        "title": "蟲師",
+        "creators": [
+          "漆原友紀"
+        ],
+        "genres": [
+          "fantasy",
+          "horror",
+          "mystery",
+          "sliceOfLife"
+        ],
+        "status": "completed",
+        "isbn": "9784063142556"
+      },
+      {
+        "id": "made-in-abyss",
+        "title": "メイドインアビス",
+        "creators": [
+          "つくしあきひと"
+        ],
+        "genres": [
+          "action",
+          "fantasy",
+          "horror",
+          "scienceFiction"
+        ],
+        "status": "ongoing",
+        "isbn": "9784812483800"
+      },
+      {
+        "id": "tokyo-revengers",
+        "title": "東京卍リベンジャーズ",
+        "creators": [
+          "和久井健"
+        ],
+        "genres": [
+          "action",
+          "mystery",
+          "scienceFiction"
+        ],
+        "status": "completed",
+        "isbn": "9784063959383"
+      }
+    ],
+    "recommendation": {
+      "work": {
+        "id": "20th-century-boys",
+        "title": "20世紀少年",
+        "creators": [
+          "浦沢直樹"
+        ],
+        "genres": [
+          "mystery"
+        ],
+        "status": "completed",
+        "isbn": "9784091855312"
+      },
+      "confidenceLevel": "normal",
+      "contributions": [
+        {
+          "source": "baseline",
+          "group": "overall",
+          "factorId": "neutralBaseline",
+          "value": 0.5,
+          "anchorWorkIds": [],
+          "explainable": false
+        },
+        {
+          "source": "similarity",
+          "group": "theme",
+          "factorId": "investigation",
+          "value": 0.05,
+          "anchorWorkIds": [
+            "monster"
+          ],
+          "explainable": true
+        },
+        {
+          "source": "similarity",
+          "group": "genre",
+          "factorId": "horror",
+          "value": -0.0375,
+          "anchorWorkIds": [
+            "monster"
+          ],
+          "explainable": true
+        },
+        {
+          "source": "similarity",
+          "group": "genre",
+          "factorId": "mystery",
+          "value": 0.0375,
+          "anchorWorkIds": [
+            "monster"
+          ],
+          "explainable": true
+        },
+        {
+          "source": "similarity",
+          "group": "narrative",
+          "factorId": "mysteryReveal",
+          "value": 0.028189066059,
+          "anchorWorkIds": [
+            "monster"
+          ],
+          "explainable": true
+        },
+        {
+          "source": "similarity",
+          "group": "art",
+          "factorId": "artRealism",
+          "value": 0.025531914894,
+          "anchorWorkIds": [
+            "monster"
+          ],
+          "explainable": true
+        },
+        {
+          "source": "similarity",
+          "group": "theme",
+          "factorId": "historicalReconstruction",
+          "value": -0.025,
+          "anchorWorkIds": [
+            "monster"
+          ],
+          "explainable": true
+        },
+        {
+          "source": "similarity",
+          "group": "theme",
+          "factorId": "school",
+          "value": -0.025,
+          "anchorWorkIds": [
+            "monster"
+          ],
+          "explainable": true
+        },
+        {
+          "source": "similarity",
+          "group": "theme",
+          "factorId": "workplace",
+          "value": 0.025,
+          "anchorWorkIds": [
+            "monster"
+          ],
+          "explainable": true
+        },
+        {
+          "source": "similarity",
+          "group": "narrative",
+          "factorId": "problemSolving",
+          "value": 0.024487471526,
+          "anchorWorkIds": [
+            "monster"
+          ],
+          "explainable": true
+        },
+        {
+          "source": "similarity",
+          "group": "narrative",
+          "factorId": "worldBuilding",
+          "value": 0.024487471526,
+          "anchorWorkIds": [
+            "monster"
+          ],
+          "explainable": true
+        },
+        {
+          "source": "similarity",
+          "group": "tone",
+          "factorId": "darkness",
+          "value": 0.022298850575,
+          "anchorWorkIds": [
+            "monster"
+          ],
+          "explainable": true
+        },
+        {
+          "source": "similarity",
+          "group": "tone",
+          "factorId": "relationshipStructure",
+          "value": 0.020229885057,
+          "anchorWorkIds": [
+            "monster"
+          ],
+          "explainable": true
+        },
+        {
+          "source": "similarity",
+          "group": "tone",
+          "factorId": "romance",
+          "value": 0.015632183908,
+          "anchorWorkIds": [
+            "monster"
+          ],
+          "explainable": true
+        },
+        {
+          "source": "similarity",
+          "group": "narrative",
+          "factorId": "pacing",
+          "value": 0.012813211845,
+          "anchorWorkIds": [
+            "monster"
+          ],
+          "explainable": true
+        },
+        {
+          "source": "similarity",
+          "group": "art",
+          "factorId": "artDensity",
+          "value": 0.012632978723,
+          "anchorWorkIds": [
+            "monster"
+          ],
+          "explainable": true
+        },
+        {
+          "source": "similarity",
+          "group": "art",
+          "factorId": "visualSoftness",
+          "value": 0.01210106383,
+          "anchorWorkIds": [
+            "monster"
+          ],
+          "explainable": true
+        },
+        {
+          "source": "similarity",
+          "group": "narrative",
+          "factorId": "strategy",
+          "value": 0.011104783599,
+          "anchorWorkIds": [
+            "monster"
+          ],
+          "explainable": true
+        },
+        {
+          "source": "similarity",
+          "group": "tone",
+          "factorId": "mentalStress",
+          "value": 0.010574712644,
+          "anchorWorkIds": [
+            "monster"
+          ],
+          "explainable": true
+        },
+        {
+          "source": "similarity",
+          "group": "tone",
+          "factorId": "characterArcWeight",
+          "value": 0.010344827586,
+          "anchorWorkIds": [
+            "monster"
+          ],
+          "explainable": true
+        }
+      ]
+    },
+    "axes": [
+      {
+        "axisId": "mysteryReveal",
+        "value": 3.809523809524
+      },
+      {
+        "axisId": "mentalStress",
+        "value": 3.619047619048
+      },
+      {
+        "axisId": "darkness",
+        "value": 3.428571428571
+      },
+      {
+        "axisId": "characterArcWeight",
+        "value": 3.238095238095
+      }
+    ]
+  }
 }

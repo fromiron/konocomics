@@ -65,7 +65,7 @@ export function SiteFooter({ className, immersive = false }: SiteFooterProps) {
               {group.links.map((link) => (
                 <li key={link.to}>
                   <Link
-                    className="inline-flex min-h-[var(--control-min-size)] min-w-[var(--control-min-size)] items-center justify-center text-[length:var(--text-caption-size)] text-text-muted [@media(hover:hover)_and_(pointer:fine)]:hover:text-text-strong"
+                    className="inline-flex min-h-[var(--control-min-size)] items-center text-[length:var(--text-caption-size)] text-text-muted [@media(hover:hover)_and_(pointer:fine)]:hover:text-text-strong"
                     preload={false}
                     to={link.to}
                   >

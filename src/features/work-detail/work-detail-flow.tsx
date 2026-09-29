@@ -15,7 +15,7 @@ import recommendationContextJson from "@/data/generated/recommendation-context-v
 import { AXIS_IDS, GENRE_TAGS, THEME_TAGS } from "@/domain/catalog/constants";
 import { normalizeIsbn } from "@/domain/catalog/normalize";
 import type { CatalogV1, Work } from "@/domain/catalog/types";
-import { explanationClusterFor, generateTasteExplanation } from "@/domain/explanation";
+import { generateTasteExplanation } from "@/domain/explanation";
 import type { ExplanationFactorId, TasteRecommendationExplanation } from "@/domain/explanation";
 import {
   hasCatalogBackedProfile,
@@ -40,6 +40,7 @@ import {
   useRecommendationCovers,
 } from "@/features/recommendations/recommendation-cover-resolver";
 import { usePersistence, type ProviderCacheRecord } from "@/infrastructure/db";
+import { explanationFactorLabel } from "@/lib/explanation-labels";
 import {
   buildRakutenBooksSearchUrl,
   createProviderCacheRecord,
@@ -606,13 +607,6 @@ function WorkStateControls({
       <Snackbar notice={notice} onDismiss={dismissNotice} />
     </section>
   );
-}
-
-function explanationFactorLabel(factorId: ExplanationFactorId) {
-  const cluster = explanationClusterFor(factorId);
-  return cluster === undefined
-    ? explanationLexicon.factorLabels[factorId]
-    : explanationLexicon.clusterLabels[cluster];
 }
 
 function CompatibilitySummary({

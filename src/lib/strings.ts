@@ -287,50 +287,51 @@ export const landingStrings = {
     equation: "kono + mi = このみ",
   },
   tagline: "好みから見つける、次のマンガ。",
-  description: [
-    "マンガの好みを分析し、理由とともに次の一冊を提案します。",
-    "好きな作品を選ぶと、Manga DNA と理由つきのおすすめがわかります。",
-  ],
+  /** Line-break units of the tagline; it never wraps inside a phrase. */
+  taglinePhrases: ["好みから見つける、", "次のマンガ。"],
+  description: (axisCount: number) =>
+    `好きなマンガを5作品選ぶだけ。展開やトーンなど${String(axisCount)}の軸から好みを読み取り、なぜ合うのかまで説明します。`,
   cta: "好きなマンガから始める",
   hero: {
-    eyebrow: "理由がわかるマンガ推薦",
-    trust: ["登録なしですぐ始める", "データはこの端末だけに保存", "推薦理由を根拠から表示"],
+    trust: (workCount: string) => [
+      "登録なし",
+      `${workCount}作品から提案`,
+      "データはこの端末だけに保存",
+    ],
   },
-  showcase: {
-    title: "まず出会いたい作品",
-    description: "カタログから幅広い作品を紹介しています。個人向けの順位ではありません。",
+  sample: {
+    caption: (titles: readonly string[]) =>
+      `例：${titles.map((title) => `『${title}』`).join("")}などが好きな場合`,
+    label: "おすすめの一冊",
+    detail: (title: string) => `『${title}』の詳細を見る`,
+  },
+  how: {
+    title: "5作品を選ぶと、好みが言葉になる",
+    steps: [
+      { title: "選ぶ", description: "好きなマンガを5〜10作品選びます。" },
+      { title: "好みが見える", description: "選んだ作品の傾向を Manga DNA として可視化します。" },
+      {
+        title: "理由つきでおすすめ",
+        description: "好みのどこに合うのかを添えて、次の一冊を提案します。",
+      },
+    ],
+    dnaTitle: "例：Manga DNA",
+    dnaBasis: (title: string, count: number) => `『${title}』ほか${String(count)}作品から`,
   },
   ranking: {
     title: "最初におすすめしたい Top 10",
-    description:
-      "はじめての方に出会ってほしい作品を、おすすめ順に紹介します。個人向けの順位ではありません。",
+    description: "はじめての方に読んでほしい10作品です。個人向けの順位ではありません。",
   },
   discovery: {
     title: "まだ知らない一冊へ",
-    description: "ジャンルを横断して、好みを登録する前に作品を眺められます。",
+    description: "ジャンルを横断して選んだ作品です。",
   },
-  stepsHeading: "konocomics でできること",
-  steps: [
-    {
-      title: "選ぶ",
-      description: "好きなマンガを 5〜10 作品選びます。",
-    },
-    {
-      title: "好みが見える",
-      description: "選んだ作品から Manga DNA を分析します。",
-    },
-    {
-      title: "理由つきでおすすめ",
-      description: "好みに合う理由とともに、次の作品を提案します。",
-    },
-  ],
-  illustration: {
-    dna: "Manga DNA",
-    reason: "おすすめ理由",
+  closing: {
+    title: "あなたの Manga DNA を見てみよう",
+    description: "好きなマンガを5作品選ぶだけ。登録はいりません。",
   },
   footer: {
     credit: "Supported by Rakuten Developers",
-    storage: "データはこのブラウザにだけ保存されます。",
   },
 } as const;
 

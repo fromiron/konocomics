@@ -48,16 +48,21 @@
 
 ### 주요 액션
 
-CTA 버튼 1개: **「好きなマンガから始める」** → /onboarding.
+CTA **「好きなマンガから始める」** → /onboarding. 행동은 이 하나뿐이며, 2026-09-29 개선으로 같은 CTA를 hero와 페이지 끝 마무리 블록에 한 번씩 둔다.
 
 ### 정보 위계
 
-1. 실제 Catalog 표지의 hero backdrop/mosaic + konomi 2톤 로고와 태그라인 「好みから見つける、次のマンガ。」
-2. CTA와 데이터가 브라우저에만 저장된다는 짧은 privacy benefit
-3. 개인화라고 주장하지 않는 Catalog showcase Shelf
-4. 첫 방문자를 위해 명시적으로 큐레이션한 editorial Top 10 ranking(`<ol>`). 시장 popularity나 개인화 결과로 주장하지 않고 「今週の人気」 같은 문구는 쓰지 않는다. 각 card는 표지 위에 큰 텍스트 순위를 고정 표시하며 generic card Y축 lift는 적용하지 않는다.
-5. discovery Shelf와 3단 설명: 選ぶ → 好みが見える → 理由つきでおすすめ
-6. 실제 route만 연결한 footer + `Supported by Rakuten Developers`
+2026-09-29 사용자 요청 개선: 기능을 설명하는 대신 실제 제품 결과를 보여 준다. 같은 작품·같은 문구를 반복하지 않고, 스크롤 한 화면에 한 가지 메시지만 둔다(제안 → 작동 방식 → 둘러보기 → 시작).
+
+1. **Hero:** 왼쪽은 2톤 로고 reveal(`好み` 캡션 포함) → 태그라인 「好みから見つける、次のマンガ。」 → 한 문장 설명 → CTA → 한 줄 신뢰 문구(「登録なし · {N}作品から提案 · データはこの端末だけに保存」)다. 이전 아이브로는 두지 않는다. 태그라인은 「好みから見つける、」「次のマンガ。」 문구 단위로만 줄바꿈하고, 설명은 `word-break: auto-phrase`를 쓴다. `{N}`은 빌드 시 `recommendationEligible` 작품 수다.
+   오른쪽은 **「例」 추천 카드**다. 고정 샘플 프로필(`src/data/landing-showcase.ts`의 `landingSampleProfile`, 5작품)을 `pnpm catalog:build`에서 기존 `rankRecommendations`로 계산하고, 결과 중 editorial Top 10과 샘플 작품 밖의 최상위 작품 하나를 보여 준다. 순위 숫자는 붙이지 않는다. 표지(원본 비율)·제목·작가, 저장한 `contributions[]`에서 `generateTasteExplanation`으로 만든 lead reason, 나머지 이유의 factor 레이블, 근거 anchor 표지를 표시한다. 카드 위에 「例：『{anchor1}』『{anchor2}』などが好きな場合」를 두어 개인 결과가 아닌 예시임을 밝힌다. hero backdrop은 이 카드 표지와 같은 URL이다.
+2. **작동 방식:** 「5作品を選ぶと、好みが言葉になる」 제목 아래 세로 3단계(選ぶ · 好みが見える · 理由つきでおすすめ)와 같은 샘플 프로필의 「例：Manga DNA」 패널을 나란히 둔다. 패널은 `summarizeMangaDna`로 빌드 시 계산한 known Axis 상위 4개를 read-only `FactorBar`로 보여 준다. 번호 3열 템플릿과 장식 아이콘은 쓰지 않는다.
+3. 첫 방문자를 위해 명시적으로 큐레이션한 editorial Top 10 ranking(`<ol>`). 시장 popularity나 개인화 결과로 주장하지 않고 「今週の人気」 같은 문구는 쓰지 않는다. 「個人向けの順位ではありません」은 이 설명에 한 번만 둔다. 각 card는 표지 위에 큰 텍스트 순위를 고정 표시하며 generic card Y축 lift는 적용하지 않는다.
+4. discovery Shelf: 빌드 시 장르 순서대로 장르마다 onboarding 가능 작품 하나를 결정론적으로 고른다(Top 10·샘플 작품·예시 추천 제외, 최대 8).
+5. 마무리 블록: 짧은 제목과 같은 CTA 하나.
+6. 실제 route만 연결한 footer + `Supported by Rakuten Developers`. footer 링크는 왼쪽 정렬이며 44px 터치 높이를 유지한다.
+
+이전 「まず出会いたい作品」 showcase Shelf와 페이지 하단의 저장 안내 문장은 두지 않는다. 저장 안내는 hero 신뢰 문구와 footer에만 있다.
 
 ### 상태
 
@@ -68,8 +73,8 @@ CTA 버튼 1개: **「好きなマンガから始める」** → /onboarding.
 
 ### 반응형
 
-- mobile: compact hero의 첫 viewport에 로고+태그라인+CTA를 두고 discovery Shelf는 2.4장을 보여 overflow를 암시한다. editorial Top 10은 96px 폭을 사용한다. bottom navigation은 없다.
-- desktop: hero 2열 — 좌측 텍스트+CTA, 우측 실제 세로 표지 기반 backdrop/mosaic. 아래에는 1200px media container의 Shelf/ranking을 둔다. editorial Top 10은 112px 폭으로 부분 노출+가로 탐색을 만들고, discovery `cover-overlay`는 152px 폭으로 7장을 한 화면에 둔다.
+- mobile: compact hero의 첫 viewport에 로고+태그라인+CTA를 두고 「例」 카드는 그 아래에 둔다. 작동 방식은 단계 → DNA 패널 순서의 1열이다. discovery Shelf는 2.4장을 보여 overflow를 암시한다. editorial Top 10은 96px 폭을 사용한다. bottom navigation은 없다.
+- desktop: hero 2열 — 좌측 텍스트+CTA, 우측 「例」 추천 카드. 작동 방식은 단계와 DNA 패널의 2열이다. 아래에는 1200px media container의 Shelf/ranking을 둔다. editorial Top 10은 112px 폭으로 부분 노출+가로 탐색을 만들고, discovery는 152px 폭 카드를 쓴다.
 
 ### 인터랙션·모션
 
@@ -84,7 +89,9 @@ CTA 버튼 1개: **「好きなマンガから始める」** → /onboarding.
 - [ ] 현재 Catalog positive anchor가 5개 이상이면 marker 유무와 무관하게 `/recommendations`로 이동한다.
 - [ ] `?landing=1`은 usable profile에도 정적 소개를 표시하고 `logoRevealed` marker를 읽거나 쓰거나 지우지 않으며 다른 로컬 상태도 변경하지 않는다.
 - [ ] CTA로 first-run 온보딩에 진입할 수 있고 라쿠텐 이미지 차단 상태에서도 hero가 placeholder 표지로 성립한다.
-- [ ] showcase/ranking은 bundled Catalog ID만 사용하고 개인화·인기 수치를 근거 없이 주장하지 않는다.
+- [ ] ranking·discovery·예시는 bundled Catalog ID만 사용하고 개인화·인기 수치를 근거 없이 주장하지 않는다.
+- [ ] 「例」 카드의 이유 문장은 빌드 시 엔진이 반환한 `contributions[]`에서만 생성되고, 카드는 예시임을 밝히며 순위 숫자를 붙이지 않는다. 예시 추천·샘플 작품·Top 10·discovery 사이에 같은 작품이 반복되지 않는다.
+- [ ] 태그라인이 단어 중간에서 줄바꿈되지 않고, desktop·390px에서 가로 스크롤 없이 hero·작동 방식·선반·마무리 CTA·footer가 겹치지 않는다.
 - [ ] Slice 10에는 reveal이 없고, Slice 11에서 marker 선기록·1회 재생·비소비 스킵·정리·CTA 상시 조작성·실패 시 정적 완결·reduced-motion 동등성을 검증한다.
 
 ---

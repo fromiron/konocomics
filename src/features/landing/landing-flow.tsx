@@ -11,12 +11,9 @@ import { useRecommendationCovers } from "@/features/recommendations/recommendati
 import { usePersistence, type ProviderCacheRecord } from "@/infrastructure/db";
 
 import { HomeHero } from "./home-hero";
-import { HomeHowItWorks } from "./home-how-it-works";
-import { HomeDiscoveryShelf, HomeRankingShelf, HomeShowcaseShelf } from "./home-showcase";
-import type { LandingWork } from "./landing-types";
-
-const SHOWCASE_COUNT = 4;
-const DISCOVERY_COUNT = 7;
+import { HomeClosing, HomeHowItWorks } from "./home-how-it-works";
+import { HomeDiscoveryShelf, HomeRankingShelf } from "./home-showcase";
+import type { LandingSample, LandingWork } from "./landing-types";
 
 function skipProviderCacheWrite(record: ProviderCacheRecord) {
   return Promise.resolve(record);
@@ -34,14 +31,18 @@ function LandingGuard() {
 }
 
 type LandingFlowProps = Readonly<{
+  discoveryWorks: readonly LandingWork[];
   editorialRankingWorks: readonly LandingWork[];
-  heroWorks: readonly LandingWork[];
+  recommendableWorkCount: number;
+  sample: LandingSample;
   showIntroduction?: boolean;
 }>;
 
 export function LandingFlow({
+  discoveryWorks,
   editorialRankingWorks,
-  heroWorks,
+  recommendableWorkCount,
+  sample,
   showIntroduction = false,
 }: LandingFlowProps) {
   const navigate = useNavigate();
@@ -53,23 +54,23 @@ export function LandingFlow({
   );
   const coverTargets = useMemo(() => {
     const uniqueWorks = new Map(
-      [...heroWorks, ...editorialRankingWorks].map((work) => [work.id, work] as const),
+      [sample.recommendation.work, ...editorialRankingWorks, ...discoveryWorks].map(
+        (work) => [work.id, work] as const,
+      ),
     );
 
     return [...uniqueWorks.values()].flatMap((work) =>
       work.isbn === undefined ? [] : [{ workId: work.id, isbn: work.isbn }],
     );
-  }, [editorialRankingWorks, heroWorks]);
+  }, [discoveryWorks, editorialRankingWorks, sample]);
   const { coverUrls, requestCover } = useRecommendationCovers({
     targets: coverTargets,
     getProviderCache,
     saveProviderCache: skipProviderCacheWrite,
   });
-  const heroWork = heroWorks[0];
-  const heroCoverSource = heroWork === undefined ? null : coverUrls.get(heroWork.id);
+  // The backdrop blurs the same cover the example card shows in front of it.
+  const heroCoverSource = coverUrls.get(sample.recommendation.work.id);
   const heroCoverUrl = heroCoverSource ? coverSourceForSize(heroCoverSource, 600) : null;
-  const showcaseWorks = heroWorks.slice(0, SHOWCASE_COUNT);
-  const discoveryWorks = heroWorks.slice(-DISCOVERY_COUNT);
 
   useEffect(() => {
     if (!showIntroduction && hasProfile === true) {
@@ -87,27 +88,26 @@ export function LandingFlow({
         backdropUrl={heroCoverUrl}
         coverUrls={coverUrls}
         onCoverVisible={requestCover}
+        recommendableWorkCount={recommendableWorkCount}
+        sample={sample}
         staticLogo={showIntroduction}
-        works={heroWorks}
       />
 
-      <div className="mx-auto grid w-full max-w-[var(--layout-width-media)] gap-[var(--space-section)] px-[var(--layout-page-padding)] py-[var(--space-section)]">
-        <HomeShowcaseShelf
-          coverUrls={coverUrls}
-          onCoverVisible={requestCover}
-          works={showcaseWorks}
-        />
-        <HomeRankingShelf
-          coverUrls={coverUrls}
-          onCoverVisible={requestCover}
-          works={editorialRankingWorks}
-        />
-        <HomeDiscoveryShelf
-          coverUrls={coverUrls}
-          onCoverVisible={requestCover}
-          works={discoveryWorks}
-        />
-        <HomeHowItWorks />
+      <div className="mx-auto grid w-full max-w-[var(--layout-width-media)] gap-[var(--space-shelf-group)] px-[var(--layout-page-padding)] pt-[var(--space-shelf)] pb-[var(--space-shelf-group)]">
+        <HomeHowItWorks sample={sample} />
+        <div className="grid gap-[var(--space-shelf)]">
+          <HomeRankingShelf
+            coverUrls={coverUrls}
+            onCoverVisible={requestCover}
+            works={editorialRankingWorks}
+          />
+          <HomeDiscoveryShelf
+            coverUrls={coverUrls}
+            onCoverVisible={requestCover}
+            works={discoveryWorks}
+          />
+        </div>
+        <HomeClosing />
       </div>
     </main>
   );

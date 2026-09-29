@@ -2,9 +2,9 @@ import { mkdirSync, renameSync, writeFileSync } from "node:fs";
 import { dirname, resolve } from "node:path";
 import { pathToFileURL } from "node:url";
 
-import { landingEditorialRankingIds } from "../src/data/landing-showcase";
 import { catalogAssetFilename, recommendationContextAssetFilename } from "../src/lib/catalog-asset";
 import { assignJointVersion } from "./catalog/compile";
+import { buildLandingProjection } from "./catalog/landing-projection";
 import { runCatalogPipelineFromAuthority, runCatalogPipelineFromCsv } from "./catalog/pipeline";
 import { formatSourceIssue, hasErrors } from "./catalog/report";
 import { validateCatalogArtifacts } from "./validate-catalog";
@@ -59,21 +59,6 @@ export function buildCatalog(
       },
     },
   );
-  const volumesById = new Map(catalog.volumes.map((volume) => [volume.id, volume] as const));
-  const worksById = new Map(catalog.works.map((work) => [work.id, work] as const));
-  const toLandingWork = (work: (typeof catalog.works)[number]) => {
-    const representativeVolumeId = catalog.representativeVolumeByWorkId[work.id];
-    return {
-      id: work.id,
-      title: work.title,
-      creators: work.creators,
-      genres: work.genres,
-      status: work.status,
-      ...(representativeVolumeId === undefined
-        ? {}
-        : { isbn: volumesById.get(representativeVolumeId)?.isbn }),
-    };
-  };
   const catalogIdentity = {
     catalogVersion: catalog.catalogVersion,
     workIds: catalog.works.map((work) => work.id),
@@ -81,20 +66,7 @@ export function buildCatalog(
       .filter((work) => work.eligibility.recommendationEligible)
       .map((work) => work.id),
   };
-  const landingProjection = {
-    catalogVersion: catalog.catalogVersion,
-    heroWorks: catalog.works
-      .filter((work) => work.eligibility.onboardingEligible)
-      .slice(0, 18)
-      .map(toLandingWork),
-    editorialRankingWorks: landingEditorialRankingIds.map((workId) => {
-      const work = worksById.get(workId);
-      if (work === undefined || !work.eligibility.onboardingEligible) {
-        throw new Error(`Landing editorial ranking work is unavailable: ${workId}`);
-      }
-      return toLandingWork(work);
-    }),
-  };
+  const landingProjection = buildLandingProjection(catalog, context);
   const publicCatalogOutput = resolve(
     canonicalRoot,
     "public/catalog",

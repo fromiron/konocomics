@@ -830,7 +830,7 @@ test.describe("Slice 7 recommendation journeys", () => {
 
     await page.goto("/", { waitUntil: "domcontentloaded" });
     const landingLogo = page.locator(".landing-logo-reveal");
-    const landingCta = page.getByRole("link", { name: "好きなマンガから始める" });
+    const landingCta = page.getByRole("link", { name: "好きなマンガから始める" }).first();
     await expect(landingLogo).toHaveAttribute("data-motion", "signature-a");
     await expect(landingCta).toBeVisible();
     await expect(landingCta).toHaveAttribute("href", "/onboarding");
@@ -842,6 +842,8 @@ test.describe("Slice 7 recommendation journeys", () => {
     await expect(landingLogo).toHaveAttribute("data-phase", "complete");
     await expect(landingCta).toBeFocused();
 
+    // Only the example cover is above the fold; Top 10 covers request as they scroll into view.
+    await page.getByRole("list", { name: "最初におすすめしたい Top 10" }).scrollIntoViewIfNeeded();
     await expect.poll(() => itemRequests.length).toBeGreaterThan(1);
     await page.evaluate(
       () =>
@@ -873,7 +875,7 @@ test.describe("Slice 7 recommendation journeys", () => {
       await expect(reducedLogo).toHaveAttribute("data-motion", "static");
       await expect(reducedLogo).toHaveAttribute("data-phase", "complete");
       expect(await reducedPage.evaluate(() => sessionStorage.getItem("logoRevealed"))).toBe("1");
-      const reducedCta = reducedPage.getByRole("link", { name: "好きなマンガから始める" });
+      const reducedCta = reducedPage.getByRole("link", { name: "好きなマンガから始める" }).first();
       await expect(reducedCta).toBeVisible();
       await reducedCta.click();
       await expect(reducedPage).toHaveURL(/\/onboarding$/u);
@@ -2679,6 +2681,7 @@ test.describe("Slice 10 data-sovereignty journey", () => {
       await expect(preProfilePage.locator('main[data-landing-state="introduction"]')).toBeVisible();
       await preProfilePage
         .getByRole("link", { name: "好きなマンガから始める", exact: true })
+        .first()
         .click();
       await expect(preProfilePage).toHaveURL(/\/onboarding$/u);
       const draftSearch = preProfilePage.getByRole("searchbox", { name: "好きなマンガを検索" });

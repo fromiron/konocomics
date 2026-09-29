@@ -7,6 +7,7 @@ import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import type { CatalogV1 } from "@/domain/catalog/types";
 import type { UserWorkRecord } from "@/domain/profile/types";
 import { LandingFlow } from "@/features/landing/landing-flow";
+import type { LandingSample } from "@/features/landing/landing-types";
 import { coreStrings, landingStrings } from "@/lib/strings";
 import { createTestCatalog, createTestWork } from "../../helpers/catalog";
 
@@ -54,11 +55,43 @@ const works = Array.from({ length: 6 }, (_, index) =>
 );
 const baseCatalog = createTestCatalog(works[0]);
 
+const toLandingWork = (work: (typeof works)[number]) => ({
+  id: work.id,
+  title: work.title,
+  creators: work.creators,
+  genres: work.genres,
+  status: work.status,
+});
+
+const sample: LandingSample = {
+  anchorWorks: works.slice(0, 2).map(toLandingWork),
+  recommendation: {
+    work: toLandingWork(works[5]!),
+    confidenceLevel: "normal",
+    contributions: [
+      {
+        source: "similarity",
+        group: "narrative",
+        factorId: "mysteryReveal",
+        value: 0.4,
+        anchorWorkIds: [works[0]!.id],
+        explainable: true,
+      },
+    ],
+  },
+  axes: [
+    { axisId: "mysteryReveal", value: 3.8 },
+    { axisId: "darkness", value: 3.4 },
+  ],
+};
+
 function renderLanding(showIntroduction = false) {
   return render(
     <LandingFlow
+      discoveryWorks={works.slice(4, 5).map(toLandingWork)}
       editorialRankingWorks={works.slice(0, 4)}
-      heroWorks={works.slice(0, 4)}
+      recommendableWorkCount={2410}
+      sample={sample}
       showIntroduction={showIntroduction}
     />,
   );
@@ -109,9 +142,30 @@ describe("LandingFlow profile routing", () => {
     renderLanding();
 
     expect(screen.getByRole("heading", { level: 1, name: landingStrings.tagline })).toBeTruthy();
-    expect(screen.getByRole("link", { name: landingStrings.cta }).getAttribute("href")).toBe(
-      "/onboarding",
-    );
+    // The same single action opens the page and closes it.
+    expect(
+      screen
+        .getAllByRole("link", { name: landingStrings.cta })
+        .map((link) => link.getAttribute("href")),
+    ).toEqual(["/onboarding", "/onboarding"]);
+    expect(
+      screen.getByText("登録なし · 2,410作品から提案 · データはこの端末だけに保存"),
+    ).toBeTruthy();
+
+    // The example is labelled as one and explains itself only from its contributions.
+    const example = screen
+      .getByText(landingStrings.sample.caption([works[0]!.title, works[1]!.title]))
+      .closest("figure");
+    expect(example).toBeTruthy();
+    if (example === null) return;
+    expect(
+      within(example).getByRole("link", { name: landingStrings.sample.detail(works[5]!.title) }),
+    ).toBeTruthy();
+    expect(within(example).getByText(works[0]!.title, { selector: "strong" })).toBeTruthy();
+    expect(within(example).queryByText(/位/u)).toBeNull();
+    expect(
+      screen.getAllByRole("meter").map((meter) => meter.getAttribute("aria-valuenow")),
+    ).toEqual(["3.8", "3.4"]);
     const editorialRanking = screen.getByRole("list", { name: landingStrings.ranking.title });
     expect(within(editorialRanking).getAllByRole("link", { name: /^おすすめ\d+位/u })).toHaveLength(
       4,
@@ -132,7 +186,7 @@ describe("LandingFlow profile routing", () => {
 
     renderLanding(true);
 
-    expect(screen.getByRole("link", { name: landingStrings.cta })).toBeTruthy();
+    expect(screen.getAllByRole("link", { name: landingStrings.cta })).toHaveLength(2);
     expect(testState.navigate).not.toHaveBeenCalled();
     expect(getItem).not.toHaveBeenCalled();
     expect(setItem).not.toHaveBeenCalled();

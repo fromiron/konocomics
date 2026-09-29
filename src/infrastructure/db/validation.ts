@@ -221,7 +221,7 @@ const recommendationPoliciesSchema: z.ZodType<RecommendationPolicies> = z.strict
   preferVerified: z.boolean(),
   excludeIncomplete: z.boolean(),
 });
-const groupContributionSchema: z.ZodType<GroupContribution> = z.strictObject({
+export const groupContributionSchema: z.ZodType<GroupContribution> = z.strictObject({
   source: z.enum([
     "baseline",
     "similarity",
