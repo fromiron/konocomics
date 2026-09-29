@@ -212,6 +212,56 @@ describe("WorkDetailFlow", () => {
     expect(await screen.findByText(workDetailStrings.state.ongoingHint)).toBeTruthy();
   });
 
+  it("records 「読んだ」 with a reaction in one tap and clears only the reaction on a second tap", async () => {
+    testState.status = { state: "ready", mode: "indexeddb", warning: null };
+    testState.userWorks = [
+      {
+        workId: "monster",
+        readingState: "hidden",
+        reaction: "disliked",
+        negativeReasons: ["tooDark"],
+        updatedAt: "2026-08-14T00:00:00.000Z",
+      },
+    ];
+    const view = renderDetail("monster");
+
+    const reactions = await screen.findByRole("group", {
+      name: workDetailStrings.state.reactionGroup,
+    });
+    await act(async () => {
+      fireEvent.click(within(reactions).getByRole("button", { name: "良かった" }));
+    });
+    const saved = testState.saveUserWork.mock.calls.at(-1)?.[0] as UserWorkRecord;
+    expect(saved).toMatchObject({
+      workId: "monster",
+      readingState: "completed",
+      reaction: "liked",
+    });
+    // Dislike reasons do not survive a reaction that is no longer 「いまいち」.
+    expect(saved.negativeReasons).toBeUndefined();
+    expect(await screen.findByText(workDetailStrings.state.reactionSaved("良かった"))).toBeTruthy();
+
+    view.unmount();
+    testState.userWorks = [{ ...saved, updatedAt: "2026-08-15T00:00:00.000Z" }];
+    renderDetail("monster");
+    const pressed = within(
+      await screen.findByRole("group", { name: workDetailStrings.state.reactionGroup }),
+    ).getByRole("button", { name: "良かった" });
+    expect(pressed.getAttribute("aria-pressed")).toBe("true");
+    expect(
+      screen
+        .getByRole("radio", { name: workDetailStrings.state.options.completed })
+        .getAttribute("aria-checked"),
+    ).toBe("true");
+    await act(async () => {
+      fireEvent.click(pressed);
+    });
+    const cleared = testState.saveUserWork.mock.calls.at(-1)?.[0] as UserWorkRecord;
+    expect(cleared.readingState).toBe("completed");
+    expect(cleared.reaction).toBeUndefined();
+    expect(await screen.findByText(workDetailStrings.state.reactionCleared)).toBeTruthy();
+  });
+
   it("expands and closes a long synopsis without changing its source text or link", async () => {
     const readStyle = window.getComputedStyle;
     const styleSpy = vi.spyOn(window, "getComputedStyle").mockImplementation((...args) => {
