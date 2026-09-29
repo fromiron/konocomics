@@ -48,7 +48,7 @@ import { explanationLexicon, mediaStrings, tasteStrings } from "@/lib/strings";
 import { cn } from "@/lib/utils";
 
 import { AdjustmentRadiogroup } from "./adjustment-radiogroup";
-import { FactorBar } from "./factor-bar";
+import { FactorBar } from "@/components/media/factor-bar";
 import { DnaAxesOverview, RecommendationDiffPreview } from "./taste-insights";
 
 const DNA_REVEAL_MARKER = "konocomics:manga-dna-reveal:v1";

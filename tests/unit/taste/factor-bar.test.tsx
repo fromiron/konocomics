@@ -40,7 +40,7 @@ vi.mock("motion/react", async () => {
   };
 });
 
-import { FactorBar } from "@/features/taste/factor-bar";
+import { FactorBar } from "@/components/media/factor-bar";
 
 afterEach(() => {
   cleanup();

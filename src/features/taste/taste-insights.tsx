@@ -6,7 +6,7 @@ import type { MangaDnaSummary } from "@/domain/profile/dna-summary";
 import { explanationLexicon, mediaStrings, tasteStrings } from "@/lib/strings";
 import { cn } from "@/lib/utils";
 
-import { FactorBar } from "./factor-bar";
+import { FactorBar } from "@/components/media/factor-bar";
 
 const AXES_OVERVIEW_LIMIT = 8;
 

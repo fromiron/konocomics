@@ -89,7 +89,7 @@
 - semantic 간격은 `--space-content-tight` 4, `--space-content` 8, `--space-content-loose` 12, `--space-section` 32, `--space-section-large` 48, `--space-section-xl` 96px이다. `--space-section-xl`은 선반과 구분하는 큰 블록의 바깥 간격에 사용한다. `/recommendations` 전용으로 같은 묶음의 선반 사이 `--space-shelf`(= `--space-section-large`, 48px)와 묶음 사이 `--space-shelf-group`(64px)을 둔다.
 - 화면 좌우 패딩은 `--layout-page-padding` mobile 16 / desktop 24, 페이지 시작 간격은 `--layout-page-block-start` mobile 32 / desktop 48이다. 바깥 page container가 이 값을 소유하며 내부 카드가 다시 화면 패딩을 만들지 않는다.
 - 고정 UI 회피값만 별도 semantic 역할로 둔다. `--layout-safe-area-bottom`은 기기 safe area, `--layout-mobile-navigation-clearance`는 모바일 nav+safe area, `--layout-onboarding-tray-clearance`는 선택 tray가 있는 온보딩의 하단 여백, `--layout-taste-action-clearance`는 고정 추천 CTA가 있는 취향 화면의 하단 여백을 소유한다. 마지막 두 값은 각각 mobile `calc(120px + safe area)` / `calc(160px + safe area)`이며, 취향 화면은 desktop에서 120px로 바뀐다.
-- 콘텐츠 최대폭: shelf 중심 `/recommendations`·landing·`/taste`는 `--layout-width-media` 1200, 상세 1040, form 640을 기본으로 한다. 온보딩 shelf는 1120, 읽기·안내 블록은 760, 전역 nav는 1200을 사용한다.
+- 콘텐츠 최대폭: shelf 중심 `/recommendations`·landing·`/taste`·작품 상세는 `--layout-width-media` 1200, form 640을 기본으로 한다. 온보딩 shelf는 1120, 읽기·안내 블록은 760, 전역 nav는 1200을 사용한다.
 - 구분선은 그림자 대신 1px `--line` 헤어라인 사용(인쇄물의 괘선 감각).
 
 ### 2.5 인터랙션 상태 (전 컴포넌트 공통)

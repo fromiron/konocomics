@@ -883,8 +883,29 @@ export const workDetailStrings = {
     source: { rakuten: "楽天ブックスの紹介", publisher: "出版社の紹介" },
   },
   factors: {
-    heading: "この作品の主要ファクター",
-    empty: "主要ファクターはまだ確認できません。",
+    heading: "ジャンル・テーマ",
+    empty: "ジャンルとテーマはまだ確認できません。",
+  },
+  traits: {
+    heading: "この作品の傾向",
+    description: "おすすめで使う物語・雰囲気・作画の軸です。",
+    pending: "この作品の傾向はまだ分析中です。",
+    groups: {
+      narrative: "展開",
+      tone: "トーン・関係",
+      art: "作画",
+    },
+    unknown: "未確認",
+    notApplicable: "該当なし",
+    groupUnknown: "この分類の軸はまだ確認できていません。",
+    legendWork: "この作品",
+    legendTaste: "あなたの好み",
+    tasteReference: (value: string) => `あなたの好み: ${value}`,
+  },
+  share: {
+    action: "共有",
+    copied: "リンクをコピーしました。",
+    failed: "リンクを共有できませんでした。",
   },
   state: {
     heading: "読書状態",

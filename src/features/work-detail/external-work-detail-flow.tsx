@@ -71,7 +71,7 @@ function ExternalDetailLoading() {
   return (
     <>
       <main
-        className="mx-auto grid min-h-dvh w-full max-w-[var(--layout-width-detail)] px-[var(--layout-page-padding)] pt-[var(--layout-page-block-start)] pb-[calc(var(--layout-mobile-navigation-clearance)+var(--space-8))] md:pb-[var(--space-section-large)]"
+        className="mx-auto grid min-h-dvh w-full max-w-[var(--layout-width-media)] px-[var(--layout-page-padding)] pt-[var(--layout-page-block-start)] pb-[calc(var(--layout-mobile-navigation-clearance)+var(--space-8))] md:pb-[var(--space-section-large)]"
         data-external-detail-state="loading"
       >
         <header className="grid gap-[var(--space-content-loose)]">
@@ -122,7 +122,7 @@ function ExternalDetailRecord({
             <span className="inline-flex min-h-6 w-fit items-center rounded-[var(--radius-pill)] border border-line px-[var(--space-content)] py-0.5 text-[length:var(--text-caption-size)] font-bold text-text-muted">
               {externalDetailStrings.badge}
             </span>
-            <h1 className="[overflow-wrap:anywhere] text-[length:var(--text-page-title-size)] leading-[var(--line-height-heading)] text-text-strong">
+            <h1 className="font-display text-[length:var(--font-size-28)] leading-[var(--line-height-heading)] [overflow-wrap:anywhere] text-text-strong">
               {record.title}
             </h1>
             <p className="font-medium text-text-muted">

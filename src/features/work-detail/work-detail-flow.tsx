@@ -10,12 +10,16 @@ import { RankingCard } from "@/components/media/ranking-card";
 import { ReasonChips } from "@/components/media/recommendation-evidence";
 import { usePageEntryMotion } from "@/components/motion/use-page-entry-motion";
 import recommendationContextJson from "@/data/generated/recommendation-context-v1.json";
-import { AXIS_IDS, THEME_TAGS } from "@/domain/catalog/constants";
+import { AXIS_IDS, GENRE_TAGS, THEME_TAGS } from "@/domain/catalog/constants";
 import { normalizeIsbn } from "@/domain/catalog/normalize";
 import type { CatalogV1, Work } from "@/domain/catalog/types";
 import { explanationClusterFor, generateTasteExplanation } from "@/domain/explanation";
 import type { ExplanationFactorId, TasteRecommendationExplanation } from "@/domain/explanation";
-import { hasCatalogBackedProfile } from "@/domain/profile/catalog-profile";
+import {
+  hasCatalogBackedProfile,
+  recommendationProfileRecords,
+} from "@/domain/profile/catalog-profile";
+import { summarizeMangaDna } from "@/domain/profile/dna-summary";
 import type { ReadingState, UserWorkRecord } from "@/domain/profile/types";
 import { recommendationContextSchema } from "@/domain/recommendation/context-schema";
 import { scoreWorkCompatibility } from "@/domain/recommendation/rank";
@@ -23,6 +27,8 @@ import type { RecommendationInput } from "@/domain/recommendation/types";
 import { useCatalog } from "@/features/catalog/catalog-provider";
 import { WorkDetailShell } from "@/features/work-detail/work-detail-shell";
 import { SameAuthorBanner } from "@/features/work-detail/same-author-banner";
+import { ShareButton } from "@/features/work-detail/share-button";
+import { WorkTraits } from "@/features/work-detail/work-traits";
 import {
   resolveWorkBookMetadata,
   selectSameAuthorWork,
@@ -146,17 +152,16 @@ function withoutDroppedReasons(record: UserWorkRecord | undefined) {
   return next;
 }
 
-function majorFactorIds(work: Work): ExplanationFactorId[] {
+function genreThemeIds(work: Work): ExplanationFactorId[] {
   if (!work.eligibility.recommendationEligible) return [];
+  const genres = new Set(work.genres);
   const centralThemes = new Set(
     work.themes.filter((theme) => theme.centrality === 2).map((theme) => theme.id),
   );
-  const themeIds = THEME_TAGS.filter((themeId) => centralThemes.has(themeId));
-  const axisIds = AXIS_IDS.filter((axisId) => {
-    const factor = work.axes[axisId];
-    return factor.state === "known" && factor.value >= 3;
-  });
-  return [...themeIds, ...axisIds];
+  return [
+    ...GENRE_TAGS.filter((genre) => genres.has(genre)),
+    ...THEME_TAGS.filter((themeId) => centralThemes.has(themeId)),
+  ];
 }
 
 function compareWorkIds(left: Work, right: Work) {
@@ -542,7 +547,7 @@ function CompatibilitySection({
     >
       <div className="grid min-w-0 content-start gap-[var(--space-6)]">
         <h2
-          className="text-[length:var(--text-section-title-size)] font-bold tracking-tight text-text-strong"
+          className="text-[length:var(--text-subheading-size)] font-bold text-text-strong"
           id="work-compatibility-heading"
         >
           {workDetailStrings.compatibility.heading}
@@ -563,7 +568,7 @@ function CompatibilitySection({
           className="work-detail-evidence grid min-w-0 gap-[var(--space-4)] rounded-[var(--radius-card)] p-[var(--space-3)] sm:p-[var(--space-4)]"
         >
           <h3
-            className="text-[length:var(--text-section-title-size)] font-bold text-text-strong"
+            className="text-[length:var(--text-subheading-size)] font-bold text-text-strong"
             id="work-evidence-heading"
           >
             {workDetailStrings.compatibility.anchors}
@@ -656,7 +661,16 @@ function WorkDetailContent({ catalog, work }: Readonly<{ catalog: CatalogV1; wor
     cache: null,
   });
   const currentRecord = userWorks?.find((record) => record.workId === work.id);
-  const factorIds = useMemo(() => majorFactorIds(work), [work]);
+  const factorIds = useMemo(() => genreThemeIds(work), [work]);
+  const tasteAxes = useMemo(() => {
+    if (userWorks === undefined || !hasCatalogBackedProfile(userWorks, catalog.works)) return null;
+    const catalogWorkIds = new Set(catalog.works.map((candidate) => candidate.id));
+    const profileRecords = recommendationProfileRecords(
+      userWorks.filter((record) => catalogWorkIds.has(record.workId)),
+      catalog.works,
+    );
+    return summarizeMangaDna(catalog.works, profileRecords).axes;
+  }, [catalog.works, userWorks]);
   const compatibility = useMemo(
     () =>
       compatibilityFor({
@@ -837,11 +851,11 @@ function WorkDetailContent({ catalog, work }: Readonly<{ catalog: CatalogV1; wor
           title={work.title}
         >
           <header className="grid gap-[var(--space-content-loose)] md:gap-[var(--space-content)]">
-            <h1 className="[overflow-wrap:anywhere] text-[length:var(--text-page-title-size)] leading-[var(--line-height-heading)] text-text-strong">
+            <h1 className="font-display text-[length:var(--font-size-28)] leading-[var(--line-height-heading)] [overflow-wrap:anywhere] text-text-strong">
               {work.title}
             </h1>
             <p className="font-medium text-text-muted">{coverStrings.creatorLine(work.creators)}</p>
-            <dl className="m-0 flex flex-wrap gap-x-[var(--space-6)] gap-y-[var(--space-3)] p-0 [&>div]:grid [&>div]:gap-[var(--space-content-tight)] [&_dd]:m-0 [&_dd]:font-bold [&_dd]:text-text-strong [&_dt]:text-[length:var(--text-caption-size)] [&_dt]:font-medium [&_dt]:text-text-muted">
+            <dl className="m-0 flex flex-wrap gap-x-[var(--space-6)] gap-y-[var(--space-3)] p-0 [&>div]:grid [&>div]:gap-[var(--space-content-tight)] [&_dd]:m-0 [&_dd]:font-bold [&_dd]:text-text-strong [&_dd]:tabular-nums [&_dt]:text-[length:var(--text-caption-size)] [&_dt]:font-medium [&_dt]:text-text-muted">
               <div>
                 <dt>{workDetailStrings.metadata.publisher}</dt>
                 <dd>{bookMetadata.publisherName ?? workDetailStrings.metadata.unknownPublisher}</dd>
@@ -854,8 +868,87 @@ function WorkDetailContent({ catalog, work }: Readonly<{ catalog: CatalogV1; wor
                 <dt>{workDetailStrings.metadata.volumes}</dt>
                 <dd>{recommendationStrings.volumeCount(volumeCount)}</dd>
               </div>
+              {commercial?.itemPrice === undefined ? null : (
+                <div>
+                  <dt>{workDetailStrings.provider.priceLabel}</dt>
+                  <dd>{workDetailStrings.provider.price(commercial.itemPrice)}</dd>
+                </div>
+              )}
+              {commercial?.availability === undefined ? null : (
+                <div>
+                  <dt>{workDetailStrings.provider.availabilityLabel}</dt>
+                  <dd>{workDetailStrings.provider.availability[commercial.availability]}</dd>
+                </div>
+              )}
+              {metadata?.reviewAverage === undefined ? null : (
+                <div>
+                  <dt>{workDetailStrings.provider.ratingLabel}</dt>
+                  <dd>
+                    {workDetailStrings.provider.rating(metadata.reviewAverage)}
+                    {metadata.reviewCount === undefined ? null : (
+                      <span className="ml-[var(--space-2)] font-normal text-text-muted">
+                        {workDetailStrings.provider.reviewCount(metadata.reviewCount)}
+                      </span>
+                    )}
+                  </dd>
+                </div>
+              )}
             </dl>
           </header>
+
+          <section
+            aria-labelledby="work-provider-heading"
+            className="grid gap-[var(--space-content)]"
+          >
+            <h2 className="sr-only" id="work-provider-heading">
+              {workDetailStrings.provider.heading}
+            </h2>
+            <div className="flex flex-wrap items-center gap-[var(--space-3)]">
+              <a
+                aria-label={
+                  isDirectProviderLink
+                    ? workDetailStrings.provider.openNewTab
+                    : workDetailStrings.provider.searchNewTab
+                }
+                className={buttonClassName({
+                  className:
+                    "w-full min-w-[min(100%,16rem)] px-[var(--space-4)] py-[var(--space-content)] font-bold sm:w-fit",
+                })}
+                href={providerHref}
+                rel="noreferrer"
+                target="_blank"
+              >
+                {isDirectProviderLink
+                  ? workDetailStrings.provider.view
+                  : workDetailStrings.provider.search}
+              </a>
+              <ShareButton title={work.title} />
+              {visibleProvider.phase === "error" && isbn !== null ? (
+                <Button
+                  className="w-fit"
+                  onClick={() => {
+                    setProviderLoad((current) => ({ ...current, phase: "loading" }));
+                    setProviderAttempt((current) => current + 1);
+                  }}
+                  type="button"
+                  variant="outline"
+                >
+                  {workDetailStrings.provider.retry}
+                </Button>
+              ) : null}
+            </div>
+            <p className="text-[length:var(--text-caption-size)] text-text-muted">
+              {visibleProvider.phase === "loading" ? (
+                <span aria-live="polite">{workDetailStrings.provider.loading} </span>
+              ) : commercial === null ? (
+                <span>{workDetailStrings.provider.unavailable} </span>
+              ) : null}
+              {metadata?.affiliateUrl === undefined ? null : (
+                <span>{workDetailStrings.provider.affiliate} </span>
+              )}
+              <span>{workDetailStrings.provider.credit}</span>
+            </p>
+          </section>
 
           {status.state === "degraded" ? (
             <p
@@ -875,14 +968,14 @@ function WorkDetailContent({ catalog, work }: Readonly<{ catalog: CatalogV1; wor
           />
         </WorkDetailShell>
 
-        <div className="mx-auto grid w-full max-w-[var(--layout-width-detail)] gap-[var(--space-4)] px-[var(--layout-page-padding)] pt-[var(--space-6)]">
-          <div className="grid gap-[var(--space-5)] border-t border-line/70 pt-[var(--space-4)] md:grid-cols-[minmax(0,1.08fr)_minmax(0,0.92fr)] md:gap-[var(--space-5)]">
+        <div className="mx-auto grid w-full max-w-[var(--layout-width-media)] gap-[var(--space-shelf)] px-[var(--layout-page-padding)] pt-[var(--space-shelf)]">
+          <div className="grid gap-[var(--space-shelf)] md:grid-cols-[minmax(0,1.2fr)_minmax(0,0.8fr)] md:gap-x-[var(--space-12)]">
             <section
               aria-labelledby="work-synopsis-heading"
               className="grid content-start gap-[var(--space-3)]"
             >
               <h2
-                className="text-[length:var(--font-size-16)] font-bold text-text-strong"
+                className="text-[length:var(--text-subheading-size)] font-bold text-text-strong"
                 id="work-synopsis-heading"
               >
                 {workDetailStrings.synopsis.heading}
@@ -913,7 +1006,7 @@ function WorkDetailContent({ catalog, work }: Readonly<{ catalog: CatalogV1; wor
                   className="grid gap-[var(--space-3)] pt-[var(--space-3)]"
                 >
                   <h3
-                    className="text-[length:var(--font-size-14)] font-bold text-text-strong"
+                    className="text-[length:var(--font-size-16)] font-bold text-text-strong"
                     id="work-book-info-heading"
                   >
                     {workDetailStrings.metadata.bookHeading(representativeVolume?.volumeNumber)}
@@ -960,13 +1053,13 @@ function WorkDetailContent({ catalog, work }: Readonly<{ catalog: CatalogV1; wor
               className="grid content-start gap-[var(--space-3)]"
             >
               <h2
-                className="text-[length:var(--font-size-16)] font-bold text-text-strong"
+                className="text-[length:var(--text-subheading-size)] font-bold text-text-strong"
                 id="work-factors-heading"
               >
                 {workDetailStrings.factors.heading}
               </h2>
               {factorIds.length === 0 ? (
-                <p>{workDetailStrings.factors.empty}</p>
+                <p className="text-text-muted">{workDetailStrings.factors.empty}</p>
               ) : (
                 <ul className="m-0 flex list-none flex-wrap gap-[var(--space-content)] p-0">
                   {factorIds.map((factorId) => (
@@ -982,6 +1075,10 @@ function WorkDetailContent({ catalog, work }: Readonly<{ catalog: CatalogV1; wor
             </section>
           </div>
 
+          {work.eligibility.recommendationEligible ? (
+            <WorkTraits tasteAxes={tasteAxes} work={work} />
+          ) : null}
+
           <CompatibilitySection
             anchorCoverUrls={coverUrls}
             catalog={catalog}
@@ -989,94 +1086,6 @@ function WorkDetailContent({ catalog, work }: Readonly<{ catalog: CatalogV1; wor
             state={compatibility}
           />
 
-          <section
-            aria-labelledby="work-provider-heading"
-            className="grid gap-[var(--space-content)] border-t border-line/70 pt-[var(--space-4)] md:grid-cols-[minmax(0,1fr)_auto] md:[&>h2]:col-span-2"
-          >
-            <h2
-              className="text-[length:var(--font-size-16)] font-bold text-text-strong"
-              id="work-provider-heading"
-            >
-              {workDetailStrings.provider.heading}
-            </h2>
-            <div className="flex flex-wrap content-start gap-x-[var(--space-6)] gap-y-[var(--space-content)]">
-              {visibleProvider.phase === "loading" ? (
-                <p aria-live="polite">{workDetailStrings.provider.loading}</p>
-              ) : commercial === null ? (
-                <p>{workDetailStrings.provider.unavailable}</p>
-              ) : (
-                <dl className="m-0 flex flex-wrap gap-x-[var(--space-6)] gap-y-[var(--space-3)] p-0 [&>div]:grid [&>div]:gap-[var(--space-content-tight)] [&_dd]:m-0 [&_dd]:font-bold [&_dd]:text-text-strong [&_dt]:text-[length:var(--text-caption-size)] [&_dt]:font-medium [&_dt]:text-text-muted">
-                  {commercial.itemPrice === undefined ? null : (
-                    <div>
-                      <dt>{workDetailStrings.provider.priceLabel}</dt>
-                      <dd>{workDetailStrings.provider.price(commercial.itemPrice)}</dd>
-                    </div>
-                  )}
-                  {commercial.availability === undefined ? null : (
-                    <div>
-                      <dt>{workDetailStrings.provider.availabilityLabel}</dt>
-                      <dd>{workDetailStrings.provider.availability[commercial.availability]}</dd>
-                    </div>
-                  )}
-                </dl>
-              )}
-              {metadata?.reviewAverage === undefined ? null : (
-                <dl className="m-0 flex flex-wrap gap-x-[var(--space-6)] gap-y-[var(--space-3)] p-0 [&>div]:grid [&>div]:gap-[var(--space-content-tight)] [&_dd]:m-0 [&_dd]:font-bold [&_dd]:text-text-strong [&_dd]:tabular-nums [&_dt]:text-[length:var(--text-caption-size)] [&_dt]:text-text-muted">
-                  <div>
-                    <dt>{workDetailStrings.provider.ratingLabel}</dt>
-                    <dd>{workDetailStrings.provider.rating(metadata.reviewAverage)}</dd>
-                  </div>
-                  {metadata.reviewCount === undefined ? null : (
-                    <div>
-                      <dt>{workDetailStrings.provider.reviewCountLabel}</dt>
-                      <dd>{workDetailStrings.provider.reviewCount(metadata.reviewCount)}</dd>
-                    </div>
-                  )}
-                </dl>
-              )}
-            </div>
-            <div className="grid content-start justify-items-start gap-[var(--space-content-tight)] md:justify-items-end">
-              <a
-                aria-label={
-                  isDirectProviderLink
-                    ? workDetailStrings.provider.openNewTab
-                    : workDetailStrings.provider.searchNewTab
-                }
-                className={buttonClassName({
-                  className:
-                    "w-full min-w-[min(100%,16rem)] px-[var(--space-4)] py-[var(--space-content)] font-bold md:w-fit",
-                })}
-                href={providerHref}
-                rel="noreferrer"
-                target="_blank"
-              >
-                {isDirectProviderLink
-                  ? workDetailStrings.provider.view
-                  : workDetailStrings.provider.search}
-              </a>
-              {visibleProvider.phase === "error" && isbn !== null ? (
-                <Button
-                  className="w-fit justify-self-start md:justify-self-end"
-                  onClick={() => {
-                    setProviderLoad((current) => ({ ...current, phase: "loading" }));
-                    setProviderAttempt((current) => current + 1);
-                  }}
-                  type="button"
-                  variant="outline"
-                >
-                  {workDetailStrings.provider.retry}
-                </Button>
-              ) : null}
-              {metadata?.affiliateUrl === undefined ? null : (
-                <p className="text-[length:var(--text-caption-size)] text-text-muted">
-                  {workDetailStrings.provider.affiliate}
-                </p>
-              )}
-              <p className="text-[length:var(--text-caption-size)] text-text-muted">
-                {workDetailStrings.provider.credit}
-              </p>
-            </div>
-          </section>
           {sameAuthor === null ? null : (
             <SameAuthorBanner
               author={sameAuthor.author}
