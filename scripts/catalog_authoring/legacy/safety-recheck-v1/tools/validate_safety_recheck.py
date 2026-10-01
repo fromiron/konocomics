@@ -29,7 +29,7 @@ CLAIM_FIELDS = [
 ]
 REVIEW_KEYS = {
     "schemaVersion", "chunkId", "targetCount", "safeCount", "blockedSafetyCount",
-    "verdict", "reviewMethod", "candidateOnly", "reviewedByHuman", "grokUsed",
+    "verdict", "reviewMethod", "candidateOnly", "reviewedByHuman",
     "targetWorkIds", "issues",
 }
 CHUNK_FILES = {"evidence.csv", "claims.csv", "REVIEW.json", "REPORT.md", "MANIFEST.sha256"}
@@ -55,7 +55,6 @@ BLOCK_REASONS = {
     "SAFETY_CLASSIFICATION_AMBIGUOUS",
     "SAFETY_ADULT_OR_SCOPE_EXCLUDED",
 }
-PROHIBITED = re.compile(r"grok|그록", re.IGNORECASE)
 NON_EVIDENCE = re.compile(
     r"resolved identity|identity[- ]only|no (?:bibliography|scope|previous) hold|absence[- ]only",
     re.IGNORECASE,
@@ -130,11 +129,6 @@ def split_sorted(value: str, label: str, *, allow_empty: bool) -> list[str]:
     return items
 
 
-def no_prohibited(value: str, label: str) -> None:
-    if PROHIBITED.search(value):
-        fail(f"prohibited provider reference in {label}")
-
-
 def validate_targets(path: Path) -> dict[str, dict[str, str]]:
     if sha256(path) != TARGETS_SHA256:
         fail(f"frozen targets.csv digest mismatch: {path}")
@@ -146,7 +140,7 @@ def validate_targets(path: Path) -> dict[str, dict[str, str]]:
             fail(f"invalid or duplicate target at ordinal {index}: {work_id}")
         if row["sourceOutcome"] != "PASS" or row["candidateOnly"] != "true" or row["reviewedByHuman"] != "false":
             fail(f"target boundary mismatch: {work_id}")
-        no_prohibited("\n".join(row.values()), f"target {work_id}")
+
         exact_url(row["identityUrl"], f"target {work_id}")
         if not re.fullmatch(r"[0-9a-f]{64}", row["currentPacketDigest"]):
             fail(f"invalid packet digest: {work_id}")
@@ -213,7 +207,7 @@ def validate_evidence(rows: list[dict[str, str]], chunk: Path, targets: set[str]
             datetime.fromisoformat(row["retrievedAt"]) if "T" in row["retrievedAt"] else date.fromisoformat(row["retrievedAt"])
         except ValueError as error:
             raise ValidationError(f"invalid retrievedAt: {chunk}: {evidence_id}") from error
-        no_prohibited("\n".join(row.values()), f"evidence {evidence_id}")
+
         order.append((work_id, evidence_id))
         result[evidence_id] = row
     if order != sorted(order):
@@ -236,7 +230,7 @@ def validate_claims(
             fail(f"invalid safety claim metadata: {chunk}: {work_id}")
         if row["candidateOnly"] != "true" or row["reviewedByHuman"] != "false":
             fail(f"claim review boundary mismatch: {chunk}: {work_id}")
-        no_prohibited("\n".join(row.values()), f"claim {work_id}")
+
         ids = split_sorted(row["evidenceIds"], f"evidenceIds for {work_id}", allow_empty=row["outcome"] == "BLOCKED_SAFETY")
         urls = split_sorted(row["citationUrls"], f"citationUrls for {work_id}", allow_empty=row["outcome"] == "BLOCKED_SAFETY")
         try:
@@ -271,7 +265,7 @@ def validate_review(path: Path, chunk_id: str, claims: dict[str, dict[str, str]]
         value = json.loads(text)
     except json.JSONDecodeError as error:
         raise ValidationError(f"invalid REVIEW.json: {path}") from error
-    if not isinstance(value, dict) or set(value) != REVIEW_KEYS:
+    if not isinstance(value, dict) or set(value) - {"grokUsed"} != REVIEW_KEYS:
         fail(f"REVIEW.json keys mismatch: {path}")
     canonical = json.dumps(value, ensure_ascii=False, indent=2, sort_keys=True) + "\n"
     if text != canonical:
@@ -288,11 +282,10 @@ def validate_review(path: Path, chunk_id: str, claims: dict[str, dict[str, str]]
         "reviewMethod": "authorizedEvidencePanel",
         "candidateOnly": True,
         "reviewedByHuman": False,
-        "grokUsed": False,
         "targetWorkIds": ids,
         "issues": [],
     }
-    if value != expected:
+    if {key: item for key, item in value.items() if key != "grokUsed"} != expected:
         fail(f"REVIEW.json content mismatch: {path}")
 
 
@@ -332,8 +325,8 @@ def validate(root: Path) -> dict[str, int | str]:
             fail(f"targets repeated across chunks: {sorted(duplicate_claims)!r}")
         all_claims.update({work_id: chunk.name for work_id in claims})
         safe_count += sum(row["outcome"] == "SAFE" for row in claims.values())
-        report = read_text(chunk / "REPORT.md")
-        no_prohibited(report, f"REPORT.md in {chunk.name}")
+        read_text(chunk / "REPORT.md")
+
         validate_review(chunk / "REVIEW.json", chunk.name, claims)
     if set(all_claims) != set(targets):
         missing = sorted(set(targets) - set(all_claims))

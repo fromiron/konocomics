@@ -2,6 +2,8 @@
 
 조회일: 2026-08-25
 
+> 아래는 당시 Pilot·배치의 실행 및 품질 이력이다. 모델별 역할·Art 정족수·후속 수집 계획을 현재 실행 지시로 재사용하지 않는다. 현재 절차는 [승격 방법론](01-promotion-method.md)과 [배치 계약](01c-catalog-batch-promotion-plan.md)을 따른다.
+
 ## Pilot 001 최종 품질
 
 - frozen 작품: 50

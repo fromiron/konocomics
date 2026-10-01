@@ -4,7 +4,7 @@
 
 이 문서는 저장 위치·보존 범위·백업 경계의 단일 운영 계약이다. 2026-09-26 승인한 실행 계약은 workspace schema v4이며 실제 전환 여부는 대상 DB의 schema·generation과 전환 receipt에서 확인한다. 문서 갱신을 운영 DB 전환 완료로 간주하지 않는다. [기존 검증 요약](authoring-retention-20260926.md)은 해당 실행 근거와 한계를 기록하며 이 문서의 규칙을 대신하지 않는다. 과거 규칙은 Git 이력에서 확인한다.
 
-**2026-09-27 SDD 상태:** 아래 R1~R9에 따라 DB 전용 기본 복구·요청별 추출·부분 작업 폴더의 증분 백업을 구현하고 기존 CLI에서 검증했다. [현재 구현·검증 근거와 한계](08-structural-throughput-20260927.md)를 따른다. 과거 원본 도구 누락 검사 4개와 실제 고정 세션 자동 전환은 별도 한계이며 문서 변경으로 중단된 큐를 재개하지 않는다.
+**2026-09-27 SDD 상태:** 아래 R1~R9에 따라 DB 전용 기본 복구·요청별 추출·부분 작업 폴더의 증분 백업을 구현하고 기존 CLI에서 검증했다. [현재 구현·검증 근거와 한계](08-structural-throughput-20260927.md)를 따른다. 과거 원본 도구 누락 검사 4개와 당시 고정 세션 자동 전환은 별도 한계였으며 현재 운영에서는 hook을 사용하지 않는다. 문서 변경으로 중단된 큐를 재개하지 않는다.
 
 **2026-09-28 경량 보존:** `scripts/catalog_authoring/lean_migration.py`는 불필요한 로컬 사본·백업·반복 검증을 줄이되, 남긴 자료를 실제로 읽고 재사용·정리할 수 있게 한다. 같은 generation에서 Work별 `curation`, 원문 `collection`(`retained-originals`), 작은 `active` 제어, `completion`, `canonical-completion`과 previous·dependency closure를 새 파일로 복사한다. 불필요한 `artifact`, 종료된 `execution`, `legacy-pin`, `active/migration-working-sets`는 독립 보존 근거로 삼지 않는다. 다만 미완료 실행과 남긴 checkpoint의 원래 소유 관계, closure에 이미 포함된 legacy pin의 조회 head는 유지한다. 이 예외로 무관한 과거 publication 사본을 복원하지 않는다. 완료 확인·GC의 구형/신규 구분은 원래 revision rowid, 생존 행 범위의 legacy watermark, 변경된 revision당 하나의 journal 표식으로 유지한다. 전체 change history를 복사하거나 새 DB에 다시 `VACUUM`하지 않는다. 원본은 한 읽기 transaction에서 선택·복사하고, 새 journal origin으로 최초 백업 후 기존 증분 백업을 사용한다. canonical `catalog.sqlite`는 바꾸지 않는다. 과거 추출 폴더는 DB blob 결속과 실제 소비 가능 범위를 확인한 뒤 정리하며, 이후 수집·판정 파일의 위치는 계속 `artifacts/`다. prior authority의 manifest 결속, freeze의 계약 문서 결속, canonical apply의 current·candidate·projection 검증, v2/v3 reader는 유지한다. 한 배치 안의 prior 재검증은 기존 `manifest_verification_cache`를 쓴다.
 
@@ -122,7 +122,7 @@
 **수용 기준:**
 
 - R9.1 기본 복구 및 자료 준비 과정의 arm·메시지 전송·작업자 재개·모델 호출은 각각 0회다. 사용자 중단 플래그·기존 turn/generation은 바뀌지 않는다.
-- R9.2 재개가 별도로 승인된 기존 명령에서만 작업을 이어가고 고정 세션·모델·작품별 의미 판정을 유지한다. 복구 report에 사용한 runtime/코드 identity와 데이터 generation을 구분하며 DB 복원을 코드 배포로 보고하지 않는다.
+- R9.2 재개가 별도로 승인된 기존 명령에서만 작업을 이어가고 작품별 의미 판정·실제 실행 이력·소유권 결속을 유지한다. 특정 모델·고정 세션 지정은 요구하지 않으며 [배치 계약 §3](01c-catalog-batch-promotion-plan.md#3-역할과-실행-추적)을 따른다. 복구 report에 사용한 runtime/코드 identity와 데이터 generation을 구분하며 DB 복원을 코드 배포로 보고하지 않는다.
 
 ### 기존 진입점과 요구 ID 연결
 
@@ -135,7 +135,7 @@
 | `apply-catalog-authoring-canonical.ts`의 기존 CLI           | 요청 canonical/static 효과·pending intent 재개·readback | R3, R5, R6, R9     |
 | `catalog_authoring_runner.py`의 기존 prepare/check/run 경로 | 명시 run/Work의 자료 사용·기존 run 재개                 | R3, R5, R7, R9     |
 | `import-publisher-book-metadata.ts`                         | 요청 metadata·근거와 해당 canonical 효과                | R3, R5, R6, R9     |
-| `notification_guard.py`의 기존 session/event 명령           | 요청 통지 자료·중단·ACK 경계 보존                       | R3, R5, R7, R9     |
+| `notification_guard.py`의 기존 session/event 명령           | 구형 자료 호환 전용. 신규 hook·통지는 사용하지 않음     | R3, R5, R7, R9     |
 
 이 표는 기존 소비자에 요구를 배정한 스펙이며 구현 완료 표가 아니다. 수용 기준을 작은 실제 진입점 재현 검사로 작성해 미충족을 확인하고, 그 스펙을 충족하도록 구현한 뒤 동일 경로로 재검증한다. 코드 동결 후 필수 통합 검증을 한 번 수행한다. r005의 과거 전체 원본 replay PASS는 R1·R3·R5의 대체 증거가 아니다.
 
@@ -148,15 +148,15 @@
 | compact 발행의 기본 50작품 checkpoint                          | pair·작품 receipt·의존을 실제 단계 백업하고 `BACKED_UP`을 확인한 지점부터 재개한다. 더 촘촘한 재개가 필요하면 `--checkpoint-every`로 줄인다. |
 | 변경 없는 재실행                                               | 실제 입력·원문·membership·receipt 결속을 확인하고 유효 결과 재사용. 불필요한 revision·백업 복사/rotation을 만들지 않는다.                    |
 
-신규 배정 크기와 단계 전환은 [배치 계약](01c-sol-batch-promotion-plan.md)을 따른다. 원본 저장·작품별 기계 검사·checkpoint는 배치 끝까지 미루지 않는다. `PERSISTED`는 마지막 경계 백업에 포함됐다는 뜻이 아니며 작업자가 문자열을 `BACKED_UP`으로 바꾸면 안 된다.
+신규 배정 크기와 단계 전환은 [배치 계약](01c-catalog-batch-promotion-plan.md)을 따른다. 원본 저장·작품별 기계 검사·checkpoint는 배치 끝까지 미루지 않는다. `PERSISTED`는 마지막 경계 백업에 포함됐다는 뜻이 아니며 작업자가 문자열을 `BACKED_UP`으로 바꾸면 안 된다.
 
-명시적 `catalog_workspace.py backup` 또는 `notification_guard.py enqueue`가 경계 백업을 수행한다. Stop/Interrupt hook은 무거운 백업을 실행하지 않는다. 독립 명령 하나가 발행/인계 경계인 경우에만 `run --phase-boundary`를 사용한다. 최종 백업 실패는 미완료로 보고하고 실제 저장 결과에서 재개한다. 강제 종료 전 미저장 자료를 복원됐다고 주장하지 않는다.
+현재 경계 백업은 명시적 `catalog_workspace.py backup`으로 수행한다. 부모·자식 hook과 `notification_guard.py enqueue`는 현재 운영 경로에서 사용하지 않는다. 과거 통지·백업 receipt는 이력으로 보존한다. 독립 명령 하나가 발행/인계 경계인 경우에만 `run --phase-boundary`를 사용한다. 최종 백업 실패는 미완료로 보고하고 실제 저장 결과에서 재개한다. 강제 종료 전 미저장 자료를 복원됐다고 주장하지 않는다.
 
 collection summary의 `workspaceAndBackupReadbackVerified`는 실제 source/latest의 원문 SHA 확인을 가리킨다. 상태명·manifest 파일 SHA 하나·경로 존재만으로 원본 보존이나 백업을 대신하지 않는다. 전체 blob 감사와 해당 단계 원문 검사는 다른 범위다.
 
 ## 실행·잠금·복원
 
-- 역할별 `prepare`·`check`·발행·통지 명령은 [runner README](../../scripts/catalog_authoring/README.md)를 따른다. `run --decisions`는 발행 명령이며 작업자의 비발행 검사로 사용하지 않는다. 판정 누락을 모델 자동 호출로 채우지 않는다.
+- 역할별 `prepare`·`check`·발행·백업 명령은 [runner README](../../scripts/catalog_authoring/README.md)를 따른다. `run --decisions`는 발행 명령이며 작업자의 비발행 검사로 사용하지 않는다. 판정 누락을 모델 자동 호출로 채우지 않는다.
 - 원격 수집·모델 판정·파일 읽기/SHA/압축·기존 blob 검증은 workspace writer 밖에서 수행한다. 입력과 기준 head를 다시 확인한 뒤 준비된 신규 blob·revision·변경 순번만 commit한다. 같은 입력의 재실행은 실제 결속 검증 후 쓰기 없이 반환하고, 입력 변경·경쟁 저장은 성공으로 기록하지 않는다.
 - workspace만 수정된 SQLite runtime에서 WAL을 사용하고 `synchronous=FULL`을 유지한다. catalog/registry의 attached transaction 쌍은 다중 DB 원자성을 위해 DELETE 모드를 유지한다. 시스템 Python의 SQLite 3.49.1로 WAL을 활성화하지 않는다.
 - 정상 백업은 최초에만 전체 복사·검증한다. 이후에는 source의 고정 변경 순번까지 필요한 delta를 준비하고 읽기 snapshot을 닫은 뒤 `latest.sqlite`의 단일 transaction에 새 revision/blob·head·삭제·cursor를 적용한다. 실제 readback 실패는 직전 백업으로 rollback하며 정상 증분 경로에서 전체 DB 복사·교체·전체 목록 비교를 반복하지 않는다. 같은 세대의 정상 운영에는 `latest.sqlite` 하나를 유지한다.

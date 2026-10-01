@@ -118,3 +118,22 @@ test("collection errors preserve failure evidence and never become source exhaus
     rmSync(root, { recursive: true, force: true });
   }
 });
+
+test("collector validation has no provider field or provider-name gate", () => {
+  const row = {
+    schemaVersion: "factor-evidence-collector-v1",
+    workId: "work-aaaaaaaaaaaaaaaaaaaa",
+    status: "INSUFFICIENT",
+    candidateOnly: true,
+    reviewedByHuman: false,
+    paidSourceUsed: false,
+    sources: [],
+    remainingGaps: ["identity"],
+    retryCondition: "Obtain same-work evidence",
+    notes: "Grok or any other executor",
+  };
+  assert.equal(validateResearchRow(row, new Set()), 0);
+  assert.equal(validateResearchRow({ ...row, grokUsed: true }, new Set()), 0);
+  assert.throws(() => validateResearchRow({ ...row, paidSourceUsed: true }, new Set()));
+  assert.throws(() => validateResearchRow({ ...row, reviewedByHuman: true }, new Set()));
+});

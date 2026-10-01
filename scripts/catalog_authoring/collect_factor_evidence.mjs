@@ -580,7 +580,6 @@ export function writeResearchSnapshot(directory, draft) {
       workId: started.workId,
       candidateOnly: true,
       reviewedByHuman: false,
-      grokUsed: false,
       paidSourceUsed: false,
       remainingGaps: [],
       retryCondition: "",

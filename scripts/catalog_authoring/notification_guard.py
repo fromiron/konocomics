@@ -587,7 +587,7 @@ def finish_registration_reconciliation(path, receipt, revision):
 
 
 def transition_collection(session, generation, turn, dispatch, artifact, directory=STATE):
-    """Advance one authorized fixed session after durable collection, without a parent round trip."""
+    """Advance one authorized legacy session after durable collection, without a parent round trip."""
     path = state_path(session, directory)
     original = path.read_bytes()
     assignment = json.loads(original)
@@ -1138,7 +1138,7 @@ def on_stop(event, directory=STATE):
         f"--session {event['session_id']} for full validation and boundary backup outside this hook. "
         f"Only after success, send {kind} with the assigned paths "
         f"(runRoot={assignment['runRoot']}) to parent {assignment['parentThreadId']} using "
-        "send_message_to_thread with destination model=gpt-5.6-sol and thinking=high, "
+        "send_message_to_thread without overriding destination model or thinking, "
         "then acknowledge the actual successful tool result with "
         "scripts/catalog_authoring/notification_guard.py ack. If already sent, record its existing "
         "successful response instead. Do not recollect, readjudicate, publish or assign another Work. "
@@ -1435,14 +1435,8 @@ def main():
     clear_command.add_argument("--session", required=True)
     args = parser.parse_args()
     if args.action is None:
-        try:
-            event = json.load(sys.stdin)
-            handler = {"UserPromptSubmit": on_prompt, "Interrupt": on_interrupt}.get(event.get("hook_event_name"), on_stop)
-            with restored_invocation(args, event):
-                result = handler(event)
-            print(json.dumps(result, ensure_ascii=False))
-        except (OSError, ValueError, KeyError, TypeError) as error:
-            print(json.dumps({"systemMessage": f"Catalog notification guard skipped: {error}"}))
+        # Project hooks are retired. Cached app registrations must also be inert.
+        print("{}")
         return
     result = None
     with restored_invocation(args):

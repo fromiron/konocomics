@@ -69,7 +69,8 @@ def expand_compact_job(job: dict, directory: Path, bindings: dict[Path, str]) ->
             require(bindings[source_path] == reference["sha256"], "conflicting research reference SHA")
             research = snapshots[source_path].get(raw["workId"])
             require(research is not None, f"TARGET_IDENTITY_MISMATCH: research reference {raw['workId']}")
-            for field, expected in {"schemaVersion": "factor-evidence-collector-v1", "candidateOnly": True, "reviewedByHuman": False, "grokUsed": False, "paidSourceUsed": False}.items():
+
+            for field, expected in {"schemaVersion": "factor-evidence-collector-v1", "candidateOnly": True, "reviewedByHuman": False, "paidSourceUsed": False}.items():
                 require(type(research.get(field)) is type(expected) and research[field] == expected, f"collector authority mismatch: {raw['workId']} {field}")
             for field, expected in (("title", raw["title"]), ("isbn13", raw["representativeIsbn"])):
                 require(field not in research or research[field] == expected, f"TARGET_IDENTITY_MISMATCH: research {field}")
@@ -144,7 +145,8 @@ def read_job(path: Path, input_bindings: dict[Path, str] | None = None, *, recov
         require(isinstance(row["representativeIsbn"], str), f"missing expected ISBN: {wid}")
         research = row["research"]
         require(isinstance(research, dict) and research.get("workId") == wid, f"TARGET_IDENTITY_MISMATCH: {wid}")
-        for key, value in {"schemaVersion": "factor-evidence-collector-v1", "candidateOnly": True, "reviewedByHuman": False, "grokUsed": False, "paidSourceUsed": False}.items():
+
+        for key, value in {"schemaVersion": "factor-evidence-collector-v1", "candidateOnly": True, "reviewedByHuman": False, "paidSourceUsed": False}.items():
             require(type(research.get(key)) is type(value) and research[key] == value, f"collector authority mismatch: {wid} {key}")
         require(isinstance(research.get("sources"), list), f"missing sources: {wid}")
         for source in research["sources"]:
@@ -527,7 +529,7 @@ def freeze(job_path: Path, baseline: Path, registry_path: Path, output: Path, pr
     if declaration is not None:
         write_json(chunk / "recovery-declaration.json", declaration)
     manifest(chunk, "CHUNK.sha256")
-    write_json(input_root / "panel-input.json", {"schemaVersion": single.INPUT if job["schemaVersion"] == single.FROZEN_JOB else "authorized-evidence-panel-followup-v2", "batchId": job["batchId"], "frozenAt": datetime.now(timezone.utc).isoformat(timespec="seconds"), "targetCount": len(targets), "chunkCount": 1, "annotationReviewMethod": "authorizedEvidencePanel", "candidateOnly": True, "reviewedByHuman": False, "grokExcluded": True, "paidSourcesExcluded": True, "aniListAuthorizingEvidence": False, "collectorDecisionClaimsIncluded": False, "baselineCandidateSha256": panel.sha256(baseline / "catalog-expanded.candidate.sqlite"), "registrySha256": panel.sha256(registry_path), "canonicalSha256": panel.sha256(REPO / "data/source/catalog.sqlite"), "goldManifestSha256": panel.sha256(REPO / "data/staging/catalog-expansion/gold-set-manifest.json"), "policyDigests": policies})
+    write_json(input_root / "panel-input.json", {"schemaVersion": single.INPUT if job["schemaVersion"] == single.FROZEN_JOB else "authorized-evidence-panel-followup-v2", "batchId": job["batchId"], "frozenAt": datetime.now(timezone.utc).isoformat(timespec="seconds"), "targetCount": len(targets), "chunkCount": 1, "annotationReviewMethod": "authorizedEvidencePanel", "candidateOnly": True, "reviewedByHuman": False, "paidSourcesExcluded": True, "aniListAuthorizingEvidence": False, "collectorDecisionClaimsIncluded": False, "baselineCandidateSha256": panel.sha256(baseline / "catalog-expanded.candidate.sqlite"), "registrySha256": panel.sha256(registry_path), "canonicalSha256": panel.sha256(REPO / "data/source/catalog.sqlite"), "goldManifestSha256": panel.sha256(REPO / "data/staging/catalog-expansion/gold-set-manifest.json"), "policyDigests": policies})
     manifest(input_root, "PANEL-INPUT.sha256")
     _, _, digest = publisher.validate_input(input_root)
     if declaration is not None:
@@ -561,7 +563,7 @@ def materialize_safety(job: dict, targets: list[dict], passed: set[str], root: P
     claims = [works[wid]["safety"]["claim"] for wid in sorted(passed)]
     write_csv(chunk / "evidence.csv", publisher.SAFETY_EVIDENCE_FIELDS, evidence)
     write_csv(chunk / "claims.csv", publisher.SAFETY_CLAIM_FIELDS, claims)
-    write_json(chunk / "REVIEW.json", {"schemaVersion": "safety-recheck-v1-review", "chunkId": "chunk-01", "targetCount": len(passed), "safeCount": len(passed), "blockedSafetyCount": 0, "verdict": "PASS", "reviewMethod": "authorizedEvidencePanel", "candidateOnly": True, "reviewedByHuman": False, "grokUsed": False, "targetWorkIds": sorted(passed), "issues": []})
+    write_json(chunk / "REVIEW.json", {"schemaVersion": "safety-recheck-v1-review", "chunkId": "chunk-01", "targetCount": len(passed), "safeCount": len(passed), "blockedSafetyCount": 0, "verdict": "PASS", "reviewMethod": "authorizedEvidencePanel", "candidateOnly": True, "reviewedByHuman": False, "targetWorkIds": sorted(passed), "issues": []})
     write_text(chunk / "REPORT.md", "# Safety review\n\nExplicit adjudication claims and same-work affirmative source observations are preserved in claims.csv and evidence.csv. Human review is not claimed.")
     manifest(chunk)
 

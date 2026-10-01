@@ -32,7 +32,7 @@
 - `annotationReviewMethod="authorizedEvidencePanel"`, `reviewedByHuman=false`를 사용한다. `human`이나 legacy `authorizedModelPanel`로 표시하지 않는다.
 - 격리된 별도 에이전트는 필수 조건이 아니다. 같은 실행 안에서도 수집 artifact와 판정 artifact를 분리하고 동결된 입력 digest를 결속하면 된다.
 - 2026-09-09 승인된 Factor 003 소실 사건의 후보 격리·새 전체 판정은 `docs/catalog-expansion/04-loss-recovery-v1.md`를 따른다. 사건·승인·scope·before snapshot에 결속한 예외이며 일반 missing-prior 실패, Gold/legacy 보호와 canonical 전환 승인 경계를 변경하지 않는다.
-- Grok은 이 권한의 조사·판정·교차검증에 사용하지 않는다. AniList는 사용자가 허용한 1회성 참고조사만 가능하고, 유료 API·과금 자료는 금지한다.
+- AniList는 사용자가 허용한 1회성 참고조사만 가능하고, 유료 API·과금 자료는 금지한다.
 
 S4는 cutoff manifest의 exact path·hash·row tuple과 일치하는 기존 값에만 `authorityKind=legacySnapshot` 호환 resolution을 만들 수 있다. 이는 현재 결과를 재현하기 위한 candidate-independent 고정 입력이며 과거 모델 패널을 비모델 evidence나 사람 검수로 재분류하지 않는다. 새 사실을 수용하거나 cutoff 범위를 확장할 수 없고, 이후 정정은 별도 비모델 resolution로 provenance를 보존해 supersede한다.
 

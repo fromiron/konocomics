@@ -61,6 +61,21 @@ def read_batch_summary(path, expected_sha, *, batch=None, ancestors=()):
         raise ValueError(f"invalid batch summary JSON: {path}: {error}") from error
     runner.prepare.require(isinstance(value, dict) and isinstance(value.get("works"), list)
                            and all(isinstance(row, dict) for row in value["works"]), "invalid batch summary works")
+    if value.get("schemaVersion") == "catalog-batch-summary-v2":
+        rows = value["works"]
+        runner.prepare.require(value.get("status") == "COMPLETE" and bool(rows)
+                               and type(value.get("assignedCount")) is int and type(value.get("processedCount")) is int
+                               and value.get("assignedCount") == value.get("processedCount") == len(rows)
+                               and len({r.get("workId") for r in rows}) == len(rows)
+                               and all(r.get("status") in {"READY_FOR_PUBLICATION", "HOLD", "ERROR"} for r in rows),
+                               "batch checkpoint is incomplete or inconsistent")
+        binding = value.get("dispatch", {})
+        dispatch = runner.artifact_path(binding["path"])
+        runner.prepare.require(runner.panel.sha256(dispatch) == binding["sha256"], "batch dispatch changed")
+        assigned = runner.panel.read_json(dispatch)
+        runner.prepare.require(assigned.get("batchId") == value.get("batchId")
+                               and {r["workId"] for r in assigned["works"]} == {r["workId"] for r in rows},
+                               "batch summary membership differs from assignment")
     if "sourceSummary" in value:
         source = value["sourceSummary"]
         runner.prepare.require(isinstance(source, dict) and isinstance(source.get("path"), str)

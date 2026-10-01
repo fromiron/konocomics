@@ -253,6 +253,17 @@ class CanonicalRebaseTest(unittest.TestCase):
         with self.assertRaisesRegex(ValueError, "absent from frozen policy"):
             nt.from_input(self.input)
 
+    def test_provider_restriction_removal_preserves_frozen_policy_and_other_rules(self):
+        for rule in compatibility.APPROVED_REPLACEMENTS:
+            frozen = ("# Policy\n" + rule["before"] + "\nEvidence must be bound.\n").encode()
+            current = frozen.replace(rule["before"].encode(), rule["text"].encode())
+            proof = compatibility.prove_compatibility(rule["policy"], frozen, current)
+            self.assertEqual(proof["effectivePolicy"], "frozen-input")
+            self.assertEqual(proof["newCapabilitiesGranted"], [])
+            self.assertEqual(proof["approvedAdditions"][0]["id"], rule["id"])
+            with self.assertRaisesRegex(ValueError, "policy changed"):
+                compatibility.prove_compatibility(rule["policy"], frozen, current.replace(b"must be bound", b"is optional"))
+
     def test_unknown_policy_edits_removed_or_moved_amendments_are_rejected(self):
         documents = self.real_policies()
         path = self.repo / rebase.POLICIES["authorizedEvidencePanel"]

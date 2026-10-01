@@ -22,7 +22,7 @@ Catalog의 성적 콘텐츠 제외 기준은 **porn / non-porn**이다. 성인�
 
 ## 역할과 배치 경계
 
-반복 작업은 [catalog-worker 스킬](../../.agents/skills/catalog-worker/SKILL.md)과 [배치 계약](01c-sol-batch-promotion-plan.md)을 따른다. 고정 세션·모델·배정 수는 배치 계약 §3을 기준으로 읽고 이 문서에서 재정의하지 않는다. 배치 전체 수집·저장/백업 보고 뒤 부모의 단계 전환을 받아 같은 세션에서 작품별 frozen 판정을 진행한다. 작품마다 수집·판정을 교차하거나 정상 작품마다 부모 응답을 기다리지 않는다.
+반복 작업은 [catalog-worker 스킬](../../.agents/skills/catalog-worker/SKILL.md)과 [배치 계약](01c-catalog-batch-promotion-plan.md)을 따른다. 특정 모델·고정 세션 지정은 요구하지 않으며 역할·실행 추적은 배치 계약 §3을 따른다. 배치 전체 수집·검증·명시적 저장/백업 뒤 승인 범위에서 판정으로 전환하고 작품별 frozen 판정을 진행한다. 작품마다 수집·판정을 교차하거나 정상 작품마다 부모 응답을 기다리지 않는다.
 
 수집자의 책임은 자료 선택·실제 독해·출처별 관찰·불확실성이다. 경로·시각·receipt·JSON 직렬화는 기존 helper에 맡긴다. 현재 작품의 brief·미소비 research·반대 근거·최신 HOLD·원문/receipt를 읽으며 전체 STATE·과거 대화·다른 작품 판정을 근거로 넘기지 않는다. 동일 관찰의 국소 보정은 담당자가 계속할 수 있다.
 
@@ -92,7 +92,7 @@ await eval(load("collector-web"))({
 - 첫 3개 출처는 시작 예산이며 최소 개수·최대 조사량·승격 조건이 아니다. 필요한 관찰이 충분하면 끝내고 추가 검색은 구체적 gap에만 한다. 새 자료가 없으면 INSUFFICIENT와 재개 조건을 남긴다. 충분한 자료나 반대 근거를 보고 분량 때문에 숨기지 않는다.
 - 도구 반환 원문을 읽은 뒤 **source마다 관찰을 한 번만 작성**한다. 구체적 사건·관계·톤·반대 근거와 실제 범위를 보존하되, 원문 재전사·별도 독해 보고서·17축 사전 판정·관찰을 반복한 notes/claimCandidates는 쓰지 않는다. 의미 관찰만 새로 생성하고 나머지 원문은 저장된 파일을 전달한다.
 - 같은 소개가 반복되면 기존 원문과 실제 추가 정보만 남긴다. 소개 개수로 사건·반복·부재를 추론하지 않는다. 공식 소개·편집 자료·독서 범위가 명확한 독립 리뷰·구체적 선정 평문은 실제 내용에 따라 사용할 수 있다. 선정 명단만으로 Factor를 판정하지 않는다.
-- 영화/애니 사건·AniList·유료 자료는 만화 근거가 아니다. Grok은 사용하지 않는다. 매체를 먼저 확인하며 도메인/키워드만으로 해당 글을 배제하지 않는다. 무효 자료는 탐색 이력으로만 보존한다. 만화 이미지에서 서사 관찰을 채택하는 경로는 AUTHORING.md의 별도 제한을 유지한다.
+- 영화/애니 사건·AniList·유료 자료는 만화 근거가 아니다. 매체를 먼저 확인하며 도메인/키워드만으로 해당 글을 배제하지 않는다. 무효 자료는 탐색 이력으로만 보존한다. 만화 이미지에서 서사 관찰을 채택하는 경로는 AUTHORING.md의 별도 제한을 유지한다.
 - HTTP가 적합하면 `fetchSelectedSources(directory, selectedUrls)` 또는 기존 fetch CLI를 사용한다. 알려진 독립 URL마다 shell 명령을 나누지 않는다. 도구는 실행당 2개·host당 1개로 처리하며 전역 제한은 아니다. 공개 비인증 GET만, 기본 15초/8 MiB, 일시 오류는 최대 1회 재시도한다. 긴 Retry-After·실패/부분 bytes를 보존하며 인증·차단 우회는 하지 않는다.
 - JS/뷰어 셸은 본문 독해가 아니다. 도움이 되는 미시도 정상 browser/CUA·문서 접근으로 바로 전환할 수 있으며 HTTP 실패가 선행 조건은 아니다. 유료·로그인·종료·접근 제한은 같은 요청을 반복하거나 숨겨진 URL/API로 우회하지 않고 다른 공개 자료를 찾는다.
 - 실제 source에서 확인한 작성자·날짜·사건만 source에 귀속한다. 다른 페이지의 정보로 readAudit를 채우지 않는다. 작성자 미확인은 author="" / authorRole="unknown". search-snippet·partial-body·full-body·blocked를 실제 읽은 범위로 구분한다. 읽지 못한 뷰어 본문은 excludedSections에 남긴다.
@@ -135,7 +135,7 @@ await eval(load("collector-web"))({
 }
 ```
 
-identity·candidateOnly=true·reviewedByHuman=false·grokUsed=false·paidSourceUsed=false·elapsedSeconds는 helper가 넣는다. 명시한 값은 그대로 검증하고 workId 불일치를 거부한다. source의 independentFrom/claimCandidates는 생략하면 빈 배열이다. 필요한 짧은 힌트만 {targetType, targetId, anchor}로 쓰며 수치 판정은 넣지 않는다. 독립성을 확인하지 못하면 independentFrom은 비운다. publisher의 workOwned=true는 동일 작품이라는 뜻이지 작성자 역할 인증이 아니다.
+identity·candidateOnly=true·reviewedByHuman=false·paidSourceUsed=false·elapsedSeconds는 helper가 넣는다. 새 수집에는 모델별 사용·제외 필드를 생성하지 않는다. 명시한 값은 그대로 검증하고 workId 불일치를 거부한다. source의 independentFrom/claimCandidates는 생략하면 빈 배열이다. 필요한 짧은 힌트만 {targetType, targetId, anchor}로 쓰며 수치 판정은 넣지 않는다. 독립성을 확인하지 못하면 independentFrom은 비운다. publisher의 workOwned=true는 동일 작품이라는 뜻이지 작성자 역할 인증이 아니다.
 
 remainingGaps는 필수 판단을 막는 실제 부족분만, 한계·미독해 권·이번 범위에서 제외된 Art는 limitation에 적는다. EVIDENCE_FOUND는 관찰이 있다는 뜻이며 전체 coverage PASS가 아니다. 날짜는 readAudit에 한 번만 기록하고 관측 정밀도/소수초를 임의 변경하지 않는다.
 
@@ -143,7 +143,7 @@ write는 기존 구조 검사를 한 번 수행하고 성공 JSONL을 덮어쓰�
 
 ## 완료·영구 보존
 
-helper의 research-written 이벤트는 해당 collection 작성 완료다. 실제 경로·SHA를 확인하고 별도 REPORT·전체 저장소 감사를 추가 게이트로 만들지 않는다. 닫힌 디렉터리에 append하지 않고 보충/정정은 새 revision에 남긴다. 고정 작업자는 기존 direct collection/저장 helper로 원본·관찰·receipt를 즉시 PERSISTED로 보존한다. 수집 배치 완료·종료/부분 중단에서 실제 BACKED_UP을 확인하고 기존 배치 통지 경로로 보고한다. 수집 단계에서는 수치 판정·seal·publish를 하지 않는다. 부모의 판정 전환 후 같은 작업자가 prepare/check를 수행한다.
+helper의 research-written 이벤트는 해당 collection 작성 완료다. 실제 경로·SHA를 확인하고 별도 REPORT·전체 저장소 감사를 추가 게이트로 만들지 않는다. 닫힌 디렉터리에 append하지 않고 보충/정정은 새 revision에 남긴다. 작업자는 기존 direct collection/저장 helper로 원본·관찰·receipt를 즉시 PERSISTED로 보존한다. 수집 배치 완료·종료/부분 중단에서 실제 BACKED_UP을 확인하고 현재 채팅에 결과와 receipt를 보고한다. hook·부모 통지·ACK는 사용하지 않는다. 수집 단계에서는 수치 판정·seal·publish를 하지 않는다. 승인된 판정 단계로 전환한 뒤 작업자가 prepare/check를 수행한다.
 
 실제 접근/독해/작성 전환에만 `recordProgress(directory, phase, note?)`를 쓸 수 있다. phase는 access-started/access-changed/reading-finished/writing-started다. 의무 검증 단계가 아니며 과거 시각을 추정하지 않는다. 동시 작업 elapsed를 합산 worker 시간으로 보고하지 않는다.
 

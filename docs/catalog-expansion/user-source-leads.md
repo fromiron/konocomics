@@ -96,4 +96,4 @@
 
 구체적 gap이 해결되거나 새 정보가 더 나오지 않고 접근 가능한 관련 경로가 소진되면 종료한다. 출처 수를 채우거나 이미 충분한 리뷰보다 더 좋은 리뷰를 찾으려고 연장하지 않는다. 자료 부족은 부족한 사실·조사 시도·재개 조건으로, 시간·쿼터·사용자 중단은 실제 중단 사유로 구분한다.
 
-수집 완료는 실제 원문·관찰·receipt와 저장 결과로 보고한다. 원문 저장·배치 단계 전환·판정·발행은 각각 [수집 지침](factor-collector-instructions.md), [배치 계약](01c-sol-batch-promotion-plan.md), [저장 계약](03-local-authoring-storage.md)을 따른다.
+수집 완료는 실제 원문·관찰·receipt와 저장 결과로 보고한다. 원문 저장·배치 단계 전환·판정·발행은 각각 [수집 지침](factor-collector-instructions.md), [배치 계약](01c-catalog-batch-promotion-plan.md), [저장 계약](03-local-authoring-storage.md)을 따른다.

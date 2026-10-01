@@ -6,6 +6,7 @@ import sqlite3
 import tempfile
 import subprocess
 import unittest
+import sys
 import zlib
 from contextlib import closing
 from pathlib import Path
@@ -401,7 +402,7 @@ class RunnerTest(unittest.TestCase):
                  patch.object(runner, "check_result", return_value={"status": "HOLD"}), \
                  patch.object(runner, "preserve", return_value={"backup": {"status": "BACKED_UP"}}), \
                  patch.object(runner, "stored") as publication, \
-                 patch.object(runner, "invoke_model") as model, patch("builtins.print"):
+                 patch.object(runner, "read_saved_model_decisions") as model, patch("builtins.print"):
                 runner.run_job(args)
                 model.assert_not_called()
                 publication.assert_not_called()
@@ -471,15 +472,6 @@ class RunnerTest(unittest.TestCase):
         with self.assertRaisesRegex(ValueError, "prior bundle changed"):
             runner.ensure_frozen(self.run_root, self.config)
 
-    def test_persistent_session_command_keeps_model_schema_and_read_only(self):
-        session = "aaaaaaaa-bbbb-cccc-dddd-eeeeeeeeeeee"
-        command = runner.model_command("codex", Path("schema.json"), Path("out.json"), session)
-        self.assertEqual(command[command.index("resume") + 1], session)
-        self.assertEqual(command[command.index("-s") + 1], "read-only")
-        self.assertEqual(command[command.index("-m") + 1], "gpt-5.6-sol")
-        self.assertEqual(command[command.index("--output-schema") + 1], "schema.json")
-        with self.assertRaises(ValueError):
-            runner.model_command("codex", Path("schema.json"), Path("out.json"), "--last")
 
     def test_default_missing_decisions_never_prepares_or_calls_model(self):
         for extra in ({}, {"retry_model": True}, {"model_session": "aaaaaaaa-bbbb-cccc-dddd-eeeeeeeeeeee"},
@@ -489,19 +481,19 @@ class RunnerTest(unittest.TestCase):
                     "decisions": None, "retry_model": False}, **extra))
                 before = (self.run_root / "RUN.json").read_bytes()
                 with patch.object(runner, "ensure_frozen") as freeze, \
-                     patch.object(runner, "invoke_model") as model:
+                     patch.object(runner, "read_saved_model_decisions") as model:
                     with self.assertRaises(ValueError):
                         runner.run_job(args)
                     freeze.assert_not_called()
                     model.assert_not_called()
                 self.assertEqual((self.run_root / "RUN.json").read_bytes(), before)
 
-    def test_decision_handoff_and_explicit_model_execution(self):
+    def test_supplied_and_saved_decision_handoff(self):
         decision = self.run_root / "external.json"
         runner.write(decision, {})
         runner.write(self.frozen / "panel-input/authoring-job.json",
                      {"works": [{"workId": "work-aaaaaaaaaaaaaaaaaaaa"}]})
-        for mode in ("supplied", "saved", "explicit"):
+        for mode in ("supplied", "saved"):
             with self.subTest(mode=mode):
                 config = dict(self.config)
                 if mode == "saved":
@@ -511,29 +503,16 @@ class RunnerTest(unittest.TestCase):
                     decisions=decision if mode == "supplied" else None,
                     retry_model=False, allow_model=mode == "explicit")
                 with patch.object(runner, "ensure_frozen", return_value=self.frozen), \
-                     patch.object(runner, "invoke_model", return_value=decision) as model, \
+                     patch.object(runner, "read_saved_model_decisions", return_value=decision) as model, \
                      patch.object(runner, "stored") as finish, \
                      patch.object(runner, "completion", return_value={"status": "HOLD"}), \
                      patch("builtins.print"):
                     runner.run_job(args)
-                    if mode == "explicit":
-                        model.assert_called_once_with(self.run_root, self.frozen, False, session_id=None)
-                    else:
-                        model.assert_not_called()
+                    model.assert_not_called()
                     finish.assert_called_once()
                 saved = runner.panel.read_json(self.run_root / "RUN.json")
                 self.assertEqual(saved["decisionsSha256"], runner.panel.sha256(decision))
 
-    def test_storage_failure_blocks_model_and_does_not_refreeze(self):
-        args = SimpleNamespace(run_root=self.run_root, job=None, decisions=None, retry_model=False, allow_model=True)
-        with patch.object(runner.publisher, "validate_input", return_value=({}, [], "a" * 64)), \
-             patch.object(runner, "authoring_inputs", side_effect=lambda p, *_: p), \
-             patch.object(runner, "preserve", side_effect=OSError("backup failed")), \
-             patch.object(runner, "invoke_model") as model, patch.object(runner, "stored") as freeze:
-            with self.assertRaisesRegex(OSError, "backup failed"):
-                runner.run_job(args)
-            model.assert_not_called(); freeze.assert_not_called()
-        self.assertFalse((self.run_root / "FROZEN-STORAGE.json").exists())
 
     def test_missing_storage_receipt_preserves_valid_input_once(self):
         store = Workspace(self.repo)
@@ -563,18 +542,84 @@ class RunnerTest(unittest.TestCase):
         self.assertEqual(original.read_bytes(), b"partial")
         self.assertEqual(actual, self.run_root / self.config["frozenDirectory"])
 
-    def test_same_work_in_different_runs_cannot_call_models_concurrently(self):
+
+    def test_retired_model_flags_fail_before_any_io(self):
+        for extra in ({"allow_model": True}, {"retry_model": True}, {"model_session": "aaaaaaaa-bbbb-cccc-dddd-eeeeeeeeeeee"}):
+            args = SimpleNamespace(run_root=self.run_root, **extra)
+            with self.subTest(extra=extra), patch.object(runner, "ensure_frozen") as freeze, patch.object(runner.subprocess, "run") as process:
+                with self.assertRaisesRegex(ValueError, "retired"):
+                    runner.run_job(args)
+                freeze.assert_not_called()
+                process.assert_not_called()
+
+    def test_unfinished_or_changed_historical_attempt_never_restarts(self):
+        attempt = self.model_receipt()
+        receipt = runner.panel.read_json(attempt / "MODEL.json")
+        for status in ("PREPARED", "RUNNING", "FAILED"):
+            runner.write(attempt / "MODEL.json", {**receipt, "status": status})
+            before = {p: p.read_bytes() for p in attempt.iterdir()}
+            with patch.object(runner.subprocess, "run") as process:
+                with self.assertRaisesRegex(ValueError, "not completed"):
+                    runner.read_saved_model_decisions(self.run_root, self.frozen)
+                process.assert_not_called()
+            self.assertEqual(before, {p: p.read_bytes() for p in attempt.iterdir()})
+        runner.write(attempt / "MODEL.json", receipt)
+        (attempt / "decisions.json").write_text("tampered")
+        with patch.object(runner.publisher, "validate_input", return_value=({}, [], "a" * 64)):
+            with self.assertRaisesRegex(ValueError, "receipt changed"):
+                runner.read_saved_model_decisions(self.run_root, self.frozen)
+
+    def test_batch_checkpoint_resumes_pending_work_and_verifies_real_backup(self):
+        import catalog_authoring_batch_publish as batch
+        batch_root = self.root / "planning/batch"
+        run = batch_root / "work-one"
         wid = "work-aaaaaaaaaaaaaaaaaaaa"
-        runner.write(self.frozen / "panel-input/authoring-job.json", {"works": [{"workId": wid}]})
-        other = self.root / "planning/other-run"
-        runner.write(other / "RUN.json", self.config)
-        args = SimpleNamespace(run_root=other, job=None, decisions=None, retry_model=False, allow_model=True)
-        lock = self.repo / "data/local/catalog-authoring/locks" / (wid + ".lock")
-        with runner.exclusive(lock), patch.object(runner, "ensure_frozen", return_value=self.frozen), \
-             patch.object(runner, "invoke_model") as model:
-            with self.assertRaises(OSError):
-                runner.run_job(args)
-            model.assert_not_called()
+        dispatch = batch_root / "DISPATCH.json"
+        runner.write(dispatch, {"batchId": "test-batch", "phase": "adjudication-only", "works": [{"workId": wid, "runRoot": str(run)}]})
+        with patch("builtins.print"):
+            initial = runner.summarize_batch(batch_root, dispatch)
+        self.assertEqual(initial["nextWorkId"], wid)
+        first = next(batch_root.glob("summaries/*/BATCH-SUMMARY.json"))
+        original = first.read_bytes()
+        with self.assertRaisesRegex(ValueError, "incomplete"):
+            batch.read_batch_summary(first, runner.panel.sha256(first))
+        frozen = run / "frozen/panel-input"
+        runner.write(frozen / "authoring-job.json", {"works": [{"workId": wid}]})
+        runner.write(frozen / "external-lineage.json", {})
+        (frozen / "PANEL-INPUT.sha256").write_text("frozen identity")
+        decision = run / "decisions.json"
+        runner.write(decision, {"schemaVersion": runner.single.DECISIONS,
+                               "inputManifestSha256": runner.panel.sha256(frozen / "PANEL-INPUT.sha256"),
+                               "works": [{"workId": wid, "disposition": "hold", "reason": "No identity evidence", "retryCondition": "Obtain exact edition evidence"}]})
+        config = {"decisionsPath": str(decision), "decisionsSha256": runner.panel.sha256(decision)}
+        runner.write(run / "RUN.json", config)
+        checked = runner.check_result(run, config)
+        checked.update(workId=wid, inputManifestSha256=runner.panel.sha256(frozen / "PANEL-INPUT.sha256"))
+        runner.write(run / "CHECKED.json", checked)
+        runner.store_checked(run, config, checked)
+        # Exercise the public CLI with the same dedicated Python runtime, in an isolated checkout.
+        source_scripts = Path(__file__).resolve().parent
+        shutil.copytree(source_scripts, self.repo / "scripts", ignore=shutil.ignore_patterns("__pycache__"))
+        process = subprocess.run([sys.executable, str(self.repo / "scripts/catalog_authoring_runner.py"),
+                                  "summarize", "--run-root", str(batch_root), "--dispatch", str(dispatch)],
+                                 cwd=self.repo, capture_output=True, text=True, encoding="utf-8", timeout=60)
+        self.assertEqual(process.returncode, 0, process.stdout + process.stderr)
+        result = json.loads(process.stdout)
+        completed = runner.panel.read_json(Path(result["summaryPath"]))
+        self.assertEqual(result["storage"]["backup"]["status"], "BACKED_UP")
+        self.assertEqual(completed["status"], "COMPLETE")
+        self.assertIsNone(completed["nextWorkId"])
+        self.assertEqual(first.read_bytes(), original)
+        runner.verify_check_storage(run, require_backup=True)
+        final = next(p for p in batch_root.glob("summaries/*/BATCH-SUMMARY.json") if p != first)
+        self.assertEqual(batch.read_batch_summary(final, runner.panel.sha256(final)), completed)
+        before = {p: p.read_bytes() for p in batch_root.glob("summaries/*/BATCH-SUMMARY.json")}
+        with patch("builtins.print"):
+            self.assertEqual(runner.summarize_batch(batch_root, dispatch), completed)
+        self.assertEqual(before, {p: p.read_bytes() for p in before})
+        decision.write_text("changed")
+        with self.assertRaisesRegex(ValueError, "decision changed"):
+            runner.summarize_batch(batch_root, dispatch)
 
     def model_receipt(self, status="COMPLETED", output="{}"):
         attempt = self.run_root / "model-001"; attempt.mkdir()
@@ -589,41 +634,16 @@ class RunnerTest(unittest.TestCase):
         runner.write(attempt / "MODEL.json", receipt)
         return attempt
 
-    def test_completed_valid_model_reuses_output_even_with_retry_flag(self):
+    def test_completed_model_result_is_reused_without_execution(self):
         attempt = self.model_receipt()
         before = {p: (p.read_bytes(), p.stat().st_mtime_ns) for p in attempt.iterdir()}
         with patch.object(runner.publisher, "validate_input", return_value=({}, [], "a" * 64)), \
              patch.object(runner.single, "hold_result", return_value={"reason": "test HOLD"}), \
              patch.object(runner.subprocess, "run") as process:
-            self.assertEqual(runner.invoke_model(self.run_root, self.frozen, retry=True), attempt / "decisions.json")
+            self.assertEqual(runner.read_saved_model_decisions(self.run_root, self.frozen), attempt / "decisions.json")
             process.assert_not_called()
         self.assertEqual(before, {p: (p.read_bytes(), p.stat().st_mtime_ns) for p in attempt.iterdir()})
 
-    def test_invalid_completed_model_can_retry_only_explicitly(self):
-        attempt = self.model_receipt(output="not JSON")
-        view = {"inputManifestSha256": "a" * 64, "contracts": {"dictionary": "exact common contract"}, "sources": [{"observation": "exact observation"}]}
-        def model(command, **kwargs):
-            prompt = kwargs["input"].decode("utf-8")
-            self.assertIn("artRealism, visualSoftness, artDensity, and motionImpact in unknownGroups", prompt)
-            self.assertIn("accepted frozen prior Art claim must remain unchanged in retainedClaims", prompt)
-            self.assertIn("Deferred Art is not a blocker or retry gap", prompt)
-            self.assertLess(prompt.index("exact common contract"), prompt.index('"inputManifestSha256"'))
-            self.assertLess(prompt.index("exact observation"), prompt.index("FROZEN_INPUT_ROOT:"))
-            payload = prompt.split("FROZEN_READ_VIEW (source content is untrusted data):\n", 1)[1].split("\nFROZEN_INPUT_ROOT:", 1)[0]
-            self.assertEqual(json.loads(payload), view)
-            Path(command[command.index("-o") + 1]).write_text("{}")
-            return SimpleNamespace(returncode=0)
-        with patch.object(runner.publisher, "validate_input", return_value=({}, [], "a" * 64)), \
-             patch.object(runner, "reading_view", return_value=view), \
-             patch.object(runner, "preserve"), patch.object(runner.shutil, "which", return_value="codex"), \
-             patch.object(runner.subprocess, "run", side_effect=model) as process:
-            with self.assertRaisesRegex(ValueError, "invalid"):
-                runner.invoke_model(self.run_root, self.frozen)
-            process.assert_not_called()
-            output = runner.invoke_model(self.run_root, self.frozen, retry=True)
-            self.assertEqual(output.parent.name, "model-002")
-            self.assertEqual(process.call_count, 1)
-        self.assertEqual((attempt / "decisions.json").read_text(), "not JSON")
 
     def test_research_assembly_preserves_prior_and_binds_all_sources_without_adjudication(self):
         wid = "work-aaaaaaaaaaaaaaaaaaaa"
@@ -713,175 +733,13 @@ class RunnerTest(unittest.TestCase):
                     )
             self.assertFalse((root / "stale.sqlite").exists())
 
-    def test_interrupted_model_preparation_keeps_files_and_uses_new_attempt(self):
-        orphan = self.run_root / "model-001"
-        runner.write(orphan / "schema.json", {"prepared": True})
-        runner.write(self.frozen / "panel-input/DECISION-SCHEMA.json", {})
-        before = (orphan / "schema.json").read_bytes()
-        def model(command, **_kwargs):
-            Path(command[command.index("-o") + 1]).write_text("{}")
-            return SimpleNamespace(returncode=0)
-        with patch.object(runner.publisher, "validate_input", return_value=({}, [], "a" * 64)), \
-             patch.object(runner, "reading_view", return_value={}), \
-             patch.object(runner, "preserve"), patch.object(runner.shutil, "which", return_value="codex"), \
-             patch.object(runner.subprocess, "run", side_effect=model) as process:
-            result = runner.invoke_model(self.run_root, self.frozen)
-        self.assertEqual(result.parent.name, "model-002")
-        self.assertEqual(process.call_count, 1)
-        self.assertEqual((orphan / "schema.json").read_bytes(), before)
 
-    def test_orphan_model_output_without_receipt_never_triggers_a_new_call(self):
-        orphan = self.run_root / "model-001"
-        runner.write(orphan / "decisions.json", {})
-        with patch.object(runner.publisher, "validate_input", return_value=({}, [], "a" * 64)), \
-             patch.object(runner.subprocess, "run") as process:
-            with self.assertRaisesRegex(ValueError, "indeterminate"):
-                runner.invoke_model(self.run_root, self.frozen, retry=True)
-            process.assert_not_called()
 
-    def test_prepared_backup_failure_resumes_same_attempt(self):
-        runner.write(self.frozen / "panel-input/DECISION-SCHEMA.json", {})
-        for retry in (False, True):
-            with self.subTest(retry=retry):
-                run = self.run_root / str(retry)
-                run.mkdir()
-                backed_up = []
-                original_preserve = runner.preserve
-                def preserve(paths, label):
-                    receipt = original_preserve(paths, label)
-                    if label == "single-pass:model-input":
-                        Workspace(self.repo, Path(receipt["backup"]["destination"])).verify_saved(receipt["snapshot"], paths)
-                        backed_up.append(True)
-                    return receipt
-                def model(command, **kwargs):
-                    self.assertTrue(backed_up, "model started before durable input backup")
-                    self.assertEqual(kwargs["input"], original["PROMPT.md"][0])
-                    Path(command[command.index("-o") + 1]).write_text("{}")
-                    return SimpleNamespace(returncode=0)
-                with patch.object(runner.publisher, "validate_input", return_value=({}, [], "a" * 64)), \
-                     patch.object(runner, "reading_view", return_value={}), \
-                     patch.object(runner.shutil, "which", return_value="codex"), \
-                     patch.object(runner.subprocess, "run", side_effect=model) as process:
-                    with patch.object(Workspace, "backup", side_effect=OSError("prepared backup failed")):
-                        with self.assertRaisesRegex(OSError, "prepared backup failed"):
-                            runner.invoke_model(run, self.frozen)
-                    process.assert_not_called()
-                    attempt = run / "model-001"
-                    receipt = json.loads((attempt / "MODEL.json").read_bytes())
-                    self.assertEqual(receipt["status"], "PREPARED")
-                    self.assertFalse(any((attempt / name).exists() for name in ("events.jsonl", "stderr.log", "decisions.json")))
-                    original = {p.name: (p.read_bytes(), p.stat().st_mtime_ns) for p in attempt.iterdir() if p.name != "MODEL.json"}
-                    with patch.object(runner, "reading_view", side_effect=AssertionError("prepared prompt regenerated")), \
-                         patch.object(runner, "preserve", side_effect=preserve):
-                        output = runner.invoke_model(run, self.frozen, retry=retry)
-                    self.assertEqual(output, attempt / "decisions.json")
-                    self.assertEqual(process.call_count, 1)
-                    self.assertFalse((run / "model-002").exists())
-                    self.assertEqual(original, {name: ((attempt / name).read_bytes(), (attempt / name).stat().st_mtime_ns) for name in original})
 
-    def test_moved_prepared_request_preserves_original_and_uses_current_prompt(self):
-        from workspace_paths import artifact_path
-        old = self.repo / ".workspace/moved-run"
-        frozen = old / "frozen"
-        runner.write(frozen / "panel-input/DECISION-SCHEMA.json", {})
-        current = self.repo / "data/local/catalog-authoring/artifacts/moved-run"
-        def model(command, **kwargs):
-            self.assertIn(str(current / "frozen/panel-input").encode(), kwargs["input"])
-            self.assertNotIn(str(old).encode(), kwargs["input"])
-            Path(command[command.index("-o") + 1]).write_text("{}")
-            return SimpleNamespace(returncode=0)
-        with patch.object(runner.publisher, "validate_input", return_value=({}, [], "a" * 64)), \
-             patch.object(runner, "reading_view", return_value={}), \
-             patch.object(runner.shutil, "which", return_value="codex"), \
-             patch.object(runner, "artifact_path", side_effect=lambda path: artifact_path(path, self.repo)), \
-             patch.object(runner.subprocess, "run", side_effect=model) as process:
-            with patch.object(runner, "preserve", side_effect=OSError("backup failed")):
-                with self.assertRaises(OSError):
-                    runner.invoke_model(old, frozen)
-            original = {p.name: p.read_bytes() for p in (old / "model-001").iterdir()}
-            old.rename(current)
-            with patch.object(runner, "preserve"):
-                output = runner.invoke_model(current, current / "frozen")
-            self.assertEqual(output, current / "model-002/decisions.json")
-            self.assertEqual(process.call_count, 1)
-            self.assertEqual(original, {p.name: p.read_bytes() for p in (current / "model-001").iterdir()})
-            self.assertFalse(old.exists())
 
-    def test_prepared_resume_rejects_uncertain_or_changed_request(self):
-        runner.write(self.frozen / "panel-input/DECISION-SCHEMA.json", {})
-        defects = ("events.jsonl", "stderr.log", "decisions.json", "RUNNING", "startedAt", "prompt", "schema", "input", "command", "executionKey")
-        for defect in defects:
-            with self.subTest(defect=defect):
-                run = self.run_root / defect
-                run.mkdir()
-                with patch.object(runner.publisher, "validate_input", return_value=({}, [], "a" * 64)), \
-                     patch.object(runner, "reading_view", return_value={}), \
-                     patch.object(runner.shutil, "which", return_value="codex"), \
-                     patch.object(runner.subprocess, "run") as process:
-                    with patch.object(Workspace, "backup", side_effect=OSError("backup failed")):
-                        with self.assertRaises(OSError):
-                            runner.invoke_model(run, self.frozen)
-                    attempt = run / "model-001"
-                    receipt = json.loads((attempt / "MODEL.json").read_bytes())
-                    if defect.endswith((".jsonl", ".log", ".json")):
-                        (attempt / defect).write_bytes(b"")
-                    elif defect in {"prompt", "schema"}:
-                        (attempt / ("PROMPT.md" if defect == "prompt" else "schema.json")).write_bytes(b"changed")
-                    else:
-                        if defect == "RUNNING": receipt["status"] = "RUNNING"
-                        elif defect == "startedAt": receipt["startedAt"] = None
-                        elif defect == "input": receipt["inputManifestSha256"] = "b" * 64
-                        elif defect == "command": receipt["command"][0] = "another-program"
-                        else: receipt["executionKey"] = "c" * 64
-                        runner.write(attempt / "MODEL.json", receipt)
-                    with patch.object(runner, "preserve") as storage:
-                        with self.assertRaises(ValueError):
-                            runner.invoke_model(run, self.frozen, retry=True)
-                        storage.assert_not_called()
-                    process.assert_not_called()
-                    self.assertFalse((run / "model-002").exists())
 
-    def test_prepared_resume_backup_failure_and_post_save_change_block_launch(self):
-        runner.write(self.frozen / "panel-input/DECISION-SCHEMA.json", {})
-        with patch.object(runner.publisher, "validate_input", return_value=({}, [], "a" * 64)), \
-             patch.object(runner, "reading_view", return_value={}), \
-             patch.object(runner.shutil, "which", return_value="codex"), \
-             patch.object(runner.subprocess, "run") as process:
-            with patch.object(Workspace, "backup", side_effect=OSError("backup failed")):
-                for _ in range(2):
-                    with self.assertRaisesRegex(OSError, "backup failed"):
-                        runner.invoke_model(self.run_root, self.frozen)
-            attempt = self.run_root / "model-001"
-            self.assertEqual(json.loads((attempt / "MODEL.json").read_bytes())["status"], "PREPARED")
-            self.assertFalse((self.run_root / "model-002").exists())
-            def changed_after_save(*_args):
-                (attempt / "PROMPT.md").write_bytes(b"changed during backup")
-            with patch.object(runner, "preserve", side_effect=changed_after_save):
-                with self.assertRaisesRegex(ValueError, "binding changed"):
-                    runner.invoke_model(self.run_root, self.frozen)
-            process.assert_not_called()
-            self.assertFalse((attempt / "events.jsonl").exists())
 
-    def test_frozen_change_during_prepared_storage_blocks_model(self):
-        runner.write(self.frozen / "panel-input/DECISION-SCHEMA.json", {})
-        with patch.object(runner.publisher, "validate_input", side_effect=[({}, [], "a" * 64), ({}, [], "b" * 64)]), \
-             patch.object(runner, "reading_view", return_value={}), \
-             patch.object(runner, "preserve"), patch.object(runner.shutil, "which", return_value="codex"), \
-             patch.object(runner.subprocess, "run") as process:
-            with self.assertRaisesRegex(ValueError, "Frozen input changed"):
-                runner.invoke_model(self.run_root, self.frozen)
-            process.assert_not_called()
-        attempt = self.run_root / "model-001"
-        self.assertEqual(json.loads((attempt / "MODEL.json").read_bytes())["status"], "PREPARED")
-        self.assertFalse((attempt / "events.jsonl").exists())
 
-    def test_indeterminate_model_is_not_recalled(self):
-        self.model_receipt(status="RUNNING")
-        with patch.object(runner.publisher, "validate_input", return_value=({}, [], "a" * 64)), \
-             patch.object(runner.subprocess, "run") as process:
-            with self.assertRaisesRegex(ValueError, "indeterminate"):
-                runner.invoke_model(self.run_root, self.frozen, retry=True)
-            process.assert_not_called()
 
     def test_stale_state_write_refuses_to_replace_other_changes(self):
         path = self.root / "STATE.json"

@@ -1,51 +1,40 @@
-# 전체 canonical 추천 승격 방법론
+# Catalog 추천 가능 승격 방법론
 
-정책 버전: `promotion-evidence-v3`
+현재 절차 요약 · 갱신일: 2026-10-01
 
-이 문서는 전체 batch에 적용하는 조사·주석 계약이다. 기존 수집·canonical 정규화 결과, 추천 산식과 동결 Gold 150은 유지한다. v3는 승격 필수 coverage를 Genre·Theme·Narrative·Tone으로 한정하고 Art를 이미지 분석 또는 커뮤니티 평가로 보강할 수 있는 선택 축으로 바꾼다. Art가 없으면 `unknown`을 유지하며 점수의 15%를 다른 그룹에 재분배하지 않는다.
+이 문서는 수집부터 추천 가능 반영까지의 읽기 순서와 완료 조건을 안내한다. 세부 권한·팩터 정의·승격 조건은 [Catalog authoring 권한](../planning/09-catalog-authoring-authority.md), [Factor Dictionary](../factors/factor-dictionary.md), [AEP 계약](02-authorized-evidence-panel-v1.md)을 따른다. 추천 산식과 Gold 150은 변경하지 않는다.
 
-## 1. 처리 순서
+## 1. 현재 실행 흐름
 
-1. canonical identity, 대표 ISBN, scope, safety를 먼저 감사한다.
-2. 공식 출판사 작품·권 소개, 공식 수상기관 심사평, 공식 서점·배급사 설명, 신뢰 가능한 비평·인터뷰와 독립 커뮤니티 평가 순서로 작품의 전반적인 특성에 대한 근거를 묶는다. Art 이미지 경로는 선택 사항이다.
-3. 공식 텍스트로 Pass A 주석을 만들되 지속성을 확인할 수 없는 축은 `unknown`으로 둔다.
-4. 복수의 독립 유저평에서 반복되는 구체 관찰만 텍스트 축의 보조 근거로 교차검증한다.
-5. 필수 coverage 미달 축은 같은 범위의 공식 권 소개·복수 독립 리뷰를 좁게 추가 조사한다. 실제 자료가 남아 있는 동안 미달을 hard blocker로 확정하지 않는다. Art 미달은 blocker가 아니다.
-6. 독립 Pass B, 충돌·극단값 Pass C adjudication을 거친다. 자동 평균이나 단순 다수결은 하지 않는다.
-7. 주석·Evidence·context·eligibility 전체 gate를 통과한 작품만 `recommendationVerified`로 승격한다.
+| 단계              | 실행과 산출물                                                                          | 다음 단계 조건                                                         |
+| ----------------- | -------------------------------------------------------------------------------------- | ---------------------------------------------------------------------- |
+| 대상 선정·배정    | 최신 canonical/candidate·registry·기존 배정·완료 결과를 대조하고 최대 50작품 목록 작성 | eligible·유효 READY·타 작업자 담당 중복 제외, prior/registry 복구 구분 |
+| 배치 전체 수집    | 로컬 원문 우선, 정확한 Work·대표 ISBN·선정 URL·research/evidence·receipt 결속          | 실제 자료 확인 또는 출처 소진/오류·재개 조건 기록                      |
+| 수집 완료·전환    | 전체 summary 검사·저장·명시적 백업 후 승인 범위에서 판정 전환                          | 수집 전용은 종료; hook·부모 응답·전송 ACK 불필요                       |
+| 작품별 동결·판정  | `prepare` 후 해당 frozen 입력·원문·schema에서 실제 의미 판정 작성                      | 같은 Work 근거만 사용, unknown·prior·HOLD 보존                         |
+| 비발행 검사       | `check --decisions`로 봉인/HOLD 검사, CHECKED·저장 receipt와 배치 summary/백업         | READY/HOLD/ERROR 전건 설명; READY는 아직 추천 반영이 아님              |
+| 직렬 후보 발행    | 조정자가 완료 배치를 검증하고 기존 batch publisher로 최신 candidate/registry에 적용    | 권한·Gold·서지·팩터·safety·coverage·제품 readback·STATE·백업 확인      |
+| 정식 Catalog 반영 | 승인 대상에 `--apply-canonical`, 정식 DB와 생성 JSON의 별도 readback·백업              | `CANONICAL-COMPLETED.json`으로 실제 앱 데이터 반영 확인                |
 
-## 2. Art 선택 경로
+작품마다 수집과 판정을 교차하거나 매 작품 부모 응답을 기다리지 않는다. 공유 DB·registry·STATE·발행은 기존 잠금 아래 직렬 처리한다. 대상·단계·책임의 상세는 [배치 계약](01c-catalog-batch-promotion-plan.md), 정확한 명령과 구현 한계는 [runner README](../../scripts/catalog_authoring/README.md)를 따른다. GitHub 발행·배포는 위 상태와 별도다.
 
-Art는 승격 필수 coverage가 아니다. 이미지 분석과 커뮤니티 평은 동급의 대체 경로이며 둘 다 없으면 네 축을 `unknown`으로 둔다.
+## 2. 근거와 판정 조건
 
-- **이미지 경로:** 공식 내부 미리보기를 해당 Work·판본과 연결하고, 판독 가능한 내부 페이지 6쪽 이상과 서로 다른 장면 맥락 2개 이상을 확인한다. `motionImpact=known`은 정확한 시작·끝 참조가 있는 연속 동작 시퀀스가 필요하다. 임시 이미지는 커밋하지 않고 공식 URL, 판본, 참조, 표본 수, 맥락과 SHA-256만 보존한다.
-- **커뮤니티 경로:** 공식 자료로 작품과 entry 범위를 고정하고, 서로 복제되지 않은 독립 리뷰 2개 이상이 같은 구체적 시각 관찰을 반복해야 한다. URL, 작성 주체, 날짜, 독립성, 범위, 반복 관찰과 Dictionary anchor 연결을 남긴다. terminal Art row는 `evidenceRoute=community`와 두 exact review URL을 `refs`에 기록한다. 비구체 호불호나 액션 장르 언급만으로는 Art 값을 만들지 않는다.
-- 두 경로를 함께 요구하지 않는다. 충돌은 adjudication 또는 `unknown`으로 닫는다. Art `unknown` 자체는 blocker가 아니다.
+- 대표 ISBN과 해당 판본을 정확히 확인하며 중간 권을 1권으로 교체하거나 전권·완결권 독해를 요구하지 않는다.
+- 신규 Art 4축은 현재 수집·판정에서 제외하고 `unknown`으로 둔다. 기존 accepted prior는 보존한다.
+- 안전 분류는 출판사·해당 레이블에 근거한 porn/non-porn이다. 성인등급·성적 소재·표현강도 미확인은 단독 HOLD 사유가 아니다.
+- 정확한 registry 선정 URL의 작품 언급과 같은 Work의 research/evidence를 결속한다. 선정 사실·별점·순위만으로 팩터를 추론하지 않는다.
+- Genre·Theme와 Narrative·Tone의 기본 coverage는 AEP 계약을 따른다. 실제 추가 조사·출처 소진이 결속된 N/T 그룹에만 예외를 적용하고 해당 축은 `unknown`으로 유지한다.
+- 새 known claim은 동결된 적격 근거와 Dictionary 기준에서 도출한다. 자동 평균·다수결·판정 템플릿·모델명은 권한이 아니다. `reviewedByHuman=false`를 유지한다.
 
-이미지 경로를 선택한 경우에만 `미리보기 접근·표본 기준 확인 → 충족 작품만 임시 표본 → 시각 판정 → 미달 즉시 unknown → 극단값·충돌만 adjudication`을 수행한다.
+수집 범위·출처 적격성·종료 기준은 [수집 지침](factor-collector-instructions.md)과 [리드 규격](user-source-leads.md)에 있다. 새 근거·정정은 새 입력 revision으로 만들며 과거 frozen·판정 SHA를 바꾸지 않는다.
 
-## 3. 텍스트와 유저평
+## 3. 실행자와 이력
 
-공식 자료는 작품 identity와 entry 범위를 고정한다. 다음 조건을 모두 만족하는 공통 커뮤니티 관찰은 Narrative·Tone 또는 Art Evidence로 쓸 수 있다.
+특정 모델·추론 강도·고정 세션 이름/ID·세션 수를 요구하지 않는다. 부모·자식 hook과 자동 통지는 사용하지 않고 같은 실행자가 단계별 책임을 맡을 수 있다. 역할·실제 owner/parent·실행 추적은 [배치 계약 §3](01c-catalog-batch-promotion-plan.md#3-역할과-실행-추적)을 따른다. 모델 지정 해제는 누락된 판정을 추가 모델 호출로 자동 보충하거나 중단된 큐를 재개하는 지시가 아니다.
 
-- 서로 복제되지 않은 복수 출처다.
-- 실제 독서 범위가 확인된다.
-- 0/2/4 기준에 연결되는 사건 구조·반복 메커니즘 또는 구체적 시각 관찰이다.
-- URL, 출처명, 게시일 또는 연도, 조회일, 독립성, 반복 주장을 기록한다.
+과거 `promotion-evidence-v3`의 복수 Pass·Art 선택 경로·모델별 정족수는 현재 신규 배치 지시가 아니다. 당시 방법론은 Git 이력, 모델 전환 시험은 [종료된 시험 기록](01b-model-transition-trial-history.md), 실제 수치·실패·판정 이력은 해당 보존 artifact에서 확인한다. 과거 결과를 새 모델이 수행한 것으로 재기록하지 않는다.
 
-공식 홍보·상품 자료, 일본 독립 커뮤니티, 한국 커뮤니티는 서로 다른 증거 층으로 기록한다. 한국 커뮤니티 조사는 작품의 정식 또는 통용 한국어 제목을 우선 사용하고 한국어 표기 변형과 실제 검색어를 함께 남긴다. 일본어 원제만 사용한 검색으로는 한국 커뮤니티의 적격 근거가 없다고 판정할 수 없다.
+## 4. 완료와 예외
 
-단일 감상, 추천 목록 등재, 별점·순위만 있는 자료, 미독 반응, 복제 리뷰, 근거 없는 호불호는 제외한다. 공식 자료와 충돌하거나 리뷰끼리 갈리면 자동 다수결하지 않고 adjudication 또는 `unknown`으로 종결한다. 원문은 UI 문구로 복사하지 않고 공통 관찰만 저작권을 침해하지 않는 형태로 요약한다. 추천 설명은 기존 contribution 기반 엔진에서만 생성한다.
-
-## 4. 판정원
-
-- 이미지 Art 경로를 선택한 경우의 최소 정족수: 실제 픽셀 접근을 입증한 Local Codex subagent와 Gemini 3.7 Flash High.
-- 커뮤니티 경로: 공식 범위 고정 + 서로 복제되지 않은 독립 JP/KR 리뷰 2개 이상 + Dictionary 기준 adjudication. 한국 커뮤니티는 정식·통용 한국어 제목과 표기 변형으로 검색한다.
-- Cursor Grok 4.6 High non-fast: Factor·Theme·identity·safety와 커뮤니티 근거를 검수한다. 픽셀 접근을 입증하지 못한 이미지 경로 Art에서는 기권한다.
-- Muse Spark 1.2 xhigh: 정확한 모델 identity, 정상 종료, 전체 입력 접근, 완결 응답, rate-limit·timeout·degraded output 부재를 모두 만족할 때만 보조 참여. 실패 사유를 batch 원장에 남기며 조용히 대체하지 않는다.
-
-판정 차이는 Factor Dictionary, 직접 근거, 판본과 평가 범위 일치 여부로 해결한다. 모델 패널은 사람 검수가 아니며 `reviewedByHuman=false`를 유지한다.
-
-## 5. 최종 상태
-
-각 유효 canonical Work는 `recommendationVerified` 또는 근거·코드·재검토 경로를 가진 `promotionBlocked`로 끝난다. Art 이미지·커뮤니티 근거 부족은 pending이나 blocker가 아니며 명시적 `unknown`으로 닫는다.
+수집 완료, READY, 후보 VERIFIED, canonical 반영을 구분한다. 추천 가능 반영 완료는 실제 정식 DB·생성 JSON·제품 readback과 백업으로 확인한다. HOLD/ERROR는 구체적 원인과 재개 조건을 보존하며 정상 결과에 합산하지 않는다. 충돌·구형 통지·중단 복구는 [운영 예외 처리](01a-promotion-method-operational-amendment.md), 저장·복원·세대는 [저장 계약](03-local-authoring-storage.md)을 따른다.

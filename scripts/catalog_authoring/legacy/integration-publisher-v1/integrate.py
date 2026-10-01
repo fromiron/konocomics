@@ -319,7 +319,7 @@ def load_corrections(batch_root: Path) -> tuple[list[dict[str, str]], dict[str, 
     if Counter(row["decision"] for row in rows) != Counter({"BLOCKED_FACTOR": 303, "CORRECTED": 113, "RESCUED": 75}):
         raise IntegrationError("correction decision counts drifted")
     for row in rows:
-        if (row["candidateOnly"], row["reviewedByHuman"], row["grokUsed"], row["researchCost"]) != ("true", "false", "false", "FREE"):
+        if (row["candidateOnly"], row["reviewedByHuman"], row["researchCost"]) != ("true", "false", "FREE"):
             raise IntegrationError(f"correction authority flags drift: {row['targetId']}")
     return rows, work_results, rescued
 

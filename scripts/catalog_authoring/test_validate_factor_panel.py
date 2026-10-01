@@ -158,6 +158,21 @@ class FactorPanelValidatorTest(unittest.TestCase):
                     panel.verify_manifest(root, root / "MANIFEST.sha256", {"data.txt"})
             self.assertEqual(sha.call_count, 1)
 
+    def test_frozen_input_without_provider_flags_preserves_other_authority_gates(self):
+        path = self.input_root / "panel-input.json"
+        original = panel.read_json(path)
+        for flag in (None, False, True):
+            updated = {key: value for key, value in original.items() if key != "grokExcluded"}
+            if flag is not None:
+                updated["grokExcluded"] = flag
+            write_json(path, updated)
+            seal(self.input_root, "PANEL-INPUT.sha256")
+            validate_input(self.input_root)
+        write_json(path, {**updated, "reviewedByHuman": True})
+        seal(self.input_root, "PANEL-INPUT.sha256")
+        with self.assertRaisesRegex(ValidationError, "authority flags"):
+            validate_input(self.input_root)
+
     def setUp(self) -> None:
         self.temporary = tempfile.TemporaryDirectory()
         base = Path(self.temporary.name)
@@ -539,7 +554,7 @@ class FactorPanelValidatorTest(unittest.TestCase):
 
         panel_path = self.input_root / "panel-input.json"
         panel = json.loads(panel_path.read_text(encoding="utf-8"))
-        panel["grokExcluded"] = False
+        panel["reviewedByHuman"] = True
         write_json(panel_path, panel)
         seal(self.input_root, "PANEL-INPUT.sha256")
         with self.assertRaisesRegex(ValidationError, "authority flags mismatch"):

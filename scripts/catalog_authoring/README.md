@@ -1,10 +1,10 @@
 # Offline Catalog authoring
 
-현재 명령·receipt 계약 · 갱신일: 2026-09-27
+현재 명령·receipt 계약 · 갱신일: 2026-10-01
 
 실행 코드와 필요한 기존 발행 backend를 이 디렉터리에서 추적한다. 원문·동결 입력·판정·후보·작업 DB는 Git에 포함하지 않는다.
 
-[저장 계약](../../docs/catalog-expansion/03-local-authoring-storage.md#현재-보존-정책)에 따라 내부 `prepare`/`check`/`save`는 `PERSISTED`, 명시적 수집·판정·발행/종료·중단 경계는 실제 `BACKED_UP`으로 구분한다. `notification_guard.py enqueue`와 명시적 `catalog_workspace.py backup`이 단계 백업을 수행하며 hook은 백업하지 않는다. `run --phase-boundary`는 독립 실행 하나가 발행/인계 경계인 경우에만 사용한다. 현재 기준점은 `CURATION-BASELINE.json`과 generation/revision receipt다.
+[저장 계약](../../docs/catalog-expansion/03-local-authoring-storage.md#현재-보존-정책)에 따라 내부 `prepare`/`check`/`save`는 `PERSISTED`, 명시적 수집·판정·발행/종료·중단 경계는 실제 `BACKED_UP`으로 구분한다. 명시적 `catalog_workspace.py backup`으로 단계 백업을 수행한다. 2026-10-01부터 부모·자식 hook과 자동 통지는 사용하지 않는다. `run --phase-boundary`는 독립 실행 하나가 발행/인계 경계인 경우에만 사용한다. 현재 기준점은 `CURATION-BASELINE.json`과 generation/revision receipt다.
 
 receipt의 `snapshot`·`snapshots`·`snapshotId`는 기존 인터페이스 필드명이다. v3/v4에서는 실제 generation과 revision UUID를 확인하며 구 숫자 snapshot은 명시적 legacy pin에만 사용한다. 필드명만 보고 새 ID를 만들거나 구 세대를 revision schema로 해석하지 않는다.
 
@@ -12,7 +12,7 @@ Catalog Python 명령은 `python scripts/catalog_python.py <script> <args>`로 �
 
 ## 역할별 진입점
 
-- 일반 진입점: `python scripts/catalog_python.py scripts/catalog_authoring_runner.py run --run-root <영구 planning 경로> --job <job.json> --decisions <판정.json>`
+- 조정자의 단일 작품 검사·발행 진입점: `python scripts/catalog_python.py scripts/catalog_authoring_runner.py run --run-root <영구 planning 경로> --job <job.json> --decisions <판정.json>`
   - 여러 작품의 봉인된 READY가 모이면 조정자는 `python scripts/catalog_python.py scripts/catalog_authoring_batch_publish.py --batch-summary <BATCH-SUMMARY.json> --batch-root <새 planning 디렉터리>`를 사용한다. 기본 compact 경로는 작품별 동결 입력·판정·현재 상태를 검사하며 private pair에 직렬 적용하고 최종 제품 빌드·추천 readback을 한 번 수행한다. 별도 publisher 사전검사 루프는 `--preflight-only` 또는 과거 `--publication-format full` 경로에서만 실행한다. 오류가 섞인 완료 묶음은 먼저 `--preflight-only`로 검사한다. 결과는 입력·결과·코드·candidate/registry·canonical SHA에 결속되고 같은 조합만 재사용한다. 알려진 Work별 prior/registry 충돌만 격리한 `PASS-SUBSET.json`을 원 summary SHA와 함께 저장하며, 공통·미분류 오류가 있으면 subset을 만들지 않는다. subset을 별도 batch root로 발행해 정상 작품의 동반 대기를 해소한다.
   - `BATCH-FINISHED.json`은 readback 완료 기록이다. 발행·readback 백업, STATE 반영·백업, `BATCH-COMPLETED.json`의 저장·백업까지 완료해야 최종 성공이다. 마지막 작은 영수증만 별도 저장하고 이미 보존한 배치 원본과 membership은 재사용한다. STATE 쓰기 실패는 같은 명령으로 재개하며 이미 발행한 결과를 재판정·재발행하지 않는다. `STATE.publicationBatches`가 같은 summary의 적용 사실을 보존해 후속 current 이후에도 중복 적용을 막는다. 옛 receipt의 적용 계보가 불명확하면 자동 재발행하지 않는다.
   - 승인한 완료 배치의 정식 반영에는 같은 명령에 `--apply-canonical`을 추가한다. candidate 완료와 canonical 완료는 별도이며 preflight에는 이 옵션을 사용하지 않는다. 대상 Work와 필요한 evidence/review만 최신 canonical에 병합하고 metadata·비대상·Gold를 보존해 정식 DB에서 생성 데이터를 다시 빌드한다. `CANONICAL-COMPLETED.json`과 `canonical-completion` revision은 candidate receipt SHA·summary SHA·실제 source/생성 파일 readback·백업에 결속한다. 같은 옵션으로 재개하면 후보를 재발행하지 않고 남은 정식 반영/백업을 이어간다. GitHub 쓰기·배포는 수행하지 않는다.
@@ -24,9 +24,8 @@ Catalog Python 명령은 `python scripts/catalog_python.py <script> <args>`로 �
 - `NEEDS_PROVENANCE_BINDING`은 준비 단계 오류다. 세션 없는 raw 묶음이나 다른 Work의 collection을 내용 근거 부족 HOLD로 바꾸지 않는다. 세션 없는 기존 자료는 작업자가 해당 작품 자료임을 확인하고 기존 `--provenance-root`로 명시 결속할 수 있다. 이 경우 `explicit-legacy`로 기록하고 모든 파일 SHA·중첩 receipt·링크 경로를 검사하되, 파일 포함 자체를 동일 작품의 근거 인증으로 표시하지 않는다. 자동 parent 복사는 하지 않는다. 원본을 보존하고 올바른 결속으로 새 run을 만든다. 기존 RUN의 provenance·registry·recovery 인자 변경은 거부하며 기존 PREPARED 프롬프트와 frozen 입력을 재작성하지 않는다.
 - `check --run-root <같은 run> --decisions <판정.json>`은 기존 seal/HOLD 검사를 공유하며 `CHECKED.json`·`CHECK-STORAGE.json`을 저장한다. READY_FOR_PUBLICATION/HOLD는 비발행 상태이고 공유 STATE·canonical을 변경하지 않는다. 새 원문은 새 run revision으로 동결한다.
 - 기존 accepted prior를 보존하는 명시적 `--job`은 원본 권한 publication bundle을 `--prior-bundle <원본 디렉터리>`로 함께 전달한다(복수 지정 가능). RUN의 `priorBundleBindings`가 경로·manifest SHA를 결속하고 동결·저장·백업에 포함한다. 다른 bundle을 기존 run에 추가하거나 교체하지 말고 새 run을 만든다. `--recovery-epoch`로 accepted prior를 비워 이 경로를 대체하지 않는다. AMP 보호 경계는 유지한다.
-- `notification_guard.py register-batch --session <ID> --parent <ID> --dispatch <배치 dispatch> --artifact <단계 summary> --run <배치 디렉터리>`는 dispatch phase에 맞춰 collection 또는 adjudication 배치를 등록한다. Collection summary는 배정된 Work ID·수집 상태·user-source/research SHA·raw receipt/body SHA·workspace/backup receipt를 검사하며 `checkedPath`를 요구하지 않는다. Adjudication summary는 기존 CHECKED·봉인·백업 결속을 검사한다. 검증된 결과만 실제 전송 응답과 함께 기존 `ack`에 전달한다. ERROR는 원인과 저장된 검사 artifact를 보존한다.
-- 기본 실행은 제공되거나 RUN에 저장된 판정만 사용한다. 판정 누락 시 모델을 자동 호출하지 않는다. 일반 고정 세션 배치에서 `--allow-model`·`--model-session`·`--retry-model`을 쓰지 않는다. 별도 승인된 호환 CLI 모델 경로를 현재 배정의 대체 수단으로 사용하지 않는다.
-- 메시지 수신자 ID와 작업자 새 턴의 model/thinking은 [배치 계약 §3](../../docs/catalog-expansion/01c-sol-batch-promotion-plan.md#3-역할과-세션)을 따른다. 작업자가 부모에게 보고할 때는 model/thinking을 생략해 부모 설정을 건드리지 않는다. 과거 이름·CLI 기본값에서 추정하지 않는다.
+- 기본 실행은 제공되거나 RUN에 저장된 판정만 사용한다. 판정 누락 시 모델을 자동 호출하지 않는다. 특정 모델·고정 세션은 요구하지 않는다([배치 계약 §3](../../docs/catalog-expansion/01c-catalog-batch-promotion-plan.md#3-역할과-실행-추적)). `--allow-model`·`--model-session`·`--retry-model`은 별도 모델 호출 경로이며 지정 해제만으로 자동 활성화하지 않는다.
+- 현재 실행자가 수집·판정·발행 책임을 단계별로 맡는다. 실제 담당·batch/Work·입력/판정 SHA·중단 사유를 보존하며 기존 owner/parent·세션 자료는 이력으로 유지한다. 새 부모 채팅·hook 등록·메시지/ACK는 요구하지 않는다.
 - 사전 리드 JSON과 자료 적격성: [정식 리드 규격](../../docs/catalog-expansion/user-source-leads.md). 실제 취득·관찰·원문 저장: [수집 지침](../../docs/catalog-expansion/factor-collector-instructions.md).
 - 새 freeze의 `--provenance-root`는 현재 job의 Work 범위로 해석한다. 정식 `.workspace/user-sources/` 루트는 해당 `<workId>.json`의 형식·Work를 검증해 결속하고 다른 작품 파일을 복사하지 않는다. Work collection은 research·raw receipt와 명시된 보충 파일을 검증한다. session 없는 임의 디렉터리는 전체 복사나 무시 대신 `NEEDS_PROVENANCE_BINDING`으로 거부한다. 그 안에서 쓸 파일은 `node scripts/catalog_authoring/collect_factor_evidence.mjs start <assigned-dir> <workId> --input <파일1> --input <파일2>`로 해당 Work collection에 먼저 결속하고 기존 `write`·`prepare --provenance-root <collection>` 순서를 사용한다. 이 입력은 파일 바이트 보존과 모델 접근을 결속하며 원문 독해·HTTP 응답·의미 채택을 합성하지 않는다.
 - 수집: `node scripts/catalog_authoring/collect_factor_evidence.mjs`
@@ -49,7 +48,7 @@ python scripts/catalog_python.py -m unittest discover -s scripts -p test_catalog
 python scripts/catalog_python.py -m unittest discover -s scripts/catalog_authoring -p test_factor_single_pass_artifacts.py
 ```
 
-실제 보존 artifact 검사는 로컬 원본이 필요하다. 원본이 없는 checkout의 skip이나 mock 모델 검사는 실제 판정·승격의 증거가 아니다. Node 24를 사용한다. 일반 판정은 고정 작업 세션에서 수행하며 CLI 모델 로그인은 별도 승인된 모델 호출 경로에만 필요하다.
+실제 보존 artifact 검사는 로컬 원본이 필요하다. 원본이 없는 checkout의 skip이나 mock 모델 검사는 실제 판정·승격의 증거가 아니다. Node 24를 사용한다. 일반 판정은 현재 배정의 작업자가 수행하며 CLI 모델 로그인은 해당 모델 호출 경로를 사용할 때만 필요하다.
 
 ## 재개 옵션과 N/T 예외
 
@@ -82,58 +81,52 @@ python scripts/catalog_python.py -m unittest discover -s scripts/catalog_authori
 - publisher 독점 `publication-owner.lock`과 실제 공유 반영 `publication.lock`을 분리한다. private 준비·검사·빌드·백업은 commit 락 밖에서 수행하고 반영 직전에 현재 STATE/canonical/registry 기준을 다시 확인한다. metadata import·대표판 정정·retention도 같은 shared lock을 사용한다. 잠금 경합만 제한 시간 안에서 재시도한다.
 - canonical 교체는 검증된 intent와 복구 자료를 보존한다. `locks/publication.pending.json`이 있으면 해당 준비본을 `--commit-prepared`로 복구하기 전 다른 공유 쓰기를 거부한다. DB·정적 데이터의 authoritative readback 뒤 CLI의 APPLIED/PASS가 나오며, 호출자의 실제 저장/백업 뒤에만 `BACKED_UP`을 보고한다. candidate 빌드 산출물을 canonical 빌드 산출물로 대신하지 않는다.
 
-## 수집 완료 자동 전환
+## 수집 완료 후 판정 전환
 
-새 일반 수집 dispatch는 `phase="collection"`, `transitionPolicy="auto-after-collection"`, `adjudicationAllowed=false`, `publicationAllowed=false`를 명시한다. 명시적 `collection-only`와 정책이 없는 기존 배정의 기본값은 `parent`이며 자동 전환하지 않는다.
+수집 전건의 실제 결과·원문 결속·summary SHA·저장/백업을 확인한 뒤 승인된 판정 단계로 진행한다. 수집 전용 요청은 여기서 종료한다. `notification_guard.py transition-collection`·arm·transport ACK는 현재 운영에서 사용하지 않는다. 기존 배정의 중단·소유권·원 summary는 보존한다.
 
-수집 전건 완료·검증·백업·통지 후 새 판정 dispatch를 같은 run 아래에 작성한다. `phase="adjudication-only"`, 기존 batchId/owner/parent, `adjudicationAllowed=true`, `publicationAllowed=false`, `collectionSummary={path,sha256}`를 사용한다. `works`에는 ERROR 외의 정확한 Work/researchPath/researchSha256을 넣고 원 ERROR 행은 `collectionErrors`에 그대로 보존한다. 다음 명령은 현재 collection summary의 불변 이벤트와 실제 성공 응답을 담은 `transport.json` ACK를 확인하고, session lock 아래 실제 원문/backup 검증과 turn·generation·중단 CAS를 통과한 경우에만 같은 턴의 arm을 유지해 전환한다. `enqueue`만으로는 전환하지 않으며 부모의 drain·consume·발행은 기다리지 않는다.
+기존 dispatch를 쓰는 경우 판정 단계에는 원 수집 summary path/SHA를 `collectionSummary`로 결속하고 개별 ERROR를 `collectionErrors`로 보존한다. 이는 자료 결속이며 부모·자식 메시지 교환이 아니다. 공통 ERROR·전건 ERROR·사용자 중단은 의존 작업을 막는다. 실제 실패 artifact와 재개 조건을 남기고 시스템 오류를 INSUFFICIENT나 출처 소진으로 바꾸지 않는다.
 
-```powershell
-python scripts/catalog_python.py scripts/catalog_authoring/notification_guard.py transition-collection --session <ID> --generation <현재 등록 generation> --turn <현재 executionTurnId> --dispatch <같은-run/ADJUDICATION-DISPATCH.json> --artifact <같은-run/ADJUDICATION-SUMMARY.json>
-```
+판정 완료 summary의 `sourceSummary`는 이전 판정 summary의 동일한 결과 행을 추린 경우에만 사용한다. 수집 summary를 여기에 넣지 않으며 결과가 달라졌으면 새 full 판정 summary를 만든다. 발행 도구가 원본 SHA·CHECKED·실제 결과를 검증한다.
 
-공통 ERROR·전건 ERROR 또는 사용자 중단/Interrupt는 자동 전환을 막는다. 개별 collection ERROR는 `errorScope="work"|"shared"`, `error`, `retryCondition`, `errorPath`, `errorSha256`과 실제 실패 artifact의 `failureEvidence=[{path,sha256}]`를 요구한다. 시스템 오류를 INSUFFICIENT나 조사 소진으로 바꾸지 않는다.
-
-구 phase/summary 등록의 정정은 `reconcile-registration --session <ID> --expected-sha <원 등록 SHA> [--summary <새 검증 가능 summary>]`를 사용한다. 기존 등록 전체와 SHA를 별도 revision에 보존하고 실제 근거·백업을 검증한 뒤 새 등록을 만든다. 부족한 필드는 합성하지 않는다. 새 등록은 arm되지 않으며 명시 실행 턴에서 `arm`이 필요하다. 중단 상태는 보존한다.
-
-판정 완료 summary의 `sourceSummary`는 이전 판정 summary의 **동일한 결과 행**만 추린 경우에 사용한다. 수집 summary는 판정 dispatch의 `collectionSummary`에 결속하며 완료 판정 summary의 `sourceSummary`로 쓰지 않는다. 완료 등록 검사는 source 체인의 SHA와 원 행을 확인해 잘못된 결속을 발행 단계 전에 거부한다. 결과 행이 바뀐 완료분은 새 full 판정 summary로 등록하고 원본을 보존한다.
-
-## 입력 결속과 통지
+## 입력 결속과 완료 기록
 
 - 신규 v4 job의 빈 `sourceBindings`는 job 자체의 SHA-bound `researchRefs`에서도 조립한다. 비어 있지 않은 명시 선택은 보존하고, `--research`로 명시 추가한 자료만 추가 결속한다. source 채택 용도는 독립 판정의 `sourceDecisions.uses`가 정한다. 동결 전 원본/보충 evidence ID 중복과 정확한 registry support URL의 같은 Work 연결 누락은 `INPUT_NEEDS_REPAIR`로 보고한다. URL alias를 추정하거나 원문 접근 제한만으로 HOLD를 만들지 않는다.
 - collector draft의 선택 `narrativeToneExhaustion`은 실제 조사자의 기존 예외 기록이다. `isbn13`과 같은 Work를 검증한 뒤 별도 `COLLECTION-HANDOFF.json` (`factor-collection-handoff-v1`)에 `researchSha256`과 함께 저장한다. collector v1 research schema는 그대로다. collector의 완료 receipt/`collection-events.jsonl`에 예상 `handoffSha256`을 남기므로 첫 조립 전에 sidecar가 삭제·변경돼도 복구 대상으로 검출한다. 조립된 research ref의 선택 `handoffSha256`·`collectionReceiptSha256`과 frozen `sourceInputBindings`/provenance가 원본을 결속한다. 과거 sidecar 없는 수집분도 지원한다. 명시 job과 서로 다른 기록은 거부한다. 부분 sidecar가 남으면 원본을 보존하고 새 collection revision을 쓴다. 소진·시도·unknown 값은 생성하지 않는다. 언어 `zh`를 명시 지원한다.
 - 동일 CHECKED의 input/result/decision/RUN과 receipt는 실제 bytes 결속으로 재사용한다. revision store의 내부 check는 PERSISTED이며 경계 백업에서 source/latest를 확인한다. 구 `catalog-check-storage-v2`의 snapshot/backup 참조는 원래 세대의 결속으로 검증한다. 중단된 receipt 저장은 누락분만 보존하고 단계 백업을 마치며 판정·전체 실행을 반복하지 않는다.
 - preflight receipt v2는 실제 Python 코드, 외부 경로·저장 helper, 계약, Gold manifest, SQL, Python/SQLite 버전과 정확한 명령·입력·현재 pair를 결속한다. 같은 key 생성은 OS lock으로 직렬화한다. `--preflight-attempt <새 시도 ID>`는 환경 오류를 재검사하며 과거 BLOCKED는 보존한다. `--preflight-retry <workId>=<새 시도 ID>`는 그 작품만 재검사한다. `timingsSeconds`는 이번 호출의 lock/validation/lookup/subprocess/total 시간이며 cache hit의 subprocess 시간은 0이다. 과거 실행 비용은 `originalCheckSeconds`와 `originalExecutionSeconds`로 분리한다. 이전 receipt에 subprocess 측정값이 없으면 후자는 null이다. workspace backup은 header/membership, blob copy/readback, 새 membership, commit/readback, rotation 시간을 구분한다. 캐시 hit에도 frozen 입력 검증을 수행하며 발행 직전 현재 상태 검사와 최종 readback은 생략하지 않는다. 기존 process 범위 manifest cache를 영구 캐시로 확대하지 않는다.
 
-통지 절차:
+## 종료된 통지 경로
 
-새 `auto-after-collection` 배정과 그 판정 전환은 `expectedPublicationEffect="canonical"`을 통지 identity에 결속한다. 직접 만드는 새 판정 dispatch도 이 필드를 명시한다. 이 배정의 `published` 처리는 candidate 완료와 동일 receipt에 결속된 정식 반영의 source/latest 완료 proof를 모두 요구한다. 기존 정책 누락 배정은 종전 candidate 완료 의미를 유지하며 정식 반영 완료로 바꿔 해석하지 않는다.
+`.codex/hooks.json`의 Catalog `UserPromptSubmit`·`Interrupt`·`Stop` 등록은 비활성화했다. 신규 운영에서 notification guard의 register/arm/enqueue/ack/drain/consume를 요구하거나 과거 부모·자식 큐를 재활성화하지 않는다. 과거 event·transport·중단·generation 자료와 호환 코드는 보존한다. 같은 파일의 검증 함수가 필요한 기존 소비자는 통지 실행과 구분한다.
 
-1. 기존 `register-batch`로 배정을 등록한다. Catalog를 실행하는 턴에서만 `notification_guard.py arm --session <ID>`를 호출한다. UserPromptSubmit은 턴 ID만 저장하며 프롬프트 본문은 보존하지 않는다. 새 프롬프트는 이전 arm을 해제한다. 회고·보고 전용 턴은 arm하지 않는다. 사용자 중단/Interrupt 후 재실행은 명시 승인된 새 턴의 `arm --resume`만 허용한다. 중단 턴 ID와 배정 generation을 보존하여 같은 턴의 `--resume`과 오래된 Interrupt를 거부한다. 기존 active 등록은 자동 활성화하지 않는다.
-2. 결과·backup을 확인한 다음 `enqueue --session <ID>`를 실행한다. 이 단계에서 전체 결과 검증을 묶어 수행하고 `validation.json` 및 `runRoot/notification-events/<eventId>/`의 원본 checkpoint·불변 event를 저장한다. 이후 ACK/drain/consume는 불변 결속을 확인하고 실제 발행 효과에는 별도 readback을 유지한다. ID는 owner/parent/배정 digest/phase/generation/checkpoint SHA/kind에 결속된다. `notifications/inbox/<parent>/<eventId>.json`은 작은 인덱스다. 등록한 runRoot/generation을 `notifications/roots/<parent>/`에 보존하고 drain·새 배정 전에 해당 event 디렉터리만 대조해 유실된 인덱스를 복구한다. Catalog 전체를 검색하지 않는다. 다음 정상 배치 저장·백업에 event 디렉터리·이 인덱스·roots 등록을 함께 포함한다. 강제 종료 전 저장되지 않은 결과나 idle 부모의 즉시 처리를 보장하지 않는다.
-3. 전송 성공 뒤 `ack --session <ID> --sha <checkpoint SHA> --event <eventId>`의 stdin으로 실제 도구 응답 JSON을 전달한다. 부분/사용자 중단도 event ID로 ACK하며 정지 상태는 유지한다. 기존 완료 통지는 event 생략도 지원한다. `transport.json`은 전송 기록이며 소비 완료를 뜻하지 않는다. Stop은 arm된 현재 턴의 새 완료 checkpoint만 한 번 상기하며 전송/소비된 checkpoint를 반복하지 않는다. 결과가 없는 턴을 강제 계속하거나 보고하도록 막지 않는다.
-4. 부분 보고는 `enqueue --session <ID> --checkpoint <JSON> --kind partial-stop`이다. JSON은 `batchId`, `ownerThreadId`, `parentThreadId`, guard의 `phase` (`batch` 또는 `collection-batch`), `processedCount`, `nextWorkId` (없으면 null), `exactReason`, `needsResume`를 실제 checkpoint에서 작성한다. 사용자 중단은 `--kind user-stop`, `needsResume=false`이며 등록도 중지한다. 부분 이벤트는 발행 권한이 아니다.
-5. 부모의 다음 active turn에서 `drain --parent <ID>`로 검증된 미소비 이벤트를 읽는다. 처리 후 ACK 전 중단에 대비해 `handlingRecorded`와 실제 발행 summary SHA를 키로 한 `STATE.publicationBatches`를 먼저 대조한다. 기존 발행은 원래 batch root의 완료·백업 복구 경로를 사용하고 재발행하지 않는다.
-6. 부모는 아래 형식으로 실제 처리/인계 결정을 저장하고 `consume --parent <ID> --event <eventId> --effect <JSON>`을 실행한다. `handling.json`을 먼저 내구성 있게 기록하고 `consumed.json`에 그 SHA를 남긴다. 같은 결정 재전달은 멱등이다. `published`/`partially-published`는 `publications: [{summaryPath, summarySha256}]`로 실제 발행 subset들을 결속한다(생략 시 원 summary). `sourceSummary` 체인의 SHA·정확한 원 행, STATE 원장, `BATCH-FINISHED`의 실제 적용 Work 집합, `verify_completed`의 완료/readback/backup을 확인한다. `partially-published`는 처리 이력을 남기되 consumed로 닫지 않고 남은 READY를 drain에 표시한다. 이후 처리 이력은 적용 Work 집합이 증가할 때만 갱신할 수 있고, 전부 처리되면 `published`로 닫는다. 나머지 결정은 덮어쓰지 않는다. 다른 결정은 단계 전환이나 발행을 수행하지 않는다. 처리 영수증도 다음 정상 저장에 포함한다.
+배치 완료는 summary·CHECKED·저장/백업 receipt로, 발행은 STATE·completion·제품 readback으로 직접 확인한다. 현재 채팅에 단계별 결과와 남은 조건을 보고한다. 사용자 중단·쿼터·오류에는 완료 수·다음 Work·checkpoint·실제 사유를 남기고 자동 재개하지 않는다.
 
-다음 예약 배정의 `register-batch`도 이전 배치의 현재 summary SHA에 결속된 완료 이벤트와 실제 전송 ACK를 요구한다. `notifiedSha256` 플래그만으로 진행하지 않는다. ACK가 `transport.json` 저장 뒤 등록 플래그 갱신 전에 중단돼도 해당 전송 기록으로 전환·다음 배정과 Stop 중복 알림 방지를 복구한다. 이전 부모 이벤트는 미소비 상태로 유지할 수 있으며 부모의 실제 발행을 다음 수집의 조건으로 삼지 않는다.
+## 단일 실행자의 진행과 재개
 
-```json
-{
-  "schemaVersion": "catalog-notification-handling-v1",
-  "eventId": "<drain이 반환한 64자리 SHA>",
-  "parentThreadId": "<부모 ID>",
-  "decision": "deferred",
-  "reason": "실제 처리 결과 또는 후속 조치가 필요한 구체적인 이유"
-}
+runner는 모델을 호출하지 않는다. 현재 실행자가 `session-input/PROMPT.md`·schema·동결 원문을 읽고 `decisions.json`을 작성한다. `prepare`·`check`는 비발행이고, `run --decisions`와 batch publisher는 발행이다. 새 입력·출력에는 모델별 사용/제외 필드를 만들지 않으며 모델명은 승인 조건이 아니다. 과거 자료의 부가 필드는 원본 바이트를 보존해 읽는다.
+
+폐기된 `--allow-model`·`--retry-model`·`--model-session`은 저장·복원 전에 오류로 종료한다. 기존 완료 모델 결과는 원래 입력·prompt/schema/output SHA와 판정 형식이 모두 맞을 때 재사용한다. 미완료 PREPARED/RUNNING/실패 실행은 자동 재개하지 않으며 현재 실행자가 명시적으로 새 판정 파일을 제공한다. 새 실행이 과거 판정을 생성한 것으로 기록하지 않는다.
+
+배치 목록에는 실제 `batchId`, `phase="adjudication-only"`, `publicationAllowed=false`, `works=[{workId,runRoot}]`를 기록한다. `runRoot`는 배치 루트 아래의 작품별 실제 절대 경로이고 서로 중복되지 않는다. 부모/작업자 thread ID는 필수가 아니다. 기존 ID가 있으면 소유권 추적을 위해 그대로 보존한다. 수집 전용 배정을 판정 완료로 집계하지 않는다.
+
+```powershell
+python scripts/catalog_python.py scripts/catalog_authoring_runner.py prepare --run-root <작품-run> --work-id <Work-ID> --research <원문에-결속된-research.jsonl>
+# 현재 실행자가 frozen 입력을 읽고 실제 decisions.json을 작성
+python scripts/catalog_python.py scripts/catalog_authoring_runner.py check --run-root <작품-run> --decisions <decisions.json>
+python scripts/catalog_python.py scripts/catalog_authoring_runner.py summarize --run-root <배치-root> --dispatch <배치목록.json>
 ```
 
-`decision`은 `deferred | stopped | stage-reviewed | published | partially-published`다. [공식 Hooks 계약](https://learn.chatgpt.com/docs/hooks)의 UserPromptSubmit/Stop `turn_id`와 Interrupt를 사용한다. 변경한 프로젝트 hook 정의는 앱의 신뢰 검토 대상이며 로컬 명령 검사와 실제 앱 hook 실행은 구분한다.
+prior가 있는 작품은 기존 `--job`·`--prior-bundle` 경로를 사용한다. `summarize`는 기존 CHECKED·RUN·판정/입력 SHA·봉인 manifest·저장 receipt를 확인해 기계적으로 집계하고, 명시적 단계 백업을 수행한다. 판정이나 봉인을 새로 만들지 않는다. 결과는 내용 SHA별 `summaries/<SHA>/BATCH-SUMMARY.json`에 저장하며 같은 결과의 재실행은 같은 파일을 사용한다. 출력의 실제 `summaryPath`·`summarySha256`·`storage`를 그대로 사용한다.
 
-현재 compact 실행 계약은 private pair·기본 50작품 백업 checkpoint·작품별 봉인 plan/논리 delta·최종 projection/readback을 사용한다. 작품별 실제 판정과 수집→판정 전환 경계는 유지한다. [과거 실행 기록](../../docs/catalog-expansion/07-pipeline-improvements-20260925.md)은 그 시점의 표본 범위로만 해석하며 신규 v4 저장·v2 발행·자동 전환의 실행 완료 증거로 쓰지 않는다.
+CHECKED가 없는 작품은 `PENDING`, 전체가 끝나지 않았으면 `INCOMPLETE`와 `nextWorkId`를 반환한다. 기존 작품별 오류는 원본 사유를 그대로 보존한다. batch publisher는 새 형식의 미완료 summary를 거부한다. 부분 checkpoint는 재개 위치를 나타내며 사용자 중단 해제나 처리 시작을 뜻하지 않는다. 복구 후에는 기존 prepare/check로 필요한 run 자료를 준비하고 상태를 다시 읽는다.
 
-## Publisher 책임 경계
+전체 배치가 `COMPLETE`이면 실제 READY를 기존 publisher로 직렬 발행한다. 혼합 ERROR의 preflight/PASS-SUBSET과 중복 발행 방지·completion readback은 유지한다. 승인된 정식 반영은 같은 publisher의 `--apply-canonical`을 사용한다. collection·판정·후보·canonical·백업 상태는 각각 실제 receipt로 보고한다.
 
-기존 `publish_batch`/legacy `publish`의 CLI·결과 파일·manifest 형식은 유지한다. legacy publisher 내부를 `verify_immutable` → `plan_against_current` → `apply_plan_in_transaction` → `verify_expected_after` → `finalize_projection`으로 분리했다. `_apply_plan`은 기존 경로 인자를 받는 wrapper로 남으며, BEGIN IMMEDIATE부터 공통·context·정정·복구 반영과 예상 결과 검사까지 한 connection에서 처리한 뒤 commit한다. 각 materializer는 connection/commit을 생성하지 않는다. 호출자가 직접 connection을 공급할 경우 transaction과 rollback도 호출자 소유다.
+프로젝트 hook 등록은 비어 있고 `notification_guard.py`의 인자 없는 hook 진입점은 `{}`만 반환한다. 앱에 남은 구 등록도 새 턴·중단·통지 상태를 쓰지 않는다. 과거 통지 자료를 읽는 호환 함수와 자료 검증은 보존하지만 신규 운영에 register/arm/전송/ACK를 요구하지 않는다.
 
-정정/복구 후반 실패는 앞선 공통 변경까지 되돌릴 수 있다. 입력·기존 DB 행·Gold·unknown·대표판 검증은 그대로 유지한다. 트랜잭션 수 변화로 SQLite header의 change counter와 이에 결속된 SHA가 달라질 수 있으므로 출력 DB의 물리 SHA 동일성을 약속하지 않는다. 기존 full publication의 외부 형식을 유지한다. 현재 compact 경로는 catalog/registry pair transaction과 작품별 expected-after를 사용하며 full 형식을 흉내 낸 중간 디렉터리를 만들지 않는다.
+## 2026-10-01 검증 범위
+
+runner·판정 입력·safety·배정·정책 호환·compact plan·배치 발행·구 통지 경로와 수집 검증의 해당 회귀 검사를 수행했다. 격리된 checkout의 실제 `summarize` CLI에서 미완료→HOLD 완료 집계, 원 summary 보존, SQLite 저장·실제 백업 readback, 동일 입력 재실행, 판정 바이트 변조 거부를 확인했다. 인자 없는 hook CLI는 입력을 읽거나 상태를 쓰지 않고 `{}`로 종료한다. 이 검사는 신규 작품의 모델 판정이나 운영 승격 성공을 뜻하지 않는다.
+
+보존 원본에 의존하는 `test_prepare_factor_batch.py`의 두 검사는 `sol-next-candidates/jobs/510/records.json`과 `w2-preparation/frozen/panel-input/external-lineage.json` 부재로 실패했다. 다른 보존 artifact 기반 검사 일부도 원본 부재로 skip됐다. 실패를 PASS로 바꾸거나 해당 자료를 합성하지 않았다. 신규 실제 작품의 수집→판정→정식 반영 전체 흐름은 별도 운영 검증이 남아 있으며, 이번 변경으로 운영 Catalog·생성 데이터를 승격하지 않았다.

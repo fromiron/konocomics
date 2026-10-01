@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""Run a bounded authoring job through real freeze, model, publication and readback."""
+"""Run agent-authored decisions through freeze, validation, publication and readback."""
 from __future__ import annotations
 
 import argparse
@@ -245,74 +245,6 @@ def ensure_frozen(run, config):
     return frozen
 
 
-def model_command(executable, schema, output, session_id=None):
-    if session_id is not None:
-        prepare.require(str(uuid.UUID(session_id)) == session_id, "invalid model session UUID")
-        return [executable, "exec", "-C", str(REPO), "-s", "read-only", "resume", session_id, "-m", "gpt-5.6-sol", "-c", 'model_reasoning_effort="medium"', "--json", "--output-schema", str(schema), "-o", str(output), "-"]
-    return [executable, "exec", "-C", str(REPO), "-s", "read-only", "-m", "gpt-5.6-sol", "-c", 'model_reasoning_effort="medium"', "--json", "--color", "never", "--output-schema", str(schema), "-o", str(output), "-"]
-
-
-def launch_prepared_model(attempt, input_root, digest):
-    """Only an unstarted, byte-bound request can resume its input backup."""
-    output = attempt / "decisions.json"
-
-    def request():
-        receipt = panel.read_json(attempt / "MODEL.json")
-        execution_fields = {"startedAt", "finishedAt", "elapsedSeconds", "exitCode", "outputSha256", "error", "pid", "childPid"}
-        prepare.require(receipt.get("status") == "PREPARED" and not execution_fields.intersection(receipt), "Prepared model execution is indeterminate: execution metadata exists")
-        prepare.require(not any(os.path.lexists(attempt / name) for name in ("events.jsonl", "stderr.log", "decisions.json")), "Prepared model execution is indeterminate: execution files exist")
-        for name in ("MODEL.json", "PROMPT.md", "schema.json"):
-            path = attempt / name
-            prepare.require(path.is_file() and not path.is_symlink(), f"Prepared request file missing or linked: {name}")
-        prompt = (attempt / "PROMPT.md").read_bytes()
-        prepare.require(receipt.get("inputManifestSha256") == digest and receipt.get("promptSha256") == panel.sha256_bytes(prompt), "Prepared model input/prompt binding changed")
-        prepare.require(receipt.get("schemaSha256") == panel.sha256(attempt / "schema.json") == panel.sha256(input_root / "DECISION-SCHEMA.json"), "Prepared model schema binding changed")
-        prepare.require(receipt.get("requestedModel") == "gpt-5.6-sol" and receipt.get("requestedReasoning") == "medium", "Prepared model configuration changed")
-        key = panel.sha256_bytes(json.dumps({key: receipt[key] for key in ("inputManifestSha256", "promptSha256", "schemaSha256", "requestedModel", "requestedReasoning")}, sort_keys=True).encode())
-        prepare.require(receipt.get("executionKey") == key, "Prepared model execution key changed")
-        executable = shutil.which("codex")
-        prepare.require(executable is not None, "codex CLI is not installed")
-        command = model_command(executable, attempt / "schema.json", output, receipt.get("modelSession"))
-        original_command = receipt.get("command")
-        prepare.require(isinstance(original_command, list) and len(original_command) == len(command) and all(isinstance(arg, str) for arg in original_command), "Prepared model command changed")
-        normalized = list(original_command)
-        for flag in ("--output-schema", "-o"):
-            index = command.index(flag) + 1
-            normalized[index] = str(artifact_path(normalized[index]).resolve())
-        prepare.require(normalized == command, "Prepared model command changed; refusing another executable or output")
-        command = normalized
-        return receipt, prompt, command
-
-    receipt, prompt, command = request()
-    # A failed save/backup leaves PREPARED intact. No process or log is opened.
-    preserve([attempt], "single-pass:model-input")
-    prepare.require(request() == (receipt, prompt, command), "Prepared request changed during storage")
-    _, _, stored_digest = publisher.validate_input(input_root)
-    prepare.require(stored_digest == digest, "Frozen input changed during prepared storage")
-    if receipt["command"] != command:
-        # A moved, unstarted request still names the old input in its prompt.
-        # Preserve it unchanged; prepare a new attempt at the current location.
-        return None
-    started = time.perf_counter()
-    receipt.update(status="RUNNING", startedAt=utc_now())
-    write(attempt / "MODEL.json", receipt)
-    # No workspace DB transaction or publication lock spans a model/network wait.
-    with (attempt / "events.jsonl").open("xb") as stdout, (attempt / "stderr.log").open("xb") as stderr:
-        try:
-            result = subprocess.run(command, input=prompt, stdout=stdout, stderr=stderr, cwd=REPO)
-            receipt.update(exitCode=result.returncode, status="COMPLETED" if result.returncode == 0 and output.is_file() else "FAILED")
-            if receipt["status"] == "COMPLETED":
-                receipt["outputSha256"] = panel.sha256(output)
-        except (OSError, KeyboardInterrupt) as error:
-            receipt.update(status="INTERRUPTED" if isinstance(error, KeyboardInterrupt) else "FAILED", error=str(error))
-        finally:
-            receipt.update(finishedAt=utc_now(), elapsedSeconds=time.perf_counter() - started)
-            write(attempt / "MODEL.json", receipt)
-    preserve([attempt], "single-pass:model-output")
-    prepare.require(receipt["status"] == "COMPLETED", f"model failed; see {attempt / 'stderr.log'}")
-    return output
-
-
 def safety_instructions(input_root):
     schema = panel.read_json(input_root / "DECISION-SCHEMA.json")
     policy = input_root / "contracts/02-authorized-evidence-panel-v1.md"
@@ -356,65 +288,31 @@ If source, identity, safety or context cannot be established, return only workId
     return {"inputManifestSha256": digest, "promptSha256": panel.sha256(destination / "PROMPT.md"), "schemaSha256": panel.sha256(schema), "modelInputSha256": panel.sha256(destination / "MODEL-INPUT.json"), "inputAccess": view.get("inputAccess")}
 
 
-def invoke_model(run, frozen, retry=False, session_id=None):
+def read_saved_model_decisions(run, frozen):
+    """Read a completed historical model attempt; never start or resume a process."""
+    attempts = sorted((p for p in run.glob("model-*") if re.fullmatch(r"model-[0-9]{3,}", p.name)),
+                      key=lambda p: int(p.name.removeprefix("model-")))
+    prepare.require(bool(attempts), "Missing decisions: read session-input/PROMPT.md and supply --decisions")
+    attempt = attempts[-1]
+    prepare.require(attempt.is_dir() and not attempt.is_symlink(), "invalid historical model attempt")
+    receipt = panel.read_json(attempt / "MODEL.json")
+    prepare.require(receipt.get("status") == "COMPLETED",
+                    "Historical model attempt is not completed; preserve it and supply --decisions")
     input_root = frozen / "panel-input"
     _, _, digest = publisher.validate_input(input_root)
-    model_directories = sorted(
-        (path for path in run.glob("model-*") if re.fullmatch(r"model-[0-9]{3,}", path.name)),
-        key=lambda path: int(path.name.removeprefix("model-")),
-    )
-    for path in model_directories:
-        prepare.require(path.is_dir() and not path.is_symlink(), "invalid model attempt directory")
-        if not (path / "MODEL.json").is_file():
-            # Prompt/schema preparation can fail before a child is started.
-            # Execution files without their receipt are not a safe retry signal.
-            prepare.require(not any((path / name).exists() for name in
-                                    ("events.jsonl", "stderr.log", "decisions.json")),
-                            "Model execution is indeterminate: output exists without its receipt; inspect the retained attempt")
-    attempts = [path / "MODEL.json" for path in model_directories if (path / "MODEL.json").is_file()]
-    if attempts:
-        last = attempts[-1]
-        receipt = panel.read_json(last)
-        output = last.parent / "decisions.json"
-        if receipt["status"] == "COMPLETED":
-            prepare.require(receipt["inputManifestSha256"] == digest and panel.sha256(output) == receipt["outputSha256"], "completed model receipt changed")
-            prepare.require(receipt["promptSha256"] == panel.sha256(last.parent / "PROMPT.md") and receipt["schemaSha256"] == panel.sha256(input_root / "DECISION-SCHEMA.json") == panel.sha256(last.parent / "schema.json"), "completed model request changed")
-            failed_seal = any(panel.read_json(path).get("adjudicationSourceSha256") == receipt["outputSha256"] for path in run.glob("result-*/FAILURE.json"))
-            try:
-                value = single.read_decisions(output)
-                if single.hold_result(input_root, value) is None:
-                    single.project(input_root, value)
-                if not failed_seal:
-                    return output
-            except (ValueError, KeyError, TypeError) as error:
-                if not retry:
-                    raise ValueError("Preserved model output is invalid; supply corrected --decisions or explicitly --retry-model") from error
-            if not retry:
-                raise ValueError("Preserved decision failed seal; use corrected --decisions or explicitly --retry-model")
-        if receipt["status"] == "PREPARED":
-            prepared = launch_prepared_model(last.parent, input_root, digest)
-            if prepared is not None:
-                return prepared
-        elif receipt["status"] == "RUNNING":
-            raise ValueError("Previous model execution is indeterminate; inspect its process/output. An explicit retry must not race an unconfirmed child; use an existing --decisions result.")
-        elif not retry:
-            raise ValueError(f"Model attempt is {receipt['status']}; preserved at {last.parent}. Use --decisions for an existing valid result or --retry-model for an explicit new attempt.")
-    next_attempt = 1 + max((int(path.name.removeprefix("model-")) for path in model_directories), default=0)
-    attempt = run / f"model-{next_attempt:03d}"
-    attempt.mkdir(exist_ok=False)
-    schema = attempt / "schema.json"
     output = attempt / "decisions.json"
-    shutil.copyfile(input_root / "DECISION-SCHEMA.json", schema)
-    prepare_session_input(attempt, input_root, digest)
-    executable = shutil.which("codex")
-    prepare.require(executable is not None, "codex CLI is not installed")
-    command = model_command(executable, schema, output, session_id)
-    receipt = {"status": "PREPARED", "inputManifestSha256": digest, "promptSha256": panel.sha256(attempt / "PROMPT.md"), "schemaSha256": panel.sha256(schema), "requestedModel": "gpt-5.6-sol", "requestedReasoning": "medium", "command": command, "preparedAt": utc_now()}
-    if session_id:
-        receipt["modelSession"] = session_id
-    receipt["executionKey"] = panel.sha256_bytes(json.dumps({key: receipt[key] for key in ("inputManifestSha256", "promptSha256", "schemaSha256", "requestedModel", "requestedReasoning")}, sort_keys=True).encode())
-    write(attempt / "MODEL.json", receipt)
-    return launch_prepared_model(attempt, input_root, digest)
+    prepare.require(receipt["inputManifestSha256"] == digest and panel.sha256(output) == receipt["outputSha256"],
+                    "completed model receipt changed")
+    prepare.require(receipt["promptSha256"] == panel.sha256(attempt / "PROMPT.md") and
+                    receipt["schemaSha256"] == panel.sha256(input_root / "DECISION-SCHEMA.json") == panel.sha256(attempt / "schema.json"),
+                    "completed model request changed")
+    value = single.read_decisions(output)
+    if single.hold_result(input_root, value) is None:
+        single.project(input_root, value)
+    prepare.require(not any(panel.read_json(p).get("adjudicationSourceSha256") == receipt["outputSha256"]
+                            for p in run.glob("result-*/FAILURE.json")),
+                    "Preserved decision failed seal; supply corrected --decisions")
+    return output
 
 
 def completion(run):
@@ -640,11 +538,10 @@ def assemble_job(job_path, research):
 
 def run_job(args):
     action = getattr(args, "action", "run")
-    allow_model = getattr(args, "allow_model", False)
-    prepare.require(action == "run" or not (allow_model or args.retry_model or getattr(args, "model_session", None)), "prepare/check never execute a model")
+    prepare.require(not (getattr(args, "allow_model", False) or getattr(args, "retry_model", False)
+                         or getattr(args, "model_session", None)),
+                    "Model execution is retired; supply agent-authored --decisions")
     prepare.require(action != "prepare" or not args.decisions, "prepare does not accept decisions")
-    prepare.require(not (args.decisions and allow_model), "choose --decisions or --allow-model")
-    prepare.require(allow_model or not (args.retry_model or getattr(args, "model_session", None)), "--retry-model and --model-session require --allow-model")
     if args.decisions:
         prepare.require(artifact_path(args.decisions).is_file(), "--decisions file does not exist; no model will be called")
     run = artifact_path(args.run_root).resolve()
@@ -655,8 +552,8 @@ def run_job(args):
         config_path = run / "RUN.json"
         config = panel.read_json(config_path) if config_path.exists() else {}
         requested_prior = getattr(args, "prior_bundle", None)
-        prepare.require(action == "prepare" or args.decisions or config.get("decisionsPath") or allow_model,
-                        "Missing decisions: supply --decisions; model execution requires explicit --allow-model")
+        prepare.require(action == "prepare" or args.decisions or config.get("decisionsPath") or any(run.glob("model-*/MODEL.json")),
+                        "Missing decisions: read session-input/PROMPT.md and supply --decisions")
         if config_path.exists():
             if getattr(args, "provenance_root", None):
                 saved = config.get("requestedProvenanceRoots", config.get("provenanceRoots", config.get("provenanceRoot")))
@@ -669,8 +566,6 @@ def run_job(args):
                         prepare.require(panel.sha256(artifact_path(requested)) == config[key + "Sha256"], f"resume {argument} bytes changed; use a new run/input revision")
             if requested_prior:
                 prepare.require(prior_bundle_bindings(requested_prior) == binding_locations(config.get("priorBundleBindings", [])), "resume prior bundles changed; use a new run")
-            if getattr(args, "model_session", None):
-                prepare.require(config.get("modelSession") == args.model_session, "resume model session changed")
             if getattr(args, "work_id", None):
                 prepare.require(panel.read_json(run / "job.json")["works"][0]["workId"] == args.work_id, "resume Work changed; use a new run")
             if args.job:
@@ -698,9 +593,6 @@ def run_job(args):
             for key in ("registryPath", "recoveryEpoch"):
                 if config[key]:
                     config[key + "Sha256"] = panel.sha256(Path(config[key]))
-            if getattr(args, "model_session", None):
-                prepare.require(str(uuid.UUID(args.model_session)) == args.model_session, "invalid model session UUID")
-                config["modelSession"] = args.model_session
             if research:
                 config["sourceResearchBindings"] = research
             write(config_path, config)
@@ -709,7 +601,7 @@ def run_job(args):
         prepare.require(len(frozen_works) == 1, "one Work per runner")
         work_id = frozen_works[0]["workId"]
         prepare.require(isinstance(work_id, str) and re.fullmatch(r"work-[0-9a-f]{20}", work_id), "invalid frozen Work identity")
-        # Separate run paths must not concurrently call the model for one Work.
+        # Separate run paths must not concurrently change one Work.
         leases.enter_context(exclusive(lock_root / (work_id + ".lock")))
         if action == "prepare":
             previous = run / "PREPARED.json"
@@ -733,13 +625,11 @@ def run_job(args):
             return
         if args.decisions:
             decisions = artifact_path(args.decisions).resolve()
-        elif args.retry_model and not (run / "FINISHED.json").is_file():
-            decisions = invoke_model(run, frozen, retry=True, session_id=config.get("modelSession"))
         elif config.get("decisionsPath"):
             decisions = artifact_path(config["decisionsPath"])
             prepare.require(panel.sha256(decisions) == config["decisionsSha256"], "selected model output changed; preserve the failure and explicitly supply --decisions")
         else:
-            decisions = invoke_model(run, frozen, args.retry_model, session_id=config.get("modelSession"))
+            decisions = read_saved_model_decisions(run, frozen)
         if (run / "FINISHED.json").is_file():
             prepare.require(panel.read_json(run / "FINISHED.json")["decisionsSha256"] == panel.sha256(decisions), "completed run is immutable; use a new run for changed decisions")
         selected_sha = panel.sha256(decisions)
@@ -810,13 +700,86 @@ def run_job(args):
                 print(json.dumps(finished, ensure_ascii=False))
 
 
+def summarize_batch(root, dispatch_path):
+    """Persist a checkpoint from actual per-Work receipts, without sessions or hooks."""
+    root, dispatch_path = artifact_path(root).resolve(), artifact_path(dispatch_path).resolve()
+    prepare.require(root.is_relative_to(ROOT / "planning"), "batch root must be in planning")
+    dispatch_sha = panel.sha256(dispatch_path)
+    dispatch = panel.read_json(dispatch_path)
+    prepare.require(dispatch.get("phase") in {"adjudication", "adjudication-only"} and dispatch.get("adjudicationAllowed", True) is True,
+                    "summary requires an adjudication assignment")
+    assigned = dispatch.get("works")
+    prepare.require(isinstance(assigned, list) and assigned, "empty batch assignment")
+    ids = [row["workId"] for row in assigned]
+    for key in ("workCount", "assignedCount"):
+        prepare.require(key not in dispatch or (type(dispatch[key]) is int and dispatch[key] == len(assigned)), "batch assignment count mismatch")
+    prepare.require(len(set(ids)) == len(ids) and all(re.fullmatch(r"work-[0-9a-f]{20}", wid) for wid in ids),
+                    "invalid or duplicate batch Work")
+    run_paths = [artifact_path(row["runRoot"]).resolve() for row in assigned]
+    prepare.require(len(set(run_paths)) == len(run_paths), "duplicate assigned run")
+    rows, paths = [], [dispatch_path]
+    # Summary locks do not span an agent's reasoning or a network request.
+    with exclusive(REPO / "data/local/catalog-authoring/locks" / (panel.sha256_bytes(str(root).encode()) + ".summary.lock")), ExitStack() as locks:
+        for row in sorted(assigned, key=lambda row: row["workId"]):
+            run = artifact_path(row["runRoot"]).resolve()
+            prepare.require(run.is_relative_to(root) and run != root, "assigned run outside batch root")
+            locks.enter_context(exclusive(REPO / "data/local/catalog-authoring/locks" / (panel.sha256_bytes(os.path.normcase(str(run)).encode()) + ".lock")))
+        for row in assigned:
+            wid, run = row["workId"], artifact_path(row["runRoot"]).resolve()
+            checked_path = run / "CHECKED.json"
+            if not checked_path.is_file():
+                rows.append({"workId": wid, "runRoot": str(run), "status": "PENDING"})
+                continue
+            checked = panel.read_json(checked_path)
+            prepare.require(checked.get("workId") == wid and checked.get("status") in {"READY_FOR_PUBLICATION", "HOLD", "ERROR"},
+                            "batch check identity mismatch")
+            result = {"workId": wid, "runRoot": str(run), "status": checked["status"],
+                      "checkedPath": str(checked_path), "checkedSha256": panel.sha256(checked_path)}
+            if checked["status"] == "ERROR":
+                prepare.require(bool(checked.get("error")), "batch ERROR lacks actual failure")
+                result["error"] = checked["error"]
+            else:
+                config = panel.read_json(run / "RUN.json")
+                prepare.require(panel.sha256(artifact_path(config["decisionsPath"])) == config["decisionsSha256"] == checked["decisionsSha256"], "batch decision changed")
+                frozen = frozen_path(run, config) / "panel-input"
+                prepare.require(panel.sha256(frozen / "PANEL-INPUT.sha256") == checked["inputManifestSha256"], "batch frozen input changed")
+                frozen_works = panel.read_json(frozen / "authoring-job.json")["works"]
+                prepare.require(len(frozen_works) == 1 and frozen_works[0]["workId"] == wid, "batch frozen Work changed")
+                if checked.get("sealedRoot"):
+                    sealed = artifact_path(checked["sealedRoot"])
+                    publisher._verify_result_manifest(sealed)
+                    if checked["status"] == "READY_FOR_PUBLICATION":
+                        prepare.require(panel.sha256(sealed / "MANIFEST.sha256") == checked["resultManifestSha256"], "batch sealed result changed")
+                else:
+                    prepare.require(checked["status"] == "HOLD" and single.hold_result(frozen, single.read_decisions(artifact_path(config["decisionsPath"]))) is not None,
+                                    "batch HOLD lacks a bound decision")
+                result["checkStorage"] = verify_check_storage(run)
+            rows.append(result)
+            paths.append(run)
+        prepare.require(panel.sha256(dispatch_path) == dispatch_sha, "batch assignment changed")
+        pending = [row["workId"] for row in rows if row["status"] == "PENDING"]
+        summary = {"schemaVersion": "catalog-batch-summary-v2", "batchId": dispatch["batchId"],
+                   "dispatch": {"path": str(dispatch_path), "sha256": dispatch_sha},
+                   "status": "INCOMPLETE" if pending else "COMPLETE", "assignedCount": len(rows),
+                   "processedCount": len(rows) - len(pending), "nextWorkId": pending[0] if pending else None,
+                   "works": rows}
+        key = panel.sha256_bytes(json.dumps(summary, sort_keys=True, ensure_ascii=False).encode())
+        path = root / "summaries" / key / "BATCH-SUMMARY.json"
+        write(path, summary)
+        storage = preserve([*paths, path], "batch:checkpoint", reuse=True, phase_boundary=True)
+        print(json.dumps({"summaryPath": str(path), "summarySha256": panel.sha256(path), "status": summary["status"],
+                          "nextWorkId": summary["nextWorkId"], "storage": storage}, ensure_ascii=False))
+        return summary
+
+
 def main():
     for stream in (sys.stdout, sys.stderr):
         if hasattr(stream, "reconfigure"):
             stream.reconfigure(encoding="utf-8")
     parser = argparse.ArgumentParser(description=__doc__)
-    parser.add_argument("action", choices=("prepare", "check", "run", "finish"))
+    parser.add_argument("action", choices=("prepare", "check", "run", "finish", "summarize"))
     parser.add_argument("--run-root", type=Path, required=True)
+    parser.add_argument("--dispatch", type=Path, help="For summarize: exact assigned Work IDs and runRoot paths")
     parser.add_argument("--job", type=Path)
     parser.add_argument("--work-id", help="Assemble a new unreviewed or explicitly authorized recovery Work from current metadata and --research; prior/proof exceptions use --job")
     parser.add_argument("--research", type=Path, action="append", help="Add an exact Work research snapshot to an existing job; preserve prior/proof fields and bind source URLs mechanically")
@@ -825,11 +788,18 @@ def main():
     parser.add_argument("--provenance-root", type=Path, action="append", help="Repeat for completed collection roots; direct research collections are verified automatically")
     parser.add_argument("--prior-bundle", type=Path, action="append", help="Manifest-bound original authority bundle; repeat for multiple originals")
     parser.add_argument("--decisions", type=Path, help="Use an existing decision for this unchanged frozen input; never refreeze on output failure")
-    parser.add_argument("--allow-model", action="store_true", help="Explicitly allow Sol medium execution; default uses supplied or saved decisions only")
-    parser.add_argument("--model-session", help="Requires --allow-model: continue a selected persistent Sol session")
-    parser.add_argument("--retry-model", action="store_true", help="Requires --allow-model: explicitly retry a model attempt")
+    parser.add_argument("--allow-model", action="store_true", help=argparse.SUPPRESS)
+    parser.add_argument("--model-session", help=argparse.SUPPRESS)
+    parser.add_argument("--retry-model", action="store_true", help=argparse.SUPPRESS)
     args = parser.parse_args()
     try:
+        prepare.require(not (args.allow_model or args.retry_model or args.model_session),
+                        "Model execution is retired; supply agent-authored --decisions")
+        if args.action == "summarize":
+            prepare.require(args.dispatch is not None, "summarize requires --dispatch")
+            summarize_batch(args.run_root, args.dispatch)
+            return 0
+        prepare.require(args.dispatch is None, "--dispatch requires summarize")
         if args.action == "finish":
             prepare.require(os.environ.get("KONOCOMICS_AUTHORING_RECORDED") == "1", "finish is an internal recorded phase; use run")
         from catalog_retention import prepare_restored_operation

@@ -38,12 +38,14 @@ def plan(dispatch_path: Path, summary_path: Path | None = None) -> dict:
     dispatch = notifications.read(dispatch_path)
     phase = dispatch.get("phase")
     require(phase in notifications.COLLECTION_PHASES | notifications.ADJUDICATION_PHASES, "unsupported dispatch phase")
-    policy = notifications.transition_policy(dispatch)
+    policy = notifications.transition_policy(dispatch) if "parentThreadId" in dispatch else None
     adjudication = phase not in notifications.COLLECTION_PHASES
-    for key in ("ownerThreadId", "parentThreadId"):
-        require(str(uuid.UUID(dispatch[key])) == dispatch[key], f"invalid {key}")
+    legacy_ownership = "ownerThreadId" in dispatch or "parentThreadId" in dispatch
+    if legacy_ownership:
+        for key in ("ownerThreadId", "parentThreadId"):
+            require(str(uuid.UUID(dispatch[key])) == dispatch[key], f"invalid {key}")
     rows = dispatch.get("works")
-    require(isinstance(rows, list) and rows and len(rows) == dispatch.get("workCount", dispatch.get("assignedCount")), "invalid dispatch count")
+    require(isinstance(rows, list) and rows and len(rows) == dispatch.get("workCount", dispatch.get("assignedCount", len(rows) if not legacy_ownership else None)), "invalid dispatch count")
     ids = [row.get("workId") for row in rows if isinstance(row, dict)]
     require(len(ids) == len(rows) and all(isinstance(wid, str) and re.fullmatch(r"work-[0-9a-f]{20}", wid) for wid in ids) and len(set(ids)) == len(ids), "invalid dispatch works")
     require(dispatch.get("adjudicationAllowed", adjudication) is adjudication and dispatch.get("publicationAllowed") is False, "dispatch authority mismatch")
@@ -54,7 +56,20 @@ def plan(dispatch_path: Path, summary_path: Path | None = None) -> dict:
         require(summary_path.is_file() and summary_path.is_relative_to(ROOT), "summary must be an authoring artifact")
         summary_sha = prepare.panel.sha256(summary_path)
         summary = notifications.read(summary_path)
-        if adjudication:
+        if not legacy_ownership:
+            require(adjudication, "collection summaries use the collection validator directly")
+            import catalog_authoring_batch_publish as batch
+            summary = batch.read_batch_summary(summary_path, summary_sha)
+            require(summary.get("batchId") == dispatch["batchId"] and {r["workId"] for r in summary["works"]} == set(ids), "summary assignment mismatch")
+            for row in summary["works"]:
+                checked = Path(row["checkedPath"])
+                require(prepare.panel.sha256(checked) == row["checkedSha256"], "summary check changed")
+                actual = notifications.read(checked)
+                require(actual.get("workId") == row["workId"] and actual.get("status") == row["status"], "summary check identity mismatch")
+                if row["status"] != "ERROR":
+                    runner.verify_check_storage(checked.parent, require_backup=True)
+            summary_rows = {row["workId"]: row for row in summary["works"]}
+        elif adjudication:
             assignment = {"dispatchPath": str(dispatch_path), "dispatchSha256": dispatch_sha,
                           "sessionId": dispatch["ownerThreadId"], "parentThreadId": dispatch["parentThreadId"],
                           "runRoot": str(dispatch_path.parent)}
@@ -159,7 +174,7 @@ def plan(dispatch_path: Path, summary_path: Path | None = None) -> dict:
     if assignment_binding is not None:
         require(prepare.panel.sha256(Path(assignment_binding["path"])) == assignment_binding["sha256"], "stale registered assignment")
     return {"schemaVersion": "catalog-dispatch-plan-v1", "batchId": dispatch["batchId"],
-            "phase": phase, "transitionPolicy": policy, "ownerThreadId": dispatch["ownerThreadId"], "parentThreadId": dispatch["parentThreadId"], "baselineRoot": str(baseline),
+            "phase": phase, "transitionPolicy": policy, "ownerThreadId": dispatch.get("ownerThreadId"), "parentThreadId": dispatch.get("parentThreadId"), "baselineRoot": str(baseline),
             "bindings": bindings, "summaryValidated": summary_path is not None,
             "workCount": len(results), "works": results,
             "verificationLimit": "Read-only identity/bibliography preflight; research, prior authority, safety, adjudication, and publication are not assessed."}

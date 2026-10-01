@@ -14,6 +14,12 @@ import notification_guard as guard
 
 
 class NotificationGuardTest(unittest.TestCase):
+    def test_retired_hook_cli_is_inert_even_with_cached_registration(self):
+        result = subprocess.run([sys.executable, str(Path(guard.__file__).resolve())],
+                                input="not even a hook event", capture_output=True, text=True, timeout=20)
+        self.assertEqual(result.returncode, 0, result.stderr)
+        self.assertEqual(json.loads(result.stdout), {})
+
     def restored_cli(self, destination, *arguments, stdin=None):
         """Run the unchanged public CLI from a separately installed code tree."""
         source = Path(guard.__file__).resolve().parents[1]
@@ -991,7 +997,7 @@ class NotificationGuardTest(unittest.TestCase):
             original = artifact.read_bytes()
             notification = guard.on_stop(event, state)
             self.assertEqual(notification["decision"], "block")
-            self.assertIn("model=gpt-5.6-sol and thinking=high", notification["reason"])
+            self.assertIn("without overriding destination model or thinking", notification["reason"])
             guard.register(session, parent, "work-a", "adjudication", artifact, root, state, root)
             self.assertEqual(guard.on_stop(event, state), {})
             sha = hashlib.sha256(original).hexdigest()

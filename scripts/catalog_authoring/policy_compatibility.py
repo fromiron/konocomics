@@ -113,6 +113,9 @@ def _digest(body: bytes) -> str:
     return hashlib.sha256(body).hexdigest()
 
 
+APPROVED_ADDITIONS += ({'id': 'aep-lean-retention-20260928', 'policy': 'authorizedEvidencePanel', 'scope': 'operational', 'text': '## 2026-09-28 경량 보존과 prior 검증\n\n작업 DB 경량 보존은 [저장 계약](03-local-authoring-storage.md)의 현재 head 선택이다. `load_prior_authority`의 manifest 계보 검증은 유지한다. 한 발행 배치 안에서는 기존 `manifest_verification_cache`가 같은 불변 입력을 다시 풀지 않는다. 이 변경은 claim 재판정·정족수·safety 계약을 바꾸지 않는다.', 'before': '# Authorized Evidence Panel V1', 'after': '## 2026-09-21 사용자 확정: 포르노 작품만 제외'}, {'id': 'authority-lean-retention-20260928', 'policy': 'authoringAuthority', 'scope': 'operational', 'text': '- 2026-09-28: 작업 DB의 경량 보존은 중복 publication 사본과 실행 이력을 현재 head에서 빼며, accepted authority의 원천은 계속 `data/source/catalog.sqlite`다. prior authority의 manifest 결속 검증은 그대로다.', 'before': '- 2026-09-09 사용자 승인: source 밖의 로컬 작업용 SQLite는 조사·후보·동결 판정·실패 이력의 영구 보존에 별도로 사용한다. tracked canonical authority를 추가하는 것이 아니며 저장 성공은 accepted authority가 아니다. 저장·백업·복원 계약은 `docs/catalog-expansion/03-local-authoring-storage.md`를 따른다.', 'after': '## 2. 권한 계약'})
+
+
 def _fence_state(line: str, fence):
     match = re.match(r"^ {0,3}(`{3,}|~{3,})(.*)$", line)
     if match is None:
@@ -164,10 +167,25 @@ def _normalize(text: str) -> str:
     return "\n".join(normalized)
 
 
+APPROVED_REPLACEMENTS = ({'id': 'authorizedEvidencePanel-provider-restriction-removal-20261001', 'policy': 'authorizedEvidencePanel', 'scope': 'operational', 'before': '- Grok은 수집·판정·교차검증에서 전면 제외한다.', 'text': ''}, {'id': 'authoringAuthority-provider-restriction-removal-20261001', 'policy': 'authoringAuthority', 'scope': 'operational', 'before': '- Grok은 이 권한의 조사·판정·교차검증에 사용하지 않는다. AniList는 사용자가 허용한 1회성 참고조사만 가능하고, 유료 API·과금 자료는 금지한다.', 'text': '- AniList는 사용자가 허용한 1회성 참고조사만 가능하고, 유료 API·과금 자료는 금지한다.'})
+
+
 def _project(policy: str, body: bytes) -> tuple[str, set[str]]:
     text = _normalize(body.decode("utf-8"))
     if "\0" in text:
         raise ValueError("Policy contains an invalid control character")
+    replacement_ids = set()
+    for rule in APPROVED_REPLACEMENTS:
+        if rule["policy"] != policy:
+            continue
+        before, after = _normalize(rule["before"]), _normalize(rule["text"])
+        lines = text.splitlines()
+        if lines.count(before) > 1:
+            raise ValueError("Duplicate historical provider restriction")
+        if before in lines:
+            text = re.sub(r"(?m)^" + re.escape(before) + r"$", lambda _: after, text)
+        else:
+            replacement_ids.add(rule["id"])
     found = {}
     for rule in APPROVED_ADDITIONS:
         if rule["policy"] != policy:
@@ -193,7 +211,7 @@ def _project(policy: str, body: bytes) -> tuple[str, set[str]]:
             raise ValueError("Approved policy amendment moved outside its reviewed context")
     for marker in found:
         text = re.sub(r"(?m)^" + re.escape(marker) + r"\n?", "", text)
-    return _normalize(text), {rule["id"] for rule in found.values()}
+    return _normalize(text), {rule["id"] for rule in found.values()} | replacement_ids
 
 
 def prove_compatibility(policy: str, frozen: bytes, current: bytes) -> dict | None:
@@ -207,7 +225,7 @@ def prove_compatibility(policy: str, frozen: bytes, current: bytes) -> dict | No
     additions = [
         {"id": rule["id"], "scope": rule["scope"],
          "textSha256": _digest(rule["text"].encode("utf-8"))}
-        for rule in APPROVED_ADDITIONS if rule["id"] in present - previous
+        for rule in (*APPROVED_ADDITIONS, *APPROVED_REPLACEMENTS) if rule["id"] in present - previous
     ]
     receipt = {"schemaVersion": FORMAT, "policy": policy,
                "frozenSha256": _digest(frozen), "currentSha256": _digest(current),

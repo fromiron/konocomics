@@ -1,41 +1,4 @@
 {
-  "description": "Remind an explicitly assigned Catalog worker once when a saved result lacks a successful queue-send receipt.",
-  "hooks": {
-    "UserPromptSubmit": [
-      {
-        "hooks": [
-          {
-            "type": "command",
-            "command": "python3 -B -X utf8 scripts/catalog_python.py scripts/catalog_authoring/notification_guard.py",
-            "commandWindows": "python -B -X utf8 scripts/catalog_python.py scripts/catalog_authoring/notification_guard.py",
-            "timeout": 10
-          }
-        ]
-      }
-    ],
-    "Interrupt": [
-      {
-        "hooks": [
-          {
-            "type": "command",
-            "command": "python3 -B -X utf8 scripts/catalog_python.py scripts/catalog_authoring/notification_guard.py",
-            "commandWindows": "python -B -X utf8 scripts/catalog_python.py scripts/catalog_authoring/notification_guard.py",
-            "timeout": 3
-          }
-        ]
-      }
-    ],
-    "Stop": [
-      {
-        "hooks": [
-          {
-            "type": "command",
-            "command": "python3 -B -X utf8 scripts/catalog_python.py scripts/catalog_authoring/notification_guard.py",
-            "commandWindows": "python -B -X utf8 scripts/catalog_python.py scripts/catalog_authoring/notification_guard.py",
-            "timeout": 10
-          }
-        ]
-      }
-    ]
-  }
+  "description": "Catalog hooks are disabled; workflow progress and checkpoints are managed explicitly.",
+  "hooks": {}
 }

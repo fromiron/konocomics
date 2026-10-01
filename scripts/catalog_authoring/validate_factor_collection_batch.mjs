@@ -252,7 +252,6 @@ export function validateResearchRow(row, seenWorkIds, requireSourceAudit = false
   }
   assert.equal(row.candidateOnly, true, `${row.workId} candidateOnly`);
   assert.equal(row.reviewedByHuman, false, `${row.workId} reviewedByHuman`);
-  assert.equal(row.grokUsed, false, `${row.workId} grokUsed`);
   assert.equal(row.paidSourceUsed, false, `${row.workId} paidSourceUsed`);
   assert(Array.isArray(row.sources), `${row.workId} sources`);
   assert(Array.isArray(row.remainingGaps), `${row.workId} remainingGaps`);

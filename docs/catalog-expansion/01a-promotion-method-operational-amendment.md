@@ -1,8 +1,8 @@
 # Catalog 운영 예외 처리
 
-현재 확정 사양 · 갱신일: 2026-09-26
+현재 확정 사양 · 갱신일: 2026-10-01
 
-정상 배정·고정 세션/모델·단계 전환·통지는 [배치 계약](01c-sol-batch-promotion-plan.md), 수집은 [수집 지침](factor-collector-instructions.md), 저장은 [저장 계약](03-local-authoring-storage.md), 명령은 [runner README](../../scripts/catalog_authoring/README.md)를 따른다. 이 문서는 그 경로에서 실제 실패·충돌이 생겼을 때만 읽는다. 과거 모델·역할·배정·시험 기록은 Git 이력에서 확인하고 새 실행 지시로 사용하지 않는다.
+정상 배정·실행 추적·단계 전환·완료 확인은 [배치 계약](01c-catalog-batch-promotion-plan.md), 수집은 [수집 지침](factor-collector-instructions.md), 저장은 [저장 계약](03-local-authoring-storage.md), 명령은 [runner README](../../scripts/catalog_authoring/README.md)를 따른다. 이 문서는 그 경로에서 실제 실패·충돌이 생겼을 때만 읽는다. 과거 모델·역할·배정·시험 기록은 Git 이력에서 확인하고 새 실행 지시로 사용하지 않는다.
 
 ## 근거·권한과 형식 오류의 구분
 
@@ -64,7 +64,7 @@ canonical 전체 SHA의 변경만으로 유효 판정을 폐기하지 않는다.
 SOL_COMPLETE: workId=<ID>; runRoot=<절대 경로>; decisionsPath=<절대 경로>; sha256=<SHA256>
 ```
 
-현재 배치의 전송 ACK·부모 consumed ACK·partial-stop/user-stop·재개 처리는 runner README의 이벤트 절차를 사용한다. 과거 세션 ID·CLI 모델 설정을 호환 명목으로 재사용하지 않는다.
+현재 배치는 hook·부모 메시지·전송/소비 ACK를 사용하지 않는다. 현재 실행자가 실제 checkpoint·summary·completion·STATE와 백업을 대조한다. 구형 통지 자료는 이력으로만 보존하며 세션 ID·CLI 모델 설정을 호환 명목으로 재사용하지 않는다.
 
 ## 측정과 보고
 

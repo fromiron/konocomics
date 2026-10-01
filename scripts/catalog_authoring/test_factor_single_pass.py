@@ -77,6 +77,19 @@ class SinglePassTest(unittest.TestCase):
             prepare.materialize_safety(mature_projected, [target], {wid}, safety_root)
             safety_targets = panel.read_csv(safety_root / "targets.csv", prepare.publisher.SAFETY_TARGET_FIELDS)
             self.assertEqual(safety_targets[0]["identityUrl"], url)
+            review_path = safety_root / "chunks/chunk-01/REVIEW.json"
+            review = panel.read_json(review_path)
+            self.assertNotIn("grokUsed", review)
+            validator = prepare.safety_validator()
+            claims = {wid: {"outcome": "SAFE"}}
+            validator.validate_review(review_path, "chunk-01", claims)
+            # Old metadata is readable, never an allow/deny rule.
+            prepare.write_json(review_path, {**review, "grokUsed": True})
+            validator.validate_review(review_path, "chunk-01", claims)
+            prepare.write_json(review_path, {**review, "reviewedByHuman": True})
+            with self.assertRaises(ValueError):
+                validator.validate_review(review_path, "chunk-01", claims)
+
             for defect in ("wrong-use", "unknown-id", "duplicate", "wrong-work", "mixed-version"):
                 bad = copy.deepcopy(value)
                 work = bad["works"][0]

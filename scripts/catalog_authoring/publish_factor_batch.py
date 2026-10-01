@@ -363,7 +363,6 @@ def _evidence_index(chunk: Path, target_ids: set[str]) -> tuple[dict[str, dict[s
             item.get("schemaVersion") != "factor-evidence-collector-v1"
             or item.get("candidateOnly") is not True
             or item.get("reviewedByHuman") is not False
-            or item.get("grokUsed") is not False
             or item.get("paidSourceUsed") is not False
             or not isinstance(item.get("sources"), list)
         ):

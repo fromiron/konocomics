@@ -64,7 +64,7 @@ CONTEXT_FIELDS = (
 )
 INPUT_KEYS = {
     "schemaVersion", "batchId", "frozenAt", "targetCount", "chunkCount",
-    "annotationReviewMethod", "candidateOnly", "reviewedByHuman", "grokExcluded",
+    "annotationReviewMethod", "candidateOnly", "reviewedByHuman",
     "paidSourcesExcluded", "aniListAuthorizingEvidence",
     "collectorDecisionClaimsIncluded", "baselineCandidateSha256", "registrySha256",
     "canonicalSha256", "goldManifestSha256", "policyDigests",
@@ -459,7 +459,7 @@ def integrated_correction_claims(root: Path) -> list[tuple[dict[str, str], dict[
         target_rows = read_csv(path, target_fields)
         rows = read_csv(result / "corrections.csv", correction_fields)
         for source in read_csv(result / "rescued-evidence.csv", rescued_fields):
-            if source["schemaVersion"] != "initial-pass-correction-v1-result" or source["chunkId"] != chunk_id or (source["researchCost"], source["aniListReferenceOnly"], source["grokUsed"]) != ("FREE", "false", "false") or source["sourceKind"] not in {"official", "publisher", "licensed"} or not source["observation"] or not source["entryRange"] or re.fullmatch(r"\d{4}-\d{2}-\d{2}", source["retrievedDate"]) is None:
+            if source["schemaVersion"] != "initial-pass-correction-v1-result" or source["chunkId"] != chunk_id or (source["researchCost"], source["aniListReferenceOnly"]) != ("FREE", "false") or source["sourceKind"] not in {"official", "publisher", "licensed"} or not source["observation"] or not source["entryRange"] or re.fullmatch(r"\d{4}-\d{2}-\d{2}", source["retrievedDate"]) is None:
                 raise ValidationError("integrated correction rescued evidence policy mismatch")
             valid_url(source["sourceUrl"], "integrated correction rescue")
             if "anilist.co" in urlsplit(source["sourceUrl"]).netloc.lower() or source["evidenceSha256"] != canonical_hash({field: source[field] for field in rescued_fields[:-1]}) or source["evidenceId"] in rescued_sources:
@@ -472,7 +472,7 @@ def integrated_correction_claims(root: Path) -> list[tuple[dict[str, str], dict[
             target = targets_by_id[row["targetId"]]
             if row["targetId"] in targets or row["schemaVersion"] != "initial-pass-correction-v1-result" or target["schemaVersion"] != "initial-pass-correction-v1" or row["chunkId"] != chunk_id or target["chunkId"] != chunk_id or row["targetFileSha256"] != sha256(path) or any(row[key] != target[key] for key in ("workId", "factKey")):
                 raise ValidationError(f"integrated correction target binding mismatch: {row['targetId']}")
-            if (row["candidateOnly"], row["reviewedByHuman"], row["grokUsed"], row["researchCost"]) != ("true", "false", "false", "FREE"):
+            if (row["candidateOnly"], row["reviewedByHuman"], row["researchCost"]) != ("true", "false", "FREE"):
                 raise ValidationError("integrated correction authority flags mismatch")
             targets[row["targetId"]] = target
         all_results.extend(rows)
@@ -1041,12 +1041,12 @@ def validate_input(input_root: Path) -> tuple[dict[str, object], list[Path], str
     manifest = input_root / "PANEL-INPUT.sha256"
     members = {path.relative_to(input_root).as_posix() for path in files if path != manifest}
     verify_manifest(input_root, manifest, members)
-    panel = exact_dict(read_json(input_root / "panel-input.json"), INPUT_KEYS, "panel-input")
+    raw_panel = read_json(input_root / "panel-input.json")
+    panel = exact_dict(raw_panel, INPUT_KEYS | ({"grokExcluded"} if isinstance(raw_panel, dict) and "grokExcluded" in raw_panel else set()), "panel-input")
     expected_flags = {
         "annotationReviewMethod": "authorizedEvidencePanel",
         "candidateOnly": True,
         "reviewedByHuman": False,
-        "grokExcluded": True,
         "paidSourcesExcluded": True,
         "aniListAuthorizingEvidence": False,
         "collectorDecisionClaimsIncluded": False,
