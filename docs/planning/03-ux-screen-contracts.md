@@ -255,7 +255,7 @@ CTA **「好きなマンガから始める」** → /onboarding. 행동은 이 �
 
 ### 주요 액션
 
-- reveal 모드: 하단 고정 CTA 「おすすめを見る」.
+- reveal 모드: 하단 고정 CTA 「おすすめを見る」. 모든 viewport에서 `--surface-1` 표면과 상단 `--line` 구분선을 가진 전체 폭 바이며, desktop은 1200px 셸 안에서 버튼을 오른쪽에 둔다. 본문 위에 떠 있는 버튼 형태는 쓰지 않는다(2026-10-01).
 - 보조 액션(2026-09-29 개선 계획 Phase 2): 제목 줄 오른쪽 outline 버튼 「カードで共有」. 주 CTA보다 앞서지 않으며 공유 취소·실패가 추천 탐색을 막지 않는다. 아래 「Manga DNA 공유 링크」 참조.
 - 상시 모드: 추천 반영 radio 변경 자체가 액션. 저장 버튼 없이 즉시 Dexie에 반영하고, 성공 시 factor와 선택값을 포함한 스낵바를 제공한다(예: 「『戦略的な展開』のおすすめへの反映を『除外』に変更しました。」).
 - 2026-10-01 후속 사용자 요청: 「おすすめを調整」 제목 옆 전체 reset과 テーマ·展開·トーン・関係·作画 제목 옆 범주 reset을 제공한다. reset은 범위 안의 모든 추천 반영을 `自動`으로 돌리는 작업이다. 범주 reset은 해당 키만 제거하고 전체 reset은 axes/themes를 모두 비운다. 한 번의 저장으로 반영하며 다른 범주의 설정·분석 DNA·독서 기록·추천 정책은 유지한다. ジャンル은 분석 전용이므로 reset이 없다. 이미 모두 자동이면 해당 버튼은 disabled다. 44px icon button에 범위를 포함한 일본어 접근 이름/tooltip과 focus ring을 제공하며 펼침 button 안에 중첩하지 않는다. reset으로 범주를 열거나 닫지 않는다. 성공은 범위가 있는 저장 안내, 실패는 직전 설정 복원과 기존 오류 안내다.
@@ -412,7 +412,7 @@ CTA **「好きなマンガから始める」** → /onboarding. 행동은 이 �
 
 1. 페이지 h1 「あなたへのおすすめ」(desktop는 28px 한 줄). 중복 설명은 시각적으로 숨기고 접근성 DOM에 유지한다.
 2. 근거 한 줄(기록 수·상위 팩터·`Manga DNA` 링크)과 장르·방침을 한 줄로 묶은 툴바
-3. plan order 상위 작품의 `FeaturedRecommendationShelf` + cover-forward poster card
+3. plan order 상위 5작품의 `FeaturedRecommendationShelf` + cover-forward poster card(2026-10-01 사용자 결정 「역할 분리」: Featured는 상위 5작품을 크게 소개하고, 10작품 전체 순위는 아래 Top 10 ranking이 맡는다. 장르 표시 필터가 있으면 필터 후 앞의 5작품이다.)
 4. lead reason의 좋아한 작품·팩터로 묶은 관점 Shelf(아래 「관점 선반」)
 5. engine plan에서 이미 discovery 성격인 항목을 추출한 Shelf
 6. canonical plan 첫 10개를 그대로 보여 주는 personalized Top 10(`<ol>`)
@@ -420,7 +420,7 @@ CTA **「好きなマンガから始める」** → /onboarding. 행동은 이 �
 
 선반 간격 (2026-09-29 사용자 위임 개선): 같은 묶음의 선반 사이는 `--space-shelf`(48px), 성격이 다른 묶음(Featured → 관점 선반 → 판매순 배너·Discovery·Top 10 → 피드백 요약) 사이는 `--space-shelf-group`(64px)을 쓴다. 두 토큰은 추천 화면 전용이며 다른 화면의 `--space-section`을 바꾸지 않는다. 선반 설명 문단은 제목만으로 의미가 부족한 Discovery·Top 10에만 두고 내부 용어(推薦エンジン・discovery・推薦プラン 등)를 쓰지 않는다.
 
-Shelf grouping은 presentation-only selector다. main Shelf 사이에는 work ID를 dedupe할 수 있지만 Top 10은 canonical summary이므로 중복을 허용한다. score를 다시 계산하거나 새로운 가중치·인기 순위를 만들지 않는다.
+Shelf grouping은 presentation-only selector다. main Shelf 사이에는 work ID를 dedupe할 수 있지만 Top 10은 canonical summary이므로 중복을 허용한다. plan 6~10위는 Featured에 없으므로 관점 선반·Discovery 후보가 될 수 있다. 카드 제거·백필은 기존처럼 표시 중인 10작품 목록에서 수행하고 Featured는 그 앞 5작품을 보여 준다. score를 다시 계산하거나 새로운 가중치·인기 순위를 만들지 않는다.
 
 ### 관점 선반 (2026-09-29 사용자 승인)
 

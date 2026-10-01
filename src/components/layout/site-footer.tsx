@@ -35,7 +35,7 @@ export function SiteFooter({ className, immersive = false }: SiteFooterProps) {
     <footer className={cn("border-t border-line bg-surface-1", className)}>
       <div className="mx-auto grid w-full max-w-[var(--layout-width-media)] gap-[var(--space-6)] px-[var(--layout-page-padding)] py-[var(--space-8)] md:grid-cols-[minmax(14rem,1.4fr)_repeat(3,minmax(8rem,1fr))]">
         <div className="grid content-start gap-[var(--space-content)]">
-          <BrandWordmark className="hidden text-[length:var(--text-section-title-size)] md:block" />
+          <BrandWordmark className="hidden text-[length:var(--font-size-28)] md:block" />
           <p className="max-w-[28rem] text-[length:var(--text-caption-size)] text-text-muted">
             {siteFooterStrings.localFirst}
           </p>

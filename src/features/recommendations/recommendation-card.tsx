@@ -128,7 +128,7 @@ export function RecommendationCard({
         </>
       )}
       <div className="relative z-10 flex min-h-0 flex-1 flex-col">
-        <h3 className="h-[3.25rem] shrink-0 line-clamp-2 text-[length:var(--font-size-20)] leading-[var(--line-height-heading)] font-bold text-text-strong md:h-[4.75rem] md:text-[length:var(--font-size-28)]">
+        <h3 className="h-[3.25rem] shrink-0 line-clamp-2 text-[length:var(--font-size-20)] leading-[var(--line-height-heading)] font-bold text-text-strong">
           {work.title}
         </h3>
         <div className="recommendation-featured-card__meta flex min-w-0 shrink-0 flex-nowrap items-baseline gap-[var(--space-1)] overflow-hidden pt-[var(--space-1)] text-[length:var(--text-caption-size)] text-text-muted">

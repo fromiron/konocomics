@@ -115,6 +115,7 @@ const DEFAULT_POLICIES: RecommendationPolicies = {
 };
 const EMPTY_ADJUSTMENTS: ProfileAdjustments = { axes: {}, themes: {} };
 const EMPTY_RECORDS: readonly UserWorkRecord[] = [];
+const FEATURED_RECOMMENDATION_LIMIT = 5;
 type RecommendationMotionListComponent = ComponentType<RecommendationMotionListProps>;
 const FeedbackDialog = lazy(async () => {
   const module = await import("./feedback-dialog");
@@ -471,10 +472,12 @@ export function RecommendationsFlow({
         const metadata = context?.constraintByWorkId[entry.workId];
         return work === undefined || metadata === undefined ? [] : [{ entry, metadata, work }];
       });
-      const nextFeaturedEntries =
+      // Featured carries the plan's top picks; the full ten stay in the Top 10 ranking (03 §4).
+      const nextFeaturedEntries = (
         genre === undefined
           ? nextRenderedEntries
-          : nextRenderedEntries.filter(({ work }) => work.genres.includes(genre));
+          : nextRenderedEntries.filter(({ work }) => work.genres.includes(genre))
+      ).slice(0, FEATURED_RECOMMENDATION_LIMIT);
       const withCatalogData = (entries: readonly RecommendationPlanEntry[]) =>
         entries.flatMap((entry) => {
           if (excludedWorkIds.has(entry.workId)) return [];
@@ -486,7 +489,7 @@ export function RecommendationsFlow({
       // Shelves draw from the same mood-filtered candidates as the main list.
       const candidatePlanEntries =
         moodPlan === null ? nextAllPlanEntries : withCatalogData(moodPlan);
-      const visibleWorkIds = new Set(displayedEntries.map((entry) => entry.workId));
+      const visibleWorkIds = new Set(nextFeaturedEntries.map(({ entry }) => entry.workId));
       const auxiliaryEntries = candidatePlanEntries.filter(
         ({ entry, work }) =>
           !visibleWorkIds.has(entry.workId) && (genre === undefined || work.genres.includes(genre)),

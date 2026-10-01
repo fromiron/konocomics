@@ -16,7 +16,6 @@ export type DiscoveryCardProps = Readonly<{
   onCoverVisible?: () => void;
   id?: string;
   marker?: string;
-  reasonAlwaysVisible?: boolean;
 }>;
 
 /** Compact discovery presentation; its caller supplies the evidence and action. */
@@ -29,7 +28,6 @@ export function DiscoveryCard({
   onCoverVisible,
   priority = false,
   reason,
-  reasonAlwaysVisible = false,
   title,
   workId,
 }: DiscoveryCardProps) {
@@ -77,12 +75,7 @@ export function DiscoveryCard({
             {title}
           </h3>
         </Link>
-        <p
-          className={cn(
-            "border-l-2 border-accent/50 pl-[var(--space-2)] text-[length:var(--text-caption-size)] leading-[1.4] text-text-muted",
-            reasonAlwaysVisible ? "line-clamp-2" : "hidden md:line-clamp-2",
-          )}
-        >
+        <p className="line-clamp-2 border-l-2 border-accent/50 pl-[var(--space-2)] text-[length:var(--text-caption-size)] leading-[1.4] text-text-muted">
           {reason}
         </p>
         {action}

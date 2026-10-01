@@ -342,7 +342,7 @@ function FactorGroup<FactorId extends ExplanationFactorId>({
       <header className="relative grid grid-cols-[minmax(0,1fr)_auto] items-center gap-x-[var(--space-3)] gap-y-[var(--space-1)] py-[var(--space-4)] min-[360px]:grid-cols-[minmax(0,1fr)_auto_auto] sm:grid-cols-[minmax(calc(var(--space-12)*3),0.3fr)_minmax(0,1fr)_auto_auto]">
         <h3
           aria-label={title}
-          className="flex min-w-0 items-center gap-[var(--space-1)]"
+          className="flex min-w-0 items-center gap-[var(--space-1)] text-[length:var(--font-size-16)]"
           id={`taste-group-${id}`}
         >
           <button
@@ -1204,25 +1204,28 @@ export function TasteFlow({
           worksById={worksById}
         />
         {revealExperience.entry ? (
-          <div className="taste-reveal-cta fixed inset-x-0 bottom-[var(--layout-mobile-navigation-clearance)] z-25 border-t border-line bg-surface-1 px-[var(--layout-page-padding)] py-2.5 md:right-[var(--layout-page-padding)] md:bottom-[var(--layout-page-padding)] md:left-auto md:w-80 md:border-0 md:bg-transparent md:p-0">
-            <Link
-              className={buttonClassName({
-                className:
-                  "pointer-magnet relative isolate mx-auto min-h-12 w-full max-w-[calc(var(--control-min-size)*11)] px-[var(--space-5)] py-[var(--space-3)] font-bold",
-              })}
-              preload={false}
-              ref={revealCtaRef}
-              to="/recommendations"
-            >
-              {tasteStrings.recommendations}
-              <span
-                aria-hidden="true"
-                className="cta-star-border"
-                data-animate={revealExperience.animate ? "true" : undefined}
+          // A full-width bar on every viewport, so the CTA never floats over the axis list.
+          <div className="taste-reveal-cta fixed inset-x-0 bottom-[var(--layout-mobile-navigation-clearance)] z-25 border-t border-line bg-surface-1 px-[var(--layout-page-padding)] py-2.5 md:bottom-0">
+            <div className="mx-auto flex w-full max-w-[calc(var(--layout-width-media)-var(--layout-page-padding)*2)] justify-center md:justify-end">
+              <Link
+                className={buttonClassName({
+                  className:
+                    "pointer-magnet relative isolate min-h-12 w-full max-w-[calc(var(--control-min-size)*11)] px-[var(--space-5)] py-[var(--space-3)] font-bold md:w-80",
+                })}
+                preload={false}
+                ref={revealCtaRef}
+                to="/recommendations"
               >
-                <span className="cta-star-border__light" />
-              </span>
-            </Link>
+                {tasteStrings.recommendations}
+                <span
+                  aria-hidden="true"
+                  className="cta-star-border"
+                  data-animate={revealExperience.animate ? "true" : undefined}
+                >
+                  <span className="cta-star-border__light" />
+                </span>
+              </Link>
+            </div>
           </div>
         ) : null}
         <p

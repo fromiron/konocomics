@@ -60,7 +60,7 @@ export function OnboardingWelcome({
           {copy.eyebrow}
         </p>
         <h1
-          className="text-[length:var(--font-size-28)] leading-[1.2] tracking-[-0.03em] text-text-strong md:text-[length:var(--font-size-32)]"
+          className="text-[length:var(--text-page-title-size)] leading-[1.2] tracking-[-0.03em] text-text-strong"
           id="onboarding-welcome-heading"
           ref={headingRef}
           tabIndex={-1}
@@ -139,7 +139,10 @@ export function OnboardingIntro({ action, addMode, headingRef }: OnboardingIntro
           {addMode ? onboardingStrings.addMode.eyebrow : onboardingStrings.step1.eyebrow}
         </p>
         <Heading
-          className="max-w-[20em] text-[length:var(--font-size-20)] leading-[1.3] tracking-[-0.02em] text-text-strong md:text-[length:var(--font-size-28)]"
+          className={cn(
+            "max-w-[20em] text-[length:var(--font-size-20)] leading-[1.3] tracking-[-0.02em] text-text-strong",
+            addMode && "md:text-[length:var(--text-page-title-size)]",
+          )}
           ref={headingRef}
           tabIndex={headingRef === undefined ? undefined : -1}
         >
