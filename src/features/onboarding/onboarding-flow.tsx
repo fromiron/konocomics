@@ -689,7 +689,7 @@ export function OnboardingFlow({
         <div className="onboarding-step-one min-w-0">
           {isAddMode ? null : <OnboardingWelcome headingRef={headingRef} />}
 
-          <div className="onboarding-layout grid gap-[var(--space-6)] md:grid-cols-[minmax(0,1fr)_minmax(0,18rem)] md:items-start lg:grid-cols-[minmax(0,1fr)_minmax(0,20rem)] lg:gap-[var(--space-8)]">
+          <div className="onboarding-layout grid gap-[var(--space-6)] md:grid-cols-[minmax(0,1fr)_minmax(0,var(--layout-width-onboarding-panel))] md:items-start lg:gap-[var(--space-8)]">
             <div className="onboarding-main min-w-0">
               <OnboardingIntro
                 action={

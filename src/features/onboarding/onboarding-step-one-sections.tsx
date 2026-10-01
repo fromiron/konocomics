@@ -321,7 +321,7 @@ export function OnboardingCollectionGrid({
               <button
                 aria-controls={open ? COLLECTION_PANEL_ID : undefined}
                 aria-expanded={open}
-                className="onboarding-collection grid min-h-[var(--control-min-size)] w-full min-w-0 grid-cols-[minmax(0,1fr)_auto] items-center gap-[var(--space-3)] bg-transparent p-[var(--space-4)] text-start focus-visible:outline-2 focus-visible:outline-offset-[-2px] focus-visible:outline-ring sm:grid-cols-[minmax(0,1fr)_auto_auto]"
+                className="onboarding-collection grid min-h-[var(--control-min-size)] w-full min-w-0 grid-cols-[minmax(0,1fr)_auto] items-center gap-[var(--space-3)] bg-transparent p-[var(--space-4)] text-start focus-visible:outline-2 focus-visible:-outline-offset-2 focus-visible:outline-ring sm:grid-cols-[minmax(0,1fr)_auto_auto]"
                 onClick={() => onSelect?.(open ? undefined : collection.id)}
                 type="button"
               >
