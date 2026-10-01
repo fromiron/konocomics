@@ -40,7 +40,7 @@ export function OnboardingWelcome({
   return (
     <section
       aria-labelledby="onboarding-welcome-heading"
-      className="onboarding-welcome mb-[var(--space-6)] grid gap-[var(--space-5)] rounded-[var(--radius-card)] border border-accent/30 bg-surface-1 p-[var(--space-5)] md:p-[var(--space-8)]"
+      className="onboarding-welcome mb-[var(--space-6)] grid gap-[var(--space-5)] rounded-[var(--radius-card)] border border-line bg-surface-1 p-[var(--space-5)] md:p-[var(--space-8)]"
     >
       <header className="grid max-w-[var(--layout-width-reading)] gap-[var(--space-content-tight)]">
         <p className="font-display text-[length:var(--text-caption-size)] font-bold tracking-[0.08em] text-accent">
@@ -60,27 +60,51 @@ export function OnboardingWelcome({
         aria-label={copy.stepsLabel}
         className="onboarding-welcome__steps m-0 grid list-none gap-[var(--space-content-loose)] p-0 md:grid-cols-3"
       >
-        {copy.steps.map((step, index) => (
-          <li
-            className="grid grid-cols-[auto_minmax(0,1fr)] items-start gap-[var(--space-3)] rounded-[var(--radius-card)] border border-line bg-surface-2 p-[var(--space-4)] md:grid-cols-1"
-            key={step.title}
-          >
-            <span
-              aria-hidden="true"
-              className="grid size-[var(--space-8)] place-items-center rounded-full border border-accent bg-accent-soft font-display font-bold text-accent"
+        {copy.steps.map((step, index) => {
+          const current = index === 0;
+          return (
+            <li
+              aria-current={current ? "step" : undefined}
+              className={cn(
+                "grid grid-cols-[auto_minmax(0,1fr)] items-start gap-[var(--space-3)] rounded-[var(--radius-card)] border p-[var(--space-4)] md:grid-cols-1",
+                current ? "border-accent/60 bg-surface-2" : "border-line bg-surface-1",
+              )}
+              key={step.title}
             >
-              {index + 1}
-            </span>
-            <span className="grid min-w-0 gap-[var(--space-content-tight)]">
-              <strong className="text-[length:var(--font-size-14)] text-text-strong">
-                {step.title}
-              </strong>
-              <span className="text-[length:var(--text-caption-size)] leading-[1.5] text-text-muted">
-                {step.description}
+              <span className="flex items-center gap-[var(--space-2)]">
+                <span
+                  aria-hidden="true"
+                  className={cn(
+                    "grid size-[var(--space-8)] place-items-center rounded-full border font-display font-bold",
+                    current
+                      ? "border-accent bg-accent-soft text-accent"
+                      : "border-line text-text-muted",
+                  )}
+                >
+                  {index + 1}
+                </span>
+                {current ? (
+                  <span className="hidden text-[length:var(--text-caption-size)] font-bold text-accent md:inline">
+                    {copy.currentStep}
+                  </span>
+                ) : null}
               </span>
-            </span>
-          </li>
-        ))}
+              <span className="grid min-w-0 gap-[var(--space-content-tight)]">
+                <strong className="flex flex-wrap items-center gap-[var(--space-2)] text-[length:var(--font-size-14)] text-text-strong">
+                  {step.title}
+                  {"optional" in step ? (
+                    <span className="rounded-[var(--radius-pill)] border border-line px-[var(--space-2)] text-[length:var(--text-caption-size)] font-medium text-text-muted">
+                      {step.optional}
+                    </span>
+                  ) : null}
+                </strong>
+                <span className="text-[length:var(--text-caption-size)] leading-[1.5] text-text-muted">
+                  {step.description}
+                </span>
+              </span>
+            </li>
+          );
+        })}
       </ol>
     </section>
   );

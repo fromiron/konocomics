@@ -11,7 +11,10 @@ import {
   useState,
 } from "react";
 
+import { ChevronLeftIcon, InfoIcon } from "lucide-react";
+
 import { Button } from "@/components/design-system/button";
+import { SectionHeading } from "@/components/layout/section-heading";
 import { pageEntryFadeProps, usePageEntryMotion } from "@/components/motion/use-page-entry-motion";
 import type { GenreTag, Work } from "@/domain/catalog/types";
 import {
@@ -28,7 +31,10 @@ import {
   type NegativeDisposition,
   type OnboardingDraft,
 } from "@/domain/profile/onboarding";
-import { FACTOR_BACKED_NEGATIVE_REASON_IDS } from "@/domain/profile/constants";
+import {
+  FACTOR_BACKED_NEGATIVE_REASON_IDS,
+  isFactorBackedNegativeReason,
+} from "@/domain/profile/constants";
 import type { NegativeReasonId } from "@/domain/profile/types";
 import { useCatalog } from "@/features/catalog/catalog-provider";
 import {
@@ -65,6 +71,7 @@ import {
   NegativeWorkCard,
 } from "./negative-work-card";
 import { ExcludedMatchNotice } from "./excluded-match-notice";
+import { NegativeSummaryPanel } from "./negative-summary-panel";
 import { createWorkSearch, findExcludedSearchMatches } from "./search";
 import { SelectedTray } from "./selected-tray";
 import { WorkSearchInput, type WorkSearchState } from "./work-search-input";
@@ -72,6 +79,8 @@ import { WorkShelf } from "./work-shelf";
 
 const STEP_ONE_SEARCH_EMPTY: WorkSearchState = { query: "", results: [] };
 const STEP_TWO_SEARCH_EMPTY: WorkSearchState = { query: "", results: [] };
+const NEGATIVE_CANDIDATE_PREVIEW_LIMIT = 6;
+const NEGATIVE_CANDIDATE_EXPANDED_LIMIT = 18;
 
 const ANCHOR_CARD_LABELS = {
   select: onboardingStrings.step1.select,
@@ -82,26 +91,34 @@ const ANCHOR_CARD_LABELS = {
   markLiked: onboardingStrings.step1.markLiked,
 } as const;
 
+const negativeCardLabels = {
+  selectedPositive: onboardingStrings.step2.selectedPositive,
+  selectedNegative: onboardingStrings.step2.selectedNegative,
+  disposition: onboardingStrings.step2.disposition,
+  disliked: onboardingStrings.step2.disliked,
+  dropped: onboardingStrings.step2.dropped,
+} as const;
+
 const NEGATIVE_REASON_OPTIONS: readonly NegativeReasonOption[] = [
   ...FACTOR_BACKED_NEGATIVE_REASON_IDS.map((id): NegativeReasonOption => ({
     id,
     label: onboardingStrings.step2.reasonLabels[id],
-    external: false,
+    group: "content",
   })),
   {
     id: "external:hiatus",
     label: onboardingStrings.step2.reasonLabels.externalHiatus,
-    external: true,
+    group: "circumstance",
   },
   {
     id: "external:no-time",
     label: onboardingStrings.step2.reasonLabels.externalNoTime,
-    external: true,
+    group: "circumstance",
   },
   {
     id: "vagueDislike",
     label: onboardingStrings.step2.reasonLabels.vague,
-    external: false,
+    group: "vague",
   },
 ];
 
@@ -190,6 +207,7 @@ export function OnboardingFlow({
   const [errorMessage, setErrorMessage] = useState("");
   const [submitting, setSubmitting] = useState(false);
   const [pageEntryConsumed, setPageEntryConsumed] = useState(false);
+  const [candidatesExpanded, setCandidatesExpanded] = useState(false);
   const headingRef = useRef<HTMLHeadingElement>(null);
   const limitTimerRef = useRef<number | null>(null);
   const submittingRef = useRef(false);
@@ -303,12 +321,36 @@ export function OnboardingFlow({
   );
   const draft = localDraft ?? initialDraft;
   const currentStep = draft?.step;
+  const negativeCandidates = useMemo(() => {
+    if (draft?.step !== 2) {
+      return [];
+    }
+    const chosenWorkIds = new Set([
+      ...draft.positiveEntries.map((entry) => entry.workId),
+      ...draft.negativeEntries.map((entry) => entry.workId),
+    ]);
+    const available = selectableCatalogWorks.filter((work) => !chosenWorkIds.has(work.id));
+    // Familiar onboarding works first: recalling a disliked title is easier from known covers.
+    return [
+      ...available.filter((work) => work.eligibility.onboardingEligible),
+      ...available.filter((work) => !work.eligibility.onboardingEligible),
+    ].slice(0, NEGATIVE_CANDIDATE_EXPANDED_LIMIT);
+  }, [draft, selectableCatalogWorks]);
+  const visibleNegativeCandidates = useMemo(
+    () =>
+      negativeCandidates.slice(
+        0,
+        candidatesExpanded ? NEGATIVE_CANDIDATE_EXPANDED_LIMIT : NEGATIVE_CANDIDATE_PREVIEW_LIMIT,
+      ),
+    [candidatesExpanded, negativeCandidates],
+  );
   const coverWorkIds = useMemo(() => {
     const ordered = [
       ...(draft?.positiveEntries.map((entry) => entry.workId) ?? []),
       ...(draft?.negativeEntries.map((entry) => entry.workId) ?? []),
       ...stepOneSearch.results.map((work) => work.id),
       ...stepTwoSearch.results.map((work) => work.id),
+      ...visibleNegativeCandidates.map((work) => work.id),
       ...featuredWorks.map((work) => work.id),
       ...collectionPanelWorks.slice(0, COLLECTION_EXPANDED_LIMIT).map((work) => work.id),
       ...onboardingCollections.flatMap((collection) =>
@@ -324,6 +366,7 @@ export function OnboardingFlow({
     draft?.positiveEntries,
     stepOneSearch.results,
     stepTwoSearch.results,
+    visibleNegativeCandidates,
   ]);
   const catalogSearch = useMemo(() => createWorkSearch(allCatalogWorks), [allCatalogWorks]);
   const stepOneExcludedMatches = useMemo(
@@ -442,10 +485,17 @@ export function OnboardingFlow({
       return;
     }
     setSelectionMessage(onboardingStrings.step1.selectedAnnouncement(workTitle));
-    updateDraft({
-      ...draft,
-      positiveEntries: [...draft.positiveEntries, { workId, reaction: "liked" }],
-    });
+    const positiveEntries = [...draft.positiveEntries, { workId, reaction: "liked" as const }];
+    updateDraft(
+      draft.mode === "add"
+        ? { ...draft, positiveEntries }
+        : {
+            ...draft,
+            positiveEntries,
+            // A work can only be on one side; liking it after returning from STEP 2 wins.
+            negativeEntries: draft.negativeEntries.filter((entry) => entry.workId !== workId),
+          },
+    );
   };
 
   const toggleFavorite = (workId: string) => {
@@ -606,6 +656,16 @@ export function OnboardingFlow({
     updateDraft({ ...draft, step: 2 });
   };
 
+  const returnToStepOne = () => {
+    if (submittingRef.current || draft.mode !== "firstRun") return;
+    prepareToContinue();
+    onQueryChange?.("");
+    setStepOneSearch(STEP_ONE_SEARCH_EMPTY);
+    setStepTwoSearch(STEP_TWO_SEARCH_EMPTY);
+    setCandidatesExpanded(false);
+    updateDraft({ ...draft, step: 1 });
+  };
+
   const closeAddMode = async () => {
     if (draft.mode !== "add" || submittingRef.current) {
       return;
@@ -631,17 +691,30 @@ export function OnboardingFlow({
     updateDraft({ ...draft, positiveEntries: [] });
   };
 
-  const clarity = projectProfileClarity(
-    profileRecords,
-    draft.positiveEntries.map((entry) => entry.workId),
-    ONBOARDING_MAX_POSITIVE_WORKS - draft.positiveEntries.length,
-  );
-  const clarityHint =
-    clarity.anchorsToNextLevel === null
+  const clarity = projectProfileClarity(profileRecords, {
+    addedPositiveWorkIds: draft.positiveEntries.map((entry) => entry.workId),
+    addedReasonedNegativeWorkIds: draft.negativeEntries
+      .filter((entry) => entry.reasons.some(isFactorBackedNegativeReason))
+      .map((entry) => entry.workId),
+    additionalPositiveCapacity:
+      draft.step === 1 ? ONBOARDING_MAX_POSITIVE_WORKS - draft.positiveEntries.length : 0,
+  });
+  const belowMinimum = draft.positiveEntries.length < minimumPositiveWorks;
+  const clarityLevelLabel =
+    clarity.positiveAnchorCount === 0
+      ? onboardingStrings.clarity.levels.empty
+      : onboardingStrings.clarity.levels[clarity.level];
+  // Below the first-run minimum the tray already says how many works remain; repeating the same
+  // count as a clarity hint would only add noise.
+  const stepOneClarityHint =
+    clarity.anchorsToNextLevel === null || (belowMinimum && !isAddMode)
       ? undefined
       : clarity.level === "low"
         ? onboardingStrings.clarity.toNormal(clarity.anchorsToNextLevel)
         : onboardingStrings.clarity.toHigh(clarity.anchorsToNextLevel);
+  // Reasoned negative works add to profile confidence until two of them are counted.
+  const stepTwoClarityHint =
+    clarity.reasonedNegativeCount < 2 ? onboardingStrings.clarity.withReasons : undefined;
   const panelMode = isAddMode ? "add" : "firstRun";
 
   const storageWarning = status.state === "degraded";
@@ -801,11 +874,8 @@ export function OnboardingFlow({
             <SelectedTray
               clarity={{
                 label: onboardingStrings.clarity.label,
-                levelLabel:
-                  clarity.positiveAnchorCount === 0
-                    ? onboardingStrings.clarity.levels.empty
-                    : onboardingStrings.clarity.levels[clarity.level],
-                hint: clarityHint,
+                levelLabel: clarityLevelLabel,
+                hint: stepOneClarityHint,
                 value: clarity.confidence,
               }}
               clearLabel={onboardingStrings.selectionPanel.clear}
@@ -843,7 +913,7 @@ export function OnboardingFlow({
               onCoverVisible={requestCover}
               onRemove={togglePositiveSelection}
               remainingLabel={
-                draft.positiveEntries.length < minimumPositiveWorks
+                belowMinimum
                   ? onboardingStrings.step1.remaining(
                       minimumPositiveWorks - draft.positiveEntries.length,
                     )
@@ -863,139 +933,192 @@ export function OnboardingFlow({
           className="onboarding-step-two m-0 min-w-0 border-0 p-0"
           disabled={submitting}
         >
-          <header className="onboarding-header mb-[var(--space-5)] grid max-w-[var(--layout-width-reading)] gap-[var(--space-content)]">
-            <p className="font-display text-[length:var(--text-caption-size)] font-bold tracking-[0.08em] text-accent">
-              {onboardingStrings.step2.eyebrow}
-            </p>
-            <h1
-              className="max-w-[18ch] text-[clamp(var(--font-size-28),5vw,var(--font-size-40))] leading-[1.25] tracking-[-0.03em] text-text-strong"
-              ref={headingRef}
-              tabIndex={-1}
-            >
-              {onboardingStrings.step2.title}{" "}
-              <span className="ms-2 inline-block text-[length:var(--font-size-14)] font-medium text-text-muted">
-                {onboardingStrings.step2.optional}
-              </span>
-            </h1>
-            <p className="text-text-muted">{onboardingStrings.step2.description}</p>
-          </header>
+          <div className="onboarding-layout grid gap-[var(--space-6)] md:grid-cols-[minmax(0,1fr)_minmax(0,var(--layout-width-onboarding-panel))] md:items-start lg:gap-[var(--space-8)]">
+            <div className="onboarding-main grid min-w-0 gap-[var(--space-section)]">
+              <header className="onboarding-header grid max-w-[var(--layout-width-reading)] justify-items-start gap-[var(--space-content-tight)]">
+                <Button
+                  className="onboarding-step-two__back -ms-[var(--space-3)] mb-[var(--space-2)] gap-[var(--space-1)] text-text-muted [&>svg]:size-4"
+                  onClick={returnToStepOne}
+                  type="button"
+                  variant="ghost"
+                >
+                  <ChevronLeftIcon aria-hidden="true" />
+                  {onboardingStrings.step2.back}
+                </Button>
+                <p className="font-display text-[length:var(--text-caption-size)] font-bold tracking-[0.08em] text-text-muted">
+                  {onboardingStrings.step2.eyebrow}
+                </p>
+                <h1
+                  className="text-[length:var(--font-size-20)] leading-[1.35] tracking-[-0.02em] text-text-strong md:text-[length:var(--font-size-28)]"
+                  ref={headingRef}
+                  tabIndex={-1}
+                >
+                  {onboardingStrings.step2.title}{" "}
+                  <span className="inline-block rounded-[var(--radius-pill)] border border-line px-[var(--space-2)] align-middle text-[length:var(--text-caption-size)] font-medium tracking-normal text-text-muted">
+                    {onboardingStrings.step2.optional}
+                  </span>
+                </h1>
+                <p className="text-text-muted">{onboardingStrings.step2.description}</p>
+                <p className="onboarding-principle mt-[var(--space-2)] flex items-start gap-[var(--space-2)] rounded-[var(--radius-card)] border border-line bg-surface-1 px-[var(--space-4)] py-[var(--space-3)] text-[length:var(--text-caption-size)] text-text [&>svg]:mt-[2px] [&>svg]:size-4 [&>svg]:shrink-0 [&>svg]:text-text-muted">
+                  <InfoIcon aria-hidden="true" />
+                  {onboardingStrings.step2.principle}
+                </p>
+              </header>
 
-          {draft.negativeEntries.length > 0 ? (
-            <section
-              aria-label={onboardingStrings.step2.title}
-              className="negative-entries mb-[var(--space-7)] grid gap-[var(--space-4)]"
-            >
-              {draft.negativeEntries.map((entry) => {
-                const work = worksById.get(entry.workId);
-                return work === undefined ? null : (
-                  <NegativeEntryEditor
-                    coverUrl={coverUrls.get(work.id)}
-                    disabled={submitting}
-                    key={entry.workId}
-                    entry={entry}
-                    focusDisposition={
-                      negativeFocus?.workId === entry.workId ? negativeFocus.disposition : undefined
-                    }
-                    labels={{
-                      disposition: onboardingStrings.step2.disposition,
-                      disliked: onboardingStrings.step2.disliked,
-                      dropped: onboardingStrings.step2.dropped,
-                      reasons: onboardingStrings.step2.reasons,
-                      noReason: onboardingStrings.step2.noReason,
-                      externalHelper: onboardingStrings.step2.externalHelper,
-                      remove: onboardingStrings.step2.remove,
-                    }}
-                    onCoverVisible={() => requestCover(work.id)}
-                    onDispositionChange={changeNegativeDisposition}
-                    onReasonToggle={toggleNegativeReason}
-                    onRemove={removeNegative}
-                    reasonOptions={NEGATIVE_REASON_OPTIONS}
-                    work={work}
+              {draft.negativeEntries.length > 0 ? (
+                <section
+                  aria-labelledby="negative-entries-heading"
+                  className="negative-entries grid gap-[var(--space-4)]"
+                >
+                  <SectionHeading
+                    className="mb-0"
+                    compact
+                    id="negative-entries-heading"
+                    title={onboardingStrings.step2.selectedHeading}
                   />
-                );
-              })}
-            </section>
-          ) : null}
+                  {draft.negativeEntries.map((entry) => {
+                    const work = worksById.get(entry.workId);
+                    return work === undefined ? null : (
+                      <NegativeEntryEditor
+                        coverUrl={coverUrls.get(work.id)}
+                        disabled={submitting}
+                        key={entry.workId}
+                        entry={entry}
+                        focusDisposition={
+                          negativeFocus?.workId === entry.workId
+                            ? negativeFocus.disposition
+                            : undefined
+                        }
+                        labels={{
+                          disposition: onboardingStrings.step2.disposition,
+                          disliked: onboardingStrings.step2.disliked,
+                          dropped: onboardingStrings.step2.dropped,
+                          reasons: onboardingStrings.step2.reasons,
+                          reasonsLegend: onboardingStrings.step2.reasonsLegend,
+                          reasonGroups: onboardingStrings.step2.reasonGroups,
+                          noReason: onboardingStrings.step2.noReason,
+                          externalHelper: onboardingStrings.step2.externalHelper,
+                          remove: onboardingStrings.step2.remove,
+                        }}
+                        onCoverVisible={() => requestCover(work.id)}
+                        onDispositionChange={changeNegativeDisposition}
+                        onReasonToggle={toggleNegativeReason}
+                        onRemove={removeNegative}
+                        reasonOptions={NEGATIVE_REASON_OPTIONS}
+                        work={work}
+                      />
+                    );
+                  })}
+                </section>
+              ) : null}
 
-          <WorkSearchInput
-            key="negative-search"
-            label={onboardingStrings.step2.searchLabel}
-            onQueryChange={onQueryChange}
-            onSearchStateChange={setStepTwoSearch}
-            placeholder={onboardingStrings.step2.searchPlaceholder}
-            query={query}
-            works={selectableCatalogWorks}
-          />
-          <p aria-atomic="true" aria-live="polite" className="visually-hidden sr-only">
-            {stepTwoSearch.query.trim().length > 0
-              ? onboardingStrings.searchResults(stepTwoSearch.query, stepTwoSearch.results.length)
-              : ""}
-          </p>
-
-          {stepTwoSearch.query.trim().length === 0 ? (
-            <p className="onboarding-search-prompt rounded-[var(--radius-card)] border border-line bg-surface-1 px-[var(--space-5)] py-[var(--space-7)] text-text-muted">
-              {onboardingStrings.step2.emptySearch}
-            </p>
-          ) : stepTwoSearch.results.length === 0 ? (
-            stepTwoExcludedMatches.length > 0 ? (
-              <ExcludedMatchNotice matches={stepTwoExcludedMatches} />
-            ) : (
-              <div className="onboarding-empty grid gap-[var(--space-content-tight)] rounded-[var(--radius-card)] border border-line bg-surface-1 px-[var(--space-5)] py-[var(--space-7)] text-text-muted">
-                <p>{onboardingStrings.step2.noResults}</p>
-              </div>
-            )
-          ) : (
-            <section
-              aria-label={onboardingStrings.step2.searchLabel}
-              className="negative-result-grid grid grid-cols-[minmax(0,var(--layout-width-form))] gap-x-[var(--space-3)] gap-y-[var(--space-5)] [&>.negative-result-card]:w-full [&>.negative-result-card]:min-w-0"
-            >
-              {stepTwoSearch.results.map((work: Work) => (
-                <NegativeWorkCard
-                  coverUrl={coverUrls.get(work.id)}
-                  disabled={submitting}
-                  key={work.id}
-                  isPositive={positiveWorkIds.has(work.id)}
-                  isSelected={negativeByWorkId.has(work.id)}
-                  labels={{
-                    selectedPositive: onboardingStrings.step2.selectedPositive,
-                    selectedNegative: onboardingStrings.step2.selectedNegative,
-                    disposition: onboardingStrings.step2.disposition,
-                    disliked: onboardingStrings.step2.disliked,
-                    dropped: onboardingStrings.step2.dropped,
-                  }}
-                  onAdd={addNegative}
-                  onCoverVisible={() => requestCover(work.id)}
-                  work={work}
+              <div className="onboarding-discovery grid gap-[var(--space-5)] [&>.work-search]:m-0 [&>.work-search]:max-w-none [&_.work-search__label]:sr-only [&_.work-search__input]:min-h-[var(--control-min-size)] [&_.work-search__input]:bg-surface-1 motion-reduce:[&_.work-search__input]:transition-none">
+                <WorkSearchInput
+                  key="negative-search"
+                  label={onboardingStrings.step2.searchLabel}
+                  onQueryChange={onQueryChange}
+                  onSearchStateChange={setStepTwoSearch}
+                  placeholder={onboardingStrings.step2.searchPlaceholder}
+                  query={query}
+                  works={selectableCatalogWorks}
                 />
-              ))}
-            </section>
-          )}
+                <p aria-atomic="true" aria-live="polite" className="visually-hidden sr-only">
+                  {stepTwoSearch.query.trim().length > 0
+                    ? onboardingStrings.searchResults(
+                        stepTwoSearch.query,
+                        stepTwoSearch.results.length,
+                      )
+                    : ""}
+                </p>
 
-          <div className="onboarding-step-actions mt-[var(--space-section)] flex max-w-[var(--layout-width-form)] justify-end gap-[var(--space-content-loose)] [&>button]:flex-1">
-            <Button
-              className={cn(
-                draft.negativeEntries.length === 0 &&
-                  "onboarding-step-actions__primary [@media(hover:hover)_and_(pointer:fine)]:hover:bg-accent-hover",
-              )}
-              disabled={submitting}
-              onClick={() => void complete(false)}
-              type="button"
-              variant={draft.negativeEntries.length === 0 ? "default" : "outline"}
-            >
-              {submitting ? onboardingStrings.step2.saving : onboardingStrings.step2.skip}
-            </Button>
-            <Button
-              className={cn(
-                draft.negativeEntries.length > 0 &&
-                  "onboarding-step-actions__primary [@media(hover:hover)_and_(pointer:fine)]:hover:bg-accent-hover",
-              )}
-              disabled={submitting}
-              onClick={() => void complete(true)}
-              type="button"
-              variant={draft.negativeEntries.length > 0 ? "default" : "outline"}
-            >
-              {submitting ? onboardingStrings.step2.saving : onboardingStrings.step2.finish}
-            </Button>
+                {stepTwoSearch.query.trim().length === 0 ? (
+                  visibleNegativeCandidates.length === 0 ? null : (
+                    <section
+                      aria-labelledby="negative-candidates-heading"
+                      className="negative-candidates grid"
+                    >
+                      <SectionHeading
+                        compact
+                        description={onboardingStrings.step2.candidatesDescription}
+                        id="negative-candidates-heading"
+                        title={onboardingStrings.step2.candidatesHeading}
+                      />
+                      <div className="negative-result-grid grid gap-[var(--space-content)]">
+                        {visibleNegativeCandidates.map((work) => (
+                          <NegativeWorkCard
+                            coverUrl={coverUrls.get(work.id)}
+                            disabled={submitting}
+                            isPositive={false}
+                            isSelected={false}
+                            key={work.id}
+                            labels={negativeCardLabels}
+                            onAdd={addNegative}
+                            onCoverVisible={() => requestCover(work.id)}
+                            work={work}
+                          />
+                        ))}
+                      </div>
+                      {!candidatesExpanded &&
+                      negativeCandidates.length > NEGATIVE_CANDIDATE_PREVIEW_LIMIT ? (
+                        <Button
+                          className="mt-[var(--space-4)] justify-self-start"
+                          onClick={() => setCandidatesExpanded(true)}
+                          type="button"
+                          variant="outline"
+                        >
+                          {onboardingStrings.step2.showMoreCandidates}
+                        </Button>
+                      ) : null}
+                    </section>
+                  )
+                ) : stepTwoSearch.results.length === 0 ? (
+                  stepTwoExcludedMatches.length > 0 ? (
+                    <ExcludedMatchNotice matches={stepTwoExcludedMatches} />
+                  ) : (
+                    <div className="onboarding-empty grid gap-[var(--space-content-tight)] rounded-[var(--radius-card)] border border-line bg-surface-1 px-[var(--space-5)] py-[var(--space-7)] text-text-muted">
+                      <p>{onboardingStrings.step2.noResults}</p>
+                    </div>
+                  )
+                ) : (
+                  <section
+                    aria-label={onboardingStrings.step2.searchLabel}
+                    className="negative-result-grid grid gap-[var(--space-content)]"
+                  >
+                    {stepTwoSearch.results.map((work: Work) => (
+                      <NegativeWorkCard
+                        coverUrl={coverUrls.get(work.id)}
+                        disabled={submitting}
+                        key={work.id}
+                        isPositive={positiveWorkIds.has(work.id)}
+                        isSelected={negativeByWorkId.has(work.id)}
+                        labels={negativeCardLabels}
+                        onAdd={addNegative}
+                        onCoverVisible={() => requestCover(work.id)}
+                        work={work}
+                      />
+                    ))}
+                  </section>
+                )}
+              </div>
+            </div>
+
+            <NegativeSummaryPanel
+              clarity={{
+                label: onboardingStrings.clarity.label,
+                levelLabel: clarityLevelLabel,
+                hint: stepTwoClarityHint,
+                value: clarity.confidence,
+              }}
+              coverUrls={coverUrls}
+              entries={draft.negativeEntries}
+              limitActive={limitMessage !== ""}
+              onCoverVisible={requestCover}
+              onFinish={() => void complete(true)}
+              onSkip={() => void complete(false)}
+              shakeKey={shakeKey}
+              submitting={submitting}
+              worksById={worksById}
+            />
           </div>
         </fieldset>
       )}

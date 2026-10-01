@@ -150,7 +150,8 @@ describe("OnboardingFlow finalization", () => {
         "",
       ),
     );
-    expect(screen.getByText("作品名を入力すると候補が表示されます。")).toBeTruthy();
+    expect(screen.getByRole("heading", { name: "候補から選ぶ" })).toBeTruthy();
+    expect(screen.getByRole("group", { name: "MONSTER — この作品について" })).toBeTruthy();
     expect(testState.saveOnboardingDraft).toHaveBeenLastCalledWith(
       expect.objectContaining({
         step: 2,
@@ -421,7 +422,10 @@ describe("OnboardingFlow finalization", () => {
     const remove = screen.getByRole("button", { name: "MONSTER — この作品を外す" });
     const disposition = screen.getByRole("radio", { name: "合わなかった" });
     const reason = screen.getByRole("checkbox", { name: "展開が遅い" });
-    const completionButtons = screen.getAllByRole("button", { name: "保存しています…" });
+    const completionButtons = [
+      screen.getByRole("button", { name: "保存しています…" }),
+      screen.getByRole("button", { name: "選んだ作品を使わずに進む" }),
+    ];
 
     await waitFor(() => {
       expect(search.matches(":disabled")).toBe(true);
@@ -452,6 +456,56 @@ describe("OnboardingFlow finalization", () => {
       ).toBe(false);
     });
     expect(screen.getByRole("alert").textContent).toContain("好みを保存できませんでした");
+  });
+
+  it("offers one primary action without chosen works and lets STEP 2 go back to STEP 1", () => {
+    testState.draft = { ...(testState.draft as object), negativeEntries: [] };
+
+    render(<OnboardingFlow />);
+
+    expect(screen.getByRole("button", { name: "好みを見る" })).toBeTruthy();
+    expect(screen.queryByRole("button", { name: "選んだ作品を使わずに進む" })).toBeNull();
+    expect(screen.getByRole("heading", { name: "候補から選ぶ" })).toBeTruthy();
+
+    fireEvent.click(screen.getByRole("button", { name: "好きな作品を選び直す" }));
+
+    expect(testState.saveOnboardingDraft).toHaveBeenLastCalledWith(
+      expect.objectContaining({ step: 1, negativeEntries: [] }),
+    );
+    expect(
+      screen.getByRole("heading", { level: 2, name: "好きなマンガを 5〜10 作品えらんでください" }),
+    ).toBeTruthy();
+  });
+
+  it("adds a suggested candidate without searching and keeps it reasonless until chosen", () => {
+    testState.draft = { ...(testState.draft as object), negativeEntries: [] };
+
+    render(<OnboardingFlow />);
+    const candidate = screen.getByRole("group", { name: "MONSTER — この作品について" });
+    fireEvent.click(within(candidate).getByRole("radio", { name: "途中でやめた" }));
+
+    expect(testState.saveOnboardingDraft).toHaveBeenLastCalledWith(
+      expect.objectContaining({
+        negativeEntries: [{ workId: "monster", disposition: "dropped", reasons: [] }],
+      }),
+    );
+    expect(screen.getByRole("heading", { name: "選んだ作品" })).toBeTruthy();
+    expect(screen.getByText("やめた理由（複数選べます）")).toBeTruthy();
+    expect(screen.getByRole("button", { name: "選んだ作品を使わずに進む" })).toBeTruthy();
+  });
+
+  it("moves a STEP 2 work to the liked side when it is picked after going back", () => {
+    testState.draft = { ...(testState.draft as object), step: 1 };
+
+    render(<OnboardingFlow />);
+    fireEvent.click(screen.getAllByRole("button", { name: "MONSTER — 好きに追加" })[0]!);
+
+    expect(testState.saveOnboardingDraft).toHaveBeenLastCalledWith(
+      expect.objectContaining({
+        negativeEntries: [],
+        positiveEntries: expect.arrayContaining([{ workId: "monster", reaction: "liked" }]),
+      }),
+    );
   });
 
   it("uses current-catalog records for the first-profile reveal decision", async () => {

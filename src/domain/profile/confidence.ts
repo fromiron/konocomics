@@ -92,27 +92,42 @@ export type ProjectedProfileClarity = Readonly<{
   confidence: number;
   level: ConfidenceLevel;
   positiveAnchorCount: number;
+  reasonedNegativeCount: number;
   anchorsToNextLevel: number | null;
 }>;
 
+export type ProfileClarityProjection = Readonly<{
+  addedPositiveWorkIds: readonly string[];
+  /** Unsaved negative works that carry at least one factor-backed reason. */
+  addedReasonedNegativeWorkIds?: readonly string[];
+  /** How many more positive works may still be added in this session. */
+  additionalPositiveCapacity: number;
+}>;
+
 /**
- * Projects the profile confidence after adding not-yet-saved positive works, and how many more
- * positive works (within `additionalCapacity`) would move it to the next confidence level.
+ * Projects the profile confidence after adding not-yet-saved onboarding works, and how many more
+ * positive works (within the remaining capacity) would move it to the next confidence level.
  */
 export function projectProfileClarity(
   records: readonly UserWorkRecord[],
-  addedPositiveWorkIds: readonly string[],
-  additionalCapacity: number,
+  {
+    addedPositiveWorkIds,
+    addedReasonedNegativeWorkIds = [],
+    additionalPositiveCapacity,
+  }: ProfileClarityProjection,
 ): ProjectedProfileClarity {
   const positiveAnchorCount = new Set([
     ...records.filter(isPositiveAnchor).map((record) => record.workId),
     ...addedPositiveWorkIds,
   ]).size;
-  const reasonedNegativeCount = countReasonedNegativeWorks(records);
+  const reasonedNegativeCount = new Set([
+    ...records.filter(hasFactorBackedReason).map((record) => record.workId),
+    ...addedReasonedNegativeWorkIds,
+  ]).size;
   const confidence = calculateConfidenceFromCounts(positiveAnchorCount, reasonedNegativeCount);
   const level = getConfidenceLevel(confidence);
   let anchorsToNextLevel: number | null = null;
-  for (let extra = 1; extra <= additionalCapacity; extra += 1) {
+  for (let extra = 1; extra <= additionalPositiveCapacity; extra += 1) {
     const nextLevel = getConfidenceLevel(
       calculateConfidenceFromCounts(positiveAnchorCount + extra, reasonedNegativeCount),
     );
@@ -121,5 +136,5 @@ export function projectProfileClarity(
       break;
     }
   }
-  return { confidence, level, positiveAnchorCount, anchorsToNextLevel };
+  return { confidence, level, positiveAnchorCount, reasonedNegativeCount, anchorsToNextLevel };
 }
