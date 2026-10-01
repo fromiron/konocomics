@@ -43,6 +43,7 @@ const fixedPrerenderPaths = [
   "/settings",
   "/works/external",
   "/share",
+  "/about",
 ] as const;
 const routedSearchCases = [
   {
