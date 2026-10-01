@@ -1,6 +1,13 @@
 "use client";
 
 import { useNavigate } from "@tanstack/react-router";
+import {
+  CircleCheckIcon,
+  DownloadIcon,
+  FileUpIcon,
+  Trash2Icon,
+  TriangleAlertIcon,
+} from "lucide-react";
 import { type ChangeEvent, type ReactNode, useRef, useState } from "react";
 
 import {
@@ -13,7 +20,7 @@ import {
   AlertDialogHeader,
   AlertDialogTitle,
 } from "@/components/design-system/alert-dialog";
-import { Button } from "@/components/design-system/button";
+import { Button, buttonClassName } from "@/components/design-system/button";
 import { Input } from "@/components/design-system/input";
 import {
   DataTransferError,
@@ -28,10 +35,10 @@ import { resetMoodSession } from "@/features/recommendations/mood-session";
 import { settingsStrings } from "@/lib/strings";
 
 import { SettingsDialog } from "./settings-dialog";
-import { SettingsPanel } from "./settings-panel";
+import { SettingsNotice, SettingsPanel, SettingsRow } from "./settings-panel";
 
 type DataSettingsProps = Readonly<{
-  /** Leading rows (for example the storage status) shown before export. */
+  /** Leading rows (for example the storage status) shown before export. Renders the data and danger cards. */
   children?: ReactNode;
   currentCatalog: CurrentCatalogIdentity;
   deleteAllData(currentCatalogVersion: string): Promise<DataMutationResult>;
@@ -109,6 +116,10 @@ export function DataSettings({
     null,
   );
   const [error, setError] = useState<string | null>(null);
+  /** Where an error outside a dialog is shown: next to the control that caused it. */
+  const [errorAt, setErrorAt] = useState<"export" | "import" | "danger">("export");
+  const [exportOrigin, setExportOrigin] = useState<"data" | "danger">("data");
+  const [previewFilename, setPreviewFilename] = useState("");
   const [success, setSuccess] = useState<string | null>(null);
 
   const beginMutation = (action: Exclude<NonNullable<typeof busyAction>, "inspect">) => {
@@ -125,13 +136,15 @@ export function DataSettings({
     setBusyAction(null);
   };
 
-  const handleExport = async () => {
+  const handleExport = async (origin: "data" | "danger") => {
     if (!beginMutation("export")) return;
+    setExportOrigin(origin);
     const exportedAt = new Date().toISOString();
     try {
       const file = await exportUserData(exportedAt, currentCatalog);
       triggerDownload(file, exportedAt);
     } catch (nextError) {
+      setErrorAt(origin === "danger" ? "danger" : "export");
       setError(transferErrorMessage(nextError));
     } finally {
       finishMutation();
@@ -150,8 +163,10 @@ export function DataSettings({
     setBusyAction("inspect");
     try {
       const nextPreview = await inspectImportJson(await selectedFile.text(), currentCatalog);
+      setPreviewFilename(selectedFile.name);
       setPreview(nextPreview);
     } catch (nextError) {
+      setErrorAt("import");
       setError(transferErrorMessage(nextError));
     } finally {
       mutationFence.current = false;
@@ -231,69 +246,101 @@ export function DataSettings({
     setError(null);
   };
 
+  const exportLabel = (origin: "data" | "danger") =>
+    busyAction === "export" && exportOrigin === origin
+      ? settingsStrings.data.export.exporting
+      : origin === "data"
+        ? settingsStrings.data.export.action
+        : settingsStrings.danger.exportFirst;
+
   return (
     <>
       <SettingsPanel
         description={settingsStrings.data.description}
         headingId="settings-data-title"
+        id="settings-section-data"
         title={settingsStrings.data.title}
       >
-        <div className="grid gap-[var(--space-5)]">
+        <div className="grid min-w-0 gap-[var(--space-5)]">
           {children}
-          <div className="grid gap-[var(--space-4)] border-t border-line pt-[var(--space-5)] sm:grid-cols-[minmax(0,1fr)_auto] sm:items-center">
-            <div className="grid min-w-0 gap-[var(--space-content-tight)]">
-              <h3 className="text-[length:var(--font-size-16)]">
-                {settingsStrings.data.export.title}
-              </h3>
-              <p className="text-text-muted [overflow-wrap:anywhere]">
-                {settingsStrings.data.export.description}
-              </p>
-            </div>
-            <Button
-              className="w-full sm:w-fit"
-              disabled={busyAction !== null}
-              onClick={() => void handleExport()}
-              type="button"
-              variant="outline"
-            >
-              {busyAction === "export"
-                ? settingsStrings.data.export.exporting
-                : settingsStrings.data.export.action}
-            </Button>
-          </div>
-
-          <div className="grid gap-[var(--space-4)] border-t border-line pt-[var(--space-5)] sm:grid-cols-[minmax(0,1fr)_auto] sm:items-center">
-            <div className="grid min-w-0 gap-[var(--space-content-tight)]">
-              <h3 className="text-[length:var(--font-size-16)]">
-                {settingsStrings.data.import.title}
-              </h3>
-              <p className="text-text-muted [overflow-wrap:anywhere]">
-                {settingsStrings.data.import.description}
-              </p>
-            </div>
-            <label className="relative w-full cursor-pointer has-[input:disabled]:cursor-not-allowed has-[input:disabled]:opacity-45 sm:w-fit">
-              <input
-                accept=".json,application/json"
-                className="peer absolute size-px opacity-0"
+          <SettingsRow
+            action={
+              <Button
+                className="w-full sm:w-fit"
                 disabled={busyAction !== null}
-                id="settings-import-file"
-                onChange={(event) => void handleImportFile(event)}
-                ref={fileInputRef}
-                type="file"
-              />
-              <span className="inline-flex min-h-[var(--control-min-size)] w-full items-center justify-center rounded-[var(--radius-control)] border border-line bg-surface-2 px-[var(--space-4)] py-[var(--space-content)] text-center font-bold text-text-strong peer-focus-visible:outline-2 peer-focus-visible:outline-offset-2 peer-focus-visible:outline-ring [@media(hover:hover)_and_(pointer:fine)]:hover:bg-surface-3 sm:w-fit">
-                {busyAction === "inspect"
-                  ? settingsStrings.data.import.inspecting
-                  : settingsStrings.data.import.select}
-              </span>
-            </label>
+                onClick={() => void handleExport("data")}
+                type="button"
+                variant="outline"
+              >
+                <DownloadIcon aria-hidden="true" />
+                {exportLabel("data")}
+              </Button>
+            }
+            description={<p>{settingsStrings.data.export.description}</p>}
+            title={settingsStrings.data.export.title}
+          >
+            {error !== null && dialog === null && errorAt === "export" ? (
+              <SettingsNotice tone="error">{error}</SettingsNotice>
+            ) : null}
+          </SettingsRow>
+
+          <SettingsRow
+            action={
+              <label className="relative w-full cursor-pointer has-[input:disabled]:cursor-not-allowed has-[input:disabled]:opacity-45 sm:w-fit">
+                <input
+                  accept=".json,application/json"
+                  className="peer absolute size-px opacity-0"
+                  disabled={busyAction !== null}
+                  id="settings-import-file"
+                  onChange={(event) => void handleImportFile(event)}
+                  ref={fileInputRef}
+                  type="file"
+                />
+                <span
+                  className={buttonClassName({
+                    className:
+                      "pointer-events-none w-full gap-[var(--space-content)] peer-focus-visible:outline-2 peer-focus-visible:outline-offset-2 peer-focus-visible:outline-ring sm:w-fit",
+                    variant: "outline",
+                  })}
+                >
+                  <FileUpIcon aria-hidden="true" />
+                  {busyAction === "inspect"
+                    ? settingsStrings.data.import.inspecting
+                    : settingsStrings.data.import.select}
+                </span>
+              </label>
+            }
+            description={<p>{settingsStrings.data.import.description}</p>}
+            title={settingsStrings.data.import.title}
+          >
+            {busyAction === "inspect" ? (
+              <SettingsNotice tone="progress">
+                {settingsStrings.data.import.inspecting}
+              </SettingsNotice>
+            ) : null}
+            {error !== null && dialog === null && errorAt === "import" ? (
+              <SettingsNotice tone="error">{error}</SettingsNotice>
+            ) : null}
             {preview === null ? null : (
               <div
-                className="grid gap-[var(--space-4)] rounded-[var(--radius-card)] border border-line bg-surface-2 p-[var(--space-4)] sm:col-span-2"
+                className="grid min-w-0 gap-[var(--space-4)] rounded-[var(--radius-card)] border border-line-accent-subtle bg-surface-2 p-[var(--space-4)] md:p-[var(--space-5)]"
                 data-import-state="ready"
               >
-                <h4>{settingsStrings.data.import.preview.title}</h4>
-                <dl className="m-0 grid [&>div]:grid [&>div]:grid-cols-[minmax(0,1fr)_auto] [&>div]:gap-[var(--space-4)] [&>div]:border-t [&>div]:border-line [&>div]:py-[var(--space-3)] [&_dd]:m-0 [&_dd]:text-end [&_dt]:text-text-muted">
+                <div className="grid min-w-0 gap-[var(--space-content-tight)]">
+                  <h4 className="flex min-w-0 items-center gap-[var(--space-content)] text-text-strong">
+                    <CircleCheckIcon
+                      aria-hidden="true"
+                      className="size-[var(--space-4)] shrink-0 text-accent"
+                    />
+                    {settingsStrings.data.import.preview.title}
+                  </h4>
+                  {previewFilename === "" ? null : (
+                    <p className="text-[length:var(--font-size-14)] text-text-muted [overflow-wrap:anywhere]">
+                      {settingsStrings.data.import.verified(previewFilename)}
+                    </p>
+                  )}
+                </div>
+                <dl className="m-0 grid min-w-0 text-[length:var(--font-size-14)] [&>div]:grid [&>div]:grid-cols-[minmax(0,1fr)_auto] [&>div]:gap-[var(--space-4)] [&>div]:border-t [&>div]:border-line [&>div]:py-[var(--space-3)] [&_dd]:m-0 [&_dd]:text-end [&_dd]:text-text-strong [&_dt]:text-text-muted">
                   <div>
                     <dt>{settingsStrings.data.import.preview.exportedAtLabel}</dt>
                     <dd>{exportedAtFormatter.format(new Date(preview.exportedAt))}</dd>
@@ -304,7 +351,7 @@ export function DataSettings({
                   </div>
                 </dl>
                 {preview.catalogVersionMismatch ? (
-                  <p className="settings-import-preview__warning border-l-[length:var(--space-1)] border-warn bg-surface-1 px-[var(--space-4)] py-[var(--space-3)]">
+                  <p className="settings-import-preview__warning border-l-[length:var(--space-1)] border-warn bg-surface-1 px-[var(--space-4)] py-[var(--space-3)] [overflow-wrap:anywhere]">
                     {settingsStrings.data.import.preview.catalogMismatch(
                       preview.catalogVersion,
                       currentCatalog.catalogVersion,
@@ -316,48 +363,60 @@ export function DataSettings({
                   disabled={busyAction !== null}
                   onClick={(event) => openReplaceDialog(event.currentTarget)}
                   type="button"
-                  variant="outline"
                 >
                   {settingsStrings.data.import.reviewReplacement}
                 </Button>
               </div>
             )}
-          </div>
+          </SettingsRow>
+        </div>
+      </SettingsPanel>
 
-          <div className="grid gap-[var(--space-4)] border-t border-line-danger pt-[var(--space-5)] sm:grid-cols-[minmax(0,1fr)_auto] sm:items-center">
-            <div className="grid min-w-0 gap-[var(--space-content-tight)]">
-              <h3 className="text-[length:var(--font-size-16)]">
-                {settingsStrings.data.delete.title}
-              </h3>
-              <p className="text-text-muted [overflow-wrap:anywhere]">
-                {settingsStrings.data.delete.confirm.description}
-              </p>
-            </div>
+      <SettingsPanel
+        description={settingsStrings.danger.description}
+        headingId="settings-danger-title"
+        icon={<TriangleAlertIcon aria-hidden="true" className="size-[var(--space-5)] shrink-0" />}
+        id="settings-section-danger"
+        title={settingsStrings.danger.title}
+        tone="danger"
+      >
+        <div className="grid min-w-0 gap-[var(--space-4)] border-t border-line-danger pt-[var(--space-5)] sm:grid-cols-[minmax(0,1fr)_auto] sm:items-center">
+          <div className="grid min-w-0 gap-[var(--space-content-tight)]">
+            <h3 className="text-[length:var(--font-size-16)] text-text-strong">
+              {settingsStrings.data.delete.title}
+            </h3>
+            <p className="text-[length:var(--font-size-14)] text-text-muted [overflow-wrap:anywhere]">
+              {settingsStrings.data.delete.description}
+            </p>
+          </div>
+          <div className="flex flex-col gap-[var(--space-content)] sm:flex-row sm:items-center">
             <Button
               className="w-full sm:w-fit"
+              disabled={busyAction !== null}
+              onClick={() => void handleExport("danger")}
+              type="button"
+              variant="outline"
+            >
+              <DownloadIcon aria-hidden="true" />
+              {exportLabel("danger")}
+            </Button>
+            <Button
+              className="w-full border-line-danger sm:w-fit"
               disabled={busyAction !== null}
               onClick={(event) => openDeleteDialog(event.currentTarget)}
               type="button"
               variant="destructive"
             >
+              <Trash2Icon aria-hidden="true" />
               {settingsStrings.data.delete.action}
             </Button>
           </div>
+          {error !== null && dialog === null && errorAt === "danger" ? (
+            <div className="sm:col-span-2">
+              <SettingsNotice tone="error">{error}</SettingsNotice>
+            </div>
+          ) : null}
         </div>
-
-        {busyAction === "inspect" ? (
-          <p className="text-[length:var(--text-caption-size)] text-text-muted" role="status">
-            {settingsStrings.data.import.inspecting}
-          </p>
-        ) : null}
-        {error === null || dialog !== null ? null : (
-          <p
-            className="border-l-[length:var(--space-1)] border-warn bg-surface-2 px-[var(--space-4)] py-[var(--space-3)]"
-            role="alert"
-          >
-            {error}
-          </p>
-        )}
       </SettingsPanel>
 
       {success === null ? null : (
@@ -429,7 +488,14 @@ export function DataSettings({
           initialFocus={() => document.getElementById("settings-delete-confirmation")}
         >
           <AlertDialogHeader className="grid grid-rows-none place-items-stretch gap-[var(--space-content)] text-start">
-            <AlertDialogTitle id="settings-delete-title">
+            <AlertDialogTitle
+              className="flex items-center gap-[var(--space-content)]"
+              id="settings-delete-title"
+            >
+              <TriangleAlertIcon
+                aria-hidden="true"
+                className="size-[var(--space-5)] shrink-0 text-danger"
+              />
               {settingsStrings.data.delete.confirm.title}
             </AlertDialogTitle>
             <AlertDialogDescription>

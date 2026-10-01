@@ -743,7 +743,7 @@ Library와 상세 panel·bottom sheet·dialog는 조용한 표면이다. panel/s
 
 ### 구성
 
-2026-09-29 사용자 위임 개선: 공용 `PageHeader`(28px) 아래에 네 섹션(おすすめの方針 · Manga DNA · データ · このアプリ)을 항상 한 페이지에 둔다. desktop(`md` 이상)은 왼쪽 sticky 섹션 목차(링크, 현재 `?section`에 `aria-current="location"`)와 오른쪽 본문 2열이며, 목차 선택과 `?section=policies|dna|data|app` 진입은 해당 섹션으로 스크롤한다. 섹션 제목은 20px, 행 제목은 16px, 섹션 간격은 `--space-shelf-group`이다. 별도 「ローカルデータとプライバシー」 섹션은 두지 않고 데이터 섹션 설명에 합친다.
+2026-10-01 사용자 샘플 기반 개선(2026-09-29 구성을 대체): 공용 `PageHeader`(28px) 아래에 다섯 섹션(おすすめの方針 · Manga DNA · データ · 危険な操作 · このアプリ)을 항상 한 페이지의 `surface-1` 카드로 둔다. 카드 간격은 `--space-6`, 섹션 제목은 20px, 행 제목은 16px이며 카드 안의 행은 `--line` 구분선으로 나눈다. 섹션 목차는 하나의 `<nav aria-label="設定セクション">`다. desktop(`md` 이상)은 왼쪽 sticky 세로 목차(아이콘+레이블, 현재 섹션은 `--accent-soft` 필)와 오른쪽 본문 2열, `md` 미만은 페이지 상단에 붙는 sticky 가로 탭 바(현재 섹션 accent 밑줄, 가로 스크롤 시 현재 탭을 보이게 유지)다. 현재 섹션은 스크롤 위치(뷰포트 상단 30% 선을 지난 마지막 섹션, 페이지 끝에서는 마지막 섹션)로 정하고 `aria-current="location"`으로 표시한다. 목차 선택과 `?section=policies|dna|data|danger|app` 진입은 해당 섹션으로 즉시 스크롤하고, 사용자가 스크롤할 때까지 그 섹션을 현재로 유지한다. router scroll restoration 뒤에도 `?section` 위치를 다시 적용한다. 별도 「ローカルデータとプライバシー」 섹션은 두지 않고 데이터 섹션 설명에 합친다.
 
 1. dark card 기반 **おすすめの方針**: 현재 네 boolean policy control(노출 여부는 `02` 계약) — 즉시 저장.
 2. **Manga DNA**: 현재 adjustment 요약과 `/taste?mode=adjust` 링크. 별도 자동학습/intensity slider는 없다.
@@ -751,8 +751,10 @@ Library와 상세 panel·bottom sheet·dialog는 조용한 표면이다. panel/s
    - 「保存の状態」: 작품 기록 수(카탈로그 외 수), 가능하면 `navigator.storage.estimate()` 사용 용량, `navigator.storage.persisted()` 보호 상태. 보호되지 않았고 `persist()`가 있으면 「データを保護する」로 브라우저에 영구 보관을 요청하고, 거부되면 정기 엑스포트를 안내한다. 성공을 합성하지 않으며 API가 없거나 session-only면 해당 표시·버튼을 생략한다.
    - 「エクスポート」 → 온보딩 전에도 `konocomics-export-YYYYMMDD.json` 다운로드. 작품 기록·external identity·adjustments·네 정책 전부·nullable 완료 시각·nullable draft를 포함한다. profile row가 아직 없으면 앱 기본 adjustments/policies를 쓰되 없는 완료 시각은 합성하지 않는다.
    - 「インポート」 → 파일 선택 → mutation 전 whole-file 검증 → 미리보기(작품 수·내보낸 날짜·Catalog version 불일치 경고) → 「置き換える」 확인 다이얼로그(현재 데이터가 대체됨을 명시).
-   - 「すべて削除」 → 타이핑 확인(「削除」 입력) 다이얼로그 → 일곱 store를 한 트랜잭션으로 비우고 현재 runtime meta만 재생성 → authoritative readback 뒤 랜딩으로.
-4. **このアプリ**: 버전, 데이터가 브라우저에만 저장됨 안내, `Supported by Rakuten Developers`와 Affiliate ID가 설정된 경우의 관계를 별도 항목으로 표시, 앱 자체 라이선스는 「未設定」, 「紹介をもう一度見る」(/?landing=1 — write-free 리다이렉트 우회). `package.json`의 `private: true`를 라이선스로 해석하지 않는다.
+   - Import 검증 실패는 Import 행 바로 아래, Export 실패는 Export 행 아래에 표시한다. 검증 통과 미리보기는 선택한 파일 이름을 함께 보여 준다.
+4. **危険な操作**: 데이터 카드와 분리된 danger 톤 카드(`--line-danger`·`--surface-danger-soft`). 「すべて削除」 행에 삭제 범위 설명, 「先にエクスポート」(Export와 같은 경로) 보조 버튼, 「すべて削除」 버튼을 둔다.
+   - 「すべて削除」 → 타이핑 확인(「削除」 입력) 다이얼로그 → 일곱 store를 한 트랜잭션으로 비우고 현재 runtime meta만 재생성 → authoritative readback 뒤 랜딩으로. 인라인 2단계 확인으로 낮추지 않는다.
+5. **このアプリ**: 버전, 데이터 저장 위치(「このブラウザのみ」, session-only면 그 상태), `Supported by Rakuten Developers`, 楽天ブックス 링크에 어필리에이트 정보가 포함될 수 있다는 정적 고지를 레이블·값 행으로 표시하고, 「使い方をもう一度見る」(/?landing=1 — write-free 리다이렉트 우회)를 둔다. 사용자가 바꿀 수 없는 빌드 설정(Affiliate ID 설정 여부)과 앱 자체 라이선스 행은 표시하지 않는다. `package.json`의 `private: true`를 라이선스로 해석하지 않는다.
 
 계정·이메일·알림·weekly report·cloud sync·theme selector는 없다. 제품은 dark-only다.
 
@@ -765,7 +767,8 @@ Library와 상세 panel·bottom sheet·dialog는 조용한 표면이다. panel/s
 
 ### 수용 기준
 
-- [ ] 네 섹션이 한 페이지에 보이고 desktop 목차의 현재 섹션이 표시된다. `?section`은 탭 전환 없이 해당 섹션으로 이동한다.
+- [ ] 다섯 섹션이 한 페이지에 보이고 desktop 세로 목차·mobile 가로 탭 바에 스크롤 위치 기준 현재 섹션이 표시된다. `?section`은 탭 전환 없이 해당 섹션으로 이동한다.
+- [ ] 「すべて削除」는 데이터 카드가 아닌 별도 「危険な操作」 카드에 있고, 같은 카드에서 먼저 Export할 수 있다.
 - [ ] 「保存の状態」는 실제 기록 수·사용 용량·보호 상태만 보여 주고, 보호 요청의 허용/거부 결과를 그대로 표시한다.
 - [ ] usable profile에서 Export → 전체 삭제 → Import로 추천·Library·정책·canonical external URL/identity가 온보딩 없이 원상 복구된다(E2E #5).
 - [ ] pre-profile의 nullable 완료 시각과 first-run draft도 Export/Import되고, 없는 완료 시각을 합성하지 않는다.

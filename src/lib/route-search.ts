@@ -73,7 +73,7 @@ export const librarySearchSchema = z.object({
 });
 
 export const settingsSearchSchema = z.object({
-  section: z.enum(["policies", "dna", "data", "app"]).optional().catch(undefined),
+  section: z.enum(["policies", "dna", "data", "danger", "app"]).optional().catch(undefined),
 });
 
 export const externalWorkSearchSchema = z.object({
