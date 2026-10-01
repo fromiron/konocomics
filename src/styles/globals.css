@@ -25,11 +25,13 @@
   --accent-soft: oklch(0.27 0.05 70);
   --on-accent: oklch(0.22 0.03 65);
   --danger: oklch(0.65 0.22 25);
-  --line-accent: color-mix(in oklch, var(--accent) 48%, var(--line));
-  --line-accent-subtle: color-mix(in oklch, var(--accent) 32%, var(--line));
-  --line-danger: color-mix(in oklch, var(--danger) 56%, var(--line));
+  /* Mixes of two hues use oklab: oklch interpolates hue and turns amber+blue-grey green and
+     red+blue-grey magenta. */
+  --line-accent: color-mix(in oklab, var(--accent) 48%, var(--line));
+  --line-accent-subtle: color-mix(in oklab, var(--accent) 32%, var(--line));
+  --line-danger: color-mix(in oklab, var(--danger) 56%, var(--line));
   --surface-overlay: color-mix(in oklch, var(--surface-1) 92%, transparent);
-  --surface-danger-soft: color-mix(in oklch, var(--danger) 8%, var(--surface-1));
+  --surface-danger-soft: color-mix(in oklab, var(--danger) 8%, var(--surface-1));
   --hero-scrim: color-mix(in oklch, var(--canvas) 72%, transparent);
   --cover-paper: color-mix(in oklch, var(--canvas) 60%, transparent);
   --discovery-paper: oklch(0.979 0.006 250);
@@ -351,6 +353,9 @@ p {
     color: var(--ink-strong);
     font-weight: 700;
     line-height: var(--line-height-heading);
+    /* Japanese headings wrap at phrase boundaries (Chromium) and keep balanced lines elsewhere. */
+    word-break: auto-phrase;
+    text-wrap: balance;
   }
 
   h1 {
@@ -410,6 +415,28 @@ h1[tabindex="-1"]:focus {
   );
   background-size: var(--cover-shimmer-period) var(--cover-shimmer-period);
   opacity: 1;
+}
+
+/* Placeholder text scales down with its frame: thumbnails keep only the tone, small covers drop the creator. */
+.cover-image__placeholder-content {
+  container-type: inline-size;
+}
+
+@container (max-width: 7.5rem) {
+  .cover-image__placeholder-creator {
+    display: none;
+  }
+}
+
+@container (max-width: 4rem) {
+  .cover-image__placeholder-title {
+    display: none;
+  }
+}
+
+/* The always-visible Top 10 rank badge sits bottom-right; the placeholder creator line stops before it. */
+.ranking-card-link:has([data-ranking-badge-position]) .cover-image__placeholder-creator {
+  right: calc(var(--space-12) + var(--space-3));
 }
 
 /* SSR covers remain paintable before hydration; only an observed pending image is hidden. */
@@ -498,7 +525,7 @@ h1[tabindex="-1"]:focus {
 .recommendation-featured-card {
   background: linear-gradient(
     180deg,
-    color-mix(in oklch, var(--accent) 16%, var(--surface-1)) 0%,
+    color-mix(in oklab, var(--accent) 16%, var(--surface-1)) 0%,
     var(--surface-1) 72%
   );
 }
@@ -621,7 +648,7 @@ h1[tabindex="-1"]:focus {
 }
 
 .rank-crown {
-  --rank-crown-outline: color-mix(in oklch, var(--canvas) 70%, var(--rank-crown-deep));
+  --rank-crown-outline: color-mix(in oklab, var(--canvas) 70%, var(--rank-crown-deep));
   --rank-crown-shine: color-mix(in oklch, var(--text-strong) 75%, transparent);
   position: absolute;
   bottom: calc(100% - var(--space-2));
@@ -810,8 +837,8 @@ h1[tabindex="-1"]:focus {
     --layout-page-block-start: var(--space-12);
     --text-body-size: var(--font-size-16);
     --text-subheading-size: var(--font-size-20);
-    --text-section-title-size: var(--font-size-28);
-    --text-page-title-size: var(--font-size-40);
+    --text-section-title-size: var(--font-size-20);
+    --text-page-title-size: var(--font-size-28);
     --text-hero-size: var(--font-size-56);
     --layout-taste-action-clearance: 120px;
   }
@@ -1450,6 +1477,12 @@ h1[tabindex="-1"]:focus {
   line-height: var(--line-height-body);
   text-wrap: pretty;
   color: var(--text-strong);
+}
+
+/* Each axis label, with its leading ×, wraps as one unit so a label never splits mid-word. */
+.taste-dna-statement > span {
+  display: inline-block;
+  max-width: 100%;
 }
 .taste-dna-segment {
   cursor: pointer;

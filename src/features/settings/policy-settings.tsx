@@ -57,12 +57,17 @@ export function PolicySettings({ policies, savePolicies }: PolicySettingsProps) 
         {VISIBLE_POLICY_KEYS.map((key) => {
           const labelId = `settings-policy-${key}-label`;
           const descriptionId = `settings-policy-${key}-description`;
+          const switchId = `settings-policy-${key}`;
           return (
             <div
               className="grid min-w-0 grid-cols-[minmax(0,1fr)_auto] items-center gap-[var(--space-4)] border-t border-line py-[var(--space-4)] last:pb-0"
               key={key}
             >
-              <span className="grid min-w-0 gap-[var(--space-content-tight)]">
+              {/* The whole text block toggles the switch, matching the row's visual extent. */}
+              <label
+                className="grid min-w-0 cursor-pointer gap-[var(--space-content-tight)]"
+                htmlFor={switchId}
+              >
                 <strong className="text-[length:var(--font-size-16)] text-text-strong" id={labelId}>
                   {settingsStrings.policies.labels[key]}
                 </strong>
@@ -72,13 +77,14 @@ export function PolicySettings({ policies, savePolicies }: PolicySettingsProps) 
                 >
                   {settingsStrings.policies.descriptions[key]}
                 </span>
-              </span>
+              </label>
               <Switch
                 aria-describedby={descriptionId}
                 aria-labelledby={labelId}
                 busy={busy}
                 checked={displayed?.[key] ?? false}
                 disabled={displayed === undefined}
+                id={switchId}
                 onCheckedChange={() => void togglePolicy(key)}
               />
             </div>

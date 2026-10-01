@@ -69,8 +69,8 @@
 | semantic | `--text-caption-size` | 12px 유지 |
 | semantic | `--text-body-size` | mobile 14px → desktop 16px |
 | semantic | `--text-subheading-size` | mobile 16px → desktop 20px |
-| semantic | `--text-section-title-size` | mobile 20px → desktop 28px |
-| semantic | `--text-page-title-size` | mobile 28px → desktop 40px |
+| semantic | `--text-section-title-size` | mobile·desktop 20px(2026-10-01 `03` 28/20 계약에 맞춤) |
+| semantic | `--text-page-title-size` | mobile·desktop 28px(2026-10-01 `03` 28/20 계약에 맞춤) |
 | semantic | `--text-display-size` | 40px. 랜딩·DNA 디스플레이 전용 |
 
 온보딩과 `/taste`의 1440px/390px 실제 제품 렌더에서 일본어 제목·본문·캡션, mixed-script DNA 제목, 다중 행 그룹을 확인했다. 잘림·겹침·가로 오버플로가 없었고 `/taste` DNA 제목의 computed font stack은 Space Grotesk와 Noto Sans JP를 함께 포함했다.
@@ -105,9 +105,9 @@
 - functional contextual image banners: 상태/기능/CTA가 연결된 이미지 배너다. 필요한 기능 배너는 아래 §9의 장식 억제보다 상위 계약이며, 실제 상태·기능·기존 route CTA가 없는 순수 장식 배너는 계속 금지한다. `/recommendations` 후보 부족 full-shell만 허용한다. 나머지 닫는 안내는 공용 `SummarySection`(이미지 없음)을 쓴다. 장식 전용 hero가 아니며 이미지 속 텍스트는 쓰지 않는다. 좌측은 DOM copy·metrics·기존 route CTA, 우측은 장식 `img`(alt="", `aria-hidden`). Spotify Green/로고/재생 UI 복제는 하지 않는다. 상시 루프 모션은 없다.
 - error: `--warn` 좌측 보더의 인라인 박스. 토스트는 성공 알림에만.
 
-모션 값도 의미 역할로 소비한다: `--motion-duration-page` 160ms, `--motion-duration-floating-action` 200ms, `--motion-duration-value` 240ms, `--motion-duration-reveal-step` 400ms, `--motion-ease-direct` ease-out, `--motion-ease-value` ease-in-out, `--motion-ease-signature` cubic-bezier(0.2, 0, 0, 1). 이 값은 아래 A~G 분류를 대체하지 않고 구현 간 별칭 드리프트만 막는다. Top 10의 floating rank accessory는 `transform`·`opacity`만 200ms ease-out으로 전환하고 reduced motion에서는 이동 없이 즉시 상태를 바꾼다.
+모션 값도 의미 역할로 소비한다: `--motion-duration-page` 160ms, `--motion-duration-floating-action` 200ms, `--motion-duration-value` 240ms, `--motion-duration-reveal-step` 400ms, `--motion-ease-direct` ease-out, `--motion-ease-value` ease-in-out, `--motion-ease-signature` cubic-bezier(0.2, 0, 0, 1). 이 값은 아래 A~G 분류를 대체하지 않고 구현 간 별칭 드리프트만 막는다. Top 10의 rank 배지는 2026-10-01부터 hover·focus 없이 항상 보이며(터치 포함, `03` §4 순위 명시), 진입 모션은 아래 왕관에만 남는다.
 
-개인화 Top 10은 2026-09-10 사용자 승인에 따라 순위 배지에 기존 프라이머리 `--accent`를 사용하고 숫자는 어두운 `--on-accent`로 표시한다. 2026-10-01 사용자 결정으로 1·2·3위는 금·은·동 메달이다: 배지는 `--medal-{gold|silver|bronze}`의 밝은→기본→깊은 금속 그라디언트와 각 메달의 어두운 ink 숫자를 쓰고, 배지 위에 같은 금속의 장식 SVG 왕관(구슬 장식·보석·잉크 외곽선)을 둔다. D 입력 피드백으로 fine-pointer hover·keyboard focus-visible 진입 시 배지가 먼저 나타나고, `--motion-delay-rank-crown` 150ms 후 왕관이 480ms 동안 위에서 떨어져 눌렸다 펴지며(squash·stretch, opacity·translate·scale만) 착지하고, 이어서 왕관 안을 광택 띠가 한 번 지나가며(520ms) 작은 반짝임 두 개가 한 번 깜박인다. 회전·기울기는 없다. 이탈 시 숨기고 재진입 시 다시 한 번 재생하며 상시 반복하지 않는다. reduced-motion에서는 배지·왕관을 지연·이동 없이 즉시 표시한다. 왕관은 `aria-hidden`이며 순위 이름·상세 링크·카드 외곽 geometry는 유지한다. 4위 이하는 accent 배지만 쓴다.
+개인화 Top 10은 2026-09-10 사용자 승인에 따라 순위 배지에 기존 프라이머리 `--accent`를 사용하고 숫자는 어두운 `--on-accent`로 표시한다. 2026-10-01 사용자 결정으로 1·2·3위는 금·은·동 메달이다: 배지는 `--medal-{gold|silver|bronze}`의 밝은→기본→깊은 금속 그라디언트와 각 메달의 어두운 ink 숫자를 쓰고, 배지 위에 같은 금속의 장식 SVG 왕관(구슬 장식·보석·잉크 외곽선)을 둔다. 배지는 항상 보이고, D 입력 피드백으로 fine-pointer hover·keyboard focus-visible 진입 시 `--motion-delay-rank-crown` 150ms 후 왕관이 480ms 동안 위에서 떨어져 눌렸다 펴지며(squash·stretch, opacity·translate·scale만) 착지하고, 이어서 왕관 안을 광택 띠가 한 번 지나가며(520ms) 작은 반짝임 두 개가 한 번 깜박인다. 회전·기울기는 없다. 이탈 시 왕관만 숨기고 재진입 시 다시 한 번 재생하며 상시 반복하지 않는다. reduced-motion에서는 왕관을 지연·이동 없이 즉시 표시한다. 왕관은 `aria-hidden`이며 순위 이름·상세 링크·카드 외곽 geometry는 유지한다. 4위 이하는 accent 배지만 쓴다.
 
 「読みたい」 저장 액션과 그 상태 표시(추천 카드·Quick Preview·Anchor 패널·작품 상세·판매순 발견 배너·Library 작품 추가·Library 「読みたい」 탭)는 2026-10-01 사용자 결정으로 모두 같은 북마크 아이콘을 쓰고, 저장된 상태는 채운 아이콘이다.
 

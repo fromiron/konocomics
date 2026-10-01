@@ -949,7 +949,7 @@ export function OnboardingFlow({
                   {onboardingStrings.step2.eyebrow}
                 </p>
                 <h1
-                  className="text-[length:var(--font-size-20)] leading-[1.35] tracking-[-0.02em] text-text-strong md:text-[length:var(--font-size-28)]"
+                  className="text-[length:var(--font-size-20)] leading-[1.35] tracking-[-0.02em] text-text-strong md:text-[length:var(--text-page-title-size)]"
                   ref={headingRef}
                   tabIndex={-1}
                 >
