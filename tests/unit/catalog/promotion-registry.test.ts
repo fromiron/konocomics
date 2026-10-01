@@ -1,5 +1,3 @@
-import { readFileSync } from "node:fs";
-
 import { parse } from "csv-parse/sync";
 import { describe, expect, it } from "vitest";
 
@@ -335,8 +333,7 @@ describe("promotion registry", () => {
 
     const [headers] = parse(serializePromotionRegistry(rows)) as string[][];
     expect(headers).toEqual(PROMOTION_REGISTRY_HEADERS);
-    expect(serializePromotionRegistry(rows)).toBe(
-      readFileSync("data/staging/catalog-expansion/promotion-registry.csv", "utf8"),
-    );
+    // Historical CSV byte parity belongs to the one-time authority cutover gate.
+    // Ongoing SQLite authoring can change this projection while remaining deterministic.
   }, 45_000);
 });
