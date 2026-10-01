@@ -10,6 +10,63 @@ import type { Work } from "@/domain/catalog/types";
 import type { PositiveOnboardingEntry } from "@/domain/profile/onboarding";
 import { cn } from "@/lib/utils";
 
+/**
+ * Shared shell of the onboarding action panel: a fixed bottom bar on mobile and a sticky
+ * side panel on desktop. STEP 1 and STEP 2 use the same frame so the primary action never moves.
+ */
+export const ONBOARDING_PANEL_CLASS =
+  "fixed inset-x-0 bottom-0 z-20 grid min-h-[calc(var(--space-12)+var(--space-12)+var(--space-8)+var(--space-1))] min-w-0 grid-cols-[minmax(0,1fr)_auto] content-center gap-[var(--space-content-loose)] border-t border-line bg-surface-1 p-[var(--space-3)] px-[max(var(--layout-page-padding),calc((100vw-var(--layout-width-onboarding))/2+var(--layout-page-padding)))] pb-[calc(var(--space-3)+var(--layout-safe-area-bottom))] md:sticky md:top-[calc(var(--desktop-navigation-height)+var(--space-5))] md:right-auto md:bottom-auto md:left-auto md:max-h-[calc(100dvh-var(--desktop-navigation-height)-var(--space-5)*2)] md:grid-cols-1 md:content-start md:overflow-y-auto md:rounded-[var(--radius-card)] md:border md:p-[var(--space-5)]";
+
+export type SelectedTrayClarity = Readonly<{
+  label: string;
+  levelLabel: string;
+  hint?: string;
+  /** Profile confidence in 0..1. Drawn as a fill only; never rendered as a number. */
+  value: number;
+}>;
+
+export type SelectedTrayGuide = Readonly<{
+  title: string;
+  steps: readonly string[];
+}>;
+
+/** 「DNAの鮮明さ」: a stage label and a fill only; the underlying value is never shown. */
+export function ClarityMeter({ clarity }: Readonly<{ clarity: SelectedTrayClarity }>) {
+  const labelId = useId();
+
+  return (
+    <div className="onboarding-clarity col-span-full grid gap-[var(--space-1)]">
+      <div className="hidden items-baseline justify-between gap-[var(--space-3)] text-[length:var(--text-caption-size)] md:flex">
+        <span className="text-text-muted" id={labelId}>
+          {clarity.label}
+        </span>
+        <span className="font-bold text-accent">{clarity.levelLabel}</span>
+      </div>
+      <div
+        aria-labelledby={labelId}
+        aria-valuemax={1}
+        aria-valuemin={0}
+        aria-valuenow={clarity.value}
+        aria-valuetext={
+          clarity.hint === undefined ? clarity.levelLabel : `${clarity.levelLabel}。${clarity.hint}`
+        }
+        className="h-[var(--space-1)] overflow-hidden rounded-[var(--radius-pill)] bg-surface-3 md:h-[var(--space-2)]"
+        role="meter"
+      >
+        <span
+          className="block h-full rounded-[var(--radius-pill)] bg-accent transition-[width] duration-[var(--motion-duration-value)] motion-reduce:transition-none"
+          style={{ width: `${String(Math.min(Math.max(clarity.value, 0), 1) * 100)}%` }}
+        />
+      </div>
+      {clarity.hint === undefined ? null : (
+        <p className="hidden text-[length:var(--text-caption-size)] text-text-muted md:block">
+          {clarity.hint}
+        </p>
+      )}
+    </div>
+  );
+}
+
 type SelectedTrayProps = Readonly<{
   selections: readonly PositiveOnboardingEntry[];
   worksById: ReadonlyMap<string, Work>;
@@ -26,6 +83,11 @@ type SelectedTrayProps = Readonly<{
   disabled: boolean;
   limitActive: boolean;
   shakeKey: number;
+  clarity?: SelectedTrayClarity;
+  guide?: SelectedTrayGuide;
+  continueHint?: string;
+  clearLabel?: string;
+  onClear?: () => void;
 }>;
 
 export function SelectedTray({
@@ -44,6 +106,11 @@ export function SelectedTray({
   disabled,
   limitActive,
   shakeKey,
+  clarity,
+  guide,
+  continueHint,
+  clearLabel,
+  onClear,
 }: SelectedTrayProps) {
   const remainingId = useId();
   const reducedMotion = useReducedMotion();
@@ -80,7 +147,8 @@ export function SelectedTray({
       <aside
         aria-label={label}
         className={cn(
-          "selected-tray fixed inset-x-0 bottom-0 z-20 grid min-h-[calc(var(--space-12)+var(--space-12)+var(--space-8)+var(--space-1))] min-w-0 grid-cols-[minmax(0,1fr)_auto] content-center gap-[var(--space-content-loose)] border-t border-line bg-surface-1 p-[var(--space-3)] px-[max(var(--layout-page-padding),calc((100vw-var(--layout-width-onboarding))/2+var(--layout-page-padding)))] pb-[calc(var(--space-3)+var(--layout-safe-area-bottom))] md:sticky md:top-[calc(var(--desktop-navigation-height)+var(--space-5))] md:right-auto md:bottom-auto md:left-auto md:min-h-[calc(var(--space-12)+var(--space-12)+var(--space-12)+var(--space-12)+var(--space-7))] md:grid-cols-1 md:content-start md:rounded-[var(--radius-card)] md:border md:p-[var(--space-5)]",
+          "selected-tray",
+          ONBOARDING_PANEL_CLASS,
           limitActive &&
             "border-2 border-warn motion-reduce:animate-none motion-reduce:transform-none",
           limitActive &&
@@ -97,13 +165,30 @@ export function SelectedTray({
           {countLabel === undefined ? null : (
             <span className="text-[length:var(--text-caption-size)] font-bold text-accent">
               {countLabel}
+              {clarity === undefined ? null : (
+                <span aria-hidden="true" className="font-medium text-text-muted md:hidden">
+                  {` ・ ${clarity.levelLabel}`}
+                </span>
+              )}
             </span>
           )}
         </div>
+        {clarity === undefined ? null : <ClarityMeter clarity={clarity} />}
+        {guide === undefined || selections.length > 0 ? null : (
+          <div className="selected-tray__guide col-span-full hidden rounded-[var(--radius-card)] border border-dashed border-line bg-surface-2 p-[var(--space-4)] text-[length:var(--text-caption-size)] leading-[1.8] text-text-muted md:block">
+            <strong className="text-text-strong">{guide.title}</strong>
+            <ol className="m-0 mt-[var(--space-1)] list-decimal ps-[var(--space-5)]">
+              {guide.steps.map((step) => (
+                <li key={step}>{step}</li>
+              ))}
+            </ol>
+          </div>
+        )}
         <div
           className={cn(
-            "selected-tray__works flex min-h-[calc(var(--space-7)*2)] min-w-0 flex-auto items-center gap-[var(--space-content)] overflow-x-auto [scrollbar-width:none] md:min-h-[calc(var(--space-8)*2+var(--space-1))] [&::-webkit-scrollbar]:hidden",
+            "selected-tray__works flex min-h-[calc(var(--space-7)*2)] min-w-0 flex-auto items-center gap-[var(--space-content)] overflow-x-auto [scrollbar-width:none] md:min-h-[calc(var(--space-8)*2+var(--space-1))] pt-[var(--space-1)] md:flex-wrap md:overflow-visible [&::-webkit-scrollbar]:hidden",
             selections.length === 0 && "overflow-x-hidden",
+            selections.length === 0 && guide !== undefined && "md:hidden",
           )}
         >
           {selections.length === 0 ? (
@@ -188,6 +273,24 @@ export function SelectedTray({
           >
             {continueLabel}
           </Button>
+          {continueHint === undefined ? null : (
+            <p className="selected-tray__continue-hint hidden text-center text-[length:var(--text-caption-size)] text-text-muted md:block">
+              {continueHint}
+            </p>
+          )}
+          {onClear === undefined || clearLabel === undefined || selections.length === 0 ? null : (
+            <button
+              className="selected-tray__clear hidden min-h-[var(--control-min-size)] justify-self-center bg-transparent px-[var(--space-2)] text-[length:var(--text-caption-size)] text-text-muted underline underline-offset-4 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-ring disabled:opacity-50 md:block [@media(hover:hover)_and_(pointer:fine)]:hover:text-warn"
+              disabled={disabled}
+              onClick={() => {
+                pendingFocus.current = "tray";
+                onClear();
+              }}
+              type="button"
+            >
+              {clearLabel}
+            </button>
+          )}
         </div>
       </aside>
     </LazyMotion>

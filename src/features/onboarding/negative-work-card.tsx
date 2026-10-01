@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useRef } from "react";
+import { useEffect, useId, useRef } from "react";
 import { XIcon } from "lucide-react";
 
 import { CoverImage } from "@/components/cover/CoverImage";
@@ -46,37 +46,35 @@ export function NegativeWorkCard({
 
   return (
     <article
-      className="negative-result-card grid grid-cols-[72px_minmax(0,1fr)] content-start items-start gap-[var(--space-content)] rounded-[var(--radius-card)] border border-line bg-surface-1 p-[var(--space-3)] data-[disabled]:opacity-65 md:grid-cols-[72px_minmax(0,1fr)_minmax(260px,auto)]"
+      className="negative-result-card grid grid-cols-[var(--space-12)_minmax(0,1fr)] items-center gap-x-[var(--space-3)] gap-y-[var(--space-content)] rounded-[var(--radius-card)] border border-line bg-surface-1 p-[var(--space-3)] data-[disabled]:opacity-65 sm:grid-cols-[var(--space-12)_minmax(0,1fr)_auto]"
       data-disabled={unavailable || undefined}
     >
       <CoverImage
-        className="[grid-row:1/span_3]"
+        className="row-span-2 sm:row-span-1"
         coverUrl={coverUrl}
         creators={work.creators}
         onVisible={onCoverVisible}
-        requestedSize={400}
+        requestedSize={200}
         title={work.title}
       />
-      <h3 className="col-start-2">{work.title}</h3>
-      <p className="col-start-2 text-[length:var(--font-size-14)] text-text-muted">
-        {work.creators.join("・")}
-      </p>
-      {isPositive ? (
-        <span className="negative-result-card__badge col-start-2 inline-flex min-h-8 items-center justify-center rounded-full bg-accent-soft px-2 py-1 text-[length:var(--text-caption-size)] font-bold text-text-strong md:col-start-3 md:row-start-1 md:[grid-row-end:span_3]">
-          {labels.selectedPositive}
+      <div className="grid min-w-0 gap-[var(--space-content-tight)]">
+        <h3 className="line-clamp-2 text-[length:var(--font-size-14)] font-bold text-text-strong">
+          {work.title}
+        </h3>
+        <p className="truncate text-[length:var(--text-caption-size)] text-text-muted">
+          {work.creators.join("・")}
+        </p>
+      </div>
+      {unavailable ? (
+        <span className="negative-result-card__badge col-start-2 w-fit rounded-[var(--radius-pill)] border border-line px-[var(--space-2)] py-[var(--space-1)] text-[length:var(--text-caption-size)] font-bold text-text-muted sm:col-start-3">
+          {isPositive ? labels.selectedPositive : labels.selectedNegative}
         </span>
-      ) : null}
-      {isSelected ? (
-        <span className="negative-result-card__badge col-start-2 inline-flex min-h-8 items-center justify-center rounded-full bg-accent-soft px-2 py-1 text-[length:var(--text-caption-size)] font-bold text-text-strong md:col-start-3 md:row-start-1 md:[grid-row-end:span_3]">
-          {labels.selectedNegative}
-        </span>
-      ) : null}
-      {!isPositive && !isSelected ? (
+      ) : (
         <fieldset
           aria-label={`${work.title} — ${labels.disposition}`}
-          className="negative-entry__disposition negative-result-card__disposition col-span-full mt-auto flex flex-wrap gap-[var(--space-content)] border-0 p-0 md:col-start-3 md:row-start-1 md:[grid-row-end:span_3]"
+          className="negative-entry__disposition negative-result-card__disposition col-start-2 m-0 min-w-0 border-0 p-0 sm:col-start-3"
         >
-          <legend className="mb-1 w-full font-bold text-text-strong">{labels.disposition}</legend>
+          <legend className="sr-only">{labels.disposition}</legend>
           <ChoiceChipRadioGroup<NegativeDisposition | "">
             aria-label={`${work.title} — ${labels.disposition}`}
             className="w-auto"
@@ -91,7 +89,7 @@ export function NegativeWorkCard({
             <ChoiceChipRadio value="dropped">{labels.dropped}</ChoiceChipRadio>
           </ChoiceChipRadioGroup>
         </fieldset>
-      ) : null}
+      )}
     </article>
   );
 }
@@ -99,8 +97,12 @@ export function NegativeWorkCard({
 export type NegativeReasonOption = Readonly<{
   id: NegativeReasonId;
   label: string;
-  external: boolean;
+  group: NegativeReasonGroup;
 }>;
+
+export type NegativeReasonGroup = "content" | "circumstance" | "vague";
+
+const NEGATIVE_REASON_GROUP_ORDER = ["content", "circumstance", "vague"] as const;
 
 type NegativeEntryEditorProps = Readonly<{
   work: Work;
@@ -114,6 +116,8 @@ type NegativeEntryEditorProps = Readonly<{
     disliked: string;
     dropped: string;
     reasons: string;
+    reasonsLegend: Readonly<Record<NegativeDisposition, string>>;
+    reasonGroups: Readonly<Record<NegativeReasonGroup, string>>;
     noReason: string;
     externalHelper: string;
     remove: string;
@@ -138,6 +142,7 @@ export function NegativeEntryEditor({
   onRemove,
 }: NegativeEntryEditorProps) {
   const groupName = `negative-disposition-${work.id}`;
+  const reasonsLegendId = useId();
   const hasExternalReason = entry.reasons.some((reason) => reason.startsWith("external:"));
   const dislikedInputRef = useRef<HTMLInputElement>(null);
   const droppedInputRef = useRef<HTMLInputElement>(null);
@@ -151,8 +156,8 @@ export function NegativeEntryEditor({
   }, [focusDisposition]);
 
   return (
-    <article className="negative-entry grid gap-[var(--space-5)] rounded-[var(--radius-card)] border border-line bg-surface-1 p-[var(--space-4)] md:grid-cols-[minmax(240px,0.8fr)_minmax(280px,1.2fr)]">
-      <div className="negative-entry__identity grid grid-cols-[64px_minmax(0,1fr)_var(--control-min-size)] items-center gap-[var(--space-content-loose)] md:self-start">
+    <article className="negative-entry grid gap-[var(--space-4)] rounded-[var(--radius-card)] border border-line bg-surface-1 p-[var(--space-4)]">
+      <div className="negative-entry__identity grid grid-cols-[var(--space-12)_minmax(0,1fr)_var(--control-min-size)] items-center gap-[var(--space-3)]">
         <CoverImage
           coverUrl={coverUrl}
           creators={work.creators}
@@ -160,9 +165,11 @@ export function NegativeEntryEditor({
           requestedSize={200}
           title={work.title}
         />
-        <div>
-          <h3>{work.title}</h3>
-          <p className="text-[length:var(--font-size-14)] text-text-muted">
+        <div className="grid min-w-0 gap-[var(--space-content-tight)]">
+          <h3 className="line-clamp-2 text-[length:var(--font-size-14)] font-bold text-text-strong">
+            {work.title}
+          </h3>
+          <p className="truncate text-[length:var(--text-caption-size)] text-text-muted">
             {work.creators.join("・")}
           </p>
         </div>
@@ -181,9 +188,11 @@ export function NegativeEntryEditor({
 
       <fieldset
         aria-label={`${work.title} — ${labels.disposition}`}
-        className="negative-entry__disposition flex flex-wrap gap-[var(--space-content)] border-0 p-0"
+        className="negative-entry__disposition m-0 grid min-w-0 gap-[var(--space-content)] border-0 p-0"
       >
-        <legend className="mb-1 w-full font-bold text-text-strong">{labels.disposition}</legend>
+        <legend className="mb-[var(--space-content)] text-[length:var(--text-caption-size)] font-bold text-text-muted">
+          {labels.disposition}
+        </legend>
         <ChoiceChipRadioGroup<NegativeDisposition>
           aria-label={`${work.title} — ${labels.disposition}`}
           className="w-auto"
@@ -203,28 +212,56 @@ export function NegativeEntryEditor({
 
       <div
         aria-label={`${work.title} — ${labels.reasons}`}
-        className="negative-entry__reasons flex flex-wrap gap-[var(--space-content)] md:col-start-2"
+        className="negative-entry__reasons grid gap-[var(--space-3)] border-t border-line pt-[var(--space-4)]"
         role="group"
       >
-        {reasonOptions.map((option) => (
-          <ChoiceChipCheckbox
-            checked={entry.reasons.includes(option.id)}
-            disabled={disabled}
-            key={option.id}
-            onCheckedChange={() => onReasonToggle(work.id, option.id)}
-            value={option.id}
-          >
-            {option.label}
-          </ChoiceChipCheckbox>
-        ))}
+        <p
+          className="text-[length:var(--text-caption-size)] font-bold text-text-muted"
+          id={reasonsLegendId}
+        >
+          {labels.reasonsLegend[entry.disposition]}
+        </p>
+        {NEGATIVE_REASON_GROUP_ORDER.map((group) => {
+          const options = reasonOptions.filter((option) => option.group === group);
+          if (options.length === 0) return null;
+          return (
+            <div
+              aria-describedby={reasonsLegendId}
+              aria-label={labels.reasonGroups[group]}
+              className="grid gap-[var(--space-content)]"
+              key={group}
+              role="group"
+            >
+              <span
+                aria-hidden="true"
+                className="text-[length:var(--text-caption-size)] text-text-muted"
+              >
+                {labels.reasonGroups[group]}
+              </span>
+              <div className="flex flex-wrap gap-[var(--space-content)]">
+                {options.map((option) => (
+                  <ChoiceChipCheckbox
+                    checked={entry.reasons.includes(option.id)}
+                    disabled={disabled}
+                    key={option.id}
+                    onCheckedChange={() => onReasonToggle(work.id, option.id)}
+                    value={option.id}
+                  >
+                    {option.label}
+                  </ChoiceChipCheckbox>
+                ))}
+              </div>
+            </div>
+          );
+        })}
       </div>
       {entry.reasons.length === 0 ? (
-        <p className="negative-entry__helper text-[length:var(--text-caption-size)] text-text-muted md:col-start-2">
+        <p className="negative-entry__helper text-[length:var(--text-caption-size)] text-text-muted">
           {labels.noReason}
         </p>
       ) : null}
       {hasExternalReason ? (
-        <p className="negative-entry__helper text-[length:var(--text-caption-size)] text-text-muted md:col-start-2">
+        <p className="negative-entry__helper text-[length:var(--text-caption-size)] text-text-muted">
           {labels.externalHelper}
         </p>
       ) : null}

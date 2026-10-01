@@ -10,6 +10,7 @@ import {
   countPositiveAnchors,
   countReasonedNegativeWorks,
   getConfidenceLevel,
+  projectProfileClarity,
 } from "@/domain/profile/confidence";
 import { roundScore } from "@/domain/recommendation/math";
 import { createTestWork } from "../../helpers/catalog";
@@ -64,6 +65,73 @@ describe("profile confidence", () => {
   });
 });
 
+describe("projected onboarding clarity", () => {
+  const project = (
+    records: Parameters<typeof projectProfileClarity>[0],
+    addedPositiveWorkIds: readonly string[],
+    additionalPositiveCapacity: number,
+    addedReasonedNegativeWorkIds: readonly string[] = [],
+  ) =>
+    projectProfileClarity(records, {
+      addedPositiveWorkIds,
+      addedReasonedNegativeWorkIds,
+      additionalPositiveCapacity,
+    });
+
+  it("projects unsaved positive works through the same profile confidence levels", () => {
+    expect(project([], [], 10)).toEqual({
+      confidence: 0,
+      level: "low",
+      positiveAnchorCount: 0,
+      reasonedNegativeCount: 0,
+      anchorsToNextLevel: 5,
+    });
+    const four = ["a", "b", "c", "d"];
+    expect(project([], four, 6)).toMatchObject({ level: "low", anchorsToNextLevel: 1 });
+    expect(project([], [...four, "e"], 5)).toMatchObject({
+      level: "normal",
+      anchorsToNextLevel: 3,
+    });
+    expect(project([], [...four, "e", "f", "g", "h"], 2)).toMatchObject({
+      level: "high",
+      anchorsToNextLevel: null,
+    });
+  });
+
+  it("counts saved anchors once and stops the hint at the remaining capacity", () => {
+    const saved = Array.from({ length: 6 }, (_, index) =>
+      createTestRecord({ workId: `saved-${index}`, reaction: "liked" }),
+    );
+    const projected = project(saved, ["saved-0", "new-a"], 0);
+
+    expect(projected.positiveAnchorCount).toBe(7);
+    expect(projected.level).toBe("normal");
+    expect(projected.anchorsToNextLevel).toBeNull();
+    expect(projected.confidence).toBe(
+      calculateProfileConfidence([
+        ...saved,
+        createTestRecord({ workId: "new-a", reaction: "liked" }),
+      ]),
+    );
+  });
+
+  it("adds unsaved reasoned negative works with the same weight as saved ones", () => {
+    const anchors = ["a", "b", "c", "d", "e", "f", "g"];
+    const projected = project([], anchors, 0, ["negative-a"]);
+    const saved = calculateProfileConfidence([
+      ...anchors.map((workId) => createTestRecord({ workId, reaction: "liked" })),
+      createTestRecord({
+        workId: "negative-a",
+        reaction: "disliked",
+        negativeReasons: ["tooDark"],
+      }),
+    ]);
+
+    expect(projected.reasonedNegativeCount).toBe(1);
+    expect(projected.confidence).toBe(saved);
+    expect(projected.level).toBe("high");
+  });
+});
 describe("work and recommendation confidence", () => {
   it("averages only known Axis and present Theme confidence", () => {
     const axes = workAxesSchema.parse(

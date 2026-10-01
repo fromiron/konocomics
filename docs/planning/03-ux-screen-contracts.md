@@ -127,14 +127,17 @@ CTA **「好きなマンガから始める」** → /onboarding. 행동은 이 �
 
 ### 정보 위계
 
-1. 안내 1줄: 「好きなマンガを 5〜10 作品えらんでください」
+0. (첫 등록만) 웰컴 히어로: h1 「あなたの Manga DNA を作りましょう」 + 로컬 저장 안내 1줄 + 실제 흐름과 같은 3스텝(好きな作品を選ぶ → 合わなかった作品(任意) → Manga DNA とおすすめ). 현재 단계(1)는 `aria-current="step"`과 accent 테두리·「いまここ」로 표시한다. add mode에는 표시하지 않는다(2026-10-01 사용자 결정).
+1. 안내 1줄(첫 등록 h2): 「好きなマンガを 5〜10 作品えらんでください」와 보조문 「特に好きな作品は ☆ で「大好き」にすると、より強く反映されます。」(favorite 1.0 / liked 0.8, `02` §6).
 2. 검색 입력(Fuse.js, Catalog의 onboardingEligible 대상)
 3. 장르 칩: アクション / ファンタジー / 歴史 / SF / ミステリー / その他
 4. 주 탐색 Shelf 「選びやすい作品」. collection panel이 열려도 이 제목과 작품은 교체되거나 사라지지 않는다.
-5. 「コレクションから探す」 compact 2열 disclosure trigger. 클릭은 새 route/modal/배너/hero가 아니라 트리거 아래 full-width inline region 하나를 연다. 같은 trigger 재클릭은 닫고, 다른 trigger는 같은 region 내용을 교체한다.
-6. 하단 고정 Selected Tray: 선택된 표지 썸네일 + 개수 + 진행 버튼
+5. 「コレクションから探す」 클릭식 accordion 행(2026-10-01 사용자 결정, `/taste` 팩터 그룹과 같은 disclosure 언어). 각 행의 trigger는 그 행 바로 아래에 named region을 연다. 열린 행은 한 번에 하나(URL `shelf`)이며 같은 trigger 재클릭은 닫고 다른 trigger는 해당 행 아래로 region을 옮긴다. 자동 확장은 없다.
+6. Selected Tray(mobile 하단 고정, desktop 우측 sticky 패널): 선택된 표지 썸네일 + 개수 + 진행 버튼. desktop 패널에는 추가로 「DNAの鮮明さ」 미터, 선택 0개일 때의 「選び方」 가이드, 진행 버튼 아래 안내(add: 「押すと Manga DNA を再計算します」), 1개 이상일 때 작은 「選択をクリア」를 둔다.
 
-이 viewport의 편집적 순간은 위 inline collection 자체다. 온보딩에 새 배너나 hero를 추가하지 않는다. 브랜드 복제(Spotify Green/로고/재생 UI/정확한 그래픽)가 아니라 discovery → 즉시 저장되는 큐레이션 흐름이다.
+이 viewport의 편집적 순간은 첫 등록 웰컴 히어로와 inline collection이다. 그 외 새 배너를 추가하지 않는다.
+
+「DNAの鮮明さ」 미터는 `calculateProfileConfidence`와 같은 산식·`getConfidenceLevel` 임계값으로 기존 추천 프로필 기록 + 현재 draft positive를 투영한 값이다(`projectProfileClarity`). 숫자·%는 표시하지 않고 단계 문구(まだ選んでいません/ぼんやり/鮮明/とても鮮明)와 채움 막대, 남은 작품 수 힌트만 보인다. 첫 등록에서 최소 5개 미만일 때는 tray의 「あと n 作品」과 같은 수를 반복하지 않도록 미터 힌트를 생략한다. mobile 하단 tray는 얇은 막대와 개수 옆 단계 문구만 보인다. desktop 패널의 선택 썸네일은 가로 스크롤 대신 줄바꿈해 10개를 모두 보인다. 접근성은 `role="meter"`와 단계 문구 `aria-valuetext`다. 브랜드 복제(Spotify Green/로고/재생 UI/정확한 그래픽)가 아니라 discovery → 즉시 저장되는 큐레이션 흐름이다.
 
 ### 컴포넌트 책임
 
@@ -155,8 +158,8 @@ CTA **「好きなマンガから始める」** → /onboarding. 행동은 이 �
 
 ### 반응형
 
-- mobile: Shelf 카드 폭 ~104px(표지 3:4.3 비율), 한 화면에 3.5장 보이게(스크롤 가능성 암시). tray 높이 88px. 장르 칩은 wrap하고 단계 progress는 compact 처리해 가로 스크롤 영역이 되지 않게 한다. Selected Tray와 work shelf는 시맨틱이 다른 가로 영역으로 유지한다. collection trigger는 320px에서도 2열로 줄바꿈되며 가로 오버플로를 만들지 않는다.
-- desktop: Shelf 대신 장르 섹션별 그리드(6~8열)로 전개해도 좋으나, **Shelf 유지 + 카드 폭 128px**로 통일한다(구현 단순화, 좌우 화살표 버튼 표시). collection trigger도 같은 2열 compact disclosure다.
+- mobile: Shelf 카드 폭 ~104px(표지 3:4.3 비율), 한 화면에 3.5장 보이게(스크롤 가능성 암시). tray 높이 88px. 장르 칩은 wrap하고 단계 progress는 compact 처리해 가로 스크롤 영역이 되지 않게 한다. Selected Tray와 work shelf는 시맨틱이 다른 가로 영역으로 유지한다. collection accordion 행은 320px에서도 1열로 줄바꿈되며(장식 표지는 좁은 화면에서 숨김) 가로 오버플로를 만들지 않는다.
+- desktop: Shelf 대신 장르 섹션별 그리드(6~8열)로 전개해도 좋으나, **Shelf 유지 + 카드 폭 128px**로 통일한다(구현 단순화, 좌우 화살표 버튼 표시). 본문과 우측 sticky Selected Tray 패널의 2열 레이아웃이며, 웰컴 히어로만 전체 폭이다. collection은 같은 accordion 행이다.
 
 ### 인터랙션
 
@@ -187,12 +190,12 @@ CTA **「好きなマンガから始める」** → /onboarding. 행동은 이 �
 - 기존 `userWorks`의 작품은 Shelf·검색에서 제외하고 저장 경계에서도 중복을 거부한다.
 - 최초 완료 marker가 있으나 Catalog 교체로 현재 positive anchor가 5개 미만인 경우도 add mode로 진입한다. first-run 저장을 재시도하지 않으며 현재 Catalog 기준 5개를 회복할 때까지 보호된 경로는 온보딩으로 돌아온다.
 - 이 세션에서 새 positive 작품 1~10개를 받는다. 1개부터 「追加する (n/10)」가 활성화되며 STEP 2는 표시하지 않는다. 10개는 세션 상한이고 기존 기록을 포함한 누적 상한은 없다.
-- 헤더는 「好きなマンガを追加してください」와 1~10개 안내를 사용하고 tray는 「追加するマンガ」로 명명한다.
-- 「DNAに戻る」는 현재 add draft를 보존하고 `/taste`로 돌아간다. 별도 「入力内容を破棄」만 draft를 삭제한다.
+- 헤더는 「好きなマンガを追加してください」와 「1作品から追加できます。5作品以上で DNA が鮮明になります。」(최소 1·권장 5 분리)를 사용하고 tray는 「追加するマンガ」로 명명한다. 「迷ったときは」도 add mode에서는 1작품 기준 문구를 쓴다.
+- 「DNAに戻る」는 헤더 오른쪽에 두며 현재 add draft를 보존하고 `/taste`로 돌아간다. 헤더의 파괴적 「入力内容を破棄」는 제거하고, 패널 하단의 작은 「選択をクリア」가 페이지에 머문 채 선택(positive)만 비운 draft를 저장한다(2026-10-01 사용자 결정).
 - 완료는 신규 positive만 insert-only로 추가하고 기존 `UserWorkRecord` 전체와 최초 `onboardingCompletedAt`을 보존한다. 성공 시 draft를 삭제하고 reveal 없이 `/taste`로 돌아간다.
 - [ ] 새 작품 1개만으로 완료할 수 있고 기존 작품·진행률·사유·시각은 변하지 않는다.
 - [ ] 기존 workId 충돌은 draft와 기존 기록을 보존한 채 전체 거부된다.
-- [ ] 닫기 후 재진입하면 reaction을 포함한 draft가 복원되고, 명시적 폐기 후에는 빈 add draft로 시작한다.
+- [ ] 닫기 후 재진입하면 reaction을 포함한 draft가 복원되고, 「選択をクリア」 후에는 빈 add draft로 남는다.
 - [ ] 완료 후 `?reveal=1` 없이 `/taste`로 복귀하며 최초 reveal marker는 변하지 않는다.
 
 ---
@@ -205,19 +208,23 @@ CTA **「好きなマンガから始める」** → /onboarding. 행동은 이 �
 
 ### 주요 액션
 
-「スキップ」와 「好みを見る」(둘 다 상시 활성) → STEP 3(/taste?reveal=1).
+「好みを見る」 하나가 상시 활성 주 버튼이다 → STEP 3(/taste?reveal=1). 0개 선택이면 그 자체가 건너뛰기 경로이므로 같은 동작의 두 번째 버튼을 두지 않고 「合わなかった作品がなくても、このまま進めます」를 함께 보인다. 1개 이상 선택하면 보조 텍스트 버튼 「選んだ作品を使わずに進む」(기존 skip, negative 미포함 완료)를 추가한다(2026-10-01 사용자 위임 디자인 결정).
 
 ### 정보 위계
 
-1. 안내: 「合わなかった・途中でやめたマンガはありますか?(任意)」
-2. 검색 입력 (STEP 1과 동일 컴포넌트, Catalog 전체 대상)
-3. 작품을 고르면 카드 확정 전에 작품별 disposition radiogroup 「この作品について」를 표시: `合わなかった` / `途中でやめた`. 둘 중 하나를 고른 작품만 선택된 negative entry가 된다.
-4. 선택된 negative 작품 카드: disposition 아래 **이유 칩 멀티 선택** — §6.7의 12사유 + 외부 사유(休載した/時間がなかった 등) + 「なんとなく合わなかった」
-5. 진행 버튼
+레이아웃은 STEP 1과 같은 본문 + 우측 sticky 패널(mobile 하단 고정)이다.
+
+0. h1 위 「好きな作品を選び直す」: draft를 보존한 채 STEP 1로 돌아간다. STEP 1에서 negative 작품을 좋아한 작품으로 고르면 그 작품은 negative에서 빠진다(한 작품은 한쪽에만).
+1. 안내: 「合わなかった・途中でやめたマンガはありますか?」 + 「任意」 pill, 「0〜3作品まで。なくても、そのまま進めます。」, 원칙 callout 「選ばないことは、苦手という意味にはなりません。」
+2. 「選んだ作品」: 선택된 negative 작품 편집 카드(아래 4).
+3. 검색 입력 (STEP 1과 동일 컴포넌트, Catalog 전체 대상). 검색어가 없으면 「候補から選ぶ」 목록을 보인다: 선택 가능 작품(recommendation eligible − 기록 − STEP 1 선택 − 이미 고른 negative) 중 onboarding eligible 작품을 먼저, 처음 6개, 「もっと見る」로 최대 18개. 검색 결과와 같은 행 카드다.
+   작품 행은 카드 확정 전에 작품별 disposition radiogroup 「この作品について」(시각 legend는 숨기고 accessible name 유지)를 표시: `合わなかった` / `途中でやめた`. 둘 중 하나를 고른 작품만 선택된 negative entry가 된다.
+4. 선택된 negative 작품 카드: disposition 아래 **이유 칩 멀티 선택**을 disposition별 안내(「合わなかった理由（複数選べます）」/「やめた理由（複数選べます）」)와 세 묶음으로 보인다 — 作品の内容(§6.7의 factor-backed 사유), 作品以外の事情(외부 사유), はっきりしない(「なんとなく合わなかった」).
+5. 우측 패널 「合わなかった作品 n / 3」: STEP 1과 같은 「DNAの鮮明さ」 미터(이유 있는 negative를 `projectProfileClarity`에 포함, reasoned 2개 미만이면 「具体的な理由を選ぶと、DNA がより鮮明になります」), 선택 요약(disposition·이유 개수), 「選ぶとどうなる？」(추천 제외, 이유별 감점 — `02` §6.7), 진행 버튼.
 
 ### 상태
 
-- 0개 선택: 「スキップ」가 시각적 주 버튼.
+- 0개 선택: 「好みを見る」만 주 버튼이며 패널에 「なくても大丈夫です」 안내를 보인다.
 - 이유 미선택 negative 작품: 선택한 disposition의 reason bucket에 `vagueDislike`로 저장됨을 카드에 소문구로 표시 「理由なし = 弱くだけ反映されます」.
 - STEP 1에서 선택한 작품은 검색 결과에서 「好きに選択済み」 배지와 함께 비활성.
 - STEP 1의 `次へ`로 STEP 2에 진입할 때 URL `q`와 검색 입력·결과를 비운다. 좋아한 작품 검색어가 불호 작품 검색으로 전달되지 않아야 하며, 선택한 작품과 감상은 유지한다. STEP 2 안에서의 검색·URL 복원은 기존 규칙을 따른다.

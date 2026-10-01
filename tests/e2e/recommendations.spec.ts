@@ -335,7 +335,7 @@ async function completeKeyboardOnboarding(
   }
   await observations.afterInitialNavigation?.(page);
   await expect(
-    page.getByRole("heading", { level: 1, name: "好きなマンガを 5〜10 作品えらんでください" }),
+    page.getByRole("heading", { level: 1, name: "あなたの Manga DNA を作りましょう" }),
   ).toBeFocused();
 
   await page.keyboard.press("Tab");
@@ -379,7 +379,7 @@ async function completeKeyboardOnboarding(
 
   await page.reload();
   await expect(
-    page.getByRole("heading", { level: 1, name: "好きなマンガを 5〜10 作品えらんでください" }),
+    page.getByRole("heading", { level: 1, name: "あなたの Manga DNA を作りましょう" }),
   ).toBeFocused();
   await expect
     .poll(async () => {
@@ -886,7 +886,7 @@ test.describe("Slice 7 recommendation journeys", () => {
       await expect(
         reducedPage.getByRole("heading", {
           level: 1,
-          name: "好きなマンガを 5〜10 作品えらんでください",
+          name: "あなたの Manga DNA を作りましょう",
         }),
       ).toBeVisible();
       await expect(reducedPage.locator("main[data-page-entry-b='active']")).toHaveCount(0);
@@ -2534,7 +2534,7 @@ test.describe("Slice 10 data-sovereignty journey", () => {
     await expect(
       guardedPage.getByRole("heading", {
         level: 1,
-        name: "好きなマンガを 5〜10 作品えらんでください",
+        name: "あなたの Manga DNA を作りましょう",
       }),
     ).toBeVisible();
     await guardedPage.close();
