@@ -25,6 +25,14 @@ const taglineCharacters = (() => {
   }));
 })();
 
+/**
+ * Tagline size that fits the longest phrase on one line of its column: one em per full-width
+ * character plus half an em of headroom for tracking and fallback fonts.
+ */
+const taglineFitSize = `calc(100cqi / ${String(
+  Math.max(...taglineCharacters.map((phrase) => phrase.characters.length)) + 0.5,
+)})`;
+
 export const landingCtaClassName = buttonClassName({
   className:
     "gap-[var(--space-content)] px-[var(--space-6)] py-[var(--space-3)] text-[length:var(--font-size-16)] font-bold",
@@ -90,23 +98,29 @@ export function HomeHero({
       >
         <div className="grid max-w-[36rem] justify-items-start gap-[var(--space-6)]">
           <LandingLogoReveal staticPresentation={staticLogo} />
-          <div className="grid gap-[var(--space-4)]">
+          <div className="grid w-full gap-[var(--space-4)] [container-type:inline-size]">
             {sharedEntry ? (
               <p className="text-[length:var(--text-caption-size)] font-bold text-accent">
                 {landingStrings.sharedEntry}
               </p>
             ) : null}
             <h1
-              className="landing-tagline font-display text-[length:var(--text-hero-size)] leading-[var(--line-height-display)] font-bold tracking-tight text-text-strong"
+              className="landing-tagline font-display text-[length:min(var(--text-hero-size),var(--tagline-fit-size))] leading-[var(--line-height-display)] font-bold tracking-tight text-text-strong"
               data-reduced-motion="fade"
               id="landing-title"
+              style={{ "--tagline-fit-size": taglineFitSize } as CSSProperties}
             >
-              {/* Each phrase is one unbreakable unit, so the tagline never wraps mid-word. The
+              {/* Each phrase is one unbreakable unit, so the tagline never wraps mid-word, and the
+                  size shrinks below the hero token when the longest phrase would not fit. The
                   characters animate during the logo reveal (04 §5.1); the heading's name is the
                   whole sentence, never single characters. */}
               <span className="sr-only">{landingStrings.tagline}</span>
               {taglineCharacters.map((phrase) => (
-                <span aria-hidden="true" className="inline-block" key={phrase.text}>
+                <span
+                  aria-hidden="true"
+                  className="inline-block whitespace-nowrap"
+                  key={phrase.text}
+                >
                   {phrase.characters.map(({ character, index }) => (
                     <span
                       className="landing-tagline__char inline-block"

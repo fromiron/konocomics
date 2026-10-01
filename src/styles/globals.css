@@ -351,6 +351,9 @@ p {
     color: var(--ink-strong);
     font-weight: 700;
     line-height: var(--line-height-heading);
+    /* Japanese headings wrap at phrase boundaries (Chromium) and keep balanced lines elsewhere. */
+    word-break: auto-phrase;
+    text-wrap: balance;
   }
 
   h1 {
@@ -1450,6 +1453,12 @@ h1[tabindex="-1"]:focus {
   line-height: var(--line-height-body);
   text-wrap: pretty;
   color: var(--text-strong);
+}
+
+/* Each axis label, with its leading ×, wraps as one unit so a label never splits mid-word. */
+.taste-dna-statement > span {
+  display: inline-block;
+  max-width: 100%;
 }
 .taste-dna-segment {
   cursor: pointer;
