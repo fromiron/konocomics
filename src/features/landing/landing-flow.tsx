@@ -11,10 +11,11 @@ import { useRecommendationCovers } from "@/features/recommendations/recommendati
 import { usePersistence, type ProviderCacheRecord } from "@/infrastructure/db";
 
 import { recordEntrySource } from "./entry-source";
-import { HomeHero, type LandingVisitorState } from "./home-hero";
+import { HomeHero } from "./home-hero";
 import { HomeClosing, HomeHowItWorks, HomeObi } from "./home-how-it-works";
 import { HomeDiscoveryShelf, HomeRankingShelf } from "./home-showcase";
 import type { LandingSample, LandingWork } from "./landing-types";
+import { useLandingVisitorState } from "./visitor-state";
 import type { EntrySource } from "@/lib/route-search";
 
 function skipProviderCacheWrite(record: ProviderCacheRecord) {
@@ -51,20 +52,13 @@ export function LandingFlow({
 }: LandingFlowProps) {
   const navigate = useNavigate();
   const catalogIdentity = useCatalogIdentity();
-  const { getProviderCache, onboardingCompletedAt, onboardingDraft, userWorks } = usePersistence();
+  const { getProviderCache, userWorks } = usePersistence();
   const hasProfile = useMemo(
     () => hasCatalogBackedProfileById(userWorks, catalogIdentity.profileWorkIds),
     [catalogIdentity.profileWorkIds, userWorks],
   );
   // Reading local state never changes it: the landing only picks where its one action leads.
-  const visitor: LandingVisitorState =
-    hasProfile === true
-      ? "profile"
-      : onboardingCompletedAt !== undefined && onboardingCompletedAt !== null
-        ? "recovery"
-        : (onboardingDraft?.positiveEntries.length ?? 0) > 0
-          ? "resume"
-          : "new";
+  const visitor = useLandingVisitorState();
 
   useEffect(() => {
     if (entrySource !== undefined) recordEntrySource(entrySource);

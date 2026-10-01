@@ -32,6 +32,7 @@ const clientOnlyRoutes = [
   "src/routes/library.tsx",
   "src/routes/settings.tsx",
   "src/routes/works/external.tsx",
+  "src/routes/share.tsx",
 ] as const;
 const fixedPrerenderPaths = [
   "/",
@@ -41,6 +42,7 @@ const fixedPrerenderPaths = [
   "/library",
   "/settings",
   "/works/external",
+  "/share",
 ] as const;
 const routedSearchCases = [
   {
@@ -150,7 +152,7 @@ const contracts = [
     },
   },
   {
-    name: "prerenders the seven fixed shells and every bundled work path",
+    name: "prerenders the eight fixed shells and every bundled work path",
     verify: () => {
       expect(catalogJson.works.length).toBeGreaterThanOrEqual(1_000);
       expect(new Set(catalogJson.works.map((work) => work.id))).toHaveLength(

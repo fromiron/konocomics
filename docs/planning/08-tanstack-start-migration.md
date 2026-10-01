@@ -25,6 +25,7 @@ TanStack Router는 route contract이며 범용 global state store가 아니다.
 | `/settings`        | `section`                                                              | form/mutation 상태는 local state                                                                                                                                                  |
 | `/works/$workId`   | canonical path param                                                   | 개인 기록은 Dexie                                                                                                                                                                 |
 | `/works/external`  | 기존 계약의 typed `workId` search param                                | external record는 Dexie                                                                                                                                                           |
+| `/share`           | 공유 DNA 링크 v1(`v`,`dna`,`ax`,`top`,`w`,`e`,`n`,`r`; `03` §4.1) — raw query를 domain codec이 strict parse | 공유 데이터는 URL에만 있고 Dexie·cache에 쓰지 않는다 |
 
 `/works/external`의 missing/duplicate/empty/malformed `workId`는 모두 기존 invalid-link 상태로 수렴하며 lookup이나 provider 요청을 시작하지 않는다. 추천 `sort`는 산식 순서를 바꾸지 않는 presentation-only 값만 허용한다.
 
@@ -34,6 +35,7 @@ TanStack Router는 route contract이며 범용 global state store가 아니다.
 - `/works/$workId`는 bundled Catalog work ID만 prerender하며 unknown ID는 not-found다.
 - `/onboarding`, `/taste`, `/recommendations`, `/library`, `/settings`는 IndexedDB 사용자 상태에 의존하므로 `ssr: false` route 또는 명시적 client boundary다.
 - `/works/external`은 고정 static shell이며 hydration 뒤 client-side IndexedDB lookup만 한다.
+- `/share`는 고정 static shell(`ssr: false`)이며 hydration 뒤 client에서 raw query를 해석한다(2026-10-01 사용자 결정). 서버는 query를 읽지 않는다.
 - Dexie profile guard는 server loader/`beforeLoad`에서 실행하지 않고 hydration 뒤 browser에서 실행한다.
 - root는 생성된 Catalog identity projection만 공유하며 Dexie나 runtime database를 열지 않는다.
 - shared root document는 server-safe하게 유지한다. persistence provider는 server render 중 memory 상태만 만들고 hydration effect에서 별도 browser chunk의 Dexie backend를 동적 import해 생성·연다. prerender되는 작품 상세의 개인 기록 영역은 client에서 hydrate한다.

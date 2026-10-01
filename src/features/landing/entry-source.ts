@@ -14,11 +14,3 @@ export function recordEntrySource(source: EntrySource) {
 export function entrySource(): EntrySource | undefined {
   return currentEntrySource;
 }
-
-/** The fixed public link a Manga DNA card points to. */
-export function shareEntryUrl(origin: string) {
-  const url = new URL("/", origin);
-  url.searchParams.set("landing", "1");
-  url.searchParams.set("via", "share-card");
-  return url.toString();
-}

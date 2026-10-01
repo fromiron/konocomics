@@ -14,6 +14,7 @@ import { Route as LibraryRouteImport } from './routes/library'
 import { Route as OnboardingRouteImport } from './routes/onboarding'
 import { Route as RecommendationsRouteImport } from './routes/recommendations'
 import { Route as SettingsRouteImport } from './routes/settings'
+import { Route as ShareRouteImport } from './routes/share'
 import { Route as TasteRouteImport } from './routes/taste'
 import { Route as WorksWorkIdRouteImport } from './routes/works/$workId'
 import { Route as WorksExternalRouteImport } from './routes/works/external'
@@ -43,6 +44,11 @@ const RecommendationsRoute = RecommendationsRouteImport.update({
 const SettingsRoute = SettingsRouteImport.update({
   id: '/settings',
   path: '/settings',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const ShareRoute = ShareRouteImport.update({
+  id: '/share',
+  path: '/share',
   getParentRoute: () => rootRouteImport,
 } as any)
 const TasteRoute = TasteRouteImport.update({
@@ -77,6 +83,7 @@ export interface FileRoutesByFullPath {
   '/onboarding': typeof OnboardingRoute
   '/recommendations': typeof RecommendationsRoute
   '/settings': typeof SettingsRoute
+  '/share': typeof ShareRoute
   '/taste': typeof TasteRoute
   '/works/$workId': typeof WorksWorkIdRoute
   '/works/external': typeof WorksExternalRoute
@@ -89,6 +96,7 @@ export interface FileRoutesByTo {
   '/onboarding': typeof OnboardingRoute
   '/recommendations': typeof RecommendationsRoute
   '/settings': typeof SettingsRoute
+  '/share': typeof ShareRoute
   '/taste': typeof TasteRoute
   '/works/$workId': typeof WorksWorkIdRoute
   '/works/external': typeof WorksExternalRoute
@@ -102,6 +110,7 @@ export interface FileRoutesById {
   '/onboarding': typeof OnboardingRoute
   '/recommendations': typeof RecommendationsRoute
   '/settings': typeof SettingsRoute
+  '/share': typeof ShareRoute
   '/taste': typeof TasteRoute
   '/works/$workId': typeof WorksWorkIdRoute
   '/works/external': typeof WorksExternalRoute
@@ -116,6 +125,7 @@ export interface FileRouteTypes {
     | '/onboarding'
     | '/recommendations'
     | '/settings'
+    | '/share'
     | '/taste'
     | '/works/$workId'
     | '/works/external'
@@ -128,6 +138,7 @@ export interface FileRouteTypes {
     | '/onboarding'
     | '/recommendations'
     | '/settings'
+    | '/share'
     | '/taste'
     | '/works/$workId'
     | '/works/external'
@@ -140,6 +151,7 @@ export interface FileRouteTypes {
     | '/onboarding'
     | '/recommendations'
     | '/settings'
+    | '/share'
     | '/taste'
     | '/works/$workId'
     | '/works/external'
@@ -153,6 +165,7 @@ export interface RootRouteChildren {
   OnboardingRoute: typeof OnboardingRoute
   RecommendationsRoute: typeof RecommendationsRoute
   SettingsRoute: typeof SettingsRoute
+  ShareRoute: typeof ShareRoute
   TasteRoute: typeof TasteRoute
   WorksWorkIdRoute: typeof WorksWorkIdRoute
   WorksExternalRoute: typeof WorksExternalRoute
@@ -195,6 +208,13 @@ declare module '@tanstack/react-router' {
       path: '/settings'
       fullPath: '/settings'
       preLoaderRoute: typeof SettingsRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/share': {
+      id: '/share'
+      path: '/share'
+      fullPath: '/share'
+      preLoaderRoute: typeof ShareRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/taste': {
@@ -241,6 +261,7 @@ const rootRouteChildren: RootRouteChildren = {
   OnboardingRoute: OnboardingRoute,
   RecommendationsRoute: RecommendationsRoute,
   SettingsRoute: SettingsRoute,
+  ShareRoute: ShareRoute,
   TasteRoute: TasteRoute,
   WorksWorkIdRoute: WorksWorkIdRoute,
   WorksExternalRoute: WorksExternalRoute,
