@@ -323,6 +323,63 @@ export const siteFooterStrings = {
     manage: "記録とデータ",
   },
   localFirst: "登録なし。好みと読書記録は、このブラウザの中だけに保存されます。",
+  about: "このサイトについて",
+  copyright: "© 2026 Konocomics",
+} as const;
+
+export const aboutStrings = {
+  metadataTitle: "このサイトについて | konocomics",
+  title: "このサイトについて",
+  lead: "konocomics は、好きなマンガから好みを分析し、次に読む作品を根拠つきでおすすめする無料のウェブアプリです。会員登録は不要です。",
+  sections: [
+    {
+      title: "運営者",
+      paragraphs: ["Konocomics"],
+    },
+    {
+      title: "ブラウザに保存されるデータ",
+      paragraphs: [
+        "読書記録、好み、おすすめの方針は、お使いのブラウザ（IndexedDB）にのみ保存されます。運営者のサーバーには送信・保存されません。",
+        "設定の「すべて削除」から、いつでも消去できます。ブラウザのサイトデータを消去した場合も削除されます。",
+      ],
+    },
+    {
+      title: "外部に送信される情報",
+      paragraphs: [
+        "作品の検索や、表紙・価格などの表示のために、検索語や ISBN を当サイトのサーバーを経由して楽天ウェブサービス（楽天ブックス API）へ送信します。読書記録や好みは送信しません。",
+        "ホスティング事業者（Vercel）のサーバーには、IP アドレスなどの一般的なアクセスログが記録される場合があります。当サイトはアクセス解析ツールや広告用の Cookie を使用していません。",
+      ],
+    },
+    {
+      title: "アフィリエイトについて",
+      paragraphs: [
+        "楽天ブックスへのリンクには、楽天アフィリエイトの情報が含まれる場合があります。リンク先での購入などにより、運営者が報酬を受け取ることがあります。",
+        "リンク先では、楽天グループの規約とプライバシーポリシーが適用されます。",
+      ],
+    },
+    {
+      title: "表紙・作品情報",
+      paragraphs: [
+        "表紙画像・書誌・価格などは楽天ブックス API から取得して表示しており、当サイトでは画像を保存・複製していません。一部の作品紹介は、出版社の公式サイトを出典として表示しています。",
+        "各作品の著作権は、それぞれの権利者に帰属します。",
+      ],
+    },
+    {
+      title: "免責事項",
+      paragraphs: [
+        "おすすめと好みの分析は、登録された作品と公開情報をもとに自動で計算した参考情報です。作品情報・価格・在庫の正確性や最新性は保証しません。",
+        "当サイトの利用によって生じた損害について、運営者は責任を負いかねます。内容は予告なく変更、または提供を終了する場合があります。",
+      ],
+    },
+  ],
+  contact: {
+    title: "お問い合わせ",
+    description: "ご意見や不具合の報告は、GitHub の Issues で受け付けています。",
+    link: "GitHub Issues",
+    linkLabel: "GitHub Issues を開く（新しいタブ）",
+    href: "https://github.com/fromiron/konocomics/issues",
+  },
+  enactedAt: "制定日：2026年10月1日",
 } as const;
 
 export const landingStrings = {
@@ -419,6 +476,7 @@ export const navigationStrings = {
     onboarding: "好みの登録",
     workDetail: "作品詳細",
     sharedDna: "共有された Manga DNA",
+    about: "このサイトについて",
   },
   routeAnnouncement: (pageLabel: string) => `${pageLabel}ページに移動しました。`,
 } as const;
@@ -1064,6 +1122,14 @@ export const recommendationStrings = {
     removedWithoutBackfill: "1件を除外しました。おすすめ候補が不足しています。",
     updated: "おすすめを更新しました。",
     policiesUpdated: "おすすめの方針を反映しました。",
+    recorded: {
+      completed: (title: string) => `「${title}」を読んだに記録しました。`,
+      hidden: (title: string) => `「${title}」を興味なしにしました。`,
+    },
+    undo: "元に戻す",
+    undone: (title: string) => `「${title}」をおすすめに戻しました。`,
+    undoConflict: "ほかの画面で記録が更新されたため、元に戻しませんでした。",
+    undoFailed: "元に戻せませんでした。もう一度お試しください。",
   },
   feedbackDialog: {
     completedTitle: "読んだ感想を残しますか？",
@@ -1099,6 +1165,9 @@ export const recommendationStrings = {
 
 export const workDetailStrings = {
   metadataTitle: "作品詳細 | konocomics",
+  workMetadataTitle: (title: string) => `${title} | konocomics`,
+  workMetadataDescription: (title: string, creators: readonly string[], publisher: string) =>
+    `『${title}』（${[...creators, publisher].filter((part) => part !== "").join("・")}）の作品情報。あなたの好みとの相性や、おすすめの理由を konocomics で確認できます。`,
   loading: "作品情報を読み込んでいます…",
   storageWarning:
     "このブラウザでは変更を保存できません。このセッション中だけ読書状態を利用できます。",
@@ -1289,6 +1358,7 @@ export const settingsStrings = {
       policies: "おすすめの方針",
       dna: "Manga DNA",
       data: "データ",
+      danger: "危険な操作",
       app: "このアプリ",
     },
   },
@@ -1312,6 +1382,11 @@ export const settingsStrings = {
     protect: "データを保護する",
     protecting: "保護を設定しています…",
   },
+  danger: {
+    title: "危険な操作",
+    description: "取り消せない操作です。実行する前に、エクスポートでバックアップを残してください。",
+    exportFirst: "先にエクスポート",
+  },
   data: {
     title: "データ",
     description:
@@ -1327,6 +1402,7 @@ export const settingsStrings = {
       description: "konocomics のエクスポートファイルを検証してから復元します。",
       select: "ファイルを選ぶ",
       inspecting: "ファイルを確認しています…",
+      verified: (filename: string) => `「${filename}」を確認しました。復元できます。`,
       reviewReplacement: "置き換える内容を確認",
       preview: {
         title: "インポートする内容",
@@ -1349,7 +1425,7 @@ export const settingsStrings = {
     },
     delete: {
       title: "すべて削除",
-      description: "このブラウザに保存した konocomics のデータをすべて削除します。",
+      description: "読書記録、好み、おすすめの方針を、このブラウザからすべて削除します。",
       action: "すべて削除",
       keyword: "削除",
       successSessionOnly:
@@ -1398,14 +1474,13 @@ export const settingsStrings = {
     versionLabel: "バージョン",
     version: "0.1.0",
     storageLabel: "データの保存先",
+    storageValue: "このブラウザのみ",
+    storageValueSessionOnly: "このセッションのみ（再読み込みで消えます）",
     providerLabel: "書誌・販売情報",
     providerCredit: "Supported by Rakuten Developers",
     affiliateLabel: "アフィリエイト",
-    affiliateRelationship:
-      "アフィリエイトIDが設定されている場合、楽天ブックスへのリンクにアフィリエイト情報が含まれます。",
-    licenseLabel: "ライセンス",
-    licenseUnset: "未設定",
-    showIntroduction: "紹介をもう一度見る",
+    affiliateRelationship: "楽天ブックスへのリンクにアフィリエイト情報が含まれる場合があります。",
+    showIntroduction: "使い方をもう一度見る",
   },
 } as const;
 

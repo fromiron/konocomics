@@ -21,7 +21,7 @@ import {
   hasCatalogBackedProfile,
   recommendationProfileRecords,
 } from "@/domain/profile/catalog-profile";
-import { projectProfileClarity } from "@/domain/profile/confidence";
+import { type ConfidenceLevel, projectProfileClarity } from "@/domain/profile/confidence";
 import {
   createEmptyOnboardingDraft,
   reconcileOnboardingDraftMode,
@@ -73,13 +73,19 @@ import {
 import { ExcludedMatchNotice } from "./excluded-match-notice";
 import { NegativeSummaryPanel } from "./negative-summary-panel";
 import { createWorkSearch, findExcludedSearchMatches } from "./search";
-import { SelectedTray } from "./selected-tray";
+import { CLARITY_STAGE_MAX, SelectedTray } from "./selected-tray";
 import { WorkSearchInput, type WorkSearchState } from "./work-search-input";
 import { WorkShelf } from "./work-shelf";
 
 const STEP_ONE_SEARCH_EMPTY: WorkSearchState = { query: "", results: [] };
 const STEP_TWO_SEARCH_EMPTY: WorkSearchState = { query: "", results: [] };
 const NEGATIVE_CANDIDATE_PREVIEW_LIMIT = 6;
+// Assistive tech reads the clarity meter as a stage, never as the raw confidence value.
+const clarityStageByLevel: Readonly<Record<ConfidenceLevel, number>> = {
+  low: 1,
+  normal: 2,
+  high: CLARITY_STAGE_MAX,
+};
 const NEGATIVE_CANDIDATE_EXPANDED_LIMIT = 18;
 
 const ANCHOR_CARD_LABELS = {
@@ -699,6 +705,7 @@ export function OnboardingFlow({
     additionalPositiveCapacity:
       draft.step === 1 ? ONBOARDING_MAX_POSITIVE_WORKS - draft.positiveEntries.length : 0,
   });
+  const clarityStage = clarity.positiveAnchorCount === 0 ? 0 : clarityStageByLevel[clarity.level];
   const belowMinimum = draft.positiveEntries.length < minimumPositiveWorks;
   const clarityLevelLabel =
     clarity.positiveAnchorCount === 0
@@ -877,6 +884,7 @@ export function OnboardingFlow({
                 levelLabel: clarityLevelLabel,
                 hint: stepOneClarityHint,
                 value: clarity.confidence,
+                stage: clarityStage,
               }}
               clearLabel={onboardingStrings.selectionPanel.clear}
               continueHint={onboardingStrings.selectionPanel.continueHint[panelMode]}
@@ -949,7 +957,7 @@ export function OnboardingFlow({
                   {onboardingStrings.step2.eyebrow}
                 </p>
                 <h1
-                  className="text-[length:var(--font-size-20)] leading-[1.35] tracking-[-0.02em] text-text-strong md:text-[length:var(--font-size-28)]"
+                  className="text-[length:var(--font-size-20)] leading-[1.35] tracking-[-0.02em] text-text-strong md:text-[length:var(--text-page-title-size)]"
                   ref={headingRef}
                   tabIndex={-1}
                 >
@@ -1108,6 +1116,7 @@ export function OnboardingFlow({
                 levelLabel: clarityLevelLabel,
                 hint: stepTwoClarityHint,
                 value: clarity.confidence,
+                stage: clarityStage,
               }}
               coverUrls={coverUrls}
               entries={draft.negativeEntries}

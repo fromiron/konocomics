@@ -16,7 +16,7 @@ import {
 } from "react";
 import { flushSync } from "react-dom";
 
-import { snackbarClassName } from "@/components/layout/snackbar";
+import { Snackbar, snackbarClassName, type SnackbarNotice } from "@/components/layout/snackbar";
 import { Button } from "@/components/design-system/button";
 import { PageHeader } from "@/components/layout/page-header";
 import {
@@ -115,6 +115,18 @@ const DEFAULT_POLICIES: RecommendationPolicies = {
 };
 const EMPTY_ADJUSTMENTS: ProfileAdjustments = { axes: {}, themes: {} };
 const EMPTY_RECORDS: readonly UserWorkRecord[] = [];
+
+/** What a 「読んだ」/「興味なし」 removal replaced, so the snackbar can put it back. */
+type RecommendationRemoval = Readonly<{
+  kind: PendingRecommendationFeedback["kind"];
+  workId: string;
+  title: string;
+  updatedAt: string;
+  previousRecord: UserWorkRecord | undefined;
+  previousVisibleEntries: RecommendationPlanEntry[];
+  removedVisibleEntries: RecommendationPlanEntry[];
+}>;
+const FEATURED_RECOMMENDATION_LIMIT = 5;
 type RecommendationMotionListComponent = ComponentType<RecommendationMotionListProps>;
 const FeedbackDialog = lazy(async () => {
   const module = await import("./feedback-dialog");
@@ -349,6 +361,8 @@ export function RecommendationsFlow({
     savePolicies,
     saveProviderCache,
     saveRecommendationCache,
+    addUserWorkIfAbsent,
+    removeUserWorkIfUnchanged,
     saveUserWork,
     status,
     userWorks,
@@ -379,6 +393,9 @@ export function RecommendationsFlow({
   const [feedbackBusy, setFeedbackBusy] = useState(false);
   const [feedbackBaseBusy, setFeedbackBaseBusy] = useState(false);
   const [feedbackError, setFeedbackError] = useState("");
+  const [undoNotice, setUndoNotice] = useState<SnackbarNotice | undefined>(undefined);
+  const lastRemoval = useRef<RecommendationRemoval | null>(null);
+  const undoNoticeSequence = useRef(0);
   const [MotionList, setMotionList] = useState<RecommendationMotionListComponent | null>(null);
   const [recommendationPlanWorker] = useState(() => new RecommendationPlanWorkerClient());
   const calculationSequence = useRef(0);
@@ -471,10 +488,12 @@ export function RecommendationsFlow({
         const metadata = context?.constraintByWorkId[entry.workId];
         return work === undefined || metadata === undefined ? [] : [{ entry, metadata, work }];
       });
-      const nextFeaturedEntries =
+      // Featured carries the plan's top picks; the full ten stay in the Top 10 ranking (03 §4).
+      const nextFeaturedEntries = (
         genre === undefined
           ? nextRenderedEntries
-          : nextRenderedEntries.filter(({ work }) => work.genres.includes(genre));
+          : nextRenderedEntries.filter(({ work }) => work.genres.includes(genre))
+      ).slice(0, FEATURED_RECOMMENDATION_LIMIT);
       const withCatalogData = (entries: readonly RecommendationPlanEntry[]) =>
         entries.flatMap((entry) => {
           if (excludedWorkIds.has(entry.workId)) return [];
@@ -486,7 +505,7 @@ export function RecommendationsFlow({
       // Shelves draw from the same mood-filtered candidates as the main list.
       const candidatePlanEntries =
         moodPlan === null ? nextAllPlanEntries : withCatalogData(moodPlan);
-      const visibleWorkIds = new Set(displayedEntries.map((entry) => entry.workId));
+      const visibleWorkIds = new Set(nextFeaturedEntries.map(({ entry }) => entry.workId));
       const auxiliaryEntries = candidatePlanEntries.filter(
         ({ entry, work }) =>
           !visibleWorkIds.has(entry.workId) && (genre === undefined || work.genres.includes(genre)),
@@ -864,11 +883,66 @@ export function RecommendationsFlow({
     });
   };
 
+  const undoRemoval = async (removal: RecommendationRemoval) => {
+    if (calculationInFlight.current || policySaveInFlight.current || feedbackBaseInFlight.current) {
+      return;
+    }
+    feedbackBaseInFlight.current = true;
+    setFeedbackBaseBusy(true);
+    setUndoNotice(undefined);
+    setActionError("");
+    try {
+      // A newer write from another screen is never overwritten or deleted.
+      const result = await removeUserWorkIfUnchanged(removal.workId, removal.updatedAt);
+      if (result !== "removed") {
+        announce(recommendationStrings.announcements.undoConflict);
+        return;
+      }
+      if (removal.previousRecord !== undefined) {
+        await addUserWorkIfAbsent({
+          ...removal.previousRecord,
+          updatedAt: new Date().toISOString(),
+        });
+      }
+      if (lastRemoval.current === removal) lastRemoval.current = null;
+      setExcludedWorkIds((current) => {
+        const next = new Set(current);
+        next.delete(removal.workId);
+        return next;
+      });
+      // Restore the exact previous list only when nothing else has changed it since.
+      setVisibleEntries((current) =>
+        current === removal.removedVisibleEntries ? removal.previousVisibleEntries : current,
+      );
+      setBackfillIds(new Set([removal.workId]));
+      announce(recommendationStrings.announcements.undone(removal.title));
+    } catch {
+      setActionError(recommendationStrings.announcements.undoFailed);
+    } finally {
+      feedbackBaseInFlight.current = false;
+      setFeedbackBaseBusy(false);
+    }
+  };
+
   const closeFeedback = () => {
     const focusWorkId = feedback?.focusWorkId ?? null;
+    const removal = lastRemoval.current;
     setFeedback(null);
     setFeedbackError("");
     focusAfterDialog(focusWorkId);
+    if (removal !== null && removal.workId === feedback?.workId) {
+      // The removal line is replaced by the undoable confirmation in the same corner.
+      announce("");
+      setUndoNotice({
+        id: (undoNoticeSequence.current += 1),
+        text: recommendationStrings.announcements.recorded[removal.kind](removal.title),
+        tone: "status",
+        action: {
+          label: recommendationStrings.announcements.undo,
+          onAction: () => void undoRemoval(removal),
+        },
+      });
+    }
   };
 
   const savePlanned = async (entry: RecommendationPlanEntry) => {
@@ -958,6 +1032,9 @@ export function RecommendationsFlow({
     setFeedbackBaseBusy(true);
     setWorkBusy(entry.workId, true);
     setActionError("");
+    setUndoNotice(undefined);
+    const previousRecord = records.find((record) => record.workId === entry.workId);
+    const previousVisibleEntries = visibleEntries;
     const updatedAt = new Date().toISOString();
     const requestedMotionList = motionListRequest.current;
     try {
@@ -1026,6 +1103,15 @@ export function RecommendationsFlow({
       setExcludedWorkIds(nextExcludedWorkIds);
       setBackfillIds(addedIds);
       setVisibleEntries(nextEntries);
+      lastRemoval.current = {
+        kind,
+        workId: entry.workId,
+        title: work.title,
+        updatedAt,
+        previousRecord,
+        previousVisibleEntries,
+        removedVisibleEntries: nextEntries,
+      };
       announce(
         addedIds.size > 0
           ? recommendationStrings.announcements.removedAndBackfilled
@@ -1648,6 +1734,10 @@ export function RecommendationsFlow({
             <span key={liveAnnouncement.sequence}>{liveAnnouncement.text}</span>
           )}
         </p>
+        <Snackbar
+          notice={undoNotice}
+          onDismiss={(id) => setUndoNotice((current) => (current?.id === id ? undefined : current))}
+        />
       </main>
     </>
   );

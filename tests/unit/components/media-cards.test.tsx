@@ -140,19 +140,11 @@ describe("media card anatomy", () => {
     expect(rankingArtwork.className).toContain("absolute inset-0");
     expect(rankingArtwork.style.aspectRatio).toBe("");
     expect(container.querySelector<HTMLElement>(".cover-image")?.style.aspectRatio).toBe("");
-    const hoverPosition = container.querySelector<HTMLElement>(
-      '[data-ranking-hover-position="true"]',
-    );
-    expect(hoverPosition?.className).toContain("opacity-0");
-    expect(hoverPosition?.className).toContain("[transform:translateY(var(--space-2))]");
-    expect(hoverPosition?.className).toContain("transition-[transform,opacity]");
-    expect(hoverPosition?.className).toContain("duration-[var(--motion-duration-floating-action)]");
-    expect(hoverPosition?.className).toContain("shadow-[var(--shadow-floating-action)]");
-    expect(hoverPosition?.className).toContain("group-hover/ranking:opacity-100");
-    expect(hoverPosition?.className).toContain("group-hover/ranking:[transform:translateY(0)]");
-    expect(hoverPosition?.className).toContain("group-focus-visible/ranking:opacity-100");
-    expect(hoverPosition?.className).toContain("motion-reduce:[transform:translateY(0)]");
-    expect(hoverPosition?.className).toContain("motion-reduce:transition-none");
+    const rankBadge = container.querySelector<HTMLElement>('[data-ranking-badge-position="true"]');
+    // The rank stays visible without hover or focus so touch users can read the order (03 §4).
+    expect(rankBadge?.className).not.toContain("opacity-0");
+    expect(rankBadge?.className).not.toContain("group-hover/ranking:opacity-100");
+    expect(rankBadge?.className).toContain("shadow-[var(--shadow-floating-action)]");
     expect(container.querySelector('[data-ranking-label="true"]')?.textContent).toBe(
       "アクション · コメディ · ファンタジー",
     );
@@ -181,7 +173,7 @@ describe("media card anatomy", () => {
     ).toBeTruthy();
     expect(screen.getByRole("listitem").hasAttribute("data-ranking-kind")).toBe(false);
     expect(screen.getByRole("listitem").hasAttribute("data-ranking-position")).toBe(false);
-    expect(container.querySelector("[data-ranking-hover-position], .ranking-crown")).toBeNull();
+    expect(container.querySelector("[data-ranking-badge-position], .ranking-crown")).toBeNull();
   });
 
   it("crowns the personalized top three in gold, silver, and bronze without replacing rank text", () => {
@@ -206,7 +198,7 @@ describe("media card anatomy", () => {
       const crown = container.querySelector(".rank-crown");
       expect(crown?.getAttribute("data-medal") ?? undefined).toBe(expectedMedal);
       expect(
-        container.querySelector("[data-ranking-hover-position]")?.getAttribute("data-medal") ??
+        container.querySelector("[data-ranking-badge-position]")?.getAttribute("data-medal") ??
           undefined,
       ).toBe(expectedMedal);
       if (crown !== null) expect(crown.getAttribute("aria-hidden")).toBe("true");

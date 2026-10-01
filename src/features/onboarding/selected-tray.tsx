@@ -23,7 +23,11 @@ export type SelectedTrayClarity = Readonly<{
   hint?: string;
   /** Profile confidence in 0..1. Drawn as a fill only; never rendered as a number. */
   value: number;
+  /** Stage index (0 = empty … CLARITY_STAGE_MAX) exposed to assistive tech instead of `value`. */
+  stage: number;
 }>;
+
+export const CLARITY_STAGE_MAX = 3;
 
 export type SelectedTrayGuide = Readonly<{
   title: string;
@@ -44,9 +48,9 @@ export function ClarityMeter({ clarity }: Readonly<{ clarity: SelectedTrayClarit
       </div>
       <div
         aria-labelledby={labelId}
-        aria-valuemax={1}
+        aria-valuemax={CLARITY_STAGE_MAX}
         aria-valuemin={0}
-        aria-valuenow={clarity.value}
+        aria-valuenow={clarity.stage}
         aria-valuetext={
           clarity.hint === undefined ? clarity.levelLabel : `${clarity.levelLabel}。${clarity.hint}`
         }

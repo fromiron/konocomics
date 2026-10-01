@@ -42,7 +42,7 @@ RecommendationsFlow
 
 ## Shelf grouping 규칙
 
-- Featured: plan order 상위 항목
+- Featured: plan order 상위 5작품(2026-10-01 「역할 분리」, `03` §4)
 - Anchor reason: lead contribution의 anchor work 기준
 - Discovery: engine이 이미 준 plan 중 discovery 성격의 항목을 presentation selector로 추출
 - Completed: candidate work.status가 completed인 항목

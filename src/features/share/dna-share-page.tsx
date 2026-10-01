@@ -354,7 +354,7 @@ export function DnaSharePage({ search }: Readonly<{ search: string }>) {
         <span className="rounded-[var(--radius-pill)] border border-line-accent bg-accent-soft px-[var(--space-4)] py-[var(--space-1)] text-[length:var(--text-caption-size)] font-bold tracking-[0.2em] text-accent">
           {strings.kicker}
         </span>
-        <h1 className="font-display text-[length:var(--font-size-28)] leading-[var(--line-height-heading)] text-text-strong md:text-[length:var(--font-size-32)]">
+        <h1 className="font-display text-[length:var(--text-page-title-size)] leading-[var(--line-height-heading)] text-text-strong">
           {link === null ? strings.invalid.title : strings.title}
         </h1>
         <p className="text-[length:var(--font-size-14)] text-text-muted">

@@ -156,6 +156,7 @@ describe("SettingsFlow layout and storage", () => {
       settingsStrings.sections.items.policies,
       settingsStrings.sections.items.dna,
       settingsStrings.sections.items.data,
+      settingsStrings.sections.items.danger,
       settingsStrings.sections.items.app,
     ]);
     expect(
@@ -168,6 +169,7 @@ describe("SettingsFlow layout and storage", () => {
       settingsStrings.policies.title,
       settingsStrings.dna.title,
       settingsStrings.data.title,
+      settingsStrings.danger.title,
       settingsStrings.app.title,
     ]) {
       expect(screen.getByRole("heading", { level: 2, name: title })).toBeTruthy();
@@ -222,12 +224,16 @@ describe("SettingsFlow layout and storage", () => {
 });
 
 describe("SettingsFlow data ownership", () => {
-  it("keeps export, import, and deletion in one compact data group", () => {
+  it("keeps export and import in the data card and moves deletion to a separate danger card", () => {
     render(<SettingsFlow />);
 
-    const dataHeading = screen.getByRole("heading", { name: settingsStrings.data.title });
-    const dataPanel = dataHeading.closest("section");
-    if (dataPanel === null) throw new Error("Missing data settings group");
+    const dataPanel = screen
+      .getByRole("heading", { level: 2, name: settingsStrings.data.title })
+      .closest("section");
+    const dangerPanel = screen
+      .getByRole("heading", { level: 2, name: settingsStrings.danger.title })
+      .closest("section");
+    if (dataPanel === null || dangerPanel === null) throw new Error("Missing settings card");
 
     expect(
       within(dataPanel).getByRole("button", { name: settingsStrings.data.export.action }),
@@ -236,11 +242,31 @@ describe("SettingsFlow data ownership", () => {
       within(dataPanel).getByLabelText(settingsStrings.data.import.select, { selector: "input" }),
     ).toBeTruthy();
     expect(
-      within(dataPanel).getByRole("button", { name: settingsStrings.data.delete.action }),
-    ).toBeTruthy();
-    expect(
-      screen.queryByRole("heading", { level: 2, name: settingsStrings.data.delete.title }),
+      within(dataPanel).queryByRole("button", { name: settingsStrings.data.delete.action }),
     ).toBeNull();
+    expect(
+      within(dangerPanel).getByRole("button", { name: settingsStrings.data.delete.action }),
+    ).toBeTruthy();
+    expect(dangerPanel.id).toBe("settings-section-danger");
+  });
+
+  it("offers an export from the danger card before deleting", async () => {
+    vi.spyOn(URL, "createObjectURL").mockReturnValue("blob:export");
+    vi.spyOn(URL, "revokeObjectURL").mockImplementation(() => undefined);
+    vi.spyOn(HTMLAnchorElement.prototype, "click").mockImplementation(() => undefined);
+    render(<SettingsFlow />);
+
+    fireEvent.click(screen.getByRole("button", { name: settingsStrings.danger.exportFirst }));
+
+    await waitFor(() => expect(testState.exportUserData).toHaveBeenCalledTimes(1));
+    expect(testState.deleteAllData).not.toHaveBeenCalled();
+  });
+
+  it("drops the unset license row from the app information", () => {
+    render(<SettingsFlow />);
+
+    expect(screen.queryByText("ライセンス")).toBeNull();
+    expect(screen.getByRole("link", { name: settingsStrings.app.showIntroduction })).toBeTruthy();
   });
 
   it("discloses the conditional affiliate relationship without exposing configuration", () => {
@@ -288,6 +314,7 @@ describe("SettingsFlow data ownership", () => {
 
     await waitFor(() => expect(testState.inspectImportJson).toHaveBeenCalledTimes(1));
     expect(screen.getByText(settingsStrings.data.import.preview.workCount(1))).toBeTruthy();
+    expect(screen.getByText(settingsStrings.data.import.verified("backup.json"))).toBeTruthy();
     expect(
       screen.getByText(
         settingsStrings.data.import.preview.catalogMismatch(

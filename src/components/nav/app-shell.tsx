@@ -63,6 +63,10 @@ function getRouteLabel(pathname: string) {
     return navigationStrings.routeNames.workDetail;
   }
 
+  if (pathname === "/about") {
+    return navigationStrings.routeNames.about;
+  }
+
   if (pathname === "/share") {
     return navigationStrings.routeNames.sharedDna;
   }

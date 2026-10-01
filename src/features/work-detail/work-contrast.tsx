@@ -46,7 +46,6 @@ export function WorkContrastSection({ entries, coverUrls, onCoverVisible }: Work
             marker="contrast"
             onCoverVisible={() => onCoverVisible(work.id)}
             reason={reason}
-            reasonAlwaysVisible
             title={work.title}
             workId={work.id}
           />
