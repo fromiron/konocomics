@@ -580,7 +580,11 @@ export function OnboardingFlow({
   };
 
   const continueFromStepOne = () => {
+    if (submittingRef.current) return;
     if (draft.positiveEntries.length < minimumPositiveWorks) {
+      showLimit(
+        onboardingStrings.step1.needMore(minimumPositiveWorks - draft.positiveEntries.length),
+      );
       return;
     }
     setPageEntryConsumed(true);
@@ -682,22 +686,23 @@ export function OnboardingFlow({
               continueLabel={
                 submitting && isAddMode
                   ? onboardingStrings.addMode.saving
-                  : isAddMode && draft.positiveEntries.length === 0
-                    ? onboardingStrings.addMode.minimum
-                    : isAddMode
-                      ? onboardingStrings.addMode.submit(draft.positiveEntries.length)
-                      : draft.positiveEntries.length < ONBOARDING_MIN_POSITIVE_WORKS
-                        ? onboardingStrings.step1.remaining(
-                            ONBOARDING_MIN_POSITIVE_WORKS - draft.positiveEntries.length,
-                          )
-                        : onboardingStrings.step1.next(draft.positiveEntries.length)
+                  : isAddMode
+                    ? onboardingStrings.addMode.submit(draft.positiveEntries.length)
+                    : onboardingStrings.step1.next(draft.positiveEntries.length)
               }
               countLabel={onboardingStrings.step1.selectedCount(
                 draft.positiveEntries.length,
                 ONBOARDING_MAX_POSITIVE_WORKS,
               )}
               coverUrls={coverUrls}
-              disabled={submitting || draft.positiveEntries.length < minimumPositiveWorks}
+              disabled={submitting}
+              remainingLabel={
+                draft.positiveEntries.length < minimumPositiveWorks
+                  ? onboardingStrings.step1.remaining(
+                      minimumPositiveWorks - draft.positiveEntries.length,
+                    )
+                  : undefined
+              }
               emptyLabel={
                 isAddMode
                   ? onboardingStrings.addMode.emptySelected

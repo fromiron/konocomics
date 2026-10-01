@@ -12,6 +12,7 @@ import {
   useState,
   type ComponentType,
   type ReactNode,
+  type RefObject,
 } from "react";
 import { flushSync } from "react-dom";
 
@@ -140,7 +141,63 @@ type RecommendationsFlowProps = Readonly<{
 
 function StaticRecommendationItems({
   items,
-}: Readonly<{ items: readonly RecommendationMotionItem[] }>) {
+  entryConsumed,
+}: Readonly<{ items: readonly RecommendationMotionItem[]; entryConsumed: RefObject<boolean> }>) {
+  const entryElements = useRef(new Map<string, HTMLLIElement>());
+  useLayoutEffect(() => {
+    if (entryConsumed.current || typeof window.matchMedia !== "function") return;
+    const preference = window.matchMedia("(prefers-reduced-motion: reduce)");
+    if (
+      typeof preference.addEventListener !== "function" ||
+      typeof preference.removeEventListener !== "function"
+    )
+      return;
+    const animations: Animation[] = [];
+    const finish = () => animations.forEach((animation) => animation.cancel());
+    // The Shelf's layout effect first restores the canonical copy and scroll position.
+    const frame = window.requestAnimationFrame(() => {
+      if (entryConsumed.current) return;
+      entryConsumed.current = true;
+      const visible = [...entryElements.current.values()]
+        .filter((element) => {
+          const rect = element.getBoundingClientRect();
+          const track = element.parentElement?.getBoundingClientRect();
+          return (
+            track !== undefined &&
+            rect.bottom > 0 &&
+            rect.top < window.innerHeight &&
+            rect.right > Math.max(0, track.left) &&
+            rect.left < Math.min(window.innerWidth, track.right)
+          );
+        })
+        .slice(0, 4);
+      visible.forEach((element, index) => {
+        if (typeof element.animate !== "function") return;
+        animations.push(
+          element.animate(
+            preference.matches
+              ? [{ opacity: 0.7 }, { opacity: 1 }]
+              : [
+                  { opacity: 0.7, transform: "translateY(8px)" },
+                  { opacity: 1, transform: "none" },
+                ],
+            {
+              duration: preference.matches ? 160 : 240,
+              delay: preference.matches ? 0 : index * 60,
+              easing: "ease-out",
+              fill: "backwards",
+            },
+          ),
+        );
+      });
+    });
+    preference.addEventListener("change", finish);
+    return () => {
+      window.cancelAnimationFrame(frame);
+      preference.removeEventListener("change", finish);
+      finish();
+    };
+  }, [entryConsumed]);
   const copies = shouldLoopCarousel(items.length) ? carouselLoopCopies : ([1] as const);
   return (
     <>
@@ -149,6 +206,14 @@ function StaticRecommendationItems({
           <li
             className="basis-[var(--featured-card-basis)] shrink-0 snap-start overflow-visible"
             data-recommendation-work-id={item.workId}
+            ref={
+              copy === 1
+                ? (element) => {
+                    if (element === null) entryElements.current.delete(item.workId);
+                    else entryElements.current.set(item.workId, element);
+                  }
+                : undefined
+            }
             key={`${String(copy)}-${item.workId}`}
             // Without layout motion a backfilled card still arrives with a short fade.
             {...(item.animateIn
@@ -291,6 +356,7 @@ export function RecommendationsFlow({
   const [localPolicies, setLocalPolicies] = useState<RecommendationPolicies | null>(null);
   const [expandedAnchorId, setExpandedAnchorId] = useState<string | null>(null);
   const introRef = useRef<HTMLDivElement>(null);
+  const featuredEntryConsumed = useRef(false);
   const restoredShelf = useRef<string | undefined>(undefined);
   const [isPolicySaving, setIsPolicySaving] = useState(false);
   const [plan, setPlan] = useState<RecommendationPlanEntry[] | null>(null);
@@ -1358,7 +1424,10 @@ export function RecommendationsFlow({
                   }}
                 >
                   {MotionList === null ? (
-                    <StaticRecommendationItems items={recommendationItems} />
+                    <StaticRecommendationItems
+                      items={recommendationItems}
+                      entryConsumed={featuredEntryConsumed}
+                    />
                   ) : (
                     <MotionList items={recommendationItems} reducedMotion={false} shortage={null} />
                   )}

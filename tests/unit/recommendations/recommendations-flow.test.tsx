@@ -88,6 +88,7 @@ const testState = vi.hoisted(() => ({
 }));
 
 let motionPreferenceListener: ((event: { matches: boolean }) => void) | null = null;
+const motionPreferenceListeners = new Set<(event: { matches: boolean }) => void>();
 
 function TestMotionList({ items, shortage }: RecommendationMotionListProps) {
   testState.motionListRenders.push(items.map((item) => item.workId));
@@ -365,6 +366,7 @@ beforeEach(() => {
   testState.motionListRenders.length = 0;
   testState.searchStr = "";
   motionPreferenceListener = null;
+  motionPreferenceListeners.clear();
   vi.stubGlobal("crypto", {
     subtle: {
       digest: vi.fn().mockResolvedValue(new Uint8Array(32).buffer),
@@ -377,9 +379,13 @@ beforeEach(() => {
   vi.stubGlobal("matchMedia", () => ({
     matches: false,
     addEventListener: (_type: string, listener: (event: { matches: boolean }) => void) => {
-      motionPreferenceListener = listener;
+      motionPreferenceListeners.add(listener);
+      motionPreferenceListener = (event) =>
+        [...motionPreferenceListeners].forEach((notify) => notify(event));
     },
-    removeEventListener: () => undefined,
+    removeEventListener: (_type: string, listener: (event: { matches: boolean }) => void) => {
+      motionPreferenceListeners.delete(listener);
+    },
   }));
   Object.defineProperty(HTMLDialogElement.prototype, "showModal", {
     configurable: true,

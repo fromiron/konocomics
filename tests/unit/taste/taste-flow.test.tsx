@@ -508,12 +508,12 @@ describe("TasteFlow", () => {
     expect(
       [...topPreferenceCards].every(
         (card, index) =>
-          card.querySelector("h3")?.className.includes("line-clamp-2") === true &&
+          card.querySelector("h3 > span")?.className.includes("line-clamp-2") === true &&
           card.querySelector(".taste-top-card__rank")?.textContent === String(index + 1) &&
           card.querySelector(".taste-top-card__rank")?.getAttribute("aria-hidden") !== "true" &&
           card.querySelector(".taste-top-card__level")?.className.includes("--font-size-14") ===
             true &&
-          card.querySelector("svg") === null &&
+          card.querySelector("svg.dna-ink-line")?.getAttribute("aria-hidden") === "true" &&
           card.querySelector("p") !== null,
       ),
     ).toBe(true);
@@ -797,7 +797,7 @@ describe("TasteFlow", () => {
 
       expect(await screen.findByRole("link", { name: "おすすめを見る" })).toBeTruthy();
       expect(window.location.pathname + window.location.search).toBe("/taste");
-      expect(document.querySelector(".taste-top-card__label--reveal")).toBeNull();
+      expect(document.querySelector('.dna-ink-line[data-draw="true"]')).toBeNull();
       expect(document.querySelector(".taste-factor-bar__fill--reveal")).toBeNull();
     },
   );
@@ -810,12 +810,12 @@ describe("TasteFlow", () => {
 
     expect(await screen.findByRole("link", { name: "おすすめを見る" })).toBeTruthy();
     expect(window.location.pathname + window.location.search).toBe("/taste");
-    expect(document.querySelector(".taste-top-card__label--reveal")).toBeNull();
+    expect(document.querySelector('.dna-ink-line[data-draw="true"]')).toBeNull();
 
     motionState.reduced = false;
     view.rerender(<TasteFlow onRevealConsumed={consumeReveal} />);
     await act(async () => Promise.resolve());
-    expect(document.querySelector(".taste-top-card__label--reveal")).toBeNull();
+    expect(document.querySelector('.dna-ink-line[data-draw="true"]')).toBeNull();
   });
 
   it("finishes an active reveal immediately when reduced motion becomes requested", async () => {
@@ -823,14 +823,14 @@ describe("TasteFlow", () => {
 
     render(<TasteFlow onRevealConsumed={consumeReveal} reveal="1" />);
     expect(await screen.findByRole("link", { name: "おすすめを見る" })).toBeTruthy();
-    expect(document.querySelector(".taste-top-card__label--reveal")).toBeTruthy();
+    expect(document.querySelector('.dna-ink-line[data-draw="true"]')).toBeTruthy();
 
     expect(motionPreferenceListener).not.toBeNull();
     act(() => motionPreferenceListener?.({ matches: true }));
 
     await waitFor(() => {
       expect(window.location.pathname + window.location.search).toBe("/taste");
-      expect(document.querySelector(".taste-top-card__label--reveal")).toBeNull();
+      expect(document.querySelector('.dna-ink-line[data-draw="true"]')).toBeNull();
       expect(document.querySelector(".taste-factor-bar__fill--reveal")).toBeNull();
     });
     expect(screen.getByRole("link", { name: "おすすめを見る" })).toBeTruthy();

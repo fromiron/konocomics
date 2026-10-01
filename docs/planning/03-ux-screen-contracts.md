@@ -45,6 +45,8 @@
 
 ## 1. `/` 랜딩
 
+2026-10-01 추가 승인: Hero와 사용법 사이에 줄바꿈 가능한 사용 순서 띠지를 두고 첫 노출에 한 번만 이동한다. 일반 신규 방문의 「例」 말풍선에만 TextType·정적 종이 그레인을 적용한다. 문장 전체의 접근성·레이아웃 공간·실제 contribution 근거를 유지하고 `?landing=1`은 정적이다. 상세 트리거·대체 동작은 `04` §6.1을 따른다.
+
 ### 목적
 
 30초 안에 "무엇을 하는 서비스인지"와 "시작하면 무엇을 받는지"를 전달하고 온보딩으로 보낸다. **일반 재방문의 usable profile은 이 화면을 보지 않는다** — hydration 뒤 현재 Catalog positive anchor가 5개 이상이면 `/recommendations`로 클라이언트 리다이렉트한다. 판정 중에는 정적 로고만 표시하고 `?landing=1`이면 리다이렉트를 우회한다.
@@ -166,7 +168,7 @@ CTA **「好きなマンガから始める」** → /onboarding. 행동은 이 �
 
 ### 수용 기준
 
-- [ ] 5개 미만에서 진행 버튼이 disabled + 남은 개수 표기.
+- [ ] 5개 미만에도 `次へ` 클릭·Enter·Space로 부족 개수 안내를 받을 수 있고, tray F 흔들림(줄인 모션은 정적 warn 보더)과 live message만 발생한다. STEP 2 진입·완료 저장은 막고 남은 개수를 상시 표기한다. 실제 저장 중에만 disabled이며 add mode는 최소 1개를 유지한다(2026-10-01 사용자 승인).
 - [ ] favorite/liked가 구분 저장되고 STEP 2로 전달된다.
 - [ ] 「ダンジョン飯」를 히라가나(だんじょんめし)로 검색해도 찾을 수 있다(가나 필드).
 - [ ] 새로고침 후 선택 상태가 복원된다.
@@ -235,6 +237,8 @@ CTA **「好きなマンガから始める」** → /onboarding. 행동은 이 �
 ---
 
 ## 4. `/taste` — Manga DNA (reveal + 보정)
+
+2026-10-01 추가 승인: 상위 취향 강조선은 직선 SVG draw로 표현하며 곡선이나 레이더로 바꾸지 않는다. 온보딩 reveal의 `おすすめを見る` 한 곳만 유한 StarBorder를 사용한다(`04` §6.1). 실제 FactorBar 값·길이·meter 의미는 그대로다.
 
 ### 목적
 
@@ -327,6 +331,8 @@ CTA **「好きなマンガから始める」** → /onboarding. 행동은 이 �
 ---
 
 ## 5. `/recommendations` — 추천
+
+2026-10-01 추가 승인: B의 유일한 추천 예외는 최초 resolved Featured 목록의 실제 보이는 canonical 카드 최대 4장에 대한 한 번의 AnimatedList다(`04` §6.1). 아래의 B 금지 원칙은 페이지 전체·나머지 선반·재정렬에 계속 적용하며 기존 C 제거·백필·focus·clone 계약은 유지한다.
 
 ### 목적
 
@@ -500,6 +506,8 @@ Shelf grouping은 presentation-only selector다. main Shelf 사이에는 work ID
 
 ## 6. 작품 상세 — `/works/[workId]` · `/works/external?workId=<ExternalWorkId>`
 
+2026-10-01 사용자 추가 승인: Catalog 상세의 `感想`(最高·良かった·普通·いまいち)은 실제 저장된 선택 배경만 spring 인디케이터로 이동한다(`04` §6.1). `aria-pressed`·44px 버튼·동일 감상 재탭 해제·현재 읽음 상태 보존·실패 시 기존 선택·Snackbar는 유지한다. 줄인 모션에서는 즉시 최종 선택이며 미선택에는 인디케이터를 만들지 않는다. external의 기존 select 편집기는 변경하지 않는다.
+
 ### 목적
 
 Catalog 작품은 추천 근거를 깊이 확인하고 구매(라쿠텐)로 연결한다. external 작품은 같은 프레젠테이션 골격에서 로컬 서지 정보와 상태만 관리하며 추천 문맥 밖에서도 동작한다.
@@ -648,7 +656,7 @@ Catalog 작품은 추천 근거를 깊이 확인하고 구매(라쿠텐)로 연�
 
 ### 모션
 
-Library와 상세 panel·bottom sheet·dialog는 조용한 표면이다. panel/sheet 진입 keyframe과 표지 load opacity fade를 적용하지 않고 최종 위치·상태로 즉시 표시한다.
+Library와 상세 panel·bottom sheet·dialog는 조용한 표면이다. panel/sheet 진입 keyframe과 표지 load opacity fade를 적용하지 않고 최종 위치·상태로 즉시 표시한다. 2026-10-01 상태 탭의 선택 배경만 `04` §6.1 D spring으로 이동한다. 가변 너비·wrap·키보드·URL 선택은 유지하고 reduced-motion은 즉시 최종 배경이다.
 
 ### 수용 기준
 
@@ -668,6 +676,8 @@ Library와 상세 panel·bottom sheet·dialog는 조용한 표면이다. panel/s
 ---
 
 ## 8. `/settings` — 설정
+
+2026-10-01 추가 승인: 추천 정책 Switch의 thumb만 `04` §6.1 D spring으로 이동한다. 저장 중 busy·실패 복구·기존 policy 쓰기 경로를 유지하며 실행 중 reduced-motion 변경도 즉시 반영한다.
 
 ### 목적
 

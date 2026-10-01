@@ -220,8 +220,7 @@ describe("LibraryView", () => {
 
   it("renders all five state tabs on the controlled overview path and discloses external rows and exclusion in detail", () => {
     renderLibrary({ activeState: null });
-    const tablist = screen.getByRole("tablist", { name: libraryStrings.tablistLabel });
-    expect(tablist.className).toContain("flex-wrap");
+    expect(screen.getByRole("tablist", { name: libraryStrings.tablistLabel })).toBeTruthy();
     expect(screen.getAllByRole("tab")).toHaveLength(5);
     expect(
       screen.getByRole("tab", { name: libraryStrings.tabWithCount(libraryStrings.tabsAll, 2) }),

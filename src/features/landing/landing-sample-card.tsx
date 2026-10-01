@@ -1,5 +1,5 @@
 import { Link } from "@tanstack/react-router";
-import { useMemo } from "react";
+import { useMemo, type CSSProperties } from "react";
 
 import { CoverImage } from "@/components/cover/CoverImage";
 import { ReasonBubble } from "@/components/media/reason-bubble";
@@ -16,13 +16,19 @@ type LandingSampleCardProps = Readonly<{
   sample: LandingSample;
   coverUrl: string | null | undefined;
   onCoverVisible(): void;
+  animateReason?: boolean;
 }>;
 
 /**
  * One real engine result for a fixed sample profile, labelled as an example. Every reason is
  * generated from the stored contributions, exactly as on the recommendations page.
  */
-export function LandingSampleCard({ coverUrl, onCoverVisible, sample }: LandingSampleCardProps) {
+export function LandingSampleCard({
+  coverUrl,
+  onCoverVisible,
+  sample,
+  animateReason = false,
+}: LandingSampleCardProps) {
   const { anchorWorks, recommendation } = sample;
   const work = recommendation.work;
   const glareRef = usePointerEffect<HTMLDivElement>("light");
@@ -45,6 +51,10 @@ export function LandingSampleCard({ coverUrl, onCoverVisible, sample }: LandingS
           .find((title) => title !== undefined && lead.text.includes(title));
   const anchorIndex = anchorTitle === undefined ? -1 : (lead?.text.indexOf(anchorTitle) ?? -1);
   const leadLabel = lead === undefined ? undefined : explanationFactorLabel(lead.factorId);
+  const characters =
+    lead === undefined
+      ? []
+      : Array.from(new Intl.Segmenter("ja", { granularity: "grapheme" }).segment(lead.text));
   const otherLabels = [
     ...new Set(
       rest.flatMap((reason) => {
@@ -96,17 +106,46 @@ export function LandingSampleCard({ coverUrl, onCoverVisible, sample }: LandingS
         {/* On phones the reason spans the card instead of wrapping beside the cover. */}
         <div className="col-span-2 grid min-w-0 content-start gap-[var(--space-3)] sm:col-span-1 sm:col-start-2">
           {lead === undefined ? null : (
-            <ReasonBubble>
+            <ReasonBubble paperGrain>
               <p className="text-[length:var(--font-size-14)] leading-[var(--line-height-body)] text-text [word-break:auto-phrase]">
-                {anchorTitle === undefined || anchorIndex < 0 ? (
-                  lead.text
-                ) : (
-                  <>
-                    {lead.text.slice(0, anchorIndex)}
-                    <strong className="font-bold text-text-strong">{anchorTitle}</strong>
-                    {lead.text.slice(anchorIndex + anchorTitle.length)}
-                  </>
-                )}
+                <span className={animateReason ? "sr-only" : undefined}>
+                  {anchorTitle === undefined || anchorIndex < 0 ? (
+                    lead.text
+                  ) : (
+                    <>
+                      {lead.text.slice(0, anchorIndex)}
+                      <strong className="font-bold text-text-strong">{anchorTitle}</strong>
+                      {lead.text.slice(anchorIndex + anchorTitle.length)}
+                    </>
+                  )}
+                </span>
+                {animateReason ? (
+                  <span
+                    aria-hidden="true"
+                    className="landing-typed-reason"
+                    style={
+                      {
+                        "--type-step": `${Math.min(32, 1100 / Math.max(1, characters.length))}ms`,
+                      } as CSSProperties
+                    }
+                  >
+                    {characters.map(({ segment, index }, order) => (
+                      <span
+                        className={
+                          anchorTitle !== undefined &&
+                          index >= anchorIndex &&
+                          index < anchorIndex + anchorTitle.length
+                            ? "font-bold text-text-strong"
+                            : undefined
+                        }
+                        key={index}
+                        style={{ "--type-index": order } as CSSProperties}
+                      >
+                        {segment}
+                      </span>
+                    ))}
+                  </span>
+                ) : null}
               </p>
             </ReasonBubble>
           )}

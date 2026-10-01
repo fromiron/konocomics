@@ -2,7 +2,7 @@
 
 import { Link } from "@tanstack/react-router";
 import { ChevronDownIcon } from "lucide-react";
-import { LazyMotion, domAnimation, m, useReducedMotion } from "motion/react";
+import { LazyMotion, domAnimation, m } from "motion/react";
 import { type CSSProperties, useCallback, useEffect, useMemo, useRef, useState } from "react";
 
 import { Button, buttonClassName } from "@/components/design-system/button";
@@ -11,6 +11,7 @@ import { SummarySection, summaryLinkClassName } from "@/components/layout/summar
 import { CoverImage } from "@/components/cover/CoverImage";
 import { MediaShelf } from "@/components/media/media-shelf";
 import { useCountUp } from "@/components/motion/use-count-up";
+import { useLiveReducedMotion } from "@/components/motion/use-live-reduced-motion";
 import { usePointerEffect } from "@/components/motion/use-pointer-effects";
 import { pageEntryFadeProps, usePageEntryMotion } from "@/components/motion/use-page-entry-motion";
 import recommendationContextJson from "@/data/generated/recommendation-context-v1.json";
@@ -93,22 +94,6 @@ type RevealExperience = Readonly<{
 }>;
 
 type RevealClaim = "claimed" | "consumed" | "unavailable";
-
-function useLiveReducedMotion() {
-  const initialPreference = useReducedMotion();
-  const [livePreference, setLivePreference] = useState<boolean | null>(null);
-
-  useEffect(() => {
-    if (typeof window.matchMedia !== "function") return;
-    const mediaQuery = window.matchMedia("(prefers-reduced-motion: reduce)");
-    if (typeof mediaQuery.addEventListener !== "function") return;
-    const handleChange = (event: MediaQueryListEvent) => setLivePreference(event.matches);
-    mediaQuery.addEventListener("change", handleChange);
-    return () => mediaQuery.removeEventListener("change", handleChange);
-  }, []);
-
-  return livePreference ?? initialPreference;
-}
 
 function factorLabel(factorId: ExplanationFactorId) {
   return explanationLexicon.factorLabels[factorId];
@@ -244,16 +229,26 @@ function TopPreferenceCard({
       <span className="taste-top-card__rank font-display text-[length:var(--text-subheading-size)] leading-none text-text-muted tabular-nums">
         {String(index + 1)}
       </span>
-      <h3
-        className={cn(
-          "relative min-w-0 line-clamp-2 text-[length:var(--font-size-16)] leading-tight font-bold text-text-strong",
-          animateReveal &&
-            "taste-top-card__label--reveal after:absolute after:right-0 after:-bottom-[3px] after:left-0 after:h-0.5 after:origin-left after:scale-x-0 after:bg-accent after:content-[''] motion-safe:after:animate-[taste-underline-reveal_300ms_500ms_ease-out_forwards]",
-          animateReveal && index === 1 && "after:[animation-delay:680ms]",
-          animateReveal && index === 2 && "after:[animation-delay:860ms]",
-        )}
-      >
-        {label}
+      <h3 className="relative min-w-0 pb-[var(--space-1)] text-[length:var(--font-size-16)] leading-tight font-bold text-text-strong">
+        <span className="line-clamp-2">{label}</span>
+        <svg
+          aria-hidden="true"
+          className="dna-ink-line absolute inset-x-0 bottom-0 h-1 w-full text-accent"
+          data-draw={animateReveal ? "true" : undefined}
+          focusable="false"
+          preserveAspectRatio="none"
+          style={{ "--ink-delay": `${500 + index * 180}ms` } as CSSProperties}
+          viewBox="0 0 100 4"
+        >
+          <path
+            d="M 1 2 H 99"
+            fill="none"
+            pathLength={1}
+            stroke="currentColor"
+            strokeLinecap="round"
+            strokeWidth="1.5"
+          />
+        </svg>
       </h3>
       <strong className="taste-top-card__level shrink-0 whitespace-nowrap text-[length:var(--font-size-14)] font-bold text-accent">
         {tasteStrings.factorValue(preference.value)}
@@ -1204,13 +1199,20 @@ export function TasteFlow({
             <Link
               className={buttonClassName({
                 className:
-                  "pointer-magnet mx-auto min-h-12 w-full max-w-[calc(var(--control-min-size)*11)] px-[var(--space-5)] py-[var(--space-3)] font-bold",
+                  "pointer-magnet relative isolate mx-auto min-h-12 w-full max-w-[calc(var(--control-min-size)*11)] px-[var(--space-5)] py-[var(--space-3)] font-bold",
               })}
               preload={false}
               ref={revealCtaRef}
               to="/recommendations"
             >
               {tasteStrings.recommendations}
+              <span
+                aria-hidden="true"
+                className="cta-star-border"
+                data-animate={revealExperience.animate ? "true" : undefined}
+              >
+                <span className="cta-star-border__light" />
+              </span>
             </Link>
           </div>
         ) : null}

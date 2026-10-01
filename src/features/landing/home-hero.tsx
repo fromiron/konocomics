@@ -139,6 +139,7 @@ export function HomeHero({
         </div>
 
         <LandingSampleCard
+          animateReason={!staticLogo && visitor === "new"}
           coverUrl={coverUrls.get(recommendedId)}
           onCoverVisible={() => onCoverVisible(recommendedId)}
           sample={sample}

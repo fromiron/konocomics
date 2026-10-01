@@ -349,6 +349,10 @@ export const landingStrings = {
     recovery: "おすすめを出すには、好きな作品をもう少し追加してください。",
   },
   sharedEntry: "シェアされた Manga DNA から来た方へ",
+  obi: {
+    label: "好みからおすすめまで",
+    steps: ["好きな5作品", "Manga DNA", "理由つきのおすすめ"],
+  },
   hero: {
     trust: (workCount: string) => [
       "登録なし",
@@ -500,6 +504,7 @@ export const onboardingStrings = {
     markLiked: "好きに戻す",
     maximum: "最大 10 作品までです",
     remaining: (count: number) => `あと ${String(count)} 作品`,
+    needMore: (count: number) => `あと ${String(count)} 作品選んでください。`,
     next: (count: number) => `次へ (${String(count)}/10)`,
     genreHeading: "ジャンルから探す",
     allGenres: "すべて",

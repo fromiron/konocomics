@@ -8,7 +8,7 @@ import { Button } from "@/components/design-system/button";
 import { Input } from "@/components/design-system/input";
 import { useUrlSyncedQuery } from "@/components/design-system/use-url-synced-query";
 import { NativeSelect } from "@/components/design-system/native-select";
-import { Tabs, TabsList, TabsTrigger } from "@/components/design-system/tabs";
+import { SegmentedControl } from "@/components/design-system/segmented-control";
 import { SummarySection, summaryLinkClassName } from "@/components/layout/summary-section";
 import { parseExternalWorkId, type ExternalWorkId } from "@/domain/catalog/external-work";
 import { isbnIdentityKey } from "@/domain/catalog/normalize";
@@ -352,32 +352,26 @@ export function LibraryView({
                 type="search"
               />
             </label>
-            <Tabs
-              className="w-full min-w-0"
-              onValueChange={(value) => {
+            <SegmentedControl
+              className="w-full sm:w-fit"
+              label={libraryStrings.tablistLabel}
+              semantics="tabs"
+              onSelect={(value) => {
                 const state = parseLibraryState(value);
                 if (state !== undefined) selectActiveState(state);
               }}
               value={activeState ?? "all"}
-            >
-              <TabsList
-                aria-label={libraryStrings.tablistLabel}
-                className="m-0 flex h-auto w-fit max-w-full flex-wrap justify-start gap-[var(--space-content-tight)] overflow-visible"
-              >
-                {tabStates.map((state) => {
-                  const id = state ?? "all";
-                  const label =
-                    state === null ? libraryStrings.tabsAll : libraryStrings.tabs[state];
-                  const count = state === null ? rows.length : stateCounts[state];
-                  return (
-                    <TabsTrigger
-                      aria-controls="library-results"
-                      aria-label={libraryStrings.tabWithCount(label, count)}
-                      className="h-auto min-h-[var(--control-min-size)] min-w-max flex-none px-[var(--space-content)]"
-                      id={"library-tab-" + id}
-                      key={id}
-                      value={id}
-                    >
+              options={tabStates.map((state) => {
+                const id = state ?? "all";
+                const label = state === null ? libraryStrings.tabsAll : libraryStrings.tabs[state];
+                const count = state === null ? rows.length : stateCounts[state];
+                return {
+                  value: id,
+                  id: "library-tab-" + id,
+                  controls: "library-results",
+                  accessibleLabel: libraryStrings.tabWithCount(label, count),
+                  label: (
+                    <>
                       {state === "planned" ? (
                         <BookmarkIcon aria-hidden="true" className="size-4" />
                       ) : null}
@@ -385,11 +379,11 @@ export function LibraryView({
                       <span aria-hidden="true" className="tabular-nums">
                         {count}
                       </span>
-                    </TabsTrigger>
-                  );
-                })}
-              </TabsList>
-            </Tabs>
+                    </>
+                  ),
+                };
+              })}
+            />
             <div className="grid grid-cols-[minmax(0,1fr)_auto] items-center gap-[var(--space-content)] md:grid-cols-[auto_minmax(0,1fr)_auto_auto]">
               <Button
                 aria-pressed={favoriteOnly}

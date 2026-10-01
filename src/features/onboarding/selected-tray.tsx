@@ -2,7 +2,7 @@
 
 import { AnimatePresence, domMax, LazyMotion, m, useReducedMotion } from "motion/react";
 import { PlusIcon, XIcon } from "lucide-react";
-import { useEffect, useRef } from "react";
+import { useEffect, useId, useRef } from "react";
 
 import { CoverImage } from "@/components/cover/CoverImage";
 import { Button } from "@/components/design-system/button";
@@ -17,6 +17,7 @@ type SelectedTrayProps = Readonly<{
   emptyLabel: string;
   removeLabel: string;
   continueLabel: string;
+  remainingLabel?: string;
   countLabel?: string;
   coverUrls?: ReadonlyMap<string, string | null>;
   onCoverVisible?: (workId: string) => void;
@@ -34,6 +35,7 @@ export function SelectedTray({
   emptyLabel,
   removeLabel,
   continueLabel,
+  remainingLabel,
   countLabel,
   coverUrls,
   onCoverVisible,
@@ -43,6 +45,7 @@ export function SelectedTray({
   limitActive,
   shakeKey,
 }: SelectedTrayProps) {
+  const remainingId = useId();
   const reducedMotion = useReducedMotion();
   const allowMotion = reducedMotion === false;
   const itemRefs = useRef(new Map<string, HTMLButtonElement>());
@@ -167,14 +170,25 @@ export function SelectedTray({
             </span>
           ) : null}
         </div>
-        <Button
-          className="selected-tray__continue min-w-32 md:w-full md:min-w-0"
-          disabled={disabled}
-          onClick={onContinue}
-          type="button"
-        >
-          {continueLabel}
-        </Button>
+        <div className="grid content-center gap-[var(--space-content-tight)]">
+          {remainingLabel ? (
+            <p
+              className="text-center text-[length:var(--text-caption-size)] text-text-muted"
+              id={remainingId}
+            >
+              {remainingLabel}
+            </p>
+          ) : null}
+          <Button
+            aria-describedby={remainingLabel ? remainingId : undefined}
+            className="selected-tray__continue min-w-32 md:w-full md:min-w-0"
+            disabled={disabled}
+            onClick={onContinue}
+            type="button"
+          >
+            {continueLabel}
+          </Button>
+        </div>
       </aside>
     </LazyMotion>
   );

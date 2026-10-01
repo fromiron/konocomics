@@ -103,6 +103,26 @@ afterEach(() => {
 });
 
 describe("OnboardingFlow finalization", () => {
+  it("explains missing works without advancing or saving an incomplete first run", () => {
+    testState.draft = {
+      id: "current",
+      mode: "firstRun",
+      step: 1,
+      positiveEntries: defaultPositiveWorks
+        .slice(0, 3)
+        .map((work) => ({ workId: work.id, reaction: "liked" })),
+      negativeEntries: [],
+      updatedAt: "2026-10-01T00:00:00.000Z",
+    };
+    render(<OnboardingFlow />);
+    testState.saveOnboardingDraft.mockClear();
+    fireEvent.click(screen.getByRole("button", { name: "次へ (3/10)" }));
+    expect(screen.getByText("あと 2 作品選んでください。")).toBeTruthy();
+    expect(screen.getByRole("searchbox", { name: "好きなマンガを検索" })).toBeTruthy();
+    expect(testState.saveOnboardingDraft).not.toHaveBeenCalled();
+    expect(testState.finalizeOnboarding).not.toHaveBeenCalled();
+    expect(testState.navigate).not.toHaveBeenCalled();
+  });
   it("clears the URL-controlled positive search when entering Step 2", async () => {
     testState.draft = {
       id: "current",
@@ -209,10 +229,10 @@ describe("OnboardingFlow finalization", () => {
     expect(
       screen.getByRole("heading", { level: 1, name: "好きなマンガを追加してください" }),
     ).toBeTruthy();
-    expect(screen.getByRole("button", { name: "1作品以上えらんでください" })).toHaveProperty(
-      "disabled",
-      true,
-    );
+    fireEvent.click(screen.getByRole("button", { name: "追加する (0/10)" }));
+    expect(screen.getByText("あと 1 作品選んでください。")).toBeTruthy();
+    expect(testState.finalizeOnboarding).not.toHaveBeenCalled();
+    expect(testState.navigate).not.toHaveBeenCalled();
   });
 
   it("removes stale draft works that are absent from the current catalog", () => {
@@ -226,7 +246,10 @@ describe("OnboardingFlow finalization", () => {
         name: "好きなマンガを 5〜10 作品えらんでください",
       }),
     ).toBeTruthy();
-    expect(screen.getByRole("button", { name: "あと 5 作品" })).toHaveProperty("disabled", true);
+    expect(screen.getByText("あと 5 作品")).toBeTruthy();
+    fireEvent.click(screen.getByRole("button", { name: "次へ (0/10)" }));
+    expect(screen.getByText("あと 5 作品選んでください。")).toBeTruthy();
+    expect(testState.finalizeOnboarding).not.toHaveBeenCalled();
     expect(screen.getByText("まだ選ばれていません")).toBeTruthy();
   });
 

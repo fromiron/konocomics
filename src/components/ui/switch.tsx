@@ -7,9 +7,11 @@ import { cn } from "@/lib/utils";
 function Switch({
   className,
   size = "default",
+  thumbRender,
   ...props
 }: SwitchPrimitive.Root.Props & {
   size?: "sm" | "default";
+  thumbRender?: SwitchPrimitive.Thumb.Props["render"];
 }) {
   return (
     <SwitchPrimitive.Root
@@ -23,7 +25,12 @@ function Switch({
     >
       <SwitchPrimitive.Thumb
         data-slot="switch-thumb"
-        className="pointer-events-none block rounded-full bg-foreground ring-0 transition-transform group-data-[size=default]/switch:size-4 group-data-[size=sm]/switch:size-3 group-data-[size=default]/switch:data-checked:translate-x-[calc(100%-2px)] group-data-[size=sm]/switch:data-checked:translate-x-[calc(100%-2px)] data-checked:bg-primary-foreground group-data-[size=default]/switch:data-unchecked:translate-x-0 group-data-[size=sm]/switch:data-unchecked:translate-x-0 data-unchecked:bg-foreground"
+        className={cn(
+          "pointer-events-none block rounded-full bg-foreground ring-0 group-data-[size=default]/switch:size-4 group-data-[size=sm]/switch:size-3 data-checked:bg-primary-foreground data-unchecked:bg-foreground",
+          !thumbRender &&
+            "transition-transform data-checked:translate-x-[calc(100%-2px)] data-unchecked:translate-x-0",
+        )}
+        render={thumbRender}
       />
     </SwitchPrimitive.Root>
   );

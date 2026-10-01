@@ -6,6 +6,7 @@ import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 
 import { coverSourceForSize } from "@/components/cover/CoverImage";
 import { Button, buttonClassName } from "@/components/design-system/button";
+import { SegmentedControl } from "@/components/design-system/segmented-control";
 import { Snackbar, type SnackbarNotice } from "@/components/layout/snackbar";
 import { MediaShelf } from "@/components/media/media-shelf";
 import { RankingCard } from "@/components/media/ranking-card";
@@ -574,35 +575,23 @@ function WorkStateControls({
               {workDetailStrings.state.options.hidden}
             </button>
           </div>
-          <div
-            aria-labelledby="work-reaction-label"
-            className="grid w-full grid-cols-4 items-center gap-[var(--space-1)] sm:flex sm:w-auto"
-            role="group"
-          >
+          <div className="grid gap-[var(--space-2)] sm:flex sm:items-center sm:gap-[var(--space-3)]">
             <span
-              className="col-span-4 text-[length:var(--text-caption-size)] font-bold text-text-muted sm:mr-[var(--space-2)]"
+              className="text-[length:var(--text-caption-size)] font-bold text-text-muted"
               id="work-reaction-label"
             >
               {workDetailStrings.state.reactionGroup}
             </span>
-            {REACTIONS.map((reaction) => {
-              const pressed = rated && record?.reaction === reaction;
-              return (
-                <button
-                  aria-pressed={pressed}
-                  className={`inline-flex min-h-[var(--control-min-size)] items-center justify-center rounded-[var(--radius-control)] px-[var(--space-3)] text-[length:var(--font-size-14)] font-bold whitespace-nowrap ${interactive} ${
-                    pressed
-                      ? "bg-accent-soft text-accent"
-                      : "text-text-muted hover:bg-surface-2 hover:text-text-strong"
-                  }`}
-                  key={reaction}
-                  onClick={() => void saveReaction(reaction)}
-                  type="button"
-                >
-                  {libraryStrings.reactions[reaction]}
-                </button>
-              );
-            })}
+            <SegmentedControl
+              className="w-full sm:w-[var(--control-segment-width)]"
+              label={workDetailStrings.state.reactionGroup}
+              options={REACTIONS.map((reaction) => ({
+                value: reaction,
+                label: libraryStrings.reactions[reaction],
+              }))}
+              value={rated ? (record?.reaction ?? null) : null}
+              onSelect={saveReaction}
+            />
           </div>
           {readProgress === "" ? null : (
             <p className="text-[length:var(--text-caption-size)] text-text-muted">

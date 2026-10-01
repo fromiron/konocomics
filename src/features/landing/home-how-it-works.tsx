@@ -1,8 +1,49 @@
+import { useEffect, useRef } from "react";
+
 import { FactorBar } from "@/components/media/factor-bar";
 import { explanationLexicon, landingStrings } from "@/lib/strings";
 
 import { LandingCta, type LandingVisitorState } from "./home-hero";
 import type { LandingSample } from "./landing-types";
+
+/** A finite reading-order cue; native scrolling never drives or loops this strip. */
+export function HomeObi({ animate }: Readonly<{ animate: boolean }>) {
+  const ref = useRef<HTMLOListElement>(null);
+  useEffect(() => {
+    const element = ref.current;
+    if (!animate || element === null || typeof IntersectionObserver === "undefined") return;
+    const observer = new IntersectionObserver(
+      (entries) => {
+        if (!entries.some((entry) => entry.isIntersecting)) return;
+        element.dataset.entered = "true";
+        observer.disconnect();
+      },
+      { threshold: 0.5 },
+    );
+    observer.observe(element);
+    return () => observer.disconnect();
+  }, [animate]);
+  return (
+    <div className="border-y border-line-accent-subtle bg-accent-soft px-[var(--layout-page-padding)] py-[var(--space-4)]">
+      <ol
+        aria-label={landingStrings.obi.label}
+        className="landing-obi mx-auto flex max-w-[var(--layout-width-media)] flex-wrap items-center justify-center gap-x-[var(--space-6)] gap-y-[var(--space-2)] text-[length:var(--font-size-14)] font-bold text-text-strong"
+        ref={ref}
+      >
+        {landingStrings.obi.steps.map((step, index) => (
+          <li className="flex items-center gap-[var(--space-6)]" key={step}>
+            {index > 0 ? (
+              <span aria-hidden="true" className="text-accent">
+                →
+              </span>
+            ) : null}
+            {step}
+          </li>
+        ))}
+      </ol>
+    </div>
+  );
+}
 
 /** Three steps beside the sample profile's real Manga DNA, so the promise is shown, not told. */
 export function HomeHowItWorks({ sample }: Readonly<{ sample: LandingSample }>) {
