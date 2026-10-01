@@ -361,6 +361,79 @@ class RetainedOperatorTest(unittest.TestCase):
             self.assertEqual(batch.publisher.sha256(candidate), before_sha)
             self.assertEqual(after, backend._snapshot_db(candidate))
 
+    def test_metadata_merge_preserves_raw_newlines_and_canonical_projection(self):
+        backend = batch.publisher._backend_module()
+        projection = '''
+import { readFileSync } from "node:fs";
+import { dirname } from "node:path";
+import { parseLexicalCsv, serializeCsv, readCatalogAuthority } from "./scripts/catalog/authority.ts";
+const input = JSON.parse(readFileSync(0, "utf8"));
+if (input.rows) {
+  const table = {path: "book-metadata.csv", headers: input.headers,
+    rows: input.rows.map((values, index) => ({sourceOrdinal: index + 1, sourceLine: 2, values}))};
+  console.log(JSON.stringify(parseLexicalCsv(table.path, serializeCsv(table), table.headers).rows));
+} else {
+  console.log(JSON.stringify(readCatalogAuthority(dirname(input.database))
+    .find(table => table.path === "book-metadata.csv").rows));
+}
+'''
+        def projected(value):
+            result = subprocess.run(
+                ["node", "--import", "tsx", "--input-type=module", "-e", projection],
+                cwd=REPO, input=json.dumps(value, ensure_ascii=False), capture_output=True,
+                text=True, encoding="utf-8",
+            )
+            self.assertEqual(result.returncode, 0, result.stderr)
+            return json.loads(result.stdout)
+
+        with tempfile.TemporaryDirectory() as directory:
+            root = Path(directory)
+            canonical = root / "canonical/catalog.sqlite"
+            candidate = root / "candidate/catalog.sqlite"
+            for path in (canonical, candidate):
+                path.parent.mkdir()
+                shutil.copyfile(REPO / "data/source/catalog.sqlite", path)
+            columns, original = backend._snapshot_db(canonical)["source_book_metadata"]
+            self.assertGreaterEqual(len(original), 3)
+            rows = [dict(zip(columns, values)) for values in original[:3]]
+            captions = ["元の紹介", '出会いの紹介\r\n次の段落, "原文"\n結び\r補足', "追加の紹介\n続き"]
+            for row, caption in zip(rows, captions):
+                row.update(itemCaption=caption, fetchedAt="2026-10-01T00:00:00Z")
+            newer_caption = "新しい紹介\r\n続き\r別段落\n最終段"
+            existing = [
+                {**rows[0], "itemCaption": newer_caption, "fetchedAt": "2026-10-02T00:00:00Z"},
+                {**rows[1], "itemCaption": "古い一段の紹介", "fetchedAt": "2026-09-01T00:00:00Z"},
+            ]
+            for path, metadata in ((canonical, rows), (candidate, existing)):
+                lexical = [[row[key] for key in columns[2:]] for row in metadata]
+                parsed = projected({"headers": columns[2:], "rows": lexical})
+                with contextlib.closing(sqlite3.connect(path)) as db, db:
+                    db.execute("delete from source_book_metadata")
+                    db.executemany(
+                        "insert into source_book_metadata values (" + ",".join("?" for _ in columns) + ")",
+                        [(entry["sourceOrdinal"], entry["sourceLine"], *values)
+                         for entry, values in zip(parsed, lexical)],
+                    )
+                projected({"database": str(path)})
+            before = backend._snapshot_db(candidate)
+            with contextlib.closing(sqlite3.connect(candidate)) as db:
+                db.execute("begin immediate")
+                batch.publisher.preserve_book_metadata(db, canonical, backend)
+                self.assertTrue(db.in_transaction)
+                db.commit()
+            after = backend._snapshot_db(candidate)
+            expected = [existing[0], rows[1], rows[2]]
+            self.assertEqual([values[2:] for values in after["source_book_metadata"][1]],
+                             [tuple(row[key] for key in columns[2:]) for row in expected])
+            self.assertEqual({key: value for key, value in before.items() if key != "source_book_metadata"},
+                             {key: value for key, value in after.items() if key != "source_book_metadata"})
+            checked = projected({"database": str(candidate)})
+            self.assertEqual([entry["sourceLine"] for entry in checked],
+                             [values[1] for values in after["source_book_metadata"][1]])
+            stable = batch.publisher.sha256(candidate)
+            batch.publisher.preserve_book_metadata(candidate, canonical, backend)
+            self.assertEqual(batch.publisher.sha256(candidate), stable)
+
     def test_freeze_rejects_recursive_provenance_before_reading_or_copying(self):
         with tempfile.TemporaryDirectory() as directory:
             root = Path(directory)
@@ -640,6 +713,173 @@ class SafetyPreflightRegressionTest(unittest.TestCase):
             ), mock.patch.object(backend, "_validate_packet_baseline_binding"):
                 with self.assertRaisesRegex(ValueError, "SAFETY_NOT_SAFE: no affirmative non-model work-owned safety evidence"):
                     batch.preflight(job, baseline, baseline / "catalog-source-registry.candidate.sqlite")
+
+
+class FreezeProbeErrorTest(unittest.TestCase):
+    def test_missing_sql_columns_are_diagnostic_errors(self):
+        with tempfile.TemporaryDirectory(prefix="factor-probe-schema-") as directory:
+            root = Path(directory)
+            wid = "work-aaaaaaaaaaaaaaaaaaaa"
+            job = {"schemaVersion": batch.single.FROZEN_JOB, "batchId": "r-probe-schema", "works": [{
+                "workId": wid, "title": "Example", "representativeIsbn": "9780000000000",
+                "research": {"schemaVersion": "factor-evidence-collector-v1", "workId": wid,
+                             "candidateOnly": True, "reviewedByHuman": False, "paidSourceUsed": False, "sources": []},
+                "supplementalEvidence": [], "evidence": [], "priorClaims": [], "priorDecisions": [], "registryVolumeProofs": [],
+            }]}
+            path = root / "job.json"
+            batch.write_json(path, job)
+            catalog, registry = root / "catalog-expanded.candidate.sqlite", root / "registry.sqlite"
+            with contextlib.closing(sqlite3.connect(catalog)) as db, db:
+                db.execute("CREATE TABLE source_works(id TEXT)")
+                db.execute("INSERT INTO source_works VALUES (?)", (wid,))
+            with contextlib.closing(sqlite3.connect(registry)) as db, db:
+                db.execute("CREATE TABLE registry_source_rows(canonicalWorkId TEXT)")
+            with self.assertRaisesRegex(sqlite3.OperationalError, "no such column: title"):
+                batch.ordinary_freeze_probe(path, root, registry)
+
+    def test_database_diagnostic_errors_defer_to_recorded_native_freeze(self):
+        import catalog_workspace as workspace
+        import catalog_authoring_runner as runner
+        with tempfile.TemporaryDirectory(prefix="factor-probe-error-") as directory:
+            root = Path(directory)
+            job = root / "job.json"
+            batch.write_json(job, {"schemaVersion": batch.single.JOB, "batchId": "r-probe-error",
+                                   "works": [{"workId": "work-aaaaaaaaaaaaaaaaaaaa", "researchRefs": []}]})
+            baseline, registry = root / "basis", root / "registry.sqlite"
+            output = root / "frozen"
+            args = types.SimpleNamespace(action="freeze", job=job, baseline_root=baseline,
+                                         registry=registry, recovery_epoch=None, output_root=output,
+                                         provenance_root=[root / "collection"])
+            with mock.patch.dict(workspace.os.environ, {"KONOCOMICS_AUTHORING_RECORDED": "0"}), \
+                 mock.patch.object(workspace, "Workspace", return_value=types.SimpleNamespace(repo=root)), \
+                 mock.patch.object(workspace, "authoring_inputs", side_effect=lambda paths, _: paths), \
+                 mock.patch.object(workspace, "recorded_run", return_value=1) as recorded, \
+                 mock.patch.object(batch, "ordinary_freeze_probe", side_effect=sqlite3.DatabaseError("not a database")), \
+                 mock.patch.object(batch, "capture_bindings", side_effect=AssertionError("raw scanned")) as capture:
+                self.assertEqual(workspace.record_arguments(Path(batch.__file__), args, ["freeze"]), 1)
+                recorded.assert_called_once()
+                self.assertEqual(recorded.call_args.args[0][-1], "freeze")
+                capture.assert_not_called()
+
+            run = root / "planning/run"
+            batch.write_json(run / "job.json", batch.panel.read_json(job))
+            config = {"priorBundleBindings": [], "baselineRoot": str(baseline), "registryPath": str(registry),
+                      "recoveryEpoch": None, "provenanceBindings": []}
+            with mock.patch.object(batch, "ordinary_freeze_probe", side_effect=sqlite3.OperationalError("database is locked")), \
+                 mock.patch.object(batch, "capture_bindings", side_effect=AssertionError("raw scanned")) as capture, \
+                 mock.patch.object(runner, "stored", side_effect=ValueError("recorded native DB failure")) as recorded:
+                with self.assertRaisesRegex(ValueError, "recorded native DB failure"):
+                    runner.ensure_frozen(run, config)
+                recorded.assert_called_once()
+                capture.assert_not_called()
+
+            args = types.SimpleNamespace(action="prepare", run_root=run, job=job, decisions=None,
+                                         registry=registry, recovery_epoch=None, provenance_root=[], research=[])
+            with mock.patch.object(runner, "REPO", root), mock.patch.object(runner, "ROOT", root), \
+                 mock.patch.object(runner, "exclusive", return_value=contextlib.nullcontext()), \
+                 mock.patch.object(runner, "current", return_value=({}, baseline)), \
+                 mock.patch.object(runner, "assemble_job", return_value=batch.panel.read_json(job)), \
+                 mock.patch.object(batch, "ordinary_freeze_probe", side_effect=sqlite3.DatabaseError("not a database")), \
+                 mock.patch.object(batch, "capture_bindings", side_effect=AssertionError("raw scanned")) as capture, \
+                 mock.patch.object(runner, "ensure_frozen", side_effect=ValueError("recorded native DB failure")) as recorded:
+                registry.write_bytes(b"not a database")
+                with self.assertRaisesRegex(ValueError, "recorded native DB failure"):
+                    runner.run_job(args)
+                recorded.assert_called_once()
+                capture.assert_not_called()
+            self.assertFalse(output.exists())
+
+
+class EarlyFreezeTest(unittest.TestCase):
+    def setUp(self):
+        source = batch.ROOT / "planning/parallel-recovery-20261001-v2/nt-supplement-b03-v1/works/work-5a8d76c8c5d5c18d465e/run-v3"
+        if not (source / "RUN.json").is_file():
+            self.skipTest("Retained ordinary freeze input unavailable")
+        self.temporary = tempfile.TemporaryDirectory(prefix="factor-early-freeze-")
+        self.addCleanup(self.temporary.cleanup)
+        self.root = Path(self.temporary.name)
+        config = batch.panel.read_json(source / "RUN.json")
+        self.baseline = self.root / "basis"
+        self.baseline.mkdir()
+        for name in ("catalog-expanded.candidate.sqlite", "catalog-source-registry.candidate.sqlite"):
+            shutil.copyfile(artifact_path(config["baselineRoot"]) / name, self.baseline / name)
+        batch.manifest(self.baseline)
+        self.registry = self.baseline / "catalog-source-registry.candidate.sqlite"
+        self.job = batch.panel.read_json(source / "frozen/panel-input/authoring-job.json")
+        self.job_path = self.root / "job.json"
+        self.provenance = []
+        for index, binding in enumerate(config["provenanceBindings"]):
+            destination = self.root / f"collection-{index}"
+            for name in binding["files"]:
+                path = destination / name
+                path.parent.mkdir(parents=True, exist_ok=True)
+                shutil.copyfile(artifact_path(binding["root"]) / name, path)
+            self.provenance.append(destination)
+        batch.write_json(self.job_path, self.job)
+
+    def test_ordinary_freeze_rejects_metadata_and_context_before_raw_scan(self):
+        cases = (
+            ("title", "TARGET_IDENTITY_MISMATCH.*title"),
+            ("ISBN", "TARGET_IDENTITY_MISMATCH.*ISBN"),
+            ("missing-context", "INPUT_NEEDS_REPAIR.*exact supportEvidenceUrl"),
+            ("different-context", "INPUT_NEEDS_REPAIR.*exact supportEvidenceUrl"),
+        )
+        for defect, error in cases:
+            with self.subTest(defect=defect):
+                job = copy.deepcopy(self.job)
+                work = job["works"][0]
+                if defect == "title":
+                    work["title"] = "Different book"
+                elif defect == "ISBN":
+                    work["representativeIsbn"] = "9780000000000"
+                elif defect == "missing-context":
+                    work["evidence"] = []
+                    work["supplementalEvidence"] = []
+                else:
+                    for source in work["evidence"] + work["supplementalEvidence"]:
+                        source["sourceUrl"] = "https://example.test/unbound-selection"
+                batch.write_json(self.job_path, job)
+                output = self.root / defect
+                with mock.patch.object(batch, "capture_bindings", side_effect=AssertionError("raw scanned")) as capture:
+                    with self.assertRaisesRegex(ValueError, error):
+                        batch.ordinary_freeze_probe(self.job_path, self.baseline, self.registry)
+                    with self.assertRaisesRegex(ValueError, error):
+                        batch.freeze(self.job_path, self.baseline, self.registry, output, self.provenance)
+                    capture.assert_not_called()
+                self.assertFalse(output.exists())
+
+    def test_ordinary_freeze_preserves_sources_and_binding_on_success(self):
+        before = {path: batch.panel.sha256(path) for root in [self.baseline, *self.provenance]
+                  for path in root.rglob("*") if path.is_file()}
+        with mock.patch.object(batch, "preflight", side_effect=AssertionError("caller repeated full preflight")):
+            probe = batch.ordinary_freeze_probe(self.job_path, self.baseline, self.registry)
+        self.assertEqual(probe[self.registry.resolve()], before[self.registry])
+        output = self.root / "frozen"
+        report = batch.freeze(self.job_path, self.baseline, self.registry, output, self.provenance)
+        self.assertEqual(report["status"], "PASS")
+        self.assertEqual(batch.panel.read_json(output / "panel-input/authoring-job.json"), self.job)
+        lineage = batch.panel.read_json(output / "panel-input/external-lineage.json")
+        self.assertEqual(lineage["sourceInputBindings"][str(self.registry.resolve())], before[self.registry])
+        self.assertEqual(before, {path: batch.panel.sha256(path) for path in before})
+
+    def test_ordinary_freeze_rejects_basis_change_during_capture_discovery(self):
+        original = batch.capture_bindings
+        for name in ("catalog-expanded.candidate.sqlite", "catalog-source-registry.candidate.sqlite", "MANIFEST.sha256"):
+            with self.subTest(name=name):
+                path = self.baseline / name
+                body = path.read_bytes()
+                def capture(*args, **kwargs):
+                    bindings = original(*args, **kwargs)
+                    path.write_bytes(body + b"concurrent change")
+                    return bindings
+                output = self.root / ("changed-" + name)
+                try:
+                    with mock.patch.object(batch, "capture_bindings", side_effect=capture):
+                        with self.assertRaisesRegex(ValueError, "authoring input changed during capture discovery"):
+                            batch.freeze(self.job_path, self.baseline, self.registry, output, self.provenance)
+                    self.assertFalse(output.exists())
+                finally:
+                    path.write_bytes(body)
 
 
 class AuthoringTest(unittest.TestCase):

@@ -9,6 +9,13 @@ import { z } from "zod";
 import { catalogPython } from "./catalog-python.ts";
 import { CATALOG_OPAQUE_PATHS, verifyCatalogAuthority } from "./catalog/authority.ts";
 import { resolveCanonicalPath } from "./catalog/canonical-publication.ts";
+import {
+  readScopeCorrections,
+  scopeAuditReviewReferences,
+  scopeOwnedTables,
+  verifyScopeAfter,
+} from "./catalog/scope-correction.ts";
+import type { ScopeCorrection } from "./catalog/scope-correction.ts";
 import { validateGoldSet } from "./validate-catalog-expansion.ts";
 import { buildCatalog } from "./build-catalog.ts";
 import { buildRecommendationPlan } from "../src/domain/recommendation/rank.ts";
@@ -19,6 +26,7 @@ import {
 import { catalogV1Schema } from "../src/domain/catalog/schema.ts";
 import { parseRecommendationContext } from "../src/domain/recommendation/context-schema.ts";
 import { AXIS_IDS } from "../src/domain/catalog/constants.ts";
+import type { AxisFactor } from "../src/domain/catalog/types.ts";
 import { workSimilarity } from "../src/domain/recommendation/similarity.ts";
 
 const argv = z.array(z.string().min(1)).parse(process.argv.slice(2));
@@ -143,7 +151,32 @@ if (batchPublications) {
   );
 }
 const promotion = promotionsByRoot.flat();
-const targets = promotion.filter((row) => row.panelOutcome === "PASS").map((row) => row.workId!);
+const scopeArtifacts = resultRoots.flatMap((root) => {
+  const artifact = readScopeCorrections(root);
+  return artifact ? [artifact] : [];
+});
+const scopeCorrections = new Map<string, ScopeCorrection>();
+const scopeResultManifests = new Map<string, string>();
+for (const artifact of scopeArtifacts)
+  for (const correction of artifact.corrections) {
+    assert(!scopeCorrections.has(correction.workId), "Duplicate batch scope correction");
+    scopeCorrections.set(correction.workId, correction);
+    scopeResultManifests.set(correction.workId, artifact.binding.resultManifestSha256);
+  }
+const scopePromotions = promotion.filter((row) => row.panelOutcome === "SCOPE_CORRECTION");
+assert.deepEqual(
+  [...scopeCorrections.keys()].sort(),
+  scopePromotions.map((row) => row.workId!).sort(),
+  "Scope promotion has no exact sealed correction",
+);
+for (const row of scopePromotions) {
+  assert.equal(row.reasonCode, "NON_JAPANESE_ORIGINAL");
+  assert.equal(row.recommendationEligible, "false");
+  assert.equal(row.libraryOnly, "true");
+}
+const targets = promotion
+  .filter((row) => ["PASS", "SCOPE_CORRECTION"].includes(row.panelOutcome!))
+  .map((row) => row.workId!);
 assert(targets.length > 0);
 assert.equal(new Set(targets).size, targets.length, "Duplicate batch target");
 if (compact)
@@ -158,6 +191,7 @@ const ledger = resultRoots.flatMap((root) =>
 const db = new DatabaseSync(toNamespacedPath(candidate), { readOnly: true });
 const rowSchema = z.record(z.string(), z.string());
 const expectedAxes = new Map<string, Map<string, z.infer<typeof rowSchema>>>();
+const scopeReviewReferences = new Set<string>();
 let counts;
 try {
   assert.equal(db.prepare("pragma integrity_check").get()?.integrity_check, "ok");
@@ -166,18 +200,26 @@ try {
     const work = rowSchema.parse(
       db
         .prepare(
-          "select recommendationEligible,libraryOnly,annotationReviewMethod from source_works where id=?",
+          "select onboardingEligible,recommendationEligible,libraryOnly,annotationReviewMethod from source_works where id=?",
         )
         .get(wid),
     );
-    assert.equal(work.recommendationEligible, "true");
-    assert.equal(work.libraryOnly, "false");
+    const scope = scopeCorrections.get(wid);
+    assert.equal(work.recommendationEligible, scope ? "false" : "true");
+    assert.equal(work.libraryOnly, scope ? "true" : "false");
+    if (scope) {
+      assert.equal(work.onboardingEligible, "false");
+      scopeReviewReferences.add(
+        verifyScopeAfter(scope, scopeOwnedTables(db, wid), scopeResultManifests.get(wid)!)
+          .reviewReference,
+      );
+    }
     assert.equal(work.annotationReviewMethod, "authorizedEvidencePanel");
     const claims = ledger.filter((row) => row.workId === wid && row.factKey?.startsWith("axis:"));
-    assert.equal(claims.length, 17);
+    if (!scope) assert.equal(claims.length, 17);
     let axes = new Map(
-      claims.map((claim) => [
-        claim.factKey!.slice(5),
+      (scope ? scope.beforeSnapshot.tables.source_factors! : claims).map((claim) => [
+        scope ? claim.axisId! : claim.factKey!.slice(5),
         rowSchema.parse({
           state: claim.state!,
           value: claim.value!,
@@ -186,7 +228,9 @@ try {
       ]),
     );
     const batchPublication = batchPublications?.works.find((row) => row.workId === wid);
-    if (compact) {
+    if (scope) {
+      assert.equal(axes.size, 17, `Preserved scope Axis snapshot mismatch: ${wid}`);
+    } else if (compact) {
       axes = new Map(compact.works[wid]!.source_factors.map((fact) => [fact.axisId, fact]));
       assert.equal(axes.size, 17, `Verified compact Axis snapshot mismatch: ${wid}`);
     } else if (batchPublication) {
@@ -250,6 +294,18 @@ try {
   for (const reference of new Set([
     ...CATALOG_OPAQUE_PATHS,
     ...references.map((r) => r.annotationReviewReference),
+    ...scopeReviewReferences,
+    ...scopeAuditReviewReferences(
+      z
+        .array(rowSchema)
+        .parse(
+          db
+            .prepare(
+              "select id,extractorVersion,notes from source_evidence where extractorVersion='authorized-evidence-panel-scope-correction-v1'",
+            )
+            .all(),
+        ),
+    ),
   ])) {
     assert(
       CATALOG_OPAQUE_PATHS.some((path) => path === reference) ||
@@ -263,6 +319,8 @@ try {
       reference,
     );
     const origin = existsSync(published) ? published : join(repo, "data/source", reference);
+    if (scopeReviewReferences.has(reference))
+      assert(existsSync(published), "Scope publication omitted its bound audit review");
     const destination = join(source, reference);
     mkdirSync(dirname(destination), { recursive: true });
     copyFileSync(origin, destination);
@@ -313,6 +371,47 @@ const plan = buildRecommendationPlan({
   policies: createDefaultRecommendationPolicies(),
 });
 for (const wid of targets) {
+  const scope = scopeCorrections.get(wid);
+  if (scope) {
+    const retained = built.catalog.works.find((row) => row.id === wid);
+    assert(retained, `Scope-excluded Work missing from Library Catalog: ${wid}`);
+    assert.deepEqual(
+      [
+        retained.eligibility.onboardingEligible,
+        retained.eligibility.recommendationEligible,
+        retained.eligibility.libraryOnly,
+      ],
+      [false, false, true],
+    );
+    const representative = built.catalog.representativeVolumeByWorkId[wid];
+    assert.equal(
+      built.catalog.volumes.find((row) => row.id === representative)?.isbn,
+      scope.representativeIsbn,
+    );
+    assert(
+      !catalog.works.some((row) => row.id === wid),
+      `Scope-excluded Work remains in recommendation profile: ${wid}`,
+    );
+    assert(
+      !(wid in context.constraintByWorkId) && !(wid in context.marketSnapshot.byWorkId),
+      "Scope-excluded context remains in recommendation profile",
+    );
+    assert(
+      !plan.some((row) => row.workId === wid),
+      `Scope-excluded Work remains in engine plan: ${wid}`,
+    );
+    for (const [axisId, fact] of expectedAxes.get(wid) ?? []) {
+      const axis = z.enum(AXIS_IDS).parse(axisId);
+      const actualAxis: AxisFactor = retained.axes[axis];
+      assert.equal(actualAxis.state, fact.state);
+      if (fact.state === "known") {
+        assert(actualAxis.state === "known");
+        assert.equal(actualAxis.value, Number(fact.value));
+        assert.equal(actualAxis.confidence, Number(fact.confidence));
+      }
+    }
+    continue;
+  }
   const work = catalog.works.find((row) => row.id === wid);
   assert(work, `Published work absent from compiled catalog: ${wid}`);
   if (
@@ -380,6 +479,9 @@ const report = {
   publicationRoot: publication,
   resultRoot,
   targetWorkIds: targets,
+  ...(scopeArtifacts.length
+    ? { scopeCorrections: scopeArtifacts.map((artifact) => artifact.binding) }
+    : {}),
   catalogSha256: candidateSha,
   registrySha256: registrySha,
   canonicalSha256: canonicalSha,

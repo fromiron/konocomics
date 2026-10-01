@@ -176,6 +176,22 @@ class CatalogState:
         self.targets, self.changed = set(plan.get("targetIds", ())), set()
         if self.targets & self.gold_ids:
             raise ValueError("Expected plan targets Gold")
+        if plan.get("scopeCorrections"):
+            from scope_correction import digest, snapshot_from_rows, FLAGS
+            if set(plan["scopeCorrections"]) != self.targets:
+                raise ValueError("Expected scope correction target mismatch")
+            for wid, correction in plan["scopeCorrections"].items():
+                before = snapshot_from_rows(self.scope({wid}), wid)
+                if before != correction["beforeSnapshot"] or digest(before["tables"]) != correction["beforeSnapshotSha256"]:
+                    raise ValueError("Expected scope correction lost frozen before snapshot")
+                if correction["afterEligibility"] != FLAGS:
+                    raise ValueError("Expected scope correction flags mismatch")
+                self._update("source_works", (wid,), {key: str(value).lower() for key, value in FLAGS.items()})
+            for eid, row in sorted(plan["newEvidence"].items()):
+                if row["id"] != eid:
+                    raise ValueError("Expected scope evidence identity mismatch")
+                self._append("source_evidence", row)
+            return set(self.changed)
         fresh, recovery = plan.get("freshSnapshots", {}), plan.get("recoverySnapshots", {})
         if set(fresh) & set(recovery):
             raise ValueError("Overlapping expected fresh/recovery snapshots")
@@ -198,7 +214,7 @@ class CatalogState:
                 self._update("source_evidence", (eid,), {k: row[k] for k in ("sourceType", "notes")})
         for row in plan.get("factorUpdates", []):
             if row["workId"] not in replaced and (row["workId"], row["axisId"]) not in correction_keys:
-                self._factor(row)
+                self._factor(row, row.get("candidateBefore"))
         for row in plan.get("themeInserts", []):
             if row["workId"] not in replaced:
                 self._append("source_themes", row)

@@ -1,10 +1,10 @@
 # 로컬 Catalog 작업 저장소
 
-현재 확정 사양 · 갱신일: 2026-09-28
+현재 확정 사양 · 갱신일: 2026-10-01
 
 이 문서는 저장 위치·보존 범위·백업 경계의 단일 운영 계약이다. 2026-09-26 승인한 실행 계약은 workspace schema v4이며 실제 전환 여부는 대상 DB의 schema·generation과 전환 receipt에서 확인한다. 문서 갱신을 운영 DB 전환 완료로 간주하지 않는다. [기존 검증 요약](authoring-retention-20260926.md)은 해당 실행 근거와 한계를 기록하며 이 문서의 규칙을 대신하지 않는다. 과거 규칙은 Git 이력에서 확인한다.
 
-**2026-09-27 SDD 상태:** 아래 R1~R9에 따라 DB 전용 기본 복구·요청별 추출·부분 작업 폴더의 증분 백업을 구현하고 기존 CLI에서 검증했다. [현재 구현·검증 근거와 한계](08-structural-throughput-20260927.md)를 따른다. 과거 원본 도구 누락 검사 4개와 당시 고정 세션 자동 전환은 별도 한계였으며 현재 운영에서는 hook을 사용하지 않는다. 문서 변경으로 중단된 큐를 재개하지 않는다.
+**2026-09-27 SDD 상태:** 아래 R1~R9에 따라 DB 전용 기본 복구·요청별 추출·부분 작업 폴더의 증분 백업을 구현하고 기존 CLI에서 검증했다. [현재 구현·검증 근거와 한계](08-structural-throughput-20260927.md)를 따른다. 과거 원본 도구 누락 검사 4개와 당시 고정 세션 자동 전환은 해당 검증의 한계였다. 문서 변경으로 중단된 큐를 재개하지 않는다.
 
 **2026-09-28 경량 보존:** `scripts/catalog_authoring/lean_migration.py`는 불필요한 로컬 사본·백업·반복 검증을 줄이되, 남긴 자료를 실제로 읽고 재사용·정리할 수 있게 한다. 같은 generation에서 Work별 `curation`, 원문 `collection`(`retained-originals`), 작은 `active` 제어, `completion`, `canonical-completion`과 previous·dependency closure를 새 파일로 복사한다. 불필요한 `artifact`, 종료된 `execution`, `legacy-pin`, `active/migration-working-sets`는 독립 보존 근거로 삼지 않는다. 다만 미완료 실행과 남긴 checkpoint의 원래 소유 관계, closure에 이미 포함된 legacy pin의 조회 head는 유지한다. 이 예외로 무관한 과거 publication 사본을 복원하지 않는다. 완료 확인·GC의 구형/신규 구분은 원래 revision rowid, 생존 행 범위의 legacy watermark, 변경된 revision당 하나의 journal 표식으로 유지한다. 전체 change history를 복사하거나 새 DB에 다시 `VACUUM`하지 않는다. 원본은 한 읽기 transaction에서 선택·복사하고, 새 journal origin으로 최초 백업 후 기존 증분 백업을 사용한다. canonical `catalog.sqlite`는 바꾸지 않는다. 과거 추출 폴더는 DB blob 결속과 실제 소비 가능 범위를 확인한 뒤 정리하며, 이후 수집·판정 파일의 위치는 계속 `artifacts/`다. prior authority의 manifest 결속, freeze의 계약 문서 결속, canonical apply의 current·candidate·projection 검증, v2/v3 reader는 유지한다. 한 배치 안의 prior 재검증은 기존 `manifest_verification_cache`를 쓴다.
 
@@ -31,6 +31,10 @@
 - 완료 배치는 `completion` revision의 summary SHA·실제 발행/readback·STATE 적용 기록으로 중복을 차단한다. 작은 원래 receipt를 보존하며 재수신 때문에 오래된 전체 STATE/publication을 다시 열지 않는다.
 - 정상 백업은 불변 completion별로 재수신에 필요한 원 summary·CHECKED·RUN·판정·동결 manifest/job·봉인 manifest 멤버의 정확한 SHA를 한 번 확인해 복구용 identity를 보존하고 이후 재사용한다. 매번 옛 full RUN·frozen·provenance 전체를 다시 저장하지 않으며 기존 원본 receipt를 수정하지 않는다.
 - 기존 frozen SHA·원본 바이트·판정 이력은 변경하지 않는다. 새 사실·정정은 새 revision에 남긴다. 같은 경로의 다른 원본 버전은 덮어쓰지 않는다.
+- 의존 자료 탐색 한 호출 안에서는 공통 조상의 링크 검사를 재사용할 수 있다. 호출 종료에는 새 검사 집합으로 모든 확인 경로를 다시 검증하며, 다음 호출·저장·발행으로 검사 결과를 넘기지 않는다. 탐색 대상·원문 SHA·retained revision 및 source/backup 검증 범위는 줄이지 않는다.
+- 이미 순회한 자료 범위는 경로의 실제 조상으로 조회하며 무관한 형제 파일 전체와 비교하지 않는다. 여러 캐시 범위가 겹치면 최초 순회의 선택을 유지한다. 대상 파일·retained 참조의 path/SHA 집합이 동일해야 하며 이 최적화로 의존을 제외하지 않는다.
+- 구조적 입력 오류는 가능한 한 원문 전수 해시·복사 전에 기존 preflight로 진단한다. 서지 기준·정확한 선정 URL·동일 URL 관찰 충돌의 기존 거부 조건을 유지하고, 실제 원문 독해나 근거 채택을 자동화한 것으로 보고하지 않는다. 입력 변경은 새 revision으로 처리하며 후속 동결의 바이트·기준 변경 검사는 유지한다.
+- 발행 실행 시간은 실제 기존 단계의 비중복 구간으로 기록한다. 의존 자료 탐색·저장과 작품별 적용 등의 하위 측정은 상위 구간에 포함되므로 합산하지 않는다. 실패·재개 실행과 완료 재사용을 구분하며 시간 기록은 판정·completion identity를 바꾸지 않는다.
 - 기본 복구와 요청별 자료 사용의 목표 범위는 아래 R1~R9를 따른다. DB에 보존한 이력과 작업 폴더에 꺼내 놓은 파일을 동일시하지 않는다.
 
 ## DB 중심 복구 요구사항
@@ -135,7 +139,7 @@
 | `apply-catalog-authoring-canonical.ts`의 기존 CLI           | 요청 canonical/static 효과·pending intent 재개·readback | R3, R5, R6, R9     |
 | `catalog_authoring_runner.py`의 기존 prepare/check/run 경로 | 명시 run/Work의 자료 사용·기존 run 재개                 | R3, R5, R7, R9     |
 | `import-publisher-book-metadata.ts`                         | 요청 metadata·근거와 해당 canonical 효과                | R3, R5, R6, R9     |
-| `notification_guard.py`의 기존 session/event 명령           | 구형 자료 호환 전용. 신규 hook·통지는 사용하지 않음     | R3, R5, R7, R9     |
+| `notification_guard.py`의 기존 session/event 명령           | 구형 session/event 자료 조회·호환                       | R3, R5, R7, R9     |
 
 이 표는 기존 소비자에 요구를 배정한 스펙이며 구현 완료 표가 아니다. 수용 기준을 작은 실제 진입점 재현 검사로 작성해 미충족을 확인하고, 그 스펙을 충족하도록 구현한 뒤 동일 경로로 재검증한다. 코드 동결 후 필수 통합 검증을 한 번 수행한다. r005의 과거 전체 원본 replay PASS는 R1·R3·R5의 대체 증거가 아니다.
 
@@ -150,7 +154,7 @@
 
 신규 배정 크기와 단계 전환은 [배치 계약](01c-catalog-batch-promotion-plan.md)을 따른다. 원본 저장·작품별 기계 검사·checkpoint는 배치 끝까지 미루지 않는다. `PERSISTED`는 마지막 경계 백업에 포함됐다는 뜻이 아니며 작업자가 문자열을 `BACKED_UP`으로 바꾸면 안 된다.
 
-현재 경계 백업은 명시적 `catalog_workspace.py backup`으로 수행한다. 부모·자식 hook과 `notification_guard.py enqueue`는 현재 운영 경로에서 사용하지 않는다. 과거 통지·백업 receipt는 이력으로 보존한다. 독립 명령 하나가 발행/인계 경계인 경우에만 `run --phase-boundary`를 사용한다. 최종 백업 실패는 미완료로 보고하고 실제 저장 결과에서 재개한다. 강제 종료 전 미저장 자료를 복원됐다고 주장하지 않는다.
+현재 경계 백업은 명시적 `catalog_workspace.py backup`으로 수행한다. 과거 통지·백업 receipt는 이력으로 보존한다. 독립 명령 하나가 발행/인계 경계인 경우에만 `run --phase-boundary`를 사용한다. 최종 백업 실패는 미완료로 보고하고 실제 저장 결과에서 재개한다. 강제 종료 전 미저장 자료를 복원됐다고 주장하지 않는다.
 
 collection summary의 `workspaceAndBackupReadbackVerified`는 실제 source/latest의 원문 SHA 확인을 가리킨다. 상태명·manifest 파일 SHA 하나·경로 존재만으로 원본 보존이나 백업을 대신하지 않는다. 전체 blob 감사와 해당 단계 원문 검사는 다른 범위다.
 
@@ -214,6 +218,8 @@ EndeavourOS를 듀얼부팅하는 동안에는 Windows에서 대상 home 경로�
 
 수집 디렉터리에 원본 HTTP 응답, 수집 receipt, `publisher-metadata.json`을 함께 둔다. receipt는 `url`, `resolvedUrl`, 실제 `fetchedAt`(offset 포함 ISO 시각), `status`, 원본 `sha256`, `bytes`를 기록한다. 이미 보존한 응답은 다시 요청하지 않으며, 정확한 수집시각이 없거나 접근에 실패한 자료는 기록만 보존한다. 소개 텍스트는 해당 판본의 실제 소개 구간 전체에서 추출하고 HTML 정리·trim 후 표시값과 원본 바이트를 구분한다.
 
+브라우저가 표시한 원문은 기존 collector의 `recordCapture(kind="browser-text")`로 저장한 실제 body·receipt를 그대로 사용한다. 이 typed 경로는 같은 collection의 `collection-session.json.workId`, receipt의 `rawPath`·SHA·bytes·HTTPS 요청/최종 URL과 실제 offset ISO `observedAt`을 검증하고 그 관찰 시각을 metadata의 `fetchedAt`으로 사용한다. `status`·`complete`가 null이면 원 receipt에서 그대로 보존하며 HTTP 200이나 완전한 HTTP 응답으로 바꾸지 않는다. 알려진 실패 status·불완전 capture·error 또는 실제 관찰 시각이 없는 자료는 반영하지 않는다. HTTP 경로의 기존 6필드·status 200 receipt 규약은 유지한다. 같은 URL의 JS shell receipt와 다른 browser body/소개를 섞지 않으며, 원문 소개가 같은 capture의 본문에 존재하는지도 확인한다. 출판사·Work·판본·소개 전체 구간의 의미 검토는 담당자의 책임으로 남는다.
+
 `publisher-metadata.json`은 다음 객체의 배열이다. `metadata`는 기존 source row 형식이므로 선택 값도 문자열로 입력하고 확인하지 못한 값은 `""`로 둔다. `sourceUrl`과 `fetchedAt`은 입력하지 않고 검증한 receipt의 최종 URL과 시각을 사용한다.
 
 ```json
@@ -240,6 +246,8 @@ EndeavourOS를 듀얼부팅하는 동안에는 Windows에서 대상 home 경로�
 
 `captionKind="summary"`로 요약을 표시할 때도 `originalItemCaption`에는 추출한 원문을 남긴다. 출판사 여부·동일 판본·소개 의미의 검토는 수집·서지 검토 담당자의 책임이다. hash와 ISBN 구조 검사가 그 의미 검토를 대체하지 않는다. 입력의 원문·receipt 경로는 같은 수집 디렉터리 내부의 파일이어야 한다.
 
+browser-text도 같은 입력 객체를 사용하며 `sourceFile`·`receiptFile`은 새 HTTP receipt 대신 기존 실제 capture body·capture JSON을 지정한다. 원문과 receipt를 수정하지 않고 서지 입력만 추가한 새 collection revision으로 저장·백업한다.
+
 ```bash
 node --import tsx scripts/import-publisher-book-metadata.ts --input <collection>/publisher-metadata.json --output .workspace/<new-publication-directory>
 ```
@@ -250,7 +258,7 @@ node --import tsx scripts/import-publisher-book-metadata.ts --input <collection>
 - 기존 metadata 행은 빈 필드까지 그대로 보존한다. 같은 URL의 다른 수집분을 섞거나 수집일만 갱신하지 않는다. 기존 행의 갱신은 유지할 모든 필드를 한 응답에서 재확인하는 별도 완결 검토가 필요하다.
 - 아직 canonical에 없는 ISBN은 `deferred-missing-volume`, 빈 소개는 `skipped-empty-caption`으로 보존한다. 정식 Work·Volume 추가 뒤 같은 입력을 다시 반영할 수 있다. 소개를 위해 Factor 승격을 요구하지 않는다.
 - 기존 authority projection·finalize·build와 `publishDirectorySet`을 재사용한다. 다른 9개 table과 opaque 문서는 보존하고 baseline DB·source manifest 및 준비 artifact hash를 교체 전에 확인한다. 작업은 직렬로 실행하며 진행 중 Factor bundle의 frozen identity를 갱신하지 않는다.
-- `receipt.json`의 실제 disposition, `published` 및 DB/생성 파일 readback을 확인한다. 생성된 `Volume.metadata`는 기존 상세 경로에서 유효한 Rakuten 항목 뒤의 fallback으로 사용한다. 로컬 발행은 GitHub 발행·배포 증거가 아니다.
+- `receipt.json`의 실제 disposition, `published` 및 DB/생성 파일 readback을 확인한다. 생성된 `Volume.metadata`는 `03-ux-screen-contracts.md`의 상세 경로에서 사용한다. 양쪽 소개가 있으면 저장된 출판사 소개를 우선하고 다른 서지는 Rakuten 우선순위를 유지한다. 로컬 발행은 GitHub 발행·배포 증거가 아니다.
 
 ## Compact 발행 자료
 

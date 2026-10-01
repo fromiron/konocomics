@@ -636,7 +636,8 @@ class RevisionWorkspace(Workspace):
             return body
 
         control_update = prepare_control_delta(self, control_base, members, control_body, deleted=control_deleted)
-        subject = label + ":" + digest(encoded(sorted(self.key(root) for root in roots)))
+        subject_links: set[Path] = set()
+        subject = label + ":" + digest(encoded(sorted(self.key(root, checked=subject_links) for root in roots)))
         payload_sha = digest(encoded({"payload": {"label": label}, "members": members}))
         with closing(self.connect()) as db:
             unchanged = self._unchanged(db, kind, subject, payload_sha, terminal, False, members)

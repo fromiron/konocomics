@@ -7,23 +7,23 @@ description: konocomics의 배정된 작품 목록을 로컬 자료 우선으로
 
 ## 현재 계약
 
-- [배치 계약 §3](../../../docs/catalog-expansion/01c-catalog-batch-promotion-plan.md#3-역할과-실행-추적)의 역할·실행 추적을 따른다. 특정 모델·추론 강도·고정 세션 이름/ID·세션 수는 요구하지 않는다. 부모·자식 세션 분리와 hook·자동 통지는 사용하지 않는다. 실제 담당과 기존 실행 이력은 보존한다. 신규 최대 50작품 목록을 사용하며 기존 100작품 배정·진행 중 턴·과거 판정은 소급 변경하지 않는다.
+- [배치 계약 §3](../../../docs/catalog-expansion/01c-catalog-batch-promotion-plan.md#3-역할과-실행-추적)의 역할·실행 추적을 따른다. 특정 모델·추론 강도·고정 세션 이름/ID·세션 수는 요구하지 않는다. 실제 담당과 기존 실행 이력은 보존한다. 신규 최대 50작품 목록을 사용하며 기존 100작품 배정·진행 중 턴·과거 판정은 소급 변경하지 않는다.
 - [수집 지침](../../../docs/catalog-expansion/factor-collector-instructions.md)과 [사전 리드 JSON·자료 적격성](../../../docs/catalog-expansion/user-source-leads.md)을 따른다. 현재 대표판을 1권으로 바꾸지 않으며 전권 확인을 요구하지 않는다. 신규 Art는 제외하고 safety는 porn/non-porn으로 판단한다.
 - [저장 계약](../../../docs/catalog-expansion/03-local-authoring-storage.md)에 따라 원문·판정·checkpoint를 즉시 PERSISTED로 보존하고 수집/판정/발행 완료·종료/부분 중단 경계에서 실제 BACKED_UP을 확인한다. 내부 명령마다 물리 백업하지 않는다. compact 발행의 기본 pair checkpoint는 50작품이다. prior authority 검증은 유지한다. 원본 SHA·generation/revision을 보존하며 상태 문자열로 실제 백업을 대신하지 않는다.
-- [runner 명령 계약](../../../scripts/catalog_authoring/README.md)을 사용한다. 작업자는 prepare/check, 조정자는 발행 책임을 뜻하며 같은 실행자가 단계를 나눠 수행할 수 있다. 모델·세션 지정 해제는 추가 모델 호출이나 새 채팅 생성의 지시가 아니다. 문서 갱신만으로 중단된 큐를 재개하지 않는다.
+- [runner 명령 계약](../../../scripts/catalog_authoring/README.md)을 사용한다. 작업자는 prepare/check, 조정자는 발행 책임을 뜻하며 같은 실행자가 단계를 나눠 수행할 수 있다. 문서 갱신만으로 중단된 큐를 재개하지 않는다.
 
 ## 배치 단계 순서
 
-**한 세션의 현재 배치 전체 수집·gap 보완을 먼저 끝낸 뒤 판정 단계로 전환한다.** 작품마다 수집→판정을 교차하지 않는다. 수집 단계에서는 독립 URL 요청과 읽기 전용 검사를 안전하게 묶고, 공통 선정/추천 원문은 한 번 저장한 자료를 작품별 실제 연결 근거와 함께 재사용한다. 원문·scope·출처 독립성 검사는 생략하지 않는다. 수집 완료는 URL 확보만이 아니라 판정에 필요한 자료 확인 또는 출처 소진에 따른 INSUFFICIENT의 기록이다. PASS 목표치를 강제하지 않는다.
+**현재 배치 전체 수집·gap 보완을 먼저 끝낸 뒤 판정 단계로 전환한다.** 작품마다 수집→판정을 교차하지 않는다. 수집 단계에서는 독립 URL 요청과 읽기 전용 검사를 안전하게 묶고, 공통 선정/추천 원문은 한 번 저장한 자료를 작품별 실제 연결 근거와 함께 재사용한다. 원문·scope·출처 독립성 검사는 생략하지 않는다. 수집 완료는 URL 확보만이 아니라 판정에 필요한 자료 확인 또는 출처 소진에 따른 INSUFFICIENT의 기록이다. PASS 목표치를 강제하지 않는다.
 
 `planningRequirements`에 `prior-recovery`가 있어도 수집 면제가 아니다. dispatch의 해당 `collectionOutput`에 user-source·기존 원문·필요 보완을 검증한 새 수집 결과를 만들고, 다른 작품과 함께 collection summary 전건에 포함한다. prior recovery map과 `--prior-bundle`은 이후 판정 freeze에서 accepted claim을 보존하는 결속이며 빈 collection 폴더나 수집 결과의 합성을 허용하지 않는다.
 
-수집 배치 완료·검증·명시적 백업을 확인한 뒤 승인된 판정 단계로 이어간다. hook의 register/arm/enqueue·전송 ACK·부모의 전환 메시지를 요구하지 않는다. 수집 전용 요청은 수집에서 종료한다. 원 수집 summary path/SHA와 개별 ERROR를 보존하고 오류 작품은 판정에서 제외한다. 공통 오류·전건 오류·사용자 중단이면 의존 작업을 진행하지 않는다. 판정 단계는 작품별 frozen 입력으로 prepare/check를 수행하며 유효 판정은 재사용한다. 완료 결과는 실제 summary·receipt로 확인하고 승인 범위에서 직렬 승격한다.
+수집 배치 완료·검증·명시적 백업을 확인한 뒤 승인된 판정 단계로 이어간다. 수집 전용 요청은 수집에서 종료한다. 원 수집 summary path/SHA와 개별 ERROR를 보존하고 오류 작품은 판정에서 제외한다. 공통 오류·전건 오류·사용자 중단이면 의존 작업을 진행하지 않는다. 판정 단계는 작품별 frozen 입력으로 prepare/check를 수행하며 유효 판정은 재사용한다. 완료 결과는 실제 summary·receipt로 확인하고 승인 범위에서 직렬 승격한다.
 
 ## 시작·재개
 
 - 배치/작품 ID, 실제 담당, 기준·입출력 경로를 확인한다. 기존 소유권과의 불일치는 현재 채팅에 보고한다. 계약·스킬은 세션 시작 때 읽고 버전 변경 시 갱신한다.
-- 조사에 필요한 독립적인 작품·출처가 있으면 서브에이전트에 겹치지 않는 범위와 반환 근거·URL을 지정할 수 있다. 같은 작품의 근거 결속과 최종 판정은 이 세션이 맡고, 공유 DB·registry·STATE·발행 변경은 병렬 위임하지 않는다.
+- 독립적인 작품·출처 수집·작품별 동결 판정·읽기 전용 검증을 서브에이전트에 겹치지 않는 범위·출력 경로·반환 근거·URL로 나눠 배정한다. 각 작품 담당자가 근거 결속과 최종 판정을 책임지고 공유 DB·registry·STATE·발행 변경은 병렬 위임하지 않는다.
 - 배정 인덱스와 현재 작품의 brief·research/prior/HOLD·receipt만 읽는다. 전체 STATE·과거 채팅·전체 후보 DB를 작품마다 재탐색하지 않는다. 완료된 결과는 해시 확인 후 재사용한다.
 - 물리 작업 자료가 없으면 [저장 계약 R1~R9](../../../docs/catalog-expansion/03-local-authoring-storage.md#db-중심-복구-요구사항)에 따라 기본 `restore`로 workspace DB를 복구한 뒤 기존 runner에 명시 run/Work를 전달한다. 해당 명령이 필요한 자료만 추출하며 미추출 파일은 삭제가 아니다. 과거 전체 폴더 재생성을 선행하지 않는다. generation·turn·중단 상태를 보존하고 과거 판정을 다시 만들지 않는다.
 - 현재 판정은 완료 여부를 포함해 Work별 최신 유효 판정으로 확인한다. 최신 READY가 완료됐다는 이유로 이전 HOLD나 READY를 재개하지 않으며 READY/HOLD를 상태별로 따로 보존·재개할 대상으로 고르지 않는다. 실제 미완료 summary가 특정 CHECKED/SHA를 요구하는 경우만 그 정확한 과거 의존을 유지한다.
@@ -39,7 +39,7 @@ description: konocomics의 배정된 작품 목록을 로컬 자료 우선으로
 - 추천 맥락에 필요한 registry `supportEvidenceUrls`의 작품 선정/추천 원문도 수집·결속한다. v3의 `contextEvidenceId=null`은 의도된 미판정 상태다. schema context ID가 빈 문자열뿐이면 채택 가능한 support URL 원문이 빠졌는지 확인하고 새 research/run revision을 만든다. 스키마를 완화하거나 ID를 임의로 채우지 않는다. 낡은 registry URL로 연결할 수 없으면 정확한 gap을 보고한다.
 - 같은 리뷰·수상/선정 URL은 작품별 실제 언급과 범위를 확인해 재사용한다. URL과 `evidenceId`를 동일시하지 않는다. 기존 ID는 저장된 Work·source·추천 문맥 결속이 완전히 같을 때만 재사용한다. 같은 URL이라도 새 결속이나 기존 선정 provenance와 충돌하면 새 source ID를 새 입력 revision에 넣고 과거 행·frozen·CHECKED를 보존한다. [AEP 계약](../../../docs/catalog-expansion/02-authorized-evidence-panel-v1.md)의 근거 ID 규칙을 따른다.
 - Work·ISBN·판본·리뷰 독립성·실제 읽은 범위를 확인한다. 대표판이 6권이면 조용히 1권으로 바꾸지 않는다. 원문·관찰·출판사 소개·서지 receipt를 기존 collector helper로 보존한다. 비밀키·유료 서비스·인증/차단 우회는 조사 수단으로 추가하지 않는다.
-- 새 유효 원문·gap은 즉시 영구 저장한다. 수집 배치 완료의 검증·명시적 백업을 확인한 뒤 현재 실행자가 승인 범위에서 기존 준비 helper로 동결한다. 시스템 오류는 실제 실패 artifact·재개 조건을 가진 `ERROR`로 남기며 `INSUFFICIENT`·조사 소진으로 바꾸지 않는다. 동결 전 수치 판정이나 공유 DB 수동 수정은 하지 않는다. 수집 중 정상 작품마다 부모의 응답을 기다리지 않는다.
+- 새 유효 원문·gap은 즉시 영구 저장한다. 수집 배치 완료의 검증·명시적 백업을 확인한 뒤 현재 실행자가 승인 범위에서 기존 준비 helper로 동결한다. 시스템 오류는 실제 실패 artifact·재개 조건을 가진 `ERROR`로 남기며 `INSUFFICIENT`·조사 소진으로 바꾸지 않는다. 동결 전 수치 판정이나 공유 DB 수동 수정은 하지 않는다.
 
 ## 수집 반복 비용 줄이기
 
@@ -70,7 +70,7 @@ description: konocomics의 배정된 작품 목록을 로컬 자료 우선으로
 - 배정 계획이 `prior-recovery`인 Work는 기존 known 축을 먼저 원 AEP manifest의 exact claim/source map에 대조한다. 원 판정 run의 빈 `prior-authority.json`, 현재 DB 행, 비-AEP `ev-v4` 메모만으로 priorClaims·REPLACE/WITHDRAW를 만들지 않는다. 충돌 축의 원 권한을 찾지 못하면 새 판정의 READY를 발행 가능으로 보고하지 말고 `PRIOR_AUTHORITY_BUNDLE_MISSING`과 필요한 원본을 기록한다. 근거가 새 값의 정정을 지지하지 않으면 기존값을 보존하고 HOLD로 종료한다.
 - 작품별 READY/HOLD/ERROR와 원본·판정·검사·실패·백업 receipt를 기록한다. READY는 승격 성공이 아니다. HOLD도 완료다. 수집·판정 단계에서는 공유 candidate/registry·STATE·canonical을 갱신하거나 직접 publish하지 않는다.
 - 정상적인 공유 저장은 파일 준비를 read-only로 수행하고 신규 blob·revision commit만 workspace writer lock으로 직렬화한다. 단계 백업은 별도 OS lock으로 직렬화하고 workspace를 read-only snapshot으로 읽어, 긴 백업이 새 workspace 저장을 막지 않게 한다. 기존 프로세스가 이전 구현으로 실행 중인 전환 구간만 그 프로세스 종료 뒤 재개한다.
-- `run --decisions`는 즉시 발행하므로 작업자의 검사 명령으로 사용하지 않는다. 판정 누락·오류를 `--allow-model`·`--retry-model`·`--model-session`의 추가 호출로 자동 보충하지 않는다. 독립 조사 서브에이전트는 위 범위에서만 사용할 수 있다.
+- `run --decisions`는 즉시 발행하므로 작업자의 검사 명령으로 사용하지 않는다. 판정 누락·오류를 `--allow-model`·`--retry-model`·`--model-session`의 추가 호출로 자동 보충하지 않는다.
 
 ## 배치 보고·누락 방지
 
@@ -78,8 +78,8 @@ description: konocomics의 배정된 작품 목록을 로컬 자료 우선으로
 - 신규 최대 50작품과 기존 배정의 모든 항목을 결과 또는 오류로 설명한다. 개별 HOLD/오류는 보존하고 다음 독립 작품을 진행한다. 공통 결함은 의존 작업만 멈춘다.
 - `catalog_authoring_runner.py summarize --run-root <배치-root> --dispatch <배치목록>`으로 실제 CHECKED를 집계하고 단계 백업을 확인한다. 누락된 작품은 PENDING/nextWorkId로 남으며 완료 수·SHA·receipt를 손으로 재작성하지 않는다. summary에는 실제 작품별 경로·최종 SHA·입력 결속·상태·gap·측정 가능한 시간/usage·저장/백업 receipt를 보존한다. READY는 `checkedPath`·`checkedSha256`·`checkStorage`를 포함한다. 없는 receipt나 식별자를 합성하지 않는다.
 - `sourceSummary`는 이전 판정 summary의 동일한 결과 행을 추린 경우만 사용한다. 수집 summary와 SHA는 단계 기록에 별도로 결속하며 기존 dispatch에서는 `collectionSummary`를 사용한다. 결과가 달라지면 새 full 판정 summary를 만든다.
-- 수집/판정 완료·종료/중단 경계에서 명시적 workspace 백업과 readback을 확인한다. notification guard 등록·전송·ACK는 완료 조건이 아니다. 기존 통지 artifact는 이력으로 보존하며 새 운영에 재활성화하지 않는다.
-- 문맥 압축 후 checkpoint에서 계속한다. 판정·CHECKED·요약·백업 완료 뒤 승인된 다음 비중복 목록을 진행할 수 있다. 별도 부모 세션이나 예약 automation을 만들지 않는다.
+- 수집/판정 완료·종료/중단 경계에서 명시적 workspace 백업과 readback을 확인한다. 기존 통지 artifact는 이력으로 보존한다.
+- 문맥 압축 후 checkpoint에서 계속한다. 판정·CHECKED·요약·백업 완료 뒤 승인된 다음 비중복 목록을 진행할 수 있다. 예약 automation을 만들지 않는다.
 
 ## N/T 예외 입력
 

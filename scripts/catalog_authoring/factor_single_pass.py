@@ -30,7 +30,7 @@ def is_single(input_root: Path) -> bool:
 
 
 def result_files(info):
-    return panel.RESULT_FILES | (EXTRA_RESULT_FILES if info["schemaVersion"] == INPUT else set())
+    return panel.RESULT_FILES | (EXTRA_RESULT_FILES if info["schemaVersion"] == INPUT else set()) | ({"scope-corrections.json"} if "scopeCorrection" in info else set())
 
 
 def read_decisions(path):
@@ -169,6 +169,10 @@ def install_backend(module, input_root, result_root):
     """Versioned input/result loader for the existing cumulative publisher."""
     if not is_single(input_root):
         return
+    import scope_correction as scope
+    if scope.enabled(input_root):
+        scope.install_backend(module, input_root, result_root)
+        return
     job, _, _ = project(input_root, panel.read_json(result_root / "chunk-01/adjudication.json"))
     contexts_by_id = {work["workId"]: work["context"] for work in job["works"]}
 
@@ -261,6 +265,14 @@ def output_schema(job=None, packets=None):
             support = packets[row["workId"]]["supportEvidenceUrls"]
             context_ids = sorted({s.get("evidenceId", s.get("id")) for s in sources if s["sourceUrl"] in support})
             work["properties"]["context"]["properties"]["evidenceId"] = {"type": "string", "enum": ["", *context_ids]}
+        import scope_correction as scope
+        if scope.requested(job):
+            source_id = {"type": "string", "enum": ids}
+            correction = obj({"workId": {"enum": [row["workId"]]}, "disposition": {"enum": ["scopeCorrection"]},
+                "sourceDecisions": array(obj({"evidenceId": source_id, "uses": array({"enum": ["scope"]}), "reason": string})),
+                "scope": obj({"outcome": {"enum": ["OUT_OF_SCOPE"]}, "reasonCode": {"enum": ["NON_JAPANESE_ORIGINAL"]},
+                    "evidenceIds": array(source_id), "entryScope": string, **explanation})})
+            result["properties"]["works"]["items"]["anyOf"] = [correction, hold]
     return result
 
 

@@ -8,7 +8,8 @@ import {
   rmSync,
   writeFileSync,
 } from "node:fs";
-import { dirname, isAbsolute, join, relative, resolve } from "node:path";
+import { dirname, isAbsolute, join, relative, resolve, toNamespacedPath } from "node:path";
+import { DatabaseSync } from "node:sqlite";
 import { pathToFileURL } from "node:url";
 import { parseArgs } from "node:util";
 import { z } from "zod";
@@ -39,6 +40,15 @@ import {
 } from "./catalog/canonical-publication";
 import { mergeRawCsv } from "./promote-pilot-001";
 import { validateGoldSet } from "./validate-catalog-expansion";
+import {
+  readScopeCorrections,
+  scopeAuditReviewReferences,
+  scopeCorrectionBindingSchema,
+  scopeOwnedTables,
+  verifyScopeAfter,
+  verifyScopeBefore,
+} from "./catalog/scope-correction";
+import type { ScopeCorrection } from "./catalog/scope-correction";
 
 const workIdsSchema = z.array(z.string().regex(/^[a-z0-9][a-z0-9-]*$/u)).min(1);
 const readbackSchema = z.object({
@@ -52,6 +62,7 @@ const readbackSchema = z.object({
       files: z.array(z.object({ path: z.string(), sha256: z.string().regex(/^[a-f0-9]{64}$/u) })),
     })
     .optional(),
+  scopeCorrections: z.array(scopeCorrectionBindingSchema).optional().default([]),
 });
 const workFields = new Set([
   "genres",
@@ -104,8 +115,15 @@ export function mergeCanonicalTargets(
   current: readonly LexicalTable[],
   candidate: readonly LexicalTable[],
   workIds: readonly string[],
+  scopeExcludedWorkIds: readonly string[] = [],
 ) {
   const targets = new Set(workIds);
+  const excluded = new Set(scopeExcludedWorkIds);
+  assert.equal(excluded.size, scopeExcludedWorkIds.length, "Duplicate scope canonical target");
+  assert(
+    scopeExcludedWorkIds.every((id) => targets.has(id)),
+    "Scope canonical target outside batch",
+  );
   const get = (tables: readonly LexicalTable[], path: string) => {
     const table = tables.find((row) => row.path === path);
     assert(table, `Missing source table: ${path}`);
@@ -123,8 +141,20 @@ export function mergeCanonicalTargets(
       "Canonical target work is missing; import bibliography first",
     );
     assert.equal(row.values[column(works, "annotationReviewMethod")], "authorizedEvidencePanel");
-    assert.equal(row.values[column(works, "recommendationEligible")], "true");
-    assert.equal(row.values[column(works, "libraryOnly")], "false");
+    const scoped = excluded.has(row.values[workId]!);
+    assert.equal(row.values[column(works, "recommendationEligible")], scoped ? "false" : "true");
+    assert.equal(row.values[column(works, "libraryOnly")], scoped ? "true" : "false");
+    if (scoped) {
+      assert.equal(row.values[column(works, "onboardingEligible")], "false");
+      const old = currentWorks.get(row.values[workId])!;
+      for (const [index, field] of works.headers.entries())
+        if (!["onboardingEligible", "recommendationEligible", "libraryOnly"].includes(field))
+          assert.equal(
+            row.values[index],
+            old.values[index],
+            `Scope correction changed Work ${field}`,
+          );
+    }
   }
   const merged = new Map<string, string>();
   selectedWorks.rows = selectedWorks.rows.map((row) => ({
@@ -361,6 +391,56 @@ export function prepareCanonicalApplication(options: {
     includeSourceData: true,
   });
   assert(current && candidate);
+  const scopeCorrections = new Map<string, ScopeCorrection>();
+  const scopeResultManifests = new Map<string, string>();
+  const scopeReviewReferences = new Set<string>();
+  for (const binding of readback.scopeCorrections) {
+    const artifact = readScopeCorrections(resolveCanonicalPath(binding.resultRoot, root));
+    assert(artifact, "Canonical readback scope correction missing");
+    assert.equal(
+      artifact.binding.path,
+      resolveCanonicalPath(binding.path, root),
+      "Canonical scope artifact path changed",
+    );
+    assert.equal(artifact.binding.sha256, binding.sha256, "Canonical scope artifact SHA changed");
+    assert.equal(
+      artifact.binding.resultManifestSha256,
+      binding.resultManifestSha256,
+      "Canonical scope result manifest changed",
+    );
+    for (const correction of artifact.corrections) {
+      assert(
+        workIds.includes(correction.workId) && !scopeCorrections.has(correction.workId),
+        "Invalid canonical scope target membership",
+      );
+      scopeCorrections.set(correction.workId, correction);
+      scopeResultManifests.set(correction.workId, artifact.binding.resultManifestSha256);
+    }
+  }
+  if (scopeCorrections.size) {
+    const currentDatabase = new DatabaseSync(toNamespacedPath(join(source, "catalog.sqlite")), {
+      readOnly: true,
+    });
+    const candidateDatabase = new DatabaseSync(
+      toNamespacedPath(join(candidateSource, "catalog.sqlite")),
+      { readOnly: true },
+    );
+    try {
+      for (const [id, correction] of scopeCorrections) {
+        verifyScopeBefore(correction, scopeOwnedTables(currentDatabase, id));
+        scopeReviewReferences.add(
+          verifyScopeAfter(
+            correction,
+            scopeOwnedTables(candidateDatabase, id),
+            scopeResultManifests.get(id)!,
+          ).reviewReference,
+        );
+      }
+    } finally {
+      currentDatabase.close();
+      candidateDatabase.close();
+    }
+  }
   const goldBytes = readFileSync(
     join(root, "data/staging/catalog-expansion/gold-set-manifest.json"),
   );
@@ -372,7 +452,9 @@ export function prepareCanonicalApplication(options: {
   const projectionRoot = join(output, "candidate");
   const projected = join(projectionRoot, "data/source");
   writeCatalogCsvProjection(source, projected);
-  const merged = mergeCanonicalTargets(current.tables, candidate.tables, workIds);
+  const merged = mergeCanonicalTargets(current.tables, candidate.tables, workIds, [
+    ...scopeCorrections.keys(),
+  ]);
   for (const [path, content] of merged) writeFileSync(join(projected, path), content);
   const works = candidate.tables.find((table) => table.path === "works.csv")!;
   const targetSet = new Set(workIds);
@@ -393,8 +475,32 @@ export function prepareCanonicalApplication(options: {
       copyFileSync(join(candidateSource, reference), destination);
     }
   }
+  for (const reference of scopeReviewReferences) {
+    const destination = join(projected, reference);
+    const bytes = readFileSync(join(candidateSource, reference));
+    if (existsSync(destination))
+      assert.equal(
+        sha256(readFileSync(destination)),
+        sha256(bytes),
+        "Existing scope audit review cannot be overwritten",
+      );
+    else {
+      mkdirSync(dirname(destination), { recursive: true });
+      copyFileSync(join(candidateSource, reference), destination);
+    }
+  }
   // Only referenced reports belong in authority; replaced historical reports survive in rollback.
   const references = new Set<string>(CATALOG_OPAQUE_PATHS);
+  const currentEvidence = current.tables.find((table) => table.path === "evidence/evidence.csv")!;
+  for (const reference of scopeAuditReviewReferences(
+    currentEvidence.rows.map((row) =>
+      Object.fromEntries(
+        currentEvidence.headers.map((field, index) => [field, row.values[index]!]),
+      ),
+    ),
+  ))
+    references.add(reference);
+  for (const reference of scopeReviewReferences) references.add(reference);
   const currentWorks = current.tables.find((table) => table.path === "works.csv")!;
   for (const row of currentWorks.rows.filter((entry) => !targetSet.has(entry.values[0]!)))
     references.add(row.values[referenceIndex]!);
@@ -407,11 +513,35 @@ export function prepareCanonicalApplication(options: {
   const authority = verifyCatalogAuthority(projectionRoot);
   validateGoldSet(projectionRoot, JSON.parse(goldBytes.toString("utf8")));
   const built = buildCatalog(projectionRoot, "authority", { compact: true, verify: true });
-  for (const id of workIds)
-    assert(
-      built.catalog.works.some((work) => work.id === id && work.eligibility.recommendationEligible),
-      `Canonical build omitted ${id}`,
-    );
+  for (const id of workIds) {
+    const work = built.catalog.works.find((row) => row.id === id);
+    assert(work, `Canonical build omitted ${id}`);
+    if (scopeCorrections.has(id)) {
+      assert.deepEqual(
+        [
+          work.eligibility.onboardingEligible,
+          work.eligibility.recommendationEligible,
+          work.eligibility.libraryOnly,
+        ],
+        [false, false, true],
+      );
+      const profile = z
+        .object({ works: z.array(z.object({ id: z.string() })) })
+        .parse(
+          JSON.parse(
+            readFileSync(
+              join(projectionRoot, "data/generated/recommendation-profile-catalog-v1.json"),
+              "utf8",
+            ),
+          ),
+        );
+      assert(
+        !profile.works.some((row) => row.id === id),
+        "Scope-excluded canonical Work remains in recommendation profile",
+      );
+    } else
+      assert(work.eligibility.recommendationEligible, `Canonical build omitted eligible ${id}`);
+  }
   assert.equal(
     sha256(readFileSync(join(source, "catalog.sqlite"))),
     originalDatabaseSha256,

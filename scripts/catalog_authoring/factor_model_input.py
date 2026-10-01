@@ -125,6 +125,7 @@ def reading_view(input_root: Path) -> dict:
                 for s in observations if s.get("url", s.get("sourceUrl")) not in bound_urls],
             "priorClaims": row["priorClaims"], "priorDecisions": row["priorDecisions"],
             **({"narrativeToneExhaustion": row["narrativeToneExhaustion"]} if "narrativeToneExhaustion" in row else {}),
+            **({"scopeCorrection": row["scopeCorrection"], "scopeCorrectionRequest": panel.read_json(input_root / "scope-correction-request.json")} if "scopeCorrection" in row else {}),
         })
     indexed_paths = {item[key] for _, item in captures for key in ("path", "receiptPath")}
     routine = {"draft.mjs", "collection-session.json", "collection-events.jsonl", "research.jsonl"}

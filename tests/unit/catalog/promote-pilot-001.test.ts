@@ -4,6 +4,7 @@ import { dirname, join } from "node:path";
 
 import { describe, expect, it, vi } from "vitest";
 
+import { runPromotionRegistry } from "../../../scripts/build-promotion-registry";
 import {
   assertPilotPublishSnapshot,
   getPilotPublishDigests,
@@ -33,6 +34,8 @@ function copyPromotionFixture() {
       cpSync(join(process.cwd(), relativePath), destination, { recursive: true });
     }
   }
+  // Derive a consistent baseline for this private CSV compatibility projection.
+  runPromotionRegistry("write", root, "csv");
   return root;
 }
 

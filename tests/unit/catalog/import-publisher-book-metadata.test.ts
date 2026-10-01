@@ -28,6 +28,227 @@ import {
 const { readCatalogAuthority, serializeCsv, sha256 } = authority;
 const repository = resolve(import.meta.dirname, "../../..");
 
+it("imports browser snapshots with honest null HTTP fields and rejects mixed or unbound captures", () => {
+  const root = mkdtempSync(join(tmpdir(), "konocomics-browser-metadata-"));
+  try {
+    mkdirSync(join(root, "data"));
+    cpSync(join(repository, "data/source"), join(root, "data/source"), { recursive: true });
+    const before = readCatalogAuthority(join(root, "data/source"));
+    const catalog = catalogV1Schema.parse(
+      JSON.parse(readFileSync(join(repository, "data/generated/catalog-v1.json"), "utf8")),
+    );
+    const volume = catalog.volumes.find((entry) => !entry.metadata)!;
+    const folder = join(root, "collection");
+    mkdirSync(folder);
+    const body = "Same-book details\nPublisher introduction & literal <name>.\nPurchase";
+    const original = "Publisher introduction & literal <name>.";
+    const receipt = {
+      kind: "browser-text",
+      url: "https://example.com/exact-book",
+      resolvedUrl: "https://example.com/exact-book",
+      observedAt: "2026-10-01T09:23:02.447Z",
+      status: null,
+      complete: null,
+      contentType: "text/plain; source=browser body.innerText",
+      contentEncoding: "utf-8",
+      error: null,
+      recordedAt: "2026-10-01T09:23:02.499Z",
+      rawPath: "capture.body",
+      bytes: Buffer.byteLength(body),
+      sha256: sha256(body),
+    };
+    const entry = {
+      metadata: {
+        workId: volume.workId,
+        isbn: volume.isbn,
+        publisherName: "",
+        itemCaption: original,
+        salesDate: "",
+        imageUrl: "",
+        imprint: "",
+        pageCount: "",
+      },
+      sourceFile: "capture.body",
+      receiptFile: "capture.json",
+      receiptSha256: "",
+      captionKind: "original",
+      originalItemCaption: original,
+    };
+    const input = join(folder, "publisher-metadata.json");
+    const write = (capture: object = receipt, intake: object = entry, raw = body) => {
+      const bytes = JSON.stringify(capture);
+      writeFileSync(join(folder, "capture.json"), bytes);
+      writeFileSync(join(folder, "capture.body"), raw);
+      writeFileSync(input, JSON.stringify([{ ...intake, receiptSha256: sha256(bytes) }]));
+      writeFileSync(
+        join(folder, "collection-session.json"),
+        JSON.stringify({ workId: volume.workId }),
+      );
+    };
+    const run = (name: string) =>
+      importPublisherBookMetadata(input, join(root, ".workspace", name), root);
+    const originalHash = sha256(readFileSync(join(root, "data/source/catalog.sqlite")));
+    const invalid = [
+      ["unsupported-kind", { ...receipt, kind: "document-text" }, entry, body],
+      ["unknown-time", { ...receipt, observedAt: null }, entry, body],
+      ["date-only", { ...receipt, observedAt: "2026-10-01" }, entry, body],
+      ["error", { ...receipt, error: "Capture failed" }, entry, body],
+      ["failed-status", { ...receipt, status: 403 }, entry, body],
+      ["incomplete", { ...receipt, complete: false }, entry, body],
+      ["length", { ...receipt, bytes: receipt.bytes + 1 }, entry, body],
+      ["raw-hash", receipt, entry, "Changed raw body"],
+      ["path", { ...receipt, rawPath: "other.body" }, entry, body],
+      ["url", { ...receipt, resolvedUrl: "http://example.com/another-work" }, entry, body],
+      ["credentials", { ...receipt, url: "https://secret@example.com/another-work" }, entry, body],
+      [
+        "wrong-work",
+        receipt,
+        { ...entry, metadata: { ...entry.metadata, workId: "wrong-work" } },
+        body,
+      ],
+      [
+        "wrong-isbn",
+        receipt,
+        { ...entry, metadata: { ...entry.metadata, isbn: "9784750339313" } },
+        body,
+      ],
+      [
+        "absent-original",
+        receipt,
+        {
+          ...entry,
+          metadata: { ...entry.metadata, itemCaption: "Another introduction" },
+          originalItemCaption: "Another introduction",
+        },
+        body,
+      ],
+    ] as const;
+    writeFileSync(join(folder, "other.body"), body);
+    for (const [name, capture, intake, raw] of invalid) {
+      write(capture, intake, raw);
+      expect(() => run(name), name).toThrow();
+      expect(sha256(readFileSync(join(root, "data/source/catalog.sqlite")))).toBe(originalHash);
+      expect(existsSync(join(root, ".workspace", name))).toBe(false);
+    }
+    write();
+    const actualReceiptBytes = readFileSync(join(folder, "capture.json"));
+    writeFileSync(
+      join(folder, "capture.json"),
+      JSON.stringify({ ...receipt, url: "https://example.com/another-work" }),
+    );
+    expect(() => run("cross-url-receipt")).toThrow("Capture receipt hash mismatch");
+    write();
+    writeFileSync(
+      join(folder, "collection-session.json"),
+      JSON.stringify({ workId: "other-work" }),
+    );
+    expect(() => run("cross-work-collection")).toThrow("Browser collection Work mismatch");
+    write();
+    const shell = "<html><script src='/app.js'></script></html>";
+    write(
+      {
+        url: receipt.url,
+        resolvedUrl: receipt.resolvedUrl,
+        fetchedAt: receipt.observedAt,
+        status: 200,
+        sha256: sha256(shell),
+        bytes: Buffer.byteLength(shell),
+      },
+      entry,
+      shell,
+    );
+    expect(() => run("http-shell-browser-intro")).toThrow("Original introduction is absent");
+    write();
+    const imported = run("import-browser");
+    expect(imported.published).toBe(true);
+    expect(readFileSync(join(folder, "capture.json"))).toEqual(actualReceiptBytes);
+    expect(JSON.parse(actualReceiptBytes.toString("utf8"))).toMatchObject({
+      status: null,
+      complete: null,
+    });
+    const after = readCatalogAuthority(join(root, "data/source"));
+    for (const table of before) {
+      const next = after.find((candidate) => candidate.path === table.path)!;
+      if (table.path === "book-metadata.csv")
+        expect(next.rows.slice(0, table.rows.length).map((row) => row.values)).toEqual(
+          table.rows.map((row) => row.values),
+        );
+      else expect(sha256(serializeCsv(next))).toBe(sha256(serializeCsv(table)));
+    }
+    const generated = catalogV1Schema.parse(
+      JSON.parse(readFileSync(join(root, "data/generated/catalog-v1.json"), "utf8")),
+    );
+    const collected = generated.volumes.find((item) => item.id === volume.id)!;
+    expect(collected.metadata).toMatchObject({
+      itemCaption: original,
+      sourceUrl: receipt.resolvedUrl,
+      fetchedAt: receipt.observedAt,
+    });
+    expect(run("repeat-browser").published).toBe(false);
+  } finally {
+    rmSync(root, { recursive: true, force: true });
+  }
+}, 480_000);
+
+it("binds HTML-normalized original text while keeping a reviewed summary separate", () => {
+  const root = mkdtempSync(join(tmpdir(), "konocomics-normalized-metadata-"));
+  try {
+    mkdirSync(join(root, "data"));
+    cpSync(join(repository, "data/source"), join(root, "data/source"), { recursive: true });
+    const catalog = catalogV1Schema.parse(
+      JSON.parse(readFileSync(join(repository, "data/generated/catalog-v1.json"), "utf8")),
+    );
+    const volume = catalog.volumes.find((item) => !item.metadata)!;
+    const folder = join(root, "collection");
+    mkdirSync(folder);
+    const html = "<p>Publisher <em>introduction</em><br>A &amp; B &#x3042;.</p>";
+    const receipt = JSON.stringify({
+      url: "https://example.com/book",
+      resolvedUrl: "https://example.com/book",
+      fetchedAt: "2026-10-01T09:23:02Z",
+      status: 200,
+      sha256: sha256(html),
+      bytes: Buffer.byteLength(html),
+    });
+    writeFileSync(join(folder, "source.html"), html);
+    writeFileSync(join(folder, "capture.json"), receipt);
+    const input = join(folder, "publisher-metadata.json");
+    writeFileSync(
+      input,
+      JSON.stringify([
+        {
+          metadata: {
+            workId: volume.workId,
+            isbn: volume.isbn,
+            publisherName: "",
+            itemCaption: "Reviewed summary",
+            salesDate: "",
+            imageUrl: "",
+            imprint: "",
+            pageCount: "",
+          },
+          sourceFile: "source.html",
+          receiptFile: "capture.json",
+          receiptSha256: sha256(receipt),
+          captionKind: "summary",
+          originalItemCaption: "Publisher introduction\nA & B あ.",
+        },
+      ]),
+    );
+    expect(
+      importPublisherBookMetadata(input, join(root, ".workspace/import-summary"), root).published,
+    ).toBe(true);
+    const generated = catalogV1Schema.parse(
+      JSON.parse(readFileSync(join(root, "data/generated/catalog-v1.json"), "utf8")),
+    );
+    expect(generated.volumes.find((item) => item.id === volume.id)!.metadata).toMatchObject({
+      itemCaption: "Reviewed summary",
+    });
+  } finally {
+    rmSync(root, { recursive: true, force: true });
+  }
+}, 480_000);
+
 // Real publication, DB-only restore, and CLI resume share one full-catalog timeout.
 it("adds a captured introduction without losing metadata, and rejects damaged or mismatched input before publication", () => {
   const root = mkdtempSync(join(tmpdir(), "konocomics-publisher-metadata-"));

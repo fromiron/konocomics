@@ -206,9 +206,11 @@ class Workspace:
             db.close()
             raise
 
-    def files(self, roots: list[Path]) -> list[Path]:
+    def files(self, roots: list[Path], *, checked_links: set[Path] | None = None) -> list[Path]:
         found = {}
-        checked = set()  # One traversal only; subsequent readback checks afresh.
+        # A dependency discovery may share this set across its component walks.
+        # The caller rechecks that invocation; ordinary calls start afresh.
+        checked = checked_links if checked_links is not None else set()
 
         def walk(directory):
             # scandir caches Windows reparse/type metadata; do not stat every ancestor per file.
@@ -906,9 +908,11 @@ def authoring_inputs(paths: list[Path], workspace: Workspace | None = None, *, r
     workspace = workspace or Workspace()
     revision_store = getattr(workspace, "is_revision_store", False)
     capture, prior, full = 0, 1, 2
-    explicit = {unlinked(artifact_path(path, workspace.repo)) for path in paths}
+    checked_links: set[Path] = set()
+    explicit = {unlinked(artifact_path(path, workspace.repo), checked_links) for path in paths}
     pending = [(path, full, None) for path in sorted(explicit, key=lambda value: len(value.parts), reverse=True)]
     visited, explored, walked, parsed, expected_manifests = set(), {}, {}, set(), {}
+    walk_order = {}
     tools_root = workspace.repo / "scripts/catalog_authoring"
     operator_names = {"prepare_factor_batch.py", "publish_factor_batch.py", "correct_factor_registry.py",
                       "validate_factor_panel.py", "prepare_factor_rescue_004.py", "prepare_ready_safety.py"}
@@ -930,7 +934,7 @@ def authoring_inputs(paths: list[Path], workspace: Workspace | None = None, *, r
     with retained_context as saved_inputs:
         while pending:
             item, mode, binding = pending.pop()
-            root = unlinked(artifact_path(item, workspace.repo))
+            root = unlinked(artifact_path(item, workspace.repo), checked_links)
             if binding is not None:
                 name, expected = binding
                 manifest = root / name if name is not None else root
@@ -958,7 +962,7 @@ def authoring_inputs(paths: list[Path], workspace: Workspace | None = None, *, r
             if explored.get(root, -1) >= mode:
                 continue
             explored[root] = mode
-            workspace.key(root)
+            workspace.key(root, checked=checked_links)
             retained_files = saved_inputs.resolve(root) if saved_inputs is not None and root not in explicit else None
             if retained_files is None:
                 visited.add(root)
@@ -988,12 +992,16 @@ def authoring_inputs(paths: list[Path], workspace: Workspace | None = None, *, r
             if retained_files is not None:
                 candidates = retained_files
             else:
-                ancestor = next((parent for parent in walked if root == parent or root.is_relative_to(parent)), None)
+                # Look up actual ancestors, not every previously visited sibling.
+                # Preserve the first matching walk when scopes overlap.
+                ancestors = [parent for parent in (root, *root.parents) if parent in walked]
+                ancestor = min(ancestors, key=walk_order.__getitem__) if ancestors else None
                 if ancestor is not None:
                     files = [path for path in walked[ancestor] if path == root or path.is_relative_to(root)]
                 else:
-                    files = workspace.files([root])
+                    files = workspace.files([root], checked_links=checked_links)
                     walked[root] = files
+                    walk_order[root] = len(walk_order)
                 candidates = [(path, None) for path in files]
             for path, stored_sha in candidates:
                 authority_sidecars = {"prior-authority.json", "external-prior-authority.json", "COMPACT-PUBLICATION.json",
@@ -1097,11 +1105,16 @@ def authoring_inputs(paths: list[Path], workspace: Workspace | None = None, *, r
                                 append(artifact_path(item, workspace.repo), capture)
                     continue
                 for reference in references:
-                    workspace.key(reference)
+                    workspace.key(reference, checked=checked_links)
                     append(reference.parent if reference.suffix == ".sqlite" else reference)
         for manifest, expected in expected_manifests.items():
             if digest(manifest.read_bytes()) != expected:
                 raise ValueError("Prior dependency manifest changed during discovery")
+        # Cache only this discovery pass. A swapped parent or a newly linked
+        # retained/code path must still fail before the caller captures inputs.
+        rechecked_links: set[Path] = set()
+        for path in sorted(checked_links, key=lambda item: (len(item.parts), str(item))):
+            unlinked(path, rechecked_links)
     return existing_parents(list(visited))
 
 
@@ -1113,8 +1126,22 @@ def record_arguments(script: Path, args: argparse.Namespace, argv: list[str] | N
     inputs, outputs = [script.resolve()], []
     prepared_freeze = script.name == "prepare_factor_batch.py" and getattr(args, "action", None) == "freeze" and getattr(args, "job", None) is not None
     if prepared_freeze:
-        from prepare_factor_batch import capture_bindings
-        provenance = capture_bindings(args.job, getattr(args, "provenance_root", None))
+        from prepare_factor_batch import capture_bindings, ordinary_freeze_probe, require
+        preflight_bindings = None
+        rejected = False
+        if getattr(args, "recovery_epoch", None) is None:
+            baseline = args.baseline_root.resolve()
+            registry = (getattr(args, "registry", None) or baseline / "catalog-source-registry.candidate.sqlite").resolve()
+            try:
+                preflight_bindings = ordinary_freeze_probe(args.job, baseline, registry)
+            except (OSError, ValueError, sqlite3.Error):
+                # Execute the original CLI below so its failure and logs remain
+                # durable, without first hashing captures it cannot consume.
+                rejected = True
+        provenance = [] if rejected else capture_bindings(args.job, getattr(args, "provenance_root", None))
+        if preflight_bindings is not None:
+            require(all(digest(path.read_bytes()) == sha for path, sha in preflight_bindings.items()),
+                    "authoring input changed during capture discovery; partial output is not usable")
         inputs.extend(Path(binding["root"]) / name for binding in provenance for name in binding["files"])
 
     def paths(value):

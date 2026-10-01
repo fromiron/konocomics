@@ -1042,7 +1042,9 @@ def validate_input(input_root: Path) -> tuple[dict[str, object], list[Path], str
     members = {path.relative_to(input_root).as_posix() for path in files if path != manifest}
     verify_manifest(input_root, manifest, members)
     raw_panel = read_json(input_root / "panel-input.json")
-    panel = exact_dict(raw_panel, INPUT_KEYS | ({"grokExcluded"} if isinstance(raw_panel, dict) and "grokExcluded" in raw_panel else set()), "panel-input")
+    panel = exact_dict(raw_panel, INPUT_KEYS | ({"grokExcluded"} if isinstance(raw_panel, dict) and "grokExcluded" in raw_panel else set()) | ({"scopeCorrection"} if isinstance(raw_panel, dict) and "scopeCorrection" in raw_panel else set()), "panel-input")
+    import scope_correction as scope
+    scope.enabled(input_root)
     expected_flags = {
         "annotationReviewMethod": "authorizedEvidencePanel",
         "candidateOnly": True,
@@ -1055,6 +1057,8 @@ def validate_input(input_root: Path) -> tuple[dict[str, object], list[Path], str
         raise ValidationError("panel-input authority flags mismatch")
     if panel["schemaVersion"] not in {"authorized-evidence-panel-followup-v2", single.INPUT}:
         raise ValidationError("unsupported panel-input version")
+    if "scopeCorrection" in panel and panel["schemaVersion"] != single.INPUT:
+        raise ValidationError("scope correction requires native v3 frozen input")
     valid_id = single.valid_revision(panel["batchId"]) if panel["schemaVersion"] == single.INPUT else isinstance(panel["batchId"], str) and re.fullmatch(r"\d{3}", panel["batchId"]) is not None
     if not valid_id or not isinstance(panel["frozenAt"], str) or not panel["frozenAt"]:
         raise ValidationError("panel-input identity fields invalid")
@@ -1461,6 +1465,9 @@ def validate_summary(path: Path, panel: dict[str, object], chunk_id: str, input_
 
 def validate(input_root: Path, result_root: Path, prior_authority: dict[str, object] | None = None) -> dict[str, int | str]:
     import factor_single_pass as single
+    import scope_correction as scope
+    if scope.enabled(input_root):
+        return scope.validate(input_root, result_root, prior_authority)
     panel, chunks, input_digest = validate_input(input_root)
     exceptions = nt.from_input(input_root)
     targets_all = {row["workId"] for chunk in chunks for row in read_csv(chunk / "targets.csv", TARGET_FIELDS)}

@@ -5,6 +5,8 @@ from __future__ import annotations
 import argparse
 import copy
 from contextlib import closing
+from contextvars import ContextVar
+from functools import wraps
 import json
 import os
 import re
@@ -16,6 +18,85 @@ import time
 import uuid
 
 import catalog_authoring_runner as runner
+
+
+_publication_timing = ContextVar("catalog_batch_publication_timing", default=None)
+
+
+class _PublicationTiming:
+    """Observe disjoint primary stages without changing saved artifact identity."""
+
+    def __init__(self, args):
+        self.started = self.marked = time.perf_counter()
+        self.stage = "summaryAndCheckedInputs"
+        self.seconds = {}
+        self.finished = False
+        self.batch = str(args.batch_root)
+        self.mode = "unresolved"
+
+    def mark(self, stage):
+        if self.finished or stage == self.stage:
+            return
+        now = time.perf_counter()
+        self.seconds[self.stage] = self.seconds.get(self.stage, 0.0) + now - self.marked
+        self.stage, self.marked = stage, now
+
+    def finish(self, outcome, *, error_type=None):
+        if self.finished:
+            return
+        now = time.perf_counter()
+        self.seconds[self.stage] = self.seconds.get(self.stage, 0.0) + now - self.marked
+        self.finished = True
+        print(json.dumps({"batchPublicationTimingsSeconds": {
+            "batchRoot": self.batch, "outcome": outcome,
+            "executionMode": self.mode,
+            "stages": self.seconds, "total": now - self.started,
+            "failedStage": self.stage if outcome == "FAILED" else None,
+            "errorType": error_type,
+            "scope": "This invocation only; nested compact/storage metrics are included, not additional time.",
+        }}), flush=True)
+
+
+def _publication_stage(stage):
+    timing = _publication_timing.get()
+    if timing is not None:
+        timing.mark(stage)
+
+
+def _publication_mode(mode):
+    timing = _publication_timing.get()
+    if timing is not None:
+        timing.mode = mode
+
+
+def _candidate_publication_stage(stage):
+    timing = _publication_timing.get()
+    if timing is not None:
+        timing.mark(stage if timing.mode == "new" else "candidateStorageBasisStateAndCompletion")
+
+
+def _finish_publication_timing(outcome="COMPLETED", *, error_type=None):
+    timing = _publication_timing.get()
+    if timing is not None:
+        timing.finish(outcome, error_type=error_type)
+
+
+def _timed_publication(function):
+    @wraps(function)
+    def measured(args):
+        timing = _PublicationTiming(args)
+        token = _publication_timing.set(timing)
+        try:
+            result = function(args)
+        except BaseException as error:
+            _finish_publication_timing("FAILED", error_type=type(error).__name__)
+            raise
+        else:
+            _finish_publication_timing()
+            return result
+        finally:
+            _publication_timing.reset(token)
+    return measured
 
 
 def _summary_object(pairs):
@@ -502,6 +583,7 @@ def _apply_canonical(batch, receipt):
 def report_completed(batch, applied, *, canonical=False, **details):
     effects = {"candidate": "VERIFIED", "canonical": "NOT_REQUESTED"}
     if canonical:
+        _publication_stage("canonicalEffect")
         try:
             runner.prepare.require(runner.panel.sha256(batch / "BATCH-FINISHED.json") == applied["receiptSha256"],
                                    "canonical candidate receipt differs from the applied completion")
@@ -511,10 +593,13 @@ def report_completed(batch, applied, *, canonical=False, **details):
             print(json.dumps({"status": "CANDIDATE_VERIFIED_CANONICAL_INCOMPLETE",
                               "batchRoot": applied["batchRoot"], "effects": effects}, ensure_ascii=False), flush=True)
             raise
+    _publication_stage("transientCleanup")
     import compact_publication
     cleanup = compact_publication.complete_transient_lifetime(batch)
     if cleanup is not None:
         effects["transientCopies"] = cleanup
+    # Keep the existing authoritative status as the last successful stdout record.
+    _finish_publication_timing()
     print(json.dumps({"status": "VERIFIED" if canonical else "ALREADY_APPLIED",
                       "batchRoot": applied["batchRoot"], "effects": effects, **details}, ensure_ascii=False), flush=True)
 
@@ -600,13 +685,29 @@ def main() -> None:
     with runner.exclusive(runner.REPO / "data/local/catalog-authoring/locks/publication-owner.lock",
                           wait=True, metadata={"operation": "batch-publication", "batchRoot": str(args.batch_root)}):
         for number in range(3):
-            attempt = attempt_arguments(args)
+            setup_started = time.perf_counter()
+            try:
+                attempt = attempt_arguments(args)
+                if not attempt.candidate_applied:
+                    from catalog_authoring_locks import assert_no_pending
+                    assert_no_pending(runner.REPO)
+                    canonical_before = runner.panel.sha256(runner.REPO / "data/source/catalog.sqlite")
+            except BaseException as error:
+                print(json.dumps({"batchPublicationSetupTimingsSeconds": {
+                    "batchRoot": str(args.batch_root), "attempt": number + 1,
+                    "stage": "attemptSelectionAndPendingGuards", "outcome": "FAILED",
+                    "elapsed": time.perf_counter() - setup_started,
+                    "errorType": type(error).__name__,
+                }}), flush=True)
+                raise
+            print(json.dumps({"batchPublicationSetupTimingsSeconds": {
+                "batchRoot": str(attempt.batch_root), "attempt": number + 1,
+                "stage": "attemptSelectionAndPendingGuards", "outcome": "COMPLETED",
+                "elapsed": time.perf_counter() - setup_started,
+            }}), flush=True)
             if attempt.candidate_applied:
                 publish(attempt)
                 return
-            from catalog_authoring_locks import assert_no_pending
-            assert_no_pending(runner.REPO)
-            canonical_before = runner.panel.sha256(runner.REPO / "data/source/catalog.sqlite")
             try:
                 publish(attempt)
                 return
@@ -618,6 +719,7 @@ def main() -> None:
                                   "retainedAttemptRoot": str(attempt.batch_root), "error": str(error)}), flush=True)
 
 
+@_timed_publication
 def publish(args) -> None:
     summary_path = runner.artifact_path(args.batch_summary).resolve()
     batch = runner.artifact_path(args.batch_root).resolve()
@@ -632,6 +734,8 @@ def publish(args) -> None:
             applied = state.get("publicationBatches", {}).get(summary_sha)
             completion = workspace.current_revision("completion", summary_sha) if applied else None
             if completion:
+                _publication_mode("reused")
+                _publication_stage("candidateStorageBasisStateAndCompletion")
                 backup = runner.Workspace(runner.REPO, runner.REPO / "data/local/catalog-authoring/backups/latest.sqlite")
                 if not backup.database.is_file() or backup.current_revision("completion", summary_sha) != {**completion, "database": str(backup.database)}:
                     workspace.backup()
@@ -675,6 +779,8 @@ def publish(args) -> None:
         runner.prepare.require(len(works) == 1 and works[0]["workId"] == row["workId"], "frozen Work changed")
         entries.append((row["workId"], run, frozen, sealed))
     if not entries and historical:
+        _publication_mode("reused")
+        _finish_publication_timing()
         print(json.dumps({"status": "ALREADY_APPLIED", "summarySha256": summary_sha, "works": len(historical),
                           "completedChecks": historical}), flush=True)
         return
@@ -682,10 +788,13 @@ def publish(args) -> None:
     runner.prepare.require(len({item[0] for item in entries}) == len(entries), "duplicate Work in batch")
     attempts = retry_attempts(args.preflight_retry, {item[0] for item in entries})
 
+    _publication_stage("currentPairAndPreflight")
     with runner.publisher.panel_validation.manifest_verification_cache():
         state, current_root = runner.current()
         applied = state.get("publicationBatches", {}).get(summary_sha)
         if applied and (runner.artifact_path(applied["batchRoot"]) / "BATCH-COMPLETED.json").exists():
+            _publication_mode("reused")
+            _publication_stage("candidateStorageBasisStateAndCompletion")
             verify_completed(runner.artifact_path(applied["batchRoot"]), applied)
             report_completed(runner.artifact_path(applied["batchRoot"]), applied, canonical=args.apply_canonical)
             return
@@ -694,6 +803,7 @@ def publish(args) -> None:
         require_previous_completion(state, summary_sha)
         existing_receipt = batch / "BATCH-FINISHED.json"
         if existing_receipt.exists() and not args.preflight_only:
+            _publication_mode("resumed")
             saved = runner.panel.read_json(existing_receipt)
             state, current_root = runner.current()
             original_publication = runner.artifact_path(saved["finalPublicationRoot"]).resolve()
@@ -702,6 +812,7 @@ def publish(args) -> None:
                 basis = workspace.get_revision(runner.panel.read_json(current_root / "CURATION-BASELINE.json")["revision"])["payload"]
                 retained_current = basis.get("provenance", {}).get("publicationManifestSha256") == saved["publicationManifestSha256"]
             if current_root == original_publication or retained_current:
+                _publication_stage("candidateStorageBasisStateAndCompletion")
                 runner.prepare.require(
                     state["latestCandidate"]["catalogSha256"] == runner.panel.sha256(current_root / "catalog-expanded.candidate.sqlite")
                     and saved["summarySha256"] == summary_sha
@@ -732,6 +843,13 @@ def publish(args) -> None:
         checks = []
         identity = code_identity()
         canonical_sha = runner.panel.sha256(runner.REPO / "data/source/catalog.sqlite")
+        if args.preflight_only:
+            _publication_mode("preflight")
+        elif args.publication_format == "compact":
+            interrupted = (batch / "compact-working/IDENTITY.json").is_file() or (batch / "publication-compact/IDENTITY.json").is_file()
+            _publication_mode("resumed" if interrupted else "new")
+        else:
+            _publication_mode("resumed" if (batch / "intent-001.json").is_file() else "new")
         if args.preflight_only or args.publication_format == "full":
             for work_id, run, frozen, sealed in entries:
                 if existing_receipt.exists() and not args.preflight_only:
@@ -773,6 +891,7 @@ def publish(args) -> None:
                 runner.prepare.require(runner.panel.sha256(runner.ROOT / "STATE.json") == state_sha, "current advanced during preflight")
                 report_root, passed, common_failure = preserve_preflight(batch, summary_path, summary_sha, summary, checks)
                 if args.preflight_only:
+                    _finish_publication_timing("BLOCKED" if common_failure else "COMPLETED")
                     print(json.dumps({"status": "BLOCKED" if common_failure else "PREFLIGHT_COMPLETE", "reportRoot": str(report_root), "passed": len(passed), "blocked": len(preflight_errors)}), flush=True)
                     return
         runner.prepare.require(not preflight_errors, "batch publisher preflight blocked before mutation: " + json.dumps(preflight_errors, ensure_ascii=False))
@@ -781,12 +900,14 @@ def publish(args) -> None:
         publications = []
         compact_failures = []
         if args.publication_format == "compact":
+            _publication_stage("compactDependenciesAndApply")
             sys.path.insert(0, str(runner.REPO / "scripts/catalog_authoring"))
             import compact_publication
             output, published_ids, compact_failures = compact_publication.publish(batch, entries, initial, summary_sha,
                 checkpoint_every=args.checkpoint_every)
             publications = [(work_id, output, sealed) for work_id, run, frozen, sealed in entries if work_id in set(published_ids)]
         else:
+            _publication_stage("fullPublication")
             for index, (work_id, run, frozen, sealed) in enumerate(entries, 1):
                 output = batch / f"publication-{index:03d}"
                 intent_path = batch / f"intent-{index:03d}.json"
@@ -817,6 +938,7 @@ def publish(args) -> None:
                 publications.append((work_id, output, sealed))
                 print(json.dumps({"published": index, "workId": work_id}, ensure_ascii=False), flush=True)
 
+        _publication_stage("productReadback")
         last = publications[-1][1]
         readback = batch / "readback/READBACK.json"
         result_roots = [sealed / "panel-result" for _, _, sealed in publications]
@@ -844,7 +966,16 @@ def publish(args) -> None:
         runner.prepare.require(verified["catalogSha256"] == runner.panel.sha256(last / "catalog-expanded.candidate.sqlite"), "final candidate changed")
         with sqlite3.connect(f"file:{(last / 'catalog-expanded.candidate.sqlite').as_posix()}?mode=ro", uri=True) as db:
             for work_id, _, _ in publications:
-                runner.prepare.require(db.execute("select recommendationEligible,libraryOnly from source_works where id=?", (work_id,)).fetchone() == ("true", "false"), f"published Work not eligible: {work_id}")
+                sealed = next(source for wid, _, source in publications if wid == work_id)
+                promotion = runner.panel.read_csv(sealed / "panel-result/chunk-01/promotion-ledger.csv", runner.panel.PROMOTION_FIELDS)
+                import scope_correction as scope
+                excluded = len(promotion) == 1 and promotion[0]["panelOutcome"] == scope.OUTCOME
+                if excluded:
+                    frozen = next(root for wid, _, root, _ in entries if wid == work_id)
+                    scope.validate(frozen / "panel-input", sealed / "panel-result")
+                expected = ("false", "false", "true") if excluded else ("true", "true", "false")
+                runner.prepare.require(db.execute("select onboardingEligible,recommendationEligible,libraryOnly from source_works where id=?", (work_id,)).fetchone() == expected, f"published Work eligibility differs from bound result: {work_id}")
+        _candidate_publication_stage("candidateArtifactStorage")
         receipt = batch / "BATCH-FINISHED.json"
         if not receipt.exists():
             runner.write(receipt, {
@@ -869,10 +1000,12 @@ def publish(args) -> None:
             runner.write(storage_path, storage)
         latest_state, latest = runner.current()
         runner.prepare.require(runner.panel.sha256(runner.ROOT / "STATE.json") == state_sha and latest == initial, "current advanced during batch")
+        _candidate_publication_stage("curationBasisAdvance")
         if getattr(workspace, "is_revision_store", False):
             from catalog_retention import advance_basis
             selected_entries = [entry for entry in entries if entry[0] in {work_id for work_id, _, _ in publications}]
             last = advance_basis(runner.REPO, initial, last, selected_entries)
+        _candidate_publication_stage("candidateStateCommit")
         previous_count = latest_state["latestCandidate"]["recommendationEligibleCount"]
         latest_state["latestCandidate"] = {
             "root": os.path.relpath(last, runner.ROOT).replace("\\", "/"),
@@ -892,6 +1025,7 @@ def publish(args) -> None:
         latest_state.setdefault("publicationBatches", {})[summary_sha] = {"batchRoot": str(batch), "receiptSha256": runner.panel.sha256(receipt)}
         latest_state["pendingPublicationBatch"] = summary_sha
         runner.commit_state(latest_state, expected_sha=state_sha, canonical_sha=verified["canonicalSha256"], baseline=initial)
+        _candidate_publication_stage("candidateCompletion")
         state_storage = complete_batch(batch, receipt, storage)
         report_completed(batch, latest_state["publicationBatches"][summary_sha], canonical=args.apply_canonical,
                          status="VERIFIED", works=len(publications), eligible=verified["counts"]["eligible"],
