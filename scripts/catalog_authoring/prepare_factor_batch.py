@@ -18,6 +18,7 @@ import publish_factor_batch as publisher
 import validate_factor_panel as panel
 import factor_single_pass as single
 import coverage_exception as nt
+import scope_correction as scope
 from prepare_factor_rescue_004 import CONTRACTS, coverage, write_text
 from prepare_ready_safety import manifest, write_csv, write_json, _qualifies
 
@@ -49,6 +50,7 @@ def expand_compact_job(job: dict, directory: Path, bindings: dict[Path, str]) ->
         if job["schemaVersion"] == single.JOB:
             keys -= {"context", "safety"}
         keys |= {"narrativeToneExhaustion"} if "narrativeToneExhaustion" in raw and job["schemaVersion"] == single.JOB else set()
+        keys |= {"scopeCorrection"} if "scopeCorrection" in raw and job["schemaVersion"] == single.JOB else set()
         panel.exact_dict(raw, keys | ({"registryVolumeProofs"} if "registryVolumeProofs" in raw else set()), "compact authoring work")
         references = raw[reference_key] if reference_key == "researchRefs" else [raw[reference_key]]
         require(isinstance(references, list) and bool(references), "research references must be a nonempty list")
@@ -74,7 +76,7 @@ def expand_compact_job(job: dict, directory: Path, bindings: dict[Path, str]) ->
                 require(type(research.get(field)) is type(expected) and research[field] == expected, f"collector authority mismatch: {raw['workId']} {field}")
             for field, expected in (("title", raw["title"]), ("isbn13", raw["representativeIsbn"])):
                 require(field not in research or research[field] == expected, f"TARGET_IDENTITY_MISMATCH: research {field}")
-            if job["schemaVersion"] == single.JOB:
+            if job["schemaVersion"] == single.JOB and "scopeCorrection" not in raw:
                 record = nt.collection_record(source_path, reference, raw, research, bindings)
                 if record is not None:
                     raw["narrativeToneExhaustion"] = record
@@ -134,6 +136,7 @@ def read_job(path: Path, input_bindings: dict[Path, str] | None = None, *, recov
     for raw in job["works"]:
         keys = (WORK_KEYS - ({"context", "safety"} if deferred else set())) | ({"registryVolumeProofs"} if proof_mode else set())
         keys |= {"narrativeToneExhaustion"} if deferred and "narrativeToneExhaustion" in raw else set()
+        keys |= {"scopeCorrection"} if deferred and "scopeCorrection" in raw else set()
         row = panel.exact_dict(raw, keys, "authoring work")
         nt.validate_record(row)
         wid = row["workId"]
@@ -180,6 +183,8 @@ def read_job(path: Path, input_bindings: dict[Path, str] | None = None, *, recov
             panel.validate_recovery_evidence(row["evidence"])
     if recovery and not deferred:
         validated_safety(job)
+    if scope.requested(job):
+        require(deferred and not recovery, "scope correction requires native v4 input and cannot mix recovery")
     require(all(panel.sha256(source) == digest for source, digest in bindings.items()), "authoring input changed while reading")
     return job
 
@@ -472,10 +477,13 @@ def freeze(job_path: Path, baseline: Path, registry_path: Path, output: Path, pr
         declaration = factor_recovery.build_declaration(recovery_epoch, baseline / "catalog-expanded.candidate.sqlite", {w["workId"] for w in job["works"]})
     started = time.perf_counter()
     packets, _, registry = preflight(job, baseline, registry_path, recovery=declaration is not None)
+    scope_request = scope.freeze_request(job, baseline / "catalog-expanded.candidate.sqlite") if scope.requested(job) else None
     checked = time.perf_counter()
     input_root = output / "panel-input"
     chunk = input_root / "chunks/chunk-01"
     chunk.mkdir(parents=True)
+    if scope_request is not None:
+        write_json(input_root / "scope-correction-request.json", scope_request)
     write_json(input_root / "authoring-job.json", job)
     for source, name in CONTRACTS.values():
         destination = input_root / "contracts" / name
@@ -530,11 +538,18 @@ def freeze(job_path: Path, baseline: Path, registry_path: Path, output: Path, pr
         write_json(chunk / "recovery-declaration.json", declaration)
     manifest(chunk, "CHUNK.sha256")
     write_json(input_root / "panel-input.json", {"schemaVersion": single.INPUT if job["schemaVersion"] == single.FROZEN_JOB else "authorized-evidence-panel-followup-v2", "batchId": job["batchId"], "frozenAt": datetime.now(timezone.utc).isoformat(timespec="seconds"), "targetCount": len(targets), "chunkCount": 1, "annotationReviewMethod": "authorizedEvidencePanel", "candidateOnly": True, "reviewedByHuman": False, "paidSourcesExcluded": True, "aniListAuthorizingEvidence": False, "collectorDecisionClaimsIncluded": False, "baselineCandidateSha256": panel.sha256(baseline / "catalog-expanded.candidate.sqlite"), "registrySha256": panel.sha256(registry_path), "canonicalSha256": panel.sha256(REPO / "data/source/catalog.sqlite"), "goldManifestSha256": panel.sha256(REPO / "data/staging/catalog-expansion/gold-set-manifest.json"), "policyDigests": policies})
+    if scope_request is not None:
+        info = panel.read_json(input_root / "panel-input.json")
+        write_json(input_root / "panel-input.json", {**info, "scopeCorrection": scope.ACTION})
     manifest(input_root, "PANEL-INPUT.sha256")
     _, _, digest = publisher.validate_input(input_root)
     if declaration is not None:
         panel.load_prior_authority(input_root, baseline / "catalog-expanded.candidate.sqlite", work_ids=set(packets))
     panel.indexes(chunk, targets)
+    if scope_request is not None:
+        authority = panel.load_prior_authority(input_root, baseline / "catalog-expanded.candidate.sqlite", work_ids=set(packets))
+        for row in job["works"][0]["priorClaims"]:
+            panel.require_prior_claim(row, authority)
     publisher._evidence_index(chunk, set(packets))
     require(all(panel.sha256(source) == digest for source, digest in input_bindings.items()), "authoring input changed during freeze; partial output is not usable")
     report = {"status": "PASS", "stage": "INPUT_FROZEN", "targetCount": len(targets), "inputManifestSha256": digest, "inputBytes": sum(p.stat().st_size for p in input_root.rglob("*") if p.is_file()), "baselineCopied": False, "preflightSeconds": checked - started, "freezeSeconds": time.perf_counter() - checked, "collectionSeconds": None, "semanticReviewSeconds": None}
@@ -665,6 +680,11 @@ def seal_result(output: Path, ledger_path: Path | None, baseline: Path, registry
     )
     source_path = decisions_path or ledger_path
     source_digest = panel.sha256(source_path)
+    if scope.enabled(input_root):
+        require(decisions_path is not None, "scope correction needs structured decisions")
+        result = scope.seal(output, destination, input_root, single.read_decisions(decisions_path), source_digest)
+        require(panel.sha256(source_path) == source_digest, "scope decision changed during seal")
+        return result
     if info["schemaVersion"] == single.INPUT:
         require(decisions_path is not None, "single-pass input requires structured v3 decisions")
         decision_value = single.read_decisions(decisions_path)

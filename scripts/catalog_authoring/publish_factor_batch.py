@@ -635,6 +635,9 @@ def validate(
     prior_evidence: dict[str, dict[str, str]] | None = None,
     prior_authority: dict[str, object] | None = None,
 ) -> dict[str, int | str]:
+    import scope_correction as scope
+    if scope.enabled(input_root):
+        return scope.validate(input_root, result_root, prior_authority)
     panel_input, chunks, input_digest = validate_input(input_root)
     exceptions = nt.from_input(input_root)
     targets_all = {row["workId"] for chunk in chunks for row in read_csv(chunk / "targets.csv", TARGET_FIELDS)}
@@ -939,6 +942,23 @@ def _backend_module(
     module._split_provenance = lambda value, separator=";": {
         item.strip() for item in re.split(r"[;|]" if separator == "|" else re.escape(separator), str(value or "")) if item.strip()
     }
+    original_review_references = module._review_references
+
+    def review_references(snapshot):
+        import scope_correction as scope
+        refs = original_review_references(snapshot)
+        columns, values = snapshot["source_evidence"]
+        evidence = {row["id"]: row for row in (dict(zip(columns, item)) for item in values)}
+        scope.accepted_exclusions(evidence)
+        for row in evidence.values():
+            if row.get("extractorVersion") == scope.EXTRACTOR:
+                reference = json.loads(row["notes"])["reviewReference"]
+                if not module.REVIEW_REFERENCE_RE.fullmatch(reference):
+                    raise module.PublishError("invalid preserved scope audit review reference")
+                refs.add(reference)
+        return refs
+
+    module._review_references = review_references
 
     original_find_repo_file = module._find_repo_file
     moved_followup_root = artifact_path(
@@ -1021,6 +1041,11 @@ def _backend_module(
         rows: list[dict[str, str]] = args[0]  # type: ignore[assignment]
         promotion: dict[str, dict[str, str]] = args[1]  # type: ignore[assignment]
         baseline = args[5]
+        import scope_correction as scope
+        excluded = scope.accepted_exclusions(baseline["evidence"])
+        repromoted = excluded & {wid for wid, row in promotion.items() if row["panelOutcome"] == "PASS"}
+        if repromoted:
+            raise module.PublishError(f"accepted foreign-original scope exclusion cannot be replaced by an ordinary recommendation PASS: {sorted(repromoted)}")
         protected = {work_id for work_id in promotion if baseline["works"][work_id].get("annotationReviewMethod") == "authorizedModelPanel"}
         if protected:
             raise module.PublishError(f"immutable legacy authorizedModelPanel targets: {sorted(protected)}")
@@ -2117,6 +2142,11 @@ def _load_safety(
 
 
 def _publication_safety(safety_root, input_root, result_root, recovery):
+    import scope_correction as scope
+    if scope.enabled(input_root):
+        scope.validate(input_root, result_root)
+        return {"claims": {}, "evidence": {}, "artifactDigest": sha256(input_root / "PANEL-INPUT.sha256"),
+                "validation": {"targetCount": 0, "safeCount": 0, "blockedSafetyCount": 0, "scope": "Eligibility-only foreign-original correction preserves prior safety; no safety claim is rejudged."}}
     if recovery and not any(row["panelOutcome"] == "PASS" for path in result_root.glob("chunk-??/promotion-ledger.csv") for row in read_csv(path, PROMOTION_FIELDS)):
         return {"claims": {}, "evidence": {}, "artifactDigest": sha256(input_root / "PANEL-INPUT.sha256"), "validation": {"targetCount": 0, "safeCount": 0, "blockedSafetyCount": len(panel_validation.recovery_safety_blockers(input_root, set(recovery), result_root)), "scope": "No PASS targets; bound safety decisions remain in panel artifacts."}}
     return _load_safety(safety_root, input_root, result_root)
@@ -2475,6 +2505,15 @@ def preserve_book_metadata(candidate: Path | sqlite3.Connection, canonical: Path
                     row = {**row, "sourceOrdinal": next_ordinal, "sourceLine": next_ordinal + 1}
                     next_ordinal += 1
                 target.execute("insert into source_book_metadata values (" + ",".join("?" for _ in columns) + ")", [row[key] for key in columns])
+            # Appending/replacing a caption changes the canonical CSV end line
+            # of that row and every following row. Preserve its lexical bytes;
+            # the authority parser counts CR and LF independently inside cells.
+            source_line = 1
+            for values in target.execute("select * from source_book_metadata order by sourceOrdinal").fetchall():
+                source_line += 1 + sum(value.count("\r") + value.count("\n") for value in values[2:])
+                if values[1] != source_line:
+                    target.execute("update source_book_metadata set sourceLine=? where sourceOrdinal=?",
+                                   (source_line, values[0]))
             backend._validate_schema(target, "candidate")
     after = backend._snapshot_db(candidate)
     for table, rows in before.items():

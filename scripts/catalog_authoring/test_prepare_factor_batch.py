@@ -361,6 +361,79 @@ class RetainedOperatorTest(unittest.TestCase):
             self.assertEqual(batch.publisher.sha256(candidate), before_sha)
             self.assertEqual(after, backend._snapshot_db(candidate))
 
+    def test_metadata_merge_preserves_raw_newlines_and_canonical_projection(self):
+        backend = batch.publisher._backend_module()
+        projection = '''
+import { readFileSync } from "node:fs";
+import { dirname } from "node:path";
+import { parseLexicalCsv, serializeCsv, readCatalogAuthority } from "./scripts/catalog/authority.ts";
+const input = JSON.parse(readFileSync(0, "utf8"));
+if (input.rows) {
+  const table = {path: "book-metadata.csv", headers: input.headers,
+    rows: input.rows.map((values, index) => ({sourceOrdinal: index + 1, sourceLine: 2, values}))};
+  console.log(JSON.stringify(parseLexicalCsv(table.path, serializeCsv(table), table.headers).rows));
+} else {
+  console.log(JSON.stringify(readCatalogAuthority(dirname(input.database))
+    .find(table => table.path === "book-metadata.csv").rows));
+}
+'''
+        def projected(value):
+            result = subprocess.run(
+                ["node", "--import", "tsx", "--input-type=module", "-e", projection],
+                cwd=REPO, input=json.dumps(value, ensure_ascii=False), capture_output=True,
+                text=True, encoding="utf-8",
+            )
+            self.assertEqual(result.returncode, 0, result.stderr)
+            return json.loads(result.stdout)
+
+        with tempfile.TemporaryDirectory() as directory:
+            root = Path(directory)
+            canonical = root / "canonical/catalog.sqlite"
+            candidate = root / "candidate/catalog.sqlite"
+            for path in (canonical, candidate):
+                path.parent.mkdir()
+                shutil.copyfile(REPO / "data/source/catalog.sqlite", path)
+            columns, original = backend._snapshot_db(canonical)["source_book_metadata"]
+            self.assertGreaterEqual(len(original), 3)
+            rows = [dict(zip(columns, values)) for values in original[:3]]
+            captions = ["元の紹介", '出会いの紹介\r\n次の段落, "原文"\n結び\r補足', "追加の紹介\n続き"]
+            for row, caption in zip(rows, captions):
+                row.update(itemCaption=caption, fetchedAt="2026-10-01T00:00:00Z")
+            newer_caption = "新しい紹介\r\n続き\r別段落\n最終段"
+            existing = [
+                {**rows[0], "itemCaption": newer_caption, "fetchedAt": "2026-10-02T00:00:00Z"},
+                {**rows[1], "itemCaption": "古い一段の紹介", "fetchedAt": "2026-09-01T00:00:00Z"},
+            ]
+            for path, metadata in ((canonical, rows), (candidate, existing)):
+                lexical = [[row[key] for key in columns[2:]] for row in metadata]
+                parsed = projected({"headers": columns[2:], "rows": lexical})
+                with contextlib.closing(sqlite3.connect(path)) as db, db:
+                    db.execute("delete from source_book_metadata")
+                    db.executemany(
+                        "insert into source_book_metadata values (" + ",".join("?" for _ in columns) + ")",
+                        [(entry["sourceOrdinal"], entry["sourceLine"], *values)
+                         for entry, values in zip(parsed, lexical)],
+                    )
+                projected({"database": str(path)})
+            before = backend._snapshot_db(candidate)
+            with contextlib.closing(sqlite3.connect(candidate)) as db:
+                db.execute("begin immediate")
+                batch.publisher.preserve_book_metadata(db, canonical, backend)
+                self.assertTrue(db.in_transaction)
+                db.commit()
+            after = backend._snapshot_db(candidate)
+            expected = [existing[0], rows[1], rows[2]]
+            self.assertEqual([values[2:] for values in after["source_book_metadata"][1]],
+                             [tuple(row[key] for key in columns[2:]) for row in expected])
+            self.assertEqual({key: value for key, value in before.items() if key != "source_book_metadata"},
+                             {key: value for key, value in after.items() if key != "source_book_metadata"})
+            checked = projected({"database": str(candidate)})
+            self.assertEqual([entry["sourceLine"] for entry in checked],
+                             [values[1] for values in after["source_book_metadata"][1]])
+            stable = batch.publisher.sha256(candidate)
+            batch.publisher.preserve_book_metadata(candidate, canonical, backend)
+            self.assertEqual(batch.publisher.sha256(candidate), stable)
+
     def test_freeze_rejects_recursive_provenance_before_reading_or_copying(self):
         with tempfile.TemporaryDirectory() as directory:
             root = Path(directory)

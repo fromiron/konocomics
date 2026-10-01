@@ -40,7 +40,7 @@ const httpsUrl = z.url().refine((value) => {
   const url = new URL(value);
   return url.protocol === "https:" && !url.username && !url.password;
 });
-const captureReceipt = z.strictObject({
+const httpCaptureReceipt = z.strictObject({
   url: httpsUrl,
   resolvedUrl: httpsUrl,
   fetchedAt: z.iso.datetime({ offset: true }),
@@ -48,6 +48,22 @@ const captureReceipt = z.strictObject({
   sha256: digest,
   bytes: z.number().int().positive(),
 });
+const browserCaptureReceipt = z.strictObject({
+  kind: z.literal("browser-text"),
+  url: httpsUrl,
+  resolvedUrl: httpsUrl,
+  observedAt: z.iso.datetime({ offset: true }),
+  status: z.number().int().min(100).max(599).nullable(),
+  complete: z.boolean().nullable(),
+  contentType: z.string().nullable(),
+  contentEncoding: z.string().nullable(),
+  error: z.null(),
+  recordedAt: z.iso.datetime({ offset: true }),
+  rawPath: z.string().min(1),
+  sha256: digest,
+  bytes: z.number().int().positive(),
+});
+const captureReceipt = z.union([httpCaptureReceipt, browserCaptureReceipt]);
 const intake = z
   .array(
     z.strictObject({
@@ -73,6 +89,35 @@ function within(parent: string, path: string) {
   return path;
 }
 
+// Match the operator's extracted introduction to the same captured response.
+// HTML cleanup changes the comparison view only, never the preserved bytes.
+function captionText(value: string) {
+  return value
+    .replace(/<script\b[^>]*>[\s\S]*?<\/script>/giu, "")
+    .replace(/<style\b[^>]*>[\s\S]*?<\/style>/giu, "")
+    .replace(/<!--[\s\S]*?-->/gu, "")
+    .replace(/<br\s*\/?>|<\/(?:p|li|h[1-6]|div|section|article|tr)>/giu, "\n")
+    .replace(/<[^>]+>/gu, "")
+    .replace(/&#(x[0-9a-f]+|[0-9]+);/giu, (entity, code: string) => {
+      const point = Number.parseInt(code.replace(/^x/iu, ""), /^x/iu.test(code) ? 16 : 10);
+      return point > 0 && point <= 0x10ffff && !(point >= 0xd800 && point <= 0xdfff)
+        ? String.fromCodePoint(point)
+        : entity;
+    })
+    .replace(/&nbsp;/giu, " ")
+    .replace(/&quot;/giu, '"')
+    .replace(/&apos;|&#39;/giu, "'")
+    .replace(/&lt;/giu, "<")
+    .replace(/&gt;/giu, ">")
+    .replace(/&amp;/giu, "&")
+    .replace(/\s+/gu, " ")
+    .trim();
+}
+
+function plainText(value: string) {
+  return value.replace(/\s+/gu, " ").trim();
+}
+
 function readIntake(input: string, inputBytes: Buffer) {
   const folder = realpathSync(dirname(input));
   return intake.parse(JSON.parse(inputBytes.toString("utf8"))).map((entry) => {
@@ -81,11 +126,34 @@ function readIntake(input: string, inputBytes: Buffer) {
     );
     assert.equal(sha256(receiptBytes), entry.receiptSha256, "Capture receipt hash mismatch");
     const receipt = captureReceipt.parse(JSON.parse(receiptBytes.toString("utf8")));
-    const source = readFileSync(within(folder, realpathSync(resolve(folder, entry.sourceFile))));
+    const sourcePath = within(folder, realpathSync(resolve(folder, entry.sourceFile)));
+    const source = readFileSync(sourcePath);
     assert.equal(sha256(source), receipt.sha256, "Captured response hash mismatch");
     assert.equal(source.length, receipt.bytes, "Captured response length mismatch");
+    if ("kind" in receipt) {
+      assert.equal(
+        within(folder, realpathSync(resolve(folder, receipt.rawPath))),
+        sourcePath,
+        "Browser receipt names a different captured source",
+      );
+      const collection = z
+        .object({ workId: z.string().min(1) })
+        .parse(JSON.parse(readFileSync(join(folder, "collection-session.json"), "utf8")));
+      assert.equal(collection.workId, entry.metadata.workId, "Browser collection Work mismatch");
+      assert(
+        receipt.status === null || (receipt.status >= 200 && receipt.status < 300),
+        "Browser capture records an unsuccessful HTTP status",
+      );
+      assert(receipt.complete !== false, "Browser capture records incomplete source bytes");
+    }
     if (entry.metadata.itemCaption !== undefined) {
       assert(entry.originalItemCaption.trim(), "Keep the publisher's original introduction");
+      const original = plainText(entry.originalItemCaption);
+      const rawText = source.toString("utf8");
+      assert(
+        plainText(rawText).includes(original) || captionText(rawText).includes(original),
+        "Original introduction is absent from the captured source",
+      );
       if (entry.captionKind === "original") {
         assert.equal(
           entry.metadata.itemCaption,
@@ -94,7 +162,11 @@ function readIntake(input: string, inputBytes: Buffer) {
         );
       }
     }
-    return { ...entry.metadata, sourceUrl: receipt.resolvedUrl, fetchedAt: receipt.fetchedAt };
+    return {
+      ...entry.metadata,
+      sourceUrl: receipt.resolvedUrl,
+      fetchedAt: "kind" in receipt ? receipt.observedAt : receipt.fetchedAt,
+    };
   });
 }
 

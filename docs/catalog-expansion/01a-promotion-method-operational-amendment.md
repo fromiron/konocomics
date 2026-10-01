@@ -42,7 +42,7 @@ canonical 전체 SHA의 변경만으로 유효 판정을 폐기하지 않는다.
 
 ## 단계·반영 중단의 복구
 
-- collection 등록을 adjudication으로 잘못 해석한 구 등록은 `reconcile-registration --expected-sha`로 원본 등록을 보존하고 새 revision을 만든다. 실제 summary·근거·백업이 부족하면 먼저 누락 원인을 해결하며 `checkedPath`·백업 문자열을 합성하지 않는다. 새 등록은 명시 실행 턴에서 arm하고 사용자 중단 상태는 유지한다.
+- 구형 등록의 이력 정정이 필요한 경우 collection을 adjudication으로 잘못 해석한 등록은 `reconcile-registration --expected-sha`로 원본 등록을 보존하고 새 revision을 만든다. 실제 summary·근거·백업이 부족하면 먼저 누락 원인을 해결하며 `checkedPath`·백업 문자열을 합성하지 않는다. 사용자 중단 상태는 유지한다.
 - 시스템 오류는 `ERROR`와 실제 실패 artifact·재개 조건으로 남긴다. 출처를 소진한 `INSUFFICIENT`로 바꾸지 않는다. 개별 작품 오류를 보존하고 나머지를 처리하되 공통 저장·무결성 오류는 자동 판정 전환을 막는다.
 - compact의 실제 `BACKED_UP` checkpoint부터 재개한다. 판정·봉인·이미 commit한 작품을 다시 만들지 않으며 부분 checkpoint의 불변 intent와 실제 pair를 대조한다. 일반 검증의 독립 plan checker와 명시 audit의 SQL replay를 구분한다.
 - `--apply-canonical` 중단은 같은 summary·batch root·옵션으로 재개한다. candidate 완료가 있으면 그 결과를 재사용하고 정식 DB·생성 artifact·백업의 남은 경계만 복구한다. `publication.pending.json`이 있으면 같은 준비 intent의 `--commit-prepared` 복구 전 다른 shared writer를 실행하지 않는다. 후보 완료를 canonical 완료로 보고하지 않는다.
@@ -58,13 +58,13 @@ canonical 전체 SHA의 변경만으로 유효 판정을 폐기하지 않는다.
 
 ## 구형 완료 통지의 수신 호환
 
-기존 등록에 결속된 `COLLECTION_READY`·`SOL_COMPLETE`·`SOL_FAILED`를 받으면 현재 담당 Work·run·판정 SHA와 실제 상태를 확인한다. 이름은 모델 설정이 아니다. 새 배정을 이 형식으로 만들거나 작품별 부모 왕복 운영을 다시 시작하지 않는다. 적용된 결과는 현재 completion/STATE 기록으로 중복을 차단하며 통지의 성공만으로 발행됐다고 간주하지 않는다.
+기존 등록에 결속된 `COLLECTION_READY`·`SOL_COMPLETE`·`SOL_FAILED`를 받으면 현재 담당 Work·run·판정 SHA와 실제 상태를 확인한다. 이름은 모델 설정이 아니다. 적용된 결과는 현재 completion/STATE 기록으로 중복을 차단하며 통지의 성공만으로 발행됐다고 간주하지 않는다.
 
 ```text
 SOL_COMPLETE: workId=<ID>; runRoot=<절대 경로>; decisionsPath=<절대 경로>; sha256=<SHA256>
 ```
 
-현재 배치는 hook·부모 메시지·전송/소비 ACK를 사용하지 않는다. 현재 실행자가 실제 checkpoint·summary·completion·STATE와 백업을 대조한다. 구형 통지 자료는 이력으로만 보존하며 세션 ID·CLI 모델 설정을 호환 명목으로 재사용하지 않는다.
+현재 실행자가 실제 checkpoint·summary·completion·STATE와 백업을 대조한다. 구형 통지 자료는 이력으로 보존하며 신규 실행의 담당·설정은 실제 실행 metadata로 확인한다.
 
 ## 측정과 보고
 

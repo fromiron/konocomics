@@ -19,6 +19,7 @@ import { DatabaseSync } from "node:sqlite";
 import { fileURLToPath } from "node:url";
 
 import { parse } from "csv-parse/sync";
+import { scopeAuditReviewReferences } from "./scope-correction";
 
 export const CATALOG_DATABASE_FILE = "catalog.sqlite";
 export const CATALOG_CUTOVER_SOURCE_COMMIT = "2b3cd10523b15ad131871e2f3bb202494119133d";
@@ -498,6 +499,14 @@ function catalogOpaquePaths(tables: readonly LexicalTable[]) {
   const referenceIndex = works.headers.indexOf("annotationReviewReference");
   assert(referenceIndex >= 0, "works.csv is missing annotationReviewReference");
   const paths = new Set<string>(CATALOG_OPAQUE_PATHS);
+  const evidence = tables.find((table) => table.path === "evidence/evidence.csv");
+  assert(evidence, "Catalog authority is missing evidence.csv");
+  for (const reference of scopeAuditReviewReferences(
+    evidence.rows.map((row) =>
+      Object.fromEntries(evidence.headers.map((field, index) => [field, row.values[index] ?? ""])),
+    ),
+  ))
+    paths.add(reference);
   for (const row of works.rows) {
     const reference = row.values[referenceIndex] ?? "";
     if (reference === "") continue;

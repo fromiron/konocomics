@@ -1540,7 +1540,8 @@ def _build_plan(
         raise PublishError(f"invalid annotation review reference: {review_reference}")
     _iso(reviewed_at, "reviewed-at")
     claim_rows = sorted((row for row in rows if row["decision"] == "accepted"), key=lambda row: (row["workId"], row["factKey"]))
-    factor_updates: list[dict[str, str]] = []
+    factor_updates: list[dict[str, object]] = []
+    explicit_unknown_evidence: dict[str, dict[str, str]] = {}
     theme_inserts: list[dict[str, str]] = []
     genre_updates: dict[str, str] = {}
     work_updates: list[dict[str, str]] = []
@@ -1561,6 +1562,29 @@ def _build_plan(
         normalised = _normalise_existing_evidence(existing)
         if normalised is not None:
             evidence_normalizations[evidence_id] = normalised
+    # Explicit unknown is a panel decision, not permission to retain a raw
+    # candidate number. Its ledger has no supporting numeric evidence.
+    for row in sorted((row for row in rows if row["decision"] == "explicitUnknown" and row["factKey"].startswith("axis:")), key=lambda row: (row["workId"], row["factKey"])):
+        work_id, axis = row["workId"], row["factKey"].split(":", 1)[1]
+        if work_id not in target_ids or work_id not in works:
+            raise PublishError(f"unknown claim references unknown target work: {work_id}")
+        current = factors.get((work_id, axis))
+        if current is None:
+            raise PublishError(f"panel axis absent from baseline: {work_id} {axis}")
+        if _raw_candidate_axis_evidence(evidence.get(current["evidenceId"], {}), work_id):
+            # Reuse the recovery publisher's explicit-unknown record pattern:
+            # bind the ledger decision without pretending it supports a number.
+            unknown_id = _claim_evidence_id(row)
+            if unknown_id in evidence or unknown_id in explicit_unknown_evidence:
+                raise PublishError(f"claim evidence id collision: {unknown_id}")
+            source = {"sourceType": "manual", "sourceUrl": "", "fetchedAt": reviewed_at}
+            explicit_unknown_evidence[unknown_id] = _evidence_row(unknown_id, source, panel_row=row)
+            explicit_unknown_evidence[unknown_id]["notes"] += " | explicitUnknownV1; new ledger decision, not numeric evidence"
+            update = {"workId": work_id, "axisId": axis, "state": "unknown", "value": "", "confidence": "", "evidenceId": unknown_id, "candidateBefore": dict(current)}
+            factor_updates.append(update)
+            factors[(work_id, axis)] = {**current, **{field: update[field] for field in ("state", "value", "confidence", "evidenceId")}}
+        elif current["state"] != "unknown":
+            raise PublishError(f"accepted baseline axis conflict: {work_id} {axis}")
     for row in claim_rows:
         kind, name = panel.fact_kind(row["factKey"])
         work_id = row["workId"]
@@ -1571,8 +1595,13 @@ def _build_plan(
             current = factors.get((work_id, name))
             if current is None:
                 raise PublishError(f"panel axis absent from baseline: {work_id} {name}")
-            if current["state"] == "unknown":
-                factor_updates.append({"workId": work_id, "axisId": name, "state": row["state"], "value": row["value"], "confidence": row["confidence"] if row["state"] == "known" else "", "evidenceId": claim_id})
+            source = evidence.get(current["evidenceId"], {})
+            raw_candidate = _raw_candidate_axis_evidence(source, work_id)
+            if raw_candidate or current["state"] == "unknown":
+                update = {"workId": work_id, "axisId": name, "state": row["state"], "value": row["value"], "confidence": row["confidence"] if row["state"] == "known" else "", "evidenceId": claim_id}
+                if raw_candidate:
+                    update["candidateBefore"] = dict(current)
+                factor_updates.append(update)
                 factors[(work_id, name)] = {**current, "state": row["state"], "value": row["value"], "confidence": row["confidence"] if row["state"] == "known" else "", "evidenceId": claim_id}
                 used_claims.append((row, claim_id))
             elif (current["state"], current["value"]) != (row["state"], row["value"]):
@@ -1605,6 +1634,8 @@ def _build_plan(
         panel_promotion = promotion[work_id]
         if panel_promotion["panelOutcome"] != "PASS":
             continue
+        if any(wid == work_id and current["state"] == "known" and _raw_candidate_axis_evidence(evidence.get(current["evidenceId"], {}), work_id) for (wid, _axis), current in factors.items()):
+            raise PublishError(f"raw candidate axis lacks panel decision: {work_id}")
         _validate_safety_gate(work_id, prior, frozen_evidence, supplemental, evidence, packets)
         if len(existing_contexts.get(work_id, [])) > 1:
             raise PublishError(f"baseline has duplicate recommendation contexts: {work_id}")
@@ -1687,7 +1718,7 @@ def _build_plan(
         if promotion[work_id]["panelOutcome"] != "PASS" or existing_contexts.get(work_id):
             continue
         used_ids.update(panel.split_list(contexts[work_id]["evidenceIds"], f"{work_id} context evidenceIds"))
-    new_evidence: dict[str, dict[str, str]] = {}
+    new_evidence: dict[str, dict[str, str]] = dict(explicit_unknown_evidence)
     for evidence_id in sorted(used_ids):
         if evidence_id in evidence:
             continue
@@ -1747,8 +1778,19 @@ def _build_plan(
         "blockedIds": sorted(work_id for work_id, item in promotion.items() if item["panelOutcome"] != "PASS"),
         "passIds": sorted(work_id for work_id, item in promotion.items() if item["panelOutcome"] == "PASS"),
         "acceptedClaimCount": len(claim_rows),
-        "changedClaimCount": len(used_claims),
+        "changedClaimCount": len(used_claims) + len(explicit_unknown_evidence),
     }
+
+
+def _raw_candidate_axis_evidence(source: dict[str, object], work_id: str) -> bool:
+    from publish_factor_batch import _protected_snapshot_evidence
+
+    return (
+        source.get("workId") == work_id
+        and source.get("sourceType") == "model"
+        and re.search(r"(?:^|[;\s])candidateOnly=true(?:;|\s|$)", str(source.get("notes", ""))) is not None
+        and not _protected_snapshot_evidence(source)
+    )
 
 
 def apply_plan_in_transaction(con: sqlite3.Connection, plan: dict[str, object]) -> None:
@@ -1781,6 +1823,17 @@ def apply_plan_in_transaction(con: sqlite3.Connection, plan: dict[str, object]) 
             (row["sourceType"], row["notes"], evidence_id),
         )
     for row in plan["factorUpdates"]:  # type: ignore[union-attr]
+        before = row.get("candidateBefore")
+        if before is not None:
+            columns = ("workId", "sourceType", "reviewedByHuman", "extractorVersion", "notes")
+            source = con.execute("select " + ",".join(columns) + " from source_evidence where id=?", (before["evidenceId"],)).fetchone()
+            if source is None or not _raw_candidate_axis_evidence(dict(zip(columns, source)), row["workId"]):
+                raise PublishError(f"candidate axis authority changed before apply: {row['workId']} {row['axisId']}")
+            values = tuple(row[field] for field in ("state", "value", "confidence", "evidenceId", "workId", "axisId")) + tuple(before[field] for field in ("state", "value", "confidence", "evidenceId"))
+            cur = con.execute("update source_factors set state=?,value=?,confidence=?,evidenceId=? where workId=? and axisId=? and state=? and value=? and confidence=? and evidenceId=?", values)
+            if cur.rowcount != 1:
+                raise PublishError(f"candidate factor lost exact baseline row: {row['workId']} {row['axisId']}")
+            continue
         cur = con.execute("update source_factors set state=?,value=?,confidence=?,evidenceId=? where workId=? and axisId=? and state='unknown'", (row["state"], row["value"], row["confidence"], row["evidenceId"], row["workId"], row["axisId"]))
         if cur.rowcount != 1:
             raise PublishError(f"factor update lost unknown row: {row['workId']} {row['axisId']}")

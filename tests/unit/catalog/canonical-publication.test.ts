@@ -271,6 +271,45 @@ it("merges only selected meaning while retaining latest bibliography, non-target
   );
 });
 
+it("requires explicit scope authority for Library-only correction and preserves the original Work fields", () => {
+  const current = smallTables();
+  const works = current.find((table) => table.path === "works.csv")!;
+  works.rows[0]!.values[works.headers.indexOf("onboardingEligible")] = "true";
+  const candidate = structuredClone(current);
+  const next = candidate.find((table) => table.path === "works.csv")!;
+  for (const [field, value] of Object.entries({
+    onboardingEligible: "false",
+    recommendationEligible: "false",
+    libraryOnly: "true",
+  }))
+    next.rows[0]!.values[next.headers.indexOf(field)] = value;
+  expect(() => mergeCanonicalTargets(current, candidate, ["target"])).toThrow();
+  const result = mergeCanonicalTargets(current, candidate, ["target"], ["target"]);
+  expect(csvRows(result.get("works.csv")!)).toMatchObject([
+    {
+      id: "target",
+      title: "latest title",
+      genres: "action",
+      onboardingEligible: "false",
+      recommendationEligible: "false",
+      libraryOnly: "true",
+      annotationReviewMethod: "authorizedEvidencePanel",
+    },
+    { id: "other", title: "Keep other" },
+  ]);
+  expect(csvRows(result.get("factors.csv")!)).toMatchObject([
+    { workId: "target", value: "1" },
+    { workId: "other", value: "4" },
+  ]);
+  expect(csvRows(result.get("evidence/evidence.csv")!)).toMatchObject([
+    { id: "old", notes: "Retained evidence" },
+  ]);
+  next.rows[0]!.values[next.headers.indexOf("genres")] = "mystery";
+  expect(() => mergeCanonicalTargets(current, candidate, ["target"], ["target"])).toThrow(
+    "Scope correction changed Work genres",
+  );
+});
+
 it("resumes an actual pre-seal preparation from a DB-only restore without rewriting its beginning", () => {
   const temporary = mkdtempSync(join(tmpdir(), "konocomics-canonical-pre-seal-"));
   const root = join(temporary, "repository");

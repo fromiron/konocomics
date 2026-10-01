@@ -844,7 +844,15 @@ def publish(args) -> None:
         runner.prepare.require(verified["catalogSha256"] == runner.panel.sha256(last / "catalog-expanded.candidate.sqlite"), "final candidate changed")
         with sqlite3.connect(f"file:{(last / 'catalog-expanded.candidate.sqlite').as_posix()}?mode=ro", uri=True) as db:
             for work_id, _, _ in publications:
-                runner.prepare.require(db.execute("select recommendationEligible,libraryOnly from source_works where id=?", (work_id,)).fetchone() == ("true", "false"), f"published Work not eligible: {work_id}")
+                sealed = next(source for wid, _, source in publications if wid == work_id)
+                promotion = runner.panel.read_csv(sealed / "panel-result/chunk-01/promotion-ledger.csv", runner.panel.PROMOTION_FIELDS)
+                import scope_correction as scope
+                excluded = len(promotion) == 1 and promotion[0]["panelOutcome"] == scope.OUTCOME
+                if excluded:
+                    frozen = next(root for wid, _, root, _ in entries if wid == work_id)
+                    scope.validate(frozen / "panel-input", sealed / "panel-result")
+                expected = ("false", "false", "true") if excluded else ("true", "true", "false")
+                runner.prepare.require(db.execute("select onboardingEligible,recommendationEligible,libraryOnly from source_works where id=?", (work_id,)).fetchone() == expected, f"published Work eligibility differs from bound result: {work_id}")
         receipt = batch / "BATCH-FINISHED.json"
         if not receipt.exists():
             runner.write(receipt, {

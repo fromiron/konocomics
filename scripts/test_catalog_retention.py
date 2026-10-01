@@ -19,6 +19,104 @@ from catalog_workspace import Workspace, APPLICATION_ID, digest
 
 
 class RetentionCutoverTest(unittest.TestCase):
+    def metadata_advance_fixture(self):
+        directory = tempfile.TemporaryDirectory()
+        self.addCleanup(directory.cleanup)
+        repo = Path(directory.name)
+        store = RevisionWorkspace.create(repo, repo / retention.BASE / "workspace.sqlite")
+        pair = repo / retention.BASE / "metadata-original"
+        pair.mkdir()
+        catalog = pair / "catalog-expanded.candidate.sqlite"
+        with closing(sqlite3.connect(catalog)) as db, db:
+            db.execute("CREATE TABLE source_works(sourceOrdinal INTEGER PRIMARY KEY,sourceLine INTEGER,id TEXT,genres TEXT,annotationReviewMethod TEXT,annotationReviewReference TEXT,recommendationEligible TEXT,libraryOnly TEXT)")
+            db.execute("CREATE TABLE source_factors(sourceOrdinal INTEGER PRIMARY KEY,sourceLine INTEGER,workId TEXT,axisId TEXT,state TEXT,value TEXT,confidence TEXT,evidenceId TEXT)")
+            db.execute("CREATE TABLE source_themes(sourceOrdinal INTEGER PRIMARY KEY,sourceLine INTEGER,workId TEXT,themeId TEXT,centrality TEXT,confidence TEXT,evidenceId TEXT)")
+            db.execute("CREATE TABLE source_evidence(sourceOrdinal INTEGER PRIMARY KEY,sourceLine INTEGER,id TEXT,workId TEXT,sourceType TEXT,notes TEXT)")
+            db.execute("CREATE TABLE source_book_metadata(sourceOrdinal INTEGER PRIMARY KEY,sourceLine INTEGER,workId TEXT,isbn TEXT,itemCaption TEXT)")
+            for n, method in enumerate(("unreviewed", "human", "authorizedModelPanel"), 1):
+                wid = f"work-{n}"
+                db.execute("INSERT INTO source_works VALUES (?,?,?,?,?,?,?,?)", (n, n+1, wid, "action", method, "", "false", "true"))
+                db.execute("INSERT INTO source_factors VALUES (?,?,?,?,?,?,?,?)", (n, n+1, wid, "strategy", "known", "2", "0.9", f"ev-{n}"))
+                db.execute("INSERT INTO source_evidence VALUES (?,?,?,?,?,?)", (n, n+1, f"ev-{n}", wid, "manual", "Original evidence"))
+        with closing(sqlite3.connect(pair / "catalog-source-registry.candidate.sqlite")) as db, db:
+            db.execute("CREATE TABLE preserved(value TEXT)")
+            db.execute("INSERT INTO preserved VALUES ('Original registry')")
+        tables = runner.publisher._backend_module()._snapshot_db(catalog)
+        works = {}
+        for n in range(1, 4):
+            wid, owned = f"work-{n}", {}
+            for name, (columns, values) in tables.items():
+                owner = "id" if name == "source_works" else "workId"
+                if owner in columns:
+                    rows = [dict(zip(columns, row)) for row in values if row[columns.index(owner)] == wid]
+                    if rows:
+                        owned[name] = rows
+            works[wid] = store.put_revision("curation", wid, {"schemaVersion": "curation-baseline-v1", "workId": wid,
+                "authorityKind": owned["source_works"][0]["annotationReviewMethod"], "tables": owned,
+                "claims": [], "legacyAuthorityRequired": False, "curationApproved": n > 1})
+        previous = repo / retention.BASE / "retained/metadata-original"
+        # A prior publication copied bibliography into the valid pair but
+        # retained this non-target Work's older curation payload.
+        with closing(sqlite3.connect(catalog)) as db, db:
+            db.execute("INSERT INTO source_book_metadata VALUES (1,2,'work-2','9784107721952','Preserved publisher description')")
+        retention.create_anchor(store, previous, pair, works)
+        canonical = repo / "data/source/catalog.sqlite"
+        canonical.parent.mkdir(parents=True)
+        shutil.copyfile(catalog, canonical)
+        state = repo / retention.CONTINUATION / "STATE.json"
+        retention.write(state, {"userStop": {"status": "STOPPED"}, "latestCandidate": {"root": str(previous)}})
+        publication = repo / retention.BASE / "metadata-publication"
+        shutil.copytree(pair, publication)
+        runner.publisher._write_result_manifest(publication)
+        frozen, sealed = repo / "frozen", repo / "sealed"
+        (frozen / "panel-input").mkdir(parents=True)
+        sealed.mkdir()
+        return repo, store, previous, publication, works, [("work-1", repo / "run", frozen, sealed)], state
+
+    def test_basis_advance_binds_copied_non_target_metadata_without_approving_it(self):
+        for metadata_only in (False, True):
+            with self.subTest(metadata_only=metadata_only):
+                repo, store, previous, publication, refs, entries, state = self.metadata_advance_fixture()
+                originals = {wid: store.get_revision(ref) for wid, ref in refs.items()}
+                original_state = state.read_bytes()
+                original_pair = digest((previous / "catalog-expanded.candidate.sqlite").read_bytes())
+                with self.assertRaisesRegex(ValueError, "source_book_metadata"):
+                    retention.load_basis(previous, {"work-2"})
+                stale_pair = digest((previous / "catalog-expanded.candidate.sqlite").read_bytes())
+                if metadata_only:
+                    destination = retention.advance_metadata_basis(repo, previous, publication, {"work-1"})
+                else:
+                    destination = retention.advance_basis(repo, previous, publication, entries)
+                retention.load_basis(destination, {"work-2"})
+                anchor = store.get_revision(retention.read(destination / "CURATION-BASELINE.json")["revision"])["payload"]
+                after = store.get_revision(anchor["works"]["work-2"])
+                before = originals["work-2"]
+                self.assertEqual(after["members"], before["members"])
+                self.assertEqual({k: v for k, v in after["payload"].items() if k != "tables"},
+                                 {k: v for k, v in before["payload"].items() if k != "tables"})
+                self.assertEqual({k: v for k, v in after["payload"]["tables"].items() if k != "source_book_metadata"}, before["payload"]["tables"])
+                self.assertEqual(after["payload"]["tables"]["source_book_metadata"][0]["itemCaption"], "Preserved publisher description")
+                self.assertEqual(anchor["works"]["work-3"], refs["work-3"])
+                self.assertEqual(store.get_revision(refs["work-2"]), before)
+                self.assertEqual(state.read_bytes(), original_state)
+                self.assertEqual(digest((previous / "catalog-expanded.candidate.sqlite").read_bytes()), stale_pair)
+                self.assertEqual(original_pair, stale_pair)
+                self.assertEqual(retention.read(previous / "CURATION-BASELINE.json")["revision"]["generation"], store._generation)
+
+    def test_copied_metadata_cannot_launder_other_non_target_semantic_changes(self):
+        for table, change in (("source_factors", "value='4'"), ("source_works", "genres='fantasy'"),
+                              ("source_evidence", "notes='Changed authority'")):
+            with self.subTest(table=table):
+                repo, store, previous, publication, refs, entries, _ = self.metadata_advance_fixture()
+                before = {wid: store.current_revision("curation", wid) for wid in refs}
+                owner = "id" if table == "source_works" else "workId"
+                with closing(sqlite3.connect(publication / "catalog-expanded.candidate.sqlite")) as db, db:
+                    db.execute(f'UPDATE "{table}" SET {change} WHERE "{owner}"=?', ("work-2",))
+                runner.publisher._write_result_manifest(publication)
+                with self.assertRaisesRegex(ValueError, "Copied metadata cannot change non-target curation"):
+                    retention.advance_basis(repo, previous, publication, entries)
+                self.assertEqual(before, {wid: store.current_revision("curation", wid) for wid in refs})
+
     def recovery_fixture(self):
         directory = tempfile.TemporaryDirectory()
         self.addCleanup(directory.cleanup)

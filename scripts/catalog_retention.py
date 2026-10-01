@@ -1709,6 +1709,18 @@ def load_basis(root, work_ids=None, *, metrics=None):
                 rows = grouped.get(wid, [])
                 if semantic_rows(payload["tables"].get(name, [])) != semantic_rows(rows):
                     raise ValueError(f"Curation basis differs from current rows: {wid} {name}")
+            from catalog_authoring import scope_correction as scope
+            scoped = {row["id"]: row for row in payload["tables"].get("source_evidence", [])
+                      if row.get("extractorVersion") == scope.EXTRACTOR}
+            scope.accepted_exclusions(scoped)
+            for row in scoped.values():
+                notes = json.loads(row["notes"])
+                if notes["correction"] not in payload.get("scopeCorrections", []):
+                    raise ValueError("Curation scope correction proof is missing")
+                name = "data/source/" + key_path(notes["reviewReference"])
+                expected = anchor.get("reviews", {}).get(name)
+                if expected is None or digest(unlinked(root / name).read_bytes()) != expected:
+                    raise ValueError("Curation scope audit review changed")
             if payload["legacyAuthorityRequired"]:
                 raise ValueError(f"Unresolved original authority remains pinned: {wid}")
             current_ids = {row["evidenceId"] for name in ("source_factors", "source_themes")
@@ -1935,6 +1947,13 @@ def create_anchor(store, destination, pair_root, works, *, legacy_pins=None, pro
     reviews = {}
     with closing(sqlite3.connect((pair_root / "catalog-expanded.candidate.sqlite").resolve().as_uri() + "?mode=ro", uri=True)) as db:
         references = {row[0] for row in db.execute("SELECT annotationReviewReference FROM source_works WHERE annotationReviewReference<>''")}
+        from catalog_authoring import scope_correction as scope
+        columns = {row[1] for row in db.execute("PRAGMA table_info(source_evidence)")}
+        if "extractorVersion" in columns:
+            scoped = {row[0]: dict(zip(("id", "workId", "extractorVersion", "notes"), row))
+                      for row in db.execute("SELECT id,workId,extractorVersion,notes FROM source_evidence WHERE extractorVersion=?", (scope.EXTRACTOR,))}
+            scope.accepted_exclusions(scoped)
+            references.update(json.loads(row["notes"])["reviewReference"] for row in scoped.values())
     for reference in sorted(references):
         name = key_path(reference)
         if not name.startswith("reviews/"):
@@ -2057,11 +2076,71 @@ def build_store(plan, basis, dependencies, *, integrated=None):
         "databaseBytes": destination.stat().st_size, "legacyAuthorityWorks": len(legacy_pins), "protectedFiles": plan["protectedFiles"]}
 
 
+def _metadata_curation_updates(store, prior, previous_root, publication, excluded):
+    """Bind copied bibliography without changing non-target adjudication facts."""
+    table = "source_book_metadata"
+    owners, current_metadata = set(), {}
+    for root in dict.fromkeys((previous_root, publication)):
+        with closing(sqlite3.connect(unlinked(root / "catalog-expanded.candidate.sqlite").as_uri() + "?mode=ro", uri=True)) as db:
+            if not db.execute("SELECT 1 FROM sqlite_schema WHERE type='table' AND name=?", (table,)).fetchone():
+                continue
+            columns = [row[1] for row in db.execute(f'PRAGMA table_info("{table}")')]
+            for values in db.execute(f'SELECT * FROM "{table}" ORDER BY sourceOrdinal'):
+                row = dict(zip(columns, values))
+                owners.add(row["workId"])
+                if root == publication:
+                    current_metadata.setdefault(row["workId"], []).append(row)
+    updates = {}
+    with closing(sqlite3.connect(unlinked(publication / "catalog-expanded.candidate.sqlite").as_uri() + "?mode=ro", uri=True)) as db:
+        owned_tables = []
+        for (name,) in db.execute("SELECT name FROM sqlite_schema WHERE type='table'"):
+            quoted = name.replace('"', '""')
+            columns = [row[1] for row in db.execute(f'PRAGMA table_info("{quoted}")')]
+            owner = "id" if name == "source_works" else "workId"
+            if name != table and owner in columns:
+                owned_tables.append((name, quoted, columns, owner))
+        for wid in sorted(owners - set(excluded)):
+            if wid not in prior["works"]:
+                raise ValueError(f"Copied metadata Work has no retained curation: {wid}")
+            original = store.get_revision(prior["works"][wid])
+            payload = original["payload"]
+            rows = current_metadata.get(wid, [])
+            if semantic_rows(payload["tables"].get(table, [])) == semantic_rows(rows):
+                continue
+            for name, quoted, columns, owner in owned_tables:
+                current = [dict(zip(columns, row)) for row in db.execute(
+                    f'SELECT * FROM "{quoted}" WHERE "{owner}"=? ORDER BY sourceOrdinal', (wid,))]
+                if semantic_rows(payload["tables"].get(name, [])) != semantic_rows(current):
+                    raise ValueError(f"Copied metadata cannot change non-target curation: {wid} {name}")
+            updates[wid] = ({**payload, "tables": {**payload["tables"], table: rows}}, original["members"])
+    return updates
+
+
 def advance_basis(repo, previous_root, publication, entries):
-    """Advance only published Works; no global archive scan or lineage replay."""
+    """Advance published facts and copied metadata; never replay other claims."""
     store = Workspace(repo)
     if not getattr(store, "is_revision_store", False):
         return publication
+    from catalog_authoring import scope_correction as scope
+    if any((entry[2] / "panel-input/scope-correction-request.json").is_file()
+           and not (entry[2] / "panel-input/panel-input.json").is_file() for entry in entries):
+        raise ValueError("Scope correction request has no frozen input mode")
+    scoped = [entry for entry in entries if (entry[2] / "panel-input/panel-input.json").is_file()
+              and scope.enabled(entry[2] / "panel-input")]
+    if scoped:
+        if len(scoped) != len(entries):
+            raise ValueError("Scope-only correction must use a separate publication batch")
+        proofs, scoped_members = {}, {}
+        for wid, _, frozen, sealed in scoped:
+            scope.validate(frozen / "panel-input", sealed / "panel-result")
+            record = read(sealed / "panel-result/chunk-01/scope-corrections.json")["corrections"][0]
+            if record["workId"] != wid:
+                raise ValueError("Scope basis target mismatch")
+            proofs[wid] = record
+            for path in store.files([frozen / "panel-input", sealed]):
+                scoped_members[relative(repo, path)] = digest(path.read_bytes())
+        return advance_metadata_basis(repo, previous_root, publication, set(proofs),
+                                      scope_proofs=proofs, scope_members=scoped_members)
     marker = read(previous_root / "CURATION-BASELINE.json")
     prior = store.get_revision(marker["revision"])["payload"]
     work_ids = {row[0] for row in entries}
@@ -2095,6 +2174,7 @@ def advance_basis(repo, previous_root, publication, entries):
         catalog=publication / "catalog-expanded.candidate.sqlite", work_ids=work_ids)
     if basis["unresolvedWorks"]:
         raise ValueError("New publication has unresolved curation references; preserve the result and repair its storage before advancing STATE")
+    metadata_updates = _metadata_curation_updates(store, prior, previous_root, publication, work_ids)
     works = dict(prior["works"])
     for wid, payload in basis["payloads"].items():
         blobs = set()
@@ -2107,17 +2187,19 @@ def advance_basis(repo, previous_root, publication, entries):
                 for capture in research["captures"]:
                     blobs.update((capture["receiptSha256"], capture["rawSha256"]))
         works[wid] = store.put_revision("curation", wid, payload, {"retained/" + sha: sha for sha in blobs})
+    for wid, (payload, original_members) in metadata_updates.items():
+        works[wid] = store.put_revision("curation", wid, payload, original_members)
     # The publisher's complete readback remains the publication verdict. This
     # separate root changes storage references while preserving the exact pair.
     destination = repo / BASE / "retained/curation-baseline" / digest((publication / "MANIFEST.sha256").read_bytes())
     if not destination.exists():
         create_anchor(store, destination, publication, works, legacy_pins=prior.get("legacyPins", {}),
                       provenance={"publicationManifestSha256": digest((publication / "MANIFEST.sha256").read_bytes())})
-    load_basis(destination, work_ids)
+    load_basis(destination, work_ids | set(metadata_updates))
     return destination
 
 
-def advance_metadata_basis(repo, previous_root, publication, work_ids):
+def advance_metadata_basis(repo, previous_root, publication, work_ids, *, scope_proofs=None, scope_members=None):
     """Keep verified claims while an existing publisher changes bibliography/eligibility."""
     from catalog_authoring.publish_factor_batch import _backend_module
     store = Workspace(repo)
@@ -2125,6 +2207,7 @@ def advance_metadata_basis(repo, previous_root, publication, work_ids):
         return publication
     store.save([publication], "metadata:verified-publication")
     prior = store.get_revision(read(previous_root / "CURATION-BASELINE.json")["revision"])["payload"]
+    metadata_updates = _metadata_curation_updates(store, prior, previous_root, publication, work_ids)
     tables = _backend_module()._snapshot_db(publication / "catalog-expanded.candidate.sqlite")
     owned = {wid: {} for wid in work_ids}
     for name, (columns, rows) in tables.items():
@@ -2138,18 +2221,52 @@ def advance_metadata_basis(repo, previous_root, publication, work_ids):
     for wid, current in owned.items():
         original = store.get_revision(works[wid])
         payload = original["payload"]
+        if scope_proofs is not None:
+            from catalog_authoring import scope_correction as scope
+            proof = scope_proofs[wid]
+            if not set(payload["tables"]) <= set(proof["beforeSnapshot"]["tables"]):
+                raise ValueError("Scope basis snapshot omits owned tables")
+            before = {"tables": {name: [json.loads(value) for value in semantic_rows(payload["tables"].get(name, []))]
+                                  for name in proof["beforeSnapshot"]["tables"]}}
+            # Sorting uses the shared manifest codec; projection ordinals never
+            # redefine accepted semantic rows.
+            before = {"tables": {name: sorted(rows, key=scope.canonical) for name, rows in before["tables"].items()}}
+            if before != proof["beforeSnapshot"]:
+                raise ValueError("Scope basis lost exact accepted prior snapshot")
+            if not set(current) <= set(before["tables"]):
+                raise ValueError("Scope basis changed owned table membership")
+            after = {name: sorted((json.loads(value) for value in semantic_rows(current.get(name, []))), key=scope.canonical)
+                     for name in before["tables"]}
+            expected = json.loads(scope.canonical(before["tables"]))
+            expected["source_works"][0].update({key: str(value).lower() for key, value in scope.FLAGS.items()})
+            added = [row for row in after["source_evidence"] if row not in expected["source_evidence"]]
+            if len(added) != 1 or added[0]["extractorVersion"] != scope.EXTRACTOR:
+                raise ValueError("Scope basis lacks exact new scope evidence")
+            notes = json.loads(added[0]["notes"])
+            if notes.get("correction") != proof or notes.get("schemaVersion") != "catalog-scope-correction-evidence-v1" or added[0]["id"] != "ev-scope-correction-" + digest(added[0]["notes"].encode("utf-8")):
+                raise ValueError("Scope basis evidence binding changed")
+            expected["source_evidence"] = sorted([*expected["source_evidence"], added[0]], key=scope.canonical)
+            if expected != after:
+                raise ValueError("Scope basis correction changed preserved facts")
         for name in ("source_factors", "source_themes"):
             if semantic_rows(current.get(name, [])) != semantic_rows(payload["tables"].get(name, [])):
                 raise ValueError("A metadata correction cannot change accepted factor/theme claims")
         for field in ("genres", "annotationReviewMethod"):
             if current["source_works"][0][field] != payload["tables"]["source_works"][0][field]:
                 raise ValueError("A metadata correction cannot change genre or adjudication authority")
-        works[wid] = store.put_revision("curation", wid, {**payload, "tables": current}, original["members"])
+        revised = {**payload, "tables": current}
+        revised_members = dict(original["members"])
+        if scope_proofs is not None:
+            revised["scopeCorrections"] = [*payload.get("scopeCorrections", []), scope_proofs[wid]]
+            revised_members.update(scope_members or {})
+        works[wid] = store.put_revision("curation", wid, revised, revised_members)
+    for wid, (payload, original_members) in metadata_updates.items():
+        works[wid] = store.put_revision("curation", wid, payload, original_members)
     destination = repo / BASE / "retained/curation-baseline" / digest((publication / "MANIFEST.sha256").read_bytes())
     if not destination.exists():
         create_anchor(store, destination, publication, works, legacy_pins=prior.get("legacyPins", {}),
                       provenance={"publicationManifestSha256": digest((publication / "MANIFEST.sha256").read_bytes())})
-    load_basis(destination, work_ids)
+    load_basis(destination, set(work_ids) | set(metadata_updates))
     return destination
 
 
