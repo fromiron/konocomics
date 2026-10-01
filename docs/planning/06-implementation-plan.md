@@ -228,7 +228,7 @@ S0~S5 동안 9개 CSV가 쓰기 권한을 가졌고 SQLite는 OS 임시 shadow�
 | **B** 최소 측정 준비 | `07` §9 한 장(지표 3개·대표 시나리오·기록란) | 분석 SDK·자동 집계 없음 |
 | **C** 추천 이유 표현 | `02` §6.9 문장 유형 표, 연구 도구용 동결 lexicon | 같은 입력에서 점수·순위·선택 근거·순서·개수 불변, 카드·관점 선반·상세·미리보기·랜딩 예시 일관 |
 | **D** 공유 진입 | `/?landing=1&via=share-card`, 방문자 상태별 랜딩 CTA, 메모리 경로 표지 | 신규·중단·프로필·복구 상태가 기존 데이터 보존 |
-| **E** DNA 카드 | `analyzedWorkIds`, `buildDnaShareCard`, Canvas PNG 미리보기·저장·복사 | 카드와 DNA·분석 작품 수 일치, 빈 분석·생성 실패 처리 |
+| **E** DNA 카드 | `analyzedWorkIds`, `buildDnaShareCard`, Canvas PNG 미리보기·저장·복사 → 2026-10-01 사용자 결정으로 `/share` 링크(`buildDnaShareLink`·`formatDnaShareLinkSearch`·`parseDnaShareLink`)로 대체 | 링크와 DNA·분석 작품 수 일치, 왕복 동일, 빈 분석·형식 위반 처리 |
 | **F** 무드 조건 | `02` §6.11 `filterPlanForMood` + 기존 목록 제약, 탭 메모리 세션 | 조건 밖 작품 0, 기본 plan 불변, 영구 저장 없음 |
 | **G** 무드 화면 | 「今日の気分」 칩, 「今日はパス」, 부족·0건 상태, Quick Preview 무드 줄 | 전환·해제·무드별 제외·상세 왕복·새로고침·Import/삭제 초기화 |
 

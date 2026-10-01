@@ -89,6 +89,7 @@ Catalog의 성적 콘텐츠 제외 기준은 **porn / non-porn**이다. 성인�
 /recommendations 추천 10개 + 이유. 카드 액션: 読みたい / 読んだ / 興味なし(+이유)
 /works/[workId] Catalog 상세: 표지·블러 배경·DNA 대조·추천 근거·라쿠텐 링크
 /works/external?workId=<ExternalWorkId> 로컬 external 상세(고정 정적 셸)
+/share?v=1&dna=…  공유된 Manga DNA 페이지(URL이 곧 데이터, 저장 없음; 03 §4.1)
 /library        읽음 상태·감상 관리, 외부 작품 추가
 /settings       추천 정책, Export/Import, 전체 삭제, 크레딧
 

@@ -227,3 +227,23 @@ export function summarizeMangaDna(
     topPreferences,
   };
 }
+
+export const DNA_WHEEL_AXIS_LIMIT = 8;
+
+export type DnaWheelAxis = DnaPreference<AxisId> & { state: "known"; value: number };
+
+/** The DNA wheel's Axes: known values, strongest first, ties by factorId, at most eight. */
+export function rankDnaWheelAxes(axes: readonly DnaPreference<AxisId>[]): DnaWheelAxis[] {
+  return axes
+    .flatMap((axis): DnaWheelAxis[] =>
+      axis.state === "known" && axis.value !== null
+        ? [{ ...axis, state: "known", value: axis.value }]
+        : [],
+    )
+    .sort(
+      (left, right) =>
+        right.value - left.value ||
+        (left.factorId < right.factorId ? -1 : left.factorId > right.factorId ? 1 : 0),
+    )
+    .slice(0, DNA_WHEEL_AXIS_LIMIT);
+}

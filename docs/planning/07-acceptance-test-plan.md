@@ -288,7 +288,7 @@ E2E 내 기본 조작성 스모크: 시나리오 1을 키보드만으로 완주�
 
 - 검색(A): `tests/unit/onboarding/search.test.tsx` — URL 지연 반영 중 끝 공백 유지, IME 조합 중 URL 미기록·확정 시 1회 기록, 자기 반영 무시·외부 URL 변경 추종, 제외 사유(`registered`/`notAnalyzable`) 분류. `submission.test.tsx` — add mode에서 기록 작품은 선택 불가이며 이유를 표시. `tests/unit/taste/factor-bar.test.tsx` — `aria-valuenow` 소수 1자리, 막대 길이 불변.
 - 설명(C): `tests/unit/explanation/generate.test.ts` — 문장 유형 표, 같은 작품명 반복 표현, 제품/동결 lexicon 사이에 선택 contribution·anchor·caution이 동일. 기존 관점 선반·카드·상세 테스트가 그대로 통과한다.
-- 공유(D·E): `tests/unit/landing/landing-flow.test.tsx` — 4개 방문자 상태 CTA, 공유 표지의 메모리 기록과 저장소 무변경. `tests/unit/profile/dna-share.test.ts` — 분석 작품 수가 근거 목록 합이 아님, 숨김이 수를 바꾸지 않음, 빈 분석 거부, `via` 허용 값. `tests/unit/taste/dna-share-dialog.test.tsx` — 실제 근거만 선택지, 생성 실패 재시도, 빈 분석 안내.
+- 공유(D·E): `tests/unit/landing/landing-flow.test.tsx` — 4개 방문자 상태 CTA, 공유 표지의 메모리 기록과 저장소 무변경. `tests/unit/profile/dna-share.test.ts` — 분석 작품 수가 근거 목록 합이 아님, 숨김이 수를 바꾸지 않음, 빈 분석 거부, 링크 왕복 동일·형식 위반 거부, `via` 허용 값. `tests/unit/taste/dna-share-dialog.test.tsx` — 실제 근거만 선택지, 링크 복사·클립보드 거부 시 링크 칸, 빈 분석 안내. `tests/unit/share/dna-share-page.test.tsx` — 링크 렌더·열 수 없는 링크·Catalog 밖 작품 생략·affiliate 고지 조건.
 - 무드(F·G): `tests/unit/recommendation/mood.test.ts` — `known`만 충족, plan 순서·객체 보존, 무드별 제외·세션 제외 후 목록 제약, Discovery 창이 남은 후보 기준. `tests/unit/recommendations/mood-session.test.ts` — 무드별 제외 분리·재적용, Catalog 범위, 초기화. `recommendations-flow.test.tsx` — 메인·선반이 무드 후보뿐이고 「今日はパス」가 저장하지 않으며 해제 시 기본 목록 복귀.
 
 ### 효과 관찰 시트 (Phase 0 — 이 한 장만 쓴다)
