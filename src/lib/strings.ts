@@ -1289,6 +1289,7 @@ export const settingsStrings = {
       policies: "おすすめの方針",
       dna: "Manga DNA",
       data: "データ",
+      danger: "危険な操作",
       app: "このアプリ",
     },
   },
@@ -1312,6 +1313,11 @@ export const settingsStrings = {
     protect: "データを保護する",
     protecting: "保護を設定しています…",
   },
+  danger: {
+    title: "危険な操作",
+    description: "取り消せない操作です。実行する前に、エクスポートでバックアップを残してください。",
+    exportFirst: "先にエクスポート",
+  },
   data: {
     title: "データ",
     description:
@@ -1327,6 +1333,7 @@ export const settingsStrings = {
       description: "konocomics のエクスポートファイルを検証してから復元します。",
       select: "ファイルを選ぶ",
       inspecting: "ファイルを確認しています…",
+      verified: (filename: string) => `「${filename}」を確認しました。復元できます。`,
       reviewReplacement: "置き換える内容を確認",
       preview: {
         title: "インポートする内容",
@@ -1349,7 +1356,7 @@ export const settingsStrings = {
     },
     delete: {
       title: "すべて削除",
-      description: "このブラウザに保存した konocomics のデータをすべて削除します。",
+      description: "読書記録、好み、おすすめの方針を、このブラウザからすべて削除します。",
       action: "すべて削除",
       keyword: "削除",
       successSessionOnly:
@@ -1398,14 +1405,13 @@ export const settingsStrings = {
     versionLabel: "バージョン",
     version: "0.1.0",
     storageLabel: "データの保存先",
+    storageValue: "このブラウザのみ",
+    storageValueSessionOnly: "このセッションのみ（再読み込みで消えます）",
     providerLabel: "書誌・販売情報",
     providerCredit: "Supported by Rakuten Developers",
     affiliateLabel: "アフィリエイト",
-    affiliateRelationship:
-      "アフィリエイトIDが設定されている場合、楽天ブックスへのリンクにアフィリエイト情報が含まれます。",
-    licenseLabel: "ライセンス",
-    licenseUnset: "未設定",
-    showIntroduction: "紹介をもう一度見る",
+    affiliateRelationship: "楽天ブックスへのリンクにアフィリエイト情報が含まれる場合があります。",
+    showIntroduction: "使い方をもう一度見る",
   },
 } as const;
 
