@@ -99,7 +99,7 @@ describe("LandingLogoReveal", () => {
       resolve(process.cwd(), "src/features/landing/landing-logo-reveal-motion.tsx"),
       "utf8",
     );
-    expect(rootSource).toContain('links: [{ rel: "stylesheet", href: globalStyles }]');
+    expect(rootSource).toMatch(/links:\s*\[\s*\{ rel: "stylesheet", href: globalStyles \}/u);
     expect(rootSource).not.toContain("fonts.googleapis.com");
     expect(rootSource).not.toContain('rel: "preload"');
     expect(componentSource).not.toContain('from "motion/react"');

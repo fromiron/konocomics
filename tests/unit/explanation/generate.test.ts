@@ -1,5 +1,8 @@
 import { describe, expect, it } from "vitest";
 
+import catalogJson from "@/data/generated/catalog-v1.json";
+import contextJson from "@/data/generated/recommendation-context-v1.json";
+import { catalogV1Schema } from "@/domain/catalog/schema";
 import {
   explanationClusterFor,
   generateBaselineExplanation,
@@ -11,6 +14,8 @@ import type {
   TasteExplanationSentence,
 } from "@/domain/explanation";
 import type { BaselineContribution, GroupContribution } from "@/domain/recommendation/types";
+import { parseRecommendationContext } from "@/domain/recommendation/context-schema";
+import { scoreWorkCompatibility } from "@/domain/recommendation/rank";
 import { explanationLexicon, frozenExperimentExplanationLexicon } from "@/lib/strings";
 
 function tasteContribution(overrides: Partial<GroupContribution> = {}): GroupContribution {
@@ -75,6 +80,63 @@ function baselineIdentityExists(
 }
 
 describe("Taste explanations", () => {
+  it.each([
+    ["jujutsu-kaisen", "attack-on-titan", "visualSoftness", 0],
+    ["hunter-x-hunter", "dungeon-meshi", "artRealism", 2],
+    ["naruto", "dungeon-meshi", "artRealism", 2],
+  ] as const)(
+    "describes the matched degree for %s without inventing a preference",
+    (workId, anchorId, axis, value) => {
+      const catalog = catalogV1Schema.parse(catalogJson);
+      const context = parseRecommendationContext(contextJson);
+      const works = new Map(catalog.works.map((work) => [work.id, work]));
+      expect(works.get(workId)?.axes[axis]).toMatchObject({ state: "known", value });
+      expect(works.get(anchorId)?.axes[axis]).toMatchObject({ state: "known", value });
+      const recommendation = scoreWorkCompatibility(
+        {
+          catalog,
+          context,
+          records: [
+            "attack-on-titan",
+            "dungeon-meshi",
+            "frieren",
+            "fullmetal-alchemist",
+            "death-note",
+          ].map((id) => ({
+            workId: id,
+            readingState: "completed" as const,
+            reaction: "liked" as const,
+            updatedAt: "2026-10-01T00:00:00.000Z",
+          })),
+          adjustments: { axes: {}, themes: {} },
+          policies: {
+            preferCompleted: false,
+            preferHidden: false,
+            preferVerified: false,
+            excludeIncomplete: false,
+          },
+        },
+        workId,
+      );
+      if (recommendation === null) throw new Error("Expected a scored catalog work");
+      expect(recommendation.bestAnchorId).toBe(anchorId);
+      const input = { ...recommendation, lexicon: explanationLexicon };
+      const explanation = generateTasteExplanation({
+        ...input,
+        resolveTitle: (id) => works.get(id)?.title,
+      });
+      const reason = explanation.positiveReasons.find((entry) => entry.factorId === axis);
+      expect(reason?.text).toBe(
+        `『${works.get(anchorId)?.title}』と「${explanationLexicon.factorLabels[axis]}」の度合いが近い作品です。`,
+      );
+      expect(reason?.value).toBeGreaterThan(0);
+      const withoutTitle = generateTasteExplanation({ ...input, resolveTitle: () => undefined });
+      expect(withoutTitle.positiveReasons.find((entry) => entry.factorId === axis)?.text).toBe(
+        `「${explanationLexicon.factorLabels[axis]}」の度合いが、好みの作品と近いと判定されています。`,
+      );
+    },
+  );
+
   it("adds only applied consensus supporters after rendered anchors without changing reasons", () => {
     const primary = tasteContribution({ anchorWorkIds: ["primary"] });
     const consensus = tasteContribution({
@@ -201,7 +263,7 @@ describe("Taste explanations", () => {
     expect(result.caution).toBeUndefined();
     expect(result.anchors).toEqual([{ workId: "positive-anchor", title: "好きな作品" }]);
     expect(result.positiveReasons[0]?.text).toBe(
-      "『好きな作品』で好きだった「ギャグ・コメディ」に近い作品です。",
+      "『好きな作品』と「ギャグ・コメディ」の度合いが近い作品です。",
     );
   });
 
@@ -267,7 +329,7 @@ describe("Taste explanations", () => {
     ]);
     expect(result.caution).toEqual({
       kind: "caution",
-      text: "ただし「頭脳で解決する展開」は、『比較作品』で好きだった傾向と少し異なります。",
+      text: "ただし「頭脳で解決する展開」の傾向は、『比較作品』と異なります。",
       source: "similarity",
       group: "narrative",
       factorId: "problemSolving",
@@ -317,7 +379,7 @@ describe("Taste explanations", () => {
     expect(result.positiveReasons.map(({ factorId }) => factorId)).toEqual(["adventure"]);
     expect(result.positiveReasons[0]?.text).toBe("DNAで好みに設定した「冒険」が描かれる作品です。");
     expect(result.caution?.factorId).toBe("darkness");
-    expect(result.caution?.text).toBe("ただし「物語の重さ」は、あなたの好みと少し異なります。");
+    expect(result.caution?.text).toBe("ただし「物語の重さ」の傾向は、好みの作品と異なります。");
   });
 
   it("states that a low Axis matches an explicit lower preference", () => {
@@ -418,7 +480,7 @@ describe("Taste explanations", () => {
     expect(result.positiveReasons.map(({ text }) => text)).toEqual([
       "『作品A』と同じ「ファンタジー」の作品です。",
       "「復讐」も『作品A』と共通しています。",
-      "「世界観の作り込み」も『作品A』と共通しています。",
+      "「世界観の作り込み」の度合いも『作品A』と近い作品です。",
     ]);
   });
 

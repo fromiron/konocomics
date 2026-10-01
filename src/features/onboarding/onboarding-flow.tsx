@@ -588,6 +588,9 @@ export function OnboardingFlow({
       void complete(false);
       return;
     }
+    onQueryChange?.("");
+    setStepOneSearch(STEP_ONE_SEARCH_EMPTY);
+    setStepTwoSearch(STEP_TWO_SEARCH_EMPTY);
     updateDraft({ ...draft, step: 2 });
   };
 

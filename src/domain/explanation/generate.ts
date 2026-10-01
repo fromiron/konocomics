@@ -179,8 +179,13 @@ function positiveTemplateIdFor(
     if (contribution.axisPreferenceDirection === "lower") return "positiveLowerAxisAdjustment";
     return contribution.group === "theme" ? "positiveThemeAdjustment" : "positiveAxisAdjustment";
   }
-  if (anchorTitle === undefined) return "positiveWithoutAnchor";
-  if (anchorAlreadyNamed) return "positiveRepeatedAnchor";
+  const isAxis = contribution.group !== "genre" && contribution.group !== "theme";
+  if (anchorTitle === undefined) {
+    return isAxis ? "positiveAxisWithoutAnchor" : "positiveWithoutAnchor";
+  }
+  if (anchorAlreadyNamed) {
+    return isAxis ? "positiveRepeatedAxisWithAnchor" : "positiveRepeatedAnchor";
+  }
   if (contribution.group === "genre") return "positiveGenreWithAnchor";
   if (contribution.group === "theme") return "positiveThemeWithAnchor";
   return "positiveWithAnchor";

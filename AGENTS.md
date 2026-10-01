@@ -38,7 +38,7 @@
 - **데이터 없음 ≠ 불호:** `unknown` 팩터는 유사도·감점·보정 어디에도 수치로 쓰지 않는다. Coverage 미달 그룹은 0.5로 수축만 하고 **가중치를 다른 그룹에 재분배하지 않는다.**
 - **런타임 LLM 권한 금지.** 런타임 추천·순위·설명 생성에 LLM API를 호출하지 않는다. 원시 오프라인 모델 출력은 `09`의 격리된 candidate일 뿐이다. 다만 사용자가 2026-09-01 승인한 `authorizedEvidencePanel`은 `docs/catalog-expansion/02-authorized-evidence-panel-v1.md`의 동결 근거·claim 재판정·manifest 계약을 전부 통과한 별도 오프라인 adjudication artifact에 한해 신규 Catalog 판정 권한을 가진다. 사람 검수로 표시하지 않는다.
 - **서버 경계:** 서버 코드는 TanStack Start server route의 `/api/rakuten/search`·`/api/rakuten/item` 둘뿐. 임의 server function·새 server route·runtime database·auth·runtime LLM 추가 금지. `09`의 tracked SQLite authority와 OS 임시 shadow는 빌드 타임에만 존재하며 `08` §3의 route별 SSR/client 경계를 바꾸지 않는다.
-- **의존성 추가 금지(허용 목록 외):** TanStack Start/Router, Vite/React plugin/Nitro, react, tailwindcss v4, shadcn Base UI 계열, motion, zod, dexie(+react-hooks), fuse.js, tsx, csv-parse, vitest, @testing-library/*, playwright. 그 외가 필요하면 **추가하지 말고 사유를 남기고 사용자에게 물어라.** React Bits·NumberFlow·Embla·Swiper·AutoAnimate·GSAP·TanStack Query·Zustand·next-themes는 추가하지 않는다. 별도 G2 harness의 동결된 Next dependency는 제품 M9와 격리한다.
+- **의존성 추가 금지(허용 목록 외):** TanStack Start/Router, Vite/React plugin/Nitro, react, tailwindcss v4, shadcn Base UI 계열, motion, zod, dexie(+react-hooks), fuse.js, tsx, csv-parse, vitest, @testing-library/*, playwright. 그 외가 필요하면 **추가하지 말고 사유를 남기고 사용자에게 물어라.** React Bits·NumberFlow·Embla·Swiper·AutoAnimate·GSAP·TanStack Query·Zustand·next-themes는 추가하지 않는다(React Bits는 2026-10-01 사용자 결정으로 효과 레퍼런스로만 쓰고 Motion·CSS로 자작한다, `04` §7). 별도 G2 harness의 동결된 Next dependency는 제품 M9와 격리한다.
 - **UI primitive:** shadcn CLI의 Base UI 기반 primitive를 필요한 것만 `src/components/ui/**`에 생성하고, 시맨틱 dark token과 접근성 기본값은 `src/components/design-system/**` wrapper에서 적용한다. route/feature가 생성 primitive를 직접 소비하지 않는다.
 - **dark-only:** theme selector와 전역 light theme을 만들지 않는다. 2026-09-11 사용자가 선택한 판매순 발견 배너와 상세 근거 배너에만 밝은 `--discovery-*`·`--evidence-surface` 표면·텍스트 토큰을 허용한다. 확정 primary는 `oklch(0.76 0.11 72)`이며 accent 위 텍스트는 어두운 `--on-accent`를 쓴다.
 - **표지 이미지:** 원본 비율 유지(크롭·누끼·텍스트 합성 금지), 블러 배경은 동일 URL + `aria-hidden`, 자체 저장소 복제 금지. `_ex` 확대는 로드 실패 시 200x200 폴백 필수.
@@ -103,7 +103,7 @@ pnpm --silent experiment:baseline # Taste vs Baseline CLI 비교 리포트(stdou
 - TypeScript strict. `any`·`as` 캐스팅 지양, 경계(외부 API·파일·Import)는 반드시 zod 파싱.
 - 의존 방향: `routes → features → domain`, `features → infrastructure`. **domain은 아무것도 import하지 않는다.** 컴포넌트에서 Dexie 직접 접근 금지(`infrastructure/db` 훅 래퍼 경유).
 - 스타일은 Tailwind + `globals.css`의 시맨틱 토큰(`04` §2)만 사용. 임의 hex·px 매직넘버로 토큰을 우회하지 않는다. `--accent`는 의미 있는 곳(로고 kono·mi, 상위 취향, 주요 CTA, 선택, focus)에만.
-- 모션은 `04` §6의 분류 A~F 중 하나에 속해야 하며, 상시 루프 애니메이션 금지, `prefers-reduced-motion` 폴백 필수.
+- 모션은 `04` §6의 분류 A~G 중 하나에 속해야 하며(G는 허용 목록의 위치만), 상시 루프 애니메이션 금지(loading skeleton 예외). `prefers-reduced-motion`은 모션을 끄는 것이 아니라 `04` §6 대체 원칙(이동·확대·포인터 추적·반복 제거, opacity·색 변화 유지)을 따른다.
 - 테스트는 `07`의 계약 목록이 기준이다. fixed 5 product E2E를 늘리거나 새 visual-regression infrastructure를 만들지 않고 기존 fixture·테스트를 migration 회귀에 재사용한다.
 - 접근성 기본선: focus-visible 링, 터치 타깃 ≥44px, 장식 요소 `aria-hidden`, 확인된 FactorBar는 `role="meter"`, 미확인 축은 이름 있는 비수치 상태, 리스트 변경 `aria-live` — 상세는 `03` 각 화면.
 

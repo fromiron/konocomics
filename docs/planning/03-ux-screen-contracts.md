@@ -9,6 +9,8 @@
 
 제품은 dark-only다. light mode와 theme selector를 렌더하지 않는다.
 
+전역 미등록 URL은 HTTP 404와 「ページが見つかりません」·홈 복귀 링크를 제공한다. 유효하지 않은 Catalog 작품 ID는 작품 상세 전용 「作品が見つかりません」 안내를 유지한다.
+
 ### 구조
 
 - `>=768px`: dark 상단 GNB만 표시한다. 좌측 로고(**kono**co**mi**cs), 우측 `おすすめ`(/recommendations), `DNA`(/taste), `ライブラリ`(/library), `設定`(/settings)을 둔다.
@@ -91,9 +93,10 @@ CTA **「好きなマンガから始める」** → /onboarding. 행동은 이 �
 ### 인터랙션·모션
 
 - Slice 10은 정적 로고와 직접 피드백만 구현한다. 랜딩 reveal·페이지 진입 모션은 Slice 11 전용이다.
-- Slice 11 로고 reveal은 일반 first-run의 resolved introduction에서 세션당 1회, 총 1.4초 이내로만 실행한다. 최종 2톤 로고·`好み` 캡션·태그라인·설명·CTA는 resolved introduction의 첫 paint부터 최종 DOM에 존재하며 CTA는 항상 조작 가능하다. 2톤 base·태그라인·설명·CTA는 시각 최종 상태를 유지하고, 고정 웨이트 단색 오버레이와 캡션만 움직인다.
+- Slice 11 로고 reveal은 일반 first-run의 resolved introduction에서 세션당 1회, 총 1.8초 이내로만 실행한다(2026-10-01 태그라인 글자 등장 추가, `04` §5.1). 최종 2톤 로고·`好み` 캡션·태그라인·설명·CTA는 resolved introduction의 첫 paint부터 최종 DOM에 존재하며 CTA는 항상 조작 가능하다. 2톤 base·설명·CTA는 시각 최종 상태를 유지하고, 고정 웨이트 단색 오버레이·캡션·태그라인 글자만 움직인다. 태그라인 heading의 accessible name은 문장 전체이며 글자 span은 `aria-hidden`이다.
+- 2026-10-01 `04` §6 G: hero·마무리 CTA는 fine pointer hover에서 마그넷(최대 x 10px·y 6px), 클릭 시 확정 스파크를 쓴다. 「例」 카드는 fine pointer hover에서 기울기·광택을 쓴다. 터치에서는 D press만 쓴다.
 - 탭/클릭·키 입력·휠/스크롤은 기본 동작을 소비하지 않고 reveal만 즉시 완료한다. 완료·스킵·`pagehide`·unmount에서는 controls·timer·pending continuation과 모든 listener를 정리한다.
-- reduced-motion: reveal 생략, 정적 2톤 로고.
+- reduced-motion: `04` §6 대체 원칙. 로고 overlay·태그라인·캡션은 이동·글자 분할 없이 opacity로만 600ms 이내에 나타나고, 마그넷·기울기·스파크는 없다.
 
 ### 수용 기준
 
@@ -155,11 +158,11 @@ CTA **「好きなマンガから始める」** → /onboarding. 행동은 이 �
 
 - 키보드: 카드로 Tab 이동, Enter/Space 선택 토글. Shelf 내 좌우 화살표로 이동(roving tabindex). 검색 입력 `/` 단축키 없음(일본어 IME 간섭 방지). collection trigger는 포커스를 유지하고, Tab으로 같은 페이지의 named panel에 진입한다. 포커스를 panel로 옮기지 않는다.
 - 작품 카드에 `aria-pressed` 상태. 선택 시 「選択済み」 어나운스. collection trigger는 `aria-expanded`이며 `aria-pressed`를 쓰지 않는다.
-- collection trigger·panel 컨트롤은 44px, `focus-visible` 링, 장식 `aria-hidden`, `prefers-reduced-motion`에서 panel 입장 모션 생략.
+- collection trigger·panel 컨트롤은 44px, `focus-visible` 링, 장식 `aria-hidden`, `prefers-reduced-motion`에서는 panel 입장의 이동을 생략하고 160ms opacity만 쓴다.
 
 ### 모션
 
-선택 시 카드 → tray로의 fly-to 애니메이션은 **하지 않는다**(구현·성능 대비 가치 낮음). tray 내 썸네일 등장은 Motion layout(200ms spring). 카드 선택 피드백은 120ms scale 0.97→1 + 체크 페이드.
+선택 시 카드 → tray로의 fly-to 애니메이션은 **하지 않는다**(구현·성능 대비 가치 낮음). tray 내 썸네일 등장은 Motion layout(200ms spring). 카드 선택 피드백은 120ms scale 0.97→1 + 체크 페이드. 2026-10-01부터 선택이 draft에 반영되는 순간 체크 오버레이에 확정 스탬프(scale 1→1.06→1, 220ms)를 한 번 주고 확정 스파크(`04` §6 G)를 함께 쓴다. 선택 해제·10개 한도 거절에는 쓰지 않는다. reduced-motion은 스탬프·스파크 없이 체크를 120ms opacity로 표시한다.
 
 ### 수용 기준
 
@@ -213,6 +216,7 @@ CTA **「好きなマンガから始める」** → /onboarding. 행동은 이 �
 - 0개 선택: 「スキップ」가 시각적 주 버튼.
 - 이유 미선택 negative 작품: 선택한 disposition의 reason bucket에 `vagueDislike`로 저장됨을 카드에 소문구로 표시 「理由なし = 弱くだけ反映されます」.
 - STEP 1에서 선택한 작품은 검색 결과에서 「好きに選択済み」 배지와 함께 비활성.
+- STEP 1의 `次へ`로 STEP 2에 진입할 때 URL `q`와 검색 입력·결과를 비운다. 좋아한 작품 검색어가 불호 작품 검색으로 전달되지 않아야 하며, 선택한 작품과 감상은 유지한다. STEP 2 안에서의 검색·URL 복원은 기존 규칙을 따른다.
 - 중단·복귀: `OnboardingDraft.negativeEntries[]`의 disposition과 reason id를 함께 저장하고 그대로 복원한다.
 
 ### 인터랙션·접근성
@@ -285,7 +289,8 @@ CTA **「好きなマンガから始める」** → /onboarding. 행동은 이 �
 - 각 범주의 disclosure는 범주명을 포함한 accessible name, `aria-expanded`, `aria-controls`, visible focus를 가진 44px 이상 button이다. 장르는 분석 내역을 여는 의미를 사용한다. URL의 열린 범주가 바뀌어도 button을 다시 마운트하지 않아 포커스를 유지하며, 접힌 상세의 control은 accessibility tree에서 제외한다.
 - 보정 선택은 `「{factor}」のおすすめへの反映を設定` 형식의 이름을 가진 radiogroup이며 각 선택은 44px 이상 target, visible label, outline/filled marker, `aria-checked`, visible focus를 제공한다. 선택 상태는 색만으로 전달하지 않는다. 미확인 막대는 가짜 0을 넣지 않고, 축 이름과 「まだ分析中」을 함께 읽는 비수치 group 상태로 노출한다.
 - 미리보기에서 현재 목록은 같은 컴포넌트 위치·작품 key를 유지한다. 갱신 상태 문장만 `aria-live`로 알리고 전체 작품 목록을 반복 낭독하거나 갱신을 이유로 보정 radio의 focus·스크롤을 강제로 이동하지 않는다. 키보드로 선택한 칩은 표시 레이블과 4px focus outline까지 스크롤 영역 안에 드러내며, 저장 스낵바가 현재 포커스와 실제로 겹칠 때만 스크롤로 가림을 해소한다. 포커스 대상은 바꾸지 않는다. 사용자에게 raw work ID를 출력하지 않는다.
-- reveal 애니메이션은 정보 추가 없음 — reduced-motion 시 즉시 완성 상태.
+- reveal 애니메이션은 정보 추가 없음 — reduced-motion 시 `04` §5.2의 opacity 대체 시퀀스(600ms 이내)로 같은 정보를 보인다.
+- 2026-10-01: 상시 진입에서도 「好みの軸」·범주 상세의 FactorBar는 mount마다 처음 뷰포트에 들어올 때 한 번 0→값으로 채워진다(`04` §6 E 진입 채움). 헤더의 분석 작품 수는 reveal에서 정수 count-up하며 DNA 축 값은 숫자로 표시하지 않는다. 진입 채움 중에도 `aria-valuenow`·`aria-valuetext`는 처음부터 최종 값이다.
 
 ### Manga DNA 카드 (2026-09-29 개선 계획 Phase 2)
 
@@ -466,7 +471,7 @@ Shelf grouping은 presentation-only selector다. main Shelf 사이에는 work ID
 
 ### 모션
 
-카드 제거/백필은 해당 Shelf owner의 C만 사용한다. featured card는 desktop fine pointer hover/focus에서 article 경계를 바꾸지 않고 표지 stage·reason max-height·action rail을 400ms로 함께 전환한다. Discovery resolved 표지의 원→직사각형은 사용자 요청의 좁은 D 예외로 `clip-path`만 240ms ease-in-out 전환하고, 카드 표면색은 personalized Top 10과 같은 240ms ease-out을 쓴다. card/캐러셀 shadow와 generic hover Y축 lift는 사용하지 않는다. reduced-motion은 같은 최종 상태를 즉시 표시한다. Quick Preview는 진입 keyframe 없이 최종 상태로 열린다. 추천 화면에는 B 페이지 진입 모션을 적용하지 않는다.
+카드 제거/백필은 해당 Shelf owner의 C만 사용한다. featured card는 desktop fine pointer hover/focus에서 article 경계를 바꾸지 않고 표지 stage·reason max-height·action rail을 400ms로 함께 전환한다. Discovery resolved 표지의 원→직사각형은 사용자 요청의 좁은 D 예외로 `clip-path`만 240ms ease-in-out 전환하고, 카드 표면색은 personalized Top 10과 같은 240ms ease-out을 쓴다. card/캐러셀 shadow와 generic hover Y축 lift는 사용하지 않는다. 2026-10-01 `04` §6 G: Featured 카드는 fine pointer hover에서 기울기·광택을 쓰고 기존 hover geometry 전환과 같은 family로 센다. 「読みたい」 저장 성공에는 확정 스탬프·스파크를 쓴다. 카드·Anchor 패널·Quick Preview의 lead reason은 `04` §2.9 말풍선으로 감싼다. reduced-motion은 `04` §6 대체 원칙에 따라 같은 최종 상태를 이동 없이 표시하고, C 제거·백필은 160ms opacity 크로스페이드다. Quick Preview는 진입 keyframe 없이 최종 상태로 열린다. 추천 화면에는 B 페이지 진입 모션을 적용하지 않는다.
 
 ### 수용 기준
 
@@ -561,6 +566,7 @@ Catalog 작품은 추천 근거를 깊이 확인하고 구매(라쿠텐)로 연�
 
 - 유효 Catalog 상세의 resolved content와 `found` external 상세의 resolved content에만 B를 적용한다. Catalog는 `workId`, external은 immutable external ID가 바뀐 새 route mount에서 다시 실행할 수 있다. loading·invalid-link·local-missing·corrupt·unavailable·error에는 적용하지 않는다.
 - 블러 배경과 표지 교체는 정적이며 이미지 load opacity fade를 적용하지 않는다.
+- 2026-10-01: 「あなたとの相性」 패널은 fine pointer hover에서 스포트라이트(`04` §6 G)를 쓰고, 패널의 이유는 `04` §2.9 말풍선으로 감싼다. 「読みたい」 저장 성공에는 확정 스탬프·스파크를 쓴다. reduced-motion에서는 스포트라이트·스파크 없이 상태만 바꾼다.
 
 ### 수용 기준
 

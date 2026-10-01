@@ -1,5 +1,7 @@
 import "@tanstack/react-start/server-only";
 
+import { securityHeaders } from "@/lib/site-metadata";
+
 import {
   fetchRakutenBooks,
   RAKUTEN_CDN_CACHE_CONTROL,
@@ -8,8 +10,10 @@ import {
 } from "./server";
 import { rakutenIsbnSchema, rakutenTitleQuerySchema } from "./schema";
 
-const invalidRequest = () => Response.json({ error: "invalid_request" }, { status: 400 });
-const providerUnavailable = () => Response.json({ error: "provider_unavailable" }, { status: 502 });
+const invalidRequest = () =>
+  Response.json({ error: "invalid_request" }, { status: 400, headers: securityHeaders });
+const providerUnavailable = () =>
+  Response.json({ error: "provider_unavailable" }, { status: 502, headers: securityHeaders });
 
 export async function handleRakutenSearch(request: Request): Promise<Response> {
   const parameters = new URL(request.url).searchParams;
@@ -28,7 +32,10 @@ export async function handleRakutenSearch(request: Request): Promise<Response> {
 
   try {
     const items = await fetchRakutenBooks(query, credentials, request);
-    return Response.json({ items }, { headers: { "Cache-Control": RAKUTEN_CDN_CACHE_CONTROL } });
+    return Response.json(
+      { items },
+      { headers: { ...securityHeaders, "Cache-Control": RAKUTEN_CDN_CACHE_CONTROL } },
+    );
   } catch {
     return providerUnavailable();
   }
@@ -50,7 +57,10 @@ export async function handleRakutenItem(request: Request): Promise<Response> {
     const listing = listings.find((candidate) => candidate.isbn === isbn.data);
     return listing === undefined
       ? providerUnavailable()
-      : Response.json({ listing }, { headers: { "Cache-Control": RAKUTEN_CDN_CACHE_CONTROL } });
+      : Response.json(
+          { listing },
+          { headers: { ...securityHeaders, "Cache-Control": RAKUTEN_CDN_CACHE_CONTROL } },
+        );
   } catch {
     return providerUnavailable();
   }

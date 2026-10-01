@@ -400,6 +400,8 @@ async function completeKeyboardOnboarding(
     .toBe(8);
 
   await observations.beforeStepTwo?.(page);
+  await positiveSearch.fill("MONSTER");
+  await expect(page).toHaveURL(/q=MONSTER/u);
   const next = await tabUntil(page, /^\s*次へ \(8\/10\)\s*$/u);
   expect(next.disabled).toBe(false);
   await page.keyboard.press("Enter");
@@ -414,6 +416,8 @@ async function completeKeyboardOnboarding(
   await page.keyboard.press("Tab");
   const negativeSearch = page.getByRole("searchbox", { name: "合わなかったマンガを検索" });
   await expect(negativeSearch).toBeFocused();
+  await expect(negativeSearch).toHaveValue("");
+  await expect(page).not.toHaveURL(/[?&]q=/u);
   await page.keyboard.type("MONSTER");
   const candidateGroup = page.getByRole("group", { name: "MONSTER — この作品について" });
   await expect(candidateGroup).toBeVisible();

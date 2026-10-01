@@ -83,6 +83,8 @@ describe("Rakuten Route Handlers", () => {
     ]) {
       const response = await searchItems(new Request(url));
       expect(response.status).toBe(400);
+      expect(response.headers.get("x-content-type-options")).toBe("nosniff");
+      expect(response.headers.get("content-security-policy")).toContain("frame-ancestors 'none'");
       await expect(response.json()).resolves.toEqual({ error: "invalid_request" });
     }
     expect(providerFetch).not.toHaveBeenCalled();
@@ -98,6 +100,7 @@ describe("Rakuten Route Handlers", () => {
         new Request(`http://localhost/api/rakuten/item?isbn=${encodeURIComponent(isbn)}`),
       );
       expect(response.status).toBe(400);
+      expect(response.headers.get("x-frame-options")).toBe("DENY");
       await expect(response.json()).resolves.toEqual({ error: "invalid_request" });
     }
     expect(providerFetch).not.toHaveBeenCalled();

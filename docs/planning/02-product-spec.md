@@ -482,7 +482,7 @@ type RecommendationWorkMarketSignal = {
 - 소스는 실제 기여도 상위 항목만. 그룹/Cluster당 최대 1개.
 - Cluster: `tacticalThinking(problemSolving, strategy, mysteryReveal)` / `relationshipAppeal(characterArcWeight, relationshipStructure)` / `toneLoad(darkness, mentalStress)`.
 - "주의할 차이"는 best Anchor 대비 전역 최대 음(−) similarity 하나만 후보로 삼는다. 해당 후보가 없거나 아래 group/Cluster 경쟁에서 탈락하면 생략한다.
-- 템플릿 기반 일본어 문장. 예: `『{anchorTitle}』で好きだった「{factorLabel}」に近い作品です。` / 차이: `ただし「{factorLabel}」は、あなたの好みと少し異なります。`
+- 템플릿 기반 일본어 문장. Axis similarity는 특성의 **정도**가 가까운 근거다. `0↔0`이나 중간값의 일치도 양의 기여도를 만들므로 해당 특성이 강하거나 사용자가 그 특성 때문에 작품을 좋아했다고 단정하지 않는다. 예: `『{anchorTitle}』と「{factorLabel}」の度合いが近い作品です。`
 - `axisPreferenceDirection=lower`인 양(+)의 Axis adjustment는 `「{factorLabel}」が控えめな点が、DNAで設定した好みに合います。`로 렌더링한다. 낮은 Axis 값이 `控えめに` 선호와 맞는다는 뜻이며, factor가 많아서 맞는다는 일반 positive 문장으로 바꾸지 않는다.
 - 2026-09-29 개선 계획 Phase 1: 선택된 contribution·순서·개수는 그대로 두고, 이미 contribution이 가진 사실만으로 positive 문장 유형을 고른다. 추천 점수·순위·근거 선택은 바꾸지 않는다.
 
@@ -490,14 +490,17 @@ type RecommendationWorkMarketSignal = {
   |---|---|---|
   | `similarity`, 제목 해결, `group=genre` | `positiveGenreWithAnchor` | `『{anchorTitle}』と同じ「{factorLabel}」の作品です。` |
   | `similarity`, 제목 해결, `group=theme` | `positiveThemeWithAnchor` | `『{anchorTitle}』と同じく「{factorLabel}」が描かれます。` |
-  | `similarity`, 제목 해결, 그 밖의 group | `positiveWithAnchor` | `『{anchorTitle}』で好きだった「{factorLabel}」に近い作品です。` |
-  | `similarity`, 같은 카드의 앞선 positive가 같은 작품명을 이미 썼음 | `positiveRepeatedAnchor` | `「{factorLabel}」も『{anchorTitle}』と共通しています。` |
-  | `similarity`, 제목 미해결 | `positiveWithoutAnchor` | `「{factorLabel}」があなたの好みに合う作品です。` |
+  | `similarity`, 제목 해결, 그 밖의 group | `positiveWithAnchor` | `『{anchorTitle}』と「{factorLabel}」の度合いが近い作品です。` |
+  | `similarity`, 같은 카드에서 같은 작품명 재등장, Genre/Theme | `positiveRepeatedAnchor` | `「{factorLabel}」も『{anchorTitle}』と共通しています。` |
+  | `similarity`, 같은 카드에서 같은 작품명 재등장, Axis | `positiveRepeatedAxisWithAnchor` | `「{factorLabel}」の度合いも『{anchorTitle}』と近い作品です。` |
+  | `similarity`, 제목 미해결, Genre/Theme | `positiveWithoutAnchor` | `「{factorLabel}」が好みの作品と共通しています。` |
+  | `similarity`, 제목 미해결, Axis | `positiveAxisWithoutAnchor` | `「{factorLabel}」の度合いが、好みの作品と近いと判定されています。` |
   | `adjustment`, Axis `higher` | `positiveAxisAdjustment` | `DNAで好みに設定した「{factorLabel}」がしっかりある作品です。` |
   | `adjustment`, Theme | `positiveThemeAdjustment` | `DNAで好みに設定した「{factorLabel}」が描かれる作品です。` |
   | `adjustment`, Axis `lower` | `positiveLowerAxisAdjustment` | 위 문장 |
 
   Genre similarity가 양(+)이면 두 작품 모두 그 장르를 가진 경우이고, Theme similarity가 양(+)이면 비슷한 중심도로 공유한 경우이므로 「同じ」 표현은 contribution 정의에서 나온다. 첫 이유는 항상 작품명을 온전히 쓰므로 관점 선반(행 제목의 작품명·레이블 포함)과 Anchor 패널 강조 계약은 유지된다. G2·Taste-vs-Baseline 실험 도구는 기록된 문장을 재현하도록 `frozenExperimentExplanationLexicon`(개선 전 문구)을 사용한다.
+- 2026-10-01 리뷰 개선: Axis의 첫 이유·반복 이유·제목 미해결 문구 모두 정도 비교를 유지한다. caution도 `ただし「{factorLabel}」の傾向は、『{anchorTitle}』と異なります。`로 근거 작품과의 차이만 설명한다. 차이의 크기를 일률적으로 「少し」라 축소하거나 특정 선호 원인을 추정하지 않는다. 점수·순위·기여도 identity·선택 순서와 동결 실험 문구는 유지한다.
 - 각 추천 결과는 `contributions[]`(팩터·그룹별 기여값)를 함께 반환하며, 설명은 이 배열에서만 생성한다. 테스트로 강제한다(`07` §2).
 
 선택·렌더링 계약:

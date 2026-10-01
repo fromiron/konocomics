@@ -69,23 +69,24 @@ const baselineExplanationTemplates = {
   baselineMaturity: "刊行の蓄積を順位に反映しています。",
 } as const;
 
-/** Product copy for recommendation reasons (02 §6.8). */
+/** Product copy for recommendation reasons (02 §6.9). */
 export const explanationLexicon = {
   factorLabels: explanationFactorLabels,
   clusterLabels: explanationClusterLabels,
   confidenceLabels: explanationConfidenceLabels,
   templates: {
-    positiveWithAnchor: "『{anchorTitle}』で好きだった「{factorLabel}」に近い作品です。",
+    positiveWithAnchor: "『{anchorTitle}』と「{factorLabel}」の度合いが近い作品です。",
     positiveGenreWithAnchor: "『{anchorTitle}』と同じ「{factorLabel}」の作品です。",
     positiveThemeWithAnchor: "『{anchorTitle}』と同じく「{factorLabel}」が描かれます。",
     positiveRepeatedAnchor: "「{factorLabel}」も『{anchorTitle}』と共通しています。",
-    positiveWithoutAnchor: "「{factorLabel}」があなたの好みに合う作品です。",
+    positiveRepeatedAxisWithAnchor: "「{factorLabel}」の度合いも『{anchorTitle}』と近い作品です。",
+    positiveWithoutAnchor: "「{factorLabel}」が好みの作品と共通しています。",
+    positiveAxisWithoutAnchor: "「{factorLabel}」の度合いが、好みの作品と近いと判定されています。",
     positiveAxisAdjustment: "DNAで好みに設定した「{factorLabel}」がしっかりある作品です。",
     positiveThemeAdjustment: "DNAで好みに設定した「{factorLabel}」が描かれる作品です。",
     positiveLowerAxisAdjustment: "「{factorLabel}」が控えめな点が、DNAで設定した好みに合います。",
-    cautionSimilarityWithAnchor:
-      "ただし「{factorLabel}」は、『{anchorTitle}』で好きだった傾向と少し異なります。",
-    cautionSimilarityWithoutAnchor: "ただし「{factorLabel}」は、あなたの好みと少し異なります。",
+    cautionSimilarityWithAnchor: "ただし「{factorLabel}」の傾向は、『{anchorTitle}』と異なります。",
+    cautionSimilarityWithoutAnchor: "ただし「{factorLabel}」の傾向は、好みの作品と異なります。",
     ...baselineExplanationTemplates,
   },
 } as const satisfies ExplanationLexicon;
@@ -103,7 +104,10 @@ export const frozenExperimentExplanationLexicon = {
     positiveGenreWithAnchor: "『{anchorTitle}』で好きだった「{factorLabel}」に近い作品です。",
     positiveThemeWithAnchor: "『{anchorTitle}』で好きだった「{factorLabel}」に近い作品です。",
     positiveRepeatedAnchor: "『{anchorTitle}』で好きだった「{factorLabel}」に近い作品です。",
+    positiveRepeatedAxisWithAnchor:
+      "『{anchorTitle}』で好きだった「{factorLabel}」に近い作品です。",
     positiveWithoutAnchor: "「{factorLabel}」があなたの好みに合う作品です。",
+    positiveAxisWithoutAnchor: "「{factorLabel}」があなたの好みに合う作品です。",
     positiveAxisAdjustment: "「{factorLabel}」があなたの好みに合う作品です。",
     positiveThemeAdjustment: "「{factorLabel}」があなたの好みに合う作品です。",
     positiveLowerAxisAdjustment: "「{factorLabel}」が控えめな点が、あなたの好みに合う作品です。",
@@ -265,6 +269,9 @@ export const routeBoundaryStrings = {
   errorTitle: "ページを表示できません",
   errorDescription: "一時的な問題が発生しました。もう一度お試しください。",
   retry: "再試行",
+  notFoundTitle: "ページが見つかりません",
+  notFoundDescription: "URLを確認するか、ホームから作品を探してください。",
+  home: "ホームへ戻る",
 } as const;
 
 export const designSystemStrings = {

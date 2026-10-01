@@ -94,17 +94,17 @@
 
 ### 2.5 인터랙션 상태 (전 컴포넌트 공통)
 
-- hover(포인터만): outline/ghost는 `--surface-hover`, 주요 accent CTA는 `--accent-hover`, 탐색 카드는 background·shadow 또는 컴포넌트 고유 상태로 반응한다. **hover로 border color를 바꾸는 패턴은 전역 금지**이며 border 상태는 selected·validation·keyboard focus처럼 hover가 아닌 의미 상태에만 쓴다. 장식적인 generic Y축 lift는 전역에서 사용하지 않는다. 카드 확장·ranking accessory 이동·preview disclosure처럼 의미 있는 주 상태 전환만 spatial motion cue가 될 수 있다. `/onboarding`의 `コレクションから探す`는 compact 2열 disclosure trigger와 그 아래 하나의 full-width inline panel이다. 표지는 원본 비율을 유지하고 semantic token만 쓴다. Spotify Green·로고·음악 재생 UI·정확한 그래픽 복제는 하지 않는다. `--motion-duration-feedback` 120ms는 허용된 transform/opacity에만 적용하고 색·배경·그림자는 즉시 상태를 바꾼다.
+- hover(포인터만): outline/ghost는 `--surface-hover`, 주요 accent CTA는 `--accent-hover`, 탐색 카드는 background·shadow 또는 컴포넌트 고유 상태로 반응한다. **hover로 border color를 바꾸는 패턴은 전역 금지**이며 border 상태는 selected·validation·keyboard focus처럼 hover가 아닌 의미 상태에만 쓴다. 장식적인 generic Y축 lift는 전역에서 사용하지 않는다. 2026-10-01 사용자 결정으로 허용된 포스터형 카드의 포인터 기울기·광택(§6 G)은 lift가 아니며 §6 G의 위치·한도 안에서만 쓴다. 카드 확장·ranking accessory 이동·preview disclosure처럼 의미 있는 주 상태 전환만 spatial motion cue가 될 수 있다. `/onboarding`의 `コレクションから探す`는 compact 2열 disclosure trigger와 그 아래 하나의 full-width inline panel이다. 표지는 원본 비율을 유지하고 semantic token만 쓴다. Spotify Green·로고·음악 재생 UI·정확한 그래픽 복제는 하지 않는다. `--motion-duration-feedback` 120ms는 허용된 transform/opacity에만 적용하고 색·배경·그림자는 즉시 상태를 바꾼다.
 - active/press: scale 0.97, `--motion-duration-press` 80ms. 데스크톱 GNB 헤더 브랜드 링크만 좁은 예외로, press transform 없이 compact opacity 피드백을 쓴다.
 - focus-visible: 2px accent ring + 2px offset. **마우스 클릭에는 링 미표시.**
 - disabled: opacity 0.45 + `cursor: not-allowed`. 색만으로 구분하지 않고 레이블 유지.
 - selected: accent 보더 + 체크 오버레이(표지 카드) / `--accent-soft` 배경 + accent 보더·텍스트(칩). solid accent 채움은 주요 CTA에만 쓴다.
-- skeleton: `--line` 톤 펄스(1.2s), 카드 실루엣 그대로. 1초 개발 throttle 동안의 짧은 placeholder 노출은 허용한다. 스피너는 전역 치명 오류 재시도에만 쓴다.
+- skeleton: 카드 실루엣 그대로, `--line` 톤 바탕에 §3.2 스크린톤 망점을 얹고 밝은 띠가 1.2s 주기로 한 방향 통과하는 시머다(2026-10-01, 로딩 중 한정). reduced-motion에서는 띠 이동 없이 정적 망점 실루엣에 1.6s opacity 0.7↔1 변화만 둔다. 1초 개발 throttle 동안의 짧은 placeholder 노출은 허용한다. 스피너는 전역 치명 오류 재시도에만 쓴다.
 - empty state: 스크린톤 원 안에 아이콘 + 1줄 안내 + 1개 액션. 일러스트 신규 제작 없음. 유일한 예외는 `/library`의 전체 레코드 없음(overall-empty)뿐이며, 승인된 image-half empty-state로 기존 메시지 1개 + `作品を追加` 1개만 유지한다. 검색·탭·세그먼트 empty와 다른 화면에는 적용하지 않는다.
 - functional contextual image banners: 상태/기능/CTA가 연결된 이미지 배너다. 필요한 기능 배너는 아래 §9의 장식 억제보다 상위 계약이며, 실제 상태·기능·기존 route CTA가 없는 순수 장식 배너는 계속 금지한다. `/recommendations` 후보 부족 full-shell만 허용한다. 나머지 닫는 안내는 공용 `SummarySection`(이미지 없음)을 쓴다. 장식 전용 hero가 아니며 이미지 속 텍스트는 쓰지 않는다. 좌측은 DOM copy·metrics·기존 route CTA, 우측은 장식 `img`(alt="", `aria-hidden`). Spotify Green/로고/재생 UI 복제는 하지 않는다. 상시 루프 모션은 없다.
 - error: `--warn` 좌측 보더의 인라인 박스. 토스트는 성공 알림에만.
 
-모션 값도 의미 역할로 소비한다: `--motion-duration-page` 160ms, `--motion-duration-floating-action` 200ms, `--motion-duration-value` 240ms, `--motion-duration-reveal-step` 400ms, `--motion-ease-direct` ease-out, `--motion-ease-value` ease-in-out, `--motion-ease-signature` cubic-bezier(0.2, 0, 0, 1). 이 값은 아래 A~F 분류를 대체하지 않고 구현 간 별칭 드리프트만 막는다. Top 10의 floating rank accessory는 `transform`·`opacity`만 200ms ease-out으로 전환하고 reduced motion에서는 이동 없이 즉시 상태를 바꾼다.
+모션 값도 의미 역할로 소비한다: `--motion-duration-page` 160ms, `--motion-duration-floating-action` 200ms, `--motion-duration-value` 240ms, `--motion-duration-reveal-step` 400ms, `--motion-ease-direct` ease-out, `--motion-ease-value` ease-in-out, `--motion-ease-signature` cubic-bezier(0.2, 0, 0, 1). 이 값은 아래 A~G 분류를 대체하지 않고 구현 간 별칭 드리프트만 막는다. Top 10의 floating rank accessory는 `transform`·`opacity`만 200ms ease-out으로 전환하고 reduced motion에서는 이동 없이 즉시 상태를 바꾼다.
 
 개인화 Top 10은 2026-09-10 사용자 승인에 따라 모든 순위 배경에 기존 프라이머리 `--accent`를 사용하고 숫자는 어두운 `--on-accent`로 표시한다. 1위만 숫자를 유지한 채 작은 장식 왕관을 배지 위에 추가한다. D 입력 피드백으로 fine-pointer hover·keyboard focus-visible 진입 시 배지가 먼저 나타나고, `--motion-delay-rank-crown` 150ms 후 왕관이 `--motion-duration-value` 240ms 동안 opacity·translate·scale로 한 번 튀어나와 정착한다. 이탈 시 숨기고 재진입 시 다시 한 번 재생하며 상시 반복하지 않는다. reduced-motion에서는 배지·왕관을 지연·이동 없이 즉시 표시한다. 왕관은 `aria-hidden`이며 순위 이름·상세 링크·카드 외곽 geometry는 유지한다.
 
@@ -113,7 +113,7 @@
 - 위 dark primitive + semantic 명칭이 migration 이후 권위다. 구현 원본은 framework-neutral global stylesheet의 `:root`이며 wide/narrow/reduced-motion에서 검증한다. 이전 light token과 `src/app/globals.css`는 migration baseline일 뿐 새 구현 권위가 아니다.
 - radius의 bounded 단계는 4px/8px 두 개다. 999px은 칩·원형 상태를 구별하기 위한 `pill-or-circle` 예외이고, 선택 표지 6px은 새 primitive가 아니라 `4px + 2px 선택 보더`의 파생값이다.
 - 그림자 1단, accent 1색, primary CTA 1종, secondary CTA 1종을 유지한다. 상태색 `--warn`은 장식 accent로 세지 않는다.
-- visual entropy 기본 모션 예산 2종을 이 프로젝트에 강제하지 않는다. §6의 A~F 6종은 reveal·문맥 전환·재배치·직접 입력·수치 변화·오류 인지라는 서로 다른 정보를 보존하므로 **검토가 필요한 명시적 예외**로 유지한다. 무한 ambient motion과 분류 밖 모션은 계속 0개다.
+- visual entropy 기본 모션 예산 2종을 이 프로젝트에 강제하지 않는다. §6의 A~G 7종(G는 2026-10-01 추가)은 reveal·문맥 전환·재배치·직접 입력·수치 변화·오류 인지라는 서로 다른 정보를 보존하므로 **검토가 필요한 명시적 예외**로 유지한다. 무한 ambient motion과 분류 밖 모션은 계속 0개다.
 - 기존 `design-token-budget.json`과 `design-token-proposal.html`은 light baseline의 역사 자료다. M7에서 dark token 구현값으로 다시 생성하기 전에는 현재 token 권위로 사용하지 않는다.
 
 ### 2.7 외부 모델 독립 리뷰 통합 기록 (2026-08-14)
@@ -135,6 +135,16 @@
 - scroll/dialog animation과 focus restoration은 React local state다. Quick Preview 대상만 deep-link 가치가 있어 `/recommendations?preview=<workId>`로 표현할 수 있다.
 - Shelf와 card 크기를 미리 예약한다. hover network fetch, autoplay, 스크롤 하이재킹은 없다.
 
+### 2.9 추천 이유 말풍선 (2026-10-01 사용자 결정)
+
+추천 이유는 「근거 있는 추천」을 보이는 제품의 핵심이므로 만화의 吹き出し 문법으로 감싼다. 정적 표현이며 모션이 아니다.
+
+- 적용처: 추천 Featured 카드의 lead reason, 관점 선반 Anchor 옆 패널의 lead reason, Quick Preview의 이유 목록, 작품 상세 「あなたとの相性」의 이유, 랜딩 「例」 카드의 lead reason. 주의할 차이(caution)는 말풍선이 아니라 기존 `--warn` 좌측 보더 블록을 유지해 이유와 구분한다.
+- 형태: `--surface-2` 바탕, `--line` 1px 보더, `--radius-card` 모서리, 안쪽 여백 `--space-3`/`--space-2`. 꼬리는 같은 바탕·보더의 10px 정사각형을 45° 회전해 위쪽 왼편(근거 작품 표지나 제목 쪽)에 둔다. 꼬리·보더는 장식이며 접근성 트리에 의미를 더하지 않는다.
+- 한 카드에 말풍선은 하나다. 이유가 여러 개인 Quick Preview·상세는 하나의 말풍선 안에 기존 목록 구조를 유지한다.
+- 고정 geometry 카드(Featured 344×448, mobile 272×356)는 말풍선의 여백만큼 reason 영역을 쓰되 최대 3줄 clamp·외곽 geometry·action rail 위치를 바꾸지 않는다. 표지 영역이 줄어드는 것은 허용하되 원본 비율 표지의 최소 높이는 현재 hover 축소 상태보다 작아지지 않는다.
+- 근거 작품명 강조(Anchor 패널)와 `data-contribution-summary` 등 기존 근거 대조 속성은 말풍선 안에서 그대로 유지한다.
+
 ---
 
 ## 3. 배경과 질감
@@ -152,12 +162,12 @@
 }
 ```
 
-- 적용처: 랜딩 hero 배경(마스크로 우상단→투명 페이드), 빈 상태 배경, DNA 요약 카드 배경. **본문·리스트 뒤에는 쓰지 않는다.**
+- 적용처: 랜딩 hero 배경(마스크로 우상단→투명 페이드), 빈 상태 배경, DNA 요약 카드 배경, 로딩 skeleton 실루엣(§2.5, 로딩 중 한정). **본문·리스트 뒤에는 쓰지 않는다.**
 - `aria-hidden` 불필요(배경 프로퍼티). 인쇄 망점의 시각 인용이며 konocomics 고유 질감으로 일관 사용.
 
 ---
 
-참고: 스크린톤 외의 질감·패턴·노이즈 텍스처는 도입하지 않는다.
+참고: 스크린톤 외의 질감·패턴·노이즈 텍스처는 도입하지 않는다. §6 G의 광택(glare)·스포트라이트는 포인터 위치를 따르는 일시적 조명 표현이며 상시 질감이 아니다. 공유용으로 내보내는 Manga DNA 카드 이미지(`03` §4)는 앱 표면이 아니므로 이 절의 적용 대상이 아니다.
 
 ## 4. 표지 표현
 
@@ -202,10 +212,11 @@
 - **자격:** usable profile이 아닌 일반 first-run의 resolved introduction에서만 세션당 1회 실행한다. `?landing=1`은 항상 정적이며 marker를 읽거나 쓰거나 지우지 않는다.
 - **marker:** `sessionStorage["logoRevealed"] = "1"`. absent 확인 뒤 write/readback을 마치고 font 대기·Motion 시작·timer/listener 등록보다 먼저 marker를 소유한다. read·write·readback 중 하나라도 실패하면 reveal 없이 최종 정적 상태를 표시한다.
 - **static-first 기본값:** 고정 300/700의 최종 2톤 wordmark, `好み`와 「kono + mi = このみ」 caption, 태그라인·설명·CTA가 resolved introduction의 첫 paint부터 최종 DOM에 존재한다. CSS 기본값과 enhancement 실패 상태는 전부 최종 시각 상태다. eligible A가 시작된 뒤에도 최종 2톤 base·태그라인·설명·CTA는 숨기거나 비활성화하지 않고 caption group만 아래 시퀀스의 opacity/transform을 적용한다.
-- **오버레이 시퀀스(총 1.4초 이내, Motion A):** 최종 2톤 base 위의 별도 고정 300 ink monochrome wordmark overlay만 opacity로 합성한다. 0–400ms에는 base가 계속 보이는 상태에서 overlay opacity가 등장하고, 400–900ms에는 overlay가 1→0으로 사라져 base를 드러낸다. 900–1400ms에는 caption group만 opacity와 `translateY(8px→0)`로 나타난다. font-weight·color·layout·tagline·description·CTA는 애니메이션하지 않는다.
+- **오버레이 시퀀스(총 1.8초 이내, Motion A):** 최종 2톤 base 위의 별도 고정 300 ink monochrome wordmark overlay만 opacity로 합성한다. 0–400ms에는 base가 계속 보이는 상태에서 overlay opacity가 등장하고, 400–900ms에는 overlay가 1→0으로 사라져 base를 드러낸다. 900–1400ms에는 caption group만 opacity와 `translateY(8px→0)`로 나타난다. font-weight·color·layout·description·CTA는 애니메이션하지 않는다.
+- **태그라인 글자 등장(2026-10-01, React Bits SplitText 참고):** 같은 A 안에서 150ms부터 태그라인 글자가 45ms 간격으로 `opacity 0→1` + `translateY(0.55em→0)`, 글자당 700ms `cubic-bezier(0.2,0.7,0.2,1)`로 나타나며 전체가 1.8초 안에 끝난다. 태그라인 문구 단위 줄바꿈(`03` §1)과 레이아웃 폭은 변하지 않는다. 접근성: 태그라인 heading은 전체 문장 하나를 accessible name으로 갖고, 글자 단위 span은 `aria-hidden`이다. 스크린리더가 글자를 하나씩 읽지 않는다. resolved introduction이 처음 그려질 때부터 숨겨진 상태로 시작해야 하며, 이미 보인 글자를 다시 숨기는 깜빡임을 만들지 않는다.
 - **font:** marker를 먼저 기록한 뒤 `document.fonts.ready`를 기다린다. API가 없거나 reject하면 최종 정적 상태다.
 - **스킵·정리:** pointer/tap/click·keydown·wheel/scroll은 `preventDefault`나 전파 차단 없이 즉시 완료한다. 자연 완료·스킵·`pagehide`·unmount는 controls·timer·pending continuation과 모든 listener를 정리한다. CTA activation은 reveal을 완료하면서도 그대로 이동한다.
-- **재진입·reduced-motion:** marker가 이미 있으므로 reload/back/forward에서 재생하지 않는다. reduced-motion도 marker는 소비하되 처음부터 최종 정적 상태다. 실행 중 reduce로 바뀌면 즉시 완료하고 같은 session에서 다시 재생하지 않는다.
+- **재진입·reduced-motion:** marker가 이미 있으므로 reload/back/forward에서 재생하지 않는다. reduced-motion도 marker를 소비하고 §6의 대체 원칙을 따른다: overlay는 400ms opacity 크로스페이드만, 태그라인은 글자 분할·이동 없이 문장 전체가 300ms opacity로 나타나고, caption은 이동 없이 opacity만 쓴다. 실행 중 reduce로 바뀌면 남은 시퀀스를 즉시 완료하고 같은 session에서 다시 재생하지 않는다.
 
 ### 5.2 Manga DNA reveal — /taste?reveal=1
 
@@ -214,9 +225,10 @@
   1. 0–500ms: 선택한 Anchor 표지 썸네일들이 상단에 가로로 정렬되어 fade-in.
   2. 500–1200ms: 상위 취향 3개가 순서대로 fade-up(간격 180ms), 각 항목의 취향 레이블에 accent 밑줄이 좌→우로 그려짐(300ms). mobile `<768`은 1열 순위 행이고 desktop은 3열 카드다.
   3. 1200ms~: 1200ms는 페이지 전체에 한 번만 적용하는 전역 gate다. gate 전에 뷰포트에 들어온 FactorBar는 gate가 열린 뒤 0→값으로 성장하고, gate 뒤 처음 진입한 화면 밖 막대는 추가 1200ms 지연 없이 즉시 시작한다(막대당 400ms, 섹션 내 stagger 60ms, ease-out, 각 1회).
+  4. (2026-10-01 강화) 헤더의 분석 작품 수는 0에서 실제 정수까지 600ms ease-out으로 count-up한다. 각 FactorBar의 정성 레이블(「強め」 등)은 막대가 정착한 뒤 160ms opacity로 나타난다. 상위 취향 제목 「あなたの上位の好み」에는 accent 광택이 왼쪽→오른쪽으로 한 번 지나간다(1.2s, React Bits ShinyText 참고, 반복 없음). DNA 값 자체는 숫자로 굴리거나 표시하지 않는다(`01` V4·`02` 원칙).
 - **URL 소비:** mount에서 `?reveal=1` 판정을 local state/ref에 고정한 즉시 같은 effect에서 query를 `replaceState`로 제거한다. URL 제거 뒤에도 고정된 판정으로 A를 계속하며 query를 in-progress state나 replay token으로 사용하지 않는다.
-- **reduced-motion:** 전부 생략, 완성 상태 즉시 표시.
-- **반복:** reveal 모드 1회. 상시 /taste의 막대는 positive anchor에서 계산한 분석 출력으로 정적이며, 추천 adjustment 변경으로 값·길이·색을 바꾸지 않는다.
+- **reduced-motion (대체):** 같은 순서를 이동·성장 없이 opacity로만 보인다. 표지·상위 취향·막대는 각 160ms opacity로 순서대로 나타나고(stagger 80ms, 총 600ms 이내), 막대는 처음부터 최종 길이다. 밑줄은 그려지지 않고 최종 상태로 페이드된다. count-up과 광택은 생략하고 최종 숫자·제목을 즉시 표시한다. 정보는 일반 모드와 동일하다.
+- **반복:** reveal 모드는 1회. 상시 /taste에서는 「好みの軸」·범주 상세의 FactorBar가 mount마다 처음 뷰포트에 들어올 때 한 번 0→값으로 채워진다(E 진입 채움, 600ms ease-out-cubic, 섹션 내 stagger 40ms). 이후 스크롤 왕복으로 다시 재생하지 않는다. 막대 값은 positive anchor에서 계산한 분석 출력이며 추천 adjustment 변경으로 값·길이·색을 바꾸지 않는다.
 - **성능:** transform/opacity만 사용. 막대는 `scaleX` transform(레이아웃 리플로우 금지).
 
 ### 5.3 작품 상세 블러 표지 배경 (정적 시그니처)
@@ -227,39 +239,65 @@
 
 ## 6. 모션 분류 체계 (taxonomy)
 
-모든 애니메이션은 아래 6종 중 하나여야 하며, 어디에도 속하지 않으면 구현하지 않는다.
+모든 애니메이션은 아래 7종 중 하나여야 하며(G는 허용 목록의 위치만), 어디에도 속하지 않으면 구현하지 않는다.
 
 | 분류 | 목적 | 지속 | easing | 도구 | 예 |
 |---|---|---|---|---|---|
 | A. 1회성 reveal | 시그니처 모먼트 | 400–1800ms | `[0.2,0,0,1]` / spring | Motion | §5.1, §5.2 |
 | B. 페이지 진입 | 문맥 전환 인지 | 160ms | ease-out | CSS | 허용된 resolved content만 fade-up 8px. **exit 애니메이션 없음**(내비 블로킹 금지) |
 | C. 상태 전환 | 데이터 변화 표현 | 200–240ms | Motion spring (stiffness 350, damping 32) | Motion layout | 추천 카드 제거→백필, tray 재배치, Library 행 이동. 온보딩 collection panel 공개는 같은 목적의 CSS(240ms opacity+8px)이며 B가 아니다 |
-| D. 직접 조작 피드백 | 입력 확인 | 80–120ms | ease-out | CSS | press scale 0.97, 선택 체크 페이드. generic hover Y축 lift는 사용하지 않음. 헤더 브랜드 링크만 press transform 없이 compact opacity 피드백 |
-| E. 값 전이 | 수치 변경 표현 | 240ms | ease-in-out | CSS transition | positive anchor 변경 뒤 FactorBar 분석값 갱신, 확신도 레이블 크로스페이드. 추천 adjustment는 FactorBar 입력이 아니다. |
+| D. 직접 조작 피드백 | 입력 확인 | 80–120ms (확정 스탬프 220ms) | ease-out / 스탬프 spring | CSS / Motion | press scale 0.97, 선택 체크 페이드. 확정 스탬프(2026-10-01): 온보딩 작품 선택·「読みたい」 저장이 확정되는 순간 한 번 scale 1→1.06→1(220ms, 표지 카드는 체크 오버레이만)과 체크 페이드. generic hover Y축 lift는 사용하지 않음. 헤더 브랜드 링크만 press transform 없이 compact opacity 피드백 |
+| E. 값 전이 | 수치 변경 표현 | 240ms (진입 채움 600ms) | ease-in-out / ease-out-cubic | CSS transition / Motion | positive anchor 변경 뒤 FactorBar 분석값 갱신, 확신도 레이블 크로스페이드. 진입 채움(2026-10-01): FactorBar가 mount마다 처음 뷰포트에 들어올 때 0→값 1회. 실제 정수 count(분석 작품 수·후보 수)의 count-up 600ms. DNA 축 값은 숫자로 굴리지 않는다. 추천 adjustment는 FactorBar 입력이 아니다. |
+| G. 포인터 반응·확정 축하 (2026-10-01) | 만질 수 있는 재질감, 긍정 확정의 보상 | 180–800ms | ease-out / `cubic-bezier(0.2,0.7,0.2,1)` | CSS 변수 + Motion/WAAPI | 아래 「G 허용 목록」만. React Bits TiltedCard·GlareHover·Magnet·SpotlightCard·ClickSpark를 참고해 자작한다 |
 | F. 어텐션 | 오류·한도 안내 | 120ms×2 | linear | CSS | tray 흔들림(±4px), 오류 박스 등장. reduced-motion에서는 전체 `--warn` 보더를 정적으로 유지 |
 
 Discovery resolved 표지의 원→직사각형은 D의 사용자 승인 scoped exception이다. `clip-path`만 `--motion-duration-value` 240ms / `--motion-ease-value`로 전환하고 카드 표면색은 personalized Top 10과 같은 240ms / `--motion-ease-direct`를 쓴다. 반복·autoplay·layout 변화가 없으며 reduced motion에서는 두 상태를 즉시 바꾼다.
 
 관점 선반(Anchor) 옆 패널은 2026-09-10 사용자 승인 D 예외다. `ExpandableMediaCard`는 200ms hover 의도 확인 또는 keyboard focus-visible 진입 뒤 article `width`를 기존 폭에서 `--control-min-size × 6`만큼 `--motion-duration-value` 240ms / `--motion-ease-signature`로 늘린다. 형제 카드가 같은 폭만큼 이동해 다음 표지를 가리지 않는다. 하나의 열린 카드를 다음 카드로 넘길 때는 기존 폭 축소와 새 폭 확장을 같은 타이밍으로 진행하며, 뒤쪽 카드가 공간을 넘겨받을 때는 표지를 오른쪽에 고정한다. 확장량은 정수 CSS 픽셀로 보간해 두 카드의 합산 폭과 후속 형제 위치가 반올림 때문에 흔들리지 않게 한다. 표지 DOM·원본 비율·카드 높이·텍스트 크기는 유지한다. 패널은 고정 폭이며 article의 overflow clipping으로 드러난다. 단독 진입과 카드 간 전환 모두 확장된 카드가 `scroll-padding` 안쪽의 흐림 없는 영역에 들어오도록 폭 전환과 함께 가로 위치를 보정하며, 사용자 직접 스크롤을 덮어쓰지 않는다. 확장 패널 하단에는 기존 Quick Preview와 같은 읽기 액션을 고정하고, 긴 근거·소개만 위쪽 영역에서 스크롤한다. 확장 불가 환경은 제목 아래 Quick Preview와 작품 상세 Link를 제공한다. reduced-motion은 최종 상태를 즉시 표시한다. 이전 overlay 및 고정 212px 높이 안은 사용하지 않는다.
 
+G 허용 목록(이 밖의 위치·효과는 구현하지 않는다):
+
+| 효과 | 위치 | 한도 | 입력 조건 |
+|---|---|---|---|
+| 기울기 + 광택 (TiltedCard·GlareHover 참고) | 추천 Featured 카드, 랜딩 「例」 카드 | `perspective: 900px`, 최대 rotateY ±8°·rotateX ±6.5°, 이탈 시 180ms ease-out 복귀. 광택은 포인터 위치 radial `--text-strong` 14%, 진입·이탈 opacity 250ms | fine pointer + hover만. 터치·펜은 D press만. Featured의 기존 hover geometry 전환과 같은 family로 세어 합성 2개를 넘지 않는다 |
+| 마그넷 (Magnet 참고) | 랜딩 hero·마무리 CTA, /taste reveal의 「おすすめを見る」 | 포인터 거리 비례 이동 최대 x 10px·y 6px, 이탈 180ms 복귀. hover 그림자는 기존 `--shadow-raised` 1단 | fine pointer + hover만. 클릭 영역·focus ring 위치는 이동하지 않는 래퍼 기준 |
+| 스포트라이트 (SpotlightCard 참고) | 작품 상세 「あなたとの相性」 패널 | 포인터 위치 radial `--accent` 16%, opacity 300ms | fine pointer + hover만. 텍스트 대비를 4.5:1 미만으로 낮추지 않는다 |
+| 확정 스파크 (ClickSpark 참고) | 랜딩 CTA 클릭, 「読みたい」 저장 성공, 온보딩 작품 선택 성공 | 입자 최대 12개, `--accent` 계열, 36–90px 방사, 480–800ms, `aria-hidden`·`pointer-events: none`, 저장 성공 뒤에만 발화 | 모든 입력. 실패·취소·「読んだ」·「興味なし」·「今日はパス」·삭제처럼 부정·교정 액션에는 쓰지 않는다 |
+
+- 포인터 좌표는 `pointermove`에서 rAF로 묶어 CSS 변수(`--tilt-x`, `--glare-x` 등)에 직접 쓰고 React state로 다시 렌더하지 않는다. 좌표를 따라가는 radial 배경 갱신은 보간 애니메이션이 아니며, 보간은 transform·opacity만 한다. `will-change`는 hover 중에만 둔다.
+- dialog·sheet·panel·설정·Library·온보딩 STEP 2와 텍스트 입력 영역에는 G를 쓰지 않는다(§9).
+
 전역 규칙:
 
-- **상시 자동 루프 애니메이션 0개.** 사용자가 직접 조작하는 Featured의 위치 순환은 autoplay가 아니다. skeleton 펄스만 예외(로딩 중 한정).
+- **상시 자동 루프 애니메이션 0개.** 사용자가 직접 조작하는 Featured의 위치 순환은 autoplay가 아니다. skeleton 시머·펄스만 예외(로딩 중 한정). 광택 sweep(§5.2)은 진입당 1회로 끝나며 반복하지 않는다.
 - 한 인터랙션이 동시에 발화하는 **합성 효과 family**는 최대 2개다(예: 카드 제거/layout + 백필). DNA의 여러 카드·막대 instance stagger는 하나의 A family로 센다.
 - transform/opacity 외 프로퍼티 애니메이션 금지(height 축소는 추천 카드 제거 시에만 허용, contain 처리). 위 Anchor Shelf의 article width는 예외다. 단, 랜딩 `ShowcaseCard` featured 핸드오프는 article `width`만 11rem↔14rem으로 240ms(`--motion-duration-value`, `--motion-ease-value`) 보간하고 reduced-motion에서는 즉시 완료한다. 추천 featured card는 고정 344×448px article 안에서 표지 stage의 flex 잔여 높이, reason `max-height`, action rail `height`·`margin`을 400ms(`--motion-duration-reveal-step`, `--motion-ease-direct`)로 함께 보간할 수 있다. 이 예외는 형제 위치 불변, overflow clipping, 최대 3줄 reason, 44px rail, coarse pointer 상시 최종 상태, reduced-motion 즉시 완료를 모두 만족해야 한다. 표지 DOM·텍스트/control 크기는 보간하지 않는다. color·background·border·box-shadow·font-weight 상태는 보간하지 않고 즉시 바꾼다.
-- 자동재생 캐러셀·스크롤 하이재킹·패럴랙스·커서 추적 효과와 generic hover Y축 lift를 금지한다. 모바일에서 hover 의존 정보 금지.
+- 자동재생 캐러셀·스크롤 하이재킹·패럴랙스·페이지 넘김 효과·효과음 문자 장식과 generic hover Y축 lift를 금지한다. 커서 추적은 G 허용 목록의 기울기·광택·마그넷·스포트라이트만 허용한다. 모바일에서 hover 의존 정보 금지.
 - B의 정확한 allowlist는 `/onboarding` Step 1 resolved content(첫 등록·add mode), reveal 요청으로 시작하지 않은 ordinary `/taste`, 유효한 `/works/[workId]` resolved Catalog 상세, `found`인 `/works/external` resolved 상세뿐이다. Catalog는 `workId`, external은 external ID가 바뀐 새 route mount에서 다시 실행할 수 있다.
 - B는 landing의 모든 상태, A로 시작한 `/taste`, `/recommendations`, `/library`, `/settings`, onboarding Step 2, loading·hydration/redirect guard·skeleton·empty·invalid-link·local-missing·corrupt·unavailable·error, dialog·modal·drawer·panel·sheet·feedback surface에 적용하지 않는다. query cleanup·local state 변경·onboarding step 변경·dialog open/close·BFCache resume도 replay trigger가 아니다.
 - B는 AppShell/global layout이 아니라 eligible resolved-content root에만 적용한다. CSS 기본값은 최종 위치에서 완전히 보이는 상태이며 keyframe은 `prefers-reduced-motion: no-preference` 안에만 둔다. 8px 이동 중에도 opacity 0으로 만들어 콘텐츠를 완전히 숨기지 않고, 실패 시 최종 상태가 남는다.
 - E와 F는 CSS가 소유한다. ordinary FactorBar E는 static CSS 기본값을 target `scaleX`로 두고 underlying analysis 값 변경 시 delay 0 / 240ms만 적용한다. 추천 adjustment의 직접 피드백은 D의 선택 marker/text와 저장 live message가 소유하며 FactorBar success highlight를 만들지 않는다. F 흔들림도 CSS만 사용한다.
-- `prefers-reduced-motion: reduce`: A는 최종 상태로 즉시 완료하고 해당 1회 marker를 소비하며 B도 최종 상태로 즉시 표시한다. C는 `layout={false}`로 즉시 상태·순서·focus/live message를 반영한다. 온보딩 collection panel 입장 모션도 생략하고 열린 region을 즉시 표시한다. 추천 featured card는 현재 pointer/focus 상태의 표지·reason·action 최종 geometry를 즉시 표시한다. D는 scale/travel을 제거하고 선택·focus 상태는 유지하며 Anchor 옆 패널도 즉시 표시한다. E는 underlying analysis의 target 값을 즉시 반영한다. F는 흔들림 없이 전체 `--warn` 보더와 오류·한도 text를 정적으로 유지한다. skeleton은 pulse 없는 정적 silhouette, Shelf 버튼 scroll은 `auto`다.
+- `prefers-reduced-motion: reduce` — **대체 원칙(2026-10-01 사용자 결정):** reduce는 모션을 없애는 스위치가 아니라 멀미를 유발하는 움직임을 의미가 같은 조용한 변화로 바꾸는 설정이다. 이동·확대/축소·회전·기울기·패럴랙스·포인터 추적·입자·반복은 제거하고, 상태와 인과를 전하는 opacity·색 변화는 짧게 남긴다. 정보·상태·focus·live message는 일반 모드와 동일하다.
+
+  | 분류 | reduce에서의 대체 |
+  |---|---|
+  | A 1회 reveal | 같은 순서를 opacity만으로 총 600ms 이내(§5.1·§5.2). marker는 소비한다. 실행 중 reduce로 바뀌면 즉시 완료 |
+  | B 페이지 진입 | 8px 이동 없이 160ms opacity만 |
+  | C 상태 전환 | `layout={false}`. 제거·백필은 이동 없이 160ms opacity 크로스페이드, 순서·focus·live message는 즉시 반영 |
+  | D 직접 조작 | scale·스탬프 제거, 선택 체크·색 상태는 120ms opacity로 유지. 추천 featured card와 Anchor 옆 패널은 현재 pointer/focus 상태의 최종 geometry를 즉시 표시 |
+  | E 값 전이 | 진입 채움·count-up 없이 최종 값을 160ms opacity로 표시. 값 변경은 즉시 반영 |
+  | F 어텐션 | 흔들림 대신 정적 `--warn` 전체 보더와 오류·한도 text |
+  | G 포인터 반응 | 기울기·마그넷·스포트라이트·스파크 없음. 광택 sweep 없음. hover의 기존 표면색 변화는 유지 |
+  | skeleton | 띠 이동 없이 정적 망점 실루엣 + 1.6s opacity 0.7↔1 |
+  | Shelf 버튼 scroll | `auto` |
+  | 온보딩 collection panel | 이동 없이 160ms opacity |
 
 ## 7. 서드파티 시각 라이브러리 판정
 
 | 라이브러리 | 판정 | 근거·제약 |
 |---|---|---|
 | **Motion** (`motion`) | **채택** | 분류 A·C 전담. 기본은 `LazyMotion` + `domAnimation`; C의 실제 `layout` 소유 컴포넌트만 local `domMax`를 사용한다. 추천은 목록 owner만 감싸고 페이지·사이드 패널·control·error·dialog까지 올리지 않는다. reduced-motion에서는 해당 C element의 `layout`을 `false`로 둔다. 유일한 애니메이션 의존성 |
-| React Bits | **미채택** | 5개 후보 전부 자작·제거로 대체(`01` V2). 컴포넌트 복사·라이선스 추적 비용 제거 |
+| React Bits | **레퍼런스로만 채택(2026-10-01)** | 코드·의존성은 들이지 않는다. 느낌의 기준으로만 쓰고 Motion·CSS로 자작한다. 참고한 효과: SplitText(§5.1), ShinyText(§5.2 1회 sweep), CountUp(정수 count만, E), TiltedCard·GlareHover·Magnet·SpotlightCard·ClickSpark(G). WebGL·GSAP·물리 엔진 기반 효과(Aurora·Galaxy·Particles 등)는 참고 대상이 아니다 |
 | NumberFlow | **미채택** | 서수 데이터에 숫자 굴림은 거짓 정밀도(`01` V4) |
 | Embla Carousel | **미채택** | Shelf는 CSS scroll-snap + 버튼으로 구현(`01` V5) |
 | AutoAnimate | **미채택** | Motion layout으로 커버 |
@@ -287,4 +325,4 @@ Shelf 구현 계약(캐러셀 대체): `overflow-x: auto` + CSS scroll-snap + �
 
 ## 9. 조용한 표면 선언
 
-다음 화면·영역에는 시그니처·B 진입·불필요한 설명형 장식을 **의도적으로 두지 않는다**: 랜딩의 A 외 별도 B, Library의 기능 배너 외 장식, 설정, 온보딩 STEP 2(불호 입력은 감정적으로 중립해야 함), 모든 dialog·panel·sheet. §2.5의 승인된 기능 배너는 이 장식 억제의 명시적 상위 예외다. 추천 피드는 §2.8의 고정 poster 직접 피드백과 C 제거/백필만 허용한다. Quick Preview와 Library sheet/panel entry, cover/image load opacity fade는 금지하고 최종 상태로 즉시 연다.
+다음 화면·영역에는 시그니처·B 진입·불필요한 설명형 장식을 **의도적으로 두지 않는다**: 랜딩의 A 외 별도 B, Library의 기능 배너 외 장식, 설정, 온보딩 STEP 2(불호 입력은 감정적으로 중립해야 함), 모든 dialog·panel·sheet. §2.5의 승인된 기능 배너는 이 장식 억제의 명시적 상위 예외다. 추천 피드는 §2.8의 고정 poster 직접 피드백, C 제거/백필, §6 G 허용 목록(Featured 기울기·광택, 「読みたい」 확정 스파크)만 허용한다. Quick Preview와 Library sheet/panel entry, cover/image load opacity fade는 금지하고 최종 상태로 즉시 연다.

@@ -1,7 +1,7 @@
 // @vitest-environment jsdom
 
 import { act, cleanup, fireEvent, render, screen, waitFor, within } from "@testing-library/react";
-import type { ReactNode } from "react";
+import { type ReactNode, useState } from "react";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 
 import { OnboardingFlow } from "@/features/onboarding/onboarding-flow";
@@ -103,6 +103,45 @@ afterEach(() => {
 });
 
 describe("OnboardingFlow finalization", () => {
+  it("clears the URL-controlled positive search when entering Step 2", async () => {
+    testState.draft = {
+      id: "current",
+      mode: "firstRun",
+      step: 1,
+      positiveEntries: defaultPositiveWorks.map((work) => ({ workId: work.id, reaction: "liked" })),
+      negativeEntries: [],
+      updatedAt: "2026-10-01T00:00:00.000Z",
+    };
+    function ControlledSearch() {
+      const [query, setQuery] = useState("MONSTER");
+      return <OnboardingFlow query={query} onQueryChange={setQuery} />;
+    }
+    render(<ControlledSearch />);
+    await waitFor(() =>
+      expect(screen.getByRole("searchbox", { name: "好きなマンガを検索" })).toHaveProperty(
+        "value",
+        "MONSTER",
+      ),
+    );
+    fireEvent.click(screen.getByRole("button", { name: "次へ (5/10)" }));
+    await waitFor(() =>
+      expect(screen.getByRole("searchbox", { name: "合わなかったマンガを検索" })).toHaveProperty(
+        "value",
+        "",
+      ),
+    );
+    expect(screen.getByText("作品名を入力すると候補が表示されます。")).toBeTruthy();
+    expect(testState.saveOnboardingDraft).toHaveBeenLastCalledWith(
+      expect.objectContaining({
+        step: 2,
+        positiveEntries: defaultPositiveWorks.map((work) => ({
+          workId: work.id,
+          reaction: "liked",
+        })),
+      }),
+    );
+  });
+
   it("does not offer library-only works as negative profile evidence", async () => {
     vi.useFakeTimers();
     const libraryOnlyWork = {

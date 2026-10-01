@@ -4,8 +4,10 @@ import tailwindcss from "@tailwindcss/vite";
 import { nitro } from "nitro/vite";
 import { defineConfig } from "vite";
 
+import { siteAssets } from "./scripts/site-assets";
 import catalogJson from "./src/data/generated/catalog-v1.json" with { type: "json" };
 import { catalogAssetUrl, recommendationContextAssetUrl } from "./src/lib/catalog-asset.ts";
+import { securityHeaders } from "./src/lib/site-metadata";
 
 export const prerenderPaths = [
   "/",
@@ -20,6 +22,7 @@ export const prerenderPaths = [
 
 export default defineConfig({
   plugins: [
+    siteAssets(prerenderPaths),
     tailwindcss(),
     tanstackStart({
       pages: prerenderPaths.map((path) => ({ path })),
@@ -33,6 +36,7 @@ export default defineConfig({
     viteReact(),
     nitro({
       routeRules: {
+        "/**": { headers: securityHeaders },
         [catalogAssetUrl(catalogJson.catalogVersion)]: {
           headers: { "cache-control": "public, max-age=31536000, immutable" },
         },
@@ -44,6 +48,7 @@ export default defineConfig({
   ],
   resolve: { tsconfigPaths: true },
   server: {
+    headers: securityHeaders,
     port: 3030,
     strictPort: true,
     watch: {
