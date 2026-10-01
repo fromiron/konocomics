@@ -45,9 +45,9 @@ Rakuten 계약 검토일(2026-08-14): [Rakuten Books Book Search API 2017-04-04]
 
 ```text
 [빌드 타임 - 제품]                       [런타임 - 브라우저]
-data/source/catalog.sqlite (S6 권한 원천) root: catalogVersion+전체 workIds+profileWorkIds identity
+data/source/catalog.sqlite (S6 권한 원천) root: 소형 runtime manifest; 전체 identity는 소비자별 지연 로드
    │  scripts/normalize-works.ts             ├→ landing: 소형 showcase projection
-   │  scripts/validate-catalog.ts            ├→ route-scoped bundled Catalog: 온보딩·DNA·Library·Catalog 상세
+   │  scripts/validate-catalog.ts            ├→ route-scoped bundled Catalog: 온보딩·Library·Catalog 상세; DNA는 개인 작품 정적 묶음
    │  scripts/build-catalog.ts               └→ /recommendations: 같은 탭의 검증 완료 bundled Catalog 재사용,
    │  scripts/build-catalog.ts                  없으면 versioned public Catalog + recommendation
    │  scripts/build-catalog.ts                  context를 병렬 fetch
@@ -103,7 +103,7 @@ deterministic Markdown 집계 리포트(stdout 또는 reports/local/)
 
 | 데이터 | 원천 | 변환 | 소유 계층 | 저장 |
 |---|---|---|---|---|
-| Work metadata | `data/source/catalog.sqlite` v2의 10개 `STRICT` source table + opaque 문서 | SQLite→zod 검증→bundled/public JSON + 소형 identity/landing projection | 빌드 스크립트 | root identity bundle + route-scoped 번들 + content-addressed/hashed 정적 자산 |
+| Work metadata | `data/source/catalog.sqlite` v2의 10개 `STRICT` source table + opaque 문서 | SQLite→zod 검증→bundled/public JSON + 소형 identity/landing projection | 빌드 스크립트 | root runtime manifest + route-scoped 번들 + 내용 주소 정적 묶음 |
 | Model candidate 및 authoring 작업 원본 | source 밖 격리 artifact | candidate는 진단만; 별도 동결 판정의 기존 권한 검증은 유지 | 로컬 authoring 도구 | `data/local/catalog-authoring/workspace.sqlite`에 원본·버전 보존, `.tmp`는 작업 사본. runtime·canonical source와 분리 |
 | Legacy resolution | 고정 S0~S5 cutoff source manifest | Factor·present Theme·present Genre만 canonical 8-field tuple로 bootstrap | one-time build-time shadow | OS 임시 `fact_resolution`; digest 재계산 후 폐기 |
 | ProviderListing | Rakuten API | 필드 축소·URL 재작성·브라우저 workId 결합·normalized ISBN in-flight 합류 | Start server route + infrastructure/rakuten | Dexie providerCache (가격·재고 24h / 기타 90일) |
@@ -348,3 +348,14 @@ onboarding_started / work_selected / onboarding_completed / taste_revealed /
 recommendation_impression / recommendation_saved / recommendation_hidden /
 recommendation_already_read / provider_clicked / data_exported
 ```
+
+## 2026-10-01 Catalog 증가 대응과 DNA 초기 로딩
+
+사용자 승인 개선: `/taste`의 DNA 표시는 전체 후보 추천과 분리한다. 루트는 작은 runtime manifest만 정적으로 import하고 전체 work ID identity는 필요한 소비자에서 지연 로드한다. 라우트 가드는 사용자 기록의 현재 작품 적격성을 부분 조회해 판정하며, 조회 실패를 프로필 없음으로 해석하지 않는다. 현재 기록 중 이미 확인된 적격 favorite/liked 5작품이 있으면 새 피드백 작품을 조회하는 동안 기존 화면과 대화상자를 유지한다. 이전 판정으로 삭제된 기록을 계속 유효하다고 간주하지 않는다.
+
+- 앱 빌드 시 SQLite에서 생성된 canonical Catalog/context를 입력으로 ID의 SHA-256 prefix로 정적 Catalog 묶음을 만든다. 개인 조회 leaf는 UTF-8 64KiB 이하(단일 작품이 이를 넘으면 빌드 실패), directory는 최대 16개 자식이다. 내용 SHA-256을 주소로 사용하고 버전별 작은 manifest가 하나의 완전한 트리를 고정한다. 전체 추천용 트리는 같은 원본을 최대 512KiB leaf로 묶어 요청 수를 줄이며 Worker에서만 읽는다. 작품 추가는 각 트리의 관련 leaf와 상위 directory만 갱신한다. 공통 JS에 전체 ID 목록을 포함하지 않는다. manifest는 Vite 가상 모듈이며 묶음은 앱 빌드 output이다. 기존 Catalog authoring 발행·복구 artifact 집합을 변경하지 않는다.
+- DNA 입력은 사용자 기록에 있는 작품의 원래 Work·대표 판본을 보존한 부분 조회다. 추천 엔진의 입력은 전체 트리를 완전히 읽은 Catalog와 context이며 부분 조회로 전체 추천을 수행하지 않는다. 산식·전체 적격 후보·동률·다양성·contributions 계약은 유지한다.
+- Worker가 자산 fetch·검증·전체 추천을 수행한다. DNA는 이를 기다리지 않고 표시한다. 기준/현재 입력이 같으면 계산을 재사용하며 새 입력은 오래된 작업을 취소 또는 폐기한다. UI로는 필요한 추천 결과·작품 정보만 반환한다.
+- HTTP 캐시와 별도 Cache Storage는 내용 주소로 검증된 정적 자산만 보존한다. 사용자 seven-store Export/Import에 섞지 않는다. 캐시 실패는 온라인 요청을 막지 않으며 손상 캐시는 제거하고 재요청한다. 누락/버전 혼합을 빈 추천으로 바꾸지 않는다.
+- 기존 bundled/full-identity 소비자는 호환 경계를 유지한다. `/taste`의 초기 의존 그래프에는 전체 catalog/context/identity가 없어야 한다.
+- 검증: 실제 온보딩→DNA→보정→공유→추천, 새로고침/오프라인/캐시 누락/데이터 변경을 확인한다. 현재 실제 Catalog 결과 동등성과 별도의 1만/3만 작품 부하를 구분한다. 모바일 모사(1.6Mbps, 150ms, CPU 4배)의 5회 중앙값 DNA 3초 이내를 목표로 하고 추천 계산은 메인 스레드에서 실행하지 않는다.

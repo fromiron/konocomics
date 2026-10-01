@@ -293,7 +293,9 @@ function publicRecommendation(candidate: RecommendationPlanEntry): RankedRecomme
   };
 }
 
-export function buildRecommendationPlan(input: RecommendationInput): RecommendationPlanEntry[] {
+export function* buildRecommendationPlanSteps(
+  input: RecommendationInput,
+): Generator<void, RecommendationPlanEntry[]> {
   assertRecommendationContext(input.catalog, input.context);
   assertUniqueRecords(input.records);
 
@@ -316,7 +318,8 @@ export function buildRecommendationPlan(input: RecommendationInput): Recommendat
   );
   const profileConfidence = calculateProfileConfidence(catalogRecords);
   const positiveAnchorScoreFor = preparePositiveAnchorScorer(anchors);
-  const scored = candidates.flatMap<ScoredRecommendation>((work) => {
+  const scored: ScoredRecommendation[] = [];
+  for (const [index, work] of candidates.entries()) {
     const result = scoreCandidate({
       work,
       positiveAnchorScoreFor,
@@ -326,10 +329,18 @@ export function buildRecommendationPlan(input: RecommendationInput): Recommendat
       input,
       popularWorkIds,
     });
-    return result === null ? [] : [result];
-  });
+    if (result !== null) scored.push(result);
+    if (index % 32 === 31) yield;
+  }
   const sorted = sortScoredRecommendations(scored, input.policies);
   return sorted.map(planRecommendation);
+}
+
+export function buildRecommendationPlan(input: RecommendationInput): RecommendationPlanEntry[] {
+  const steps = buildRecommendationPlanSteps(input);
+  let next = steps.next();
+  while (!next.done) next = steps.next();
+  return next.value;
 }
 
 export function scoreWorkCompatibility(

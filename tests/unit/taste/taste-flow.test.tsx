@@ -6,6 +6,8 @@ import type * as MotionReact from "motion/react";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 
 import { THEME_TAGS } from "@/domain/catalog/constants";
+import type { CatalogV1 } from "@/domain/catalog/types";
+import type { TastePreviewInput } from "@/features/recommendations/recommendation-plan-worker-protocol";
 import { summarizeMangaDna } from "@/domain/profile/dna-summary";
 import type {
   ProfileAdjustments,
@@ -40,21 +42,37 @@ vi.mock("motion/react", async (importOriginal) => {
   return { ...actual, useReducedMotion: () => motionState.reduced };
 });
 
-vi.mock("@/data/generated/recommendation-context-v1.json", () => ({
-  default: {
-    constraintByWorkId: Object.fromEntries(
-      Array.from({ length: 7 }, (_, index) => {
-        const workId = `work-${String(index + 1)}`;
-        return [workId, { workId, catalogRole: "bridge", volumeCount: 1 }];
-      }),
-    ),
-    marketSnapshot: {
-      catalogVersion: "v1-test",
-      catalogAverageRating: 0,
-      byWorkId: {},
+vi.mock("@/features/recommendations/recommendation-plan-worker-client", async () => {
+  const { buildRecommendationPlan, selectRecommendationPlanEntries } =
+    await import("@/domain/recommendation/rank");
+  return {
+    RecommendationPlanWorkerClient: class {
+      terminate() {}
+      async preview(_manifest: unknown, input: TastePreviewInput) {
+        const catalog = testState.catalog as CatalogV1;
+        const context = {
+          constraintByWorkId: Object.fromEntries(
+            catalog.works.map((work) => [
+              work.id,
+              { workId: work.id, catalogRole: "bridge" as const, volumeCount: 1 },
+            ]),
+          ),
+          marketSnapshot: {
+            catalogVersion: catalog.catalogVersion,
+            catalogAverageRating: 0,
+            byWorkId: {},
+          },
+        };
+        const run = (adjustments: ProfileAdjustments) =>
+          selectRecommendationPlanEntries(
+            buildRecommendationPlan({ catalog, context, ...input, adjustments }),
+            input.policies,
+          ).slice(0, 4);
+        return { before: run(input.baselineAdjustments), after: run(input.adjustments), catalog };
+      }
     },
-  },
-}));
+  };
+});
 
 vi.mock("@tanstack/react-router", () => ({
   Link: ({
@@ -149,12 +167,16 @@ beforeEach(() => {
   motionPreferenceListener = null;
   window.sessionStorage.clear();
   window.history.replaceState({}, "", "/taste");
+  const motionListeners = new Set<(event: { matches: boolean }) => void>();
   vi.stubGlobal("matchMedia", () => ({
     matches: motionState.reduced,
     addEventListener: (_type: string, listener: (event: { matches: boolean }) => void) => {
-      motionPreferenceListener = listener;
+      motionListeners.add(listener);
+      motionPreferenceListener = (event) => motionListeners.forEach((notify) => notify(event));
     },
-    removeEventListener: () => undefined,
+    removeEventListener: (_type: string, listener: (event: { matches: boolean }) => void) => {
+      motionListeners.delete(listener);
+    },
   }));
   vi.stubGlobal(
     "IntersectionObserver",
@@ -285,9 +307,12 @@ describe("TasteFlow", () => {
     const { container } = render(<TasteFlow />);
 
     await waitFor(() => {
-      expect(container.querySelector<HTMLImageElement>(".taste-anchor-cover img")?.src).toBe(
-        "https://thumbnail.image.rakuten.co.jp/book.jpg?_ex=200x200",
-      );
+      const source = container.querySelector<HTMLImageElement>(".taste-anchor-cover img")?.src;
+      expect(source).toBeTruthy();
+      const url = new URL(source!);
+      // Cover sizing can adapt to the grid; the cached source image must be preserved.
+      expect(url.origin).toBe("https://thumbnail.image.rakuten.co.jp");
+      expect(url.pathname).toBe("/book.jpg");
     });
     expect(testState.getProviderCache).toHaveBeenCalledWith(isbn);
   });
@@ -361,7 +386,8 @@ describe("TasteFlow", () => {
     });
     expect(statusGroups).toHaveLength(1);
     expect(within(statusGroups[0]!).getAllByRole("link")).toHaveLength(8);
-    expect(statusGroups[0]!.querySelectorAll(".taste-feedback-cover")).toHaveLength(8);
+    // Recent feedback uses title links under the current screen contract.
+    expect(statusGroups[0]!.querySelectorAll("img")).toHaveLength(0);
     expect(
       within(recent).getAllByText(tasteStrings.feedbackLabels.liked, { exact: true }),
     ).toHaveLength(1);
@@ -382,8 +408,8 @@ describe("TasteFlow", () => {
     ).toEqual(["ジャンル", "テーマ", "展開", "トーン・関係", "作画"]);
     expect(container.querySelectorAll("section.taste-factor-group")).toHaveLength(5);
     expect(container.querySelectorAll(".taste-factor-group__icon")).toHaveLength(0);
-    // Themes start with the six strongest rows; the rest open through 「すべて表示」.
-    expect(container.querySelectorAll(".taste-factor-row")).toHaveLength(32);
+    // Closed controls are deferred until their category opens.
+    expect(container.querySelectorAll(".taste-factor-row")).toHaveLength(0);
     expect(container.querySelectorAll(".taste-factor-group__details:not([hidden])")).toHaveLength(
       0,
     );
@@ -400,8 +426,10 @@ describe("TasteFlow", () => {
     expect(onGroupChange).toHaveBeenLastCalledWith("genre");
     expect(document.activeElement).toBe(genreDetailsButton);
     expect(genreDetailsButton.getAttribute("aria-expanded")).toBe("true");
-    expect(genreDetails?.classList.contains("taste-factor-group__rows--analysis")).toBe(true);
-    expect(genreDetails?.className).toContain("md:grid-cols-2");
+    expect(genreDetails?.querySelector(".taste-factor-group__rows--analysis")).not.toBeNull();
+    expect(genreDetails?.querySelector(".taste-factor-group__rows")?.className).toContain(
+      "md:grid-cols-2",
+    );
     expect(genreDetails?.querySelectorAll(".taste-factor-row--analysis")).toHaveLength(10);
     expect(within(genreDetails as HTMLElement).queryByRole("radiogroup")).toBeNull();
 
@@ -567,7 +595,7 @@ describe("TasteFlow", () => {
     ).toEqual(["false", "false", "true", "false", "false"]);
     expect(strategyGroup.querySelectorAll('[data-slot="segmented-indicator"]')).toHaveLength(1);
     expect(screen.queryByRole("region", { name: tasteStrings.previewAfter })).toBeNull();
-    fireEvent.click(screen.getByRole("button", { name: tasteStrings.previewExpand }));
+    fireEvent.click(await screen.findByRole("button", { name: tasteStrings.previewExpand }));
     expect(screen.queryByRole("region", { name: tasteStrings.previewBefore })).toBeNull();
     const afterPreview = screen.getByRole("region", { name: tasteStrings.previewAfter });
     expect(
@@ -756,7 +784,7 @@ describe("TasteFlow", () => {
 
     const view = render(
       <StrictMode>
-        <TasteFlow onRevealConsumed={consumeReveal} reveal="1" />
+        <TasteFlow group="narrative" onRevealConsumed={consumeReveal} reveal="1" />
       </StrictMode>,
     );
     await act(async () => {
@@ -775,7 +803,7 @@ describe("TasteFlow", () => {
 
     view.rerender(
       <StrictMode>
-        <TasteFlow onRevealConsumed={consumeReveal} />
+        <TasteFlow group="narrative" onRevealConsumed={consumeReveal} />
       </StrictMode>,
     );
     expect(screen.getByRole("link", { name: "おすすめを見る" })).toBeTruthy();
@@ -908,16 +936,15 @@ describe("TasteFlow", () => {
   it("finishes an active reveal immediately when reduced motion becomes requested", async () => {
     window.history.replaceState({}, "", "/taste?reveal=1");
 
-    render(<TasteFlow onRevealConsumed={consumeReveal} reveal="1" />);
+    render(<TasteFlow group="narrative" onRevealConsumed={consumeReveal} reveal="1" />);
     expect(await screen.findByRole("link", { name: "おすすめを見る" })).toBeTruthy();
-    expect(document.querySelector('.dna-ink-line[data-draw="true"]')).toBeTruthy();
+    expect(document.querySelector(".taste-factor-bar__fill--reveal")).toBeTruthy();
 
     expect(motionPreferenceListener).not.toBeNull();
     act(() => motionPreferenceListener?.({ matches: true }));
 
     await waitFor(() => {
       expect(window.location.pathname + window.location.search).toBe("/taste");
-      expect(document.querySelector('.dna-ink-line[data-draw="true"]')).toBeNull();
       expect(document.querySelector(".taste-factor-bar__fill--reveal")).toBeNull();
     });
     expect(screen.getByRole("link", { name: "おすすめを見る" })).toBeTruthy();

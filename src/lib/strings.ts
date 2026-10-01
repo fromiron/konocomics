@@ -873,6 +873,8 @@ export const tasteStrings = {
   previewBefore: "開いたときの反映設定で",
   previewAfter: "現在の反映設定で",
   previewEmpty: "表示できる候補はありません。",
+  previewLoading: "おすすめを準備しています… 好みの調整は続けられます。",
+  previewRetry: "もう一度試す",
   previewUnavailable: "おすすめの変化を計算できませんでした。",
   previewWorkUnavailable: "この作品の情報を表示できません。",
   previewUnchanged: "先頭の最大4作品に変化はありません。",

@@ -81,6 +81,16 @@ vi.mock("@/features/catalog/catalog-provider", () => ({
   }),
 }));
 
+vi.mock("@/features/catalog/personal-catalog-provider", async () => {
+  const { hasCatalogBackedProfile } = await import("@/domain/profile/catalog-profile");
+  return {
+    usePersonalProfile: () => ({
+      error: false,
+      hasProfile: hasCatalogBackedProfile(testState.userWorks, catalog.works),
+    }),
+  };
+});
+
 vi.mock("@/infrastructure/db", () => ({
   usePersistence: () => ({
     getProviderCache: () => Promise.resolve(null),

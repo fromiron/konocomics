@@ -74,6 +74,9 @@ function WorkPreviewList({
 }
 
 export function RecommendationDiffPreview({
+  loading = false,
+  failed = false,
+  onRetry,
   after,
   before,
   className,
@@ -81,6 +84,9 @@ export function RecommendationDiffPreview({
   onCoverVisible,
   worksById,
 }: Readonly<{
+  loading?: boolean;
+  failed?: boolean;
+  onRetry?: () => void;
   after: readonly string[] | null;
   before: readonly string[] | null;
   className?: string;
@@ -89,7 +95,7 @@ export function RecommendationDiffPreview({
   onCoverVisible(workId: string): void;
 }>) {
   const [unchangedExpanded, setUnchangedExpanded] = useState(false);
-  const available = before !== null && after !== null;
+  const available = !failed && before !== null && after !== null;
   const unchanged =
     available &&
     before.length === after.length &&
@@ -111,6 +117,7 @@ export function RecommendationDiffPreview({
           {tasteStrings.previewDescription}
         </p>
       </div>
+      {loading ? <p aria-live="polite">{tasteStrings.previewLoading}</p> : null}
       {available && before.length === 0 && after.length === 0 ? (
         <p className="text-text-muted">{tasteStrings.previewEmpty}</p>
       ) : available ? (
@@ -187,8 +194,13 @@ export function RecommendationDiffPreview({
             />
           </div>
         </div>
-      ) : (
-        <p>{tasteStrings.previewUnavailable}</p>
+      ) : loading ? null : (
+        <div>
+          <p role="status">{tasteStrings.previewUnavailable}</p>
+          {onRetry === undefined ? null : (
+            <Button onClick={onRetry}>{tasteStrings.previewRetry}</Button>
+          )}
+        </div>
       )}
     </section>
   );

@@ -1,6 +1,6 @@
 "use client";
 
-import { createContext, type ReactNode, useContext } from "react";
+import { createContext, type ReactNode, use, useContext } from "react";
 
 import { Button } from "@/components/design-system/button";
 import type { CatalogV1 } from "@/domain/catalog/types";
@@ -8,7 +8,9 @@ import type { CurrentCatalogIdentity } from "@/infrastructure/db";
 import { catalogStrings } from "@/lib/strings";
 
 const CatalogContext = createContext<CatalogV1 | null>(null);
-const CatalogIdentityContext = createContext<CurrentCatalogIdentity | null>(null);
+const CatalogIdentityContext = createContext<
+  CurrentCatalogIdentity | (() => Promise<CurrentCatalogIdentity>) | null
+>(null);
 
 type CatalogProviderProps = Readonly<{
   catalog: CatalogV1;
@@ -44,12 +46,32 @@ export function CatalogProvider({ catalog, children }: CatalogProviderProps) {
   return <CatalogContext value={catalog}>{children}</CatalogContext>;
 }
 
+let identityRequest: Promise<CurrentCatalogIdentity> | undefined;
+function loadIdentity() {
+  if (identityRequest !== undefined) return identityRequest;
+  identityRequest = import("@/data/generated/catalog-identity-v1.json").then(
+    async ({ default: json }) => {
+      const { parseCurrentCatalogIdentity } = await import("@/infrastructure/db/export-v1");
+      return parseCurrentCatalogIdentity(json);
+    },
+  );
+  const request = identityRequest;
+  void request.catch(() => {
+    if (identityRequest === request) identityRequest = undefined;
+  });
+  return request;
+}
+/** Full identity is requested only by consumers which actually need all IDs. */
+export function LazyCatalogIdentityProvider({ children }: { children: ReactNode }) {
+  return <CatalogIdentityContext value={loadIdentity}>{children}</CatalogIdentityContext>;
+}
+
 export function useCatalogIdentity(): CurrentCatalogIdentity {
   const identity = useContext(CatalogIdentityContext);
   if (identity === null) {
     throw new Error("useCatalogIdentity must be used within CatalogIdentityProvider");
   }
-  return identity;
+  return typeof identity === "function" ? use(identity()) : identity;
 }
 
 export function useCatalog(): CatalogV1 {
