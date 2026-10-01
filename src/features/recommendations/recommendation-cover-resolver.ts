@@ -23,8 +23,27 @@ type RecommendationCoverResolution = Readonly<{
   target: RecommendationCoverTarget;
   coverUrl: string | null;
   itemCaption?: string;
+  links?: RecommendationProviderLinks;
   source: "fresh-cache" | "refreshed" | "unavailable";
 }>;
+
+/** The provider's own product links for a resolved cover, when it returned any. */
+export type RecommendationProviderLinks = Readonly<{
+  itemUrl?: string;
+  affiliateUrl?: string;
+}>;
+
+function providerLinks(
+  metadata: Readonly<{ itemUrl?: string; affiliateUrl?: string }> | null | undefined,
+): Pick<RecommendationCoverResolution, "links"> {
+  if (metadata?.itemUrl === undefined && metadata?.affiliateUrl === undefined) return {};
+  return {
+    links: {
+      ...(metadata.itemUrl === undefined ? {} : { itemUrl: metadata.itemUrl }),
+      ...(metadata.affiliateUrl === undefined ? {} : { affiliateUrl: metadata.affiliateUrl }),
+    },
+  };
+}
 
 type RecommendationCoverDependencies = Readonly<{
   getProviderCache(isbn: string): Promise<ProviderCacheRecord | null>;
@@ -84,6 +103,7 @@ export async function resolveRecommendationCover(
           target,
           coverUrl: normalizedImageUrl(cache.metadata?.imageUrl),
           itemCaption: cache.metadata?.itemCaption,
+          ...providerLinks(cache.metadata),
           source: "fresh-cache",
         };
       }
@@ -112,6 +132,7 @@ export async function resolveRecommendationCover(
       target,
       coverUrl: normalizedImageUrl(savedCache.metadata?.imageUrl),
       itemCaption: savedCache.metadata?.itemCaption,
+      ...providerLinks(savedCache.metadata),
       source: "refreshed",
     };
   } catch {
@@ -128,6 +149,7 @@ type UseRecommendationCoversInput = Readonly<{
 type RecommendationCoverState = Readonly<{
   coverUrls: ReadonlyMap<string, string | null>;
   itemCaptions: ReadonlyMap<string, string>;
+  providerLinks: ReadonlyMap<string, RecommendationProviderLinks>;
   requestCover(workId: string): void;
 }>;
 
@@ -245,13 +267,15 @@ export function useRecommendationCovers({
   const metadata = useMemo(() => {
     const coverUrls = new Map<string, string | null>();
     const itemCaptions = new Map<string, string>();
+    const links = new Map<string, RecommendationProviderLinks>();
     targets.forEach((target) => {
       const resolution = resolvedByTarget.get(targetKey(target));
       if (resolution === undefined) return;
       coverUrls.set(target.workId, resolution.coverUrl);
       if (resolution.itemCaption) itemCaptions.set(target.workId, resolution.itemCaption);
+      if (resolution.links !== undefined) links.set(target.workId, resolution.links);
     });
-    return { coverUrls, itemCaptions };
+    return { coverUrls, itemCaptions, providerLinks: links };
   }, [resolvedByTarget, targets]);
 
   return useMemo(() => ({ ...metadata, requestCover }), [metadata, requestCover]);

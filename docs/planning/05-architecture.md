@@ -146,7 +146,7 @@ groupingScore =
 ## 3. Router·클라이언트/서버 경계 (선언)
 
 1. TanStack Router는 pathname/path params, Zod search params, loader data, route boundary와 metadata만 소유한다. Dexie 사용자 상태, 추천 결과/policy/cache, form·animation·scroll·mutation state는 소유하지 않는다(`08` §1~2).
-2. `/`는 공개 prerender shell, `/works/$workId`는 bundled Catalog ID만 prerender한다. `/onboarding`·`/taste`·`/recommendations`·`/library`·`/settings`는 `ssr: false` route 또는 client boundary이고 `/works/external`은 고정 static shell + hydration 뒤 IndexedDB lookup이다.
+2. `/`는 공개 prerender shell, `/works/$workId`는 bundled Catalog ID만 prerender한다. `/onboarding`·`/taste`·`/recommendations`·`/library`·`/settings`는 `ssr: false` route 또는 client boundary이고 `/works/external`은 고정 static shell + hydration 뒤 IndexedDB lookup이다. `/share`는 고정 static shell + hydration 뒤 query만 해석하는 공개 공유 페이지다(`03` §4.1).
 3. shared root document는 server-safe하게 유지한다. persistence provider는 server render 중 memory 상태만 만들고 hydration effect에서 별도 browser chunk의 Dexie backend를 동적 import해 생성·연다. Dexie profile guard를 server loader/`beforeLoad`에서 실행하지 않는다. Router context는 repository/client/config dependency injection에만 쓰며 mutable UI·사용자 state를 넣지 않는다.
 4. **서버 코드는 `/api/rakuten/*` Start server route 단 둘(search, item)이다.** App ID·Access Key 은닉과 CDN cache를 위한 경계이며 임의 server function·새 server route를 추가하지 않는다.
 5. **추천 엔진·설명 엔진은 순수·결정론 함수다.** `Date.now()`·난수·I/O 접근 금지. 시간 의존 값(예: TTL 판정)은 인자로 주입. 동일 입력 → 동일 출력을 단위 테스트로 강제한다.

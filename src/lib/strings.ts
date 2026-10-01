@@ -418,6 +418,7 @@ export const navigationStrings = {
     home: "ホーム",
     onboarding: "好みの登録",
     workDetail: "作品詳細",
+    sharedDna: "共有された Manga DNA",
   },
   routeAnnouncement: (pageLabel: string) => `${pageLabel}ページに移動しました。`,
 } as const;
@@ -458,35 +459,76 @@ export const onboardingStrings = {
     },
     openLibrary: "ライブラリで開く",
   },
-  stepProgress: {
-    label: "好み登録の進み具合",
-    selection: "作品を選ぶ",
-    dna: "DNAを確認",
-    recommendations: "おすすめへ",
+  welcome: {
+    eyebrow: "はじめに",
+    title: "あなたの Manga DNA を作りましょう",
+    description: "好きなマンガを選ぶだけ。登録なし、データはこのブラウザの中だけに保存されます。",
+    stepsLabel: "Manga DNA ができるまで",
+    currentStep: "いまここ",
+    steps: [
+      {
+        title: "好きな作品を選ぶ",
+        description: "5〜10 作品。特に好きな作品は「大好き」にできます。",
+      },
+      {
+        title: "合わなかった作品",
+        optional: "任意",
+        description: "0〜3 作品。選ばなくても大丈夫です。",
+      },
+      {
+        title: "Manga DNA とおすすめ",
+        description: "好みを読み取り、合う作品を理由といっしょに提案します。",
+      },
+    ],
+  },
+  clarity: {
+    label: "DNAの鮮明さ",
+    levels: {
+      empty: "まだ選んでいません",
+      low: "ぼんやり",
+      normal: "鮮明",
+      high: "とても鮮明",
+    },
+    toNormal: (count: number) => `あと ${String(count)} 作品で鮮明になります`,
+    toHigh: (count: number) => `あと ${String(count)} 作品でさらに鮮明になります`,
+    withReasons: "具体的な理由を選ぶと、DNA がより鮮明になります",
+  },
+  selectionPanel: {
+    guideTitle: "選び方",
+    guideSteps: {
+      firstRun: [
+        "作品の ＋ を押して選ぶ",
+        "特に好きな作品は ☆ で「大好き」に",
+        "5 作品から「次へ」に進めます",
+      ],
+      add: [
+        "作品の ＋ を押して選ぶ",
+        "特に好きな作品は ☆ で「大好き」に",
+        "「追加する」で DNA に反映",
+      ],
+    },
+    continueHint: {
+      firstRun: "次に、合わなかった作品を任意で選べます",
+      add: "押すと Manga DNA を再計算します",
+    },
+    clear: "選択をクリア",
+    clearedAnnouncement: "選択をクリアしました。",
   },
   addMode: {
     eyebrow: "作品を追加",
     title: "好きなマンガを追加してください",
-    description:
-      "新しく選んだ作品を Manga DNA と次のおすすめに反映します。1〜10作品まで追加できます。",
+    description: "1作品から追加できます。5作品以上で DNA が鮮明になります。",
     selectedTray: "追加するマンガ",
     emptySelected: "まだ追加する作品がありません",
     minimum: "1作品以上えらんでください",
     submit: (count: number) => `追加する (${String(count)}/10)`,
     saving: "追加しています…",
     close: "DNAに戻る",
-    discard: "入力内容を破棄",
-    discardError: "入力内容を破棄できませんでした。もう一度お試しください。",
   },
   step1: {
     eyebrow: "STEP 1 / 2",
     title: "好きなマンガを 5〜10 作品えらんでください",
-    description: "選んだ作品から、物語や雰囲気の好みを読み取ります。",
-    benefits: [
-      { title: "好みが伝わる", description: "作品の共通点から傾向を見つけます。" },
-      { title: "根拠がわかる", description: "選んだ作品をおすすめ理由につなげます。" },
-      { title: "あとから調整", description: "Manga DNA はいつでも見直せます。" },
-    ],
+    description: "特に好きな作品は ☆ で「大好き」にすると、より強く反映されます。",
     searchLabel: "好きなマンガを検索",
     searchPlaceholder: "タイトル・作者名を入力",
     noResults: "見つかりませんでした。別の書き方で試してください",
@@ -523,6 +565,7 @@ export const onboardingStrings = {
     featuredHeading: "選びやすい作品",
     noFilteredWorks: "この条件で選べる作品はありません。条件を変えてください。",
     collectionsHeading: "コレクションから探す",
+    collectionsDescription: "気分に合う棚を開いて選べます。",
     showMore: "もっと見る",
     collectionVisibleCount: (count: number) => `${String(count)}件表示`,
     collectionEmpty: "このコレクションで選べる作品はありません。",
@@ -549,12 +592,20 @@ export const onboardingStrings = {
       },
     },
     guidanceHeading: "迷ったときは",
-    guidance: [
-      "最近夢中になった作品から選ぶ",
-      "違うジャンルを混ぜて選ぶ",
-      "5〜10作品の範囲で、無理に埋めない",
-      "選んだ内容はあとから追加・調整できる",
-    ],
+    guidance: {
+      firstRun: [
+        "最近夢中になった作品から選ぶ",
+        "違うジャンルを混ぜて選ぶ",
+        "5〜10作品の範囲で、無理に埋めない",
+        "選んだ内容はあとから追加・調整できる",
+      ],
+      add: [
+        "最近夢中になった作品から選ぶ",
+        "違うジャンルを混ぜて選ぶ",
+        "1作品からでOK。無理に埋めない",
+        "選んだ内容はあとから追加・調整できる",
+      ],
+    },
     shelves: {
       action: "アクション",
       fantasy: "ファンタジー",
@@ -568,10 +619,15 @@ export const onboardingStrings = {
     eyebrow: "STEP 2 / 2",
     title: "合わなかった・途中でやめたマンガはありますか？",
     optional: "任意",
-    description: "0〜3作品まで。選ばないことは、苦手という意味にはなりません。",
+    description: "0〜3作品まで。なくても、そのまま進めます。",
+    principle: "選ばないことは、苦手という意味にはなりません。",
+    back: "好きな作品を選び直す",
     searchLabel: "合わなかったマンガを検索",
     searchPlaceholder: "タイトル・作者名を入力",
-    emptySearch: "作品名を入力すると候補が表示されます。",
+    candidatesHeading: "候補から選ぶ",
+    candidatesDescription: "読んだことがあって、合わなかった作品があれば選んでください。",
+    showMoreCandidates: "もっと見る",
+    selectedHeading: "選んだ作品",
     noResults: "見つかりませんでした。別の書き方で試してください",
     selectedPositive: "好きに選択済み",
     selectedNegative: "追加済み",
@@ -580,12 +636,32 @@ export const onboardingStrings = {
     disliked: "合わなかった",
     dropped: "途中でやめた",
     reasons: "理由を選ぶ",
+    reasonsLegend: {
+      disliked: "合わなかった理由（複数選べます）",
+      dropped: "やめた理由（複数選べます）",
+    },
+    reasonGroups: {
+      content: "作品の内容",
+      circumstance: "作品以外の事情",
+      vague: "はっきりしない",
+    },
     noReason: "理由なし = 弱くだけ反映されます",
     externalHelper: "この理由はおすすめの計算には使いません。",
     remove: "この作品を外す",
-    skip: "スキップ",
+    skip: "選んだ作品を使わずに進む",
     finish: "好みを見る",
+    finishHint: "合わなかった作品がなくても、このまま進めます",
     saving: "保存しています…",
+    panel: {
+      title: "合わなかった作品",
+      empty: "なくても大丈夫です。そのまま「好みを見る」で Manga DNA を作れます。",
+      effectsTitle: "選ぶとどうなる？",
+      effects: [
+        "選んだ作品はおすすめに表示されません",
+        "理由を選ぶと、似た条件の作品がおすすめに出にくくなります",
+      ],
+      reasonCount: (count: number) => (count === 0 ? "理由なし" : `理由 ${String(count)}つ`),
+    },
     reasonLabels: {
       tooSlow: "展開が遅い",
       tooRepetitiveProgression: "強くなるだけの繰り返し",
@@ -647,46 +723,32 @@ export const tasteStrings = {
   topPreferencePending: "好みの特徴を分析しています。作品を追加すると見つけやすくなります。",
   share: {
     open: "カードで共有",
-    title: "Manga DNA カード",
-    description: "いまの Manga DNA を1枚の画像にします。保存してそのまま投稿できます。",
-    previewAlt: "Manga DNA カードのプレビュー",
-    previewCaption: "保存される画像と同じプレビューです。",
-    worksLegend: "カードに作品名を載せる",
+    title: "Manga DNA を共有",
+    description:
+      "いまの Manga DNA とおすすめ作品を1つのページにまとめます。リンクを送ると、相手もそのページを見られます。",
+    previewHeading: "共有ページに載る内容",
+    previewBasis: (count: number) => `${String(count)}作品から分析`,
+    previewRecommendations: (titles: readonly string[]) =>
+      `おすすめ: ${titles.map((title) => `『${title}』`).join("")}`,
+    worksLegend: "ページに載せる作品",
     worksHelp: (count: number) =>
-      `外した作品は「ほか○作品」にまとめます。分析した${String(count)}作品の数は変わりません。`,
-    save: "画像を保存",
-    copy: "紹介文とリンクをコピー",
+      `外した作品は名前を載せず「ほか○作品」として数だけ載せます。分析した${String(count)}作品の数は変わりません。`,
+    copy: "私のDNAページリンクをコピー",
     shareSheet: "ほかのアプリで共有",
-    linkLabel: "紹介リンク",
-    privacy: "リンクにはあなたの好みや作品の情報は含まれません。",
-    renderFailed: "カード画像を作れませんでした。",
-    retry: "もう一度作る",
-    empty:
-      "カードにできる好みの特徴がまだありません。好きな作品を追加すると、上位の好みが見つかります。",
+    openPage: "ページを開いて確認",
+    openPageNewTab: "共有ページを開いて確認(新しいタブ)",
+    linkLabel: "DNAページのリンク",
+    privacy:
+      "リンクには DNA の段階、載せた作品、おすすめ作品が含まれます。サーバーには保存されず、作成時点のスナップショットとして共有されます。",
+    empty: "共有できる好みの軸がまだありません。好きな作品を追加すると、Manga DNA が見つかります。",
     addWorks: "好きな作品を追加",
     shareText:
       "好きなマンガから、わたしの好みを分析しました。あなたの Manga DNA も見てみませんか？",
     status: {
-      saved: "画像の保存を始めました。",
-      copied: "紹介文とリンクをコピーしました。",
+      copied: "DNAページのリンクをコピーしました。",
       copyFailed: "コピーできませんでした。リンク欄から選択してコピーしてください。",
       handedOff: "共有先のアプリに渡しました。",
-      shareFailed: "共有できませんでした。画像の保存かリンクのコピーをお使いください。",
-    },
-    image: {
-      brand: [
-        { text: "kono", accent: true },
-        { text: "co", accent: false },
-        { text: "mi", accent: true },
-        { text: "cs", accent: false },
-      ],
-      kicker: "MANGA DNA",
-      eyebrow: "わたしの好み",
-      analyzedUnit: "作品から分析",
-      worksHeading: "分析した作品",
-      moreWorks: (count: number) => `ほか${String(count)}作品`,
-      restrainedHeading: "好きな作品に少ない要素",
-      footerLead: "好きなマンガ5作品で、あなたの好みもわかる",
+      shareFailed: "共有できませんでした。リンクのコピーをお使いください。",
     },
   },
   groups: {
@@ -794,6 +856,45 @@ export const tasteStrings = {
     heading: "Manga DNAを、もう少し鮮明に。",
     description: "好きな作品を追加すると、好みの輪郭が深まります。",
     action: "作品を追加",
+  },
+} as const;
+
+export const dnaSharePageStrings = {
+  metadataTitle: "わたしの Manga DNA | konocomics",
+  loading: "共有された Manga DNA を読み込んでいます…",
+  kicker: "MANGA DNA",
+  title: "わたしの Manga DNA",
+  basis: (count: number) =>
+    `${String(count)}作品から分析しました · このページは共有用に作成されました`,
+  wheelLabel: (axes: readonly string[]) => `共有された Manga DNA ホイール。${axes.join("、")}`,
+  wheelAxis: (label: string, level: string) => `${label}: ${level}`,
+  centerUnit: "作品から分析",
+  axesHeading: "好みの軸",
+  worksHeading: "分析した作品",
+  moreWorks: (count: number) => `ほか${String(count)}作品`,
+  recommendationsHeading: "このDNAにおすすめの作品",
+  recommendationsDescription:
+    "DNAの持ち主へのおすすめ上位作品です。表紙と商品情報は楽天ブックスから表示しています。",
+  reasonChip: (label: string) => `「${label}」が近い`,
+  cta: {
+    heading: "あなたのDNAも、5作品でわかる",
+    profileHeading: "あなたの Manga DNA とくらべてみる",
+    description: "好きなマンガを選ぶだけ。登録なし、データはあなたのブラウザの中だけに。",
+    byVisitor: {
+      new: "Manga DNAを作る",
+      resume: "選んだ作品の続きから",
+      profile: "自分の Manga DNA を見る",
+      recovery: "作品を追加して続ける",
+    },
+  },
+  footnote: [
+    "このページは共有用に作成されました。好みのデータはURLにのみ含まれ、サーバーには保存されません。",
+    "共有されたDNAは作成時点のスナップショットです。",
+  ],
+  invalid: {
+    title: "このリンクは開けません",
+    description:
+      "リンクが途中で切れているか、形式が正しくありません。共有した人にもう一度リンクを送ってもらってください。",
   },
 } as const;
 

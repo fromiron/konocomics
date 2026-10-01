@@ -35,6 +35,7 @@ import type {
 } from "@/domain/profile/types";
 import { isExternalNegativeReason } from "@/domain/profile/constants";
 import { recommendationContextSchema } from "@/domain/recommendation/context-schema";
+import type { RecommendationPlanEntry } from "@/domain/recommendation/types";
 import {
   buildRecommendationPlan,
   selectRecommendationPlanEntries,
@@ -57,13 +58,14 @@ import { DnaWheel } from "./dna-wheel";
 const DNA_REVEAL_MARKER = "konocomics:manga-dna-reveal:v1";
 const EMPTY_RECORDS: readonly UserWorkRecord[] = [];
 const EMPTY_ADJUSTMENTS: ProfileAdjustments = { axes: {}, themes: {} };
+const EMPTY_PREVIEW_ENTRIES: readonly RecommendationPlanEntry[] = [];
 const NARRATIVE_IDS = new Set<AxisId>(NARRATIVE_AXIS_IDS);
 const TONE_IDS = new Set<AxisId>(TONE_AXIS_IDS);
 const ART_IDS = new Set<AxisId>(ART_AXIS_IDS);
 const parsedRecommendationContext =
   recommendationContextSchema.safeParse(recommendationContextJson);
 
-function recommendationPreviewWorkIds(
+function recommendationPreviewEntries(
   catalog: CatalogV1,
   records: readonly UserWorkRecord[],
   adjustments: ProfileAdjustments,
@@ -79,9 +81,7 @@ function recommendationPreviewWorkIds(
       policies,
       context: parsedRecommendationContext.data,
     });
-    return selectRecommendationPlanEntries(plan, policies)
-      .slice(0, 4)
-      .map((entry) => entry.workId);
+    return selectRecommendationPlanEntries(plan, policies).slice(0, 4);
   } catch {
     return null;
   }
@@ -848,12 +848,21 @@ export function TasteFlow({
   );
   const beforePreviewWorkIds = useMemo(() => {
     if (baselineAdjustments === null || storedPolicies === undefined) return null;
-    return recommendationPreviewWorkIds(catalog, records, baselineAdjustments, storedPolicies);
+    return (
+      recommendationPreviewEntries(catalog, records, baselineAdjustments, storedPolicies)?.map(
+        (entry) => entry.workId,
+      ) ?? null
+    );
   }, [baselineAdjustments, catalog, records, storedPolicies]);
-  const afterPreviewWorkIds = useMemo(() => {
+  // The current list also feeds the share link, so its entries keep their contributions.
+  const afterPreviewEntries = useMemo(() => {
     if (storedPolicies === undefined) return null;
-    return recommendationPreviewWorkIds(catalog, records, adjustments, storedPolicies);
+    return recommendationPreviewEntries(catalog, records, adjustments, storedPolicies);
   }, [adjustments, catalog, records, storedPolicies]);
+  const afterPreviewWorkIds = useMemo(
+    () => afterPreviewEntries?.map((entry) => entry.workId) ?? null,
+    [afterPreviewEntries],
+  );
   const coverTargets = useMemo(
     () =>
       createRecommendationCoverTargets(catalog, [
@@ -1063,7 +1072,13 @@ export function TasteFlow({
         onFocus={keepFocusAboveSnackbar}
       >
         <PageHeader
-          action={<DnaShareButton summary={summary} worksById={worksById} />}
+          action={
+            <DnaShareButton
+              recommendations={afterPreviewEntries ?? EMPTY_PREVIEW_ENTRIES}
+              summary={summary}
+              worksById={worksById}
+            />
+          }
           className="taste-header mb-[var(--space-8)]"
           title={tasteStrings.title}
         >

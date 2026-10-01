@@ -25,7 +25,12 @@ type AppShellContentProps = Readonly<{
 }>;
 
 function isImmersivePath(pathname: string) {
-  return pathname === "/" || pathname === "/onboarding" || pathname.startsWith("/onboarding/");
+  return (
+    pathname === "/" ||
+    pathname === "/share" ||
+    pathname === "/onboarding" ||
+    pathname.startsWith("/onboarding/")
+  );
 }
 
 function requiresProfile(pathname: string) {
@@ -56,6 +61,10 @@ function getRouteLabel(pathname: string) {
 
   if (pathname.startsWith("/works/")) {
     return navigationStrings.routeNames.workDetail;
+  }
+
+  if (pathname === "/share") {
+    return navigationStrings.routeNames.sharedDna;
   }
 
   if (pathname.startsWith("/onboarding")) {

@@ -4,28 +4,11 @@ import { useInView } from "motion/react";
 import { type CSSProperties, useId, useRef, useState } from "react";
 
 import type { AxisId, Work } from "@/domain/catalog/types";
-import type { MangaDnaSummary } from "@/domain/profile/dna-summary";
+import { rankDnaWheelAxes, type MangaDnaSummary } from "@/domain/profile/dna-summary";
 import { explanationLexicon, tasteStrings } from "@/lib/strings";
 import { cn } from "@/lib/utils";
 
-const CENTER = 170;
-const INNER_RADIUS = 72;
-const OUTER_RADIUS = 140;
-const AXIS_LIMIT = 8;
-const SEGMENT_GAP = 0.055;
-
-function point(radius: number, angle: number) {
-  return [CENTER + radius * Math.cos(angle), CENTER + radius * Math.sin(angle)];
-}
-
-function segmentPath(start: number, end: number, outerRadius: number) {
-  const innerStart = point(INNER_RADIUS, start);
-  const outerStart = point(outerRadius, start);
-  const outerEnd = point(outerRadius, end);
-  const innerEnd = point(INNER_RADIUS, end);
-  const largeArc = end - start > Math.PI ? 1 : 0;
-  return `M${innerStart}L${outerStart}A${outerRadius},${outerRadius} 0 ${largeArc} 1 ${outerEnd}L${innerEnd}A${INNER_RADIUS},${INNER_RADIUS} 0 ${largeArc} 0 ${innerStart}Z`;
-}
+import { DNA_WHEEL_VIEW_BOX, dnaWheelSegment } from "./dna-wheel-geometry";
 
 export function DnaWheel({
   animateReveal,
@@ -42,16 +25,7 @@ export function DnaWheel({
   const segmentRefs = useRef(new Map<AxisId, SVGGElement>());
   const wheelRef = useRef<HTMLDivElement>(null);
   const inView = useInView(wheelRef, { once: true, amount: 0.2 });
-  const axes = summary.axes
-    .flatMap((axis) =>
-      axis.state === "known" && axis.value !== null ? [{ ...axis, value: axis.value }] : [],
-    )
-    .sort(
-      (left, right) =>
-        right.value - left.value ||
-        (left.factorId < right.factorId ? -1 : left.factorId > right.factorId ? 1 : 0),
-    )
-    .slice(0, AXIS_LIMIT);
+  const axes = rankDnaWheelAxes(summary.axes);
   const selected = axes.find((axis) => axis.factorId === selectedId);
   const toggle = (factorId: AxisId) =>
     setSelectedId((current) => (current === factorId ? null : factorId));
@@ -82,7 +56,7 @@ export function DnaWheel({
                 aria-label={strings.label}
                 className="block h-auto w-full"
                 role="group"
-                viewBox="0 0 340 340"
+                viewBox={DNA_WHEEL_VIEW_BOX}
               >
                 <defs>
                   <linearGradient id={`${id}-accent`} x1="0" y1="0" x2="1" y2="1">
@@ -91,12 +65,7 @@ export function DnaWheel({
                   </linearGradient>
                 </defs>
                 {axes.map((axis, index) => {
-                  const start =
-                    -Math.PI / 2 + (index * Math.PI * 2) / axes.length + SEGMENT_GAP / 2;
-                  const end =
-                    -Math.PI / 2 + ((index + 1) * Math.PI * 2) / axes.length - SEGMENT_GAP / 2;
-                  const radius = INNER_RADIUS + (axis.value / 4) * (OUTER_RADIUS - INNER_RADIUS);
-                  const badge = point(OUTER_RADIUS + 17, (start + end) / 2);
+                  const segment = dnaWheelSegment(index, axes.length, axis.value);
                   const label = explanationLexicon.factorLabels[axis.factorId];
                   return (
                     <g
@@ -152,26 +121,28 @@ export function DnaWheel({
                         (selected?.factorId ?? axes[0]?.factorId) === axis.factorId ? 0 : -1
                       }
                     >
-                      <path
-                        className="taste-dna-segment__track"
-                        d={segmentPath(start, end, OUTER_RADIUS)}
-                      />
+                      <path className="taste-dna-segment__track" d={segment.trackPath} />
                       {axis.value === 0 ? null : (
                         <path
                           className="taste-dna-segment__fill"
-                          d={segmentPath(start, end, radius)}
+                          d={segment.fillPath}
                           fill={index < 3 ? `url(#${id}-accent)` : "var(--dna-muted-fill)"}
                         />
                       )}
                       {index < 3 ? (
                         <g aria-hidden="true" className="pointer-events-none">
-                          <circle cx={badge[0]} cy={badge[1]} fill="var(--accent)" r={11} />
+                          <circle
+                            cx={segment.badge.x}
+                            cy={segment.badge.y}
+                            fill="var(--accent)"
+                            r={11}
+                          />
                           <text
                             className="taste-dna-wheel__rank"
                             dominantBaseline="central"
                             textAnchor="middle"
-                            x={badge[0]}
-                            y={badge[1]}
+                            x={segment.badge.x}
+                            y={segment.badge.y}
                           >
                             {index + 1}
                           </text>
