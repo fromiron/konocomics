@@ -51,13 +51,14 @@ describe("versioned static Catalog asset", () => {
     );
   });
 
-  it("applies immutable Nitro caching only to the exact current content-addressed asset", () => {
+  it("applies immutable caching to versioned assets and the content-addressed node directory", () => {
     expect(viteConfigSource).toMatch(
       /\[catalogAssetUrl\(catalogJson\.catalogVersion\)\]:\s*\{\s*headers:\s*\{\s*"cache-control":\s*"public, max-age=31536000, immutable"\s*\}/u,
     );
     expect(viteConfigSource).toMatch(
       /\[recommendationContextAssetUrl\(catalogJson\.catalogVersion\)\]:\s*\{\s*headers:\s*\{\s*"cache-control":\s*"public, max-age=31536000, immutable"\s*\}/u,
     );
-    expect(viteConfigSource.match(/"cache-control"/gu)).toHaveLength(2);
+    expect(viteConfigSource).toContain('"/catalog/nodes/**"');
+    expect(viteConfigSource).not.toContain('"/catalog/**"');
   });
 });

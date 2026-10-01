@@ -5,45 +5,25 @@ import {
   Outlet,
   Scripts,
   useRouter,
-  useRouterState,
 } from "@tanstack/react-router";
-import { preload } from "react-dom";
+import { Suspense } from "react";
 
 import { Button } from "@/components/design-system/button";
 import { AppShell } from "@/components/nav/app-shell";
-import catalogIdentityJson from "@/data/generated/catalog-identity-v1.json";
-import { CatalogIdentityProvider } from "@/features/catalog/catalog-provider";
-import { getValidatedSessionCatalog } from "@/features/catalog/validated-catalog-cache";
-import {
-  type CurrentCatalogIdentity,
-  parseCurrentCatalogIdentity,
-  PersistenceProvider,
-} from "@/infrastructure/db";
-import { catalogAssetUrl, recommendationContextAssetUrl } from "@/lib/catalog-asset";
+import { PersonalCatalogProvider } from "@/features/catalog/personal-catalog-provider";
+import { LazyCatalogIdentityProvider } from "@/features/catalog/catalog-provider";
+import { PersistenceProvider } from "@/infrastructure/db";
 import { securityHeaders, siteMetadata } from "@/lib/site-metadata";
 import { coreStrings, routeBoundaryStrings } from "@/lib/strings";
 
 import globalStyles from "../styles/globals.css?url";
-
-let currentCatalogIdentity: CurrentCatalogIdentity | null = null;
-try {
-  currentCatalogIdentity = parseCurrentCatalogIdentity(catalogIdentityJson);
-} catch {
-  currentCatalogIdentity = null;
-}
 
 export const Route = createRootRoute({
   headers: () => securityHeaders,
   beforeLoad: ({ location }) => ({ documentPathname: location.pathname }),
   head: ({ match }) => {
     const pathname = match.context.documentPathname;
-    const indexable =
-      pathname === "/" ||
-      pathname === "/about" ||
-      (currentCatalogIdentity?.workIds.some(
-        (id) => pathname === `/works/${encodeURIComponent(id)}`,
-      ) ??
-        false);
+    const indexable = pathname === "/" || pathname === "/about";
     const metadata = siteMetadata(pathname, indexable);
     return {
       meta: [
@@ -112,37 +92,23 @@ function GlobalNotFound() {
 }
 
 function RootDocument() {
-  const pathname = useRouterState({ select: (state) => state.location.pathname });
-  if (
-    currentCatalogIdentity !== null &&
-    (pathname === "/recommendations" || pathname.startsWith("/recommendations/"))
-  ) {
-    if (getValidatedSessionCatalog(currentCatalogIdentity) === null) {
-      preload(catalogAssetUrl(currentCatalogIdentity.catalogVersion), {
-        as: "fetch",
-        crossOrigin: "anonymous",
-        fetchPriority: "high",
-      });
-    }
-    preload(recommendationContextAssetUrl(currentCatalogIdentity.catalogVersion), {
-      as: "fetch",
-      crossOrigin: "anonymous",
-    });
-  }
-
   return (
     <html className="dark" lang="ja">
       <head>
         <HeadContent />
       </head>
       <body>
-        <CatalogIdentityProvider identity={currentCatalogIdentity}>
+        <LazyCatalogIdentityProvider>
           <PersistenceProvider>
-            <AppShell>
-              <Outlet />
-            </AppShell>
+            <PersonalCatalogProvider>
+              <Suspense fallback={<GlobalPending />}>
+                <AppShell>
+                  <Outlet />
+                </AppShell>
+              </Suspense>
+            </PersonalCatalogProvider>
           </PersistenceProvider>
-        </CatalogIdentityProvider>
+        </LazyCatalogIdentityProvider>
         <Scripts />
       </body>
     </html>

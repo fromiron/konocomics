@@ -21,6 +21,19 @@ const testState = vi.hoisted(() => ({
   onboardingCompletedAt: null as string | null | undefined,
 }));
 
+vi.mock("@/features/catalog/personal-catalog-provider", async () => {
+  const { hasCatalogBackedProfile } = await import("@/domain/profile/catalog-profile");
+  return {
+    usePersonalProfile: () => ({
+      error: false,
+      hasProfile: hasCatalogBackedProfile(
+        testState.userWorks === undefined ? undefined : [...testState.userWorks],
+        testState.catalog.works,
+      ),
+    }),
+  };
+});
+
 vi.mock("@tanstack/react-router", () => ({
   Link: ({
     children,

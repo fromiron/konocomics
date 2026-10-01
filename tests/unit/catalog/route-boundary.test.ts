@@ -194,15 +194,13 @@ const contracts = [
         catalogJson.catalogVersion,
       );
       expect(source("src/routes/recommendations.tsx")).toContain("<StaticAssetCatalogProvider>");
-      expect(source("src/routes/__root.tsx")).toContain(
-        'import catalogIdentityJson from "@/data/generated/catalog-identity-v1.json"',
+      expect(source("src/routes/__root.tsx")).not.toContain(
+        "@/data/generated/catalog-identity-v1.json",
       );
-      expect(source("src/routes/__root.tsx")).not.toContain("Route.useLoaderData()");
-      expect(source("src/routes/__root.tsx")).toContain(
-        "recommendationContextAssetUrl(currentCatalogIdentity.catalogVersion)",
-      );
-      expect(source("src/routes/__root.tsx")).toContain(
-        "getValidatedSessionCatalog(currentCatalogIdentity) === null",
+      expect(source("src/routes/taste.tsx")).toContain("<PersonalTasteCatalogProvider>");
+      expect(source("src/features/taste/taste-flow.tsx")).not.toContain("buildRecommendationPlan");
+      expect(source("src/features/taste/taste-flow.tsx")).not.toContain(
+        "recommendation-context-v1.json",
       );
     },
   },

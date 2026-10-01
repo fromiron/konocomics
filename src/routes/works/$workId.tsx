@@ -1,28 +1,34 @@
 import { createFileRoute, Link, notFound } from "@tanstack/react-router";
 
-import catalogIdentity from "@/data/generated/catalog-identity-v1.json";
 import { BundledCatalogProvider } from "@/features/catalog/bundled-catalog-provider";
 import { WorkDetailFlow } from "@/features/work-detail/work-detail-flow";
 import { loadWorkDetailMetadata } from "@/features/work-detail/work-metadata";
 import { emptySearchSchema } from "@/lib/route-search";
 import { workDetailStrings } from "@/lib/strings";
+import { siteOrigin } from "@/lib/site-metadata";
 
 export const Route = createFileRoute("/works/$workId")({
   validateSearch: (search) => emptySearchSchema.parse(search),
   loader: async ({ params }) => {
-    if (!catalogIdentity.workIds.includes(params.workId)) {
+    const metadata = await loadWorkDetailMetadata(params.workId);
+    if (metadata === null) {
       throw notFound();
     }
-    return { workId: params.workId, metadata: await loadWorkDetailMetadata(params.workId) };
+    return { workId: params.workId, metadata };
   },
   head: ({ loaderData }) => {
     const metadata = loaderData?.metadata;
-    if (metadata === null || metadata === undefined) {
+    if (loaderData === undefined || metadata === null || metadata === undefined) {
       return { meta: [{ title: workDetailStrings.metadataTitle }] };
     }
+    const canonicalUrl = new URL("/works/" + encodeURIComponent(loaderData.workId), siteOrigin)
+      .href;
     return {
+      links: [{ rel: "canonical", href: canonicalUrl }],
       meta: [
+        { property: "og:url", content: canonicalUrl },
         { title: metadata.title },
+        { name: "robots", content: "index,follow" },
         { name: "description", content: metadata.description },
         { property: "og:title", content: metadata.title },
         { property: "og:description", content: metadata.description },

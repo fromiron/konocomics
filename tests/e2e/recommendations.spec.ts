@@ -498,7 +498,7 @@ type LateFactorProbe = {
 async function verifyLateViewportFactorReveal(page: Page) {
   const factorDisclosure = page.getByRole("button", { name: "トーン・関係の詳細設定" });
   await expect(factorDisclosure).toHaveAttribute("aria-expanded", "false");
-  await factorDisclosure.dispatchEvent("click");
+  await factorDisclosure.click();
   await expect(factorDisclosure).toHaveAttribute("aria-expanded", "true");
   await expect(page.locator("[data-reveal-ready='true']").first()).toBeAttached({
     timeout: 3_000,
@@ -966,10 +966,10 @@ test.describe("Slice 7 recommendation journeys", () => {
           pageEntryObservations.filter((observation) => observation.owner === "taste"),
         ).toHaveLength(0);
         await expect(journeyPage.getByRole("link", { name: "おすすめを見る" })).toBeVisible();
-        await expect(journeyPage.locator(".taste-top-summary")).toBeVisible();
+        await expect(journeyPage.locator(".taste-dna-emblem")).toBeVisible();
         expect(await journeyPage.locator(".taste-factor-group").count()).toBeGreaterThan(0);
-        await expect(journeyPage.locator("[data-reveal-ready='false']").first()).toBeAttached();
-        await expect(journeyPage.locator("[data-reveal-ready='true']")).toHaveCount(0);
+        // Closed categories do not mount their meters until the user opens one.
+        await expect(journeyPage.locator(".taste-factor-row")).toHaveCount(0);
         dnaRevealMarker = await journeyPage.evaluate(() =>
           sessionStorage.getItem("konocomics:manga-dna-reveal:v1"),
         );

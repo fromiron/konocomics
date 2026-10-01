@@ -73,6 +73,7 @@ describe("RecommendationPlanWorkerClient", () => {
     const firstWorker = TestWorker.instances[0];
     const firstRequest = firstWorker?.messages[0];
     if (firstWorker === undefined || firstRequest === undefined) throw new Error("Missing worker");
+    if (firstRequest.type !== "build") throw new Error("Expected build request");
     expect(firstRequest.staticInput).toEqual({ catalog: input.catalog, context: input.context });
     firstWorker.respond({ type: "result", requestId: firstRequest.requestId, plan: [] });
     await expect(firstPlan).resolves.toEqual([]);
@@ -80,6 +81,7 @@ describe("RecommendationPlanWorkerClient", () => {
     const secondPlan = client.build({ ...input, records: [] });
     const secondRequest = firstWorker.messages[1];
     if (secondRequest === undefined) throw new Error("Missing second request");
+    if (secondRequest.type !== "build") throw new Error("Expected build request");
     expect(secondRequest.staticInput).toBeUndefined();
 
     const thirdPlan = client.build({ ...input, records: [] });
@@ -98,6 +100,7 @@ describe("RecommendationPlanWorkerClient", () => {
     if (retryWorker === undefined || retryRequest === undefined) {
       throw new Error("Missing retry worker");
     }
+    if (retryRequest.type !== "build") throw new Error("Expected build request");
     expect(retryRequest.staticInput).toEqual({ catalog: input.catalog, context: input.context });
     retryWorker.respond({ type: "result", requestId: retryRequest.requestId, plan: [] });
     await expect(retryPlan).resolves.toEqual([]);

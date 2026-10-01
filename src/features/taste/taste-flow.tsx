@@ -13,9 +13,8 @@ import { useCountUp } from "@/components/motion/use-count-up";
 import { useLiveReducedMotion } from "@/components/motion/use-live-reduced-motion";
 import { usePointerEffect } from "@/components/motion/use-pointer-effects";
 import { pageEntryFadeProps, usePageEntryMotion } from "@/components/motion/use-page-entry-motion";
-import recommendationContextJson from "@/data/generated/recommendation-context-v1.json";
 import { ART_AXIS_IDS, NARRATIVE_AXIS_IDS, TONE_AXIS_IDS } from "@/domain/catalog/constants";
-import type { AxisId, CatalogV1, CoverageGroup, ThemeTag, Work } from "@/domain/catalog/types";
+import type { AxisId, CoverageGroup, ThemeTag, Work } from "@/domain/catalog/types";
 import type { ExplanationFactorId } from "@/domain/explanation";
 import {
   hasCatalogBackedProfile,
@@ -30,16 +29,10 @@ import { calculateProfileConfidence, getConfidenceLevel } from "@/domain/profile
 import type {
   AdjustmentPreference,
   ProfileAdjustments,
-  RecommendationPolicies,
   UserWorkRecord,
 } from "@/domain/profile/types";
 import { isExternalNegativeReason } from "@/domain/profile/constants";
-import { recommendationContextSchema } from "@/domain/recommendation/context-schema";
 import type { RecommendationPlanEntry } from "@/domain/recommendation/types";
-import {
-  buildRecommendationPlan,
-  selectRecommendationPlanEntries,
-} from "@/domain/recommendation/rank";
 import { useCatalog } from "@/features/catalog/catalog-provider";
 import {
   createRecommendationCoverTargets,
@@ -49,6 +42,7 @@ import { usePersistence } from "@/infrastructure/db";
 import { explanationLexicon, mediaStrings, tasteStrings } from "@/lib/strings";
 import { cn } from "@/lib/utils";
 
+import { useTastePreview } from "./use-taste-preview";
 import { DnaShareButton } from "./dna-share-dialog";
 import { AdjustmentRadiogroup } from "./adjustment-radiogroup";
 import { FactorBar } from "@/components/media/factor-bar";
@@ -62,31 +56,6 @@ const EMPTY_PREVIEW_ENTRIES: readonly RecommendationPlanEntry[] = [];
 const NARRATIVE_IDS = new Set<AxisId>(NARRATIVE_AXIS_IDS);
 const TONE_IDS = new Set<AxisId>(TONE_AXIS_IDS);
 const ART_IDS = new Set<AxisId>(ART_AXIS_IDS);
-const parsedRecommendationContext =
-  recommendationContextSchema.safeParse(recommendationContextJson);
-
-function recommendationPreviewEntries(
-  catalog: CatalogV1,
-  records: readonly UserWorkRecord[],
-  adjustments: ProfileAdjustments,
-  policies: RecommendationPolicies,
-) {
-  if (!parsedRecommendationContext.success) return null;
-
-  try {
-    const plan = buildRecommendationPlan({
-      catalog,
-      records: [...records],
-      adjustments,
-      policies,
-      context: parsedRecommendationContext.data,
-    });
-    return selectRecommendationPlanEntries(plan, policies).slice(0, 4);
-  } catch {
-    return null;
-  }
-}
-
 type RevealExperience = Readonly<{
   entry: boolean;
   animate: boolean;
@@ -406,77 +375,85 @@ function FactorGroup<FactorId extends ExplanationFactorId>({
         hidden={!open}
         id={detailsId}
       >
-        {isAnalysisOnly ? null : (
-          <p className="mb-[var(--space-3)] max-w-[var(--layout-width-reading)] text-[length:var(--text-caption-size)] text-text-muted">
-            {tasteStrings.groupAdjustmentHelp}
-          </p>
-        )}
-        <div
-          className={cn(
-            "taste-factor-group__rows grid",
-            isAnalysisOnly
-              ? "taste-factor-group__rows--analysis grid-cols-1 md:grid-cols-2 md:gap-x-[var(--space-6)]"
-              : "grid-cols-1",
-          )}
-        >
-          {visiblePreferences.map((preference, index) => {
-            const label = factorLabel(preference.factorId);
-            return (
-              <div
-                className={cn(
-                  "taste-factor-row grid min-w-0 gap-[var(--space-3)] border-t border-line/70 py-[var(--space-3)]",
-                  isAnalysisOnly && "taste-factor-row--analysis",
-                )}
-                key={preference.factorId}
-              >
-                <FactorBar
-                  animateReveal={animateReveal}
-                  enterDelay={index * 0.04}
-                  enterFill
-                  revealReady={factorRevealReady}
-                  label={label}
-                  revealDelay={index * 0.06}
-                  state={preference.state}
-                  value={preference.value}
-                />
-                {adjustmentValues === undefined || onAdjustment === undefined ? null : (
-                  <div className="taste-factor-row__adjustment min-w-0">
-                    <AdjustmentRadiogroup
-                      factorId={`${id}-${preference.factorId}`}
-                      factorLabel={label}
-                      onChange={(value) => onAdjustment(preference.factorId, value)}
-                      value={adjustmentValues[preference.factorId] ?? "auto"}
-                    />
-                  </div>
-                )}
-              </div>
-            );
-          })}
-        </div>
-        {canCollapse ? (
-          <Button
-            aria-controls={detailsId}
-            aria-expanded={showAll}
-            aria-label={tasteStrings.groupShowAllLabel(title, orderedPreferences.length, showAll)}
-            className="mx-auto mt-[var(--space-4)] flex w-fit gap-[var(--space-2)] rounded-[var(--radius-pill)] text-[length:var(--text-caption-size)]"
-            onClick={() => {
-              if (showAll) setPinnedIds(adjustedIds());
-              setShowAll(!showAll);
-            }}
-            type="button"
-            variant="outline"
-          >
-            {showAll
-              ? tasteStrings.groupShowFewer
-              : tasteStrings.groupShowAll(orderedPreferences.length)}
-            <ChevronDownIcon
-              aria-hidden="true"
+        {open ? (
+          <>
+            {isAnalysisOnly ? null : (
+              <p className="mb-[var(--space-3)] max-w-[var(--layout-width-reading)] text-[length:var(--text-caption-size)] text-text-muted">
+                {tasteStrings.groupAdjustmentHelp}
+              </p>
+            )}
+            <div
               className={cn(
-                "size-4 transition-transform duration-[var(--motion-duration-feedback)] motion-reduce:transition-none",
-                showAll && "rotate-180",
+                "taste-factor-group__rows grid",
+                isAnalysisOnly
+                  ? "taste-factor-group__rows--analysis grid-cols-1 md:grid-cols-2 md:gap-x-[var(--space-6)]"
+                  : "grid-cols-1",
               )}
-            />
-          </Button>
+            >
+              {visiblePreferences.map((preference, index) => {
+                const label = factorLabel(preference.factorId);
+                return (
+                  <div
+                    className={cn(
+                      "taste-factor-row grid min-w-0 gap-[var(--space-3)] border-t border-line/70 py-[var(--space-3)]",
+                      isAnalysisOnly && "taste-factor-row--analysis",
+                    )}
+                    key={preference.factorId}
+                  >
+                    <FactorBar
+                      animateReveal={animateReveal}
+                      enterDelay={index * 0.04}
+                      enterFill
+                      revealReady={factorRevealReady}
+                      label={label}
+                      revealDelay={index * 0.06}
+                      state={preference.state}
+                      value={preference.value}
+                    />
+                    {adjustmentValues === undefined || onAdjustment === undefined ? null : (
+                      <div className="taste-factor-row__adjustment min-w-0">
+                        <AdjustmentRadiogroup
+                          factorId={`${id}-${preference.factorId}`}
+                          factorLabel={label}
+                          onChange={(value) => onAdjustment(preference.factorId, value)}
+                          value={adjustmentValues[preference.factorId] ?? "auto"}
+                        />
+                      </div>
+                    )}
+                  </div>
+                );
+              })}
+            </div>
+            {canCollapse ? (
+              <Button
+                aria-controls={detailsId}
+                aria-expanded={showAll}
+                aria-label={tasteStrings.groupShowAllLabel(
+                  title,
+                  orderedPreferences.length,
+                  showAll,
+                )}
+                className="mx-auto mt-[var(--space-4)] flex w-fit gap-[var(--space-2)] rounded-[var(--radius-pill)] text-[length:var(--text-caption-size)]"
+                onClick={() => {
+                  if (showAll) setPinnedIds(adjustedIds());
+                  setShowAll(!showAll);
+                }}
+                type="button"
+                variant="outline"
+              >
+                {showAll
+                  ? tasteStrings.groupShowFewer
+                  : tasteStrings.groupShowAll(orderedPreferences.length)}
+                <ChevronDownIcon
+                  aria-hidden="true"
+                  className={cn(
+                    "size-4 transition-transform duration-[var(--motion-duration-feedback)] motion-reduce:transition-none",
+                    showAll && "rotate-180",
+                  )}
+                />
+              </Button>
+            ) : null}
+          </>
         ) : null}
       </div>
     </section>
@@ -785,9 +762,29 @@ export function TasteFlow({
   });
   const records = userWorks ?? EMPTY_RECORDS;
   const adjustments = localAdjustments ?? storedAdjustments ?? EMPTY_ADJUSTMENTS;
+  const preview = useTastePreview(records, adjustments, baselineAdjustments, storedPolicies);
+  const displayCatalog = useMemo(() => {
+    const result = preview.result?.catalog;
+    if (result === undefined) return catalog;
+    return {
+      ...catalog,
+      works: [
+        ...new Map([...catalog.works, ...result.works].map((work) => [work.id, work])).values(),
+      ],
+      volumes: [
+        ...new Map(
+          [...catalog.volumes, ...result.volumes].map((volume) => [volume.id, volume]),
+        ).values(),
+      ],
+      representativeVolumeByWorkId: {
+        ...catalog.representativeVolumeByWorkId,
+        ...result.representativeVolumeByWorkId,
+      },
+    };
+  }, [catalog, preview.result]);
   const worksById = useMemo(
-    () => new Map(catalog.works.map((work) => [work.id, work] as const)),
-    [catalog.works],
+    () => new Map(displayCatalog.works.map((work) => [work.id, work] as const)),
+    [displayCatalog.works],
   );
   const catalogRecords = useMemo(
     () => records.filter((record) => worksById.has(record.workId)),
@@ -846,33 +843,25 @@ export function TasteFlow({
         : [tasteStrings.basisReactionCount(tasteStrings.feedbackLabels[reaction], count)];
     },
   );
-  const beforePreviewWorkIds = useMemo(() => {
-    if (baselineAdjustments === null || storedPolicies === undefined) return null;
-    return (
-      recommendationPreviewEntries(catalog, records, baselineAdjustments, storedPolicies)?.map(
-        (entry) => entry.workId,
-      ) ?? null
-    );
-  }, [baselineAdjustments, catalog, records, storedPolicies]);
-  // The current list also feeds the share link, so its entries keep their contributions.
-  const afterPreviewEntries = useMemo(() => {
-    if (storedPolicies === undefined) return null;
-    return recommendationPreviewEntries(catalog, records, adjustments, storedPolicies);
-  }, [adjustments, catalog, records, storedPolicies]);
+  const beforePreviewWorkIds = useMemo(
+    () => preview.result?.before.map((entry) => entry.workId) ?? null,
+    [preview.result],
+  );
+  const afterPreviewEntries = preview.result?.after ?? null;
   const afterPreviewWorkIds = useMemo(
     () => afterPreviewEntries?.map((entry) => entry.workId) ?? null,
     [afterPreviewEntries],
   );
   const coverTargets = useMemo(
     () =>
-      createRecommendationCoverTargets(catalog, [
+      createRecommendationCoverTargets(displayCatalog, [
         ...new Set([
           ...anchors.map((work) => work.id),
           ...(beforePreviewWorkIds ?? []),
           ...(afterPreviewWorkIds ?? []),
         ]),
       ]),
-    [afterPreviewWorkIds, anchors, beforePreviewWorkIds, catalog],
+    [afterPreviewWorkIds, anchors, beforePreviewWorkIds, displayCatalog],
   );
   const { coverUrls, requestCover } = useRecommendationCovers({
     targets: coverTargets,
@@ -1074,6 +1063,7 @@ export function TasteFlow({
         <PageHeader
           action={
             <DnaShareButton
+              ready={preview.ready}
               recommendations={afterPreviewEntries ?? EMPTY_PREVIEW_ENTRIES}
               summary={summary}
               worksById={worksById}
@@ -1190,6 +1180,9 @@ export function TasteFlow({
           </section>
 
           <RecommendationDiffPreview
+            loading={preview.loading}
+            failed={preview.error}
+            onRetry={preview.retry}
             after={afterPreviewWorkIds}
             before={beforePreviewWorkIds}
             coverUrls={coverUrls}

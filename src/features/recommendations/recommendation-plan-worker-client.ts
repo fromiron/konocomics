@@ -1,8 +1,11 @@
+import type { CatalogManifest } from "@/features/catalog/catalog-assets-schema";
 import type { RecommendationInput, RecommendationPlanEntry } from "@/domain/recommendation/types";
 
 import type {
   RecommendationPlanWorkerRequest,
   RecommendationPlanWorkerResponse,
+  TastePreviewInput,
+  TastePreviewResult,
 } from "./recommendation-plan-worker-protocol";
 
 type PendingRequest = Readonly<{
@@ -12,6 +15,10 @@ type PendingRequest = Readonly<{
 
 export class RecommendationPlanWorkerClient {
   private worker: Worker | null = null;
+  private readonly previews = new Map<
+    number,
+    { resolve: (preview: TastePreviewResult) => void; reject: (error: Error) => void }
+  >();
   private initialized = false;
   private nextRequestId = 1;
   private readonly pending = new Map<number, PendingRequest>();
@@ -47,6 +54,25 @@ export class RecommendationPlanWorkerClient {
     });
   }
 
+  async preview(manifest: CatalogManifest, input: TastePreviewInput): Promise<TastePreviewResult> {
+    if (typeof Worker === "undefined") throw new Error("Recommendation Worker is unavailable");
+    const worker = this.worker ?? this.createWorker();
+    const requestId = this.nextRequestId++;
+    return new Promise((resolve, reject) => {
+      this.previews.set(requestId, { resolve, reject });
+      try {
+        worker.postMessage({
+          type: "preview",
+          requestId,
+          manifest,
+          input,
+        } satisfies RecommendationPlanWorkerRequest);
+      } catch (error) {
+        this.reset(error instanceof Error ? error : new Error("Recommendation worker failed"));
+      }
+    });
+  }
+
   terminate() {
     this.reset(new Error("Recommendation worker terminated"));
   }
@@ -57,6 +83,17 @@ export class RecommendationPlanWorkerClient {
     });
     worker.onmessage = (event: MessageEvent<RecommendationPlanWorkerResponse>) => {
       const response = event.data;
+      const preview = this.previews.get(response.requestId);
+      if (preview !== undefined) {
+        this.previews.delete(response.requestId);
+        if (response.type === "preview-result") preview.resolve(response.preview);
+        else
+          preview.reject(
+            new Error(response.type === "error" ? response.message : "Unexpected worker response"),
+          );
+        return;
+      }
+      if (response.type === "preview-result") return;
       const pending = this.pending.get(response.requestId);
       if (pending === undefined) return;
       this.pending.delete(response.requestId);
@@ -81,5 +118,7 @@ export class RecommendationPlanWorkerClient {
     }
     for (const request of this.pending.values()) request.reject(error);
     this.pending.clear();
+    for (const request of this.previews.values()) request.reject(error);
+    this.previews.clear();
   }
 }
