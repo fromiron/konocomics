@@ -18,6 +18,7 @@ export const prerenderPaths = [
   "/settings",
   "/works/external",
   "/share",
+  "/about",
   ...catalogJson.works.map((work) => `/works/${encodeURIComponent(work.id)}`),
 ];
 

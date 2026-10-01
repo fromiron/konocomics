@@ -39,6 +39,7 @@ export const Route = createRootRoute({
     const pathname = match.context.documentPathname;
     const indexable =
       pathname === "/" ||
+      pathname === "/about" ||
       (currentCatalogIdentity?.workIds.some(
         (id) => pathname === `/works/${encodeURIComponent(id)}`,
       ) ??

@@ -83,6 +83,8 @@ const testState = vi.hoisted(() => ({
   saveProviderCache: vi.fn(),
   saveRecommendationCache: vi.fn(),
   saveUserWork: vi.fn(),
+  removeUserWorkIfUnchanged: vi.fn(),
+  addUserWorkIfAbsent: vi.fn(),
   userWorks: [] as UserWorkRecord[],
   catalog: null as unknown,
 }));
@@ -191,6 +193,8 @@ vi.mock("@/infrastructure/db", () => ({
     savePolicies: testState.savePolicies,
     saveProviderCache: testState.saveProviderCache,
     saveUserWork: testState.saveUserWork,
+    removeUserWorkIfUnchanged: testState.removeUserWorkIfUnchanged,
+    addUserWorkIfAbsent: testState.addUserWorkIfAbsent,
   }),
 }));
 
@@ -361,6 +365,13 @@ beforeEach(() => {
   testState.savePolicies.mockResolvedValue(undefined);
   testState.saveUserWork.mockReset();
   testState.saveUserWork.mockImplementation(async (record: UserWorkRecord) => record);
+  testState.removeUserWorkIfUnchanged.mockReset();
+  testState.removeUserWorkIfUnchanged.mockResolvedValue("removed");
+  testState.addUserWorkIfAbsent.mockReset();
+  testState.addUserWorkIfAbsent.mockImplementation(async (record: UserWorkRecord) => ({
+    kind: "added",
+    record,
+  }));
   testState.loadMotionList.mockReset();
   testState.loadMotionList.mockResolvedValue(TestMotionList);
   testState.motionListRenders.length = 0;
@@ -1349,6 +1360,62 @@ describe("RecommendationsFlow", () => {
         ),
       );
     });
+  });
+
+  it("undoes a 読んだ removal from the snackbar and restores the previous list", async () => {
+    testState.loadMotionList.mockRejectedValueOnce(new Error("motion chunk failed"));
+    const { container } = render(<RecommendationsFlow />);
+    await waitFor(() => {
+      expect(container.querySelectorAll(featuredItemSelector)).toHaveLength(5);
+    });
+    const firstCard = container.querySelector(featuredItemSelector) as HTMLElement;
+    const removedWorkId = firstCard.dataset.recommendationWorkId!;
+    const backfillWorkId = makePlan()[5]!.workId;
+    const removedTitle = catalog.works.find((work) => work.id === removedWorkId)!.title;
+
+    fireEvent.click(within(firstCard).getByRole("button", { name: "読んだ" }));
+    expect(await screen.findByRole("dialog")).toBeTruthy();
+    expect(screen.queryByRole("button", { name: "元に戻す" })).toBeNull();
+    fireEvent.click(screen.getByRole("button", { name: "スキップ" }));
+
+    expect(
+      await screen.findByText(recommendationStrings.announcements.recorded.completed(removedTitle)),
+    ).toBeTruthy();
+    fireEvent.click(screen.getByRole("button", { name: "元に戻す" }));
+
+    await waitFor(() => {
+      expect(
+        container.querySelector(`[data-recommendation-work-id='${removedWorkId}']`),
+      ).toBeTruthy();
+    });
+    expect(testState.removeUserWorkIfUnchanged).toHaveBeenCalledWith(
+      removedWorkId,
+      (testState.saveUserWork.mock.calls[0]![0] as UserWorkRecord).updatedAt,
+    );
+    // The work had no record before the action, so nothing is re-added.
+    expect(testState.addUserWorkIfAbsent).not.toHaveBeenCalled();
+    expect(container.querySelector(`[data-recommendation-work-id='${backfillWorkId}']`)).toBeNull();
+    expect(screen.getByText(recommendationStrings.announcements.undone(removedTitle))).toBeTruthy();
+  });
+
+  it("keeps a newer record and the removal when undo finds a conflicting write", async () => {
+    testState.loadMotionList.mockRejectedValueOnce(new Error("motion chunk failed"));
+    testState.removeUserWorkIfUnchanged.mockResolvedValue("preserved-conflict");
+    const { container } = render(<RecommendationsFlow />);
+    await waitFor(() => {
+      expect(container.querySelectorAll(featuredItemSelector)).toHaveLength(5);
+    });
+    const firstCard = container.querySelector(featuredItemSelector) as HTMLElement;
+    const removedWorkId = firstCard.dataset.recommendationWorkId!;
+
+    fireEvent.click(within(firstCard).getByRole("button", { name: "興味なし" }));
+    expect(await screen.findByRole("dialog")).toBeTruthy();
+    fireEvent.click(screen.getByRole("button", { name: "スキップ" }));
+    fireEvent.click(await screen.findByRole("button", { name: "元に戻す" }));
+
+    expect(await screen.findByText(recommendationStrings.announcements.undoConflict)).toBeTruthy();
+    expect(testState.addUserWorkIfAbsent).not.toHaveBeenCalled();
+    expect(container.querySelector(`[data-recommendation-work-id='${removedWorkId}']`)).toBeNull();
   });
 
   it.each(["reduced", "missing"] as const)(

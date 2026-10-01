@@ -319,7 +319,7 @@ type ExportFileV1 = {
 
 ### 공개 메타·정적 파일·응답 헤더 (2026-10-01 리뷰 개선)
 
-- 공개 origin은 README의 `https://konocomics.vercel.app`다. OGP/Twitter Card는 앱 이름·기존 설명·브랜드 이미지를 사용하고 개인 DNA·감상·URL query를 포함하지 않는다. canonical과 `og:url`은 랜딩 및 유효한 bundled 작품 경로에만 붙인다. 개인 데이터 화면과 알 수 없는 경로는 `noindex,follow`로 둔다.
+- 공개 origin은 README의 `https://konocomics.vercel.app`다. OGP/Twitter Card는 앱 이름·기존 설명·브랜드 이미지를 사용하고(2026-10-01 사용자 결정: bundled 작품 상세는 `<title>`·description·og/twitter title·description만 작품 제목·작가·출판사로 만든 고정 템플릿으로 바꾸고 이미지는 브랜드 이미지를 유지한다) 개인 DNA·감상·URL query를 포함하지 않는다. canonical과 `og:url`은 랜딩, `/about`(2026-10-01 추가), 유효한 bundled 작품 경로에만 붙인다. 개인 데이터 화면과 알 수 없는 경로는 `noindex,follow`로 둔다.
 - 기존 Vite 빌드에서 `/manifest.webmanifest`, `/robots.txt`, `/sitemap.xml`을 정적 asset으로 생성한다. 사이트맵은 `/`와 같은 빌드의 bundled 작품 경로 전부를 포함하며 개인 데이터 화면·external 상세·임의 lastmod는 넣지 않는다. 개발 서버에서도 동일한 asset 내용을 제공한다. runtime server route·database·service worker는 추가하지 않는다.
 - manifest는 일본어 앱, `/` start URL·scope, standalone, dark 색상, 192/512 PNG 아이콘을 제공한다. 홈 화면 아이콘과 공유 이미지는 기존 워드마크·Space Grotesk·색상 토큰을 사용한다.
 - 공통 헤더는 Nitro routeRules와 Vite dev 응답에 `X-Content-Type-Options: nosniff`, `Referrer-Policy: strict-origin-when-cross-origin`, `X-Frame-Options: DENY`를 적용한다. CSP는 `base-uri 'none'; object-src 'none'; frame-ancestors 'none'; form-action 'self'; script-src-attr 'none'`로 base URL 변조·object·외부 프레이밍·외부 form 제출·inline event attribute를 차단한다. 이 정책은 SSR inline hydration script를 차단하는 strict script CSP라고 주장하지 않는다. 임의 고정 nonce나 `unsafe-inline` 예외는 추가하지 않는다. HTTPS/HSTS는 배포 계층에서 유지한다.

@@ -42,6 +42,16 @@ export function SiteFooter({ className, immersive = false }: SiteFooterProps) {
           <p className="text-[length:var(--text-caption-size)] text-text-muted">
             {landingStrings.footer.credit}
           </p>
+          <p className="flex flex-wrap items-center gap-x-[var(--space-4)] text-[length:var(--text-caption-size)] text-text-muted">
+            <Link
+              className="inline-flex min-h-[var(--control-min-size)] items-center underline-offset-4 [@media(hover:hover)_and_(pointer:fine)]:hover:text-text-strong [@media(hover:hover)_and_(pointer:fine)]:hover:underline"
+              preload={false}
+              to="/about"
+            >
+              {siteFooterStrings.about}
+            </Link>
+            <small className="text-[length:inherit]">{siteFooterStrings.copyright}</small>
+          </p>
           {immersive ? (
             <Link
               className="inline-flex min-h-[var(--control-min-size)] min-w-[var(--control-min-size)] items-center text-[length:var(--text-caption-size)] text-text-muted md:hidden [@media(hover:hover)_and_(pointer:fine)]:hover:text-text-strong"

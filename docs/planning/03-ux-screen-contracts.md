@@ -15,7 +15,7 @@
 
 - `>=768px`: dark 상단 GNB만 표시한다. 좌측 로고(**kono**co**mi**cs), 우측 `おすすめ`(/recommendations), `DNA`(/taste), `ライブラリ`(/library), `設定`(/settings)을 둔다.
 - `<768px`: post-onboarding route에서 하단 탭 바 4개만 표시한다. 높이 64px, 아이콘+레이블, 터치 타깃 ≥44×44다. `/`와 `/onboarding`은 immersive route라 bottom navigation을 표시하지 않는다.
-- post-onboarding 모바일 footer는 Discover/Understand/Manage 라우트 그룹 없이 local-first 1줄과 `Supported by Rakuten Developers`만 둔다. immersive `/`·`/onboarding` 모바일 footer는 같은 두 줄에 設定 링크를 더한다. `>=768px` footer sitemap은 유지한다.
+- post-onboarding 모바일 footer는 Discover/Understand/Manage 라우트 그룹 없이 local-first 1줄과 `Supported by Rakuten Developers`만 둔다. immersive `/`·`/onboarding` 모바일 footer는 같은 두 줄에 設定 링크를 더한다. `>=768px` footer sitemap은 유지한다. 2026-10-01 사용자 결정: 모든 크기의 footer는 크레디트 아래에 「このサイトについて」(/about) 링크와 `© 2026 Konocomics`를 한 줄로 둔다.
 - 두 navigation은 CSS media query로 상호 배타적으로 숨기며 숨겨진 쪽은 accessibility tree에도 남기지 않는다. 로그인·계정·아바타·알림 control은 없다. Global Search는 실제 dialog/sheet 기능이 연결된 경우에만 표시한다.
 - Catalog 상세 `/works/[workId]`와 고정 external 상세 `/works/external?workId=<ExternalWorkId>`는 탭 바를 유지한 채 스택처럼 열린다. 뒤로가기는 브라우저 history다.
 - 2026-09-11 사용자 지시에 따라 전역 document scroll container는 `scrollbar-gutter: stable`로 스크롤바 자리를 확보한다. 필터·페이지 이동으로 세로 스크롤바가 생기거나 사라져도 본문 가로 폭·중앙 정렬은 유지한다. overlay scrollbar 환경에는 불필요한 별도 여백을 더하지 않는다.
@@ -137,7 +137,7 @@ CTA **「好きなマンガから始める」** → /onboarding. 행동은 이 �
 
 이 viewport의 편집적 순간은 첫 등록 웰컴 히어로와 inline collection이다. 그 외 새 배너를 추가하지 않는다.
 
-「DNAの鮮明さ」 미터는 `calculateProfileConfidence`와 같은 산식·`getConfidenceLevel` 임계값으로 기존 추천 프로필 기록 + 현재 draft positive를 투영한 값이다(`projectProfileClarity`). 숫자·%는 표시하지 않고 단계 문구(まだ選んでいません/ぼんやり/鮮明/とても鮮明)와 채움 막대, 남은 작품 수 힌트만 보인다. 첫 등록에서 최소 5개 미만일 때는 tray의 「あと n 作品」과 같은 수를 반복하지 않도록 미터 힌트를 생략한다. mobile 하단 tray는 얇은 막대와 개수 옆 단계 문구만 보인다. desktop 패널의 선택 썸네일은 가로 스크롤 대신 줄바꿈해 10개를 모두 보인다. 접근성은 `role="meter"`와 단계 문구 `aria-valuetext`다. 브랜드 복제(Spotify Green/로고/재생 UI/정확한 그래픽)가 아니라 discovery → 즉시 저장되는 큐레이션 흐름이다.
+「DNAの鮮明さ」 미터는 `calculateProfileConfidence`와 같은 산식·`getConfidenceLevel` 임계값으로 기존 추천 프로필 기록 + 현재 draft positive를 투영한 값이다(`projectProfileClarity`). 숫자·%는 표시하지 않고 단계 문구(まだ選んでいません/ぼんやり/鮮明/とても鮮明)와 채움 막대, 남은 작품 수 힌트만 보인다. 첫 등록에서 최소 5개 미만일 때는 tray의 「あと n 作品」과 같은 수를 반복하지 않도록 미터 힌트를 생략한다. mobile 하단 tray는 얇은 막대와 개수 옆 단계 문구만 보인다. desktop 패널의 선택 썸네일은 가로 스크롤 대신 줄바꿈해 10개를 모두 보인다. 접근성은 `role="meter"`와 단계 문구 `aria-valuetext`다. `aria-valuenow`는 원시 confidence가 아니라 단계 index(0 미선택·1 ぼんやり·2 鮮明·3 とても鮮明, max 3)다(2026-10-01). 브랜드 복제(Spotify Green/로고/재생 UI/정확한 그래픽)가 아니라 discovery → 즉시 저장되는 큐레이션 흐름이다.
 
 ### 컴포넌트 책임
 
@@ -520,6 +520,7 @@ Shelf grouping은 presentation-only selector다. main Shelf 사이에는 work ID
 - Featured Shelf는 3-copy scroll-snap 루프다. 가운데 copy만 canonical·interactive이고 양쪽 copy는 `aria-hidden`·`inert`이며 표지 가시성 요청과 ref 등록을 하지 않는다. 초기 진입과 scroll settle 뒤 같은 위치의 가운데 copy로 보이지 않게 점프한다. Featured 화살표·touch scroll은 순환하지만 키보드는 canonical 실카드만 대상으로 하고 끝에서 순환하지 않는다. 관점 선반·Discovery·Top 10은 유한 트랙이며 끝에서 화살표가 disabled되고 wrap하지 않는다. 네이티브 가로 snap은 유지하되 전용 swipe 제스처는 도입하지 않는다.
 - 렌더 대상 카드의 표지는 표시 순 `workId → representativeVolume ISBN` registry로 해석한다. 첫 `target[0]` metadata만 LCP lane에서 자동 시작하고, 나머지는 각 표지 root가 실제 viewport에 진입할 때 요청한다. 전체 해석 상한은 4이며 각 결과를 도착 즉시 commit한다. 가시성 수요는 target generation이 바뀌어도 유지해 백필 때 생존 카드 URL을 보존하고 새로 보인 카드만 해석한다. fresh no-image와 cache/provider 실패는 같은 `workId + ISBN`에서 재시도 없이 placeholder로 끝내되 카드·이유·액션을 제거하지 않는다.
 - `読んだ` / `興味なし`: 영속 쓰기 성공 뒤 카드 제거(Motion layout, 240ms) → 최초 계산에서 보존한 전체 후보 plan의 다음 순위로 즉시 백필한다(점수 재계산 없음, 리스트는 항상 10개 유지, 후보 소진 시 예외). `読んだ`는 `completed`로 저장한 뒤 후속 시트의 `最高/良かった/普通/いまいち`를 `favorite/liked/neutral/disliked`에 대응하며 스킵은 reaction 없음이다. `興味なし`는 `hidden`으로 저장하고, 이유 칩을 고른 경우만 `disliked + negativeReasons`를 추가한다. 스킵은 reaction·reason 없음이며 `vagueDislike`를 합성하지 않는다.
+- 2026-10-01 사용자 결정 — `読んだ`/`興味なし` 되돌리기: 후속 시트를 닫으면(저장·스킵 모두) 공용 `Snackbar`에 「「{title}」を読んだに記録しました。」/「「{title}」を興味なしにしました。」와 「元に戻す」를 8초 표시한다. 「元に戻す」는 이번 액션이 쓴 record가 그대로일 때만(`removeUserWorkIfUnchanged`) 지우고, 액션 직전 record가 있었으면 `addUserWorkIfAbsent`로 복원한다. 다른 화면의 더 새로운 기록은 덮어쓰거나 지우지 않고 「ほかの画面で記録が更新されたため、元に戻しませんでした。」를 알린다. 성공하면 제외를 풀고, 그 사이 목록이 바뀌지 않았다면 제거 직전 목록(백필 전)을 그대로 되돌린다. 새 액션이 시작되면 이전 되돌리기는 사라진다.
 - `読みたい`: 카드 유지, 버튼이 확정 상태로 변경 + Library(planned)에 추가.
 - 「更新」: 현재 `inputHash`의 유효한 전체 plan cache가 있으면 재사용하고, 없으면 전체 재계산한다. 이전 목록과 동일 입력이면 동일 결과(결정론)임을 전제로, 버튼은 입력 변경이 있을 때만 활성화.
 
@@ -618,6 +619,7 @@ Catalog 작품은 추천 근거를 깊이 확인하고 구매(라쿠텐)로 연�
 - 추천 문맥 없이 진입(프로필 없음): 상성 섹션 생략, 팩터 요약은 표시.
 - ProviderListing 만료·실패: 가격·재고 숨김, 구매 버튼은 itemUrl 캐시가 있으면 유지, 없으면 「楽天ブックスで検索」(제목 질의 링크)로 대체.
 - Catalog route는 bundled Catalog ID만 허용한다. 존재하지 않는 `/works/[workId]`는 실제 404 페이지 + /recommendations 링크이며 external ID를 이 route에서 해석하거나 리다이렉트하지 않는다.
+- 2026-10-01 사용자 결정: Catalog 상세의 `<title>`·description·og/twitter title·description은 작품별로 「{제목} | konocomics」와 「『{제목}』（{작가}・{출판사}）の作品情報。…」 템플릿을 쓴다. og:image는 브랜드 이미지를 유지하고 표지·개인 기록을 메타에 넣지 않는다. external 상세는 공통 메타를 유지한다.
 - external entry는 고정 정적 셸 `/works/external?workId=<ExternalWorkId>`만 사용하고 팩터·상성 섹션 없이 서지 정보와 상태 관리만 표시한다. query는 hydration 뒤 client feature가 읽으며 `workId`가 정확히 한 번 존재하고 `^ext:rakuten:v1:[0-9a-f]{64}$`를 만족한 뒤에만 IndexedDB를 조회한다.
 - external query가 없거나 중복·비어 있음·namespace/version/digest 형식이 틀리면 in-page invalid-link 상태와 /library 이동만 표시한다. 해당 값을 `inspectExternalWork`에 넘기거나 Rakuten API를 호출하지 않고 404·Catalog route로 바꾸지 않는다. 전역 PersistenceProvider의 일반 초기화는 이 ID별 lookup과 별개다.
 - 유효 ID가 이 브라우저에 없으면 저장되지 않은 로컬 작품 상태와 /library 이동을 표시한다. digest에서 작품을 복원하거나 제목 검색·빈 record 생성을 하지 않는다.
@@ -784,6 +786,29 @@ Library와 상세 panel·bottom sheet·dialog는 조용한 표면이다. panel/s
 - [ ] 전체 삭제 readback은 여섯 data/cache store가 비고 meta만 현재 값임을 확인하며, 이후 /recommendations 접근은 first-run 온보딩으로 유도된다.
 
 ---
+
+## 8.1 `/about` — このサイトについて (2026-10-01 사용자 결정)
+
+### 목적
+
+무료·로컬 저장 서비스의 운영자·데이터 처리·아피리에이트·면책·문의처를 한 페이지에서 밝힌다. 별도 プライバシーポリシー·利用規約 페이지를 두지 않고 이 페이지가 두 역할을 겸한다. 特定商取引法 표기는 판매가 없어 두지 않는다.
+
+### 정보 위계
+
+1. `PageHeader` 「このサイトについて」와 서비스 한 줄 소개(무료·회원가입 불필요).
+2. 섹션 순서: 運営者(`Konocomics`) · ブラウザに保存されるデータ · 外部に送信される情報 · アフィリエイトについて · 表紙・作品情報 · 免責事項 · お問い合わせ(GitHub Issues 새 탭 링크) · 制定日.
+3. 외부 송신은 사실만 적는다: 검색어·ISBN이 서버 route를 거쳐 楽天ウェブサービス로 전송되고 독서 기록·취향은 보내지 않는다. 호스팅(Vercel)의 일반 접속 로그 가능성, 접속 분석 도구·광고 Cookie 미사용을 밝힌다. 기능을 바꾸면 이 문구를 함께 갱신한다.
+
+### 렌더링·라우팅
+
+- SSR prerender되는 정적 route이며 Dexie·profile을 읽지 않는다. 프로필 가드 없이 누구나 열 수 있고 canonical·`og:url`을 붙이는 indexable 경로다.
+- 문자열은 `src/lib/strings.ts`의 `aboutStrings`만 사용한다.
+
+### 수용 기준
+
+- [ ] `/about`이 prerender되고 프로필 유무와 무관하게 같은 내용을 표시한다.
+- [ ] 모든 크기의 footer에서 「このサイトについて」로 이동할 수 있고 터치 타깃이 44px 이상이다.
+- [ ] 문의 링크는 새 탭으로 열리며 `rel="noopener noreferrer"`다.
 
 ## 9. 공유 컴포넌트 계약 (요약)
 
