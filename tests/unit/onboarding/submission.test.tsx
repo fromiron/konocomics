@@ -241,8 +241,11 @@ describe("OnboardingFlow finalization", () => {
     render(<OnboardingFlow />);
 
     expect(
+      screen.getByRole("heading", { level: 1, name: "あなたの Manga DNA を作りましょう" }),
+    ).toBeTruthy();
+    expect(
       screen.getByRole("heading", {
-        level: 1,
+        level: 2,
         name: "好きなマンガを 5〜10 作品えらんでください",
       }),
     ).toBeTruthy();
@@ -552,18 +555,23 @@ describe("OnboardingFlow add mode", () => {
     expect(testState.finalizeOnboarding).not.toHaveBeenCalled();
   });
 
-  it("clears the add draft only through the separately labeled discard action", async () => {
+  it("clears the add selection in place without leaving the page", async () => {
     useCatalogBackedProfile();
-    testState.clearOnboardingDraft.mockResolvedValue(undefined);
 
     render(<OnboardingFlow />);
+    expect(screen.queryByRole("heading", { name: "あなたの Manga DNA を作りましょう" })).toBeNull();
+    expect(screen.queryByRole("button", { name: "選択をクリア" })).toBeNull();
     fireEvent.click(screen.getByRole("button", { name: "追加候補 — 好きに追加" }));
-    fireEvent.click(screen.getByRole("button", { name: "入力内容を破棄" }));
+    fireEvent.click(screen.getByRole("button", { name: "選択をクリア" }));
 
     await waitFor(() => {
-      expect(testState.clearOnboardingDraft).toHaveBeenCalledTimes(1);
-      expect(testState.navigate).toHaveBeenCalledWith({ to: "/taste", replace: true });
+      expect(testState.saveOnboardingDraft).toHaveBeenLastCalledWith(
+        expect.objectContaining({ mode: "add", positiveEntries: [] }),
+      );
     });
+    expect(screen.getByRole("button", { name: "追加する (0/10)" })).toBeTruthy();
+    expect(testState.clearOnboardingDraft).not.toHaveBeenCalled();
+    expect(testState.navigate).not.toHaveBeenCalled();
     expect(testState.finalizeOnboarding).not.toHaveBeenCalled();
   });
 

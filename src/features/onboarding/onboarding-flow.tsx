@@ -14,7 +14,11 @@ import {
 import { Button } from "@/components/design-system/button";
 import { pageEntryFadeProps, usePageEntryMotion } from "@/components/motion/use-page-entry-motion";
 import type { GenreTag, Work } from "@/domain/catalog/types";
-import { hasCatalogBackedProfile } from "@/domain/profile/catalog-profile";
+import {
+  hasCatalogBackedProfile,
+  recommendationProfileRecords,
+} from "@/domain/profile/catalog-profile";
+import { projectProfileClarity } from "@/domain/profile/confidence";
 import {
   createEmptyOnboardingDraft,
   reconcileOnboardingDraftMode,
@@ -53,7 +57,7 @@ import {
   OnboardingGenreChips,
   OnboardingIntro,
   OnboardingSelectionGuidance,
-  OnboardingStepProgress,
+  OnboardingWelcome,
 } from "./onboarding-step-one-sections";
 import {
   NegativeEntryEditor,
@@ -171,7 +175,6 @@ export function OnboardingFlow({
     refresh,
     saveProviderCache,
     saveOnboardingDraft,
-    clearOnboardingDraft,
     finalizeOnboarding,
   } = usePersistence();
   const [localDraft, setLocalDraft] = useState<OnboardingDraft | null>(null);
@@ -258,6 +261,10 @@ export function OnboardingFlow({
         ),
       ),
     [onboardingEligibleWorks],
+  );
+  const profileRecords = useMemo(
+    () => recommendationProfileRecords(userWorks ?? [], allCatalogWorks),
+    [allCatalogWorks, userWorks],
   );
   const hadCatalogBackedProfile = useMemo(
     () => hasCatalogBackedProfile(userWorks, allCatalogWorks),
@@ -616,23 +623,26 @@ export function OnboardingFlow({
     }
   };
 
-  const discardAddDraft = async () => {
-    if (draft.mode !== "add" || submittingRef.current) {
+  const clearSelection = () => {
+    if (submittingRef.current || draft.positiveEntries.length === 0) {
       return;
     }
-    submittingRef.current = true;
-    setSubmitting(true);
-    setErrorMessage("");
-    try {
-      await clearOnboardingDraft();
-      setLocalDraft(null);
-      await navigate({ to: "/taste", replace: true });
-    } catch {
-      submittingRef.current = false;
-      setSubmitting(false);
-      setErrorMessage(onboardingStrings.addMode.discardError);
-    }
+    setSelectionMessage(onboardingStrings.selectionPanel.clearedAnnouncement);
+    updateDraft({ ...draft, positiveEntries: [] });
   };
+
+  const clarity = projectProfileClarity(
+    profileRecords,
+    draft.positiveEntries.map((entry) => entry.workId),
+    ONBOARDING_MAX_POSITIVE_WORKS - draft.positiveEntries.length,
+  );
+  const clarityHint =
+    clarity.anchorsToNextLevel === null
+      ? undefined
+      : clarity.level === "low"
+        ? onboardingStrings.clarity.toNormal(clarity.anchorsToNextLevel)
+        : onboardingStrings.clarity.toHigh(clarity.anchorsToNextLevel);
+  const panelMode = isAddMode ? "add" : "firstRun";
 
   const storageWarning = status.state === "degraded";
 
@@ -677,12 +687,129 @@ export function OnboardingFlow({
 
       {draft.step === 1 ? (
         <div className="onboarding-step-one min-w-0">
-          {isAddMode ? null : <OnboardingStepProgress />}
+          {isAddMode ? null : <OnboardingWelcome headingRef={headingRef} />}
 
-          <div className="onboarding-hero mb-[var(--space-6)] grid gap-[var(--space-6)] md:grid-cols-[minmax(0,1.1fr)_minmax(0,0.9fr)] md:items-start">
-            <OnboardingIntro addMode={isAddMode} headingRef={headingRef} />
+          <div className="onboarding-layout grid gap-[var(--space-6)] md:grid-cols-[minmax(0,1fr)_minmax(0,18rem)] md:items-start lg:grid-cols-[minmax(0,1fr)_minmax(0,20rem)] lg:gap-[var(--space-8)]">
+            <div className="onboarding-main min-w-0">
+              <OnboardingIntro
+                action={
+                  isAddMode ? (
+                    <Button
+                      className="onboarding-add-mode-actions__close"
+                      disabled={submitting}
+                      onClick={() => void closeAddMode()}
+                      type="button"
+                      variant="outline"
+                    >
+                      {onboardingStrings.addMode.close}
+                    </Button>
+                  ) : undefined
+                }
+                addMode={isAddMode}
+                headingRef={isAddMode ? headingRef : undefined}
+              />
+
+              <div className="onboarding-discovery grid gap-[var(--space-6)] [&>.work-search]:m-0 [&>.work-search]:max-w-none [&_.work-search__label]:sr-only [&_.work-search__input]:min-h-[var(--control-min-size)] [&_.work-search__input]:bg-surface-1 motion-reduce:[&_.work-search__input]:transition-none">
+                <WorkSearchInput
+                  key="positive-search"
+                  label={onboardingStrings.step1.searchLabel}
+                  onQueryChange={onQueryChange}
+                  onSearchStateChange={setStepOneSearch}
+                  placeholder={onboardingStrings.step1.searchPlaceholder}
+                  query={query}
+                  works={onboardingEligibleWorks}
+                />
+                <p aria-atomic="true" aria-live="polite" className="visually-hidden sr-only">
+                  {stepOneSearch.query.trim().length > 0
+                    ? onboardingStrings.searchResults(
+                        stepOneSearch.query,
+                        stepOneSearch.results.length,
+                      )
+                    : ""}
+                </p>
+
+                <OnboardingGenreChips genre={activeGenre} onChange={onGenreChange} />
+
+                {stepOneSearch.query.trim().length > 0 ? (
+                  stepOneSearch.results.length > 0 ? (
+                    <div className="grid gap-[var(--space-6)]">
+                      <section
+                        aria-label={onboardingStrings.step1.searchLabel}
+                        className="work-search-grid grid grid-cols-[repeat(auto-fill,minmax(104px,1fr))] gap-x-[var(--space-3)] gap-y-[var(--space-5)] [&>.anchor-card]:w-full [&>.anchor-card]:min-w-0 md:grid-cols-[repeat(auto-fill,minmax(128px,1fr))] md:gap-x-[var(--space-4)] md:gap-y-[var(--space-6)]"
+                      >
+                        {stepOneSearch.results.map((work) => (
+                          <AnchorCoverCard
+                            coverUrl={coverUrls.get(work.id)}
+                            key={work.id}
+                            labels={ANCHOR_CARD_LABELS}
+                            onCoverVisible={() => requestCover(work.id)}
+                            onToggleFavorite={toggleFavorite}
+                            onToggleSelection={togglePositiveSelection}
+                            selection={positiveByWorkId.get(work.id)}
+                            work={work}
+                          />
+                        ))}
+                      </section>
+                      <ExcludedMatchNotice matches={stepOneExcludedMatches} />
+                    </div>
+                  ) : stepOneExcludedMatches.length > 0 ? (
+                    <ExcludedMatchNotice matches={stepOneExcludedMatches} />
+                  ) : (
+                    <div className="onboarding-empty grid gap-[var(--space-content-tight)] rounded-[var(--radius-card)] border border-line bg-surface-1 px-[var(--space-5)] py-[var(--space-7)] text-text-muted">
+                      <p>{onboardingStrings.step1.noResults}</p>
+                      <p>{onboardingStrings.step1.catalogLater}</p>
+                    </div>
+                  )
+                ) : (
+                  <div className="onboarding-shelves grid gap-[var(--space-section)]">
+                    {featuredWorks.length === 0 ? (
+                      <div className="onboarding-empty grid gap-[var(--space-content-tight)] rounded-[var(--radius-card)] border border-line bg-surface-1 px-[var(--space-5)] py-[var(--space-7)] text-text-muted">
+                        <p>{onboardingStrings.step1.noFilteredWorks}</p>
+                      </div>
+                    ) : (
+                      <WorkShelf
+                        coverUrls={coverUrls}
+                        labels={ANCHOR_CARD_LABELS}
+                        onCoverVisible={requestCover}
+                        onToggleFavorite={toggleFavorite}
+                        onToggleSelection={togglePositiveSelection}
+                        selectionsByWorkId={positiveByWorkId}
+                        title={onboardingStrings.step1.featuredHeading}
+                        works={featuredWorks}
+                      />
+                    )}
+
+                    <OnboardingCollectionGrid
+                      activeId={selectedCollection?.id}
+                      coverUrls={coverUrls}
+                      labels={ANCHOR_CARD_LABELS}
+                      onCoverVisible={requestCover}
+                      onSelect={onShelfChange}
+                      onToggleFavorite={toggleFavorite}
+                      onToggleSelection={togglePositiveSelection}
+                      panelWorks={collectionPanelWorks}
+                      previewWorks={collectionPreviewWorks}
+                      selectionsByWorkId={positiveByWorkId}
+                    />
+
+                    <OnboardingSelectionGuidance addMode={isAddMode} />
+                  </div>
+                )}
+              </div>
+            </div>
 
             <SelectedTray
+              clarity={{
+                label: onboardingStrings.clarity.label,
+                levelLabel:
+                  clarity.positiveAnchorCount === 0
+                    ? onboardingStrings.clarity.levels.empty
+                    : onboardingStrings.clarity.levels[clarity.level],
+                hint: clarityHint,
+                value: clarity.confidence,
+              }}
+              clearLabel={onboardingStrings.selectionPanel.clear}
+              continueHint={onboardingStrings.selectionPanel.continueHint[panelMode]}
               continueLabel={
                 submitting && isAddMode
                   ? onboardingStrings.addMode.saving
@@ -696,6 +823,25 @@ export function OnboardingFlow({
               )}
               coverUrls={coverUrls}
               disabled={submitting}
+              emptyLabel={
+                isAddMode
+                  ? onboardingStrings.addMode.emptySelected
+                  : onboardingStrings.step1.emptySelected
+              }
+              guide={{
+                title: onboardingStrings.selectionPanel.guideTitle,
+                steps: onboardingStrings.selectionPanel.guideSteps[panelMode],
+              }}
+              label={
+                isAddMode
+                  ? onboardingStrings.addMode.selectedTray
+                  : onboardingStrings.step1.selectedTray
+              }
+              limitActive={limitMessage !== ""}
+              onClear={clearSelection}
+              onContinue={continueFromStepOne}
+              onCoverVisible={requestCover}
+              onRemove={togglePositiveSelection}
               remainingLabel={
                 draft.positiveEntries.length < minimumPositiveWorks
                   ? onboardingStrings.step1.remaining(
@@ -703,133 +849,11 @@ export function OnboardingFlow({
                     )
                   : undefined
               }
-              emptyLabel={
-                isAddMode
-                  ? onboardingStrings.addMode.emptySelected
-                  : onboardingStrings.step1.emptySelected
-              }
-              label={
-                isAddMode
-                  ? onboardingStrings.addMode.selectedTray
-                  : onboardingStrings.step1.selectedTray
-              }
-              limitActive={limitMessage !== ""}
-              onContinue={continueFromStepOne}
-              onCoverVisible={requestCover}
-              onRemove={togglePositiveSelection}
               removeLabel={onboardingStrings.step1.remove}
               selections={draft.positiveEntries}
               shakeKey={shakeKey}
               worksById={worksById}
             />
-          </div>
-
-          {isAddMode ? (
-            <div className="onboarding-step-actions onboarding-add-mode-actions mb-[var(--space-6)] flex max-w-[var(--layout-width-form)] flex-wrap justify-start gap-[var(--space-content-loose)] [&>button]:flex-[0_1_auto]">
-              <Button
-                className="onboarding-add-mode-actions__close"
-                disabled={submitting}
-                onClick={() => void closeAddMode()}
-                type="button"
-                variant="outline"
-              >
-                {onboardingStrings.addMode.close}
-              </Button>
-              <Button
-                className="onboarding-add-mode-actions__discard border-transparent bg-transparent text-warn"
-                disabled={submitting}
-                onClick={() => void discardAddDraft()}
-                type="button"
-                variant="ghost"
-              >
-                {onboardingStrings.addMode.discard}
-              </Button>
-            </div>
-          ) : null}
-
-          <div className="onboarding-discovery grid gap-[var(--space-6)] [&>.work-search]:m-0 [&>.work-search]:max-w-none [&_.work-search__label]:sr-only [&_.work-search__input]:min-h-[var(--control-min-size)] [&_.work-search__input]:bg-surface-1 motion-reduce:[&_.work-search__input]:transition-none">
-            <WorkSearchInput
-              key="positive-search"
-              label={onboardingStrings.step1.searchLabel}
-              onQueryChange={onQueryChange}
-              onSearchStateChange={setStepOneSearch}
-              placeholder={onboardingStrings.step1.searchPlaceholder}
-              query={query}
-              works={onboardingEligibleWorks}
-            />
-            <p aria-atomic="true" aria-live="polite" className="visually-hidden sr-only">
-              {stepOneSearch.query.trim().length > 0
-                ? onboardingStrings.searchResults(stepOneSearch.query, stepOneSearch.results.length)
-                : ""}
-            </p>
-
-            <OnboardingGenreChips genre={activeGenre} onChange={onGenreChange} />
-
-            {stepOneSearch.query.trim().length > 0 ? (
-              stepOneSearch.results.length > 0 ? (
-                <div className="grid gap-[var(--space-6)]">
-                  <section
-                    aria-label={onboardingStrings.step1.searchLabel}
-                    className="work-search-grid grid grid-cols-[repeat(auto-fill,minmax(104px,1fr))] gap-x-[var(--space-3)] gap-y-[var(--space-5)] [&>.anchor-card]:w-full [&>.anchor-card]:min-w-0 md:grid-cols-[repeat(auto-fill,minmax(128px,1fr))] md:gap-x-[var(--space-4)] md:gap-y-[var(--space-6)]"
-                  >
-                    {stepOneSearch.results.map((work) => (
-                      <AnchorCoverCard
-                        coverUrl={coverUrls.get(work.id)}
-                        key={work.id}
-                        labels={ANCHOR_CARD_LABELS}
-                        onCoverVisible={() => requestCover(work.id)}
-                        onToggleFavorite={toggleFavorite}
-                        onToggleSelection={togglePositiveSelection}
-                        selection={positiveByWorkId.get(work.id)}
-                        work={work}
-                      />
-                    ))}
-                  </section>
-                  <ExcludedMatchNotice matches={stepOneExcludedMatches} />
-                </div>
-              ) : stepOneExcludedMatches.length > 0 ? (
-                <ExcludedMatchNotice matches={stepOneExcludedMatches} />
-              ) : (
-                <div className="onboarding-empty grid gap-[var(--space-content-tight)] rounded-[var(--radius-card)] border border-line bg-surface-1 px-[var(--space-5)] py-[var(--space-7)] text-text-muted">
-                  <p>{onboardingStrings.step1.noResults}</p>
-                  <p>{onboardingStrings.step1.catalogLater}</p>
-                </div>
-              )
-            ) : (
-              <div className="onboarding-shelves grid gap-[var(--space-section)]">
-                {featuredWorks.length === 0 ? (
-                  <div className="onboarding-empty grid gap-[var(--space-content-tight)] rounded-[var(--radius-card)] border border-line bg-surface-1 px-[var(--space-5)] py-[var(--space-7)] text-text-muted">
-                    <p>{onboardingStrings.step1.noFilteredWorks}</p>
-                  </div>
-                ) : (
-                  <WorkShelf
-                    coverUrls={coverUrls}
-                    labels={ANCHOR_CARD_LABELS}
-                    onCoverVisible={requestCover}
-                    onToggleFavorite={toggleFavorite}
-                    onToggleSelection={togglePositiveSelection}
-                    selectionsByWorkId={positiveByWorkId}
-                    title={onboardingStrings.step1.featuredHeading}
-                    works={featuredWorks}
-                  />
-                )}
-
-                <OnboardingCollectionGrid
-                  activeId={selectedCollection?.id}
-                  coverUrls={coverUrls}
-                  labels={ANCHOR_CARD_LABELS}
-                  onCoverVisible={requestCover}
-                  onSelect={onShelfChange}
-                  onToggleFavorite={toggleFavorite}
-                  onToggleSelection={togglePositiveSelection}
-                  panelWorks={collectionPanelWorks}
-                  previewWorks={collectionPreviewWorks}
-                  selectionsByWorkId={positiveByWorkId}
-                />
-
-                <OnboardingSelectionGuidance />
-              </div>
-            )}
           </div>
         </div>
       ) : (

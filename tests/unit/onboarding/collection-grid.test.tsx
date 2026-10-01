@@ -117,7 +117,7 @@ describe("exclusiveOnboardingSearch", () => {
 });
 
 describe("OnboardingCollectionGrid", () => {
-  it("uses compact disclosure triggers that open one named inline panel", () => {
+  it("uses accordion triggers that open one named panel under the clicked row", () => {
     const { onSelect } = renderGrid();
 
     expect(
@@ -155,7 +155,8 @@ describe("OnboardingCollectionGrid", () => {
     expect(worlds.getAttribute("aria-controls")).toBeNull();
     const panel = screen.getByRole("region", { name: "謎と緊張を楽しむ" });
     expect(panel.getAttribute("id")).toBe(COLLECTION_PANEL_ID);
-    expect(within(panel).getByRole("heading", { name: "謎と緊張を楽しむ" })).toBeTruthy();
+    expect(mysteries.parentElement?.contains(panel)).toBe(true);
+    expect(worlds.parentElement?.contains(panel)).toBe(false);
     expect(within(panel).getByRole("button", { name: "mysteries作品1 — 好きに追加" })).toBeTruthy();
 
     fireEvent.click(mysteries);

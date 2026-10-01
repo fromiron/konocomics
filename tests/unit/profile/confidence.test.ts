@@ -10,6 +10,7 @@ import {
   countPositiveAnchors,
   countReasonedNegativeWorks,
   getConfidenceLevel,
+  projectProfileClarity,
 } from "@/domain/profile/confidence";
 import { roundScore } from "@/domain/recommendation/math";
 import { createTestWork } from "../../helpers/catalog";
@@ -61,6 +62,47 @@ describe("profile confidence", () => {
     );
 
     expect(calculateProfileConfidence([...anchors, ...negatives])).toBe(1);
+  });
+});
+
+describe("projected onboarding clarity", () => {
+  it("projects unsaved positive works through the same profile confidence levels", () => {
+    expect(projectProfileClarity([], [], 10)).toEqual({
+      confidence: 0,
+      level: "low",
+      positiveAnchorCount: 0,
+      anchorsToNextLevel: 5,
+    });
+    const four = ["a", "b", "c", "d"];
+    expect(projectProfileClarity([], four, 6)).toMatchObject({
+      level: "low",
+      anchorsToNextLevel: 1,
+    });
+    expect(projectProfileClarity([], [...four, "e"], 5)).toMatchObject({
+      level: "normal",
+      anchorsToNextLevel: 3,
+    });
+    expect(projectProfileClarity([], [...four, "e", "f", "g", "h"], 2)).toMatchObject({
+      level: "high",
+      anchorsToNextLevel: null,
+    });
+  });
+
+  it("counts saved anchors once and stops the hint at the remaining capacity", () => {
+    const saved = Array.from({ length: 6 }, (_, index) =>
+      createTestRecord({ workId: `saved-${index}`, reaction: "liked" }),
+    );
+    const projected = projectProfileClarity(saved, ["saved-0", "new-a"], 0);
+
+    expect(projected.positiveAnchorCount).toBe(7);
+    expect(projected.level).toBe("normal");
+    expect(projected.anchorsToNextLevel).toBeNull();
+    expect(projected.confidence).toBe(
+      calculateProfileConfidence([
+        ...saved,
+        createTestRecord({ workId: "new-a", reaction: "liked" }),
+      ]),
+    );
   });
 });
 

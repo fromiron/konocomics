@@ -27,10 +27,20 @@ export function countReasonedNegativeWorks(records: readonly UserWorkRecord[]) {
   return new Set(records.filter(hasFactorBackedReason).map((record) => record.workId)).size;
 }
 
-export function calculateProfileConfidence(records: readonly UserWorkRecord[]) {
-  const anchorConfidence = Math.min(countPositiveAnchors(records) / 8, 1) * 0.8;
-  const negativeConfidence = Math.min(countReasonedNegativeWorks(records) / 2, 1) * 0.2;
+export function calculateConfidenceFromCounts(
+  positiveAnchorCount: number,
+  reasonedNegativeCount: number,
+) {
+  const anchorConfidence = Math.min(positiveAnchorCount / 8, 1) * 0.8;
+  const negativeConfidence = Math.min(reasonedNegativeCount / 2, 1) * 0.2;
   return canonicalSum([anchorConfidence, negativeConfidence]);
+}
+
+export function calculateProfileConfidence(records: readonly UserWorkRecord[]) {
+  return calculateConfidenceFromCounts(
+    countPositiveAnchors(records),
+    countReasonedNegativeWorks(records),
+  );
 }
 
 export function calculateAverageFactorConfidence(work: Work) {
@@ -76,4 +86,40 @@ export function getConfidenceLevel(confidence: number): ConfidenceLevel {
     return "normal";
   }
   return "low";
+}
+
+export type ProjectedProfileClarity = Readonly<{
+  confidence: number;
+  level: ConfidenceLevel;
+  positiveAnchorCount: number;
+  anchorsToNextLevel: number | null;
+}>;
+
+/**
+ * Projects the profile confidence after adding not-yet-saved positive works, and how many more
+ * positive works (within `additionalCapacity`) would move it to the next confidence level.
+ */
+export function projectProfileClarity(
+  records: readonly UserWorkRecord[],
+  addedPositiveWorkIds: readonly string[],
+  additionalCapacity: number,
+): ProjectedProfileClarity {
+  const positiveAnchorCount = new Set([
+    ...records.filter(isPositiveAnchor).map((record) => record.workId),
+    ...addedPositiveWorkIds,
+  ]).size;
+  const reasonedNegativeCount = countReasonedNegativeWorks(records);
+  const confidence = calculateConfidenceFromCounts(positiveAnchorCount, reasonedNegativeCount);
+  const level = getConfidenceLevel(confidence);
+  let anchorsToNextLevel: number | null = null;
+  for (let extra = 1; extra <= additionalCapacity; extra += 1) {
+    const nextLevel = getConfidenceLevel(
+      calculateConfidenceFromCounts(positiveAnchorCount + extra, reasonedNegativeCount),
+    );
+    if (nextLevel !== level) {
+      anchorsToNextLevel = extra;
+      break;
+    }
+  }
+  return { confidence, level, positiveAnchorCount, anchorsToNextLevel };
 }
