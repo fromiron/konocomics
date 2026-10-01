@@ -28,12 +28,13 @@ afterEach(() => {
 });
 
 describe("WorkTraits", () => {
-  it("draws confirmed axes, names unconfirmed ones, and collapses an all-unknown group", () => {
+  it("draws confirmed axes and omits unknown values and groups without confirmed data", () => {
     const work = createTestWork({
       axes: createTestAxes({
         pacing: { state: "known", value: 4, confidence: 0.9 },
         darkness: { state: "unknown" },
         ...Object.fromEntries(ART_AXIS_IDS.map((id) => [id, { state: "unknown" }])),
+        motionImpact: { state: "notApplicable" },
       }),
     });
 
@@ -43,13 +44,19 @@ describe("WorkTraits", () => {
     expect(pacing.getAttribute("aria-valuenow")).toBe("4");
     expect(pacing.getAttribute("aria-valuetext")).toBe(tasteStrings.factorValue(4));
     expect(
-      screen.getByRole("group", {
+      screen.queryByRole("group", {
         name: `${explanationLexicon.factorLabels.darkness}: ${strings.unknown}`,
       }),
-    ).toBeTruthy();
-    const art = screen.getByRole("region", { name: strings.groups.art });
-    expect(within(art).queryByRole("meter")).toBeNull();
-    expect(within(art).getByText(strings.groupUnknown)).toBeTruthy();
+    ).toBeNull();
+    expect(screen.queryByText(explanationLexicon.factorLabels.darkness!)).toBeNull();
+    expect(screen.queryByRole("region", { name: strings.groups.art })).toBeNull();
+    expect(screen.queryByText(strings.groupUnknown)).toBeNull();
+    expect(screen.queryByText(strings.notApplicable)).toBeNull();
+    expect(
+      within(screen.getByRole("region", { name: strings.groups.narrative })).getByRole("meter", {
+        name: explanationLexicon.factorLabels.pacing,
+      }),
+    ).toBe(pacing);
     expect(screen.queryByText(strings.legendTaste)).toBeNull();
     expect(document.querySelector("[data-factor-reference]")).toBeNull();
   });
@@ -71,7 +78,7 @@ describe("WorkTraits", () => {
     expect(document.querySelectorAll("[data-factor-reference]")).toHaveLength(1);
   });
 
-  it("shows only the pending note when fewer than three axes are confirmed", () => {
+  it("keeps the available values visible even when fewer than three axes are confirmed", () => {
     const axes = createTestAxes(
       Object.fromEntries(
         AXIS_IDS.map((id, index) => [
@@ -83,8 +90,29 @@ describe("WorkTraits", () => {
 
     render(<WorkTraits tasteAxes={null} work={createTestWork({ axes })} />);
 
-    expect(screen.getByText(strings.pending)).toBeTruthy();
+    expect(screen.queryByText(strings.pending)).toBeNull();
+    expect(screen.getAllByRole("meter")).toHaveLength(2);
+    for (const id of AXIS_IDS.slice(0, 2)) {
+      expect(
+        screen
+          .getByRole("meter", { name: explanationLexicon.factorLabels[id] })
+          .getAttribute("aria-valuenow"),
+      ).toBe("2");
+    }
+  });
+
+  it("omits the entire section when no axes are confirmed", () => {
+    const axes = createTestAxes(
+      Object.fromEntries(AXIS_IDS.map((id) => [id, { state: "unknown" }])),
+    );
+
+    render(<WorkTraits tasteAxes={null} work={createTestWork({ axes })} />);
+
+    expect(screen.queryByRole("region", { name: strings.heading })).toBeNull();
+    expect(screen.queryByRole("heading", { name: strings.heading })).toBeNull();
     expect(screen.queryByRole("meter")).toBeNull();
+    expect(screen.queryByText(strings.pending)).toBeNull();
+    expect(screen.queryByText(strings.groupUnknown)).toBeNull();
   });
 });
 

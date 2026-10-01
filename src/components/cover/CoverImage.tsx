@@ -5,6 +5,8 @@ import { useCallback, useEffect, useRef, useState } from "react";
 import { coverStrings } from "@/lib/strings";
 import { cn } from "@/lib/utils";
 
+import { CoverShimmer } from "./CoverShimmer";
+
 export type CoverImageSize = 200 | 400 | 600;
 
 export type CoverImageProps = Readonly<{
@@ -65,6 +67,7 @@ export function CoverImage({
     : "";
   const fallbackSource = normalizedCoverUrl ? coverSourceForSize(normalizedCoverUrl, 200) : "";
   const [failure, setFailure] = useState<FailureState | null>(null);
+  const [loadingSource, setLoadingSource] = useState<string | null>(null);
   const [loadedSource, setLoadedSource] = useState<string | null>(null);
   const [sourceAspectRatio, setSourceAspectRatio] = useState<{
     source: string;
@@ -101,6 +104,35 @@ export function CoverImage({
     settledSourceRef.current = requestedSource;
     onSettled();
   }, [onSettled, requestedSource]);
+  const markImageLoaded = useCallback(
+    (image: HTMLImageElement) => {
+      if (
+        variant !== "hero" &&
+        fit !== "cover" &&
+        image.naturalWidth > 0 &&
+        image.naturalHeight > 0
+      ) {
+        setSourceAspectRatio({
+          source: currentSource,
+          value: image.naturalWidth / image.naturalHeight,
+        });
+      }
+      setLoadedSource(currentSource);
+    },
+    [currentSource, fit, variant],
+  );
+  const setImageRef = useCallback(
+    (image: HTMLImageElement | null) => {
+      if (image === null) return;
+      // A cached image can finish before hydration attaches its load handler.
+      if (image.complete && image.naturalWidth > 0) {
+        markImageLoaded(image);
+      } else {
+        setLoadingSource(currentSource);
+      }
+    },
+    [currentSource, markImageLoaded],
+  );
 
   useEffect(() => {
     if (showPlaceholder || loaded) notifySettled();
@@ -219,18 +251,15 @@ export function CoverImage({
           className="cover-image__hero-paper pointer-events-none absolute inset-0 z-0 bg-cover-paper"
         />
         <div className="cover-image__hero-frame relative z-10 h-[calc(100%-var(--space-8))] w-auto max-w-[calc(100%-var(--space-8))] overflow-hidden rounded-[var(--radius-cover)] border border-line/50 bg-surface-1 shadow-[var(--shadow-raised)] aspect-[30/43]">
-          {loaded ? null : (
-            <span
-              aria-hidden="true"
-              className="cover-image__skeleton skeleton-tone absolute inset-0"
-              data-reduced-motion="fade"
-            />
-          )}
+          <CoverShimmer loaded={loaded} />
           <img
+            ref={setImageRef}
             alt={decorative ? "" : coverStrings.alt(title)}
             className="cover-image__image absolute inset-0 size-full object-contain"
             data-cover-source={currentSource}
             data-loaded={loaded ? "true" : "false"}
+            data-loading={loadingSource === currentSource && !loaded ? "true" : undefined}
+            data-reduced-motion="fade"
             decoding="async"
             draggable={false}
             fetchPriority={priority ? "high" : "auto"}
@@ -242,9 +271,7 @@ export function CoverImage({
                 stage: failureStage === "requested" ? "fallback" : "requested",
               });
             }}
-            onLoad={() => {
-              setLoadedSource(currentSource);
-            }}
+            onLoad={(event) => markImageLoaded(event.currentTarget)}
             src={currentSource}
             width={requestedSize}
           />
@@ -262,13 +289,7 @@ export function CoverImage({
       )}
       style={frameAspectRatio === undefined ? undefined : { aspectRatio: frameAspectRatio }}
     >
-      {loaded ? null : (
-        <span
-          aria-hidden="true"
-          className="cover-image__skeleton skeleton-tone absolute inset-0"
-          data-reduced-motion="fade"
-        />
-      )}
+      <CoverShimmer loaded={loaded} />
       <span
         className={cn(
           "cover-image__artwork relative z-[1] block max-h-full max-w-full overflow-hidden rounded-[var(--radius-cover)]",
@@ -277,12 +298,15 @@ export function CoverImage({
         style={artworkStyle}
       >
         <img
+          ref={setImageRef}
           alt={decorative ? "" : coverStrings.alt(title)}
           className={cn(
             "cover-image__image absolute inset-0 size-full rounded-[var(--radius-cover)]",
             coverFit ? "object-cover object-center" : "object-contain",
           )}
           data-loaded={loaded ? "true" : "false"}
+          data-loading={loadingSource === currentSource && !loaded ? "true" : undefined}
+          data-reduced-motion="fade"
           decoding="async"
           draggable={false}
           fetchPriority={priority ? "high" : "auto"}
@@ -294,19 +318,7 @@ export function CoverImage({
               stage: failureStage === "requested" ? "fallback" : "requested",
             });
           }}
-          onLoad={(event) => {
-            if (
-              fit !== "cover" &&
-              event.currentTarget.naturalWidth > 0 &&
-              event.currentTarget.naturalHeight > 0
-            ) {
-              setSourceAspectRatio({
-                source: currentSource,
-                value: event.currentTarget.naturalWidth / event.currentTarget.naturalHeight,
-              });
-            }
-            setLoadedSource(currentSource);
-          }}
+          onLoad={(event) => markImageLoaded(event.currentTarget)}
           src={currentSource}
           width={requestedSize}
         />

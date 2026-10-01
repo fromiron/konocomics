@@ -1,15 +1,14 @@
 "use client";
 
 import { Link } from "@tanstack/react-router";
-import { ChevronDownIcon } from "lucide-react";
+import { ChevronDownIcon, RotateCcwIcon } from "lucide-react";
 import { LazyMotion, domAnimation, m } from "motion/react";
 import { type CSSProperties, useCallback, useEffect, useMemo, useRef, useState } from "react";
 
 import { Button, buttonClassName } from "@/components/design-system/button";
 import { PageHeader } from "@/components/layout/page-header";
-import { SummarySection, summaryLinkClassName } from "@/components/layout/summary-section";
+import { summaryLinkClassName } from "@/components/layout/summary-section";
 import { CoverImage } from "@/components/cover/CoverImage";
-import { MediaShelf } from "@/components/media/media-shelf";
 import { useCountUp } from "@/components/motion/use-count-up";
 import { useLiveReducedMotion } from "@/components/motion/use-live-reduced-motion";
 import { usePointerEffect } from "@/components/motion/use-pointer-effects";
@@ -25,7 +24,6 @@ import {
 import {
   summarizeMangaDna,
   type DnaPreference,
-  type DnaTopPreference,
   type MangaDnaSummary,
 } from "@/domain/profile/dna-summary";
 import { calculateProfileConfidence, getConfidenceLevel } from "@/domain/profile/confidence";
@@ -53,7 +51,8 @@ import { cn } from "@/lib/utils";
 import { DnaShareButton } from "./dna-share-dialog";
 import { AdjustmentRadiogroup } from "./adjustment-radiogroup";
 import { FactorBar } from "@/components/media/factor-bar";
-import { DnaAxesOverview, RecommendationDiffPreview } from "./taste-insights";
+import { RecommendationDiffPreview } from "./taste-insights";
+import { DnaWheel } from "./dna-wheel";
 
 const DNA_REVEAL_MARKER = "konocomics:manga-dna-reveal:v1";
 const EMPTY_RECORDS: readonly UserWorkRecord[] = [];
@@ -147,129 +146,96 @@ function AnchorStrip({
   evidenceLabels: ReadonlyMap<string, string>;
   onCoverVisible(workId: string): void;
 }>) {
-  const shelf = (
-    <MediaShelf
-      className="taste-anchor-strip min-w-0"
-      compactHeading
-      listType="unordered"
-      title={tasteStrings.anchorsHeading}
-      trackClassName="!pb-[var(--space-1)]"
+  const content = (
+    <section
+      aria-labelledby="taste-anchors-heading"
+      className="taste-anchor-strip grid gap-[var(--space-4)]"
     >
-      {anchors.map((work) => (
-        <li
-          className="w-[calc((100vw-(var(--layout-page-padding)*2)-(var(--space-content-loose)*2))/2.4)] max-w-44 shrink-0 snap-start sm:w-32 md:w-[calc((100%-var(--space-content-loose)*7)/8)] md:min-w-28 md:max-w-32"
-          key={work.id}
+      <header className="grid gap-[var(--space-1)]">
+        <h2
+          className="text-[length:var(--text-subheading-size)] text-text-strong"
+          id="taste-anchors-heading"
         >
-          <Link
-            aria-label={mediaStrings.openDetails(work.title)}
-            className="group/evidence grid min-h-[var(--control-min-size)] gap-[var(--space-2)] rounded-[var(--radius-cover)] focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-ring"
-            params={{ workId: work.id }}
-            preload={false}
-            to="/works/$workId"
-          >
-            <CoverImage
-              className="taste-anchor-cover aspect-[30/43] w-full overflow-hidden rounded-[var(--radius-cover)] border border-line/60"
-              coverUrl={coverUrls.get(work.id)}
-              creators={work.creators}
-              decorative
-              onVisible={() => onCoverVisible(work.id)}
-              requestedSize={200}
-              title={work.title}
-            />
-            <span className="grid min-w-0 gap-[var(--space-content-tight)]">
-              <strong className="line-clamp-2 min-h-[2.5em] text-[length:var(--font-size-14)] leading-tight text-text-strong">
-                {work.title}
-              </strong>
-              <span className="truncate text-[length:var(--text-caption-size)] text-text-muted">
-                {evidenceLabels.get(work.id)}
+          {tasteStrings.anchorsHeading}
+        </h2>
+        <p className="text-[length:var(--font-size-14)] text-text-muted">
+          {tasteStrings.anchorsDescription(anchors.length)}
+        </p>
+      </header>
+      <ul
+        aria-label={tasteStrings.anchorsHeading}
+        className="m-0 grid list-none grid-cols-2 gap-[var(--space-4)] p-0 sm:grid-cols-3 lg:grid-cols-5"
+      >
+        {anchors.map((work) => (
+          <li className="min-w-0" key={work.id}>
+            <Link
+              aria-label={mediaStrings.openDetails(work.title)}
+              className="group/evidence grid h-full min-h-[var(--control-min-size)] grid-rows-[auto_1fr] overflow-hidden rounded-[var(--radius-card)] border border-line bg-surface-1 transition-colors duration-[var(--motion-duration-value)] focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-ring focus-visible:bg-surface-2 [@media(hover:hover)_and_(pointer:fine)]:hover:bg-surface-2"
+              params={{ workId: work.id }}
+              preload={false}
+              to="/works/$workId"
+            >
+              <CoverImage
+                className="taste-anchor-cover aspect-[30/43] w-full overflow-hidden rounded-none border-0"
+                coverUrl={coverUrls.get(work.id)}
+                creators={work.creators}
+                decorative
+                onVisible={() => onCoverVisible(work.id)}
+                requestedSize={400}
+                title={work.title}
+              />
+              <span className="grid min-w-0 content-start gap-[var(--space-2)] p-[var(--space-3)]">
+                <strong className="line-clamp-2 min-h-[2lh] text-[length:var(--font-size-14)] leading-tight text-text-strong">
+                  {work.title}
+                </strong>
+                {evidenceLabels.has(work.id) ? (
+                  <span className="w-fit max-w-full rounded-[var(--radius-pill)] border border-accent/25 bg-accent-soft px-[var(--space-2)] py-[var(--space-1)] text-[length:var(--text-caption-size)] leading-snug text-accent">
+                    {evidenceLabels.get(work.id)}
+                  </span>
+                ) : null}
               </span>
-            </span>
-          </Link>
-        </li>
-      ))}
-    </MediaShelf>
+            </Link>
+          </li>
+        ))}
+      </ul>
+    </section>
   );
-
   return animateReveal ? (
     <m.div
       animate={{ opacity: 1 }}
       initial={{ opacity: 0 }}
       transition={{ duration: 0.5, ease: [0.2, 0, 0, 1] }}
     >
-      {shelf}
+      {content}
     </m.div>
   ) : (
-    shelf
+    content
   );
 }
 
-type TopPreferenceCardProps = Readonly<{
-  preference: DnaTopPreference;
-  worksById: ReadonlyMap<string, Work>;
-  index: number;
-  animateReveal: boolean;
-}>;
+type AdjustmentGroup = Exclude<CoverageGroup, "genre">;
 
-function TopPreferenceCard({
-  preference,
-  worksById,
-  index,
-  animateReveal,
-}: TopPreferenceCardProps) {
-  const evidenceWorks = preference.anchorWorkIds.flatMap((workId): Work[] => {
-    const work = worksById.get(workId);
-    return work === undefined ? [] : [work];
-  });
-  const label = factorLabel(preference.factorId);
-  const cardClassName =
-    "taste-top-card grid min-w-0 grid-cols-[auto_minmax(0,1fr)_auto] items-baseline gap-x-[var(--space-3)] gap-y-[var(--space-content-tight)] border-t border-line/70 py-[var(--space-3)] text-left";
-
-  const content = (
-    <>
-      <span className="taste-top-card__rank font-display text-[length:var(--text-subheading-size)] leading-none text-text-muted tabular-nums">
-        {String(index + 1)}
-      </span>
-      <h3 className="relative min-w-0 pb-[var(--space-1)] text-[length:var(--font-size-16)] leading-tight font-bold text-text-strong">
-        <span className="line-clamp-2">{label}</span>
-        <svg
-          aria-hidden="true"
-          className="dna-ink-line absolute inset-x-0 bottom-0 h-1 w-full text-accent"
-          data-draw={animateReveal ? "true" : undefined}
-          focusable="false"
-          preserveAspectRatio="none"
-          style={{ "--ink-delay": `${500 + index * 180}ms` } as CSSProperties}
-          viewBox="0 0 100 4"
-        >
-          <path
-            d="M 1 2 H 99"
-            fill="none"
-            pathLength={1}
-            stroke="currentColor"
-            strokeLinecap="round"
-            strokeWidth="1.5"
-          />
-        </svg>
-      </h3>
-      <strong className="taste-top-card__level shrink-0 whitespace-nowrap text-[length:var(--font-size-14)] font-bold text-accent">
-        {tasteStrings.factorValue(preference.value)}
-      </strong>
-      <p className="col-span-2 col-start-2 line-clamp-2 text-[length:var(--text-caption-size)] leading-[var(--line-height-body)] text-text-muted">
-        {tasteStrings.topPreferenceEvidence(evidenceWorks.map((work) => work.title))}
-      </p>
-    </>
-  );
-
-  return animateReveal ? (
-    <m.article
-      animate={{ opacity: 1, y: 0 }}
-      className={cardClassName}
-      initial={{ opacity: 0, y: 8 }}
-      transition={{ delay: 0.5 + index * 0.18, duration: 0.4, ease: [0.2, 0, 0, 1] }}
+function AdjustmentResetButton({
+  label,
+  disabled,
+  onReset,
+}: Readonly<{
+  label: string;
+  disabled: boolean;
+  onReset(): void;
+}>) {
+  return (
+    <Button
+      aria-label={label}
+      className="taste-adjustment-reset relative z-10 size-[var(--control-min-size)] shrink-0 p-0 text-text-muted"
+      disabled={disabled}
+      onClick={onReset}
+      title={label}
+      type="button"
+      variant="ghost"
     >
-      {content}
-    </m.article>
-  ) : (
-    <article className={cardClassName}>{content}</article>
+      <RotateCcwIcon aria-hidden="true" className="size-4" />
+    </Button>
   );
 }
 
@@ -281,6 +247,7 @@ type FactorGroupProps<FactorId extends ExplanationFactorId> = Readonly<{
   factorRevealReady: boolean;
   adjustmentValues?: Partial<Record<FactorId, AdjustmentPreference>>;
   onAdjustment?: (factorId: FactorId, preference: AdjustmentPreference) => void;
+  onReset?: () => void;
   onOpenChange: (open: boolean) => void;
   open: boolean;
 }>;
@@ -327,6 +294,7 @@ function FactorGroup<FactorId extends ExplanationFactorId>({
   factorRevealReady,
   adjustmentValues,
   onAdjustment,
+  onReset,
   onOpenChange,
   open,
 }: FactorGroupProps<FactorId>) {
@@ -369,123 +337,134 @@ function FactorGroup<FactorId extends ExplanationFactorId>({
   return (
     <section
       aria-labelledby={`taste-group-${id}`}
-      className="taste-factor-group m-0 h-fit min-w-0 border-t border-line/70 pt-[var(--space-3)]"
+      className="taste-factor-group m-0 min-w-0 border-t border-line first:border-t-0"
     >
-      <header className="grid grid-cols-1 items-center gap-[var(--space-3)] py-[var(--space-content)] sm:grid-cols-[minmax(0,1fr)_auto]">
-        <span className="min-w-0">
-          <h3 className="text-[length:var(--font-size-16)] tracking-tight" id={`taste-group-${id}`}>
-            {title}
-          </h3>
-          <span className="mt-[var(--space-content-tight)] line-clamp-2 block text-[length:var(--font-size-12)] leading-[var(--line-height-body)] text-text-muted">
-            {summarizeGroupPreferences(preferences)}
-          </span>
-        </span>
-        <span className="flex min-w-0 flex-wrap items-center justify-between gap-[var(--space-content)] sm:flex-nowrap sm:justify-end">
-          <span className="whitespace-nowrap text-[length:var(--font-size-12)] font-bold text-text-muted">
-            {settingSummary}
-          </span>
-          <Button
+      <header className="relative grid grid-cols-[minmax(0,1fr)_auto] items-center gap-x-[var(--space-3)] gap-y-[var(--space-1)] py-[var(--space-4)] min-[360px]:grid-cols-[minmax(0,1fr)_auto_auto] sm:grid-cols-[minmax(calc(var(--space-12)*3),0.3fr)_minmax(0,1fr)_auto_auto]">
+        <h3
+          aria-label={title}
+          className="flex min-w-0 items-center gap-[var(--space-1)]"
+          id={`taste-group-${id}`}
+        >
+          <button
             aria-controls={detailsId}
             aria-expanded={open}
+            aria-describedby={`taste-group-${id}-summary taste-group-${id}-status`}
             aria-label={
               isAnalysisOnly
                 ? tasteStrings.groupAnalysisDetailsLabel(title, open)
                 : tasteStrings.groupDetailsLabel(title, open)
             }
-            className="shrink-0 gap-[var(--space-content-tight)] px-[var(--space-2)] text-[length:var(--font-size-12)] font-bold text-text-strong"
+            className="taste-factor-group__trigger min-h-[var(--control-min-size)] min-w-0 text-left text-[length:var(--font-size-14)] font-bold text-text-strong after:absolute after:inset-0 after:rounded-[var(--radius-control)] focus-visible:outline-none focus-visible:after:outline-2 focus-visible:after:outline-offset-2 focus-visible:after:outline-ring"
             onClick={() => onOpenChange(!open)}
             type="button"
-            variant="ghost"
           >
-            {open
-              ? tasteStrings.groupClose
-              : isAnalysisOnly
-                ? tasteStrings.groupAnalysisDetails
-                : tasteStrings.groupDetails}
-            <ChevronDownIcon
-              aria-hidden="true"
-              className={cn(
-                "size-[var(--space-4)] transition-transform duration-[var(--motion-duration-feedback)] motion-reduce:transition-none",
-                open && "rotate-180",
-              )}
+            {title}
+          </button>
+          {onReset === undefined ? null : (
+            <AdjustmentResetButton
+              disabled={adjustedCount === 0}
+              label={tasteStrings.resetGroup(title)}
+              onReset={onReset}
             />
-          </Button>
+          )}
+        </h3>
+        <span
+          className="pointer-events-none col-span-2 row-start-3 line-clamp-2 min-w-0 text-[length:var(--text-caption-size)] text-text-muted min-[360px]:col-span-3 min-[360px]:row-start-2 sm:col-span-1 sm:col-start-2 sm:row-start-1 sm:line-clamp-1"
+          id={`taste-group-${id}-summary`}
+        >
+          {summarizeGroupPreferences(preferences)}
+        </span>
+        <span
+          className={cn(
+            "pointer-events-none col-start-1 row-start-2 w-fit whitespace-nowrap rounded-[var(--radius-pill)] border px-[var(--space-2)] py-[var(--space-1)] text-[length:var(--text-caption-size)] font-medium min-[360px]:col-start-2 min-[360px]:row-start-1 sm:col-start-3",
+            isAnalysisOnly
+              ? "border-line bg-surface-2 text-text-muted"
+              : "border-accent/25 bg-accent-soft text-accent",
+            adjustedCount !== null && adjustedCount > 0 && "font-bold",
+          )}
+          id={`taste-group-${id}-status`}
+        >
+          {settingSummary}
+        </span>
+        <span
+          aria-hidden="true"
+          className={cn(
+            "pointer-events-none col-start-2 row-start-1 grid size-[var(--control-min-size)] place-items-center rounded-[var(--radius-pill)] border border-line text-text-muted min-[360px]:col-start-3 sm:col-start-4",
+            open && "border-accent text-accent",
+          )}
+        >
+          <ChevronDownIcon
+            className={cn(
+              "size-4 transition-transform duration-[var(--motion-duration-value)] motion-reduce:transition-none",
+              open && "rotate-180",
+            )}
+          />
         </span>
       </header>
       <div
-        className={cn(
-          "taste-factor-group__details taste-factor-group__rows grid px-0 pb-[var(--space-3)]",
-          isAnalysisOnly
-            ? "taste-factor-group__rows--analysis grid-cols-1 md:grid-cols-2 md:gap-x-[var(--space-4)]"
-            : "grid-cols-1",
-        )}
+        className="taste-factor-group__details pb-[var(--space-5)]"
         hidden={!open}
         id={detailsId}
       >
         {isAnalysisOnly ? null : (
-          <div
-            aria-hidden="true"
-            className="taste-factor-group__column-headings sticky top-[var(--desktop-navigation-height)] z-10 hidden grid-cols-[minmax(12rem,0.75fr)_minmax(0,1.25fr)] items-center gap-[var(--space-content)] border-b border-line/70 bg-canvas py-[var(--space-content)] text-[length:var(--font-size-12)] font-bold text-text-muted md:grid"
-          >
-            <span>{tasteStrings.analysisColumnHeading}</span>
-            <span className="taste-factor-group__column-adjustment border-l border-line pl-[var(--space-content-loose)]">
-              {tasteStrings.adjustmentColumnHeading}
-            </span>
-          </div>
+          <p className="mb-[var(--space-3)] max-w-[var(--layout-width-reading)] text-[length:var(--text-caption-size)] text-text-muted">
+            {tasteStrings.groupAdjustmentHelp}
+          </p>
         )}
-        {visiblePreferences.map((preference, index) => {
-          const label = factorLabel(preference.factorId);
-          return (
-            <div
-              className={cn(
-                "taste-factor-row min-w-0 border-b border-line py-[var(--space-content-tight)]",
-                isAnalysisOnly
-                  ? "taste-factor-row--analysis grid gap-[var(--space-content-tight)] last:border-b-0 md:[&:nth-last-child(-n+2)]:border-b-0"
-                  : "grid gap-[var(--space-content-tight)] last:border-b-0 md:grid-cols-[minmax(12rem,0.75fr)_minmax(0,1.25fr)] md:items-center md:gap-[var(--space-content)]",
-              )}
-              key={preference.factorId}
-            >
-              <FactorBar
-                animateReveal={animateReveal}
-                enterDelay={index * 0.04}
-                enterFill
-                revealReady={factorRevealReady}
-                label={label}
-                revealDelay={index * 0.06}
-                state={preference.state}
-                value={preference.value}
-              />
-              {adjustmentValues === undefined || onAdjustment === undefined ? null : (
-                <div className="taste-factor-row__adjustment grid min-w-0 gap-[var(--space-content-tight)] md:border-l md:border-line md:pl-[var(--space-content-loose)]">
-                  <span
-                    aria-hidden="true"
-                    className="taste-factor-row__adjustment-label text-[length:var(--font-size-12)] font-bold text-text-muted md:hidden"
-                  >
-                    {tasteStrings.adjustmentColumnHeading}
-                  </span>
-                  <AdjustmentRadiogroup
-                    factorId={`${id}-${preference.factorId}`}
-                    factorLabel={label}
-                    onChange={(value) => onAdjustment(preference.factorId, value)}
-                    value={adjustmentValues[preference.factorId] ?? "auto"}
-                  />
-                </div>
-              )}
-            </div>
-          );
-        })}
+        <div
+          className={cn(
+            "taste-factor-group__rows grid",
+            isAnalysisOnly
+              ? "taste-factor-group__rows--analysis grid-cols-1 md:grid-cols-2 md:gap-x-[var(--space-6)]"
+              : "grid-cols-1",
+          )}
+        >
+          {visiblePreferences.map((preference, index) => {
+            const label = factorLabel(preference.factorId);
+            return (
+              <div
+                className={cn(
+                  "taste-factor-row grid min-w-0 gap-[var(--space-3)] border-t border-line/70 py-[var(--space-3)]",
+                  isAnalysisOnly && "taste-factor-row--analysis",
+                )}
+                key={preference.factorId}
+              >
+                <FactorBar
+                  animateReveal={animateReveal}
+                  enterDelay={index * 0.04}
+                  enterFill
+                  revealReady={factorRevealReady}
+                  label={label}
+                  revealDelay={index * 0.06}
+                  state={preference.state}
+                  value={preference.value}
+                />
+                {adjustmentValues === undefined || onAdjustment === undefined ? null : (
+                  <div className="taste-factor-row__adjustment min-w-0">
+                    <AdjustmentRadiogroup
+                      factorId={`${id}-${preference.factorId}`}
+                      factorLabel={label}
+                      onChange={(value) => onAdjustment(preference.factorId, value)}
+                      value={adjustmentValues[preference.factorId] ?? "auto"}
+                    />
+                  </div>
+                )}
+              </div>
+            );
+          })}
+        </div>
         {canCollapse ? (
           <Button
             aria-controls={detailsId}
             aria-expanded={showAll}
             aria-label={tasteStrings.groupShowAllLabel(title, orderedPreferences.length, showAll)}
-            className="mt-[var(--space-2)] w-fit gap-[var(--space-content-tight)] px-[var(--space-2)] text-[length:var(--font-size-12)] font-bold text-text-strong"
+            className="mx-auto mt-[var(--space-4)] flex w-fit gap-[var(--space-2)] rounded-[var(--radius-pill)] text-[length:var(--text-caption-size)]"
             onClick={() => {
               if (showAll) setPinnedIds(adjustedIds());
               setShowAll(!showAll);
             }}
             type="button"
-            variant="ghost"
+            variant="outline"
           >
             {showAll
               ? tasteStrings.groupShowFewer
@@ -493,7 +472,7 @@ function FactorGroup<FactorId extends ExplanationFactorId>({
             <ChevronDownIcon
               aria-hidden="true"
               className={cn(
-                "size-[var(--space-4)] transition-transform duration-[var(--motion-duration-feedback)] motion-reduce:transition-none",
+                "size-4 transition-transform duration-[var(--motion-duration-feedback)] motion-reduce:transition-none",
                 showAll && "rotate-180",
               )}
             />
@@ -512,6 +491,7 @@ function FactorPanels({
   factorRevealReady,
   group,
   onAdjustment,
+  onReset,
   onGroupChange,
   summary,
 }: Readonly<{
@@ -525,6 +505,7 @@ function FactorPanels({
     preference: AdjustmentPreference,
   ) => void;
   onGroupChange?: (group: CoverageGroup | undefined) => void;
+  onReset(group: AdjustmentGroup): void;
   summary: MangaDnaSummary;
 }>) {
   const narrative = summary.axes.filter((preference) => NARRATIVE_IDS.has(preference.factorId));
@@ -540,7 +521,7 @@ function FactorPanels({
   };
 
   return (
-    <div className="taste-factor-grid grid grid-cols-1 items-start gap-[var(--space-3)]">
+    <div className="taste-factor-grid grid min-w-0 grid-cols-1 items-start rounded-[var(--radius-card)] border border-line bg-surface-1 px-[var(--space-4)] sm:px-[var(--space-6)]">
       <FactorGroup
         animateReveal={animateReveal}
         factorRevealReady={factorRevealReady}
@@ -555,6 +536,7 @@ function FactorPanels({
         animateReveal={animateReveal}
         factorRevealReady={factorRevealReady}
         id="theme"
+        onReset={() => onReset("theme")}
         onAdjustment={(factorId, value) => onAdjustment("theme", factorId, value)}
         onOpenChange={(open) => setGroupOpen("theme", open)}
         open={openGroup === "theme"}
@@ -566,6 +548,7 @@ function FactorPanels({
         animateReveal={animateReveal}
         factorRevealReady={factorRevealReady}
         id="narrative"
+        onReset={() => onReset("narrative")}
         onAdjustment={(factorId, value) => onAdjustment("axis", factorId, value)}
         onOpenChange={(open) => setGroupOpen("narrative", open)}
         open={openGroup === "narrative"}
@@ -577,6 +560,7 @@ function FactorPanels({
         animateReveal={animateReveal}
         factorRevealReady={factorRevealReady}
         id="tone"
+        onReset={() => onReset("tone")}
         onAdjustment={(factorId, value) => onAdjustment("axis", factorId, value)}
         onOpenChange={(open) => setGroupOpen("tone", open)}
         open={openGroup === "tone"}
@@ -588,6 +572,7 @@ function FactorPanels({
         animateReveal={animateReveal}
         factorRevealReady={factorRevealReady}
         id="art"
+        onReset={() => onReset("art")}
         onAdjustment={(factorId, value) => onAdjustment("axis", factorId, value)}
         onOpenChange={(open) => setGroupOpen("art", open)}
         open={openGroup === "art"}
@@ -600,27 +585,35 @@ function FactorPanels({
 
 function ConfidenceCoachSummary() {
   return (
-    <SummarySection
-      actions={
-        <Link className={summaryLinkClassName} preload={false} to="/onboarding">
-          {tasteStrings.coach.action}
-        </Link>
-      }
-      headingId="taste-coach-heading"
-      title={tasteStrings.coach.heading}
+    <section
+      aria-labelledby="taste-coach-heading"
+      className="taste-coach-banner mt-[var(--space-shelf)] flex flex-wrap items-center justify-between gap-[var(--space-5)] rounded-[var(--radius-card)] border border-accent/30 bg-surface-1 p-[var(--space-6)]"
     >
-      <p className="text-[length:var(--font-size-14)] text-text-muted">
-        {tasteStrings.coach.description}
-      </p>
-    </SummarySection>
+      <div className="grid gap-[var(--space-2)]">
+        <h2
+          className="text-[length:var(--text-subheading-size)] text-text-strong"
+          id="taste-coach-heading"
+        >
+          {tasteStrings.coach.heading}
+        </h2>
+        <p className="text-[length:var(--font-size-14)] text-text-muted">
+          {tasteStrings.coach.description}
+        </p>
+      </div>
+      <Link
+        className={buttonClassName({ className: "px-[var(--space-6)]" })}
+        preload={false}
+        to="/onboarding"
+      >
+        {tasteStrings.coach.action}
+      </Link>
+    </section>
   );
 }
 
 type RecentFeedbackSummaryProps = Readonly<{
   records: readonly UserWorkRecord[];
   worksById: ReadonlyMap<string, Work>;
-  coverUrls: ReadonlyMap<string, string | null>;
-  onCoverVisible(workId: string): void;
   showAddWorksLink: boolean;
 }>;
 
@@ -629,8 +622,6 @@ const RECENT_FEEDBACK_LIMIT = 12;
 function RecentFeedbackSummary({
   records,
   worksById,
-  coverUrls,
-  onCoverVisible,
   showAddWorksLink,
 }: RecentFeedbackSummaryProps) {
   const items = [...records]
@@ -702,26 +693,15 @@ function RecentFeedbackSummary({
               className="m-0 flex list-none flex-wrap gap-[var(--space-3)] p-0"
             >
               {entries.map(({ reason, work }) => (
-                <li className="w-16 min-w-0" key={work.id}>
+                <li className="min-w-0 max-w-full" key={work.id}>
                   <Link
                     aria-label={mediaStrings.openDetails(work.title)}
-                    className="grid gap-[var(--space-1)] rounded-[var(--radius-cover)] focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-ring"
+                    className="inline-flex min-h-[var(--control-min-size)] max-w-full flex-wrap items-center gap-x-[var(--space-2)] rounded-[var(--radius-pill)] border border-line bg-surface-2 px-[var(--space-4)] py-[var(--space-2)] text-[length:var(--font-size-14)] text-text transition-colors focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-ring [@media(hover:hover)_and_(pointer:fine)]:hover:bg-surface-3"
                     params={{ workId: work.id }}
                     preload={false}
                     to="/works/$workId"
                   >
-                    <CoverImage
-                      className="taste-feedback-cover aspect-[30/43] w-full overflow-hidden rounded-[var(--radius-cover)] border border-line/60"
-                      coverUrl={coverUrls.get(work.id)}
-                      creators={work.creators}
-                      decorative
-                      onVisible={() => onCoverVisible(work.id)}
-                      requestedSize={200}
-                      title={work.title}
-                    />
-                    <span className="truncate text-[length:var(--text-caption-size)] font-bold text-text-strong">
-                      {work.title}
-                    </span>
+                    <span className="line-clamp-2 break-words font-medium">{work.title}</span>
                     {reason === undefined ? null : (
                       <span className="truncate text-[length:var(--text-caption-size)] text-text-muted">
                         {reason}
@@ -874,29 +854,16 @@ export function TasteFlow({
     if (storedPolicies === undefined) return null;
     return recommendationPreviewWorkIds(catalog, records, adjustments, storedPolicies);
   }, [adjustments, catalog, records, storedPolicies]);
-  const recentFeedbackWorkIds = useMemo(
-    () =>
-      [...catalogRecords]
-        .sort(
-          (left, right) =>
-            right.updatedAt.localeCompare(left.updatedAt) ||
-            left.workId.localeCompare(right.workId),
-        )
-        .slice(0, RECENT_FEEDBACK_LIMIT)
-        .map((record) => record.workId),
-    [catalogRecords],
-  );
   const coverTargets = useMemo(
     () =>
       createRecommendationCoverTargets(catalog, [
         ...new Set([
           ...anchors.map((work) => work.id),
-          ...recentFeedbackWorkIds,
           ...(beforePreviewWorkIds ?? []),
           ...(afterPreviewWorkIds ?? []),
         ]),
       ]),
-    [afterPreviewWorkIds, anchors, beforePreviewWorkIds, catalog, recentFeedbackWorkIds],
+    [afterPreviewWorkIds, anchors, beforePreviewWorkIds, catalog],
   );
   const { coverUrls, requestCover } = useRecommendationCovers({
     targets: coverTargets,
@@ -981,27 +948,16 @@ export function TasteFlow({
     [],
   );
 
-  const updateAdjustment = useCallback(
-    (kind: "axis" | "theme", factorId: AxisId | ThemeTag, preference: AdjustmentPreference) => {
+  const persistAdjustments = useCallback(
+    (next: ProfileAdjustments, successMessage: string) => {
       const before = localAdjustments ?? storedAdjustments ?? EMPTY_ADJUSTMENTS;
-      const next: ProfileAdjustments =
-        kind === "axis"
-          ? { ...before, axes: { ...before.axes, [factorId]: preference } }
-          : { ...before, themes: { ...before.themes, [factorId]: preference } };
-      const sequence = saveSequence.current + 1;
-      saveSequence.current = sequence;
+      const sequence = ++saveSequence.current;
       setLocalAdjustments(next);
       setErrorMessage("");
-
       void saveProfileAdjustments(next).then(
         () => {
           if (saveSequence.current !== sequence) return;
-          setMessage(
-            tasteStrings.adjustmentSaved(
-              factorLabel(factorId),
-              tasteStrings.adjustmentLabels[preference],
-            ),
-          );
+          setMessage(successMessage);
           if (messageTimer.current !== null) window.clearTimeout(messageTimer.current);
           messageTimer.current = window.setTimeout(() => setMessage(""), 2400);
         },
@@ -1014,6 +970,55 @@ export function TasteFlow({
     },
     [localAdjustments, saveProfileAdjustments, storedAdjustments],
   );
+  const updateAdjustment = useCallback(
+    (kind: "axis" | "theme", factorId: AxisId | ThemeTag, preference: AdjustmentPreference) => {
+      const next: ProfileAdjustments =
+        kind === "axis"
+          ? { ...adjustments, axes: { ...adjustments.axes, [factorId]: preference } }
+          : { ...adjustments, themes: { ...adjustments.themes, [factorId]: preference } };
+      persistAdjustments(
+        next,
+        tasteStrings.adjustmentSaved(
+          factorLabel(factorId),
+          tasteStrings.adjustmentLabels[preference],
+        ),
+      );
+    },
+    [adjustments, persistAdjustments],
+  );
+  const resetAdjustments = useCallback(
+    (group?: AdjustmentGroup) => {
+      const next: ProfileAdjustments = {
+        axes: { ...adjustments.axes },
+        themes: { ...adjustments.themes },
+      };
+      if (group === undefined) {
+        next.axes = {};
+        next.themes = {};
+      } else if (group === "theme") {
+        next.themes = {};
+      } else {
+        const ids =
+          group === "narrative"
+            ? NARRATIVE_AXIS_IDS
+            : group === "tone"
+              ? TONE_AXIS_IDS
+              : ART_AXIS_IDS;
+        for (const id of ids) delete next.axes[id];
+      }
+      persistAdjustments(
+        next,
+        group === undefined
+          ? tasteStrings.resetAllSaved
+          : tasteStrings.resetGroupSaved(tasteStrings.groups[group]),
+      );
+    },
+    [adjustments, persistAdjustments],
+  );
+  const hasManualAdjustments = [
+    ...Object.values(adjustments.axes),
+    ...Object.values(adjustments.themes),
+  ].some((value) => value !== undefined && value !== "auto");
 
   if (
     status.state === "initializing" ||
@@ -1046,7 +1051,7 @@ export function TasteFlow({
     <LazyMotion features={domAnimation} strict>
       <main
         className={cn(
-          "taste-page mx-auto min-h-dvh w-full max-w-[var(--layout-width-media)] px-[var(--layout-page-padding)] pt-[var(--layout-page-block-start)] pb-[var(--space-shelf-group)] text-text",
+          "taste-page mx-auto min-h-dvh w-full max-w-[var(--layout-width-media)] px-[var(--layout-page-padding)] pt-[var(--layout-page-block-start)] text-text",
           revealExperience.entry &&
             "taste-page--with-action pb-[var(--layout-taste-action-clearance)]",
           !revealExperience.entry &&
@@ -1059,10 +1064,12 @@ export function TasteFlow({
       >
         <PageHeader
           action={<DnaShareButton summary={summary} worksById={worksById} />}
-          className="taste-header mb-[var(--space-6)]"
-          description={tasteStrings.description}
+          className="taste-header mb-[var(--space-8)]"
           title={tasteStrings.title}
         >
+          <p className="mt-[var(--space-2)] text-[length:var(--font-size-14)] text-text-muted">
+            {tasteStrings.description}
+          </p>
           <section aria-label={tasteStrings.basisHeading}>
             <p className="text-[length:var(--font-size-14)] leading-relaxed text-text-muted">
               <span aria-hidden="true">
@@ -1072,52 +1079,33 @@ export function TasteFlow({
                 {tasteStrings.basisCount(profileRecords.length, reactionBreakdown)}
               </span>
               <span aria-hidden="true"> · </span>
-              <span className="taste-confidence">
+              <span className="taste-confidence inline-flex items-center gap-[var(--space-2)]">
                 {tasteStrings.confidence}: {tasteStrings.confidenceLabels[confidenceLevel]}
+                <span aria-hidden="true" className="inline-flex gap-[var(--space-1)]">
+                  {[0, 1, 2].map((index) => (
+                    <span
+                      className={cn(
+                        "size-1.5 rounded-full",
+                        index <
+                          (confidenceLevel === "high" ? 3 : confidenceLevel === "normal" ? 2 : 1)
+                          ? "bg-accent"
+                          : "bg-surface-3",
+                      )}
+                      key={index}
+                    />
+                  ))}
+                </span>
               </span>
             </p>
           </section>
         </PageHeader>
 
-        <div className="taste-overview grid items-start gap-[var(--space-shelf)] lg:grid-cols-2 lg:gap-x-[var(--space-12)]">
-          <section
-            className="taste-top-summary grid content-start gap-[var(--space-3)]"
-            aria-labelledby="taste-top-heading"
-            {...revealFadeStep(1)}
-          >
-            <h2
-              className={cn(
-                "text-[length:var(--text-subheading-size)]",
-                revealExperience.animate && "text-shine-once [--text-shine-delay:900ms]",
-              )}
-              id="taste-top-heading"
-            >
-              {tasteStrings.topPreferencesHeading}
-            </h2>
-            {summary.topPreferences.length === 0 ? (
-              <p className="text-text-muted">{tasteStrings.topPreferencePending}</p>
-            ) : (
-              <ol className="taste-top-summary__grid m-0 grid list-none grid-cols-1 p-0">
-                {summary.topPreferences.map((preference, index) => (
-                  <li className="min-w-0" key={`${preference.kind}:${preference.factorId}`}>
-                    <TopPreferenceCard
-                      animateReveal={revealExperience.animate}
-                      index={index}
-                      preference={preference}
-                      worksById={worksById}
-                    />
-                  </li>
-                ))}
-              </ol>
-            )}
-          </section>
-          <div className="min-w-0" {...revealFadeStep(2)}>
-            <DnaAxesOverview
-              animateReveal={revealExperience.animate}
-              axes={summary.axes}
-              revealReady={factorRevealReady}
-            />
-          </div>
+        <div className="taste-overview" {...revealFadeStep(1)}>
+          <DnaWheel
+            animateReveal={revealExperience.animate}
+            summary={summary}
+            worksById={worksById}
+          />
         </div>
 
         {status.state === "degraded" ? (
@@ -1137,7 +1125,7 @@ export function TasteFlow({
           </p>
         ) : null}
 
-        <div className="mt-[var(--space-shelf-group)]" {...revealFadeStep(0)}>
+        <div className="mt-[var(--space-shelf)]" {...revealFadeStep(0)}>
           <AnchorStrip
             anchors={anchors}
             animateReveal={revealExperience.animate}
@@ -1155,13 +1143,20 @@ export function TasteFlow({
             className="taste-workspace grid gap-[var(--space-3)]"
             data-taste-mode={mode}
           >
-            <header className="taste-workspace__header flex flex-wrap items-baseline gap-x-[var(--space-3)] gap-y-[var(--space-content-tight)]">
-              <h2
-                className="text-[length:var(--text-subheading-size)] text-text-strong"
-                id="taste-workspace-heading"
-              >
-                {tasteStrings.workspaceHeading}
-              </h2>
+            <header className="taste-workspace__header grid gap-[var(--space-1)]">
+              <div className="flex items-center gap-[var(--space-2)]">
+                <h2
+                  className="text-[length:var(--text-subheading-size)] text-text-strong"
+                  id="taste-workspace-heading"
+                >
+                  {tasteStrings.workspaceHeading}
+                </h2>
+                <AdjustmentResetButton
+                  disabled={!hasManualAdjustments}
+                  label={tasteStrings.resetAll}
+                  onReset={() => resetAdjustments()}
+                />
+              </div>
               <p className="text-[length:var(--text-caption-size)] text-text-muted">
                 {tasteStrings.modeDescriptions.adjust}
               </p>
@@ -1173,6 +1168,7 @@ export function TasteFlow({
               factorRevealReady={factorRevealReady}
               group={group}
               onAdjustment={updateAdjustment}
+              onReset={resetAdjustments}
               onGroupChange={onGroupChange}
               summary={summary}
             />
@@ -1188,8 +1184,6 @@ export function TasteFlow({
         </div>
 
         <RecentFeedbackSummary
-          coverUrls={coverUrls}
-          onCoverVisible={requestCover}
           records={catalogRecords}
           showAddWorksLink={confidenceLevel !== "normal" || revealExperience.entry}
           worksById={worksById}

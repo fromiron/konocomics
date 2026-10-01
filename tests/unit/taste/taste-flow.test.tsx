@@ -212,6 +212,13 @@ describe("TasteFlow", () => {
         />,
       );
 
+      if (message === tasteStrings.previewUnchanged) {
+        expect(screen.queryAllByRole("list")).toHaveLength(0);
+        const disclosure = screen.getByRole("button", { name: tasteStrings.previewExpand });
+        expect(disclosure.getAttribute("aria-expanded")).toBe("false");
+        fireEvent.click(disclosure);
+        expect(disclosure.getAttribute("aria-expanded")).toBe("true");
+      }
       expect(screen.queryAllByRole("list")).toHaveLength(lists);
       expect(screen.getAllByText(message)).toHaveLength(1);
       if (before !== null && after !== null && before.length !== after.length) {
@@ -488,39 +495,35 @@ describe("TasteFlow", () => {
     expect(container.querySelector(".taste-page--with-action")).toBeNull();
     expect(container.querySelector("main")?.classList.contains("page-entry-b")).toBe(true);
     const axes = screen.getByRole("region", { name: tasteStrings.axesHeading });
-    expect(axes.querySelector("svg")).toBeNull();
-    const axisMeters = within(axes).getAllByRole("meter");
-    expect(axisMeters.length).toBeGreaterThan(0);
-    expect(axisMeters.length).toBeLessThanOrEqual(8);
-    const axisValues = axisMeters.map((meter) => Number(meter.getAttribute("aria-valuenow")));
-    expect(axisValues).toEqual([...axisValues].sort((left, right) => right - left));
+    const wheel = within(axes).getByRole("group", { name: tasteStrings.wheel.label });
+    const wheelButtons = within(wheel).getAllByRole("button");
+    const axisButtons = within(within(axes).getByRole("list")).getAllByRole("button");
+    expect(axisButtons.length).toBeGreaterThan(0);
+    expect(axisButtons.length).toBeLessThanOrEqual(8);
+    expect(wheelButtons).toHaveLength(axisButtons.length);
+    expect(
+      wheelButtons.every((button) => button.getAttribute("data-reduced-motion") === "fade"),
+    ).toBe(true);
+    const firstAxis = axisButtons[0];
+    const firstSegment = wheelButtons[0];
+    if (firstAxis === undefined || firstSegment === undefined)
+      throw new Error("Expected known DNA axes");
+    fireEvent.click(firstAxis);
+    expect(firstAxis.getAttribute("aria-pressed")).toBe("true");
+    expect(firstSegment.getAttribute("aria-pressed")).toBe("true");
+    fireEvent.click(firstSegment);
+    expect(firstAxis.getAttribute("aria-pressed")).toBe("false");
+    expect(firstSegment.getAttribute("aria-pressed")).toBe("false");
+    expect(testState.saveProfileAdjustments).not.toHaveBeenCalled();
     const anchorRegion = screen.getByRole("region", { name: tasteStrings.anchorsHeading });
     expect(within(anchorRegion).queryByRole("img")).toBeNull();
     expect(anchorRegion.querySelectorAll("li > a")).toHaveLength(5);
     expect(anchorRegion.querySelector("li > .visually-hidden")).toBeNull();
     expect(anchorRegion.innerHTML).not.toContain("linear-gradient");
-    const topPreferenceGrid = container.querySelector(".taste-top-summary__grid");
-    expect(topPreferenceGrid?.tagName).toBe("OL");
-    expect(topPreferenceGrid?.className).toContain("grid-cols-1");
-    expect(topPreferenceGrid?.querySelectorAll(":scope > li")).toHaveLength(3);
-    const topPreferenceCards = container.querySelectorAll(".taste-top-card");
-    expect(topPreferenceCards).toHaveLength(3);
-    expect(
-      [...topPreferenceCards].every(
-        (card, index) =>
-          card.querySelector("h3 > span")?.className.includes("line-clamp-2") === true &&
-          card.querySelector(".taste-top-card__rank")?.textContent === String(index + 1) &&
-          card.querySelector(".taste-top-card__rank")?.getAttribute("aria-hidden") !== "true" &&
-          card.querySelector(".taste-top-card__level")?.className.includes("--font-size-14") ===
-            true &&
-          card.querySelector("svg.dna-ink-line")?.getAttribute("aria-hidden") === "true" &&
-          card.querySelector("p") !== null,
-      ),
-    ).toBe(true);
-    expect(container.querySelector(".taste-top-card .taste-evidence-cover")).toBeNull();
-    expect([...topPreferenceCards].some((card) => card.textContent?.includes("『作品"))).toBe(true);
+    expect(screen.queryByRole("heading", { name: tasteStrings.topPreferencesHeading })).toBeNull();
+    expect(axes.textContent).toContain("『作品");
     const groupHeadings = [...container.querySelectorAll(".taste-factor-group h3")];
-    expect(groupHeadings.map((heading) => heading.textContent)).toEqual([
+    expect(groupHeadings.map((heading) => heading.getAttribute("aria-label"))).toEqual([
       "ジャンル",
       "テーマ",
       "展開",
@@ -550,16 +553,7 @@ describe("TasteFlow", () => {
       ?.getAttribute("style");
 
     const narrativePanel = container.querySelector("#taste-group-narrative-details") as HTMLElement;
-    const columnHeadings = narrativePanel.querySelector(".taste-factor-group__column-headings");
-    expect(columnHeadings?.getAttribute("aria-hidden")).toBe("true");
-    expect(columnHeadings?.textContent).toContain("分析した好み");
-    expect(columnHeadings?.textContent).toContain("おすすめへの反映");
-    expect(narrativePanel.querySelectorAll(".taste-factor-row__adjustment-label")).toHaveLength(6);
-    expect(
-      [...narrativePanel.querySelectorAll(".taste-factor-row__adjustment-label")].every(
-        (label) => label.textContent === "おすすめへの反映",
-      ),
-    ).toBe(true);
+    expect(within(narrativePanel).getByText(tasteStrings.groupAdjustmentHelp)).toBeTruthy();
 
     const strategyGroup = screen.getByRole("radiogroup", {
       name: "「戦略的な展開」のおすすめへの反映を設定",
@@ -571,21 +565,9 @@ describe("TasteFlow", () => {
         within(strategyGroup).getByRole("radio", { name: label }).getAttribute("aria-checked"),
       ),
     ).toEqual(["false", "false", "true", "false", "false"]);
-    expect(strategyGroup.className).toContain("flex-nowrap");
-    expect(strategyGroup.className).not.toContain("rounded-");
-    expect(strategyGroup.className).not.toContain("border-line");
-    expect(strategyGroup.querySelectorAll(".taste-adjustment-option__marker")).toHaveLength(5);
-    expect(
-      [...strategyGroup.querySelectorAll(".taste-adjustment-option__marker")].every(
-        (marker) => marker.getAttribute("aria-hidden") === "true",
-      ),
-    ).toBe(true);
-    expect(
-      within(strategyGroup)
-        .getByRole("radio", { name: "除外" })
-        .closest("label")
-        ?.className.includes("border-l"),
-    ).toBe(true);
+    expect(strategyGroup.querySelectorAll('[data-slot="segmented-indicator"]')).toHaveLength(1);
+    expect(screen.queryByRole("region", { name: tasteStrings.previewAfter })).toBeNull();
+    fireEvent.click(screen.getByRole("button", { name: tasteStrings.previewExpand }));
     expect(screen.queryByRole("region", { name: tasteStrings.previewBefore })).toBeNull();
     const afterPreview = screen.getByRole("region", { name: tasteStrings.previewAfter });
     expect(
@@ -630,6 +612,111 @@ describe("TasteFlow", () => {
       ).toBeTruthy();
       expect(screen.getByRole("region", { name: tasteStrings.previewAfter })).toBe(afterPreview);
     });
+  });
+
+  it.each([
+    {
+      group: "theme",
+      expected: { axes: { strategy: "like", comedy: "less", artDensity: "exclude" }, themes: {} },
+    },
+    {
+      group: "narrative",
+      expected: {
+        axes: { comedy: "less", artDensity: "exclude" },
+        themes: { combat: "veryLike", school: "less" },
+      },
+    },
+    {
+      group: "tone",
+      expected: {
+        axes: { strategy: "like", artDensity: "exclude" },
+        themes: { combat: "veryLike", school: "less" },
+      },
+    },
+    {
+      group: "art",
+      expected: {
+        axes: { strategy: "like", comedy: "less" },
+        themes: { combat: "veryLike", school: "less" },
+      },
+    },
+  ] as const)(
+    "resets only $group to automatic with one save and keeps disclosures closed",
+    async ({ group, expected }) => {
+      testState.adjustments = {
+        axes: { strategy: "like", comedy: "less", artDensity: "exclude" },
+        themes: { combat: "veryLike", school: "less" },
+      };
+      const { container } = render(<TasteFlow />);
+      const reset = await screen.findByRole("button", {
+        name: tasteStrings.resetGroup(tasteStrings.groups[group]),
+      });
+      fireEvent.click(reset);
+      await waitFor(() => {
+        expect(testState.saveProfileAdjustments).toHaveBeenCalledTimes(1);
+        expect(testState.saveProfileAdjustments).toHaveBeenCalledWith(expected);
+        expect(reset.hasAttribute("disabled")).toBe(true);
+      });
+      expect(container.querySelectorAll(".taste-factor-group__details:not([hidden])")).toHaveLength(
+        0,
+      );
+      expect(
+        screen.getByText(tasteStrings.resetGroupSaved(tasteStrings.groups[group])),
+      ).toBeTruthy();
+    },
+  );
+
+  it("resets all adjustments and exposes automatic selections without changing analysis", async () => {
+    testState.adjustments = {
+      axes: { strategy: "like", comedy: "less" },
+      themes: { combat: "exclude" },
+    };
+    render(<TasteFlow group="narrative" mode="adjust" />);
+    const reset = await screen.findByRole("button", { name: tasteStrings.resetAll });
+    const meter = screen.getByRole("meter", { name: "戦略的な展開" });
+    const beforeValue = meter.getAttribute("aria-valuenow");
+    expect(
+      screen.queryByRole("button", { name: tasteStrings.resetGroup(tasteStrings.groups.genre) }),
+    ).toBeNull();
+    fireEvent.click(reset);
+    await waitFor(() => {
+      expect(testState.saveProfileAdjustments).toHaveBeenCalledTimes(1);
+      expect(testState.saveProfileAdjustments).toHaveBeenCalledWith({ axes: {}, themes: {} });
+      expect(reset.hasAttribute("disabled")).toBe(true);
+    });
+    const control = screen.getByRole("radiogroup", {
+      name: tasteStrings.adjustmentGroupLabel("戦略的な展開"),
+    });
+    expect(within(control).getByRole("radio", { name: "自動" }).getAttribute("aria-checked")).toBe(
+      "true",
+    );
+    expect(meter.getAttribute("aria-valuenow")).toBe(beforeValue);
+    expect(
+      screen
+        .getByRole("button", {
+          name: tasteStrings.groupDetailsLabel(tasteStrings.groups.narrative, true),
+        })
+        .getAttribute("aria-expanded"),
+    ).toBe("true");
+    expect(screen.getByText(tasteStrings.resetAllSaved)).toBeTruthy();
+  });
+
+  it("restores a failed reset and leaves the manual setting available", async () => {
+    testState.adjustments = { axes: { strategy: "like" }, themes: {} };
+    testState.saveProfileAdjustments.mockRejectedValue(new Error("write failed"));
+    render(<TasteFlow group="narrative" mode="adjust" />);
+    const reset = await screen.findByRole("button", {
+      name: tasteStrings.resetGroup(tasteStrings.groups.narrative),
+    });
+    fireEvent.click(reset);
+    expect((await screen.findByRole("alert")).textContent).toContain(tasteStrings.saveError);
+    const control = screen.getByRole("radiogroup", {
+      name: tasteStrings.adjustmentGroupLabel("戦略的な展開"),
+    });
+    expect(within(control).getByRole("radio", { name: "好き" }).getAttribute("aria-checked")).toBe(
+      "true",
+    );
+    expect(reset.hasAttribute("disabled")).toBe(false);
   });
 
   it("restores stored adjustments on remount and rolls back a rejected save", async () => {

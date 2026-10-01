@@ -10,13 +10,7 @@ const TRAIT_GROUPS = [
   ["art", ART_AXIS_IDS],
 ] as const satisfies readonly (readonly [string, readonly AxisId[]])[];
 
-/** Below this many confirmed axes the profile is too sparse to read at a glance. */
-const MIN_KNOWN_AXES = 3;
-
-/**
- * The work's axis profile as read-only meters, optionally overlaid with the viewer's Manga DNA.
- * Unconfirmed axes are named as such and never drawn as zero.
- */
+/** Only confirmed values are shown; omitting an unknown axis never turns it into zero. */
 export function WorkTraits({
   tasteAxes,
   work,
@@ -32,27 +26,30 @@ export function WorkTraits({
         : [],
     ),
   );
-  const knownCount = TRAIT_GROUPS.flatMap(([, ids]) => ids).filter(
-    (id) => work.axes[id].state === "known",
-  ).length;
-  const readable = knownCount >= MIN_KNOWN_AXES;
-
+  const groups = TRAIT_GROUPS.flatMap(([group, ids]) => {
+    const known = ids.filter((id) => work.axes[id].state === "known");
+    return known.length === 0 ? [] : [{ group, ids: known }];
+  });
+  if (groups.length === 0) return null;
+  const hasComparison = groups.some(({ ids }) => ids.some((id) => tasteById.has(id)));
+  const columns =
+    groups.length === 3 ? "md:grid-cols-3" : groups.length === 2 ? "md:grid-cols-2" : "";
   return (
     <section aria-labelledby="work-traits-heading" className="grid gap-[var(--space-4)]">
-      <div className="flex flex-wrap items-end justify-between gap-x-[var(--space-6)] gap-y-[var(--space-2)]">
+      <div className="flex flex-wrap items-end justify-between gap-[var(--space-3)]">
         <div className="grid gap-[var(--space-1)]">
           <h2
-            className="text-[length:var(--text-subheading-size)] leading-snug font-bold text-text-strong"
+            className="text-[length:var(--text-subheading-size)] font-bold text-text-strong"
             id="work-traits-heading"
           >
             {strings.heading}
           </h2>
           <p className="text-[length:var(--font-size-14)] text-text-muted">{strings.description}</p>
         </div>
-        {readable && tasteById.size > 0 ? (
+        {!hasComparison ? null : (
           <p
             aria-hidden="true"
-            className="flex items-center gap-x-[var(--space-4)] text-[length:var(--text-caption-size)] text-text-muted"
+            className="flex items-center gap-[var(--space-4)] text-[length:var(--text-caption-size)] text-text-muted"
           >
             <span className="inline-flex items-center gap-[var(--space-2)]">
               <span className="block h-1.5 w-4 rounded-full bg-accent" />
@@ -63,69 +60,52 @@ export function WorkTraits({
               {strings.legendTaste}
             </span>
           </p>
-        ) : null}
+        )}
       </div>
-      {!readable ? (
-        <p className="text-text-muted">{strings.pending}</p>
-      ) : (
-        <div className="grid gap-x-[var(--space-8)] gap-y-[var(--space-6)] md:grid-cols-3">
-          {TRAIT_GROUPS.map(([group, ids]) => {
-            const groupKnown = ids.some((id) => work.axes[id].state === "known");
-            return (
-              <section
-                aria-labelledby={`work-traits-${group}`}
-                className="grid content-start gap-[var(--space-3)]"
-                key={group}
-              >
-                <h3
-                  className="text-[length:var(--font-size-16)] text-text-strong"
-                  id={`work-traits-${group}`}
-                >
-                  {strings.groups[group]}
-                </h3>
-                {groupKnown ? (
-                  <ul className="m-0 grid list-none gap-[var(--space-3)] p-0">
-                    {ids.map((id) => {
-                      const factor = work.axes[id];
-                      const tasteValue = tasteById.get(id);
-                      return (
-                        <li key={id}>
-                          <FactorBar
-                            animateReveal={false}
-                            label={explanationLexicon.factorLabels[id]}
-                            reference={
-                              tasteValue === undefined
-                                ? undefined
-                                : {
-                                    label: strings.tasteReference(
-                                      tasteStrings.factorValue(tasteValue),
-                                    ),
-                                    value: tasteValue,
-                                  }
+      <div
+        className={`grid gap-[var(--space-6)] rounded-[var(--radius-card)] border border-line bg-surface-1 p-[var(--space-5)] ${columns}`}
+      >
+        {groups.map(({ group, ids }) => (
+          <section
+            aria-labelledby={`work-traits-${group}`}
+            className="grid content-start gap-[var(--space-3)]"
+            key={group}
+          >
+            <h3
+              className="text-[length:var(--font-size-16)] font-bold text-text-strong"
+              id={`work-traits-${group}`}
+            >
+              {strings.groups[group]}
+            </h3>
+            <ul className="m-0 grid list-none gap-[var(--space-3)] p-0">
+              {ids.map((id) => {
+                const factor = work.axes[id];
+                if (factor.state !== "known") return null;
+                const tasteValue = tasteById.get(id);
+                return (
+                  <li key={id}>
+                    <FactorBar
+                      animateReveal={false}
+                      label={explanationLexicon.factorLabels[id]}
+                      reference={
+                        tasteValue === undefined
+                          ? undefined
+                          : {
+                              label: strings.tasteReference(tasteStrings.factorValue(tasteValue)),
+                              value: tasteValue,
                             }
-                            revealReady
-                            state={factor.state === "known" ? "known" : "unknown"}
-                            unknownLabel={
-                              factor.state === "notApplicable"
-                                ? strings.notApplicable
-                                : strings.unknown
-                            }
-                            value={factor.state === "known" ? factor.value : null}
-                          />
-                        </li>
-                      );
-                    })}
-                  </ul>
-                ) : (
-                  <p className="text-[length:var(--font-size-14)] text-text-muted">
-                    {strings.groupUnknown}
-                  </p>
-                )}
-              </section>
-            );
-          })}
-        </div>
-      )}
+                      }
+                      revealReady
+                      state="known"
+                      value={factor.value}
+                    />
+                  </li>
+                );
+              })}
+            </ul>
+          </section>
+        ))}
+      </div>
     </section>
   );
 }

@@ -71,7 +71,7 @@ function ExternalDetailLoading() {
   return (
     <>
       <main
-        className="mx-auto grid min-h-dvh w-full max-w-[var(--layout-width-media)] px-[var(--layout-page-padding)] pt-[var(--layout-page-block-start)] pb-[calc(var(--layout-mobile-navigation-clearance)+var(--space-8))] md:pb-[var(--space-section-large)]"
+        className="mx-auto grid min-h-dvh w-full max-w-[var(--layout-width-media)] px-[var(--layout-page-padding)] pt-[var(--layout-page-block-start)]"
         data-external-detail-state="loading"
       >
         <header className="grid gap-[var(--space-content-loose)]">
@@ -103,7 +103,7 @@ function ExternalDetailRecord({
   return (
     <>
       <main
-        className={`mx-auto min-h-dvh w-full pb-[var(--space-section-large)]${pageEntryMotion.active ? " page-entry-b motion-safe:animate-[page-entry-b-enter_var(--motion-duration-page)_var(--motion-ease-direct)_both]" : ""}`}
+        className={`mx-auto min-h-dvh w-full${pageEntryMotion.active ? " page-entry-b motion-safe:animate-[page-entry-b-enter_var(--motion-duration-page)_var(--motion-ease-direct)_both]" : ""}`}
         data-external-detail-state="found"
         data-external-work-detail={record.id}
         key={record.id}

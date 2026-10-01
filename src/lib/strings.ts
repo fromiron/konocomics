@@ -626,8 +626,21 @@ export const tasteStrings = {
     low: "低め(データ収集中)",
   },
   anchorsHeading: "好みを代表する作品",
+  anchorsDescription: (count: number) =>
+    `あなたの好みをかたちづくった作品から、${String(count)}作品を紹介します。`,
   axesHeading: "好みの軸",
   axesPending: "確認できる好みの軸を分析しています。",
+  wheel: {
+    name: "Manga DNA",
+    label: "好みの軸のDNAホイール",
+    count: (count: number) => `${String(count)}つの軸`,
+    description: (count: number) =>
+      `${String(count)}つの軸から、あなたのDNAを描きました。軸を選んで強さと根拠を確かめられます。`,
+    basis: (count: number) => `${String(count)}作品の好みから見えた、あなたの物語の輪郭です。`,
+    axisLabel: (label: string, level: string) => `${label}: ${level}`,
+    segmentLabel: (label: string, level: string) => `ホイールの${label}: ${level}`,
+    hint: "選んだ軸をもう一度押すと、全体表示に戻ります。",
+  },
   topPreferencesHeading: "あなたの上位の好み",
   topPreferenceEvidence: (titles: readonly string[]) =>
     `${titles.map((title) => `『${title}』`).join("")}から`,
@@ -684,6 +697,10 @@ export const tasteStrings = {
     genre: "ジャンル",
   },
   workspaceHeading: "おすすめを調整",
+  resetAll: "おすすめへの反映をすべて自動に戻す",
+  resetGroup: (title: string) => `${title}の反映をすべて自動に戻す`,
+  resetAllSaved: "おすすめへの反映をすべて自動に戻しました。",
+  resetGroupSaved: (title: string) => `${title}の反映をすべて自動に戻しました。`,
   modeLabel: "Manga DNA の表示モード",
   modes: {
     summary: "まとめ",
@@ -696,7 +713,9 @@ export const tasteStrings = {
   groupFactorSummary: (labels: readonly string[], remaining: number) =>
     remaining > 0 ? `${labels.join("、")} ほか${String(remaining)}項目` : labels.join("、"),
   groupAdjustmentAuto: "すべて自動",
-  groupAdjustmentCount: (count: number) => `${String(count)}項目を調整中`,
+  groupAdjustmentCount: (count: number) => `手動 ${String(count)}項目`,
+  groupAdjustmentHelp:
+    "各項目のおすすめへの反映を変えられます。自動に戻すと分析結果が使われます。変更はすぐに保存されます。",
   groupAnalysisCount: (count: number) => `分析のみ（${String(count)}項目）`,
   groupAnalysisDetails: "内訳を見る",
   groupAnalysisDetailsLabel: (title: string, open: boolean) =>
@@ -737,6 +756,9 @@ export const tasteStrings = {
   previewUnavailable: "おすすめの変化を計算できませんでした。",
   previewWorkUnavailable: "この作品の情報を表示できません。",
   previewUnchanged: "先頭の最大4作品に変化はありません。",
+  previewUnchangedHint: "設定を変えて、上位の作品への影響を確かめられます。",
+  previewExpand: "比較を見る",
+  previewCollapse: "比較を閉じる",
   previewChanged: "先頭の最大4作品の顔ぶれや並びが変わりました。",
   recentFeedbackHeading: "最近の記録",
   openLibrary: "ライブラリで見る",
@@ -999,12 +1021,19 @@ export const workDetailStrings = {
     publisherSource: "出版社の書誌情報",
     date: (value: string) => value.replace(/^(\d{4})-(\d{2})-(\d{2})$/u, "$1年$2月$3日"),
     sourceOpen: (source: string) => `${source}（新しいタブ）`,
+    edition: (volumeNumber?: number) =>
+      volumeNumber === undefined ? "掲載版" : `第${String(volumeNumber)}巻`,
   },
   compatibility: {
     heading: "あなたとの相性",
     reasons: "合いそうな理由",
     caution: "好みと異なる点",
     anchors: "根拠になった作品",
+    anchorsDescription: "このおすすめの理由になった、あなたのライブラリの作品です。",
+    allAnchors: "すべての根拠を見る",
+    moreAnchors: (count: number) => `+${count}`,
+    anchorCount: (count: number) => `全${count}作品`,
+    consensusSupport: "このおすすめを支える、ほかの好みの作品です。",
     primaryAnchor: "主な根拠",
     supportingAnchor: "好みのつながり",
     anchorFactors: "近いポイント",
@@ -1012,8 +1041,20 @@ export const workDetailStrings = {
     unavailable: "現在の好みから相性を表示できません。",
   },
   related: {
-    heading: "似た作品",
-    description: "主要テーマが重なるカタログ作品です。",
+    heading: "この作品と近い作品",
+    description: "テーマや雰囲気が近いカタログ作品です。",
+  },
+  contrast: {
+    heading: "違う味わいの作品",
+    description: "確認できた傾向から、この作品との違いを紹介します。",
+    differences: {
+      pacing: { lower: "テンポ：ゆっくり", higher: "テンポ：速め" },
+      comedy: { lower: "ギャグ：控えめ", higher: "ギャグ：多め" },
+      darkness: { lower: "暗さ：控えめ", higher: "暗さ：強め" },
+      mentalStress: { lower: "心理的圧迫：弱め", higher: "心理的圧迫：強め" },
+      romance: { lower: "恋愛要素：控えめ", higher: "恋愛要素：強め" },
+    },
+    view: "作品を見る",
   },
   sameMood: {
     heading: "同じ雰囲気の作品",
@@ -1028,7 +1069,7 @@ export const workDetailStrings = {
     open: (title: string) => `「${title}」の作品詳細を見る`,
   },
   synopsis: {
-    heading: "作品紹介",
+    heading: "あらすじ",
     unavailable: "作品紹介を取得できませんでした。",
     readMore: "続きを読む",
     readLess: "閉じる",

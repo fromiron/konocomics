@@ -637,6 +637,16 @@ type BaselineRecommendation = {
 - 메인·관점 선반·Discovery·Top 10은 같은 무드 후보를 쓴다. 무드 충족 안내는 취향 이유와 분리해 표시하고 기여도처럼 설명하지 않는다.
 - 무드와 무드별 임시 제외(「今日はパス」)는 탭 메모리 상태다. 상세 왕복에는 유지되고 새로고침·새 탭·Import·전체 삭제·Catalog 교체에서 초기화한다. Dexie·Export·추천 cache·입력 hash에 넣지 않는다.
 
+### 6.12 상세의 다른 맛 탐색 (2026-10-01 사용자 승인)
+
+「違う味わいの作品」은 현재 Catalog 작품과 대비되는 읽기 경험을 탐색하는 별도 선반이다. 사용자 취향의 반대·낮은 인지도·개인화 추천 점수로 해석하지 않으며 §6.1~6.11의 plan/점수/기여도를 바꾸지 않는다.
+
+- 입력은 현재 Work·Catalog 후보·화면에서 제외할 Work ID다. 비교 축은 `pacing`, `comedy`, `darkness`, `mentalStress`, `romance` 순서다. Art·장르 미일치로 반대 성향을 추정하지 않는다.
+- 현재 Work와 후보 모두 `recommendationEligible`이어야 한다. 양쪽 모두 known인 축만 관측하며 `unknown/notApplicable`을 0으로 대체하지 않는다. 최소 공통 known 3축, 원시 값 차이 `abs(source−target) >= 2`인 축 최소 2개가 있어야 한다.
+- 관측 축 각각의 거리는 기존 §6.2/팩터 사전의 `1−calculateAxisValueSimilarity`다(presence-sensitive 포함). 관측 축 평균 거리 내림차순 → 관측 수 내림차순 → Work ID 오름차순으로 정렬하고 최대 6개를 표시한다. 현재 작품·이미 표시한 근거/같은 작가/가까운 작품 선반·사용자 기록 중 planned 이외 상태 또는 disliked 감상은 제외한다. 사용자 기록 읽기가 끝나기 전에는 이 선반을 표시하지 않는다.
+- 반환 `ContrastContribution`은 개인화 `GroupContribution`과 별개다. axisId·sourceValue·targetValue·direction·distance를 가진 실제 비교 근거를 반환한다. 값 차이 2 이상인 근거를 거리 내림차순 → 원시 차이 내림차순 → 위 축 순서로 정렬하며 UI의 짧은 비교 설명은 첫 근거에서만 만든다. 현재 작품과의 비교라는 문맥을 함께 표시한다. darkness로 스트레스·안전성을 추정하지 않는다.
+- 3/2/2/6은 시작 정책값이며 관측된 사용자 효과를 뜻하지 않는다. 부족할 때 자동 완화·무관한 작품 보충을 하지 않는다. 1~5개면 있는 만큼, 0개면 제목/선반을 함께 생략한다. LLM·외부 요청·새 영속 상태 없이 순수 결정론 함수로 계산한다.
+
 ## 7. 검증 전략
 
 ### 단계 게이트

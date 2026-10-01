@@ -88,13 +88,14 @@
 - 4px 기본 단위. primitive 간격은 `--space-1` / `--space-2` / `--space-3` / `--space-4` / `--space-5` / `--space-6` / `--space-7` / `--space-8` / `--space-12` / `--space-24` = 4/8/12/16/20/24/28/32/48/96px로 제한한다. 2/6/10/14/18px은 보더·아이콘 광학 보정·44px 타깃 내부 패딩처럼 역할이 명시된 컴포넌트 예외만 허용한다.
 - semantic 간격은 `--space-content-tight` 4, `--space-content` 8, `--space-content-loose` 12, `--space-section` 32, `--space-section-large` 48, `--space-section-xl` 96px이다. `--space-section-xl`은 선반과 구분하는 큰 블록의 바깥 간격에 사용한다. `/recommendations` 전용으로 같은 묶음의 선반 사이 `--space-shelf`(= `--space-section-large`, 48px)와 묶음 사이 `--space-shelf-group`(64px)을 둔다.
 - 화면 좌우 패딩은 `--layout-page-padding` mobile 16 / desktop 24, 페이지 시작 간격은 `--layout-page-block-start` mobile 32 / desktop 48이다. 바깥 page container가 이 값을 소유하며 내부 카드가 다시 화면 패딩을 만들지 않는다.
+- 일반 본문 끝과 footer 사이의 여백은 공용 AppShell route-content의 `padding-bottom: var(--space-section-large)` 48px이다. 마지막 캐러셀의 별도 margin이나 각 화면의 일반 bottom padding은 사용하지 않는다. tray·고정 CTA·하단 navigation의 회피 공간은 아래 계약대로 별도 유지한다.
 - 고정 UI 회피값만 별도 semantic 역할로 둔다. `--layout-safe-area-bottom`은 기기 safe area, `--layout-mobile-navigation-clearance`는 모바일 nav+safe area, `--layout-onboarding-tray-clearance`는 선택 tray가 있는 온보딩의 하단 여백, `--layout-taste-action-clearance`는 고정 추천 CTA가 있는 취향 화면의 하단 여백을 소유한다. 마지막 두 값은 각각 mobile `calc(120px + safe area)` / `calc(160px + safe area)`이며, 취향 화면은 desktop에서 120px로 바뀐다.
 - 콘텐츠 최대폭: shelf 중심 `/recommendations`·landing·`/taste`·작품 상세는 `--layout-width-media` 1200, form 640을 기본으로 한다. 온보딩 shelf는 1120, 읽기·안내 블록은 760, 전역 nav는 1200을 사용한다.
 - 구분선은 그림자 대신 1px `--line` 헤어라인 사용(인쇄물의 괘선 감각).
 
 ### 2.5 인터랙션 상태 (전 컴포넌트 공통)
 
-- hover(포인터만): outline/ghost는 `--surface-hover`, 주요 accent CTA는 `--accent-hover`, 탐색 카드는 background·shadow 또는 컴포넌트 고유 상태로 반응한다. **hover로 border color를 바꾸는 패턴은 전역 금지**이며 border 상태는 selected·validation·keyboard focus처럼 hover가 아닌 의미 상태에만 쓴다. 장식적인 generic Y축 lift는 전역에서 사용하지 않는다. 2026-10-01 사용자 결정으로 허용된 포스터형 카드의 포인터 광택(§6 G)은 lift가 아니며 §6 G의 위치·한도 안에서만 쓴다. 각도를 바꾸는 기울기(tilt)는 모든 요소에서 금지한다. 카드 확장·ranking accessory 이동·preview disclosure처럼 의미 있는 주 상태 전환만 spatial motion cue가 될 수 있다. `/onboarding`의 `コレクションから探す`는 compact 2열 disclosure trigger와 그 아래 하나의 full-width inline panel이다. 표지는 원본 비율을 유지하고 semantic token만 쓴다. Spotify Green·로고·음악 재생 UI·정확한 그래픽 복제는 하지 않는다. `--motion-duration-feedback` 120ms는 허용된 transform/opacity에만 적용하고 색·배경·그림자는 즉시 상태를 바꾼다.
+- hover(포인터만): outline/ghost는 `--surface-hover`, 주요 accent CTA는 `--accent-hover`, 탐색 카드는 background·shadow 또는 컴포넌트 고유 상태로 반응한다. **hover로 border color를 바꾸는 패턴은 전역 금지**(상세 「この作品と近い作品」의 임시 보더 예외도 Top 10 공용 카드 재사용으로 종료)이며 border 상태는 selected·validation·keyboard focus처럼 hover가 아닌 의미 상태에만 쓴다. 장식적인 generic Y축 lift는 전역에서 사용하지 않는다. 2026-10-01 사용자 결정으로 허용된 포스터형 카드의 포인터 광택(§6 G)은 lift가 아니며 §6 G의 위치·한도 안에서만 쓴다. 각도를 바꾸는 기울기(tilt)는 모든 요소에서 금지한다. 카드 확장·ranking accessory 이동·preview disclosure처럼 의미 있는 주 상태 전환만 spatial motion cue가 될 수 있다. `/onboarding`의 `コレクションから探す`는 compact 2열 disclosure trigger와 그 아래 하나의 full-width inline panel이다. 표지는 원본 비율을 유지하고 semantic token만 쓴다. Spotify Green·로고·음악 재생 UI·정확한 그래픽 복제는 하지 않는다. `--motion-duration-feedback` 120ms는 허용된 transform/opacity에만 적용하고 색·배경·그림자는 즉시 상태를 바꾼다.
 - active/press: scale 0.97, `--motion-duration-press` 80ms. 데스크톱 GNB 헤더 브랜드 링크만 좁은 예외로, press transform 없이 compact opacity 피드백을 쓴다.
 - focus-visible: 2px accent ring + 2px offset. **마우스 클릭에는 링 미표시.**
 - disabled: opacity 0.45 + `cursor: not-allowed`. 색만으로 구분하지 않고 레이블 유지.
@@ -142,7 +143,7 @@
 추천 이유는 「근거 있는 추천」을 보이는 제품의 핵심이므로 만화의 吹き出し 문법으로 감싼다. 기본은 정적 표현이며, 2026-10-01 추가 승인으로 랜딩 「例」 lead reason 한 곳만 §6.1의 TextType·정적 종이 그레인을 사용한다.
 
 - 적용처: 관점 선반 Anchor 옆 패널의 lead reason, Quick Preview의 이유 목록, 작품 상세 「あなたとの相性」의 이유, 랜딩 「例」 카드의 lead reason. 추천 Featured 카드는 2026-10-01 사용자 판단으로 말풍선 없이 기존 reason 줄을 유지한다(고정 poster의 hover 크기 전환과 겹치지 않게). 주의할 차이(caution)는 말풍선이 아니라 기존 `--warn` 좌측 보더 블록을 유지해 이유와 구분한다.
-- 색: 2026-10-01 사용자 결정으로 만화 말풍선처럼 밝은 종이 바탕에 어두운 글자다. 승인된 밝은 토큰을 범위 안에서 재정의해 `--discovery-paper` 바탕, `--discovery-ink` 본문·강조, `--discovery-muted` 보조, `--discovery-line` 보더·꼬리를 쓴다. dark-only 원칙의 세 번째 명시 예외이며 말풍선 밖으로 번지지 않는다. 순백(`--discovery-button`)은 눈부심 때문에 쓰지 않는다.
+- 색: 기본은 2026-10-01 사용자 결정의 밝은 종이 바탕과 어두운 글자다. 이후 상세 리디자인 승인으로 Catalog 상세의 상성 말풍선만 기존 `--surface-2`·`--line`·`--text-strong`의 dark variant를 쓴다. 꼬리도 같은 토큰을 따르며 상세 밖 말풍선은 바꾸지 않는다. 승인된 밝은 토큰을 범위 안에서 재정의해 `--discovery-paper` 바탕, `--discovery-ink` 본문·강조, `--discovery-muted` 보조, `--discovery-line` 보더·꼬리를 쓴다. dark-only 원칙의 세 번째 명시 예외이며 말풍선 밖으로 번지지 않는다. 순백(`--discovery-button`)은 눈부심 때문에 쓰지 않는다.
 - 형태: 위 색의 바탕과 1px 보더, `--radius-card` 모서리, 안쪽 여백 `--space-3`/`--space-2`. 꼬리는 같은 바탕·보더의 10px 정사각형을 45° 회전해 근거가 가리키는 표지·제목 쪽에 둔다. 위에 표지·제목이 있으면 위쪽 왼편, Anchor 옆 패널처럼 표지 옆으로 열리는 패널이면 표지 쪽 측면이다(오른쪽으로 열리면 왼쪽 꼬리, 왼쪽으로 열리면 오른쪽 꼬리, `data-expansion-side` 기준). 측면 꼬리가 스크롤 패널에 잘리지 않도록 말풍선 좌우에 8px 여백을 둔다. 꼬리·보더는 장식이며 접근성 트리에 의미를 더하지 않는다.
 - 한 카드에 말풍선은 하나다. 이유가 여러 개인 Quick Preview·상세는 하나의 말풍선 안에 기존 목록 구조를 유지한다.
 - 근거 작품명 강조(Anchor 패널)와 `data-contribution-summary` 등 기존 근거 대조 속성은 말풍선 안에서 그대로 유지한다.
@@ -169,7 +170,7 @@
 
 ---
 
-참고: 스크린톤 외 질감의 유일한 앱 예외는 랜딩 「例」 말풍선의 정적 종이 그레인이다(2026-10-01 승인). 명시적 opt-in이며 opacity 0.035의 단색 SVG noise를 배경으로만 사용해 글자·표지를 덮지 않는다. 전역·본문·리스트·다른 말풍선에는 확장하지 않는다. §6 G의 광택·스포트라이트는 일시적 조명이며 상시 질감이 아니다. 공유용 Manga DNA 카드 이미지(`03` §4)는 앱 표면이 아니므로 이 절의 적용 대상이 아니다.
+참고: 스크린톤 외 질감의 유일한 앱 예외는 랜딩 「例」 말풍선의 정적 종이 그레인이다(2026-10-01 승인). 명시적 opt-in이며 opacity 0.035의 단색 SVG noise를 배경으로만 사용해 글자·표지를 덮지 않는다. 전역·본문·리스트·다른 말풍선에는 확장하지 않는다. §6 G의 광택은 일시적 조명이며 상시 질감이 아니다. 공유용 Manga DNA 카드 이미지(`03` §4)는 앱 표면이 아니므로 이 절의 적용 대상이 아니다.
 
 ## 4. 표지 표현
 
@@ -177,7 +178,11 @@
 
 공통 바탕은 `/media/book-base-small.webp`(256×256), `book-base-medium.webp`(512×512), `book-base-large.webp`(1024×1024) 세 크기다. 모든 크기의 투명도·구도는 같으며 `srcSet`과 lazy 이미지의 `sizes="auto, 225px"`로 브라우저가 표시 크기와 픽셀 밀도에 맞게 고른다. 다른 위치에서도 같은 `BookCover`와 자산을 재사용하고, CSS `--book-cover-width`로 크기를 조정한다. 원본과 크기별 생성 근거는 `outputs/design/book-base-source-20260911.png`와 `design-qa.md`에 보존한다.
 
-같은 작가 배너는 2026-09-11 사용자가 선택한 이미지 1의 본문 전체폭·왼쪽 책·오른쪽 문구 구성이다. 구매 영역과 관련 Shelf 사이에 `--surface-1`·`--radius-card`를 사용하고 실제 작품명·저자명·기존 `--accent` 이동 링크만 표시한다. desktop 최소 높이는 256px, 책 기준 폭은 176px이며 mobile은 최소 192px 안에 책과 줄바꿈 가능한 문구를 나란히 둔다. 단일 Link 전체가 조작 영역이고 keyboard focus outline을 제공한다. 공통 `BookCover`를 정적으로 재사용하며 이 배너의 책은 수직 중앙에 둔다. 반복·hover 이동·새 이미지 자산은 추가하지 않는다.
+같은 작가 영역은 2026-10-01 후속 사용자 요청에 따라 본문 전체 폭의 `--surface-1`·`--radius-card` 공통 배경을 사용한다. 대표작은 왼쪽 책·오른쪽 문구의 독립 Link이고, 나머지 작품은 같은 배경 안의 작은 선반으로 배치한다. desktop은 좌우 2열, mobile은 위아래이며 대표작 책·문구의 나란한 구도는 유지한다. 「そのほかの作品」 소제목은 생략하고 목록의 접근 이름과 overflow 시 이전/다음·키보드 이동은 유지한다. 공통 배경 자체를 Link로 만들지 않는다. 대표작 최소 높이 desktop 192px/mobile 160px, 책 기준 폭 desktop 112px/mobile 80–96px, 나머지 카드 폭 112px는 기존 spacing 토큰 조합으로 표현한다. 작은 카드의 제목은 14px이며 상위 「{作者}の作品」이 저자 문맥을 제공하므로 카드 안의 저자명은 생략한다. 대표작과 작은 카드 모두 실제 장르와 centrality 2 핵심 테마를 합쳐 기존 순서대로 최대 3개까지 표시한다. 작은 카드는 12px 정적 태그로 줄바꿈하며 태그 데이터가 없으면 해당 행을 만들지 않는다. 태그 2~3개의 줄 수 차이도 공용 카드 전체 높이에 흡수해 hover/focus 영역을 맞춘다. 원본 표지·각 상세 링크를 보존한다. 공통 `BookCover`와 `RankingCard`를 재사용하고 이 배너의 책은 수직 중앙에 둔다. 반복·hover 이동·새 이미지 자산은 추가하지 않는다.
+
+2026-10-01 카드 높이 후속 수정: 공용 `RankingCard`의 일반 ranking/unranked 카드는 제목 2줄 공간을 예약하고 같은 선반 행의 article·Link가 카드 전체 높이를 채운다. 제목 줄 수·저자 길이에 따라 hover/focus 배경과 클릭 영역의 아래쪽 경계가 달라지지 않는다. 표지 크기는 그대로 두고 남는 세로 공간은 카드 아래에 둔다. editorial 표지 전용 링크와 evidence의 3줄 제목 계약은 유지한다.
+
+2026-10-01 상세 선반 후속 승인: 두 상세 캐러셀의 컨테이너는 추천 화면과 같은 `--layout-width-media` 1200px와 공용 좌우 page padding을 사용해 동일 viewport에서 트랙 표시 폭·카드 수를 맞춘다. 「この作品と近い作品」은 개인화 Top 10의 RankingShelf/RankingCard를 순위 없이 재사용한다. 상세 전용 테두리/표면은 두지 않고 overlay 화살표·양끝 fade·유한 트랙을 공유한다. 「違う味わいの作品」은 추천 隠れた候補의 공용 DiscoveryCard를 재사용해 같은 크기·표지 원형→사각 hover/focus morph·reduced-motion 대체를 적용한다. 이 위치도 기존 Discovery 표지 크롭/morph의 사용자 승인 예외에 포함한다. 현재 작품과의 실제 축 차이 설명은 모바일에서도 보이며 미리보기 대신 실제 상세 Link를 제공한다. 캐러셀 하단은 공용 AppShell 패딩을 사용한다.
 
 ### 4.1 기본 규칙
 
@@ -185,7 +190,7 @@
 - 소스 크기: thumb `_ex=200x200` / 카드 `_ex=400x400` / 상세 hero `_ex=600x600`. `_ex` 확대는 비공식 동작이므로 `onError`에서 200x200 폴백 필수.
 - `loading="lazy"`(뷰포트 첫 화면 제외), `decoding="async"`. 컨테이너에 aspect-ratio를 지정해 CLS 0.
 - 추천 1위 표지는 첫 viewport의 LCP 후보이므로 대표 ISBN metadata와 이미지를 eager/high-priority로 요청한다. 나머지 표지 metadata는 각 표지 root가 실제 viewport에 진입할 때만 요청하고, 이미지는 lazy loading을 유지한다. metadata 해석은 화면 전체에서 최대 4개 동시 처리하며 hover/focus를 선행 fetch 신호로 쓰지 않는다.
-- skeleton에서 성공 이미지 또는 실패 placeholder로 바뀔 때 opacity fade를 적용하지 않고 즉시 교체한다.
+- 2026-10-01 상세 리디자인 승인: 모든 공용 CoverImage의 loading은 샘플 鈴木さん 커버의 16px 망점·1.2s 이동 시머다. 기존 surface/line/spacing 토큰을 사용하며 성공 시 기존 reveal-step/cinematic duration의 opacity 크로스페이드, 실패 placeholder는 즉시 표시한다. reduced-motion은 망점 이동을 제거하고 짧은 opacity만 허용한다. 실제 load/cache/fallback/lazy 경로를 유지하고 재생 버튼·가짜 지연은 만들지 않는다.
 
 ### 4.2 블러 배경 (작품 상세 시그니처)
 
@@ -224,14 +229,14 @@
 
 - **목적:** 온보딩의 보상. "선택한 작품들 → 분석된 취향"의 인과를 몸으로 느끼게 한다(가설 E).
 - **시퀀스 (총 ≈2.4s + 사용자 스크롤):**
-  1. 0–500ms: 선택한 Anchor 표지 썸네일들이 상단에 가로로 정렬되어 fade-in.
-  2. 500–1200ms: 상위 취향 3개가 순서대로 fade-up(간격 180ms), 각 항목의 취향 레이블에 accent 밑줄이 좌→우로 그려짐(300ms). mobile `<768`은 1열 순위 행이고 desktop은 3열 카드다.
+  1. 0–500ms: 기존 근거 선택의 Anchor grid가 fade-in.
+  2. 2026-10-01 최신 HTML 샘플 승인: 상위 취향 목록·직선 강조선과 별도 8축 막대를 하나의 DNA 휠/선택 목록으로 대체한다. 실제 known 축 최대 8개만 사용하고 상위 3축은 accent 계열 gradient와 순위 배지, 나머지는 accent를 낮게 혼합한 표면이다. 휠은 500ms 뒤 조각당 70ms stagger로 scale/opacity를 통해 한 번 나타난다(기존 cinematic 640ms 토큰). 임시 선택은 표면/윤곽선·중앙 레이블만 바꾸며 실제 값은 바꾸지 않는다. DNA 엠블럼 안에만 희미한 정적 동심원을 허용하고 별도 spotlight·pointer tracking·루프는 없다.
   3. 1200ms~: 1200ms는 페이지 전체에 한 번만 적용하는 전역 gate다. gate 전에 뷰포트에 들어온 FactorBar는 gate가 열린 뒤 0→값으로 성장하고, gate 뒤 처음 진입한 화면 밖 막대는 추가 1200ms 지연 없이 즉시 시작한다(막대당 400ms, 섹션 내 stagger 60ms, ease-out, 각 1회).
-  4. (2026-10-01 강화) 헤더의 분석 작품 수는 0에서 실제 정수까지 600ms ease-out으로 count-up한다. 각 FactorBar의 정성 레이블(「強め」 등)은 막대가 정착한 뒤 160ms opacity로 나타난다. 상위 취향 제목 「あなたの上位の好み」에는 accent 광택이 왼쪽→오른쪽으로 한 번 지나간다(1.2s, React Bits ShinyText 참고, 반복 없음). DNA 값 자체는 숫자로 굴리거나 표시하지 않는다(`01` V4·`02` 원칙).
+  4. 헤더의 분석 작품 수는 0에서 실제 정수까지 600ms ease-out으로 count-up한다. 범주 FactorBar의 정성 레이블은 막대 정착 뒤 나타난다. 이전 상위 취향 제목 광택은 휠 통합으로 제거한다. DNA 값 자체는 숫자로 굴리거나 표시하지 않는다(`01` V4·`02` 원칙).
 - **URL 소비:** mount에서 `?reveal=1` 판정을 local state/ref에 고정한 즉시 같은 effect에서 query를 `replaceState`로 제거한다. URL 제거 뒤에도 고정된 판정으로 A를 계속하며 query를 in-progress state나 replay token으로 사용하지 않는다.
-- **reduced-motion (대체):** 같은 순서를 이동·성장 없이 opacity로만 보인다. 표지·상위 취향·막대는 각 160ms opacity로 순서대로 나타나고(stagger 80ms, 총 600ms 이내), 막대는 처음부터 최종 길이다. 밑줄은 그려지지 않고 최종 상태로 페이드된다. count-up과 광택은 생략하고 최종 숫자·제목을 즉시 표시한다. 정보는 일반 모드와 동일하다.
-- **반복:** reveal 모드는 1회. 상시 /taste에서는 「好みの軸」·범주 상세의 FactorBar가 mount마다 처음 뷰포트에 들어올 때 한 번 0→값으로 채워진다(E 진입 채움, 600ms ease-out-cubic, 섹션 내 stagger 40ms). 이후 스크롤 왕복으로 다시 재생하지 않는다. 막대 값은 positive anchor에서 계산한 분석 출력이며 추천 adjustment 변경으로 값·길이·색을 바꾸지 않는다.
-- **성능:** 막대는 `scaleX` transform(레이아웃 리플로우 금지). 기본은 transform/opacity이며 상위 취향 SVG 직선 강조선의 `stroke-dashoffset`만 §6.1의 좁은 예외다.
+- **reduced-motion (대체):** 휠은 처음부터 최종 geometry에 160ms opacity만 사용하고 stagger·확대·count-up을 제거한다. 범주 막대도 최종 길이를 유지하며 기존 600ms 이내 opacity 대체를 따른다. spring 세그먼트는 indicator가 이동하지 않고 현재 선택 위치에 표시된다.
+- **반복:** reveal은 기존 1회 소비를 유지한다. 일반 진입의 휠은 mount의 최초 viewport 진입에 한 번만 나타나며 재스크롤·선택·보정으로 재생하지 않는다. 범주 FactorBar의 기존 E 진입 채움은 유지한다. 모든 분석값은 positive anchor 출력이며 adjustment로 값·길이·색을 바꾸지 않는다.
+- **성능:** 휠 진입은 transform/opacity, 막대는 scaleX다. SVG path는 실제 값/표시 축이 바뀔 때만 변경하고 hover/선택은 geometry를 애니메이션하지 않는다. 휠·목록·대표작·배너·세그먼트의 색·font·radius·간격은 기존 프로젝트 토큰을 사용한다.
 
 ### 5.3 작품 상세 블러 표지 배경 (정적 시그니처)
 
@@ -265,13 +270,15 @@ Discovery resolved 표지의 원→직사각형은 D의 사용자 승인 scoped 
 |---|---|---|
 | AnimatedList (B 한정 예외) | `/recommendations` 최초 resolved Featured 목록, route mount당 1회. 실제 보이는 canonical 카드 최대 4장만 240ms opacity 0.7→1·Y 8→0, 60ms stagger. clone·다른 선반·필터 변경·스크롤 왕복은 재생하지 않고 기존 C 백필은 유지 | 이동·stagger 없이 160ms opacity. 실행 중 reduce로 바뀌면 즉시 완료. JS 실패 시 완전히 보이는 목록 |
 | TextType (랜딩 A의 예시 설명) | 일반 랜딩 「例」 lead reason, mount당 1회. 실제 `contributions[]` 문장을 자소 단위로 최대 1100ms에 표시. 줄·공간을 처음부터 예약하고 작품명 강조 유지. 커서·삭제·반복 없음 | 전체 문장 즉시 표시. 접근성에는 항상 완성 문장 하나. `?landing=1`은 정적 |
-| SVG draw (DNA A) | `/taste?reveal=1` 상위 취향 3개의 기존 강조선을 직선 decorative SVG로 표시. 곡선·손그림 형태로 바꾸지 않는다. 500/680/860ms 뒤 각 300ms. `stroke-dashoffset`만 좁은 예외로 허용. 레이더·새 축·새 수치 없음 | 최종 직선 강조선 즉시 표시. 일반 `/taste`도 최종 선 |
+| DNA 휠 (DNA A/E, 최신 샘플) | §5.2의 실제 축 원형 요약. 이전 SVG 직선 강조선 UI를 대체하며 새로운 축/수치는 만들지 않는다. 최초 진입 scale/opacity만 1회, 휠/목록 선택 상태 동기화 | 최종 geometry + 160ms opacity, 선택 indicator 이동 없음 |
 | 띠지 (B 한정 예외) | 랜딩 Hero와 사용법 사이의 실제 사용 순서, 첫 viewport 진입 1회. 640ms opacity 0.7→1·X −16→0 후 정지. 줄바꿈 허용, 스크롤 속도 연동·무한 marquee·복제 문구 없음 | 정적 전체 문구. `?landing=1`도 정적. native scroll 유지 |
 | 부족 선택 안내 (F) | STEP 1의 `次へ` 클릭·Enter·Space. 최소 개수 미달이면 진행·저장 없이 기존 tray ±4px/240ms 흔들림과 부족 개수 live 안내. 부족할 때도 안내를 받을 수 있는 버튼이며 실제 저장 중에만 disabled. 첫 등록 5개·add mode 1개 유지 | 정적 warn 보더·동일 부족 개수 안내 |
 | spring (D 한정 예외) | 공용 `SegmentedControl`을 Library 상태 탭·Catalog 상세 `感想`에 적용하고 공용 Switch도 같은 Motion spring(stiffness 350, damping 24)을 사용. 한 중립 track 안의 채워진 accent 인디케이터와 `--on-accent` 선택 글자. 선택 배경·thumb만 실제 layout을 따라 이동하며 글자·control은 변형하지 않는다. 상세는 실제 저장된 감상 사이에서 이동하고 같은 감상을 다시 누르면 감상만 해제·인디케이터 제거 | 즉시 최종 선택. 최초 mount도 이동 없음. 실행 중 OS 설정 변경에도 즉시 반영. 키보드·focus·busy 유지 |
-| shimmer | 기존 표지·추천·공유 이미지 loading의 §2.5 망점 + 1.2s 시머 재사용. 가짜 지연이나 별도 로딩 상태 없음 | 정적 망점 + 1.6s opacity. 로딩 사실 유지 |
+| shimmer | 표지는 이후 사용자 지정한 §4.1 공용 CoverShimmer(16px 망점 이동, 1.2s·성공 크로스페이드). 다른 추천·공유 loading은 기존 §2.5를 유지. 가짜 지연·재생 버튼 없음 | 표지는 이동 없는 망점·짧은 opacity, 다른 skeleton은 기존 1.6s opacity |
 | StarBorder (DNA A의 다음 행동 안내) | reveal의 `おすすめを見る` 한 곳. 2400ms 뒤 accent 계열 gradient 테두리가 900ms 한 번 지나가고 종료. CTA는 처음부터 사용 가능. 다른 CTA·공유로 확장하지 않음 | 정적 테두리. focus ring·누를 영역 유지. 내부 장식만 transform/opacity |
 | Noise | 랜딩 「例」 말풍선에만 §3.2 정적 단색 종이 질감 opt-in | 동일 정적 질감. 추가 설정·저장 상태 없음 |
+
+상세 리디자인 후 감상 세그먼트는 読んだ일 때만 공개하며 다른 상태에서도 저장된 reaction은 보존한다. 공개는 콘텐츠 실제 높이+opacity 1회 spring이고 reduced-motion은 높이 이동 없이 opacity만이다.
 
 공용 세그먼트의 anatomy는 샘플처럼 track 1개·4px 안쪽 여백·같은 행에서 균등하게 늘어나는 segment·채워진 인디케이터 1개다. track은 `--surface-2`와 1px `--line`, radius는 기존 control에서 파생한 10px/7px다. 개별 segment에 선택 보더·별도 칩 배경을 만들지 않는다. Library만 내용에 따라 wrap하며 탭 semantics·ID·`aria-controls`·URL을 보존한다. 상세 감상은 4개가 한 줄이고 그룹 label은 track 밖에 둔다. Switch는 샘플의 46×26 track·20px 밝은 thumb·3px inset이며 on/off 모두 같은 밝은 thumb다. 공용 wrapper가 크기·색·spring·reduced-motion을 소유하고 feature는 option·값·선택 callback만 제공한다. 44px 조작 타깃은 유지한다.
 
@@ -279,14 +286,17 @@ Discovery resolved 표지의 원→직사각형은 D의 사용자 승인 scoped 
 
 ### 6.2 G 허용 목록
 
+2026-10-01 Taste 샘플의 radio 세그먼트도 같은 공용 track/indicator를 쓴다. positive 선택은 accent/on-accent, auto·less는 surface/text, exclude는 기존 경고 토큰을 사용한다. 「おすすめを調整」과 편집 범주 제목 옆 reset은 44px quiet icon button이며 범위가 있는 접근 이름과 tooltip을 가진다. 자동뿐인 범위는 disabled이고 펼침 trigger와 독립된다. reset은 같은 선택 indicator·저장 live message로 피드백하며 추가 모션을 만들지 않는다.
+
 이 밖의 위치·효과는 구현하지 않는다.
 
 | 효과 | 위치 | 한도 | 입력 조건 |
 |---|---|---|---|
 | 광택 (GlareHover 참고) | 추천 Featured 카드, 랜딩 「例」 카드 | 카드의 각도·위치·크기는 바꾸지 않는다. 포인터 위치 radial `--text-strong` 14%, 진입·이탈 opacity 250ms | fine pointer + hover만. 터치·펜은 D press만. Featured의 기존 hover geometry 전환과 같은 family로 세어 합성 2개를 넘지 않는다 |
 | 마그넷 (Magnet 참고) | 랜딩 hero·마무리 CTA, /taste reveal의 「おすすめを見る」 | 포인터 거리 비례 이동 최대 x 10px·y 6px, 이탈 180ms 복귀. hover 그림자는 기존 `--shadow-raised` 1단 | fine pointer + hover만. 클릭 영역·focus ring 위치는 이동하지 않는 래퍼 기준 |
-| 스포트라이트 (SpotlightCard 참고) | 작품 상세 「あなたとの相性」 패널 | 포인터 위치 radial `--accent` 16%, opacity 300ms | fine pointer + hover만. 텍스트 대비를 4.5:1 미만으로 낮추지 않는다 |
 | 확정 스파크 (ClickSpark 참고) | 랜딩 CTA 클릭, 「読みたい」 저장 성공, 온보딩 작품 선택 성공 | 입자 최대 12개, `--accent` 계열, 36–90px 방사, 480–800ms, `aria-hidden`·`pointer-events: none`, 저장 성공 뒤에만 발화 | 모든 입력. 실패·취소·「読んだ」·「興味なし」·「今日はパス」·삭제처럼 부정·교정 액션에는 쓰지 않는다 |
+
+상세 「あなたとの相性」의 스포트라이트는 2026-10-01 후속 사용자 요청으로 폐기했다. 포인터 추적 조명·전용 overlay를 만들지 않는다.
 
 - 포인터 좌표는 `pointermove`에서 rAF로 묶어 CSS 변수(`--light-x`, `--magnet-x` 등)에 직접 쓰고 React state로 다시 렌더하지 않는다. 좌표를 따라가는 radial 배경 갱신은 보간 애니메이션이 아니며, 보간은 transform·opacity만 한다. `will-change`는 hover 중에만 둔다.
 - dialog·sheet·panel·설정·Library·온보딩 STEP 2와 텍스트 입력 영역에는 G를 쓰지 않는다(§9).
@@ -295,12 +305,12 @@ Discovery resolved 표지의 원→직사각형은 D의 사용자 승인 scoped 
 
 - **상시 자동 루프 애니메이션 0개.** 사용자가 직접 조작하는 Featured의 위치 순환은 autoplay가 아니다. skeleton 시머·펄스만 예외(로딩 중 한정). 광택 sweep(§5.2)은 진입당 1회로 끝나며 반복하지 않는다.
 - 한 인터랙션이 동시에 발화하는 **합성 효과 family**는 최대 2개다(예: 카드 제거/layout + 백필). DNA의 여러 카드·막대 instance stagger는 하나의 A family로 센다.
-- transform/opacity 외 프로퍼티 애니메이션 금지(height 축소는 추천 카드 제거 시에만 허용, contain 처리). 위 Anchor Shelf의 article width는 예외다. 단, 랜딩 `ShowcaseCard` featured 핸드오프는 article `width`만 11rem↔14rem으로 240ms(`--motion-duration-value`, `--motion-ease-value`) 보간하고 reduced-motion에서는 즉시 완료한다. 추천 featured card는 고정 344×448px article 안에서 표지 stage의 flex 잔여 높이, reason `max-height`, action rail `height`·`margin`을 400ms(`--motion-duration-reveal-step`, `--motion-ease-direct`)로 함께 보간할 수 있다. 이 예외는 형제 위치 불변, overflow clipping, 최대 3줄 reason, 44px rail, coarse pointer 상시 최종 상태, reduced-motion 즉시 완료를 모두 만족해야 한다. 표지 DOM·텍스트/control 크기는 보간하지 않는다. color·background·border·box-shadow·font-weight 상태는 보간하지 않고 즉시 바꾼다.
-- 자동재생 캐러셀·스크롤 하이재킹·패럴랙스·페이지 넘김 효과·효과음 문자 장식과 generic hover Y축 lift를 금지한다. 커서 추적은 G 허용 목록의 광택·마그넷·스포트라이트만 허용하며, 각도를 바꾸는 기울기는 어떤 요소에도 쓰지 않는다. 모바일에서 hover 의존 정보 금지.
+- transform/opacity 외 프로퍼티 애니메이션 금지(height 축소는 추천 카드 제거 시에 허용, contain 처리). 2026-10-01 상세 리디자인의 감상 공개 height와 공통 커버 loading 망점 background-position은 사용자 승인 한정 예외다. 위 Anchor Shelf의 article width는 예외다. 단, 랜딩 `ShowcaseCard` featured 핸드오프는 article `width`만 11rem↔14rem으로 240ms(`--motion-duration-value`, `--motion-ease-value`) 보간하고 reduced-motion에서는 즉시 완료한다. 추천 featured card는 고정 344×448px article 안에서 표지 stage의 flex 잔여 높이, reason `max-height`, action rail `height`·`margin`을 400ms(`--motion-duration-reveal-step`, `--motion-ease-direct`)로 함께 보간할 수 있다. 이 예외는 형제 위치 불변, overflow clipping, 최대 3줄 reason, 44px rail, coarse pointer 상시 최종 상태, reduced-motion 즉시 완료를 모두 만족해야 한다. 표지 DOM·텍스트/control 크기는 보간하지 않는다. color·background·border·box-shadow·font-weight 상태는 보간하지 않고 즉시 바꾼다.
+- 자동재생 캐러셀·스크롤 하이재킹·패럴랙스·페이지 넘김 효과·효과음 문자 장식과 generic hover Y축 lift를 금지한다. 커서 추적은 G 허용 목록의 광택·마그넷만 허용하며, 각도를 바꾸는 기울기는 어떤 요소에도 쓰지 않는다. 모바일에서 hover 의존 정보 금지.
 - B의 allowlist는 `/onboarding` Step 1 resolved content(첫 등록·add mode), reveal 요청으로 시작하지 않은 ordinary `/taste`, 유효한 `/works/[workId]` resolved Catalog 상세, `found`인 `/works/external` resolved 상세와 §6.1의 최초 Featured 카드·랜딩 띠지다. Catalog는 `workId`, external은 external ID가 바뀐 새 route mount에서 다시 실행할 수 있다.
 - §6.1의 두 한정 예외 외에는 B를 landing, A로 시작한 `/taste`, `/recommendations`, `/library`, `/settings`, onboarding Step 2, loading·hydration/redirect guard·skeleton·empty·invalid-link·local-missing·corrupt·unavailable·error, dialog·modal·drawer·panel·sheet·feedback surface에 적용하지 않는다. query cleanup·local state 변경·onboarding step 변경·dialog open/close·BFCache resume도 replay trigger가 아니다.
 - B는 AppShell/global layout이 아니라 eligible resolved-content root에만 적용한다. CSS 기본값은 최종 위치에서 완전히 보이는 상태이며 keyframe은 `prefers-reduced-motion: no-preference` 안에만 둔다. 8px 이동 중에도 opacity 0으로 만들어 콘텐츠를 완전히 숨기지 않고, 실패 시 최종 상태가 남는다.
-- E와 F는 CSS가 소유한다. ordinary FactorBar E는 static CSS 기본값을 target `scaleX`로 두고 underlying analysis 값 변경 시 delay 0 / 240ms만 적용한다. 추천 adjustment의 직접 피드백은 D의 선택 marker/text와 저장 live message가 소유하며 FactorBar success highlight를 만들지 않는다. F 흔들림도 CSS만 사용한다.
+- E와 F는 CSS가 소유한다. ordinary FactorBar E는 static CSS 기본값을 target `scaleX`로 두고 underlying analysis 값 변경 시 delay 0 / 240ms만 적용한다. 추천 adjustment의 직접 피드백은 D의 선택 indicator/text와 저장 live message가 소유하며 FactorBar success highlight를 만들지 않는다. F 흔들림도 CSS만 사용한다.
 - `prefers-reduced-motion: reduce` — **대체 원칙(2026-10-01 사용자 결정):** reduce는 모션을 없애는 스위치가 아니라 멀미를 유발하는 움직임을 의미가 같은 조용한 변화로 바꾸는 설정이다. 이동·확대/축소·회전·기울기·패럴랙스·포인터 추적·입자·반복은 제거하고, 상태와 인과를 전하는 opacity·색 변화는 짧게 남긴다. 정보·상태·focus·live message는 일반 모드와 동일하다.
 
   | 분류 | reduce에서의 대체 |
@@ -321,7 +331,7 @@ Discovery resolved 표지의 원→직사각형은 D의 사용자 승인 scoped 
 | 라이브러리 | 판정 | 근거·제약 |
 |---|---|---|
 | **Motion** (`motion`) | **채택** | 분류 A·C와 §6.1 D spring 전담. 기본은 `LazyMotion` + `domAnimation`; C 및 D spring의 실제 `layout` 소유 컴포넌트만 local `domMax`를 사용한다. 추천은 목록 owner만 감싸고 페이지·사이드 패널·control·error·dialog까지 올리지 않는다. reduced-motion에서는 해당 element의 `layout`을 `false`로 두고 공유 `layoutId`도 제거한다. 유일한 애니메이션 의존성 |
-| React Bits | **레퍼런스로만 채택(2026-10-01)** | 코드·의존성은 들이지 않는다. 느낌의 기준으로만 쓰고 Motion·CSS로 자작한다. 참고한 효과: SplitText(§5.1), ShinyText(§5.2 1회 sweep), CountUp(정수 count만, E), GlareHover·Magnet·SpotlightCard·ClickSpark(G). TiltedCard는 2026-10-01 사용자 결정으로 쓰지 않는다. WebGL·GSAP·물리 엔진 기반 효과(Aurora·Galaxy·Particles 등)는 참고 대상이 아니다 |
+| React Bits | **레퍼런스로만 채택(2026-10-01)** | 코드·의존성은 들이지 않는다. 느낌의 기준으로만 쓰고 Motion·CSS로 자작한다. 참고한 효과: SplitText(§5.1), ShinyText(§5.2 1회 sweep), CountUp(정수 count만, E), GlareHover·Magnet·ClickSpark(G). TiltedCard는 2026-10-01 사용자 결정으로 쓰지 않는다. WebGL·GSAP·물리 엔진 기반 효과(Aurora·Galaxy·Particles 등)는 참고 대상이 아니다 |
 | NumberFlow | **미채택** | 서수 데이터에 숫자 굴림은 거짓 정밀도(`01` V4) |
 | Embla Carousel | **미채택** | Shelf는 CSS scroll-snap + 버튼으로 구현(`01` V5) |
 | AutoAnimate | **미채택** | Motion layout으로 커버 |
@@ -349,4 +359,4 @@ Shelf 구현 계약(캐러셀 대체): `overflow-x: auto` + CSS scroll-snap + �
 
 ## 9. 조용한 표면 선언
 
-다음 화면·영역에는 시그니처·B 진입·불필요한 설명형 장식을 **의도적으로 두지 않는다**: 랜딩의 A 외 별도 B, Library의 기능 배너 외 장식, 설정, 온보딩 STEP 2(불호 입력은 감정적으로 중립해야 함), 모든 dialog·panel·sheet. §2.5 기능 배너와 §6.1의 랜딩 띠지·최초 Featured 카드·Library 탭 및 설정 Switch의 D spring만 명시적 예외다. 추천 피드는 §6.1의 첫 Featured 표시, §2.8 고정 poster 직접 피드백, C 제거/백필, §6 G 허용 목록(Featured 광택, 「読みたい」 확정 스파크)을 허용한다. Quick Preview와 Library sheet/panel entry, cover/image load opacity fade는 금지하고 최종 상태로 즉시 연다.
+다음 화면·영역에는 시그니처·B 진입·불필요한 설명형 장식을 **의도적으로 두지 않는다**: 랜딩의 A 외 별도 B, Library의 기능 배너 외 장식, 설정, 온보딩 STEP 2(불호 입력은 감정적으로 중립해야 함), 모든 dialog·panel·sheet. §2.5 기능 배너와 §6.1의 랜딩 띠지·최초 Featured 카드·Library 탭 및 설정 Switch의 D spring만 명시적 예외다. 추천 피드는 §6.1의 첫 Featured 표시, §2.8 고정 poster 직접 피드백, C 제거/백필, §6 G 허용 목록(Featured 광택, 「読みたい」 확정 스파크)을 허용한다. Quick Preview와 Library sheet/panel entry는 최종 상태로 즉시 연다. cover/image의 실제 loading→성공 크로스페이드는 §4.1의 공용 표지 예외를 따른다.

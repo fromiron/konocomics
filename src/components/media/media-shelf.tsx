@@ -31,6 +31,8 @@ type MediaShelfProps = Readonly<{
     [key: `data-${string}`]: string | boolean | undefined;
   }>;
   compactHeading?: boolean;
+  /** Omit the visual heading when a parent section already supplies its context. */
+  hideHeading?: boolean;
   headingLevel?: 2 | 3;
   controlsPlacement?: "heading" | "overlay";
   enableLoop?: boolean;
@@ -227,6 +229,7 @@ export function MediaShelf({
   children,
   className,
   compactHeading = false,
+  hideHeading = false,
   headingLevel = 2,
   controlsPlacement = "heading",
   enableLoop = true,
@@ -437,26 +440,39 @@ export function MediaShelf({
     </Button>
   );
 
+  const hasHeadingControls = scrollState.hasOverflow && controlsPlacement === "heading";
+  const headingAction = (
+    <>
+      {action}
+      {hasHeadingControls ? (
+        <span className="hidden gap-[var(--space-content-tight)] [@media(min-width:768px)_and_(hover:hover)_and_(pointer:fine)]:flex">
+          {scrollButton(-1)}
+          {scrollButton(1)}
+        </span>
+      ) : null}
+    </>
+  );
+
   return (
-    <section aria-labelledby={headingId} className={cn("relative min-w-0", className)}>
-      <SectionHeading
-        action={
-          <>
-            {action}
-            {scrollState.hasOverflow && controlsPlacement === "heading" ? (
-              <span className="hidden gap-[var(--space-content-tight)] [@media(min-width:768px)_and_(hover:hover)_and_(pointer:fine)]:flex">
-                {scrollButton(-1)}
-                {scrollButton(1)}
-              </span>
-            ) : null}
-          </>
-        }
-        compact={compactHeading}
-        description={description}
-        headingLevel={headingLevel}
-        id={headingId}
-        title={title}
-      />
+    <section
+      aria-label={hideHeading ? title : undefined}
+      aria-labelledby={hideHeading ? undefined : headingId}
+      className={cn("relative min-w-0", className)}
+    >
+      {hideHeading ? (
+        action != null || hasHeadingControls ? (
+          <div className="mb-[var(--space-2)] flex justify-end">{headingAction}</div>
+        ) : null
+      ) : (
+        <SectionHeading
+          action={headingAction}
+          compact={compactHeading}
+          description={description}
+          headingLevel={headingLevel}
+          id={headingId}
+          title={title}
+        />
+      )}
       {controlsPlacement === "overlay" ? (
         <div className="media-shelf-overlay relative">
           {track}

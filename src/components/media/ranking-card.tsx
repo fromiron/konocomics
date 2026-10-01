@@ -130,14 +130,12 @@ export function RankingCard(props: RankingCardProps | EvidencePlaceholderProps) 
           </div>
         </article>
       ) : (
-        <article className={cn("min-w-0", isEvidence && "h-full")}>
+        <article className="h-full min-w-0">
           <Link
             aria-label={linkLabel}
             className={cn(
-              "ranking-card-link group/ranking relative grid min-h-[var(--control-min-size)] gap-[var(--space-2)] rounded-[var(--radius-card)] transition-colors duration-[var(--motion-duration-value)] ease-[var(--motion-ease-direct)] focus-visible:bg-surface-2 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-ring motion-reduce:transition-none [@media(hover:hover)_and_(pointer:fine)]:hover:bg-surface-2",
-              isEvidence
-                ? "h-full content-start bg-surface-1 p-[var(--space-2)]"
-                : "bg-transparent p-[var(--space-3)]",
+              "ranking-card-link group/ranking relative grid h-full min-h-[var(--control-min-size)] content-start gap-[var(--space-2)] rounded-[var(--radius-card)] transition-colors duration-[var(--motion-duration-value)] ease-[var(--motion-ease-direct)] focus-visible:bg-surface-2 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-ring motion-reduce:transition-none [@media(hover:hover)_and_(pointer:fine)]:hover:bg-surface-2",
+              isEvidence ? "bg-surface-1 p-[var(--space-2)]" : "bg-transparent p-[var(--space-3)]",
             )}
             params={{ workId }}
             preload={false}
@@ -172,22 +170,24 @@ export function RankingCard(props: RankingCardProps | EvidencePlaceholderProps) 
                   "ranking-card-title leading-snug text-text-strong [overflow-wrap:anywhere]",
                   isEvidence
                     ? "line-clamp-3 text-[length:var(--font-size-14)] font-bold"
-                    : "line-clamp-2 text-[length:var(--font-size-16)] font-medium",
+                    : "line-clamp-2 min-h-[2lh] text-[length:var(--font-size-16)] font-medium",
                 )}
               >
                 {title}
               </span>
-              <span
-                className={cn(
-                  "ranking-card-meta leading-snug text-text-muted",
-                  isEvidence
-                    ? "order-first text-[length:var(--text-caption-size)]"
-                    : "line-clamp-2 text-[length:var(--font-size-14)]",
-                )}
-                data-ranking-label={variant === "ranking" ? "true" : undefined}
-              >
-                {metadata}
-              </span>
+              {metadata === undefined ? null : (
+                <span
+                  className={cn(
+                    "ranking-card-meta leading-snug text-text-muted",
+                    isEvidence
+                      ? "order-first text-[length:var(--text-caption-size)]"
+                      : "line-clamp-2 text-[length:var(--font-size-14)]",
+                  )}
+                  data-ranking-label={variant === "ranking" ? "true" : undefined}
+                >
+                  {metadata}
+                </span>
+              )}
             </span>
           </Link>
         </article>

@@ -25,11 +25,11 @@ export function WorkDetailShell({
       priority
     >
       <div
-        className="mx-auto grid w-full max-w-[var(--layout-width-media)] gap-[var(--space-5)] px-[var(--layout-page-padding)] pt-[var(--space-5)] pb-[var(--space-section)] md:grid-cols-[minmax(12rem,15rem)_minmax(0,1fr)] md:gap-[var(--space-8)] md:py-[var(--space-5)]"
+        className={`mx-auto grid w-full gap-[var(--space-5)] px-[var(--layout-page-padding)] md:gap-[var(--space-8)] ${kind === "catalog" ? "max-w-[var(--layout-width-library)] py-[var(--space-section)] md:grid-cols-[12rem_minmax(0,1fr)]" : "max-w-[var(--layout-width-media)] pt-[var(--space-5)] pb-[var(--space-section)] md:grid-cols-[minmax(12rem,15rem)_minmax(0,1fr)] md:py-[var(--space-5)]"}`}
         data-slot="work-detail-hero"
       >
         <div
-          className="mx-auto max-h-[40svh] w-[min(54vw,16rem)] md:sticky md:top-[calc(var(--desktop-navigation-height)+var(--space-6))] md:w-full md:max-h-none"
+          className={`mx-auto max-h-[40svh] md:w-full md:max-h-none ${kind === "catalog" ? "w-[calc(var(--space-8)*4)]" : "w-[min(54vw,16rem)] md:sticky md:top-[calc(var(--desktop-navigation-height)+var(--space-6))]"}`}
           data-external-detail-cover={kind === "external" ? true : undefined}
           data-work-detail-cover={kind === "catalog" ? true : undefined}
         >
@@ -43,7 +43,13 @@ export function WorkDetailShell({
           />
         </div>
 
-        <div className="grid min-w-0 content-start gap-[var(--space-5)] md:gap-[var(--space-4)]">
+        <div
+          className={
+            kind === "catalog"
+              ? "flex min-w-0 flex-col justify-between gap-[var(--space-5)]"
+              : "grid min-w-0 content-start gap-[var(--space-5)] md:gap-[var(--space-4)]"
+          }
+        >
           {children}
         </div>
       </div>

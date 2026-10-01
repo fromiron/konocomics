@@ -17,16 +17,19 @@ export function ReasonBubble({
   className,
   tail = "top",
   paperGrain = false,
+  surface = "paper",
 }: Readonly<{
   children: ReactNode;
   className?: string;
   tail?: "top" | "side";
   paperGrain?: boolean;
+  surface?: "paper" | "dark";
 }>) {
   return (
     <div
       className={cn(
-        "reason-bubble relative min-w-0 rounded-[var(--radius-card)] border border-line bg-surface-2 px-[var(--space-3)] py-[var(--space-2)]",
+        "relative min-w-0 rounded-[var(--radius-card)] border border-line bg-surface-2 px-[var(--space-3)] py-[var(--space-2)]",
+        surface === "paper" && "reason-bubble",
         tail === "top" && "mt-[6px]",
         paperGrain && "paper-grain",
         className,

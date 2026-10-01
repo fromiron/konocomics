@@ -5,7 +5,7 @@ import { BookCover } from "@/components/cover/BookCover";
 import { MediaShelf } from "@/components/media/media-shelf";
 import { RankingCard } from "@/components/media/ranking-card";
 import type { Work } from "@/domain/catalog/types";
-import { coverStrings, explanationLexicon, workDetailStrings } from "@/lib/strings";
+import { explanationLexicon, workDetailStrings } from "@/lib/strings";
 import { cn } from "@/lib/utils";
 
 type SameAuthorSectionProps = Readonly<{
@@ -18,7 +18,16 @@ type SameAuthorSectionProps = Readonly<{
   onCoverVisible(workId: string): void;
 }>;
 
-/** 「{author}の作品」: a half-width featured book banner beside a shelf of the rest. */
+function genreThemeLabels(work: Work) {
+  return [
+    ...work.genres,
+    ...work.themes.filter((theme) => theme.centrality === 2).map((theme) => theme.id),
+  ]
+    .slice(0, 3)
+    .map((id) => explanationLexicon.factorLabels[id]);
+}
+
+/** A full-width author panel with a featured book and a compact shelf of the rest. */
 export function SameAuthorSection({
   author,
   coverUrlOf,
@@ -28,6 +37,7 @@ export function SameAuthorSection({
   others,
 }: SameAuthorSectionProps) {
   const split = featured !== null && others.length > 0;
+  const featuredTags = featured === null ? [] : genreThemeLabels(featured);
   return (
     <section aria-labelledby="same-author-heading" className="grid gap-[var(--space-4)]">
       <h2
@@ -38,14 +48,14 @@ export function SameAuthorSection({
       </h2>
       <div
         className={cn(
-          "grid items-start gap-[var(--space-6)]",
-          split && "md:grid-cols-[minmax(0,1fr)_minmax(0,1fr)] md:gap-[var(--space-8)]",
+          "same-author-panel grid min-w-0 items-center gap-[var(--space-4)]",
+          split && "md:grid-cols-2 md:gap-[var(--space-6)]",
         )}
       >
         {featured === null ? null : (
           <Link
             aria-label={workDetailStrings.sameAuthor.open(featured.title)}
-            className={cn("same-author-banner", !split && "md:max-w-[50%]")}
+            className="same-author-banner"
             params={{ workId: featured.id }}
             to="/works/$workId"
           >
@@ -62,13 +72,8 @@ export function SameAuthorSection({
                 <span className="same-author-banner__eyebrow">{featuredMeta}</span>
               )}
               <span className="same-author-banner__title">{featured.title}</span>
-              {featured.genres.length === 0 ? null : (
-                <span className="same-author-banner__genres">
-                  {featured.genres
-                    .slice(0, 3)
-                    .map((genre) => explanationLexicon.factorLabels[genre])
-                    .join(" · ")}
-                </span>
+              {featuredTags.length === 0 ? null : (
+                <span className="same-author-banner__genres">{featuredTags.join(" · ")}</span>
               )}
               <span className="same-author-banner__action">
                 {workDetailStrings.sameAuthor.view}
@@ -79,25 +84,43 @@ export function SameAuthorSection({
         )}
         {others.length === 0 ? null : (
           <MediaShelf
-            className="min-w-0"
+            className="same-author-shelf min-w-0"
             compactHeading
             headingLevel={3}
+            hideHeading
             listType="unordered"
             title={workDetailStrings.sameAuthor.othersHeading}
           >
-            {others.map((work) => (
-              <RankingCard
-                coverUrl={coverUrlOf(work.id)}
-                creators={work.creators}
-                key={work.id}
-                metadata={coverStrings.creatorLine(work.creators)}
-                metadataAccessibleLabel={coverStrings.creatorLine(work.creators)}
-                onCoverVisible={() => onCoverVisible(work.id)}
-                title={work.title}
-                variant="unranked"
-                workId={work.id}
-              />
-            ))}
+            {others.map((work) => {
+              const tags = genreThemeLabels(work);
+              return (
+                <RankingCard
+                  className="same-author-card"
+                  coverUrl={coverUrlOf(work.id)}
+                  creators={work.creators}
+                  key={work.id}
+                  metadata={
+                    tags.length === 0 ? undefined : (
+                      <span className="flex flex-wrap gap-[var(--space-1)]">
+                        {tags.map((tag) => (
+                          <span
+                            className="same-author-card__tag inline-block max-w-full truncate rounded-[var(--radius-pill)] border border-line px-[var(--space-2)] py-[var(--space-1)] align-top text-[length:var(--font-size-12)] leading-[var(--line-height-body)] text-text-muted"
+                            key={tag}
+                          >
+                            {tag}
+                          </span>
+                        ))}
+                      </span>
+                    )
+                  }
+                  metadataAccessibleLabel={tags.length === 0 ? undefined : tags.join(" · ")}
+                  onCoverVisible={() => onCoverVisible(work.id)}
+                  title={work.title}
+                  variant="unranked"
+                  workId={work.id}
+                />
+              );
+            })}
           </MediaShelf>
         )}
       </div>

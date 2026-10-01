@@ -205,10 +205,13 @@ describe("WorkDetailFlow", () => {
     const section = heading.closest("section");
     if (section === null) throw new Error("Missing same-author section");
     expect(
-      within(section).getByRole("heading", {
+      within(section).queryByRole("heading", {
         level: 3,
         name: workDetailStrings.sameAuthor.othersHeading,
       }),
+    ).toBeNull();
+    expect(
+      within(section).getByRole("list", { name: workDetailStrings.sameAuthor.othersHeading }),
     ).toBeTruthy();
     const links = within(section)
       .getAllByRole("link")
@@ -217,33 +220,18 @@ describe("WorkDetailFlow", () => {
     expect(new Set(links).size).toBe(links.length);
   });
 
-  it("sets the recommendation exclusion apart and explains 「読んだ」 only for continuing series", async () => {
+  it("offers four reading states and explains 「読んだ」 only for continuing series", async () => {
     testState.status = { state: "ready", mode: "indexeddb", warning: null };
     const view = renderDetail("monster");
 
-    const hidden = await screen.findByRole("button", {
-      name: workDetailStrings.state.options.hidden,
-    });
-    // Reading progress is one segmented control; the exclusion stays outside it.
-    const segments = document.querySelector('[data-slot="work-reading-segments"]');
-    expect(
-      [...(segments?.querySelectorAll("button") ?? [])].map((button) => button.textContent),
-    ).toEqual([workDetailStrings.state.options.completed, workDetailStrings.state.options.dropped]);
-    // Four states only: the 「読みたい」 bookmark plus three read outcomes.
-    expect(
-      [
-        ...(screen
-          .getByRole("group", { name: workDetailStrings.state.heading })
-          .querySelectorAll("[data-reading-state]") ?? []),
-      ].map((button) => button.getAttribute("data-reading-state")),
-    ).toEqual(["planned", "completed", "dropped", "hidden"]);
-    expect(
-      screen
-        .getByRole("button", { name: workDetailStrings.state.options.planned })
-        .getAttribute("aria-pressed"),
-    ).toBe("false");
-    expect(hidden.closest('[data-slot="work-reading-segments"]')).toBeNull();
-    expect(hidden.className).not.toContain("bg-accent");
+    const controls = await screen.findByRole("group", { name: workDetailStrings.state.heading });
+    expect(within(controls).getAllByRole("button")).toHaveLength(4);
+    for (const name of Object.values(workDetailStrings.state.options)) {
+      expect(within(controls).getByRole("button", { name }).getAttribute("aria-pressed")).toBe(
+        "false",
+      );
+    }
+    expect(screen.queryByRole("group", { name: workDetailStrings.state.reactionGroup })).toBeNull();
     expect(screen.queryByText(workDetailStrings.state.ongoingHint)).toBeNull();
 
     view.unmount();
@@ -251,7 +239,7 @@ describe("WorkDetailFlow", () => {
     expect(await screen.findByText(workDetailStrings.state.ongoingHint)).toBeTruthy();
   });
 
-  it("records 「読んだ」 with a reaction in one tap and clears only the reaction on a second tap", async () => {
+  it("requires 「読んだ」 before editing a reaction and clears only the reaction on a second tap", async () => {
     testState.status = { state: "ready", mode: "indexeddb", warning: null };
     testState.userWorks = [
       {
@@ -264,6 +252,21 @@ describe("WorkDetailFlow", () => {
     ];
     const view = renderDetail("monster");
 
+    expect(screen.queryByRole("group", { name: workDetailStrings.state.reactionGroup })).toBeNull();
+    await act(async () => {
+      fireEvent.click(
+        screen.getByRole("button", { name: workDetailStrings.state.options.completed }),
+      );
+    });
+    const completed = testState.saveUserWork.mock.calls.at(-1)?.[0];
+    if (completed === undefined) throw new Error("Expected the reading state to be saved");
+    expect(completed).toMatchObject({ readingState: "completed", reaction: "disliked" });
+    testState.userWorks = [completed];
+    view.rerender(
+      <CatalogProvider catalog={catalog}>
+        <WorkDetailFlow workId="monster" />
+      </CatalogProvider>,
+    );
     const reactions = await screen.findByRole("group", {
       name: workDetailStrings.state.reactionGroup,
     });
@@ -310,23 +313,6 @@ describe("WorkDetailFlow", () => {
 
   it("keeps the bookmark in place after rating and keeps a read state with its progress", async () => {
     testState.status = { state: "ready", mode: "indexeddb", warning: null };
-    testState.userWorks = [];
-    let view = renderDetail("monster");
-    const bookmark = await screen.findByRole("button", {
-      name: workDetailStrings.state.options.planned,
-    });
-    await act(async () => {
-      fireEvent.click(
-        within(
-          screen.getByRole("group", { name: workDetailStrings.state.reactionGroup }),
-        ).getByRole("button", { name: "普通" }),
-      );
-    });
-    // Rating records 「読んだ」 but never removes or moves the bookmark control.
-    expect(bookmark.isConnected).toBe(true);
-    view.unmount();
-
-    testState.saveUserWork.mockClear();
     testState.userWorks = [
       {
         workId: "monster",
@@ -335,7 +321,10 @@ describe("WorkDetailFlow", () => {
         updatedAt: "2026-08-14T00:00:00.000Z",
       },
     ];
-    view = renderDetail("monster");
+    renderDetail("monster");
+    const bookmark = await screen.findByRole("button", {
+      name: workDetailStrings.state.options.planned,
+    });
 
     expect(
       await screen.findByText(
@@ -359,30 +348,97 @@ describe("WorkDetailFlow", () => {
       reaction: "favorite",
       progress: { volume: 4 },
     });
+    expect(bookmark.isConnected).toBe(true);
+    expect(bookmark.getAttribute("aria-pressed")).toBe("false");
+  });
 
-    view.unmount();
-    testState.saveUserWork.mockClear();
+  it.each(["planned", "dropped", "hidden"] as const)(
+    "hides reactions in %s while preserving the saved reaction for a return to 「読んだ」",
+    async (readingState) => {
+      const record: UserWorkRecord = {
+        workId: target.id,
+        readingState: "completed",
+        reaction: "liked",
+        progress: { volume: 3 },
+        updatedAt: "2026-08-14T00:00:00.000Z",
+      };
+      testState.userWorks = [record];
+      const view = renderDetail();
+
+      await act(async () => {
+        fireEvent.click(
+          screen.getByRole("button", { name: workDetailStrings.state.options[readingState] }),
+        );
+      });
+      const saved = testState.saveUserWork.mock.calls.at(-1)?.[0];
+      if (saved === undefined) throw new Error("Expected the changed reading state");
+      expect(saved).toMatchObject({ readingState, reaction: "liked", progress: record.progress });
+      testState.userWorks = [saved];
+      view.rerender(
+        <CatalogProvider catalog={catalog}>
+          <WorkDetailFlow workId={target.id} />
+        </CatalogProvider>,
+      );
+      expect(
+        screen.queryByRole("group", { name: workDetailStrings.state.reactionGroup }),
+      ).toBeNull();
+      expect(screen.queryByRole("button", { name: libraryStrings.reactions.liked })).toBeNull();
+
+      await act(async () => {
+        fireEvent.click(
+          screen.getByRole("button", { name: workDetailStrings.state.options.completed }),
+        );
+      });
+      const returned = testState.saveUserWork.mock.calls.at(-1)?.[0];
+      if (returned === undefined) throw new Error("Expected the restored completed state");
+      testState.userWorks = [returned];
+      view.rerender(
+        <CatalogProvider catalog={catalog}>
+          <WorkDetailFlow workId={target.id} />
+        </CatalogProvider>,
+      );
+      const reactions = screen.getByRole("group", { name: workDetailStrings.state.reactionGroup });
+      expect(
+        within(reactions)
+          .getByRole("button", { name: libraryStrings.reactions.liked })
+          .getAttribute("aria-pressed"),
+      ).toBe("true");
+      expect(returned).toMatchObject({
+        readingState: "completed",
+        reaction: "liked",
+        progress: record.progress,
+      });
+    },
+  );
+
+  it("keeps the saved state and reaction available when a state change fails", async () => {
     testState.userWorks = [
       {
-        workId: "monster",
-        readingState: "dropped",
-        droppedReasons: ["tooSlow"],
+        workId: target.id,
+        readingState: "completed",
+        reaction: "liked",
         updatedAt: "2026-08-14T00:00:00.000Z",
       },
     ];
-    renderDetail("monster");
+    testState.saveUserWork.mockRejectedValue(new Error("write failed"));
+    renderDetail();
+
     await act(async () => {
       fireEvent.click(
-        within(
-          await screen.findByRole("group", { name: workDetailStrings.state.reactionGroup }),
-        ).getByRole("button", { name: "いまいち" }),
+        screen.getByRole("button", { name: workDetailStrings.state.options.planned }),
       );
     });
-    expect(testState.saveUserWork.mock.calls.at(-1)?.[0]).toMatchObject({
-      readingState: "dropped",
-      reaction: "disliked",
-      droppedReasons: ["tooSlow"],
-    });
+    expect(screen.getByText(workDetailStrings.state.error)).toBeTruthy();
+    expect(
+      screen
+        .getByRole("button", { name: workDetailStrings.state.options.completed })
+        .getAttribute("aria-pressed"),
+    ).toBe("true");
+    expect(
+      screen
+        .getByRole("button", { name: libraryStrings.reactions.liked })
+        .getAttribute("aria-pressed"),
+    ).toBe("true");
   });
 
   it("expands and closes a long synopsis without changing its source text or link", async () => {
@@ -434,7 +490,7 @@ describe("WorkDetailFlow", () => {
     }
   });
 
-  it("fills an omitted caption after a successful Rakuten response and links the same author work", async () => {
+  it("keeps the stored publisher synopsis ahead of Rakuten text and links the same author work", async () => {
     const workId = "work-9b42e9cda7743bba0f9b";
     const volume = catalog.volumes.find(
       (volume) => volume.id === catalog.representativeVolumeByWorkId[workId],
@@ -452,11 +508,13 @@ describe("WorkDetailFlow", () => {
       reviewCount: 0,
       availability: 1,
       itemUrl: "https://books.rakuten.co.jp/rb/1585697/",
+      itemCaption: "楽天から届いた別の紹介です。",
     });
     renderDetail(workId);
 
     expect(await screen.findByText("2003年08月08日頃")).toBeTruthy();
     expect(screen.getByText(volume.metadata!.itemCaption!)).toBeTruthy();
+    expect(screen.queryByText("楽天から届いた別の紹介です。")).toBeNull();
     expect(screen.getByText("208ページ")).toBeTruthy();
     expect(
       screen
@@ -474,7 +532,7 @@ describe("WorkDetailFlow", () => {
       expect.objectContaining({
         isbn: volume.isbn,
         publisherName: "講談社",
-        itemCaption: undefined,
+        itemCaption: "楽天から届いた別の紹介です。",
       }),
     );
   });
@@ -711,8 +769,12 @@ describe("WorkDetailFlow", () => {
       name: workDetailStrings.provider.searchNewTab,
     });
     expect(fallback.getAttribute("href")).toBe(buildRakutenBooksSearchUrl(target.title));
-    expect(screen.getByText(workDetailStrings.provider.unavailable)).toBeTruthy();
-    expect(screen.getByRole("button", { name: workDetailStrings.provider.retry })).toBeTruthy();
+    expect(
+      await screen.findByRole("button", { name: workDetailStrings.provider.retry }),
+    ).toBeTruthy();
+    expect(screen.queryByText(workDetailStrings.provider.unavailable)).toBeNull();
+    expect(screen.queryByRole("heading", { name: workDetailStrings.synopsis.heading })).toBeNull();
+    expect(screen.queryByText(workDetailStrings.synopsis.unavailable)).toBeNull();
   });
 
   it("keeps library-only records and metadata without using retained factors for detail recommendations", async () => {
@@ -758,7 +820,8 @@ describe("WorkDetailFlow", () => {
         .getByRole("button", { name: workDetailStrings.state.options.completed })
         .getAttribute("aria-pressed"),
     ).toBe("true");
-    expect(screen.getByText(workDetailStrings.factors.empty)).toBeTruthy();
+    expect(screen.queryByRole("heading", { name: workDetailStrings.factors.heading })).toBeNull();
+    expect(screen.queryByText(workDetailStrings.factors.empty)).toBeNull();
     expect(view.container.querySelectorAll('a[href^="/works/"]')).toHaveLength(0);
     expect(testState.userWorks).toEqual([record]);
     expect(testState.saveUserWork).not.toHaveBeenCalled();
@@ -784,7 +847,7 @@ describe("WorkDetailFlow", () => {
       name: workDetailStrings.provider.openNewTab,
     });
     expect(directLink.getAttribute("href")).toBe(cached.affiliateUrl);
-    await screen.findByText(workDetailStrings.provider.unavailable);
+    await screen.findByRole("button", { name: workDetailStrings.provider.retry });
     expect(screen.queryByText(workDetailStrings.provider.price(cached.itemPrice!))).toBeNull();
     expect(
       screen.queryByText(workDetailStrings.provider.availability[cached.availability!]),
@@ -798,8 +861,9 @@ describe("WorkDetailFlow", () => {
 
     const view = renderDetail();
 
-    await screen.findByText(workDetailStrings.provider.unavailable);
-    expect(screen.getByText(workDetailStrings.synopsis.unavailable)).toBeTruthy();
+    await screen.findByRole("button", { name: workDetailStrings.provider.retry });
+    expect(screen.queryByRole("heading", { name: workDetailStrings.synopsis.heading })).toBeNull();
+    expect(screen.queryByText(workDetailStrings.synopsis.unavailable)).toBeNull();
     expect(view.container.innerHTML).not.toContain(cached.imageUrl);
     expect(view.container.textContent).not.toContain(String(cached.reviewAverage));
     expect(view.container.textContent).not.toContain(String(cached.reviewCount));
@@ -842,7 +906,8 @@ describe("WorkDetailFlow", () => {
     await act(async () => {
       await vi.advanceTimersByTimeAsync(1_000);
     });
-    expect(screen.getByText(workDetailStrings.synopsis.unavailable)).toBeTruthy();
+    expect(screen.queryByRole("heading", { name: workDetailStrings.synopsis.heading })).toBeNull();
+    expect(screen.queryByText(workDetailStrings.synopsis.unavailable)).toBeNull();
     expect(view.container.innerHTML).not.toContain(cached.imageUrl);
     expect(heroRequestCount()).toBe(1);
     expect(
@@ -854,7 +919,7 @@ describe("WorkDetailFlow", () => {
     ).toBe(cached.itemUrl);
   });
 
-  it("renders a lead compatibility sentence with remaining evidence labels and its anchor cover", async () => {
+  it("renders grounded compatibility and a separate evidence section with no empty slots", async () => {
     testState.userWorks = catalog.works.slice(0, 5).map((work, index) => ({
       workId: work.id,
       readingState: "completed" as const,
@@ -891,10 +956,10 @@ describe("WorkDetailFlow", () => {
       isbn === anchorIsbn ? anchorCache : null,
     );
 
-    const view = renderDetail();
+    renderDetail();
 
     const heading = screen.getByRole("heading", { name: workDetailStrings.compatibility.heading });
-    const summary = heading.parentElement!;
+    const summary = heading.closest("section")!;
     const leadReason = expected.positiveReasons[0]!;
     expect(summary.querySelector("p")?.textContent).toBe(leadReason.text);
     const leadAnchorTitle = leadReason.anchorWorkIds
@@ -921,31 +986,38 @@ describe("WorkDetailFlow", () => {
     expect(
       screen.queryByText(workDetailStrings.compatibility.confidence, { exact: false }),
     ).toBeNull();
-    await waitFor(() => {
-      expect(
-        view.container
-          .querySelector(".work-detail-compatibility__anchor-cover img")
-          ?.getAttribute("src"),
-      ).toContain("_ex=400x400");
-    });
-    const evidence = view.container.querySelector(".work-detail-evidence");
-    expect(evidence?.querySelectorAll("a")).toHaveLength(expected.anchors.length);
-    expect(evidence?.querySelector("ul")?.getAttribute("data-evidence-count")).toBe(
-      String(expected.anchors.length),
-    );
-    expect(evidence?.querySelectorAll(".work-detail-evidence__details")).toHaveLength(
-      expected.anchors.length === 1 || expected.anchors.length === 3 ? 1 : 0,
-    );
-    const emptySlots = evidence?.querySelectorAll('li[aria-hidden="true"]') ?? [];
-    expect(emptySlots).toHaveLength(3 - expected.anchors.length);
-    for (const slot of emptySlots) {
-      expect(slot.textContent).toBe(mediaStrings.evidencePlaceholder);
-      expect(slot.querySelector("img, a, button, [tabindex]")).toBeNull();
+    const evidence = screen.getByRole("region", { name: workDetailStrings.compatibility.anchors });
+    expect(summary.contains(evidence)).toBe(false);
+    expect(
+      within(evidence).getByText(workDetailStrings.compatibility.anchorsDescription),
+    ).toBeTruthy();
+    const links = within(evidence).getAllByRole("link");
+    expect(links).toHaveLength(expected.anchors.length);
+    expect(within(evidence).getAllByRole("listitem")).toHaveLength(expected.anchors.length);
+    for (const anchor of expected.anchors) {
+      const link = links.find(
+        (candidate) => candidate.getAttribute("href") === `/works/${anchor.workId}`,
+      );
+      expect(link).toBeDefined();
+      expect(link?.textContent).toContain(anchor.title);
     }
-    expect(evidence?.querySelector("a")?.getAttribute("href")).toBe(`/works/${anchorWorkId}`);
-    expect(evidence?.querySelector('[data-evidence-role="primary"]')?.textContent).toBe(
-      workDetailStrings.compatibility.primaryAnchor,
-    );
-    expect(evidence?.querySelector("[data-ranking-position]")).toBeNull();
+    expect(within(evidence).queryByText(mediaStrings.evidencePlaceholder)).toBeNull();
+    expect(
+      within(evidence).getAllByText(workDetailStrings.compatibility.primaryAnchor),
+    ).toHaveLength(1);
+    expect(links[0]?.textContent).toContain(workDetailStrings.compatibility.primaryAnchor);
+    for (const link of links.slice(1)) {
+      expect(link.textContent).toContain(workDetailStrings.compatibility.supportingAnchor);
+    }
+    const anchorLink = links.find((link) => link.getAttribute("href") === `/works/${anchorWorkId}`);
+    await waitFor(() => {
+      expect(anchorLink?.querySelector("img")?.getAttribute("src")).toContain(
+        "thumbnail.image.rakuten.co.jp/book.jpg",
+      );
+    });
+    expect(
+      within(evidence).queryByRole("button", { name: workDetailStrings.compatibility.allAnchors }),
+    ).toBeNull();
+    expect(evidence.querySelector("[data-ranking-position]")).toBeNull();
   });
 });

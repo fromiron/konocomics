@@ -2,18 +2,19 @@
 
 import { Link } from "@tanstack/react-router";
 import { BookmarkIcon, EyeOffIcon } from "lucide-react";
+import { LazyMotion, domAnimation, m } from "motion/react";
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 
 import { coverSourceForSize } from "@/components/cover/CoverImage";
 import { Button, buttonClassName } from "@/components/design-system/button";
 import { SegmentedControl } from "@/components/design-system/segmented-control";
 import { Snackbar, type SnackbarNotice } from "@/components/layout/snackbar";
-import { MediaShelf } from "@/components/media/media-shelf";
+import { RankingShelf } from "@/components/media/ranking-shelf";
 import { RankingCard } from "@/components/media/ranking-card";
 import { ReasonBubble } from "@/components/media/reason-bubble";
-import { ReasonChips } from "@/components/media/recommendation-evidence";
+import { controlSpring } from "@/components/design-system/spring-selection";
+import { useLiveReducedMotion } from "@/components/motion/use-live-reduced-motion";
 import { pageEntryFadeProps, usePageEntryMotion } from "@/components/motion/use-page-entry-motion";
-import { usePointerEffect } from "@/components/motion/use-pointer-effects";
 import { useSaveConfirmation } from "@/components/motion/use-save-confirmation";
 import recommendationContextJson from "@/data/generated/recommendation-context-v1.json";
 import { AXIS_IDS, GENRE_TAGS, THEME_TAGS } from "@/domain/catalog/constants";
@@ -29,14 +30,19 @@ import { summarizeMangaDna } from "@/domain/profile/dna-summary";
 import type { Reaction, ReadingState, UserWorkRecord } from "@/domain/profile/types";
 import { recommendationContextSchema } from "@/domain/recommendation/context-schema";
 import { scoreWorkCompatibility } from "@/domain/recommendation/rank";
+import { selectContrastingWorks } from "@/domain/recommendation/contrast";
 import type { RecommendationInput } from "@/domain/recommendation/types";
 import { useCatalog } from "@/features/catalog/catalog-provider";
 import { WorkDetailShell } from "@/features/work-detail/work-detail-shell";
 import { SameAuthorSection } from "@/features/work-detail/same-author-banner";
 import { ShareButton } from "@/features/work-detail/share-button";
 import { WorkTraits } from "@/features/work-detail/work-traits";
+import { WorkEvidenceSection } from "./work-evidence";
+import { WorkContrastSection } from "./work-contrast";
 import {
+  collectWorkEvidence,
   resolveWorkBookMetadata,
+  type WorkEvidence,
   selectSameAuthorWorks,
 } from "@/features/work-detail/work-detail-data";
 import {
@@ -57,6 +63,7 @@ import {
   libraryStrings,
   navigationStrings,
   recommendationStrings,
+  onboardingStrings,
   workDetailStrings,
   explanationLexicon,
 } from "@/lib/strings";
@@ -75,7 +82,11 @@ type ProviderLoadState = Readonly<{
 type CompatibilityState =
   | Readonly<{ kind: "hidden" }>
   | Readonly<{ kind: "unavailable" }>
-  | Readonly<{ kind: "ready"; explanation: TasteRecommendationExplanation }>;
+  | Readonly<{
+      kind: "ready";
+      explanation: TasteRecommendationExplanation;
+      evidence: readonly WorkEvidence[];
+    }>;
 
 function providerNow() {
   return new Date(Date.now()).toISOString();
@@ -275,14 +286,16 @@ function compatibilityFor(options: {
     if (result === null) return { kind: "unavailable" };
 
     const worksById = new Map(catalog.works.map((work) => [work.id, work] as const));
+    const explanation = generateTasteExplanation({
+      contributions: result.contributions,
+      confidenceLevel: result.confidenceLevel,
+      lexicon: explanationLexicon,
+      resolveTitle: (anchorWorkId) => worksById.get(anchorWorkId)?.title,
+    });
     return {
       kind: "ready",
-      explanation: generateTasteExplanation({
-        contributions: result.contributions,
-        confidenceLevel: result.confidenceLevel,
-        lexicon: explanationLexicon,
-        resolveTitle: (anchorWorkId) => worksById.get(anchorWorkId)?.title,
-      }),
+      explanation,
+      evidence: collectWorkEvidence(catalog, result.contributions, explanation),
     };
   } catch {
     return { kind: "unavailable" };
@@ -419,18 +432,13 @@ function WorkStateControls({
     });
   };
 
-  // A reaction keeps a finished or dropped state and otherwise records 「読んだ」.
-  // Tapping the current reaction clears only the reaction.
+  // Reactions are editable only after 「読んだ」; switching state preserves stored reactions.
   const saveReaction = (reaction: Reaction) => {
-    const keptState =
-      record?.readingState === "completed" || record?.readingState === "dropped"
-        ? record.readingState
-        : undefined;
-    const nextState = keptState ?? "completed";
-    const nextReaction =
-      keptState !== undefined && record?.reaction === reaction ? undefined : reaction;
+    if (record?.readingState !== "completed") return;
+    const nextState = "completed";
+    const nextReaction = record.reaction === reaction ? undefined : reaction;
     return runAction(async () => {
-      const base = nextState === "dropped" ? record : withoutDroppedReasons(record);
+      const base = withoutDroppedReasons(record);
       const negativeReasons = base?.negativeReasons;
       const rest = { ...base };
       delete rest.reaction;
@@ -477,19 +485,21 @@ function WorkStateControls({
     stamping: bookmarkStamping,
   } = useSaveConfirmation<HTMLButtonElement>(bookmarked);
   const excluded = record?.readingState === "hidden";
+  const showReaction = record?.readingState === "completed";
+  const reducedMotion = useLiveReducedMotion() !== false;
   const rated = record?.readingState === "completed" || record?.readingState === "dropped";
   const interactive =
-    "transition-[background-color,color] duration-[var(--motion-duration-feedback)] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-focus-ring focus-visible:ring-offset-2 focus-visible:ring-offset-canvas motion-reduce:transition-none";
+    "focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-focus-ring focus-visible:ring-offset-2 focus-visible:ring-offset-canvas motion-reduce:transition-none";
 
   const segment = (state: "completed" | "dropped") => {
     const selected = record?.readingState === state;
     return (
       <button
         aria-pressed={selected}
-        className={`inline-flex min-h-[var(--control-min-size)] items-center justify-center rounded-[var(--radius-control)] px-[var(--space-4)] text-[length:var(--font-size-14)] font-bold whitespace-nowrap ${interactive} ${
+        className={`inline-flex min-h-[var(--control-min-size)] items-center justify-center rounded-[var(--radius-control)] border px-[var(--space-4)] text-[length:var(--font-size-14)] font-bold whitespace-nowrap ${interactive} ${
           selected
-            ? "bg-accent text-on-accent"
-            : "text-text-muted hover:bg-surface-2 hover:text-text-strong"
+            ? "border-accent bg-accent-soft text-accent"
+            : "border-line bg-surface-1 text-text-muted hover:bg-surface-2 hover:text-text-strong"
         }`}
         data-reading-state={state}
         onClick={() => handleStateSelect(state)}
@@ -527,15 +537,15 @@ function WorkStateControls({
           {/* 「読みたい」 stays in place in every state so rating never reflows the row. */}
           <div
             aria-labelledby="work-state-heading"
-            className="flex flex-wrap items-center gap-x-[var(--space-3)] gap-y-[var(--space-2)]"
+            className="flex flex-wrap items-center gap-[var(--space-2)]"
             role="group"
           >
             <button
               aria-pressed={bookmarked}
-              className={`inline-flex min-h-[var(--control-min-size)] items-center gap-[var(--space-2)] rounded-[var(--radius-control)] px-[var(--space-4)] text-[length:var(--font-size-14)] font-bold ${interactive} ${
+              className={`inline-flex min-h-[var(--control-min-size)] items-center gap-[var(--space-2)] rounded-[var(--radius-control)] border px-[var(--space-4)] text-[length:var(--font-size-14)] font-bold ${interactive} ${
                 bookmarked
-                  ? "bg-accent-soft text-accent"
-                  : "bg-surface-2/70 text-text hover:bg-surface-2 hover:text-text-strong"
+                  ? "border-accent bg-accent-soft text-accent"
+                  : "border-line bg-surface-1 text-text hover:bg-surface-2 hover:text-text-strong"
               }${bookmarkStamping ? " confirm-stamp" : ""}`}
               data-reading-state="planned"
               data-slot="work-bookmark"
@@ -552,20 +562,17 @@ function WorkStateControls({
               />
               {workDetailStrings.state.options.planned}
             </button>
-            <div
-              className="inline-flex gap-[var(--space-1)] rounded-[calc(var(--radius-control)+var(--space-1))] bg-surface-2/70 p-[var(--space-1)]"
-              data-slot="work-reading-segments"
-            >
+            <div className="contents" data-slot="work-reading-segments">
               {segment("completed")}
               {segment("dropped")}
             </div>
             {/* 「興味なし」 excludes the work from recommendations rather than tracking reading. */}
             <button
               aria-pressed={excluded}
-              className={`inline-flex min-h-[var(--control-min-size)] items-center gap-[var(--space-2)] rounded-[var(--radius-control)] px-[var(--space-3)] text-[length:var(--font-size-14)] font-bold ${interactive} ${
+              className={`inline-flex min-h-[var(--control-min-size)] items-center gap-[var(--space-2)] rounded-[var(--radius-control)] border px-[var(--space-4)] text-[length:var(--font-size-14)] font-bold ${interactive} ${
                 excluded
-                  ? "bg-surface-2 text-text-strong"
-                  : "text-text-muted hover:text-text-strong"
+                  ? "border-accent bg-accent-soft text-accent"
+                  : "border-line bg-surface-1 text-text-muted hover:bg-surface-2 hover:text-text-strong"
               }`}
               data-reading-state="hidden"
               onClick={() => handleStateSelect("hidden")}
@@ -575,24 +582,38 @@ function WorkStateControls({
               {workDetailStrings.state.options.hidden}
             </button>
           </div>
-          <div className="grid gap-[var(--space-2)] sm:flex sm:items-center sm:gap-[var(--space-3)]">
-            <span
-              className="text-[length:var(--text-caption-size)] font-bold text-text-muted"
-              id="work-reaction-label"
+          <LazyMotion features={domAnimation} strict>
+            <m.div
+              animate={{ height: showReaction ? "auto" : 0, opacity: showReaction ? 1 : 0 }}
+              aria-hidden={!showReaction}
+              className="overflow-hidden"
+              inert={!showReaction}
+              initial={false}
+              transition={{
+                height: reducedMotion ? { duration: 0 } : controlSpring,
+                opacity: { duration: 0.16 },
+              }}
             >
-              {workDetailStrings.state.reactionGroup}
-            </span>
-            <SegmentedControl
-              className="w-full sm:w-[var(--control-segment-width)]"
-              label={workDetailStrings.state.reactionGroup}
-              options={REACTIONS.map((reaction) => ({
-                value: reaction,
-                label: libraryStrings.reactions[reaction],
-              }))}
-              value={rated ? (record?.reaction ?? null) : null}
-              onSelect={saveReaction}
-            />
-          </div>
+              <div className="grid gap-[var(--space-2)] sm:flex sm:items-center sm:gap-[var(--space-3)]">
+                <span
+                  className="text-[length:var(--text-caption-size)] font-bold text-text-muted"
+                  id="work-reaction-label"
+                >
+                  {workDetailStrings.state.reactionGroup}
+                </span>
+                <SegmentedControl
+                  className="w-full sm:w-[var(--control-segment-width)]"
+                  label={workDetailStrings.state.reactionGroup}
+                  options={REACTIONS.map((reaction) => ({
+                    value: reaction,
+                    label: libraryStrings.reactions[reaction],
+                  }))}
+                  value={showReaction ? (record?.reaction ?? null) : null}
+                  onSelect={saveReaction}
+                />
+              </div>
+            </m.div>
+          </LazyMotion>
           {readProgress === "" ? null : (
             <p className="text-[length:var(--text-caption-size)] text-text-muted">
               {workDetailStrings.state.progressNote(readProgress)}
@@ -613,11 +634,9 @@ function WorkStateControls({
 function CompatibilitySummary({
   catalog,
   explanation,
-  mobileAnchorFactorLabels,
 }: Readonly<{
   catalog: CatalogV1;
   explanation: TasteRecommendationExplanation;
-  mobileAnchorFactorLabels: readonly string[];
 }>) {
   const leadReason = explanation.positiveReasons[0];
   const leadText = leadReason?.text ?? recommendationStrings.reasonUnavailable;
@@ -647,17 +666,14 @@ function CompatibilitySummary({
       ),
     ),
   ];
-  const desktopLabelText = labels.join(" · ");
-  const mobileLabelText = labels
-    .filter((label) => !mobileAnchorFactorLabels.includes(label))
-    .join(" · ");
 
   return (
     <div className="grid content-start gap-[var(--space-3)] text-[length:var(--text-body-size)] leading-[var(--line-height-body)] text-text">
-      {leadReason === undefined ? (
-        <p className="text-text-muted">{leadText}</p>
-      ) : (
-        <ReasonBubble className="grid gap-[var(--space-2)]">
+      {leadReason === undefined ? null : (
+        <ReasonBubble
+          className="grid gap-[var(--space-2)] p-[var(--space-5)] text-text-strong"
+          surface="dark"
+        >
           <p>
             {anchorMentionIndex < 0 ? (
               leadText
@@ -674,167 +690,52 @@ function CompatibilitySummary({
           ))}
         </ReasonBubble>
       )}
-      {desktopLabelText === "" ? null : (
-        <p className={desktopLabelText === mobileLabelText ? undefined : "hidden md:block"}>
-          {desktopLabelText}
-        </p>
-      )}
-      {mobileLabelText === "" || desktopLabelText === mobileLabelText ? null : (
-        <p className="md:hidden">{mobileLabelText}</p>
+      {labels.length === 0 ? null : (
+        <ul className="m-0 flex list-none flex-wrap gap-[var(--space-2)] p-0">
+          {labels.map((label) => (
+            <li
+              className="rounded-[var(--radius-pill)] border border-accent/35 bg-accent-soft px-[var(--space-3)] py-[var(--space-1)] text-[length:var(--font-size-12)] text-accent"
+              key={label}
+            >
+              {label}
+            </li>
+          ))}
+        </ul>
       )}
       {explanation.caution === undefined ? null : (
-        <ReasonChips
-          caution={explanation.caution}
-          cautionLabel={workDetailStrings.compatibility.caution}
-          reasons={[]}
-        />
+        <div className="grid gap-[var(--space-1)] rounded-r-[var(--radius-card)] border-l-2 border-warn bg-warn/10 px-[var(--space-4)] py-[var(--space-3)]">
+          <h3 className="text-[length:var(--text-caption-size)] font-bold text-warn">
+            {workDetailStrings.compatibility.caution}
+          </h3>
+          <p className="text-[length:var(--font-size-14)]">{explanation.caution.text}</p>
+        </div>
       )}
     </div>
   );
 }
 
 function CompatibilitySection({
-  anchorCoverUrls,
   catalog,
-  onAnchorCoverVisible,
   state,
-}: Readonly<{
-  anchorCoverUrls: ReadonlyMap<string, string | null>;
-  catalog: CatalogV1;
-  onAnchorCoverVisible(workId: string): void;
-  state: CompatibilityState;
-}>) {
-  const spotlightRef = usePointerEffect<HTMLElement>("light");
-
-  if (state.kind === "hidden") return null;
-  const primaryAnchorIds = new Set(
-    state.kind === "ready"
-      ? [
-          ...state.explanation.positiveReasons,
-          ...(state.explanation.caution ? [state.explanation.caution] : []),
-        ]
-          .filter((reason) => reason.source === "similarity")
-          .flatMap((reason) => reason.anchorWorkIds)
-      : [],
-  );
-  const anchorCards =
-    state.kind !== "ready"
-      ? []
-      : state.explanation.anchors.flatMap((anchor) => {
-          const work = catalog.works.find((candidate) => candidate.id === anchor.workId);
-          if (work === undefined) return [];
-          const factorLabels = state.explanation.positiveReasons
-            .filter(
-              (reason) =>
-                reason.source === "similarity" && reason.anchorWorkIds.includes(anchor.workId),
-            )
-            .flatMap((reason) => {
-              const label = explanationFactorLabel(reason.factorId);
-              return label === undefined ? [] : [label];
-            });
-          return [{ work, factorLabels }];
-        });
-  const showMobileAnchorDetails = anchorCards.length === 1 || anchorCards.length === 3;
-  const mobileAnchorFactorLabels = showMobileAnchorDetails
-    ? (anchorCards[0]?.factorLabels ?? [])
-    : [];
-
+}: Readonly<{ catalog: CatalogV1; state: CompatibilityState }>) {
+  if (
+    state.kind !== "ready" ||
+    (state.explanation.positiveReasons.length === 0 && state.explanation.caution === undefined)
+  )
+    return null;
   return (
     <section
       aria-labelledby="work-compatibility-heading"
-      className="relative grid items-start gap-[var(--space-6)] border-t border-line/70 pt-[var(--space-6)] md:grid-cols-2"
+      className="relative grid gap-[var(--space-4)]"
       data-slot="work-compatibility"
-      ref={spotlightRef}
     >
-      <span aria-hidden="true" className="pointer-spotlight" />
-      <div className="grid min-w-0 content-start gap-[var(--space-6)]">
-        <h2
-          className="text-[length:var(--text-subheading-size)] font-bold text-text-strong"
-          id="work-compatibility-heading"
-        >
-          {workDetailStrings.compatibility.heading}
-        </h2>
-        {state.kind === "unavailable" ? (
-          <p>{workDetailStrings.compatibility.unavailable}</p>
-        ) : (
-          <CompatibilitySummary
-            catalog={catalog}
-            explanation={state.explanation}
-            mobileAnchorFactorLabels={mobileAnchorFactorLabels}
-          />
-        )}
-      </div>
-      {anchorCards.length === 0 ? null : (
-        <aside
-          aria-labelledby="work-evidence-heading"
-          className="work-detail-evidence grid min-w-0 gap-[var(--space-4)] rounded-[var(--radius-card)] p-[var(--space-3)] sm:p-[var(--space-4)]"
-        >
-          <h3
-            className="text-[length:var(--text-subheading-size)] font-bold text-text-strong"
-            id="work-evidence-heading"
-          >
-            {workDetailStrings.compatibility.anchors}
-          </h3>
-          <ul
-            className="m-0 grid list-none grid-cols-2 gap-[var(--space-2)] p-0 md:grid-cols-3"
-            data-evidence-count={anchorCards.length}
-          >
-            {anchorCards.map(({ work: anchorWork, factorLabels }, index) => {
-              const isPrimary = primaryAnchorIds.has(anchorWork.id);
-              const roleLabel = isPrimary
-                ? workDetailStrings.compatibility.primaryAnchor
-                : workDetailStrings.compatibility.supportingAnchor;
-              return (
-                <RankingCard
-                  className="work-detail-compatibility__anchor-cover"
-                  coverUrl={anchorCoverUrls.get(anchorWork.id)}
-                  creators={anchorWork.creators}
-                  key={anchorWork.id}
-                  metadata={
-                    <>
-                      <span
-                        className="work-detail-evidence__role"
-                        data-evidence-role={isPrimary ? "primary" : "supporting"}
-                      >
-                        {roleLabel}
-                      </span>
-                      {index === 0 && showMobileAnchorDetails ? (
-                        <span className="work-detail-evidence__details mt-[var(--space-3)] grid gap-[var(--space-3)] leading-[var(--line-height-body)] md:hidden">
-                          <span>{coverStrings.creatorLine(anchorWork.creators)}</span>
-                          {factorLabels.length === 0 ? null : (
-                            <span className="grid gap-[var(--space-1)]">
-                              <span className="font-bold text-text-strong">
-                                {workDetailStrings.compatibility.anchorFactors}
-                              </span>
-                              <span>{factorLabels.join(" · ")}</span>
-                            </span>
-                          )}
-                        </span>
-                      ) : null}
-                    </>
-                  }
-                  metadataAccessibleLabel={
-                    index === 0
-                      ? [
-                          roleLabel,
-                          coverStrings.creatorLine(anchorWork.creators),
-                          ...factorLabels,
-                        ].join(" · ")
-                      : roleLabel
-                  }
-                  onCoverVisible={() => onAnchorCoverVisible(anchorWork.id)}
-                  title={anchorWork.title}
-                  variant="evidence"
-                  workId={anchorWork.id}
-                />
-              );
-            })}
-            {[0, 1, 2].slice(anchorCards.length).map((slot) => (
-              <RankingCard key={`empty-evidence-${slot}`} variant="evidence-placeholder" />
-            ))}
-          </ul>
-        </aside>
-      )}
+      <h2
+        className="text-[length:var(--text-subheading-size)] font-bold text-text-strong"
+        id="work-compatibility-heading"
+      >
+        {workDetailStrings.compatibility.heading}
+      </h2>
+      <CompatibilitySummary catalog={catalog} explanation={state.explanation} />
     </section>
   );
 }
@@ -887,6 +788,7 @@ function WorkDetailContent({ catalog, work }: Readonly<{ catalog: CatalogV1; wor
     [adjustments, catalog, policies, userWorks, work.id],
   );
   const relatedGroups = useMemo(() => relatedWorkGroups(catalog, work), [catalog, work]);
+  const nearbyWorks = [...relatedGroups.themeRanked, ...relatedGroups.moodRanked];
   const sameAuthor = useMemo(
     () =>
       selectSameAuthorWorks(catalog, work, (workId) =>
@@ -896,11 +798,28 @@ function WorkDetailContent({ catalog, work }: Readonly<{ catalog: CatalogV1; wor
       ),
     [catalog, work],
   );
+  const contrastingWorks = useMemo(() => {
+    if (userWorks === undefined) return [];
+    return selectContrastingWorks({
+      source: work,
+      candidates: catalog.works,
+      excludedWorkIds: [
+        ...relatedGroups.themeRanked.map((related) => related.id),
+        ...relatedGroups.moodRanked.map((related) => related.id),
+        ...(sameAuthor === null || sameAuthor.featured === null ? [] : [sameAuthor.featured.id]),
+        ...(sameAuthor?.others.map((other) => other.id) ?? []),
+        ...(compatibility.kind === "ready"
+          ? compatibility.evidence.map((item) => item.work.id)
+          : []),
+        ...userWorks
+          .filter((record) => record.readingState !== "planned" || record.reaction === "disliked")
+          .map((record) => record.workId),
+      ],
+    });
+  }, [catalog, compatibility, relatedGroups, sameAuthor, userWorks, work]);
   const coverTargets = useMemo(() => {
     const anchorWorkIds =
-      compatibility.kind === "ready"
-        ? compatibility.explanation.anchors.map((anchor) => anchor.workId)
-        : [];
+      compatibility.kind === "ready" ? compatibility.evidence.map((item) => item.work.id) : [];
     const orderedWorkIds = [
       ...new Set([
         ...anchorWorkIds,
@@ -912,10 +831,11 @@ function WorkDetailContent({ catalog, work }: Readonly<{ catalog: CatalogV1; wor
             ]),
         ...relatedGroups.themeRanked.map((related) => related.id),
         ...relatedGroups.moodRanked.map((related) => related.id),
+        ...contrastingWorks.map((entry) => entry.work.id),
       ]),
     ];
     return createRecommendationCoverTargets(catalog, orderedWorkIds);
-  }, [catalog, compatibility, relatedGroups, sameAuthor]);
+  }, [catalog, compatibility, contrastingWorks, relatedGroups, sameAuthor]);
   const { coverUrls, requestCover } = useRecommendationCovers({
     targets: coverTargets,
     getProviderCache,
@@ -1041,13 +961,19 @@ function WorkDetailContent({ catalog, work }: Readonly<{ catalog: CatalogV1; wor
   const volumeCount = parsedRecommendationContext.success
     ? (parsedRecommendationContext.data.constraintByWorkId[work.id]?.volumeCount ?? 0)
     : catalog.volumes.filter((volume) => volume.workId === work.id).length;
+  const hasHeroMetadata =
+    bookMetadata.publisherName !== undefined ||
+    volumeCount > 0 ||
+    work.status !== "unknown" ||
+    (commercial?.itemPrice ?? 0) > 0 ||
+    ((metadata?.reviewAverage ?? 0) > 0 && (metadata?.reviewCount ?? 0) > 0);
   const heroCoverUrl =
     bookMetadata.imageUrl === undefined ? null : coverSourceForSize(bookMetadata.imageUrl, 600);
 
   return (
     <>
       <main
-        className={`mx-auto w-full pb-[var(--space-section-large)]${pageEntryMotion.active ? " page-entry-b motion-safe:animate-[page-entry-b-enter_var(--motion-duration-page)_var(--motion-ease-direct)_both]" : ""}`}
+        className={`mx-auto w-full${pageEntryMotion.active ? " page-entry-b motion-safe:animate-[page-entry-b-enter_var(--motion-duration-page)_var(--motion-ease-direct)_both]" : ""}`}
         data-work-detail-id={work.id}
         key={work.id}
         onAnimationEnd={pageEntryMotion.onAnimationEnd}
@@ -1062,60 +988,71 @@ function WorkDetailContent({ catalog, work }: Readonly<{ catalog: CatalogV1; wor
           kind="catalog"
           title={work.title}
         >
-          <header className="grid gap-[var(--space-content-loose)] md:gap-[var(--space-content)]">
+          <header className="grid gap-[var(--space-2)]">
             <h1 className="font-display text-[length:var(--font-size-28)] leading-[var(--line-height-heading)] [overflow-wrap:anywhere] text-text-strong">
               {work.title}
             </h1>
-            <p className="font-medium text-text-muted">{coverStrings.creatorLine(work.creators)}</p>
-            <dl className="m-0 flex flex-wrap gap-x-[var(--space-6)] gap-y-[var(--space-3)] p-0 [&>div]:grid [&>div]:gap-[var(--space-content-tight)] [&_dd]:m-0 [&_dd]:font-bold [&_dd]:text-text-strong [&_dd]:tabular-nums [&_dt]:text-[length:var(--text-caption-size)] [&_dt]:font-medium [&_dt]:text-text-muted">
-              <div>
-                <dt>{workDetailStrings.metadata.publisher}</dt>
-                <dd>{bookMetadata.publisherName ?? workDetailStrings.metadata.unknownPublisher}</dd>
-              </div>
-              <div>
-                <dt>{workDetailStrings.metadata.status}</dt>
-                <dd>{recommendationStrings.workStatus[work.status]}</dd>
-              </div>
-              <div>
-                <dt>{workDetailStrings.metadata.volumes}</dt>
-                <dd>{recommendationStrings.volumeCount(volumeCount)}</dd>
-              </div>
-              {commercial?.itemPrice === undefined ? null : (
+            <p className="text-[length:var(--font-size-14)] text-text-muted">
+              {coverStrings.creatorLine(work.creators)}
+            </p>
+          </header>
+          {hasHeroMetadata ? (
+            <dl className="m-0 grid grid-cols-2 overflow-hidden rounded-[var(--radius-card)] border border-line bg-surface-1 p-0 md:grid-flow-col md:auto-cols-fr md:grid-cols-none [&>div]:grid [&>div]:content-start [&>div]:gap-[var(--space-1)] [&>div]:border-r [&>div]:border-line [&>div]:px-[var(--space-3)] [&>div]:py-[var(--space-3)] [&>div:last-child]:border-r-0 [&_dd]:m-0 [&_dd]:break-words [&_dd]:text-[length:var(--font-size-14)] [&_dd]:font-semibold [&_dd]:text-text-strong [&_dt]:text-[length:var(--text-caption-size)] [&_dt]:text-text-muted">
+              {bookMetadata.publisherName === undefined ? null : (
+                <div>
+                  <dt>{workDetailStrings.metadata.publisher}</dt>
+                  <dd>{bookMetadata.publisherName}</dd>
+                </div>
+              )}
+              {volumeCount > 0 || work.status !== "unknown" ? (
+                <div>
+                  <dt>
+                    {volumeCount > 0
+                      ? workDetailStrings.metadata.volumes
+                      : workDetailStrings.metadata.status}
+                  </dt>
+                  <dd>
+                    {volumeCount > 0 ? recommendationStrings.volumeCount(volumeCount) : null}
+                    {work.status === "unknown" ? null : (
+                      <small className="block font-normal text-text-muted">
+                        {recommendationStrings.workStatus[work.status]}
+                      </small>
+                    )}
+                  </dd>
+                </div>
+              ) : null}
+              {commercial?.itemPrice !== undefined && commercial.itemPrice > 0 ? (
                 <div>
                   <dt>{workDetailStrings.provider.priceLabel}</dt>
-                  <dd>{workDetailStrings.provider.price(commercial.itemPrice)}</dd>
+                  <dd>
+                    {workDetailStrings.provider.price(commercial.itemPrice)}
+                    <small className="block font-normal text-text-muted">
+                      {workDetailStrings.metadata.edition(representativeVolume?.volumeNumber)}
+                    </small>
+                  </dd>
                 </div>
-              )}
-              {commercial?.availability === undefined ? null : (
-                <div>
-                  <dt>{workDetailStrings.provider.availabilityLabel}</dt>
-                  <dd>{workDetailStrings.provider.availability[commercial.availability]}</dd>
-                </div>
-              )}
-              {metadata?.reviewAverage === undefined ? null : (
+              ) : null}
+              {metadata?.reviewAverage !== undefined &&
+              metadata.reviewAverage > 0 &&
+              metadata.reviewCount !== undefined &&
+              metadata.reviewCount > 0 ? (
                 <div>
                   <dt>{workDetailStrings.provider.ratingLabel}</dt>
                   <dd>
                     {workDetailStrings.provider.rating(metadata.reviewAverage)}
-                    {metadata.reviewCount === undefined ? null : (
-                      <span className="ml-[var(--space-2)] font-normal text-text-muted">
-                        {workDetailStrings.provider.reviewCount(metadata.reviewCount)}
-                      </span>
-                    )}
+                    <small className="block font-normal text-text-muted">
+                      {workDetailStrings.provider.reviewCount(metadata.reviewCount)}
+                    </small>
                   </dd>
                 </div>
-              )}
+              ) : null}
             </dl>
-          </header>
-
-          <section
-            aria-labelledby="work-provider-heading"
-            className="grid gap-[var(--space-content)]"
-          >
+          ) : null}
+          <section aria-labelledby="work-provider-heading" className="grid gap-[var(--space-2)]">
             <h2 className="sr-only" id="work-provider-heading">
               {workDetailStrings.provider.heading}
             </h2>
-            <div className="flex flex-wrap items-center gap-[var(--space-3)]">
+            <div className="flex items-start gap-[var(--space-2)]">
               <a
                 aria-label={
                   isDirectProviderLink
@@ -1123,8 +1060,7 @@ function WorkDetailContent({ catalog, work }: Readonly<{ catalog: CatalogV1; wor
                     : workDetailStrings.provider.searchNewTab
                 }
                 className={buttonClassName({
-                  className:
-                    "w-full min-w-[min(100%,16rem)] px-[var(--space-4)] py-[var(--space-content)] font-bold sm:w-fit",
+                  className: "min-w-0 flex-1 px-[var(--space-3)] font-bold",
                 })}
                 href={providerHref}
                 rel="noreferrer"
@@ -1135,42 +1071,50 @@ function WorkDetailContent({ catalog, work }: Readonly<{ catalog: CatalogV1; wor
                   : workDetailStrings.provider.search}
               </a>
               <ShareButton title={work.title} />
-              {visibleProvider.phase === "error" && isbn !== null ? (
-                <Button
-                  className="w-fit"
-                  onClick={() => {
-                    setProviderLoad((current) => ({ ...current, phase: "loading" }));
-                    setProviderAttempt((current) => current + 1);
-                  }}
-                  type="button"
-                  variant="outline"
-                >
-                  {workDetailStrings.provider.retry}
-                </Button>
-              ) : null}
             </div>
             <p className="text-[length:var(--text-caption-size)] text-text-muted">
-              {visibleProvider.phase === "loading" ? (
-                <span aria-live="polite">{workDetailStrings.provider.loading} </span>
-              ) : commercial === null ? (
-                <span>{workDetailStrings.provider.unavailable} </span>
-              ) : null}
               {metadata?.affiliateUrl === undefined ? null : (
                 <span>{workDetailStrings.provider.affiliate} </span>
               )}
-              <span>{workDetailStrings.provider.credit}</span>
+              {workDetailStrings.provider.credit}
             </p>
+            {commercial?.availability === undefined ? null : (
+              <p className="text-[length:var(--text-caption-size)] text-text-muted">
+                {workDetailStrings.provider.availability[commercial.availability]}
+              </p>
+            )}
+            {visibleProvider.phase === "loading" ? (
+              <p
+                aria-live="polite"
+                className="text-[length:var(--text-caption-size)] text-text-muted"
+              >
+                {workDetailStrings.provider.loading}
+              </p>
+            ) : visibleProvider.phase === "error" && isbn !== null ? (
+              <Button
+                className="w-fit"
+                onClick={() => {
+                  setProviderLoad((current) => ({ ...current, phase: "loading" }));
+                  setProviderAttempt((current) => current + 1);
+                }}
+                type="button"
+                variant="ghost"
+              >
+                {workDetailStrings.provider.retry}
+              </Button>
+            ) : null}
           </section>
+        </WorkDetailShell>
 
+        <div className="mx-auto grid w-full max-w-[var(--layout-width-library)] gap-[var(--space-section)] px-[var(--layout-page-padding)] pt-[var(--space-section)]">
           {status.state === "degraded" ? (
             <p
-              className="border-l-[length:var(--space-content-tight)] border-warn bg-surface-1 px-[var(--space-4)] py-[var(--space-3)]"
+              className="border-l-2 border-warn bg-surface-1 px-[var(--space-4)] py-[var(--space-3)]"
               role="status"
             >
               {workDetailStrings.storageWarning}
             </p>
           ) : null}
-
           <WorkStateControls
             addUserWorkIfAbsent={addUserWorkIfAbsent}
             record={currentRecord}
@@ -1181,129 +1125,117 @@ function WorkDetailContent({ catalog, work }: Readonly<{ catalog: CatalogV1; wor
             seriesContinues={work.status === "ongoing" || work.status === "hiatus"}
             workId={work.id}
           />
-        </WorkDetailShell>
-
-        <div className="mx-auto grid w-full max-w-[var(--layout-width-media)] gap-[var(--space-shelf)] px-[var(--layout-page-padding)] pt-[var(--space-shelf)]">
-          <div className="grid gap-[var(--space-shelf)] md:grid-cols-[minmax(0,1.2fr)_minmax(0,0.8fr)] md:gap-x-[var(--space-12)]">
-            <section
-              aria-labelledby="work-synopsis-heading"
-              className="grid content-start gap-[var(--space-3)]"
-            >
+          {bookMetadata.itemCaption === undefined ? null : (
+            <section aria-labelledby="work-synopsis-heading" className="grid gap-[var(--space-3)]">
               <h2
                 className="text-[length:var(--text-subheading-size)] font-bold text-text-strong"
                 id="work-synopsis-heading"
               >
                 {workDetailStrings.synopsis.heading}
               </h2>
-              <WorkSynopsis
-                caption={bookMetadata.itemCaption ?? workDetailStrings.synopsis.unavailable}
-                key={bookMetadata.itemCaption}
-              />
-              {bookMetadata.itemCaption === undefined ||
-              bookMetadata.captionSourceUrl === undefined ? null : (
-                <a
-                  aria-label={workDetailStrings.metadata.sourceOpen(
-                    workDetailStrings.synopsis.source[bookMetadata.captionSource],
-                  )}
-                  className="inline-flex min-h-[var(--control-min-size)] w-fit items-center text-[length:var(--text-caption-size)] text-text-muted underline decoration-line underline-offset-4 hover:text-accent focus-visible:rounded-[var(--radius-control)] focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-focus-ring"
-                  href={bookMetadata.captionSourceUrl}
-                  rel="noreferrer"
-                  target="_blank"
-                >
-                  {workDetailStrings.synopsis.source[bookMetadata.captionSource]}
-                </a>
-              )}
-              {bookMetadata.salesDate === undefined &&
-              bookMetadata.imprint === undefined &&
-              bookMetadata.pageCount === undefined ? null : (
-                <section
-                  aria-labelledby="work-book-info-heading"
-                  className="grid gap-[var(--space-3)] pt-[var(--space-3)]"
-                >
-                  <h3
-                    className="text-[length:var(--font-size-16)] font-bold text-text-strong"
-                    id="work-book-info-heading"
+              <div className="grid gap-[var(--space-3)] rounded-[var(--radius-card)] border border-line bg-surface-1 p-[var(--space-5)] text-[length:var(--font-size-14)]">
+                <WorkSynopsis caption={bookMetadata.itemCaption} key={bookMetadata.itemCaption} />
+                <p className="text-[length:var(--text-caption-size)] text-text-muted">
+                  {workDetailStrings.metadata.edition(representativeVolume?.volumeNumber)}
+                </p>
+                {bookMetadata.captionSourceUrl === undefined ? null : (
+                  <a
+                    aria-label={workDetailStrings.metadata.sourceOpen(
+                      workDetailStrings.synopsis.source[bookMetadata.captionSource],
+                    )}
+                    className="inline-flex min-h-[var(--control-min-size)] w-fit items-center text-[length:var(--text-caption-size)] text-text-muted underline decoration-line underline-offset-4 hover:text-accent focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-ring"
+                    href={bookMetadata.captionSourceUrl}
+                    rel="noreferrer"
+                    target="_blank"
                   >
-                    {workDetailStrings.metadata.bookHeading(representativeVolume?.volumeNumber)}
-                  </h3>
-                  <dl className="m-0 flex flex-wrap gap-x-[var(--space-6)] gap-y-[var(--space-3)] p-0 [&>div]:grid [&>div]:gap-[var(--space-content-tight)] [&_dd]:m-0 [&_dd]:text-text [&_dt]:text-[length:var(--text-caption-size)] [&_dt]:text-text-muted">
-                    {bookMetadata.salesDate === undefined ? null : (
-                      <div>
-                        <dt>{workDetailStrings.metadata.releaseDate}</dt>
-                        <dd>{workDetailStrings.metadata.date(bookMetadata.salesDate)}</dd>
-                      </div>
-                    )}
-                    {bookMetadata.imprint === undefined ? null : (
-                      <div>
-                        <dt>{workDetailStrings.metadata.imprint}</dt>
-                        <dd>{bookMetadata.imprint}</dd>
-                      </div>
-                    )}
-                    {bookMetadata.pageCount === undefined ? null : (
-                      <div>
-                        <dt>{workDetailStrings.metadata.pages}</dt>
-                        <dd>{workDetailStrings.metadata.pageCount(bookMetadata.pageCount)}</dd>
-                      </div>
-                    )}
-                  </dl>
-                  {bookMetadata.collectedSourceUrl === undefined ? null : (
-                    <a
-                      aria-label={workDetailStrings.metadata.sourceOpen(
-                        workDetailStrings.metadata.publisherSource,
-                      )}
-                      className="inline-flex min-h-[var(--control-min-size)] w-fit items-center text-[length:var(--text-caption-size)] text-text-muted underline decoration-line underline-offset-4 hover:text-accent focus-visible:rounded-[var(--radius-control)] focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-focus-ring"
-                      href={bookMetadata.collectedSourceUrl}
-                      rel="noreferrer"
-                      target="_blank"
-                    >
-                      {workDetailStrings.metadata.publisherSource}
-                    </a>
-                  )}
-                </section>
-              )}
+                    {workDetailStrings.synopsis.source[bookMetadata.captionSource]}
+                  </a>
+                )}
+              </div>
             </section>
-
-            <section
-              aria-labelledby="work-factors-heading"
-              className="grid content-start gap-[var(--space-3)]"
-            >
+          )}
+          {factorIds.length === 0 ? null : (
+            <section aria-labelledby="work-factors-heading" className="grid gap-[var(--space-3)]">
               <h2
                 className="text-[length:var(--text-subheading-size)] font-bold text-text-strong"
                 id="work-factors-heading"
               >
                 {workDetailStrings.factors.heading}
               </h2>
-              {factorIds.length === 0 ? (
-                <p className="text-text-muted">{workDetailStrings.factors.empty}</p>
-              ) : (
-                <ul className="m-0 flex list-none flex-wrap gap-[var(--space-content)] p-0">
-                  {factorIds.map((factorId) => (
-                    <li
-                      className="inline-flex min-h-[var(--space-8)] items-center rounded-[var(--radius-pill)] border border-line/60 px-[var(--space-3)] py-[var(--space-content-tight)] text-[length:var(--font-size-12)] font-bold text-text"
-                      key={factorId}
-                    >
-                      {explanationLexicon.factorLabels[factorId]}
-                    </li>
-                  ))}
-                </ul>
-              )}
+              <ul className="m-0 flex list-none flex-wrap gap-[var(--space-2)] p-0">
+                {factorIds.map((factorId) => (
+                  <li
+                    className="rounded-[var(--radius-pill)] border border-line bg-surface-1 px-[var(--space-3)] py-[var(--space-1)] text-[length:var(--font-size-12)] text-text"
+                    key={factorId}
+                  >
+                    {explanationLexicon.factorLabels[factorId]}
+                  </li>
+                ))}
+              </ul>
             </section>
-          </div>
-
+          )}
           {work.eligibility.recommendationEligible ? (
             <WorkTraits tasteAxes={tasteAxes} work={work} />
           ) : null}
-
-          <CompatibilitySection
-            anchorCoverUrls={coverUrls}
-            catalog={catalog}
-            onAnchorCoverVisible={requestCover}
-            state={compatibility}
-          />
+          <CompatibilitySection catalog={catalog} state={compatibility} />
+          {compatibility.kind === "ready" ? (
+            <WorkEvidenceSection
+              coverUrls={coverUrls}
+              evidence={compatibility.evidence}
+              onCoverVisible={requestCover}
+            />
+          ) : null}
+          {bookMetadata.salesDate === undefined &&
+          bookMetadata.imprint === undefined &&
+          bookMetadata.pageCount === undefined ? null : (
+            <section
+              aria-labelledby="work-book-info-heading"
+              className="grid gap-[var(--space-3)] pt-[var(--space-3)]"
+            >
+              <h2
+                className="text-[length:var(--font-size-16)] font-bold text-text-strong"
+                id="work-book-info-heading"
+              >
+                {workDetailStrings.metadata.bookHeading(representativeVolume?.volumeNumber)}
+              </h2>
+              <dl className="m-0 flex flex-wrap gap-x-[var(--space-6)] gap-y-[var(--space-3)] p-0 [&>div]:grid [&>div]:gap-[var(--space-content-tight)] [&_dd]:m-0 [&_dd]:text-text [&_dt]:text-[length:var(--text-caption-size)] [&_dt]:text-text-muted">
+                {bookMetadata.salesDate === undefined ? null : (
+                  <div>
+                    <dt>{workDetailStrings.metadata.releaseDate}</dt>
+                    <dd>{workDetailStrings.metadata.date(bookMetadata.salesDate)}</dd>
+                  </div>
+                )}
+                {bookMetadata.imprint === undefined ? null : (
+                  <div>
+                    <dt>{workDetailStrings.metadata.imprint}</dt>
+                    <dd>{bookMetadata.imprint}</dd>
+                  </div>
+                )}
+                {bookMetadata.pageCount === undefined ? null : (
+                  <div>
+                    <dt>{workDetailStrings.metadata.pages}</dt>
+                    <dd>{workDetailStrings.metadata.pageCount(bookMetadata.pageCount)}</dd>
+                  </div>
+                )}
+              </dl>
+              {bookMetadata.collectedSourceUrl === undefined ? null : (
+                <a
+                  aria-label={workDetailStrings.metadata.sourceOpen(
+                    workDetailStrings.metadata.publisherSource,
+                  )}
+                  className="inline-flex min-h-[var(--control-min-size)] w-fit items-center text-[length:var(--text-caption-size)] text-text-muted underline decoration-line underline-offset-4 hover:text-accent focus-visible:rounded-[var(--radius-control)] focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-focus-ring"
+                  href={bookMetadata.collectedSourceUrl}
+                  rel="noreferrer"
+                  target="_blank"
+                >
+                  {workDetailStrings.metadata.publisherSource}
+                </a>
+              )}
+            </section>
+          )}
         </div>
-
-        <div className="mx-auto grid w-full max-w-[var(--layout-width-media)] gap-[var(--space-shelf)] px-[var(--layout-page-padding)] pt-[var(--space-shelf-group)]">
-          {sameAuthor === null ? null : (
+        {sameAuthor === null ? null : (
+          <div className="mx-auto w-full max-w-[var(--layout-width-library)] px-[var(--layout-page-padding)] pt-[var(--space-section)]">
             <SameAuthorSection
               author={sameAuthor.author}
               coverUrlOf={(workId) =>
@@ -1317,48 +1249,47 @@ function WorkDetailContent({ catalog, work }: Readonly<{ catalog: CatalogV1; wor
               onCoverVisible={requestCover}
               others={sameAuthor.others}
             />
-          )}
-          <MediaShelf
-            compactHeading
-            description={workDetailStrings.related.description}
-            listType="unordered"
-            title={workDetailStrings.related.heading}
-          >
-            {relatedGroups.themeRanked.map((related) => (
-              <RankingCard
-                coverUrl={coverUrls.get(related.id)}
-                creators={related.creators}
-                key={related.id}
-                metadata={coverStrings.creatorLine(related.creators)}
-                metadataAccessibleLabel={coverStrings.creatorLine(related.creators)}
-                onCoverVisible={() => requestCover(related.id)}
-                title={related.title}
-                variant="unranked"
-                workId={related.id}
-              />
-            ))}
-          </MediaShelf>
-          <MediaShelf
-            compactHeading
-            description={workDetailStrings.sameMood.description}
-            listType="unordered"
-            title={workDetailStrings.sameMood.heading}
-          >
-            {relatedGroups.moodRanked.map((related) => (
-              <RankingCard
-                coverUrl={coverUrls.get(related.id)}
-                creators={related.creators}
-                key={related.id}
-                metadata={coverStrings.creatorLine(related.creators)}
-                metadataAccessibleLabel={coverStrings.creatorLine(related.creators)}
-                onCoverVisible={() => requestCover(related.id)}
-                title={related.title}
-                variant="unranked"
-                workId={related.id}
-              />
-            ))}
-          </MediaShelf>
-        </div>
+          </div>
+        )}
+        {nearbyWorks.length === 0 && contrastingWorks.length === 0 ? null : (
+          <div className="mx-auto grid w-full max-w-[var(--layout-width-media)] gap-[var(--space-shelf)] px-[var(--layout-page-padding)] pt-[var(--space-section)]">
+            {nearbyWorks.length === 0 ? null : (
+              <RankingShelf
+                compactHeading
+                controlsPlacement="overlay"
+                description={workDetailStrings.related.description}
+                rankingKind="unranked"
+                title={workDetailStrings.related.heading}
+                trackClassName="!pb-[var(--space-1)]"
+              >
+                {nearbyWorks.map((related) => {
+                  const genres = related.genres
+                    .slice(0, 3)
+                    .map((genre) => onboardingStrings.step1.genreLabels[genre])
+                    .join(" · ");
+                  return (
+                    <RankingCard
+                      coverUrl={coverUrls.get(related.id)}
+                      creators={related.creators}
+                      key={related.id}
+                      metadata={genres}
+                      metadataAccessibleLabel={genres}
+                      onCoverVisible={() => requestCover(related.id)}
+                      title={related.title}
+                      variant="unranked"
+                      workId={related.id}
+                    />
+                  );
+                })}
+              </RankingShelf>
+            )}
+            <WorkContrastSection
+              coverUrls={coverUrls}
+              entries={contrastingWorks}
+              onCoverVisible={requestCover}
+            />
+          </div>
+        )}
       </main>
     </>
   );

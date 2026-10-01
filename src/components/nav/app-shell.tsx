@@ -97,7 +97,9 @@ function AppShellContent({
         id="app-content"
         tabIndex={-1}
       >
-        <div className="flex flex-1 flex-col">{children}</div>
+        <div className="app-shell__page flex flex-1 flex-col pb-[var(--space-section-large)]">
+          {children}
+        </div>
         <SiteFooter immersive={!showMobileNavigation} />
       </div>
       {showMobileNavigation ? (

@@ -117,7 +117,7 @@ export function LandingFlow({
       />
 
       <HomeObi animate={!showIntroduction} />
-      <div className="mx-auto grid w-full max-w-[var(--layout-width-media)] gap-[var(--space-shelf-group)] px-[var(--layout-page-padding)] pt-[var(--space-shelf)] pb-[var(--space-shelf-group)]">
+      <div className="mx-auto grid w-full max-w-[var(--layout-width-media)] gap-[var(--space-shelf-group)] px-[var(--layout-page-padding)] pt-[var(--space-shelf)]">
         <HomeHowItWorks sample={sample} />
         <div className="grid gap-[var(--space-shelf)]">
           <HomeRankingShelf

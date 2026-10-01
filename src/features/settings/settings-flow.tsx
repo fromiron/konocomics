@@ -140,7 +140,7 @@ export function SettingsFlow({
   };
 
   return (
-    <main className="mx-auto w-full max-w-[var(--layout-width-media)] px-[var(--layout-page-padding)] pt-[var(--layout-page-block-start)] pb-[var(--space-8)] md:pb-[var(--space-section-large)]">
+    <main className="mx-auto w-full max-w-[var(--layout-width-media)] px-[var(--layout-page-padding)] pt-[var(--layout-page-block-start)]">
       <PageHeader className="mb-[var(--space-6)]" title={settingsStrings.title}>
         <p className="text-[length:var(--font-size-14)] leading-relaxed text-text-muted">
           {settingsStrings.description}

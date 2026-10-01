@@ -20,6 +20,8 @@
 - Catalog 상세 `/works/[workId]`와 고정 external 상세 `/works/external?workId=<ExternalWorkId>`는 탭 바를 유지한 채 스택처럼 열린다. 뒤로가기는 브라우저 history다.
 - 2026-09-11 사용자 지시에 따라 전역 document scroll container는 `scrollbar-gutter: stable`로 스크롤바 자리를 확보한다. 필터·페이지 이동으로 세로 스크롤바가 생기거나 사라져도 본문 가로 폭·중앙 정렬은 유지한다. overlay scrollbar 환경에는 불필요한 별도 여백을 더하지 않는다.
 
+- 2026-10-01 후속 사용자 요청: 마지막 본문과 footer 사이의 일반 여백은 공용 AppShell의 route-content wrapper가 `padding-bottom: var(--space-section-large)`(48px)로 소유한다. 캐러셀마다 margin을 추가하거나 각 화면의 일반 하단 패딩을 중복하지 않는다. mobile navigation/safe area, onboarding tray, taste reveal 고정 CTA의 회피 여백은 별도로 유지한다.
+
 ### 전역 상태
 
 - **Catalog 로드 실패(치명):** 풀스크린 오류 — 「カタログを読み込めませんでした」 + 再試行 버튼. 앱의 나머지는 렌더하지 않는다.
@@ -238,7 +240,7 @@ CTA **「好きなマンガから始める」** → /onboarding. 행동은 이 �
 
 ## 4. `/taste` — Manga DNA (reveal + 보정)
 
-2026-10-01 추가 승인: 상위 취향 강조선은 직선 SVG draw로 표현하며 곡선이나 레이더로 바꾸지 않는다. 온보딩 reveal의 `おすすめを見る` 한 곳만 유한 StarBorder를 사용한다(`04` §6.1). 실제 FactorBar 값·길이·meter 의미는 그대로다.
+2026-10-01 최신 사용자 샘플 승인: 별도 상위 취향 목록과 8축 막대의 중복을 하나의 DNA 휠 + 축 선택 목록으로 통합한다. 원형 휠은 이번 샘플의 명시적 변경이며 기존 직선 강조선 UI를 대체한다. 디자인 토큰은 프로젝트 것을 우선한다. 샘플의 가상 축·작품·값·강도 임계값은 사용하지 않는다. 온보딩 reveal의 `おすすめを見る` 한 곳만 유한 StarBorder를 유지한다(`04` §6.1).
 
 ### 목적
 
@@ -249,52 +251,53 @@ CTA **「好きなマンガから始める」** → /onboarding. 행동은 이 �
 - reveal 모드: 하단 고정 CTA 「おすすめを見る」.
 - 보조 액션(2026-09-29 개선 계획 Phase 2): 제목 줄 오른쪽 outline 버튼 「カードで共有」. 주 CTA보다 앞서지 않으며 공유 취소·실패가 추천 탐색을 막지 않는다. 아래 「Manga DNA 카드」 참조.
 - 상시 모드: 추천 반영 radio 변경 자체가 액션. 저장 버튼 없이 즉시 Dexie에 반영하고, 성공 시 factor와 선택값을 포함한 스낵바를 제공한다(예: 「『戦略的な展開』のおすすめへの反映を『除外』に変更しました。」).
+- 2026-10-01 후속 사용자 요청: 「おすすめを調整」 제목 옆 전체 reset과 テーマ·展開·トーン・関係·作画 제목 옆 범주 reset을 제공한다. reset은 범위 안의 모든 추천 반영을 `自動`으로 돌리는 작업이다. 범주 reset은 해당 키만 제거하고 전체 reset은 axes/themes를 모두 비운다. 한 번의 저장으로 반영하며 다른 범주의 설정·분석 DNA·독서 기록·추천 정책은 유지한다. ジャンル은 분석 전용이므로 reset이 없다. 이미 모두 자동이면 해당 버튼은 disabled다. 44px icon button에 범위를 포함한 일본어 접근 이름/tooltip과 focus ring을 제공하며 펼침 button 안에 중첩하지 않는다. reset으로 범주를 열거나 닫지 않는다. 성공은 범위가 있는 저장 안내, 실패는 직전 설정 복원과 기존 오류 안내다.
 
 ### 정보 위계
 
 2026-09-29 사용자 위임 개선: `/recommendations`를 디자인 기준으로 삼아 셸 폭·타이포·간격·카드 문법을 맞춘다. 셸은 `--layout-width-media`(1200px), 페이지 제목은 28px, 모든 섹션 제목(h2)은 subheading(20px)이며 섹션 간격은 `--space-shelf`/`--space-shelf-group`을 쓴다. 장식 아이콘·이미지 배너·표지 위 그라디언트/텍스트 합성은 쓰지 않는다.
 
 1. 헤더: 공용 `PageHeader`의 「あなたの Manga DNA」 h1과 그 아래 근거 한 줄(「N作品から分析しました（大好き N・好き N…） · 分析の確信度: 高い/ふつう」, 0인 감상은 생략). `おすすめを見る`는 기존대로 reveal CTA에만 둔다.
-2. **상위 취향 3개**: 순위·취향 레이블·강도·근거 제목 1~2줄. 아이콘은 쓰지 않는다. desktop `>=1024`에서는 「好みの軸」과 2열로 나란히 두는 순위 목록이고, 그 미만에서는 1열로 쌓는다(가로 snap 없음).
-3. 「好みの軸」: 동일 deterministic profile의 확인된 Axis를 강도 내림차순으로 최대 8개 read-only `FactorBar`로 보여 준다(동률은 factorId 오름차순). desktop은 2열 grid, mobile은 1열이다. 막대가 `role="meter"`로 값을 제공하므로 별도 radar와 중복 text list는 두지 않는다. 확인된 축이 없으면 분석 중 안내만 둔다.
-4. 근거 작품 `MediaShelf`(「好みを代表する作品」). `/recommendations` 관점 선반과 같은 원본 비율 표지 프레임 아래에 제목 2줄과 근거 팩터 레이블(없으면 감상 레이블)을 둔다. 표지 위에 그라디언트·레이블·제목을 겹치지 않는다. 기존 가로 스크롤과 키보드 이동으로 마지막 작품까지 접근한다.
-5. 일반 진입에서 확신도가 `normal`일 때만 근거 Shelf 뒤에 두는 이미지 없는 한 줄 coaching 요약. CTA는 `/onboarding` 「作品を追加」. `high`, 최초 reveal, 학습/AI 암시는 없다. 현재 profile guard를 통과한 사용자의 최저 확신도가 `normal`이므로 도달 불가능한 `low` UI 상태는 만들지 않는다.
-6. 5개 범주(장르/테마/전개/톤·관계/작화)의 compact summary row. 범주 icon은 두지 않는다. 각 row는 범주명, 실제 profile에서 계산한 대표 factor, 조정 상태, 명시적인 disclosure를 제공한다. 장르는 「分析のみ（10項目）」와 「内訳を見る」, 나머지 범주는 「詳細設定」을 사용한다. 초기에는 모두 접고 한 번에 한 범주의 상세만 연다. 장르는 분석 전용으로 가로 막대(0~4) + 일본어 레이블만 제공하고 보정 control을 만들지 않는다. 나머지 네 범주의 열린 상세에는 기존 5단 보정 control을 그대로 제공한다.
+2. 「好みの軸」의 동일 deterministic profile에서 known Axis를 강도 내림차순·동률 factorId 오름차순으로 최대 8개 표시한다. 같은 8축을 원형 휠과 선택 목록이 공유한다. 상위 3축의 이름을 ×로 잇는 문장과 순위 배지, 실제 정성 강도·각 축의 `anchorWorkIds`에서 찾은 작품명을 표시한다. 휠의 채움은 실제 0~4 값을 사용하며 숫자/백분율은 표시하지 않는다. known 0은 빈 트랙으로 남고 unknown을 0으로 보충하지 않는다. 확인된 축 0개면 분석 중 안내만 표시한다. 이 축 순위는 화면 요약이며 기존 전체 팩터 `topPreferences`·공유 카드·추천 산식을 재정의하지 않는다.
+3. 휠 조각과 해당 목록 버튼은 같은 축 선택을 토글하고, 중앙에 축 이름·정성 강도를 표시한다. 다시 누르면 Manga DNA·실제 축 개수로 돌아온다. 선택은 임시 화면 상태이며 분석값·adjustment·추천 순위·저장값을 바꾸지 않는다. 긴 축 이름은 중앙 안에서 줄바꿈한다.
+4. 「好みを代表する作品」은 기존 근거 우선 선택의 최대 5작품을 반응형 grid로 보여 준다(desktop 5열, tablet 3열, mobile 2열). 공용 CoverImage의 원본 비율·시머·fallback을 사용하고, 제목 2줄 아래 실제 근거 팩터 칩(없으면 감상)을 둔다. 각 전체 카드는 실제 상세 Link이며 모든 작품은 Tab으로 접근된다. 같은 행의 표면 높이를 맞추고 표지 위 텍스트·hover lift를 추가하지 않는다.
+5. 일반 진입에서 확신도가 `normal`일 때만 근거 grid 뒤에 텍스트와 `/onboarding` 「作品を追加」 CTA의 배너를 둔다. 기존 surface·border·accent·radius 토큰을 사용한다. `high`와 최초 reveal에서는 숨기고 학습/AI 암시는 없다. 도달 불가능한 `low` 상태를 만들지 않는다.
+6. 5개 범주(장르/테마/전개/톤·관계/작화)를 하나의 표면 안의 compact accordion row로 묶는다. 행 전체 disclosure는 범주명·실제 대표 factor·조정 상태 칩·chevron을 제공한다. 초기에는 모두 접고 한 번에 한 범주의 상세만 연다. 장르는 「分析のみ（10項目）」인 분석 전용 0~4 meter이고 보정 control은 없다. 나머지 네 범주는 분석 meter 아래에 기존 5단 값을 사용하는 공용 spring 세그먼트 radio를 둔다. 상태는 자동 또는 실제 수동 항목 수다.
    2026-09-29 개선: 보정 가능한 범주의 열린 상세은 분석값 내림차순(미확인은 끝, 동률은 factorId 오름차순)으로 정렬하고, 상위 6개와 `自動`이 아닌 항목만 먼저 보인다. 나머지는 범주명을 포함한 접근 이름의 44px 「すべて表示（N項目）」 disclosure(`aria-expanded`/`aria-controls`)로 연다. 숨긴 항목의 보정값·저장 계약은 그대로다. 분석 전용 장르는 10개를 모두 보인다.
-7. 같은 최신 Catalog·기록·추천 정책에 페이지에서 처음 읽은 보정 설정과 현재 보정 설정을 각각 적용하는 preview. 동일 recommendation engine의 선두 최대 4개 work ID와 순서만 비교하고, 사용자는 제목·표지·해당 범위의 상태를 본다. 방문 당시 추천 목록을 동결하는 기능이 아니며 새로고침하면 저장된 현재 보정이 새 기준이다. 같으면 현재 목록 하나, 다르면 기준/현재 두 목록, 양쪽 0개면 빈 안내 한 번, 한쪽만 0개면 비교와 빈 쪽 안내를 제공한다. 계산 불가는 빈 결과·변화 없음과 구분하고 작품 정보가 없으면 ID 대신 이름 있는 안내로 해당 자리를 유지한다. network 요청과 별도 추천 산식은 없다.
-8. `UserWorkRecord.updatedAt`과 기존 reasons로 구성한 최근 feedback 요약. 2026-09-29 개선: 최근 최대 12건을 같은 상태끼리 묶어 상태 라벨(「好き」 등)을 묶음마다 한 번만 쓰고, 그 아래 원본 비율 작은 표지와 제목(이유가 있으면 이유)을 둔다. 제목 줄에 `ライブラリで見る`(`/library`) 링크를 둔다. 제목은 미리보기와 같은 subheading 크기(desktop 20px/mobile 16px)다. 「作品を追加して精度を上げる」 링크는 coaching banner가 숨는 `high` 또는 최초 reveal에서만 유지한다.
+7. 같은 최신 Catalog·기록·추천 정책에 페이지에서 처음 읽은 보정 설정과 현재 보정 설정을 각각 적용하는 preview. 동일 recommendation engine의 선두 최대 4개 work ID와 순서만 비교한다. 같으면 간결한 상태 노트와 「比較を見る」 disclosure만 먼저 표시하고 열면 현재 목록 하나를 보여 준다. 다르면 기준/현재 두 목록을 즉시 표시한다. 양쪽 0개는 빈 안내 한 번, 한쪽 0개는 비교와 빈 쪽 안내, 계산 불가는 별도 실패 안내를 유지한다. 기준은 방문 시 보정 설정이며 새로고침하면 저장된 현재 보정이 기준이 된다. 원시 ID·가짜 비교·새 산식은 사용하지 않는다.
+8. `UserWorkRecord.updatedAt` 순서의 최근 최대 12건을 같은 상태끼리 묶고, 상태 라벨 아래 제목 중심의 compact Link 칩으로 표시한다. 실제 이유가 있으면 함께 제공한다. 제목 줄의 `ライブラリで見る`와 조건부 작품 추가 링크를 유지한다. coaching banner가 보이면 작품 추가 링크를 중복하지 않는다.
 
 ### 막대 규칙
 
 - 값 = 사용자 positive anchor들의 가중 평균에서 추론된 선호 강도(엔진의 프로필 요약 출력).
 - 확인값의 표시 레이블: `<0.5 → ごく控えめ`, `<1.5 → 控えめ`, `<2.5 → ほどほど`, `<3.5 → 強め`, 그 외 `とても強め`. 숫자 원값은 화면에 표시하지 않는다.
 - **미확인 축: 빈 윤곽선 막대 + 「まだ分析中」. 0으로 그리지 않는다.**
-- 보정 radio 5단: `とても好き / 好き / 自動 / 控えめに / 除外`. 기본 `自動`. 반복되는 segmented box 대신 배경·외곽선이 없는 marker + label 행을 사용하고, 선택값은 채운 marker와 굵은 text로 구분한다. `除外`는 앞의 가는 구분선으로 일반 강도 조절과 분리하며 선택 시에만 marker와 text를 경고색으로 표시한다. 확인 다이얼로그 없이 즉시 적용한다.
-- adjustment workspace의 visible contract는 「おすすめを調整」이다. 설명은 분석값이 바뀌지 않고 설정만 추천에 반영된다는 점과 `自動`이 분석 결과를 따른다는 점을 명시한다. 열린 보정 범주의 desktop 상세은 `分析した好み` / `おすすめへの反映` 두 열 제목과 가는 구분선을 사용한다. FactorBar는 read-only 분석 출력이며 radio 변경으로 값·길이·색을 바꾸지 않는다.
+- 보정 radio 5단: `とても好き / 好き / 自動 / 控えめに / 除外`. 기본 `自動`. 공용 ChoiceChipRadio의 keyboard/semantics와 SpringSelectionIndicator를 조합한 세그먼트를 사용한다. 선택은 indicator·굵기·`aria-checked`로 구분한다. positive는 accent/on-accent, auto/less는 surface/text, exclude는 기존 경고 토큰으로 표현한다. 모든 항목은 44px 이상이며 좁은 화면에서도 줄바꿈 없는 가로 스크롤과 focus 노출을 유지한다. 확인 다이얼로그 없이 기존 저장 함수로 즉시 적용한다.
+- adjustment workspace의 visible contract는 「おすすめを調整」이다. 열린 상세의 설명과 각 control의 접근 이름은 분석값과 추천 반영을 구분하고 `自動`이 분석 결과를 따름을 명시한다. FactorBar는 read-only 분석 출력이며 radio 변경으로 값·길이·색을 바꾸지 않는다.
 
 ### 상태
 
 - reveal(1회): §`04` 5.2의 시퀀스. `?reveal=1`을 발견하면 현재 mount의 reveal 여부를 local state/ref에 먼저 고정하고 같은 effect에서 query를 즉시 `replaceState`로 제거한다. 이후 A 시퀀스는 고정된 판정으로 계속하며 URL을 진행 중 상태나 재생 token으로 사용하지 않는다.
-- 보정 변경 직후: 선택 marker와 text 상태를 즉시 반영하고, 저장 성공 시 어떤 factor를 어떤 값으로 변경했는지 `aria-live` snackbar로 알린다. FactorBar에는 보정 성공 highlight나 값 전이를 적용하지 않는다.
-- 분석 확신도 `normal`: 일반 진입에서 헤더의 정성 레이블과 근거 Shelf를 유지한 채, 근거 Shelf 뒤·조정 workspace 앞에 이미지 없는 한 줄 coaching 요약(제목·설명·`/onboarding` 링크)을 둔다. 기존 `calculateProfileConfidence` + `getConfidenceLevel`만 사용하고 상위 취향/근거 Shelf takeover는 금지한다. CTA는 `/onboarding`뿐이며, 최근 feedback의 동일 목적 링크는 숨긴다. 최초 reveal에서는 배너를 숨긴다. 현재 profile guard에서 `low`는 도달 불가능하므로 별도 배너 상태를 만들지 않는다.
+- 보정 변경 직후: 선택 indicator와 text 상태를 즉시 반영하고, 저장 성공 시 어떤 factor를 어떤 값으로 변경했는지 `aria-live` snackbar로 알린다. reset 성공은 전체/범주 범위를 알린다. FactorBar에는 보정 성공 highlight나 값 전이를 적용하지 않는다.
+- 분석 확신도 `normal`: 일반 진입에서 헤더의 정성 레이블과 대표작 grid를 유지한 채, 대표작 뒤·조정 workspace 앞에 이미지 없는 coaching 배너(제목·설명·`/onboarding` CTA)를 둔다. 기존 `calculateProfileConfidence` + `getConfidenceLevel`만 사용하고 휠/근거 작품 takeover는 금지한다. 최근 feedback의 동일 목적 링크와 최초 reveal의 배너는 숨긴다. 현재 profile guard에서 `low`는 도달 불가능하므로 별도 상태를 만들지 않는다.
 - 분석 확신도 `high`: coaching banner를 표시하지 않는다.
 - anchor < 5 (가드 통과 못함): /onboarding 리다이렉트.
 
 ### 반응형
 
-- 전체 Taste shell은 loading/일반 화면 모두 `/recommendations`와 같은 최대 1200px다. 상위 취향과 「好みの軸」은 1024px부터 2열이며, 그 미만에서는 쌓는다.
-- mobile: 상위 취향 3개는 순위 1열 행이다. 각 행의 첫 줄은 순위 `1–3`, 팩터 레이블(최대 2줄, 16px/bold), 강도 14px nowrap이며 다음 줄은 기존 근거 제목 1–2줄이다. 한 줄 근거에 두 줄 높이를 강제하지 않는다. 5개 범주 summary를 1열로 쌓고 한 범주의 상세만 연다. 열린 상세은 각 FactorBar 아래에 visible `おすすめへの反映` micro-label과 줄바꿈 없는 가로 스크롤 radio 행을 둔다.
-- desktop `>=768`: 상위 취향 3개는 mobile과 같은 순위 행 문법을 유지한다(강도는 제목보다 크지 않다). 셸 폭의 full-width 범주 row를 사용하고 한 범주의 상세만 연다. 분석 전용 장르 상세은 2열 meter grid로 10개 항목을 5행에 배치한다. 보정 가능한 네 범주는 sticky `分析した好み` / `おすすめへの反映` 열 제목 아래 FactorBar + 5단 control 행을 유지한다.
+- 전체 Taste shell은 loading/일반 화면 모두 `/recommendations`와 같은 최대 1200px다. 휠과 축 목록은 768px부터 2열, 그 미만에서는 휠→목록 순서의 1열이다. 색·font·radius·간격은 기존 시맨틱 토큰을 우선한다.
+- mobile: 축 목록은 배지·이름·강도와 다음 줄 근거이며 긴 이름은 줄바꿈한다. 범주 행은 제목/상태/chevron 아래 요약을 둔다. 분석 막대 아래의 5단 control은 가로 스크롤할 수 있고 페이지 전체 가로 overflow를 만들지 않는다.
+- desktop `>=768`: 분석 전용 장르는 2열 meter grid다. 편집 행은 meter→5단 control 순서이며 두 열의 중복 헤더를 제거한다. 대표작 5개와 compact 최근 기록은 각각 grid와 줄바꿈 가능한 칩으로 표시한다.
 
 ### 접근성
 
 - 확인된 막대는 축 레이블만 접근 가능한 이름으로 사용하고 `role="meter"` + `aria-valuemin/max/now`를 제공한다. `aria-valuetext`는 중복된 축 이름이나 숫자 없이 위 정성 레이블만 제공한다(예: 이름 `戦略的な展開`, `aria-valuetext="強め"`).
-- 「好みの軸」은 read-only `FactorBar` meter로 값을 제공한다.
+- DNA 휠의 SVG 조각과 목록은 축 이름·정성 강도·pressed 상태·근거 설명을 제공한다. SVG는 Enter/Space와 방향키/Home/End, 목록은 native button keyboard를 지원한다. 시각적 순서와 동일한 DOM 순서를 사용하고 focus와 선택을 색만으로 구분하지 않는다. 분석용 meter는 범주 상세에서 유지한다.
 - 각 범주의 disclosure는 범주명을 포함한 accessible name, `aria-expanded`, `aria-controls`, visible focus를 가진 44px 이상 button이다. 장르는 분석 내역을 여는 의미를 사용한다. URL의 열린 범주가 바뀌어도 button을 다시 마운트하지 않아 포커스를 유지하며, 접힌 상세의 control은 accessibility tree에서 제외한다.
-- 보정 선택은 `「{factor}」のおすすめへの反映を設定` 형식의 이름을 가진 radiogroup이며 각 선택은 44px 이상 target, visible label, outline/filled marker, `aria-checked`, visible focus를 제공한다. 선택 상태는 색만으로 전달하지 않는다. 미확인 막대는 가짜 0을 넣지 않고, 축 이름과 「まだ分析中」을 함께 읽는 비수치 group 상태로 노출한다.
+- 보정 선택은 `「{factor}」のおすすめへの反映を設定` 형식의 이름을 가진 radiogroup이며 각 선택은 44px 이상 target, visible label, 선택 indicator/굵기, `aria-checked`, visible focus를 제공한다. 미확인 막대는 가짜 0을 넣지 않고 축 이름과 「まだ分析中」을 함께 읽는 비수치 group 상태로 노출한다.
 - 미리보기에서 현재 목록은 같은 컴포넌트 위치·작품 key를 유지한다. 갱신 상태 문장만 `aria-live`로 알리고 전체 작품 목록을 반복 낭독하거나 갱신을 이유로 보정 radio의 focus·스크롤을 강제로 이동하지 않는다. 키보드로 선택한 칩은 표시 레이블과 4px focus outline까지 스크롤 영역 안에 드러내며, 저장 스낵바가 현재 포커스와 실제로 겹칠 때만 스크롤로 가림을 해소한다. 포커스 대상은 바꾸지 않는다. 사용자에게 raw work ID를 출력하지 않는다.
 - reveal 애니메이션은 정보 추가 없음 — reduced-motion 시 `04` §5.2의 opacity 대체 시퀀스(600ms 이내)로 같은 정보를 보인다.
-- 2026-10-01: 상시 진입에서도 「好みの軸」·범주 상세의 FactorBar는 mount마다 처음 뷰포트에 들어올 때 한 번 0→값으로 채워진다(`04` §6 E 진입 채움). 헤더의 분석 작품 수는 reveal에서 정수 count-up하며 DNA 축 값은 숫자로 표시하지 않는다. 진입 채움 중에도 `aria-valuenow`·`aria-valuetext`는 처음부터 최종 값이다.
+- 2026-10-01: DNA 휠과 범주 상세 FactorBar는 각각 mount의 첫 viewport 진입에 한 번만 나타난다(`04` §5.2). 헤더의 분석 작품 수는 reveal에서 정수 count-up하며 DNA 축 값은 숫자로 표시하지 않는다. 막대 진입 채움 중에도 `aria-valuenow`·`aria-valuetext`는 처음부터 최종 값이다.
 
 ### Manga DNA 카드 (2026-09-29 개선 계획 Phase 2)
 
@@ -315,18 +318,19 @@ CTA **「好きなマンガから始める」** → /onboarding. 행동은 이 �
 - [ ] 모든 막대 값이 엔진 프로필 출력과 일치한다(스냅샷 테스트).
 - [ ] 초기 화면에는 5개 범주 summary가 모두 보이고 상세는 접혀 있다. disclosure를 열면 해당 범주의 상세만 노출되며 다른 범주의 상세는 닫힌다.
 - [ ] 장르 상세은 desktop 2열/mobile 1열 meter grid이며 radiogroup이 없다. 다른 네 범주의 5단 보정 control에는 영향이 없다.
-- [ ] 보정 radiogroup은 반복 segmented container나 선택 pill 없이 marker + label로 표시되고, 선택값은 filled marker와 text weight로도 구분된다. `除外` warning은 선택 시에만 표시된다.
-- [ ] 열린 보정 범주는 desktop에서 `分析した好み` / `おすすめへの反映` 열 제목과 divider, mobile에서 행별 `おすすめへの反映` label을 제공한다. workspace heading과 설명은 분석값과 추천 설정을 별개로 설명한다.
+- [ ] 보정 radiogroup은 공용 spring indicator를 사용한 5단 세그먼트이며 키보드·44px target·선택값의 굵기/상태·좁은 화면 focus 노출을 유지한다. `除外` warning은 선택 시에만 표시된다.
+- [ ] 열린 보정 범주는 분석 meter 아래 반영 control을 제공하고 workspace/상세 설명과 접근 이름은 분석값과 추천 설정을 별개로 설명한다. 행 전체 disclosure와 실제 수동 항목 수 칩을 제공한다.
 - [ ] radio 변경 전후 해당 FactorBar의 `aria-valuenow`와 시각 길이는 동일하며, 막대 highlight 대신 구체적인 저장 `aria-live` message와 선두 최대 4작품의 recommendation preview가 해당 표시 범위의 영향을 전달한다.
 - [ ] 열린 범주의 모든 기존 5단 보정 control을 keyboard로 접근할 수 있고 접고 다시 열어도 값이 유지된다.
 - [ ] 보정 칩 변경 → Dexie 반영 → /recommendations 재진입 시 추천이 변한다.
+- [ ] 전체/범주 reset은 표시되지 않은 항목까지 해당 범위를 모두 `自動`으로 저장하고 범주 reset에서 다른 범주를 보존한다. 이미 자동인 reset은 disabled, ジャンル reset은 없으며 펼침 상태를 바꾸지 않는다. 저장 실패 시 직전 선택을 복원하고 오류를 알린다.
 - [ ] 미확인 축이 0값 축과 시각·접근성 DOM 시맨틱 모두에서 구분된다. 실제 스크린리더 낭독 검증은 제품 완료 후 선택적 접근성 감사 범위다.
-- [ ] 상위 취향 3개 각각에 근거 제목이 표시된다.
+- [ ] DNA 휠과 목록은 같은 실제 known Axis 최대 8개를 보여 주며 상위 3축의 순위·문장과 각 축의 실제 근거를 표시한다. 선택/해제와 SVG·목록의 상태가 일치하고 분석값은 변하지 않는다.
 - [ ] 1440×900에서 셸 폭·페이지 제목 28px·섹션 제목 20px·섹션 간격 48/64px이 `/recommendations`와 같고, 장식 아이콘·이미지 배너·표지 위 그라디언트가 없다.
-- [ ] 「好みの軸」은 확인된 Axis 최대 8개를 강도 내림차순 meter로 보여 준다.
+- [ ] 휠은 실제 값에 따른 채움과 정성 레이블을 사용하고 unknown·가짜 근거를 보충하지 않는다. known 0은 빈 트랙, 축 0개는 안내다. mobile에서도 긴 축 이름·근거·대표작 grid가 넘치지 않는다.
 - [ ] 테마처럼 7개 이상인 보정 범주는 열었을 때 상위 6개와 조정한 항목만 먼저 보이고 「すべて表示」로 나머지를 연다.
-- [ ] 일반 진입의 `normal` coaching 요약은 근거 Shelf 뒤에서 `/onboarding` 링크와 DOM 문구만 사용하고, 최근 feedback의 동일 목적 링크를 중복하지 않는다. `high`와 최초 reveal에서는 숨긴다. 도달 불가능한 `low` UI fixture는 추가하지 않는다.
-- [ ] 보정 preview의 before/after work ID가 같은 최신 기록·정책에 각 보정 설정을 적용해 결정론적으로 계산되고 영속 추천 결과를 URL이나 Router context에 저장하지 않는다. 동일/변경/양쪽 빈 목록/한쪽 빈 목록/계산 불가를 구분하며 사용자 표시는 제목·표지·선두 최대 4작품의 상태다.
+- [ ] 일반 진입의 `normal` coaching 배너는 대표작 grid 뒤에서 `/onboarding` 링크와 DOM 문구만 사용하고, 최근 feedback의 동일 목적 링크를 중복하지 않는다. `high`와 최초 reveal에서는 숨긴다. 도달 불가능한 `low` UI fixture는 추가하지 않는다.
+- [ ] 보정 preview의 before/after work ID가 같은 최신 기록·정책에 각 보정 설정을 적용해 결정론적으로 계산되고 영속 추천 결과를 URL이나 Router context에 저장하지 않는다. 동일은 노트와 disclosure 뒤 현재 목록 하나, 변경은 두 목록 자동 표시이며 양쪽 빈 목록/한쪽 빈 목록/계산 불가를 구분한다. 사용자 표시는 제목·표지·선두 최대 4작품의 상태다.
 
 ---
 
@@ -512,41 +516,38 @@ Shelf grouping은 presentation-only selector다. main Shelf 사이에는 work ID
 
 Catalog 작품은 추천 근거를 깊이 확인하고 구매(라쿠텐)로 연결한다. external 작품은 같은 프레젠테이션 골격에서 로컬 서지 정보와 상태만 관리하며 추천 문맥 밖에서도 동작한다.
 
-### 주요 액션
+### 주요 액션과 표시 조건 (2026-10-01 상세 리디자인)
 
-**「楽天ブックスで見る」** (affiliate 링크, 새 탭). 부가: 읽음 상태 제어. 2026-09-29 개선(`02` §5.2 4상태 모델): heading으로 이름 붙인 `group` 한 줄에 「読みたい」 북마크, 옅은 트랙 위 「読んだ | 途中でやめた」 세그먼트, 아이콘 텍스트 「興味なし」(accent 채움 없음)를 둔다. 네 버튼 모두 `aria-pressed` 토글이며 **어떤 상태에서도 사라지거나 자리를 옮기지 않는다**(감상을 눌러 `completed`가 되어도 「読みたい」는 같은 자리에 눌리지 않은 상태로 남는다). 선택되지 않은 상태를 누르면 그 상태를 저장하고, **현재 선택된 상태를 다시 누르면 기록을 해제**해 기록 없음으로 되돌린다. 해제는 화면이 읽은 record의 `updatedAt`이 저장소에서 그대로일 때만 삭제하는 조건부 삭제(`removeUserWorkIfUnchanged`)이며, 다른 화면에서 더 새로 쓴 기록은 삭제하지 않고 「別の画面で更新された記録を残しました。…」를 알린다. 부가 정보 없는 최소 `planned` 해제는 기존 `removeMinimalPlannedUserWork` 계약과 메시지를 쓴다. 해제 성공 알림에는 「元に戻す」 action을 둔다. 해제 직전 record 전체(감상·진행·이유 포함)를 새 `updatedAt`으로 `addUserWorkIfAbsent` 복원하며, 그 사이 다른 기록이 생겼으면 덮어쓰지 않는다. 「感想」 그룹(最高·良かった·普通·いまいち, Library와 같은 라벨·`aria-pressed`)은 `completed`·`dropped`이면 상태를 유지한 채 reaction만 저장하고, 그 밖이면 `completed`+reaction을 저장한다. 현재 감상을 다시 누르면 reaction만 제거한다. reaction이 `disliked`가 아니게 되면 `negativeReasons`를 제거하고, `dropped`의 `droppedReasons`는 유지한다. `completed`·`dropped`에 진행 기록이 있으면 「{N巻・N話}まで読んだ記録があります。」를, 연재 중·휴재 중 작품에는 「連載中の作品も、読んだところまでを「読んだ」として記録できます。」를 둔다. **저장 결과 알림 — 2026-09-29 사용자 요청:** 컨트롤 아래 인라인 문장 대신 공용 `Snackbar`(`src/components/layout/snackbar.tsx`, `/recommendations`와 같은 표면)를 쓴다. 한 `role="status"` live region에서 알림을 제자리 교체하므로 연속 탭에도 페이지가 밀리거나 깜빡이지 않는다. 저장 중 「保存しています…」 문장과 버튼 disabled 흐림은 두지 않고 `aria-busy`와 동기 mutation fence로 중복 실행을 막는다. 상태 알림은 5초(action이 있으면 8초) 뒤 닫히고 pointer·focus가 안에 있으면 멈춘다. 오류는 경고색 테두리로 표시하고 다음 조작까지 유지한다.
+현재 사용자가 제공한 상세 스펙·HTML과 후속 지시가 이 절의 프레젠테이션 권위다. 샘플의 더미 문장·수치·표지·「표지 로딩 다시 보기」 버튼은 구현하지 않는다. 색·타입·간격·radius는 기존 semantic token을 우선한다. 표지는 공용 `CoverImage`의 실제 로딩 상태만 사용한다.
+
+- 구매는 히어로의 「楽天ブックスで見る」 한 링크(없으면 기존 제목 검색 대체)와 이름이 「共有」인 44px 이상 아이콘 버튼이다. 별도 Kobo CTA는 두지 않는다. 실제 affiliate 링크일 때 고지를 버튼 아래에 유지하고 provider credit·오류 재시도·캐시 TTL을 보존한다. 공유는 OS 공유 또는 현재 URL 복사이며 취소는 실패로 알리지 않는다.
+- 「読書状態」는 히어로 아래, 「あらすじ」보다 앞에 오는 독립 영역이다(2026-10-01 후속 사용자 요청). 네 상태 버튼은 같은 행의 wrap 가능한 그룹이며 선택 상태는 accent 보더·accent-soft 배경이다. `aria-pressed`·44px target·busy mutation fence·저장 실패 피드백을 유지한다.
+- 「感想」은 저장된 `readingState === completed`에서만 펼친다. 다른 상태로 바꾸면 접근성 트리와 Tab 순서에서도 접히며 기존 reaction은 보존한다. 공용 `SegmentedControl`의 선택 인디케이터를 재사용한다. 같은 감상 재탭은 reaction만 해제한다. 현재 읽음 상태 재탭은 기존 조건부 record 해제·Undo이며 다른 화면의 최신 기록을 덮어쓰지 않는다. `negativeReasons`·`droppedReasons`의 유효 조건과 진행 표시를 보존한다.
+- 결과는 기존 Snackbar에 표시한다. 저장 실패·저장소 degraded·잘못된 경로·동시 편집 안내는 사용자의 복구에 필요하므로 숨기지 않는다. 소개·메타·팩터·근거의 단순 부재를 내부 실패 문구나 빈 슬롯으로 대신하지 않는다.
 
 ### 정보 위계
 
-2026-09-29 사용자 위임 개선: 셸은 `--layout-width-media`(1200px), 작품 제목 28px, 섹션 제목 20px, 하위 제목 16px, 본문 섹션 간격 `--space-shelf`를 쓴다. 구매 영역은 히어로로 올리고 본문 끝의 별도 「楽天ブックス」 섹션은 두지 않는다.
+1. 히어로: 원본 비율 표지 + 우측 제목/저자, 메타 스트립, 구매/공유를 상·중·하로 배치한다. 기존 880px 폭 토큰과 28px 제목·20px 섹션 제목을 사용한다. 모바일은 표지를 축소하고 메타를 2열로 줄바꿈한다.
+2. 메타 스트립은 값이 있는 출판사·권수·대표권 가격·리뷰만 표시한다. 알려진 연재 상태는 권수와 함께 보조 표기한다. 가격은 실제 대표권의 `第N巻`을 붙이며 미확인 권수를 1권으로 만들어내지 않는다. 가격·평점·리뷰 수 0/null은 셀을 생략한다. 실제 재고는 구매 근처에서 표시한다.
+3. 독립 「読書状態」를 소개보다 먼저 배치한다. 저장소 경고도 이 조작 영역과 함께 두고 상태 저장·감상·오류 안내 동작을 보존한다.
+4. `あらすじ`: 기존 동일 Work·대표 ISBN의 라쿠텐/출판사 소개를 검토해 사용하며, 선택한 출처와 실제 권 기준을 밝힌다. 본문이 없으면 제목·카드·출처를 함께 생략한다. 5줄 초과 시에만 「続きを読む」/「閉じる」를 제공한다. 샘플 문구·관찰 팩터·추천 이유로 줄거리를 작성하지 않는다. 추가 수집은 사용자 확인 범위에서만 한다.
+5. 값이 있는 장르·중심 Theme 칩, 알려진 축만 표시하는 「この作品の傾向」 순이다. unknown/notApplicable 축은 그 행을 생략하고 빈 그룹·전체 빈 섹션도 생략한다. 알려진 값 0은 표시하며 unknown을 0으로 바꾸지 않는다. 범주 수에 맞게 1~3열을 사용한다. 대표권 서지의 알려진 값은 보존한다.
+6. 「あなたとの相性」: 실제 첫 positive 이유 문장을 dark `ReasonBubble`에 그대로 표시하고 결속된 작품명만 강조한다. 중복 없는 나머지 팩터/클러스터는 accent outline 태그다. lower 방향·레이블 없는 이유는 원문을 유지한다. 실제 caution만 별도 `好みと異なる点` warn 블록에 표시한다. 이유가 전혀 없으면 빈 안내 대신 섹션을 생략한다. 다른 추천 화면의 설명 생성은 변경하지 않는다.
+7. 독립 「根拠になった作品」: 렌더된 similarity 이유와 양수 consensus contribution의 실제 작품만 수집한다. 양수 similarity 기여 합과 실제 consensus 참여를 근거로 정렬하고 동률은 Work ID다. consensus를 임의 분배하거나 supporter별 팩터 설명을 발명하지 않는다. 첫 카드만 filled 「主な根拠」, 나머지는 outline 「好みのつながり」이며 모두 dark surface다. 상위 3개만 먼저 표시하고 실제 4개 이상이면 `+N`으로 전체 목록 Dialog를 연다. 현재 엔진은 best Anchor + 최대 2 supporter이므로 모달 노출을 위해 엔진·Library·가짜 근거를 확장하지 않는다. 0개면 섹션을 생략하며 빈 슬롯은 어느 viewport에도 없다.
+8. 같은 작가 영역은 상세 본문 전체 폭의 공통 `--surface-1` 배경 안에 대표작 배너와 작은 나머지 작품 선반을 담는다(2026-10-01 후속 사용자 요청). 보이는 「そのほかの作品」 소제목은 생략하되 목록·스크롤 버튼의 접근 이름을 유지한다. desktop에서는 좌우로, mobile에서는 대표작 아래에 작은 선반을 배치한다. 작품별 Link는 분리하며 기존 실제 저자·리뷰 수·Work ID 기반 선택을 유지한다. 작은 카드의 저자명은 상위 제목과 중복되므로 생략하고 대표작·작은 카드 모두 실제 장르와 핵심 테마를 최대 3개까지 표시한다. 제목은 두 줄 공간을 예약하고 같은 행 카드의 hover/focus 배경은 전체 높이가 일치한다.
+9. 「この作品と近い作品」: 기존 themeRanked 다음 moodRanked를 ID 중복 없이 이어 한 선반에 표시한다. 후보·순서는 유지하고 두 상세 캐러셀은 `/recommendations`와 같은 `--layout-width-media` 1200px·공용 page padding 컨테이너를 사용한다(후속 사용자 요청). 「あなたの Top 10」과 동일한 공용 RankingShelf/RankingCard·overlay 화살표·양끝 fade·유한 scroll-snap을 사용한다. 순위/왕관과 ordered 순위 의미만 제외하고 실제 장르 metadata를 표시한다. 상세 전용 보더/배경 override는 제거한다. 0개면 섹션을 생략하며 external에는 만들지 않는다.
+10. 「違う味わいの作品」은 바로 다음에 배치한다. `02` §6.12의 실제 대조 후보 최대 6개와 첫 ContrastContribution의 축/방향에서 만든 짧은 설명을 표시한다. `/recommendations` 「隠れた候補」의 공용 DiscoveryCard와 overlay 유한 캐러셀을 재사용하며 제목/표지/「作品を見る」가 실제 상세로 간다. 개인화 entry·이유·낮은 인지도 판정을 합성하지 않는다. 설명은 모바일에도 표시하며 현재 작품과의 비교라는 문맥을 명시한다. 후보 0개는 전체 생략, 화면 밖 표지는 기존 visibility 기반 조회/공통 shimmer를 유지한다.
 
-1. 히어로: 동일 표지 URL의 강한 블러 배경(`aria-hidden`) 위에 원본 비율 표지(고해상도 `_ex=600x600`)
-2. 제목·저자·출판사·연재 상태·권수와, TTL 내 ProviderListing이 있을 때만 가격·재고·평점(리뷰 수). 그 아래 「楽天ブックスで見る」(또는 검색 대체)와 「共有」, 실패 시 「再試行」, affiliate·`Supported by Rakuten Developers` 안내, 읽음 상태 제어. 「共有」는 Web Share API가 있으면 OS 공유 창, 없으면 현재 URL 복사이며 둘 다 없으면 표시하지 않는다. 공유 창 닫기는 실패로 알리지 않는다.
-3. 작품 소개와 대표권 정보(발매일·레이블·페이지 수). 소개는 기본 최대 5줄이며, 현재 화면 폭에서 5줄을 넘을 때만 「続きを読む」로 원문 전체를 펼치고 「閉じる」로 다시 접는다. 원문과 출처는 보존하며 소개와 서지는 아래 항목별 우선순위를 따른다.
-4. 「ジャンル・テーマ」 칩(장르 + centrality 2 Theme). desktop에서는 소개·서지 오른쪽에 표시한다.
-4-1. 「この作品の傾向」(recommendationEligible Catalog 작품만): 展開·トーン・関係·作画 세 묶음의 Axis를 read-only `FactorBar`로 보여 준다(desktop 3열, mobile 1열). 미확인은 「未確認」, notApplicable은 「該当なし」로 표기하고 0으로 그리지 않는다. 한 묶음이 모두 미확인이면 막대 대신 한 줄 안내만 둔다. 확인된 Axis가 3개 미만이면 섹션 본문은 분석 중 안내만 둔다. 사용 가능한 프로필이 있으면 각 막대에 Manga DNA 값의 표시선과 범례(「この作品」「あなたの好み」)를 겹치고, 접근 이름 값 문구에 「あなたの好み: {정성 레이블}」을 덧붙인다. 레이더는 미확인 축을 0처럼 보이게 하므로 쓰지 않는다.
-5. **「あなたとの相性」 섹션** (프로필 존재 시): desktop은 같은 폭의 2열로 왼쪽에 제목·핵심 이유와 보조 포인트·주의점 최대 1, 오른쪽에 「根拠になった作品」 배너를 배치한다. 이유 표현은 아래 계약을 따른다. 2026-09-11 사용자 선택 이미지 1의 회청색 표면·흰 카드 구성을 적용하며 `あなたの Top 10`의 `RankingCard`를 `evidence` variant로 재사용한다. 근거 카드는 §6.9의 실제 Anchor 최대 3개이고 원본 비율 표지·역할·제목 전체가 Catalog 상세 링크다. 순위·왕관은 표시하지 않는다. 후속 사용자 지시에 따라 이 섹션의 「分析の確信度」 레이블과 전용 구분선은 표시하지 않는다. mobile은 이유 다음에 배너를 쌓으며 아래의 실제 근거 개수별 배치를 따른다. 확장 카드는 `完結作から選ぶ`의 표지 왼쪽·제목과 정보 오른쪽 배치를 사용한다. 부족한 개수를 가짜 근거로 채우지 않는다.
-6. (2026-09-29 이동) 구매 링크·가격·재고는 2번 히어로에서 표시한다.
-7. 「{作者}の作品」 섹션(2026-09-29 사용자 결정): 기존 creator 정규화로 같은 저자임을 확인한 다른 Catalog 작품을 모은다(현재 작품·external 제외). 대표작은 그중 `recommendationEligible` 작품에서 추천 문맥의 라쿠텐 리뷰 수가 가장 많은 작품(동률·미확인은 Work ID code-unit 순)이며 랜덤으로 고르지 않는다. desktop은 왼쪽 절반에 대표작의 실제 책 배너(원본 표지·「楽天レビュー 평균 · N件」 또는 연재 상태·권수·최대 3개 장르·「作品を見る」, 배너 전체가 상세 링크), 오른쪽 절반에 나머지 작품을 같은 순서로 `RankingCard` `unranked` 선반(h3 「そのほかの作品」)으로 둔다. mobile은 쌓는다. 나머지가 없으면 배너만 절반 폭, 대표작이 없으면 선반만 표시하고 모두 없으면 섹션을 생략한다. 이 섹션부터 관련 선반까지를 탐색 묶음으로 보고 앞 묶음과 `--space-shelf-group`, 선반 사이는 `--space-shelf` 간격을 쓴다.
-8. Catalog 작품만 deterministic known factor/theme selector로 구성한 관련/Same Mood Shelf. 2026-09-11 사용자 지시에 따라 「似た作品」·「同じ雰囲気の作品」은 `あなたの Top 10`과 같은 `RankingCard`의 `unranked` variant를 사용한다. 카드 폭·표지·제목·hover/focus 표현을 공유하고 저자를 본문 아래 metadata로 표시한다. 순위 숫자·왕관·순위 접근성 이름은 없으며 목록은 순서 없는 목록이다. core 추천 순위는 변경하지 않으며 external에는 factor를 추측하지 않는다.
+### 근거 모달과 모션
 
-### 상성 이유 표현 (2026-09-11 사용자 승인)
-
-- 제목은 왼쪽의 현재 위치에서 `--text-subheading-size`(desktop 20px)를 사용한다(2026-09-29 타이포 통일). 전체 폭 제목 행이나 새 크기를 추가하지 않고 「合いそうな理由」 소제목은 제거한다.
-- 첫 `positiveReasons[0].text`를 그대로 표시하며, 그 이유의 `anchorWorkIds`에 결속된 작품명만 강조한다. 나머지 positive 이유는 기존 팩터/클러스터 레이블로 본문 크기·본문 대비의 짧은 나열을 표시한다. 첫 이유와 같은 레이블과 보조 레이블끼리의 중복은 제외한다. 새 소제목·칩·추천 문장을 만들지 않는다.
-- 낮은 강도를 선호하는 `axisPreferenceDirection: lower` 이유는 「控えめ」의 방향을 잃지 않도록 원문 문장으로 유지한다. 원래 레이블을 찾을 수 없는 이유도 원문으로 보존한다. 이유가 하나면 보조 나열을 생략하며 빈 이유 안내와 실제 caution은 유지한다. 엔진 산식·문장 생성·다른 추천 화면의 표현은 바꾸지 않는다. 「好みのつながり」를 개별 팩터 이유 문장으로 풀지 않는다.
-- mobile의 보조 레이블 중 실제로 렌더되는 첫 근거 카드의 「近いポイント」와 겹치는 것만 왼쪽에서 생략한다. 카드 수가 1개·3개이고 첫 카드에 해당 포인트가 있을 때만 적용한다. 2개 상태, 포인트 없음, 첫 카드가 설명하지 않는 레이블은 왼쪽에 남긴다. 오른쪽 배너의 크기·표면·카드 구성은 유지한다.
-
-### 부족한 근거 슬롯 (2026-09-11 사용자 최종 선택)
-
-- desktop은 실제 근거 수에 관계없이 기존 3열·카드 크기를 유지한다. 근거가 1~2개면 남은 슬롯에 같은 `RankingCard`의 `evidence-placeholder` 상태를 사용한다. 실제 카드보다 대비가 낮은 밝은 바탕 중앙에 작은 책 윤곽 아이콘과 「追加の根拠なし」를 표시한다. 실제 표지 이미지·작품 제목·역할·링크·포커스가 없고 `aria-hidden`으로 접근성 트리에서 제외하며 추천 근거 개수나 contribution에 추가하지 않는다.
-- mobile은 빈 카드를 표시하지 않고 그 공간도 제거한다. 실제 근거가 1개면 확장 카드 하나, 2개면 기존 3개 표시의 두 번째·세 번째 카드와 같은 크기의 일반 카드 두 개를 표시한다. 3개면 첫 카드 전체 행·나머지 두 카드 아래 2열을 유지한다. 저자·근거 포인트는 확장 카드에만 표시한다.
-- 실제 근거가 0개면 배너를 생략한다. 실제 작품의 표지만 없는 경우에는 제목·저자가 있는 기존 대체 표지를 사용한다.
+- 전체 근거 Dialog는 공용 Base UI wrapper의 이름·`aria-modal`·focus trap·닫기 버튼·Esc·overlay 닫기·body scroll lock·trigger focus 복원을 사용한다. 목록에는 순서·역할·해당 작품에 결속된 기존 이유 또는 사실인 consensus 참여 설명만 표시하고 상세 링크를 유지한다.
+- 감상 공개는 실제 콘텐츠 높이와 opacity의 유한 spring 공개이며, 접히면 조작할 수 없다. reduced-motion에서는 높이 이동 없이 상태가 바뀌며 짧은 opacity만 허용한다. 선택 인디케이터의 기존 spring/reduced 계약은 유지한다.
+- 전역 표지의 실제 loading에서만 샘플의 16px 망점 이동·1.2s 시머를 사용한다. 성공 이미지로 opacity 크로스페이드하되 실패 placeholder는 즉시 표시한다. reduced-motion은 망점 이동을 제거한다. 가짜 지연·재생 버튼은 없다.
 
 ### 소개·서지 우선순위 (2026-09-11 사용자 승인)
 
-- 같은 Work·대표권·ISBN에 결속된 유효한 항목별로 **TTL 내 라쿠텐 API > 출판사 수집 Catalog > 기존 Catalog 서지 또는 미확인** 순으로 표시한다. HTTP 200만으로 모든 항목이 있다고 판단하지 않는다. 공백 문자열·null·누락은 결측이며 유효한 숫자 0은 결측이 아니다.
-- 양쪽 값이 있으면 라쿠텐 값을 선택한다. 소개를 이어 붙이거나 길이로 고르지 않는다. 출처 URL·수집일을 원천별로 보존하고 수집 자료를 Rakuten 캐시에 쓰지 않는다. 소개 옆에는 실제 선택한 출처 링크를 같은 형식의 「楽天ブックスの紹介」 / 「出版社の紹介」로 표시한다. 출판사 요약 여부와 원문은 authoring 자료에 보존한다.
+- 같은 Work·대표권·ISBN에 결속된 유효한 항목별로 **소개는 출판사 수집 Catalog > TTL 내 라쿠텐 API**, 나머지 서지는 **TTL 내 라쿠텐 API > 출판사 수집 Catalog > 기존 Catalog 서지** 순으로 표시한다. HTTP 200만으로 모든 항목이 있다고 판단하지 않는다. 공백 문자열·null·누락은 결측이다. 팩터 값 0은 유효한 값이며, 상세 상업 메타의 가격·리뷰 평균·리뷰 수 0은 새 샘플 계약에 따라 표시하지 않는다.
+- 2026-10-01 사용자 확정: 양쪽 소개가 있으면 출판사에 결속해 저장한 소개를 선택하고, 없으면 라쿠텐 소개를 사용한다. 둘 다 없으면 あらすじ 섹션 전체를 표시하지 않는다. 다른 서지 항목은 기존 라쿠텐 우선순위를 유지한다. 소개를 이어 붙이거나 길이로 고르지 않는다. 출처 URL·수집일을 원천별로 보존하고 수집 자료를 Rakuten 캐시에 쓰지 않는다. 소개 옆에는 실제 선택한 출처 링크를 같은 형식의 「楽天ブックスの紹介」 / 「出版社の紹介」로 표시한다. 출판사 요약 여부와 원문은 authoring 자료에 보존한다.
 - 수집 서지는 빌드 전용 `source_book_metadata`에서 해당 Volume의 선택적 `metadata`로 생성한다. 표지는 원본 URL을 사용하며 이미지 파일을 복제하지 않는다. 발매일은 API의 「頃」 등 원래 정밀도를 유지한다.
 - 가격·재고·리뷰·구매 링크는 기존 ProviderListing 경로만 사용한다. 수집값으로 만료된 상업 정보를 대체하지 않는다. 시리즈 전체 권수·상태와 canonical 제목·저자는 Catalog가 소유하며 단권 API 응답의 제목이나 권수를 시리즈 사실로 해석하지 않는다.
 
@@ -562,8 +563,8 @@ Catalog 작품은 추천 근거를 깊이 확인하고 구매(라쿠텐)로 연�
 
 ### 반응형
 
-- mobile: 히어로 표지 높이 최대 40vh, 이하 세로 스크롤. 상성 이유는 본문 「あなたとの相性」에서만 표시하고 히어로에 중복하지 않는다. 「楽天ブックスで見る」와 검색 대체 버튼은 구매 영역의 전체 폭을 사용한다.
-- desktop: dark cinematic backdrop 위 2열 — 좌측 고정 표지(sticky), 우측 정보 스크롤. 최대폭 1200px. 관련 Shelf는 hero 아래 전체폭이다.
+- mobile: 히어로 표지와 제목·정보는 세로로 배치하고 메타 스트립은 2열 wrap한다. 구매 링크와 공유 아이콘은 같은 행이다. 본문·근거 카드·감상에 가로 넘침이 없다.
+- desktop: dark backdrop 위 표지와 상·중·하 정보 2열이다. Catalog 상세의 히어로·본문·같은 작가 영역은 기존 880px 폭 토큰을 재사용한다. 「この作品と近い作品」·「違う味わいの作品」 두 캐러셀은 추천 페이지와 같은 1200px media 컨테이너와 공용 page padding을 사용한다. external 셸의 1200px 구성은 유지한다.
 
 ### 접근성
 
@@ -573,35 +574,33 @@ Catalog 작품은 추천 근거를 깊이 확인하고 구매(라쿠텐)로 연�
 ### 모션
 
 - 유효 Catalog 상세의 resolved content와 `found` external 상세의 resolved content에만 B를 적용한다. Catalog는 `workId`, external은 immutable external ID가 바뀐 새 route mount에서 다시 실행할 수 있다. loading·invalid-link·local-missing·corrupt·unavailable·error에는 적용하지 않는다.
-- 블러 배경과 표지 교체는 정적이며 이미지 load opacity fade를 적용하지 않는다.
-- 2026-10-01: 「あなたとの相性」 패널은 fine pointer hover에서 스포트라이트(`04` §6 G)를 쓰고, 패널의 이유는 `04` §2.9 말풍선으로 감싼다. 「読みたい」 저장 성공에는 확정 스탬프·스파크를 쓴다. reduced-motion에서는 스포트라이트·스파크 없이 상태만 바꾼다.
+- 블러 배경은 정적이다. 전경 표지의 loading→성공만 공용 크로스페이드 예외로 허용한다(`04` §4.1).
+- 2026-10-01 후속 사용자 결정: 「あなたとの相性」의 포인터 추적 조명·스포트라이트를 제거한다. 이유는 정적 dark 말풍선으로 표시한다. 「読みたい」의 기존 확정 피드백과 reduced-motion 대체는 유지한다.
 
 ### 수용 기준
 
 - [ ] 블러 배경과 전경이 동일 URL이며 추가 이미지 요청이 없다(같은 캐시 항목).
 - [ ] `_ex=600x600` 로드 실패 시 200x200으로 자동 폴백된다.
 - [ ] 상성 섹션 문구가 /recommendations 카드의 이유와 동일 소스(contribution)에서 생성된다.
-- [ ] 「この作品の傾向」은 확인된 Axis만 막대 값으로 그리고 미확인·해당 없음을 이름으로 표기한다. 프로필이 있으면 표시선·범례·접근 이름의 「あなたの好み」 문구가 Manga DNA 값과 일치한다.
-- [ ] 히어로에 구매 링크·가격·재고·평점과 「共有」가 있고, 공유는 OS 공유 창 또는 링크 복사 결과만 알린다.
-- [ ] 상성 제목은 왼쪽 위치와 subheading 토큰을 사용하며 「合いそうな理由」 소제목을 표시하지 않는다. 첫 이유 원문·결속된 작품명 강조·나머지 중복 없는 본문 레이블을 표시하며, 낮은 강도 이유 원문과 빈 이유 안내·caution을 보존한다.
-- [ ] mobile에서 실제 첫 근거 카드에 표시되는 「近いポイント」와 겹치는 보조 레이블만 왼쪽에서 생략한다. 1·3개와 달리 2개 상태에서는 왼쪽 보조 레이블을 유지하고, 카드에 없는 실제 이유도 사라지지 않는다.
 - [ ] 소개는 기본 최대 5줄이며 넘칠 때만 「続きを読む」를 표시한다. 버튼으로 원문 전체를 펼치고 「閉じる」로 다시 접으며 출처 링크를 유지한다. 화면 폭이 바뀌면 넘침을 다시 판단하고 버튼은 키보드·44px 터치 타깃·확장 상태 안내를 제공한다.
-- [ ] mobile 히어로에 상성 이유를 중복 표시하지 않고 본문 「あなたとの相性」에 기존 contribution 이유를 유지한다.
-- [ ] 근거 배너는 렌더링된 similarity 근거와 양수 적용 consensus의 실제 supporter만 최대 3개 표시하며 역할을 구분한다. 0개면 생략하고 표지·제목 링크는 키보드와 터치로 상세에 진입한다. desktop 반폭·mobile 적층에서 가로 넘침 없이 표시한다.
-- [ ] desktop에서 실제 근거가 1~2개이면 기존 크기의 근거 카드 뒤 남은 슬롯에 대비가 낮은 밝은 카드·책 윤곽 아이콘·「追加の根拠なし」를 표시한다. 빈 카드에는 실제 표지·작품 제목·역할·링크·포커스가 없고 접근성 트리와 실제 근거 개수에 포함되지 않는다. 0개면 배너를 생략한다.
-- [ ] mobile은 빈 카드와 그 공간을 제거한다. 실제 근거가 1개면 확장 카드 하나, 2개면 같은 크기의 일반 카드 두 개, 3개면 첫 작품 한 행·나머지 두 작품 아래 2열이다. 확장 카드는 표지와 제목·역할을 좌우에 두고 일반 카드보다 큰 표지와 제목을 사용한다.
-- [ ] mobile 확장 카드의 역할 아래에는 Catalog 저자와 「近いポイント」를 표시한다. 포인트는 해당 Anchor를 실제로 참조하는 렌더링된 positive similarity 이유의 Factor/Cluster 레이블만 사용하며, 해당 이유가 없으면 포인트 부분을 생략한다.
-- [ ] mobile의 「楽天ブックスで見る」와 검색 대체 버튼은 구매 영역의 전체 폭을 사용한다.
 - [ ] 읽음 상태 변경이 Library와 다음 추천에 반영된다.
 - [ ] 선택된 읽음 상태·북마크를 다시 누르면 기록이 해제되고 「元に戻す」로 해제 직전 record를 복원한다. 다른 화면에서 갱신된 기록은 해제·복원 어느 쪽에서도 덮어쓰거나 삭제하지 않는다.
-- [ ] 「読みたい」는 감상·상태 변경 뒤에도 같은 자리에 남고, 저장 결과는 레이아웃을 밀지 않는 snackbar로 제자리 교체된다.
 - [ ] 같은 브라우저에서 external 상세 URL을 새로고침해도 같은 로컬 record와 사용자 상태를 읽는다.
 - [ ] 같은 URL을 해당 row가 없는 브라우저에서 열면 local-missing 상태가 되고 provider로 복원하지 않는다.
 - [ ] malformed query는 해당 값으로 ID별 local lookup/provider 요청을 하지 않고, corrupt row는 provider 요청과 questionable 서지 렌더링을 하지 않는다.
-- [ ] 관련 Shelf selector는 동일 입력에서 같은 work ID 순서이고 external 작품에는 표시되지 않는다.
-- [ ] 「似た作品」·「同じ雰囲気の作品」은 Top 10과 같은 카드 컴포넌트의 순위 없는 상태로 표시한다. 표지·제목·저자·상세 링크·키보드 탐색을 유지하며 순위 효과와 순위 안내를 표시하지 않는다.
-- [ ] 정상 API 응답에서도 소개가 없으면 같은 ISBN의 수집 소개를 표시하며, 양쪽에 값이 있는 항목은 라쿠텐 값을 선택한다. 다른 Work·ISBN의 수집 정보는 결합하지 않는다.
-- [ ] 「{作者}の作品」의 대표작은 같은 입력에서 항상 같은 작품(리뷰 수 → Work ID)이고 절반 폭 배너가 실제 Catalog 상세로 이동한다. 나머지 작품 선반은 같은 순서이며, mobile에서도 책과 문구를 나란히 표시하고 가로 넘침·hover 전용 조작이 없다.
+- [ ] 정상 API 응답에서도 소개가 없으면 같은 ISBN의 수집 소개를 표시하며, 양쪽 소개가 있으면 저장된 출판사 소개를 우선하고, 다른 서지는 라쿠텐 우선순위를 유지한다. 다른 Work·ISBN의 수집 정보는 결합하지 않는다.
+- [ ] 「{作者}の作品」의 대표작은 같은 입력에서 항상 같은 작품(리뷰 수 → Work ID)이고 실제 Catalog 상세로 이동한다. 본문 전체 폭의 공통 배경 안에 대표작과 작은 나머지 작품 선반이 들어가며 「そのほかの作品」 소제목은 보이지 않는다. 작은 카드의 중복 저자명을 생략하고 대표작·작은 카드에 실제 장르/핵심 테마를 최대 3개 표시하며, 같은 행의 hover/focus 배경 높이가 일치한다. 나머지 목록의 순서·접근 이름·키보드 조작을 유지하며, mobile에서도 대표작 책과 문구는 나란히 표시하고 페이지 가로 넘침·hover 전용 조작이 없다.
+- [ ] 값이 없는 소개·메타·장르·축·근거는 행/그룹/섹션 전체를 숨기며 실패 문구·빈 근거 슬롯·더미 데이터가 없다. 알려진 축 값 0은 유지한다.
+- [ ] 히어로는 제목/저자·슬림 메타·구매/공유를 분산 배치하고 공유 아이콘은 「共有」 이름과 44px target을 가진다. 가격은 실제 대표권 기준이며 Kobo 중복 CTA가 없다.
+- [ ] 読書状態는 あらすじ보다 먼저 표시된다. あらすじ는 검토된 기존 소개와 실제 출처·판본만 사용하며 본문 없는 작품에는 섹션을 만들지 않는다.
+- [ ] 상성은 dark 말풍선·중복 없는 태그·실제 caution으로 구성하며 낮은 선호 방향과 원문 의미를 보존한다.
+- [ ] 독립 근거는 실제 데이터만 최대 3개, 첫 카드만 primary다. 실제 4개 이상에서만 +N 모달이 나타나며 닫기/Esc/overlay/focus/scroll lock과 전체 상세 링크를 제공한다.
+- [ ] 감상은 読んだ에서만 조작 가능하고 다른 상태로 전환해도 reaction을 보존한다. 복귀·새로고침 후 기존 감상이 다시 선택되며 저장 오류는 숨기지 않는다.
+- [ ] 알려진 축만 표시하며 빈 분류·전체 빈 성향 섹션을 만들지 않는다. 프로필 비교선의 값과 접근 이름은 기존 DNA를 유지한다.
+- [ ] 기존 두 관련 목록을 중복 없이 하나의 この作品と近い作品 선반으로 제공하며 동일 입력의 순서를 유지한다. Top 10의 공용 캐러셀/카드·장르 metadata·상세 링크·키보드 조작과 유한 양끝을 사용하고 순위 숫자/왕관/ordered 의미는 없다.
+- [ ] 違う味わいの作品은 가까운 작품 다음에 오고 隠れた候補의 공용 캐러셀/카드를 사용한다. 실제 비교 근거·중복/기록 제외·unknown 보호·최대 6개·0개 비표시를 지키며 모바일에서도 차이 설명과 상세 이동을 제공한다.
+- [ ] 모든 CoverImage 소비자는 실제 loading에만 공통 망점 시머를 사용하고 성공 크로스페이드·lazy·200px fallback·실패 대체 표지를 유지한다. 로딩 재생 버튼·인위적 대기·tilt가 없다.
+- [ ] 390px와 desktop에서 가로 넘침·읽을 수 없는 메타·숨은 감상 focus가 없으며 reduced-motion은 망점/높이/인디케이터 이동을 제거한다.
 
 ---
 
@@ -656,7 +655,7 @@ Catalog 작품은 추천 근거를 깊이 확인하고 구매(라쿠텐)로 연�
 
 ### 모션
 
-Library와 상세 panel·bottom sheet·dialog는 조용한 표면이다. panel/sheet 진입 keyframe과 표지 load opacity fade를 적용하지 않고 최종 위치·상태로 즉시 표시한다. 2026-10-01 상태 탭의 선택 배경만 `04` §6.1 D spring으로 이동한다. 가변 너비·wrap·키보드·URL 선택은 유지하고 reduced-motion은 즉시 최종 배경이다.
+Library와 상세 panel·bottom sheet·dialog는 조용한 표면이다. panel/sheet 진입 keyframe 없이 최종 위치·상태로 즉시 표시한다. 공용 CoverImage의 실제 loading→성공 크로스페이드는 `04` §4.1을 따른다. 2026-10-01 상태 탭의 선택 배경만 `04` §6.1 D spring으로 이동한다. 가변 너비·wrap·키보드·URL 선택은 유지하고 reduced-motion은 즉시 최종 배경이다.
 
 ### 수용 기준
 
@@ -730,7 +729,8 @@ Base UI primitive는 shadcn CLI로 `src/components/ui/**`에 생성하고 `src/c
 | `CoverImage`         | 모든 표지 렌더           | 원본 비율(object-contain), radius 4px, 1px `--line` 테두리, 로드 실패 시 타이포 placeholder, `_ex` 크기 프리셋(thumb 200/card 400/hero 600), lazy loading                                                                                                                                                                                                                    |
 | `MediaShelf`         | 가로 탐색                | CSS scroll-snap + ResizeObserver. Featured는 inert/aria-hidden clone을 둔 3-copy pointer/touch 루프이고 키보드는 canonical card 끝에서 비순환한다. 나머지 Shelf는 끝에서 화살표·키보드 비순환이다. overlay variant는 track 시작선을 콘텐츠 shell에 유지한 채 좌우 fade 폭만큼 viewport와 fade를 negative gutter로 확장한다. reduced-motion instant scroll, Embla/Swiper 없음 |
 | `RecommendationCard` | 추천 featured 탐색       | 4px-grid 고정 poster(Desktop 344×448), 2줄 title slot·메타/confidence·원본비율 표지·lead reason. fine pointer hover/focus는 외곽 고정 상태에서 표지를 줄이고 최대 3줄 reason+44px icon action rail을 열며 coarse pointer는 rail을 상시 표시한다. identity는 상세, Quick Preview는 작품 단위 접근 이름을 가진 ScanSearch icon control                                         |
-| `RankingShelf`       | Top 10                   | `<ol>` + 화면에 보이는 텍스트 순위, canonical plan 순서 유지. Quick Preview 없음                                                                                                                                                                                                                                                                                             |
+| `RankingShelf`       | Top 10·상세의 가까운 작품 | Top 10은 `<ol>` + 화면에 보이는 텍스트 순위, canonical plan 순서 유지. 상세의 unranked는 같은 카드/유한 트랙을 `<ul>`로 제공하며 순위/왕관을 제외한다. Quick Preview 없음 |
+| `DiscoveryCard`      | 숨은 후보·다른 맛 탐색    | 공용 크기·표지 원형→사각 hover/focus·표면·접근성 경로. 이유와 액션은 호출자가 실제 근거와 함께 제공한다. 추천은 contribution + Quick Preview, 상세는 ContrastContribution + 상세 Link이며 비교 설명은 모바일에도 표시한다. |
 | `QuickPreview`       | 상세 전 주요 정보/action | desktop Dialog/mobile Sheet wrapper, `?preview` 대상만 URL, focus trap/opener 복원. opener는 동일 ScanSearch+「クイック表示」 quiet 컨트롤이며 identity `Link` 밖에 둔다. Top 10에는 없다                                                                                                                                                                                    |
 | `ReasonChips`        | 이유·주의점 표시         | contribution 데이터에서만 생성, cluster당 1개, 최대 3+1                                                                                                                                                                                                                                                                                                                      |
 | `ConfidenceLabel`    | 확신도 표시              | 3단 레이블만, 숫자·퍼센트 금지                                                                                                                                                                                                                                                                                                                                               |

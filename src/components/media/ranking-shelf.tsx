@@ -3,7 +3,7 @@ import type { ReactNode } from "react";
 import { MediaShelf } from "./media-shelf";
 
 type RankingShelfProps = Readonly<{
-  rankingKind: "editorial-ranking" | "personalized-ranking";
+  rankingKind: "editorial-ranking" | "personalized-ranking" | "unranked";
   title: string;
   description?: string;
   children: ReactNode;
@@ -30,10 +30,10 @@ export function RankingShelf({
       controlsPlacement={controlsPlacement}
       description={description}
       enableLoop={false}
-      listType="ordered"
+      listType={rankingKind === "unranked" ? "unordered" : "ordered"}
       title={title}
       trackClassName={trackClassName}
-      trackData={{ "data-ranking-shelf": rankingKind }}
+      trackData={rankingKind === "unranked" ? undefined : { "data-ranking-shelf": rankingKind }}
     >
       {children}
     </MediaShelf>

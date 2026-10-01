@@ -1159,7 +1159,7 @@ export function RecommendationsFlow({
     storedPolicies === undefined
   ) {
     return (
-      <main className="mx-auto min-h-dvh w-full max-w-[var(--layout-width-media)] px-[var(--layout-page-padding)] pt-[var(--layout-page-block-start)] pb-[calc(var(--layout-mobile-navigation-clearance)+var(--space-8))] md:pb-[var(--space-section-large)] [--recommendation-cover-width:104px]">
+      <main className="mx-auto min-h-dvh w-full max-w-[var(--layout-width-media)] px-[var(--layout-page-padding)] pt-[var(--layout-page-block-start)] [--recommendation-cover-width:104px]">
         <p aria-live="polite">{recommendationStrings.loading}</p>
       </main>
     );
@@ -1263,7 +1263,7 @@ export function RecommendationsFlow({
   return (
     <>
       <main
-        className="mx-auto w-full max-w-[var(--layout-width-media)] bg-canvas px-[var(--layout-page-padding)] pt-[var(--layout-page-block-start)] pb-[var(--space-8)] md:pb-[var(--space-6)] [--recommendation-cover-width:104px]"
+        className="mx-auto w-full max-w-[var(--layout-width-media)] bg-canvas px-[var(--layout-page-padding)] pt-[var(--layout-page-block-start)] [--recommendation-cover-width:104px]"
         data-recommendation-input-hash={displayedHash ?? undefined}
       >
         <div className="block w-full min-w-0">

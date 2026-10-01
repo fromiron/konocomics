@@ -2,6 +2,7 @@ import { Link } from "@tanstack/react-router";
 import { ScanSearchIcon } from "lucide-react";
 
 import { CoverImage } from "@/components/cover/CoverImage";
+import { DiscoveryCard } from "@/components/media/discovery-card";
 import { ReasonBubble } from "@/components/media/reason-bubble";
 import { ExpandableMediaCard } from "@/components/media/expandable-media-card";
 import { QuietTextAction, StateActionRow } from "@/components/media/state-action-row";
@@ -66,12 +67,7 @@ export function RecommendationShelfCard({
       : undefined;
   const anchorMention = anchorTitle ?? "";
   const anchorMentionIndex = anchorMention === "" ? -1 : leadReason.indexOf(anchorMention);
-  const expandable = variant !== "discovery";
-  const compact = !expandable;
-  const morphDiscoveryCover = variant === "discovery" && Boolean(coverUrl?.trim());
-  const widthClass = expandable
-    ? "w-[calc((100vw-(var(--layout-page-padding)*2)-(var(--space-content-loose)*2))/2.4)] max-w-44 sm:w-32 md:w-[calc((100%-var(--space-content-loose)*7)/8)] md:min-w-28 md:max-w-32"
-    : "w-[calc((100vw-(var(--layout-page-padding)*2)-(var(--space-content-loose)*2))/1.8)] max-w-72 sm:w-64 md:w-[calc((100%-var(--space-content-loose)*4)/5)] md:min-w-60";
+  const compact = variant === "discovery";
   const previewControl = (
     <QuietTextAction
       aria-label={recommendationStrings.quickPreview.open(work.title)}
@@ -82,78 +78,61 @@ export function RecommendationShelfCard({
       {recommendationStrings.quickPreview.openLabel}
     </QuietTextAction>
   );
+  if (compact) {
+    return (
+      <DiscoveryCard
+        action={previewControl}
+        coverUrl={coverUrl}
+        creators={work.creators}
+        id={`recommendation-shelf-work-${work.id}`}
+        marker="discovery"
+        onCoverVisible={onCoverVisible}
+        priority={priority}
+        reason={leadReason}
+        title={work.title}
+        workId={work.id}
+      />
+    );
+  }
+
   const identityLinkClassName =
     "min-h-[var(--control-min-size)] focus-visible:outline-2 focus-visible:outline-offset-[-2px] focus-visible:outline-ring";
-  const titleClassName = cn(
-    "line-clamp-2 text-[length:var(--font-size-14)] leading-tight font-bold text-text-strong",
-    expandable && "min-h-[2.5em]",
-  );
+  const titleClassName =
+    "line-clamp-2 text-[length:var(--font-size-14)] leading-tight font-bold text-text-strong min-h-[2.5em]";
 
   const cardClassName = cn(
     "group/shelf-card shrink-0 snap-start overflow-hidden rounded-[var(--radius-card)] border border-transparent bg-transparent focus-within:bg-surface-2 [@media(hover:hover)_and_(pointer:fine)]:hover:bg-surface-2",
-    expandable
-      ? "data-[expanded=true]:bg-surface-2"
-      : "transition-colors duration-[var(--motion-duration-value)] ease-[var(--motion-ease-direct)] motion-reduce:transition-none",
-    widthClass,
-    compact &&
-      "grid grid-rows-[auto_minmax(0,1fr)] gap-[var(--space-2)] p-[var(--space-2)] md:grid-cols-[auto_minmax(0,1fr)] md:grid-rows-1 md:items-stretch md:py-[var(--space-3)]",
+    "data-[expanded=true]:bg-surface-2",
+    "w-[calc((100vw-(var(--layout-page-padding)*2)-(var(--space-content-loose)*2))/2.4)] max-w-44 sm:w-32 md:w-[calc((100%-var(--space-content-loose)*7)/8)] md:min-w-28 md:max-w-32",
   );
   const content = (
     <>
       <Link
         aria-label={mediaStrings.openDetails(work.title)}
-        className={cn(
-          identityLinkClassName,
-          compact && "min-h-0 md:h-full md:w-auto md:aspect-[30/43]",
-          expandable && "relative !grid gap-[var(--space-2)]",
-        )}
+        className={cn(identityLinkClassName, "relative !grid gap-[var(--space-2)]")}
         params={{ workId: work.id }}
         preload={false}
         to="/works/$workId"
       >
         <CoverImage
-          className={cn(
-            "aspect-[30/43] w-full overflow-hidden rounded-[var(--radius-cover)] border border-line/60",
-            expandable && "border-transparent bg-transparent",
-            compact && "md:h-full md:w-full",
-            morphDiscoveryCover &&
-              "border-transparent [clip-path:inset(15.116279%_0_round_50%_/_34.883721%)] transition-[clip-path] duration-[var(--motion-duration-value)] ease-linear group-focus-within/shelf-card:[clip-path:inset(0_round_var(--radius-cover))] motion-reduce:transition-none [@media(hover:hover)_and_(pointer:fine)]:group-hover/shelf-card:[clip-path:inset(0_round_var(--radius-cover))]",
-          )}
+          className="aspect-[30/43] w-full overflow-hidden rounded-[var(--radius-cover)] border border-transparent bg-transparent"
           coverUrl={coverUrl}
           creators={work.creators}
-          fit={expandable ? "cover-square" : morphDiscoveryCover ? "cover" : "contain"}
-          matchSourceAspectRatio={compact}
+          fit="cover-square"
           onVisible={onCoverVisible}
           priority={priority}
           requestedSize={400}
           title={work.title}
         />
-        {compact ? null : <h3 className={titleClassName}>{work.title}</h3>}
+        <h3 className={titleClassName}>{work.title}</h3>
       </Link>
-      {compact ? (
-        <div className="flex h-full min-h-0 min-w-0 flex-col gap-[var(--space-1)]">
-          <Link
-            className={cn(identityLinkClassName, "min-w-0")}
-            params={{ workId: work.id }}
-            preload={false}
-            to="/works/$workId"
-          >
-            <h3 className={titleClassName}>{work.title}</h3>
-          </Link>
-          <p className="hidden border-l-2 border-accent/50 pl-[var(--space-2)] text-[length:var(--text-caption-size)] leading-[1.4] text-text-muted md:line-clamp-2">
-            {leadReason}
-          </p>
-          {previewControl}
-        </div>
-      ) : (
-        <div className="[@media(min-width:768px)_and_(hover:hover)_and_(pointer:fine)]:hidden">
-          {previewControl}
-        </div>
-      )}
+      <div className="[@media(min-width:768px)_and_(hover:hover)_and_(pointer:fine)]:hidden">
+        {previewControl}
+      </div>
     </>
   );
 
-  return expandable ? (
+  return (
     <ExpandableMediaCard
       className={cardClassName}
       data-lead-anchor-work-ids={leadSentence?.anchorWorkIds.join(" ")}
@@ -201,13 +180,5 @@ export function RecommendationShelfCard({
     >
       <div className="p-[var(--space-2)] md:py-[var(--space-3)]">{content}</div>
     </ExpandableMediaCard>
-  ) : (
-    <article
-      className={cardClassName}
-      data-recommendation-shelf-card={variant}
-      id={`recommendation-shelf-work-${work.id}`}
-    >
-      {content}
-    </article>
   );
 }

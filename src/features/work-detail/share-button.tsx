@@ -4,6 +4,7 @@ import { Share2Icon } from "lucide-react";
 import { useEffect, useState } from "react";
 
 import { Button } from "@/components/design-system/button";
+import { Snackbar } from "@/components/layout/snackbar";
 import { workDetailStrings } from "@/lib/strings";
 
 type ShareMode = "share" | "copy" | null;
@@ -47,19 +48,29 @@ export function ShareButton({ title }: Readonly<{ title: string }>) {
   };
 
   return (
-    <span className="inline-flex flex-wrap items-center gap-x-[var(--space-3)]">
+    <>
       <Button
-        className="gap-[var(--space-2)] px-[var(--space-4)] font-bold"
+        aria-label={workDetailStrings.share.action}
+        className="size-[var(--control-min-size)] shrink-0"
         onClick={() => void share()}
+        size="icon"
         type="button"
         variant="outline"
       >
         <Share2Icon aria-hidden="true" className="size-4" />
-        {workDetailStrings.share.action}
       </Button>
-      <span aria-live="polite" className="text-[length:var(--text-caption-size)] text-text-muted">
-        {message}
-      </span>
-    </span>
+      <Snackbar
+        notice={
+          message === ""
+            ? undefined
+            : {
+                id: 1,
+                text: message,
+                tone: message === workDetailStrings.share.failed ? "error" : "status",
+              }
+        }
+        onDismiss={() => setMessage("")}
+      />
+    </>
   );
 }

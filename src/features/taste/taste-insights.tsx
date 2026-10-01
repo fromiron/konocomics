@@ -1,72 +1,13 @@
 import { Link } from "@tanstack/react-router";
+import { ChevronDownIcon } from "lucide-react";
+import { useState } from "react";
+
+import { Button } from "@/components/design-system/button";
 
 import { CoverImage } from "@/components/cover/CoverImage";
 import type { Work } from "@/domain/catalog/types";
-import type { MangaDnaSummary } from "@/domain/profile/dna-summary";
-import { explanationLexicon, mediaStrings, tasteStrings } from "@/lib/strings";
+import { mediaStrings, tasteStrings } from "@/lib/strings";
 import { cn } from "@/lib/utils";
-
-import { FactorBar } from "@/components/media/factor-bar";
-
-const AXES_OVERVIEW_LIMIT = 8;
-
-export function DnaAxesOverview({
-  animateReveal,
-  axes,
-  revealReady,
-}: Readonly<
-  Pick<MangaDnaSummary, "axes"> & {
-    animateReveal: boolean;
-    revealReady: boolean;
-  }
->) {
-  const confirmedAxes = axes
-    .flatMap((axis) =>
-      axis.state === "known" && axis.value !== null
-        ? [{ factorId: axis.factorId, value: axis.value }]
-        : [],
-    )
-    .sort(
-      (left, right) =>
-        right.value - left.value ||
-        (left.factorId < right.factorId ? -1 : left.factorId > right.factorId ? 1 : 0),
-    )
-    .slice(0, AXES_OVERVIEW_LIMIT);
-
-  return (
-    <section
-      aria-labelledby="taste-axes-heading"
-      className="taste-axes grid content-start gap-[var(--space-3)]"
-    >
-      <h2
-        className="text-[length:var(--text-subheading-size)] text-text-strong"
-        id="taste-axes-heading"
-      >
-        {tasteStrings.axesHeading}
-      </h2>
-      {confirmedAxes.length === 0 ? (
-        <p className="text-text-muted">{tasteStrings.axesPending}</p>
-      ) : (
-        <ul className="m-0 grid list-none grid-cols-1 gap-x-[var(--space-6)] gap-y-[var(--space-3)] p-0 sm:grid-cols-2">
-          {confirmedAxes.map((axis, index) => (
-            <li className="min-w-0" key={axis.factorId}>
-              <FactorBar
-                animateReveal={animateReveal}
-                enterDelay={index * 0.04}
-                enterFill
-                label={explanationLexicon.factorLabels[axis.factorId]}
-                revealDelay={index * 0.06}
-                revealReady={revealReady}
-                state="known"
-                value={axis.value}
-              />
-            </li>
-          ))}
-        </ul>
-      )}
-    </section>
-  );
-}
 
 function WorkPreviewList({
   coverUrls,
@@ -147,6 +88,7 @@ export function RecommendationDiffPreview({
   coverUrls: ReadonlyMap<string, string | null>;
   onCoverVisible(workId: string): void;
 }>) {
+  const [unchangedExpanded, setUnchangedExpanded] = useState(false);
   const available = before !== null && after !== null;
   const unchanged =
     available &&
@@ -172,8 +114,59 @@ export function RecommendationDiffPreview({
       {available && before.length === 0 && after.length === 0 ? (
         <p className="text-text-muted">{tasteStrings.previewEmpty}</p>
       ) : available ? (
-        <div className="taste-recommendation-preview__body grid gap-[var(--space-content)]">
-          <div className="taste-recommendation-preview__columns grid grid-cols-1 items-start gap-[var(--space-content-loose)] md:grid-cols-2">
+        <div className="taste-recommendation-preview__body grid gap-[var(--space-3)]">
+          <div
+            className={cn(
+              "taste-recommendation-preview__note flex items-start gap-[var(--space-3)]",
+              unchanged &&
+                "rounded-[var(--radius-card)] border border-accent/25 bg-accent/5 p-[var(--space-4)]",
+            )}
+          >
+            {unchanged ? (
+              <span
+                aria-hidden="true"
+                className="mt-[var(--space-2)] size-2 shrink-0 rounded-full bg-accent"
+              />
+            ) : null}
+            <div className="grid gap-[var(--space-1)]">
+              <p
+                aria-atomic="true"
+                aria-live="polite"
+                className="taste-recommendation-preview__status text-[length:var(--font-size-14)] text-text"
+              >
+                {unchanged ? tasteStrings.previewUnchanged : tasteStrings.previewChanged}
+              </p>
+              {unchanged ? (
+                <p className="text-[length:var(--text-caption-size)] text-text-muted">
+                  {tasteStrings.previewUnchangedHint}
+                </p>
+              ) : null}
+            </div>
+          </div>
+          {unchanged ? (
+            <Button
+              aria-controls="taste-recommendation-preview-lists"
+              aria-expanded={unchangedExpanded}
+              className="w-fit gap-[var(--space-2)] px-0 text-accent"
+              onClick={() => setUnchangedExpanded((open) => !open)}
+              type="button"
+              variant="ghost"
+            >
+              {unchangedExpanded ? tasteStrings.previewCollapse : tasteStrings.previewExpand}
+              <ChevronDownIcon
+                aria-hidden="true"
+                className={cn(
+                  "size-4 transition-transform duration-[var(--motion-duration-feedback)] motion-reduce:transition-none",
+                  unchangedExpanded && "rotate-180",
+                )}
+              />
+            </Button>
+          ) : null}
+          <div
+            className="taste-recommendation-preview__columns grid grid-cols-1 items-start gap-[var(--space-6)] md:grid-cols-2"
+            hidden={unchanged && !unchangedExpanded}
+            id="taste-recommendation-preview-lists"
+          >
             {unchanged ? null : (
               <WorkPreviewList
                 coverUrls={coverUrls}
@@ -193,13 +186,6 @@ export function RecommendationDiffPreview({
               worksById={worksById}
             />
           </div>
-          <p
-            aria-atomic="true"
-            aria-live="polite"
-            className="taste-recommendation-preview__status text-[length:var(--font-size-12)] font-bold text-text-muted"
-          >
-            {unchanged ? tasteStrings.previewUnchanged : tasteStrings.previewChanged}
-          </p>
         </div>
       ) : (
         <p>{tasteStrings.previewUnavailable}</p>

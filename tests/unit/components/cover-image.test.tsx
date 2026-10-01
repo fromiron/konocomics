@@ -160,7 +160,7 @@ describe("CoverImage accessibility contract", () => {
     expect(fallbackVisible).toHaveBeenCalledOnce();
   });
 
-  it("keeps the real image paintable above its skeleton before load settles", () => {
+  it("keeps the pending cover named while its shared loading layer stays decorative", () => {
     const { container } = render(
       <CoverImage coverUrl="https://example.com/cover.jpg" creators={["作者"]} title="作品" />,
     );
@@ -169,35 +169,46 @@ describe("CoverImage accessibility contract", () => {
     const skeleton = container.querySelector(".cover-image__skeleton");
 
     expect(image?.dataset.loaded).toBe("false");
+    expect(image?.dataset.loading).toBe("true");
     expect(skeleton).toBeTruthy();
+    expect(skeleton?.getAttribute("aria-hidden")).toBe("true");
+    expect(skeleton?.getAttribute("data-loaded")).toBe("false");
     expect(skeleton?.nextElementSibling).toBe(artwork);
     expect(artwork?.contains(image ?? null)).toBe(true);
     expect(image?.hidden).toBe(false);
     expect(image?.getAttribute("aria-hidden")).toBeNull();
   });
 
-  it("removes the skeleton and reports settlement exactly once after a successful load", () => {
-    const onSettled = vi.fn();
-    const { container } = render(
-      <CoverImage
-        coverUrl="https://example.com/cover.jpg"
-        creators={["作者"]}
-        onSettled={onSettled}
-        title="作品"
-      />,
-    );
-    const image = container.querySelector<HTMLImageElement>(".cover-image__image");
-    if (image === null) throw new Error("Expected the cover image");
+  it.each(["standard", "hero"] as const)(
+    "crossfades the %s loading layer to its completed state and reports settlement once",
+    (variant) => {
+      const onSettled = vi.fn();
+      const { container } = render(
+        <CoverImage
+          coverUrl="https://example.com/cover.jpg"
+          creators={["作者"]}
+          onSettled={onSettled}
+          title="作品"
+          variant={variant}
+        />,
+      );
+      const image = container.querySelector<HTMLImageElement>(".cover-image__image");
+      if (image === null) throw new Error("Expected the cover image");
 
-    expect(onSettled).not.toHaveBeenCalled();
-    fireEvent.load(image);
-    expect(image.dataset.loaded).toBe("true");
-    expect(container.querySelector(".cover-image__skeleton")).toBeNull();
-    expect(onSettled).toHaveBeenCalledOnce();
+      expect(onSettled).not.toHaveBeenCalled();
+      fireEvent.load(image);
+      expect(image.dataset.loaded).toBe("true");
+      const skeleton = container.querySelector(".cover-image__skeleton");
+      expect(skeleton?.getAttribute("data-loaded")).toBe("true");
+      expect(skeleton?.getAttribute("aria-hidden")).toBe("true");
+      expect(image.hasAttribute("data-loading")).toBe(false);
+      expect(screen.getByRole("img", { name: "作品 表紙" })).toBe(image);
+      expect(onSettled).toHaveBeenCalledOnce();
 
-    fireEvent.load(image);
-    expect(onSettled).toHaveBeenCalledOnce();
-  });
+      fireEvent.load(image);
+      expect(onSettled).toHaveBeenCalledOnce();
+    },
+  );
 
   it("can match the frame to the source ratio without cropping", () => {
     const { container } = render(

@@ -22,7 +22,7 @@ const volume = {
 };
 
 describe("work book information", () => {
-  it("chooses each nonblank Rakuten field before collected information and preserves its citation", () => {
+  it("prefers the stored publisher caption and keeps fresh Rakuten fields for other metadata", () => {
     expect(
       resolveWorkBookMetadata(work, volume, {
         itemCaption: " APIの紹介 ",
@@ -32,9 +32,9 @@ describe("work book information", () => {
         itemUrl: "https://books.rakuten.co.jp/rb/1/",
       }),
     ).toMatchObject({
-      itemCaption: "APIの紹介",
-      captionSource: "rakuten",
-      captionSourceUrl: "https://books.rakuten.co.jp/rb/1/",
+      itemCaption: "収集した紹介",
+      captionSource: "publisher",
+      captionSourceUrl: volume.metadata.sourceUrl,
       publisherName: "API出版社",
       salesDate: "2003年08月08日頃",
       imageUrl: "https://example.com/api.jpg",
@@ -50,6 +50,36 @@ describe("work book information", () => {
       salesDate: "2003-08-06",
       imageUrl: volume.metadata.imageUrl,
     });
+  });
+
+  it("falls back to the nonblank Rakuten caption only when the publisher caption is absent", () => {
+    const provider = {
+      itemCaption: " APIの紹介 ",
+      itemUrl: "https://books.rakuten.co.jp/rb/1/",
+    };
+    expect(
+      resolveWorkBookMetadata(
+        work,
+        { ...volume, metadata: { ...volume.metadata, itemCaption: "  " } },
+        provider,
+      ),
+    ).toMatchObject({
+      itemCaption: "APIの紹介",
+      captionSource: "rakuten",
+      captionSourceUrl: provider.itemUrl,
+    });
+    expect(resolveWorkBookMetadata(work, undefined, provider)).toMatchObject({
+      itemCaption: "APIの紹介",
+      captionSource: "rakuten",
+      captionSourceUrl: provider.itemUrl,
+    });
+    expect(
+      resolveWorkBookMetadata(
+        work,
+        { ...volume, metadata: { ...volume.metadata, itemCaption: "  " } },
+        { ...provider, itemCaption: "\n " },
+      ).itemCaption,
+    ).toBeUndefined();
   });
 
   it("uses collected data without a fresh provider and excludes a volume bound to another work", () => {
