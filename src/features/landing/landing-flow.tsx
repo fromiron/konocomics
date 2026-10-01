@@ -5,8 +5,8 @@ import { useEffect, useMemo } from "react";
 
 import { coverSourceForSize } from "@/components/cover/CoverImage";
 import { BrandWordmark } from "@/components/nav/brand-wordmark";
-import { hasCatalogBackedProfileById } from "@/domain/profile/catalog-profile";
-import { useCatalogIdentity } from "@/features/catalog/catalog-provider";
+import { CatalogFailure } from "@/features/catalog/catalog-provider";
+import { usePersonalProfile } from "@/features/catalog/personal-catalog-provider";
 import { useRecommendationCovers } from "@/features/recommendations/recommendation-cover-resolver";
 import { usePersistence, type ProviderCacheRecord } from "@/infrastructure/db";
 
@@ -51,12 +51,8 @@ export function LandingFlow({
   entrySource,
 }: LandingFlowProps) {
   const navigate = useNavigate();
-  const catalogIdentity = useCatalogIdentity();
-  const { getProviderCache, userWorks } = usePersistence();
-  const hasProfile = useMemo(
-    () => hasCatalogBackedProfileById(userWorks, catalogIdentity.profileWorkIds),
-    [catalogIdentity.profileWorkIds, userWorks],
-  );
+  const { getProviderCache } = usePersistence();
+  const { hasProfile, error: profileError } = usePersonalProfile();
   // Reading local state never changes it: the landing only picks where its one action leads.
   const visitor = useLandingVisitorState();
 
@@ -88,6 +84,8 @@ export function LandingFlow({
       void navigate({ to: "/recommendations", replace: true });
     }
   }, [hasProfile, navigate, showIntroduction]);
+
+  if (profileError) return <CatalogFailure />;
 
   if (!showIntroduction && hasProfile !== false) {
     return <LandingGuard />;

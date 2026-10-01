@@ -164,7 +164,11 @@ it("adds a captured introduction without losing metadata, and rejects damaged or
         itemCaption: "Rakuten",
         itemUrl: "https://example.com/rakuten",
       }),
-    ).toMatchObject({ itemCaption: "Rakuten", captionSource: "rakuten" });
+    ).toMatchObject({
+      itemCaption: entry.originalItemCaption,
+      captionSource: "publisher",
+      captionSourceUrl: "https://example.com/book",
+    });
     const publishedHash = databaseHash();
     writeFileSync(input, JSON.stringify([entry]));
     expect(run("import")).toMatchObject({ published: true, verification: "HISTORICAL_COMPLETION" });

@@ -1,12 +1,11 @@
 "use client";
 
 import { useNavigate, useRouterState } from "@tanstack/react-router";
-import { type ReactNode, useEffect, useMemo } from "react";
+import { type ReactNode, useEffect } from "react";
 
 import { SiteFooter } from "@/components/layout/site-footer";
-import { hasCatalogBackedProfileById } from "@/domain/profile/catalog-profile";
-import { useCatalogIdentity } from "@/features/catalog/catalog-provider";
-import { usePersistence } from "@/infrastructure/db";
+import { CatalogFailure } from "@/features/catalog/catalog-provider";
+import { usePersonalProfile } from "@/features/catalog/personal-catalog-provider";
 import { navigationStrings } from "@/lib/strings";
 import { cn } from "@/lib/utils";
 
@@ -125,12 +124,7 @@ function AppShellContent({
 export function AppShell({ children }: AppShellProps) {
   const pathname = useRouterState({ select: (state) => state.location.pathname });
   const navigate = useNavigate();
-  const catalogIdentity = useCatalogIdentity();
-  const { userWorks } = usePersistence();
-  const hasProfile = useMemo(
-    () => hasCatalogBackedProfileById(userWorks, catalogIdentity.profileWorkIds),
-    [catalogIdentity.profileWorkIds, userWorks],
-  );
+  const { hasProfile, error: profileError } = usePersonalProfile();
   const guarded = requiresProfile(pathname);
   const showDesktopNavigation = true;
   const showMobileNavigation = !isImmersivePath(pathname);
@@ -140,6 +134,8 @@ export function AppShell({ children }: AppShellProps) {
       void navigate({ to: "/onboarding", replace: true });
     }
   }, [guarded, hasProfile, navigate]);
+
+  if (guarded && profileError) return <CatalogFailure />;
 
   if (guarded && hasProfile !== true) {
     return (

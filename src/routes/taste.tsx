@@ -1,7 +1,7 @@
 import { createFileRoute } from "@tanstack/react-router";
 import { Suspense } from "react";
 
-import { BundledCatalogProvider } from "@/features/catalog/bundled-catalog-provider";
+import { PersonalTasteCatalogProvider } from "@/features/catalog/personal-catalog-provider";
 import { TasteFlow } from "@/features/taste/taste-flow";
 import { tasteSearchSchema } from "@/lib/route-search";
 import { tasteStrings } from "@/lib/strings";
@@ -18,7 +18,7 @@ function TastePage() {
   const navigate = Route.useNavigate();
 
   return (
-    <BundledCatalogProvider>
+    <PersonalTasteCatalogProvider>
       <Suspense
         fallback={
           <main className="taste-page taste-page--loading">
@@ -45,6 +45,6 @@ function TastePage() {
           reveal={search.reveal}
         />
       </Suspense>
-    </BundledCatalogProvider>
+    </PersonalTasteCatalogProvider>
   );
 }

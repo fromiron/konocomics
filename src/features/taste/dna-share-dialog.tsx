@@ -63,6 +63,7 @@ function shareRecommendations(
 }
 
 export function DnaShareButton({
+  ready = true,
   recommendations,
   summary,
   worksById,
@@ -70,6 +71,7 @@ export function DnaShareButton({
   recommendations: readonly ShareRecommendationEntry[];
   summary: ShareSummary;
   worksById: ReadonlyMap<string, Work>;
+  ready?: boolean;
 }>) {
   const [open, setOpen] = useState(false);
 
@@ -77,6 +79,8 @@ export function DnaShareButton({
     <>
       <Button
         className="gap-[var(--space-2)] px-[var(--space-4)] font-bold"
+        disabled={!ready}
+        title={ready ? undefined : tasteStrings.previewLoading}
         onClick={() => setOpen(true)}
         type="button"
         variant="outline"
@@ -85,7 +89,7 @@ export function DnaShareButton({
         {strings.open}
       </Button>
       <Dialog onOpenChange={setOpen} open={open}>
-        {open ? (
+        {open && ready ? (
           <DnaShareDialogBody
             onClose={() => setOpen(false)}
             recommendations={recommendations}
