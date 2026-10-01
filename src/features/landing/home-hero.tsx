@@ -1,16 +1,29 @@
 import { Link } from "@tanstack/react-router";
 import { ArrowRightIcon } from "lucide-react";
+import type { CSSProperties } from "react";
 
 import { buttonClassName } from "@/components/design-system/button";
+import { burstConfirmSparks } from "@/components/motion/confirm-spark";
+import { usePointerEffect } from "@/components/motion/use-pointer-effects";
 import { HeroBackdrop } from "@/components/media/hero-backdrop";
 import { AXIS_IDS } from "@/domain/catalog/constants";
 import { landingStrings } from "@/lib/strings";
+import { cn } from "@/lib/utils";
 
 import { LandingLogoReveal } from "./landing-logo-reveal";
 import { LandingSampleCard } from "./landing-sample-card";
 import type { LandingSample } from "./landing-types";
 
 const workCountFormat = new Intl.NumberFormat("ja-JP");
+
+/** Tagline phrases split into characters with one running index for the stagger. */
+const taglineCharacters = (() => {
+  let index = 0;
+  return landingStrings.taglinePhrases.map((text) => ({
+    text,
+    characters: [...text].map((character) => ({ character, index: index++ })),
+  }));
+})();
 
 export const landingCtaClassName = buttonClassName({
   className:
@@ -25,10 +38,18 @@ export const landingCtaClassName = buttonClassName({
 export type LandingVisitorState = "new" | "resume" | "profile" | "recovery";
 
 export function LandingCta({ visitor = "new" }: Readonly<{ visitor?: LandingVisitorState }>) {
+  const magnetRef = usePointerEffect<HTMLAnchorElement>("magnet");
   return (
     <Link
-      className={landingCtaClassName}
+      className={cn(landingCtaClassName, "pointer-magnet")}
       data-landing-visitor={visitor}
+      onClick={(event) => {
+        // Keyboard activation has no pointer position, so the burst starts at the button.
+        burstConfirmSparks(
+          event.detail === 0 ? event.currentTarget : { x: event.clientX, y: event.clientY },
+        );
+      }}
+      ref={magnetRef}
       preload={false}
       to={visitor === "profile" ? "/recommendations" : "/onboarding"}
     >
@@ -65,7 +86,7 @@ export function HomeHero({
     <HeroBackdrop coverUrl={backdropUrl} priority>
       <section
         aria-labelledby="landing-title"
-        className="mx-auto grid w-full max-w-[var(--layout-width-media)] content-center gap-[var(--space-8)] px-[var(--layout-page-padding)] pt-[var(--space-8)] pb-[var(--space-12)] md:min-h-[72vh] md:grid-cols-[minmax(0,1.1fr)_minmax(0,0.9fr)] md:items-center md:gap-[var(--space-12)] md:pt-[var(--space-12)]"
+        className="landing-hero mx-auto grid w-full max-w-[var(--layout-width-media)] content-center gap-[var(--space-8)] px-[var(--layout-page-padding)] pt-[var(--space-8)] pb-[var(--space-12)] md:min-h-[72vh] md:grid-cols-[minmax(0,1.1fr)_minmax(0,0.9fr)] md:items-center md:gap-[var(--space-12)] md:pt-[var(--space-12)]"
       >
         <div className="grid max-w-[36rem] justify-items-start gap-[var(--space-6)]">
           <LandingLogoReveal staticPresentation={staticLogo} />
@@ -76,13 +97,25 @@ export function HomeHero({
               </p>
             ) : null}
             <h1
-              className="font-display text-[length:var(--text-hero-size)] leading-[var(--line-height-display)] font-bold tracking-tight text-text-strong"
+              className="landing-tagline font-display text-[length:var(--text-hero-size)] leading-[var(--line-height-display)] font-bold tracking-tight text-text-strong"
+              data-reduced-motion="fade"
               id="landing-title"
             >
-              {/* Each phrase is one unbreakable unit, so the tagline never wraps mid-word. */}
-              {landingStrings.taglinePhrases.map((phrase) => (
-                <span className="inline-block" key={phrase}>
-                  {phrase}
+              {/* Each phrase is one unbreakable unit, so the tagline never wraps mid-word. The
+                  characters animate during the logo reveal (04 §5.1); the heading's name is the
+                  whole sentence, never single characters. */}
+              <span className="sr-only">{landingStrings.tagline}</span>
+              {taglineCharacters.map((phrase) => (
+                <span aria-hidden="true" className="inline-block" key={phrase.text}>
+                  {phrase.characters.map(({ character, index }) => (
+                    <span
+                      className="landing-tagline__char inline-block"
+                      key={index}
+                      style={{ "--char-index": index } as CSSProperties}
+                    >
+                      {character}
+                    </span>
+                  ))}
                 </span>
               ))}
             </h1>

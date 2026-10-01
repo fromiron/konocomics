@@ -41,6 +41,19 @@
   --discovery-action: oklch(0.49 0.19 290);
   --discovery-link: oklch(0.78 0.105 238);
   --evidence-surface: oklch(0.8 0.018 215);
+  /* Medal metals for the top three personalized ranks (04 §2.5, 2026-10-01). */
+  --medal-gold-light: oklch(0.95 0.1 95);
+  --medal-gold: oklch(0.82 0.15 82);
+  --medal-gold-deep: oklch(0.62 0.13 66);
+  --medal-gold-ink: oklch(0.27 0.06 66);
+  --medal-silver-light: oklch(0.98 0.004 250);
+  --medal-silver: oklch(0.84 0.012 250);
+  --medal-silver-deep: oklch(0.6 0.018 250);
+  --medal-silver-ink: oklch(0.24 0.02 250);
+  --medal-bronze-light: oklch(0.88 0.07 62);
+  --medal-bronze: oklch(0.68 0.12 52);
+  --medal-bronze-deep: oklch(0.47 0.1 42);
+  --medal-bronze-ink: oklch(0.2 0.04 42);
   --book-cover-width: 96px;
   --discovery-question-size: 18px;
   --dialog-overlay: color-mix(in oklch, var(--canvas) 72%, transparent);
@@ -570,48 +583,148 @@ h1[tabindex="-1"]:focus {
   }
 }
 
-.ranking-crown {
-  position: absolute;
-  bottom: calc(100% - var(--space-1));
-  left: calc(50% - var(--space-3));
-  width: var(--space-6);
-  height: var(--space-6);
-  color: var(--accent);
-  opacity: 0;
-  transform-origin: center bottom;
+/* Top three rank badges and crowns (04 §2.5). Metal comes from the medal tokens. */
+.ranking-badge[data-medal] {
+  background: linear-gradient(
+    150deg,
+    var(--rank-crown-light) 0%,
+    var(--rank-crown-base) 48%,
+    var(--rank-crown-deep) 100%
+  );
+  color: var(--rank-crown-ink);
+  box-shadow:
+    inset 0 1px 0 color-mix(in oklch, var(--rank-crown-light) 80%, transparent),
+    inset 0 -2px 0 color-mix(in oklch, var(--rank-crown-deep) 70%, transparent),
+    var(--shadow-floating-action);
 }
 
-.ranking-card-link:focus-visible .ranking-crown {
+[data-medal="gold"] {
+  --rank-crown-light: var(--medal-gold-light);
+  --rank-crown-base: var(--medal-gold);
+  --rank-crown-deep: var(--medal-gold-deep);
+  --rank-crown-ink: var(--medal-gold-ink);
+  --rank-crown-gem: oklch(0.6 0.2 25);
+}
+
+[data-medal="silver"] {
+  --rank-crown-light: var(--medal-silver-light);
+  --rank-crown-base: var(--medal-silver);
+  --rank-crown-deep: var(--medal-silver-deep);
+  --rank-crown-ink: var(--medal-silver-ink);
+  --rank-crown-gem: oklch(0.62 0.14 250);
+}
+
+[data-medal="bronze"] {
+  --rank-crown-light: var(--medal-bronze-light);
+  --rank-crown-base: var(--medal-bronze);
+  --rank-crown-deep: var(--medal-bronze-deep);
+  --rank-crown-ink: var(--medal-bronze-ink);
+  --rank-crown-gem: oklch(0.58 0.14 160);
+}
+
+.rank-crown {
+  --rank-crown-outline: color-mix(in oklch, var(--canvas) 70%, var(--rank-crown-deep));
+  --rank-crown-shine: color-mix(in oklch, var(--text-strong) 75%, transparent);
+  position: absolute;
+  bottom: calc(100% - var(--space-2));
+  left: 50%;
+  width: var(--space-8);
+  height: auto;
+  overflow: visible;
+  translate: -50% 0;
+  opacity: 0;
+  transform-origin: center bottom;
+  filter: drop-shadow(0 2px 3px color-mix(in oklch, var(--canvas) 60%, transparent));
+}
+
+.rank-crown__shine {
+  transform: translateX(-12px);
+}
+
+.rank-crown__spark {
+  opacity: 0;
+  transform-box: fill-box;
+  transform-origin: center;
+}
+
+.ranking-card-link:focus-visible .rank-crown {
   opacity: 1;
-  animation: var(--ranking-crown-animation, none);
 }
 
 @media (hover: hover) and (pointer: fine) {
-  .ranking-card-link:hover .ranking-crown {
+  .ranking-card-link:hover .rank-crown {
     opacity: 1;
-    animation: var(--ranking-crown-animation, none);
   }
 }
 
 @media (prefers-reduced-motion: no-preference) {
-  .ranking-crown {
-    --ranking-crown-animation: ranking-crown-pop var(--motion-duration-value)
-      var(--motion-ease-direct) var(--motion-delay-rank-crown) both;
+  .ranking-card-link:focus-visible .rank-crown,
+  .ranking-card-link:hover .rank-crown {
+    animation: rank-crown-land 480ms cubic-bezier(0.2, 0.8, 0.2, 1) var(--motion-delay-rank-crown)
+      both;
+  }
+
+  .ranking-card-link:focus-visible .rank-crown__shine,
+  .ranking-card-link:hover .rank-crown__shine {
+    animation: rank-crown-shine 520ms var(--motion-ease-direct) 560ms both;
+  }
+
+  .ranking-card-link:focus-visible .rank-crown__spark,
+  .ranking-card-link:hover .rank-crown__spark {
+    animation: rank-crown-twinkle 560ms var(--motion-ease-direct) 600ms both;
+  }
+
+  .ranking-card-link:focus-visible .rank-crown__spark--end,
+  .ranking-card-link:hover .rank-crown__spark--end {
+    animation-delay: 720ms;
   }
 }
 
-@keyframes ranking-crown-pop {
-  from {
+@keyframes rank-crown-land {
+  0% {
     opacity: 0;
-    transform: translateY(var(--space-1)) scale(0.5);
+    transform: translateY(-14px) scale(0.72);
   }
-  65% {
+
+  45% {
     opacity: 1;
-    transform: translateY(calc(-1 * var(--space-1))) scale(1.16);
+    transform: translateY(2px) scale(1.1, 0.86);
   }
+
+  70% {
+    transform: translateY(-2px) scale(0.97, 1.05);
+  }
+
+  100% {
+    opacity: 1;
+    transform: none;
+  }
+}
+
+@keyframes rank-crown-shine {
+  from {
+    transform: translateX(-12px);
+  }
+
   to {
+    transform: translateX(30px);
+  }
+}
+
+@keyframes rank-crown-twinkle {
+  0% {
+    opacity: 0;
+    transform: scale(0.2);
+  }
+
+  45% {
     opacity: 1;
-    transform: translateY(0) scale(1);
+    transform: scale(1.15);
+  }
+
+  100% {
+    opacity: 0;
+    transform: scale(0.6);
   }
 }
 
@@ -1048,13 +1161,273 @@ h1[tabindex="-1"]:focus {
   }
 }
 
+/*
+ * Reduced motion replaces movement instead of removing every change (04 §6). Everything is
+ * stopped by default; an element opts back in with `data-reduced-motion="fade"` and then owns
+ * an opacity-only animation or transition for the reduce case.
+ */
 @media (prefers-reduced-motion: reduce) {
-  *,
-  *::before,
-  *::after {
+  *:not([data-reduced-motion="fade"]),
+  *:not([data-reduced-motion="fade"])::before,
+  *:not([data-reduced-motion="fade"])::after {
     scroll-behavior: auto !important;
     animation-duration: 0.01ms !important;
     animation-iteration-count: 1 !important;
     transition-duration: 0.01ms !important;
+  }
+
+  /* Opted-in elements keep only opacity and color changes; a transform still shows a value
+     (for example a meter fill) but never animates. */
+  [data-reduced-motion="fade"] {
+    scroll-behavior: auto !important;
+    transition-property: opacity, color, background-color !important;
+  }
+
+  [data-reduced-motion="fade"][data-reduced-motion-enter] {
+    animation: reduced-fade-in var(--reduced-motion-duration, var(--motion-duration-page))
+      var(--motion-ease-direct) both !important;
+    animation-delay: var(--reduced-motion-delay, 0ms) !important;
+  }
+}
+
+/* One accent sweep across a heading, left to right, then plain text (04 §5.2). Never repeats. */
+@media (prefers-reduced-motion: no-preference) {
+  .text-shine-once {
+    background-image: linear-gradient(
+      100deg,
+      var(--text-strong) 0%,
+      var(--text-strong) 40%,
+      var(--accent) 50%,
+      var(--text-strong) 60%,
+      var(--text-strong) 100%
+    );
+    background-size: 300% 100%;
+    background-clip: text;
+    -webkit-background-clip: text;
+    color: transparent;
+    animation: text-shine-sweep 1.2s var(--motion-ease-direct) var(--text-shine-delay, 0ms) 1 both;
+  }
+}
+
+@keyframes text-shine-sweep {
+  from {
+    background-position: 100% 0;
+  }
+
+  to {
+    background-position: 0% 0;
+  }
+}
+
+/* Side tail of a reason bubble in a panel beside a cover: it points back at the cover. */
+/* Reason bubbles are paper with ink, like a manga 吹き出し (04 §2.9, 2026-10-01 user decision).
+   Scoped token overrides recolour the bubble, its tail, and its text together. */
+.reason-bubble {
+  --surface-2: var(--discovery-paper);
+  --text-strong: var(--discovery-ink);
+  --text: var(--discovery-ink);
+  --text-muted: var(--discovery-muted);
+  --line: var(--discovery-line);
+  --ring: var(--discovery-ink);
+  --focus-ring: var(--discovery-ink);
+}
+
+/* Room for the tail inside a scrolling panel that would otherwise clip it. */
+[data-reason-bubble="side"] {
+  margin-inline: 8px;
+}
+
+[data-reason-bubble="side"] > .reason-bubble__tail {
+  top: var(--space-4);
+  border-color: var(--line);
+  border-style: solid;
+  border-width: 0;
+}
+
+[data-expansion-side="right"] [data-reason-bubble="side"] > .reason-bubble__tail,
+[data-reason-bubble="side"]:not([data-expansion-side] *) > .reason-bubble__tail {
+  left: -6px;
+  border-bottom-width: 1px;
+  border-left-width: 1px;
+}
+
+[data-expansion-side="left"] [data-reason-bubble="side"] > .reason-bubble__tail {
+  right: -6px;
+  border-top-width: 1px;
+  border-right-width: 1px;
+}
+
+/* Pointer reactions (04 §6 G). Only fine hovering pointers without reduced motion get them. */
+@media (prefers-reduced-motion: no-preference) and (hover: hover) and (pointer: fine) {
+  .pointer-glare,
+  .pointer-spotlight {
+    position: absolute;
+    inset: 0;
+    z-index: 20;
+    border-radius: inherit;
+    pointer-events: none;
+    opacity: 0;
+    transition: opacity 250ms var(--motion-ease-direct);
+  }
+
+  .pointer-glare {
+    background: radial-gradient(
+      420px circle at var(--light-x, 50%) var(--light-y, 50%),
+      color-mix(in oklch, var(--text-strong) 14%, transparent),
+      transparent 55%
+    );
+  }
+
+  .pointer-spotlight {
+    background: radial-gradient(
+      260px circle at var(--light-x, 50%) var(--light-y, 50%),
+      color-mix(in oklch, var(--accent) 16%, transparent),
+      transparent 70%
+    );
+  }
+
+  [data-pointer-active] > .pointer-glare,
+  [data-pointer-active] > .pointer-spotlight {
+    opacity: 1;
+  }
+
+  .pointer-magnet {
+    translate: var(--magnet-x, 0px) var(--magnet-y, 0px);
+    transition: translate 180ms var(--motion-ease-direct);
+  }
+
+  .pointer-magnet[data-pointer-active] {
+    transition-duration: 80ms;
+  }
+}
+
+@media not ((prefers-reduced-motion: no-preference) and (hover: hover) and (pointer: fine)) {
+  .pointer-glare,
+  .pointer-spotlight {
+    display: none;
+  }
+}
+
+/* Landing tagline characters ride the logo reveal and finish inside its 1.4s (04 §5.1). */
+@media (prefers-reduced-motion: no-preference) {
+  .landing-hero:has(.landing-logo-reveal[data-phase="waiting-fonts"]) .landing-tagline__char {
+    opacity: 0;
+    transform: translateY(0.55em);
+  }
+
+  .landing-hero:has(.landing-logo-reveal[data-phase="playing"]) .landing-tagline__char {
+    animation: tagline-char-in 600ms cubic-bezier(0.2, 0.7, 0.2, 1) both;
+    animation-delay: calc(150ms + var(--char-index, 0) * 45ms);
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .landing-hero:has(.landing-logo-reveal[data-reduced-entry]) .landing-tagline {
+    animation: reduced-fade-in 300ms var(--motion-ease-direct) both !important;
+  }
+
+  .landing-logo-reveal[data-reduced-entry] {
+    --reduced-motion-duration: 400ms;
+  }
+}
+
+@keyframes tagline-char-in {
+  from {
+    opacity: 0;
+    transform: translateY(0.55em);
+  }
+
+  to {
+    opacity: 1;
+    transform: none;
+  }
+}
+
+/* Loading skeleton: screentone dots with one light band passing across (04 §2.5·§3.2).
+   Loading-only; reduced motion keeps the still dots and a slow opacity change. */
+.skeleton-tone {
+  position: relative;
+  overflow: hidden;
+  background-color: var(--line);
+  background-image: radial-gradient(
+    color-mix(in oklch, var(--text-strong) 9%, transparent) 1px,
+    transparent 1px
+  );
+  background-size: 8px 8px;
+}
+
+@media (prefers-reduced-motion: no-preference) {
+  .skeleton-tone::after {
+    position: absolute;
+    inset: 0 auto 0 -100%;
+    width: 200%;
+    content: "";
+    background: linear-gradient(
+      100deg,
+      transparent 35%,
+      color-mix(in oklch, var(--text-strong) 9%, transparent) 50%,
+      transparent 65%
+    );
+    animation: skeleton-tone-sweep 1.2s linear infinite;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .skeleton-tone[data-reduced-motion="fade"] {
+    animation: skeleton-tone-breathe 1.6s ease-in-out infinite alternate !important;
+  }
+}
+
+@keyframes skeleton-tone-sweep {
+  from {
+    transform: translateX(0);
+  }
+
+  to {
+    transform: translateX(50%);
+  }
+}
+
+@keyframes skeleton-tone-breathe {
+  from {
+    opacity: 0.7;
+  }
+
+  to {
+    opacity: 1;
+  }
+}
+
+/* Confirmation stamp: a single press-down pop when a positive choice is saved (04 §6 D). */
+@media (prefers-reduced-motion: no-preference) {
+  .confirm-stamp {
+    animation: confirm-stamp 220ms cubic-bezier(0.2, 0.7, 0.2, 1) both;
+  }
+}
+
+@keyframes confirm-stamp {
+  0% {
+    opacity: 0.4;
+    transform: scale(1);
+  }
+
+  45% {
+    opacity: 1;
+    transform: scale(1.06);
+  }
+
+  100% {
+    opacity: 1;
+    transform: scale(1);
+  }
+}
+
+@keyframes reduced-fade-in {
+  from {
+    opacity: 0;
+  }
+
+  to {
+    opacity: 1;
   }
 }

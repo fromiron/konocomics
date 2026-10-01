@@ -298,7 +298,8 @@ function DnaShareDialogBody({
                 ) : (
                   <div
                     aria-hidden="true"
-                    className="size-full animate-pulse bg-surface-3 motion-reduce:animate-none"
+                    className="skeleton-tone size-full"
+                    data-reduced-motion="fade"
                   />
                 )}
               </div>

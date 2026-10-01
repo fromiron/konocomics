@@ -1,7 +1,10 @@
+"use client";
+
 import { BookmarkIcon } from "lucide-react";
 import type { ComponentPropsWithoutRef, KeyboardEvent } from "react";
 
 import { Button } from "@/components/design-system/button";
+import { useSaveConfirmation } from "@/components/motion/use-save-confirmation";
 import { recommendationStrings } from "@/lib/strings";
 import { cn } from "@/lib/utils";
 
@@ -84,6 +87,11 @@ export function StateActionRow({
   onRemovalIntent,
   planned,
 }: StateActionRowProps) {
+  const {
+    attach: saveAttach,
+    markPressed: saveMarkPressed,
+    stamping: saveStamping,
+  } = useSaveConfirmation<HTMLButtonElement>(planned);
   return (
     <div
       className={cn(
@@ -94,8 +102,15 @@ export function StateActionRow({
       <Button
         aria-pressed={planned}
         busy={busy}
-        className="w-fit justify-self-start aria-pressed:border-accent aria-pressed:bg-accent aria-pressed:text-on-accent"
-        onClick={onPlanned}
+        className={cn(
+          "w-fit justify-self-start aria-pressed:border-accent aria-pressed:bg-accent aria-pressed:text-on-accent",
+          saveStamping && "confirm-stamp",
+        )}
+        onClick={() => {
+          saveMarkPressed();
+          onPlanned();
+        }}
+        ref={saveAttach}
         type="button"
       >
         <BookmarkIcon aria-hidden="true" className={cn("size-4", planned && "fill-current")} />
@@ -128,6 +143,11 @@ export function CoverSaveToggle({
   onPlanned: () => void;
   planned: boolean;
 }>) {
+  const {
+    attach: saveAttach,
+    markPressed: saveMarkPressed,
+    stamping: saveStamping,
+  } = useSaveConfirmation<HTMLButtonElement>(planned);
   return (
     <button
       aria-busy={busy || undefined}
@@ -139,10 +159,15 @@ export function CoverSaveToggle({
       aria-pressed={planned}
       className={cn(
         "cover-save-toggle grid size-[var(--control-min-size)] shrink-0 place-items-center rounded-full transition-colors duration-[var(--motion-duration-feedback)] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-focus-ring focus-visible:ring-offset-0 disabled:cursor-not-allowed disabled:opacity-45 motion-reduce:transition-none",
+        saveStamping && "confirm-stamp",
         className,
       )}
       disabled={busy}
-      onClick={onPlanned}
+      onClick={() => {
+        saveMarkPressed();
+        onPlanned();
+      }}
+      ref={saveAttach}
       type="button"
     >
       <BookmarkIcon aria-hidden="true" className={cn("size-5", planned && "fill-current")} />

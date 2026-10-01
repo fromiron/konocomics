@@ -5,6 +5,7 @@ import { CheckIcon, PlusIcon, StarIcon } from "lucide-react";
 
 import { CoverImage } from "@/components/cover/CoverImage";
 import { Button } from "@/components/design-system/button";
+import { useSaveConfirmation } from "@/components/motion/use-save-confirmation";
 import type { Work } from "@/domain/catalog/types";
 import type { PositiveOnboardingEntry } from "@/domain/profile/onboarding";
 import { cn } from "@/lib/utils";
@@ -48,6 +49,12 @@ export function AnchorCoverCard({
   const isSelected = selection !== undefined;
   const isFavorite = selection?.reaction === "favorite";
   const hasRemoteCover = (coverUrl?.trim() ?? "") !== "";
+  // The selection prop changes only after the draft accepted the work (04 §6 D·G).
+  const {
+    attach: saveAttach,
+    markPressed: saveMarkPressed,
+    stamping: saveStamping,
+  } = useSaveConfirmation<HTMLSpanElement>(isSelected);
 
   return (
     <article
@@ -58,7 +65,10 @@ export function AnchorCoverCard({
         aria-label={`${work.title} — ${isSelected ? labels.remove : labels.select}`}
         aria-pressed={isSelected}
         className="anchor-card__selection group/selection !grid !h-auto min-h-[var(--control-min-size)] w-full !grid-cols-1 !justify-start rounded-[var(--radius-card)] border-0 bg-transparent p-0 text-start"
-        onClick={() => onToggleSelection(work.id)}
+        onClick={() => {
+          saveMarkPressed();
+          onToggleSelection(work.id);
+        }}
         onFocus={onSelectionFocus}
         onKeyDown={onSelectionKeyDown}
         ref={selectionButtonRef}
@@ -104,7 +114,15 @@ export function AnchorCoverCard({
           {isSelected ? (
             <span
               aria-hidden="true"
-              className="anchor-card__check absolute top-1 right-1 grid size-7 place-items-center rounded-full bg-accent font-bold text-on-accent shadow-[var(--shadow-level-1)] motion-safe:animate-[anchor-check-appear_var(--motion-duration-feedback)_var(--motion-ease-direct)] [&>svg]:size-4"
+              className={cn(
+                "anchor-card__check absolute top-1 right-1 grid size-7 place-items-center rounded-full bg-accent font-bold text-on-accent shadow-[var(--shadow-level-1)] [--reduced-motion-duration:var(--motion-duration-feedback)] [&>svg]:size-4",
+                saveStamping
+                  ? "confirm-stamp"
+                  : "motion-safe:animate-[anchor-check-appear_var(--motion-duration-feedback)_var(--motion-ease-direct)]",
+              )}
+              data-reduced-motion="fade"
+              data-reduced-motion-enter=""
+              ref={saveAttach}
             >
               <CheckIcon />
             </span>

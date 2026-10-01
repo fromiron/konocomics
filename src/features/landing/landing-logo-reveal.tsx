@@ -9,6 +9,8 @@ import { landingStrings } from "@/lib/strings";
 const LOGO_REVEAL_MARKER = "logoRevealed";
 const LOGO_REVEAL_MARKER_VALUE = "1";
 const SIGNATURE_DURATION_MS = 1_400;
+/** Reduced motion keeps the reveal as a short opacity entry instead (04 §5.1). */
+const REDUCED_ENTRY_MS = 600;
 
 type LogoRevealPhase = "complete" | "waiting-fonts" | "playing";
 type LogoRevealDecision = "undecided" | "claimed" | "settled";
@@ -44,6 +46,7 @@ export function LandingLogoReveal({ staticPresentation = false }: LandingLogoRev
   const [MotionRenderer, setMotionRenderer] = useState<ComponentType<MotionRendererProps> | null>(
     null,
   );
+  const [reducedEntry, setReducedEntry] = useState(false);
   const decisionRef = useRef<LogoRevealDecision>("undecided");
   const finishedRef = useRef(false);
 
@@ -125,6 +128,17 @@ export function LandingLogoReveal({ staticPresentation = false }: LandingLogoRev
       }
 
       mediaQuery = window.matchMedia("(prefers-reduced-motion: reduce)");
+      if (mediaQuery.matches === true) {
+        // The claimed reveal becomes an opacity-only entry; the logo itself stays static.
+        setReducedEntry(true);
+        signatureTimer = window.setTimeout(() => setReducedEntry(false), REDUCED_ENTRY_MS);
+        finishedRef.current = true;
+        decisionRef.current = "settled";
+        setPhase("complete");
+        return () => {
+          if (signatureTimer !== undefined) window.clearTimeout(signatureTimer);
+        };
+      }
       if (
         mediaQuery.matches !== false ||
         typeof mediaQuery.addEventListener !== "function" ||
@@ -205,6 +219,13 @@ export function LandingLogoReveal({ staticPresentation = false }: LandingLogoRev
       className="landing-logo-reveal group/logo grid justify-items-start gap-[var(--space-content-tight)]"
       data-motion={motion}
       data-phase={phase}
+      {...(reducedEntry
+        ? {
+            "data-reduced-entry": "",
+            "data-reduced-motion": "fade",
+            "data-reduced-motion-enter": "",
+          }
+        : {})}
     >
       {phase === "playing" && MotionRenderer !== null ? (
         <MotionRenderer caption={caption} />

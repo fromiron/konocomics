@@ -184,7 +184,7 @@ describe("media card anatomy", () => {
     expect(container.querySelector("[data-ranking-hover-position], .ranking-crown")).toBeNull();
   });
 
-  it("reserves a decorative crown for personalized first place without replacing rank text", () => {
+  it("crowns the personalized top three in gold, silver, and bronze without replacing rank text", () => {
     const { container, rerender } = render(<ol />);
     for (const position of [1, 2, 3, 4, 10]) {
       rerender(
@@ -202,10 +202,14 @@ describe("media card anatomy", () => {
       expect(screen.getByRole("link").getAttribute("aria-label")).toMatch(
         new RegExp(`^${String(position)}位`, "u"),
       );
-      expect(container.querySelectorAll(".ranking-crown")).toHaveLength(position === 1 ? 1 : 0);
-      if (position === 1) {
-        expect(container.querySelector(".ranking-crown")?.getAttribute("aria-hidden")).toBe("true");
-      }
+      const expectedMedal = ["gold", "silver", "bronze"][position - 1];
+      const crown = container.querySelector(".rank-crown");
+      expect(crown?.getAttribute("data-medal") ?? undefined).toBe(expectedMedal);
+      expect(
+        container.querySelector("[data-ranking-hover-position]")?.getAttribute("data-medal") ??
+          undefined,
+      ).toBe(expectedMedal);
+      if (crown !== null) expect(crown.getAttribute("aria-hidden")).toBe("true");
     }
   });
 

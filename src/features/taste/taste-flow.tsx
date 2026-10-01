@@ -3,14 +3,16 @@
 import { Link } from "@tanstack/react-router";
 import { ChevronDownIcon } from "lucide-react";
 import { LazyMotion, domAnimation, m, useReducedMotion } from "motion/react";
-import { useCallback, useEffect, useMemo, useRef, useState } from "react";
+import { type CSSProperties, useCallback, useEffect, useMemo, useRef, useState } from "react";
 
 import { Button, buttonClassName } from "@/components/design-system/button";
 import { PageHeader } from "@/components/layout/page-header";
 import { SummarySection, summaryLinkClassName } from "@/components/layout/summary-section";
 import { CoverImage } from "@/components/cover/CoverImage";
 import { MediaShelf } from "@/components/media/media-shelf";
-import { usePageEntryMotion } from "@/components/motion/use-page-entry-motion";
+import { useCountUp } from "@/components/motion/use-count-up";
+import { usePointerEffect } from "@/components/motion/use-pointer-effects";
+import { pageEntryFadeProps, usePageEntryMotion } from "@/components/motion/use-page-entry-motion";
 import recommendationContextJson from "@/data/generated/recommendation-context-v1.json";
 import { ART_AXIS_IDS, NARRATIVE_AXIS_IDS, TONE_AXIS_IDS } from "@/domain/catalog/constants";
 import type { AxisId, CatalogV1, CoverageGroup, ThemeTag, Work } from "@/domain/catalog/types";
@@ -450,6 +452,8 @@ function FactorGroup<FactorId extends ExplanationFactorId>({
             >
               <FactorBar
                 animateReveal={animateReveal}
+                enterDelay={index * 0.04}
+                enterFill
                 revealReady={factorRevealReady}
                 label={label}
                 revealDelay={index * 0.06}
@@ -856,6 +860,9 @@ export function TasteFlow({
     return labels;
   }, [profileRecords, summary.topPreferences]);
   const confidenceLevel = getConfidenceLevel(calculateProfileConfidence(profileRecords));
+  const revealCtaRef = usePointerEffect<HTMLAnchorElement>("magnet");
+  // The analysed work count is a real integer, so the reveal may count it up (04 §5.2).
+  const basisDisplayCount = useCountUp(profileRecords.length, revealExperience?.animate === true);
   const reactionBreakdown = (["favorite", "liked", "neutral", "disliked"] as const).flatMap(
     (reaction) => {
       const count = profileRecords.filter((record) => record.reaction === reaction).length;
@@ -1030,6 +1037,16 @@ export function TasteFlow({
     );
   }
 
+  // Reduced-motion reveal: the same order as opacity steps, 80ms apart (04 §5.2).
+  const revealFadeStep = (step: number) =>
+    revealExperience.entry && reducedMotion === true
+      ? ({
+          "data-reduced-motion": "fade",
+          "data-reduced-motion-enter": "",
+          style: { "--reduced-motion-delay": `${String(step * 80)}ms` } as CSSProperties,
+        } as const)
+      : {};
+
   return (
     <LazyMotion features={domAnimation} strict>
       <main
@@ -1042,6 +1059,7 @@ export function TasteFlow({
             "page-entry-b motion-safe:animate-[page-entry-b-enter_var(--motion-duration-page)_var(--motion-ease-direct)_both]",
         )}
         onAnimationEnd={pageEntryMotion.onAnimationEnd}
+        {...pageEntryFadeProps(pageEntryMotion.variant)}
         onFocus={keepFocusAboveSnackbar}
       >
         <PageHeader
@@ -1052,7 +1070,12 @@ export function TasteFlow({
         >
           <section aria-label={tasteStrings.basisHeading}>
             <p className="text-[length:var(--font-size-14)] leading-relaxed text-text-muted">
-              <span>{tasteStrings.basisCount(profileRecords.length, reactionBreakdown)}</span>
+              <span aria-hidden="true">
+                {tasteStrings.basisCount(basisDisplayCount, reactionBreakdown)}
+              </span>
+              <span className="sr-only">
+                {tasteStrings.basisCount(profileRecords.length, reactionBreakdown)}
+              </span>
               <span aria-hidden="true"> · </span>
               <span className="taste-confidence">
                 {tasteStrings.confidence}: {tasteStrings.confidenceLabels[confidenceLevel]}
@@ -1065,8 +1088,15 @@ export function TasteFlow({
           <section
             className="taste-top-summary grid content-start gap-[var(--space-3)]"
             aria-labelledby="taste-top-heading"
+            {...revealFadeStep(1)}
           >
-            <h2 className="text-[length:var(--text-subheading-size)]" id="taste-top-heading">
+            <h2
+              className={cn(
+                "text-[length:var(--text-subheading-size)]",
+                revealExperience.animate && "text-shine-once [--text-shine-delay:900ms]",
+              )}
+              id="taste-top-heading"
+            >
               {tasteStrings.topPreferencesHeading}
             </h2>
             {summary.topPreferences.length === 0 ? (
@@ -1086,11 +1116,13 @@ export function TasteFlow({
               </ol>
             )}
           </section>
-          <DnaAxesOverview
-            animateReveal={revealExperience.animate}
-            axes={summary.axes}
-            revealReady={factorRevealReady}
-          />
+          <div className="min-w-0" {...revealFadeStep(2)}>
+            <DnaAxesOverview
+              animateReveal={revealExperience.animate}
+              axes={summary.axes}
+              revealReady={factorRevealReady}
+            />
+          </div>
         </div>
 
         {status.state === "degraded" ? (
@@ -1110,7 +1142,7 @@ export function TasteFlow({
           </p>
         ) : null}
 
-        <div className="mt-[var(--space-shelf-group)]">
+        <div className="mt-[var(--space-shelf-group)]" {...revealFadeStep(0)}>
           <AnchorStrip
             anchors={anchors}
             animateReveal={revealExperience.animate}
@@ -1172,9 +1204,10 @@ export function TasteFlow({
             <Link
               className={buttonClassName({
                 className:
-                  "mx-auto min-h-12 w-full max-w-[calc(var(--control-min-size)*11)] px-[var(--space-5)] py-[var(--space-3)] font-bold",
+                  "pointer-magnet mx-auto min-h-12 w-full max-w-[calc(var(--control-min-size)*11)] px-[var(--space-5)] py-[var(--space-3)] font-bold",
               })}
               preload={false}
+              ref={revealCtaRef}
               to="/recommendations"
             >
               {tasteStrings.recommendations}

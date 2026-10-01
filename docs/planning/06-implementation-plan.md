@@ -246,10 +246,10 @@ S0~S5 동안 9개 CSV가 쓰기 권한을 가졌고 SQLite는 OS 임시 shadow�
 | 2 | DNA reveal 강화 + E 진입 채움 | `04` §5.2 count-up·정성 레이블 페이드·1회 광택, 상시 /taste FactorBar 진입 채움 | 진입당 1회, `aria-*` 최종 값, 숫자 미노출 |
 | 3 | 확정 피드백 | 온보딩 선택·「読みたい」 스탬프 + 스파크, 랜딩 CTA 스파크 | 긍정 확정 성공 뒤에만 발화, 800ms 내 정리 |
 | 4 | 추천 이유 말풍선 | `04` §2.9 공통 reason surface 컴포넌트, 5개 소비처 | 고정 geometry·근거 대조 속성 유지 |
-| 5 | 포인터 반응 | Featured·「例」 기울기·광택, CTA 마그넷, 상세 스포트라이트 | fine pointer만, 형제 rect 불변, FPS·JS 예산 |
+| 5 | 포인터 반응 | Featured·「例」 광택(각도 변화 없음), CTA 마그넷, 상세 스포트라이트 | fine pointer만, 형제 rect 불변, FPS·JS 예산 |
 | 6 | 랜딩 태그라인 글자 등장, skeleton 망점 시머 | `04` §5.1, §2.5 | 1.8s 이내, 깜빡임 없음, accessible name 단일 |
 
-각 묶음은 독립 변경으로 나누고 fixed 5 product E2E를 늘리지 않는다. 동작 검증은 영향받는 유닛·컴포넌트 테스트와 브라우저 확인으로 하며, reduced-motion 동등성은 각 묶음에서 함께 확인한다. 페이지 넘김·효과음 문자·패럴랙스·hover lift·WebGL/GSAP 효과는 범위 밖이다.
+각 묶음은 독립 변경으로 나누고 fixed 5 product E2E를 늘리지 않는다. 동작 검증은 영향받는 유닛·컴포넌트 테스트와 브라우저 확인으로 하며, reduced-motion 동등성은 각 묶음에서 함께 확인한다. 페이지 넘김·효과음 문자·패럴랙스·hover lift·기울기(tilt)·WebGL/GSAP 효과는 범위 밖이다.
 
 ---
 

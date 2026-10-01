@@ -46,6 +46,7 @@ function PageEntryHarness({
     <main
       className={motion.active ? "page-entry-b" : undefined}
       data-motion-active={motion.active ? "true" : "false"}
+      data-motion-variant={motion.variant ?? "none"}
       onAnimationEnd={motion.onAnimationEnd}
     />
   );
@@ -75,6 +76,16 @@ describe("usePageEntryMotion", () => {
       expect(motionPreferenceListeners.size).toBe(0);
     },
   );
+
+  it("replaces the move with an opacity-only fade under reduced motion", () => {
+    stubMotionPreference(true);
+
+    const { container } = render(<PageEntryHarness />);
+
+    const main = container.querySelector("main");
+    expect(main?.getAttribute("data-motion-active")).toBe("false");
+    expect(main?.getAttribute("data-motion-variant")).toBe("fade");
+  });
 
   it("consumes only the exact B animation and never revives the same identity", () => {
     const view = render(

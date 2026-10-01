@@ -1,8 +1,9 @@
 import { Link } from "@tanstack/react-router";
-import { BookOpen, CrownIcon } from "lucide-react";
+import { BookOpen } from "lucide-react";
 import type { ReactNode } from "react";
 
 import { CoverImage } from "@/components/cover/CoverImage";
+import { RankCrown, rankMedalFor } from "@/components/media/rank-crown";
 import { mediaStrings } from "@/lib/strings";
 import { cn } from "@/lib/utils";
 
@@ -65,6 +66,8 @@ export function RankingCard(props: RankingCardProps | EvidencePlaceholderProps) 
   } = props;
   const isEvidence = variant === "evidence";
   const isEditorialRanking = rankingKind === "editorial-ranking";
+  // Gold, silver, and bronze mark only the personalized top three (04 §2.5).
+  const medal = isEvidence ? undefined : rankMedalFor(position);
   const positionLabel =
     position === undefined
       ? undefined
@@ -154,19 +157,12 @@ export function RankingCard(props: RankingCardProps | EvidencePlaceholderProps) 
               {position === undefined ? null : (
                 <span
                   aria-hidden="true"
-                  className="pointer-events-none absolute right-[var(--space-2)] bottom-[var(--space-2)] grid size-[var(--space-12)] place-items-center rounded-full bg-accent font-display text-[length:var(--font-size-16)] leading-none font-black text-on-accent opacity-0 shadow-[var(--shadow-floating-action)] transition-[transform,opacity] duration-[var(--motion-duration-floating-action)] ease-[var(--motion-ease-direct)] [transform:translateY(var(--space-2))] tabular-nums group-focus-visible/ranking:opacity-100 group-focus-visible/ranking:[transform:translateY(0)] motion-reduce:transition-none motion-reduce:[transform:translateY(0)] [@media(hover:hover)_and_(pointer:fine)]:group-hover/ranking:opacity-100 [@media(hover:hover)_and_(pointer:fine)]:group-hover/ranking:[transform:translateY(0)]"
+                  className="ranking-badge pointer-events-none absolute right-[var(--space-2)] bottom-[var(--space-2)] grid size-[var(--space-12)] place-items-center rounded-full bg-accent font-display text-[length:var(--font-size-16)] leading-none font-black text-on-accent opacity-0 shadow-[var(--shadow-floating-action)] transition-[transform,opacity] duration-[var(--motion-duration-floating-action)] ease-[var(--motion-ease-direct)] [transform:translateY(var(--space-2))] tabular-nums group-focus-visible/ranking:opacity-100 group-focus-visible/ranking:[transform:translateY(0)] motion-reduce:transition-none motion-reduce:[transform:translateY(0)] [@media(hover:hover)_and_(pointer:fine)]:group-hover/ranking:opacity-100 [@media(hover:hover)_and_(pointer:fine)]:group-hover/ranking:[transform:translateY(0)]"
+                  data-medal={medal}
                   data-ranking-hover-position="true"
                 >
                   {position}
-                  {position === 1 ? (
-                    <CrownIcon
-                      aria-hidden="true"
-                      className="ranking-crown"
-                      fill="currentColor"
-                      stroke="var(--canvas)"
-                      strokeWidth={1.5}
-                    />
-                  ) : null}
+                  {medal === undefined ? null : <RankCrown medal={medal} />}
                 </span>
               )}
             </span>

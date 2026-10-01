@@ -12,7 +12,7 @@ import {
 } from "react";
 
 import { Button } from "@/components/design-system/button";
-import { usePageEntryMotion } from "@/components/motion/use-page-entry-motion";
+import { pageEntryFadeProps, usePageEntryMotion } from "@/components/motion/use-page-entry-motion";
 import type { GenreTag, Work } from "@/domain/catalog/types";
 import { hasCatalogBackedProfile } from "@/domain/profile/catalog-profile";
 import {
@@ -134,6 +134,7 @@ function ResolvedOnboardingPage({
           "onboarding-page--entry-b motion-safe:[&>.onboarding-step-one]:animate-[page-entry-b-enter_var(--motion-duration-page)_var(--motion-ease-direct)_both]",
       )}
       data-page-entry-b={pageEntryMotion.active ? "active" : undefined}
+      {...pageEntryFadeProps(pageEntryMotion.variant)}
       onAnimationEnd={(event) => {
         pageEntryMotion.onAnimationEnd(event);
         onPageEntryEnd(event);

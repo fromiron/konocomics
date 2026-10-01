@@ -52,6 +52,8 @@ export function DnaAxesOverview({
             <li className="min-w-0" key={axis.factorId}>
               <FactorBar
                 animateReveal={animateReveal}
+                enterDelay={index * 0.04}
+                enterFill
                 label={explanationLexicon.factorLabels[axis.factorId]}
                 revealDelay={index * 0.06}
                 revealReady={revealReady}

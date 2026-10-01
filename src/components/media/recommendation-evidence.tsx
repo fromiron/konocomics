@@ -1,6 +1,8 @@
 import type { TasteExplanationSentence } from "@/domain/explanation/types";
 import { cn } from "@/lib/utils";
 
+import { ReasonBubble } from "./reason-bubble";
+
 type ReasonChipsProps = Readonly<{
   reasons: readonly TasteExplanationSentence[];
   caution?: TasteExplanationSentence;
@@ -25,28 +27,30 @@ export function ReasonChips({
           <p className="text-text-muted">{emptyText}</p>
         )
       ) : (
-        <ul
-          className={cn(
-            "m-0 grid list-none gap-[var(--space-content)] p-0",
-            presentation === "feature-cards" && "gap-[var(--space-3)]",
-          )}
-        >
-          {reasons.slice(0, 3).map((reason) => (
-            <li
-              className={cn(
-                "relative min-w-0 pl-[var(--space-4)] text-[length:var(--font-size-14)] leading-[var(--line-height-body)] text-text",
-                presentation === "feature-cards" && "text-[length:var(--font-size-16)]",
-              )}
-              key={`${reason.source}:${reason.group}:${reason.factorId}`}
-            >
-              <span
-                aria-hidden="true"
-                className="absolute top-[0.72em] left-0 h-px w-[var(--space-2)] bg-text-muted"
-              />
-              {reason.text}
-            </li>
-          ))}
-        </ul>
+        <ReasonBubble>
+          <ul
+            className={cn(
+              "m-0 grid list-none gap-[var(--space-content)] p-0",
+              presentation === "feature-cards" && "gap-[var(--space-3)]",
+            )}
+          >
+            {reasons.slice(0, 3).map((reason) => (
+              <li
+                className={cn(
+                  "relative min-w-0 pl-[var(--space-4)] text-[length:var(--font-size-14)] leading-[var(--line-height-body)] text-text",
+                  presentation === "feature-cards" && "text-[length:var(--font-size-16)]",
+                )}
+                key={`${reason.source}:${reason.group}:${reason.factorId}`}
+              >
+                <span
+                  aria-hidden="true"
+                  className="absolute top-[0.72em] left-0 h-px w-[var(--space-2)] bg-text-muted"
+                />
+                {reason.text}
+              </li>
+            ))}
+          </ul>
+        </ReasonBubble>
       )}
       {caution === undefined ? null : (
         <div className="grid gap-[var(--space-content)] border-l-2 border-warn pl-[var(--space-3)]">

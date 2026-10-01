@@ -1,5 +1,6 @@
 "use client";
 
+import { BookmarkIcon } from "lucide-react";
 import { useEffect, useMemo, useRef, useState, type ReactNode } from "react";
 
 import { CoverImage } from "@/components/cover/CoverImage";
@@ -203,12 +204,16 @@ export function WorkSearchSheet({
                       </p>
                     </div>
                     <Button
-                      className="col-span-full md:col-auto"
+                      className="col-span-full gap-[var(--space-2)] md:col-auto"
                       disabled={added || busyKey !== undefined}
                       onClick={() => void addCatalog(work)}
                       type="button"
                       variant="outline"
                     >
+                      <BookmarkIcon
+                        aria-hidden="true"
+                        className={added ? "size-4 fill-current" : "size-4"}
+                      />
                       {added
                         ? libraryStrings.search.added
                         : busy
@@ -294,12 +299,16 @@ export function WorkSearchSheet({
                       </span>
                     </div>
                     <Button
-                      className="col-span-full md:col-auto"
+                      className="col-span-full gap-[var(--space-2)] md:col-auto"
                       disabled={added || busyKey !== undefined}
                       onClick={() => void addProviderItem(item)}
                       type="button"
                       variant="outline"
                     >
+                      <BookmarkIcon
+                        aria-hidden="true"
+                        className={added ? "size-4 fill-current" : "size-4"}
+                      />
                       {added
                         ? libraryStrings.search.added
                         : busy

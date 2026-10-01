@@ -1,7 +1,7 @@
 "use client";
 
-import { m, useInView } from "motion/react";
-import { useRef, useState } from "react";
+import { m, useInView, useReducedMotion } from "motion/react";
+import { useEffect, useRef, useState } from "react";
 
 import type { DnaPreferenceState } from "@/domain/profile/dna-summary";
 import { tasteStrings } from "@/lib/strings";
@@ -18,7 +18,16 @@ type FactorBarProps = Readonly<{
   unknownLabel?: string;
   /** A comparison marker (for example the viewer's taste) drawn on the same 0–4 track. */
   reference?: Readonly<{ value: number; label: string }>;
+  /**
+   * Fill from 0 the first time the bar enters the viewport in this mount (04 §6 E). The meter's
+   * accessible value is final from the start; only the drawn fill waits.
+   */
+  enterFill?: boolean;
+  /** Stagger for `enterFill`, in seconds. */
+  enterDelay?: number;
 }>;
+
+const ENTER_FILL_EASE = "cubic-bezier(0.33, 1, 0.68, 1)";
 
 export function FactorBar({
   label,
@@ -29,10 +38,35 @@ export function FactorBar({
   revealDelay = 0,
   reference,
   unknownLabel = tasteStrings.unknown,
+  enterFill = false,
+  enterDelay = 0,
 }: FactorBarProps) {
   const [revealComplete, setRevealComplete] = useState(false);
   const revealTrackRef = useRef<HTMLSpanElement>(null);
   const revealInView = useInView(revealTrackRef, { amount: 0.4, once: true });
+  const enterTrackRef = useRef<HTMLSpanElement>(null);
+  // Without IntersectionObserver there is no way to wait, so the bar starts filled.
+  const [enterInView, setEnterInView] = useState(() => typeof IntersectionObserver === "undefined");
+  const reducedMotion = useReducedMotion() === true;
+  const usesEnterFill = enterFill && !animateReveal;
+  // Reduced motion shows the final length at once; the track fades in instead (04 §6 E).
+  const enterFilled = !usesEnterFill || reducedMotion || enterInView;
+
+  useEffect(() => {
+    const element = enterTrackRef.current;
+    if (!usesEnterFill || enterInView || element === null) return;
+    // Any visible part counts: the track is a few pixels tall, so ratio thresholds miss it.
+    const observer = new IntersectionObserver((entries) => {
+      if (!entries.some((entry) => entry.isIntersecting)) return;
+      observer.disconnect();
+      setEnterInView(true);
+    });
+    observer.observe(element);
+    return () => observer.disconnect();
+  }, [enterInView, usesEnterFill]);
+  const [enterSettled, setEnterSettled] = useState(false);
+  // During the reveal the qualitative label follows the settled bar (04 §5.2).
+  const labelWaitsForReveal = animateReveal && !revealComplete && !reducedMotion;
   const knownValue = state === "known" && value !== null ? value : null;
   const valueLabel = knownValue === null ? null : tasteStrings.factorValue(knownValue);
   const referenceText = reference === undefined ? "" : `（${reference.label}）`;
@@ -56,11 +90,21 @@ export function FactorBar({
     >
       <span className="taste-factor-bar__heading flex items-baseline justify-between gap-[var(--space-content-loose)] text-[length:var(--text-caption-size)] font-bold text-text-strong">
         <span>{label}</span>
-        <span className="taste-factor-bar__value whitespace-nowrap text-[length:var(--text-caption-size)] font-medium text-text-muted">
+        <span
+          className="taste-factor-bar__value whitespace-nowrap text-[length:var(--text-caption-size)] font-medium text-text-muted transition-opacity duration-[var(--motion-duration-page)] ease-[var(--motion-ease-direct)]"
+          data-reduced-motion="fade"
+          style={knownValue !== null && labelWaitsForReveal ? { opacity: 0 } : undefined}
+        >
           {valueLabel === null ? unknownLabel : valueLabel}
         </span>
       </span>
-      <span className="relative block">
+      <span
+        className="relative block"
+        ref={usesEnterFill ? enterTrackRef : undefined}
+        {...(usesEnterFill
+          ? { "data-reduced-motion": "fade", "data-reduced-motion-enter": "" }
+          : {})}
+      >
         <span
           aria-hidden="true"
           className={cn(
@@ -93,7 +137,21 @@ export function FactorBar({
           ) : (
             <span
               className="taste-factor-bar__fill block h-full w-full origin-left rounded-[inherit] bg-accent transition-transform duration-[var(--motion-duration-value)] ease-[var(--motion-ease-value)] motion-reduce:transition-none"
-              style={{ transform: `scaleX(${String(knownValue / 4)})`, transformOrigin: "left" }}
+              data-enter-fill={usesEnterFill ? (enterFilled ? "filled" : "waiting") : undefined}
+              onTransitionEnd={() => {
+                if (enterFilled) setEnterSettled(true);
+              }}
+              style={{
+                transform: `scaleX(${String(enterFilled ? knownValue / 4 : 0)})`,
+                transformOrigin: "left",
+                ...(usesEnterFill && enterFilled && !reducedMotion && !enterSettled
+                  ? {
+                      transitionDuration: "600ms",
+                      transitionDelay: `${String(enterDelay)}s`,
+                      transitionTimingFunction: ENTER_FILL_EASE,
+                    }
+                  : {}),
+              }}
             />
           )}
         </span>

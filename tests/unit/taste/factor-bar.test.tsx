@@ -4,12 +4,17 @@ import { act, cleanup, render, screen } from "@testing-library/react";
 import type { HTMLAttributes, ReactNode } from "react";
 import { afterEach, describe, expect, it, vi } from "vitest";
 
-const motionState = vi.hoisted(() => ({ calls: [] as Record<string, unknown>[], inView: false }));
+const motionState = vi.hoisted(() => ({
+  calls: [] as Record<string, unknown>[],
+  inView: false,
+  reducedMotion: false,
+}));
 
 vi.mock("motion/react", async () => {
   const React = await import("react");
   return {
     useInView: () => motionState.inView,
+    useReducedMotion: () => motionState.reducedMotion,
     m: {
       span: (props: Record<string, unknown>) => {
         const {
@@ -46,6 +51,8 @@ afterEach(() => {
   cleanup();
   motionState.calls = [];
   motionState.inView = false;
+  motionState.reducedMotion = false;
+  vi.unstubAllGlobals();
 });
 
 describe("FactorBar", () => {
@@ -177,5 +184,59 @@ describe("FactorBar", () => {
     const fill = view.container.querySelector<HTMLElement>(".taste-factor-bar__fill");
     expect(fill?.classList.contains("taste-factor-bar__fill--reveal")).toBe(false);
     expect(fill?.style.transform).toBe("scaleX(0.75)");
+  });
+
+  it("fills from zero only once the bar is in view, keeping the meter value final", () => {
+    let notify: ((entries: { isIntersecting: boolean }[]) => void) | undefined;
+    vi.stubGlobal(
+      "IntersectionObserver",
+      class {
+        constructor(callback: (entries: { isIntersecting: boolean }[]) => void) {
+          notify = callback;
+        }
+        observe() {}
+        disconnect() {}
+      },
+    );
+    const view = render(
+      <FactorBar
+        animateReveal={false}
+        enterFill
+        label="テンポの速さ"
+        revealReady={false}
+        state="known"
+        value={3}
+      />,
+    );
+    const fill = () => view.container.querySelector<HTMLElement>(".taste-factor-bar__fill");
+
+    expect(fill()?.style.transform).toBe("scaleX(0)");
+    expect(fill()?.dataset.enterFill).toBe("waiting");
+    expect(screen.getByRole("meter", { name: "テンポの速さ" }).getAttribute("aria-valuenow")).toBe(
+      "3",
+    );
+
+    act(() => notify?.([{ isIntersecting: true }]));
+    expect(fill()?.style.transform).toBe("scaleX(0.75)");
+    expect(fill()?.style.transitionDuration).toBe("600ms");
+  });
+
+  it("shows the final length at once under reduced motion", () => {
+    motionState.reducedMotion = true;
+    const { container } = render(
+      <FactorBar
+        animateReveal={false}
+        enterFill
+        label="テンポの速さ"
+        revealReady={false}
+        state="known"
+        value={3}
+      />,
+    );
+
+    const fill = container.querySelector<HTMLElement>(".taste-factor-bar__fill");
+    expect(fill?.style.transform).toBe("scaleX(0.75)");
+    expect(fill?.style.transitionDuration).toBe("");
+    expect(container.querySelector("[data-reduced-motion-enter]")).toBeTruthy();
   });
 });

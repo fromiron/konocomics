@@ -168,14 +168,14 @@ E2E 내 기본 조작성 스모크: 시나리오 1을 키보드만으로 완주�
 
 - [ ] OS 설정 활성 후(`04` §6 대체 원칙, 2026-10-01): 로고 reveal·DNA reveal은 이동·글자 분할·성장 없이 opacity만으로 600ms 이내에 끝나고 일반 모드와 같은 정보를 보인다. 해당 1회 marker는 소비한다.
 - [ ] B는 이동 없는 160ms opacity, C는 `layout=false` + 160ms opacity 크로스페이드로 상태·순서·focus·live message를 즉시 반영한다. D는 scale·스탬프 없이 선택 체크·색 상태를 보존하고, E는 진입 채움·count-up 없이 최종 값을 보이며, F는 흔들림 대신 정적 `--warn` 보더와 text를 유지한다.
-- [ ] G(기울기·광택·마그넷·스포트라이트·스파크)와 광택 sweep이 하나도 실행되지 않는다. hover 표면색 변화는 유지한다.
+- [ ] G(광택·마그넷·스포트라이트·스파크)와 광택 sweep이 하나도 실행되지 않는다. hover 표면색 변화는 유지한다.
 - [ ] skeleton은 띠 이동 없는 정적 망점 실루엣 + opacity 변화만으로 loading/failure를 구분하고, 실행 중 reduce로 바뀌어도 A가 즉시 완료된 뒤 같은 session에서 재생되지 않는다.
 - [ ] Shelf 버튼 스크롤이 instant로 동작.
 
 ### 포인터 반응·확정 피드백 (`04` §6 G, 2026-10-01)
 
-- [ ] 기울기·광택·마그넷·스포트라이트는 fine pointer + hover에서만 동작하고 터치·펜·키보드에서는 실행되지 않는다(터치는 D press만).
-- [ ] 기울기는 rotateY ±8°·rotateX ±6.5°, 마그넷은 x 10px·y 6px를 넘지 않고, 이탈 뒤 180ms 안에 원위치로 돌아온다. 형제 카드 위치·article rect·Shelf 스크롤 위치는 변하지 않는다.
+- [ ] 광택·마그넷·스포트라이트는 fine pointer + hover에서만 동작하고 터치·펜·키보드에서는 실행되지 않는다(터치는 D press만).
+- [ ] 어떤 요소도 포인터에 따라 각도가 바뀌지 않는다. 마그넷은 x 10px·y 6px를 넘지 않고 이탈 뒤 180ms 안에 원위치로 돌아온다. 형제 카드 위치·article rect·Shelf 스크롤 위치는 변하지 않는다.
 - [ ] 확정 스파크는 허용된 긍정 확정(랜딩 CTA, 「読みたい」 저장 성공, 온보딩 선택 성공)에서만, 저장 성공 뒤에만 발화하고 실패·취소·「読んだ」·「興味なし」·「今日はパス」에는 발화하지 않는다. 입자는 `aria-hidden`·`pointer-events: none`이며 800ms 안에 DOM에서 제거된다.
 - [ ] 태그라인 글자 등장 중에도 heading의 accessible name은 문장 전체 하나다. 글자 span은 접근성 트리에 없다.
 - [ ] DNA 축 값은 어떤 모드에서도 숫자로 굴리거나 표시하지 않는다. count-up은 분석 작품 수 같은 실제 정수에만 쓰인다.
@@ -185,8 +185,8 @@ E2E 내 기본 조작성 스모크: 시나리오 1을 키보드만으로 완주�
 
 ### 추천 이유 말풍선 (`04` §2.9)
 
-- [ ] Featured·Anchor 패널·Quick Preview·작품 상세·랜딩 「例」의 이유가 같은 말풍선 표현이며 caution은 `--warn` 좌측 보더 블록으로 구분된다.
-- [ ] Featured 344×448·mobile 272×356의 외곽 geometry, 최대 3줄 reason, action rail 위치가 바뀌지 않고, `data-contribution-summary` 근거 대조가 유지된다.
+- [ ] Anchor 패널·Quick Preview·작품 상세·랜딩 「例」의 이유가 같은 말풍선 표현이며 caution은 `--warn` 좌측 보더 블록으로 구분된다. Featured 카드는 말풍선 없이 기존 reason 줄이다.
+- [ ] Anchor 옆 패널의 꼬리는 표지 쪽 측면을 가리킨다(오른쪽으로 열리면 왼쪽, 왼쪽으로 열리면 오른쪽). 패널 본문에 가로 스크롤이 생기지 않고 `data-contribution-summary` 근거 대조가 유지된다.
 
 ### 비주얼 충실도 (04 문서 대조)
 

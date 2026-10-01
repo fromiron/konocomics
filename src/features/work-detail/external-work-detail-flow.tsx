@@ -4,7 +4,7 @@ import { Link } from "@tanstack/react-router";
 import { useEffect, useRef, useState } from "react";
 
 import { coverSourceForSize } from "@/components/cover/CoverImage";
-import { usePageEntryMotion } from "@/components/motion/use-page-entry-motion";
+import { pageEntryFadeProps, usePageEntryMotion } from "@/components/motion/use-page-entry-motion";
 import { parseExternalWorkDetailQuery } from "@/domain/catalog/external-work";
 import { LibraryRecordEditor } from "@/features/library/record-editor";
 import { WorkDetailShell } from "@/features/work-detail/work-detail-shell";
@@ -108,6 +108,7 @@ function ExternalDetailRecord({
         data-external-work-detail={record.id}
         key={record.id}
         onAnimationEnd={pageEntryMotion.onAnimationEnd}
+        {...pageEntryFadeProps(pageEntryMotion.variant)}
       >
         <p aria-atomic="true" aria-live="polite" className="sr-only">
           {navigationStrings.routeAnnouncement(record.title)}

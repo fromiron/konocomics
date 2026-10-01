@@ -94,9 +94,9 @@ CTA **「好きなマンガから始める」** → /onboarding. 행동은 이 �
 
 - Slice 10은 정적 로고와 직접 피드백만 구현한다. 랜딩 reveal·페이지 진입 모션은 Slice 11 전용이다.
 - Slice 11 로고 reveal은 일반 first-run의 resolved introduction에서 세션당 1회, 총 1.8초 이내로만 실행한다(2026-10-01 태그라인 글자 등장 추가, `04` §5.1). 최종 2톤 로고·`好み` 캡션·태그라인·설명·CTA는 resolved introduction의 첫 paint부터 최종 DOM에 존재하며 CTA는 항상 조작 가능하다. 2톤 base·설명·CTA는 시각 최종 상태를 유지하고, 고정 웨이트 단색 오버레이·캡션·태그라인 글자만 움직인다. 태그라인 heading의 accessible name은 문장 전체이며 글자 span은 `aria-hidden`이다.
-- 2026-10-01 `04` §6 G: hero·마무리 CTA는 fine pointer hover에서 마그넷(최대 x 10px·y 6px), 클릭 시 확정 스파크를 쓴다. 「例」 카드는 fine pointer hover에서 기울기·광택을 쓴다. 터치에서는 D press만 쓴다.
+- 2026-10-01 `04` §6 G: hero·마무리 CTA는 fine pointer hover에서 마그넷(최대 x 10px·y 6px), 클릭 시 확정 스파크를 쓴다. 「例」 카드는 fine pointer hover에서 광택만 쓰고 각도를 바꾸지 않는다. 터치에서는 D press만 쓴다.
 - 탭/클릭·키 입력·휠/스크롤은 기본 동작을 소비하지 않고 reveal만 즉시 완료한다. 완료·스킵·`pagehide`·unmount에서는 controls·timer·pending continuation과 모든 listener를 정리한다.
-- reduced-motion: `04` §6 대체 원칙. 로고 overlay·태그라인·캡션은 이동·글자 분할 없이 opacity로만 600ms 이내에 나타나고, 마그넷·기울기·스파크는 없다.
+- reduced-motion: `04` §6 대체 원칙. 로고 overlay·태그라인·캡션은 이동·글자 분할 없이 opacity로만 600ms 이내에 나타나고, 마그넷·광택·스파크는 없다.
 
 ### 수용 기준
 
@@ -471,7 +471,7 @@ Shelf grouping은 presentation-only selector다. main Shelf 사이에는 work ID
 
 ### 모션
 
-카드 제거/백필은 해당 Shelf owner의 C만 사용한다. featured card는 desktop fine pointer hover/focus에서 article 경계를 바꾸지 않고 표지 stage·reason max-height·action rail을 400ms로 함께 전환한다. Discovery resolved 표지의 원→직사각형은 사용자 요청의 좁은 D 예외로 `clip-path`만 240ms ease-in-out 전환하고, 카드 표면색은 personalized Top 10과 같은 240ms ease-out을 쓴다. card/캐러셀 shadow와 generic hover Y축 lift는 사용하지 않는다. 2026-10-01 `04` §6 G: Featured 카드는 fine pointer hover에서 기울기·광택을 쓰고 기존 hover geometry 전환과 같은 family로 센다. 「読みたい」 저장 성공에는 확정 스탬프·스파크를 쓴다. 카드·Anchor 패널·Quick Preview의 lead reason은 `04` §2.9 말풍선으로 감싼다. reduced-motion은 `04` §6 대체 원칙에 따라 같은 최종 상태를 이동 없이 표시하고, C 제거·백필은 160ms opacity 크로스페이드다. Quick Preview는 진입 keyframe 없이 최종 상태로 열린다. 추천 화면에는 B 페이지 진입 모션을 적용하지 않는다.
+카드 제거/백필은 해당 Shelf owner의 C만 사용한다. featured card는 desktop fine pointer hover/focus에서 article 경계를 바꾸지 않고 표지 stage·reason max-height·action rail을 400ms로 함께 전환한다. Discovery resolved 표지의 원→직사각형은 사용자 요청의 좁은 D 예외로 `clip-path`만 240ms ease-in-out 전환하고, 카드 표면색은 personalized Top 10과 같은 240ms ease-out을 쓴다. card/캐러셀 shadow와 generic hover Y축 lift는 사용하지 않는다. 2026-10-01 `04` §6 G: Featured 카드는 fine pointer hover에서 광택만 쓰고(각도 변화 없음) 기존 hover geometry 전환과 같은 family로 센다. Featured 카드의 reason은 말풍선 없이 기존 줄을 유지한다. 「読みたい」 저장 성공에는 확정 스탬프·스파크를 쓴다. Anchor 패널(표지 쪽 측면 꼬리)·Quick Preview의 이유는 `04` §2.9 말풍선으로 감싼다. reduced-motion은 `04` §6 대체 원칙에 따라 같은 최종 상태를 이동 없이 표시하고, C 제거·백필은 160ms opacity 크로스페이드다. Quick Preview는 진입 keyframe 없이 최종 상태로 열린다. 추천 화면에는 B 페이지 진입 모션을 적용하지 않는다.
 
 ### 수용 기준
 

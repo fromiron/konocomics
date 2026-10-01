@@ -3,14 +3,19 @@
 import { type AnimationEvent, useCallback, useLayoutEffect, useRef, useState } from "react";
 
 const PAGE_ENTRY_ANIMATION_NAME = "page-entry-b-enter";
+const PAGE_ENTRY_FADE_ANIMATION_NAME = "reduced-fade-in";
 
 type PageEntryMotionOptions = Readonly<{
   enabled: boolean;
   identity: string;
 }>;
 
+/** `move` is the 8px fade-up; `fade` is its reduced-motion replacement (opacity only). */
+export type PageEntryVariant = "move" | "fade";
+
 type PageEntryMotionOwner = Readonly<{
   active: boolean;
+  variant: PageEntryVariant | null;
   onAnimationEnd(event: AnimationEvent<HTMLElement>): void;
 }>;
 
@@ -18,11 +23,11 @@ export function usePageEntryMotion({
   enabled,
   identity,
 }: PageEntryMotionOptions): PageEntryMotionOwner {
-  const [active, setActive] = useState(false);
+  const [variant, setVariant] = useState<PageEntryVariant | null>(null);
   const ownershipRef = useRef({ consumed: false, identity });
   const consume = useCallback(() => {
     ownershipRef.current.consumed = true;
-    setActive(false);
+    setVariant(null);
   }, []);
 
   /* eslint-disable react-hooks/set-state-in-effect -- B is a pre-paint progressive enhancement that must fail closed before it can animate. */
@@ -45,6 +50,11 @@ export function usePageEntryMotion({
       }
 
       mediaQuery = window.matchMedia("(prefers-reduced-motion: reduce)");
+      if (mediaQuery.matches === true) {
+        // Reduced motion keeps the entry cue as an opacity-only fade (04 §6 B).
+        setVariant("fade");
+        return;
+      }
       if (
         mediaQuery.matches !== false ||
         typeof mediaQuery.addEventListener !== "function" ||
@@ -63,7 +73,7 @@ export function usePageEntryMotion({
         consume();
         return;
       }
-      setActive(true);
+      setVariant("move");
     } catch {
       consume();
       return;
@@ -82,10 +92,22 @@ export function usePageEntryMotion({
 
   const onAnimationEnd = useCallback(
     (event: AnimationEvent<HTMLElement>) => {
-      if (event.animationName === PAGE_ENTRY_ANIMATION_NAME) consume();
+      if (
+        event.animationName === PAGE_ENTRY_ANIMATION_NAME ||
+        event.animationName === PAGE_ENTRY_FADE_ANIMATION_NAME
+      ) {
+        consume();
+      }
     },
     [consume],
   );
 
-  return { active, onAnimationEnd };
+  return { active: variant === "move", variant, onAnimationEnd };
+}
+
+/** Props for the reduced-motion fade variant of a page entry root. */
+export function pageEntryFadeProps(variant: PageEntryVariant | null) {
+  return variant === "fade"
+    ? ({ "data-reduced-motion": "fade", "data-reduced-motion-enter": "" } as const)
+    : {};
 }

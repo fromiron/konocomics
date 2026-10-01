@@ -9,8 +9,11 @@ import { Button, buttonClassName } from "@/components/design-system/button";
 import { Snackbar, type SnackbarNotice } from "@/components/layout/snackbar";
 import { MediaShelf } from "@/components/media/media-shelf";
 import { RankingCard } from "@/components/media/ranking-card";
+import { ReasonBubble } from "@/components/media/reason-bubble";
 import { ReasonChips } from "@/components/media/recommendation-evidence";
-import { usePageEntryMotion } from "@/components/motion/use-page-entry-motion";
+import { pageEntryFadeProps, usePageEntryMotion } from "@/components/motion/use-page-entry-motion";
+import { usePointerEffect } from "@/components/motion/use-pointer-effects";
+import { useSaveConfirmation } from "@/components/motion/use-save-confirmation";
 import recommendationContextJson from "@/data/generated/recommendation-context-v1.json";
 import { AXIS_IDS, GENRE_TAGS, THEME_TAGS } from "@/domain/catalog/constants";
 import { normalizeIsbn } from "@/domain/catalog/normalize";
@@ -467,6 +470,11 @@ function WorkStateControls({
   };
 
   const bookmarked = record?.readingState === "planned";
+  const {
+    attach: bookmarkAttach,
+    markPressed: bookmarkMarkPressed,
+    stamping: bookmarkStamping,
+  } = useSaveConfirmation<HTMLButtonElement>(bookmarked);
   const excluded = record?.readingState === "hidden";
   const rated = record?.readingState === "completed" || record?.readingState === "dropped";
   const interactive =
@@ -527,10 +535,14 @@ function WorkStateControls({
                 bookmarked
                   ? "bg-accent-soft text-accent"
                   : "bg-surface-2/70 text-text hover:bg-surface-2 hover:text-text-strong"
-              }`}
+              }${bookmarkStamping ? " confirm-stamp" : ""}`}
               data-reading-state="planned"
               data-slot="work-bookmark"
-              onClick={() => handleStateSelect("planned")}
+              onClick={() => {
+                bookmarkMarkPressed();
+                handleStateSelect("planned");
+              }}
+              ref={bookmarkAttach}
               type="button"
             >
               <BookmarkIcon
@@ -653,20 +665,26 @@ function CompatibilitySummary({
 
   return (
     <div className="grid content-start gap-[var(--space-3)] text-[length:var(--text-body-size)] leading-[var(--line-height-body)] text-text">
-      <p className={leadReason === undefined ? "text-text-muted" : undefined}>
-        {anchorMentionIndex < 0 ? (
-          leadText
-        ) : (
-          <>
-            {leadText.slice(0, anchorMentionIndex)}
-            <strong className="font-bold text-text-strong">{anchorMention}</strong>
-            {leadText.slice(anchorMentionIndex + anchorMention.length)}
-          </>
-        )}
-      </p>
-      {fullReasons.map(({ reason }) => (
-        <p key={`${reason.source}:${reason.group}:${reason.factorId}`}>{reason.text}</p>
-      ))}
+      {leadReason === undefined ? (
+        <p className="text-text-muted">{leadText}</p>
+      ) : (
+        <ReasonBubble className="grid gap-[var(--space-2)]">
+          <p>
+            {anchorMentionIndex < 0 ? (
+              leadText
+            ) : (
+              <>
+                {leadText.slice(0, anchorMentionIndex)}
+                <strong className="font-bold text-text-strong">{anchorMention}</strong>
+                {leadText.slice(anchorMentionIndex + anchorMention.length)}
+              </>
+            )}
+          </p>
+          {fullReasons.map(({ reason }) => (
+            <p key={`${reason.source}:${reason.group}:${reason.factorId}`}>{reason.text}</p>
+          ))}
+        </ReasonBubble>
+      )}
       {desktopLabelText === "" ? null : (
         <p className={desktopLabelText === mobileLabelText ? undefined : "hidden md:block"}>
           {desktopLabelText}
@@ -697,6 +715,8 @@ function CompatibilitySection({
   onAnchorCoverVisible(workId: string): void;
   state: CompatibilityState;
 }>) {
+  const spotlightRef = usePointerEffect<HTMLElement>("light");
+
   if (state.kind === "hidden") return null;
   const primaryAnchorIds = new Set(
     state.kind === "ready"
@@ -733,9 +753,11 @@ function CompatibilitySection({
   return (
     <section
       aria-labelledby="work-compatibility-heading"
-      className="grid items-start gap-[var(--space-6)] border-t border-line/70 pt-[var(--space-6)] md:grid-cols-2"
+      className="relative grid items-start gap-[var(--space-6)] border-t border-line/70 pt-[var(--space-6)] md:grid-cols-2"
       data-slot="work-compatibility"
+      ref={spotlightRef}
     >
+      <span aria-hidden="true" className="pointer-spotlight" />
       <div className="grid min-w-0 content-start gap-[var(--space-6)]">
         <h2
           className="text-[length:var(--text-subheading-size)] font-bold text-text-strong"
@@ -1040,6 +1062,7 @@ function WorkDetailContent({ catalog, work }: Readonly<{ catalog: CatalogV1; wor
         data-work-detail-id={work.id}
         key={work.id}
         onAnimationEnd={pageEntryMotion.onAnimationEnd}
+        {...pageEntryFadeProps(pageEntryMotion.variant)}
       >
         <p aria-atomic="true" aria-live="polite" className="sr-only">
           {navigationStrings.routeAnnouncement(work.title)}

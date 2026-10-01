@@ -2,6 +2,7 @@ import { Link } from "@tanstack/react-router";
 import { ScanSearchIcon } from "lucide-react";
 
 import { CoverImage } from "@/components/cover/CoverImage";
+import { ReasonBubble } from "@/components/media/reason-bubble";
 import { ExpandableMediaCard } from "@/components/media/expandable-media-card";
 import { QuietTextAction, StateActionRow } from "@/components/media/state-action-row";
 import type { Work } from "@/domain/catalog/types";
@@ -163,20 +164,22 @@ export function RecommendationShelfCard({
       panel={
         <div className="flex h-full flex-col gap-[var(--space-2)]">
           <div className="grid min-h-0 flex-1 content-start gap-[var(--space-2)] overflow-y-auto overscroll-contain">
-            <p
-              className="text-[length:var(--font-size-14)] leading-[var(--line-height-body)] text-text"
-              data-contribution-summary={JSON.stringify(leadSentence ?? null)}
-            >
-              {anchorMentionIndex < 0 ? (
-                leadReason
-              ) : (
-                <>
-                  {leadReason.slice(0, anchorMentionIndex)}
-                  <strong className="font-bold text-text-strong">{anchorMention}</strong>
-                  {leadReason.slice(anchorMentionIndex + anchorMention.length)}
-                </>
-              )}
-            </p>
+            <ReasonBubble tail="side">
+              <p
+                className="text-[length:var(--font-size-14)] leading-[var(--line-height-body)] text-text"
+                data-contribution-summary={JSON.stringify(leadSentence ?? null)}
+              >
+                {anchorMentionIndex < 0 ? (
+                  leadReason
+                ) : (
+                  <>
+                    {leadReason.slice(0, anchorMentionIndex)}
+                    <strong className="font-bold text-text-strong">{anchorMention}</strong>
+                    {leadReason.slice(anchorMentionIndex + anchorMention.length)}
+                  </>
+                )}
+              </p>
+            </ReasonBubble>
             {itemCaption ? (
               <p className="line-clamp-3 text-[length:var(--text-caption-size)] leading-[var(--line-height-body)] text-text-muted">
                 {itemCaption}

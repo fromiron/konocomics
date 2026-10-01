@@ -2,6 +2,8 @@ import { Link } from "@tanstack/react-router";
 import { useMemo } from "react";
 
 import { CoverImage } from "@/components/cover/CoverImage";
+import { ReasonBubble } from "@/components/media/reason-bubble";
+import { usePointerEffect } from "@/components/motion/use-pointer-effects";
 import { generateTasteExplanation } from "@/domain/explanation";
 import { explanationFactorLabel } from "@/lib/explanation-labels";
 import { explanationLexicon, landingStrings } from "@/lib/strings";
@@ -23,6 +25,7 @@ type LandingSampleCardProps = Readonly<{
 export function LandingSampleCard({ coverUrl, onCoverVisible, sample }: LandingSampleCardProps) {
   const { anchorWorks, recommendation } = sample;
   const work = recommendation.work;
+  const glareRef = usePointerEffect<HTMLDivElement>("light");
   const explanation = useMemo(() => {
     const titles = new Map(anchorWorks.map((anchor) => [anchor.id, anchor.title] as const));
     return generateTasteExplanation({
@@ -59,9 +62,11 @@ export function LandingSampleCard({ coverUrl, onCoverVisible, sample }: LandingS
         )}
       </figcaption>
       <div
-        className="grid grid-cols-[minmax(6.5rem,8rem)_minmax(0,1fr)] sm:grid-cols-[11rem_minmax(0,1fr)] sm:grid-rows-[auto_1fr] items-start gap-x-[var(--space-5)] gap-y-[var(--space-4)] rounded-[var(--radius-card)] border border-line bg-surface-1/90 p-[var(--space-5)] shadow-[var(--shadow-raised)]"
+        className="relative grid grid-cols-[minmax(6.5rem,8rem)_minmax(0,1fr)] sm:grid-cols-[11rem_minmax(0,1fr)] sm:grid-rows-[auto_1fr] items-start gap-x-[var(--space-5)] gap-y-[var(--space-4)] rounded-[var(--radius-card)] border border-line bg-surface-1/90 p-[var(--space-5)] shadow-[var(--shadow-raised)]"
         data-slot="landing-sample"
+        ref={glareRef}
       >
+        <span aria-hidden="true" className="pointer-glare" />
         <CoverImage
           className="sm:row-span-2 sm:w-[11rem]"
           coverUrl={coverUrl}
@@ -91,17 +96,19 @@ export function LandingSampleCard({ coverUrl, onCoverVisible, sample }: LandingS
         {/* On phones the reason spans the card instead of wrapping beside the cover. */}
         <div className="col-span-2 grid min-w-0 content-start gap-[var(--space-3)] sm:col-span-1 sm:col-start-2">
           {lead === undefined ? null : (
-            <p className="text-[length:var(--font-size-14)] leading-[var(--line-height-body)] text-text [word-break:auto-phrase]">
-              {anchorTitle === undefined || anchorIndex < 0 ? (
-                lead.text
-              ) : (
-                <>
-                  {lead.text.slice(0, anchorIndex)}
-                  <strong className="font-bold text-text-strong">{anchorTitle}</strong>
-                  {lead.text.slice(anchorIndex + anchorTitle.length)}
-                </>
-              )}
-            </p>
+            <ReasonBubble>
+              <p className="text-[length:var(--font-size-14)] leading-[var(--line-height-body)] text-text [word-break:auto-phrase]">
+                {anchorTitle === undefined || anchorIndex < 0 ? (
+                  lead.text
+                ) : (
+                  <>
+                    {lead.text.slice(0, anchorIndex)}
+                    <strong className="font-bold text-text-strong">{anchorTitle}</strong>
+                    {lead.text.slice(anchorIndex + anchorTitle.length)}
+                  </>
+                )}
+              </p>
+            </ReasonBubble>
           )}
           {otherLabels.length === 0 ? null : (
             <p className="text-[length:var(--text-caption-size)] text-text-muted">

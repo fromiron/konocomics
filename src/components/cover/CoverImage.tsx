@@ -222,7 +222,8 @@ export function CoverImage({
           {loaded ? null : (
             <span
               aria-hidden="true"
-              className="cover-image__skeleton absolute inset-0 bg-line motion-safe:[animation:cover-skeleton-pulse_1.2s_ease-in-out_infinite_alternate] motion-reduce:opacity-65"
+              className="cover-image__skeleton skeleton-tone absolute inset-0"
+              data-reduced-motion="fade"
             />
           )}
           <img
@@ -264,7 +265,8 @@ export function CoverImage({
       {loaded ? null : (
         <span
           aria-hidden="true"
-          className="cover-image__skeleton absolute inset-0 bg-line motion-safe:[animation:cover-skeleton-pulse_1.2s_ease-in-out_infinite_alternate] motion-reduce:opacity-65"
+          className="cover-image__skeleton skeleton-tone absolute inset-0"
+          data-reduced-motion="fade"
         />
       )}
       <span

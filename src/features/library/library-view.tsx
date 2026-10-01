@@ -1,6 +1,7 @@
 "use client";
 
 import { Link } from "@tanstack/react-router";
+import { BookmarkIcon } from "lucide-react";
 import { useEffect, useMemo, useRef, useState, type ReactNode } from "react";
 
 import { Button } from "@/components/design-system/button";
@@ -377,6 +378,9 @@ export function LibraryView({
                       key={id}
                       value={id}
                     >
+                      {state === "planned" ? (
+                        <BookmarkIcon aria-hidden="true" className="size-4" />
+                      ) : null}
                       {label}
                       <span aria-hidden="true" className="tabular-nums">
                         {count}

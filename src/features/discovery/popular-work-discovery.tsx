@@ -1,7 +1,7 @@
 "use client";
 
 import { Link } from "@tanstack/react-router";
-import { CheckIcon, XIcon } from "lucide-react";
+import { BookmarkIcon, CheckIcon, XIcon } from "lucide-react";
 import { useEffect, useId, useMemo, useRef, useState } from "react";
 
 import { BookCover } from "@/components/cover/BookCover";
@@ -245,7 +245,12 @@ export function PopularWorkDiscovery({ embedded = false }: Readonly<{ embedded?:
               </p>
             </section>
             <div className="flex flex-wrap items-center gap-[var(--space-3)]">
-              <Button disabled={busy} onClick={() => void save(selection.record)}>
+              <Button
+                className="gap-[var(--space-2)]"
+                disabled={busy}
+                onClick={() => void save(selection.record)}
+              >
+                <BookmarkIcon aria-hidden="true" className="size-4" />
                 {libraryStrings.search.add}
               </Button>
               {selection.work === undefined ? null : (

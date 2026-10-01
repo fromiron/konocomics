@@ -1,8 +1,9 @@
 import { Link } from "@tanstack/react-router";
 import { ScanSearchIcon } from "lucide-react";
-import { type Ref } from "react";
+import { useCallback } from "react";
 
 import { CoverImage, coverSourceForSize } from "@/components/cover/CoverImage";
+import { usePointerEffect } from "@/components/motion/use-pointer-effects";
 import { ConfidenceLabel } from "@/components/media/recommendation-evidence";
 import {
   CoverSaveToggle,
@@ -24,7 +25,8 @@ type RecommendationCardProps = Readonly<{
   busy: boolean;
   priority: boolean;
   coverUrl?: string | null;
-  articleRef: Ref<HTMLElement>;
+  /** Absent on carousel clones, which never register as the canonical card. */
+  articleRef?: (element: HTMLElement | null) => void;
   onPlanned: () => void;
   onCompleted: () => void;
   onHidden: () => void;
@@ -84,14 +86,24 @@ export function RecommendationCard({
   const explanation = explanationFor(entry, resolveTitle);
   const leadReason = explanation.positiveReasons[0];
   const backdropSource = coverUrl?.trim() ? coverSourceForSize(coverUrl, 400) : "";
+  // A soft light follows a fine pointer; the card never changes angle (04 §6 G).
+  const attachGlare = usePointerEffect<HTMLElement>("light");
+  const setArticle = useCallback(
+    (element: HTMLElement | null) => {
+      attachGlare(element);
+      articleRef?.(element);
+    },
+    [articleRef, attachGlare],
+  );
 
   return (
     <article
       className="recommendation-featured-card group/card relative isolate flex h-[22.25rem] w-full flex-col overflow-hidden rounded-[var(--radius-card)] border border-line/70 p-[var(--space-4)] focus-within:border-line-accent sm:h-[24.75rem] md:h-[28rem] md:p-[var(--space-5)]"
       data-personalized-recommendation-card={work.id}
-      ref={articleRef}
+      ref={setArticle}
       tabIndex={-1}
     >
+      <span aria-hidden="true" className="pointer-glare" />
       {backdropSource === "" ? null : (
         <>
           <img

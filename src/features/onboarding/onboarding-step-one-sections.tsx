@@ -221,6 +221,8 @@ function OnboardingCollectionPanel({
     <section
       aria-labelledby={COLLECTION_PANEL_TITLE_ID}
       className="onboarding-collection-panel mt-[var(--space-content-loose)] min-w-0 rounded-[var(--radius-card)] border border-line bg-surface-1 p-[var(--space-4)]"
+      data-reduced-motion="fade"
+      data-reduced-motion-enter=""
       id={COLLECTION_PANEL_ID}
     >
       <h3

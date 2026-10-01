@@ -75,7 +75,7 @@
 | # | 영역 | 이전 결정 | Verdict | 개정 결정 | 이유 |
 |---|---|---|---|---|---|
 | V2′ | React Bits | 전면 미채택 | **REFINE** | 코드·의존성은 계속 미도입. 효과의 레퍼런스로만 쓰고 Motion·CSS로 자작 (`04` §7) | 관리·의존성 비용 없이 체감 품질을 올림 |
-| V7′ | Spotlight / Tilted Card | 제거 | **REFINE** | `04` §6 G 허용 목록의 위치·한도·fine pointer 조건으로 채택 | 표지와 경쟁하지 않는 범위의 재질감 |
+| V7′ | Spotlight / Tilted Card | 제거 | **REFINE** | Spotlight·광택만 `04` §6 G 허용 목록의 위치·한도·fine pointer 조건으로 채택. 각도를 바꾸는 Tilt는 구현 검토 뒤 사용자 결정으로 모든 요소에서 금지 | 표지와 경쟁하지 않는 범위의 재질감, Featured의 기존 크기 전환과 중복 회피 |
 | V14 | reduced-motion | 모션 제거 | **REPLACE** | 이동·확대·포인터 추적·반복만 제거하고 opacity·색 변화로 대체 (`04` §6) | WCAG 2.3.3·OS Reduce Motion 관례에 맞추고 상태 인과는 유지 |
 
 ## 검증·순서

@@ -150,6 +150,10 @@ function StaticRecommendationItems({
             className="basis-[var(--featured-card-basis)] shrink-0 snap-start overflow-visible"
             data-recommendation-work-id={item.workId}
             key={`${String(copy)}-${item.workId}`}
+            // Without layout motion a backfilled card still arrives with a short fade.
+            {...(item.animateIn
+              ? { "data-reduced-motion": "fade", "data-reduced-motion-enter": "" }
+              : {})}
             {...carouselCloneProps(copy)}
           >
             {duplicateCarouselContent(item.content, copy)}
@@ -233,14 +237,26 @@ function RecommendationsSkeleton() {
       <ol aria-hidden="true" className="m-0 grid list-none gap-[var(--space-4)] p-0">
         {Array.from({ length: 10 }, (_, index) => (
           <li
-            className="grid min-h-[calc(var(--recommendation-cover-width)*1.43)] grid-cols-[var(--recommendation-cover-width)_minmax(0,1fr)] gap-[var(--space-4)] rounded-[var(--radius-card)] border border-line bg-surface-1 p-[var(--space-4)] motion-safe:[animation:cover-skeleton-pulse_1.2s_ease-in-out_infinite_alternate] motion-reduce:animate-none motion-reduce:opacity-65"
+            className="grid min-h-[calc(var(--recommendation-cover-width)*1.43)] grid-cols-[var(--recommendation-cover-width)_minmax(0,1fr)] gap-[var(--space-4)] rounded-[var(--radius-card)] border border-line bg-surface-1 p-[var(--space-4)]"
             key={index}
           >
-            <span className="block aspect-[30/43] rounded-[var(--radius-cover)] bg-line" />
+            <span
+              className="skeleton-tone block aspect-[30/43] rounded-[var(--radius-cover)]"
+              data-reduced-motion="fade"
+            />
             <div className="grid content-start gap-[var(--space-3)]">
-              <span className="block h-[var(--space-4)] rounded-[var(--radius-cover)] bg-line" />
-              <span className="block h-[var(--space-4)] w-2/3 rounded-[var(--radius-cover)] bg-line" />
-              <span className="block h-[var(--space-8)] rounded-[var(--radius-cover)] bg-line" />
+              <span
+                className="skeleton-tone block h-[var(--space-4)] rounded-[var(--radius-cover)]"
+                data-reduced-motion="fade"
+              />
+              <span
+                className="skeleton-tone block h-[var(--space-4)] w-2/3 rounded-[var(--radius-cover)]"
+                data-reduced-motion="fade"
+              />
+              <span
+                className="skeleton-tone block h-[var(--space-8)] rounded-[var(--radius-cover)]"
+                data-reduced-motion="fade"
+              />
             </div>
           </li>
         ))}
