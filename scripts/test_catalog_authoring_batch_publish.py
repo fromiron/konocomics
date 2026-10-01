@@ -1,6 +1,7 @@
 """Publication recovery uses real storage; no model or canonical publication runs here."""
+import io
 import json
-from contextlib import closing, nullcontext
+from contextlib import closing, nullcontext, redirect_stdout
 from pathlib import Path
 import tempfile
 from types import SimpleNamespace
@@ -117,12 +118,20 @@ class BatchPublicationTest(unittest.TestCase):
                 "checkedPath": str(checked), "checkedSha256": batch.runner.panel.sha256(checked)}]}).encode() + b"\r\n")
             raw = summary.read_bytes()
             args = SimpleNamespace(batch_summary=summary, batch_root=root / "planning/attempt", apply_canonical=False)
+            output = io.StringIO()
             with patch.object(batch.runner, "REPO", repo), patch.object(batch.runner, "ROOT", root), \
-                 patch.object(batch.runner, "current", return_value=({}, root)):
-                with self.assertRaisesRegex(ValueError, "LF-only"):
+                 patch.object(batch.runner, "current", return_value=({}, root)), redirect_stdout(output):
+                with self.assertRaisesRegex(ValueError, "LF-only") as failure:
                     batch.publish(args)
             self.assertEqual(summary.read_bytes(), raw)
             self.assertTrue((args.batch_root / "summary-adapters" / batch.runner.panel.sha256(summary) / "ADAPTER.json").exists())
+            events = [json.loads(line) for line in output.getvalue().splitlines()]
+            timing = events[-1]["batchPublicationTimingsSeconds"]
+            self.assertEqual(timing["outcome"], "FAILED")
+            self.assertEqual(timing["executionMode"], "unresolved")
+            self.assertEqual(timing["failedStage"], "summaryAndCheckedInputs")
+            self.assertEqual(timing["errorType"], type(failure.exception).__name__)
+            self.assertGreaterEqual(timing["total"], 0)
 
     def test_canonical_resume_rejects_a_changed_live_candidate_receipt(self):
         with tempfile.TemporaryDirectory() as directory:
@@ -359,10 +368,38 @@ class BatchPublicationTest(unittest.TestCase):
                 batch.complete_batch(output, receipt, storage)
                 self.assertTrue(batch.verify_completion_revision(summary_sha, applied))
                 args = SimpleNamespace(batch_summary=summary, batch_root=output, apply_canonical=True)
+                authoritative_bytes = {path: path.read_bytes() for path in (summary, readback, receipt)}
+                logged = io.StringIO()
                 with patch.object(batch.runner, "current", return_value=(state, output)), \
-                     patch.object(batch, "apply_canonical", return_value={"status": "APPLIED"}) as canonical:
+                     patch.object(batch, "apply_canonical", return_value={"status": "APPLIED"}) as canonical, \
+                     redirect_stdout(logged):
                     batch.publish(args)
                 canonical.assert_called_once_with(output, receipt)
+                events = [json.loads(line) for line in logged.getvalue().splitlines()]
+                self.assertEqual(events[-1]["status"], "VERIFIED")
+                timing = events[-2]["batchPublicationTimingsSeconds"]
+                self.assertEqual(timing["outcome"], "COMPLETED")
+                self.assertEqual(timing["executionMode"], "reused")
+                self.assertEqual(set(timing["stages"]), {"summaryAndCheckedInputs",
+                    "candidateStorageBasisStateAndCompletion", "canonicalEffect", "transientCleanup"})
+                self.assertTrue(all(value >= 0 for value in timing["stages"].values()))
+                self.assertAlmostEqual(sum(timing["stages"].values()), timing["total"], places=6)
+                self.assertEqual({path: path.read_bytes() for path in authoritative_bytes}, authoritative_bytes)
+                failed = io.StringIO()
+                with patch.object(batch.runner, "current", return_value=(state, output)), \
+                     patch.object(batch, "apply_canonical", side_effect=OSError("canonical interrupted")), \
+                     redirect_stdout(failed):
+                    with self.assertRaisesRegex(OSError, "canonical interrupted"):
+                        batch.publish(args)
+                events = [json.loads(line) for line in failed.getvalue().splitlines()]
+                self.assertEqual(events[-2]["status"], "CANDIDATE_VERIFIED_CANONICAL_INCOMPLETE")
+                timing = events[-1]["batchPublicationTimingsSeconds"]
+                self.assertEqual(timing["outcome"], "FAILED")
+                self.assertEqual(timing["executionMode"], "reused")
+                self.assertEqual(timing["failedStage"], "canonicalEffect")
+                self.assertEqual(timing["errorType"], "OSError")
+                self.assertNotIn("transientCleanup", timing["stages"])
+                self.assertEqual({path: path.read_bytes() for path in authoritative_bytes}, authoritative_bytes)
                 previous = store.current_revision("completion", summary_sha)
                 value = store.get_revision(previous)
                 store.put_revision("completion", summary_sha, {**value["payload"], "audit": "new unbacked revision"}, value["members"])

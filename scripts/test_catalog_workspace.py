@@ -34,6 +34,63 @@ class WorkspaceTest(unittest.TestCase):
             actual = existing_parents(paths + paths[:10])
         self.assertEqual(actual, paths)
 
+    def test_dependency_discovery_checks_shared_parents_once_per_pass(self):
+        paths = [self.inputs / f"source-{index:03d}.json" for index in range(40)]
+        for path in paths:
+            path.write_bytes(b'{"actual":"source"}')
+        original = Path.is_symlink
+        calls = []
+
+        def observed(path):
+            if path == self.inputs:
+                calls.append(path)
+            return original(path)
+
+        with patch.object(Path, "is_symlink", new=observed):
+            self.assertEqual(set(authoring_inputs(paths, self.workspace)), set(paths))
+            first = len(calls)
+            # The shared parent used to be stat'ed for every sibling and again
+            # by key()/files(). Discovery, fresh exit check and root reduction
+            # still inspect it; the sibling count must not multiply those checks.
+            self.assertGreaterEqual(first, 2)
+            self.assertLessEqual(first, 4)
+            self.assertEqual(set(authoring_inputs(paths, self.workspace)), set(paths))
+            self.assertEqual(len(calls), first * 2)
+
+    def test_dependency_discovery_does_not_search_unrelated_siblings(self):
+        paths = [self.inputs / f"review-{index:03d}.md" for index in range(40)]
+        for path in paths:
+            path.write_bytes(b"actual source\n")
+        original = Path.is_relative_to
+
+        def observed(path, other):
+            if path != other and path.parent == other.parent and other in paths:
+                raise AssertionError("Unrelated sibling dependency comparison")
+            return original(path, other)
+
+        with patch.object(Path, "is_relative_to", new=observed):
+            self.assertEqual(set(authoring_inputs(paths, self.workspace)), set(paths))
+
+    def test_dependency_discovery_rejects_parent_link_changed_during_read(self):
+        source = self.inputs / "source.json"
+        source.write_bytes(b'{"actual":"source"}')
+        original_link, original_read = Path.is_symlink, Path.read_bytes
+        changed = False
+
+        def observed_link(path):
+            return (changed and path == self.inputs) or original_link(path)
+
+        def observed_read(path):
+            nonlocal changed
+            body = original_read(path)
+            if path == source:
+                changed = True
+            return body
+
+        with patch.object(Path, "is_symlink", new=observed_link), patch.object(Path, "read_bytes", new=observed_read):
+            with self.assertRaisesRegex(ValueError, "Linked path is not allowed"):
+                authoring_inputs([source], self.workspace)
+
     def test_relocated_snapshot_reads_original_keys_without_links(self):
         repo = self.root / "moved-repo"
         old = repo / ".workspace/catalog-expansion-continuation-20260902"

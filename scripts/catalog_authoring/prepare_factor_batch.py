@@ -8,8 +8,10 @@ import json
 import os
 import re
 import shutil
+import sqlite3
 import sys
 import time
+from contextlib import closing
 from datetime import datetime, timezone
 from pathlib import Path
 from urllib.parse import urlsplit
@@ -233,6 +235,18 @@ def validate_context_evidence(job: dict, facts: dict, packets: dict) -> None:
             require(not source_url or source_url in urls, f"context evidence URL is outside cited support URLs: {wid}")
 
 
+def validate_deferred_source_bindings(job: dict, packets: dict) -> None:
+    errors = []
+    for row in job["works"]:
+        sources = row["evidence"] + row["supplementalEvidence"]
+        ids = [source.get("evidenceId", source.get("id")) for source in sources]
+        if len(ids) != len(set(ids)):
+            errors.append(f"{row['workId']}: duplicate evidence ID across original and supplemental sources")
+        if not any(source["sourceUrl"] in packets[row["workId"]]["supportEvidenceUrls"] for source in sources):
+            errors.append(f"{row['workId']}: no same-Work evidence bound to an exact supportEvidenceUrl; repair binding or collect the missing context")
+    require(not errors, "INPUT_NEEDS_REPAIR: " + "; ".join(errors))
+
+
 def preflight(job: dict, baseline: Path, registry_path: Path, *, recovery: bool = False) -> tuple[dict, dict, dict]:
     """Check real publisher identity/bibliography before freezing or numerical review."""
     ids = {row["workId"] for row in job["works"]}
@@ -250,15 +264,7 @@ def preflight(job: dict, baseline: Path, registry_path: Path, *, recovery: bool 
     packets = build_packets(job, facts, registry)
     backend._validate_packet_baseline_binding(packets, facts, registry)
     if job["schemaVersion"] == single.FROZEN_JOB:
-        errors = []
-        for row in job["works"]:
-            sources = row["evidence"] + row["supplementalEvidence"]
-            ids = [source.get("evidenceId", source.get("id")) for source in sources]
-            if len(ids) != len(set(ids)):
-                errors.append(f"{row['workId']}: duplicate evidence ID across original and supplemental sources")
-            if not any(source["sourceUrl"] in packets[row["workId"]]["supportEvidenceUrls"] for source in sources):
-                errors.append(f"{row['workId']}: no same-Work evidence bound to an exact supportEvidenceUrl; repair binding or collect the missing context")
-        require(not errors, "INPUT_NEEDS_REPAIR: " + "; ".join(errors))
+        validate_deferred_source_bindings(job, packets)
         return packets, facts, registry
     validate_context_evidence(job, facts, packets)
     validated = validated_safety(job)
@@ -453,6 +459,54 @@ def capture_bindings(job_path: Path, provenance=None) -> list[dict]:
     return bindings
 
 
+def ordinary_freeze_probe(job_path: Path, baseline: Path, registry_path: Path):
+    """Cheap caller diagnostics; the recorded freeze still runs full preflight."""
+    bindings = {}
+    job = read_job(job_path, bindings)
+    backend = publisher._backend_module()
+    catalog_path = baseline / "catalog-expanded.candidate.sqlite"
+    bindings.update({path.resolve(): panel.sha256(path) for path in (catalog_path, registry_path)})
+    ids = [row["workId"] for row in job["works"]]
+    placeholders = ",".join("?" for _ in ids)
+    with closing(sqlite3.connect(backend._db_uri(catalog_path), uri=True)) as db:
+        db.row_factory = sqlite3.Row
+        db.execute("BEGIN")
+        work_columns = "id,title,titleKana,creators,publisher,demographic,status,firstPublishedYear,factorScope,annotationReviewMethod"
+        works = {row["id"]: dict(row) for row in db.execute(f"SELECT {work_columns} FROM source_works WHERE id IN ({placeholders})", ids)}
+        volumes = {}
+        volume_columns = "id,workId,volumeNumber,isbn,releaseDate,editionKind,isRepresentative,evidenceId"
+        for row in db.execute(f"SELECT {volume_columns} FROM source_volumes WHERE workId IN ({placeholders}) ORDER BY sourceOrdinal", ids):
+            volumes.setdefault(row["workId"], []).append(dict(row))
+    with closing(sqlite3.connect(backend._db_uri(registry_path), uri=True)) as db:
+        db.row_factory = sqlite3.Row
+        db.execute("BEGIN")
+        by_work = {}
+        for row in db.execute(f"SELECT * FROM registry_source_rows WHERE canonicalWorkId IN ({placeholders}) ORDER BY sourceOrdinal", ids):
+            by_work.setdefault(row["canonicalWorkId"], []).append(dict(row))
+    packets = build_packets(job, {"works": works, "volumeRows": volumes}, {"rowsByWork": by_work})
+    if job["schemaVersion"] == single.FROZEN_JOB:
+        validate_deferred_source_bindings(job, packets)
+    require(all(panel.sha256(path) == sha for path, sha in bindings.items()),
+            "authoring input changed during preflight; use a new run/input revision")
+    return bindings
+
+
+def ordinary_freeze_preflight(job_path: Path, baseline: Path, registry_path: Path, input_bindings=None):
+    """Use the ordinary freeze gates before discovering or hashing raw captures."""
+    bindings = {} if input_bindings is None else input_bindings
+    job = read_job(job_path, bindings)
+    if job["schemaVersion"] == single.FROZEN_JOB:
+        require(len(job["works"]) == 1, "single-pass revisions isolate one Work; queue independent revisions")
+    basis = [baseline / "catalog-expanded.candidate.sqlite", baseline / "MANIFEST.sha256",
+             registry_path, REPO / "data/staging/catalog-expansion/gold-set-manifest.json"]
+    bindings.update({path.resolve(): panel.sha256(path) for path in basis})
+    packets, _, registry = preflight(job, baseline, registry_path)
+    scope_request = scope.freeze_request(job, basis[0]) if scope.requested(job) else None
+    require(all(panel.sha256(path) == sha for path, sha in bindings.items()),
+            "authoring input changed during preflight; use a new run/input revision")
+    return job, packets, registry, scope_request, bindings
+
+
 def freeze(job_path: Path, baseline: Path, registry_path: Path, output: Path, provenance=None, prior_bundles: tuple[Path, ...] = (), recovery_epoch: Path | None = None) -> dict:
     require(not output.exists(), f"refusing overwrite: {output}")
     for root in provenance_roots(provenance):
@@ -463,7 +517,12 @@ def freeze(job_path: Path, baseline: Path, registry_path: Path, output: Path, pr
         epoch = factor_recovery.load_epoch(recovery_epoch)
         input_bindings[recovery_epoch.resolve()] = panel.sha256(recovery_epoch)
         input_bindings[artifact_path(epoch["originalCanonicalPath"]).resolve()] = epoch["canonicalSha256"]
-    job = read_job(job_path, input_bindings, recovery=recovery_epoch is not None)
+    started = time.perf_counter()
+    if recovery_epoch is None:
+        job, packets, registry, scope_request, _ = ordinary_freeze_preflight(job_path, baseline, registry_path, input_bindings)
+        checked = time.perf_counter()
+    else:
+        job = read_job(job_path, input_bindings, recovery=True)
     captures = capture_bindings(job_path, provenance)
     for binding in captures:
         root = Path(binding["root"])
@@ -475,10 +534,13 @@ def freeze(job_path: Path, baseline: Path, registry_path: Path, output: Path, pr
     if recovery_epoch is not None:
         require(1 <= len(job["works"]) <= 5, "recovery freeze needs 1..5 works")
         declaration = factor_recovery.build_declaration(recovery_epoch, baseline / "catalog-expanded.candidate.sqlite", {w["workId"] for w in job["works"]})
-    started = time.perf_counter()
-    packets, _, registry = preflight(job, baseline, registry_path, recovery=declaration is not None)
-    scope_request = scope.freeze_request(job, baseline / "catalog-expanded.candidate.sqlite") if scope.requested(job) else None
-    checked = time.perf_counter()
+    if recovery_epoch is not None:
+        started = time.perf_counter()
+        packets, _, registry = preflight(job, baseline, registry_path, recovery=True)
+        scope_request = scope.freeze_request(job, baseline / "catalog-expanded.candidate.sqlite") if scope.requested(job) else None
+        checked = time.perf_counter()
+    require(all(panel.sha256(path) == sha for path, sha in input_bindings.items()),
+            "authoring input changed during capture discovery; partial output is not usable")
     input_root = output / "panel-input"
     chunk = input_root / "chunks/chunk-01"
     chunk.mkdir(parents=True)

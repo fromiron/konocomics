@@ -379,6 +379,46 @@ class RevisionStoreTest(unittest.TestCase):
         with closing(self.store.connect()) as db:
             self.assertEqual(db.execute("SELECT count(*) FROM revision").fetchone()[0], 0)
 
+    def test_flat_save_bounds_ancestor_checks_without_reusing_saved_content(self):
+        folder = self.repo / "flat"
+        folder.mkdir()
+        paths = [folder / f"review-{index}.md" for index in range(16)]
+        for path in paths:
+            path.write_bytes(b"original evidence\n")
+        original = Path.is_symlink
+        ancestor_checks = []
+
+        def counted(path):
+            if path == self.repo:
+                ancestor_checks.append(path)
+            return original(path)
+
+        with patch.object(Path, "is_symlink", counted):
+            saved = self.store.save(paths, "flat evidence")
+        self.assertLess(len(ancestor_checks), len(paths))
+        expected = {self.store.key(path): digest(path.read_bytes()) for path in paths}
+        self.assertEqual(self.store.get_revision(saved)["members"], expected)
+        self.store.verify_saved(saved, paths)
+        with closing(self.store.connect()) as db:
+            cursor = db.execute("SELECT max(seq) FROM change_log").fetchone()[0]
+        self.assertEqual(self.store.save(paths, "flat evidence"), saved)
+        with closing(self.store.connect()) as db:
+            self.assertEqual(db.execute("SELECT max(seq) FROM change_log").fetchone()[0], cursor)
+
+        paths[-1].write_bytes(b"new evidence\n")
+        changed = self.store.save(paths, "flat evidence")
+        self.assertNotEqual(changed["revisionId"], saved["revisionId"])
+        self.assertEqual(self.store.get_revision(saved)["members"], expected)
+        expected[self.store.key(paths[-1])] = digest(paths[-1].read_bytes())
+        self.assertEqual(self.store.get_revision(changed)["members"], expected)
+        backup = self.store.backup()
+        copied = RevisionWorkspace(self.repo, Path(backup["destination"]))
+        self.assertEqual(copied.get_revision(changed), self.store.get_revision(changed))
+        with closing(self.store.connect(write=True)) as db, db:
+            db.execute("UPDATE blob SET content=x'00' WHERE sha256=?", (digest(paths[-1].read_bytes()),))
+        with self.assertRaises((ValueError, zlib.error)):
+            self.store.save(paths, "flat evidence")
+
     def test_incremental_backup_updates_in_place_and_only_copies_the_delta(self):
         self.store.save_bytes({"large.bin": os.urandom(1024 * 1024)}, "large")
         initial = self.store.backup()
@@ -677,10 +717,10 @@ store.backup()
             "registryPath": str(prior / "catalog-source-registry.candidate.sqlite")}), encoding="utf-8")
         calls, original_files = [], self.store.files
 
-        def bounded(roots):
+        def bounded(roots, **kwargs):
             calls.extend(roots)
             self.assertFalse(any(root in (prior, ancestor, origin, irrelevant) for root in roots), "Saved authority trees must not be walked again")
-            return original_files(roots)
+            return original_files(roots, **kwargs)
 
         references = []
         with patch.object(self.store, "files", side_effect=bounded):
@@ -786,9 +826,9 @@ assert compact_publication.read_stored_file(reference)==b'original policy and ca
         (child / "raw.txt").write_bytes(b"source")
         original, calls = self.store.files, []
 
-        def counted(roots):
+        def counted(roots, **kwargs):
             calls.extend(roots)
-            return original(roots)
+            return original(roots, **kwargs)
 
         with patch.object(self.store, "files", side_effect=counted):
             roots = authoring_inputs([child, parent], self.store)

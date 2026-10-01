@@ -9,6 +9,7 @@ import os
 import re
 from pathlib import Path
 import shutil
+import sqlite3
 import subprocess
 import sys
 import time
@@ -200,8 +201,19 @@ def ensure_frozen(run, config):
             if config.get(key + "Sha256"):
                 prepare.require(panel.sha256(artifact_path(config[key])) == config[key + "Sha256"], f"{key} changed since run creation; use a new run")
         roots = config.get("provenanceRoots", prepare.provenance_roots(config.get("provenanceRoot")))
-        if "provenanceBindings" in config:
+        rejected = False
+        preflight_bindings = None
+        if config.get("recoveryEpoch") is None:
+            try:
+                preflight_bindings = prepare.ordinary_freeze_probe(run / "job.json", artifact_path(config["baselineRoot"]), artifact_path(config["registryPath"]))
+            except (OSError, ValueError, sqlite3.Error):
+                # Keep the existing recorded freeze as the source of failure
+                # logs; unusable inputs do not need a raw-capture inventory.
+                rejected = True
+        if "provenanceBindings" in config and not rejected:
             prepare.require(prepare.capture_bindings(run / "job.json", roots) == binding_locations(config["provenanceBindings"]), "provenance changed since run creation; use a new run")
+        if preflight_bindings is not None:
+            prepare.require(all(panel.sha256(path) == sha for path, sha in preflight_bindings.items()), "authoring input changed during capture discovery; partial output is not usable")
         command = [sys.executable, "-X", "utf8", str(REPO / "scripts/catalog_authoring/prepare_factor_batch.py"), "freeze", "--job", str(run / "job.json"), "--baseline-root", str(artifact_path(config["baselineRoot"])), "--registry", str(artifact_path(config["registryPath"])), "--output-root", str(frozen)]
         inputs = [REPO / "scripts/catalog_authoring/prepare_factor_batch.py", run / "job.json", artifact_path(config["baselineRoot"]), artifact_path(config["registryPath"])]
         inputs.extend(partial_inputs)
@@ -211,9 +223,9 @@ def ensure_frozen(run, config):
             inputs.append(artifact_path(config["recoveryEpoch"]))
         for root in roots:
             command.extend(["--provenance-root", str(artifact_path(root))])
-        for binding in config.get("provenanceBindings", []):
+        for binding in ([] if rejected else config.get("provenanceBindings", [])):
             inputs.extend(artifact_path(binding["root"]) / name for name in binding["files"])
-        if "provenanceBindings" not in config:
+        if "provenanceBindings" not in config and not rejected:
             inputs.extend(artifact_path(root) for root in roots)
         direct_prior = [artifact_path(item["root"]) for item in prior_bundles]
         for root in direct_prior:
@@ -597,9 +609,29 @@ def run_job(args):
                 prepare.require(not getattr(args, "work_id", None), "choose --job or --work-id")
             raw = assemble_job(job_path, research)
             write(run / "job.json", raw)
-            captures = prepare.capture_bindings(run / "job.json", getattr(args, "provenance_root", None))
-            roots = [item["root"] for item in captures]
-            config = {"schemaVersion": "catalog-authoring-run-v1", "sourceJobSha256": panel.sha256(job_path), "baselineRoot": str(baseline), "registryPath": str(artifact_path(args.registry or baseline / "catalog-source-registry.candidate.sqlite").resolve()), "recoveryEpoch": str(artifact_path(args.recovery_epoch).resolve()) if args.recovery_epoch else None, "provenanceRoot": roots[0] if len(roots) == 1 else None, "provenanceRoots": roots, "provenanceBindings": captures, "priorBundleBindings": prior_bundles, "createdAt": utc_now()}
+            registry_path = artifact_path(args.registry or baseline / "catalog-source-registry.candidate.sqlite").resolve()
+            rejected, preflight_bindings = False, None
+            if args.recovery_epoch is None:
+                try:
+                    preflight_bindings = prepare.ordinary_freeze_probe(run / "job.json", baseline, registry_path)
+                except (OSError, ValueError, sqlite3.Error):
+                    rejected = True  # The recorded native freeze retains the actual error.
+            captures = [] if rejected else prepare.capture_bindings(run / "job.json", getattr(args, "provenance_root", None))
+            if preflight_bindings is not None:
+                prepare.require(all(panel.sha256(path) == sha for path, sha in preflight_bindings.items()), "authoring input changed during capture discovery; partial output is not usable")
+            if rejected:
+                roots = set(prepare.provenance_roots(getattr(args, "provenance_root", None)))
+                for work in raw["works"]:
+                    for ref in work.get("researchRefs", []):
+                        parent = artifact_path(ref["path"]).resolve().parent
+                        if (parent / "collection-session.json").is_file():
+                            roots.add(parent)
+                roots = sorted(map(str, roots))
+            else:
+                roots = [item["root"] for item in captures]
+            config = {"schemaVersion": "catalog-authoring-run-v1", "sourceJobSha256": panel.sha256(job_path), "baselineRoot": str(baseline), "registryPath": str(registry_path), "recoveryEpoch": str(artifact_path(args.recovery_epoch).resolve()) if args.recovery_epoch else None, "provenanceRoot": roots[0] if len(roots) == 1 else None, "provenanceRoots": roots, "priorBundleBindings": prior_bundles, "createdAt": utc_now()}
+            if not rejected:
+                config["provenanceBindings"] = captures
             config["requestedProvenanceRoots"] = [str(root) for root in prepare.provenance_roots(getattr(args, "provenance_root", None))]
             for key in ("registryPath", "recoveryEpoch"):
                 if config[key]:
