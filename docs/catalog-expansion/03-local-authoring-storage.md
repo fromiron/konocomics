@@ -277,6 +277,8 @@ node --import tsx scripts/import-publisher-book-metadata.ts --input <collection>
 
 새 compact 배치는 `compact-working`과 `checkpoints`의 정확한 임시 범위를 실행 시작 때 선언하고, checkpoint의 `execution-artifact` revision·head·소유권을 같은 commit에 결속한다. 미완료 실행과 canonical 반영·백업이 남은 실행의 사본은 보존한다. 요청된 후보·정식 반영과 readback·백업이 모두 끝나면 종료를 한 번만 기록하고, 저장 SHA 및 `latest.sqlite`의 실제 원문과 일치하는 선언 범위의 파일만 정리한다. 변경·추가 파일이나 살아 있는 참조가 있으면 보존하고, 임시 범위가 남아 있는 동안 GC도 소유자와 복구 자료를 유지한다. 정상 GC는 7일 수명이 지난 이 명시적 임시 head만 예외적으로 제거할 수 있으며 일반 artifact·근거·큐레이션 head에는 적용하지 않는다. 실행 시작 시각은 payload에 보존하고 종료 후 재수신으로 보존 기간을 연장하지 않는다. 최종 배치 저장은 이 임시 사본을 제외하고 발행·판정·원문·완료 근거를 보존한다. 이 규칙은 과거 자료의 일괄 삭제 권한이 아니다.
 
+완료 재수신에서 source/latest의 같은 execution 원문·membership·종료 상태·종료 시각이 일치하고 선언된 임시 경로가 모두 없으면, 정리 결과를 읽기 전용으로 재사용한다. 이 경우 전역 복구 제어 자료 수집·백업을 반복하지 않는다. 경로가 다시 생겼거나 종료/백업이 미완료이면 기존 종료·백업·소유권 및 원문 readback 경로를 수행하며, 새 파일·변경 파일·살아 있는 참조는 그대로 보존한다. 이는 완료한 임시 사본 정리만의 재사용이며 새 수집·판정·발행 단계의 백업을 대신하지 않는다.
+
 v3→v4는 writer 중지 → 기존 최종 백업 → 전용 runtime 확인 → schema/WAL 전환 → source·backup·generation/revision readback → writer 재개의 명시적 운영 전환이다. `catalog_retention.py upgrade-v4 --enable-wal`이 publisher/commit lock과 maintenance intent 아래 기존 백업·실제 v4 전환·새 백업·STATE readback을 결속한다. 중단된 같은 전환은 `--resume`으로 재개한다. 기존 generation과 revision을 유지하고 v4 인덱스·변경 순번을 추가한다. 전환 후 새 쓰기가 있으면 과거 파일의 단순 복원으로 변경을 버리지 않는다. 이 경계는 아래 과거 v2 retention cutover와 다르며, 문서나 runtime 설치만으로 전환됐다고 보고하지 않는다.
 
 ```powershell
