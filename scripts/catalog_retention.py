@@ -380,7 +380,7 @@ def retain_recovery_controls(store):
     inventory = store._inventory(roots)
     if any(digest(path.read_bytes()) != sha for path, sha in observed.items()):
         raise ValueError("Recovery control changed after scope discovery")
-    retained = store.save(roots, "recovery:current-controls")
+    retained = store._save_with_inventory(roots, "recovery:current-controls", inventory=inventory)
     store._assert_inventory(roots, inventory)
     if (read(state_path) != state or any(digest(path.read_bytes()) != sha for path, sha in observed.items())
             or any(names != tuple(sorted(str(path) for path in root.glob(pattern) if path.is_file()))

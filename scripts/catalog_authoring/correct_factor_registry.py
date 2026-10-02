@@ -21,6 +21,9 @@ removed; no identity URL additions, last-source deletion, or reordering is allow
 Job-only v4 consumes the v2 job's explicit registryVolumeProofs. ISBN and row/Work
 IDs remain immutable; bibliography updates follow the row's proved own volume,
 not necessarily the Catalog representative. Existing bibliography URLs survive.
+Job-only v5 adds one same-origin support URL per changed row, preserving its
+existing URL order and selection metadata. The operator's same-selection
+observation must bind the exact Work/job research, evidence ID, and raw receipt.
 
 Oricon discovery --changes uses factor-registry-oricon-discovery-request-v1 with
 current sourceRegistrySha256/catalogSha256, sourceCorrection (root,
@@ -61,12 +64,16 @@ from urllib.parse import urlsplit
 repository = next(parent for parent in Path(__file__).resolve().parents if (parent / 'scripts/catalog_workspace.py').is_file())
 sys.path.insert(0, str(repository / 'scripts/catalog_authoring'))
 from authoring_paths import artifact_path
+from workspace_paths import path_identity
 
 sys.dont_write_bytecode = True
 ALLOWED = {'volumeNumber', 'editionKind', 'bibliographyEvidenceUrls', 'identityEvidenceUrls', 'supportEvidenceUrls', 'canonicalCreatorsJa'}
 MEMBERS = {'build_registry_correction.py', 'preflight_registry_correction.py', 'catalog-source-registry.candidate.sqlite', 'source-registry.csv', 'correction-ledger.json', 'preflight-report.json'}
 REQUEST_KEYS = {'schemaVersion', 'sourceRegistrySha256', 'catalogSha256', 'panelInputManifestSha256', 'changes'}
 CHANGE_KEYS = {'sourceRowId', 'expectedBefore', 'updates', 'evidenceUrl', 'observation'}
+SUPPORT_REQUEST = 'factor-registry-correction-request-v5'
+SELECTION_FIELDS = {'sourceIds', 'sourceFamilies', 'cohortKeys', 'notes'}
+SUPPORT_PROOF_FIELDS = {'researchPath', 'researchSha256', 'evidenceId', 'receiptPath', 'receiptSha256'} | SELECTION_FIELDS
 LEGACY_REQUEST = 'factor-registry-legacy-import-request-v1'
 LEGACY_LEDGER = 'factor-registry-legacy-import-v1'
 LEGACY_COHORT_RULE_SHA256 = '37c50a264e04ae05e7dcd8b61a15b8edeeaa755bdc9490ad2cbbcc14bd160733'
@@ -303,7 +310,7 @@ def identity_mapping_plan(before: dict, request: dict) -> tuple[dict, list[dict]
 def validate_request(value: object) -> dict:
     require(isinstance(value, dict), 'Unexpected request fields')
     schema = value.get('schemaVersion')
-    require(schema in {'factor-registry-correction-request-v1', 'factor-registry-correction-request-v2', 'factor-registry-correction-request-v3', 'factor-registry-correction-request-v4'}, 'Unsupported request schema')
+    require(schema in {'factor-registry-correction-request-v1', 'factor-registry-correction-request-v2', 'factor-registry-correction-request-v3', 'factor-registry-correction-request-v4', SUPPORT_REQUEST}, 'Unsupported request schema')
     removal_mode = schema.endswith('-v3')
     binding_key = 'panelInputManifestSha256' if schema.endswith('-v1') else 'jobSha256'
     keys = (REQUEST_KEYS - {'panelInputManifestSha256'}) | {binding_key}
@@ -313,7 +320,8 @@ def validate_request(value: object) -> dict:
     require(isinstance(value['changes'], list) and bool(value['changes']), 'Empty changes')
     ids = set()
     for change in value['changes']:
-        change_keys = CHANGE_KEYS | ({'rejectedIdentityUrls', 'remainingIdentityEvidence'} if removal_mode else set())
+        support_mode = schema == SUPPORT_REQUEST and isinstance(change, dict) and isinstance(change.get('updates'), dict) and 'supportEvidenceUrls' in change['updates']
+        change_keys = CHANGE_KEYS | ({'rejectedIdentityUrls', 'remainingIdentityEvidence'} if removal_mode else set()) | ({'supportEvidence'} if support_mode else set())
         require(isinstance(change, dict) and set(change) == change_keys, 'Unexpected change fields')
         rid, before, updates = change['sourceRowId'], change['expectedBefore'], change['updates']
         require(isinstance(rid, str) and bool(rid) and rid not in ids, 'Duplicate or empty sourceRowId')
@@ -323,6 +331,12 @@ def validate_request(value: object) -> dict:
         require(all(before[k] != v for k, v in updates.items()), 'No-op change')
         require(valid_url(change['evidenceUrl']), 'Invalid evidence URL')
         require(isinstance(change['observation'], str) and bool(change['observation'].strip()), 'Missing evidence observation')
+        if support_mode:
+            proof = change['supportEvidence']
+            require(isinstance(proof, dict) and set(proof) == SUPPORT_PROOF_FIELDS, 'Invalid support evidence binding')
+            require(all(isinstance(value, str) and value.strip() for value in proof.values()), 'Incomplete support evidence binding')
+            require(all(re.fullmatch('[0-9a-f]{64}', proof[key]) is not None for key in ('researchSha256', 'receiptSha256')), 'Invalid support evidence SHA')
+            require(all(path_identity(proof[key]).is_absolute() for key in ('researchPath', 'receiptPath')), 'Support evidence paths must be absolute')
         if removal_mode:
             require('identityEvidenceUrls' in updates, 'Removal requires identity expectedBefore and update')
             rejected = change['rejectedIdentityUrls']
@@ -338,7 +352,70 @@ def validate_request(value: object) -> dict:
             proof = change['remainingIdentityEvidence']
             require(isinstance(proof, dict) and set(proof) == {'url', 'workId', 'title', 'creators', 'observation'}, 'Invalid remaining identity evidence')
             require(valid_url(proof['url']) and all(isinstance(proof[k], str) and proof[k].strip() for k in ('workId', 'title', 'creators', 'observation')), 'Missing remaining identity evidence')
+    require(schema != SUPPORT_REQUEST or any('supportEvidence' in change for change in value['changes']), 'v5 requires an explicit support addition')
     return value
+
+
+def support_additions(job_path: Path, request: dict, before: dict, *, input_bindings: dict | None = None) -> set[str]:
+    """Check byte/Work bindings of an operator observation, not its semantics."""
+    if request['schemaVersion'] != SUPPORT_REQUEST:
+        return set()
+    prepare = importlib.import_module('prepare_factor_batch')
+    job_path = prepare.unlinked(job_path.resolve())
+    raw_job = prepare.panel.read_json(job_path)
+    require(raw_job.get('schemaVersion') == prepare.single.JOB, 'Support addition requires a native v4 job')
+    works = {work['workId']: work for work in raw_job['works']}
+    rows = {row['sourceRowId']: row for row in before['tables']['registry_source_rows']['rows']}
+    verified = set()
+    bindings = {} if input_bindings is None else input_bindings
+    for item in request['changes']:
+        if 'supportEvidenceUrls' not in item['updates']:
+            continue
+        rid, proof, url = item['sourceRowId'], item['supportEvidence'], item['evidenceUrl']
+        row = rows.get(rid)
+        require(row is not None and row['canonicalWorkId'] in works, f'Support evidence Work is outside job: {rid}')
+        work = works[row['canonicalWorkId']]
+        require(all(proof[key] == row[key] for key in SELECTION_FIELDS), f'Support selection metadata changed: {rid}')
+        research = prepare.unlinked(artifact_path(proof['researchPath']))
+        references = work.get('researchRefs', [work['researchRef']] if 'researchRef' in work else [])
+        require(any(artifact_path(job_path.parent / ref['path']).resolve() == research.resolve() and ref['sha256'] == proof['researchSha256'] for ref in references), f'Support research is not bound by job: {rid}')
+        require(sha256(research) == proof['researchSha256'], f'Support research SHA mismatch: {rid}')
+        records = [json.loads(line) for line in research.read_text(encoding='utf-8').splitlines() if line.strip()]
+        matches = [record for record in records if record.get('workId') == row['canonicalWorkId']]
+        require(len(matches) == 1 and matches[0].get('status') in {'EVIDENCE_FOUND', 'INSUFFICIENT'}, f'Support research Work/status mismatch: {rid}')
+        sources = [source for source in matches[0]['sources'] if source.get('url') == url]
+        require(len(sources) == 1, f'Support source missing or duplicated: {rid}')
+        source = sources[0]
+        audit = source.get('readAudit', {})
+        require(source.get('workOwned') is True and source.get('observation') == item['observation']
+                and isinstance(audit, dict) and audit.get('access') in {'full-body', 'partial-body'}
+                and isinstance(audit.get('coveredSections'), list) and bool(audit['coveredSections']),
+                f'Support addition lacks the bound official source observation: {rid}')
+        require(sum(binding == {'evidenceId': proof['evidenceId'], 'sourceUrl': url} for binding in work['sourceBindings']) == 1,
+                f'Support evidence ID is not bound to the same Work: {rid}')
+        collection = research.parent
+        session = prepare.panel.read_json(prepare.unlinked(collection / 'collection-session.json'))
+        require(session.get('workId') == row['canonicalWorkId'], f'Support collection belongs to another Work: {rid}')
+        captures = prepare.capture_files(collection)
+        bindings[collection / 'collection-session.json'] = sha256(collection / 'collection-session.json')
+        bindings.update({collection / name: digest for name, digest in captures.items()})
+        receipt_path = prepare.unlinked(artifact_path(proof['receiptPath']))
+        require(receipt_path.is_relative_to(collection) and captures.get(receipt_path.relative_to(collection).as_posix()) == proof['receiptSha256'], f'Support receipt is outside the bound collection or changed: {rid}')
+        receipt = prepare.panel.read_json(receipt_path)
+        raw = prepare.unlinked(prepare.panel._safe_child(receipt_path.parent, receipt.get('rawPath', '')))
+        require(raw.is_file() and raw.is_relative_to(collection) and captures.get(raw.relative_to(collection).as_posix()) == receipt.get('sha256'), f'Support raw body is not bound: {rid}')
+        require(receipt.get('kind') == 'http-body' and receipt.get('url') == url
+                and receipt.get('status') == 200 and receipt.get('complete') is True and not receipt.get('error')
+                and type(receipt.get('bytes')) is int and receipt['bytes'] > 0
+                and valid_url(receipt.get('resolvedUrl'))
+                and urlsplit(receipt['resolvedUrl']).netloc == urlsplit(url).netloc,
+                f'Support HTTP receipt does not bind the official source: {rid}')
+        require(sha256(research) == proof['researchSha256'] and sha256(receipt_path) == proof['receiptSha256'], f'Support input changed during readback: {rid}')
+        bindings[research] = proof['researchSha256']
+        verified.add(rid)
+    require(sha256(job_path) == request['jobSha256'], 'Support job changed during readback')
+    require(all(sha256(path) == digest for path, digest in bindings.items()), 'Support source bytes changed during readback')
+    return verified
 
 
 def creator_names(value: str) -> list[str]:
@@ -350,7 +427,7 @@ def creator_names(value: str) -> list[str]:
     return names
 
 
-def plan(before: dict, request: dict, representatives: dict, target_ids: set[str], volume_proofs: dict | None = None) -> tuple[dict, list[dict]]:
+def plan(before: dict, request: dict, representatives: dict, target_ids: set[str], volume_proofs: dict | None = None, *, verified_support: set[str] | None = None) -> tuple[dict, list[dict]]:
     expected = copy.deepcopy(before)
     indexed = {r['sourceRowId']: r for r in expected['tables']['registry_source_rows']['rows']}
     require(len(indexed) == len(expected['tables']['registry_source_rows']['rows']), 'Nonunique registry sourceRowId')
@@ -384,6 +461,11 @@ def plan(before: dict, request: dict, representatives: dict, target_ids: set[str
                 require(value == ' | '.join(proposed), f'URL field must use canonical pipe separators: {rid}.{field}')
                 if field == 'bibliographyEvidenceUrls':
                     require([url for url in proposed if url in previous] == previous and set(proposed) - set(previous) <= {item['evidenceUrl']}, f'Unproved bibliography URL change: {rid}')
+                elif field == 'supportEvidenceUrls' and request['schemaVersion'] == SUPPORT_REQUEST:
+                    require(rid in (verified_support or set()), f'Support addition was not bound to its research: {rid}')
+                    require(previous and len(set(previous)) == len(previous) and proposed == [*previous, item['evidenceUrl']]
+                            and item['evidenceUrl'] not in previous, f'Support addition must preserve old URLs and append exactly its evidence URL: {rid}')
+                    require(any(urlsplit(old).netloc == urlsplit(item['evidenceUrl']).netloc for old in previous), f'Support addition must retain the same source origin: {rid}')
                 elif field == 'identityEvidenceUrls' and request['schemaVersion'].endswith('-v3'):
                     rejected = {proof['url'] for proof in item['rejectedIdentityUrls']}
                     require(rejected <= set(previous), f'Rejected URL not in original row: {rid}')
@@ -417,19 +499,26 @@ def packet_volume_proofs(packets: dict, request: dict, backend) -> dict | None:
     return proofs
 
 
-def preservation(before: dict, after: dict, expected: dict, changes: list[dict]) -> dict:
+def preservation(before: dict, after: dict, expected: dict, changes: list[dict], *, support_binding=False) -> dict:
     require(after == expected, 'Registry changed outside the exact authorized correction')
     removals = [{'sourceRowId': r['sourceRowId'], 'url': url} for r in changes if r['field'] == 'identityEvidenceUrls' for url in dict.fromkeys(url_members(r['before'])) if url not in url_members(r['after'])]
-    return {'schemaUnchanged': before['schema'] == after['schema'], 'tableSetUnchanged': True, 'allRowsAndColumnsCompared': True, 'onlyAuthorizedFieldsChanged': True, 'identityAndSupportUrlMembershipAndOrderPreserved': not removals, **({'explicitlyRejectedIdentityUrlsRemoved': removals, 'survivingIdentityUrlOrderPreserved': True} if removals else {}), 'changedRowCount': len({r['sourceRowId'] for r in changes}), 'changedFieldCount': len(changes), 'tables': [{'table': name, 'beforeRowCount': len(table['rows']), 'afterRowCount': len(after['tables'][name]['rows']), 'beforeSha256': json_sha(table), 'afterSha256': json_sha(after['tables'][name]), 'unchanged': table == after['tables'][name]} for name, table in before['tables'].items()]}
+    additions = [{'sourceRowId': r['sourceRowId'], 'url': url} for r in changes if r['field'] == 'supportEvidenceUrls' for url in url_members(r['after']) if url not in url_members(r['before'])]
+    # Preserve historical source-replay proof bytes; v5 alone declares the new
+    # append-only support assertion rather than claiming unchanged membership.
+    extra = {'explicitlyBoundSupportUrlsAdded': additions, 'existingSupportUrlOrderPreserved': True} if support_binding else {}
+    return {'schemaUnchanged': before['schema'] == after['schema'], 'tableSetUnchanged': True, 'allRowsAndColumnsCompared': True, 'onlyAuthorizedFieldsChanged': True, 'identityAndSupportUrlMembershipAndOrderPreserved': not removals and not (support_binding and additions), **extra, **({'explicitlyRejectedIdentityUrlsRemoved': removals, 'survivingIdentityUrlOrderPreserved': True} if removals else {}), 'changedRowCount': len({r['sourceRowId'] for r in changes}), 'changedFieldCount': len(changes), 'tables': [{'table': name, 'beforeRowCount': len(table['rows']), 'afterRowCount': len(after['tables'][name]['rows']), 'beforeSha256': json_sha(table), 'afterSha256': json_sha(after['tables'][name]), 'unchanged': table == after['tables'][name]} for name, table in before['tables'].items()]}
 
 
 def verify_packet_delta(original: dict, corrected: dict, expected_registry: dict, request: dict) -> dict:
-    """Only v3's validated source-identity projection may differ before freeze."""
+    """Only explicitly validated URL projections may differ before freeze."""
     expected = copy.deepcopy(original)
     if request['schemaVersion'].endswith('-v3'):
         for wid, packet in expected.items():
             urls = {url for row in expected_registry['tables']['registry_source_rows']['rows'] if row['canonicalWorkId'] == wid for url in url_members(row['identityEvidenceUrls'])}
             packet['sourceIdentity'] = ' | '.join(sorted(urls, key=lambda value: value.encode('utf-16-be')))
+    if request['schemaVersion'] == SUPPORT_REQUEST:
+        for wid, packet in expected.items():
+            packet['supportEvidenceUrls'] = sorted({url for row in expected_registry['tables']['registry_source_rows']['rows'] if row['canonicalWorkId'] == wid for url in url_members(row['supportEvidenceUrls'])}, key=lambda value: value.encode('utf-16-be'))
     require(corrected == expected, 'Correction changed operator packet identity or provenance')
     return corrected
 
@@ -443,12 +532,12 @@ def write_json(path: Path, value: dict) -> None:
         stream.write(json.dumps(value, ensure_ascii=False, indent=2, sort_keys=True) + '\n')
 
 
-def job_binding(job_path: Path, catalog: Path, registry_path: Path, expected_job_sha: str):
+def job_binding(job_path: Path, catalog: Path, registry_path: Path, expected_job_sha: str, *, input_bindings: dict | None = None):
     """Use the real prepare entry point's packet builder, without recursive preflight."""
     require(job_path.is_file() and not job_path.is_symlink() and sha256(job_path) == expected_job_sha, 'Operator job hash mismatch')
     publisher = load_publisher(job_path.parent)
     prepare = importlib.import_module('prepare_factor_batch')
-    job = prepare.read_job(job_path)
+    job = prepare.read_job(job_path, input_bindings)
     publisher._verify_result_manifest(catalog.parent)
     require(catalog.name == 'catalog-expanded.candidate.sqlite', 'Job mode needs the actual publication catalog')
     backend = publisher._backend_module()
@@ -1115,11 +1204,12 @@ def verify_correction(root: Path, source_registry: Path, catalog: Path) -> Path:
     require(catalog_sha == request['catalogSha256'] == ledger['baselineSha256'], 'Correction catalog mismatch')
     job_mode = not request['schemaVersion'].endswith('-v1')
     output_db, output_csv = root / 'catalog-source-registry.candidate.sqlite', root / 'source-registry.csv'
+    source_bindings = {}
     if job_mode:
         require(ledger.get('bindingMode') == report.get('bindingMode') == 'operator-job', 'Operator binding mode mismatch')
         require(isinstance(ledger.get('jobPath'), str), 'Missing original operator job path')
         job_path = artifact_path(ledger['jobPath']).resolve()
-        publisher, backend, spec, packets, baseline, _ = job_binding(job_path, catalog, source_registry, request['jobSha256'])
+        publisher, backend, spec, packets, baseline, _ = job_binding(job_path, catalog, source_registry, request['jobSha256'], input_bindings=source_bindings)
         digest, binding_key = request['jobSha256'], 'jobSha256'
         require(ledger.get(binding_key) == digest, 'Original operator job binding mismatch')
     else:
@@ -1145,8 +1235,15 @@ def verify_correction(root: Path, source_registry: Path, catalog: Path) -> Path:
         require(len(volumes) == 1, 'Original catalog representative mismatch')
         representatives[wid] = {**volumes[0], 'catalogCreators': baseline['works'][wid]['creators']}
     before = snapshot(source_registry)
-    expected, changes = plan(before, request, representatives, targets, packet_volume_proofs(packets, request, backend))
-    preserved = preservation(before, snapshot(output_db), expected, changes)
+    verified_support = support_additions(job_path, request, before, input_bindings=source_bindings) if job_mode else set()
+    if request['schemaVersion'] == SUPPORT_REQUEST:
+        saved_bindings = ledger.get('sourceInputBindings')
+        require(isinstance(saved_bindings, dict), 'Support correction source input bindings are missing')
+        resolved_bindings = {artifact_path(path).resolve(): digest for path, digest in saved_bindings.items()}
+        require(len(resolved_bindings) == len(saved_bindings) and resolved_bindings == source_bindings,
+                'Support correction source input bindings changed')
+    expected, changes = plan(before, request, representatives, targets, packet_volume_proofs(packets, request, backend), verified_support=verified_support)
+    preserved = preservation(before, snapshot(output_db), expected, changes, support_binding=request['schemaVersion'] == SUPPORT_REQUEST)
     require(ledger.get('changes') == changes and ledger.get('preservation') == preserved and report.get('preservation') == preserved, 'Correction full-table readback differs from ledger/preflight')
     if job_mode:
         original_rows = sorted([r for r in before['tables']['registry_source_rows']['rows'] if r['canonicalWorkId'] in targets], key=lambda r: int(r['sourceOrdinal']))
@@ -1187,7 +1284,7 @@ def correct(source_registry: Path, catalog: Path, input_root: Path | None, chang
     request = validate_request(json.loads(changes_path.read_text(encoding='utf-8')))
     require((input_root is None) != (job is None), 'Choose exactly one of --input-root and --job')
     job_mode = job is not None
-    require(request['schemaVersion'] in ({'factor-registry-correction-request-v2', 'factor-registry-correction-request-v3', 'factor-registry-correction-request-v4'} if job_mode else {'factor-registry-correction-request-v1'}), 'Request schema does not match binding mode')
+    require(request['schemaVersion'] in ({'factor-registry-correction-request-v2', 'factor-registry-correction-request-v3', 'factor-registry-correction-request-v4', SUPPORT_REQUEST} if job_mode else {'factor-registry-correction-request-v1'}), 'Request schema does not match binding mode')
     source_registry, catalog, output_root = (p.resolve() for p in (source_registry, catalog, output_root))
     binding_path = job.resolve() if job_mode else input_root.resolve()
     input_root = None if job_mode else binding_path
@@ -1199,8 +1296,9 @@ def correct(source_registry: Path, catalog: Path, input_root: Path | None, chang
         for path, digest in protected.items():
             require(sha256(path) == digest, f'Immutable input hash mismatch: {path}')
     verify_sources()
+    source_bindings = {}
     if job_mode:
-        publisher, backend, spec, packets, baseline, _ = job_binding(binding_path, catalog, source_registry, request[binding_key])
+        publisher, backend, spec, packets, baseline, _ = job_binding(binding_path, catalog, source_registry, request[binding_key], input_bindings=source_bindings)
         digest = request[binding_key]
     else:
         publisher = load_publisher(input_root)
@@ -1224,7 +1322,8 @@ def correct(source_registry: Path, catalog: Path, input_root: Path | None, chang
         require(len(volumes) == 1, f'Representative count mismatch: {wid}')
         representatives[wid] = {**volumes[0], 'catalogCreators': baseline['works'][wid]['creators']}
     before = snapshot(source_registry)
-    expected, changes = plan(before, request, representatives, targets, packet_volume_proofs(packets, request, backend))
+    verified_support = support_additions(binding_path, request, before, input_bindings=source_bindings) if job_mode else set()
+    expected, changes = plan(before, request, representatives, targets, packet_volume_proofs(packets, request, backend), verified_support=verified_support)
     original_rows = {r['sourceRowId']: r for r in before['tables']['registry_source_rows']['rows'] if r['canonicalWorkId'] in targets}
     if job_mode:
         columns = before['tables']['registry_source_rows']['columns']
@@ -1249,7 +1348,7 @@ def correct(source_registry: Path, catalog: Path, input_root: Path | None, chang
                 field = change['field']  # Already restricted to the explicit allowlist.
                 cursor = db.execute(f'update registry_source_rows set "{field}"=? where sourceRowId=? and "{field}"=?', (change['after'], change['sourceRowId'], change['before']))
                 require(cursor.rowcount == 1, 'Bounded update did not affect exactly one row')
-    proof = preservation(before, snapshot(output_db), expected, changes)
+    proof = preservation(before, snapshot(output_db), expected, changes, support_binding=request['schemaVersion'] == SUPPORT_REQUEST)
     corrected_rows = {r['sourceRowId']: r for r in expected['tables']['registry_source_rows']['rows']}
     with output_csv.open('x', encoding='utf-8', newline='') as stream:
         writer = csv.DictWriter(stream, fieldnames=columns, lineterminator='\n')
@@ -1269,7 +1368,11 @@ def correct(source_registry: Path, catalog: Path, input_root: Path | None, chang
     verify_sources()
     common = {'sourceRegistrySha256': request['sourceRegistrySha256'], 'correctedRegistrySha256': sha256(output_db), 'baselineSha256': baseline_meta['sha256'], binding_key: digest, 'correctedRegistrySliceSha256': sha256(output_csv)}
     origin = {'bindingMode': 'operator-job', 'jobPath': str(binding_path), 'sourceRegistryRowsSha256': json_sha(ordered_original)} if job_mode else {'inputRoot': str(input_root), 'sourceRegistrySliceSha256': sha256(input_root / 'source-registry.csv')}
-    write_json(output_root / 'correction-ledger.json', {'schemaVersion': 'batch010-registry-identity-correction-v1', 'candidateOnly': True, 'reviewedByHuman': False, 'verifiedAt': datetime.now(timezone.utc).isoformat(timespec='seconds'), **common, **origin, 'requestSha256': sha256(changes_path), 'requestCanonicalSha256': json_sha(request), 'request': request, 'changes': changes, 'preservation': proof, 'genericToolSha256': sha256(Path(__file__).resolve()), 'scope': 'Exact requested bibliography fields, URL normalization, and v3 explicitly disproven identity URL removal only. All tables, other fields, work/row/ISBN identities and source files preserved; only a new registry copy was written.'})
+    scope = 'Exact requested bibliography fields, URL normalization, and v3 explicitly disproven identity URL removal only. All tables, other fields, work/row/ISBN identities and source files preserved; only a new registry copy was written.'
+    if request['schemaVersion'] == SUPPORT_REQUEST:
+        scope = 'Exact requested bibliography fields and one research/raw-bound same-origin support URL addition per row. Existing URL order and selection metadata are preserved. Source observation is the operator judgement, not a machine-certified selection. Only a new registry copy was written.'
+        origin['sourceInputBindings'] = {str(path): digest for path, digest in source_bindings.items()}
+    write_json(output_root / 'correction-ledger.json', {'schemaVersion': 'batch010-registry-identity-correction-v1', 'candidateOnly': True, 'reviewedByHuman': False, 'verifiedAt': datetime.now(timezone.utc).isoformat(timespec='seconds'), **common, **origin, 'requestSha256': sha256(changes_path), 'requestCanonicalSha256': json_sha(request), 'request': request, 'changes': changes, 'preservation': proof, 'genericToolSha256': sha256(Path(__file__).resolve()), 'scope': scope})
     report = {'schemaVersion': 'batch010-registry-correction-preflight-v1', 'status': 'PASS' if not blocked else 'BLOCKED', 'batchId': str(spec['batchId']), 'packetCount': len(targets), 'passedCount': len(targets) - len(blocked), 'blockedCount': len(blocked), 'blocked': blocked, **common, 'preservation': proof, 'bindingEntryPoint': 'publish_authorized_followup._validate_packet_baseline_binding', 'verificationLimit': 'Registry correction/binding only; no Factor publication, canonical, STATE, or runtime mutation.'}
     if job_mode:
         report['bindingMode'] = 'operator-job'

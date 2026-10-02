@@ -91,8 +91,7 @@ function session(directory) {
   for (const item of value.supplementalFiles ?? []) {
     const path = privatePath(directory, item.path);
     const resolvedOriginal = resolve(item.originalPath);
-    const original =
-      process.platform === "win32" ? resolvedOriginal.toLowerCase() : resolvedOriginal;
+    const original = sep === "\\" ? resolvedOriginal.toLowerCase() : resolvedOriginal;
     assert(!seen.has(item.path) && !originals.has(original), "Duplicate supplemental binding");
     seen.add(item.path);
     originals.add(original);
@@ -132,7 +131,7 @@ export function startCollection(directory, workId, inputs = []) {
   const seen = new Set();
   const supplementalFiles = inputs.map((input, index) => {
     const originalPath = resolve(input);
-    const identity = process.platform === "win32" ? originalPath.toLowerCase() : originalPath;
+    const identity = sep === "\\" ? originalPath.toLowerCase() : originalPath;
     assert(!seen.has(identity), "Duplicate supplemental input; list each exact file once");
     seen.add(identity);
     for (let current = originalPath; current !== dirname(current); current = dirname(current)) {

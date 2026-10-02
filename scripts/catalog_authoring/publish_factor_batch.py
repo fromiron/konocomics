@@ -880,10 +880,6 @@ def _validate_fresh_unreviewed_snapshots(
             if not genre_evidence_id or genre_evidence_id not in evidence_by_id:
                 raise ValidationError(f"fresh snapshot baseline Genre evidence ownership mismatch: {work_id}")
             materialized.append({"evidenceId": genre_evidence_id})
-        if any(_protected_snapshot_evidence(evidence_by_id[str(row["evidenceId"])]) for row in materialized):
-            raise ValidationError(f"fresh snapshot materialized fact has protected reviewed evidence: {work_id}")
-        if any(evidence_by_id[str(row["evidenceId"])].get("sourceType") != "model" for row in materialized):
-            raise ValidationError(f"fresh snapshot materialized facts require raw model evidence: {work_id}")
         prior_keys = set(frozen_priors.get(work_id, {}))
         authority_keys = {key for key in prior_authority.get("claims", {}) if key[0] == work_id}
         if prior_keys != authority_keys:
@@ -891,11 +887,30 @@ def _validate_fresh_unreviewed_snapshots(
         for key, original in sorted(frozen_priors.get(work_id, {}).items()):
             panel_validation.require_prior_claim(original, prior_authority)
             panel_validation.preserved_prior(original, result_rows.get(key), {})
+        preserved_axes = []
+        for row in materialized:
+            source = evidence_by_id[str(row["evidenceId"])]
+            if _protected_snapshot_evidence(source):
+                axis = row.get("axisId")
+                original = frozen_priors.get(work_id, {}).get((work_id, f"axis:{axis}"))
+                prior_source = prior_authority.get("evidence", {}).get(str(row["evidenceId"]), {})
+                if (
+                    axis not in AXES or row.get("state") != "known"
+                    or original is None
+                    or any(row.get(field) != original[field] for field in ("state", "value", "confidence"))
+                    or row["evidenceId"] not in panel_validation.split_list(original["evidenceIds"], "prior evidenceIds", require_sorted=False)
+                    or any(prior_source.get(field) != value for field, value in source.items())
+                ):
+                    raise ValidationError(f"fresh snapshot materialized fact has protected reviewed evidence without exact stored prior: {work_id}")
+                preserved_axes.append(str(axis))
+            elif source.get("sourceType") != "model":
+                raise ValidationError(f"fresh snapshot materialized facts require raw model evidence: {work_id}")
         selected[work_id] = {
             "bindingSha256": current["sha256"],
             "beforeFactors": {str(row["axisId"]): row for row in factors},
             "beforeThemes": themes,
             "beforeGenres": str(current_work.get("genres", "")),
+            "preservedAxes": sorted(preserved_axes),
         }
     return selected
 
@@ -1063,6 +1078,8 @@ def _backend_module(
                 current = effective_baseline["factors"].get((work_id, axis))
                 if current is None:
                     raise module.PublishError(f"fresh snapshot axis absent from baseline: {work_id} {axis}")
+                if axis in fresh[work_id].get("preservedAxes", []):
+                    continue
                 effective_baseline["factors"][(work_id, axis)] = {
                     **current, "state": "unknown", "value": "", "confidence": "",
                 }
@@ -1284,7 +1301,12 @@ def _backend_module(
             for axis in AXES:
                 ledger = axis_rows[axis]
                 before = fresh[work_id]["beforeFactors"][axis]
-                if ledger["state"] == "unknown":
+                if axis in fresh[work_id].get("preservedAxes", []):
+                    # Keep the manifest-bound stored claim and its evidence ID.
+                    if axis in planned_factors or any(ledger[field] != before[field] for field in ("state", "value", "confidence")):
+                        raise module.PublishError(f"fresh snapshot preserved prior axis changed: {work_id} {axis}")
+                    after = {field: before[field] for field in ("workId", "axisId", "state", "value", "confidence", "evidenceId")}
+                elif ledger["state"] == "unknown":
                     unknown_id = before["evidenceId"]
                     if work_id in recovery:
                         unknown_id = module._claim_evidence_id(ledger)
@@ -1813,7 +1835,10 @@ def _install_correction_materializer(module: types.ModuleType) -> None:
                     raise module.PublishError(f"fresh snapshot factor readback mismatch: {work_id} {expected['axisId']}")
                 if not actual["evidenceId"] or (actual["state"] == "unknown" and (actual["value"] or actual["confidence"])):
                     raise module.PublishError(f"fresh snapshot factor schema mismatch: {work_id} {expected['axisId']}")
-                if actual["state"] != "unknown" and actual["evidenceId"] not in plan["newEvidence"]:
+                preserved = expected["axisId"] in snapshot.get("preservedAxes", [])
+                if preserved and any(expected[field] != item["before"][field] for field in ("state", "value", "confidence", "evidenceId")):
+                    raise module.PublishError(f"fresh snapshot preserved prior axis readback mismatch: {work_id} {expected['axisId']}")
+                if actual["state"] != "unknown" and not preserved and actual["evidenceId"] not in plan["newEvidence"]:
                     raise module.PublishError(f"fresh snapshot factor lacks fresh evidence readback: {work_id} {expected['axisId']}")
             expected_themes = {
                 row["themeId"]: tuple(row[field] for field in ("centrality", "confidence", "evidenceId"))
@@ -1905,13 +1930,16 @@ def registry_correction_changes(frozen_baseline: Path, frozen_registry: Path, ta
     if any(
         not isinstance(change, dict)
         or set(change) != {"sourceRowId", "workId", "field", "before", "after"}
-        or change["workId"] not in target_ids
         or not all(isinstance(change[key], str) for key in change)
         for change in changes
     ):
-        raise ValidationError("registry correction exceeds frozen target scope")
+        raise ValidationError("registry correction has a malformed change")
 
-    return changes
+    # verify_correction above checks the complete ledger, source hashes, exact
+    # request and full-table preservation before selecting this Work's effects.
+    # Independent frozen jobs can share one corrected registry; each serial
+    # publisher must apply only its own rows and leave other Works unchanged.
+    return [change for change in changes if change["workId"] in target_ids]
 
 
 def plan_registry_correction(changes: list[dict], before: dict) -> tuple[dict, list[dict]]:

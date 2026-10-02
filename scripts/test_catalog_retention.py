@@ -261,7 +261,7 @@ class RetentionCutoverTest(unittest.TestCase):
         for change in ("added", "removed", "stop-changed"):
             with self.subTest(change=change):
                 repo, store, _, _, registration, _, _, _ = self.recovery_fixture()
-                save = store.save
+                save = store._save_with_inventory
 
                 def change_control(paths, label, **kwargs):
                     receipt = save(paths, label, **kwargs)
@@ -277,7 +277,7 @@ class RetentionCutoverTest(unittest.TestCase):
                             retention.write(registration, value)
                     return receipt
 
-                with patch.object(store, "save", side_effect=change_control):
+                with patch.object(store, "_save_with_inventory", side_effect=change_control):
                     with self.assertRaises((OSError, ValueError)):
                         store.backup()
                 self.assertIsNone(store.current_revision("active", "current-recovery-controls"))

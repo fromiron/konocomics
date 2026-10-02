@@ -80,16 +80,18 @@ class RunnerRecoveryTest(unittest.TestCase):
         return {"schemaVersion": "factor-authoring-job-v4", "works": [{
             "workId": self.wid, "researchRefs": list(refs)}]}
 
-    def frozen(self):
+    def frozen(self, *, registry_path=None, source_bindings=None):
         old_canonical = b"Historical canonical bytes remain evidence only"
         self.save({"data/source/catalog.sqlite": old_canonical})
+        registry_path = registry_path or self.repo / self.basis / "catalog-source-registry.candidate.sqlite"
         frozen = self.run + "/frozen/panel-input"
         inputs = {"authoring-job.json": encoded(self.job()),
                   "panel-input.json": encoded({"registrySha256": digest(self.sqlite)}),
                   "external-lineage.json": encoded({"baselineRoot": str(self.repo / self.basis),
                       "baselineManifestSha256": digest(self.basis_manifest),
-                      "registryPath": str(self.repo / self.basis / "catalog-source-registry.candidate.sqlite"),
-                      "sourceInputBindings": {str(self.repo / "data/source/catalog.sqlite"): digest(old_canonical)}}),
+                      "registryPath": str(registry_path),
+                      "sourceInputBindings": {str(self.repo / "data/source/catalog.sqlite"): digest(old_canonical),
+                                              **(source_bindings or {})}}),
                   "prior-authority.json": encoded({"bundles": []})}
         frozen_manifest = manifest(inputs)
         values = {frozen + "/" + name: body for name, body in inputs.items()}
@@ -97,12 +99,52 @@ class RunnerRecoveryTest(unittest.TestCase):
                        self.run + "/frozen/INPUT-PREPARATION-REPORT.json": encoded({"inputManifestSha256": digest(frozen_manifest)}),
                        self.run + "/job.json": encoded(self.job(refs=[{"path": "missing-original-research.jsonl", "sha256": "f" * 64}])),
                        self.run + "/RUN.json": encoded({"frozenDirectory": "frozen", "baselineRoot": str(self.repo / self.basis),
-                           "registryPath": str(self.repo / self.basis / "catalog-source-registry.candidate.sqlite"),
+                           "registryPath": str(registry_path),
                            "provenanceBindings": [{"root": str(self.repo / ".workspace/absent-history"), "files": {"old.raw": "e" * 64}}],
                            "priorBundleBindings": []}),
                        self.run + "/model-001/MODEL.json": encoded({"status": "RUNNING"})})
         self.save(values)
         return old_canonical, frozen, frozen_manifest
+
+    def shared_support_correction(self):
+        """Preserve the existing correction transport in the temporary workspace DB."""
+        source_root = ".workspace/shared-support-input"
+        correction_root = ".workspace/shared-support-correction"
+        values, works = {}, []
+        for wid in (self.wid, "work-bbbbbbbbbbbbbbbbbbbb"):
+            folder = source_root + "/" + wid
+            url = "https://example.test/selection/" + wid
+            raw = ("Official selection for " + wid + "\n").encode()
+            research = encoded({"workId": wid, "sources": [{"url": url, "workOwned": True}]})
+            values.update({
+                folder + "/research.jsonl": research,
+                folder + "/collection-session.json": encoded({"workId": wid}),
+                folder + "/capture-selection.body": raw,
+                folder + "/capture-selection.json": encoded({
+                    "kind": "http-body", "url": url, "resolvedUrl": url, "status": 200,
+                    "complete": True, "rawPath": "capture-selection.body", "sha256": digest(raw), "bytes": len(raw)}),
+            })
+            works.append({"workId": wid, "researchRefs": [{
+                "path": wid + "/research.jsonl", "sha256": digest(research)}]})
+        original_job = source_root + "/job.json"
+        values[original_job] = encoded({"schemaVersion": "factor-authoring-job-v4", "works": works})
+        members = {
+            "build_registry_correction.py": b"# Preserved correction builder\n",
+            "preflight_registry_correction.py": b"# Preserved correction verifier\n",
+            "catalog-source-registry.candidate.sqlite": self.sqlite,
+            "source-registry.csv": b"sourceRowId,canonicalWorkId\n",
+            "preflight-report.json": encoded({}),
+            "correction-ledger.json": encoded({
+                "request": {"schemaVersion": "factor-registry-correction-request-v5",
+                            "jobSha256": digest(values[original_job])},
+                "jobPath": str(self.repo / original_job), "correctedRegistrySha256": digest(self.sqlite),
+                "sourceInputBindings": {str(self.repo / name): digest(body) for name, body in values.items()},
+            }),
+        }
+        members["MANIFEST.sha256"] = manifest(members)
+        values.update({correction_root + "/" + name: body for name, body in members.items()})
+        self.save(values)
+        return correction_root + "/catalog-source-registry.candidate.sqlite", values
 
     def test_new_run_restores_job_relative_research_and_exact_sidecars_only(self):
         research = encoded({"workId": self.wid, "sources": []})
@@ -147,6 +189,47 @@ class RunnerRecoveryTest(unittest.TestCase):
         self.assertEqual((self.repo / retention.BASE / "restored-versions" / digest(old)).read_bytes(), old)
         self.assertEqual((self.repo / frozen / "PANEL-INPUT.sha256").read_bytes(), frozen_manifest)
         self.assertFalse((self.repo / self.run / "CHECKED.json").exists())
+
+    def test_frozen_single_work_restores_shared_support_proof_without_reassigning_other_work(self):
+        registry, proof = self.shared_support_correction()
+        _, frozen, frozen_manifest = self.frozen(
+            registry_path=self.repo / registry,
+            source_bindings={str(self.repo / name): digest(body) for name, body in proof.items()})
+        unrelated = ".workspace/shared-support-input/unbound.body"
+        other_run = retention.CONTINUATION + "/planning/unrelated/run/RUN.json"
+        self.save({unrelated: b"Unbound source", other_run: encoded({"workId": "work-bbbbbbbbbbbbbbbbbbbb"})})
+
+        result = self.request(action="check", workId=self.wid)
+
+        self.assertEqual(result["status"], "MATERIALIZED")
+        for name, body in proof.items():
+            self.assertEqual((self.repo / name).read_bytes(), body, name)
+        assigned = json.loads((self.repo / self.run / "job.json").read_bytes())
+        self.assertEqual([work["workId"] for work in assigned["works"]], [self.wid])
+        self.assertEqual((self.repo / frozen / "PANEL-INPUT.sha256").read_bytes(), frozen_manifest)
+        self.assertFalse((self.repo / unrelated).exists())
+        self.assertFalse((self.repo / other_run).exists())
+        self.assertFalse((self.repo / self.run / "CHECKED.json").exists())
+
+    def test_frozen_support_correction_rejects_a_different_live_manifest_sha(self):
+        registry, proof = self.shared_support_correction()
+        self.frozen(registry_path=self.repo / registry,
+                    source_bindings={str(self.repo / name): digest(body) for name, body in proof.items()})
+        manifest_name = str(Path(registry).parent / "MANIFEST.sha256").replace("\\", "/")
+        # Preserve both valid serializations: only the original SHA was frozen.
+        changed = b"\n".join(reversed(proof[manifest_name].splitlines())) + b"\n"
+        self.assertNotEqual(digest(changed), digest(proof[manifest_name]))
+        self.save({manifest_name: changed})
+        live_manifest = self.repo / manifest_name
+        live_manifest.parent.mkdir(parents=True)
+        live_manifest.write_bytes(changed)
+
+        with self.assertRaisesRegex(ValueError, "Requested recovery would overwrite different bytes: .*MANIFEST"):
+            self.request(action="check", workId=self.wid)
+
+        self.assertEqual(live_manifest.read_bytes(), changed)
+        self.assertFalse((self.repo / self.run).exists())
+        self.assertFalse((self.repo / ".workspace/shared-support-input").exists())
 
     def test_unfinished_ready_batch_keeps_frozen_canonical_separate_from_current(self):
         old, frozen, frozen_manifest = self.frozen()

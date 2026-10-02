@@ -1,7 +1,343 @@
 import copy
+import json
+import tempfile
 import unittest
+from pathlib import Path
+from unittest.mock import patch
 
 import correct_factor_registry as correction
+import publish_factor_batch as publisher
+
+
+def write_json(path, value):
+    path.write_bytes((json.dumps(value, ensure_ascii=False) + '\n').encode('utf-8'))
+
+
+def support_inputs(root):
+    """Use actual collection bytes and hashes; no capture or binding mocks."""
+    collection = root / 'collection'
+    collection.mkdir()
+    work_id = 'work-aaaaaaaaaaaaaaaaaaaa'
+    old_urls = ['https://awards.example.test/archive', 'https://awards.example.test/2026']
+    url = 'https://awards.example.test/2026/selected-work'
+    observation = 'The official selection page names the same Work in the 2026 selection.'
+    raw = collection / 'capture-selection.body'
+    raw.write_bytes(f'<h1>2026 selection</h1><p>作品A</p><a href="{url}">作品A</a>'.encode('utf-8'))
+    receipt = collection / 'capture-selection.json'
+    write_json(receipt, {
+        'kind': 'http-body', 'url': url, 'resolvedUrl': url, 'status': 200,
+        'complete': True, 'error': None, 'rawPath': raw.name,
+        'sha256': correction.sha256(raw), 'bytes': raw.stat().st_size,
+    })
+    session = collection / 'collection-session.json'
+    write_json(session, {'workId': work_id})
+    record = {
+        'workId': work_id, 'status': 'EVIDENCE_FOUND',
+        'sources': [{
+            'url': url, 'workOwned': True, 'observation': observation,
+            'readAudit': {'access': 'full-body', 'coveredSections': ['2026 selection']},
+        }],
+    }
+    research = collection / 'research.jsonl'
+    write_json(research, record)
+    job_value = {
+        'schemaVersion': 'factor-authoring-job-v4',
+        'works': [{
+            'workId': work_id,
+            'researchRef': {'path': 'collection/research.jsonl', 'sha256': correction.sha256(research)},
+            'sourceBindings': [{'evidenceId': 'selection-evidence-a', 'sourceUrl': url}],
+        }],
+    }
+    job = root / 'job.json'
+    write_json(job, job_value)
+    row = {
+        'sourceRowId': 'source-a', 'canonicalWorkId': work_id, 'representativeIsbn': '9784063460124',
+        'supportEvidenceUrls': ' | '.join(old_urls),
+        'sourceIds': 'award-2026', 'sourceFamilies': 'award', 'cohortKeys': '2026-selection',
+        'notes': 'Original selection membership remains unchanged.',
+    }
+    request = {
+        'schemaVersion': correction.SUPPORT_REQUEST,
+        'sourceRegistrySha256': '0' * 64, 'catalogSha256': '1' * 64, 'jobSha256': correction.sha256(job),
+        'changes': [{
+            'sourceRowId': row['sourceRowId'],
+            'expectedBefore': {'supportEvidenceUrls': row['supportEvidenceUrls']},
+            'updates': {'supportEvidenceUrls': ' | '.join([*old_urls, url])},
+            'evidenceUrl': url, 'observation': observation,
+            'supportEvidence': {
+                'researchPath': str(research.resolve()), 'researchSha256': correction.sha256(research),
+                'evidenceId': 'selection-evidence-a', 'receiptPath': str(receipt.resolve()),
+                'receiptSha256': correction.sha256(receipt),
+                **{key: row[key] for key in correction.SELECTION_FIELDS},
+            },
+        }],
+    }
+    return {
+        'job': job, 'job_value': job_value, 'record': record, 'research': research,
+        'raw': raw, 'receipt': receipt, 'session': session, 'row': row, 'request': request,
+        'before': {'tables': {'registry_source_rows': {'rows': [row]}}},
+        'representatives': {work_id: {'isbn': row['representativeIsbn']}}, 'targets': {work_id},
+    }
+
+
+def bind_support_inputs(fixture):
+    """Rebind changed records so semantic failures cannot pass as stale-SHA failures."""
+    write_json(fixture['research'], fixture['record'])
+    digest = correction.sha256(fixture['research'])
+    fixture['job_value']['works'][0]['researchRef']['sha256'] = digest
+    fixture['request']['changes'][0]['supportEvidence']['researchSha256'] = digest
+    write_json(fixture['job'], fixture['job_value'])
+    fixture['request']['jobSha256'] = correction.sha256(fixture['job'])
+
+
+class SupportEvidenceCorrectionTest(unittest.TestCase):
+    def test_support_proof_rejects_relative_research_and_receipt_paths(self):
+        for field, relative in (
+            ('researchPath', 'collection/research.jsonl'),
+            ('receiptPath', 'collection/capture-selection.json'),
+        ):
+            with self.subTest(field=field), tempfile.TemporaryDirectory() as directory:
+                fixture = support_inputs(Path(directory))
+                fixture['request']['changes'][0]['supportEvidence'][field] = relative
+                with self.assertRaisesRegex(ValueError, 'Support evidence paths must be absolute'):
+                    correction.validate_request(fixture['request'])
+
+    def test_v5_appends_one_bound_same_origin_source_and_preserves_selection(self):
+        with tempfile.TemporaryDirectory() as directory:
+            fixture = support_inputs(Path(directory))
+            before = copy.deepcopy(fixture['before'])
+            request = correction.validate_request(fixture['request'])
+            verified = correction.support_additions(fixture['job'], request, fixture['before'])
+
+            after, changes = correction.plan(
+                fixture['before'], request, fixture['representatives'], fixture['targets'],
+                verified_support=verified,
+            )
+
+            expected_row = {**fixture['row'], **request['changes'][0]['updates']}
+            self.assertEqual(verified, {'source-a'})
+            self.assertEqual(after['tables']['registry_source_rows']['rows'], [expected_row])
+            self.assertEqual(fixture['before'], before)
+            self.assertEqual(changes, [{
+                'sourceRowId': 'source-a', 'workId': fixture['row']['canonicalWorkId'],
+                'field': 'supportEvidenceUrls', 'before': fixture['row']['supportEvidenceUrls'],
+                'after': expected_row['supportEvidenceUrls'],
+            }])
+
+    def test_v5_plan_rejects_support_that_has_not_passed_file_binding(self):
+        with tempfile.TemporaryDirectory() as directory:
+            fixture = support_inputs(Path(directory))
+            with self.assertRaisesRegex(ValueError, 'Support addition was not bound'):
+                correction.plan(
+                    fixture['before'], correction.validate_request(fixture['request']),
+                    fixture['representatives'], fixture['targets'],
+                )
+
+    def test_changed_capture_research_receipt_or_job_is_rejected(self):
+        for member, message in (
+            ('raw', 'raw capture/receipt mismatch'),
+            ('research', 'Support research SHA mismatch'),
+            ('receipt', 'Support receipt is outside the bound collection or changed'),
+            ('job', 'Support job changed during readback'),
+        ):
+            with self.subTest(member=member), tempfile.TemporaryDirectory() as directory:
+                fixture = support_inputs(Path(directory))
+                path = fixture[member]
+                path.write_bytes(path.read_bytes() + b'\n')
+                with self.assertRaisesRegex(ValueError, message):
+                    correction.support_additions(fixture['job'], fixture['request'], fixture['before'])
+
+    def test_another_work_research_session_or_evidence_cannot_authorize_support(self):
+        for member, message in (
+            ('research', 'Support research Work/status mismatch'),
+            ('session', 'Support collection belongs to another Work'),
+            ('evidence', 'Support evidence ID is not bound to the same Work'),
+            ('job', 'Support evidence Work is outside job'),
+        ):
+            with self.subTest(member=member), tempfile.TemporaryDirectory() as directory:
+                fixture = support_inputs(Path(directory))
+                other_work = 'work-bbbbbbbbbbbbbbbbbbbb'
+                if member == 'research':
+                    fixture['record']['workId'] = other_work
+                elif member == 'session':
+                    write_json(fixture['session'], {'workId': other_work})
+                elif member == 'evidence':
+                    bindings = fixture['job_value']['works'][0]['sourceBindings']
+                    fixture['job_value']['works'][0]['sourceBindings'] = []
+                    fixture['job_value']['works'].append({'workId': other_work, 'sourceBindings': bindings})
+                else:
+                    fixture['job_value']['works'][0]['workId'] = other_work
+                bind_support_inputs(fixture)
+                with self.assertRaisesRegex(ValueError, message):
+                    correction.support_additions(fixture['job'], fixture['request'], fixture['before'])
+
+    def test_selection_metadata_and_source_observation_must_match(self):
+        for member in ('sourceIds', 'sourceFamilies', 'cohortKeys', 'notes', 'observation', 'workOwned', 'readAudit'):
+            with self.subTest(member=member), tempfile.TemporaryDirectory() as directory:
+                fixture = support_inputs(Path(directory))
+                if member in correction.SELECTION_FIELDS:
+                    fixture['request']['changes'][0]['supportEvidence'][member] += '-different-selection'
+                    message = 'Support selection metadata changed'
+                else:
+                    source = fixture['record']['sources'][0]
+                    source[member] = {
+                        'observation': 'A different selection is described.',
+                        'workOwned': False,
+                        'readAudit': {'access': 'full-body', 'coveredSections': []},
+                    }[member]
+                    message = 'lacks the bound official source observation'
+                bind_support_inputs(fixture)
+                with self.assertRaisesRegex(ValueError, message):
+                    correction.support_additions(fixture['job'], fixture['request'], fixture['before'])
+
+    def test_http_receipt_requires_successful_complete_same_origin_response(self):
+        for update in (
+            {'status': 404}, {'complete': False}, {'error': 'connection interrupted'},
+            {'kind': 'web-tool-response'},
+            {'url': 'https://awards.example.test/different-page'},
+            {'resolvedUrl': 'https://unrelated.example.test/selection'},
+        ):
+            with self.subTest(update=update), tempfile.TemporaryDirectory() as directory:
+                fixture = support_inputs(Path(directory))
+                receipt = json.loads(fixture['receipt'].read_text(encoding='utf-8'))
+                write_json(fixture['receipt'], {**receipt, **update})
+                fixture['request']['changes'][0]['supportEvidence']['receiptSha256'] = correction.sha256(fixture['receipt'])
+                with self.assertRaisesRegex(ValueError, 'HTTP receipt does not bind the official source'):
+                    correction.support_additions(fixture['job'], fixture['request'], fixture['before'])
+
+    def test_support_cannot_replace_reorder_add_two_urls_or_change_origin(self):
+        for operation in ('replace', 'reorder', 'two-additions', 'other-origin'):
+            with self.subTest(operation=operation), tempfile.TemporaryDirectory() as directory:
+                fixture = support_inputs(Path(directory))
+                request = fixture['request']
+                change = request['changes'][0]
+                if operation == 'other-origin':
+                    url = 'https://unrelated.example.test/selection'
+                    change['evidenceUrl'] = url
+                    fixture['record']['sources'][0]['url'] = url
+                    fixture['job_value']['works'][0]['sourceBindings'][0]['sourceUrl'] = url
+                    receipt = json.loads(fixture['receipt'].read_text(encoding='utf-8'))
+                    write_json(fixture['receipt'], {**receipt, 'url': url, 'resolvedUrl': url})
+                    change['supportEvidence']['receiptSha256'] = correction.sha256(fixture['receipt'])
+                    bind_support_inputs(fixture)
+                verified = correction.support_additions(fixture['job'], request, fixture['before'])
+                old_urls = correction.url_members(fixture['row']['supportEvidenceUrls'])
+                proposed = {
+                    'replace': [old_urls[0], change['evidenceUrl']],
+                    'reorder': [*reversed(old_urls), change['evidenceUrl']],
+                    'two-additions': [*old_urls, change['evidenceUrl'], 'https://awards.example.test/extra'],
+                    'other-origin': [*old_urls, change['evidenceUrl']],
+                }[operation]
+                change['updates']['supportEvidenceUrls'] = ' | '.join(proposed)
+                message = 'same source origin' if operation == 'other-origin' else 'preserve old URLs and append exactly'
+                with self.assertRaisesRegex(ValueError, message):
+                    correction.plan(
+                        fixture['before'], correction.validate_request(request),
+                        fixture['representatives'], fixture['targets'], verified_support=verified,
+                    )
+
+    def test_v2_does_not_gain_permission_to_add_support_urls(self):
+        with tempfile.TemporaryDirectory() as directory:
+            fixture = support_inputs(Path(directory))
+            request = fixture['request']
+            request['schemaVersion'] = 'factor-registry-correction-request-v2'
+            del request['changes'][0]['supportEvidence']
+            request = correction.validate_request(request)
+            self.assertEqual(correction.support_additions(fixture['job'], request, fixture['before']), set())
+            with self.assertRaisesRegex(ValueError, 'URL membership/order changed'):
+                correction.plan(fixture['before'], request, fixture['representatives'], fixture['targets'])
+
+
+class SharedRegistryCorrectionTest(unittest.TestCase):
+    def shared_inputs(self, root):
+        baseline = root / 'frozen' / 'catalog.candidate.sqlite'
+        corrected = root / 'correction' / 'catalog-source-registry.candidate.sqlite'
+        corrected.parent.mkdir()
+        rows = [{
+            'sourceRowId': f'source-{suffix}', 'canonicalWorkId': f'work-{suffix}',
+            'supportEvidenceUrls': f'https://awards.example.test/{suffix}/archive',
+        } for suffix in ('a', 'b')]
+        changes = [{
+            'sourceRowId': row['sourceRowId'], 'workId': row['canonicalWorkId'],
+            'field': 'supportEvidenceUrls', 'before': row['supportEvidenceUrls'],
+            'after': row['supportEvidenceUrls'] + f' | https://awards.example.test/{index}/selection',
+        } for index, row in enumerate(rows)]
+        write_json(corrected.parent / 'correction-ledger.json', {'changes': changes})
+        return baseline, corrected, {'tables': {'registry_source_rows': {'rows': rows}}}, changes
+
+    def test_shared_full_ledger_is_verified_then_applied_only_to_target_work(self):
+        with tempfile.TemporaryDirectory() as directory:
+            baseline, corrected, before, changes = self.shared_inputs(Path(directory))
+            original = copy.deepcopy(before)
+            with patch.object(correction, 'verify_correction', return_value=corrected) as verify:
+                selected = publisher.registry_correction_changes(baseline, corrected, {'work-a'})
+                verify.assert_called_once_with(
+                    corrected.parent, baseline.parent / 'catalog-source-registry.candidate.sqlite', baseline,
+                )
+
+            after, pending = publisher.plan_registry_correction(selected, before)
+
+            self.assertEqual(selected, changes[:1])
+            self.assertEqual(pending, changes[:1])
+            self.assertEqual(after['tables']['registry_source_rows']['rows'], [
+                {**before['tables']['registry_source_rows']['rows'][0], 'supportEvidenceUrls': changes[0]['after']},
+                before['tables']['registry_source_rows']['rows'][1],
+            ])
+            self.assertEqual(before, original)
+
+            with patch.object(correction, 'verify_correction', return_value=corrected) as verify:
+                next_work = publisher.registry_correction_changes(baseline, corrected, {'work-b'})
+                verify.assert_called_once_with(
+                    corrected.parent, baseline.parent / 'catalog-source-registry.candidate.sqlite', baseline,
+                )
+            completed, next_pending = publisher.plan_registry_correction(next_work, after)
+            self.assertEqual(next_pending, changes[1:])
+            self.assertEqual(completed['tables']['registry_source_rows']['rows'], [
+                after['tables']['registry_source_rows']['rows'][0],
+                {**before['tables']['registry_source_rows']['rows'][1], 'supportEvidenceUrls': changes[1]['after']},
+            ])
+            resumed, retry_pending = publisher.plan_registry_correction(selected, completed)
+            self.assertEqual(retry_pending, [])
+            self.assertEqual(resumed, completed)
+
+    def test_other_work_only_ledger_still_requires_full_verification(self):
+        with tempfile.TemporaryDirectory() as directory:
+            baseline, corrected, _, _ = self.shared_inputs(Path(directory))
+            with patch.object(correction, 'verify_correction', return_value=corrected) as verify:
+                self.assertEqual(publisher.registry_correction_changes(baseline, corrected, {'work-c'}), [])
+                verify.assert_called_once_with(
+                    corrected.parent, baseline.parent / 'catalog-source-registry.candidate.sqlite', baseline,
+                )
+
+    def test_full_verification_failure_cannot_be_bypassed_by_work_subset(self):
+        with tempfile.TemporaryDirectory() as directory:
+            baseline, corrected, _, _ = self.shared_inputs(Path(directory))
+            with patch.object(correction, 'verify_correction', side_effect=ValueError('full correction is invalid')) as verify:
+                with self.assertRaisesRegex(ValueError, 'full correction is invalid'):
+                    publisher.registry_correction_changes(baseline, corrected, {'work-a'})
+                verify.assert_called_once_with(
+                    corrected.parent, baseline.parent / 'catalog-source-registry.candidate.sqlite', baseline,
+                )
+
+    def test_malformed_unrelated_change_is_never_hidden_by_work_filter(self):
+        for defect in ('missing-field', 'extra-field', 'non-string-value', 'non-object'):
+            with self.subTest(defect=defect), tempfile.TemporaryDirectory() as directory:
+                baseline, corrected, _, changes = self.shared_inputs(Path(directory))
+                if defect == 'missing-field':
+                    del changes[1]['after']
+                elif defect == 'extra-field':
+                    changes[1]['unexpected'] = 'not allowed'
+                elif defect == 'non-string-value':
+                    changes[1]['after'] = None
+                else:
+                    changes[1] = ['not a change object']
+                write_json(corrected.parent / 'correction-ledger.json', {'changes': changes})
+                with patch.object(correction, 'verify_correction', return_value=corrected) as verify:
+                    with self.assertRaisesRegex(ValueError, 'malformed change'):
+                        publisher.registry_correction_changes(baseline, corrected, {'work-a'})
+                    verify.assert_called_once_with(
+                        corrected.parent, baseline.parent / 'catalog-source-registry.candidate.sqlite', baseline,
+                    )
 
 
 class ResolvedIdentityMappingCorrectionTest(unittest.TestCase):

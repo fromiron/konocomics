@@ -104,6 +104,10 @@ python scripts/catalog_python.py scripts/catalog_authoring_runner.py summarize -
 
 기존 dispatch를 쓰는 경우 판정 단계에는 원 수집 summary path/SHA를 `collectionSummary`로 결속하고 개별 ERROR를 `collectionErrors`로 보존한다. 공통 ERROR·전건 ERROR·사용자 중단은 의존 작업을 막는다. 실제 실패 artifact와 재개 조건을 남기고 시스템 오류를 INSUFFICIENT나 출처 소진으로 바꾸지 않는다.
 
+정확한 support URL이 사라졌지만 같은 공식 출처·선정 문맥의 실제 새 원문을 확인한 경우, 기존 `correct_factor_registry.py --job <v4-job.json> --changes <request.json>`의 `factor-registry-correction-request-v5`로 원 URL을 보존하고 새 `evidenceUrl` 하나만 뒤에 추가할 수 있다. 기존 v1~v4의 URL 변경 범위는 그대로다. v5는 `sourceRegistrySha256`, `catalogSha256`, `jobSha256`, `changes`를 결속한다. support 변경 행에는 기존 `sourceRowId`, `expectedBefore`, `updates`, `evidenceUrl`, `observation`과 `supportEvidence={researchPath,researchSha256,evidenceId,receiptPath,receiptSha256,sourceIds,sourceFamilies,cohortKeys,notes}`를 넣는다. 마지막 네 값은 현재 행의 선정 metadata 원문이며 바뀌면 거부한다. observation은 해당 Work research에서 새 URL을 읽은 관찰과 같아야 하고, job의 research SHA·evidence ID·동일 Work collection·성공한 실제 raw/receipt까지 검증한다. 같은 host라는 사실만으로 새 선정 의미를 허가하지 않으며 연도·부문·nominee 의미가 동일한지는 실제 원문을 읽은 담당자가 확인한다. helper 성공은 그 의미 판정의 자동 인증이 아니다.
+
+호환되는 서지 정정과 support 추가는 같은 검증 pair에서 하나의 request와 정정 registry로 묶을 수 있다. support를 바꾸지 않는 행은 기존 다섯 필드만 사용한다. v5 증빙의 research/receipt 경로는 절대 경로이며 HTTP 200·complete인 비어 있지 않은 같은 host의 원문을 요구한다. 작품별 독립 동결은 같은 정정 registry를 읽고, 직렬 publisher는 full ledger·원본 SHA·전체 행 보존을 먼저 검증한 다음 해당 Work의 변경만 적용한다. 다른 Work의 잘못된 ledger 항목이나 원문 손상은 제외해서 통과시키지 않는다. 정정 ledger의 `sourceInputBindings`와 manifest·정정 파일도 각 frozen lineage에 결속해 DB 복구 후 같은 원문으로 재검증한다. 최신 pair가 전진했으면 정정본 전체를 덮어쓰지 않고 기존 발행의 행·필드 비교와 rebase를 사용한다.
+
 판정 완료 summary의 `sourceSummary`는 이전 판정 summary의 동일한 결과 행을 추린 경우에만 사용한다. 수집 summary를 여기에 넣지 않으며 결과가 달라졌으면 새 full 판정 summary를 만든다. 발행 도구가 원본 SHA·CHECKED·실제 결과를 검증한다.
 
 ## 입력 결속과 완료 기록

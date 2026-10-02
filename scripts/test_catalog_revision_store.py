@@ -379,6 +379,43 @@ class RevisionStoreTest(unittest.TestCase):
         with closing(self.store.connect()) as db:
             self.assertEqual(db.execute("SELECT count(*) FROM revision").fetchone()[0], 0)
 
+    def test_prepared_inventory_rejects_changed_bytes_and_new_members_before_commit(self):
+        for change in ("bytes", "member"):
+            with self.subTest(change=change):
+                root = self.repo / change
+                root.mkdir()
+                path = root / "evidence.txt"
+                path.write_bytes(b"original evidence")
+                inventory = self.store._inventory([root])
+                if change == "bytes":
+                    stamp = path.stat()
+                    path.write_bytes(b"replaced evidence")
+                    os.utime(path, ns=(stamp.st_atime_ns, stamp.st_mtime_ns))
+                else:
+                    (root / "new.txt").write_bytes(b"new evidence")
+                with self.assertRaisesRegex(ValueError, "changed"):
+                    self.store._save_with_inventory([root], "prepared evidence", inventory=inventory)
+                with closing(self.store.connect()) as db:
+                    self.assertEqual(db.execute("SELECT count(*) FROM revision").fetchone()[0], 0)
+
+    def test_prepared_inventory_keeps_postcommit_readback(self):
+        path = self.repo / "evidence.txt"
+        path.write_bytes(b"original evidence")
+        inventory = self.store._inventory([path])
+        original_save = self.store._save_prepared
+
+        def change_after_commit(*args, **kwargs):
+            receipt = original_save(*args, **kwargs)
+            path.write_bytes(b"changed after commit")
+            return receipt
+
+        with patch.object(self.store, "_save_prepared", side_effect=change_after_commit):
+            with self.assertRaisesRegex(ValueError, "changed"):
+                self.store._save_with_inventory([path], "prepared evidence", inventory=inventory)
+        with closing(self.store.connect()) as db:
+            self.assertEqual(db.execute("SELECT count(*) FROM revision").fetchone()[0], 1)
+            self.assertEqual(self.store.read_blob(db, digest(b"original evidence")), b"original evidence")
+
     def test_flat_save_bounds_ancestor_checks_without_reusing_saved_content(self):
         folder = self.repo / "flat"
         folder.mkdir()

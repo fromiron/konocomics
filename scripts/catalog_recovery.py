@@ -577,6 +577,35 @@ def select_runner_files(files, request):
                 research(Path(name).parent / reference["path"], reference)
         return value
 
+    def registry(path, expected=None, source_bindings=None):
+        files.request(path, expected)
+        folder = Path(files.key(path)).parent
+        ledger_path = folder / "correction-ledger.json"
+        if not available(ledger_path):
+            return
+        ledger = files.json(ledger_path, live=True)
+        if ledger.get("request", {}).get("schemaVersion") != "factor-registry-correction-request-v5":
+            return
+        import catalog_authoring.correct_factor_registry as correction
+        manifest_name = (folder / "MANIFEST.sha256").as_posix()
+        manifest_bindings = [sha for source, sha in (source_bindings or {}).items() if files.key(source) == manifest_name]
+        if source_bindings is not None and len(manifest_bindings) != 1:
+            raise ValueError("Frozen support correction has no unique manifest binding")
+        manifest = files.manifest(folder, "MANIFEST.sha256", manifest_bindings[0] if manifest_bindings else None)
+        if set(manifest) != correction.MEMBERS:
+            raise ValueError("Restored support correction membership changed")
+        for member, sha in manifest.items():
+            files.request(folder / member, sha)
+        if ledger.get("correctedRegistrySha256") != manifest.get(Path(files.key(path)).name):
+            raise ValueError("Restored support correction registry binding changed")
+        bindings = ledger.get("sourceInputBindings")
+        if not isinstance(bindings, dict) or bindings.get(ledger.get("jobPath")) != ledger["request"].get("jobSha256"):
+            raise ValueError("Restored support correction has no bound original job")
+        # The correction's multi-Work proof is read by its own verifier. Do not
+        # turn its original job into this runner's one-Work assignment.
+        for source, sha in bindings.items():
+            files.request(source, sha)
+
     files.state()
     files.canonical()
     config_path = run / "RUN.json"
@@ -609,12 +638,12 @@ def select_runner_files(files, request):
                 lineage = files.json(input_root / "external-lineage.json")
                 metadata = files.json(input_root / "panel-input.json")
                 scope(lineage["baselineRoot"], lineage.get("baselineManifestSha256"), prior=True)
-                files.file(lineage["registryPath"], metadata["registrySha256"])
+                registry(lineage["registryPath"], metadata["registrySha256"], lineage.get("sourceInputBindings", {}))
                 for source, sha in lineage.get("sourceInputBindings", {}).items():
                     files.file(source, sha, historical=True)
         else:
             scope(config["baselineRoot"], prior=True)
-            files.request(config["registryPath"], config.get("registryPathSha256"))
+            registry(config["registryPath"], config.get("registryPathSha256"))
             if config.get("recoveryEpoch"):
                 files.request(config["recoveryEpoch"], config.get("recoveryEpochSha256"))
                 if files.key(config["recoveryEpoch"]) in files.latest:
@@ -634,7 +663,10 @@ def select_runner_files(files, request):
         research(path)
     for field in ("registryPath", "decisionsPath"):
         if request.get(field):
-            files.request(request[field])
+            if field == "registryPath":
+                registry(request[field])
+            else:
+                files.request(request[field])
     named = {files.key(path) for path in [request.get("jobPath"), request.get("registryPath"),
              request.get("decisionsPath"), *request.get("researchPaths", [])] if path}
     for path in request.get("inputPaths", []):

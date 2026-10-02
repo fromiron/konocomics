@@ -501,6 +501,15 @@ def ordinary_freeze_preflight(job_path: Path, baseline: Path, registry_path: Pat
              registry_path, REPO / "data/staging/catalog-expansion/gold-set-manifest.json"]
     bindings.update({path.resolve(): panel.sha256(path) for path in basis})
     packets, _, registry = preflight(job, baseline, registry_path)
+    if registry_path.resolve() != (baseline / "catalog-source-registry.candidate.sqlite").resolve():
+        from correct_factor_registry import MEMBERS, SUPPORT_REQUEST
+        root = registry_path.parent
+        ledger = panel.read_json(root / "correction-ledger.json")
+        if ledger.get("request", {}).get("schemaVersion") == SUPPORT_REQUEST:
+            # preflight verified the complete correction, including this exact
+            # source closure. Independent Works keep the shared proof recoverable.
+            bindings.update({artifact_path(path).resolve(): sha for path, sha in ledger["sourceInputBindings"].items()})
+            bindings.update({(root / name).resolve(): panel.sha256(root / name) for name in MEMBERS | {"MANIFEST.sha256"}})
     scope_request = scope.freeze_request(job, basis[0]) if scope.requested(job) else None
     require(all(panel.sha256(path) == sha for path, sha in bindings.items()),
             "authoring input changed during preflight; use a new run/input revision")
