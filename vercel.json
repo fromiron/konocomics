@@ -1,8 +1,12 @@
 {
   "$schema": "https://openapi.vercel.sh/vercel.json",
+  "github": {
+    "silent": true
+  },
   "git": {
     "deploymentEnabled": {
-      "catalog-recovery-and-throughput-20261001": false
+      "main": true,
+      "**": false
     }
   }
 }
