@@ -89,15 +89,8 @@ function within(parent: string, path: string) {
   return path;
 }
 
-// Match the operator's extracted introduction to the same captured response.
-// HTML cleanup changes the comparison view only, never the preserved bytes.
-function captionText(value: string) {
+function decodeHtmlEntities(value: string) {
   return value
-    .replace(/<script\b[^>]*>[\s\S]*?<\/script>/giu, "")
-    .replace(/<style\b[^>]*>[\s\S]*?<\/style>/giu, "")
-    .replace(/<!--[\s\S]*?-->/gu, "")
-    .replace(/<br\s*\/?>|<\/(?:p|li|h[1-6]|div|section|article|tr)>/giu, "\n")
-    .replace(/<[^>]+>/gu, "")
     .replace(/&#(x[0-9a-f]+|[0-9]+);/giu, (entity, code: string) => {
       const point = Number.parseInt(code.replace(/^x/iu, ""), /^x/iu.test(code) ? 16 : 10);
       return point > 0 && point <= 0x10ffff && !(point >= 0xd800 && point <= 0xdfff)
@@ -109,9 +102,81 @@ function captionText(value: string) {
     .replace(/&apos;|&#39;/giu, "'")
     .replace(/&lt;/giu, "<")
     .replace(/&gt;/giu, ">")
-    .replace(/&amp;/giu, "&")
+    .replace(/&amp;/giu, "&");
+}
+
+// Match the operator's extracted introduction to the same captured response.
+// HTML cleanup changes the comparison view only, never the preserved bytes.
+function captionText(value: string) {
+  return decodeHtmlEntities(
+    value
+      .replace(/<script\b[^>]*>[\s\S]*?<\/script>/giu, "")
+      .replace(/<style\b[^>]*>[\s\S]*?<\/style>/giu, "")
+      .replace(/<!--[\s\S]*?-->/gu, "")
+      .replace(/<br\s*\/?>|<\/(?:p|li|h[1-6]|div|section|article|tr)>/giu, "\n")
+      .replace(/<[^>]+>/gu, ""),
+  )
     .replace(/\s+/gu, " ")
     .trim();
+}
+
+const shogakukanBookPage = z.object({
+  component: z.literal("Books/Show"),
+  props: z.object({
+    book: z.object({
+      isbn13_cd: z.string(),
+      promo_contents: z.array(z.string().nullable()),
+      promo_kbns: z.array(
+        z.object({
+          promo_kbn: z.number(),
+          pivot: z.object({ promo_contents: z.string() }),
+        }),
+      ),
+    }),
+  }),
+});
+
+function capturedBookIntroduction(value: string, sourceUrl: string, isbn: string) {
+  if (!["shogakukan.co.jp", "www.shogakukan.co.jp"].includes(new URL(sourceUrl).hostname))
+    return "";
+  const markup = value
+    .replace(/<script\b[^>]*>[\s\S]*?<\/script>/giu, "")
+    .replace(/<style\b[^>]*>[\s\S]*?<\/style>/giu, "")
+    .replace(/<!--[\s\S]*?-->/gu, "");
+  for (const tag of markup.matchAll(/<div\b(?:[^"'<>]|"[^"]*"|'[^']*')*>/giu)) {
+    const attributes = new Map<string, string>();
+    for (const attribute of tag[0].matchAll(
+      /\s([^\s"'<>/=]+)\s*=\s*(?:"([^"]*)"|'([^']*)')/gu,
+    )) {
+      const name = attribute[1];
+      const content = attribute[2] ?? attribute[3];
+      if (name !== undefined && content !== undefined)
+        attributes.set(name.toLowerCase(), content);
+    }
+    const dataPage = attributes.get("data-page");
+    if (attributes.get("id") !== "app" || !dataPage) continue;
+    let parsed: unknown;
+    try {
+      parsed = JSON.parse(decodeHtmlEntities(dataPage));
+    } catch {
+      continue;
+    }
+    const page = shogakukanBookPage.safeParse(parsed);
+    if (!page.success) continue;
+    const book = page.data.props.book;
+    if (isbnIdentityKey(book.isbn13_cd) !== isbnIdentityKey(isbn)) continue;
+    // Shogakukan's category 3 is the full introduction. Do not admit arbitrary
+    // JSON strings, related books, or administrative fields as source text.
+    const introduction = book.promo_contents[3];
+    if (
+      introduction &&
+      book.promo_kbns.some(
+        (category) => category.promo_kbn === 3 && category.pivot.promo_contents === introduction,
+      )
+    )
+      return captionText(introduction);
+  }
+  return "";
 }
 
 function plainText(value: string) {
@@ -151,7 +216,11 @@ function readIntake(input: string, inputBytes: Buffer) {
       const original = plainText(entry.originalItemCaption);
       const rawText = source.toString("utf8");
       assert(
-        plainText(rawText).includes(original) || captionText(rawText).includes(original),
+        plainText(rawText).includes(original) ||
+          captionText(rawText).includes(original) ||
+          capturedBookIntroduction(rawText, receipt.resolvedUrl, entry.metadata.isbn).includes(
+            original,
+          ),
         "Original introduction is absent from the captured source",
       );
       if (entry.captionKind === "original") {

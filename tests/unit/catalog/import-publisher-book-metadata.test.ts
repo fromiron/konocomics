@@ -249,6 +249,110 @@ it("binds HTML-normalized original text while keeping a reviewed summary separat
   }
 }, 480_000);
 
+it("binds an escaped publisher book introduction without admitting other JSON fields", () => {
+  const root = mkdtempSync(join(tmpdir(), "konocomics-inertia-metadata-"));
+  try {
+    mkdirSync(join(root, "data"));
+    cpSync(join(repository, "data/source"), join(root, "data/source"), { recursive: true });
+    const catalog = catalogV1Schema.parse(
+      JSON.parse(readFileSync(join(repository, "data/generated/catalog-v1.json"), "utf8")),
+    );
+    const volume = catalog.volumes.find((item) => !item.metadata)!;
+    const folder = join(root, "collection");
+    mkdirSync(folder);
+    const introduction = "<p>紹介文「全体」 &amp; &#9829;</p><p>次の段落。</p>";
+    const original = "紹介文「全体」 & ♥\n次の段落。";
+    const hidden = "紹介に使わない管理情報";
+    const book = {
+      isbn13_cd: volume.isbn,
+      promo_contents: [null, null, "紹介文", introduction],
+      promo_kbns: [{ promo_kbn: 3, pivot: { promo_contents: introduction } }],
+      administrative_note: hidden,
+    };
+    const sourceHtml = (value = book) => {
+      const json = JSON.stringify({ component: "Books/Show", props: { book: value } })
+        .replace(/[^\x20-\x7e]/gu, (character) =>
+          `\\u${character.charCodeAt(0).toString(16).padStart(4, "0")}`,
+        )
+        .replace(/&/gu, "&amp;")
+        .replace(/"/gu, "&quot;")
+        .replace(/</gu, "&lt;")
+        .replace(/>/gu, "&gt;");
+      return `<html><div id="app" data-page="${json}"></div></html>`;
+    };
+    const input = join(folder, "publisher-metadata.json");
+    const write = (
+      html: string,
+      caption = original,
+      url = "https://www.shogakukan.co.jp/books/09131393",
+    ) => {
+      const receipt = JSON.stringify({
+        url,
+        resolvedUrl: url,
+        fetchedAt: "2026-10-01T09:23:02Z",
+        status: 200,
+        sha256: sha256(html),
+        bytes: Buffer.byteLength(html),
+      });
+      writeFileSync(join(folder, "source.html"), html);
+      writeFileSync(join(folder, "capture.json"), receipt);
+      writeFileSync(
+        input,
+        JSON.stringify([
+          {
+            metadata: {
+              workId: volume.workId,
+              isbn: volume.isbn,
+              publisherName: "小学館",
+              itemCaption: caption,
+              salesDate: "",
+              imageUrl: "",
+              imprint: "",
+              pageCount: "",
+            },
+            sourceFile: "source.html",
+            receiptFile: "capture.json",
+            receiptSha256: sha256(receipt),
+            captionKind: "original",
+            originalItemCaption: caption,
+          },
+        ]),
+      );
+      return receipt;
+    };
+    const run = (name: string) =>
+      importPublisherBookMetadata(input, join(root, ".workspace", name), root);
+    const html = sourceHtml();
+    const otherIsbn = volume.isbn === "9784091865618" ? "9784091313935" : "9784091865618";
+    for (const [name, raw, caption] of [
+      ["hidden", html, hidden],
+      ["wrong-book", sourceHtml({ ...book, isbn13_cd: otherIsbn }), original],
+      ["wrong-category", sourceHtml({ ...book, promo_kbns: [] }), original],
+      ["unbound-suffix", html, original + " 存在しない続き。"],
+      ["script-only", `<script>${html}</script>`, original],
+      ["malformed", '<div id="app" data-page="{&quot;props&quot;:"></div>', original],
+    ] as const) {
+      write(raw, caption);
+      expect(() => run(name)).toThrow("Original introduction is absent");
+      expect(existsSync(join(root, ".workspace", name))).toBe(false);
+    }
+    write(html, original, "https://example.com/book");
+    expect(() => run("other-publisher")).toThrow("Original introduction is absent");
+    const receipt = write(html);
+    expect(run("import-inertia").published).toBe(true);
+    expect(readFileSync(join(folder, "source.html"), "utf8")).toBe(html);
+    expect(readFileSync(join(folder, "capture.json"), "utf8")).toBe(receipt);
+    const generated = catalogV1Schema.parse(
+      JSON.parse(readFileSync(join(root, "data/generated/catalog-v1.json"), "utf8")),
+    );
+    expect(generated.volumes.find((item) => item.id === volume.id)!.metadata?.itemCaption).toBe(
+      original,
+    );
+  } finally {
+    rmSync(root, { recursive: true, force: true });
+  }
+}, 480_000);
+
 // Real publication, DB-only restore, and CLI resume share one full-catalog timeout.
 it("adds a captured introduction without losing metadata, and rejects damaged or mismatched input before publication", () => {
   const root = mkdtempSync(join(tmpdir(), "konocomics-publisher-metadata-"));

@@ -1,6 +1,6 @@
 {
   "schemaVersion": 1,
-  "catalogVersion": "v1-9ebbe926ac26",
+  "catalogVersion": "v1-10c76baf2ac4",
   "factorDictionaryVersion": "v1",
   "works": [
     {
@@ -372676,7 +372676,17 @@
       "workId": "work-42601be20aadcbe8fdb2",
       "volumeNumber": 1,
       "isbn": "9784091865618",
-      "editionKind": "standard"
+      "editionKind": "standard",
+      "metadata": {
+        "publisherName": "小学館",
+        "itemCaption": "▼第1話／龍の目覚め▼第2話／死なせていい患者▼第3話／日本の研修医▼第4話／外科医の現実▼第5話／別の生き方▼第6話／院内感染▼第7話／生身の人間●登場人物／朝田龍太郎（かつてNGOで世界レベルの医療チームを指揮していた唯一の日本人。今は、明真大学付属病院・胸部心臓外科の無給医）、加藤晶（腐った日本医療を改革するため、教授のポストを狙っている。36歳の若さで、明真大学付属病院・胸部心臓外科助教授）、里原ミキ（かつて朝田と同じ大学で、オペ・チームを組んでいた看護婦）●あらすじ／NGOキャンプで優秀な外科医として働いていた朝田は、今は医者を辞め、悠々自適の田舎暮らしの毎日。そこへ大学助教授の加藤が現れ、彼を自分の大学病院に迎えようとする。だが、朝田はまるで興味を示そうとしなかった。そんな中、朝田の家にいた看護婦のミキが突然、倒れてしまい…!?（第1話）●本巻の特徴／東北の片田舎で隠遁生活を送る朝田龍太郎。だが、彼はかつてNGOで救命医療チームを指揮した優秀な医者だった!!　彼と明真大学助教授の加藤晶の出会いから、怒濤の院内革命が始まる!!　読むと、もう大学病院にはいけない…!?●その他の登場人物／伊集院登（明真大学付属病院・胸部心臓外科の研修医）、木原毅彦（明真大学付属病院・胸部心臓外科の助手）、藤吉圭介（明真大学付属病院・循環器内科の講師）",
+        "salesDate": "2002-09-30",
+        "imageUrl": "https://www.shogakukan.co.jp/thumbnail/books/09186561",
+        "imprint": "ビッグコミックス",
+        "pageCount": 216,
+        "sourceUrl": "https://www.shogakukan.co.jp/books/09186561",
+        "fetchedAt": "2026-09-28T08:11:27.300Z"
+      }
     },
     {
       "id": "work-42738b05ed35f25c491f-representative",
@@ -378025,7 +378035,17 @@
       "volumeNumber": 1,
       "isbn": "9784040662374",
       "releaseDate": "2014-01-27",
-      "editionKind": "standard"
+      "editionKind": "standard",
+      "metadata": {
+        "publisherName": "KADOKAWA",
+        "itemCaption": "「神は死んだ」衝撃のさとり世代、ニーチェ先生ついに降臨！\n「神は死んだ」――閲覧数4000000数以上!!!Twitterを騒然とさせたさとり世代のコンビニ店員、ニーチェ先生ついに解禁!!",
+        "salesDate": "2014-01-27",
+        "imageUrl": "https://cdn.kdkw.jp/cover_1000/301312/301312000317.webp",
+        "imprint": "MFコミックス ジーンシリーズ",
+        "pageCount": 130,
+        "sourceUrl": "https://www.kadokawa.co.jp/product/301312000317/",
+        "fetchedAt": "2026-09-28T08:15:16.908Z"
+      }
     },
     {
       "id": "work-7d1618139c75ba3fc493-v1",
@@ -378055,7 +378075,16 @@
       "volumeNumber": 1,
       "isbn": "9784040653686",
       "releaseDate": "2018-11-21",
-      "editionKind": "standard"
+      "editionKind": "standard",
+      "metadata": {
+        "publisherName": "KADOKAWA",
+        "itemCaption": "異世界帰りのおじさんが語る、血と涙と時々ゲームな物語!!\n17年間の昏睡状態から目覚めたおじさんは、異世界からの帰還者だった……。甥っ子たかふみと共同生活を始めたおじさんが語る、新感覚異世界＆異文化コメディ！",
+        "salesDate": "2018-11-21",
+        "imprint": "MFC",
+        "pageCount": 160,
+        "sourceUrl": "https://www.kadokawa.co.jp/product/321808000753/",
+        "fetchedAt": "2026-09-28T08:12:03.414Z"
+      }
     },
     {
       "id": "work-7d4713147b1de577d668-representative",
@@ -378201,7 +378230,17 @@
       "workId": "work-7f168231a3214caeef78",
       "volumeNumber": 1,
       "isbn": "9784063611939",
-      "editionKind": "standard"
+      "editionKind": "standard",
+      "metadata": {
+        "publisherName": "講談社",
+        "itemCaption": "未来永劫の約束なんてない！！\n高校２年生にもなって純情で、\n未来を少しだけ夢見ていて、\n普通に女の子にあこがれを抱き、\n自由も不自由もない日々の中、\n少しずつ毒に冒されていく‥‥。",
+        "salesDate": "2003-12-22",
+        "imageUrl": "https://dvs-cover.kodansha.co.jp/0000010551/6vIo6x0RKRmdI18K3sF2jBgY0RD1pY2xSQn7bJaG.jpg",
+        "imprint": "ヤンマガＫＣスペシャル",
+        "pageCount": 241,
+        "sourceUrl": "https://www.kodansha.co.jp/comic/products/0000010551",
+        "fetchedAt": "2026-09-28T08:13:26.900Z"
+      }
     },
     {
       "id": "work-7f27142cfed178db5059-representative",
@@ -378403,7 +378442,16 @@
       "volumeNumber": 2,
       "isbn": "9784301001843",
       "releaseDate": "2025-12-26",
-      "editionKind": "standard"
+      "editionKind": "standard",
+      "metadata": {
+        "publisherName": "スクウェア・エニックス",
+        "itemCaption": "ずっと友達がええ？\n転校生の蛇神くんは、寒いとヘビになる体質。\n\n蛇神くんと友達になった春名さんだけど、抱き締めてきたり、手をつないできたり、ミステリアスな彼にドキドキしっぱなし！\n\n\n\n「好きな友達」と「好きな人」の違いに悩んでいたら、眠いとクマになる大熊くんもちょっかいをかけてきて…!?\n\n\n\n人外男子と普通の女子高生の、じわじわ体温上昇系青春ラブコメ♪",
+        "salesDate": "2025-12-22",
+        "imageUrl": "https://magazine.jp.square-enix.com/top/shoei/9784301001843.jpg?t=20251216131346",
+        "imprint": "ガンガンpixiv",
+        "sourceUrl": "https://magazine.jp.square-enix.com/top/comics/detail/9784301001843/",
+        "fetchedAt": "2026-10-02T13:48:49.428Z"
+      }
     },
     {
       "id": "work-81375f4a498cf819bfcc-v1",
@@ -382629,7 +382677,16 @@
       "workId": "work-af3443bab1c30d470a76",
       "volumeNumber": 1,
       "isbn": "9784047286337",
-      "editionKind": "standard"
+      "editionKind": "standard",
+      "metadata": {
+        "publisherName": "KADOKAWA",
+        "itemCaption": "クール、クーラー、クーレスト高校生の登場！",
+        "salesDate": "2013-01-15",
+        "imprint": "ハルタコミックス",
+        "pageCount": 176,
+        "sourceUrl": "https://www.kadokawa.co.jp/product/201211000248/",
+        "fetchedAt": "2026-10-02T13:50:37.990Z"
+      }
     },
     {
       "id": "work-af51667513840d675ee8-v1",
@@ -385049,7 +385106,17 @@
       "volumeNumber": 1,
       "isbn": "9784091313935",
       "releaseDate": "2007-12-21",
-      "editionKind": "standard"
+      "editionKind": "standard",
+      "metadata": {
+        "publisherName": "小学館",
+        "itemCaption": "緑峰山（りょくほうざん）の天狗の娘、秋姫（あきひめ）は、下界で母親と暮らしながら中学校に通っている。お山で修行にはげむ幼なじみの瞬（しゅん）ちゃんから、天狗になるための修行をするようにいわれるが、断り続ける毎日だ。そんな秋姫の心の中は、同級生の“タケル君”のことでいっぱいなのだが…。ヘンテコ青春ファンタジー、第1巻♥　短編「手をとって、そのままで」も収録。",
+        "salesDate": "2007-12-21",
+        "imageUrl": "https://www.shogakukan.co.jp/thumbnail/books/09131393",
+        "imprint": "フラワーコミックス",
+        "pageCount": 192,
+        "sourceUrl": "https://www.shogakukan.co.jp/books/09131393",
+        "fetchedAt": "2026-09-28T08:11:25.565Z"
+      }
     },
     {
       "id": "work-c8483ec374a763860621-representative",
@@ -389777,7 +389844,16 @@
       "workId": "work-ff9b025f58d7e12f3cb1",
       "volumeNumber": 1,
       "isbn": "9784592187349",
-      "editionKind": "standard"
+      "editionKind": "standard",
+      "metadata": {
+        "publisherName": "白泉社",
+        "itemCaption": "身寄りのない中村詩春(16歳)の、将来の夢は保育士さん！ 夢を叶えるため保育園でアルバイト三昧だが、訳あって双子のベビーシッターをすることに。バイト先は爽やかが売りのTVアナウンサー・松永政ニの家だが…!?　2009年5月刊。",
+        "salesDate": "2009-05-19",
+        "imageUrl": "https://www.hakusensha.co.jp/wp_hakusensha/postimage/2016/lists/9784592187349.jpg",
+        "imprint": "花とゆめコミックス",
+        "sourceUrl": "https://www.hakusensha.co.jp/comicslist/44745/",
+        "fetchedAt": "2026-09-28T08:12:16.513Z"
+      }
     },
     {
       "id": "work-ffb27b6611e39f1e117c-representative",
