@@ -22,9 +22,9 @@ description: konocomics의 배정된 작품 목록을 로컬 자료 우선으로
 
 ## 시작·재개
 
-- 배치/작품 ID, 실제 담당, 기준·입출력 경로를 확인한다. 기존 소유권과의 불일치는 현재 채팅에 보고한다. 계약·스킬은 세션 시작 때 읽고 버전 변경 시 갱신한다.
+- 배치/작품 ID, 실제 담당, 기준·입출력 경로를 확인한다. 기존 소유권과의 불일치는 현재 채팅에 보고한다. 계약·스킬은 세션 시작 때 읽고 버전 변경 시 갱신한다. Python 조회·도구 실행은 UTF-8을 설정하는 기존 `python scripts/catalog_python.py ...`를 사용한다.
 - 독립적인 작품·출처 수집·작품별 동결 판정·읽기 전용 검증을 서브에이전트에 겹치지 않는 범위·출력 경로·반환 근거·URL로 나눠 배정한다. 각 작품 담당자가 근거 결속과 최종 판정을 책임지고 공유 DB·registry·STATE·발행 변경은 병렬 위임하지 않는다.
-- 배정 인덱스와 현재 작품의 brief·research/prior/HOLD·receipt만 읽는다. 전체 STATE·과거 채팅·전체 후보 DB를 작품마다 재탐색하지 않는다. 완료된 결과는 해시 확인 후 재사용한다.
+- 배정의 공통 권한·기준 정보와 자기 Work 행·brief·research/prior/HOLD·receipt를 읽는다. 전체 dispatch를 반복 출력하거나 전체 STATE·과거 채팅·전체 후보 DB를 작품마다 재탐색하지 않는다. 완료된 결과는 해시 확인 후 재사용한다.
 - 물리 작업 자료가 없으면 [저장 계약 R1~R9](../../../docs/catalog-expansion/03-local-authoring-storage.md#db-중심-복구-요구사항)에 따라 기본 `restore`로 workspace DB를 복구한 뒤 기존 runner에 명시 run/Work를 전달한다. 해당 명령이 필요한 자료만 추출하며 미추출 파일은 삭제가 아니다. 과거 전체 폴더 재생성을 선행하지 않는다. generation·turn·중단 상태를 보존하고 과거 판정을 다시 만들지 않는다.
 - 현재 판정은 완료 여부를 포함해 Work별 최신 유효 판정으로 확인한다. 최신 READY가 완료됐다는 이유로 이전 HOLD나 READY를 재개하지 않으며 READY/HOLD를 상태별로 따로 보존·재개할 대상으로 고르지 않는다. 실제 미완료 summary가 특정 CHECKED/SHA를 요구하는 경우만 그 정확한 과거 의존을 유지한다.
 - 현재 배치 단계 안에서 다음 작품은 저장된 결과/checkpoint를 남긴 뒤 자율 진행한다. 목록 밖 작품이나 다른 세션의 작업을 가져오지 않는다. 중단·문맥 압축 후에는 checkpoint와 현재 frozen 입력 경계를 확인한다.
@@ -47,7 +47,7 @@ description: konocomics의 배정된 작품 목록을 로컬 자료 우선으로
 - 배치 COLLECTION-CONTEXT.json이 있으면 dispatch/registry SHA를 확인한 뒤 작품별 support URL union을 조회한다. 원 registry 행을 보존한 수집 리드이며 근거 채택을 대신하지 않는다.
 - 제공 URL과 support URL은 중복 제거해 함께 요청하고 공통 raw/receipt를 재사용한다. 작품별 실제 연결·독립성·scope는 각각 확인한다.
 - 큰 HTML은 필요한 제목/본문/작품명 주변부터 읽는다. 한 줄 HTML에는 줄 수 제한만 적용하지 말고 문자 주변 구간이나 기존 reading helper를 사용한다. 부분 발췌를 전수 독해로 표시하지 않는다.
-- 요약 observation에 필수 항목이 없다는 이유만으로 원문 근거 부재를 선언하지 않는다. 추가 검색이나 identity HOLD 전에 저장된 raw/receipt에서 제목·저자·ISBN 등 해당 gap을 확인한다. 기존 원문에 사실이 있으면 정확한 관찰·receipt 연결을 새 research revision에 저장하고 단계 백업·전환 후 새 run으로 동결한다. 이전 frozen을 수정하거나 미결속 raw를 기존 판정에 섞지 않는다.
+- 요약 observation에 필수 항목이 없다는 이유만으로 원문 근거 부재를 선언하지 않는다. 추가 검색이나 HOLD 전에 저장된 raw/receipt의 관련 본문을 읽어 정체·판본과 해당 gap의 구체 사실을 확인한다. 기존 원문에 사실이 있으면 정확한 관찰·receipt 연결을 새 research revision에 저장하고 단계 백업·전환 후 새 run으로 동결한다. 이전 frozen을 수정하거나 미결속 raw를 기존 판정에 섞지 않는다.
 - `collect_factor_evidence.mjs write <collection-dir> draft.mjs`의 draft는 collection 기준 경로다. scopeAliases/권 범위 형식을 확인하되 실제 읽은 범위를 기준으로 선택하고 타 작품 값을 무조건 복사하지 않는다.
 - validator receipt가 동일 bytes의 영구 저장을 증명하면 collection 전체의 중복 save를 생략한다. 단계 완료에는 별도로 실제 BACKED_UP을 확인한다. mtime만으로 동일성을 판단하지 않는다. 이후 새 REPORT/progress/summary와 외부 raw는 별도 저장하며 필수 검사·백업은 유지한다.
 

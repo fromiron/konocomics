@@ -23,11 +23,11 @@ description: konocomics의 작품 묶음을 배정하고 배치 완료·예외 �
 - 새 수집 배정 전달 전에 기존 dispatch에 `plan_dispatch.py`를 실행한다([명령](../../../scripts/catalog_authoring/README.md)). eligible·Gold/human/authorizedModelPanel 보호·AEP prior 복구·registry 정정을 먼저 분류한다. 복합 문제와 NOT_ASSESSED를 보존하며 미확인을 fresh/검증 완료로 간주하지 않는다. SHA 결속된 유효 배치 요약의 READY만 재사용 대상으로 삼고 mtime/file count로 현재 attempt를 추정하지 않는다. 실행 중인 기존 배정은 이 조회 결과만으로 바꾸지 않는다.
 
 - 현재 작업 환경의 가용한 실행자에게 배정한다. 과거 고정 ID 표나 모델 설정을 요구하지 않는다. 실제 담당과 결과 경로를 확인하고 기존 배정의 소유권·중단 상태를 임의 변경하지 않는다.
-- 최신 canonical/candidate·registry·기존 배정·완료 결과를 한 번 대조한다. eligible·유효 미발행 PASS·타 작업자 담당 작품을 새 판정에서 제외한다. HOLD는 구체적 새 수집 가능성이나 확인된 오류로 분류하고 같은 입력을 반복 판정하지 않는다.
+- 최신 canonical/candidate·registry·기존 배정·완료 결과를 한 번 대조한다. 같은 기준 pair의 Catalog와 동일 Work registry 행에서 제목·저자·ISBN·권·판본을 비교하고, 확인된 차이를 brief에 모두 남긴다. eligible·유효 미발행 PASS·타 작업자 담당 작품을 새 판정에서 제외한다. HOLD는 구체적 새 수집 가능성이나 확인된 오류로 분류하고 같은 입력을 반복 판정하지 않는다.
 - 복구는 [저장 계약 R1~R9](../../../docs/catalog-expansion/03-local-authoring-storage.md#db-중심-복구-요구사항)를 따른다. 기본 `restore`는 workspace DB와 mapping/report만 만들며, 기존 batch·runner·canonical 명령이 요청 자료를 준비한다. 미추출 파일은 삭제가 아니므로 과거 전체 폴더를 먼저 복원하지 않는다. 완료 summary는 원본 그대로 재전달하고 source/latest completion과 요청한 현재 canonical 효과를 확인한다. 누락·손상과 중단 상태를 합성하지 않는다.
 - 최신 유효 판정은 완료 run까지 포함해 Work별로 먼저 고른다. 최신 판정이 완료됐다면 그 completion을 확인하고 과거 HOLD/READY를 다시 현재 미완료로 배정하지 않는다. 상태별 최신을 각각 고르는 방식은 사용하지 않는다. 실제 미완료 summary·기존 pending 처리의 exact CHECKED/SHA 의존은 별도로 보존한다.
 - 신규 배정에서는 50개씩 겹치지 않는 목록을 만들고 자료 충분/추가 수집/gap 유형을 가용한 작업자에게 배분한다. 50은 신규 작업 목록 크기이며 PASS 목표가 아니다. 마지막 작은 묶음도 배정한다.
-- 배치 ID·실제 담당·기준 pair/계약 SHA·허용된 단계 범위과 각 작품의 brief·prior/HOLD·원문/receipt·리드·출력 경로를 결속한다. 승격까지 허용된 작업과 수집 전용 요청을 구분한다. 스킬과 목록 경로를 보내고 배치 전체 raw를 프롬프트에 넣지 않는다. 각 작품은 배정된 담당자가 해당 동결 입력으로 판정하며 독립 작품은 담당 범위와 출력 경로가 겹치지 않게 나눠 진행한다.
+- 배치 ID·실제 담당·기준 pair/계약 SHA·허용된 단계 범위와 각 작품의 brief·prior/HOLD·원문/receipt·리드·출력 경로를 결속한다. 승격까지 허용된 작업과 수집 전용 요청을 구분한다. 스킬·목록 경로와 공통 권한·기준 정보를 전달하고, 작업자는 자기 Work 행·brief를 조회하도록 한다. 배치 전체 dispatch를 반복 출력하거나 전체 raw를 프롬프트에 넣지 않는다. 각 작품은 배정된 담당자가 해당 동결 입력으로 판정하며 독립 작품은 담당 범위와 출력 경로가 겹치지 않게 나눠 진행한다.
 - registry의 작품별 `supportEvidenceUrls`는 `registry_source_rows.canonicalWorkId`로 조회한다. `existingCatalogWorkId`는 이 배정의 lookup 키가 아니다. collection context를 만들면 dispatch/registry SHA와 Work 전건의 URL 목록을 대조한 뒤 저장한다. 잘못 만든 context는 덮어쓰지 않고 새 revision으로 정정해 작업자에게 철회를 명시한다.
 - prior-recovery도 dispatch에 `collectionOutput`을 포함하고 배치 전체 수집·summary 검증을 거친다. prior recovery map은 판정 시 accepted claim을 보존하는 manifest 결속이며 수집 단계 생략이나 가짜 collection 결과의 근거가 아니다.
 - 독립적인 작품·출처 수집·작품별 동결 판정·읽기 전용 검증을 서브에이전트에 나눠 배정한다. 작품·출처·출력 경로·반환 근거를 분리하고 각 작품 담당자가 근거 결속·최종 판정을 책임진다. 공유 DB·registry·STATE·발행 변경은 서브에이전트에 병렬 위임하지 않는다.
@@ -40,7 +40,7 @@ description: konocomics의 작품 묶음을 배정하고 배치 완료·예외 �
 - 중단·쿼터·장애는 실제 checkpoint와 사유로 판단한다. 사용자 중단을 자동 해제하거나 “진행 중” 문구만으로 실제 실행을 주장하지 않는다.
 - 발행 전 `STATE.publicationBatches`와 실제 completion/readback을 확인해 이미 발생한 효과를 반복하지 않는다. 과거 미소비 통지를 새 판정·발행 권한으로 취급하지 않는다.
 - 정상 원문을 매번 전수 재검토하지 않는다. 초기 작은 PASS/HOLD 표본과 구체적 의미 충돌은 [배치 계약 §7](../../../docs/catalog-expansion/01c-catalog-batch-promotion-plan.md#7-배치-완료와-발행-확인)에 따라 확인한다. PASS율만으로 품질을 인증하거나 HOLD를 오류로 분류하지 않는다.
-- 수집 완료 확인에서 담당자가 필수 정체/판본·출판사 분류·정확한 선정 URL의 실제 원문과 Work 결속을 확인했는지 먼저 본다. HTTP 200·raw 파일 존재만으로 이 확인을 대신하지 않는다. 이후에는 작품별 독해·입력/판정 SHA·검사/저장 receipt를 재사용하고, 정상 결과를 조정자가 다시 전량 독해하거나 과거 이력 전체를 확장한 보고서를 만들지 않는다. 오류·누락·의미 충돌이 있는 범위만 다시 조사한다.
+- 수집 완료 확인에서 담당자가 필수 정체/판본·출판사 분류·정확한 선정 URL의 실제 원문과 Work 결속을 확인했는지 먼저 본다. HTTP 200·raw 파일 존재·구조 검사 PASS·SHA 일치는 실제 가독성과 source별 관찰을 대신하지 않는다. 이후에는 작품별 독해·입력/판정 SHA·검사/저장 receipt를 재사용하고, 정상 결과를 조정자가 다시 전량 독해하거나 과거 이력 전체를 확장한 보고서를 만들지 않는다. 오류·누락·의미 충돌이 있는 범위만 다시 조사한다.
 - 같은 완료 배치의 READY는 기존 compact publisher에 모아 전달한다. 정상 작품마다 전체 발행 절차를 반복하지 않는다. 독립 배치의 다음 수집·판정·읽기 전용 검증은 완료 발행과 병렬로 진행하되, 배치 전체 수집/백업 선행 조건과 공유 발행의 직렬 처리는 유지한다.
 
 ## 승격
