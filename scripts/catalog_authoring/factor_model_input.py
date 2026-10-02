@@ -2,12 +2,68 @@
 from pathlib import Path
 from authoring_paths import REPO, ROOT, LEGACY, artifact_path
 from html.parser import HTMLParser
-import re
 import validate_factor_panel as panel
 
 
 # A transport budget, never a source count, reading limit, or quality gate.
 INLINE_READING_BYTES = 128 * 1024
+
+# Only explicit, supported labels select a legacy codec; never guess from bytes.
+_SOURCE_CODECS = {
+    "utf-8": "utf-8", "utf8": "utf-8",
+    "euc-jp": "euc_jp", "euc_jp": "euc_jp",
+    "shift_jis": "shift_jis", "shift-jis": "shift_jis", "sjis": "shift_jis",
+    "cp932": "cp932", "windows-31j": "cp932",
+}
+
+
+def _charset_labels(content_type):
+    parameters, start, quote, escaped = [], 0, None, False
+    for index, character in enumerate(content_type):
+        if escaped:
+            escaped = False
+        elif quote is not None and character == "\\":
+            escaped = True
+        elif character == quote:
+            quote = None
+        elif quote is None:
+            if character in "\"'":
+                _, separator, prefix = content_type[start:index].partition("=")
+                if separator and not prefix.strip():
+                    quote = character
+            elif character == ";":
+                parameters.append(content_type[start:index])
+                start = index + 1
+    if quote is not None or escaped:
+        return [""]  # Malformed quoting cannot establish a supported charset.
+    parameters.append(content_type[start:])
+    labels = []
+    for parameter in parameters:
+        name, _, label = parameter.partition("=")
+        if name.strip().lower() == "charset":
+            label = label.strip()
+            if len(label) >= 2 and label[0] in "\"'" and label[-1] == label[0]:
+                label = label[1:-1]
+            labels.append(label.strip())
+    return labels
+
+
+class _HtmlCharsetDeclarations(HTMLParser):
+    def __init__(self):
+        super().__init__(convert_charrefs=True)
+        self.declarations = []
+
+    def handle_starttag(self, tag, attrs):
+        if tag != "meta":
+            return
+        for name, value in attrs:
+            if name == "charset":
+                self.declarations.append({"source": "html-meta-charset", "label": (value or "").strip()})
+        if any(name == "http-equiv" and (value or "").strip().lower() == "content-type" for name, value in attrs):
+            for name, value in attrs:
+                if name == "content":
+                    self.declarations.extend({"source": "html-meta-http-equiv", "label": label}
+                                             for label in _charset_labels(value or ""))
 
 
 class _HtmlReadingText(HTMLParser):
@@ -37,11 +93,23 @@ def reading_text(body, metadata):
     html = kind == "http-body" and content_type.lower().split(";", 1)[0].strip() == "text/html"
     if not html and kind not in {"browser-text", "search-snippet", "document-text", "web-tool-response"}:
         return None
-    declared = re.search(r"charset\s*=\s*[\"']?([^;\s\"']+)", content_type, re.I)
-    if declared and declared.group(1).lower() not in {"utf-8", "utf8"}:
+    declarations = [{"source": "http-content-type" if kind == "http-body" else "capture-content-type", "label": label}
+                    for label in _charset_labels(content_type)]
+    if html:
+        declarations_parser = _HtmlCharsetDeclarations()
+        # Latin-1 maps bytes only to inspect ASCII-compatible HTML declarations.
+        # It is never the decoding used for source text or a charset guess.
+        declarations_parser.feed(body.decode("latin-1"))
+        declarations_parser.close()
+        declarations.extend(declarations_parser.declarations)
+    codecs = {_SOURCE_CODECS.get(item["label"].lower()) for item in declarations}
+    if None in codecs or len(codecs) > 1:
         return None
+    codec = next(iter(codecs), "utf-8")
+    if not html and codec != "utf-8":
+        return None  # Typed browser/tool/document text keeps its UTF-8 contract.
     try:
-        text = body.decode("utf-8")
+        text = body.decode(codec, errors="strict")
     except UnicodeDecodeError:
         return None
     if html:
@@ -57,6 +125,8 @@ def reading_text(body, metadata):
         "sha256": panel.sha256_bytes(text.encode("utf-8")),
         "bytes": len(text.encode("utf-8")),
         "isRenderedPage": False,
+        "sourceEncoding": {"codec": codec, "declarations": declarations, "strict": True,
+                           "basis": "declared" if declarations else "existing-utf8-default"},
         "limitation": "HTML text nodes only; no scripts, styles, comments or attributes. Hidden nodes may remain. Consult the original for omitted content/metadata; absence here proves nothing." if html else "Exact text of this capture, not proof of complete source access or reading.",
     }
 

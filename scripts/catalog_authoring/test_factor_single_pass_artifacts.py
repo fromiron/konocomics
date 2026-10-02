@@ -9,8 +9,67 @@ from pathlib import Path
 from authoring_paths import REPO, ROOT, LEGACY, artifact_path
 import factor_single_pass as single
 import validate_factor_panel as panel
-from factor_model_input import reading_view
+from factor_model_input import reading_text, reading_view
 from test_validate_factor_panel import seal, write_csv
+
+
+class ReadingTextEncodingTest(unittest.TestCase):
+    def test_declared_http_codecs_keep_complete_text_and_decoding_origin(self):
+        for label, codec in (("UTF-8", "utf-8"), ("EUC-JP", "euc_jp"),
+                             ("Shift_JIS", "shift_jis"), ("CP932", "cp932")):
+            with self.subTest(label=label):
+                text = "日本語の本文" + ("髙" if codec == "cp932" else "")
+                body = ("<p>" + text + "</p>").encode(codec)
+                before = panel.sha256_bytes(body)
+                view = reading_text(body, {"kind": "http-body", "contentType": "text/html; charset=" + label})
+                self.assertEqual(view["text"], text)
+                self.assertEqual(view["sha256"], panel.sha256_bytes(text.encode("utf-8")))
+                self.assertEqual(view["sourceEncoding"], {"codec": codec, "strict": True, "basis": "declared",
+                    "declarations": [{"source": "http-content-type", "label": label}]})
+                self.assertEqual(panel.sha256_bytes(body), before)
+                self.assertFalse(view["isRenderedPage"])
+
+    def test_html_meta_declarations_preserve_projection_and_ignore_script_or_comment_text(self):
+        for meta, source in (("<meta charset='EUC-JP'>", "html-meta-charset"),
+                             ('<meta http-equiv="Content-Type" content="text/html; charset=EUC-JP">', "html-meta-http-equiv")):
+            with self.subTest(source=source):
+                body = (meta + '<!-- <meta charset="UTF-8"> --><script><meta charset="UTF-8"></script>'
+                        '<style>metadata only</style><p>日常１巻 &amp; 本文</p><span hidden>補足</span>').encode("euc_jp")
+                view = reading_text(body, {"kind": "http-body", "contentType": "text/html"})
+                self.assertEqual(view["text"], "日常１巻 & 本文\n補足")
+                self.assertEqual(view["sourceEncoding"]["declarations"], [{"source": source, "label": "EUC-JP"}])
+                self.assertIn("Hidden nodes may remain", view["limitation"])
+
+    def test_unknown_conflicting_or_invalid_bytes_keep_the_raw_path(self):
+        cases = [
+            (b"<p>plain</p>", "text/html; charset=unknown"),
+            (b'<meta charset="unknown"><p>plain</p>', "text/html"),
+            (b'<meta charset=""><p>plain</p>', "text/html"),
+            (b'<meta charset="EUC-JP"><p>plain</p>', "text/html; charset=UTF-8"),
+            (b'<meta charset="Shift_JIS"><meta charset="CP932"><p>plain</p>', "text/html"),
+            (b"<p>plain</p>", "text/html; charset=UTF-8; charset=EUC-JP"),
+            (b"<p>plain</p>", 'text/html; charset="UTF-8'),
+            (b"\xff", "text/html; charset=EUC-JP"),
+            (b"\x81", "text/html; charset=Shift_JIS"),
+            (b"\x81", "text/html; charset=CP932"),
+        ]
+        for body, content_type in cases:
+            with self.subTest(body=body, content_type=content_type):
+                self.assertIsNone(reading_text(body, {"kind": "http-body", "contentType": content_type}))
+        self.assertIsNone(reading_text("本文".encode("euc_jp"), {"kind": "browser-text", "contentType": "text/plain; charset=EUC-JP"}))
+        direct = "宣言なしのUTF-8".encode("utf-8")
+        for kind, content_type in (("browser-text", ""), ("http-body", "text/html")):
+            view = reading_text(direct, {"kind": kind, "contentType": content_type})
+            self.assertEqual(view["text"].encode("utf-8"), direct)
+            self.assertEqual(view["sourceEncoding"]["basis"], "existing-utf8-default")
+
+    def test_charset_named_inside_another_quoted_parameter_is_not_a_declaration(self):
+        body = "<p>日本語の本文</p>".encode("utf-8")
+        view = reading_text(body, {"kind": "http-body",
+            "contentType": 'text/html; charset="UTF-8"; note="; charset=EUC-JP"; tag=publisher\'s'})
+        self.assertEqual(view["text"], "日本語の本文")
+        self.assertEqual(view["sourceEncoding"]["declarations"], [
+            {"source": "http-content-type", "label": "UTF-8"}])
 
 
 class SinglePassArtifactsTest(unittest.TestCase):
@@ -174,7 +233,7 @@ class SinglePassArtifactsTest(unittest.TestCase):
         self.assertIn("attributes", view["limitation"])
         self.assertEqual(view["sha256"], panel.sha256_bytes(view["text"].encode()))
         self.assertIsNone(view_module.reading_text(b"\xff", {"kind": "browser-text"}))
-        self.assertIsNone(view_module.reading_text(body, {"kind": "http-body", "contentType": "text/html; charset=shift_jis"}))
+        self.assertIsNone(view_module.reading_text(body, {"kind": "http-body", "contentType": "text/html; charset=utf-16"}))
         self.assertIsNone(view_module.reading_text(b"%PDF", {"kind": "http-body", "contentType": "application/pdf"}))
         direct = '轢℡춻\r\n{"source":"exact tool result"}'.encode()
         self.assertEqual(view_module.reading_text(direct, {"kind": "web-tool-response"})["text"].encode(), direct)
