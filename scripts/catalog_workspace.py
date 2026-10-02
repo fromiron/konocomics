@@ -23,7 +23,7 @@ from contextlib import closing, contextmanager, nullcontext
 from datetime import datetime, timezone
 from pathlib import Path, PurePosixPath
 from time import perf_counter, sleep
-from workspace_paths import artifact_path
+from workspace_paths import artifact_path, path_identity
 
 REPO = Path(__file__).resolve().parents[1]
 APPLICATION_ID = 0x4B435753
@@ -1080,6 +1080,13 @@ def authoring_inputs(paths: list[Path], workspace: Workspace | None = None, *, r
                 if mode != full:
                     continue
                 references = []
+                if value.get("schemaVersion") == "factor-registry-correction-request-v5":
+                    for change in value.get("changes", []):
+                        proof = change.get("supportEvidence", {})
+                        if proof.get("researchPath") and path_identity(proof["researchPath"]).is_absolute():
+                            # The v5 consumer reads this exact Work collection's
+                            # session and capture closure, including failed attempts.
+                            append(artifact_path(proof["researchPath"], workspace.repo).parent, capture)
                 if value.get("schemaVersion") in {"factor-authoring-job-v3", "factor-authoring-job-v4"}:
                     for work in value.get("works", []) if isinstance(value.get("works"), list) else []:
                         refs = work.get("researchRefs", [work.get("researchRef", {})]) if isinstance(work, dict) else []

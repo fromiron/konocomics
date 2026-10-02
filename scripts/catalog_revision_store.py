@@ -615,6 +615,12 @@ class RevisionWorkspace(Workspace):
                 prepared.close()
 
     def save(self, roots, label, *, kind="artifact", terminal=False, execution=None, control_base=False, control_deleted=()):
+        return self._save_with_inventory(roots, label, kind=kind, terminal=terminal, execution=execution,
+                                         control_base=control_base, control_deleted=control_deleted)
+
+    def _save_with_inventory(self, roots, label, *, inventory=None, kind="artifact", terminal=False,
+                             execution=None, control_base=False, control_deleted=()):
+        """Reuse this invocation's prepared inventory; retain all commit/readback checks."""
         from catalog_retention import sparse_control_base, prepare_control_delta
         if control_base is False:
             control_base = sparse_control_base(self)
@@ -622,7 +628,8 @@ class RevisionWorkspace(Workspace):
             raise ValueError("Save requires explicit roots and a label")
         if (kind == "execution-artifact") != (execution is not None):
             raise ValueError("Transient artifacts require an atomic execution owner")
-        inventory = self._inventory(roots)
+        if inventory is None:
+            inventory = self._inventory(roots)
         for path in inventory:
             if path.suffix == ".sqlite" and any(Path(str(path) + suffix).exists() for suffix in ("-wal", "-shm", "-journal")):
                 raise ValueError(f"Close/checkpoint the source SQLite before capturing exact bytes: {path}")

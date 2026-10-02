@@ -1,5 +1,6 @@
 """Exercise candidate/accepted authority through the existing planner and writer."""
 import copy
+import csv
 import json
 import shutil
 import sqlite3
@@ -142,6 +143,110 @@ class CandidateAxisAuthorityTest(unittest.TestCase):
         self.baseline["evidence"][eid]["extractorVersion"] = "authorizedEvidencePanelV1"
         with self.assertRaisesRegex(self.backend.PublishError, "accepted baseline axis conflict"):
             self.plan()
+
+    def fresh_prior_input(self):
+        """A raw work can retain one already adjudicated Axis correction."""
+        folder = tempfile.TemporaryDirectory(prefix="publisher-preserved-prior-")
+        self.addCleanup(folder.cleanup)
+        root = Path(folder.name)
+        input_root, result_root = root / "input", root / "result"
+        raw_id = "test-raw-progression"
+        self.db.execute("update source_factors set evidenceId=? where workId=?", (raw_id, self.work_id))
+        self.db.execute("update source_factors set state='known',value='2',confidence='0.85',evidenceId=? where workId=? and axisId='relationshipStructure'", (self.source["id"], self.work_id))
+        self.db.execute("update source_themes set evidenceId=? where workId=?", (raw_id, self.work_id))
+        self.db.execute("update source_works set annotationReviewMethod='unreviewed',evidenceId=? where id=?", (raw_id, self.work_id))
+        self.db.execute("update source_evidence set sourceUrl=? where id=?", (self.url, self.source["id"]))
+        self.db.commit()
+        self.baseline = self.backend._baseline_facts(self.db)
+        self.packet["work"] = self.baseline["works"][self.work_id]
+        self.ledger = [self.claim(axis, unknown=axis in publisher.ART) for axis in publisher.AXES]
+        prior = {**self.claim("relationshipStructure"), "factType": "axis", "evidenceIds": self.source["id"], "reasonCode": "PRESERVED_VERIFIED_PRIOR"}
+        self.ledger = [prior if row["factKey"] == prior["factKey"] else row for row in self.ledger]
+        for genre in self.baseline["works"][self.work_id]["genres"].split(";"):
+            if genre:
+                self.ledger.append({**self.claim("relationshipStructure"), "factKey": "genre:" + genre, "value": "true"})
+        for (wid, theme), row in self.baseline["themes"].items():
+            if wid == self.work_id:
+                self.ledger.append({**self.claim("relationshipStructure"), "factKey": "theme:" + theme, "value": row["centrality"]})
+        source = self.baseline["evidence"][self.source["id"]]
+        source = {**source, "retrievedAt": source["fetchedAt"], "observation": source["notes"], "limitation": "Frozen prior source record."}
+        authority = {"claims": {(self.work_id, prior["factKey"]): {publisher.panel_validation.claim_semantic_digest(prior): prior}}, "evidence": {source["id"]: source}}
+
+        def write(path, fields, rows):
+            path.parent.mkdir(parents=True, exist_ok=True)
+            with path.open("w", encoding="utf-8", newline="") as stream:
+                writer = csv.DictWriter(stream, fieldnames=fields, extrasaction="ignore", lineterminator="\n")
+                writer.writeheader()
+                writer.writerows(rows)
+
+        write(input_root / "chunks/chunk-01/prior-panel-claims.csv", publisher.PRIOR_FIELDS, [prior])
+        write(result_root / "chunk-01/promotion-ledger.csv", publisher.PROMOTION_FIELDS, [{"workId": self.work_id, "panelOutcome": "PASS"}])
+        write(result_root / "chunk-01/evidence-panel-ledger.csv", publisher.LEDGER_FIELDS, self.ledger)
+        return input_root, result_root, authority
+
+    def test_fresh_raw_tags_preserve_exact_prior_axis_through_writer_and_readback(self):
+        input_root, result_root, authority = self.fresh_prior_input()
+        snapshots = publisher._validate_fresh_unreviewed_snapshots(input_root, result_root, self.db, self.db, authority)
+        self.assertEqual(snapshots[self.work_id]["preservedAxes"], ["relationshipStructure"])
+        self.backend = publisher._backend_module(prior_evidence=authority["evidence"], prior_authority=authority, fresh_snapshots=snapshots)
+        before = self.backend._snapshot_db(self.db)
+        plan = self.plan()
+        self.assertFalse(any(row["axisId"] == "relationshipStructure" for row in plan["factorUpdates"]))
+        expected = CatalogState(before, {self.gold_id})
+        expected.apply(plan)
+        self.db.execute("begin immediate")
+        self.backend.apply_plan_in_transaction(self.db, plan)
+        self.backend.verify_expected_after(self.db, before, plan, {self.gold_id})
+        after = self.backend._snapshot_db(self.db)
+        self.assertEqual(after, expected.snapshot())
+        prior_axis = next(row for row in self.rows(before, "source_factors", self.work_id) if row["axisId"] == "relationshipStructure")
+        actual_axis = next(row for row in self.rows(after, "source_factors", self.work_id) if row["axisId"] == "relationshipStructure")
+        self.assertEqual(actual_axis, prior_axis)
+        old_sources = {row["id"]: row for row in self.rows(before, "source_evidence")}
+        new_sources = {row["id"]: row for row in self.rows(after, "source_evidence")}
+        self.assertEqual(new_sources[self.source["id"]], old_sources[self.source["id"]])
+        self.db.rollback()
+
+    def test_fresh_prior_rejects_missing_or_forged_authority(self):
+        input_root, result_root, authority = self.fresh_prior_input()
+        for claims in ({}, {(self.work_id, "axis:relationshipStructure"): {}}):
+            with self.subTest(claims=claims), self.assertRaises(publisher.ValidationError):
+                publisher._validate_fresh_unreviewed_snapshots(input_root, result_root, self.db, self.db, {**authority, "claims": claims})
+
+    def test_fresh_prior_rejects_stored_value_confidence_or_evidence_drift(self):
+        input_root, result_root, authority = self.fresh_prior_input()
+        for column, value in (("value", "3"), ("confidence", "0.99"), ("state", "notApplicable")):
+            with self.subTest(column=column):
+                self.db.execute(f"update source_factors set {column}=? where workId=? and axisId='relationshipStructure'", (value, self.work_id))
+                with self.assertRaisesRegex(publisher.ValidationError, "without exact stored prior"):
+                    publisher._validate_fresh_unreviewed_snapshots(input_root, result_root, self.db, self.db, authority)
+                self.db.rollback()
+        self.db.execute("update source_evidence set notes='authorizedEvidencePanelV1 tampered' where id=?", (self.source["id"],))
+        with self.assertRaisesRegex(publisher.ValidationError, "without exact stored prior"):
+            publisher._validate_fresh_unreviewed_snapshots(input_root, result_root, self.db, self.db, authority)
+        self.db.rollback()
+
+    def test_fresh_prior_rejects_changed_or_omitted_result(self):
+        input_root, result_root, authority = self.fresh_prior_input()
+        ledger = result_root / "chunk-01/evidence-panel-ledger.csv"
+        prior = next(row for row in self.ledger if row["factKey"] == "axis:relationshipStructure")
+        for changed in ({**prior, "value": "3"}, None):
+            rows = [row for row in self.ledger if row["factKey"] != "axis:relationshipStructure"]
+            if changed is not None:
+                rows.append(changed)
+            with ledger.open("w", encoding="utf-8", newline="") as stream:
+                writer = csv.DictWriter(stream, fieldnames=publisher.LEDGER_FIELDS, extrasaction="ignore", lineterminator="\n")
+                writer.writeheader()
+                writer.writerows(rows)
+            with self.subTest(changed=changed), self.assertRaisesRegex(publisher.ValidationError, "accepted prior claim changed or omitted"):
+                publisher._validate_fresh_unreviewed_snapshots(input_root, result_root, self.db, self.db, authority)
+
+    def test_fresh_prior_does_not_authorize_protected_tags(self):
+        input_root, result_root, authority = self.fresh_prior_input()
+        self.db.execute("update source_themes set evidenceId=? where workId=?", (self.source["id"], self.work_id))
+        with self.assertRaisesRegex(publisher.ValidationError, "without exact stored prior"):
+            publisher._validate_fresh_unreviewed_snapshots(input_root, result_root, self.db, self.db, authority)
+        self.db.rollback()
 
     def test_corrected_unknown_can_be_filled_by_new_frozen_claim(self):
         self._verify_actual_frozen_operator("work-24ae5b81951d389bc686", "run-v1")

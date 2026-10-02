@@ -459,6 +459,23 @@ def complete_transient_lifetime(batch):
     execution = workspace.current_revision("execution", transient_subject(workspace, batch))
     if execution is None:
         return None  # Older publications have no disposable scope grant.
+    from catalog_workspace import unlinked
+    original = workspace.get_revision(execution)
+    roots = workspace._transient_roots(original["payload"])
+    backup_path = runner.REPO / "data/local/catalog-authoring/backups/latest.sqlite"
+    if backup_path.is_file() and all(not unlinked(workspace.repo / root).exists() for root in roots):
+        backup = runner.Workspace(runner.REPO, backup_path)
+        query = "SELECT kind,subject,payload_sha256,terminal,created_at FROM revision WHERE id=?"
+        with closing(workspace.connect()) as source, closing(backup.connect()) as saved:
+            closed = source.execute(query, (execution["revisionId"],)).fetchone()
+            backed = saved.execute(query, (execution["revisionId"],)).fetchone()
+        if closed is not None and closed[0] == "execution" and closed[3] == 1 and backed == closed:
+            # Verify the actual immutable bytes in both stores. An absent scope
+            # alone cannot prove that its execution completed or was backed up.
+            if backup.get_revision(execution) != original:
+                raise ValueError("Transient completion backup differs")
+            if all(not unlinked(workspace.repo / root).exists() for root in roots):
+                return {"status": "RETIRED", "removed": [], "preserved": []}
     workspace.close_transient_execution(execution)
     workspace.backup()
     return workspace.retire_transient_files(execution)

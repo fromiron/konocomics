@@ -14,6 +14,71 @@ import publish_factor_batch as publisher
 
 
 class CompactTransactionTest(unittest.TestCase):
+    def test_completed_cleanup_reuses_backed_execution_and_observes_recreated_files(self):
+        import catalog_authoring_runner as runner
+        from catalog_revision_store import RevisionWorkspace
+        with tempfile.TemporaryDirectory() as directory:
+            repo = Path(directory)
+            store = RevisionWorkspace.create(repo, repo / "data/local/catalog-authoring/workspace.sqlite")
+            batch = repo / "data/local/catalog-authoring/artifacts/batch"
+            scope = batch / "compact-working"
+            scope.mkdir(parents=True)
+            copied = scope / "pair.bin"
+            copied.write_bytes(b"retained checkpoint")
+            execution = store.put_revision("execution", compact.transient_subject(store, batch), {
+                "schemaVersion": "authoring-transient-execution-v1", "disposableRoots": [store.key(scope)]})
+            store.persist([scope], "checkpoint", execution=execution)
+            with patch.object(runner, "REPO", repo):
+                self.assertEqual(compact.complete_transient_lifetime(batch)["status"], "RETIRED")
+                self.assertFalse(scope.exists())
+                with patch.object(RevisionWorkspace, "backup", side_effect=AssertionError("unchanged cleanup backed up again")):
+                    self.assertEqual(compact.complete_transient_lifetime(batch), {
+                        "status": "RETIRED", "removed": [], "preserved": []})
+                # Files added after retirement must re-enter the ordinary
+                # ownership/SHA checks and remain available to the operator.
+                scope.mkdir()
+                copied.write_bytes(b"new operator bytes")
+                result = compact.complete_transient_lifetime(batch)
+                self.assertEqual(result["status"], "PARTIALLY_RETAINED")
+                self.assertEqual(result["preserved"], [{"path": store.key(copied), "reason": "changed"}])
+                self.assertEqual(copied.read_bytes(), b"new operator bytes")
+
+    def test_missing_scope_still_backs_up_an_unfinished_execution(self):
+        import catalog_authoring_runner as runner
+        from catalog_revision_store import RevisionWorkspace
+        with tempfile.TemporaryDirectory() as directory:
+            repo = Path(directory)
+            store = RevisionWorkspace.create(repo, repo / "data/local/catalog-authoring/workspace.sqlite")
+            batch = repo / "data/local/catalog-authoring/artifacts/batch"
+            execution = store.put_revision("execution", compact.transient_subject(store, batch), {
+                "schemaVersion": "authoring-transient-execution-v1",
+                "disposableRoots": [store.key(batch / "compact-working")]})
+            store.backup()
+            with patch.object(runner, "REPO", repo):
+                self.assertEqual(compact.complete_transient_lifetime(batch)["status"], "RETIRED")
+            backup = RevisionWorkspace(repo, repo / "data/local/catalog-authoring/backups/latest.sqlite")
+            with closing(backup.connect()) as db:
+                self.assertEqual(db.execute("SELECT terminal FROM revision WHERE id=?", (execution["revisionId"],)).fetchone(), (1,))
+            self.assertEqual(backup.get_revision(execution), store.get_revision(execution))
+
+    def test_completed_cleanup_rejects_corrupt_backed_execution_bytes(self):
+        import catalog_authoring_runner as runner
+        from catalog_revision_store import RevisionWorkspace
+        with tempfile.TemporaryDirectory() as directory:
+            repo = Path(directory)
+            store = RevisionWorkspace.create(repo, repo / "data/local/catalog-authoring/workspace.sqlite")
+            batch = repo / "data/local/catalog-authoring/artifacts/batch"
+            execution = store.put_revision("execution", compact.transient_subject(store, batch), {
+                "schemaVersion": "authoring-transient-execution-v1",
+                "disposableRoots": [store.key(batch / "compact-working")]})
+            store.close_transient_execution(execution)
+            store.backup()
+            backup = RevisionWorkspace(repo, repo / "data/local/catalog-authoring/backups/latest.sqlite")
+            with closing(backup.connect(write=True)) as db, db:
+                db.execute("UPDATE blob SET byte_length=byte_length+1 WHERE sha256=?", (execution["payloadSha256"],))
+            with patch.object(runner, "REPO", repo), self.assertRaises(ValueError):
+                compact.complete_transient_lifetime(batch)
+
     def test_original_source_bytes_are_rechecked_after_scoped_memo_reuse(self):
         with tempfile.TemporaryDirectory() as directory:
             root = Path(directory)
