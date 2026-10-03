@@ -839,6 +839,26 @@ def prepare_control_delta(store, base, updates, read_body, *, deleted=()):
                 or name in {BASE + "/locks/publication.pending.json", BASE + "/locks/publication.completed.json"})
 
     changed = {name: sha for name, sha in updates.items() if current_path(name) and members.get(name) != sha}
+    for filename, fields in (("publication.pending.json", ("prepared",)),
+                             ("publication.completed.json", ("prepared", "completion"))):
+        pointer_name = BASE + "/locks/" + filename
+        if pointer_name not in updates:
+            continue
+        pointer = json.loads(read_body(updates[pointer_name]))
+        with closing(store.connect()) as db:
+            files = _RecoveryFiles(store, db)
+            for field in fields:
+                name, sha = files.key(pointer[field + "Path"]), pointer[field + "Sha256"]
+                if name in updates:
+                    if updates[name] != sha:
+                        raise ValueError("Canonical control dependency changed: " + name)
+                    read_body(sha)
+                else:
+                    if name in tombstones:
+                        raise ValueError("Canonical control dependency was explicitly deleted: " + name)
+                    files.file(name, sha)
+                if members.get(name) != sha:
+                    changed[name] = sha
     removed = {key_path(name) for name, sha in deleted.items()
                if sha is not None and (name in members or tombstones.get(name) != sha)}
     if not changed and not removed:
@@ -919,6 +939,22 @@ def record_restored_operation(repo, preparation, written_paths, deleted_paths=()
     receipt = preparation.get("controlBase")
     base = {"receipt": receipt, **store.get_revision(receipt)} if receipt else sparse_control_base(store)
     roots = sorted({unlinked(artifact_path(path, repo)) for path in written_paths}, key=str)
+    # A newly written pointer declares exact dependencies created by this
+    # operation before they have their own preserved revision.
+    for path in list(roots):
+        name = store.key(path)
+        fields = (("prepared", "completion") if name == BASE + "/locks/publication.completed.json"
+                  else ("prepared",) if name == BASE + "/locks/publication.pending.json" else ())
+        if not fields:
+            continue
+        pointer = json.loads(path.read_bytes())
+        for field in fields:
+            dependency = unlinked(artifact_path(pointer[field + "Path"], repo))
+            store.key(dependency)
+            if digest(dependency.read_bytes()) != pointer[field + "Sha256"]:
+                raise ValueError("Canonical control dependency changed: " + store.key(dependency))
+            roots.append(dependency)
+    roots = sorted(set(roots), key=str)
     removed = {}
     with closing(store.connect()) as db:
         db.execute("BEGIN")

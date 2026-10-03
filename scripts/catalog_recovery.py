@@ -208,6 +208,9 @@ def _summary(files, path, expected=None, ancestors=()):
         raise ValueError("Cyclic requested source summary")
     body = files.request(name, expected)
     value = json.loads(body)
+    if value.get("schemaVersion") == "catalog-batch-summary-v2":
+        binding = value["dispatch"]
+        files.request(binding["path"], binding["sha256"])
     source = value.get("sourceSummary")
     if source is not None:
         _summary(files, source["path"], source["sha256"], (*ancestors, name))
@@ -310,10 +313,16 @@ def _metadata(files, request):
     if request.get("inputPath"):
         source = Path(files.key(request["inputPath"]))
         entries = files.json(source, live=True)
+        def capture_path(value):
+            path = artifact_path(value, files.store.repo)
+            name = Path(files.key(path if path.is_absolute() else files.store.repo / source.parent / path))
+            if not name.is_relative_to(source.parent):
+                raise ValueError("Metadata recovery capture escapes its input folder")
+            return name
         for item in entries:
-            receipt_path = source.parent / key_path(item["receiptFile"])
+            receipt_path = capture_path(item["receiptFile"])
             receipt = files.json(receipt_path, item["receiptSha256"], live=True)
-            body = files.request(source.parent / key_path(item["sourceFile"]), receipt["sha256"])
+            body = files.request(capture_path(item["sourceFile"]), receipt["sha256"])
             if len(body) != receipt["bytes"]:
                 raise ValueError("Metadata recovery capture length changed")
     if request.get("outputRoot"):

@@ -25,6 +25,59 @@ class RevisionStoreTest(unittest.TestCase):
         self.repo = Path(self.folder.name)
         self.store = RevisionWorkspace.create(self.repo, self.repo / "data/local/catalog-authoring/workspace.sqlite")
 
+    def test_sparse_completed_pointer_save_binds_exact_dependencies_and_repairs_same_pointer(self):
+        output = "data/local/catalog-authoring/artifacts/current-canonical"
+        prepared, completed = output + "/prepared.json", output + "/completion.json"
+        bodies = {prepared: b'{"kind":"adjudication"}', completed: b'{"status":"APPLIED"}'}
+        self.store.save_bytes(bodies, "exact canonical dependencies")
+        (self.repo / ".catalog-restore.json").write_bytes(encoded({
+            "schemaVersion": "catalog-restored-workspace-v1", "materialization": "on-demand",
+            "generation": self.store._generation, "originalRepositories": [str(self.repo)]}))
+        name = "data/local/catalog-authoring/locks/publication.completed.json"
+        pointer = encoded({"schemaVersion": "catalog-canonical-completion-pointer-v1",
+            "preparedPath": str(self.repo / prepared), "preparedSha256": digest(bodies[prepared]),
+            "completionPath": str(self.repo / completed), "completionSha256": digest(bodies[completed])})
+        self.store.save_bytes({name: pointer}, "completed pointer")
+        controls = self.store.get_revision(self.store.current_revision("active", "current-recovery-controls"))
+        for path, body in bodies.items():
+            self.assertEqual(controls["members"][path], digest(body))
+        # Repair old sparse controls through the same explicit save, without
+        # a source-tree scan or replacing the already-applied canonical bytes.
+        self.store.put_revision("active", "current-recovery-controls", controls["payload"], {name: digest(pointer)})
+        self.store.save_bytes({name: pointer}, "completed pointer")
+        self.store.backup()
+        backup = RevisionWorkspace(self.repo, self.repo / "data/local/catalog-authoring/backups/latest.sqlite")
+        saved = backup.get_revision(backup.current_revision("active", "current-recovery-controls"))
+        with closing(backup.connect()) as db:
+            for path, body in {**bodies, name: pointer}.items():
+                self.assertEqual(backup.read_blob(db, saved["members"][path]), body)
+        # Canonical commit creates fresh dependencies and reports the pointer
+        # before the outer operation has saved its output directory.
+        from catalog_retention import record_restored_operation
+        preparation = {"status": "MATERIALIZED", "generation": self.store._generation,
+                       "controlBase": self.store.current_revision("active", "current-recovery-controls")}
+        fresh = {".workspace/metadata/prepared.json": b'{"kind":"publisher-metadata"}',
+                 ".workspace/metadata/completion.json": b'{"status":"APPLIED"}'}
+        for path, body in fresh.items():
+            target = self.repo / path
+            target.parent.mkdir(parents=True, exist_ok=True)
+            target.write_bytes(body)
+        pointer_value = json.loads(pointer)
+        for field, (path, body) in zip(("prepared", "completion"), fresh.items()):
+            pointer_value[field + "Path"] = str(self.repo / path)
+            pointer_value[field + "Sha256"] = digest(body)
+        target = self.repo / name
+        target.parent.mkdir(parents=True, exist_ok=True)
+        target.write_bytes(encoded(pointer_value))
+        recorded = record_restored_operation(self.repo, preparation, [target])
+        current = self.store.get_revision(recorded["controls"])
+        with closing(self.store.connect()) as db:
+            for path, body in fresh.items():
+                self.assertEqual(self.store.read_blob(db, current["members"][path]), body)
+        (self.repo / next(iter(fresh))).write_bytes(b"changed dependency")
+        with self.assertRaisesRegex(ValueError, "Canonical control dependency changed"):
+            record_restored_operation(self.repo, preparation, [target])
+
     def test_transient_lifetime_preserves_unfinished_and_retires_only_backed_owned_bytes(self):
         root = self.repo / ".workspace/lifetime/checkpoints"
         root.mkdir(parents=True)

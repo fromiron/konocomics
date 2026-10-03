@@ -18,6 +18,7 @@ import shutil
 import sqlite3
 import subprocess
 import sys
+import tempfile
 import types
 from contextlib import closing, nullcontext
 from pathlib import Path, PurePosixPath
@@ -2595,7 +2596,8 @@ def publish_batch(
         raise ValidationError("recovery cannot mix prior corrections or retained conflicts")
     batch_id = str(_read_json(input_root / "panel-input.json")["batchId"])
     registry_slice, canonical_rebase = _verify_current_input_identities(input_root, frozen_baseline, frozen_registry, repo)
-    if registry != frozen_registry and baseline == frozen_baseline:
+    if (registry != frozen_registry and baseline == frozen_baseline
+            and frozen_registry == frozen_baseline.parent / "catalog-source-registry.candidate.sqlite"):
         registry_sha = str(_read_json(input_root / "panel-input.json")["registrySha256"])
         registry_slice = _registry_correction_slice(input_root, frozen_baseline, registry, registry_sha)
     safety = _publication_safety(safety_root, input_root, result_root, recovery)
@@ -2745,7 +2747,8 @@ def main(argv: list[str] | None = None) -> int:
             registry_slice, canonical_rebase = _verify_current_input_identities(
                 args.input_root, frozen_baseline, frozen_registry, repo
             )
-            if args.previous_registry.resolve() != frozen_registry.resolve() and args.previous_catalog.resolve() == frozen_baseline.resolve():
+            if (args.previous_registry.resolve() != frozen_registry.resolve() and args.previous_catalog.resolve() == frozen_baseline.resolve()
+                    and frozen_registry.resolve() == frozen_baseline.resolve().parent / "catalog-source-registry.candidate.sqlite"):
                 registry_sha = str(_read_json(args.input_root / "panel-input.json")["registrySha256"])
                 registry_slice = _registry_correction_slice(
                     args.input_root, frozen_baseline, args.previous_registry, registry_sha
@@ -2755,16 +2758,22 @@ def main(argv: list[str] | None = None) -> int:
             backend = _backend_module(safety, prior_evidence, conflicts, prior_authority, corrections, fresh_snapshots, recovery)
             import factor_single_pass as single
             single.install_backend(backend, args.input_root, args.panel_output_root)
-            prepared, _ = backend.preflight(
-                args.input_root,
-                args.panel_output_root,
-                args.previous_catalog,
-                args.previous_registry,
-                args.reviewed_at,
-                f"reviews/authorized-evidence-panel-v1-batch-{batch_id}.md",
-                repo / "data" / "staging" / "catalog-expansion" / "gold-set-manifest.json",
-                registry_slice,
-            )
+            corrected = frozen_registry.resolve() != frozen_baseline.resolve().parent / "catalog-source-registry.candidate.sqlite"
+            with tempfile.TemporaryDirectory(prefix="catalog-preflight-registry-") if corrected else nullcontext(None) as temporary:
+                registry = args.previous_registry
+                if temporary is not None:
+                    registry = Path(temporary) / "catalog-source-registry.candidate.sqlite"
+                    _rebase_registry_correction(frozen_baseline, frozen_registry, args.previous_registry, registry, target_ids)
+                prepared, _ = backend.preflight(
+                    args.input_root,
+                    args.panel_output_root,
+                    args.previous_catalog,
+                    registry,
+                    args.reviewed_at,
+                    f"reviews/authorized-evidence-panel-v1-batch-{batch_id}.md",
+                    repo / "data" / "staging" / "catalog-expansion" / "gold-set-manifest.json",
+                    registry_slice,
+                )
             result: dict[str, object] = dict(prepared["panelResult"])
             result["safety"] = safety["validation"]
             result["safetyArtifactDigest"] = safety["artifactDigest"]

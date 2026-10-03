@@ -1,8 +1,12 @@
 import copy
+from contextlib import ExitStack, closing, redirect_stdout
+import io
 import json
+import sqlite3
 import tempfile
+from types import SimpleNamespace
 import unittest
-from pathlib import Path
+from pathlib import Path, PureWindowsPath
 from unittest.mock import patch
 
 import correct_factor_registry as correction
@@ -91,6 +95,37 @@ def bind_support_inputs(fixture):
 
 
 class SupportEvidenceCorrectionTest(unittest.TestCase):
+    def test_restored_windows_research_reference_binds_job_capture_and_support(self):
+        import prepare_factor_batch as prepare
+        from workspace_paths import artifact_path
+        with tempfile.TemporaryDirectory() as directory:
+            root = Path(directory)
+            fixture = support_inputs(root)
+            origin = PureWindowsPath('C:/Toys/konocomics')
+            write_json(root / '.catalog-restore.json', {'schemaVersion': 'catalog-restored-workspace-v1',
+                'originalRepositories': [str(origin)]})
+            saved = str(origin / 'collection/research.jsonl')
+            work = fixture['job_value']['works'][0]
+            work['researchRef']['path'] = saved
+            fixture['record'].update(schemaVersion='factor-evidence-collector-v1', candidateOnly=True,
+                reviewedByHuman=False, paidSourceUsed=False)
+            bind_support_inputs(fixture)
+            protected = {path: path.read_bytes() for path in (fixture['job'], fixture['research'], fixture['receipt'])}
+            with patch.object(prepare, 'artifact_path', side_effect=lambda value: artifact_path(value, root)), \
+                    patch.object(correction, 'artifact_path', side_effect=lambda value: artifact_path(value, root)):
+                raw = {key: [] for key in prepare.WORK_KEYS - {'research', 'supplementalEvidence'}}
+                raw.update(work, title='作品A', representativeIsbn=fixture['row']['representativeIsbn'], sourceBindings=[])
+                bindings = {}
+                expanded = prepare.expand_compact_job({'schemaVersion': 'factor-authoring-job-v3',
+                    'works': [raw]}, fixture['job'].parent, bindings)
+                self.assertEqual(expanded['works'][0]['research']['workId'], work['workId'])
+                self.assertEqual(bindings[fixture['research']], work['researchRef']['sha256'])
+                captured = prepare.capture_bindings(fixture['job'])
+                self.assertEqual(captured[0]['researchBindings'], {str(fixture['research']): work['researchRef']['sha256']})
+                self.assertEqual(correction.support_additions(fixture['job'], fixture['request'], fixture['before']), {'source-a'})
+                self.assertEqual(prepare.job_reference(root / 'jobs', '../collection/research.jsonl').resolve(), fixture['research'])
+            self.assertEqual({path: path.read_bytes() for path in protected}, protected)
+
     def test_support_proof_rejects_relative_research_and_receipt_paths(self):
         for field, relative in (
             ('researchPath', 'collection/research.jsonl'),
@@ -249,6 +284,58 @@ class SupportEvidenceCorrectionTest(unittest.TestCase):
 
 
 class SharedRegistryCorrectionTest(unittest.TestCase):
+    def test_validate_only_rebases_corrected_frozen_registry_without_changing_current_pair(self):
+        with tempfile.TemporaryDirectory() as directory:
+            root = Path(directory)
+            baseline, corrected, _, changes = self.shared_inputs(root)
+            baseline.parent.mkdir()
+            baseline.write_bytes(b"Immutable retained baseline")
+            current = baseline.parent / 'catalog-source-registry.candidate.sqlite'
+            with closing(sqlite3.connect(current)) as db, db:
+                db.execute('create table registry_meta(key text primary key,value text)')
+                db.execute('create table registry_research_attempts(attemptId text primary key)')
+                db.execute('create table registry_source_rows(sourceRowId text primary key,canonicalWorkId text,supportEvidenceUrls text)')
+                for change in changes:
+                    db.execute('insert into registry_source_rows values(?,?,?)',
+                               (change['sourceRowId'], change['workId'], change['before']))
+            protected = {path: path.read_bytes() for path in (baseline, current, corrected.parent / 'correction-ledger.json')}
+            input_root = root / 'input'
+            input_root.mkdir()
+            write_json(input_root / 'panel-input.json', {'batchId': 'requested', 'registrySha256': 'frozen'})
+            projected = []
+            def preflight(*args):
+                registry = args[3]
+                self.assertNotEqual(registry, current)
+                with closing(sqlite3.connect(registry)) as db:
+                    rows = db.execute('select supportEvidenceUrls from registry_source_rows order by sourceRowId').fetchall()
+                self.assertEqual(rows, [(changes[0]['after'],), (changes[1]['before'],)])
+                projected.append(registry)
+                return {'panelResult': {}}, None
+            with ExitStack() as stack, redirect_stdout(io.StringIO()):
+                from workspace_paths import artifact_path
+                stack.enter_context(patch.object(publisher, 'artifact_path', side_effect=lambda value: artifact_path(value, root)))
+                replacements = {
+                    'validate_input': (None, [input_root], None), 'read_csv': [{'workId': 'work-a'}],
+                    '_validate_axis_corrections': {}, '_validate_fresh_unreviewed_snapshots': {},
+                    '_load_conflict_adjudication': ({}, None), '_verify_current_input_identities': (None, None),
+                    '_publication_safety': {'validation': {}, 'artifactDigest': 'safety'},
+                    '_backend_module': SimpleNamespace(preflight=preflight),
+                }
+                for name, value in replacements.items():
+                    stack.enter_context(patch.object(publisher, name, return_value=value))
+                stack.enter_context(patch.object(publisher.panel_validation, 'load_prior_authority', return_value={'evidence': {}}))
+                stack.enter_context(patch.object(publisher.factor_recovery, 'validate_publish', return_value=None))
+                stack.enter_context(patch.object(correction, 'verify_correction', return_value=corrected))
+                import factor_single_pass
+                stack.enter_context(patch.object(factor_single_pass, 'install_backend'))
+                self.assertEqual(publisher.main(['--validate-only', '--input-root', str(input_root),
+                    '--panel-output-root', str(root / 'result'), '--previous-catalog', str(baseline),
+                    '--previous-registry', str(current), '--frozen-registry', str(corrected),
+                    '--safety-root', str(root / 'safety'), '--output-root', str(root / 'unused')]), 0)
+            self.assertEqual({path: path.read_bytes() for path in protected}, protected)
+            self.assertEqual(len(projected), 1)
+            self.assertFalse(projected[0].exists())
+
     def shared_inputs(self, root):
         baseline = root / 'frozen' / 'catalog.candidate.sqlite'
         corrected = root / 'correction' / 'catalog-source-registry.candidate.sqlite'

@@ -54,13 +54,19 @@ class RequestedBatchRecoveryTest(unittest.TestCase):
             identity = repo / "src/data/generated/catalog-identity-v1.json"
             retention.write(identity, {"catalogVersion": "v1-test"})
             intake = repo / ".workspace/input.json"
-            retention.write(intake, [])
+            capture = intake.parent / "capture.body"
+            capture.parent.mkdir(parents=True, exist_ok=True)
+            capture.write_bytes(b"Exact publisher capture")
+            receipt = intake.parent / "capture.receipt.json"
+            retention.write(receipt, {"sha256": digest(capture.read_bytes()), "bytes": capture.stat().st_size})
+            entry = {"receiptFile": str(receipt), "receiptSha256": digest(receipt.read_bytes()), "sourceFile": str(capture)}
+            retention.write(intake, [entry])
             output = repo / ".workspace/current-intent"
             prepared = output / "prepared.json"
             retention.write(prepared, {"output": str(output), "artifacts": [{"path": "data/source", "sha256": "a" * 64}]})
             pending = repo / retention.BASE / "locks/publication.pending.json"
             retention.write(pending, {"preparedPath": str(prepared), "preparedSha256": digest(prepared.read_bytes())})
-            store.save([source, identity, intake, output, pending], "metadata:exact current capture without STATE")
+            store.save([source, identity, intake, receipt, capture, output, pending], "metadata:exact current capture without STATE")
             store.backup()
             destination = repo / "recovered"
             retention.restore_current(RevisionWorkspace(repo, repo / retention.BASE / "backups/latest.sqlite"), destination)
@@ -69,6 +75,12 @@ class RequestedBatchRecoveryTest(unittest.TestCase):
                 if path.is_file():
                     self.assertEqual((destination / path.relative_to(repo)).read_bytes(), path.read_bytes())
             self.assertEqual((destination / identity.relative_to(repo)).read_bytes(), identity.read_bytes())
+            for path in (intake, receipt, capture):
+                self.assertEqual((destination / path.relative_to(repo)).read_bytes(), path.read_bytes())
+            restored_intake = destination / intake.relative_to(repo)
+            retention.write(restored_intake, [{**entry, "sourceFile": str(source / "catalog.sqlite")}])
+            with self.assertRaisesRegex(ValueError, "capture escapes its input folder"):
+                retention.prepare_restored_operation(destination, {"operation": "metadata", "inputPath": str(intake)})
             self.assertFalse((destination / retention.CONTINUATION / "STATE.json").exists())
 
     def test_historical_verification_selects_its_proof_and_pending_marker_only(self):
@@ -174,7 +186,12 @@ class RequestedBatchRecoveryTest(unittest.TestCase):
         source.parent.mkdir(parents=True)
         shutil.copy2(basis / "catalog-expanded.candidate.sqlite", source)
         summary_path = repo / retention.CONTINUATION / "planning/requested/SUMMARY.json"
-        retention.write(summary_path, {"works": [{"workId": "work-0", "status": "READY_FOR_PUBLICATION",
+        dispatch_path = summary_path.parent / "DISPATCH.json"
+        retention.write(dispatch_path, {"batchId": "requested", "works": [{"workId": "work-0"}]})
+        retention.write(summary_path, {"schemaVersion": "catalog-batch-summary-v2", "status": "COMPLETE",
+            "batchId": "requested", "assignedCount": 1, "processedCount": 1,
+            "dispatch": {"path": str(dispatch_path), "sha256": digest(dispatch_path.read_bytes())},
+            "works": [{"workId": "work-0", "status": "READY_FOR_PUBLICATION",
             "checkedPath": str(unrelated / "CHECKED.json"), "checkedSha256": "0" * 64}]})
         summary_sha = digest(summary_path.read_bytes())
         finished_path = repo / retention.CONTINUATION / "planning/requested-published/BATCH-FINISHED.json"
@@ -188,7 +205,7 @@ class RequestedBatchRecoveryTest(unittest.TestCase):
         state["authoringStore"]["journalMode"] = "wal"
         state.pop("pendingPublicationBatch", None)
         retention.write(state_path, state)
-        saved = store.save([summary_path, finished_path], "completed request")
+        saved = store.save([summary_path, dispatch_path, finished_path], "completed request")
         store.put_revision("completion", summary_sha, {"status": "VERIFIED", "summarySha256": summary_sha,
             "applied": applied, "finished": finished}, store.get_revision(saved)["members"])
         # This fixture tests an already-committed receipt, not its original
@@ -236,6 +253,8 @@ class RequestedBatchRecoveryTest(unittest.TestCase):
         self.assertEqual(result.returncode, 0, result.stdout + result.stderr)
         self.assertIn('"status": "ALREADY_APPLIED"', result.stdout)
         self.assertEqual((destination / state_path.relative_to(repo)).read_bytes(), state_path.read_bytes())
+        dispatch = Path(command[command.index("--batch-summary") + 1]).parent / "DISPATCH.json"
+        self.assertEqual((destination / dispatch.relative_to(repo)).read_bytes(), dispatch.read_bytes())
         self.assertTrue((destination / basis.relative_to(repo) / "catalog-expanded.candidate.sqlite").is_file())
         self.assertFalse((destination / basis.relative_to(repo) / "data/source/reviews").exists())
         for path in (registration, collection, unrelated):

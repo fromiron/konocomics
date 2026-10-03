@@ -113,9 +113,10 @@ class CompactTransactionTest(unittest.TestCase):
                 db.execute("attach database ':memory:' as registry")
                 db.execute("create table registry.registry_meta(key text primary key,value text)")
                 db.execute("create table registry.registry_research_attempts(attemptId text primary key)")
-                db.execute("create table registry.registry_source_rows(sourceRowId text primary key,canonicalWorkId text,volumeNumber text)")
+                db.execute("create table registry.registry_source_rows(sourceOrdinal integer primary key,sourceRowId text unique,canonicalWorkId text,volumeNumber text)")
                 ids = [row[0] for row in db.execute("select id from source_works order by sourceOrdinal limit 2")]
-                db.execute("insert into registry.registry_source_rows values('row',?,'')", (ids[0],))
+                db.execute("insert into registry.registry_source_rows values(1,'row',?,'')", (ids[0],))
+                db.execute("insert into registry.registry_source_rows values(2,'another',?,'')", (ids[1],))
                 db.commit()
                 view = compact.BatchView(db)
                 work_id = ids[0]
@@ -138,7 +139,8 @@ class CompactTransactionTest(unittest.TestCase):
                         backend, "_snapshot_db", side_effect=AssertionError("per-work full scan")):
                     receipt = compact.apply_work_v2(entry, db, prepared, seal, view)
                 self.assertEqual(receipt["schemaVersion"], compact.WORK_FORMAT)
-                self.assertEqual(db.execute("select volumeNumber from registry.registry_source_rows").fetchone()[0], "1")
+                self.assertEqual(db.execute("select volumeNumber from registry.registry_source_rows where sourceRowId='row'").fetchone()[0], "1")
+                self.assertEqual(view.registry.snapshot(), correction.snapshot(db, namespace="registry", integrity=False))
                 with self.assertRaisesRegex(ValueError, "independent sealed plans"):
                     view.verify_final(db)
                 db.rollback()
