@@ -1042,6 +1042,11 @@
       "catalogRole": "discovery",
       "volumeCount": 1
     },
+    "work-0562309cb808e08ea668": {
+      "workId": "work-0562309cb808e08ea668",
+      "catalogRole": "discovery",
+      "volumeCount": 1
+    },
     "work-057321eada0f5983975e": {
       "workId": "work-057321eada0f5983975e",
       "catalogRole": "discovery",
@@ -1452,6 +1457,11 @@
       "catalogRole": "discovery",
       "volumeCount": 1
     },
+    "work-102972d475181dd41030": {
+      "workId": "work-102972d475181dd41030",
+      "catalogRole": "discovery",
+      "volumeCount": 1
+    },
     "work-102b3dba9b0218222b2d": {
       "workId": "work-102b3dba9b0218222b2d",
       "catalogRole": "discovery",
@@ -1724,6 +1734,11 @@
     },
     "work-15cd524191c3fb7ce45f": {
       "workId": "work-15cd524191c3fb7ce45f",
+      "catalogRole": "discovery",
+      "volumeCount": 1
+    },
+    "work-15d6508605fbd4a266fc": {
+      "workId": "work-15d6508605fbd4a266fc",
       "catalogRole": "discovery",
       "volumeCount": 1
     },
@@ -2081,6 +2096,11 @@
       "workId": "work-1d191998612dec7bb5ba",
       "catalogRole": "discovery",
       "volumeCount": 1
+    },
+    "work-1d3a3e6f7abac735e237": {
+      "workId": "work-1d3a3e6f7abac735e237",
+      "catalogRole": "discovery",
+      "volumeCount": 0
     },
     "work-1d447cc9026b530fb53d": {
       "workId": "work-1d447cc9026b530fb53d",
@@ -3407,6 +3427,11 @@
       "catalogRole": "discovery",
       "volumeCount": 1
     },
+    "work-36fa8748a9d59077d7a8": {
+      "workId": "work-36fa8748a9d59077d7a8",
+      "catalogRole": "discovery",
+      "volumeCount": 1
+    },
     "work-3713ab561de583d709bc": {
       "workId": "work-3713ab561de583d709bc",
       "catalogRole": "bridge",
@@ -3662,6 +3687,11 @@
       "catalogRole": "discovery",
       "volumeCount": 1
     },
+    "work-3bd226b51c9ca594037c": {
+      "workId": "work-3bd226b51c9ca594037c",
+      "catalogRole": "discovery",
+      "volumeCount": 1
+    },
     "work-3c0b05054f0af284b60d": {
       "workId": "work-3c0b05054f0af284b60d",
       "catalogRole": "discovery",
@@ -3734,6 +3764,11 @@
     },
     "work-3d9161d57fe3c9f659a9": {
       "workId": "work-3d9161d57fe3c9f659a9",
+      "catalogRole": "discovery",
+      "volumeCount": 1
+    },
+    "work-3da0f5e46a41a19c26bc": {
+      "workId": "work-3da0f5e46a41a19c26bc",
       "catalogRole": "discovery",
       "volumeCount": 1
     },
@@ -5747,6 +5782,11 @@
       "catalogRole": "discovery",
       "volumeCount": 1
     },
+    "work-605152d38acc7c1cd1bf": {
+      "workId": "work-605152d38acc7c1cd1bf",
+      "catalogRole": "discovery",
+      "volumeCount": 1
+    },
     "work-6051ddc30fbd59c21ed3": {
       "workId": "work-6051ddc30fbd59c21ed3",
       "catalogRole": "discovery",
@@ -5892,6 +5932,11 @@
       "catalogRole": "discovery",
       "volumeCount": 1
     },
+    "work-632a3aee275635bd4a18": {
+      "workId": "work-632a3aee275635bd4a18",
+      "catalogRole": "discovery",
+      "volumeCount": 1
+    },
     "work-634f34830600e07d8f17": {
       "workId": "work-634f34830600e07d8f17",
       "catalogRole": "discovery",
@@ -5939,6 +5984,11 @@
     },
     "work-6420394c30e480d4e3e0": {
       "workId": "work-6420394c30e480d4e3e0",
+      "catalogRole": "discovery",
+      "volumeCount": 1
+    },
+    "work-642e9ccdf602c8584fbb": {
+      "workId": "work-642e9ccdf602c8584fbb",
       "catalogRole": "discovery",
       "volumeCount": 1
     },
@@ -6034,6 +6084,11 @@
     },
     "work-66503ca2459f96855b6b": {
       "workId": "work-66503ca2459f96855b6b",
+      "catalogRole": "discovery",
+      "volumeCount": 1
+    },
+    "work-6664464cc0c55b2352da": {
+      "workId": "work-6664464cc0c55b2352da",
       "catalogRole": "discovery",
       "volumeCount": 1
     },
@@ -6327,6 +6382,11 @@
       "catalogRole": "discovery",
       "volumeCount": 1
     },
+    "work-6d5b94566fc74680b7b0": {
+      "workId": "work-6d5b94566fc74680b7b0",
+      "catalogRole": "discovery",
+      "volumeCount": 1
+    },
     "work-6d9e564af04356e9f959": {
       "workId": "work-6d9e564af04356e9f959",
       "catalogRole": "discovery",
@@ -6504,6 +6564,11 @@
     },
     "work-719e76feacfde2877323": {
       "workId": "work-719e76feacfde2877323",
+      "catalogRole": "discovery",
+      "volumeCount": 1
+    },
+    "work-71a9e89d75fd4349ef2b": {
+      "workId": "work-71a9e89d75fd4349ef2b",
       "catalogRole": "discovery",
       "volumeCount": 1
     },
@@ -6843,6 +6908,11 @@
       "catalogRole": "discovery",
       "volumeCount": 1
     },
+    "work-796e01e5055489853ff4": {
+      "workId": "work-796e01e5055489853ff4",
+      "catalogRole": "discovery",
+      "volumeCount": 1
+    },
     "work-7975d62582a89492a35f": {
       "workId": "work-7975d62582a89492a35f",
       "catalogRole": "bridge",
@@ -7055,6 +7125,11 @@
     },
     "work-7d0fca585c113300786a": {
       "workId": "work-7d0fca585c113300786a",
+      "catalogRole": "discovery",
+      "volumeCount": 1
+    },
+    "work-7d259c925286a9f91310": {
+      "workId": "work-7d259c925286a9f91310",
       "catalogRole": "discovery",
       "volumeCount": 1
     },
@@ -12865,7 +12940,7 @@
     }
   },
   "marketSnapshot": {
-    "catalogVersion": "v1-0c01e25a3261",
+    "catalogVersion": "v1-8d33cce6d1c9",
     "catalogAverageRating": 4.367959183673469,
     "byWorkId": {
       "20th-century-boys": {
@@ -13587,6 +13662,9 @@
       "work-0561faff6ea00f9474b0": {
         "workId": "work-0561faff6ea00f9474b0"
       },
+      "work-0562309cb808e08ea668": {
+        "workId": "work-0562309cb808e08ea668"
+      },
       "work-057321eada0f5983975e": {
         "workId": "work-057321eada0f5983975e"
       },
@@ -13837,6 +13915,9 @@
       "work-0fe64d3cc470022fd3b9": {
         "workId": "work-0fe64d3cc470022fd3b9"
       },
+      "work-102972d475181dd41030": {
+        "workId": "work-102972d475181dd41030"
+      },
       "work-102b3dba9b0218222b2d": {
         "workId": "work-102b3dba9b0218222b2d"
       },
@@ -14001,6 +14082,9 @@
       },
       "work-15cd524191c3fb7ce45f": {
         "workId": "work-15cd524191c3fb7ce45f"
+      },
+      "work-15d6508605fbd4a266fc": {
+        "workId": "work-15d6508605fbd4a266fc"
       },
       "work-15dba4fdb46308ab45d7": {
         "workId": "work-15dba4fdb46308ab45d7"
@@ -14214,6 +14298,9 @@
       },
       "work-1d191998612dec7bb5ba": {
         "workId": "work-1d191998612dec7bb5ba"
+      },
+      "work-1d3a3e6f7abac735e237": {
+        "workId": "work-1d3a3e6f7abac735e237"
       },
       "work-1d447cc9026b530fb53d": {
         "workId": "work-1d447cc9026b530fb53d"
@@ -15010,6 +15097,9 @@
       "work-36f8b5504693130b4c4e": {
         "workId": "work-36f8b5504693130b4c4e"
       },
+      "work-36fa8748a9d59077d7a8": {
+        "workId": "work-36fa8748a9d59077d7a8"
+      },
       "work-3713ab561de583d709bc": {
         "workId": "work-3713ab561de583d709bc"
       },
@@ -15163,6 +15253,9 @@
       "work-3bc0fb41890597b33b40": {
         "workId": "work-3bc0fb41890597b33b40"
       },
+      "work-3bd226b51c9ca594037c": {
+        "workId": "work-3bd226b51c9ca594037c"
+      },
       "work-3c0b05054f0af284b60d": {
         "workId": "work-3c0b05054f0af284b60d"
       },
@@ -15207,6 +15300,9 @@
       },
       "work-3d9161d57fe3c9f659a9": {
         "workId": "work-3d9161d57fe3c9f659a9"
+      },
+      "work-3da0f5e46a41a19c26bc": {
+        "workId": "work-3da0f5e46a41a19c26bc"
       },
       "work-3da15233e47a65b15f14": {
         "workId": "work-3da15233e47a65b15f14"
@@ -16420,6 +16516,9 @@
       "work-5fc6b29f8e4455352ccf": {
         "workId": "work-5fc6b29f8e4455352ccf"
       },
+      "work-605152d38acc7c1cd1bf": {
+        "workId": "work-605152d38acc7c1cd1bf"
+      },
       "work-6051ddc30fbd59c21ed3": {
         "workId": "work-6051ddc30fbd59c21ed3"
       },
@@ -16507,6 +16606,9 @@
       "work-62fbc6b2253b895e3a66": {
         "workId": "work-62fbc6b2253b895e3a66"
       },
+      "work-632a3aee275635bd4a18": {
+        "workId": "work-632a3aee275635bd4a18"
+      },
       "work-634f34830600e07d8f17": {
         "workId": "work-634f34830600e07d8f17"
       },
@@ -16536,6 +16638,9 @@
       },
       "work-6420394c30e480d4e3e0": {
         "workId": "work-6420394c30e480d4e3e0"
+      },
+      "work-642e9ccdf602c8584fbb": {
+        "workId": "work-642e9ccdf602c8584fbb"
       },
       "work-648d361e6dcb25d33961": {
         "workId": "work-648d361e6dcb25d33961"
@@ -16593,6 +16698,9 @@
       },
       "work-66503ca2459f96855b6b": {
         "workId": "work-66503ca2459f96855b6b"
+      },
+      "work-6664464cc0c55b2352da": {
+        "workId": "work-6664464cc0c55b2352da"
       },
       "work-6680ea8aa4ec87ba2364": {
         "workId": "work-6680ea8aa4ec87ba2364"
@@ -16768,6 +16876,9 @@
       "work-6d01004d74b7b51a058d": {
         "workId": "work-6d01004d74b7b51a058d"
       },
+      "work-6d5b94566fc74680b7b0": {
+        "workId": "work-6d5b94566fc74680b7b0"
+      },
       "work-6d9e564af04356e9f959": {
         "workId": "work-6d9e564af04356e9f959"
       },
@@ -16875,6 +16986,9 @@
       },
       "work-719e76feacfde2877323": {
         "workId": "work-719e76feacfde2877323"
+      },
+      "work-71a9e89d75fd4349ef2b": {
+        "workId": "work-71a9e89d75fd4349ef2b"
       },
       "work-71e824df2e6bc2125294": {
         "workId": "work-71e824df2e6bc2125294"
@@ -17079,6 +17193,9 @@
       "work-794131c03d38fa490b5d": {
         "workId": "work-794131c03d38fa490b5d"
       },
+      "work-796e01e5055489853ff4": {
+        "workId": "work-796e01e5055489853ff4"
+      },
       "work-7975d62582a89492a35f": {
         "workId": "work-7975d62582a89492a35f"
       },
@@ -17207,6 +17324,9 @@
       },
       "work-7d0fca585c113300786a": {
         "workId": "work-7d0fca585c113300786a"
+      },
+      "work-7d259c925286a9f91310": {
+        "workId": "work-7d259c925286a9f91310"
       },
       "work-7d40d89092e9e0ee4973": {
         "workId": "work-7d40d89092e9e0ee4973"

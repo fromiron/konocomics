@@ -207,6 +207,18 @@ class CandidateAxisAuthorityTest(unittest.TestCase):
         self.assertEqual(new_sources[self.source["id"]], old_sources[self.source["id"]])
         self.db.rollback()
 
+    def test_fresh_prior_preserves_semantic_claim_without_transport_fact_type(self):
+        input_root, result_root, authority = self.fresh_prior_input()
+        path = input_root / "chunks/chunk-01/prior-panel-claims.csv"
+        rows = publisher.read_csv(path, publisher.PRIOR_FIELDS)
+        rows[0]["factType"] = ""
+        with path.open("w", encoding="utf-8", newline="") as stream:
+            writer = csv.DictWriter(stream, fieldnames=publisher.PRIOR_FIELDS, lineterminator="\n")
+            writer.writeheader()
+            writer.writerows(rows)
+        snapshots = publisher._validate_fresh_unreviewed_snapshots(input_root, result_root, self.db, self.db, authority)
+        self.assertEqual(snapshots[self.work_id]["preservedAxes"], ["relationshipStructure"])
+
     def test_fresh_prior_rejects_missing_or_forged_authority(self):
         input_root, result_root, authority = self.fresh_prior_input()
         for claims in ({}, {(self.work_id, "axis:relationshipStructure"): {}}):

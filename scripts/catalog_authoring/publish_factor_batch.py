@@ -432,7 +432,7 @@ def _validate_ledger(
     for row in prior_rows:
         if row["workId"] not in target_ids or row["reviewedByHuman"] != "false" or row["candidateOnly"] != "true":
             raise ValidationError(f"prior claim boundary mismatch: {row['workId']} {row['factKey']}")
-        if row["decision"] != "accepted" or row["factType"] not in {"axis", "genre", "theme"}:
+        if row["decision"] != "accepted" or (row["factType"] or row["factKey"].partition(":")[0]) not in {"axis", "genre", "theme"}:
             continue
         key = (row["workId"], row["factKey"])
         if key in prior_accepted:
@@ -823,7 +823,7 @@ def _validate_fresh_unreviewed_snapshots(
         row
         for path in (input_root / "chunks").glob("chunk-??/prior-panel-claims.csv")
         for row in read_csv(path, PRIOR_FIELDS)
-        if row["decision"] == "accepted" and row["factType"] in {"axis", "genre", "theme"}
+        if row["decision"] == "accepted" and (row["factType"] or row["factKey"].partition(":")[0]) in {"axis", "genre", "theme"}
     ):
         key = (row["workId"], row["factKey"])
         if key in frozen_priors.setdefault(row["workId"], {}):

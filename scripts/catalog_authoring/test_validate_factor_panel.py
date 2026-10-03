@@ -546,6 +546,38 @@ class FactorPanelValidatorTest(unittest.TestCase):
         with self.assertRaisesRegex(ValidationError, "manifest-bound original"):
             indexes(self.chunk, [{"workId": WORK}], authority)
 
+    def test_publisher_preserves_unsorted_semantic_prior_without_fact_type(self) -> None:
+        import publish_factor_batch as publisher
+        supplemental_path = self.chunk / "supplemental-evidence.csv"
+        supplemental = read_csv(supplemental_path, SUPPLEMENTAL_FIELDS)
+        research = json.loads((self.chunk / "collector-research.jsonl").read_text().splitlines()[0])
+        source = next(row for row in research["sources"] if row["url"] == URL)
+        supplemental[0].update(publisher.supplemental_source_fields(source), collectorChunk=self.chunk.name)
+        write_csv(supplemental_path, SUPPLEMENTAL_FIELDS, supplemental)
+        prior_path = self.chunk / "prior-panel-claims.csv"
+        prior = read_csv(prior_path, PRIOR_FIELDS)
+        prior[0].update(factType="", evidenceIds="ev-z;ev-a", citationUrls=OLD_URL)
+        write_csv(prior_path, PRIOR_FIELDS, prior)
+        authority = {
+            "claims": {(WORK, prior[0]["factKey"]): {claim_semantic_digest(prior[0]): prior[0]}},
+            "evidence": {key: {"workId": WORK, "sourceUrl": OLD_URL} for key in ("ev-z", "ev-a")},
+        }
+        ledger_path = self.result_root / "chunk-01/evidence-panel-ledger.csv"
+        ledger = read_csv(ledger_path, LEDGER_FIELDS)
+        retained = next(row for row in ledger if row["factKey"] == prior[0]["factKey"])
+        retained.update(evidenceIds="ev-z;ev-a")
+        write_csv(ledger_path, LEDGER_FIELDS, ledger)
+        original_digest = claim_semantic_digest(retained)
+        publisher._validate_ledger(self.chunk, ledger_path.parent, [{"workId": WORK}],
+                                   digest(self.chunk / "CHUNK.sha256"), prior_authority=authority)
+        self.assertEqual(claim_semantic_digest(read_csv(ledger_path, LEDGER_FIELDS)[0]), original_digest)
+        fresh = next(row for row in ledger if row["state"] == "known" and row is not retained)
+        fresh["evidenceIds"] = "ev-z;ev-a"
+        write_csv(ledger_path, LEDGER_FIELDS, ledger)
+        with self.assertRaisesRegex(ValueError, "not code-unit sorted"):
+            publisher._validate_ledger(self.chunk, ledger_path.parent, [{"workId": WORK}],
+                                       digest(self.chunk / "CHUNK.sha256"), prior_authority=authority)
+
     def test_manifest_and_input_authority_flags(self) -> None:
         report = self.result_root / "chunk-01" / "authorized-evidence-panel-v1.md"
         report.write_text("tampered\n", encoding="utf-8", newline="\n")
