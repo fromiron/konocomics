@@ -8753,6 +8753,11 @@
       "catalogRole": "discovery",
       "volumeCount": 1
     },
+    "work-8e9a075fcdd0d7fccbb5": {
+      "workId": "work-8e9a075fcdd0d7fccbb5",
+      "catalogRole": "discovery",
+      "volumeCount": 1
+    },
     "work-8ea56f655dbb1443e114": {
       "workId": "work-8ea56f655dbb1443e114",
       "catalogRole": "discovery",
@@ -14680,7 +14685,7 @@
     }
   },
   "marketSnapshot": {
-    "catalogVersion": "v1-213239b8e2e9",
+    "catalogVersion": "v1-0d40190bf8ec",
     "catalogAverageRating": 4.367959183673469,
     "byWorkId": {
       "20th-century-boys": {
@@ -20041,6 +20046,9 @@
       },
       "work-8e66168d4127243b2cde": {
         "workId": "work-8e66168d4127243b2cde"
+      },
+      "work-8e9a075fcdd0d7fccbb5": {
+        "workId": "work-8e9a075fcdd0d7fccbb5"
       },
       "work-8ea56f655dbb1443e114": {
         "workId": "work-8ea56f655dbb1443e114"

@@ -108,7 +108,8 @@ export function deriveCanonicalContextAudit(options: {
       seen.add(record.workId);
       assert.equal(record.reviewReference, reference, "Context audit review identity changed");
       assert.notEqual(record.priorReviewReference, reference, "Context audit must retain a separate prior review");
-      assert.equal(options.priorReviewSha256(record.priorReviewReference), record.priorReviewSha256,
+      const { priorReviewSha256, ...binding } = record;
+      assert.equal(options.priorReviewSha256(record.priorReviewReference), priorReviewSha256,
         "Context audit prior review changed");
       const matches = evidence.rows.filter((r) => r.values[column(evidence, "id")] === record.replacementEvidenceId);
       assert.equal(matches.length, 1, "Context audit replacement evidence missing or duplicated");
@@ -117,7 +118,6 @@ export function deriveCanonicalContextAudit(options: {
       const notes = row.values[column(evidence, "notes")]!;
       const marker = " | contextSupersessionV1|";
       assert.equal(notes.split(marker).length, 2, "Context audit has no exact evidence binding");
-      const { priorReviewSha256: _prior, ...binding } = record;
       assert.deepEqual(JSON.parse(notes.split(marker)[1]!), binding, "Context audit differs from accepted evidence binding");
     }
   }

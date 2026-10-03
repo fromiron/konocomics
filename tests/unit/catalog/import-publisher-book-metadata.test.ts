@@ -656,7 +656,8 @@ it("decodes declared publisher charsets and binds unchanged supplied HTTP receip
     const metadata = { workId: "work-0123456789abcdef0123", isbn: "9784757747210",
       publisherName: "", itemCaption: caption, salesDate: "", imageUrl: "", imprint: "", pageCount: "" };
     const input = join(folder, "input.json");
-    for (const [label, codec] of [["EUC-JP", "euc_jp"], ["Shift_JIS", "shift_jis"]]) {
+    const charsets: [string, string][] = [["EUC-JP", "euc_jp"], ["Shift_JIS", "shift_jis"]];
+    for (const [label, codec] of charsets) {
       const body = spawnSync(catalogPython(repository), ["-c",
         "import sys;sys.stdout.buffer.write(sys.argv[1].encode(sys.argv[2]))",
         `<meta charset="${label}"><p>${caption}</p>`, codec]).stdout;
@@ -668,20 +669,19 @@ it("decodes declared publisher charsets and binds unchanged supplied HTTP receip
       const receiptBytes = Buffer.from(JSON.stringify(receipt));
       writeFileSync(join(folder, rawPath), body);
       writeFileSync(join(folder, receiptPath), receiptBytes);
-      const session = { workId: metadata.workId, supplementalFiles: [
-        { path: rawPath, originalPath: "C:\\saved\\capture.body", bytes: body.length, sha256: sha256(body) },
-        { path: receiptPath, originalPath: "C:\\saved\\capture.json", bytes: receiptBytes.length, sha256: sha256(receiptBytes) },
-      ] };
+      const sourceFixture = { path: rawPath, originalPath: "C:\\saved\\capture.body", bytes: body.length, sha256: sha256(body) };
+      const receiptFixture = { path: receiptPath, originalPath: "C:\\saved\\capture.json", bytes: receiptBytes.length, sha256: sha256(receiptBytes) };
+      const session = { workId: metadata.workId, supplementalFiles: [sourceFixture, receiptFixture] };
       writeFileSync(join(folder, "collection-session.json"), JSON.stringify(session));
       const entry = { metadata, sourceFile: rawPath, receiptFile: receiptPath, receiptSha256: sha256(receiptBytes),
         captionKind: "original", originalItemCaption: caption };
       writeFileSync(input, JSON.stringify([entry]));
-      expect(readIntake(input, readFileSync(input))[0].itemCaption).toBe(caption);
+      expect(readIntake(input, readFileSync(input))[0]?.itemCaption).toBe(caption);
       expect(sha256(readFileSync(join(folder, rawPath)))).toBe(receipt.sha256);
-      session.supplementalFiles[0].originalPath = "C:\\other\\capture.body";
+      sourceFixture.originalPath = "C:\\other\\capture.body";
       writeFileSync(join(folder, "collection-session.json"), JSON.stringify(session));
       expect(() => readIntake(input, readFileSync(input))).toThrow("different original source");
-      session.supplementalFiles[0].originalPath = "C:\\saved\\capture.body";
+      sourceFixture.originalPath = "C:\\saved\\capture.body";
       writeFileSync(join(folder, "collection-session.json"), JSON.stringify(session));
       const undeclared = spawnSync(catalogPython(repository), ["-c",
         "import sys;sys.stdout.buffer.write(sys.argv[1].encode(sys.argv[2]))", `<p>${caption}</p>`, codec]).stdout;
@@ -689,8 +689,8 @@ it("decodes declared publisher charsets and binds unchanged supplied HTTP receip
       const unknownBytes = Buffer.from(JSON.stringify(unknownReceipt));
       writeFileSync(join(folder, rawPath), undeclared);
       writeFileSync(join(folder, receiptPath), unknownBytes);
-      session.supplementalFiles[0].sha256 = sha256(undeclared); session.supplementalFiles[0].bytes = undeclared.length;
-      session.supplementalFiles[1].sha256 = sha256(unknownBytes); session.supplementalFiles[1].bytes = unknownBytes.length;
+      sourceFixture.sha256 = sha256(undeclared); sourceFixture.bytes = undeclared.length;
+      receiptFixture.sha256 = sha256(unknownBytes); receiptFixture.bytes = unknownBytes.length;
       writeFileSync(join(folder, "collection-session.json"), JSON.stringify(session));
       writeFileSync(input, JSON.stringify([{ ...entry, receiptSha256: sha256(unknownBytes) }]));
       expect(() => readIntake(input, readFileSync(input))).toThrow();

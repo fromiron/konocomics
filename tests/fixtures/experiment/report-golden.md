@@ -1,6 +1,6 @@
 # konocomics Taste vs Baseline レポート
 
-- カタログバージョン: v1\-febb82edb685
+- カタログバージョン: v1\-c5e6f1e2e338
 - ファクター辞書バージョン: v1
 - Baseline バージョン: v1
 - プロフィール数: 3
@@ -238,28 +238,29 @@
 | 4 | 0.03 | similarity | genre | action | kingdom | なし | はい |
 | 5 | 0.03 | similarity | genre | historical | kingdom | なし | はい |
 
-#### 10. 炎炎ノ消防隊 (fire\-force)
+#### 10. 進撃の巨人 (attack\-on\-titan)
 
-- スコア: 0.627124369983
+- スコア: 0.643177591794
 - 確信度: ふつう
-- 最も近いアンカー: チェンソーマン (chainsaw\-man)
+- 最も近いアンカー: 鋼の錬金術師 (fullmetal\-alchemist)
 - おすすめ理由:
-  - 「迫力・スピード感」があなたの好みに合う作品です。
-  - 「戦闘」があなたの好みに合う作品です。
   - 「テンポの速さ」があなたの好みに合う作品です。
+  - 「戦闘」があなたの好みに合う作品です。
+  - 『鋼の錬金術師』で好きだった「アクション」に近い作品です。
 - 注意点: なし
-- 根拠アンカー: なし
+- 根拠アンカー: 鋼の錬金術師 (fullmetal\-alchemist)
 - 適用された減点: 理由を特定できない苦手
-- カバレッジ警告: なし
+- カバレッジ警告:
+  - PARTIAL / art / coverage=0.75 / threshold=0.3 / adjustedScore=0.911885245902
 - 寄与度上位5件:
 
 | 順位 | 寄与 | source | group | factorId | anchorWorkIds | negativeReasonId | 説明対象 |
 | -: | -: | --- | --- | --- | --- | --- | --- |
 | 1 | 0.4 | baseline | overall | neutralBaseline | なし | なし | いいえ |
-| 2 | 0.06 | adjustment | art | motionImpact | なし | なし | はい |
+| 2 | 0.06 | adjustment | narrative | pacing | なし | なし | はい |
 | 3 | 0.06 | adjustment | theme | combat | なし | なし | はい |
-| 4 | 0.03 | adjustment | narrative | pacing | なし | なし | はい |
-| 5 | -0.03 | clamp | overall | adjustmentClamp | なし | なし | いいえ |
+| 4 | 0.02 | similarity | genre | action | fullmetal\-alchemist | なし | はい |
+| 5 | 0.02 | similarity | genre | fantasy | fullmetal\-alchemist | なし | はい |
 
 ### Baseline Top 10 (10/10)
 
@@ -424,7 +425,7 @@
 - Taste 件数: 10/10
 - Baseline 件数: 10/10
 - SHRUNK グループ数: 0
-- PARTIAL グループ数: 16
+- PARTIAL グループ数: 17
 
 ## プロフィール: tactical\-mystery
 
