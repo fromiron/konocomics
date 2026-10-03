@@ -649,6 +649,44 @@ it("adds a captured introduction without losing metadata, and rejects damaged or
   }
 }, 480_000);
 
+it("binds mdash entities to the Unicode publisher caption without changing captured bytes", () => {
+  const folder = mkdtempSync(join(tmpdir(), "publisher-mdash-caption-"));
+  try {
+    const caption = "少年たちの冒険——本をめくる物語。";
+    const body = "<p>少年たちの冒険&mdash;&mdash;本をめくる物語。</p>";
+    const receipt = JSON.stringify({
+      url: "https://example.com/book",
+      resolvedUrl: "https://example.com/book",
+      fetchedAt: "2026-10-04T00:00:00Z",
+      status: 200,
+      sha256: sha256(body),
+      bytes: Buffer.byteLength(body),
+    });
+    const input = join(folder, "input.json");
+    const entry = {
+      metadata: {
+        workId: "work-0123456789abcdef0123", isbn: "9784864681926",
+        publisherName: "", itemCaption: caption, salesDate: "", imageUrl: "", imprint: "", pageCount: "",
+      },
+      sourceFile: "source.html", receiptFile: "capture.json", receiptSha256: sha256(receipt),
+      captionKind: "original", originalItemCaption: caption,
+    };
+    writeFileSync(join(folder, entry.sourceFile), body);
+    writeFileSync(join(folder, entry.receiptFile), receipt);
+    const intakeBytes = Buffer.from(JSON.stringify([entry]));
+    expect(readIntake(input, intakeBytes)[0]?.itemCaption).toBe(caption);
+    expect(readFileSync(join(folder, entry.sourceFile), "utf8")).toBe(body);
+    expect(sha256(readFileSync(join(folder, entry.sourceFile)))).toBe(sha256(body));
+    expect(readFileSync(join(folder, entry.receiptFile), "utf8")).toBe(receipt);
+    const differentCaption = caption + " 存在しない続き。";
+    const changed = { ...entry, metadata: { ...entry.metadata, itemCaption: differentCaption },
+      originalItemCaption: differentCaption };
+    expect(() => readIntake(input, Buffer.from(JSON.stringify([changed])))).toThrow(
+      "Original introduction is absent from the captured source",
+    );
+  } finally { rmSync(folder, { recursive: true, force: true }); }
+});
+
 it("decodes declared publisher charsets and binds unchanged supplied HTTP receipts", () => {
   const folder = mkdtempSync(join(tmpdir(), "publisher-declared-charset-"));
   try {
