@@ -8,7 +8,7 @@ import {
   realpathSync,
   writeFileSync,
 } from "node:fs";
-import { dirname, isAbsolute, join, relative, resolve } from "node:path";
+import { dirname, isAbsolute, join, relative, resolve, win32 } from "node:path";
 import { pathToFileURL } from "node:url";
 import { parseArgs } from "node:util";
 import { z } from "zod";
@@ -63,7 +63,12 @@ const browserCaptureReceipt = z.strictObject({
   sha256: digest,
   bytes: z.number().int().positive(),
 });
-const captureReceipt = z.union([httpCaptureReceipt, browserCaptureReceipt]);
+const fullHttpCaptureReceipt = browserCaptureReceipt.extend({
+  kind: z.literal("http-body"),
+  status: z.literal(200),
+  complete: z.literal(true),
+});
+const captureReceipt = z.union([httpCaptureReceipt, browserCaptureReceipt, fullHttpCaptureReceipt]);
 const intake = z
   .array(
     z.strictObject({
@@ -186,12 +191,11 @@ function plainText(value: string) {
   return value.replace(/\s+/gu, " ").trim();
 }
 
-function readIntake(input: string, inputBytes: Buffer) {
+export function readIntake(input: string, inputBytes: Buffer) {
   const folder = realpathSync(dirname(input));
   return intake.parse(JSON.parse(inputBytes.toString("utf8"))).map((entry) => {
-    const receiptBytes = readFileSync(
-      within(folder, realpathSync(resolve(folder, entry.receiptFile))),
-    );
+    const receiptPath = within(folder, realpathSync(resolve(folder, entry.receiptFile)));
+    const receiptBytes = readFileSync(receiptPath);
     assert.equal(sha256(receiptBytes), entry.receiptSha256, "Capture receipt hash mismatch");
     const receipt = captureReceipt.parse(JSON.parse(receiptBytes.toString("utf8")));
     const sourcePath = within(folder, realpathSync(resolve(folder, entry.sourceFile)));
@@ -199,14 +203,32 @@ function readIntake(input: string, inputBytes: Buffer) {
     assert.equal(sha256(source), receipt.sha256, "Captured response hash mismatch");
     assert.equal(source.length, receipt.bytes, "Captured response length mismatch");
     if ("kind" in receipt) {
-      assert.equal(
-        within(folder, realpathSync(resolve(folder, receipt.rawPath))),
-        sourcePath,
-        "Browser receipt names a different captured source",
-      );
+      const sourceFolder = dirname(sourcePath);
+      const collectionFolder = existsSync(join(sourceFolder, "collection-session.json"))
+        ? sourceFolder : dirname(sourceFolder);
+      if (collectionFolder !== folder) within(folder, collectionFolder);
       const collection = z
-        .object({ workId: z.string().min(1) })
-        .parse(JSON.parse(readFileSync(join(folder, "collection-session.json"), "utf8")));
+        .object({ workId: z.string().min(1), supplementalFiles: z.array(z.object({
+          path: z.string(), originalPath: z.string(), sha256: digest, bytes: z.number().int().positive(),
+        })).optional() })
+        .parse(JSON.parse(readFileSync(join(collectionFolder, "collection-session.json"), "utf8")));
+      const supplied = collection.supplementalFiles ?? [];
+      const sourceBinding = supplied.find((row) => resolve(collectionFolder, row.path) === sourcePath);
+      const receiptBinding = supplied.find((row) => resolve(collectionFolder, row.path) === receiptPath);
+      if (receipt.kind === "http-body" && sourceBinding && receiptBinding) {
+        for (const [binding, bytes] of [[sourceBinding, source], [receiptBinding, receiptBytes]] as const) {
+          assert.equal(sha256(bytes), binding.sha256, "Supplied capture hash mismatch");
+          assert.equal(bytes.length, binding.bytes, "Supplied capture length mismatch");
+        }
+        assert([sourceBinding.originalPath, receiptBinding.originalPath].every((path) =>
+          isAbsolute(path) || win32.isAbsolute(path)), "Supplied capture original path must be absolute");
+        const paths = win32.isAbsolute(receiptBinding.originalPath) ? win32 : { dirname, resolve };
+        assert.equal(paths.resolve(paths.dirname(receiptBinding.originalPath), receipt.rawPath),
+          paths.resolve(sourceBinding.originalPath), "Supplied receipt names a different original source");
+      } else {
+        assert.equal(within(folder, realpathSync(resolve(dirname(receiptPath), receipt.rawPath))),
+          sourcePath, "Browser receipt names a different captured source");
+      }
       assert.equal(collection.workId, entry.metadata.workId, "Browser collection Work mismatch");
       assert(
         receipt.status === null || (receipt.status >= 200 && receipt.status < 300),
@@ -217,7 +239,15 @@ function readIntake(input: string, inputBytes: Buffer) {
     if (entry.metadata.itemCaption !== undefined) {
       assert(entry.originalItemCaption.trim(), "Keep the publisher's original introduction");
       const original = plainText(entry.originalItemCaption);
-      const rawText = source.toString("utf8");
+      const decoded = spawnSync(catalogPython(resolve(import.meta.dirname, "..")), [
+        "-B", "-X", "utf8", "-c",
+        "import json,sys; sys.path.insert(0,sys.argv[1]); from factor_model_input import reading_text; print(json.dumps(reading_text(sys.stdin.buffer.read(),json.loads(sys.argv[2]),preserve_html=True),ensure_ascii=False))",
+        join(import.meta.dirname, "catalog_authoring"),
+        JSON.stringify("kind" in receipt ? receipt : { kind: "http-body", contentType: "text/html" }),
+      ], { input: source, encoding: "utf8", maxBuffer: 16 * 1024 * 1024, windowsHide: true });
+      if (decoded.error) throw decoded.error;
+      assert.equal(decoded.status, 0, decoded.stderr || decoded.stdout);
+      const rawText = z.object({ text: z.string().min(1) }).parse(JSON.parse(decoded.stdout)).text;
       assert(
         plainText(rawText).includes(original) ||
           captionText(rawText).includes(original) ||

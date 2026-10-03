@@ -17,7 +17,7 @@ import { expect, it, vi } from "vitest";
 import { catalogV1Schema } from "@/domain/catalog/schema";
 import { resolveWorkBookMetadata } from "@/features/work-detail/work-detail-data";
 import * as authority from "../../../scripts/catalog/authority";
-import { importPublisherBookMetadata } from "../../../scripts/import-publisher-book-metadata";
+import { importPublisherBookMetadata, readIntake } from "../../../scripts/import-publisher-book-metadata";
 import { catalogPython } from "../../../scripts/catalog-python";
 import {
   artifactDigest,
@@ -648,3 +648,52 @@ it("adds a captured introduction without losing metadata, and rejects damaged or
     rmSync(restoreParent, { recursive: true, force: true });
   }
 }, 480_000);
+
+it("decodes declared publisher charsets and binds unchanged supplied HTTP receipts", () => {
+  const folder = mkdtempSync(join(tmpdir(), "publisher-declared-charset-"));
+  try {
+    const caption = "同じ本の紹介。";
+    const metadata = { workId: "work-0123456789abcdef0123", isbn: "9784757747210",
+      publisherName: "", itemCaption: caption, salesDate: "", imageUrl: "", imprint: "", pageCount: "" };
+    const input = join(folder, "input.json");
+    for (const [label, codec] of [["EUC-JP", "euc_jp"], ["Shift_JIS", "shift_jis"]]) {
+      const body = spawnSync(catalogPython(repository), ["-c",
+        "import sys;sys.stdout.buffer.write(sys.argv[1].encode(sys.argv[2]))",
+        `<meta charset="${label}"><p>${caption}</p>`, codec]).stdout;
+      const rawPath = "supplied.body", receiptPath = "supplied.json";
+      const receipt = { kind: "http-body", url: "https://example.com/book", resolvedUrl: "https://example.com/book",
+        observedAt: "2026-10-04T00:00:00Z", recordedAt: "2026-10-04T00:00:00Z", status: 200, complete: true,
+        contentType: `text/html; charset=${label}`, contentEncoding: null, error: null,
+        rawPath: "capture.body", bytes: body.length, sha256: sha256(body) };
+      const receiptBytes = Buffer.from(JSON.stringify(receipt));
+      writeFileSync(join(folder, rawPath), body);
+      writeFileSync(join(folder, receiptPath), receiptBytes);
+      const session = { workId: metadata.workId, supplementalFiles: [
+        { path: rawPath, originalPath: "C:\\saved\\capture.body", bytes: body.length, sha256: sha256(body) },
+        { path: receiptPath, originalPath: "C:\\saved\\capture.json", bytes: receiptBytes.length, sha256: sha256(receiptBytes) },
+      ] };
+      writeFileSync(join(folder, "collection-session.json"), JSON.stringify(session));
+      const entry = { metadata, sourceFile: rawPath, receiptFile: receiptPath, receiptSha256: sha256(receiptBytes),
+        captionKind: "original", originalItemCaption: caption };
+      writeFileSync(input, JSON.stringify([entry]));
+      expect(readIntake(input, readFileSync(input))[0].itemCaption).toBe(caption);
+      expect(sha256(readFileSync(join(folder, rawPath)))).toBe(receipt.sha256);
+      session.supplementalFiles[0].originalPath = "C:\\other\\capture.body";
+      writeFileSync(join(folder, "collection-session.json"), JSON.stringify(session));
+      expect(() => readIntake(input, readFileSync(input))).toThrow("different original source");
+      session.supplementalFiles[0].originalPath = "C:\\saved\\capture.body";
+      writeFileSync(join(folder, "collection-session.json"), JSON.stringify(session));
+      const undeclared = spawnSync(catalogPython(repository), ["-c",
+        "import sys;sys.stdout.buffer.write(sys.argv[1].encode(sys.argv[2]))", `<p>${caption}</p>`, codec]).stdout;
+      const unknownReceipt = { ...receipt, contentType: "text/html", bytes: undeclared.length, sha256: sha256(undeclared) };
+      const unknownBytes = Buffer.from(JSON.stringify(unknownReceipt));
+      writeFileSync(join(folder, rawPath), undeclared);
+      writeFileSync(join(folder, receiptPath), unknownBytes);
+      session.supplementalFiles[0].sha256 = sha256(undeclared); session.supplementalFiles[0].bytes = undeclared.length;
+      session.supplementalFiles[1].sha256 = sha256(unknownBytes); session.supplementalFiles[1].bytes = unknownBytes.length;
+      writeFileSync(join(folder, "collection-session.json"), JSON.stringify(session));
+      writeFileSync(input, JSON.stringify([{ ...entry, receiptSha256: sha256(unknownBytes) }]));
+      expect(() => readIntake(input, readFileSync(input))).toThrow();
+    }
+  } finally { rmSync(folder, { recursive: true, force: true }); }
+});
