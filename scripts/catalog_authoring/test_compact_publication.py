@@ -1,11 +1,11 @@
 """The compact writer must leave both databases under the caller's transaction."""
-from contextlib import closing
+from contextlib import closing, ExitStack
 from pathlib import Path
 import shutil
 import sqlite3
 import tempfile
 import unittest
-from unittest.mock import patch
+from unittest.mock import patch, Mock
 
 from authoring_paths import REPO
 import compact_publication as compact
@@ -14,6 +14,47 @@ import publish_factor_batch as publisher
 
 
 class CompactTransactionTest(unittest.TestCase):
+    def test_later_frozen_batch_subset_plans_a_new_review_reference(self):
+        import factor_single_pass as single
+        import canonical_rebase
+        with tempfile.TemporaryDirectory() as directory:
+            root = Path(directory)
+            frozen, sealed = root / "input", root / "sealed"
+            result = sealed / "panel-result"
+            (result / "chunk-01").mkdir(parents=True)
+            frozen.mkdir()
+            for p in (frozen / "PANEL-INPUT.sha256", result / "chunk-01/PANEL-INPUT.sha256"):
+                p.write_bytes(b"same immutable frozen manifest")
+            wid = "work-" + "1" * 20
+            old_ref = "reviews/authorized-evidence-panel-v1-batch-r-" + "2" * 32 + ".md"
+            backend = Mock()
+            backend.verify_immutable.return_value = {"targetIds": {wid}, "panelInput": {"batchId": "r-" + "2" * 32},
+                                                     "inputManifestSha256": "3" * 64}
+            backend._review_references.return_value = {old_ref}
+            backend.plan_against_current.return_value = ({}, {}, {})
+            registry = {"tables": {"registry_meta": {"rows": []},
+                "registry_source_rows": {"columns": [], "rows": []}}}
+            with ExitStack() as stack:
+                stack.enter_context(patch.object(compact, "resolve_reference", side_effect=lambda p: Path(p)))
+                stack.enter_context(patch.object(compact, "artifact_path", side_effect=lambda p: Path(p)))
+                stack.enter_context(patch.object(publisher, "_read_json", side_effect=lambda p:
+                    {"baselineRoot": str(root), "registryPath": str(root / "registry.sqlite")}
+                    if p.name == "external-lineage.json" else {"canonicalSha256": "4" * 64}))
+                stack.enter_context(patch.object(publisher.panel_validation, "load_prior_authority", return_value={"evidence": {}}))
+                for name in ("_validate_axis_corrections", "_validate_fresh_unreviewed_snapshots", "_verify_input_identities", "_publication_safety"):
+                    stack.enter_context(patch.object(publisher, name, return_value={}))
+                stack.enter_context(patch.object(publisher.factor_recovery, "validate_publish", return_value={}))
+                stack.enter_context(patch.object(publisher, "_load_conflict_adjudication", return_value=({}, {})))
+                stack.enter_context(patch.object(publisher, "_backend_module", return_value=backend))
+                stack.enter_context(patch.object(publisher, "registry_correction_changes", return_value=[]))
+                stack.enter_context(patch.object(publisher, "plan_registry_correction", return_value=(registry, [])))
+                stack.enter_context(patch.object(single, "install_backend"))
+                stack.enter_context(patch.object(canonical_rebase, "validate_rebase", return_value={}))
+                prepared = compact.prepare_work({"workId": wid, "input": str(frozen), "authority": str(sealed)},
+                    None, registry, "4" * 64, "test", {})
+            self.assertEqual(prepared["reviewReference"], old_ref.removesuffix(".md") + "-" + "3" * 64 + ".md")
+            self.assertEqual(backend.plan_against_current.call_args.args[4], prepared["reviewReference"])
+
     def test_completed_cleanup_reuses_backed_execution_and_observes_recreated_files(self):
         import catalog_authoring_runner as runner
         from catalog_revision_store import RevisionWorkspace

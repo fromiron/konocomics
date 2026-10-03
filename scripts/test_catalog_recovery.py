@@ -19,6 +19,62 @@ import test_catalog_retention as retention_cases
 
 
 class RequestedBatchRecoveryTest(unittest.TestCase):
+    def test_checked_publication_uses_frozen_job_without_runner_recipe(self):
+        with tempfile.TemporaryDirectory() as temporary:
+            repo = Path(temporary)
+            store = RevisionWorkspace.create(repo, repo / retention.BASE / "workspace.sqlite")
+            wid = "work-" + "1" * 20
+            run = repo / retention.CONTINUATION / "planning/reuse/adjudication" / wid / "run-v1"
+            frozen = run / "frozen/panel-input"
+            decisions = run / "decisions.json"
+            registry = repo / retention.CONTINUATION / "planning/reuse/registry.sqlite"
+            retention.write(decisions, {"works": [{"workId": wid}]})
+            registry.write_bytes(b"exact registry")
+            retention.write(frozen / "authoring-job.json", {"works": [{"workId": wid}]})
+            retention.write(repo / ".catalog-restore.json", {"schemaVersion": "catalog-restored-workspace-v1",
+                                                            "originalRepositories": ["C:\\Toys\\konocomics"]})
+            prior = repo / retention.CONTINUATION / "retained/prior"
+            retention.write(prior / "accepted.json", {"workId": wid})
+            (prior / "MANIFEST.sha256").write_text(f"{digest((prior / 'accepted.json').read_bytes())}  accepted.json\n")
+            retention.write(frozen / "prior-authority.json", {"bundles": [{
+                "root": "C:\\Toys\\konocomics\\" + str(prior.relative_to(repo)).replace("/", "\\"),
+                "manifestSha256": digest((prior / "MANIFEST.sha256").read_bytes())}]})
+            retention.write(frozen / "external-lineage.json", {"registryPath": str(registry),
+                "baselineRoot": str(repo / retention.CONTINUATION / "retained/current")})
+            retention.write(frozen / "panel-input.json", {"registrySha256": digest(registry.read_bytes())})
+            manifest = frozen / "PANEL-INPUT.sha256"
+            manifest.write_text("".join(f"{digest(p.read_bytes())}  {p.name}\n"
+                                      for p in sorted(frozen.iterdir())))
+            manifest_sha = digest(manifest.read_bytes())
+            retention.write(run / "frozen/INPUT-PREPARATION-REPORT.json", {"inputManifestSha256": manifest_sha})
+            retention.write(run / "RUN.json", {"decisionsPath": str(decisions),
+                                               "decisionsSha256": digest(decisions.read_bytes())})
+            sealed = run / "sealed"
+            retention.write(sealed / "result.json", {"workId": wid})
+            (sealed / "MANIFEST.sha256").write_text(f"{digest((sealed / 'result.json').read_bytes())}  result.json\n")
+            checked = {"workId": wid, "status": "READY_FOR_PUBLICATION", "inputManifestSha256": manifest_sha,
+                       "decisionsSha256": digest(decisions.read_bytes()), "sealedRoot": str(sealed),
+                       "resultManifestSha256": digest((sealed / "MANIFEST.sha256").read_bytes())}
+            retention.write(run / "CHECKED.json", checked)
+            row = {"workId": wid, "status": checked["status"], "checkedPath": str(run / "CHECKED.json"),
+                   "checkedSha256": digest((run / "CHECKED.json").read_bytes())}
+            store.save([run, registry, prior], "exact checked and frozen proof without run recipe")
+            shutil.rmtree(run)
+            registry.unlink()
+            with closing(store.connect()) as db:
+                files = recovery._Selection(store, db)
+                files._state = {"latestCandidate": {"root": "retained/current"}}
+                with patch.object(files, "canonical"), patch.object(files, "basis"):
+                    files.checked(row)
+                    self.assertNotIn(files.key(run / "job.json"), files.members)
+                    for path in (manifest, frozen / "authoring-job.json", decisions, sealed / "result.json", prior / "accepted.json"):
+                        self.assertIn(files.key(path), files.members)
+                    with self.assertRaisesRegex(ValueError, "unpreserved file: .*job.json"):
+                        recovery.select_runner_files(files, {"action": "check", "runRoot": str(run), "workId": wid})
+                altered = dict(row, checkedSha256="0" * 64)
+                with self.assertRaises(ValueError):
+                    files.checked(altered)
+
     def test_historical_windows_artifact_cannot_escape_restored_repository(self):
         with tempfile.TemporaryDirectory() as temporary:
             repo = Path(temporary)

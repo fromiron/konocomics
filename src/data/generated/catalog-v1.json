@@ -1,6 +1,6 @@
 {
   "schemaVersion": 1,
-  "catalogVersion": "v1-059a3adabf75",
+  "catalogVersion": "v1-65ed02ae3906",
   "factorDictionaryVersion": "v1",
   "works": [
     {
@@ -238332,6 +238332,7 @@
       "genres": [
         "fantasy",
         "historical",
+        "mystery",
         "romance",
         "sliceOfLife"
       ],
@@ -238355,41 +238356,41 @@
       "axes": {
         "progression": {
           "state": "known",
-          "value": 2,
-          "confidence": 0.82
+          "value": 3,
+          "confidence": 0.78
         },
         "problemSolving": {
-          "state": "unknown"
+          "state": "known",
+          "value": 2,
+          "confidence": 0.78
         },
         "strategy": {
-          "state": "known",
-          "value": 3,
-          "confidence": 0.9
+          "state": "unknown"
         },
         "pacing": {
           "state": "known",
           "value": 2,
-          "confidence": 0.86
+          "confidence": 0.78
         },
         "mysteryReveal": {
           "state": "known",
-          "value": 2,
-          "confidence": 0.85
+          "value": 3,
+          "confidence": 0.78
         },
         "worldBuilding": {
           "state": "known",
           "value": 4,
-          "confidence": 0.97
+          "confidence": 0.78
         },
         "characterArcWeight": {
           "state": "known",
           "value": 4,
-          "confidence": 0.94
+          "confidence": 0.78
         },
         "relationshipStructure": {
           "state": "known",
           "value": 3,
-          "confidence": 0.88
+          "confidence": 0.78
         },
         "comedy": {
           "state": "unknown"
@@ -238397,22 +238398,22 @@
         "darkness": {
           "state": "known",
           "value": 3,
-          "confidence": 0.91
+          "confidence": 0.78
         },
         "mentalStress": {
           "state": "known",
           "value": 2,
-          "confidence": 0.84
+          "confidence": 0.78
         },
         "romance": {
           "state": "known",
-          "value": 3,
-          "confidence": 0.94
+          "value": 2,
+          "confidence": 0.78
         },
         "emotionalWarmth": {
           "state": "known",
           "value": 3,
-          "confidence": 0.86
+          "confidence": 0.78
         },
         "artRealism": {
           "state": "unknown"
@@ -238429,15 +238430,15 @@
       },
       "factorScope": "entry_1_3_volumes",
       "eligibility": {
-        "onboardingEligible": false,
-        "recommendationEligible": false,
-        "libraryOnly": true
+        "onboardingEligible": true,
+        "recommendationEligible": true,
+        "libraryOnly": false
       },
       "evidence": {
         "metadataConfidence": 0.92,
         "groupingConfidence": 0.96,
         "sourceAgreement": 0.69,
-        "annotationReviewedAt": "2026-09-02T11:45:32+09:00"
+        "annotationReviewedAt": "2026-10-03T17:58:58.259115+00:00"
       }
     },
     {
@@ -275537,57 +275538,53 @@
         "progression": {
           "state": "known",
           "value": 1,
-          "confidence": 0.77
+          "confidence": 0.78
         },
         "problemSolving": {
           "state": "known",
           "value": 2,
-          "confidence": 0.86
+          "confidence": 0.78
         },
         "strategy": {
-          "state": "known",
-          "value": 0,
-          "confidence": 0.84
+          "state": "unknown"
         },
         "pacing": {
           "state": "known",
-          "value": 3,
-          "confidence": 0.93
+          "value": 2,
+          "confidence": 0.78
         },
         "mysteryReveal": {
-          "state": "known",
-          "value": 0,
-          "confidence": 0.82
+          "state": "unknown"
         },
         "worldBuilding": {
           "state": "known",
-          "value": 1,
-          "confidence": 0.81
+          "value": 2,
+          "confidence": 0.78
         },
         "characterArcWeight": {
           "state": "known",
           "value": 4,
-          "confidence": 0.96
+          "confidence": 0.78
         },
         "relationshipStructure": {
           "state": "known",
-          "value": 0,
-          "confidence": 0.86
+          "value": 1,
+          "confidence": 0.78
         },
         "comedy": {
           "state": "known",
           "value": 3,
-          "confidence": 0.94
+          "confidence": 0.78
         },
         "darkness": {
           "state": "known",
-          "value": 4,
-          "confidence": 0.97
+          "value": 3,
+          "confidence": 0.78
         },
         "mentalStress": {
           "state": "known",
-          "value": 2,
-          "confidence": 0.9
+          "value": 4,
+          "confidence": 0.78
         },
         "romance": {
           "state": "unknown"
@@ -275612,15 +275609,15 @@
       },
       "factorScope": "entry_1_3_volumes",
       "eligibility": {
-        "onboardingEligible": false,
-        "recommendationEligible": false,
-        "libraryOnly": true
+        "onboardingEligible": true,
+        "recommendationEligible": true,
+        "libraryOnly": false
       },
       "evidence": {
         "metadataConfidence": 0.92,
         "groupingConfidence": 0.96,
         "sourceAgreement": 0.64,
-        "annotationReviewedAt": "2026-09-02T11:45:32+09:00"
+        "annotationReviewedAt": "2026-10-03T17:58:59.634375+00:00"
       }
     },
     {
@@ -296759,13 +296756,34 @@
       "firstPublishedYear": 1994,
       "genres": [
         "action",
+        "fantasy",
         "mystery",
         "romance",
         "scienceFiction"
       ],
       "themes": [
         {
+          "id": "adventure",
+          "centrality": 2,
+          "confidence": 0.82
+        },
+        {
           "id": "combat",
+          "centrality": 1,
+          "confidence": 0.82
+        },
+        {
+          "id": "exploration",
+          "centrality": 2,
+          "confidence": 0.82
+        },
+        {
+          "id": "politics",
+          "centrality": 2,
+          "confidence": 0.82
+        },
+        {
+          "id": "revenge",
           "centrality": 1,
           "confidence": 0.82
         },
@@ -296773,68 +296791,77 @@
           "id": "survival",
           "centrality": 2,
           "confidence": 0.96
+        },
+        {
+          "id": "war",
+          "centrality": 1,
+          "confidence": 0.82
         }
       ],
       "axes": {
         "progression": {
-          "state": "unknown"
+          "state": "known",
+          "value": 3,
+          "confidence": 0.78
         },
         "problemSolving": {
           "state": "known",
-          "value": 2,
+          "value": 3,
           "confidence": 0.78
         },
         "strategy": {
           "state": "known",
-          "value": 2,
-          "confidence": 0.8
+          "value": 3,
+          "confidence": 0.78
         },
         "pacing": {
           "state": "known",
-          "value": 4,
-          "confidence": 0.94
+          "value": 3,
+          "confidence": 0.78
         },
         "mysteryReveal": {
           "state": "known",
           "value": 4,
-          "confidence": 0.92
+          "confidence": 0.78
         },
         "worldBuilding": {
           "state": "known",
           "value": 4,
-          "confidence": 0.91
+          "confidence": 0.78
         },
         "characterArcWeight": {
           "state": "known",
-          "value": 2,
-          "confidence": 0.76
+          "value": 4,
+          "confidence": 0.78
         },
         "relationshipStructure": {
           "state": "known",
           "value": 4,
-          "confidence": 0.85
+          "confidence": 0.78
         },
         "comedy": {
-          "state": "unknown"
+          "state": "known",
+          "value": 1,
+          "confidence": 0.78
         },
         "darkness": {
           "state": "known",
           "value": 4,
-          "confidence": 0.96
+          "confidence": 0.78
         },
         "mentalStress": {
           "state": "known",
           "value": 4,
-          "confidence": 0.93
+          "confidence": 0.78
         },
         "romance": {
           "state": "known",
           "value": 3,
-          "confidence": 0.84
+          "confidence": 0.78
         },
         "emotionalWarmth": {
           "state": "known",
-          "value": 1,
+          "value": 2,
           "confidence": 0.78
         },
         "artRealism": {
@@ -296852,15 +296879,15 @@
       },
       "factorScope": "entry_1_3_volumes",
       "eligibility": {
-        "onboardingEligible": false,
-        "recommendationEligible": false,
-        "libraryOnly": true
+        "onboardingEligible": true,
+        "recommendationEligible": true,
+        "libraryOnly": false
       },
       "evidence": {
         "metadataConfidence": 0.92,
         "groupingConfidence": 0.96,
         "sourceAgreement": 0.64,
-        "annotationReviewedAt": "2026-09-02T11:45:32+09:00"
+        "annotationReviewedAt": "2026-10-03T17:59:00.105131+00:00"
       }
     },
     {
@@ -330085,73 +330112,81 @@
           "id": "investigation",
           "centrality": 2,
           "confidence": 0.99
+        },
+        {
+          "id": "revenge",
+          "centrality": 2,
+          "confidence": 0.82
+        },
+        {
+          "id": "workplace",
+          "centrality": 1,
+          "confidence": 0.82
         }
       ],
       "axes": {
         "progression": {
           "state": "known",
           "value": 3,
-          "confidence": 0.94
+          "confidence": 0.78
         },
         "problemSolving": {
           "state": "known",
           "value": 4,
-          "confidence": 0.98
+          "confidence": 0.78
         },
         "strategy": {
           "state": "known",
-          "value": 4,
-          "confidence": 0.98
+          "value": 3,
+          "confidence": 0.78
         },
         "pacing": {
           "state": "known",
-          "value": 4,
-          "confidence": 0.96
+          "value": 3,
+          "confidence": 0.78
         },
         "mysteryReveal": {
           "state": "known",
           "value": 4,
-          "confidence": 0.99
+          "confidence": 0.78
         },
         "worldBuilding": {
           "state": "known",
           "value": 2,
-          "confidence": 0.84
+          "confidence": 0.78
         },
         "characterArcWeight": {
           "state": "known",
-          "value": 3,
-          "confidence": 0.9
+          "value": 4,
+          "confidence": 0.78
         },
         "relationshipStructure": {
           "state": "known",
-          "value": 3,
-          "confidence": 0.89
+          "value": 4,
+          "confidence": 0.78
         },
         "comedy": {
-          "state": "known",
-          "value": 0,
-          "confidence": 0.95
+          "state": "unknown"
         },
         "darkness": {
           "state": "known",
-          "value": 4,
-          "confidence": 0.96
+          "value": 3,
+          "confidence": 0.78
         },
         "mentalStress": {
           "state": "known",
           "value": 4,
-          "confidence": 0.97
+          "confidence": 0.78
         },
         "romance": {
           "state": "known",
-          "value": 0,
-          "confidence": 0.88
+          "value": 1,
+          "confidence": 0.78
         },
         "emotionalWarmth": {
           "state": "known",
           "value": 1,
-          "confidence": 0.8
+          "confidence": 0.78
         },
         "artRealism": {
           "state": "unknown"
@@ -330168,15 +330203,15 @@
       },
       "factorScope": "entry_1_3_volumes",
       "eligibility": {
-        "onboardingEligible": false,
-        "recommendationEligible": false,
-        "libraryOnly": true
+        "onboardingEligible": true,
+        "recommendationEligible": true,
+        "libraryOnly": false
       },
       "evidence": {
         "metadataConfidence": 0.92,
         "groupingConfidence": 0.96,
         "sourceAgreement": 0.69,
-        "annotationReviewedAt": "2026-09-02T11:45:32+09:00"
+        "annotationReviewedAt": "2026-10-03T17:59:00.576183+00:00"
       }
     },
     {
@@ -331000,9 +331035,19 @@
           "confidence": 0.9
         },
         {
+          "id": "postApocalypse",
+          "centrality": 2,
+          "confidence": 0.82
+        },
+        {
           "id": "school",
           "centrality": 1,
           "confidence": 0.91
+        },
+        {
+          "id": "survival",
+          "centrality": 2,
+          "confidence": 0.82
         },
         {
           "id": "war",
@@ -331013,68 +331058,68 @@
       "axes": {
         "progression": {
           "state": "known",
-          "value": 0,
-          "confidence": 0.91
+          "value": 2,
+          "confidence": 0.78
         },
         "problemSolving": {
           "state": "known",
-          "value": 0,
-          "confidence": 0.91
+          "value": 2,
+          "confidence": 0.78
         },
         "strategy": {
           "state": "known",
-          "value": 0,
-          "confidence": 0.88
+          "value": 2,
+          "confidence": 0.78
         },
         "pacing": {
           "state": "known",
-          "value": 4,
-          "confidence": 0.98
+          "value": 3,
+          "confidence": 0.78
         },
         "mysteryReveal": {
           "state": "known",
-          "value": 2,
-          "confidence": 0.9
+          "value": 3,
+          "confidence": 0.78
         },
         "worldBuilding": {
           "state": "known",
           "value": 3,
-          "confidence": 0.96
+          "confidence": 0.78
         },
         "characterArcWeight": {
           "state": "known",
           "value": 4,
-          "confidence": 0.99
+          "confidence": 0.78
         },
         "relationshipStructure": {
           "state": "known",
           "value": 3,
-          "confidence": 0.94
+          "confidence": 0.78
         },
         "comedy": {
           "state": "known",
-          "value": 0,
-          "confidence": 0.98
+          "value": 1,
+          "confidence": 0.78
         },
         "darkness": {
           "state": "known",
           "value": 4,
-          "confidence": 0.99
+          "confidence": 0.78
         },
         "mentalStress": {
           "state": "known",
           "value": 4,
-          "confidence": 0.99
+          "confidence": 0.78
         },
         "romance": {
           "state": "known",
           "value": 4,
-          "confidence": 0.99
+          "confidence": 0.78
         },
         "emotionalWarmth": {
           "state": "known",
-          "value": 2,
-          "confidence": 0.92
+          "value": 1,
+          "confidence": 0.78
         },
         "artRealism": {
           "state": "unknown"
@@ -331091,15 +331136,15 @@
       },
       "factorScope": "entry_1_3_volumes",
       "eligibility": {
-        "onboardingEligible": false,
-        "recommendationEligible": false,
-        "libraryOnly": true
+        "onboardingEligible": true,
+        "recommendationEligible": true,
+        "libraryOnly": false
       },
       "evidence": {
         "metadataConfidence": 0.92,
         "groupingConfidence": 0.96,
         "sourceAgreement": 0.64,
-        "annotationReviewedAt": "2026-09-02T11:45:32+09:00"
+        "annotationReviewedAt": "2026-10-03T17:59:01.050589+00:00"
       }
     },
     {
@@ -371771,7 +371816,14 @@
       "workId": "work-2b892c968f70694c631f",
       "volumeNumber": 1,
       "isbn": "9784107723420",
-      "editionKind": "standard"
+      "editionKind": "standard",
+      "metadata": {
+        "publisherName": "新潮社",
+        "itemCaption": "少年院に収監される非行少年たちの中で、少なくない確率で知能障害の少年がいる……！ 『「子供を殺してください」という親たち』の鈴木マサカズ最新作!! 累計60万部突破の新書漫画化！ 少年院と知能障害の闇に迫る!!",
+        "imprint": "BUNCH COMICS",
+        "sourceUrl": "https://www.shinchosha.co.jp/book/772342/",
+        "fetchedAt": "2026-09-28T06:18:40.884Z"
+      }
     },
     {
       "id": "work-2b93e880f7d765296bd5-v1",
@@ -371940,7 +371992,13 @@
       "workId": "work-2d5fb92e9dbb0695d47f",
       "volumeNumber": 1,
       "isbn": "9784091885647",
-      "editionKind": "standard"
+      "editionKind": "standard",
+      "metadata": {
+        "publisherName": "小学館",
+        "itemCaption": "ヘンなお話、あります。道満晴明劇場開幕。 たった８ページの短編に、愛と勇気とちょっとの毒を。（あとは、BLとかロリとかヤンデレとかフリークスとかヒーローとか邪神とかとか…）。ショートの妙手・道満晴明がおくる、不思議な味わいの短編集。 深夜の動物園で女子高生は虎と出会う…「Heart Food」 命がけのしりとりはいかが…「ファニーゲーム」 乙女心と恋占い。赤い糸の先には…「フェイスハガー」 双子の姉妹、ずっと一緒、ぜんぜん正反対…「ヒールとスニーカー」 …etc. ささやかで、愛おしくて、バカバカしくって、すこし切ない…色とりどりの13編。あなたの大好きなお話が、きっとあるはず。",
+        "sourceUrl": "https://shogakukan-comic.jp/book?isbn=9784091885647",
+        "fetchedAt": "2026-09-28T06:19:37.200Z"
+      }
     },
     {
       "id": "work-2d62113ac80beb0669e6-v1",
@@ -373462,7 +373520,13 @@
       "workId": "work-3c89a0e00be749b12862",
       "volumeNumber": 1,
       "isbn": "9784063145984",
-      "editionKind": "standard"
+      "editionKind": "standard",
+      "metadata": {
+        "publisherName": "講談社",
+        "itemCaption": "“短編の名手”が本領発揮した喜怒哀楽全部入りエンターテイメント！ 前短編集 『おひっこし 竹易てあし漫画全集』から７年。月刊アフタヌーンを始め、各誌 で発表してきた短編が満を持して一冊に。『無限の住人』とはひと味もふた味も 違う沙村広明がここにある！ 収録作品：『久誓院家最大のショウ』『制服は脱げない（全８話）』『ブリギッ トの晩餐』『シズルキネマ』『下層戦略 鏡打ち』『青春じゃんじゃかじゃか じゃか』『エメラルド』 『久誓院家最大のショウ』旧家を舞台に繰り広げられる奇妙な父娘愛。『制服は脱げない』女子高生が世相を斬る風刺ショートコミック。『ブリギットの晩餐』妹の身代わりとしてなった少女の奮闘記。『シズルキネマ』駆け出しマンガ家・ケンの同棲物語。『下層戦略 鏡打ち』実録麻雀漫画。『青春じゃんじゃかじゃかじゃか』青臭さ満点の青春告白ストーリー。商業誌未発表だった幻の短編。『エメラルド』作者初の西部劇。",
+        "sourceUrl": "https://www.kodansha.co.jp/comic/products/0000029416",
+        "fetchedAt": "2026-09-28T06:18:14.721Z"
+      }
     },
     {
       "id": "work-3cc3c96550e2acaf7249-v11",
@@ -373570,7 +373634,15 @@
       "volumeNumber": 1,
       "isbn": "9784047137509",
       "releaseDate": "2005-08-26",
-      "editionKind": "standard"
+      "editionKind": "standard",
+      "metadata": {
+        "publisherName": "KADOKAWA",
+        "itemCaption": "シャアの大ボケ炸裂！ あのシーンが実はこうだったら……。本編でのシリアスな場面が、軽快なギャグの４コマ漫画でよみがえる。抱腹絶倒間違いナシ。",
+        "salesDate": "2005-08-24",
+        "pageCount": 180,
+        "sourceUrl": "https://www.kadokawa.co.jp/product/200503000701/",
+        "fetchedAt": "2026-09-28T06:24:12.471Z"
+      }
     },
     {
       "id": "work-3de7c6b6b60da1aaf20a-representative",
@@ -375367,7 +375439,14 @@
       "volumeNumber": 1,
       "isbn": "9784107727428",
       "releaseDate": "2024-09-06",
-      "editionKind": "standard"
+      "editionKind": "standard",
+      "metadata": {
+        "publisherName": "新潮社",
+        "itemCaption": "ヤクザ事務所の下っ端である春本一信。ある日、事務所が襲撃され、彼と組長の幼い娘・むつみだけが生き残ることに。警察に保護された二人が身を隠すために連れていかれたのは、七〇〇年以上の歴史を有する禅の名刹「禅生寺」であった。しかしそこで待ちうけていたのは、治外法権の修行生活で……。死か禅の道か――!? 若き雲水（僧侶）たちの青春修行グラフィティ。",
+        "imprint": "BUNCH COMICS",
+        "sourceUrl": "https://www.shinchosha.co.jp/book/772742/",
+        "fetchedAt": "2026-09-28T06:18:50.858Z"
+      }
     },
     {
       "id": "work-528a274ba6e2c0ad0546-representative",
@@ -376041,7 +376120,14 @@
       "workId": "work-5967695d5bae4569da34",
       "volumeNumber": 1,
       "isbn": "9784047379541",
-      "editionKind": "standard"
+      "editionKind": "standard",
+      "metadata": {
+        "publisherName": "KADOKAWA",
+        "itemCaption": "「お母さんの遺体には、心臓がなかった」\n母を亡くしたばかりの高校生・菊光は\n居候先の親戚に煙たがられている。\nなぜなら、菊光の父親は「悪魔」だから――。\n悪魔の強大な力と人間の優しき心を併せ持つ、\n二世の少女の物語。\n新鋭・志波由紀のデビュー作！",
+        "imprint": "ハルタコミックス",
+        "sourceUrl": "https://www.kadokawa.co.jp/product/322401000797/",
+        "fetchedAt": "2026-09-28T06:20:48.994Z"
+      }
     },
     {
       "id": "work-597214e38696430ad398-v1",
@@ -376055,7 +376141,13 @@
       "workId": "work-597886800b3f0e54a709",
       "volumeNumber": 1,
       "isbn": "9784537142426",
-      "editionKind": "standard"
+      "editionKind": "standard",
+      "metadata": {
+        "publisherName": "日本文芸社",
+        "itemCaption": "生き物を飼うことは、楽しいだけではない。 可愛いだけでもない。幸せな時間ばかりでもない。 それでも僕らは、何かを求めてきみをかう。 漫画・エッセイで大活躍のカレー沢薫が その作風を一新して挑む新境地。 連載時から反響続々、感涙必至の一作が遂に単行本化。 “きみにかわれるまえに”知って欲しい、 ペットと人間がつながる、１７個の小さく優しい物話。",
+        "sourceUrl": "https://www.nihonbungeisha.co.jp/book/b510269.html",
+        "fetchedAt": "2026-09-28T06:23:02.837Z"
+      }
     },
     {
       "id": "work-598b59b6153e22e56da2-representative",
@@ -376221,7 +376313,13 @@
       "workId": "work-5aecd629b08b7fb6832e",
       "volumeNumber": 1,
       "isbn": "9784063886283",
-      "editionKind": "standard"
+      "editionKind": "standard",
+      "metadata": {
+        "publisherName": "講談社",
+        "itemCaption": "《前作『あそびあい』が「このマンガがすごい! 2015［オトコ編］（宝島社）」にランクインした注目作家が、「女の浮気心」を生々しく描き出した最新作!!》 平ワコ31歳、彼氏と同棲中。そんな中「運命の出会い」が…!? 結婚はしてくれそうなマンネリ彼氏か、トキメキが止まらない超タイプ（でも高校生…）か。今さら一人になる勇気もない“適齢期オンナ”は、どの恋を選べば幸せをつかめるのか!?",
+        "sourceUrl": "https://www.kodansha.co.jp/comic/products/0000018826",
+        "fetchedAt": "2026-09-28T06:20:51.203Z"
+      }
     },
     {
       "id": "work-5b0d4a8aa459ea35977f-v1",
@@ -376273,7 +376371,13 @@
       "workId": "work-5b50056ba198c8b2c3c4",
       "volumeNumber": 1,
       "isbn": "9784065128206",
-      "editionKind": "standard"
+      "editionKind": "standard",
+      "metadata": {
+        "publisherName": "講談社",
+        "itemCaption": "大学進学のため田舎を出て一人暮らしを始めた鳥居さち子は、同じ下宿に住む一学年上の先輩・倉本慎と出会う。何もかも唐突過ぎる慎の言動に、不思議と居心地の良さを感じるさち子。そして二人は付き合うことにーー。だが、その夜。身体の関係を結ぼうとしたさち子と慎に、ある問題が発生するのだった。 発売即１３万部を突破し、各メディアやＳＮＳで大反響を呼んだ衝撃の私小説『夫のちんぽが入らない』（こだま・著）。繋がれない痛みの中で懸命に生きる女性の半生を、『Ｒ－中学生』『水色の部屋』のゴトウユキコが鮮烈コミカライズ！学校、社会、そして男女の関係。様々な場所において彼女を苦しめたのは、「普通」という名の「呪い」だったーー。生きづらさを抱えたすべての人達に捧ぐ、絶望と希望の人生譚が幕を開ける！！",
+        "sourceUrl": "https://www.kodansha.co.jp/comic/products/0000313321",
+        "fetchedAt": "2026-09-28T06:23:04.740Z"
+      }
     },
     {
       "id": "work-5b5c868309ef1f0d442d-v1",
@@ -376983,7 +377087,13 @@
       "workId": "work-627896ee75fff7c4e684",
       "volumeNumber": 1,
       "isbn": "9784103512110",
-      "editionKind": "standard"
+      "editionKind": "standard",
+      "metadata": {
+        "publisherName": "新潮社",
+        "itemCaption": "一風変わった大家さんとの“二人暮らし”の日々は、ほっこり度100％！\n1階には大家のおばあさん、2階にはトホホな芸人の僕。挨拶は「ごきげんよう」、好きなタイプはマッカーサー元帥（渋い！）、牛丼もハンバーガーも食べたことがなく、僕を俳優と勘違いしている……。一緒に旅行するほど仲良くなった大家さんとの“二人暮らし”がずっと続けばいい、そう思っていた――。泣き笑い、傑作漫画。",
+        "sourceUrl": "https://www.shinchosha.co.jp/book/351211/",
+        "fetchedAt": "2026-09-28T06:20:55.153Z"
+      }
     },
     {
       "id": "work-6286f08d20bec6bba3a6-v1",
@@ -377827,7 +377937,14 @@
       "volumeNumber": 1,
       "isbn": "9784063142723",
       "releaseDate": "2001-07-23",
-      "editionKind": "standard"
+      "editionKind": "standard",
+      "metadata": {
+        "publisherName": "講談社",
+        "itemCaption": "「ナス」をテーマに自由自在。話題の連作短編登場！",
+        "imprint": "アフタヌーンＫＣ",
+        "sourceUrl": "https://www.kodansha.co.jp/comic/products/0000030185",
+        "fetchedAt": "2026-09-28T06:21:11.791Z"
+      }
     },
     {
       "id": "work-6c02e0e9406afdc54dd6-v1",
@@ -378106,7 +378223,14 @@
       "workId": "work-6f9739debf5e0210ecbc",
       "volumeNumber": 1,
       "isbn": "9784098605422",
-      "editionKind": "standard"
+      "editionKind": "standard",
+      "metadata": {
+        "publisherName": "小学館",
+        "itemCaption": "王島家一家はペットに縁がない家庭だった。\nしかし、長男・王島（♂）がつい拾ってきてしまったのは、\n小4男子程度の知能を持つ天才犬（♀）。\nその犬を可愛がりたい次男・まさお（♂）。\nあくまで預かっているだけと受け入れない母（♀）。\n恐妻家で母に同調するだけの父（♂）。\n果たして犬（♀）は王島家の一員になれるのか…！？\n団地界を騒然とさせた問題作『団地ともお』完結から\n新たな舞台は”団地”から”横須賀”へ！\n新たな主人公は”小学生”から”犬”に！\n笑えてほのぼのしてちょっと泣ける小田扉の新連載！！",
+        "imprint": "ビッグ　コミックス",
+        "sourceUrl": "https://www.shogakukan.co.jp/books/09860542",
+        "fetchedAt": "2026-09-28T06:24:55.024Z"
+      }
     },
     {
       "id": "work-6fa129f5cdaef9804601-representative",
@@ -379150,7 +379274,14 @@
       "volumeNumber": 1,
       "isbn": "9784088708928",
       "releaseDate": "2014-04-09",
-      "editionKind": "standard"
+      "editionKind": "standard",
+      "metadata": {
+        "publisherName": "集英社",
+        "itemCaption": "銀河の平和を守るパトロール隊員が地球の小島に不時着した！　彼の名はジャコ、超エリートらしい…。工学博士の大盛というお爺さんと知り合って、宇宙船の修理をしてもらうのだが、大騒動を次々と巻き起こし!?",
+        "imprint": "ジャンプコミックス",
+        "sourceUrl": "https://www.s-manga.net/items/contents.html?isbn=978-4-08-870892-8",
+        "fetchedAt": "2026-09-28T08:14:27.046Z"
+      }
     },
     {
       "id": "work-7b585d506d99db4d83cb-representative",
@@ -382449,7 +382580,13 @@
       "workId": "work-9e98119539f60465ce66",
       "volumeNumber": 1,
       "isbn": "9784785936310",
-      "editionKind": "standard"
+      "editionKind": "standard",
+      "metadata": {
+        "publisherName": "少年画報社",
+        "itemCaption": "親の転勤により、一人暮らしをすることになった宇佐くん。だが彼の新しい住居は奇人変態ばかり。だが、憧れの律先輩もそこにいて…!?　ラブ３：コメ７の思春期コメディー！",
+        "sourceUrl": "https://www.shonengahosha.co.jp/book_Info.php?id=6776",
+        "fetchedAt": "2026-09-28T06:16:48.729Z"
+      }
     },
     {
       "id": "work-9e98f2a1b10b95ac4fb7-v7",
@@ -386150,7 +386287,14 @@
       "workId": "work-c4775102091893cd28a3",
       "volumeNumber": 1,
       "isbn": "9784065177617",
-      "editionKind": "standard"
+      "editionKind": "standard",
+      "metadata": {
+        "publisherName": "講談社",
+        "itemCaption": "俺はもう、地獄におるのかもしれん。\n読むと厭（いや）になる。\nカラスヤサトシ、新たなる代表作。\nWebコミックサイト「コミクリ！」にて連載開始以来、各所で高評を得る怪奇短編連作、待望の単行本化。描き下ろし番外編を含む全十六編を収録。エッセイコミックの名手がみせる、もうひとつの「怖い顔」をご覧ください──。",
+        "imprint": "ＫＣデラックス",
+        "sourceUrl": "https://www.kodansha.co.jp/comic/products/0000326898",
+        "fetchedAt": "2026-09-28T09:11:26.060Z"
+      }
     },
     {
       "id": "work-c47d7f2983b314384786-v6",
@@ -386344,7 +386488,14 @@
       "workId": "work-c5ac127add189c51d507",
       "volumeNumber": 1,
       "isbn": "9784845860265",
-      "editionKind": "standard"
+      "editionKind": "standard",
+      "metadata": {
+        "publisherName": "リイド社",
+        "itemCaption": "不世出の才能・奥田亜紀子、六年ぶり待望の単行本！\n中学生の切実な日常を真正面から描き切った大傑作『ぷらせぼくらぶ』から六年。\n奥田亜紀子の原点と現在地を収録した作品集がついに刊行。\nページが光っているような眩いトーンワークが照らし出す心の深いところ。\n吹き溜まりだと感じていた場所にあったのは、思いのほかに美しいものなのかもしれない。\nどこまでも繊細な才能が、鋭く研ぎ澄まされた感性で描く私たちのドラマ。",
+        "imprint": "torch comics",
+        "sourceUrl": "https://www.leed.co.jp/9784845860265",
+        "fetchedAt": "2026-09-28T09:12:36.412Z"
+      }
     },
     {
       "id": "work-c5b0ba5f92f6b9ebf2ad-v1",
@@ -386373,7 +386524,14 @@
       "workId": "work-c5e2e4f117dbf2b96a20",
       "volumeNumber": 1,
       "isbn": "9784048694186",
-      "editionKind": "standard"
+      "editionKind": "standard",
+      "metadata": {
+        "publisherName": "KADOKAWA",
+        "itemCaption": "私の父は、ピョン吉に殺され、ピョン吉に救われた。\n『ど根性ガエル』の著者・吉沢やすみ。原稿と家族を捨て失踪した父と、彼を支え続けた家族の姿を、吉沢やすみの実の娘・大月悠祐子が鮮烈に描きだす――。これは、日本中すべての家族に捧げる、感動の一家再生物語。",
+        "imprint": "コミックエッセイ",
+        "sourceUrl": "https://www.kadokawa.co.jp/product/312327200000/",
+        "fetchedAt": "2026-09-28T09:12:38.013Z"
+      }
     },
     {
       "id": "work-c5e8c957903bf1832dc5-representative",
@@ -387079,7 +387237,14 @@
       "workId": "work-cf48c1286554fe8c5731",
       "volumeNumber": 1,
       "isbn": "9784107714862",
-      "editionKind": "standard"
+      "editionKind": "standard",
+      "metadata": {
+        "publisherName": "新潮社",
+        "itemCaption": "太宰治の希代の問題作「人間失格」を、現代社会を舞台に変え、完全コミック化！　「恥の多い生涯を送ってきました」――ネット上に見つけた大庭葉蔵の独白が赤裸々に綴られたページ。掲示されていた3枚の写真は、葉蔵の転落の人生の軌跡を描いていた。読み進めるほどに堕ち、崩壊していく葉蔵の人生。彼は何を恐れ、逃げていたのか。鬼才×鬼才、100年に一度の出会いが生み出した究極にして最強のコラボレート作！　ここに登場!!",
+        "imprint": "BUNCH COMICS",
+        "sourceUrl": "https://www.shinchosha.co.jp/book/771486/",
+        "fetchedAt": "2026-09-28T09:23:07.347Z"
+      }
     },
     {
       "id": "work-cf493107b6e880dd2d63-v1",

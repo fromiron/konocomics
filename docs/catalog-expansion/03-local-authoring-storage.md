@@ -100,6 +100,7 @@
 - R6.1 기본 DB restore의 canonical·정적 파일 생성/변경은 0건이다. 요청된 canonical 효과는 같은 현재 version의 DB와 생성 JSON을 읽어 확인하며 서로 다른 candidate/canonical 빌드 결과를 혼용하지 않는다.
 - R6.2 canonical 교체 중단은 보존된 동일 intent를 기존 명령으로 재개한다. 공유 락과 commit 직전 기준 비교를 유지하고, 재시도에서 중복 반영이 없으며 DB·생성 자료·백업의 readback 후에만 완료 처리한다.
 - R6.3 대상 외·Gold·서지·기존 근거를 보존한다. canonical 효과와 candidate completion의 상태를 분리해 실패·미완료를 숨기지 않는다.
+- R6.4 부분 발행된 같은 동결 batch의 context audit 경로가 충돌하면 기존 `09`의 기존 canonical projection 경계에서만 review reference를 파생할 수 있다. 입력은 검증된 원 candidate/readback이며 기존 review bytes가 candidate의 정확한 prefix이고 나머지가 전부 `Recommendation context supersession` 기록이어야 한다. 각 기록의 대상 Work·원 review SHA·accepted evidence의 `contextSupersessionV1` 결속이 정확히 일치해야 한다. 기존 review와 원 candidate·판정·receipt·STATE 최초 완료를 바꾸지 않고, 대상의 `annotationReviewReference`만 candidate review SHA를 붙인 별도 경로로 투영한다. 팩터·근거값·범위·대상 외 Work는 기존 merge 계약대로 보존한다. canonical `prepared.json.contextReviewAliases`에 원/파생 reference·기존/candidate SHA·대상을 기록한다. 임의 append·prefix 변경·다른 Work·근거 불일치는 실패이며 기존 보호를 완화하지 않는다. 실패 후 같은 summary 재전달은 기존 candidate 완료를 재사용하여 동일 canonical intent를 준비·검증·반영하며 승격 count를 다시 더하지 않는다.
 
 ### R7 현재 판정은 상태별이 아니라 Work별로 선택한다
 

@@ -99,6 +99,8 @@ function decodeHtmlEntities(value: string) {
     })
     .replace(/&nbsp;/giu, " ")
     .replace(/&hellip;/gu, "…")
+    .replace(/&ldquo;/gu, "“")
+    .replace(/&rdquo;/gu, "”")
     .replace(/&quot;/giu, '"')
     .replace(/&apos;|&#39;/giu, "'")
     .replace(/&lt;/giu, "<")

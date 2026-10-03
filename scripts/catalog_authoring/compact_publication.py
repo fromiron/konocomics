@@ -167,6 +167,9 @@ def prepare_work(entry, connection, registry_before, canonical_sha, reviewed_at,
     registry = backend._bind_frozen_registry(input_root, {work_id}, registry, registry_slice)
     gold = backend._load_gold_ids(publisher._repo_root() / "data/staging/catalog-expansion/gold-set-manifest.json")
     review_reference = "reviews/authorized-evidence-panel-v1-batch-" + str(verified["panelInput"]["batchId"]) + ".md"
+    if review_reference in backend._review_references(before):
+        # A later subset of one frozen batch must keep its prior audit immutable.
+        review_reference = review_reference.removesuffix(".md") + "-" + verified["inputManifestSha256"] + ".md"
     plan, _, _ = backend.plan_against_current(connection, verified, registry, reviewed_at, review_reference, gold,
                                              baseline_snapshot=before)
     return {"backend": backend, "verified": verified, "plan": plan, "gold": gold,

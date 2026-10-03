@@ -260,8 +260,8 @@ it("binds an escaped publisher book introduction without admitting other JSON fi
     const volume = catalog.volumes.find((item) => !item.metadata)!;
     const folder = join(root, "collection");
     mkdirSync(folder);
-    const introduction = "<p>紹介文「全体」 &amp; &#9829;</p><p>次の段落&hellip;&hellip;。</p>";
-    const original = "紹介文「全体」 & ♥\n次の段落……。";
+    const introduction = "<p>紹介文&ldquo;全体&rdquo; &amp; &#9829;</p><p>次の段落&hellip;&hellip;。</p>";
+    const original = "紹介文“全体” & ♥\n次の段落……。";
     const hidden = "紹介に使わない管理情報";
     const book = {
       isbn13_cd: volume.isbn,

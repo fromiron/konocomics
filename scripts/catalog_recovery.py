@@ -8,7 +8,7 @@ from __future__ import annotations
 from contextlib import closing, nullcontext
 import json
 import os
-from pathlib import Path
+from pathlib import Path, PureWindowsPath
 import tempfile
 from time import perf_counter
 
@@ -172,8 +172,8 @@ class _Selection(retention._RecoveryFiles):
         config = self.json(config_name, selected.get(config_name))
         if not selected:
             select_runner_files(self, {"operation": "runner", "action": "check",
-                                       "runRoot": str(run), "workId": row["workId"]})
-            return
+                                       "runRoot": str(run), "workId": row["workId"],
+                                       "purpose": "checked-publication"})
         frozen_name = config.get("frozenDirectory", "frozen")
         if not isinstance(frozen_name, str) or frozen_name in {"", ".", ".."} or "/" in frozen_name or "\\" in frozen_name:
             raise ValueError("Completed frozen directory escapes its run")
@@ -630,18 +630,22 @@ def select_runner_files(files, request):
         frozen = run / frozen_name
         report_path = frozen / "INPUT-PREPARATION-REPORT.json"
         complete = available(report_path)
-        job(run / "job.json", inputs=not complete)
+        if not (complete and request.get("purpose") == "checked-publication"):
+            job(run / "job.json", inputs=not complete)
         for binding in config.get("priorBundleBindings", []):
             scope(binding["root"], binding["manifestSha256"], prior=True)
         if complete:
             report = files.json(report_path, live=True)
             input_root = frozen / "panel-input"
             files.root(input_root, report["inputManifestSha256"], follow=False)
+            if request.get("purpose") == "checked-publication":
+                members = files.manifest(input_root, "PANEL-INPUT.sha256", report["inputManifestSha256"])
+                job(input_root / "authoring-job.json", members["authoring-job.json"], inputs=False)
             for filename in ("prior-authority.json", "external-prior-authority.json"):
                 if available(input_root / filename):
                     for binding in files.json(input_root / filename).get("bundles", []):
                         path = Path(binding["root"])
-                        scope(path if path.is_absolute() else input_root / path,
+                        scope(path if path.is_absolute() or PureWindowsPath(binding["root"]).is_absolute() else input_root / path,
                               binding["manifestSha256"], prior=True)
             if action != "prepare":
                 lineage = files.json(input_root / "external-lineage.json")
