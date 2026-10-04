@@ -1,6 +1,6 @@
 {
   "schemaVersion": 1,
-  "catalogVersion": "v1-37bb1e7661c0",
+  "catalogVersion": "v1-e75018c72be1",
   "factorDictionaryVersion": "v1",
   "works": [
     {
@@ -347113,8 +347113,17 @@
       "demographic": "seinen",
       "status": "unknown",
       "firstPublishedYear": 2013,
-      "genres": [],
-      "themes": [],
+      "genres": [
+        "comedy",
+        "sliceOfLife"
+      ],
+      "themes": [
+        {
+          "id": "cooking",
+          "centrality": 1,
+          "confidence": 0.8
+        }
+      ],
       "axes": {
         "progression": {
           "state": "unknown"
@@ -347126,7 +347135,9 @@
           "state": "unknown"
         },
         "pacing": {
-          "state": "unknown"
+          "state": "known",
+          "value": 0,
+          "confidence": 0.78
         },
         "mysteryReveal": {
           "state": "unknown"
@@ -347138,13 +347149,19 @@
           "state": "unknown"
         },
         "relationshipStructure": {
-          "state": "unknown"
+          "state": "known",
+          "value": 2,
+          "confidence": 0.78
         },
         "comedy": {
-          "state": "unknown"
+          "state": "known",
+          "value": 4,
+          "confidence": 0.78
         },
         "darkness": {
-          "state": "unknown"
+          "state": "known",
+          "value": 0,
+          "confidence": 0.78
         },
         "mentalStress": {
           "state": "unknown"
@@ -347153,7 +347170,9 @@
           "state": "unknown"
         },
         "emotionalWarmth": {
-          "state": "unknown"
+          "state": "known",
+          "value": 4,
+          "confidence": 0.78
         },
         "artRealism": {
           "state": "unknown"
@@ -347170,14 +347189,25 @@
       },
       "factorScope": "entry_1_3_volumes",
       "eligibility": {
-        "onboardingEligible": false,
-        "recommendationEligible": false,
-        "libraryOnly": true
+        "onboardingEligible": true,
+        "recommendationEligible": true,
+        "libraryOnly": false,
+        "narrativeToneException": {
+          "policy": "narrative-tone-exhaustion-v1",
+          "workId": "work-eb4651eac9718ca332ee",
+          "inputManifestSha256": "ef77d844f6ca584edbf9fa16bc0c9106c83f302e95c32933d56e9414fb7e2435",
+          "researchSha256": "e817cebe434d25fcff8f92486f7731024349627a2a2969e1d714150bb7827858",
+          "groups": [
+            "narrative",
+            "tone"
+          ]
+        }
       },
       "evidence": {
         "metadataConfidence": 0.92,
         "groupingConfidence": 0.96,
-        "sourceAgreement": 0.64
+        "sourceAgreement": 0.64,
+        "annotationReviewedAt": "2026-10-04T11:25:49.489223+00:00"
       }
     },
     {
@@ -347434,8 +347464,32 @@
       "demographic": "seinen",
       "status": "unknown",
       "firstPublishedYear": 2016,
-      "genres": [],
-      "themes": [],
+      "genres": [
+        "historical",
+        "mystery"
+      ],
+      "themes": [
+        {
+          "id": "historicalReconstruction",
+          "centrality": 2,
+          "confidence": 0.8
+        },
+        {
+          "id": "investigation",
+          "centrality": 2,
+          "confidence": 0.8
+        },
+        {
+          "id": "politics",
+          "centrality": 2,
+          "confidence": 0.8
+        },
+        {
+          "id": "war",
+          "centrality": 2,
+          "confidence": 0.8
+        }
+      ],
       "axes": {
         "progression": {
           "state": "unknown"
@@ -347444,28 +347498,40 @@
           "state": "unknown"
         },
         "strategy": {
-          "state": "unknown"
+          "state": "known",
+          "value": 4,
+          "confidence": 0.8
         },
         "pacing": {
           "state": "unknown"
         },
         "mysteryReveal": {
-          "state": "unknown"
+          "state": "known",
+          "value": 4,
+          "confidence": 0.78
         },
         "worldBuilding": {
-          "state": "unknown"
+          "state": "known",
+          "value": 2,
+          "confidence": 0.78
         },
         "characterArcWeight": {
-          "state": "unknown"
+          "state": "known",
+          "value": 3,
+          "confidence": 0.78
         },
         "relationshipStructure": {
-          "state": "unknown"
+          "state": "known",
+          "value": 4,
+          "confidence": 0.78
         },
         "comedy": {
           "state": "unknown"
         },
         "darkness": {
-          "state": "unknown"
+          "state": "known",
+          "value": 2,
+          "confidence": 0.78
         },
         "mentalStress": {
           "state": "unknown"
@@ -347491,14 +347557,25 @@
       },
       "factorScope": "entry_1_3_volumes",
       "eligibility": {
-        "onboardingEligible": false,
-        "recommendationEligible": false,
-        "libraryOnly": true
+        "onboardingEligible": true,
+        "recommendationEligible": true,
+        "libraryOnly": false,
+        "narrativeToneException": {
+          "policy": "narrative-tone-exhaustion-v1",
+          "workId": "work-eb85c9d2bfb0bcf0edb3",
+          "inputManifestSha256": "6a4466f0f8970e44d11f8d6d8930b878be51f23f23afe8343091d0de946d4b14",
+          "researchSha256": "68c7099340030816fda2ef6e47706373330cf19e046c74483c3d9360cc34bb5a",
+          "groups": [
+            "narrative",
+            "tone"
+          ]
+        }
       },
       "evidence": {
         "metadataConfidence": 0.92,
         "groupingConfidence": 0.96,
-        "sourceAgreement": 0.64
+        "sourceAgreement": 0.64,
+        "annotationReviewedAt": "2026-10-04T11:25:51.399252+00:00"
       }
     },
     {
@@ -350104,8 +350181,17 @@
       "demographic": "unknown",
       "status": "unknown",
       "firstPublishedYear": 2017,
-      "genres": [],
-      "themes": [],
+      "genres": [
+        "comedy",
+        "sliceOfLife"
+      ],
+      "themes": [
+        {
+          "id": "school",
+          "centrality": 2,
+          "confidence": 0.8
+        }
+      ],
       "axes": {
         "progression": {
           "state": "unknown"
@@ -350126,25 +350212,35 @@
           "state": "unknown"
         },
         "characterArcWeight": {
-          "state": "unknown"
+          "state": "known",
+          "value": 4,
+          "confidence": 0.78
         },
         "relationshipStructure": {
-          "state": "unknown"
+          "state": "known",
+          "value": 2,
+          "confidence": 0.78
         },
         "comedy": {
-          "state": "unknown"
+          "state": "known",
+          "value": 3,
+          "confidence": 0.78
         },
         "darkness": {
           "state": "unknown"
         },
         "mentalStress": {
-          "state": "unknown"
+          "state": "known",
+          "value": 2,
+          "confidence": 0.78
         },
         "romance": {
           "state": "unknown"
         },
         "emotionalWarmth": {
-          "state": "unknown"
+          "state": "known",
+          "value": 3,
+          "confidence": 0.78
         },
         "artRealism": {
           "state": "unknown"
@@ -350161,14 +350257,25 @@
       },
       "factorScope": "entry_1_3_volumes",
       "eligibility": {
-        "onboardingEligible": false,
-        "recommendationEligible": false,
-        "libraryOnly": true
+        "onboardingEligible": true,
+        "recommendationEligible": true,
+        "libraryOnly": false,
+        "narrativeToneException": {
+          "policy": "narrative-tone-exhaustion-v1",
+          "workId": "work-edb3fc1ca559d5212478",
+          "inputManifestSha256": "3eba8c0fc40750e1bf0f66965807d6824ac65171cbf6caa94279fbfd026bf146",
+          "researchSha256": "b2fccd6313782552aa3a0a7101e3cc14b63f09d6679a63dcbf9932085b1984f7",
+          "groups": [
+            "narrative",
+            "tone"
+          ]
+        }
       },
       "evidence": {
         "metadataConfidence": 0.92,
         "groupingConfidence": 0.96,
-        "sourceAgreement": 0.64
+        "sourceAgreement": 0.64,
+        "annotationReviewedAt": "2026-10-04T11:25:51.952090+00:00"
       }
     },
     {
@@ -350609,8 +350716,17 @@
       "demographic": "unknown",
       "status": "unknown",
       "firstPublishedYear": 2015,
-      "genres": [],
-      "themes": [],
+      "genres": [
+        "comedy",
+        "sliceOfLife"
+      ],
+      "themes": [
+        {
+          "id": "school",
+          "centrality": 2,
+          "confidence": 0.8
+        }
+      ],
       "axes": {
         "progression": {
           "state": "unknown"
@@ -350631,25 +350747,37 @@
           "state": "unknown"
         },
         "characterArcWeight": {
-          "state": "unknown"
+          "state": "known",
+          "value": 4,
+          "confidence": 0.78
         },
         "relationshipStructure": {
-          "state": "unknown"
+          "state": "known",
+          "value": 2,
+          "confidence": 0.78
         },
         "comedy": {
-          "state": "unknown"
+          "state": "known",
+          "value": 3,
+          "confidence": 0.78
         },
         "darkness": {
           "state": "unknown"
         },
         "mentalStress": {
-          "state": "unknown"
+          "state": "known",
+          "value": 2,
+          "confidence": 0.78
         },
         "romance": {
-          "state": "unknown"
+          "state": "known",
+          "value": 2,
+          "confidence": 0.78
         },
         "emotionalWarmth": {
-          "state": "unknown"
+          "state": "known",
+          "value": 2,
+          "confidence": 0.78
         },
         "artRealism": {
           "state": "unknown"
@@ -350666,14 +350794,25 @@
       },
       "factorScope": "entry_1_3_volumes",
       "eligibility": {
-        "onboardingEligible": false,
-        "recommendationEligible": false,
-        "libraryOnly": true
+        "onboardingEligible": true,
+        "recommendationEligible": true,
+        "libraryOnly": false,
+        "narrativeToneException": {
+          "policy": "narrative-tone-exhaustion-v1",
+          "workId": "work-edfc08345f8917c890eb",
+          "inputManifestSha256": "6a2537232c5c78431b38af42fca1e999e15f06a3b54a66eb4d0af451c3d049dd",
+          "researchSha256": "494c7cb7622133c2a4f49faeee86b11df870e694cf0066a5a0fbaa3deeb39755",
+          "groups": [
+            "narrative",
+            "tone"
+          ]
+        }
       },
       "evidence": {
         "metadataConfidence": 0.92,
         "groupingConfidence": 0.96,
-        "sourceAgreement": 0.64
+        "sourceAgreement": 0.64,
+        "annotationReviewedAt": "2026-10-04T11:25:52.424137+00:00"
       }
     },
     {
@@ -350817,8 +350956,18 @@
       "demographic": "unknown",
       "status": "unknown",
       "firstPublishedYear": 2022,
-      "genres": [],
-      "themes": [],
+      "genres": [
+        "comedy",
+        "fantasy",
+        "romance"
+      ],
+      "themes": [
+        {
+          "id": "adventure",
+          "centrality": 2,
+          "confidence": 0.8
+        }
+      ],
       "axes": {
         "progression": {
           "state": "unknown"
@@ -350839,13 +350988,19 @@
           "state": "unknown"
         },
         "characterArcWeight": {
-          "state": "unknown"
+          "state": "known",
+          "value": 4,
+          "confidence": 0.78
         },
         "relationshipStructure": {
-          "state": "unknown"
+          "state": "known",
+          "value": 2,
+          "confidence": 0.78
         },
         "comedy": {
-          "state": "unknown"
+          "state": "known",
+          "value": 3,
+          "confidence": 0.78
         },
         "darkness": {
           "state": "unknown"
@@ -350854,10 +351009,14 @@
           "state": "unknown"
         },
         "romance": {
-          "state": "unknown"
+          "state": "known",
+          "value": 4,
+          "confidence": 0.78
         },
         "emotionalWarmth": {
-          "state": "unknown"
+          "state": "known",
+          "value": 4,
+          "confidence": 0.78
         },
         "artRealism": {
           "state": "unknown"
@@ -350874,14 +351033,25 @@
       },
       "factorScope": "entry_1_3_volumes",
       "eligibility": {
-        "onboardingEligible": false,
-        "recommendationEligible": false,
-        "libraryOnly": true
+        "onboardingEligible": true,
+        "recommendationEligible": true,
+        "libraryOnly": false,
+        "narrativeToneException": {
+          "policy": "narrative-tone-exhaustion-v1",
+          "workId": "work-ee0f73ceee476e027d9c",
+          "inputManifestSha256": "a0c01ffa7a471a62e226c03a39027a19e6a8f7f606df908093f345893395fec5",
+          "researchSha256": "c351b7de0230bca7fecc9ebb77a902ff7b36a0ba15c8cc1be5bc92657bc79326",
+          "groups": [
+            "narrative",
+            "tone"
+          ]
+        }
       },
       "evidence": {
         "metadataConfidence": 0.87,
         "groupingConfidence": 0.74,
-        "sourceAgreement": 0.61
+        "sourceAgreement": 0.61,
+        "annotationReviewedAt": "2026-10-04T11:25:52.847749+00:00"
       }
     },
     {
@@ -352204,14 +352374,27 @@
       "demographic": "unknown",
       "status": "unknown",
       "firstPublishedYear": 2021,
-      "genres": [],
-      "themes": [],
+      "genres": [
+        "comedy",
+        "sliceOfLife"
+      ],
+      "themes": [
+        {
+          "id": "workplace",
+          "centrality": 2,
+          "confidence": 0.8
+        }
+      ],
       "axes": {
         "progression": {
-          "state": "unknown"
+          "state": "known",
+          "value": 2,
+          "confidence": 0.78
         },
         "problemSolving": {
-          "state": "unknown"
+          "state": "known",
+          "value": 2,
+          "confidence": 0.78
         },
         "strategy": {
           "state": "unknown"
@@ -352223,28 +352406,40 @@
           "state": "unknown"
         },
         "worldBuilding": {
-          "state": "unknown"
+          "state": "known",
+          "value": 2,
+          "confidence": 0.78
         },
         "characterArcWeight": {
-          "state": "unknown"
+          "state": "known",
+          "value": 4,
+          "confidence": 0.78
         },
         "relationshipStructure": {
-          "state": "unknown"
+          "state": "known",
+          "value": 2,
+          "confidence": 0.78
         },
         "comedy": {
-          "state": "unknown"
+          "state": "known",
+          "value": 3,
+          "confidence": 0.78
         },
         "darkness": {
           "state": "unknown"
         },
         "mentalStress": {
-          "state": "unknown"
+          "state": "known",
+          "value": 2,
+          "confidence": 0.78
         },
         "romance": {
           "state": "unknown"
         },
         "emotionalWarmth": {
-          "state": "unknown"
+          "state": "known",
+          "value": 4,
+          "confidence": 0.78
         },
         "artRealism": {
           "state": "unknown"
@@ -352261,14 +352456,25 @@
       },
       "factorScope": "entry_1_3_volumes",
       "eligibility": {
-        "onboardingEligible": false,
-        "recommendationEligible": false,
-        "libraryOnly": true
+        "onboardingEligible": true,
+        "recommendationEligible": true,
+        "libraryOnly": false,
+        "narrativeToneException": {
+          "policy": "narrative-tone-exhaustion-v1",
+          "workId": "work-eef79255bf8915914764",
+          "inputManifestSha256": "5222845b71c218ec9e5082d94b11be1c9f8341ab298396e62670804a4eb650f9",
+          "researchSha256": "c552f0a17a218d024a3e41ee2a23948eb001e46aa9beac1e19a99cc6b69c9b80",
+          "groups": [
+            "narrative",
+            "tone"
+          ]
+        }
       },
       "evidence": {
         "metadataConfidence": 0.87,
         "groupingConfidence": 0.74,
-        "sourceAgreement": 0.7
+        "sourceAgreement": 0.7,
+        "annotationReviewedAt": "2026-10-04T11:25:53.316716+00:00"
       }
     },
     {
@@ -355829,8 +356035,16 @@
       "demographic": "unknown",
       "status": "unknown",
       "firstPublishedYear": 2008,
-      "genres": [],
-      "themes": [],
+      "genres": [
+        "sliceOfLife"
+      ],
+      "themes": [
+        {
+          "id": "workplace",
+          "centrality": 2,
+          "confidence": 0.8
+        }
+      ],
       "axes": {
         "progression": {
           "state": "unknown"
@@ -355842,7 +356056,9 @@
           "state": "unknown"
         },
         "pacing": {
-          "state": "unknown"
+          "state": "known",
+          "value": 0,
+          "confidence": 0.78
         },
         "mysteryReveal": {
           "state": "unknown"
@@ -355851,13 +356067,19 @@
           "state": "unknown"
         },
         "characterArcWeight": {
-          "state": "unknown"
+          "state": "known",
+          "value": 3,
+          "confidence": 0.78
         },
         "relationshipStructure": {
-          "state": "unknown"
+          "state": "known",
+          "value": 2,
+          "confidence": 0.78
         },
         "comedy": {
-          "state": "unknown"
+          "state": "known",
+          "value": 2,
+          "confidence": 0.78
         },
         "darkness": {
           "state": "unknown"
@@ -355866,10 +356088,14 @@
           "state": "unknown"
         },
         "romance": {
-          "state": "unknown"
+          "state": "known",
+          "value": 2,
+          "confidence": 0.78
         },
         "emotionalWarmth": {
-          "state": "unknown"
+          "state": "known",
+          "value": 4,
+          "confidence": 0.78
         },
         "artRealism": {
           "state": "unknown"
@@ -355886,14 +356112,25 @@
       },
       "factorScope": "entry_1_3_volumes",
       "eligibility": {
-        "onboardingEligible": false,
-        "recommendationEligible": false,
-        "libraryOnly": true
+        "onboardingEligible": true,
+        "recommendationEligible": true,
+        "libraryOnly": false,
+        "narrativeToneException": {
+          "policy": "narrative-tone-exhaustion-v1",
+          "workId": "work-f269671eefb58f176d22",
+          "inputManifestSha256": "d85b2f28a14886a7d2fc560c398376c73416aa9e478fcd0853de752a1a02a0b8",
+          "researchSha256": "bfccd1f5ec1b646b9acd3b1e53c73b0ad890e75c2d1ed278f9d9a889b95ca4a8",
+          "groups": [
+            "narrative",
+            "tone"
+          ]
+        }
       },
       "evidence": {
         "metadataConfidence": 0.92,
         "groupingConfidence": 0.96,
-        "sourceAgreement": 0.64
+        "sourceAgreement": 0.64,
+        "annotationReviewedAt": "2026-10-04T11:25:53.803883+00:00"
       }
     },
     {
@@ -359101,8 +359338,16 @@
       "demographic": "unknown",
       "status": "unknown",
       "firstPublishedYear": 2017,
-      "genres": [],
-      "themes": [],
+      "genres": [
+        "sliceOfLife"
+      ],
+      "themes": [
+        {
+          "id": "workplace",
+          "centrality": 2,
+          "confidence": 0.8
+        }
+      ],
       "axes": {
         "progression": {
           "state": "unknown"
@@ -359123,25 +359368,35 @@
           "state": "unknown"
         },
         "characterArcWeight": {
-          "state": "unknown"
+          "state": "known",
+          "value": 4,
+          "confidence": 0.78
         },
         "relationshipStructure": {
-          "state": "unknown"
+          "state": "known",
+          "value": 3,
+          "confidence": 0.78
         },
         "comedy": {
           "state": "unknown"
         },
         "darkness": {
-          "state": "unknown"
+          "state": "known",
+          "value": 2,
+          "confidence": 0.78
         },
         "mentalStress": {
-          "state": "unknown"
+          "state": "known",
+          "value": 2,
+          "confidence": 0.78
         },
         "romance": {
           "state": "unknown"
         },
         "emotionalWarmth": {
-          "state": "unknown"
+          "state": "known",
+          "value": 4,
+          "confidence": 0.78
         },
         "artRealism": {
           "state": "unknown"
@@ -359158,14 +359413,25 @@
       },
       "factorScope": "entry_1_3_volumes",
       "eligibility": {
-        "onboardingEligible": false,
-        "recommendationEligible": false,
-        "libraryOnly": true
+        "onboardingEligible": true,
+        "recommendationEligible": true,
+        "libraryOnly": false,
+        "narrativeToneException": {
+          "policy": "narrative-tone-exhaustion-v1",
+          "workId": "work-f54759dfa2492222b42d",
+          "inputManifestSha256": "eee6f8c74e98ba227623f16f34ba0e3750f2ebd6bfb54f9961627d9d3447bbc3",
+          "researchSha256": "3c8aedd7ceb9d27af4bf7e389d1d190520f50b97a83a082d4b4d6a4a8c651777",
+          "groups": [
+            "narrative",
+            "tone"
+          ]
+        }
       },
       "evidence": {
         "metadataConfidence": 0.92,
         "groupingConfidence": 0.96,
-        "sourceAgreement": 0.64
+        "sourceAgreement": 0.64,
+        "annotationReviewedAt": "2026-10-04T11:25:54.268232+00:00"
       }
     },
     {
