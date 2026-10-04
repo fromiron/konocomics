@@ -14,6 +14,82 @@ import publish_factor_batch as publisher
 
 
 class CompactTransactionTest(unittest.TestCase):
+
+    def _protected_wrapper_fixture(self, kind="axis", state="known"):
+        import copy
+        panel = publisher.panel_validation
+        wid, name = "work-" + "a" * 20, "progression" if kind == "axis" else "school"
+        claim = {field: "" for field in panel.LEDGER_FIELDS}
+        claim.update(workId=wid, factKey=f"{kind}:{name}", state="known", value="2", confidence="0.8",
+            evidenceIds="ev-original", citationUrls="https://example.org/original", entryScope="entry_1_volume",
+            observation="Exact original observation", limitation="One volume", decision="accepted", reasonCode="SUPPORTED",
+            authorityKind="authorizedEvidencePanelV1", authorityArtifactDigest="b" * 64,
+            citationSetDigest=panel.citation_digest(["https://example.org/original"]), reviewedByHuman="false", candidateOnly="true")
+        backend = publisher._backend_module()
+        evidence_id = backend._claim_evidence_id(claim)
+        source = backend._evidence_row(evidence_id, {"sourceType": "model", "sourceUrl": claim["citationUrls"],
+            "fetchedAt": "2026-10-04T00:00:00Z"}, panel_row=claim)
+        raw = {"id": "ev-original", "workId": wid, "sourceUrl": claim["citationUrls"]}
+        authority = {"claims": {(wid, claim["factKey"]): {panel.claim_semantic_digest(claim): claim}}, "evidence": {"ev-original": raw}}
+        if state == "unknown":
+            authority["claims"] = {}
+        factors = [{"workId": wid, "axisId": axis, "state": "unknown", "value": "", "confidence": "", "evidenceId": "ev-raw"} for axis in publisher.AXES]
+        themes = []
+        if kind == "axis":
+            row = next(row for row in factors if row["axisId"] == name)
+            row.update(state=state, value="2" if state == "known" else "", confidence="0.8" if state == "known" else "", evidenceId=evidence_id)
+        else:
+            themes = [{"workId": wid, "themeId": name, "centrality": "2", "confidence": "0.8", "evidenceId": evidence_id}]
+        snapshot = {"sha256": "c" * 64, "tables": {"source_works": [{"id": wid, "annotationReviewMethod": "unreviewed",
+            "onboardingEligible": "false", "recommendationEligible": "false", "libraryOnly": "true", "genres": ""}],
+            "source_factors": factors, "source_themes": themes, "source_evidence": [source, {"id": "ev-raw", "sourceType": "model", "reviewedByHuman": "false"}]}}
+        def invoke(result=None):
+            prior = {field: claim.get(field, "") for field in panel.PRIOR_FIELDS}
+            prior["factType"] = kind
+            self.assertEqual(panel.claim_semantic_digest(prior), panel.claim_semantic_digest(claim))
+            with tempfile.TemporaryDirectory() as directory, ExitStack() as stack:
+                root = Path(directory); inp, output = root / "input", root / "output"
+                (inp / "chunks/chunk-01").mkdir(parents=True); (output / "chunk-01").mkdir(parents=True)
+                for file in (inp / "chunks/chunk-01/prior-panel-claims.csv", output / "chunk-01/promotion-ledger.csv", output / "chunk-01/evidence-panel-ledger.csv"):
+                    file.touch()
+                stack.enter_context(patch.object(publisher, "_read_json", return_value={"workIds": []}))
+                stack.enter_context(patch.object(publisher, "_target_semantic_snapshot", side_effect=lambda *args: copy.deepcopy(snapshot)))
+                stack.enter_context(patch.object(panel, "load_prior_decisions", return_value={}))
+                stack.enter_context(patch.object(publisher, "read_csv", side_effect=lambda path, fields:
+                    [{"workId": wid, "panelOutcome": "PASS"}] if path.name == "promotion-ledger.csv" else
+                    ([prior] if state == "known" else []) if path.name == "prior-panel-claims.csv" else [result or claim]))
+                return publisher._validate_fresh_unreviewed_snapshots(inp, output, root / "frozen.sqlite", root / "current.sqlite", authority)
+        return claim, source, snapshot, invoke
+
+    def test_exact_original_known_wrapper_is_preserved(self):
+        claim, _, _, invoke = self._protected_wrapper_fixture()
+        result = invoke()[claim["workId"]]
+        self.assertEqual(result["preservedAxes"], ["progression"])
+
+    def test_protected_wrapper_rejects_altered_original_or_source(self):
+        for field in ("observation", "sourceUrl", "reviewedByHuman"):
+            with self.subTest(field=field):
+                claim, source, _, invoke = self._protected_wrapper_fixture()
+                if field == "observation":
+                    claim[field] = "Changed original observation"
+                else:
+                    source[field] = "https://example.org/other" if field == "sourceUrl" else "true"
+                with self.assertRaises(publisher.ValidationError):
+                    invoke()
+
+    def test_exact_original_known_theme_wrapper_is_preserved(self):
+        claim, _, _, invoke = self._protected_wrapper_fixture("theme")
+        self.assertEqual(invoke()[claim["workId"]]["preservedThemes"], ["school"])
+
+    def test_protected_unknown_may_be_preserved_but_not_made_known(self):
+        claim, source, _, invoke = self._protected_wrapper_fixture(state="unknown")
+        with self.assertRaisesRegex(publisher.ValidationError, "cannot override protected unknown"):
+            invoke()
+        unknown = {**claim, "state": "unknown", "value": "", "confidence": "", "decision": "explicitUnknown"}
+        result = invoke(unknown)[claim["workId"]]
+        self.assertEqual(result["beforeFactors"]["progression"]["evidenceId"], source["id"])
+        self.assertEqual(result["preservedAxes"], [])
+
     def test_later_frozen_batch_subset_plans_a_new_review_reference(self):
         import factor_single_pass as single
         import canonical_rebase

@@ -794,11 +794,20 @@ it("adds a captured introduction without losing metadata, and rejects damaged or
   }
 }, 480_000);
 
-it("binds mdash entities to the Unicode publisher caption without changing captured bytes", () => {
-  const folder = mkdtempSync(join(tmpdir(), "publisher-mdash-caption-"));
+it.each([
+  {
+    entity: "mdash",
+    caption: "少年たちの冒険——本をめくる物語。",
+    body: "<p>少年たちの冒険&mdash;&mdash;本をめくる物語。</p>",
+  },
+  {
+    entity: "times",
+    caption: "女子小学生×お遍路の旅！",
+    body: "<p>女子小学生&times;お遍路の旅！</p>",
+  },
+])("binds $entity captions and preserves captured bytes", ({ caption, body }) => {
+  const folder = mkdtempSync(join(tmpdir(), "publisher-entity-caption-"));
   try {
-    const caption = "少年たちの冒険——本をめくる物語。";
-    const body = "<p>少年たちの冒険&mdash;&mdash;本をめくる物語。</p>";
     const receipt = JSON.stringify({
       url: "https://example.com/book",
       resolvedUrl: "https://example.com/book",

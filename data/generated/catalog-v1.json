@@ -1,6 +1,6 @@
 {
   "schemaVersion": 1,
-  "catalogVersion": "v1-ec0ccd178a03",
+  "catalogVersion": "v1-d4b4819efb67",
   "factorDictionaryVersion": "v1",
   "works": [
     {
@@ -38171,24 +38171,16 @@
       ],
       "axes": {
         "progression": {
-          "state": "known",
-          "value": 1,
-          "confidence": 0.78
+          "state": "unknown"
         },
         "problemSolving": {
-          "state": "known",
-          "value": 0,
-          "confidence": 0.78
+          "state": "unknown"
         },
         "strategy": {
-          "state": "known",
-          "value": 0,
-          "confidence": 0.9
+          "state": "unknown"
         },
         "pacing": {
-          "state": "known",
-          "value": 1,
-          "confidence": 0.84
+          "state": "unknown"
         },
         "mysteryReveal": {
           "state": "unknown"
@@ -38198,18 +38190,18 @@
         },
         "characterArcWeight": {
           "state": "known",
-          "value": 3,
-          "confidence": 0.88
+          "value": 4,
+          "confidence": 0.82
         },
         "relationshipStructure": {
           "state": "known",
           "value": 2,
-          "confidence": 0.86
+          "confidence": 0.82
         },
         "comedy": {
           "state": "known",
           "value": 4,
-          "confidence": 0.97
+          "confidence": 0.82
         },
         "darkness": {
           "state": "unknown"
@@ -38219,8 +38211,8 @@
         },
         "romance": {
           "state": "known",
-          "value": 3,
-          "confidence": 0.92
+          "value": 4,
+          "confidence": 0.82
         },
         "emotionalWarmth": {
           "state": "known",
@@ -38242,15 +38234,24 @@
       },
       "factorScope": "entry_1_3_volumes",
       "eligibility": {
-        "onboardingEligible": false,
-        "recommendationEligible": false,
-        "libraryOnly": true
+        "onboardingEligible": true,
+        "recommendationEligible": true,
+        "libraryOnly": false,
+        "narrativeToneException": {
+          "policy": "narrative-tone-exhaustion-v1",
+          "workId": "work-0f25d774661e1421a7d1",
+          "inputManifestSha256": "0e695a607705a6c758af6e4a2dbd09508899e4108be80992a682ba5959fb09ee",
+          "researchSha256": "32667ba952d10443601134bdc70bc8c9e7be3a8fa12cecafa7d57ccc64fee136",
+          "groups": [
+            "narrative"
+          ]
+        }
       },
       "evidence": {
         "metadataConfidence": 0.92,
         "groupingConfidence": 0.96,
         "sourceAgreement": 0.64,
-        "annotationReviewedAt": "2026-09-03T03:00:00+09:00"
+        "annotationReviewedAt": "2026-10-04T05:42:54.437924+00:00"
       }
     },
     {
@@ -40050,26 +40051,22 @@
         "problemSolving": {
           "state": "known",
           "value": 2,
-          "confidence": 0.86
+          "confidence": 0.82
         },
         "strategy": {
           "state": "known",
-          "value": 1,
-          "confidence": 0.78
+          "value": 2,
+          "confidence": 0.82
         },
         "pacing": {
-          "state": "known",
-          "value": 2,
-          "confidence": 0.78
+          "state": "unknown"
         },
         "mysteryReveal": {
-          "state": "known",
-          "value": 0,
-          "confidence": 0.82
+          "state": "unknown"
         },
         "worldBuilding": {
           "state": "known",
-          "value": 1,
+          "value": 2,
           "confidence": 0.82
         },
         "characterArcWeight": {
@@ -40078,22 +40075,18 @@
         "relationshipStructure": {
           "state": "known",
           "value": 2,
-          "confidence": 0.88
+          "confidence": 0.82
         },
         "comedy": {
           "state": "known",
           "value": 4,
-          "confidence": 0.98
+          "confidence": 0.82
         },
         "darkness": {
-          "state": "known",
-          "value": 0,
-          "confidence": 0.86
+          "state": "unknown"
         },
         "mentalStress": {
-          "state": "known",
-          "value": 0,
-          "confidence": 0.83
+          "state": "unknown"
         },
         "romance": {
           "state": "known",
@@ -40118,15 +40111,25 @@
       },
       "factorScope": "entry_1_3_volumes",
       "eligibility": {
-        "onboardingEligible": false,
-        "recommendationEligible": false,
-        "libraryOnly": true
+        "onboardingEligible": true,
+        "recommendationEligible": true,
+        "libraryOnly": false,
+        "narrativeToneException": {
+          "policy": "narrative-tone-exhaustion-v1",
+          "workId": "work-1092cf84d9e723ec04eb",
+          "inputManifestSha256": "b07b62485e7054ba776f5246f8ce8f33a8b4b3a8154d3a75aa9179efea0fc63f",
+          "researchSha256": "ab2e19b7210f5d59cb13279d107722e37d44113469bd2c595aca4885e534a6ef",
+          "groups": [
+            "narrative",
+            "tone"
+          ]
+        }
       },
       "evidence": {
         "metadataConfidence": 0.92,
         "groupingConfidence": 0.96,
         "sourceAgreement": 0.64,
-        "annotationReviewedAt": "2026-09-03T03:00:00+09:00"
+        "annotationReviewedAt": "2026-10-04T05:42:55.084697+00:00"
       }
     },
     {
@@ -55606,15 +55609,15 @@
       },
       "factorScope": "entry_1_3_volumes",
       "eligibility": {
-        "onboardingEligible": false,
-        "recommendationEligible": false,
-        "libraryOnly": true
+        "onboardingEligible": true,
+        "recommendationEligible": true,
+        "libraryOnly": false
       },
       "evidence": {
         "metadataConfidence": 0.87,
         "groupingConfidence": 0.74,
         "sourceAgreement": 0.7,
-        "annotationReviewedAt": "2026-09-03T03:00:00+09:00"
+        "annotationReviewedAt": "2026-10-04T05:34:22.800985+00:00"
       }
     },
     {
@@ -76616,7 +76619,9 @@
           "confidence": 0.79
         },
         "romance": {
-          "state": "unknown"
+          "state": "known",
+          "value": 4,
+          "confidence": 0.82
         },
         "emotionalWarmth": {
           "state": "known",
@@ -76638,15 +76643,24 @@
       },
       "factorScope": "entry_1_3_volumes",
       "eligibility": {
-        "onboardingEligible": false,
-        "recommendationEligible": false,
-        "libraryOnly": true
+        "onboardingEligible": true,
+        "recommendationEligible": true,
+        "libraryOnly": false,
+        "narrativeToneException": {
+          "policy": "narrative-tone-exhaustion-v1",
+          "workId": "work-28e8792a35f7129ad419",
+          "inputManifestSha256": "374194a9e48ed78d6e182a1ea2ee82276552483df9e9ada4f0eab183333dfe21",
+          "researchSha256": "37c9361ced8d678c12e18a88c408d594bac7203cc7fe49ba1341d045f50bc427",
+          "groups": [
+            "narrative"
+          ]
+        }
       },
       "evidence": {
         "metadataConfidence": 0.87,
         "groupingConfidence": 0.84,
         "sourceAgreement": 0.66,
-        "annotationReviewedAt": "2026-09-13T06:35:02.830801+00:00"
+        "annotationReviewedAt": "2026-10-04T05:42:52.489255+00:00"
       }
     },
     {
@@ -78251,9 +78265,7 @@
       ],
       "axes": {
         "progression": {
-          "state": "known",
-          "value": 0,
-          "confidence": 0.84
+          "state": "unknown"
         },
         "problemSolving": {
           "state": "known",
@@ -78265,49 +78277,47 @@
         },
         "pacing": {
           "state": "known",
-          "value": 1,
-          "confidence": 0.88
+          "value": 0,
+          "confidence": 0.82
         },
         "mysteryReveal": {
           "state": "unknown"
         },
         "worldBuilding": {
-          "state": "known",
-          "value": 0,
-          "confidence": 0.9
+          "state": "unknown"
         },
         "characterArcWeight": {
           "state": "known",
           "value": 4,
-          "confidence": 0.96
+          "confidence": 0.82
         },
         "relationshipStructure": {
           "state": "known",
-          "value": 4,
-          "confidence": 0.96
+          "value": 2,
+          "confidence": 0.82
         },
         "comedy": {
           "state": "unknown"
         },
         "darkness": {
           "state": "known",
-          "value": 1,
-          "confidence": 0.8
+          "value": 2,
+          "confidence": 0.82
         },
         "mentalStress": {
           "state": "known",
-          "value": 1,
-          "confidence": 0.76
+          "value": 2,
+          "confidence": 0.82
         },
         "romance": {
           "state": "known",
           "value": 2,
-          "confidence": 0.91
+          "confidence": 0.82
         },
         "emotionalWarmth": {
           "state": "known",
           "value": 4,
-          "confidence": 0.98
+          "confidence": 0.82
         },
         "artRealism": {
           "state": "unknown"
@@ -78324,15 +78334,25 @@
       },
       "factorScope": "entry_1_3_volumes",
       "eligibility": {
-        "onboardingEligible": false,
-        "recommendationEligible": false,
-        "libraryOnly": true
+        "onboardingEligible": true,
+        "recommendationEligible": true,
+        "libraryOnly": false,
+        "narrativeToneException": {
+          "policy": "narrative-tone-exhaustion-v1",
+          "workId": "work-29e57ae6a3b62e6bb45b",
+          "inputManifestSha256": "562f47e97191d69f9b6553bfe641930e007ea04a9f14071033d5ac5d9372266d",
+          "researchSha256": "7a9811d1533e26e0ab4f31d90ce46c093ee54e90f7ef7af43365d489e7109316",
+          "groups": [
+            "narrative",
+            "tone"
+          ]
+        }
       },
       "evidence": {
         "metadataConfidence": 0.92,
         "groupingConfidence": 0.96,
         "sourceAgreement": 0.64,
-        "annotationReviewedAt": "2026-09-03T02:00:00+09:00"
+        "annotationReviewedAt": "2026-10-04T05:42:55.880599+00:00"
       }
     },
     {
@@ -88922,15 +88942,15 @@
       },
       "factorScope": "entry_1_3_volumes",
       "eligibility": {
-        "onboardingEligible": false,
-        "recommendationEligible": false,
-        "libraryOnly": true
+        "onboardingEligible": true,
+        "recommendationEligible": true,
+        "libraryOnly": false
       },
       "evidence": {
         "metadataConfidence": 0.87,
         "groupingConfidence": 0.74,
         "sourceAgreement": 0.61,
-        "annotationReviewedAt": "2026-09-03T02:00:00+09:00"
+        "annotationReviewedAt": "2026-10-04T05:34:24.264377+00:00"
       }
     },
     {
@@ -90381,15 +90401,15 @@
       },
       "factorScope": "entry_1_3_volumes",
       "eligibility": {
-        "onboardingEligible": false,
-        "recommendationEligible": false,
-        "libraryOnly": true
+        "onboardingEligible": true,
+        "recommendationEligible": true,
+        "libraryOnly": false
       },
       "evidence": {
         "metadataConfidence": 0.92,
         "groupingConfidence": 0.92,
         "sourceAgreement": 0.64,
-        "annotationReviewedAt": "2026-09-02T12:00:00+09:00"
+        "annotationReviewedAt": "2026-10-04T06:35:11.631759+00:00"
       }
     },
     {
@@ -94361,15 +94381,15 @@
       },
       "factorScope": "entry_1_3_volumes",
       "eligibility": {
-        "onboardingEligible": false,
-        "recommendationEligible": false,
-        "libraryOnly": true
+        "onboardingEligible": true,
+        "recommendationEligible": true,
+        "libraryOnly": false
       },
       "evidence": {
         "metadataConfidence": 0.92,
         "groupingConfidence": 0.96,
         "sourceAgreement": 0.64,
-        "annotationReviewedAt": "2026-09-02T21:00:00+09:00"
+        "annotationReviewedAt": "2026-10-04T05:34:24.725405+00:00"
       }
     },
     {
@@ -104066,6 +104086,7 @@
       "status": "unknown",
       "firstPublishedYear": 2016,
       "genres": [
+        "comedy",
         "fantasy",
         "horror",
         "mystery",
@@ -104094,33 +104115,33 @@
         },
         "problemSolving": {
           "state": "known",
-          "value": 3,
-          "confidence": 0.94
+          "value": 2,
+          "confidence": 0.82
         },
         "strategy": {
           "state": "known",
           "value": 2,
-          "confidence": 0.92
+          "confidence": 0.82
         },
         "pacing": {
           "state": "known",
           "value": 4,
-          "confidence": 0.96
+          "confidence": 0.82
         },
         "mysteryReveal": {
           "state": "known",
-          "value": 3,
-          "confidence": 0.9
+          "value": 2,
+          "confidence": 0.82
         },
         "worldBuilding": {
           "state": "known",
-          "value": 3,
-          "confidence": 0.93
+          "value": 2,
+          "confidence": 0.82
         },
         "characterArcWeight": {
           "state": "known",
           "value": 4,
-          "confidence": 0.94
+          "confidence": 0.82
         },
         "relationshipStructure": {
           "state": "known",
@@ -104128,25 +104149,29 @@
           "confidence": 0.9
         },
         "comedy": {
-          "state": "unknown"
+          "state": "known",
+          "value": 2,
+          "confidence": 0.82
         },
         "darkness": {
           "state": "known",
-          "value": 4,
-          "confidence": 0.96
+          "value": 2,
+          "confidence": 0.82
         },
         "mentalStress": {
           "state": "known",
           "value": 4,
-          "confidence": 0.95
+          "confidence": 0.82
         },
         "romance": {
           "state": "known",
           "value": 2,
-          "confidence": 0.88
+          "confidence": 0.82
         },
         "emotionalWarmth": {
-          "state": "unknown"
+          "state": "known",
+          "value": 2,
+          "confidence": 0.82
         },
         "artRealism": {
           "state": "unknown"
@@ -104163,15 +104188,15 @@
       },
       "factorScope": "entry_1_3_volumes",
       "eligibility": {
-        "onboardingEligible": false,
-        "recommendationEligible": false,
-        "libraryOnly": true
+        "onboardingEligible": true,
+        "recommendationEligible": true,
+        "libraryOnly": false
       },
       "evidence": {
         "metadataConfidence": 0.92,
         "groupingConfidence": 0.96,
         "sourceAgreement": 0.64,
-        "annotationReviewedAt": "2026-09-02T12:00:00+09:00"
+        "annotationReviewedAt": "2026-10-04T05:42:56.699727+00:00"
       }
     },
     {
@@ -112939,15 +112964,15 @@
       },
       "factorScope": "entry_1_3_volumes",
       "eligibility": {
-        "onboardingEligible": false,
-        "recommendationEligible": false,
-        "libraryOnly": true
+        "onboardingEligible": true,
+        "recommendationEligible": true,
+        "libraryOnly": false
       },
       "evidence": {
         "metadataConfidence": 0.92,
         "groupingConfidence": 0.96,
         "sourceAgreement": 0.64,
-        "annotationReviewedAt": "2026-09-03T02:00:00+09:00"
+        "annotationReviewedAt": "2026-10-04T05:34:25.276989+00:00"
       }
     },
     {
@@ -142595,15 +142620,15 @@
       },
       "factorScope": "entry_1_3_volumes",
       "eligibility": {
-        "onboardingEligible": false,
-        "recommendationEligible": false,
-        "libraryOnly": true
+        "onboardingEligible": true,
+        "recommendationEligible": true,
+        "libraryOnly": false
       },
       "evidence": {
         "metadataConfidence": 0.92,
         "groupingConfidence": 0.96,
         "sourceAgreement": 0.64,
-        "annotationReviewedAt": "2026-09-03T02:00:00+09:00"
+        "annotationReviewedAt": "2026-10-04T05:34:23.899988+00:00"
       }
     },
     {
@@ -161191,6 +161216,11 @@
           "id": "investigation",
           "centrality": 2,
           "confidence": 0.91
+        },
+        {
+          "id": "workplace",
+          "centrality": 1,
+          "confidence": 0.82
         }
       ],
       "axes": {
@@ -161270,15 +161300,15 @@
       },
       "factorScope": "entry_1_3_volumes",
       "eligibility": {
-        "onboardingEligible": false,
-        "recommendationEligible": false,
-        "libraryOnly": true
+        "onboardingEligible": true,
+        "recommendationEligible": true,
+        "libraryOnly": false
       },
       "evidence": {
         "metadataConfidence": 0.92,
         "groupingConfidence": 0.96,
         "sourceAgreement": 0.64,
-        "annotationReviewedAt": "2026-09-02T12:00:00+09:00"
+        "annotationReviewedAt": "2026-10-04T06:35:05.042468+00:00"
       }
     },
     {
@@ -172082,15 +172112,15 @@
       },
       "factorScope": "entry_1_3_volumes",
       "eligibility": {
-        "onboardingEligible": false,
-        "recommendationEligible": false,
-        "libraryOnly": true
+        "onboardingEligible": true,
+        "recommendationEligible": true,
+        "libraryOnly": false
       },
       "evidence": {
         "metadataConfidence": 0.92,
         "groupingConfidence": 0.96,
         "sourceAgreement": 0.69,
-        "annotationReviewedAt": "2026-09-02T12:00:00+09:00"
+        "annotationReviewedAt": "2026-10-04T06:34:57.069457+00:00"
       }
     },
     {
@@ -244855,7 +244885,8 @@
       "firstPublishedYear": 2022,
       "genres": [
         "fantasy",
-        "mystery"
+        "mystery",
+        "scienceFiction"
       ],
       "themes": [
         {
@@ -244920,9 +244951,7 @@
           "confidence": 0.84
         },
         "romance": {
-          "state": "known",
-          "value": 0,
-          "confidence": 0.91
+          "state": "unknown"
         },
         "emotionalWarmth": {
           "state": "known",
@@ -244944,15 +244973,15 @@
       },
       "factorScope": "entry_1_3_volumes",
       "eligibility": {
-        "onboardingEligible": false,
-        "recommendationEligible": false,
-        "libraryOnly": true
+        "onboardingEligible": true,
+        "recommendationEligible": true,
+        "libraryOnly": false
       },
       "evidence": {
         "metadataConfidence": 0.87,
         "groupingConfidence": 0.84,
         "sourceAgreement": 0.61,
-        "annotationReviewedAt": "2026-09-02T21:00:00+09:00"
+        "annotationReviewedAt": "2026-10-04T06:29:19.554275+00:00"
       }
     },
     {
@@ -354427,64 +354456,50 @@
       "axes": {
         "progression": {
           "state": "known",
-          "value": 2,
-          "confidence": 0.84
+          "value": 4,
+          "confidence": 0.86
         },
         "problemSolving": {
           "state": "known",
-          "value": 3,
-          "confidence": 0.86
+          "value": 2,
+          "confidence": 0.8
         },
         "strategy": {
-          "state": "known",
-          "value": 2,
-          "confidence": 0.84
+          "state": "unknown"
         },
         "pacing": {
-          "state": "known",
-          "value": 4,
-          "confidence": 0.9
+          "state": "unknown"
         },
         "mysteryReveal": {
           "state": "unknown"
         },
         "worldBuilding": {
-          "state": "known",
-          "value": 2,
-          "confidence": 0.84
+          "state": "unknown"
         },
         "characterArcWeight": {
-          "state": "known",
-          "value": 0,
-          "confidence": 0.78
+          "state": "unknown"
         },
         "relationshipStructure": {
           "state": "known",
           "value": 0,
-          "confidence": 0.88
+          "confidence": 0.83
         },
         "comedy": {
-          "state": "unknown"
+          "state": "known",
+          "value": 2,
+          "confidence": 0.8
         },
         "darkness": {
-          "state": "known",
-          "value": 3,
-          "confidence": 0.89
+          "state": "unknown"
         },
         "mentalStress": {
-          "state": "known",
-          "value": 1,
-          "confidence": 0.87
+          "state": "unknown"
         },
         "romance": {
-          "state": "known",
-          "value": 0,
-          "confidence": 0.92
+          "state": "unknown"
         },
         "emotionalWarmth": {
-          "state": "known",
-          "value": 0,
-          "confidence": 0.88
+          "state": "unknown"
         },
         "artRealism": {
           "state": "unknown"
@@ -354501,15 +354516,25 @@
       },
       "factorScope": "entry_1_3_volumes",
       "eligibility": {
-        "onboardingEligible": false,
-        "recommendationEligible": false,
-        "libraryOnly": true
+        "onboardingEligible": true,
+        "recommendationEligible": true,
+        "libraryOnly": false,
+        "narrativeToneException": {
+          "policy": "narrative-tone-exhaustion-v1",
+          "workId": "work-f29de1f71300579ebcf5",
+          "inputManifestSha256": "9d08a08d24974333983b5ed7993c20d40062eb7c83d1937f6993695d82b11237",
+          "researchSha256": "5e101d5eed714705c57e1c59b769a99eebdd8d45653bad4242563d2b67545f7a",
+          "groups": [
+            "narrative",
+            "tone"
+          ]
+        }
       },
       "evidence": {
         "metadataConfidence": 0.92,
         "groupingConfidence": 0.96,
         "sourceAgreement": 0.64,
-        "annotationReviewedAt": "2026-09-03T03:00:00+09:00"
+        "annotationReviewedAt": "2026-10-04T06:29:21.174017+00:00"
       }
     },
     {
@@ -377596,7 +377621,16 @@
       "volumeNumber": 1,
       "isbn": "9784063884029",
       "releaseDate": "2015-04-23",
-      "editionKind": "standard"
+      "editionKind": "standard",
+      "metadata": {
+        "publisherName": "講談社",
+        "itemCaption": "その村では、人は必ず５０歳で死を迎える。 村人を縛るしきたり、 「あの世」と呼ばれる山の向こう。 双子の姉を生け贄に 捧げられた少女・杏。 獣の皮をかぶった役人達が取り仕切る 「この世」と呼ばれる村で 神に見守られて暮らす人々。 そして、不思議な山の民。 杏が見つめる先には 希望も絶望もある。 この物語で描くのは 山下和美が抱く、 日本という国への 不安。 『天才 柳沢教授の生活』『不思議な少年』で人間を見つめ続けてきた山下和美が挑む新境地。この閉ざされた村が舞台の物語で描き出そうとするのは、人間社会の恐ろしさと生きることへの希望。NHK『浦沢直樹の漫勉』での”産みの苦しみ”の姿も話題を呼んだ本作は、著者自らも「はじめての挑戦」という意欲作です。",
+        "salesDate": "2015-04-23",
+        "imprint": "モーニング　ＫＣ",
+        "pageCount": 368,
+        "sourceUrl": "https://www.kodansha.co.jp/comic/products/0000018604",
+        "fetchedAt": "2026-10-04T06:00:08.049Z"
+      }
     },
     {
       "id": "work-2ed2c94fe3de948be954-representative",
@@ -382387,7 +382421,16 @@
       "workId": "work-5cceafdb5782def04a6e",
       "volumeNumber": 1,
       "isbn": "9784107724304",
-      "editionKind": "standard"
+      "editionKind": "standard",
+      "metadata": {
+        "publisherName": "新潮社",
+        "itemCaption": "幼なじみがいないなら、作ればいいじゃない！ 転校生の柚木楓と、家も学校の席も隣同士になった相田航平。仲良くなろうと話しかけるのだが会話が続かず……。そんなある日、彼女に話があると呼び出され、告げられた言葉は――。幼なじみになっていく系（？）ラブコメディ、開幕。",
+        "salesDate": "2021-10-08",
+        "imprint": "BUNCH COMICS",
+        "pageCount": 144,
+        "sourceUrl": "https://www.shinchosha.co.jp/book/772430/",
+        "fetchedAt": "2026-10-04T06:00:08.860Z"
+      }
     },
     {
       "id": "work-5cdc282dbac2bd7928aa-v1",
@@ -383119,7 +383162,16 @@
       "workId": "work-6370ef6f456d96d83d71",
       "volumeNumber": 1,
       "isbn": "9784063829686",
-      "editionKind": "standard"
+      "editionKind": "standard",
+      "metadata": {
+        "publisherName": "講談社",
+        "itemCaption": "舞台は“魔女”が人々の崇拝を集める街――。そこに現れたのは、棺桶を背負う男と、獣の目をした少女。彼等の求める獲物は“魔女”、そのただ一つ。悪しき“魔女”と飢えた“野獣”が出会う時、華麗にして苛烈な戦いの幕が開く！\n新進気鋭の才能が描く、未踏のピカレスク・ファンタジー！！",
+        "salesDate": "2017-09-20",
+        "imprint": "ヤンマガＫＣスペシャル",
+        "pageCount": 192,
+        "sourceUrl": "https://www.kodansha.co.jp/comic/products/0000016772",
+        "fetchedAt": "2026-10-04T05:28:29.693Z"
+      }
     },
     {
       "id": "work-6379e47b01357ad7d10c-v1",
@@ -383980,7 +384032,15 @@
       "workId": "work-6d6dcf7fe79715e14fe8",
       "volumeNumber": 1,
       "isbn": "9784091287557",
-      "editionKind": "standard"
+      "editionKind": "standard",
+      "metadata": {
+        "publisherName": "小学館",
+        "itemCaption": "私に、彼女ができました。 超モテるのに「好きな人と両想いになったことがない」パッと見いい女のみわ。 大学入学を機に軽音サークルに入り、 絶対友達にならないタイプ！と思ったお調子者の冴子と急接近。 なんだかちょっと新しい扉が開いちゃう感じ…？ 「せっかくだからあたしたち、付き合ってみない？」 軽音サークルの仲間たちと織りなす、ホンネの女子大生ガールズラブ!!",
+        "salesDate": "2019-01-11",
+        "pageCount": 208,
+        "sourceUrl": "https://shogakukan-comic.jp/book?isbn=9784091287557",
+        "fetchedAt": "2026-09-21T14:58:37.651Z"
+      }
     },
     {
       "id": "work-6d8090a9ae9e61c0e8f0-v1",
@@ -383994,7 +384054,16 @@
       "workId": "work-6d942c9e448cc06cd94c",
       "volumeNumber": 1,
       "isbn": "9784865891447",
-      "editionKind": "standard"
+      "editionKind": "standard",
+      "metadata": {
+        "publisherName": "ふゅーじょんぷろだくと",
+        "itemCaption": "“ヤバい男達が組んだ” 鬼戸 圭輔(きど けいすけ)、何でもこなす男前な悪徳刑事 × 八敷 翔(やしき しょう)、美味しく貪欲なビッチのヤクザ 1990年代、北海道——…全国を震撼させる警察の不祥事が幕を開ける。 1990年代、警察庁は相次ぐ拳銃事件の対策として全国的な銃器摘発キャンペーンを始める。全国の警察は厳しいノルマを設けられ、それをこなす為に警察がヤクザと手を組むという点数稼ぎのデキレースが横行した。そんな中にエースと呼ばれる男・鬼戸圭輔(きど けいすけ)はいた。彼は何人もの犯罪者を情報提供者として飼い、北海道警察の中で一際多くの拳銃を\"摘発\"していった。そして彼は自分の運命である誠凛会(せいりんかい)の幹部・八敷 翔(やしき しょう)に出逢ってしまう。より大きい山を当てるために鬼戸は柏組(かしわぐみ)の武器庫に目を付け、八敷を潜入捜査に誘う。八敷は薬の密輸入を目溢しすることを条件に鬼戸と組む。二人は甘美な成功を期待して潜入捜査に乗り込むが——。男達が自らの欲望の果てに見た景色とはなんだったのか。息を吐かせぬ展開で描く渾身のサスペンスBL。",
+        "salesDate": "2016-02-24",
+        "imprint": "Babyコミックス",
+        "pageCount": 258,
+        "sourceUrl": "https://www.comicbox.co.jp/baby/contents/bc76_koorioni1.html",
+        "fetchedAt": "2026-10-04T05:25:24.190Z"
+      }
     },
     {
       "id": "work-6d9e564af04356e9f959-v1",
@@ -387398,7 +387467,16 @@
       "workId": "work-91eee4cbd280babd6cc0",
       "volumeNumber": 1,
       "isbn": "9784309728063",
-      "editionKind": "standard"
+      "editionKind": "standard",
+      "metadata": {
+        "publisherName": "河出書房新社",
+        "itemCaption": "『マドモアゼル・モーツァルト』の作者が贈る、奇妙な世界。怒涛の１コマ連作から、名人芸というべき素晴らしき短篇の数々を収めた激レア作品集!!",
+        "salesDate": "2001-07-18",
+        "imprint": "九龍ＣＯＭＩＣＳ",
+        "pageCount": 200,
+        "sourceUrl": "https://www.kawade.co.jp/np/isbn/9784309728063/",
+        "fetchedAt": "2026-10-04T05:22:58.105Z"
+      }
     },
     {
       "id": "work-9204df77aa0e4c6b1622-representative",
@@ -388918,7 +388996,15 @@
       "volumeNumber": 1,
       "isbn": "9784868200154",
       "releaseDate": "2025-07-09",
-      "editionKind": "standard"
+      "editionKind": "standard",
+      "metadata": {
+        "publisherName": "茜新社",
+        "itemCaption": "「息子が結婚したーー……男と」 父として、夫として、 男として、昭和から変わらぬ 価値観で生きてきた。 息子である利人の 結婚を認めきれず、 ゲイに対して敏感になる中で 部下から突然 カミングアウトされてしまい……？",
+        "salesDate": "2025-07-18",
+        "imprint": "EDGE COMIX",
+        "sourceUrl": "https://akaneshinsha.com/opera/comics/978-4-86820-015-4/",
+        "fetchedAt": "2026-10-04T05:25:24.347Z"
+      }
     },
     {
       "id": "work-9fb32a2b0f954de5f4a3-representative",
@@ -389209,7 +389295,16 @@
       "workId": "work-a2959582cb9e13f7b678",
       "volumeNumber": 2,
       "isbn": "9784065353042",
-      "editionKind": "standard"
+      "editionKind": "standard",
+      "metadata": {
+        "publisherName": "講談社",
+        "itemCaption": "終わりなき家事、介護、家業に追われ、身も心も疲れ切った主婦・未知。鬱屈とした日常から抜け出すべく、一大決心で運転免許取得を目指すことに！猛反対の夫が出した「マニュアル免許なら許す」というハードすぎる条件を飲み、54歳にして茨の道を突き進むことに。迎えた教習初日。現れたのは、あの日、未知の心を突き動かした「ポルシェの妖精」！？そして次々と現れるクセの強い教官たちに、身も心も翻弄されて…！？\n人生山あり谷あり、急カーブあり。幸せをあきらめた大人たちに贈る、下町オバちゃん冒険譚第２巻！",
+        "salesDate": "2024-05-13",
+        "imprint": "ＢＥ ＬＯＶＥ ＫＣ",
+        "pageCount": 192,
+        "sourceUrl": "https://www.kodansha.co.jp/comic/products/0000387716",
+        "fetchedAt": "2026-10-04T05:34:51.196Z"
+      }
     },
     {
       "id": "work-a2d7c7e5df67d3fce2e4-v1",
@@ -389459,7 +389554,16 @@
       "workId": "work-a4f99dc45346f162b6ce",
       "volumeNumber": 6,
       "isbn": "9784845866236",
-      "editionKind": "standard"
+      "editionKind": "standard",
+      "metadata": {
+        "publisherName": "リイド社",
+        "itemCaption": "『稼ぎ時だ 派手にやろうぜ』 現代異能アクション第６巻!! 珪素（『異修羅』シリーズ）も愛読！ 現代異能アクション最新巻！ 21世紀なかば、違法なエーテル（魔力）強化手術で 《魔王》と化したマフィアの頭目たちが、 東京の裏社会を牛耳っていた。 合法ドラッグ《E3》によりエーテル能力を強化し、 この《魔王》を狩る合法の賞金稼ぎ、 それが《勇者》である——— 仲間の仇《ハーフ・ドラゴン》を追う 《勇者》ヤシロは北海道で衝撃の事実に直面する。 一方、秩序を失った東京では 魔王同士の抗争が激化していた—————。 アニメ化決定で湧く”勇者刑に処す”の 俊英・ロケット商会原作、 個人で５万部を売った鬼才・ナカシマ723作画。 超弩級現代異能アクション、堂々の第６巻！ （著者） 漫画：ナカシマ723 漫画家。コミカライズを手がける『勇者のクズ』シリーズは個人制作・流通にも関わらず累計50000部以上を売り上げ、【次にくるマンガ大賞】２年連続ノミネート。 原作：ロケット商会 「第1回カクヨムweb小説コンテスト」現代アクション部門で大賞を受賞した小説、『勇者のクズ』でデビュー。近作に『勇者刑に処す 懲罰勇者9004隊刑務記録』（KADOKAWA）など。",
+        "salesDate": "2024-05-31",
+        "imprint": "BORDER COMICS",
+        "pageCount": 208,
+        "sourceUrl": "https://www.leed.co.jp/9784845866236",
+        "fetchedAt": "2026-10-04T05:23:29.683Z"
+      }
     },
     {
       "id": "work-a510d3487823b6868774-v1",
@@ -389593,7 +389697,15 @@
       "workId": "work-a6f9727c5a4d03e60270",
       "volumeNumber": 2,
       "isbn": "9784098601677",
-      "editionKind": "standard"
+      "editionKind": "standard",
+      "metadata": {
+        "publisherName": "小学館",
+        "itemCaption": "私にとってあなたはきっと、奇跡よりも大きい。 映画監督志望の高校生・零と、あまり売れていないAV女優・パピコ。偶然出会ったふたりは、謎の男によって体に埋め込まれてしまった機械についてパピコが相談したことがきっかけで、距離を近づけてゆく。その機械によりパピコは、体の大きさを自由に変えることができるようになった。一方、世間では「ネット上の投票で票を集めたお願いが実現される」サイト、ETEの存在が話題となり……!?",
+        "imprint": "ビッグ コミックス〔スペシャル〕",
+        "pageCount": 210,
+        "sourceUrl": "https://www.shogakukan.co.jp/books/09860167",
+        "fetchedAt": "2026-10-04T05:34:52.609Z"
+      }
     },
     {
       "id": "work-a6fb886cc7cf51ffc68c-v1",
@@ -390014,7 +390126,14 @@
       "workId": "work-ab1ff42010245d9f8a2e",
       "volumeNumber": 1,
       "isbn": "9784785956691",
-      "editionKind": "standard"
+      "editionKind": "standard",
+      "metadata": {
+        "publisherName": "少年画報社",
+        "itemCaption": "小さなころからずっと欲しかったもの…それは「義理の姉」！夢にまでみた理想の姉と暮らすことになった男子の逮捕寸前妄想日記！",
+        "salesDate": "2015-11-30",
+        "sourceUrl": "https://www.shonengahosha.co.jp/book_Info.php?id=5449",
+        "fetchedAt": "2026-10-04T05:41:57.234Z"
+      }
     },
     {
       "id": "work-ab3d5b23fb97624a6aa4-representative",
@@ -390929,7 +391048,16 @@
       "volumeNumber": 5,
       "isbn": "9784065410219",
       "releaseDate": "2025-10-08",
-      "editionKind": "standard"
+      "editionKind": "standard",
+      "metadata": {
+        "publisherName": "講談社",
+        "itemCaption": "ついに雇用関係を解消し、\n恋人同士となった二人。\n関係性は変わっても、\n変わらず穏やかな日々を送っている\n二人のもとに、\nルシルの妹から一通の手紙が届く。\nなにやら困っているらしい実家の様子を見に、\n二人はルシルの生まれ育った街へ！",
+        "salesDate": "2025-10-30",
+        "imprint": "ＫＣｘ",
+        "pageCount": 176,
+        "sourceUrl": "https://www.kodansha.co.jp/comic/products/0000418860",
+        "fetchedAt": "2026-10-04T05:35:04.396Z"
+      }
     },
     {
       "id": "work-b34f17cb8b7a2c8347ae-representative",
@@ -391000,7 +391128,16 @@
       "workId": "work-b41912ab67d88c406093",
       "volumeNumber": 2,
       "isbn": "9784088840055",
-      "editionKind": "standard"
+      "editionKind": "standard",
+      "metadata": {
+        "publisherName": "集英社",
+        "itemCaption": "「魔の電球」騒動の元凶が旧知の“正道魔導士”と知り、ニクヅタは正道の魔術セミナーへと殴り込む…!!　互いの正義を問う、“邪道”と“正道”の戦いの結末は!?　そして、ニクヅタとクリアリーの旅路が最後に行き着くところとは──…!!",
+        "salesDate": "2024-03-04",
+        "imprint": "ジャンプコミックス",
+        "pageCount": 194,
+        "sourceUrl": "https://www.shueisha.co.jp/books/items/contents.html?isbn=978-4-08-884005-5",
+        "fetchedAt": "2026-10-04T05:35:06.204Z"
+      }
     },
     {
       "id": "work-b4284a6ef960f906d31e-representative",
@@ -391500,7 +391637,15 @@
       "volumeNumber": 1,
       "isbn": "9784775913635",
       "releaseDate": "2010-02-01",
-      "editionKind": "standard"
+      "editionKind": "standard",
+      "metadata": {
+        "publisherName": "パンローリング",
+        "itemCaption": "小さな島の小さな小学校に新しくやってきた教師加上大作は、気は優\nしくて力持ちのスーパーマン。「ファイト！」という口癖から生徒の\nみんなはファイト先生と呼んでいる。ある日の休み時間、木の棒と石\nで野球をする生徒たちに気づいた加上は危険なので注意するのだが、\n理科の教材すら満足に買えない学校の貧しさを思い出し、厳しく注意す\nることができない。不憫に感じた加上は、自身の思い出が詰まったボク\nシンググローブを売って得たお金で野球道具を買おうと計画するが……。",
+        "imprint": "マンガショップ",
+        "pageCount": 336,
+        "sourceUrl": "https://www.mangashop.jp/bin/showprod?a=55011&c=9784775913635",
+        "fetchedAt": "2026-10-04T05:37:16.763Z"
+      }
     },
     {
       "id": "work-b96bf77bd21ed120dbb9-representative",
@@ -392338,7 +392483,15 @@
       "workId": "work-c19be7b96e2e45394257",
       "volumeNumber": 1,
       "isbn": "9784098607440",
-      "editionKind": "standard"
+      "editionKind": "standard",
+      "metadata": {
+        "publisherName": "小学館",
+        "itemCaption": "スペリオール新人コミックオーディションにて審査員の絶賛を浴びて大賞を受賞した若き才能が、ついに単行本デビュー！ いじめられっ子の大庭は、毎日の苦しみを耐え抜くために、「今不幸である自分は、未来への幸福を貯金している」という考えにたどり着く。 だが現実は、その貯金だけで乗り切れるほど簡単なものではなく... 苛烈な若き魂の行き着く先は----！？",
+        "imprint": "ビッグ コミックス",
+        "pageCount": 208,
+        "sourceUrl": "https://www.shogakukan.co.jp/books/09860744",
+        "fetchedAt": "2026-10-04T05:35:07.906Z"
+      }
     },
     {
       "id": "work-c1ab3f526b37a071a876-representative",
@@ -392398,7 +392551,14 @@
       "volumeNumber": 1,
       "isbn": "9784785979522",
       "releaseDate": "2025-06-23",
-      "editionKind": "standard"
+      "editionKind": "standard",
+      "metadata": {
+        "publisherName": "少年画報社",
+        "itemCaption": "愛猫を亡くし塞ぎ込む小学生・鞠邑音羽（まりむらねう）は引越し先の愛媛県松山市への移動中、不思議な猫の夢を見る。四国八十八ケ所のお寺を廻る「お遍路」をし、そこにいる様々な《守猫》（もりねこ）から御蹠印（ごしょいん）を集めれば、死んだ愛猫に会えるという……。女子小学生×お遍路の旅！",
+        "salesDate": "2025-05-30",
+        "sourceUrl": "https://www.shonengahosha.co.jp/book_Info.php?id=10876",
+        "fetchedAt": "2026-10-04T05:35:08.006Z"
+      }
     },
     {
       "id": "work-c24c7f023810516a931c-representative",

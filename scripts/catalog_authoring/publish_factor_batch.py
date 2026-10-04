@@ -888,22 +888,45 @@ def _validate_fresh_unreviewed_snapshots(
         for key, original in sorted(frozen_priors.get(work_id, {}).items()):
             panel_validation.require_prior_claim(original, prior_authority)
             panel_validation.preserved_prior(original, result_rows.get(key), {})
-        preserved_axes = []
+        # Protected unknowns are not permission to add new known claims.
+        for row in factors:
+            if row["state"] == "unknown" and _protected_snapshot_evidence(evidence_by_id[row["evidenceId"]]):
+                result = result_rows.get((work_id, f"axis:{row['axisId']}"))
+                if result is None or (result["state"], result["value"], result["confidence"]) != ("unknown", "", ""):
+                    raise ValidationError(f"fresh snapshot cannot override protected unknown axis: {work_id} {row['axisId']}")
+        preserved_axes, preserved_themes = [], []
+        wrapper_backend = None
         for row in materialized:
             source = evidence_by_id[str(row["evidenceId"])]
             if _protected_snapshot_evidence(source):
-                axis = row.get("axisId")
-                original = frozen_priors.get(work_id, {}).get((work_id, f"axis:{axis}"))
-                prior_source = prior_authority.get("evidence", {}).get(str(row["evidenceId"]), {})
-                if (
-                    axis not in AXES or row.get("state") != "known"
-                    or original is None
-                    or any(row.get(field) != original[field] for field in ("state", "value", "confidence"))
-                    or row["evidenceId"] not in panel_validation.split_list(original["evidenceIds"], "prior evidenceIds", require_sorted=False)
-                    or any(prior_source.get(field) != value for field, value in source.items())
-                ):
+                axis, theme = row.get("axisId"), row.get("themeId")
+                kind, name = ("axis", axis) if axis in AXES else ("theme", theme)
+                original = frozen_priors.get(work_id, {}).get((work_id, f"{kind}:{name}"))
+                value = row.get("value") if kind == "axis" else row.get("centrality")
+                if (name is None or original is None or original["state"] != "known"
+                        or kind == "axis" and row.get("state") != "known"
+                        or value != original["value"] or row.get("confidence") != original["confidence"]):
                     raise ValidationError(f"fresh snapshot materialized fact has protected reviewed evidence without exact stored prior: {work_id}")
-                preserved_axes.append(str(axis))
+                panel_validation.require_prior_claim(original, prior_authority)
+                prior_source = prior_authority["evidence"].get(str(row["evidenceId"]), {})
+                direct = (row["evidenceId"] in panel_validation.split_list(original["evidenceIds"], "prior evidenceIds", require_sorted=False)
+                          and all(prior_source.get(field) == value for field, value in source.items()))
+                if not direct:
+                    verified = prior_authority["claims"][(work_id, original["factKey"])][panel_validation.claim_semantic_digest(original)]
+                    if wrapper_backend is None:
+                        wrapper_backend = _backend_module()
+                    urls = panel_validation.split_list(verified["citationUrls"], "prior citations", require_sorted=False)
+                    expected_id = wrapper_backend._claim_evidence_id(verified)
+                    if (verified.get("authorityKind") != "authorizedEvidencePanelV1"
+                            or verified.get("reviewedByHuman") != "false" or verified.get("candidateOnly") != "true"
+                            or source.get("id") != expected_id or source.get("workId") != work_id
+                            or source.get("targetType") != kind or source.get("targetId") != name
+                            or source.get("sourceType") != "model" or source.get("sourceUrl") != sorted(urls)[0]
+                            or source.get("extractorVersion") != "authorizedEvidencePanelV1"
+                            or source.get("reviewedByHuman") != "false" or source.get("confidence") != original["confidence"]
+                            or source.get("notes") != wrapper_backend._binding_notes(verified, evidence_id=expected_id, source_kind="model")):
+                        raise ValidationError(f"fresh snapshot materialized fact has protected reviewed evidence without exact stored prior: {work_id} {original['factKey']}; protected wrapper original binding differs")
+                (preserved_axes if kind == "axis" else preserved_themes).append(str(name))
             elif source.get("sourceType") != "model":
                 raise ValidationError(f"fresh snapshot materialized facts require raw model evidence: {work_id}")
         selected[work_id] = {
@@ -912,6 +935,7 @@ def _validate_fresh_unreviewed_snapshots(
             "beforeThemes": themes,
             "beforeGenres": str(current_work.get("genres", "")),
             "preservedAxes": sorted(preserved_axes),
+            "preservedThemes": sorted(preserved_themes),
         }
     return selected
 
@@ -1086,7 +1110,7 @@ def _backend_module(
                 }
             effective_baseline["themes"] = {
                 key: value for key, value in effective_baseline["themes"].items()
-                if key[0] != work_id
+                if key[0] != work_id or key[1] in fresh[work_id].get("preservedThemes", [])
             }
             if work_id in recovery:
                 effective_baseline["contexts"][work_id] = []
@@ -1346,8 +1370,13 @@ def _backend_module(
             exact_themes = []
             for row in theme_rows:
                 name = row["factKey"].split(":", 1)[1]
-                after = planned_themes.get((work_id, name))
-                if after is None or after["evidenceId"] not in plan["newEvidence"]:
+                if name in fresh[work_id].get("preservedThemes", []):
+                    if (work_id, name) in planned_themes:
+                        raise module.PublishError(f"fresh snapshot preserved prior theme changed: {work_id} {name}")
+                    after = next(item for item in fresh[work_id]["beforeThemes"] if item["themeId"] == name)
+                else:
+                    after = planned_themes.get((work_id, name))
+                if after is None or (name not in fresh[work_id].get("preservedThemes", []) and after["evidenceId"] not in plan["newEvidence"]):
                     raise module.PublishError(f"fresh snapshot theme lacks fresh decision evidence: {work_id} {name}")
                 exact_themes.append(after)
             genre_rows = sorted(
@@ -1886,7 +1915,7 @@ def _install_correction_materializer(module: types.ModuleType) -> None:
                 theme_id: tuple(after_themes[(work_id, theme_id)][field] for field in ("centrality", "confidence", "evidenceId"))
                 for owner, theme_id in after_themes if owner == work_id
             }
-            if actual_themes != expected_themes or any(values[2] not in plan["newEvidence"] for values in actual_themes.values()):
+            if actual_themes != expected_themes or any(values[2] not in plan["newEvidence"] for name, values in actual_themes.items() if name not in snapshot.get("preservedThemes", [])):
                 raise module.PublishError(f"fresh snapshot theme readback mismatch: {work_id}")
             if after_works[work_id]["genres"] != snapshot["afterGenres"] or any(evidence_id not in after_evidence or evidence_id not in plan["newEvidence"] for evidence_id in snapshot["genreEvidenceIds"]):
                 raise module.PublishError(f"fresh snapshot genre readback mismatch: {work_id}")
