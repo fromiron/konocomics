@@ -196,6 +196,7 @@ def preflight_scope(error, work_id):
     return "WORK" if (last == f"frozen registry row set mismatch: {work_id}"
                       or last == f"fresh snapshot materialized fact has protected reviewed evidence: {work_id}"
                       or last.startswith(f"accepted baseline axis conflict: {work_id} ")
+                      or last.startswith(f"accepted baseline theme conflict: {work_id} ")
                       or last.startswith(f"Canonical rebase target conflict: {work_id}: ")) else "BATCH"
 
 

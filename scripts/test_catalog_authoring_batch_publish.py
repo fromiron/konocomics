@@ -500,6 +500,12 @@ class BatchPublicationTest(unittest.TestCase):
             for error in ("manifest changed", "accepted baseline axis conflict: work-other darkness", "Traceback: dependency unavailable"):
                 self.assertEqual(batch.preflight_scope(error, "work-a"), "BATCH")
 
+    def test_preflight_isolates_only_same_work_baseline_theme_conflict(self):
+        self.assertEqual(batch.preflight_scope(json.dumps({"error": "accepted baseline theme conflict: work-a school"}), "work-a"), "WORK")
+        for error in ("accepted baseline theme conflict: work-other school",
+                      "accepted baseline theme conflict: work-aa school", "unclassified theme failure"):
+            self.assertEqual(batch.preflight_scope(json.dumps({"error": error}), "work-a"), "BATCH")
+
     def test_code_identity_binds_external_helpers_gold_schema_and_policy(self):
         identity = batch.code_identity()
         for relative in ("scripts/workspace_paths.py", "scripts/catalog_recovery.py", "scripts/sql/catalog-authority/001-init.sql",
