@@ -1,6 +1,6 @@
 {
   "schemaVersion": 1,
-  "catalogVersion": "v1-bb84b1d1a16d",
+  "catalogVersion": "v1-774ad62a2a0c",
   "factorDictionaryVersion": "v1",
   "works": [
     {
@@ -35067,6 +35067,110 @@
       }
     },
     {
+      "id": "work-0d57708fef112e0cc067",
+      "title": "JIN-仁-",
+      "aliases": [],
+      "creators": [
+        "村上もとか"
+      ],
+      "demographic": "unknown",
+      "status": "unknown",
+      "genres": [
+        "historical",
+        "scienceFiction"
+      ],
+      "themes": [
+        {
+          "id": "timeTravel",
+          "centrality": 2,
+          "confidence": 0.8
+        }
+      ],
+      "axes": {
+        "progression": {
+          "state": "known",
+          "value": 2,
+          "confidence": 0.8
+        },
+        "problemSolving": {
+          "state": "known",
+          "value": 4,
+          "confidence": 0.8
+        },
+        "strategy": {
+          "state": "unknown"
+        },
+        "pacing": {
+          "state": "known",
+          "value": 4,
+          "confidence": 0.8
+        },
+        "mysteryReveal": {
+          "state": "unknown"
+        },
+        "worldBuilding": {
+          "state": "known",
+          "value": 4,
+          "confidence": 0.8
+        },
+        "characterArcWeight": {
+          "state": "known",
+          "value": 2,
+          "confidence": 0.8
+        },
+        "relationshipStructure": {
+          "state": "known",
+          "value": 2,
+          "confidence": 0.8
+        },
+        "comedy": {
+          "state": "unknown"
+        },
+        "darkness": {
+          "state": "known",
+          "value": 2,
+          "confidence": 0.8
+        },
+        "mentalStress": {
+          "state": "known",
+          "value": 3,
+          "confidence": 0.8
+        },
+        "romance": {
+          "state": "unknown"
+        },
+        "emotionalWarmth": {
+          "state": "known",
+          "value": 4,
+          "confidence": 0.8
+        },
+        "artRealism": {
+          "state": "unknown"
+        },
+        "artDensity": {
+          "state": "unknown"
+        },
+        "visualSoftness": {
+          "state": "unknown"
+        },
+        "motionImpact": {
+          "state": "unknown"
+        }
+      },
+      "factorScope": "entry_1_3_volumes",
+      "eligibility": {
+        "onboardingEligible": true,
+        "recommendationEligible": true,
+        "libraryOnly": false
+      },
+      "evidence": {
+        "metadataConfidence": 0,
+        "groupingConfidence": 0,
+        "sourceAgreement": 0,
+        "annotationReviewedAt": "2026-10-04T11:08:34.361696+00:00"
+      }
+    },
+    {
       "id": "work-0d6c496878e276979e3c",
       "title": "ふたり鷹",
       "aliases": [],
@@ -40656,6 +40760,121 @@
         "groupingConfidence": 1,
         "sourceAgreement": 1,
         "annotationReviewedAt": "2026-08-27T00:00:00+09:00"
+      }
+    },
+    {
+      "id": "work-11f4d1b0c59c69084b90",
+      "title": "王家の紋章",
+      "aliases": [],
+      "creators": [
+        "細川智栄子あんど芙～みん"
+      ],
+      "demographic": "unknown",
+      "status": "unknown",
+      "genres": [
+        "fantasy",
+        "historical",
+        "romance"
+      ],
+      "themes": [
+        {
+          "id": "politics",
+          "centrality": 2,
+          "confidence": 0.8
+        },
+        {
+          "id": "timeTravel",
+          "centrality": 2,
+          "confidence": 0.8
+        },
+        {
+          "id": "war",
+          "centrality": 2,
+          "confidence": 0.8
+        }
+      ],
+      "axes": {
+        "progression": {
+          "state": "unknown"
+        },
+        "problemSolving": {
+          "state": "known",
+          "value": 2,
+          "confidence": 0.8
+        },
+        "strategy": {
+          "state": "known",
+          "value": 2,
+          "confidence": 0.8
+        },
+        "pacing": {
+          "state": "known",
+          "value": 4,
+          "confidence": 0.8
+        },
+        "mysteryReveal": {
+          "state": "unknown"
+        },
+        "worldBuilding": {
+          "state": "known",
+          "value": 4,
+          "confidence": 0.8
+        },
+        "characterArcWeight": {
+          "state": "known",
+          "value": 4,
+          "confidence": 0.8
+        },
+        "relationshipStructure": {
+          "state": "known",
+          "value": 4,
+          "confidence": 0.8
+        },
+        "comedy": {
+          "state": "unknown"
+        },
+        "darkness": {
+          "state": "known",
+          "value": 2,
+          "confidence": 0.8
+        },
+        "mentalStress": {
+          "state": "unknown"
+        },
+        "romance": {
+          "state": "known",
+          "value": 4,
+          "confidence": 0.8
+        },
+        "emotionalWarmth": {
+          "state": "known",
+          "value": 2,
+          "confidence": 0.8
+        },
+        "artRealism": {
+          "state": "unknown"
+        },
+        "artDensity": {
+          "state": "unknown"
+        },
+        "visualSoftness": {
+          "state": "unknown"
+        },
+        "motionImpact": {
+          "state": "unknown"
+        }
+      },
+      "factorScope": "entry_1_3_volumes",
+      "eligibility": {
+        "onboardingEligible": true,
+        "recommendationEligible": true,
+        "libraryOnly": false
+      },
+      "evidence": {
+        "metadataConfidence": 0,
+        "groupingConfidence": 0,
+        "sourceAgreement": 0,
+        "annotationReviewedAt": "2026-10-04T11:08:38.157976+00:00"
       }
     },
     {
@@ -133250,6 +133469,112 @@
       }
     },
     {
+      "id": "work-5715f5d1fffd311944f1",
+      "title": "村井の恋",
+      "aliases": [],
+      "creators": [
+        "島順太"
+      ],
+      "demographic": "unknown",
+      "status": "unknown",
+      "genres": [
+        "comedy",
+        "romance"
+      ],
+      "themes": [
+        {
+          "id": "school",
+          "centrality": 2,
+          "confidence": 0.75
+        }
+      ],
+      "axes": {
+        "progression": {
+          "state": "known",
+          "value": 2,
+          "confidence": 0.75
+        },
+        "problemSolving": {
+          "state": "known",
+          "value": 0,
+          "confidence": 0.75
+        },
+        "strategy": {
+          "state": "unknown"
+        },
+        "pacing": {
+          "state": "known",
+          "value": 2,
+          "confidence": 0.75
+        },
+        "mysteryReveal": {
+          "state": "known",
+          "value": 2,
+          "confidence": 0.75
+        },
+        "worldBuilding": {
+          "state": "unknown"
+        },
+        "characterArcWeight": {
+          "state": "known",
+          "value": 4,
+          "confidence": 0.75
+        },
+        "relationshipStructure": {
+          "state": "known",
+          "value": 2,
+          "confidence": 0.75
+        },
+        "comedy": {
+          "state": "known",
+          "value": 4,
+          "confidence": 0.75
+        },
+        "darkness": {
+          "state": "unknown"
+        },
+        "mentalStress": {
+          "state": "known",
+          "value": 2,
+          "confidence": 0.75
+        },
+        "romance": {
+          "state": "known",
+          "value": 4,
+          "confidence": 0.75
+        },
+        "emotionalWarmth": {
+          "state": "known",
+          "value": 4,
+          "confidence": 0.75
+        },
+        "artRealism": {
+          "state": "unknown"
+        },
+        "artDensity": {
+          "state": "unknown"
+        },
+        "visualSoftness": {
+          "state": "unknown"
+        },
+        "motionImpact": {
+          "state": "unknown"
+        }
+      },
+      "factorScope": "entry_1_3_volumes",
+      "eligibility": {
+        "onboardingEligible": true,
+        "recommendationEligible": true,
+        "libraryOnly": false
+      },
+      "evidence": {
+        "metadataConfidence": 0,
+        "groupingConfidence": 0,
+        "sourceAgreement": 0,
+        "annotationReviewedAt": "2026-10-04T11:08:44.373991+00:00"
+      }
+    },
+    {
       "id": "work-5731b3832b2132933edf",
       "title": "一勝千金",
       "aliases": [],
@@ -172874,6 +173199,109 @@
       }
     },
     {
+      "id": "work-78121c4029bcc809d4f3",
+      "title": "セクシーボイス＆ロボ",
+      "aliases": [],
+      "creators": [
+        "黒田硫黄"
+      ],
+      "demographic": "unknown",
+      "status": "unknown",
+      "genres": [
+        "mystery"
+      ],
+      "themes": [
+        {
+          "id": "investigation",
+          "centrality": 2,
+          "confidence": 0.75
+        }
+      ],
+      "axes": {
+        "progression": {
+          "state": "unknown"
+        },
+        "problemSolving": {
+          "state": "known",
+          "value": 4,
+          "confidence": 0.75
+        },
+        "strategy": {
+          "state": "unknown"
+        },
+        "pacing": {
+          "state": "known",
+          "value": 2,
+          "confidence": 0.75
+        },
+        "mysteryReveal": {
+          "state": "known",
+          "value": 4,
+          "confidence": 0.75
+        },
+        "worldBuilding": {
+          "state": "known",
+          "value": 2,
+          "confidence": 0.75
+        },
+        "characterArcWeight": {
+          "state": "known",
+          "value": 2,
+          "confidence": 0.75
+        },
+        "relationshipStructure": {
+          "state": "known",
+          "value": 2,
+          "confidence": 0.75
+        },
+        "comedy": {
+          "state": "known",
+          "value": 2,
+          "confidence": 0.75
+        },
+        "darkness": {
+          "state": "known",
+          "value": 2,
+          "confidence": 0.75
+        },
+        "mentalStress": {
+          "state": "unknown"
+        },
+        "romance": {
+          "state": "unknown"
+        },
+        "emotionalWarmth": {
+          "state": "known",
+          "value": 2,
+          "confidence": 0.75
+        },
+        "artRealism": {
+          "state": "unknown"
+        },
+        "artDensity": {
+          "state": "unknown"
+        },
+        "visualSoftness": {
+          "state": "unknown"
+        },
+        "motionImpact": {
+          "state": "unknown"
+        }
+      },
+      "factorScope": "entry_1_3_volumes",
+      "eligibility": {
+        "onboardingEligible": true,
+        "recommendationEligible": true,
+        "libraryOnly": false
+      },
+      "evidence": {
+        "metadataConfidence": 0,
+        "groupingConfidence": 0,
+        "sourceAgreement": 0,
+        "annotationReviewedAt": "2026-10-04T11:08:41.589712+00:00"
+      }
+    },
+    {
       "id": "work-7819d66a9d4fe8ec5a8b",
       "title": "おしえて執事くん",
       "aliases": [],
@@ -175884,6 +176312,125 @@
         "groupingConfidence": 1,
         "sourceAgreement": 1,
         "annotationReviewedAt": "2026-08-26T00:00:00+09:00"
+      }
+    },
+    {
+      "id": "work-7a2ceef4e3753253866d",
+      "title": "外科医エリーゼ",
+      "aliases": [],
+      "creators": [
+        "mini",
+        "yuin"
+      ],
+      "demographic": "unknown",
+      "status": "unknown",
+      "genres": [
+        "fantasy",
+        "romance"
+      ],
+      "themes": [
+        {
+          "id": "reincarnation",
+          "centrality": 2,
+          "confidence": 0.75
+        },
+        {
+          "id": "timeTravel",
+          "centrality": 2,
+          "confidence": 0.75
+        },
+        {
+          "id": "workplace",
+          "centrality": 2,
+          "confidence": 0.75
+        }
+      ],
+      "axes": {
+        "progression": {
+          "state": "known",
+          "value": 4,
+          "confidence": 0.75
+        },
+        "problemSolving": {
+          "state": "known",
+          "value": 4,
+          "confidence": 0.75
+        },
+        "strategy": {
+          "state": "known",
+          "value": 2,
+          "confidence": 0.75
+        },
+        "pacing": {
+          "state": "known",
+          "value": 2,
+          "confidence": 0.75
+        },
+        "mysteryReveal": {
+          "state": "unknown"
+        },
+        "worldBuilding": {
+          "state": "known",
+          "value": 2,
+          "confidence": 0.75
+        },
+        "characterArcWeight": {
+          "state": "known",
+          "value": 4,
+          "confidence": 0.75
+        },
+        "relationshipStructure": {
+          "state": "known",
+          "value": 2,
+          "confidence": 0.75
+        },
+        "comedy": {
+          "state": "unknown"
+        },
+        "darkness": {
+          "state": "known",
+          "value": 2,
+          "confidence": 0.75
+        },
+        "mentalStress": {
+          "state": "known",
+          "value": 2,
+          "confidence": 0.75
+        },
+        "romance": {
+          "state": "known",
+          "value": 4,
+          "confidence": 0.75
+        },
+        "emotionalWarmth": {
+          "state": "known",
+          "value": 2,
+          "confidence": 0.75
+        },
+        "artRealism": {
+          "state": "unknown"
+        },
+        "artDensity": {
+          "state": "unknown"
+        },
+        "visualSoftness": {
+          "state": "unknown"
+        },
+        "motionImpact": {
+          "state": "unknown"
+        }
+      },
+      "factorScope": "entry_1_3_volumes",
+      "eligibility": {
+        "onboardingEligible": true,
+        "recommendationEligible": true,
+        "libraryOnly": false
+      },
+      "evidence": {
+        "metadataConfidence": 0,
+        "groupingConfidence": 0,
+        "sourceAgreement": 0,
+        "annotationReviewedAt": "2026-10-04T11:08:47.217863+00:00"
       }
     },
     {
@@ -181618,6 +182165,122 @@
         "groupingConfidence": 0.74,
         "sourceAgreement": 0.61,
         "annotationReviewedAt": "2026-09-28T10:07:34.641217+00:00"
+      }
+    },
+    {
+      "id": "work-7eaff5dd2723c42c3e16",
+      "title": "愛さないといわれましても～元魔王の伯爵令嬢は生真面目軍人に餌付けをされて幸せになる～",
+      "aliases": [],
+      "creators": [
+        "石野人衣",
+        "豆田麦",
+        "花染なぎさ"
+      ],
+      "demographic": "unknown",
+      "status": "unknown",
+      "genres": [
+        "comedy",
+        "fantasy",
+        "romance"
+      ],
+      "themes": [
+        {
+          "id": "reincarnation",
+          "centrality": 2,
+          "confidence": 0.75
+        },
+        {
+          "id": "territoryManagement",
+          "centrality": 1,
+          "confidence": 0.75
+        }
+      ],
+      "axes": {
+        "progression": {
+          "state": "known",
+          "value": 2,
+          "confidence": 0.75
+        },
+        "problemSolving": {
+          "state": "known",
+          "value": 2,
+          "confidence": 0.75
+        },
+        "strategy": {
+          "state": "unknown"
+        },
+        "pacing": {
+          "state": "known",
+          "value": 0,
+          "confidence": 0.75
+        },
+        "mysteryReveal": {
+          "state": "unknown"
+        },
+        "worldBuilding": {
+          "state": "known",
+          "value": 2,
+          "confidence": 0.75
+        },
+        "characterArcWeight": {
+          "state": "known",
+          "value": 4,
+          "confidence": 0.75
+        },
+        "relationshipStructure": {
+          "state": "known",
+          "value": 2,
+          "confidence": 0.75
+        },
+        "comedy": {
+          "state": "known",
+          "value": 2,
+          "confidence": 0.75
+        },
+        "darkness": {
+          "state": "known",
+          "value": 2,
+          "confidence": 0.75
+        },
+        "mentalStress": {
+          "state": "known",
+          "value": 0,
+          "confidence": 0.75
+        },
+        "romance": {
+          "state": "known",
+          "value": 4,
+          "confidence": 0.75
+        },
+        "emotionalWarmth": {
+          "state": "known",
+          "value": 4,
+          "confidence": 0.75
+        },
+        "artRealism": {
+          "state": "unknown"
+        },
+        "artDensity": {
+          "state": "unknown"
+        },
+        "visualSoftness": {
+          "state": "unknown"
+        },
+        "motionImpact": {
+          "state": "unknown"
+        }
+      },
+      "factorScope": "entry_1_3_volumes",
+      "eligibility": {
+        "onboardingEligible": true,
+        "recommendationEligible": true,
+        "libraryOnly": false
+      },
+      "evidence": {
+        "metadataConfidence": 0,
+        "groupingConfidence": 0,
+        "sourceAgreement": 0,
+        "annotationReviewedAt": "2026-10-04T11:08:50.116862+00:00"
       }
     },
     {
@@ -222193,6 +222856,112 @@
         "groupingConfidence": 1,
         "sourceAgreement": 1,
         "annotationReviewedAt": "2026-08-26T00:00:00+09:00"
+      }
+    },
+    {
+      "id": "work-a128dc5c0243a6c70e05",
+      "title": "アマチュアビジランテ",
+      "aliases": [],
+      "creators": [
+        "内藤光太郎",
+        "浅村壮平"
+      ],
+      "publisher": "講談社",
+      "demographic": "unknown",
+      "status": "unknown",
+      "firstPublishedYear": 2025,
+      "genres": [
+        "action"
+      ],
+      "themes": [
+        {
+          "id": "combat",
+          "centrality": 2,
+          "confidence": 0.75
+        }
+      ],
+      "axes": {
+        "progression": {
+          "state": "unknown"
+        },
+        "problemSolving": {
+          "state": "known",
+          "value": 2,
+          "confidence": 0.75
+        },
+        "strategy": {
+          "state": "known",
+          "value": 2,
+          "confidence": 0.75
+        },
+        "pacing": {
+          "state": "known",
+          "value": 4,
+          "confidence": 0.75
+        },
+        "mysteryReveal": {
+          "state": "unknown"
+        },
+        "worldBuilding": {
+          "state": "known",
+          "value": 2,
+          "confidence": 0.75
+        },
+        "characterArcWeight": {
+          "state": "known",
+          "value": 2,
+          "confidence": 0.75
+        },
+        "relationshipStructure": {
+          "state": "known",
+          "value": 2,
+          "confidence": 0.75
+        },
+        "comedy": {
+          "state": "unknown"
+        },
+        "darkness": {
+          "state": "known",
+          "value": 4,
+          "confidence": 0.75
+        },
+        "mentalStress": {
+          "state": "known",
+          "value": 2,
+          "confidence": 0.75
+        },
+        "romance": {
+          "state": "unknown"
+        },
+        "emotionalWarmth": {
+          "state": "known",
+          "value": 2,
+          "confidence": 0.75
+        },
+        "artRealism": {
+          "state": "unknown"
+        },
+        "artDensity": {
+          "state": "unknown"
+        },
+        "visualSoftness": {
+          "state": "unknown"
+        },
+        "motionImpact": {
+          "state": "unknown"
+        }
+      },
+      "factorScope": "entry_1_3_volumes",
+      "eligibility": {
+        "onboardingEligible": true,
+        "recommendationEligible": true,
+        "libraryOnly": false
+      },
+      "evidence": {
+        "metadataConfidence": 0.91,
+        "groupingConfidence": 0.74,
+        "sourceAgreement": 0.66,
+        "annotationReviewedAt": "2026-10-04T11:08:41.174506+00:00"
       }
     },
     {
@@ -327733,6 +328502,13 @@
       }
     },
     {
+      "id": "work-0d57708fef112e0cc067-representative",
+      "workId": "work-0d57708fef112e0cc067",
+      "volumeNumber": 1,
+      "isbn": "9784088591742",
+      "editionKind": "standard"
+    },
+    {
       "id": "work-0d6c496878e276979e3c-representative",
       "workId": "work-0d6c496878e276979e3c",
       "volumeNumber": 1,
@@ -328179,6 +328955,21 @@
       "isbn": "9784088913254",
       "releaseDate": "2019-07-19",
       "editionKind": "standard"
+    },
+    {
+      "id": "work-11f4d1b0c59c69084b90-representative",
+      "workId": "work-11f4d1b0c59c69084b90",
+      "volumeNumber": 1,
+      "isbn": "9784253070607",
+      "editionKind": "standard",
+      "metadata": {
+        "publisherName": "秋田書店",
+        "itemCaption": "3000年の時空を超え、愛を誓い合ったメンフィスとキャロル、二人の行く手には数々の苦難が!!\n読み切り作品「麗しのメリーさん」を併録。",
+        "salesDate": "1977-01-24",
+        "imprint": "プリンセス・コミックス",
+        "sourceUrl": "https://www.akitashoten.co.jp/comics/4253070604",
+        "fetchedAt": "2026-10-04T07:10:04.421Z"
+      }
     },
     {
       "id": "work-11f7290fc68cdf9635aa-representative",
@@ -334952,6 +335743,23 @@
       "editionKind": "standard"
     },
     {
+      "id": "work-5715f5d1fffd311944f1-representative",
+      "workId": "work-5715f5d1fffd311944f1",
+      "volumeNumber": 1,
+      "isbn": "9784040653334",
+      "editionKind": "standard",
+      "metadata": {
+        "publisherName": "KADOKAWA",
+        "itemCaption": "様子のおかしい男子高校生・村井は乙女ゲームオタクの田中先生に告白をするが一蹴される。次の日、髪型を一新してきた村井が田中の\"推しキャラ\"に激似になっており…!? 噴出必至の求愛コメディ第１巻。",
+        "salesDate": "2018-12-15",
+        "imageUrl": "https://cdn.kdkw.jp/cover_1000/321808/321808000199.webp",
+        "imprint": "ジーンLINE",
+        "pageCount": 154,
+        "sourceUrl": "https://www.kadokawa.co.jp/product/321808000199/",
+        "fetchedAt": "2026-10-04T07:10:24.668Z"
+      }
+    },
+    {
       "id": "work-5731b3832b2132933edf-representative",
       "workId": "work-5731b3832b2132933edf",
       "volumeNumber": 1,
@@ -337884,6 +338692,23 @@
       "editionKind": "standard"
     },
     {
+      "id": "work-78121c4029bcc809d4f3-representative",
+      "workId": "work-78121c4029bcc809d4f3",
+      "volumeNumber": 1,
+      "isbn": "9784063885354",
+      "editionKind": "standard",
+      "metadata": {
+        "publisherName": "講談社",
+        "itemCaption": "2002年に文化庁メディア芸術祭マンガ部門で大賞を受賞し、2007年にはテレビドラマにもなった名作が、復活刊行!!　カバーは描き下ろし!!　さらに、新規のオマケも収録!!　スパイや占い師にあこがれるニコ（14歳）が、声を駆使して風変わりな事件に挑む！　その隣には、おもちゃ大好きアルバイター・ロボ（25歳）もいるぞ！",
+        "salesDate": "2016-03-23",
+        "imageUrl": "https://dvs-cover.kodansha.co.jp/0000018735/wQq1NSXyiQ2Z0PCD2m8RIh1RhHmlbNgW3Cy10p3Q.jpg",
+        "imprint": "モーニング ＫＣ",
+        "pageCount": 208,
+        "sourceUrl": "https://www.kodansha.co.jp/comic/products/0000018735",
+        "fetchedAt": "2026-10-04T07:10:24.445Z"
+      }
+    },
+    {
       "id": "work-7819d66a9d4fe8ec5a8b-representative",
       "workId": "work-7819d66a9d4fe8ec5a8b",
       "volumeNumber": 1,
@@ -338090,6 +338915,23 @@
       "volumeNumber": 1,
       "isbn": "9784048673150",
       "editionKind": "standard"
+    },
+    {
+      "id": "work-7a2ceef4e3753253866d-representative",
+      "workId": "work-7a2ceef4e3753253866d",
+      "volumeNumber": 1,
+      "isbn": "9784040658131",
+      "editionKind": "standard",
+      "metadata": {
+        "publisherName": "KADOKAWA",
+        "itemCaption": "天才外科医の転生先は1回目の人生に逆戻り? 悪女皇后と呼ばれ火炙りの刑になり一生を終えたエリーゼ。 前世での過ちを清算すべく2回目の人生は外科医として人のため 生きてきた彼女だが、ある日飛行機事故で帰らぬ人に… しかし、目を覚ますと1回目の人生に戻ってしまった!? 処刑される10年前の16歳の自分に転生したエリーゼは今回だけは 後悔しない人生を送ろうと前世の配偶者との婚約を阻止しようと 奮闘するのだが…。ピッコマの大人気タイトル、コミックス化!!",
+        "salesDate": "2019-08-05",
+        "imageUrl": "https://cdn.kdkw.jp/cover_1000/321903/321903000642.webp",
+        "imprint": "FLOS COMIC",
+        "pageCount": 192,
+        "sourceUrl": "https://www.kadokawa.co.jp/product/321903000642/",
+        "fetchedAt": "2026-10-04T07:10:24.798Z"
+      }
     },
     {
       "id": "work-7a4e7ba45413e1b8af34-representative",
@@ -338514,6 +339356,21 @@
       "volumeNumber": 1,
       "isbn": "9784065355428",
       "editionKind": "standard"
+    },
+    {
+      "id": "work-7eaff5dd2723c42c3e16-representative",
+      "workId": "work-7eaff5dd2723c42c3e16",
+      "volumeNumber": 1,
+      "isbn": "9784575416374",
+      "editionKind": "standard",
+      "metadata": {
+        "publisherName": "双葉社",
+        "itemCaption": "「君を愛することはないだろう」伯爵令嬢のアビゲイルは政略結婚の初夜、夫から愛さない宣言をされてしまい、焦る。それって……ごはんはいただけないということですか！？ 家族から虐げられてきたアビゲイルは、夫と幸せになれるのか！？ 「小説家になろう」発、新感覚餌付けラブコメディー！待望のコミカライズ第１巻！",
+        "salesDate": "2023-05-10",
+        "imprint": "モンスターコミックスｆ",
+        "sourceUrl": "https://book-api.futabasha.co.jp/book_details?jdcn_code=97845754163740000000&media=1",
+        "fetchedAt": "2026-10-04T07:13:39.207Z"
+      }
     },
     {
       "id": "work-7ec5c82be5c9a60ef16d-representative",
@@ -341258,6 +342115,21 @@
       "volumeNumber": 1,
       "isbn": "9784861279188",
       "editionKind": "standard"
+    },
+    {
+      "id": "work-a128dc5c0243a6c70e05-v2",
+      "workId": "work-a128dc5c0243a6c70e05",
+      "volumeNumber": 2,
+      "isbn": "9784065382769",
+      "releaseDate": "2025-01-03",
+      "editionKind": "standard",
+      "metadata": {
+        "publisherName": "講談社",
+        "itemCaption": "39歳、無職、底辺。何も持たない男に神は、殺しの才能を与えた。最注目バイオレンスアクション第2巻！！ 宿願だった政治家暗殺を取りやめ、自作武器を駆使し、ヤクザに狙われた隣人家族を救出した尾城慎太郎。 何ひとつ持たないと思っていた自身に殺人の才能があることを知った男は、巨悪との戦いに身を投じていく‥‥。 弱者か、無敵か。テロリストか、ヒーローか。この男から目を離すな。",
+        "imprint": "ヤンマガＫＣスペシャル",
+        "sourceUrl": "https://www.kodansha.co.jp/comic/products/0000405787",
+        "fetchedAt": "2026-10-04T07:10:28.490Z"
+      }
     },
     {
       "id": "work-a141d948194d8a849f77-v1",
@@ -348941,6 +349813,7 @@
     "work-0d10ae56716a82f0ae4e": "work-0d10ae56716a82f0ae4e-representative",
     "work-0d1ad77728a44df56508": "work-0d1ad77728a44df56508-representative",
     "work-0d31d804ea197d0cece8": "work-0d31d804ea197d0cece8-v3",
+    "work-0d57708fef112e0cc067": "work-0d57708fef112e0cc067-representative",
     "work-0d6c496878e276979e3c": "work-0d6c496878e276979e3c-representative",
     "work-0d894a02becb714986db": "work-0d894a02becb714986db-representative",
     "work-0dabd1d17e5fcf2992b9": "work-0dabd1d17e5fcf2992b9-representative",
@@ -348990,6 +349863,7 @@
     "work-11d23966f22f777e95d0": "work-11d23966f22f777e95d0-representative",
     "work-11e7080196fedbdc4668": "work-11e7080196fedbdc4668-v1",
     "work-11f13ef455c9bc9d68b4": "work-11f13ef455c9bc9d68b4-representative",
+    "work-11f4d1b0c59c69084b90": "work-11f4d1b0c59c69084b90-representative",
     "work-11f7290fc68cdf9635aa": "work-11f7290fc68cdf9635aa-representative",
     "work-1237a0e89a427c736fac": "work-1237a0e89a427c736fac-representative",
     "work-124535cbdf6a4f78ca90": "work-124535cbdf6a4f78ca90-v1",
@@ -349803,6 +350677,7 @@
     "work-56e45e2dd0d00d5f24a8": "work-56e45e2dd0d00d5f24a8-representative",
     "work-5702b6d631ece35b62ea": "work-5702b6d631ece35b62ea-representative",
     "work-57130794fc2f5b4f8739": "work-57130794fc2f5b4f8739-v1",
+    "work-5715f5d1fffd311944f1": "work-5715f5d1fffd311944f1-representative",
     "work-5731b3832b2132933edf": "work-5731b3832b2132933edf-representative",
     "work-5740e7a571a3fb5a4823": "work-5740e7a571a3fb5a4823-v1",
     "work-574a0d3c5c25d8741ba5": "work-574a0d3c5c25d8741ba5-representative",
@@ -350151,6 +351026,7 @@
     "work-7783c60325de208ab8c6": "work-7783c60325de208ab8c6-v4",
     "work-77aecd2b33b956f62334": "work-77aecd2b33b956f62334-representative",
     "work-77badbb854188a849982": "work-77badbb854188a849982-v1",
+    "work-78121c4029bcc809d4f3": "work-78121c4029bcc809d4f3-representative",
     "work-7819d66a9d4fe8ec5a8b": "work-7819d66a9d4fe8ec5a8b-representative",
     "work-783ea1ebbdf006a7bc03": "work-783ea1ebbdf006a7bc03-v1",
     "work-7853da71146ce5b3e105": "work-7853da71146ce5b3e105-v2",
@@ -350177,6 +351053,7 @@
     "work-7a156f0d2233a11ec519": "work-7a156f0d2233a11ec519-v2",
     "work-7a2385eed8b63d552074": "work-7a2385eed8b63d552074-v1",
     "work-7a260e9a539643caf362": "work-7a260e9a539643caf362-representative",
+    "work-7a2ceef4e3753253866d": "work-7a2ceef4e3753253866d-representative",
     "work-7a4e7ba45413e1b8af34": "work-7a4e7ba45413e1b8af34-representative",
     "work-7a9de6fd58fbd19aed74": "work-7a9de6fd58fbd19aed74-representative",
     "work-7aa23df2c051d68240fb": "work-7aa23df2c051d68240fb-representative",
@@ -350227,6 +351104,7 @@
     "work-7e667fcf9c44138386d7": "work-7e667fcf9c44138386d7-representative",
     "work-7e72bc605eebca48aa3d": "work-7e72bc605eebca48aa3d-representative",
     "work-7ea5d1bf06e3d5ed6620": "work-7ea5d1bf06e3d5ed6620-v1",
+    "work-7eaff5dd2723c42c3e16": "work-7eaff5dd2723c42c3e16-representative",
     "work-7ec5c82be5c9a60ef16d": "work-7ec5c82be5c9a60ef16d-representative",
     "work-7f0f63c5d80083f2be7f": "work-7f0f63c5d80083f2be7f-representative",
     "work-7f168231a3214caeef78": "work-7f168231a3214caeef78-v1",
@@ -350575,6 +351453,7 @@
     "work-a0ef16551acd379eb984": "work-a0ef16551acd379eb984-representative",
     "work-a0fdd0c31f6b45d32172": "work-a0fdd0c31f6b45d32172-representative",
     "work-a111c5b5eb985dbc9c50": "work-a111c5b5eb985dbc9c50-representative",
+    "work-a128dc5c0243a6c70e05": "work-a128dc5c0243a6c70e05-v2",
     "work-a141d948194d8a849f77": "work-a141d948194d8a849f77-v1",
     "work-a14cf4446d589444177f": "work-a14cf4446d589444177f-representative",
     "work-a15b3e6abad9affdea74": "work-a15b3e6abad9affdea74-representative",
