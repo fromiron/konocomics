@@ -1477,6 +1477,24 @@ def index_original_sources(source, db, members):
     return indexed
 
 
+def verified_prior_wrapper(claim, source, authority):
+    """Recognize only the native wrapper of an exact original accepted claim."""
+    import catalog_authoring.validate_factor_panel as panel
+    import catalog_authoring.publish_factor_batch as publisher
+    if (not source.get("notes", "").startswith("authorizedEvidencePanelV1|")
+            or claim.get("authorityKind") != "authorizedEvidencePanelV1"):
+        return False
+    panel.require_prior_claim(claim, authority)
+    ids = panel.split_list(claim["evidenceIds"], "retained prior evidence", require_sorted=False)
+    original = authority["evidence"][ids[0]]
+    backend = publisher._backend_module(prior_authority=authority)
+    with backend._verified_prior_lists([claim]):
+        eid = backend._claim_evidence_id(claim)
+        original = {**original, "sourceUrl": sorted(panel.split_list(claim["citationUrls"], "retained citations", require_sorted=False))[0]}
+        expected = backend._evidence_row(eid, original, panel_row=claim)
+    return all(source.get(field) == value for field, value in expected.items())
+
+
 def build_basis(plan, *, catalog=None, work_ids=None):
     """Bind current AEP values to original result/input manifests and source records.
 
@@ -1615,6 +1633,33 @@ def build_basis(plan, *, catalog=None, work_ids=None):
     for eid, (wid, fact, _, _) in wanted.items():
         if eid not in matched:
             unresolved.setdefault(eid, "No exact original modern claim binding; retain legacy authority")
+    # Native publications can preserve exact initial/follow-up claims whose
+    # original packet format is not the modern curation-ledger format above.
+    # Keep only manifest-verified, exact current wrappers as scoped legacy pins.
+    legacy_matched, legacy_pins = set(), {}
+    for bundle in plan.get("priorAuthorityBundles", []):
+        wid, root, sha = bundle["workId"], Path(bundle["root"]), bundle["manifestSha256"]
+        if work_ids is not None and wid not in work_ids:
+            continue
+        pending = {eid: target for eid, target in wanted.items() if target[0] == wid and eid not in matched and eid not in legacy_matched}
+        if not pending:
+            continue
+        authority = panel.load_prior_authority(root, extra_bundles=((root, sha),), work_ids={wid})
+        digests = set()
+        for eid, (_, fact, value, confidence) in pending.items():
+            for claim in authority["claims"].get((wid, fact), {}).values():
+                if (claim["state"], claim["value"], claim["confidence"]) != ("known", value, confidence):
+                    continue
+                if not verified_prior_wrapper(claim, evidence[eid], authority):
+                    continue
+                legacy_matched.add(eid)
+                unresolved.pop(eid, None)
+                digests.add(panel.claim_semantic_digest(claim))
+        if digests:
+            with closing(source.connect()) as db:
+                source_manifest(source, db, sha, retained=verified_bytes, selected=())
+            legacy_pins.setdefault(wid, []).append({"root": str(root), "manifestSha256": sha,
+                "workId": wid, "claimDigests": sorted(digests)})
     unresolved_works = {wanted[eid][0] for eid in unresolved}
     owned_tables = {wid: {} for wid in works}
     for table, rows in data.items():
@@ -1632,7 +1677,7 @@ def build_basis(plan, *, catalog=None, work_ids=None):
                          "claims": owned_claims[wid], "legacyAuthorityRequired": wid in unresolved_works,
                          "canonicalSha256AtMigration": plan["protectedFiles"]["data/source/catalog.sqlite"]}
     return {"payloads": payloads, "unresolvedClaims": unresolved, "unresolvedWorks": sorted(unresolved_works),
-            "verifiedSourceBlobs": sorted(verified_bytes), "currentClaims": len(wanted), "matchedClaims": len(matched)}
+            "verifiedSourceBlobs": sorted(verified_bytes), "currentClaims": len(wanted), "matchedClaims": len(matched) + len(legacy_matched), "legacyPins": legacy_pins}
 
 
 def verify_claim_note(claim, source):
@@ -1761,6 +1806,12 @@ def load_basis(root, work_ids=None, *, metrics=None):
                 raise ValueError(f"Unresolved original authority remains pinned: {wid}")
             current_ids = {row["evidenceId"] for name in ("source_factors", "source_themes")
                            for row in payload["tables"].get(name, []) if row.get("state", "known") == "known"}
+            for row in payload["tables"].get("source_evidence", []):
+                if row.get("notes", "").startswith("authorizedEvidencePanelV1|"):
+                    note = json.JSONDecoder().raw_decode(row["notes"].split("|", 1)[1])[0]
+                    fact = note.get("factKey", "")
+                    if fact.startswith("genre:") and fact[6:] in work[0]["genres"].split(";"):
+                        current_ids.add(row["id"])
             legacy.extend({**pin, "currentEvidenceIds": sorted(current_ids)} for pin in anchor.get("legacyPins", {}).get(wid, []))
             for original in payload["claims"]:
                 claim = original["claim"]
@@ -2205,7 +2256,16 @@ def advance_basis(repo, previous_root, publication, entries):
                     prefix = "retained-basis/source/" + proof["inputManifestSha256"]
                     members[prefix + "/PANEL-INPUT.sha256"] = {"sha256": proof["inputManifestSha256"]}
                     members[prefix + "/" + proof["csvPath"]] = {"sha256": proof["csvSha256"]}
-    basis = build_basis({"repository": str(repo), "source": {"database": str(store.database)}, "members": members,
+    prior_bundles = []
+    for wid, _, frozen, _ in entries:
+        declared = frozen / "panel-input/external-prior-authority.json"
+        if declared.is_file():
+            for bundle in read(declared)["bundles"]:
+                root = artifact_path(bundle["root"], repo)
+                if not (root / "CURATION-BASELINE.json").is_file():
+                    prior_bundles.append({**bundle, "root": str(root), "workId": wid})
+        prior_bundles.append({"root": str(publication), "manifestSha256": digest((publication / "MANIFEST.sha256").read_bytes()), "workId": wid})
+    basis = build_basis({"repository": str(repo), "source": {"database": str(store.database)}, "members": members, "priorAuthorityBundles": prior_bundles,
         "protectedFiles": {"data/source/catalog.sqlite": digest((repo / "data/source/catalog.sqlite").read_bytes())}},
         catalog=publication / "catalog-expanded.candidate.sqlite", work_ids=work_ids)
     if basis["unresolvedWorks"]:
@@ -2227,9 +2287,12 @@ def advance_basis(repo, previous_root, publication, entries):
         works[wid] = store.put_revision("curation", wid, payload, original_members)
     # The publisher's complete readback remains the publication verdict. This
     # separate root changes storage references while preserving the exact pair.
+    legacy_pins = {wid: list(pins) for wid, pins in prior.get("legacyPins", {}).items()}
+    for wid, pins in basis["legacyPins"].items():
+        legacy_pins.setdefault(wid, []).extend(pin for pin in pins if pin not in legacy_pins.get(wid, []))
     destination = repo / BASE / "retained/curation-baseline" / digest((publication / "MANIFEST.sha256").read_bytes())
     if not destination.exists():
-        create_anchor(store, destination, publication, works, legacy_pins=prior.get("legacyPins", {}),
+        create_anchor(store, destination, publication, works, legacy_pins=legacy_pins,
                       provenance={"publicationManifestSha256": digest((publication / "MANIFEST.sha256").read_bytes())})
     load_basis(destination, work_ids | set(metadata_updates))
     return destination

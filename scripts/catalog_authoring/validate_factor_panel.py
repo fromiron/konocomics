@@ -938,8 +938,16 @@ def _load_prior_authority(
                                     require_prior_claim(claim, retained)
                                     found[claim["workId"]].add(semantic)
                                     ids = split_list(claim["evidenceIds"], "retained legacy evidence", require_sorted=False)
+                                    wrapped = set()
                                     if not set(ids) <= current_sources[claim["workId"]]:
-                                        continue  # A later accepted revision replaced this legacy value.
+                                        from catalog_retention import verified_prior_wrapper
+                                        current.row_factory = sqlite3.Row
+                                        for eid in current_sources[claim["workId"]]:
+                                            source = current.execute("select * from source_evidence where id=? and workId=?", (eid, claim["workId"])).fetchone()
+                                            if source is not None and verified_prior_wrapper(claim, dict(source), retained):
+                                                wrapped.add(eid)
+                                        if not wrapped:
+                                            continue  # A later revision replaced this original claim.
                                     # A shared evidence ID can survive after this particular fact was
                                     # withdrawn or changed. Verify the current fact, not just that union.
                                     kind, name = claim["factKey"].split(":", 1)
@@ -953,7 +961,7 @@ def _load_prior_authority(
                                             f" from {table} where workId=? and {column}=?", (claim["workId"], name)).fetchone()
                                         effective = (actual is not None and (kind != "axis" or actual[3] == "known")
                                             and float(actual[0]) == float(claim["value"])
-                                            and float(actual[1]) == float(claim["confidence"]) and actual[2] in ids)
+                                            and float(actual[1]) == float(claim["confidence"]) and actual[2] in set(ids) | wrapped)
                                     if not effective:
                                         continue
                                     add_claim(claim)
@@ -1036,6 +1044,8 @@ def _load_prior_authority(
                 raise ValidationError(f"ambiguous prior publication layout: {root}")
             prior_input = inputs[0].parent
             prior_info, chunks, _ = validate_input(prior_input)
+            original_authority = {"claims": {}, "evidence": {}}
+            original_decisions = {}
             if prior_info["schemaVersion"] == single.INPUT:
                 # Verify the original decision-to-ledger/context projection, not
                 # just a rehashed collection of v3 result files. Explicit prior
@@ -1045,6 +1055,7 @@ def _load_prior_authority(
                     prior_input, work_ids=prior_ids, _active_roots=_active_roots | {root},
                 )
                 validate(prior_input, outputs[0].parent.parent, original_authority)
+                original_decisions = load_prior_decisions(prior_input)
             for chunk in chunks:
                 for path in (chunk / "packets").glob("*/evidence.csv"):
                     for row in read_csv(path, ORIGINAL_EVIDENCE_FIELDS):
@@ -1068,7 +1079,13 @@ def _load_prior_authority(
                 for row in read_csv(result / "evidence-panel-ledger.csv", LEDGER_FIELDS):
                     if row["authorityKind"] != "authorizedEvidencePanelV1" or row["authorityArtifactDigest"] != chunk_digest:
                         raise ValidationError(f"prior claim artifact binding mismatch: {result}")
-                    if row["citationSetDigest"] != citation_digest(split_list(row["citationUrls"], "prior citations")):
+                    original = original_authority["claims"].get((row["workId"], row["factKey"]), {}).get(claim_semantic_digest(row))
+                    preserved = original is not None and preserved_prior(original, row, original_decisions)
+                    if preserved:
+                        require_prior_claim(original, original_authority)
+                        for eid in split_list(original["evidenceIds"], "preserved prior evidence", require_sorted=False):
+                            merge_prior_evidence(evidence, original_authority["evidence"][eid])
+                    if row["citationSetDigest"] != citation_digest(split_list(row["citationUrls"], "prior citations", require_sorted=not preserved)):
                         raise ValidationError(f"prior citation digest mismatch: {result}")
                     add_claim(row)
         elif (root / "audit/correction").is_dir():

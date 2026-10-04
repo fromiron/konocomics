@@ -20,7 +20,7 @@ import subprocess
 import sys
 import tempfile
 import types
-from contextlib import closing, nullcontext
+from contextlib import closing, contextmanager, nullcontext
 from pathlib import Path, PurePosixPath
 from authoring_paths import REPO, ROOT, LEGACY, artifact_path
 from typing import Iterable
@@ -914,17 +914,25 @@ def _validate_fresh_unreviewed_snapshots(
                 if not direct:
                     verified = prior_authority["claims"][(work_id, original["factKey"])][panel_validation.claim_semantic_digest(original)]
                     if wrapper_backend is None:
-                        wrapper_backend = _backend_module()
+                        wrapper_backend = _backend_module(prior_authority=prior_authority)
                     urls = panel_validation.split_list(verified["citationUrls"], "prior citations", require_sorted=False)
-                    expected_id = wrapper_backend._claim_evidence_id(verified)
+                    ids = panel_validation.split_list(verified["evidenceIds"], "prior evidenceIds", require_sorted=False)
+                    original_source = next((prior_authority["evidence"].get(evidence_id) for evidence_id in ids
+                                            if prior_authority["evidence"].get(evidence_id)), None)
+                    if original_source is None or original_source.get("workId") != work_id:
+                        raise ValidationError(f"protected wrapper original source missing: {work_id} {original['factKey']}")
+                    original_kind = original_source.get("sourceType", "")
+                    with wrapper_backend._verified_prior_lists([verified]):
+                        expected_id = wrapper_backend._claim_evidence_id(verified)
+                        original_notes = wrapper_backend._binding_notes(verified, evidence_id=expected_id, source_kind=original_kind)
                     if (verified.get("authorityKind") != "authorizedEvidencePanelV1"
                             or verified.get("reviewedByHuman") != "false" or verified.get("candidateOnly") != "true"
                             or source.get("id") != expected_id or source.get("workId") != work_id
                             or source.get("targetType") != kind or source.get("targetId") != name
-                            or source.get("sourceType") != "model" or source.get("sourceUrl") != sorted(urls)[0]
+                            or source.get("sourceType") != wrapper_backend._source_type(original_kind) or source.get("sourceUrl") != sorted(urls)[0]
                             or source.get("extractorVersion") != "authorizedEvidencePanelV1"
                             or source.get("reviewedByHuman") != "false" or source.get("confidence") != original["confidence"]
-                            or source.get("notes") != wrapper_backend._binding_notes(verified, evidence_id=expected_id, source_kind="model")):
+                            or source.get("notes") != original_notes):
                         raise ValidationError(f"fresh snapshot materialized fact has protected reviewed evidence without exact stored prior: {work_id} {original['factKey']}; protected wrapper original binding differs")
                 (preserved_axes if kind == "axis" else preserved_themes).append(str(name))
             elif source.get("sourceType") != "model":
@@ -1075,6 +1083,27 @@ def _backend_module(
 
     adapter.split_list = backend_split_list
 
+    @contextmanager
+    def verified_prior_lists(rows: list[dict[str, str]]):
+        legacy_lists: set[str] = set()
+        for row in rows:
+            for field in ("evidenceIds", "citationUrls"):
+                value = row.get(field, "")
+                items = panel_validation.split_list(value, field, require_sorted=False)
+                if items != sorted(items):
+                    # Verify the full original claim before permitting legacy order.
+                    panel_validation.require_prior_claim(row, prior_authority or {"claims": {}, "evidence": {}})
+                    if (row["workId"], row["factKey"]) in corrections:
+                        raise ValidationError("replacement claims require sorted evidence lists")
+                    legacy_lists.add(value)
+        verified_legacy_lists.update(legacy_lists)
+        try:
+            yield
+        finally:
+            verified_legacy_lists.clear()
+
+    module._verified_prior_lists = verified_prior_lists
+
     def factor_only_build(*args: object, **kwargs: object) -> dict[str, object]:
         # Work review timestamps share the product's offset-datetime contract.
         args = (*args[:6], _safety_fetched_at(args[6]), *args[7:])
@@ -1196,22 +1225,8 @@ def _backend_module(
                 prior[f"{work_id}\x1fscope:safety"] = {**claim, "packetDigest": packet_digest}
             build_args[4] = frozen
             filtered_kwargs["prior"] = prior
-        legacy_lists: set[str] = set()
-        for row in publishable:
-            for field in ("evidenceIds", "citationUrls"):
-                value = row.get(field, "")
-                items = panel_validation.split_list(value, field, require_sorted=False)
-                if items != sorted(items):
-                    # Never let a new/tampered row borrow another claim's list.
-                    panel_validation.require_prior_claim(row, prior_authority or {"claims": {}, "evidence": {}})
-                    if (row["workId"], row["factKey"]) in corrections:
-                        raise ValidationError("replacement claims require sorted evidence lists")
-                    legacy_lists.add(value)
-        verified_legacy_lists.update(legacy_lists)
-        try:
+        with verified_prior_lists(publishable):
             plan = original_build(publishable, *build_args[1:], **filtered_kwargs)
-        finally:
-            verified_legacy_lists.clear()
         plan["legacyPassIds"] = []
         plan["evidenceNormalizations"] = {}
         plan["priorCorrections"] = []

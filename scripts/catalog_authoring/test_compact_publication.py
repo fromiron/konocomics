@@ -15,7 +15,7 @@ import publish_factor_batch as publisher
 
 class CompactTransactionTest(unittest.TestCase):
 
-    def _protected_wrapper_fixture(self, kind="axis", state="known"):
+    def _protected_wrapper_fixture(self, kind="axis", state="known", source_kind="model", legacy_order=False):
         import copy
         panel = publisher.panel_validation
         wid, name = "work-" + "a" * 20, "progression" if kind == "axis" else "school"
@@ -25,12 +25,19 @@ class CompactTransactionTest(unittest.TestCase):
             observation="Exact original observation", limitation="One volume", decision="accepted", reasonCode="SUPPORTED",
             authorityKind="authorizedEvidencePanelV1", authorityArtifactDigest="b" * 64,
             citationSetDigest=panel.citation_digest(["https://example.org/original"]), reviewedByHuman="false", candidateOnly="true")
-        backend = publisher._backend_module()
-        evidence_id = backend._claim_evidence_id(claim)
-        source = backend._evidence_row(evidence_id, {"sourceType": "model", "sourceUrl": claim["citationUrls"],
-            "fetchedAt": "2026-10-04T00:00:00Z"}, panel_row=claim)
-        raw = {"id": "ev-original", "workId": wid, "sourceUrl": claim["citationUrls"]}
-        authority = {"claims": {(wid, claim["factKey"]): {panel.claim_semantic_digest(claim): claim}}, "evidence": {"ev-original": raw}}
+        if legacy_order:
+            claim["evidenceIds"] = "ev-z;ev-a"
+            claim["citationUrls"] = "https://example.org/z;https://example.org/a"
+            claim["citationSetDigest"] = panel.citation_digest(claim["citationUrls"].split(";"))
+        raw = {evidence_id: {"id": evidence_id, "workId": wid, "sourceType": source_kind,
+            "sourceUrl": claim["citationUrls"].split(";")[index]}
+            for index, evidence_id in enumerate(claim["evidenceIds"].split(";"))}
+        authority = {"claims": {(wid, claim["factKey"]): {panel.claim_semantic_digest(claim): dict(claim)}}, "evidence": raw}
+        backend = publisher._backend_module(prior_authority=authority)
+        with backend._verified_prior_lists([claim]):
+            evidence_id = backend._claim_evidence_id(claim)
+            source = backend._evidence_row(evidence_id, {"sourceType": source_kind,
+                "sourceUrl": sorted(claim["citationUrls"].split(";"))[0], "fetchedAt": "2026-10-04T00:00:00Z"}, panel_row=claim)
         if state == "unknown":
             authority["claims"] = {}
         factors = [{"workId": wid, "axisId": axis, "state": "unknown", "value": "", "confidence": "", "evidenceId": "ev-raw"} for axis in publisher.AXES]
@@ -67,15 +74,39 @@ class CompactTransactionTest(unittest.TestCase):
         self.assertEqual(result["preservedAxes"], ["progression"])
 
     def test_protected_wrapper_rejects_altered_original_or_source(self):
-        for field in ("observation", "sourceUrl", "reviewedByHuman"):
+        for field in ("observation", "sourceUrl", "reviewedByHuman", "sourceType", "confidence"):
             with self.subTest(field=field):
                 claim, source, _, invoke = self._protected_wrapper_fixture()
                 if field == "observation":
                     claim[field] = "Changed original observation"
                 else:
-                    source[field] = "https://example.org/other" if field == "sourceUrl" else "true"
+                    source[field] = {"sourceUrl": "https://example.org/other", "reviewedByHuman": "true", "sourceType": "publisher", "confidence": "0.9"}[field]
                 with self.assertRaises(publisher.ValidationError):
                     invoke()
+
+    def test_original_publisher_store_wrapper_preserves_source_kind(self):
+        claim, source, _, invoke = self._protected_wrapper_fixture(source_kind="publisherStore")
+        self.assertEqual(source["sourceType"], "publisher")
+        self.assertEqual(invoke()[claim["workId"]]["preservedAxes"], ["progression"])
+        source["sourceType"] = "model"
+        with self.assertRaises(publisher.ValidationError):
+            invoke()
+
+    def test_exact_legacy_order_wrapper_preserves_original_semantics(self):
+        claim, _, _, invoke = self._protected_wrapper_fixture(source_kind="licensedStore", legacy_order=True)
+        digest = publisher.panel_validation.claim_semantic_digest(claim)
+        self.assertEqual(invoke()[claim["workId"]]["preservedAxes"], ["progression"])
+        self.assertEqual(publisher.panel_validation.claim_semantic_digest(claim), digest)
+        backend = publisher._backend_module()
+        with self.assertRaises(publisher.ValidationError):
+            with backend._verified_prior_lists([claim]):
+                backend._claim_evidence_id(claim)
+        # A validated invocation cannot leave list permissions in another backend.
+        with self.assertRaises(publisher.ValidationError):
+            backend._claim_evidence_id(claim)
+        claim["observation"] = "Unproved replacement"
+        with self.assertRaises(publisher.ValidationError):
+            invoke()
 
     def test_exact_original_known_theme_wrapper_is_preserved(self):
         claim, _, _, invoke = self._protected_wrapper_fixture("theme")
