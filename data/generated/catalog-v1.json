@@ -1,6 +1,6 @@
 {
   "schemaVersion": 1,
-  "catalogVersion": "v1-a0adeb5f0f3f",
+  "catalogVersion": "v1-9969f8f314c6",
   "factorDictionaryVersion": "v1",
   "works": [
     {
@@ -265083,47 +265083,49 @@
       "status": "unknown",
       "firstPublishedYear": 1997,
       "genres": [
-        "horror"
+        "romance"
       ],
-      "themes": [],
+      "themes": [
+        {
+          "id": "school",
+          "centrality": 1,
+          "confidence": 0.8
+        }
+      ],
       "axes": {
         "progression": {
-          "state": "known",
-          "value": 0,
-          "confidence": 0.84
+          "state": "unknown"
         },
         "problemSolving": {
-          "state": "known",
-          "value": 0,
-          "confidence": 0.85
+          "state": "unknown"
         },
         "strategy": {
-          "state": "known",
-          "value": 0,
-          "confidence": 0.87
+          "state": "unknown"
         },
         "pacing": {
-          "state": "unknown"
+          "state": "known",
+          "value": 2,
+          "confidence": 0.78
         },
         "mysteryReveal": {
           "state": "known",
           "value": 2,
-          "confidence": 0.88
+          "confidence": 0.78
         },
         "worldBuilding": {
           "state": "known",
           "value": 2,
-          "confidence": 0.88
+          "confidence": 0.78
         },
         "characterArcWeight": {
           "state": "known",
           "value": 4,
-          "confidence": 0.96
+          "confidence": 0.78
         },
         "relationshipStructure": {
           "state": "known",
           "value": 2,
-          "confidence": 0.9
+          "confidence": 0.78
         },
         "comedy": {
           "state": "unknown"
@@ -265131,20 +265133,22 @@
         "darkness": {
           "state": "known",
           "value": 4,
-          "confidence": 0.97
+          "confidence": 0.78
         },
         "mentalStress": {
           "state": "known",
-          "value": 3,
-          "confidence": 0.9
+          "value": 4,
+          "confidence": 0.78
         },
         "romance": {
-          "state": "unknown"
+          "state": "known",
+          "value": 4,
+          "confidence": 0.78
         },
         "emotionalWarmth": {
           "state": "known",
           "value": 2,
-          "confidence": 0.86
+          "confidence": 0.78
         },
         "artRealism": {
           "state": "unknown"
@@ -265161,14 +265165,24 @@
       },
       "factorScope": "entry_1_3_volumes",
       "eligibility": {
-        "onboardingEligible": false,
-        "recommendationEligible": false,
-        "libraryOnly": true
+        "onboardingEligible": true,
+        "recommendationEligible": true,
+        "libraryOnly": false,
+        "narrativeToneException": {
+          "policy": "narrative-tone-exhaustion-v1",
+          "workId": "work-b019d09d7523b471f579",
+          "inputManifestSha256": "e43a7ede64dd3b3b1f7dbb0e2329f242083fdd0a6a7c5af28c337c06c6efe89c",
+          "researchSha256": "b0bb3ff1814dcf161f790384cb8e61469234b79cae6e5fa501873e022a1cd9bc",
+          "groups": [
+            "narrative"
+          ]
+        }
       },
       "evidence": {
         "metadataConfidence": 0.92,
         "groupingConfidence": 0.96,
-        "sourceAgreement": 0.64
+        "sourceAgreement": 0.64,
+        "annotationReviewedAt": "2026-10-04T01:45:12.791376+00:00"
       }
     },
     {
@@ -313333,8 +313347,16 @@
       "demographic": "unknown",
       "status": "unknown",
       "firstPublishedYear": 1997,
-      "genres": [],
-      "themes": [],
+      "genres": [
+        "historical"
+      ],
+      "themes": [
+        {
+          "id": "historicalReconstruction",
+          "centrality": 2,
+          "confidence": 0.8
+        }
+      ],
       "axes": {
         "progression": {
           "state": "unknown"
@@ -313361,7 +313383,9 @@
           "state": "unknown"
         },
         "comedy": {
-          "state": "unknown"
+          "state": "known",
+          "value": 2,
+          "confidence": 0.7
         },
         "darkness": {
           "state": "unknown"
@@ -313390,14 +313414,25 @@
       },
       "factorScope": "entry_1_3_volumes",
       "eligibility": {
-        "onboardingEligible": false,
-        "recommendationEligible": false,
-        "libraryOnly": true
+        "onboardingEligible": true,
+        "recommendationEligible": true,
+        "libraryOnly": false,
+        "narrativeToneException": {
+          "policy": "narrative-tone-exhaustion-v1",
+          "workId": "work-d53b1dcf37ec61ba0eda",
+          "inputManifestSha256": "517371c3b6221329ac6167b93b2f956671de3973f5e77d47b8ab530899648e10",
+          "researchSha256": "e7e712b0cee691965474436b794ac5089a0b129ee68778f2c36977be9341f967",
+          "groups": [
+            "narrative",
+            "tone"
+          ]
+        }
       },
       "evidence": {
         "metadataConfidence": 0.92,
         "groupingConfidence": 0.96,
-        "sourceAgreement": 0.64
+        "sourceAgreement": 0.64,
+        "annotationReviewedAt": "2026-10-04T01:45:13.908628+00:00"
       }
     },
     {

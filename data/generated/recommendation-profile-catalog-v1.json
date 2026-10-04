@@ -1,6 +1,6 @@
 {
   "schemaVersion": 1,
-  "catalogVersion": "v1-248625bad231",
+  "catalogVersion": "v1-13331f2e42ee",
   "factorDictionaryVersion": "v1",
   "works": [
     {
@@ -233902,6 +233902,120 @@
       }
     },
     {
+      "id": "work-b019d09d7523b471f579",
+      "title": "羊のうた",
+      "aliases": [],
+      "creators": [
+        "冬目景"
+      ],
+      "publisher": "スコラ",
+      "demographic": "seinen",
+      "status": "unknown",
+      "firstPublishedYear": 1997,
+      "genres": [
+        "romance"
+      ],
+      "themes": [
+        {
+          "id": "school",
+          "centrality": 1,
+          "confidence": 0.8
+        }
+      ],
+      "axes": {
+        "progression": {
+          "state": "unknown"
+        },
+        "problemSolving": {
+          "state": "unknown"
+        },
+        "strategy": {
+          "state": "unknown"
+        },
+        "pacing": {
+          "state": "known",
+          "value": 2,
+          "confidence": 0.78
+        },
+        "mysteryReveal": {
+          "state": "known",
+          "value": 2,
+          "confidence": 0.78
+        },
+        "worldBuilding": {
+          "state": "known",
+          "value": 2,
+          "confidence": 0.78
+        },
+        "characterArcWeight": {
+          "state": "known",
+          "value": 4,
+          "confidence": 0.78
+        },
+        "relationshipStructure": {
+          "state": "known",
+          "value": 2,
+          "confidence": 0.78
+        },
+        "comedy": {
+          "state": "unknown"
+        },
+        "darkness": {
+          "state": "known",
+          "value": 4,
+          "confidence": 0.78
+        },
+        "mentalStress": {
+          "state": "known",
+          "value": 4,
+          "confidence": 0.78
+        },
+        "romance": {
+          "state": "known",
+          "value": 4,
+          "confidence": 0.78
+        },
+        "emotionalWarmth": {
+          "state": "known",
+          "value": 2,
+          "confidence": 0.78
+        },
+        "artRealism": {
+          "state": "unknown"
+        },
+        "artDensity": {
+          "state": "unknown"
+        },
+        "visualSoftness": {
+          "state": "unknown"
+        },
+        "motionImpact": {
+          "state": "unknown"
+        }
+      },
+      "factorScope": "entry_1_3_volumes",
+      "eligibility": {
+        "onboardingEligible": true,
+        "recommendationEligible": true,
+        "libraryOnly": false,
+        "narrativeToneException": {
+          "policy": "narrative-tone-exhaustion-v1",
+          "workId": "work-b019d09d7523b471f579",
+          "inputManifestSha256": "e43a7ede64dd3b3b1f7dbb0e2329f242083fdd0a6a7c5af28c337c06c6efe89c",
+          "researchSha256": "b0bb3ff1814dcf161f790384cb8e61469234b79cae6e5fa501873e022a1cd9bc",
+          "groups": [
+            "narrative"
+          ]
+        }
+      },
+      "evidence": {
+        "metadataConfidence": 0.92,
+        "groupingConfidence": 0.96,
+        "sourceAgreement": 0.64,
+        "annotationReviewedAt": "2026-10-04T01:45:12.791376+00:00"
+      }
+    },
+    {
       "id": "work-b030f64d25c6108129bb",
       "title": "五等分の花嫁",
       "aliases": [],
@@ -272185,6 +272299,105 @@
         "groupingConfidence": 1,
         "sourceAgreement": 1,
         "annotationReviewedAt": "2026-08-26T00:00:00+09:00"
+      }
+    },
+    {
+      "id": "work-d53b1dcf37ec61ba0eda",
+      "title": "坂本龍馬",
+      "aliases": [],
+      "creators": [
+        "黒鉄ヒロシ"
+      ],
+      "publisher": "PHP研究所",
+      "demographic": "unknown",
+      "status": "unknown",
+      "firstPublishedYear": 1997,
+      "genres": [
+        "historical"
+      ],
+      "themes": [
+        {
+          "id": "historicalReconstruction",
+          "centrality": 2,
+          "confidence": 0.8
+        }
+      ],
+      "axes": {
+        "progression": {
+          "state": "unknown"
+        },
+        "problemSolving": {
+          "state": "unknown"
+        },
+        "strategy": {
+          "state": "unknown"
+        },
+        "pacing": {
+          "state": "unknown"
+        },
+        "mysteryReveal": {
+          "state": "unknown"
+        },
+        "worldBuilding": {
+          "state": "unknown"
+        },
+        "characterArcWeight": {
+          "state": "unknown"
+        },
+        "relationshipStructure": {
+          "state": "unknown"
+        },
+        "comedy": {
+          "state": "known",
+          "value": 2,
+          "confidence": 0.7
+        },
+        "darkness": {
+          "state": "unknown"
+        },
+        "mentalStress": {
+          "state": "unknown"
+        },
+        "romance": {
+          "state": "unknown"
+        },
+        "emotionalWarmth": {
+          "state": "unknown"
+        },
+        "artRealism": {
+          "state": "unknown"
+        },
+        "artDensity": {
+          "state": "unknown"
+        },
+        "visualSoftness": {
+          "state": "unknown"
+        },
+        "motionImpact": {
+          "state": "unknown"
+        }
+      },
+      "factorScope": "entry_1_3_volumes",
+      "eligibility": {
+        "onboardingEligible": true,
+        "recommendationEligible": true,
+        "libraryOnly": false,
+        "narrativeToneException": {
+          "policy": "narrative-tone-exhaustion-v1",
+          "workId": "work-d53b1dcf37ec61ba0eda",
+          "inputManifestSha256": "517371c3b6221329ac6167b93b2f956671de3973f5e77d47b8ab530899648e10",
+          "researchSha256": "e7e712b0cee691965474436b794ac5089a0b129ee68778f2c36977be9341f967",
+          "groups": [
+            "narrative",
+            "tone"
+          ]
+        }
+      },
+      "evidence": {
+        "metadataConfidence": 0.92,
+        "groupingConfidence": 0.96,
+        "sourceAgreement": 0.64,
+        "annotationReviewedAt": "2026-10-04T01:45:13.908628+00:00"
       }
     },
     {
@@ -329993,6 +330206,13 @@
       "editionKind": "standard"
     },
     {
+      "id": "work-b019d09d7523b471f579-v1",
+      "workId": "work-b019d09d7523b471f579",
+      "volumeNumber": 1,
+      "isbn": "9784796297035",
+      "editionKind": "standard"
+    },
+    {
       "id": "work-b030f64d25c6108129bb-representative",
       "workId": "work-b030f64d25c6108129bb",
       "volumeNumber": 1,
@@ -332745,6 +332965,19 @@
       "volumeNumber": 1,
       "isbn": "9784758063715",
       "editionKind": "standard"
+    },
+    {
+      "id": "work-d53b1dcf37ec61ba0eda-v1",
+      "workId": "work-d53b1dcf37ec61ba0eda",
+      "volumeNumber": 1,
+      "isbn": "9784569558950",
+      "editionKind": "standard",
+      "metadata": {
+        "publisherName": "PHP研究所",
+        "itemCaption": "ベストセラー『新選組』に続く「黒鉄歴画」の傑作が誕生！ 幕末のスーパースター・龍馬のすべてをユーモラスなタッチで描き上げる。",
+        "sourceUrl": "https://www.php.co.jp/books/detail.php?isbn=978-4-569-55895-0",
+        "fetchedAt": "2026-10-04T00:08:31.334Z"
+      }
     },
     {
       "id": "work-d53fe377f90268fa90aa-v1",
@@ -337416,6 +337649,7 @@
     "work-afd37ebdbc592eb81575": "work-afd37ebdbc592eb81575-v1",
     "work-afe85672c12153071644": "work-afe85672c12153071644-representative",
     "work-b016fb45e3491836d5ce": "work-b016fb45e3491836d5ce-representative",
+    "work-b019d09d7523b471f579": "work-b019d09d7523b471f579-v1",
     "work-b030f64d25c6108129bb": "work-b030f64d25c6108129bb-representative",
     "work-b0393a3f0573bf223d68": "work-b0393a3f0573bf223d68-representative",
     "work-b03c7f59e96d7019f84b": "work-b03c7f59e96d7019f84b-representative",
@@ -337758,6 +337992,7 @@
     "work-d511327162ea22a67167": "work-d511327162ea22a67167-v1",
     "work-d5190eab71dd7e16f800": "work-d5190eab71dd7e16f800-representative",
     "work-d532eab2aba5cb4a898f": "work-d532eab2aba5cb4a898f-representative",
+    "work-d53b1dcf37ec61ba0eda": "work-d53b1dcf37ec61ba0eda-v1",
     "work-d53fe377f90268fa90aa": "work-d53fe377f90268fa90aa-v1",
     "work-d55b7026f5d0409716b9": "work-d55b7026f5d0409716b9-v1",
     "work-d562b23d7c10b7009909": "work-d562b23d7c10b7009909-v1",
