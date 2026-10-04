@@ -134,7 +134,15 @@ const shogakukanBookPage = z.object({
   props: z.object({
     book: z.object({
       isbn13_cd: z.string(),
-      promo_contents: z.array(z.string().nullable()),
+      promo_contents: z.tuple(
+        [
+          z.string().nullable(),
+          z.string().nullable(),
+          z.string().nullable(),
+          z.string().nullable(),
+        ],
+        z.union([z.string(), z.array(z.string())]).nullable(),
+      ),
       promo_kbns: z.array(
         z.object({
           promo_kbn: z.number(),
@@ -145,6 +153,43 @@ const shogakukanBookPage = z.object({
   }),
 });
 
+const futabashaBookResponse = z.object({
+  book_details: z.object({
+    book_informations: z.object({
+      isbn_code: z.string().regex(/^\d{13}$/u),
+      jdcn_code: z.string().min(1),
+      book_name: z.string().min(1),
+      introductions_400: z.string().min(1),
+    }),
+  }),
+});
+
+function capturedJsonBookIntroduction(source: Buffer, sourceUrl: string, isbn: string) {
+  const url = new URL(sourceUrl);
+  if (
+    url.hostname !== "book-api.futabasha.co.jp" ||
+    url.pathname !== "/book_details" ||
+    url.searchParams.get("media") !== "1"
+  )
+    return "";
+  let parsed: unknown;
+  try {
+    parsed = JSON.parse(new TextDecoder("utf-8", { fatal: true }).decode(source));
+  } catch {
+    return "";
+  }
+  const response = futabashaBookResponse.safeParse(parsed);
+  if (!response.success) return "";
+  const book = response.data.book_details.book_informations;
+  if (
+    isbnIdentityKey(book.isbn_code) !== isbnIdentityKey(isbn) ||
+    !book.jdcn_code.startsWith(book.isbn_code) ||
+    url.searchParams.get("jdcn_code") !== book.jdcn_code
+  )
+    return "";
+  return captionText(book.introductions_400);
+}
+
 function capturedBookIntroduction(value: string, sourceUrl: string, isbn: string) {
   if (!["shogakukan.co.jp", "www.shogakukan.co.jp"].includes(new URL(sourceUrl).hostname))
     return "";
@@ -154,13 +199,10 @@ function capturedBookIntroduction(value: string, sourceUrl: string, isbn: string
     .replace(/<!--[\s\S]*?-->/gu, "");
   for (const tag of markup.matchAll(/<div\b(?:[^"'<>]|"[^"]*"|'[^']*')*>/giu)) {
     const attributes = new Map<string, string>();
-    for (const attribute of tag[0].matchAll(
-      /\s([^\s"'<>/=]+)\s*=\s*(?:"([^"]*)"|'([^']*)')/gu,
-    )) {
+    for (const attribute of tag[0].matchAll(/\s([^\s"'<>/=]+)\s*=\s*(?:"([^"]*)"|'([^']*)')/gu)) {
       const name = attribute[1];
       const content = attribute[2] ?? attribute[3];
-      if (name !== undefined && content !== undefined)
-        attributes.set(name.toLowerCase(), content);
+      if (name !== undefined && content !== undefined) attributes.set(name.toLowerCase(), content);
     }
     const dataPage = attributes.get("data-page");
     if (attributes.get("id") !== "app" || !dataPage) continue;
@@ -206,29 +248,57 @@ export function readIntake(input: string, inputBytes: Buffer) {
     if ("kind" in receipt) {
       const sourceFolder = dirname(sourcePath);
       const collectionFolder = existsSync(join(sourceFolder, "collection-session.json"))
-        ? sourceFolder : dirname(sourceFolder);
+        ? sourceFolder
+        : dirname(sourceFolder);
       if (collectionFolder !== folder) within(folder, collectionFolder);
       const collection = z
-        .object({ workId: z.string().min(1), supplementalFiles: z.array(z.object({
-          path: z.string(), originalPath: z.string(), sha256: digest, bytes: z.number().int().positive(),
-        })).optional() })
+        .object({
+          workId: z.string().min(1),
+          supplementalFiles: z
+            .array(
+              z.object({
+                path: z.string(),
+                originalPath: z.string(),
+                sha256: digest,
+                bytes: z.number().int().positive(),
+              }),
+            )
+            .optional(),
+        })
         .parse(JSON.parse(readFileSync(join(collectionFolder, "collection-session.json"), "utf8")));
       const supplied = collection.supplementalFiles ?? [];
-      const sourceBinding = supplied.find((row) => resolve(collectionFolder, row.path) === sourcePath);
-      const receiptBinding = supplied.find((row) => resolve(collectionFolder, row.path) === receiptPath);
+      const sourceBinding = supplied.find(
+        (row) => resolve(collectionFolder, row.path) === sourcePath,
+      );
+      const receiptBinding = supplied.find(
+        (row) => resolve(collectionFolder, row.path) === receiptPath,
+      );
       if (receipt.kind === "http-body" && sourceBinding && receiptBinding) {
-        for (const [binding, bytes] of [[sourceBinding, source], [receiptBinding, receiptBytes]] as const) {
+        for (const [binding, bytes] of [
+          [sourceBinding, source],
+          [receiptBinding, receiptBytes],
+        ] as const) {
           assert.equal(sha256(bytes), binding.sha256, "Supplied capture hash mismatch");
           assert.equal(bytes.length, binding.bytes, "Supplied capture length mismatch");
         }
-        assert([sourceBinding.originalPath, receiptBinding.originalPath].every((path) =>
-          isAbsolute(path) || win32.isAbsolute(path)), "Supplied capture original path must be absolute");
+        assert(
+          [sourceBinding.originalPath, receiptBinding.originalPath].every(
+            (path) => isAbsolute(path) || win32.isAbsolute(path),
+          ),
+          "Supplied capture original path must be absolute",
+        );
         const paths = win32.isAbsolute(receiptBinding.originalPath) ? win32 : { dirname, resolve };
-        assert.equal(paths.resolve(paths.dirname(receiptBinding.originalPath), receipt.rawPath),
-          paths.resolve(sourceBinding.originalPath), "Supplied receipt names a different original source");
+        assert.equal(
+          paths.resolve(paths.dirname(receiptBinding.originalPath), receipt.rawPath),
+          paths.resolve(sourceBinding.originalPath),
+          "Supplied receipt names a different original source",
+        );
       } else {
-        assert.equal(within(folder, realpathSync(resolve(dirname(receiptPath), receipt.rawPath))),
-          sourcePath, "Browser receipt names a different captured source");
+        assert.equal(
+          within(folder, realpathSync(resolve(dirname(receiptPath), receipt.rawPath))),
+          sourcePath,
+          "Browser receipt names a different captured source",
+        );
       }
       assert.equal(collection.workId, entry.metadata.workId, "Browser collection Work mismatch");
       assert(
@@ -240,15 +310,35 @@ export function readIntake(input: string, inputBytes: Buffer) {
     if (entry.metadata.itemCaption !== undefined) {
       assert(entry.originalItemCaption.trim(), "Keep the publisher's original introduction");
       const original = plainText(entry.originalItemCaption);
-      const decoded = spawnSync(catalogPython(resolve(import.meta.dirname, "..")), [
-        "-B", "-X", "utf8", "-c",
-        "import json,sys; sys.path.insert(0,sys.argv[1]); from factor_model_input import reading_text; print(json.dumps(reading_text(sys.stdin.buffer.read(),json.loads(sys.argv[2]),preserve_html=True),ensure_ascii=False))",
-        join(import.meta.dirname, "catalog_authoring"),
-        JSON.stringify("kind" in receipt ? receipt : { kind: "http-body", contentType: "text/html" }),
-      ], { input: source, encoding: "utf8", maxBuffer: 16 * 1024 * 1024, windowsHide: true });
-      if (decoded.error) throw decoded.error;
-      assert.equal(decoded.status, 0, decoded.stderr || decoded.stdout);
-      const rawText = z.object({ text: z.string().min(1) }).parse(JSON.parse(decoded.stdout)).text;
+      const jsonCapture =
+        "kind" in receipt &&
+        receipt.kind === "http-body" &&
+        /^application\/json(?:\s*;\s*charset\s*=\s*"?utf-8"?)?\s*$/iu.test(
+          receipt.contentType ?? "",
+        );
+      let rawText: string;
+      if (jsonCapture) {
+        rawText = capturedJsonBookIntroduction(source, receipt.resolvedUrl, entry.metadata.isbn);
+      } else {
+        const decoded = spawnSync(
+          catalogPython(resolve(import.meta.dirname, "..")),
+          [
+            "-B",
+            "-X",
+            "utf8",
+            "-c",
+            "import json,sys; sys.path.insert(0,sys.argv[1]); from factor_model_input import reading_text; print(json.dumps(reading_text(sys.stdin.buffer.read(),json.loads(sys.argv[2]),preserve_html=True),ensure_ascii=False))",
+            join(import.meta.dirname, "catalog_authoring"),
+            JSON.stringify(
+              "kind" in receipt ? receipt : { kind: "http-body", contentType: "text/html" },
+            ),
+          ],
+          { input: source, encoding: "utf8", maxBuffer: 16 * 1024 * 1024, windowsHide: true },
+        );
+        if (decoded.error) throw decoded.error;
+        assert.equal(decoded.status, 0, decoded.stderr || decoded.stdout);
+        rawText = z.object({ text: z.string().min(1) }).parse(JSON.parse(decoded.stdout)).text;
+      }
       assert(
         plainText(rawText).includes(original) ||
           captionText(rawText).includes(original) ||
