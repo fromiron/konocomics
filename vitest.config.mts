@@ -26,6 +26,7 @@ export default defineConfig({
     exclude: [
       ...configDefaults.exclude,
       "tests/e2e/**",
+      ".claude/worktrees/**",
       ".tmp/**",
       ".workspace/**",
       "data/local/catalog-authoring/**",
