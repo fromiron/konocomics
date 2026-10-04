@@ -184,6 +184,89 @@ class CandidateAxisAuthorityTest(unittest.TestCase):
         write(result_root / "chunk-01/evidence-panel-ledger.csv", publisher.LEDGER_FIELDS, self.ledger)
         return input_root, result_root, authority
 
+    def test_stored_withdrawal_validates_exact_frozen_prior_and_native_readback(self):
+        # An already eligible AEP work with retained numeric context and no Axis
+        # updates must still take the correction path, not context-only replay.
+        for axis in publisher.AXES:
+            art = axis in publisher.ART
+            self.db.execute("update source_factors set state=?,value=?,confidence=?,evidenceId=? where workId=? and axisId=?", ("unknown" if art else "known", "" if art else "2", "" if art else "0.8", "" if art else self.source["id"], self.work_id, axis))
+        self.db.execute("update source_works set onboardingEligible='true',recommendationEligible='true',libraryOnly='false' where id=?", (self.work_id,))
+        context = self.rows(self.fixture, "source_recommendation_context", self.work_id)[0]
+        self.db.execute("insert into source_recommendation_context values(?,?,?,?,?,?,?,?)", tuple(context.values()))
+        self.integration = fixtures.CompactPlanTest.integration
+        self.integration.reindex_authority_projection(self.db, {"source_recommendation_context"})
+        self.db.commit()
+        for kind in ("genre", "theme"):
+            with self.subTest(kind=kind):
+                self.db.execute("update source_works set genres='fantasy;horror;mystery' where id=?", (self.work_id,))
+                self.db.commit()
+                baseline = self.backend._baseline_facts(self.db)
+                tag = "mystery" if kind == "genre" else next(name for wid, name in baseline["themes"] if wid == self.work_id)
+                current = baseline["works"][self.work_id] if kind == "genre" else baseline["themes"][(self.work_id, tag)]
+                prior = {**self.claim("relationshipStructure"), "factKey": kind + ":" + tag,
+                         "factType": kind, "value": "true" if kind == "genre" else current["centrality"], "reasonCode": "ORIGINAL_ACCEPTED"}
+                decision = {"workId": self.work_id, "factKey": prior["factKey"], "action": "WITHDRAW", "reasonCode": "NEW_FROZEN_OBSERVATION_CONTRADICTS_PRIOR",
+                            "priorSemanticSha256": publisher.panel_validation.claim_semantic_digest(prior),
+                            "baselineSemanticSha256": publisher.panel_validation.baseline_stored_tag_digest(self.work_id, prior["factKey"], current),
+                            "resultSemanticSha256": publisher.panel_validation.claim_semantic_digest(None)}
+                ledger = [self.claim(axis, unknown=axis in publisher.ART) for axis in publisher.AXES]
+                with tempfile.TemporaryDirectory() as folder:
+                    root = Path(folder)
+                    def write(path, fields, rows):
+                        path.parent.mkdir(parents=True, exist_ok=True)
+                        with path.open("w", encoding="utf-8", newline="") as stream:
+                            writer = csv.DictWriter(stream, fieldnames=fields, extrasaction="ignore", restval="", lineterminator="\n")
+                            writer.writeheader()
+                            writer.writerows(rows)
+                    write(root / "input/prior-claim-decisions.csv", publisher.panel_validation.DECISION_FIELDS, [decision])
+                    write(root / "input/chunks/chunk-01/prior-panel-claims.csv", publisher.PRIOR_FIELDS, [prior])
+                    write(root / "result/chunk-01/evidence-panel-ledger.csv", publisher.LEDGER_FIELDS, ledger)
+                    (root / "result/chunk-01/evidence-panel-summary.json").write_text(json.dumps({"works": [{"workId": self.work_id, "coverage": {}}]}) + "\n")
+                    corrections = publisher._validate_axis_corrections(root / "input", root / "result", self.db, self.db)
+                    self.assertIsNone(corrections[(self.work_id, prior["factKey"])]["result"])
+                    # Current drift and a non-omitted result are rejected against the
+                    # original frozen digest, before any transaction may publish.
+                    sql = "update source_works set evidenceId='stale' where id=?" if kind == "genre" else "update source_themes set confidence='0.01' where workId=? and themeId=?"
+                    params = (self.work_id,) if kind == "genre" else (self.work_id, tag)
+                    self.db.execute(sql, params)
+                    with self.assertRaisesRegex(publisher.ValidationError, "baseline semantic binding mismatch"):
+                        publisher._validate_axis_corrections(root / "input", root / "result", self.db, self.db)
+                    self.db.rollback()
+                    write(root / "result/chunk-01/evidence-panel-ledger.csv", publisher.LEDGER_FIELDS, [*ledger, prior])
+                    with self.assertRaisesRegex(publisher.ValidationError, "explicitly withdraw"):
+                        publisher._validate_axis_corrections(root / "input", root / "result", self.db, self.db)
+                    write(root / "result/chunk-01/evidence-panel-ledger.csv", publisher.LEDGER_FIELDS, ledger)
+                    self.backend = publisher._backend_module(prior_corrections=corrections)
+                    self.baseline, self.ledger = baseline, ledger
+                    self.packet["work"] = baseline["works"][self.work_id]
+                    before = self.backend._snapshot_db(self.db)
+                    plan = self.plan()
+                    self.assertFalse(plan["tagCorrections"][0]["published"])
+                    self.assertFalse(plan["tagCorrections"][0]["retainedStoredTag"])
+                    self.assertFalse(plan["contextOnlyWorkUpdates"])
+                    expected = CatalogState(before, {self.gold_id})
+                    expected.apply(plan)
+                    self.db.execute("begin immediate")
+                    self.backend.apply_plan_in_transaction(self.db, plan)
+                    self.backend.verify_expected_after(self.db, before, plan, {self.gold_id})
+                    self.assertEqual(self.backend._snapshot_db(self.db), expected.snapshot())
+                    originals = {row["id"]: row for row in self.rows(before, "source_evidence")}
+                    actual = {row["id"]: row for row in self.rows(expected.snapshot(), "source_evidence")}
+                    self.assertTrue(all(actual[eid] == row for eid, row in originals.items()))
+                    self.assertIn("priorClaimCorrectionV1|", actual[plan["tagCorrections"][0]["correctionEvidenceId"]]["notes"])
+                    if kind == "genre":
+                        self.db.execute("savepoint unexpected")
+                        self.db.execute("update source_works set genres='horror' where id=?", (self.work_id,))
+                        with self.assertRaisesRegex(ValueError, "final membership readback mismatch"):
+                            self.backend.verify_expected_after(self.db, before, plan, {self.gold_id})
+                        self.db.execute("rollback to unexpected")
+                        self.db.execute("release unexpected")
+                    # A replay cannot silently omit the old membership again.
+                    with self.assertRaisesRegex(ValueError, "lost exact baseline"):
+                        self.backend.apply_plan_in_transaction(self.db, plan)
+                    self.db.rollback()
+                    self.assertEqual(before, self.backend._snapshot_db(self.db))
+
     def test_fresh_raw_tags_preserve_exact_prior_axis_through_writer_and_readback(self):
         input_root, result_root, authority = self.fresh_prior_input()
         snapshots = publisher._validate_fresh_unreviewed_snapshots(input_root, result_root, self.db, self.db, authority)
