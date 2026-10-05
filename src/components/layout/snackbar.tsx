@@ -63,7 +63,7 @@ export function Snackbar({
           <span>{notice.text}</span>
           {notice.action === undefined ? null : (
             <button
-              className="-my-[var(--space-2)] inline-flex min-h-[var(--control-min-size)] shrink-0 items-center rounded-[var(--radius-control)] px-[var(--space-2)] text-accent underline-offset-4 hover:underline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-focus-ring"
+              className="-my-[var(--space-2)] inline-flex min-h-[var(--control-min-size)] shrink-0 items-center rounded-[var(--radius-control)] px-[var(--space-2)] text-accent-ink underline-offset-4 hover:underline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-focus-ring"
               onClick={notice.action.onAction}
               type="button"
             >

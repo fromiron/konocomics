@@ -82,7 +82,7 @@ function GlobalNotFound() {
       <h1>{routeBoundaryStrings.notFoundTitle}</h1>
       <p>{routeBoundaryStrings.notFoundDescription}</p>
       <Link
-        className="interactive-press inline-flex min-h-[var(--control-min-size)] items-center font-bold text-accent underline underline-offset-[var(--space-content-tight)] transition-transform duration-[var(--motion-duration-press)] active:scale-[0.97] motion-reduce:active:scale-100"
+        className="interactive-press inline-flex min-h-[var(--control-min-size)] items-center font-bold text-accent-ink underline underline-offset-[var(--space-content-tight)] transition-transform duration-[var(--motion-duration-press)] active:scale-[0.97] motion-reduce:active:scale-100"
         to="/"
       >
         {routeBoundaryStrings.home}

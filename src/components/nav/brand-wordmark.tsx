@@ -17,13 +17,13 @@ export function BrandWordmark({ className, decorative = false }: BrandWordmarkPr
       )}
       role={decorative ? undefined : "img"}
     >
-      <span aria-hidden="true" className="brand-mark__accent font-bold text-accent">
+      <span aria-hidden="true" className="brand-mark__accent font-bold text-accent-ink">
         {navigationStrings.brandParts.kono}
       </span>
       <span aria-hidden="true" className="brand-mark__muted font-light text-text-muted">
         {navigationStrings.brandParts.co}
       </span>
-      <span aria-hidden="true" className="brand-mark__accent font-bold text-accent">
+      <span aria-hidden="true" className="brand-mark__accent font-bold text-accent-ink">
         {navigationStrings.brandParts.mi}
       </span>
       <span aria-hidden="true" className="brand-mark__muted font-light text-text-muted">

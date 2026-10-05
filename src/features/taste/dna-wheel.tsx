@@ -184,7 +184,7 @@ export function DnaWheel({
                 {axes.slice(0, 3).map((axis, index) => (
                   <span key={axis.factorId}>
                     {index === 0 ? null : (
-                      <span className="px-[var(--space-2)] text-accent">×</span>
+                      <span className="px-[var(--space-2)] text-accent-ink">×</span>
                     )}
                     {explanationLexicon.factorLabels[axis.factorId]}
                   </span>
@@ -224,7 +224,9 @@ export function DnaWheel({
                           {index < 3 ? index + 1 : "·"}
                         </span>
                         <strong className="taste-dna-axis__name">{label}</strong>
-                        <span className={cn("taste-dna-axis__level", index < 3 && "text-accent")}>
+                        <span
+                          className={cn("taste-dna-axis__level", index < 3 && "text-accent-ink")}
+                        >
                           {tasteStrings.factorValue(axis.value)}
                         </span>
                         {evidence.length === 0 ? null : (

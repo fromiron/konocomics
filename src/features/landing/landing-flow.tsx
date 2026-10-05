@@ -3,7 +3,6 @@
 import { useNavigate } from "@tanstack/react-router";
 import { useEffect, useMemo } from "react";
 
-import { coverSourceForSize } from "@/components/cover/CoverImage";
 import { BrandWordmark } from "@/components/nav/brand-wordmark";
 import { CatalogFailure } from "@/features/catalog/catalog-provider";
 import { usePersonalProfile } from "@/features/catalog/personal-catalog-provider";
@@ -12,7 +11,7 @@ import { usePersistence, type ProviderCacheRecord } from "@/infrastructure/db";
 
 import { recordEntrySource } from "./entry-source";
 import { HomeHero } from "./home-hero";
-import { HomeClosing, HomeHowItWorks, HomeObi } from "./home-how-it-works";
+import { HomeClosing, HomeHowItWorks } from "./home-how-it-works";
 import { HomeDiscoveryShelf, HomeRankingShelf } from "./home-showcase";
 import type { LandingSample, LandingWork } from "./landing-types";
 import { useLandingVisitorState } from "./visitor-state";
@@ -61,9 +60,12 @@ export function LandingFlow({
   }, [entrySource]);
   const coverTargets = useMemo(() => {
     const uniqueWorks = new Map(
-      [sample.recommendation.work, ...editorialRankingWorks, ...discoveryWorks].map(
-        (work) => [work.id, work] as const,
-      ),
+      [
+        sample.recommendation.work,
+        ...sample.anchorWorks,
+        ...editorialRankingWorks,
+        ...discoveryWorks,
+      ].map((work) => [work.id, work] as const),
     );
 
     return [...uniqueWorks.values()].flatMap((work) =>
@@ -75,9 +77,6 @@ export function LandingFlow({
     getProviderCache,
     saveProviderCache: skipProviderCacheWrite,
   });
-  // The backdrop blurs the same cover the example card shows in front of it.
-  const heroCoverSource = coverUrls.get(sample.recommendation.work.id);
-  const heroCoverUrl = heroCoverSource ? coverSourceForSize(heroCoverSource, 600) : null;
 
   useEffect(() => {
     if (!showIntroduction && hasProfile === true) {
@@ -98,19 +97,18 @@ export function LandingFlow({
       data-landing-state="introduction"
     >
       <HomeHero
-        backdropUrl={heroCoverUrl}
-        coverUrls={coverUrls}
-        onCoverVisible={requestCover}
         recommendableWorkCount={recommendableWorkCount}
-        sample={sample}
         sharedEntry={entrySource === "share-card"}
-        staticLogo={showIntroduction}
+        storageFree={showIntroduction}
         visitor={visitor}
       />
-
-      <HomeObi animate={!showIntroduction} />
       <div className="mx-auto grid w-full max-w-[var(--layout-width-media)] gap-[var(--space-shelf-group)] px-[var(--layout-page-padding)] pt-[var(--space-shelf)]">
-        <HomeHowItWorks sample={sample} />
+        <HomeHowItWorks
+          animateReason={!showIntroduction && visitor === "new"}
+          coverUrls={coverUrls}
+          onCoverVisible={requestCover}
+          sample={sample}
+        />
         <div className="grid gap-[var(--space-shelf)]">
           <HomeRankingShelf
             coverUrls={coverUrls}

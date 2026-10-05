@@ -145,7 +145,7 @@ function SectionNavigation({
                 aria-current={isCurrent ? "location" : undefined}
                 className={cn(
                   "flex min-h-[var(--control-min-size)] items-center gap-[var(--space-content-loose)] border-b-2 border-transparent px-[var(--space-3)] text-[length:var(--font-size-14)] font-medium whitespace-nowrap text-text-muted transition-colors duration-[var(--motion-duration-feedback)] ease-[var(--motion-ease-direct)] focus-visible:outline-2 focus-visible:-outline-offset-2 focus-visible:outline-ring md:rounded-[var(--radius-control)] md:border-b-0 [@media(hover:hover)_and_(pointer:fine)]:hover:text-text-strong md:[@media(hover:hover)_and_(pointer:fine)]:hover:bg-surface-1",
-                  "aria-[current=location]:border-accent aria-[current=location]:font-bold aria-[current=location]:text-accent md:aria-[current=location]:bg-accent-soft md:[@media(hover:hover)_and_(pointer:fine)]:aria-[current=location]:hover:bg-accent-soft",
+                  "aria-[current=location]:border-accent aria-[current=location]:font-bold aria-[current=location]:text-accent-ink md:aria-[current=location]:bg-accent-soft md:[@media(hover:hover)_and_(pointer:fine)]:aria-[current=location]:hover:bg-accent-soft",
                 )}
                 onClick={(event) => {
                   if (

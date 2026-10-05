@@ -58,7 +58,8 @@ function NavigationLinks({ activePathname, variant }: PostOnboardingNavigationPr
                 variant === "mobile"
                   ? "h-[var(--mobile-navigation-height)] flex-col gap-0.5 px-[var(--space-1)] pt-[6px] pb-[var(--space-1)] text-[length:var(--text-caption-size)] leading-[1.25] after:top-0"
                   : "rounded-[var(--radius-control)] px-[14px] text-[length:var(--font-size-14)] after:bottom-0",
-                active && "app-navigation__link--active font-bold text-accent after:opacity-100",
+                active &&
+                  "app-navigation__link--active font-bold text-accent-ink after:opacity-100",
               )}
               to={item.href}
               preload={false}

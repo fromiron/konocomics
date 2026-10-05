@@ -406,16 +406,14 @@ export const landingStrings = {
     recovery: "おすすめを出すには、好きな作品をもう少し追加してください。",
   },
   sharedEntry: "シェアされた Manga DNA から来た方へ",
-  obi: {
-    label: "好みからおすすめまで",
-    steps: ["好きな5作品", "Manga DNA", "理由つきのおすすめ"],
-  },
   hero: {
     trust: (workCount: string) => [
       "登録なし",
       `${workCount}作品から提案`,
       "データはこの端末だけに保存",
     ],
+    motionPause: "アニメーションを一時停止",
+    motionPlay: "アニメーションを再生",
   },
   sample: {
     caption: (titles: readonly string[]) =>
@@ -433,7 +431,8 @@ export const landingStrings = {
         description: "好みのどこに合うのかを添えて、次の一冊を提案します。",
       },
     ],
-    dnaTitle: "例：Manga DNA",
+    anchorsLabel: "選んだ作品",
+    dnaTitle: "Manga DNA",
     dnaBasis: (title: string, count: number) => `『${title}』ほか${String(count)}作品から`,
   },
   ranking: {
@@ -445,7 +444,8 @@ export const landingStrings = {
     description: "ジャンルを横断して選んだ作品です。",
   },
   closing: {
-    title: "あなたの Manga DNA を見てみよう",
+    // A no-break space keeps the product name on one line.
+    title: "あなたの Manga\u00a0DNA を見てみよう",
     description: "好きなマンガを5作品選ぶだけ。登録はいりません。",
   },
   footer: {

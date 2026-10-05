@@ -112,7 +112,7 @@ export function StorageStatus({
                   className={cn(
                     "mt-[var(--space-content-tight)] size-[var(--space-4)] shrink-0",
                     persistState === "persisted" && !storageDegraded
-                      ? "text-accent"
+                      ? "text-accent-ink"
                       : "text-text-muted",
                   )}
                 />

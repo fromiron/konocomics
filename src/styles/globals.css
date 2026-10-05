@@ -10,21 +10,24 @@
 }
 
 :root {
-  color-scheme: dark;
-  --canvas: oklch(0.12 0.018 250);
-  --surface-1: oklch(0.16 0.021 250);
-  --surface-2: oklch(0.2 0.024 250);
-  --surface-3: oklch(0.24 0.027 250);
-  --text-strong: oklch(0.97 0.006 250);
-  --text: oklch(0.86 0.012 250);
-  --text-muted: oklch(0.67 0.018 250);
-  --line: oklch(0.29 0.025 250);
-  --accent: oklch(0.76 0.11 72);
-  --accent-hover: oklch(0.81 0.11 74);
-  --accent-active: oklch(0.7 0.12 70);
-  --accent-soft: oklch(0.27 0.05 70);
+  /* Manga paper and ink (2026-10-05 user decision: the app moves to a light theme). The amber
+     brand fill stays; text in the accent hue uses the deeper --accent-ink for contrast. */
+  color-scheme: light;
+  --canvas: oklch(0.962 0.009 85);
+  --surface-1: oklch(0.988 0.005 85);
+  --surface-2: oklch(0.935 0.011 85);
+  --surface-3: oklch(0.9 0.013 85);
+  --text-strong: oklch(0.2 0.016 265);
+  --text: oklch(0.31 0.017 265);
+  --text-muted: oklch(0.47 0.016 265);
+  --line: oklch(0.85 0.013 85);
+  --accent: oklch(0.76 0.12 70);
+  --accent-ink: oklch(0.5 0.12 58);
+  --accent-hover: oklch(0.72 0.13 68);
+  --accent-active: oklch(0.67 0.13 64);
+  --accent-soft: oklch(0.93 0.045 78);
   --on-accent: oklch(0.22 0.03 65);
-  --danger: oklch(0.65 0.22 25);
+  --danger: oklch(0.54 0.2 27);
   /* Mixes of two hues use oklab: oklch interpolates hue and turns amber+blue-grey green and
      red+blue-grey magenta. */
   --line-accent: color-mix(in oklab, var(--accent) 48%, var(--line));
@@ -58,9 +61,9 @@
   --medal-bronze-ink: oklch(0.2 0.04 42);
   --book-cover-width: 96px;
   --discovery-question-size: 18px;
-  --dialog-overlay: color-mix(in oklch, var(--canvas) 72%, transparent);
+  --dialog-overlay: oklch(0.2 0.016 265 / 0.42);
   --warn: var(--danger);
-  --focus-ring: var(--accent);
+  --focus-ring: var(--accent-ink);
   --font-noto-sans-jp: "Noto Sans JP";
   --font-space-grotesk: "Space Grotesk";
 
@@ -131,6 +134,7 @@
   --layout-width-onboarding: 1120px;
   --layout-width-onboarding-panel: 20rem;
   --layout-width-media: 1200px;
+  --layout-width-hero: 1440px;
   --layout-width-navigation: 1200px;
 
   --radius-cover: 4px;
@@ -139,9 +143,9 @@
   --radius-pill: 999px;
   --radius-cover-selection: calc(var(--radius-cover) + 2px);
   --radius: var(--radius-card);
-  --shadow-level-1: 0 4px 16px oklch(0 0 0 / 0.08);
-  --shadow-cover-featured: 0 8px 24px oklch(0 0 0 / 0.5);
-  --shadow-floating-action: 0 8px 8px oklch(0 0 0 / 0.3);
+  --shadow-level-1: 0 4px 16px oklch(0.2 0.016 265 / 0.08);
+  --shadow-cover-featured: 0 8px 24px oklch(0.2 0.016 265 / 0.2);
+  --shadow-floating-action: 0 8px 8px oklch(0.2 0.016 265 / 0.16);
   --shadow-raised: var(--shadow-level-1);
   --surface-page: var(--canvas);
   --surface-raised: var(--surface-1);
@@ -219,6 +223,7 @@
   --color-ink-muted: var(--ink-muted);
   --color-line: var(--line);
   --color-accent: var(--accent);
+  --color-accent-ink: var(--accent-ink);
   --color-accent-hover: var(--accent-hover);
   --color-accent-active: var(--accent-active);
   --color-accent-soft: var(--accent-soft);
@@ -295,7 +300,7 @@ button.quiet-text-action--cover {
 
 button.quiet-text-action--cover:hover,
 button.quiet-text-action--cover:focus-visible {
-  color: var(--accent);
+  color: var(--accent-ink);
 }
 
 button.quiet-text-action--danger:hover,
@@ -1002,7 +1007,7 @@ h1[tabindex="-1"]:focus {
   align-items: center;
   gap: var(--space-1);
   min-height: var(--control-min-size);
-  color: var(--accent);
+  color: var(--accent-ink);
   font-size: var(--font-size-14);
   font-weight: 700;
 }
@@ -1316,7 +1321,7 @@ h1[tabindex="-1"]:focus {
   .pointer-glare {
     background: radial-gradient(
       420px circle at var(--light-x, 50%) var(--light-y, 50%),
-      color-mix(in oklch, var(--text-strong) 14%, transparent),
+      oklch(1 0 0 / 0.42),
       transparent 55%
     );
   }
@@ -1341,38 +1346,9 @@ h1[tabindex="-1"]:focus {
   }
 }
 
-/* Landing tagline characters ride the logo reveal and finish inside its 1.4s (04 §5.1). */
-@media (prefers-reduced-motion: no-preference) {
-  .landing-hero:has(.landing-logo-reveal[data-phase="waiting-fonts"]) .landing-tagline__char {
-    opacity: 0;
-    transform: translateY(0.55em);
-  }
-
-  .landing-hero:has(.landing-logo-reveal[data-phase="playing"]) .landing-tagline__char {
-    animation: tagline-char-in 600ms cubic-bezier(0.2, 0.7, 0.2, 1) both;
-    animation-delay: calc(150ms + var(--char-index, 0) * 45ms);
-  }
-}
-
 @media (prefers-reduced-motion: reduce) {
-  .landing-hero:has(.landing-logo-reveal[data-reduced-entry]) .landing-tagline {
-    animation: reduced-fade-in 300ms var(--motion-ease-direct) both !important;
-  }
-
   .landing-logo-reveal[data-reduced-entry] {
     --reduced-motion-duration: 400ms;
-  }
-}
-
-@keyframes tagline-char-in {
-  from {
-    opacity: 0;
-    transform: translateY(0.55em);
-  }
-
-  to {
-    opacity: 1;
-    transform: none;
   }
 }
 
@@ -1666,7 +1642,8 @@ h1[tabindex="-1"]:focus {
   background: var(--accent);
 }
 .spring-switch > [data-slot="switch-thumb"] {
-  background: var(--text-strong);
+  background: var(--surface-1);
+  box-shadow: 0 1px 2px oklch(0.2 0.016 265 / 0.3);
 }
 .spring-switch[data-size="default"] > [data-slot="switch-thumb"] {
   width: var(--control-switch-thumb);
@@ -1715,10 +1692,6 @@ h1[tabindex="-1"]:focus {
     animation: typed-reason-glyph var(--motion-duration-typing-glyph) steps(1, end) backwards;
     animation-delay: calc(var(--type-index) * var(--type-step));
   }
-  .landing-obi[data-entered="true"] {
-    animation: landing-obi-enter var(--motion-duration-cinematic) var(--motion-ease-signature)
-      backwards;
-  }
   .dna-ink-line[data-draw="true"] path {
     animation: dna-ink-draw var(--motion-duration-ink-draw) var(--motion-ease-direct) backwards;
     animation-delay: var(--ink-delay);
@@ -1735,16 +1708,6 @@ h1[tabindex="-1"]:focus {
   }
   to {
     opacity: 1;
-  }
-}
-@keyframes landing-obi-enter {
-  from {
-    opacity: 0.7;
-    transform: translateX(calc(-1 * var(--space-4)));
-  }
-  to {
-    opacity: 1;
-    transform: none;
   }
 }
 @keyframes dna-ink-draw {
@@ -1859,4 +1822,345 @@ h1[tabindex="-1"]:focus {
   to {
     opacity: 1;
   }
+}
+
+/* Home hero scene: a delivered manga page on the dark canvas. The page paper and ink match the
+   delivered panel layers (romance 06/07 panel paper and ink, battle 05 panel ink). Layer
+   motion is Web Animations on `.hh-node` channels; these rules are the approved still. */
+:root {
+  --hero-paper-warm: rgb(255 250 241);
+  --hero-paper-white: rgb(255 255 255);
+  --hero-ink-warm: rgb(30 28 28);
+  --hero-ink-cool: rgb(12 12 12);
+  --hero-inset-warm: color-mix(in oklch, oklch(0.9 0.05 15) 55%, var(--hero-paper-warm));
+  --hero-inset-cool: color-mix(in oklch, oklch(0.93 0.03 40) 35%, var(--hero-paper-warm));
+  --hero-light: oklch(0.99 0.04 85);
+  --hero-page-shadow:
+    0 1px 2px oklch(0.2 0.016 265 / 0.08), 0 24px 48px -28px oklch(0.2 0.016 265 / 0.45);
+}
+
+/* One sheet of paper holds the art panel and the title panel. Its paper, ink and frame weight
+   follow the scene, so the title is inked like the art beside it. */
+.hh-page {
+  grid-template-columns: minmax(0, 1fr);
+  --hh-paper: var(--hero-paper-white);
+  --hh-ink: var(--hero-ink-cool);
+  --hh-margin: 1.6cqi;
+  --hh-frame: max(1.5px, 0.22cqi);
+  position: relative;
+  display: grid;
+  gap: var(--hh-margin);
+  padding: var(--hh-margin);
+  border-radius: var(--radius-cover);
+  background: var(--hh-paper);
+  box-shadow: var(--hero-page-shadow);
+}
+
+.hh-page[data-paper="warm"] {
+  --hh-paper: var(--hero-paper-warm);
+  --hh-ink: var(--hero-ink-warm);
+  --hh-frame: max(1px, 0.12cqi);
+}
+
+.hh-stage {
+  position: relative;
+  min-width: 0;
+  user-select: none;
+}
+
+/* Every scene shares one 1536x1024 page, so the hero never changes size between scenes. */
+.hh-sheet {
+  position: relative;
+  aspect-ratio: 1536 / 1024;
+}
+
+.hh-window {
+  position: absolute;
+  overflow: hidden;
+  background: var(--hh-paper);
+}
+
+/* The panel frame is drawn above the art, so only the escape plane can cross it. */
+.hh-window::after {
+  position: absolute;
+  inset: 0;
+  border: var(--hh-frame) solid var(--hh-ink);
+  content: "";
+  pointer-events: none;
+}
+
+.hh-escape {
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+}
+
+.hh-space {
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 100%;
+  aspect-ratio: 1536 / 1024;
+  container-type: inline-size;
+}
+
+.hh-layer,
+.hh-overlay {
+  position: absolute;
+}
+
+.hh-group,
+.hh-fill,
+.hh-arcs,
+.hh-node {
+  position: absolute;
+  inset: 0;
+}
+
+.hh-arcs {
+  width: 100%;
+  height: 100%;
+  overflow: visible;
+}
+
+.hh-layer img {
+  display: block;
+  width: 100%;
+  height: 100%;
+  -webkit-user-drag: none;
+}
+
+/* Rest pose of motion-only elements: petals and light are absent from the approved still. */
+.hh-node[data-rest-hidden],
+.hh-overlay[data-effect="flash"],
+.hh-overlay[data-effect="bloom"] {
+  opacity: 0;
+}
+
+.hh-thread {
+  stroke-dasharray: 1 1;
+  stroke-dashoffset: 0;
+}
+
+.hh-fill[data-paint="paper"],
+.hh-overlay[data-effect="flash"] {
+  background: var(--hh-paper);
+}
+
+.hh-fill[data-paint="inset-warm"] {
+  background: linear-gradient(200deg, var(--hero-inset-warm), var(--hero-paper-warm) 70%);
+}
+
+.hh-fill[data-paint="inset-cool"] {
+  background: linear-gradient(160deg, var(--hero-paper-warm) 30%, var(--hero-inset-cool));
+}
+
+.hh-overlay[data-effect="bloom"] {
+  background: radial-gradient(
+    circle at 82% 6%,
+    color-mix(in oklch, var(--hero-light) 90%, transparent),
+    transparent 62%
+  );
+  mix-blend-mode: screen;
+}
+
+.hh-overlay[data-effect="dapple"] {
+  background: linear-gradient(
+    100deg,
+    transparent 8%,
+    color-mix(in oklch, var(--hero-light) 16%, transparent) 42%,
+    color-mix(in oklch, var(--hero-light) 26%, transparent) 50%,
+    color-mix(in oklch, var(--hero-light) 16%, transparent) 58%,
+    transparent 92%
+  );
+  mix-blend-mode: screen;
+}
+
+/* Hero spread: masthead, the page with its title, then copy. On wide screens the page is sized
+   from the viewport height so the copy and action stay in the first view, and the title is set
+   vertically beside it like a magazine cover. */
+.hh-hero {
+  --hh-title-size: clamp(1.375rem, 7.4vw, 2.5rem);
+  display: grid;
+  gap: var(--space-4);
+  width: 100%;
+  margin-inline: auto;
+}
+
+/* The title panel: the same ink frame as the art panel, the heading inked on the page paper. */
+.hh-title-panel {
+  position: relative;
+  min-width: 0;
+  padding: var(--space-3) var(--space-3) var(--space-3) var(--space-4);
+  border: var(--hh-frame) solid var(--hh-ink);
+}
+
+/* The pause control sits in the panel corner, so it never takes width from the heading. */
+.hh-title-panel__control {
+  position: absolute;
+  right: var(--space-1);
+  bottom: var(--space-1);
+}
+
+/* Page margins and frame weight scale with the page, measured against this wrapper. */
+.hh-spread {
+  container-type: inline-size;
+}
+
+.hh-title {
+  color: var(--hh-ink);
+  font-size: var(--hh-title-size);
+  font-weight: 700;
+  line-height: 1.3;
+  letter-spacing: 0.04em;
+}
+
+.hh-title__phrase {
+  display: inline-block;
+  white-space: nowrap;
+}
+
+.hh-foot {
+  display: grid;
+  gap: var(--space-5);
+}
+
+.hh-foot__action {
+  display: grid;
+  justify-items: start;
+  gap: var(--space-3);
+}
+
+@media (min-width: 64rem) {
+  .hh-hero {
+    --hh-chrome: 16rem;
+    /* Sized from the height the art panel gets, so the vertical title always fits beside it. */
+    --hh-title-size: min(3.5rem, max(2rem, calc((100svh - 24rem) / 10)));
+    --hh-title-width: calc(var(--hh-title-size) * 2.7 + var(--space-3) * 2);
+    --hh-sheet-max: calc((100svh - var(--hh-chrome)) * 1.5);
+    width: min(
+      100%,
+      calc(var(--hh-sheet-max) + var(--hh-title-width) + var(--space-12) + var(--space-4))
+    );
+  }
+
+  .hh-page {
+    grid-template-columns: minmax(0, 1fr) var(--hh-title-width);
+  }
+
+  /* The art panel sets the row height; the title panel only stretches to it. */
+  .hh-title-panel {
+    display: flex;
+    justify-content: center;
+    height: 0;
+    min-height: 100%;
+    overflow: hidden;
+    padding: var(--space-6) var(--space-3) calc(var(--control-min-size) + var(--space-3));
+  }
+
+  .hh-title {
+    writing-mode: vertical-rl;
+    letter-spacing: 0.08em;
+  }
+
+  .hh-title__phrase {
+    display: block;
+  }
+
+  .hh-foot {
+    grid-template-columns: minmax(0, 1fr) auto;
+    align-items: start;
+  }
+
+  .hh-foot__action {
+    justify-items: end;
+    text-align: end;
+  }
+}
+
+/* Home below the hero: section titles, the three-panel example strip, and the closing panel. The
+   panels borrow the hero page's ink frame so the whole page reads as one manga. */
+.home-section-title {
+  color: var(--text-strong);
+  word-break: auto-phrase;
+  font-size: var(--text-section-title-size);
+  font-weight: 700;
+  line-height: var(--line-height-heading);
+  letter-spacing: -0.01em;
+}
+
+.koma-strip {
+  display: grid;
+  gap: var(--space-3);
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.koma {
+  position: relative;
+  display: grid;
+  align-content: start;
+  gap: var(--space-4);
+  padding: calc(var(--space-6) + var(--space-2)) var(--space-5) var(--space-5);
+  border: 2px solid var(--text-strong);
+  background: var(--surface-1);
+}
+
+.koma__number {
+  position: absolute;
+  top: -2px;
+  left: -2px;
+  display: grid;
+  place-items: center;
+  width: var(--space-7);
+  height: var(--space-7);
+  background: var(--text-strong);
+  color: var(--surface-1);
+  font-family: var(--font-display);
+  font-size: var(--font-size-14);
+  font-weight: 700;
+}
+
+/* The example's chosen works as one row of covers, original aspect kept by CoverImage. */
+.koma-covers {
+  display: grid;
+  grid-template-columns: repeat(5, minmax(0, 1fr));
+  gap: var(--space-2);
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+@media (min-width: 64rem) {
+  .koma-strip {
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+  }
+
+  .koma-covers {
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+    gap: var(--space-3);
+  }
+}
+
+/* The closing panel fades a screentone in from its right edge, like a manga's last panel. */
+.home-closing {
+  position: relative;
+  overflow: hidden;
+  padding: var(--space-8) var(--space-6);
+  border: 2px solid var(--text-strong);
+  background: var(--surface-1);
+}
+
+.home-closing::after {
+  position: absolute;
+  inset: 0 0 0 40%;
+  background-image: radial-gradient(
+    color-mix(in oklch, var(--text-strong) 24%, transparent) 1.3px,
+    transparent 1.5px
+  );
+  background-size: 9px 9px;
+  content: "";
+  mask-image: linear-gradient(to right, transparent, black 75%);
+  pointer-events: none;
 }

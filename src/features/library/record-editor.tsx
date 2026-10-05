@@ -97,7 +97,7 @@ function ReasonPicker({
         {REASON_OPTIONS.map((option) => (
           <Button
             aria-pressed={reasons.includes(option.id)}
-            className="aria-pressed:border-accent aria-pressed:bg-accent-soft aria-pressed:text-accent"
+            className="aria-pressed:border-accent aria-pressed:bg-accent-soft aria-pressed:text-accent-ink"
             key={option.id}
             onClick={() => {
               const next = toggleReason(reasons, otherReasons, option.id);

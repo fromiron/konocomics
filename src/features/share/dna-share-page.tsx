@@ -145,13 +145,13 @@ function SharedRecommendation({
           {coverStrings.creatorLine(work.creators)}
         </p>
         {reason === "" ? null : (
-          <span className="mt-[var(--space-1)] w-fit max-w-full rounded-[var(--radius-pill)] border border-accent/25 bg-accent-soft px-[var(--space-2)] py-[var(--space-1)] text-[length:var(--text-caption-size)] leading-snug text-accent">
+          <span className="mt-[var(--space-1)] w-fit max-w-full rounded-[var(--radius-pill)] border border-accent/25 bg-accent-soft px-[var(--space-2)] py-[var(--space-1)] text-[length:var(--text-caption-size)] leading-snug text-accent-ink">
             {strings.reasonChip(reason)}
           </span>
         )}
         <a
           aria-label={`${work.title} ${directUrl === undefined ? providerStrings.searchNewTab : providerStrings.openNewTab}`}
-          className="inline-flex min-h-[var(--control-min-size)] items-center text-[length:var(--font-size-14)] font-bold text-accent underline-offset-4 hover:underline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-ring"
+          className="inline-flex min-h-[var(--control-min-size)] items-center text-[length:var(--font-size-14)] font-bold text-accent-ink underline-offset-4 hover:underline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-ring"
           href={directUrl ?? buildRakutenBooksSearchUrl(work.title)}
           rel="noreferrer"
           target="_blank"
@@ -220,7 +220,7 @@ function SharedDna({
                 return axis === undefined ? null : (
                   <span key={axis.axisId}>
                     {index === 0 ? null : (
-                      <span aria-hidden="true" className="px-[var(--space-2)] text-accent">
+                      <span aria-hidden="true" className="px-[var(--space-2)] text-accent-ink">
                         ×
                       </span>
                     )}
@@ -254,7 +254,10 @@ function SharedDna({
                     </span>
                     <strong className="taste-dna-axis__name">{factorLabel(axis.axisId)}</strong>
                     <span
-                      className={cn("taste-dna-axis__level", rank !== undefined && "text-accent")}
+                      className={cn(
+                        "taste-dna-axis__level",
+                        rank !== undefined && "text-accent-ink",
+                      )}
                     >
                       {tasteStrings.factorValue(axis.level)}
                     </span>
@@ -351,7 +354,7 @@ export function DnaSharePage({ search }: Readonly<{ search: string }>) {
       data-share-state={link === null ? "invalid" : "ready"}
     >
       <header className="grid justify-items-center gap-[var(--space-3)] text-center">
-        <span className="rounded-[var(--radius-pill)] border border-line-accent bg-accent-soft px-[var(--space-4)] py-[var(--space-1)] text-[length:var(--text-caption-size)] font-bold tracking-[0.2em] text-accent">
+        <span className="rounded-[var(--radius-pill)] border border-line-accent bg-accent-soft px-[var(--space-4)] py-[var(--space-1)] text-[length:var(--text-caption-size)] font-bold tracking-[0.2em] text-accent-ink">
           {strings.kicker}
         </span>
         <h1 className="font-display text-[length:var(--text-page-title-size)] leading-[var(--line-height-heading)] text-text-strong">

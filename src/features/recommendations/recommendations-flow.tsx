@@ -1476,7 +1476,7 @@ export function RecommendationsFlow({
                   <h2>{recommendationStrings.empty.title}</h2>
                   <p>{recommendationStrings.empty.description}</p>
                   <Link
-                    className="inline-flex min-h-[var(--control-min-size)] items-center font-bold text-accent underline underline-offset-[var(--space-content-tight)] transition-transform duration-[var(--motion-duration-press)] active:scale-[0.97] motion-reduce:transform-none motion-reduce:transition-none"
+                    className="inline-flex min-h-[var(--control-min-size)] items-center font-bold text-accent-ink underline underline-offset-[var(--space-content-tight)] transition-transform duration-[var(--motion-duration-press)] active:scale-[0.97] motion-reduce:transform-none motion-reduce:transition-none"
                     preload={false}
                     to="/taste"
                   >
@@ -1545,14 +1545,14 @@ export function RecommendationsFlow({
                       </p>
                       <div className="flex flex-nowrap items-center gap-x-[var(--space-4)]">
                         <Link
-                          className="inline-flex min-h-[var(--control-min-size)] shrink-0 items-center font-bold text-accent underline underline-offset-[var(--space-content-tight)] transition-transform duration-[var(--motion-duration-press)] active:scale-[0.97] motion-reduce:transform-none motion-reduce:transition-none"
+                          className="inline-flex min-h-[var(--control-min-size)] shrink-0 items-center font-bold text-accent-ink underline underline-offset-[var(--space-content-tight)] transition-transform duration-[var(--motion-duration-press)] active:scale-[0.97] motion-reduce:transform-none motion-reduce:transition-none"
                           preload={false}
                           to="/onboarding"
                         >
                           {recommendationStrings.shortage.addWorks}
                         </Link>
                         <Link
-                          className="inline-flex min-h-[var(--control-min-size)] shrink-0 items-center font-bold text-accent underline underline-offset-[var(--space-content-tight)] transition-transform duration-[var(--motion-duration-press)] active:scale-[0.97] motion-reduce:transform-none motion-reduce:transition-none"
+                          className="inline-flex min-h-[var(--control-min-size)] shrink-0 items-center font-bold text-accent-ink underline underline-offset-[var(--space-content-tight)] transition-transform duration-[var(--motion-duration-press)] active:scale-[0.97] motion-reduce:transform-none motion-reduce:transition-none"
                           preload={false}
                           to="/taste"
                         >

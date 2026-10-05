@@ -56,7 +56,7 @@ export function OnboardingWelcome({
       className="onboarding-welcome mb-[var(--space-6)] grid gap-[var(--space-5)] rounded-[var(--radius-card)] border border-line bg-surface-1 p-[var(--space-5)] md:p-[var(--space-8)]"
     >
       <header className="grid max-w-[var(--layout-width-reading)] gap-[var(--space-content-tight)]">
-        <p className="font-display text-[length:var(--text-caption-size)] font-bold tracking-[0.08em] text-accent">
+        <p className="font-display text-[length:var(--text-caption-size)] font-bold tracking-[0.08em] text-accent-ink">
           {copy.eyebrow}
         </p>
         <h1
@@ -90,14 +90,14 @@ export function OnboardingWelcome({
                   className={cn(
                     "grid size-[var(--space-8)] place-items-center rounded-full border font-display font-bold",
                     current
-                      ? "border-accent bg-accent-soft text-accent"
+                      ? "border-accent bg-accent-soft text-accent-ink"
                       : "border-line text-text-muted",
                   )}
                 >
                   {index + 1}
                 </span>
                 {current ? (
-                  <span className="hidden text-[length:var(--text-caption-size)] font-bold text-accent md:inline">
+                  <span className="hidden text-[length:var(--text-caption-size)] font-bold text-accent-ink md:inline">
                     {copy.currentStep}
                   </span>
                 ) : null}
@@ -172,7 +172,7 @@ export function OnboardingGenreChips({ genre, onChange }: OnboardingGenreChipsPr
         id="onboarding-genre-heading"
         title={onboardingStrings.step1.genreHeading}
       />
-      <div className="flex flex-wrap gap-[var(--space-content)] pb-[var(--space-content)] [&>button[aria-pressed=true]]:border-accent [&>button[aria-pressed=true]]:text-accent">
+      <div className="flex flex-wrap gap-[var(--space-content)] pb-[var(--space-content)] [&>button[aria-pressed=true]]:border-accent [&>button[aria-pressed=true]]:text-accent-ink">
         <Button
           aria-pressed={genre === undefined}
           className="shrink-0"
@@ -400,7 +400,7 @@ export function OnboardingCollectionGrid({
                   aria-hidden="true"
                   className={cn(
                     "grid size-[var(--control-min-size)] place-items-center rounded-[var(--radius-pill)] border border-line text-text-muted",
-                    open && "border-accent text-accent",
+                    open && "border-accent text-accent-ink",
                   )}
                 >
                   <ChevronDownIcon

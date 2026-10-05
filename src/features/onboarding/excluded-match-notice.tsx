@@ -36,7 +36,7 @@ export function ExcludedMatchNotice({
             </p>
             {reason === "registered" ? (
               <Link
-                className="inline-flex min-h-[var(--control-min-size)] shrink-0 items-center text-[length:var(--text-caption-size)] font-bold text-accent underline-offset-4 hover:underline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-ring"
+                className="inline-flex min-h-[var(--control-min-size)] shrink-0 items-center text-[length:var(--text-caption-size)] font-bold text-accent-ink underline-offset-4 hover:underline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-ring"
                 search={{ q: work.title }}
                 to="/library"
               >

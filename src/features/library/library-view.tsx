@@ -387,7 +387,7 @@ export function LibraryView({
             <div className="grid grid-cols-[minmax(0,1fr)_auto] items-center gap-[var(--space-content)] md:grid-cols-[auto_minmax(0,1fr)_auto_auto]">
               <Button
                 aria-pressed={favoriteOnly}
-                className="order-1 justify-self-start rounded-[var(--radius-pill)] aria-pressed:border-accent aria-pressed:bg-accent-soft aria-pressed:text-accent"
+                className="order-1 justify-self-start rounded-[var(--radius-pill)] aria-pressed:border-accent aria-pressed:bg-accent-soft aria-pressed:text-accent-ink"
                 onClick={() => onFavoriteOnlyChange?.(!favoriteOnly)}
                 type="button"
                 variant="outline"
@@ -429,7 +429,7 @@ export function LibraryView({
                 {(["grid", "list"] as const).map((mode) => (
                   <Button
                     aria-pressed={view === mode}
-                    className="aria-pressed:border-accent aria-pressed:bg-accent-soft aria-pressed:text-accent"
+                    className="aria-pressed:border-accent aria-pressed:bg-accent-soft aria-pressed:text-accent-ink"
                     key={mode}
                     onClick={() => onViewChange?.(mode)}
                     type="button"
@@ -650,7 +650,7 @@ export function LibraryView({
                   </>
                 ) : selectedRow.kind === "catalog" ? (
                   <Link
-                    className="inline-flex min-h-[var(--control-min-size)] w-fit items-center font-bold text-accent underline underline-offset-[var(--space-content-tight)]"
+                    className="inline-flex min-h-[var(--control-min-size)] w-fit items-center font-bold text-accent-ink underline underline-offset-[var(--space-content-tight)]"
                     params={{ workId: selectedRow.id }}
                     to="/works/$workId"
                   >
@@ -658,7 +658,7 @@ export function LibraryView({
                   </Link>
                 ) : (
                   <Link
-                    className="inline-flex min-h-[var(--control-min-size)] w-fit items-center font-bold text-accent underline underline-offset-[var(--space-content-tight)]"
+                    className="inline-flex min-h-[var(--control-min-size)] w-fit items-center font-bold text-accent-ink underline underline-offset-[var(--space-content-tight)]"
                     search={{ workId: parseExternalWorkId(selectedRow.id) }}
                     to="/works/external"
                   >

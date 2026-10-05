@@ -65,7 +65,7 @@ export function NegativeSummaryPanel({
     >
       <div className="col-span-full flex items-baseline justify-between gap-[var(--space-4)]">
         <strong className="text-text-strong">{copy.panel.title}</strong>
-        <span className="text-[length:var(--text-caption-size)] font-bold text-accent">
+        <span className="text-[length:var(--text-caption-size)] font-bold text-accent-ink">
           {onboardingStrings.step1.selectedCount(entries.length, ONBOARDING_MAX_NEGATIVE_WORKS)}
           <span aria-hidden="true" className="font-medium text-text-muted md:hidden">
             {` ・ ${clarity.levelLabel}`}

@@ -44,7 +44,7 @@ export function ClarityMeter({ clarity }: Readonly<{ clarity: SelectedTrayClarit
         <span className="text-text-muted" id={labelId}>
           {clarity.label}
         </span>
-        <span className="font-bold text-accent">{clarity.levelLabel}</span>
+        <span className="font-bold text-accent-ink">{clarity.levelLabel}</span>
       </div>
       <div
         aria-labelledby={labelId}
@@ -167,7 +167,7 @@ export function SelectedTray({
         <div className="selected-tray__heading col-span-full flex items-baseline justify-between gap-[var(--space-4)]">
           <strong className="text-text-strong">{label}</strong>
           {countLabel === undefined ? null : (
-            <span className="text-[length:var(--text-caption-size)] font-bold text-accent">
+            <span className="text-[length:var(--text-caption-size)] font-bold text-accent-ink">
               {countLabel}
               {clarity === undefined ? null : (
                 <span aria-hidden="true" className="font-medium text-text-muted md:hidden">

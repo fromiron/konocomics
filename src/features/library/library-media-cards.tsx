@@ -124,7 +124,7 @@ function RowBadges({ row, showState }: Readonly<{ row: LibraryRow; showState: bo
       {row.record.reaction === undefined ? null : (
         <span
           className={
-            row.record.reaction === "favorite" ? "font-bold text-accent" : "text-text-muted"
+            row.record.reaction === "favorite" ? "font-bold text-accent-ink" : "text-text-muted"
           }
         >
           {libraryStrings.reactions[row.record.reaction]}
@@ -177,7 +177,7 @@ function ProgressDisplay({
         <progress
           aria-label={libraryStrings.editor.progress}
           aria-valuetext={label}
-          className="h-[var(--space-content-tight)] w-full overflow-hidden rounded-[var(--radius-pill)] border-0 bg-surface-3 text-accent [&::-moz-progress-bar]:bg-accent [&::-webkit-progress-bar]:bg-surface-3 [&::-webkit-progress-value]:bg-accent"
+          className="h-[var(--space-content-tight)] w-full overflow-hidden rounded-[var(--radius-pill)] border-0 bg-surface-3 text-accent-ink [&::-moz-progress-bar]:bg-accent [&::-webkit-progress-bar]:bg-surface-3 [&::-webkit-progress-value]:bg-accent"
           max={total}
           value={Math.min(volume, total)}
         />

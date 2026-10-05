@@ -194,7 +194,7 @@ function DnaShareDialogBody({
           <div className="grid justify-items-start gap-[var(--space-4)] rounded-[var(--radius-card)] border border-line bg-surface-2 p-[var(--space-5)]">
             <p className="text-text">{strings.empty}</p>
             <Link
-              className="inline-flex min-h-[var(--control-min-size)] items-center font-bold text-accent underline-offset-4 hover:underline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-ring"
+              className="inline-flex min-h-[var(--control-min-size)] items-center font-bold text-accent-ink underline-offset-4 hover:underline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-ring"
               onClick={onClose}
               preload={false}
               to="/onboarding"
@@ -220,7 +220,7 @@ function DnaShareDialogBody({
                   return axis === undefined ? null : (
                     <span key={axis.axisId}>
                       {index === 0 ? null : (
-                        <span className="px-[var(--space-2)] text-accent">×</span>
+                        <span className="px-[var(--space-2)] text-accent-ink">×</span>
                       )}
                       {explanationLexicon.factorLabels[axis.axisId]}
                     </span>

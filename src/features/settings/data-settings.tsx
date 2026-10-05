@@ -330,7 +330,7 @@ export function DataSettings({
                   <h4 className="flex min-w-0 items-center gap-[var(--space-content)] text-text-strong">
                     <CircleCheckIcon
                       aria-hidden="true"
-                      className="size-[var(--space-4)] shrink-0 text-accent"
+                      className="size-[var(--space-4)] shrink-0 text-accent-ink"
                     />
                     {settingsStrings.data.import.preview.title}
                   </h4>

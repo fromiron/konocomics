@@ -1,38 +1,16 @@
 import { Link } from "@tanstack/react-router";
 import { ArrowRightIcon } from "lucide-react";
-import type { CSSProperties } from "react";
-
 import { buttonClassName } from "@/components/design-system/button";
 import { burstConfirmSparks } from "@/components/motion/confirm-spark";
 import { usePointerEffect } from "@/components/motion/use-pointer-effects";
-import { HeroBackdrop } from "@/components/media/hero-backdrop";
 import { AXIS_IDS } from "@/domain/catalog/constants";
+import { HomeHeroScene } from "@/features/home-hero/home-hero-scene";
 import { landingStrings } from "@/lib/strings";
 import { cn } from "@/lib/utils";
 
 import { LandingLogoReveal } from "./landing-logo-reveal";
-import { LandingSampleCard } from "./landing-sample-card";
-import type { LandingSample } from "./landing-types";
 
 const workCountFormat = new Intl.NumberFormat("ja-JP");
-
-/** Tagline phrases split into characters with one running index for the stagger. */
-const taglineCharacters = (() => {
-  let index = 0;
-  return landingStrings.taglinePhrases.map((text) => ({
-    text,
-    characters: [...text].map((character) => ({ character, index: index++ })),
-  }));
-})();
-
-/**
- * Tagline size that fits the longest phrase on one line of its column: one em per full-width
- * character plus half an em of headroom for tracking and fallback fonts.
- */
-const taglineFitSize = `calc(100cqi / ${String(
-  Math.max(...taglineCharacters.map((phrase) => phrase.characters.length)) + 0.5,
-)})`;
-
 export const landingCtaClassName = buttonClassName({
   className:
     "gap-[var(--space-content)] px-[var(--space-6)] py-[var(--space-3)] text-[length:var(--font-size-16)] font-bold",
@@ -68,97 +46,70 @@ export function LandingCta({ visitor = "new" }: Readonly<{ visitor?: LandingVisi
 }
 
 type HomeHeroProps = Readonly<{
-  sample: LandingSample;
   recommendableWorkCount: number;
-  coverUrls: ReadonlyMap<string, string | null>;
-  backdropUrl?: string | null;
-  onCoverVisible(workId: string): void;
-  staticLogo?: boolean;
+  /** `?landing=1`: a write-free bypass, so the hero reads and writes no storage. */
+  storageFree?: boolean;
   visitor?: LandingVisitorState;
   sharedEntry?: boolean;
 }>;
 
+/**
+ * Hero as a magazine spread: brand masthead, a living manga page with the title set vertically
+ * beside it (horizontally on narrow screens), and the copy and single action underneath.
+ */
 export function HomeHero({
-  backdropUrl,
-  coverUrls,
-  onCoverVisible,
   recommendableWorkCount,
-  sample,
   sharedEntry = false,
-  staticLogo = false,
+  storageFree = false,
   visitor = "new",
 }: HomeHeroProps) {
-  const recommendedId = sample.recommendation.work.id;
-
   return (
-    <HeroBackdrop coverUrl={backdropUrl} priority>
+    <div className="overflow-x-clip">
       <section
         aria-labelledby="landing-title"
-        className="landing-hero mx-auto grid w-full max-w-[var(--layout-width-media)] content-center gap-[var(--space-8)] px-[var(--layout-page-padding)] pt-[var(--space-8)] pb-[var(--space-12)] md:min-h-[72vh] md:grid-cols-[minmax(0,1.1fr)_minmax(0,0.9fr)] md:items-center md:gap-[var(--space-12)] md:pt-[var(--space-12)]"
+        className="landing-hero mx-auto grid w-full max-w-[var(--layout-width-hero)] px-[var(--layout-page-padding)] pt-[var(--space-6)] pb-[var(--space-12)]"
       >
-        <div className="grid max-w-[36rem] justify-items-start gap-[var(--space-6)]">
-          <LandingLogoReveal staticPresentation={staticLogo} />
-          <div className="grid w-full gap-[var(--space-4)] [container-type:inline-size]">
-            {sharedEntry ? (
-              <p className="text-[length:var(--text-caption-size)] font-bold text-accent">
-                {landingStrings.sharedEntry}
-              </p>
-            ) : null}
-            <h1
-              className="landing-tagline font-display text-[length:min(var(--text-hero-size),var(--tagline-fit-size))] leading-[var(--line-height-display)] font-bold tracking-tight text-text-strong"
-              data-reduced-motion="fade"
-              id="landing-title"
-              style={{ "--tagline-fit-size": taglineFitSize } as CSSProperties}
-            >
-              {/* Each phrase is one unbreakable unit, so the tagline never wraps mid-word, and the
-                  size shrinks below the hero token when the longest phrase would not fit. The
-                  characters animate during the logo reveal (04 §5.1); the heading's name is the
-                  whole sentence, never single characters. */}
-              <span className="sr-only">{landingStrings.tagline}</span>
-              {taglineCharacters.map((phrase) => (
-                <span
-                  aria-hidden="true"
-                  className="inline-block whitespace-nowrap"
-                  key={phrase.text}
-                >
-                  {phrase.characters.map(({ character, index }) => (
-                    <span
-                      className="landing-tagline__char inline-block"
-                      key={index}
-                      style={{ "--char-index": index } as CSSProperties}
-                    >
-                      {character}
-                    </span>
-                  ))}
+        <HomeHeroScene
+          brand={<LandingLogoReveal staticPresentation={storageFree} />}
+          storageFree={storageFree}
+          title={
+            <h1 className="hh-title" id="landing-title">
+              {/* Phrases never break inside; on wide screens each phrase is one column. */}
+              {landingStrings.taglinePhrases.map((phrase) => (
+                <span className="hh-title__phrase" key={phrase}>
+                  {phrase}
                 </span>
               ))}
             </h1>
-            <p className="max-w-[32rem] text-[length:var(--text-body-size)] leading-[var(--line-height-body)] text-text-muted [word-break:auto-phrase]">
-              {landingStrings.description(AXIS_IDS.length)}
-            </p>
-          </div>
-          <div className="grid justify-items-start gap-[var(--space-4)]">
-            <LandingCta visitor={visitor} />
-            {visitor === "new" ? null : (
-              <p className="text-[length:var(--text-caption-size)] text-text">
-                {landingStrings.visitorNote[visitor]}
+          }
+        >
+          <div className="hh-foot">
+            <div className="grid content-start gap-[var(--space-2)]">
+              {sharedEntry ? (
+                <p className="text-[length:var(--text-caption-size)] font-bold text-accent-ink">
+                  {landingStrings.sharedEntry}
+                </p>
+              ) : null}
+              <p className="max-w-[34rem] text-[length:var(--text-body-size)] leading-[var(--line-height-body)] text-text-muted [word-break:auto-phrase]">
+                {landingStrings.description(AXIS_IDS.length)}
               </p>
-            )}
-            <p className="text-[length:var(--text-caption-size)] text-text-muted">
-              {landingStrings.hero
-                .trust(workCountFormat.format(recommendableWorkCount))
-                .join(" · ")}
-            </p>
+            </div>
+            <div className="hh-foot__action">
+              <LandingCta visitor={visitor} />
+              {visitor === "new" ? null : (
+                <p className="text-[length:var(--text-caption-size)] text-text">
+                  {landingStrings.visitorNote[visitor]}
+                </p>
+              )}
+              <p className="text-[length:var(--text-caption-size)] text-text-muted">
+                {landingStrings.hero
+                  .trust(workCountFormat.format(recommendableWorkCount))
+                  .join(" · ")}
+              </p>
+            </div>
           </div>
-        </div>
-
-        <LandingSampleCard
-          animateReason={!staticLogo && visitor === "new"}
-          coverUrl={coverUrls.get(recommendedId)}
-          onCoverVisible={() => onCoverVisible(recommendedId)}
-          sample={sample}
-        />
+        </HomeHeroScene>
       </section>
-    </HeroBackdrop>
+    </div>
   );
 }

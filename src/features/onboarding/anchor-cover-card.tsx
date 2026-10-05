@@ -140,7 +140,7 @@ export function AnchorCoverCard({
         <Button
           aria-label={`${work.title} — ${isFavorite ? labels.markLiked : labels.markFavorite}`}
           aria-pressed={isFavorite}
-          className="anchor-card__favorite absolute right-1 bottom-1 !size-[var(--control-min-size)] min-h-[var(--control-min-size)] min-w-[var(--control-min-size)] rounded-full border border-line bg-surface-1/90 p-0 text-text-muted aria-pressed:border-accent aria-pressed:text-accent [&>svg]:size-4"
+          className="anchor-card__favorite absolute right-1 bottom-1 !size-[var(--control-min-size)] min-h-[var(--control-min-size)] min-w-[var(--control-min-size)] rounded-full border border-line bg-surface-1/90 p-0 text-text-muted aria-pressed:border-accent aria-pressed:text-accent-ink [&>svg]:size-4"
           onClick={() => onToggleFavorite(work.id)}
           type="button"
           variant="ghost"

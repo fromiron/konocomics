@@ -31,7 +31,7 @@ export function WorkContrastSection({ entries, coverUrls, onCoverVisible }: Work
           <DiscoveryCard
             action={
               <Link
-                className="mt-auto inline-flex min-h-[var(--control-min-size)] items-center self-start text-[length:var(--font-size-14)] font-bold text-accent underline decoration-line underline-offset-4 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-ring"
+                className="mt-auto inline-flex min-h-[var(--control-min-size)] items-center self-start text-[length:var(--font-size-14)] font-bold text-accent-ink underline decoration-line underline-offset-4 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-ring"
                 params={{ workId: work.id }}
                 preload={false}
                 to="/works/$workId"

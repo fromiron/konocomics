@@ -158,7 +158,7 @@ function AnchorStrip({
                   {work.title}
                 </strong>
                 {evidenceLabels.has(work.id) ? (
-                  <span className="w-fit max-w-full rounded-[var(--radius-pill)] border border-accent/25 bg-accent-soft px-[var(--space-2)] py-[var(--space-1)] text-[length:var(--text-caption-size)] leading-snug text-accent">
+                  <span className="w-fit max-w-full rounded-[var(--radius-pill)] border border-accent/25 bg-accent-soft px-[var(--space-2)] py-[var(--space-1)] text-[length:var(--text-caption-size)] leading-snug text-accent-ink">
                     {evidenceLabels.get(work.id)}
                   </span>
                 ) : null}
@@ -348,7 +348,7 @@ function FactorGroup<FactorId extends ExplanationFactorId>({
             "pointer-events-none col-start-1 row-start-2 w-fit whitespace-nowrap rounded-[var(--radius-pill)] border px-[var(--space-2)] py-[var(--space-1)] text-[length:var(--text-caption-size)] font-medium min-[360px]:col-start-2 min-[360px]:row-start-1 sm:col-start-3",
             isAnalysisOnly
               ? "border-line bg-surface-2 text-text-muted"
-              : "border-accent/25 bg-accent-soft text-accent",
+              : "border-accent/25 bg-accent-soft text-accent-ink",
             adjustedCount !== null && adjustedCount > 0 && "font-bold",
           )}
           id={`taste-group-${id}-status`}
@@ -359,7 +359,7 @@ function FactorGroup<FactorId extends ExplanationFactorId>({
           aria-hidden="true"
           className={cn(
             "pointer-events-none col-start-2 row-start-1 grid size-[var(--control-min-size)] place-items-center rounded-[var(--radius-pill)] border border-line text-text-muted min-[360px]:col-start-3 sm:col-start-4",
-            open && "border-accent text-accent",
+            open && "border-accent text-accent-ink",
           )}
         >
           <ChevronDownIcon
