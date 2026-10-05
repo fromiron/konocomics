@@ -36,6 +36,7 @@ export function HomeRankingShelf({ coverUrls, onCoverVisible, works }: HomeShelf
   return (
     <RankingShelf
       compactHeading
+      controlsPlacement="overlay"
       description={landingStrings.ranking.description}
       rankingKind="editorial-ranking"
       title={landingStrings.ranking.title}
@@ -67,6 +68,7 @@ export function HomeDiscoveryShelf({ coverUrls, onCoverVisible, works }: HomeShe
   return (
     <MediaShelf
       compactHeading
+      controlsPlacement="overlay"
       description={landingStrings.discovery.description}
       title={landingStrings.discovery.title}
       trackClassName="items-start"

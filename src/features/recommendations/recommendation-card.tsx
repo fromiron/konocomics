@@ -2,7 +2,8 @@ import { Link } from "@tanstack/react-router";
 import { ScanSearchIcon } from "lucide-react";
 import { useCallback } from "react";
 
-import { CoverImage, coverSourceForSize } from "@/components/cover/CoverImage";
+import { CoverImage } from "@/components/cover/CoverImage";
+import { CoverBackdrop } from "@/components/media/cover-backdrop";
 import { usePointerEffect } from "@/components/motion/use-pointer-effects";
 import { ConfidenceLabel } from "@/components/media/recommendation-evidence";
 import {
@@ -85,7 +86,6 @@ export function RecommendationCard({
 }: RecommendationCardProps) {
   const explanation = explanationFor(entry, resolveTitle);
   const leadReason = explanation.positiveReasons[0];
-  const backdropSource = coverUrl?.trim() ? coverSourceForSize(coverUrl, 400) : "";
   // A soft light follows a fine pointer; the card never changes angle (04 §6 G).
   const attachGlare = usePointerEffect<HTMLElement>("light");
   const setArticle = useCallback(
@@ -104,29 +104,11 @@ export function RecommendationCard({
       tabIndex={-1}
     >
       <span aria-hidden="true" className="pointer-glare" />
-      {backdropSource === "" ? null : (
-        <>
-          <img
-            alt=""
-            aria-hidden="true"
-            className="recommendation-featured-card__backdrop pointer-events-none absolute inset-0 size-full scale-110 object-cover opacity-75 blur-md saturate-125"
-            data-recommendation-card-backdrop
-            decoding="async"
-            draggable={false}
-            key={backdropSource}
-            loading="lazy"
-            onError={(event) => {
-              event.currentTarget.hidden = true;
-            }}
-            src={backdropSource}
-          />
-          <span
-            aria-hidden="true"
-            className="recommendation-featured-card__scrim pointer-events-none absolute inset-0 bg-hero-scrim"
-            data-recommendation-card-scrim
-          />
-        </>
-      )}
+      <CoverBackdrop
+        coverUrl={coverUrl}
+        imageData={{ "data-recommendation-card-backdrop": true }}
+        scrimData={{ "data-recommendation-card-scrim": true }}
+      />
       <div className="relative z-10 flex min-h-0 flex-1 flex-col">
         <h3 className="h-[3.25rem] shrink-0 line-clamp-2 text-[length:var(--font-size-20)] leading-[var(--line-height-heading)] font-bold text-text-strong">
           {work.title}

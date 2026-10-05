@@ -1,8 +1,11 @@
-import type { ReactNode } from "react";
+import { useId, type ReactNode } from "react";
 
 import { CoverImage } from "@/components/cover/CoverImage";
+import { SectionHeading } from "@/components/layout/section-heading";
+import { CoverBackdrop } from "@/components/media/cover-backdrop";
 import { FactorBar } from "@/components/media/factor-bar";
 import { explanationLexicon, landingStrings } from "@/lib/strings";
+import { cn } from "@/lib/utils";
 
 import { LandingCta, type LandingVisitorState } from "./home-hero";
 import { LandingSampleRecommendation } from "./landing-sample-card";
@@ -10,28 +13,36 @@ import type { LandingSample } from "./landing-types";
 
 const CAPTION_ANCHOR_COUNT = 2;
 
-type KomaPanelProps = Readonly<{
+/** The recommendations card surface: a quiet card that a cover backdrop can tint. */
+const cardClassName =
+  "relative isolate overflow-hidden rounded-[var(--radius-card)] border border-line/70 bg-surface-1";
+
+type StepCardProps = Readonly<{
   number: number;
   step: Readonly<{ title: string; description: string }>;
+  backdropUrl?: string | null;
   children: ReactNode;
 }>;
 
-/** One panel of the strip: an ink frame, its reading-order number, the step, then its proof. */
-function KomaPanel({ number, step, children }: KomaPanelProps) {
+/** One step: its order and title, a line on what happens, then the sample's real result. */
+function StepCard({ backdropUrl, number, step, children }: StepCardProps) {
   return (
-    <li className="koma">
-      <span aria-hidden="true" className="koma__number">
-        {String(number)}
-      </span>
-      <div className="grid gap-[var(--space-content-tight)]">
-        <h3 className="text-[length:var(--font-size-16)] font-bold text-text-strong">
-          {step.title}
-        </h3>
-        <p className="text-[length:var(--font-size-14)] leading-[var(--line-height-body)] text-text-muted [word-break:auto-phrase]">
-          {step.description}
-        </p>
+    <li className={cn(cardClassName, "p-[var(--space-4)] md:p-[var(--space-5)]")}>
+      {backdropUrl === undefined ? null : <CoverBackdrop coverUrl={backdropUrl} />}
+      <div className="relative z-10 grid content-start gap-[var(--space-4)]">
+        <div className="grid gap-[var(--space-content-tight)]">
+          <h3 className="flex items-baseline gap-[var(--space-2)] text-[length:var(--font-size-16)] font-bold text-text-strong">
+            <span aria-hidden="true" className="font-display text-accent-ink tabular-nums">
+              {String(number).padStart(2, "0")}
+            </span>
+            {step.title}
+          </h3>
+          <p className="text-[length:var(--font-size-14)] leading-[var(--line-height-body)] text-text-muted [word-break:auto-phrase]">
+            {step.description}
+          </p>
+        </div>
+        {children}
       </div>
-      {children}
     </li>
   );
 }
@@ -44,9 +55,10 @@ type HomeHowItWorksProps = Readonly<{
 }>;
 
 /**
- * How it works as a three-panel manga strip, read in order: the example's chosen works, the
- * Manga DNA they produce, and the engine's recommendation with its reason. One sample profile
- * runs through all three panels, so the strip shows a real result rather than describing one.
+ * How it works in three cards, in the recommendations page's language: the example's chosen
+ * works, the Manga DNA they produce, and the engine's recommendation with its reason, the last
+ * card tinted by its cover like a featured recommendation. One sample profile runs through all
+ * three, so the section shows a real result rather than describing one.
  */
 export function HomeHowItWorks({
   sample,
@@ -54,24 +66,26 @@ export function HomeHowItWorks({
   onCoverVisible,
   animateReason = false,
 }: HomeHowItWorksProps) {
+  const headingId = useId();
   const [firstAnchor] = sample.anchorWorks;
   const recommendedId = sample.recommendation.work.id;
   const [choose, see, recommend] = landingStrings.how.steps;
 
   return (
-    <section aria-labelledby="landing-how-title" className="grid gap-[var(--space-5)]">
-      <h2 className="home-section-title" id="landing-how-title">
-        {landingStrings.how.title}
-      </h2>
+    <section aria-labelledby={headingId} className="min-w-0">
+      <SectionHeading compact id={headingId} title={landingStrings.how.title} />
       <figure className="m-0 grid gap-[var(--space-3)]">
         <figcaption className="text-[length:var(--text-caption-size)] text-text-muted">
           {landingStrings.sample.caption(
             sample.anchorWorks.slice(0, CAPTION_ANCHOR_COUNT).map((anchor) => anchor.title),
           )}
         </figcaption>
-        <ol className="koma-strip">
-          <KomaPanel number={1} step={choose}>
-            <ul aria-label={landingStrings.how.anchorsLabel} className="koma-covers">
+        <ol className="m-0 grid list-none gap-[var(--space-3)] p-0 lg:grid-cols-3">
+          <StepCard number={1} step={choose}>
+            <ul
+              aria-label={landingStrings.how.anchorsLabel}
+              className="m-0 grid list-none grid-cols-5 gap-[var(--space-2)] p-0 lg:grid-cols-3"
+            >
               {sample.anchorWorks.map((work) => (
                 <li key={work.id}>
                   <CoverImage
@@ -84,8 +98,8 @@ export function HomeHowItWorks({
                 </li>
               ))}
             </ul>
-          </KomaPanel>
-          <KomaPanel number={2} step={see}>
+          </StepCard>
+          <StepCard number={2} step={see}>
             <div className="grid gap-[var(--space-4)]" data-slot="landing-sample-dna">
               <p className="flex flex-wrap items-baseline justify-between gap-x-[var(--space-3)] gap-y-[var(--space-content-tight)]">
                 <span className="font-bold text-text-strong">{landingStrings.how.dnaTitle}</span>
@@ -109,32 +123,43 @@ export function HomeHowItWorks({
                 ))}
               </ul>
             </div>
-          </KomaPanel>
-          <KomaPanel number={3} step={recommend}>
+          </StepCard>
+          <StepCard backdropUrl={coverUrls.get(recommendedId)} number={3} step={recommend}>
             <LandingSampleRecommendation
               animateReason={animateReason}
               coverUrl={coverUrls.get(recommendedId)}
               onCoverVisible={() => onCoverVisible(recommendedId)}
               sample={sample}
             />
-          </KomaPanel>
+          </StepCard>
         </ol>
       </figure>
     </section>
   );
 }
 
-/** The last panel of the page: the same single action, framed like a closing manga panel. */
-export function HomeClosing({ visitor = "new" }: Readonly<{ visitor?: LandingVisitorState }>) {
+type HomeClosingProps = Readonly<{
+  visitor?: LandingVisitorState;
+  /** The example recommendation's cover, which tints the block like a featured card. */
+  backdropUrl?: string | null;
+}>;
+
+/** The page's last block: the same single action on a card tinted by the example's cover. */
+export function HomeClosing({ backdropUrl, visitor = "new" }: HomeClosingProps) {
+  const headingId = useId();
   return (
-    <section aria-labelledby="landing-closing-title" className="home-closing">
-      <div className="relative z-[1] grid justify-items-start gap-[var(--space-4)]">
-        <h2 className="home-section-title" id="landing-closing-title">
-          {landingStrings.closing.title}
-        </h2>
-        <p className="text-[length:var(--text-body-size)] text-text-muted [word-break:auto-phrase]">
-          {landingStrings.closing.description}
-        </p>
+    <section
+      aria-labelledby={headingId}
+      className={cn(cardClassName, "p-[var(--space-6)] md:p-[var(--space-8)]")}
+    >
+      <CoverBackdrop coverUrl={backdropUrl} />
+      <div className="relative z-10 grid justify-items-start gap-[var(--space-4)]">
+        <SectionHeading
+          className="mb-0"
+          description={landingStrings.closing.description}
+          id={headingId}
+          title={landingStrings.closing.title}
+        />
         <LandingCta visitor={visitor} />
       </div>
     </section>

@@ -121,7 +121,7 @@ export function LandingFlow({
             works={discoveryWorks}
           />
         </div>
-        <HomeClosing visitor={visitor} />
+        <HomeClosing backdropUrl={coverUrls.get(sample.recommendation.work.id)} visitor={visitor} />
       </div>
     </main>
   );
