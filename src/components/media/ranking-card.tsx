@@ -1,6 +1,6 @@
 import { Link } from "@tanstack/react-router";
 import { BookOpen } from "lucide-react";
-import type { CSSProperties, ReactNode } from "react";
+import type { ReactNode } from "react";
 
 import { CoverImage } from "@/components/cover/CoverImage";
 import { RankCrown, rankMedalFor } from "@/components/media/rank-crown";
@@ -114,7 +114,6 @@ export function RankingCard(props: RankingCardProps | EvidencePlaceholderProps) 
               aria-hidden="true"
               className="pointer-events-none absolute bottom-[var(--space-1)] left-[var(--space-2)] font-display text-[length:var(--font-size-32)] leading-none font-black text-text-strong tabular-nums [text-shadow:0_2px_10px_color-mix(in_oklch,var(--canvas)_80%,transparent)]"
               data-ranking-editorial-position="true"
-              style={{ "--rank-order": position } as CSSProperties}
             >
               {position}
             </span>

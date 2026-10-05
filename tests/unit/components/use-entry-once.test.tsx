@@ -10,7 +10,7 @@ type Callback = (entries: { isIntersecting: boolean }[]) => void;
 let observers: { callback: Callback; disconnect: ReturnType<typeof vi.fn> }[] = [];
 let reducedMotion = false;
 
-function Probe({ top }: Readonly<{ top: number }>) {
+function Probe({ top, size = 100 }: Readonly<{ top: number; size?: number }>) {
   const ref = useEntryOnce<HTMLDivElement>();
   return (
     <div
@@ -18,7 +18,14 @@ function Probe({ top }: Readonly<{ top: number }>) {
       ref={(element) => {
         if (element !== null) {
           element.getBoundingClientRect = () =>
-            ({ top, bottom: top + 100, left: 0, right: 100, width: 100, height: 100 }) as DOMRect;
+            ({
+              top,
+              bottom: top + size,
+              left: 0,
+              right: size,
+              width: size,
+              height: size,
+            }) as DOMRect;
         }
         ref(element);
       }}
@@ -64,6 +71,12 @@ describe("useEntryOnce", () => {
 
   it("leaves an element already in view in its final state", () => {
     const { getByTestId } = render(<Probe top={100} />);
+    expect(getByTestId("probe").hasAttribute("data-entry")).toBe(false);
+    expect(observers).toHaveLength(0);
+  });
+
+  it("never arms an element that has no box, since it can never come into view", () => {
+    const { getByTestId } = render(<Probe size={0} top={0} />);
     expect(getByTestId("probe").hasAttribute("data-entry")).toBe(false);
     expect(observers).toHaveLength(0);
   });

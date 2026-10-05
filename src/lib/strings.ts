@@ -423,6 +423,11 @@ export const landingStrings = {
   },
   how: {
     title: "5作品を選ぶと、好みが言葉になる",
+    /** Line-break units of the title; it never wraps inside one. */
+    titlePhrases: ["5作品を選ぶと、", "好みが言葉になる"],
+    /** The part of the title set in the accent colour. */
+    titleAccent: "好み",
+    progressLabel: "3つのステップ",
     steps: [
       { title: "選ぶ", description: "好きなマンガを5〜10作品選びます。" },
       { title: "好みが見える", description: "選んだ作品の傾向を Manga DNA として可視化します。" },
@@ -434,6 +439,11 @@ export const landingStrings = {
     anchorsLabel: "選んだ作品",
     dnaTitle: "Manga DNA",
     dnaBasis: (title: string, count: number) => `『${title}』ほか${String(count)}作品から`,
+  },
+  wheel: {
+    title: (axisCount: number) => `${String(axisCount)}の軸で、好みを読む`,
+    axesLabel: "Manga DNA の軸",
+    legend: "例のプロフィールで強く出た軸",
   },
   ranking: {
     title: "最初におすすめしたい Top 10",

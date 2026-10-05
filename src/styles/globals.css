@@ -1686,13 +1686,13 @@ h1[tabindex="-1"]:focus {
 }
 
 @media (prefers-reduced-motion: no-preference) {
-  /* The example reason types itself out when its card enters (useEntryOnce). Without the entry
-     trigger the sentence is simply there. */
-  [data-entry="armed"] .landing-typed-reason > span {
+  /* The example reason types itself out once its scene holds the stage (useEntryOnce on the
+     third story spacer). Without the trigger the sentence is simply there. */
+  .home-story:has(.home-story__spacer[data-entry="armed"]) .landing-typed-reason > span {
     opacity: 0;
   }
 
-  [data-entry="play"] .landing-typed-reason > span {
+  .home-story:has(.home-story__spacer[data-entry="play"]) .landing-typed-reason > span {
     animation: typed-reason-glyph var(--motion-duration-typing-glyph) steps(1, end) backwards;
     animation-delay: calc(240ms + var(--type-index) * var(--type-step));
   }
@@ -2098,84 +2098,20 @@ h1[tabindex="-1"]:focus {
 }
 
 /* Home scroll story. Everything here only animates toward the final state, which is also the
-   default: without scroll timelines (or with reduced motion) the page is simply static. Scroll
-   position and speed always stay the reader's own; nothing is pinned or hijacked. */
-@supports (animation-timeline: view()) {
-  @media (prefers-reduced-motion: no-preference) {
-    /* The hero sheet recedes into the dark as it leaves, and its lamp goes down. */
-    .hh-spread {
-      view-timeline: --hero-sheet block;
-    }
-
-    .hh-spread > .hh-page {
-      transform-origin: 50% 0%;
-      animation: hero-sheet-exit linear both;
-      animation-timeline: --hero-sheet;
-      animation-range: exit 12% exit 100%;
-    }
-
-    .hh-spread::before {
-      animation: hero-lamp-exit linear both;
-      animation-timeline: --hero-sheet;
-      animation-range: exit 12% exit 70%;
-    }
-
-    /* The three steps light up in reading order: choose, see your taste, get the reason. The
-       card names its own timeline because it clips its contents, which would otherwise make it
-       the tint's scroll container. */
-    .home-step {
-      view-timeline: --home-step block;
-      animation: home-step-light linear both;
-      animation-timeline: --home-step;
-      animation-range: entry 0% cover 32%;
-    }
-
-    .home-step__tint {
-      animation: home-step-tint linear both;
-      animation-timeline: --home-step;
-      animation-range: cover 18% cover 40%;
-    }
-
-    @media (min-width: 64rem) {
-      /* In one row the cards share the row's timeline and take turns. */
-      .home-steps {
-        view-timeline: --home-steps block;
-      }
-
-      .home-step,
-      .home-step__tint {
-        animation-timeline: --home-steps;
-      }
-
-      .home-step:nth-child(1) {
-        animation-range: cover 4% cover 22%;
-      }
-
-      .home-step:nth-child(2) {
-        animation-range: cover 13% cover 31%;
-      }
-
-      .home-step:nth-child(3) {
-        animation-range: cover 22% cover 40%;
-      }
-
-      .home-step:nth-child(3) .home-step__tint {
-        animation-range: cover 30% cover 46%;
-      }
-    }
-  }
-}
-
-/* The editorial ranks stamp down one by one, once, when the Top 10 is first seen. */
+   default: with reduced motion the page is simply static. Scroll position and speed always stay
+   the reader's own; nothing is pinned or hijacked. Each subject names its range in
+   --scroll-range; the timelines that drive it are attached after the scroll sections below. */
 @media (prefers-reduced-motion: no-preference) {
-  .home-rank-stamp[data-entry="armed"] [data-ranking-editorial-position] {
-    opacity: 0;
+  /* The hero sheet recedes into the dark as it leaves, and its lamp goes down. */
+  .hh-spread > .hh-page {
+    --scroll-range: exit 12% exit 100%;
+    transform-origin: 50% 0%;
+    animation: hero-sheet-exit linear both;
   }
 
-  .home-rank-stamp[data-entry="play"] [data-ranking-editorial-position] {
-    transform-origin: 30% 80%;
-    animation: rank-stamp 420ms cubic-bezier(0.2, 0.9, 0.3, 1) both;
-    animation-delay: calc(80ms + (var(--rank-order, 1) - 1) * 70ms);
+  .hh-spread::before {
+    --scroll-range: exit 12% exit 70%;
+    animation: hero-lamp-exit linear both;
   }
 }
 
@@ -2192,41 +2128,959 @@ h1[tabindex="-1"]:focus {
   }
 }
 
-@keyframes home-step-light {
+/* ---------------------------------------------------------------------------------------------
+   Home scroll sections. Each block below is first a complete static layout (the default, and
+   what readers with reduced motion get). When motion is allowed the same markup becomes a
+   scroll scene: a tall section with a sticky stage whose progress drives the effect, through
+   native scroll timelines or, where those are missing, useHomeScrollFallback. Scrolling itself
+   always stays the reader's.
+   --------------------------------------------------------------------------------------------- */
+
+/* Scroll progress for the scramble (1 = scattered, 0 = assembled) and the wheel (0 = scrambled,
+   1 = aligned). Their initial values are the finished states. */
+/* A scroll subject's animation range, such as "cover 0% cover 100%". Not inherited, so a
+   subject never borrows its parent's range. */
+@property --scroll-range {
+  syntax: "*";
+  inherits: false;
+}
+
+@property --assemble {
+  syntax: "<number>";
+  inherits: true;
+  initial-value: 0;
+}
+
+@property --spin {
+  syntax: "<number>";
+  inherits: true;
+  initial-value: 1;
+}
+
+/* 1. The sentence that assembles from scattered glyphs. */
+.home-scramble__stage {
+  display: grid;
+  place-items: center;
+  padding: var(--space-section-xl) var(--layout-page-padding);
+}
+
+.home-scramble__sentence {
+  max-width: var(--layout-width-media);
+  color: var(--text-strong);
+  font-family: var(--font-display);
+  font-size: clamp(2rem, 7.4vw, 5.75rem);
+  font-weight: 800;
+  line-height: 1.15;
+  letter-spacing: 0.02em;
+  text-align: center;
+  perspective: 900px;
+}
+
+.home-scramble__phrase {
+  display: inline-block;
+  white-space: nowrap;
+  transform-style: preserve-3d;
+}
+
+/* Scattered glyphs start in the dark and only show once they are well on their way, so a
+   glimpse of the section's top edge is empty rather than stray fragments. */
+.home-scramble__glyph {
+  display: inline-block;
+  opacity: clamp(0, (1 - var(--assemble)) * 2.5, 1);
+  transform: translate3d(
+      calc(var(--glyph-x) * var(--assemble) * 1vw),
+      calc(var(--glyph-y) * var(--assemble) * 1svh),
+      calc(var(--glyph-z) * var(--assemble) * 1px)
+    )
+    rotate(calc(var(--glyph-turn) * var(--assemble) * 1deg));
+}
+
+.home-scramble__glyph[data-accent] {
+  color: var(--accent);
+}
+
+/* 2. Three scenes; statically a column of panels. */
+.home-story__stage {
+  display: grid;
+  gap: var(--space-6);
+  max-width: var(--layout-width-media);
+  margin: 0 auto;
+  padding: 0 var(--layout-page-padding);
+}
+
+.home-story__caption {
+  color: var(--text-muted);
+  font-size: var(--text-caption-size);
+}
+
+.home-story__index,
+.home-story__spacers {
+  display: none;
+}
+
+.home-story__scenes {
+  display: grid;
+  gap: var(--space-section-large);
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.home-story__scene {
+  position: relative;
+  isolation: isolate;
+  overflow: hidden;
+  border-radius: var(--radius-card);
+}
+
+.home-story__tint {
+  position: absolute;
+  inset: 0;
+  z-index: -1;
+}
+
+.home-story__scene-body {
+  display: grid;
+  gap: var(--space-8);
+  align-items: center;
+  padding: var(--space-8) var(--space-5);
+}
+
+.home-story__scene-copy {
+  display: grid;
+  align-content: start;
+  gap: var(--space-3);
+}
+
+.home-story__number {
+  color: var(--accent);
+  font-family: var(--font-display);
+  font-size: clamp(4.5rem, 14vw, 10rem);
+  font-weight: 800;
+  line-height: 0.82;
+  letter-spacing: -0.04em;
+}
+
+.home-story__title {
+  color: var(--text-strong);
+  font-size: clamp(1.75rem, 4.2vw, 3.25rem);
+  font-weight: 700;
+  line-height: 1.2;
+}
+
+.home-story__description {
+  max-width: 26rem;
+  color: var(--text-muted);
+  font-size: var(--font-size-16);
+  line-height: var(--line-height-body);
+  word-break: auto-phrase;
+}
+
+.home-story__scene-proof {
+  min-width: 0;
+}
+
+.home-story__covers {
+  display: grid;
+  grid-template-columns: repeat(5, minmax(0, 1fr));
+  gap: var(--space-2);
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+@media (min-width: 64rem) {
+  .home-story__scene-body {
+    grid-template-columns: minmax(0, 0.85fr) minmax(0, 1.15fr);
+    gap: var(--space-12);
+    padding: var(--space-12) var(--space-8);
+  }
+
+  .home-story__covers {
+    gap: var(--space-4);
+  }
+}
+
+/* 3. The axis wheel. Labels need ten glyphs of room beyond the rim on every side. */
+.home-wheel {
+  --wheel-size: clamp(8rem, 34vmin, 21rem);
+  --wheel-font: clamp(0.625rem, 1.7vmin, 1rem);
+}
+
+.home-wheel__stage {
+  display: grid;
+  justify-items: center;
+  gap: var(--space-6);
+  padding: var(--space-section-xl) var(--layout-page-padding);
+}
+
+.home-wheel__center,
+.home-wheel__ring {
+  grid-area: 1 / 1;
+}
+
+.home-wheel__center {
+  z-index: 1;
+  align-self: center;
+  width: calc(var(--wheel-size) * 0.78);
+  opacity: calc(0.3 + var(--spin) * 0.7);
+  text-align: center;
+}
+
+.home-wheel__title {
+  display: grid;
+  justify-items: center;
+  color: var(--text-strong);
+  font-size: clamp(0.75rem, 2.2vmin, 1.375rem);
+  font-weight: 700;
+  line-height: 1.35;
+  word-break: auto-phrase;
+}
+
+.home-wheel__count {
+  color: var(--accent);
+  font-family: var(--font-display);
+  font-size: calc(var(--wheel-size) * 0.36);
+  font-weight: 800;
+  line-height: 1;
+}
+
+.home-wheel__legend {
+  grid-row: 2;
+  display: flex;
+  align-items: center;
+  gap: var(--space-2);
+  color: var(--text-muted);
+  font-size: var(--text-caption-size);
+}
+
+.home-wheel__legend-dot {
+  width: var(--space-2);
+  height: var(--space-2);
+  border-radius: var(--radius-pill);
+  background: var(--accent);
+}
+
+.home-wheel__ring {
+  position: relative;
+  width: var(--wheel-size);
+  height: var(--wheel-size);
+  margin: calc(var(--wheel-font) * 10.6 + var(--space-3));
+  padding: 0;
+  list-style: none;
+  transform: rotate(calc(var(--spin) * 360deg));
+}
+
+/* The rim the spokes leave from. */
+.home-wheel__ring::before {
+  position: absolute;
+  inset: 0;
+  border: 1px solid var(--line);
+  border-radius: var(--radius-pill);
+  content: "";
+}
+
+.home-wheel__spoke {
+  position: absolute;
+  inset: 50%;
+  color: var(--text-muted);
+  font-size: var(--wheel-font);
+  line-height: 1;
+  transform: rotate(var(--spoke-angle));
+}
+
+.home-wheel__spoke[data-highlight] {
+  color: var(--accent);
+  font-weight: 700;
+}
+
+.home-wheel__glyph {
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 1em;
+  text-align: center;
+  transform-origin: 0 0;
+  transform: rotate(calc(var(--glyph-scramble) * (1 - var(--spin))))
+    translateX(calc(var(--wheel-size) / 2 + var(--space-3)))
+    translateX(calc(var(--glyph-slot) * 1.04em)) translateY(-0.5em)
+    rotate(calc(var(--glyph-flip) * 180deg))
+    translate(calc(var(--glyph-flip) * -1em), calc(var(--glyph-flip) * -1em));
+}
+
+/* 4. Walls of works that bloom into place. */
+.home-chapter {
+  display: grid;
+  gap: var(--space-2);
+  margin-bottom: var(--space-8);
+}
+
+.home-chapter__title {
+  color: var(--text-strong);
+  font-size: clamp(1.75rem, 4vw, 3rem);
+  font-weight: 700;
+  line-height: 1.2;
+  letter-spacing: -0.01em;
+  word-break: auto-phrase;
+}
+
+.home-chapter__description {
+  color: var(--text-muted);
+  font-size: var(--font-size-14);
+}
+
+.home-bloom__grid {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: var(--space-8) var(--space-4);
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.home-bloom__card {
+  display: grid;
+  gap: var(--space-2);
+  border-radius: var(--radius-cover);
+  color: inherit;
+  text-decoration: none;
+}
+
+.home-bloom__card:focus-visible {
+  outline: 2px solid var(--focus-ring);
+  outline-offset: 4px;
+}
+
+.home-bloom__cover {
+  position: relative;
+  display: block;
+}
+
+/* The rank sits over the cover's top-left corner, half above it, clear of the title below. */
+.home-bloom__rank {
+  position: absolute;
+  top: -0.42em;
+  left: -0.06em;
+  color: var(--text-strong);
+  font-family: var(--font-display);
+  font-size: var(--bloom-rank-size);
+  font-weight: 900;
+  line-height: 0.8;
+  text-shadow: 0 4px 18px color-mix(in oklch, var(--canvas) 85%, transparent);
+}
+
+.home-bloom__title {
+  display: -webkit-box;
+  overflow: hidden;
+  color: var(--text-strong);
+  font-size: var(--font-size-14);
+  font-weight: 700;
+  line-height: 1.35;
+  -webkit-box-orient: vertical;
+  -webkit-line-clamp: 2;
+}
+
+.home-bloom__grid[data-ranked] {
+  --bloom-rank-size: clamp(3.25rem, 7vw, 5.5rem);
+}
+
+.home-bloom__grid[data-ranked] .home-bloom__card {
+  padding-top: calc(var(--bloom-rank-size) * 0.42);
+}
+
+.home-bloom__meta {
+  color: var(--text-muted);
+  font-size: var(--font-size-12);
+}
+
+@media (min-width: 48rem) {
+  .home-bloom__grid {
+    grid-template-columns: repeat(4, minmax(0, 1fr));
+  }
+}
+
+@media (min-width: 64rem) {
+  .home-bloom__grid[data-ranked] {
+    grid-template-columns: repeat(5, minmax(0, 1fr));
+  }
+}
+
+@media (prefers-reduced-motion: no-preference) {
+  /* 1. Scramble: a 240svh section pins a full-screen stage while the glyphs fly home. */
+  .home-scramble {
+    height: 240svh;
+  }
+
+  .home-scramble__stage {
+    --scroll-range: entry 45% contain 62%;
+    position: sticky;
+    top: 0;
+    height: 100svh;
+    padding-block: 0;
+    overflow: hidden;
+    animation: home-assemble linear both;
+  }
+
+  /* 2. Story: three screen-tall spacers scroll under one pinned stage; each scene blinks
+     (blur + contrast) in and out with its spacer, and the 01·02·03 index follows. No scroll
+     snapping: even proximity snapping pulled small wheel steps back and trapped the reader. */
+  .home-story__stage {
+    position: sticky;
+    top: 0;
+    display: block;
+    height: 100svh;
+    max-width: none;
+    padding: 0;
+    overflow: hidden;
+  }
+
+  .home-story__caption {
+    position: absolute;
+    top: var(--space-6);
+    right: 0;
+    left: 0;
+    z-index: 4;
+    text-align: center;
+  }
+
+  .home-story__index {
+    position: absolute;
+    bottom: var(--space-6);
+    left: 50%;
+    z-index: 4;
+    display: flex;
+    gap: var(--space-4);
+    margin: 0;
+    padding: 0;
+    color: var(--text-muted);
+    font-family: var(--font-display);
+    font-size: var(--font-size-14);
+    font-weight: 700;
+    list-style: none;
+    translate: -50% 0;
+  }
+
+  .home-story__scenes {
+    position: absolute;
+    inset: 0;
+    display: block;
+  }
+
+  .home-story__scene {
+    position: absolute;
+    inset: 0;
+    display: grid;
+    place-items: center;
+    border-radius: 0;
+    animation-timing-function: ease-in-out;
+    animation-fill-mode: both;
+  }
+
+  /* A keyboard reader who tabs into a scene sees it, whatever the scroll position. */
+  .home-story__scene:focus-within {
+    z-index: 5;
+    opacity: 1;
+    animation: none;
+  }
+
+  .home-story__scene-body {
+    width: min(100% - 2 * var(--layout-page-padding), var(--layout-width-media));
+    padding: var(--space-12) 0;
+  }
+
+  .home-story__spacers {
+    display: block;
+    margin-top: -100svh;
+  }
+
+  .home-story__spacer {
+    display: block;
+    height: 100svh;
+  }
+
+  /* Each scene, its body and its index entry follow their spacer from first to last pixel. */
+  .home-story__scene,
+  .home-story__scene-body,
+  .home-story__index li {
+    --scroll-range: cover 0% cover 100%;
+  }
+
+  /* The scene (with its full-screen tint) only fades, which the compositor does cheaply;
+     the blur and contrast melt applies to the content area alone. */
+  .home-story__scene[data-scene="1"] {
+    animation-name: story-fade-out;
+  }
+
+  .home-story__scene[data-scene="2"] {
+    animation-name: story-fade;
+  }
+
+  .home-story__scene[data-scene="3"] {
+    animation-name: story-fade-in;
+  }
+
+  .home-story__scene-body {
+    animation-timing-function: ease-in-out;
+    animation-fill-mode: both;
+  }
+
+  .home-story__scene[data-scene="1"] > .home-story__scene-body {
+    animation-name: story-melt-out;
+  }
+
+  .home-story__scene[data-scene="2"] > .home-story__scene-body {
+    animation-name: story-melt;
+  }
+
+  .home-story__scene[data-scene="3"] > .home-story__scene-body {
+    animation-name: story-melt-in;
+  }
+
+  .home-story__scene:focus-within > .home-story__scene-body {
+    filter: none;
+    animation: none;
+  }
+
+  .home-story__index li {
+    animation-fill-mode: both;
+    animation-timing-function: linear;
+  }
+
+  .home-story__index [data-scene="1"] {
+    animation-name: story-index-out;
+  }
+
+  .home-story__index [data-scene="2"] {
+    animation-name: story-index;
+  }
+
+  .home-story__index [data-scene="3"] {
+    animation-name: story-index-in;
+  }
+
+  /* While a scene holds the stage its contents keep moving with the scroll: the number
+     drifts up, the five covers fan out of a stack, the DNA rows rise one by one (each row
+     carries its own staggered range inline), and the recommendation card lifts while the
+     page takes its cover's colour. */
+  .home-story__number {
+    --scroll-range: cover 10% cover 90%;
+    animation: story-number-drift linear both;
+  }
+
+  .home-story__covers > li {
+    --scroll-range: cover 0% cover 55%;
+    animation: story-cover-fan linear both;
+  }
+
+  .home-story__bars > li {
+    animation: story-bar-rise linear both;
+  }
+
+  .home-story__card {
+    --scroll-range: cover 15% cover 50%;
+    animation: story-card-lift linear both;
+  }
+
+  .home-story__tint {
+    --scroll-range: cover 28% cover 55%;
+    animation: story-tint linear both;
+  }
+
+  /* 3. Wheel: a 220svh section pins the wheel while it turns once and the labels align. */
+  .home-wheel {
+    height: 220svh;
+  }
+
+  .home-wheel__stage {
+    --scroll-range: entry 40% contain 70%;
+    position: sticky;
+    top: 0;
+    height: 100svh;
+    align-content: center;
+    padding-block: 0;
+    overflow: hidden;
+    animation: home-wheel-spin linear both;
+  }
+
+  /* 4. Bloom: each tile settles from a turn about an axis far off to its side. */
+  .home-bloom__item {
+    --scroll-range: entry 0% cover 42%;
+    --bloom-origin: 25vw;
+    --bloom-side: -1;
+    --bloom-amp: 1;
+    transform-origin: var(--bloom-origin) 100%;
+    animation: home-bloom linear both;
+  }
+
+  .home-bloom__item:nth-child(2n) {
+    --bloom-origin: -25vw;
+    --bloom-side: 1;
+  }
+
+  @media (min-width: 48rem) {
+    .home-bloom__item:nth-child(4n + 1) {
+      --bloom-origin: 50vw;
+      --bloom-side: -1;
+      --bloom-amp: 2;
+    }
+
+    .home-bloom__item:nth-child(4n + 2) {
+      --bloom-origin: 25vw;
+      --bloom-side: -1;
+      --bloom-amp: 1;
+    }
+
+    .home-bloom__item:nth-child(4n + 3) {
+      --bloom-origin: -25vw;
+      --bloom-side: 1;
+      --bloom-amp: 1;
+    }
+
+    .home-bloom__item:nth-child(4n) {
+      --bloom-origin: -50vw;
+      --bloom-side: 1;
+      --bloom-amp: 2;
+    }
+  }
+
+  @media (min-width: 64rem) {
+    [data-ranked] > .home-bloom__item:nth-child(5n + 1) {
+      --bloom-origin: 50vw;
+      --bloom-side: -1;
+      --bloom-amp: 2;
+    }
+
+    [data-ranked] > .home-bloom__item:nth-child(5n + 2) {
+      --bloom-origin: 25vw;
+      --bloom-side: -1;
+      --bloom-amp: 1;
+    }
+
+    [data-ranked] > .home-bloom__item:nth-child(5n + 3) {
+      --bloom-origin: 50%;
+      --bloom-side: 0;
+      --bloom-amp: 1;
+    }
+
+    [data-ranked] > .home-bloom__item:nth-child(5n + 4) {
+      --bloom-origin: -25vw;
+      --bloom-side: 1;
+      --bloom-amp: 1;
+    }
+
+    [data-ranked] > .home-bloom__item:nth-child(5n) {
+      --bloom-origin: -50vw;
+      --bloom-side: 1;
+      --bloom-amp: 2;
+    }
+  }
+}
+
+/* Native scroll timelines drive every subject above over its --scroll-range. The selector list
+   repeats each subject's own selector so it overrides the range reset by the shorthand. */
+@supports (animation-timeline: view()) {
+  @media (prefers-reduced-motion: no-preference) {
+    .hh-spread > .hh-page,
+    .hh-spread::before,
+    .home-scramble__stage,
+    .home-story__scene,
+    .home-story__scene-body,
+    .home-story__index li,
+    .home-story__number,
+    .home-story__covers > li,
+    .home-story__bars > li,
+    .home-story__card,
+    .home-story__tint,
+    .home-wheel__stage,
+    .home-bloom__item {
+      animation-range: var(--scroll-range);
+    }
+
+    .hh-spread {
+      view-timeline: --hero-sheet block;
+    }
+
+    .hh-spread > .hh-page,
+    .hh-spread::before {
+      animation-timeline: --hero-sheet;
+    }
+
+    .home-scramble {
+      view-timeline: --scramble block;
+    }
+
+    .home-scramble__stage {
+      animation-timeline: --scramble;
+    }
+
+    .home-story {
+      timeline-scope: --story-1, --story-2, --story-3;
+    }
+
+    .home-story__spacer[data-scene="1"] {
+      view-timeline: --story-1 block;
+    }
+
+    .home-story__spacer[data-scene="2"] {
+      view-timeline: --story-2 block;
+    }
+
+    .home-story__spacer[data-scene="3"] {
+      view-timeline: --story-3 block;
+    }
+
+    .home-story__scene[data-scene="1"],
+    .home-story__scene[data-scene="1"] > .home-story__scene-body,
+    .home-story__scene[data-scene="1"] .home-story__number,
+    .home-story__index [data-scene="1"],
+    .home-story__covers > li {
+      animation-timeline: --story-1;
+    }
+
+    .home-story__scene[data-scene="2"],
+    .home-story__scene[data-scene="2"] > .home-story__scene-body,
+    .home-story__scene[data-scene="2"] .home-story__number,
+    .home-story__index [data-scene="2"],
+    .home-story__bars > li {
+      animation-timeline: --story-2;
+    }
+
+    .home-story__scene[data-scene="3"],
+    .home-story__scene[data-scene="3"] > .home-story__scene-body,
+    .home-story__scene[data-scene="3"] .home-story__number,
+    .home-story__index [data-scene="3"],
+    .home-story__card,
+    .home-story__tint {
+      animation-timeline: --story-3;
+    }
+
+    .home-wheel {
+      view-timeline: --wheel block;
+    }
+
+    .home-wheel__stage {
+      animation-timeline: --wheel;
+    }
+
+    .home-bloom__item {
+      animation-timeline: view();
+    }
+  }
+}
+
+/* Without scroll timelines (Firefox) the same keyframes hold paused and useHomeScrollFallback
+   writes each subject's range progress (0–1) to --scroll-progress, which seeks them. Until it
+   runs every subject waits at its start. */
+@supports not (animation-timeline: view()) {
+  @media (prefers-reduced-motion: no-preference) {
+    .hh-spread > .hh-page,
+    .hh-spread::before,
+    .home-scramble__stage,
+    .home-story__scene,
+    .home-story__scene-body,
+    .home-story__index li,
+    .home-story__number,
+    .home-story__covers > li,
+    .home-story__bars > li,
+    .home-story__card,
+    .home-story__tint,
+    .home-wheel__stage,
+    .home-bloom__item {
+      animation-duration: 1s;
+      animation-play-state: paused;
+      animation-delay: calc(var(--scroll-progress, 0) * -1s);
+    }
+  }
+}
+
+@keyframes home-assemble {
+  from {
+    --assemble: 1;
+  }
+
+  to {
+    --assemble: 0;
+  }
+}
+
+@keyframes home-wheel-spin {
+  from {
+    --spin: 0;
+  }
+
+  to {
+    --spin: 1;
+  }
+}
+
+/* Over a spacer's cover range: enter 15–35%, hold 35–65%, leave 65–85%. Neighbouring spacers
+   overlap there, so one scene melts out as the next melts in. */
+@keyframes story-fade {
+  0%,
+  15%,
+  85%,
+  100% {
+    z-index: 0;
+    opacity: 0;
+  }
+
+  35%,
+  65% {
+    z-index: 2;
+    opacity: 1;
+  }
+}
+
+@keyframes story-fade-in {
+  0%,
+  15% {
+    z-index: 0;
+    opacity: 0;
+  }
+
+  35%,
+  100% {
+    z-index: 2;
+    opacity: 1;
+  }
+}
+
+@keyframes story-fade-out {
+  0%,
+  65% {
+    z-index: 2;
+    opacity: 1;
+  }
+
+  85%,
+  100% {
+    z-index: 0;
+    opacity: 0;
+  }
+}
+
+@keyframes story-melt {
+  0%,
+  15%,
+  85%,
+  100% {
+    filter: blur(0.6rem) contrast(3);
+  }
+
+  35%,
+  65% {
+    filter: blur(0) contrast(1);
+  }
+}
+
+@keyframes story-melt-in {
+  0%,
+  15% {
+    filter: blur(0.6rem) contrast(3);
+  }
+
+  35%,
+  100% {
+    filter: blur(0) contrast(1);
+  }
+}
+
+@keyframes story-melt-out {
+  0%,
+  65% {
+    filter: blur(0) contrast(1);
+  }
+
+  85%,
+  100% {
+    filter: blur(0.6rem) contrast(3);
+  }
+}
+
+@keyframes story-number-drift {
+  from {
+    translate: 0 2.5rem;
+  }
+
+  to {
+    translate: 0 -2.5rem;
+  }
+}
+
+@keyframes story-cover-fan {
+  from {
+    translate: calc(var(--cover-offset) * -88%) 14%;
+    rotate: calc(var(--cover-offset) * 9deg);
+  }
+}
+
+@keyframes story-bar-rise {
+  from {
+    opacity: 0;
+    translate: 0 1.5rem;
+  }
+}
+
+@keyframes story-card-lift {
   from {
     opacity: 0.3;
-    transform: translateY(24px);
-  }
-
-  to {
-    opacity: 1;
-    transform: none;
+    translate: 0 22%;
+    scale: 0.94;
   }
 }
 
-@keyframes home-step-tint {
+@keyframes story-tint {
   from {
     opacity: 0;
   }
+}
 
-  to {
+@keyframes story-index {
+  0%,
+  20%,
+  80%,
+  100% {
+    opacity: 0.35;
+  }
+
+  35%,
+  65% {
     opacity: 1;
+    color: var(--accent);
   }
 }
 
-@keyframes rank-stamp {
-  0% {
-    opacity: 0;
-    transform: scale(1.7);
+@keyframes story-index-in {
+  0%,
+  20% {
+    opacity: 0.35;
   }
 
-  55% {
-    opacity: 1;
-    transform: scale(0.94);
-  }
-
+  35%,
   100% {
     opacity: 1;
-    transform: scale(1);
+    color: var(--accent);
+  }
+}
+
+@keyframes story-index-out {
+  0%,
+  65% {
+    opacity: 1;
+    color: var(--accent);
+  }
+
+  80%,
+  100% {
+    opacity: 0.35;
+  }
+}
+
+@keyframes home-bloom {
+  from {
+    opacity: 0.25;
+    translate: 0 12%;
+    scale: 0.78;
+    rotate: calc(var(--bloom-side) * 8deg * var(--bloom-amp));
   }
 }

@@ -55,7 +55,8 @@ type HomeHeroProps = Readonly<{
 
 /**
  * Hero as a magazine spread: brand masthead, a living manga page with the title set vertically
- * beside it (horizontally on narrow screens), and the copy and single action underneath.
+ * beside it (horizontally on narrow screens), and the copy and single action underneath. It
+ * fills at least the first screen, centred, so nothing below shows before the reader scrolls.
  */
 export function HomeHero({
   recommendableWorkCount,
@@ -67,7 +68,7 @@ export function HomeHero({
     <div className="overflow-x-clip">
       <section
         aria-labelledby="landing-title"
-        className="landing-hero mx-auto grid w-full max-w-[var(--layout-width-hero)] px-[var(--layout-page-padding)] pt-[var(--space-6)] pb-[var(--space-12)]"
+        className="landing-hero mx-auto grid min-h-svh w-full max-w-[var(--layout-width-hero)] content-center px-[var(--layout-page-padding)] pt-[var(--space-6)] pb-[var(--space-12)]"
       >
         <HomeHeroScene
           brand={<LandingLogoReveal staticPresentation={storageFree} />}

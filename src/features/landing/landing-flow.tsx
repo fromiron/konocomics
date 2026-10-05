@@ -1,7 +1,7 @@
 "use client";
 
 import { useNavigate } from "@tanstack/react-router";
-import { useEffect, useMemo } from "react";
+import { useEffect, useId, useMemo } from "react";
 
 import { BrandWordmark } from "@/components/nav/brand-wordmark";
 import { CatalogFailure } from "@/features/catalog/catalog-provider";
@@ -12,7 +12,10 @@ import { usePersistence, type ProviderCacheRecord } from "@/infrastructure/db";
 import { recordEntrySource } from "./entry-source";
 import { HomeHero } from "./home-hero";
 import { HomeClosing, HomeHowItWorks } from "./home-how-it-works";
-import { HomeDiscoveryShelf, HomeRankingShelf } from "./home-showcase";
+import { HomeAxisWheel } from "./home-axis-wheel";
+import { HomeDiscoveryBloom, HomeRankingBloom } from "./home-bloom-grid";
+import { HomeScrambleHeading } from "./home-scramble-heading";
+import { useHomeScrollFallback } from "./use-home-scroll-fallback";
 import type { LandingSample, LandingWork } from "./landing-types";
 import { useLandingVisitorState } from "./visitor-state";
 import type { EntrySource } from "@/lib/route-search";
@@ -54,6 +57,8 @@ export function LandingFlow({
   const { hasProfile, error: profileError } = usePersonalProfile();
   // Reading local state never changes it: the landing only picks where its one action leads.
   const visitor = useLandingVisitorState();
+  const scrambleHeadingId = useId();
+  const scrollRootRef = useHomeScrollFallback<HTMLElement>();
 
   useEffect(() => {
     if (entrySource !== undefined) recordEntrySource(entrySource);
@@ -95,6 +100,7 @@ export function LandingFlow({
       className="min-h-dvh overflow-x-clip bg-canvas"
       data-entry-source={entrySource}
       data-landing-state="introduction"
+      ref={scrollRootRef}
     >
       <HomeHero
         recommendableWorkCount={recommendableWorkCount}
@@ -102,25 +108,27 @@ export function LandingFlow({
         storageFree={showIntroduction}
         visitor={visitor}
       />
-      <div className="mx-auto grid w-full max-w-[var(--layout-width-media)] gap-[var(--space-shelf-group)] px-[var(--layout-page-padding)] pt-[var(--space-shelf)]">
-        <HomeHowItWorks
-          animateReason={!showIntroduction && visitor === "new"}
+      {/* Below the hero the page is a scroll story: a sentence assembling, three scenes, the
+          axis wheel, then the walls of works and the closing action. */}
+      <HomeScrambleHeading id={scrambleHeadingId} />
+      <HomeHowItWorks
+        animateReason={!showIntroduction && visitor === "new"}
+        coverUrls={coverUrls}
+        onCoverVisible={requestCover}
+        sample={sample}
+      />
+      <HomeAxisWheel sample={sample} />
+      <div className="mx-auto grid w-full max-w-[var(--layout-width-media)] gap-[var(--space-section-xl)] px-[var(--layout-page-padding)] pt-[var(--space-section-xl)]">
+        <HomeRankingBloom
           coverUrls={coverUrls}
           onCoverVisible={requestCover}
-          sample={sample}
+          works={editorialRankingWorks}
         />
-        <div className="grid gap-[var(--space-shelf)]">
-          <HomeRankingShelf
-            coverUrls={coverUrls}
-            onCoverVisible={requestCover}
-            works={editorialRankingWorks}
-          />
-          <HomeDiscoveryShelf
-            coverUrls={coverUrls}
-            onCoverVisible={requestCover}
-            works={discoveryWorks}
-          />
-        </div>
+        <HomeDiscoveryBloom
+          coverUrls={coverUrls}
+          onCoverVisible={requestCover}
+          works={discoveryWorks}
+        />
         <HomeClosing backdropUrl={coverUrls.get(sample.recommendation.work.id)} visitor={visitor} />
       </div>
     </main>

@@ -15,7 +15,7 @@ type EntryOnceOptions = Readonly<{
  * A one-time entrance for an element below the fold. On attach the element gets
  * `data-entry="armed"` (CSS shows its starting pose) and switches to `data-entry="play"` the
  * first time it is in view. Nothing is set when motion is reduced, IntersectionObserver is
- * missing, or the element is already in view, so the final state is the default and never
+ * missing, or the element is already in view or not rendered, so the final state is the default and never
  * waits on script. Returns a callback ref.
  */
 export function useEntryOnce<Element extends HTMLElement>({
@@ -33,6 +33,8 @@ export function useEntryOnce<Element extends HTMLElement>({
       return;
     }
     const rect = element.getBoundingClientRect();
+    // An element without a box (display: none) never comes into view, so it must not wait.
+    if (rect.width === 0 && rect.height === 0) return;
     if (rect.top < window.innerHeight && rect.bottom > 0) return;
 
     element.setAttribute("data-entry", "armed");
