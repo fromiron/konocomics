@@ -143,6 +143,23 @@ describe.each(scenes)("$id scene", (scene) => {
     }
   });
 
+  it("returns loose light and props off-page instead of sweeping them back across it", () => {
+    for (const track of scene.ambient) {
+      const poses = resolved(track.keyframes);
+      track.keyframes.forEach((frame, index) => {
+        const next = poses[index + 1];
+        if (next === undefined) return;
+        const jump = Math.hypot(next.x - poses[index]!.x, next.y - poses[index]!.y);
+        const nextOffset = track.keyframes[index + 1]?.offset ?? 1;
+        const span = nextOffset - (frame.offset ?? 0);
+        // A move of hundreds of pixels in about a hundred milliseconds is a return, not motion.
+        if (jump > 400 && span * track.durationMs < 400) {
+          expect(frame.easing, `${track.node} keyframe ${String(index)}`).toMatch(/^steps\(/u);
+        }
+      });
+    }
+  });
+
   it("does not start everything on the same beat", () => {
     const starts = new Set(scene.intro.map((track) => track.startMs));
     expect(starts.size).toBeGreaterThanOrEqual(6);

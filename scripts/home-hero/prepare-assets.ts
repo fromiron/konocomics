@@ -203,11 +203,26 @@ function visibleBox(file: string): [number, number, number, number] {
   if (alpha === "Undefined" || alpha === "False") {
     return [0, 0, Number(imageWidth), Number(imageHeight)];
   }
-  const box = magick(file, "-alpha", "extract", "-threshold", "0", "-format", "%@", "info:");
+  // A 1 px empty border keeps the trim's background colour right even when the content touches
+  // the image edges; the border is then taken back out of the offsets.
+  const box = magick(
+    file,
+    "-alpha",
+    "extract",
+    "-threshold",
+    "0",
+    "-bordercolor",
+    "black",
+    "-border",
+    "1",
+    "-format",
+    "%@",
+    "info:",
+  );
   const match = /^(\d+)x(\d+)\+(\d+)\+(\d+)$/u.exec(box);
   if (match === null) throw new Error(`Unexpected trim box ${box} for ${file}`);
   const [, width, height, x, y] = match.map(Number);
-  return [x!, y!, width!, height!];
+  return [x! - 1, y! - 1, width!, height!];
 }
 
 function encode(input: string, output: string, encoding: Encoding, width?: number) {

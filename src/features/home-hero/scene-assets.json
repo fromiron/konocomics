@@ -69,18 +69,18 @@
       }
     },
     "paper": {
-      "x": 1,
+      "x": 0,
       "y": 0,
-      "w": 488,
+      "w": 489,
       "h": 1024,
       "files": [
-        { "format": "webp", "width": 488, "file": "romance/paper-488.webp" },
-        { "format": "webp", "width": 244, "file": "romance/paper-244.webp" }
+        { "format": "webp", "width": 489, "file": "romance/paper-489.webp" },
+        { "format": "webp", "width": 245, "file": "romance/paper-245.webp" }
       ],
       "source": {
         "file": "러브코미디/background-FX-panels/layers/06-panel-paper-overscan.png",
         "sha256": "16da9c2f9ab2397c2691cf5815e5a69bcd9318946761b58dc67391bf739cc57a",
-        "crop": [385, 384, 488, 1024]
+        "crop": [384, 384, 489, 1024]
       }
     },
     "ink": {

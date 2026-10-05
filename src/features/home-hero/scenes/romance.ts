@@ -391,7 +391,8 @@ export const romanceScene: SceneDefinition = {
       repeat: true,
       keyframes: [
         { offset: 0, x: 0, easing: SINE },
-        { offset: 0.45, x: 2500 },
+        // Jump back while off-panel instead of sweeping back across it.
+        { offset: 0.45, x: 2500, easing: "steps(1, end)" },
         { offset: 0.46, x: 0 },
         { offset: 1, x: 0 },
       ],
