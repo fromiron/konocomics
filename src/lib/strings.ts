@@ -384,15 +384,9 @@ export const aboutStrings = {
 
 export const landingStrings = {
   metadataTitle: "konocomics | 好みから見つける、次のマンガ。",
-  logoCaption: {
-    japanese: "好み",
-    equation: "kono + mi = このみ",
-  },
   tagline: "好みから見つける、次のマンガ。",
   /** Line-break units of the tagline; it never wraps inside a phrase. */
   taglinePhrases: ["好みから見つける、", "次のマンガ。"],
-  description: (axisCount: number) =>
-    `好きなマンガを5作品選ぶだけ。展開やトーンなど${String(axisCount)}の軸から好みを読み取り、なぜ合うのかまで説明します。`,
   cta: "好きなマンガから始める",
   ctaByVisitor: {
     new: "好きなマンガから始める",

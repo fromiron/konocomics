@@ -7,7 +7,7 @@ import { StrictMode } from "react";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 
 import { LandingLogoReveal } from "@/features/landing/landing-logo-reveal";
-import { coreStrings, landingStrings } from "@/lib/strings";
+import { coreStrings } from "@/lib/strings";
 
 type MotionPreferenceListener = (event: { matches: boolean }) => void;
 
@@ -108,19 +108,16 @@ describe("LandingLogoReveal", () => {
     expect(motionSource).toContain("initial={{ opacity: 0 }}");
     expect(motionSource).toContain("duration: 0.9");
     expect(motionSource).toContain("times: [0, 4 / 9, 1]");
-    expect(componentSource).toContain("group-data-[phase=waiting-fonts]/logo:opacity-0");
     expect(componentSource).toContain("landing-logo-reveal__monochrome");
     expect(componentSource).toContain("opacity-0");
   });
 
-  it("keeps the final accessible wordmark and meaning caption present in every phase", () => {
+  it("keeps the final accessible wordmark present in every phase", () => {
     setFontsReady(new Promise(() => undefined));
 
     render(<LandingLogoReveal />);
 
     expect(screen.getByLabelText(coreStrings.appName)).toBeTruthy();
-    expect(screen.getByText(landingStrings.logoCaption.japanese)).toBeTruthy();
-    expect(screen.getByText("kono + mi = このみ")).toBeTruthy();
     expect(document.querySelectorAll(".landing-logo-reveal__base")).toHaveLength(1);
     expect(document.querySelectorAll(".landing-logo-reveal__monochrome")).toHaveLength(1);
     expect(revealRoot().dataset.motion).toBe("signature-a");

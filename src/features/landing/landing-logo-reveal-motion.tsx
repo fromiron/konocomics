@@ -1,15 +1,10 @@
 "use client";
 
 import { LazyMotion, domAnimation, m } from "motion/react";
-import type { ReactNode } from "react";
 
 import { BrandWordmark } from "@/components/nav/brand-wordmark";
 
-type LandingLogoRevealMotionProps = Readonly<{
-  caption: ReactNode;
-}>;
-
-export function LandingLogoRevealMotion({ caption }: LandingLogoRevealMotionProps) {
+export function LandingLogoRevealMotion() {
   return (
     <LazyMotion features={domAnimation} strict>
       <span className="relative inline-flex text-[length:var(--font-size-28)]">
@@ -27,14 +22,6 @@ export function LandingLogoRevealMotion({ caption }: LandingLogoRevealMotionProp
           <BrandWordmark className="[&>span]:!text-text" decorative />
         </m.span>
       </span>
-      <m.span
-        animate={{ opacity: 1, y: 0 }}
-        className="flex items-baseline gap-[var(--space-content-tight)] text-[length:var(--text-caption-size)] text-text-muted [&_[lang=ja]]:font-bold [&_[lang=ja]]:text-text"
-        initial={{ opacity: 0, y: 8 }}
-        transition={{ delay: 0.9, duration: 0.5, ease: [0.2, 0, 0, 1] }}
-      >
-        {caption}
-      </m.span>
     </LazyMotion>
   );
 }

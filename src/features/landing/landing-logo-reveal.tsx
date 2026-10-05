@@ -1,10 +1,9 @@
 "use client";
 
-import type { ComponentType, ReactNode } from "react";
+import type { ComponentType } from "react";
 import { useLayoutEffect, useRef, useState } from "react";
 
 import { BrandWordmark } from "@/components/nav/brand-wordmark";
-import { landingStrings } from "@/lib/strings";
 
 const LOGO_REVEAL_MARKER = "logoRevealed";
 const LOGO_REVEAL_MARKER_VALUE = "1";
@@ -17,10 +16,6 @@ type LogoRevealDecision = "undecided" | "claimed" | "settled";
 
 type LandingLogoRevealProps = Readonly<{
   staticPresentation?: boolean;
-}>;
-
-type MotionRendererProps = Readonly<{
-  caption: ReactNode;
 }>;
 
 function claimLogoReveal(): "claimed" | "consumed" | "unavailable" {
@@ -43,9 +38,7 @@ function claimLogoReveal(): "claimed" | "consumed" | "unavailable" {
 
 export function LandingLogoReveal({ staticPresentation = false }: LandingLogoRevealProps) {
   const [phase, setPhase] = useState<LogoRevealPhase>("complete");
-  const [MotionRenderer, setMotionRenderer] = useState<ComponentType<MotionRendererProps> | null>(
-    null,
-  );
+  const [MotionRenderer, setMotionRenderer] = useState<ComponentType | null>(null);
   const [reducedEntry, setReducedEntry] = useState(false);
   const decisionRef = useRef<LogoRevealDecision>("undecided");
   const finishedRef = useRef(false);
@@ -157,7 +150,7 @@ export function LandingLogoReveal({ staticPresentation = false }: LandingLogoRev
       window.addEventListener("pagehide", finish, true);
       mediaQuery.addEventListener("change", handleMotionPreferenceChange);
 
-      // This pre-paint enhancement prevents the final caption from flashing before phase A.
+      // This pre-paint enhancement prevents the final wordmark from flashing before phase A.
       setPhase("waiting-fonts");
 
       const fontsReady = document.fonts?.ready;
@@ -194,24 +187,13 @@ export function LandingLogoReveal({ staticPresentation = false }: LandingLogoRev
   /* eslint-enable react-hooks/set-state-in-effect */
 
   const motion = phase === "complete" ? "static" : "signature-a";
-  const caption = (
-    <>
-      <span lang="ja">{landingStrings.logoCaption.japanese}</span>
-      <span>{landingStrings.logoCaption.equation}</span>
-    </>
-  );
   const staticLayers = (
-    <>
-      <span className="relative inline-flex text-[length:var(--font-size-28)]">
-        <BrandWordmark className="landing-logo-reveal__base relative z-0" />
-        <span className="landing-logo-reveal__monochrome pointer-events-none absolute inset-0 z-[1] opacity-0">
-          <BrandWordmark className="[&>span]:!text-text" decorative />
-        </span>
+    <span className="relative inline-flex text-[length:var(--font-size-28)]">
+      <BrandWordmark className="landing-logo-reveal__base relative z-0" />
+      <span className="landing-logo-reveal__monochrome pointer-events-none absolute inset-0 z-[1] opacity-0">
+        <BrandWordmark className="[&>span]:!text-text" decorative />
       </span>
-      <span className="flex items-baseline gap-[var(--space-content-tight)] text-[length:var(--text-caption-size)] text-text-muted group-data-[phase=waiting-fonts]/logo:translate-y-2 group-data-[phase=waiting-fonts]/logo:opacity-0 [&_[lang=ja]]:font-bold [&_[lang=ja]]:text-text">
-        {caption}
-      </span>
-    </>
+    </span>
   );
 
   return (
@@ -227,11 +209,7 @@ export function LandingLogoReveal({ staticPresentation = false }: LandingLogoRev
           }
         : {})}
     >
-      {phase === "playing" && MotionRenderer !== null ? (
-        <MotionRenderer caption={caption} />
-      ) : (
-        staticLayers
-      )}
+      {phase === "playing" && MotionRenderer !== null ? <MotionRenderer /> : staticLayers}
     </div>
   );
 }

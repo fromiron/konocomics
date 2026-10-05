@@ -3,12 +3,13 @@ import { ArrowRightIcon } from "lucide-react";
 import { buttonClassName } from "@/components/design-system/button";
 import { burstConfirmSparks } from "@/components/motion/confirm-spark";
 import { usePointerEffect } from "@/components/motion/use-pointer-effects";
-import { AXIS_IDS } from "@/domain/catalog/constants";
 import { HomeHeroScene } from "@/features/home-hero/home-hero-scene";
 import { landingStrings } from "@/lib/strings";
 import { cn } from "@/lib/utils";
 
+import { HomeHeroResult } from "./home-hero-result";
 import { LandingLogoReveal } from "./landing-logo-reveal";
+import type { LandingSample } from "./landing-types";
 
 const workCountFormat = new Intl.NumberFormat("ja-JP");
 export const landingCtaClassName = buttonClassName({
@@ -47,6 +48,10 @@ export function LandingCta({ visitor = "new" }: Readonly<{ visitor?: LandingVisi
 
 type HomeHeroProps = Readonly<{
   recommendableWorkCount: number;
+  /** The example profile whose real recommendation fills the page's last panel. */
+  sample: LandingSample;
+  coverUrl: string | null | undefined;
+  onCoverVisible(): void;
   /** `?landing=1`: a write-free bypass, so the hero reads and writes no storage. */
   storageFree?: boolean;
   visitor?: LandingVisitorState;
@@ -54,12 +59,16 @@ type HomeHeroProps = Readonly<{
 }>;
 
 /**
- * Hero as a magazine spread: brand masthead, a living manga page with the title set vertically
- * beside it (horizontally on narrow screens), and the copy and single action underneath. It
- * fills at least the first screen, centred, so nothing below shows before the reader scrolls.
+ * Hero as a landing spread: the brand, the promise set large and the single action on the left;
+ * on the right a living manga page whose last panel is a real example recommendation with its
+ * reason. It fills at least the first screen, centred, so nothing below shows before the reader
+ * scrolls.
  */
 export function HomeHero({
+  coverUrl,
+  onCoverVisible,
   recommendableWorkCount,
+  sample,
   sharedEntry = false,
   storageFree = false,
   visitor = "new",
@@ -70,32 +79,25 @@ export function HomeHero({
         aria-labelledby="landing-title"
         className="landing-hero mx-auto grid min-h-svh w-full max-w-[var(--layout-width-hero)] content-center px-[var(--layout-page-padding)] pt-[var(--space-6)] pb-[var(--space-12)]"
       >
-        <HomeHeroScene
-          brand={<LandingLogoReveal staticPresentation={storageFree} />}
-          storageFree={storageFree}
-          title={
+        <div className="hh-hero">
+          <div className="hh-masthead">
+            <LandingLogoReveal staticPresentation={storageFree} />
+          </div>
+          <div className="hh-copy">
+            {sharedEntry ? (
+              <p className="text-[length:var(--text-caption-size)] font-bold text-accent-ink">
+                {landingStrings.sharedEntry}
+              </p>
+            ) : null}
             <h1 className="hh-title" id="landing-title">
-              {/* Phrases never break inside; on wide screens each phrase is one column. */}
+              {/* Phrases never break inside; each phrase is one line where there is room. */}
               {landingStrings.taglinePhrases.map((phrase) => (
                 <span className="hh-title__phrase" key={phrase}>
                   {phrase}
                 </span>
               ))}
             </h1>
-          }
-        >
-          <div className="hh-foot">
-            <div className="grid content-start gap-[var(--space-2)]">
-              {sharedEntry ? (
-                <p className="text-[length:var(--text-caption-size)] font-bold text-accent-ink">
-                  {landingStrings.sharedEntry}
-                </p>
-              ) : null}
-              <p className="max-w-[34rem] text-[length:var(--text-body-size)] leading-[var(--line-height-body)] text-text-muted [word-break:auto-phrase]">
-                {landingStrings.description(AXIS_IDS.length)}
-              </p>
-            </div>
-            <div className="hh-foot__action">
+            <div className="hh-copy__action">
               <LandingCta visitor={visitor} />
               {visitor === "new" ? null : (
                 <p className="text-[length:var(--text-caption-size)] text-text">
@@ -109,7 +111,13 @@ export function HomeHero({
               </p>
             </div>
           </div>
-        </HomeHeroScene>
+          <HomeHeroScene
+            lastPanel={
+              <HomeHeroResult coverUrl={coverUrl} onCoverVisible={onCoverVisible} sample={sample} />
+            }
+            storageFree={storageFree}
+          />
+        </div>
       </section>
     </div>
   );

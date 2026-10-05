@@ -18,6 +18,63 @@ type LandingSampleRecommendationProps = Readonly<{
 }>;
 
 /**
+ * The example's lead reason and the other reasons' factor labels, generated from the stored
+ * contributions exactly as on the recommendations page. `anchorTitle` is the anchor work the
+ * lead reason names, located in its text so it can be set in bold.
+ */
+export function useSampleReason({ anchorWorks, recommendation }: LandingSample) {
+  return useMemo(() => {
+    const titles = new Map(anchorWorks.map((anchor) => [anchor.id, anchor.title] as const));
+    const explanation = generateTasteExplanation({
+      contributions: recommendation.contributions,
+      confidenceLevel: recommendation.confidenceLevel,
+      lexicon: explanationLexicon,
+      resolveTitle: (workId) => titles.get(workId),
+    });
+    const [lead, ...rest] = explanation.positiveReasons;
+    const anchorTitle =
+      lead === undefined
+        ? undefined
+        : lead.anchorWorkIds
+            .map((workId) => titles.get(workId))
+            .find((title) => title !== undefined && lead.text.includes(title));
+    const anchorIndex = anchorTitle === undefined ? -1 : (lead?.text.indexOf(anchorTitle) ?? -1);
+    const leadLabel = lead === undefined ? undefined : explanationFactorLabel(lead.factorId);
+    const otherLabels = [
+      ...new Set(
+        rest.flatMap((reason) => {
+          const label = explanationFactorLabel(reason.factorId);
+          return label === undefined || label === leadLabel ? [] : [label];
+        }),
+      ),
+    ];
+    return { lead, anchorTitle, anchorIndex, otherLabels };
+  }, [anchorWorks, recommendation]);
+}
+
+/** The lead reason as plain text, with the anchor work it names in bold. */
+export function LeadReasonText({
+  text,
+  anchorTitle,
+  anchorIndex,
+  strongClassName,
+}: Readonly<{
+  text: string;
+  anchorTitle: string | undefined;
+  anchorIndex: number;
+  strongClassName: string;
+}>) {
+  if (anchorTitle === undefined || anchorIndex < 0) return text;
+  return (
+    <>
+      {text.slice(0, anchorIndex)}
+      <strong className={strongClassName}>{anchorTitle}</strong>
+      {text.slice(anchorIndex + anchorTitle.length)}
+    </>
+  );
+}
+
+/**
  * One real engine result for a fixed sample profile, shown as the last panel of the example
  * strip. Every reason is generated from the stored contributions, exactly as on the
  * recommendations page.
@@ -28,40 +85,13 @@ export function LandingSampleRecommendation({
   sample,
   animateReason = false,
 }: LandingSampleRecommendationProps) {
-  const { anchorWorks, recommendation } = sample;
-  const work = recommendation.work;
+  const work = sample.recommendation.work;
   const glareRef = usePointerEffect<HTMLDivElement>("light");
-  const explanation = useMemo(() => {
-    const titles = new Map(anchorWorks.map((anchor) => [anchor.id, anchor.title] as const));
-    return generateTasteExplanation({
-      contributions: recommendation.contributions,
-      confidenceLevel: recommendation.confidenceLevel,
-      lexicon: explanationLexicon,
-      resolveTitle: (workId) => titles.get(workId),
-    });
-  }, [anchorWorks, recommendation]);
-
-  const [lead, ...rest] = explanation.positiveReasons;
-  const anchorTitle =
-    lead === undefined
-      ? undefined
-      : lead.anchorWorkIds
-          .map((workId) => anchorWorks.find((anchor) => anchor.id === workId)?.title)
-          .find((title) => title !== undefined && lead.text.includes(title));
-  const anchorIndex = anchorTitle === undefined ? -1 : (lead?.text.indexOf(anchorTitle) ?? -1);
-  const leadLabel = lead === undefined ? undefined : explanationFactorLabel(lead.factorId);
+  const { lead, anchorTitle, anchorIndex, otherLabels } = useSampleReason(sample);
   const characters =
     lead === undefined
       ? []
       : Array.from(new Intl.Segmenter("ja", { granularity: "grapheme" }).segment(lead.text));
-  const otherLabels = [
-    ...new Set(
-      rest.flatMap((reason) => {
-        const label = explanationFactorLabel(reason.factorId);
-        return label === undefined || label === leadLabel ? [] : [label];
-      }),
-    ),
-  ];
 
   return (
     <div
@@ -101,15 +131,12 @@ export function LandingSampleRecommendation({
           <ReasonBubble paperGrain>
             <p className="text-[length:var(--font-size-14)] leading-[var(--line-height-body)] text-text [word-break:auto-phrase]">
               <span className={animateReason ? "sr-only" : undefined}>
-                {anchorTitle === undefined || anchorIndex < 0 ? (
-                  lead.text
-                ) : (
-                  <>
-                    {lead.text.slice(0, anchorIndex)}
-                    <strong className="font-bold text-text-strong">{anchorTitle}</strong>
-                    {lead.text.slice(anchorIndex + anchorTitle.length)}
-                  </>
-                )}
+                <LeadReasonText
+                  anchorIndex={anchorIndex}
+                  anchorTitle={anchorTitle}
+                  strongClassName="font-bold text-text-strong"
+                  text={lead.text}
+                />
               </span>
               {animateReason ? (
                 <span

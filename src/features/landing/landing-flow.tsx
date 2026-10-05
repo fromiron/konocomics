@@ -103,7 +103,10 @@ export function LandingFlow({
       ref={scrollRootRef}
     >
       <HomeHero
+        coverUrl={coverUrls.get(sample.recommendation.work.id)}
+        onCoverVisible={() => requestCover(sample.recommendation.work.id)}
         recommendableWorkCount={recommendableWorkCount}
+        sample={sample}
         sharedEntry={entrySource === "share-card"}
         storageFree={showIntroduction}
         visitor={visitor}

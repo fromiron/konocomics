@@ -1846,8 +1846,8 @@ h1[tabindex="-1"]:focus {
   --hero-lamp: color-mix(in oklch, var(--hero-light) 9%, transparent);
 }
 
-/* One sheet of paper holds the art panel and the title panel. Its paper, ink and frame weight
-   follow the scene, so the title is inked like the art beside it. */
+/* One sheet of paper holds the art panel and the last panel. Its paper, ink and frame weight
+   follow the scene, so the last panel is inked like the art above it. */
 .hh-page {
   grid-template-columns: minmax(0, 1fr);
   --hh-paper: var(--hero-paper-white);
@@ -1983,30 +1983,42 @@ h1[tabindex="-1"]:focus {
   mix-blend-mode: screen;
 }
 
-/* Hero spread: masthead, the page with its title, then copy. On wide screens the page is sized
-   from the viewport height so the copy and action stay in the first view, and the title is set
-   vertically beside it like a magazine cover. */
+/* Hero spread: the brand, the promise and the single action on the left, and the manga page
+   on the right, whose last panel is a real example recommendation. On narrow screens they stack
+   (brand, promise and action first). On wide screens the page is sized from the viewport height
+   so the whole spread stays in the first view. */
 .hh-hero {
-  --hh-title-size: clamp(1.375rem, 7.4vw, 2.5rem);
+  --hh-title-size: clamp(1.75rem, 8.4vw, 2.75rem);
+  --hh-result-cover: 4rem;
   display: grid;
-  gap: var(--space-4);
+  gap: var(--space-6);
   width: 100%;
   margin-inline: auto;
 }
 
-/* The title panel: the same ink frame as the art panel, the heading inked on the page paper. */
-.hh-title-panel {
-  position: relative;
-  min-width: 0;
-  padding: var(--space-3) var(--space-3) var(--space-3) var(--space-4);
-  border: var(--hh-frame) solid var(--hh-ink);
+.hh-copy {
+  display: grid;
+  justify-items: start;
+  gap: var(--space-6);
 }
 
-/* The pause control sits in the panel corner, so it never takes width from the heading. */
-.hh-title-panel__control {
-  position: absolute;
-  right: var(--space-1);
-  bottom: var(--space-1);
+.hh-copy__action {
+  display: grid;
+  justify-items: start;
+  gap: var(--space-3);
+}
+
+.hh-title {
+  color: var(--text-strong);
+  font-size: var(--hh-title-size);
+  font-weight: 700;
+  line-height: 1.3;
+  letter-spacing: 0.02em;
+}
+
+.hh-title__phrase {
+  display: inline-block;
+  white-space: nowrap;
 }
 
 /* Page margins and frame weight scale with the page, measured against this wrapper. */
@@ -2026,74 +2038,161 @@ h1[tabindex="-1"]:focus {
   pointer-events: none;
 }
 
-.hh-title {
+/* The last panel, inked like the art above it: the example's cover beside a speech balloon. */
+.hh-result {
+  --hh-ink-soft: color-mix(in oklch, var(--hh-ink) 62%, var(--hh-paper));
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto;
+  align-items: end;
+  gap: var(--space-2);
+  padding: var(--space-3) var(--space-2) var(--space-3) var(--space-3);
+  border: var(--hh-frame) solid var(--hh-ink);
   color: var(--hh-ink);
-  font-size: var(--hh-title-size);
+}
+
+.hh-result__body {
+  display: grid;
+  grid-template-columns: var(--hh-result-cover) minmax(0, 1fr);
+  grid-template-rows: auto auto 1fr;
+  align-items: start;
+  gap: var(--space-1) var(--space-4);
+  margin: 0;
+}
+
+.hh-result__cover {
+  grid-row: 1 / span 3;
+  width: var(--hh-result-cover);
+}
+
+.hh-result__caption,
+.hh-result__creators {
+  color: var(--hh-ink-soft);
+  font-size: var(--text-caption-size);
+}
+
+.hh-result__work {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: baseline;
+  gap: 0 var(--space-2);
+  margin: 0;
+}
+
+.hh-result__title {
+  border-radius: var(--radius-control);
+  color: var(--hh-ink);
+  font-size: var(--font-size-16);
   font-weight: 700;
-  line-height: 1.3;
-  letter-spacing: 0.04em;
+  text-underline-offset: 4px;
 }
 
-.hh-title__phrase {
-  display: inline-block;
-  white-space: nowrap;
+.hh-result__title:hover {
+  text-decoration: underline;
 }
 
-.hh-foot {
-  display: grid;
-  gap: var(--space-5);
+.hh-result__title:focus-visible {
+  outline: 2px solid var(--focus-ring);
+  outline-offset: 2px;
 }
 
-.hh-foot__action {
-  display: grid;
-  justify-items: start;
-  gap: var(--space-3);
+/* A manga speech balloon in the page's ink, its tail pointing back at the cover. */
+.hh-balloon {
+  position: relative;
+  justify-self: start;
+  max-width: 40em;
+  margin: var(--space-2) 0 0 var(--space-2);
+  padding: var(--space-2) var(--space-3);
+  border: max(1.5px, var(--hh-frame)) solid var(--hh-ink);
+  border-radius: 1.1rem;
+  background: var(--hh-paper);
+  font-size: var(--font-size-14);
+  line-height: var(--line-height-body);
+  word-break: auto-phrase;
+}
+
+.hh-balloon::before {
+  position: absolute;
+  top: 0.85rem;
+  left: -0.42rem;
+  width: 0.7rem;
+  height: 0.7rem;
+  border-bottom: max(1.5px, var(--hh-frame)) solid var(--hh-ink);
+  border-left: max(1.5px, var(--hh-frame)) solid var(--hh-ink);
+  background: var(--hh-paper);
+  content: "";
+  rotate: 45deg;
+}
+
+.hh-result__control {
+  color: var(--hh-ink-soft);
+}
+
+/* On a phone the balloon takes the panel's full width under the cover, its tail pointing up. */
+@media (max-width: 39.9375rem) {
+  .hh-result__cover {
+    grid-row: 1 / span 2;
+  }
+
+  .hh-balloon {
+    grid-column: 1 / -1;
+    margin: var(--space-3) 0 0;
+  }
+
+  .hh-balloon::before {
+    top: -0.42rem;
+    left: 1.5rem;
+    rotate: 135deg;
+  }
+}
+
+/* The last panel arrives once, after the art has started: what the scene leads to. */
+@media (prefers-reduced-motion: no-preference) {
+  .hh-result__body {
+    animation: hh-result-enter 560ms cubic-bezier(0.2, 0, 0, 1) 700ms backwards;
+  }
+}
+
+@keyframes hh-result-enter {
+  from {
+    opacity: 0;
+    translate: 0 0.75rem;
+  }
 }
 
 @media (min-width: 64rem) {
   .hh-hero {
+    --hh-title-size: clamp(2.25rem, 3.6vw, 3.5rem);
+    --hh-result-cover: 4.5rem;
+    /* What the page shares the screen height with: section padding and the last panel. */
     --hh-chrome: 16rem;
-    /* Sized from the height the art panel gets, so the vertical title always fits beside it. */
-    --hh-title-size: min(3.5rem, max(2rem, calc((100svh - 24rem) / 10)));
-    --hh-title-width: calc(var(--hh-title-size) * 2.7 + var(--space-3) * 2);
-    --hh-sheet-max: calc((100svh - var(--hh-chrome)) * 1.5);
-    width: min(
-      100%,
-      calc(var(--hh-sheet-max) + var(--hh-title-width) + var(--space-12) + var(--space-4))
-    );
+    grid-template-areas:
+      "mast page"
+      "copy page";
+    grid-template-rows: auto 1fr;
+    grid-template-columns: minmax(0, 5fr) minmax(0, 7fr);
+    column-gap: var(--space-12);
+    row-gap: var(--space-6);
   }
 
-  .hh-page {
-    grid-template-columns: minmax(0, 1fr) var(--hh-title-width);
+  .hh-masthead {
+    grid-area: mast;
   }
 
-  /* The art panel sets the row height; the title panel only stretches to it. */
-  .hh-title-panel {
-    display: flex;
-    justify-content: center;
-    height: 0;
-    min-height: 100%;
-    overflow: hidden;
-    padding: var(--space-6) var(--space-3) calc(var(--control-min-size) + var(--space-3));
-  }
-
-  .hh-title {
-    writing-mode: vertical-rl;
-    letter-spacing: 0.08em;
+  .hh-copy {
+    grid-area: copy;
+    align-self: center;
+    gap: var(--space-8);
   }
 
   .hh-title__phrase {
     display: block;
   }
 
-  .hh-foot {
-    grid-template-columns: minmax(0, 1fr) auto;
-    align-items: start;
-  }
-
-  .hh-foot__action {
-    justify-items: end;
-    text-align: end;
+  .hh-spread {
+    grid-area: page;
+    align-self: center;
+    justify-self: end;
+    width: min(100%, calc((100svh - var(--hh-chrome)) * 1.5));
   }
 }
 

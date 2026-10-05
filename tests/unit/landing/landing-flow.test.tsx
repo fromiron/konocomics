@@ -185,17 +185,23 @@ describe("LandingFlow profile routing", () => {
       screen.getByText("登録なし · 2,410作品から提案 · データはこの端末だけに保存"),
     ).toBeTruthy();
 
-    // The example is labelled as one and explains itself only from its contributions.
-    const example = screen
-      .getByText(landingStrings.sample.caption([works[0]!.title, works[1]!.title]))
-      .closest("figure");
-    expect(example).toBeTruthy();
-    if (example === null) return;
-    expect(
-      within(example).getByRole("link", { name: landingStrings.sample.detail(works[5]!.title) }),
-    ).toBeTruthy();
-    expect(within(example).getByText(works[0]!.title, { selector: "strong" })).toBeTruthy();
-    expect(within(example).queryByText(/位/u)).toBeNull();
+    // The example is labelled as one and explains itself only from its contributions, both as
+    // the hero page's last panel and as the story's third scene.
+    const examples = screen
+      .getAllByText(landingStrings.sample.caption([works[0]!.title, works[1]!.title]))
+      .map((caption) => caption.closest("figure"));
+    expect(examples).toHaveLength(2);
+    for (const example of examples) {
+      expect(example).toBeTruthy();
+      if (example === null) return;
+      expect(
+        within(example).getByRole("link", { name: landingStrings.sample.detail(works[5]!.title) }),
+      ).toBeTruthy();
+      expect(
+        within(example).getAllByText(works[0]!.title, { selector: "strong" }),
+      ).not.toHaveLength(0);
+      expect(within(example).queryByText(/位/u)).toBeNull();
+    }
     expect(
       screen.getAllByRole("meter").map((meter) => meter.getAttribute("aria-valuenow")),
     ).toEqual(["3.8", "3.4"]);

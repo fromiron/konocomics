@@ -218,57 +218,47 @@ function PlayingStage({ scene, motion, paused }: PlayingStageProps) {
 type HomeHeroSceneProps = Readonly<{
   /** `?landing=1`: no storage reads or writes, and a stable scene for server rendering. */
   storageFree?: boolean;
-  /** Brand line above the page on narrow screens, where no site header carries it. */
-  brand: ReactNode;
-  /** The hero heading, set beside the page on wide screens. */
-  title: ReactNode;
-  /** Copy and action below the page. */
-  children: ReactNode;
+  /** The page's last panel, under the art: what the scene leads to. */
+  lastPanel: ReactNode;
 }>;
 
 /**
- * The home hero as one manga page: a living art panel from a genre scene beside a title panel,
- * both inked on the same paper, with the brand above and the copy underneath. Each load draws a
- * genre at random, never repeating the previous one, and plays its intro.
+ * The home hero as one manga page: a living art panel from a genre scene above a last panel,
+ * both inked on the same paper. Each load draws a genre at random, never repeating the previous
+ * one, and plays its intro.
  */
-export function HomeHeroScene({ storageFree = false, brand, title, children }: HomeHeroSceneProps) {
+export function HomeHeroScene({ storageFree = false, lastPanel }: HomeHeroSceneProps) {
   const motion = useSyncExternalStore(subscribeMotionPreference, sceneMotionAvailable, () => false);
   const [scene] = useState(() => sceneForThisLoad(storageFree));
   const [paused, setPaused] = useState(() => !storageFree && readPaused());
 
   return (
-    <div className="hh-hero" data-scene={scene.id}>
-      <div className="hh-masthead">{brand}</div>
-      <div className="hh-spread">
-        <div className="hh-page" data-paper={scene.paper}>
-          <PlayingStage motion={motion} paused={paused} scene={scene} />
-          <div className="hh-title-panel">
-            {title}
-            {motion ? (
-              <Button
-                aria-label={
-                  paused ? landingStrings.hero.motionPlay : landingStrings.hero.motionPause
-                }
-                className="hh-title-panel__control text-text-muted"
-                onClick={() => {
-                  const next = !paused;
-                  setPaused(next);
-                  if (!storageFree) writePaused(next);
-                }}
-                title={paused ? landingStrings.hero.motionPlay : landingStrings.hero.motionPause}
-                variant="ghost"
-              >
-                {paused ? (
-                  <PlayIcon aria-hidden="true" className="size-4" />
-                ) : (
-                  <PauseIcon aria-hidden="true" className="size-4" />
-                )}
-              </Button>
-            ) : null}
-          </div>
+    <div className="hh-spread" data-scene={scene.id}>
+      <div className="hh-page" data-paper={scene.paper}>
+        <PlayingStage motion={motion} paused={paused} scene={scene} />
+        <div className="hh-result">
+          {lastPanel}
+          {motion ? (
+            <Button
+              aria-label={paused ? landingStrings.hero.motionPlay : landingStrings.hero.motionPause}
+              className="hh-result__control"
+              onClick={() => {
+                const next = !paused;
+                setPaused(next);
+                if (!storageFree) writePaused(next);
+              }}
+              title={paused ? landingStrings.hero.motionPlay : landingStrings.hero.motionPause}
+              variant="ghost"
+            >
+              {paused ? (
+                <PlayIcon aria-hidden="true" className="size-4" />
+              ) : (
+                <PauseIcon aria-hidden="true" className="size-4" />
+              )}
+            </Button>
+          ) : null}
         </div>
       </div>
-      {children}
     </div>
   );
 }
