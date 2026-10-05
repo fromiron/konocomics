@@ -218,12 +218,12 @@
 - **목적:** 브랜드 기믹이 곧 제품 설명("숨은 취향의 발견")임을 10초 안에 체험시킨다.
 - **자격:** usable profile이 아닌 일반 first-run의 resolved introduction에서만 세션당 1회 실행한다. `?landing=1`은 항상 정적이며 marker를 읽거나 쓰거나 지우지 않는다.
 - **marker:** `sessionStorage["logoRevealed"] = "1"`. absent 확인 뒤 write/readback을 마치고 font 대기·Motion 시작·timer/listener 등록보다 먼저 marker를 소유한다. read·write·readback 중 하나라도 실패하면 reveal 없이 최종 정적 상태를 표시한다.
-- **static-first 기본값:** 고정 300/700의 최종 2톤 wordmark, `好み`와 「kono + mi = このみ」 caption, 태그라인·설명·CTA가 resolved introduction의 첫 paint부터 최종 DOM에 존재한다. CSS 기본값과 enhancement 실패 상태는 전부 최종 시각 상태다. eligible A가 시작된 뒤에도 최종 2톤 base·태그라인·설명·CTA는 숨기거나 비활성화하지 않고 caption group만 아래 시퀀스의 opacity/transform을 적용한다.
-- **오버레이 시퀀스(총 1.8초 이내, Motion A):** 최종 2톤 base 위의 별도 고정 300 ink monochrome wordmark overlay만 opacity로 합성한다. 0–400ms에는 base가 계속 보이는 상태에서 overlay opacity가 등장하고, 400–900ms에는 overlay가 1→0으로 사라져 base를 드러낸다. 900–1400ms에는 caption group만 opacity와 `translateY(8px→0)`로 나타난다. font-weight·color·layout·description·CTA는 애니메이션하지 않는다.
+- **static-first 기본값:** 고정 300/700의 최종 2톤 wordmark, 태그라인·CTA가 resolved introduction의 첫 paint부터 최종 DOM에 존재한다. 2026-10-05 사용자 결정으로 `好み`·「kono + mi = このみ」 caption과 설명 문장은 두지 않는다. CSS 기본값과 enhancement 실패 상태는 전부 최종 시각 상태다. eligible A가 시작된 뒤에도 최종 2톤 base·태그라인·CTA는 숨기거나 비활성화하지 않는다.
+- **오버레이 시퀀스(총 1.8초 이내, Motion A):** 최종 2톤 base 위의 별도 고정 300 ink monochrome wordmark overlay만 opacity로 합성한다. 0–400ms에는 base가 계속 보이는 상태에서 overlay opacity가 등장하고, 400–900ms에는 overlay가 1→0으로 사라져 base를 드러낸다. font-weight·color·layout·CTA는 애니메이션하지 않는다.
 - **태그라인 글자 등장(2026-10-01, React Bits SplitText 참고):** 같은 A 안에서 150ms부터 태그라인 글자가 45ms 간격으로 `opacity 0→1` + `translateY(0.55em→0)`, 글자당 700ms `cubic-bezier(0.2,0.7,0.2,1)`로 나타나며 전체가 1.8초 안에 끝난다. 태그라인 문구 단위 줄바꿈(`03` §1)과 레이아웃 폭은 변하지 않는다. 접근성: 태그라인 heading은 전체 문장 하나를 accessible name으로 갖고, 글자 단위 span은 `aria-hidden`이다. 스크린리더가 글자를 하나씩 읽지 않는다. resolved introduction이 처음 그려질 때부터 숨겨진 상태로 시작해야 하며, 이미 보인 글자를 다시 숨기는 깜빡임을 만들지 않는다.
 - **font:** marker를 먼저 기록한 뒤 `document.fonts.ready`를 기다린다. API가 없거나 reject하면 최종 정적 상태다.
 - **스킵·정리:** pointer/tap/click·keydown·wheel/scroll은 `preventDefault`나 전파 차단 없이 즉시 완료한다. 자연 완료·스킵·`pagehide`·unmount는 controls·timer·pending continuation과 모든 listener를 정리한다. CTA activation은 reveal을 완료하면서도 그대로 이동한다.
-- **재진입·reduced-motion:** marker가 이미 있으므로 reload/back/forward에서 재생하지 않는다. reduced-motion도 marker를 소비하고 §6의 대체 원칙을 따른다: overlay는 400ms opacity 크로스페이드만, 태그라인은 글자 분할·이동 없이 문장 전체가 300ms opacity로 나타나고, caption은 이동 없이 opacity만 쓴다. 실행 중 reduce로 바뀌면 남은 시퀀스를 즉시 완료하고 같은 session에서 다시 재생하지 않는다.
+- **재진입·reduced-motion:** marker가 이미 있으므로 reload/back/forward에서 재생하지 않는다. reduced-motion도 marker를 소비하고 §6의 대체 원칙을 따른다: overlay는 400ms opacity 크로스페이드만, 태그라인은 글자 분할·이동 없이 문장 전체가 300ms opacity로 나타난다. 실행 중 reduce로 바뀌면 남은 시퀀스를 즉시 완료하고 같은 session에서 다시 재생하지 않는다.
 
 ### 5.2 Manga DNA reveal — /taste?reveal=1
 

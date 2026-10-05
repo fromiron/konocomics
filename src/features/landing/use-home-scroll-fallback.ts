@@ -6,7 +6,6 @@ const MOTION_QUERY = "(prefers-reduced-motion: no-preference)";
 
 /** Every element whose keyframes follow the scroll; mirrors the subject list in globals.css. */
 const SUBJECTS = [
-  ".hh-spread",
   ".hh-spread > .hh-page",
   ".home-scramble__stage",
   ".home-story__scene",
@@ -75,7 +74,7 @@ export function rangeProgress(
 
 /** The element whose view timeline a subject follows, as the native rules in globals.css. */
 function timelineSource(subject: HTMLElement): HTMLElement | null {
-  if (subject.matches(".hh-spread, .home-bloom__item")) return subject;
+  if (subject.matches(".home-bloom__item")) return subject;
   if (subject.matches(".hh-page")) return subject.closest<HTMLElement>(".hh-spread");
   if (subject.matches(".home-scramble__stage")) {
     return subject.closest<HTMLElement>(".home-scramble");
@@ -140,10 +139,8 @@ export function useHomeScrollFallback<Root extends HTMLElement>() {
       visibleBottom = page.clientHeight - insetBottom;
       viewport = visibleBottom - insetTop;
       tracks = [...root.querySelectorAll<HTMLElement>(SUBJECTS)].flatMap((subject) => {
-        // The hero lamp is the spread's ::before, which reads the spread's progress.
-        const pseudo = subject.matches(".hh-spread") ? "::before" : null;
         const range = parseScrollRange(
-          getComputedStyle(subject, pseudo).getPropertyValue("--scroll-range"),
+          getComputedStyle(subject).getPropertyValue("--scroll-range"),
         );
         const source = timelineSource(subject);
         if (range === null || source === null) return [];

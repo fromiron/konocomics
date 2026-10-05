@@ -7,7 +7,7 @@ import { BrandWordmark } from "@/components/nav/brand-wordmark";
 export function LandingLogoRevealMotion() {
   return (
     <LazyMotion features={domAnimation} strict>
-      <span className="relative inline-flex text-[length:var(--font-size-28)]">
+      <span className="relative inline-flex text-[length:var(--landing-logo-size,var(--font-size-28))]">
         <BrandWordmark className="landing-logo-reveal__base relative z-0" />
         <m.span
           animate={{ opacity: [0, 1, 0] }}

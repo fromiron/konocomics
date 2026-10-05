@@ -188,7 +188,7 @@ export function LandingLogoReveal({ staticPresentation = false }: LandingLogoRev
 
   const motion = phase === "complete" ? "static" : "signature-a";
   const staticLayers = (
-    <span className="relative inline-flex text-[length:var(--font-size-28)]">
+    <span className="relative inline-flex text-[length:var(--landing-logo-size,var(--font-size-28))]">
       <BrandWordmark className="landing-logo-reveal__base relative z-0" />
       <span className="landing-logo-reveal__monochrome pointer-events-none absolute inset-0 z-[1] opacity-0">
         <BrandWordmark className="[&>span]:!text-text" decorative />

@@ -72,8 +72,8 @@ CTA **「好きなマンガから始める」** → /onboarding. 행동은 이 �
 
 2026-09-29 사용자 요청 개선: 기능을 설명하는 대신 실제 제품 결과를 보여 준다. 같은 작품·같은 문구를 반복하지 않고, 스크롤 한 화면에 한 가지 메시지만 둔다(제안 → 작동 방식 → 둘러보기 → 시작).
 
-1. **Hero:** 왼쪽은 2톤 로고 reveal(`好み` 캡션 포함) → 태그라인 「好みから見つける、次のマンガ。」 → 한 문장 설명 → CTA → 한 줄 신뢰 문구(「登録なし · {N}作品から提案 · データはこの端末だけに保存」)다. 이전 아이브로는 두지 않는다. 태그라인은 「好みから見つける、」「次のマンガ。」 문구 단위로만 줄바꿈하고, 설명은 `word-break: auto-phrase`를 쓴다. `{N}`은 빌드 시 `recommendationEligible` 작품 수다.
-   오른쪽은 **「例」 추천 카드**다. 고정 샘플 프로필(`src/data/landing-showcase.ts`의 `landingSampleProfile`, 5작품)을 `pnpm catalog:build`에서 기존 `rankRecommendations`로 계산하고, 결과 중 editorial Top 10과 샘플 작품 밖의 최상위 작품 하나를 보여 준다. 순위 숫자는 붙이지 않는다. 표지(원본 비율)·제목·작가, 저장한 `contributions[]`에서 `generateTasteExplanation`으로 만든 lead reason, 나머지 이유의 factor 레이블, 근거 anchor 표지를 표시한다. 카드 위에 「例：『{anchor1}』『{anchor2}』などが好きな場合」를 두어 개인 결과가 아닌 예시임을 밝힌다. hero backdrop은 이 카드 표지와 같은 URL이다.
+1. **Hero(2026-10-05 사용자 결정 개정):** 큰 2톤 워드마크(마스트헤드) 아래의 만화 한 페이지다. 일본 만화의 읽기 순서(오른쪽 위 → 왼쪽 아래)와 컷 나누기(단 사이 간격은 넓게, 단 안은 좁게, 단마다 세로 경계를 어긋나게)를 따른다. 위 단은 오른쪽의 내레이션 컷(흰 바탕·먹선, 태그라인 「好みから見つける、次のマンガ。」 세로쓰기, h1)과 왼쪽의 모션 그림 컷(장면 컷 `1536×830`)이다. 아래 단은 오른쪽의 효과음 컷(흰 바탕·먹선, 장면별 「ドンッ!!!」·「ドキッ..!」, 컷 가장자리에서 살짝 잘림)과 왼쪽 CTA 컷이며 둘 사이는 사선이다. CTA 컷은 컷 전체가 하나의 CTA 링크이고 그 아래에 한 줄 신뢰 문구 「登録なし · {N}作品から提案 · データはこの端末だけに保存」를 둔다. 로고의 `好み` 캡션, 한 문장 설명, 히어로 안의 「例」 추천 카드는 두지 않는다. 이전 아이브로도 두지 않는다. 태그라인은 「好みから見つける、」「次のマンガ。」 문구 단위로만 줄바꿈한다. `{N}`은 빌드 시 `recommendationEligible` 작품 수다. 구도·모션 상세는 `redesign/home-hero-motion-plan.md`가 정한다.
+   고정 샘플 프로필(`src/data/landing-showcase.ts`의 `landingSampleProfile`, 5작품)의 「例」 추천은 사용법 세 번째 장면에서 보여 준다. `pnpm catalog:build`에서 기존 `rankRecommendations`로 계산한 결과 중 editorial Top 10과 샘플 작품 밖의 최상위 작품 하나이며, 순위 숫자 없이 표지(원본 비율)·제목·작가, `contributions[]`에서 `generateTasteExplanation`으로 만든 lead reason과 나머지 이유 레이블을 표시하고 「例：『{anchor1}』『{anchor2}』などが好きな場合」로 예시임을 밝힌다.
 2. **작동 방식:** 「5作品を選ぶと、好みが言葉になる」 제목 아래 세로 3단계(選ぶ · 好みが見える · 理由つきでおすすめ)와 같은 샘플 프로필의 「例：Manga DNA」 패널을 나란히 둔다. 패널은 `summarizeMangaDna`로 빌드 시 계산한 known Axis 상위 4개를 read-only `FactorBar`로 보여 준다. 번호 3열 템플릿과 장식 아이콘은 쓰지 않는다.
 3. 첫 방문자를 위해 명시적으로 큐레이션한 editorial Top 10 ranking(`<ol>`). 시장 popularity나 개인화 결과로 주장하지 않고 「今週の人気」 같은 문구는 쓰지 않는다. 「個人向けの順位ではありません」은 이 설명에 한 번만 둔다. 각 card는 표지 위에 큰 텍스트 순위를 고정 표시하며 generic card Y축 lift는 적용하지 않는다.
 4. discovery Shelf: 빌드 시 장르 순서대로 장르마다 onboarding 가능 작품 하나를 결정론적으로 고른다(Top 10·샘플 작품·예시 추천 제외, 최대 8).
@@ -91,13 +91,13 @@ CTA **「好きなマンガから始める」** → /onboarding. 행동은 이 �
 
 ### 반응형
 
-- mobile: compact hero의 첫 viewport에 로고+태그라인+CTA를 두고 「例」 카드는 그 아래에 둔다. 작동 방식은 단계 → DNA 패널 순서의 1열이다. discovery Shelf는 2.4장을 보여 overflow를 암시한다. editorial Top 10은 96px 폭을 사용한다. bottom navigation은 없다.
-- desktop: hero 2열 — 좌측 텍스트+CTA, 우측 「例」 추천 카드. 작동 방식은 단계와 DNA 패널의 2열이다. 아래에는 1200px media container의 Shelf/ranking을 둔다. editorial Top 10은 112px 폭으로 부분 노출+가로 탐색을 만들고, discovery는 152px 폭 카드를 쓴다.
+- mobile: hero 컷을 로고 → 내레이션(가로쓰기) → 그림 → 효과음 → CTA 순서로 쌓고, 360×740 이상에서 CTA가 첫 viewport 안에 들어온다. 작동 방식은 단계 → DNA 패널 순서의 1열이다. discovery Shelf는 2.4장을 보여 overflow를 암시한다. editorial Top 10은 96px 폭을 사용한다. bottom navigation은 없다.
+- desktop: hero는 첫 화면을 채우는 두 단의 만화 페이지 — 위 단 그림·내레이션, 아래 단 CTA·효과음. 작동 방식은 단계와 DNA 패널의 2열이다. 아래에는 1200px media container의 Shelf/ranking을 둔다. editorial Top 10은 112px 폭으로 부분 노출+가로 탐색을 만들고, discovery는 152px 폭 카드를 쓴다.
 
 ### 인터랙션·모션
 
 - Slice 10은 정적 로고와 직접 피드백만 구현한다. 랜딩 reveal·페이지 진입 모션은 Slice 11 전용이다.
-- Slice 11 로고 reveal은 일반 first-run의 resolved introduction에서 세션당 1회, 총 1.8초 이내로만 실행한다(2026-10-01 태그라인 글자 등장 추가, `04` §5.1). 최종 2톤 로고·`好み` 캡션·태그라인·설명·CTA는 resolved introduction의 첫 paint부터 최종 DOM에 존재하며 CTA는 항상 조작 가능하다. 2톤 base·설명·CTA는 시각 최종 상태를 유지하고, 고정 웨이트 단색 오버레이·캡션·태그라인 글자만 움직인다. 태그라인 heading의 accessible name은 문장 전체이며 글자 span은 `aria-hidden`이다.
+- Slice 11 로고 reveal은 일반 first-run의 resolved introduction에서 세션당 1회, 총 1.8초 이내로만 실행한다(2026-10-01 태그라인 글자 등장 추가, `04` §5.1). 최종 2톤 로고·태그라인·CTA는 resolved introduction의 첫 paint부터 최종 DOM에 존재하며 CTA는 항상 조작 가능하다. 2톤 base·CTA는 시각 최종 상태를 유지하고, 고정 웨이트 단색 오버레이·태그라인 글자만 움직인다. 태그라인 heading의 accessible name은 문장 전체이며 글자 span은 `aria-hidden`이다.
 - 2026-10-01 `04` §6 G: hero·마무리 CTA는 fine pointer hover에서 마그넷(최대 x 10px·y 6px), 클릭 시 확정 스파크를 쓴다. 「例」 카드는 fine pointer hover에서 광택만 쓰고 각도를 바꾸지 않는다. 터치에서는 D press만 쓴다.
 - 탭/클릭·키 입력·휠/스크롤은 기본 동작을 소비하지 않고 reveal만 즉시 완료한다. 완료·스킵·`pagehide`·unmount에서는 controls·timer·pending continuation과 모든 listener를 정리한다.
 - reduced-motion: `04` §6 대체 원칙. 로고 overlay·태그라인·캡션은 이동·글자 분할 없이 opacity로만 600ms 이내에 나타나고, 마그넷·광택·스파크는 없다.

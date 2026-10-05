@@ -9,7 +9,7 @@ import {
   useState,
   useSyncExternalStore,
 } from "react";
-import type { ReactNode } from "react";
+import type { CSSProperties } from "react";
 
 import { Button } from "@/components/design-system/button";
 import { landingStrings } from "@/lib/strings";
@@ -215,50 +215,55 @@ function PlayingStage({ scene, motion, paused }: PlayingStageProps) {
   return <HeroStage ref={stageRef} scene={scene} />;
 }
 
+/** The scene this load shows: drawn once per document load, stable for `?landing=1`. */
+export function useHeroScene(storageFree = false): SceneDefinition {
+  const [scene] = useState(() => sceneForThisLoad(storageFree));
+  return scene;
+}
+
+/** The hero's art panel shape: the scene panel's width over its height. */
+export function sceneWindowStyle(scene: SceneDefinition) {
+  const [, , width, height] = scene.window;
+  return { "--hh-art-ratio": width / height } as CSSProperties;
+}
+
 type HomeHeroSceneProps = Readonly<{
-  /** `?landing=1`: no storage reads or writes, and a stable scene for server rendering. */
+  scene: SceneDefinition;
+  /** `?landing=1`: no storage reads or writes. */
   storageFree?: boolean;
-  /** The page's last panel, under the art: what the scene leads to. */
-  lastPanel: ReactNode;
 }>;
 
 /**
- * The home hero as one manga page: a living art panel from a genre scene above a last panel,
- * both inked on the same paper. Each load draws a genre at random, never repeating the previous
- * one, and plays its intro.
+ * The hero's art panel: a living genre scene cut to its own panel, with whatever breaks out of
+ * the panel (the battle scene's hand) free to cross into the panels around it. Each load draws a
+ * genre at random, never repeating the previous one, and plays its intro.
  */
-export function HomeHeroScene({ storageFree = false, lastPanel }: HomeHeroSceneProps) {
+export function HomeHeroScene({ scene, storageFree = false }: HomeHeroSceneProps) {
   const motion = useSyncExternalStore(subscribeMotionPreference, sceneMotionAvailable, () => false);
-  const [scene] = useState(() => sceneForThisLoad(storageFree));
   const [paused, setPaused] = useState(() => !storageFree && readPaused());
 
   return (
-    <div className="hh-spread" data-scene={scene.id}>
-      <div className="hh-page" data-paper={scene.paper}>
-        <PlayingStage motion={motion} paused={paused} scene={scene} />
-        <div className="hh-result">
-          {lastPanel}
-          {motion ? (
-            <Button
-              aria-label={paused ? landingStrings.hero.motionPlay : landingStrings.hero.motionPause}
-              className="hh-result__control"
-              onClick={() => {
-                const next = !paused;
-                setPaused(next);
-                if (!storageFree) writePaused(next);
-              }}
-              title={paused ? landingStrings.hero.motionPlay : landingStrings.hero.motionPause}
-              variant="ghost"
-            >
-              {paused ? (
-                <PlayIcon aria-hidden="true" className="size-4" />
-              ) : (
-                <PauseIcon aria-hidden="true" className="size-4" />
-              )}
-            </Button>
-          ) : null}
-        </div>
-      </div>
+    <div className="hh-art" data-scene={scene.id}>
+      <PlayingStage motion={motion} paused={paused} scene={scene} />
+      {motion ? (
+        <Button
+          aria-label={paused ? landingStrings.hero.motionPlay : landingStrings.hero.motionPause}
+          className="hh-art__control"
+          onClick={() => {
+            const next = !paused;
+            setPaused(next);
+            if (!storageFree) writePaused(next);
+          }}
+          title={paused ? landingStrings.hero.motionPlay : landingStrings.hero.motionPause}
+          variant="ghost"
+        >
+          {paused ? (
+            <PlayIcon aria-hidden="true" className="size-4" />
+          ) : (
+            <PauseIcon aria-hidden="true" className="size-4" />
+          )}
+        </Button>
+      ) : null}
     </div>
   );
 }

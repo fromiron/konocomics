@@ -387,6 +387,8 @@ export const landingStrings = {
   tagline: "好みから見つける、次のマンガ。",
   /** Line-break units of the tagline; it never wraps inside a phrase. */
   taglinePhrases: ["好みから見つける、", "次のマンガ。"],
+  /** The part of the tagline set in the accent colour. */
+  taglineAccent: "好み",
   cta: "好きなマンガから始める",
   ctaByVisitor: {
     new: "好きなマンガから始める",
@@ -406,6 +408,13 @@ export const landingStrings = {
       `${workCount}作品から提案`,
       "データはこの端末だけに保存",
     ],
+    /** The sound effect lettered large in the hero's effect panel, per scene. */
+    panelEffect: { battle: "ドンッ!!!", romance: "ドキッ..!" },
+    /** Decorative sound effects lettered faintly on the blank pages under each hero scene. */
+    soundEffects: {
+      battle: ["ゴゴゴ", "ドンッ", "ザッ", "ズドン", "ガッ", "バッ"],
+      romance: ["ドキッ", "キュン", "ふわっ", "ドキドキ", "ぽっ", "きらっ"],
+    },
     motionPause: "アニメーションを一時停止",
     motionPlay: "アニメーションを再生",
   },

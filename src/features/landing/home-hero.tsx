@@ -3,13 +3,16 @@ import { ArrowRightIcon } from "lucide-react";
 import { buttonClassName } from "@/components/design-system/button";
 import { burstConfirmSparks } from "@/components/motion/confirm-spark";
 import { usePointerEffect } from "@/components/motion/use-pointer-effects";
-import { HomeHeroScene } from "@/features/home-hero/home-hero-scene";
+import { HeroUnderlay } from "@/features/home-hero/hero-underlay";
+import {
+  HomeHeroScene,
+  sceneWindowStyle,
+  useHeroScene,
+} from "@/features/home-hero/home-hero-scene";
 import { landingStrings } from "@/lib/strings";
 import { cn } from "@/lib/utils";
 
-import { HomeHeroResult } from "./home-hero-result";
 import { LandingLogoReveal } from "./landing-logo-reveal";
-import type { LandingSample } from "./landing-types";
 
 const workCountFormat = new Intl.NumberFormat("ja-JP");
 export const landingCtaClassName = buttonClassName({
@@ -24,11 +27,19 @@ export const landingCtaClassName = buttonClassName({
  */
 export type LandingVisitorState = "new" | "resume" | "profile" | "recovery";
 
-export function LandingCta({ visitor = "new" }: Readonly<{ visitor?: LandingVisitorState }>) {
+/**
+ * The single landing action. `panel` makes it the hero's action panel itself: the text sits in
+ * the panel and the link covers the whole panel, so the panel is the button.
+ */
+export function LandingCta({
+  visitor = "new",
+  appearance = "button",
+}: Readonly<{ visitor?: LandingVisitorState; appearance?: "button" | "panel" }>) {
   const magnetRef = usePointerEffect<HTMLAnchorElement>("magnet");
+  const panel = appearance === "panel";
   return (
     <Link
-      className={cn(landingCtaClassName, "pointer-magnet")}
+      className={panel ? "hh-cta" : cn(landingCtaClassName, "pointer-magnet")}
       data-landing-visitor={visitor}
       onClick={(event) => {
         // Keyboard activation has no pointer position, so the burst starts at the button.
@@ -36,22 +47,18 @@ export function LandingCta({ visitor = "new" }: Readonly<{ visitor?: LandingVisi
           event.detail === 0 ? event.currentTarget : { x: event.clientX, y: event.clientY },
         );
       }}
-      ref={magnetRef}
+      ref={panel ? undefined : magnetRef}
       preload={false}
       to={visitor === "profile" ? "/recommendations" : "/onboarding"}
     >
       {landingStrings.ctaByVisitor[visitor]}
-      <ArrowRightIcon aria-hidden="true" className="size-4" />
+      <ArrowRightIcon aria-hidden="true" className={panel ? "hh-cta__arrow" : "size-4"} />
     </Link>
   );
 }
 
 type HomeHeroProps = Readonly<{
   recommendableWorkCount: number;
-  /** The example profile whose real recommendation fills the page's last panel. */
-  sample: LandingSample;
-  coverUrl: string | null | undefined;
-  onCoverVisible(): void;
   /** `?landing=1`: a write-free bypass, so the hero reads and writes no storage. */
   storageFree?: boolean;
   visitor?: LandingVisitorState;
@@ -59,64 +66,75 @@ type HomeHeroProps = Readonly<{
 }>;
 
 /**
- * Hero as a landing spread: the brand, the promise set large and the single action on the left;
- * on the right a living manga page whose last panel is a real example recommendation with its
- * reason. It fills at least the first screen, centred, so nothing below shows before the reader
- * scrolls.
+ * The hero as one manga page under a magazine masthead, read the Japanese way from the top
+ * right: the opening narration (the promise, set vertically), the large art panel, then the
+ * scene's sound effect where the battle hand lands and, in the closing bottom-left corner where
+ * a page turns, the action panel. Two tiers with their dividers at different places, the lower
+ * one on a slant. On narrow screens the panels stack.
  */
 export function HomeHero({
-  coverUrl,
-  onCoverVisible,
   recommendableWorkCount,
-  sample,
   sharedEntry = false,
   storageFree = false,
   visitor = "new",
 }: HomeHeroProps) {
+  const scene = useHeroScene(storageFree);
+  const accent = landingStrings.taglineAccent;
   return (
     <div className="overflow-x-clip">
-      <section
-        aria-labelledby="landing-title"
-        className="landing-hero mx-auto grid min-h-svh w-full max-w-[var(--layout-width-hero)] content-center px-[var(--layout-page-padding)] pt-[var(--space-6)] pb-[var(--space-12)]"
-      >
-        <div className="hh-hero">
-          <div className="hh-masthead">
-            <LandingLogoReveal staticPresentation={storageFree} />
-          </div>
-          <div className="hh-copy">
-            {sharedEntry ? (
-              <p className="text-[length:var(--text-caption-size)] font-bold text-accent-ink">
-                {landingStrings.sharedEntry}
-              </p>
-            ) : null}
-            <h1 className="hh-title" id="landing-title">
-              {/* Phrases never break inside; each phrase is one line where there is room. */}
-              {landingStrings.taglinePhrases.map((phrase) => (
-                <span className="hh-title__phrase" key={phrase}>
-                  {phrase}
-                </span>
-              ))}
-            </h1>
-            <div className="hh-copy__action">
-              <LandingCta visitor={visitor} />
-              {visitor === "new" ? null : (
-                <p className="text-[length:var(--text-caption-size)] text-text">
-                  {landingStrings.visitorNote[visitor]}
-                </p>
-              )}
-              <p className="text-[length:var(--text-caption-size)] text-text-muted">
-                {landingStrings.hero
-                  .trust(workCountFormat.format(recommendableWorkCount))
-                  .join(" · ")}
-              </p>
+      <section aria-labelledby="landing-title" className="landing-hero">
+        <HeroUnderlay sceneId={scene.id} />
+        <div className="hh-spread">
+          <div className="hh-page" data-paper={scene.paper} style={sceneWindowStyle(scene)}>
+            <div className="hh-mast">
+              <LandingLogoReveal staticPresentation={storageFree} />
+            </div>
+            {/* The opening narration (top right, read first): the promise, set vertically. */}
+            <div className="hh-koma hh-koma--title">
+              <div className="hh-koma__fill">
+                <h1 className="hh-title" id="landing-title">
+                  {landingStrings.taglinePhrases.map((phrase) => (
+                    <span className="hh-title__phrase" key={phrase}>
+                      {phrase.startsWith(accent) ? (
+                        <>
+                          <span className="hh-title__accent">{accent}</span>
+                          {phrase.slice(accent.length)}
+                        </>
+                      ) : (
+                        phrase
+                      )}
+                    </span>
+                  ))}
+                </h1>
+              </div>
+            </div>
+            <HomeHeroScene scene={scene} storageFree={storageFree} />
+            {/* The lower tier, divided at a different place than the upper one, on a slant. */}
+            <div className="hh-tier">
+              <div className="hh-koma hh-koma--action">
+                <div className="hh-koma__fill">
+                  {sharedEntry ? (
+                    <p className="hh-cta__note font-bold">{landingStrings.sharedEntry}</p>
+                  ) : null}
+                  <LandingCta appearance="panel" visitor={visitor} />
+                  {visitor === "new" ? null : (
+                    <p className="hh-cta__note">{landingStrings.visitorNote[visitor]}</p>
+                  )}
+                  <p className="hh-cta__note">
+                    {landingStrings.hero
+                      .trust(workCountFormat.format(recommendableWorkCount))
+                      .join(" · ")}
+                  </p>
+                </div>
+              </div>
+              {/* A panel holding only the scene's sound effect, where the hand lands (描き文字). */}
+              <div aria-hidden="true" className="hh-koma hh-koma--effect">
+                <div className="hh-koma__fill">
+                  <span className="hh-effect">{landingStrings.hero.panelEffect[scene.id]}</span>
+                </div>
+              </div>
             </div>
           </div>
-          <HomeHeroScene
-            lastPanel={
-              <HomeHeroResult coverUrl={coverUrl} onCoverVisible={onCoverVisible} sample={sample} />
-            }
-            storageFree={storageFree}
-          />
         </div>
       </section>
     </div>

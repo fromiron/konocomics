@@ -1839,34 +1839,15 @@ h1[tabindex="-1"]:focus {
   --hero-inset-warm: color-mix(in oklch, oklch(0.9 0.05 15) 55%, var(--hero-paper-warm));
   --hero-inset-cool: color-mix(in oklch, oklch(0.93 0.03 40) 35%, var(--hero-paper-warm));
   --hero-light: oklch(0.99 0.04 85);
-  /* The sheet's edge catches a thin line of light; below it a deep shadow lifts it off the desk. */
-  --hero-page-shadow:
-    0 0 0 1px oklch(1 0 0 / 0.08), 0 2px 4px oklch(0 0 0 / 0.4),
-    0 32px 72px -24px oklch(0 0 0 / 0.85);
-  --hero-lamp: color-mix(in oklch, var(--hero-light) 9%, transparent);
+  /* The amber accent dark enough to read on the hero's paper. */
+  --hero-accent-ink: oklch(0.52 0.12 62);
 }
 
-/* One sheet of paper holds the art panel and the last panel. Its paper, ink and frame weight
-   follow the scene, so the last panel is inked like the art above it. */
+/* The paper and ink of the art panel and the hero's paper panels; the scene can warm them. */
 .hh-page {
-  grid-template-columns: minmax(0, 1fr);
   --hh-paper: var(--hero-paper-white);
   --hh-ink: var(--hero-ink-cool);
-  --hh-margin: 1.6cqi;
-  --hh-frame: max(1.5px, 0.22cqi);
-  position: relative;
-  display: grid;
-  gap: var(--hh-margin);
-  padding: var(--hh-margin);
-  border-radius: var(--radius-cover);
-  background: var(--hh-paper);
-  box-shadow: var(--hero-page-shadow);
-}
-
-.hh-page[data-paper="warm"] {
-  --hh-paper: var(--hero-paper-warm);
-  --hh-ink: var(--hero-ink-warm);
-  --hh-frame: max(1px, 0.12cqi);
+  --hh-frame: 2px;
 }
 
 .hh-stage {
@@ -1983,37 +1964,198 @@ h1[tabindex="-1"]:focus {
   mix-blend-mode: screen;
 }
 
-/* Hero spread: the brand, the promise and the single action on the left, and the manga page
-   on the right, whose last panel is a real example recommendation. On narrow screens they stack
-   (brand, promise and action first). On wide screens the page is sized from the viewport height
-   so the whole spread stays in the first view. */
-.hh-hero {
-  --hh-title-size: clamp(1.75rem, 8.4vw, 2.75rem);
-  --hh-result-cover: 4rem;
+/* Hero: one manga page under a magazine masthead, read the Japanese way from the top right.
+   Panel layout (コマ割り): two tiers whose horizontal gutter runs straight across the page and
+   is wider than the narrow gutters inside a tier; the upper tier divides at the art's edge and
+   the lower one somewhere else, on a slant, so the dividers never line up. Upper tier: the
+   opening narration (right) and the art (left). Lower tier: the sound effect where the battle
+   hand lands (right) and, in the closing bottom-left corner where a page turns, the action.
+   Black ink and paper with amber as the single spot colour; blank pages and sound effects lie
+   faintly underneath as accessories. On narrow screens the panels stack. */
+.landing-hero {
+  --hh-outer: var(--space-4);
+  position: relative;
+  isolation: isolate;
+  container-type: inline-size;
   display: grid;
-  gap: var(--space-6);
+  align-content: center;
+  min-height: 100svh;
+  padding: var(--hh-outer);
+}
+
+/* The blank pages under the hero, faint enough that the hero's panels stay the page in hand. */
+.hh-underlay {
+  position: absolute;
+  inset: 0;
+  z-index: -1;
+  width: 100%;
+  height: 100%;
+  color: var(--hero-paper-white);
+  pointer-events: none;
+}
+
+.hh-underlay__sheet {
+  fill: color-mix(in oklch, var(--hero-paper-white) 1.5%, transparent);
+}
+
+.hh-underlay__frame {
+  fill: none;
+  stroke: color-mix(in oklch, var(--hero-paper-white) 9%, transparent);
+  stroke-width: 2;
+  vector-effect: non-scaling-stroke;
+}
+
+.hh-underlay__tone {
+  opacity: 0.05;
+}
+
+.hh-underlay__line {
+  stroke: color-mix(in oklch, var(--hero-paper-white) 8%, transparent);
+  stroke-linecap: round;
+  stroke-width: 2;
+  vector-effect: non-scaling-stroke;
+}
+
+.hh-underlay__sfx {
+  fill: none;
+  font-weight: 700;
+  letter-spacing: -0.04em;
+  paint-order: stroke;
+  stroke: color-mix(in oklch, var(--hero-paper-white) 10%, transparent);
+  stroke-linejoin: round;
+  stroke-width: 2.5;
+  vector-effect: non-scaling-stroke;
+}
+
+/* Romance lettering is rounder at the joints. */
+.hh-underlay[data-scene="romance"] .hh-underlay__sfx {
+  stroke-linecap: round;
+  stroke-width: 3.5;
+}
+
+.hh-underlay__sfx[data-toned] {
+  fill: url(#hh-tone-dots);
+  fill-opacity: 0.1;
+}
+
+/* Resolved on the (horizontal) page, so the vertical narration inherits a plain length: inside
+   vertical writing, container units would measure the page's height instead. */
+@property --hh-title-size {
+  syntax: "<length>";
+  inherits: true;
+  initial-value: 32px;
+}
+
+.hh-page {
+  --hh-gutter: var(--space-3);
+  --hh-col-gap: var(--space-2);
+  --hh-slant: 1rem;
+  --hh-title-size: clamp(1.5rem, 7vw, 2.25rem);
+  --landing-logo-size: clamp(2.5rem, 13vw, 3.5rem);
+  display: grid;
+  grid-template-areas:
+    "mast"
+    "title"
+    "art"
+    "tier";
+  grid-template-columns: minmax(0, 1fr);
+  gap: var(--hh-gutter);
   width: 100%;
   margin-inline: auto;
 }
 
-.hh-copy {
-  display: grid;
-  justify-items: start;
-  gap: var(--space-6);
+/* Paper and ink follow the scene, so the art panel is inked like its page. */
+.hh-page[data-paper="warm"] {
+  --hh-paper: var(--hero-paper-warm);
+  --hh-ink: var(--hero-ink-warm);
+  --hh-frame: 1.5px;
 }
 
-.hh-copy__action {
+/* The masthead: the wordmark alone, large and tight. */
+.hh-mast {
+  grid-area: mast;
+  min-width: 0;
+}
+
+.hh-mast .landing-logo-reveal {
+  font-weight: 700;
+  line-height: 0.9;
+  letter-spacing: -0.045em;
+}
+
+.hh-art {
+  position: relative;
+  z-index: 2;
+  grid-area: art;
+  aspect-ratio: var(--hh-art-ratio);
+  /* The stage below is the taller shared page; only the panel sets this box's height. */
+  min-width: 0;
+  min-height: 0;
+}
+
+.hh-art__control {
+  position: absolute;
+  top: var(--space-2);
+  right: var(--space-2);
+  z-index: 3;
+  border-radius: var(--radius-pill);
+  background: color-mix(in oklch, var(--hh-paper) 88%, transparent);
+  color: var(--hh-ink);
+}
+
+/* A panel: its face cut to its shape; the dark gutters separate the panels. */
+.hh-koma {
+  --koma-shape: inset(0);
+  position: relative;
+  z-index: 1;
+  min-width: 0;
+  clip-path: var(--koma-shape);
+}
+
+.hh-koma__fill {
+  position: relative;
+  isolation: isolate;
+  height: 100%;
+  padding: var(--space-5);
+  background: var(--koma-face);
+}
+
+/* The narration and the sound effect are white panels framed in ink, like panels on paper. The
+   frame is the ink showing round a white face cut to the same shape, so a slanted edge keeps
+   its frame too. */
+.hh-koma--title > .hh-koma__fill,
+.hh-koma--effect > .hh-koma__fill {
+  background: var(--hero-ink-cool);
+  clip-path: var(--koma-shape);
+}
+
+.hh-koma--title > .hh-koma__fill::before,
+.hh-koma--effect > .hh-koma__fill::before {
+  position: absolute;
+  inset: 3px;
+  z-index: -1;
+  background: var(--hero-paper-white);
+  clip-path: var(--koma-shape);
+  content: "";
+  pointer-events: none;
+}
+
+/* The opening narration. */
+.hh-koma--title {
+  grid-area: title;
+}
+
+.hh-koma--title > .hh-koma__fill {
   display: grid;
-  justify-items: start;
-  gap: var(--space-3);
+  align-content: center;
 }
 
 .hh-title {
-  color: var(--text-strong);
+  color: var(--hero-ink-cool);
   font-size: var(--hh-title-size);
   font-weight: 700;
-  line-height: 1.3;
-  letter-spacing: 0.02em;
+  line-height: 1.35;
+  letter-spacing: 0.04em;
 }
 
 .hh-title__phrase {
@@ -2021,178 +2163,230 @@ h1[tabindex="-1"]:focus {
   white-space: nowrap;
 }
 
-/* Page margins and frame weight scale with the page, measured against this wrapper. */
-.hh-spread {
-  position: relative;
-  isolation: isolate;
-  container-type: inline-size;
+.hh-title__accent {
+  color: var(--hero-accent-ink);
 }
 
-/* Static lamp light pooling on the desk around the sheet; it never moves. */
-.hh-spread::before {
+/* The lower tier: the action, then the sound effect. On narrow screens the sound effect comes
+   first, right under the art where the hand lands. */
+.hh-tier {
+  display: grid;
+  grid-area: tier;
+  gap: var(--hh-gutter);
+  min-width: 0;
+}
+
+/* The sound effect, lettered large in solid ink and turned about 15 degrees. */
+.hh-koma--effect {
+  order: -1;
+  height: clamp(6rem, 30vw, 9rem);
+}
+
+.hh-koma--effect > .hh-koma__fill {
+  container-type: size;
+  display: grid;
+  place-items: center;
+  overflow: hidden;
+}
+
+.hh-effect {
+  color: var(--hero-ink-cool);
+  /* Slightly larger than the panel, so the lettering runs off its edges and is cut there. */
+  font-size: min(24cqi, 82cqb);
+  font-weight: 700;
+  line-height: 1;
+  letter-spacing: -0.04em;
+  white-space: nowrap;
+  rotate: -15deg;
+  transform: skewX(-10deg);
+}
+
+.hh-page:has(.hh-art[data-scene="romance"]) .hh-effect {
+  transform: none;
+}
+
+/* The action panel is the button: amber spot colour with faint focus lines closing on the
+   words, its whole area one link to start. */
+.hh-koma--action {
+  --koma-face: var(--accent);
+  --hh-burst: 32% 72%;
+}
+
+.hh-koma--action:has(.hh-cta:hover) {
+  --koma-face: var(--accent-hover);
+}
+
+.hh-koma--action:has(.hh-cta:active) {
+  --koma-face: var(--accent-active);
+}
+
+.hh-koma--action > .hh-koma__fill {
+  container-type: inline-size;
+  display: grid;
+  align-content: end;
+  justify-items: start;
+  gap: var(--space-2);
+  color: var(--on-accent);
+}
+
+/* Black focus lines (集中線) closing on the words, drawn over the amber face. */
+.hh-koma--action > .hh-koma__fill::after {
   position: absolute;
-  inset: -12% -10% -18%;
+  inset: 0;
   z-index: -1;
-  background: radial-gradient(ellipse 60% 55% at 50% 42%, var(--hero-lamp), transparent 72%);
+  background: repeating-conic-gradient(
+    from 0deg at var(--hh-burst),
+    color-mix(in oklch, var(--hero-ink-cool) 32%, transparent) 0deg 1deg,
+    transparent 1deg 5deg
+  );
   content: "";
+  mask-image: radial-gradient(circle at var(--hh-burst), transparent 24%, black 72%);
   pointer-events: none;
 }
 
-/* The last panel, inked like the art above it: the example's cover beside a speech balloon. */
-.hh-result {
-  --hh-ink-soft: color-mix(in oklch, var(--hh-ink) 62%, var(--hh-paper));
-  display: grid;
-  grid-template-columns: minmax(0, 1fr) auto;
-  align-items: end;
-  gap: var(--space-2);
-  padding: var(--space-3) var(--space-2) var(--space-3) var(--space-3);
-  border: var(--hh-frame) solid var(--hh-ink);
-  color: var(--hh-ink);
+.hh-cta {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.4em;
+  border-radius: var(--radius-control);
+  color: var(--on-accent);
+  /* One line at any panel width: the label, a gap and the arrow are about 12.4em. */
+  font-size: clamp(1.125rem, 7.8cqi, 2.75rem);
+  font-weight: 700;
+  line-height: 1.25;
+  white-space: nowrap;
 }
 
-.hh-result__body {
-  display: grid;
-  grid-template-columns: var(--hh-result-cover) minmax(0, 1fr);
-  grid-template-rows: auto auto 1fr;
-  align-items: start;
-  gap: var(--space-1) var(--space-4);
-  margin: 0;
+/* The link covers the whole panel. */
+.hh-cta::after {
+  position: absolute;
+  inset: 0;
+  content: "";
 }
 
-.hh-result__cover {
-  grid-row: 1 / span 3;
-  width: var(--hh-result-cover);
+.hh-cta:focus-visible {
+  outline: 3px solid var(--on-accent);
+  outline-offset: 6px;
 }
 
-.hh-result__caption,
-.hh-result__creators {
-  color: var(--hh-ink-soft);
+.hh-cta__arrow {
+  width: 1em;
+  height: 1em;
+  flex: none;
+}
+
+@media (prefers-reduced-motion: no-preference) and (hover: hover) and (pointer: fine) {
+  .hh-cta__arrow {
+    transition: translate var(--motion-duration-feedback) var(--motion-ease-direct);
+  }
+
+  .hh-cta:hover .hh-cta__arrow {
+    translate: 0.2em 0;
+  }
+}
+
+.hh-cta__note {
+  position: relative;
+  color: color-mix(in oklch, var(--on-accent) 80%, var(--accent));
   font-size: var(--text-caption-size);
 }
 
-.hh-result__work {
-  display: flex;
-  flex-wrap: wrap;
-  align-items: baseline;
-  gap: 0 var(--space-2);
-  margin: 0;
-}
-
-.hh-result__title {
-  border-radius: var(--radius-control);
-  color: var(--hh-ink);
-  font-size: var(--font-size-16);
-  font-weight: 700;
-  text-underline-offset: 4px;
-}
-
-.hh-result__title:hover {
-  text-decoration: underline;
-}
-
-.hh-result__title:focus-visible {
-  outline: 2px solid var(--focus-ring);
-  outline-offset: 2px;
-}
-
-/* A manga speech balloon in the page's ink, its tail pointing back at the cover. */
-.hh-balloon {
-  position: relative;
-  justify-self: start;
-  max-width: 40em;
-  margin: var(--space-2) 0 0 var(--space-2);
-  padding: var(--space-2) var(--space-3);
-  border: max(1.5px, var(--hh-frame)) solid var(--hh-ink);
-  border-radius: 1.1rem;
-  background: var(--hh-paper);
-  font-size: var(--font-size-14);
-  line-height: var(--line-height-body);
-  word-break: auto-phrase;
-}
-
-.hh-balloon::before {
-  position: absolute;
-  top: 0.85rem;
-  left: -0.42rem;
-  width: 0.7rem;
-  height: 0.7rem;
-  border-bottom: max(1.5px, var(--hh-frame)) solid var(--hh-ink);
-  border-left: max(1.5px, var(--hh-frame)) solid var(--hh-ink);
-  background: var(--hh-paper);
-  content: "";
-  rotate: 45deg;
-}
-
-.hh-result__control {
-  color: var(--hh-ink-soft);
-}
-
-/* On a phone the balloon takes the panel's full width under the cover, its tail pointing up. */
-@media (max-width: 39.9375rem) {
-  .hh-result__cover {
-    grid-row: 1 / span 2;
+/* Narrow screens: the sound effect sits left, clear of the battle hand reaching into its
+   panel; it meets the action panel at a slanted gutter as wide as the others (the action panel
+   reaches back under the slant). */
+@media (max-width: 63.9375rem) {
+  .hh-koma--effect > .hh-koma__fill {
+    justify-items: start;
+    padding-inline: var(--space-6);
   }
 
-  .hh-balloon {
-    grid-column: 1 / -1;
-    margin: var(--space-3) 0 0;
+  .hh-koma--effect {
+    --koma-shape: polygon(0 0, 100% 0, 100% calc(100% - var(--hh-slant)), 0 100%);
   }
 
-  .hh-balloon::before {
-    top: -0.42rem;
-    left: 1.5rem;
-    rotate: 135deg;
+  .hh-koma--action {
+    --koma-shape: polygon(0 var(--hh-slant), 100% 0, 100% 100%, 0 100%);
+    margin-top: calc(-1 * var(--hh-slant));
+  }
+
+  .hh-koma--action > .hh-koma__fill {
+    padding-top: calc(var(--space-5) + var(--hh-slant));
   }
 }
 
-/* The last panel arrives once, after the art has started: what the scene leads to. */
-@media (prefers-reduced-motion: no-preference) {
-  .hh-result__body {
-    animation: hh-result-enter 560ms cubic-bezier(0.2, 0, 0, 1) 700ms backwards;
-  }
-}
-
-@keyframes hh-result-enter {
-  from {
-    opacity: 0;
-    translate: 0 0.75rem;
-  }
-}
-
+/* Wide screens: the masthead, then two tiers. The art is as large as the screen allows; the
+   narration takes the rest of the upper tier; the lower tier splits on a slant at about 60%. */
 @media (min-width: 64rem) {
-  .hh-hero {
-    --hh-title-size: clamp(2.25rem, 3.6vw, 3.5rem);
-    --hh-result-cover: 4.5rem;
-    /* What the page shares the screen height with: section padding and the last panel. */
-    --hh-chrome: 16rem;
+  .hh-page {
+    /* Wide gutters between tiers, narrow ones inside a tier. */
+    --hh-gutter: var(--space-5);
+    --hh-slant: 2.5rem;
+    --landing-logo-size: clamp(4rem, 7.2cqi, 7.5rem);
+    --hh-mast-h: calc(var(--landing-logo-size) * 0.9);
+    --hh-page-w: min(100cqi - 2 * var(--hh-outer), 112rem);
+    --hh-title-min: 14rem;
+    --hh-tier-min: 13rem;
+    --hh-art-w: min(
+      var(--hh-page-w) - var(--hh-title-min) - var(--hh-col-gap),
+      (
+          100svh - 2 * var(--hh-outer) - var(--hh-mast-h) - 2 * var(--hh-gutter) -
+            var(--hh-tier-min)
+        ) *
+        var(--hh-art-ratio)
+    );
+    --hh-art-h: calc(var(--hh-art-w) / var(--hh-art-ratio));
+    /* Two vertical columns as tall as the narration panel allows. */
+    --hh-title-size: min(4.5rem, (var(--hh-art-h) - 4rem) / 9.8);
     grid-template-areas:
-      "mast page"
-      "copy page";
-    grid-template-rows: auto 1fr;
-    grid-template-columns: minmax(0, 5fr) minmax(0, 7fr);
-    column-gap: var(--space-12);
-    row-gap: var(--space-6);
+      "mast mast"
+      "art title"
+      "tier tier";
+    grid-template-rows: auto auto minmax(var(--hh-tier-min), 1fr);
+    grid-template-columns: var(--hh-art-w) minmax(0, 1fr);
+    column-gap: var(--hh-col-gap);
+    width: var(--hh-page-w);
+    height: min(
+      100svh - 2 * var(--hh-outer),
+      var(--hh-mast-h) + var(--hh-art-h) + 2 * var(--hh-gutter) + 20rem
+    );
   }
 
-  .hh-masthead {
-    grid-area: mast;
+  .hh-koma--title > .hh-koma__fill {
+    align-content: start;
+    justify-content: end;
+    padding: var(--space-8) var(--space-6);
   }
 
-  .hh-copy {
-    grid-area: copy;
-    align-self: center;
-    gap: var(--space-8);
+  .hh-title {
+    writing-mode: vertical-rl;
+    letter-spacing: 0.08em;
   }
 
   .hh-title__phrase {
     display: block;
   }
 
-  .hh-spread {
-    grid-area: page;
-    align-self: center;
-    justify-self: end;
-    width: min(100%, calc((100svh - var(--hh-chrome)) * 1.5));
+  .hh-tier {
+    display: flex;
+    gap: var(--hh-col-gap);
+  }
+
+  .hh-koma--action {
+    --koma-shape: polygon(0 0, 100% 0, calc(100% - var(--hh-slant)) 100%, 0 100%);
+    --hh-burst: 26% 76%;
+    flex: 0 0 60%;
+  }
+
+  .hh-koma--action > .hh-koma__fill {
+    padding: var(--space-5) calc(var(--space-6) + var(--hh-slant)) var(--space-6) var(--space-6);
+  }
+
+  .hh-koma--effect {
+    --koma-shape: polygon(var(--hh-slant) 0, 100% 0, 100% 100%, 0 100%);
+    order: 0;
+    flex: 1 1 0;
+    height: auto;
+    margin-left: calc(-1 * var(--hh-slant));
   }
 }
 
@@ -2201,16 +2395,11 @@ h1[tabindex="-1"]:focus {
    the reader's own; nothing is pinned or hijacked. Each subject names its range in
    --scroll-range; the timelines that drive it are attached after the scroll sections below. */
 @media (prefers-reduced-motion: no-preference) {
-  /* The hero sheet recedes into the dark as it leaves, and its lamp goes down. */
+  /* The hero page recedes into the dark as it leaves. */
   .hh-spread > .hh-page {
     --scroll-range: exit 12% exit 100%;
     transform-origin: 50% 0%;
     animation: hero-sheet-exit linear both;
-  }
-
-  .hh-spread::before {
-    --scroll-range: exit 12% exit 70%;
-    animation: hero-lamp-exit linear both;
   }
 }
 
@@ -2218,12 +2407,6 @@ h1[tabindex="-1"]:focus {
   to {
     opacity: 0.4;
     transform: translateY(6%) scale(0.93);
-  }
-}
-
-@keyframes hero-lamp-exit {
-  to {
-    opacity: 0;
   }
 }
 
@@ -2880,7 +3063,6 @@ h1[tabindex="-1"]:focus {
 @supports (animation-timeline: view()) {
   @media (prefers-reduced-motion: no-preference) {
     .hh-spread > .hh-page,
-    .hh-spread::before,
     .home-scramble__stage,
     .home-story__scene,
     .home-story__scene-body,
@@ -2899,8 +3081,7 @@ h1[tabindex="-1"]:focus {
       view-timeline: --hero-sheet block;
     }
 
-    .hh-spread > .hh-page,
-    .hh-spread::before {
+    .hh-spread > .hh-page {
       animation-timeline: --hero-sheet;
     }
 
@@ -2973,7 +3154,6 @@ h1[tabindex="-1"]:focus {
 @supports not (animation-timeline: view()) {
   @media (prefers-reduced-motion: no-preference) {
     .hh-spread > .hh-page,
-    .hh-spread::before,
     .home-scramble__stage,
     .home-story__scene,
     .home-story__scene-body,

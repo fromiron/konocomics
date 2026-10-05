@@ -236,7 +236,9 @@ const BEHIND = new Set(["petal-02", "petal-04", "petal-09", "petal-21", "petal-2
 
 export const romanceScene: SceneDefinition = {
   id: "romance",
-  window: [0, 0, 1536, 1024],
+  // The same panel as the battle scene, so the hero keeps one layout whichever scene is drawn.
+  // Only the bottom of the page goes: the inset panels, both faces and the book stay.
+  window: [0, 0, 1536, 830],
   paper: "warm",
   layers: [
     // The main panel fades in as one flattened picture, so nothing shows through the figures.
