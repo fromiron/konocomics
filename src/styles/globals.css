@@ -1686,9 +1686,15 @@ h1[tabindex="-1"]:focus {
 }
 
 @media (prefers-reduced-motion: no-preference) {
-  .landing-typed-reason > span {
+  /* The example reason types itself out when its card enters (useEntryOnce). Without the entry
+     trigger the sentence is simply there. */
+  [data-entry="armed"] .landing-typed-reason > span {
+    opacity: 0;
+  }
+
+  [data-entry="play"] .landing-typed-reason > span {
     animation: typed-reason-glyph var(--motion-duration-typing-glyph) steps(1, end) backwards;
-    animation-delay: calc(var(--type-index) * var(--type-step));
+    animation-delay: calc(240ms + var(--type-index) * var(--type-step));
   }
   .dna-ink-line[data-draw="true"] path {
     animation: dna-ink-draw var(--motion-duration-ink-draw) var(--motion-ease-direct) backwards;
@@ -2088,5 +2094,139 @@ h1[tabindex="-1"]:focus {
   .hh-foot__action {
     justify-items: end;
     text-align: end;
+  }
+}
+
+/* Home scroll story. Everything here only animates toward the final state, which is also the
+   default: without scroll timelines (or with reduced motion) the page is simply static. Scroll
+   position and speed always stay the reader's own; nothing is pinned or hijacked. */
+@supports (animation-timeline: view()) {
+  @media (prefers-reduced-motion: no-preference) {
+    /* The hero sheet recedes into the dark as it leaves, and its lamp goes down. */
+    .hh-spread {
+      view-timeline: --hero-sheet block;
+    }
+
+    .hh-spread > .hh-page {
+      transform-origin: 50% 0%;
+      animation: hero-sheet-exit linear both;
+      animation-timeline: --hero-sheet;
+      animation-range: exit 12% exit 100%;
+    }
+
+    .hh-spread::before {
+      animation: hero-lamp-exit linear both;
+      animation-timeline: --hero-sheet;
+      animation-range: exit 12% exit 70%;
+    }
+
+    /* The three steps light up in reading order: choose, see your taste, get the reason. The
+       card names its own timeline because it clips its contents, which would otherwise make it
+       the tint's scroll container. */
+    .home-step {
+      view-timeline: --home-step block;
+      animation: home-step-light linear both;
+      animation-timeline: --home-step;
+      animation-range: entry 0% cover 32%;
+    }
+
+    .home-step__tint {
+      animation: home-step-tint linear both;
+      animation-timeline: --home-step;
+      animation-range: cover 18% cover 40%;
+    }
+
+    @media (min-width: 64rem) {
+      /* In one row the cards share the row's timeline and take turns. */
+      .home-steps {
+        view-timeline: --home-steps block;
+      }
+
+      .home-step,
+      .home-step__tint {
+        animation-timeline: --home-steps;
+      }
+
+      .home-step:nth-child(1) {
+        animation-range: cover 4% cover 22%;
+      }
+
+      .home-step:nth-child(2) {
+        animation-range: cover 13% cover 31%;
+      }
+
+      .home-step:nth-child(3) {
+        animation-range: cover 22% cover 40%;
+      }
+
+      .home-step:nth-child(3) .home-step__tint {
+        animation-range: cover 30% cover 46%;
+      }
+    }
+  }
+}
+
+/* The editorial ranks stamp down one by one, once, when the Top 10 is first seen. */
+@media (prefers-reduced-motion: no-preference) {
+  .home-rank-stamp[data-entry="armed"] [data-ranking-editorial-position] {
+    opacity: 0;
+  }
+
+  .home-rank-stamp[data-entry="play"] [data-ranking-editorial-position] {
+    transform-origin: 30% 80%;
+    animation: rank-stamp 420ms cubic-bezier(0.2, 0.9, 0.3, 1) both;
+    animation-delay: calc(80ms + (var(--rank-order, 1) - 1) * 70ms);
+  }
+}
+
+@keyframes hero-sheet-exit {
+  to {
+    opacity: 0.4;
+    transform: translateY(6%) scale(0.93);
+  }
+}
+
+@keyframes hero-lamp-exit {
+  to {
+    opacity: 0;
+  }
+}
+
+@keyframes home-step-light {
+  from {
+    opacity: 0.3;
+    transform: translateY(24px);
+  }
+
+  to {
+    opacity: 1;
+    transform: none;
+  }
+}
+
+@keyframes home-step-tint {
+  from {
+    opacity: 0;
+  }
+
+  to {
+    opacity: 1;
+  }
+}
+
+@keyframes rank-stamp {
+  0% {
+    opacity: 0;
+    transform: scale(1.7);
+  }
+
+  55% {
+    opacity: 1;
+    transform: scale(0.94);
+  }
+
+  100% {
+    opacity: 1;
+    transform: scale(1);
   }
 }

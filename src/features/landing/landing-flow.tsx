@@ -92,7 +92,7 @@ export function LandingFlow({
 
   return (
     <main
-      className="min-h-dvh overflow-hidden bg-canvas"
+      className="min-h-dvh overflow-x-clip bg-canvas"
       data-entry-source={entrySource}
       data-landing-state="introduction"
     >

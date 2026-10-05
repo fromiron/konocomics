@@ -4,6 +4,7 @@ import { CoverImage } from "@/components/cover/CoverImage";
 import { SectionHeading } from "@/components/layout/section-heading";
 import { CoverBackdrop } from "@/components/media/cover-backdrop";
 import { FactorBar } from "@/components/media/factor-bar";
+import { useEntryOnce } from "@/components/motion/use-entry-once";
 import { explanationLexicon, landingStrings } from "@/lib/strings";
 import { cn } from "@/lib/utils";
 
@@ -21,14 +22,26 @@ type StepCardProps = Readonly<{
   number: number;
   step: Readonly<{ title: string; description: string }>;
   backdropUrl?: string | null;
+  entryRef?: (element: HTMLLIElement | null) => void;
   children: ReactNode;
 }>;
 
-/** One step: its order and title, a line on what happens, then the sample's real result. */
-function StepCard({ backdropUrl, number, step, children }: StepCardProps) {
+/**
+ * One step: its order and title, a line on what happens, then the sample's real result. Steps
+ * light up in reading order as the page scrolls past them (`.home-step`, CSS scroll timelines).
+ */
+function StepCard({ backdropUrl, entryRef, number, step, children }: StepCardProps) {
   return (
-    <li className={cn(cardClassName, "p-[var(--space-4)] md:p-[var(--space-5)]")}>
-      {backdropUrl === undefined ? null : <CoverBackdrop coverUrl={backdropUrl} />}
+    <li
+      className={cn(cardClassName, "home-step p-[var(--space-4)] md:p-[var(--space-5)]")}
+      ref={entryRef}
+    >
+      {backdropUrl === undefined ? null : (
+        // The cover tint arrives last, as the recommendation step lights up.
+        <span aria-hidden="true" className="home-step__tint absolute inset-0">
+          <CoverBackdrop coverUrl={backdropUrl} />
+        </span>
+      )}
       <div className="relative z-10 grid content-start gap-[var(--space-4)]">
         <div className="grid gap-[var(--space-content-tight)]">
           <h3 className="flex items-baseline gap-[var(--space-2)] text-[length:var(--font-size-16)] font-bold text-text-strong">
@@ -70,6 +83,8 @@ export function HomeHowItWorks({
   const [firstAnchor] = sample.anchorWorks;
   const recommendedId = sample.recommendation.work.id;
   const [choose, see, recommend] = landingStrings.how.steps;
+  // The reason writes itself once the recommendation card is well into view.
+  const reasonEntryRef = useEntryOnce<HTMLLIElement>({ threshold: 0.6, bottomInset: "20%" });
 
   return (
     <section aria-labelledby={headingId} className="min-w-0">
@@ -80,7 +95,7 @@ export function HomeHowItWorks({
             sample.anchorWorks.slice(0, CAPTION_ANCHOR_COUNT).map((anchor) => anchor.title),
           )}
         </figcaption>
-        <ol className="m-0 grid list-none gap-[var(--space-3)] p-0 lg:grid-cols-3">
+        <ol className="home-steps m-0 grid list-none gap-[var(--space-3)] p-0 lg:grid-cols-3">
           <StepCard number={1} step={choose}>
             <ul
               aria-label={landingStrings.how.anchorsLabel}
@@ -110,10 +125,12 @@ export function HomeHowItWorks({
                 )}
               </p>
               <ul className="m-0 grid list-none gap-[var(--space-4)] p-0">
-                {sample.axes.map((axis) => (
+                {sample.axes.map((axis, index) => (
                   <li key={axis.axisId}>
                     <FactorBar
                       animateReveal={false}
+                      enterDelay={0.25 + index * 0.08}
+                      enterFill
                       label={explanationLexicon.factorLabels[axis.axisId]}
                       revealReady
                       state="known"
@@ -124,7 +141,12 @@ export function HomeHowItWorks({
               </ul>
             </div>
           </StepCard>
-          <StepCard backdropUrl={coverUrls.get(recommendedId)} number={3} step={recommend}>
+          <StepCard
+            backdropUrl={coverUrls.get(recommendedId)}
+            entryRef={animateReason ? reasonEntryRef : undefined}
+            number={3}
+            step={recommend}
+          >
             <LandingSampleRecommendation
               animateReason={animateReason}
               coverUrl={coverUrls.get(recommendedId)}

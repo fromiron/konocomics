@@ -2,6 +2,7 @@ import { MediaPosterCard } from "@/components/media/media-poster-card";
 import { MediaShelf } from "@/components/media/media-shelf";
 import { RankingCard } from "@/components/media/ranking-card";
 import { RankingShelf } from "@/components/media/ranking-shelf";
+import { useEntryOnce } from "@/components/motion/use-entry-once";
 import {
   landingStrings,
   mediaStrings,
@@ -32,35 +33,39 @@ function catalogMetadata(work: LandingWork, density: "compact" | "standard") {
   } as const;
 }
 
+/** Editorial Top 10; its rank numerals stamp down one after another the first time it is seen. */
 export function HomeRankingShelf({ coverUrls, onCoverVisible, works }: HomeShelfProps) {
+  const stampRef = useEntryOnce<HTMLDivElement>({ threshold: 0.5 });
   return (
-    <RankingShelf
-      compactHeading
-      controlsPlacement="overlay"
-      description={landingStrings.ranking.description}
-      rankingKind="editorial-ranking"
-      title={landingStrings.ranking.title}
-      trackClassName="items-start"
-    >
-      {works.map((work, index) => {
-        const metadata = catalogMetadata(work, "compact");
+    <div className="home-rank-stamp min-w-0" ref={stampRef}>
+      <RankingShelf
+        compactHeading
+        controlsPlacement="overlay"
+        description={landingStrings.ranking.description}
+        rankingKind="editorial-ranking"
+        title={landingStrings.ranking.title}
+        trackClassName="items-start"
+      >
+        {works.map((work, index) => {
+          const metadata = catalogMetadata(work, "compact");
 
-        return (
-          <RankingCard
-            coverUrl={coverUrls.get(work.id)}
-            creators={work.creators}
-            key={work.id}
-            metadata={metadata.visible}
-            metadataAccessibleLabel={metadata.accessible}
-            onCoverVisible={() => onCoverVisible?.(work.id)}
-            position={index + 1}
-            rankingKind="editorial-ranking"
-            title={work.title}
-            workId={work.id}
-          />
-        );
-      })}
-    </RankingShelf>
+          return (
+            <RankingCard
+              coverUrl={coverUrls.get(work.id)}
+              creators={work.creators}
+              key={work.id}
+              metadata={metadata.visible}
+              metadataAccessibleLabel={metadata.accessible}
+              onCoverVisible={() => onCoverVisible?.(work.id)}
+              position={index + 1}
+              rankingKind="editorial-ranking"
+              title={work.title}
+              workId={work.id}
+            />
+          );
+        })}
+      </RankingShelf>
+    </div>
   );
 }
 
