@@ -9,7 +9,9 @@ import type {
 import {
   OnboardingAlreadyCompletedError,
   OnboardingWorkConflictError,
+  UserWorkConflictError,
   type MinimalPlannedRemovalResult,
+  type ExternalWorkRemovalResult,
   type UserWorkRemovalResult,
   type OnboardingCommit,
   type PersistenceBackend,
@@ -34,6 +36,7 @@ import type { ExternalWorkRecord, ProviderCacheRecord, RecommendationCacheRecord
 import {
   hasUpdatedAt,
   isMinimalPlannedUserWork,
+  isUnchangedExternalWork,
   parseExternalUserWorkRecord,
   parseExternalWork,
   parseExternalWorks,
@@ -121,8 +124,21 @@ export class MemoryPersistenceBackend implements PersistenceBackend {
     };
   }
 
-  async upsertUserWork(record: UserWorkRecord): Promise<UserWorkRecord> {
+  async upsertUserWork(
+    record: UserWorkRecord,
+    expectedUpdatedAt?: string | null,
+  ): Promise<UserWorkRecord> {
     const validatedRecord = parseUserWork(record);
+    if (expectedUpdatedAt !== undefined) {
+      const current = this.userWorks.get(validatedRecord.workId);
+      if (
+        expectedUpdatedAt === null
+          ? current !== undefined
+          : !hasUpdatedAt(current, expectedUpdatedAt)
+      ) {
+        throw new UserWorkConflictError(validatedRecord.workId);
+      }
+    }
     this.userWorks.set(validatedRecord.workId, validatedRecord);
     return parseUserWork(this.userWorks.get(validatedRecord.workId));
   }
@@ -210,9 +226,15 @@ export class MemoryPersistenceBackend implements PersistenceBackend {
     return parseExternalWork(this.externalWorks.get(validatedId));
   }
 
-  async removeExternalWork(id: string): Promise<"removed" | "already-absent"> {
+  async removeExternalWork(
+    id: string,
+    expectedRecord?: ExternalWorkRecord,
+  ): Promise<Exclude<ExternalWorkRemovalResult, "preserved-unknown">> {
     const validatedId = parseExternalWorkId(id);
-    if (!this.externalWorks.has(validatedId)) return "already-absent";
+    const current = this.externalWorks.get(validatedId);
+    if (current === undefined) return "already-absent";
+    if (expectedRecord !== undefined && !isUnchangedExternalWork(current, expectedRecord))
+      return "preserved-conflict";
     this.externalWorks.delete(validatedId);
     if (this.externalWorks.has(validatedId)) {
       throw new Error(`External work deletion readback failed: ${validatedId}`);

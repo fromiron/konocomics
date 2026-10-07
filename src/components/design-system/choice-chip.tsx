@@ -19,7 +19,7 @@ type ChoiceChipProps = Readonly<{
 }>;
 
 const chipClassName =
-  "inline-flex min-h-[var(--control-min-size)] min-w-[var(--control-min-size)] items-center justify-center rounded-[var(--radius-pill)] border border-transparent bg-surface-2 px-[var(--space-content-loose)] py-[var(--space-content)] text-[length:var(--font-size-14)] font-bold peer-data-checked:border-accent peer-data-checked:bg-accent peer-data-checked:text-on-accent peer-focus-visible:outline-2 peer-focus-visible:outline-offset-2 peer-focus-visible:outline-[var(--focus-ring)] peer-data-disabled:cursor-not-allowed peer-data-disabled:opacity-45 [@media(hover:hover)_and_(pointer:fine)]:group-hover/choice:peer-[:not([data-disabled])]:bg-surface-3";
+  "inline-flex min-h-[var(--control-min-size)] min-w-[var(--control-min-size)] items-center justify-center rounded-[var(--radius-pill)] border border-transparent bg-surface-2 px-[var(--space-content-loose)] py-[var(--space-content)] text-[length:var(--font-size-14)] font-bold peer-data-checked:border-accent peer-data-checked:bg-accent peer-data-checked:text-on-accent peer-focus-visible:outline-2 peer-focus-visible:outline-offset-2 peer-focus-visible:outline-[var(--focus-ring)] peer-data-disabled:cursor-not-allowed peer-data-disabled:opacity-45 [@media(hover:hover)_and_(pointer:fine)]:group-hover/choice:peer-[:not([data-disabled]):not([data-checked])]:bg-surface-3";
 
 export function ChoiceChipRadioGroup<Value>({ className, ...props }: RadioGroupProps<Value>) {
   return (

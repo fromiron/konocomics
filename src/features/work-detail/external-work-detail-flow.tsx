@@ -1,9 +1,20 @@
 "use client";
 
-import { Link } from "@tanstack/react-router";
+import { Link, useNavigate } from "@tanstack/react-router";
 import { useEffect, useRef, useState } from "react";
 
 import { coverSourceForSize } from "@/components/cover/CoverImage";
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+} from "@/components/design-system/alert-dialog";
+import { Button } from "@/components/design-system/button";
 import { pageEntryFadeProps, usePageEntryMotion } from "@/components/motion/use-page-entry-motion";
 import { parseExternalWorkDetailQuery } from "@/domain/catalog/external-work";
 import { LibraryRecordEditor } from "@/features/library/record-editor";
@@ -86,12 +97,14 @@ function ExternalDetailLoading() {
 function ExternalDetailRecord({
   busy,
   message,
+  onRemove,
   onSave,
   record,
   storageDegraded,
 }: Readonly<{
   busy: boolean;
   message: Readonly<{ kind: "status" | "error"; text: string }> | undefined;
+  onRemove(opener: HTMLButtonElement): void;
   onSave(record: ExternalWorkRecord["record"]): Promise<void>;
   record: ExternalWorkRecord;
   storageDegraded: boolean;
@@ -163,7 +176,7 @@ function ExternalDetailRecord({
             </h2>
             <LibraryRecordEditor
               busy={busy}
-              key={`${record.id}:${record.record.updatedAt}`}
+              key={JSON.stringify(record.record)}
               onSave={onSave}
               record={record.record}
             />
@@ -174,6 +187,14 @@ function ExternalDetailRecord({
             >
               {message?.text}
             </p>
+            <Button
+              className="justify-self-start text-text-muted"
+              disabled={busy}
+              onClick={(event) => onRemove(event.currentTarget)}
+              variant="ghost"
+            >
+              {externalDetailStrings.remove.action}
+            </Button>
           </section>
         </WorkDetailShell>
       </main>
@@ -184,13 +205,19 @@ function ExternalDetailRecord({
 function ExternalWorkDetailQuery({ queryString }: Readonly<{ queryString: string }>) {
   const query = parseExternalWorkDetailQuery(new URLSearchParams(queryString));
   const externalId = query.kind === "valid" ? query.id : null;
-  const { inspectExternalWork, saveExternalUserRecord, status } = usePersistence();
+  const { inspectExternalWork, removeExternalWork, saveExternalUserRecord, status } =
+    usePersistence();
+  const navigate = useNavigate();
   const [detail, setDetail] = useState<ExternalDetailState>({ kind: "loading" });
   const [busy, setBusy] = useState(false);
   const [message, setMessage] = useState<
     Readonly<{ kind: "status" | "error"; text: string }> | undefined
   >();
   const saveInFlight = useRef(false);
+  const [removeTarget, setRemoveTarget] = useState<ExternalWorkRecord | null>(null);
+  const removeOpener = useRef<HTMLButtonElement | null>(null);
+  const removed = useRef(false);
+  const cancelRemove = useRef<HTMLButtonElement | null>(null);
 
   useEffect(() => {
     if (externalId === null) return;
@@ -234,18 +261,90 @@ function ExternalWorkDetailQuery({ queryString }: Readonly<{ queryString: string
     }
   };
 
+  const removeRecord = async () => {
+    if (removeTarget === null || busy || saveInFlight.current) return;
+    saveInFlight.current = true;
+    setBusy(true);
+    setMessage(undefined);
+    try {
+      const result = await removeExternalWork(removeTarget.id, removeTarget);
+      if (result === "removed") {
+        removed.current = true;
+        setRemoveTarget(null);
+        await navigate({ to: "/library" });
+        document.getElementById("app-content")?.focus({ preventScroll: true });
+      } else if (result === "already-absent") {
+        setRemoveTarget(null);
+        setDetail({ kind: "missing" });
+      } else if (result === "preserved-conflict") {
+        setDetail(stateFromLookup(await inspectExternalWork(removeTarget.id)));
+        setRemoveTarget(null);
+        setMessage({ kind: "error", text: externalDetailStrings.remove.conflict });
+      } else {
+        setMessage({ kind: "error", text: externalDetailStrings.remove.error });
+      }
+    } catch {
+      setMessage({ kind: "error", text: externalDetailStrings.remove.error });
+    } finally {
+      saveInFlight.current = false;
+      setBusy(false);
+    }
+  };
+
   if (query.kind === "invalid") return <ExternalDetailMessage kind="invalid" />;
   if (detail.kind === "loading") return <ExternalDetailLoading />;
   if (detail.kind !== "found") return <ExternalDetailMessage kind={detail.kind} />;
 
   return (
-    <ExternalDetailRecord
-      busy={busy}
-      message={message}
-      onSave={saveRecord}
-      record={detail.record}
-      storageDegraded={status.state === "degraded"}
-    />
+    <>
+      <ExternalDetailRecord
+        busy={busy}
+        message={removeTarget === null ? message : undefined}
+        onRemove={(opener) => {
+          removeOpener.current = opener;
+          removed.current = false;
+          setMessage(undefined);
+          setRemoveTarget(detail.record);
+        }}
+        onSave={saveRecord}
+        record={detail.record}
+        storageDegraded={status.state === "degraded"}
+      />
+      <AlertDialog
+        open={removeTarget !== null}
+        onOpenChange={(open) => {
+          if (!open && !saveInFlight.current) setRemoveTarget(null);
+        }}
+      >
+        <AlertDialogContent
+          className="max-h-[calc(100dvh-var(--space-8))] overflow-y-auto [overflow-wrap:anywhere]"
+          finalFocus={() => (removed.current ? false : removeOpener.current)}
+          initialFocus={cancelRemove}
+        >
+          <AlertDialogHeader>
+            <AlertDialogTitle>
+              {externalDetailStrings.remove.title(removeTarget?.title ?? detail.record.title)}
+            </AlertDialogTitle>
+            <AlertDialogDescription>
+              {externalDetailStrings.remove.description}
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          {message?.kind === "error" ? <p role="alert">{message.text}</p> : null}
+          <AlertDialogFooter>
+            <AlertDialogCancel disabled={busy} ref={cancelRemove}>
+              {externalDetailStrings.remove.cancel}
+            </AlertDialogCancel>
+            <AlertDialogAction
+              busy={busy}
+              onClick={() => void removeRecord()}
+              variant="destructive"
+            >
+              {busy ? externalDetailStrings.remove.busy : externalDetailStrings.remove.confirm}
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
+    </>
   );
 }
 

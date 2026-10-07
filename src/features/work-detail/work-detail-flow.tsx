@@ -960,7 +960,7 @@ function WorkDetailContent({ catalog, work }: Readonly<{ catalog: CatalogV1; wor
   const isDirectProviderLink = directUrl !== undefined;
   const volumeCount = parsedRecommendationContext.success
     ? (parsedRecommendationContext.data.constraintByWorkId[work.id]?.volumeCount ?? 0)
-    : catalog.volumes.filter((volume) => volume.workId === work.id).length;
+    : 0;
   const hasHeroMetadata =
     bookMetadata.publisherName !== undefined ||
     volumeCount > 0 ||

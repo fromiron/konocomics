@@ -238,7 +238,8 @@ describe("OnboardingFlow finalization", () => {
       screen.getByRole("heading", { level: 1, name: "好きなマンガを追加してください" }),
     ).toBeTruthy();
     fireEvent.click(screen.getByRole("button", { name: "追加する (0/10)" }));
-    expect(screen.getByText("あと 1 作品選んでください。")).toBeTruthy();
+    expect(screen.getByRole("button", { name: "追加する (0/10)" }).matches(":disabled")).toBe(true);
+    expect(screen.getByText("あと 1 作品")).toBeTruthy();
     expect(testState.finalizeOnboarding).not.toHaveBeenCalled();
     expect(testState.navigate).not.toHaveBeenCalled();
   });
@@ -255,7 +256,7 @@ describe("OnboardingFlow finalization", () => {
     expect(currentStep()?.textContent).toContain("好きな作品を選ぶ");
     expect(screen.getByText("あと 5 作品")).toBeTruthy();
     fireEvent.click(screen.getByRole("button", { name: "次へ (0/10)" }));
-    expect(screen.getByText("あと 5 作品選んでください。")).toBeTruthy();
+    expect(screen.getByRole("button", { name: "次へ (0/10)" }).matches(":disabled")).toBe(true);
     expect(testState.finalizeOnboarding).not.toHaveBeenCalled();
     expect(screen.getByText("まだ選ばれていません")).toBeTruthy();
   });

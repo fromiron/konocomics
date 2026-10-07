@@ -143,7 +143,17 @@ function selectTasteContributions(
       continue;
     }
     if (candidate.kind === "positive") {
-      if (selectedPositives.length >= MAX_POSITIVE_REASONS) {
+      if (
+        selectedPositives.length >= MAX_POSITIVE_REASONS ||
+        selectedPositives.some(
+          (selected) =>
+            selected.contribution.source === "similarity" &&
+            candidate.contribution.source === "similarity" &&
+            selected.factorId === candidate.factorId &&
+            selected.contribution.anchorWorkIds.join("\u0000") ===
+              candidate.contribution.anchorWorkIds.join("\u0000"),
+        )
+      ) {
         continue;
       }
       selectedPositives.push(candidate);

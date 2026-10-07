@@ -80,6 +80,54 @@ function baselineIdentityExists(
 }
 
 describe("Taste explanations", () => {
+  it("skips repeated positive factors from the same anchor without changing their contributions", () => {
+    const contributions = [
+      tasteContribution({ group: "tone", factorId: "romance", value: 0.3 }),
+      tasteContribution({ group: "genre", factorId: "romance", value: 0.2 }),
+      tasteContribution({ group: "genre", factorId: "sports", value: 0.15 }),
+      tasteContribution({ group: "narrative", factorId: "strategy", value: 0.1 }),
+    ];
+    const original = structuredClone(contributions);
+    const input = {
+      confidenceLevel: "high" as const,
+      lexicon: explanationLexicon,
+      resolveTitle: titleResolver({ "anchor-a": "ちはやふる", "anchor-b": "別の作品" }),
+    };
+    const result = generateTasteExplanation({ ...input, contributions });
+    expect(result.positiveReasons.map((reason) => reason.factorId)).toEqual([
+      "romance",
+      "sports",
+      "strategy",
+    ]);
+    expect(
+      result.positiveReasons.every((reason) => tasteIdentityExists(reason, contributions)),
+    ).toBe(true);
+    expect(contributions).toEqual(original);
+    expect(
+      generateTasteExplanation({ ...input, contributions: [...contributions].reverse() }),
+    ).toEqual(result);
+    expect(
+      generateTasteExplanation({ ...input, contributions: contributions.slice(0, 2) })
+        .positiveReasons,
+    ).toHaveLength(1);
+
+    const differentAnchor = [
+      contributions[0]!,
+      { ...contributions[1]!, anchorWorkIds: ["anchor-b"] },
+    ];
+    expect(
+      generateTasteExplanation({ ...input, contributions: differentAnchor }).positiveReasons,
+    ).toHaveLength(2);
+    const withCaution = [contributions[0]!, { ...contributions[1]!, value: -0.2 }];
+    expect(
+      generateTasteExplanation({ ...input, contributions: withCaution }).caution,
+    ).toMatchObject({
+      factorId: "romance",
+      value: -0.2,
+      kind: "caution",
+    });
+  });
+
   it.each([
     ["jujutsu-kaisen", "attack-on-titan", "visualSoftness", 0],
     ["hunter-x-hunter", "dungeon-meshi", "artRealism", 2],

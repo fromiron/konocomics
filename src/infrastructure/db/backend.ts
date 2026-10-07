@@ -20,7 +20,8 @@ export type MinimalPlannedRemovalResult = "removed" | "already-absent" | "preser
 /** Result of removing a user work only if it is still the row the caller last read. */
 export type UserWorkRemovalResult = MinimalPlannedRemovalResult;
 
-export type ExternalWorkRemovalResult = "removed" | "already-absent" | "preserved-unknown";
+export type ExternalWorkRemovalResult =
+  "removed" | "already-absent" | "preserved-conflict" | "preserved-unknown";
 
 export type AddIfAbsentResult<T> =
   | { kind: "added"; record: T }
@@ -36,6 +37,13 @@ export class OnboardingWorkConflictError extends Error {
   constructor(readonly workId: string) {
     super(`Cannot add existing user work: ${workId}`);
     this.name = "OnboardingWorkConflictError";
+  }
+}
+
+export class UserWorkConflictError extends Error {
+  constructor(readonly workId: string) {
+    super(`User work changed since it was read: ${workId}`);
+    this.name = "UserWorkConflictError";
   }
 }
 
@@ -65,7 +73,7 @@ export interface PersistenceBackend {
   commitOnboarding(commit: OnboardingCommit): Promise<void>;
   getUserWorks(): Promise<unknown[]>;
   addUserWorkIfAbsent(record: UserWorkRecord): Promise<ConfirmedAddIfAbsentResult<unknown>>;
-  upsertUserWork(record: UserWorkRecord): Promise<unknown>;
+  upsertUserWork(record: UserWorkRecord, expectedUpdatedAt?: string | null): Promise<unknown>;
   removeMinimalPlannedUserWork(workId: string): Promise<MinimalPlannedRemovalResult>;
   removeUserWorkIfUnchanged(
     workId: string,
@@ -79,7 +87,10 @@ export interface PersistenceBackend {
     expectedNormalizedKey: string,
     record: UserWorkRecord,
   ): Promise<unknown>;
-  removeExternalWork(id: string): Promise<Exclude<ExternalWorkRemovalResult, "preserved-unknown">>;
+  removeExternalWork(
+    id: string,
+    expectedRecord?: ExternalWorkRecord,
+  ): Promise<Exclude<ExternalWorkRemovalResult, "preserved-unknown">>;
   getProfileAdjustments(): Promise<unknown | null>;
   setProfileAdjustments(adjustments: ProfileAdjustments): Promise<void>;
   getRecommendationPolicies(): Promise<unknown | null>;

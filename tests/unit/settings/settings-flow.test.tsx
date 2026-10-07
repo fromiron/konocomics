@@ -6,7 +6,12 @@ import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 
 import type { CatalogV1 } from "@/domain/catalog/types";
 import type { RecommendationPolicies } from "@/domain/profile/types";
-import { DataTransferError, type ExportFileV1, type ImportPreviewV1 } from "@/infrastructure/db";
+import {
+  DataTransferError,
+  ExportDraftConflictError,
+  type ExportFileV1,
+  type ImportPreviewV1,
+} from "@/infrastructure/db";
 import type * as PersistenceExports from "@/infrastructure/db";
 import { SettingsFlow } from "@/features/settings/settings-flow";
 import { settingsStrings } from "@/lib/strings";
@@ -58,6 +63,10 @@ vi.mock("@/features/catalog/catalog-provider", () => ({
       .filter((work) => work.eligibility.recommendationEligible)
       .map((work) => work.id),
   }),
+}));
+
+vi.mock("@/features/catalog/catalog-assets", () => ({
+  loadCatalogSelection: vi.fn(async () => ({ catalog: testState.catalog })),
 }));
 
 vi.mock("@/infrastructure/db", async (importOriginal) => {
@@ -259,6 +268,41 @@ describe("SettingsFlow data ownership", () => {
     fireEvent.click(screen.getByRole("button", { name: settingsStrings.danger.exportFirst }));
 
     await waitFor(() => expect(testState.exportUserData).toHaveBeenCalledTimes(1));
+    expect(testState.deleteAllData).not.toHaveBeenCalled();
+  });
+
+  it("confirms the exact conflicting draft selections before downloading a recovery backup", async () => {
+    const entries = [{ workId: catalog.works[0]!.id, reaction: "liked" as const }];
+    testState.exportUserData.mockRejectedValueOnce(new ExportDraftConflictError(entries));
+    vi.spyOn(URL, "createObjectURL").mockReturnValue("blob:export");
+    vi.spyOn(URL, "revokeObjectURL").mockImplementation(() => undefined);
+    const download = vi
+      .spyOn(HTMLAnchorElement.prototype, "click")
+      .mockImplementation(() => undefined);
+    render(<SettingsFlow />);
+
+    fireEvent.click(screen.getByRole("button", { name: settingsStrings.data.export.action }));
+    const dialog = await screen.findByRole("dialog", {
+      name: settingsStrings.data.export.recovery.title,
+    });
+    expect(within(dialog).getByText(catalog.works[0]!.title, { exact: false })).toBeTruthy();
+    expect(download).not.toHaveBeenCalled();
+    fireEvent.click(within(dialog).getByRole("button", { name: settingsStrings.dialog.cancel }));
+    expect(testState.exportUserData).toHaveBeenCalledTimes(1);
+
+    testState.exportUserData.mockRejectedValueOnce(new ExportDraftConflictError(entries));
+    fireEvent.click(screen.getByRole("button", { name: settingsStrings.data.export.action }));
+    const retryDialog = await screen.findByRole("dialog", {
+      name: settingsStrings.data.export.recovery.title,
+    });
+    fireEvent.click(
+      within(retryDialog).getByRole("button", {
+        name: settingsStrings.data.export.recovery.action,
+      }),
+    );
+    await waitFor(() => expect(download).toHaveBeenCalledTimes(1));
+    expect(testState.exportUserData.mock.calls[2]?.[2]).toEqual(entries);
+    expect(testState.replaceFromExport).not.toHaveBeenCalled();
     expect(testState.deleteAllData).not.toHaveBeenCalled();
   });
 

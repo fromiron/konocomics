@@ -28,40 +28,56 @@ function LibraryPage() {
         onActiveStateChange={(state) => {
           void navigate({
             resetScroll: false,
-            search: { ...search, state: state ?? undefined, page: undefined },
+            search: (current) => ({ ...current, state: state ?? undefined, page: undefined }),
           });
         }}
         onFavoriteOnlyChange={(favoriteOnly) => {
           void navigate({
             resetScroll: false,
-            search: { ...search, favorite: favoriteOnly ? "1" : undefined, page: undefined },
+            search: (current) => ({
+              ...current,
+              favorite: favoriteOnly ? "1" : undefined,
+              page: undefined,
+            }),
           });
         }}
         onClearFilters={() => {
           void navigate({
             resetScroll: false,
-            search: { ...search, state: undefined, favorite: undefined, page: undefined },
+            search: (current) => ({
+              ...current,
+              state: undefined,
+              favorite: undefined,
+              page: undefined,
+            }),
           });
         }}
         onQueryChange={(query) => {
           void navigate({
             replace: true,
             resetScroll: false,
-            search: { ...search, q: query.trim() === "" ? undefined : query, page: undefined },
+            search: (current) => ({
+              ...current,
+              q: query.trim() === "" ? undefined : query,
+              page: undefined,
+            }),
           });
         }}
         onSortChange={(sort) => {
-          void navigate({ resetScroll: false, search: { ...search, sort, page: undefined } });
+          void navigate({
+            resetScroll: false,
+            search: (current) => ({ ...current, sort, page: undefined }),
+          });
         }}
         onPageChange={(page, replace = false) => {
           void navigate({
             replace,
             resetScroll: false,
-            search: { ...search, page: page === 1 ? undefined : page },
+            search: (current) => ({ ...current, page: page === 1 ? undefined : page }),
           });
         }}
         onViewChange={(view) => {
-          void navigate({ resetScroll: false, search: { ...search, view } });
+          void navigate({ resetScroll: false, search: (current) => ({ ...current, view }) });
         }}
       />
     </BundledCatalogProvider>

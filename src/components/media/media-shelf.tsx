@@ -123,6 +123,43 @@ function getLoopMetrics(track: HTMLElement): LoopMetrics | null {
   };
 }
 
+function synchronizeLoopOverflow(track: HTMLElement) {
+  const originals = Array.from(track.querySelectorAll<HTMLElement>("[data-carousel-copy='1']"));
+  const first = originals[0];
+  const last = originals.at(-1);
+  if (first === undefined || last === undefined || track.clientWidth === 0) return;
+  const style = getComputedStyle(track);
+  const availableWidth =
+    track.clientWidth -
+    (parseFloat(style.paddingLeft) || 0) -
+    (parseFloat(style.paddingRight) || 0);
+  const contentWidth = last.offsetLeft + last.offsetWidth - first.offsetLeft;
+  const fits = contentWidth <= availableWidth + 1;
+  for (const clone of track.querySelectorAll<HTMLElement>("[data-carousel-clone]")) {
+    clone.hidden = fits;
+  }
+  if (fits) track.scrollLeft = 0;
+}
+
+function positionLoopCards(track: HTMLElement) {
+  const metrics = getLoopMetrics(track);
+  const center = track.scrollLeft + track.clientWidth / 2;
+  for (const card of track.querySelectorAll<HTMLElement>("[data-carousel-copy='1']")) {
+    const offsets = metrics === null ? [0] : [0, -metrics.periodFromCopy0, metrics.periodFromCopy2];
+    const cardCenter = card.offsetLeft - loopOrigin(track) + card.offsetWidth / 2;
+    const offset = offsets.reduce((nearest, candidate) =>
+      Math.abs(cardCenter + candidate - center) < Math.abs(cardCenter + nearest - center)
+        ? candidate
+        : nearest,
+    );
+    card.style.translate = offset === 0 ? "" : `${String(offset)}px`;
+  }
+  // Copies reserve loop geometry; only the original links and controls are ever visible.
+  for (const clone of track.querySelectorAll<HTMLElement>("[data-carousel-clone]")) {
+    clone.style.visibility = "hidden";
+  }
+}
+
 function jumpScroll(track: HTMLElement, left: number) {
   track.style.scrollBehavior = "auto";
   track.style.scrollSnapType = "none";
@@ -251,6 +288,7 @@ export function MediaShelf({
     const track = trackRef.current;
     if (track === null) return;
 
+    positionLoopCards(track);
     const maximum = Math.max(0, track.scrollWidth - track.clientWidth);
     const looping = getLoopMetrics(track) !== null;
     const next = {
@@ -294,6 +332,7 @@ export function MediaShelf({
       typeof ResizeObserver === "undefined"
         ? null
         : new ResizeObserver(() => {
+            synchronizeLoopOverflow(track);
             if (settleTimer !== undefined) {
               updateScrollState();
               return;
@@ -317,6 +356,7 @@ export function MediaShelf({
     const track = trackRef.current;
     if (track === null) return;
     wrappingRef.current = true;
+    synchronizeLoopOverflow(track);
     preserveLoopPosition(track, copy1ScrollRef);
     wrappingRef.current = false;
     updateScrollState();
@@ -481,21 +521,21 @@ export function MediaShelf({
               <span
                 aria-hidden="true"
                 className={cn(
-                  "media-shelf-edge-fade media-shelf-edge-fade--start absolute inset-y-0 left-0",
+                  "media-shelf-edge-fade media-shelf-edge-fade--start absolute inset-y-0 left-[calc(var(--control-min-size)+var(--space-2))]",
                   !scrollState.canScrollBack && "hidden",
                 )}
               />
               <span
                 aria-hidden="true"
                 className={cn(
-                  "media-shelf-edge-fade media-shelf-edge-fade--end absolute inset-y-0 right-0",
+                  "media-shelf-edge-fade media-shelf-edge-fade--end absolute inset-y-0 right-[calc(var(--control-min-size)+var(--space-2))]",
                   !scrollState.canScrollForward && "hidden",
                 )}
               />
-              <span className="absolute top-1/2 left-[var(--media-shelf-edge-fade-width)] z-10 -translate-x-1/2 -translate-y-1/2">
+              <span className="absolute top-1/2 left-0 z-10 -translate-y-1/2">
                 {scrollButton(-1)}
               </span>
-              <span className="absolute top-1/2 right-[var(--media-shelf-edge-fade-width)] z-10 translate-x-1/2 -translate-y-1/2">
+              <span className="absolute top-1/2 right-0 z-10 -translate-y-1/2">
                 {scrollButton(1)}
               </span>
             </span>

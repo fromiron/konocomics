@@ -271,7 +271,7 @@ export function SelectedTray({
           <Button
             aria-describedby={remainingLabel ? remainingId : undefined}
             className="selected-tray__continue min-w-32 md:w-full md:min-w-0"
-            disabled={disabled}
+            disabled={disabled || selections.length === 0}
             onClick={onContinue}
             type="button"
           >

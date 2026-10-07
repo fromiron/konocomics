@@ -1,5 +1,5 @@
 import {
-  createRootRoute,
+  createRootRouteWithContext,
   HeadContent,
   Link,
   Outlet,
@@ -18,7 +18,9 @@ import { coreStrings, routeBoundaryStrings } from "@/lib/strings";
 
 import globalStyles from "../styles/globals.css?url";
 
-export const Route = createRootRoute({
+export const Route = createRootRouteWithContext<{
+  navigation: { isHistoryTraversal: boolean };
+}>()({
   headers: () => securityHeaders,
   beforeLoad: ({ location }) => ({ documentPathname: location.pathname }),
   head: ({ match }) => {

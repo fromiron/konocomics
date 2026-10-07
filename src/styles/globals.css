@@ -516,17 +516,14 @@ h1[tabindex="-1"]:focus {
 
 @media (min-width: 768px) and (hover: hover) and (pointer: fine) {
   .media-shelf-overlay {
-    --media-shelf-edge-fade-width: clamp(
-      var(--layout-page-padding),
-      calc((100vw - var(--layout-width-media)) / 2 + var(--layout-page-padding) - var(--space-2)),
-      calc(var(--space-12) + var(--space-12))
-    );
-    margin-inline: calc(0px - var(--media-shelf-edge-fade-width));
+    --media-shelf-edge-fade-width: var(--space-2);
+    margin-inline: 0;
+    padding-inline: calc(var(--control-min-size) + var(--space-2));
   }
 
   .media-shelf-overlay > [data-media-shelf-track] {
-    padding-inline: var(--media-shelf-edge-fade-width);
-    scroll-padding-inline: var(--media-shelf-edge-fade-width);
+    padding-inline: 0;
+    scroll-padding-inline: 0;
   }
 }
 
@@ -2025,16 +2022,15 @@ h1[tabindex="-1"]:focus {
 
 .library-editor__actions {
   position: sticky;
-  bottom: calc(-1 * (var(--space-6) + var(--layout-safe-area-bottom)));
+  bottom: 0;
   z-index: 2;
   display: flex;
   align-items: center;
   justify-content: space-between;
   gap: var(--space-4);
-  margin-inline: calc(-1 * var(--layout-page-padding));
-  margin-bottom: calc(-1 * (var(--space-6) + var(--layout-safe-area-bottom)));
-  padding: var(--space-3) var(--layout-page-padding)
-    calc(var(--space-3) + var(--layout-safe-area-bottom));
+  margin-inline: 0;
+  margin-bottom: 0;
+  padding: var(--space-3) 0 calc(var(--space-3) + var(--layout-safe-area-bottom));
   border-top: 1px solid var(--chrome-rule);
   background: var(--surface-1);
 }
@@ -3906,5 +3902,46 @@ h1[tabindex="-1"]:focus {
     translate: 0 12%;
     scale: 0.78;
     rotate: calc(var(--bloom-side) * 8deg * var(--bloom-amp));
+  }
+}
+
+@media (min-width: 48rem) and (max-height: 50rem) {
+  .ob-welcome {
+    gap: var(--space-2);
+    margin-bottom: var(--space-3);
+  }
+  .ob-welcome__narration {
+    padding: var(--space-3) var(--space-5);
+  }
+  .ob-welcome__eyebrow {
+    display: none;
+  }
+  .ob-welcome__step {
+    grid-template-columns: auto minmax(0, 1fr);
+    align-items: center;
+    padding: var(--space-2) var(--space-3);
+  }
+  .ob-welcome__step[aria-current="step"] {
+    padding-right: calc(var(--space-3) + var(--ob-slant));
+  }
+  .ob-welcome__step[aria-current="step"] + .ob-welcome__step {
+    padding-left: calc(var(--space-3) + var(--ob-slant));
+  }
+  .ob-welcome__current {
+    display: none;
+  }
+  .ob-welcome__step-description {
+    position: absolute;
+    width: 1px;
+    height: 1px;
+    overflow: hidden;
+    clip-path: inset(50%);
+    white-space: nowrap;
+  }
+  .ob-welcome__current-note {
+    display: block;
+  }
+  .onboarding-step-one .onboarding-discovery {
+    gap: var(--space-3);
   }
 }

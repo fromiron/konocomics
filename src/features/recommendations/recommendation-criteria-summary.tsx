@@ -4,10 +4,12 @@ import { recommendationStrings } from "@/lib/strings";
 
 type RecommendationCriteriaSummaryProps = Readonly<{
   recordCount: number;
+  adjustmentLabels?: readonly string[];
   preferenceLabels: readonly string[];
 }>;
 
 export function RecommendationCriteriaSummary({
+  adjustmentLabels = [],
   preferenceLabels,
   recordCount,
 }: RecommendationCriteriaSummaryProps) {
@@ -21,6 +23,11 @@ export function RecommendationCriteriaSummary({
           ? recommendationStrings.criteria.basisWithoutPreferences(recordCount)
           : recommendationStrings.criteria.basis(recordCount, preferenceLabels.join("・"))}
       </p>
+      {adjustmentLabels.length > 0 ? (
+        <p className="text-[length:var(--font-size-14)] text-text-muted">
+          {recommendationStrings.criteria.adjusted(adjustmentLabels.join("・"))}
+        </p>
+      ) : null}
       <Link
         className="inline-flex min-h-[var(--control-min-size)] shrink-0 items-center text-[length:var(--font-size-14)] font-bold text-text underline underline-offset-4 hover:text-text-strong focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-ring"
         preload={false}

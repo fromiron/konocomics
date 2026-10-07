@@ -60,7 +60,33 @@ export function QuickPreviewDialog({
     <Dialog onOpenChange={onOpenChange} open={open}>
       <DialogContent
         className="recommendation-quick-preview !top-auto bottom-0 !max-h-[calc(100dvh-var(--space-4))] w-full max-w-full -translate-x-1/2 translate-y-0 grid-cols-[calc(var(--control-min-size)*1.5)_minmax(0,1fr)] grid-rows-[auto_minmax(0,1fr)_auto] gap-[var(--space-3)] overflow-hidden rounded-t-[var(--radius-card)] rounded-b-none pb-[calc(var(--space-4)+var(--layout-safe-area-bottom))] !transition-none !animate-none data-open:!animate-none data-closed:!animate-none sm:max-w-full [@media(min-width:768px)_and_(hover:hover)_and_(pointer:fine)]:!top-1/2 [@media(min-width:768px)_and_(hover:hover)_and_(pointer:fine)]:bottom-auto [@media(min-width:768px)_and_(hover:hover)_and_(pointer:fine)]:w-[min(calc(100%-var(--space-8)),var(--layout-width-reading))] [@media(min-width:768px)_and_(hover:hover)_and_(pointer:fine)]:max-w-[var(--layout-width-reading)] [@media(min-width:768px)_and_(hover:hover)_and_(pointer:fine)]:-translate-y-1/2 [@media(min-width:768px)_and_(hover:hover)_and_(pointer:fine)]:grid-cols-[calc(var(--control-min-size)*2.5)_minmax(0,1fr)] [@media(min-width:768px)_and_(hover:hover)_and_(pointer:fine)]:rounded-[var(--radius-card)] [@media(min-width:768px)_and_(hover:hover)_and_(pointer:fine)]:pb-[var(--space-4)]"
-        finalFocus={() => (opener?.isConnected === true ? opener : null)}
+        finalFocus={() => {
+          const available = (element: HTMLElement | null) =>
+            element?.isConnected === true &&
+            !element.matches(":disabled, [aria-disabled='true']") &&
+            element.closest("[inert], [data-carousel-clone]") === null;
+          const belongsToWork = (element: HTMLElement | null) =>
+            element !== null &&
+            (element.closest<HTMLElement>("[data-recommendation-work-id]")?.dataset
+              .recommendationWorkId === work.id ||
+              document.getElementById(`recommendation-shelf-work-${work.id}`)?.contains(element));
+          const trigger =
+            available(opener) && belongsToWork(opener)
+              ? opener
+              : [...document.querySelectorAll<HTMLButtonElement>("button[aria-label]")].find(
+                  (button) =>
+                    button.getAttribute("aria-label") ===
+                      recommendationStrings.quickPreview.open(work.title) &&
+                    !button.disabled &&
+                    available(button) &&
+                    belongsToWork(button),
+                );
+          const target = trigger ?? document.getElementById("recommendation-page-heading");
+          // Featured actions are hidden until their card contains focus.
+          trigger?.closest<HTMLElement>("article[tabindex]")?.focus({ preventScroll: true });
+          target?.focus({ preventScroll: true });
+          return false;
+        }}
         initialFocus={titleRef}
       >
         <CoverImage

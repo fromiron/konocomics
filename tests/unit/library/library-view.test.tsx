@@ -4,6 +4,8 @@ import { cleanup, fireEvent, render, screen, waitFor, within } from "@testing-li
 import type { ReactNode } from "react";
 import { afterEach, describe, expect, it, vi } from "vitest";
 
+import recommendationContextJson from "@/data/generated/recommendation-context-v1.json";
+import { recommendationContextSchema } from "@/domain/recommendation/context-schema";
 import catalogJson from "@/data/generated/catalog-v1.json";
 import type { ExternalWorkId } from "@/domain/catalog/external-work";
 import { catalogV1Schema } from "@/domain/catalog/schema";
@@ -37,6 +39,7 @@ vi.mock("@tanstack/react-router", () => ({
 }));
 
 const catalog = catalogV1Schema.parse(catalogJson);
+const context = recommendationContextSchema.parse(recommendationContextJson);
 const target = catalog.works[0]!;
 const readingTarget = catalog.works.find(
   (work) => work.id !== target.id && catalog.volumes.some((volume) => volume.workId === work.id),
@@ -121,6 +124,111 @@ function choose(group: string, option: string) {
 }
 
 describe("LibraryView", () => {
+  it("finds saved kana and alias matches without broadening the active filters", () => {
+    const hunter = catalog.works.find((work) => work.id === "hunter-x-hunter")!;
+    renderLibrary({
+      query: "ﾊﾝﾀｰ",
+      favoriteOnly: true,
+      activeState: "dropped",
+      externalWorks: [],
+      userWorks: [
+        { ...catalogRecord, workId: hunter.id, readingState: "dropped", reaction: "favorite" },
+      ],
+    });
+    expect(
+      screen.getByRole("button", { name: libraryStrings.openRecord(hunter.title) }),
+    ).toBeTruthy();
+    fireEvent.change(screen.getByRole("searchbox"), { target: { value: "はんたー" } });
+    expect(
+      screen.getByRole("button", { name: libraryStrings.openRecord(hunter.title) }),
+    ).toBeTruthy();
+    fireEvent.change(screen.getByRole("searchbox"), { target: { value: "zzzzzz" } });
+    expect(
+      screen.queryByRole("button", { name: libraryStrings.openRecord(hunter.title) }),
+    ).toBeNull();
+  });
+
+  it("uses known released volumes and keeps a list status out of the cover", () => {
+    renderLibrary({
+      view: "list",
+      externalWorks: [],
+      userWorks: [
+        {
+          ...catalogRecord,
+          workId: "hunter-x-hunter",
+          readingState: "dropped",
+          reaction: "favorite",
+          progress: { volume: 12 },
+        },
+      ],
+    });
+    const total = context.constraintByWorkId["hunter-x-hunter"]!.volumeCount;
+    const bar = screen.getByRole("progressbar");
+    expect(bar.getAttribute("max")).toBe(String(total));
+    expect(bar.getAttribute("value")).toBe("12");
+    expect(screen.queryByText("100%")).toBeNull();
+    expect(document.querySelector(".library-card__stamp")).toBeNull();
+    const row = document.querySelector("[data-work-id=hunter-x-hunter]")!;
+    expect(row.textContent).toContain(libraryStrings.tabs.dropped);
+    expect(
+      within(row.parentElement!).getByRole("button").getAttribute("aria-describedby"),
+    ).toBeTruthy();
+  });
+
+  it("does not turn an unknown total or progress beyond known volumes into a percentage", () => {
+    renderLibrary({
+      externalWorks: [
+        {
+          ...externalRecord,
+          record: { ...externalRecord.record, readingState: "completed", progress: { volume: 12 } },
+        },
+      ],
+      userWorks: [
+        {
+          ...catalogRecord,
+          workId: "hunter-x-hunter",
+          readingState: "dropped",
+          progress: { volume: 999 },
+        },
+      ],
+    });
+    expect(screen.queryByRole("progressbar")).toBeNull();
+    expect(screen.getByText(libraryStrings.progress(999, undefined))).toBeTruthy();
+    expect(screen.getByText(libraryStrings.progress(12, undefined))).toBeTruthy();
+  });
+
+  it("does not normalize a page using an uncommitted URL query, including IME composition", () => {
+    const onQueryChange = vi.fn();
+    const onPageChange = vi.fn();
+    const records = catalog.works
+      .slice(0, 25)
+      .map((work) => ({ ...catalogRecord, workId: work.id }));
+    render(
+      <LibraryView
+        catalog={catalog}
+        externalWorks={[]}
+        userWorks={records}
+        page={2}
+        query=""
+        onQueryChange={onQueryChange}
+        onPageChange={onPageChange}
+        addCatalogWork={vi.fn()}
+        addExternalWork={vi.fn()}
+        saveExternalUserRecord={vi.fn()}
+        saveUserWork={vi.fn()}
+        storageDegraded={false}
+      />,
+    );
+    const input = screen.getByRole("searchbox");
+    fireEvent.compositionStart(input);
+    fireEvent.change(input, { target: { value: "存在しない検索" } });
+    expect(onQueryChange).not.toHaveBeenCalled();
+    expect(onPageChange).not.toHaveBeenCalled();
+    fireEvent.compositionEnd(input);
+    expect(onQueryChange).toHaveBeenCalledWith("存在しない検索");
+    expect(onPageChange).not.toHaveBeenCalled();
+  });
+
   it("sorts by rating, then by recency, and summarizes the collection in the header", () => {
     const [first, second, third] = catalog.works;
     if (first === undefined || second === undefined || third === undefined) {
@@ -221,7 +329,16 @@ describe("LibraryView", () => {
         screen
           .getByRole("progressbar", { name: libraryStrings.editor.progress })
           .getAttribute("aria-valuetext"),
-      ).toBe(libraryStrings.progress(1, 4));
+      ).toBe(
+        [
+          libraryStrings.progress(1, 4),
+          libraryStrings.progressAgainstKnownVolumes(
+            1,
+            context.constraintByWorkId[readingTarget.id]!.volumeCount,
+            Math.round(100 / context.constraintByWorkId[readingTarget.id]!.volumeCount),
+          ),
+        ].join("・"),
+      );
     },
   );
 
@@ -426,7 +543,9 @@ describe("LibraryView", () => {
     const rows = document.querySelectorAll("[data-library-row-kind]");
     expect(rows).toHaveLength(1);
     expect(rows[0]?.getAttribute("data-work-id")).toBe(target.id);
-    expect(rows[0]?.textContent).not.toContain(libraryStrings.tabs.planned);
+    expect(rows[0]?.querySelector("button")?.textContent).not.toContain(
+      libraryStrings.tabs.planned,
+    );
     expect(screen.getByText(libraryStrings.toolbar.resultCount(1))).toBeTruthy();
   });
 });

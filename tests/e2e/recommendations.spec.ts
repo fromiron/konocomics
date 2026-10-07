@@ -138,6 +138,39 @@ async function readProductState(page: Page): Promise<ProductState> {
   });
 }
 
+async function readStoredRecord<Store extends "userWorks" | "profile">(
+  page: Page,
+  store: Store,
+  key: string,
+): Promise<ProductState[Store][number] | undefined> {
+  return page.evaluate(
+    ({ store, key }) =>
+      new Promise<ProductState[Store][number] | undefined>((resolve, reject) => {
+        const open = indexedDB.open("konocomics");
+        open.onerror = () => reject(open.error);
+        open.onsuccess = () => {
+          const database = open.result;
+          const transaction = database.transaction(store, "readonly");
+          const request: IDBRequest<ProductState[Store][number] | undefined> = transaction
+            .objectStore(store)
+            .get(key);
+          const fail = (error: DOMException | null) => {
+            database.close();
+            reject(error);
+          };
+          request.onerror = () => fail(request.error);
+          transaction.onerror = () => fail(transaction.error);
+          transaction.onabort = () => fail(transaction.error);
+          transaction.oncomplete = () => {
+            database.close();
+            resolve(request.result);
+          };
+        };
+      }),
+    { store, key },
+  );
+}
+
 function stateBytes(state: ProductState) {
   return JSON.stringify(state);
 }
@@ -1104,7 +1137,7 @@ test.describe("Slice 7 recommendation journeys", () => {
       await expect(firstCard.getByRole("img")).toHaveCount(1);
       expect(
         await page.evaluate(
-          () => document.documentElement.scrollWidth === document.documentElement.clientWidth,
+          () => document.documentElement.scrollWidth <= document.documentElement.clientWidth,
         ),
       ).toBe(true);
     }
@@ -1239,17 +1272,23 @@ test.describe("Slice 7 recommendation journeys", () => {
     await page.goBack();
     await expect(previewDialog).toBeHidden();
 
-    await tabUntil(page, /^\s*完結作を優先\s*$/u, 120);
+    if (testInfo.project.name === "mobile-chromium") {
+      const policySummary = page.locator("summary").filter({ hasText: "おすすめの方針" });
+      await policySummary.focus();
+      await policySummary.press("Enter");
+      await expect(page.getByRole("checkbox", { name: "完結作を優先" })).toBeVisible();
+    }
+    await tabUntil(
+      page,
+      /^\s*完結作を優先\s*$/u,
+      120,
+      testInfo.project.name === "chromium" ? "Shift+Tab" : "Tab",
+    );
     await page.keyboard.press("Space");
     await expect(page.getByRole("checkbox", { name: "完結作を優先" })).toBeChecked();
     await expect(page.getByText("おすすめの方針を反映しました。", { exact: true })).toBeVisible();
     await expect
-      .poll(async () => {
-        const policies = (await readProductState(page)).profile.find(
-          (entry) => entry.key === "policies",
-        )?.value;
-        return policies;
-      })
+      .poll(async () => (await readStoredRecord(page, "profile", "policies"))?.value)
       .toEqual(
         expect.objectContaining({
           preferCompleted: true,
@@ -1265,6 +1304,9 @@ test.describe("Slice 7 recommendation journeys", () => {
     const policyIds = await recommendationIds(page);
 
     await page.reload();
+    if (testInfo.project.name === "mobile-chromium") {
+      await page.locator("summary").filter({ hasText: "おすすめの方針" }).click();
+    }
     await expect(page.getByRole("checkbox", { name: "完結作を優先" })).toBeChecked();
     await expect(
       page.locator("li[data-recommendation-work-id]:not([data-carousel-clone])"),
@@ -1313,8 +1355,13 @@ test.describe("Slice 7 recommendation journeys", () => {
     const anchorPreview = anchorCard.getByRole("button", { name: /クイック表示/u });
     if (testInfo.project.name === "chromium") {
       await expect(anchorPreview).toBeHidden();
+      const shelfCards = page
+        .locator("[data-media-shelf-track]")
+        .filter({ has: page.locator('[data-recommendation-shelf-card="anchor"]') })
+        .first()
+        .locator('[data-recommendation-shelf-card="anchor"]');
       // Real input through the production shelf; the DOM readback observes its geometry.
-      const beforeExpansion = await anchorCards.evaluateAll((elements) => {
+      const beforeExpansion = await shelfCards.evaluateAll((elements) => {
         const track = elements[0]?.parentElement;
         if (track == null) throw new Error("Missing Anchor track");
         return {
@@ -1351,7 +1398,7 @@ test.describe("Slice 7 recommendation journeys", () => {
       await expect
         .poll(async () => (await anchorCard.boundingBox())!.width)
         .toBeCloseTo(beforeExpansion.rects[0]!.width + 264, 0);
-      const afterExpansion = await anchorCards.evaluateAll((elements) => {
+      const afterExpansion = await shelfCards.evaluateAll((elements) => {
         const track = elements[0]?.parentElement;
         if (track == null) throw new Error("Missing Anchor track");
         return {
@@ -1369,11 +1416,11 @@ test.describe("Slice 7 recommendation journeys", () => {
           0,
         );
       }
-      const nextAnchor = anchorCards.nth(1);
+      const nextAnchor = shelfCards.nth(1);
       const nextCover = nextAnchor.getByRole("link");
       const nextPosition = await nextCover.boundingBox();
       await nextCover.hover();
-      const followingFrames = await anchorCards.evaluateAll(async (elements) => {
+      const followingFrames = await shelfCards.evaluateAll(async (elements) => {
         const positions: number[][] = [];
         const until = performance.now() + 500;
         while (performance.now() < until) {
@@ -1423,8 +1470,8 @@ test.describe("Slice 7 recommendation journeys", () => {
       await page.keyboard.press("Escape");
       await page.emulateMedia({ reducedMotion: "no-preference" });
 
-      const lastAnchor = anchorCards.last();
-      const precedingAnchor = anchorCards.nth((await anchorCards.count()) - 2);
+      const lastAnchor = shelfCards.last();
+      const precedingAnchor = shelfCards.nth((await shelfCards.count()) - 2);
       for (const handoff of [false, true]) {
         await page
           .getByRole("heading", { level: 2, name: /が好きなら$/u })
@@ -1478,6 +1525,7 @@ test.describe("Slice 7 recommendation journeys", () => {
       const preview = page.getByRole("dialog");
       await expect(preview.getByRole("heading", { name: anchorTitle, exact: true })).toBeVisible();
       await expect(preview.getByText(anchorSummary.text, { exact: true })).toBeVisible();
+      await expect(preview.getByText(/分析の確信度/u)).toBeVisible();
       for (const label of ["読みたい", "読んだ", "興味なし"]) {
         await expect(preview.getByRole("button", { name: label, exact: true })).toBeVisible();
       }
@@ -1492,7 +1540,6 @@ test.describe("Slice 7 recommendation journeys", () => {
     await expect(anchorDetail.getByRole("heading", { level: 1, name: anchorTitle })).toBeVisible();
     const compatibility = anchorDetail.getByRole("region", { name: "あなたとの相性" });
     await expect(compatibility.getByText(anchorSummary.text, { exact: true })).toBeVisible();
-    await expect(compatibility.getByText(/分析の確信度/u)).toBeVisible();
     await expect(anchorDetail.getByRole("button", { name: "読みたい", exact: true })).toBeVisible();
     await page.goBack();
     await expect(anchorCard).toBeVisible();
@@ -1579,6 +1626,7 @@ test.describe("Slice 7 recommendation journeys", () => {
     const initialIds = await recommendationIds(page);
     const removedWorkId = initialIds[0];
     expect(removedWorkId).toBeTruthy();
+    if (removedWorkId === undefined) throw new Error("No recommendation available for feedback");
 
     const firstCard = page
       .locator("li[data-recommendation-work-id]:not([data-carousel-clone])")
@@ -1609,9 +1657,7 @@ test.describe("Slice 7 recommendation journeys", () => {
       )
       .toBe(nextFirstWorkId);
     await expect
-      .poll(async () =>
-        (await readProductState(page)).userWorks.find((record) => record.workId === removedWorkId),
-      )
+      .poll(() => readStoredRecord(page, "userWorks", removedWorkId))
       .toEqual(expect.objectContaining({ readingState: "completed" }));
 
     const update = page.getByRole("button", { name: "更新" });
@@ -1645,9 +1691,12 @@ test.describe("Slice 7 recommendation journeys", () => {
       ["興味なし", "hidden"],
     ]) {
       const anchors = page.locator('[data-recommendation-shelf-card="anchor"]');
-      const anchor = anchors.first();
+      const anchorId = await anchors.first().getAttribute("id");
+      expect(anchorId).toBeTruthy();
+      const anchor = page.locator(`[id='${anchorId}']`);
       const link = anchor.getByRole("link");
-      const workId = (await link.getAttribute("href"))!.split("/").at(-1)!;
+      const workId = anchorId!.replace("recommendation-shelf-work-", "");
+      await expect(link).toHaveAttribute("href", `/works/${workId}`);
       const neighborId = await anchors.nth(1).getAttribute("id");
       excludedAnchorIds.push(workId);
       // Keep the whole card, including its panel actions, inside the viewport so clicking an
@@ -1665,16 +1714,12 @@ test.describe("Slice 7 recommendation journeys", () => {
       await planned.click();
       await expect(planned).toHaveAttribute("aria-pressed", "true");
       await expect
-        .poll(async () =>
-          (await readProductState(page)).userWorks.find((record) => record.workId === workId),
-        )
+        .poll(() => readStoredRecord(page, "userWorks", workId))
         .toEqual(expect.objectContaining({ readingState: "planned" }));
       await actions.getByRole("button", { name: label, exact: true }).click();
       await expect(page.getByRole("dialog")).toBeVisible();
       await expect
-        .poll(async () =>
-          (await readProductState(page)).userWorks.find((record) => record.workId === workId),
-        )
+        .poll(() => readStoredRecord(page, "userWorks", workId))
         .toEqual(expect.objectContaining({ readingState }));
       await page.keyboard.press("Escape");
       await expect(page.getByRole("dialog")).toBeHidden();
@@ -1785,6 +1830,7 @@ test.describe("Slice 8 provider and work-detail journey", () => {
       .locator("li[data-recommendation-work-id]:not([data-carousel-clone])")
       .first();
     const workId = await firstCard.getAttribute("data-recommendation-work-id");
+    if (workId === null) throw new Error("Missing recommendation work ID");
     expect(workId).toBeTruthy();
     providerTitle =
       (await firstCard.getByRole("heading", { level: 3 }).textContent())?.trim() ?? "";
@@ -1803,12 +1849,8 @@ test.describe("Slice 8 provider and work-detail journey", () => {
     const detailPlaceholder = detail.locator("[data-work-detail-cover]").getByRole("img");
     await expect(detailPlaceholder).toBeVisible();
     expect(await detailPlaceholder.getAttribute("aria-label")).toContain(providerTitle);
-    await expect(
-      detail.getByText("作品紹介を取得できませんでした。", { exact: true }),
-    ).toBeVisible();
-    await expect(detail.getByText("価格と在庫を現在表示できません。", { exact: true })).toBeVisible(
-      { timeout: 45_000 },
-    );
+    await expect(detail.getByRole("button", { name: "もう一度確認", exact: true })).toBeVisible();
+    await expect(detail.locator("#work-synopsis-heading")).toHaveCount(0);
     await expect(detail.getByText("価格", { exact: true })).toHaveCount(0);
     await expect(detail.getByText("在庫・発送", { exact: true })).toHaveCount(0);
 
@@ -1822,16 +1864,16 @@ test.describe("Slice 8 provider and work-detail journey", () => {
     expect(searchUrl.pathname).toBe("/search");
     expect(searchUrl.searchParams.get("g")).toBe("001001");
     expect(searchUrl.searchParams.get("sitem")).toBe(providerTitle);
-    expect(searchRequests).toHaveLength(0);
+    // The independent discovery banner may request sales-ranked books; the fallback link
+    // must not issue a title search simply to construct its destination.
+    expect(searchRequests.filter((url) => new URL(url).searchParams.has("title"))).toHaveLength(0);
 
     const planned = detail.getByRole("button", { name: "読みたい", exact: true });
     await planned.click();
     await expect(planned).toHaveAttribute("aria-pressed", "true");
     await expect(detail.getByRole("status")).toHaveText("読みたいに追加しました。");
     await expect
-      .poll(async () =>
-        (await readProductState(page)).userWorks.find((record) => record.workId === workId),
-      )
+      .poll(() => readStoredRecord(page, "userWorks", workId))
       .toEqual(expect.objectContaining({ workId, readingState: "planned" }));
 
     const stalePage = await page.context().newPage();
@@ -1849,9 +1891,7 @@ test.describe("Slice 8 provider and work-detail journey", () => {
       restoredDetail.getByRole("button", { name: "読みたい", exact: true }),
     ).toHaveAttribute("aria-pressed", "true");
     await expect
-      .poll(async () =>
-        (await readProductState(page)).userWorks.find((record) => record.workId === workId),
-      )
+      .poll(() => readStoredRecord(page, "userWorks", workId))
       .toEqual(expect.objectContaining({ workId, readingState: "planned" }));
 
     await expect(restoredDetail.getByText(itemCaption, { exact: true })).toBeVisible();
@@ -1884,9 +1924,7 @@ test.describe("Slice 8 provider and work-detail journey", () => {
     await expect(completedState).toHaveAttribute("aria-pressed", "true");
     await expect(restoredDetail.getByRole("status")).toHaveText("「読んだ」を保存しました。");
     await expect
-      .poll(async () =>
-        (await readProductState(page)).userWorks.find((record) => record.workId === workId),
-      )
+      .poll(() => readStoredRecord(page, "userWorks", workId))
       .toEqual(expect.objectContaining({ workId, readingState: "completed" }));
 
     await staleDetail.getByRole("button", { name: "読みたい", exact: true }).click();
@@ -1933,7 +1971,7 @@ test.describe("Slice 9 library and external-work journey", () => {
     browser,
     context,
     page,
-  }) => {
+  }, testInfo) => {
     test.setTimeout(120_000);
     const catalogTitle = "20世紀少年";
     const catalogWorkId = "20th-century-boys";
@@ -1965,6 +2003,10 @@ test.describe("Slice 9 library and external-work journey", () => {
           contentType: "application/json",
           status: 502,
         });
+        return;
+      }
+      if (requestUrl.searchParams.get("sort") === "sales") {
+        await route.fulfill({ json: { items: [] } });
         return;
       }
       const requestedTitle = requestUrl.searchParams.get("title");
@@ -2011,7 +2053,6 @@ test.describe("Slice 9 library and external-work journey", () => {
 
     await appPage
       .getByRole("tabpanel", { name: "すべて" })
-      .getByRole("region", { name: "読みたい" })
       .getByRole("button", { name: `「${catalogTitle}」の記録を編集` })
       .click();
     const catalogEditor = appPage.getByRole("dialog", { name: catalogTitle });
@@ -2039,8 +2080,15 @@ test.describe("Slice 9 library and external-work journey", () => {
     await expect(
       catalogEditor.getByRole("heading", { level: 2, name: catalogTitle }),
     ).toHaveAttribute("id", "library-detail-title");
-    await catalogEditor.getByRole("combobox", { name: "読書状態" }).selectOption("completed");
-    await catalogEditor.getByRole("combobox", { name: "感想" }).selectOption("liked");
+    await catalogEditor
+      .getByRole("radiogroup", { name: "読書状態" })
+      .getByText("読んだ", { exact: true })
+      .click();
+    await catalogEditor
+      .getByRole("radiogroup", { name: "感想" })
+      .getByText("良かった", { exact: true })
+      .click();
+    await catalogEditor.getByText("進み具合（任意）", { exact: true }).click();
     await catalogEditor.getByRole("spinbutton", { name: "巻" }).fill("7");
     await catalogEditor.getByRole("button", { name: "変更を保存" }).click();
     await expect(
@@ -2076,12 +2124,16 @@ test.describe("Slice 9 library and external-work journey", () => {
     await expect(
       restoredCatalogEditor.getByRole("heading", { level: 2, name: catalogTitle }),
     ).toBeVisible();
-    await expect(restoredCatalogEditor.getByRole("combobox", { name: "読書状態" })).toHaveValue(
-      "completed",
-    );
-    await expect(restoredCatalogEditor.getByRole("combobox", { name: "感想" })).toHaveValue(
-      "liked",
-    );
+    await expect(
+      restoredCatalogEditor
+        .getByRole("radiogroup", { name: "読書状態" })
+        .getByRole("radio", { name: "読んだ", exact: true }),
+    ).toBeChecked();
+    await expect(
+      restoredCatalogEditor
+        .getByRole("radiogroup", { name: "感想" })
+        .getByRole("radio", { name: "良かった", exact: true }),
+    ).toBeChecked();
     await expect(restoredCatalogEditor.getByRole("spinbutton", { name: "巻" })).toHaveValue("7");
     await restoredCatalogEditor.getByRole("button", { name: "閉じる" }).click();
     await expect(restoredCatalogEditor).toBeHidden();
@@ -2145,8 +2197,15 @@ test.describe("Slice 9 library and external-work journey", () => {
       name: "カタログ外作品の詳細を見る",
     });
     await expect(externalDetailLink).toHaveAttribute("href", canonicalExternalHref);
-    await externalEditor.getByRole("combobox", { name: "読書状態" }).selectOption("completed");
-    await externalEditor.getByRole("combobox", { name: "感想" }).selectOption("favorite");
+    await externalEditor
+      .getByRole("radiogroup", { name: "読書状態" })
+      .getByText("読んだ", { exact: true })
+      .click();
+    await externalEditor
+      .getByRole("radiogroup", { name: "感想" })
+      .getByText("最高", { exact: true })
+      .click();
+    await externalEditor.getByText("進み具合（任意）", { exact: true }).click();
     await externalEditor.getByRole("spinbutton", { name: "巻" }).fill("3");
 
     const mergePage = await context.newPage();
@@ -2230,10 +2289,16 @@ test.describe("Slice 9 library and external-work journey", () => {
     await expect(
       externalDetail.getByRole("heading", { level: 1, name: externalTitle }),
     ).toBeVisible();
-    await expect(externalDetail.getByRole("combobox", { name: "読書状態" })).toHaveValue(
-      "completed",
-    );
-    await expect(externalDetail.getByRole("combobox", { name: "感想" })).toHaveValue("favorite");
+    await expect(
+      externalDetail
+        .getByRole("radiogroup", { name: "読書状態" })
+        .getByRole("radio", { name: "読んだ", exact: true }),
+    ).toBeChecked();
+    await expect(
+      externalDetail
+        .getByRole("radiogroup", { name: "感想" })
+        .getByRole("radio", { name: "最高", exact: true }),
+    ).toBeChecked();
     await expect(externalDetail.getByRole("spinbutton", { name: "巻" })).toHaveValue("3");
     expect(providerRequests).toHaveLength(providerCountBeforeDetail);
 
@@ -2244,14 +2309,16 @@ test.describe("Slice 9 library and external-work journey", () => {
     await expect(
       reloadedExternalDetail.getByRole("heading", { level: 1, name: externalTitle }),
     ).toBeVisible();
-    await expect(reloadedExternalDetail.getByRole("combobox", { name: "読書状態" })).toHaveValue(
-      "completed",
-    );
+    await expect(
+      reloadedExternalDetail
+        .getByRole("radiogroup", { name: "読書状態" })
+        .getByRole("radio", { name: "読んだ", exact: true }),
+    ).toBeChecked();
     expect(providerRequests).toHaveLength(providerCountBeforeDetail);
 
     const cleanProviderRequests: string[] = [];
     const cleanContext = await browser.newContext({
-      baseURL: "http://localhost:3030",
+      baseURL: testInfo.project.use.baseURL,
       viewport: appPage.viewportSize() ?? undefined,
     });
     await cleanContext.route(/\/api\/rakuten\/(?:search|item)(?:\?|$)/u, async (route) => {
@@ -2320,7 +2387,7 @@ test.describe("Slice 10 data-sovereignty journey", () => {
     browser,
     context,
     page,
-  }) => {
+  }, testInfo) => {
     test.setTimeout(300_000);
     const externalTitle = "E2E カタログ外作品 完全版 1";
     const externalCreator = "検証作者";
@@ -2358,6 +2425,10 @@ test.describe("Slice 10 data-sovereignty journey", () => {
       }
 
       expect(requestUrl.pathname).toBe("/api/rakuten/search");
+      if (requestUrl.searchParams.get("sort") === "sales") {
+        await route.fulfill({ json: { items: [] } });
+        return;
+      }
       expect(requestUrl.searchParams.get("title")).toBe(externalTitle);
       await route.fulfill({
         body: JSON.stringify({
@@ -2405,7 +2476,13 @@ test.describe("Slice 10 data-sovereignty journey", () => {
     expect(cachedProviderWorkBeforeDetail).toBeTruthy();
     await openRecommendationDetail(page, providerWorkId!);
     await expect(page.locator(`main[data-work-detail-id='${providerWorkId}']`)).toBeVisible();
-    await expect(page.getByText(providerCaption, { exact: true })).toBeVisible();
+    const collectedCaption = catalogJson.volumes.find(
+      (volume) =>
+        volume.isbn === cachedProviderWorkBeforeDetail?.isbn && volume.workId === providerWorkId,
+    )?.metadata?.itemCaption;
+    await expect(page.locator("#work-synopsis-content")).toHaveText(
+      collectedCaption?.trim() || providerCaption,
+    );
     await expect
       .poll(async () =>
         (await readProductState(page)).providerCache.find(
@@ -2440,8 +2517,15 @@ test.describe("Slice 10 data-sovereignty journey", () => {
     await expect(
       externalEditor.getByRole("link", { name: "カタログ外作品の詳細を見る" }),
     ).toHaveAttribute("href", canonicalExternalHref);
-    await externalEditor.getByRole("combobox", { name: "読書状態" }).selectOption("completed");
-    await externalEditor.getByRole("combobox", { name: "感想" }).selectOption("favorite");
+    await externalEditor
+      .getByRole("radiogroup", { name: "読書状態" })
+      .getByText("読んだ", { exact: true })
+      .click();
+    await externalEditor
+      .getByRole("radiogroup", { name: "感想" })
+      .getByText("最高", { exact: true })
+      .click();
+    await externalEditor.getByText("進み具合（任意）", { exact: true }).click();
     await externalEditor.getByRole("spinbutton", { name: "巻" }).fill("3");
     await externalEditor.getByRole("button", { name: "変更を保存" }).click();
     await expect(
@@ -2474,10 +2558,7 @@ test.describe("Slice 10 data-sovereignty journey", () => {
     await verifiedPolicy.click();
     await expect(verifiedPolicy).toBeChecked();
     await expect
-      .poll(
-        async () =>
-          (await readProductState(page)).profile.find((entry) => entry.key === "policies")?.value,
-      )
+      .poll(async () => (await readStoredRecord(page, "profile", "policies"))?.value)
       .toEqual({
         preferCompleted: false,
         preferHidden: false,
@@ -2561,7 +2642,7 @@ test.describe("Slice 10 data-sovereignty journey", () => {
     await page.goto("/?landing=1");
     await expect(page.locator('main[data-landing-state="introduction"]')).toBeVisible();
     await expect(
-      page.getByRole("heading", { level: 1, name: "好みから見つける、次のマンガ。" }),
+      page.getByRole("heading", { level: 1, name: /^好みから見つける、\s*次のマンガ。$/u }),
     ).toBeVisible();
     expect(stateBytes(await readProductState(page))).toBe(beforeIntroductionBypass);
 
@@ -2589,12 +2670,16 @@ test.describe("Slice 10 data-sovereignty journey", () => {
     await page.getByRole("tab", { name: /^読んだ、/u }).click();
     await page.getByRole("button", { name: `「${externalTitle}」の記録を編集` }).click();
     const restoredExternalEditor = page.getByRole("dialog", { name: externalTitle });
-    await expect(restoredExternalEditor.getByRole("combobox", { name: "読書状態" })).toHaveValue(
-      "completed",
-    );
-    await expect(restoredExternalEditor.getByRole("combobox", { name: "感想" })).toHaveValue(
-      "favorite",
-    );
+    await expect(
+      restoredExternalEditor
+        .getByRole("radiogroup", { name: "読書状態" })
+        .getByRole("radio", { name: "読んだ", exact: true }),
+    ).toBeChecked();
+    await expect(
+      restoredExternalEditor
+        .getByRole("radiogroup", { name: "感想" })
+        .getByRole("radio", { name: "最高", exact: true }),
+    ).toBeChecked();
     await expect(restoredExternalEditor.getByRole("spinbutton", { name: "巻" })).toHaveValue("3");
     await expect(
       restoredExternalEditor.getByRole("link", { name: "カタログ外作品の詳細を見る" }),
@@ -2660,7 +2745,7 @@ test.describe("Slice 10 data-sovereignty journey", () => {
 
     await page.goto("/library");
     const catalogMissingRow = page.locator(
-      `[data-library-row-kind='catalog-missing'][data-library-card-role='planned-compact'][data-work-id='${catalogMissingWorkId}']`,
+      `[data-library-row-kind='catalog-missing'][data-work-id='${catalogMissingWorkId}']`,
     );
     await expect(catalogMissingRow).toBeVisible();
     await expect(catalogMissingRow).toContainText("現在のカタログ外");
@@ -2676,7 +2761,7 @@ test.describe("Slice 10 data-sovereignty journey", () => {
     );
 
     const preProfileContext = await browser.newContext({
-      baseURL: "http://localhost:3030",
+      baseURL: testInfo.project.use.baseURL,
       viewport: page.viewportSize() ?? undefined,
     });
     try {

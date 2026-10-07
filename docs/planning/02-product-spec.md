@@ -289,6 +289,8 @@ type OnboardingDraft = {
 ### 5.4 데이터 주권·호환 프로필 계약
 
 - 온보딩 전에도 `/settings`에서 Export할 수 있다. v1 파일은 `userWorks`·`externalWorks`, adjustments와 **네 정책 전부**(`preferCompleted`·`preferHidden`·`preferVerified`·`excludeIncomplete`), 필수 nullable `onboardingCompletedAt`, 필수 nullable `onboardingDraft`를 보존한다. 저장된 adjustments/policies row가 없으면 동결된 앱 기본값을 완전한 객체로 쓰고, 완료 시각이나 draft가 없으면 필드를 생략하거나 현재 시각을 합성하지 않고 정확히 `null`을 쓴다.
+- 2026-10-07 백업 복구: 저장 기록과 add 초안이 겹치면 기본 Export는 충돌 선택을 알려 준다. 사용자가 정확한 작품·초안 감상을 확인한 경우에만 백업 사본에서 해당 겹친 선택을 제외할 수 있다. 브라우저 원본 초안·기록·다른 선택은 보존하고, 승인 뒤 바뀐 충돌은 다시 확인한다. Import의 전체 파일 모순 검증은 유지한다.
+- 외부 작품의 오등록 취소는 작품 상세에서 제목·삭제 범위를 확인한 뒤 해당 작품과 읽기 기록만 제거한다. 확인한 전체 row와 현재 row가 다르면 삭제하지 않으며 다른 기록·설정·external identity는 보존한다.
 - Import는 strict whole-file·external identity·중복/충돌·프로필/draft 교차 필드 검증을 mutation 전에 끝낸다. 유효한 파일만 일곱 store를 한 트랜잭션으로 대체한다. 결과는 imported `userWorks`·`externalWorks`·profile·draft, 빈 recommendation/provider cache, 현재 앱의 schemaVersion·현재 bundled catalogVersion만 가진 runtime meta다. export의 meta나 cache는 가져오지 않는다.
 - nullable draft의 `null`은 모든 resolver 상태에서 유효하다. non-null draft 교차 필드에서 `firstRun`은 현재 Catalog positive가 5개 미만이고 완료 marker가 `null`일 때만, `add`는 usable profile이거나 완료 marker가 있을 때만 유효하다. add draft의 workId는 imported 기록과 겹칠 수 없다. 모순된 조합은 mode를 자동 변경하지 않고 파일 전체를 거부한다.
 - source `catalogVersion`이 현재와 달라도 경고 후 Import할 수 있다. 현재 Catalog에 없는 `userWorks` 기록은 삭제하지 않고 「カタログ外」로 표시하며 positive 수에는 포함하지 않는다. external identity는 저장된 version 규칙으로 검증하고 그대로 보존한다.
@@ -352,6 +354,7 @@ positiveAnchorScore = clamp(bestMatch + consensusBonus, 0, 1);
 - `bayesianRating = (n·avg + 20·catalogAvg) / (n + 20)` — 1권 리뷰 기준, priorCount 20에서 시작.
 - `maturity = min(1, log1p(volumeCount) / log1p(15))` — "검증된 작품 우선" 정책 선택 시에만 tie-break 우선순위 상승.
 - 리뷰가 없으면 `n=0`으로 Bayesian 결과는 catalog average다. 결측 reviewCount는 0, 결측 정적 volumeCount는 0이다.
+- `volumeCount`는 해당 시리즈·판본에서 확인한 작품 권수다. 수집된 판본 행 수나 대표 구매 권 번호를 전체 권수로 대체하지 않는다. 별도 권수 근거가 없는 신규 추천 context는 0(미확인)을 사용하고, 기존 값의 정정은 판본을 확인한 근거와 함께 별도 처리한다.
 - `catalogAvg`는 대표 1권의 `reviewAverage`가 있고 `reviewCount>0`인 작품만 동일 가중으로 산술평균한다. 리뷰 0건 작품은 명시적 context entry를 유지하되 평균 분모에서 제외하며, 관측 작품이 하나도 없으면 catalog build를 실패시킨다.
 
 근접 동률은 pairwise comparator를 쓰지 않는다. 최종 tasteScore를 소수 12자리로 반올림해 내림차순 정렬하고, 아직 cohort에 들지 않은 첫 작품을 leader로 삼아 leader와 차가 `<0.025`인 연속 작품을 같은 cohort로 묶는다. 정확히 0.025 차이면 새 cohort다.
@@ -510,6 +513,7 @@ type RecommendationWorkMarketSignal = {
 - Axis adjustment는 `axisPreferenceDirection`이 있어야만 렌더링 후보가 된다. 이 provenance가 빠졌거나 Theme/다른 source에 잘못 붙은 contribution은 일반 positive 문장으로 추정하지 않고 설명 대상에서 제외한다.
 - 안정 fallback은 `source → group → factorId → axisPreferenceDirection → anchorWorkIds.join("\\0") → negativeReasonId` 오름차순이다. 음수 similarity를 `value asc → fallback`으로 정렬한 첫 1개만 global caution 후보로 둔다.
 - 모든 positive와 global caution 하나를 `abs(value) desc → fallback`으로 순회한다. 이미 쓴 group/Cluster는 건너뛰고 positive 최대 3, caution 최대 1을 고른다. caution이 더 강한 positive와 충돌하면 다른 음수로 백필하지 않고 생략한다.
+- 2026-10-07 #54: positive similarity에서 같은 의미 팩터(`factorId`)와 같은 근거 작품 목록(`anchorWorkIds`)을 반복하는 후보는 설명 선택에서 건너뛴다. 예를 들어 Genre/Tone의 `romance`가 같은 작품을 근거로 삼으면 강한 기여 하나만 설명하고, 아직 사용하지 않은 group/Cluster의 실제 후보가 있으면 이어서 선택한다. 다른 팩터·같은 근거 및 같은 팩터·다른 근거는 이 규칙으로 합치지 않는다. 주의 의미·원본 contributions·추천 점수·순위는 유지하며 근거가 부족하면 3개를 채우지 않는다.
 - 렌더링 가능한 factor는 `ExplanationLexicon.factorLabels`에 정의된 Axis/Genre/Theme뿐이다. Cluster 소속 factor는 cluster label, 나머지는 factor label을 쓰되 구조화 identity에는 원래 factorId를 보존한다.
 - 근거 Anchor는 렌더링된 positive 순서 뒤 caution 순서에서 `source=similarity`의 실제 `anchorWorkIds`를 먼저 수집한다. 2026-09-11 사용자 승인에 따라 이후 `source=consensus, group=overall, factorId=consensus, value>0`인 실제 적용 bonus의 supporter ID를 안정 identity 순서로 추가한다. 제목이 해결된 distinct 최대 3개이며 similarity는 「主な根拠」, consensus만으로 추가된 작품은 「好みのつながり」로 구분한다. consensus의 `explainable=false`와 이유 문장 선택·추천 산식은 유지한다. penalty·미렌더 similarity·0 이하 bonus·제목 미해결 ID는 제외하고, 0개면 bestAnchorId나 무관한 작품을 보충하지 않은 채 Anchor 구역을 생략한다.
 - confidence는 Taste에만 정확히 `高い / ふつう / 低め(データ収集中)`로 표시한다. 모든 일본어 label/template은 `src/lib/strings.ts`가 소유하고 순수 설명기에 lexicon으로 주입한다.

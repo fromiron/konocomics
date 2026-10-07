@@ -10,8 +10,10 @@ import type {
 import {
   type AddIfAbsentResult,
   type MinimalPlannedRemovalResult,
+  type ExternalWorkRemovalResult,
   OnboardingAlreadyCompletedError,
   OnboardingWorkConflictError,
+  UserWorkConflictError,
   type OnboardingCommit,
   type PersistenceBackend,
 } from "@/infrastructure/db/backend";
@@ -28,6 +30,7 @@ import {
   createExportFileV1,
   DataSnapshotUnavailableError,
   DataTransferError,
+  ExportDraftConflictError,
   exportFilenameV1,
   serializeExportFileV1,
   type DataMutationReadback,
@@ -43,12 +46,14 @@ import {
   ExternalWorkCorruptRecordError,
   ExternalWorkIdentityConflictError,
   ExternalWorkNotFoundError,
+  createExternalWorkIdentity,
   hasValidExternalWorkIdentity,
   mergeExternalWorkOnInsert,
 } from "@/infrastructure/db/external-work";
 import {
   hasUpdatedAt,
   isMinimalPlannedUserWork,
+  isUnchangedExternalWork,
   parseExternalUserWorkRecord,
   parseExternalWork,
 } from "@/infrastructure/db/validation";
@@ -298,7 +303,10 @@ class ControllableBackend implements PersistenceBackend {
     return { kind: "added", record: structuredClone(record) };
   }
 
-  async upsertUserWork(record: UserWorkRecord): Promise<unknown> {
+  async upsertUserWork(
+    record: UserWorkRecord,
+    expectedUpdatedAt?: string | null,
+  ): Promise<unknown> {
     if (this.failUserWorkWrite) {
       throw new Error("IndexedDB user work write failed");
     }
@@ -309,6 +317,15 @@ class ControllableBackend implements PersistenceBackend {
           : [],
       ),
     );
+    const current = existing.get(record.workId);
+    if (
+      expectedUpdatedAt !== undefined &&
+      (expectedUpdatedAt === null
+        ? current !== undefined
+        : !hasUpdatedAt(current, expectedUpdatedAt))
+    ) {
+      throw new UserWorkConflictError(record.workId);
+    }
     existing.set(record.workId, structuredClone(record));
     this.userWorks = [...existing.values()];
     return structuredClone(record);
@@ -442,15 +459,20 @@ class ControllableBackend implements PersistenceBackend {
     return structuredClone(updated);
   }
 
-  async removeExternalWork(id: string): Promise<"removed" | "already-absent"> {
+  async removeExternalWork(
+    id: string,
+    expectedRecord?: ExternalWorkRecord,
+  ): Promise<Exclude<ExternalWorkRemovalResult, "preserved-unknown">> {
     if (this.failExternalWorkRemoval) {
       throw new Error("IndexedDB external work removal failed");
     }
-    const exists = this.externalWorks.some(
+    const current = this.externalWorks.find(
       (record) =>
         typeof record === "object" && record !== null && "id" in record && String(record.id) === id,
     );
-    if (!exists) return "already-absent";
+    if (current === undefined) return "already-absent";
+    if (expectedRecord !== undefined && !isUnchangedExternalWork(current, expectedRecord))
+      return "preserved-conflict";
     this.externalWorks = this.externalWorks.filter(
       (record) =>
         !(typeof record === "object" && record !== null && "id" in record) ||
@@ -649,6 +671,9 @@ function createDexieExternalHarness(initial: unknown | undefined) {
     async put(record: ExternalWorkRecord) {
       current = structuredClone(record);
     },
+    async delete() {
+      current = undefined;
+    },
   };
   const database = {
     externalWorks,
@@ -763,6 +788,68 @@ describe("Slice 10 data-sovereignty persistence", () => {
       details: "one",
     });
     expect(overlapBackend.draft).toEqual(createAddDraft("one"));
+  });
+
+  it("exports overlapping drafts only with explicit matching approval and preserves the browser draft", async () => {
+    const backend = new ControllableBackend();
+    backend.onboardingCompletedAt = COMPLETED_TIME;
+    const draft: OnboardingDraft = {
+      ...createAddDraft("one"),
+      positiveEntries: [
+        { workId: "one", reaction: "favorite" },
+        { workId: "six", reaction: "liked" },
+      ],
+    };
+    backend.draft = draft;
+    const persistence = new ResilientPersistence({ primaryFactory: () => backend });
+    await persistence.saveUserWork({
+      workId: "one",
+      readingState: "planned",
+      updatedAt: COMPLETED_TIME,
+    });
+    const before = await backend.readUserDataSnapshot();
+    await expect(persistence.exportUserData(COMPLETED_TIME, CURRENT_CATALOG)).rejects.toMatchObject(
+      {
+        entries: [{ workId: "one", reaction: "favorite" }],
+      },
+    );
+    await expect(
+      persistence.exportUserData(COMPLETED_TIME, CURRENT_CATALOG, [
+        { workId: "one", reaction: "liked" },
+      ]),
+    ).rejects.toBeInstanceOf(ExportDraftConflictError);
+    const file = await persistence.exportUserData(COMPLETED_TIME, CURRENT_CATALOG, [
+      { workId: "one", reaction: "favorite" },
+    ]);
+    expect(file.onboardingDraft).toEqual({
+      ...draft,
+      positiveEntries: [{ workId: "six", reaction: "liked" }],
+    });
+    expect(file.userWorks).toEqual(before.userWorks);
+    expect(await backend.readUserDataSnapshot()).toEqual(before);
+    const restoredBackend = new ControllableBackend();
+    const restored = new ResilientPersistence({ primaryFactory: () => restoredBackend });
+    const preview = await restored.inspectImportJson(serializeExportFileV1(file), CURRENT_CATALOG);
+    await restored.replaceFromExport(preview.file, CURRENT_CATALOG);
+    expect(await restored.getOnboardingDraft()).toEqual(file.onboardingDraft);
+    expect(await restored.getUserWorks()).toEqual(file.userWorks);
+    await expect(
+      restored.inspectImportJson(
+        JSON.stringify({ ...file, onboardingDraft: draft }),
+        CURRENT_CATALOG,
+      ),
+    ).rejects.toMatchObject({ code: "incompatible-profile-state" });
+    await persistence.addUserWorkIfAbsent({
+      workId: "six",
+      readingState: "planned",
+      updatedAt: COMPLETED_TIME,
+    });
+    await expect(
+      persistence.exportUserData(COMPLETED_TIME, CURRENT_CATALOG, [
+        { workId: "one", reaction: "favorite" },
+      ]),
+    ).rejects.toMatchObject({ entries: draft.positiveEntries });
+    expect(await persistence.getOnboardingDraft()).toEqual(draft);
   });
 
   it("atomically replaces user data, clears stale caches, and returns authoritative counts", async () => {
@@ -1029,6 +1116,53 @@ describe("conditional minimal-planned removal backend contract", () => {
 });
 
 describe("external work persistence", () => {
+  it.each(["indexeddb", "memory"] as const)(
+    "preserves changed metadata and reading records before %s removal",
+    async (mode) => {
+      const expected = createExternalRecord();
+      const changes: ExternalWorkRecord[] = [
+        { ...expected, title: "キングダム 2" },
+        { ...expected, creators: [...expected.creators, "Another creator"] },
+        { ...expected, isbnSamples: [...expected.isbnSamples, "9780306406157"] },
+        { ...expected, coverUrl: "https://example.com/new-cover.jpg" },
+        {
+          ...expected,
+          record: {
+            ...expected.record,
+            readingState: "completed",
+            reaction: "favorite",
+            progress: { volume: 4 },
+            updatedAt: COMPLETED_TIME,
+          },
+        },
+      ];
+      for (const current of changes) {
+        const memory = new MemoryPersistenceBackend();
+        memory.synchronizeExternalWorks([current]);
+        const backend = mode === "indexeddb" ? createDexieExternalHarness(current).backend : memory;
+        expect(await backend.removeExternalWork(EXTERNAL_ID, expected)).toBe("preserved-conflict");
+        expect(await backend.getExternalWork(EXTERNAL_ID)).toEqual(current);
+        expect(await backend.removeExternalWork(EXTERNAL_ID, current)).toBe("removed");
+        expect(await backend.getExternalWork(EXTERNAL_ID)).toBeNull();
+        expect(await backend.removeExternalWork(EXTERNAL_ID, current)).toBe("already-absent");
+      }
+    },
+  );
+
+  it("refreshes a conflicting external removal without deleting siblings or degrading storage", async () => {
+    const backend = new ControllableBackend();
+    const expected = createExternalRecord();
+    const current = { ...expected, isbnSamples: [...expected.isbnSamples, "9780306406157"] };
+    const identity = await createExternalWorkIdentity("別作品", "別作者");
+    const sibling = createExternalRecord({ ...identity, title: "別作品", creators: ["別作者"] });
+    backend.externalWorks = [current, sibling];
+    const persistence = new ResilientPersistence({ primaryFactory: () => backend });
+    expect(await persistence.removeExternalWork(EXTERNAL_ID, expected)).toBe("preserved-conflict");
+    expect(await persistence.getExternalWorks()).toEqual([current, sibling]);
+    expect(persistence.getStatus()).toMatchObject({ state: "ready", mode: "indexeddb" });
+    expect(await persistence.removeExternalWork(EXTERNAL_ID, current)).toBe("removed");
+    expect(await persistence.getExternalWorks()).toEqual([sibling]);
+  });
   it("strictly validates embedded identity and duplicate bibliographic fields", async () => {
     const memory = new MemoryPersistenceBackend();
     await expect(
@@ -1221,7 +1355,7 @@ describe("external work persistence", () => {
     backend.externalWorks = [record];
     backend.failExternalWorkRemoval = true;
 
-    expect(await persistence.removeExternalWork(EXTERNAL_ID)).toBe("preserved-unknown");
+    expect(await persistence.removeExternalWork(EXTERNAL_ID, record)).toBe("preserved-unknown");
     expect(persistence.getStatus()).toEqual({
       state: "degraded",
       mode: "memory",
@@ -2099,6 +2233,35 @@ describe("resilient onboarding persistence", () => {
       ]),
     );
     expect(await persistence.getUserWorks()).toHaveLength(2);
+  });
+
+  it("never replays a conflicting or uncertain conditional write into session memory", async () => {
+    const backend = new ControllableBackend();
+    const current: UserWorkRecord = {
+      workId: "shared-work",
+      readingState: "completed",
+      reaction: "favorite",
+      updatedAt: COMPLETED_TIME,
+    };
+    backend.userWorks = [current];
+    const persistence = new ResilientPersistence({ primaryFactory: () => backend });
+    const stale: UserWorkRecord = {
+      workId: current.workId,
+      readingState: "hidden",
+      updatedAt: DRAFT_TIME,
+    };
+    await expect(persistence.saveUserWork(stale, null)).rejects.toBeInstanceOf(
+      UserWorkConflictError,
+    );
+    expect(persistence.getStatus()).toMatchObject({ state: "ready", mode: "indexeddb" });
+    expect(await persistence.getUserWorks()).toEqual([current]);
+    backend.failUserWorkWrite = true;
+    await expect(persistence.saveUserWork(stale, COMPLETED_TIME)).rejects.toThrow(
+      "IndexedDB user work write failed",
+    );
+    expect(persistence.getStatus()).toMatchObject({ state: "degraded", mode: "memory" });
+    expect(await persistence.getUserWorks()).toEqual([current]);
+    expect(backend.userWorks).toEqual([current]);
   });
 
   it("replays a failed user-work upsert without dropping warmed sibling records", async () => {

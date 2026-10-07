@@ -66,7 +66,12 @@ import type {
 import { useCatalog } from "@/features/catalog/catalog-provider";
 import { PopularWorkDiscovery } from "@/features/discovery/popular-work-discovery";
 import { usePersistence } from "@/infrastructure/db";
-import { explanationLexicon, onboardingStrings, recommendationStrings } from "@/lib/strings";
+import {
+  explanationLexicon,
+  onboardingStrings,
+  recommendationStrings,
+  tasteStrings,
+} from "@/lib/strings";
 import { cn } from "@/lib/utils";
 
 import type { PendingRecommendationFeedback } from "./feedback-dialog";
@@ -126,6 +131,13 @@ type RecommendationRemoval = Readonly<{
   previousVisibleEntries: RecommendationPlanEntry[];
   removedVisibleEntries: RecommendationPlanEntry[];
 }>;
+function mergeFeedbackRecord(previous: UserWorkRecord | undefined, feedback: UserWorkRecord) {
+  const next = { ...previous, ...feedback };
+  if (next.reaction !== "disliked") delete next.negativeReasons;
+  if (next.readingState !== "dropped") delete next.droppedReasons;
+  return next;
+}
+
 const FEATURED_RECOMMENDATION_LIMIT = 5;
 type RecommendationMotionListComponent = ComponentType<RecommendationMotionListProps>;
 const FeedbackDialog = lazy(async () => {
@@ -142,6 +154,8 @@ type MotionFocusTarget = Readonly<{
 }>;
 type RecommendationsFlowProps = Readonly<{
   context: RecommendationContext | null;
+  onReady?: () => void;
+  restoreShelfFromUrl?: boolean;
   previewWorkId?: string;
   genre?: GenreTag;
   shelf?: string;
@@ -346,6 +360,8 @@ export function RecommendationsFlow({
   context,
   genre,
   onGenreChange,
+  onReady,
+  restoreShelfFromUrl = true,
   onPreviewClose,
   onPreviewOpen,
   onShelfChange,
@@ -484,6 +500,7 @@ export function RecommendationsFlow({
   const { discoveryEntries, featuredEntries, lensShelves, previewEntry, renderedEntries } =
     useMemo(() => {
       const nextRenderedEntries = displayedEntries.flatMap((entry) => {
+        if (excludedWorkIds.has(entry.workId)) return [];
         const work = worksById.get(entry.workId);
         const metadata = context?.constraintByWorkId[entry.workId];
         return work === undefined || metadata === undefined ? [] : [{ entry, metadata, work }];
@@ -708,8 +725,12 @@ export function RecommendationsFlow({
   useEffect(() => {
     if (plan === null || restoredShelf.current === shelf) return;
     restoredShelf.current = shelf;
-    if (shelf !== undefined) scrollToRecommendationShelf(shelf);
-  }, [plan, shelf]);
+    if (shelf !== undefined && restoreShelfFromUrl) scrollToRecommendationShelf(shelf);
+  }, [plan, restoreShelfFromUrl, shelf]);
+
+  useEffect(() => {
+    if (plan !== null || calculationError !== "") onReady?.();
+  }, [calculationError, onReady, plan]);
 
   useLayoutEffect(() => {
     if (isComputing || !restoreUpdateFocus.current) return;
@@ -959,15 +980,25 @@ export function RecommendationsFlow({
     setWorkBusy(entry.workId, true);
     setActionError("");
     try {
-      await saveUserWork(
+      const result = await addUserWorkIfAbsent(
         createRecommendationFeedbackRecord({
           action: "planned",
           workId: entry.workId,
           updatedAt: new Date().toISOString(),
         }),
       );
-      setOptimisticPlannedIds((current) => new Set(current).add(entry.workId));
-      announce(recommendationStrings.announcements.planned(work.title));
+      if (result.kind === "preserved-unknown") throw new Error("Saved record unavailable");
+      if (result.record.readingState === "planned") {
+        setOptimisticPlannedIds((current) => new Set(current).add(entry.workId));
+      } else {
+        setExcludedWorkIds((current) => new Set(current).add(entry.workId));
+        onPreviewClose?.();
+      }
+      announce(
+        result.kind === "added"
+          ? recommendationStrings.announcements.planned(work.title)
+          : recommendationStrings.announcements.alreadyRecorded(work.title),
+      );
     } catch {
       setActionError(recommendationStrings.errors.feedback);
     } finally {
@@ -1039,19 +1070,23 @@ export function RecommendationsFlow({
     const requestedMotionList = motionListRequest.current;
     try {
       await saveUserWork(
-        kind === "completed"
-          ? createRecommendationFeedbackRecord({
-              action: "completed",
-              workId: entry.workId,
-              updatedAt,
-              reaction: "skip",
-            })
-          : createRecommendationFeedbackRecord({
-              action: "hidden",
-              workId: entry.workId,
-              updatedAt,
-              reasons: [],
-            }),
+        mergeFeedbackRecord(
+          previousRecord,
+          kind === "completed"
+            ? createRecommendationFeedbackRecord({
+                action: "completed",
+                workId: entry.workId,
+                updatedAt,
+                reaction: "skip",
+              })
+            : createRecommendationFeedbackRecord({
+                action: "hidden",
+                workId: entry.workId,
+                updatedAt,
+                reasons: [],
+              }),
+        ),
+        previousRecord?.updatedAt ?? null,
       );
       await requestedMotionList;
       const nextExcludedWorkIds = new Set(excludedWorkIds).add(entry.workId);
@@ -1115,7 +1150,9 @@ export function RecommendationsFlow({
       announce(
         addedIds.size > 0
           ? recommendationStrings.announcements.removedAndBackfilled
-          : recommendationStrings.announcements.removedWithoutBackfill,
+          : displayedIndex >= 0 && nextDisplayed.length < 10
+            ? recommendationStrings.announcements.removedWithoutBackfill
+            : recommendationStrings.announcements.removed,
       );
       setFeedback({
         kind,
@@ -1140,14 +1177,21 @@ export function RecommendationsFlow({
     setFeedbackBusy(true);
     setFeedbackError("");
     try {
-      await saveUserWork(
-        createRecommendationFeedbackRecord({
-          action: "completed",
-          workId: feedback.workId,
-          updatedAt: feedback.updatedAt,
-          reaction,
-        }),
+      const saved = await saveUserWork(
+        mergeFeedbackRecord(
+          lastRemoval.current?.previousRecord,
+          createRecommendationFeedbackRecord({
+            action: "completed",
+            workId: feedback.workId,
+            updatedAt: new Date().toISOString(),
+            reaction,
+          }),
+        ),
+        feedback.updatedAt,
       );
+      if (lastRemoval.current?.workId === feedback.workId) {
+        lastRemoval.current = { ...lastRemoval.current, updatedAt: saved.updatedAt };
+      }
       closeFeedback();
     } catch {
       setFeedbackError(recommendationStrings.errors.followUp);
@@ -1161,14 +1205,21 @@ export function RecommendationsFlow({
     setFeedbackBusy(true);
     setFeedbackError("");
     try {
-      await saveUserWork(
-        createRecommendationFeedbackRecord({
-          action: "hidden",
-          workId: feedback.workId,
-          updatedAt: feedback.updatedAt,
-          reasons,
-        }),
+      const saved = await saveUserWork(
+        mergeFeedbackRecord(
+          lastRemoval.current?.previousRecord,
+          createRecommendationFeedbackRecord({
+            action: "hidden",
+            workId: feedback.workId,
+            updatedAt: new Date().toISOString(),
+            reasons,
+          }),
+        ),
+        feedback.updatedAt,
       );
+      if (lastRemoval.current?.workId === feedback.workId) {
+        lastRemoval.current = { ...lastRemoval.current, updatedAt: saved.updatedAt };
+      }
       closeFeedback();
     } catch {
       setFeedbackError(recommendationStrings.errors.followUp);
@@ -1275,11 +1326,27 @@ export function RecommendationsFlow({
     currentHash === null ||
     displayedHash === null ||
     currentHash === displayedHash;
-  const preferenceLabels = dnaSummary.topPreferences.map(
-    (preference) =>
-      explanationLexicon.factorLabels[preference.factorId as ExplanationFactorId] ??
-      preference.factorId,
+  const activeAdjustments = [
+    ...Object.entries(adjustments.axes),
+    ...Object.entries(adjustments.themes),
+  ].filter(([, value]) => value !== "auto");
+  const reducedFactors = new Set(
+    activeAdjustments
+      .filter(([, value]) => value === "less" || value === "exclude")
+      .map(([factorId]) => factorId),
   );
+  const preferenceLabels = dnaSummary.topPreferences
+    .filter((preference) => preference.kind === "genre" || !reducedFactors.has(preference.factorId))
+    .map(
+      (preference) =>
+        explanationLexicon.factorLabels[preference.factorId as ExplanationFactorId] ??
+        preference.factorId,
+    );
+  const adjustmentLabels = activeAdjustments.map(
+    ([factorId, value]) =>
+      `${explanationLexicon.factorLabels[factorId as ExplanationFactorId] ?? factorId}：${tasteStrings.adjustmentLabels[value]}`,
+  );
+
   const recommendationItems: RecommendationMotionItem[] = featuredEntries.map(
     ({ entry, metadata, work }, index) => ({
       workId: entry.workId,
@@ -1372,6 +1439,7 @@ export function RecommendationsFlow({
                 title={recommendationStrings.title}
               >
                 <RecommendationCriteriaSummary
+                  adjustmentLabels={adjustmentLabels}
                   preferenceLabels={preferenceLabels}
                   recordCount={profileRecords.length}
                 />
@@ -1487,7 +1555,9 @@ export function RecommendationsFlow({
             ) : recommendationItems.length === 0 ? (
               <FeaturedRecommendationState>
                 <p className="rounded-[var(--radius-card)] p-[var(--space-5)] text-text-muted">
-                  {recommendationStrings.filters.empty}
+                  {lensShelves.length > 0 || discoveryEntries.length > 0
+                    ? recommendationStrings.filters.featuredEmpty
+                    : recommendationStrings.filters.empty}
                 </p>
               </FeaturedRecommendationState>
             ) : (

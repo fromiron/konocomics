@@ -9,8 +9,10 @@ import type {
 import {
   OnboardingAlreadyCompletedError,
   OnboardingWorkConflictError,
+  UserWorkConflictError,
   type ConfirmedAddIfAbsentResult,
   type MinimalPlannedRemovalResult,
+  type ExternalWorkRemovalResult,
   type UserWorkRemovalResult,
   type OnboardingCommit,
   type PersistenceBackend,
@@ -39,6 +41,7 @@ import type {
 import {
   hasUpdatedAt,
   isMinimalPlannedUserWork,
+  isUnchangedExternalWork,
   parseExternalUserWorkRecord,
   parseExternalWork,
 } from "./validation";
@@ -130,8 +133,21 @@ export class DexiePersistenceBackend implements PersistenceBackend {
     });
   }
 
-  async upsertUserWork(record: UserWorkRecord): Promise<unknown> {
+  async upsertUserWork(
+    record: UserWorkRecord,
+    expectedUpdatedAt?: string | null,
+  ): Promise<unknown> {
     return this.database.transaction("rw", this.database.userWorks, async () => {
+      if (expectedUpdatedAt !== undefined) {
+        const current = await this.database.userWorks.get(record.workId);
+        if (
+          expectedUpdatedAt === null
+            ? current !== undefined
+            : !hasUpdatedAt(current, expectedUpdatedAt)
+        ) {
+          throw new UserWorkConflictError(record.workId);
+        }
+      }
       await this.database.userWorks.put(record);
       const stored = await this.database.userWorks.get(record.workId);
       if (stored === undefined) {
@@ -243,10 +259,15 @@ export class DexiePersistenceBackend implements PersistenceBackend {
     });
   }
 
-  async removeExternalWork(id: string): Promise<"removed" | "already-absent"> {
+  async removeExternalWork(
+    id: string,
+    expectedRecord?: ExternalWorkRecord,
+  ): Promise<Exclude<ExternalWorkRemovalResult, "preserved-unknown">> {
     return this.database.transaction("rw", this.database.externalWorks, async () => {
       const current = await this.database.externalWorks.get(id);
       if (current === undefined) return "already-absent";
+      if (expectedRecord !== undefined && !isUnchangedExternalWork(current, expectedRecord))
+        return "preserved-conflict";
       await this.database.externalWorks.delete(id);
       if ((await this.database.externalWorks.get(id)) !== undefined) {
         throw new Error(`External work deletion readback failed: ${id}`);

@@ -1,6 +1,6 @@
 // @vitest-environment jsdom
 
-import { cleanup, fireEvent, render, screen } from "@testing-library/react";
+import { act, cleanup, fireEvent, render, screen } from "@testing-library/react";
 import { afterEach, describe, expect, it, vi } from "vitest";
 
 import { MediaShelf } from "@/components/media/media-shelf";
@@ -8,6 +8,19 @@ import { MediaShelf } from "@/components/media/media-shelf";
 afterEach(cleanup);
 
 describe("MediaShelf", () => {
+  it.each([0, 1])("does not duplicate a shelf with %i cards", (count) => {
+    const { container } = render(
+      <MediaShelf controlsPlacement="overlay" title="Small shelf">
+        {Array.from({ length: count }, (_, index) => (
+          <article key={index}>Card</article>
+        ))}
+      </MediaShelf>,
+    );
+    expect(container.querySelectorAll("article")).toHaveLength(count);
+    expect(container.querySelector("[data-carousel-clone]")).toBeNull();
+    expect(screen.queryByRole("button")).toBeNull();
+  });
+
   it("moves focus between adjacent cards with the arrow keys", () => {
     render(
       <MediaShelf title="Shelf">
@@ -93,6 +106,100 @@ describe("MediaShelf", () => {
     expect(startFade?.classList.contains("hidden")).toBe(false);
     expect(endFade?.classList.contains("hidden")).toBe(true);
   });
+
+  it.each([2, 3, 5])(
+    "hides %i fitting cards’ loop copies and re-evaluates after resize",
+    (count) => {
+      let resize: (() => void) | undefined;
+      vi.stubGlobal(
+        "ResizeObserver",
+        class {
+          constructor(callback: () => void) {
+            resize = callback;
+          }
+          observe() {}
+          disconnect() {}
+        },
+      );
+      const view = render(
+        <MediaShelf controlsPlacement="overlay" title="Responsive shelf">
+          {Array.from({ length: count }, (_, index) => (
+            <article key={index}>
+              <button>{`Card ${index}`}</button>
+            </article>
+          ))}
+        </MediaShelf>,
+      );
+      const track = view.container.querySelector<HTMLElement>("[data-media-shelf-track]")!;
+      let width = count * 100 + 100;
+      Object.defineProperties(track, {
+        clientWidth: { configurable: true, get: () => width },
+        scrollWidth: {
+          configurable: true,
+          get: () =>
+            Array.from(track.children).filter((e) => e instanceof HTMLElement && !e.hidden).length *
+            100,
+        },
+      });
+      for (const child of Array.from(track.children)) {
+        Object.defineProperties(child, {
+          offsetLeft: {
+            configurable: true,
+            get: () =>
+              child instanceof HTMLElement && child.hidden
+                ? 0
+                : Array.from(track.children)
+                    .filter((e) => e instanceof HTMLElement && !e.hidden)
+                    .indexOf(child) * 100,
+          },
+          offsetWidth: { configurable: true, value: 100 },
+        });
+      }
+      try {
+        act(() => resize?.());
+        expect(
+          Array.from(track.querySelectorAll<HTMLElement>("[data-carousel-clone]")).every(
+            (e) => e.hidden,
+          ),
+        ).toBe(true);
+        expect(screen.queryByRole("button", { name: /次へ/ })).toBeNull();
+        expect(screen.getAllByRole("button")).toHaveLength(count);
+
+        width = 150;
+        act(() => resize?.());
+        expect(
+          Array.from(track.querySelectorAll<HTMLElement>("[data-carousel-clone]")).every(
+            (e) => !e.hidden,
+          ),
+        ).toBe(true);
+        expect(track.scrollLeft).toBe(count * 100);
+        expect(screen.getByRole<HTMLButtonElement>("button", { name: /次へ/ }).disabled).toBe(
+          false,
+        );
+
+        track.scrollLeft = count * 100 + (count - 1) * 100;
+        fireEvent.scroll(track);
+        const firstOriginal = track.querySelector<HTMLElement>("[data-carousel-copy='1']")!;
+        expect(firstOriginal.style.translate).toBe(`${count * 100}px`);
+        expect(
+          Array.from(track.querySelectorAll<HTMLElement>("[data-carousel-clone]")).every(
+            (e) => e.style.visibility === "hidden" && e.hasAttribute("inert"),
+          ),
+        ).toBe(true);
+        const firstButton = firstOriginal.querySelector("button")!;
+        firstButton.focus();
+        fireEvent.keyDown(firstButton, { key: "ArrowRight" });
+        expect(document.activeElement?.textContent).toBe("Card 1");
+
+        width = count * 100 + 100;
+        act(() => resize?.());
+        expect(track.scrollLeft).toBe(0);
+        expect(screen.queryByRole("button", { name: /次へ/ })).toBeNull();
+      } finally {
+        vi.unstubAllGlobals();
+      }
+    },
+  );
 
   it("preserves the canonical offset when loop items change", () => {
     const offsetLeftDescriptor = Object.getOwnPropertyDescriptor(

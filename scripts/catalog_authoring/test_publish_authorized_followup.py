@@ -125,6 +125,20 @@ class CandidateAxisAuthorityTest(unittest.TestCase):
         self.db.rollback()
         self.assertEqual(before, self.backend._snapshot_db(self.db))
 
+    def test_collected_editions_do_not_establish_series_volume_count(self):
+        for collected_count in (1, 3):
+            with self.subTest(collected_count=collected_count):
+                self.baseline["volumes"][self.work_id] = collected_count
+                plan = self.plan()
+                self.assertEqual(plan["contextInserts"][0]["volumeCount"], "0")
+                self.db.execute("begin immediate")
+                self.backend.apply_plan_in_transaction(self.db, plan)
+                self.assertEqual(self.db.execute(
+                    "select volumeCount from source_recommendation_context where workId=?",
+                    (self.work_id,),
+                ).fetchone()[0], "0")
+                self.db.rollback()
+
     def test_accepted_human_panel_and_correction_conflicts_remain_rejected(self):
         eid = self.baseline["factors"][(self.work_id, "mysteryReveal")]["evidenceId"]
         original = self.baseline["evidence"][eid]

@@ -10,6 +10,8 @@ import { useUrlSyncedQuery } from "@/components/design-system/use-url-synced-que
 import { NativeSelect } from "@/components/design-system/native-select";
 import { SegmentedControl } from "@/components/design-system/segmented-control";
 import { SummarySection, summaryLinkClassName } from "@/components/layout/summary-section";
+import recommendationContextJson from "@/data/generated/recommendation-context-v1.json";
+import { recommendationContextSchema } from "@/domain/recommendation/context-schema";
 import { parseExternalWorkId, type ExternalWorkId } from "@/domain/catalog/external-work";
 import { isbnIdentityKey } from "@/domain/catalog/normalize";
 import type { CatalogV1, Work } from "@/domain/catalog/types";
@@ -33,6 +35,10 @@ import { ModalSurface } from "./modal-surface";
 import { LibraryRecordEditor } from "./record-editor";
 import { WorkSearchSheet, type LibraryAddOutcome } from "./work-search-sheet";
 
+import { libraryWorkSearchText, normalizeLibraryQuery } from "./search";
+
+const parsedRecommendationContext =
+  recommendationContextSchema.safeParse(recommendationContextJson);
 const PAGE_SIZE = 24;
 export type { LibraryRow } from "./library-media-cards";
 type SelectedRow = Readonly<
@@ -63,11 +69,13 @@ function compareRows(left: LibraryRow, right: LibraryRow, sort: LibrarySort) {
 }
 
 function matchesQuery(row: LibraryRow, query: string) {
-  const normalized = query.trim().toLocaleLowerCase("ja-JP");
+  const normalized = normalizeLibraryQuery(query);
   if (normalized === "") return true;
-  return [rowTitle(row), rowCreators(row).join(" "), row.id].some((value) =>
-    value.toLocaleLowerCase("ja-JP").includes(normalized),
-  );
+  const text =
+    row.kind === "catalog"
+      ? libraryWorkSearchText(row.work)
+      : [rowTitle(row), ...rowCreators(row)].map(normalizeLibraryQuery).join(" ");
+  return text.includes(normalized) || normalizeLibraryQuery(row.id).includes(normalized);
 }
 
 function parseLibraryState(value: unknown): LibraryStateFilter | undefined {
@@ -161,13 +169,18 @@ export function LibraryView({
     () => new Map(catalog.works.map((work) => [work.id, work] as const)),
     [catalog.works],
   );
-  const volumeCountByWorkId = useMemo(() => {
-    const counts = new Map<string, number>();
-    catalog.volumes.forEach((volume) =>
-      counts.set(volume.workId, (counts.get(volume.workId) ?? 0) + 1),
-    );
-    return counts;
-  }, [catalog.volumes]);
+  const volumeCountByWorkId = useMemo(
+    () =>
+      new Map(
+        catalog.works.map((work) => [
+          work.id,
+          parsedRecommendationContext.success
+            ? (parsedRecommendationContext.data.constraintByWorkId[work.id]?.volumeCount ?? 0)
+            : 0,
+        ]),
+      ),
+    [catalog.works],
+  );
   const rows = useMemo(() => {
     if (userWorks === undefined || externalWorks === undefined) return undefined;
     const next: LibraryRow[] = [];
@@ -226,8 +239,11 @@ export function LibraryView({
     ]);
   }, [onPageWorkIdsChange, pageRows, selectedWorkId]);
   useEffect(() => {
+    // The draft can shrink results before its URL update (or IME commit).
+    // Only normalize pages against the same query that the route currently owns.
+    if (onQueryChange !== undefined && query.trim() !== (urlQuery ?? "").trim()) return;
     if (rows !== undefined && page !== currentPage) onPageChange?.(currentPage, true);
-  }, [currentPage, onPageChange, page, rows]);
+  }, [currentPage, onPageChange, onQueryChange, page, query, rows, urlQuery]);
   const tabStates: readonly LibraryStateFilter[] = [null, ...READING_STATES];
   const hasQuery = query.trim().length > 0;
   const hasFilters = activeState !== null || favoriteOnly;
