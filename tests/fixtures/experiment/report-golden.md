@@ -1,6 +1,6 @@
 # konocomics Taste vs Baseline レポート
 
-- カタログバージョン: v1\-febb82edb685
+- カタログバージョン: v1\-641447975cce
 - ファクター辞書バージョン: v1
 - Baseline バージョン: v1
 - プロフィール数: 3
