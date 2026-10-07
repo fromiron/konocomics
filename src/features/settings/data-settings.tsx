@@ -330,7 +330,7 @@ export function DataSettings({
                   <h4 className="flex min-w-0 items-center gap-[var(--space-content)] text-text-strong">
                     <CircleCheckIcon
                       aria-hidden="true"
-                      className="size-[var(--space-4)] shrink-0 text-accent"
+                      className="size-[var(--space-4)] shrink-0 text-accent-ink"
                     />
                     {settingsStrings.data.import.preview.title}
                   </h4>
@@ -421,7 +421,7 @@ export function DataSettings({
 
       {success === null ? null : (
         <p
-          className="fixed right-[var(--layout-page-padding)] bottom-[calc(var(--layout-mobile-navigation-clearance)+var(--space-4))] left-[var(--layout-page-padding)] z-65 mx-auto w-fit max-w-[calc(100%-(var(--layout-page-padding)*2))] rounded-[var(--radius-control)] border border-line bg-surface-1 px-[var(--space-4)] py-[var(--space-3)] text-text-strong shadow-[var(--shadow-raised)]"
+          className="fixed right-[var(--layout-page-padding)] bottom-[calc(var(--layout-mobile-navigation-clearance)+var(--space-4))] left-[var(--layout-page-padding)] z-65 mx-auto w-fit max-w-[calc(100%-(var(--layout-page-padding)*2))] rounded-[var(--radius-control)] bg-surface-1 px-[var(--space-4)] py-[var(--space-3)] text-text-strong shadow-[var(--shadow-raised)]"
           role="status"
         >
           {success}

@@ -16,7 +16,7 @@ export function ExcludedMatchNotice({
   return (
     <section
       aria-label={strings.heading}
-      className="onboarding-excluded grid gap-[var(--space-3)] rounded-[var(--radius-card)] border border-line bg-surface-1 px-[var(--space-4)] py-[var(--space-4)]"
+      className="onboarding-excluded grid gap-[var(--space-3)] rounded-[var(--radius-card)] bg-surface-1 px-[var(--space-4)] py-[var(--space-4)]"
     >
       <h2 className="text-[length:var(--text-caption-size)] font-bold text-text-muted">
         {strings.heading}
@@ -36,7 +36,7 @@ export function ExcludedMatchNotice({
             </p>
             {reason === "registered" ? (
               <Link
-                className="inline-flex min-h-[var(--control-min-size)] shrink-0 items-center text-[length:var(--text-caption-size)] font-bold text-accent underline-offset-4 hover:underline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-ring"
+                className="inline-flex min-h-[var(--control-min-size)] shrink-0 items-center text-[length:var(--text-caption-size)] font-bold text-accent-ink underline-offset-4 hover:underline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-ring"
                 search={{ q: work.title }}
                 to="/library"
               >

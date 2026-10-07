@@ -4,7 +4,7 @@ import { cn } from "@/lib/utils";
 
 /** Accent text link used for the actions of a summary section. */
 export const summaryLinkClassName =
-  "inline-flex min-h-[var(--control-min-size)] items-center text-[length:var(--font-size-14)] font-bold text-accent underline-offset-4 hover:underline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-ring";
+  "inline-flex min-h-[var(--control-min-size)] items-center text-[length:var(--font-size-14)] font-bold text-accent-ink underline-offset-4 hover:underline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-ring";
 
 type SummarySectionProps = Readonly<{
   headingId: string;

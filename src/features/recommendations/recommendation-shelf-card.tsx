@@ -101,7 +101,7 @@ export function RecommendationShelfCard({
     "line-clamp-2 text-[length:var(--font-size-14)] leading-tight font-bold text-text-strong min-h-[2.5em]";
 
   const cardClassName = cn(
-    "group/shelf-card shrink-0 snap-start overflow-hidden rounded-[var(--radius-card)] border border-transparent bg-transparent focus-within:bg-surface-2 [@media(hover:hover)_and_(pointer:fine)]:hover:bg-surface-2",
+    "group/shelf-card shrink-0 snap-start overflow-hidden rounded-[var(--radius-media-card)] border border-transparent bg-transparent focus-within:bg-surface-2 [@media(hover:hover)_and_(pointer:fine)]:hover:bg-surface-2",
     "data-[expanded=true]:bg-surface-2",
     "w-[calc((100vw-(var(--layout-page-padding)*2)-(var(--space-content-loose)*2))/2.4)] max-w-44 sm:w-32 md:w-[calc((100%-var(--space-content-loose)*7)/8)] md:min-w-28 md:max-w-32",
   );

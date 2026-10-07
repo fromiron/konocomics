@@ -498,7 +498,7 @@ function WorkStateControls({
         aria-pressed={selected}
         className={`inline-flex min-h-[var(--control-min-size)] items-center justify-center rounded-[var(--radius-control)] border px-[var(--space-4)] text-[length:var(--font-size-14)] font-bold whitespace-nowrap ${interactive} ${
           selected
-            ? "border-accent bg-accent-soft text-accent"
+            ? "border-accent bg-accent-soft text-accent-ink"
             : "border-line bg-surface-1 text-text-muted hover:bg-surface-2 hover:text-text-strong"
         }`}
         data-reading-state={state}
@@ -544,7 +544,7 @@ function WorkStateControls({
               aria-pressed={bookmarked}
               className={`inline-flex min-h-[var(--control-min-size)] items-center gap-[var(--space-2)] rounded-[var(--radius-control)] border px-[var(--space-4)] text-[length:var(--font-size-14)] font-bold ${interactive} ${
                 bookmarked
-                  ? "border-accent bg-accent-soft text-accent"
+                  ? "border-accent bg-accent-soft text-accent-ink"
                   : "border-line bg-surface-1 text-text hover:bg-surface-2 hover:text-text-strong"
               }${bookmarkStamping ? " confirm-stamp" : ""}`}
               data-reading-state="planned"
@@ -571,7 +571,7 @@ function WorkStateControls({
               aria-pressed={excluded}
               className={`inline-flex min-h-[var(--control-min-size)] items-center gap-[var(--space-2)] rounded-[var(--radius-control)] border px-[var(--space-4)] text-[length:var(--font-size-14)] font-bold ${interactive} ${
                 excluded
-                  ? "border-accent bg-accent-soft text-accent"
+                  ? "border-accent bg-accent-soft text-accent-ink"
                   : "border-line bg-surface-1 text-text-muted hover:bg-surface-2 hover:text-text-strong"
               }`}
               data-reading-state="hidden"
@@ -694,7 +694,7 @@ function CompatibilitySummary({
         <ul className="m-0 flex list-none flex-wrap gap-[var(--space-2)] p-0">
           {labels.map((label) => (
             <li
-              className="rounded-[var(--radius-pill)] border border-accent/35 bg-accent-soft px-[var(--space-3)] py-[var(--space-1)] text-[length:var(--font-size-12)] text-accent"
+              className="rounded-[var(--radius-pill)] border border-accent/35 bg-accent-soft px-[var(--space-3)] py-[var(--space-1)] text-[length:var(--font-size-12)] text-accent-ink"
               key={label}
             >
               {label}
@@ -997,7 +997,7 @@ function WorkDetailContent({ catalog, work }: Readonly<{ catalog: CatalogV1; wor
             </p>
           </header>
           {hasHeroMetadata ? (
-            <dl className="m-0 grid grid-cols-2 overflow-hidden rounded-[var(--radius-card)] border border-line bg-surface-1 p-0 md:grid-flow-col md:auto-cols-fr md:grid-cols-none [&>div]:grid [&>div]:content-start [&>div]:gap-[var(--space-1)] [&>div]:border-r [&>div]:border-line [&>div]:px-[var(--space-3)] [&>div]:py-[var(--space-3)] [&>div:last-child]:border-r-0 [&_dd]:m-0 [&_dd]:break-words [&_dd]:text-[length:var(--font-size-14)] [&_dd]:font-semibold [&_dd]:text-text-strong [&_dt]:text-[length:var(--text-caption-size)] [&_dt]:text-text-muted">
+            <dl className="m-0 grid grid-cols-2 overflow-hidden rounded-[var(--radius-card)] border border-transparent bg-surface-1 p-0 md:grid-flow-col md:auto-cols-fr md:grid-cols-none [&>div]:grid [&>div]:content-start [&>div]:gap-[var(--space-1)] [&>div]:border-r [&>div]:border-line [&>div]:px-[var(--space-3)] [&>div]:py-[var(--space-3)] [&>div:last-child]:border-r-0 [&_dd]:m-0 [&_dd]:break-words [&_dd]:text-[length:var(--font-size-14)] [&_dd]:font-semibold [&_dd]:text-text-strong [&_dt]:text-[length:var(--text-caption-size)] [&_dt]:text-text-muted">
               {bookMetadata.publisherName === undefined ? null : (
                 <div>
                   <dt>{workDetailStrings.metadata.publisher}</dt>
@@ -1133,7 +1133,7 @@ function WorkDetailContent({ catalog, work }: Readonly<{ catalog: CatalogV1; wor
               >
                 {workDetailStrings.synopsis.heading}
               </h2>
-              <div className="grid gap-[var(--space-3)] rounded-[var(--radius-card)] border border-line bg-surface-1 p-[var(--space-5)] text-[length:var(--font-size-14)]">
+              <div className="grid gap-[var(--space-3)] rounded-[var(--radius-card)] bg-surface-1 p-[var(--space-5)] text-[length:var(--font-size-14)]">
                 <WorkSynopsis caption={bookMetadata.itemCaption} key={bookMetadata.itemCaption} />
                 <p className="text-[length:var(--text-caption-size)] text-text-muted">
                   {workDetailStrings.metadata.edition(representativeVolume?.volumeNumber)}
@@ -1143,7 +1143,7 @@ function WorkDetailContent({ catalog, work }: Readonly<{ catalog: CatalogV1; wor
                     aria-label={workDetailStrings.metadata.sourceOpen(
                       workDetailStrings.synopsis.source[bookMetadata.captionSource],
                     )}
-                    className="inline-flex min-h-[var(--control-min-size)] w-fit items-center text-[length:var(--text-caption-size)] text-text-muted underline decoration-line underline-offset-4 hover:text-accent focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-ring"
+                    className="inline-flex min-h-[var(--control-min-size)] w-fit items-center text-[length:var(--text-caption-size)] text-text-muted underline decoration-line underline-offset-4 hover:text-accent-ink focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-ring"
                     href={bookMetadata.captionSourceUrl}
                     rel="noreferrer"
                     target="_blank"
@@ -1223,7 +1223,7 @@ function WorkDetailContent({ catalog, work }: Readonly<{ catalog: CatalogV1; wor
                   aria-label={workDetailStrings.metadata.sourceOpen(
                     workDetailStrings.metadata.publisherSource,
                   )}
-                  className="inline-flex min-h-[var(--control-min-size)] w-fit items-center text-[length:var(--text-caption-size)] text-text-muted underline decoration-line underline-offset-4 hover:text-accent focus-visible:rounded-[var(--radius-control)] focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-focus-ring"
+                  className="inline-flex min-h-[var(--control-min-size)] w-fit items-center text-[length:var(--text-caption-size)] text-text-muted underline decoration-line underline-offset-4 hover:text-accent-ink focus-visible:rounded-[var(--radius-control)] focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-focus-ring"
                   href={bookMetadata.collectedSourceUrl}
                   rel="noreferrer"
                   target="_blank"
@@ -1305,7 +1305,7 @@ export function WorkDetailFlow({ workId }: Readonly<{ workId: string }>) {
         <h1>{workDetailStrings.notFound.title}</h1>
         <p>{workDetailStrings.notFound.description}</p>
         <Link
-          className="inline-flex min-h-[var(--control-min-size)] items-center font-bold text-accent underline underline-offset-[var(--space-content-tight)]"
+          className="inline-flex min-h-[var(--control-min-size)] items-center font-bold text-accent-ink underline underline-offset-[var(--space-content-tight)]"
           to="/recommendations"
         >
           {workDetailStrings.notFound.recommendations}

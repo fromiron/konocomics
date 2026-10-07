@@ -100,7 +100,7 @@ export function MediaPosterCard({
             ? mediaStrings.openDetails(title)
             : `${mediaStrings.openDetails(title)} · ${metadataAccessibleLabel}`
         }
-        className="group/card grid min-h-[var(--control-min-size)] gap-[var(--space-content)] rounded-[var(--radius-card)]"
+        className="group/card grid min-h-[var(--control-min-size)] gap-[var(--space-content)] rounded-[var(--radius-media-card)]"
         params={{ workId }}
         preload={false}
         to="/works/$workId"

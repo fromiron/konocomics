@@ -109,7 +109,7 @@ export function RecommendationShelfNavigation({
                 navigationLabel,
                 title,
               )}
-              className="inline-flex min-h-[var(--control-min-size)] shrink-0 items-center border-b-2 border-transparent px-[var(--space-3)] text-[length:var(--font-size-14)] font-medium text-text-muted hover:text-text focus-visible:outline-2 focus-visible:-outline-offset-2 focus-visible:outline-ring aria-[current=location]:border-accent aria-[current=location]:font-bold aria-[current=location]:text-accent aria-disabled:cursor-not-allowed aria-disabled:opacity-45"
+              className="inline-flex min-h-[var(--control-min-size)] shrink-0 items-center border-b-2 border-transparent px-[var(--space-3)] text-[length:var(--font-size-14)] font-medium text-text-muted hover:text-text focus-visible:outline-2 focus-visible:-outline-offset-2 focus-visible:outline-ring aria-[current=location]:border-accent aria-[current=location]:font-bold aria-[current=location]:text-accent-ink aria-disabled:cursor-not-allowed aria-disabled:opacity-45"
               href={`/recommendations?${destination.toString()}`}
               key={key}
               onClick={(event) => {

@@ -1,6 +1,6 @@
 // @vitest-environment jsdom
 
-import { cleanup, fireEvent, render, screen, waitFor } from "@testing-library/react";
+import { cleanup, fireEvent, render, screen, waitFor, within } from "@testing-library/react";
 import { afterEach, describe, expect, it, vi } from "vitest";
 
 import type { UserWorkRecord } from "@/domain/profile/types";
@@ -8,6 +8,13 @@ import { LibraryRecordEditor } from "@/features/library/record-editor";
 import { libraryStrings } from "@/lib/strings";
 
 afterEach(cleanup);
+
+/** Picks one option in a record-editor choice group (読書状態 or 感想). */
+function choose(group: string, option: string) {
+  fireEvent.click(
+    within(screen.getByRole("radiogroup", { name: group })).getByRole("radio", { name: option }),
+  );
+}
 
 describe("LibraryRecordEditor", () => {
   it("prevents unchanged writes, including reverted fields, while preserving collapsed progress", async () => {
@@ -31,15 +38,12 @@ describe("LibraryRecordEditor", () => {
     expect(save.disabled).toBe(true);
     fireEvent.submit(save.closest("form")!);
     expect(onSave).not.toHaveBeenCalled();
-    const state = screen.getByRole("combobox", { name: libraryStrings.editor.readingState });
-    fireEvent.change(state, { target: { value: "dropped" } });
+    choose(libraryStrings.editor.readingState, libraryStrings.tabs.dropped);
     expect(save.disabled).toBe(false);
-    fireEvent.change(state, { target: { value: "completed" } });
+    choose(libraryStrings.editor.readingState, libraryStrings.tabs.completed);
     expect(save.disabled).toBe(true);
     fireEvent.click(screen.getByText(libraryStrings.editor.progressOptional));
-    fireEvent.change(screen.getByRole("combobox", { name: libraryStrings.editor.reaction }), {
-      target: { value: "favorite" },
-    });
+    choose(libraryStrings.editor.reaction, libraryStrings.reactions.favorite);
     fireEvent.click(save);
     await waitFor(() =>
       expect(onSave).toHaveBeenCalledWith(
@@ -126,9 +130,8 @@ describe("LibraryRecordEditor", () => {
       />,
     );
 
-    const selects = screen.getAllByRole<HTMLSelectElement>("combobox");
-    fireEvent.change(selects[0]!, { target: { value: "completed" } });
-    fireEvent.change(selects[1]!, { target: { value: "liked" } });
+    choose(libraryStrings.editor.readingState, libraryStrings.tabs.completed);
+    choose(libraryStrings.editor.reaction, libraryStrings.reactions.liked);
     fireEvent.click(screen.getByRole("button", { name: libraryStrings.editor.save }));
 
     await waitFor(() => expect(onSave).toHaveBeenCalledTimes(1));

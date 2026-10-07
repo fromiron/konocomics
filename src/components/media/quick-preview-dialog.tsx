@@ -95,7 +95,7 @@ export function QuickPreviewDialog({
         <div className="col-span-full grid min-h-0 min-w-0 content-start gap-[var(--space-3)] overflow-y-auto overscroll-contain [@media(min-width:768px)_and_(hover:hover)_and_(pointer:fine)]:col-span-1 [@media(min-width:768px)_and_(hover:hover)_and_(pointer:fine)]:col-start-2 [&_section]:grid [&_section]:gap-[var(--space-content)]">
           {moodLine === undefined ? null : (
             <p
-              className="w-fit rounded-[var(--radius-pill)] border border-accent/60 px-[var(--space-3)] py-[var(--space-1)] text-[length:var(--text-caption-size)] font-bold text-accent"
+              className="w-fit rounded-[var(--radius-pill)] border border-accent/60 px-[var(--space-3)] py-[var(--space-1)] text-[length:var(--text-caption-size)] font-bold text-accent-ink"
               data-recommendation-mood-match
             >
               {moodLine}
@@ -115,7 +115,7 @@ export function QuickPreviewDialog({
             prefix={recommendationStrings.confidenceHeading}
           />
           <Link
-            className="inline-flex min-h-[var(--control-min-size)] items-center justify-self-start font-bold text-accent"
+            className="inline-flex min-h-[var(--control-min-size)] items-center justify-self-start font-bold text-accent-ink"
             params={{ workId: work.id }}
             preload={false}
             to="/works/$workId"

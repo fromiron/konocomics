@@ -20,6 +20,8 @@
   --text-muted: oklch(0.67 0.018 250);
   --line: oklch(0.29 0.025 250);
   --accent: oklch(0.76 0.11 72);
+  /* Accent-coloured text. On the dark canvas the brand amber reads as it is. */
+  --accent-ink: var(--accent);
   --accent-hover: oklch(0.81 0.11 74);
   --accent-active: oklch(0.7 0.12 70);
   --accent-soft: oklch(0.27 0.05 70);
@@ -60,7 +62,7 @@
   --discovery-question-size: 18px;
   --dialog-overlay: color-mix(in oklch, var(--canvas) 72%, transparent);
   --warn: var(--danger);
-  --focus-ring: var(--accent);
+  --focus-ring: var(--accent-ink);
   --font-noto-sans-jp: "Noto Sans JP";
   --font-space-grotesk: "Space Grotesk";
 
@@ -131,12 +133,16 @@
   --layout-width-onboarding: 1120px;
   --layout-width-onboarding-panel: 20rem;
   --layout-width-media: 1200px;
+  --layout-width-hero: 1440px;
   --layout-width-navigation: 1200px;
 
   --radius-cover: 4px;
-  --radius-card: 8px;
+  /* Panels, controls and labels are square like manga panels; only the cover content cards
+     (recommendation, shelf and work cards) keep a rounded corner, and circles stay circles. */
+  --radius-card: 0px;
+  --radius-media-card: 8px;
   --radius-control: var(--radius-card);
-  --radius-pill: 999px;
+  --radius-pill: 0px;
   --radius-cover-selection: calc(var(--radius-cover) + 2px);
   --radius: var(--radius-card);
   --shadow-level-1: 0 4px 16px oklch(0 0 0 / 0.08);
@@ -144,13 +150,15 @@
   --shadow-floating-action: 0 8px 8px oklch(0 0 0 / 0.3);
   --shadow-raised: var(--shadow-level-1);
   --surface-page: var(--canvas);
+  /* App chrome (header, tab bar, footer): hard paper-coloured rules on the dark page. */
+  --chrome-rule: color-mix(in oklch, var(--text-strong) 22%, transparent);
   --surface-raised: var(--surface-1);
   --surface-interactive: var(--surface-2);
   --surface-hover: var(--surface-3);
   --control-min-size: 44px;
   --control-segment-width: 340px;
-  --radius-segment-track: calc(var(--radius-control) + 2px);
-  --radius-segment-indicator: calc(var(--radius-control) - 1px);
+  --radius-segment-track: var(--radius-control);
+  --radius-segment-indicator: var(--radius-control);
   --control-switch-width: 46px;
   --control-switch-height: 26px;
   --control-switch-thumb: var(--space-5);
@@ -219,6 +227,7 @@
   --color-ink-muted: var(--ink-muted);
   --color-line: var(--line);
   --color-accent: var(--accent);
+  --color-accent-ink: var(--accent-ink);
   --color-accent-hover: var(--accent-hover);
   --color-accent-active: var(--accent-active);
   --color-accent-soft: var(--accent-soft);
@@ -295,7 +304,7 @@ button.quiet-text-action--cover {
 
 button.quiet-text-action--cover:hover,
 button.quiet-text-action--cover:focus-visible {
-  color: var(--accent);
+  color: var(--accent-ink);
 }
 
 button.quiet-text-action--danger:hover,
@@ -1002,7 +1011,7 @@ h1[tabindex="-1"]:focus {
   align-items: center;
   gap: var(--space-1);
   min-height: var(--control-min-size);
-  color: var(--accent);
+  color: var(--accent-ink);
   font-size: var(--font-size-14);
   font-weight: 700;
 }
@@ -1341,38 +1350,9 @@ h1[tabindex="-1"]:focus {
   }
 }
 
-/* Landing tagline characters ride the logo reveal and finish inside its 1.4s (04 §5.1). */
-@media (prefers-reduced-motion: no-preference) {
-  .landing-hero:has(.landing-logo-reveal[data-phase="waiting-fonts"]) .landing-tagline__char {
-    opacity: 0;
-    transform: translateY(0.55em);
-  }
-
-  .landing-hero:has(.landing-logo-reveal[data-phase="playing"]) .landing-tagline__char {
-    animation: tagline-char-in 600ms cubic-bezier(0.2, 0.7, 0.2, 1) both;
-    animation-delay: calc(150ms + var(--char-index, 0) * 45ms);
-  }
-}
-
 @media (prefers-reduced-motion: reduce) {
-  .landing-hero:has(.landing-logo-reveal[data-reduced-entry]) .landing-tagline {
-    animation: reduced-fade-in 300ms var(--motion-ease-direct) both !important;
-  }
-
   .landing-logo-reveal[data-reduced-entry] {
     --reduced-motion-duration: 400ms;
-  }
-}
-
-@keyframes tagline-char-in {
-  from {
-    opacity: 0;
-    transform: translateY(0.55em);
-  }
-
-  to {
-    opacity: 1;
-    transform: none;
   }
 }
 
@@ -1386,7 +1366,6 @@ h1[tabindex="-1"]:focus {
   max-width: 100%;
   height: auto;
   padding: var(--space-1);
-  border: 1px solid var(--line);
   border-radius: var(--radius-segment-track);
   background: var(--surface-2);
 }
@@ -1447,7 +1426,6 @@ h1[tabindex="-1"]:focus {
   isolation: isolate;
   overflow: hidden;
   padding: var(--space-6);
-  border: 1px solid var(--line);
   border-radius: var(--radius-card);
   background: var(--surface-1);
 }
@@ -1711,13 +1689,15 @@ h1[tabindex="-1"]:focus {
 }
 
 @media (prefers-reduced-motion: no-preference) {
-  .landing-typed-reason > span {
-    animation: typed-reason-glyph var(--motion-duration-typing-glyph) steps(1, end) backwards;
-    animation-delay: calc(var(--type-index) * var(--type-step));
+  /* The example reason types itself out once its scene holds the stage (useEntryOnce on the
+     third story spacer). Without the trigger the sentence is simply there. */
+  .home-story:has(.home-story__spacer[data-entry="armed"]) .landing-typed-reason > span {
+    opacity: 0;
   }
-  .landing-obi[data-entered="true"] {
-    animation: landing-obi-enter var(--motion-duration-cinematic) var(--motion-ease-signature)
-      backwards;
+
+  .home-story:has(.home-story__spacer[data-entry="play"]) .landing-typed-reason > span {
+    animation: typed-reason-glyph var(--motion-duration-typing-glyph) steps(1, end) backwards;
+    animation-delay: calc(240ms + var(--type-index) * var(--type-step));
   }
   .dna-ink-line[data-draw="true"] path {
     animation: dna-ink-draw var(--motion-duration-ink-draw) var(--motion-ease-direct) backwards;
@@ -1735,16 +1715,6 @@ h1[tabindex="-1"]:focus {
   }
   to {
     opacity: 1;
-  }
-}
-@keyframes landing-obi-enter {
-  from {
-    opacity: 0.7;
-    transform: translateX(calc(-1 * var(--space-4)));
-  }
-  to {
-    opacity: 1;
-    transform: none;
   }
 }
 @keyframes dna-ink-draw {
@@ -1858,5 +1828,2083 @@ h1[tabindex="-1"]:focus {
 
   to {
     opacity: 1;
+  }
+}
+
+/* App chrome, in the home page's language: the dark page itself cut off by a hard paper rule,
+   the tight masthead wordmark, and the amber spot colour (as on the home action panel) marking
+   where you are. */
+.app-navigation--desktop,
+.app-navigation--mobile {
+  background: var(--canvas);
+}
+
+.app-navigation--desktop {
+  border-bottom: 1px solid var(--chrome-rule);
+}
+
+.app-navigation--mobile {
+  border-top: 1px solid var(--chrome-rule);
+}
+
+.brand-mark .brand-wordmark {
+  letter-spacing: -0.045em;
+}
+
+.app-navigation__link {
+  color: var(--text-muted);
+}
+
+/* The current place is an amber block; on the tab bar it is inset from the bar's edges. */
+.app-navigation__link::before {
+  position: absolute;
+  inset: 0;
+  z-index: -1;
+  background: var(--accent);
+  content: "";
+  opacity: 0;
+}
+
+.app-navigation--mobile .app-navigation__link::before {
+  inset: var(--space-1) var(--space-1) var(--space-1);
+}
+
+.app-navigation__link--active {
+  color: var(--on-accent);
+}
+
+.app-navigation__link--active::before {
+  opacity: 1;
+}
+
+@media (hover: hover) and (pointer: fine) {
+  .app-navigation__link:not(.app-navigation__link--active):hover {
+    color: var(--text-strong);
+    text-decoration: underline;
+    text-decoration-thickness: 2px;
+    text-underline-offset: 6px;
+  }
+}
+
+/* The footer as a colophon (奥付): one heavy paper rule across the content width, the notes
+   beside a table of routes ruled row by row, and the wordmark set faintly across the same width,
+   trimmed a little at the page's foot. */
+.site-footer {
+  background: var(--canvas);
+}
+
+.site-footer__inner {
+  container-type: inline-size;
+  overflow: hidden;
+}
+
+.site-footer__colophon {
+  padding-top: var(--space-5);
+  border-top: 2px solid var(--text-strong);
+}
+
+.site-footer__row {
+  border-bottom: 1px solid var(--chrome-rule);
+}
+
+.site-footer__row:first-child {
+  border-top: 1px solid var(--chrome-rule);
+}
+
+.site-footer__row-title,
+.site-footer__row-links {
+  display: inline-flex;
+  vertical-align: middle;
+}
+
+.site-footer__row-title {
+  width: 8rem;
+  margin: 0;
+  color: var(--text-strong);
+  font-size: var(--font-size-14);
+}
+
+.site-footer__row-links {
+  flex-wrap: wrap;
+  gap: 0 var(--space-5);
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.site-footer__mark {
+  /* The wordmark is about 5.4em wide: it spans the content width, and the box keeps all but
+     the foot of the letters. */
+  height: 0.72em;
+  margin-top: var(--space-8);
+  font-size: calc((100cqi - 2 * var(--layout-page-padding)) / 5.4);
+  line-height: 0.9;
+}
+
+.site-footer__mark .brand-wordmark {
+  font-family: var(--font-display);
+  letter-spacing: -0.05em;
+}
+
+.site-footer__mark .brand-wordmark > span {
+  color: color-mix(in oklch, var(--text-strong) 12%, transparent);
+}
+
+/* Settings section tabs on narrow screens scroll sideways: the right edge fades so the hidden
+   sections read as more to come, and trailing room lets the last tab scroll clear of the fade. */
+@media (max-width: 47.9375rem) {
+  .settings-nav__list {
+    padding-right: var(--space-12);
+    mask-image: linear-gradient(to right, black calc(100% - var(--space-12)), transparent);
+  }
+}
+
+/* Library cards: a stamp on the cover marks a favourite (amber) or a negative record (ink), and
+   a negative record's cover is dimmed, since it now counts against similar recommendations. */
+.library-card__cover {
+  position: relative;
+  display: block;
+}
+
+.library-card__cover[data-tone="negative"] > :first-child {
+  filter: grayscale(0.85);
+  opacity: 0.5;
+}
+
+.library-card__stamp {
+  position: absolute;
+  top: var(--space-2);
+  left: var(--space-2);
+  display: inline-flex;
+  align-items: center;
+  gap: var(--space-1);
+  max-width: calc(100% - 2 * var(--space-2));
+  padding: 2px var(--space-2);
+  background: var(--hero-ink-cool);
+  color: var(--hero-paper-white);
+  font-size: var(--font-size-12);
+  font-weight: 700;
+  white-space: nowrap;
+}
+
+.library-card__cover[data-tone="favorite"] > .library-card__stamp {
+  background: var(--accent);
+  color: var(--on-accent);
+}
+
+/* Record editor: labelled choice groups, then the save action in a bar at the dialog's foot. */
+.library-editor {
+  display: grid;
+  gap: var(--space-6);
+  padding-top: var(--space-5);
+  border-top: 2px solid var(--text-strong);
+}
+
+.library-editor__group {
+  display: grid;
+  gap: var(--space-2);
+  min-width: 0;
+  margin: 0;
+  padding: 0;
+  border: 0;
+}
+
+.library-editor__legend {
+  margin-bottom: var(--space-1);
+  color: var(--text-strong);
+  font-size: var(--font-size-14);
+  font-weight: 700;
+}
+
+.library-editor__none {
+  background: transparent;
+  color: var(--text-muted);
+  text-decoration: underline;
+  text-underline-offset: 4px;
+}
+
+.library-editor__actions {
+  position: sticky;
+  bottom: calc(-1 * (var(--space-6) + var(--layout-safe-area-bottom)));
+  z-index: 2;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--space-4);
+  margin-inline: calc(-1 * var(--layout-page-padding));
+  margin-bottom: calc(-1 * (var(--space-6) + var(--layout-safe-area-bottom)));
+  padding: var(--space-3) var(--layout-page-padding)
+    calc(var(--space-3) + var(--layout-safe-area-bottom));
+  border-top: 1px solid var(--chrome-rule);
+  background: var(--surface-1);
+}
+
+.library-editor__status {
+  min-width: 0;
+}
+
+/* The editor's work header: a larger cover beside the title, creators and links. */
+.library-detail__head {
+  display: grid;
+  grid-template-columns: 6rem minmax(0, 1fr);
+  align-items: start;
+  gap: var(--space-5);
+}
+
+@media (min-width: 48rem) {
+  .library-detail__head {
+    grid-template-columns: 7.5rem minmax(0, 1fr);
+  }
+}
+
+/* Onboarding welcome, in the home hero's panel language: a white narration panel framed in ink,
+   then the steps as a strip of panels with the current one in amber. Wide gutters between the
+   tiers, narrow ones inside the strip, one slant after the current step. */
+.ob-welcome {
+  --ob-slant: 1rem;
+  display: grid;
+  gap: var(--space-3);
+  margin-bottom: var(--space-8);
+}
+
+.ob-welcome__narration {
+  display: grid;
+  gap: var(--space-1);
+  padding: var(--space-5);
+  border: 3px solid var(--hero-ink-cool);
+  background: var(--hero-paper-white);
+  color: var(--hero-ink-cool);
+}
+
+.ob-welcome__eyebrow {
+  color: var(--hero-accent-ink);
+  font-family: var(--font-display);
+  font-size: var(--text-caption-size);
+  font-weight: 700;
+  letter-spacing: 0.08em;
+}
+
+.ob-welcome__title {
+  color: var(--hero-ink-cool);
+  font-size: var(--text-page-title-size);
+  line-height: 1.2;
+  letter-spacing: -0.02em;
+}
+
+.ob-welcome__title:focus-visible {
+  outline: 2px solid var(--hero-accent-ink);
+  outline-offset: 4px;
+}
+
+.ob-welcome__description {
+  color: color-mix(in oklch, var(--hero-ink-cool) 72%, var(--hero-paper-white));
+}
+
+.ob-welcome__steps {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: var(--space-2);
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.ob-welcome__step {
+  display: grid;
+  align-content: start;
+  gap: var(--space-1);
+  min-width: 0;
+  padding: var(--space-3);
+  border: 3px solid var(--hero-ink-cool);
+  background: var(--hero-paper-white);
+  color: var(--hero-ink-cool);
+}
+
+/* The current step is the amber spot colour; its right edge and the next step's left edge run
+   on one slant, the next panel reaching back under it so the gutter stays narrow. */
+.ob-welcome__step[aria-current="step"] {
+  padding-right: calc(var(--space-3) + var(--ob-slant));
+  border-color: var(--accent);
+  background: var(--accent);
+  color: var(--on-accent);
+  clip-path: polygon(0 0, 100% 0, calc(100% - var(--ob-slant)) 100%, 0 100%);
+}
+
+.ob-welcome__step[aria-current="step"] + .ob-welcome__step {
+  margin-left: calc(-1 * var(--ob-slant));
+  padding-left: calc(var(--space-3) + var(--ob-slant));
+  clip-path: polygon(var(--ob-slant) 0, 100% 0, 100% 100%, 0 100%);
+}
+
+.ob-welcome__step-head {
+  display: flex;
+  align-items: baseline;
+  gap: var(--space-2);
+}
+
+.ob-welcome__number {
+  font-family: var(--font-display);
+  font-size: var(--font-size-28);
+  font-weight: 700;
+  line-height: 1;
+}
+
+/* On narrow screens the current step is marked by its amber panel (and aria-current) alone. */
+.ob-welcome__current {
+  display: none;
+  font-size: var(--text-caption-size);
+  font-weight: 700;
+  white-space: nowrap;
+}
+
+.ob-welcome__step-title {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: var(--space-1) var(--space-2);
+  font-size: var(--text-caption-size);
+  line-height: 1.4;
+}
+
+.ob-welcome__optional {
+  padding: 0 var(--space-1);
+  border: 1px solid currentColor;
+  font-size: var(--font-size-12);
+  font-weight: 500;
+}
+
+/* Narrow screens keep the strip short: the descriptions are for screen readers only, and the
+   current step's description stands under the strip instead. */
+.ob-welcome__current-note {
+  color: var(--text-muted);
+  font-size: var(--text-caption-size);
+}
+
+/* Narrow screens keep the strip short: the descriptions are for screen readers only. */
+.ob-welcome__step-description {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  overflow: hidden;
+  clip-path: inset(50%);
+  white-space: nowrap;
+}
+
+@media (min-width: 48rem) {
+  .ob-welcome {
+    --ob-slant: 2rem;
+    gap: var(--space-5);
+  }
+
+  .ob-welcome__narration {
+    padding: var(--space-6) var(--space-8);
+  }
+
+  .ob-welcome__step {
+    padding: var(--space-4) var(--space-5);
+  }
+
+  .ob-welcome__step[aria-current="step"] {
+    padding-right: calc(var(--space-5) + var(--ob-slant));
+  }
+
+  .ob-welcome__step[aria-current="step"] + .ob-welcome__step {
+    padding-left: calc(var(--space-5) + var(--ob-slant));
+  }
+
+  .ob-welcome__current {
+    display: inline;
+  }
+
+  .ob-welcome__current-note {
+    display: none;
+  }
+
+  .ob-welcome__step-title {
+    font-size: var(--font-size-16);
+  }
+
+  .ob-welcome__step-description {
+    position: static;
+    width: auto;
+    height: auto;
+    overflow: visible;
+    clip-path: none;
+    font-size: var(--text-caption-size);
+    line-height: 1.5;
+    white-space: normal;
+    opacity: 0.8;
+  }
+}
+
+/* "迷ったときは": the tips as one ruled list (two columns where there is room), each icon
+   centred on its line. */
+.onboarding-guidance__list {
+  display: grid;
+  margin: 0;
+  padding: 0;
+  border-top: 1px solid var(--line);
+  list-style: none;
+}
+
+.onboarding-guidance__item {
+  display: flex;
+  align-items: center;
+  gap: var(--space-3);
+  min-height: var(--control-min-size);
+  padding-block: var(--space-2);
+  border-bottom: 1px solid var(--line);
+  color: var(--text);
+  font-size: var(--text-caption-size);
+  line-height: 1.5;
+}
+
+.onboarding-guidance__icon {
+  flex: none;
+  width: 1rem;
+  height: 1rem;
+  color: var(--accent-ink);
+}
+
+@media (min-width: 40rem) {
+  .onboarding-guidance__list {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    column-gap: var(--space-6);
+  }
+}
+
+/* Step-2 candidates, laid out like the step-1 cover shelf: cover cards in a grid, each with its
+   title over a scrim and the two dispositions underneath. */
+.negative-result-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(6.5rem, 1fr));
+  gap: var(--space-5) var(--space-3);
+}
+
+@media (min-width: 48rem) {
+  .negative-result-grid {
+    grid-template-columns: repeat(auto-fill, minmax(8rem, 1fr));
+  }
+}
+
+.negative-result-card {
+  display: grid;
+  align-content: start;
+  gap: var(--space-2);
+  min-width: 0;
+}
+
+.negative-result-card[data-disabled] {
+  opacity: 0.65;
+}
+
+.negative-result-card__cover {
+  position: relative;
+  display: block;
+  overflow: hidden;
+  border-radius: var(--radius-cover-selection);
+  background: var(--surface-2);
+}
+
+.negative-result-card__identity {
+  position: absolute;
+  inset: auto 0 0;
+  display: grid;
+  gap: var(--space-content-tight);
+  padding: var(--space-6) var(--space-2) var(--space-2);
+  background: linear-gradient(
+    to top,
+    var(--canvas),
+    color-mix(in oklch, var(--canvas) 80%, transparent) 55%,
+    transparent
+  );
+  pointer-events: none;
+}
+
+.negative-result-card__title {
+  display: -webkit-box;
+  overflow: hidden;
+  color: var(--text-strong);
+  font-size: var(--font-size-14);
+  font-weight: 700;
+  line-height: 1.35;
+  -webkit-box-orient: vertical;
+  -webkit-line-clamp: 2;
+}
+
+.negative-result-card__creators {
+  overflow: hidden;
+  color: var(--text-muted);
+  font-size: var(--text-caption-size);
+  line-height: 1.35;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.negative-result-card__disposition {
+  min-width: 0;
+  margin: 0;
+  padding: 0;
+  border: 0;
+}
+
+/* The two choices stack at the card's width; a chip and its label both fill it. */
+.negative-result-card__choices {
+  display: grid;
+  gap: var(--space-1);
+}
+
+.negative-result-card__choices > label,
+.negative-result-card__choices > label > span:last-child {
+  width: 100%;
+}
+
+.negative-result-card__choices > label > span:last-child {
+  padding-inline: var(--space-2);
+  font-size: var(--text-caption-size);
+}
+
+.negative-result-card__badge {
+  justify-self: start;
+  padding: var(--space-1) var(--space-2);
+  border-radius: var(--radius-pill);
+  color: var(--text-muted);
+  font-size: var(--text-caption-size);
+  font-weight: 700;
+}
+
+/* Home hero scene: a delivered manga page on the dark canvas, lit like a sheet under a desk lamp. The page paper and ink match the
+   delivered panel layers (romance 06/07 panel paper and ink, battle 05 panel ink). Layer
+   motion is Web Animations on `.hh-node` channels; these rules are the approved still. */
+:root {
+  --hero-paper-warm: rgb(255 250 241);
+  --hero-paper-white: rgb(255 255 255);
+  --hero-ink-warm: rgb(30 28 28);
+  --hero-ink-cool: rgb(12 12 12);
+  --hero-inset-warm: color-mix(in oklch, oklch(0.9 0.05 15) 55%, var(--hero-paper-warm));
+  --hero-inset-cool: color-mix(in oklch, oklch(0.93 0.03 40) 35%, var(--hero-paper-warm));
+  --hero-light: oklch(0.99 0.04 85);
+  /* The amber accent dark enough to read on the hero's paper. */
+  --hero-accent-ink: oklch(0.52 0.12 62);
+}
+
+/* The paper and ink of the art panel and the hero's paper panels; the scene can warm them. */
+.hh-page {
+  --hh-paper: var(--hero-paper-white);
+  --hh-ink: var(--hero-ink-cool);
+  --hh-frame: 2px;
+}
+
+.hh-stage {
+  position: relative;
+  min-width: 0;
+  user-select: none;
+}
+
+/* Every scene shares one 1536x1024 page, so the hero never changes size between scenes. */
+.hh-sheet {
+  position: relative;
+  aspect-ratio: 1536 / 1024;
+}
+
+.hh-window {
+  position: absolute;
+  overflow: hidden;
+  background: var(--hh-paper);
+}
+
+/* The panel frame is drawn above the art, so only the escape plane can cross it. */
+.hh-window::after {
+  position: absolute;
+  inset: 0;
+  border: var(--hh-frame) solid var(--hh-ink);
+  content: "";
+  pointer-events: none;
+}
+
+.hh-escape {
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+}
+
+.hh-space {
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 100%;
+  aspect-ratio: 1536 / 1024;
+  container-type: inline-size;
+}
+
+.hh-layer,
+.hh-overlay {
+  position: absolute;
+}
+
+.hh-group,
+.hh-fill,
+.hh-arcs,
+.hh-node {
+  position: absolute;
+  inset: 0;
+}
+
+.hh-arcs {
+  width: 100%;
+  height: 100%;
+  overflow: visible;
+}
+
+.hh-layer img {
+  display: block;
+  width: 100%;
+  height: 100%;
+  -webkit-user-drag: none;
+}
+
+/* Rest pose of motion-only elements: petals and light are absent from the approved still. */
+.hh-node[data-rest-hidden],
+.hh-overlay[data-effect="flash"],
+.hh-overlay[data-effect="bloom"] {
+  opacity: 0;
+}
+
+.hh-thread {
+  stroke-dasharray: 1 1;
+  stroke-dashoffset: 0;
+}
+
+.hh-fill[data-paint="paper"],
+.hh-overlay[data-effect="flash"] {
+  background: var(--hh-paper);
+}
+
+.hh-fill[data-paint="inset-warm"] {
+  background: linear-gradient(200deg, var(--hero-inset-warm), var(--hero-paper-warm) 70%);
+}
+
+.hh-fill[data-paint="inset-cool"] {
+  background: linear-gradient(160deg, var(--hero-paper-warm) 30%, var(--hero-inset-cool));
+}
+
+.hh-overlay[data-effect="bloom"] {
+  background: radial-gradient(
+    circle at 82% 6%,
+    color-mix(in oklch, var(--hero-light) 90%, transparent),
+    transparent 62%
+  );
+  mix-blend-mode: screen;
+}
+
+.hh-overlay[data-effect="dapple"] {
+  background: linear-gradient(
+    100deg,
+    transparent 8%,
+    color-mix(in oklch, var(--hero-light) 16%, transparent) 42%,
+    color-mix(in oklch, var(--hero-light) 26%, transparent) 50%,
+    color-mix(in oklch, var(--hero-light) 16%, transparent) 58%,
+    transparent 92%
+  );
+  mix-blend-mode: screen;
+}
+
+/* Hero: one manga page under a magazine masthead, read the Japanese way from the top right.
+   Panel layout (コマ割り): two tiers whose horizontal gutter runs straight across the page and
+   is wider than the narrow gutters inside a tier; the upper tier divides at the art's edge and
+   the lower one somewhere else, on a slant, so the dividers never line up. Upper tier: the
+   opening narration (right) and the art (left). Lower tier: the sound effect where the battle
+   hand lands (right) and, in the closing bottom-left corner where a page turns, the action.
+   Black ink and paper with amber as the single spot colour; blank pages and sound effects lie
+   faintly underneath as accessories. On narrow screens the panels stack. */
+.landing-hero {
+  --hh-outer: var(--space-4);
+  position: relative;
+  isolation: isolate;
+  container-type: inline-size;
+  display: grid;
+  align-content: center;
+  min-height: 100svh;
+  padding: var(--hh-outer);
+}
+
+/* The blank pages under the hero, faint enough that the hero's panels stay the page in hand. */
+.hh-underlay {
+  position: absolute;
+  inset: 0;
+  z-index: -1;
+  width: 100%;
+  height: 100%;
+  color: var(--hero-paper-white);
+  pointer-events: none;
+}
+
+.hh-underlay__sheet {
+  fill: color-mix(in oklch, var(--hero-paper-white) 1.5%, transparent);
+}
+
+.hh-underlay__frame {
+  fill: none;
+  stroke: color-mix(in oklch, var(--hero-paper-white) 9%, transparent);
+  stroke-width: 2;
+  vector-effect: non-scaling-stroke;
+}
+
+.hh-underlay__tone {
+  opacity: 0.05;
+}
+
+.hh-underlay__line {
+  stroke: color-mix(in oklch, var(--hero-paper-white) 8%, transparent);
+  stroke-linecap: round;
+  stroke-width: 2;
+  vector-effect: non-scaling-stroke;
+}
+
+.hh-underlay__sfx {
+  fill: none;
+  font-weight: 700;
+  letter-spacing: -0.04em;
+  paint-order: stroke;
+  stroke: color-mix(in oklch, var(--hero-paper-white) 10%, transparent);
+  stroke-linejoin: round;
+  stroke-width: 2.5;
+  vector-effect: non-scaling-stroke;
+}
+
+/* Romance lettering is rounder at the joints. */
+.hh-underlay[data-scene="romance"] .hh-underlay__sfx {
+  stroke-linecap: round;
+  stroke-width: 3.5;
+}
+
+.hh-underlay__sfx[data-toned] {
+  fill: url(#hh-tone-dots);
+  fill-opacity: 0.1;
+}
+
+/* Resolved on the (horizontal) page, so the vertical narration inherits a plain length: inside
+   vertical writing, container units would measure the page's height instead. */
+@property --hh-title-size {
+  syntax: "<length>";
+  inherits: true;
+  initial-value: 32px;
+}
+
+.hh-page {
+  --hh-gutter: var(--space-3);
+  --hh-col-gap: var(--space-2);
+  --hh-slant: 1rem;
+  --hh-title-size: clamp(1.5rem, 7vw, 2.25rem);
+  --landing-logo-size: clamp(2.5rem, 13vw, 3.5rem);
+  display: grid;
+  grid-template-areas:
+    "mast"
+    "title"
+    "art"
+    "tier";
+  grid-template-columns: minmax(0, 1fr);
+  gap: var(--hh-gutter);
+  width: 100%;
+  margin-inline: auto;
+}
+
+/* Paper and ink follow the scene, so the art panel is inked like its page. */
+.hh-page[data-paper="warm"] {
+  --hh-paper: var(--hero-paper-warm);
+  --hh-ink: var(--hero-ink-warm);
+  --hh-frame: 1.5px;
+}
+
+/* The masthead: the wordmark alone, large and tight. */
+.hh-mast {
+  grid-area: mast;
+  min-width: 0;
+}
+
+.hh-mast .landing-logo-reveal {
+  font-weight: 700;
+  line-height: 0.9;
+  letter-spacing: -0.045em;
+}
+
+.hh-art {
+  position: relative;
+  z-index: 2;
+  grid-area: art;
+  aspect-ratio: var(--hh-art-ratio);
+  /* The stage below is the taller shared page; only the panel sets this box's height. */
+  min-width: 0;
+  min-height: 0;
+}
+
+.hh-art__control {
+  position: absolute;
+  top: var(--space-2);
+  right: var(--space-2);
+  z-index: 3;
+  border-radius: 50%;
+  background: color-mix(in oklch, var(--hh-paper) 88%, transparent);
+  color: var(--hh-ink);
+}
+
+/* A panel: its face cut to its shape; the dark gutters separate the panels. */
+.hh-koma {
+  --koma-shape: inset(0);
+  position: relative;
+  z-index: 1;
+  min-width: 0;
+  clip-path: var(--koma-shape);
+}
+
+.hh-koma__fill {
+  position: relative;
+  isolation: isolate;
+  height: 100%;
+  padding: var(--space-5);
+  background: var(--koma-face);
+}
+
+/* The narration and the sound effect are white panels framed in ink, like panels on paper. The
+   frame is the ink showing round a white face cut to the same shape, so a slanted edge keeps
+   its frame too. */
+.hh-koma--title > .hh-koma__fill,
+.hh-koma--effect > .hh-koma__fill {
+  background: var(--hero-ink-cool);
+  clip-path: var(--koma-shape);
+}
+
+.hh-koma--title > .hh-koma__fill::before,
+.hh-koma--effect > .hh-koma__fill::before {
+  position: absolute;
+  inset: 3px;
+  z-index: -1;
+  background: var(--hero-paper-white);
+  clip-path: var(--koma-shape);
+  content: "";
+  pointer-events: none;
+}
+
+/* The opening narration. */
+.hh-koma--title {
+  grid-area: title;
+}
+
+.hh-koma--title > .hh-koma__fill {
+  display: grid;
+  align-content: center;
+}
+
+.hh-title {
+  color: var(--hero-ink-cool);
+  font-size: var(--hh-title-size);
+  font-weight: 700;
+  line-height: 1.35;
+  letter-spacing: 0.04em;
+}
+
+.hh-title__phrase {
+  display: inline-block;
+  white-space: nowrap;
+}
+
+.hh-title__accent {
+  color: var(--hero-accent-ink);
+}
+
+/* The lower tier: the action, then the sound effect. On narrow screens the sound effect comes
+   first, right under the art where the hand lands. */
+.hh-tier {
+  display: grid;
+  grid-area: tier;
+  gap: var(--hh-gutter);
+  min-width: 0;
+}
+
+/* The sound effect, lettered large in solid ink and turned about 15 degrees. */
+.hh-koma--effect {
+  order: -1;
+  height: clamp(6rem, 30vw, 9rem);
+}
+
+.hh-koma--effect > .hh-koma__fill {
+  container-type: size;
+  display: grid;
+  place-items: center;
+  overflow: hidden;
+}
+
+.hh-effect {
+  color: var(--hero-ink-cool);
+  /* Slightly larger than the panel, so the lettering runs off its edges and is cut there. */
+  font-size: min(24cqi, 82cqb);
+  font-weight: 700;
+  line-height: 1;
+  letter-spacing: -0.04em;
+  white-space: nowrap;
+  rotate: -15deg;
+  transform: skewX(-10deg);
+}
+
+.hh-page:has(.hh-art[data-scene="romance"]) .hh-effect {
+  transform: none;
+}
+
+/* The action panel is the button: amber spot colour with faint focus lines closing on the
+   words, its whole area one link to start. */
+.hh-koma--action {
+  --koma-face: var(--accent);
+  --hh-burst: 32% 72%;
+}
+
+.hh-koma--action:has(.hh-cta:hover) {
+  --koma-face: var(--accent-hover);
+}
+
+.hh-koma--action:has(.hh-cta:active) {
+  --koma-face: var(--accent-active);
+}
+
+.hh-koma--action > .hh-koma__fill {
+  container-type: inline-size;
+  display: grid;
+  align-content: end;
+  justify-items: start;
+  gap: var(--space-2);
+  color: var(--on-accent);
+}
+
+/* Black focus lines (集中線) closing on the words, drawn over the amber face. */
+.hh-koma--action > .hh-koma__fill::after {
+  position: absolute;
+  inset: 0;
+  z-index: -1;
+  background: repeating-conic-gradient(
+    from 0deg at var(--hh-burst),
+    color-mix(in oklch, var(--hero-ink-cool) 32%, transparent) 0deg 1deg,
+    transparent 1deg 5deg
+  );
+  content: "";
+  mask-image: radial-gradient(circle at var(--hh-burst), transparent 24%, black 72%);
+  pointer-events: none;
+}
+
+.hh-cta {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.4em;
+  border-radius: var(--radius-control);
+  color: var(--on-accent);
+  /* One line at any panel width: the label, a gap and the arrow are about 12.4em. */
+  font-size: clamp(1.125rem, 7.8cqi, 2.75rem);
+  font-weight: 700;
+  line-height: 1.25;
+  white-space: nowrap;
+}
+
+/* The link covers the whole panel. */
+.hh-cta::after {
+  position: absolute;
+  inset: 0;
+  content: "";
+}
+
+.hh-cta:focus-visible {
+  outline: 3px solid var(--on-accent);
+  outline-offset: 6px;
+}
+
+.hh-cta__arrow {
+  width: 1em;
+  height: 1em;
+  flex: none;
+}
+
+@media (prefers-reduced-motion: no-preference) and (hover: hover) and (pointer: fine) {
+  .hh-cta__arrow {
+    transition: translate var(--motion-duration-feedback) var(--motion-ease-direct);
+  }
+
+  .hh-cta:hover .hh-cta__arrow {
+    translate: 0.2em 0;
+  }
+}
+
+.hh-cta__note {
+  position: relative;
+  color: color-mix(in oklch, var(--on-accent) 80%, var(--accent));
+  font-size: var(--text-caption-size);
+}
+
+/* Narrow screens: the sound effect sits left, clear of the battle hand reaching into its
+   panel; it meets the action panel at a slanted gutter as wide as the others (the action panel
+   reaches back under the slant). */
+@media (max-width: 63.9375rem) {
+  .hh-koma--effect > .hh-koma__fill {
+    justify-items: start;
+    padding-inline: var(--space-6);
+  }
+
+  .hh-koma--effect {
+    --koma-shape: polygon(0 0, 100% 0, 100% calc(100% - var(--hh-slant)), 0 100%);
+  }
+
+  .hh-koma--action {
+    --koma-shape: polygon(0 var(--hh-slant), 100% 0, 100% 100%, 0 100%);
+    margin-top: calc(-1 * var(--hh-slant));
+  }
+
+  .hh-koma--action > .hh-koma__fill {
+    padding-top: calc(var(--space-5) + var(--hh-slant));
+  }
+}
+
+/* Wide screens: the masthead, then two tiers. The art is as large as the screen allows; the
+   narration takes the rest of the upper tier; the lower tier splits on a slant at about 60%. */
+@media (min-width: 64rem) {
+  .hh-page {
+    /* Wide gutters between tiers, narrow ones inside a tier. */
+    --hh-gutter: var(--space-5);
+    --hh-slant: 2.5rem;
+    --landing-logo-size: clamp(4rem, 7.2cqi, 7.5rem);
+    --hh-mast-h: calc(var(--landing-logo-size) * 0.9);
+    --hh-page-w: min(100cqi - 2 * var(--hh-outer), 112rem);
+    --hh-title-min: 14rem;
+    --hh-tier-min: 13rem;
+    --hh-art-w: min(
+      var(--hh-page-w) - var(--hh-title-min) - var(--hh-col-gap),
+      (
+          100svh - 2 * var(--hh-outer) - var(--hh-mast-h) - 2 * var(--hh-gutter) -
+            var(--hh-tier-min)
+        ) *
+        var(--hh-art-ratio)
+    );
+    --hh-art-h: calc(var(--hh-art-w) / var(--hh-art-ratio));
+    /* Two vertical columns as tall as the narration panel allows. */
+    --hh-title-size: min(4.5rem, (var(--hh-art-h) - 4rem) / 9.8);
+    grid-template-areas:
+      "mast mast"
+      "art title"
+      "tier tier";
+    grid-template-rows: auto auto minmax(var(--hh-tier-min), 1fr);
+    grid-template-columns: var(--hh-art-w) minmax(0, 1fr);
+    column-gap: var(--hh-col-gap);
+    width: var(--hh-page-w);
+    height: min(
+      100svh - 2 * var(--hh-outer),
+      var(--hh-mast-h) + var(--hh-art-h) + 2 * var(--hh-gutter) + 20rem
+    );
+  }
+
+  .hh-koma--title > .hh-koma__fill {
+    align-content: start;
+    justify-content: end;
+    padding: var(--space-8) var(--space-6);
+  }
+
+  .hh-title {
+    writing-mode: vertical-rl;
+    letter-spacing: 0.08em;
+  }
+
+  .hh-title__phrase {
+    display: block;
+  }
+
+  .hh-tier {
+    display: flex;
+    gap: var(--hh-col-gap);
+  }
+
+  .hh-koma--action {
+    --koma-shape: polygon(0 0, 100% 0, calc(100% - var(--hh-slant)) 100%, 0 100%);
+    --hh-burst: 26% 76%;
+    flex: 0 0 60%;
+  }
+
+  .hh-koma--action > .hh-koma__fill {
+    padding: var(--space-5) calc(var(--space-6) + var(--hh-slant)) var(--space-6) var(--space-6);
+  }
+
+  .hh-koma--effect {
+    --koma-shape: polygon(var(--hh-slant) 0, 100% 0, 100% 100%, 0 100%);
+    order: 0;
+    flex: 1 1 0;
+    height: auto;
+    margin-left: calc(-1 * var(--hh-slant));
+  }
+}
+
+/* Home scroll story. Everything here only animates toward the final state, which is also the
+   default: with reduced motion the page is simply static. Scroll position and speed always stay
+   the reader's own; nothing is pinned or hijacked. Each subject names its range in
+   --scroll-range; the timelines that drive it are attached after the scroll sections below. */
+@media (prefers-reduced-motion: no-preference) {
+  /* The hero page recedes into the dark as it leaves. */
+  .hh-spread > .hh-page {
+    --scroll-range: exit 12% exit 100%;
+    transform-origin: 50% 0%;
+    animation: hero-sheet-exit linear both;
+  }
+}
+
+@keyframes hero-sheet-exit {
+  to {
+    opacity: 0.4;
+    transform: translateY(6%) scale(0.93);
+  }
+}
+
+/* ---------------------------------------------------------------------------------------------
+   Home scroll sections. Each block below is first a complete static layout (the default, and
+   what readers with reduced motion get). When motion is allowed the same markup becomes a
+   scroll scene: a tall section with a sticky stage whose progress drives the effect, through
+   native scroll timelines or, where those are missing, useHomeScrollFallback. Scrolling itself
+   always stays the reader's.
+   --------------------------------------------------------------------------------------------- */
+
+/* Scroll progress for the scramble (1 = scattered, 0 = assembled) and the wheel (0 = scrambled,
+   1 = aligned). Their initial values are the finished states. */
+/* A scroll subject's animation range, such as "cover 0% cover 100%". Not inherited, so a
+   subject never borrows its parent's range. */
+@property --scroll-range {
+  syntax: "*";
+  inherits: false;
+}
+
+@property --assemble {
+  syntax: "<number>";
+  inherits: true;
+  initial-value: 0;
+}
+
+@property --spin {
+  syntax: "<number>";
+  inherits: true;
+  initial-value: 1;
+}
+
+/* 1. The sentence that assembles from scattered glyphs. */
+.home-scramble__stage {
+  display: grid;
+  place-items: center;
+  padding: var(--space-section-xl) var(--layout-page-padding);
+}
+
+.home-scramble__sentence {
+  max-width: var(--layout-width-media);
+  color: var(--text-strong);
+  font-family: var(--font-display);
+  font-size: clamp(2rem, 7.4vw, 5.75rem);
+  font-weight: 800;
+  line-height: 1.15;
+  letter-spacing: 0.02em;
+  text-align: center;
+  perspective: 900px;
+}
+
+.home-scramble__phrase {
+  display: inline-block;
+  white-space: nowrap;
+  transform-style: preserve-3d;
+}
+
+/* Scattered glyphs start in the dark and only show once they are well on their way, so a
+   glimpse of the section's top edge is empty rather than stray fragments. */
+.home-scramble__glyph {
+  display: inline-block;
+  opacity: clamp(0, (1 - var(--assemble)) * 2.5, 1);
+  transform: translate3d(
+      calc(var(--glyph-x) * var(--assemble) * 1vw),
+      calc(var(--glyph-y) * var(--assemble) * 1svh),
+      calc(var(--glyph-z) * var(--assemble) * 1px)
+    )
+    rotate(calc(var(--glyph-turn) * var(--assemble) * 1deg));
+}
+
+.home-scramble__glyph[data-accent] {
+  color: var(--accent);
+}
+
+/* 2. Three scenes; statically a column of panels. */
+.home-story__stage {
+  display: grid;
+  gap: var(--space-6);
+  max-width: var(--layout-width-media);
+  margin: 0 auto;
+  padding: 0 var(--layout-page-padding);
+}
+
+.home-story__caption {
+  color: var(--text-muted);
+  font-size: var(--text-caption-size);
+}
+
+.home-story__index,
+.home-story__spacers {
+  display: none;
+}
+
+.home-story__scenes {
+  display: grid;
+  gap: var(--space-section-large);
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.home-story__scene {
+  position: relative;
+  isolation: isolate;
+  overflow: hidden;
+  border-radius: var(--radius-card);
+}
+
+.home-story__tint {
+  position: absolute;
+  inset: 0;
+  z-index: -1;
+}
+
+.home-story__scene-body {
+  display: grid;
+  gap: var(--space-8);
+  align-items: center;
+  padding: var(--space-8) var(--space-5);
+}
+
+.home-story__scene-copy {
+  display: grid;
+  align-content: start;
+  gap: var(--space-3);
+}
+
+.home-story__number {
+  color: var(--accent);
+  font-family: var(--font-display);
+  font-size: clamp(4.5rem, 14vw, 10rem);
+  font-weight: 800;
+  line-height: 0.82;
+  letter-spacing: -0.04em;
+}
+
+.home-story__title {
+  color: var(--text-strong);
+  font-size: clamp(1.75rem, 4.2vw, 3.25rem);
+  font-weight: 700;
+  line-height: 1.2;
+}
+
+.home-story__description {
+  max-width: 26rem;
+  color: var(--text-muted);
+  font-size: var(--font-size-16);
+  line-height: var(--line-height-body);
+  word-break: auto-phrase;
+}
+
+.home-story__scene-proof {
+  min-width: 0;
+}
+
+.home-story__covers {
+  display: grid;
+  grid-template-columns: repeat(5, minmax(0, 1fr));
+  gap: var(--space-2);
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+@media (min-width: 64rem) {
+  .home-story__scene-body {
+    grid-template-columns: minmax(0, 0.85fr) minmax(0, 1.15fr);
+    gap: var(--space-12);
+    padding: var(--space-12) var(--space-8);
+  }
+
+  .home-story__covers {
+    gap: var(--space-4);
+  }
+}
+
+/* 3. The axis wheel. Labels need ten glyphs of room beyond the rim on every side. */
+.home-wheel {
+  --wheel-size: clamp(8rem, 34vmin, 21rem);
+  --wheel-font: clamp(0.625rem, 1.7vmin, 1rem);
+}
+
+.home-wheel__stage {
+  display: grid;
+  justify-items: center;
+  gap: var(--space-6);
+  padding: var(--space-section-xl) var(--layout-page-padding);
+}
+
+.home-wheel__center,
+.home-wheel__ring {
+  grid-area: 1 / 1;
+}
+
+.home-wheel__center {
+  z-index: 1;
+  align-self: center;
+  width: calc(var(--wheel-size) * 0.78);
+  opacity: calc(0.3 + var(--spin) * 0.7);
+  text-align: center;
+}
+
+.home-wheel__title {
+  display: grid;
+  justify-items: center;
+  color: var(--text-strong);
+  font-size: clamp(0.75rem, 2.2vmin, 1.375rem);
+  font-weight: 700;
+  line-height: 1.35;
+  word-break: auto-phrase;
+}
+
+.home-wheel__count {
+  color: var(--accent);
+  font-family: var(--font-display);
+  font-size: calc(var(--wheel-size) * 0.36);
+  font-weight: 800;
+  line-height: 1;
+}
+
+.home-wheel__legend {
+  grid-row: 2;
+  display: flex;
+  align-items: center;
+  gap: var(--space-2);
+  color: var(--text-muted);
+  font-size: var(--text-caption-size);
+}
+
+.home-wheel__legend-dot {
+  width: var(--space-2);
+  height: var(--space-2);
+  border-radius: 50%;
+  background: var(--accent);
+}
+
+.home-wheel__ring {
+  position: relative;
+  width: var(--wheel-size);
+  height: var(--wheel-size);
+  margin: calc(var(--wheel-font) * 10.6 + var(--space-3));
+  padding: 0;
+  list-style: none;
+  transform: rotate(calc(var(--spin) * 360deg));
+}
+
+/* The rim the spokes leave from. */
+.home-wheel__ring::before {
+  position: absolute;
+  inset: 0;
+  border: 1px solid var(--line);
+  border-radius: 50%;
+  content: "";
+}
+
+.home-wheel__spoke {
+  position: absolute;
+  inset: 50%;
+  color: var(--text-muted);
+  font-size: var(--wheel-font);
+  line-height: 1;
+  transform: rotate(var(--spoke-angle));
+}
+
+.home-wheel__spoke[data-highlight] {
+  color: var(--accent);
+  font-weight: 700;
+}
+
+.home-wheel__glyph {
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 1em;
+  text-align: center;
+  transform-origin: 0 0;
+  transform: rotate(calc(var(--glyph-scramble) * (1 - var(--spin))))
+    translateX(calc(var(--wheel-size) / 2 + var(--space-3)))
+    translateX(calc(var(--glyph-slot) * 1.04em)) translateY(-0.5em)
+    rotate(calc(var(--glyph-flip) * 180deg))
+    translate(calc(var(--glyph-flip) * -1em), calc(var(--glyph-flip) * -1em));
+}
+
+/* 4. Walls of works that bloom into place. */
+.home-chapter {
+  display: grid;
+  gap: var(--space-2);
+  margin-bottom: var(--space-8);
+}
+
+.home-chapter__title {
+  color: var(--text-strong);
+  font-size: clamp(1.75rem, 4vw, 3rem);
+  font-weight: 700;
+  line-height: 1.2;
+  letter-spacing: -0.01em;
+  word-break: auto-phrase;
+}
+
+.home-chapter__description {
+  color: var(--text-muted);
+  font-size: var(--font-size-14);
+}
+
+.home-bloom__grid {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: var(--space-8) var(--space-4);
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.home-bloom__card {
+  display: grid;
+  gap: var(--space-2);
+  border-radius: var(--radius-cover);
+  color: inherit;
+  text-decoration: none;
+}
+
+.home-bloom__card:focus-visible {
+  outline: 2px solid var(--focus-ring);
+  outline-offset: 4px;
+}
+
+.home-bloom__cover {
+  position: relative;
+  display: block;
+}
+
+/* The rank sits over the cover's top-left corner, half above it, clear of the title below. */
+.home-bloom__rank {
+  position: absolute;
+  top: -0.42em;
+  left: -0.06em;
+  color: var(--text-strong);
+  font-family: var(--font-display);
+  font-size: var(--bloom-rank-size);
+  font-weight: 900;
+  line-height: 0.8;
+  text-shadow: 0 4px 18px color-mix(in oklch, var(--canvas) 85%, transparent);
+}
+
+.home-bloom__title {
+  display: -webkit-box;
+  overflow: hidden;
+  color: var(--text-strong);
+  font-size: var(--font-size-14);
+  font-weight: 700;
+  line-height: 1.35;
+  -webkit-box-orient: vertical;
+  -webkit-line-clamp: 2;
+}
+
+.home-bloom__grid[data-ranked] {
+  --bloom-rank-size: clamp(3.25rem, 7vw, 5.5rem);
+}
+
+.home-bloom__grid[data-ranked] .home-bloom__card {
+  padding-top: calc(var(--bloom-rank-size) * 0.42);
+}
+
+.home-bloom__meta {
+  color: var(--text-muted);
+  font-size: var(--font-size-12);
+}
+
+@media (min-width: 48rem) {
+  .home-bloom__grid {
+    grid-template-columns: repeat(4, minmax(0, 1fr));
+  }
+}
+
+@media (min-width: 64rem) {
+  .home-bloom__grid[data-ranked] {
+    grid-template-columns: repeat(5, minmax(0, 1fr));
+  }
+}
+
+@media (prefers-reduced-motion: no-preference) {
+  /* 1. Scramble: a 240svh section pins a full-screen stage while the glyphs fly home. */
+  .home-scramble {
+    height: 240svh;
+  }
+
+  .home-scramble__stage {
+    --scroll-range: entry 45% contain 62%;
+    position: sticky;
+    top: 0;
+    height: 100svh;
+    padding-block: 0;
+    overflow: hidden;
+    animation: home-assemble linear both;
+  }
+
+  /* 2. Story: three screen-tall spacers scroll under one pinned stage; each scene blinks
+     (blur + contrast) in and out with its spacer, and the 01·02·03 index follows. No scroll
+     snapping: even proximity snapping pulled small wheel steps back and trapped the reader. */
+  .home-story__stage {
+    position: sticky;
+    top: 0;
+    display: block;
+    height: 100svh;
+    max-width: none;
+    padding: 0;
+    overflow: hidden;
+  }
+
+  .home-story__caption {
+    position: absolute;
+    top: var(--space-6);
+    right: 0;
+    left: 0;
+    z-index: 4;
+    text-align: center;
+  }
+
+  .home-story__index {
+    position: absolute;
+    bottom: var(--space-6);
+    left: 50%;
+    z-index: 4;
+    display: flex;
+    gap: var(--space-4);
+    margin: 0;
+    padding: 0;
+    color: var(--text-muted);
+    font-family: var(--font-display);
+    font-size: var(--font-size-14);
+    font-weight: 700;
+    list-style: none;
+    translate: -50% 0;
+  }
+
+  .home-story__scenes {
+    position: absolute;
+    inset: 0;
+    display: block;
+  }
+
+  .home-story__scene {
+    position: absolute;
+    inset: 0;
+    display: grid;
+    place-items: center;
+    border-radius: 0;
+    animation-timing-function: ease-in-out;
+    animation-fill-mode: both;
+  }
+
+  /* A keyboard reader who tabs into a scene sees it, whatever the scroll position. */
+  .home-story__scene:focus-within {
+    z-index: 5;
+    opacity: 1;
+    animation: none;
+  }
+
+  .home-story__scene-body {
+    width: min(100% - 2 * var(--layout-page-padding), var(--layout-width-media));
+    padding: var(--space-12) 0;
+  }
+
+  .home-story__spacers {
+    display: block;
+    margin-top: -100svh;
+  }
+
+  .home-story__spacer {
+    display: block;
+    height: 100svh;
+  }
+
+  /* Each scene, its body and its index entry follow their spacer from first to last pixel. */
+  .home-story__scene,
+  .home-story__scene-body,
+  .home-story__index li {
+    --scroll-range: cover 0% cover 100%;
+  }
+
+  /* The scene (with its full-screen tint) only fades, which the compositor does cheaply;
+     the blur and contrast melt applies to the content area alone. */
+  .home-story__scene[data-scene="1"] {
+    animation-name: story-fade-out;
+  }
+
+  .home-story__scene[data-scene="2"] {
+    animation-name: story-fade;
+  }
+
+  .home-story__scene[data-scene="3"] {
+    animation-name: story-fade-in;
+  }
+
+  .home-story__scene-body {
+    animation-timing-function: ease-in-out;
+    animation-fill-mode: both;
+  }
+
+  .home-story__scene[data-scene="1"] > .home-story__scene-body {
+    animation-name: story-melt-out;
+  }
+
+  .home-story__scene[data-scene="2"] > .home-story__scene-body {
+    animation-name: story-melt;
+  }
+
+  .home-story__scene[data-scene="3"] > .home-story__scene-body {
+    animation-name: story-melt-in;
+  }
+
+  .home-story__scene:focus-within > .home-story__scene-body {
+    filter: none;
+    animation: none;
+  }
+
+  .home-story__index li {
+    animation-fill-mode: both;
+    animation-timing-function: linear;
+  }
+
+  .home-story__index [data-scene="1"] {
+    animation-name: story-index-out;
+  }
+
+  .home-story__index [data-scene="2"] {
+    animation-name: story-index;
+  }
+
+  .home-story__index [data-scene="3"] {
+    animation-name: story-index-in;
+  }
+
+  /* While a scene holds the stage its contents keep moving with the scroll: the number
+     drifts up, the five covers fan out of a stack, the DNA rows rise one by one (each row
+     carries its own staggered range inline), and the recommendation card lifts while the
+     page takes its cover's colour. */
+  .home-story__number {
+    --scroll-range: cover 10% cover 90%;
+    animation: story-number-drift linear both;
+  }
+
+  .home-story__covers > li {
+    --scroll-range: cover 0% cover 55%;
+    animation: story-cover-fan linear both;
+  }
+
+  .home-story__bars > li {
+    animation: story-bar-rise linear both;
+  }
+
+  .home-story__card {
+    --scroll-range: cover 15% cover 50%;
+    animation: story-card-lift linear both;
+  }
+
+  .home-story__tint {
+    --scroll-range: cover 28% cover 55%;
+    animation: story-tint linear both;
+  }
+
+  /* 3. Wheel: a 220svh section pins the wheel while it turns once and the labels align. */
+  .home-wheel {
+    height: 220svh;
+  }
+
+  .home-wheel__stage {
+    --scroll-range: entry 40% contain 70%;
+    position: sticky;
+    top: 0;
+    height: 100svh;
+    align-content: center;
+    padding-block: 0;
+    overflow: hidden;
+    animation: home-wheel-spin linear both;
+  }
+
+  /* 4. Bloom: each tile settles from a turn about an axis far off to its side. */
+  .home-bloom__item {
+    --scroll-range: entry 0% cover 42%;
+    --bloom-origin: 25vw;
+    --bloom-side: -1;
+    --bloom-amp: 1;
+    transform-origin: var(--bloom-origin) 100%;
+    animation: home-bloom linear both;
+  }
+
+  .home-bloom__item:nth-child(2n) {
+    --bloom-origin: -25vw;
+    --bloom-side: 1;
+  }
+
+  @media (min-width: 48rem) {
+    .home-bloom__item:nth-child(4n + 1) {
+      --bloom-origin: 50vw;
+      --bloom-side: -1;
+      --bloom-amp: 2;
+    }
+
+    .home-bloom__item:nth-child(4n + 2) {
+      --bloom-origin: 25vw;
+      --bloom-side: -1;
+      --bloom-amp: 1;
+    }
+
+    .home-bloom__item:nth-child(4n + 3) {
+      --bloom-origin: -25vw;
+      --bloom-side: 1;
+      --bloom-amp: 1;
+    }
+
+    .home-bloom__item:nth-child(4n) {
+      --bloom-origin: -50vw;
+      --bloom-side: 1;
+      --bloom-amp: 2;
+    }
+  }
+
+  @media (min-width: 64rem) {
+    [data-ranked] > .home-bloom__item:nth-child(5n + 1) {
+      --bloom-origin: 50vw;
+      --bloom-side: -1;
+      --bloom-amp: 2;
+    }
+
+    [data-ranked] > .home-bloom__item:nth-child(5n + 2) {
+      --bloom-origin: 25vw;
+      --bloom-side: -1;
+      --bloom-amp: 1;
+    }
+
+    [data-ranked] > .home-bloom__item:nth-child(5n + 3) {
+      --bloom-origin: 50%;
+      --bloom-side: 0;
+      --bloom-amp: 1;
+    }
+
+    [data-ranked] > .home-bloom__item:nth-child(5n + 4) {
+      --bloom-origin: -25vw;
+      --bloom-side: 1;
+      --bloom-amp: 1;
+    }
+
+    [data-ranked] > .home-bloom__item:nth-child(5n) {
+      --bloom-origin: -50vw;
+      --bloom-side: 1;
+      --bloom-amp: 2;
+    }
+  }
+}
+
+/* Native scroll timelines drive every subject above over its --scroll-range. The selector list
+   repeats each subject's own selector so it overrides the range reset by the shorthand. */
+@supports (animation-timeline: view()) {
+  @media (prefers-reduced-motion: no-preference) {
+    .hh-spread > .hh-page,
+    .home-scramble__stage,
+    .home-story__scene,
+    .home-story__scene-body,
+    .home-story__index li,
+    .home-story__number,
+    .home-story__covers > li,
+    .home-story__bars > li,
+    .home-story__card,
+    .home-story__tint,
+    .home-wheel__stage,
+    .home-bloom__item {
+      animation-range: var(--scroll-range);
+    }
+
+    .hh-spread {
+      view-timeline: --hero-sheet block;
+    }
+
+    .hh-spread > .hh-page {
+      animation-timeline: --hero-sheet;
+    }
+
+    .home-scramble {
+      view-timeline: --scramble block;
+    }
+
+    .home-scramble__stage {
+      animation-timeline: --scramble;
+    }
+
+    .home-story {
+      timeline-scope: --story-1, --story-2, --story-3;
+    }
+
+    .home-story__spacer[data-scene="1"] {
+      view-timeline: --story-1 block;
+    }
+
+    .home-story__spacer[data-scene="2"] {
+      view-timeline: --story-2 block;
+    }
+
+    .home-story__spacer[data-scene="3"] {
+      view-timeline: --story-3 block;
+    }
+
+    .home-story__scene[data-scene="1"],
+    .home-story__scene[data-scene="1"] > .home-story__scene-body,
+    .home-story__scene[data-scene="1"] .home-story__number,
+    .home-story__index [data-scene="1"],
+    .home-story__covers > li {
+      animation-timeline: --story-1;
+    }
+
+    .home-story__scene[data-scene="2"],
+    .home-story__scene[data-scene="2"] > .home-story__scene-body,
+    .home-story__scene[data-scene="2"] .home-story__number,
+    .home-story__index [data-scene="2"],
+    .home-story__bars > li {
+      animation-timeline: --story-2;
+    }
+
+    .home-story__scene[data-scene="3"],
+    .home-story__scene[data-scene="3"] > .home-story__scene-body,
+    .home-story__scene[data-scene="3"] .home-story__number,
+    .home-story__index [data-scene="3"],
+    .home-story__card,
+    .home-story__tint {
+      animation-timeline: --story-3;
+    }
+
+    .home-wheel {
+      view-timeline: --wheel block;
+    }
+
+    .home-wheel__stage {
+      animation-timeline: --wheel;
+    }
+
+    .home-bloom__item {
+      animation-timeline: view();
+    }
+  }
+}
+
+/* Without scroll timelines (Firefox) the same keyframes hold paused and useHomeScrollFallback
+   writes each subject's range progress (0–1) to --scroll-progress, which seeks them. Until it
+   runs every subject waits at its start. */
+@supports not (animation-timeline: view()) {
+  @media (prefers-reduced-motion: no-preference) {
+    .hh-spread > .hh-page,
+    .home-scramble__stage,
+    .home-story__scene,
+    .home-story__scene-body,
+    .home-story__index li,
+    .home-story__number,
+    .home-story__covers > li,
+    .home-story__bars > li,
+    .home-story__card,
+    .home-story__tint,
+    .home-wheel__stage,
+    .home-bloom__item {
+      animation-duration: 1s;
+      animation-play-state: paused;
+      animation-delay: calc(var(--scroll-progress, 0) * -1s);
+    }
+  }
+}
+
+@keyframes home-assemble {
+  from {
+    --assemble: 1;
+  }
+
+  to {
+    --assemble: 0;
+  }
+}
+
+@keyframes home-wheel-spin {
+  from {
+    --spin: 0;
+  }
+
+  to {
+    --spin: 1;
+  }
+}
+
+/* Over a spacer's cover range: enter 15–35%, hold 35–65%, leave 65–85%. Neighbouring spacers
+   overlap there, so one scene melts out as the next melts in. */
+@keyframes story-fade {
+  0%,
+  15%,
+  85%,
+  100% {
+    z-index: 0;
+    opacity: 0;
+  }
+
+  35%,
+  65% {
+    z-index: 2;
+    opacity: 1;
+  }
+}
+
+@keyframes story-fade-in {
+  0%,
+  15% {
+    z-index: 0;
+    opacity: 0;
+  }
+
+  35%,
+  100% {
+    z-index: 2;
+    opacity: 1;
+  }
+}
+
+@keyframes story-fade-out {
+  0%,
+  65% {
+    z-index: 2;
+    opacity: 1;
+  }
+
+  85%,
+  100% {
+    z-index: 0;
+    opacity: 0;
+  }
+}
+
+@keyframes story-melt {
+  0%,
+  15%,
+  85%,
+  100% {
+    filter: blur(0.6rem) contrast(3);
+  }
+
+  35%,
+  65% {
+    filter: blur(0) contrast(1);
+  }
+}
+
+@keyframes story-melt-in {
+  0%,
+  15% {
+    filter: blur(0.6rem) contrast(3);
+  }
+
+  35%,
+  100% {
+    filter: blur(0) contrast(1);
+  }
+}
+
+@keyframes story-melt-out {
+  0%,
+  65% {
+    filter: blur(0) contrast(1);
+  }
+
+  85%,
+  100% {
+    filter: blur(0.6rem) contrast(3);
+  }
+}
+
+@keyframes story-number-drift {
+  from {
+    translate: 0 2.5rem;
+  }
+
+  to {
+    translate: 0 -2.5rem;
+  }
+}
+
+@keyframes story-cover-fan {
+  from {
+    translate: calc(var(--cover-offset) * -88%) 14%;
+    rotate: calc(var(--cover-offset) * 9deg);
+  }
+}
+
+@keyframes story-bar-rise {
+  from {
+    opacity: 0;
+    translate: 0 1.5rem;
+  }
+}
+
+@keyframes story-card-lift {
+  from {
+    opacity: 0.3;
+    translate: 0 22%;
+    scale: 0.94;
+  }
+}
+
+@keyframes story-tint {
+  from {
+    opacity: 0;
+  }
+}
+
+@keyframes story-index {
+  0%,
+  20%,
+  80%,
+  100% {
+    opacity: 0.35;
+  }
+
+  35%,
+  65% {
+    opacity: 1;
+    color: var(--accent);
+  }
+}
+
+@keyframes story-index-in {
+  0%,
+  20% {
+    opacity: 0.35;
+  }
+
+  35%,
+  100% {
+    opacity: 1;
+    color: var(--accent);
+  }
+}
+
+@keyframes story-index-out {
+  0%,
+  65% {
+    opacity: 1;
+    color: var(--accent);
+  }
+
+  80%,
+  100% {
+    opacity: 0.35;
+  }
+}
+
+@keyframes home-bloom {
+  from {
+    opacity: 0.25;
+    translate: 0 12%;
+    scale: 0.78;
+    rotate: calc(var(--bloom-side) * 8deg * var(--bloom-amp));
   }
 }

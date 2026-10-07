@@ -37,7 +37,7 @@ export function DiscoveryCard({
 
   return (
     <article
-      className="group/shelf-card shrink-0 snap-start overflow-hidden rounded-[var(--radius-card)] border border-transparent bg-transparent focus-within:bg-surface-2 [@media(hover:hover)_and_(pointer:fine)]:hover:bg-surface-2 transition-colors duration-[var(--motion-duration-value)] ease-[var(--motion-ease-direct)] motion-reduce:transition-none w-[calc((100vw-(var(--layout-page-padding)*2)-(var(--space-content-loose)*2))/1.8)] max-w-72 sm:w-64 md:w-[calc((100%-var(--space-content-loose)*4)/5)] md:min-w-60 grid grid-rows-[auto_minmax(0,1fr)] gap-[var(--space-2)] p-[var(--space-2)] md:grid-cols-[auto_minmax(0,1fr)] md:grid-rows-1 md:items-stretch md:py-[var(--space-3)]"
+      className="group/shelf-card shrink-0 snap-start overflow-hidden rounded-[var(--radius-media-card)] border border-transparent bg-transparent focus-within:bg-surface-2 [@media(hover:hover)_and_(pointer:fine)]:hover:bg-surface-2 transition-colors duration-[var(--motion-duration-value)] ease-[var(--motion-ease-direct)] motion-reduce:transition-none w-[calc((100vw-(var(--layout-page-padding)*2)-(var(--space-content-loose)*2))/1.8)] max-w-72 sm:w-64 md:w-[calc((100%-var(--space-content-loose)*4)/5)] md:min-w-60 grid grid-rows-[auto_minmax(0,1fr)] gap-[var(--space-2)] p-[var(--space-2)] md:grid-cols-[auto_minmax(0,1fr)] md:grid-rows-1 md:items-stretch md:py-[var(--space-3)]"
       data-recommendation-shelf-card={marker}
       id={id}
     >

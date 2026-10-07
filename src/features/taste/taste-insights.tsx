@@ -154,7 +154,7 @@ export function RecommendationDiffPreview({
             <Button
               aria-controls="taste-recommendation-preview-lists"
               aria-expanded={unchangedExpanded}
-              className="w-fit gap-[var(--space-2)] px-0 text-accent"
+              className="w-fit gap-[var(--space-2)] px-0 text-accent-ink"
               onClick={() => setUnchangedExpanded((open) => !open)}
               type="button"
               variant="ghost"

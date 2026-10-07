@@ -7,7 +7,7 @@ import {
   createRouter,
   RouterProvider,
 } from "@tanstack/react-router";
-import { cleanup, fireEvent, render, screen, waitFor } from "@testing-library/react";
+import { cleanup, fireEvent, render, screen, waitFor, within } from "@testing-library/react";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 
 import catalogJson from "@/data/generated/catalog-v1.json";
@@ -75,6 +75,13 @@ afterEach(() => {
   vi.unstubAllGlobals();
 });
 
+/** Picks one option in a record-editor choice group (読書状態 or 感想). */
+function choose(group: string, option: string) {
+  fireEvent.click(
+    within(screen.getByRole("radiogroup", { name: group })).getByRole("radio", { name: option }),
+  );
+}
+
 describe("popular work discovery", () => {
   it("leaves an unread answer unrecorded and saves a separately confirmed reading state", async () => {
     const persistence = await mount();
@@ -85,12 +92,10 @@ describe("popular work discovery", () => {
     expect(await persistence.getExternalWorks()).toEqual([]);
     fireEvent.click(screen.getByRole("button", { name: "閉じる" }));
     fireEvent.click(screen.getByRole("button", { name: popularWorkStrings.read }));
-    const state = await screen.findByRole("combobox", { name: libraryStrings.editor.readingState });
+    await screen.findByRole("radiogroup", { name: libraryStrings.editor.readingState });
     expect(await persistence.getUserWorks()).toEqual([]);
-    fireEvent.change(state, { target: { value: "dropped" } });
-    fireEvent.change(screen.getByRole("combobox", { name: libraryStrings.editor.reaction }), {
-      target: { value: "liked" },
-    });
+    choose(libraryStrings.editor.readingState, libraryStrings.tabs.dropped);
+    choose(libraryStrings.editor.reaction, libraryStrings.reactions.liked);
     fireEvent.click(screen.getByRole("button", { name: libraryStrings.editor.save }));
     await screen.findByText(libraryStrings.editor.saved);
     expect(await persistence.getUserWorks()).toEqual([

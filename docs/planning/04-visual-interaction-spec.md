@@ -12,6 +12,17 @@
 - **브랜드 인격:** 안목 있는 서점 점원. 조용하고 정확하며, 근거를 갖고 말한다. 과장·호들갑 없음.
 - **색의 위계:** 화면에서 가장 채도 높은 것은 만화 표지와 의미 있는 cyan accent다. UI 자체는 navy 중립색 + accent 1색.
 - **밀도:** 한 viewport에서 여러 작품을 탐색할 수 있게 Shelf·ranking을 밀도 있게 두고 장식은 희박하게 유지한다.
+- **디자인 언어의 세 층(2026-10-07 사용자 결정):** 앱 전체를 홈 히어로의 만화 잡지 언어와 한 서비스로 묶되, 쓰임에 따라 강도를 나눈다.
+  1. **바깥 틀(헤더·하단 탭·푸터):** 모든 화면에서 홈 마스트헤드의 축소판을 쓴다. 페이지와 같은 먹 바탕을 종이색 괘선(`--chrome-rule`)으로 끊고, 워드마크는 촘촘하게, 현재 위치는 앰버 블록이다. 푸터는 판권면(奥付)이다.
+  2. **편집적 순간(홈 히어로, 온보딩 웰컴):** 만화 컷 문법을 쓴다. 흰 바탕·먹선 컷, 앰버 별색 컷, 넓은 단 간격과 좁은 칸 간격, 사선 경계 한 곳이다. 히어로의 상세는 `redesign/home-hero-motion-plan.md`가 정한다.
+  3. **도구(검색·선반·추천 카드·설정·폼):** 지금의 카드 문법을 유지한다. 만화 장식을 더하지 않는다.
+- **선 대신 면, 각진 모서리(2026-10-07 사용자 결정):** 테두리와 둥근 모서리는 표지가 들어간 콘텐츠 카드(「あなたのために選んだ作品」·「『…』が好きなら」·「隠れた候補」·Top 10·발견·라이브러리·DNA 대표작 카드)와 표지 틀에만 둔다(`--radius-media-card` 8px, `--radius-cover` 4px). 그 밖은 다음을 따른다.
+  - 섹션 패널·대화상자·스낵바·빈 상태·칩·외곽선 버튼·세그먼트·라벨: 테두리 없이 면(`surface-1`/`surface-2`)으로 구분하고 모서리는 0(`--radius-card`·`--radius-control`·`--radius-pill` = 0)이다.
+  - 선택·눌림: 앰버 면(`bg-accent` + `--on-accent`)으로 표시한다. 경고·위험·포커스의 테두리와 링은 정보이므로 유지한다.
+  - 입력·선택 상자: 아래 선 하나(`border-b`)만 둔다.
+  - 칸막이·표 행·점선이던 안내: 괘선 한 줄로 나눈다.
+  - 설정 섹션은 면 대신 판권면처럼 굵은 종이색 괘선(2px) 아래의 블록이고, 섹션 사이는 48px다. 「危険な操作」만 빨간 테두리 상자를 유지한다. 섹션 탐색의 현재 항목은 헤더·하단 탭과 같은 앰버 블록이며, 좁은 화면의 가로 탭은 오른쪽 끝을 흐려 더 있음을 알린다.
+  - 원형 아이콘 버튼·스위치·진행 점은 원형을 유지한다(전부 사각형이 되지 않게).
 
 ## 2. 디자인 토큰
 
@@ -218,12 +229,12 @@
 - **목적:** 브랜드 기믹이 곧 제품 설명("숨은 취향의 발견")임을 10초 안에 체험시킨다.
 - **자격:** usable profile이 아닌 일반 first-run의 resolved introduction에서만 세션당 1회 실행한다. `?landing=1`은 항상 정적이며 marker를 읽거나 쓰거나 지우지 않는다.
 - **marker:** `sessionStorage["logoRevealed"] = "1"`. absent 확인 뒤 write/readback을 마치고 font 대기·Motion 시작·timer/listener 등록보다 먼저 marker를 소유한다. read·write·readback 중 하나라도 실패하면 reveal 없이 최종 정적 상태를 표시한다.
-- **static-first 기본값:** 고정 300/700의 최종 2톤 wordmark, `好み`와 「kono + mi = このみ」 caption, 태그라인·설명·CTA가 resolved introduction의 첫 paint부터 최종 DOM에 존재한다. CSS 기본값과 enhancement 실패 상태는 전부 최종 시각 상태다. eligible A가 시작된 뒤에도 최종 2톤 base·태그라인·설명·CTA는 숨기거나 비활성화하지 않고 caption group만 아래 시퀀스의 opacity/transform을 적용한다.
-- **오버레이 시퀀스(총 1.8초 이내, Motion A):** 최종 2톤 base 위의 별도 고정 300 ink monochrome wordmark overlay만 opacity로 합성한다. 0–400ms에는 base가 계속 보이는 상태에서 overlay opacity가 등장하고, 400–900ms에는 overlay가 1→0으로 사라져 base를 드러낸다. 900–1400ms에는 caption group만 opacity와 `translateY(8px→0)`로 나타난다. font-weight·color·layout·description·CTA는 애니메이션하지 않는다.
+- **static-first 기본값:** 고정 300/700의 최종 2톤 wordmark, 태그라인·CTA가 resolved introduction의 첫 paint부터 최종 DOM에 존재한다. 2026-10-05 사용자 결정으로 `好み`·「kono + mi = このみ」 caption과 설명 문장은 두지 않는다. CSS 기본값과 enhancement 실패 상태는 전부 최종 시각 상태다. eligible A가 시작된 뒤에도 최종 2톤 base·태그라인·CTA는 숨기거나 비활성화하지 않는다.
+- **오버레이 시퀀스(총 1.8초 이내, Motion A):** 최종 2톤 base 위의 별도 고정 300 ink monochrome wordmark overlay만 opacity로 합성한다. 0–400ms에는 base가 계속 보이는 상태에서 overlay opacity가 등장하고, 400–900ms에는 overlay가 1→0으로 사라져 base를 드러낸다. font-weight·color·layout·CTA는 애니메이션하지 않는다.
 - **태그라인 글자 등장(2026-10-01, React Bits SplitText 참고):** 같은 A 안에서 150ms부터 태그라인 글자가 45ms 간격으로 `opacity 0→1` + `translateY(0.55em→0)`, 글자당 700ms `cubic-bezier(0.2,0.7,0.2,1)`로 나타나며 전체가 1.8초 안에 끝난다. 태그라인 문구 단위 줄바꿈(`03` §1)과 레이아웃 폭은 변하지 않는다. 접근성: 태그라인 heading은 전체 문장 하나를 accessible name으로 갖고, 글자 단위 span은 `aria-hidden`이다. 스크린리더가 글자를 하나씩 읽지 않는다. resolved introduction이 처음 그려질 때부터 숨겨진 상태로 시작해야 하며, 이미 보인 글자를 다시 숨기는 깜빡임을 만들지 않는다.
 - **font:** marker를 먼저 기록한 뒤 `document.fonts.ready`를 기다린다. API가 없거나 reject하면 최종 정적 상태다.
 - **스킵·정리:** pointer/tap/click·keydown·wheel/scroll은 `preventDefault`나 전파 차단 없이 즉시 완료한다. 자연 완료·스킵·`pagehide`·unmount는 controls·timer·pending continuation과 모든 listener를 정리한다. CTA activation은 reveal을 완료하면서도 그대로 이동한다.
-- **재진입·reduced-motion:** marker가 이미 있으므로 reload/back/forward에서 재생하지 않는다. reduced-motion도 marker를 소비하고 §6의 대체 원칙을 따른다: overlay는 400ms opacity 크로스페이드만, 태그라인은 글자 분할·이동 없이 문장 전체가 300ms opacity로 나타나고, caption은 이동 없이 opacity만 쓴다. 실행 중 reduce로 바뀌면 남은 시퀀스를 즉시 완료하고 같은 session에서 다시 재생하지 않는다.
+- **재진입·reduced-motion:** marker가 이미 있으므로 reload/back/forward에서 재생하지 않는다. reduced-motion도 marker를 소비하고 §6의 대체 원칙을 따른다: overlay는 400ms opacity 크로스페이드만, 태그라인은 글자 분할·이동 없이 문장 전체가 300ms opacity로 나타난다. 실행 중 reduce로 바뀌면 남은 시퀀스를 즉시 완료하고 같은 session에서 다시 재생하지 않는다.
 
 ### 5.2 Manga DNA reveal — /taste?reveal=1
 

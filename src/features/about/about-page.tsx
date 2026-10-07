@@ -26,7 +26,7 @@ export function AboutPage() {
         <p className={paragraphClassName}>{aboutStrings.contact.description}</p>
         <a
           aria-label={aboutStrings.contact.linkLabel}
-          className="inline-flex min-h-[var(--control-min-size)] items-center justify-self-start font-bold text-accent underline-offset-4 hover:underline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-ring"
+          className="inline-flex min-h-[var(--control-min-size)] items-center justify-self-start font-bold text-accent-ink underline-offset-4 hover:underline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-ring"
           href={aboutStrings.contact.href}
           rel="noopener noreferrer"
           target="_blank"

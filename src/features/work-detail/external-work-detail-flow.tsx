@@ -57,7 +57,7 @@ function ExternalDetailMessage({
         <h1>{copy.title}</h1>
         <p>{copy.description}</p>
         <Link
-          className="inline-flex min-h-[var(--control-min-size)] items-center font-bold text-accent underline underline-offset-[var(--space-content-tight)] transition-transform duration-[var(--motion-duration-press)] active:scale-[0.97] motion-reduce:transition-none"
+          className="inline-flex min-h-[var(--control-min-size)] items-center font-bold text-accent-ink underline underline-offset-[var(--space-content-tight)] transition-transform duration-[var(--motion-duration-press)] active:scale-[0.97] motion-reduce:transition-none"
           to="/library"
         >
           {copy.library}

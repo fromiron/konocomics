@@ -314,7 +314,7 @@ function RecommendationsSkeleton() {
       <ol aria-hidden="true" className="m-0 grid list-none gap-[var(--space-4)] p-0">
         {Array.from({ length: 10 }, (_, index) => (
           <li
-            className="grid min-h-[calc(var(--recommendation-cover-width)*1.43)] grid-cols-[var(--recommendation-cover-width)_minmax(0,1fr)] gap-[var(--space-4)] rounded-[var(--radius-card)] border border-line bg-surface-1 p-[var(--space-4)]"
+            className="grid min-h-[calc(var(--recommendation-cover-width)*1.43)] grid-cols-[var(--recommendation-cover-width)_minmax(0,1fr)] gap-[var(--space-4)] rounded-[var(--radius-media-card)] border border-line bg-surface-1 p-[var(--space-4)]"
             key={index}
           >
             <span
@@ -1438,7 +1438,7 @@ export function RecommendationsFlow({
             ) : showInitialError ? (
               <FeaturedRecommendationState>
                 <section
-                  className="grid gap-[var(--space-3)] rounded-[var(--radius-card)] border border-line bg-surface-1 p-[var(--space-6)]"
+                  className="grid gap-[var(--space-3)] rounded-[var(--radius-card)] bg-surface-1 p-[var(--space-6)]"
                   role="alert"
                 >
                   <h2>{recommendationStrings.errors.calculation}</h2>
@@ -1460,7 +1460,7 @@ export function RecommendationsFlow({
             ) : renderedEntries.length === 0 && mood !== null ? (
               <FeaturedRecommendationState>
                 <section
-                  className="grid justify-items-start gap-[var(--space-3)] rounded-[var(--radius-card)] border border-line bg-surface-1 p-[var(--space-6)]"
+                  className="grid justify-items-start gap-[var(--space-3)] rounded-[var(--radius-card)] bg-surface-1 p-[var(--space-6)]"
                   data-recommendation-mood-empty
                 >
                   <h2>{recommendationStrings.mood.empty.title}</h2>
@@ -1472,11 +1472,11 @@ export function RecommendationsFlow({
               </FeaturedRecommendationState>
             ) : renderedEntries.length === 0 ? (
               <FeaturedRecommendationState>
-                <section className="grid justify-items-start gap-[var(--space-3)] rounded-[var(--radius-card)] border border-line bg-surface-1 p-[var(--space-6)]">
+                <section className="grid justify-items-start gap-[var(--space-3)] rounded-[var(--radius-card)] bg-surface-1 p-[var(--space-6)]">
                   <h2>{recommendationStrings.empty.title}</h2>
                   <p>{recommendationStrings.empty.description}</p>
                   <Link
-                    className="inline-flex min-h-[var(--control-min-size)] items-center font-bold text-accent underline underline-offset-[var(--space-content-tight)] transition-transform duration-[var(--motion-duration-press)] active:scale-[0.97] motion-reduce:transform-none motion-reduce:transition-none"
+                    className="inline-flex min-h-[var(--control-min-size)] items-center font-bold text-accent-ink underline underline-offset-[var(--space-content-tight)] transition-transform duration-[var(--motion-duration-press)] active:scale-[0.97] motion-reduce:transform-none motion-reduce:transition-none"
                     preload={false}
                     to="/taste"
                   >
@@ -1486,7 +1486,7 @@ export function RecommendationsFlow({
               </FeaturedRecommendationState>
             ) : recommendationItems.length === 0 ? (
               <FeaturedRecommendationState>
-                <p className="rounded-[var(--radius-card)] border border-line p-[var(--space-5)] text-text-muted">
+                <p className="rounded-[var(--radius-card)] p-[var(--space-5)] text-text-muted">
                   {recommendationStrings.filters.empty}
                 </p>
               </FeaturedRecommendationState>
@@ -1545,14 +1545,14 @@ export function RecommendationsFlow({
                       </p>
                       <div className="flex flex-nowrap items-center gap-x-[var(--space-4)]">
                         <Link
-                          className="inline-flex min-h-[var(--control-min-size)] shrink-0 items-center font-bold text-accent underline underline-offset-[var(--space-content-tight)] transition-transform duration-[var(--motion-duration-press)] active:scale-[0.97] motion-reduce:transform-none motion-reduce:transition-none"
+                          className="inline-flex min-h-[var(--control-min-size)] shrink-0 items-center font-bold text-accent-ink underline underline-offset-[var(--space-content-tight)] transition-transform duration-[var(--motion-duration-press)] active:scale-[0.97] motion-reduce:transform-none motion-reduce:transition-none"
                           preload={false}
                           to="/onboarding"
                         >
                           {recommendationStrings.shortage.addWorks}
                         </Link>
                         <Link
-                          className="inline-flex min-h-[var(--control-min-size)] shrink-0 items-center font-bold text-accent underline underline-offset-[var(--space-content-tight)] transition-transform duration-[var(--motion-duration-press)] active:scale-[0.97] motion-reduce:transform-none motion-reduce:transition-none"
+                          className="inline-flex min-h-[var(--control-min-size)] shrink-0 items-center font-bold text-accent-ink underline underline-offset-[var(--space-content-tight)] transition-transform duration-[var(--motion-duration-press)] active:scale-[0.97] motion-reduce:transform-none motion-reduce:transition-none"
                           preload={false}
                           to="/taste"
                         >
@@ -1564,7 +1564,7 @@ export function RecommendationsFlow({
                 ) : null}
                 {moodLabel !== null && renderedEntries.length < 10 ? (
                   <div
-                    className="mt-[var(--space-4)] flex flex-wrap items-center justify-between gap-x-[var(--space-4)] gap-y-[var(--space-2)] rounded-[var(--radius-card)] border border-line bg-surface-1 px-[var(--space-4)] py-[var(--space-3)]"
+                    className="mt-[var(--space-4)] flex flex-wrap items-center justify-between gap-x-[var(--space-4)] gap-y-[var(--space-2)] rounded-[var(--radius-card)] bg-surface-1 px-[var(--space-4)] py-[var(--space-3)]"
                     data-recommendation-mood-shortage
                   >
                     <p className="text-[length:var(--font-size-14)] text-text">

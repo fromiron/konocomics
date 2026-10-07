@@ -6,7 +6,7 @@ import { afterEach, describe, expect, it, vi } from "vitest";
 
 import { MediaPosterCard } from "@/components/media/media-poster-card";
 import { RankingCard } from "@/components/media/ranking-card";
-import { HomeDiscoveryShelf, HomeRankingShelf } from "@/features/landing/home-showcase";
+import { HomeDiscoveryBloom, HomeRankingBloom } from "@/features/landing/home-bloom-grid";
 import { landingStrings } from "@/lib/strings";
 
 vi.mock("@tanstack/react-router", () => ({
@@ -273,24 +273,18 @@ describe("media card anatomy", () => {
 
     render(
       <>
-        <HomeRankingShelf coverUrls={coverUrls} works={works} />
-        <HomeDiscoveryShelf coverUrls={coverUrls} works={works} />
+        <HomeRankingBloom coverUrls={coverUrls} works={works} />
+        <HomeDiscoveryBloom coverUrls={coverUrls} works={works} />
       </>,
     );
 
     const ranking = screen.getByRole("list", { name: landingStrings.ranking.title });
-    const discovery = screen
-      .getByRole("heading", { name: landingStrings.discovery.title })
-      .closest("section")
-      ?.querySelector<HTMLElement>("[data-media-shelf-track]");
-    expect(discovery).toBeTruthy();
-    if (discovery === null || discovery === undefined) return;
+    const discovery = screen.getByRole("list", { name: landingStrings.discovery.title });
+    expect(ranking.tagName).toBe("OL");
+    expect(discovery.tagName).toBe("UL");
     expect(within(ranking).getByText("アクション +2")).toBeTruthy();
     expect(within(discovery).getByText("アクション ほか2 · 完結")).toBeTruthy();
-    expect(ranking.querySelector('[data-media-meta-line="true"]')).toBeNull();
-    expect(discovery.querySelector('[data-media-meta-line="true"]')).toBeTruthy();
-    expect(ranking.querySelector(".lucide-circle")).toBeNull();
-    expect(discovery.querySelector(".lucide-book-open")).toBeNull();
+    expect(within(ranking).getByRole("link").getAttribute("aria-label")).toMatch(/^おすすめ1位/u);
     expect(within(ranking).getByRole("link").getAttribute("aria-label")).toContain(
       "ジャンル アクション、ファンタジー、ホラー。刊行状況 完結",
     );

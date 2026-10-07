@@ -65,7 +65,7 @@ export function NegativeSummaryPanel({
     >
       <div className="col-span-full flex items-baseline justify-between gap-[var(--space-4)]">
         <strong className="text-text-strong">{copy.panel.title}</strong>
-        <span className="text-[length:var(--text-caption-size)] font-bold text-accent">
+        <span className="text-[length:var(--text-caption-size)] font-bold text-accent-ink">
           {onboardingStrings.step1.selectedCount(entries.length, ONBOARDING_MAX_NEGATIVE_WORKS)}
           <span aria-hidden="true" className="font-medium text-text-muted md:hidden">
             {` ・ ${clarity.levelLabel}`}
@@ -76,7 +76,7 @@ export function NegativeSummaryPanel({
       <ClarityMeter clarity={clarity} />
 
       {visibleEntries.length === 0 ? (
-        <p className="col-span-full hidden rounded-[var(--radius-card)] border border-dashed border-line bg-surface-2 p-[var(--space-4)] text-[length:var(--text-caption-size)] leading-[1.8] text-text-muted md:block">
+        <p className="col-span-full hidden border-t border-line pt-[var(--space-4)] text-[length:var(--text-caption-size)] leading-[1.8] text-text-muted md:block">
           {copy.panel.empty}
         </p>
       ) : (

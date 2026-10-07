@@ -1,5 +1,7 @@
 "use client";
 
+import { BanIcon, StarIcon, ThumbsDownIcon } from "lucide-react";
+
 import { CoverImage } from "@/components/cover/CoverImage";
 import { Button } from "@/components/design-system/button";
 import type { Work } from "@/domain/catalog/types";
@@ -115,31 +117,76 @@ function CreatorLine({ row }: Readonly<{ row: LibraryRow }>) {
   );
 }
 
+/**
+ * The card's status line: reading state and reaction joined on one quiet line, leaving out
+ * whatever the cover stamp already says (the stamp carries "いまいち", "途中でやめた", "興味なし"
+ * and "最高").
+ */
 function RowBadges({ row, showState }: Readonly<{ row: LibraryRow; showState: boolean }>) {
+  const stamp = recordStamp(row);
+  const { reaction, readingState } = row.record;
+  const parts = [
+    showState && stamp?.part !== "state" ? libraryStrings.tabs[readingState] : undefined,
+    reaction !== undefined && stamp?.part !== "reaction"
+      ? libraryStrings.reactions[reaction]
+      : undefined,
+  ].filter((part) => part !== undefined);
+  const badge =
+    row.kind === "external"
+      ? libraryStrings.externalBadge
+      : row.kind === "catalog-missing"
+        ? libraryStrings.catalogMissing.badge
+        : undefined;
+  if (parts.length === 0 && badge === undefined) return null;
   return (
-    <span className="flex min-w-0 flex-wrap gap-[var(--space-content-tight)] text-[length:var(--text-caption-size)]">
-      {showState ? (
-        <span className="text-text">{libraryStrings.tabs[row.record.readingState]}</span>
-      ) : null}
-      {row.record.reaction === undefined ? null : (
-        <span
-          className={
-            row.record.reaction === "favorite" ? "font-bold text-accent" : "text-text-muted"
-          }
-        >
-          {libraryStrings.reactions[row.record.reaction]}
-        </span>
+    <span className="flex min-w-0 flex-wrap items-center gap-[var(--space-content-tight)] text-[length:var(--text-caption-size)] text-text-muted">
+      {parts.length === 0 ? null : <span>{parts.join("・")}</span>}
+      {badge === undefined ? null : (
+        <span className="bg-surface-2 px-[var(--space-2)] py-[var(--space-1)]">{badge}</span>
       )}
-      {row.kind === "external" ? (
-        <span className="rounded-[var(--radius-pill)] border border-line px-[var(--space-2)] py-[var(--space-1)] text-text-muted">
-          {libraryStrings.externalBadge}
-        </span>
-      ) : null}
-      {row.kind === "catalog-missing" ? (
-        <span className="rounded-[var(--radius-pill)] border border-line px-[var(--space-2)] py-[var(--space-1)] text-text-muted">
-          {libraryStrings.catalogMissing.badge}
-        </span>
-      ) : null}
+    </span>
+  );
+}
+
+/**
+ * How a record reads at a glance: a disliked, dropped or hidden work is "negative" (its cover is
+ * dimmed, since it now counts against similar recommendations), a favourite is "favorite".
+ */
+function recordTone(row: LibraryRow): "negative" | "favorite" | undefined {
+  const { reaction, readingState } = row.record;
+  if (reaction === "disliked" || readingState === "dropped" || readingState === "hidden") {
+    return "negative";
+  }
+  return reaction === "favorite" ? "favorite" : undefined;
+}
+
+/** What the cover stamp says, if anything, and which part of the record it stands for. */
+function recordStamp(row: LibraryRow) {
+  const { reaction, readingState } = row.record;
+  if (reaction === "disliked") {
+    return {
+      part: "reaction",
+      Icon: ThumbsDownIcon,
+      label: libraryStrings.reactions.disliked,
+    } as const;
+  }
+  if (readingState === "dropped" || readingState === "hidden") {
+    return { part: "state", Icon: BanIcon, label: libraryStrings.tabs[readingState] } as const;
+  }
+  if (reaction === "favorite") {
+    return { part: "reaction", Icon: StarIcon, label: libraryStrings.reactions.favorite } as const;
+  }
+  return undefined;
+}
+
+/** A stamp on the cover naming why the record stands out. */
+function RecordStamp({ row }: Readonly<{ row: LibraryRow }>) {
+  const stamp = recordStamp(row);
+  if (stamp === undefined) return null;
+  return (
+    <span aria-hidden="true" className="library-card__stamp">
+      <stamp.Icon className="size-3.5 shrink-0" />
+      {stamp.label}
     </span>
   );
 }
@@ -177,7 +224,7 @@ function ProgressDisplay({
         <progress
           aria-label={libraryStrings.editor.progress}
           aria-valuetext={label}
-          className="h-[var(--space-content-tight)] w-full overflow-hidden rounded-[var(--radius-pill)] border-0 bg-surface-3 text-accent [&::-moz-progress-bar]:bg-accent [&::-webkit-progress-bar]:bg-surface-3 [&::-webkit-progress-value]:bg-accent"
+          className="h-[var(--space-content-tight)] w-full overflow-hidden rounded-[var(--radius-pill)] border-0 bg-surface-3 text-accent-ink [&::-moz-progress-bar]:bg-accent [&::-webkit-progress-bar]:bg-surface-3 [&::-webkit-progress-value]:bg-accent"
           max={total}
           value={Math.min(volume, total)}
         />
@@ -215,19 +262,22 @@ export function LibraryStateCard({
       <Button
         aria-label={rowOpenLabel(row)}
         className={cn(
-          "group/card !grid h-full min-h-[var(--control-min-size)] w-full items-start justify-stretch gap-[var(--space-2)] rounded-[var(--radius-card)] border border-transparent bg-transparent p-[var(--space-2)] text-start whitespace-normal text-text transition-colors duration-[var(--motion-duration-value)] ease-[var(--motion-ease-direct)] focus-within:bg-surface-2 motion-reduce:transition-none [@media(hover:hover)_and_(pointer:fine)]:hover:bg-surface-2",
+          "group/card !grid h-full min-h-[var(--control-min-size)] w-full items-start justify-stretch gap-[var(--space-2)] rounded-[var(--radius-media-card)] border border-transparent bg-transparent p-[var(--space-2)] text-start whitespace-normal text-text transition-colors duration-[var(--motion-duration-value)] ease-[var(--motion-ease-direct)] focus-within:bg-surface-2 motion-reduce:transition-none [@media(hover:hover)_and_(pointer:fine)]:hover:bg-surface-2",
           view === "list" ? "grid-cols-[calc(var(--space-8)*2)_minmax(0,1fr)]" : "content-start",
         )}
         onClick={(event) => onOpen(event.currentTarget, row)}
         type="button"
         variant="ghost"
       >
-        <RowMedia
-          catalogCoverUrls={catalogCoverUrls}
-          className="aspect-[30/43] w-full overflow-hidden rounded-[var(--radius-cover)] border border-line/60"
-          onCoverVisible={onCoverVisible}
-          row={row}
-        />
+        <span className="library-card__cover" data-tone={recordTone(row)}>
+          <RowMedia
+            catalogCoverUrls={catalogCoverUrls}
+            className="aspect-[30/43] w-full overflow-hidden rounded-[var(--radius-cover)] border border-line/60"
+            onCoverVisible={onCoverVisible}
+            row={row}
+          />
+          <RecordStamp row={row} />
+        </span>
         <span className="grid min-w-0 content-start gap-[var(--space-content-tight)]">
           <strong className="line-clamp-2 text-[length:var(--font-size-14)] leading-tight [overflow-wrap:anywhere] text-text-strong">
             {rowTitle(row)}

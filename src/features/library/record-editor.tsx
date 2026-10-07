@@ -1,10 +1,10 @@
 "use client";
 
-import { type FormEvent, useState } from "react";
+import { type FormEvent, type ReactNode, useState } from "react";
 
 import { Button } from "@/components/design-system/button";
+import { ChoiceChipRadio, ChoiceChipRadioGroup } from "@/components/design-system/choice-chip";
 import { Input } from "@/components/design-system/input";
-import { NativeSelect } from "@/components/design-system/native-select";
 import { FACTOR_BACKED_NEGATIVE_REASON_IDS } from "@/domain/profile/constants";
 import { READING_STATES } from "@/domain/profile/reading-state";
 import type {
@@ -16,6 +16,8 @@ import type {
 import { libraryStrings } from "@/lib/strings";
 
 const REACTIONS = ["favorite", "liked", "neutral", "disliked"] as const;
+/** The "no reaction" choice in the reaction group; never stored. */
+const NO_REACTION = "none";
 const REASON_OPTIONS: ReadonlyArray<Readonly<{ id: NegativeReasonId; label: string }>> = [
   ...FACTOR_BACKED_NEGATIVE_REASON_IDS.map((id) => ({
     id,
@@ -34,10 +36,6 @@ function optionalInteger(value: string) {
 
 function isReadingState(value: string): value is ReadingState {
   return READING_STATES.some((state) => state === value);
-}
-
-function isReaction(value: string): value is Reaction {
-  return REACTIONS.some((reaction) => reaction === value);
 }
 
 function editableValues(record: UserWorkRecord) {
@@ -85,19 +83,16 @@ function ReasonPicker({
 }: ReasonPickerProps) {
   const hasExternalReason = reasons.some((reason) => reason.startsWith("external:"));
   return (
-    <fieldset
-      aria-describedby={descriptionId}
-      className="m-0 grid gap-[var(--space-content)] border-0 p-0"
-    >
-      <legend className="mb-[var(--space-content)] font-bold text-text-strong">{legend}</legend>
-      <p className="text-text-muted" id={descriptionId}>
+    <fieldset aria-describedby={descriptionId} className="library-editor__group">
+      <legend className="library-editor__legend">{legend}</legend>
+      <p className="text-[length:var(--text-caption-size)] text-text-muted" id={descriptionId}>
         {libraryStrings.editor.reasonOptional}
       </p>
       <div className="flex flex-wrap gap-[var(--space-content)]" role="group">
         {REASON_OPTIONS.map((option) => (
           <Button
             aria-pressed={reasons.includes(option.id)}
-            className="aria-pressed:border-accent aria-pressed:bg-accent-soft aria-pressed:text-accent"
+            className="aria-pressed:border-accent aria-pressed:bg-accent aria-pressed:text-on-accent"
             key={option.id}
             onClick={() => {
               const next = toggleReason(reasons, otherReasons, option.id);
@@ -124,13 +119,21 @@ type LibraryRecordEditorProps = Readonly<{
   isNewRecord?: boolean;
   onSave(record: UserWorkRecord): Promise<void>;
   record: UserWorkRecord;
+  /** Save feedback shown beside the save button in the sticky action bar. */
+  status?: ReactNode;
 }>;
 
+/**
+ * The reading record form: state and reaction as visible choices (one tap each), optional
+ * progress, the reasons a negative choice asks for, and the save action in a bar that stays at
+ * the foot of the dialog while the form scrolls.
+ */
 export function LibraryRecordEditor({
   busy,
   isNewRecord = false,
   onSave,
   record,
+  status,
 }: LibraryRecordEditorProps) {
   const [readingState, setReadingState] = useState<ReadingState>(record.readingState);
   const [reaction, setReaction] = useState<Reaction | "">(record.reaction ?? "");
@@ -186,52 +189,49 @@ export function LibraryRecordEditor({
   };
 
   return (
-    <form
-      aria-busy={busy}
-      className="grid gap-[var(--space-5)] border-t border-line pt-[var(--space-5)]"
-      onSubmit={submit}
-    >
-      <h3>{libraryStrings.editor.heading}</h3>
-      <div className="grid gap-[var(--space-3)] md:grid-cols-2">
-        <label className="grid gap-[var(--space-content-tight)] text-[length:var(--text-caption-size)] font-bold text-text-muted">
-          <span>{libraryStrings.editor.readingState}</span>
-          <NativeSelect
-            disabled={busy}
-            onChange={(event) => {
-              if (isReadingState(event.currentTarget.value)) {
-                setReadingState(event.currentTarget.value);
-              }
-            }}
-            value={readingState}
-          >
-            {READING_STATES.map((state) => (
-              <option key={state} value={state}>
-                {libraryStrings.tabs[state]}
-              </option>
-            ))}
-          </NativeSelect>
-        </label>
-        <label className="grid gap-[var(--space-content-tight)] text-[length:var(--text-caption-size)] font-bold text-text-muted">
-          <span>{libraryStrings.editor.reaction}</span>
-          <NativeSelect
-            disabled={busy}
-            onChange={(event) => {
-              const value = event.currentTarget.value;
-              if (value === "" || isReaction(value)) setReaction(value);
-            }}
-            value={reaction}
-          >
-            <option value="">{libraryStrings.editor.reactionPrompt}</option>
-            {REACTIONS.map((entry) => (
-              <option key={entry} value={entry}>
-                {libraryStrings.reactions[entry]}
-              </option>
-            ))}
-          </NativeSelect>
-        </label>
-      </div>
+    <form aria-busy={busy} className="library-editor" onSubmit={submit}>
+      <h3 className="sr-only">{libraryStrings.editor.heading}</h3>
+      <fieldset className="library-editor__group">
+        <legend className="library-editor__legend">{libraryStrings.editor.readingState}</legend>
+        <ChoiceChipRadioGroup<ReadingState>
+          aria-label={libraryStrings.editor.readingState}
+          disabled={busy}
+          onValueChange={(value) => {
+            if (isReadingState(value)) setReadingState(value);
+          }}
+          value={readingState}
+        >
+          {READING_STATES.map((state) => (
+            <ChoiceChipRadio key={state} value={state}>
+              {libraryStrings.tabs[state]}
+            </ChoiceChipRadio>
+          ))}
+        </ChoiceChipRadioGroup>
+      </fieldset>
+      <fieldset className="library-editor__group">
+        <legend className="library-editor__legend">{libraryStrings.editor.reaction}</legend>
+        <ChoiceChipRadioGroup<Reaction | typeof NO_REACTION>
+          aria-label={libraryStrings.editor.reaction}
+          disabled={busy}
+          onValueChange={(value) => setReaction(value === NO_REACTION ? "" : value)}
+          value={reaction === "" ? NO_REACTION : reaction}
+        >
+          {REACTIONS.map((entry) => (
+            <ChoiceChipRadio
+              key={entry}
+              value={entry}
+              variant={entry === "disliked" ? "danger" : "default"}
+            >
+              {libraryStrings.reactions[entry]}
+            </ChoiceChipRadio>
+          ))}
+          <ChoiceChipRadio chipClassName="library-editor__none" value={NO_REACTION}>
+            {libraryStrings.editor.reactionPrompt}
+          </ChoiceChipRadio>
+        </ChoiceChipRadioGroup>
+      </fieldset>
       <details open={progressOpen} onToggle={(event) => setProgressOpen(event.currentTarget.open)}>
-        <summary className="min-h-[var(--control-min-size)] cursor-pointer content-center rounded-[var(--radius-control)] font-bold text-text-strong focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-focus-ring">
+        <summary className="library-editor__legend min-h-[var(--control-min-size)] cursor-pointer content-center focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-focus-ring">
           {libraryStrings.editor.progressOptional}
         </summary>
         <fieldset
@@ -288,13 +288,12 @@ export function LibraryRecordEditor({
           }}
         />
       ) : null}
-      <Button
-        className="justify-self-start"
-        disabled={busy || (!isNewRecord && !hasChanges)}
-        type="submit"
-      >
-        {busy ? libraryStrings.editor.saving : libraryStrings.editor.save}
-      </Button>
+      <div className="library-editor__actions">
+        <div className="library-editor__status">{status}</div>
+        <Button disabled={busy || (!isNewRecord && !hasChanges)} type="submit">
+          {busy ? libraryStrings.editor.saving : libraryStrings.editor.save}
+        </Button>
+      </div>
     </form>
   );
 }

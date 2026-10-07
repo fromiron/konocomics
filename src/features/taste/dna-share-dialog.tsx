@@ -191,10 +191,10 @@ function DnaShareDialogBody({
         </DialogHeader>
 
         {link === null ? (
-          <div className="grid justify-items-start gap-[var(--space-4)] rounded-[var(--radius-card)] border border-line bg-surface-2 p-[var(--space-5)]">
+          <div className="grid justify-items-start gap-[var(--space-4)] rounded-[var(--radius-card)] bg-surface-2 p-[var(--space-5)]">
             <p className="text-text">{strings.empty}</p>
             <Link
-              className="inline-flex min-h-[var(--control-min-size)] items-center font-bold text-accent underline-offset-4 hover:underline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-ring"
+              className="inline-flex min-h-[var(--control-min-size)] items-center font-bold text-accent-ink underline-offset-4 hover:underline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-ring"
               onClick={onClose}
               preload={false}
               to="/onboarding"
@@ -206,7 +206,7 @@ function DnaShareDialogBody({
           <div className="grid gap-[var(--space-6)] md:grid-cols-[minmax(0,1fr)_minmax(0,1fr)] md:items-start md:gap-[var(--space-8)]">
             <section
               aria-labelledby={previewHeadingId}
-              className="grid gap-[var(--space-3)] rounded-[var(--radius-card)] border border-line bg-surface-2 p-[var(--space-5)]"
+              className="grid gap-[var(--space-3)] rounded-[var(--radius-card)] bg-surface-2 p-[var(--space-5)]"
             >
               <h3
                 className="text-[length:var(--text-caption-size)] font-bold text-text-muted"
@@ -220,7 +220,7 @@ function DnaShareDialogBody({
                   return axis === undefined ? null : (
                     <span key={axis.axisId}>
                       {index === 0 ? null : (
-                        <span className="px-[var(--space-2)] text-accent">×</span>
+                        <span className="px-[var(--space-2)] text-accent-ink">×</span>
                       )}
                       {explanationLexicon.factorLabels[axis.axisId]}
                     </span>
@@ -323,7 +323,7 @@ function DnaShareDialogBody({
                       {strings.linkLabel}
                     </label>
                     <input
-                      className="min-h-[var(--control-min-size)] w-full rounded-[var(--radius-control)] border border-line bg-surface-2 px-[var(--space-3)] text-[length:var(--font-size-14)] text-text focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-ring"
+                      className="min-h-[var(--control-min-size)] w-full rounded-[var(--radius-control)] border-0 border-b border-text-muted bg-surface-2 px-[var(--space-3)] text-[length:var(--font-size-14)] text-text focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-ring"
                       id={linkInputId}
                       onFocus={(event) => event.currentTarget.select()}
                       readOnly

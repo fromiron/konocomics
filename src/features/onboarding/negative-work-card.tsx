@@ -31,6 +31,10 @@ type NegativeWorkCardProps = Readonly<{
   onAdd: (workId: string, disposition: NegativeDisposition) => void;
 }>;
 
+/**
+ * A step-2 candidate drawn like the step-1 cover cards: the cover with its title over a scrim,
+ * then the two dispositions to choose from (or why it cannot be chosen).
+ */
 export function NegativeWorkCard({
   work,
   coverUrl,
@@ -43,41 +47,38 @@ export function NegativeWorkCard({
 }: NegativeWorkCardProps) {
   const unavailable = isPositive || isSelected;
   const dispositionName = `negative-result-disposition-${work.id}`;
+  const hasRemoteCover = (coverUrl?.trim() ?? "") !== "";
 
   return (
-    <article
-      className="negative-result-card grid grid-cols-[var(--space-12)_minmax(0,1fr)] items-center gap-x-[var(--space-3)] gap-y-[var(--space-content)] rounded-[var(--radius-card)] border border-line bg-surface-1 p-[var(--space-3)] data-[disabled]:opacity-65 sm:grid-cols-[var(--space-12)_minmax(0,1fr)_auto]"
-      data-disabled={unavailable || undefined}
-    >
-      <CoverImage
-        className="row-span-2 sm:row-span-1"
-        coverUrl={coverUrl}
-        creators={work.creators}
-        onVisible={onCoverVisible}
-        requestedSize={200}
-        title={work.title}
-      />
-      <div className="grid min-w-0 gap-[var(--space-content-tight)]">
-        <h3 className="line-clamp-2 text-[length:var(--font-size-14)] font-bold text-text-strong">
-          {work.title}
-        </h3>
-        <p className="truncate text-[length:var(--text-caption-size)] text-text-muted">
-          {work.creators.join("・")}
-        </p>
-      </div>
+    <article className="negative-result-card" data-disabled={unavailable || undefined}>
+      <span className="negative-result-card__cover">
+        <CoverImage
+          coverUrl={coverUrl}
+          creators={work.creators}
+          onVisible={onCoverVisible}
+          requestedSize={400}
+          title={work.title}
+        />
+        {/* Without a cover the placeholder already shows the title; the heading stays for
+            screen readers. */}
+        <span className={hasRemoteCover ? "negative-result-card__identity" : "sr-only"}>
+          <h3 className="negative-result-card__title">{work.title}</h3>
+          <span className="negative-result-card__creators">{work.creators.join("・")}</span>
+        </span>
+      </span>
       {unavailable ? (
-        <span className="negative-result-card__badge col-start-2 w-fit rounded-[var(--radius-pill)] border border-line px-[var(--space-2)] py-[var(--space-1)] text-[length:var(--text-caption-size)] font-bold text-text-muted sm:col-start-3">
+        <span className="negative-result-card__badge">
           {isPositive ? labels.selectedPositive : labels.selectedNegative}
         </span>
       ) : (
         <fieldset
           aria-label={`${work.title} — ${labels.disposition}`}
-          className="negative-entry__disposition negative-result-card__disposition col-start-2 m-0 min-w-0 border-0 p-0 sm:col-start-3"
+          className="negative-entry__disposition negative-result-card__disposition"
         >
           <legend className="sr-only">{labels.disposition}</legend>
           <ChoiceChipRadioGroup<NegativeDisposition | "">
             aria-label={`${work.title} — ${labels.disposition}`}
-            className="w-auto"
+            className="negative-result-card__choices"
             disabled={disabled}
             name={dispositionName}
             onValueChange={(disposition) => {

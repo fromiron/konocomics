@@ -13,9 +13,9 @@
 
 ### 구조
 
-- `>=768px`: dark 상단 GNB만 표시한다. 좌측 로고(**kono**co**mi**cs), 우측 `おすすめ`(/recommendations), `DNA`(/taste), `ライブラリ`(/library), `設定`(/settings)을 둔다.
-- `<768px`: post-onboarding route에서 하단 탭 바 4개만 표시한다. 높이 64px, 아이콘+레이블, 터치 타깃 ≥44×44다. `/`와 `/onboarding`은 immersive route라 bottom navigation을 표시하지 않는다.
-- post-onboarding 모바일 footer는 Discover/Understand/Manage 라우트 그룹 없이 local-first 1줄과 `Supported by Rakuten Developers`만 둔다. immersive `/`·`/onboarding` 모바일 footer는 같은 두 줄에 設定 링크를 더한다. `>=768px` footer sitemap은 유지한다. 2026-10-01 사용자 결정: 모든 크기의 footer는 크레디트 아래에 「このサイトについて」(/about) 링크와 `© 2026 Konocomics`를 한 줄로 둔다.
+- `>=768px`: dark 상단 GNB만 표시한다. 좌측 로고(**kono**co**mi**cs), 우측 `おすすめ`(/recommendations), `DNA`(/taste), `ライブラリ`(/library), `設定`(/settings)을 둔다. 2026-10-07 사용자 결정(홈과 같은 디자인 언어): 띠는 페이지와 같은 먹 바탕에 종이색 1px 하단 괘선이고, 로고는 홈 마스트헤드와 같은 촘촘한 워드마크(32px)다. 현재 위치는 앰버 블록(먹 글자)과 `aria-current="page"`로 표시한다. 높이는 64px를 유지한다.
+- `<768px`: post-onboarding route에서 하단 탭 바 4개만 표시한다. 높이 64px, 아이콘+레이블, 터치 타깃 ≥44×44다. 먹 바탕에 종이색 상단 괘선이고 현재 탭은 안쪽으로 들인 앰버 블록이다. `/`와 `/onboarding`은 immersive route라 bottom navigation을 표시하지 않는다.
+- post-onboarding 모바일 footer는 Discover/Understand/Manage 라우트 그룹 없이 local-first 1줄과 `Supported by Rakuten Developers`만 둔다. immersive `/`·`/onboarding` 모바일 footer는 같은 두 줄에 設定 링크를 더한다. `>=768px` footer sitemap은 유지한다. 2026-10-01 사용자 결정: 모든 크기의 footer는 크레디트 아래에 「このサイトについて」(/about) 링크와 `© 2026 Konocomics`를 한 줄로 둔다. 2026-10-07 사용자 결정: footer는 만화 단행본의 판권면(奥付)처럼 먹 바탕에 열마다 굵은 종이색 괘선을 두고, 맨 아래에 본문 폭의 워드마크를 아래 가장자리에서 잘리게 둔다.
 - 두 navigation은 CSS media query로 상호 배타적으로 숨기며 숨겨진 쪽은 accessibility tree에도 남기지 않는다. 로그인·계정·아바타·알림 control은 없다. Global Search는 실제 dialog/sheet 기능이 연결된 경우에만 표시한다.
 - Catalog 상세 `/works/[workId]`와 고정 external 상세 `/works/external?workId=<ExternalWorkId>`는 탭 바를 유지한 채 스택처럼 열린다. 뒤로가기는 브라우저 history다.
 - 2026-09-11 사용자 지시에 따라 전역 document scroll container는 `scrollbar-gutter: stable`로 스크롤바 자리를 확보한다. 필터·페이지 이동으로 세로 스크롤바가 생기거나 사라져도 본문 가로 폭·중앙 정렬은 유지한다. overlay scrollbar 환경에는 불필요한 별도 여백을 더하지 않는다.
@@ -72,8 +72,8 @@ CTA **「好きなマンガから始める」** → /onboarding. 행동은 이 �
 
 2026-09-29 사용자 요청 개선: 기능을 설명하는 대신 실제 제품 결과를 보여 준다. 같은 작품·같은 문구를 반복하지 않고, 스크롤 한 화면에 한 가지 메시지만 둔다(제안 → 작동 방식 → 둘러보기 → 시작).
 
-1. **Hero:** 왼쪽은 2톤 로고 reveal(`好み` 캡션 포함) → 태그라인 「好みから見つける、次のマンガ。」 → 한 문장 설명 → CTA → 한 줄 신뢰 문구(「登録なし · {N}作品から提案 · データはこの端末だけに保存」)다. 이전 아이브로는 두지 않는다. 태그라인은 「好みから見つける、」「次のマンガ。」 문구 단위로만 줄바꿈하고, 설명은 `word-break: auto-phrase`를 쓴다. `{N}`은 빌드 시 `recommendationEligible` 작품 수다.
-   오른쪽은 **「例」 추천 카드**다. 고정 샘플 프로필(`src/data/landing-showcase.ts`의 `landingSampleProfile`, 5작품)을 `pnpm catalog:build`에서 기존 `rankRecommendations`로 계산하고, 결과 중 editorial Top 10과 샘플 작품 밖의 최상위 작품 하나를 보여 준다. 순위 숫자는 붙이지 않는다. 표지(원본 비율)·제목·작가, 저장한 `contributions[]`에서 `generateTasteExplanation`으로 만든 lead reason, 나머지 이유의 factor 레이블, 근거 anchor 표지를 표시한다. 카드 위에 「例：『{anchor1}』『{anchor2}』などが好きな場合」를 두어 개인 결과가 아닌 예시임을 밝힌다. hero backdrop은 이 카드 표지와 같은 URL이다.
+1. **Hero(2026-10-05 사용자 결정 개정):** 큰 2톤 워드마크(마스트헤드) 아래의 만화 한 페이지다. 일본 만화의 읽기 순서(오른쪽 위 → 왼쪽 아래)와 컷 나누기(단 사이 간격은 넓게, 단 안은 좁게, 단마다 세로 경계를 어긋나게)를 따른다. 위 단은 오른쪽의 내레이션 컷(흰 바탕·먹선, 태그라인 「好みから見つける、次のマンガ。」 세로쓰기, h1)과 왼쪽의 모션 그림 컷(장면 컷 `1536×830`)이다. 아래 단은 오른쪽의 효과음 컷(흰 바탕·먹선, 장면별 「ドンッ!!!」·「ドキッ..!」, 컷 가장자리에서 살짝 잘림)과 왼쪽 CTA 컷이며 둘 사이는 사선이다. CTA 컷은 컷 전체가 하나의 CTA 링크이고 그 아래에 한 줄 신뢰 문구 「登録なし · {N}作品から提案 · データはこの端末だけに保存」를 둔다. 로고의 `好み` 캡션, 한 문장 설명, 히어로 안의 「例」 추천 카드는 두지 않는다. 이전 아이브로도 두지 않는다. 태그라인은 「好みから見つける、」「次のマンガ。」 문구 단위로만 줄바꿈한다. `{N}`은 빌드 시 `recommendationEligible` 작품 수다. 구도·모션 상세는 `redesign/home-hero-motion-plan.md`가 정한다.
+   고정 샘플 프로필(`src/data/landing-showcase.ts`의 `landingSampleProfile`, 5작품)의 「例」 추천은 사용법 세 번째 장면에서 보여 준다. `pnpm catalog:build`에서 기존 `rankRecommendations`로 계산한 결과 중 editorial Top 10과 샘플 작품 밖의 최상위 작품 하나이며, 순위 숫자 없이 표지(원본 비율)·제목·작가, `contributions[]`에서 `generateTasteExplanation`으로 만든 lead reason과 나머지 이유 레이블을 표시하고 「例：『{anchor1}』『{anchor2}』などが好きな場合」로 예시임을 밝힌다.
 2. **작동 방식:** 「5作品を選ぶと、好みが言葉になる」 제목 아래 세로 3단계(選ぶ · 好みが見える · 理由つきでおすすめ)와 같은 샘플 프로필의 「例：Manga DNA」 패널을 나란히 둔다. 패널은 `summarizeMangaDna`로 빌드 시 계산한 known Axis 상위 4개를 read-only `FactorBar`로 보여 준다. 번호 3열 템플릿과 장식 아이콘은 쓰지 않는다.
 3. 첫 방문자를 위해 명시적으로 큐레이션한 editorial Top 10 ranking(`<ol>`). 시장 popularity나 개인화 결과로 주장하지 않고 「今週の人気」 같은 문구는 쓰지 않는다. 「個人向けの順位ではありません」은 이 설명에 한 번만 둔다. 각 card는 표지 위에 큰 텍스트 순위를 고정 표시하며 generic card Y축 lift는 적용하지 않는다.
 4. discovery Shelf: 빌드 시 장르 순서대로 장르마다 onboarding 가능 작품 하나를 결정론적으로 고른다(Top 10·샘플 작품·예시 추천 제외, 최대 8).
@@ -91,13 +91,13 @@ CTA **「好きなマンガから始める」** → /onboarding. 행동은 이 �
 
 ### 반응형
 
-- mobile: compact hero의 첫 viewport에 로고+태그라인+CTA를 두고 「例」 카드는 그 아래에 둔다. 작동 방식은 단계 → DNA 패널 순서의 1열이다. discovery Shelf는 2.4장을 보여 overflow를 암시한다. editorial Top 10은 96px 폭을 사용한다. bottom navigation은 없다.
-- desktop: hero 2열 — 좌측 텍스트+CTA, 우측 「例」 추천 카드. 작동 방식은 단계와 DNA 패널의 2열이다. 아래에는 1200px media container의 Shelf/ranking을 둔다. editorial Top 10은 112px 폭으로 부분 노출+가로 탐색을 만들고, discovery는 152px 폭 카드를 쓴다.
+- mobile: hero 컷을 로고 → 내레이션(가로쓰기) → 그림 → 효과음 → CTA 순서로 쌓고, 360×740 이상에서 CTA가 첫 viewport 안에 들어온다. 작동 방식은 단계 → DNA 패널 순서의 1열이다. discovery Shelf는 2.4장을 보여 overflow를 암시한다. editorial Top 10은 96px 폭을 사용한다. bottom navigation은 없다.
+- desktop: hero는 첫 화면을 채우는 두 단의 만화 페이지 — 위 단 그림·내레이션, 아래 단 CTA·효과음. 작동 방식은 단계와 DNA 패널의 2열이다. 아래에는 1200px media container의 Shelf/ranking을 둔다. editorial Top 10은 112px 폭으로 부분 노출+가로 탐색을 만들고, discovery는 152px 폭 카드를 쓴다.
 
 ### 인터랙션·모션
 
 - Slice 10은 정적 로고와 직접 피드백만 구현한다. 랜딩 reveal·페이지 진입 모션은 Slice 11 전용이다.
-- Slice 11 로고 reveal은 일반 first-run의 resolved introduction에서 세션당 1회, 총 1.8초 이내로만 실행한다(2026-10-01 태그라인 글자 등장 추가, `04` §5.1). 최종 2톤 로고·`好み` 캡션·태그라인·설명·CTA는 resolved introduction의 첫 paint부터 최종 DOM에 존재하며 CTA는 항상 조작 가능하다. 2톤 base·설명·CTA는 시각 최종 상태를 유지하고, 고정 웨이트 단색 오버레이·캡션·태그라인 글자만 움직인다. 태그라인 heading의 accessible name은 문장 전체이며 글자 span은 `aria-hidden`이다.
+- Slice 11 로고 reveal은 일반 first-run의 resolved introduction에서 세션당 1회, 총 1.8초 이내로만 실행한다(2026-10-01 태그라인 글자 등장 추가, `04` §5.1). 최종 2톤 로고·태그라인·CTA는 resolved introduction의 첫 paint부터 최종 DOM에 존재하며 CTA는 항상 조작 가능하다. 2톤 base·CTA는 시각 최종 상태를 유지하고, 고정 웨이트 단색 오버레이·태그라인 글자만 움직인다. 태그라인 heading의 accessible name은 문장 전체이며 글자 span은 `aria-hidden`이다.
 - 2026-10-01 `04` §6 G: hero·마무리 CTA는 fine pointer hover에서 마그넷(최대 x 10px·y 6px), 클릭 시 확정 스파크를 쓴다. 「例」 카드는 fine pointer hover에서 광택만 쓰고 각도를 바꾸지 않는다. 터치에서는 D press만 쓴다.
 - 탭/클릭·키 입력·휠/스크롤은 기본 동작을 소비하지 않고 reveal만 즉시 완료한다. 완료·스킵·`pagehide`·unmount에서는 controls·timer·pending continuation과 모든 listener를 정리한다.
 - reduced-motion: `04` §6 대체 원칙. 로고 overlay·태그라인·캡션은 이동·글자 분할 없이 opacity로만 600ms 이내에 나타나고, 마그넷·광택·스파크는 없다.
@@ -127,8 +127,8 @@ CTA **「好きなマンガから始める」** → /onboarding. 행동은 이 �
 
 ### 정보 위계
 
-0. (첫 등록만) 웰컴 히어로: h1 「あなたの Manga DNA を作りましょう」 + 로컬 저장 안내 1줄 + 실제 흐름과 같은 3스텝(好きな作品を選ぶ → 合わなかった作品(任意) → Manga DNA とおすすめ). 현재 단계(1)는 `aria-current="step"`과 accent 테두리·「いまここ」로 표시한다. add mode에는 표시하지 않는다(2026-10-01 사용자 결정).
-1. 안내 1줄(첫 등록 h2): 「好きなマンガを 5〜10 作品えらんでください」와 보조문 「特に好きな作品は ☆ で「大好き」にすると、より強く反映されます。」(favorite 1.0 / liked 0.8, `02` §6).
+0. (첫 등록만) 웰컴 히어로: h1 「あなたの Manga DNA を作りましょう」 + 로컬 저장 안내 1줄 + 실제 흐름과 같은 3스텝(好きな作品を選ぶ → 合わなかった作品(任意) → Manga DNA とおすすめ). 현재 단계(1)는 `aria-current="step"`과 「いまここ」로 표시한다. add mode에는 표시하지 않는다(2026-10-01 사용자 결정). 2026-10-07 사용자 결정(홈과 같은 디자인 언어): 제목은 흰 바탕·먹선의 내레이션 컷, 3단계는 컷 띠이며 현재 단계는 앰버 컷, 다음 단계와의 경계는 사선이다. `<768px`에서는 단계 설명을 화면에서 숨기고(스크린리더에는 유지) 「いまここ」 대신 앰버 컷과 `aria-current`로 현재 단계를 표시해 띠를 짧게 유지한다.
+1. 안내: 2026-10-07 사용자 결정으로 첫 등록에서는 별도 h2 안내와 「STEP 1 / 2」를 두지 않는다. 웰컴의 단계 띠(현재 단계 「好きな作品を選ぶ」, 「5〜10 作品。特に好きな作品は「大好き」にできます。」)가 같은 내용을 전하며, `<768px`에서는 현재 단계 설명 한 줄을 띠 아래에 보인다. ☆ 「大好き」 가중(favorite 1.0 / liked 0.8, `02` §6)과 선택 방법은 tray의 「選び方」가 유지한다. add mode는 단계 띠가 없으므로 기존 헤더(아래 add mode 조항)를 유지한다.
 2. 검색 입력(Fuse.js, Catalog의 onboardingEligible 대상)
 3. 장르 칩: アクション / ファンタジー / 歴史 / SF / ミステリー / その他
 4. 주 탐색 Shelf 「選びやすい作品」. collection panel이 열려도 이 제목과 작품은 교체되거나 사라지지 않는다.
@@ -190,7 +190,7 @@ CTA **「好きなマンガから始める」** → /onboarding. 행동은 이 �
 - 기존 `userWorks`의 작품은 Shelf·검색에서 제외하고 저장 경계에서도 중복을 거부한다.
 - 최초 완료 marker가 있으나 Catalog 교체로 현재 positive anchor가 5개 미만인 경우도 add mode로 진입한다. first-run 저장을 재시도하지 않으며 현재 Catalog 기준 5개를 회복할 때까지 보호된 경로는 온보딩으로 돌아온다.
 - 이 세션에서 새 positive 작품 1~10개를 받는다. 1개부터 「追加する (n/10)」가 활성화되며 STEP 2는 표시하지 않는다. 10개는 세션 상한이고 기존 기록을 포함한 누적 상한은 없다.
-- 헤더는 「好きなマンガを追加してください」와 「1作品から追加できます。5作品以上で DNA が鮮明になります。」(최소 1·권장 5 분리)를 사용하고 tray는 「追加するマンガ」로 명명한다. 「迷ったときは」도 add mode에서는 1작품 기준 문구를 쓴다.
+- 헤더는 「好きなマンガを追加してください」와 「1作品から追加できます。5作品以上で DNA が鮮明になります。」(최소 1·권장 5 분리)를 사용하고 tray는 「追加するマンガ」로 명명한다. 「迷ったときは」도 add mode에서는 1작품 기준 문구를 쓴다. 「迷ったときは」는 버튼처럼 보이는 개별 박스 대신 아이콘과 문구를 한 줄에 맞춘 괘선 목록이다(2026-10-07).
 - 「DNAに戻る」는 헤더 오른쪽에 두며 현재 add draft를 보존하고 `/taste`로 돌아간다. 헤더의 파괴적 「入力内容を破棄」는 제거하고, 패널 하단의 작은 「選択をクリア」가 페이지에 머문 채 선택(positive)만 비운 draft를 저장한다(2026-10-01 사용자 결정).
 - 완료는 신규 positive만 insert-only로 추가하고 기존 `UserWorkRecord` 전체와 최초 `onboardingCompletedAt`을 보존한다. 성공 시 draft를 삭제하고 reveal 없이 `/taste`로 돌아간다.
 - [ ] 새 작품 1개만으로 완료할 수 있고 기존 작품·진행률·사유·시각은 변하지 않는다.
@@ -215,9 +215,9 @@ CTA **「好きなマンガから始める」** → /onboarding. 행동은 이 �
 레이아웃은 STEP 1과 같은 본문 + 우측 sticky 패널(mobile 하단 고정)이다.
 
 0. h1 위 「好きな作品を選び直す」: draft를 보존한 채 STEP 1로 돌아간다. STEP 1에서 negative 작품을 좋아한 작품으로 고르면 그 작품은 negative에서 빠진다(한 작품은 한쪽에만).
-1. 안내: 「合わなかった・途中でやめたマンガはありますか?」 + 「任意」 pill, 「0〜3作品まで。なくても、そのまま進めます。」, 원칙 callout 「選ばないことは、苦手という意味にはなりません。」
+1. 안내: 첫 등록과 같은 단계 띠(현재 단계 2)를 맨 위에 두고 「STEP 2 / 2」는 두지 않는다. 「合わなかった・途中でやめたマンガはありますか?」 + 「任意」 pill과 원칙 callout 「選ばないことは、苦手という意味にはなりません。」를 둔다. 수량 안내는 단계 띠의 「0〜3 作品。選ばなくても大丈夫です。」가 맡는다(2026-10-07 사용자 결정).
 2. 「選んだ作品」: 선택된 negative 작품 편집 카드(아래 4).
-3. 검색 입력 (STEP 1과 동일 컴포넌트, Catalog 전체 대상). 검색어가 없으면 「候補から選ぶ」 목록을 보인다: 선택 가능 작품(recommendation eligible − 기록 − STEP 1 선택 − 이미 고른 negative) 중 onboarding eligible 작품을 먼저, 처음 6개, 「もっと見る」로 최대 18개. 검색 결과와 같은 행 카드다.
+3. 검색 입력 (STEP 1과 동일 컴포넌트, Catalog 전체 대상). 검색어가 없으면 「候補から選ぶ」 목록을 보인다: 선택 가능 작품(recommendation eligible − 기록 − STEP 1 선택 − 이미 고른 negative) 중 onboarding eligible 작품을 먼저, 처음 6개, 「もっと見る」로 최대 18개. 검색 결과와 같은 카드이며, 2026-10-07 사용자 결정으로 STEP 1 표지 카드와 같은 형태(표지 위 제목·작가, 아래에 「合わなかった」「途中でやめた」 선택지)의 그리드다.
    작품 행은 카드 확정 전에 작품별 disposition radiogroup 「この作品について」(시각 legend는 숨기고 accessible name 유지)를 표시: `合わなかった` / `途中でやめた`. 둘 중 하나를 고른 작품만 선택된 negative entry가 된다.
 4. 선택된 negative 작품 카드: disposition 아래 **이유 칩 멀티 선택**을 disposition별 안내(「合わなかった理由（複数選べます）」/「やめた理由（複数選べます）」)와 세 묶음으로 보인다 — 作品の内容(§6.7의 factor-backed 사유), 作品以外の事情(외부 사유), はっきりしない(「なんとなく合わなかった」).
 5. 우측 패널 「合わなかった作品 n / 3」: STEP 1과 같은 「DNAの鮮明さ」 미터(이유 있는 negative를 `projectProfileClarity`에 포함, reasoned 2개 미만이면 「具体的な理由を選ぶと、DNA がより鮮明になります」), 선택 요약(disposition·이유 개수), 「選ぶとどうなる？」(추천 제외, 이유별 감점 — `02` §6.7), 진행 버튼.
@@ -684,9 +684,9 @@ Catalog 작품은 추천 근거를 깊이 확인하고 구매(라쿠텐)로 연�
 1. 간결한 제목과 「作品を追加」 → 내 기록 검색 → 상태 탭 → 즐겨찾기 조건·정렬·보기·표시 건수 → 하나의 작품 목록 순서다. 읽기 전용 count matrix와 중복 페이지 설명은 사용하지 않는다.
 2. 모든 크기에서 `すべて`+readingState 4종(読みたい·読んだ·途中でやめた·興味なし, `02` §5.2)에 **전체 등록 수**를 붙인다. 편집 dialog의 読書状態 선택지도 같은 네 값이다. 이전 링크의 `?state=reading`은 「読んだ」 탭으로 연다. mobile 탭은 높이 최소 44px로 wrap하며 검색·다른 조작과 겹치지 않는다. `favorite=1`은 `reaction === "favorite"`인 기록만 고르는 별도 조건이며 탭이나 readingState가 아니다. 잘못된 값은 무시한다.
 3. 검색·상태·favorite 조건을 AND로 적용하고, `最近更新` / `タイトル順` / `評価順`(大好き→好き→ふつう→合わなかった→감상 없음, 동률은 최근 갱신)으로 정렬한 **동일 결과 배열**을 grid/list에 표시한다. 같은 기록을 최근·상태별·favorite Shelf에 반복하지 않는다. 결과 수는 목록 위에 짧게 표시하고 `aria-live`로 알린다. 기존 Catalog/external union과 identity는 유지한다.
-4. 카드는 표지·제목·감상·있는 진행 기록을 보여준다. 전체 보기에는 상태를 포함하고 단일 상태 필터에서는 같은 상태를 반복하지 않는다. Catalog/external/catalog-missing 구분은 유지한다. `completed`·`dropped`의 진행 막대는 입력된 volume과 확인된 총 권수가 있을 때만 표시한다. 없는 메모·시간·날짜·진행을 만들지 않는다.
+4. 카드는 표지·제목·감상·있는 진행 기록을 보여준다. 2026-10-07 사용자 결정: 「いまいち」·「途中でやめた」·「興味なし」 기록은 표지를 흐리게(흑백·반투명) 하고 표지 왼쪽 위에 먹 바탕 도장으로 이유를 표시해 추천에서 감점되는 작품임을 구별한다. 「最高」는 앰버 도장이다. 카드 아래 상태·감상 문구는 「読んだ・良かった」처럼 한 줄로 잇고, 도장이 이미 보여 주는 항목은 반복하지 않는다. 전체 보기에는 상태를 포함하고 단일 상태 필터에서는 같은 상태를 반복하지 않는다. Catalog/external/catalog-missing 구분은 유지한다. `completed`·`dropped`의 진행 막대는 입력된 volume과 확인된 총 권수가 있을 때만 표시한다. 없는 메모·시간·날짜·진행을 만들지 않는다.
 5. 카드/행 전체는 「記録を編集」 버튼이며 작은 문구로 동작을 보인다. 상세 시트에는 기존 기록의 `updatedAt`을 업데이트 날짜로 표시한다. Catalog는 `/works/{catalogWorkId}`, external은 `/works/external?workId={encodedExternalWorkId}` 링크를 사용한다.
-6. 기존 기록은 실제 편집 값이 달라야 저장한다. 수정 후 원복하면 다시 비활성화하며 `updatedAt`만 바꾸는 저장을 실행하지 않는다. 판매순 발견의 신규 기록은 기본 상태를 확인하여 저장할 수 있어야 한다. 진행 입력은 「進み具合（任意）」로 접을 수 있고 읽는 중/기존 진행 값이 있으면 기본 펼침이다. 접기는 값을 삭제하지 않는다.
+6. 편집 dialog는 표지·제목 머리 아래에 読書状態(4개)와 感想(4개+「感想を記録しない」)을 셀렉트가 아닌 한 번에 고르는 선택 칩 그룹(radio)으로 보여 주고, 「いまいち」는 경고색으로 표시한다. 저장 버튼과 저장 결과는 dialog 하단에 고정된 바에 둔다(2026-10-07). 기존 기록은 실제 편집 값이 달라야 저장한다. 수정 후 원복하면 다시 비활성화하며 `updatedAt`만 바꾸는 저장을 실행하지 않는다. 판매순 발견의 신규 기록은 기본 상태를 확인하여 저장할 수 있어야 한다. 진행 입력은 「進み具合（任意）」로 접을 수 있고 읽는 중/기존 진행 값이 있으면 기본 펼침이다. 접기는 값을 삭제하지 않는다.
 7. populated 목록 하단에는 이미지 없는 공용 `SummarySection` 「記録のバックアップ」(「N作品の記録は、このブラウザにだけ保存されています。」 + `/settings?section=data` 「データ設定を開く」)을 둔다. 검색 중이거나 표시 결과 0건이면 숨긴다.
 8. 2026-09-11 추가 사용자 결정: 전체 기록에 검색·필터·정렬을 적용한 뒤 **24개 단위 페이지네이션**을 한다. 200개면 9페이지이며 한 페이지에 카드가 최대 24개다. 1페이지는 page를 생략하고 2페이지부터 `page`를 URL에 저장한다. q/state/favorite/sort 변경은 1페이지로, grid/list 변경은 현재 페이지를 유지한다. 잘못된 page는 무시하고 결과 범위를 넘으면 마지막 페이지로 replace 정규화한다. 2페이지 이상일 때 `1–24 / 200作品`처럼 표시 범위·전체 결과 수와 이전/페이지 선택/다음을 제공한다. 페이지 조작 후 목록에 포커스를 이동하고 목록 위로 스크롤한다.
 9. Library cover resolver의 대상은 현재 페이지와 열린 편집/추가 검색 결과로 한정한다. 기존 visibility demand·cache·ISBN 요청 중복 제거·동시 요청 제한을 재사용한다. 페이지 이동은 이전 resolver generation의 대기 작업을 중단하며 이미 시작한 요청은 기존 제한 아래 완료한다. 모든 기록을 미리 렌더하거나 모든 표지 API를 동시에 호출하지 않는다.

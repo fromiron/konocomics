@@ -384,15 +384,11 @@ export const aboutStrings = {
 
 export const landingStrings = {
   metadataTitle: "konocomics | 好みから見つける、次のマンガ。",
-  logoCaption: {
-    japanese: "好み",
-    equation: "kono + mi = このみ",
-  },
   tagline: "好みから見つける、次のマンガ。",
   /** Line-break units of the tagline; it never wraps inside a phrase. */
   taglinePhrases: ["好みから見つける、", "次のマンガ。"],
-  description: (axisCount: number) =>
-    `好きなマンガを5作品選ぶだけ。展開やトーンなど${String(axisCount)}の軸から好みを読み取り、なぜ合うのかまで説明します。`,
+  /** The part of the tagline set in the accent colour. */
+  taglineAccent: "好み",
   cta: "好きなマンガから始める",
   ctaByVisitor: {
     new: "好きなマンガから始める",
@@ -406,16 +402,21 @@ export const landingStrings = {
     recovery: "おすすめを出すには、好きな作品をもう少し追加してください。",
   },
   sharedEntry: "シェアされた Manga DNA から来た方へ",
-  obi: {
-    label: "好みからおすすめまで",
-    steps: ["好きな5作品", "Manga DNA", "理由つきのおすすめ"],
-  },
   hero: {
     trust: (workCount: string) => [
       "登録なし",
       `${workCount}作品から提案`,
       "データはこの端末だけに保存",
     ],
+    /** The sound effect lettered large in the hero's effect panel, per scene. */
+    panelEffect: { battle: "ドンッ!!!", romance: "ドキッ..!" },
+    /** Decorative sound effects lettered faintly on the blank pages under each hero scene. */
+    soundEffects: {
+      battle: ["ゴゴゴ", "ドンッ", "ザッ", "ズドン", "ガッ", "バッ"],
+      romance: ["ドキッ", "キュン", "ふわっ", "ドキドキ", "ぽっ", "きらっ"],
+    },
+    motionPause: "アニメーションを一時停止",
+    motionPlay: "アニメーションを再生",
   },
   sample: {
     caption: (titles: readonly string[]) =>
@@ -425,6 +426,11 @@ export const landingStrings = {
   },
   how: {
     title: "5作品を選ぶと、好みが言葉になる",
+    /** Line-break units of the title; it never wraps inside one. */
+    titlePhrases: ["5作品を選ぶと、", "好みが言葉になる"],
+    /** The part of the title set in the accent colour. */
+    titleAccent: "好み",
+    progressLabel: "3つのステップ",
     steps: [
       { title: "選ぶ", description: "好きなマンガを5〜10作品選びます。" },
       { title: "好みが見える", description: "選んだ作品の傾向を Manga DNA として可視化します。" },
@@ -433,8 +439,14 @@ export const landingStrings = {
         description: "好みのどこに合うのかを添えて、次の一冊を提案します。",
       },
     ],
-    dnaTitle: "例：Manga DNA",
+    anchorsLabel: "選んだ作品",
+    dnaTitle: "Manga DNA",
     dnaBasis: (title: string, count: number) => `『${title}』ほか${String(count)}作品から`,
+  },
+  wheel: {
+    title: (axisCount: number) => `${String(axisCount)}の軸で、好みを読む`,
+    axesLabel: "Manga DNA の軸",
+    legend: "例のプロフィールで強く出た軸",
   },
   ranking: {
     title: "最初におすすめしたい Top 10",
@@ -445,7 +457,8 @@ export const landingStrings = {
     description: "ジャンルを横断して選んだ作品です。",
   },
   closing: {
-    title: "あなたの Manga DNA を見てみよう",
+    // A no-break space keeps the product name on one line.
+    title: "あなたの Manga\u00a0DNA を見てみよう",
     description: "好きなマンガを5作品選ぶだけ。登録はいりません。",
   },
   footer: {
@@ -584,9 +597,6 @@ export const onboardingStrings = {
     close: "DNAに戻る",
   },
   step1: {
-    eyebrow: "STEP 1 / 2",
-    title: "好きなマンガを 5〜10 作品えらんでください",
-    description: "特に好きな作品は ☆ で「大好き」にすると、より強く反映されます。",
     searchLabel: "好きなマンガを検索",
     searchPlaceholder: "タイトル・作者名を入力",
     noResults: "見つかりませんでした。別の書き方で試してください",
@@ -674,10 +684,8 @@ export const onboardingStrings = {
     },
   },
   step2: {
-    eyebrow: "STEP 2 / 2",
     title: "合わなかった・途中でやめたマンガはありますか？",
     optional: "任意",
-    description: "0〜3作品まで。なくても、そのまま進めます。",
     principle: "選ばないことは、苦手という意味にはなりません。",
     back: "好きな作品を選び直す",
     searchLabel: "合わなかったマンガを検索",

@@ -1,0 +1,564 @@
+{
+  "romance": {
+    "bg": {
+      "x": 319.65,
+      "y": -16.62,
+      "w": 1216.35,
+      "h": 1197.97,
+      "files": [
+        { "format": "avif", "width": 860, "file": "romance/bg-860.avif" },
+        { "format": "avif", "width": 430, "file": "romance/bg-430.avif" },
+        { "format": "webp", "width": 860, "file": "romance/bg-860.webp" },
+        { "format": "webp", "width": 430, "file": "romance/bg-430.webp" }
+      ],
+      "source": {
+        "file": "러브코미디/background-FX-panels/layers/04-campus-background-overscan.png",
+        "sha256": "ccf69cfae3dc449ce0e3881dd02d60b392bff61eda45cf53539ccd66bbd8a55a",
+        "crop": [407, 124, 860, 847]
+      }
+    },
+    "pair": {
+      "x": 326.95,
+      "y": -16.07,
+      "w": 1209.99,
+      "h": 1286.31,
+      "files": [
+        { "format": "avif", "width": 761, "file": "romance/pair-761.avif" },
+        { "format": "avif", "width": 381, "file": "romance/pair-381.avif" },
+        { "format": "webp", "width": 761, "file": "romance/pair-761.webp" },
+        { "format": "webp", "width": 381, "file": "romance/pair-381.webp" }
+      ],
+      "source": {
+        "file": "러브코미디/expanded-characters/layers/01-contact-locked-pair-fullbody.png",
+        "sha256": "d56761db5ade87c42448d3be1fabc12b5f501ee1dc974c240aca34c108cc326d",
+        "crop": [105, 127, 761, 809]
+      }
+    },
+    "inset-downcast": {
+      "x": 7.76,
+      "y": -4.27,
+      "w": 381.64,
+      "h": 240.64,
+      "files": [
+        { "format": "avif", "width": 812, "file": "romance/inset-downcast-812.avif" },
+        { "format": "avif", "width": 406, "file": "romance/inset-downcast-406.avif" },
+        { "format": "webp", "width": 812, "file": "romance/inset-downcast-812.webp" },
+        { "format": "webp", "width": 406, "file": "romance/inset-downcast-406.webp" }
+      ],
+      "source": {
+        "file": "러브코미디/expanded-characters/layers/02-B-downcast-expanded.png",
+        "sha256": "bd4f3430d2334511ae3d84c0de07e05b63f299a531fbd03d52a7ad5aebdb6a7e",
+        "crop": [308, 259, 812, 512]
+      }
+    },
+    "inset-upturned": {
+      "x": -16.1,
+      "y": 205.5,
+      "w": 448.7,
+      "h": 434.7,
+      "files": [
+        { "format": "avif", "width": 641, "file": "romance/inset-upturned-641.avif" },
+        { "format": "avif", "width": 321, "file": "romance/inset-upturned-321.avif" },
+        { "format": "webp", "width": 641, "file": "romance/inset-upturned-641.webp" },
+        { "format": "webp", "width": 321, "file": "romance/inset-upturned-321.webp" }
+      ],
+      "source": {
+        "file": "러브코미디/expanded-characters/layers/03-B-upturned-expanded.png",
+        "sha256": "b3dac1f42d6d883419471aaf4d76040a5534bcd52215c52e65500f2b30363a9b",
+        "crop": [327, 135, 641, 621]
+      }
+    },
+    "paper": {
+      "x": 0,
+      "y": 0,
+      "w": 489,
+      "h": 1024,
+      "files": [
+        { "format": "webp", "width": 489, "file": "romance/paper-489.webp" },
+        { "format": "webp", "width": 245, "file": "romance/paper-245.webp" }
+      ],
+      "source": {
+        "file": "러브코미디/background-FX-panels/layers/06-panel-paper-overscan.png",
+        "sha256": "16da9c2f9ab2397c2691cf5815e5a69bcd9318946761b58dc67391bf739cc57a",
+        "crop": [384, 384, 489, 1024]
+      }
+    },
+    "ink": {
+      "x": 0,
+      "y": 0,
+      "w": 490,
+      "h": 1024,
+      "files": [
+        { "format": "webp", "width": 490, "file": "romance/ink-490.webp" },
+        { "format": "webp", "width": 245, "file": "romance/ink-245.webp" }
+      ],
+      "source": {
+        "file": "러브코미디/background-FX-panels/layers/07-panel-ink-overscan.png",
+        "sha256": "eb37ca535752f467ab91c4e10b8faee447e5fc3cef7f04af2db4019276037374",
+        "crop": [384, 384, 490, 1024]
+      }
+    },
+    "arcs": {
+      "x": 112,
+      "y": 159,
+      "w": 590,
+      "h": 513,
+      "files": [
+        { "format": "webp", "width": 590, "file": "romance/arcs-590.webp" },
+        { "format": "webp", "width": 295, "file": "romance/arcs-295.webp" }
+      ],
+      "source": {
+        "file": "러브코미디/background-FX-panels/layers/09-romance-arcs-overscan.png",
+        "sha256": "a0bb78cb7ebd1487035e9f79ea153c94f36e6ec599fe9722d9af41d941acf987",
+        "crop": [496, 543, 590, 513]
+      }
+    },
+    "petal-01": {
+      "x": 43,
+      "y": 59,
+      "w": 76,
+      "h": 80,
+      "files": [
+        { "format": "avif", "width": 76, "file": "romance/petal-01-76.avif" },
+        { "format": "webp", "width": 76, "file": "romance/petal-01-76.webp" }
+      ],
+      "source": {
+        "file": "러브코미디/background-FX-panels/layers/petals-individual/petal-01.png",
+        "sha256": "a29423755787d178ed75b1cf501bbec41e33a0cda16c2e9c73894377eeeac5f2",
+        "crop": [12, 11, 76, 80]
+      }
+    },
+    "petal-02": {
+      "x": 176,
+      "y": 88,
+      "w": 39,
+      "h": 37,
+      "files": [
+        { "format": "avif", "width": 39, "file": "romance/petal-02-39.avif" },
+        { "format": "webp", "width": 39, "file": "romance/petal-02-39.webp" }
+      ],
+      "source": {
+        "file": "러브코미디/background-FX-panels/layers/petals-individual/petal-02.png",
+        "sha256": "1c4761b035f980a6cd5a2f53616c7213b7d25a25b0a8f46d3ff5221da883bf31",
+        "crop": [12, 12, 39, 37]
+      }
+    },
+    "petal-03": {
+      "x": 308,
+      "y": 143,
+      "w": 93,
+      "h": 73,
+      "files": [
+        { "format": "avif", "width": 93, "file": "romance/petal-03-93.avif" },
+        { "format": "webp", "width": 93, "file": "romance/petal-03-93.webp" }
+      ],
+      "source": {
+        "file": "러브코미디/background-FX-panels/layers/petals-individual/petal-03.png",
+        "sha256": "4934895fb9020fa2e55db7eea7c99439c5cc7c230b7dedefcc4ef2120d416016",
+        "crop": [10, 11, 93, 73]
+      }
+    },
+    "petal-04": {
+      "x": 172,
+      "y": 200,
+      "w": 52,
+      "h": 34,
+      "files": [
+        { "format": "avif", "width": 52, "file": "romance/petal-04-52.avif" },
+        { "format": "webp", "width": 52, "file": "romance/petal-04-52.webp" }
+      ],
+      "source": {
+        "file": "러브코미디/background-FX-panels/layers/petals-individual/petal-04.png",
+        "sha256": "0fad5574e757fd34635fe14a1eece822129dd28fe51f1453ca43c40fbb7c1446",
+        "crop": [12, 12, 52, 34]
+      }
+    },
+    "petal-05": {
+      "x": 489,
+      "y": 222,
+      "w": 100,
+      "h": 69,
+      "files": [
+        { "format": "avif", "width": 100, "file": "romance/petal-05-100.avif" },
+        { "format": "webp", "width": 100, "file": "romance/petal-05-100.webp" }
+      ],
+      "source": {
+        "file": "러브코미디/background-FX-panels/layers/petals-individual/petal-05.png",
+        "sha256": "f1ac32c5233092626ae843c67cdb8414055d9a7c02d8ccd1775a57566c5dbf4f",
+        "crop": [10, 12, 100, 69]
+      }
+    },
+    "petal-06": {
+      "x": 263,
+      "y": 243,
+      "w": 127,
+      "h": 89,
+      "files": [
+        { "format": "avif", "width": 127, "file": "romance/petal-06-127.avif" },
+        { "format": "webp", "width": 127, "file": "romance/petal-06-127.webp" }
+      ],
+      "source": {
+        "file": "러브코미디/background-FX-panels/layers/petals-individual/petal-06.png",
+        "sha256": "2ec06445811b38ec7b16c06d9c4e2200aa3094e6676f981c7034571e7fa47749",
+        "crop": [10, 10, 127, 89]
+      }
+    },
+    "petal-07": {
+      "x": 711,
+      "y": 299,
+      "w": 91,
+      "h": 94,
+      "files": [
+        { "format": "avif", "width": 91, "file": "romance/petal-07-91.avif" },
+        { "format": "webp", "width": 91, "file": "romance/petal-07-91.webp" }
+      ],
+      "source": {
+        "file": "러브코미디/background-FX-panels/layers/petals-individual/petal-07.png",
+        "sha256": "cf63b5634e85166d16b41686b9d30644f8b1435de7c15e6356c44c8c5533d45e",
+        "crop": [10, 10, 91, 94]
+      }
+    },
+    "petal-08": {
+      "x": 408,
+      "y": 320,
+      "w": 100,
+      "h": 137,
+      "files": [
+        { "format": "avif", "width": 100, "file": "romance/petal-08-100.avif" },
+        { "format": "webp", "width": 100, "file": "romance/petal-08-100.webp" }
+      ],
+      "source": {
+        "file": "러브코미디/background-FX-panels/layers/petals-individual/petal-08.png",
+        "sha256": "fab5cdaae5bbabe04a63c6817ab877475f925c1e5ad841603c539f1a2b0c5fa5",
+        "crop": [10, 12, 100, 137]
+      }
+    },
+    "petal-09": {
+      "x": 122,
+      "y": 329,
+      "w": 47,
+      "h": 63,
+      "files": [
+        { "format": "avif", "width": 47, "file": "romance/petal-09-47.avif" },
+        { "format": "webp", "width": 47, "file": "romance/petal-09-47.webp" }
+      ],
+      "source": {
+        "file": "러브코미디/background-FX-panels/layers/petals-individual/petal-09.png",
+        "sha256": "4237e61a341d839eddb12b3700e7e2685bcc85121e7570b7ef50220f547536ec",
+        "crop": [11, 12, 47, 63]
+      }
+    },
+    "petal-10": {
+      "x": 891,
+      "y": 416,
+      "w": 42,
+      "h": 57,
+      "files": [
+        { "format": "avif", "width": 42, "file": "romance/petal-10-42.avif" },
+        { "format": "webp", "width": 42, "file": "romance/petal-10-42.webp" }
+      ],
+      "source": {
+        "file": "러브코미디/background-FX-panels/layers/petals-individual/petal-10.png",
+        "sha256": "76cfa585b641b8123991138ce740e01cc0cf654a26288a55f69e914b81bc043e",
+        "crop": [12, 12, 42, 57]
+      }
+    },
+    "petal-11": {
+      "x": 555,
+      "y": 426,
+      "w": 53,
+      "h": 35,
+      "files": [
+        { "format": "avif", "width": 53, "file": "romance/petal-11-53.avif" },
+        { "format": "webp", "width": 53, "file": "romance/petal-11-53.webp" }
+      ],
+      "source": {
+        "file": "러브코미디/background-FX-panels/layers/petals-individual/petal-11.png",
+        "sha256": "62514be258daf8c355658ce039c5fc75fc5173a98358484b6066d5bf5e58398a",
+        "crop": [11, 10, 53, 35]
+      }
+    },
+    "petal-12": {
+      "x": 714,
+      "y": 469,
+      "w": 119,
+      "h": 99,
+      "files": [
+        { "format": "avif", "width": 119, "file": "romance/petal-12-119.avif" },
+        { "format": "webp", "width": 119, "file": "romance/petal-12-119.webp" }
+      ],
+      "source": {
+        "file": "러브코미디/background-FX-panels/layers/petals-individual/petal-12.png",
+        "sha256": "5783cfe46bd42e8aad63c149e65174c79007542172ac734aadd5aed7d76ab07c",
+        "crop": [11, 10, 119, 99]
+      }
+    },
+    "petal-13": {
+      "x": 1028,
+      "y": 499,
+      "w": 112,
+      "h": 73,
+      "files": [
+        { "format": "avif", "width": 112, "file": "romance/petal-13-112.avif" },
+        { "format": "webp", "width": 112, "file": "romance/petal-13-112.webp" }
+      ],
+      "source": {
+        "file": "러브코미디/background-FX-panels/layers/petals-individual/petal-13.png",
+        "sha256": "fb67f6ad61251e433fb10b3244793f266c84cd42c012d2bb69e7ea5f7efe6b9d",
+        "crop": [12, 11, 112, 73]
+      }
+    },
+    "petal-14": {
+      "x": 576,
+      "y": 522,
+      "w": 66,
+      "h": 62,
+      "files": [
+        { "format": "avif", "width": 66, "file": "romance/petal-14-66.avif" },
+        { "format": "webp", "width": 66, "file": "romance/petal-14-66.webp" }
+      ],
+      "source": {
+        "file": "러브코미디/background-FX-panels/layers/petals-individual/petal-14.png",
+        "sha256": "4b78f1a09dfe5631ba19dfc88e5c64bc3f2ca05936cdb9794e3faa59f08860a0",
+        "crop": [12, 12, 66, 62]
+      }
+    },
+    "petal-15": {
+      "x": 893,
+      "y": 564,
+      "w": 61,
+      "h": 57,
+      "files": [
+        { "format": "avif", "width": 61, "file": "romance/petal-15-61.avif" },
+        { "format": "webp", "width": 61, "file": "romance/petal-15-61.webp" }
+      ],
+      "source": {
+        "file": "러브코미디/background-FX-panels/layers/petals-individual/petal-15.png",
+        "sha256": "b18c0ec180280546de535070c8187d0e968b460efd0199bb8e0f5e0dc3777612",
+        "crop": [12, 12, 61, 57]
+      }
+    },
+    "petal-16": {
+      "x": 1199,
+      "y": 596,
+      "w": 61,
+      "h": 66,
+      "files": [
+        { "format": "avif", "width": 61, "file": "romance/petal-16-61.avif" },
+        { "format": "webp", "width": 61, "file": "romance/petal-16-61.webp" }
+      ],
+      "source": {
+        "file": "러브코미디/background-FX-panels/layers/petals-individual/petal-16.png",
+        "sha256": "6f53f9bb751b3cc0a3e1c2cca68c4623ba645a91853465ec462367bf60a35f29",
+        "crop": [12, 10, 61, 66]
+      }
+    },
+    "petal-17": {
+      "x": 1077,
+      "y": 637,
+      "w": 153,
+      "h": 119,
+      "files": [
+        { "format": "avif", "width": 153, "file": "romance/petal-17-153.avif" },
+        { "format": "webp", "width": 153, "file": "romance/petal-17-153.webp" }
+      ],
+      "source": {
+        "file": "러브코미디/background-FX-panels/layers/petals-individual/petal-17.png",
+        "sha256": "8409d791268b633489c25ca81b6bf899d1a47e17a2f5656ac5da0adcbaf76b75",
+        "crop": [10, 12, 153, 119]
+      }
+    },
+    "petal-18": {
+      "x": 951,
+      "y": 682,
+      "w": 56,
+      "h": 54,
+      "files": [
+        { "format": "avif", "width": 56, "file": "romance/petal-18-56.avif" },
+        { "format": "webp", "width": 56, "file": "romance/petal-18-56.webp" }
+      ],
+      "source": {
+        "file": "러브코미디/background-FX-panels/layers/petals-individual/petal-18.png",
+        "sha256": "61a770dda2b985bc0754dac1520fd95ec1c3e26033b08ac07d7e554374dffcf4",
+        "crop": [11, 10, 56, 54]
+      }
+    },
+    "petal-19": {
+      "x": 1343,
+      "y": 720,
+      "w": 56,
+      "h": 56,
+      "files": [
+        { "format": "avif", "width": 56, "file": "romance/petal-19-56.avif" },
+        { "format": "webp", "width": 56, "file": "romance/petal-19-56.webp" }
+      ],
+      "source": {
+        "file": "러브코미디/background-FX-panels/layers/petals-individual/petal-19.png",
+        "sha256": "626a12a55cdf433b90c5ea70b704318ae832715db626d9fc29aae354fb01a5d7",
+        "crop": [12, 12, 56, 56]
+      }
+    },
+    "petal-20": {
+      "x": 1146,
+      "y": 816,
+      "w": 85,
+      "h": 57,
+      "files": [
+        { "format": "avif", "width": 85, "file": "romance/petal-20-85.avif" },
+        { "format": "webp", "width": 85, "file": "romance/petal-20-85.webp" }
+      ],
+      "source": {
+        "file": "러브코미디/background-FX-panels/layers/petals-individual/petal-20.png",
+        "sha256": "e7de43d37e0678d8ec91e097bf578daac527d8ba5ffb1aa34790a4af6f29984a",
+        "crop": [12, 11, 85, 57]
+      }
+    },
+    "petal-21": {
+      "x": 1462,
+      "y": 820,
+      "w": 36,
+      "h": 32,
+      "files": [
+        { "format": "avif", "width": 36, "file": "romance/petal-21-36.avif" },
+        { "format": "webp", "width": 36, "file": "romance/petal-21-36.webp" }
+      ],
+      "source": {
+        "file": "러브코미디/background-FX-panels/layers/petals-individual/petal-21.png",
+        "sha256": "caaf233037bef5d9f4eeff8340a85374f45fa064c62b5a105b1359652659bffe",
+        "crop": [10, 11, 36, 32]
+      }
+    },
+    "petal-22": {
+      "x": 1291,
+      "y": 822,
+      "w": 117,
+      "h": 110,
+      "files": [
+        { "format": "avif", "width": 117, "file": "romance/petal-22-117.avif" },
+        { "format": "webp", "width": 117, "file": "romance/petal-22-117.webp" }
+      ],
+      "source": {
+        "file": "러브코미디/background-FX-panels/layers/petals-individual/petal-22.png",
+        "sha256": "ffbc6e2ba223f5bb0db8b38831fd5f6742d73924267a888005f1ae88e38a3dd4",
+        "crop": [11, 12, 117, 110]
+      }
+    },
+    "petal-23": {
+      "x": 1427,
+      "y": 828,
+      "w": 44,
+      "h": 42,
+      "files": [
+        { "format": "avif", "width": 44, "file": "romance/petal-23-44.avif" },
+        { "format": "webp", "width": 44, "file": "romance/petal-23-44.webp" }
+      ],
+      "source": {
+        "file": "러브코미디/background-FX-panels/layers/petals-individual/petal-23.png",
+        "sha256": "7aa41db9639f3d6c0dd3882d3732521d24830c5efff556fe8de5a071479768f4",
+        "crop": [12, 11, 44, 42]
+      }
+    }
+  },
+  "battle": {
+    "bg": {
+      "x": -48,
+      "y": -48,
+      "w": 1632,
+      "h": 988.5,
+      "files": [
+        { "format": "avif", "width": 1088, "file": "battle/bg-1088.avif" },
+        { "format": "avif", "width": 544, "file": "battle/bg-544.avif" },
+        { "format": "webp", "width": 1088, "file": "battle/bg-1088.webp" },
+        { "format": "webp", "width": 544, "file": "battle/bg-544.webp" }
+      ],
+      "source": {
+        "file": "학원물/expanded-environment-FX/layers/05-background-overscan.png",
+        "sha256": "3095829b244f4ed8f10dcaf8b67a494b7cb8ddf6065a4efe991d3cadb2de6da7",
+        "crop": [180, 68, 1088, 659]
+      }
+    },
+    "fx": {
+      "x": -120,
+      "y": -120,
+      "w": 1776,
+      "h": 1120.5,
+      "files": [
+        { "format": "avif", "width": 1184, "file": "battle/fx-1184.avif" },
+        { "format": "avif", "width": 592, "file": "battle/fx-592.avif" },
+        { "format": "webp", "width": 1184, "file": "battle/fx-1184.webp" },
+        { "format": "webp", "width": 592, "file": "battle/fx-592.webp" }
+      ],
+      "source": {
+        "file": "학원물/expanded-environment-FX/layers/05-FX-speed-lines-debris.png",
+        "sha256": "26b5a50c9022be70ab649f06ebee110a22593ead8cbd5ec5a6ca834e1d8e0534",
+        "crop": [132, 122, 1184, 747]
+      }
+    },
+    "ink": {
+      "x": 721,
+      "y": 0,
+      "w": 815,
+      "h": 523,
+      "files": [
+        { "format": "webp", "width": 815, "file": "battle/ink-815.webp" },
+        { "format": "webp", "width": 408, "file": "battle/ink-408.webp" }
+      ],
+      "source": {
+        "file": "학원물/expanded-environment-FX/layers/05-panel-ink-source.png",
+        "sha256": "b8270c866508dac805ef5a9204b81ea39d9b4ec9861c3bd6654d481e9e5ae2a4",
+        "crop": [721, 0, 815, 523]
+      }
+    },
+    "boy": {
+      "x": -113.98,
+      "y": -27.77,
+      "w": 1426.22,
+      "h": 1058.76,
+      "files": [
+        { "format": "avif", "width": 1145, "file": "battle/boy-1145.avif" },
+        { "format": "avif", "width": 573, "file": "battle/boy-573.avif" },
+        { "format": "webp", "width": 1145, "file": "battle/boy-1145.webp" },
+        { "format": "webp", "width": 573, "file": "battle/boy-573.webp" }
+      ],
+      "source": {
+        "file": "학원물/expanded-characters/layers/05-A-full-body.png",
+        "sha256": "ce3fec417549de1154c5de981e370629f13e5c1eba192fdf8850056e9bef300f",
+        "crop": [234, 160, 1145, 850]
+      }
+    },
+    "girl": {
+      "x": 711.12,
+      "y": 6.51,
+      "w": 493.78,
+      "h": 493.78,
+      "files": [
+        { "format": "avif", "width": 1024, "file": "battle/girl-1024.avif" },
+        { "format": "avif", "width": 512, "file": "battle/girl-512.avif" },
+        { "format": "webp", "width": 1024, "file": "battle/girl-1024.webp" },
+        { "format": "webp", "width": 512, "file": "battle/girl-512.webp" }
+      ],
+      "source": {
+        "file": "학원물/expanded-characters/layers/05-B-reaction-expanded.png",
+        "sha256": "9c5f5cbe4acbad98d88509d74a14b3e7cd64187c1f0e100ca37148346f3e0d19",
+        "crop": [128, 135, 1024, 1024]
+      }
+    },
+    "kid": {
+      "x": 1088.52,
+      "y": 94.85,
+      "w": 395.66,
+      "h": 405.32,
+      "files": [
+        { "format": "avif", "width": 1024, "file": "battle/kid-1024.avif" },
+        { "format": "avif", "width": 512, "file": "battle/kid-512.avif" },
+        { "format": "webp", "width": 1024, "file": "battle/kid-1024.webp" },
+        { "format": "webp", "width": 512, "file": "battle/kid-512.webp" }
+      ],
+      "source": {
+        "file": "학원물/expanded-characters/layers/05-C-reaction-expanded.png",
+        "sha256": "891910e547c889000a03c0b4764fcc4613b6c8ebee086d67ca19fd4ee04a339b",
+        "crop": [128, 128, 1024, 1049]
+      }
+    }
+  }
+}

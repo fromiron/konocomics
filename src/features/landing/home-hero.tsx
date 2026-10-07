@@ -1,38 +1,20 @@
 import { Link } from "@tanstack/react-router";
 import { ArrowRightIcon } from "lucide-react";
-import type { CSSProperties } from "react";
-
 import { buttonClassName } from "@/components/design-system/button";
 import { burstConfirmSparks } from "@/components/motion/confirm-spark";
 import { usePointerEffect } from "@/components/motion/use-pointer-effects";
-import { HeroBackdrop } from "@/components/media/hero-backdrop";
-import { AXIS_IDS } from "@/domain/catalog/constants";
+import { HeroUnderlay } from "@/features/home-hero/hero-underlay";
+import {
+  HomeHeroScene,
+  sceneWindowStyle,
+  useHeroScene,
+} from "@/features/home-hero/home-hero-scene";
 import { landingStrings } from "@/lib/strings";
 import { cn } from "@/lib/utils";
 
 import { LandingLogoReveal } from "./landing-logo-reveal";
-import { LandingSampleCard } from "./landing-sample-card";
-import type { LandingSample } from "./landing-types";
 
 const workCountFormat = new Intl.NumberFormat("ja-JP");
-
-/** Tagline phrases split into characters with one running index for the stagger. */
-const taglineCharacters = (() => {
-  let index = 0;
-  return landingStrings.taglinePhrases.map((text) => ({
-    text,
-    characters: [...text].map((character) => ({ character, index: index++ })),
-  }));
-})();
-
-/**
- * Tagline size that fits the longest phrase on one line of its column: one em per full-width
- * character plus half an em of headroom for tracking and fallback fonts.
- */
-const taglineFitSize = `calc(100cqi / ${String(
-  Math.max(...taglineCharacters.map((phrase) => phrase.characters.length)) + 0.5,
-)})`;
-
 export const landingCtaClassName = buttonClassName({
   className:
     "gap-[var(--space-content)] px-[var(--space-6)] py-[var(--space-3)] text-[length:var(--font-size-16)] font-bold",
@@ -45,11 +27,19 @@ export const landingCtaClassName = buttonClassName({
  */
 export type LandingVisitorState = "new" | "resume" | "profile" | "recovery";
 
-export function LandingCta({ visitor = "new" }: Readonly<{ visitor?: LandingVisitorState }>) {
+/**
+ * The single landing action. `panel` makes it the hero's action panel itself: the text sits in
+ * the panel and the link covers the whole panel, so the panel is the button.
+ */
+export function LandingCta({
+  visitor = "new",
+  appearance = "button",
+}: Readonly<{ visitor?: LandingVisitorState; appearance?: "button" | "panel" }>) {
   const magnetRef = usePointerEffect<HTMLAnchorElement>("magnet");
+  const panel = appearance === "panel";
   return (
     <Link
-      className={cn(landingCtaClassName, "pointer-magnet")}
+      className={panel ? "hh-cta" : cn(landingCtaClassName, "pointer-magnet")}
       data-landing-visitor={visitor}
       onClick={(event) => {
         // Keyboard activation has no pointer position, so the burst starts at the button.
@@ -57,108 +47,96 @@ export function LandingCta({ visitor = "new" }: Readonly<{ visitor?: LandingVisi
           event.detail === 0 ? event.currentTarget : { x: event.clientX, y: event.clientY },
         );
       }}
-      ref={magnetRef}
+      ref={panel ? undefined : magnetRef}
       preload={false}
       to={visitor === "profile" ? "/recommendations" : "/onboarding"}
     >
       {landingStrings.ctaByVisitor[visitor]}
-      <ArrowRightIcon aria-hidden="true" className="size-4" />
+      <ArrowRightIcon aria-hidden="true" className={panel ? "hh-cta__arrow" : "size-4"} />
     </Link>
   );
 }
 
 type HomeHeroProps = Readonly<{
-  sample: LandingSample;
   recommendableWorkCount: number;
-  coverUrls: ReadonlyMap<string, string | null>;
-  backdropUrl?: string | null;
-  onCoverVisible(workId: string): void;
-  staticLogo?: boolean;
+  /** `?landing=1`: a write-free bypass, so the hero reads and writes no storage. */
+  storageFree?: boolean;
   visitor?: LandingVisitorState;
   sharedEntry?: boolean;
 }>;
 
+/**
+ * The hero as one manga page under a magazine masthead, read the Japanese way from the top
+ * right: the opening narration (the promise, set vertically), the large art panel, then the
+ * scene's sound effect where the battle hand lands and, in the closing bottom-left corner where
+ * a page turns, the action panel. Two tiers with their dividers at different places, the lower
+ * one on a slant. On narrow screens the panels stack.
+ */
 export function HomeHero({
-  backdropUrl,
-  coverUrls,
-  onCoverVisible,
   recommendableWorkCount,
-  sample,
   sharedEntry = false,
-  staticLogo = false,
+  storageFree = false,
   visitor = "new",
 }: HomeHeroProps) {
-  const recommendedId = sample.recommendation.work.id;
-
+  const scene = useHeroScene(storageFree);
+  const accent = landingStrings.taglineAccent;
   return (
-    <HeroBackdrop coverUrl={backdropUrl} priority>
-      <section
-        aria-labelledby="landing-title"
-        className="landing-hero mx-auto grid w-full max-w-[var(--layout-width-media)] content-center gap-[var(--space-8)] px-[var(--layout-page-padding)] pt-[var(--space-8)] pb-[var(--space-12)] md:min-h-[72vh] md:grid-cols-[minmax(0,1.1fr)_minmax(0,0.9fr)] md:items-center md:gap-[var(--space-12)] md:pt-[var(--space-12)]"
-      >
-        <div className="grid max-w-[36rem] justify-items-start gap-[var(--space-6)]">
-          <LandingLogoReveal staticPresentation={staticLogo} />
-          <div className="grid w-full gap-[var(--space-4)] [container-type:inline-size]">
-            {sharedEntry ? (
-              <p className="text-[length:var(--text-caption-size)] font-bold text-accent">
-                {landingStrings.sharedEntry}
-              </p>
-            ) : null}
-            <h1
-              className="landing-tagline font-display text-[length:min(var(--text-hero-size),var(--tagline-fit-size))] leading-[var(--line-height-display)] font-bold tracking-tight text-text-strong"
-              data-reduced-motion="fade"
-              id="landing-title"
-              style={{ "--tagline-fit-size": taglineFitSize } as CSSProperties}
-            >
-              {/* Each phrase is one unbreakable unit, so the tagline never wraps mid-word, and the
-                  size shrinks below the hero token when the longest phrase would not fit. The
-                  characters animate during the logo reveal (04 §5.1); the heading's name is the
-                  whole sentence, never single characters. */}
-              <span className="sr-only">{landingStrings.tagline}</span>
-              {taglineCharacters.map((phrase) => (
-                <span
-                  aria-hidden="true"
-                  className="inline-block whitespace-nowrap"
-                  key={phrase.text}
-                >
-                  {phrase.characters.map(({ character, index }) => (
-                    <span
-                      className="landing-tagline__char inline-block"
-                      key={index}
-                      style={{ "--char-index": index } as CSSProperties}
-                    >
-                      {character}
+    <div className="overflow-x-clip">
+      <section aria-labelledby="landing-title" className="landing-hero">
+        <HeroUnderlay sceneId={scene.id} />
+        <div className="hh-spread">
+          <div className="hh-page" data-paper={scene.paper} style={sceneWindowStyle(scene)}>
+            <div className="hh-mast">
+              <LandingLogoReveal staticPresentation={storageFree} />
+            </div>
+            {/* The opening narration (top right, read first): the promise, set vertically. */}
+            <div className="hh-koma hh-koma--title">
+              <div className="hh-koma__fill">
+                <h1 className="hh-title" id="landing-title">
+                  {landingStrings.taglinePhrases.map((phrase) => (
+                    <span className="hh-title__phrase" key={phrase}>
+                      {phrase.startsWith(accent) ? (
+                        <>
+                          <span className="hh-title__accent">{accent}</span>
+                          {phrase.slice(accent.length)}
+                        </>
+                      ) : (
+                        phrase
+                      )}
                     </span>
                   ))}
-                </span>
-              ))}
-            </h1>
-            <p className="max-w-[32rem] text-[length:var(--text-body-size)] leading-[var(--line-height-body)] text-text-muted [word-break:auto-phrase]">
-              {landingStrings.description(AXIS_IDS.length)}
-            </p>
-          </div>
-          <div className="grid justify-items-start gap-[var(--space-4)]">
-            <LandingCta visitor={visitor} />
-            {visitor === "new" ? null : (
-              <p className="text-[length:var(--text-caption-size)] text-text">
-                {landingStrings.visitorNote[visitor]}
-              </p>
-            )}
-            <p className="text-[length:var(--text-caption-size)] text-text-muted">
-              {landingStrings.hero
-                .trust(workCountFormat.format(recommendableWorkCount))
-                .join(" · ")}
-            </p>
+                </h1>
+              </div>
+            </div>
+            <HomeHeroScene scene={scene} storageFree={storageFree} />
+            {/* The lower tier, divided at a different place than the upper one, on a slant. */}
+            <div className="hh-tier">
+              <div className="hh-koma hh-koma--action">
+                <div className="hh-koma__fill">
+                  {sharedEntry ? (
+                    <p className="hh-cta__note font-bold">{landingStrings.sharedEntry}</p>
+                  ) : null}
+                  <LandingCta appearance="panel" visitor={visitor} />
+                  {visitor === "new" ? null : (
+                    <p className="hh-cta__note">{landingStrings.visitorNote[visitor]}</p>
+                  )}
+                  <p className="hh-cta__note">
+                    {landingStrings.hero
+                      .trust(workCountFormat.format(recommendableWorkCount))
+                      .join(" · ")}
+                  </p>
+                </div>
+              </div>
+              {/* A panel holding only the scene's sound effect, where the hand lands (描き文字). */}
+              <div aria-hidden="true" className="hh-koma hh-koma--effect">
+                <div className="hh-koma__fill">
+                  <span className="hh-effect">{landingStrings.hero.panelEffect[scene.id]}</span>
+                </div>
+              </div>
+            </div>
           </div>
         </div>
-
-        <LandingSampleCard
-          animateReason={!staticLogo && visitor === "new"}
-          coverUrl={coverUrls.get(recommendedId)}
-          onCoverVisible={() => onCoverVisible(recommendedId)}
-          sample={sample}
-        />
       </section>
-    </HeroBackdrop>
+    </div>
   );
 }

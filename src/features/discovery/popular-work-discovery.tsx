@@ -255,7 +255,7 @@ export function PopularWorkDiscovery({ embedded = false }: Readonly<{ embedded?:
               </Button>
               {selection.work === undefined ? null : (
                 <Link
-                  className="inline-flex min-h-[var(--control-min-size)] items-center text-accent underline"
+                  className="inline-flex min-h-[var(--control-min-size)] items-center text-accent-ink underline"
                   params={{ workId: selection.work.id }}
                   to="/works/$workId"
                 >
@@ -263,7 +263,7 @@ export function PopularWorkDiscovery({ embedded = false }: Readonly<{ embedded?:
                 </Link>
               )}
               <a
-                className="inline-flex min-h-[var(--control-min-size)] items-center text-accent underline"
+                className="inline-flex min-h-[var(--control-min-size)] items-center text-accent-ink underline"
                 href={selection.item.affiliateUrl ?? selection.item.itemUrl}
                 rel="noopener noreferrer"
                 target="_blank"
