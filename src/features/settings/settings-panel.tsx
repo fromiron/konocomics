@@ -31,7 +31,7 @@ export function SettingsPanel({
         "grid min-w-0 scroll-mt-[calc(var(--control-min-size)+var(--space-6))] content-start gap-[var(--space-5)] rounded-[var(--radius-card)] border p-[var(--space-5)] md:scroll-mt-[calc(var(--desktop-navigation-height)+var(--space-6))] md:p-[var(--space-6)]",
         tone === "danger"
           ? "border-line-danger bg-surface-danger-soft"
-          : "border-line bg-surface-1",
+          : "border-transparent bg-surface-1",
         className,
       )}
       {...props}

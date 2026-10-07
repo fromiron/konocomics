@@ -76,7 +76,7 @@ export function NegativeSummaryPanel({
       <ClarityMeter clarity={clarity} />
 
       {visibleEntries.length === 0 ? (
-        <p className="col-span-full hidden rounded-[var(--radius-card)] border border-dashed border-line bg-surface-2 p-[var(--space-4)] text-[length:var(--text-caption-size)] leading-[1.8] text-text-muted md:block">
+        <p className="col-span-full hidden border-t border-line pt-[var(--space-4)] text-[length:var(--text-caption-size)] leading-[1.8] text-text-muted md:block">
           {copy.panel.empty}
         </p>
       ) : (

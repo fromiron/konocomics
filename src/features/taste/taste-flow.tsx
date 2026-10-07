@@ -139,7 +139,7 @@ function AnchorStrip({
           <li className="min-w-0" key={work.id}>
             <Link
               aria-label={mediaStrings.openDetails(work.title)}
-              className="group/evidence grid h-full min-h-[var(--control-min-size)] grid-rows-[auto_1fr] overflow-hidden rounded-[var(--radius-card)] border border-line bg-surface-1 transition-colors duration-[var(--motion-duration-value)] focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-ring focus-visible:bg-surface-2 [@media(hover:hover)_and_(pointer:fine)]:hover:bg-surface-2"
+              className="group/evidence grid h-full min-h-[var(--control-min-size)] grid-rows-[auto_1fr] overflow-hidden rounded-[var(--radius-media-card)] border border-line bg-surface-1 transition-colors duration-[var(--motion-duration-value)] focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-ring focus-visible:bg-surface-2 [@media(hover:hover)_and_(pointer:fine)]:hover:bg-surface-2"
               params={{ workId: work.id }}
               preload={false}
               to="/works/$workId"
@@ -358,7 +358,7 @@ function FactorGroup<FactorId extends ExplanationFactorId>({
         <span
           aria-hidden="true"
           className={cn(
-            "pointer-events-none col-start-2 row-start-1 grid size-[var(--control-min-size)] place-items-center rounded-[var(--radius-pill)] border border-line text-text-muted min-[360px]:col-start-3 sm:col-start-4",
+            "pointer-events-none col-start-2 row-start-1 grid size-[var(--control-min-size)] place-items-center rounded-full border border-transparent bg-surface-2 text-text-muted min-[360px]:col-start-3 sm:col-start-4",
             open && "border-accent text-accent-ink",
           )}
         >
@@ -498,7 +498,7 @@ function FactorPanels({
   };
 
   return (
-    <div className="taste-factor-grid grid min-w-0 grid-cols-1 items-start rounded-[var(--radius-card)] border border-line bg-surface-1 px-[var(--space-4)] sm:px-[var(--space-6)]">
+    <div className="taste-factor-grid grid min-w-0 grid-cols-1 items-start rounded-[var(--radius-card)] bg-surface-1 px-[var(--space-4)] sm:px-[var(--space-6)]">
       <FactorGroup
         animateReveal={animateReveal}
         factorRevealReady={factorRevealReady}
@@ -1224,7 +1224,7 @@ export function TasteFlow({
         <p
           aria-atomic="true"
           aria-live="polite"
-          className="taste-snackbar fixed right-[var(--layout-page-padding)] bottom-[calc(var(--layout-mobile-navigation-clearance)+var(--space-12)+var(--space-7))] z-40 max-w-[min(360px,calc(100vw-(var(--layout-page-padding)*2)))] rounded-[var(--radius-card)] border border-l-[length:var(--space-1)] border-line border-l-accent bg-surface-1 px-[var(--space-4)] py-[var(--space-3)] font-bold shadow-[var(--shadow-raised)] empty:hidden md:bottom-[calc(var(--layout-page-padding)+var(--control-min-size)+var(--space-5))]"
+          className="taste-snackbar fixed right-[var(--layout-page-padding)] bottom-[calc(var(--layout-mobile-navigation-clearance)+var(--space-12)+var(--space-7))] z-40 max-w-[min(360px,calc(100vw-(var(--layout-page-padding)*2)))] rounded-[var(--radius-card)] border-l-[length:var(--space-1)] border-l-accent bg-surface-1 px-[var(--space-4)] py-[var(--space-3)] font-bold shadow-[var(--shadow-raised)] empty:hidden md:bottom-[calc(var(--layout-page-padding)+var(--control-min-size)+var(--space-5))]"
           ref={snackbarRef}
         >
           {message}

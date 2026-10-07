@@ -387,7 +387,7 @@ export function LibraryView({
             <div className="grid grid-cols-[minmax(0,1fr)_auto] items-center gap-[var(--space-content)] md:grid-cols-[auto_minmax(0,1fr)_auto_auto]">
               <Button
                 aria-pressed={favoriteOnly}
-                className="order-1 justify-self-start rounded-[var(--radius-pill)] aria-pressed:border-accent aria-pressed:bg-accent-soft aria-pressed:text-accent-ink"
+                className="order-1 justify-self-start rounded-[var(--radius-pill)] aria-pressed:border-accent aria-pressed:bg-accent aria-pressed:text-on-accent"
                 onClick={() => onFavoriteOnlyChange?.(!favoriteOnly)}
                 type="button"
                 variant="outline"
@@ -429,7 +429,7 @@ export function LibraryView({
                 {(["grid", "list"] as const).map((mode) => (
                   <Button
                     aria-pressed={view === mode}
-                    className="aria-pressed:border-accent aria-pressed:bg-accent-soft aria-pressed:text-accent-ink"
+                    className="aria-pressed:border-accent aria-pressed:bg-accent aria-pressed:text-on-accent"
                     key={mode}
                     onClick={() => onViewChange?.(mode)}
                     type="button"

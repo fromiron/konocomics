@@ -15,7 +15,7 @@ import { cn } from "@/lib/utils";
  * side panel on desktop. STEP 1 and STEP 2 use the same frame so the primary action never moves.
  */
 export const ONBOARDING_PANEL_CLASS =
-  "fixed inset-x-0 bottom-0 z-20 grid min-h-[calc(var(--space-12)+var(--space-12)+var(--space-8)+var(--space-1))] min-w-0 grid-cols-[minmax(0,1fr)_auto] content-center gap-[var(--space-content-loose)] border-t border-line bg-surface-1 p-[var(--space-3)] px-[max(var(--layout-page-padding),calc((100vw-var(--layout-width-onboarding))/2+var(--layout-page-padding)))] pb-[calc(var(--space-3)+var(--layout-safe-area-bottom))] md:sticky md:top-[calc(var(--desktop-navigation-height)+var(--space-5))] md:right-auto md:bottom-auto md:left-auto md:max-h-[calc(100dvh-var(--desktop-navigation-height)-var(--space-5)*2)] md:grid-cols-1 md:content-start md:overflow-y-auto md:rounded-[var(--radius-card)] md:border md:p-[var(--space-5)]";
+  "fixed inset-x-0 bottom-0 z-20 grid min-h-[calc(var(--space-12)+var(--space-12)+var(--space-8)+var(--space-1))] min-w-0 grid-cols-[minmax(0,1fr)_auto] content-center gap-[var(--space-content-loose)] border-t border-line bg-surface-1 p-[var(--space-3)] px-[max(var(--layout-page-padding),calc((100vw-var(--layout-width-onboarding))/2+var(--layout-page-padding)))] pb-[calc(var(--space-3)+var(--layout-safe-area-bottom))] md:sticky md:top-[calc(var(--desktop-navigation-height)+var(--space-5))] md:right-auto md:bottom-auto md:left-auto md:max-h-[calc(100dvh-var(--desktop-navigation-height)-var(--space-5)*2)] md:grid-cols-1 md:content-start md:overflow-y-auto md:rounded-[var(--radius-card)] md:border-0 md:p-[var(--space-5)]";
 
 export type SelectedTrayClarity = Readonly<{
   label: string;
@@ -179,7 +179,7 @@ export function SelectedTray({
         </div>
         {clarity === undefined ? null : <ClarityMeter clarity={clarity} />}
         {guide === undefined || selections.length > 0 ? null : (
-          <div className="selected-tray__guide col-span-full hidden rounded-[var(--radius-card)] border border-dashed border-line bg-surface-2 p-[var(--space-4)] text-[length:var(--text-caption-size)] leading-[1.8] text-text-muted md:block">
+          <div className="selected-tray__guide col-span-full hidden border-t border-line pt-[var(--space-4)] text-[length:var(--text-caption-size)] leading-[1.8] text-text-muted md:block">
             <strong className="text-text-strong">{guide.title}</strong>
             <ol className="m-0 mt-[var(--space-1)] list-decimal ps-[var(--space-5)]">
               {guide.steps.map((step) => (
@@ -242,7 +242,7 @@ export function SelectedTray({
                   />
                   <span
                     aria-hidden="true"
-                    className="selected-tray__remove absolute -top-1 -right-1 grid size-7 place-items-center rounded-full border border-line bg-surface-1 font-bold text-text-strong [&>svg]:size-4"
+                    className="selected-tray__remove absolute -top-1 -right-1 grid size-7 place-items-center rounded-full border-0 bg-surface-3 font-bold text-text-strong [&>svg]:size-4"
                   >
                     <XIcon />
                   </span>
@@ -253,7 +253,7 @@ export function SelectedTray({
           {selections.length > 0 && selections.length < 10 ? (
             <span
               aria-hidden="true"
-              className="selected-tray__empty-slot grid min-h-[60px] w-12 min-w-12 place-items-center rounded-[var(--radius-cover)] border border-line bg-surface-2 text-text-muted [&>svg]:size-4"
+              className="selected-tray__empty-slot grid min-h-[60px] w-12 min-w-12 place-items-center rounded-[var(--radius-cover)] bg-surface-2 text-text-muted [&>svg]:size-4"
             >
               <PlusIcon />
             </span>

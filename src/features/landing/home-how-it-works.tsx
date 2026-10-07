@@ -22,7 +22,7 @@ function barRiseRange(index: number) {
 
 /** The recommendations card surface: a quiet card that a cover backdrop can tint. */
 const cardClassName =
-  "relative isolate overflow-hidden rounded-[var(--radius-card)] border border-line/70 bg-surface-1";
+  "relative isolate overflow-hidden rounded-[var(--radius-media-card)] border border-line/70 bg-surface-1";
 
 type SceneProps = Readonly<{
   number: number;

@@ -284,7 +284,7 @@ function SharedDna({
                   </li>
                 ))}
                 {unnamedCount > 0 ? (
-                  <li className="rounded-[var(--radius-pill)] border border-dashed border-line px-[var(--space-3)] py-[var(--space-1)] text-[length:var(--text-caption-size)] text-text-muted">
+                  <li className="bg-surface-2 px-[var(--space-3)] py-[var(--space-1)] text-[length:var(--text-caption-size)] text-text-muted">
                     {strings.moreWorks(unnamedCount)}
                   </li>
                 ) : null}

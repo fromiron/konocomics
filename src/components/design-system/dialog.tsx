@@ -53,7 +53,7 @@ export function DialogContent({
   return (
     <PrimitiveDialogContent
       className={cn(
-        "max-h-[calc(100dvh-var(--space-8))] overflow-y-auto rounded-[var(--radius-card)] border border-line bg-surface-1 text-text shadow-[var(--shadow-raised)] ring-0 !transition-none !animate-none sm:max-w-lg",
+        "max-h-[calc(100dvh-var(--space-8))] overflow-y-auto rounded-[var(--radius-card)] bg-surface-1 text-text shadow-[var(--shadow-raised)] ring-0 !transition-none !animate-none sm:max-w-lg",
         className,
       )}
       showCloseButton={false}

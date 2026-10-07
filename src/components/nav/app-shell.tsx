@@ -88,7 +88,7 @@ function AppShellContent({
   return (
     <div className={cn("app-shell min-h-dvh", hasNavigation && "app-shell--post-onboarding")}>
       <a
-        className="skip-link fixed top-[var(--space-2)] left-[var(--space-2)] z-[100] min-h-[var(--control-min-size)] -translate-y-[calc(100%+var(--space-8)+var(--space-2))] rounded-[var(--radius-control)] border border-line bg-surface-1 px-[14px] py-[10px] font-bold text-text-strong shadow-[var(--shadow-raised)] transition-transform duration-[var(--motion-duration-feedback)] ease-[var(--motion-ease-direct)] focus-visible:translate-y-0"
+        className="skip-link fixed top-[var(--space-2)] left-[var(--space-2)] z-[100] min-h-[var(--control-min-size)] -translate-y-[calc(100%+var(--space-8)+var(--space-2))] rounded-[var(--radius-control)] bg-surface-1 px-[14px] py-[10px] font-bold text-text-strong shadow-[var(--shadow-raised)] transition-transform duration-[var(--motion-duration-feedback)] ease-[var(--motion-ease-direct)] focus-visible:translate-y-0"
         href="#app-content"
       >
         {navigationStrings.skipLink}

@@ -98,7 +98,7 @@ export function RecommendationCard({
 
   return (
     <article
-      className="recommendation-featured-card group/card relative isolate flex h-[22.25rem] w-full flex-col overflow-hidden rounded-[var(--radius-card)] border border-line/70 p-[var(--space-4)] focus-within:border-line-accent sm:h-[24.75rem] md:h-[28rem] md:p-[var(--space-5)]"
+      className="recommendation-featured-card group/card relative isolate flex h-[22.25rem] w-full flex-col overflow-hidden rounded-[var(--radius-media-card)] border border-line/70 p-[var(--space-4)] focus-within:border-line-accent sm:h-[24.75rem] md:h-[28rem] md:p-[var(--space-5)]"
       data-personalized-recommendation-card={work.id}
       ref={setArticle}
       tabIndex={-1}

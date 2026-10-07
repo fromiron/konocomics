@@ -16,7 +16,7 @@ export function ExcludedMatchNotice({
   return (
     <section
       aria-label={strings.heading}
-      className="onboarding-excluded grid gap-[var(--space-3)] rounded-[var(--radius-card)] border border-line bg-surface-1 px-[var(--space-4)] py-[var(--space-4)]"
+      className="onboarding-excluded grid gap-[var(--space-3)] rounded-[var(--radius-card)] bg-surface-1 px-[var(--space-4)] py-[var(--space-4)]"
     >
       <h2 className="text-[length:var(--text-caption-size)] font-bold text-text-muted">
         {strings.heading}

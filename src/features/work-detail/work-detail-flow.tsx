@@ -997,7 +997,7 @@ function WorkDetailContent({ catalog, work }: Readonly<{ catalog: CatalogV1; wor
             </p>
           </header>
           {hasHeroMetadata ? (
-            <dl className="m-0 grid grid-cols-2 overflow-hidden rounded-[var(--radius-card)] border border-line bg-surface-1 p-0 md:grid-flow-col md:auto-cols-fr md:grid-cols-none [&>div]:grid [&>div]:content-start [&>div]:gap-[var(--space-1)] [&>div]:border-r [&>div]:border-line [&>div]:px-[var(--space-3)] [&>div]:py-[var(--space-3)] [&>div:last-child]:border-r-0 [&_dd]:m-0 [&_dd]:break-words [&_dd]:text-[length:var(--font-size-14)] [&_dd]:font-semibold [&_dd]:text-text-strong [&_dt]:text-[length:var(--text-caption-size)] [&_dt]:text-text-muted">
+            <dl className="m-0 grid grid-cols-2 overflow-hidden rounded-[var(--radius-card)] border border-transparent bg-surface-1 p-0 md:grid-flow-col md:auto-cols-fr md:grid-cols-none [&>div]:grid [&>div]:content-start [&>div]:gap-[var(--space-1)] [&>div]:border-r [&>div]:border-line [&>div]:px-[var(--space-3)] [&>div]:py-[var(--space-3)] [&>div:last-child]:border-r-0 [&_dd]:m-0 [&_dd]:break-words [&_dd]:text-[length:var(--font-size-14)] [&_dd]:font-semibold [&_dd]:text-text-strong [&_dt]:text-[length:var(--text-caption-size)] [&_dt]:text-text-muted">
               {bookMetadata.publisherName === undefined ? null : (
                 <div>
                   <dt>{workDetailStrings.metadata.publisher}</dt>
@@ -1133,7 +1133,7 @@ function WorkDetailContent({ catalog, work }: Readonly<{ catalog: CatalogV1; wor
               >
                 {workDetailStrings.synopsis.heading}
               </h2>
-              <div className="grid gap-[var(--space-3)] rounded-[var(--radius-card)] border border-line bg-surface-1 p-[var(--space-5)] text-[length:var(--font-size-14)]">
+              <div className="grid gap-[var(--space-3)] rounded-[var(--radius-card)] bg-surface-1 p-[var(--space-5)] text-[length:var(--font-size-14)]">
                 <WorkSynopsis caption={bookMetadata.itemCaption} key={bookMetadata.itemCaption} />
                 <p className="text-[length:var(--text-caption-size)] text-text-muted">
                   {workDetailStrings.metadata.edition(representativeVolume?.volumeNumber)}

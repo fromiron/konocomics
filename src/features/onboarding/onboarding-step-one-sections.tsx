@@ -162,7 +162,7 @@ export function OnboardingGenreChips({ genre, onChange }: OnboardingGenreChipsPr
         id="onboarding-genre-heading"
         title={onboardingStrings.step1.genreHeading}
       />
-      <div className="flex flex-wrap gap-[var(--space-content)] pb-[var(--space-content)] [&>button[aria-pressed=true]]:border-accent [&>button[aria-pressed=true]]:text-accent-ink">
+      <div className="flex flex-wrap gap-[var(--space-content)] pb-[var(--space-content)]">
         <Button
           aria-pressed={genre === undefined}
           className="shrink-0"
@@ -346,7 +346,7 @@ export function OnboardingCollectionGrid({
             <li
               className={cn(
                 "onboarding-collection-row min-w-0 overflow-hidden rounded-[var(--radius-card)] border bg-surface-1",
-                open ? "border-accent/60" : "border-line",
+                open ? "border-accent/60" : "border-transparent",
               )}
               key={collection.id}
             >
@@ -389,7 +389,7 @@ export function OnboardingCollectionGrid({
                 <span
                   aria-hidden="true"
                   className={cn(
-                    "grid size-[var(--control-min-size)] place-items-center rounded-[var(--radius-pill)] border border-line text-text-muted",
+                    "grid size-[var(--control-min-size)] place-items-center rounded-full border border-transparent bg-surface-2 text-text-muted",
                     open && "border-accent text-accent-ink",
                   )}
                 >

@@ -38,7 +38,7 @@ export function RankingCard(props: RankingCardProps | EvidencePlaceholderProps) 
       <li
         aria-hidden="true"
         className={cn(
-          "grid min-w-0 place-items-center rounded-[var(--radius-card)] bg-surface-1/40 p-[var(--space-2)] text-text-muted",
+          "grid min-w-0 place-items-center rounded-[var(--radius-media-card)] bg-surface-1/40 p-[var(--space-2)] text-text-muted",
           props.className,
         )}
       >
@@ -134,7 +134,7 @@ export function RankingCard(props: RankingCardProps | EvidencePlaceholderProps) 
           <Link
             aria-label={linkLabel}
             className={cn(
-              "ranking-card-link group/ranking relative grid h-full min-h-[var(--control-min-size)] content-start gap-[var(--space-2)] rounded-[var(--radius-card)] transition-colors duration-[var(--motion-duration-value)] ease-[var(--motion-ease-direct)] focus-visible:bg-surface-2 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-ring motion-reduce:transition-none [@media(hover:hover)_and_(pointer:fine)]:hover:bg-surface-2",
+              "ranking-card-link group/ranking relative grid h-full min-h-[var(--control-min-size)] content-start gap-[var(--space-2)] rounded-[var(--radius-media-card)] transition-colors duration-[var(--motion-duration-value)] ease-[var(--motion-ease-direct)] focus-visible:bg-surface-2 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-ring motion-reduce:transition-none [@media(hover:hover)_and_(pointer:fine)]:hover:bg-surface-2",
               isEvidence ? "bg-surface-1 p-[var(--space-2)]" : "bg-transparent p-[var(--space-3)]",
             )}
             params={{ workId }}

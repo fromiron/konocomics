@@ -54,7 +54,7 @@ export function ModalSurface({
       >
         <Button
           aria-label={libraryStrings.panel.close}
-          className="sticky top-0 z-2 ml-auto grid size-[var(--control-min-size)] min-h-[var(--control-min-size)] place-items-center border border-line bg-surface-1 text-[length:var(--font-size-20)] leading-none text-text-strong"
+          className="sticky top-0 z-2 ml-auto grid size-[var(--control-min-size)] min-h-[var(--control-min-size)] place-items-center bg-surface-1 text-[length:var(--font-size-20)] leading-none text-text-strong"
           onClick={onClose}
           size="icon"
           type="button"

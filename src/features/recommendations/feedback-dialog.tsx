@@ -91,7 +91,7 @@ export function FeedbackDialog({
       <DialogContent
         aria-describedby="recommendation-feedback-description"
         aria-labelledby="recommendation-feedback-title"
-        className="!top-auto bottom-0 !max-h-[88dvh] w-full max-w-[var(--layout-width-form)] -translate-x-1/2 translate-y-0 rounded-t-[var(--radius-card)] rounded-b-none border border-line bg-surface-1 p-0 text-text shadow-[var(--shadow-raised)] sm:max-w-[var(--layout-width-form)] md:!top-1/2 md:bottom-auto md:-translate-y-1/2 md:rounded-[var(--radius-card)]"
+        className="!top-auto bottom-0 !max-h-[88dvh] w-full max-w-[var(--layout-width-form)] -translate-x-1/2 translate-y-0 rounded-t-[var(--radius-card)] rounded-b-none bg-surface-1 p-0 text-text shadow-[var(--shadow-raised)] sm:max-w-[var(--layout-width-form)] md:!top-1/2 md:bottom-auto md:-translate-y-1/2 md:rounded-[var(--radius-card)]"
         showCloseButton={false}
       >
         <form

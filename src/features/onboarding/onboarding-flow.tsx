@@ -755,7 +755,7 @@ export function OnboardingFlow({
         <div
           aria-atomic="true"
           aria-live="polite"
-          className="onboarding-limit-message fixed right-[var(--layout-page-padding)] bottom-[var(--layout-onboarding-tray-clearance)] z-50 max-w-[min(360px,calc(100vw-(var(--layout-page-padding)*2)))] rounded-[var(--radius-card)] border border-l-[length:var(--space-1)] border-line border-l-warn bg-surface-1 px-[var(--space-4)] py-[var(--space-3)] font-bold text-text-strong shadow-[var(--shadow-raised)] motion-reduce:border-2 motion-reduce:border-l-[length:var(--space-1)] motion-reduce:border-warn"
+          className="onboarding-limit-message fixed right-[var(--layout-page-padding)] bottom-[var(--layout-onboarding-tray-clearance)] z-50 max-w-[min(360px,calc(100vw-(var(--layout-page-padding)*2)))] rounded-[var(--radius-card)] border border-l-[length:var(--space-1)] border-transparent border-l-warn bg-surface-1 px-[var(--space-4)] py-[var(--space-3)] font-bold text-text-strong shadow-[var(--shadow-raised)] motion-reduce:border-2 motion-reduce:border-l-[length:var(--space-1)] motion-reduce:border-warn"
           key={shakeKey}
           role="status"
         >
@@ -836,7 +836,7 @@ export function OnboardingFlow({
                   ) : stepOneExcludedMatches.length > 0 ? (
                     <ExcludedMatchNotice matches={stepOneExcludedMatches} />
                   ) : (
-                    <div className="onboarding-empty grid gap-[var(--space-content-tight)] rounded-[var(--radius-card)] border border-line bg-surface-1 px-[var(--space-5)] py-[var(--space-7)] text-text-muted">
+                    <div className="onboarding-empty grid gap-[var(--space-content-tight)] rounded-[var(--radius-card)] bg-surface-1 px-[var(--space-5)] py-[var(--space-7)] text-text-muted">
                       <p>{onboardingStrings.step1.noResults}</p>
                       <p>{onboardingStrings.step1.catalogLater}</p>
                     </div>
@@ -844,7 +844,7 @@ export function OnboardingFlow({
                 ) : (
                   <div className="onboarding-shelves grid gap-[var(--space-section)]">
                     {featuredWorks.length === 0 ? (
-                      <div className="onboarding-empty grid gap-[var(--space-content-tight)] rounded-[var(--radius-card)] border border-line bg-surface-1 px-[var(--space-5)] py-[var(--space-7)] text-text-muted">
+                      <div className="onboarding-empty grid gap-[var(--space-content-tight)] rounded-[var(--radius-card)] bg-surface-1 px-[var(--space-5)] py-[var(--space-7)] text-text-muted">
                         <p>{onboardingStrings.step1.noFilteredWorks}</p>
                       </div>
                     ) : (

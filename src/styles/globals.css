@@ -137,9 +137,12 @@
   --layout-width-navigation: 1200px;
 
   --radius-cover: 4px;
-  --radius-card: 8px;
+  /* Panels, controls and labels are square like manga panels; only the cover content cards
+     (recommendation, shelf and work cards) keep a rounded corner, and circles stay circles. */
+  --radius-card: 0px;
+  --radius-media-card: 8px;
   --radius-control: var(--radius-card);
-  --radius-pill: 999px;
+  --radius-pill: 0px;
   --radius-cover-selection: calc(var(--radius-cover) + 2px);
   --radius: var(--radius-card);
   --shadow-level-1: 0 4px 16px oklch(0 0 0 / 0.08);
@@ -154,8 +157,8 @@
   --surface-hover: var(--surface-3);
   --control-min-size: 44px;
   --control-segment-width: 340px;
-  --radius-segment-track: calc(var(--radius-control) + 2px);
-  --radius-segment-indicator: calc(var(--radius-control) - 1px);
+  --radius-segment-track: var(--radius-control);
+  --radius-segment-indicator: var(--radius-control);
   --control-switch-width: 46px;
   --control-switch-height: 26px;
   --control-switch-thumb: var(--space-5);
@@ -1363,7 +1366,6 @@ h1[tabindex="-1"]:focus {
   max-width: 100%;
   height: auto;
   padding: var(--space-1);
-  border: 1px solid var(--line);
   border-radius: var(--radius-segment-track);
   background: var(--surface-2);
 }
@@ -1424,7 +1426,6 @@ h1[tabindex="-1"]:focus {
   isolation: isolate;
   overflow: hidden;
   padding: var(--space-6);
-  border: 1px solid var(--line);
   border-radius: var(--radius-card);
   background: var(--surface-1);
 }
@@ -2259,7 +2260,6 @@ h1[tabindex="-1"]:focus {
 .negative-result-card__badge {
   justify-self: start;
   padding: var(--space-1) var(--space-2);
-  border: 1px solid var(--line);
   border-radius: var(--radius-pill);
   color: var(--text-muted);
   font-size: var(--text-caption-size);
@@ -2536,7 +2536,7 @@ h1[tabindex="-1"]:focus {
   top: var(--space-2);
   right: var(--space-2);
   z-index: 3;
-  border-radius: var(--radius-pill);
+  border-radius: 50%;
   background: color-mix(in oklch, var(--hh-paper) 88%, transparent);
   color: var(--hh-ink);
 }
@@ -3077,7 +3077,7 @@ h1[tabindex="-1"]:focus {
 .home-wheel__legend-dot {
   width: var(--space-2);
   height: var(--space-2);
-  border-radius: var(--radius-pill);
+  border-radius: 50%;
   background: var(--accent);
 }
 
@@ -3096,7 +3096,7 @@ h1[tabindex="-1"]:focus {
   position: absolute;
   inset: 0;
   border: 1px solid var(--line);
-  border-radius: var(--radius-pill);
+  border-radius: 50%;
   content: "";
 }
 

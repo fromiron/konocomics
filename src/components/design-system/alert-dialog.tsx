@@ -37,7 +37,7 @@ export function AlertDialogContent({
   return (
     <PrimitiveAlertDialogContent
       className={cn(
-        "rounded-[var(--radius-card)] border border-line bg-surface-1 text-text shadow-[var(--shadow-raised)] ring-0 !transition-none !animate-none",
+        "rounded-[var(--radius-card)] bg-surface-1 text-text shadow-[var(--shadow-raised)] ring-0 !transition-none !animate-none",
         className,
       )}
       {...props}
