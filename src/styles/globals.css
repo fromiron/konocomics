@@ -1950,6 +1950,15 @@ h1[tabindex="-1"]:focus {
   color: color-mix(in oklch, var(--text-strong) 12%, transparent);
 }
 
+/* Settings section tabs on narrow screens scroll sideways: the right edge fades so the hidden
+   sections read as more to come, and trailing room lets the last tab scroll clear of the fade. */
+@media (max-width: 47.9375rem) {
+  .settings-nav__list {
+    padding-right: var(--space-12);
+    mask-image: linear-gradient(to right, black calc(100% - var(--space-12)), transparent);
+  }
+}
+
 /* Onboarding welcome, in the home hero's panel language: a white narration panel framed in ink,
    then the steps as a strip of panels with the current one in amber. Wide gutters between the
    tiers, narrow ones inside the strip, one slant after the current step. */

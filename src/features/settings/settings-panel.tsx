@@ -13,7 +13,11 @@ type SettingsPanelProps = Omit<ComponentPropsWithoutRef<"section">, "title"> &
     tone?: "default" | "danger";
   }>;
 
-/** One settings card. Its id is the scroll target of the section navigation. */
+/**
+ * One settings section, set like a colophon block: a heavy paper rule over the heading and its
+ * rows (the danger section stays a red-framed box). Its id is the scroll target of the section
+ * navigation.
+ */
 export function SettingsPanel({
   children,
   className,
@@ -28,10 +32,10 @@ export function SettingsPanel({
     <section
       aria-labelledby={headingId}
       className={cn(
-        "grid min-w-0 scroll-mt-[calc(var(--control-min-size)+var(--space-6))] content-start gap-[var(--space-5)] rounded-[var(--radius-card)] border p-[var(--space-5)] md:scroll-mt-[calc(var(--desktop-navigation-height)+var(--space-6))] md:p-[var(--space-6)]",
+        "grid min-w-0 scroll-mt-[calc(var(--control-min-size)+var(--space-6))] content-start gap-[var(--space-5)] md:scroll-mt-[calc(var(--desktop-navigation-height)+var(--space-6))]",
         tone === "danger"
-          ? "border-line-danger bg-surface-danger-soft"
-          : "border-transparent bg-surface-1",
+          ? "border border-line-danger bg-surface-danger-soft p-[var(--space-5)] md:p-[var(--space-6)]"
+          : "border-t-2 border-text-strong pt-[var(--space-5)]",
         className,
       )}
       {...props}
@@ -39,7 +43,7 @@ export function SettingsPanel({
       <div className="grid min-w-0 gap-[var(--space-content)]">
         <h2
           className={cn(
-            "flex min-w-0 items-center gap-[var(--space-content)] text-[length:var(--text-subheading-size)] leading-snug [overflow-wrap:anywhere]",
+            "flex min-w-0 items-center gap-[var(--space-content)] text-[length:var(--font-size-20)] leading-snug [overflow-wrap:anywhere]",
             tone === "danger" ? "text-danger" : "text-text-strong",
           )}
           id={headingId}

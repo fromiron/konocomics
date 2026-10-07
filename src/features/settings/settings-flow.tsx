@@ -130,10 +130,10 @@ function SectionNavigation({
   return (
     <nav
       aria-label={settingsStrings.sections.label}
-      className="sticky top-0 z-20 min-w-0 -mx-[var(--layout-page-padding)] mb-[var(--space-6)] border-b border-line bg-canvas md:top-[calc(var(--desktop-navigation-height)+var(--space-6))] md:mx-0 md:mb-0 md:border-b-0 md:bg-transparent"
+      className="settings-nav sticky top-0 z-20 min-w-0 -mx-[var(--layout-page-padding)] mb-[var(--space-6)] border-b border-[var(--chrome-rule)] bg-canvas md:top-[calc(var(--desktop-navigation-height)+var(--space-6))] md:mx-0 md:mb-0 md:border-b-0 md:bg-transparent"
     >
       <ul
-        className="m-0 flex list-none gap-[var(--space-1)] overflow-x-auto px-[var(--layout-page-padding)] [scrollbar-width:none] md:grid md:overflow-visible md:p-0 [&::-webkit-scrollbar]:hidden"
+        className="settings-nav__list m-0 flex list-none gap-[var(--space-1)] overflow-x-auto px-[var(--layout-page-padding)] py-[var(--space-1)] [scrollbar-width:none] md:grid md:overflow-visible md:p-0 [&::-webkit-scrollbar]:hidden"
         ref={listRef}
       >
         {SETTINGS_SECTIONS.map((section) => {
@@ -144,8 +144,9 @@ function SectionNavigation({
               <a
                 aria-current={isCurrent ? "location" : undefined}
                 className={cn(
-                  "flex min-h-[var(--control-min-size)] items-center gap-[var(--space-content-loose)] border-b-2 border-transparent px-[var(--space-3)] text-[length:var(--font-size-14)] font-medium whitespace-nowrap text-text-muted transition-colors duration-[var(--motion-duration-feedback)] ease-[var(--motion-ease-direct)] focus-visible:outline-2 focus-visible:-outline-offset-2 focus-visible:outline-ring md:rounded-[var(--radius-control)] md:border-b-0 [@media(hover:hover)_and_(pointer:fine)]:hover:text-text-strong md:[@media(hover:hover)_and_(pointer:fine)]:hover:bg-surface-1",
-                  "aria-[current=location]:border-accent aria-[current=location]:font-bold aria-[current=location]:text-accent-ink md:aria-[current=location]:bg-accent-soft md:[@media(hover:hover)_and_(pointer:fine)]:aria-[current=location]:hover:bg-accent-soft",
+                  "flex min-h-[var(--control-min-size)] items-center gap-[var(--space-content-loose)] px-[var(--space-3)] text-[length:var(--font-size-14)] font-bold whitespace-nowrap text-text-muted transition-colors duration-[var(--motion-duration-feedback)] ease-[var(--motion-ease-direct)] focus-visible:outline-2 focus-visible:-outline-offset-2 focus-visible:outline-ring [@media(hover:hover)_and_(pointer:fine)]:hover:text-text-strong",
+                  // The current section is the amber block of the header and tab bar.
+                  "aria-[current=location]:bg-accent aria-[current=location]:text-on-accent [@media(hover:hover)_and_(pointer:fine)]:aria-[current=location]:hover:text-on-accent",
                 )}
                 onClick={(event) => {
                   if (
@@ -310,7 +311,7 @@ export function SettingsFlow({
             jumpTo(section);
           }}
         />
-        <div className="grid min-w-0 gap-[var(--space-6)]">
+        <div className="grid min-w-0 gap-[var(--space-12)]">
           <PolicySettings policies={policies} savePolicies={savePolicies} />
           <DnaSettings adjustmentCount={adjustmentCount} />
           <DataSettings
