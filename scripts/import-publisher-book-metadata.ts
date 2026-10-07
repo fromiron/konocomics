@@ -145,13 +145,10 @@ function capturedBookIntroduction(value: string, sourceUrl: string, isbn: string
     .replace(/<!--[\s\S]*?-->/gu, "");
   for (const tag of markup.matchAll(/<div\b(?:[^"'<>]|"[^"]*"|'[^']*')*>/giu)) {
     const attributes = new Map<string, string>();
-    for (const attribute of tag[0].matchAll(
-      /\s([^\s"'<>/=]+)\s*=\s*(?:"([^"]*)"|'([^']*)')/gu,
-    )) {
+    for (const attribute of tag[0].matchAll(/\s([^\s"'<>/=]+)\s*=\s*(?:"([^"]*)"|'([^']*)')/gu)) {
       const name = attribute[1];
       const content = attribute[2] ?? attribute[3];
-      if (name !== undefined && content !== undefined)
-        attributes.set(name.toLowerCase(), content);
+      if (name !== undefined && content !== undefined) attributes.set(name.toLowerCase(), content);
     }
     const dataPage = attributes.get("data-page");
     if (attributes.get("id") !== "app" || !dataPage) continue;

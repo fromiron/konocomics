@@ -271,8 +271,9 @@ it("binds an escaped publisher book introduction without admitting other JSON fi
     };
     const sourceHtml = (value = book) => {
       const json = JSON.stringify({ component: "Books/Show", props: { book: value } })
-        .replace(/[^\x20-\x7e]/gu, (character) =>
-          `\\u${character.charCodeAt(0).toString(16).padStart(4, "0")}`,
+        .replace(
+          /[^\x20-\x7e]/gu,
+          (character) => `\\u${character.charCodeAt(0).toString(16).padStart(4, "0")}`,
         )
         .replace(/&/gu, "&amp;")
         .replace(/"/gu, "&quot;")
