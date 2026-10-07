@@ -1527,7 +1527,6 @@ def _build_plan(
     themes: dict[tuple[str, str], dict[str, str]] = baseline["themes"]  # type: ignore[assignment]
     evidence: dict[str, dict[str, str]] = baseline["evidence"]  # type: ignore[assignment]
     existing_contexts: dict[str, list[dict[str, object]]] = baseline["contexts"]  # type: ignore[assignment]
-    volumes: dict[str, int] = baseline["volumes"]  # type: ignore[assignment]
     target_ids = set(promotion)
     packets = packets or {}
     chunk_digests = chunk_digests or {}
@@ -1711,7 +1710,8 @@ def _build_plan(
                     )
                     evidence_updates.pop(evidence_id, None)
                     context_sources[context_ids.index(evidence_id)] = new_row
-            context_inserts.append({"workId": work_id, "catalogRole": "discovery", "seriesGroupId": "", "volumeCount": str(volumes.get(work_id, 0)), "reviewAverage": "", "reviewCount": ""})
+            # Collected editions and representative volume numbers do not establish a series total.
+            context_inserts.append({"workId": work_id, "catalogRole": "discovery", "seriesGroupId": "", "volumeCount": "0", "reviewAverage": "", "reviewCount": ""})
 
     used_ids = {evidence_id for row, _claim_id in used_claims for evidence_id in panel.split_list(row["evidenceIds"], f"{row['workId']} evidenceIds")}
     for work_id in sorted(target_ids):

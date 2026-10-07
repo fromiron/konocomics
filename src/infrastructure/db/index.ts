@@ -12,10 +12,12 @@ export type {
   ExternalWorkRemovalResult,
   MinimalPlannedRemovalResult,
 } from "./backend";
+export { UserWorkConflictError } from "./backend";
 export type { ExternalWorkRecord, ProviderCacheRecord, RecommendationCacheRecord } from "./records";
 export {
   DataSnapshotUnavailableError,
   DataTransferError,
+  ExportDraftConflictError,
   EXPORT_FORMAT,
   EXPORT_SCHEMA_VERSION,
   exportFilenameV1,

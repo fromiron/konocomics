@@ -18,6 +18,7 @@ import { ExternalWorkDetailFlow } from "@/features/work-detail/external-work-det
 import type {
   ExternalWorkLookupResult,
   ExternalWorkRecord,
+  ExternalWorkRemovalResult,
   PersistenceStatus,
 } from "@/infrastructure/db";
 import {
@@ -30,6 +31,11 @@ import {
 const testState = vi.hoisted(() => ({
   status: { state: "ready", mode: "indexeddb", warning: null } as PersistenceStatus,
   inspectExternalWork: vi.fn<(id: ExternalWorkId) => Promise<ExternalWorkLookupResult>>(),
+  navigate: vi.fn(),
+  removeExternalWork:
+    vi.fn<
+      (id: ExternalWorkId, expected: ExternalWorkRecord) => Promise<ExternalWorkRemovalResult>
+    >(),
   saveExternalUserRecord:
     vi.fn<
       (
@@ -41,6 +47,7 @@ const testState = vi.hoisted(() => ({
 }));
 
 vi.mock("@tanstack/react-router", () => ({
+  useNavigate: () => testState.navigate,
   Link: ({ children, className, to }: { children: ReactNode; className?: string; to: string }) => (
     <a className={className} href={to}>
       {children}
@@ -51,6 +58,7 @@ vi.mock("@tanstack/react-router", () => ({
 vi.mock("@/infrastructure/db", () => ({
   usePersistence: () => ({
     inspectExternalWork: testState.inspectExternalWork,
+    removeExternalWork: testState.removeExternalWork,
     saveExternalUserRecord: testState.saveExternalUserRecord,
     status: testState.status,
   }),
@@ -112,6 +120,10 @@ beforeEach(() => {
   setSearch("");
   testState.status = { state: "ready", mode: "indexeddb", warning: null };
   testState.inspectExternalWork.mockReset();
+  testState.navigate.mockReset();
+  testState.navigate.mockResolvedValue(undefined);
+  testState.removeExternalWork.mockReset();
+  testState.removeExternalWork.mockResolvedValue("removed");
   testState.saveExternalUserRecord.mockReset();
   testState.saveExternalUserRecord.mockImplementation(
     async (id, _expectedNormalizedKey, record) => ({
@@ -140,6 +152,122 @@ function choose(group: string, option: string) {
 }
 
 describe("ExternalWorkDetailFlow", () => {
+  it("confirms the exact external record, focuses cancel, and only removes after confirmation", async () => {
+    const record = externalRecord();
+    const navigation = deferred<void>();
+    testState.navigate.mockReturnValue(navigation.promise);
+    testState.inspectExternalWork.mockResolvedValue({ kind: "found", record });
+    const view = render(
+      <div id="app-content" tabIndex={-1}>
+        <ExternalWorkDetailFlow workId={record.id} />
+      </div>,
+    );
+    const opener = await screen.findByRole("button", { name: externalDetailStrings.remove.action });
+    fireEvent.click(opener);
+    const dialog = await screen.findByRole("alertdialog");
+    expect(within(dialog).getByText(externalDetailStrings.remove.title(record.title))).toBeTruthy();
+    expect(within(dialog).getByText(externalDetailStrings.remove.description)).toBeTruthy();
+    const cancel = within(dialog).getByRole("button", {
+      name: externalDetailStrings.remove.cancel,
+    });
+    await waitFor(() => expect(document.activeElement).toBe(cancel));
+    fireEvent.click(cancel);
+    await waitFor(() => expect(screen.queryByRole("alertdialog")).toBeNull());
+    expect(testState.removeExternalWork).not.toHaveBeenCalled();
+    expect(testState.navigate).not.toHaveBeenCalled();
+    await waitFor(() => expect(document.activeElement).toBe(opener));
+
+    fireEvent.click(opener);
+    fireEvent.click(
+      await screen.findByRole("button", { name: externalDetailStrings.remove.confirm }),
+    );
+    await waitFor(() => expect(testState.navigate).toHaveBeenCalledWith({ to: "/library" }));
+    expect(testState.removeExternalWork).toHaveBeenCalledExactlyOnceWith(record.id, record);
+    // Router navigation resolves after replacing the source route, while AppShell persists.
+    view.rerender(
+      <div id="app-content" tabIndex={-1}>
+        <h1>{libraryStrings.title}</h1>
+      </div>,
+    );
+    await act(async () => navigation.resolve());
+    await waitFor(() => expect(document.activeElement?.id).toBe("app-content"));
+  });
+
+  it("reloads a conflicting record without navigating or deleting it again", async () => {
+    const record = externalRecord();
+    const updated = {
+      ...record,
+      title: "別のタブで更新した作品",
+      record: {
+        ...record.record,
+        readingState: "completed" as const,
+        reaction: "favorite" as const,
+      },
+    };
+    testState.inspectExternalWork
+      .mockResolvedValueOnce({ kind: "found", record })
+      .mockResolvedValue({ kind: "found", record: updated });
+    testState.removeExternalWork.mockResolvedValue("preserved-conflict");
+    render(<ExternalWorkDetailFlow workId={record.id} />);
+    fireEvent.click(
+      await screen.findByRole("button", { name: externalDetailStrings.remove.action }),
+    );
+    fireEvent.click(
+      await screen.findByRole("button", { name: externalDetailStrings.remove.confirm }),
+    );
+    expect(await screen.findByRole("heading", { level: 1, name: updated.title })).toBeTruthy();
+    expect((await screen.findByRole("alert")).textContent).toBe(
+      externalDetailStrings.remove.conflict,
+    );
+    expect(
+      screen
+        .getByRole("radio", { name: libraryStrings.tabs.completed })
+        .getAttribute("aria-checked"),
+    ).toBe("true");
+    expect(testState.removeExternalWork).toHaveBeenCalledExactlyOnceWith(record.id, record);
+    expect(testState.navigate).not.toHaveBeenCalled();
+  });
+
+  it.each(["preserved-unknown", "rejected"] as const)(
+    "keeps %s removal outcomes visible without claiming success",
+    async (outcome) => {
+      const record = externalRecord();
+      testState.inspectExternalWork.mockResolvedValue({ kind: "found", record });
+      if (outcome === "rejected")
+        testState.removeExternalWork.mockRejectedValue(new Error("storage"));
+      else testState.removeExternalWork.mockResolvedValue(outcome);
+      render(<ExternalWorkDetailFlow workId={record.id} />);
+      fireEvent.click(
+        await screen.findByRole("button", { name: externalDetailStrings.remove.action }),
+      );
+      fireEvent.click(
+        await screen.findByRole("button", { name: externalDetailStrings.remove.confirm }),
+      );
+      expect((await screen.findByRole("alert")).textContent).toBe(
+        externalDetailStrings.remove.error,
+      );
+      expect(screen.getByRole("alertdialog")).toBeTruthy();
+      expect(testState.navigate).not.toHaveBeenCalled();
+    },
+  );
+
+  it("shows a missing record if another tab already removed it", async () => {
+    const record = externalRecord();
+    testState.inspectExternalWork.mockResolvedValue({ kind: "found", record });
+    testState.removeExternalWork.mockResolvedValue("already-absent");
+    render(<ExternalWorkDetailFlow workId={record.id} />);
+    fireEvent.click(
+      await screen.findByRole("button", { name: externalDetailStrings.remove.action }),
+    );
+    fireEvent.click(
+      await screen.findByRole("button", { name: externalDetailStrings.remove.confirm }),
+    );
+    expect(
+      await screen.findByRole("heading", { name: externalDetailStrings.missing.title }),
+    ).toBeTruthy();
+    expect(testState.navigate).not.toHaveBeenCalled();
+  });
+
   it.each([
     ["missing", ""],
     ["empty", "?workId="],

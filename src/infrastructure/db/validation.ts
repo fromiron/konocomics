@@ -332,6 +332,14 @@ export function parseExternalWork(value: unknown): ExternalWorkRecord {
   return externalWorkRecordSchema.parse(value);
 }
 
+export function isUnchangedExternalWork(value: unknown, expected: ExternalWorkRecord): boolean {
+  const current = externalWorkRecordSchema.safeParse(value);
+  // Parsing gives both records the same field order, including nested reading metadata.
+  return (
+    current.success && JSON.stringify(current.data) === JSON.stringify(parseExternalWork(expected))
+  );
+}
+
 export function parseExternalUserWorkRecord(id: ExternalWorkId, value: unknown): UserWorkRecord {
   const record = userWorkRecordSchema.parse(value);
   if (record.workId !== id) {

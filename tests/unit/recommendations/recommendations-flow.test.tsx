@@ -14,13 +14,18 @@ import {
 import catalogJson from "@/data/generated/catalog-v1.json";
 import recommendationContextJson from "@/data/generated/recommendation-context-v1.json";
 import { catalogV1Schema } from "@/domain/catalog/schema";
-import type { RecommendationPolicies, UserWorkRecord } from "@/domain/profile/types";
+import type {
+  ProfileAdjustments,
+  RecommendationPolicies,
+  UserWorkRecord,
+} from "@/domain/profile/types";
 import { recommendationContextSchema } from "@/domain/recommendation/context-schema";
 import { workMatchesMood } from "@/domain/recommendation/mood";
 import type { RecommendationPlanEntry } from "@/domain/recommendation/types";
 import { resetMoodSession } from "@/features/recommendations/mood-session";
 import type { RecommendationMotionListProps } from "@/features/recommendations/recommendation-motion-list";
 import { RecommendationsFlow as RecommendationsFlowComponent } from "@/features/recommendations/recommendations-flow";
+import { parseUserWork } from "@/infrastructure/db/validation";
 import { onboardingStrings, recommendationStrings } from "@/lib/strings";
 
 const featuredItemSelector = "li[data-recommendation-work-id]:not([data-carousel-clone])";
@@ -67,7 +72,7 @@ const testState = vi.hoisted(() => ({
   buildPlan: vi.fn(),
   coverPriorities: [] as boolean[],
   coverUrls: [] as Array<string | null | undefined>,
-  adjustments: { axes: {}, themes: {} } as const,
+  adjustments: { axes: {}, themes: {} } as ProfileAdjustments,
   getRecommendationCache: vi.fn(),
   getProviderCache: vi.fn(),
   loadMotionList: vi.fn(),
@@ -343,6 +348,7 @@ beforeEach(() => {
     reaction: "liked",
     updatedAt: "2026-08-14T09:00:00+09:00",
   }));
+  testState.adjustments = { axes: {}, themes: {} };
   testState.policies = {
     preferCompleted: false,
     preferHidden: false,
@@ -364,7 +370,9 @@ beforeEach(() => {
   testState.savePolicies.mockReset();
   testState.savePolicies.mockResolvedValue(undefined);
   testState.saveUserWork.mockReset();
-  testState.saveUserWork.mockImplementation(async (record: UserWorkRecord) => record);
+  testState.saveUserWork.mockImplementation(async (record: UserWorkRecord) =>
+    parseUserWork(record),
+  );
   testState.removeUserWorkIfUnchanged.mockReset();
   testState.removeUserWorkIfUnchanged.mockResolvedValue("removed");
   testState.addUserWorkIfAbsent.mockReset();
@@ -801,6 +809,192 @@ describe("RecommendationsFlow", () => {
     );
     await waitFor(() => expect(screen.queryByRole("dialog")).toBeNull());
     await waitFor(() => expect(document.activeElement).toBe(previewButton));
+  });
+
+  it("signals asynchronous plan readiness without overriding a restored history scroll with a shelf jump", async () => {
+    const cached = deferred<ReturnType<typeof cacheRecord>>();
+    testState.getRecommendationCache.mockReturnValueOnce(cached.promise);
+    const onReady = vi.fn();
+    const scrollIntoView = vi.fn();
+    Object.defineProperty(HTMLElement.prototype, "scrollIntoView", {
+      configurable: true,
+      writable: true,
+      value: scrollIntoView,
+    });
+    const view = render(
+      <RecommendationsFlow onReady={onReady} restoreShelfFromUrl={false} shelf="ranking" />,
+    );
+    await waitFor(() => expect(testState.getRecommendationCache).toHaveBeenCalled());
+    expect(onReady).not.toHaveBeenCalled();
+    await act(async () => {
+      cached.resolve(cacheRecord(makePlan()));
+      await cached.promise;
+    });
+    await waitFor(() => expect(onReady).toHaveBeenCalledTimes(1));
+    expect(scrollIntoView).not.toHaveBeenCalled();
+    view.rerender(<RecommendationsFlow restoreShelfFromUrl={false} shelf="discovery" />);
+    expect(scrollIntoView).not.toHaveBeenCalled();
+    view.rerender(<RecommendationsFlow restoreShelfFromUrl shelf="ranking" />);
+    await waitFor(() => expect(scrollIntoView).toHaveBeenCalledTimes(1));
+  });
+
+  it("restores a URL preview to a current trigger after remount and uses a heading fallback", async () => {
+    const first = makePlan()[0]!;
+    const view = render(<RecommendationsFlow previewWorkId={first.workId} />);
+    await screen.findByRole("dialog");
+    const title = catalog.works.find((work) => work.id === first.workId)!.title;
+    const trigger = [
+      ...view.container.querySelectorAll<HTMLButtonElement>("button[aria-label]"),
+    ].find(
+      (button) =>
+        button.getAttribute("aria-label") === recommendationStrings.quickPreview.open(title) &&
+        button.closest("[inert], [data-carousel-clone]") === null,
+    )!;
+    view.rerender(<RecommendationsFlow />);
+    await waitFor(() => expect(document.activeElement).toBe(trigger));
+    view.rerender(<RecommendationsFlow previewWorkId={first.workId} genre="horror" />);
+    await screen.findByRole("dialog");
+    view.rerender(<RecommendationsFlow genre="horror" />);
+    await waitFor(() => expect(document.activeElement?.id).toBe("recommendation-page-heading"));
+  });
+
+  it("keeps stale planned actions insert-only and preserves authoritative completed records", async () => {
+    const first = makePlan()[0]!;
+    testState.addUserWorkIfAbsent.mockResolvedValue({
+      kind: "existing",
+      record: {
+        workId: first.workId,
+        readingState: "completed",
+        reaction: "favorite",
+        updatedAt: "2026-10-07T00:00:00Z",
+      },
+    });
+    const { container } = render(<RecommendationsFlow />);
+    await waitFor(() => expect(container.querySelectorAll(featuredItemSelector)).toHaveLength(5));
+    const card = container.querySelector<HTMLElement>(featuredItemSelector)!;
+    fireEvent.click(within(card).getByRole("button", { name: "読みたい" }));
+    await waitFor(() => expect(testState.addUserWorkIfAbsent).toHaveBeenCalledTimes(1));
+    expect(testState.saveUserWork).not.toHaveBeenCalled();
+    await waitFor(() =>
+      expect(
+        screen.getByText(
+          recommendationStrings.announcements.alreadyRecorded(
+            catalog.works.find((work) => work.id === first.workId)!.title,
+          ),
+        ),
+      ).toBeTruthy(),
+    );
+  });
+
+  it.each([
+    ["dropped", "completed", "良かった"],
+    ["completed", "completed", "良かった"],
+    ["completed", "completed", "普通"],
+    ["dropped", "hidden", null],
+  ] as const)(
+    "normalizes %s reasons after a stale conflict and retry to %s (%s)",
+    async (previousState, nextState, reactionLabel) => {
+      const first = makePlan()[0]!;
+      const previous = parseUserWork({
+        workId: first.workId,
+        readingState: previousState,
+        reaction: "disliked",
+        negativeReasons: ["tooSlow"],
+        ...(previousState === "dropped" ? { droppedReasons: ["tooDark"] } : {}),
+        progress: { volume: 7 },
+        positiveReasons: ["strategy"],
+        updatedAt: "2026-10-07T00:00:00Z",
+      });
+      testState.saveUserWork.mockImplementationOnce(async () => {
+        testState.userWorks = [...testState.userWorks, previous];
+        throw new Error("Concurrent record changed");
+      });
+      const { container } = render(<RecommendationsFlow />);
+      await waitFor(() => expect(container.querySelectorAll(featuredItemSelector)).toHaveLength(5));
+      const action = within(container.querySelector<HTMLElement>(featuredItemSelector)!).getByRole(
+        "button",
+        {
+          name: nextState === "completed" ? "読んだ" : "興味なし",
+        },
+      );
+      fireEvent.click(action);
+      await screen.findByText(recommendationStrings.errors.feedback);
+      const retryAction = await waitFor(() => {
+        const currentCard = container.querySelector<HTMLElement>(
+          `li[data-recommendation-work-id="${first.workId}"]:not([data-carousel-clone])`,
+        );
+        expect(currentCard).not.toBeNull();
+        const button = within(currentCard!).getByRole("button", {
+          name: nextState === "completed" ? "読んだ" : "興味なし",
+        });
+        expect(button.hasAttribute("disabled")).toBe(false);
+        return button;
+      });
+      fireEvent.click(retryAction);
+      const dialog = await screen.findByRole("dialog");
+      const base = parseUserWork(testState.saveUserWork.mock.calls[1]![0]);
+      expect(base.progress).toEqual({ volume: 7 });
+      expect(base.droppedReasons).toBeUndefined();
+      expect(testState.saveUserWork.mock.calls[1]![1]).toBe(previous.updatedAt);
+      if (reactionLabel !== null) {
+        fireEvent.click(within(dialog).getByRole("radio", { name: reactionLabel }));
+      } else {
+        fireEvent.click(within(dialog).getByRole("checkbox", { name: "展開が遅い" }));
+      }
+      fireEvent.click(within(dialog).getByRole("button", { name: "保存" }));
+      await waitFor(() => expect(screen.queryByRole("dialog")).toBeNull());
+      const saved = parseUserWork(testState.saveUserWork.mock.calls.at(-1)![0]);
+      expect(saved.progress).toEqual({ volume: 7 });
+      expect(saved.positiveReasons).toEqual(["strategy"]);
+      expect(saved.droppedReasons).toBeUndefined();
+      expect(saved.readingState).toBe(nextState);
+      if (nextState === "completed") expect(saved.negativeReasons).toBeUndefined();
+      else expect(saved.negativeReasons).toEqual(["tooSlow"]);
+    },
+  );
+
+  it("does not describe excluded preferences as a positive recommendation basis", async () => {
+    const { rerender } = render(<RecommendationsFlow />);
+    const criteria = await screen.findByRole("region", { name: "今回のおすすめ基準" });
+    testState.adjustments = { axes: { darkness: "exclude", strategy: "less" }, themes: {} };
+    rerender(<RecommendationsFlow />);
+    expect(criteria.querySelector("p")?.textContent).not.toContain("ダークな世界観");
+    expect(criteria.textContent).toContain("ダークな世界観：除外");
+    expect(criteria.textContent).toContain("おすすめの調整");
+    testState.adjustments = { axes: {}, themes: {} };
+    rerender(<RecommendationsFlow />);
+    expect(criteria.textContent).not.toContain("おすすめの調整");
+  });
+
+  it("distinguishes an empty featured genre from matching auxiliary candidates", async () => {
+    const plan = makePlan(150);
+    const matches = (entry: RecommendationPlanEntry) =>
+      catalog.works.find((work) => work.id === entry.workId)!.genres.includes("horror");
+    const other = plan.filter((entry) => !matches(entry)).slice(0, 10);
+    const candidate = plan.find(matches)!;
+    expect(candidate).toBeDefined();
+    testState.getRecommendationCache.mockResolvedValue(
+      cacheRecord([...other, { ...candidate, isDiscovery: true }]),
+    );
+    const view = render(<RecommendationsFlow genre="horror" />);
+    await screen.findByText(recommendationStrings.filters.featuredEmpty);
+    expect(screen.queryByText(recommendationStrings.filters.empty)).toBeNull();
+    view.rerender(<RecommendationsFlow />);
+    await waitFor(() =>
+      expect(screen.queryByText(recommendationStrings.filters.featuredEmpty)).toBeNull(),
+    );
+  });
+
+  it("announces auxiliary-only removal without claiming a Top 10 shortage", async () => {
+    const plan = makePlan();
+    const auxiliary = plan[10]!;
+    render(<RecommendationsFlow previewWorkId={auxiliary.workId} />);
+    const dialog = await screen.findByRole("dialog");
+    fireEvent.click(within(dialog).getByRole("button", { name: "興味なし" }));
+    await screen.findByText(recommendationStrings.announcements.removed);
+    expect(
+      screen.queryByText(recommendationStrings.announcements.removedWithoutBackfill),
+    ).toBeNull();
   });
 
   it("shows distinct supporting reasons without inventing a caution", async () => {
@@ -1271,11 +1465,14 @@ describe("RecommendationsFlow", () => {
     expect(testState.saveUserWork).toHaveBeenCalledTimes(1);
     expect(container.querySelector(`[data-recommendation-work-id='${firstWorkId}']`)).toBeTruthy();
     expect(screen.queryByRole("dialog")).toBeNull();
-    expect(testState.saveUserWork).toHaveBeenCalledWith({
-      workId: firstWorkId,
-      readingState: "completed",
-      updatedAt: expect.any(String),
-    });
+    expect(testState.saveUserWork).toHaveBeenCalledWith(
+      {
+        workId: firstWorkId,
+        readingState: "completed",
+        updatedAt: expect.any(String),
+      },
+      null,
+    );
 
     await act(async () => {
       baseWrite.resolve(testState.saveUserWork.mock.calls[0]![0] as UserWorkRecord);
@@ -1310,12 +1507,15 @@ describe("RecommendationsFlow", () => {
     fireEvent.click(screen.getByRole("radio", { name: "最高" }));
     fireEvent.click(screen.getByRole("button", { name: "保存" }));
     await waitFor(() => expect(screen.queryByRole("dialog")).toBeNull());
-    expect(testState.saveUserWork).toHaveBeenLastCalledWith({
-      workId: firstWorkId,
-      readingState: "completed",
-      reaction: "favorite",
-      updatedAt: (testState.saveUserWork.mock.calls[0]![0] as UserWorkRecord).updatedAt,
-    });
+    expect(testState.saveUserWork).toHaveBeenLastCalledWith(
+      {
+        workId: firstWorkId,
+        readingState: "completed",
+        reaction: "favorite",
+        updatedAt: expect.any(String),
+      },
+      (testState.saveUserWork.mock.calls[0]![0] as UserWorkRecord).updatedAt,
+    );
     await waitFor(() => {
       expect(document.activeElement).toBe(
         container.querySelector(
@@ -1605,13 +1805,16 @@ describe("RecommendationsFlow", () => {
     fireEvent.click(within(dialog).getByRole("checkbox", { name: "展開が遅い" }));
     fireEvent.click(within(dialog).getByRole("button", { name: "保存" }));
     await waitFor(() => expect(screen.queryByRole("dialog")).toBeNull());
-    expect(testState.saveUserWork).toHaveBeenLastCalledWith({
-      workId: selectedReasonWorkId,
-      readingState: "hidden",
-      reaction: "disliked",
-      negativeReasons: ["tooSlow"],
-      updatedAt: expect.any(String),
-    });
+    expect(testState.saveUserWork).toHaveBeenLastCalledWith(
+      {
+        workId: selectedReasonWorkId,
+        readingState: "hidden",
+        reaction: "disliked",
+        negativeReasons: ["tooSlow"],
+        updatedAt: expect.any(String),
+      },
+      expect.any(String),
+    );
 
     const nextCard = [...container.querySelectorAll<HTMLElement>(featuredItemSelector)].find(
       (card) =>
@@ -1622,11 +1825,14 @@ describe("RecommendationsFlow", () => {
     fireEvent.click(within(nextCard).getByRole("button", { name: "興味なし" }));
     await screen.findByRole("dialog");
     fireEvent.click(screen.getByRole("button", { name: "スキップ" }));
-    expect(testState.saveUserWork).toHaveBeenLastCalledWith({
-      workId: nextCard.dataset.recommendationWorkId,
-      readingState: "hidden",
-      updatedAt: expect.any(String),
-    });
+    expect(testState.saveUserWork).toHaveBeenLastCalledWith(
+      {
+        workId: nextCard.dataset.recommendationWorkId,
+        readingState: "hidden",
+        updatedAt: expect.any(String),
+      },
+      null,
+    );
   });
 
   it("keeps planned cards and preserves the hidden fourth policy when a visible policy changes", async () => {

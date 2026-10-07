@@ -14,14 +14,14 @@ type SearchDocument = Readonly<{
   normalizedText: string;
 }>;
 
-function normalizeQuery(value: string) {
+export function normalizeLibraryQuery(value: string) {
   return normalizeTitle(value).kanaFolded.replace(/\s+/gu, "");
 }
 
-function searchableText(work: Work) {
+export function libraryWorkSearchText(work: Work) {
   const titles = [work.title, work.titleKana, ...work.aliases]
     .filter((value): value is string => value !== undefined)
-    .map(normalizeQuery);
+    .map(normalizeLibraryQuery);
   const creators = work.creators.map((creator) =>
     foldKatakanaToHiragana(normalizeCreator(creator)).replace(/\s+/gu, ""),
   );
@@ -35,7 +35,7 @@ export type LibraryWorkSearch = Readonly<{
 export function createLibraryWorkSearch(works: readonly Work[]): LibraryWorkSearch {
   const documents = works.map((work): SearchDocument => ({
     work,
-    normalizedText: searchableText(work),
+    normalizedText: libraryWorkSearchText(work),
   }));
   const fuse = new Fuse(documents, {
     keys: ["normalizedText"],
@@ -46,7 +46,7 @@ export function createLibraryWorkSearch(works: readonly Work[]): LibraryWorkSear
 
   return {
     search(query, limit = 20) {
-      const normalizedQuery = normalizeQuery(query);
+      const normalizedQuery = normalizeLibraryQuery(query);
       if (normalizedQuery.length === 0) return [];
       return fuse.search(normalizedQuery, { limit }).map(({ item }) => item.work);
     },

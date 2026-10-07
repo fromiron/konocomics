@@ -4,6 +4,8 @@ import type { OnboardingDraft } from "@/domain/profile/onboarding";
 import type { UserWorkRecord } from "@/domain/profile/types";
 import type { KonocomicsDatabase } from "@/infrastructure/db/database";
 import { DexiePersistenceBackend } from "@/infrastructure/db/dexie-backend";
+import { UserWorkConflictError } from "@/infrastructure/db/backend";
+import { MemoryPersistenceBackend } from "@/infrastructure/db/memory-backend";
 import type { RuntimeMetaV2, UserDataSnapshot } from "@/infrastructure/db/export-v1";
 import type {
   ExternalWorkRecord,
@@ -297,5 +299,50 @@ describe("Dexie data-sovereignty transactions", () => {
       "Authoritative deletion store counts readback failed",
     );
     expect(database.dump()).toEqual(before);
+  });
+});
+
+describe.each(["indexeddb", "memory"] as const)("%s stale user-work writes", (mode) => {
+  it("preserves newer records against stale additions and conditional feedback", async () => {
+    const backend = mode === "indexeddb" ? harness().backend : new MemoryPersistenceBackend();
+    const latest: UserWorkRecord = {
+      workId: "shared-work",
+      readingState: "completed",
+      reaction: "favorite",
+      progress: { volume: 7 },
+      positiveReasons: ["characters"],
+      updatedAt: "2026-08-15T10:00:00+09:00",
+    };
+    await backend.upsertUserWork(latest);
+    const planned: UserWorkRecord = {
+      workId: latest.workId,
+      readingState: "planned",
+      updatedAt: UPDATED_AT,
+    };
+    expect(await backend.addUserWorkIfAbsent(planned)).toEqual({
+      kind: "already-exists",
+      record: latest,
+    });
+    for (const expected of [null, UPDATED_AT]) {
+      await expect(
+        backend.upsertUserWork({ ...planned, readingState: "hidden" }, expected),
+      ).rejects.toBeInstanceOf(UserWorkConflictError);
+    }
+    expect(await backend.getUserWorks()).toContainEqual(latest);
+    const updated = {
+      ...latest,
+      reaction: "liked" as const,
+      updatedAt: "2026-08-16T10:00:00+09:00",
+    };
+    expect(await backend.upsertUserWork(updated, latest.updatedAt)).toEqual(updated);
+    await expect(backend.upsertUserWork(planned, latest.updatedAt)).rejects.toBeInstanceOf(
+      UserWorkConflictError,
+    );
+    expect(await backend.getUserWorks()).toContainEqual(updated);
+    const newWork = { ...planned, workId: "absent-work" };
+    expect(await backend.upsertUserWork(newWork, null)).toEqual(newWork);
+    await expect(backend.upsertUserWork(newWork, null)).rejects.toBeInstanceOf(
+      UserWorkConflictError,
+    );
   });
 });

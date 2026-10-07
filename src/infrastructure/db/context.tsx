@@ -47,7 +47,7 @@ export type PersistenceContextValue = {
   saveProfileAdjustments(adjustments: ProfileAdjustments): Promise<void>;
   savePolicies(policies: RecommendationPolicies): Promise<void>;
   addUserWorkIfAbsent(record: UserWorkRecord): Promise<AddIfAbsentResult<UserWorkRecord>>;
-  saveUserWork(record: UserWorkRecord): Promise<UserWorkRecord>;
+  saveUserWork(record: UserWorkRecord, expectedUpdatedAt?: string | null): Promise<UserWorkRecord>;
   removeMinimalPlannedUserWork(workId: string): Promise<MinimalPlannedRemovalResult>;
   removeUserWorkIfUnchanged(
     workId: string,
@@ -62,12 +62,19 @@ export type PersistenceContextValue = {
     expectedNormalizedKey: string,
     record: UserWorkRecord,
   ): Promise<ExternalWorkRecord>;
-  removeExternalWork(id: ExternalWorkId): Promise<ExternalWorkRemovalResult>;
+  removeExternalWork(
+    id: ExternalWorkId,
+    expectedRecord?: ExternalWorkRecord,
+  ): Promise<ExternalWorkRemovalResult>;
   getRecommendationCache(inputHash: string): Promise<RecommendationCacheRecord | null>;
   saveRecommendationCache(record: RecommendationCacheRecord): Promise<void>;
   getProviderCache(isbn: string): Promise<ProviderCacheRecord | null>;
   saveProviderCache(record: ProviderCacheRecord): Promise<ProviderCacheRecord>;
-  exportUserData(exportedAt: string, currentCatalog: CurrentCatalogIdentity): Promise<ExportFileV1>;
+  exportUserData(
+    exportedAt: string,
+    currentCatalog: CurrentCatalogIdentity,
+    excludedDraftEntries?: readonly OnboardingDraft["positiveEntries"][number][],
+  ): Promise<ExportFileV1>;
   inspectImportJson(
     jsonText: string,
     currentCatalog: CurrentCatalogIdentity,
@@ -200,10 +207,12 @@ export function PersistenceProvider({ children, persistence }: PersistenceProvid
   );
 
   const saveUserWork = useCallback(
-    async (record: UserWorkRecord) => {
-      const storedRecord = await service.saveUserWork(record);
-      setUserWorks(await service.getUserWorks());
-      return storedRecord;
+    async (record: UserWorkRecord, expectedUpdatedAt?: string | null) => {
+      try {
+        return await service.saveUserWork(record, expectedUpdatedAt);
+      } finally {
+        setUserWorks(await service.getUserWorks());
+      }
     },
     [service],
   );
@@ -259,8 +268,8 @@ export function PersistenceProvider({ children, persistence }: PersistenceProvid
   );
 
   const removeExternalWork = useCallback(
-    async (id: ExternalWorkId) => {
-      const result = await service.removeExternalWork(id);
+    async (id: ExternalWorkId, expectedRecord?: ExternalWorkRecord) => {
+      const result = await service.removeExternalWork(id, expectedRecord);
       setExternalWorks(await service.getExternalWorks());
       return result;
     },
@@ -285,8 +294,11 @@ export function PersistenceProvider({ children, persistence }: PersistenceProvid
   );
 
   const exportUserData = useCallback(
-    (exportedAt: string, currentCatalog: CurrentCatalogIdentity) =>
-      service.exportUserData(exportedAt, currentCatalog),
+    (
+      exportedAt: string,
+      currentCatalog: CurrentCatalogIdentity,
+      excludedDraftEntries?: readonly OnboardingDraft["positiveEntries"][number][],
+    ) => service.exportUserData(exportedAt, currentCatalog, excludedDraftEntries),
     [service],
   );
 

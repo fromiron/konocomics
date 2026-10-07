@@ -9,6 +9,7 @@ import type {
 import {
   OnboardingAlreadyCompletedError,
   OnboardingWorkConflictError,
+  UserWorkConflictError,
   type AddIfAbsentResult,
   type ExternalWorkRemovalResult,
   type MinimalPlannedRemovalResult,
@@ -18,6 +19,7 @@ import {
 import {
   createExportFileV1,
   DataSnapshotUnavailableError,
+  ExportDraftConflictError,
   exportFileToSnapshot,
   inspectExportFileV1,
   inspectExportJsonV1,
@@ -107,8 +109,34 @@ async function createCompatibleExportFile(
   snapshot: RawUserDataSnapshot,
   exportedAt: string,
   currentCatalog: CurrentCatalogIdentity,
+  excludedDraftEntries: readonly OnboardingDraft["positiveEntries"][number][],
 ): Promise<ExportFileV1> {
-  const file = await createExportFileV1(snapshot, exportedAt, currentCatalog.catalogVersion);
+  let file = await createExportFileV1(snapshot, exportedAt, currentCatalog.catalogVersion);
+  if (file.onboardingDraft?.mode === "add") {
+    const savedWorkIds = new Set(file.userWorks.map((record) => record.workId));
+    const overlaps = file.onboardingDraft.positiveEntries.filter((entry) =>
+      savedWorkIds.has(entry.workId),
+    );
+    if (
+      overlaps.some(
+        (entry) =>
+          !excludedDraftEntries.some(
+            (approved) => approved.workId === entry.workId && approved.reaction === entry.reaction,
+          ),
+      )
+    ) {
+      throw new ExportDraftConflictError(overlaps);
+    }
+    file = {
+      ...file,
+      onboardingDraft: {
+        ...file.onboardingDraft,
+        positiveEntries: file.onboardingDraft.positiveEntries.filter(
+          (entry) => !savedWorkIds.has(entry.workId),
+        ),
+      },
+    };
+  }
   return (await inspectExportFileV1(file, currentCatalog)).file;
 }
 
@@ -122,7 +150,7 @@ export interface Persistence {
   finalizeOnboarding(draft: OnboardingDraft, completedAt: string): Promise<void>;
   getUserWorks(): Promise<UserWorkRecord[]>;
   addUserWorkIfAbsent(record: UserWorkRecord): Promise<AddIfAbsentResult<UserWorkRecord>>;
-  saveUserWork(record: UserWorkRecord): Promise<UserWorkRecord>;
+  saveUserWork(record: UserWorkRecord, expectedUpdatedAt?: string | null): Promise<UserWorkRecord>;
   removeMinimalPlannedUserWork(workId: string): Promise<MinimalPlannedRemovalResult>;
   removeUserWorkIfUnchanged(
     workId: string,
@@ -138,7 +166,10 @@ export interface Persistence {
     expectedNormalizedKey: string,
     record: UserWorkRecord,
   ): Promise<ExternalWorkRecord>;
-  removeExternalWork(id: ExternalWorkId): Promise<ExternalWorkRemovalResult>;
+  removeExternalWork(
+    id: ExternalWorkId,
+    expectedRecord?: ExternalWorkRecord,
+  ): Promise<ExternalWorkRemovalResult>;
   getProfileAdjustments(): Promise<ProfileAdjustments>;
   saveProfileAdjustments(adjustments: ProfileAdjustments): Promise<void>;
   getPolicies(): Promise<RecommendationPolicies>;
@@ -148,7 +179,11 @@ export interface Persistence {
   getProviderCache(isbn: string): Promise<ProviderCacheRecord | null>;
   saveProviderCache(record: ProviderCacheRecord): Promise<ProviderCacheRecord>;
   getOnboardingCompletedAt(): Promise<string | null>;
-  exportUserData(exportedAt: string, currentCatalog: CurrentCatalogIdentity): Promise<ExportFileV1>;
+  exportUserData(
+    exportedAt: string,
+    currentCatalog: CurrentCatalogIdentity,
+    excludedDraftEntries?: readonly OnboardingDraft["positiveEntries"][number][],
+  ): Promise<ExportFileV1>;
   inspectImportJson(
     jsonText: string,
     currentCatalog: CurrentCatalogIdentity,
@@ -331,24 +366,32 @@ export class ResilientPersistence implements Persistence {
     });
   }
 
-  async saveUserWork(record: UserWorkRecord): Promise<UserWorkRecord> {
+  async saveUserWork(
+    record: UserWorkRecord,
+    expectedUpdatedAt?: string | null,
+  ): Promise<UserWorkRecord> {
     const validatedRecord = parseUserWork(record);
     return this.enqueue(async () => {
       await this.initialize();
       if (this.activeBackend.mode === "memory") {
-        return parseUserWork(await this.memoryBackend.upsertUserWork(validatedRecord));
+        return parseUserWork(
+          await this.memoryBackend.upsertUserWork(validatedRecord, expectedUpdatedAt),
+        );
       }
 
       try {
         const existingRecords = parseUserWorks(await this.activeBackend.getUserWorks());
         this.memoryBackend.synchronizeUserWorks(existingRecords);
         const storedRecord = parseUserWork(
-          await this.activeBackend.upsertUserWork(validatedRecord),
+          await this.activeBackend.upsertUserWork(validatedRecord, expectedUpdatedAt),
         );
         await this.memoryBackend.upsertUserWork(storedRecord);
         return storedRecord;
-      } catch {
+      } catch (error) {
+        if (error instanceof UserWorkConflictError) throw error;
         await this.degrade("operation-failed");
+        // A conditional write must not be replayed against a potentially stale mirror.
+        if (expectedUpdatedAt !== undefined) throw error;
         return parseUserWork(await this.memoryBackend.upsertUserWork(validatedRecord));
       }
     });
@@ -584,12 +627,19 @@ export class ResilientPersistence implements Persistence {
     });
   }
 
-  async removeExternalWork(id: ExternalWorkId): Promise<ExternalWorkRemovalResult> {
+  async removeExternalWork(
+    id: ExternalWorkId,
+    expectedRecord?: ExternalWorkRecord,
+  ): Promise<ExternalWorkRemovalResult> {
     const validatedId = parseExternalWorkId(id);
+    const expected =
+      expectedRecord === undefined ? undefined : await parseVerifiedExternalWork(expectedRecord);
+    if (expected !== undefined && expected.id !== validatedId)
+      throw new ExternalWorkIdentityConflictError(validatedId);
     return this.enqueue(async () => {
       await this.initialize();
       if (this.activeBackend.mode === "memory") {
-        return this.memoryBackend.removeExternalWork(validatedId);
+        return this.memoryBackend.removeExternalWork(validatedId, expected);
       }
 
       try {
@@ -597,8 +647,15 @@ export class ResilientPersistence implements Persistence {
           await this.activeBackend.getExternalWorks(),
         );
         this.memoryBackend.synchronizeExternalWorks(existingRecords);
-        const result = await this.activeBackend.removeExternalWork(validatedId);
+        const result = await this.activeBackend.removeExternalWork(validatedId, expected);
         const current = await this.activeBackend.getExternalWork(validatedId);
+        if (result === "preserved-conflict") {
+          this.memoryBackend.synchronizeExternalWork(
+            validatedId,
+            current === null ? null : await parseVerifiedExternalWork(current),
+          );
+          return result;
+        }
         if (current !== null) {
           throw new Error(`External work deletion readback failed: ${validatedId}`);
         }
@@ -815,6 +872,7 @@ export class ResilientPersistence implements Persistence {
   async exportUserData(
     exportedAt: string,
     currentCatalog: CurrentCatalogIdentity,
+    excludedDraftEntries: readonly OnboardingDraft["positiveEntries"][number][] = [],
   ): Promise<ExportFileV1> {
     const catalog = parseCurrentCatalogIdentity(currentCatalog);
     return this.enqueue(async () => {
@@ -824,6 +882,7 @@ export class ResilientPersistence implements Persistence {
           await this.memoryBackend.readUserDataSnapshot(),
           exportedAt,
           catalog,
+          excludedDraftEntries,
         );
       }
 
@@ -834,7 +893,7 @@ export class ResilientPersistence implements Persistence {
         await this.degrade("operation-failed");
         throw new DataSnapshotUnavailableError({ cause: error });
       }
-      return createCompatibleExportFile(snapshot, exportedAt, catalog);
+      return createCompatibleExportFile(snapshot, exportedAt, catalog, excludedDraftEntries);
     });
   }
 

@@ -24,6 +24,7 @@ import { Button, buttonClassName } from "@/components/design-system/button";
 import { Input } from "@/components/design-system/input";
 import {
   DataTransferError,
+  ExportDraftConflictError,
   exportFilenameV1,
   serializeExportFileV1,
   type CurrentCatalogIdentity,
@@ -32,7 +33,9 @@ import {
   type ImportPreviewV1,
 } from "@/infrastructure/db";
 import { resetMoodSession } from "@/features/recommendations/mood-session";
-import { settingsStrings } from "@/lib/strings";
+import { libraryStrings, settingsStrings } from "@/lib/strings";
+import { loadCatalogSelection } from "@/features/catalog/catalog-assets";
+import { runtimeManifest } from "@/features/catalog/runtime-manifest";
 
 import { SettingsDialog } from "./settings-dialog";
 import { SettingsNotice, SettingsPanel, SettingsRow } from "./settings-panel";
@@ -42,7 +45,11 @@ type DataSettingsProps = Readonly<{
   children?: ReactNode;
   currentCatalog: CurrentCatalogIdentity;
   deleteAllData(currentCatalogVersion: string): Promise<DataMutationResult>;
-  exportUserData(exportedAt: string, currentCatalog: CurrentCatalogIdentity): Promise<ExportFileV1>;
+  exportUserData(
+    exportedAt: string,
+    currentCatalog: CurrentCatalogIdentity,
+    excludedDraftEntries?: ExportDraftConflictError["entries"],
+  ): Promise<ExportFileV1>;
   inspectImportJson(
     jsonText: string,
     currentCatalog: CurrentCatalogIdentity,
@@ -56,6 +63,12 @@ type DataSettingsProps = Readonly<{
 type DialogState =
   | Readonly<{ kind: "replace"; opener: HTMLElement | null }>
   | Readonly<{ kind: "delete"; opener: HTMLElement | null }>
+  | Readonly<{
+      kind: "export-recovery";
+      opener: HTMLElement | null;
+      entries: ExportDraftConflictError["entries"];
+      titles: ReadonlyMap<string, string>;
+    }>
   | null;
 
 const exportedAtFormatter = new Intl.DateTimeFormat("ja-JP", {
@@ -136,14 +149,33 @@ export function DataSettings({
     setBusyAction(null);
   };
 
-  const handleExport = async (origin: "data" | "danger") => {
+  const handleExport = async (
+    origin: "data" | "danger",
+    excludedDraftEntries?: ExportDraftConflictError["entries"],
+  ) => {
     if (!beginMutation("export")) return;
+    const opener = document.activeElement instanceof HTMLElement ? document.activeElement : null;
     setExportOrigin(origin);
     const exportedAt = new Date().toISOString();
     try {
-      const file = await exportUserData(exportedAt, currentCatalog);
+      const file = await exportUserData(exportedAt, currentCatalog, excludedDraftEntries);
       triggerDownload(file, exportedAt);
+      setDialog(null);
     } catch (nextError) {
+      if (nextError instanceof ExportDraftConflictError) {
+        // Titles are optional display metadata; failure must not block a verified backup.
+        const selection = await loadCatalogSelection(
+          runtimeManifest,
+          nextError.entries.map((entry) => entry.workId),
+        ).catch(() => null);
+        setDialog({
+          kind: "export-recovery",
+          opener: dialog?.opener ?? opener,
+          entries: nextError.entries,
+          titles: new Map(selection?.catalog.works.map((work) => [work.id, work.title]) ?? []),
+        });
+        return;
+      }
       setErrorAt(origin === "danger" ? "danger" : "export");
       setError(transferErrorMessage(nextError));
     } finally {
@@ -427,6 +459,48 @@ export function DataSettings({
           {success}
         </p>
       )}
+
+      {dialog?.kind === "export-recovery" ? (
+        <SettingsDialog
+          busy={busyAction === "export"}
+          fallbackFocusId="settings-data-title"
+          initialFocusId="settings-export-cancel"
+          labelledBy="settings-export-recovery-title"
+          onClose={closeDialog}
+          opener={dialog.opener}
+        >
+          <h2 id="settings-export-recovery-title">{settingsStrings.data.export.recovery.title}</h2>
+          <p>{settingsStrings.data.export.recovery.description}</p>
+          <ul className="grid gap-[var(--space-2)]">
+            {dialog.entries.map((entry) => (
+              <li key={entry.workId}>
+                {dialog.titles.get(entry.workId) ?? entry.workId}
+                {" — "}
+                {libraryStrings.reactions[entry.reaction]}
+              </li>
+            ))}
+          </ul>
+          {error === null ? null : <p role="alert">{error}</p>}
+          <div className="flex flex-wrap justify-end gap-[var(--space-content)]">
+            <Button
+              disabled={busyAction === "export"}
+              id="settings-export-cancel"
+              onClick={closeDialog}
+              variant="outline"
+            >
+              {settingsStrings.dialog.cancel}
+            </Button>
+            <Button
+              disabled={busyAction === "export"}
+              onClick={() => void handleExport(exportOrigin, dialog.entries)}
+            >
+              {busyAction === "export"
+                ? settingsStrings.data.export.exporting
+                : settingsStrings.data.export.recovery.action}
+            </Button>
+          </div>
+        </SettingsDialog>
+      ) : null}
 
       {dialog?.kind === "replace" && preview !== null ? (
         <SettingsDialog

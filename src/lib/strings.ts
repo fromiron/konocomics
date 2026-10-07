@@ -339,14 +339,15 @@ export const aboutStrings = {
     {
       title: "ブラウザに保存されるデータ",
       paragraphs: [
-        "読書記録、好み、おすすめの方針は、お使いのブラウザ（IndexedDB）にのみ保存されます。運営者のサーバーには送信・保存されません。",
+        "通常の読書記録、好み、おすすめの方針は、お使いのブラウザ（IndexedDB）に保存します。ご自身で作成する DNA 共有リンクには、公開用の要約が含まれます。",
         "設定の「すべて削除」から、いつでも消去できます。ブラウザのサイトデータを消去した場合も削除されます。",
       ],
     },
     {
       title: "外部に送信される情報",
       paragraphs: [
-        "作品の検索や、表紙・価格などの表示のために、検索語や ISBN を当サイトのサーバーを経由して楽天ウェブサービス（楽天ブックス API）へ送信します。読書記録や好みは送信しません。",
+        "作品の検索や、表紙・価格などの表示のために、検索語や ISBN を当サイトのサーバーを経由して楽天ウェブサービス（楽天ブックス API）へ送信します。この検索には読書記録や好みを含めません。",
+        "DNA 共有リンクには、DNA の要約・軸・分析作品数・おすすめ作品・公開を選んだ作品名が含まれます。作品名をすべて外しても、要約や分析作品数、おすすめ作品は残ります。リンクを開くと URL の内容はページのリクエストとしてホスティングサーバーへ送られ、リンクを受け取った人もその内容を見ることができます。",
         "ホスティング事業者（Vercel）のサーバーには、IP アドレスなどの一般的なアクセスログが記録される場合があります。当サイトはアクセス解析ツールや広告用の Cookie を使用していません。",
       ],
     },
@@ -805,7 +806,7 @@ export const tasteStrings = {
     openPageNewTab: "共有ページを開いて確認(新しいタブ)",
     linkLabel: "DNAページのリンク",
     privacy:
-      "リンクには DNA の段階、載せた作品、おすすめ作品が含まれます。サーバーには保存されず、作成時点のスナップショットとして共有されます。",
+      "リンクには DNA の要約・軸・分析作品数・おすすめ作品・公開する作品名が含まれます。作品名を外しても要約や分析作品数は残ります。開くと URL の内容がホスティングサーバーに送られ、リンクを受け取った人も見られます。",
     empty: "共有できる好みの軸がまだありません。好きな作品を追加すると、Manga DNA が見つかります。",
     addWorks: "好きな作品を追加",
     shareText:
@@ -989,12 +990,15 @@ export const recommendationStrings = {
     basisWithoutPreferences: (count: number) => `${String(count)}作品の記録から選んでいます。`,
     dnaLink: "Manga DNA",
     policies: "適用中の条件",
+    adjusted: (labels: string) => `おすすめの調整：${labels}`,
   },
   filters: {
     heading: "絞り込み",
     genre: "ジャンル",
     allGenres: "すべて",
     rankingScope: "Top 10は全ジャンルの順位です。",
+    featuredEmpty:
+      "代表のおすすめには該当作品がありません。下の棚でこのジャンルの候補をご覧ください。",
     sort: "並び順",
     recommended: "おすすめ順",
     empty: "この条件で表示できる作品はありません。ジャンルを変えてお試しください。",
@@ -1102,7 +1106,7 @@ export const recommendationStrings = {
     hiatus: "休載中",
     unknown: "刊行状況不明",
   },
-  volumeCount: (count: number) => `${String(count)}巻`,
+  volumeCount: (count: number) => (count > 0 ? `${String(count)}巻` : "巻数未確認"),
   tasteSummary: {
     heading: "あなたの上位の好み",
     empty: "作品を追加すると、好みの特徴がここに表示されます。",
@@ -1128,6 +1132,8 @@ export const recommendationStrings = {
   },
   announcements: {
     planned: (title: string) => `「${title}」を読みたいに追加しました。`,
+    removed: "1件を除外しました。",
+    alreadyRecorded: (title: string) => `『${title}』は登録済みです。最新の記録を保持しました。`,
     removedAndBackfilled: "1件を除外し、新しい候補を追加しました",
     removedWithoutBackfill: "1件を除外しました。おすすめ候補が不足しています。",
     updated: "おすすめを更新しました。",
@@ -1400,16 +1406,23 @@ export const settingsStrings = {
   data: {
     title: "データ",
     description:
-      "記録はこのブラウザだけに保存され、外部へ送信されません。書き出し・復元・削除ができます。",
+      "通常の記録はこのブラウザに保存されます。書き出し・復元・削除ができます。ご自身で作成する DNA 共有リンクには公開用の要約が含まれます。",
     export: {
       title: "エクスポート",
       description: "読書記録と好みのデータを JSON ファイルに書き出します。",
       action: "エクスポート",
       exporting: "書き出しています…",
+      recovery: {
+        title: "登録済みの作品が未完了の選択に残っています",
+        description:
+          "以下は、作品追加の途中で選んだ感想です。バックアップでは保存済みの読書記録を優先し、重複する未完了の選択だけを除きます。他の選択は残します。このブラウザの記録と未完了の選択は変更しません。",
+        action: "重複する選択を除いて書き出す",
+      },
     },
     import: {
       title: "インポート",
-      description: "konocomics のエクスポートファイルを検証してから復元します。",
+      description:
+        "ファイルを検証し、内容を確認してから、このブラウザの現在のデータを置き換えます。データの結合はしません。必要な記録は先にエクスポートしてください。ファイルを選ぶだけでは置き換わりません。",
       select: "ファイルを選ぶ",
       inspecting: "ファイルを確認しています…",
       verified: (filename: string) => `「${filename}」を確認しました。復元できます。`,
@@ -1555,6 +1568,8 @@ export const libraryStrings = {
     favorites === 0
       ? `${String(total)}作品を記録`
       : `${String(total)}作品を記録 · お気に入り ${String(favorites)}`,
+  progressAgainstKnownVolumes: (volume: number, total: number, percentage: number) =>
+    `確認できている${String(total)}巻のうち${String(volume)}巻（${String(percentage)}%）`,
   progress: (volume: number | undefined, chapter: number | undefined) =>
     [
       volume === undefined ? null : `${String(volume)}巻`,
@@ -1691,6 +1706,18 @@ export const popularWorkStrings = {
 } as const;
 
 export const externalDetailStrings = {
+  remove: {
+    action: "ライブラリから削除",
+    title: (title: string) => `「${title}」をライブラリから削除しますか？`,
+    description:
+      "このカタログ外作品の登録と読書状態・感想・進行を削除します。他の作品やおすすめの設定は変わりません。",
+    cancel: "キャンセル",
+    confirm: "この作品を削除",
+    busy: "削除しています…",
+    conflict:
+      "他の画面で記録が更新されています。最新の内容を確認してから、もう一度お試しください。",
+    error: "削除を確認できませんでした。時間をおいてもう一度お試しください。",
+  },
   metadataTitle: "カタログ外作品 | konocomics",
   loading: "カタログ外作品を読み込んでいます…",
   title: "カタログ外作品",

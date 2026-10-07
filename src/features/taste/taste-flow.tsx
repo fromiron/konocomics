@@ -834,15 +834,16 @@ export function TasteFlow({
   const confidenceLevel = getConfidenceLevel(calculateProfileConfidence(profileRecords));
   const revealCtaRef = usePointerEffect<HTMLAnchorElement>("magnet");
   // The analysed work count is a real integer, so the reveal may count it up (04 §5.2).
-  const basisDisplayCount = useCountUp(profileRecords.length, revealExperience?.animate === true);
-  const reactionBreakdown = (["favorite", "liked", "neutral", "disliked"] as const).flatMap(
-    (reaction) => {
-      const count = profileRecords.filter((record) => record.reaction === reaction).length;
-      return count === 0
-        ? []
-        : [tasteStrings.basisReactionCount(tasteStrings.feedbackLabels[reaction], count)];
-    },
+  const basisDisplayCount = useCountUp(
+    summary.analyzedWorkIds.length,
+    revealExperience?.animate === true,
   );
+  const reactionBreakdown = (["favorite", "liked"] as const).flatMap((reaction) => {
+    const count = profileRecords.filter((record) => record.reaction === reaction).length;
+    return count === 0
+      ? []
+      : [tasteStrings.basisReactionCount(tasteStrings.feedbackLabels[reaction], count)];
+  });
   const beforePreviewWorkIds = useMemo(
     () => preview.result?.before.map((entry) => entry.workId) ?? null,
     [preview.result],
@@ -1081,7 +1082,7 @@ export function TasteFlow({
                 {tasteStrings.basisCount(basisDisplayCount, reactionBreakdown)}
               </span>
               <span className="sr-only">
-                {tasteStrings.basisCount(profileRecords.length, reactionBreakdown)}
+                {tasteStrings.basisCount(summary.analyzedWorkIds.length, reactionBreakdown)}
               </span>
               <span aria-hidden="true"> · </span>
               <span className="taste-confidence inline-flex items-center gap-[var(--space-2)]">

@@ -199,6 +199,25 @@ afterEach(() => {
 });
 
 describe("TasteFlow", () => {
+  it("counts only analyzed liked works and updates after an unrated read receives a reaction", async () => {
+    testState.userWorks.push({
+      workId: "work-6",
+      readingState: "completed",
+      updatedAt: "2026-10-07T00:00:00.000Z",
+    });
+    const { rerender } = render(<TasteFlow />);
+    const basis = await screen.findByRole("region", { name: tasteStrings.basisHeading });
+    expect(within(basis).getAllByText("5作品から分析しました（好き 5）")).toHaveLength(2);
+
+    testState.userWorks = testState.userWorks.map((record) =>
+      record.workId === "work-6" ? { ...record, reaction: "liked" } : record,
+    );
+    rerender(<TasteFlow />);
+    await waitFor(() => {
+      expect(within(basis).getAllByText("6作品から分析しました（好き 6）")).toHaveLength(2);
+    });
+  });
+
   it.each([
     { before: ["work-6"], after: ["work-6"], lists: 1, message: tasteStrings.previewUnchanged },
     {

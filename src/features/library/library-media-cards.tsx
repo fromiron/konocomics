@@ -1,6 +1,7 @@
 "use client";
 
 import { BanIcon, StarIcon, ThumbsDownIcon } from "lucide-react";
+import { useId } from "react";
 
 import { CoverImage } from "@/components/cover/CoverImage";
 import { Button } from "@/components/design-system/button";
@@ -122,8 +123,12 @@ function CreatorLine({ row }: Readonly<{ row: LibraryRow }>) {
  * whatever the cover stamp already says (the stamp carries "いまいち", "途中でやめた", "興味なし"
  * and "最高").
  */
-function RowBadges({ row, showState }: Readonly<{ row: LibraryRow; showState: boolean }>) {
-  const stamp = recordStamp(row);
+function RowBadges({
+  row,
+  showState,
+  showStamp,
+}: Readonly<{ row: LibraryRow; showState: boolean; showStamp: boolean }>) {
+  const stamp = showStamp ? recordStamp(row) : undefined;
   const { reaction, readingState } = row.record;
   const parts = [
     showState && stamp?.part !== "state" ? libraryStrings.tabs[readingState] : undefined,
@@ -208,25 +213,31 @@ function ProgressDisplay({
     (row.record.readingState !== "completed" && row.record.readingState !== "dropped") ||
     volume === undefined ||
     total === undefined ||
-    total < 1
+    total < 1 ||
+    volume > total
       ? undefined
-      : Math.min(100, Math.round((volume / total) * 100));
+      : Math.round((volume / total) * 100);
+
+  const knownProgress =
+    percentage === undefined || total === undefined || volume === undefined
+      ? undefined
+      : libraryStrings.progressAgainstKnownVolumes(volume, total, percentage);
 
   return (
     <span className="grid gap-[var(--space-content-tight)] text-[length:var(--text-caption-size)] text-text-muted">
-      <span className="flex items-center justify-between gap-[var(--space-2)]">
+      <span className="flex flex-wrap items-center justify-between gap-[var(--space-2)]">
         <span>{label}</span>
         {percentage === undefined ? null : (
-          <span className="font-bold text-text tabular-nums">{String(percentage)}%</span>
+          <span className="font-bold text-text tabular-nums">{knownProgress}</span>
         )}
       </span>
       {percentage === undefined || total === undefined || volume === undefined ? null : (
         <progress
           aria-label={libraryStrings.editor.progress}
-          aria-valuetext={label}
+          aria-valuetext={[label, knownProgress].join("・")}
           className="h-[var(--space-content-tight)] w-full overflow-hidden rounded-[var(--radius-pill)] border-0 bg-surface-3 text-accent-ink [&::-moz-progress-bar]:bg-accent [&::-webkit-progress-bar]:bg-surface-3 [&::-webkit-progress-value]:bg-accent"
           max={total}
-          value={Math.min(volume, total)}
+          value={volume}
         />
       )}
     </span>
@@ -252,6 +263,7 @@ export function LibraryStateCard({
   view,
   volumeCountByWorkId,
 }: LibraryCardProps) {
+  const descriptionId = useId();
   return (
     <article
       className="h-full min-w-0"
@@ -261,6 +273,7 @@ export function LibraryStateCard({
     >
       <Button
         aria-label={rowOpenLabel(row)}
+        aria-describedby={descriptionId}
         className={cn(
           "group/card !grid h-full min-h-[var(--control-min-size)] w-full items-start justify-stretch gap-[var(--space-2)] rounded-[var(--radius-media-card)] border border-transparent bg-transparent p-[var(--space-2)] text-start whitespace-normal text-text transition-colors duration-[var(--motion-duration-value)] ease-[var(--motion-ease-direct)] focus-within:bg-surface-2 motion-reduce:transition-none [@media(hover:hover)_and_(pointer:fine)]:hover:bg-surface-2",
           view === "list" ? "grid-cols-[calc(var(--space-8)*2)_minmax(0,1fr)]" : "content-start",
@@ -276,17 +289,27 @@ export function LibraryStateCard({
             onCoverVisible={onCoverVisible}
             row={row}
           />
-          <RecordStamp row={row} />
+          {view === "grid" ? <RecordStamp row={row} /> : null}
         </span>
         <span className="grid min-w-0 content-start gap-[var(--space-content-tight)]">
           <strong className="line-clamp-2 text-[length:var(--font-size-14)] leading-tight [overflow-wrap:anywhere] text-text-strong">
             {rowTitle(row)}
           </strong>
           <CreatorLine row={row} />
-          <RowBadges row={row} showState={showState} />
+          <RowBadges row={row} showState={showState} showStamp={view === "grid"} />
           <ProgressDisplay row={row} volumeCountByWorkId={volumeCountByWorkId} />
         </span>
       </Button>
+      <span className="sr-only" id={descriptionId}>
+        {[
+          libraryStrings.tabs[row.record.readingState],
+          row.record.reaction === undefined
+            ? undefined
+            : libraryStrings.reactions[row.record.reaction],
+        ]
+          .filter(Boolean)
+          .join("・")}
+      </span>
     </article>
   );
 }

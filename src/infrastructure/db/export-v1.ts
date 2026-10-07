@@ -149,6 +149,15 @@ export class DataSnapshotUnavailableError extends Error {
   }
 }
 
+export class ExportDraftConflictError extends DataTransferError {
+  constructor(readonly entries: readonly OnboardingDraft["positiveEntries"][number][]) {
+    super("incompatible-profile-state", "An add-mode draft overlaps saved user works", {
+      details: entries[0]?.workId,
+    });
+    this.name = "ExportDraftConflictError";
+  }
+}
+
 const timestampSchema = z.iso.datetime({ offset: true });
 
 const currentCatalogIdentitySchema = z
