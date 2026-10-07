@@ -13,9 +13,9 @@
 
 ### 구조
 
-- `>=768px`: dark 상단 GNB만 표시한다. 좌측 로고(**kono**co**mi**cs), 우측 `おすすめ`(/recommendations), `DNA`(/taste), `ライブラリ`(/library), `設定`(/settings)을 둔다.
-- `<768px`: post-onboarding route에서 하단 탭 바 4개만 표시한다. 높이 64px, 아이콘+레이블, 터치 타깃 ≥44×44다. `/`와 `/onboarding`은 immersive route라 bottom navigation을 표시하지 않는다.
-- post-onboarding 모바일 footer는 Discover/Understand/Manage 라우트 그룹 없이 local-first 1줄과 `Supported by Rakuten Developers`만 둔다. immersive `/`·`/onboarding` 모바일 footer는 같은 두 줄에 設定 링크를 더한다. `>=768px` footer sitemap은 유지한다. 2026-10-01 사용자 결정: 모든 크기의 footer는 크레디트 아래에 「このサイトについて」(/about) 링크와 `© 2026 Konocomics`를 한 줄로 둔다.
+- `>=768px`: dark 상단 GNB만 표시한다. 좌측 로고(**kono**co**mi**cs), 우측 `おすすめ`(/recommendations), `DNA`(/taste), `ライブラリ`(/library), `設定`(/settings)을 둔다. 2026-10-07 사용자 결정(홈과 같은 디자인 언어): 띠는 페이지와 같은 먹 바탕에 종이색 1px 하단 괘선이고, 로고는 홈 마스트헤드와 같은 촘촘한 워드마크(32px)다. 현재 위치는 앰버 블록(먹 글자)과 `aria-current="page"`로 표시한다. 높이는 64px를 유지한다.
+- `<768px`: post-onboarding route에서 하단 탭 바 4개만 표시한다. 높이 64px, 아이콘+레이블, 터치 타깃 ≥44×44다. 먹 바탕에 종이색 상단 괘선이고 현재 탭은 안쪽으로 들인 앰버 블록이다. `/`와 `/onboarding`은 immersive route라 bottom navigation을 표시하지 않는다.
+- post-onboarding 모바일 footer는 Discover/Understand/Manage 라우트 그룹 없이 local-first 1줄과 `Supported by Rakuten Developers`만 둔다. immersive `/`·`/onboarding` 모바일 footer는 같은 두 줄에 設定 링크를 더한다. `>=768px` footer sitemap은 유지한다. 2026-10-01 사용자 결정: 모든 크기의 footer는 크레디트 아래에 「このサイトについて」(/about) 링크와 `© 2026 Konocomics`를 한 줄로 둔다. 2026-10-07 사용자 결정: footer는 만화 단행본의 판권면(奥付)처럼 먹 바탕에 열마다 굵은 종이색 괘선을 두고, 맨 아래에 본문 폭의 워드마크를 아래 가장자리에서 잘리게 둔다.
 - 두 navigation은 CSS media query로 상호 배타적으로 숨기며 숨겨진 쪽은 accessibility tree에도 남기지 않는다. 로그인·계정·아바타·알림 control은 없다. Global Search는 실제 dialog/sheet 기능이 연결된 경우에만 표시한다.
 - Catalog 상세 `/works/[workId]`와 고정 external 상세 `/works/external?workId=<ExternalWorkId>`는 탭 바를 유지한 채 스택처럼 열린다. 뒤로가기는 브라우저 history다.
 - 2026-09-11 사용자 지시에 따라 전역 document scroll container는 `scrollbar-gutter: stable`로 스크롤바 자리를 확보한다. 필터·페이지 이동으로 세로 스크롤바가 생기거나 사라져도 본문 가로 폭·중앙 정렬은 유지한다. overlay scrollbar 환경에는 불필요한 별도 여백을 더하지 않는다.
@@ -127,8 +127,8 @@ CTA **「好きなマンガから始める」** → /onboarding. 행동은 이 �
 
 ### 정보 위계
 
-0. (첫 등록만) 웰컴 히어로: h1 「あなたの Manga DNA を作りましょう」 + 로컬 저장 안내 1줄 + 실제 흐름과 같은 3스텝(好きな作品を選ぶ → 合わなかった作品(任意) → Manga DNA とおすすめ). 현재 단계(1)는 `aria-current="step"`과 accent 테두리·「いまここ」로 표시한다. add mode에는 표시하지 않는다(2026-10-01 사용자 결정).
-1. 안내 1줄(첫 등록 h2): 「好きなマンガを 5〜10 作品えらんでください」와 보조문 「特に好きな作品は ☆ で「大好き」にすると、より強く反映されます。」(favorite 1.0 / liked 0.8, `02` §6).
+0. (첫 등록만) 웰컴 히어로: h1 「あなたの Manga DNA を作りましょう」 + 로컬 저장 안내 1줄 + 실제 흐름과 같은 3스텝(好きな作品を選ぶ → 合わなかった作品(任意) → Manga DNA とおすすめ). 현재 단계(1)는 `aria-current="step"`과 「いまここ」로 표시한다. add mode에는 표시하지 않는다(2026-10-01 사용자 결정). 2026-10-07 사용자 결정(홈과 같은 디자인 언어): 제목은 흰 바탕·먹선의 내레이션 컷, 3단계는 컷 띠이며 현재 단계는 앰버 컷, 다음 단계와의 경계는 사선이다. `<768px`에서는 단계 설명을 화면에서 숨기고(스크린리더에는 유지) 「いまここ」 대신 앰버 컷과 `aria-current`로 현재 단계를 표시해 띠를 짧게 유지한다.
+1. 안내: 2026-10-07 사용자 결정으로 첫 등록에서는 별도 h2 안내와 「STEP 1 / 2」를 두지 않는다. 웰컴의 단계 띠(현재 단계 「好きな作品を選ぶ」, 「5〜10 作品。特に好きな作品は「大好き」にできます。」)가 같은 내용을 전하며, `<768px`에서는 현재 단계 설명 한 줄을 띠 아래에 보인다. ☆ 「大好き」 가중(favorite 1.0 / liked 0.8, `02` §6)과 선택 방법은 tray의 「選び方」가 유지한다. add mode는 단계 띠가 없으므로 기존 헤더(아래 add mode 조항)를 유지한다.
 2. 검색 입력(Fuse.js, Catalog의 onboardingEligible 대상)
 3. 장르 칩: アクション / ファンタジー / 歴史 / SF / ミステリー / その他
 4. 주 탐색 Shelf 「選びやすい作品」. collection panel이 열려도 이 제목과 작품은 교체되거나 사라지지 않는다.
@@ -190,7 +190,7 @@ CTA **「好きなマンガから始める」** → /onboarding. 행동은 이 �
 - 기존 `userWorks`의 작품은 Shelf·검색에서 제외하고 저장 경계에서도 중복을 거부한다.
 - 최초 완료 marker가 있으나 Catalog 교체로 현재 positive anchor가 5개 미만인 경우도 add mode로 진입한다. first-run 저장을 재시도하지 않으며 현재 Catalog 기준 5개를 회복할 때까지 보호된 경로는 온보딩으로 돌아온다.
 - 이 세션에서 새 positive 작품 1~10개를 받는다. 1개부터 「追加する (n/10)」가 활성화되며 STEP 2는 표시하지 않는다. 10개는 세션 상한이고 기존 기록을 포함한 누적 상한은 없다.
-- 헤더는 「好きなマンガを追加してください」와 「1作品から追加できます。5作品以上で DNA が鮮明になります。」(최소 1·권장 5 분리)를 사용하고 tray는 「追加するマンガ」로 명명한다. 「迷ったときは」도 add mode에서는 1작품 기준 문구를 쓴다.
+- 헤더는 「好きなマンガを追加してください」와 「1作品から追加できます。5作品以上で DNA が鮮明になります。」(최소 1·권장 5 분리)를 사용하고 tray는 「追加するマンガ」로 명명한다. 「迷ったときは」도 add mode에서는 1작품 기준 문구를 쓴다. 「迷ったときは」는 버튼처럼 보이는 개별 박스 대신 아이콘과 문구를 한 줄에 맞춘 괘선 목록이다(2026-10-07).
 - 「DNAに戻る」는 헤더 오른쪽에 두며 현재 add draft를 보존하고 `/taste`로 돌아간다. 헤더의 파괴적 「入力内容を破棄」는 제거하고, 패널 하단의 작은 「選択をクリア」가 페이지에 머문 채 선택(positive)만 비운 draft를 저장한다(2026-10-01 사용자 결정).
 - 완료는 신규 positive만 insert-only로 추가하고 기존 `UserWorkRecord` 전체와 최초 `onboardingCompletedAt`을 보존한다. 성공 시 draft를 삭제하고 reveal 없이 `/taste`로 돌아간다.
 - [ ] 새 작품 1개만으로 완료할 수 있고 기존 작품·진행률·사유·시각은 변하지 않는다.
@@ -215,9 +215,9 @@ CTA **「好きなマンガから始める」** → /onboarding. 행동은 이 �
 레이아웃은 STEP 1과 같은 본문 + 우측 sticky 패널(mobile 하단 고정)이다.
 
 0. h1 위 「好きな作品を選び直す」: draft를 보존한 채 STEP 1로 돌아간다. STEP 1에서 negative 작품을 좋아한 작품으로 고르면 그 작품은 negative에서 빠진다(한 작품은 한쪽에만).
-1. 안내: 「合わなかった・途中でやめたマンガはありますか?」 + 「任意」 pill, 「0〜3作品まで。なくても、そのまま進めます。」, 원칙 callout 「選ばないことは、苦手という意味にはなりません。」
+1. 안내: 첫 등록과 같은 단계 띠(현재 단계 2)를 맨 위에 두고 「STEP 2 / 2」는 두지 않는다. 「合わなかった・途中でやめたマンガはありますか?」 + 「任意」 pill과 원칙 callout 「選ばないことは、苦手という意味にはなりません。」를 둔다. 수량 안내는 단계 띠의 「0〜3 作品。選ばなくても大丈夫です。」가 맡는다(2026-10-07 사용자 결정).
 2. 「選んだ作品」: 선택된 negative 작품 편집 카드(아래 4).
-3. 검색 입력 (STEP 1과 동일 컴포넌트, Catalog 전체 대상). 검색어가 없으면 「候補から選ぶ」 목록을 보인다: 선택 가능 작품(recommendation eligible − 기록 − STEP 1 선택 − 이미 고른 negative) 중 onboarding eligible 작품을 먼저, 처음 6개, 「もっと見る」로 최대 18개. 검색 결과와 같은 행 카드다.
+3. 검색 입력 (STEP 1과 동일 컴포넌트, Catalog 전체 대상). 검색어가 없으면 「候補から選ぶ」 목록을 보인다: 선택 가능 작품(recommendation eligible − 기록 − STEP 1 선택 − 이미 고른 negative) 중 onboarding eligible 작품을 먼저, 처음 6개, 「もっと見る」로 최대 18개. 검색 결과와 같은 카드이며, 2026-10-07 사용자 결정으로 STEP 1 표지 카드와 같은 형태(표지 위 제목·작가, 아래에 「合わなかった」「途中でやめた」 선택지)의 그리드다.
    작품 행은 카드 확정 전에 작품별 disposition radiogroup 「この作品について」(시각 legend는 숨기고 accessible name 유지)를 표시: `合わなかった` / `途中でやめた`. 둘 중 하나를 고른 작품만 선택된 negative entry가 된다.
 4. 선택된 negative 작품 카드: disposition 아래 **이유 칩 멀티 선택**을 disposition별 안내(「合わなかった理由（複数選べます）」/「やめた理由（複数選べます）」)와 세 묶음으로 보인다 — 作品の内容(§6.7의 factor-backed 사유), 作品以外の事情(외부 사유), はっきりしない(「なんとなく合わなかった」).
 5. 우측 패널 「合わなかった作品 n / 3」: STEP 1과 같은 「DNAの鮮明さ」 미터(이유 있는 negative를 `projectProfileClarity`에 포함, reasoned 2개 미만이면 「具体的な理由を選ぶと、DNA がより鮮明になります」), 선택 요약(disposition·이유 개수), 「選ぶとどうなる？」(추천 제외, 이유별 감점 — `02` §6.7), 진행 버튼.

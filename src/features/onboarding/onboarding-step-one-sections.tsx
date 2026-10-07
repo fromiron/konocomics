@@ -45,114 +45,104 @@ function keepRangesTogether(text: string): ReactNode {
   );
 }
 
+/**
+ * The first-registration steps as a strip of panels: the current step in the amber spot colour
+ * (and `aria-current`), divided from the next by a slanted gutter. It stands under the welcome on
+ * step 1 and at the top of step 2, so both steps share one picture of where the visitor is.
+ */
+export function OnboardingSteps({ current }: Readonly<{ current: number }>) {
+  const copy = onboardingStrings.welcome;
+  const currentStep = copy.steps[current];
+  return (
+    <>
+      <ol aria-label={copy.stepsLabel} className="ob-welcome__steps">
+        {copy.steps.map((step, index) => {
+          const isCurrent = index === current;
+          return (
+            <li
+              aria-current={isCurrent ? "step" : undefined}
+              className="ob-welcome__step"
+              key={step.title}
+            >
+              <span className="ob-welcome__step-head">
+                <span aria-hidden="true" className="ob-welcome__number">
+                  {index + 1}
+                </span>
+                {isCurrent ? <span className="ob-welcome__current">{copy.currentStep}</span> : null}
+              </span>
+              <strong className="ob-welcome__step-title">
+                {step.title}
+                {"optional" in step ? (
+                  <span className="ob-welcome__optional">{step.optional}</span>
+                ) : null}
+              </strong>
+              <span className="ob-welcome__step-description">{step.description}</span>
+            </li>
+          );
+        })}
+      </ol>
+      {/* On narrow screens the step descriptions are hidden in the strip; the current one is
+          repeated here for sight only (screen readers already have it in the strip). */}
+      {currentStep === undefined ? null : (
+        <p aria-hidden="true" className="ob-welcome__current-note">
+          {currentStep.description}
+        </p>
+      )}
+    </>
+  );
+}
+
+/**
+ * The first-registration welcome, drawn like the home hero's panels: a white narration panel
+ * framed in ink with the heading, then the three steps as a strip of panels, the current one in
+ * the amber spot colour and divided from the next by a slanted gutter. On narrow screens the
+ * step descriptions stay for screen readers only, so the strip stays short.
+ */
 export function OnboardingWelcome({
   headingRef,
 }: Readonly<{ headingRef: Ref<HTMLHeadingElement> }>) {
   const copy = onboardingStrings.welcome;
 
   return (
-    <section
-      aria-labelledby="onboarding-welcome-heading"
-      className="onboarding-welcome mb-[var(--space-6)] grid gap-[var(--space-5)] rounded-[var(--radius-card)] border border-line bg-surface-1 p-[var(--space-5)] md:p-[var(--space-8)]"
-    >
-      <header className="grid max-w-[var(--layout-width-reading)] gap-[var(--space-content-tight)]">
-        <p className="font-display text-[length:var(--text-caption-size)] font-bold tracking-[0.08em] text-accent-ink">
-          {copy.eyebrow}
-        </p>
+    <section aria-labelledby="onboarding-welcome-heading" className="ob-welcome">
+      <header className="ob-welcome__narration">
+        <p className="ob-welcome__eyebrow">{copy.eyebrow}</p>
         <h1
-          className="text-[length:var(--text-page-title-size)] leading-[1.2] tracking-[-0.03em] text-text-strong"
+          className="ob-welcome__title"
           id="onboarding-welcome-heading"
           ref={headingRef}
           tabIndex={-1}
         >
           {copy.title}
         </h1>
-        <p className="text-text-muted">{copy.description}</p>
+        <p className="ob-welcome__description">{copy.description}</p>
       </header>
-      <ol
-        aria-label={copy.stepsLabel}
-        className="onboarding-welcome__steps m-0 grid list-none gap-[var(--space-content-loose)] p-0 md:grid-cols-3"
-      >
-        {copy.steps.map((step, index) => {
-          const current = index === 0;
-          return (
-            <li
-              aria-current={current ? "step" : undefined}
-              className={cn(
-                "grid grid-cols-[auto_minmax(0,1fr)] items-start gap-[var(--space-3)] rounded-[var(--radius-card)] border p-[var(--space-4)] md:grid-cols-1",
-                current ? "border-accent/60 bg-surface-2" : "border-line bg-surface-1",
-              )}
-              key={step.title}
-            >
-              <span className="flex items-center gap-[var(--space-2)]">
-                <span
-                  aria-hidden="true"
-                  className={cn(
-                    "grid size-[var(--space-8)] place-items-center rounded-full border font-display font-bold",
-                    current
-                      ? "border-accent bg-accent-soft text-accent-ink"
-                      : "border-line text-text-muted",
-                  )}
-                >
-                  {index + 1}
-                </span>
-                {current ? (
-                  <span className="hidden text-[length:var(--text-caption-size)] font-bold text-accent-ink md:inline">
-                    {copy.currentStep}
-                  </span>
-                ) : null}
-              </span>
-              <span className="grid min-w-0 gap-[var(--space-content-tight)]">
-                <strong className="flex flex-wrap items-center gap-[var(--space-2)] text-[length:var(--font-size-14)] text-text-strong">
-                  {step.title}
-                  {"optional" in step ? (
-                    <span className="rounded-[var(--radius-pill)] border border-line px-[var(--space-2)] text-[length:var(--text-caption-size)] font-medium text-text-muted">
-                      {step.optional}
-                    </span>
-                  ) : null}
-                </strong>
-                <span className="text-[length:var(--text-caption-size)] leading-[1.5] text-text-muted">
-                  {step.description}
-                </span>
-              </span>
-            </li>
-          );
-        })}
-      </ol>
+      <OnboardingSteps current={0} />
     </section>
   );
 }
 
 type OnboardingIntroProps = Readonly<{
-  addMode: boolean;
-  headingRef?: Ref<HTMLHeadingElement>;
-  action?: ReactNode;
+  headingRef: Ref<HTMLHeadingElement>;
+  action: ReactNode;
 }>;
 
-export function OnboardingIntro({ action, addMode, headingRef }: OnboardingIntroProps) {
-  const Heading = addMode ? "h1" : "h2";
-
+/** The add-mode header (an existing profile adding works), which has no step strip above it. */
+export function OnboardingIntro({ action, headingRef }: OnboardingIntroProps) {
   return (
     <header className="onboarding-header mb-[var(--space-5)] grid grid-cols-[minmax(0,1fr)_auto] items-start gap-x-[var(--space-4)] gap-y-[var(--space-content-tight)]">
       <div className="grid max-w-[var(--layout-width-reading)] min-w-0 gap-[var(--space-content-tight)]">
         <p className="font-display text-[length:var(--text-caption-size)] font-bold tracking-[0.08em] text-text-muted">
-          {addMode ? onboardingStrings.addMode.eyebrow : onboardingStrings.step1.eyebrow}
+          {onboardingStrings.addMode.eyebrow}
         </p>
-        <Heading
-          className={cn(
-            "max-w-[20em] text-[length:var(--font-size-20)] leading-[1.3] tracking-[-0.02em] text-text-strong",
-            addMode && "md:text-[length:var(--text-page-title-size)]",
-          )}
+        <h1
+          className="max-w-[20em] text-[length:var(--font-size-20)] leading-[1.3] tracking-[-0.02em] text-text-strong md:text-[length:var(--text-page-title-size)]"
           ref={headingRef}
-          tabIndex={headingRef === undefined ? undefined : -1}
+          tabIndex={-1}
         >
-          {keepRangesTogether(
-            addMode ? onboardingStrings.addMode.title : onboardingStrings.step1.title,
-          )}
-        </Heading>
-        <p className="text-text-muted">
-          {addMode ? onboardingStrings.addMode.description : onboardingStrings.step1.description}
-        </p>
+          {keepRangesTogether(onboardingStrings.addMode.title)}
+        </h1>
+        <p className="text-text-muted">{onboardingStrings.addMode.description}</p>
       </div>
       {action}
     </header>
@@ -432,6 +422,7 @@ export function OnboardingCollectionGrid({
   );
 }
 
+/** Tips for an undecided visitor: one quiet list under the heading, not a set of buttons. */
 export function OnboardingSelectionGuidance({ addMode }: Readonly<{ addMode: boolean }>) {
   const guidanceIcons = [BookmarkIcon, Grid2X2Icon, WandSparklesIcon, SparklesIcon] as const;
   const guidance = addMode
@@ -445,20 +436,12 @@ export function OnboardingSelectionGuidance({ addMode }: Readonly<{ addMode: boo
         id="onboarding-guidance-heading"
         title={onboardingStrings.step1.guidanceHeading}
       />
-      <ul className="m-0 grid list-none gap-[var(--space-content-loose)] p-0 sm:grid-cols-2">
+      <ul className="onboarding-guidance__list">
         {guidance.map((item, index) => {
           const GuidanceIcon = guidanceIcons[index] ?? SparklesIcon;
           return (
-            <li
-              className="grid grid-cols-[auto_minmax(0,1fr)] items-start gap-[var(--space-content)] rounded-[var(--radius-card)] border border-line bg-surface-1 p-[var(--space-4)] text-[length:var(--text-caption-size)] leading-[1.5] text-text-muted"
-              key={item}
-            >
-              <span
-                aria-hidden="true"
-                className="grid size-[var(--space-8)] place-items-center rounded-full border border-line/70 bg-surface-1 text-text-muted [&>svg]:size-4"
-              >
-                <GuidanceIcon />
-              </span>
+            <li className="onboarding-guidance__item" key={item}>
+              <GuidanceIcon aria-hidden="true" className="onboarding-guidance__icon" />
               <span>{item}</span>
             </li>
           );

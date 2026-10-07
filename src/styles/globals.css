@@ -147,6 +147,8 @@
   --shadow-floating-action: 0 8px 8px oklch(0 0 0 / 0.3);
   --shadow-raised: var(--shadow-level-1);
   --surface-page: var(--canvas);
+  /* App chrome (header, tab bar, footer): hard paper-coloured rules on the dark page. */
+  --chrome-rule: color-mix(in oklch, var(--text-strong) 22%, transparent);
   --surface-raised: var(--surface-1);
   --surface-interactive: var(--surface-2);
   --surface-hover: var(--surface-3);
@@ -1826,6 +1828,442 @@ h1[tabindex="-1"]:focus {
   to {
     opacity: 1;
   }
+}
+
+/* App chrome, in the home page's language: the dark page itself cut off by a hard paper rule,
+   the tight masthead wordmark, and the amber spot colour (as on the home action panel) marking
+   where you are. */
+.app-navigation--desktop,
+.app-navigation--mobile {
+  background: var(--canvas);
+}
+
+.app-navigation--desktop {
+  border-bottom: 1px solid var(--chrome-rule);
+}
+
+.app-navigation--mobile {
+  border-top: 1px solid var(--chrome-rule);
+}
+
+.brand-mark .brand-wordmark {
+  letter-spacing: -0.045em;
+}
+
+.app-navigation__link {
+  color: var(--text-muted);
+}
+
+/* The current place is an amber block; on the tab bar it is inset from the bar's edges. */
+.app-navigation__link::before {
+  position: absolute;
+  inset: 0;
+  z-index: -1;
+  background: var(--accent);
+  content: "";
+  opacity: 0;
+}
+
+.app-navigation--mobile .app-navigation__link::before {
+  inset: var(--space-1) var(--space-1) var(--space-1);
+}
+
+.app-navigation__link--active {
+  color: var(--on-accent);
+}
+
+.app-navigation__link--active::before {
+  opacity: 1;
+}
+
+@media (hover: hover) and (pointer: fine) {
+  .app-navigation__link:not(.app-navigation__link--active):hover {
+    color: var(--text-strong);
+    text-decoration: underline;
+    text-decoration-thickness: 2px;
+    text-underline-offset: 6px;
+  }
+}
+
+/* The footer as a colophon (奥付): one heavy paper rule across the content width, the notes
+   beside a table of routes ruled row by row, and the wordmark set faintly across the same width,
+   trimmed a little at the page's foot. */
+.site-footer {
+  background: var(--canvas);
+}
+
+.site-footer__inner {
+  container-type: inline-size;
+  overflow: hidden;
+}
+
+.site-footer__colophon {
+  padding-top: var(--space-5);
+  border-top: 2px solid var(--text-strong);
+}
+
+.site-footer__row {
+  border-bottom: 1px solid var(--chrome-rule);
+}
+
+.site-footer__row:first-child {
+  border-top: 1px solid var(--chrome-rule);
+}
+
+.site-footer__row-title,
+.site-footer__row-links {
+  display: inline-flex;
+  vertical-align: middle;
+}
+
+.site-footer__row-title {
+  width: 8rem;
+  margin: 0;
+  color: var(--text-strong);
+  font-size: var(--font-size-14);
+}
+
+.site-footer__row-links {
+  flex-wrap: wrap;
+  gap: 0 var(--space-5);
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.site-footer__mark {
+  /* The wordmark is about 5.4em wide: it spans the content width, and the box keeps all but
+     the foot of the letters. */
+  height: 0.72em;
+  margin-top: var(--space-8);
+  font-size: calc((100cqi - 2 * var(--layout-page-padding)) / 5.4);
+  line-height: 0.9;
+}
+
+.site-footer__mark .brand-wordmark {
+  font-family: var(--font-display);
+  letter-spacing: -0.05em;
+}
+
+.site-footer__mark .brand-wordmark > span {
+  color: color-mix(in oklch, var(--text-strong) 12%, transparent);
+}
+
+/* Onboarding welcome, in the home hero's panel language: a white narration panel framed in ink,
+   then the steps as a strip of panels with the current one in amber. Wide gutters between the
+   tiers, narrow ones inside the strip, one slant after the current step. */
+.ob-welcome {
+  --ob-slant: 1rem;
+  display: grid;
+  gap: var(--space-3);
+  margin-bottom: var(--space-8);
+}
+
+.ob-welcome__narration {
+  display: grid;
+  gap: var(--space-1);
+  padding: var(--space-5);
+  border: 3px solid var(--hero-ink-cool);
+  background: var(--hero-paper-white);
+  color: var(--hero-ink-cool);
+}
+
+.ob-welcome__eyebrow {
+  color: var(--hero-accent-ink);
+  font-family: var(--font-display);
+  font-size: var(--text-caption-size);
+  font-weight: 700;
+  letter-spacing: 0.08em;
+}
+
+.ob-welcome__title {
+  color: var(--hero-ink-cool);
+  font-size: var(--text-page-title-size);
+  line-height: 1.2;
+  letter-spacing: -0.02em;
+}
+
+.ob-welcome__title:focus-visible {
+  outline: 2px solid var(--hero-accent-ink);
+  outline-offset: 4px;
+}
+
+.ob-welcome__description {
+  color: color-mix(in oklch, var(--hero-ink-cool) 72%, var(--hero-paper-white));
+}
+
+.ob-welcome__steps {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: var(--space-2);
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.ob-welcome__step {
+  display: grid;
+  align-content: start;
+  gap: var(--space-1);
+  min-width: 0;
+  padding: var(--space-3);
+  border: 3px solid var(--hero-ink-cool);
+  background: var(--hero-paper-white);
+  color: var(--hero-ink-cool);
+}
+
+/* The current step is the amber spot colour; its right edge and the next step's left edge run
+   on one slant, the next panel reaching back under it so the gutter stays narrow. */
+.ob-welcome__step[aria-current="step"] {
+  padding-right: calc(var(--space-3) + var(--ob-slant));
+  border-color: var(--accent);
+  background: var(--accent);
+  color: var(--on-accent);
+  clip-path: polygon(0 0, 100% 0, calc(100% - var(--ob-slant)) 100%, 0 100%);
+}
+
+.ob-welcome__step[aria-current="step"] + .ob-welcome__step {
+  margin-left: calc(-1 * var(--ob-slant));
+  padding-left: calc(var(--space-3) + var(--ob-slant));
+  clip-path: polygon(var(--ob-slant) 0, 100% 0, 100% 100%, 0 100%);
+}
+
+.ob-welcome__step-head {
+  display: flex;
+  align-items: baseline;
+  gap: var(--space-2);
+}
+
+.ob-welcome__number {
+  font-family: var(--font-display);
+  font-size: var(--font-size-28);
+  font-weight: 700;
+  line-height: 1;
+}
+
+/* On narrow screens the current step is marked by its amber panel (and aria-current) alone. */
+.ob-welcome__current {
+  display: none;
+  font-size: var(--text-caption-size);
+  font-weight: 700;
+  white-space: nowrap;
+}
+
+.ob-welcome__step-title {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: var(--space-1) var(--space-2);
+  font-size: var(--text-caption-size);
+  line-height: 1.4;
+}
+
+.ob-welcome__optional {
+  padding: 0 var(--space-1);
+  border: 1px solid currentColor;
+  font-size: var(--font-size-12);
+  font-weight: 500;
+}
+
+/* Narrow screens keep the strip short: the descriptions are for screen readers only, and the
+   current step's description stands under the strip instead. */
+.ob-welcome__current-note {
+  color: var(--text-muted);
+  font-size: var(--text-caption-size);
+}
+
+/* Narrow screens keep the strip short: the descriptions are for screen readers only. */
+.ob-welcome__step-description {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  overflow: hidden;
+  clip-path: inset(50%);
+  white-space: nowrap;
+}
+
+@media (min-width: 48rem) {
+  .ob-welcome {
+    --ob-slant: 2rem;
+    gap: var(--space-5);
+  }
+
+  .ob-welcome__narration {
+    padding: var(--space-6) var(--space-8);
+  }
+
+  .ob-welcome__step {
+    padding: var(--space-4) var(--space-5);
+  }
+
+  .ob-welcome__step[aria-current="step"] {
+    padding-right: calc(var(--space-5) + var(--ob-slant));
+  }
+
+  .ob-welcome__step[aria-current="step"] + .ob-welcome__step {
+    padding-left: calc(var(--space-5) + var(--ob-slant));
+  }
+
+  .ob-welcome__current {
+    display: inline;
+  }
+
+  .ob-welcome__current-note {
+    display: none;
+  }
+
+  .ob-welcome__step-title {
+    font-size: var(--font-size-16);
+  }
+
+  .ob-welcome__step-description {
+    position: static;
+    width: auto;
+    height: auto;
+    overflow: visible;
+    clip-path: none;
+    font-size: var(--text-caption-size);
+    line-height: 1.5;
+    white-space: normal;
+    opacity: 0.8;
+  }
+}
+
+/* "迷ったときは": the tips as one ruled list (two columns where there is room), each icon
+   centred on its line. */
+.onboarding-guidance__list {
+  display: grid;
+  margin: 0;
+  padding: 0;
+  border-top: 1px solid var(--line);
+  list-style: none;
+}
+
+.onboarding-guidance__item {
+  display: flex;
+  align-items: center;
+  gap: var(--space-3);
+  min-height: var(--control-min-size);
+  padding-block: var(--space-2);
+  border-bottom: 1px solid var(--line);
+  color: var(--text);
+  font-size: var(--text-caption-size);
+  line-height: 1.5;
+}
+
+.onboarding-guidance__icon {
+  flex: none;
+  width: 1rem;
+  height: 1rem;
+  color: var(--accent-ink);
+}
+
+@media (min-width: 40rem) {
+  .onboarding-guidance__list {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    column-gap: var(--space-6);
+  }
+}
+
+/* Step-2 candidates, laid out like the step-1 cover shelf: cover cards in a grid, each with its
+   title over a scrim and the two dispositions underneath. */
+.negative-result-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(6.5rem, 1fr));
+  gap: var(--space-5) var(--space-3);
+}
+
+@media (min-width: 48rem) {
+  .negative-result-grid {
+    grid-template-columns: repeat(auto-fill, minmax(8rem, 1fr));
+  }
+}
+
+.negative-result-card {
+  display: grid;
+  align-content: start;
+  gap: var(--space-2);
+  min-width: 0;
+}
+
+.negative-result-card[data-disabled] {
+  opacity: 0.65;
+}
+
+.negative-result-card__cover {
+  position: relative;
+  display: block;
+  overflow: hidden;
+  border-radius: var(--radius-cover-selection);
+  background: var(--surface-2);
+}
+
+.negative-result-card__identity {
+  position: absolute;
+  inset: auto 0 0;
+  display: grid;
+  gap: var(--space-content-tight);
+  padding: var(--space-6) var(--space-2) var(--space-2);
+  background: linear-gradient(
+    to top,
+    var(--canvas),
+    color-mix(in oklch, var(--canvas) 80%, transparent) 55%,
+    transparent
+  );
+  pointer-events: none;
+}
+
+.negative-result-card__title {
+  display: -webkit-box;
+  overflow: hidden;
+  color: var(--text-strong);
+  font-size: var(--font-size-14);
+  font-weight: 700;
+  line-height: 1.35;
+  -webkit-box-orient: vertical;
+  -webkit-line-clamp: 2;
+}
+
+.negative-result-card__creators {
+  overflow: hidden;
+  color: var(--text-muted);
+  font-size: var(--text-caption-size);
+  line-height: 1.35;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.negative-result-card__disposition {
+  min-width: 0;
+  margin: 0;
+  padding: 0;
+  border: 0;
+}
+
+/* The two choices stack at the card's width; a chip and its label both fill it. */
+.negative-result-card__choices {
+  display: grid;
+  gap: var(--space-1);
+}
+
+.negative-result-card__choices > label,
+.negative-result-card__choices > label > span:last-child {
+  width: 100%;
+}
+
+.negative-result-card__choices > label > span:last-child {
+  padding-inline: var(--space-2);
+  font-size: var(--text-caption-size);
+}
+
+.negative-result-card__badge {
+  justify-self: start;
+  padding: var(--space-1) var(--space-2);
+  border: 1px solid var(--line);
+  border-radius: var(--radius-pill);
+  color: var(--text-muted);
+  font-size: var(--text-caption-size);
+  font-weight: 700;
 }
 
 /* Home hero scene: a delivered manga page on the dark canvas, lit like a sheet under a desk lamp. The page paper and ink match the

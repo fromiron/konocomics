@@ -63,6 +63,7 @@ import {
   OnboardingGenreChips,
   OnboardingIntro,
   OnboardingSelectionGuidance,
+  OnboardingSteps,
   OnboardingWelcome,
 } from "./onboarding-step-one-sections";
 import {
@@ -771,9 +772,10 @@ export function OnboardingFlow({
 
           <div className="onboarding-layout grid gap-[var(--space-6)] md:grid-cols-[minmax(0,1fr)_minmax(0,var(--layout-width-onboarding-panel))] md:items-start lg:gap-[var(--space-8)]">
             <div className="onboarding-main min-w-0">
-              <OnboardingIntro
-                action={
-                  isAddMode ? (
+              {/* First registration names the step in the strip above; add mode has no strip. */}
+              {isAddMode ? (
+                <OnboardingIntro
+                  action={
                     <Button
                       className="onboarding-add-mode-actions__close"
                       disabled={submitting}
@@ -783,11 +785,10 @@ export function OnboardingFlow({
                     >
                       {onboardingStrings.addMode.close}
                     </Button>
-                  ) : undefined
-                }
-                addMode={isAddMode}
-                headingRef={isAddMode ? headingRef : undefined}
-              />
+                  }
+                  headingRef={headingRef}
+                />
+              ) : null}
 
               <div className="onboarding-discovery grid gap-[var(--space-6)] [&>.work-search]:m-0 [&>.work-search]:max-w-none [&_.work-search__label]:sr-only [&_.work-search__input]:min-h-[var(--control-min-size)] [&_.work-search__input]:bg-surface-1 motion-reduce:[&_.work-search__input]:transition-none">
                 <WorkSearchInput
@@ -941,6 +942,9 @@ export function OnboardingFlow({
           className="onboarding-step-two m-0 min-w-0 border-0 p-0"
           disabled={submitting}
         >
+          <div className="ob-welcome">
+            <OnboardingSteps current={1} />
+          </div>
           <div className="onboarding-layout grid gap-[var(--space-6)] md:grid-cols-[minmax(0,1fr)_minmax(0,var(--layout-width-onboarding-panel))] md:items-start lg:gap-[var(--space-8)]">
             <div className="onboarding-main grid min-w-0 gap-[var(--space-section)]">
               <header className="onboarding-header grid max-w-[var(--layout-width-reading)] justify-items-start gap-[var(--space-content-tight)]">
@@ -953,9 +957,6 @@ export function OnboardingFlow({
                   <ChevronLeftIcon aria-hidden="true" />
                   {onboardingStrings.step2.back}
                 </Button>
-                <p className="font-display text-[length:var(--text-caption-size)] font-bold tracking-[0.08em] text-text-muted">
-                  {onboardingStrings.step2.eyebrow}
-                </p>
                 <h1
                   className="text-[length:var(--font-size-20)] leading-[1.35] tracking-[-0.02em] text-text-strong md:text-[length:var(--text-page-title-size)]"
                   ref={headingRef}
@@ -966,7 +967,6 @@ export function OnboardingFlow({
                     {onboardingStrings.step2.optional}
                   </span>
                 </h1>
-                <p className="text-text-muted">{onboardingStrings.step2.description}</p>
                 <p className="onboarding-principle mt-[var(--space-2)] flex items-start gap-[var(--space-2)] rounded-[var(--radius-card)] border border-line bg-surface-1 px-[var(--space-4)] py-[var(--space-3)] text-[length:var(--text-caption-size)] text-text [&>svg]:mt-[2px] [&>svg]:size-4 [&>svg]:shrink-0 [&>svg]:text-text-muted">
                   <InfoIcon aria-hidden="true" />
                   {onboardingStrings.step2.principle}
@@ -1051,7 +1051,7 @@ export function OnboardingFlow({
                         id="negative-candidates-heading"
                         title={onboardingStrings.step2.candidatesHeading}
                       />
-                      <div className="negative-result-grid grid gap-[var(--space-content)]">
+                      <div className="negative-result-grid">
                         {visibleNegativeCandidates.map((work) => (
                           <NegativeWorkCard
                             coverUrl={coverUrls.get(work.id)}
@@ -1090,7 +1090,7 @@ export function OnboardingFlow({
                 ) : (
                   <section
                     aria-label={onboardingStrings.step2.searchLabel}
-                    className="negative-result-grid grid gap-[var(--space-content)]"
+                    className="negative-result-grid"
                   >
                     {stepTwoSearch.results.map((work: Work) => (
                       <NegativeWorkCard

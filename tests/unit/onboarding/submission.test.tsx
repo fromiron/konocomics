@@ -102,6 +102,13 @@ afterEach(() => {
   vi.unstubAllGlobals();
 });
 
+/** The step marked current in the onboarding step strip. */
+function currentStep() {
+  return screen
+    .getByRole("list", { name: "Manga DNA ができるまで" })
+    .querySelector('[aria-current="step"]');
+}
+
 describe("OnboardingFlow finalization", () => {
   it("explains missing works without advancing or saving an incomplete first run", () => {
     testState.draft = {
@@ -244,12 +251,8 @@ describe("OnboardingFlow finalization", () => {
     expect(
       screen.getByRole("heading", { level: 1, name: "あなたの Manga DNA を作りましょう" }),
     ).toBeTruthy();
-    expect(
-      screen.getByRole("heading", {
-        level: 2,
-        name: "好きなマンガを 5〜10 作品えらんでください",
-      }),
-    ).toBeTruthy();
+    // The step strip names the current step; there is no separate step heading.
+    expect(currentStep()?.textContent).toContain("好きな作品を選ぶ");
     expect(screen.getByText("あと 5 作品")).toBeTruthy();
     fireEvent.click(screen.getByRole("button", { name: "次へ (0/10)" }));
     expect(screen.getByText("あと 5 作品選んでください。")).toBeTruthy();
@@ -472,9 +475,7 @@ describe("OnboardingFlow finalization", () => {
     expect(testState.saveOnboardingDraft).toHaveBeenLastCalledWith(
       expect.objectContaining({ step: 1, negativeEntries: [] }),
     );
-    expect(
-      screen.getByRole("heading", { level: 2, name: "好きなマンガを 5〜10 作品えらんでください" }),
-    ).toBeTruthy();
+    expect(currentStep()?.textContent).toContain("好きな作品を選ぶ");
   });
 
   it("adds a suggested candidate without searching and keeps it reasonless until chosen", () => {

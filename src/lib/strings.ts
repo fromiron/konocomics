@@ -597,9 +597,6 @@ export const onboardingStrings = {
     close: "DNAに戻る",
   },
   step1: {
-    eyebrow: "STEP 1 / 2",
-    title: "好きなマンガを 5〜10 作品えらんでください",
-    description: "特に好きな作品は ☆ で「大好き」にすると、より強く反映されます。",
     searchLabel: "好きなマンガを検索",
     searchPlaceholder: "タイトル・作者名を入力",
     noResults: "見つかりませんでした。別の書き方で試してください",
@@ -687,10 +684,8 @@ export const onboardingStrings = {
     },
   },
   step2: {
-    eyebrow: "STEP 2 / 2",
     title: "合わなかった・途中でやめたマンガはありますか？",
     optional: "任意",
-    description: "0〜3作品まで。なくても、そのまま進めます。",
     principle: "選ばないことは、苦手という意味にはなりません。",
     back: "好きな作品を選び直す",
     searchLabel: "合わなかったマンガを検索",
