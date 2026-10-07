@@ -1,6 +1,6 @@
 # konocomics Taste vs Baseline レポート
 
-- カタログバージョン: v1\-641447975cce
+- カタログバージョン: v1\-b4a28106e2e8
 - ファクター辞書バージョン: v1
 - Baseline バージョン: v1
 - プロフィール数: 3
@@ -238,28 +238,29 @@
 | 4 | 0.03 | similarity | genre | action | kingdom | なし | はい |
 | 5 | 0.03 | similarity | genre | historical | kingdom | なし | はい |
 
-#### 10. 炎炎ノ消防隊 (fire\-force)
+#### 10. 進撃の巨人 (attack\-on\-titan)
 
-- スコア: 0.627124369983
+- スコア: 0.643177591794
 - 確信度: ふつう
-- 最も近いアンカー: チェンソーマン (chainsaw\-man)
+- 最も近いアンカー: 鋼の錬金術師 (fullmetal\-alchemist)
 - おすすめ理由:
-  - 「迫力・スピード感」があなたの好みに合う作品です。
-  - 「戦闘」があなたの好みに合う作品です。
   - 「テンポの速さ」があなたの好みに合う作品です。
+  - 「戦闘」があなたの好みに合う作品です。
+  - 『鋼の錬金術師』で好きだった「アクション」に近い作品です。
 - 注意点: なし
-- 根拠アンカー: なし
+- 根拠アンカー: 鋼の錬金術師 (fullmetal\-alchemist)
 - 適用された減点: 理由を特定できない苦手
-- カバレッジ警告: なし
+- カバレッジ警告:
+  - PARTIAL / art / coverage=0.75 / threshold=0.3 / adjustedScore=0.911885245902
 - 寄与度上位5件:
 
 | 順位 | 寄与 | source | group | factorId | anchorWorkIds | negativeReasonId | 説明対象 |
 | -: | -: | --- | --- | --- | --- | --- | --- |
 | 1 | 0.4 | baseline | overall | neutralBaseline | なし | なし | いいえ |
-| 2 | 0.06 | adjustment | art | motionImpact | なし | なし | はい |
+| 2 | 0.06 | adjustment | narrative | pacing | なし | なし | はい |
 | 3 | 0.06 | adjustment | theme | combat | なし | なし | はい |
-| 4 | 0.03 | adjustment | narrative | pacing | なし | なし | はい |
-| 5 | -0.03 | clamp | overall | adjustmentClamp | なし | なし | いいえ |
+| 4 | 0.02 | similarity | genre | action | fullmetal\-alchemist | なし | はい |
+| 5 | 0.02 | similarity | genre | fantasy | fullmetal\-alchemist | なし | はい |
 
 ### Baseline Top 10 (10/10)
 
@@ -424,7 +425,7 @@
 - Taste 件数: 10/10
 - Baseline 件数: 10/10
 - SHRUNK グループ数: 0
-- PARTIAL グループ数: 16
+- PARTIAL グループ数: 17
 
 ## プロフィール: tactical\-mystery
 
@@ -436,32 +437,7 @@
 
 ### Taste Engine Top 10 (10/10)
 
-#### 1. 名探偵コナン (work\-39555fe7402dada0d79f)
-
-- スコア: 0.918888719625
-- 確信度: ふつう
-- 最も近いアンカー: DEATH NOTE (death\-note)
-- おすすめ理由:
-  - 『DEATH NOTE』で好きだった「捜査・調査」に近い作品です。
-  - 「頭脳で解決する展開」があなたの好みに合う作品です。
-  - 『DEATH NOTE』で好きだった「描き込みの密度」に近い作品です。
-- 注意点: ただし「ホラー」は、『DEATH NOTE』で好きだった傾向と少し異なります。
-- 根拠アンカー: DEATH NOTE (death\-note), MONSTER (monster)
-- 適用された減点: なし
-- カバレッジ警告:
-  - PARTIAL / tone / coverage=0.714285714286 / threshold=0.6 / adjustedScore=0.728855721393
-  - PARTIAL / art / coverage=0.75 / threshold=0.3 / adjustedScore=0.824902723735
-- 寄与度上位5件:
-
-| 順位 | 寄与 | source | group | factorId | anchorWorkIds | negativeReasonId | 説明対象 |
-| -: | -: | --- | --- | --- | --- | --- | --- |
-| 1 | 0.5 | baseline | overall | neutralBaseline | なし | なし | いいえ |
-| 2 | 0.083333333333 | similarity | theme | investigation | death\-note | なし | はい |
-| 3 | 0.06 | adjustment | narrative | mysteryReveal | なし | なし | はい |
-| 4 | 0.06 | adjustment | theme | investigation | なし | なし | はい |
-| 5 | 0.041666666667 | similarity | theme | school | death\-note | なし | はい |
-
-#### 2. 親愛なる僕へ殺意をこめて (my\-dearest\-self\-with\-malice\-aforethought)
+#### 1. 親愛なる僕へ殺意をこめて (my\-dearest\-self\-with\-malice\-aforethought)
 
 - スコア: 0.939670108285
 - 確信度: ふつう
@@ -485,9 +461,9 @@
 | 4 | 0.06 | adjustment | theme | investigation | なし | なし | はい |
 | 5 | 0.05 | similarity | theme | investigation | death\-note | なし | はい |
 
-#### 3. 光が死んだ夏 (the\-summer\-hikaru\-died)
+#### 2. ザシス (work\-31d2342cf0a5e56f4e8a)
 
-- スコア: 0.926618709936
+- スコア: 0.955016207245
 - 確信度: ふつう
 - 最も近いアンカー: DEATH NOTE (death\-note)
 - おすすめ理由:
@@ -498,16 +474,43 @@
 - 根拠アンカー: DEATH NOTE (death\-note), MONSTER (monster)
 - 適用された減点: なし
 - カバレッジ警告:
-  - PARTIAL / art / coverage=0.75 / threshold=0.3 / adjustedScore=0.916666666667
+  - PARTIAL / narrative / coverage=0.666666666667 / threshold=0.6 / adjustedScore=0.702662721893
+  - PARTIAL / tone / coverage=0.714285714286 / threshold=0.6 / adjustedScore=0.884756097561
+  - SHRUNK / art / coverage=0 / threshold=0.3 / adjustedScore=0.5
 - 寄与度上位5件:
 
 | 順位 | 寄与 | source | group | factorId | anchorWorkIds | negativeReasonId | 説明対象 |
 | -: | -: | --- | --- | --- | --- | --- | --- |
 | 1 | 0.5 | baseline | overall | neutralBaseline | なし | なし | いいえ |
-| 2 | 0.0625 | similarity | theme | investigation | death\-note | なし | はい |
+| 2 | 0.083333333333 | similarity | theme | investigation | death\-note | なし | はい |
 | 3 | 0.06 | adjustment | narrative | mysteryReveal | なし | なし | はい |
 | 4 | 0.06 | adjustment | theme | investigation | なし | なし | はい |
-| 5 | 0.0375 | similarity | genre | horror | death\-note | なし | はい |
+| 5 | 0.041666666667 | similarity | theme | school | death\-note | なし | はい |
+
+#### 3. 名探偵コナン (work\-39555fe7402dada0d79f)
+
+- スコア: 0.918888719625
+- 確信度: ふつう
+- 最も近いアンカー: DEATH NOTE (death\-note)
+- おすすめ理由:
+  - 『DEATH NOTE』で好きだった「捜査・調査」に近い作品です。
+  - 「頭脳で解決する展開」があなたの好みに合う作品です。
+  - 『DEATH NOTE』で好きだった「描き込みの密度」に近い作品です。
+- 注意点: ただし「ホラー」は、『DEATH NOTE』で好きだった傾向と少し異なります。
+- 根拠アンカー: DEATH NOTE (death\-note), MONSTER (monster)
+- 適用された減点: なし
+- カバレッジ警告:
+  - PARTIAL / tone / coverage=0.714285714286 / threshold=0.6 / adjustedScore=0.728855721393
+  - PARTIAL / art / coverage=0.75 / threshold=0.3 / adjustedScore=0.824902723735
+- 寄与度上位5件:
+
+| 順位 | 寄与 | source | group | factorId | anchorWorkIds | negativeReasonId | 説明対象 |
+| -: | -: | --- | --- | --- | --- | --- | --- |
+| 1 | 0.5 | baseline | overall | neutralBaseline | なし | なし | いいえ |
+| 2 | 0.083333333333 | similarity | theme | investigation | death\-note | なし | はい |
+| 3 | 0.06 | adjustment | narrative | mysteryReveal | なし | なし | はい |
+| 4 | 0.06 | adjustment | theme | investigation | なし | なし | はい |
+| 5 | 0.041666666667 | similarity | theme | school | death\-note | なし | はい |
 
 #### 4. 20世紀少年 (20th\-century\-boys)
 
@@ -853,8 +856,8 @@
 
 - Taste 件数: 10/10
 - Baseline 件数: 10/10
-- SHRUNK グループ数: 0
-- PARTIAL グループ数: 17
+- SHRUNK グループ数: 1
+- PARTIAL グループ数: 18
 
 ## プロフィール: warm\-exploration
 

@@ -21,6 +21,7 @@ import { GENRE_TAGS } from "../../../src/domain/catalog/constants";
 import {
   mergeCanonicalTargets,
   prepareCanonicalApplication,
+  deriveCanonicalContextAudit,
 } from "../../../scripts/apply-catalog-authoring-canonical";
 import { catalogPython } from "../../../scripts/catalog-python";
 import { CATALOG_TABLES, readCatalogAuthority, sha256 } from "../../../scripts/catalog/authority";
@@ -79,6 +80,53 @@ function smallTables(): LexicalTable[] {
 }
 const csvRows = (text: string) =>
   z.array(z.record(z.string(), z.string())).parse(parse(text, { columns: true }));
+
+function contextAuditFixture() {
+  const reference = "reviews/authorized-evidence-panel-v1-batch-r-original.md";
+  const current = Buffer.from("Original immutable review\n");
+  const prior = Buffer.from("Earlier context review\n");
+  const binding = { workId: "target", priorReviewReference: "reviews/prior.md", reviewReference: reference,
+    priorContextEvidenceSha256: {}, replacementEvidenceId: "context-evidence", numericContextPreserved: true,
+    candidateOnly: true, reviewedByHuman: false, contextOnly: false };
+  const record = { ...binding, priorReviewSha256: sha256(prior) };
+  const suffix = "\n## Recommendation context supersession\n\nThe new frozen context replaces the prior selection provenance for these works. Previous evidence and reviews remain historical records; numeric context rows are unchanged. Factor decisions remain in the separately validated ledger.\n\n```json\n"
+    + JSON.stringify([record], null, 2) + "\n```\n";
+  const evidence = smallTables().find((t) => t.path === "evidence/evidence.csv")!;
+  const fields: Record<string, string> = { id: "context-evidence", workId: "target",
+    notes: "accepted | contextSupersessionV1|" + JSON.stringify(binding) };
+  evidence.rows = [{ sourceOrdinal: 1, sourceLine: 2, values: evidence.headers.map((field) =>
+    fields[field] ?? "") }];
+  return { reference, current, candidate: Buffer.concat([current, Buffer.from(suffix)]), workIds: ["target"],
+    evidence, priorReviewSha256: () => sha256(prior) };
+}
+
+it("derives an immutable canonical audit alias from exact bound context additions", () => {
+  const fixture = contextAuditFixture();
+  const before = Buffer.from(fixture.current);
+  const alias = deriveCanonicalContextAudit(fixture);
+  expect(alias.canonicalReference).toBe(fixture.reference.replace(/\.md$/u, `-context-${sha256(fixture.candidate)}.md`));
+  expect(alias.currentSha256).toBe(sha256(before));
+  expect(alias.candidateSha256).toBe(sha256(fixture.candidate));
+  expect(fixture.current.equals(before)).toBe(true);
+});
+
+it("rejects a canonical audit alias for original review edits or arbitrary append bytes", () => {
+  const fixture = contextAuditFixture();
+  const edited = Buffer.from(fixture.candidate);
+  edited[0] = 88;
+  expect(() => deriveCanonicalContextAudit({ ...fixture, candidate: edited })).toThrow("outside appended context audit");
+  expect(() => deriveCanonicalContextAudit({ ...fixture, candidate: Buffer.concat([fixture.current, Buffer.from("arbitrary")]) }))
+    .toThrow("Unexpected existing review append");
+});
+
+it("rejects a canonical audit alias outside its target or accepted evidence binding", () => {
+  const fixture = contextAuditFixture();
+  expect(() => deriveCanonicalContextAudit({ ...fixture, workIds: ["other"] })).toThrow("outside exact target group");
+  expect(() => deriveCanonicalContextAudit({ ...fixture, priorReviewSha256: () => "0".repeat(64) })).toThrow("prior review changed");
+  const notes = fixture.evidence.headers.indexOf("notes");
+  fixture.evidence.rows[0]!.values[notes] = fixture.evidence.rows[0]!.values[notes]!.replace('"contextOnly":false', '"contextOnly":true');
+  expect(() => deriveCanonicalContextAudit(fixture)).toThrow("accepted evidence binding");
+});
 
 it("uses the most specific declared restore origin without rewriting its marker", () => {
   const temporary = mkdtempSync(join(tmpdir(), "konocomics-nested-restore-"));

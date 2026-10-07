@@ -18,8 +18,9 @@ import shutil
 import sqlite3
 import subprocess
 import sys
+import tempfile
 import types
-from contextlib import closing, nullcontext
+from contextlib import closing, contextmanager, nullcontext
 from pathlib import Path, PurePosixPath
 from authoring_paths import REPO, ROOT, LEGACY, artifact_path
 from typing import Iterable
@@ -431,7 +432,7 @@ def _validate_ledger(
     for row in prior_rows:
         if row["workId"] not in target_ids or row["reviewedByHuman"] != "false" or row["candidateOnly"] != "true":
             raise ValidationError(f"prior claim boundary mismatch: {row['workId']} {row['factKey']}")
-        if row["decision"] != "accepted" or row["factType"] not in {"axis", "genre", "theme"}:
+        if row["decision"] != "accepted" or (row["factType"] or row["factKey"].partition(":")[0]) not in {"axis", "genre", "theme"}:
             continue
         key = (row["workId"], row["factKey"])
         if key in prior_accepted:
@@ -822,7 +823,7 @@ def _validate_fresh_unreviewed_snapshots(
         row
         for path in (input_root / "chunks").glob("chunk-??/prior-panel-claims.csv")
         for row in read_csv(path, PRIOR_FIELDS)
-        if row["decision"] == "accepted" and row["factType"] in {"axis", "genre", "theme"}
+        if row["decision"] == "accepted" and (row["factType"] or row["factKey"].partition(":")[0]) in {"axis", "genre", "theme"}
     ):
         key = (row["workId"], row["factKey"])
         if key in frozen_priors.setdefault(row["workId"], {}):
@@ -887,22 +888,53 @@ def _validate_fresh_unreviewed_snapshots(
         for key, original in sorted(frozen_priors.get(work_id, {}).items()):
             panel_validation.require_prior_claim(original, prior_authority)
             panel_validation.preserved_prior(original, result_rows.get(key), {})
-        preserved_axes = []
+        # Protected unknowns are not permission to add new known claims.
+        for row in factors:
+            if row["state"] == "unknown" and _protected_snapshot_evidence(evidence_by_id[row["evidenceId"]]):
+                result = result_rows.get((work_id, f"axis:{row['axisId']}"))
+                if result is None or (result["state"], result["value"], result["confidence"]) != ("unknown", "", ""):
+                    raise ValidationError(f"fresh snapshot cannot override protected unknown axis: {work_id} {row['axisId']}")
+        preserved_axes, preserved_themes = [], []
+        wrapper_backend = None
         for row in materialized:
             source = evidence_by_id[str(row["evidenceId"])]
             if _protected_snapshot_evidence(source):
-                axis = row.get("axisId")
-                original = frozen_priors.get(work_id, {}).get((work_id, f"axis:{axis}"))
-                prior_source = prior_authority.get("evidence", {}).get(str(row["evidenceId"]), {})
-                if (
-                    axis not in AXES or row.get("state") != "known"
-                    or original is None
-                    or any(row.get(field) != original[field] for field in ("state", "value", "confidence"))
-                    or row["evidenceId"] not in panel_validation.split_list(original["evidenceIds"], "prior evidenceIds", require_sorted=False)
-                    or any(prior_source.get(field) != value for field, value in source.items())
-                ):
+                axis, theme = row.get("axisId"), row.get("themeId")
+                kind, name = ("axis", axis) if axis in AXES else ("theme", theme)
+                original = frozen_priors.get(work_id, {}).get((work_id, f"{kind}:{name}"))
+                value = row.get("value") if kind == "axis" else row.get("centrality")
+                if (name is None or original is None or original["state"] != "known"
+                        or kind == "axis" and row.get("state") != "known"
+                        or value != original["value"] or row.get("confidence") != original["confidence"]):
                     raise ValidationError(f"fresh snapshot materialized fact has protected reviewed evidence without exact stored prior: {work_id}")
-                preserved_axes.append(str(axis))
+                panel_validation.require_prior_claim(original, prior_authority)
+                prior_source = prior_authority["evidence"].get(str(row["evidenceId"]), {})
+                direct = (row["evidenceId"] in panel_validation.split_list(original["evidenceIds"], "prior evidenceIds", require_sorted=False)
+                          and all(prior_source.get(field) == value for field, value in source.items()))
+                if not direct:
+                    verified = prior_authority["claims"][(work_id, original["factKey"])][panel_validation.claim_semantic_digest(original)]
+                    if wrapper_backend is None:
+                        wrapper_backend = _backend_module(prior_authority=prior_authority)
+                    urls = panel_validation.split_list(verified["citationUrls"], "prior citations", require_sorted=False)
+                    ids = panel_validation.split_list(verified["evidenceIds"], "prior evidenceIds", require_sorted=False)
+                    original_source = next((prior_authority["evidence"].get(evidence_id) for evidence_id in ids
+                                            if prior_authority["evidence"].get(evidence_id)), None)
+                    if original_source is None or original_source.get("workId") != work_id:
+                        raise ValidationError(f"protected wrapper original source missing: {work_id} {original['factKey']}")
+                    original_kind = original_source.get("sourceType", "")
+                    with wrapper_backend._verified_prior_lists([verified]):
+                        expected_id = wrapper_backend._claim_evidence_id(verified)
+                        original_notes = wrapper_backend._binding_notes(verified, evidence_id=expected_id, source_kind=original_kind)
+                    if (verified.get("authorityKind") != "authorizedEvidencePanelV1"
+                            or verified.get("reviewedByHuman") != "false" or verified.get("candidateOnly") != "true"
+                            or source.get("id") != expected_id or source.get("workId") != work_id
+                            or source.get("targetType") != kind or source.get("targetId") != name
+                            or source.get("sourceType") != wrapper_backend._source_type(original_kind) or source.get("sourceUrl") != sorted(urls)[0]
+                            or source.get("extractorVersion") != "authorizedEvidencePanelV1"
+                            or source.get("reviewedByHuman") != "false" or source.get("confidence") != original["confidence"]
+                            or source.get("notes") != original_notes):
+                        raise ValidationError(f"fresh snapshot materialized fact has protected reviewed evidence without exact stored prior: {work_id} {original['factKey']}; protected wrapper original binding differs")
+                (preserved_axes if kind == "axis" else preserved_themes).append(str(name))
             elif source.get("sourceType") != "model":
                 raise ValidationError(f"fresh snapshot materialized facts require raw model evidence: {work_id}")
         selected[work_id] = {
@@ -911,6 +943,7 @@ def _validate_fresh_unreviewed_snapshots(
             "beforeThemes": themes,
             "beforeGenres": str(current_work.get("genres", "")),
             "preservedAxes": sorted(preserved_axes),
+            "preservedThemes": sorted(preserved_themes),
         }
     return selected
 
@@ -1050,6 +1083,27 @@ def _backend_module(
 
     adapter.split_list = backend_split_list
 
+    @contextmanager
+    def verified_prior_lists(rows: list[dict[str, str]]):
+        legacy_lists: set[str] = set()
+        for row in rows:
+            for field in ("evidenceIds", "citationUrls"):
+                value = row.get(field, "")
+                items = panel_validation.split_list(value, field, require_sorted=False)
+                if items != sorted(items):
+                    # Verify the full original claim before permitting legacy order.
+                    panel_validation.require_prior_claim(row, prior_authority or {"claims": {}, "evidence": {}})
+                    if (row["workId"], row["factKey"]) in corrections:
+                        raise ValidationError("replacement claims require sorted evidence lists")
+                    legacy_lists.add(value)
+        verified_legacy_lists.update(legacy_lists)
+        try:
+            yield
+        finally:
+            verified_legacy_lists.clear()
+
+    module._verified_prior_lists = verified_prior_lists
+
     def factor_only_build(*args: object, **kwargs: object) -> dict[str, object]:
         # Work review timestamps share the product's offset-datetime contract.
         args = (*args[:6], _safety_fetched_at(args[6]), *args[7:])
@@ -1064,7 +1118,7 @@ def _backend_module(
         protected = {work_id for work_id in promotion if baseline["works"][work_id].get("annotationReviewMethod") == "authorizedModelPanel"}
         if protected:
             raise module.PublishError(f"immutable legacy authorizedModelPanel targets: {sorted(protected)}")
-        correction_ids = {key[0] for key in corrections if key[1].startswith("axis:")}
+        correction_ids = {key[0] for key, item in corrections.items() if key[1].startswith("axis:") or (item["decision"]["action"] == "WITHDRAW" and item["before"].get("state") != "absent")}
         if set(corrections) & set(conflicts or {}):
             raise module.PublishError("prior correction overlaps retained-baseline conflict")
         fresh_ids = set(fresh)
@@ -1085,7 +1139,7 @@ def _backend_module(
                 }
             effective_baseline["themes"] = {
                 key: value for key, value in effective_baseline["themes"].items()
-                if key[0] != work_id
+                if key[0] != work_id or key[1] in fresh[work_id].get("preservedThemes", [])
             }
             if work_id in recovery:
                 effective_baseline["contexts"][work_id] = []
@@ -1099,10 +1153,16 @@ def _backend_module(
                 if digest != correction["decision"]["baselineSemanticSha256"]:
                     raise module.PublishError(f"tag baseline changed after validation: {key}")
                 result = by_key.get(key)
-                if present and (correction["decision"]["action"] != "REPLACE" or result is None or (result["decision"], result["state"], result["value"]) != ("accepted", "known", "true" if kind == "genre" else current["centrality"])):
-                    raise module.PublishError(f"stored Genre/Theme correction must preserve its stored value: {key}")
+                if present and not ((correction["decision"]["action"] == "WITHDRAW" and result is None) or (correction["decision"]["action"] == "REPLACE" and result is not None and (result["decision"], result["state"], result["value"]) == ("accepted", "known", "true" if kind == "genre" else current["centrality"]))):
+                    raise module.PublishError(f"stored Genre/Theme correction must preserve its stored value or explicitly withdraw it: {key}")
                 if panel_validation.claim_semantic_digest(result) != correction["decision"]["resultSemanticSha256"]:
                     raise module.PublishError(f"correction result changed after validation: {key}")
+                if present and correction["decision"]["action"] == "WITHDRAW":
+                    if kind == "genre":
+                        work = effective_baseline["works"][key[0]]
+                        work["genres"] = ";".join(tag for tag in work["genres"].split(";") if tag and tag != name)
+                    else:
+                        del effective_baseline["themes"][(key[0], name)]
                 continue
             current = baseline["factors"].get((key[0], key[1].split(":", 1)[1]))
             if current is None or panel_validation.baseline_axis_digest(current) != correction["decision"]["baselineSemanticSha256"]:
@@ -1165,22 +1225,8 @@ def _backend_module(
                 prior[f"{work_id}\x1fscope:safety"] = {**claim, "packetDigest": packet_digest}
             build_args[4] = frozen
             filtered_kwargs["prior"] = prior
-        legacy_lists: set[str] = set()
-        for row in publishable:
-            for field in ("evidenceIds", "citationUrls"):
-                value = row.get(field, "")
-                items = panel_validation.split_list(value, field, require_sorted=False)
-                if items != sorted(items):
-                    # Never let a new/tampered row borrow another claim's list.
-                    panel_validation.require_prior_claim(row, prior_authority or {"claims": {}, "evidence": {}})
-                    if (row["workId"], row["factKey"]) in corrections:
-                        raise ValidationError("replacement claims require sorted evidence lists")
-                    legacy_lists.add(value)
-        verified_legacy_lists.update(legacy_lists)
-        try:
+        with verified_prior_lists(publishable):
             plan = original_build(publishable, *build_args[1:], **filtered_kwargs)
-        finally:
-            verified_legacy_lists.clear()
         plan["legacyPassIds"] = []
         plan["evidenceNormalizations"] = {}
         plan["priorCorrections"] = []
@@ -1217,8 +1263,12 @@ def _backend_module(
             claim["notes"] += " | priorClaimCorrectionV1|" + json.dumps(payload, ensure_ascii=False, sort_keys=True, separators=(",", ":"))
             plan["newEvidence"][claim_id] = claim
             if not key[1].startswith("axis:"):
-                retained = correction["before"].get("state") != "absent"
+                retained = correction["before"].get("state") != "absent" and decision["action"] == "REPLACE"
                 plan["tagCorrections"].append({"decision": decision, "before": correction["before"], "after": correction["result"], "correctionEvidenceId": claim_id, "retainedStoredTag": retained, "published": retained or (promotion[key[0]]["panelOutcome"] == "PASS" and correction["result"] is not None)})
+                if decision["action"] == "WITHDRAW" and correction["before"].get("state") != "absent":
+                    plan["changedClaimCount"] += 1
+                    if key[1].startswith("genre:"):
+                        plan["genreUpdates"].setdefault(key[0], effective_baseline["works"][key[0]]["genres"])
                 continue
             update = {"workId": key[0], "axisId": key[1].split(":", 1)[1], "state": row["state"], "value": row["value"], "confidence": row["confidence"], "evidenceId": claim_id}
             if any((item["workId"], item["axisId"]) == (update["workId"], update["axisId"]) for item in plan["factorUpdates"]):
@@ -1335,8 +1385,13 @@ def _backend_module(
             exact_themes = []
             for row in theme_rows:
                 name = row["factKey"].split(":", 1)[1]
-                after = planned_themes.get((work_id, name))
-                if after is None or after["evidenceId"] not in plan["newEvidence"]:
+                if name in fresh[work_id].get("preservedThemes", []):
+                    if (work_id, name) in planned_themes:
+                        raise module.PublishError(f"fresh snapshot preserved prior theme changed: {work_id} {name}")
+                    after = next(item for item in fresh[work_id]["beforeThemes"] if item["themeId"] == name)
+                else:
+                    after = planned_themes.get((work_id, name))
+                if after is None or (name not in fresh[work_id].get("preservedThemes", []) and after["evidenceId"] not in plan["newEvidence"]):
                     raise module.PublishError(f"fresh snapshot theme lacks fresh decision evidence: {work_id} {name}")
                 exact_themes.append(after)
             genre_rows = sorted(
@@ -1559,7 +1614,7 @@ def _materialize_existing_context_evidence(module, plan, promotion, contexts, su
                    "replacementEvidenceId": stored_id, "numericContextPreserved": True, "candidateOnly": True, "reviewedByHuman": False}
         if not module.REVIEW_REFERENCE_RE.fullmatch(linkage["priorReviewReference"]) or linkage["priorReviewReference"] == review_reference:
             raise module.PublishError(f"context replacement requires a new review reference: {wid}")
-        context_only = not any(r["workId"] == wid for key in ("factorUpdates", "themeInserts", "contextInserts") for r in plan.get(key, [])) and wid not in plan.get("genreUpdates", {})
+        context_only = not any(r["workId"] == wid for key in ("factorUpdates", "themeInserts", "contextInserts") for r in plan.get(key, [])) and wid not in plan.get("genreUpdates", {}) and not any(r.get("decision", {}).get("workId") == wid and r["decision"]["action"] == "WITHDRAW" and r["before"].get("state") != "absent" for r in plan.get("tagCorrections", []))
         if context_only:
             work = baseline["works"][wid]
             if work.get("annotationReviewMethod") != "authorizedEvidencePanel":
@@ -1671,8 +1726,8 @@ def _validate_axis_corrections(input_root: Path, result_root: Path, frozen_basel
                     present = name in work["genres"].split(";") if kind == "genre" else row is not None
                     if present:
                         result = results.get(key)
-                        if decision["action"] != "REPLACE" or result is None or (result["decision"], result["state"], result["value"]) != ("accepted", "known", "true" if kind == "genre" else row["centrality"]):
-                            raise ValidationError(f"stored Genre/Theme correction must preserve its stored value: {key}")
+                        if not ((decision["action"] == "WITHDRAW" and result is None) or (decision["action"] == "REPLACE" and result is not None and (result["decision"], result["state"], result["value"]) == ("accepted", "known", "true" if kind == "genre" else row["centrality"]))):
+                            raise ValidationError(f"stored Genre/Theme correction must preserve its stored value or explicitly withdraw it: {key}")
                         before = dict(row)
                         digest = panel_validation.baseline_stored_tag_digest(*key, before)
                     else:
@@ -1708,16 +1763,36 @@ def _install_correction_materializer(module: types.ModuleType) -> None:
         snapshots = plan.get("freshSnapshots", {})
         snapshot_ids = set(snapshots)
         snapshot_keys = {(work_id, axis) for work_id in snapshot_ids for axis in AXES}
+        withdrawals = [row for row in plan.get("tagCorrections", []) if row.get("decision", {}).get("action") == "WITHDRAW" and row["before"].get("state") != "absent"]
+        genre_withdrawals = {row["decision"]["workId"] for row in withdrawals if row["decision"]["factKey"].startswith("genre:")}
         normal = {
             **plan,
             "factorUpdates": [row for row in plan["factorUpdates"] if (row["workId"], row["axisId"]) not in keys | snapshot_keys],
             "themeInserts": [row for row in plan["themeInserts"] if row["workId"] not in snapshot_ids],
-            "genreUpdates": {work_id: genres for work_id, genres in plan["genreUpdates"].items() if work_id not in snapshot_ids},
+            "genreUpdates": {work_id: genres for work_id, genres in plan["genreUpdates"].items() if work_id not in snapshot_ids | genre_withdrawals},
         }
         original_apply(con, normal)
         previous_factory = con.row_factory
         con.row_factory = sqlite3.Row
         try:
+            for work_id in sorted(genre_withdrawals):
+                items = [row for row in withdrawals if row["decision"]["workId"] == work_id and row["decision"]["factKey"].startswith("genre:")]
+                before_genres = items[0]["before"]["genres"]
+                if any(row["before"]["genres"] != before_genres or row["before"]["evidenceId"] != items[0]["before"]["evidenceId"] for row in items):
+                    raise module.PublishError(f"conflicting genre withdrawal baseline: {work_id}")
+                removed = {row["decision"]["factKey"].split(":", 1)[1] for row in items}
+                final_genres = plan["genreUpdates"][work_id]
+                if removed & set(final_genres.split(";")) or not removed <= set(before_genres.split(";")) or not (set(before_genres.split(";")) - removed - {""}) <= set(final_genres.split(";")):
+                    raise module.PublishError(f"genre withdrawal plan membership mismatch: {work_id}")
+                changed = con.execute("update source_works set genres=? where id=? and genres=? and evidenceId=?", (final_genres, work_id, before_genres, items[0]["before"]["evidenceId"]))
+                if changed.rowcount != 1:
+                    raise module.PublishError(f"genre withdrawal lost exact baseline: {work_id}")
+            for correction in withdrawals:
+                decision, before = correction["decision"], correction["before"]
+                if decision["factKey"].startswith("theme:"):
+                    changed = con.execute("delete from source_themes where workId=? and themeId=? and centrality=? and confidence=? and evidenceId=?", tuple(before[field] for field in ("workId", "themeId", "centrality", "confidence", "evidenceId")))
+                    if changed.rowcount != 1:
+                        raise module.PublishError(f"theme withdrawal lost exact baseline: {decision['workId']} {decision['factKey']}")
             for correction in corrections:
                 before, after = correction["before"], correction["after"]
                 values = tuple(after[field] for field in ("state", "value", "confidence", "evidenceId", "workId", "axisId")) + tuple(before[field] for field in ("state", "value", "confidence", "evidenceId"))
@@ -1759,9 +1834,9 @@ def _install_correction_materializer(module: types.ModuleType) -> None:
                     )
                     next_ordinal += 1
                     next_line += 1
-            if snapshot_ids:
+            if snapshot_ids or any(row["decision"]["factKey"].startswith("theme:") for row in withdrawals):
                 integration.reindex_authority_projection(con, {"source_themes"})
-            ids = {key[0] for key in keys}
+            ids = {key[0] for key in keys} | {row["decision"]["workId"] for row in withdrawals}
             coverage_readback = {}
             for work_id in sorted(ids):
                 actual_axes = {row[0]: {"state": row[1], "value": row[2]} for row in con.execute("select axisId,state,value from source_factors where workId=?", (work_id,))}
@@ -1787,12 +1862,16 @@ def _install_correction_materializer(module: types.ModuleType) -> None:
         snapshots = plan.get("freshSnapshots", {})
         snapshot_ids = set(snapshots)
         blocked = set(plan["correctionBlockedIds"])
+        withdrawals = [row for row in plan.get("tagCorrections", []) if row.get("decision", {}).get("action") == "WITHDRAW" and row["before"].get("state") != "absent"]
+        removed_themes = {(row["decision"]["workId"], row["decision"]["factKey"].split(":", 1)[1]) for row in withdrawals if row["decision"]["factKey"].startswith("theme:")}
         work_columns, work_rows = before["source_works"]
         expected_rows = []
         after_works = module._rows_by_key(after, "source_works", "id")
         for values in work_rows:
             work = dict(zip(work_columns, values))
             if work["id"] in blocked:
+                if any(row["decision"]["workId"] == work["id"] and row["decision"]["factKey"].startswith("genre:") for row in withdrawals):
+                    work["genres"] = plan["genreUpdates"][work["id"]]
                 work.update(onboardingEligible="false", recommendationEligible="false", libraryOnly="true", annotationReviewMethod="unreviewed", annotationReviewedAt="", annotationReviewReference="")
                 if after_works[work["id"]] != work:
                     raise module.PublishError(f"correction demotion readback mismatch: {work['id']}")
@@ -1810,16 +1889,19 @@ def _install_correction_materializer(module: types.ModuleType) -> None:
                 line += integration._canonical_row_line(row)
                 projected_rows.append((ordinal, line, *row))
             projected["source_recommendation_context"] = (columns, tuple(projected_rows))
-        if snapshot_ids:
-            theme_columns, before_theme_rows = before["source_themes"]
-            after_theme_rows = after["source_themes"][1]
-            work_index = theme_columns.index("workId")
-            semantic_indexes = [index for index, column in enumerate(theme_columns) if column not in {"sourceOrdinal", "sourceLine"}]
-            semantic = lambda row: tuple(row[index] for index in semantic_indexes)
-            before_other = sorted(semantic(row) for row in before_theme_rows if row[work_index] not in snapshot_ids)
-            after_other = sorted(semantic(row) for row in after_theme_rows if row[work_index] not in snapshot_ids)
-            if before_other != after_other:
-                raise module.PublishError("fresh snapshot changed non-target theme semantics")
+        if snapshot_ids or removed_themes:
+            columns, values = before["source_themes"]
+            wid_index, tag_index = columns.index("workId"), columns.index("themeId")
+            survivors = [row[2:] for row in values if row[wid_index] not in snapshot_ids and (row[wid_index], row[tag_index]) not in removed_themes]
+            expected_semantics = survivors + [tuple(row[field] for field in columns[2:]) for row in plan["themeInserts"] if row["workId"] not in snapshot_ids]
+            for work_id in sorted(snapshot_ids):
+                expected_semantics.extend(tuple(row[field] for field in columns[2:]) for row in snapshots[work_id]["afterThemes"])
+            line, expected = 1, []
+            for ordinal, row in enumerate(expected_semantics, 1):
+                line += integration._canonical_row_line(row)
+                expected.append((ordinal, line, *row))
+            if after["source_themes"] != (columns, tuple(expected)):
+                raise module.PublishError("correction/fresh snapshot theme projection mismatch")
             projected["source_themes"] = after["source_themes"]
         # The original verifier still checks every untouched field, old evidence,
         # Gold row, exact factor update, and allowed PASS/context insertion.
@@ -1848,20 +1930,23 @@ def _install_correction_materializer(module: types.ModuleType) -> None:
                 theme_id: tuple(after_themes[(work_id, theme_id)][field] for field in ("centrality", "confidence", "evidenceId"))
                 for owner, theme_id in after_themes if owner == work_id
             }
-            if actual_themes != expected_themes or any(values[2] not in plan["newEvidence"] for values in actual_themes.values()):
+            if actual_themes != expected_themes or any(values[2] not in plan["newEvidence"] for name, values in actual_themes.items() if name not in snapshot.get("preservedThemes", [])):
                 raise module.PublishError(f"fresh snapshot theme readback mismatch: {work_id}")
             if after_works[work_id]["genres"] != snapshot["afterGenres"] or any(evidence_id not in after_evidence or evidence_id not in plan["newEvidence"] for evidence_id in snapshot["genreEvidenceIds"]):
                 raise module.PublishError(f"fresh snapshot genre readback mismatch: {work_id}")
+        for work_id in {row["decision"]["workId"] for row in withdrawals if row["decision"]["factKey"].startswith("genre:")}:
+            if after_works[work_id]["genres"] != plan["genreUpdates"][work_id]:
+                raise module.PublishError(f"genre withdrawal final membership readback mismatch: {work_id}")
         for correction in plan["tagCorrections"]:
             decision = correction["decision"]
             work_id, fact_key = decision["workId"], decision["factKey"]
             kind, name = fact_kind(fact_key)
             stored = after_themes.get((work_id, name)) if kind == "theme" else None
             present = name in after_works[work_id]["genres"].split(";") if kind == "genre" else stored is not None
-            if present != correction["published"] or (stored is not None and stored["centrality"] != correction["after"]["value"]):
+            if present != correction["published"] or (stored is not None and (correction["after"] is None or stored["centrality"] != correction["after"]["value"])):
                 raise module.PublishError(f"tag correction readback mismatch: {work_id} {fact_key}")
         prior_works = module._rows_by_key(before, "source_works", "id")
-        module.correction_readback = {"corrections": [*plan["priorCorrections"], *plan["tagCorrections"]], "axisUpdates": plan["correctionAxisUpdates"], "coverageReadback": module.correction_coverage, "blockedWorkIds": sorted(blocked), "demotedWorkIds": sorted(work_id for work_id in blocked if prior_works[work_id]["recommendationEligible"] == "true"), "removedContexts": [dict(zip(before["source_recommendation_context"][0], row)) for row in before["source_recommendation_context"][1] if row[before["source_recommendation_context"][0].index("workId")] in blocked], "scope": "Axis-corrected works materialize the validated final Axis snapshot. Genre/Theme corrections preserve old evidence, publish absent-tag replacements only on PASS, and retain existing stored tags only for storage-identical REPLACE decisions. Exact tag membership/value readback is verified. Other BLOCKED publication behavior is unchanged; panel and database coverage are reported separately."}
+        module.correction_readback = {"corrections": [*plan["priorCorrections"], *plan["tagCorrections"]], "axisUpdates": plan["correctionAxisUpdates"], "coverageReadback": module.correction_coverage, "blockedWorkIds": sorted(blocked), "demotedWorkIds": sorted(work_id for work_id in blocked if prior_works[work_id]["recommendationEligible"] == "true"), "removedContexts": [dict(zip(before["source_recommendation_context"][0], row)) for row in before["source_recommendation_context"][1] if row[before["source_recommendation_context"][0].index("workId")] in blocked], "scope": "Corrected works materialize the validated final Axis snapshot. Genre/Theme corrections preserve old evidence, publish absent-tag replacements only on PASS, and retain existing stored tags only for storage-identical REPLACE decisions. Explicit stored-tag WITHDRAW removes only its bound membership/row; exact tag membership/value readback is verified. Other BLOCKED publication behavior is unchanged; panel and database coverage are reported separately."}
 
     module.apply_plan_in_transaction, module._verify_preservation = apply, verify
 
@@ -2595,7 +2680,8 @@ def publish_batch(
         raise ValidationError("recovery cannot mix prior corrections or retained conflicts")
     batch_id = str(_read_json(input_root / "panel-input.json")["batchId"])
     registry_slice, canonical_rebase = _verify_current_input_identities(input_root, frozen_baseline, frozen_registry, repo)
-    if registry != frozen_registry and baseline == frozen_baseline:
+    if (registry != frozen_registry and baseline == frozen_baseline
+            and frozen_registry == frozen_baseline.parent / "catalog-source-registry.candidate.sqlite"):
         registry_sha = str(_read_json(input_root / "panel-input.json")["registrySha256"])
         registry_slice = _registry_correction_slice(input_root, frozen_baseline, registry, registry_sha)
     safety = _publication_safety(safety_root, input_root, result_root, recovery)
@@ -2745,7 +2831,8 @@ def main(argv: list[str] | None = None) -> int:
             registry_slice, canonical_rebase = _verify_current_input_identities(
                 args.input_root, frozen_baseline, frozen_registry, repo
             )
-            if args.previous_registry.resolve() != frozen_registry.resolve() and args.previous_catalog.resolve() == frozen_baseline.resolve():
+            if (args.previous_registry.resolve() != frozen_registry.resolve() and args.previous_catalog.resolve() == frozen_baseline.resolve()
+                    and frozen_registry.resolve() == frozen_baseline.resolve().parent / "catalog-source-registry.candidate.sqlite"):
                 registry_sha = str(_read_json(args.input_root / "panel-input.json")["registrySha256"])
                 registry_slice = _registry_correction_slice(
                     args.input_root, frozen_baseline, args.previous_registry, registry_sha
@@ -2755,16 +2842,22 @@ def main(argv: list[str] | None = None) -> int:
             backend = _backend_module(safety, prior_evidence, conflicts, prior_authority, corrections, fresh_snapshots, recovery)
             import factor_single_pass as single
             single.install_backend(backend, args.input_root, args.panel_output_root)
-            prepared, _ = backend.preflight(
-                args.input_root,
-                args.panel_output_root,
-                args.previous_catalog,
-                args.previous_registry,
-                args.reviewed_at,
-                f"reviews/authorized-evidence-panel-v1-batch-{batch_id}.md",
-                repo / "data" / "staging" / "catalog-expansion" / "gold-set-manifest.json",
-                registry_slice,
-            )
+            corrected = frozen_registry.resolve() != frozen_baseline.resolve().parent / "catalog-source-registry.candidate.sqlite"
+            with tempfile.TemporaryDirectory(prefix="catalog-preflight-registry-") if corrected else nullcontext(None) as temporary:
+                registry = args.previous_registry
+                if temporary is not None:
+                    registry = Path(temporary) / "catalog-source-registry.candidate.sqlite"
+                    _rebase_registry_correction(frozen_baseline, frozen_registry, args.previous_registry, registry, target_ids)
+                prepared, _ = backend.preflight(
+                    args.input_root,
+                    args.panel_output_root,
+                    args.previous_catalog,
+                    registry,
+                    args.reviewed_at,
+                    f"reviews/authorized-evidence-panel-v1-batch-{batch_id}.md",
+                    repo / "data" / "staging" / "catalog-expansion" / "gold-set-manifest.json",
+                    registry_slice,
+                )
             result: dict[str, object] = dict(prepared["panelResult"])
             result["safety"] = safety["validation"]
             result["safetyArtifactDigest"] = safety["artifactDigest"]

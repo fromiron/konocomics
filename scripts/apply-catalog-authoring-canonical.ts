@@ -75,6 +75,58 @@ const workFields = new Set([
   "annotationReviewReference",
 ]);
 
+const reviewReferenceSchema = z.string().regex(/^reviews\/[a-z0-9]+(?:-[a-z0-9]+)*\.md$/u);
+const contextAuditSchema = z.strictObject({
+  workId: z.string(), priorReviewReference: reviewReferenceSchema,
+  reviewReference: reviewReferenceSchema, priorReviewSha256: z.string().regex(/^[a-f0-9]{64}$/u),
+  priorContextEvidenceSha256: z.record(z.string(), z.string().regex(/^[a-f0-9]{64}$/u)),
+  replacementEvidenceId: z.string(), numericContextPreserved: z.literal(true),
+  candidateOnly: z.literal(true), reviewedByHuman: z.literal(false), contextOnly: z.boolean(),
+});
+const contextAuditPrefix = "\n## Recommendation context supersession\n\nThe new frozen context replaces the prior selection provenance for these works. Previous evidence and reviews remain historical records; numeric context rows are unchanged. Factor decisions remain in the separately validated ledger.\n\n```json\n";
+
+/** Derive an audit identity only for exact, evidence-bound context additions. */
+export function deriveCanonicalContextAudit(options: {
+  reference: string; current: Buffer; candidate: Buffer; workIds: readonly string[];
+  evidence: LexicalTable; priorReviewSha256: (reference: string) => string;
+}) {
+  const { reference, current, candidate, workIds, evidence } = options;
+  reviewReferenceSchema.parse(reference);
+  assert(candidate.length > current.length && candidate.subarray(0, current.length).equals(current),
+    "Existing review differs outside appended context audit");
+  let remaining = new TextDecoder("utf-8", { fatal: true }).decode(candidate.subarray(current.length));
+  const seen = new Set<string>();
+  while (remaining) {
+    assert(remaining.startsWith(contextAuditPrefix), "Unexpected existing review append");
+    remaining = remaining.slice(contextAuditPrefix.length);
+    const end = remaining.indexOf("\n```\n");
+    assert(end >= 0, "Incomplete context audit append");
+    const records = z.array(contextAuditSchema).min(1).parse(JSON.parse(remaining.slice(0, end)));
+    remaining = remaining.slice(end + "\n```\n".length);
+    for (const record of records) {
+      assert(workIds.includes(record.workId) && !seen.has(record.workId), "Context audit outside exact target group");
+      seen.add(record.workId);
+      assert.equal(record.reviewReference, reference, "Context audit review identity changed");
+      assert.notEqual(record.priorReviewReference, reference, "Context audit must retain a separate prior review");
+      const { priorReviewSha256, ...binding } = record;
+      assert.equal(options.priorReviewSha256(record.priorReviewReference), priorReviewSha256,
+        "Context audit prior review changed");
+      const matches = evidence.rows.filter((r) => r.values[column(evidence, "id")] === record.replacementEvidenceId);
+      assert.equal(matches.length, 1, "Context audit replacement evidence missing or duplicated");
+      const row = matches[0]!;
+      assert.equal(row.values[column(evidence, "workId")], record.workId, "Context audit evidence belongs to another Work");
+      const notes = row.values[column(evidence, "notes")]!;
+      const marker = " | contextSupersessionV1|";
+      assert.equal(notes.split(marker).length, 2, "Context audit has no exact evidence binding");
+      assert.deepEqual(JSON.parse(notes.split(marker)[1]!), binding, "Context audit differs from accepted evidence binding");
+    }
+  }
+  assert.deepEqual([...seen].sort(), [...workIds].sort(), "Context audit does not cover exact target group");
+  const candidateSha256 = sha256(candidate);
+  return { originalReference: reference, currentSha256: sha256(current), candidateSha256,
+    canonicalReference: reference.replace(/\.md$/u, `-context-${candidateSha256}.md`), workIds: [...seen].sort() };
+}
+
 function containsPath(parent: string, child: string) {
   const part = relative(parent, child);
   return (
@@ -452,29 +504,43 @@ export function prepareCanonicalApplication(options: {
   const projectionRoot = join(output, "candidate");
   const projected = join(projectionRoot, "data/source");
   writeCatalogCsvProjection(source, projected);
-  const merged = mergeCanonicalTargets(current.tables, candidate.tables, workIds, [
-    ...scopeCorrections.keys(),
-  ]);
-  for (const [path, content] of merged) writeFileSync(join(projected, path), content);
   const works = candidate.tables.find((table) => table.path === "works.csv")!;
   const targetSet = new Set(workIds);
   const referenceIndex = column(works, "annotationReviewReference");
+  const contextReviewAliases: NonNullable<ReturnType<typeof deriveCanonicalContextAudit>>[] = [];
+  const handledReferences = new Set<string>();
   for (const row of works.rows.filter((entry) => targetSet.has(entry.values[0]!))) {
     const reference = row.values[referenceIndex]!;
+    if (handledReferences.has(reference)) continue;
+    handledReferences.add(reference);
     assert.match(reference, /^reviews\/[a-z0-9]+(?:-[a-z0-9]+)*\.md$/u);
     const destination = join(projected, reference);
     const bytes = readFileSync(join(candidateSource, reference));
-    if (existsSync(destination))
-      assert.equal(
-        sha256(readFileSync(destination)),
-        sha256(bytes),
-        "Existing review cannot be overwritten",
-      );
-    else {
+    if (existsSync(destination) && sha256(readFileSync(destination)) !== sha256(bytes)) {
+      const ids = works.rows.filter((r) => targetSet.has(r.values[0]!) && r.values[referenceIndex] === reference)
+        .map((r) => r.values[0]!);
+      assert(ids.every((id) => !scopeCorrections.has(id)), "Scope audit cannot use context review alias");
+      const alias = deriveCanonicalContextAudit({ reference, current: readFileSync(destination), candidate: bytes,
+        workIds: ids, evidence: candidate.tables.find((table) => table.path === "evidence/evidence.csv")!,
+        priorReviewSha256: (prior) => sha256(readFileSync(join(projected, prior))) });
+      const auditPath = join(projected, alias.canonicalReference);
+      if (existsSync(auditPath)) assert.equal(sha256(readFileSync(auditPath)), alias.candidateSha256,
+        "Canonical context audit alias already has different bytes");
+      else writeFileSync(auditPath, bytes);
+      contextReviewAliases.push(alias);
+    } else if (!existsSync(destination)) {
       mkdirSync(dirname(destination), { recursive: true });
       copyFileSync(join(candidateSource, reference), destination);
     }
   }
+  const aliases = new Map(contextReviewAliases.map((entry) => [entry.originalReference, entry.canonicalReference]));
+  const projectedTables = candidate.tables.map((table) => table !== works ? table : {
+    ...table, rows: table.rows.map((row) => !targetSet.has(row.values[0]!) ? row : {
+      ...row, values: row.values.map((value, index) => index === referenceIndex ? aliases.get(value) ?? value : value),
+    }),
+  });
+  const merged = mergeCanonicalTargets(current.tables, projectedTables, workIds, [...scopeCorrections.keys()]);
+  for (const [path, content] of merged) writeFileSync(join(projected, path), content);
   for (const reference of scopeReviewReferences) {
     const destination = join(projected, reference);
     const bytes = readFileSync(join(candidateSource, reference));
@@ -491,6 +557,10 @@ export function prepareCanonicalApplication(options: {
   }
   // Only referenced reports belong in authority; replaced historical reports survive in rollback.
   const references = new Set<string>(CATALOG_OPAQUE_PATHS);
+  for (const alias of contextReviewAliases) {
+    references.add(alias.originalReference);
+    references.add(alias.canonicalReference);
+  }
   const currentEvidence = current.tables.find((table) => table.path === "evidence/evidence.csv")!;
   for (const reference of scopeAuditReviewReferences(
     currentEvidence.rows.map((row) =>
@@ -505,7 +575,7 @@ export function prepareCanonicalApplication(options: {
   for (const row of currentWorks.rows.filter((entry) => !targetSet.has(entry.values[0]!)))
     references.add(row.values[referenceIndex]!);
   for (const row of works.rows.filter((entry) => targetSet.has(entry.values[0]!)))
-    references.add(row.values[referenceIndex]!);
+    references.add(aliases.get(row.values[referenceIndex]!) ?? row.values[referenceIndex]!);
   for (const file of readdirSync(join(projected, "reviews"))) {
     if (!references.has(`reviews/${file}`)) rmSync(join(projected, "reviews", file));
   }
@@ -585,6 +655,7 @@ export function prepareCanonicalApplication(options: {
       beforeSourceManifestDigest: before.sourceManifestDigest,
       sourceManifestDigest: authority.sourceManifestDigest,
       catalogVersion: built.catalog.catalogVersion,
+      ...(contextReviewAliases.length ? { contextReviewAliases } : {}),
       guards: [
         ...policyGuards,
         {

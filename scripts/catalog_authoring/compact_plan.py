@@ -76,6 +76,11 @@ class _Table:
             values = self.rows.pop(ordinal)
             del self.by_key[tuple(values[self.positions[k]] for k in self.keys)]
 
+    def delete_key(self, key):
+        ordinal = self.by_key.pop(key)
+        values = self.rows.pop(ordinal)
+        self.owners[values[self.positions[self.owner]]].remove(ordinal)
+
     def append(self, row):
         while self.ordinals and -self.ordinals[0] not in self.rows:
             heapq.heappop(self.ordinals)
@@ -202,6 +207,8 @@ class CatalogState:
                 raise ValueError(f"Expected recovery target binding changed: {wid}")
         corrections = plan.get("priorCorrections", [])
         correction_keys = {(r["after"]["workId"], r["after"]["axisId"]) for r in corrections}
+        withdrawals = [row for row in plan.get("tagCorrections", []) if row.get("decision", {}).get("action") == "WITHDRAW" and row["before"].get("state") != "absent"]
+        genre_withdrawals = {row["decision"]["workId"] for row in withdrawals if row["decision"]["factKey"].startswith("genre:")}
         replaced = set(fresh) | set(recovery)
         context_only = plan.get("contextOnlyWorkUpdates", {})
 
@@ -219,7 +226,7 @@ class CatalogState:
             if row["workId"] not in replaced:
                 self._append("source_themes", row)
         for wid, genres in sorted(plan.get("genreUpdates", {}).items()):
-            if wid not in replaced:
+            if wid not in replaced | genre_withdrawals:
                 self._update("source_works", (wid,), {"genres": genres})
         for row in plan.get("contextInserts", []):
             if row["workId"] not in recovery:
@@ -234,6 +241,28 @@ class CatalogState:
                 raise ValueError(f"Expected legacy PASS baseline mismatch: {wid}")
             self._update("source_works", (wid,), {"onboardingEligible": "true"})
 
+        for wid in sorted(genre_withdrawals):
+            items = [row for row in withdrawals if row["decision"]["workId"] == wid and row["decision"]["factKey"].startswith("genre:")]
+            work = self.tables["source_works"].row(wid)
+            current = work["genres"]
+            removed = {row["decision"]["factKey"].split(":", 1)[1] for row in items}
+            final = plan["genreUpdates"][wid]
+            if any(row["before"]["genres"] != current or row["before"]["evidenceId"] != work["evidenceId"] for row in items) or not removed <= set(current.split(";")) or removed & set(final.split(";")) or not (set(current.split(";")) - removed - {""}) <= set(final.split(";")):
+                raise ValueError(f"Expected genre withdrawal baseline/membership mismatch: {wid}")
+            self._update("source_works", (wid,), {"genres": final})
+        removed_themes = False
+        for correction in withdrawals:
+            decision, before = correction["decision"], correction["before"]
+            wid, fact_key = decision["workId"], decision["factKey"]
+            if fact_key.startswith("theme:"):
+                self._permit(wid)
+                key = (wid, fact_key.split(":", 1)[1])
+                current = self.tables["source_themes"].row(*key)
+                if any(current[field] != before[field] for field in ("workId", "themeId", "centrality", "confidence", "evidenceId")):
+                    raise ValueError(f"Expected theme withdrawal baseline mismatch: {key}")
+                self.tables["source_themes"].delete_key(key)
+                self.changed.add("source_themes")
+                removed_themes = True
         for correction in corrections:
             self._factor(correction["after"], correction["before"])
         for wid, snapshot in sorted(fresh.items()):
@@ -250,9 +279,9 @@ class CatalogState:
             self._delete("source_themes", wid)
             for row in snapshot["afterThemes"]:
                 self._append("source_themes", row)
-        if fresh:
+        if fresh or removed_themes:
             self.tables["source_themes"].reindex()
-        corrected = {wid for wid, _axis in correction_keys}
+        corrected = {wid for wid, _axis in correction_keys} | {row["decision"]["workId"] for row in withdrawals}
         blocked = set(plan.get("correctionBlockedIds", []))
         for wid in sorted(corrected):
             actual = {row["axisId"]: {k: row[k] for k in ("state", "value")}

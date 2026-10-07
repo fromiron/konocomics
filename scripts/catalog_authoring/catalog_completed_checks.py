@@ -157,14 +157,16 @@ def verify_current_canonical_effect(state=None):
                 "current canonical effect prepared/completion binding changed")
             artifacts = {key_path(path_identity(item["path"]).as_posix()): item["sha256"] for item in prepared["artifacts"]}
             version = prepared["catalogVersion"]
-            expected = _STATIC_ARTIFACTS | {"data/source", f"public/catalog/catalog-v1.{version}.json",
+            source_artifact = "data/source/catalog.sqlite" if prepared.get("kind") == "publisher-metadata" else "data/source"
+            expected = _STATIC_ARTIFACTS | {source_artifact, f"public/catalog/catalog-v1.{version}.json",
                                            f"public/catalog/recommendation-context-v1.{version}.json"}
             runner.prepare.require(len(artifacts) == len(prepared["artifacts"]) and set(artifacts) == expected,
                                    "current canonical effect artifact membership changed")
             source_members = {name[len("data/source/"):]: sha for name, sha in members.items() if name.startswith("data/source/")}
             generated = {name: sha for name, sha in members.items() if not name.startswith("data/source/")}
-            runner.prepare.require(source_members and _tree_digest(source_members) == artifacts["data/source"] and
-                generated == {name: sha for name, sha in artifacts.items() if name != "data/source"},
+            source_sha = source_members.get("catalog.sqlite") if source_artifact != "data/source" else _tree_digest(source_members)
+            runner.prepare.require(source_members and source_sha == artifacts[source_artifact] and
+                generated == {name: sha for name, sha in artifacts.items() if name != source_artifact},
                 "current canonical effect retained artifacts differ from prepared")
             actual = {path.relative_to(runner.REPO / "data/source").as_posix(): runner.panel.sha256(path)
                       for path in store.files([runner.REPO / "data/source"])}
@@ -208,7 +210,10 @@ def verify_current_canonical_effect(state=None):
                     completed.get("preparedSha256") == pointer["preparedSha256"] and
                     prepared.get("kind") in {"adjudication", "publisher-metadata"},
                     "current canonical effect pointer binding changed")
-                members = control["payload"].get("currentCanonical", {}).get("members", {})
+                public = {f"public/catalog/{name}.{prepared['catalogVersion']}.json"
+                          for name in ("catalog-v1", "recommendation-context-v1")}
+                members = {name: sha for name, sha in control["payload"].get("currentCanonical", {}).get("members", {}).items()
+                           if not name.startswith("public/catalog/") or name in public}
                 selected = {**members, pointer_key: pointer_sha,
                     store.key(output / "prepared.json"): pointer["preparedSha256"],
                     store.key(output / "completion.json"): pointer["completionSha256"]}

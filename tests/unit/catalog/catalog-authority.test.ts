@@ -20,6 +20,7 @@ import {
   CATALOG_DATABASE_FILE,
   CATALOG_TABLES,
   finalizeCatalogAuthorityProjection,
+  parseLexicalCsv,
   readCatalogAuthority,
   serializeCsv,
   sha256,
@@ -230,6 +231,17 @@ describe("SQLite Catalog authority", () => {
         `${readFileSync(aliases, "utf8").trimEnd()}\ndungeon-meshi,ダンジョン飯テスト\n`,
         "utf8",
       );
+      const metadata = readCatalogAuthority(repositorySource).find(
+        (table) => table.path === CATALOG_BOOK_METADATA_TABLE.path,
+      )!;
+      const captionIndex = metadata.headers.indexOf("itemCaption");
+      const metadataProjection = {
+        ...metadata,
+        rows: metadata.rows.map((row) => ({ ...row, values: [...row.values] })),
+      };
+      metadataProjection.rows[0]!.values[captionIndex] = "紹介\r\n次の段落";
+      metadataProjection.rows[1]!.values[captionIndex] = "続く紹介";
+      writeFileSync(join(projected, metadata.path), serializeCsv(metadataProjection));
       finalizeCatalogAuthorityProjection(repositorySource, projected);
 
       expect(existsSync(join(projected, CATALOG_DATABASE_FILE))).toBe(true);
@@ -244,6 +256,15 @@ describe("SQLite Catalog authority", () => {
           values: ["dungeon-meshi", "ダンジョン飯テスト"],
         },
       ]);
+      const finalizedMetadata = readCatalogAuthority(projected).find(
+        (table) => table.path === metadata.path,
+      )!;
+      expect(finalizedMetadata.rows[0]!.values[captionIndex]).toBe("紹介\n次の段落");
+      expect(finalizedMetadata.rows[1]!.values[captionIndex]).toBe("続く紹介");
+      expect(finalizedMetadata.rows.slice(0, 2).map((row) => row.sourceLine)).toEqual([3, 4]);
+      expect(finalizedMetadata.rows).toEqual(
+        parseLexicalCsv(metadata.path, serializeCsv(finalizedMetadata), metadata.headers).rows,
+      );
       expect(sha256(readFileSync(originalDatabase))).toBe(originalDigest);
     } finally {
       rmSync(root, { recursive: true, force: true });

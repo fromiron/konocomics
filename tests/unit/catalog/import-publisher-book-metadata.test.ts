@@ -17,7 +17,10 @@ import { expect, it, vi } from "vitest";
 import { catalogV1Schema } from "@/domain/catalog/schema";
 import { resolveWorkBookMetadata } from "@/features/work-detail/work-detail-data";
 import * as authority from "../../../scripts/catalog/authority";
-import { importPublisherBookMetadata } from "../../../scripts/import-publisher-book-metadata";
+import {
+  importPublisherBookMetadata,
+  readIntake,
+} from "../../../scripts/import-publisher-book-metadata";
 import { catalogPython } from "../../../scripts/catalog-python";
 import {
   artifactDigest,
@@ -27,6 +30,146 @@ import {
 
 const { readCatalogAuthority, serializeCsv, sha256 } = authority;
 const repository = resolve(import.meta.dirname, "../../..");
+
+it.each(["futabasha-json", "shogakukan-ancillary-array"])(
+  "binds the exact publisher introduction for %s without admitting other book fields",
+  (format) => {
+    const folder = mkdtempSync(join(tmpdir(), "publisher-structured-introduction-"));
+    try {
+      const isbn = format === "futabasha-json" ? "9784575831771" : "9784091793256";
+      const caption = "同じ本の紹介。次の段落。";
+      const hidden = "紹介ではない管理情報。";
+      const serial = `${isbn}0000000`;
+      const url =
+        format === "futabasha-json"
+          ? `https://book-api.futabasha.co.jp/book_details?media=1&jdcn_code=${serial}`
+          : "https://www.shogakukan.co.jp/books/09179325";
+      const book = {
+        isbn_code: isbn,
+        jdcn_code: serial,
+        book_name: "こどものじかん 1",
+        introductions_400: caption,
+        administrative_note: hidden,
+      };
+      const htmlBook = {
+        isbn13_cd: isbn,
+        promo_contents: [null, null, "短い紹介", caption, null, null, [hidden]],
+        promo_kbns: [{ promo_kbn: 3, pivot: { promo_contents: caption } }],
+        administrative_note: hidden,
+      };
+      const raw = (wrongIsbn = false, wrongCategory = false) =>
+        format === "futabasha-json"
+          ? JSON.stringify({
+              book_details: {
+                book_informations: {
+                  ...book,
+                  ...(wrongIsbn ? { isbn_code: "9784091790750" } : {}),
+                  ...(wrongCategory ? { introductions_400: hidden } : {}),
+                },
+              },
+            })
+          : `<div id="app" data-page="${JSON.stringify({
+              component: "Books/Show",
+              props: {
+                book: {
+                  ...htmlBook,
+                  ...(wrongIsbn ? { isbn13_cd: "9784091790750" } : {}),
+                  ...(wrongCategory ? { promo_kbns: [] } : {}),
+                },
+              },
+            })
+              .replace(
+                /[^\x20-\x7e]/gu,
+                (character) => `\\u${character.charCodeAt(0).toString(16).padStart(4, "0")}`,
+              )
+              .replace(/&/gu, "&amp;")
+              .replace(/"/gu, "&quot;")}"></div>`;
+      const entry = {
+        metadata: {
+          workId: "work-0123456789abcdef0123",
+          isbn,
+          publisherName: "",
+          itemCaption: caption,
+          salesDate: "",
+          imageUrl: "",
+          imprint: "",
+          pageCount: "",
+        },
+        sourceFile: "capture.body",
+        receiptFile: "capture.json",
+        receiptSha256: "",
+        captionKind: "original",
+        originalItemCaption: caption,
+      };
+      const input = join(folder, "input.json");
+      const write = (body = raw(), sourceUrl = url, original = caption) => {
+        const receipt = JSON.stringify({
+          kind: "http-body",
+          url: sourceUrl,
+          resolvedUrl: sourceUrl,
+          observedAt: "2026-10-04T00:00:00Z",
+          recordedAt: "2026-10-04T00:00:00Z",
+          status: 200,
+          complete: true,
+          contentType:
+            format === "futabasha-json" ? "application/json" : "text/html; charset=utf-8",
+          contentEncoding: null,
+          error: null,
+          rawPath: entry.sourceFile,
+          bytes: Buffer.byteLength(body),
+          sha256: sha256(body),
+        });
+        writeFileSync(join(folder, entry.sourceFile), body);
+        writeFileSync(join(folder, entry.receiptFile), receipt);
+        writeFileSync(
+          join(folder, "collection-session.json"),
+          JSON.stringify({ workId: entry.metadata.workId }),
+        );
+        const bytes = Buffer.from(
+          JSON.stringify([
+            {
+              ...entry,
+              receiptSha256: sha256(receipt),
+              metadata: { ...entry.metadata, itemCaption: original },
+              originalItemCaption: original,
+            },
+          ]),
+        );
+        return { bytes, body, receipt };
+      };
+      const valid = write();
+      expect(readIntake(input, valid.bytes)[0]?.itemCaption).toBe(caption);
+      expect(readFileSync(join(folder, entry.sourceFile), "utf8")).toBe(valid.body);
+      expect(readFileSync(join(folder, entry.receiptFile), "utf8")).toBe(valid.receipt);
+      for (const [body, sourceUrl, original] of [
+        [raw(true), url, caption],
+        [raw(false, true), url, caption],
+        [raw(), "https://example.com/book", caption],
+        [raw(), url, hidden],
+      ])
+        expect(() => readIntake(input, write(body, sourceUrl, original).bytes)).toThrow();
+      if (format === "futabasha-json") {
+        expect(() =>
+          readIntake(input, write(raw(), url.replace(serial, `${isbn}1111111`)).bytes),
+        ).toThrow();
+        expect(() =>
+          readIntake(input, write(raw(), url.replace("/book_details", "/other")).bytes),
+        ).toThrow();
+      }
+      const bound = write();
+      writeFileSync(join(folder, entry.sourceFile), "changed body");
+      expect(() => readIntake(input, bound.bytes)).toThrow("Captured response hash mismatch");
+      write();
+      writeFileSync(
+        join(folder, "collection-session.json"),
+        JSON.stringify({ workId: "other-work" }),
+      );
+      expect(() => readIntake(input, bound.bytes)).toThrow("Browser collection Work mismatch");
+    } finally {
+      rmSync(folder, { recursive: true, force: true });
+    }
+  },
+);
 
 it("imports browser snapshots with honest null HTTP fields and rejects mixed or unbound captures", () => {
   const root = mkdtempSync(join(tmpdir(), "konocomics-browser-metadata-"));
@@ -260,8 +403,9 @@ it("binds an escaped publisher book introduction without admitting other JSON fi
     const volume = catalog.volumes.find((item) => !item.metadata)!;
     const folder = join(root, "collection");
     mkdirSync(folder);
-    const introduction = "<p>紹介文「全体」 &amp; &#9829;</p><p>次の段落。</p>";
-    const original = "紹介文「全体」 & ♥\n次の段落。";
+    const introduction =
+      "<p>紹介文&ldquo;全体&rdquo; &amp; &#9829;</p><p>次の段落&hellip;&hellip;。</p>";
+    const original = "紹介文“全体” & ♥\n次の段落……。";
     const hidden = "紹介に使わない管理情報";
     const book = {
       isbn13_cd: volume.isbn,
@@ -649,3 +793,171 @@ it("adds a captured introduction without losing metadata, and rejects damaged or
     rmSync(restoreParent, { recursive: true, force: true });
   }
 }, 480_000);
+
+it.each([
+  {
+    entity: "mdash",
+    caption: "少年たちの冒険——本をめくる物語。",
+    body: "<p>少年たちの冒険&mdash;&mdash;本をめくる物語。</p>",
+  },
+  {
+    entity: "times",
+    caption: "女子小学生×お遍路の旅！",
+    body: "<p>女子小学生&times;お遍路の旅！</p>",
+  },
+])("binds $entity captions and preserves captured bytes", ({ caption, body }) => {
+  const folder = mkdtempSync(join(tmpdir(), "publisher-entity-caption-"));
+  try {
+    const receipt = JSON.stringify({
+      url: "https://example.com/book",
+      resolvedUrl: "https://example.com/book",
+      fetchedAt: "2026-10-04T00:00:00Z",
+      status: 200,
+      sha256: sha256(body),
+      bytes: Buffer.byteLength(body),
+    });
+    const input = join(folder, "input.json");
+    const entry = {
+      metadata: {
+        workId: "work-0123456789abcdef0123",
+        isbn: "9784864681926",
+        publisherName: "",
+        itemCaption: caption,
+        salesDate: "",
+        imageUrl: "",
+        imprint: "",
+        pageCount: "",
+      },
+      sourceFile: "source.html",
+      receiptFile: "capture.json",
+      receiptSha256: sha256(receipt),
+      captionKind: "original",
+      originalItemCaption: caption,
+    };
+    writeFileSync(join(folder, entry.sourceFile), body);
+    writeFileSync(join(folder, entry.receiptFile), receipt);
+    const intakeBytes = Buffer.from(JSON.stringify([entry]));
+    expect(readIntake(input, intakeBytes)[0]?.itemCaption).toBe(caption);
+    expect(readFileSync(join(folder, entry.sourceFile), "utf8")).toBe(body);
+    expect(sha256(readFileSync(join(folder, entry.sourceFile)))).toBe(sha256(body));
+    expect(readFileSync(join(folder, entry.receiptFile), "utf8")).toBe(receipt);
+    const differentCaption = caption + " 存在しない続き。";
+    const changed = {
+      ...entry,
+      metadata: { ...entry.metadata, itemCaption: differentCaption },
+      originalItemCaption: differentCaption,
+    };
+    expect(() => readIntake(input, Buffer.from(JSON.stringify([changed])))).toThrow(
+      "Original introduction is absent from the captured source",
+    );
+  } finally {
+    rmSync(folder, { recursive: true, force: true });
+  }
+});
+
+it("decodes declared publisher charsets and binds unchanged supplied HTTP receipts", () => {
+  const folder = mkdtempSync(join(tmpdir(), "publisher-declared-charset-"));
+  try {
+    const caption = "同じ本の紹介。";
+    const metadata = {
+      workId: "work-0123456789abcdef0123",
+      isbn: "9784757747210",
+      publisherName: "",
+      itemCaption: caption,
+      salesDate: "",
+      imageUrl: "",
+      imprint: "",
+      pageCount: "",
+    };
+    const input = join(folder, "input.json");
+    const charsets: [string, string][] = [
+      ["EUC-JP", "euc_jp"],
+      ["Shift_JIS", "shift_jis"],
+    ];
+    for (const [label, codec] of charsets) {
+      const body = spawnSync(catalogPython(repository), [
+        "-c",
+        "import sys;sys.stdout.buffer.write(sys.argv[1].encode(sys.argv[2]))",
+        `<meta charset="${label}"><p>${caption}</p>`,
+        codec,
+      ]).stdout;
+      const rawPath = "supplied.body",
+        receiptPath = "supplied.json";
+      const receipt = {
+        kind: "http-body",
+        url: "https://example.com/book",
+        resolvedUrl: "https://example.com/book",
+        observedAt: "2026-10-04T00:00:00Z",
+        recordedAt: "2026-10-04T00:00:00Z",
+        status: 200,
+        complete: true,
+        contentType: `text/html; charset=${label}`,
+        contentEncoding: null,
+        error: null,
+        rawPath: "capture.body",
+        bytes: body.length,
+        sha256: sha256(body),
+      };
+      const receiptBytes = Buffer.from(JSON.stringify(receipt));
+      writeFileSync(join(folder, rawPath), body);
+      writeFileSync(join(folder, receiptPath), receiptBytes);
+      const sourceFixture = {
+        path: rawPath,
+        originalPath: "C:\\saved\\capture.body",
+        bytes: body.length,
+        sha256: sha256(body),
+      };
+      const receiptFixture = {
+        path: receiptPath,
+        originalPath: "C:\\saved\\capture.json",
+        bytes: receiptBytes.length,
+        sha256: sha256(receiptBytes),
+      };
+      const session = {
+        workId: metadata.workId,
+        supplementalFiles: [sourceFixture, receiptFixture],
+      };
+      writeFileSync(join(folder, "collection-session.json"), JSON.stringify(session));
+      const entry = {
+        metadata,
+        sourceFile: rawPath,
+        receiptFile: receiptPath,
+        receiptSha256: sha256(receiptBytes),
+        captionKind: "original",
+        originalItemCaption: caption,
+      };
+      writeFileSync(input, JSON.stringify([entry]));
+      expect(readIntake(input, readFileSync(input))[0]?.itemCaption).toBe(caption);
+      expect(sha256(readFileSync(join(folder, rawPath)))).toBe(receipt.sha256);
+      sourceFixture.originalPath = "C:\\other\\capture.body";
+      writeFileSync(join(folder, "collection-session.json"), JSON.stringify(session));
+      expect(() => readIntake(input, readFileSync(input))).toThrow("different original source");
+      sourceFixture.originalPath = "C:\\saved\\capture.body";
+      writeFileSync(join(folder, "collection-session.json"), JSON.stringify(session));
+      const undeclared = spawnSync(catalogPython(repository), [
+        "-c",
+        "import sys;sys.stdout.buffer.write(sys.argv[1].encode(sys.argv[2]))",
+        `<p>${caption}</p>`,
+        codec,
+      ]).stdout;
+      const unknownReceipt = {
+        ...receipt,
+        contentType: "text/html",
+        bytes: undeclared.length,
+        sha256: sha256(undeclared),
+      };
+      const unknownBytes = Buffer.from(JSON.stringify(unknownReceipt));
+      writeFileSync(join(folder, rawPath), undeclared);
+      writeFileSync(join(folder, receiptPath), unknownBytes);
+      sourceFixture.sha256 = sha256(undeclared);
+      sourceFixture.bytes = undeclared.length;
+      receiptFixture.sha256 = sha256(unknownBytes);
+      receiptFixture.bytes = unknownBytes.length;
+      writeFileSync(join(folder, "collection-session.json"), JSON.stringify(session));
+      writeFileSync(input, JSON.stringify([{ ...entry, receiptSha256: sha256(unknownBytes) }]));
+      expect(() => readIntake(input, readFileSync(input))).toThrow();
+    }
+  } finally {
+    rmSync(folder, { recursive: true, force: true });
+  }
+});

@@ -117,6 +117,66 @@ class RetentionCutoverTest(unittest.TestCase):
                     retention.advance_basis(repo, previous, publication, entries)
                 self.assertEqual(before, {wid: store.current_revision("curation", wid) for wid in refs})
 
+    def test_exact_retained_wrapper_keeps_scoped_pin_without_laundering_changes(self):
+        import copy
+        import hashlib
+        from catalog_authoring import validate_factor_panel as panel
+        from catalog_authoring import publish_factor_batch as publisher
+        wid = "work-" + "a" * 20
+        claim = {field: "" for field in panel.LEDGER_FIELDS}
+        claim.update(workId=wid, factKey="axis:strategy", state="known", value="2", confidence="0.8",
+            evidenceIds="ev-z;ev-a", citationUrls="https://example.org/z;https://example.org/a",
+            entryScope="entry_1_volume", observation="Original observation", limitation="One volume",
+            decision="accepted", reasonCode="SUPPORTED", authorityKind="authorizedEvidencePanelV1",
+            authorityArtifactDigest="b" * 64, citationSetDigest=panel.citation_digest(["https://example.org/z", "https://example.org/a"]),
+            reviewedByHuman="false", candidateOnly="true")
+        raw = {eid: {"id": eid, "workId": wid, "sourceType": "publisherStore", "sourceUrl": url,
+            "fetchedAt": "2026-10-04T00:00:00Z"} for eid, url in zip(claim["evidenceIds"].split(";"), claim["citationUrls"].split(";"))}
+        authority = {"claims": {(wid, claim["factKey"]): {panel.claim_semantic_digest(claim): claim}}, "evidence": raw}
+        backend = publisher._backend_module(prior_authority=authority)
+        with backend._verified_prior_lists([claim]):
+            eid = backend._claim_evidence_id(claim)
+            source = backend._evidence_row(eid, {**raw["ev-z"], "sourceUrl": "https://example.org/a"}, panel_row=claim)
+        tables = {"source_works": [{"id": wid, "annotationReviewMethod": "authorizedEvidencePanel", "genres": ""}],
+            "source_factors": [{"workId": wid, "axisId": "strategy", "state": "known", "value": "2", "confidence": "0.8", "evidenceId": eid}],
+            "source_themes": [], "source_evidence": [source]}
+        original_backend = publisher._backend_module
+        def snapshot_backend(*args, **kwargs):
+            result = original_backend(*args, **kwargs)
+            result._snapshot_db = lambda path: {name: (list(rows[0]) if rows else [], [tuple(row.values()) for row in rows]) for name, rows in tables.items()}
+            return result
+        with tempfile.TemporaryDirectory() as directory:
+            repo = Path(directory);store = RevisionWorkspace.create(repo, repo / retention.BASE / "workspace.sqlite")
+            bundle = repo / "original";bundle.mkdir();(bundle / "source.txt").write_text("Immutable original proof\n")
+            manifest = bundle / "MANIFEST.sha256";manifest.write_text(hashlib.sha256((bundle / "source.txt").read_bytes()).hexdigest()+"  source.txt\n")
+            store.save([bundle], "exact-original")
+            sha = hashlib.sha256(manifest.read_bytes()).hexdigest()
+            plan = {"repository": str(repo), "source": {"database": str(store.database)}, "members": {},
+                "protectedFiles": {"data/source/catalog.sqlite": "c" * 64},
+                "priorAuthorityBundles": [{"root": str(bundle), "manifestSha256": sha, "workId": wid}]}
+            with patch.object(publisher, "_backend_module", side_effect=snapshot_backend), patch.object(panel, "load_prior_authority", return_value=authority):
+                before = panel.claim_semantic_digest(claim)
+                result = retention.build_basis(plan, work_ids={wid})
+                self.assertEqual(result["unresolvedWorks"], [])
+                self.assertEqual(result["matchedClaims"], 1)
+                self.assertEqual(result["legacyPins"][wid][0]["claimDigests"], [before])
+                self.assertEqual(panel.claim_semantic_digest(claim), before)
+                for field, value in (("sourceType", "model"), ("confidence", "0.9"), ("reviewedByHuman", "true"), ("sourceUrl", "https://example.org/other")):
+                    with self.subTest(field=field):
+                        original = source[field];source[field] = value
+                        self.assertEqual(retention.build_basis(plan, work_ids={wid})["unresolvedWorks"], [wid])
+                        source[field] = original
+                tables["source_factors"][0]["value"] = "4"
+                self.assertEqual(retention.build_basis(plan, work_ids={wid})["unresolvedWorks"], [wid])
+                tables["source_factors"][0]["value"] = "2"
+                with patch.object(panel, "load_prior_authority", return_value={"claims": {}, "evidence": {}}):
+                    self.assertEqual(retention.build_basis(plan, work_ids={wid})["unresolvedWorks"], [wid])
+                changed = copy.deepcopy(authority);changed_claim = next(iter(changed["claims"][(wid, claim["factKey"])].values()))
+                changed_claim["citationUrls"] = "https://example.org/unproved"
+                with patch.object(panel, "load_prior_authority", return_value=changed):
+                    with self.assertRaises(ValueError):
+                        retention.build_basis(plan, work_ids={wid})
+
     def recovery_fixture(self):
         directory = tempfile.TemporaryDirectory()
         self.addCleanup(directory.cleanup)

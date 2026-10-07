@@ -13,7 +13,7 @@ import sys
 import time
 from contextlib import closing
 from datetime import datetime, timezone
-from pathlib import Path
+from pathlib import Path, PureWindowsPath
 from urllib.parse import urlsplit
 
 import publish_factor_batch as publisher
@@ -26,6 +26,7 @@ from prepare_ready_safety import manifest, write_csv, write_json, _qualifies
 
 from authoring_paths import REPO, ROOT, LEGACY, artifact_path
 from catalog_workspace import unlinked
+from workspace_paths import path_identity
 WORK_KEYS = {"workId", "title", "representativeIsbn", "research", "supplementalEvidence", "context", "evidence", "priorClaims", "priorDecisions", "safety"}
 
 
@@ -39,6 +40,11 @@ def input_file(value: str) -> Path:
     if not path.is_file():
         raise argparse.ArgumentTypeError(f"expected an existing file, not a directory: {path}")
     return path
+
+
+def job_reference(directory: Path, value: str) -> Path:
+    path = value if Path(value).is_absolute() or PureWindowsPath(value).is_absolute() else directory / value
+    return artifact_path(path)
 
 
 def expand_compact_job(job: dict, directory: Path, bindings: dict[Path, str]) -> dict:
@@ -61,7 +67,7 @@ def expand_compact_job(job: dict, directory: Path, bindings: dict[Path, str]) ->
             panel.exact_dict(reference, {"path", "sha256"} | ({"handoffSha256", "collectionReceiptSha256"} & reference.keys()), "research reference")
             require(isinstance(reference["path"], str) and bool(reference["path"]), "missing research reference path")
             require(isinstance(reference["sha256"], str) and panel.SHA_RE.fullmatch(reference["sha256"]) is not None, "invalid research reference SHA")
-            source_path = artifact_path(directory / reference["path"]).resolve()
+            source_path = job_reference(directory, reference["path"]).resolve()
             if source_path not in snapshots:
                 source_bytes = source_path.read_bytes()
                 bindings[source_path] = panel.sha256_bytes(source_bytes)
@@ -340,10 +346,10 @@ def capture_files(root: Path, *, recursive=False) -> dict:
         path = unlinked(panel._safe_child(root, item["path"]))
         require(path.is_relative_to(root / "supplemental") and item["path"] not in declared,
                 "NEEDS_PROVENANCE_BINDING: duplicate or invalid supplemental path")
-        require(isinstance(item["originalPath"], str) and Path(item["originalPath"]).is_absolute()
+        require(isinstance(item["originalPath"], str) and path_identity(item["originalPath"]).is_absolute()
                 and type(item["bytes"]) is int and item["bytes"] >= 0 and isinstance(item["sha256"], str)
                 and panel.SHA_RE.fullmatch(item["sha256"]), "NEEDS_PROVENANCE_BINDING: invalid supplemental binding")
-        original = os.path.normcase(os.path.normpath(item["originalPath"]))
+        original = path_identity(item["originalPath"])
         require(original not in originals, "NEEDS_PROVENANCE_BINDING: duplicate supplemental original")
         originals.add(original)
         require(path.is_file(), f"NEEDS_PROVENANCE_BINDING: missing supplemental file: {path}")
@@ -411,7 +417,7 @@ def capture_bindings(job_path: Path, provenance=None) -> list[dict]:
     research = {}
     for row in raw["works"]:
         for ref in row.get("researchRefs", [row["researchRef"]] if "researchRef" in row else []):
-            path = unlinked(artifact_path(job_path.resolve().parent / ref["path"]))
+            path = unlinked(job_reference(job_path.resolve().parent, ref["path"]))
             require(panel.sha256(path) == ref["sha256"], "research reference SHA mismatch")
             research.setdefault(path.parent.resolve(), {})[str(path.resolve())] = ref["sha256"]
             covered = any(path.parent.is_relative_to(root) for root in explicit)
@@ -451,7 +457,7 @@ def capture_bindings(job_path: Path, provenance=None) -> list[dict]:
         for row in raw["works"]:
             for ref in row.get("researchRefs", [row["researchRef"]] if "researchRef" in row else []):
                 if ("collectionReceiptSha256" in ref
-                        and artifact_path(job_path.resolve().parent / ref["path"]).parent.resolve() == root):
+                        and job_reference(job_path.resolve().parent, ref["path"]).parent.resolve() == root):
                     receipt = unlinked(root / "collection-events.jsonl")
                     require(receipt.is_file() and panel.sha256(receipt) == ref["collectionReceiptSha256"], "INPUT_NEEDS_REPAIR: collection receipt changed")
                     files[receipt.name] = ref["collectionReceiptSha256"]

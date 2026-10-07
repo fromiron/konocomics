@@ -47,6 +47,10 @@ export const canonicalPublicationSchema = z.strictObject({
   catalogVersion: z.string().min(1),
   artifacts: z.array(artifactSchema).min(1),
   guards: z.array(z.strictObject({ path: z.string().min(1), sha256: digest })).default([]),
+  contextReviewAliases: z.array(z.strictObject({
+    originalReference: z.string(), canonicalReference: z.string(),
+    currentSha256: digest, candidateSha256: digest, workIds: z.array(z.string()).min(1),
+  })).optional(),
 });
 export type CanonicalPublication = z.infer<typeof canonicalPublicationSchema>;
 

@@ -159,7 +159,7 @@ class RegistryState:
     def __init__(self, value: dict):
         self.header = {key: value[key] for key in ("schema", "userVersion", "applicationId")}
         self.columns = {name: table["columns"] for name, table in value["tables"].items()}
-        self.rows = {name: {row[table["columns"][0]]: dict(row) for row in table["rows"]}
+        self.rows = {name: {row["sourceRowId" if name == "registry_source_rows" else table["columns"][0]]: dict(row) for row in table["rows"]}
                      for name, table in value["tables"].items()}
         self.owners = {}
         for rid, row in self.rows["registry_source_rows"].items():
@@ -184,7 +184,8 @@ class RegistryState:
 
     def snapshot(self) -> dict:
         return {**self.header, "tables": {
-            name: {"columns": self.columns[name], "rows": [dict(rows[key]) for key in sorted(rows)]}
+            name: {"columns": self.columns[name], "rows": [dict(row) for row in
+                sorted(rows.values(), key=lambda row: row[self.columns[name][0]])]}
             for name, rows in self.rows.items()}}
 
     def verify_touched(self, connection: sqlite3.Connection, changes: list[dict]) -> None:
@@ -378,7 +379,7 @@ def support_additions(job_path: Path, request: dict, before: dict, *, input_bind
         require(all(proof[key] == row[key] for key in SELECTION_FIELDS), f'Support selection metadata changed: {rid}')
         research = prepare.unlinked(artifact_path(proof['researchPath']))
         references = work.get('researchRefs', [work['researchRef']] if 'researchRef' in work else [])
-        require(any(artifact_path(job_path.parent / ref['path']).resolve() == research.resolve() and ref['sha256'] == proof['researchSha256'] for ref in references), f'Support research is not bound by job: {rid}')
+        require(any(prepare.job_reference(job_path.parent, ref['path']).resolve() == research.resolve() and ref['sha256'] == proof['researchSha256'] for ref in references), f'Support research is not bound by job: {rid}')
         require(sha256(research) == proof['researchSha256'], f'Support research SHA mismatch: {rid}')
         records = [json.loads(line) for line in research.read_text(encoding='utf-8').splitlines() if line.strip()]
         matches = [record for record in records if record.get('workId') == row['canonicalWorkId']]

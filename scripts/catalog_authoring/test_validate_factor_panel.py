@@ -86,6 +86,40 @@ def mutate_csv(path: Path, fields: tuple[str, ...], change) -> None:
 
 
 class FactorPanelValidatorTest(unittest.TestCase):
+    def test_current_legacy_pins_do_not_revive_withdrawn_shared_evidence_facts(self):
+        original = next(iter(self.authority["claims"][(WORK, "axis:progression")].values()))
+        rows = [original, {**original, "factKey": "genre:mystery", "factType": "genre", "value": "true"},
+                {**original, "factKey": "theme:investigation", "factType": "theme"}]
+        retained = {"claims": {(WORK, row["factKey"]): {claim_semantic_digest(row): row} for row in rows},
+                    "evidence": self.authority["evidence"]}
+        root = Path(self.temporary.name) / "curation"
+        root.mkdir()
+        write_json(root / "CURATION-BASELINE.json", {})
+        with sqlite3.connect(root / "catalog-expanded.candidate.sqlite") as db:
+            db.execute("create table source_works(id text, genres text)")
+            db.execute("insert into source_works values (?, '')", (WORK,))
+            db.execute("create table source_factors(workId text, axisId text, value text, confidence text, evidenceId text, state text)")
+            db.execute("insert into source_factors values (?, 'progression', '2', '0.8', ?, 'known')", (WORK, OLD_EVIDENCE))
+            db.execute("create table source_themes(workId text, themeId text, centrality text, confidence text, evidenceId text)")
+        seal(root, "MANIFEST.sha256")
+        basis = {"claims": {}, "evidence": {}, "legacyBundles": [{"root": str(self.input_root),
+            "manifestSha256": "a" * 64, "workId": WORK,
+            "claimDigests": [claim_semantic_digest(row) for row in rows], "currentEvidenceIds": [OLD_EVIDENCE]}]}
+        with patch("catalog_retention.load_basis", return_value=basis), patch.object(panel, "load_prior_authority", return_value=retained):
+            result = panel._load_prior_authority(root, extra_bundles=((root, digest(root / "MANIFEST.sha256")),), work_ids={WORK})
+            self.assertEqual(set(result["claims"]), {(WORK, "axis:progression")})
+            # Matching current facts remain available despite harmless numeric formatting.
+            with sqlite3.connect(root / "catalog-expanded.candidate.sqlite") as db:
+                db.execute("update source_works set genres='mystery'")
+                db.execute("insert into source_themes values (?, 'investigation', '2', '0.8', ?)", (WORK, OLD_EVIDENCE))
+            result = panel._load_prior_authority(root, extra_bundles=((root, digest(root / "MANIFEST.sha256")),), work_ids={WORK})
+            self.assertEqual(set(result["claims"]), set(retained["claims"]))
+            with sqlite3.connect(root / "catalog-expanded.candidate.sqlite") as db:
+                db.execute("update source_themes set centrality='4'")
+            result = panel._load_prior_authority(root, extra_bundles=((root, digest(root / "MANIFEST.sha256")),), work_ids={WORK})
+            self.assertNotIn((WORK, "theme:investigation"), result["claims"])
+        self.assertEqual(retained["claims"][(WORK, "theme:investigation")][claim_semantic_digest(rows[2])], rows[2])
+
     def test_recovery_fact_evidence_cannot_import_old_model_or_materialized_answer(self):
         row = {field: "" for field in ORIGINAL_EVIDENCE_FIELDS}
         row.update(workId=WORK, id="old-fact", targetType="axis", targetId="pacing", sourceType="model")
@@ -546,6 +580,38 @@ class FactorPanelValidatorTest(unittest.TestCase):
         with self.assertRaisesRegex(ValidationError, "manifest-bound original"):
             indexes(self.chunk, [{"workId": WORK}], authority)
 
+    def test_publisher_preserves_unsorted_semantic_prior_without_fact_type(self) -> None:
+        import publish_factor_batch as publisher
+        supplemental_path = self.chunk / "supplemental-evidence.csv"
+        supplemental = read_csv(supplemental_path, SUPPLEMENTAL_FIELDS)
+        research = json.loads((self.chunk / "collector-research.jsonl").read_text().splitlines()[0])
+        source = next(row for row in research["sources"] if row["url"] == URL)
+        supplemental[0].update(publisher.supplemental_source_fields(source), collectorChunk=self.chunk.name)
+        write_csv(supplemental_path, SUPPLEMENTAL_FIELDS, supplemental)
+        prior_path = self.chunk / "prior-panel-claims.csv"
+        prior = read_csv(prior_path, PRIOR_FIELDS)
+        prior[0].update(factType="", evidenceIds="ev-z;ev-a", citationUrls=OLD_URL)
+        write_csv(prior_path, PRIOR_FIELDS, prior)
+        authority = {
+            "claims": {(WORK, prior[0]["factKey"]): {claim_semantic_digest(prior[0]): prior[0]}},
+            "evidence": {key: {"workId": WORK, "sourceUrl": OLD_URL} for key in ("ev-z", "ev-a")},
+        }
+        ledger_path = self.result_root / "chunk-01/evidence-panel-ledger.csv"
+        ledger = read_csv(ledger_path, LEDGER_FIELDS)
+        retained = next(row for row in ledger if row["factKey"] == prior[0]["factKey"])
+        retained.update(evidenceIds="ev-z;ev-a")
+        write_csv(ledger_path, LEDGER_FIELDS, ledger)
+        original_digest = claim_semantic_digest(retained)
+        publisher._validate_ledger(self.chunk, ledger_path.parent, [{"workId": WORK}],
+                                   digest(self.chunk / "CHUNK.sha256"), prior_authority=authority)
+        self.assertEqual(claim_semantic_digest(read_csv(ledger_path, LEDGER_FIELDS)[0]), original_digest)
+        fresh = next(row for row in ledger if row["state"] == "known" and row is not retained)
+        fresh["evidenceIds"] = "ev-z;ev-a"
+        write_csv(ledger_path, LEDGER_FIELDS, ledger)
+        with self.assertRaisesRegex(ValueError, "not code-unit sorted"):
+            publisher._validate_ledger(self.chunk, ledger_path.parent, [{"workId": WORK}],
+                                       digest(self.chunk / "CHUNK.sha256"), prior_authority=authority)
+
     def test_manifest_and_input_authority_flags(self) -> None:
         report = self.result_root / "chunk-01" / "authorized-evidence-panel-v1.md"
         report.write_text("tampered\n", encoding="utf-8", newline="\n")
@@ -637,9 +703,106 @@ class IntegratedCorrectionLineageTest(unittest.TestCase):
         cls.workspace = REPO
         cls.original = REPO / "data/local/catalog-authoring/artifacts/catalog-followup/batch001-20260902/konocomics-v5-panel-batch-001-of-008/integration-publisher-v1/published-run-8/result"
         if not cls.original.is_dir():
+            cls.original = REPO / "data/local/catalog-authoring/retained/legacy/3b35c323379f173cfb7adba1b015ef34223e7454ec3390113bc5845d2623e321"
+        if not cls.original.is_dir():
             raise unittest.SkipTest("Frozen historical integration bundle is unavailable")
         cls.original_digest = "3b35c323379f173cfb7adba1b015ef34223e7454ec3390113bc5845d2623e321"
         cls.authority = load_prior_authority(REPO / "data/local/catalog-authoring/artifacts", extra_bundles=((cls.original, cls.original_digest),))
+
+    def test_initial_effective_claims_preserve_original_rows_and_supersession(self) -> None:
+        expected = {"work-318a96f25110298e93c1": 18, "work-2f8bc51897b7cf899d0f": 15,
+                    "work-398185fc619ac57ce895": 14}
+        authority = load_prior_authority(ROOT, extra_bundles=((self.original, self.original_digest),), work_ids=set(expected))
+        original = read_csv(self.original / "audit/external/result/claim-ledger.batch-001.csv", PRIOR_FIELDS)
+        for wid, count in expected.items():
+            rows = [row for (work, _), versions in authority["claims"].items() if work == wid for row in versions.values()]
+            self.assertEqual(len(rows), count, wid)
+            for row in rows:
+                require_prior_claim(row, authority)
+                if row["reasonCode"] != "PRESERVED_VERIFIED_INTEGRATED_PANEL_CLAIM":
+                    self.assertIn(row, original)
+        self.assertNotIn(("work-318a96f25110298e93c1", "axis:comedy"), authority["claims"])
+        self.assertNotIn(("work-398185fc619ac57ce895", "axis:mysteryReveal"), authority["claims"])
+        romance = authority["claims"][("work-398185fc619ac57ce895", "axis:romance")]
+        self.assertEqual(len(romance), 1)
+        self.assertTrue(next(iter(romance.values()))["evidenceIds"].startswith("ev-authorized-correction-"))
+
+    def test_initial_reader_rejects_changed_projection_duplicate_and_cross_work_source(self) -> None:
+        wid = "work-318a96f25110298e93c1"
+        original_read = panel.read_csv
+        for mutation, error in (("value", "effective projection mismatch"),
+                                ("duplicate", "ambiguous or invalid"),
+                                ("source", "source ownership mismatch"),
+                                ("url", "evidence binding mismatch")):
+            def changed(path, fields):
+                rows = original_read(path, fields)
+                if path.name == "claim-ledger.batch-001.csv":
+                    row = next(row for row in rows if row["workId"] == wid and row["factKey"] == "axis:pacing")
+                    if mutation == "value":
+                        row["value"] = "0"
+                    elif mutation == "duplicate":
+                        rows.append(dict(row))
+                    elif mutation == "url":
+                        row["citationUrls"] = "https://example.com/other"
+                if mutation == "source" and path.name == "evidence.csv" and path.parent.name == wid:
+                    rows[0]["workId"] = "work-other"
+                return rows
+            with self.subTest(mutation=mutation), patch.object(panel, "read_csv", side_effect=changed):
+                with self.assertRaisesRegex(ValidationError, error):
+                    panel.integrated_initial_claims(self.original, {wid})
+
+    def test_initial_export_uses_existing_operation_cache_and_work_scope(self) -> None:
+        args = {"extra_bundles": ((self.original, self.original_digest),),
+                "work_ids": {"work-318a96f25110298e93c1"}}
+        with patch.object(panel, "integrated_initial_claims", wraps=panel.integrated_initial_claims) as reader:
+            with panel.manifest_verification_cache():
+                first = load_prior_authority(ROOT, **args)
+                second = load_prior_authority(ROOT, **args)
+                self.assertEqual(first, second)
+                self.assertEqual(reader.call_count, 1)
+                self.assertEqual({row["workId"] for rows in second["claims"].values() for row in rows.values()}, args["work_ids"])
+
+    def test_initial_original_art_is_preserved_but_current_unknown_is_not_reactivated(self) -> None:
+        original = read_csv(self.original / "audit/external/result/claim-ledger.batch-001.csv", PRIOR_FIELDS)
+        # A small generated fixture exercises known historical Art; the actual
+        # retained integration already excludes Art, so it cannot prove this case.
+        row = dict(next(row for row in original if row["workId"] == "work-318a96f25110298e93c1" and row["factKey"] == "axis:artRealism"))
+        row.update(state="known", value="2", confidence="0.9", decision="accepted", observation="Frozen Art fixture.")
+        wid = row["workId"]
+        with tempfile.TemporaryDirectory() as temporary:
+            root = Path(temporary)
+            external = root / "audit/external"
+            external.mkdir(parents=True)
+            shutil.copytree(self.original / "audit/external/evidence-packets" / wid, external / "evidence-packets" / wid)
+            source = self.original / "audit/external"
+            shutil.copy2(source / "PANEL-INPUT.batch-001.sha256", external)
+            write_csv(external / "result/claim-ledger.batch-001.csv", PRIOR_FIELDS, [row])
+            result_sha = digest(external / "result/claim-ledger.batch-001.csv")
+            (external / "PANEL-RESULT.batch-001.sha256").write_text(result_sha + "  result/claim-ledger.batch-001.csv\n")
+            source_rows = (source / "SOURCE-root-MANIFEST.sha256").read_text().splitlines()
+            entries = {line.split("  ", 1)[1]: line.split("  ", 1)[0] for line in source_rows}
+            for name in ("PANEL-INPUT.batch-001.sha256", "PANEL-RESULT.batch-001.sha256", "result/claim-ledger.batch-001.csv"):
+                entries[name] = digest(external / name)
+            (external / "SOURCE-root-MANIFEST.sha256").write_text("".join(f"{sha}  {name}\n" for name, sha in sorted(entries.items())))
+            names = {"PANEL-INPUT.batch-001.sha256": "PANEL-INPUT.batch-001.sha256", "PANEL-RESULT.batch-001.sha256": "PANEL-RESULT.batch-001.sha256",
+                     "claim-ledger.batch-001.csv": "result/claim-ledger.batch-001.csv", "root-MANIFEST.sha256": "SOURCE-root-MANIFEST.sha256"}
+            (root / "COMBINED-INPUT.sha256").write_text("".join(f"{digest(external / path)}  external/{name}\n" for name, path in sorted(names.items())))
+            (root / "correction-ledger.csv").write_text("workId,factKey\n")
+            database = root / "catalog-expanded.candidate.sqlite"
+            shutil.copy2(self.original / "catalog-expanded.candidate.sqlite", database)
+            with closing(sqlite3.connect(database)) as con:
+                con.execute("update source_factors set state='known',value='2',confidence='0.9',evidenceId=? where workId=? and axisId='artRealism'",
+                            (row["evidenceIds"], wid))
+                con.commit()
+            claims, _ = panel.integrated_initial_claims(root, {wid}, database)
+            self.assertEqual(claims, [row])
+            baseline = root / "current.sqlite"
+            shutil.copy2(database, baseline)
+            with closing(sqlite3.connect(baseline)) as con:
+                con.execute("update source_factors set state='unknown',value='',confidence='' where workId=? and axisId='artRealism'", (wid,))
+                con.commit()
+            claims, _ = panel.integrated_initial_claims(root, {wid}, baseline)
+            self.assertFalse(any(row["factKey"].startswith("axis:") and row["factKey"][5:] in panel.ART for row in claims))
 
     def test_real_original_binds_all_historical_integrated_wrappers(self) -> None:
         wrappers = {}
@@ -688,7 +851,8 @@ class IntegratedCorrectionLineageTest(unittest.TestCase):
             require_prior_claim(row, self.authority)
             for evidence_id in row["evidenceIds"].split(";"):
                 self.assertEqual(self.authority["evidence"][evidence_id]["workId"], work_id)
-        self.assertEqual(len(self.authority["claims"]), 806)
+        self.assertEqual(sum(any("authorityKind" in row or row["reasonCode"] == "PRESERVED_VERIFIED_INTEGRATED_PANEL_CLAIM"
+                                 for row in versions.values()) for versions in self.authority["claims"].values()), 806)
         # No sorted copy, same-ID alias or modified semantic claim is authority.
         unsorted = next(row for row in rows if row["evidenceIds"].split(";") != sorted(row["evidenceIds"].split(";")))
         with self.assertRaisesRegex(ValidationError, "manifest-bound original"):

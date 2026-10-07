@@ -244,7 +244,13 @@ class RetainedOperatorTest(unittest.TestCase):
             batch.write_json(root / "collection/collection-session.json", session)
             original.unlink()
             self.assertEqual(batch.capture_files(root / "collection"), {binding["path"]: binding["sha256"]})
+            windows = {**binding, "originalPath": "C:\\Toys\\konocomics\\user-note.md"}
+            batch.write_json(root / "collection/collection-session.json", {**session, "supplementalFiles": [windows]})
+            saved = (root / "collection/collection-session.json").read_bytes()
+            self.assertEqual(batch.capture_files(root / "collection"), {binding["path"]: binding["sha256"]})
+            self.assertEqual((root / "collection/collection-session.json").read_bytes(), saved)
             for changed in ({"bytes": True}, {"sha256": "0" * 64}, {"path": "../outside"},
+                            {"originalPath": "relative/user-note.md"}, {"originalPath": "C:user-note.md"},
                             {"path": "supplemental/research.jsonl"}, {"path": "supplemental/capture-page.json"},
                             {"path": "supplemental/input-0001/nested.md"}):
                 batch.write_json(root / "collection/collection-session.json", {**session, "supplementalFiles": [{**binding, **changed}]})

@@ -17,7 +17,7 @@ import sqlite3
 import sys
 import types
 from collections import defaultdict
-from contextlib import closing, contextmanager
+from contextlib import closing, contextmanager, nullcontext
 from contextvars import ContextVar
 from pathlib import Path, PurePosixPath
 from authoring_paths import REPO, ROOT, LEGACY, artifact_path
@@ -545,6 +545,126 @@ def integrated_correction_claims(root: Path) -> list[tuple[dict[str, str], dict[
     return recovered
 
 
+def integrated_initial_claims(root: Path, work_ids: set[str] | None, baseline: Path | None = None) -> tuple[list[dict[str, str]], dict[str, dict[str, str]]]:
+    """Read untouched original claims from a verified integrated publication.
+
+    Correction and follow-up readers must run first: their validated ledgers
+    define supersession, including explicit unknowns, independently of SQL values.
+    SQL only proves the effective projection of the original accepted row.
+    """
+    external = root / "audit/external"
+
+    def entries(path: Path) -> dict[str, str]:
+        result = {}
+        for line in path.read_text(encoding="ascii").splitlines():
+            match = SHA_ROW.fullmatch(line)
+            if match is None or match[2] in result:
+                raise ValidationError(f"invalid integrated initial manifest: {path}")
+            _safe_child(root, match[2])
+            result[match[2]] = match[1]
+        if not result:
+            raise ValidationError(f"empty integrated initial manifest: {path}")
+        return result
+
+    combined = entries(root / "COMBINED-INPUT.sha256")
+    for name, path in (("PANEL-INPUT.batch-001.sha256", external / "PANEL-INPUT.batch-001.sha256"),
+                       ("PANEL-RESULT.batch-001.sha256", external / "PANEL-RESULT.batch-001.sha256"),
+                       ("claim-ledger.batch-001.csv", external / "result/claim-ledger.batch-001.csv"),
+                       ("root-MANIFEST.sha256", external / "SOURCE-root-MANIFEST.sha256")):
+        if combined.get("external/" + name) != sha256(path):
+            raise ValidationError("integrated initial combined input binding mismatch")
+    inputs = entries(external / "PANEL-INPUT.batch-001.sha256")
+    outputs = entries(external / "PANEL-RESULT.batch-001.sha256")
+    original = entries(external / "SOURCE-root-MANIFEST.sha256")
+    ledger = external / "result/claim-ledger.batch-001.csv"
+    if (outputs.get("result/claim-ledger.batch-001.csv") != sha256(ledger)
+            or original.get("result/claim-ledger.batch-001.csv") != sha256(ledger)
+            or any(original.get(name) != sha256(external / name)
+                   for name in ("PANEL-INPUT.batch-001.sha256", "PANEL-RESULT.batch-001.sha256"))):
+        raise ValidationError("integrated initial result binding mismatch")
+    policies = {key: original.get("overlay/docs/" + name) for key, name in (
+        ("factorDictionary", "factors/factor-dictionary.md"),
+        ("annotationGuide", "factors/annotation-guide.md"),
+        ("authorizedEvidencePanel", "catalog-expansion/02-authorized-evidence-panel-v1.md"))}
+    if not all(policies.values()) or any(inputs.get(name) != digest for name, digest in original.items()
+                                        if name in inputs and name.startswith("overlay/docs/")):
+        raise ValidationError("integrated initial original policy binding mismatch")
+    with (root / "correction-ledger.csv").open(encoding="utf-8-sig", newline="") as stream:
+        superseded = {(row["workId"], row["factKey"]) for row in csv.DictReader(stream)}
+    for path in sorted((root / "audit/followup/result").glob("chunk-*/evidence-panel-ledger.csv")):
+        superseded.update((row["workId"], row["factKey"]) for row in read_csv(path, LEDGER_FIELDS)
+                          if row["decision"] in {"accepted", "explicitUnknown"})
+    claims, sources, packets, seen = [], {}, {}, set()
+    current = (closing(sqlite3.connect(baseline.resolve().as_uri() + "?mode=ro", uri=True))
+               if baseline is not None else nullcontext(None))
+    with current as current_con, closing(sqlite3.connect((root / "catalog-expanded.candidate.sqlite").resolve().as_uri() + "?mode=ro", uri=True)) as con:
+        con.row_factory = sqlite3.Row
+        for row in read_csv(ledger, PRIOR_FIELDS):
+            wid, fact = row["workId"], row["factKey"]
+            if (work_ids is not None and wid not in work_ids or row["decision"] != "accepted"
+                    or row["state"] != "known" or not fact.startswith(("axis:", "genre:", "theme:"))
+                    or (wid, fact) in superseded):
+                continue
+            kind, name = fact_kind(fact)
+            if (wid, fact) in seen or row["factType"] != kind or row["candidateOnly"] != "true" or row["reviewedByHuman"] != "false":
+                raise ValidationError(f"ambiguous or invalid integrated initial claim: {wid} {fact}")
+            seen.add((wid, fact))
+            if wid not in packets:
+                packet = _safe_child(external / "evidence-packets", wid)
+                digest = sha256(packet / "PACKET.sha256")
+                value = read_json(packet / "packet.json")
+                packet_path = f"overlay/data/staging/catalog-expansion/v5-panel/batch-001/evidence-packets/{wid}"
+                if (inputs.get(packet_path + "/PACKET.sha256") != digest or value.get("work", {}).get("id") != wid
+                        or value.get("batchId") != row["batchId"] or str(value.get("ordinal")) != row["ordinal"]
+                        or value.get("candidateOnly") is not True or value.get("reviewedByHuman") is not False
+                        or value.get("priorCandidateTablesExcludedFromPacket") is not True or value.get("policyDigests") != policies):
+                    raise ValidationError(f"integrated initial packet identity mismatch: {wid}")
+                verify_manifest(packet, packet / "PACKET.sha256", {path.name for path in packet.iterdir() if path.is_file() and path.name != "PACKET.sha256"})
+                work = con.execute("select * from source_works where id=?", (wid,)).fetchone()
+                volumes = con.execute("select * from source_volumes where workId=? and isRepresentative='true'", (wid,)).fetchall()
+                if (work is None or any(work[key] != value["work"].get(key) for key in ("id", "title", "creators", "publisher"))
+                        or len(volumes) != 1 or any(volumes[0][key] != value.get("representativeVolume", {}).get(key)
+                                                   for key in ("id", "isbn", "volumeNumber", "editionKind"))):
+                    raise ValidationError(f"integrated initial Work/edition projection mismatch: {wid}")
+                records = {}
+                for source in read_csv(packet / "evidence.csv", ORIGINAL_EVIDENCE_FIELDS):
+                    if source["workId"] != wid or source["id"] in records:
+                        raise ValidationError(f"integrated initial source ownership mismatch: {wid}")
+                    records[source["id"]] = source
+                packets[wid] = packet_path, digest, value, records
+            packet_path, digest, value, records = packets[wid]
+            if (row["packetPath"] != packet_path or row["packetDigest"] != digest or row["title"] != value["work"]["title"]
+                    or row["batchId"] != value["batchId"] or row["entryScope"] != value.get("entryScope")
+                    or str(value["ordinal"]) != row["ordinal"]):
+                raise ValidationError(f"integrated initial claim packet mismatch: {wid} {fact}")
+            table, column = ("source_factors", "axisId") if kind == "axis" else ("source_themes", "themeId")
+            actual = (con.execute("select * from source_works where id=?", (wid,)).fetchone() if kind == "genre"
+                      else con.execute(f"select * from {table} where workId=? and {column}=?", (wid, name)).fetchone())
+            # Historical Art excluded from the effective baseline stays excluded.
+            if kind == "axis" and name in ART and actual is not None and actual["state"] == "unknown":
+                continue
+            if kind == "axis" and name in ART and current_con is not None:
+                current_axis = current_con.execute("select state from source_factors where workId=? and axisId=?", (wid, name)).fetchone()
+                if current_axis is None:
+                    raise ValidationError(f"integrated initial current Art binding missing: {wid} {fact}")
+                if current_axis[0] == "unknown":
+                    continue
+            ids = split_list(row["evidenceIds"], "initial prior evidence", require_sorted=False)
+            urls = split_list(row["citationUrls"], "initial prior citations", require_sorted=False)
+            if (not ids or not urls or any(eid not in records for eid in ids)
+                    or {records[eid]["sourceUrl"] for eid in ids} != set(urls)):
+                raise ValidationError(f"integrated initial evidence binding mismatch: {wid} {fact}")
+            if (actual is None or kind == "genre" and name not in actual["genres"].split(";")
+                    or kind != "genre" and (actual["value" if kind == "axis" else "centrality"] != row["value"]
+                        or actual["confidence"] != row["confidence"] or actual["evidenceId"] not in ids
+                        or kind == "axis" and actual["state"] != "known")):
+                raise ValidationError(f"integrated initial effective projection mismatch: {wid} {fact}")
+            for eid in ids:
+                merge_prior_evidence(sources, records[eid])
+            claims.append(row)
+    return claims, sources
+
+
 def integrated_followup_claims(root: Path) -> tuple[list[dict[str, str]], dict[str, dict[str, str]]]:
     """Read the preserved legacy follow-up without changing modern input semantics.
 
@@ -806,24 +926,49 @@ def _load_prior_authority(
                 for item in authority["legacyBundles"]:
                     pins.setdefault((item["root"], item["manifestSha256"]), {}).setdefault(item["workId"], set()).update(item["claimDigests"])
                     current_sources[item["workId"]] = set(item["currentEvidenceIds"])
-                for (legacy_root, legacy_sha), selected in pins.items():
-                    retained = load_prior_authority(root, extra_bundles=((artifact_path(legacy_root), legacy_sha),), work_ids=set(selected),
-                        _active_roots=_active_roots | {root})
-                    found = {wid: set() for wid in selected}
-                    for originals in retained["claims"].values():
-                        for claim in originals.values():
-                            semantic = claim_semantic_digest(claim)
-                            if semantic in selected.get(claim["workId"], set()):
-                                require_prior_claim(claim, retained)
-                                found[claim["workId"]].add(semantic)
-                                ids = split_list(claim["evidenceIds"], "retained legacy evidence", require_sorted=False)
-                                if not set(ids) <= current_sources[claim["workId"]]:
-                                    continue  # A later accepted revision replaced this legacy value.
-                                add_claim(claim)
-                                for eid in ids:
-                                    merge_prior_evidence(evidence, retained["evidence"][eid])
-                    if found != selected:
-                        raise ValidationError("Retained legacy authority is incomplete")
+                with closing(sqlite3.connect((root / "catalog-expanded.candidate.sqlite").resolve().as_uri() + "?mode=ro", uri=True)) as current:
+                    for (legacy_root, legacy_sha), selected in pins.items():
+                        retained = load_prior_authority(root, extra_bundles=((artifact_path(legacy_root), legacy_sha),), work_ids=set(selected),
+                            _active_roots=_active_roots | {root})
+                        found = {wid: set() for wid in selected}
+                        for originals in retained["claims"].values():
+                            for claim in originals.values():
+                                semantic = claim_semantic_digest(claim)
+                                if semantic in selected.get(claim["workId"], set()):
+                                    require_prior_claim(claim, retained)
+                                    found[claim["workId"]].add(semantic)
+                                    ids = split_list(claim["evidenceIds"], "retained legacy evidence", require_sorted=False)
+                                    wrapped = set()
+                                    if not set(ids) <= current_sources[claim["workId"]]:
+                                        from catalog_retention import verified_prior_wrapper
+                                        current.row_factory = sqlite3.Row
+                                        for eid in current_sources[claim["workId"]]:
+                                            source = current.execute("select * from source_evidence where id=? and workId=?", (eid, claim["workId"])).fetchone()
+                                            if source is not None and verified_prior_wrapper(claim, dict(source), retained):
+                                                wrapped.add(eid)
+                                        if not wrapped:
+                                            continue  # A later revision replaced this original claim.
+                                    # A shared evidence ID can survive after this particular fact was
+                                    # withdrawn or changed. Verify the current fact, not just that union.
+                                    kind, name = claim["factKey"].split(":", 1)
+                                    if kind == "genre":
+                                        actual = current.execute("select genres from source_works where id=?", (claim["workId"],)).fetchone()
+                                        effective = actual is not None and name in actual[0].split(";")
+                                    else:
+                                        table, column, value = (("source_factors", "axisId", "value") if kind == "axis"
+                                                                else ("source_themes", "themeId", "centrality"))
+                                        actual = current.execute(f"select {value}, confidence, evidenceId" + (", state" if kind == "axis" else "") +
+                                            f" from {table} where workId=? and {column}=?", (claim["workId"], name)).fetchone()
+                                        effective = (actual is not None and (kind != "axis" or actual[3] == "known")
+                                            and float(actual[0]) == float(claim["value"])
+                                            and float(actual[1]) == float(claim["confidence"]) and actual[2] in set(ids) | wrapped)
+                                    if not effective:
+                                        continue
+                                    add_claim(claim)
+                                    for eid in ids:
+                                        merge_prior_evidence(evidence, retained["evidence"][eid])
+                        if found != selected:
+                            raise ValidationError("Retained legacy authority is incomplete")
             continue
         if not root.is_dir() or root.is_symlink() or any(path.is_symlink() for path in root.rglob("*")):
             raise ValidationError(f"prior bundle missing or linked: {root}")
@@ -899,6 +1044,8 @@ def _load_prior_authority(
                 raise ValidationError(f"ambiguous prior publication layout: {root}")
             prior_input = inputs[0].parent
             prior_info, chunks, _ = validate_input(prior_input)
+            original_authority = {"claims": {}, "evidence": {}}
+            original_decisions = {}
             if prior_info["schemaVersion"] == single.INPUT:
                 # Verify the original decision-to-ledger/context projection, not
                 # just a rehashed collection of v3 result files. Explicit prior
@@ -908,6 +1055,7 @@ def _load_prior_authority(
                     prior_input, work_ids=prior_ids, _active_roots=_active_roots | {root},
                 )
                 validate(prior_input, outputs[0].parent.parent, original_authority)
+                original_decisions = load_prior_decisions(prior_input)
             for chunk in chunks:
                 for path in (chunk / "packets").glob("*/evidence.csv"):
                     for row in read_csv(path, ORIGINAL_EVIDENCE_FIELDS):
@@ -931,7 +1079,13 @@ def _load_prior_authority(
                 for row in read_csv(result / "evidence-panel-ledger.csv", LEDGER_FIELDS):
                     if row["authorityKind"] != "authorizedEvidencePanelV1" or row["authorityArtifactDigest"] != chunk_digest:
                         raise ValidationError(f"prior claim artifact binding mismatch: {result}")
-                    if row["citationSetDigest"] != citation_digest(split_list(row["citationUrls"], "prior citations")):
+                    original = original_authority["claims"].get((row["workId"], row["factKey"]), {}).get(claim_semantic_digest(row))
+                    preserved = original is not None and preserved_prior(original, row, original_decisions)
+                    if preserved:
+                        require_prior_claim(original, original_authority)
+                        for eid in split_list(original["evidenceIds"], "preserved prior evidence", require_sorted=False):
+                            merge_prior_evidence(evidence, original_authority["evidence"][eid])
+                    if row["citationSetDigest"] != citation_digest(split_list(row["citationUrls"], "prior citations", require_sorted=not preserved)):
                         raise ValidationError(f"prior citation digest mismatch: {result}")
                     add_claim(row)
         elif (root / "audit/correction").is_dir():
@@ -946,6 +1100,14 @@ def _load_prior_authority(
                         merge_prior_evidence(evidence, source)
                 for claim in followup_claims:
                     add_claim(claim)
+            current_basis = baseline
+            if current_basis is None and (input_root / "CURATION-BASELINE.json").is_file():
+                current_basis = input_root / "catalog-expanded.candidate.sqlite"
+            initial_claims, initial_sources = integrated_initial_claims(root, work_ids, current_basis)
+            for source in initial_sources.values():
+                merge_prior_evidence(evidence, source)
+            for claim in initial_claims:
+                add_claim(claim)
         else:
             ledgers = sorted((root / "result").glob("claim-ledger.batch-*.csv"))
             if not ledgers:

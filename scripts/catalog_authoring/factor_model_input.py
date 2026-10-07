@@ -86,7 +86,7 @@ class _HtmlReadingText(HTMLParser):
             self.parts.append(value.strip())
 
 
-def reading_text(body, metadata):
+def reading_text(body, metadata, *, preserve_html=False):
     """Return complete decoded text or a labelled HTML text projection."""
     kind = metadata.get("kind")
     content_type = metadata.get("contentType") or ""
@@ -112,7 +112,7 @@ def reading_text(body, metadata):
         text = body.decode(codec, errors="strict")
     except UnicodeDecodeError:
         return None
-    if html:
+    if html and not preserve_html:
         parser = _HtmlReadingText()
         parser.feed(text)
         parser.close()
@@ -120,14 +120,14 @@ def reading_text(body, metadata):
     if not text:
         return None
     return {
-        "representation": "html-text-navigation-v1" if html else "verbatim-utf8-capture",
+        "representation": "verbatim-decoded-html" if html and preserve_html else "html-text-navigation-v1" if html else "verbatim-utf8-capture",
         "text": text,
         "sha256": panel.sha256_bytes(text.encode("utf-8")),
         "bytes": len(text.encode("utf-8")),
         "isRenderedPage": False,
         "sourceEncoding": {"codec": codec, "declarations": declarations, "strict": True,
                            "basis": "declared" if declarations else "existing-utf8-default"},
-        "limitation": "HTML text nodes only; no scripts, styles, comments or attributes. Hidden nodes may remain. Consult the original for omitted content/metadata; absence here proves nothing." if html else "Exact text of this capture, not proof of complete source access or reading.",
+        "limitation": "HTML text nodes only; no scripts, styles, comments or attributes. Hidden nodes may remain. Consult the original for omitted content/metadata; absence here proves nothing." if html and not preserve_html else "Exact text of this capture, not proof of complete source access or reading.",
     }
 
 

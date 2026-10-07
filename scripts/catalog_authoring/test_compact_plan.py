@@ -65,7 +65,7 @@ class CompactPlanTest(unittest.TestCase):
     def evidence(self, before, suffix):
         return {**self.rows(before, "source_evidence", self.work_id)[0], "id": "test-independent-" + suffix}
 
-    def parity(self, db, plan, backend=None):
+    def parity(self, db, plan, backend=None, verify=False):
         backend = backend or publisher._backend_module()
         before = backend._snapshot_db(db)
         state = CatalogState(before, {self.gold_id})
@@ -73,6 +73,8 @@ class CompactPlanTest(unittest.TestCase):
         expected = state.snapshot()
         db.execute("begin immediate")
         backend.apply_plan_in_transaction(db, plan)
+        if verify:
+            backend.verify_expected_after(db, before, plan, {self.gold_id})
         after = backend._snapshot_db(db)
         self.assertEqual(after, expected)
         for name, (columns, values) in state.scope({self.work_id}).items():
@@ -138,6 +140,79 @@ class CompactPlanTest(unittest.TestCase):
                 backend = publisher._backend_module()
                 publisher._install_correction_materializer(backend)
                 self.parity(db, plan, backend)
+
+    def test_stored_tag_withdrawal_matches_projection_and_preserves_history(self):
+        for kind in ("genre", "theme"):
+            for active in (True, False):
+                with self.subTest(kind=kind, active=active):
+                    db, plan = self.database(), self.plan()
+                    db.execute("update source_works set genres=? where id=?", ("fantasy;horror;mystery" if active or kind == "theme" else "mystery", self.work_id))
+                    if not active and kind == "theme":
+                        db.execute("delete from source_themes where workId=? and themeId not in (select themeId from source_themes where workId=? order by sourceOrdinal limit 1)", (self.work_id, self.work_id))
+                        self.integration.reindex_authority_projection(db, {"source_themes"})
+                    db.commit()
+                    before = self.backend._snapshot_db(db)
+                    work = self.rows(before, "source_works", self.work_id)[0]
+                    theme = self.rows(before, "source_themes", self.work_id)[0]
+                    name = "mystery" if kind == "genre" else theme["themeId"]
+                    plan["tagCorrections"] = [{"decision": {"workId": self.work_id, "factKey": kind + ":" + name, "action": "WITHDRAW"},
+                        "before": work if kind == "genre" else theme, "after": None,
+                        "retainedStoredTag": False, "published": False}]
+                    if kind == "genre":
+                        plan["genreUpdates"] = {self.work_id: "fantasy;horror" if active else ""}
+                    plan["correctionAxisSnapshot"] = {self.work_id: {r["axisId"]: {k: r[k] for k in ("state", "value")} for r in self.rows(before, "source_factors", self.work_id)}}
+                    plan["correctionPanelCoverage"] = {self.work_id: {}}
+                    plan["correctionBlockedIds"] = [] if active else [self.work_id]
+                    plan["correctionAxisUpdates"] = []
+                    plan["passIds"], plan["blockedIds"] = ([self.work_id], []) if active else ([], [self.work_id])
+                    backend = publisher._backend_module()
+                    publisher._install_correction_materializer(backend)
+                    _, expected = self.parity(db, plan, backend, verify=True)
+                    after_work = self.rows(expected, "source_works", self.work_id)[0]
+                    self.assertEqual(after_work["genres"], ("fantasy;horror" if active else "") if kind == "genre" else work["genres"])
+                    expected_themes = [r for r in self.rows(before, "source_themes", self.work_id) if kind != "theme" or r["themeId"] != name]
+                    semantic = lambda rows: [{k: r[k] for k in ("workId", "themeId", "centrality", "confidence", "evidenceId")} for r in rows]
+                    self.assertEqual(semantic(self.rows(expected, "source_themes", self.work_id)), semantic(expected_themes))
+                    self.assertEqual(expected["source_evidence"], before["source_evidence"])
+                    self.assertEqual(self.rows(expected, "source_works", self.gold_id), self.rows(before, "source_works", self.gold_id))
+                    self.assertEqual(after_work["recommendationEligible"], "true" if active else "false")
+
+    def test_theme_withdrawal_and_other_fresh_snapshot_share_exact_projection(self):
+        db, plan = self.database(), self.plan()
+        with closing(sqlite3.connect(f"file:{(REPO / 'data/source/catalog.sqlite').as_posix()}?mode=ro", uri=True)) as original:
+            other = original.execute("select id from source_works where annotationReviewMethod='authorizedEvidencePanel' and recommendationEligible='true' and id<>? order by sourceOrdinal limit 1", (self.work_id,)).fetchone()[0]
+            for name, (columns, _) in self.fixture.items():
+                owner = "id" if name == "source_works" else "workId"
+                if owner not in columns or name == "source_book_metadata":
+                    continue
+                rows = original.execute(f'select * from "{name}" where "{owner}"=? order by sourceOrdinal', (other,)).fetchall()
+                ordinal, line = db.execute(f'select coalesce(max(sourceOrdinal),0),coalesce(max(sourceLine),1) from "{name}"').fetchone()
+                for row in rows:
+                    ordinal, line = ordinal + 1, line + 1
+                    db.execute(f'insert into "{name}" values ({",".join("?" for _ in columns)})', (ordinal, line, *row[2:]))
+            self.integration.reindex_authority_projection(db, set(self.fixture))
+        db.commit()
+        before = self.backend._snapshot_db(db)
+        plan["targetIds"].append(other)
+        withdrawn = self.rows(before, "source_themes", self.work_id)[0]
+        plan["tagCorrections"] = [{"decision": {"workId": self.work_id, "factKey": "theme:" + withdrawn["themeId"], "action": "WITHDRAW"}, "before": withdrawn, "after": None, "published": False, "retainedStoredTag": False}]
+        plan["correctionAxisSnapshot"] = {self.work_id: {r["axisId"]: {k: r[k] for k in ("state", "value")} for r in self.rows(before, "source_factors", self.work_id)}}
+        plan["correctionAxisUpdates"], plan["correctionPanelCoverage"] = [], {self.work_id: {}}
+        evidence = self.evidence(before, "mixed-normal")
+        fresh_evidence = {**self.rows(before, "source_evidence", other)[0], "id": "test-mixed-fresh"}
+        plan["newEvidence"] = {evidence["id"]: evidence, fresh_evidence["id"]: fresh_evidence}
+        normal_theme = {"workId": self.work_id, "themeId": "cooking", "centrality": "2", "confidence": "0.9", "evidenceId": evidence["id"]}
+        factors = [{"before": row, "after": {**row, "evidenceId": fresh_evidence["id"]}} for row in self.rows(before, "source_factors", other)]
+        fields = ("workId", "themeId", "centrality", "confidence", "evidenceId")
+        themes = [{k: row[k] for k in fields} for row in self.rows(before, "source_themes", other)]
+        after_themes = [{**row, "evidenceId": fresh_evidence["id"]} for row in themes]
+        genres = self.rows(before, "source_works", other)[0]["genres"]
+        plan["freshSnapshots"] = {other: {"factorRows": factors, "beforeGenres": genres, "afterGenres": genres, "beforeThemes": themes, "afterThemes": after_themes, "genreEvidenceIds": [fresh_evidence["id"]]}}
+        plan["factorUpdates"], plan["themeInserts"] = [r["after"] for r in factors], [normal_theme, *after_themes]
+        plan["genreUpdates"] = {other: genres}
+        backend = publisher._backend_module()
+        publisher._install_correction_materializer(backend)
+        self.parity(db, plan, backend, verify=True)
 
     def test_fresh_snapshot_replacement_keeps_historical_evidence(self):
         db, plan = self.database(), self.plan()

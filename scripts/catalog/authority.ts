@@ -784,13 +784,13 @@ export function finalizeCatalogAuthorityProjection(
     currentTables.some((table) => table.path === CATALOG_BOOK_METADATA_TABLE.path) ||
     existsSync(join(projectedSourceDirectory, CATALOG_BOOK_METADATA_TABLE.path));
   const configs = hasBookMetadata ? ALL_CATALOG_TABLES : CATALOG_TABLES;
-  const tables = configs.map((config) =>
-    parseLexicalCsv(
-      config.path,
-      readFileSync(join(projectedSourceDirectory, config.path)),
-      config.headers,
-    ),
-  );
+  const tables = configs.map((config) => {
+    const path = join(projectedSourceDirectory, config.path);
+    const parsed = parseLexicalCsv(config.path, readFileSync(path), config.headers);
+    const canonical = serializeCsv(parsed);
+    writeFileSync(path, canonical);
+    return parseLexicalCsv(config.path, canonical, config.headers);
+  });
   const projectedOpaquePaths = catalogOpaquePaths(tables);
   assert.deepEqual(
     discoverFiles(projectedSourceDirectory),

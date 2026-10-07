@@ -271,7 +271,10 @@ class CompletedCheckTest(unittest.TestCase):
         output = self.global_effect()
         prepared_path, completion_path = output / "prepared.json", output / "completion.json"
         prepared = runner.panel.read_json(prepared_path)
-        artifacts = [{**item, "path": item["path"].replace("/", "\\")} for item in prepared["artifacts"]]
+        artifacts = [{**item, "path": item["path"].replace("/", "\\")} if item["path"] != "data/source"
+                     else {**item, "path": "data\\source\\catalog.sqlite",
+                           "sha256": runner.panel.sha256(self.repo / "data/source/catalog.sqlite")}
+                     for item in prepared["artifacts"]]
         runner.write(prepared_path, {**prepared, "kind": "publisher-metadata", "artifacts": artifacts})
         completed = runner.panel.read_json(completion_path)
         runner.write(completion_path, {**completed, "artifacts": artifacts,
@@ -284,6 +287,11 @@ class CompletedCheckTest(unittest.TestCase):
                                     f"public/catalog/recommendation-context-v1.{prepared['catalogVersion']}.json"}
         current = {path.relative_to(self.repo).as_posix(): runner.panel.sha256(path)
                    for path in self.store.files([self.repo / "data/source", *(self.repo / name for name in names)])}
+        # Sparse controls preserve prior public versions alongside the current
+        # build; recognizing this effect must select its exact version only.
+        old_public = self.repo / "public/catalog/catalog-v1.v1-prior.json"
+        runner.write(old_public, {"catalogVersion": "v1-prior"})
+        current[old_public.relative_to(self.repo).as_posix()] = runner.panel.sha256(old_public)
         unrelated = self.root / "unrelated-notification.json"
         runner.write(unrelated, {"sessionId": "other", "suspended": True})
         saved = self.store.save([pointer, prepared_path, completion_path, unrelated, *(self.repo / name for name in current)], "current effect")
@@ -296,10 +304,10 @@ class CompletedCheckTest(unittest.TestCase):
     def test_current_metadata_pointer_verifies_only_required_effect_members(self):
         from catalog_completed_checks import verify_current_canonical_effect
         unrelated = self.current_pointer()
-        forbidden = runner.panel.sha256(unrelated)
+        forbidden = {runner.panel.sha256(unrelated), runner.panel.sha256(self.repo / "public/catalog/catalog-v1.v1-prior.json")}
         read_blob = RevisionWorkspace.read_blob
         def effect_only(source, db, sha):
-            self.assertNotEqual(sha, forbidden, "Unrelated notification was opened")
+            self.assertNotIn(sha, forbidden, "Unrelated notification or prior public version was opened")
             return read_blob(db, sha)
         with patch.object(RevisionWorkspace, "read_blob", effect_only):
             effect = verify_current_canonical_effect(self.state)
