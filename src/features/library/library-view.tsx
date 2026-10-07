@@ -609,7 +609,7 @@ export function LibraryView({
           variant="detail"
         >
           <div className="grid gap-[var(--space-6)]">
-            <div className="grid grid-cols-[88px_minmax(0,1fr)] items-start gap-[var(--space-4)]">
+            <div className="library-detail__head">
               <RowMedia
                 catalogCoverUrls={catalogCoverUrls}
                 coverUrl={typeof panel === "object" ? panel.coverUrl : undefined}
@@ -618,7 +618,11 @@ export function LibraryView({
                 row={selectedRow}
               />
               <div className="grid min-w-0 gap-[var(--space-content)]">
-                <h2 className="[overflow-wrap:anywhere]" id="library-detail-title" tabIndex={-1}>
+                <h2
+                  className="text-[length:var(--font-size-20)] leading-snug [overflow-wrap:anywhere]"
+                  id="library-detail-title"
+                  tabIndex={-1}
+                >
                   {rowTitle(selectedRow)}
                 </h2>
                 <p className="text-text-muted">
@@ -672,14 +676,16 @@ export function LibraryView({
               key={`${selectedRow.kind}:${selectedRow.id}:${selectedRow.record.updatedAt}`}
               onSave={saveSelectedRecord}
               record={selectedRow.record}
+              status={
+                <p
+                  aria-live="polite"
+                  className="text-[length:var(--text-caption-size)] text-text-muted [&[role=alert]]:font-bold [&[role=alert]]:text-warn"
+                  role={message?.kind === "error" ? "alert" : "status"}
+                >
+                  {message?.text}
+                </p>
+              }
             />
-            <p
-              aria-live="polite"
-              className="min-h-6 text-text-muted [&[role=alert]]:border-l-[length:var(--space-content-tight)] [&[role=alert]]:border-warn [&[role=alert]]:bg-canvas [&[role=alert]]:p-[var(--space-3)] [&[role=alert]]:text-text-strong"
-              role={message?.kind === "error" ? "alert" : "status"}
-            >
-              {message?.text}
-            </p>
           </div>
         </ModalSurface>
       )}

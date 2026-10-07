@@ -1959,6 +1959,104 @@ h1[tabindex="-1"]:focus {
   }
 }
 
+/* Library cards: a stamp on the cover marks a favourite (amber) or a negative record (ink), and
+   a negative record's cover is dimmed, since it now counts against similar recommendations. */
+.library-card__cover {
+  position: relative;
+  display: block;
+}
+
+.library-card__cover[data-tone="negative"] > :first-child {
+  filter: grayscale(0.85);
+  opacity: 0.5;
+}
+
+.library-card__stamp {
+  position: absolute;
+  top: var(--space-2);
+  left: var(--space-2);
+  display: inline-flex;
+  align-items: center;
+  gap: var(--space-1);
+  max-width: calc(100% - 2 * var(--space-2));
+  padding: 2px var(--space-2);
+  background: var(--hero-ink-cool);
+  color: var(--hero-paper-white);
+  font-size: var(--font-size-12);
+  font-weight: 700;
+  white-space: nowrap;
+}
+
+.library-card__cover[data-tone="favorite"] > .library-card__stamp {
+  background: var(--accent);
+  color: var(--on-accent);
+}
+
+/* Record editor: labelled choice groups, then the save action in a bar at the dialog's foot. */
+.library-editor {
+  display: grid;
+  gap: var(--space-6);
+  padding-top: var(--space-5);
+  border-top: 2px solid var(--text-strong);
+}
+
+.library-editor__group {
+  display: grid;
+  gap: var(--space-2);
+  min-width: 0;
+  margin: 0;
+  padding: 0;
+  border: 0;
+}
+
+.library-editor__legend {
+  margin-bottom: var(--space-1);
+  color: var(--text-strong);
+  font-size: var(--font-size-14);
+  font-weight: 700;
+}
+
+.library-editor__none {
+  background: transparent;
+  color: var(--text-muted);
+  text-decoration: underline;
+  text-underline-offset: 4px;
+}
+
+.library-editor__actions {
+  position: sticky;
+  bottom: calc(-1 * (var(--space-6) + var(--layout-safe-area-bottom)));
+  z-index: 2;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--space-4);
+  margin-inline: calc(-1 * var(--layout-page-padding));
+  margin-bottom: calc(-1 * (var(--space-6) + var(--layout-safe-area-bottom)));
+  padding: var(--space-3) var(--layout-page-padding)
+    calc(var(--space-3) + var(--layout-safe-area-bottom));
+  border-top: 1px solid var(--chrome-rule);
+  background: var(--surface-1);
+}
+
+.library-editor__status {
+  min-width: 0;
+}
+
+/* The editor's work header: a larger cover beside the title, creators and links. */
+.library-detail__head {
+  display: grid;
+  grid-template-columns: 6rem minmax(0, 1fr);
+  align-items: start;
+  gap: var(--space-5);
+}
+
+@media (min-width: 48rem) {
+  .library-detail__head {
+    grid-template-columns: 7.5rem minmax(0, 1fr);
+  }
+}
+
 /* Onboarding welcome, in the home hero's panel language: a white narration panel framed in ink,
    then the steps as a strip of panels with the current one in amber. Wide gutters between the
    tiers, narrow ones inside the strip, one slant after the current step. */

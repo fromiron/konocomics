@@ -8,6 +8,7 @@ import {
   render,
   screen,
   waitFor,
+  within,
 } from "@testing-library/react";
 import type { ReactNode } from "react";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
@@ -131,6 +132,13 @@ afterEach(() => {
   vi.unstubAllGlobals();
 });
 
+/** Picks one option in a record-editor choice group (読書状態 or 感想). */
+function choose(group: string, option: string) {
+  fireEvent.click(
+    within(screen.getByRole("radiogroup", { name: group })).getByRole("radio", { name: option }),
+  );
+}
+
 describe("ExternalWorkDetailFlow", () => {
   it.each([
     ["missing", ""],
@@ -212,9 +220,7 @@ describe("ExternalWorkDetailFlow", () => {
     );
     expect(document.querySelector("main")?.classList.contains("page-entry-b")).toBe(true);
 
-    fireEvent.change(screen.getAllByRole<HTMLSelectElement>("combobox")[0]!, {
-      target: { value: "completed" },
-    });
+    choose(libraryStrings.editor.readingState, libraryStrings.tabs.completed);
     fireEvent.click(screen.getByRole("button", { name: libraryStrings.editor.save }));
 
     await waitFor(() => expect(testState.saveExternalUserRecord).toHaveBeenCalledTimes(1));
@@ -239,9 +245,7 @@ describe("ExternalWorkDetailFlow", () => {
       name: libraryStrings.editor.save,
     });
     expect(saveButton.disabled).toBe(true);
-    fireEvent.change(screen.getAllByRole<HTMLSelectElement>("combobox")[0]!, {
-      target: { value: "completed" },
-    });
+    choose(libraryStrings.editor.readingState, libraryStrings.tabs.completed);
     expect(saveButton.disabled).toBe(false);
     const form = screen.getByRole("button", { name: libraryStrings.editor.save }).closest("form")!;
     fireEvent.submit(form);
@@ -267,9 +271,7 @@ describe("ExternalWorkDetailFlow", () => {
       name: libraryStrings.editor.save,
     });
     expect(saveButton.disabled).toBe(true);
-    fireEvent.change(screen.getAllByRole<HTMLSelectElement>("combobox")[0]!, {
-      target: { value: "completed" },
-    });
+    choose(libraryStrings.editor.readingState, libraryStrings.tabs.completed);
     expect(saveButton.disabled).toBe(false);
     fireEvent.click(screen.getByRole("button", { name: libraryStrings.editor.save }));
 

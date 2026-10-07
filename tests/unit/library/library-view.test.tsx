@@ -1,6 +1,6 @@
 // @vitest-environment jsdom
 
-import { cleanup, fireEvent, render, screen, waitFor } from "@testing-library/react";
+import { cleanup, fireEvent, render, screen, waitFor, within } from "@testing-library/react";
 import type { ReactNode } from "react";
 import { afterEach, describe, expect, it, vi } from "vitest";
 
@@ -112,6 +112,13 @@ function renderLibrary(options?: {
 }
 
 afterEach(cleanup);
+
+/** Picks one option in a record-editor choice group (読書状態 or 感想). */
+function choose(group: string, option: string) {
+  fireEvent.click(
+    within(screen.getByRole("radiogroup", { name: group })).getByRole("radio", { name: option }),
+  );
+}
 
 describe("LibraryView", () => {
   it("sorts by rating, then by recency, and summarizes the collection in the header", () => {
@@ -286,9 +293,7 @@ describe("LibraryView", () => {
       />,
     );
     fireEvent.click(screen.getByRole("button", { name: libraryStrings.openRecord(target.title) }));
-    fireEvent.change(screen.getByRole("combobox", { name: libraryStrings.editor.readingState }), {
-      target: { value: "completed" },
-    });
+    choose(libraryStrings.editor.readingState, libraryStrings.tabs.completed);
     fireEvent.click(screen.getByRole("button", { name: libraryStrings.editor.save }));
 
     expect(saveUserWork).toHaveBeenCalledWith(
@@ -373,9 +378,7 @@ describe("LibraryView", () => {
     );
     expect(screen.queryByRole("link")).toBeNull();
     expect(screen.getByText(libraryStrings.catalogMissing.description)).toBeTruthy();
-    fireEvent.change(screen.getByRole("combobox", { name: libraryStrings.editor.readingState }), {
-      target: { value: "completed" },
-    });
+    choose(libraryStrings.editor.readingState, libraryStrings.tabs.completed);
     fireEvent.click(screen.getByRole("button", { name: libraryStrings.editor.save }));
 
     await waitFor(() =>
