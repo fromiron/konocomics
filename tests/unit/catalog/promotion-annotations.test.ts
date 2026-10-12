@@ -76,7 +76,7 @@ describe("promotion annotation validation", () => {
     const result = validatePromotionAnnotationChunk("annotation-pass-a", "01");
     expect(result.workCount).toBe(10);
     expect(result.factorCount).toBe(170);
-  }, 30_000);
+  }, 180_000);
 
   it("validates the nested 10x17 Batch shape and exact evidence prefix", () => {
     const fixture = createAnnotationFixture();

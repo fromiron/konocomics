@@ -93,5 +93,5 @@ describe("catalog build", () => {
     // All three artifact copies disagree with the changed catalog, plus the source error.
     expect(validateCatalogArtifacts(root, incomplete, true).errorCount).toBe(4);
     expect(reportCoverage(incomplete, true).sourceErrors).toBe(true);
-  }, 30_000);
+  }, 180_000);
 });

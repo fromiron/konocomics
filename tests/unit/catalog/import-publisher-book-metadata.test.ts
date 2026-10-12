@@ -344,7 +344,7 @@ it("imports browser snapshots with honest null HTTP fields and rejects mixed or 
   } finally {
     rmSync(root, { recursive: true, force: true });
   }
-}, 480_000);
+}, 1_440_000);
 
 it("binds HTML-normalized original text while keeping a reviewed summary separate", () => {
   const root = mkdtempSync(join(tmpdir(), "konocomics-normalized-metadata-"));
@@ -403,7 +403,7 @@ it("binds HTML-normalized original text while keeping a reviewed summary separat
   } finally {
     rmSync(root, { recursive: true, force: true });
   }
-}, 480_000);
+}, 1_440_000);
 
 it("binds an escaped publisher book introduction without admitting other JSON fields", () => {
   const root = mkdtempSync(join(tmpdir(), "konocomics-inertia-metadata-"));
@@ -509,7 +509,7 @@ it("binds an escaped publisher book introduction without admitting other JSON fi
   } finally {
     rmSync(root, { recursive: true, force: true });
   }
-}, 480_000);
+}, 1_440_000);
 
 // Real publication, DB-only restore, and CLI resume share one full-catalog timeout.
 it("adds a captured introduction without losing metadata, and rejects damaged or mismatched input before publication", () => {
@@ -805,7 +805,7 @@ it("adds a captured introduction without losing metadata, and rejects damaged or
     rmSync(parked, { recursive: true, force: true });
     rmSync(restoreParent, { recursive: true, force: true });
   }
-}, 480_000);
+}, 1_440_000);
 
 it.each([
   {

@@ -335,5 +335,5 @@ describe("promotion registry", () => {
     expect(headers).toEqual(PROMOTION_REGISTRY_HEADERS);
     // Historical CSV byte parity belongs to the one-time authority cutover gate.
     // Ongoing SQLite authoring can change this projection while remaining deterministic.
-  }, 45_000);
+  }, 180_000);
 });

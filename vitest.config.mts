@@ -22,7 +22,9 @@ export default defineConfig({
   test: {
     // Catalog integration tests launch SQLite/Node processes and load the full catalog.
     // Bound file concurrency so those jobs do not starve component timers and I/O.
-    maxWorkers: 4,
+    maxWorkers: process.env.CI ? 2 : 4,
+    testTimeout: process.env.CI ? 30_000 : undefined,
+    hookTimeout: process.env.CI ? 120_000 : undefined,
     exclude: [
       ...configDefaults.exclude,
       "tests/e2e/**",

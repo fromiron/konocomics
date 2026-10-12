@@ -102,3 +102,12 @@ action-nine-and-drama에서 top5의 3작품이 違国日記에 가까운 것은 
 2026-10-12 18시대 최종 fixed 5 × desktop/mobile **10/10 PASS**, 3.8분. 새 제품 변경 없이 단건 DB readback 수정과 순차 실행으로 확인했다. 동일 production build를 재사용하고 timeout을 늘리지 않았다. 실제 다운로드→Import, 손상 파일 원자적 거부, 다중 탭 기록 경쟁, 피드백→갱신→reload, provider 장애 복구를 포함한다. 비영속 Chromium의 실제 저장 보호 응답과 안내 일치도 두 viewport에서 통과했다(둘 다 요청 전/후 persisted=false).
 
 중간 trace-on 시도는 첫 core PASS 후 프로세스 SIGTERM/Channel closed로 중단돼 완료 결과로 쓰지 않았다. 해당 trace를 `e2e-interrupted-traces/`에 보존했다. 최종 결과는 `e2e-final.log`와 `e2e-final.json`이다. 이 기록은 호스팅 CI·공개 배포·LINE/X 실측을 대신하지 않는다.
+
+
+## 2026-10-12 온라인 CI 시간 예산
+
+사용자는 온라인 CI 사양에 맞춰 기준을 낮추고, 단순 시간초과로 CI를 반복하지 않도록 충분한 여유를 요청했다. 기존 main CI에서도 Catalog 테스트 5건이 시간초과였고, unit 약 737초와 사전 검사 약 131초로 15분 job 예산 대부분을 사용했다.
+
+온라인 CI의 Vitest 동시 실행 수를 4→2로 줄이고 job 상한을 15→60분으로 늘린다. 기본 테스트는 30초, hook은 120초로 여유를 둔다. 명시적 timeout이 있는 Catalog 통합 검사는 온라인 실행에 맞춰 최소 180초 또는 기존 제한의 3배 중 큰 값(30/45초→180초, 120초→360초, 480초→1,440초)을 적용한다. Catalog 개별 상한은 로컬에도 동일하게 적용한다. 로컬 동시 실행 수와 일반 테스트 기본 제한, assertion, Catalog 무결성·파생물 비교, 실패 판정과 검사 수는 유지한다. timeout을 무제한으로 끄거나 실패를 성공 처리하거나 자동 retry를 추가하지 않는다.
+
+PR 최초 CI `38233153048`도 1,182 PASS/4 timeout, unit 713초였다. 기능 assertion 오류 없이 canonical 복구·pilot·대표 ISBN 복구에서 제한을 초과했다. 해당 실패 로그를 보존하고 위 자원/시간 예산만 보완한다.

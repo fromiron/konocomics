@@ -228,5 +228,5 @@ describe("Pilot 001 raw CSV promotion", () => {
       log.mockRestore();
       rmSync(root, { recursive: true, force: true });
     }
-  }, 480_000);
+  }, 1_440_000);
 });

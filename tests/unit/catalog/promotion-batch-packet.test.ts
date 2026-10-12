@@ -33,7 +33,7 @@ describe("promotion batch packet", () => {
         payloadLedgerSha256: "0".repeat(64),
       }),
     ).not.toBe(manifest.candidateSha256);
-  }, 30_000);
+  }, 180_000);
 
   it("rejects decorative title delimiters in the frozen identity", () => {
     const path = join(

@@ -543,7 +543,7 @@ it("resumes an actual pre-seal preparation from a DB-only restore without rewrit
   } finally {
     rmSync(temporary, { recursive: true, force: true });
   }
-}, 120_000);
+}, 360_000);
 
 // Full-catalog publication and interrupted-swap recovery run through real CLI processes.
 it("publishes a rebuilt selected canonical projection and resumes an interrupted source swap through the real lock broker", () => {
@@ -1032,4 +1032,4 @@ it("publishes a rebuilt selected canonical projection and resumes an interrupted
   } finally {
     rmSync(temporary, { recursive: true, force: true });
   }
-}, 480_000);
+}, 1_440_000);
