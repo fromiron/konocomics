@@ -256,7 +256,7 @@ type ExternalWorkRecord = {
 type PositiveOnboardingEntry = {
   workId: string;
   reaction: "favorite" | "liked";
-  readingState?: "planned" | "reading" | "completed"; // 과거 초안은 미확인으로 복원
+  readingState?: "reading" | "completed"; // 과거 미확인·planned 초안은 미확인으로 복원
 };
 
 type NegativeDisposition = "disliked" | "dropped";
@@ -285,7 +285,7 @@ type OnboardingDraft = {
 - `add` 완료는 기존 `UserWorkRecord`를 덮어쓰지 않는 insert-only 작업이다. 기존 workId와 충돌하면 draft·기존 기록을 그대로 둔 채 전체 작업을 거부한다. 누적 positive 총량에는 별도 상한을 두지 않고 10개는 추가 세션 하나의 상한이다.
 - usable profile과 온보딩 mode는 현재 Catalog의 서로 다른 positive anchor 수와 완료 marker를 함께 해석한다. 5개 이상이면 `onboardingCompletedAt` 유무와 관계없이 usable profile이다. 5개 미만이면서 marker가 있으면 `firstRun`을 다시 열지 않고 `add` recovery로 진입하고, 5개 미만이면서 marker가 `null`이면 `firstRun`이다. recovery는 현재 Catalog 기준 5개를 회복할 때까지 profile guard를 유지하며 최초 완료 시각과 reveal marker를 바꾸지 않는다.
 - `vagueDislike`는 해당 작품의 유일한 사유여야 한다. 이유를 고르지 않은 negative entry는 완료 시 `vagueDislike` 하나로 정규화한다. `external:*`은 `external:[a-z0-9]+(?:-[a-z0-9]+)*` 형식의 10~64자 id만 허용하고 같은 entry 안의 reason id는 중복될 수 없다.
-- 완료 변환은 호출자가 주입한 동일 `completedAt`을 새 record의 `updatedAt`으로 쓴다. positive entry는 사용자가 확인한 `readingState`를 그대로 쓴다. 미확인 entry는 완료를 거부하고, `planned`는 reaction을 생성하지 않으며 최소 선호 수에 포함하지 않는다. `reading`·`completed`는 보존된 reaction을 쓴다. `disliked` entry는 `readingState="completed"` + `reaction="disliked"` + `negativeReasons`, `dropped` entry는 `readingState="dropped"` + reaction 미지정 + `droppedReasons`가 된다. `add` 완료는 최초 `profile.onboardingCompletedAt`을 변경하지 않으므로 DNA reveal을 다시 열지 않는다.
+- 완료 변환은 호출자가 주입한 동일 `completedAt`을 새 record의 `updatedAt`으로 쓴다. positive entry는 사용자가 확인한 `readingState`를 그대로 쓴다. 미확인 entry는 완료를 거부한다. 2026-10-12부터 온보딩 positive entry는 `planned`를 고를 수 없으며 과거 초안의 `planned`는 미확인으로 복원한다. `reading`·`completed`는 보존된 reaction을 쓴다. `disliked` entry는 `readingState="completed"` + `reaction="disliked"` + `negativeReasons`, `dropped` entry는 `readingState="dropped"` + reaction 미지정 + `droppedReasons`가 된다. `add` 완료는 최초 `profile.onboardingCompletedAt`을 변경하지 않으므로 DNA reveal을 다시 열지 않는다.
 
 ### 5.4 데이터 주권·호환 프로필 계약
 

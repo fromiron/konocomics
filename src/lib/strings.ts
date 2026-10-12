@@ -562,10 +562,9 @@ export const onboardingStrings = {
     title: "選んだ作品の読書状態",
     description:
       "好きという感想と、読書状態を別々に保存します。まとめて選んだ後、作品ごとに変更できます。",
-    unconfirmed: "状態を選んでください",
+    workLabel: (title: string) => `${title}の読書状態`,
     allReading: "すべて読んでいる",
     allCompleted: "すべて読んだ",
-    planned: "読みたい（感想は保存しない）",
     reading: "読んでいる",
     completed: "読んだ",
     required: "選んだ作品の読書状態を確認してください。",
@@ -1035,7 +1034,7 @@ export const recommendationStrings = {
     genre: "ジャンル",
     allGenres: "すべて",
     rankingScope:
-      "ジャンルは代表・テーマ別・隠れた候補の棚を絞り込みます。Top 10は全ジャンルの順位です。気分はすべての棚に適用されます。",
+      "ジャンルは代表・テーマ別・隠れた候補の棚を絞り込みます。11〜20位は全ジャンルの順位です。気分はすべての棚に適用されます。",
     featuredEmpty:
       "代表のおすすめには該当作品がありません。下の棚でこのジャンルの候補をご覧ください。",
     sort: "並び順",
@@ -1045,7 +1044,10 @@ export const recommendationStrings = {
   shelves: {
     featured: {
       navigationLabel: "上位",
-      title: "あなたのために選んだ作品",
+      title: (count?: number) =>
+        count === undefined || count === 0
+          ? "あなたのために選んだ作品"
+          : `あなたのために選んだ${String(count)}作品`,
     },
     discovery: {
       navigationLabel: "隠れた候補",
@@ -1053,9 +1055,9 @@ export const recommendationStrings = {
       description: "定番作の外から、好みに近い作品を選んでいます。",
     },
     ranking: {
-      navigationLabel: "Top 10",
-      title: "あなたの Top 10",
-      description: "おすすめ順の上位10作品です。",
+      navigationLabel: "11〜20位",
+      title: "あなたの 11〜20位",
+      description: "上の10作品に続く、おすすめ順の11〜20位です。",
     },
   },
   lensShelves: {
@@ -1092,7 +1094,7 @@ export const recommendationStrings = {
     dismiss: "今日はパス",
     dismissLabel: (title: string) => `「${title}」を今日の気分では見送る`,
     dismissed: (title: string) => `「${title}」を今日の気分では見送りました。`,
-    rankingDescription: "今日の気分に合う作品の上位10作品です。",
+    rankingDescription: "今日の気分に合う作品の11〜20位です。",
     unchanged: "もとの上位作品もこの条件を満たしています。気分は並べ替えではなく絞り込みです。",
     shortage: (label: string, count: number) =>
       `「${label}」に合う作品は、いまのおすすめ候補の中に ${String(count)}作品あります。`,

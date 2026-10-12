@@ -600,7 +600,7 @@ describe("RecommendationsFlow", () => {
 
     const { container, rerender } = render(<RecommendationsFlow />);
     await waitFor(() => {
-      expect(container.querySelectorAll(featuredItemSelector)).toHaveLength(5);
+      expect(container.querySelectorAll(featuredItemSelector)).toHaveLength(10);
     });
     const initialIds = [...container.querySelectorAll<HTMLElement>(featuredItemSelector)].map(
       (element) => element.dataset.recommendationWorkId,
@@ -646,7 +646,7 @@ describe("RecommendationsFlow", () => {
       [...container.querySelectorAll<HTMLElement>(featuredItemSelector)].map(
         (element) => element.dataset.recommendationWorkId,
       ),
-    ).toEqual(nextPlan.slice(0, 5).map((entry) => entry.workId));
+    ).toEqual(nextPlan.slice(0, 10).map((entry) => entry.workId));
     expect(screen.getByText(recommendationStrings.announcements.updated)).toBeTruthy();
     expect(document.activeElement).toBe(tasteLink);
   });
@@ -676,7 +676,7 @@ describe("RecommendationsFlow", () => {
       expect(element).toBeTruthy();
       return element as HTMLUListElement;
     });
-    expect(list.querySelectorAll(featuredItemSelector)).toHaveLength(5);
+    expect(list.querySelectorAll(featuredItemSelector)).toHaveLength(10);
     expect(list.querySelectorAll("[data-carousel-clone]")).toHaveLength(0);
     for (const clone of list.querySelectorAll("[data-carousel-clone]")) {
       expect(clone.getAttribute("aria-hidden")).toBe("true");
@@ -690,7 +690,7 @@ describe("RecommendationsFlow", () => {
     ).toHaveLength(0);
     expect(testState.buildPlan).not.toHaveBeenCalled();
     const cards = list.querySelectorAll(featuredItemSelector);
-    expect(cards).toHaveLength(5);
+    expect(cards).toHaveLength(10);
     const lead = cards[0]?.querySelector("[data-contribution-summary]");
     expect(lead?.textContent).toContain("頭脳で解決する展開");
     expect(JSON.parse(lead?.getAttribute("data-contribution-summary") ?? "null")).toMatchObject({
@@ -761,17 +761,22 @@ describe("RecommendationsFlow", () => {
     expect(screen.getAllByRole("checkbox", { name: /優先|重視/u })).toHaveLength(3);
     expect(screen.queryByRole("checkbox", { name: /未完/u })).toBeNull();
     expect(container.querySelectorAll('[data-cover-priority="high"]')).toHaveLength(1);
-    const ranking = screen.getByRole("list", { name: "あなたの Top 10" });
-    expect(within(ranking).getAllByRole("link", { name: /^\d+位/u })).toHaveLength(10);
+    const ranking = screen.getByRole("list", { name: "あなたの 11〜20位" });
+    expect(within(ranking).getAllByRole("link", { name: /^\d+位/u })).toHaveLength(
+      plan.length - 10,
+    );
     expect(within(ranking).queryByRole("button", { name: /クイック表示/u })).toBeNull();
     expect(within(list).queryAllByRole("link", { name: /^\d+位/u })).toHaveLength(0);
     const firstRankingCard = within(ranking).getAllByRole("listitem")[0];
     expect(firstRankingCard?.className).toContain("w-44");
     expect(firstRankingCard?.className).not.toContain("md:min-w-[4.5rem]");
     expect(firstRankingCard?.getAttribute("data-ranking-kind")).toBe("personalized-ranking");
-    expect(firstRankingCard?.getAttribute("data-ranking-position")).toBe("1");
+    expect(firstRankingCard?.getAttribute("data-ranking-position")).toBe("11");
+    expect([...ranking.querySelectorAll("a")].map((link) => link.getAttribute("href"))).toEqual(
+      plan.slice(10).map((entry) => `/works/${entry.workId}`),
+    );
     expect(firstRankingCard?.querySelector('[data-ranking-editorial-position="true"]')).toBeNull();
-    const firstRankingWork = catalog.works.find((work) => work.id === selectedWorkId);
+    const firstRankingWork = catalog.works.find((work) => work.id === plan[10]?.workId);
     if (firstRankingWork === undefined) throw new Error("Missing first ranking work");
     expect(firstRankingCard?.querySelector('[data-ranking-label="true"]')?.textContent).toBe(
       firstRankingWork.genres
@@ -782,7 +787,7 @@ describe("RecommendationsFlow", () => {
     const anchorCards = container.querySelectorAll<HTMLElement>(
       '[data-recommendation-shelf-card="anchor"]',
     );
-    expect(anchorCards).toHaveLength(Math.min(plan.length - 5, 8));
+    expect(anchorCards).toHaveLength(Math.min(plan.length - 10, 8));
     const lensAnchorTitle = catalog.works.find((work) => work.id === plan[0]?.bestAnchorId)?.title;
     expect(
       screen.getByRole("heading", {
@@ -978,7 +983,7 @@ describe("RecommendationsFlow", () => {
       },
     });
     const { container } = render(<RecommendationsFlow />);
-    await waitFor(() => expect(container.querySelectorAll(featuredItemSelector)).toHaveLength(5));
+    await waitFor(() => expect(container.querySelectorAll(featuredItemSelector)).toHaveLength(10));
     const card = container.querySelector<HTMLElement>(featuredItemSelector)!;
     fireEvent.click(within(card).getByRole("button", { name: "読みたい" }));
     await waitFor(() => expect(testState.addUserWorkIfAbsent).toHaveBeenCalledTimes(1));
@@ -1018,7 +1023,9 @@ describe("RecommendationsFlow", () => {
         throw new Error("Concurrent record changed");
       });
       const { container } = render(<RecommendationsFlow />);
-      await waitFor(() => expect(container.querySelectorAll(featuredItemSelector)).toHaveLength(5));
+      await waitFor(() =>
+        expect(container.querySelectorAll(featuredItemSelector)).toHaveLength(10),
+      );
       const action = within(container.querySelector<HTMLElement>(featuredItemSelector)!).getByRole(
         "button",
         {
@@ -1219,10 +1226,10 @@ describe("RecommendationsFlow", () => {
     const { container, rerender } = render(
       <RecommendationsFlow onGenreChange={onGenreChange} onShelfChange={onShelfChange} />,
     );
-    await waitFor(() => expect(container.querySelectorAll(featuredItemSelector)).toHaveLength(5));
+    await waitFor(() => expect(container.querySelectorAll(featuredItemSelector)).toHaveLength(10));
     const rankingIds = () =>
-      [...screen.getByRole("list", { name: "あなたの Top 10" }).querySelectorAll("a")].map((link) =>
-        link.getAttribute("href"),
+      [...screen.getByRole("list", { name: "あなたの 11〜20位" }).querySelectorAll("a")].map(
+        (link) => link.getAttribute("href"),
       );
     const originalIds = rankingIds();
     fireEvent.change(screen.getByRole("combobox", { name: "ジャンル" }), {
@@ -1264,11 +1271,13 @@ describe("RecommendationsFlow", () => {
     const anchor = container.querySelector<HTMLElement>("#recommendation-shelf-ranking");
     if (anchor === null) throw new Error("Missing ranking shelf target");
     anchor.scrollIntoView = vi.fn();
-    const jump = within(navigation).getByRole("link", { name: "あなたの Top 10" });
+    const jump = within(navigation).getByRole("link", { name: "あなたの 11〜20位" });
     expect(jump.getAttribute("href")).toBe("/recommendations?genre=action&shelf=ranking");
     for (let index = 0; index < 2; index += 1) {
       fireEvent.click(jump);
-      expect(document.activeElement).toBe(screen.getByRole("heading", { name: "あなたの Top 10" }));
+      expect(document.activeElement).toBe(
+        screen.getByRole("heading", { name: "あなたの 11〜20位" }),
+      );
     }
     expect(anchor.scrollIntoView).toHaveBeenCalledTimes(2);
     expect(onShelfChange).toHaveBeenNthCalledWith(2, "ranking");
@@ -1277,7 +1286,7 @@ describe("RecommendationsFlow", () => {
     fireEvent.scroll(window);
     await waitFor(() => expect(jump.getAttribute("aria-current")).toBe("location"));
     expect(onShelfChange).toHaveBeenCalledTimes(2);
-    expect(document.activeElement).toBe(screen.getByRole("heading", { name: "あなたの Top 10" }));
+    expect(document.activeElement).toBe(screen.getByRole("heading", { name: "あなたの 11〜20位" }));
   });
 
   it("omits navigation for a single empty shelf and still restores its URL destination", async () => {
@@ -1328,13 +1337,15 @@ describe("RecommendationsFlow", () => {
           ?.getAttribute("data-cover-url"),
       ).toBe(`https://thumbnail.image.rakuten.co.jp/${expectedVisible.workId}.jpg`);
     });
-    const ranking = screen.getByRole("list", { name: "あなたの Top 10" });
+    const firstRanked = catalog.works.find((work) => work.id === plan[10]?.workId);
+    if (firstRanked === undefined) throw new Error("Missing first ranked work");
+    const ranking = screen.getByRole("list", { name: "あなたの 11〜20位" });
     await waitFor(() => {
       expect(
         within(ranking)
-          .getByRole("img", { name: canonicalFirst.title })
+          .getByRole("img", { name: firstRanked.title })
           .getAttribute("data-cover-url"),
-      ).toBe(`https://thumbnail.image.rakuten.co.jp/${canonicalFirst.id}.jpg`);
+      ).toBe(`https://thumbnail.image.rakuten.co.jp/${firstRanked.id}.jpg`);
     });
     expect(container.querySelectorAll('[data-cover-priority="high"]')).toHaveLength(1);
   });
@@ -1417,11 +1428,12 @@ describe("RecommendationsFlow", () => {
     const { container } = render(<RecommendationsFlow />);
 
     await waitFor(() => {
-      expect(container.querySelectorAll(featuredItemSelector)).toHaveLength(5);
+      expect(container.querySelectorAll(featuredItemSelector)).toHaveLength(9);
     });
     const shortageHeading = screen.getByRole("heading", {
       name: "おすすめ候補が少なくなっています",
     });
+    expect(screen.queryByRole("list", { name: "あなたの 11〜20位" })).toBeNull();
     expect(shortageHeading.closest("li")).toBeNull();
     expect(
       container
@@ -1453,7 +1465,7 @@ describe("RecommendationsFlow", () => {
 
     const { container, rerender } = render(<RecommendationsFlow />);
     await waitFor(() => {
-      expect(container.querySelectorAll(featuredItemSelector)).toHaveLength(5);
+      expect(container.querySelectorAll(featuredItemSelector)).toHaveLength(9);
     });
     expect(screen.getByRole("heading", { name: "おすすめ候補が少なくなっています" })).toBeTruthy();
 
@@ -1481,7 +1493,7 @@ describe("RecommendationsFlow", () => {
     const { container } = render(<RecommendationsFlow />);
 
     await waitFor(() => {
-      expect(container.querySelectorAll(featuredItemSelector)).toHaveLength(5);
+      expect(container.querySelectorAll(featuredItemSelector)).toHaveLength(10);
     });
     expect(screen.queryByRole("heading", { name: "おすすめ候補が少なくなっています" })).toBeNull();
     expect(testState.buildPlan).toHaveBeenCalledTimes(1);
@@ -1497,7 +1509,7 @@ describe("RecommendationsFlow", () => {
     const { container } = render(<RecommendationsFlow />);
 
     await waitFor(() => {
-      expect(container.querySelectorAll(featuredItemSelector)).toHaveLength(5);
+      expect(container.querySelectorAll(featuredItemSelector)).toHaveLength(10);
     });
     const heading = screen.getByRole("heading", {
       name: recommendationStrings.feedbackSummary.heading,
@@ -1530,7 +1542,7 @@ describe("RecommendationsFlow", () => {
     const { container } = render(<RecommendationsFlow />);
 
     await waitFor(() => {
-      expect(container.querySelectorAll(featuredItemSelector)).toHaveLength(5);
+      expect(container.querySelectorAll(featuredItemSelector)).toHaveLength(10);
     });
     expect(
       screen.queryByRole("heading", { name: recommendationStrings.feedbackSummary.heading }),
@@ -1556,7 +1568,7 @@ describe("RecommendationsFlow", () => {
       pendingCache.resolve(cacheRecord(makePlan()));
       await vi.advanceTimersByTimeAsync(100);
     });
-    expect(document.querySelectorAll(featuredItemSelector)).toHaveLength(5);
+    expect(document.querySelectorAll(featuredItemSelector)).toHaveLength(10);
   });
 
   it("keeps a card until the completed base record is saved, then backfills and restores focus", async () => {
@@ -1566,7 +1578,7 @@ describe("RecommendationsFlow", () => {
     testState.loadMotionList.mockReturnValueOnce(motionLoad.promise);
     const { container } = render(<RecommendationsFlow />);
     await waitFor(() => {
-      expect(container.querySelectorAll(featuredItemSelector)).toHaveLength(5);
+      expect(container.querySelectorAll(featuredItemSelector)).toHaveLength(10);
     });
     const firstCard = container.querySelector(featuredItemSelector);
     const firstWorkId = firstCard?.getAttribute("data-recommendation-work-id");
@@ -1620,7 +1632,9 @@ describe("RecommendationsFlow", () => {
     expect(testState.motionListRenders.at(-1)).not.toContain(firstWorkId);
     expect(container.querySelector(`[data-recommendation-work-id='${firstWorkId}']`)).toBeNull();
     expect(
-      container.querySelector(`[data-recommendation-work-id='${makePlan()[5]!.workId}']`),
+      container.querySelector(
+        `ul.recommendations-list ${featuredItemSelector}[data-recommendation-work-id='${makePlan()[10]!.workId}']`,
+      ),
     ).toBeTruthy();
     expect(screen.getByText("1件を除外し、新しい候補を追加しました")).toBeTruthy();
 
@@ -1649,7 +1663,7 @@ describe("RecommendationsFlow", () => {
     testState.loadMotionList.mockRejectedValueOnce(new Error("motion chunk failed"));
     const { container } = render(<RecommendationsFlow />);
     await waitFor(() => {
-      expect(container.querySelectorAll(featuredItemSelector)).toHaveLength(5);
+      expect(container.querySelectorAll(featuredItemSelector)).toHaveLength(10);
     });
     const firstCard = container.querySelector(featuredItemSelector) as HTMLElement;
     const removedWorkId = firstCard.dataset.recommendationWorkId;
@@ -1668,7 +1682,9 @@ describe("RecommendationsFlow", () => {
     ).toBe("static");
     expect(container.querySelector(`[data-recommendation-work-id='${removedWorkId}']`)).toBeNull();
     expect(
-      container.querySelector(`[data-recommendation-work-id='${makePlan()[5]!.workId}']`),
+      container.querySelector(
+        `ul.recommendations-list ${featuredItemSelector}[data-recommendation-work-id='${makePlan()[10]!.workId}']`,
+      ),
     ).toBeTruthy();
     expect(screen.getByText("1件を除外し、新しい候補を追加しました")).toBeTruthy();
 
@@ -1686,7 +1702,7 @@ describe("RecommendationsFlow", () => {
 
   it("stacks pending update, feedback announcement and Undo in one fixed container", async () => {
     const { container, rerender } = render(<RecommendationsFlow />);
-    await waitFor(() => expect(container.querySelectorAll(featuredItemSelector)).toHaveLength(5));
+    await waitFor(() => expect(container.querySelectorAll(featuredItemSelector)).toHaveLength(10));
     const firstCard = container.querySelector(featuredItemSelector) as HTMLElement;
     fireEvent.click(within(firstCard).getByRole("button", { name: "読んだ" }));
     await screen.findByRole("dialog");
@@ -1716,11 +1732,11 @@ describe("RecommendationsFlow", () => {
     testState.loadMotionList.mockRejectedValueOnce(new Error("motion chunk failed"));
     const { container } = render(<RecommendationsFlow />);
     await waitFor(() => {
-      expect(container.querySelectorAll(featuredItemSelector)).toHaveLength(5);
+      expect(container.querySelectorAll(featuredItemSelector)).toHaveLength(10);
     });
     const firstCard = container.querySelector(featuredItemSelector) as HTMLElement;
     const removedWorkId = firstCard.dataset.recommendationWorkId!;
-    const backfillWorkId = makePlan()[5]!.workId;
+    const backfillWorkId = makePlan()[10]!.workId;
     const removedTitle = catalog.works.find((work) => work.id === removedWorkId)!.title;
 
     fireEvent.click(within(firstCard).getByRole("button", { name: "読んだ" }));
@@ -1755,7 +1771,7 @@ describe("RecommendationsFlow", () => {
     testState.removeUserWorkIfUnchanged.mockResolvedValue("preserved-conflict");
     const { container } = render(<RecommendationsFlow />);
     await waitFor(() => {
-      expect(container.querySelectorAll(featuredItemSelector)).toHaveLength(5);
+      expect(container.querySelectorAll(featuredItemSelector)).toHaveLength(10);
     });
     const firstCard = container.querySelector(featuredItemSelector) as HTMLElement;
     const removedWorkId = firstCard.dataset.recommendationWorkId!;
@@ -1786,7 +1802,7 @@ describe("RecommendationsFlow", () => {
       }
       const { container } = render(<RecommendationsFlow />);
       await waitFor(() => {
-        expect(container.querySelectorAll(featuredItemSelector)).toHaveLength(5);
+        expect(container.querySelectorAll(featuredItemSelector)).toHaveLength(10);
       });
       const firstCard = container.querySelector(featuredItemSelector) as HTMLElement;
 
@@ -1807,7 +1823,7 @@ describe("RecommendationsFlow", () => {
   it("restores the focused action when an active motion island becomes reduced", async () => {
     const { container } = render(<RecommendationsFlow />);
     await waitFor(() => {
-      expect(container.querySelectorAll(featuredItemSelector)).toHaveLength(5);
+      expect(container.querySelectorAll(featuredItemSelector)).toHaveLength(10);
     });
     const firstCard = container.querySelector(featuredItemSelector) as HTMLElement;
     const completed = within(firstCard).getByRole("button", { name: "読んだ" });
@@ -1858,7 +1874,7 @@ describe("RecommendationsFlow", () => {
     testState.loadMotionList.mockReturnValueOnce(motionLoad.promise);
     const { container } = render(<RecommendationsFlow />);
     await waitFor(() => {
-      expect(container.querySelectorAll(featuredItemSelector)).toHaveLength(5);
+      expect(container.querySelectorAll(featuredItemSelector)).toHaveLength(10);
     });
     const firstCard = container.querySelector(featuredItemSelector) as HTMLElement;
     const removedWorkId = firstCard.dataset.recommendationWorkId;
@@ -1888,7 +1904,9 @@ describe("RecommendationsFlow", () => {
     ).toBe("static");
     expect(container.querySelector(`[data-recommendation-work-id='${removedWorkId}']`)).toBeNull();
     expect(
-      container.querySelector(`[data-recommendation-work-id='${makePlan()[5]!.workId}']`),
+      container.querySelector(
+        `ul.recommendations-list ${featuredItemSelector}[data-recommendation-work-id='${makePlan()[10]!.workId}']`,
+      ),
     ).toBeTruthy();
     expect(testState.loadMotionList).toHaveBeenCalledTimes(1);
     expect(testState.motionListRenders).toEqual([]);
@@ -1908,7 +1926,7 @@ describe("RecommendationsFlow", () => {
   it("drops the motion island before a policy recompute without requesting it again", async () => {
     const { container } = render(<RecommendationsFlow />);
     await waitFor(() => {
-      expect(container.querySelectorAll(featuredItemSelector)).toHaveLength(5);
+      expect(container.querySelectorAll(featuredItemSelector)).toHaveLength(10);
     });
     const firstCard = container.querySelector(featuredItemSelector) as HTMLElement;
     const completed = within(firstCard).getByRole("button", { name: "読んだ" });
@@ -1944,7 +1962,7 @@ describe("RecommendationsFlow", () => {
     testState.saveUserWork.mockRejectedValueOnce(new Error("write failed"));
     const { container } = render(<RecommendationsFlow />);
     await waitFor(() => {
-      expect(container.querySelectorAll(featuredItemSelector)).toHaveLength(5);
+      expect(container.querySelectorAll(featuredItemSelector)).toHaveLength(10);
     });
     let firstCard = container.querySelector(featuredItemSelector) as HTMLElement;
     const failedWorkId = firstCard.dataset.recommendationWorkId;
@@ -2001,7 +2019,7 @@ describe("RecommendationsFlow", () => {
     testState.policies = { ...testState.policies, excludeIncomplete: true };
     const { container } = render(<RecommendationsFlow />);
     await waitFor(() => {
-      expect(container.querySelectorAll(featuredItemSelector)).toHaveLength(5);
+      expect(container.querySelectorAll(featuredItemSelector)).toHaveLength(10);
     });
     const firstCard = container.querySelector(featuredItemSelector) as HTMLElement;
     const workId = firstCard.dataset.recommendationWorkId;
@@ -2086,7 +2104,7 @@ describe("RecommendationsFlow", () => {
     testState.savePolicies.mockReturnValueOnce(policyWrite.promise);
     const { container } = render(<RecommendationsFlow />);
     await waitFor(() => {
-      expect(container.querySelectorAll(featuredItemSelector)).toHaveLength(5);
+      expect(container.querySelectorAll(featuredItemSelector)).toHaveLength(10);
     });
     const policySection = screen.getByRole("region", { name: "おすすめの方針" });
     const policyHint = within(policySection).getByRole("status");

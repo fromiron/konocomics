@@ -138,7 +138,8 @@ function mergeFeedbackRecord(previous: UserWorkRecord | undefined, feedback: Use
   return next;
 }
 
-const FEATURED_RECOMMENDATION_LIMIT = 5;
+const FEATURED_RECOMMENDATION_LIMIT = 10;
+const RANKING_RECOMMENDATION_LIMIT = 10;
 type RecommendationMotionListComponent = ComponentType<RecommendationMotionListProps>;
 const FeedbackDialog = lazy(async () => {
   const module = await import("./feedback-dialog");
@@ -259,7 +260,7 @@ function FeaturedRecommendationState({ children }: Readonly<{ children: ReactNod
         className="border-l-[length:var(--space-1)] border-accent pl-[var(--space-4)]"
         id="recommendation-featured-heading"
       >
-        {recommendationStrings.shelves.featured.title}
+        {recommendationStrings.shelves.featured.title()}
       </h2>
       {children}
     </section>
@@ -514,123 +515,149 @@ export function RecommendationsFlow({
       ),
     [displayedEntries, genre, moodPlan, plan, worksById],
   );
-  const { discoveryEntries, featuredEntries, lensShelves, previewEntry, renderedEntries } =
-    useMemo(() => {
-      const nextRenderedEntries = displayedEntries.flatMap((entry) => {
+  const {
+    discoveryEntries,
+    featuredEntries,
+    lensShelves,
+    previewEntry,
+    rankingEntries,
+    renderedEntries,
+  } = useMemo(() => {
+    const nextRenderedEntries = displayedEntries.flatMap((entry) => {
+      if (excludedWorkIds.has(entry.workId)) return [];
+      const work = worksById.get(entry.workId);
+      const metadata = context?.constraintByWorkId[entry.workId];
+      return work === undefined || metadata === undefined ? [] : [{ entry, metadata, work }];
+    });
+    const withCatalogData = (entries: readonly RecommendationPlanEntry[]) =>
+      entries.flatMap((entry) => {
         if (excludedWorkIds.has(entry.workId)) return [];
         const work = worksById.get(entry.workId);
         const metadata = context?.constraintByWorkId[entry.workId];
         return work === undefined || metadata === undefined ? [] : [{ entry, metadata, work }];
       });
-      const withCatalogData = (entries: readonly RecommendationPlanEntry[]) =>
-        entries.flatMap((entry) => {
-          if (excludedWorkIds.has(entry.workId)) return [];
-          const work = worksById.get(entry.workId);
-          const metadata = context?.constraintByWorkId[entry.workId];
-          return work === undefined || metadata === undefined ? [] : [{ entry, metadata, work }];
-        });
-      const nextAllPlanEntries = withCatalogData(plan ?? []);
-      // Shelves draw from the same mood-filtered candidates as the main list.
-      const candidatePlanEntries =
-        moodPlan === null ? nextAllPlanEntries : withCatalogData(moodPlan);
-      // A genre can use the full ranked candidate pool, even when the all-genre Top 10 misses it.
-      const nextFeaturedEntries = (
-        genre === undefined
-          ? nextRenderedEntries
-          : candidatePlanEntries.filter(({ work }) => work.genres.includes(genre))
-      ).slice(0, FEATURED_RECOMMENDATION_LIMIT);
-      const visibleWorkIds = new Set(nextFeaturedEntries.map(({ entry }) => entry.workId));
-      const auxiliaryEntries = candidatePlanEntries.filter(
-        ({ entry, work }) =>
-          !visibleWorkIds.has(entry.workId) && (genre === undefined || work.genres.includes(genre)),
-      );
-      const resolveTitle = (workId: string) => worksById.get(workId)?.title;
-      const lenses = groupRecommendationLenses({
-        items: auxiliaryEntries,
-        leadReasonOf: ({ entry }) =>
-          (
-            explanations.get(entry.workId) ??
-            generateTasteExplanation({
-              contributions: entry.contributions,
-              confidenceLevel: entry.confidenceLevel,
-              lexicon: explanationLexicon,
-              resolveTitle,
-            })
-          ).positiveReasons[0],
-        lexicon: explanationLexicon,
-        resolveTitle,
-      });
-      // Anchor lenses always precede the factor lens, so the index is the anchor ordinal.
-      const nextLensShelves = lenses.map((lens, index) => {
-        if (lens.kind === "factor") {
-          return {
-            key: "factor",
-            variant: "factor" as const,
-            navigationLabel: recommendationStrings.lensShelves.factor.navigationLabel(
-              lens.factorLabel,
-            ),
-            title: recommendationStrings.lensShelves.factor.title(lens.factorLabel),
-            items: lens.items,
-          };
-        }
+    const nextAllPlanEntries = withCatalogData(plan ?? []);
+    // Shelves draw from the same mood-filtered candidates as the main list.
+    const candidatePlanEntries = moodPlan === null ? nextAllPlanEntries : withCatalogData(moodPlan);
+    // A genre can use the full ranked candidate pool, even when the all-genre Top 10 misses it.
+    const nextFeaturedEntries = (
+      genre === undefined
+        ? nextRenderedEntries
+        : candidatePlanEntries.filter(({ work }) => work.genres.includes(genre))
+    ).slice(0, FEATURED_RECOMMENDATION_LIMIT);
+    const visibleWorkIds = new Set(nextFeaturedEntries.map(({ entry }) => entry.workId));
+    const auxiliaryEntries = candidatePlanEntries.filter(
+      ({ entry, work }) =>
+        !visibleWorkIds.has(entry.workId) && (genre === undefined || work.genres.includes(genre)),
+    );
+    const resolveTitle = (workId: string) => worksById.get(workId)?.title;
+    const lenses = groupRecommendationLenses({
+      items: auxiliaryEntries,
+      leadReasonOf: ({ entry }) =>
+        (
+          explanations.get(entry.workId) ??
+          generateTasteExplanation({
+            contributions: entry.contributions,
+            confidenceLevel: entry.confidenceLevel,
+            lexicon: explanationLexicon,
+            resolveTitle,
+          })
+        ).positiveReasons[0],
+      lexicon: explanationLexicon,
+      resolveTitle,
+    });
+    // Anchor lenses always precede the factor lens, so the index is the anchor ordinal.
+    const nextLensShelves = lenses.map((lens, index) => {
+      if (lens.kind === "factor") {
         return {
-          key: index === 0 ? "anchor" : `anchor-${String(index + 1)}`,
-          variant: "anchor" as const,
-          navigationLabel: recommendationStrings.lensShelves.anchor.navigationLabel(
-            lens.anchorTitle,
+          key: "factor",
+          variant: "factor" as const,
+          navigationLabel: recommendationStrings.lensShelves.factor.navigationLabel(
+            lens.factorLabel,
           ),
-          title: recommendationStrings.lensShelves.anchor.title(lens.anchorTitle),
+          title: recommendationStrings.lensShelves.factor.title(lens.factorLabel),
           items: lens.items,
         };
-      });
-      const usedAuxiliaryIds = new Set(
-        nextLensShelves.flatMap(({ items }) => items.map(({ entry }) => entry.workId)),
-      );
-      const nextDiscoveryEntries = auxiliaryEntries
-        .filter(({ entry }) => entry.isDiscovery && !usedAuxiliaryIds.has(entry.workId))
-        .slice(0, 6);
-
+      }
       return {
-        discoveryEntries: nextDiscoveryEntries,
-        featuredEntries: nextFeaturedEntries,
-        lensShelves: nextLensShelves,
-        previewEntry:
-          nextAllPlanEntries.find(({ entry }) => entry.workId === previewWorkId) ?? null,
-        renderedEntries: nextRenderedEntries,
+        key: index === 0 ? "anchor" : `anchor-${String(index + 1)}`,
+        variant: "anchor" as const,
+        navigationLabel: recommendationStrings.lensShelves.anchor.navigationLabel(lens.anchorTitle),
+        title: recommendationStrings.lensShelves.anchor.title(lens.anchorTitle),
+        items: lens.items,
       };
-    }, [
-      context,
-      displayedEntries,
-      explanations,
-      excludedWorkIds,
-      genre,
-      moodPlan,
-      plan,
-      previewWorkId,
-      worksById,
-    ]);
+    });
+    const usedAuxiliaryIds = new Set(
+      nextLensShelves.flatMap(({ items }) => items.map(({ entry }) => entry.workId)),
+    );
+    const nextDiscoveryEntries = auxiliaryEntries
+      .filter(({ entry }) => entry.isDiscovery && !usedAuxiliaryIds.has(entry.workId))
+      .slice(0, 6);
+    // Ranks 11-20 continue the all-genre list with the same list constraints.
+    // A short top list means the constraints found nothing more, so ranks 11-20 stay empty.
+    const renderedWorkIds = new Set(nextRenderedEntries.map(({ entry }) => entry.workId));
+    const rankingWorkIds = new Set(
+      nextRenderedEntries.length < FEATURED_RECOMMENDATION_LIMIT
+        ? []
+        : selectRecommendationPlanEntries(
+            candidatePlanEntries
+              .map(({ entry }) => entry)
+              .filter((entry) => !renderedWorkIds.has(entry.workId)),
+            planPolicies ?? policies,
+            RANKING_RECOMMENDATION_LIMIT,
+          ).map((entry) => entry.workId),
+    );
+    const nextRankingEntries = candidatePlanEntries.filter(({ entry }) =>
+      rankingWorkIds.has(entry.workId),
+    );
+
+    return {
+      discoveryEntries: nextDiscoveryEntries,
+      featuredEntries: nextFeaturedEntries,
+      lensShelves: nextLensShelves,
+      previewEntry: nextAllPlanEntries.find(({ entry }) => entry.workId === previewWorkId) ?? null,
+      rankingEntries: nextRankingEntries,
+      renderedEntries: nextRenderedEntries,
+    };
+  }, [
+    context,
+    displayedEntries,
+    explanations,
+    excludedWorkIds,
+    genre,
+    moodPlan,
+    plan,
+    planPolicies,
+    policies,
+    previewWorkId,
+    worksById,
+  ]);
   const shelfDestinations = useMemo<RecommendationShelfDestination[]>(() => {
-    const destination = (key: "featured" | "discovery" | "ranking") => ({
+    const destination = (key: "discovery" | "ranking") => ({
       key,
       ...recommendationStrings.shelves[key],
     });
     return [
-      destination("featured"),
+      {
+        key: "featured",
+        navigationLabel: recommendationStrings.shelves.featured.navigationLabel,
+        title: recommendationStrings.shelves.featured.title(featuredEntries.length),
+      },
       ...lensShelves.map(({ key, navigationLabel, title }) => ({ key, navigationLabel, title })),
       ...(discoveryEntries.length > 0 ? [destination("discovery")] : []),
-      ...(renderedEntries.length > 0 ? [destination("ranking")] : []),
+      ...(rankingEntries.length > 0 ? [destination("ranking")] : []),
     ];
-  }, [discoveryEntries.length, lensShelves, renderedEntries.length]);
+  }, [discoveryEntries.length, featuredEntries.length, lensShelves, rankingEntries.length]);
   const coverWorkIds = useMemo(() => {
     const orderedIds = [
       ...featuredEntries.map(({ entry }) => entry.workId),
-      ...renderedEntries.map(({ entry }) => entry.workId),
+      ...rankingEntries.map(({ entry }) => entry.workId),
       ...lensShelves.flatMap(({ items }) => items.map(({ entry }) => entry.workId)),
       ...discoveryEntries.map(({ entry }) => entry.workId),
       ...(previewEntry === null ? [] : [previewEntry.entry.workId]),
     ];
     return [...new Set(orderedIds)];
-  }, [discoveryEntries, lensShelves, featuredEntries, previewEntry, renderedEntries]);
+  }, [discoveryEntries, lensShelves, featuredEntries, previewEntry, rankingEntries]);
   const recommendationCoverTargets = useMemo(
     () => createRecommendationCoverTargets(catalog, coverWorkIds),
     [catalog, coverWorkIds],
@@ -1588,7 +1615,7 @@ export function RecommendationsFlow({
                   controlsPlacement="overlay"
                   listType="unordered"
                   compactHeading
-                  title={recommendationStrings.shelves.featured.title}
+                  title={recommendationStrings.shelves.featured.title(featuredEntries.length)}
                   trackClassName={RECOMMENDATION_CAROUSEL_TRACK_CLASSNAME}
                   trackData={{
                     "data-recommendation-motion": MotionList === null ? "static" : "enabled",
@@ -1711,47 +1738,51 @@ export function RecommendationsFlow({
               {discoveryEntries.map((item) => renderShelfCard(item, "discovery"))}
             </MediaShelf>
 
-            <span
-              aria-hidden="true"
-              className="scroll-mt-[var(--space-4)] md:scroll-mt-[calc(var(--control-min-size)+var(--space-2))]"
-              id="recommendation-shelf-ranking"
-            />
-            <RankingShelf
-              className="mt-[var(--space-shelf)] scroll-mt-[var(--space-4)] md:scroll-mt-[calc(var(--control-min-size)+var(--space-2))]"
-              compactHeading
-              controlsPlacement="overlay"
-              description={
-                mood === null
-                  ? recommendationStrings.shelves.ranking.description
-                  : recommendationStrings.mood.rankingDescription
-              }
-              rankingKind="personalized-ranking"
-              title={recommendationStrings.shelves.ranking.title}
-              trackClassName="!pb-[var(--space-1)]"
-            >
-              {renderedEntries.slice(0, 10).map(({ entry, work }, index) => {
-                const genreLabels = work.genres
-                  .slice(0, 3)
-                  .map((genre) => onboardingStrings.step1.genreLabels[genre])
-                  .join(" · ");
+            {rankingEntries.length > 0 ? (
+              <>
+                <span
+                  aria-hidden="true"
+                  className="scroll-mt-[var(--space-4)] md:scroll-mt-[calc(var(--control-min-size)+var(--space-2))]"
+                  id="recommendation-shelf-ranking"
+                />
+                <RankingShelf
+                  className="mt-[var(--space-shelf)] scroll-mt-[var(--space-4)] md:scroll-mt-[calc(var(--control-min-size)+var(--space-2))]"
+                  compactHeading
+                  controlsPlacement="overlay"
+                  description={
+                    mood === null
+                      ? recommendationStrings.shelves.ranking.description
+                      : recommendationStrings.mood.rankingDescription
+                  }
+                  rankingKind="personalized-ranking"
+                  title={recommendationStrings.shelves.ranking.title}
+                  trackClassName="!pb-[var(--space-1)]"
+                >
+                  {rankingEntries.map(({ entry, work }, index) => {
+                    const genreLabels = work.genres
+                      .slice(0, 3)
+                      .map((genre) => onboardingStrings.step1.genreLabels[genre])
+                      .join(" · ");
 
-                return (
-                  <RankingCard
-                    coverUrl={recommendationCoverUrls.get(entry.workId)}
-                    creators={work.creators}
-                    key={entry.workId}
-                    metadata={genreLabels}
-                    metadataAccessibleLabel={genreLabels}
-                    onCoverVisible={() => requestCover(entry.workId)}
-                    position={index + 1}
-                    priority={featuredEntries.length === 0 && index === 0}
-                    rankingKind="personalized-ranking"
-                    title={work.title}
-                    workId={work.id}
-                  />
-                );
-              })}
-            </RankingShelf>
+                    return (
+                      <RankingCard
+                        coverUrl={recommendationCoverUrls.get(entry.workId)}
+                        creators={work.creators}
+                        key={entry.workId}
+                        metadata={genreLabels}
+                        metadataAccessibleLabel={genreLabels}
+                        onCoverVisible={() => requestCover(entry.workId)}
+                        position={FEATURED_RECOMMENDATION_LIMIT + index + 1}
+                        priority={featuredEntries.length === 0 && index === 0}
+                        rankingKind="personalized-ranking"
+                        title={work.title}
+                        workId={work.id}
+                      />
+                    );
+                  })}
+                </RankingShelf>
+              </>
+            ) : null}
             <FeedbackImpactSummary
               readingCount={
                 libraryRecords.filter((record) => record.readingState === "reading").length
