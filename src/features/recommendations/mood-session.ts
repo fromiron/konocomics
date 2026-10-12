@@ -5,9 +5,9 @@ import { useSyncExternalStore } from "react";
 import type { RecommendationMood } from "@/domain/recommendation/mood";
 
 /**
- * This tab's mood choice and the works set aside for today under each mood. It lives in memory
- * only: it survives moving to a work detail and back, and a reload, a new tab, Import, full
- * deletion, or a Catalog change starts empty. It is never written to IndexedDB or Export.
+ * The route owns the mood URL; this memory store keeps today's per-mood set-asides.
+ * The optional local mood also supports standalone consumers. Reload, Import, full deletion
+ * and Catalog changes clear the set-asides. Nothing is written to IndexedDB or Export.
  */
 export type MoodSessionState = Readonly<{
   mood: RecommendationMood | null;

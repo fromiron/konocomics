@@ -1,6 +1,7 @@
 "use client";
 
 import { Link } from "@tanstack/react-router";
+import { DetailBackLink } from "@/components/nav/detail-back-link";
 import { BookmarkIcon, EyeOffIcon } from "lucide-react";
 import { LazyMotion, domAnimation, m } from "motion/react";
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
@@ -49,7 +50,11 @@ import {
   createRecommendationCoverTargets,
   useRecommendationCovers,
 } from "@/features/recommendations/recommendation-cover-resolver";
-import { usePersistence, type ProviderCacheRecord } from "@/infrastructure/db";
+import {
+  usePersistence,
+  UserWorkConflictError,
+  type ProviderCacheRecord,
+} from "@/infrastructure/db";
 import { explanationFactorLabel } from "@/lib/explanation-labels";
 import {
   buildRakutenBooksSearchUrl,
@@ -316,7 +321,7 @@ type WorkStateControlsProps = Readonly<{
   ): Promise<Readonly<{ kind: "added" | "already-exists" | "preserved-unknown" }>>;
   removeMinimalPlannedUserWork(workId: string): Promise<RemovalResult>;
   removeUserWorkIfUnchanged(workId: string, expectedUpdatedAt: string): Promise<RemovalResult>;
-  saveUserWork(record: UserWorkRecord): Promise<UserWorkRecord>;
+  saveUserWork(record: UserWorkRecord, expectedUpdatedAt?: string | null): Promise<UserWorkRecord>;
 }>;
 
 function WorkStateControls({
@@ -348,8 +353,14 @@ function WorkStateControls({
     let next: StateNotice;
     try {
       next = await action();
-    } catch {
-      next = { tone: "error", text: workDetailStrings.state.error };
+    } catch (error) {
+      next = {
+        tone: "error",
+        text:
+          error instanceof UserWorkConflictError
+            ? workDetailStrings.state.plannedPreservedConflict
+            : workDetailStrings.state.error,
+      };
     } finally {
       actionInFlight.current = false;
       setBusy(false);
@@ -360,19 +371,38 @@ function WorkStateControls({
 
   const saveReadingState = (readingState: ReadingState) =>
     runAction(async () => {
+      const snapshot = record;
       const preservedRecord = readingState === "dropped" ? record : withoutDroppedReasons(record);
-      await saveUserWork({
-        ...preservedRecord,
-        workId,
-        readingState,
-        updatedAt: new Date().toISOString(),
-      });
+      const saved = await saveUserWork(
+        {
+          ...preservedRecord,
+          workId,
+          readingState,
+          updatedAt: new Date().toISOString(),
+        },
+        snapshot?.updatedAt ?? null,
+      );
       return {
         tone: "status",
         text:
           readingState === "planned"
             ? workDetailStrings.state.plannedSaved
             : workDetailStrings.state.stateSaved(workDetailStrings.state.options[readingState]),
+        action: {
+          label: workDetailStrings.state.undo,
+          onAction: () =>
+            void runAction(async () => {
+              if (snapshot !== undefined) {
+                await saveUserWork(
+                  { ...snapshot, updatedAt: new Date().toISOString() },
+                  saved.updatedAt,
+                );
+              } else if ((await removeUserWorkIfUnchanged(workId, saved.updatedAt)) !== "removed") {
+                return { tone: "status", text: workDetailStrings.state.plannedPreservedConflict };
+              }
+              return { tone: "status", text: workDetailStrings.state.recordRestored };
+            }),
+        },
       };
     });
 
@@ -432,10 +462,10 @@ function WorkStateControls({
     });
   };
 
-  // Reactions are editable only after 「読んだ」; switching state preserves stored reactions.
+  // A reaction does not imply that reading is complete.
   const saveReaction = (reaction: Reaction) => {
-    if (record?.readingState !== "completed") return;
-    const nextState = "completed";
+    if (record?.readingState !== "completed" && record?.readingState !== "reading") return;
+    const nextState = record.readingState;
     const nextReaction = record.reaction === reaction ? undefined : reaction;
     return runAction(async () => {
       const base = withoutDroppedReasons(record);
@@ -443,17 +473,20 @@ function WorkStateControls({
       const rest = { ...base };
       delete rest.reaction;
       delete rest.negativeReasons;
-      await saveUserWork({
-        ...rest,
-        workId,
-        readingState: nextState,
-        ...(nextReaction === undefined ? {} : { reaction: nextReaction }),
-        // Dislike reasons are only valid while the reaction stays 「いまいち」.
-        ...(nextReaction === "disliked" && negativeReasons !== undefined
-          ? { negativeReasons }
-          : {}),
-        updatedAt: new Date().toISOString(),
-      });
+      await saveUserWork(
+        {
+          ...rest,
+          workId,
+          readingState: nextState,
+          ...(nextReaction === undefined ? {} : { reaction: nextReaction }),
+          // Dislike reasons are only valid while the reaction stays 「いまいち」.
+          ...(nextReaction === "disliked" && negativeReasons !== undefined
+            ? { negativeReasons }
+            : {}),
+          updatedAt: new Date().toISOString(),
+        },
+        record.updatedAt,
+      );
       return {
         tone: "status",
         text:
@@ -485,13 +518,13 @@ function WorkStateControls({
     stamping: bookmarkStamping,
   } = useSaveConfirmation<HTMLButtonElement>(bookmarked);
   const excluded = record?.readingState === "hidden";
-  const showReaction = record?.readingState === "completed";
+  const showReaction = record?.readingState === "completed" || record?.readingState === "reading";
   const reducedMotion = useLiveReducedMotion() !== false;
-  const rated = record?.readingState === "completed" || record?.readingState === "dropped";
+  const rated = showReaction || record?.readingState === "dropped";
   const interactive =
     "focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-focus-ring focus-visible:ring-offset-2 focus-visible:ring-offset-canvas motion-reduce:transition-none";
 
-  const segment = (state: "completed" | "dropped") => {
+  const segment = (state: "reading" | "completed" | "dropped") => {
     const selected = record?.readingState === state;
     return (
       <button
@@ -501,6 +534,7 @@ function WorkStateControls({
             ? "border-accent bg-accent-soft text-accent-ink"
             : "border-line bg-surface-1 text-text-muted hover:bg-surface-2 hover:text-text-strong"
         }`}
+        disabled={busy}
         data-reading-state={state}
         onClick={() => handleStateSelect(state)}
         type="button"
@@ -547,6 +581,7 @@ function WorkStateControls({
                   ? "border-accent bg-accent-soft text-accent-ink"
                   : "border-line bg-surface-1 text-text hover:bg-surface-2 hover:text-text-strong"
               }${bookmarkStamping ? " confirm-stamp" : ""}`}
+              disabled={busy}
               data-reading-state="planned"
               data-slot="work-bookmark"
               onClick={() => {
@@ -563,6 +598,7 @@ function WorkStateControls({
               {workDetailStrings.state.options.planned}
             </button>
             <div className="contents" data-slot="work-reading-segments">
+              {segment("reading")}
               {segment("completed")}
               {segment("dropped")}
             </div>
@@ -574,6 +610,7 @@ function WorkStateControls({
                   ? "border-accent bg-accent-soft text-accent-ink"
                   : "border-line bg-surface-1 text-text-muted hover:bg-surface-2 hover:text-text-strong"
               }`}
+              disabled={busy}
               data-reading-state="hidden"
               onClick={() => handleStateSelect("hidden")}
               type="button"
@@ -618,6 +655,23 @@ function WorkStateControls({
             <p className="text-[length:var(--text-caption-size)] text-text-muted">
               {workDetailStrings.state.progressNote(readProgress)}
             </p>
+          )}
+          {record === undefined ? null : (
+            <div className="grid gap-[var(--space-2)]">
+              <Button
+                disabled={busy}
+                variant="ghost"
+                className="justify-self-start"
+                onClick={() =>
+                  void clearRecord(workDetailStrings.state.options[record.readingState])
+                }
+              >
+                {workDetailStrings.state.removeRecord}
+              </Button>
+              <p className="text-[length:var(--text-caption-size)] text-text-muted">
+                {workDetailStrings.state.removeDescription}
+              </p>
+            </div>
           )}
           {seriesContinues ? (
             <p className="text-[length:var(--text-caption-size)] text-text-muted">
@@ -961,12 +1015,6 @@ function WorkDetailContent({ catalog, work }: Readonly<{ catalog: CatalogV1; wor
   const volumeCount = parsedRecommendationContext.success
     ? (parsedRecommendationContext.data.constraintByWorkId[work.id]?.volumeCount ?? 0)
     : 0;
-  const hasHeroMetadata =
-    bookMetadata.publisherName !== undefined ||
-    volumeCount > 0 ||
-    work.status !== "unknown" ||
-    (commercial?.itemPrice ?? 0) > 0 ||
-    ((metadata?.reviewAverage ?? 0) > 0 && (metadata?.reviewCount ?? 0) > 0);
   const heroCoverUrl =
     bookMetadata.imageUrl === undefined ? null : coverSourceForSize(bookMetadata.imageUrl, 600);
 
@@ -982,6 +1030,7 @@ function WorkDetailContent({ catalog, work }: Readonly<{ catalog: CatalogV1; wor
         <p aria-atomic="true" aria-live="polite" className="sr-only">
           {navigationStrings.routeAnnouncement(work.title)}
         </p>
+        <DetailBackLink />
         <WorkDetailShell
           coverUrl={heroCoverUrl}
           creators={work.creators}
@@ -995,59 +1044,54 @@ function WorkDetailContent({ catalog, work }: Readonly<{ catalog: CatalogV1; wor
             <p className="text-[length:var(--font-size-14)] text-text-muted">
               {coverStrings.creatorLine(work.creators)}
             </p>
+            <p className="text-[length:var(--text-caption-size)] text-text-muted">
+              {workDetailStrings.metadata.displayedEdition(representativeVolume?.volumeNumber)}
+            </p>
           </header>
-          {hasHeroMetadata ? (
-            <dl className="m-0 grid grid-cols-2 overflow-hidden rounded-[var(--radius-card)] border border-transparent bg-surface-1 p-0 md:grid-flow-col md:auto-cols-fr md:grid-cols-none [&>div]:grid [&>div]:content-start [&>div]:gap-[var(--space-1)] [&>div]:border-r [&>div]:border-line [&>div]:px-[var(--space-3)] [&>div]:py-[var(--space-3)] [&>div:last-child]:border-r-0 [&_dd]:m-0 [&_dd]:break-words [&_dd]:text-[length:var(--font-size-14)] [&_dd]:font-semibold [&_dd]:text-text-strong [&_dt]:text-[length:var(--text-caption-size)] [&_dt]:text-text-muted">
-              {bookMetadata.publisherName === undefined ? null : (
-                <div>
-                  <dt>{workDetailStrings.metadata.publisher}</dt>
-                  <dd>{bookMetadata.publisherName}</dd>
-                </div>
-              )}
-              {volumeCount > 0 || work.status !== "unknown" ? (
-                <div>
-                  <dt>
-                    {volumeCount > 0
-                      ? workDetailStrings.metadata.volumes
-                      : workDetailStrings.metadata.status}
-                  </dt>
-                  <dd>
-                    {volumeCount > 0 ? recommendationStrings.volumeCount(volumeCount) : null}
-                    {work.status === "unknown" ? null : (
-                      <small className="block font-normal text-text-muted">
-                        {recommendationStrings.workStatus[work.status]}
-                      </small>
-                    )}
-                  </dd>
-                </div>
-              ) : null}
-              {commercial?.itemPrice !== undefined && commercial.itemPrice > 0 ? (
-                <div>
-                  <dt>{workDetailStrings.provider.priceLabel}</dt>
-                  <dd>
-                    {workDetailStrings.provider.price(commercial.itemPrice)}
-                    <small className="block font-normal text-text-muted">
-                      {workDetailStrings.metadata.edition(representativeVolume?.volumeNumber)}
-                    </small>
-                  </dd>
-                </div>
-              ) : null}
-              {metadata?.reviewAverage !== undefined &&
-              metadata.reviewAverage > 0 &&
-              metadata.reviewCount !== undefined &&
-              metadata.reviewCount > 0 ? (
-                <div>
-                  <dt>{workDetailStrings.provider.ratingLabel}</dt>
-                  <dd>
-                    {workDetailStrings.provider.rating(metadata.reviewAverage)}
-                    <small className="block font-normal text-text-muted">
-                      {workDetailStrings.provider.reviewCount(metadata.reviewCount)}
-                    </small>
-                  </dd>
-                </div>
-              ) : null}
-            </dl>
-          ) : null}
+          <dl className="m-0 grid grid-cols-2 overflow-hidden rounded-[var(--radius-card)] border border-transparent bg-surface-1 p-0 md:grid-flow-col md:auto-cols-fr md:grid-cols-none [&>div]:grid [&>div]:content-start [&>div]:gap-[var(--space-1)] [&>div]:border-r [&>div]:border-line [&>div]:px-[var(--space-3)] [&>div]:py-[var(--space-3)] [&>div:last-child]:border-r-0 [&_dd]:m-0 [&_dd]:break-words [&_dd]:text-[length:var(--font-size-14)] [&_dd]:font-semibold [&_dd]:text-text-strong [&_dt]:text-[length:var(--text-caption-size)] [&_dt]:text-text-muted">
+            {bookMetadata.publisherName === undefined ? null : (
+              <div>
+                <dt>{workDetailStrings.metadata.publisher}</dt>
+                <dd>{bookMetadata.publisherName}</dd>
+              </div>
+            )}
+            <div>
+              <dt>{workDetailStrings.metadata.volumes}</dt>
+              <dd>
+                {volumeCount > 0
+                  ? recommendationStrings.volumeCount(volumeCount)
+                  : workDetailStrings.metadata.unknownVolumes}
+                <small className="block font-normal text-text-muted">
+                  {recommendationStrings.workStatus[work.status]}
+                </small>
+              </dd>
+            </div>
+            {commercial?.itemPrice !== undefined && commercial.itemPrice > 0 ? (
+              <div>
+                <dt>{workDetailStrings.provider.priceLabel}</dt>
+                <dd>
+                  {workDetailStrings.provider.price(commercial.itemPrice)}
+                  <small className="block font-normal text-text-muted">
+                    {workDetailStrings.metadata.edition(representativeVolume?.volumeNumber)}
+                  </small>
+                </dd>
+              </div>
+            ) : null}
+            {metadata?.reviewAverage !== undefined &&
+            metadata.reviewAverage > 0 &&
+            metadata.reviewCount !== undefined &&
+            metadata.reviewCount > 0 ? (
+              <div>
+                <dt>{workDetailStrings.provider.ratingLabel}</dt>
+                <dd>
+                  {workDetailStrings.provider.rating(metadata.reviewAverage)}
+                  <small className="block font-normal text-text-muted">
+                    {workDetailStrings.provider.reviewCount(metadata.reviewCount)}
+                  </small>
+                </dd>
+              </div>
+            ) : null}
+          </dl>
           <section aria-labelledby="work-provider-heading" className="grid gap-[var(--space-2)]">
             <h2 className="sr-only" id="work-provider-heading">
               {workDetailStrings.provider.heading}
@@ -1069,6 +1113,9 @@ function WorkDetailContent({ catalog, work }: Readonly<{ catalog: CatalogV1; wor
                 {isDirectProviderLink
                   ? workDetailStrings.provider.view
                   : workDetailStrings.provider.search}
+                <span className="text-[length:var(--text-caption-size)] font-normal">
+                  （{workDetailStrings.provider.newTab}）
+                </span>
               </a>
               <ShareButton title={work.title} />
             </div>
@@ -1125,7 +1172,25 @@ function WorkDetailContent({ catalog, work }: Readonly<{ catalog: CatalogV1; wor
             seriesContinues={work.status === "ongoing" || work.status === "hiatus"}
             workId={work.id}
           />
-          {bookMetadata.itemCaption === undefined ? null : (
+          {bookMetadata.itemCaption === undefined ? (
+            <section aria-labelledby="work-synopsis-heading" className="grid gap-[var(--space-3)]">
+              <h2
+                className="text-[length:var(--text-subheading-size)] font-bold text-text-strong"
+                id="work-synopsis-heading"
+              >
+                {workDetailStrings.synopsis.heading}
+              </h2>
+              <p className="text-[length:var(--font-size-14)] text-text-muted" role="status">
+                {bookMetadata.captionRejected
+                  ? workDetailStrings.synopsis.chapterList
+                  : visibleProvider.phase === "loading"
+                    ? workDetailStrings.synopsis.loading
+                    : visibleProvider.phase === "error" && isbn !== null
+                      ? workDetailStrings.synopsis.unavailable
+                      : workDetailStrings.synopsis.missing}
+              </p>
+            </section>
+          ) : (
             <section aria-labelledby="work-synopsis-heading" className="grid gap-[var(--space-3)]">
               <h2
                 className="text-[length:var(--text-subheading-size)] font-bold text-text-strong"

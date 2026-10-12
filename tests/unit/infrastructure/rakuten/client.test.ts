@@ -62,8 +62,46 @@ describe("Rakuten client", () => {
     await expect(searchRakutenBooks(" 20世紀少年 ")).resolves.toEqual([ITEM]);
     expect(routeFetch).toHaveBeenCalledWith(
       "/api/rakuten/search?title=20%E4%B8%96%E7%B4%80%E5%B0%91%E5%B9%B4",
-      { headers: { Accept: "application/json" } },
+      { headers: { Accept: "application/json" }, signal: expect.any(AbortSignal) },
     );
+  });
+
+  it("cancels title requests and rejects over-limit titles before fetching", async () => {
+    const routeFetch = vi.fn(
+      (_url: string, options: RequestInit) =>
+        new Promise<Response>((_resolve, reject) => {
+          options.signal?.addEventListener("abort", () =>
+            reject(new DOMException("Aborted", "AbortError")),
+          );
+        }),
+    );
+    vi.stubGlobal("fetch", routeFetch);
+    const controller = new AbortController();
+    const request = searchRakutenBooks("AKIRA", controller.signal);
+    const failure = expect(request).rejects.toMatchObject({ code: "provider_unavailable" });
+    await vi.waitFor(() => expect(routeFetch).toHaveBeenCalledOnce());
+    controller.abort();
+    await failure;
+    await expect(searchRakutenBooks("あ".repeat(220))).rejects.toMatchObject({
+      code: "invalid_request",
+    });
+    expect(routeFetch).toHaveBeenCalledOnce();
+  });
+
+  it("releases a canceled search from the UI while queued behind cover requests", async () => {
+    const responders: Array<(response: Response) => void> = [];
+    const routeFetch = vi.fn(() => new Promise<Response>((resolve) => responders.push(resolve)));
+    vi.stubGlobal("fetch", routeFetch);
+    const covers = Array.from({ length: 4 }, () => fetchRakutenBook(ITEM.isbn));
+    await vi.waitFor(() => expect(routeFetch).toHaveBeenCalledTimes(4));
+    const controller = new AbortController();
+    const request = searchRakutenBooks("AKIRA", controller.signal);
+    const failure = expect(request).rejects.toMatchObject({ code: "provider_unavailable" });
+    controller.abort();
+    await failure;
+    responders.forEach((resolve) => resolve(Response.json({ listing: ITEM })));
+    await Promise.all(covers);
+    expect(routeFetch).toHaveBeenCalledTimes(4);
   });
 
   it("normalizes ISBN and returns an item DTO", async () => {

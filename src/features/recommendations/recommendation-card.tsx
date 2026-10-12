@@ -14,11 +14,13 @@ import {
 import type { Work } from "@/domain/catalog/types";
 import { generateTasteExplanation } from "@/domain/explanation/generate";
 import type { TasteExplanationSentence } from "@/domain/explanation/types";
+import type { TasteRecommendationExplanation } from "@/domain/explanation/types";
 import type { RecommendationPlanEntry } from "@/domain/recommendation/types";
 import { explanationLexicon, recommendationStrings } from "@/lib/strings";
 
 type RecommendationCardProps = Readonly<{
   entry: RecommendationPlanEntry;
+  explanation?: TasteRecommendationExplanation;
   work: Work;
   volumeCount: number;
   resolveTitle: (workId: string) => string | undefined;
@@ -71,6 +73,7 @@ export function RecommendationCard({
   busy,
   coverUrl,
   entry,
+  explanation: suppliedExplanation,
   onCompleted,
   onCoverVisible,
   onDismissForToday,
@@ -84,7 +87,7 @@ export function RecommendationCard({
   volumeCount,
   work,
 }: RecommendationCardProps) {
-  const explanation = explanationFor(entry, resolveTitle);
+  const explanation = suppliedExplanation ?? explanationFor(entry, resolveTitle);
   const leadReason = explanation.positiveReasons[0];
   // A soft light follows a fine pointer; the card never changes angle (04 §6 G).
   const attachGlare = usePointerEffect<HTMLElement>("light");

@@ -19,7 +19,7 @@ import {
 import type { RakutenBookItem } from "@/infrastructure/rakuten";
 
 import { LibraryView } from "./library-view";
-import type { LibraryAddOutcome } from "./work-search-sheet";
+import type { LibraryAddOutcome, LibraryAddState } from "./work-search-sheet";
 
 function nowIso() {
   return new Date().toISOString();
@@ -80,10 +80,10 @@ export function LibraryFlow({
   });
 
   const addCatalogWork = useCallback(
-    async (work: Work): Promise<LibraryAddOutcome> => {
+    async (work: Work, readingState: LibraryAddState): Promise<LibraryAddOutcome> => {
       const result = await addUserWorkIfAbsent({
         workId: work.id,
-        readingState: "planned",
+        readingState,
         updatedAt: nowIso(),
       });
       return result.kind;
@@ -92,17 +92,20 @@ export function LibraryFlow({
   );
 
   const addExternalWork = useCallback(
-    async (item: RakutenBookItem): Promise<LibraryAddOutcome> => {
+    async (item: RakutenBookItem, readingState: LibraryAddState): Promise<LibraryAddOutcome> => {
       const record = await createPlannedExternalWorkRecord(item, nowIso());
-      const result = await addExternalWorkIfAbsent(record);
+      const result = await addExternalWorkIfAbsent({
+        ...record,
+        record: { ...record.record, readingState },
+      });
       return result.kind;
     },
     [addExternalWorkIfAbsent],
   );
 
   const saveCatalogRecord = useCallback(
-    async (record: UserWorkRecord) => {
-      await saveUserWork(record);
+    async (record: UserWorkRecord, expectedUpdatedAt?: string) => {
+      await saveUserWork(record, expectedUpdatedAt);
     },
     [saveUserWork],
   );
@@ -112,8 +115,9 @@ export function LibraryFlow({
       id: ExternalWorkId,
       expectedNormalizedKey: string,
       record: ExternalWorkRecord["record"],
+      expectedUpdatedAt?: string,
     ) => {
-      await saveExternalUserRecord(id, expectedNormalizedKey, record);
+      await saveExternalUserRecord(id, expectedNormalizedKey, record, expectedUpdatedAt);
     },
     [saveExternalUserRecord],
   );

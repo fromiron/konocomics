@@ -34,9 +34,10 @@ export function ShareButton({ title }: Readonly<{ title: string }>) {
     setMessage("");
     try {
       if (mode === "share") {
-        await navigator.share({ title, url });
+        await navigator.share({ title, text: workDetailStrings.share.text(title), url });
+        setMessage(workDetailStrings.share.handedOff);
       } else {
-        await navigator.clipboard.writeText(url);
+        await navigator.clipboard.writeText(`${workDetailStrings.share.text(title)}\n${url}`);
         setMessage(workDetailStrings.share.copied);
       }
     } catch (error) {
@@ -50,7 +51,9 @@ export function ShareButton({ title }: Readonly<{ title: string }>) {
   return (
     <>
       <Button
-        aria-label={workDetailStrings.share.action}
+        aria-label={
+          mode === "share" ? workDetailStrings.share.action : workDetailStrings.share.copyAction
+        }
         className="size-[var(--control-min-size)] shrink-0"
         onClick={() => void share()}
         size="icon"

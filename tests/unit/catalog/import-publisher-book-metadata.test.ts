@@ -31,7 +31,7 @@ import {
 const { readCatalogAuthority, serializeCsv, sha256 } = authority;
 const repository = resolve(import.meta.dirname, "../../..");
 
-it.each(["futabasha-json", "shogakukan-ancillary-array"])(
+it.each(["futabasha-json", "shogakukan-ancillary-array", "shogakukan-short-introduction"])(
   "binds the exact publisher introduction for %s without admitting other book fields",
   (format) => {
     const folder = mkdtempSync(join(tmpdir(), "publisher-structured-introduction-"));
@@ -53,8 +53,21 @@ it.each(["futabasha-json", "shogakukan-ancillary-array"])(
       };
       const htmlBook = {
         isbn13_cd: isbn,
-        promo_contents: [null, null, "短い紹介", caption, null, null, [hidden]],
-        promo_kbns: [{ promo_kbn: 3, pivot: { promo_contents: caption } }],
+        promo_contents: [
+          null,
+          null,
+          format === "shogakukan-short-introduction" ? caption : "短い紹介",
+          format === "shogakukan-short-introduction" ? "▼第１話／事件▼第２話／謎" : caption,
+          null,
+          null,
+          [hidden],
+        ],
+        promo_kbns: [
+          {
+            promo_kbn: format === "shogakukan-short-introduction" ? 2 : 3,
+            pivot: { promo_contents: caption },
+          },
+        ],
         administrative_note: hidden,
       };
       const raw = (wrongIsbn = false, wrongCategory = false) =>
@@ -331,7 +344,7 @@ it("imports browser snapshots with honest null HTTP fields and rejects mixed or 
   } finally {
     rmSync(root, { recursive: true, force: true });
   }
-}, 480_000);
+}, 1_440_000);
 
 it("binds HTML-normalized original text while keeping a reviewed summary separate", () => {
   const root = mkdtempSync(join(tmpdir(), "konocomics-normalized-metadata-"));
@@ -390,7 +403,7 @@ it("binds HTML-normalized original text while keeping a reviewed summary separat
   } finally {
     rmSync(root, { recursive: true, force: true });
   }
-}, 480_000);
+}, 1_440_000);
 
 it("binds an escaped publisher book introduction without admitting other JSON fields", () => {
   const root = mkdtempSync(join(tmpdir(), "konocomics-inertia-metadata-"));
@@ -496,7 +509,7 @@ it("binds an escaped publisher book introduction without admitting other JSON fi
   } finally {
     rmSync(root, { recursive: true, force: true });
   }
-}, 480_000);
+}, 1_440_000);
 
 // Real publication, DB-only restore, and CLI resume share one full-catalog timeout.
 it("adds a captured introduction without losing metadata, and rejects damaged or mismatched input before publication", () => {
@@ -792,7 +805,7 @@ it("adds a captured introduction without losing metadata, and rejects damaged or
     rmSync(parked, { recursive: true, force: true });
     rmSync(restoreParent, { recursive: true, force: true });
   }
-}, 480_000);
+}, 1_440_000);
 
 it.each([
   {

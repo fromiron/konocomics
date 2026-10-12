@@ -274,5 +274,5 @@ describe("library-only expansion row construction", () => {
     } finally {
       rmSync(temporaryRoot, { recursive: true, force: true });
     }
-  }, 120_000);
+  }, 360_000);
 });

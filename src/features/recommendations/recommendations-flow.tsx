@@ -19,19 +19,19 @@ import { flushSync } from "react-dom";
 import { Snackbar, snackbarClassName, type SnackbarNotice } from "@/components/layout/snackbar";
 import { Button } from "@/components/design-system/button";
 import { PageHeader } from "@/components/layout/page-header";
-import {
-  carouselCloneProps,
-  carouselLoopCopies,
-  duplicateCarouselContent,
-  MediaShelf,
-  shouldLoopCarousel,
-} from "@/components/media/media-shelf";
+import { MediaShelf } from "@/components/media/media-shelf";
 import { RankingCard } from "@/components/media/ranking-card";
 import { RankingShelf } from "@/components/media/ranking-shelf";
 import type { GenreTag } from "@/domain/catalog/types";
 import type { ExplanationFactorId } from "@/domain/explanation";
-import { generateTasteExplanation } from "@/domain/explanation/generate";
-import { groupRecommendationLenses } from "@/domain/explanation/lens";
+import {
+  generateTasteExplanation,
+  generateVariedTasteExplanations,
+} from "@/domain/explanation/generate";
+import {
+  groupRecommendationLenses,
+  RECOMMENDATION_LENS_CANDIDATE_LIMIT,
+} from "@/domain/explanation/lens";
 import { recommendationProfileRecords } from "@/domain/profile/catalog-profile";
 import {
   createRecommendationFeedbackRecord,
@@ -39,7 +39,6 @@ import {
 } from "@/domain/profile/recommendation-feedback";
 import { summarizeMangaDna } from "@/domain/profile/dna-summary";
 import type {
-  FactorBackedNegativeReasonId,
   ProfileAdjustments,
   RecommendationPolicies,
   UserWorkRecord,
@@ -65,10 +64,11 @@ import type {
 } from "@/domain/recommendation/types";
 import { useCatalog } from "@/features/catalog/catalog-provider";
 import { PopularWorkDiscovery } from "@/features/discovery/popular-work-discovery";
-import { usePersistence } from "@/infrastructure/db";
+import { usePersistence, UserWorkConflictError } from "@/infrastructure/db";
 import {
   explanationLexicon,
   onboardingStrings,
+  libraryStrings,
   recommendationStrings,
   tasteStrings,
 } from "@/lib/strings";
@@ -158,6 +158,8 @@ type RecommendationsFlowProps = Readonly<{
   restoreShelfFromUrl?: boolean;
   previewWorkId?: string;
   genre?: GenreTag;
+  mood?: RecommendationMood | null;
+  onMoodChange?: (mood: RecommendationMood | null) => void;
   shelf?: string;
   onPreviewOpen?: (workId: string) => void;
   onPreviewClose?: () => void;
@@ -224,33 +226,24 @@ function StaticRecommendationItems({
       finish();
     };
   }, [entryConsumed]);
-  const copies = shouldLoopCarousel(items.length) ? carouselLoopCopies : ([1] as const);
   return (
     <>
-      {copies.flatMap((copy) =>
-        items.map((item) => (
-          <li
-            className="basis-[var(--featured-card-basis)] shrink-0 snap-start overflow-visible"
-            data-recommendation-work-id={item.workId}
-            ref={
-              copy === 1
-                ? (element) => {
-                    if (element === null) entryElements.current.delete(item.workId);
-                    else entryElements.current.set(item.workId, element);
-                  }
-                : undefined
-            }
-            key={`${String(copy)}-${item.workId}`}
-            // Without layout motion a backfilled card still arrives with a short fade.
-            {...(item.animateIn
-              ? { "data-reduced-motion": "fade", "data-reduced-motion-enter": "" }
-              : {})}
-            {...carouselCloneProps(copy)}
-          >
-            {duplicateCarouselContent(item.content, copy)}
-          </li>
-        )),
-      )}
+      {items.map((item) => (
+        <li
+          className="basis-[var(--featured-card-basis)] shrink-0 snap-start overflow-visible"
+          data-recommendation-work-id={item.workId}
+          ref={(element) => {
+            if (element === null) entryElements.current.delete(item.workId);
+            else entryElements.current.set(item.workId, element);
+          }}
+          key={item.workId}
+          {...(item.animateIn
+            ? { "data-reduced-motion": "fade", "data-reduced-motion-enter": "" }
+            : {})}
+        >
+          {item.content}
+        </li>
+      ))}
     </>
   );
 }
@@ -359,6 +352,8 @@ function RecommendationsSkeleton() {
 export function RecommendationsFlow({
   context,
   genre,
+  mood: urlMood,
+  onMoodChange,
   onGenreChange,
   onReady,
   restoreShelfFromUrl = true,
@@ -382,6 +377,7 @@ export function RecommendationsFlow({
     saveUserWork,
     status,
     userWorks,
+    externalWorks,
   } = usePersistence();
   const [localPolicies, setLocalPolicies] = useState<RecommendationPolicies | null>(null);
   const [expandedAnchorId, setExpandedAnchorId] = useState<string | null>(null);
@@ -431,6 +427,7 @@ export function RecommendationsFlow({
   const pendingMotionFocus = useRef<MotionFocusTarget | null>(null);
   const [previewOpener, setPreviewOpener] = useState<HTMLElement | null>(null);
   const records = userWorks ?? EMPTY_RECORDS;
+  const libraryRecords = [...records, ...(externalWorks ?? []).map((work) => work.record)];
   const profileRecords = useMemo(
     () => recommendationProfileRecords(records, catalog.works),
     [catalog.works, records],
@@ -471,7 +468,7 @@ export function RecommendationsFlow({
   }, [optimisticPlannedIds, records]);
   // Mood narrows the already ranked plan; scores, reasons, and order stay the plan's own.
   const moodSession = useMoodSession(catalog.catalogVersion);
-  const mood = moodSession.mood;
+  const mood = urlMood === undefined ? moodSession.mood : urlMood;
   const moodDismissedWorkIds = useMemo(
     () => new Set(mood === null ? [] : (moodSession.dismissedByMood[mood] ?? [])),
     [mood, moodSession.dismissedByMood],
@@ -497,6 +494,26 @@ export function RecommendationsFlow({
     [moodPlan, planPolicies, policies],
   );
   const displayedEntries = moodVisibleEntries ?? visibleEntries;
+  const explanations = useMemo(
+    () =>
+      generateVariedTasteExplanations(
+        [
+          ...displayedEntries,
+          ...(moodPlan ?? plan ?? [])
+            .filter(
+              (entry) => genre === undefined || worksById.get(entry.workId)?.genres.includes(genre),
+            )
+            .slice(0, RECOMMENDATION_LENS_CANDIDATE_LIMIT),
+        ].map((entry) => ({
+          workId: entry.workId,
+          contributions: entry.contributions,
+          confidenceLevel: entry.confidenceLevel,
+          lexicon: explanationLexicon,
+          resolveTitle: (workId: string) => worksById.get(workId)?.title,
+        })),
+      ),
+    [displayedEntries, genre, moodPlan, plan, worksById],
+  );
   const { discoveryEntries, featuredEntries, lensShelves, previewEntry, renderedEntries } =
     useMemo(() => {
       const nextRenderedEntries = displayedEntries.flatMap((entry) => {
@@ -505,12 +522,6 @@ export function RecommendationsFlow({
         const metadata = context?.constraintByWorkId[entry.workId];
         return work === undefined || metadata === undefined ? [] : [{ entry, metadata, work }];
       });
-      // Featured carries the plan's top picks; the full ten stay in the Top 10 ranking (03 §4).
-      const nextFeaturedEntries = (
-        genre === undefined
-          ? nextRenderedEntries
-          : nextRenderedEntries.filter(({ work }) => work.genres.includes(genre))
-      ).slice(0, FEATURED_RECOMMENDATION_LIMIT);
       const withCatalogData = (entries: readonly RecommendationPlanEntry[]) =>
         entries.flatMap((entry) => {
           if (excludedWorkIds.has(entry.workId)) return [];
@@ -522,6 +533,12 @@ export function RecommendationsFlow({
       // Shelves draw from the same mood-filtered candidates as the main list.
       const candidatePlanEntries =
         moodPlan === null ? nextAllPlanEntries : withCatalogData(moodPlan);
+      // A genre can use the full ranked candidate pool, even when the all-genre Top 10 misses it.
+      const nextFeaturedEntries = (
+        genre === undefined
+          ? nextRenderedEntries
+          : candidatePlanEntries.filter(({ work }) => work.genres.includes(genre))
+      ).slice(0, FEATURED_RECOMMENDATION_LIMIT);
       const visibleWorkIds = new Set(nextFeaturedEntries.map(({ entry }) => entry.workId));
       const auxiliaryEntries = candidatePlanEntries.filter(
         ({ entry, work }) =>
@@ -531,12 +548,15 @@ export function RecommendationsFlow({
       const lenses = groupRecommendationLenses({
         items: auxiliaryEntries,
         leadReasonOf: ({ entry }) =>
-          generateTasteExplanation({
-            contributions: entry.contributions,
-            confidenceLevel: entry.confidenceLevel,
-            lexicon: explanationLexicon,
-            resolveTitle,
-          }).positiveReasons[0],
+          (
+            explanations.get(entry.workId) ??
+            generateTasteExplanation({
+              contributions: entry.contributions,
+              confidenceLevel: entry.confidenceLevel,
+              lexicon: explanationLexicon,
+              resolveTitle,
+            })
+          ).positiveReasons[0],
         lexicon: explanationLexicon,
         resolveTitle,
       });
@@ -581,6 +601,7 @@ export function RecommendationsFlow({
     }, [
       context,
       displayedEntries,
+      explanations,
       excludedWorkIds,
       genre,
       moodPlan,
@@ -836,7 +857,15 @@ export function RecommendationsFlow({
         setVisibleEntries(nextVisible);
         setBackfillIds(new Set());
         setDisplayedHash(inputHash);
-        if (options.announcement !== undefined) announce(options.announcement);
+        if (options.announcement !== undefined) {
+          const unchanged =
+            !isInitialCalculation &&
+            nextVisible.map((entry) => entry.workId).join() ===
+              visibleEntries.map((entry) => entry.workId).join();
+          announce(
+            unchanged ? recommendationStrings.announcements.updatedUnchanged : options.announcement,
+          );
+        }
         return true;
       } catch {
         if (calculationSequence.current === sequence) {
@@ -859,6 +888,7 @@ export function RecommendationsFlow({
       plan,
       recommendationPlanWorker,
       saveRecommendationCache,
+      visibleEntries,
     ],
   );
 
@@ -914,16 +944,17 @@ export function RecommendationsFlow({
     setActionError("");
     try {
       // A newer write from another screen is never overwritten or deleted.
-      const result = await removeUserWorkIfUnchanged(removal.workId, removal.updatedAt);
-      if (result !== "removed") {
-        announce(recommendationStrings.announcements.undoConflict);
-        return;
-      }
       if (removal.previousRecord !== undefined) {
-        await addUserWorkIfAbsent({
-          ...removal.previousRecord,
-          updatedAt: new Date().toISOString(),
-        });
+        await saveUserWork(
+          { ...removal.previousRecord, updatedAt: new Date().toISOString() },
+          removal.updatedAt,
+        );
+      } else {
+        const result = await removeUserWorkIfUnchanged(removal.workId, removal.updatedAt);
+        if (result !== "removed") {
+          announce(recommendationStrings.announcements.undoConflict);
+          return;
+        }
       }
       if (lastRemoval.current === removal) lastRemoval.current = null;
       setExcludedWorkIds((current) => {
@@ -937,8 +968,12 @@ export function RecommendationsFlow({
       );
       setBackfillIds(new Set([removal.workId]));
       announce(recommendationStrings.announcements.undone(removal.title));
-    } catch {
-      setActionError(recommendationStrings.announcements.undoFailed);
+    } catch (error) {
+      setActionError(
+        error instanceof UserWorkConflictError
+          ? recommendationStrings.announcements.undoConflict
+          : recommendationStrings.announcements.undoFailed,
+      );
     } finally {
       feedbackBaseInFlight.current = false;
       setFeedbackBaseBusy(false);
@@ -1043,6 +1078,7 @@ export function RecommendationsFlow({
     setExpandedAnchorId(null);
     setBackfillIds(new Set());
     selectMood(nextMood, catalog.catalogVersion);
+    onMoodChange?.(nextMood);
   };
 
   const removeForFeedback = async (
@@ -1161,8 +1197,12 @@ export function RecommendationsFlow({
         updatedAt,
         focusWorkId: focusEntry?.workId ?? null,
       });
-    } catch {
-      setActionError(recommendationStrings.errors.feedback);
+    } catch (error) {
+      setActionError(
+        error instanceof UserWorkConflictError
+          ? libraryStrings.editor.conflict
+          : recommendationStrings.errors.feedback,
+      );
     } finally {
       setWorkBusy(entry.workId, false);
       feedbackBaseInFlight.current = false;
@@ -1193,36 +1233,12 @@ export function RecommendationsFlow({
         lastRemoval.current = { ...lastRemoval.current, updatedAt: saved.updatedAt };
       }
       closeFeedback();
-    } catch {
-      setFeedbackError(recommendationStrings.errors.followUp);
-    } finally {
-      setFeedbackBusy(false);
-    }
-  };
-
-  const saveHiddenFeedback = async (reasons: readonly FactorBackedNegativeReasonId[]) => {
-    if (feedback?.kind !== "hidden") return;
-    setFeedbackBusy(true);
-    setFeedbackError("");
-    try {
-      const saved = await saveUserWork(
-        mergeFeedbackRecord(
-          lastRemoval.current?.previousRecord,
-          createRecommendationFeedbackRecord({
-            action: "hidden",
-            workId: feedback.workId,
-            updatedAt: new Date().toISOString(),
-            reasons,
-          }),
-        ),
-        feedback.updatedAt,
+    } catch (error) {
+      setFeedbackError(
+        error instanceof UserWorkConflictError
+          ? libraryStrings.editor.conflict
+          : recommendationStrings.errors.followUp,
       );
-      if (lastRemoval.current?.workId === feedback.workId) {
-        lastRemoval.current = { ...lastRemoval.current, updatedAt: saved.updatedAt };
-      }
-      closeFeedback();
-    } catch {
-      setFeedbackError(recommendationStrings.errors.followUp);
     } finally {
       setFeedbackBusy(false);
     }
@@ -1305,12 +1321,13 @@ export function RecommendationsFlow({
   const previewExplanation =
     previewEntry === null
       ? null
-      : generateTasteExplanation({
+      : (explanations.get(previewEntry.entry.workId) ??
+        generateTasteExplanation({
           contributions: previewEntry.entry.contributions,
           confidenceLevel: previewEntry.entry.confidenceLevel,
           lexicon: explanationLexicon,
           resolveTitle: (workId) => worksById.get(workId)?.title,
-        });
+        }));
   const hasInvalidEntry = renderedEntries.length !== displayedEntries.length;
   const moodLabel = mood === null ? null : recommendationStrings.mood.labels[mood];
   const moodDismissHandler = (entry: RecommendationPlanEntry) =>
@@ -1360,6 +1377,7 @@ export function RecommendationsFlow({
           busy={isComputing || isPolicySaving || feedbackBaseBusy || busyWorkIds.has(entry.workId)}
           coverUrl={recommendationCoverUrls.get(entry.workId)}
           entry={entry}
+          explanation={explanations.get(entry.workId)}
           onCompleted={() => void removeForFeedback(entry, "completed")}
           onCoverVisible={() => requestCover(entry.workId)}
           onDismissForToday={moodDismissHandler(entry)}
@@ -1392,6 +1410,7 @@ export function RecommendationsFlow({
       busy={isComputing || isPolicySaving || feedbackBaseBusy || busyWorkIds.has(entry.workId)}
       coverUrl={recommendationCoverUrls.get(entry.workId)}
       entry={entry}
+      explanation={explanations.get(entry.workId)}
       expanded={variant !== "discovery" && expandedAnchorId === entry.workId}
       itemCaption={itemCaptions.get(entry.workId)}
       key={entry.workId}
@@ -1441,7 +1460,9 @@ export function RecommendationsFlow({
                 <RecommendationCriteriaSummary
                   adjustmentLabels={adjustmentLabels}
                   preferenceLabels={preferenceLabels}
-                  recordCount={profileRecords.length}
+                  recordCount={dnaSummary.analyzedWorkIds.length}
+                  totalRecordCount={records.length + (externalWorks?.length ?? 0)}
+                  input={recommendationInput}
                 />
               </PageHeader>
 
@@ -1459,22 +1480,17 @@ export function RecommendationsFlow({
                 genre={genre}
                 onGenreChange={onGenreChange}
                 onPolicyToggle={(key) => void togglePolicy(key)}
-                onUpdate={() => {
-                  if (recommendationInput === null) window.location.reload();
-                  else void updateRecommendations();
-                }}
-                pending={
-                  displayedHash !== null && currentHash !== null && displayedHash !== currentHash
-                }
                 policies={policies}
                 policyUpdating={isPolicySaving}
-                updateButtonRef={updateButtonRef}
-                updateDisabled={updateDisabled}
-                updating={isComputing}
               />
 
               <RecommendationMoodBar
                 candidateCount={moodPlan?.length ?? 0}
+                unchanged={
+                  mood !== null &&
+                  displayedEntries.map((entry) => entry.workId).join() ===
+                    visibleEntries.map((entry) => entry.workId).join()
+                }
                 disabled={isComputing || isPolicySaving || feedbackBaseBusy || plan === null}
                 dismissedCount={moodDismissedWorkIds.size}
                 mood={mood}
@@ -1570,7 +1586,6 @@ export function RecommendationsFlow({
                 <MediaShelf
                   className="scroll-mt-[var(--space-4)] md:scroll-mt-[calc(var(--control-min-size)+var(--space-2))]"
                   controlsPlacement="overlay"
-                  enableLoop
                   listType="unordered"
                   compactHeading
                   title={recommendationStrings.shelves.featured.title}
@@ -1668,7 +1683,6 @@ export function RecommendationsFlow({
                     )}
                     compactHeading
                     controlsPlacement="overlay"
-                    enableLoop={false}
                     onPageChange={() => setExpandedAnchorId(null)}
                     title={lens.title}
                     trackClassName="!pb-[var(--space-1)] has-[[data-expansion-active]]:!snap-none"
@@ -1691,7 +1705,6 @@ export function RecommendationsFlow({
               compactHeading
               controlsPlacement="overlay"
               description={recommendationStrings.shelves.discovery.description}
-              enableLoop={false}
               title={recommendationStrings.shelves.discovery.title}
               trackClassName="!pb-[var(--space-1)]"
             >
@@ -1740,10 +1753,18 @@ export function RecommendationsFlow({
               })}
             </RankingShelf>
             <FeedbackImpactSummary
-              completedCount={
-                records.filter((record) => record.readingState === "completed").length
+              readingCount={
+                libraryRecords.filter((record) => record.readingState === "reading").length
               }
-              hiddenCount={records.filter((record) => record.readingState === "hidden").length}
+              completedCount={
+                libraryRecords.filter((record) => record.readingState === "completed").length
+              }
+              hiddenCount={
+                libraryRecords.filter((record) => record.readingState === "hidden").length
+              }
+              droppedCount={
+                libraryRecords.filter((record) => record.readingState === "dropped").length
+              }
             />
           </div>
         </div>
@@ -1756,7 +1777,6 @@ export function RecommendationsFlow({
                 errorMessage={feedbackError}
                 feedback={feedback}
                 onSaveCompleted={(reaction) => void saveCompletedFeedback(reaction)}
-                onSaveHidden={(reasons) => void saveHiddenFeedback(reasons)}
                 onSkip={closeFeedback}
               />
             ) : null}
@@ -1799,15 +1819,52 @@ export function RecommendationsFlow({
             ) : null}
           </Suspense>
         ) : null}
-        <p aria-atomic="true" aria-live="polite" className={snackbarClassName}>
-          {liveAnnouncement.text === "" ? null : (
-            <span key={liveAnnouncement.sequence}>{liveAnnouncement.text}</span>
-          )}
-        </p>
-        <Snackbar
-          notice={undoNotice}
-          onDismiss={(id) => setUndoNotice((current) => (current?.id === id ? undefined : current))}
-        />
+        <div
+          className="fixed right-[var(--layout-page-padding)] bottom-[calc(var(--layout-mobile-navigation-clearance)+var(--space-4))] z-40 flex w-[min(var(--layout-width-form),calc(100vw-(var(--layout-page-padding)*2)))] flex-col items-end gap-[var(--space-2)] md:bottom-[var(--space-6)]"
+          data-recommendation-notifications
+        >
+          {!isPolicySaving &&
+          displayedHash !== null &&
+          currentHash !== null &&
+          displayedHash !== currentHash ? (
+            <div
+              className={cn(
+                snackbarClassName,
+                "static flex max-w-full flex-wrap items-center gap-x-[var(--space-4)] gap-y-[var(--space-2)]",
+              )}
+              role="status"
+            >
+              <p className="text-[length:var(--font-size-14)] text-text-muted">
+                {recommendationStrings.pendingChanges}
+              </p>
+              <Button
+                busy={isComputing}
+                disabled={updateDisabled}
+                onClick={() => void updateRecommendations()}
+                ref={updateButtonRef}
+                type="button"
+              >
+                {isComputing ? recommendationStrings.updating : recommendationStrings.update}
+              </Button>
+            </div>
+          ) : null}
+          <p
+            aria-atomic="true"
+            aria-live="polite"
+            className={cn(snackbarClassName, "static max-w-full")}
+          >
+            {liveAnnouncement.text === "" ? null : (
+              <span key={liveAnnouncement.sequence}>{liveAnnouncement.text}</span>
+            )}
+          </p>
+          <Snackbar
+            className="static max-w-full"
+            notice={undoNotice}
+            onDismiss={(id) =>
+              setUndoNotice((current) => (current?.id === id ? undefined : current))
+            }
+          />
+        </div>
       </main>
     </>
   );

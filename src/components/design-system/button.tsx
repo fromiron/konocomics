@@ -21,6 +21,7 @@ export function buttonClassName({
       "active:bg-accent-active [@media(hover:hover)_and_(pointer:fine)]:hover:bg-accent-hover",
     (variant === "outline" || variant === "ghost") &&
       "[@media(hover:hover)_and_(pointer:fine)]:hover:bg-surface-3",
+    "aria-pressed:hover:bg-accent-hover aria-pressed:hover:text-on-accent aria-pressed:active:bg-accent-active [@media(hover:hover)_and_(pointer:fine)]:aria-pressed:hover:bg-accent-hover",
     className,
   );
 }

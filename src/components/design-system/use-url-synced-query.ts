@@ -9,8 +9,9 @@ import {
   useState,
 } from "react";
 
-/** Route search schemas cap free-text queries at 100 characters. */
-export const URL_QUERY_MAX_LENGTH = 100;
+import { WORK_QUERY_MAX_LENGTH } from "@/lib/search-query";
+
+export const URL_QUERY_MAX_LENGTH = WORK_QUERY_MAX_LENGTH;
 
 function comparable(value: string | undefined) {
   return (value ?? "").trim();
@@ -35,6 +36,7 @@ export function useUrlSyncedQuery({
   onUrlQueryChange?: (query: string) => void;
 }>) {
   const [draft, setDraft] = useState(urlQuery ?? "");
+  const [searchQuery, setSearchQuery] = useState(draft);
   const draftRef = useRef(draft);
   const composingRef = useRef(false);
   const pendingRef = useRef<string[]>([]);
@@ -53,12 +55,15 @@ export function useUrlSyncedQuery({
       return;
     }
     pendingRef.current = [];
-    if (incoming !== comparable(draftRef.current)) updateDraft(urlQuery ?? "");
+    if (incoming !== comparable(draftRef.current)) {
+      updateDraft(urlQuery ?? "");
+      setSearchQuery(urlQuery ?? "");
+    }
   }, [updateDraft, urlQuery]);
 
   const emit = useCallback(
     (value: string) => {
-      if (onUrlQueryChange === undefined) return;
+      if (onUrlQueryChange === undefined || value.length > URL_QUERY_MAX_LENGTH) return;
       const emitted = comparable(value);
       const pending = pendingRef.current;
       if (pending.at(-1) !== emitted) pendingRef.current = [...pending, emitted];
@@ -74,7 +79,10 @@ export function useUrlSyncedQuery({
       const nativeEvent = event.nativeEvent;
       const composing =
         composingRef.current || (nativeEvent instanceof InputEvent && nativeEvent.isComposing);
-      if (!composing) emit(next);
+      if (!composing) {
+        setSearchQuery(next);
+        emit(next);
+      }
     },
     [emit, updateDraft],
   );
@@ -88,6 +96,7 @@ export function useUrlSyncedQuery({
       composingRef.current = false;
       const next = event.currentTarget.value;
       updateDraft(next);
+      setSearchQuery(next);
       emit(next);
     },
     [emit, updateDraft],
@@ -95,11 +104,13 @@ export function useUrlSyncedQuery({
 
   const clear = useCallback(() => {
     updateDraft("");
+    setSearchQuery("");
     emit("");
   }, [emit, updateDraft]);
 
   return {
     value: draft,
+    searchQuery,
     clear,
     inputProps: {
       maxLength: URL_QUERY_MAX_LENGTH,

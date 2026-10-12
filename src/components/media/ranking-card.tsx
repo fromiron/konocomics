@@ -123,7 +123,7 @@ export function RankingCard(props: RankingCardProps | EvidencePlaceholderProps) 
               {title}
             </h3>
             {metadata === undefined ? null : (
-              <p className="line-clamp-1 text-[length:var(--text-caption-size)] leading-tight text-text-muted">
+              <p className="text-[length:var(--text-caption-size)] leading-tight text-text-muted">
                 {metadata}
               </p>
             )}
@@ -181,7 +181,7 @@ export function RankingCard(props: RankingCardProps | EvidencePlaceholderProps) 
                     "ranking-card-meta leading-snug text-text-muted",
                     isEvidence
                       ? "order-first text-[length:var(--text-caption-size)]"
-                      : "line-clamp-2 text-[length:var(--font-size-14)]",
+                      : "text-[length:var(--font-size-14)]",
                   )}
                   data-ranking-label={variant === "ranking" ? "true" : undefined}
                 >

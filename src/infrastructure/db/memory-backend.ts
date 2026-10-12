@@ -13,7 +13,6 @@ import {
   type MinimalPlannedRemovalResult,
   type ExternalWorkRemovalResult,
   type UserWorkRemovalResult,
-  type OnboardingCommit,
   type PersistenceBackend,
   type ConfirmedAddIfAbsentResult,
 } from "./backend";
@@ -34,6 +33,7 @@ import {
 } from "./external-work";
 import type { ExternalWorkRecord, ProviderCacheRecord, RecommendationCacheRecord } from "./records";
 import {
+  createOnboardingCommit,
   hasUpdatedAt,
   isMinimalPlannedUserWork,
   isUnchangedExternalWork,
@@ -77,23 +77,35 @@ export class MemoryPersistenceBackend implements PersistenceBackend {
     this.onboardingDraft = draft === null ? null : parseOnboardingDraft(draft);
   }
 
-  async commitOnboarding(commit: OnboardingCommit): Promise<void> {
-    const userWorks = parseUserWorks(commit.userWorks);
-    const duplicate = userWorks.find((record) => this.userWorks.has(record.workId));
+  async commitOnboarding(
+    draft: OnboardingDraft,
+    completedAt: string,
+    profileWorkIds?: readonly string[],
+  ): Promise<UserWorkRecord[]> {
+    const restoredDraft = parseOnboardingDraft(draft);
+    const duplicate = [...restoredDraft.positiveEntries, ...restoredDraft.negativeEntries].find(
+      (record) => this.userWorks.has(record.workId),
+    );
     if (duplicate !== undefined) {
       throw new OnboardingWorkConflictError(duplicate.workId);
     }
+    if (restoredDraft.mode === "firstRun" && this.onboardingCompletedAt !== null) {
+      throw new OnboardingAlreadyCompletedError();
+    }
+    const commit = createOnboardingCommit(
+      restoredDraft,
+      completedAt,
+      [...this.userWorks.values()],
+      profileWorkIds,
+    );
+    const userWorks = commit.userWorks;
     const nextUserWorks = new Map(this.userWorks);
     userWorks.forEach((record) => nextUserWorks.set(record.workId, record));
 
     if (commit.mode === "add") {
       this.userWorks = nextUserWorks;
       this.onboardingDraft = null;
-      return;
-    }
-
-    if (this.onboardingCompletedAt !== null) {
-      throw new OnboardingAlreadyCompletedError();
+      return parseUserWorks([...nextUserWorks.values()]);
     }
 
     const onboardingCompletedAt = parseOnboardingCompletedAt(commit.onboardingCompletedAt);
@@ -103,6 +115,7 @@ export class MemoryPersistenceBackend implements PersistenceBackend {
     this.userWorks = nextUserWorks;
     this.onboardingCompletedAt = onboardingCompletedAt;
     this.onboardingDraft = null;
+    return parseUserWorks([...nextUserWorks.values()]);
   }
 
   async getUserWorks(): Promise<UserWorkRecord[]> {
@@ -200,6 +213,7 @@ export class MemoryPersistenceBackend implements PersistenceBackend {
     id: ExternalWorkId,
     expectedNormalizedKey: string,
     record: UserWorkRecord,
+    expectedUpdatedAt?: string,
   ): Promise<ExternalWorkRecord> {
     const validatedId = parseExternalWorkId(id);
     const validatedRecord = parseExternalUserWorkRecord(validatedId, record);
@@ -219,6 +233,10 @@ export class MemoryPersistenceBackend implements PersistenceBackend {
     }
     if (currentRecord.normalizedKey !== expectedNormalizedKey) {
       throw new ExternalWorkIdentityConflictError(validatedId);
+    }
+
+    if (expectedUpdatedAt !== undefined && currentRecord.record.updatedAt !== expectedUpdatedAt) {
+      throw new UserWorkConflictError(record.workId);
     }
 
     const updatedRecord = parseExternalWork({ ...currentRecord, record: validatedRecord });

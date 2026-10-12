@@ -14,7 +14,6 @@ import {
   type MinimalPlannedRemovalResult,
   type ExternalWorkRemovalResult,
   type UserWorkRemovalResult,
-  type OnboardingCommit,
   type PersistenceBackend,
 } from "./backend";
 import { DATABASE_SCHEMA_VERSION, KonocomicsDatabase } from "./database";
@@ -39,6 +38,9 @@ import type {
   RecommendationCacheRecord,
 } from "./records";
 import {
+  createOnboardingCommit,
+  parseOnboardingDraft,
+  parseUserWorks,
   hasUpdatedAt,
   isMinimalPlannedUserWork,
   isUnchangedExternalWork,
@@ -68,48 +70,47 @@ export class DexiePersistenceBackend implements PersistenceBackend {
     await this.database.onboardingDraft.put(draft);
   }
 
-  async commitOnboarding(commit: OnboardingCommit): Promise<void> {
-    if (commit.mode === "add") {
-      await this.database.transaction(
-        "rw",
-        this.database.userWorks,
-        this.database.onboardingDraft,
-        async () => {
-          const workIds = commit.userWorks.map((record) => record.workId);
-          const existingRecords = await this.database.userWorks.bulkGet(workIds);
-          const conflictIndex = existingRecords.findIndex((record) => record !== undefined);
-          if (conflictIndex >= 0) {
-            throw new OnboardingWorkConflictError(workIds[conflictIndex]!);
-          }
-          await this.database.userWorks.bulkAdd(commit.userWorks);
-          await this.database.onboardingDraft.delete("current");
-        },
-      );
-      return;
-    }
-
-    await this.database.transaction(
+  async commitOnboarding(
+    draft: OnboardingDraft,
+    completedAt: string,
+    profileWorkIds?: readonly string[],
+  ): Promise<UserWorkRecord[]> {
+    const restoredDraft = parseOnboardingDraft(draft);
+    return this.database.transaction(
       "rw",
       this.database.userWorks,
       this.database.profile,
       this.database.onboardingDraft,
       async () => {
-        const existingCompletion = await this.database.profile.get("onboardingCompletedAt");
-        if (existingCompletion !== undefined) {
+        if (
+          restoredDraft.mode === "firstRun" &&
+          (await this.database.profile.get("onboardingCompletedAt")) !== undefined
+        ) {
           throw new OnboardingAlreadyCompletedError();
         }
-        const workIds = commit.userWorks.map((record) => record.workId);
-        const existingRecords = await this.database.userWorks.bulkGet(workIds);
-        const conflictIndex = existingRecords.findIndex((record) => record !== undefined);
-        if (conflictIndex >= 0) {
-          throw new OnboardingWorkConflictError(workIds[conflictIndex]!);
+        const existingRecords = parseUserWorks(await this.database.userWorks.toArray());
+        const existingWorkIds = new Set(existingRecords.map((record) => record.workId));
+        const duplicate = [...restoredDraft.positiveEntries, ...restoredDraft.negativeEntries].find(
+          (entry) => existingWorkIds.has(entry.workId),
+        );
+        if (duplicate !== undefined) {
+          throw new OnboardingWorkConflictError(duplicate.workId);
         }
+        const commit = createOnboardingCommit(
+          restoredDraft,
+          completedAt,
+          existingRecords,
+          profileWorkIds,
+        );
         await this.database.userWorks.bulkAdd(commit.userWorks);
-        await this.database.profile.put({
-          key: "onboardingCompletedAt",
-          value: commit.onboardingCompletedAt,
-        });
+        if (commit.mode === "firstRun") {
+          await this.database.profile.put({
+            key: "onboardingCompletedAt",
+            value: commit.onboardingCompletedAt,
+          });
+        }
         await this.database.onboardingDraft.delete("current");
+        return [...existingRecords, ...commit.userWorks];
       },
     );
   }
@@ -232,6 +233,7 @@ export class DexiePersistenceBackend implements PersistenceBackend {
     id: ExternalWorkId,
     expectedNormalizedKey: string,
     record: UserWorkRecord,
+    expectedUpdatedAt?: string,
   ): Promise<unknown> {
     const validatedRecord = parseExternalUserWorkRecord(id, record);
     return this.database.transaction("rw", this.database.externalWorks, async () => {
@@ -248,6 +250,10 @@ export class DexiePersistenceBackend implements PersistenceBackend {
       }
       if (currentRecord.normalizedKey !== expectedNormalizedKey) {
         throw new ExternalWorkIdentityConflictError(id);
+      }
+
+      if (expectedUpdatedAt !== undefined && currentRecord.record.updatedAt !== expectedUpdatedAt) {
+        throw new UserWorkConflictError(record.workId);
       }
 
       await this.database.externalWorks.put({ ...currentRecord, record: validatedRecord });

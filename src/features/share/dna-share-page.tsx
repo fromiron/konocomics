@@ -27,6 +27,7 @@ import {
   coverStrings,
   dnaSharePageStrings,
   explanationLexicon,
+  mediaStrings,
   tasteStrings,
   workDetailStrings,
 } from "@/lib/strings";
@@ -157,7 +158,7 @@ function SharedRecommendation({
           target="_blank"
         >
           {directUrl === undefined ? providerStrings.search : providerStrings.view}
-          <span aria-hidden="true"> ›</span>
+          <span aria-hidden="true">{mediaStrings.externalNewTab} ›</span>
         </a>
         {links?.affiliateUrl === undefined ? null : (
           <p className="text-[length:var(--text-caption-size)] text-text-muted">

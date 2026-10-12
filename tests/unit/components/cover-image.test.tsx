@@ -13,6 +13,23 @@ afterEach(() => {
 });
 
 describe("CoverImage accessibility contract", () => {
+  it("settles a cached image failure that happened before hydration", () => {
+    const complete = vi.spyOn(HTMLImageElement.prototype, "complete", "get").mockReturnValue(true);
+    const width = vi.spyOn(HTMLImageElement.prototype, "naturalWidth", "get").mockReturnValue(0);
+    try {
+      const { container } = render(
+        <CoverImage coverUrl="https://example.com/missing.jpg" creators={["作者"]} title="作品" />,
+      );
+      expect(
+        screen.getByRole("img", { name: "作品の表紙画像はありません。作者 作者" }),
+      ).toBeTruthy();
+      expect(container.querySelector("img")).toBeNull();
+      expect(container.querySelector(".cover-shimmer")).toBeNull();
+    } finally {
+      complete.mockRestore();
+      width.mockRestore();
+    }
+  });
   it("keeps the book base decorative and preserves the cover fallback inside a button", () => {
     const { container } = render(
       <button type="button">

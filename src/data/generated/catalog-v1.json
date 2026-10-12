@@ -1,6 +1,6 @@
 {
   "schemaVersion": 1,
-  "catalogVersion": "v1-d0427475dc17",
+  "catalogVersion": "v1-bf43e2765bf2",
   "factorDictionaryVersion": "v1",
   "works": [
     {
@@ -35219,6 +35219,84 @@
       }
     },
     {
+      "id": "work-0bfd1cd17ce207473ec2",
+      "title": "ハチミツとクローバー",
+      "titleKana": "ハチミツトクローバー",
+      "aliases": [],
+      "creators": [
+        "羽海野チカ"
+      ],
+      "publisher": "集英社",
+      "demographic": "unknown",
+      "status": "unknown",
+      "genres": [],
+      "themes": [],
+      "axes": {
+        "progression": {
+          "state": "unknown"
+        },
+        "problemSolving": {
+          "state": "unknown"
+        },
+        "strategy": {
+          "state": "unknown"
+        },
+        "pacing": {
+          "state": "unknown"
+        },
+        "mysteryReveal": {
+          "state": "unknown"
+        },
+        "worldBuilding": {
+          "state": "unknown"
+        },
+        "characterArcWeight": {
+          "state": "unknown"
+        },
+        "relationshipStructure": {
+          "state": "unknown"
+        },
+        "comedy": {
+          "state": "unknown"
+        },
+        "darkness": {
+          "state": "unknown"
+        },
+        "mentalStress": {
+          "state": "unknown"
+        },
+        "romance": {
+          "state": "unknown"
+        },
+        "emotionalWarmth": {
+          "state": "unknown"
+        },
+        "artRealism": {
+          "state": "unknown"
+        },
+        "artDensity": {
+          "state": "unknown"
+        },
+        "visualSoftness": {
+          "state": "unknown"
+        },
+        "motionImpact": {
+          "state": "unknown"
+        }
+      },
+      "factorScope": "whole_work",
+      "eligibility": {
+        "onboardingEligible": false,
+        "recommendationEligible": false,
+        "libraryOnly": true
+      },
+      "evidence": {
+        "metadataConfidence": 1,
+        "groupingConfidence": 1,
+        "sourceAgreement": 1
+      }
+    },
+    {
       "id": "work-0c0301626306f5624d27",
       "title": "Sunny Sunny Ann!",
       "aliases": [],
@@ -63491,7 +63569,7 @@
       ],
       "publisher": "Kadokawa",
       "demographic": "seinen",
-      "status": "unknown",
+      "status": "completed",
       "firstPublishedYear": 2007,
       "genres": [
         "fantasy",
@@ -88846,7 +88924,7 @@
       ],
       "publisher": "集英社",
       "demographic": "unknown",
-      "status": "unknown",
+      "status": "completed",
       "firstPublishedYear": 2025,
       "genres": [
         "horror",
@@ -135526,6 +135604,87 @@
       }
     },
     {
+      "id": "work-527c45f3ae21c5b5ade3",
+      "title": "銀魂―ぎんたま―",
+      "titleKana": "ギンタマ",
+      "aliases": [
+        "ぎんたま",
+        "銀魂"
+      ],
+      "creators": [
+        "空知英秋"
+      ],
+      "publisher": "集英社",
+      "demographic": "shonen",
+      "status": "unknown",
+      "genres": [],
+      "themes": [],
+      "axes": {
+        "progression": {
+          "state": "unknown"
+        },
+        "problemSolving": {
+          "state": "unknown"
+        },
+        "strategy": {
+          "state": "unknown"
+        },
+        "pacing": {
+          "state": "unknown"
+        },
+        "mysteryReveal": {
+          "state": "unknown"
+        },
+        "worldBuilding": {
+          "state": "unknown"
+        },
+        "characterArcWeight": {
+          "state": "unknown"
+        },
+        "relationshipStructure": {
+          "state": "unknown"
+        },
+        "comedy": {
+          "state": "unknown"
+        },
+        "darkness": {
+          "state": "unknown"
+        },
+        "mentalStress": {
+          "state": "unknown"
+        },
+        "romance": {
+          "state": "unknown"
+        },
+        "emotionalWarmth": {
+          "state": "unknown"
+        },
+        "artRealism": {
+          "state": "unknown"
+        },
+        "artDensity": {
+          "state": "unknown"
+        },
+        "visualSoftness": {
+          "state": "unknown"
+        },
+        "motionImpact": {
+          "state": "unknown"
+        }
+      },
+      "factorScope": "whole_work",
+      "eligibility": {
+        "onboardingEligible": false,
+        "recommendationEligible": false,
+        "libraryOnly": true
+      },
+      "evidence": {
+        "metadataConfidence": 1,
+        "groupingConfidence": 1,
+        "sourceAgreement": 1
+      }
+    },
+    {
       "id": "work-528a274ba6e2c0ad0546",
       "title": "Piece",
       "aliases": [],
@@ -147995,7 +148154,9 @@
     {
       "id": "work-5aaa689fe80174423ad4",
       "title": "SLAM DUNK",
-      "aliases": [],
+      "aliases": [
+        "スラムダンク"
+      ],
       "creators": [
         "井上雄彦"
       ],
@@ -376931,6 +377092,24 @@
       "editionKind": "standard"
     },
     {
+      "id": "work-0bfd1cd17ce207473ec2-representative",
+      "workId": "work-0bfd1cd17ce207473ec2",
+      "volumeNumber": 1,
+      "isbn": "9784088650791",
+      "releaseDate": "2002-08-19",
+      "editionKind": "standard",
+      "metadata": {
+        "publisherName": "集英社",
+        "itemCaption": "6畳＋台所3畳フロなしというアパートで貧乏ながら結構楽しい生活を送る美大生、森田、真山、竹本の3人。そんな彼らが、花本はぐみと出会い……!?　大ヒットシリーズ第1巻!!",
+        "salesDate": "2002-08-19",
+        "imageUrl": "https://dosbg3xlm0x1t.cloudfront.net/images/items/9784088650791/500/9784088650791.jpg",
+        "imprint": "クイーンズコミックス",
+        "pageCount": 192,
+        "sourceUrl": "https://www.shueisha.co.jp/books/items/contents.html?isbn=978-4-08-865079-1&mode=1",
+        "fetchedAt": "2026-10-09T06:49:54.055447+00:00"
+      }
+    },
+    {
       "id": "work-0c0301626306f5624d27-representative",
       "workId": "work-0c0301626306f5624d27",
       "isbn": "9784063766547",
@@ -382158,7 +382337,13 @@
       "volumeNumber": 1,
       "isbn": "9784091233714",
       "releaseDate": "1994-06-18",
-      "editionKind": "standard"
+      "editionKind": "standard",
+      "metadata": {
+        "publisherName": "小学館",
+        "itemCaption": "ホームズに憧れる推理マニアの高校生。工藤新一がとある理由で小学生の体に！！小さな探偵が大活躍の奇想天外本格探偵アクション！",
+        "sourceUrl": "https://www.shogakukan.co.jp/books/09123371",
+        "fetchedAt": "2026-10-09T06:49:22.408257+00:00"
+      }
     },
     {
       "id": "work-3979ca1df0523fa19990-representative",
@@ -384553,6 +384738,24 @@
         "imprint": "BUNCH COMICS",
         "sourceUrl": "https://www.shinchosha.co.jp/book/772742/",
         "fetchedAt": "2026-09-28T06:18:50.858Z"
+      }
+    },
+    {
+      "id": "work-527c45f3ae21c5b5ade3-representative",
+      "workId": "work-527c45f3ae21c5b5ade3",
+      "volumeNumber": 1,
+      "isbn": "9784088736235",
+      "releaseDate": "2004-04-02",
+      "editionKind": "standard",
+      "metadata": {
+        "publisherName": "集英社",
+        "itemCaption": "江戸では、突如宙から舞い降りた異人「天人」の台頭と廃刀令により侍が衰退の一途をたどっていた。しかし一人、侍の魂を堅持する男が…。その名は坂田銀時。甘党＆無鉄砲なこの男が、腐った江戸を一刀両断…するかも!?",
+        "salesDate": "2004-04-02",
+        "imageUrl": "https://dosbg3xlm0x1t.cloudfront.net/images/items/9784088736235/500/9784088736235.jpg",
+        "imprint": "ジャンプコミックス",
+        "pageCount": 208,
+        "sourceUrl": "https://www.shueisha.co.jp/books/items/contents.html?isbn=978-4-08-873623-5&mode=1",
+        "fetchedAt": "2026-10-09T06:49:53.907288+00:00"
       }
     },
     {
@@ -402483,6 +402686,7 @@
     "work-0bd2d3b52ffff3a7ded4": "work-0bd2d3b52ffff3a7ded4-representative",
     "work-0bec5d8d9474a2197312": "work-0bec5d8d9474a2197312-representative",
     "work-0bf4fb9ebf916a0012a9": "work-0bf4fb9ebf916a0012a9-v1",
+    "work-0bfd1cd17ce207473ec2": "work-0bfd1cd17ce207473ec2-representative",
     "work-0c0301626306f5624d27": "work-0c0301626306f5624d27-representative",
     "work-0c08e11cfccb806b9b64": "work-0c08e11cfccb806b9b64-v1",
     "work-0c9222ac9c98638a2c3b": "work-0c9222ac9c98638a2c3b-v1",
@@ -403374,6 +403578,7 @@
     "work-522dcf39236be10bc853": "work-522dcf39236be10bc853-v1",
     "work-52395120f06a2d9216a8": "work-52395120f06a2d9216a8-v1",
     "work-52729c609c21aba712d4": "work-52729c609c21aba712d4-v1",
+    "work-527c45f3ae21c5b5ade3": "work-527c45f3ae21c5b5ade3-representative",
     "work-528a274ba6e2c0ad0546": "work-528a274ba6e2c0ad0546-representative",
     "work-5292c97c547005b2b017": "work-5292c97c547005b2b017-v1",
     "work-529bc862ac854aab473e": "work-529bc862ac854aab473e-v1",

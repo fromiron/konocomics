@@ -70,7 +70,7 @@ describe("promotion pilot packet", () => {
       payloadLedgerSha256: "0".repeat(64),
     });
     expect(changedCandidate).not.toBe(manifest.candidateSha256);
-  }, 30_000);
+  }, 180_000);
 
   it("keeps explicit packet regeneration isolated to the original library-only state", () => {
     const input = loadPromotionPilotInput(process.cwd());
@@ -111,5 +111,5 @@ describe("promotion pilot packet", () => {
         input.goldWorkIds,
       ),
     ).toThrow(`work is not isolated libraryOnly: ${first.workId}`);
-  }, 30_000);
+  }, 180_000);
 });

@@ -1,6 +1,6 @@
 "use client";
 
-import { useNavigate } from "@tanstack/react-router";
+import { Link, useNavigate } from "@tanstack/react-router";
 import {
   type AnimationEvent,
   type ReactNode,
@@ -14,6 +14,7 @@ import {
 import { ChevronLeftIcon, InfoIcon } from "lucide-react";
 
 import { Button } from "@/components/design-system/button";
+import { NativeSelect, NativeSelectOption } from "@/components/design-system/native-select";
 import { SectionHeading } from "@/components/layout/section-heading";
 import { pageEntryFadeProps, usePageEntryMotion } from "@/components/motion/use-page-entry-motion";
 import type { GenreTag, Work } from "@/domain/catalog/types";
@@ -24,6 +25,7 @@ import {
 import { type ConfidenceLevel, projectProfileClarity } from "@/domain/profile/confidence";
 import {
   createEmptyOnboardingDraft,
+  OnboardingInsufficientPositiveWorksError,
   reconcileOnboardingDraftMode,
   ONBOARDING_MAX_NEGATIVE_WORKS,
   ONBOARDING_MAX_POSITIVE_WORKS,
@@ -195,6 +197,7 @@ export function OnboardingFlow({
     onboardingDraft: storedDraft,
     onboardingCompletedAt,
     userWorks,
+    externalWorks,
     getProviderCache,
     refresh,
     saveProviderCache,
@@ -216,6 +219,7 @@ export function OnboardingFlow({
   const [pageEntryConsumed, setPageEntryConsumed] = useState(false);
   const [candidatesExpanded, setCandidatesExpanded] = useState(false);
   const headingRef = useRef<HTMLHeadingElement>(null);
+  const readingConfirmationRef = useRef<HTMLFieldSetElement>(null);
   const limitTimerRef = useRef<number | null>(null);
   const submittingRef = useRef(false);
 
@@ -229,7 +233,10 @@ export function OnboardingFlow({
     [recommendationEligibleCatalogWorks],
   );
   const onboardingEligibleCatalogWorks = useMemo(
-    () => recommendationEligibleCatalogWorks.filter((work) => work.eligibility.onboardingEligible),
+    () => [
+      ...recommendationEligibleCatalogWorks.filter((work) => work.eligibility.onboardingEligible),
+      ...recommendationEligibleCatalogWorks.filter((work) => !work.eligibility.onboardingEligible),
+    ],
     [recommendationEligibleCatalogWorks],
   );
   const onboardingEligibleWorkIds = useMemo(
@@ -291,6 +298,11 @@ export function OnboardingFlow({
     () => recommendationProfileRecords(userWorks ?? [], allCatalogWorks),
     [allCatalogWorks, userWorks],
   );
+  const existingPositiveCount = new Set(
+    profileRecords
+      .filter((record) => record.reaction === "liked" || record.reaction === "favorite")
+      .map((record) => record.workId),
+  ).size;
   const hadCatalogBackedProfile = useMemo(
     () => hasCatalogBackedProfile(userWorks, allCatalogWorks),
     [allCatalogWorks, userWorks],
@@ -315,8 +327,10 @@ export function OnboardingFlow({
               persistedWorkIds,
               onboardingEligibleWorkIds,
               recommendationEligibleWorkIds,
+              existingPositiveCount,
             ),
     [
+      existingPositiveCount,
       onboardingEligibleWorkIds,
       onboardingCompletedAt,
       persistedWorkIds,
@@ -471,7 +485,23 @@ export function OnboardingFlow({
 
   const updateDraft = (nextDraft: OnboardingDraft) => persist(withUpdatedAt(nextDraft));
   const isAddMode = draft.mode === "add";
-  const minimumPositiveWorks = isAddMode ? 1 : ONBOARDING_MIN_POSITIVE_WORKS;
+  const minimumPositiveWorks = Math.max(
+    isAddMode && hadCatalogBackedProfile ? 1 : 0,
+    ONBOARDING_MIN_POSITIVE_WORKS - existingPositiveCount,
+  );
+  const selectedPositiveCount = draft.positiveEntries.filter(
+    (entry) => entry.readingState !== "planned",
+  ).length;
+  const confirmReadingState = (
+    readingState: "planned" | "reading" | "completed",
+    workId?: string,
+  ) =>
+    updateDraft({
+      ...draft,
+      positiveEntries: draft.positiveEntries.map((entry) =>
+        workId === undefined || entry.workId === workId ? { ...entry, readingState } : entry,
+      ),
+    });
 
   const togglePositiveSelection = (workId: string) => {
     const existing = positiveByWorkId.get(workId);
@@ -614,7 +644,7 @@ export function OnboardingFlow({
             updatedAt: nowIso(),
           };
     try {
-      await finalizeOnboarding(completedDraft, nowIso());
+      await finalizeOnboarding(completedDraft, nowIso(), [...recommendationEligibleWorkIds]);
       if (completedDraft.mode === "add") {
         await navigate({ to: "/taste", replace: true });
       } else {
@@ -625,6 +655,14 @@ export function OnboardingFlow({
         await refresh().catch(() => undefined);
         setLocalDraft(null);
         await navigate({ to: "/taste", replace: true });
+        return;
+      }
+      if (error instanceof OnboardingInsufficientPositiveWorksError) {
+        await refresh().catch(() => undefined);
+        setLocalDraft(null);
+        submittingRef.current = false;
+        setSubmitting(false);
+        setErrorMessage(onboardingStrings.completeError);
         return;
       }
       if (error instanceof OnboardingWorkConflictError) {
@@ -645,10 +683,13 @@ export function OnboardingFlow({
 
   const continueFromStepOne = () => {
     if (submittingRef.current) return;
-    if (draft.positiveEntries.length < minimumPositiveWorks) {
-      showLimit(
-        onboardingStrings.step1.needMore(minimumPositiveWorks - draft.positiveEntries.length),
-      );
+    if (selectedPositiveCount < minimumPositiveWorks) {
+      showLimit(onboardingStrings.step1.needMore(minimumPositiveWorks - selectedPositiveCount));
+      return;
+    }
+    if (draft.positiveEntries.some((entry) => entry.readingState === undefined)) {
+      showLimit(onboardingStrings.readingConfirmation.required);
+      readingConfirmationRef.current?.focus();
       return;
     }
     setPageEntryConsumed(true);
@@ -682,7 +723,7 @@ export function OnboardingFlow({
     setErrorMessage("");
     try {
       await saveOnboardingDraft(draft);
-      await navigate({ to: "/taste", replace: true });
+      await navigate({ to: hadCatalogBackedProfile ? "/taste" : "/library", replace: true });
     } catch {
       submittingRef.current = false;
       setSubmitting(false);
@@ -699,7 +740,9 @@ export function OnboardingFlow({
   };
 
   const clarity = projectProfileClarity(profileRecords, {
-    addedPositiveWorkIds: draft.positiveEntries.map((entry) => entry.workId),
+    addedPositiveWorkIds: draft.positiveEntries
+      .filter((entry) => entry.readingState !== "planned")
+      .map((entry) => entry.workId),
     addedReasonedNegativeWorkIds: draft.negativeEntries
       .filter((entry) => entry.reasons.some(isFactorBackedNegativeReason))
       .map((entry) => entry.workId),
@@ -707,7 +750,7 @@ export function OnboardingFlow({
       draft.step === 1 ? ONBOARDING_MAX_POSITIVE_WORKS - draft.positiveEntries.length : 0,
   });
   const clarityStage = clarity.positiveAnchorCount === 0 ? 0 : clarityStageByLevel[clarity.level];
-  const belowMinimum = draft.positiveEntries.length < minimumPositiveWorks;
+  const belowMinimum = selectedPositiveCount < minimumPositiveWorks;
   const clarityLevelLabel =
     clarity.positiveAnchorCount === 0
       ? onboardingStrings.clarity.levels.empty
@@ -715,7 +758,7 @@ export function OnboardingFlow({
   // Below the first-run minimum the tray already says how many works remain; repeating the same
   // count as a clarity hint would only add noise.
   const stepOneClarityHint =
-    clarity.anchorsToNextLevel === null || (belowMinimum && !isAddMode)
+    clarity.anchorsToNextLevel === null || belowMinimum
       ? undefined
       : clarity.level === "low"
         ? onboardingStrings.clarity.toNormal(clarity.anchorsToNextLevel)
@@ -783,13 +826,33 @@ export function OnboardingFlow({
                       type="button"
                       variant="outline"
                     >
-                      {onboardingStrings.addMode.close}
+                      {hadCatalogBackedProfile
+                        ? onboardingStrings.addMode.close
+                        : onboardingStrings.recovery.library}
                     </Button>
                   }
                   headingRef={headingRef}
                 />
               ) : null}
 
+              {!hadCatalogBackedProfile && userWorks.length + (externalWorks?.length ?? 0) > 0 ? (
+                <section
+                  className="mb-[var(--space-5)] grid gap-[var(--space-2)] text-text-muted"
+                  aria-label={onboardingStrings.recovery.library}
+                >
+                  <p>
+                    {onboardingStrings.recovery.summary(
+                      userWorks.length + (externalWorks?.length ?? 0),
+                      existingPositiveCount,
+                      Math.max(0, ONBOARDING_MIN_POSITIVE_WORKS - existingPositiveCount),
+                    )}
+                  </p>
+                  <p>{onboardingStrings.recovery.help}</p>
+                  <Link className="text-accent-ink underline" to="/library">
+                    {onboardingStrings.recovery.library}
+                  </Link>
+                </section>
+              ) : null}
               <div className="onboarding-discovery grid gap-[var(--space-6)] [&>.work-search]:m-0 [&>.work-search]:max-w-none [&_.work-search__label]:sr-only [&_.work-search__input]:min-h-[var(--control-min-size)] [&_.work-search__input]:bg-surface-1 motion-reduce:[&_.work-search__input]:transition-none">
                 <WorkSearchInput
                   key="positive-search"
@@ -877,6 +940,63 @@ export function OnboardingFlow({
                   </div>
                 )}
               </div>
+              {draft.positiveEntries.length > 0 ? (
+                <fieldset
+                  ref={readingConfirmationRef}
+                  tabIndex={-1}
+                  className="mt-[var(--space-5)] grid gap-[var(--space-3)]"
+                  disabled={submitting}
+                >
+                  <legend className="font-bold text-text-strong">
+                    {onboardingStrings.readingConfirmation.title}
+                  </legend>
+                  <p className="text-text-muted">
+                    {onboardingStrings.readingConfirmation.description}
+                  </p>
+                  <div className="flex flex-wrap gap-[var(--space-2)]">
+                    <Button
+                      type="button"
+                      variant="outline"
+                      onClick={() => confirmReadingState("reading")}
+                    >
+                      {onboardingStrings.readingConfirmation.allReading}
+                    </Button>
+                    <Button
+                      type="button"
+                      variant="outline"
+                      onClick={() => confirmReadingState("completed")}
+                    >
+                      {onboardingStrings.readingConfirmation.allCompleted}
+                    </Button>
+                  </div>
+                  {draft.positiveEntries.map((entry) => (
+                    <label key={entry.workId} className="grid gap-[var(--space-1)]">
+                      <span>{worksById.get(entry.workId)?.title ?? entry.workId}</span>
+                      <NativeSelect
+                        value={entry.readingState ?? ""}
+                        onChange={(event) => {
+                          const value = event.currentTarget.value;
+                          if (value === "planned" || value === "reading" || value === "completed")
+                            confirmReadingState(value, entry.workId);
+                        }}
+                      >
+                        <NativeSelectOption value="" disabled>
+                          {onboardingStrings.readingConfirmation.unconfirmed}
+                        </NativeSelectOption>
+                        <NativeSelectOption value="planned">
+                          {onboardingStrings.readingConfirmation.planned}
+                        </NativeSelectOption>
+                        <NativeSelectOption value="reading">
+                          {onboardingStrings.readingConfirmation.reading}
+                        </NativeSelectOption>
+                        <NativeSelectOption value="completed">
+                          {onboardingStrings.readingConfirmation.completed}
+                        </NativeSelectOption>
+                      </NativeSelect>
+                    </label>
+                  ))}
+                </fieldset>
+              ) : null}
             </div>
 
             <SelectedTray
@@ -923,9 +1043,7 @@ export function OnboardingFlow({
               onRemove={togglePositiveSelection}
               remainingLabel={
                 belowMinimum
-                  ? onboardingStrings.step1.remaining(
-                      minimumPositiveWorks - draft.positiveEntries.length,
-                    )
+                  ? onboardingStrings.step1.remaining(minimumPositiveWorks - selectedPositiveCount)
                   : undefined
               }
               removeLabel={onboardingStrings.step1.remove}

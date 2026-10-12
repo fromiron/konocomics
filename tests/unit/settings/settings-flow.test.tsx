@@ -1,6 +1,6 @@
 // @vitest-environment jsdom
 
-import { cleanup, fireEvent, render, screen, waitFor, within } from "@testing-library/react";
+import { act, cleanup, fireEvent, render, screen, waitFor, within } from "@testing-library/react";
 import type { ReactNode } from "react";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 
@@ -208,6 +208,8 @@ describe("SettingsFlow layout and storage", () => {
     expect(screen.getByText(/使用容量 約2 MB/u)).toBeTruthy();
     fireEvent.click(screen.getByRole("button", { name: strings.protect }));
     expect(await screen.findByText(strings.persisted)).toBeTruthy();
+    expect(screen.getByText(strings.limits)).toBeTruthy();
+    expect(screen.getByText(strings.usageHelp)).toBeTruthy();
     expect(persist).toHaveBeenCalledTimes(1);
     expect(screen.queryByRole("button", { name: strings.protect })).toBeNull();
   });
@@ -229,6 +231,58 @@ describe("SettingsFlow layout and storage", () => {
     );
     expect(await screen.findByText(settingsStrings.storageStatus.denied)).toBeTruthy();
     expect(screen.queryByText(settingsStrings.storageStatus.persisted)).toBeNull();
+  });
+});
+
+describe("SettingsFlow storage limitations", () => {
+  it("shows unsupported storage protection while keeping backup available", () => {
+    vi.stubGlobal("navigator", { ...navigator, storage: undefined });
+    render(<SettingsFlow />);
+    expect(screen.getByText(settingsStrings.storageStatus.unsupported)).toBeTruthy();
+    expect(screen.getByText(settingsStrings.storageStatus.limits)).toBeTruthy();
+    expect(
+      screen.queryByRole("button", { name: settingsStrings.storageStatus.protect }),
+    ).toBeNull();
+    expect(screen.getByRole("button", { name: settingsStrings.data.export.action })).toBeTruthy();
+  });
+
+  it("keeps the request result when an earlier persistence query finishes later", async () => {
+    let finishQuery: (value: boolean) => void = () => undefined;
+    vi.stubGlobal("navigator", {
+      ...navigator,
+      storage: {
+        persisted: () =>
+          new Promise<boolean>((resolve) => {
+            finishQuery = resolve;
+          }),
+        persist: vi.fn().mockResolvedValue(true),
+      },
+    });
+    render(<SettingsFlow />);
+    fireEvent.click(screen.getByRole("button", { name: settingsStrings.storageStatus.protect }));
+    expect(await screen.findByText(settingsStrings.storageStatus.persisted)).toBeTruthy();
+    await act(async () => {
+      finishQuery(false);
+    });
+    expect(screen.getByText(settingsStrings.storageStatus.persisted)).toBeTruthy();
+    expect(screen.queryByText(settingsStrings.storageStatus.notPersisted)).toBeNull();
+  });
+
+  it("allows an explicit request if reading persistence status fails", async () => {
+    const persist = vi.fn().mockRejectedValue(new Error("denied"));
+    vi.stubGlobal("navigator", {
+      ...navigator,
+      storage: {
+        persisted: vi.fn().mockRejectedValue(new Error("unavailable")),
+        persist,
+      },
+    });
+    render(<SettingsFlow />);
+    expect(screen.getByText(settingsStrings.storageStatus.unknown)).toBeTruthy();
+    fireEvent.click(screen.getByRole("button", { name: settingsStrings.storageStatus.protect }));
+    expect(await screen.findByText(settingsStrings.storageStatus.denied)).toBeTruthy();
+    expect(testState.deleteAllData).not.toHaveBeenCalled();
+    expect(testState.replaceFromExport).not.toHaveBeenCalled();
   });
 });
 
@@ -268,6 +322,7 @@ describe("SettingsFlow data ownership", () => {
     fireEvent.click(screen.getByRole("button", { name: settingsStrings.danger.exportFirst }));
 
     await waitFor(() => expect(testState.exportUserData).toHaveBeenCalledTimes(1));
+    expect(await screen.findByText(settingsStrings.data.export.started)).toBeTruthy();
     expect(testState.deleteAllData).not.toHaveBeenCalled();
   });
 
@@ -344,6 +399,35 @@ describe("SettingsFlow data ownership", () => {
     expect(downloadedFilename).toMatch(/^konocomics-export-\d{8}\.json$/u);
     expect(createObjectUrl).toHaveBeenCalledTimes(1);
     expect(revokeObjectUrl).toHaveBeenCalledWith("blob:export");
+  });
+
+  it("announces preparing, then reports a failed download without claiming completion", async () => {
+    let completeExport: (file: ExportFileV1) => void = () => undefined;
+    testState.exportUserData.mockReturnValue(
+      new Promise<ExportFileV1>((resolve) => {
+        completeExport = resolve;
+      }),
+    );
+    vi.spyOn(URL, "createObjectURL").mockReturnValue("blob:export");
+    const revoke = vi.spyOn(URL, "revokeObjectURL").mockImplementation(() => undefined);
+    vi.spyOn(HTMLAnchorElement.prototype, "click").mockImplementation(() => {
+      throw new Error("download denied");
+    });
+    render(<SettingsFlow />);
+    fireEvent.click(screen.getByRole("button", { name: settingsStrings.data.export.action }));
+    expect(
+      screen
+        .getAllByRole("status")
+        .some((node) => node.textContent === settingsStrings.data.export.exporting),
+    ).toBe(true);
+    completeExport(exportFile);
+    expect(await screen.findByText(settingsStrings.data.errors.unknown)).toBeTruthy();
+    expect(screen.queryByText(settingsStrings.data.export.started)).toBeNull();
+    expect(revoke).toHaveBeenCalledWith("blob:export");
+    expect(document.querySelector("a[download]")).toBeNull();
+    expect(testState.deleteAllData).not.toHaveBeenCalled();
+    expect(testState.replaceFromExport).not.toHaveBeenCalled();
+    expect(testState.savePolicies).not.toHaveBeenCalled();
   });
 
   it("validates locally, shows the required preview, then opens a separate replacement confirmation", async () => {

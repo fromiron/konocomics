@@ -19,7 +19,6 @@ export function WorkContrastSection({ entries, coverUrls, onCoverVisible }: Work
       compactHeading
       controlsPlacement="overlay"
       description={strings.description}
-      enableLoop={false}
       title={strings.heading}
       trackClassName="!pb-[var(--space-1)]"
     >

@@ -1,4 +1,7 @@
-import type { OnboardingDraft } from "@/domain/profile/onboarding";
+import {
+  OnboardingInsufficientPositiveWorksError,
+  type OnboardingDraft,
+} from "@/domain/profile/onboarding";
 import { parseExternalWorkId, type ExternalWorkId } from "@/domain/catalog/external-work";
 import type {
   ProfileAdjustments,
@@ -40,7 +43,6 @@ import {
 import { MemoryPersistenceBackend } from "./memory-backend";
 import type { ExternalWorkRecord, ProviderCacheRecord, RecommendationCacheRecord } from "./records";
 import {
-  createOnboardingCommit,
   createDefaultRecommendationPolicies,
   createEmptyProfileAdjustments,
   parseExternalWork,
@@ -147,7 +149,11 @@ export interface Persistence {
   getOnboardingDraft(): Promise<OnboardingDraft | null>;
   saveOnboardingDraft(draft: OnboardingDraft): Promise<void>;
   clearOnboardingDraft(): Promise<void>;
-  finalizeOnboarding(draft: OnboardingDraft, completedAt: string): Promise<void>;
+  finalizeOnboarding(
+    draft: OnboardingDraft,
+    completedAt: string,
+    profileWorkIds?: readonly string[],
+  ): Promise<void>;
   getUserWorks(): Promise<UserWorkRecord[]>;
   addUserWorkIfAbsent(record: UserWorkRecord): Promise<AddIfAbsentResult<UserWorkRecord>>;
   saveUserWork(record: UserWorkRecord, expectedUpdatedAt?: string | null): Promise<UserWorkRecord>;
@@ -165,6 +171,7 @@ export interface Persistence {
     id: ExternalWorkId,
     expectedNormalizedKey: string,
     record: UserWorkRecord,
+    expectedUpdatedAt?: string,
   ): Promise<ExternalWorkRecord>;
   removeExternalWork(
     id: ExternalWorkId,
@@ -297,27 +304,44 @@ export class ResilientPersistence implements Persistence {
     });
   }
 
-  async finalizeOnboarding(draft: OnboardingDraft, completedAt: string): Promise<void> {
-    const commit = createOnboardingCommit(draft, completedAt);
+  async finalizeOnboarding(
+    draft: OnboardingDraft,
+    completedAt: string,
+    profileWorkIds?: readonly string[],
+  ): Promise<void> {
+    draft = parseOnboardingDraft(draft);
+    if (parseOnboardingCompletedAt(completedAt) === null)
+      throw new Error("Onboarding completion time is required");
+    if (draft.positiveEntries.some((entry) => entry.readingState === undefined)) {
+      throw new Error("Confirm the reading state of each selected work");
+    }
     return this.enqueue(async () => {
       await this.initialize();
       if (this.activeBackend.mode === "memory") {
-        await this.memoryBackend.commitOnboarding(commit);
+        await this.memoryBackend.commitOnboarding(draft, completedAt, profileWorkIds);
         return;
       }
 
       try {
-        await this.activeBackend.commitOnboarding(commit);
-        await this.memoryBackend.commitOnboarding(commit);
+        const records = await this.activeBackend.commitOnboarding(
+          draft,
+          completedAt,
+          profileWorkIds,
+        );
+        this.memoryBackend.synchronizeUserWorks(records);
+        if (draft.mode === "firstRun")
+          this.memoryBackend.synchronizeOnboardingCompletedAt(completedAt);
+        await this.memoryBackend.setOnboardingDraft(null);
       } catch (error) {
         if (
           error instanceof OnboardingWorkConflictError ||
-          error instanceof OnboardingAlreadyCompletedError
+          error instanceof OnboardingAlreadyCompletedError ||
+          error instanceof OnboardingInsufficientPositiveWorksError
         ) {
           throw error;
         }
         await this.degrade("operation-failed");
-        await this.memoryBackend.commitOnboarding(commit);
+        await this.memoryBackend.commitOnboarding(draft, completedAt, profileWorkIds);
       }
     });
   }
@@ -559,6 +583,7 @@ export class ResilientPersistence implements Persistence {
     id: ExternalWorkId,
     expectedNormalizedKey: string,
     record: UserWorkRecord,
+    expectedUpdatedAt?: string,
   ): Promise<ExternalWorkRecord> {
     const validatedId = parseExternalWorkId(id);
     const validatedRecord = parseExternalUserWorkRecord(validatedId, record);
@@ -574,6 +599,7 @@ export class ResilientPersistence implements Persistence {
           validatedId,
           expectedNormalizedKey,
           validatedRecord,
+          expectedUpdatedAt,
         );
       }
 
@@ -601,6 +627,7 @@ export class ResilientPersistence implements Persistence {
             validatedId,
             expectedNormalizedKey,
             validatedRecord,
+            expectedUpdatedAt,
           ),
         );
         if (
@@ -613,6 +640,7 @@ export class ResilientPersistence implements Persistence {
         return storedRecord;
       } catch (error) {
         if (
+          error instanceof UserWorkConflictError ||
           error instanceof ExternalWorkIdentityConflictError ||
           error instanceof ExternalWorkCorruptRecordError ||
           error instanceof ExternalWorkNotFoundError

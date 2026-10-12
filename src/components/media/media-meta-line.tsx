@@ -11,7 +11,7 @@ export function MediaMetaLine({ children, className }: MediaMetaLineProps) {
   return (
     <span
       className={cn(
-        "block min-w-0 truncate text-[length:var(--text-caption-size)] leading-tight text-text-muted",
+        "block min-w-0 whitespace-normal [overflow-wrap:anywhere] text-[length:var(--text-caption-size)] leading-tight text-text-muted",
         className,
       )}
       data-media-meta-line="true"

@@ -18,6 +18,7 @@ import recommendationContextJson from "@/data/generated/recommendation-context-v
 import { catalogV1Schema } from "@/domain/catalog/schema";
 import { explanationClusterFor, generateTasteExplanation } from "@/domain/explanation";
 import type { UserWorkRecord } from "@/domain/profile/types";
+import type * as PersistenceModule from "@/infrastructure/db";
 import { recommendationContextSchema } from "@/domain/recommendation/context-schema";
 import { scoreWorkCompatibility } from "@/domain/recommendation/rank";
 import { CatalogProvider } from "@/features/catalog/catalog-provider";
@@ -34,6 +35,8 @@ import {
 } from "@/lib/strings";
 
 vi.mock("@tanstack/react-router", () => ({
+  useCanGoBack: () => false,
+  useRouter: () => ({ history: { back: vi.fn() } }),
   Link: ({
     to,
     params,
@@ -62,7 +65,8 @@ const testState = vi.hoisted(() => ({
     preferVerified: false,
     excludeIncomplete: false,
   },
-  saveUserWork: vi.fn<(record: UserWorkRecord) => Promise<UserWorkRecord>>(),
+  saveUserWork:
+    vi.fn<(record: UserWorkRecord, expectedUpdatedAt?: string | null) => Promise<UserWorkRecord>>(),
   removeMinimalPlannedUserWork:
     vi.fn<(workId: string) => Promise<"removed" | "already-absent" | "preserved-conflict">>(),
   removeUserWorkIfUnchanged:
@@ -79,7 +83,8 @@ const testState = vi.hoisted(() => ({
   requestRakutenBook: vi.fn(),
 }));
 
-vi.mock("@/infrastructure/db", () => ({
+vi.mock("@/infrastructure/db", async (importOriginal) => ({
+  ...(await importOriginal<typeof PersistenceModule>()),
   usePersistence: () => ({
     status: testState.status,
     userWorks: testState.userWorks,
@@ -220,12 +225,12 @@ describe("WorkDetailFlow", () => {
     expect(new Set(links).size).toBe(links.length);
   });
 
-  it("offers four reading states and explains 「読んだ」 only for continuing series", async () => {
+  it("offers five reading states and explains 「読んだ」 only for continuing series", async () => {
     testState.status = { state: "ready", mode: "indexeddb", warning: null };
     const view = renderDetail("monster");
 
     const controls = await screen.findByRole("group", { name: workDetailStrings.state.heading });
-    expect(within(controls).getAllByRole("button")).toHaveLength(4);
+    expect(within(controls).getAllByRole("button")).toHaveLength(5);
     for (const name of Object.values(workDetailStrings.state.options)) {
       expect(within(controls).getByRole("button", { name }).getAttribute("aria-pressed")).toBe(
         "false",
@@ -570,6 +575,44 @@ describe("WorkDetailFlow", () => {
     expect(nextMain.classList.contains("page-entry-b")).toBe(true);
   });
 
+  it("preserves Higurashi feedback and progress when hiding, and restores its original state atomically", async () => {
+    const higurashi = catalog.works.find((work) => work.title.includes("ひぐらし"));
+    if (higurashi === undefined) throw new Error("Expected the reported catalog work");
+    const original: UserWorkRecord = {
+      workId: higurashi.id,
+      readingState: "planned",
+      reaction: "liked",
+      progress: { volume: 2 },
+      updatedAt: "2026-08-14T00:00:00.000Z",
+    };
+    testState.userWorks = [original];
+    renderDetail(higurashi.id);
+    fireEvent.click(screen.getByRole("button", { name: workDetailStrings.state.options.hidden }));
+    await waitFor(() =>
+      expect(testState.saveUserWork).toHaveBeenCalledWith(
+        expect.objectContaining({
+          readingState: "hidden",
+          reaction: "liked",
+          progress: { volume: 2 },
+        }),
+        original.updatedAt,
+      ),
+    );
+    const hidden = testState.saveUserWork.mock.calls[0]![0];
+    fireEvent.click(await screen.findByRole("button", { name: workDetailStrings.state.undo }));
+    await waitFor(() =>
+      expect(testState.saveUserWork).toHaveBeenLastCalledWith(
+        expect.objectContaining({
+          readingState: "planned",
+          reaction: "liked",
+          progress: { volume: 2 },
+        }),
+        hidden.updatedAt,
+      ),
+    );
+    expect(testState.removeUserWorkIfUnchanged).not.toHaveBeenCalled();
+  });
+
   it("gates all record mutations until authoritative userWorks are ready", () => {
     testState.userWorks = undefined;
     renderDetail();
@@ -581,7 +624,7 @@ describe("WorkDetailFlow", () => {
     expect(testState.removeUserWorkIfUnchanged).not.toHaveBeenCalled();
   });
 
-  it("clears the record when the selected state is tapped again and restores it once", async () => {
+  it("clears the record with an explicit removal action and restores it once", async () => {
     const record: UserWorkRecord = {
       workId: target.id,
       readingState: "completed",
@@ -597,7 +640,7 @@ describe("WorkDetailFlow", () => {
     expect(completed.getAttribute("aria-pressed")).toBe("true");
 
     await act(async () => {
-      fireEvent.click(completed);
+      fireEvent.click(screen.getByRole("button", { name: workDetailStrings.state.removeRecord }));
     });
     expect(testState.removeUserWorkIfUnchanged).toHaveBeenCalledWith(target.id, record.updatedAt);
     expect(testState.saveUserWork).not.toHaveBeenCalled();
@@ -773,8 +816,8 @@ describe("WorkDetailFlow", () => {
       await screen.findByRole("button", { name: workDetailStrings.provider.retry }),
     ).toBeTruthy();
     expect(screen.queryByText(workDetailStrings.provider.unavailable)).toBeNull();
-    expect(screen.queryByRole("heading", { name: workDetailStrings.synopsis.heading })).toBeNull();
-    expect(screen.queryByText(workDetailStrings.synopsis.unavailable)).toBeNull();
+    expect(screen.getByRole("heading", { name: workDetailStrings.synopsis.heading })).toBeTruthy();
+    expect(screen.getByText(workDetailStrings.synopsis.unavailable)).toBeTruthy();
   });
 
   it("keeps library-only records and metadata without using retained factors for detail recommendations", async () => {
@@ -862,8 +905,8 @@ describe("WorkDetailFlow", () => {
     const view = renderDetail();
 
     await screen.findByRole("button", { name: workDetailStrings.provider.retry });
-    expect(screen.queryByRole("heading", { name: workDetailStrings.synopsis.heading })).toBeNull();
-    expect(screen.queryByText(workDetailStrings.synopsis.unavailable)).toBeNull();
+    expect(screen.getByRole("heading", { name: workDetailStrings.synopsis.heading })).toBeTruthy();
+    expect(screen.getByText(workDetailStrings.synopsis.unavailable)).toBeTruthy();
     expect(view.container.innerHTML).not.toContain(cached.imageUrl);
     expect(view.container.textContent).not.toContain(String(cached.reviewAverage));
     expect(view.container.textContent).not.toContain(String(cached.reviewCount));
@@ -906,8 +949,8 @@ describe("WorkDetailFlow", () => {
     await act(async () => {
       await vi.advanceTimersByTimeAsync(1_000);
     });
-    expect(screen.queryByRole("heading", { name: workDetailStrings.synopsis.heading })).toBeNull();
-    expect(screen.queryByText(workDetailStrings.synopsis.unavailable)).toBeNull();
+    expect(screen.getByRole("heading", { name: workDetailStrings.synopsis.heading })).toBeTruthy();
+    expect(screen.getByText(workDetailStrings.synopsis.unavailable)).toBeTruthy();
     expect(view.container.innerHTML).not.toContain(cached.imageUrl);
     expect(heroRequestCount()).toBe(1);
     expect(

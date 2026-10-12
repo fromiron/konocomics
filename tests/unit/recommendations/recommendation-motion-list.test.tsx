@@ -44,8 +44,7 @@ beforeEach(() => {
 afterEach(cleanup);
 
 describe("RecommendationMotionList", () => {
-  const canonicalItemProps = () =>
-    motionState.itemProps.find((props) => props["data-carousel-copy"] === 1);
+  const canonicalItemProps = () => motionState.itemProps[0];
 
   it("pops the removed card from layout while scaling and fading it", () => {
     render(
@@ -113,41 +112,22 @@ describe("RecommendationMotionList", () => {
     ).not.toMatch(/height|scale|"y"/u);
   });
 
-  it("keeps only the middle loop copy interactive while all copies share geometry motion", () => {
+  it("renders one interactive card per canonical item", () => {
     render(
       <RecommendationMotionList
         items={[
-          { workId: "work-1", animateIn: true, content: <article>Work 1</article> },
-          { workId: "work-2", animateIn: false, content: <article>Work 2</article> },
+          { workId: "work-1", animateIn: true, content: <article>First</article> },
+          { workId: "work-2", animateIn: false, content: <article>Second</article> },
         ]}
         reducedMotion={false}
         shortage={null}
       />,
     );
-
-    const workCopies = motionState.itemProps.filter(
-      (props) => props["data-recommendation-work-id"] === "work-1",
-    );
-    expect(workCopies).toHaveLength(3);
-    expect(workCopies[0]).toMatchObject({
-      "aria-hidden": true,
-      "data-carousel-clone": "",
-      "data-carousel-copy": 0,
-      inert: true,
-      exit: { opacity: 0, scale: 0.92 },
-      layout: "position",
-    });
-    expect(workCopies[1]).toMatchObject({
-      "data-carousel-copy": 1,
-      layout: "position",
-    });
-    expect(workCopies[2]).toMatchObject({
-      "aria-hidden": true,
-      "data-carousel-clone": "",
-      "data-carousel-copy": 2,
-      inert: true,
-      exit: { opacity: 0, scale: 0.92 },
-      layout: "position",
-    });
+    expect(motionState.itemProps).toHaveLength(2);
+    for (const props of motionState.itemProps) {
+      expect(props.inert).toBeUndefined();
+      expect(props["aria-hidden"]).toBeUndefined();
+      expect(props.layout).toBe("position");
+    }
   });
 });

@@ -9,7 +9,7 @@ import {
   sceneWindowStyle,
   useHeroScene,
 } from "@/features/home-hero/home-hero-scene";
-import { landingStrings } from "@/lib/strings";
+import { landingStrings, navigationStrings } from "@/lib/strings";
 import { cn } from "@/lib/utils";
 
 import { LandingLogoReveal } from "./landing-logo-reveal";
@@ -87,7 +87,15 @@ export function HomeHero({
         <div className="hh-spread">
           <div className="hh-page" data-paper={scene.paper} style={sceneWindowStyle(scene)}>
             <div className="hh-mast">
-              <LandingLogoReveal staticPresentation={storageFree} />
+              <Link
+                aria-current="page"
+                aria-label={navigationStrings.brandLinkLabel}
+                preload={false}
+                search={{ landing: "1" }}
+                to="/"
+              >
+                <LandingLogoReveal staticPresentation={storageFree} />
+              </Link>
             </div>
             {/* The opening narration (top right, read first): the promise, set vertically. */}
             <div className="hh-koma hh-koma--title">

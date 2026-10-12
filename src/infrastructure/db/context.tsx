@@ -43,7 +43,11 @@ export type PersistenceContextValue = {
   refresh(): Promise<void>;
   saveOnboardingDraft(draft: OnboardingDraft): Promise<void>;
   clearOnboardingDraft(): Promise<void>;
-  finalizeOnboarding(draft: OnboardingDraft, completedAt: string): Promise<void>;
+  finalizeOnboarding(
+    draft: OnboardingDraft,
+    completedAt: string,
+    profileWorkIds?: readonly string[],
+  ): Promise<void>;
   saveProfileAdjustments(adjustments: ProfileAdjustments): Promise<void>;
   savePolicies(policies: RecommendationPolicies): Promise<void>;
   addUserWorkIfAbsent(record: UserWorkRecord): Promise<AddIfAbsentResult<UserWorkRecord>>;
@@ -61,6 +65,7 @@ export type PersistenceContextValue = {
     id: ExternalWorkId,
     expectedNormalizedKey: string,
     record: UserWorkRecord,
+    expectedUpdatedAt?: string,
   ): Promise<ExternalWorkRecord>;
   removeExternalWork(
     id: ExternalWorkId,
@@ -178,8 +183,8 @@ export function PersistenceProvider({ children, persistence }: PersistenceProvid
   }, [service]);
 
   const finalizeOnboarding = useCallback(
-    async (draft: OnboardingDraft, completedAt: string) => {
-      await service.finalizeOnboarding(draft, completedAt);
+    async (draft: OnboardingDraft, completedAt: string, profileWorkIds?: readonly string[]) => {
+      await service.finalizeOnboarding(draft, completedAt, profileWorkIds);
       const records = await service.getUserWorks();
       setUserWorks(records);
       setOnboardingDraft(null);
@@ -259,10 +264,22 @@ export function PersistenceProvider({ children, persistence }: PersistenceProvid
   );
 
   const saveExternalUserRecord = useCallback(
-    async (id: ExternalWorkId, expectedNormalizedKey: string, record: UserWorkRecord) => {
-      const storedRecord = await service.saveExternalUserRecord(id, expectedNormalizedKey, record);
-      setExternalWorks(await service.getExternalWorks());
-      return storedRecord;
+    async (
+      id: ExternalWorkId,
+      expectedNormalizedKey: string,
+      record: UserWorkRecord,
+      expectedUpdatedAt?: string,
+    ) => {
+      try {
+        return await service.saveExternalUserRecord(
+          id,
+          expectedNormalizedKey,
+          record,
+          expectedUpdatedAt,
+        );
+      } finally {
+        setExternalWorks(await service.getExternalWorks());
+      }
     },
     [service],
   );
@@ -323,6 +340,12 @@ export function PersistenceProvider({ children, persistence }: PersistenceProvid
     async (currentCatalogVersion: string) => {
       const result = await service.deleteAllData(currentCatalogVersion);
       if (result.kind === "applied") {
+        try {
+          localStorage.removeItem("konocomics:popular-discovery-answered");
+          sessionStorage.removeItem("konocomics:popular-discovery-dismissed");
+        } catch {
+          /* Browser may deny optional prompt storage. */
+        }
         await refresh();
       }
       return result;

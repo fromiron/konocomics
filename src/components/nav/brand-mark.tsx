@@ -18,7 +18,8 @@ export function BrandMark({ className }: BrandMarkProps) {
         className,
       )}
       preload={false}
-      to="/recommendations"
+      search={{ landing: "1" }}
+      to="/"
     >
       <BrandWordmark decorative />
     </Link>

@@ -25,7 +25,12 @@ export type SnackbarNotice = Readonly<{
 export function Snackbar({
   notice,
   onDismiss,
-}: Readonly<{ notice: SnackbarNotice | undefined; onDismiss(id: number): void }>) {
+  className,
+}: Readonly<{
+  notice: SnackbarNotice | undefined;
+  onDismiss(id: number): void;
+  className?: string;
+}>) {
   const [held, setHeld] = useState(false);
 
   useEffect(() => {
@@ -50,6 +55,7 @@ export function Snackbar({
         notice?.action !== undefined &&
           "max-w-[min(var(--layout-width-form),calc(100vw-(var(--layout-page-padding)*2)))]",
         notice?.tone === "error" && "border-l-warn",
+        className,
       )}
       data-slot="snackbar"
       onBlur={release}

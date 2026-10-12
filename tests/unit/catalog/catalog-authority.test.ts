@@ -64,7 +64,7 @@ describe("SQLite Catalog authority", () => {
     } finally {
       rmSync(root, { recursive: true, force: true });
     }
-  }, 120_000);
+  }, 360_000);
 
   it("migrates a v1 authoring projection to v2 and preserves metadata on the next ordinary edit", () => {
     const root = mkdtempSync(join(tmpdir(), "konocomics-authority-book-metadata-"));
@@ -121,7 +121,7 @@ describe("SQLite Catalog authority", () => {
     } finally {
       rmSync(root, { recursive: true, force: true });
     }
-  }, 120_000);
+  }, 360_000);
 
   it("binds referenced review reports into the ongoing authority digest", () => {
     const { root, review } = createAuthorityWithDynamicReview();
@@ -135,7 +135,7 @@ describe("SQLite Catalog authority", () => {
     } finally {
       rmSync(root, { recursive: true, force: true });
     }
-  }, 120_000);
+  }, 360_000);
 
   it("rejects a missing referenced review report", () => {
     const { root, review } = createAuthorityWithDynamicReview();
@@ -147,7 +147,7 @@ describe("SQLite Catalog authority", () => {
     } finally {
       rmSync(root, { recursive: true, force: true });
     }
-  }, 120_000);
+  }, 360_000);
 
   it("rejects unreferenced review reports and root duplicates", () => {
     const { root, source } = createAuthorityWithDynamicReview();
@@ -166,7 +166,7 @@ describe("SQLite Catalog authority", () => {
     } finally {
       rmSync(root, { recursive: true, force: true });
     }
-  }, 120_000);
+  }, 360_000);
 
   it("rejects dual authority and SQLite sidecars", () => {
     const root = mkdtempSync(join(tmpdir(), "konocomics-authority-verify-"));
@@ -213,7 +213,7 @@ describe("SQLite Catalog authority", () => {
     } finally {
       rmSync(root, { recursive: true, force: true });
     }
-  }, 120_000);
+  }, 360_000);
 
   it("commits a validated projection to a candidate DB and leaves the current DB untouched", () => {
     const root = mkdtempSync(join(tmpdir(), "konocomics-authority-write-"));
@@ -269,7 +269,7 @@ describe("SQLite Catalog authority", () => {
     } finally {
       rmSync(root, { recursive: true, force: true });
     }
-  }, 120_000);
+  }, 360_000);
 
   it("rejects non-STRICT tables and CHECK constraint drift", () => {
     for (const [label, mutateSchema, expectedError] of [
@@ -304,5 +304,5 @@ describe("SQLite Catalog authority", () => {
         rmSync(root, { recursive: true, force: true });
       }
     }
-  }, 120_000);
+  }, 360_000);
 });

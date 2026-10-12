@@ -1,7 +1,7 @@
 "use client";
 
 import { Link } from "@tanstack/react-router";
-import { BookmarkIcon } from "lucide-react";
+import { BookmarkIcon, CheckIcon } from "lucide-react";
 import { useEffect, useMemo, useRef, useState, type ReactNode } from "react";
 
 import { Button } from "@/components/design-system/button";
@@ -17,9 +17,10 @@ import { isbnIdentityKey } from "@/domain/catalog/normalize";
 import type { CatalogV1, Work } from "@/domain/catalog/types";
 import { READING_STATES } from "@/domain/profile/reading-state";
 import type { ReadingState, UserWorkRecord } from "@/domain/profile/types";
-import type { ExternalWorkRecord } from "@/infrastructure/db";
+import { UserWorkConflictError, type ExternalWorkRecord } from "@/infrastructure/db";
 import type { RakutenBookItem } from "@/infrastructure/rakuten";
-import { libraryStrings } from "@/lib/strings";
+import { WORK_QUERY_MAX_LENGTH } from "@/lib/search-query";
+import { libraryStrings, searchStrings } from "@/lib/strings";
 import { cn } from "@/lib/utils";
 
 import {
@@ -33,7 +34,7 @@ import {
 import { LibraryOverviewHeader } from "./library-overview-header";
 import { ModalSurface } from "./modal-surface";
 import { LibraryRecordEditor } from "./record-editor";
-import { WorkSearchSheet, type LibraryAddOutcome } from "./work-search-sheet";
+import { WorkSearchSheet, type LibraryAddOutcome, type LibraryAddState } from "./work-search-sheet";
 
 import { libraryWorkSearchText, normalizeLibraryQuery } from "./search";
 
@@ -69,6 +70,7 @@ function compareRows(left: LibraryRow, right: LibraryRow, sort: LibrarySort) {
 }
 
 function matchesQuery(row: LibraryRow, query: string) {
+  if (query.length > WORK_QUERY_MAX_LENGTH) return false;
   const normalized = normalizeLibraryQuery(query);
   if (normalized === "") return true;
   const text =
@@ -88,8 +90,8 @@ type LibraryViewProps = Readonly<{
   activeState?: LibraryStateFilter;
   favoriteOnly?: boolean;
   page?: number;
-  addCatalogWork(work: Work): Promise<LibraryAddOutcome>;
-  addExternalWork(item: RakutenBookItem): Promise<LibraryAddOutcome>;
+  addCatalogWork(work: Work, state: LibraryAddState): Promise<LibraryAddOutcome>;
+  addExternalWork(item: RakutenBookItem, state: LibraryAddState): Promise<LibraryAddOutcome>;
   catalog: CatalogV1;
   catalogCoverUrls?: ReadonlyMap<string, string | null>;
   externalWorks: readonly ExternalWorkRecord[] | undefined;
@@ -108,8 +110,9 @@ type LibraryViewProps = Readonly<{
     id: ExternalWorkId,
     expectedNormalizedKey: string,
     record: ExternalWorkRecord["record"],
+    expectedUpdatedAt?: string,
   ): Promise<void>;
-  saveUserWork(record: UserWorkRecord): Promise<void>;
+  saveUserWork(record: UserWorkRecord, expectedUpdatedAt?: string): Promise<void>;
   // Accepted for test compatibility; the footer is now rendered once by the app shell.
   showFooter?: boolean;
   sort?: LibrarySort;
@@ -149,7 +152,7 @@ export function LibraryView({
   const {
     clear: clearQuery,
     inputProps: queryInputProps,
-    value: query,
+    searchQuery: query,
   } = useUrlSyncedQuery({
     urlQuery,
     onUrlQueryChange: onQueryChange,
@@ -280,14 +283,25 @@ export function LibraryView({
     setMessage(undefined);
     try {
       if (selectedRow.kind === "external") {
-        await saveExternalUserRecord(selectedRow.external.id, selectedRow.external.normalizedKey, {
-          ...record,
-          workId: selectedRow.external.id,
-        });
-      } else await saveUserWork(record);
+        await saveExternalUserRecord(
+          selectedRow.external.id,
+          selectedRow.external.normalizedKey,
+          {
+            ...record,
+            workId: selectedRow.external.id,
+          },
+          selectedRow.record.updatedAt,
+        );
+      } else await saveUserWork(record, selectedRow.record.updatedAt);
       setMessage({ kind: "status", text: libraryStrings.editor.saved });
-    } catch {
-      setMessage({ kind: "error", text: libraryStrings.editor.error });
+    } catch (error) {
+      setMessage({
+        kind: "error",
+        text:
+          error instanceof UserWorkConflictError
+            ? libraryStrings.editor.conflict
+            : libraryStrings.editor.error,
+      });
     } finally {
       saveInFlight.current = false;
       setBusy(false);
@@ -362,12 +376,21 @@ export function LibraryView({
               <span className="sr-only">{libraryStrings.toolbar.searchLabel}</span>
               <Input
                 {...queryInputProps}
+                aria-describedby="library-filter-search-hint"
                 className="w-full bg-surface-2 text-text-strong"
                 enterKeyHint="search"
                 placeholder={libraryStrings.toolbar.searchPlaceholder}
                 type="search"
               />
             </label>
+            <p
+              id="library-filter-search-hint"
+              className="text-text-muted text-[length:var(--text-caption-size)]"
+            >
+              {queryInputProps.value.length > WORK_QUERY_MAX_LENGTH
+                ? searchStrings.tooLong
+                : searchStrings.limitHint}
+            </p>
             <SegmentedControl
               className="w-full sm:w-fit"
               label={libraryStrings.tablistLabel}
@@ -403,11 +426,12 @@ export function LibraryView({
             <div className="grid grid-cols-[minmax(0,1fr)_auto] items-center gap-[var(--space-content)] md:grid-cols-[auto_minmax(0,1fr)_auto_auto]">
               <Button
                 aria-pressed={favoriteOnly}
-                className="order-1 justify-self-start rounded-[var(--radius-pill)] aria-pressed:border-accent aria-pressed:bg-accent aria-pressed:text-on-accent"
+                className="order-1 justify-self-start rounded-[var(--radius-pill)]"
                 onClick={() => onFavoriteOnlyChange?.(!favoriteOnly)}
                 type="button"
                 variant="outline"
               >
+                {favoriteOnly ? <CheckIcon aria-hidden="true" className="size-4" /> : null}
                 {libraryStrings.toolbar.favoriteOnly}
               </Button>
               <label className="order-2 min-w-0 justify-self-end md:order-3">
@@ -445,12 +469,12 @@ export function LibraryView({
                 {(["grid", "list"] as const).map((mode) => (
                   <Button
                     aria-pressed={view === mode}
-                    className="aria-pressed:border-accent aria-pressed:bg-accent aria-pressed:text-on-accent"
                     key={mode}
                     onClick={() => onViewChange?.(mode)}
                     type="button"
                     variant="outline"
                   >
+                    {view === mode ? <CheckIcon aria-hidden="true" className="size-4" /> : null}
                     {libraryStrings.toolbar.views[mode]}
                   </Button>
                 ))}

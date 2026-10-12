@@ -11,6 +11,7 @@ type MoodValue = RecommendationMood | typeof NO_MOOD;
 
 export function RecommendationMoodBar({
   candidateCount,
+  unchanged = false,
   disabled,
   dismissedCount,
   mood,
@@ -19,6 +20,7 @@ export function RecommendationMoodBar({
   mood: RecommendationMood | null;
   /** Works in the ranked plan that meet the mood, after today's set-asides. */
   candidateCount: number;
+  unchanged?: boolean;
   dismissedCount: number;
   disabled: boolean;
   onMoodChange: (mood: RecommendationMood | null) => void;
@@ -62,6 +64,7 @@ export function RecommendationMoodBar({
           : [
               strings.basis(strings.labels[mood], candidateCount),
               strings.limits[mood],
+              unchanged ? strings.unchanged : "",
               dismissedCount > 0 ? strings.dismissedCount(dismissedCount) : "",
             ]
               .filter(Boolean)

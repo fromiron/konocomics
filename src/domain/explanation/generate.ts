@@ -343,8 +343,15 @@ export function generateTasteExplanation({
   contributions,
   lexicon,
   resolveTitle,
+  preferredFactorId,
 }: GenerateTasteExplanationInput): TasteRecommendationExplanation {
   const { selectedCaution, selectedPositives } = selectTasteContributions(contributions, lexicon);
+  if (preferredFactorId !== undefined) {
+    const index = selectedPositives.findIndex(
+      (candidate) => candidate.factorId === preferredFactorId,
+    );
+    if (index > 0) selectedPositives.unshift(...selectedPositives.splice(index, 1));
+  }
   const namedAnchorTitles = new Set<string>();
   const positiveReasons = selectedPositives.map((candidate) => {
     const sentence = tasteSentenceFor({
@@ -449,4 +456,33 @@ export function generateBaselineExplanation({
     reason,
     anchors: collectAnchors([reason], ["genre"], resolveTitle),
   };
+}
+
+/** Reuses valid reasons across a shelf; neither rank nor contribution data is edited. */
+export function generateVariedTasteExplanations(
+  inputs: readonly (GenerateTasteExplanationInput & { workId: string })[],
+): ReadonlyMap<string, TasteRecommendationExplanation> {
+  const factors = new Map<string, number>();
+  const anchors = new Map<string, number>();
+  const explanations = new Map<string, TasteRecommendationExplanation>();
+  for (const input of inputs) {
+    if (explanations.has(input.workId)) continue;
+    const initial = generateTasteExplanation(input);
+    const lead = [...initial.positiveReasons].sort(
+      (left, right) =>
+        (factors.get(left.factorId) ?? 0) - (factors.get(right.factorId) ?? 0) ||
+        (anchors.get(left.anchorWorkIds.join()) ?? 0) -
+          (anchors.get(right.anchorWorkIds.join()) ?? 0),
+    )[0];
+    const explanation =
+      lead === undefined
+        ? initial
+        : generateTasteExplanation({ ...input, preferredFactorId: lead.factorId });
+    explanations.set(input.workId, explanation);
+    if (lead !== undefined) {
+      factors.set(lead.factorId, (factors.get(lead.factorId) ?? 0) + 1);
+      anchors.set(lead.anchorWorkIds.join(), (anchors.get(lead.anchorWorkIds.join()) ?? 0) + 1);
+    }
+  }
+  return explanations;
 }

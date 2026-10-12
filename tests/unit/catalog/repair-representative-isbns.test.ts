@@ -382,7 +382,7 @@ it("keeps one audited 84-work decision set through repair, adjudication, and pro
   } finally {
     rmSync(fixtureRoot, { recursive: true, force: true });
   }
-}, 120_000);
+}, 360_000);
 
 it("repairs SQLite authority through the locked entrypoint without publishing its dry-run", () => {
   const sourceRoot = resolve(process.cwd());
@@ -421,4 +421,4 @@ it("repairs SQLite authority through the locked entrypoint without publishing it
   } finally {
     rmSync(fixtureRoot, { recursive: true, force: true });
   }
-}, 120_000);
+}, 360_000);

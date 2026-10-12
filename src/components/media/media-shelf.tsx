@@ -1,8 +1,6 @@
 import { ChevronLeftIcon, ChevronRightIcon } from "lucide-react";
 import {
   Children,
-  cloneElement,
-  isValidElement,
   useCallback,
   useEffect,
   useId,
@@ -10,7 +8,6 @@ import {
   useRef,
   useState,
   type KeyboardEvent,
-  type ReactElement,
   type ReactNode,
 } from "react";
 
@@ -35,7 +32,6 @@ type MediaShelfProps = Readonly<{
   hideHeading?: boolean;
   headingLevel?: 2 | 3;
   controlsPlacement?: "heading" | "overlay";
-  enableLoop?: boolean;
   onPageChange?: (firstVisibleIndex: number) => void;
 }>;
 
@@ -43,223 +39,22 @@ type ScrollState = Readonly<{
   hasOverflow: boolean;
   canScrollBack: boolean;
   canScrollForward: boolean;
+  first: number;
+  last: number;
+  total: number;
 }>;
-
-export const carouselLoopCopies = [0, 1, 2] as const;
-export type CarouselLoopCopy = (typeof carouselLoopCopies)[number];
 
 const initialScrollState: ScrollState = {
   hasOverflow: false,
   canScrollBack: false,
   canScrollForward: false,
+  first: 0,
+  last: 0,
+  total: 0,
 };
 
 const focusableCardTarget =
   'a[href], button:not([disabled]), input:not([disabled]), select:not([disabled]), textarea:not([disabled]), [tabindex]:not([tabindex="-1"])';
-
-export function carouselCloneProps(copy: CarouselLoopCopy) {
-  if (copy === 1) {
-    return { "data-carousel-copy": copy } as const;
-  }
-  return {
-    "aria-hidden": true,
-    "data-carousel-clone": "",
-    "data-carousel-copy": copy,
-    inert: true,
-  } as const;
-}
-
-export function shouldLoopCarousel(count: number) {
-  return count > 1;
-}
-
-export function cloneCarouselTrailing(trailing: ReactNode, copy: CarouselLoopCopy) {
-  if (trailing == null || trailing === false) return null;
-  if (copy === 1) return trailing;
-  if (!isValidElement(trailing)) return trailing;
-  const className =
-    typeof trailing.props === "object" &&
-    trailing.props !== null &&
-    "className" in trailing.props &&
-    typeof trailing.props.className === "string"
-      ? trailing.props.className
-      : undefined;
-  return cloneElement(trailing as ReactElement<{ className?: string }>, {
-    key: `trailing-${String(copy)}`,
-    className: cn(className, "invisible pointer-events-none"),
-    ...carouselCloneProps(copy),
-  });
-}
-
-export function duplicateCarouselContent(content: ReactNode, copy: CarouselLoopCopy) {
-  if (copy === 1 || !isValidElement(content)) return content;
-  return cloneElement(content as ReactElement<Record<string, unknown>>, {
-    articleRef: undefined,
-    onCoverVisible: undefined,
-    priority: false,
-  });
-}
-
-type LoopMetrics = Readonly<{
-  copy1Scroll: number;
-  copy2Offset: number;
-  periodFromCopy0: number;
-  periodFromCopy2: number;
-}>;
-
-function getLoopMetrics(track: HTMLElement): LoopMetrics | null {
-  const copy0 = track.querySelector<HTMLElement>("[data-carousel-copy='0']");
-  const copy1 = track.querySelector<HTMLElement>("[data-carousel-copy='1']");
-  const copy2 = track.querySelector<HTMLElement>("[data-carousel-copy='2']");
-  if (copy0 === null || copy1 === null || copy2 === null) return null;
-  const periodFromCopy0 = copy1.offsetLeft - copy0.offsetLeft;
-  const periodFromCopy2 = copy2.offsetLeft - copy1.offsetLeft;
-  if (periodFromCopy0 <= 1 || periodFromCopy2 <= 1) return null;
-  return {
-    copy1Scroll: copy1.offsetLeft - copy0.offsetLeft,
-    copy2Offset: copy2.offsetLeft,
-    periodFromCopy0,
-    periodFromCopy2,
-  };
-}
-
-function synchronizeLoopOverflow(track: HTMLElement) {
-  const originals = Array.from(track.querySelectorAll<HTMLElement>("[data-carousel-copy='1']"));
-  const first = originals[0];
-  const last = originals.at(-1);
-  if (first === undefined || last === undefined || track.clientWidth === 0) return;
-  const style = getComputedStyle(track);
-  const availableWidth =
-    track.clientWidth -
-    (parseFloat(style.paddingLeft) || 0) -
-    (parseFloat(style.paddingRight) || 0);
-  const contentWidth = last.offsetLeft + last.offsetWidth - first.offsetLeft;
-  const fits = contentWidth <= availableWidth + 1;
-  for (const clone of track.querySelectorAll<HTMLElement>("[data-carousel-clone]")) {
-    clone.hidden = fits;
-  }
-  if (fits) track.scrollLeft = 0;
-}
-
-function positionLoopCards(track: HTMLElement) {
-  const metrics = getLoopMetrics(track);
-  const center = track.scrollLeft + track.clientWidth / 2;
-  for (const card of track.querySelectorAll<HTMLElement>("[data-carousel-copy='1']")) {
-    const offsets = metrics === null ? [0] : [0, -metrics.periodFromCopy0, metrics.periodFromCopy2];
-    const cardCenter = card.offsetLeft - loopOrigin(track) + card.offsetWidth / 2;
-    const offset = offsets.reduce((nearest, candidate) =>
-      Math.abs(cardCenter + candidate - center) < Math.abs(cardCenter + nearest - center)
-        ? candidate
-        : nearest,
-    );
-    card.style.translate = offset === 0 ? "" : `${String(offset)}px`;
-  }
-  // Copies reserve loop geometry; only the original links and controls are ever visible.
-  for (const clone of track.querySelectorAll<HTMLElement>("[data-carousel-clone]")) {
-    clone.style.visibility = "hidden";
-  }
-}
-
-function jumpScroll(track: HTMLElement, left: number) {
-  track.style.scrollBehavior = "auto";
-  track.style.scrollSnapType = "none";
-  track.scrollLeft = left;
-  window.setTimeout(() => {
-    track.style.scrollBehavior = "";
-    track.style.scrollSnapType = "";
-  }, 32);
-}
-
-function preserveLoopPosition(track: HTMLElement, copy1ScrollRef: { current: number | null }) {
-  const metrics = getLoopMetrics(track);
-  if (metrics === null) {
-    copy1ScrollRef.current = null;
-    return;
-  }
-
-  const previousCopy1Scroll = copy1ScrollRef.current;
-  copy1ScrollRef.current = metrics.copy1Scroll;
-  if (previousCopy1Scroll === null) {
-    jumpScroll(track, metrics.copy1Scroll);
-    return;
-  }
-
-  const copyStartDelta = metrics.copy1Scroll - previousCopy1Scroll;
-  if (Math.abs(copyStartDelta) > 1) {
-    jumpScroll(track, track.scrollLeft + copyStartDelta);
-  }
-}
-
-function wrapLoopedTrack(track: HTMLElement, wrappingRef: { current: boolean }) {
-  if (wrappingRef.current) return;
-  const metrics = getLoopMetrics(track);
-  if (metrics === null) return;
-  const left = track.scrollLeft;
-  if (left < metrics.copy1Scroll - 1) {
-    wrappingRef.current = true;
-    jumpScroll(track, left + metrics.periodFromCopy0);
-    wrappingRef.current = false;
-    return;
-  }
-  if (left >= metrics.copy2Offset) {
-    wrappingRef.current = true;
-    jumpScroll(track, left - metrics.periodFromCopy2);
-    wrappingRef.current = false;
-  }
-}
-
-function loopPageItems(track: HTMLElement) {
-  return Array.from(track.children).filter(
-    (element): element is HTMLElement =>
-      element instanceof HTMLElement &&
-      element.hasAttribute("data-carousel-copy") &&
-      !element.classList.contains("invisible"),
-  );
-}
-
-function loopOrigin(track: HTMLElement) {
-  const copy0 = track.querySelector<HTMLElement>("[data-carousel-copy='0']");
-  return copy0?.offsetLeft ?? 0;
-}
-
-function scrollLoopPage(track: HTMLElement, direction: -1 | 1) {
-  const origin = loopOrigin(track);
-  const items = loopPageItems(track);
-  if (items.length === 0) {
-    track.scrollBy({ left: direction * track.clientWidth });
-    return;
-  }
-  const destination = track.scrollLeft + direction * track.clientWidth;
-  const target =
-    direction === 1
-      ? items.find((item) => item.offsetLeft - origin >= destination - 1)
-      : [...items].reverse().find((item) => item.offsetLeft - origin <= destination + 1);
-  if (target === undefined) {
-    track.scrollBy({ left: direction * track.clientWidth });
-    return;
-  }
-  const reducedMotion =
-    typeof window.matchMedia === "function" &&
-    window.matchMedia("(prefers-reduced-motion: reduce)").matches;
-  track.scrollTo({
-    left: target.offsetLeft - origin,
-    behavior: reducedMotion ? "auto" : "smooth",
-  });
-}
-
-function loopOverlayChildren(children: ReactNode) {
-  const items = Children.toArray(children);
-  if (!shouldLoopCarousel(items.length)) return children;
-  return carouselLoopCopies.flatMap((copy) =>
-    items.map((child, index) => {
-      if (!isValidElement(child)) return child;
-      return cloneElement(child as ReactElement<Record<string, unknown>>, {
-        key: `carousel-${String(copy)}-${String(child.key ?? index)}`,
-        ...carouselCloneProps(copy),
-      });
-    }),
-  );
-}
 
 export function MediaShelf({
   action,
@@ -269,7 +64,6 @@ export function MediaShelf({
   hideHeading = false,
   headingLevel = 2,
   controlsPlacement = "heading",
-  enableLoop = true,
   description,
   listType,
   onPageChange,
@@ -279,27 +73,33 @@ export function MediaShelf({
 }: MediaShelfProps) {
   const headingId = useId();
   const trackRef = useRef<HTMLElement | null>(null);
-  const wrappingRef = useRef(false);
-  const copy1ScrollRef = useRef<number | null>(null);
   const [scrollState, setScrollState] = useState(initialScrollState);
-  const loopingChildren =
-    controlsPlacement === "overlay" && enableLoop ? loopOverlayChildren(children) : children;
   const updateScrollState = useCallback(() => {
     const track = trackRef.current;
     if (track === null) return;
 
-    positionLoopCards(track);
     const maximum = Math.max(0, track.scrollWidth - track.clientWidth);
-    const looping = getLoopMetrics(track) !== null;
+    const cards = Array.from(track.children);
+    const bounds = track.getBoundingClientRect();
+    const visible = cards.flatMap((card, index) => {
+      const rect = card.getBoundingClientRect();
+      return rect.right > bounds.left + 1 && rect.left < bounds.right - 1 ? [index + 1] : [];
+    });
     const next = {
-      hasOverflow: looping || maximum > 1,
-      canScrollBack: looping || track.scrollLeft > 1,
-      canScrollForward: looping || track.scrollLeft < maximum - 1,
+      hasOverflow: maximum > 1,
+      canScrollBack: track.scrollLeft > 1,
+      canScrollForward: track.scrollLeft < maximum - 1,
+      first: visible[0] ?? (cards.length > 0 ? 1 : 0),
+      last: visible.at(-1) ?? cards.length,
+      total: cards.length,
     };
     setScrollState((current) =>
       current.hasOverflow === next.hasOverflow &&
       current.canScrollBack === next.canScrollBack &&
-      current.canScrollForward === next.canScrollForward
+      current.canScrollForward === next.canScrollForward &&
+      current.first === next.first &&
+      current.last === next.last &&
+      current.total === next.total
         ? current
         : next,
     );
@@ -308,59 +108,19 @@ export function MediaShelf({
   useEffect(() => {
     const track = trackRef.current;
     if (track === null) return;
-    let settleTimer: ReturnType<typeof setTimeout> | undefined;
-
-    const settleLoop = () => {
-      if (settleTimer !== undefined) {
-        clearTimeout(settleTimer);
-        settleTimer = undefined;
-      }
-      wrapLoopedTrack(track, wrappingRef);
-      updateScrollState();
-    };
-    const onScroll = () => {
-      updateScrollState();
-      if (settleTimer !== undefined) clearTimeout(settleTimer);
-      settleTimer = setTimeout(settleLoop, 400);
-    };
-
     updateScrollState();
-    track.addEventListener("scroll", onScroll, { passive: true });
-    track.addEventListener("scrollend", settleLoop);
-
+    track.addEventListener("scroll", updateScrollState, { passive: true });
     const observer =
-      typeof ResizeObserver === "undefined"
-        ? null
-        : new ResizeObserver(() => {
-            synchronizeLoopOverflow(track);
-            if (settleTimer !== undefined) {
-              updateScrollState();
-              return;
-            }
-            preserveLoopPosition(track, copy1ScrollRef);
-            wrapLoopedTrack(track, wrappingRef);
-            updateScrollState();
-          });
+      typeof ResizeObserver === "undefined" ? null : new ResizeObserver(updateScrollState);
     observer?.observe(track);
     for (const child of track.children) observer?.observe(child);
-
     return () => {
-      if (settleTimer !== undefined) clearTimeout(settleTimer);
-      track.removeEventListener("scroll", onScroll);
-      track.removeEventListener("scrollend", settleLoop);
+      track.removeEventListener("scroll", updateScrollState);
       observer?.disconnect();
     };
   }, [children, updateScrollState]);
 
-  useLayoutEffect(() => {
-    const track = trackRef.current;
-    if (track === null) return;
-    wrappingRef.current = true;
-    synchronizeLoopOverflow(track);
-    preserveLoopPosition(track, copy1ScrollRef);
-    wrappingRef.current = false;
-    updateScrollState();
-  }, [children, updateScrollState]);
+  useLayoutEffect(updateScrollState, [children, updateScrollState]);
 
   if (Children.count(children) === 0) return null;
 
@@ -373,18 +133,13 @@ export function MediaShelf({
       Math.max(0, track.scrollLeft + direction * track.clientWidth),
     );
     const cards = Array.from(track.children).filter(
-      (element): element is HTMLElement =>
-        element instanceof HTMLElement && !element.hasAttribute("data-carousel-clone"),
+      (element): element is HTMLElement => element instanceof HTMLElement,
     );
     const firstVisibleIndex = cards.findIndex(
       (card) => card.offsetLeft + card.offsetWidth > targetLeft + 1,
     );
     onPageChange?.(firstVisibleIndex < 0 ? Math.max(0, cards.length - 1) : firstVisibleIndex);
-    if (getLoopMetrics(track) === null) {
-      track.scrollBy({ left: direction * track.clientWidth });
-      return;
-    }
-    scrollLoopPage(track, direction);
+    track.scrollBy({ left: direction * track.clientWidth });
   };
   const moveCardFocus = (event: KeyboardEvent<HTMLElement>) => {
     if (event.defaultPrevented || (event.key !== "ArrowLeft" && event.key !== "ArrowRight")) {
@@ -394,9 +149,7 @@ export function MediaShelf({
     const target = event.target;
     if (!(target instanceof HTMLElement)) return;
 
-    const cards = Array.from(event.currentTarget.children).filter(
-      (element) => !element.hasAttribute("data-carousel-clone"),
-    );
+    const cards = Array.from(event.currentTarget.children);
     const currentIndex = cards.findIndex((card) => card.contains(target));
     if (currentIndex < 0) return;
 
@@ -413,7 +166,7 @@ export function MediaShelf({
   };
   const trackClassName = cn(
     "flex snap-x gap-[var(--space-content-loose)] overflow-x-auto overscroll-x-contain scroll-smooth pb-[var(--space-3)] [scrollbar-width:none] motion-reduce:scroll-auto [&::-webkit-scrollbar]:hidden",
-    controlsPlacement === "overlay" && enableLoop ? "snap-proximity" : "snap-mandatory",
+    "snap-mandatory",
   );
   const setTrack = (node: HTMLElement | null) => {
     trackRef.current = node;
@@ -430,7 +183,7 @@ export function MediaShelf({
         ref={setTrack}
         role="list"
       >
-        {loopingChildren}
+        {children}
       </ol>
     ) : listType === "unordered" ? (
       <ul
@@ -443,7 +196,7 @@ export function MediaShelf({
         ref={setTrack}
         role="list"
       >
-        {loopingChildren}
+        {children}
       </ul>
     ) : (
       <div
@@ -455,7 +208,7 @@ export function MediaShelf({
         onKeyDown={moveCardFocus}
         ref={setTrack}
       >
-        {loopingChildren}
+        {children}
       </div>
     );
   const scrollButton = (direction: -1 | 1) => (
@@ -513,6 +266,13 @@ export function MediaShelf({
           title={title}
         />
       )}
+      <p
+        className="mb-[var(--space-2)] text-[length:var(--text-caption-size)] text-text-muted"
+        aria-live="polite"
+        aria-atomic="true"
+      >
+        {mediaStrings.shelfPosition(scrollState.first, scrollState.last, scrollState.total)}
+      </p>
       {controlsPlacement === "overlay" ? (
         <div className="media-shelf-overlay relative">
           {track}

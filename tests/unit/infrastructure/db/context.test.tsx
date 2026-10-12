@@ -991,6 +991,8 @@ describe("PersistenceProvider profile state", () => {
       expect(screen.getByTestId("preview-count").textContent).toBe("6");
     });
 
+    localStorage.setItem("konocomics:popular-discovery-answered", '["work-one"]');
+    sessionStorage.setItem("konocomics:popular-discovery-dismissed", "1");
     const releaseDeleteRefresh = persistence.deferNextExternalWorksRead();
     const snapshotsBeforeDelete = observedSnapshots.length;
     fireEvent.click(screen.getByRole("button", { name: "delete all data" }));
@@ -1004,6 +1006,8 @@ describe("PersistenceProvider profile state", () => {
     await waitFor(() => {
       expect(screen.getByTestId("transfer-snapshot").textContent).toBe(deletedSnapshot);
       expect(observedSnapshots.slice(snapshotsBeforeDelete)).toEqual([deletedSnapshot]);
+      expect(localStorage.getItem("konocomics:popular-discovery-answered")).toBeNull();
+      expect(sessionStorage.getItem("konocomics:popular-discovery-dismissed")).toBeNull();
     });
   });
 
