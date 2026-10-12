@@ -140,6 +140,11 @@ describe("OnboardingFlow finalization", () => {
     expect(screen.getByRole("status").textContent).toContain("読書状態を確認");
     expect(testState.finalizeOnboarding).not.toHaveBeenCalled();
     fireEvent.click(screen.getByRole("button", { name: "すべて読んでいる" }));
+    const workStates = screen.getAllByRole("radiogroup", { name: "テスト作品の読書状態" });
+    expect(workStates).toHaveLength(defaultPositiveWorks.length);
+    const firstWorkStates = workStates[0] ?? screen.getByRole("radiogroup");
+    expect(within(firstWorkStates).queryByRole("radio", { name: /読みたい/u })).toBeNull();
+    fireEvent.click(within(firstWorkStates).getByRole("radio", { name: "読んだ" }));
     fireEvent.click(screen.getByRole("button", { name: "次へ (5/10)" }));
     expect(testState.saveOnboardingDraft).toHaveBeenLastCalledWith(
       expect.objectContaining({
@@ -147,7 +152,7 @@ describe("OnboardingFlow finalization", () => {
         positiveEntries: defaultPositiveWorks.map((work) => ({
           workId: work.id,
           reaction: "liked",
-          readingState: "reading",
+          readingState: work.id === "positive-1" ? "completed" : "reading",
         })),
       }),
     );

@@ -348,7 +348,7 @@ Discovery resolved 표지의 원→직사각형은 D의 사용자 승인 scoped 
 | AutoAnimate | **미채택** | Motion layout으로 커버 |
 | GSAP / Lottie / three.js | **미채택** | 요구 없음 |
 
-Shelf 구현 계약(캐러셀 대체): `overflow-x: auto` + CSS scroll-snap + 카드 `scroll-snap-align: start` + 데스크톱용 이전/다음 버튼(`scrollBy`, reduced-motion 시 instant) + `scrollbar-width: none`. desktop fine-pointer overlay Shelf는 shell 안의 좌우 control 크기+간격 gutter에 이동 버튼을 두어 카드 텍스트와 겹치지 않게 한다. fade는 track 경계에 두고 문서 가로 overflow는 만들지 않는다. Featured만 3-copy pointer/touch 루프를 쓰고 clone은 `aria-hidden`·`inert`이며 image demand/ref를 소유하지 않는다. 키보드는 canonical 카드 간 Tab/화살표이고 끝에서 wrap하지 않는다. 나머지 Shelf는 끝에서 disabled·비순환이다.
+Shelf 구현 계약(캐러셀 대체): `overflow-x: auto` + CSS scroll-snap + 카드 `scroll-snap-align: start` + 데스크톱용 이전/다음 버튼(`scrollBy`, reduced-motion 시 instant) + `scrollbar-width: none`. desktop fine-pointer overlay Shelf는 shell 안의 좌우 control 크기+간격 gutter에 이동 버튼을 두어 카드 텍스트와 겹치지 않게 한다. 2026-10-12 사용자 요청: 카드가 잘린 것처럼 보이지 않도록 scroll viewport는 control gutter와 바깥 page gutter(최대 96px)까지 번지고, 같은 폭의 track padding·scroll-padding으로 완전히 보이는 카드의 시작선은 control 안쪽에 맞춘다. 양끝 fade는 그 번짐 폭 전체를 덮어 이웃 카드가 control 아래에서 canvas로 녹아들게 한다. 페이지 이동과 「n–m / N作品」 범위는 이 inset을 뺀 카드 영역 기준이다. 문서 가로 overflow는 만들지 않는다. Featured만 3-copy pointer/touch 루프를 쓰고 clone은 `aria-hidden`·`inert`이며 image demand/ref를 소유하지 않는다. 키보드는 canonical 카드 간 Tab/화살표이고 끝에서 wrap하지 않는다. 나머지 Shelf는 끝에서 disabled·비순환이다.
 
 ## 8. 성능 예산
 

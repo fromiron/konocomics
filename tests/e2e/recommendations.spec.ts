@@ -513,7 +513,7 @@ async function completeKeyboardOnboarding(
   await expect(page.getByRole("heading", { level: 1, name: "あなたへのおすすめ" })).toBeVisible();
   await expect(
     page.locator("li[data-recommendation-work-id]:not([data-carousel-clone])"),
-  ).toHaveCount(5);
+  ).toHaveCount(10);
 }
 
 async function recommendationIds(page: Page) {
@@ -1036,7 +1036,7 @@ test.describe("Slice 7 recommendation journeys", () => {
       .locator("main[data-recommendation-input-hash]")
       .getAttribute("data-recommendation-input-hash");
 
-    for (let index = 0; index < 5; index += 1) {
+    for (let index = 0; index < initialIds.length; index += 1) {
       const card = cards.nth(index);
       const cover = card.getByRole("img");
       await cover.scrollIntoViewIfNeeded();
@@ -1117,24 +1117,24 @@ test.describe("Slice 7 recommendation journeys", () => {
     await expect(page).toHaveURL(/\/recommendations$/u);
     await expect(
       page.locator("li[data-recommendation-work-id]:not([data-carousel-clone])"),
-    ).toHaveCount(5);
+    ).toHaveCount(10);
     expect(await recommendationIds(page)).toEqual(initialIds);
 
     await page.reload();
     await expect(
       page.locator("li[data-recommendation-work-id]:not([data-carousel-clone])"),
-    ).toHaveCount(5);
+    ).toHaveCount(10);
     expect(await recommendationIds(page)).toEqual(initialIds);
 
     if (testInfo.project.name === "chromium") {
       const firstItem = page
-        .getByRole("list", { name: "あなたのために選んだ作品" })
+        .getByRole("list", { name: "あなたのために選んだ10作品" })
         .locator("li[data-recommendation-work-id]:not([data-carousel-clone])")
         .first();
       const firstCard = firstItem.locator("article");
       const firstCardLink = firstItem.getByRole("link", { name: /作品詳細を見る$/u });
       const secondCard = page
-        .getByRole("list", { name: "あなたのために選んだ作品" })
+        .getByRole("list", { name: "あなたのために選んだ10作品" })
         .locator("li[data-recommendation-work-id]:not([data-carousel-clone])")
         .nth(1)
         .locator("article");
@@ -1322,7 +1322,7 @@ test.describe("Slice 7 recommendation journeys", () => {
     await expect(page.getByRole("checkbox", { name: "完結作を優先" })).toBeChecked();
     await expect(
       page.locator("li[data-recommendation-work-id]:not([data-carousel-clone])"),
-    ).toHaveCount(5);
+    ).toHaveCount(10);
     expect(await recommendationIds(page)).toEqual(policyIds);
 
     const anchorCards = page.locator('[data-recommendation-shelf-card="anchor"]');
@@ -1562,7 +1562,7 @@ test.describe("Slice 7 recommendation journeys", () => {
     await page.keyboard.press("Control+Home");
     await expect(shelfNavigation).toBeHidden();
     await expect(page.getByRole("combobox", { name: "棚へ移動" })).toHaveCount(0);
-    const rankingLinks = page.getByRole("list", { name: "あなたの Top 10" }).getByRole("link");
+    const rankingLinks = page.getByRole("list", { name: "あなたの 11〜20位" }).getByRole("link");
     const canonicalDestinations = await rankingLinks.evaluateAll((links) =>
       links.map((link) => link.getAttribute("href")),
     );
@@ -1570,7 +1570,7 @@ test.describe("Slice 7 recommendation journeys", () => {
       .getByRole("combobox", { name: "ジャンル", exact: true })
       .selectOption("scienceFiction");
     await expect(
-      page.getByText(/Top 10は全ジャンルの順位です。気分はすべての棚に適用されます。/u),
+      page.getByText(/11〜20位は全ジャンルの順位です。気分はすべての棚に適用されます。/u),
     ).toBeVisible();
     expect(
       await rankingLinks.evaluateAll((links) => links.map((link) => link.getAttribute("href"))),
@@ -1578,8 +1578,8 @@ test.describe("Slice 7 recommendation journeys", () => {
     if (testInfo.project.name === "chromium") {
       await page.mouse.wheel(0, 600);
       await expect(shelfNavigation).toBeVisible();
-      const rankingLink = shelfNavigation.getByRole("link", { name: "あなたの Top 10" });
-      const rankingHeading = page.getByRole("heading", { level: 2, name: "あなたの Top 10" });
+      const rankingLink = shelfNavigation.getByRole("link", { name: "あなたの 11〜20位" });
+      const rankingHeading = page.getByRole("heading", { level: 2, name: "あなたの 11〜20位" });
       await rankingLink.click();
       await expect(rankingHeading).toBeFocused();
       await expect(rankingLink).toHaveAttribute("aria-current", "location");
@@ -1611,7 +1611,7 @@ test.describe("Slice 7 recommendation journeys", () => {
     await expect(page.getByRole("dialog")).toHaveCount(0);
     await expect(
       page.locator("li[data-recommendation-work-id]:not([data-carousel-clone])"),
-    ).toHaveCount(5);
+    ).toHaveCount(10);
 
     await page.emulateMedia({ colorScheme: "light" });
     expect(await page.evaluate(() => getComputedStyle(document.documentElement).colorScheme)).toBe(
@@ -1653,7 +1653,7 @@ test.describe("Slice 7 recommendation journeys", () => {
     await expect(page.locator(`li[data-recommendation-work-id='${removedWorkId}']`)).toHaveCount(0);
     await expect(
       page.locator("li[data-recommendation-work-id]:not([data-carousel-clone])"),
-    ).toHaveCount(5);
+    ).toHaveCount(10);
     await expect(
       page.getByText("1件を除外し、新しい候補を追加しました", { exact: true }),
     ).toBeVisible();
@@ -1699,7 +1699,7 @@ test.describe("Slice 7 recommendation journeys", () => {
     await page.reload();
     await expect(
       page.locator("li[data-recommendation-work-id]:not([data-carousel-clone])"),
-    ).toHaveCount(5);
+    ).toHaveCount(10);
     expect(await recommendationIds(page)).toEqual(updatedIds);
     expect(await recommendationIds(page)).not.toContain(removedWorkId);
 
@@ -1977,7 +1977,7 @@ test.describe("Slice 8 provider and work-detail journey", () => {
     await expect(page.getByRole("heading", { level: 1, name: "あなたへのおすすめ" })).toBeVisible();
     await expect(
       page.locator("li[data-recommendation-work-id]:not([data-carousel-clone])"),
-    ).toHaveCount(5);
+    ).toHaveCount(10);
     await expect(page.locator(`li[data-recommendation-work-id='${workId}']`)).toHaveCount(0);
 
     const notFoundResponse = await page.goto("/works/not-a-real-work");
@@ -2524,7 +2524,7 @@ test.describe("Slice 10 data-sovereignty journey", () => {
     await expect(page).toHaveURL(/\/recommendations$/u);
     await expect(
       page.locator("li[data-recommendation-work-id]:not([data-carousel-clone])"),
-    ).toHaveCount(5);
+    ).toHaveCount(10);
 
     await page.goto("/library");
     const externalSearch = await openLibrarySearch(page, externalTitle);
@@ -2704,7 +2704,7 @@ test.describe("Slice 10 data-sovereignty journey", () => {
     await expect(page).toHaveURL(/\/recommendations$/u);
     await expect(
       page.locator("li[data-recommendation-work-id]:not([data-carousel-clone])"),
-    ).toHaveCount(5);
+    ).toHaveCount(10);
     const recomputedHash = await page
       .locator("main[data-recommendation-input-hash]")
       .getAttribute("data-recommendation-input-hash");
@@ -2808,7 +2808,7 @@ test.describe("Slice 10 data-sovereignty journey", () => {
     await page.goto("/recommendations");
     await expect(
       page.locator("li[data-recommendation-work-id]:not([data-carousel-clone])"),
-    ).toHaveCount(5);
+    ).toHaveCount(10);
     await expect(page.locator("main[data-recommendation-input-hash]")).toHaveAttribute(
       "data-recommendation-input-hash",
       recomputedHash,

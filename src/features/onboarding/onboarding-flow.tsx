@@ -14,7 +14,7 @@ import {
 import { ChevronLeftIcon, InfoIcon } from "lucide-react";
 
 import { Button } from "@/components/design-system/button";
-import { NativeSelect, NativeSelectOption } from "@/components/design-system/native-select";
+import { SegmentedControl } from "@/components/design-system/segmented-control";
 import { SectionHeading } from "@/components/layout/section-heading";
 import { pageEntryFadeProps, usePageEntryMotion } from "@/components/motion/use-page-entry-motion";
 import type { GenreTag, Work } from "@/domain/catalog/types";
@@ -83,6 +83,7 @@ import { WorkShelf } from "./work-shelf";
 const STEP_ONE_SEARCH_EMPTY: WorkSearchState = { query: "", results: [] };
 const STEP_TWO_SEARCH_EMPTY: WorkSearchState = { query: "", results: [] };
 const NEGATIVE_CANDIDATE_PREVIEW_LIMIT = 6;
+const READING_CONFIRMATION_STATES = ["reading", "completed"] as const;
 // Assistive tech reads the clarity meter as a stage, never as the raw confidence value.
 const clarityStageByLevel: Readonly<Record<ConfidenceLevel, number>> = {
   low: 1,
@@ -489,19 +490,16 @@ export function OnboardingFlow({
     isAddMode && hadCatalogBackedProfile ? 1 : 0,
     ONBOARDING_MIN_POSITIVE_WORKS - existingPositiveCount,
   );
-  const selectedPositiveCount = draft.positiveEntries.filter(
-    (entry) => entry.readingState !== "planned",
-  ).length;
-  const confirmReadingState = (
-    readingState: "planned" | "reading" | "completed",
-    workId?: string,
-  ) =>
+  const selectedPositiveCount = draft.positiveEntries.length;
+  const confirmReadingState = (readingState: "reading" | "completed", workId?: string) => {
+    if (submittingRef.current) return;
     updateDraft({
       ...draft,
       positiveEntries: draft.positiveEntries.map((entry) =>
         workId === undefined || entry.workId === workId ? { ...entry, readingState } : entry,
       ),
     });
+  };
 
   const togglePositiveSelection = (workId: string) => {
     const existing = positiveByWorkId.get(workId);
@@ -740,9 +738,7 @@ export function OnboardingFlow({
   };
 
   const clarity = projectProfileClarity(profileRecords, {
-    addedPositiveWorkIds: draft.positiveEntries
-      .filter((entry) => entry.readingState !== "planned")
-      .map((entry) => entry.workId),
+    addedPositiveWorkIds: draft.positiveEntries.map((entry) => entry.workId),
     addedReasonedNegativeWorkIds: draft.negativeEntries
       .filter((entry) => entry.reasons.some(isFactorBackedNegativeReason))
       .map((entry) => entry.workId),
@@ -969,32 +965,29 @@ export function OnboardingFlow({
                       {onboardingStrings.readingConfirmation.allCompleted}
                     </Button>
                   </div>
-                  {draft.positiveEntries.map((entry) => (
-                    <label key={entry.workId} className="grid gap-[var(--space-1)]">
-                      <span>{worksById.get(entry.workId)?.title ?? entry.workId}</span>
-                      <NativeSelect
-                        value={entry.readingState ?? ""}
-                        onChange={(event) => {
-                          const value = event.currentTarget.value;
-                          if (value === "planned" || value === "reading" || value === "completed")
-                            confirmReadingState(value, entry.workId);
-                        }}
+                  {draft.positiveEntries.map((entry) => {
+                    const title = worksById.get(entry.workId)?.title ?? entry.workId;
+                    return (
+                      <div
+                        key={entry.workId}
+                        className="flex flex-wrap items-center justify-between gap-[var(--space-2)]"
                       >
-                        <NativeSelectOption value="" disabled>
-                          {onboardingStrings.readingConfirmation.unconfirmed}
-                        </NativeSelectOption>
-                        <NativeSelectOption value="planned">
-                          {onboardingStrings.readingConfirmation.planned}
-                        </NativeSelectOption>
-                        <NativeSelectOption value="reading">
-                          {onboardingStrings.readingConfirmation.reading}
-                        </NativeSelectOption>
-                        <NativeSelectOption value="completed">
-                          {onboardingStrings.readingConfirmation.completed}
-                        </NativeSelectOption>
-                      </NativeSelect>
-                    </label>
-                  ))}
+                        <span className="min-w-0">{title}</span>
+                        <SegmentedControl
+                          className="w-full sm:w-[var(--control-segment-width)]"
+                          label={onboardingStrings.readingConfirmation.workLabel(title)}
+                          name={`reading-state-${entry.workId}`}
+                          onSelect={(value) => confirmReadingState(value, entry.workId)}
+                          options={READING_CONFIRMATION_STATES.map((state) => ({
+                            value: state,
+                            label: onboardingStrings.readingConfirmation[state],
+                          }))}
+                          semantics="radio"
+                          value={entry.readingState ?? null}
+                        />
+                      </div>
+                    );
+                  })}
                 </fieldset>
               ) : null}
             </div>

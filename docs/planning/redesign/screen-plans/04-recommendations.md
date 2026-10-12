@@ -16,7 +16,7 @@
 ## 데이터 계약
 
 - base order는 기존 RecommendationPlan 순서
-- Top 10은 그 순서의 첫 10개
+- 11~20위는 표시 중인 상위 10작품 다음 순서(2026-10-12, `03` §4)
 - Shelf grouping은 presentation-only selector
 - description은 실제 `contributions[]`와 existing explanation generator
 - policies는 현재 4개 boolean만 사용
@@ -42,12 +42,12 @@ RecommendationsFlow
 
 ## Shelf grouping 규칙
 
-- Featured: plan order 상위 5작품(2026-10-01 「역할 분리」, `03` §4)
+- Featured: plan order 상위 10작품(2026-10-12 사용자 결정으로 5작품 제한 해제, `03` §4)
 - Anchor reason: lead contribution의 anchor work 기준
 - Discovery: engine이 이미 준 plan 중 discovery 성격의 항목을 presentation selector로 추출
 - Completed: candidate work.status가 completed인 항목
-- Top 10: plan[0:10]
-- main shelves 사이에는 work ID dedupe; Top 10은 요약이므로 중복 허용
+- 11~20위: 상위 10작품을 뺀 같은 후보에 기존 목록 제약을 적용한 10작품
+- main shelves 사이에는 work ID dedupe; 11~20위는 상위 10작품과 겹치지 않고 보조 선반과는 중복 허용
 
 Grouping을 위해 ranking score를 다시 계산하거나 새 가중치를 만들지 않습니다.
 

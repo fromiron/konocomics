@@ -33,7 +33,7 @@ function validDraft(overrides: Partial<FirstRunOnboardingDraft> = {}): FirstRunO
 }
 
 describe("onboarding draft", () => {
-  it("restores Step 2 with four saved positives and one confirmed new positive, but not a planned entry", () => {
+  it("restores Step 2 with four saved positives and one confirmed new positive, but not a legacy planned entry", () => {
     const draft = validDraft({ positiveEntries: positiveEntries(1) });
     const eligibleIds = new Set(["positive-1"]);
     expect(
@@ -42,15 +42,23 @@ describe("onboarding draft", () => {
     expect(
       reconcileOnboardingDraftMode(draft, false, new Set(), eligibleIds, eligibleIds, 3).step,
     ).toBe(1);
-    const planned = validDraft({
+    const planned: unknown = {
+      ...validDraft(),
       positiveEntries: [{ workId: "positive-1", readingState: "planned", reaction: "liked" }],
-    });
+    };
     expect(
-      reconcileOnboardingDraftMode(planned, false, new Set(), eligibleIds, eligibleIds, 4).step,
+      reconcileOnboardingDraftMode(
+        restoreOnboardingDraft(planned),
+        false,
+        new Set(),
+        eligibleIds,
+        eligibleIds,
+        4,
+      ).step,
     ).toBe(1);
   });
 
-  it("requires an explicit reading confirmation and preserves planned, reading, and completed separately", () => {
+  it("requires an explicit reading confirmation and preserves reading and completed separately", () => {
     const legacy = validDraft({
       positiveEntries: positiveEntries().map(({ workId, reaction }) => ({ workId, reaction })),
     });
@@ -58,11 +66,24 @@ describe("onboarding draft", () => {
     expect(() => finalizeOnboardingDraft(legacy, COMPLETED_TIME)).toThrow(
       "Confirm the reading state",
     );
+    const legacyPlanned: unknown = {
+      ...validDraft(),
+      positiveEntries: [
+        ...positiveEntries(4),
+        { workId: "wishlist", reaction: "liked", readingState: "planned" },
+      ],
+    };
+    expect(restoreOnboardingDraft(legacyPlanned).positiveEntries[4]).toEqual({
+      workId: "wishlist",
+      reaction: "liked",
+    });
+    expect(() =>
+      finalizeOnboardingDraft(restoreOnboardingDraft(legacyPlanned), COMPLETED_TIME),
+    ).toThrow("Confirm the reading state");
     const draft = validDraft({
       positiveEntries: [
         ...positiveEntries(),
         { workId: "ongoing", reaction: "favorite", readingState: "reading" },
-        { workId: "wishlist", reaction: "liked", readingState: "planned" },
       ],
     });
     const records = finalizeOnboardingDraft(draft, COMPLETED_TIME);
@@ -70,21 +91,12 @@ describe("onboarding draft", () => {
       readingState: "reading",
       reaction: "favorite",
     });
-    expect(records.find((record) => record.workId === "wishlist")).toEqual({
-      workId: "wishlist",
-      readingState: "planned",
-      updatedAt: COMPLETED_TIME,
+    expect(records.find((record) => record.workId === "positive-1")).toMatchObject({
+      readingState: "completed",
+      reaction: "favorite",
     });
     expect(() =>
-      finalizeOnboardingDraft(
-        validDraft({
-          positiveEntries: [
-            ...positiveEntries(4),
-            { workId: "wishlist", reaction: "liked", readingState: "planned" },
-          ],
-        }),
-        COMPLETED_TIME,
-      ),
+      finalizeOnboardingDraft(validDraft({ positiveEntries: positiveEntries(4) }), COMPLETED_TIME),
     ).toThrow("requires at least 5");
     expect(
       finalizeOnboardingDraft(

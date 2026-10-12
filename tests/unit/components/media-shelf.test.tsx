@@ -102,6 +102,42 @@ describe("MediaShelf", () => {
     expect(endFade?.classList.contains("hidden")).toBe(true);
   });
 
+  it("pages by the card area inside the faded bleed inset", () => {
+    const onPageChange = vi.fn();
+    const { container } = render(
+      <MediaShelf controlsPlacement="overlay" onPageChange={onPageChange} title="Bleed shelf">
+        {Array.from({ length: 6 }, (_, index) => (
+          <article key={index}>Card {index + 1}</article>
+        ))}
+      </MediaShelf>,
+    );
+    const track = container.querySelector<HTMLElement>("[data-media-shelf-track]");
+    if (track === null) throw new Error("Missing shelf track");
+    track.style.scrollPaddingLeft = "50px";
+    track.style.scrollPaddingRight = "50px";
+    const scrollBy = vi.fn(({ left }: ScrollToOptions) => {
+      track.scrollLeft += left ?? 0;
+    });
+    Object.defineProperties(track, {
+      clientWidth: { configurable: true, value: 300 },
+      scrollLeft: { configurable: true, value: 0, writable: true },
+      scrollWidth: { configurable: true, value: 700 },
+      scrollBy: { configurable: true, value: scrollBy },
+    });
+    Array.from(track.children).forEach((child, index) => {
+      Object.defineProperties(child, {
+        offsetLeft: { configurable: true, value: 50 + index * 100 },
+        offsetWidth: { configurable: true, value: 100 },
+      });
+    });
+    fireEvent.scroll(track);
+
+    fireEvent.click(screen.getByRole("button", { name: /次へ/ }));
+
+    expect(scrollBy).toHaveBeenCalledWith({ left: 200 });
+    expect(onPageChange).toHaveBeenCalledWith(2);
+  });
+
   it("re-evaluates finite overflow after resize without creating clones", () => {
     let resize: (() => void) | undefined;
     vi.stubGlobal(

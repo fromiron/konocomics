@@ -13,7 +13,7 @@ const EXTERNAL_REASON_PATTERN = /^external:[a-z0-9]+(?:-[a-z0-9]+)*$/;
 export type PositiveOnboardingEntry = {
   workId: string;
   reaction: "favorite" | "liked";
-  readingState?: "planned" | "reading" | "completed";
+  readingState?: "reading" | "completed";
 };
 
 export type NegativeDisposition = "disliked" | "dropped";
@@ -44,11 +44,16 @@ export type AddWorksOnboardingDraft = OnboardingDraftBase & {
 
 export type OnboardingDraft = FirstRunOnboardingDraft | AddWorksOnboardingDraft;
 
-const positiveOnboardingEntrySchema = z.strictObject({
-  workId: z.string().min(1),
-  reaction: z.enum(["favorite", "liked"]),
-  readingState: z.enum(["planned", "reading", "completed"]).optional(),
-});
+const positiveOnboardingEntrySchema = z
+  .strictObject({
+    workId: z.string().min(1),
+    reaction: z.enum(["favorite", "liked"]),
+    // Legacy drafts may hold "planned"; restore it as unconfirmed.
+    readingState: z.enum(["planned", "reading", "completed"]).optional(),
+  })
+  .transform(({ readingState, ...entry }): PositiveOnboardingEntry =>
+    readingState === undefined || readingState === "planned" ? entry : { ...entry, readingState },
+  );
 
 function isExternalNegativeReason(value: string): value is ExternalNegativeReasonId {
   return value.length >= 10 && value.length <= 64 && EXTERNAL_REASON_PATTERN.test(value);
@@ -202,9 +207,7 @@ export function reconcileOnboardingDraftMode(
     mode: "firstRun",
     step:
       restored.mode === "firstRun" &&
-      positiveEntries.filter((entry) => entry.readingState !== "planned").length +
-        existingPositiveCount >=
-        ONBOARDING_MIN_POSITIVE_WORKS &&
+      positiveEntries.length + existingPositiveCount >= ONBOARDING_MIN_POSITIVE_WORKS &&
       positiveEntries.every((entry) => entry.readingState !== undefined)
         ? restored.step
         : 1,
@@ -236,10 +239,7 @@ export function finalizeOnboardingDraft(
       ? 1
       : Math.max(1, ONBOARDING_MIN_POSITIVE_WORKS - existingPositiveCount);
 
-  if (
-    restored.positiveEntries.filter((entry) => entry.readingState !== "planned").length <
-    minimumPositiveWorks
-  ) {
+  if (restored.positiveEntries.length < minimumPositiveWorks) {
     throw new OnboardingInsufficientPositiveWorksError(
       `${restored.mode === "add" ? "Add mode" : "Onboarding"} requires at least ${String(minimumPositiveWorks)} positive works`,
     );
@@ -252,7 +252,7 @@ export function finalizeOnboardingDraft(
     return {
       workId: entry.workId,
       readingState: entry.readingState,
-      ...(entry.readingState === "planned" ? {} : { reaction: entry.reaction }),
+      reaction: entry.reaction,
       updatedAt: finalizedAt,
     };
   });

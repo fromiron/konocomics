@@ -483,11 +483,12 @@ h1[tabindex="-1"]:focus {
 }
 
 /* Overlay carousel: keep cards aligned to the shell while the fade and
-   scroll viewport bleed into the outer gutter. */
+   scroll viewport bleed past the control gutter into the outer page gutter. */
 .media-shelf-overlay {
   --media-shelf-edge-fade-width: var(--layout-page-padding);
 }
 
+/* The outer half stays solid so peeking card text never shows through at the edge. */
 .media-shelf-edge-fade {
   width: var(--media-shelf-edge-fade-width, var(--layout-page-padding));
 }
@@ -496,9 +497,9 @@ h1[tabindex="-1"]:focus {
   background: linear-gradient(
     to right,
     transparent 0%,
-    color-mix(in oklch, var(--canvas) 38%, transparent) 24%,
-    color-mix(in oklch, var(--canvas) 86%, transparent) 54%,
-    var(--canvas) 82%,
+    color-mix(in oklch, var(--canvas) 45%, transparent) 18%,
+    color-mix(in oklch, var(--canvas) 88%, transparent) 36%,
+    var(--canvas) 52%,
     var(--canvas) 100%
   );
 }
@@ -507,23 +508,40 @@ h1[tabindex="-1"]:focus {
   background: linear-gradient(
     to left,
     transparent 0%,
-    color-mix(in oklch, var(--canvas) 38%, transparent) 24%,
-    color-mix(in oklch, var(--canvas) 86%, transparent) 54%,
-    var(--canvas) 82%,
+    color-mix(in oklch, var(--canvas) 45%, transparent) 18%,
+    color-mix(in oklch, var(--canvas) 88%, transparent) 36%,
+    var(--canvas) 52%,
     var(--canvas) 100%
   );
 }
 
 @media (min-width: 768px) and (hover: hover) and (pointer: fine) {
   .media-shelf-overlay {
-    --media-shelf-edge-fade-width: var(--space-2);
-    margin-inline: 0;
-    padding-inline: calc(var(--control-min-size) + var(--space-2));
+    /* Controls stay outside the fully visible cards; peeking cards fade under them. */
+    --media-shelf-bleed: clamp(
+      0px,
+      calc((100vw - var(--layout-width-media)) / 2 + var(--layout-page-padding) - var(--space-2)),
+      calc(var(--space-12) + var(--space-12))
+    );
+    --media-shelf-control-gutter: calc(var(--control-min-size) + var(--space-2));
+    --media-shelf-edge-fade-width: calc(
+      var(--media-shelf-bleed) + var(--media-shelf-control-gutter)
+    );
+    margin-inline: calc(0px - var(--media-shelf-bleed));
+    padding-inline: 0;
   }
 
   .media-shelf-overlay > [data-media-shelf-track] {
-    padding-inline: 0;
-    scroll-padding-inline: 0;
+    padding-inline: var(--media-shelf-edge-fade-width);
+    scroll-padding-inline: var(--media-shelf-edge-fade-width);
+  }
+
+  .media-shelf-overlay__control--start {
+    left: var(--media-shelf-bleed);
+  }
+
+  .media-shelf-overlay__control--end {
+    right: var(--media-shelf-bleed);
   }
 }
 

@@ -53,6 +53,15 @@ const initialScrollState: ScrollState = {
   total: 0,
 };
 
+/** Scroll padding that bleeds the track under the edge fades; cards align inside it. */
+function trackInset(track: HTMLElement) {
+  const style = getComputedStyle(track);
+  return {
+    start: parseFloat(style.scrollPaddingLeft) || 0,
+    end: parseFloat(style.scrollPaddingRight) || 0,
+  };
+}
+
 const focusableCardTarget =
   'a[href], button:not([disabled]), input:not([disabled]), select:not([disabled]), textarea:not([disabled]), [tabindex]:not([tabindex="-1"])';
 
@@ -81,9 +90,13 @@ export function MediaShelf({
     const maximum = Math.max(0, track.scrollWidth - track.clientWidth);
     const cards = Array.from(track.children);
     const bounds = track.getBoundingClientRect();
+    const { start, end } = trackInset(track);
+    // Cards peeking into the faded inset are not counted as shown.
     const visible = cards.flatMap((card, index) => {
       const rect = card.getBoundingClientRect();
-      return rect.right > bounds.left + 1 && rect.left < bounds.right - 1 ? [index + 1] : [];
+      return rect.right > bounds.left + start + 1 && rect.left < bounds.right - end - 1
+        ? [index + 1]
+        : [];
     });
     const next = {
       hasOverflow: maximum > 1,
@@ -128,18 +141,17 @@ export function MediaShelf({
     const track = trackRef.current;
     if (track === null) return;
     const maximum = Math.max(0, track.scrollWidth - track.clientWidth);
-    const targetLeft = Math.min(
-      maximum,
-      Math.max(0, track.scrollLeft + direction * track.clientWidth),
-    );
+    const { start, end } = trackInset(track);
+    const page = Math.max(0, track.clientWidth - start - end);
+    const targetLeft = Math.min(maximum, Math.max(0, track.scrollLeft + direction * page));
     const cards = Array.from(track.children).filter(
       (element): element is HTMLElement => element instanceof HTMLElement,
     );
     const firstVisibleIndex = cards.findIndex(
-      (card) => card.offsetLeft + card.offsetWidth > targetLeft + 1,
+      (card) => card.offsetLeft - start + card.offsetWidth > targetLeft + 1,
     );
     onPageChange?.(firstVisibleIndex < 0 ? Math.max(0, cards.length - 1) : firstVisibleIndex);
-    track.scrollBy({ left: direction * track.clientWidth });
+    track.scrollBy({ left: direction * page });
   };
   const moveCardFocus = (event: KeyboardEvent<HTMLElement>) => {
     if (event.defaultPrevented || (event.key !== "ArrowLeft" && event.key !== "ArrowRight")) {
@@ -281,21 +293,21 @@ export function MediaShelf({
               <span
                 aria-hidden="true"
                 className={cn(
-                  "media-shelf-edge-fade media-shelf-edge-fade--start absolute inset-y-0 left-[calc(var(--control-min-size)+var(--space-2))]",
+                  "media-shelf-edge-fade media-shelf-edge-fade--start absolute inset-y-0 left-0",
                   !scrollState.canScrollBack && "hidden",
                 )}
               />
               <span
                 aria-hidden="true"
                 className={cn(
-                  "media-shelf-edge-fade media-shelf-edge-fade--end absolute inset-y-0 right-[calc(var(--control-min-size)+var(--space-2))]",
+                  "media-shelf-edge-fade media-shelf-edge-fade--end absolute inset-y-0 right-0",
                   !scrollState.canScrollForward && "hidden",
                 )}
               />
-              <span className="absolute top-1/2 left-0 z-10 -translate-y-1/2">
+              <span className="media-shelf-overlay__control--start absolute top-1/2 left-0 z-10 -translate-y-1/2">
                 {scrollButton(-1)}
               </span>
-              <span className="absolute top-1/2 right-0 z-10 -translate-y-1/2">
+              <span className="media-shelf-overlay__control--end absolute top-1/2 right-0 z-10 -translate-y-1/2">
                 {scrollButton(1)}
               </span>
             </span>
