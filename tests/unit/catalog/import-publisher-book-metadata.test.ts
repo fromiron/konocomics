@@ -31,7 +31,7 @@ import {
 const { readCatalogAuthority, serializeCsv, sha256 } = authority;
 const repository = resolve(import.meta.dirname, "../../..");
 
-it.each(["futabasha-json", "shogakukan-ancillary-array"])(
+it.each(["futabasha-json", "shogakukan-ancillary-array", "shogakukan-short-introduction"])(
   "binds the exact publisher introduction for %s without admitting other book fields",
   (format) => {
     const folder = mkdtempSync(join(tmpdir(), "publisher-structured-introduction-"));
@@ -53,8 +53,21 @@ it.each(["futabasha-json", "shogakukan-ancillary-array"])(
       };
       const htmlBook = {
         isbn13_cd: isbn,
-        promo_contents: [null, null, "短い紹介", caption, null, null, [hidden]],
-        promo_kbns: [{ promo_kbn: 3, pivot: { promo_contents: caption } }],
+        promo_contents: [
+          null,
+          null,
+          format === "shogakukan-short-introduction" ? caption : "短い紹介",
+          format === "shogakukan-short-introduction" ? "▼第１話／事件▼第２話／謎" : caption,
+          null,
+          null,
+          [hidden],
+        ],
+        promo_kbns: [
+          {
+            promo_kbn: format === "shogakukan-short-introduction" ? 2 : 3,
+            pivot: { promo_contents: caption },
+          },
+        ],
         administrative_note: hidden,
       };
       const raw = (wrongIsbn = false, wrongCategory = false) =>

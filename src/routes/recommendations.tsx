@@ -44,6 +44,13 @@ function RecommendationsPage() {
               onReady={onReady}
               restoreShelfFromUrl={!isHistoryTraversal}
               genre={search.genre}
+              mood={search.mood ?? null}
+              onMoodChange={(mood) => {
+                void navigate({
+                  resetScroll: false,
+                  search: (current) => ({ ...current, mood: mood ?? undefined }),
+                });
+              }}
               onGenreChange={(genre) => {
                 void navigate({
                   resetScroll: false,

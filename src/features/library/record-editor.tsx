@@ -210,6 +210,9 @@ export function LibraryRecordEditor({
       </fieldset>
       <fieldset className="library-editor__group">
         <legend className="library-editor__legend">{libraryStrings.editor.reaction}</legend>
+        <p className="text-[length:var(--text-caption-size)] text-text-muted">
+          {libraryStrings.editor.reactionHelp}
+        </p>
         <ChoiceChipRadioGroup<Reaction | typeof NO_REACTION>
           aria-label={libraryStrings.editor.reaction}
           disabled={busy}
@@ -289,7 +292,12 @@ export function LibraryRecordEditor({
         />
       ) : null}
       <div className="library-editor__actions">
-        <div className="library-editor__status">{status}</div>
+        <div className="library-editor__status">
+          {status}
+          {!isNewRecord && !hasChanges ? (
+            <p role="status">{libraryStrings.editor.unchanged}</p>
+          ) : null}
+        </div>
         <Button disabled={busy || (!isNewRecord && !hasChanges)} type="submit">
           {busy ? libraryStrings.editor.saving : libraryStrings.editor.save}
         </Button>

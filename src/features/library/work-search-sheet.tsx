@@ -5,10 +5,14 @@ import { useEffect, useMemo, useRef, useState, type ReactNode } from "react";
 
 import { CoverImage } from "@/components/cover/CoverImage";
 import { Button } from "@/components/design-system/button";
+import { NativeSelect } from "@/components/design-system/native-select";
+import { useUrlSyncedQuery } from "@/components/design-system/use-url-synced-query";
 import { Input } from "@/components/design-system/input";
-import type { CatalogV1, Work } from "@/domain/catalog/types";
+import { GENRE_TAGS } from "@/domain/catalog/constants";
+import type { CatalogV1, Work, GenreTag } from "@/domain/catalog/types";
 import { searchRakutenBooks, type RakutenBookItem } from "@/infrastructure/rakuten";
-import { libraryStrings } from "@/lib/strings";
+import { WORK_QUERY_MAX_LENGTH } from "@/lib/search-query";
+import { libraryStrings, searchStrings, onboardingStrings } from "@/lib/strings";
 
 import { catalogWorkForRakutenItem, createLibraryWorkSearch } from "./search";
 
@@ -17,6 +21,8 @@ type ProviderState =
   | Readonly<{ phase: "loading" }>
   | Readonly<{ phase: "ready"; items: readonly RakutenBookItem[] }>
   | Readonly<{ phase: "error" }>;
+
+export type LibraryAddState = "planned" | "reading" | "completed";
 
 export type LibraryAddOutcome = "added" | "already-exists" | "preserved-unknown";
 
@@ -28,8 +34,8 @@ type WorkSearchSheetProps = Readonly<{
   emptyContent?: ReactNode;
   isCatalogAdded(workId: string): boolean;
   isExternalAdded(item: RakutenBookItem): boolean;
-  onAddCatalog(work: Work): Promise<LibraryAddOutcome>;
-  onAddExternal(item: RakutenBookItem): Promise<LibraryAddOutcome>;
+  onAddCatalog(work: Work, state: LibraryAddState): Promise<LibraryAddOutcome>;
+  onAddExternal(item: RakutenBookItem, state: LibraryAddState): Promise<LibraryAddOutcome>;
 }>;
 
 export function WorkSearchSheet({
@@ -43,8 +49,18 @@ export function WorkSearchSheet({
   onAddCatalog,
   onAddExternal,
 }: WorkSearchSheetProps) {
-  const search = useMemo(() => createLibraryWorkSearch(catalog.works), [catalog.works]);
-  const [query, setQuery] = useState("");
+  const [genre, setGenre] = useState<GenreTag>();
+  const genreWorks = useMemo(
+    () =>
+      genre === undefined
+        ? catalog.works
+        : catalog.works.filter((work) => work.genres.includes(genre)),
+    [catalog.works, genre],
+  );
+  const search = useMemo(() => createLibraryWorkSearch(genreWorks), [genreWorks]);
+  const { inputProps, searchQuery: query, clear } = useUrlSyncedQuery({ urlQuery: undefined });
+  const [readingState, setReadingState] = useState<LibraryAddState>("planned");
+  const [online, setOnline] = useState(() => navigator.onLine);
   const [provider, setProvider] = useState<ProviderState>({ phase: "idle" });
   const [busyKey, setBusyKey] = useState<string>();
   const [message, setMessage] = useState<
@@ -52,9 +68,29 @@ export function WorkSearchSheet({
   >();
   const addInFlight = useRef(false);
   const providerInFlight = useRef(false);
+  const providerController = useRef<AbortController | undefined>(undefined);
   const providerRequestSequence = useRef(0);
-  const localResults = useMemo(() => search.search(query), [query, search]);
+  const localResults = useMemo(
+    () =>
+      query.trim().length === 0 && genre !== undefined
+        ? genreWorks.slice(0, 20)
+        : search.search(query),
+    [query, search, genre, genreWorks],
+  );
+  const tooLong = inputProps.value.length > WORK_QUERY_MAX_LENGTH;
   const hasQuery = query.trim().length > 0;
+
+  useEffect(() => {
+    const update = () => setOnline(navigator.onLine);
+    window.addEventListener("online", update);
+    window.addEventListener("offline", update);
+    return () => {
+      window.removeEventListener("online", update);
+      window.removeEventListener("offline", update);
+      providerController.current?.abort();
+      providerRequestSequence.current += 1;
+    };
+  }, []);
 
   useEffect(() => {
     onSearchResultsChange?.(localResults.map((work) => work.id));
@@ -62,14 +98,24 @@ export function WorkSearchSheet({
   useEffect(() => () => onSearchResultsChange?.([]), [onSearchResultsChange]);
 
   const runProviderSearch = async () => {
-    if (!hasQuery || provider.phase === "loading" || providerInFlight.current) return;
+    if (
+      !hasQuery ||
+      tooLong ||
+      inputProps.value !== query ||
+      !online ||
+      provider.phase === "loading" ||
+      providerInFlight.current
+    )
+      return;
     providerInFlight.current = true;
     const requestSequence = providerRequestSequence.current + 1;
     providerRequestSequence.current = requestSequence;
     setProvider({ phase: "loading" });
     setMessage(undefined);
     try {
-      const items = await searchRakutenBooks(query);
+      const controller = new AbortController();
+      providerController.current = controller;
+      const items = await searchRakutenBooks(query, controller.signal);
       if (providerRequestSequence.current === requestSequence) {
         setProvider({ phase: "ready", items });
       }
@@ -90,7 +136,7 @@ export function WorkSearchSheet({
     setBusyKey(`catalog:${work.id}`);
     setMessage(undefined);
     try {
-      const result = await onAddCatalog(work);
+      const result = await onAddCatalog(work, readingState);
       if (result === "preserved-unknown") {
         setMessage({ kind: "error", text: libraryStrings.search.addUnknown });
         return;
@@ -99,7 +145,7 @@ export function WorkSearchSheet({
         kind: "status",
         text:
           result === "added"
-            ? libraryStrings.search.addedAnnouncement(work.title)
+            ? libraryStrings.search.addedAnnouncement(work.title, readingState)
             : libraryStrings.search.alreadyAddedAnnouncement(work.title),
       });
     } catch {
@@ -121,7 +167,9 @@ export function WorkSearchSheet({
     setMessage(undefined);
     try {
       const result =
-        catalogMatch === undefined ? await onAddExternal(item) : await onAddCatalog(catalogMatch);
+        catalogMatch === undefined
+          ? await onAddExternal(item, readingState)
+          : await onAddCatalog(catalogMatch, readingState);
       if (result === "preserved-unknown") {
         setMessage({ kind: "error", text: libraryStrings.search.addUnknown });
         return;
@@ -130,7 +178,10 @@ export function WorkSearchSheet({
         kind: "status",
         text:
           result === "added"
-            ? libraryStrings.search.addedAnnouncement(catalogMatch?.title ?? item.title)
+            ? libraryStrings.search.addedAnnouncement(
+                catalogMatch?.title ?? item.title,
+                readingState,
+              )
             : libraryStrings.search.alreadyAddedAnnouncement(catalogMatch?.title ?? item.title),
       });
     } catch {
@@ -149,23 +200,88 @@ export function WorkSearchSheet({
       <label className="grid gap-[var(--space-content-tight)] font-bold text-text-strong">
         <span>{libraryStrings.search.label}</span>
         <Input
+          {...inputProps}
+          aria-describedby="library-search-hint"
           id="library-add-search"
           className="w-full"
           autoComplete="off"
           onChange={(event) => {
             providerRequestSequence.current += 1;
             providerInFlight.current = false;
-            setQuery(event.currentTarget.value);
+            providerController.current?.abort();
+            inputProps.onChange(event);
             setProvider({ phase: "idle" });
             setMessage(undefined);
           }}
           placeholder={libraryStrings.search.placeholder}
           type="search"
-          value={query}
         />
       </label>
 
-      {hasQuery ? (
+      <p
+        id="library-search-hint"
+        role={tooLong ? "status" : undefined}
+        className="text-text-muted text-[length:var(--text-caption-size)]"
+      >
+        {tooLong ? searchStrings.tooLong : searchStrings.limitHint}
+      </p>
+      {query.normalize("NFKC").trim().toLowerCase() === "bl" ? (
+        <p className="text-text-muted">{libraryStrings.search.genreClassificationHint}</p>
+      ) : null}
+      <div className="flex flex-wrap items-center gap-[var(--space-3)]">
+        <label className="grid gap-[var(--space-content-tight)]">
+          <span>{libraryStrings.search.readingState}</span>
+          <NativeSelect
+            value={readingState}
+            disabled={busyKey !== undefined}
+            onChange={(event) =>
+              setReadingState(
+                event.currentTarget.value === "completed" || event.currentTarget.value === "reading"
+                  ? event.currentTarget.value
+                  : "planned",
+              )
+            }
+          >
+            <option value="planned">{libraryStrings.tabs.planned}</option>
+            <option value="reading">{libraryStrings.tabs.reading}</option>
+            <option value="completed">{libraryStrings.tabs.completed}</option>
+          </NativeSelect>
+        </label>
+        <label className="grid gap-[var(--space-content-tight)]">
+          <span>{libraryStrings.search.genreHint}</span>
+          <NativeSelect
+            value={genre ?? "all"}
+            onChange={(event) =>
+              setGenre(GENRE_TAGS.find((value) => value === event.currentTarget.value))
+            }
+          >
+            <option value="all">{onboardingStrings.step1.allGenres}</option>
+            {GENRE_TAGS.map((value) => (
+              <option key={value} value={value}>
+                {onboardingStrings.step1.genreLabels[value]}
+              </option>
+            ))}
+          </NativeSelect>
+        </label>
+        {inputProps.value.length > 0 ? (
+          <Button
+            type="button"
+            variant="outline"
+            onClick={() => {
+              clear();
+              providerController.current?.abort();
+              providerRequestSequence.current += 1;
+              providerInFlight.current = false;
+              setProvider({ phase: "idle" });
+              setMessage(undefined);
+            }}
+          >
+            {libraryStrings.filteredEmpty.clearSearch}
+          </Button>
+        ) : null}
+      </div>
+
+      {(hasQuery || genre !== undefined) && !tooLong ? (
         <section
           aria-labelledby="library-local-search-heading"
           className="grid gap-[var(--space-4)] border-t border-line pt-[var(--space-5)]"
@@ -218,7 +334,11 @@ export function WorkSearchSheet({
                         ? libraryStrings.search.added
                         : busy
                           ? libraryStrings.search.adding
-                          : libraryStrings.search.add}
+                          : readingState === "reading"
+                            ? libraryStrings.search.addReading
+                            : readingState === "completed"
+                              ? libraryStrings.search.addCompleted
+                              : libraryStrings.search.add}
                     </Button>
                   </li>
                 );
@@ -236,22 +356,37 @@ export function WorkSearchSheet({
       {hasQuery ? (
         <Button
           className="justify-self-start"
-          disabled={provider.phase === "loading" || busyKey !== undefined}
+          disabled={
+            provider.phase === "loading" ||
+            busyKey !== undefined ||
+            tooLong ||
+            inputProps.value !== query ||
+            !online
+          }
+          aria-busy={provider.phase === "loading"}
+          aria-describedby={
+            provider.phase === "error" || !online ? "library-provider-status" : undefined
+          }
           onClick={() => void runProviderSearch()}
           type="button"
         >
           {provider.phase === "loading"
             ? libraryStrings.search.rakutenSearching
-            : libraryStrings.search.rakutenExpand}
+            : provider.phase === "error"
+              ? libraryStrings.search.rakutenRetry
+              : libraryStrings.search.rakutenExpand}
         </Button>
       ) : null}
 
-      {provider.phase === "error" ? (
+      {provider.phase === "error" || !online ? (
         <p
           className="border-l-[length:var(--space-content-tight)] border-warn bg-canvas p-[var(--space-3)] text-text-strong"
           role="status"
+          id="library-provider-status"
         >
-          {libraryStrings.search.providerUnavailable}
+          {online
+            ? libraryStrings.search.providerUnavailable
+            : libraryStrings.search.providerOffline}
         </p>
       ) : null}
       {provider.phase === "ready" ? (
@@ -313,9 +448,13 @@ export function WorkSearchSheet({
                         ? libraryStrings.search.added
                         : busy
                           ? libraryStrings.search.adding
-                          : catalogMatch === undefined
-                            ? libraryStrings.search.externalMatch
-                            : libraryStrings.search.add}
+                          : readingState === "reading"
+                            ? libraryStrings.search.addReading
+                            : readingState === "completed"
+                              ? libraryStrings.search.addCompleted
+                              : catalogMatch === undefined
+                                ? libraryStrings.search.externalMatch
+                                : libraryStrings.search.add}
                     </Button>
                   </li>
                 );

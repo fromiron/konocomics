@@ -2,6 +2,8 @@ import * as z from "zod/v4";
 
 import {
   finalizeOnboardingDraft,
+  OnboardingInsufficientPositiveWorksError,
+  ONBOARDING_MIN_POSITIVE_WORKS,
   restoreOnboardingDraft,
   type OnboardingDraft,
 } from "@/domain/profile/onboarding";
@@ -49,7 +51,6 @@ const negativeReasonSchema: z.ZodType<NegativeReasonId> = z.union([
 const userWorkRecordSchema: z.ZodType<UserWorkRecord> = z
   .strictObject({
     workId: z.string().min(1),
-    // Records saved before the four-state model may still hold `reading`.
     readingState: z.enum(LEGACY_READING_STATES).transform(normalizeReadingState),
     reaction: z.enum(["favorite", "liked", "neutral", "disliked"]).optional(),
     progress: z
@@ -445,9 +446,39 @@ export function parseOnboardingCompletedAt(value: unknown): string | null {
 export function createOnboardingCommit(
   draft: OnboardingDraft,
   completedAt: string,
+  existingRecords: readonly UserWorkRecord[] = [],
+  profileWorkIds?: readonly string[],
 ): OnboardingCommit {
   const finalizedAt = timestampSchema.parse(completedAt);
-  const userWorks = parseUserWorks(finalizeOnboardingDraft(draft, finalizedAt));
+  const eligibleIds = new Set(profileWorkIds ?? draft.positiveEntries.map((entry) => entry.workId));
+  const existingPositiveCount = new Set(
+    existingRecords
+      .filter(
+        (record) =>
+          eligibleIds.has(record.workId) &&
+          (record.reaction === "liked" || record.reaction === "favorite"),
+      )
+      .map((record) => record.workId),
+  ).size;
+  const userWorks = parseUserWorks(
+    finalizeOnboardingDraft(draft, finalizedAt, existingPositiveCount),
+  );
+  if (draft.mode === "firstRun" || profileWorkIds !== undefined) {
+    const mergedPositiveIds = new Set(
+      [...existingRecords, ...userWorks]
+        .filter(
+          (record) =>
+            eligibleIds.has(record.workId) &&
+            (record.reaction === "liked" || record.reaction === "favorite"),
+        )
+        .map((record) => record.workId),
+    );
+    if (mergedPositiveIds.size < ONBOARDING_MIN_POSITIVE_WORKS) {
+      throw new OnboardingInsufficientPositiveWorksError(
+        "Onboarding requires at least 5 eligible positive works",
+      );
+    }
+  }
   return draft.mode === "add"
     ? { mode: "add", userWorks }
     : { mode: "firstRun", userWorks, onboardingCompletedAt: finalizedAt };

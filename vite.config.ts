@@ -60,6 +60,8 @@ export default defineConfig({
     }),
   ],
   resolve: { tsconfigPaths: true },
+  // Prerender previews can use another port when a local app owns the default.
+  preview: { strictPort: false },
   server: {
     headers: securityHeaders,
     port: 3030,

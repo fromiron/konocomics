@@ -47,6 +47,8 @@ const testState = vi.hoisted(() => ({
 }));
 
 vi.mock("@tanstack/react-router", () => ({
+  useCanGoBack: () => false,
+  useRouter: () => ({ history: { back: vi.fn() } }),
   useNavigate: () => testState.navigate,
   Link: ({ children, className, to }: { children: ReactNode; className?: string; to: string }) => (
     <a className={className} href={to}>
@@ -356,6 +358,7 @@ describe("ExternalWorkDetailFlow", () => {
       record.id,
       record.normalizedKey,
       expect.objectContaining({ workId: record.id, readingState: "completed" }),
+      record.record.updatedAt,
     );
     expect(await screen.findByText(externalDetailStrings.state.saved)).toBeTruthy();
   });

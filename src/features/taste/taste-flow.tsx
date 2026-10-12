@@ -508,6 +508,9 @@ function FactorPanels({
         preferences={summary.genres}
         title={tasteStrings.groups.genre}
       />
+      <p className="text-[length:var(--text-caption-size)] text-text-muted">
+        {tasteStrings.genreAnalysisHelp}
+      </p>
       <FactorGroup
         adjustmentValues={adjustments.themes}
         animateReveal={animateReveal}
@@ -952,6 +955,7 @@ export function TasteFlow({
       const before = localAdjustments ?? storedAdjustments ?? EMPTY_ADJUSTMENTS;
       const sequence = ++saveSequence.current;
       setLocalAdjustments(next);
+      setMessage("");
       setErrorMessage("");
       void saveProfileAdjustments(next).then(
         () => {

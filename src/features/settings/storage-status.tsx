@@ -40,7 +40,11 @@ export function StorageStatus({
     void storage
       .persisted?.()
       .then((persisted) => {
-        if (active) setPersistState(persisted ? "persisted" : "not-persisted");
+        if (active) {
+          setPersistState((current) =>
+            current === "unknown" ? (persisted ? "persisted" : "not-persisted") : current,
+          );
+        }
       })
       .catch(() => undefined);
     void storage
@@ -73,15 +77,17 @@ export function StorageStatus({
       ? strings.persisted
       : persistState === "denied"
         ? strings.denied
-        : persistState === "not-persisted"
-          ? strings.notPersisted
-          : null;
+        : !canRequestPersistence
+          ? strings.unsupported
+          : persistState === "not-persisted"
+            ? strings.notPersisted
+            : strings.unknown;
   const ProtectionIcon = persistState === "persisted" ? ShieldCheckIcon : ShieldAlertIcon;
 
   return (
     <SettingsRow
       action={
-        !storageDegraded && persistState === "not-persisted" && canRequestPersistence ? (
+        !storageDegraded && persistState !== "persisted" && canRequestPersistence ? (
           <Button
             className="w-full sm:w-fit"
             disabled={requesting}
@@ -104,6 +110,8 @@ export function StorageStatus({
               </>
             )}
           </p>
+          {usageBytes === null ? null : <p>{strings.usageHelp}</p>}
+          <p>{strings.limits}</p>
           <p className="flex items-start gap-[var(--space-content)]" role="status">
             {protectionMessage === null ? null : (
               <>

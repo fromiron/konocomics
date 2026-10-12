@@ -140,6 +140,22 @@ describe("onboarding search input bound to the URL", () => {
     expect(input.value).toBe("進撃");
   });
 
+  it("keeps over-limit composition editable without publishing an invalid URL", async () => {
+    vi.useFakeTimers();
+    const writes: string[] = [];
+    render(<UrlBackedSearchHarness onUrlWrite={(query) => writes.push(query)} />);
+    const input = screen.getByRole<HTMLInputElement>("searchbox", { name: "作品を検索" });
+    const longQuery = "あ".repeat(220);
+    fireEvent.compositionStart(input);
+    fireEvent.change(input, { target: { value: longQuery } });
+    fireEvent.compositionEnd(input);
+    await act(async () => vi.advanceTimersByTime(350));
+    expect(input.value).toBe(longQuery);
+    expect(writes).toEqual([]);
+    fireEvent.change(input, { target: { value: "あ".repeat(100) } });
+    expect(writes).toEqual(["あ".repeat(100)]);
+  });
+
   it("ignores stale URL echoes but follows external URL changes", async () => {
     vi.useFakeTimers();
     render(<UrlBackedSearchHarness onUrlWrite={() => undefined} />);

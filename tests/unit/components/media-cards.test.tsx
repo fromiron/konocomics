@@ -148,7 +148,7 @@ describe("media card anatomy", () => {
     expect(container.querySelector('[data-ranking-label="true"]')?.textContent).toBe(
       "アクション · コメディ · ファンタジー",
     );
-    expect(container.querySelector('[data-ranking-label="true"]')?.className).toContain(
+    expect(container.querySelector('[data-ranking-label="true"]')?.className).not.toContain(
       "line-clamp-2",
     );
     expect(container.querySelector("button")).toBeNull();

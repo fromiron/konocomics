@@ -18,7 +18,7 @@ import { selectPopularWork } from "@/features/discovery/popular-works";
 import { createPersistence, PersistenceProvider } from "@/infrastructure/db";
 import { MemoryPersistenceBackend } from "@/infrastructure/db/memory-backend";
 import type * as Rakuten from "@/infrastructure/rakuten";
-import { libraryStrings, popularWorkStrings } from "@/lib/strings";
+import { libraryStrings, popularWorkStrings, workDetailStrings } from "@/lib/strings";
 
 const provider = vi.hoisted(() => ({ popular: vi.fn(), search: vi.fn() }));
 vi.mock("@/infrastructure/rakuten", async (importOriginal) => ({
@@ -41,7 +41,7 @@ const item: Rakuten.RakutenBookItem = {
   reviewCount: 10,
 };
 
-async function mount(embedded = false) {
+async function mount(embedded = false, expectBanner = true) {
   const persistence = createPersistence({
     primaryFactory: async () => new MemoryPersistenceBackend(),
   });
@@ -59,13 +59,15 @@ async function mount(embedded = false) {
     history: createMemoryHistory({ initialEntries: ["/"] }),
   });
   render(<RouterProvider router={router} />);
-  await screen.findByRole("button", { name: popularWorkStrings.unread });
+  if (expectBanner) await screen.findByRole("button", { name: popularWorkStrings.unread });
   return persistence;
 }
 
 beforeEach(() => {
   vi.stubGlobal("crypto", webcrypto);
   sessionStorage.clear();
+  localStorage.clear();
+  provider.popular.mockClear();
   provider.popular.mockResolvedValue([item]);
   provider.search.mockResolvedValue([item]);
 });
@@ -83,9 +85,9 @@ function choose(group: string, option: string) {
 }
 
 describe("popular work discovery", () => {
-  it("leaves an unread answer unrecorded and saves a separately confirmed reading state", async () => {
+  it("previews without recording and saves a separately confirmed reading state", async () => {
     const persistence = await mount();
-    fireEvent.click(screen.getByRole("button", { name: popularWorkStrings.unread }));
+    fireEvent.click(screen.getByRole("button", { name: popularWorkStrings.preview(work.title) }));
     await screen.findByRole("dialog");
     expect(screen.getByText(item.itemCaption!)).toBeTruthy();
     expect(await persistence.getUserWorks()).toEqual([]);
@@ -114,15 +116,19 @@ describe("popular work discovery", () => {
     provider.popular.mockResolvedValue([external]);
     provider.search.mockResolvedValue([external]);
     const persistence = await mount(true);
-    fireEvent.click(screen.getByRole("button", { name: popularWorkStrings.unread }));
+    fireEvent.click(
+      screen.getByRole("button", { name: popularWorkStrings.preview("固有の新しい漫画") }),
+    );
     await screen.findByText(libraryStrings.externalExclusion);
     expect(screen.queryByRole("dialog")).toBeNull();
     expect(await persistence.getExternalWorks()).toEqual([]);
     fireEvent.click(screen.getByRole("button", { name: popularWorkStrings.back }));
     expect(document.activeElement).toBe(
-      screen.getByRole("button", { name: popularWorkStrings.unread }),
+      screen.getByRole("button", { name: popularWorkStrings.preview("固有の新しい漫画") }),
     );
-    fireEvent.click(screen.getByRole("button", { name: popularWorkStrings.unread }));
+    fireEvent.click(
+      screen.getByRole("button", { name: popularWorkStrings.preview("固有の新しい漫画") }),
+    );
     await screen.findByText(libraryStrings.externalExclusion);
     fireEvent.click(screen.getByRole("button", { name: libraryStrings.search.add }));
     await screen.findByText(libraryStrings.editor.saved);
@@ -149,6 +155,36 @@ describe("popular work discovery", () => {
     expect(screen.getByRole("dialog")).toBeTruthy();
     expect(screen.queryByText(libraryStrings.editor.saved)).toBeNull();
     expect(await persistence.getUserWorks()).toEqual([]);
+  });
+
+  it("dismisses unread without a record and suppresses the same work after a new session", async () => {
+    const persistence = await mount();
+    fireEvent.click(screen.getByRole("button", { name: popularWorkStrings.unread }));
+    expect(screen.queryByRole("dialog")).toBeNull();
+    expect(screen.queryByRole("button", { name: popularWorkStrings.unread })).toBeNull();
+    expect(await persistence.getUserWorks()).toEqual([]);
+    expect(await persistence.getExternalWorks()).toEqual([]);
+    cleanup();
+    sessionStorage.clear();
+    await mount(false, false);
+    await waitFor(() => expect(provider.popular).toHaveBeenCalledTimes(2));
+    expect(screen.queryByRole("button", { name: popularWorkStrings.unread })).toBeNull();
+  });
+
+  it("undoes a banner save without deleting a newer record", async () => {
+    const persistence = await mount();
+    fireEvent.click(screen.getByRole("button", { name: popularWorkStrings.read }));
+    fireEvent.click(await screen.findByRole("button", { name: libraryStrings.editor.save }));
+    await screen.findByText(libraryStrings.editor.saved);
+    await persistence.saveUserWork({
+      workId: work.id,
+      readingState: "completed",
+      reaction: "liked",
+      updatedAt: "2099-01-01T00:00:00Z",
+    });
+    fireEvent.click(screen.getByRole("button", { name: workDetailStrings.state.undo }));
+    await screen.findByText(workDetailStrings.state.plannedPreservedConflict);
+    expect((await persistence.getUserWorks())[0]?.reaction).toBe("liked");
   });
 
   it("excludes saved series across volumes without sorting the sales list by taste", () => {

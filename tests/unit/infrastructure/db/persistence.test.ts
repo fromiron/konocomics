@@ -1,6 +1,10 @@
 import { describe, expect, it } from "vitest";
 
-import { onboardingDraftSchema, type OnboardingDraft } from "@/domain/profile/onboarding";
+import {
+  onboardingDraftSchema,
+  OnboardingInsufficientPositiveWorksError,
+  type OnboardingDraft,
+} from "@/domain/profile/onboarding";
 import type { ExternalWorkId } from "@/domain/catalog/external-work";
 import type {
   ProfileAdjustments,
@@ -14,7 +18,6 @@ import {
   OnboardingAlreadyCompletedError,
   OnboardingWorkConflictError,
   UserWorkConflictError,
-  type OnboardingCommit,
   type PersistenceBackend,
 } from "@/infrastructure/db/backend";
 import {
@@ -51,6 +54,8 @@ import {
   mergeExternalWorkOnInsert,
 } from "@/infrastructure/db/external-work";
 import {
+  createOnboardingCommit,
+  parseUserWorks,
   hasUpdatedAt,
   isMinimalPlannedUserWork,
   isUnchangedExternalWork,
@@ -146,6 +151,7 @@ function createDraft(positiveCount = 5): OnboardingDraft {
     positiveEntries: Array.from({ length: positiveCount }, (_value, index) => ({
       workId: `positive-${String(index + 1)}`,
       reaction: index === 0 ? "favorite" : "liked",
+      readingState: "completed",
     })),
     negativeEntries: [
       { workId: "negative-disliked", disposition: "disliked", reasons: ["tooDark"] },
@@ -160,7 +166,7 @@ function createAddDraft(workId = "new-positive"): OnboardingDraft {
     id: "current",
     mode: "add",
     step: 1,
-    positiveEntries: [{ workId, reaction: "liked" }],
+    positiveEntries: [{ workId, reaction: "liked", readingState: "completed" }],
     negativeEntries: [],
     updatedAt: DRAFT_TIME,
   });
@@ -232,6 +238,7 @@ class ControllableBackend implements PersistenceBackend {
   policyWriteGate: Promise<void> | null = null;
   onPolicyWriteWaiting: (() => void) | null = null;
   beforeUserWorkRemoval: (() => void) | null = null;
+  beforeOnboardingCommit: (() => void) | null = null;
   closed = false;
 
   async open(): Promise<void> {
@@ -251,7 +258,19 @@ class ControllableBackend implements PersistenceBackend {
     this.draft = draft === null ? null : structuredClone(draft);
   }
 
-  async commitOnboarding(commit: OnboardingCommit): Promise<void> {
+  async commitOnboarding(
+    draft: OnboardingDraft,
+    completedAt: string,
+    profileWorkIds?: readonly string[],
+  ): Promise<UserWorkRecord[]> {
+    this.beforeOnboardingCommit?.();
+    this.beforeOnboardingCommit = null;
+    const commit = createOnboardingCommit(
+      draft,
+      completedAt,
+      parseUserWorks(this.userWorks),
+      profileWorkIds,
+    );
     if (this.failCommit) {
       throw new Error("IndexedDB transaction failed");
     }
@@ -277,6 +296,7 @@ class ControllableBackend implements PersistenceBackend {
       this.onboardingCompletedAt = commit.onboardingCompletedAt;
     }
     this.draft = null;
+    return parseUserWorks(this.userWorks);
   }
 
   async getUserWorks(): Promise<unknown[]> {
@@ -1250,6 +1270,34 @@ describe("external work persistence", () => {
     expect(harness.read()).toBeUndefined();
   });
 
+  it("rejects stale external reading edits in IndexedDB and memory without losing newer data", async () => {
+    const initial = createExternalRecord();
+    const newer = {
+      ...initial,
+      record: { ...initial.record, reaction: "liked" as const, updatedAt: COMPLETED_TIME },
+    };
+    const harness = createDexieExternalHarness(newer);
+    const memory = new MemoryPersistenceBackend();
+    await memory.addExternalWorkIfAbsent(newer);
+    const edit = {
+      ...initial.record,
+      readingState: "hidden" as const,
+      updatedAt: "2099-01-01T00:00:00Z",
+    };
+    for (const backend of [harness.backend, memory]) {
+      await expect(
+        backend.saveExternalUserRecord(
+          EXTERNAL_ID,
+          initial.normalizedKey,
+          edit,
+          initial.record.updatedAt,
+        ),
+      ).rejects.toThrow(UserWorkConflictError);
+    }
+    expect(harness.read()).toEqual(newer);
+    expect(await memory.getExternalWork(EXTERNAL_ID)).toEqual(newer);
+  });
+
   it("refuses a key change observed inside the IndexedDB edit transaction", async () => {
     const loaded = createExternalRecord();
     const changed = createExternalRecord({ normalizedKey: '["べつさくひん","べつさくしゃ"]' });
@@ -1652,6 +1700,55 @@ describe("atomic library insert-only persistence", () => {
 });
 
 describe("resilient onboarding persistence", () => {
+  it("does not degrade or replay a rejected transaction using stale mirrored likes", async () => {
+    const backend = new ControllableBackend();
+    const existing: UserWorkRecord[] = Array.from({ length: 4 }, (_, index) => ({
+      workId: `saved-${String(index)}`,
+      readingState: "reading",
+      reaction: "liked",
+      updatedAt: DRAFT_TIME,
+    }));
+    backend.userWorks = existing;
+    const persistence = new ResilientPersistence({ primaryFactory: () => backend });
+    expect(await persistence.getUserWorks()).toHaveLength(4);
+    const draft = createDraft(1);
+    draft.negativeEntries = [];
+    await persistence.saveOnboardingDraft(draft);
+    backend.beforeOnboardingCommit = () => {
+      backend.userWorks = existing.slice(1);
+    };
+    await expect(
+      persistence.finalizeOnboarding(draft, COMPLETED_TIME, [
+        ...existing.map((record) => record.workId),
+        "positive-1",
+      ]),
+    ).rejects.toBeInstanceOf(OnboardingInsufficientPositiveWorksError);
+    expect(persistence.getStatus().state).toBe("ready");
+    expect(await persistence.getUserWorks()).toEqual(existing.slice(1));
+    expect(await persistence.getOnboardingCompletedAt()).toBeNull();
+    expect(await persistence.getOnboardingDraft()).toEqual(draft);
+  });
+
+  it("counts existing eligible likes before finishing a one-work first run without changing saved records", async () => {
+    const { persistence } = openFailingPersistence();
+    const existing: UserWorkRecord[] = Array.from({ length: 4 }, (_, index) => ({
+      workId: `existing-${String(index)}`,
+      readingState: "reading",
+      reaction: "liked",
+      updatedAt: DRAFT_TIME,
+    }));
+    for (const record of existing) await persistence.saveUserWork(record);
+    const draft = createDraft(1);
+    draft.negativeEntries = [];
+    await persistence.finalizeOnboarding(draft, COMPLETED_TIME, [
+      ...existing.map((record) => record.workId),
+      "positive-1",
+    ]);
+    expect(await persistence.getUserWorks()).toEqual(expect.arrayContaining(existing));
+    expect(await persistence.getUserWorks()).toHaveLength(5);
+    expect(await persistence.getOnboardingCompletedAt()).toBe(COMPLETED_TIME);
+  });
+
   it("surfaces open failure and completes onboarding in session memory", async () => {
     const { backend, persistence } = openFailingPersistence();
     const statuses: string[] = [];
@@ -2434,7 +2531,7 @@ describe("resilient onboarding persistence", () => {
     ]);
   });
 
-  it("reads a stored legacy 「読んでいる」 row as 「読んだ」 without losing its progress", async () => {
+  it("preserves a stored 「読んでいる」 row and its progress", async () => {
     const backend = new ControllableBackend();
     backend.userWorks = [
       {
@@ -2450,7 +2547,7 @@ describe("resilient onboarding persistence", () => {
     expect(await persistence.getUserWorks()).toEqual([
       {
         workId: "legacy-reading",
-        readingState: "completed",
+        readingState: "reading",
         reaction: "liked",
         progress: { volume: 5 },
         updatedAt: DRAFT_TIME,

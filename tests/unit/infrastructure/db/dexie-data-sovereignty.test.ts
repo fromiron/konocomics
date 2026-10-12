@@ -1,6 +1,9 @@
 import { describe, expect, it } from "vitest";
 
-import type { OnboardingDraft } from "@/domain/profile/onboarding";
+import {
+  OnboardingInsufficientPositiveWorksError,
+  type OnboardingDraft,
+} from "@/domain/profile/onboarding";
 import type { UserWorkRecord } from "@/domain/profile/types";
 import type { KonocomicsDatabase } from "@/infrastructure/db/database";
 import { DexiePersistenceBackend } from "@/infrastructure/db/dexie-backend";
@@ -32,6 +35,10 @@ class FakeTable<T> {
     records: readonly T[] = [],
   ) {
     this.restore(records);
+  }
+
+  async delete(key: Key): Promise<void> {
+    this.records.delete(key);
   }
 
   async clear(): Promise<void> {
@@ -83,6 +90,7 @@ class FakeTable<T> {
 }
 
 class AtomicDatabaseHarness {
+  beforeTransaction: (() => void) | null = null;
   readonly userWorks: FakeTable<UserWorkRecord>;
   readonly externalWorks: FakeTable<ExternalWorkRecord>;
   readonly profile: FakeTable<ProfileRecord>;
@@ -115,6 +123,8 @@ class AtomicDatabaseHarness {
   async transaction<T>(...args: unknown[]): Promise<T> {
     const operation = args.at(-1);
     if (typeof operation !== "function") throw new Error("Missing transaction operation");
+    this.beforeTransaction?.();
+    this.beforeTransaction = null;
     const before = this.dump();
     try {
       return await (operation as () => Promise<T>)();
@@ -344,5 +354,75 @@ describe.each(["indexeddb", "memory"] as const)("%s stale user-work writes", (mo
     await expect(backend.upsertUserWork(newWork, null)).rejects.toBeInstanceOf(
       UserWorkConflictError,
     );
+  });
+});
+
+describe("atomic onboarding eligibility", () => {
+  const existing: UserWorkRecord[] = Array.from({ length: 4 }, (_, index) => ({
+    workId: `existing-${String(index)}`,
+    readingState: "reading",
+    reaction: "liked",
+    updatedAt: UPDATED_AT,
+  }));
+  const confirmedDraft: OnboardingDraft = {
+    id: "current",
+    mode: "firstRun",
+    step: 2,
+    positiveEntries: [{ workId: "new-one", reaction: "liked", readingState: "reading" }],
+    negativeEntries: [],
+    updatedAt: UPDATED_AT,
+  };
+  const profileWorkIds = [...existing.map((record) => record.workId), "new-one"];
+
+  it.each(["delete", "downgrade"] as const)(
+    "checks the current rows inside the write transaction after another tab's %s",
+    async (change) => {
+      const { database, backend } = harness();
+      database.profile.restore([]);
+      database.userWorks.restore(existing);
+      database.onboardingDraft.restore([confirmedDraft]);
+      expect(await backend.getUserWorks()).toHaveLength(4);
+      const concurrentRecords =
+        change === "delete"
+          ? existing.slice(1)
+          : existing.map((record, index) =>
+              index === 0 ? { ...record, reaction: "neutral" as const } : record,
+            );
+      database.beforeTransaction = () => database.userWorks.restore(concurrentRecords);
+      await expect(
+        backend.commitOnboarding(confirmedDraft, UPDATED_AT, profileWorkIds),
+      ).rejects.toBeInstanceOf(OnboardingInsufficientPositiveWorksError);
+      expect(database.userWorks.dump()).toEqual(concurrentRecords);
+      expect(database.profile.dump()).toEqual([]);
+      expect(database.onboardingDraft.dump()).toEqual([confirmedDraft]);
+    },
+  );
+
+  it("commits four current eligible positives and one new work atomically", async () => {
+    const { database, backend } = harness();
+    database.profile.restore([]);
+    database.userWorks.restore(existing);
+    database.onboardingDraft.restore([confirmedDraft]);
+    const records = await backend.commitOnboarding(confirmedDraft, UPDATED_AT, profileWorkIds);
+    expect(records).toHaveLength(5);
+    expect(database.userWorks.dump()).toEqual(records);
+    expect(database.profile.dump()).toEqual([{ key: "onboardingCompletedAt", value: UPDATED_AT }]);
+    expect(database.onboardingDraft.dump()).toEqual([]);
+  });
+
+  it("rejects an ineligible new positive and preserves memory records and draft", async () => {
+    const backend = new MemoryPersistenceBackend();
+    backend.synchronizeUserWorks(existing);
+    await backend.setOnboardingDraft(confirmedDraft);
+    await expect(
+      backend.commitOnboarding(
+        confirmedDraft,
+        UPDATED_AT,
+        existing.map((record) => record.workId),
+      ),
+    ).rejects.toBeInstanceOf(OnboardingInsufficientPositiveWorksError);
+    expect(await backend.getUserWorks()).toEqual(existing);
+    expect(await backend.getOnboardingDraft()).toEqual(confirmedDraft);
+    expect(await backend.getOnboardingCompletedAt()).toBeNull();
   });
 });

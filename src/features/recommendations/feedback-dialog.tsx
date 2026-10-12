@@ -3,11 +3,7 @@
 import { useState } from "react";
 
 import { Button } from "@/components/design-system/button";
-import {
-  ChoiceChipCheckbox,
-  ChoiceChipRadio,
-  ChoiceChipRadioGroup,
-} from "@/components/design-system/choice-chip";
+import { ChoiceChipRadio, ChoiceChipRadioGroup } from "@/components/design-system/choice-chip";
 import {
   Dialog,
   DialogContent,
@@ -15,9 +11,7 @@ import {
   DialogHeader,
   DialogTitle,
 } from "@/components/design-system/dialog";
-import { FACTOR_BACKED_NEGATIVE_REASON_IDS } from "@/domain/profile/constants";
 import type { CompletedRecommendationReaction } from "@/domain/profile/recommendation-feedback";
-import type { FactorBackedNegativeReasonId } from "@/domain/profile/types";
 import { recommendationStrings } from "@/lib/strings";
 
 export type PendingRecommendationFeedback = Readonly<{
@@ -33,7 +27,6 @@ type FeedbackDialogProps = Readonly<{
   busy: boolean;
   errorMessage: string;
   onSaveCompleted: (reaction: Exclude<CompletedRecommendationReaction, "skip">) => void;
-  onSaveHidden: (reasons: readonly FactorBackedNegativeReasonId[]) => void;
   onSkip: () => void;
 }>;
 
@@ -44,7 +37,6 @@ export function FeedbackDialog({
   errorMessage,
   feedback,
   onSaveCompleted,
-  onSaveHidden,
   onSkip,
 }: FeedbackDialogProps) {
   const feedbackKey =
@@ -52,23 +44,8 @@ export function FeedbackDialog({
   const [selection, setSelection] = useState<{
     feedbackKey: string;
     reaction: (typeof REACTIONS)[number] | null;
-    reasons: FactorBackedNegativeReasonId[];
-  }>({ feedbackKey: "closed", reaction: null, reasons: [] });
+  }>({ feedbackKey: "closed", reaction: null });
   const reaction = selection.feedbackKey === feedbackKey ? selection.reaction : null;
-  const reasons = selection.feedbackKey === feedbackKey ? selection.reasons : [];
-
-  const toggleReason = (reason: FactorBackedNegativeReasonId) => {
-    setSelection((current) => {
-      const currentReasons = current.feedbackKey === feedbackKey ? current.reasons : [];
-      return {
-        feedbackKey,
-        reaction: null,
-        reasons: currentReasons.includes(reason)
-          ? currentReasons.filter((candidate) => candidate !== reason)
-          : [...currentReasons, reason],
-      };
-    });
-  };
   const completed = feedback?.kind === "completed";
   const title = completed
     ? recommendationStrings.feedbackDialog.completedTitle
@@ -79,7 +56,7 @@ export function FeedbackDialog({
       : completed
         ? recommendationStrings.feedbackDialog.completedDescription(feedback.title)
         : recommendationStrings.feedbackDialog.hiddenDescription(feedback.title);
-  const canSave = completed ? reaction !== null : reasons.length > 0;
+  const canSave = completed && reaction !== null;
 
   return (
     <Dialog
@@ -100,8 +77,6 @@ export function FeedbackDialog({
             event.preventDefault();
             if (feedback?.kind === "completed" && reaction !== null) {
               onSaveCompleted(reaction);
-            } else if (feedback?.kind === "hidden" && reasons.length > 0) {
-              onSaveHidden(reasons);
             }
           }}
         >
@@ -123,7 +98,7 @@ export function FeedbackDialog({
                 name="recommendation-reaction"
                 onValueChange={(value) => {
                   if (value !== "") {
-                    setSelection({ feedbackKey, reaction: value, reasons: [] });
+                    setSelection({ feedbackKey, reaction: value });
                   }
                 }}
                 value={reaction ?? ""}
@@ -135,26 +110,7 @@ export function FeedbackDialog({
                 ))}
               </ChoiceChipRadioGroup>
             </fieldset>
-          ) : (
-            <fieldset className="m-0 min-w-0 border-0 p-0">
-              <legend className="mb-[var(--space-content)] p-0 font-bold text-text-strong">
-                {recommendationStrings.feedbackDialog.reasonLegend}
-              </legend>
-              <div className="flex flex-wrap gap-[var(--space-content)]">
-                {FACTOR_BACKED_NEGATIVE_REASON_IDS.map((reason) => (
-                  <ChoiceChipCheckbox
-                    checked={reasons.includes(reason)}
-                    disabled={busy}
-                    key={reason}
-                    onCheckedChange={() => toggleReason(reason)}
-                    value={reason}
-                  >
-                    {recommendationStrings.feedbackDialog.reasonLabels[reason]}
-                  </ChoiceChipCheckbox>
-                ))}
-              </div>
-            </fieldset>
-          )}
+          ) : null}
 
           {errorMessage ? (
             <p
@@ -172,18 +128,22 @@ export function FeedbackDialog({
               type="button"
               variant="outline"
             >
-              {recommendationStrings.feedbackDialog.skip}
+              {completed
+                ? recommendationStrings.feedbackDialog.skip
+                : recommendationStrings.feedbackDialog.close}
             </Button>
-            <Button
-              className="min-h-[var(--control-min-size)] px-[var(--space-4)] py-[var(--space-content)] font-bold"
-              busy={busy}
-              disabled={!canSave}
-              type="submit"
-            >
-              {busy
-                ? recommendationStrings.feedbackDialog.saving
-                : recommendationStrings.feedbackDialog.save}
-            </Button>
+            {completed ? (
+              <Button
+                className="min-h-[var(--control-min-size)] px-[var(--space-4)] py-[var(--space-content)] font-bold"
+                busy={busy}
+                disabled={!canSave}
+                type="submit"
+              >
+                {busy
+                  ? recommendationStrings.feedbackDialog.saving
+                  : recommendationStrings.feedbackDialog.save}
+              </Button>
+            ) : null}
           </div>
         </form>
       </DialogContent>

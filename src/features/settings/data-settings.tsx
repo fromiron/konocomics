@@ -106,9 +106,12 @@ function triggerDownload(file: ExportFileV1, exportedAt: string) {
   anchor.download = exportFilenameV1(exportedAt);
   anchor.href = url;
   document.body.append(anchor);
-  anchor.click();
-  anchor.remove();
-  URL.revokeObjectURL(url);
+  try {
+    anchor.click();
+  } finally {
+    anchor.remove();
+    URL.revokeObjectURL(url);
+  }
 }
 
 export function DataSettings({
@@ -160,6 +163,7 @@ export function DataSettings({
     try {
       const file = await exportUserData(exportedAt, currentCatalog, excludedDraftEntries);
       triggerDownload(file, exportedAt);
+      setSuccess(settingsStrings.data.export.started);
       setDialog(null);
     } catch (nextError) {
       if (nextError instanceof ExportDraftConflictError) {
@@ -451,12 +455,12 @@ export function DataSettings({
         </div>
       </SettingsPanel>
 
-      {success === null ? null : (
+      {success === null && busyAction !== "export" ? null : (
         <p
           className="fixed right-[var(--layout-page-padding)] bottom-[calc(var(--layout-mobile-navigation-clearance)+var(--space-4))] left-[var(--layout-page-padding)] z-65 mx-auto w-fit max-w-[calc(100%-(var(--layout-page-padding)*2))] rounded-[var(--radius-control)] bg-surface-1 px-[var(--space-4)] py-[var(--space-3)] text-text-strong shadow-[var(--shadow-raised)]"
           role="status"
         >
-          {success}
+          {busyAction === "export" ? settingsStrings.data.export.exporting : success}
         </p>
       )}
 

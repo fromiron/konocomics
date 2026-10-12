@@ -4,15 +4,9 @@ import { act, cleanup, fireEvent, render, screen, waitFor, within } from "@testi
 import { type ComponentProps, type MouseEventHandler, type ReactNode, useEffect } from "react";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 
-import {
-  carouselCloneProps,
-  carouselLoopCopies,
-  cloneCarouselTrailing,
-  duplicateCarouselContent,
-  shouldLoopCarousel,
-} from "@/components/media/media-shelf";
 import catalogJson from "@/data/generated/catalog-v1.json";
 import recommendationContextJson from "@/data/generated/recommendation-context-v1.json";
+import { createExternalWorkNormalizedKeyV1 } from "@/domain/catalog/external-work";
 import { catalogV1Schema } from "@/domain/catalog/schema";
 import type {
   ProfileAdjustments,
@@ -25,7 +19,8 @@ import type { RecommendationPlanEntry } from "@/domain/recommendation/types";
 import { resetMoodSession } from "@/features/recommendations/mood-session";
 import type { RecommendationMotionListProps } from "@/features/recommendations/recommendation-motion-list";
 import { RecommendationsFlow as RecommendationsFlowComponent } from "@/features/recommendations/recommendations-flow";
-import { parseUserWork } from "@/infrastructure/db/validation";
+import type * as PersistenceModule from "@/infrastructure/db";
+import { parseExternalWork, parseUserWork } from "@/infrastructure/db/validation";
 import { onboardingStrings, recommendationStrings } from "@/lib/strings";
 
 const featuredItemSelector = "li[data-recommendation-work-id]:not([data-carousel-clone])";
@@ -91,6 +86,7 @@ const testState = vi.hoisted(() => ({
   removeUserWorkIfUnchanged: vi.fn(),
   addUserWorkIfAbsent: vi.fn(),
   userWorks: [] as UserWorkRecord[],
+  externalWorks: [] as PersistenceModule.ExternalWorkRecord[],
   catalog: null as unknown,
 }));
 
@@ -99,21 +95,14 @@ const motionPreferenceListeners = new Set<(event: { matches: boolean }) => void>
 
 function TestMotionList({ items, shortage }: RecommendationMotionListProps) {
   testState.motionListRenders.push(items.map((item) => item.workId));
-  const copies = shouldLoopCarousel(items.length) ? carouselLoopCopies : ([1] as const);
   return (
     <>
-      {copies.flatMap((copy) => [
-        ...items.map((item) => (
-          <li
-            data-recommendation-work-id={item.workId}
-            key={`${String(copy)}-${item.workId}`}
-            {...carouselCloneProps(copy)}
-          >
-            {duplicateCarouselContent(item.content, copy)}
-          </li>
-        )),
-        cloneCarouselTrailing(shortage, copy),
-      ])}
+      {items.map((item) => (
+        <li data-recommendation-work-id={item.workId} key={item.workId}>
+          {item.content}
+        </li>
+      ))}
+      {shortage}
     </>
   );
 }
@@ -186,10 +175,12 @@ vi.mock("@/features/recommendations/recommendation-motion-loader", () => ({
   loadRecommendationMotionList: testState.loadMotionList,
 }));
 
-vi.mock("@/infrastructure/db", () => ({
+vi.mock("@/infrastructure/db", async (importOriginal) => ({
+  ...(await importOriginal<typeof PersistenceModule>()),
   usePersistence: () => ({
     status: { state: "ready", mode: "indexeddb", warning: null },
     userWorks: testState.userWorks,
+    externalWorks: testState.externalWorks,
     adjustments: testState.adjustments,
     policies: testState.policies,
     getRecommendationCache: testState.getRecommendationCache,
@@ -206,6 +197,22 @@ vi.mock("@/infrastructure/db", () => ({
 const catalog = catalogV1Schema.parse(catalogJson);
 const recommendationContext = recommendationContextSchema.parse(recommendationContextJson);
 const INPUT_HASH = "0".repeat(64);
+
+function externalFixture(
+  digit: string,
+  readingState: UserWorkRecord["readingState"] = "completed",
+) {
+  const title = `外部作品${digit}`;
+  const id = `ext:rakuten:v1:${digit.repeat(64)}`;
+  return parseExternalWork({
+    id,
+    normalizedKey: createExternalWorkNormalizedKeyV1(title, "著者"),
+    title,
+    creators: ["著者"],
+    isbnSamples: ["9784088725093"],
+    record: { workId: id, readingState, reaction: "liked", updatedAt: "2026-10-12T00:00:00.000Z" },
+  });
+}
 
 function RecommendationsFlow(
   props: Omit<ComponentProps<typeof RecommendationsFlowComponent>, "context"> = {},
@@ -342,6 +349,7 @@ beforeEach(() => {
   const plan = makePlan();
   const anchorIds = catalog.works.slice(0, 5).map((work) => work.id);
   testState.catalog = catalog;
+  testState.externalWorks = [];
   testState.userWorks = anchorIds.map((workId) => ({
     workId,
     readingState: "completed",
@@ -430,6 +438,106 @@ afterEach(() => {
 });
 
 describe("RecommendationsFlow", () => {
+  it("restores controlled URL moods on history changes without saving a profile", async () => {
+    const onMoodChange = vi.fn();
+    const { container, rerender } = render(
+      <RecommendationsFlow mood="warm" onMoodChange={onMoodChange} />,
+    );
+    await waitFor(() =>
+      expect(
+        container
+          .querySelector("[data-recommendation-mood]")
+          ?.getAttribute("data-recommendation-mood"),
+      ).toBe("warm"),
+    );
+    await waitFor(() =>
+      expect(
+        screen.getByRole("radio", { name: "テンポが速い話" }).getAttribute("aria-disabled"),
+      ).not.toBe("true"),
+    );
+    fireEvent.click(screen.getByRole("radio", { name: "テンポが速い話" }));
+    await waitFor(() => expect(onMoodChange).toHaveBeenCalledWith("fastPaced"));
+    rerender(<RecommendationsFlow mood="fastPaced" onMoodChange={onMoodChange} />);
+    expect(
+      container
+        .querySelector("[data-recommendation-mood]")
+        ?.getAttribute("data-recommendation-mood"),
+    ).toBe("fastPaced");
+    rerender(<RecommendationsFlow mood="warm" onMoodChange={onMoodChange} />);
+    expect(
+      container
+        .querySelector("[data-recommendation-mood]")
+        ?.getAttribute("data-recommendation-mood"),
+    ).toBe("warm");
+    rerender(<RecommendationsFlow mood={null} onMoodChange={onMoodChange} />);
+    expect(
+      container
+        .querySelector("[data-recommendation-mood]")
+        ?.getAttribute("data-recommendation-mood"),
+    ).toBe("none");
+    expect(testState.saveUserWork).not.toHaveBeenCalled();
+  });
+
+  it("counts both persistence stores while keeping external records outside recommendation input", async () => {
+    testState.externalWorks = [externalFixture("1"), externalFixture("2", "hidden")];
+    const { rerender } = render(<RecommendationsFlow />);
+    const region = await screen.findByRole("region", {
+      name: recommendationStrings.criteria.heading,
+    });
+    expect(region.textContent).toContain("好きな 5作品の分析");
+    expect(region.textContent).toContain(
+      "全記録 7作品・苦手／中断の入力 0作品・記録による候補除外 5作品",
+    );
+    expect(screen.getByRole("link", { name: /読んだ 6作品/ })).toBeTruthy();
+    expect(screen.getByRole("link", { name: /興味なし 1作品/ })).toBeTruthy();
+    const hashCalls = vi.mocked(globalThis.crypto.subtle.digest).mock.calls.length;
+    testState.externalWorks = [testState.externalWorks[0]!];
+    rerender(<RecommendationsFlow />);
+    expect(region.textContent).toContain(
+      "全記録 6作品・苦手／中断の入力 0作品・記録による候補除外 5作品",
+    );
+    expect(region.textContent).toContain("好きな 5作品の分析");
+    expect(screen.queryByRole("link", { name: /興味なし 1作品/ })).toBeNull();
+    expect(vi.mocked(globalThis.crypto.subtle.digest).mock.calls).toHaveLength(hashCalls);
+  });
+
+  it("counts liked analysis separately from planned, unrated, negative and external records", async () => {
+    const ids = catalog.works
+      .filter(
+        (work) =>
+          work.eligibility.recommendationEligible &&
+          !testState.userWorks.some((record) => record.workId === work.id),
+      )
+      .slice(0, 6)
+      .map((work) => work.id);
+    testState.userWorks = [
+      ...testState.userWorks,
+      ...ids.map((workId, index) => ({
+        workId,
+        readingState: (
+          ["planned", "completed", "completed", "completed", "dropped", "hidden"] as const
+        )[index]!,
+        ...(index === 2
+          ? { reaction: "neutral" as const }
+          : index === 3
+            ? { reaction: "disliked" as const }
+            : {}),
+        updatedAt: "2026-10-09T00:00:00.000Z",
+      })),
+    ];
+    testState.externalWorks = [externalFixture("1")];
+    render(<RecommendationsFlow />);
+    const region = await screen.findByRole("region", {
+      name: recommendationStrings.criteria.heading,
+    });
+    expect(region.textContent).toContain("好きな 5作品の分析");
+    expect(region.textContent).toContain(
+      "全記録 12作品・苦手／中断の入力 2作品・記録による候補除外 10作品",
+    );
+    expect(region.textContent).toContain("外部作品は分析の対象外");
+    expect(screen.getByRole("link", { name: /途中でやめた 1作品/ })).toBeTruthy();
+  });
+
   it("reuses the exact cached plan when Update applies a changed input hash", async () => {
     const nextHash = "01".repeat(32);
     const plan = makePlan();
@@ -470,7 +578,7 @@ describe("RecommendationsFlow", () => {
     expect(testState.getRecommendationCache).toHaveBeenCalledWith(nextHash);
     expect(testState.buildPlan).not.toHaveBeenCalled();
     expect(testState.saveRecommendationCache).not.toHaveBeenCalled();
-    expect(screen.getByText("おすすめを更新しました。")).toBeTruthy();
+    expect(screen.getByText(recommendationStrings.announcements.updatedUnchanged)).toBeTruthy();
     expect(screen.queryByRole("button", { name: "更新" })).toBeNull();
     await waitFor(() =>
       expect(document.activeElement).toBe(screen.getByRole("heading", { level: 1 })),
@@ -539,7 +647,7 @@ describe("RecommendationsFlow", () => {
         (element) => element.dataset.recommendationWorkId,
       ),
     ).toEqual(nextPlan.slice(0, 5).map((entry) => entry.workId));
-    expect(screen.getByText("おすすめを更新しました。")).toBeTruthy();
+    expect(screen.getByText(recommendationStrings.announcements.updated)).toBeTruthy();
     expect(document.activeElement).toBe(tasteLink);
   });
 
@@ -568,8 +676,8 @@ describe("RecommendationsFlow", () => {
       expect(element).toBeTruthy();
       return element as HTMLUListElement;
     });
-    expect(list.querySelectorAll("[data-carousel-copy='1']")).toHaveLength(5);
-    expect(list.querySelectorAll("[data-carousel-clone]")).toHaveLength(10);
+    expect(list.querySelectorAll(featuredItemSelector)).toHaveLength(5);
+    expect(list.querySelectorAll("[data-carousel-clone]")).toHaveLength(0);
     for (const clone of list.querySelectorAll("[data-carousel-clone]")) {
       expect(clone.getAttribute("aria-hidden")).toBe("true");
       expect(clone.hasAttribute("inert")).toBe(true);
@@ -939,9 +1047,13 @@ describe("RecommendationsFlow", () => {
       if (reactionLabel !== null) {
         fireEvent.click(within(dialog).getByRole("radio", { name: reactionLabel }));
       } else {
-        fireEvent.click(within(dialog).getByRole("checkbox", { name: "展開が遅い" }));
+        expect(within(dialog).queryByRole("checkbox")).toBeNull();
       }
-      fireEvent.click(within(dialog).getByRole("button", { name: "保存" }));
+      fireEvent.click(
+        within(dialog).getByRole("button", {
+          name: reactionLabel === null ? recommendationStrings.feedbackDialog.close : "保存",
+        }),
+      );
       await waitFor(() => expect(screen.queryByRole("dialog")).toBeNull());
       const saved = parseUserWork(testState.saveUserWork.mock.calls.at(-1)![0]);
       expect(saved.progress).toEqual({ volume: 7 });
@@ -949,7 +1061,7 @@ describe("RecommendationsFlow", () => {
       expect(saved.droppedReasons).toBeUndefined();
       expect(saved.readingState).toBe(nextState);
       if (nextState === "completed") expect(saved.negativeReasons).toBeUndefined();
-      else expect(saved.negativeReasons).toEqual(["tooSlow"]);
+      else expect(saved.negativeReasons).toEqual(previous.negativeReasons);
     },
   );
 
@@ -966,7 +1078,7 @@ describe("RecommendationsFlow", () => {
     expect(criteria.textContent).not.toContain("おすすめの調整");
   });
 
-  it("distinguishes an empty featured genre from matching auxiliary candidates", async () => {
+  it("fills a selected genre from the full candidate pool while preserving the all-genre Top 10", async () => {
     const plan = makePlan(150);
     const matches = (entry: RecommendationPlanEntry) =>
       catalog.works.find((work) => work.id === entry.workId)!.genres.includes("horror");
@@ -977,7 +1089,13 @@ describe("RecommendationsFlow", () => {
       cacheRecord([...other, { ...candidate, isDiscovery: true }]),
     );
     const view = render(<RecommendationsFlow genre="horror" />);
-    await screen.findByText(recommendationStrings.filters.featuredEmpty);
+    await waitFor(() =>
+      expect(
+        [...view.container.querySelectorAll(featuredItemSelector)].map((element) =>
+          element.getAttribute("data-recommendation-work-id"),
+        ),
+      ).toEqual([candidate.workId]),
+    );
     expect(screen.queryByText(recommendationStrings.filters.empty)).toBeNull();
     view.rerender(<RecommendationsFlow />);
     await waitFor(() =>
@@ -1083,7 +1201,9 @@ describe("RecommendationsFlow", () => {
       ),
     ).toBeNull();
 
-    fireEvent.click(await screen.findByRole("button", { name: "スキップ" }));
+    fireEvent.click(
+      await screen.findByRole("button", { name: recommendationStrings.feedbackDialog.skip }),
+    );
     await waitFor(() => {
       expect(document.activeElement).toBe(
         container.querySelector(
@@ -1552,7 +1672,9 @@ describe("RecommendationsFlow", () => {
     ).toBeTruthy();
     expect(screen.getByText("1件を除外し、新しい候補を追加しました")).toBeTruthy();
 
-    fireEvent.click(screen.getByRole("button", { name: "スキップ" }));
+    fireEvent.click(
+      screen.getByRole("button", { name: recommendationStrings.feedbackDialog.skip }),
+    );
     await waitFor(() => {
       expect(document.activeElement).toBe(
         container.querySelector(
@@ -1560,6 +1682,34 @@ describe("RecommendationsFlow", () => {
         ),
       );
     });
+  });
+
+  it("stacks pending update, feedback announcement and Undo in one fixed container", async () => {
+    const { container, rerender } = render(<RecommendationsFlow />);
+    await waitFor(() => expect(container.querySelectorAll(featuredItemSelector)).toHaveLength(5));
+    const firstCard = container.querySelector(featuredItemSelector) as HTMLElement;
+    fireEvent.click(within(firstCard).getByRole("button", { name: "読んだ" }));
+    await screen.findByRole("dialog");
+    fireEvent.click(
+      screen.getByRole("button", { name: recommendationStrings.feedbackDialog.skip }),
+    );
+    await screen.findByRole("button", { name: "元に戻す" });
+    vi.mocked(globalThis.crypto.subtle.digest).mockResolvedValue(new Uint8Array(32).fill(1).buffer);
+    testState.userWorks = testState.userWorks.map((record, index) =>
+      index === 0 ? { ...record, reaction: "favorite" } : record,
+    );
+    rerender(<RecommendationsFlow />);
+    const update = await screen.findByRole("button", { name: recommendationStrings.update });
+    const undo = screen.getByRole("button", { name: "元に戻す" });
+    const stack = container.querySelector("[data-recommendation-notifications]");
+    expect(stack?.contains(update)).toBe(true);
+    expect(stack?.contains(undo)).toBe(true);
+    expect(stack?.className).toContain("flex-col");
+    expect(stack?.className).toContain("fixed");
+    for (const notice of stack?.children ?? []) {
+      expect(notice.classList.contains("static")).toBe(true);
+      expect(notice.classList.contains("fixed")).toBe(false);
+    }
   });
 
   it("undoes a 読んだ removal from the snackbar and restores the previous list", async () => {
@@ -1576,7 +1726,9 @@ describe("RecommendationsFlow", () => {
     fireEvent.click(within(firstCard).getByRole("button", { name: "読んだ" }));
     expect(await screen.findByRole("dialog")).toBeTruthy();
     expect(screen.queryByRole("button", { name: "元に戻す" })).toBeNull();
-    fireEvent.click(screen.getByRole("button", { name: "スキップ" }));
+    fireEvent.click(
+      screen.getByRole("button", { name: recommendationStrings.feedbackDialog.skip }),
+    );
 
     expect(
       await screen.findByText(recommendationStrings.announcements.recorded.completed(removedTitle)),
@@ -1610,7 +1762,9 @@ describe("RecommendationsFlow", () => {
 
     fireEvent.click(within(firstCard).getByRole("button", { name: "興味なし" }));
     expect(await screen.findByRole("dialog")).toBeTruthy();
-    fireEvent.click(screen.getByRole("button", { name: "スキップ" }));
+    fireEvent.click(
+      screen.getByRole("button", { name: recommendationStrings.feedbackDialog.close }),
+    );
     fireEvent.click(await screen.findByRole("button", { name: "元に戻す" }));
 
     expect(await screen.findByText(recommendationStrings.announcements.undoConflict)).toBeTruthy();
@@ -1668,7 +1822,9 @@ describe("RecommendationsFlow", () => {
         .querySelector("ul.recommendations-list")
         ?.getAttribute("data-recommendation-motion"),
     ).toBe("enabled");
-    fireEvent.click(screen.getByRole("button", { name: "スキップ" }));
+    fireEvent.click(
+      screen.getByRole("button", { name: recommendationStrings.feedbackDialog.skip }),
+    );
     const survivorWorkId = makePlan()[1]!.workId;
     const survivor = container.querySelector(
       `${featuredItemSelector}[data-recommendation-work-id='${survivorWorkId}']`,
@@ -1737,7 +1893,9 @@ describe("RecommendationsFlow", () => {
     expect(testState.loadMotionList).toHaveBeenCalledTimes(1);
     expect(testState.motionListRenders).toEqual([]);
 
-    fireEvent.click(screen.getByRole("button", { name: "スキップ" }));
+    fireEvent.click(
+      screen.getByRole("button", { name: recommendationStrings.feedbackDialog.skip }),
+    );
     await waitFor(() => {
       expect(document.activeElement).toBe(
         container.querySelector(
@@ -1765,7 +1923,9 @@ describe("RecommendationsFlow", () => {
         .querySelector("ul.recommendations-list")
         ?.getAttribute("data-recommendation-motion"),
     ).toBe("enabled");
-    fireEvent.click(screen.getByRole("button", { name: "スキップ" }));
+    fireEvent.click(
+      screen.getByRole("button", { name: recommendationStrings.feedbackDialog.skip }),
+    );
 
     fireEvent.click(screen.getByRole("checkbox", { name: "完結作を優先" }));
 
@@ -1780,7 +1940,7 @@ describe("RecommendationsFlow", () => {
     expect(testState.loadMotionList).toHaveBeenCalledTimes(1);
   });
 
-  it("keeps failed feedback cards and records selected interest reasons without inventing a skip reason", async () => {
+  it("keeps failed feedback cards and hides without inventing a disliked reaction", async () => {
     testState.saveUserWork.mockRejectedValueOnce(new Error("write failed"));
     const { container } = render(<RecommendationsFlow />);
     await waitFor(() => {
@@ -1802,18 +1962,18 @@ describe("RecommendationsFlow", () => {
     const selectedReasonWorkId = firstCard.dataset.recommendationWorkId;
     fireEvent.click(within(firstCard).getByRole("button", { name: "興味なし" }));
     const dialog = await screen.findByRole("dialog");
-    fireEvent.click(within(dialog).getByRole("checkbox", { name: "展開が遅い" }));
-    fireEvent.click(within(dialog).getByRole("button", { name: "保存" }));
+    expect(within(dialog).queryByRole("checkbox")).toBeNull();
+    fireEvent.click(
+      within(dialog).getByRole("button", { name: recommendationStrings.feedbackDialog.close }),
+    );
     await waitFor(() => expect(screen.queryByRole("dialog")).toBeNull());
     expect(testState.saveUserWork).toHaveBeenLastCalledWith(
       {
         workId: selectedReasonWorkId,
         readingState: "hidden",
-        reaction: "disliked",
-        negativeReasons: ["tooSlow"],
         updatedAt: expect.any(String),
       },
-      expect.any(String),
+      null,
     );
 
     const nextCard = [...container.querySelectorAll<HTMLElement>(featuredItemSelector)].find(
@@ -1824,7 +1984,9 @@ describe("RecommendationsFlow", () => {
     if (nextCard === undefined) throw new Error("Expected a surviving recommendation card");
     fireEvent.click(within(nextCard).getByRole("button", { name: "興味なし" }));
     await screen.findByRole("dialog");
-    fireEvent.click(screen.getByRole("button", { name: "スキップ" }));
+    fireEvent.click(
+      screen.getByRole("button", { name: recommendationStrings.feedbackDialog.close }),
+    );
     expect(testState.saveUserWork).toHaveBeenLastCalledWith(
       {
         workId: nextCard.dataset.recommendationWorkId,
@@ -1866,7 +2028,7 @@ describe("RecommendationsFlow", () => {
 
     const criteria = await screen.findByRole("region", { name: "今回のおすすめ基準" });
     expect(criteria.querySelector("p")?.textContent).toMatch(
-      /^5作品の(好み（.+）|記録)から選んでいます。$/u,
+      /^好きな 5作品の分析(?:（.+）)?から選んでいます。$/u,
     );
     expect(within(criteria).getByRole("link", { name: "Manga DNA" }).getAttribute("href")).toBe(
       "/taste",

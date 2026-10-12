@@ -1,56 +1,17 @@
-import Fuse from "fuse.js";
-
-import {
-  foldKatakanaToHiragana,
-  isbnIdentityKey,
-  normalizeCreator,
-  normalizeTitle,
-} from "@/domain/catalog/normalize";
+import { isbnIdentityKey } from "@/domain/catalog/normalize";
 import type { CatalogV1, Work } from "@/domain/catalog/types";
 import type { RakutenBookItem } from "@/infrastructure/rakuten";
+import { createWorkSearchIndex } from "@/lib/work-search";
 
-type SearchDocument = Readonly<{
-  work: Work;
-  normalizedText: string;
-}>;
+export {
+  normalizeWorkQuery as normalizeLibraryQuery,
+  workSearchText as libraryWorkSearchText,
+} from "@/lib/work-search";
 
-export function normalizeLibraryQuery(value: string) {
-  return normalizeTitle(value).kanaFolded.replace(/\s+/gu, "");
-}
-
-export function libraryWorkSearchText(work: Work) {
-  const titles = [work.title, work.titleKana, ...work.aliases]
-    .filter((value): value is string => value !== undefined)
-    .map(normalizeLibraryQuery);
-  const creators = work.creators.map((creator) =>
-    foldKatakanaToHiragana(normalizeCreator(creator)).replace(/\s+/gu, ""),
-  );
-  return [...titles, ...creators].join(" ");
-}
-
-export type LibraryWorkSearch = Readonly<{
-  search(query: string, limit?: number): Work[];
-}>;
+export type LibraryWorkSearch = Readonly<{ search(query: string, limit?: number): Work[] }>;
 
 export function createLibraryWorkSearch(works: readonly Work[]): LibraryWorkSearch {
-  const documents = works.map((work): SearchDocument => ({
-    work,
-    normalizedText: libraryWorkSearchText(work),
-  }));
-  const fuse = new Fuse(documents, {
-    keys: ["normalizedText"],
-    threshold: 0.3,
-    ignoreLocation: true,
-    shouldSort: true,
-  });
-
-  return {
-    search(query, limit = 20) {
-      const normalizedQuery = normalizeLibraryQuery(query);
-      if (normalizedQuery.length === 0) return [];
-      return fuse.search(normalizedQuery, { limit }).map(({ item }) => item.work);
-    },
-  };
+  return createWorkSearchIndex(works, 20);
 }
 
 export function catalogWorkForRakutenItem(

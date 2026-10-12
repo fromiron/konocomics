@@ -70,7 +70,11 @@ export interface PersistenceBackend {
   open(): Promise<void>;
   getOnboardingDraft(): Promise<unknown | null>;
   setOnboardingDraft(draft: OnboardingDraft | null): Promise<void>;
-  commitOnboarding(commit: OnboardingCommit): Promise<void>;
+  commitOnboarding(
+    draft: OnboardingDraft,
+    completedAt: string,
+    profileWorkIds?: readonly string[],
+  ): Promise<UserWorkRecord[]>;
   getUserWorks(): Promise<unknown[]>;
   addUserWorkIfAbsent(record: UserWorkRecord): Promise<ConfirmedAddIfAbsentResult<unknown>>;
   upsertUserWork(record: UserWorkRecord, expectedUpdatedAt?: string | null): Promise<unknown>;
@@ -86,6 +90,7 @@ export interface PersistenceBackend {
     id: ExternalWorkId,
     expectedNormalizedKey: string,
     record: UserWorkRecord,
+    expectedUpdatedAt?: string,
   ): Promise<unknown>;
   removeExternalWork(
     id: string,

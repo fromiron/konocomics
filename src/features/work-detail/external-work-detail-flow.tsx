@@ -1,6 +1,7 @@
 "use client";
 
 import { Link, useNavigate } from "@tanstack/react-router";
+import { DetailBackLink } from "@/components/nav/detail-back-link";
 import { useEffect, useRef, useState } from "react";
 
 import { coverSourceForSize } from "@/components/cover/CoverImage";
@@ -126,6 +127,7 @@ function ExternalDetailRecord({
         <p aria-atomic="true" aria-live="polite" className="sr-only">
           {navigationStrings.routeAnnouncement(record.title)}
         </p>
+        <DetailBackLink fallback="/library" />
         <WorkDetailShell
           coverUrl={heroCoverUrl}
           creators={record.creators}
@@ -243,10 +245,15 @@ function ExternalWorkDetailQuery({ queryString }: Readonly<{ queryString: string
     setBusy(true);
     setMessage(undefined);
     try {
-      const saved = await saveExternalUserRecord(current.id, current.normalizedKey, {
-        ...nextRecord,
-        workId: current.id,
-      });
+      const saved = await saveExternalUserRecord(
+        current.id,
+        current.normalizedKey,
+        {
+          ...nextRecord,
+          workId: current.id,
+        },
+        current.record.updatedAt,
+      );
       setDetail((latest) =>
         latest.kind === "found" && latest.record.id === saved.id
           ? { kind: "found", record: saved }

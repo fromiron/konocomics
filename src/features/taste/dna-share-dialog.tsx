@@ -23,7 +23,7 @@ import {
 } from "@/domain/profile/dna-share";
 import type { MangaDnaSummary } from "@/domain/profile/dna-summary";
 import type { RankedRecommendation } from "@/domain/recommendation/types";
-import { explanationLexicon, tasteStrings } from "@/lib/strings";
+import { explanationLexicon, mediaStrings, tasteStrings } from "@/lib/strings";
 
 const strings = tasteStrings.share;
 
@@ -143,11 +143,13 @@ function DnaShareDialogBody({
   const canShareNatively =
     typeof navigator !== "undefined" && typeof navigator.share === "function";
 
-  const copyLink = async () => {
+  const copyLink = async (includeText = false) => {
     try {
-      await navigator.clipboard.writeText(shareUrl);
+      await navigator.clipboard.writeText(
+        includeText ? `${strings.shareText}\n${shareUrl}` : shareUrl,
+      );
       setCopyFailed(false);
-      setStatus(strings.status.copied);
+      setStatus(includeText ? strings.status.textCopied : strings.status.copied);
     } catch {
       setCopyFailed(true);
       setStatus(strings.status.copyFailed);
@@ -164,6 +166,7 @@ function DnaShareDialogBody({
   }, [copyFailed, linkInputId]);
 
   const shareNatively = async () => {
+    setStatus("");
     try {
       await navigator.share({ text: strings.shareText, url: shareUrl });
       // The share sheet finished; whether anything was posted is unknown, so it is not claimed.
@@ -230,6 +233,28 @@ function DnaShareDialogBody({
               <p className="text-[length:var(--font-size-14)] text-text-muted">
                 {strings.previewBasis(link.analyzedWorkCount)}
               </p>
+              <p className="text-[length:var(--font-size-14)] text-text">
+                {strings.previewWorks(
+                  link.workIds.flatMap((id) => {
+                    const title = worksById.get(id)?.title;
+                    return title === undefined ? [] : [title];
+                  }),
+                  link.analyzedWorkCount - link.workIds.length,
+                )}
+              </p>
+              <details className="text-[length:var(--font-size-14)] text-text-muted">
+                <summary className="min-h-[var(--control-min-size)] cursor-pointer focus-visible:outline-2 focus-visible:outline-ring">
+                  {strings.previewAxes}
+                </summary>
+                <ul>
+                  {link.axes.map((axis) => (
+                    <li key={axis.axisId}>
+                      {explanationLexicon.factorLabels[axis.axisId]}:{" "}
+                      {tasteStrings.factorValue(axis.level)}
+                    </li>
+                  ))}
+                </ul>
+              </details>
               {link.recommendations.length === 0 ? null : (
                 <p className="text-[length:var(--font-size-14)] leading-[var(--line-height-body)] [overflow-wrap:anywhere] text-text">
                   {strings.previewRecommendations(
@@ -288,6 +313,12 @@ function DnaShareDialogBody({
                   <LinkIcon aria-hidden="true" className="size-4" />
                   {strings.copy}
                 </Button>
+                <Button onClick={() => void copyLink(true)} type="button" variant="outline">
+                  {strings.copyText}
+                </Button>
+                <p className="text-[length:var(--text-caption-size)] text-text-muted">
+                  {strings.deliveryHelp}
+                </p>
                 <div className="flex flex-wrap gap-[var(--space-content)] [&>*]:flex-1">
                   <a
                     aria-label={strings.openPageNewTab}
@@ -301,6 +332,7 @@ function DnaShareDialogBody({
                   >
                     <ExternalLinkIcon aria-hidden="true" className="size-4" />
                     {strings.openPage}
+                    <span aria-hidden="true">{mediaStrings.externalNewTab}</span>
                   </a>
                   {canShareNatively ? (
                     <Button

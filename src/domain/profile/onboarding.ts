@@ -13,6 +13,7 @@ const EXTERNAL_REASON_PATTERN = /^external:[a-z0-9]+(?:-[a-z0-9]+)*$/;
 export type PositiveOnboardingEntry = {
   workId: string;
   reaction: "favorite" | "liked";
+  readingState?: "planned" | "reading" | "completed";
 };
 
 export type NegativeDisposition = "disliked" | "dropped";
@@ -46,6 +47,7 @@ export type OnboardingDraft = FirstRunOnboardingDraft | AddWorksOnboardingDraft;
 const positiveOnboardingEntrySchema = z.strictObject({
   workId: z.string().min(1),
   reaction: z.enum(["favorite", "liked"]),
+  readingState: z.enum(["planned", "reading", "completed"]).optional(),
 });
 
 function isExternalNegativeReason(value: string): value is ExternalNegativeReasonId {
@@ -175,6 +177,7 @@ export function reconcileOnboardingDraftMode(
   existingWorkIds: ReadonlySet<string>,
   positiveAvailableWorkIds: ReadonlySet<string>,
   negativeAvailableWorkIds: ReadonlySet<string>,
+  existingPositiveCount = 0,
 ): OnboardingDraft {
   const restored = restoreOnboardingDraft(draft);
   const positiveEntries = restored.positiveEntries.filter(
@@ -198,7 +201,11 @@ export function reconcileOnboardingDraftMode(
     ...restored,
     mode: "firstRun",
     step:
-      restored.mode === "firstRun" && positiveEntries.length >= ONBOARDING_MIN_POSITIVE_WORKS
+      restored.mode === "firstRun" &&
+      positiveEntries.filter((entry) => entry.readingState !== "planned").length +
+        existingPositiveCount >=
+        ONBOARDING_MIN_POSITIVE_WORKS &&
+      positiveEntries.every((entry) => entry.readingState !== undefined)
         ? restored.step
         : 1,
     positiveEntries,
@@ -210,26 +217,45 @@ function finalizedReasons(reasons: readonly NegativeReasonId[]): NegativeReasonI
   return reasons.length === 0 ? ["vagueDislike"] : [...reasons];
 }
 
+export class OnboardingInsufficientPositiveWorksError extends Error {
+  constructor(message: string) {
+    super(message);
+    this.name = "OnboardingInsufficientPositiveWorksError";
+  }
+}
+
 export function finalizeOnboardingDraft(
   draft: OnboardingDraft,
   completedAt: string,
+  existingPositiveCount = 0,
 ): UserWorkRecord[] {
   const restored = restoreOnboardingDraft(draft);
   const finalizedAt = z.iso.datetime({ offset: true }).parse(completedAt);
-  const minimumPositiveWorks = restored.mode === "add" ? 1 : ONBOARDING_MIN_POSITIVE_WORKS;
+  const minimumPositiveWorks =
+    restored.mode === "add"
+      ? 1
+      : Math.max(1, ONBOARDING_MIN_POSITIVE_WORKS - existingPositiveCount);
 
-  if (restored.positiveEntries.length < minimumPositiveWorks) {
-    throw new Error(
+  if (
+    restored.positiveEntries.filter((entry) => entry.readingState !== "planned").length <
+    minimumPositiveWorks
+  ) {
+    throw new OnboardingInsufficientPositiveWorksError(
       `${restored.mode === "add" ? "Add mode" : "Onboarding"} requires at least ${String(minimumPositiveWorks)} positive works`,
     );
   }
 
-  const positives: UserWorkRecord[] = restored.positiveEntries.map((entry) => ({
-    workId: entry.workId,
-    readingState: "completed",
-    reaction: entry.reaction,
-    updatedAt: finalizedAt,
-  }));
+  const positives: UserWorkRecord[] = restored.positiveEntries.map((entry) => {
+    if (entry.readingState === undefined) {
+      throw new Error("Confirm the reading state of each selected work");
+    }
+    return {
+      workId: entry.workId,
+      readingState: entry.readingState,
+      ...(entry.readingState === "planned" ? {} : { reaction: entry.reaction }),
+      updatedAt: finalizedAt,
+    };
+  });
   const negatives: UserWorkRecord[] = restored.negativeEntries.map((entry) => {
     const reasons = finalizedReasons(entry.reasons);
     if (entry.disposition === "disliked") {

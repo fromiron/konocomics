@@ -1,5 +1,7 @@
 import * as z from "zod/v4";
 
+import { WORK_QUERY_MAX_LENGTH } from "@/lib/search-query";
+
 import { isValidIsbn, normalizeIsbn } from "@/domain/catalog/normalize";
 
 const httpsUrlSchema = z.url().refine((value) => new URL(value).protocol === "https:", {
@@ -58,4 +60,4 @@ export const rakutenErrorResponseSchema = z.strictObject({
   error: z.enum(["invalid_request", "provider_unavailable"]),
 });
 
-export const rakutenTitleQuerySchema = z.string().trim().min(1).max(100);
+export const rakutenTitleQuerySchema = z.string().trim().min(1).max(WORK_QUERY_MAX_LENGTH);

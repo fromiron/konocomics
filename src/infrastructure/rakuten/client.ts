@@ -82,12 +82,28 @@ export function buildRakutenBooksSearchUrl(title: string): string {
   return url.toString();
 }
 
-async function fetchJson(url: string): Promise<unknown> {
+async function fetchJson(url: string, signal?: AbortSignal): Promise<unknown> {
   let response: Response;
   try {
-    response = await scheduleProviderRequest(() =>
-      fetch(url, { headers: { Accept: "application/json" } }),
-    );
+    const request = scheduleProviderRequest(() => {
+      signal?.throwIfAborted();
+      return fetch(url, {
+        headers: { Accept: "application/json" },
+        ...(signal === undefined ? {} : { signal }),
+      });
+    });
+    response =
+      signal === undefined
+        ? await request
+        : await new Promise<Response>((resolve, reject) => {
+            const abort = () => reject(signal.reason);
+            // A search can expire while waiting behind cover requests, before fetch starts.
+            if (signal.aborted) abort();
+            else signal.addEventListener("abort", abort, { once: true });
+            void request
+              .then(resolve, reject)
+              .finally(() => signal.removeEventListener("abort", abort));
+          });
   } catch {
     throw new RakutenClientError("provider_unavailable");
   }
@@ -109,13 +125,19 @@ async function fetchJson(url: string): Promise<unknown> {
   return payload;
 }
 
-export async function searchRakutenBooks(title: string): Promise<RakutenBookItem[]> {
+export async function searchRakutenBooks(
+  title: string,
+  signal?: AbortSignal,
+): Promise<RakutenBookItem[]> {
   const parsedTitle = rakutenTitleQuerySchema.safeParse(title);
   if (!parsedTitle.success) {
     throw new RakutenClientError("invalid_request");
   }
   const payload = await fetchJson(
     `/api/rakuten/search?${new URLSearchParams({ title: parsedTitle.data }).toString()}`,
+    signal === undefined
+      ? AbortSignal.timeout(10_000)
+      : AbortSignal.any([signal, AbortSignal.timeout(10_000)]),
   );
   const response = rakutenSearchResponseSchema.safeParse(payload);
   if (!response.success) {

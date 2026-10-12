@@ -1,5 +1,6 @@
 import { describe, expect, it } from "vitest";
 import catalogJson from "@/data/generated/catalog-v1.json";
+import contextJson from "@/data/generated/recommendation-context-v1.json";
 import { catalogV1Schema } from "@/domain/catalog/schema";
 import {
   resolveWorkBookMetadata,
@@ -22,6 +23,55 @@ const volume = {
 };
 
 describe("work book information", () => {
+  it("keeps verified series totals separate from the represented edition and preserves creator data", () => {
+    for (const [id, count, edition] of [
+      ["work-1ffb6ba18b9d7c2daeda", 16, 1],
+      ["work-31b4dc55b32d1b29be08", 3, 2],
+    ] as const) {
+      const work = catalog.works.find((entry) => entry.id === id)!;
+      expect(work.status).toBe("completed");
+      expect(contextJson.constraintByWorkId[id].volumeCount).toBe(count);
+      expect(
+        catalog.volumes.find((entry) => entry.id === catalog.representativeVolumeByWorkId[id])
+          ?.volumeNumber,
+      ).toBe(edition);
+    }
+    expect(
+      catalog.works.find((entry) => entry.id === "work-0153a125c5a56225b06c")?.creators,
+    ).toContain("ヤマシタ トモコ");
+    const conan = catalog.works.find((entry) => entry.id === "work-39555fe7402dada0d79f")!;
+    const edition = catalog.volumes.find(
+      (entry) => entry.id === catalog.representativeVolumeByWorkId[conan.id],
+    );
+    expect(resolveWorkBookMetadata(conan, edition, null).itemCaption).toContain("ホームズに憧れる");
+  });
+
+  it("rejects chapter lists without discarding a real fallback or prose", () => {
+    const list = "FILE.1 平成のホームズ FILE.2 小さくなった名探偵 FILE.3 仲間はずれの名探偵";
+    expect(resolveWorkBookMetadata(work, undefined, { itemCaption: list })).toMatchObject({
+      itemCaption: undefined,
+      captionRejected: true,
+    });
+    expect(resolveWorkBookMetadata(work, volume, { itemCaption: list })).toMatchObject({
+      itemCaption: volume.metadata.itemCaption,
+      captionSource: "publisher",
+    });
+    expect(
+      resolveWorkBookMetadata(
+        work,
+        { ...volume, metadata: { ...volume.metadata, itemCaption: list } },
+        { itemCaption: "出版社とは異なる有効な紹介。" },
+      ),
+    ).toMatchObject({
+      itemCaption: "出版社とは異なる有効な紹介。",
+      captionSource: "rakuten",
+    });
+    const prose = "第1話と第2話に登場する事件をめぐる物語。";
+    expect(resolveWorkBookMetadata(work, undefined, { itemCaption: prose }).itemCaption).toBe(
+      prose,
+    );
+  });
+
   it("prefers the stored publisher caption and keeps fresh Rakuten fields for other metadata", () => {
     expect(
       resolveWorkBookMetadata(work, volume, {

@@ -1,8 +1,11 @@
 import * as z from "zod/v4";
 
+import { WORK_QUERY_MAX_LENGTH } from "@/lib/search-query";
+
 import { EXTERNAL_WORK_ID_V1_PATTERN, type ExternalWorkId } from "@/domain/catalog/external-work";
 import { COVERAGE_GROUPS } from "@/domain/catalog/constants";
 import { catalogIdSchema, genreTagSchema } from "@/domain/catalog/schema";
+import { RECOMMENDATION_MOODS } from "@/domain/recommendation/mood";
 import { LEGACY_READING_STATES, normalizeReadingState } from "@/domain/profile/reading-state";
 
 const optionalQuery = z
@@ -11,7 +14,7 @@ const optionalQuery = z
       typeof value === "string" || typeof value === "number" || typeof value === "boolean"
         ? String(value)
         : value,
-    z.string().trim().min(1).max(100),
+    z.string().trim().min(1).max(WORK_QUERY_MAX_LENGTH),
   )
   .optional()
   .catch(undefined);
@@ -51,6 +54,7 @@ export const tasteSearchSchema = z.object({
 });
 
 export const recommendationsSearchSchema = z.object({
+  mood: z.enum(RECOMMENDATION_MOODS).optional().catch(undefined),
   preview: catalogIdSchema.optional().catch(undefined),
   genre: genreTagSchema.optional().catch(undefined),
   sort: z.literal("recommended").optional().catch(undefined),
@@ -65,7 +69,7 @@ export const librarySearchSchema = z.object({
       z.number().int().min(2).max(Number.MAX_SAFE_INTEGER).optional(),
     )
     .catch(undefined),
-  // Old links may still say `?state=reading`; it opens 「読んだ」.
+  // Preserve the reading state in old and new links.
   state: z.enum(LEGACY_READING_STATES).transform(normalizeReadingState).optional().catch(undefined),
   q: optionalQuery,
   sort: z.enum(["updated", "title", "rating"]).optional().catch(undefined),

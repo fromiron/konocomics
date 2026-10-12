@@ -52,19 +52,9 @@ export function createRecommendationFeedbackRecord(
     };
   }
 
-  if (input.reasons.length === 0) {
-    return {
-      workId: input.workId,
-      readingState: "hidden",
-      updatedAt,
-    };
-  }
-
   return {
     workId: input.workId,
     readingState: "hidden",
-    reaction: "disliked",
-    negativeReasons: [...input.reasons],
     updatedAt,
   };
 }

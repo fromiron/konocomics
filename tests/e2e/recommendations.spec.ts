@@ -37,7 +37,11 @@ type StoredOnboardingDraft = {
   id: string;
   mode: "firstRun" | "add";
   step: number;
-  positiveEntries: Array<{ workId: string; reaction: string }>;
+  positiveEntries: Array<{
+    workId: string;
+    reaction: string;
+    readingState?: "planned" | "reading" | "completed";
+  }>;
   negativeEntries: unknown[];
   updatedAt: string;
 };
@@ -435,6 +439,14 @@ async function completeKeyboardOnboarding(
   await observations.beforeStepTwo?.(page);
   await positiveSearch.fill("MONSTER");
   await expect(page).toHaveURL(/q=MONSTER/u);
+  await tabUntil(page, /^\s*すべて読んだ\s*$/u, 40);
+  await page.keyboard.press("Enter");
+  await expect
+    .poll(async () => {
+      const entries = (await readProductState(page)).onboardingDraft[0]?.positiveEntries ?? [];
+      return entries.length === 8 && entries.every((entry) => entry.readingState === "completed");
+    })
+    .toBe(true);
   const next = await tabUntil(page, /^\s*次へ \(8\/10\)\s*$/u);
   expect(next.disabled).toBe(false);
   await page.keyboard.press("Enter");
@@ -1557,7 +1569,9 @@ test.describe("Slice 7 recommendation journeys", () => {
     await page
       .getByRole("combobox", { name: "ジャンル", exact: true })
       .selectOption("scienceFiction");
-    await expect(page.getByText("Top 10は全ジャンルの順位です。", { exact: true })).toBeVisible();
+    await expect(
+      page.getByText(/Top 10は全ジャンルの順位です。気分はすべての棚に適用されます。/u),
+    ).toBeVisible();
     expect(
       await rankingLinks.evaluateAll((links) => links.map((link) => link.getAttribute("href"))),
     ).toEqual(canonicalDestinations);
@@ -1663,7 +1677,11 @@ test.describe("Slice 7 recommendation journeys", () => {
     const update = page.getByRole("button", { name: "更新" });
     await expect(update).toBeEnabled();
     await update.click();
-    await expect(page.getByText("おすすめを更新しました。", { exact: true })).toBeVisible();
+    await expect(
+      page.getByText(
+        /^(おすすめを更新しました。|変更を反映しました。上位作品と順番は同じです。)$/u,
+      ),
+    ).toBeVisible();
     await expect(update).toHaveCount(0);
     await expect(page.getByRole("heading", { level: 1, name: "あなたへのおすすめ" })).toBeFocused();
     await expect(page.locator(`li[data-recommendation-work-id='${removedWorkId}']`)).toHaveCount(0);
@@ -1728,7 +1746,11 @@ test.describe("Slice 7 recommendation journeys", () => {
       expect(await recommendationIds(page)).toEqual(updatedIds);
     }
     await page.getByRole("button", { name: "更新", exact: true }).click();
-    await expect(page.getByText("おすすめを更新しました。", { exact: true })).toBeVisible();
+    await expect(
+      page.getByText(
+        /^(おすすめを更新しました。|変更を反映しました。上位作品と順番は同じです。)$/u,
+      ),
+    ).toBeVisible();
     await page.reload();
     await expect(page.locator('[data-recommendation-shelf-card="anchor"]').first()).toBeVisible();
     for (const workId of excludedAnchorIds) {
@@ -1850,8 +1872,13 @@ test.describe("Slice 8 provider and work-detail journey", () => {
     await expect(detailPlaceholder).toBeVisible();
     expect(await detailPlaceholder.getAttribute("aria-label")).toContain(providerTitle);
     await expect(detail.getByRole("button", { name: "もう一度確認", exact: true })).toBeVisible();
-    await expect(detail.locator("#work-synopsis-heading")).toHaveCount(0);
-    await expect(detail.getByText("価格", { exact: true })).toHaveCount(0);
+    await expect(detail.locator("#work-synopsis-heading")).toBeVisible();
+    await expect(
+      detail.getByText("作品紹介を取得できませんでした。楽天ブックスでご確認ください。", {
+        exact: true,
+      }),
+    ).toBeVisible();
+    await expect(detail.getByText("掲載版の価格", { exact: true })).toHaveCount(0);
     await expect(detail.getByText("在庫・発送", { exact: true })).toHaveCount(0);
 
     const searchLink = detail.getByRole("link", {
@@ -1871,7 +1898,9 @@ test.describe("Slice 8 provider and work-detail journey", () => {
     const planned = detail.getByRole("button", { name: "読みたい", exact: true });
     await planned.click();
     await expect(planned).toHaveAttribute("aria-pressed", "true");
-    await expect(detail.getByRole("status")).toHaveText("読みたいに追加しました。");
+    await expect(
+      detail.getByRole("region", { name: "読書状態", exact: true }).getByRole("status"),
+    ).toContainText("読みたいに追加しました。");
     await expect
       .poll(() => readStoredRecord(page, "userWorks", workId))
       .toEqual(expect.objectContaining({ workId, readingState: "planned" }));
@@ -1901,7 +1930,7 @@ test.describe("Slice 8 provider and work-detail journey", () => {
     await expect(purchaseLink).toHaveAttribute("href", affiliateUrl);
     await expect(purchaseLink).toHaveAttribute("target", "_blank");
     await expect(purchaseLink).toHaveAttribute("rel", "noreferrer");
-    await expect(restoredDetail.getByText("価格", { exact: true })).toBeVisible();
+    await expect(restoredDetail.getByText("掲載版の価格", { exact: true })).toBeVisible();
     await expect(restoredDetail.getByText(/770/u)).toBeVisible();
     await expect(restoredDetail.getByText("在庫あり", { exact: true })).toBeVisible();
 
@@ -1922,23 +1951,23 @@ test.describe("Slice 8 provider and work-detail journey", () => {
     const completedState = restoredDetail.getByRole("button", { name: "読んだ", exact: true });
     await completedState.click();
     await expect(completedState).toHaveAttribute("aria-pressed", "true");
-    await expect(restoredDetail.getByRole("status")).toHaveText("「読んだ」を保存しました。");
+    await expect(
+      restoredDetail.getByRole("region", { name: "読書状態", exact: true }).getByRole("status"),
+    ).toContainText("「読んだ」を保存しました。");
     await expect
       .poll(() => readStoredRecord(page, "userWorks", workId))
       .toEqual(expect.objectContaining({ workId, readingState: "completed" }));
 
     await staleDetail.getByRole("button", { name: "読みたい", exact: true }).click();
-    await expect(staleDetail.getByRole("status")).toHaveText(
-      "別の画面で更新された記録を残しました。最新の読書状態を表示しています。",
-    );
+    await expect(
+      staleDetail.getByRole("region", { name: "読書状態", exact: true }).getByRole("status"),
+    ).toContainText("別の画面で更新された記録を残しました。最新の読書状態を表示しています。");
     await expect(staleDetail.getByRole("button", { name: "読んだ", exact: true })).toHaveAttribute(
       "aria-pressed",
       "true",
     );
     await expect
-      .poll(async () =>
-        (await readProductState(stalePage)).userWorks.find((record) => record.workId === workId),
-      )
+      .poll(() => readStoredRecord(stalePage, "userWorks", workId))
       .toEqual(expect.objectContaining({ workId, readingState: "completed" }));
     await stalePage.close();
 
@@ -2552,6 +2581,31 @@ test.describe("Slice 10 data-sovereignty journey", () => {
     await page.goto("/settings");
     await expect(page.getByRole("heading", { level: 1, name: "設定" })).toBeVisible({
       timeout: 15_000,
+    });
+    const persistedBefore = await page.evaluate(() => navigator.storage.persisted());
+    if (!persistedBefore) {
+      await page.getByRole("button", { name: "自動削除の抑制をリクエスト", exact: true }).click();
+    }
+    await expect(
+      page.getByText(
+        /^(ブラウザは、空き容量不足による自動削除を抑えるリクエストを承認しています。|このブラウザでは保護を有効にできませんでした。定期的にエクスポートしてください。)$/u,
+      ),
+    ).toBeVisible();
+    const persistedAfter = await page.evaluate(() => navigator.storage.persisted());
+    await expect(
+      page.getByText(
+        persistedAfter
+          ? "ブラウザは、空き容量不足による自動削除を抑えるリクエストを承認しています。"
+          : "このブラウザでは保護を有効にできませんでした。定期的にエクスポートしてください。",
+        { exact: true },
+      ),
+    ).toBeVisible();
+    await expect(
+      page.getByText(/自動削除の抑制が承認されても、手動のデータ削除やシークレット/u),
+    ).toBeVisible();
+    await testInfo.attach("actual-storage-persistence", {
+      body: JSON.stringify({ context: "non-persistent Chromium", persistedBefore, persistedAfter }),
+      contentType: "application/json",
     });
     const verifiedPolicy = page.getByRole("switch", { name: "評価・実績を重視" });
     await expect(verifiedPolicy).not.toBeChecked();

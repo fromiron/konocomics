@@ -97,60 +97,89 @@ beforeEach(() => {
 afterEach(cleanup);
 
 describe("LibraryFlow add boundary", () => {
-  it("uses atomic insert-only persistence for a local Catalog result", async () => {
-    testState.addUserWorkIfAbsent.mockImplementation(async (record) => ({
-      kind: "added",
-      record,
-    }));
-    render(<LibraryFlow />);
-    openSearch();
-    fireEvent.change(screen.getByRole("searchbox", { name: libraryStrings.search.label }), {
-      target: { value: target.title },
-    });
-    const result = screen
-      .getAllByRole("listitem")
-      .find((item) => within(item).queryAllByText(target.title).length > 0)!;
-    fireEvent.click(within(result).getByRole("button", { name: libraryStrings.search.add }));
+  it.each(["planned", "reading", "completed"] as const)(
+    "uses atomic insert-only persistence for a %s local Catalog result",
+    async (readingState) => {
+      testState.addUserWorkIfAbsent.mockImplementation(async (record) => ({
+        kind: "added",
+        record,
+      }));
+      render(<LibraryFlow />);
+      openSearch();
+      fireEvent.change(screen.getByRole("searchbox", { name: libraryStrings.search.label }), {
+        target: { value: target.title },
+      });
+      fireEvent.change(screen.getByRole("combobox", { name: libraryStrings.search.readingState }), {
+        target: { value: readingState },
+      });
+      const result = screen
+        .getAllByRole("listitem")
+        .find((item) => within(item).queryAllByText(target.title).length > 0)!;
+      fireEvent.click(
+        within(result).getByRole("button", {
+          name:
+            readingState === "reading"
+              ? libraryStrings.search.addReading
+              : readingState === "completed"
+                ? libraryStrings.search.addCompleted
+                : libraryStrings.search.add,
+        }),
+      );
 
-    await waitFor(() => expect(testState.addUserWorkIfAbsent).toHaveBeenCalledTimes(1));
-    expect(testState.addUserWorkIfAbsent).toHaveBeenCalledWith({
-      workId: target.id,
-      readingState: "planned",
-      updatedAt: expect.any(String),
-    });
-    expect(testState.saveUserWork).not.toHaveBeenCalled();
-  });
+      await waitFor(() => expect(testState.addUserWorkIfAbsent).toHaveBeenCalledTimes(1));
+      expect(testState.addUserWorkIfAbsent).toHaveBeenCalledWith({
+        workId: target.id,
+        readingState,
+        updatedAt: expect.any(String),
+      });
+      expect(testState.saveUserWork).not.toHaveBeenCalled();
+    },
+  );
 
-  it("uses the canonical async creator before atomically adding an ISBN mismatch", async () => {
-    testState.searchRakutenBooks.mockResolvedValue([providerItem]);
-    testState.createPlannedExternalWorkRecord.mockResolvedValue(plannedExternal);
-    testState.addExternalWorkIfAbsent.mockResolvedValue({
-      kind: "added",
-      record: plannedExternal,
-    });
-    render(<LibraryFlow />);
-    openSearch();
-    fireEvent.change(screen.getByRole("searchbox", { name: libraryStrings.search.label }), {
-      target: { value: providerItem.title },
-    });
-    fireEvent.click(screen.getByRole("button", { name: libraryStrings.search.rakutenExpand }));
-    await waitFor(() => expect(screen.getByText(libraryStrings.externalBadge)).toBeTruthy());
-    const providerResult = screen
-      .getAllByRole("listitem")
-      .find((item) => within(item).queryByText(libraryStrings.externalBadge) !== null)!;
-    fireEvent.click(
-      within(providerResult).getByRole("button", {
-        name: libraryStrings.search.externalMatch,
-      }),
-    );
+  it.each(["planned", "reading", "completed"] as const)(
+    "uses canonical identity then inserts an external %s record",
+    async (readingState) => {
+      testState.searchRakutenBooks.mockResolvedValue([providerItem]);
+      testState.createPlannedExternalWorkRecord.mockResolvedValue(plannedExternal);
+      testState.addExternalWorkIfAbsent.mockResolvedValue({
+        kind: "added",
+        record: plannedExternal,
+      });
+      render(<LibraryFlow />);
+      openSearch();
+      fireEvent.change(screen.getByRole("searchbox", { name: libraryStrings.search.label }), {
+        target: { value: providerItem.title },
+      });
+      fireEvent.click(screen.getByRole("button", { name: libraryStrings.search.rakutenExpand }));
+      await waitFor(() => expect(screen.getByText(libraryStrings.externalBadge)).toBeTruthy());
+      fireEvent.change(screen.getByRole("combobox", { name: libraryStrings.search.readingState }), {
+        target: { value: readingState },
+      });
+      const providerResult = screen
+        .getAllByRole("listitem")
+        .find((item) => within(item).queryByText(libraryStrings.externalBadge) !== null)!;
+      fireEvent.click(
+        within(providerResult).getByRole("button", {
+          name:
+            readingState === "reading"
+              ? libraryStrings.search.addReading
+              : readingState === "completed"
+                ? libraryStrings.search.addCompleted
+                : libraryStrings.search.externalMatch,
+        }),
+      );
 
-    await waitFor(() =>
-      expect(testState.createPlannedExternalWorkRecord).toHaveBeenCalledWith(
-        providerItem,
-        expect.any(String),
-      ),
-    );
-    expect(testState.addExternalWorkIfAbsent).toHaveBeenCalledWith(plannedExternal);
-    expect(testState.saveExternalUserRecord).not.toHaveBeenCalled();
-  });
+      await waitFor(() =>
+        expect(testState.createPlannedExternalWorkRecord).toHaveBeenCalledWith(
+          providerItem,
+          expect.any(String),
+        ),
+      );
+      expect(testState.addExternalWorkIfAbsent).toHaveBeenCalledWith({
+        ...plannedExternal,
+        record: { ...plannedExternal.record, readingState },
+      });
+      expect(testState.saveExternalUserRecord).not.toHaveBeenCalled();
+    },
+  );
 });

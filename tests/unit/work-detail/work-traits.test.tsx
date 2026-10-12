@@ -125,7 +125,12 @@ describe("ShareButton", () => {
     const button = await screen.findByRole("button", { name: workDetailStrings.share.action });
     await act(async () => fireEvent.click(button));
 
-    expect(share).toHaveBeenCalledWith({ title: "七つの大罪", url: window.location.href });
+    expect(share).toHaveBeenCalledWith({
+      title: "七つの大罪",
+      text: workDetailStrings.share.text("七つの大罪"),
+      url: window.location.href,
+    });
+    expect(screen.getByText(workDetailStrings.share.handedOff)).toBeTruthy();
     expect(screen.queryByText(workDetailStrings.share.failed)).toBeNull();
   });
 
@@ -135,10 +140,12 @@ describe("ShareButton", () => {
 
     render(<ShareButton title="七つの大罪" />);
     const shareButton = await screen.findByRole("button", {
-      name: workDetailStrings.share.action,
+      name: workDetailStrings.share.copyAction,
     });
     await act(async () => fireEvent.click(shareButton));
-    expect(writeText).toHaveBeenCalledWith(window.location.href);
+    expect(writeText).toHaveBeenCalledWith(
+      `${workDetailStrings.share.text("七つの大罪")}\n${window.location.href}`,
+    );
     expect(screen.getByText(workDetailStrings.share.copied)).toBeTruthy();
 
     cleanup();

@@ -785,3 +785,28 @@ describe("Baseline explanations", () => {
     expect(result.anchors).toEqual([]);
   });
 });
+
+it("varies only existing positive reasons across cards, keeping one-reason cards honest", async () => {
+  const { generateVariedTasteExplanations } = await import("@/domain/explanation/generate");
+  const contributions = [
+    tasteContribution({ group: "theme", factorId: "foundFamily", value: 0.2 }),
+    tasteContribution({ group: "narrative", factorId: "pacing", value: 0.1 }),
+  ];
+  const before = structuredClone(contributions);
+  const base = {
+    contributions,
+    lexicon: explanationLexicon,
+    confidenceLevel: "normal" as const,
+    resolveTitle: titleResolver({ "anchor-a": "作品A" }),
+  };
+  const explanations = generateVariedTasteExplanations([
+    { ...base, workId: "one" },
+    { ...base, workId: "two" },
+    { ...base, workId: "three", contributions: [contributions[0]!] },
+  ]);
+  expect(explanations.get("one")?.positiveReasons[0]?.factorId).toBe("foundFamily");
+  expect(explanations.get("two")?.positiveReasons[0]?.factorId).toBe("pacing");
+  expect(explanations.get("two")?.positiveReasons[0]?.text).not.toContain("も『");
+  expect(explanations.get("three")?.positiveReasons).toHaveLength(1);
+  expect(contributions).toEqual(before);
+});

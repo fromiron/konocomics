@@ -1,5 +1,7 @@
 "use client";
 
+import * as z from "zod/v4";
+
 import { Link } from "@tanstack/react-router";
 import { BookmarkIcon, CheckIcon, XIcon } from "lucide-react";
 import { useEffect, useId, useMemo, useRef, useState } from "react";
@@ -7,6 +9,7 @@ import { useEffect, useId, useMemo, useRef, useState } from "react";
 import { BookCover } from "@/components/cover/BookCover";
 import { CoverImage } from "@/components/cover/CoverImage";
 import { Button } from "@/components/design-system/button";
+import { Snackbar, type SnackbarNotice } from "@/components/layout/snackbar";
 import { Dialog, DialogContent } from "@/components/design-system/dialog";
 import { stripVolumeAndEditionTokens } from "@/domain/catalog/normalize";
 import type { Work } from "@/domain/catalog/types";
@@ -20,10 +23,22 @@ import {
   type ExternalWorkRecord,
 } from "@/infrastructure/db";
 import { fetchPopularRakutenBooks, type RakutenBookItem } from "@/infrastructure/rakuten";
-import { libraryStrings, popularWorkStrings, workDetailStrings } from "@/lib/strings";
+import { libraryStrings, mediaStrings, popularWorkStrings, workDetailStrings } from "@/lib/strings";
 import { cn } from "@/lib/utils";
 
 import { resolvePopularWork, selectPopularWork } from "./popular-works";
+
+const ANSWERED_KEY = "konocomics:popular-discovery-answered";
+const answeredSchema = z.array(z.string().min(1).max(100)).max(1000);
+function answeredWorks(): string[] {
+  try {
+    const stored = localStorage.getItem(ANSWERED_KEY) ?? "[]";
+    if (stored.length > 104_000) return [];
+    return answeredSchema.parse(JSON.parse(stored));
+  } catch {
+    return [];
+  }
+}
 
 const DISMISSED_KEY = "konocomics:popular-discovery-dismissed";
 
@@ -45,8 +60,18 @@ type Selection = Readonly<{
 
 export function PopularWorkDiscovery({ embedded = false }: Readonly<{ embedded?: boolean }>) {
   const catalog = useCatalog();
-  const { userWorks, externalWorks, addUserWorkIfAbsent, addExternalWorkIfAbsent, status } =
-    usePersistence();
+  const {
+    userWorks,
+    externalWorks,
+    addUserWorkIfAbsent,
+    addExternalWorkIfAbsent,
+    removeUserWorkIfUnchanged,
+    removeExternalWork,
+    status,
+  } = usePersistence();
+  const [answered, setAnswered] = useState(answeredWorks);
+  const [notice, setNotice] = useState<SnackbarNotice>();
+  const noticeId = useRef(0);
   const [items, setItems] = useState<readonly RakutenBookItem[]>([]);
   const [dismissed, setDismissed] = useState(wasDismissed);
   const [resolved, setResolved] = useState<Readonly<{ isbn: string; item: RakutenBookItem }>>();
@@ -62,9 +87,22 @@ export function PopularWorkDiscovery({ embedded = false }: Readonly<{ embedded?:
     () =>
       userWorks === undefined || externalWorks === undefined
         ? undefined
-        : selectPopularWork(items, catalog, userWorks, externalWorks),
-    [catalog, externalWorks, items, userWorks],
+        : selectPopularWork(
+            items.filter(
+              (entry) =>
+                !answered.includes(catalogWorkForRakutenItem(catalog, entry)?.id ?? entry.isbn),
+            ),
+            catalog,
+            userWorks,
+            externalWorks,
+          ),
+    [answered, catalog, externalWorks, items, userWorks],
   );
+  useEffect(() => {
+    const sync = () => setAnswered(answeredWorks());
+    window.addEventListener("storage", sync);
+    return () => window.removeEventListener("storage", sync);
+  }, []);
   const item = resolved?.isbn === candidate?.isbn ? resolved?.item : undefined;
 
   useEffect(() => {
@@ -110,6 +148,22 @@ export function PopularWorkDiscovery({ embedded = false }: Readonly<{ embedded?:
         document.querySelector<HTMLElement>("main h1"));
 
   const dismiss = () => {
+    setMessage(undefined);
+    if (candidate !== undefined) {
+      const next = [
+        ...new Set([
+          ...answeredWorks(),
+          ...answered,
+          catalogWorkForRakutenItem(catalog, candidate)?.id ?? candidate.isbn,
+        ]),
+      ].slice(-1000);
+      setAnswered(next);
+      try {
+        localStorage.setItem(ANSWERED_KEY, JSON.stringify(next));
+      } catch {
+        /* Keep in-memory answer. */
+      }
+    }
     try {
       sessionStorage.setItem(DISMISSED_KEY, "1");
     } catch {
@@ -176,8 +230,48 @@ export function PopularWorkDiscovery({ embedded = false }: Readonly<{ embedded?:
         setMessage({ error: true, text: libraryStrings.search.addUnknown });
       } else {
         dismiss();
-        setMessage({
-          error: false,
+        const savedRecord = result.record;
+        setNotice({
+          id: ++noticeId.current,
+          tone: "status",
+          ...(result.kind !== "added"
+            ? {}
+            : {
+                action: {
+                  label: workDetailStrings.state.undo,
+                  onAction: () => {
+                    if (inFlight.current) return;
+                    inFlight.current = true;
+                    void (async () => {
+                      try {
+                        const outcome =
+                          "record" in savedRecord
+                            ? await removeExternalWork(savedRecord.id, savedRecord)
+                            : await removeUserWorkIfUnchanged(
+                                savedRecord.workId,
+                                savedRecord.updatedAt,
+                              );
+                        setNotice({
+                          id: ++noticeId.current,
+                          tone: "status",
+                          text:
+                            outcome === "removed"
+                              ? workDetailStrings.state.recordCleared(selectedTitle)
+                              : workDetailStrings.state.plannedPreservedConflict,
+                        });
+                      } catch {
+                        setNotice({
+                          id: ++noticeId.current,
+                          tone: "error",
+                          text: libraryStrings.editor.error,
+                        });
+                      } finally {
+                        inFlight.current = false;
+                      }
+                    })();
+                  },
+                },
+              }),
           text:
             result.kind === "added" ? libraryStrings.editor.saved : popularWorkStrings.alreadyAdded,
         });
@@ -269,6 +363,7 @@ export function PopularWorkDiscovery({ embedded = false }: Readonly<{ embedded?:
                 target="_blank"
               >
                 {popularWorkStrings.rakuten}
+                {mediaStrings.externalNewTab}
               </a>
             </div>
           </>
@@ -282,7 +377,13 @@ export function PopularWorkDiscovery({ embedded = false }: Readonly<{ embedded?:
       </div>
     );
 
-  if ((dismissed || item === undefined) && selection === null && message === undefined) return null;
+  if (
+    (dismissed || item === undefined) &&
+    selection === null &&
+    message === undefined &&
+    notice === undefined
+  )
+    return null;
   const title =
     item === undefined
       ? ""
@@ -346,7 +447,7 @@ export function PopularWorkDiscovery({ embedded = false }: Readonly<{ embedded?:
             <Button
               className="popular-work-banner__answer"
               disabled={busy}
-              onClick={(event) => void open("preview", event.currentTarget)}
+              onClick={dismiss}
               variant="outline"
             >
               <XIcon aria-hidden="true" />
@@ -385,6 +486,10 @@ export function PopularWorkDiscovery({ embedded = false }: Readonly<{ embedded?:
           </DialogContent>
         </Dialog>
       )}
+      <Snackbar
+        notice={notice}
+        onDismiss={(id) => setNotice((current) => (current?.id === id ? undefined : current))}
+      />
       {message !== undefined && (selection === null || !message.error) ? (
         <p
           className="mt-[var(--space-3)] text-text-muted"

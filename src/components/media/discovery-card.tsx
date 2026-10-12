@@ -75,7 +75,7 @@ export function DiscoveryCard({
             {title}
           </h3>
         </Link>
-        <p className="line-clamp-2 border-l-2 border-accent/50 pl-[var(--space-2)] text-[length:var(--text-caption-size)] leading-[1.4] text-text-muted">
+        <p className="border-l-2 border-accent/50 pl-[var(--space-2)] text-[length:var(--text-caption-size)] leading-[1.4] text-text-muted">
           {reason}
         </p>
         {action}

@@ -85,6 +85,8 @@ export type BaselineRecommendationExplanation = {
 export type WorkTitleResolver = (workId: string) => string | undefined;
 
 export type GenerateTasteExplanationInput = {
+  /** Presentation only: choose an existing valid reason before rendering its wording. */
+  preferredFactorId?: ExplanationFactorId;
   contributions: readonly GroupContribution[];
   confidenceLevel: ConfidenceLevel;
   lexicon: ExplanationLexicon;

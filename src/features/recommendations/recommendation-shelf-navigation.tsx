@@ -84,7 +84,7 @@ export function RecommendationShelfNavigation({
 
   return (
     <div
-      className="sticky top-[var(--desktop-navigation-height)] z-40 hidden h-0 md:block"
+      className="sticky top-[var(--desktop-navigation-height)] z-40 hidden h-0 [@media(min-width:768px)_and_(min-height:600px)]:block"
       ref={holderRef}
     >
       <nav

@@ -127,11 +127,17 @@ export function CoverImage({
       // A cached image can finish before hydration attaches its load handler.
       if (image.complete && image.naturalWidth > 0) {
         markImageLoaded(image);
+      } else if (image.complete) {
+        // A cached failure can also settle before hydration attaches its error handler.
+        setFailure({
+          primarySource: requestedSource,
+          stage: failureStage === "requested" ? "fallback" : "requested",
+        });
       } else {
         setLoadingSource(currentSource);
       }
     },
-    [currentSource, markImageLoaded],
+    [currentSource, failureStage, markImageLoaded, requestedSource],
   );
 
   useEffect(() => {

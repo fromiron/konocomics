@@ -1,5 +1,5 @@
 import { PageHeader } from "@/components/layout/page-header";
-import { aboutStrings } from "@/lib/strings";
+import { aboutStrings, mediaStrings } from "@/lib/strings";
 
 const sectionClassName = "grid gap-[var(--space-content)] border-t border-line pt-[var(--space-6)]";
 const headingClassName = "text-[length:var(--text-section-title-size)] text-text-strong";
@@ -32,7 +32,7 @@ export function AboutPage() {
           target="_blank"
         >
           {aboutStrings.contact.link}
-          <span aria-hidden="true"> ›</span>
+          <span>{mediaStrings.externalNewTab}</span>
         </a>
       </section>
       <p className="border-t border-line pt-[var(--space-6)] text-[length:var(--text-caption-size)] text-text-muted">

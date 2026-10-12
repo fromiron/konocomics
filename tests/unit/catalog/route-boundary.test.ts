@@ -48,14 +48,22 @@ const fixedPrerenderPaths = [
 const routedSearchCases = [
   {
     parse: (input: unknown) => recommendationsSearchSchema.parse(input),
-    valid: { preview: "monster", genre: "fantasy", sort: "recommended", shelf: "top_10" },
+    valid: {
+      mood: "warm",
+      preview: "monster",
+      genre: "fantasy",
+      sort: "recommended",
+      shelf: "top_10",
+    },
     malformed: {
+      mood: "invalid",
       preview: ["monster"],
       genre: ["fantasy"],
       sort: ["recommended"],
       shelf: ["top_10"],
     },
     malformedDefault: {
+      mood: undefined,
       preview: undefined,
       genre: undefined,
       sort: undefined,
@@ -130,8 +138,8 @@ const contracts = [
         expect(parse({})).toEqual({});
         expect(parse(malformed)).toEqual(malformedDefault);
       }
-      // Pre-four-state links keep working: 「読んでいる」 opens 「読んだ」.
-      expect(librarySearchSchema.parse({ state: "reading" }).state).toBe("completed");
+      // Existing reading links preserve the explicitly recorded state.
+      expect(librarySearchSchema.parse({ state: "reading" }).state).toBe("reading");
     },
   },
   {

@@ -68,12 +68,20 @@ export function resolveWorkBookMetadata(
 ) {
   const matchingVolume = volume?.workId === work.id ? volume : undefined;
   const collected = matchingVolume?.metadata;
-  const providerCaption = text(provider?.itemCaption);
-  const collectedCaption = text(collected?.itemCaption);
+  const providerText = text(provider?.itemCaption);
+  const collectedText = text(collected?.itemCaption);
+  // Reject clear chapter lists only; prose mentioning a chapter remains a valid introduction.
+  const chapterList = (value: string | undefined) =>
+    value !== undefined &&
+    !/[。！？!?]/u.test(value) &&
+    (value.match(/(?:FILE[.．]?|第)\s*[0-9０-９]+(?:話|章)?/giu)?.length ?? 0) >= 2;
+  const providerCaption = chapterList(providerText) ? undefined : providerText;
+  const collectedCaption = chapterList(collectedText) ? undefined : collectedText;
   const captionSource: "publisher" | "rakuten" =
     collectedCaption === undefined ? "rakuten" : "publisher";
   return {
     itemCaption: collectedCaption ?? providerCaption,
+    captionRejected: chapterList(collectedText) || chapterList(providerText),
     captionSource,
     captionSourceUrl: collectedCaption === undefined ? provider?.itemUrl : collected?.sourceUrl,
     publisherName: text(provider?.publisherName) ?? collected?.publisherName ?? work.publisher,

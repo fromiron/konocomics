@@ -29,7 +29,6 @@ export function RankingShelf({
       compactHeading={compactHeading}
       controlsPlacement={controlsPlacement}
       description={description}
-      enableLoop={false}
       listType={rankingKind === "unranked" ? "unordered" : "ordered"}
       title={title}
       trackClassName={trackClassName}

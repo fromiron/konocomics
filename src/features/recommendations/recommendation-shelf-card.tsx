@@ -8,6 +8,7 @@ import { ExpandableMediaCard } from "@/components/media/expandable-media-card";
 import { QuietTextAction, StateActionRow } from "@/components/media/state-action-row";
 import type { Work } from "@/domain/catalog/types";
 import { generateTasteExplanation } from "@/domain/explanation/generate";
+import type { TasteRecommendationExplanation } from "@/domain/explanation/types";
 import type { RecommendationPlanEntry } from "@/domain/recommendation/types";
 import { explanationLexicon, mediaStrings, recommendationStrings } from "@/lib/strings";
 import { cn } from "@/lib/utils";
@@ -15,6 +16,7 @@ import { cn } from "@/lib/utils";
 type RecommendationShelfCardProps = Readonly<{
   busy: boolean;
   entry: RecommendationPlanEntry;
+  explanation?: TasteRecommendationExplanation;
   expanded?: boolean;
   onExpandedChange?: (expanded: boolean) => void;
   work: Work;
@@ -36,6 +38,7 @@ export function RecommendationShelfCard({
   busy,
   coverUrl,
   entry,
+  explanation: suppliedExplanation,
   expanded = false,
   itemCaption,
   onCompleted,
@@ -51,12 +54,14 @@ export function RecommendationShelfCard({
   variant,
   work,
 }: RecommendationShelfCardProps) {
-  const explanation = generateTasteExplanation({
-    contributions: entry.contributions,
-    confidenceLevel: entry.confidenceLevel,
-    lexicon: explanationLexicon,
-    resolveTitle,
-  });
+  const explanation =
+    suppliedExplanation ??
+    generateTasteExplanation({
+      contributions: entry.contributions,
+      confidenceLevel: entry.confidenceLevel,
+      lexicon: explanationLexicon,
+      resolveTitle,
+    });
   const leadSentence = explanation.positiveReasons[0];
   const leadReason = leadSentence?.text ?? recommendationStrings.reasonUnavailable;
   const anchorTitle =

@@ -21,6 +21,7 @@ const strings = tasteStrings.share;
 afterEach(() => {
   cleanup();
   vi.restoreAllMocks();
+  vi.unstubAllGlobals();
 });
 
 function worksAndSummary(count: number) {
@@ -100,11 +101,83 @@ describe("DnaShareButton", () => {
     const link = parseDnaShareLink(url.search);
     expect(link?.analyzedWorkCount).toBe(5);
     expect(link?.workIds).toHaveLength(4);
+    expect(
+      within(dialog).getByText(strings.previewWorks(["作品2", "作品3", "作品4", "作品5"], 1)),
+    ).toBeTruthy();
+    expect(within(dialog).getByText(strings.deliveryHelp)).toBeTruthy();
     expect(link?.recommendations).toEqual([{ workId: "work-9", reasonFactorId: "darkness" }]);
     expect(within(dialog).getByText(strings.status.copied)).toBeTruthy();
     expect(
       within(dialog).getByRole("link", { name: strings.openPageNewTab }).getAttribute("href"),
     ).toBe(url.toString());
+  });
+
+  it("copies introduction and URL separately from the URL-only action", async () => {
+    const writeText = vi.fn().mockResolvedValue(undefined);
+    mockClipboard(writeText);
+    const { summary, worksById } = worksAndSummary(5);
+    render(<DnaShareButton recommendations={[]} summary={summary} worksById={worksById} />);
+    fireEvent.click(screen.getByRole("button", { name: strings.open }));
+    const dialog = await screen.findByRole("dialog", { name: strings.title });
+    fireEvent.click(within(dialog).getByRole("button", { name: strings.copyText }));
+    expect(await within(dialog).findByText(strings.status.textCopied)).toBeTruthy();
+    const [text, url] = writeText.mock.calls[0]![0].split("\n");
+    expect(text).toBe(strings.shareText);
+    expect(parseDnaShareLink(new URL(url).search)?.analyzedWorkCount).toBe(5);
+  });
+
+  it("passes only the previewed public snapshot to native sharing", async () => {
+    const share = vi.fn().mockResolvedValue(undefined);
+    vi.stubGlobal("navigator", { ...navigator, share });
+    const { summary, worksById } = worksAndSummary(5);
+    render(<DnaShareButton recommendations={[]} summary={summary} worksById={worksById} />);
+    fireEvent.click(screen.getByRole("button", { name: strings.open }));
+    const dialog = await screen.findByRole("dialog", { name: strings.title });
+    for (const checkbox of within(dialog).getAllByRole("checkbox")) fireEvent.click(checkbox);
+    expect(within(dialog).getByText(strings.previewWorks([], 5))).toBeTruthy();
+    fireEvent.click(within(dialog).getByRole("button", { name: strings.shareSheet }));
+    expect(await within(dialog).findByText(strings.status.handedOff)).toBeTruthy();
+    expect(share.mock.calls[0]![0].text).toBe(strings.shareText);
+    expect(parseDnaShareLink(new URL(share.mock.calls[0]![0].url).search)?.workIds).toEqual([]);
+  });
+
+  it("clears a previous handoff when the next native share is cancelled", async () => {
+    const share = vi
+      .fn()
+      .mockResolvedValueOnce(undefined)
+      .mockRejectedValueOnce(new DOMException("cancelled", "AbortError"));
+    vi.stubGlobal("navigator", { ...navigator, share });
+    const { summary, worksById } = worksAndSummary(5);
+    render(<DnaShareButton recommendations={[]} summary={summary} worksById={worksById} />);
+    fireEvent.click(screen.getByRole("button", { name: strings.open }));
+    const dialog = await screen.findByRole("dialog", { name: strings.title });
+    const shareButton = within(dialog).getByRole("button", { name: strings.shareSheet });
+    fireEvent.click(shareButton);
+    expect(await within(dialog).findByText(strings.status.handedOff)).toBeTruthy();
+    fireEvent.click(shareButton);
+    await waitFor(() => expect(share).toHaveBeenCalledTimes(2));
+    expect(within(dialog).queryByText(strings.status.handedOff)).toBeNull();
+    expect(within(dialog).queryByText(strings.status.shareFailed)).toBeNull();
+    expect(
+      within(dialog)
+        .getAllByRole("checkbox")
+        .every((chip) => chip.getAttribute("aria-checked") === "true"),
+    ).toBe(true);
+  });
+
+  it("offers the link fallback after native sharing fails", async () => {
+    vi.stubGlobal("navigator", {
+      ...navigator,
+      share: vi.fn().mockRejectedValue(new DOMException("denied", "NotAllowedError")),
+    });
+    const { summary, worksById } = worksAndSummary(5);
+    render(<DnaShareButton recommendations={[]} summary={summary} worksById={worksById} />);
+    fireEvent.click(screen.getByRole("button", { name: strings.open }));
+    const dialog = await screen.findByRole("dialog", { name: strings.title });
+    fireEvent.click(within(dialog).getByRole("button", { name: strings.shareSheet }));
+    expect(await within(dialog).findByText(strings.status.shareFailed)).toBeTruthy();
+    expect(within(dialog).getByRole("button", { name: strings.copy })).toBeTruthy();
+    expect(within(dialog).queryByText(strings.status.handedOff)).toBeNull();
   });
 
   it("asks for more works instead of sharing an empty analysis", async () => {

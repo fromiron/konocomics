@@ -713,6 +713,19 @@ describe("TasteFlow", () => {
     },
   );
 
+  it("keeps no-change resets disabled and describes genre as analysis only", async () => {
+    testState.adjustments = { axes: {}, themes: {} };
+    render(<TasteFlow group="genre" mode="adjust" />);
+    const reset = await screen.findByRole("button", { name: tasteStrings.resetAll });
+    expect(reset.hasAttribute("disabled")).toBe(true);
+    fireEvent.click(reset);
+    expect(testState.saveProfileAdjustments).not.toHaveBeenCalled();
+    expect(screen.getByText(tasteStrings.genreAnalysisHelp)).toBeTruthy();
+    expect(
+      screen.queryByRole("button", { name: tasteStrings.resetGroup(tasteStrings.groups.genre) }),
+    ).toBeNull();
+  });
+
   it("resets all adjustments and exposes automatic selections without changing analysis", async () => {
     testState.adjustments = {
       axes: { strategy: "like", comedy: "less" },

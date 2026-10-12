@@ -55,7 +55,7 @@ describe("recommendation feedback mapping", () => {
     });
   });
 
-  it("maps selected hidden reasons to disliked and copies the caller-owned array", () => {
+  it("never infers a disliked reaction from hidden reasons", () => {
     const reasons = ["tooDark", "tooStressful"] as const;
     const record = createRecommendationFeedbackRecord({
       action: "hidden",
@@ -67,11 +67,9 @@ describe("recommendation feedback mapping", () => {
     expect(record).toEqual({
       workId: "hidden-work",
       readingState: "hidden",
-      reaction: "disliked",
-      negativeReasons: ["tooDark", "tooStressful"],
       updatedAt: UPDATED_AT,
     });
-    expect(record.negativeReasons).not.toBe(reasons);
+    expect(record.negativeReasons).toBeUndefined();
   });
 
   it("keeps skipped hidden feedback reasonless instead of synthesizing vagueDislike", () => {

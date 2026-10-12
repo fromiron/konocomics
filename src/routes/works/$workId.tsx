@@ -4,7 +4,7 @@ import { BundledCatalogProvider } from "@/features/catalog/bundled-catalog-provi
 import { WorkDetailFlow } from "@/features/work-detail/work-detail-flow";
 import { loadWorkDetailMetadata } from "@/features/work-detail/work-metadata";
 import { emptySearchSchema } from "@/lib/route-search";
-import { workDetailStrings } from "@/lib/strings";
+import { coreStrings, workDetailStrings } from "@/lib/strings";
 import { siteOrigin } from "@/lib/site-metadata";
 
 export const Route = createFileRoute("/works/$workId")({
@@ -16,7 +16,10 @@ export const Route = createFileRoute("/works/$workId")({
     }
     return { workId: params.workId, metadata };
   },
-  head: ({ loaderData }) => {
+  head: ({ loaderData, match }) => {
+    if (match.status === "notFound" || match._notFound) {
+      return { meta: [{ title: `${workDetailStrings.notFound.title} | ${coreStrings.appName}` }] };
+    }
     const metadata = loaderData?.metadata;
     if (loaderData === undefined || metadata === null || metadata === undefined) {
       return { meta: [{ title: workDetailStrings.metadataTitle }] };

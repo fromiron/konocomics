@@ -97,6 +97,19 @@ async function exportFile(overrides: Partial<RawUserDataSnapshot> = {}): Promise
 }
 
 describe("Export v1 file contract", () => {
+  it("round-trips explicit onboarding reading states and still accepts unconfirmed old drafts", async () => {
+    const draft = firstRunDraft();
+    draft.positiveEntries[0]!.readingState = "reading";
+    const file = await exportFile({ onboardingDraft: draft });
+    const preview = await inspectExportFileV1(file, CURRENT_CATALOG);
+    expect(preview.file.onboardingDraft).toEqual(draft);
+    const legacy = await exportFile();
+    expect(
+      (await inspectExportFileV1(legacy, CURRENT_CATALOG)).file.onboardingDraft?.positiveEntries[0]
+        ?.readingState,
+    ).toBeUndefined();
+  });
+
   it("rejects duplicate or out-of-catalog profile identity entries", () => {
     expect(() =>
       parseCurrentCatalogIdentity({
@@ -255,7 +268,7 @@ describe("Export v1 file contract", () => {
     expect(preview.profileState).toBe("first-run");
   });
 
-  it("imports a legacy 「読んでいる」 record as 「読んだ」 with its progress", async () => {
+  it("imports a legacy 「読んでいる」 record as 「読んでいる」 with its progress", async () => {
     const file = await exportFile({ userWorks: [] });
     const legacy = {
       ...file,
@@ -277,13 +290,13 @@ describe("Export v1 file contract", () => {
     expect(preview.file.userWorks).toEqual([
       {
         workId: "one",
-        readingState: "completed",
+        readingState: "reading",
         progress: { volume: 4, chapter: 30 },
         updatedAt: EXPORTED_AT,
       },
     ]);
     expect(preview.file.externalWorks.map((work) => work.record.readingState)).toEqual(
-      file.externalWorks.map(() => "completed"),
+      file.externalWorks.map(() => "reading"),
     );
   });
 

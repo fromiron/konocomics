@@ -69,11 +69,11 @@ beforeEach(() => {
     mode: "firstRun",
     step: 2,
     positiveEntries: [
-      { workId: "positive-1", reaction: "favorite" },
-      { workId: "positive-2", reaction: "liked" },
-      { workId: "positive-3", reaction: "liked" },
-      { workId: "positive-4", reaction: "liked" },
-      { workId: "positive-5", reaction: "liked" },
+      { workId: "positive-1", reaction: "favorite", readingState: "completed" },
+      { workId: "positive-2", reaction: "liked", readingState: "completed" },
+      { workId: "positive-3", reaction: "liked", readingState: "completed" },
+      { workId: "positive-4", reaction: "liked", readingState: "completed" },
+      { workId: "positive-5", reaction: "liked", readingState: "completed" },
     ],
     negativeEntries: [{ workId: "monster", disposition: "disliked", reasons: [] }],
     updatedAt: "2026-08-14T00:00:00+09:00",
@@ -110,6 +110,84 @@ function currentStep() {
 }
 
 describe("OnboardingFlow finalization", () => {
+  it("restores Step 2 with four library positives and one confirmed draft positive", () => {
+    testState.userWorks = defaultPositiveWorks.slice(0, 4).map((work) => ({
+      workId: work.id,
+      readingState: "reading",
+      reaction: "liked",
+      updatedAt: "2026-10-09T00:00:00.000Z",
+    }));
+    testState.draft = {
+      id: "current",
+      mode: "firstRun",
+      step: 2,
+      positiveEntries: [{ workId: "positive-5", reaction: "liked", readingState: "reading" }],
+      negativeEntries: [],
+      updatedAt: "2026-10-09T00:00:00.000Z",
+    };
+    render(<OnboardingFlow />);
+    expect(screen.getByRole("searchbox", { name: "合わなかったマンガを検索" })).toBeTruthy();
+    expect(screen.queryByRole("searchbox", { name: "好きなマンガを検索" })).toBeNull();
+  });
+
+  it("asks once for reading states before advancing and restores an unconfirmed legacy draft", () => {
+    testState.draft = {
+      ...(testState.draft as object),
+      positiveEntries: defaultPositiveWorks.map((work) => ({ workId: work.id, reaction: "liked" })),
+    };
+    render(<OnboardingFlow />);
+    fireEvent.click(screen.getByRole("button", { name: "次へ (5/10)" }));
+    expect(screen.getByRole("status").textContent).toContain("読書状態を確認");
+    expect(testState.finalizeOnboarding).not.toHaveBeenCalled();
+    fireEvent.click(screen.getByRole("button", { name: "すべて読んでいる" }));
+    fireEvent.click(screen.getByRole("button", { name: "次へ (5/10)" }));
+    expect(testState.saveOnboardingDraft).toHaveBeenLastCalledWith(
+      expect.objectContaining({
+        step: 2,
+        positiveEntries: defaultPositiveWorks.map((work) => ({
+          workId: work.id,
+          reaction: "liked",
+          readingState: "reading",
+        })),
+      }),
+    );
+  });
+
+  it("offers eligible recommendation works even when they are not discovery starters", () => {
+    testState.draft = null;
+    testState.catalog = createTestCatalog({
+      ...monster,
+      eligibility: {
+        ...monster.eligibility,
+        onboardingEligible: false,
+        recommendationEligible: true,
+      },
+    });
+    render(<OnboardingFlow />);
+    expect(screen.getAllByRole("button", { name: "MONSTER — 好きに追加" }).length).toBeGreaterThan(
+      0,
+    );
+  });
+
+  it("shows existing positive progress and sends a 5-to-4 recovery exit to the library", async () => {
+    testState.onboardingCompletedAt = "2026-08-01T00:00:00.000Z";
+    testState.draft = null;
+    testState.userWorks = defaultPositiveWorks.map((work, index) => ({
+      workId: work.id,
+      readingState: "completed",
+      reaction: index === 4 ? "disliked" : "liked",
+      updatedAt: "2026-08-01T00:00:00.000Z",
+    }));
+    render(<OnboardingFlow />);
+    expect(screen.getByText(/登録済み 5作品のうち.*4作品.*あと 1作品/)).toBeTruthy();
+    expect(screen.queryByRole("button", { name: "DNAに戻る" })).toBeNull();
+    fireEvent.click(screen.getByRole("button", { name: "ライブラリで感想を見直す" }));
+    await waitFor(() =>
+      expect(testState.navigate).toHaveBeenCalledWith({ to: "/library", replace: true }),
+    );
+    expect(testState.finalizeOnboarding).not.toHaveBeenCalled();
+  });
+
   it("explains missing works without advancing or saving an incomplete first run", () => {
     testState.draft = {
       id: "current",
@@ -117,7 +195,7 @@ describe("OnboardingFlow finalization", () => {
       step: 1,
       positiveEntries: defaultPositiveWorks
         .slice(0, 3)
-        .map((work) => ({ workId: work.id, reaction: "liked" })),
+        .map((work) => ({ workId: work.id, reaction: "liked", readingState: "completed" })),
       negativeEntries: [],
       updatedAt: "2026-10-01T00:00:00.000Z",
     };
@@ -135,7 +213,11 @@ describe("OnboardingFlow finalization", () => {
       id: "current",
       mode: "firstRun",
       step: 1,
-      positiveEntries: defaultPositiveWorks.map((work) => ({ workId: work.id, reaction: "liked" })),
+      positiveEntries: defaultPositiveWorks.map((work) => ({
+        workId: work.id,
+        reaction: "liked",
+        readingState: "completed",
+      })),
       negativeEntries: [],
       updatedAt: "2026-10-01T00:00:00.000Z",
     };
@@ -150,6 +232,7 @@ describe("OnboardingFlow finalization", () => {
         "MONSTER",
       ),
     );
+    fireEvent.click(screen.getByRole("button", { name: "すべて読んだ" }));
     fireEvent.click(screen.getByRole("button", { name: "次へ (5/10)" }));
     await waitFor(() =>
       expect(screen.getByRole("searchbox", { name: "合わなかったマンガを検索" })).toHaveProperty(
@@ -165,6 +248,7 @@ describe("OnboardingFlow finalization", () => {
         positiveEntries: defaultPositiveWorks.map((work) => ({
           workId: work.id,
           reaction: "liked",
+          readingState: "completed",
         })),
       }),
     );
@@ -205,6 +289,7 @@ describe("OnboardingFlow finalization", () => {
       positiveEntries: defaultPositiveWorks.map((work) => ({
         workId: work.id,
         reaction: "liked" as const,
+        readingState: "completed" as const,
       })),
       negativeEntries: [],
       updatedAt: "2026-08-14T00:00:00+09:00",
@@ -214,6 +299,7 @@ describe("OnboardingFlow finalization", () => {
     const main = container.querySelector("main");
 
     expect(main?.getAttribute("data-page-entry-b")).toBe("active");
+    fireEvent.click(screen.getByRole("button", { name: "すべて読んだ" }));
     fireEvent.click(screen.getByRole("button", { name: "次へ (5/10)" }));
 
     expect(container.querySelector("main")).toBe(main);
@@ -239,7 +325,7 @@ describe("OnboardingFlow finalization", () => {
     ).toBeTruthy();
     fireEvent.click(screen.getByRole("button", { name: "追加する (0/10)" }));
     expect(screen.getByRole("button", { name: "追加する (0/10)" }).matches(":disabled")).toBe(true);
-    expect(screen.getByText("あと 1 作品")).toBeTruthy();
+    expect(screen.getByText("あと 5 作品")).toBeTruthy();
     expect(testState.finalizeOnboarding).not.toHaveBeenCalled();
     expect(testState.navigate).not.toHaveBeenCalled();
   });
@@ -293,6 +379,7 @@ describe("OnboardingFlow finalization", () => {
       positiveEntries: selectedWorks.map((work) => ({
         workId: work.id,
         reaction: "liked" as const,
+        readingState: "completed" as const,
       })),
       negativeEntries: [],
       updatedAt: "2026-08-14T00:00:00+09:00",
@@ -312,7 +399,9 @@ describe("OnboardingFlow finalization", () => {
     expect(screen.getByText("10 / 10 作品")).toBeTruthy();
     expect(screen.getByText("「緊張作品1」は選択済みです。")).toBeTruthy();
     expect(testState.saveOnboardingDraft.mock.calls.at(-1)?.[0]).toMatchObject({
-      positiveEntries: expect.arrayContaining([{ workId: "horror-1", reaction: "liked" }]),
+      positiveEntries: expect.arrayContaining([
+        { workId: "horror-1", reaction: "liked", readingState: "completed" },
+      ]),
     });
     expect(testState.saveOnboardingDraft.mock.calls.at(-1)?.[0].positiveEntries).toHaveLength(10);
 
@@ -345,6 +434,7 @@ describe("OnboardingFlow finalization", () => {
       positiveEntries: selectedWorks.map((work) => ({
         workId: work.id,
         reaction: "liked" as const,
+        readingState: "completed" as const,
       })),
       negativeEntries: [],
       updatedAt: "2026-08-14T00:00:00+09:00",
@@ -385,6 +475,7 @@ describe("OnboardingFlow finalization", () => {
       positiveEntries: defaultPositiveWorks.map((work) => ({
         workId: work.id,
         reaction: "liked" as const,
+        readingState: "completed" as const,
       })),
       negativeEntries: selectedWorks.map((work) => ({
         workId: work.id,
@@ -570,6 +661,7 @@ describe("OnboardingFlow add mode", () => {
     expect(container.querySelector("main")?.getAttribute("data-page-entry-b")).toBe("active");
     expect(screen.queryByText("STEP 1 / 2")).toBeNull();
     fireEvent.click(screen.getByRole("button", { name: "追加候補 — 好きに追加" }));
+    fireEvent.click(screen.getByRole("button", { name: "すべて読んだ" }));
     fireEvent.click(screen.getByRole("button", { name: "追加する (1/10)" }));
 
     await waitFor(() => {
@@ -579,7 +671,7 @@ describe("OnboardingFlow add mode", () => {
     expect(testState.finalizeOnboarding.mock.calls[0]?.[0]).toMatchObject({
       mode: "add",
       step: 1,
-      positiveEntries: [{ workId: "new-candidate", reaction: "liked" }],
+      positiveEntries: [{ workId: "new-candidate", reaction: "liked", readingState: "completed" }],
       negativeEntries: [],
     });
     expect(testState.navigate).toHaveBeenCalledTimes(1);
@@ -596,6 +688,7 @@ describe("OnboardingFlow add mode", () => {
 
     render(<OnboardingFlow />);
     fireEvent.click(screen.getByRole("button", { name: "追加候補 — 好きに追加" }));
+    fireEvent.click(screen.getByRole("button", { name: "すべて読んだ" }));
     fireEvent.click(screen.getByRole("button", { name: "DNAに戻る" }));
 
     await waitFor(() => {
@@ -604,7 +697,9 @@ describe("OnboardingFlow add mode", () => {
     expect(testState.saveOnboardingDraft).toHaveBeenLastCalledWith(
       expect.objectContaining({
         mode: "add",
-        positiveEntries: [{ workId: "new-candidate", reaction: "liked" }],
+        positiveEntries: [
+          { workId: "new-candidate", reaction: "liked", readingState: "completed" },
+        ],
       }),
     );
     expect(testState.clearOnboardingDraft).not.toHaveBeenCalled();
@@ -639,6 +734,7 @@ describe("OnboardingFlow add mode", () => {
 
     render(<OnboardingFlow />);
     fireEvent.click(screen.getByRole("button", { name: "追加候補 — 好きに追加" }));
+    fireEvent.click(screen.getByRole("button", { name: "すべて読んだ" }));
     fireEvent.click(screen.getByRole("button", { name: "追加する (1/10)" }));
 
     await waitFor(() => {
@@ -702,6 +798,7 @@ describe("OnboardingFlow add mode", () => {
           : defaultPositiveWorks.map((work) => ({
               workId: work.id,
               reaction: "liked" as const,
+              readingState: "completed" as const,
             })),
       negativeEntries: [],
       updatedAt: "2026-08-14T00:00:00+09:00",

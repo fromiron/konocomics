@@ -279,6 +279,9 @@ export const designSystemStrings = {
 } as const;
 
 export const mediaStrings = {
+  externalNewTab: "（新しいタブ）",
+  shelfPosition: (first: number, last: number, total: number) =>
+    `${String(first)}–${String(last)} / ${String(total)}作品`,
   openDetails: (title: string) => `「${title}」の作品詳細を見る`,
   evidencePlaceholder: "追加の根拠なし",
   previous: (title: string) => `${title}を前へ送る`,
@@ -468,7 +471,9 @@ export const landingStrings = {
 } as const;
 
 export const navigationStrings = {
-  brandLinkLabel: "konocomics おすすめへ",
+  brandLinkLabel: "konocomics 使い方へ",
+  introduction: "使い方",
+  detailBack: "前の画面に戻る",
   brandParts: {
     kono: "kono",
     co: "co",
@@ -553,6 +558,24 @@ export const onboardingStrings = {
       },
     ],
   },
+  readingConfirmation: {
+    title: "選んだ作品の読書状態",
+    description:
+      "好きという感想と、読書状態を別々に保存します。まとめて選んだ後、作品ごとに変更できます。",
+    unconfirmed: "状態を選んでください",
+    allReading: "すべて読んでいる",
+    allCompleted: "すべて読んだ",
+    planned: "読みたい（感想は保存しない）",
+    reading: "読んでいる",
+    completed: "読んだ",
+    required: "選んだ作品の読書状態を確認してください。",
+  },
+  recovery: {
+    summary: (total: number, positive: number, remaining: number) =>
+      `登録済み ${String(total)}作品のうち、分析対象の「好き・大好き」は ${String(positive)}作品です。DNA を見るにはあと ${String(remaining)}作品が必要です。`,
+    help: "「読みたい」、感想が未入力の作品、分析未対応の作品はこの数に含みません。登録済みの作品はライブラリで感想を変更できます。",
+    library: "ライブラリで感想を見直す",
+  },
   clarity: {
     label: "DNAの鮮明さ",
     levels: {
@@ -589,7 +612,7 @@ export const onboardingStrings = {
   addMode: {
     eyebrow: "作品を追加",
     title: "好きなマンガを追加してください",
-    description: "1作品から追加できます。5作品以上で DNA が鮮明になります。",
+    description: "分析対象の「好き・大好き」が合計5作品になると DNA を見られます。",
     selectedTray: "追加するマンガ",
     emptySelected: "まだ追加する作品がありません",
     minimum: "1作品以上えらんでください",
@@ -801,7 +824,13 @@ export const tasteStrings = {
     worksHelp: (count: number) =>
       `外した作品は名前を載せず「ほか○作品」として数だけ載せます。分析した${String(count)}作品の数は変わりません。`,
     copy: "私のDNAページリンクをコピー",
-    shareSheet: "ほかのアプリで共有",
+    copyText: "紹介文とリンクをコピー",
+    shareSheet: "紹介文とリンクを共有",
+    previewWorks: (titles: readonly string[], hidden: number) =>
+      `公開する作品: ${titles.length === 0 ? "なし" : titles.map((title) => `『${title}』`).join(" ")}（名前を載せない作品 ${String(hidden)}件）`,
+    previewAxes: "共有する軸と強さを確認",
+    deliveryHelp:
+      "画像ファイルの保存・共有には対応していません。LINE・Xのプレビューに個別のDNAが出るとは限りません。紹介文とリンクを送ると、相手はページを開いて確認できます。",
     openPage: "ページを開いて確認",
     openPageNewTab: "共有ページを開いて確認(新しいタブ)",
     linkLabel: "DNAページのリンク",
@@ -813,6 +842,7 @@ export const tasteStrings = {
       "好きなマンガから、わたしの好みを分析しました。あなたの Manga DNA も見てみませんか？",
     status: {
       copied: "DNAページのリンクをコピーしました。",
+      textCopied: "紹介文とDNAページのリンクをコピーしました。",
       copyFailed: "コピーできませんでした。リンク欄から選択してコピーしてください。",
       handedOff: "共有先のアプリに渡しました。",
       shareFailed: "共有できませんでした。リンクのコピーをお使いください。",
@@ -846,6 +876,8 @@ export const tasteStrings = {
   groupAdjustmentHelp:
     "各項目のおすすめへの反映を変えられます。自動に戻すと分析結果が使われます。変更はすぐに保存されます。",
   groupAnalysisCount: (count: number) => `分析のみ（${String(count)}項目）`,
+  genreAnalysisHelp:
+    "ジャンルは読書記録からの分析結果です。ここでは調整しません。おすすめ画面でジャンルを絞り込めます。",
   groupAnalysisDetails: "内訳を見る",
   groupAnalysisDetailsLabel: (title: string, open: boolean) =>
     open ? `${title}の分析の内訳を閉じる` : `${title}の分析の内訳を見る`,
@@ -901,6 +933,7 @@ export const tasteStrings = {
   },
   readingStateLabels: {
     planned: "読みたい",
+    reading: "読んでいる",
     completed: "読んだ",
     dropped: "途中でやめた",
     hidden: "興味なし",
@@ -977,6 +1010,8 @@ export const recommendationStrings = {
     "このブラウザでは変更を保存できません。このセッション中だけおすすめを利用できます。",
   policiesHeading: "おすすめの方針",
   policiesUpdating: "並べ直しています…",
+  hiddenPolicyHint:
+    "隠れた作品は代表の巻のレビュー数が上位20%（同数を含む）に入らない候補です。有名さの判定ではありません。上位の好みが近い候補から優先し、全作品を入れ替えるものではありません。",
   policyLabels: recommendationPolicyLabels,
   update: "更新",
   updating: "更新しています…",
@@ -985,9 +1020,12 @@ export const recommendationStrings = {
     heading: "今回のおすすめ基準",
     description: "保存した読書記録、Manga DNA、おすすめ方針だけを使っています。",
     records: "読書記録",
+    counts: (total: number, negative: number, excluded: number) =>
+      `全記録 ${String(total)}作品・苦手／中断の入力 ${String(negative)}作品・記録による候補除外 ${String(excluded)}作品。読みたいへの追加だけでは分析数は増えません。未評価・普通は、好きな作品の分析数に含みません。外部作品は分析の対象外です。好きな各作品との近さで選ぶため、選んだジャンルの比率とは一致しません。`,
     basis: (count: number, preferences: string) =>
-      `${String(count)}作品の好み（${preferences}）から選んでいます。`,
-    basisWithoutPreferences: (count: number) => `${String(count)}作品の記録から選んでいます。`,
+      `好きな ${String(count)}作品の分析（${preferences}）から選んでいます。`,
+    basisWithoutPreferences: (count: number) =>
+      `好きな ${String(count)}作品の分析から選んでいます。`,
     dnaLink: "Manga DNA",
     policies: "適用中の条件",
     adjusted: (labels: string) => `おすすめの調整：${labels}`,
@@ -996,7 +1034,8 @@ export const recommendationStrings = {
     heading: "絞り込み",
     genre: "ジャンル",
     allGenres: "すべて",
-    rankingScope: "Top 10は全ジャンルの順位です。",
+    rankingScope:
+      "ジャンルは代表・テーマ別・隠れた候補の棚を絞り込みます。Top 10は全ジャンルの順位です。気分はすべての棚に適用されます。",
     featuredEmpty:
       "代表のおすすめには該当作品がありません。下の棚でこのジャンルの候補をご覧ください。",
     sort: "並び順",
@@ -1054,6 +1093,7 @@ export const recommendationStrings = {
     dismissLabel: (title: string) => `「${title}」を今日の気分では見送る`,
     dismissed: (title: string) => `「${title}」を今日の気分では見送りました。`,
     rankingDescription: "今日の気分に合う作品の上位10作品です。",
+    unchanged: "もとの上位作品もこの条件を満たしています。気分は並べ替えではなく絞り込みです。",
     shortage: (label: string, count: number) =>
       `「${label}」に合う作品は、いまのおすすめ候補の中に ${String(count)}作品あります。`,
     empty: {
@@ -1082,7 +1122,9 @@ export const recommendationStrings = {
     close: "おすすめ詳細を閉じる",
   },
   feedbackSummary: {
-    heading: "読んだ・興味なしの記録",
+    heading: "おすすめから外す読書状態",
+    reading: (count: number) => `いま読んでいる ${String(count)}作品`,
+    dropped: (count: number) => `途中でやめた ${String(count)}作品`,
     completed: (count: number) => `読んだ ${String(count)}作品`,
     hidden: (count: number) => `興味なし ${String(count)}作品`,
     excluded: "は、おすすめから外しています。",
@@ -1096,6 +1138,7 @@ export const recommendationStrings = {
   confidenceHeading: "分析の確信度",
   actions: {
     planned: "読みたい",
+    reading: "読んでいる",
     completed: "読んだ",
     hidden: "興味なし",
     plannedConfirmation: "追加済み",
@@ -1136,9 +1179,11 @@ export const recommendationStrings = {
     alreadyRecorded: (title: string) => `『${title}』は登録済みです。最新の記録を保持しました。`,
     removedAndBackfilled: "1件を除外し、新しい候補を追加しました",
     removedWithoutBackfill: "1件を除外しました。おすすめ候補が不足しています。",
+    updatedUnchanged: "変更を反映しました。上位作品と順番は同じです。",
     updated: "おすすめを更新しました。",
     policiesUpdated: "おすすめの方針を反映しました。",
     recorded: {
+      reading: (title: string) => `「${title}」を読んでいるに記録しました。`,
       completed: (title: string) => `「${title}」を読んだに記録しました。`,
       hidden: (title: string) => `「${title}」を興味なしにしました。`,
     },
@@ -1150,8 +1195,10 @@ export const recommendationStrings = {
   feedbackDialog: {
     completedTitle: "読んだ感想を残しますか？",
     completedDescription: (title: string) => `「${title}」の感想を選んでください。`,
-    hiddenTitle: "興味なしの理由を残しますか？",
-    hiddenDescription: (title: string) => `「${title}」について、当てはまる理由を選んでください。`,
+    hiddenTitle: "おすすめから外しました",
+    hiddenDescription: (title: string) =>
+      `「${title}」を興味なしに変更しました。感想と進行は保ちます。「いまいち」の評価は追加しません。閉じた後の「元に戻す」、またはライブラリの「興味なし」から変更できます。`,
+    close: "閉じる",
     reactionLegend: "感想",
     reactionLabels: {
       highest: "最高",
@@ -1175,7 +1222,7 @@ export const recommendationStrings = {
     },
     save: "保存",
     saving: "保存しています…",
-    skip: "スキップ",
+    skip: "感想を追加せず閉じる",
   },
 } as const;
 
@@ -1196,7 +1243,12 @@ export const workDetailStrings = {
     creators: "作者",
     publisher: "出版社",
     status: "刊行状況",
-    volumes: "巻数",
+    volumes: "シリーズの巻数",
+    unknownVolumes: "巻数未確認",
+    displayedEdition: (volumeNumber?: number) =>
+      volumeNumber === undefined
+        ? "表紙・紹介・購入リンク：掲載版（巻数未確認）"
+        : `表紙・紹介・購入リンク：第${String(volumeNumber)}巻`,
     unknownPublisher: "出版社不明",
     bookHeading: (volumeNumber?: number) =>
       volumeNumber === undefined ? "書誌情報" : `第${String(volumeNumber)}巻の情報`,
@@ -1256,7 +1308,10 @@ export const workDetailStrings = {
   },
   synopsis: {
     heading: "あらすじ",
-    unavailable: "作品紹介を取得できませんでした。",
+    unavailable: "作品紹介を取得できませんでした。楽天ブックスでご確認ください。",
+    missing: "この掲載版の作品紹介はまだありません。",
+    loading: "作品紹介を確認しています…",
+    chapterList: "提供された内容は目次・回次一覧のため、あらすじとして表示していません。",
     readMore: "続きを読む",
     readLess: "閉じる",
     source: { rakuten: "楽天ブックスの紹介", publisher: "出版社の紹介" },
@@ -1283,8 +1338,11 @@ export const workDetailStrings = {
   },
   share: {
     action: "共有",
-    copied: "リンクをコピーしました。",
-    failed: "リンクを共有できませんでした。",
+    copyAction: "作品名とリンクをコピー",
+    text: (title: string) => `『${title}』 | kono・mi`,
+    copied: "作品名とリンクをコピーしました。",
+    handedOff: "作品名とリンクを共有先のアプリに渡しました。",
+    failed: "共有できませんでした。ブラウザのアドレス欄からリンクをコピーできます。",
   },
   state: {
     heading: "読書状態",
@@ -1293,13 +1351,17 @@ export const workDetailStrings = {
     prompt: "状態を選ぶ",
     options: {
       planned: "読みたい",
+      reading: "読んでいる",
       completed: "読んだ",
       dropped: "途中でやめた",
       hidden: "興味なし",
     },
+    removeRecord: "この作品の登録を取り消す",
+    removeDescription: "読書状態・感想・進行を削除します。作品情報は残ります。直後に元に戻せます。",
     plannedAdd: "読みたい",
     plannedRemove: "読みたいから外す",
-    ongoingHint: "連載中の作品も、読んだところまでを「読んだ」として記録できます。",
+    ongoingHint:
+      "読んでいる途中なら「読んでいる」を選び、巻・話の進み具合はライブラリで記録できます。",
     reactionGroup: "感想",
     reactionSaved: (state: string, label: string) => `「${state}・${label}」を保存しました。`,
     reactionCleared: "感想を外しました。読書状態はそのままです。",
@@ -1327,7 +1389,8 @@ export const workDetailStrings = {
     retry: "もう一度確認",
     affiliate: "このリンクはアフィリエイトリンクです。",
     credit: "Supported by Rakuten Developers",
-    priceLabel: "価格",
+    priceLabel: "掲載版の価格",
+    newTab: "新しいタブ",
     availabilityLabel: "在庫・発送",
     ratingLabel: "楽天レビュー",
     reviewCountLabel: "レビュー件数",
@@ -1382,7 +1445,9 @@ export const settingsStrings = {
     title: "Manga DNA",
     description: "Manga DNA の分析結果を確認し、おすすめへの反映を設定できます。",
     adjustmentCount: (count: number) =>
-      count === 0 ? "手動調整はありません。" : `${String(count)} 項目を手動調整しています。`,
+      count === 0
+        ? "現在、おすすめへの反映はすべて自動です。"
+        : `${String(count)} 項目を手動調整しています。`,
     action: "おすすめを調整",
   },
   storageStatus: {
@@ -1392,10 +1457,17 @@ export const settingsStrings = {
         ? `作品の記録 ${String(count)}件`
         : `作品の記録 ${String(count)}件（カタログ外 ${String(external)}件）`,
     usage: (megabytes: string) => `使用容量 約${megabytes} MB`,
-    persisted: "ブラウザの自動削除から保護されています。",
+    usageHelp:
+      "このサイトのブラウザ推定使用量です。キャッシュなどを含むため、読書記録のバックアップファイルの容量とは異なります。",
+    limits:
+      "自動削除の抑制が承認されても、手動のデータ削除やシークレット・ゲストモードの終了で記録が失われる場合があります。別の端末への同期やバックアップではありません。大切な記録はエクスポートしてください。",
+    unsupported:
+      "このブラウザでは自動削除の抑制をリクエストできません。エクスポートでバックアップしてください。",
+    unknown: "自動削除の抑制が承認されているか確認できません。",
+    persisted: "ブラウザは、空き容量不足による自動削除を抑えるリクエストを承認しています。",
     notPersisted: "空き容量が不足すると、ブラウザが記録を自動で削除する場合があります。",
     denied: "このブラウザでは保護を有効にできませんでした。定期的にエクスポートしてください。",
-    protect: "データを保護する",
+    protect: "自動削除の抑制をリクエスト",
     protecting: "保護を設定しています…",
   },
   danger: {
@@ -1412,6 +1484,8 @@ export const settingsStrings = {
       description: "読書記録と好みのデータを JSON ファイルに書き出します。",
       action: "エクスポート",
       exporting: "書き出しています…",
+      started:
+        "ダウンロードを開始しました。保存できたかはブラウザのダウンロード一覧で確認してください。",
       recovery: {
         title: "登録済みの作品が未完了の選択に残っています",
         description:
@@ -1519,6 +1593,7 @@ export const libraryStrings = {
   tabsAll: "すべて",
   tabs: {
     planned: "読みたい",
+    reading: "読んでいる",
     completed: "読んだ",
     dropped: "途中でやめた",
     hidden: "興味なし",
@@ -1594,6 +1669,7 @@ export const libraryStrings = {
   },
   tabEmpty: {
     planned: "読みたい作品はまだありません。",
+    reading: "読んでいる作品はまだありません。",
     completed: "読んだ作品はまだありません。",
     dropped: "途中でやめた作品はまだありません。",
     hidden: "興味なしにした作品はまだありません。",
@@ -1621,7 +1697,7 @@ export const libraryStrings = {
   panel: {
     close: "閉じる",
     detailLabel: "読書記録を編集",
-    catalogDetail: "作品詳細を見る",
+    catalogDetail: "作品詳細・登録の取り消し",
     externalDetail: "カタログ外作品の詳細を見る",
   },
   editor: {
@@ -1629,6 +1705,10 @@ export const libraryStrings = {
     readingState: "読書状態",
     reaction: "感想",
     reactionPrompt: "感想を記録しない",
+    reactionHelp:
+      "「普通」は中立の感想です。「感想を記録しない」は未評価です。興味なしへの変更だけでは感想は変わりません。",
+    unchanged: "変更はありません。",
+    conflict: "ほかの画面で記録が更新されました。最新の内容を確認して、もう一度変更してください。",
     progress: "進み具合",
     progressOptional: "進み具合（任意）",
     volume: "巻",
@@ -1667,9 +1747,18 @@ export const libraryStrings = {
     localResults: (count: number) => `カタログから ${String(count)} 作品見つかりました。`,
     noLocalResults: "カタログ内では見つかりませんでした。",
     add: "読みたいに追加",
+    addCompleted: "読んだに追加",
+    addReading: "読んでいるに追加",
+    genreClassificationHint:
+      "BLをタイトル・作者名として検索しています。ジャンル選択にはBLの分類はありません。",
+    readingState: "追加する記録",
+    genreHint: "カタログのジャンル",
+    rakutenRetry: "楽天ブックスを再試行",
+    providerOffline: "オフラインです。カタログ内の作品を追加できます。接続後に再試行してください。",
     added: "追加済み",
     adding: "追加しています…",
-    addedAnnouncement: (title: string) => `「${title}」を読みたいに追加しました。`,
+    addedAnnouncement: (title: string, state: "planned" | "reading" | "completed" = "planned") =>
+      `「${title}」を${state === "completed" ? "読んだ" : state === "reading" ? "読んでいる" : "読みたい"}に追加しました。`,
     alreadyAddedAnnouncement: (title: string) =>
       `「${title}」はすでにライブラリにあります。最新の記録を表示しています。`,
     addError: "作品を追加できませんでした。もう一度お試しください。",
@@ -1689,7 +1778,7 @@ export const libraryStrings = {
 } as const;
 
 export const popularWorkStrings = {
-  source: "楽天ブックスで売れている作品",
+  source: "読書記録を増やす質問 · 楽天ブックスの売上順",
   question: "は読んだことがありますか？",
   title: (title: string) => `『${title}』`,
   read: "読んだことがある",
@@ -1829,4 +1918,9 @@ export const experimentReportStrings = {
     powerInflation: "強さのインフレが気になる",
     vagueDislike: "理由を特定できない苦手",
   },
+} as const;
+
+export const searchStrings = {
+  limitHint: "検索は100文字までです。長いタイトルは一部を入力してください。",
+  tooLong: "検索語が長すぎます。100文字以内に短くしてください。",
 } as const;

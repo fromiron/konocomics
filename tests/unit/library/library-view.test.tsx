@@ -342,10 +342,10 @@ describe("LibraryView", () => {
     },
   );
 
-  it("renders all five state tabs on the controlled overview path and discloses external rows and exclusion in detail", () => {
+  it("renders all six state tabs on the controlled overview path and discloses external rows and exclusion in detail", () => {
     renderLibrary({ activeState: null });
     expect(screen.getByRole("tablist", { name: libraryStrings.tablistLabel })).toBeTruthy();
-    expect(screen.getAllByRole("tab")).toHaveLength(5);
+    expect(screen.getAllByRole("tab")).toHaveLength(6);
     expect(
       screen.getByRole("tab", { name: libraryStrings.tabWithCount(libraryStrings.tabsAll, 2) }),
     ).toBeTruthy();
@@ -415,6 +415,7 @@ describe("LibraryView", () => {
 
     expect(saveUserWork).toHaveBeenCalledWith(
       expect.objectContaining({ workId: target.id, readingState: "completed" }),
+      catalogRecord.updatedAt,
     );
     expect(screen.queryByText(libraryStrings.editor.saved)).toBeNull();
     release?.();
@@ -504,6 +505,7 @@ describe("LibraryView", () => {
           workId: catalogMissingRecord.workId,
           readingState: "completed",
         }),
+        catalogMissingRecord.updatedAt,
       ),
     );
   });

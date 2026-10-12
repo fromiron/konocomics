@@ -31,7 +31,12 @@ export const Route = createRootRouteWithContext<{
       meta: [
         { charSet: "utf-8" },
         { name: "viewport", content: "width=device-width, initial-scale=1, viewport-fit=cover" },
-        { title: coreStrings.appName },
+        {
+          title:
+            match._notFound || match.status === "notFound"
+              ? `${routeBoundaryStrings.notFoundTitle} | ${coreStrings.appName}`
+              : coreStrings.appName,
+        },
         { name: "description", content: coreStrings.metadata.description },
         ...metadata.meta,
       ],

@@ -217,16 +217,19 @@ function capturedBookIntroduction(value: string, sourceUrl: string, isbn: string
     if (!page.success) continue;
     const book = page.data.props.book;
     if (isbnIdentityKey(book.isbn13_cd) !== isbnIdentityKey(isbn)) continue;
-    // Shogakukan's category 3 is the full introduction. Do not admit arbitrary
-    // JSON strings, related books, or administrative fields as source text.
-    const introduction = book.promo_contents[3];
-    if (
-      introduction &&
-      book.promo_kbns.some(
-        (category) => category.promo_kbn === 3 && category.pivot.promo_contents === introduction,
-      )
-    )
-      return captionText(introduction);
+    // Both publisher-labelled introductions are valid: category 3 may contain only a contents list.
+    return [3, 2]
+      .flatMap((kind) => {
+        const introduction = book.promo_contents[kind];
+        return typeof introduction === "string" &&
+          book.promo_kbns.some(
+            (category) =>
+              category.promo_kbn === kind && category.pivot.promo_contents === introduction,
+          )
+          ? [captionText(introduction)]
+          : [];
+      })
+      .join("\n");
   }
   return "";
 }

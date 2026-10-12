@@ -540,7 +540,7 @@ h1[tabindex="-1"]:focus {
   pointer-events: auto;
 }
 
-@media (hover: hover) and (pointer: fine) {
+@media (min-width: 768px) and (min-height: 600px) and (hover: hover) and (pointer: fine) {
   .recommendation-featured-card__actions {
     height: 0;
     min-height: 0;
@@ -2392,6 +2392,7 @@ h1[tabindex="-1"]:focus {
 }
 
 .hh-stage {
+  pointer-events: none;
   position: relative;
   min-width: 0;
   user-select: none;
@@ -3397,6 +3398,16 @@ h1[tabindex="-1"]:focus {
     border-radius: 0;
     animation-timing-function: ease-in-out;
     animation-fill-mode: both;
+  }
+
+  /* Focus owns the stage, including nested animations and the other scroll-driven scenes. */
+  .home-story__scenes:focus-within .home-story__scene:not(:focus-within) {
+    visibility: hidden;
+  }
+
+  .home-story__scene:focus-within .home-story__card,
+  .home-story__scene:focus-within .home-story__tint {
+    animation: none;
   }
 
   /* A keyboard reader who tabs into a scene sees it, whatever the scroll position. */

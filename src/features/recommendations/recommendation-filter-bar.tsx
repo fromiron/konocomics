@@ -1,7 +1,6 @@
 import { CheckIcon, SquareIcon } from "lucide-react";
-import { type Ref, useEffect, useState } from "react";
+import { useEffect, useState } from "react";
 
-import { Button } from "@/components/design-system/button";
 import { ChoiceChipCheckbox } from "@/components/design-system/choice-chip";
 import { NativeSelect, NativeSelectOption } from "@/components/design-system/native-select";
 import { GENRE_TAGS } from "@/domain/catalog/constants";
@@ -16,14 +15,9 @@ type RecommendationFilterBarProps = Readonly<{
   genre?: GenreTag;
   policies: RecommendationPolicies;
   disabled: boolean;
-  pending: boolean;
   policyUpdating: boolean;
-  updating: boolean;
-  updateDisabled: boolean;
-  updateButtonRef: Ref<HTMLButtonElement>;
   onGenreChange?: (genre: GenreTag | undefined) => void;
   onPolicyToggle: (key: VisiblePolicyKey) => void;
-  onUpdate: () => void;
 }>;
 
 export function RecommendationFilterBar({
@@ -31,13 +25,8 @@ export function RecommendationFilterBar({
   genre,
   onGenreChange,
   onPolicyToggle,
-  onUpdate,
-  pending,
   policies,
   policyUpdating,
-  updateDisabled,
-  updateButtonRef,
-  updating,
 }: RecommendationFilterBarProps) {
   const [policiesOpen, setPoliciesOpen] = useState(
     () =>
@@ -139,23 +128,10 @@ export function RecommendationFilterBar({
           </span>
         </section>
       </div>
-      {!policyUpdating && pending ? (
-        <div className="flex flex-wrap items-center gap-x-[var(--space-4)] gap-y-[var(--space-2)]">
-          {updating ? null : (
-            <p className="text-[length:var(--font-size-14)] text-text-muted">
-              {recommendationStrings.pendingChanges}
-            </p>
-          )}
-          <Button
-            busy={updating}
-            disabled={updateDisabled}
-            onClick={onUpdate}
-            ref={updateButtonRef}
-            type="button"
-          >
-            {updating ? recommendationStrings.updating : recommendationStrings.update}
-          </Button>
-        </div>
+      {policies.preferHidden ? (
+        <p className="text-[length:var(--text-caption-size)] text-text-muted">
+          {recommendationStrings.hiddenPolicyHint}
+        </p>
       ) : null}
       {genre === undefined ? null : (
         <p

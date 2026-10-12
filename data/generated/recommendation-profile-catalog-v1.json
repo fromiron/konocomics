@@ -1,6 +1,6 @@
 {
   "schemaVersion": 1,
-  "catalogVersion": "v1-b982938cc433",
+  "catalogVersion": "v1-b825bdb251a1",
   "factorDictionaryVersion": "v1",
   "works": [
     {
@@ -60952,7 +60952,7 @@
       ],
       "publisher": "Kadokawa",
       "demographic": "seinen",
-      "status": "unknown",
+      "status": "completed",
       "firstPublishedYear": 2007,
       "genres": [
         "fantasy",
@@ -84552,7 +84552,7 @@
       ],
       "publisher": "集英社",
       "demographic": "unknown",
-      "status": "unknown",
+      "status": "completed",
       "firstPublishedYear": 2025,
       "genres": [
         "horror",
@@ -337412,7 +337412,13 @@
       "volumeNumber": 1,
       "isbn": "9784091233714",
       "releaseDate": "1994-06-18",
-      "editionKind": "standard"
+      "editionKind": "standard",
+      "metadata": {
+        "publisherName": "小学館",
+        "itemCaption": "ホームズに憧れる推理マニアの高校生。工藤新一がとある理由で小学生の体に！！小さな探偵が大活躍の奇想天外本格探偵アクション！",
+        "sourceUrl": "https://www.shogakukan.co.jp/books/09123371",
+        "fetchedAt": "2026-10-09T06:49:22.408257+00:00"
+      }
     },
     {
       "id": "work-3979ca1df0523fa19990-representative",
