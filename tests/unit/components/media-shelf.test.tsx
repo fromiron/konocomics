@@ -1,6 +1,7 @@
 // @vitest-environment jsdom
 
 import { act, cleanup, fireEvent, render, screen } from "@testing-library/react";
+import { renderToString } from "react-dom/server";
 import { afterEach, describe, expect, it, vi } from "vitest";
 
 import { MediaShelf } from "@/components/media/media-shelf";
@@ -20,6 +21,18 @@ describe("MediaShelf", () => {
     expect(container.querySelector("[data-carousel-clone]")).toBeNull();
     expect(screen.queryByRole("button")).toBeNull();
     expect(screen.queryByText(/作品$/)).toBeNull();
+  });
+
+  it("keeps the position line blank until the browser measures the track", () => {
+    const html = renderToString(
+      <MediaShelf title="Server shelf">
+        <article>First</article>
+        <article>Second</article>
+      </MediaShelf>,
+    );
+
+    expect(html).not.toContain("作品");
+    expect(html).toMatch(/<p class="[^"]*invisible[^"]*" aria-live="polite"/);
   });
 
   it("moves focus between adjacent cards with the arrow keys", () => {

@@ -36,6 +36,8 @@ type MediaShelfProps = Readonly<{
 }>;
 
 type ScrollState = Readonly<{
+  /** False until the browser has laid the track out (server render and before hydration). */
+  measured: boolean;
   hasOverflow: boolean;
   canScrollBack: boolean;
   canScrollForward: boolean;
@@ -45,6 +47,7 @@ type ScrollState = Readonly<{
 }>;
 
 const initialScrollState: ScrollState = {
+  measured: false,
   hasOverflow: false,
   canScrollBack: false,
   canScrollForward: false,
@@ -99,6 +102,7 @@ export function MediaShelf({
         : [];
     });
     const next = {
+      measured: true,
       hasOverflow: maximum > 1,
       canScrollBack: track.scrollLeft > 1,
       canScrollForward: track.scrollLeft < maximum - 1,
@@ -107,6 +111,7 @@ export function MediaShelf({
       total: cards.length,
     };
     setScrollState((current) =>
+      current.measured &&
       current.hasOverflow === next.hasOverflow &&
       current.canScrollBack === next.canScrollBack &&
       current.canScrollForward === next.canScrollForward &&
@@ -228,8 +233,8 @@ export function MediaShelf({
       aria-label={direction === -1 ? mediaStrings.previous(title) : mediaStrings.next(title)}
       className={
         controlsPlacement === "overlay"
-          ? "pointer-events-auto rounded-[var(--radius-pill)] border-line bg-surface-overlay"
-          : undefined
+          ? "pointer-events-auto rounded-full border-line bg-surface-overlay"
+          : "rounded-full"
       }
       disabled={direction === -1 ? !scrollState.canScrollBack : !scrollState.canScrollForward}
       onClick={() => move(direction)}
@@ -278,16 +283,23 @@ export function MediaShelf({
           title={title}
         />
       )}
-      {/* A position only means something when the shelf can scroll past what is shown. */}
-      {scrollState.hasOverflow ? (
+      {/* A position only means something when the shelf can scroll past what is shown. Until the
+          track is measured (server render, before hydration) the line keeps its space blank, so
+          an overflowing shelf does not push the page down when its position arrives. */}
+      {scrollState.measured && !scrollState.hasOverflow ? null : (
         <p
-          className="mb-[var(--space-2)] text-[length:var(--text-caption-size)] text-text-muted"
+          className={cn(
+            "mb-[var(--space-2)] text-[length:var(--text-caption-size)] text-text-muted",
+            !scrollState.measured && "invisible",
+          )}
           aria-live="polite"
           aria-atomic="true"
         >
-          {mediaStrings.shelfPosition(scrollState.first, scrollState.last, scrollState.total)}
+          {scrollState.measured
+            ? mediaStrings.shelfPosition(scrollState.first, scrollState.last, scrollState.total)
+            : "\u00a0"}
         </p>
-      ) : null}
+      )}
       {controlsPlacement === "overlay" ? (
         <div className="media-shelf-overlay relative">
           {track}
