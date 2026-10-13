@@ -11,7 +11,7 @@ export function DetailBackLink({
   const canGoBack = useCanGoBack();
   return (
     <Link
-      className="mx-auto flex min-h-[var(--control-min-size)] w-full max-w-[var(--layout-width-reading)] items-center gap-[var(--space-2)] px-[var(--layout-page-padding)] text-text-muted"
+      className="mx-auto flex min-h-[var(--control-min-size)] w-full max-w-[var(--layout-width-media)] items-center gap-[var(--space-2)] px-[var(--layout-page-padding)] text-text-muted"
       onClick={(event) => {
         if (
           !canGoBack ||

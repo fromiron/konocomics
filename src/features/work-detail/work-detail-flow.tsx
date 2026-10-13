@@ -2,17 +2,18 @@
 
 import { Link } from "@tanstack/react-router";
 import { DetailBackLink } from "@/components/nav/detail-back-link";
-import { BookmarkIcon, EyeOffIcon } from "lucide-react";
+import { ArrowRightIcon, BookmarkIcon, EyeOffIcon } from "lucide-react";
 import { LazyMotion, domAnimation, m } from "motion/react";
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 
-import { coverSourceForSize } from "@/components/cover/CoverImage";
+import { CoverImage, coverSourceForSize } from "@/components/cover/CoverImage";
 import { Button, buttonClassName } from "@/components/design-system/button";
 import { SegmentedControl } from "@/components/design-system/segmented-control";
 import { Snackbar, type SnackbarNotice } from "@/components/layout/snackbar";
 import { RankingShelf } from "@/components/media/ranking-shelf";
 import { RankingCard } from "@/components/media/ranking-card";
 import { ReasonBubble } from "@/components/media/reason-bubble";
+import { cn } from "@/lib/utils";
 import { controlSpring } from "@/components/design-system/spring-selection";
 import { useLiveReducedMotion } from "@/components/motion/use-live-reduced-motion";
 import { pageEntryFadeProps, usePageEntryMotion } from "@/components/motion/use-page-entry-motion";
@@ -688,9 +689,11 @@ function WorkStateControls({
 function CompatibilitySummary({
   catalog,
   explanation,
+  tail,
 }: Readonly<{
   catalog: CatalogV1;
   explanation: TasteRecommendationExplanation;
+  tail: "top" | "side";
 }>) {
   const leadReason = explanation.positiveReasons[0];
   const leadText = leadReason?.text ?? recommendationStrings.reasonUnavailable;
@@ -727,6 +730,7 @@ function CompatibilitySummary({
         <ReasonBubble
           className="grid gap-[var(--space-2)] p-[var(--space-5)] text-text-strong"
           surface="dark"
+          tail={tail}
         >
           <p>
             {anchorMentionIndex < 0 ? (
@@ -775,16 +779,24 @@ function CompatibilitySummary({
   );
 }
 
+/**
+ * The page's highlight: the library works behind the recommendation lead to this work's cover,
+ * and the reason bubble beside them reads as what connects them.
+ */
 function CompatibilitySection({
   catalog,
+  coverUrl,
   coverUrls,
   onCoverVisible,
   state,
+  work,
 }: Readonly<{
   catalog: CatalogV1;
+  coverUrl: string | null;
   coverUrls: ReadonlyMap<string, string | null>;
   onCoverVisible(workId: string): void;
   state: CompatibilityState;
+  work: Work;
 }>) {
   if (
     state.kind !== "ready" ||
@@ -803,12 +815,39 @@ function CompatibilitySection({
       >
         {workDetailStrings.compatibility.heading}
       </h2>
-      <WorkEvidenceList
-        coverUrls={coverUrls}
-        evidence={state.evidence}
-        onCoverVisible={onCoverVisible}
-      />
-      <CompatibilitySummary catalog={catalog} explanation={state.explanation} />
+      <div
+        className={cn(
+          "work-compatibility__band grid items-center gap-[var(--space-5)] p-[var(--space-5)] md:p-[var(--space-6)]",
+          state.evidence.length > 0 && "md:grid-cols-[auto_minmax(0,1fr)] md:gap-[var(--space-8)]",
+        )}
+      >
+        {state.evidence.length === 0 ? null : (
+          <div className="flex items-start gap-[var(--space-3)]">
+            <WorkEvidenceList
+              coverUrls={coverUrls}
+              evidence={state.evidence}
+              onCoverVisible={onCoverVisible}
+            />
+            <ArrowRightIcon
+              aria-hidden="true"
+              className="mt-[var(--space-8)] size-5 shrink-0 text-accent"
+            />
+            <CoverImage
+              className="w-[calc(var(--space-8)*2)] shrink-0"
+              coverUrl={coverUrl}
+              creators={work.creators}
+              decorative
+              requestedSize={200}
+              title={work.title}
+            />
+          </div>
+        )}
+        <CompatibilitySummary
+          catalog={catalog}
+          explanation={state.explanation}
+          tail={state.evidence.length === 0 ? "top" : "side"}
+        />
+      </div>
     </section>
   );
 }
@@ -1063,6 +1102,23 @@ function WorkDetailContent({ catalog, work }: Readonly<{ catalog: CatalogV1; wor
             <p className="text-[length:var(--font-size-14)] text-text-muted">
               {coverStrings.creatorLine(work.creators)}
             </p>
+            {factorIds.length === 0 ? null : (
+              <ul
+                aria-label={workDetailStrings.factors.heading}
+                className="m-0 flex list-none flex-wrap gap-x-[var(--space-2)] p-0 text-[length:var(--font-size-14)] text-text"
+              >
+                {factorIds.map((factorId, index) => (
+                  <li key={factorId}>
+                    {index === 0 ? null : (
+                      <span aria-hidden="true" className="pe-[var(--space-2)] text-text-muted">
+                        ·
+                      </span>
+                    )}
+                    {explanationLexicon.factorLabels[factorId]}
+                  </li>
+                ))}
+              </ul>
+            )}
           </header>
           <dl className="m-0 grid grid-cols-2 overflow-hidden rounded-[var(--radius-card)] border border-transparent bg-surface-1 p-0 md:grid-flow-col md:auto-cols-fr md:grid-cols-none [&>div]:grid [&>div]:content-start [&>div]:gap-[var(--space-1)] [&>div]:border-r [&>div]:border-line [&>div]:px-[var(--space-3)] [&>div]:py-[var(--space-3)] [&>div:last-child]:border-r-0 [&_dd]:m-0 [&_dd]:break-words [&_dd]:text-[length:var(--font-size-14)] [&_dd]:font-semibold [&_dd]:text-text-strong [&_dt]:text-[length:var(--text-caption-size)] [&_dt]:text-text-muted">
             {bookMetadata.publisherName === undefined ? null : (
@@ -1164,7 +1220,7 @@ function WorkDetailContent({ catalog, work }: Readonly<{ catalog: CatalogV1; wor
           </section>
         </WorkDetailShell>
 
-        <div className="mx-auto grid w-full max-w-[var(--layout-width-library)] gap-[var(--space-section)] px-[var(--layout-page-padding)] pt-[var(--space-section)]">
+        <div className="mx-auto grid w-full max-w-[var(--layout-width-media)] gap-[var(--space-section)] px-[var(--layout-page-padding)] pt-[var(--space-section)] [&>*]:min-w-0">
           {status.state === "degraded" ? (
             <p
               className="border-l-2 border-warn bg-surface-1 px-[var(--space-4)] py-[var(--space-3)]"
@@ -1173,18 +1229,31 @@ function WorkDetailContent({ catalog, work }: Readonly<{ catalog: CatalogV1; wor
               {workDetailStrings.storageWarning}
             </p>
           ) : null}
-          <WorkStateControls
-            addUserWorkIfAbsent={addUserWorkIfAbsent}
-            record={currentRecord}
-            recordsReady={userWorks !== undefined}
-            removeMinimalPlannedUserWork={removeMinimalPlannedUserWork}
-            removeUserWorkIfUnchanged={removeUserWorkIfUnchanged}
-            saveUserWork={saveUserWork}
-            seriesContinues={work.status === "ongoing" || work.status === "hiatus"}
-            workId={work.id}
+          <div className="max-w-[var(--layout-width-library)]">
+            <WorkStateControls
+              addUserWorkIfAbsent={addUserWorkIfAbsent}
+              record={currentRecord}
+              recordsReady={userWorks !== undefined}
+              removeMinimalPlannedUserWork={removeMinimalPlannedUserWork}
+              removeUserWorkIfUnchanged={removeUserWorkIfUnchanged}
+              saveUserWork={saveUserWork}
+              seriesContinues={work.status === "ongoing" || work.status === "hiatus"}
+              workId={work.id}
+            />
+          </div>
+          <CompatibilitySection
+            catalog={catalog}
+            coverUrl={heroCoverUrl}
+            coverUrls={coverUrls}
+            onCoverVisible={requestCover}
+            state={compatibility}
+            work={work}
           />
           {bookMetadata.itemCaption === undefined ? (
-            <section aria-labelledby="work-synopsis-heading" className="grid gap-[var(--space-3)]">
+            <section
+              aria-labelledby="work-synopsis-heading"
+              className="grid max-w-[var(--layout-width-library)] gap-[var(--space-3)]"
+            >
               <h2
                 className="text-[length:var(--text-subheading-size)] font-bold text-text-strong"
                 id="work-synopsis-heading"
@@ -1202,7 +1271,10 @@ function WorkDetailContent({ catalog, work }: Readonly<{ catalog: CatalogV1; wor
               </p>
             </section>
           ) : (
-            <section aria-labelledby="work-synopsis-heading" className="grid gap-[var(--space-3)]">
+            <section
+              aria-labelledby="work-synopsis-heading"
+              className="grid max-w-[var(--layout-width-library)] gap-[var(--space-3)]"
+            >
               <h2
                 className="text-[length:var(--text-subheading-size)] font-bold text-text-strong"
                 id="work-synopsis-heading"
@@ -1237,41 +1309,17 @@ function WorkDetailContent({ catalog, work }: Readonly<{ catalog: CatalogV1; wor
               </div>
             </section>
           )}
-          {factorIds.length === 0 ? null : (
-            <section aria-labelledby="work-factors-heading" className="grid gap-[var(--space-3)]">
-              <h2
-                className="text-[length:var(--text-subheading-size)] font-bold text-text-strong"
-                id="work-factors-heading"
-              >
-                {workDetailStrings.factors.heading}
-              </h2>
-              <ul className="m-0 flex list-none flex-wrap gap-[var(--space-2)] p-0">
-                {factorIds.map((factorId) => (
-                  <li
-                    className="rounded-[var(--radius-pill)] border border-line bg-surface-1 px-[var(--space-3)] py-[var(--space-1)] text-[length:var(--font-size-12)] text-text"
-                    key={factorId}
-                  >
-                    {explanationLexicon.factorLabels[factorId]}
-                  </li>
-                ))}
-              </ul>
-            </section>
-          )}
           {work.eligibility.recommendationEligible ? (
-            <WorkTraits tasteAxes={tasteAxes} work={work} />
+            <div className="max-w-[var(--layout-width-library)]">
+              <WorkTraits tasteAxes={tasteAxes} work={work} />
+            </div>
           ) : null}
-          <CompatibilitySection
-            catalog={catalog}
-            coverUrls={coverUrls}
-            onCoverVisible={requestCover}
-            state={compatibility}
-          />
           {bookMetadata.salesDate === undefined &&
           bookMetadata.imprint === undefined &&
           bookMetadata.pageCount === undefined ? null : (
             <section
               aria-labelledby="work-book-info-heading"
-              className="grid gap-[var(--space-3)] pt-[var(--space-3)]"
+              className="grid max-w-[var(--layout-width-library)] gap-[var(--space-3)]"
             >
               <h2
                 className="text-[length:var(--font-size-16)] font-bold text-text-strong"

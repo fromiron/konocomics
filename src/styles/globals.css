@@ -549,6 +549,15 @@ h1[tabindex="-1"]:focus {
   }
 }
 
+/* Detail 「あなたとの相性」: the page's one lit band, tinted like the featured recommendation. */
+.work-compatibility__band {
+  background: linear-gradient(
+    120deg,
+    color-mix(in oklab, var(--accent) 14%, var(--surface-1)) 0%,
+    var(--surface-1) 55%
+  );
+}
+
 /* Featured card: fixed Spotify-style frame; the inner information density changes. */
 .recommendation-featured-card {
   background: linear-gradient(
@@ -1348,6 +1357,20 @@ h1[tabindex="-1"]:focus {
   right: -6px;
   border-top-width: 1px;
   border-right-width: 1px;
+}
+
+/* Stacked on narrow screens, the bubble sits under the covers, so its tail points up at them. */
+@media (max-width: 767px) {
+  .work-compatibility__band [data-reason-bubble="side"] {
+    margin-inline: 0;
+    margin-top: 6px;
+  }
+
+  .work-compatibility__band [data-reason-bubble="side"] > .reason-bubble__tail {
+    top: -6px;
+    left: var(--space-5);
+    border-width: 1px 0 0 1px;
+  }
 }
 
 /* Pointer reactions (04 §6 G). Only fine hovering pointers without reduced motion get them. */

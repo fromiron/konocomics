@@ -833,8 +833,10 @@ describe("WorkDetailFlow", () => {
     await screen.findByRole("button", { name: workDetailStrings.provider.retry });
     expect(view.container.querySelectorAll('a[href^="/works/"]').length).toBeGreaterThan(0);
     expect(
-      view.container.querySelector("#work-factors-heading")?.parentElement?.querySelector("li"),
-    ).not.toBeNull();
+      within(screen.getByRole("list", { name: workDetailStrings.factors.heading })).getAllByRole(
+        "listitem",
+      ).length,
+    ).toBeGreaterThan(0);
 
     const libraryCatalog = {
       ...catalog,
@@ -863,7 +865,7 @@ describe("WorkDetailFlow", () => {
         .getByRole("button", { name: workDetailStrings.state.options.completed })
         .getAttribute("aria-pressed"),
     ).toBe("true");
-    expect(screen.queryByRole("heading", { name: workDetailStrings.factors.heading })).toBeNull();
+    expect(screen.queryByRole("list", { name: workDetailStrings.factors.heading })).toBeNull();
     expect(screen.queryByText(workDetailStrings.factors.empty)).toBeNull();
     expect(view.container.querySelectorAll('a[href^="/works/"]')).toHaveLength(0);
     expect(testState.userWorks).toEqual([record]);

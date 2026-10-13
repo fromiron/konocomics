@@ -1249,7 +1249,7 @@ export const workDetailStrings = {
     unknownVolumes: "巻数未確認",
     unknownPublisher: "出版社不明",
     bookHeading: (volumeNumber?: number) =>
-      volumeNumber === undefined ? "書誌情報" : `第${String(volumeNumber)}巻の情報`,
+      volumeNumber === undefined ? "書誌情報" : `${String(volumeNumber)}巻の書誌`,
     releaseDate: "発売日",
     imprint: "レーベル",
     pages: "ページ数",

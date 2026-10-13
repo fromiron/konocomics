@@ -63,7 +63,7 @@ export function WorkTraits({
         )}
       </div>
       <div
-        className={`grid gap-[var(--space-6)] rounded-[var(--radius-card)] border border-line bg-surface-1 p-[var(--space-5)] ${columns}`}
+        className={`grid gap-[var(--space-6)] rounded-[var(--radius-card)] bg-surface-1 p-[var(--space-5)] ${columns}`}
       >
         {groups.map(({ group, ids }) => (
           <section
