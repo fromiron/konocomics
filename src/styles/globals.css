@@ -488,12 +488,15 @@ h1[tabindex="-1"]:focus {
   --media-shelf-edge-fade-width: var(--layout-page-padding);
 }
 
-/* The outer half stays solid so peeking card text never shows through at the edge. */
+/* The outer half stays solid so peeking card text never shows through at the edge.
+   The fade overhangs the track by 1px: at fractional offsets the scroll clip and the
+   fade snap to different device pixels, leaving a bare column where card text leaks. */
 .media-shelf-edge-fade {
-  width: var(--media-shelf-edge-fade-width, var(--layout-page-padding));
+  width: calc(var(--media-shelf-edge-fade-width, var(--layout-page-padding)) + 1px);
 }
 
 .media-shelf-edge-fade--end {
+  right: -1px;
   background: linear-gradient(
     to right,
     transparent 0%,
@@ -505,6 +508,7 @@ h1[tabindex="-1"]:focus {
 }
 
 .media-shelf-edge-fade--start {
+  left: -1px;
   background: linear-gradient(
     to left,
     transparent 0%,
