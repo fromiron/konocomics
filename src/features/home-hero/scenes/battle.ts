@@ -98,6 +98,8 @@ export const battleScene: SceneDefinition = {
         { kind: "image", asset: "boy", origin: LUNGE_ORIGIN },
       ],
     },
+    // The impact flash brightens the panel; the paper and the CTA tier below stay unlit.
+    { kind: "overlay", node: "flash", effect: "flash" },
   ],
   // The fingertips reach about 150 px below the frame at rest and 172 px at the lunge peak, still
   // inside the 1024 px page.
@@ -111,11 +113,18 @@ export const battleScene: SceneDefinition = {
         [1936, 1400],
         [-400, 1400],
       ],
-      children: [{ kind: "image", asset: "boy", origin: LUNGE_ORIGIN, mask: HAND }],
+      children: [
+        { kind: "image", asset: "boy", origin: LUNGE_ORIGIN, mask: HAND },
+        // The hand brightens with the panel: a paper-white copy of the hand's own pixels rides
+        // the lunge, so the flash never spreads over the action panel below the frame.
+        {
+          kind: "group",
+          node: "boy",
+          origin: LUNGE_ORIGIN,
+          children: [{ kind: "image", asset: "boy", node: "flash", mask: HAND, restHidden: true }],
+        },
+      ],
     },
-    // The impact flash covers the whole page: the panel and the hand brighten alike, and the
-    // white paper around them shows no change.
-    { kind: "overlay", node: "flash", effect: "flash" },
   ],
   introMs: 2100,
   intro: [

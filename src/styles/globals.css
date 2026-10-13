@@ -2499,6 +2499,11 @@ h1[tabindex="-1"]:focus {
   background: var(--hh-paper);
 }
 
+/* A flash that follows a figure's own pixels: the image as a paper-white silhouette. */
+.hh-node[data-hh-node="flash"] img {
+  filter: brightness(0) invert(1);
+}
+
 .hh-fill[data-paint="inset-warm"] {
   background: linear-gradient(200deg, var(--hero-inset-warm), var(--hero-paper-warm) 70%);
 }
