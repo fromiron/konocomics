@@ -278,13 +278,16 @@ export function MediaShelf({
           title={title}
         />
       )}
-      <p
-        className="mb-[var(--space-2)] text-[length:var(--text-caption-size)] text-text-muted"
-        aria-live="polite"
-        aria-atomic="true"
-      >
-        {mediaStrings.shelfPosition(scrollState.first, scrollState.last, scrollState.total)}
-      </p>
+      {/* A position only means something when the shelf can scroll past what is shown. */}
+      {scrollState.hasOverflow ? (
+        <p
+          className="mb-[var(--space-2)] text-[length:var(--text-caption-size)] text-text-muted"
+          aria-live="polite"
+          aria-atomic="true"
+        >
+          {mediaStrings.shelfPosition(scrollState.first, scrollState.last, scrollState.total)}
+        </p>
+      ) : null}
       {controlsPlacement === "overlay" ? (
         <div className="media-shelf-overlay relative">
           {track}

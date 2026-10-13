@@ -19,6 +19,7 @@ describe("MediaShelf", () => {
     expect(container.querySelectorAll("article")).toHaveLength(count);
     expect(container.querySelector("[data-carousel-clone]")).toBeNull();
     expect(screen.queryByRole("button")).toBeNull();
+    expect(screen.queryByText(/作品$/)).toBeNull();
   });
 
   it("moves focus between adjacent cards with the arrow keys", () => {
@@ -82,6 +83,7 @@ describe("MediaShelf", () => {
     });
 
     fireEvent.scroll(track);
+    expect(screen.getByText(/\/ 2作品$/)).toBeTruthy();
     const previous = screen.getByRole<HTMLButtonElement>("button", { name: /前へ/ });
     const next = screen.getByRole<HTMLButtonElement>("button", { name: /次へ/ });
     const startFade = container.querySelector(".media-shelf-edge-fade--start");

@@ -49,7 +49,7 @@ export function SameAuthorSection({
       <div
         className={cn(
           "same-author-panel grid min-w-0 items-center gap-[var(--space-4)]",
-          split && "md:grid-cols-2 md:gap-[var(--space-6)]",
+          split && "same-author-panel--split md:gap-[var(--space-6)]",
         )}
       >
         {featured === null ? null : (

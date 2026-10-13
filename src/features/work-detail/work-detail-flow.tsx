@@ -1300,7 +1300,7 @@ function WorkDetailContent({ catalog, work }: Readonly<{ catalog: CatalogV1; wor
           )}
         </div>
         {sameAuthor === null ? null : (
-          <div className="mx-auto w-full max-w-[var(--layout-width-library)] px-[var(--layout-page-padding)] pt-[var(--space-section)]">
+          <div className="mx-auto w-full max-w-[var(--layout-width-media)] px-[var(--layout-page-padding)] pt-[var(--space-section)]">
             <SameAuthorSection
               author={sameAuthor.author}
               coverUrlOf={(workId) =>

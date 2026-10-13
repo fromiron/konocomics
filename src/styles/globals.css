@@ -949,6 +949,19 @@ h1[tabindex="-1"]:focus {
   background: var(--surface-1);
 }
 
+/* Most authors have only a few other works: the panel wraps what it holds instead of framing
+   empty space, and reaches the full width only when the shelf has to scroll. */
+@media (min-width: 768px) {
+  .same-author-panel {
+    width: fit-content;
+    max-width: 100%;
+  }
+
+  .same-author-panel--split {
+    grid-template-columns: calc(var(--space-8) * 13) minmax(0, max-content);
+  }
+}
+
 /* Media-object card: the title and genres sit beside the cover, so every card keeps the
    cover's height however many genres a work has, and reads title first. */
 .same-author-card {
