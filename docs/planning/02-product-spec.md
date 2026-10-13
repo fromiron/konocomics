@@ -355,7 +355,7 @@ positiveAnchorScore = clamp(bestMatch + consensusBonus, 0, 1);
 - `bayesianRating = (n·avg + 20·catalogAvg) / (n + 20)` — 1권 리뷰 기준, priorCount 20에서 시작.
 - `maturity = min(1, log1p(volumeCount) / log1p(15))` — "검증된 작품 우선" 정책 선택 시에만 tie-break 우선순위 상승.
 - 리뷰가 없으면 `n=0`으로 Bayesian 결과는 catalog average다. 결측 reviewCount는 0, 결측 정적 volumeCount는 0이다.
-- `volumeCount`는 해당 시리즈·판본에서 확인한 작품 권수다. 수집된 판본 행 수나 대표 구매 권 번호를 전체 권수로 대체하지 않는다. 별도 권수 근거가 없는 신규 추천 context는 0(미확인)을 사용하고, 기존 값의 정정은 판본을 확인한 근거와 함께 별도 처리한다.
+- `volumeCount`는 해당 시리즈·판본에서 확인한 작품 권수다. 수집된 판본 행 수나 대표 구매 권 번호를 전체 권수로 대체하지 않는다. 별도 권수 근거가 없는 신규 추천 context는 0(미확인)을 사용하고, 기존 값의 정정은 판본을 확인한 근거와 함께 별도 처리한다. 2026-10-13 확인: 과거 커뮤니티 승격 스크립트가 권수 근거 없이 「Catalog 최고 권 번호(최소 1)」를 기록해 추천 context 3,112개 중 2,639개가 1이다(스크립트는 0을 쓰도록 수정). 정정 전까지 화면은 Catalog 자체 권 번호를 넘지 않는 기록값을 시리즈 권수로 표시하지 않고 미확인으로 다루며(`confirmedSeriesVolumeCounts`), 순위 산식은 기록값을 그대로 쓴다.
 - `catalogAvg`는 대표 1권의 `reviewAverage`가 있고 `reviewCount>0`인 작품만 동일 가중으로 산술평균한다. 리뷰 0건 작품은 명시적 context entry를 유지하되 평균 분모에서 제외하며, 관측 작품이 하나도 없으면 catalog build를 실패시킨다.
 
 근접 동률은 pairwise comparator를 쓰지 않는다. 최종 tasteScore를 소수 12자리로 반올림해 내림차순 정렬하고, 아직 cohort에 들지 않은 첫 작품을 leader로 삼아 leader와 차가 `<0.025`인 연속 작품을 같은 cohort로 묶는다. 정확히 0.025 차이면 새 cohort다.

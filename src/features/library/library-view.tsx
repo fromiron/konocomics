@@ -11,6 +11,7 @@ import { NativeSelect } from "@/components/design-system/native-select";
 import { SegmentedControl } from "@/components/design-system/segmented-control";
 import { SummarySection, summaryLinkClassName } from "@/components/layout/summary-section";
 import recommendationContextJson from "@/data/generated/recommendation-context-v1.json";
+import { confirmedSeriesVolumeCounts } from "@/domain/catalog/series";
 import { recommendationContextSchema } from "@/domain/recommendation/context-schema";
 import { parseExternalWorkId, type ExternalWorkId } from "@/domain/catalog/external-work";
 import { isbnIdentityKey } from "@/domain/catalog/normalize";
@@ -174,15 +175,15 @@ export function LibraryView({
   );
   const volumeCountByWorkId = useMemo(
     () =>
-      new Map(
-        catalog.works.map((work) => [
-          work.id,
+      confirmedSeriesVolumeCounts(
+        catalog,
+        (workId) =>
           parsedRecommendationContext.success
-            ? (parsedRecommendationContext.data.constraintByWorkId[work.id]?.volumeCount ?? 0)
-            : 0,
-        ]),
+            ? parsedRecommendationContext.data.constraintByWorkId[workId]?.volumeCount
+            : undefined,
+        catalog.works.map((work) => work.id),
       ),
-    [catalog.works],
+    [catalog],
   );
   const rows = useMemo(() => {
     if (userWorks === undefined || externalWorks === undefined) return undefined;

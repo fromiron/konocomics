@@ -101,16 +101,6 @@ const CONTEXT_HEADERS = [
   "reviewAverage",
   "reviewCount",
 ] as const;
-const VOLUME_HEADERS = [
-  "id",
-  "workId",
-  "volumeNumber",
-  "isbn",
-  "releaseDate",
-  "editionKind",
-  "isRepresentative",
-  "evidenceId",
-] as const;
 const FACTOR_VALUES = new Set(["0", "2", "4", "unknown"]);
 const GENRES = new Set<string>(GENRE_TAGS);
 const THEMES = new Set<string>(THEME_TAGS);
@@ -309,7 +299,6 @@ function runCommunityAdjudicationBatchFromSource(
   const targetIds = new Set(reviewed.map((result) => result.row.workId));
   const currentWorks = readMatrix(join(sourceRoot, "works.csv"), WORK_HEADERS);
   const currentEvidence = readMatrix(join(sourceRoot, "evidence/evidence.csv"), EVIDENCE_HEADERS);
-  const currentVolumes = readMatrix(join(sourceRoot, "volumes.csv"), VOLUME_HEADERS);
   const currentThemes = readMatrix(join(sourceRoot, "themes.csv"), THEME_HEADERS);
   const currentContext = readMatrix(
     join(sourceRoot, "recommendation-context.csv"),
@@ -372,17 +361,12 @@ function runCommunityAdjudicationBatchFromSource(
       confidence: result.confidence || evidence.confidence,
       notes: `${result.row.notes} Japanese evidence: ${result.japaneseUrls.join("; ") || "no direct result"}. Korean-title evidence: ${result.koreanUrls.join("; ") || "no direct result"}. Korean queries: ${result.row.koreanQueries}.`,
     });
-    const volumeCount = Math.max(
-      1,
-      ...currentVolumes
-        .filter((volume) => volume.workId === result.row.workId)
-        .map((volume) => Number(volume.volumeNumber) || 0),
-    );
     contextRows.push({
       workId: result.row.workId,
       catalogRole: "discovery",
       seriesGroupId: "",
-      volumeCount: String(volumeCount),
+      // Community evidence carries no series length; the representative volume is not one (02 §6).
+      volumeCount: "0",
       reviewAverage: "",
       reviewCount: "",
     });

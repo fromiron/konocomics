@@ -19,6 +19,7 @@ import { useLiveReducedMotion } from "@/components/motion/use-live-reduced-motio
 import { pageEntryFadeProps, usePageEntryMotion } from "@/components/motion/use-page-entry-motion";
 import { useSaveConfirmation } from "@/components/motion/use-save-confirmation";
 import recommendationContextJson from "@/data/generated/recommendation-context-v1.json";
+import { confirmedSeriesVolumeCounts } from "@/domain/catalog/series";
 import { AXIS_IDS, GENRE_TAGS, THEME_TAGS } from "@/domain/catalog/constants";
 import { normalizeIsbn } from "@/domain/catalog/normalize";
 import type { CatalogV1, Work } from "@/domain/catalog/types";
@@ -189,14 +190,28 @@ function genreThemeIds(work: Work): ExplanationFactorId[] {
   ];
 }
 
-function sameAuthorMeta(work: Work) {
+/** The series length the Catalog vouches for, or 0; see `confirmedSeriesVolumeCounts`. */
+function seriesVolumeCount(catalog: CatalogV1, workId: string) {
+  return (
+    confirmedSeriesVolumeCounts(
+      catalog,
+      (id) =>
+        parsedRecommendationContext.success
+          ? parsedRecommendationContext.data.constraintByWorkId[id]?.volumeCount
+          : undefined,
+      [workId],
+    ).get(workId) ?? 0
+  );
+}
+
+function sameAuthorMeta(catalog: CatalogV1, work: Work) {
   const context = parsedRecommendationContext.success ? parsedRecommendationContext.data : null;
   const market = context?.marketSnapshot.byWorkId[work.id];
   if (market?.reviewAverage !== undefined && market.reviewCount !== undefined) {
     return workDetailStrings.sameAuthor.reviews(market.reviewAverage, market.reviewCount);
   }
   // Without reviews, fall back to known series facts only; an unknown status adds nothing.
-  const volumeCount = context?.constraintByWorkId[work.id]?.volumeCount ?? 0;
+  const volumeCount = seriesVolumeCount(catalog, work.id);
   return [
     ...(work.status === "unknown" ? [] : [recommendationStrings.workStatus[work.status]]),
     ...(volumeCount < 1 ? [] : [recommendationStrings.volumeCount(volumeCount)]),
@@ -1070,9 +1085,7 @@ function WorkDetailContent({ catalog, work }: Readonly<{ catalog: CatalogV1; wor
     metadata?.affiliateUrl ?? metadata?.itemUrl ?? visibleProvider.cache?.fallbackItemUrl;
   const providerHref = directUrl ?? buildRakutenBooksSearchUrl(work.title);
   const isDirectProviderLink = directUrl !== undefined;
-  const volumeCount = parsedRecommendationContext.success
-    ? (parsedRecommendationContext.data.constraintByWorkId[work.id]?.volumeCount ?? 0)
-    : 0;
+  const volumeCount = seriesVolumeCount(catalog, work.id);
   const heroCoverUrl =
     bookMetadata.imageUrl === undefined ? null : coverSourceForSize(bookMetadata.imageUrl, 600);
 
@@ -1127,17 +1140,25 @@ function WorkDetailContent({ catalog, work }: Readonly<{ catalog: CatalogV1; wor
                 <dd>{bookMetadata.publisherName}</dd>
               </div>
             )}
-            <div>
-              <dt>{workDetailStrings.metadata.volumes}</dt>
-              <dd>
-                {volumeCount > 0
-                  ? recommendationStrings.volumeCount(volumeCount)
-                  : workDetailStrings.metadata.unknownVolumes}
-                <small className="block font-normal text-text-muted">
-                  {recommendationStrings.workStatus[work.status]}
-                </small>
-              </dd>
-            </div>
+            {/* Only known series facts: an unconfirmed length and an unknown status add nothing. */}
+            {volumeCount > 0 ? (
+              <div>
+                <dt>{workDetailStrings.metadata.volumes}</dt>
+                <dd>
+                  {recommendationStrings.volumeCount(volumeCount)}
+                  {work.status === "unknown" ? null : (
+                    <small className="block font-normal text-text-muted">
+                      {recommendationStrings.workStatus[work.status]}
+                    </small>
+                  )}
+                </dd>
+              </div>
+            ) : work.status === "unknown" ? null : (
+              <div>
+                <dt>{workDetailStrings.metadata.status}</dt>
+                <dd>{recommendationStrings.workStatus[work.status]}</dd>
+              </div>
+            )}
             {commercial?.itemPrice !== undefined && commercial.itemPrice > 0 ? (
               <div>
                 <dt>{workDetailStrings.provider.priceLabel(representativeVolume?.volumeNumber)}</dt>
@@ -1374,7 +1395,9 @@ function WorkDetailContent({ catalog, work }: Readonly<{ catalog: CatalogV1; wor
                 )?.metadata?.imageUrl
               }
               featured={sameAuthor.featured}
-              featuredMeta={sameAuthor.featured === null ? "" : sameAuthorMeta(sameAuthor.featured)}
+              featuredMeta={
+                sameAuthor.featured === null ? "" : sameAuthorMeta(catalog, sameAuthor.featured)
+              }
               onCoverVisible={requestCover}
               others={sameAuthor.others}
             />

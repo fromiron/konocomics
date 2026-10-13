@@ -22,6 +22,7 @@ import { PageHeader } from "@/components/layout/page-header";
 import { MediaShelf } from "@/components/media/media-shelf";
 import { RankingCard } from "@/components/media/ranking-card";
 import { RankingShelf } from "@/components/media/ranking-shelf";
+import { confirmedSeriesVolumeCounts } from "@/domain/catalog/series";
 import type { GenreTag } from "@/domain/catalog/types";
 import type { ExplanationFactorId } from "@/domain/explanation";
 import {
@@ -438,6 +439,15 @@ export function RecommendationsFlow({
   const worksById = useMemo(
     () => new Map(catalog.works.map((work) => [work.id, work] as const)),
     [catalog.works],
+  );
+  const seriesVolumeCounts = useMemo(
+    () =>
+      confirmedSeriesVolumeCounts(
+        catalog,
+        (workId) => context?.constraintByWorkId[workId]?.volumeCount,
+        catalog.works.map((work) => work.id),
+      ),
+    [catalog, context],
   );
   const recommendationInput = useMemo<RecommendationInput | null>(() => {
     if (
@@ -1392,7 +1402,7 @@ export function RecommendationsFlow({
   );
 
   const recommendationItems: RecommendationMotionItem[] = featuredEntries.map(
-    ({ entry, metadata, work }, index) => ({
+    ({ entry, work }, index) => ({
       workId: entry.workId,
       animateIn: backfillIds.has(entry.workId),
       content: (
@@ -1415,7 +1425,7 @@ export function RecommendationsFlow({
           planned={plannedIds.has(entry.workId)}
           priority={index === 0}
           resolveTitle={(workId) => worksById.get(workId)?.title}
-          volumeCount={metadata.volumeCount}
+          volumeCount={seriesVolumeCounts.get(entry.workId) ?? 0}
           work={work}
         />
       ),
@@ -1844,7 +1854,7 @@ export function RecommendationsFlow({
                 onRemovalIntent={requestRemovalMotion}
                 open
                 planned={plannedIds.has(previewEntry.entry.workId)}
-                volumeCount={previewEntry.metadata.volumeCount}
+                volumeCount={seriesVolumeCounts.get(previewEntry.entry.workId) ?? 0}
                 work={previewEntry.work}
               />
             ) : null}

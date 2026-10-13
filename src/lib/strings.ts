@@ -1246,7 +1246,6 @@ export const workDetailStrings = {
     publisher: "出版社",
     status: "刊行状況",
     volumes: "シリーズの巻数",
-    unknownVolumes: "巻数未確認",
     unknownPublisher: "出版社不明",
     bookHeading: (volumeNumber?: number) =>
       volumeNumber === undefined ? "書誌情報" : `${String(volumeNumber)}巻の書誌`,
