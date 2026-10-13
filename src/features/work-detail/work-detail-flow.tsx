@@ -1308,7 +1308,11 @@ function WorkDetailContent({ catalog, work }: Readonly<{ catalog: CatalogV1; wor
             )}
             {work.eligibility.recommendationEligible ? (
               <div>
-                <WorkTraits tasteAxes={tasteAxes} work={work} />
+                <WorkTraits
+                  tasteAxes={tasteAxes}
+                  tasteReady={userWorks !== undefined}
+                  work={work}
+                />
               </div>
             ) : null}
             {bookMetadata.salesDate === undefined &&

@@ -27,6 +27,10 @@ afterEach(() => {
   vi.unstubAllGlobals();
 });
 
+function expandDetails() {
+  fireEvent.click(screen.getByRole("button", { name: strings.expand }));
+}
+
 describe("WorkTraits", () => {
   it("draws confirmed axes and omits unknown values and groups without confirmed data", () => {
     const work = createTestWork({
@@ -38,7 +42,8 @@ describe("WorkTraits", () => {
       }),
     });
 
-    render(<WorkTraits tasteAxes={null} work={work} />);
+    render(<WorkTraits tasteAxes={null} tasteReady work={work} />);
+    expandDetails();
 
     const pacing = screen.getByRole("meter", { name: explanationLexicon.factorLabels.pacing });
     expect(pacing.getAttribute("aria-valuenow")).toBe("4");
@@ -66,7 +71,8 @@ describe("WorkTraits", () => {
       axes: createTestAxes({ pacing: { state: "known", value: 4, confidence: 0.9 } }),
     });
 
-    render(<WorkTraits tasteAxes={tasteAxes({ pacing: 1 })} work={work} />);
+    render(<WorkTraits tasteAxes={tasteAxes({ pacing: 1 })} tasteReady work={work} />);
+    expandDetails();
 
     expect(screen.getByText(strings.legendTaste)).toBeTruthy();
     const pacing = screen.getByRole("meter", { name: explanationLexicon.factorLabels.pacing });
@@ -88,7 +94,8 @@ describe("WorkTraits", () => {
       ),
     );
 
-    render(<WorkTraits tasteAxes={null} work={createTestWork({ axes })} />);
+    render(<WorkTraits tasteAxes={null} tasteReady work={createTestWork({ axes })} />);
+    expandDetails();
 
     expect(screen.queryByText(strings.pending)).toBeNull();
     expect(screen.getAllByRole("meter")).toHaveLength(2);
@@ -101,12 +108,41 @@ describe("WorkTraits", () => {
     }
   });
 
+  it("summarises the overlap as a level word and keeps the bars folded until asked", () => {
+    const work = createTestWork({
+      axes: createTestAxes({
+        pacing: { state: "known", value: 4, confidence: 0.9 },
+        comedy: { state: "known", value: 2, confidence: 0.9 },
+        darkness: { state: "known", value: 0, confidence: 0.9 },
+      }),
+    });
+
+    render(
+      <WorkTraits
+        tasteAxes={tasteAxes({ pacing: 4, comedy: 2, darkness: 0 })}
+        tasteReady
+        work={work}
+      />,
+    );
+
+    expect(screen.getByText(strings.overlap.levels[4])).toBeTruthy();
+    expect(screen.queryByText(/%/u)).toBeNull();
+    expect(screen.queryByRole("meter")).toBeNull();
+    const toggle = screen.getByRole("button", { name: strings.expand });
+    expect(toggle.getAttribute("aria-expanded")).toBe("false");
+    expandDetails();
+    expect(toggle.getAttribute("aria-expanded")).toBe("true");
+    expect(
+      screen.getByRole("meter", { name: explanationLexicon.factorLabels.pacing }),
+    ).toBeTruthy();
+  });
+
   it("omits the entire section when no axes are confirmed", () => {
     const axes = createTestAxes(
       Object.fromEntries(AXIS_IDS.map((id) => [id, { state: "unknown" }])),
     );
 
-    render(<WorkTraits tasteAxes={null} work={createTestWork({ axes })} />);
+    render(<WorkTraits tasteAxes={null} tasteReady work={createTestWork({ axes })} />);
 
     expect(screen.queryByRole("region", { name: strings.heading })).toBeNull();
     expect(screen.queryByRole("heading", { name: strings.heading })).toBeNull();

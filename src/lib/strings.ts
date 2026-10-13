@@ -1333,6 +1333,22 @@ export const workDetailStrings = {
     legendWork: "この作品",
     legendTaste: "あなたの好み",
     tasteReference: (value: string) => `あなたの好み: ${value}`,
+    overlap: {
+      caption: "あなたの好みとの重なり",
+      levels: ["離れている", "やや離れている", "ほどほど", "近い", "とても近い"] as const,
+      close: (labels: readonly string[]) =>
+        `${labels.map((label) => `「${label}」`).join("")}が好みと重なります。`,
+      apart: (label: string, direction: "stronger" | "weaker") =>
+        `「${label}」はあなたの好みより${direction === "stronger" ? "強め" : "控えめ"}です。`,
+      basis: (count: number) => `確認できた${String(count)}の軸で比べています。`,
+    },
+    standout: {
+      caption: "この作品の目立つ傾向",
+      strong: (labels: readonly string[]) =>
+        `${labels.map((label) => `「${label}」`).join("")}が強めの作品です。`,
+    },
+    expand: "詳しく見る",
+    collapse: "閉じる",
   },
   share: {
     action: "共有",
