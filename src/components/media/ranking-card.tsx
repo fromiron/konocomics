@@ -170,7 +170,9 @@ export function RankingCard(props: RankingCardProps | EvidencePlaceholderProps) 
                   "ranking-card-title leading-snug text-text-strong [overflow-wrap:anywhere]",
                   isEvidence
                     ? "line-clamp-3 text-[length:var(--font-size-14)] font-bold"
-                    : "line-clamp-2 min-h-[2lh] text-[length:var(--font-size-16)] font-medium",
+                    : "line-clamp-2 text-[length:var(--font-size-16)] font-medium",
+                  // Ranked rows keep their labels on one line; elsewhere metadata follows the title.
+                  variant === "ranking" && "min-h-[2lh]",
                 )}
               >
                 {title}
