@@ -130,6 +130,9 @@
   --layout-width-form: 640px;
   --layout-width-reading: 760px;
   --layout-width-library: 880px;
+  /* Work detail: the hero cover column, and the reading column that hangs on the title line. */
+  --layout-detail-cover: 14rem;
+  --layout-detail-column: 46rem;
   --layout-width-onboarding: 1120px;
   --layout-width-onboarding-panel: 20rem;
   --layout-width-media: 1200px;
@@ -551,7 +554,17 @@ h1[tabindex="-1"]:focus {
   }
 }
 
-/* Detail 「あなたとの相性」: the page's one lit band, tinted like the featured recommendation. */
+/* Work detail body: on wide screens it starts on the hero's title line, the cover hanging to its
+   left, and keeps a reading measure; the shelves below keep the full media width. */
+@media (min-width: 768px) {
+  .work-detail-column {
+    width: auto;
+    max-width: var(--layout-detail-column);
+    margin-left: calc(var(--layout-detail-cover) + var(--space-8));
+  }
+}
+
+/* Detail 「あなたとの相性」: the page's one lit panel, tinted like the featured recommendation. */
 .work-compatibility__band {
   background: linear-gradient(
     120deg,
@@ -1354,20 +1367,6 @@ h1[tabindex="-1"]:focus {
   right: -6px;
   border-top-width: 1px;
   border-right-width: 1px;
-}
-
-/* Stacked on narrow screens, the bubble sits under the covers, so its tail points up at them. */
-@media (max-width: 767px) {
-  .work-compatibility__band [data-reason-bubble="side"] {
-    margin-inline: 0;
-    margin-top: 6px;
-  }
-
-  .work-compatibility__band [data-reason-bubble="side"] > .reason-bubble__tail {
-    top: -6px;
-    left: var(--space-5);
-    border-width: 1px 0 0 1px;
-  }
 }
 
 /* Pointer reactions (04 §6 G). Only fine hovering pointers without reduced motion get them. */

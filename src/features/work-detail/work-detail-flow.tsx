@@ -14,7 +14,6 @@ import { Snackbar, type SnackbarNotice } from "@/components/layout/snackbar";
 import { RankingShelf } from "@/components/media/ranking-shelf";
 import { RankingCard } from "@/components/media/ranking-card";
 import { ReasonBubble } from "@/components/media/reason-bubble";
-import { cn } from "@/lib/utils";
 import { controlSpring } from "@/components/design-system/spring-selection";
 import { useLiveReducedMotion } from "@/components/motion/use-live-reduced-motion";
 import { pageEntryFadeProps, usePageEntryMotion } from "@/components/motion/use-page-entry-motion";
@@ -705,11 +704,9 @@ function WorkStateControls({
 function CompatibilitySummary({
   catalog,
   explanation,
-  tail,
 }: Readonly<{
   catalog: CatalogV1;
   explanation: TasteRecommendationExplanation;
-  tail: "top" | "side";
 }>) {
   const leadReason = explanation.positiveReasons[0];
   const leadText = leadReason?.text ?? recommendationStrings.reasonUnavailable;
@@ -746,7 +743,6 @@ function CompatibilitySummary({
         <ReasonBubble
           className="grid gap-[var(--space-2)] p-[var(--space-5)] text-text-strong"
           surface="dark"
-          tail={tail}
         >
           <p>
             {anchorMentionIndex < 0 ? (
@@ -831,12 +827,7 @@ function CompatibilitySection({
       >
         {workDetailStrings.compatibility.heading}
       </h2>
-      <div
-        className={cn(
-          "work-compatibility__band grid items-center gap-[var(--space-5)] p-[var(--space-5)] md:p-[var(--space-6)]",
-          state.evidence.length > 0 && "md:grid-cols-[auto_minmax(0,1fr)] md:gap-[var(--space-8)]",
-        )}
-      >
+      <div className="work-compatibility__band grid gap-[var(--space-4)] p-[var(--space-5)] md:p-[var(--space-6)]">
         {state.evidence.length === 0 ? null : (
           <div className="flex items-start gap-[var(--space-3)]">
             <WorkEvidenceList
@@ -858,11 +849,7 @@ function CompatibilitySection({
             />
           </div>
         )}
-        <CompatibilitySummary
-          catalog={catalog}
-          explanation={state.explanation}
-          tail={state.evidence.length === 0 ? "top" : "side"}
-        />
+        <CompatibilitySummary catalog={catalog} explanation={state.explanation} />
       </div>
     </section>
   );
@@ -1229,148 +1216,150 @@ function WorkDetailContent({ catalog, work }: Readonly<{ catalog: CatalogV1; wor
           </section>
         </WorkDetailShell>
 
-        <div className="mx-auto grid w-full max-w-[var(--layout-width-media)] gap-[var(--space-section)] px-[var(--layout-page-padding)] pt-[var(--space-section)] [&>*]:min-w-0">
-          {status.state === "degraded" ? (
-            <p
-              className="border-l-2 border-warn bg-surface-1 px-[var(--space-4)] py-[var(--space-3)]"
-              role="status"
-            >
-              {workDetailStrings.storageWarning}
-            </p>
-          ) : null}
-          <div className="max-w-[var(--layout-width-library)]">
-            <WorkStateControls
-              addUserWorkIfAbsent={addUserWorkIfAbsent}
-              record={currentRecord}
-              recordsReady={userWorks !== undefined}
-              removeMinimalPlannedUserWork={removeMinimalPlannedUserWork}
-              removeUserWorkIfUnchanged={removeUserWorkIfUnchanged}
-              saveUserWork={saveUserWork}
-              seriesContinues={work.status === "ongoing" || work.status === "hiatus"}
-              workId={work.id}
-            />
-          </div>
-          <CompatibilitySection
-            catalog={catalog}
-            coverUrl={heroCoverUrl}
-            coverUrls={coverUrls}
-            onCoverVisible={requestCover}
-            state={compatibility}
-            work={work}
-          />
-          {bookMetadata.itemCaption === undefined ? (
-            <section
-              aria-labelledby="work-synopsis-heading"
-              className="grid max-w-[var(--layout-width-library)] gap-[var(--space-3)]"
-            >
-              <h2
-                className="text-[length:var(--text-subheading-size)] font-bold text-text-strong"
-                id="work-synopsis-heading"
+        <div className="mx-auto w-full max-w-[var(--layout-width-media)] px-[var(--layout-page-padding)] pt-[var(--space-section)]">
+          <div className="work-detail-column grid gap-[var(--space-section)] [&>*]:min-w-0">
+            {status.state === "degraded" ? (
+              <p
+                className="border-l-2 border-warn bg-surface-1 px-[var(--space-4)] py-[var(--space-3)]"
+                role="status"
               >
-                {workDetailStrings.synopsis.heading}
-              </h2>
-              <p className="text-[length:var(--font-size-14)] text-text-muted" role="status">
-                {bookMetadata.captionRejected
-                  ? workDetailStrings.synopsis.chapterList
-                  : visibleProvider.phase === "loading"
-                    ? workDetailStrings.synopsis.loading
-                    : visibleProvider.phase === "error" && isbn !== null
-                      ? workDetailStrings.synopsis.unavailable
-                      : workDetailStrings.synopsis.missing}
+                {workDetailStrings.storageWarning}
               </p>
-            </section>
-          ) : (
-            <section
-              aria-labelledby="work-synopsis-heading"
-              className="grid max-w-[var(--layout-width-library)] gap-[var(--space-3)]"
-            >
-              <h2
-                className="text-[length:var(--text-subheading-size)] font-bold text-text-strong"
-                id="work-synopsis-heading"
+            ) : null}
+            <div>
+              <WorkStateControls
+                addUserWorkIfAbsent={addUserWorkIfAbsent}
+                record={currentRecord}
+                recordsReady={userWorks !== undefined}
+                removeMinimalPlannedUserWork={removeMinimalPlannedUserWork}
+                removeUserWorkIfUnchanged={removeUserWorkIfUnchanged}
+                saveUserWork={saveUserWork}
+                seriesContinues={work.status === "ongoing" || work.status === "hiatus"}
+                workId={work.id}
+              />
+            </div>
+            <CompatibilitySection
+              catalog={catalog}
+              coverUrl={heroCoverUrl}
+              coverUrls={coverUrls}
+              onCoverVisible={requestCover}
+              state={compatibility}
+              work={work}
+            />
+            {bookMetadata.itemCaption === undefined ? (
+              <section
+                aria-labelledby="work-synopsis-heading"
+                className="grid gap-[var(--space-3)]"
               >
-                {workDetailStrings.synopsis.heading}
-              </h2>
-              <div className="grid gap-[var(--space-3)] rounded-[var(--radius-card)] bg-surface-1 p-[var(--space-5)] text-[length:var(--font-size-14)]">
-                <WorkSynopsis caption={bookMetadata.itemCaption} key={bookMetadata.itemCaption} />
-                {bookMetadata.captionSourceUrl === undefined ? (
-                  <p className="text-[length:var(--text-caption-size)] text-text-muted">
-                    {workDetailStrings.metadata.edition(representativeVolume?.volumeNumber)}
-                  </p>
-                ) : (
-                  <a
-                    aria-label={workDetailStrings.metadata.sourceOpen(
-                      workDetailStrings.synopsis.sourceForEdition(
+                <h2
+                  className="text-[length:var(--text-subheading-size)] font-bold text-text-strong"
+                  id="work-synopsis-heading"
+                >
+                  {workDetailStrings.synopsis.heading}
+                </h2>
+                <p className="text-[length:var(--font-size-14)] text-text-muted" role="status">
+                  {bookMetadata.captionRejected
+                    ? workDetailStrings.synopsis.chapterList
+                    : visibleProvider.phase === "loading"
+                      ? workDetailStrings.synopsis.loading
+                      : visibleProvider.phase === "error" && isbn !== null
+                        ? workDetailStrings.synopsis.unavailable
+                        : workDetailStrings.synopsis.missing}
+                </p>
+              </section>
+            ) : (
+              <section
+                aria-labelledby="work-synopsis-heading"
+                className="grid gap-[var(--space-3)]"
+              >
+                <h2
+                  className="text-[length:var(--text-subheading-size)] font-bold text-text-strong"
+                  id="work-synopsis-heading"
+                >
+                  {workDetailStrings.synopsis.heading}
+                </h2>
+                <div className="grid gap-[var(--space-3)] rounded-[var(--radius-card)] bg-surface-1 p-[var(--space-5)] text-[length:var(--font-size-14)]">
+                  <WorkSynopsis caption={bookMetadata.itemCaption} key={bookMetadata.itemCaption} />
+                  {bookMetadata.captionSourceUrl === undefined ? (
+                    <p className="text-[length:var(--text-caption-size)] text-text-muted">
+                      {workDetailStrings.metadata.edition(representativeVolume?.volumeNumber)}
+                    </p>
+                  ) : (
+                    <a
+                      aria-label={workDetailStrings.metadata.sourceOpen(
+                        workDetailStrings.synopsis.sourceForEdition(
+                          workDetailStrings.synopsis.source[bookMetadata.captionSource],
+                          representativeVolume?.volumeNumber,
+                        ),
+                      )}
+                      className="inline-flex min-h-[var(--control-min-size)] w-fit items-center text-[length:var(--text-caption-size)] text-text-muted underline decoration-line underline-offset-4 hover:text-accent-ink focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-ring"
+                      href={bookMetadata.captionSourceUrl}
+                      rel="noreferrer"
+                      target="_blank"
+                    >
+                      {workDetailStrings.synopsis.sourceForEdition(
                         workDetailStrings.synopsis.source[bookMetadata.captionSource],
                         representativeVolume?.volumeNumber,
-                      ),
+                      )}
+                    </a>
+                  )}
+                </div>
+              </section>
+            )}
+            {work.eligibility.recommendationEligible ? (
+              <div>
+                <WorkTraits tasteAxes={tasteAxes} work={work} />
+              </div>
+            ) : null}
+            {bookMetadata.salesDate === undefined &&
+            bookMetadata.imprint === undefined &&
+            bookMetadata.pageCount === undefined ? null : (
+              <section
+                aria-labelledby="work-book-info-heading"
+                className="grid gap-[var(--space-3)]"
+              >
+                <h2
+                  className="text-[length:var(--font-size-16)] font-bold text-text-strong"
+                  id="work-book-info-heading"
+                >
+                  {workDetailStrings.metadata.bookHeading(representativeVolume?.volumeNumber)}
+                </h2>
+                <dl className="m-0 flex flex-wrap gap-x-[var(--space-6)] gap-y-[var(--space-3)] p-0 [&>div]:grid [&>div]:gap-[var(--space-content-tight)] [&_dd]:m-0 [&_dd]:text-text [&_dt]:text-[length:var(--text-caption-size)] [&_dt]:text-text-muted">
+                  {bookMetadata.salesDate === undefined ? null : (
+                    <div>
+                      <dt>{workDetailStrings.metadata.releaseDate}</dt>
+                      <dd>{workDetailStrings.metadata.date(bookMetadata.salesDate)}</dd>
+                    </div>
+                  )}
+                  {bookMetadata.imprint === undefined ? null : (
+                    <div>
+                      <dt>{workDetailStrings.metadata.imprint}</dt>
+                      <dd>{bookMetadata.imprint}</dd>
+                    </div>
+                  )}
+                  {bookMetadata.pageCount === undefined ? null : (
+                    <div>
+                      <dt>{workDetailStrings.metadata.pages}</dt>
+                      <dd>{workDetailStrings.metadata.pageCount(bookMetadata.pageCount)}</dd>
+                    </div>
+                  )}
+                </dl>
+                {bookMetadata.collectedSourceUrl === undefined ? null : (
+                  <a
+                    aria-label={workDetailStrings.metadata.sourceOpen(
+                      workDetailStrings.metadata.publisherSource,
                     )}
-                    className="inline-flex min-h-[var(--control-min-size)] w-fit items-center text-[length:var(--text-caption-size)] text-text-muted underline decoration-line underline-offset-4 hover:text-accent-ink focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-ring"
-                    href={bookMetadata.captionSourceUrl}
+                    className="inline-flex min-h-[var(--control-min-size)] w-fit items-center text-[length:var(--text-caption-size)] text-text-muted underline decoration-line underline-offset-4 hover:text-accent-ink focus-visible:rounded-[var(--radius-control)] focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-focus-ring"
+                    href={bookMetadata.collectedSourceUrl}
                     rel="noreferrer"
                     target="_blank"
                   >
-                    {workDetailStrings.synopsis.sourceForEdition(
-                      workDetailStrings.synopsis.source[bookMetadata.captionSource],
-                      representativeVolume?.volumeNumber,
-                    )}
+                    {workDetailStrings.metadata.publisherSource}
                   </a>
                 )}
-              </div>
-            </section>
-          )}
-          {work.eligibility.recommendationEligible ? (
-            <div className="max-w-[var(--layout-width-library)]">
-              <WorkTraits tasteAxes={tasteAxes} work={work} />
-            </div>
-          ) : null}
-          {bookMetadata.salesDate === undefined &&
-          bookMetadata.imprint === undefined &&
-          bookMetadata.pageCount === undefined ? null : (
-            <section
-              aria-labelledby="work-book-info-heading"
-              className="grid max-w-[var(--layout-width-library)] gap-[var(--space-3)]"
-            >
-              <h2
-                className="text-[length:var(--font-size-16)] font-bold text-text-strong"
-                id="work-book-info-heading"
-              >
-                {workDetailStrings.metadata.bookHeading(representativeVolume?.volumeNumber)}
-              </h2>
-              <dl className="m-0 flex flex-wrap gap-x-[var(--space-6)] gap-y-[var(--space-3)] p-0 [&>div]:grid [&>div]:gap-[var(--space-content-tight)] [&_dd]:m-0 [&_dd]:text-text [&_dt]:text-[length:var(--text-caption-size)] [&_dt]:text-text-muted">
-                {bookMetadata.salesDate === undefined ? null : (
-                  <div>
-                    <dt>{workDetailStrings.metadata.releaseDate}</dt>
-                    <dd>{workDetailStrings.metadata.date(bookMetadata.salesDate)}</dd>
-                  </div>
-                )}
-                {bookMetadata.imprint === undefined ? null : (
-                  <div>
-                    <dt>{workDetailStrings.metadata.imprint}</dt>
-                    <dd>{bookMetadata.imprint}</dd>
-                  </div>
-                )}
-                {bookMetadata.pageCount === undefined ? null : (
-                  <div>
-                    <dt>{workDetailStrings.metadata.pages}</dt>
-                    <dd>{workDetailStrings.metadata.pageCount(bookMetadata.pageCount)}</dd>
-                  </div>
-                )}
-              </dl>
-              {bookMetadata.collectedSourceUrl === undefined ? null : (
-                <a
-                  aria-label={workDetailStrings.metadata.sourceOpen(
-                    workDetailStrings.metadata.publisherSource,
-                  )}
-                  className="inline-flex min-h-[var(--control-min-size)] w-fit items-center text-[length:var(--text-caption-size)] text-text-muted underline decoration-line underline-offset-4 hover:text-accent-ink focus-visible:rounded-[var(--radius-control)] focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-focus-ring"
-                  href={bookMetadata.collectedSourceUrl}
-                  rel="noreferrer"
-                  target="_blank"
-                >
-                  {workDetailStrings.metadata.publisherSource}
-                </a>
-              )}
-            </section>
-          )}
+              </section>
+            )}
+          </div>
         </div>
         {sameAuthor === null ? null : (
           <div className="mx-auto w-full max-w-[var(--layout-width-media)] px-[var(--layout-page-padding)] pt-[var(--space-section)]">
