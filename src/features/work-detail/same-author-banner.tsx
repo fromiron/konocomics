@@ -101,12 +101,9 @@ export function SameAuthorSection({
                   key={work.id}
                   metadata={
                     tags.length === 0 ? undefined : (
-                      <span className="flex flex-wrap gap-[var(--space-1)]">
+                      <span className="grid gap-[var(--space-content-tight)]">
                         {tags.map((tag) => (
-                          <span
-                            className="same-author-card__tag inline-block max-w-full truncate rounded-[var(--radius-pill)] border border-line px-[var(--space-2)] py-[var(--space-1)] align-top text-[length:var(--font-size-12)] leading-[var(--line-height-body)] text-text-muted"
-                            key={tag}
-                          >
+                          <span className="truncate" key={tag}>
                             {tag}
                           </span>
                         ))}
