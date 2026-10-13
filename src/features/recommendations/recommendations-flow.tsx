@@ -16,6 +16,7 @@ import {
 } from "react";
 import { flushSync } from "react-dom";
 
+import { GenreChips } from "@/components/media/genre-chips";
 import { Snackbar, snackbarClassName, type SnackbarNotice } from "@/components/layout/snackbar";
 import { Button } from "@/components/design-system/button";
 import { PageHeader } from "@/components/layout/page-header";
@@ -1769,17 +1770,17 @@ export function RecommendationsFlow({
                   trackClassName="!pb-[var(--space-1)]"
                 >
                   {rankingEntries.map(({ entry, work }, index) => {
-                    const genreLabels = work.genres
+                    const genres = work.genres
                       .slice(0, 3)
-                      .map((genre) => onboardingStrings.step1.genreLabels[genre])
-                      .join(" · ");
+                      .map((genre) => onboardingStrings.step1.genreLabels[genre]);
+                    const genreLabels = genres.join(" · ");
 
                     return (
                       <RankingCard
                         coverUrl={recommendationCoverUrls.get(entry.workId)}
                         creators={work.creators}
                         key={entry.workId}
-                        metadata={genreLabels}
+                        metadata={<GenreChips inline labels={genres} max={2} />}
                         metadataAccessibleLabel={genreLabels}
                         onCoverVisible={() => requestCover(entry.workId)}
                         position={FEATURED_RECOMMENDATION_LIMIT + index + 1}

@@ -1,6 +1,7 @@
 import { Link } from "@tanstack/react-router";
 import { ChevronRight } from "lucide-react";
 
+import { GenreChips } from "@/components/media/genre-chips";
 import { BookCover } from "@/components/cover/BookCover";
 import { MediaShelf } from "@/components/media/media-shelf";
 import { RankingCard } from "@/components/media/ranking-card";
@@ -72,9 +73,7 @@ export function SameAuthorSection({
                 <span className="same-author-banner__eyebrow">{featuredMeta}</span>
               )}
               <span className="same-author-banner__title">{featured.title}</span>
-              {featuredTags.length === 0 ? null : (
-                <span className="same-author-banner__genres">{featuredTags.join(" · ")}</span>
-              )}
+              <GenreChips inline labels={featuredTags} />
               <span className="same-author-banner__action">
                 {workDetailStrings.sameAuthor.view}
                 <ChevronRight aria-hidden="true" size={18} />

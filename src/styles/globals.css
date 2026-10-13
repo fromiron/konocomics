@@ -143,6 +143,8 @@
   --radius-media-card: 8px;
   --radius-control: var(--radius-card);
   --radius-pill: 0px;
+  /* Information tags (genre/theme) stay round so they read apart from square controls. */
+  --radius-tag: 999px;
   --radius-cover-selection: calc(var(--radius-cover) + 2px);
   --radius: var(--radius-card);
   --shadow-level-1: 0 4px 16px oklch(0 0 0 / 0.08);
@@ -1048,11 +1050,6 @@ h1[tabindex="-1"]:focus {
   overflow-wrap: anywhere;
   -webkit-box-orient: vertical;
   -webkit-line-clamp: 2;
-}
-
-.same-author-banner__genres {
-  color: var(--text-muted);
-  font-size: var(--font-size-14);
 }
 
 .same-author-banner__action {

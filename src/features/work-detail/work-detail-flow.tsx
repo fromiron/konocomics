@@ -1,6 +1,7 @@
 "use client";
 
 import { Link } from "@tanstack/react-router";
+import { GenreChips } from "@/components/media/genre-chips";
 import { DetailBackLink } from "@/components/nav/detail-back-link";
 import { ArrowRightIcon, BookmarkIcon, EyeOffIcon } from "lucide-react";
 import { LazyMotion, domAnimation, m } from "motion/react";
@@ -1115,23 +1116,10 @@ function WorkDetailContent({ catalog, work }: Readonly<{ catalog: CatalogV1; wor
             <p className="text-[length:var(--font-size-14)] text-text-muted">
               {coverStrings.creatorLine(work.creators)}
             </p>
-            {factorIds.length === 0 ? null : (
-              <ul
-                aria-label={workDetailStrings.factors.heading}
-                className="m-0 flex list-none flex-wrap gap-x-[var(--space-2)] p-0 text-[length:var(--font-size-14)] text-text"
-              >
-                {factorIds.map((factorId, index) => (
-                  <li key={factorId}>
-                    {index === 0 ? null : (
-                      <span aria-hidden="true" className="pe-[var(--space-2)] text-text-muted">
-                        ·
-                      </span>
-                    )}
-                    {explanationLexicon.factorLabels[factorId]}
-                  </li>
-                ))}
-              </ul>
-            )}
+            <GenreChips
+              label={workDetailStrings.factors.heading}
+              labels={factorIds.map((factorId) => explanationLexicon.factorLabels[factorId])}
+            />
           </header>
           <dl className="m-0 grid grid-cols-2 overflow-hidden rounded-[var(--radius-card)] border border-transparent bg-surface-1 p-0 md:grid-flow-col md:auto-cols-fr md:grid-cols-none [&>div]:grid [&>div]:content-start [&>div]:gap-[var(--space-1)] [&>div]:border-r [&>div]:border-line [&>div]:px-[var(--space-3)] [&>div]:py-[var(--space-3)] [&>div:last-child]:border-r-0 [&_dd]:m-0 [&_dd]:break-words [&_dd]:text-[length:var(--font-size-14)] [&_dd]:font-semibold [&_dd]:text-text-strong [&_dt]:text-[length:var(--text-caption-size)] [&_dt]:text-text-muted">
             {bookMetadata.publisherName === undefined ? null : (
@@ -1415,16 +1403,16 @@ function WorkDetailContent({ catalog, work }: Readonly<{ catalog: CatalogV1; wor
                 trackClassName="!pb-[var(--space-1)]"
               >
                 {nearbyWorks.map((related) => {
-                  const genres = related.genres
+                  const genreLabels = related.genres
                     .slice(0, 3)
-                    .map((genre) => onboardingStrings.step1.genreLabels[genre])
-                    .join(" · ");
+                    .map((genre) => onboardingStrings.step1.genreLabels[genre]);
+                  const genres = genreLabels.join(" · ");
                   return (
                     <RankingCard
                       coverUrl={coverUrls.get(related.id)}
                       creators={related.creators}
                       key={related.id}
-                      metadata={genres}
+                      metadata={<GenreChips inline labels={genreLabels} max={2} />}
                       metadataAccessibleLabel={genres}
                       onCoverVisible={() => requestCover(related.id)}
                       title={related.title}
