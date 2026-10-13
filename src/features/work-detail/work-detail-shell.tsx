@@ -19,11 +19,7 @@ export function WorkDetailShell({
   title,
 }: WorkDetailShellProps) {
   return (
-    <HeroBackdrop
-      className="border-b border-line shadow-[inset_0_-1px_0_var(--line)]"
-      coverUrl={coverUrl}
-      priority
-    >
+    <HeroBackdrop coverUrl={coverUrl} priority>
       <div
         className={`mx-auto grid w-full gap-[var(--space-5)] px-[var(--layout-page-padding)] md:gap-[var(--space-8)] ${kind === "catalog" ? "max-w-[var(--layout-width-media)] py-[var(--space-section)] md:grid-cols-[14rem_minmax(0,var(--layout-width-library))]" : "max-w-[var(--layout-width-media)] pt-[var(--space-5)] pb-[var(--space-section)] md:grid-cols-[minmax(12rem,15rem)_minmax(0,1fr)] md:py-[var(--space-5)]"}`}
         data-slot="work-detail-hero"
