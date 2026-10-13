@@ -20,29 +20,25 @@ type EvidenceProps = Readonly<{
   onCoverVisible(workId: string): void;
 }>;
 
-function EvidenceCard({
+/** One library work behind the recommendation: its cover and title, linking to its detail. */
+function EvidenceCover({
   item,
-  index,
   coverUrl,
   onCoverVisible,
 }: Readonly<{
   item: WorkEvidence;
-  index: number;
   coverUrl: string | null | undefined;
   onCoverVisible(workId: string): void;
 }>) {
-  const strings = workDetailStrings.compatibility;
-  const primary = index === 0;
   return (
     <Link
-      className={`flex h-full min-w-0 items-start gap-[var(--space-3)] rounded-[var(--radius-card)] border p-[var(--space-4)] hover:bg-surface-2 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-ring ${primary ? "border-accent/40 bg-accent/5" : "border-line bg-surface-1"}`}
-      data-evidence-role={primary ? "primary" : "supporting"}
+      className="grid w-[calc(var(--space-8)*2+var(--space-6))] content-start gap-[var(--space-2)] rounded-[var(--radius-cover)] text-[length:var(--text-caption-size)] leading-snug text-text hover:text-text-strong focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-ring"
       params={{ workId: item.work.id }}
       preload={false}
       to="/works/$workId"
     >
       <CoverImage
-        className="w-[var(--space-12)] shrink-0"
+        className="w-[calc(var(--space-8)*2)]"
         coverUrl={coverUrl}
         creators={item.work.creators}
         decorative
@@ -50,96 +46,90 @@ function EvidenceCard({
         requestedSize={200}
         title={item.work.title}
       />
-      <span className="grid min-w-0 gap-[var(--space-2)]">
-        <span
-          className={`w-fit rounded-[var(--radius-pill)] border px-[var(--space-2)] py-[var(--space-1)] text-[length:var(--font-size-12)] font-bold ${primary ? "border-accent bg-accent text-on-accent" : "border-line text-text-muted"}`}
-        >
-          {primary ? strings.primaryAnchor : strings.supportingAnchor}
-        </span>
-        <span className="font-bold [overflow-wrap:anywhere] text-text-strong">
-          {item.work.title}
-        </span>
-        <span className="text-[length:var(--text-caption-size)] leading-[var(--line-height-body)] text-text-muted">
-          {item.reasons[0] ?? strings.consensusSupport}
-        </span>
-      </span>
+      <span className="line-clamp-2 [overflow-wrap:anywhere]">{item.work.title}</span>
     </Link>
   );
 }
 
-export function WorkEvidenceSection({ evidence, coverUrls, onCoverVisible }: EvidenceProps) {
-  if (evidence.length === 0) return null;
+/** The full evidence list for 4+ real anchors: order, role and each work's own reason. */
+function EvidenceDialog({ evidence, coverUrls, onCoverVisible }: EvidenceProps) {
   const strings = workDetailStrings.compatibility;
-  const card = (item: WorkEvidence, index: number) => (
-    <EvidenceCard
-      coverUrl={coverUrls.get(item.work.id)}
-      index={index}
-      item={item}
-      onCoverVisible={onCoverVisible}
-    />
-  );
   return (
-    <section aria-labelledby="work-evidence-heading" className="grid gap-[var(--space-4)]">
-      <div className="grid gap-[var(--space-1)]">
-        <h2
-          className="text-[length:var(--text-subheading-size)] font-bold text-text-strong"
-          id="work-evidence-heading"
-        >
-          {strings.anchors}
-        </h2>
-        <p className="text-[length:var(--font-size-14)] text-text-muted">
-          {strings.anchorsDescription}
-        </p>
-      </div>
-      <ul
-        className={`m-0 grid list-none gap-[var(--space-3)] p-0 sm:grid-cols-2 ${evidence.length === 3 ? "lg:grid-cols-3" : ""}`}
-        data-evidence-count={evidence.length}
+    <Dialog>
+      <DialogTrigger
+        render={
+          <Button
+            className="grid size-[calc(var(--space-8)*2)] place-items-center rounded-[var(--radius-cover)]"
+            variant="outline"
+          />
+        }
       >
-        {evidence.slice(0, 3).map((item, index) => (
-          <li key={item.work.id}>{card(item, index)}</li>
-        ))}
-        {evidence.length > 3 ? (
-          <li>
-            <Dialog>
-              <DialogTrigger
-                render={
-                  <Button
-                    className="grid h-full w-full gap-[var(--space-1)] border-dashed py-[var(--space-5)]"
-                    variant="outline"
-                  />
-                }
-              >
-                <span aria-hidden="true" className="text-[length:var(--font-size-24)]">
-                  {strings.moreAnchors(evidence.length - 3)}
+        <span aria-hidden="true" className="text-[length:var(--font-size-20)]">
+          {strings.moreAnchors(evidence.length - 3)}
+        </span>
+        <span className="sr-only">{strings.allAnchors}</span>
+      </DialogTrigger>
+      <DialogContent>
+        <DialogHeader>
+          <DialogTitle>{strings.anchors}</DialogTitle>
+          <DialogDescription>{strings.anchorCount(evidence.length)}</DialogDescription>
+        </DialogHeader>
+        <ol className="m-0 grid list-none gap-[var(--space-4)] p-0">
+          {evidence.map((item, index) => (
+            <li
+              className="grid grid-cols-[auto_minmax(0,1fr)] items-start gap-[var(--space-3)]"
+              key={item.work.id}
+            >
+              <EvidenceCover
+                coverUrl={coverUrls.get(item.work.id)}
+                item={item}
+                onCoverVisible={onCoverVisible}
+              />
+              <span className="grid gap-[var(--space-1)] text-[length:var(--font-size-14)]">
+                <span className="text-[length:var(--text-caption-size)] text-text-muted tabular-nums">
+                  {index + 1}. {index === 0 ? strings.primaryAnchor : strings.supportingAnchor}
                 </span>
-                <span>{strings.allAnchors}</span>
-              </DialogTrigger>
-              <DialogContent>
-                <DialogHeader>
-                  <DialogTitle>{strings.anchors}</DialogTitle>
-                  <DialogDescription>{strings.anchorCount(evidence.length)}</DialogDescription>
-                </DialogHeader>
-                <ol className="m-0 grid list-none gap-[var(--space-3)] p-0">
-                  {evidence.map((item, index) => (
-                    <li
-                      className="grid grid-cols-[auto_minmax(0,1fr)] items-start gap-[var(--space-2)]"
-                      key={item.work.id}
-                    >
-                      <span
-                        aria-hidden="true"
-                        className="pt-[var(--space-4)] text-[length:var(--text-caption-size)] tabular-nums text-text-muted"
-                      >
-                        {index + 1}
-                      </span>
-                      {card(item, index)}
-                    </li>
-                  ))}
-                </ol>
-              </DialogContent>
-            </Dialog>
-          </li>
-        ) : null}
-      </ul>
-    </section>
+                <span>{item.reasons[0] ?? strings.consensusSupport}</span>
+              </span>
+            </li>
+          ))}
+        </ol>
+      </DialogContent>
+    </Dialog>
+  );
+}
+
+/**
+ * The library works that carry this recommendation, strongest first. They sit above the reason
+ * bubble, whose tail points at the first cover, so the reason reads as coming from them. The
+ * bubble already holds the lead sentence, so the covers repeat no text and carry no role badges.
+ */
+export function WorkEvidenceList({ evidence, coverUrls, onCoverVisible }: EvidenceProps) {
+  if (evidence.length === 0) return null;
+  return (
+    <ul
+      aria-label={workDetailStrings.compatibility.anchors}
+      className="m-0 flex list-none flex-wrap items-start gap-[var(--space-3)] p-0"
+      data-evidence-count={evidence.length}
+    >
+      {evidence.slice(0, 3).map((item) => (
+        <li key={item.work.id}>
+          <EvidenceCover
+            coverUrl={coverUrls.get(item.work.id)}
+            item={item}
+            onCoverVisible={onCoverVisible}
+          />
+        </li>
+      ))}
+      {evidence.length > 3 ? (
+        <li>
+          <EvidenceDialog
+            coverUrls={coverUrls}
+            evidence={evidence}
+            onCoverVisible={onCoverVisible}
+          />
+        </li>
+      ) : null}
+    </ul>
   );
 }

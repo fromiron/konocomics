@@ -38,7 +38,7 @@ import { WorkDetailShell } from "@/features/work-detail/work-detail-shell";
 import { SameAuthorSection } from "@/features/work-detail/same-author-banner";
 import { ShareButton } from "@/features/work-detail/share-button";
 import { WorkTraits } from "@/features/work-detail/work-traits";
-import { WorkEvidenceSection } from "./work-evidence";
+import { WorkEvidenceList } from "./work-evidence";
 import { WorkContrastSection } from "./work-contrast";
 import {
   collectWorkEvidence,
@@ -742,19 +742,26 @@ function CompatibilitySummary({
           {fullReasons.map(({ reason }) => (
             <p key={`${reason.source}:${reason.group}:${reason.factorId}`}>{reason.text}</p>
           ))}
+          {labels.length === 0 ? null : (
+            <div className="flex flex-wrap gap-x-[var(--space-3)] gap-y-[var(--space-1)] text-[length:var(--font-size-14)]">
+              <h3 className="text-[length:var(--font-size-14)] font-normal text-text-muted">
+                {workDetailStrings.compatibility.anchorFactors}
+              </h3>
+              <ul className="m-0 flex list-none flex-wrap gap-x-[var(--space-2)] p-0">
+                {labels.map((label, index) => (
+                  <li key={label}>
+                    {index === 0 ? null : (
+                      <span aria-hidden="true" className="pe-[var(--space-2)] text-text-muted">
+                        ・
+                      </span>
+                    )}
+                    {label}
+                  </li>
+                ))}
+              </ul>
+            </div>
+          )}
         </ReasonBubble>
-      )}
-      {labels.length === 0 ? null : (
-        <ul className="m-0 flex list-none flex-wrap gap-[var(--space-2)] p-0">
-          {labels.map((label) => (
-            <li
-              className="rounded-[var(--radius-pill)] border border-accent/35 bg-accent-soft px-[var(--space-3)] py-[var(--space-1)] text-[length:var(--font-size-12)] text-accent-ink"
-              key={label}
-            >
-              {label}
-            </li>
-          ))}
-        </ul>
       )}
       {explanation.caution === undefined ? null : (
         <div className="grid gap-[var(--space-1)] rounded-r-[var(--radius-card)] border-l-2 border-warn bg-warn/10 px-[var(--space-4)] py-[var(--space-3)]">
@@ -770,8 +777,15 @@ function CompatibilitySummary({
 
 function CompatibilitySection({
   catalog,
+  coverUrls,
+  onCoverVisible,
   state,
-}: Readonly<{ catalog: CatalogV1; state: CompatibilityState }>) {
+}: Readonly<{
+  catalog: CatalogV1;
+  coverUrls: ReadonlyMap<string, string | null>;
+  onCoverVisible(workId: string): void;
+  state: CompatibilityState;
+}>) {
   if (
     state.kind !== "ready" ||
     (state.explanation.positiveReasons.length === 0 && state.explanation.caution === undefined)
@@ -789,6 +803,11 @@ function CompatibilitySection({
       >
         {workDetailStrings.compatibility.heading}
       </h2>
+      <WorkEvidenceList
+        coverUrls={coverUrls}
+        evidence={state.evidence}
+        onCoverVisible={onCoverVisible}
+      />
       <CompatibilitySummary catalog={catalog} explanation={state.explanation} />
     </section>
   );
@@ -1044,9 +1063,6 @@ function WorkDetailContent({ catalog, work }: Readonly<{ catalog: CatalogV1; wor
             <p className="text-[length:var(--font-size-14)] text-text-muted">
               {coverStrings.creatorLine(work.creators)}
             </p>
-            <p className="text-[length:var(--text-caption-size)] text-text-muted">
-              {workDetailStrings.metadata.displayedEdition(representativeVolume?.volumeNumber)}
-            </p>
           </header>
           <dl className="m-0 grid grid-cols-2 overflow-hidden rounded-[var(--radius-card)] border border-transparent bg-surface-1 p-0 md:grid-flow-col md:auto-cols-fr md:grid-cols-none [&>div]:grid [&>div]:content-start [&>div]:gap-[var(--space-1)] [&>div]:border-r [&>div]:border-line [&>div]:px-[var(--space-3)] [&>div]:py-[var(--space-3)] [&>div:last-child]:border-r-0 [&_dd]:m-0 [&_dd]:break-words [&_dd]:text-[length:var(--font-size-14)] [&_dd]:font-semibold [&_dd]:text-text-strong [&_dt]:text-[length:var(--text-caption-size)] [&_dt]:text-text-muted">
             {bookMetadata.publisherName === undefined ? null : (
@@ -1068,13 +1084,8 @@ function WorkDetailContent({ catalog, work }: Readonly<{ catalog: CatalogV1; wor
             </div>
             {commercial?.itemPrice !== undefined && commercial.itemPrice > 0 ? (
               <div>
-                <dt>{workDetailStrings.provider.priceLabel}</dt>
-                <dd>
-                  {workDetailStrings.provider.price(commercial.itemPrice)}
-                  <small className="block font-normal text-text-muted">
-                    {workDetailStrings.metadata.edition(representativeVolume?.volumeNumber)}
-                  </small>
-                </dd>
+                <dt>{workDetailStrings.provider.priceLabel(representativeVolume?.volumeNumber)}</dt>
+                <dd>{workDetailStrings.provider.price(commercial.itemPrice)}</dd>
               </div>
             ) : null}
             {metadata?.reviewAverage !== undefined &&
@@ -1200,20 +1211,27 @@ function WorkDetailContent({ catalog, work }: Readonly<{ catalog: CatalogV1; wor
               </h2>
               <div className="grid gap-[var(--space-3)] rounded-[var(--radius-card)] bg-surface-1 p-[var(--space-5)] text-[length:var(--font-size-14)]">
                 <WorkSynopsis caption={bookMetadata.itemCaption} key={bookMetadata.itemCaption} />
-                <p className="text-[length:var(--text-caption-size)] text-text-muted">
-                  {workDetailStrings.metadata.edition(representativeVolume?.volumeNumber)}
-                </p>
-                {bookMetadata.captionSourceUrl === undefined ? null : (
+                {bookMetadata.captionSourceUrl === undefined ? (
+                  <p className="text-[length:var(--text-caption-size)] text-text-muted">
+                    {workDetailStrings.metadata.edition(representativeVolume?.volumeNumber)}
+                  </p>
+                ) : (
                   <a
                     aria-label={workDetailStrings.metadata.sourceOpen(
-                      workDetailStrings.synopsis.source[bookMetadata.captionSource],
+                      workDetailStrings.synopsis.sourceForEdition(
+                        workDetailStrings.synopsis.source[bookMetadata.captionSource],
+                        representativeVolume?.volumeNumber,
+                      ),
                     )}
                     className="inline-flex min-h-[var(--control-min-size)] w-fit items-center text-[length:var(--text-caption-size)] text-text-muted underline decoration-line underline-offset-4 hover:text-accent-ink focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-ring"
                     href={bookMetadata.captionSourceUrl}
                     rel="noreferrer"
                     target="_blank"
                   >
-                    {workDetailStrings.synopsis.source[bookMetadata.captionSource]}
+                    {workDetailStrings.synopsis.sourceForEdition(
+                      workDetailStrings.synopsis.source[bookMetadata.captionSource],
+                      representativeVolume?.volumeNumber,
+                    )}
                   </a>
                 )}
               </div>
@@ -1242,14 +1260,12 @@ function WorkDetailContent({ catalog, work }: Readonly<{ catalog: CatalogV1; wor
           {work.eligibility.recommendationEligible ? (
             <WorkTraits tasteAxes={tasteAxes} work={work} />
           ) : null}
-          <CompatibilitySection catalog={catalog} state={compatibility} />
-          {compatibility.kind === "ready" ? (
-            <WorkEvidenceSection
-              coverUrls={coverUrls}
-              evidence={compatibility.evidence}
-              onCoverVisible={requestCover}
-            />
-          ) : null}
+          <CompatibilitySection
+            catalog={catalog}
+            coverUrls={coverUrls}
+            onCoverVisible={requestCover}
+            state={compatibility}
+          />
           {bookMetadata.salesDate === undefined &&
           bookMetadata.imprint === undefined &&
           bookMetadata.pageCount === undefined ? null : (

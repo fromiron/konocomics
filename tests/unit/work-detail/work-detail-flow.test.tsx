@@ -485,7 +485,7 @@ describe("WorkDetailFlow", () => {
       expect(
         screen
           .getByRole("link", {
-            name: workDetailStrings.metadata.sourceOpen(workDetailStrings.synopsis.source.rakuten),
+            name: (name) => name.startsWith(workDetailStrings.synopsis.source.rakuten),
           })
           .getAttribute("href"),
       ).toBe(cached.itemUrl);
@@ -524,7 +524,7 @@ describe("WorkDetailFlow", () => {
     expect(
       screen
         .getByRole("link", {
-          name: workDetailStrings.metadata.sourceOpen(workDetailStrings.synopsis.source.publisher),
+          name: (name) => name.startsWith(workDetailStrings.synopsis.source.publisher),
         })
         .getAttribute("href"),
     ).toBe(volume.metadata!.sourceUrl);
@@ -962,7 +962,7 @@ describe("WorkDetailFlow", () => {
     ).toBe(cached.itemUrl);
   });
 
-  it("renders grounded compatibility and a separate evidence section with no empty slots", async () => {
+  it("renders grounded compatibility with its evidence covers and no empty slots", async () => {
     testState.userWorks = catalog.works.slice(0, 5).map((work, index) => ({
       workId: work.id,
       readingState: "completed" as const,
@@ -1029,11 +1029,9 @@ describe("WorkDetailFlow", () => {
     expect(
       screen.queryByText(workDetailStrings.compatibility.confidence, { exact: false }),
     ).toBeNull();
-    const evidence = screen.getByRole("region", { name: workDetailStrings.compatibility.anchors });
-    expect(summary.contains(evidence)).toBe(false);
-    expect(
-      within(evidence).getByText(workDetailStrings.compatibility.anchorsDescription),
-    ).toBeTruthy();
+    const evidence = within(summary).getByRole("list", {
+      name: workDetailStrings.compatibility.anchors,
+    });
     const links = within(evidence).getAllByRole("link");
     expect(links).toHaveLength(expected.anchors.length);
     expect(within(evidence).getAllByRole("listitem")).toHaveLength(expected.anchors.length);
@@ -1045,13 +1043,10 @@ describe("WorkDetailFlow", () => {
       expect(link?.textContent).toContain(anchor.title);
     }
     expect(within(evidence).queryByText(mediaStrings.evidencePlaceholder)).toBeNull();
+    // The lead reason is said once, by the bubble under the covers.
     expect(
-      within(evidence).getAllByText(workDetailStrings.compatibility.primaryAnchor),
+      [...summary.querySelectorAll("p")].filter((line) => line.textContent === leadReason.text),
     ).toHaveLength(1);
-    expect(links[0]?.textContent).toContain(workDetailStrings.compatibility.primaryAnchor);
-    for (const link of links.slice(1)) {
-      expect(link.textContent).toContain(workDetailStrings.compatibility.supportingAnchor);
-    }
     const anchorLink = links.find((link) => link.getAttribute("href") === `/works/${anchorWorkId}`);
     await waitFor(() => {
       expect(anchorLink?.querySelector("img")?.getAttribute("src")).toContain(

@@ -1247,10 +1247,6 @@ export const workDetailStrings = {
     status: "刊行状況",
     volumes: "シリーズの巻数",
     unknownVolumes: "巻数未確認",
-    displayedEdition: (volumeNumber?: number) =>
-      volumeNumber === undefined
-        ? "表紙・紹介・購入リンク：掲載版（巻数未確認）"
-        : `表紙・紹介・購入リンク：第${String(volumeNumber)}巻`,
     unknownPublisher: "出版社不明",
     bookHeading: (volumeNumber?: number) =>
       volumeNumber === undefined ? "書誌情報" : `第${String(volumeNumber)}巻の情報`,
@@ -1262,14 +1258,13 @@ export const workDetailStrings = {
     date: (value: string) => value.replace(/^(\d{4})-(\d{2})-(\d{2})$/u, "$1年$2月$3日"),
     sourceOpen: (source: string) => `${source}（新しいタブ）`,
     edition: (volumeNumber?: number) =>
-      volumeNumber === undefined ? "掲載版" : `第${String(volumeNumber)}巻`,
+      volumeNumber === undefined ? "掲載版" : `${String(volumeNumber)}巻`,
   },
   compatibility: {
     heading: "あなたとの相性",
     reasons: "合いそうな理由",
     caution: "好みと異なる点",
     anchors: "根拠になった作品",
-    anchorsDescription: "このおすすめの理由になった、あなたのライブラリの作品です。",
     allAnchors: "すべての根拠を見る",
     moreAnchors: (count: number) => `+${count}`,
     anchorCount: (count: number) => `全${count}作品`,
@@ -1317,6 +1312,8 @@ export const workDetailStrings = {
     readMore: "続きを読む",
     readLess: "閉じる",
     source: { rakuten: "楽天ブックスの紹介", publisher: "出版社の紹介" },
+    sourceForEdition: (source: string, volumeNumber?: number) =>
+      volumeNumber === undefined ? source : `${source}（${String(volumeNumber)}巻）`,
   },
   factors: {
     heading: "ジャンル・テーマ",
@@ -1391,7 +1388,8 @@ export const workDetailStrings = {
     retry: "もう一度確認",
     affiliate: "このリンクはアフィリエイトリンクです。",
     credit: "Supported by Rakuten Developers",
-    priceLabel: "掲載版の価格",
+    priceLabel: (volumeNumber?: number) =>
+      volumeNumber === undefined ? "掲載版の価格" : `${String(volumeNumber)}巻の価格`,
     newTab: "新しいタブ",
     availabilityLabel: "在庫・発送",
     ratingLabel: "楽天レビュー",
