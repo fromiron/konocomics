@@ -1467,11 +1467,15 @@ class RevisionWorkspace(Workspace):
 
     @staticmethod
     def _artifact_expires(db, rid, legacy_watermark, expiring_owners=frozenset()):
-        """Current heads, meaningful history, other executions and legacy artifacts stay protected."""
-        return db.execute("""SELECT 1 FROM revision r WHERE id=? AND kind='artifact' AND pinned=0 AND rowid>?
+        """Current heads, meaningful history, other executions and legacy artifacts stay protected.
+
+        A preview passes the executions that would expire first; their ownership
+        and dependency rows are deleted before the applied check runs.
+        """
+        return db.execute("""SELECT 1 FROM revision r WHERE id=?1 AND kind='artifact' AND pinned=0 AND rowid>?2
             AND NOT EXISTS(SELECT 1 FROM head WHERE revision_id=r.id)
-            AND NOT EXISTS(SELECT 1 FROM execution_artifact WHERE artifact_id=r.id AND execution_id NOT IN (SELECT value FROM json_each(?)))
-            AND NOT EXISTS(SELECT 1 FROM revision_dependency WHERE target_id=r.id)
+            AND NOT EXISTS(SELECT 1 FROM execution_artifact WHERE artifact_id=r.id AND execution_id NOT IN (SELECT value FROM json_each(?3)))
+            AND NOT EXISTS(SELECT 1 FROM revision_dependency WHERE target_id=r.id AND owner_id NOT IN (SELECT value FROM json_each(?3)))
             AND NOT EXISTS(SELECT 1 FROM revision WHERE previous_id=r.id)""",
             (rid, legacy_watermark, json.dumps(sorted(expiring_owners)))).fetchone() is not None
 

@@ -76,9 +76,13 @@ class CompactStoreTest(unittest.TestCase):
         (folder / "only.txt").unlink()
         (folder / "other.txt").write_bytes(b"new")
         self.store.save([folder], "scratch")
-        owner = self.store.put_revision("execution", "done", {"status": "PASS"}, terminal=True)
+        # The execution both owns and depends on the superseded copy; the
+        # preview must count it exactly like the applied run.
+        owner = self.store.put_revision("execution", "done", {"status": "PASS", "result": scratch}, terminal=True)
         self.store.own_execution_artifacts(owner, [scratch])
-        result = self.store.gc(now=datetime.now(timezone.utc) + timedelta(days=9), apply=True)
+        later = datetime.now(timezone.utc) + timedelta(days=9)
+        self.assertEqual(self.store.gc(now=later)["retiredOwnedArtifacts"], [scratch["revisionId"]])
+        result = self.store.gc(now=later, apply=True)
         self.assertEqual(result["retiredOwnedArtifacts"], [scratch["revisionId"]])
         with closing(self.store.connect()) as db:
             self.assertEqual([row[0] for row in db.execute("SELECT value FROM path")], ["scratch/other.txt"])
