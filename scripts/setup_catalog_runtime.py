@@ -19,7 +19,8 @@ SQLITE_SHA3 = "deddee963c810d1eeac3ce5e15c7c41da21a1c54d7a39cf54fbf577d2f50de3a"
 SQLITE_SOURCE_URL = "https://www.sqlite.org/2026/sqlite-amalgamation-3530400.zip"
 SQLITE_SOURCE_SHA3 = "628a44cfe82c66aed1ccbbe85a562d2e33ebe64b3288981ed76285612227934e"
 SQLITE_VERSION = "3.53.4"
-PROBE = """import json,sqlite3,subprocess,sys
+PROBE = """import json,lzma,sqlite3,subprocess,sys
+assert lzma.decompress(lzma.compress(b'probe',preset=6))==b'probe'
 database=sqlite3.connect(':memory:')
 database.execute('CREATE TABLE runtime_probe(value INTEGER)')
 database.execute('INSERT INTO runtime_probe VALUES (1)')

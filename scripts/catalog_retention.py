@@ -15,6 +15,7 @@ from pathlib import Path
 import sqlite3
 import sys
 import time
+import uuid
 from bisect import bisect_left
 import hashlib
 
@@ -291,7 +292,7 @@ def retain_recovery_controls(store):
     if (repo / BASE / "RETENTION-MAINTENANCE.json").exists():
         return None  # Cutover backs up before its guarded STATE transition.
     with closing(store.connect()) as db:
-        if db.execute("PRAGMA user_version").fetchone()[0] != 4:
+        if db.execute("PRAGMA user_version").fetchone()[0] not in (4, 5):
             return None
         previous = db.execute("SELECT revision_id FROM head WHERE kind='active' AND subject='current-recovery-controls'").fetchone()
         expected_head = previous[0] if previous else None
@@ -983,7 +984,7 @@ def record_restored_operation(repo, preparation, written_paths, deleted_paths=()
 
 def restore_current(store, destination, *, into_checkout=False):
     """Restore the database; existing operations extract their own artifacts."""
-    from catalog_revision_store import RevisionWorkspace, VERSION
+    from catalog_revision_store import RevisionWorkspace, WRITABLE_VERSIONS
     from catalog_workspace import APPLICATION_ID
     from workspace_paths import restored_origins
     started = time.perf_counter()
@@ -1011,8 +1012,8 @@ def restore_current(store, destination, *, into_checkout=False):
     with closing(store.connect()) as source:
         source.execute("BEGIN")
         version = source.execute("PRAGMA user_version").fetchone()[0]
-        if version != VERSION or source.execute("PRAGMA application_id").fetchone()[0] != APPLICATION_ID:
-            raise ValueError("Database recovery requires an authoring schema v4 store")
+        if version not in WRITABLE_VERSIONS or source.execute("PRAGMA application_id").fetchone()[0] != APPLICATION_ID:
+            raise ValueError("Database recovery requires an authoring schema v4 or v5 store")
         generation = source.execute("SELECT value FROM store_meta WHERE key='generation'").fetchone()[0]
         revision_ids = [row[0] for row in source.execute("SELECT id FROM revision ORDER BY id")]
         sequence = source.execute("SELECT coalesce(max(seq),0) FROM change_log").fetchone()[0]
@@ -1720,7 +1721,7 @@ def load_basis(root, work_ids=None, *, metrics=None):
         if not database.is_file():
             continue
         with closing(sqlite3.connect(database.as_uri() + "?mode=ro", uri=True)) as connection:
-            if connection.execute("PRAGMA user_version").fetchone()[0] not in (3, 4):
+            if connection.execute("PRAGMA user_version").fetchone()[0] not in (3, 4, 5):
                 continue
             generation = connection.execute("SELECT value FROM store_meta WHERE key='generation'").fetchone()[0]
         if generation == marker["revision"]["generation"]:
@@ -2461,7 +2462,7 @@ def activate_store(build, verification, *, resume=False):
                     backup_meta = dict(db.execute("SELECT * FROM store_meta"))
                     if any(backup_meta.get(key) != value for key, value in source_meta.items() if key != "backup_cursor"):
                         raise ValueError("New backup metadata differs from staged generation")
-                    if source.execute("PRAGMA user_version").fetchone()[0] == 4:
+                    if source.execute("PRAGMA user_version").fetchone()[0] in (4, 5):
                         sequence = source.execute("SELECT coalesce(max(seq),0) FROM change_log").fetchone()[0]
                         if backup_meta.get("backup_cursor") != str(sequence):
                             raise ValueError("New backup cursor is incomplete")
@@ -2471,7 +2472,9 @@ def activate_store(build, verification, *, resume=False):
             original_state_sha = digest(state_path.read_bytes())
             state["latestCandidate"].update(root=os.path.relpath(build["anchor"], repo / CONTINUATION).replace("\\", "/"),
                 manifestSha256=verification["anchorManifestSha256"], curationBasisGeneration=build["generation"])
-            state["authoringStore"] = {"schemaVersion": 4, "generation": build["generation"], "policy": "curation-evidence-active-v1"}
+            with closing(sqlite3.connect(pending.as_uri() + "?mode=ro", uri=True)) as staged:
+                staged_version = staged.execute("PRAGMA user_version").fetchone()[0]
+            state["authoringStore"] = {"schemaVersion": staged_version, "generation": build["generation"], "policy": "curation-evidence-active-v1"}
             state["updatedAt"] = utc_now()
             intent = {"schemaVersion": "catalog-retention-cutover-v1", "generation": build["generation"],
                       "oldDatabaseSha256": file_sha(active), "newDatabaseSha256": verification["databaseSha256"],
@@ -2574,6 +2577,76 @@ def prune_retired(cutover_path):
         return result
 
 
+def materialized_scopes(store, backup, state):
+    """Closed extraction scopes whose consumers re-materialize from the database.
+
+    Only completed and canonically applied publication attempts, unreferenced
+    curation anchors and content-named restored versions qualify. Live runs,
+    unapplied attempts and the current/previous basis stay on disk.
+    """
+    repo = store.repo
+    continuation = repo / CONTINUATION
+    latest = state.get("latestCandidate", {})
+    protected = {artifact_path(continuation / latest[field], repo).resolve()
+                 for field in ("root", "previousBaselineRoot") if latest.get(field)}
+    if latest.get("readback"):
+        readback = artifact_path(continuation / latest["readback"], repo).resolve()
+        protected.update(parent for parent in readback.parents if parent.parent.name == "attempts")
+    pending = state.get("pendingPublicationBatch")
+    scopes, skipped = [], Counter()
+    for summary_sha, applied in sorted(state.get("publicationBatches", {}).items()):
+        root = artifact_path(applied["batchRoot"], repo).resolve()
+        if not root.is_dir():
+            continue
+        if summary_sha == pending or root in protected:
+            skipped["protected-attempt"] += 1
+            continue
+        if root.parent.name != "attempts":
+            skipped["not-an-attempt"] += 1
+            continue
+        complete = all(view.current_revision(kind, summary_sha) is not None
+                       for view in (store, backup) for kind in ("completion", "canonical-completion"))
+        if not complete:
+            skipped["canonical-incomplete"] += 1
+            continue
+        scopes.append((root, False))
+    anchors = repo / BASE / "retained/curation-baseline"
+    if anchors.is_dir():
+        for root in sorted(anchors.iterdir()):
+            if root.resolve() in protected:
+                skipped["current-basis"] += 1
+            elif root.is_dir():
+                scopes.append((root, False))
+    scopes.append((repo / BASE / "restored-versions", True))
+    return scopes, dict(skipped)
+
+
+def prune_materialized(repo, *, apply=False, min_age_hours=24, owner_lock_held=False):
+    """Remove verified extracted copies; the database and its backup keep every byte."""
+    from contextlib import nullcontext
+    from catalog_revision_store import RevisionWorkspace
+    repo = Path(repo).resolve()
+    base = repo / BASE
+    store = RevisionWorkspace(repo, base / "workspace.sqlite")
+    if sparse_restore_marker(store) is None:
+        raise ValueError("Only an on-demand restored workspace can re-materialize pruned copies")
+    owner = nullcontext() if owner_lock_held else acquire(base / "locks/publication-owner.lock", wait=False)
+    with owner, acquire(base / "locks/publication.lock", wait=False):
+        assert_no_pending(repo)
+        backup = store.backup() if apply else None
+        latest = RevisionWorkspace(repo, base / "backups/latest.sqlite")
+        scopes, skipped = materialized_scopes(store, latest, read(repo / CONTINUATION / "STATE.json"))
+        result = store.retire_materialized(scopes, apply=apply, min_age_seconds=min_age_hours * 3600)
+    result.update(skippedScopes=skipped, minAgeHours=min_age_hours)
+    if apply:
+        result["backup"] = {key: backup[key] for key in ("status", "mode", "cursor") if key in backup}
+        receipt = base / "operations/materialized-prune" / (utc_now().replace(":", "") + ".json")
+        receipt.parent.mkdir(parents=True, exist_ok=True)
+        write(receipt, result)
+        result["receipt"] = str(receipt)
+    return result
+
+
 def upgrade_store_v4(repo, *, enable_wal=False, resume=False):
     """One stopped-writer transition with a complete pre-upgrade recovery image."""
     from catalog_revision_store import RevisionWorkspace, wal_runtime_supported
@@ -2663,6 +2736,230 @@ def upgrade_store_v4(repo, *, enable_wal=False, resume=False):
     return result
 
 
+V5_INTENT = "catalog-storage-v5-upgrade-v1"
+
+
+def _store_identity(database):
+    with closing(sqlite3.connect(database.as_uri() + "?mode=ro", uri=True)) as db:
+        db.execute("BEGIN")
+        ids = [row[0] for row in db.execute("SELECT id FROM revision ORDER BY id")]
+        return {"schemaVersion": db.execute("PRAGMA user_version").fetchone()[0],
+                "generation": db.execute("SELECT value FROM store_meta WHERE key='generation'").fetchone()[0],
+                "revisionCount": len(ids), "revisionIdsSha256": digest(json.dumps(ids, separators=(",", ":")).encode()),
+                "blobCount": db.execute("SELECT count(*) FROM blob").fetchone()[0],
+                "committedSequence": db.execute("SELECT coalesce(max(seq),0) FROM change_log").fetchone()[0]}
+
+
+def _build_v5(source, staged, workers):
+    """Copy every row into a fresh v5 file; recompress outside any live writer."""
+    from catalog_revision_store import V5_SCHEMA, change_triggers, recompressed
+    from catalog_workspace import APPLICATION_ID
+    with closing(sqlite3.connect(staged)) as new, closing(sqlite3.connect(source.as_uri() + "?mode=ro", uri=True)) as old:
+        new.executescript(f"PRAGMA auto_vacuum=INCREMENTAL;BEGIN IMMEDIATE;{V5_SCHEMA}"
+                          f"PRAGMA application_id={APPLICATION_ID};PRAGMA user_version=5;COMMIT;")
+        old.execute("BEGIN")
+        meta = dict(old.execute("SELECT key,value FROM store_meta"))
+        if int(meta.get("legacy_revision_max_rowid", "0")) > 0:
+            raise ValueError("Legacy completion markers need the lean v4 journal; v5 upgrade refuses them")
+        meta.pop("backup_cursor", None)
+        meta["journal_origin"] = str(uuid.uuid4())
+        new.execute("BEGIN")
+        new.executemany("INSERT INTO store_meta VALUES (?,?)", sorted(meta.items()))
+        rows = old.execute("SELECT sha256,byte_length,content FROM blob ORDER BY sha256")
+        for count, row in enumerate(recompressed(rows, workers), 1):
+            new.execute("INSERT INTO blob VALUES (?,?,?)", row)
+            if count % 5000 == 0:
+                new.commit()
+                new.execute("BEGIN")
+                print(json.dumps({"v5RecompressedBlobs": count}), flush=True)
+        # Rowids stay identical: legacy readers and GC order revisions by rowid.
+        new.executemany("INSERT INTO revision(rowid,id,kind,subject,payload_sha256,previous_id,created_at,terminal,pinned) "
+                        "VALUES (?,?,?,?,?,?,?,?,?)", old.execute("SELECT rowid,* FROM revision ORDER BY rowid"))
+        new.executemany("INSERT INTO head VALUES (?,?,?)", old.execute("SELECT * FROM head ORDER BY kind,subject"))
+        new.executemany("INSERT INTO execution_artifact VALUES (?,?)", old.execute("SELECT * FROM execution_artifact ORDER BY 1,2"))
+        new.executemany("INSERT INTO revision_dependency VALUES (?,?)", old.execute("SELECT * FROM revision_dependency ORDER BY 1,2"))
+        new.executemany("INSERT INTO path(value) VALUES (?)", old.execute("SELECT DISTINCT path FROM revision_blob ORDER BY path"))
+        new.executemany("INSERT INTO member VALUES (?,(SELECT id FROM path WHERE value=?),(SELECT id FROM blob_key WHERE sha256=?))",
+                        old.execute("SELECT revision_id,path,sha256 FROM revision_blob ORDER BY revision_id,path"))
+        # The backup cursor only compares the last committed journal row.
+        last = old.execute("SELECT seq,entity,key1,key2 FROM change_log ORDER BY seq DESC LIMIT 1").fetchone()
+        if last:
+            new.execute("INSERT INTO change_log(seq,entity,key1,key2) VALUES (?,?,?,?)", last)
+        new.commit()
+        new.executescript(change_triggers(5))
+        new.execute("ANALYZE")
+        new.commit()
+    return {"databaseBytes": staged.stat().st_size}
+
+
+def _verify_v5(repo, source, staged):
+    """Rows, membership and every decoded blob must match the v4 source exactly."""
+    from catalog_revision_store import RevisionWorkspace
+    with closing(sqlite3.connect(source.as_uri() + "?mode=ro", uri=True)) as old, \
+            closing(sqlite3.connect(staged.as_uri() + "?mode=ro", uri=True)) as new:
+        old.execute("BEGIN")
+        new.execute("BEGIN")
+        if new.execute("PRAGMA integrity_check").fetchall() != [("ok",)] or new.execute("PRAGMA foreign_key_check").fetchall():
+            raise ValueError("Staged v5 store failed SQLite integrity readback")
+        for query in ("SELECT rowid,* FROM revision ORDER BY rowid", "SELECT * FROM head ORDER BY kind,subject",
+                      "SELECT * FROM execution_artifact ORDER BY 1,2", "SELECT * FROM revision_dependency ORDER BY 1,2",
+                      "SELECT sha256,byte_length FROM blob ORDER BY sha256",
+                      "SELECT max(seq) FROM change_log"):
+            if old.execute(query).fetchall() != new.execute(query).fetchall():
+                raise ValueError("Staged v5 store differs from its source: " + query)
+        old_meta, new_meta = dict(old.execute("SELECT * FROM store_meta")), dict(new.execute("SELECT * FROM store_meta"))
+        if any(new_meta.get(key) != value for key, value in old_meta.items() if key not in {"journal_origin", "backup_cursor"}):
+            raise ValueError("Staged v5 store metadata differs from its source")
+        members = 0
+        for rid, in old.execute("SELECT id FROM revision ORDER BY rowid").fetchall():
+            query = "SELECT path,sha256 FROM revision_blob WHERE revision_id=?"
+            expected = dict(old.execute(query, (rid,)))
+            if dict(new.execute(query, (rid,))) != expected:
+                raise ValueError("Staged v5 membership differs from its source: " + rid)
+            members += len(expected)
+    # Every blob decodes to its SHA and every payload names exactly its members.
+    audit = RevisionWorkspace(repo, staged).verify()
+    return {"status": "VERIFIED", "members": members, "audit": audit, "databaseBytes": staged.stat().st_size}
+
+
+def _checkpoint_to_rollback_journal(database):
+    with closing(sqlite3.connect(database.as_uri() + "?mode=rw", uri=True, timeout=300)) as db:
+        db.execute("PRAGMA wal_checkpoint(TRUNCATE)").fetchall()
+        if db.execute("PRAGMA journal_mode=DELETE").fetchone()[0] != "delete":
+            raise ValueError("Close every reader before the storage transition")
+    if any(Path(str(database) + suffix).exists() for suffix in ("-wal", "-shm", "-journal")):
+        raise ValueError("SQLite journal files remain beside the store; refuse to swap")
+
+
+def upgrade_store_v5(repo, *, resume=False, workers=None):
+    """Stopped-writer transition to the compact v5 layout with a verified rollback copy."""
+    from catalog_revision_store import RevisionWorkspace, wal_runtime_supported
+    repo = Path(repo).resolve()
+    base = repo / BASE
+    source, staged = base / "workspace.sqlite", base / "workspace.v5.sqlite"
+    retired, retired_backup, latest = base / "workspace.pre-v5.sqlite", base / "backups/pre-v5.sqlite", base / "backups/latest.sqlite"
+    state_path = repo / CONTINUATION / "STATE.json"
+    maintenance, completed = base / "RETENTION-MAINTENANCE.json", base / "STORAGE-V5-UPGRADE.json"
+    workers = workers or max(1, min(8, os.cpu_count() or 1))
+    with acquire(base / "locks/publication-owner.lock", wait=False), acquire(base / "locks/publication.lock", wait=False):
+        assert_no_pending(repo)
+        if completed.is_file() and not maintenance.is_file():
+            result = read(completed)
+            if _store_identity(source)["schemaVersion"] != 5:
+                raise ValueError("Completed v5 transition no longer matches the active schema")
+            if read(state_path).get("authoringStore", {}).get("generation") != result["generation"]:
+                raise ValueError("Completed v5 transition no longer matches STATE")
+        else:
+            if maintenance.is_file():
+                if not resume:
+                    raise ValueError("Interrupted storage upgrade exists; use upgrade-v5 --resume")
+                intent = read(maintenance)
+                if intent.get("schemaVersion") != V5_INTENT:
+                    raise ValueError("Another retention operation owns the maintenance boundary")
+            else:
+                identity = _store_identity(source)
+                if identity["schemaVersion"] != 4:
+                    raise ValueError("Only the current v4 store can start the v5 transition")
+                if any(path.exists() for path in (staged, retired, retired_backup)):
+                    raise ValueError("Earlier v5 transition files exist; inspect them before a new transition")
+                # The final v4 boundary backup is the rollback image of record.
+                final_backup = RevisionWorkspace(repo, source).backup()
+                with closing(sqlite3.connect(source.as_uri() + "?mode=ro", uri=True)) as db:
+                    journal = db.execute("PRAGMA journal_mode").fetchone()[0]
+                intent = {"schemaVersion": V5_INTENT, "generation": identity["generation"], "source": identity,
+                          "journalMode": journal, "oldStateSha256": file_sha(state_path), "oldState": read(state_path),
+                          "finalV4Backup": {key: final_backup.get(key) for key in ("status", "mode", "cursor")}, "createdAt": utc_now()}
+                write(maintenance, intent)
+            if not intent.get("swapped"):
+                if not intent.get("staged"):
+                    for path in [staged, *(Path(str(staged) + suffix) for suffix in ("-wal", "-shm", "-journal"))]:
+                        if path.exists():
+                            path.unlink()  # An unverified staged build is disposable.
+                    started = time.perf_counter()
+                    build = _build_v5(source, staged, workers)
+                    build["seconds"] = time.perf_counter() - started
+                    verification = _verify_v5(repo, source, staged)
+                    intent["staged"] = {"build": build, "verification": verification,
+                                        "identity": _store_identity(staged), "sha256": file_sha(staged)}
+                    write(maintenance, intent)
+                elif staged.exists() and file_sha(staged) != intent["staged"]["sha256"]:
+                    raise ValueError("Verified staged v5 store changed before activation")
+                if not retired.exists():
+                    if _store_identity(source) != intent["source"]:
+                        raise ValueError("v4 store advanced during the stopped-writer transition")
+                    _checkpoint_to_rollback_journal(source)
+                    os.replace(source, retired)
+                if staged.exists():
+                    os.replace(staged, source)
+                active = _store_identity(source)
+                if active != {**intent["source"], "schemaVersion": 5}:
+                    raise ValueError("Activated v5 store identity differs from its v4 source")
+                if intent["journalMode"] == "wal":
+                    if not wal_runtime_supported():
+                        raise ValueError("Use the configured patched SQLite runtime before enabling WAL")
+                    with closing(sqlite3.connect(source.as_uri() + "?mode=rw", uri=True)) as db:
+                        if db.execute("PRAGMA journal_mode=WAL").fetchone()[0] != "wal":
+                            raise ValueError("Authoring WAL activation failed")
+                intent["swapped"] = True
+                write(maintenance, intent)
+            if latest.exists() and not retired_backup.exists():
+                with closing(sqlite3.connect(latest.as_uri() + "?mode=ro", uri=True)) as db:
+                    old_backup = db.execute("PRAGMA user_version").fetchone()[0] == 4
+                if old_backup:
+                    os.replace(latest, retired_backup)
+            # A new journal origin forces one verified initial copy of the v5 store.
+            initial_backup = RevisionWorkspace(repo, source).backup()
+            current = read(state_path)
+            if current == intent["oldState"]:
+                if file_sha(state_path) != intent["oldStateSha256"]:
+                    raise ValueError("STATE bytes changed during storage transition")
+                with closing(sqlite3.connect(source.as_uri() + "?mode=ro", uri=True)) as db:
+                    journal = db.execute("PRAGMA journal_mode").fetchone()[0]
+                write(state_path, {**current, "authoringStore": {**current.get("authoringStore", {}), "schemaVersion": 5,
+                    "generation": intent["generation"], "journalMode": journal, "sqliteVersion": sqlite3.sqlite_version}})
+            elif (current.get("authoringStore", {}).get("schemaVersion") != 5
+                  or current["authoringStore"]["generation"] != intent["generation"]):
+                raise ValueError("STATE advanced outside the stopped-writer transition")
+            for database in (source, latest):
+                if _store_identity(database)["schemaVersion"] != 5:
+                    raise ValueError("Storage upgrade readback failed")
+            result = {key: value for key, value in intent.items() if key not in {"oldState"}}
+            result.update(status="ACTIVATED", stateSha256=file_sha(state_path), backup={key: initial_backup.get(key) for key in ("status", "mode", "cursor")},
+                          databaseBytes=source.stat().st_size, backupBytes=latest.stat().st_size,
+                          rollback={"workspace": str(retired), "backup": str(retired_backup)}, completedAt=utc_now())
+            write(completed, result)
+            maintenance.unlink()
+    # A failed final boundary resumes here without repeating the schema change.
+    result["storage"] = RevisionWorkspace(repo, source).persist([state_path, completed], "storage-v5:activated", phase_boundary=True)
+    return result
+
+
+def prune_pre_v5(repo):
+    """Remove the verified v4 rollback pair only after the active v5 pair reads back."""
+    repo = Path(repo).resolve()
+    base = repo / BASE
+    completed = base / "STORAGE-V5-UPGRADE.json"
+    if not completed.is_file() or (base / "RETENTION-MAINTENANCE.json").exists():
+        raise ValueError("Complete the v5 transition before removing its rollback pair")
+    result = read(completed)
+    with acquire(base / "locks/publication-owner.lock", wait=False), acquire(base / "locks/publication.lock", wait=False):
+        active, backup = _store_identity(base / "workspace.sqlite"), _store_identity(base / "backups/latest.sqlite")
+        if any(identity["schemaVersion"] != 5 or identity["generation"] != result["generation"] for identity in (active, backup)):
+            raise ValueError("Active v5 pair does not read back")
+        removed = []
+        for name in ("workspace", "backup"):
+            path = Path(result["rollback"][name])
+            if not path.is_file():
+                continue
+            if _store_identity(path)["revisionIdsSha256"] != result["source"]["revisionIdsSha256"]:
+                raise ValueError("Rollback copy is not the recorded v4 source: " + str(path))
+            removed.append({"path": str(path), "bytes": path.stat().st_size})
+            path.unlink()
+        result["rollbackRemoved"] = {"files": removed, "removedAt": utc_now()}
+        write(completed, result)
+    return {"status": "PRUNED", "removed": removed}
+
+
 def main():
     import argparse
     from catalog_revision_store import RevisionWorkspace
@@ -2685,9 +2982,16 @@ def main():
     prune.add_argument("--cutover", type=Path, required=True)
     gc = commands.add_parser("gc")
     gc.add_argument("--apply", action="store_true")
+    materialized = commands.add_parser("prune-materialized")
+    materialized.add_argument("--apply", action="store_true")
+    materialized.add_argument("--min-age-hours", type=float, default=24)
     upgrade = commands.add_parser("upgrade-v4")
     upgrade.add_argument("--enable-wal", action="store_true")
     upgrade.add_argument("--resume", action="store_true")
+    upgrade_v5 = commands.add_parser("upgrade-v5")
+    upgrade_v5.add_argument("--resume", action="store_true")
+    upgrade_v5.add_argument("--workers", type=int)
+    commands.add_parser("prune-pre-v5")
     args = parser.parse_args()
     if args.action == "plan":
         result = make_plan(Path(__file__).resolve().parents[1], args.output)
@@ -2707,6 +3011,13 @@ def main():
         result = activate_store(read(args.build), read(args.verification), resume=args.resume)
     elif args.action == "prune-retired":
         result = prune_retired(args.cutover)
+    elif args.action == "prune-materialized":
+        result = prune_materialized(Path(__file__).resolve().parents[1], apply=args.apply, min_age_hours=args.min_age_hours)
+    elif args.action == "upgrade-v5":
+        result = upgrade_store_v5(Path(__file__).resolve().parents[1], resume=args.resume, workers=args.workers)
+        result = {key: result.get(key) for key in ("status", "generation", "staged", "databaseBytes", "backupBytes", "rollback", "storage")}
+    elif args.action == "prune-pre-v5":
+        result = prune_pre_v5(Path(__file__).resolve().parents[1])
     elif args.action == "upgrade-v4":
         result = upgrade_store_v4(Path(__file__).resolve().parents[1], enable_wal=args.enable_wal, resume=args.resume)
         result = {key: result[key] for key in ("status", "schemaVersion", "generation", "journalMode", "recovery", "recoverySha256", "storage")}
@@ -2718,7 +3029,11 @@ def main():
             with acquire(store.repo / BASE / "locks/publication-owner.lock"), acquire(store.repo / BASE / "locks/publication.lock"):
                 assert_no_pending(store.repo)
                 result = store.gc(apply=True)
-            result["backup"] = store.backup()
+                result["backup"] = store.backup()
+                # Journal rows below the verified cursor and freed pages are
+                # reclaimed only after the backup holds every deletion.
+                result["journal"] = store.prune_change_log()
+                result["reclaimed"] = store.reclaim_free_pages()
         else:
             result = store.gc()
     print(json.dumps(result, ensure_ascii=False))

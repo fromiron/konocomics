@@ -1,6 +1,6 @@
 # 로컬 Catalog 작업 저장소
 
-현재 확정 사양 · 갱신일: 2026-10-01
+현재 확정 사양 · 갱신일: 2026-10-14
 
 이 문서는 저장 위치·보존 범위·백업 경계의 단일 운영 계약이다. 2026-09-26 승인한 실행 계약은 workspace schema v4이며 실제 전환 여부는 대상 DB의 schema·generation과 전환 receipt에서 확인한다. 문서 갱신을 운영 DB 전환 완료로 간주하지 않는다. [기존 검증 요약](authoring-retention-20260926.md)은 해당 실행 근거와 한계를 기록하며 이 문서의 규칙을 대신하지 않는다. 과거 규칙은 Git 이력에서 확인한다.
 
@@ -8,23 +8,25 @@
 
 **2026-09-28 경량 보존:** `scripts/catalog_authoring/lean_migration.py`는 불필요한 로컬 사본·백업·반복 검증을 줄이되, 남긴 자료를 실제로 읽고 재사용·정리할 수 있게 한다. 같은 generation에서 Work별 `curation`, 원문 `collection`(`retained-originals`), 작은 `active` 제어, `completion`, `canonical-completion`과 previous·dependency closure를 새 파일로 복사한다. 불필요한 `artifact`, 종료된 `execution`, `legacy-pin`, `active/migration-working-sets`는 독립 보존 근거로 삼지 않는다. 다만 미완료 실행과 남긴 checkpoint의 원래 소유 관계, closure에 이미 포함된 legacy pin의 조회 head는 유지한다. 이 예외로 무관한 과거 publication 사본을 복원하지 않는다. 완료 확인·GC의 구형/신규 구분은 원래 revision rowid, 생존 행 범위의 legacy watermark, 변경된 revision당 하나의 journal 표식으로 유지한다. 전체 change history를 복사하거나 새 DB에 다시 `VACUUM`하지 않는다. 원본은 한 읽기 transaction에서 선택·복사하고, 새 journal origin으로 최초 백업 후 기존 증분 백업을 사용한다. canonical `catalog.sqlite`는 바꾸지 않는다. 과거 추출 폴더는 DB blob 결속과 실제 소비 가능 범위를 확인한 뒤 정리하며, 이후 수집·판정 파일의 위치는 계속 `artifacts/`다. prior authority의 manifest 결속, freeze의 계약 문서 결속, canonical apply의 current·candidate·projection 검증, v2/v3 reader는 유지한다. 한 배치 안의 prior 재검증은 기존 `manifest_verification_cache`를 쓴다.
 
+**2026-10-14 저장 압축:** 사용자 요청에 따라 데이터 증가를 전제로 저장 방식을 축소한다. 측정 시점 54G 중 대부분은 이미 DB에 같은 SHA로 저장된 추출 사본(약 27G), revision마다 경로 문자열을 반복한 membership 행과 인덱스(약 7.4G), 그리고 이를 그대로 복제한 백업이었다. 백업의 증분 방식은 유지한다. 대신 (1) 검증된 추출 사본 정리, (2) 발행 완료 시 같은 정리의 자동 실행, (3) schema v5의 경로 사전·정수 키 membership과 xz 압축, (4) gc의 대체 제어 스냅샷 만료·journal 정리·재압축·여유 페이지 회수를 둔다. 모든 revision·원문 바이트·frozen SHA·판정 이력은 보존하며, 정리는 아래 [세대 전환과 정리](#세대-전환과-정리)의 검증 범위에서만 수행한다. 실제 실행 결과와 한계는 [2026-10-14 실행 기록](storage-compaction-20261014.md)에 있다.
+
 ## 저장 경계
 
-| 위치                                                        | 내용과 권한                                                                                                             |
-| ----------------------------------------------------------- | ----------------------------------------------------------------------------------------------------------------------- |
-| `data/source/catalog.sqlite`                                | Git으로 추적하는 유일한 canonical Catalog. 작업 DB가 대체하지 않는다.                                                   |
-| `scripts/catalog_authoring/` 및 기존 runner/storage scripts | Git으로 추적하는 실행 코드·회귀 검사. artifact의 도구 사본은 새 실행 코드가 아니다.                                     |
-| `data/local/catalog-authoring/workspace.sqlite`             | 원문·판정·큐레이션·작업 의존의 영구 작업 저장소. 저장 성공은 판정 승인이나 승격 성공이 아니다.                          |
-| `data/local/catalog-authoring/artifacts/`                   | 원문·동결 입력·판정·후보·실패·인계의 작업 파일과 receipt. 필요한 원본은 작업 DB에 결속한다.                             |
-| `data/local/catalog-authoring/backups/latest.sqlite`        | 검증된 현재 세대의 정규 백업 하나.                                                                                      |
-| `.workspace/`                                               | 재생성 가능한 임시 출력. 사용자 제공 자료인 `user-sources/`는 보호 예외이며 [리드 규격](user-source-leads.md)을 따른다. |
+| 위치                                                        | 내용과 권한                                                                                                                                            |
+| ----------------------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------ |
+| `data/source/catalog.sqlite`                                | Git으로 추적하는 유일한 canonical Catalog. 작업 DB가 대체하지 않는다.                                                                                  |
+| `scripts/catalog_authoring/` 및 기존 runner/storage scripts | Git으로 추적하는 실행 코드·회귀 검사. artifact의 도구 사본은 새 실행 코드가 아니다.                                                                    |
+| `data/local/catalog-authoring/workspace.sqlite`             | 원문·판정·큐레이션·작업 의존의 영구 작업 저장소. 저장 성공은 판정 승인이나 승격 성공이 아니다.                                                         |
+| `data/local/catalog-authoring/artifacts/`                   | 원문·동결 입력·판정·후보·실패·인계의 작업 파일과 receipt. 필요한 원본은 작업 DB에 결속한다. 완료된 발행 attempt의 추출 사본은 아래 정리 규칙을 따른다. |
+| `data/local/catalog-authoring/backups/latest.sqlite`        | 검증된 현재 세대의 정규 백업 하나.                                                                                                                     |
+| `.workspace/`                                               | 재생성 가능한 임시 출력. 사용자 제공 자료인 `user-sources/`는 보호 예외이며 [리드 규격](user-source-leads.md)을 따른다.                                |
 
 로컬 작업 데이터는 Git에서 제외한다. 서비스 런타임은 정적 JSON·기존 Dexie·두 Rakuten route를 유지하며 작업 DB를 사용하지 않는다. `.tmp`나 메모리만을 원본의 유일한 보존 위치로 사용하지 않는다. `handoff/`와 미분류 사용자 자료도 보존한다.
 
 ## 현재 보존 정책
 
 - 보존 대상은 현재 큐레이션, 실제 원문·관찰·범위·한계, 의미 있는 판정 변경, Work별 최신 유효 판정, 미완료 작업 의존과 중복 발행 방지 기록이다. 최신 판정은 READY와 HOLD를 각각 하나씩 고르는 뜻이 아니다. 모든 실행 사본의 영구 복원을 요구하지 않는다.
-- `revision`·`head`·`revision_blob`과 SHA-256/zlib blob을 사용한다. 같은 내용의 재저장은 같은 revision을 반환한다. UUID와 generation을 사용하며 옛 snapshot 번호를 새 ID로 재사용하지 않는다.
+- `revision`·`head`·`revision_blob`과 SHA-256 identity의 압축 blob을 사용한다. 압축 형식은 zlib 또는 xz이며 identity와 readback 검증을 바꾸지 않는다. v5는 membership을 경로 사전과 정수 키의 `member`에 저장하고, 같은 열 순서의 `revision_blob` view로 읽고 쓴다. 같은 내용의 재저장은 같은 revision을 반환한다. UUID와 generation을 사용하며 옛 snapshot 번호를 새 ID로 재사용하지 않는다.
 - v4의 `change_log` 순번과 백업 cursor는 실제 revision/blob·head·삭제·의존 변경과 같은 commit에 결속한다. v3→v4는 generation·revision ID·동결 원문을 보존하며 새 세대로 위장하지 않는다. v3 읽기는 지원하되 v4 writer는 명시 전환 전의 v3 쓰기를 거부한다.
 - 현재 기준점 `CURATION-BASELINE.json`은 원래 result/input manifest·claim·원문과 현행 SQL 행을 대조한다. 값만 읽어 새 승인 판정을 만들지 않는다. AEP·기존 모델 판정·미검토·Gold 구분과 unknown을 보존한다. legacy 권한은 검증된 adapter와 명시적 bundle pin으로 유지한다.
 - prior reader는 기준점에서 필요한 작품을 읽는다. 필요한 권한·원문 결속은 검증하되 과거 전체 publication 계보를 매 작품 순회하지 않는다. 누락·손상된 근거를 합성하지 않는다.
@@ -274,7 +276,40 @@ node --import tsx scripts/import-publisher-book-metadata.ts --input <collection>
 
 ## 세대 전환과 정리
 
-활성 v4의 정상 정리는 `gc`다. 성공 종료 후 7일이 지난 비고정 execution과 그 소유 artifact·참조 없는 blob만 검증된 범위에서 제거한다. 명시적 소유 관계·receipt 의존·의미 있는 현재 head와 pin을 보존하고 v3에서 이어진 수명 불명 artifact는 자동 삭제하지 않는다. 의미 있는 큐레이션 이력·미해결 실패·활성/legacy pin은 시간이나 mtime만으로 제거하지 않는다. 배치마다 VACUUM을 하지 않는다.
+활성 v4/v5의 정상 정리는 `gc`다. 성공 종료 후 7일이 지난 비고정 execution과 그 소유 artifact·참조 없는 blob만 검증된 범위에서 제거한다. 명시적 소유 관계·receipt 의존·의미 있는 현재 head와 pin을 보존하고 v3에서 이어진 수명 불명 artifact는 자동 삭제하지 않는다. 의미 있는 큐레이션 이력·미해결 실패·활성/legacy pin은 시간이나 mtime만으로 제거하지 않는다. 배치마다 VACUUM을 하지 않는다.
+
+`gc`는 다음도 함께 다룬다. preview는 각 대상의 수와 바이트를 보고하고 `--apply`만 변경한다.
+
+- **대체된 제어 스냅샷:** `current-live-declared-inputs`와 `current-recovery-controls`는 head만 읽는다. head·pin·자식·소유 관계가 없고, 같은 subject의 _후속_ revision 자체가 7일보다 오래된 비고정 스냅샷만 만료한다. 살아 있는 revision이 의존하는 스냅샷과 그 의존 대상은 보존한다.
+- **재압축:** v5는 4KiB 미만을 zlib-9, 1MiB 미만을 xz로 저장한다. 1MiB 이상은 발행 경로 속도를 위해 zlib으로 먼저 저장하고, `gc --apply`가 임시 checkpoint 외의 대형 blob을 xz로 재압축한다. 변환된 바이트는 같은 SHA로 readback한 뒤에만 교체하며 백업에는 증분으로 반영된다.
+- **journal과 여유 공간:** `--apply`는 백업이 모든 삭제·교체를 담은 뒤 source와 백업의 `change_log`에서 cursor 미만 행을 지운다. cursor 행은 양쪽이 대조하므로 유지하고, `legacy_revision_max_rowid`가 0보다 크면 거부한다. 이어 `incremental_vacuum`으로 여유 페이지를 파일 시스템에 돌려준다. 이는 rowid를 바꾸는 VACUUM이 아니다.
+
+**추출 사본 정리:** `prune-materialized`는 DB 이력을 바꾸지 않고, on-demand 복구 표식이 있는 저장소에서 추출된 파일 사본만 지운다. 소비 명령은 필요한 파일을 R3 경로로 다시 추출한다. 대상은 다음 세 가지다.
+
+- `STATE.publicationBatches`에 있고 completion과 canonical-completion head가 source·백업 양쪽에 있는 발행 attempt. 단 `pendingPublicationBatch`와 `latestCandidate.readback`을 담은 attempt는 제외한다.
+- `latestCandidate`의 `root`·`previousBaselineRoot`를 제외한 `retained/curation-baseline/*`.
+- 내용 SHA 이름의 `restored-versions/*`.
+
+run·worker 폴더, 적용되지 않은 attempt, canonical 미완료 attempt, `.workspace/`는 디스크를 직접 읽는 소비자가 있으므로 대상이 아니다. 파일마다 다음을 모두 확인한다.
+
+- 정확한 (path, SHA)가 source와 백업 양쪽에서 GC가 제거할 수 없는 revision에 있다. 이는 의미 kind, head·pin된 active, 실행 소유가 없거나 head인 artifact를 뜻한다.
+- 그 경로의 최신 저장 SHA와 같다.
+- 지정한 시간(기본 24시간)보다 오래되었다.
+- 열린 SQLite journal이 없다.
+- 백업 blob 디코드 결과가 같은 SHA다.
+- 삭제 직전에 다시 읽어도 바뀌지 않았다.
+
+조건을 하나라도 벗어난 파일은 사유와 함께 보존한다. preview가 기본이며, `--apply`는 먼저 경계 백업을 수행하고 결과를 `operations/materialized-prune/`에 남긴다. 발행 완료 경로는 임시 사본 종료 뒤 같은 정리를 1시간 기준으로 실행한다. 실패해도 발행 결과를 바꾸지 않고 `effects.materializedCopies`에 기록한다. on-demand 표식이 있는 저장소에서는 정리 범위의 일부만 남은 폴더를 같은 subject로 다시 저장해 head membership을 줄이지 못한다(R5).
+
+**v5 전환:** `catalog_retention.py upgrade-v5`는 writer를 멈춘 뒤 다음 순서로 진행한다.
+
+1. v4 경계 백업과 maintenance intent를 남긴다.
+2. 새 파일에 모든 행을 revision rowid 그대로 복사하고, blob을 병렬로 재압축한다.
+3. 행·membership·store_meta·journal 순번과 전체 blob 디코드·payload membership을 v4 원본과 대조한다.
+4. WAL을 checkpoint한 원본을 `workspace.pre-v5.sqlite`로, 기존 백업을 `backups/pre-v5.sqlite`로 보존하고 교체한다.
+5. 새 journal origin의 초기 백업을 만들고, STATE `authoringStore.schemaVersion=5`와 readback을 결속한다.
+
+중단되면 같은 intent를 `--resume`으로 재개한다. 검증되지 않은 staged 파일은 다시 만들고, 검증된 파일이 바뀌면 거부한다. v5 코드는 v3를 읽기 전용으로, v4와 v5를 읽고 쓴다. v4에서는 zlib을 유지하므로 이전 코드와 같은 바이트 형식을 쓴다. `prune-pre-v5`는 활성 v5 쌍의 generation·schema readback과 보존 사본의 revision 집합이 기록과 같을 때만 rollback 쌍을 지운다.
 
 새 compact 배치는 `compact-working`과 `checkpoints`의 정확한 임시 범위를 실행 시작 때 선언하고, checkpoint의 `execution-artifact` revision·head·소유권을 같은 commit에 결속한다. 미완료 실행과 canonical 반영·백업이 남은 실행의 사본은 보존한다. 요청된 후보·정식 반영과 readback·백업이 모두 끝나면 종료를 한 번만 기록하고, 저장 SHA 및 `latest.sqlite`의 실제 원문과 일치하는 선언 범위의 파일만 정리한다. 변경·추가 파일이나 살아 있는 참조가 있으면 보존하고, 임시 범위가 남아 있는 동안 GC도 소유자와 복구 자료를 유지한다. 정상 GC는 7일 수명이 지난 이 명시적 임시 head만 예외적으로 제거할 수 있으며 일반 artifact·근거·큐레이션 head에는 적용하지 않는다. 실행 시작 시각은 payload에 보존하고 종료 후 재수신으로 보존 기간을 연장하지 않는다. 최종 배치 저장은 이 임시 사본을 제외하고 발행·판정·원문·완료 근거를 보존한다. 이 규칙은 과거 자료의 일괄 삭제 권한이 아니다.
 
@@ -301,9 +336,15 @@ python scripts/catalog_python.py scripts/catalog_workspace.py --database data/lo
 python scripts/catalog_python.py scripts/catalog_retention.py activate --build <build.json> --verification <verified.json>
 # 실제 새 경로 readback 후 cutover가 지정한 구 v2 파일에만 적용
 python scripts/catalog_python.py scripts/catalog_retention.py prune-retired --cutover data/local/catalog-authoring/RETENTION-CUTOVER.json
-# 활성 v4 정상 정리: 검토 후 승인된 범위만 적용
+# 활성 v4/v5 정상 정리: 검토 후 승인된 범위만 적용
 python scripts/catalog_python.py scripts/catalog_retention.py gc
 python scripts/catalog_python.py scripts/catalog_retention.py gc --apply
+# 검증된 추출 사본 정리(on-demand 저장소): preview 후 적용
+python scripts/catalog_python.py scripts/catalog_retention.py prune-materialized
+python scripts/catalog_python.py scripts/catalog_retention.py prune-materialized --apply
+# writer 중지 후 v4→v5 전환, 중단 시 --resume, readback 확인 뒤 rollback 쌍 제거
+python scripts/catalog_python.py scripts/catalog_retention.py upgrade-v5
+python scripts/catalog_python.py scripts/catalog_retention.py prune-pre-v5
 ```
 
 전환 전 아직 v2인 저장소에는 v2 동작을 유지한다. revision schema로 해석하거나 숫자 snapshot을 UUID로 치환하지 않는다. v3/v4를 이해하지 못하는 코드는 schema 검사에서 거부한다. plan 이후 입력·보호 파일이 바뀌면 다시 선별한다. 검증된 plan 범위 밖 물리 사본을 함께 삭제하지 않는다. `.workspace/user-sources/`, `handoff/`, 미분류 사용자 자료와 활성 의존은 보호한다.
