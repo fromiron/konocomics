@@ -13,14 +13,14 @@
 
 ## 크기 변화
 
-| 항목 | 이전 | 이후 |
-| --- | --- | --- |
-| `data/` 전체 | 54G | 13G |
-| `workspace.sqlite` | 13.9G (v4) | 4.52G (v5) |
-| `backups/latest.sqlite` | 13.9G | 4.52G |
-| `artifacts/` | 22G | 3.4G |
-| `retained/` | 4.2G | 249M |
-| `restored-versions/` | 2.5G | 0 |
+| 항목                    | 이전       | 이후       |
+| ----------------------- | ---------- | ---------- |
+| `data/` 전체            | 54G        | 13G        |
+| `workspace.sqlite`      | 13.9G (v4) | 4.52G (v5) |
+| `backups/latest.sqlite` | 13.9G      | 4.52G      |
+| `artifacts/`            | 22G        | 3.4G       |
+| `retained/`             | 4.2G       | 249M       |
+| `restored-versions/`    | 2.5G       | 0          |
 
 v5 DB의 내부 구성은 다음과 같다.
 

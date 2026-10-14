@@ -12,14 +12,14 @@
 
 ## 저장 경계
 
-| 위치                                                        | 내용과 권한                                                                                                             |
-| ----------------------------------------------------------- | ----------------------------------------------------------------------------------------------------------------------- |
-| `data/source/catalog.sqlite`                                | Git으로 추적하는 유일한 canonical Catalog. 작업 DB가 대체하지 않는다.                                                   |
-| `scripts/catalog_authoring/` 및 기존 runner/storage scripts | Git으로 추적하는 실행 코드·회귀 검사. artifact의 도구 사본은 새 실행 코드가 아니다.                                     |
-| `data/local/catalog-authoring/workspace.sqlite`             | 원문·판정·큐레이션·작업 의존의 영구 작업 저장소. 저장 성공은 판정 승인이나 승격 성공이 아니다.                          |
+| 위치                                                        | 내용과 권한                                                                                                                                            |
+| ----------------------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------ |
+| `data/source/catalog.sqlite`                                | Git으로 추적하는 유일한 canonical Catalog. 작업 DB가 대체하지 않는다.                                                                                  |
+| `scripts/catalog_authoring/` 및 기존 runner/storage scripts | Git으로 추적하는 실행 코드·회귀 검사. artifact의 도구 사본은 새 실행 코드가 아니다.                                                                    |
+| `data/local/catalog-authoring/workspace.sqlite`             | 원문·판정·큐레이션·작업 의존의 영구 작업 저장소. 저장 성공은 판정 승인이나 승격 성공이 아니다.                                                         |
 | `data/local/catalog-authoring/artifacts/`                   | 원문·동결 입력·판정·후보·실패·인계의 작업 파일과 receipt. 필요한 원본은 작업 DB에 결속한다. 완료된 발행 attempt의 추출 사본은 아래 정리 규칙을 따른다. |
-| `data/local/catalog-authoring/backups/latest.sqlite`        | 검증된 현재 세대의 정규 백업 하나.                                                                                      |
-| `.workspace/`                                               | 재생성 가능한 임시 출력. 사용자 제공 자료인 `user-sources/`는 보호 예외이며 [리드 규격](user-source-leads.md)을 따른다. |
+| `data/local/catalog-authoring/backups/latest.sqlite`        | 검증된 현재 세대의 정규 백업 하나.                                                                                                                     |
+| `.workspace/`                                               | 재생성 가능한 임시 출력. 사용자 제공 자료인 `user-sources/`는 보호 예외이며 [리드 규격](user-source-leads.md)을 따른다.                                |
 
 로컬 작업 데이터는 Git에서 제외한다. 서비스 런타임은 정적 JSON·기존 Dexie·두 Rakuten route를 유지하며 작업 DB를 사용하지 않는다. `.tmp`나 메모리만을 원본의 유일한 보존 위치로 사용하지 않는다. `handoff/`와 미분류 사용자 자료도 보존한다.
 
@@ -280,7 +280,7 @@ node --import tsx scripts/import-publisher-book-metadata.ts --input <collection>
 
 `gc`는 다음도 함께 다룬다. preview는 각 대상의 수와 바이트를 보고하고 `--apply`만 변경한다.
 
-- **대체된 제어 스냅샷:** `current-live-declared-inputs`와 `current-recovery-controls`는 head만 읽는다. head·pin·자식·소유 관계가 없고, 같은 subject의 *후속* revision 자체가 7일보다 오래된 비고정 스냅샷만 만료한다. 살아 있는 revision이 의존하는 스냅샷과 그 의존 대상은 보존한다.
+- **대체된 제어 스냅샷:** `current-live-declared-inputs`와 `current-recovery-controls`는 head만 읽는다. head·pin·자식·소유 관계가 없고, 같은 subject의 _후속_ revision 자체가 7일보다 오래된 비고정 스냅샷만 만료한다. 살아 있는 revision이 의존하는 스냅샷과 그 의존 대상은 보존한다.
 - **재압축:** v5는 4KiB 미만을 zlib-9, 1MiB 미만을 xz로 저장한다. 1MiB 이상은 발행 경로 속도를 위해 zlib으로 먼저 저장하고, `gc --apply`가 임시 checkpoint 외의 대형 blob을 xz로 재압축한다. 변환된 바이트는 같은 SHA로 readback한 뒤에만 교체하며 백업에는 증분으로 반영된다.
 - **journal과 여유 공간:** `--apply`는 백업이 모든 삭제·교체를 담은 뒤 source와 백업의 `change_log`에서 cursor 미만 행을 지운다. cursor 행은 양쪽이 대조하므로 유지하고, `legacy_revision_max_rowid`가 0보다 크면 거부한다. 이어 `incremental_vacuum`으로 여유 페이지를 파일 시스템에 돌려준다. 이는 rowid를 바꾸는 VACUUM이 아니다.
 
