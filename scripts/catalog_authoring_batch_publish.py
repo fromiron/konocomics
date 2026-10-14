@@ -599,10 +599,24 @@ def report_completed(batch, applied, *, canonical=False, **details):
     cleanup = compact_publication.complete_transient_lifetime(batch)
     if cleanup is not None:
         effects["transientCopies"] = cleanup
+    # Earlier completed copies retire within the same cleanup stage.
+    effects["materializedCopies"] = retire_materialized_copies()
     # Keep the existing authoritative status as the last successful stdout record.
     _finish_publication_timing()
     print(json.dumps({"status": "VERIFIED" if canonical else "ALREADY_APPLIED",
                       "batchRoot": applied["batchRoot"], "effects": effects, **details}, ensure_ascii=False), flush=True)
+
+
+def retire_materialized_copies():
+    """Drop extracted copies of earlier completed publications; never fail this one."""
+    from catalog_retention import prune_materialized, sparse_restore_marker
+    try:
+        if sparse_restore_marker(runner.Workspace(runner.REPO)) is None:
+            return {"status": "NOT_APPLICABLE"}
+        result = prune_materialized(runner.REPO, apply=True, min_age_hours=1, owner_lock_held=True)
+        return {key: result[key] for key in ("status", "files", "bytes", "receipt") if key in result}
+    except (OSError, ValueError, sqlite3.Error) as error:
+        return {"status": "SKIPPED", "error": str(error)}
 
 
 def verify_completed(batch, applied):

@@ -396,8 +396,8 @@ def prepare_restored_operation(repo, request):
     started = perf_counter()
     with closing(store.connect()) as db, tempfile.SpooledTemporaryFile(max_size=16 * 1024 * 1024) as prepared:
         db.execute("BEGIN")
-        if db.execute("PRAGMA user_version").fetchone()[0] != 4:
-            raise ValueError("DB-only recovery requires authoring schema v4")
+        if db.execute("PRAGMA user_version").fetchone()[0] not in (4, 5):
+            raise ValueError("DB-only recovery requires authoring schema v4 or v5")
         retention.sparse_restore_marker(store)
         files = _Selection(store, db)
         state_sha = files.control["payload"].get("stateSha256")

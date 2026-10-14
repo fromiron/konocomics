@@ -1,22 +1,40 @@
 """Generation-bound authoring revisions; execution history is not curation history."""
 from __future__ import annotations
 
+from collections import Counter
 from contextlib import closing, ExitStack
 from datetime import datetime, timedelta, timezone
+import hashlib
 import json
 import os
 from pathlib import Path
 import sqlite3
 import uuid
 import re
+import lzma
 import tempfile
+import time
 from time import perf_counter, sleep
 import zlib
 
-from catalog_workspace import Workspace, APPLICATION_ID, digest, exclusive_file, key_path, unlinked, utc_now, replace_busy_backup
+from catalog_workspace import Workspace, APPLICATION_ID, XZ_MAGIC, decode_blob, digest, exclusive_file, key_path, unlinked, utc_now, replace_busy_backup
 
-VERSION = 4
+VERSION = 5
+WRITABLE_VERSIONS = (4, 5)
+READABLE_VERSIONS = (3, 4, 5)
+LARGE_BLOB = 1024 * 1024
 FORMAT = "catalog-authoring-revision-v1"
+# Saved bytes that no GC rule can retire. Execution records and their transient
+# copies expire; superseded unpinned control snapshots expire as well.
+DURABLE_MEMBER = """(r.kind IN ('curation','collection','decision','completion','canonical-completion','legacy-pin')
+ OR (r.kind='active' AND (r.pinned=1 OR EXISTS(SELECT 1 FROM head h WHERE h.revision_id=r.id)))
+ OR (r.kind='artifact' AND (r.pinned=1 OR EXISTS(SELECT 1 FROM head h WHERE h.revision_id=r.id)
+     OR NOT EXISTS(SELECT 1 FROM execution_artifact e WHERE e.artifact_id=r.id))))"""
+# Mutable recovery-control snapshots: only the head is read; superseded copies
+# expire once their successor has itself aged past the retention window.
+CONTROL_SUBJECTS = ("current-live-declared-inputs", "current-recovery-controls")
+MATERIALIZED_SCOPE = re.compile(r"data/local/catalog-authoring/(?:retained/curation-baseline/[^/]+"
+                                r"|restored-versions|artifacts/.+/attempts/[0-9a-f]{64})(?:/|$)")
 SCHEMA = """
 CREATE TABLE store_meta(key TEXT PRIMARY KEY, value TEXT NOT NULL) STRICT;
 CREATE TABLE blob(sha256 TEXT PRIMARY KEY CHECK(length(sha256)=64), byte_length INTEGER NOT NULL CHECK(byte_length>=0), content BLOB NOT NULL) STRICT;
@@ -56,14 +74,70 @@ CREATE TABLE change_log(
 ) STRICT;
 """
 
+# v5 keeps the v4 rows and journal, but stores each membership row as small
+# integer keys. The revision_blob view preserves every existing query shape.
+V5_SCHEMA = """
+CREATE TABLE store_meta(key TEXT PRIMARY KEY, value TEXT NOT NULL) STRICT;
+CREATE TABLE blob(sha256 TEXT PRIMARY KEY CHECK(length(sha256)=64), byte_length INTEGER NOT NULL CHECK(byte_length>=0), content BLOB NOT NULL) STRICT;
+CREATE TABLE blob_key(id INTEGER PRIMARY KEY, sha256 TEXT NOT NULL UNIQUE REFERENCES blob(sha256) ON DELETE CASCADE) STRICT;
+CREATE TRIGGER blob_key_insert AFTER INSERT ON blob BEGIN INSERT INTO blob_key(sha256) VALUES (new.sha256); END;
+CREATE TABLE revision(
+ id TEXT PRIMARY KEY, kind TEXT NOT NULL, subject TEXT NOT NULL,
+ payload_sha256 TEXT NOT NULL REFERENCES blob(sha256),
+ previous_id TEXT REFERENCES revision(id), created_at TEXT NOT NULL,
+ terminal INTEGER NOT NULL CHECK(terminal IN (0,1)), pinned INTEGER NOT NULL CHECK(pinned IN (0,1))
+) STRICT;
+CREATE TABLE head(kind TEXT NOT NULL, subject TEXT NOT NULL, revision_id TEXT NOT NULL REFERENCES revision(id), PRIMARY KEY(kind,subject)) STRICT;
+CREATE TABLE path(id INTEGER PRIMARY KEY, value TEXT NOT NULL UNIQUE) STRICT;
+CREATE TABLE member(revision_id TEXT NOT NULL REFERENCES revision(id), path_id INTEGER NOT NULL REFERENCES path(id),
+ blob_id INTEGER NOT NULL REFERENCES blob_key(id), PRIMARY KEY(revision_id,path_id)) STRICT, WITHOUT ROWID;
+CREATE INDEX member_path ON member(path_id,blob_id);
+CREATE INDEX member_blob ON member(blob_id);
+CREATE VIEW revision_blob(revision_id,path,sha256) AS
+ SELECT m.revision_id,p.value,k.sha256 FROM member m JOIN path p ON p.id=m.path_id JOIN blob_key k ON k.id=m.blob_id;
+CREATE TRIGGER revision_blob_insert INSTEAD OF INSERT ON revision_blob BEGIN
+ INSERT INTO path(value) SELECT new.path WHERE NOT EXISTS(SELECT 1 FROM path WHERE value=new.path);
+ INSERT INTO member(revision_id,path_id,blob_id) VALUES (new.revision_id,
+  (SELECT id FROM path WHERE value=new.path), (SELECT id FROM blob_key WHERE sha256=new.sha256));
+END;
+CREATE TRIGGER revision_blob_delete INSTEAD OF DELETE ON revision_blob BEGIN
+ DELETE FROM member WHERE revision_id=old.revision_id AND path_id=(SELECT id FROM path WHERE value=old.path);
+ DELETE FROM path WHERE value=old.path AND NOT EXISTS(SELECT 1 FROM member WHERE path_id=path.id);
+END;
+CREATE INDEX revision_subject ON revision(kind,subject);
+CREATE INDEX revision_previous ON revision(previous_id);
+CREATE INDEX revision_payload ON revision(payload_sha256);
+CREATE INDEX revision_expiry ON revision(kind,terminal,pinned,created_at);
+CREATE INDEX head_revision ON head(revision_id);
+CREATE TABLE execution_artifact(
+ execution_id TEXT NOT NULL REFERENCES revision(id),
+ artifact_id TEXT NOT NULL REFERENCES revision(id),
+ PRIMARY KEY(execution_id,artifact_id)
+) STRICT;
+CREATE INDEX execution_artifact_target ON execution_artifact(artifact_id);
+CREATE TABLE revision_dependency(
+ owner_id TEXT NOT NULL REFERENCES revision(id), target_id TEXT NOT NULL REFERENCES revision(id),
+ PRIMARY KEY(owner_id,target_id)
+) STRICT;
+CREATE INDEX revision_dependency_target ON revision_dependency(target_id);
+CREATE TABLE change_log(
+ seq INTEGER PRIMARY KEY AUTOINCREMENT, entity TEXT NOT NULL,
+ key1 TEXT NOT NULL, key2 TEXT NOT NULL DEFAULT ''
+) STRICT;
+"""
 
-def change_triggers():
+
+def change_triggers(version=4):
     statements = []
     tables = {"blob": ("blob", "sha256", None), "revision": ("revision", "id", None),
               "head": ("head", "kind", "subject"),
               "revision_blob": ("revision", "revision_id", None),
               "execution_artifact": ("ownership", "execution_id", "artifact_id"),
               "revision_dependency": ("dependency", "owner_id", "target_id")}
+    if version >= 5:
+        # Membership changes only with its revision insert/delete, which is
+        # already journaled; backup deltas re-read the whole membership.
+        del tables["revision_blob"]
     for table, (entity, first, second) in tables.items():
         for action in ("INSERT", "UPDATE", "DELETE"):
             row = "old" if action == "DELETE" else "new"
@@ -71,6 +145,53 @@ def change_triggers():
             statements.append(f"""CREATE TRIGGER log_{table}_{action.lower()} AFTER {action} ON {table}
                 BEGIN INSERT INTO change_log(entity,key1,key2) VALUES ('{entity}',{row}.{first},{key2}); END;""")
     return "\n".join(statements)
+
+
+def encode_blob(body, version, *, final=False):
+    """v5 keeps durable bytes compact; large hot-path writes wait for gc recompress."""
+    if version < 5:
+        return zlib.compress(body, level=1)
+    if len(body) < 4096:
+        return zlib.compress(body, level=9)
+    if len(body) < LARGE_BLOB:
+        return lzma.compress(body, preset=6)
+    return lzma.compress(body, preset=9) if final else zlib.compress(body, level=1)
+
+
+def recompress_blobs(rows):
+    """Worker entry point: verify stored bytes, re-encode them for long-term storage."""
+    result = []
+    for sha, size, content in rows:
+        encoded_body = encode_blob(decode_blob(sha, size, content), VERSION, final=True)
+        decode_blob(sha, size, encoded_body)  # The new encoding must round-trip to the same SHA.
+        result.append((sha, size, encoded_body if len(encoded_body) < len(content) else content))
+    return result
+
+
+def recompressed(rows, workers, *, batch_bytes=64 * 1024 * 1024, batch_rows=256):
+    """Bounded, ordered parallel recompression; at most a few batches stay in memory."""
+    from collections import deque
+    from concurrent.futures import ProcessPoolExecutor
+
+    def batches():
+        batch, size = [], 0
+        for row in rows:
+            batch.append(row)
+            size += len(row[2])
+            if len(batch) >= batch_rows or size >= batch_bytes:
+                yield batch
+                batch, size = [], 0
+        if batch:
+            yield batch
+
+    with ProcessPoolExecutor(max_workers=workers) as pool:
+        pending = deque()
+        for batch in batches():
+            pending.append(pool.submit(recompress_blobs, batch))
+            if len(pending) >= workers * 2:
+                yield from pending.popleft().result()
+        while pending:
+            yield from pending.popleft().result()
 
 
 def wal_runtime_supported(version=None):
@@ -359,7 +480,10 @@ class RevisionWorkspace(Workspace):
         with store.database.open("xb"):
             pass
         with closing(sqlite3.connect(store.database)) as db:
-            db.executescript(f"BEGIN IMMEDIATE;{SCHEMA}{V4_SCHEMA}{change_triggers()}PRAGMA application_id={APPLICATION_ID};PRAGMA user_version={VERSION};COMMIT;")
+            # Incremental auto-vacuum must precede the first table; VACUUM would
+            # renumber revision rowids that legacy readers still compare.
+            db.executescript(f"PRAGMA auto_vacuum=INCREMENTAL;BEGIN IMMEDIATE;{V5_SCHEMA}{change_triggers(VERSION)}"
+                             f"PRAGMA application_id={APPLICATION_ID};PRAGMA user_version={VERSION};COMMIT;")
             with db:
                 db.executemany("INSERT INTO store_meta VALUES (?,?)", [
                     ("generation", str(uuid.uuid4())), ("policy", "curation-evidence-active-v1"),
@@ -376,7 +500,7 @@ class RevisionWorkspace(Workspace):
             if db.execute("PRAGMA application_id").fetchone()[0] != APPLICATION_ID:
                 raise ValueError("Not an authoring revision store")
             version = db.execute("PRAGMA user_version").fetchone()[0]
-            if version not in (3, VERSION):
+            if version not in READABLE_VERSIONS:
                 raise ValueError("Only schema v3 can migrate to v4")
             generation = db.execute("SELECT value FROM store_meta WHERE key='generation'").fetchone()[0]
             if version == 3:
@@ -384,12 +508,13 @@ class RevisionWorkspace(Workspace):
                 db.executescript(f"BEGIN IMMEDIATE;{V4_SCHEMA}{change_triggers()}"
                     f"INSERT INTO store_meta VALUES ('journal_origin','{origin}');"
                     "INSERT INTO store_meta SELECT 'legacy_revision_max_rowid',cast(coalesce(max(rowid),0) AS TEXT) FROM revision;"
-                    f"PRAGMA user_version={VERSION};COMMIT;")
+                    "PRAGMA user_version=4;COMMIT;")
+                version = 4
             if enable_wal:
                 if db.execute("PRAGMA journal_mode=WAL").fetchone()[0] != "wal":
                     raise ValueError("Authoring WAL activation failed")
             mode = db.execute("PRAGMA journal_mode").fetchone()[0]
-        return {"status": "UPGRADED", "schemaVersion": VERSION, "generation": generation, "journalMode": mode}
+        return {"status": "UPGRADED", "schemaVersion": version, "generation": generation, "journalMode": mode}
 
     def connect(self, *, write=False):
         if write and self.database == self.repo / "data/local/catalog-authoring/workspace.sqlite" and (self.database.parent / "RETENTION-MAINTENANCE.json").exists():
@@ -401,10 +526,11 @@ class RevisionWorkspace(Workspace):
             db.execute("PRAGMA foreign_keys=ON")
             version = db.execute("PRAGMA user_version").fetchone()[0]
             if (db.execute("PRAGMA application_id").fetchone()[0] != APPLICATION_ID
-                    or version not in (3, VERSION)):
+                    or version not in READABLE_VERSIONS):
                 raise ValueError("Authoring store generation/schema changed; reopen with current code")
-            if write and version != VERSION:
+            if write and version not in WRITABLE_VERSIONS:
                 raise ValueError("Schema v3 is read-only; explicitly upgrade_v4 with writers stopped")
+            self._schema_version = version
             generation = db.execute("SELECT value FROM store_meta WHERE key='generation'").fetchone()[0]
             if hasattr(self, "_generation") and self._generation != generation:
                 raise ValueError("Authoring store generation changed during operation")
@@ -518,10 +644,10 @@ class RevisionWorkspace(Workspace):
             # Keep prepared bytes: concurrent GC may retire a formerly saved blob.
             compressed = old[1]
         else:
-            # zlib round-trips deterministically; the payload SHA is re-checked
-            # whenever a blob is read back (_decode_compressed), so a compress
-            # readback here is redundant defensive work on every new blob.
-            compressed = zlib.compress(body, level=1)
+            # Both codecs round-trip deterministically; the payload SHA is
+            # re-checked whenever a blob is read back (_decode_compressed), so a
+            # compress readback here is redundant defensive work on every blob.
+            compressed = encode_blob(body, self._schema_version)
         prepared.add(sha, len(body), compressed)
         if body.lstrip()[:1] in (b"{", b"["):
             try:
@@ -647,6 +773,8 @@ class RevisionWorkspace(Workspace):
         subject = label + ":" + digest(encoded(sorted(self.key(root, checked=subject_links) for root in roots)))
         payload_sha = digest(encoded({"payload": {"label": label}, "members": members}))
         with closing(self.connect()) as db:
+            if control_base is not None:
+                self._reject_partial_materialization(db, kind, subject, members)
             unchanged = self._unchanged(db, kind, subject, payload_sha, terminal, False, members)
             if unchanged and execution is not None:
                 self._bind_execution_artifacts(db, execution, [unchanged], require_existing=True)
@@ -665,6 +793,95 @@ class RevisionWorkspace(Workspace):
         # A concurrent file change during commit cannot produce a success receipt.
         self._assert_inventory(roots, inventory)
         return receipt
+
+    @staticmethod
+    def _reject_partial_materialization(db, kind, subject, members):
+        """SPARSE FILE ABSENCE IS NOT DELETION: a pruned copy never shrinks its head."""
+        head = db.execute("SELECT revision_id FROM head WHERE kind=? AND subject=?", (kind, subject)).fetchone()
+        if head is None:
+            return
+        for path, in db.execute("SELECT path FROM revision_blob WHERE revision_id=?", head):
+            if path not in members and MATERIALIZED_SCOPE.match(path):
+                raise ValueError("Saved scope is only partially materialized; extract it through its operation first: " + path)
+
+    def durable_saved(self, db, path, sha):
+        """The exact path/bytes survive every GC rule, and no later save replaced them."""
+        latest = db.execute("SELECT b.sha256 FROM revision_blob b JOIN revision r ON r.id=b.revision_id "
+                            "WHERE b.path=? ORDER BY r.rowid DESC LIMIT 1", (path,)).fetchone()
+        if latest != (sha,):
+            return False
+        return db.execute("SELECT 1 FROM revision_blob b JOIN revision r ON r.id=b.revision_id WHERE b.path=? AND b.sha256=? AND "
+                          + DURABLE_MEMBER + " LIMIT 1", (path, sha)).fetchone() is not None
+
+    def durable_bytes(self, db, sha):
+        """Content-addressed copies need only durable bytes under any saved path."""
+        return db.execute("SELECT 1 FROM revision_blob b JOIN revision r ON r.id=b.revision_id WHERE b.sha256=? AND "
+                          + DURABLE_MEMBER + " LIMIT 1", (sha,)).fetchone() is not None
+
+    def retire_materialized(self, scopes, *, apply=False, min_age_seconds=24 * 3600, now=None):
+        """Delete extracted copies only when source and backup both hold durable bytes.
+
+        A scope is (root, content_named). Every other file is preserved with its
+        reason; the database history is never changed here.
+        """
+        backup = RevisionWorkspace(self.repo, self.repo / "data/local/catalog-authoring/backups/latest.sqlite")
+        if not backup.database.is_file():
+            raise ValueError("Materialized copies require a verified backup before removal")
+        now = time.time() if now is None else now
+        removed, preserved, verified = Counter(), {}, set()
+        removed_bytes = Counter()
+        listing = hashlib.sha256()
+        with closing(self.connect()) as db, closing(backup.connect()) as saved:
+            db.execute("BEGIN")
+            saved.execute("BEGIN")
+            for root, content_named in scopes:
+                root = unlinked(root)
+                if not root.is_dir():
+                    continue
+                scope = self.key(root)
+                for path in self.files([root]):
+                    key = self.key(path)
+                    stat = path.lstat()
+                    reason = None
+                    if now - stat.st_mtime < min_age_seconds:
+                        reason = "recent"
+                    elif path.suffix == ".sqlite" and any(Path(str(path) + suffix).exists() for suffix in ("-wal", "-shm", "-journal")):
+                        reason = "open-sqlite"
+                    if reason is None:
+                        body = path.read_bytes()
+                        sha = digest(body)
+                        if content_named:
+                            durable = path.name == sha and all(self.durable_bytes(view, sha) for view in (db, saved))
+                        else:
+                            durable = all(self.durable_saved(view, key, sha) for view in (db, saved))
+                        if not durable:
+                            reason = "not-durable"
+                    if reason is not None:
+                        preserved.setdefault(reason, []).append(key)
+                        continue
+                    if sha not in verified:
+                        # Decoding re-checks the SHA-256 of the actual recovery bytes.
+                        backup.read_blob(saved, sha)
+                        verified.add(sha)
+                    if apply:
+                        again = path.lstat()
+                        if ((again.st_size, again.st_mtime_ns, again.st_ino) != (stat.st_size, stat.st_mtime_ns, stat.st_ino)
+                                or digest(path.read_bytes()) != sha):
+                            raise ValueError("Materialized copy changed during retirement: " + key)
+                        path.unlink()
+                    removed[scope] += 1
+                    removed_bytes[scope] += stat.st_size
+                    listing.update(encoded([key, sha]))
+                if apply:
+                    for directory in sorted([p for p in root.rglob("*") if p.is_dir()], key=lambda p: len(p.parts), reverse=True):
+                        if not directory.is_symlink() and not any(directory.iterdir()):
+                            directory.rmdir()
+                    if not any(root.iterdir()):
+                        root.rmdir()
+        return {"status": "RETIRED" if apply else "PREVIEW", "files": sum(removed.values()), "bytes": sum(removed_bytes.values()),
+                "listingSha256": listing.hexdigest(),
+                "scopes": {scope: {"files": removed[scope], "bytes": removed_bytes[scope]} for scope in sorted(removed)},
+                "preserved": {reason: {"files": len(paths), "examples": paths[:20]} for reason, paths in sorted(preserved.items())}}
 
     def file_reference(self, path, sha=None):
         key = self.key(path)
@@ -820,13 +1037,12 @@ class RevisionWorkspace(Workspace):
             self.get_revision(ref)
         return {"status": "STORAGE_VERIFIED", "generation": self._generation, "revisions": len(refs), "blobs": count, "uniqueBytes": size}
 
+    def _encode_blob(self, content):
+        return encode_blob(content, self._schema_version)
+
     @staticmethod
     def _decode_compressed(sha, size, compressed):
-        decoder = zlib.decompressobj()
-        body = decoder.decompress(compressed, size + 1)
-        if not decoder.eof or decoder.unused_data or len(body) != size or digest(body) != sha:
-            raise ValueError(f"Corrupt blob: {sha}")
-        return body
+        return decode_blob(sha, size, compressed)
 
     def _initial_backup(self, latest):
         pending = latest.with_name(latest.stem + ".revision-pending.sqlite")
@@ -956,7 +1172,8 @@ class RevisionWorkspace(Workspace):
         with exclusive_file(root / "rotation.lock"):
             acquired = perf_counter()
             with closing(self.connect()) as source:
-                if source.execute("PRAGMA user_version").fetchone()[0] != VERSION:
+                source_version = source.execute("PRAGMA user_version").fetchone()[0]
+                if source_version not in WRITABLE_VERSIONS:
                     raise ValueError("Schema v3 is read-only; explicitly upgrade_v4 before backup")
                 origin = source.execute("SELECT value FROM store_meta WHERE key='journal_origin'").fetchone()[0]
             initialize = not latest.exists()
@@ -966,14 +1183,17 @@ class RevisionWorkspace(Workspace):
                 # hot rollback journal left by a killed delta transaction. A
                 # read-only first open cannot perform that recovery on Windows.
                 with closing(sqlite3.connect(latest.as_uri() + "?mode=rw", uri=True, timeout=300)) as previous:
+                    previous_version = previous.execute("PRAGMA user_version").fetchone()[0]
                     if (previous.execute("PRAGMA application_id").fetchone()[0] != APPLICATION_ID
-                            or previous.execute("PRAGMA user_version").fetchone()[0] not in (3, VERSION)):
+                            or previous_version not in READABLE_VERSIONS):
                         raise ValueError("Not a supported authoring revision backup")
                     generation = previous.execute("SELECT value FROM store_meta WHERE key='generation'").fetchone()[0]
                     if generation != self._generation:
                         raise ValueError("Initialize a separate backup for the new retention generation")
                     old_origin = previous.execute("SELECT value FROM store_meta WHERE key='journal_origin'").fetchone()
-                    initialize = old_origin is None or old_origin[0] != origin
+                    # A schema transition gets a fresh journal origin; a stale
+                    # format behind the same origin is never patched in place.
+                    initialize = old_origin is None or old_origin[0] != origin or previous_version != source_version
                     if not initialize:
                         value = previous.execute("SELECT value FROM store_meta WHERE key='backup_cursor'").fetchone()
                         if value is None:
@@ -1179,7 +1399,7 @@ class RevisionWorkspace(Workspace):
                     physical_state[rid] = (sha, any(unlinked(self.repo / name).exists() for name in roots))
         with closing(self.connect(write=apply)) as db:
             db.execute("BEGIN IMMEDIATE" if apply else "BEGIN")
-            modern = db.execute("PRAGMA user_version").fetchone()[0] == VERSION
+            modern = db.execute("PRAGMA user_version").fetchone()[0] in WRITABLE_VERSIONS
             legacy = db.execute("SELECT value FROM store_meta WHERE key='legacy_revision_max_rowid'").fetchone()
             legacy_watermark = int(legacy[0]) if legacy else 0
             dependency_guard = "AND NOT EXISTS(SELECT 1 FROM revision_dependency WHERE target_id=r.id)" if modern else ""
@@ -1203,8 +1423,11 @@ class RevisionWorkspace(Workspace):
                         artifacts.update(row[0] for row in db.execute("SELECT artifact_id FROM execution_artifact WHERE execution_id=?", (rid,)))
             blocked = [rid for rid, (owned, eligible) in transient.items() if owned - eligible or rid in cleanup_pending]
             removable = [rid for rid in removable if rid not in blocked]
+            controls = self._expired_controls(db, cutoff, legacy_watermark) if modern else set()
+            control_members = sum(db.execute("SELECT count(*) FROM revision_blob WHERE revision_id=?", (rid,)).fetchone()[0]
+                                  for rid in controls)
+            retired = [] if apply else sorted(rid for rid in artifacts if self._artifact_expires(db, rid, legacy_watermark, set(removable)))
             if apply:
-                retired = []
                 for rid, (_, eligible) in transient.items():
                     for artifact in eligible:
                         db.execute("DELETE FROM revision_dependency WHERE owner_id=?", (artifact,))
@@ -1221,20 +1444,120 @@ class RevisionWorkspace(Workspace):
                     db.execute("DELETE FROM revision_blob WHERE revision_id=?", (rid,))
                     db.execute("DELETE FROM revision WHERE id=?", (rid,))
                 for rid in sorted(artifacts):
-                    # Current heads, meaningful history, other executions and
-                    # legacy artifacts without explicit ownership stay protected.
-                    eligible = db.execute("""SELECT 1 FROM revision r WHERE id=? AND kind='artifact' AND pinned=0 AND rowid>?
-                        AND NOT EXISTS(SELECT 1 FROM head WHERE revision_id=r.id)
-                        AND NOT EXISTS(SELECT 1 FROM execution_artifact WHERE artifact_id=r.id)
-                        AND NOT EXISTS(SELECT 1 FROM revision_dependency WHERE target_id=r.id)
-                        AND NOT EXISTS(SELECT 1 FROM revision WHERE previous_id=r.id)""", (rid, legacy_watermark)).fetchone()
-                    if eligible:
+                    if self._artifact_expires(db, rid, legacy_watermark):
                         db.execute("DELETE FROM revision_dependency WHERE owner_id=?", (rid,))
                         db.execute("DELETE FROM revision_blob WHERE revision_id=?", (rid,))
                         db.execute("DELETE FROM revision WHERE id=?", (rid,))
                         retired.append(rid)
-                db.execute("DELETE FROM blob WHERE sha256 NOT IN (SELECT payload_sha256 FROM revision UNION SELECT sha256 FROM revision_blob)")
+                # Owners first: a superseded controls snapshot may depend on an
+                # equally superseded live-input snapshot in the same expiry set.
+                for rid in controls:
+                    db.execute("DELETE FROM revision_dependency WHERE owner_id=?", (rid,))
+                for rid in sorted(controls):
+                    db.execute("DELETE FROM revision_blob WHERE revision_id=?", (rid,))
+                    db.execute("DELETE FROM revision WHERE id=?", (rid,))
+                db.execute("DELETE FROM blob WHERE NOT EXISTS(SELECT 1 FROM revision WHERE payload_sha256=blob.sha256) "
+                           "AND NOT EXISTS(SELECT 1 FROM revision_blob WHERE sha256=blob.sha256)")
                 db.commit()
-            return {"status": "GC_APPLIED" if apply else "GC_PREVIEW", "expiredExecutionRevisions": removable,
-                    "retiredOwnedArtifacts": retired if apply else [], "blockedExecutionRevisions": blocked, "cutoff": cutoff}
+            result = {"status": "GC_APPLIED" if apply else "GC_PREVIEW", "expiredExecutionRevisions": removable,
+                      "retiredOwnedArtifacts": retired, "blockedExecutionRevisions": blocked, "cutoff": cutoff,
+                      "expiredControlRevisions": len(controls), "expiredControlMembers": control_members}
+        result["recompression"] = self.recompress_large_blobs(apply=apply)
+        return result
+
+    @staticmethod
+    def _artifact_expires(db, rid, legacy_watermark, expiring_owners=frozenset()):
+        """Current heads, meaningful history, other executions and legacy artifacts stay protected."""
+        return db.execute("""SELECT 1 FROM revision r WHERE id=? AND kind='artifact' AND pinned=0 AND rowid>?
+            AND NOT EXISTS(SELECT 1 FROM head WHERE revision_id=r.id)
+            AND NOT EXISTS(SELECT 1 FROM execution_artifact WHERE artifact_id=r.id AND execution_id NOT IN (SELECT value FROM json_each(?)))
+            AND NOT EXISTS(SELECT 1 FROM revision_dependency WHERE target_id=r.id)
+            AND NOT EXISTS(SELECT 1 FROM revision WHERE previous_id=r.id)""",
+            (rid, legacy_watermark, json.dumps(sorted(expiring_owners)))).fetchone() is not None
+
+    @staticmethod
+    def _expired_controls(db, cutoff, legacy_watermark):
+        """Superseded unpinned control snapshots whose successor aged past the cutoff."""
+        candidates = set()
+        for subject in CONTROL_SUBJECTS:
+            rows = db.execute("SELECT id,created_at,pinned,rowid FROM revision WHERE kind='active' AND subject=? ORDER BY rowid",
+                              (subject,)).fetchall()
+            for (rid, _, pinned, rowid), successor in zip(rows, rows[1:]):
+                if pinned or rowid <= legacy_watermark or successor[1] >= cutoff:
+                    continue
+                if db.execute("""SELECT 1 WHERE EXISTS(SELECT 1 FROM head WHERE revision_id=?)
+                        OR EXISTS(SELECT 1 FROM revision WHERE previous_id=?)
+                        OR EXISTS(SELECT 1 FROM execution_artifact WHERE artifact_id=? OR execution_id=?)""",
+                        (rid, rid, rid, rid)).fetchone() is None:
+                    candidates.add(rid)
+        # Keep any snapshot that a surviving revision still depends on.
+        while True:
+            blocked = {rid for rid in candidates if any(owner not in candidates for owner, in db.execute(
+                "SELECT owner_id FROM revision_dependency WHERE target_id=?", (rid,)))}
+            if not blocked:
+                return candidates
+            candidates -= blocked
+
+    def recompress_large_blobs(self, *, apply=False, workers=None):
+        """Large hot-path zlib blobs become compact xz; the raw SHA identity is unchanged."""
+        with closing(self.connect()) as db:
+            if self._schema_version < 5:
+                return {"status": "NOT_APPLICABLE", "schemaVersion": self._schema_version}
+            # Disposable checkpoint pairs expire with their execution; skip them.
+            rows = db.execute("""SELECT sha256,byte_length,length(content) FROM blob b WHERE byte_length>=? AND substr(content,1,6)<>?
+                AND (EXISTS(SELECT 1 FROM revision WHERE payload_sha256=b.sha256)
+                     OR EXISTS(SELECT 1 FROM revision_blob m JOIN revision r ON r.id=m.revision_id
+                               WHERE m.sha256=b.sha256 AND r.kind<>'execution-artifact'))""",
+                              (LARGE_BLOB, XZ_MAGIC)).fetchall()
+        result = {"status": "RECOMPRESSED" if apply else "PREVIEW", "blobs": len(rows), "storedBytesBefore": sum(row[2] for row in rows)}
+        if not apply or not rows:
+            return result
+        workers = workers or max(1, min(4, os.cpu_count() or 1))
+
+        def stored():
+            with closing(self.connect()) as reader:
+                for sha, _, _ in rows:
+                    yield reader.execute("SELECT sha256,byte_length,content FROM blob WHERE sha256=?", (sha,)).fetchone()
+
+        after = 0
+        for sha, size, content in recompressed(stored(), workers, batch_rows=8):
+            with closing(self.connect(write=True)) as db, db:
+                db.execute("BEGIN IMMEDIATE")
+                db.execute("UPDATE blob SET content=? WHERE sha256=? AND byte_length=?", (content, sha, size))
+            after += len(content)
+        result["storedBytesAfter"] = after
+        return result
+
+    def prune_change_log(self):
+        """Drop journal rows the backup already holds; both keep the cursor row they compare."""
+        latest = RevisionWorkspace(self.repo, self.repo / "data/local/catalog-authoring/backups/latest.sqlite")
+        with closing(latest.connect()) as saved:
+            cursor = int(saved.execute("SELECT value FROM store_meta WHERE key='backup_cursor'").fetchone()[0])
+        removed = {}
+        for name, store in (("source", self), ("backup", latest)):
+            with closing(store.connect(write=True)) as db, db:
+                db.execute("BEGIN IMMEDIATE")
+                legacy = db.execute("SELECT value FROM store_meta WHERE key='legacy_revision_max_rowid'").fetchone()
+                if legacy and int(legacy[0]) > 0:
+                    raise ValueError("Legacy completion markers keep the full change journal")
+                if db.execute("SELECT 1 FROM change_log WHERE seq=?", (cursor,)).fetchone() is None:
+                    raise ValueError("Change journal cursor row is missing")
+                removed[name] = db.execute("DELETE FROM change_log WHERE seq<?", (cursor,)).rowcount
+        return {"cursor": cursor, "removedRows": removed}
+
+    def reclaim_free_pages(self):
+        """Return freed pages to the file system without VACUUM renumbering rowids."""
+        latest = RevisionWorkspace(self.repo, self.repo / "data/local/catalog-authoring/backups/latest.sqlite")
+        result = {}
+        for name, store in (("source", self), ("backup", latest)):
+            before = store.database.stat().st_size
+            with closing(store.connect(write=True)) as db:
+                if db.execute("PRAGMA auto_vacuum").fetchone()[0] != 2:
+                    result[name] = {"status": "NOT_INCREMENTAL", "bytes": before}
+                    continue
+                db.execute("PRAGMA incremental_vacuum").fetchall()
+                if db.execute("PRAGMA journal_mode").fetchone()[0] == "wal":
+                    db.execute("PRAGMA wal_checkpoint(TRUNCATE)").fetchall()
+            result[name] = {"status": "RECLAIMED", "bytesBefore": before, "bytesAfter": store.database.stat().st_size}
+        return result
     is_revision_store = True

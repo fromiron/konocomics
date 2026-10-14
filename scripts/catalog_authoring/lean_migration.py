@@ -23,10 +23,10 @@ import uuid
 REPO = Path(__file__).resolve().parents[2]
 sys.path.insert(0, str(REPO / "scripts"))
 
-from catalog_revision_store import SCHEMA, V4_SCHEMA, change_triggers, RevisionWorkspace  # noqa: E402
+from catalog_revision_store import SCHEMA, V4_SCHEMA, V5_SCHEMA, change_triggers, RevisionWorkspace  # noqa: E402
 from catalog_workspace import APPLICATION_ID  # noqa: E402
 
-VERSION = 4
+VERSIONS = (4, 5)
 DROP_HEAD_KINDS = {"legacy-pin", "artifact", "execution"}
 DROP_ACTIVE_SUBJECTS = {"migration-working-sets"}
 
@@ -69,8 +69,9 @@ def build(source_path: Path, dest_path: Path):
         raise SystemExit(f"Destination already exists: {dest_path}")
     with closing(sqlite3.connect(source_path.resolve().as_uri() + "?mode=ro", uri=True)) as src:
         src.execute("BEGIN")
-        if src.execute("PRAGMA user_version").fetchone()[0] != VERSION:
-            raise SystemExit("Source must be a v4 authoring store")
+        version = src.execute("PRAGMA user_version").fetchone()[0]
+        if version not in VERSIONS:
+            raise SystemExit("Source must be a v4 or v5 authoring store")
         meta = dict(src.execute("SELECT key,value FROM store_meta"))
         heads = kept_heads(src)
         keep = closure(src, {rid for _, _, rid in heads})
@@ -87,9 +88,12 @@ def build(source_path: Path, dest_path: Path):
         with closing(sqlite3.connect(dest_path)) as dst:
             # Create the schema without change triggers so the bulk copy does not
             # populate a full change history; the new origin initializes one backup.
+            # The lean copy keeps its source format; v5 inserts go through the
+            # same revision_blob view and blob key trigger as normal writes.
+            schema = f"{SCHEMA}{V4_SCHEMA}" if version == 4 else V5_SCHEMA
             dst.executescript(
-                f"BEGIN IMMEDIATE;{SCHEMA}{V4_SCHEMA}"
-                f"PRAGMA application_id={APPLICATION_ID};PRAGMA user_version={VERSION};COMMIT;")
+                ("" if version == 4 else "PRAGMA auto_vacuum=INCREMENTAL;") + f"BEGIN IMMEDIATE;{schema}"
+                f"PRAGMA application_id={APPLICATION_ID};PRAGMA user_version={version};COMMIT;")
             dst.execute("PRAGMA foreign_keys=OFF")
             dst.execute("BEGIN IMMEDIATE")
             dst.executemany("INSERT INTO store_meta VALUES (?,?)", [
@@ -151,7 +155,7 @@ def build(source_path: Path, dest_path: Path):
             dst.execute("COMMIT")
             # executescript first commits any open transaction; triggers are added
             # after the bulk copy so only the compatibility markers are logged.
-            dst.executescript(change_triggers())
+            dst.executescript(change_triggers(version))
             dst.execute("PRAGMA foreign_keys=ON")
             fk = dst.execute("PRAGMA foreign_key_check").fetchall()
             if fk:

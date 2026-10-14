@@ -10,6 +10,7 @@ import argparse
 import errno
 import hashlib
 import json
+import lzma
 import os
 import re
 import shutil
@@ -55,6 +56,24 @@ CREATE INDEX entry_snapshot ON entry(snapshot_id);
 
 def digest(content: bytes) -> str:
     return hashlib.sha256(content).hexdigest()
+
+
+XZ_MAGIC = b"\xfd7zXZ\x00"
+
+
+def decode_blob(sha: str, size: int, content: bytes) -> bytes:
+    """Decode stored bytes by codec magic; the raw SHA-256 stays the identity."""
+    if content[:6] == XZ_MAGIC:
+        decoder = lzma.LZMADecompressor(format=lzma.FORMAT_XZ, memlimit=256 * 1024 * 1024)
+    else:
+        decoder = zlib.decompressobj()
+    try:
+        body = decoder.decompress(content, size + 1)
+    except (zlib.error, lzma.LZMAError) as error:
+        raise ValueError(f"Corrupt blob: {sha}") from error
+    if not decoder.eof or decoder.unused_data or len(body) != size or digest(body) != sha:
+        raise ValueError(f"Corrupt blob: {sha}")
+    return body
 
 
 def replace_busy_backup(source: Path, target: Path) -> None:
@@ -132,7 +151,7 @@ class Workspace:
             path = Path(database or Path(repo) / "data/local/catalog-authoring/workspace.sqlite")
             if path.is_file():
                 with closing(sqlite3.connect(unlinked(path).as_uri() + "?mode=ro", uri=True)) as db:
-                    revision_format = db.execute("PRAGMA user_version").fetchone()[0] in (3, 4)
+                    revision_format = db.execute("PRAGMA user_version").fetchone()[0] in (3, 4, 5)
                 if revision_format:
                     from catalog_revision_store import RevisionWorkspace
                     # Executing this file as __main__ creates a distinct class
@@ -238,12 +257,15 @@ class Workspace:
                 found[key_path(path.relative_to(self.repo).as_posix())] = path
         return [found[key] for key in sorted(found)]
 
+    def _encode_blob(self, content: bytes) -> bytes:
+        return zlib.compress(content, level=1)
+
     def add_blob(self, db, content: bytes) -> str:
         sha = digest(content)
         old = db.execute("SELECT byte_length FROM blob WHERE sha256=?", (sha,)).fetchone()
         if old is None:
-            compressed = zlib.compress(content, level=1)
-            if zlib.decompress(compressed) != content:
+            compressed = self._encode_blob(content)
+            if decode_blob(sha, len(content), compressed) != content:
                 raise ValueError("Compression readback failed")
             db.execute("INSERT INTO blob VALUES (?, ?, ?)", (sha, len(content), compressed))
         elif old[0] != len(content) or self.read_blob(db, sha) != content:
@@ -340,11 +362,7 @@ class Workspace:
         row = db.execute("SELECT byte_length,content FROM blob WHERE sha256=?", (sha,)).fetchone()
         if row is None:
             raise ValueError(f"Missing blob: {sha}")
-        decoder = zlib.decompressobj()
-        content = decoder.decompress(row[1], row[0] + 1)
-        if not decoder.eof or decoder.unused_data or len(content) != row[0] or digest(content) != sha:
-            raise ValueError(f"Corrupt blob: {sha}")
-        return content
+        return decode_blob(sha, row[0], row[1])
 
     def _inventory(self, roots, metrics=None):
         """Call-local actual bytes, never an mtime-based content cache."""
@@ -1250,6 +1268,6 @@ def main() -> int:
 if __name__ == "__main__":
     try:
         raise SystemExit(main())
-    except (OSError, ValueError, sqlite3.Error, zlib.error) as error:
+    except (OSError, ValueError, sqlite3.Error, zlib.error, lzma.LZMAError) as error:
         print(json.dumps({"status": "STORAGE_FAILED", "error": str(error)}, ensure_ascii=True), file=sys.stderr)
         raise SystemExit(1)
