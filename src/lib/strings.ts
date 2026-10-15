@@ -1275,8 +1275,11 @@ export const workDetailStrings = {
     unavailable: "現在の好みから相性を表示できません。",
   },
   related: {
-    heading: "この作品と近い作品",
-    description: "テーマや雰囲気が近いカタログ作品です。",
+    heading: (title: string) => `『${title}』が好きなら`,
+    description: "この作品との共通点から選んでいます。",
+    genreReason: (label: string) => `共通するジャンル：${label}`,
+    themeReason: (label: string) => `共通するテーマ：${label}`,
+    axisReason: (label: string) => `「${label}」の度合いが近い`,
   },
   contrast: {
     heading: "違う味わいの作品",

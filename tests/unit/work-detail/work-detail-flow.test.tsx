@@ -21,6 +21,7 @@ import type { UserWorkRecord } from "@/domain/profile/types";
 import type * as PersistenceModule from "@/infrastructure/db";
 import { recommendationContextSchema } from "@/domain/recommendation/context-schema";
 import { scoreWorkCompatibility } from "@/domain/recommendation/rank";
+import { selectRelatedWorks } from "@/domain/recommendation/related";
 import { CatalogProvider } from "@/features/catalog/catalog-provider";
 import { WorkDetailFlow } from "@/features/work-detail/work-detail-flow";
 import type { ProviderCacheRecord } from "@/infrastructure/db";
@@ -257,6 +258,105 @@ describe("WorkDetailFlow", () => {
       '[data-recommendation-shelf-card="contrast"] a',
     )) {
       expect(authorLinks.has(link.getAttribute("href"))).toBe(false);
+    }
+  });
+
+  it("keeps source-based related works and their reasons unchanged by personal records and policies", async () => {
+    const source = catalog.works.find((work) => work.id === "dr-stone")!;
+    testState.userWorks = undefined;
+    const view = renderDetail(source.id);
+    const relatedSection = () => {
+      const section = screen
+        .getByRole("heading", { name: workDetailStrings.related.heading(source.title) })
+        .closest("section");
+      if (section === null) throw new Error("Missing source-based related section");
+      return section;
+    };
+    const relatedCards = () =>
+      within(relatedSection())
+        .getAllByRole("link")
+        .map((link) => ({
+          href: link.getAttribute("href"),
+          label: link.getAttribute("aria-label"),
+          text: link.textContent,
+        }));
+    const before = relatedCards();
+    expect(before).toHaveLength(16);
+    expect(before.some(({ href }) => href === `/works/${source.id}`)).toBe(false);
+    expect(new Set(before.map(({ href }) => href)).size).toBe(before.length);
+    expect(within(relatedSection()).getByText(workDetailStrings.related.description)).toBeTruthy();
+    for (const { work, contributions } of selectRelatedWorks({
+      source,
+      candidates: catalog.works,
+    })) {
+      const lead = contributions[0]!;
+      const label = explanationLexicon.factorLabels[lead.factorId];
+      const reason =
+        lead.group === "genre"
+          ? workDetailStrings.related.genreReason(label)
+          : lead.group === "theme"
+            ? workDetailStrings.related.themeReason(label)
+            : workDetailStrings.related.axisReason(label);
+      const link = within(relatedSection()).getByRole("link", {
+        name: (name) => name.includes(work.title) && name.includes(reason),
+      });
+      expect(within(link).getByText(reason)).toBeTruthy();
+    }
+
+    const rerender = () =>
+      view.rerender(
+        <CatalogProvider catalog={catalog}>
+          <WorkDetailFlow workId={source.id} />
+        </CatalogProvider>,
+      );
+    testState.status = { state: "ready", mode: "indexeddb", warning: null };
+    testState.userWorks = [];
+    rerender();
+    expect(relatedCards()).toEqual(before);
+
+    testState.userWorks = ["monster", "one-piece", "naruto", "frieren", "yotsuba-to"].map(
+      (workId): UserWorkRecord => ({
+        workId,
+        readingState: "completed",
+        reaction: "favorite",
+        updatedAt: "2026-10-15T00:00:00.000Z",
+      }),
+    );
+    testState.adjustments = { axes: { darkness: "exclude" }, themes: { combat: "exclude" } };
+    testState.policies = {
+      preferCompleted: true,
+      preferHidden: true,
+      preferVerified: true,
+      excludeIncomplete: true,
+    };
+    rerender();
+    expect(relatedCards()).toEqual(before);
+
+    testState.userWorks = before.map(({ href }, index): UserWorkRecord => {
+      if (href === null) throw new Error("Missing related work link");
+      return {
+        workId: href.replace("/works/", ""),
+        readingState: index % 2 === 0 ? "completed" : "hidden",
+        reaction: "disliked",
+        negativeReasons: ["tooDark"],
+        updatedAt: "2026-10-15T00:00:00.000Z",
+      };
+    });
+    rerender();
+    expect(relatedCards()).toEqual(before);
+    expect(
+      screen.getByRole("heading", { name: workDetailStrings.sameAuthor.multipleHeading }),
+    ).toBeTruthy();
+    await waitFor(() =>
+      expect(
+        view.container.querySelectorAll('[data-recommendation-shelf-card="contrast"]').length,
+      ).toBeGreaterThan(0),
+    );
+    const relatedLinks = new Set(before.map(({ href }) => href));
+    for (const link of view.container.querySelectorAll(
+      '[data-recommendation-shelf-card="contrast"] a',
+    )) {
+      expect(relatedLinks.has(link.getAttribute("href"))).toBe(false);
     }
   });
 
@@ -915,7 +1015,9 @@ describe("WorkDetailFlow", () => {
     expect(
       screen.queryByRole("heading", { name: workDetailStrings.compatibility.heading }),
     ).toBeNull();
-    expect(screen.queryByRole("heading", { name: workDetailStrings.related.heading })).toBeNull();
+    expect(
+      screen.queryByRole("heading", { name: workDetailStrings.related.heading(source.title) }),
+    ).toBeNull();
     expect(screen.queryByRole("heading", { name: workDetailStrings.contrast.heading })).toBeNull();
     const authorSection = screen
       .getByRole("heading", { name: workDetailStrings.sameAuthor.heading("浦沢直樹") })
