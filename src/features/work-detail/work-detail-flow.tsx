@@ -1368,7 +1368,8 @@ function WorkDetailContent({ catalog, work }: Readonly<{ catalog: CatalogV1; wor
         {sameAuthor === null ? null : (
           <div className="mx-auto w-full max-w-[var(--layout-width-media)] px-[var(--layout-page-padding)] pt-[var(--space-section)]">
             <SameAuthorSection
-              author={sameAuthor.author}
+              authors={sameAuthor.authors}
+              sharedAuthorsByWorkId={sameAuthor.sharedAuthorsByWorkId}
               coverUrlOf={(workId) =>
                 coverUrls.get(workId) ??
                 catalog.volumes.find(

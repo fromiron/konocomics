@@ -103,23 +103,36 @@ export function selectSameAuthorWorks(
   source: Work,
   reviewCountOf: (workId: string) => number | undefined,
 ) {
-  if (!source.eligibility.recommendationEligible) return null;
-  const authors = new Map(source.creators.map((author) => [normalizeCreator(author), author]));
+  // Bibliographic links tolerate spacing differences without changing Catalog identity rules.
+  const creatorKey = (name: string) => normalizeCreator(name).replace(/\s+/gu, "");
+  const authors = new Map<string, string>();
+  for (const name of source.creators) {
+    const key = creatorKey(name);
+    if (key !== "" && !authors.has(key)) authors.set(key, name);
+  }
+  const authorEntries = [...authors];
+  const sharedAuthorsByWorkId = new Map<string, string[]>();
   const byReviewsThenId = (left: Work, right: Work) =>
     (reviewCountOf(right.id) ?? -1) - (reviewCountOf(left.id) ?? -1) ||
     (left.id < right.id ? -1 : left.id > right.id ? 1 : 0);
   const candidates = catalog.works
-    .filter(
-      (work) =>
-        work.id !== source.id &&
-        work.creators.some((author) => authors.has(normalizeCreator(author))),
-    )
+    .filter((work) => {
+      if (work.id === source.id) return false;
+      const keys = new Set(work.creators.map(creatorKey));
+      const shared = authorEntries.filter(([key]) => keys.has(key)).map(([, name]) => name);
+      if (shared.length === 0) return false;
+      sharedAuthorsByWorkId.set(work.id, shared);
+      return true;
+    })
     .sort(byReviewsThenId);
+  if (candidates.length === 0) return null;
   const featured = candidates.find((work) => work.eligibility.recommendationEligible);
   const others = candidates.filter((work) => work !== featured);
-  const sample = featured ?? others[0];
-  const author = sample?.creators.map((name) => authors.get(normalizeCreator(name))).find(Boolean);
-  return sample === undefined || author === undefined
-    ? null
-    : { author, featured: featured ?? null, others };
+  const connectedAuthors = new Set([...sharedAuthorsByWorkId.values()].flat());
+  return {
+    authors: [...authors.values()].filter((name) => connectedAuthors.has(name)),
+    sharedAuthorsByWorkId,
+    featured: featured ?? null,
+    others,
+  };
 }

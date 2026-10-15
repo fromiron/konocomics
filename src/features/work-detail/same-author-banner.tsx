@@ -10,7 +10,8 @@ import { explanationLexicon, workDetailStrings } from "@/lib/strings";
 import { cn } from "@/lib/utils";
 
 type SameAuthorSectionProps = Readonly<{
-  author: string;
+  authors: readonly string[];
+  sharedAuthorsByWorkId: ReadonlyMap<string, readonly string[]>;
   featured: Work | null;
   others: readonly Work[];
   coverUrlOf(workId: string): string | null | undefined;
@@ -30,7 +31,8 @@ function genreThemeLabels(work: Work) {
 
 /** A full-width author panel with a featured book and a compact shelf of the rest. */
 export function SameAuthorSection({
-  author,
+  authors,
+  sharedAuthorsByWorkId,
   coverUrlOf,
   featured,
   featuredMeta,
@@ -39,13 +41,20 @@ export function SameAuthorSection({
 }: SameAuthorSectionProps) {
   const split = featured !== null && others.length > 0;
   const featuredTags = featured === null ? [] : genreThemeLabels(featured);
+  const multipleAuthors = authors.length > 1;
+  const featuredAuthors =
+    featured === null || !multipleAuthors
+      ? ""
+      : workDetailStrings.sameAuthor.sharedCreators(sharedAuthorsByWorkId.get(featured.id) ?? []);
   return (
     <section aria-labelledby="same-author-heading" className="grid gap-[var(--space-4)]">
       <h2
         className="text-[length:var(--text-subheading-size)] tracking-tight text-text-strong"
         id="same-author-heading"
       >
-        {workDetailStrings.sameAuthor.heading(author)}
+        {multipleAuthors
+          ? workDetailStrings.sameAuthor.multipleHeading
+          : workDetailStrings.sameAuthor.heading(authors[0]!)}
       </h2>
       <div
         className={cn(
@@ -55,7 +64,9 @@ export function SameAuthorSection({
       >
         {featured === null ? null : (
           <Link
-            aria-label={workDetailStrings.sameAuthor.open(featured.title)}
+            aria-label={[workDetailStrings.sameAuthor.open(featured.title), featuredAuthors]
+              .filter(Boolean)
+              .join(" · ")}
             className="same-author-banner"
             params={{ workId: featured.id }}
             to="/works/$workId"
@@ -73,6 +84,11 @@ export function SameAuthorSection({
                 <span className="same-author-banner__eyebrow">{featuredMeta}</span>
               )}
               <span className="same-author-banner__title">{featured.title}</span>
+              {featuredAuthors === "" ? null : (
+                <span className="text-[length:var(--text-caption-size)] text-text-muted">
+                  {featuredAuthors}
+                </span>
+              )}
               <GenreChips inline labels={featuredTags} />
               <span className="same-author-banner__action">
                 {workDetailStrings.sameAuthor.view}
@@ -92,6 +108,12 @@ export function SameAuthorSection({
           >
             {others.map((work) => {
               const tags = genreThemeLabels(work);
+              const sharedAuthors = multipleAuthors
+                ? workDetailStrings.sameAuthor.sharedCreators(
+                    sharedAuthorsByWorkId.get(work.id) ?? [],
+                  )
+                : "";
+              const metadata = [...(sharedAuthors === "" ? [] : [sharedAuthors]), ...tags];
               return (
                 <RankingCard
                   className="same-author-card"
@@ -99,17 +121,17 @@ export function SameAuthorSection({
                   creators={work.creators}
                   key={work.id}
                   metadata={
-                    tags.length === 0 ? undefined : (
+                    metadata.length === 0 ? undefined : (
                       <span className="grid gap-[var(--space-content-tight)]">
-                        {tags.map((tag) => (
-                          <span className="truncate" key={tag}>
-                            {tag}
+                        {metadata.map((label) => (
+                          <span className="truncate" key={label}>
+                            {label}
                           </span>
                         ))}
                       </span>
                     )
                   }
-                  metadataAccessibleLabel={tags.length === 0 ? undefined : tags.join(" · ")}
+                  metadataAccessibleLabel={metadata.length === 0 ? undefined : metadata.join(" · ")}
                   onCoverVisible={() => onCoverVisible(work.id)}
                   title={work.title}
                   variant="unranked"

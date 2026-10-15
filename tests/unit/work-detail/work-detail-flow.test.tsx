@@ -225,6 +225,41 @@ describe("WorkDetailFlow", () => {
     expect(new Set(links).size).toBe(links.length);
   });
 
+  it("names each shared creator under a neutral heading for coauthored works", async () => {
+    testState.status = { state: "ready", mode: "indexeddb", warning: null };
+    const view = renderDetail("dr-stone");
+
+    const heading = await screen.findByRole("heading", {
+      level: 2,
+      name: workDetailStrings.sameAuthor.multipleHeading,
+    });
+    const section = heading.closest("section");
+    if (section === null) throw new Error("Missing same-author section");
+    const eyeshield = within(section).getByRole("link", { name: /アイシールド21.*稲垣理一郎/ });
+    expect(eyeshield.getAttribute("href")).toBe("/works/work-f4ae52fca1e80f395a62");
+    expect(within(eyeshield).getByText("稲垣理一郎")).toBeTruthy();
+    expect(within(eyeshield).queryByText("Boichi")).toBeNull();
+    const trillion = within(section).getByRole("link", { name: /トリリオンゲーム.*稲垣理一郎/ });
+    expect(trillion.getAttribute("href")).toBe("/works/work-e906b3eaa9ef9eafe23c");
+    expect(within(section).getByRole("link", { name: /サンケンロック.*Boichi/ })).toBeTruthy();
+
+    const authorLinks = new Set(
+      within(section)
+        .getAllByRole("link")
+        .map((link) => link.getAttribute("href")),
+    );
+    await waitFor(() =>
+      expect(
+        view.container.querySelectorAll('[data-recommendation-shelf-card="contrast"]').length,
+      ).toBeGreaterThan(0),
+    );
+    for (const link of view.container.querySelectorAll(
+      '[data-recommendation-shelf-card="contrast"] a',
+    )) {
+      expect(authorLinks.has(link.getAttribute("href"))).toBe(false);
+    }
+  });
+
   it("offers five reading states and explains 「読んだ」 only for continuing series", async () => {
     testState.status = { state: "ready", mode: "indexeddb", warning: null };
     const view = renderDetail("monster");
@@ -822,15 +857,25 @@ describe("WorkDetailFlow", () => {
 
   it("keeps library-only records and metadata without using retained factors for detail recommendations", async () => {
     testState.status = { state: "ready", mode: "indexeddb", warning: null };
+    const source = catalog.works.find((work) => work.id === "monster")!;
     const record: UserWorkRecord = {
-      workId: target.id,
+      workId: source.id,
       readingState: "completed",
       reaction: "favorite",
       updatedAt: "2026-08-14T00:00:00.000Z",
     };
-    testState.userWorks = [record];
-    const view = renderDetail();
+    testState.userWorks = [
+      record,
+      ...["one-piece", "naruto", "frieren", "hunter-x-hunter", "chainsaw-man"].map(
+        (workId): UserWorkRecord => ({ ...record, workId }),
+      ),
+    ];
+    const originalRecords = structuredClone(testState.userWorks);
+    const view = renderDetail(source.id);
     await screen.findByRole("button", { name: workDetailStrings.provider.retry });
+    expect(
+      screen.getByRole("heading", { name: workDetailStrings.compatibility.heading }),
+    ).toBeTruthy();
     expect(view.container.querySelectorAll('a[href^="/works/"]').length).toBeGreaterThan(0);
     expect(
       within(screen.getByRole("list", { name: workDetailStrings.factors.heading })).getAllByRole(
@@ -841,7 +886,7 @@ describe("WorkDetailFlow", () => {
     const libraryCatalog = {
       ...catalog,
       works: catalog.works.map((work) =>
-        work.id === target.id
+        work.id === source.id
           ? {
               ...work,
               eligibility: {
@@ -855,11 +900,11 @@ describe("WorkDetailFlow", () => {
     };
     view.rerender(
       <CatalogProvider catalog={libraryCatalog}>
-        <WorkDetailFlow workId={target.id} />
+        <WorkDetailFlow workId={source.id} />
       </CatalogProvider>,
     );
 
-    expect(screen.getByRole("heading", { name: target.title })).toBeTruthy();
+    expect(screen.getByRole("heading", { name: source.title })).toBeTruthy();
     expect(
       screen
         .getByRole("button", { name: workDetailStrings.state.options.completed })
@@ -867,12 +912,23 @@ describe("WorkDetailFlow", () => {
     ).toBe("true");
     expect(screen.queryByRole("list", { name: workDetailStrings.factors.heading })).toBeNull();
     expect(screen.queryByText(workDetailStrings.factors.empty)).toBeNull();
-    expect(view.container.querySelectorAll('a[href^="/works/"]')).toHaveLength(0);
-    expect(testState.userWorks).toEqual([record]);
+    expect(
+      screen.queryByRole("heading", { name: workDetailStrings.compatibility.heading }),
+    ).toBeNull();
+    expect(screen.queryByRole("heading", { name: workDetailStrings.related.heading })).toBeNull();
+    expect(screen.queryByRole("heading", { name: workDetailStrings.contrast.heading })).toBeNull();
+    const authorSection = screen
+      .getByRole("heading", { name: workDetailStrings.sameAuthor.heading("浦沢直樹") })
+      .closest("section");
+    if (authorSection === null) throw new Error("Missing bibliographic same-author section");
+    const authorLinks = within(authorSection).getAllByRole("link");
+    expect(authorLinks.length).toBeGreaterThan(0);
+    expect(view.container.querySelectorAll('a[href^="/works/"]').length).toBe(authorLinks.length);
+    expect(testState.userWorks).toEqual(originalRecords);
     expect(testState.saveUserWork).not.toHaveBeenCalled();
-    expect(libraryCatalog.works.find((work) => work.id === target.id)?.axes).toEqual(target.axes);
-    expect(libraryCatalog.works.find((work) => work.id === target.id)?.themes).toEqual(
-      target.themes,
+    expect(libraryCatalog.works.find((work) => work.id === source.id)?.axes).toEqual(source.axes);
+    expect(libraryCatalog.works.find((work) => work.id === source.id)?.themes).toEqual(
+      source.themes,
     );
   });
 

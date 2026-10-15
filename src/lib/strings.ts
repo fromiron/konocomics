@@ -1296,6 +1296,8 @@ export const workDetailStrings = {
   },
   sameAuthor: {
     heading: (author: string) => `${author}の作品`,
+    multipleHeading: "同じ作者のほかの作品",
+    sharedCreators: (authors: readonly string[]) => authors.join("・"),
     othersHeading: "そのほかの作品",
     reviews: (average: number, count: number) =>
       `楽天レビュー ${average.toFixed(1)} · ${String(count)}件`,
