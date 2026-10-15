@@ -1854,6 +1854,13 @@ test.describe("Slice 8 provider and work-detail journey", () => {
     const workId = await firstCard.getAttribute("data-recommendation-work-id");
     if (workId === null) throw new Error("Missing recommendation work ID");
     expect(workId).toBeTruthy();
+    const representativeVolumeId = Object.entries(catalogJson.representativeVolumeByWorkId).find(
+      ([id]) => id === workId,
+    )?.[1];
+    const volumeNumber = catalogJson.volumes.find(
+      (volume) => volume.id === representativeVolumeId && volume.workId === workId,
+    )?.volumeNumber;
+    const priceLabel = volumeNumber === undefined ? "掲載版の価格" : `${volumeNumber}巻の価格`;
     providerTitle =
       (await firstCard.getByRole("heading", { level: 3 }).textContent())?.trim() ?? "";
     expect(providerTitle).not.toBe("");
@@ -1878,7 +1885,7 @@ test.describe("Slice 8 provider and work-detail journey", () => {
         exact: true,
       }),
     ).toBeVisible();
-    await expect(detail.getByText("掲載版の価格", { exact: true })).toHaveCount(0);
+    await expect(detail.getByText(priceLabel, { exact: true })).toHaveCount(0);
     await expect(detail.getByText("在庫・発送", { exact: true })).toHaveCount(0);
 
     const searchLink = detail.getByRole("link", {
@@ -1930,7 +1937,7 @@ test.describe("Slice 8 provider and work-detail journey", () => {
     await expect(purchaseLink).toHaveAttribute("href", affiliateUrl);
     await expect(purchaseLink).toHaveAttribute("target", "_blank");
     await expect(purchaseLink).toHaveAttribute("rel", "noreferrer");
-    await expect(restoredDetail.getByText("掲載版の価格", { exact: true })).toBeVisible();
+    await expect(restoredDetail.getByText(priceLabel, { exact: true })).toBeVisible();
     await expect(restoredDetail.getByText(/770/u)).toBeVisible();
     await expect(restoredDetail.getByText("在庫あり", { exact: true })).toBeVisible();
 

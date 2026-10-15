@@ -20,7 +20,7 @@ import { pageEntryFadeProps, usePageEntryMotion } from "@/components/motion/use-
 import { useSaveConfirmation } from "@/components/motion/use-save-confirmation";
 import recommendationContextJson from "@/data/generated/recommendation-context-v1.json";
 import { confirmedSeriesVolumeCounts } from "@/domain/catalog/series";
-import { AXIS_IDS, GENRE_TAGS, THEME_TAGS } from "@/domain/catalog/constants";
+import { GENRE_TAGS, THEME_TAGS } from "@/domain/catalog/constants";
 import { normalizeIsbn } from "@/domain/catalog/normalize";
 import type { CatalogV1, Work } from "@/domain/catalog/types";
 import { generateTasteExplanation } from "@/domain/explanation";
@@ -34,6 +34,7 @@ import type { Reaction, ReadingState, UserWorkRecord } from "@/domain/profile/ty
 import { recommendationContextSchema } from "@/domain/recommendation/context-schema";
 import { scoreWorkCompatibility } from "@/domain/recommendation/rank";
 import { selectContrastingWorks } from "@/domain/recommendation/contrast";
+import { selectRelatedWorks } from "@/domain/recommendation/related";
 import type { RecommendationInput } from "@/domain/recommendation/types";
 import { useCatalog } from "@/features/catalog/catalog-provider";
 import { WorkDetailShell } from "@/features/work-detail/work-detail-shell";
@@ -216,61 +217,6 @@ function sameAuthorMeta(catalog: CatalogV1, work: Work) {
     ...(work.status === "unknown" ? [] : [recommendationStrings.workStatus[work.status]]),
     ...(volumeCount < 1 ? [] : [recommendationStrings.volumeCount(volumeCount)]),
   ].join(" · ");
-}
-
-function compareWorkIds(left: Work, right: Work) {
-  return left.id < right.id ? -1 : left.id === right.id ? 0 : 1;
-}
-
-function relatedWorkGroups(catalog: CatalogV1, source: Work) {
-  if (!source.eligibility.recommendationEligible) return { themeRanked: [], moodRanked: [] };
-  const sourceThemes = new Set(
-    source.themes.filter((theme) => theme.centrality > 0).map((theme) => theme.id),
-  );
-  const sourceAxes = AXIS_IDS.flatMap((axisId) => {
-    const factor = source.axes[axisId];
-    return factor.state === "known" ? [[axisId, factor.value] as const] : [];
-  });
-  const themeRanked = catalog.works
-    .filter((work) => work.id !== source.id && work.eligibility.recommendationEligible)
-    .map((work) => ({
-      work,
-      score: work.themes.reduce(
-        (score, theme) => score + (sourceThemes.has(theme.id) ? theme.centrality : 0),
-        0,
-      ),
-    }))
-    .filter(({ score }) => score > 0)
-    .sort((left, right) => right.score - left.score || compareWorkIds(left.work, right.work))
-    .slice(0, 8)
-    .map(({ work }) => work);
-  const themeIds = new Set(themeRanked.map((work) => work.id));
-  const moodRanked = catalog.works
-    .filter(
-      (work) =>
-        work.id !== source.id && work.eligibility.recommendationEligible && !themeIds.has(work.id),
-    )
-    .map((work) => {
-      const distances = sourceAxes.flatMap(([axisId, sourceValue]) => {
-        const factor = work.axes[axisId];
-        return factor.state === "known" ? [Math.abs(sourceValue - factor.value)] : [];
-      });
-      return {
-        work,
-        coverage: distances.length,
-        distance: distances.reduce((sum, value) => sum + value, 0),
-      };
-    })
-    .filter(({ coverage }) => coverage >= 4)
-    .sort(
-      (left, right) =>
-        left.distance / left.coverage - right.distance / right.coverage ||
-        compareWorkIds(left.work, right.work),
-    )
-    .slice(0, 8)
-    .map(({ work }) => work);
-
-  return { themeRanked, moodRanked };
 }
 
 function compatibilityFor(options: {
@@ -902,8 +848,10 @@ function WorkDetailContent({ catalog, work }: Readonly<{ catalog: CatalogV1; wor
       }),
     [adjustments, catalog, policies, userWorks, work.id],
   );
-  const relatedGroups = useMemo(() => relatedWorkGroups(catalog, work), [catalog, work]);
-  const nearbyWorks = [...relatedGroups.themeRanked, ...relatedGroups.moodRanked];
+  const nearbyWorks = useMemo(
+    () => selectRelatedWorks({ source: work, candidates: catalog.works }),
+    [catalog.works, work],
+  );
   const sameAuthor = useMemo(
     () =>
       selectSameAuthorWorks(catalog, work, (workId) =>
@@ -919,8 +867,7 @@ function WorkDetailContent({ catalog, work }: Readonly<{ catalog: CatalogV1; wor
       source: work,
       candidates: catalog.works,
       excludedWorkIds: [
-        ...relatedGroups.themeRanked.map((related) => related.id),
-        ...relatedGroups.moodRanked.map((related) => related.id),
+        ...nearbyWorks.map((related) => related.work.id),
         ...(sameAuthor === null || sameAuthor.featured === null ? [] : [sameAuthor.featured.id]),
         ...(sameAuthor?.others.map((other) => other.id) ?? []),
         ...(compatibility.kind === "ready"
@@ -931,7 +878,7 @@ function WorkDetailContent({ catalog, work }: Readonly<{ catalog: CatalogV1; wor
           .map((record) => record.workId),
       ],
     });
-  }, [catalog, compatibility, relatedGroups, sameAuthor, userWorks, work]);
+  }, [catalog, compatibility, nearbyWorks, sameAuthor, userWorks, work]);
   const coverTargets = useMemo(() => {
     const anchorWorkIds =
       compatibility.kind === "ready" ? compatibility.evidence.map((item) => item.work.id) : [];
@@ -944,13 +891,12 @@ function WorkDetailContent({ catalog, work }: Readonly<{ catalog: CatalogV1; wor
               ...(sameAuthor.featured === null ? [] : [sameAuthor.featured.id]),
               ...sameAuthor.others.map((other) => other.id),
             ]),
-        ...relatedGroups.themeRanked.map((related) => related.id),
-        ...relatedGroups.moodRanked.map((related) => related.id),
+        ...nearbyWorks.map((related) => related.work.id),
         ...contrastingWorks.map((entry) => entry.work.id),
       ]),
     ];
     return createRecommendationCoverTargets(catalog, orderedWorkIds);
-  }, [catalog, compatibility, contrastingWorks, relatedGroups, sameAuthor]);
+  }, [catalog, compatibility, contrastingWorks, nearbyWorks, sameAuthor]);
   const { coverUrls, requestCover } = useRecommendationCovers({
     targets: coverTargets,
     getProviderCache,
@@ -1368,7 +1314,8 @@ function WorkDetailContent({ catalog, work }: Readonly<{ catalog: CatalogV1; wor
         {sameAuthor === null ? null : (
           <div className="mx-auto w-full max-w-[var(--layout-width-media)] px-[var(--layout-page-padding)] pt-[var(--space-section)]">
             <SameAuthorSection
-              author={sameAuthor.author}
+              authors={sameAuthor.authors}
+              sharedAuthorsByWorkId={sameAuthor.sharedAuthorsByWorkId}
               coverUrlOf={(workId) =>
                 coverUrls.get(workId) ??
                 catalog.volumes.find(
@@ -1392,10 +1339,19 @@ function WorkDetailContent({ catalog, work }: Readonly<{ catalog: CatalogV1; wor
                 controlsPlacement="overlay"
                 description={workDetailStrings.related.description}
                 rankingKind="unranked"
-                title={workDetailStrings.related.heading}
+                title={workDetailStrings.related.heading(work.title)}
                 trackClassName="!pb-[var(--space-1)]"
               >
-                {nearbyWorks.map((related) => {
+                {nearbyWorks.map(({ work: related, contributions }) => {
+                  const lead = contributions[0];
+                  if (lead === undefined) return null;
+                  const label = explanationLexicon.factorLabels[lead.factorId];
+                  const reason =
+                    lead.group === "genre"
+                      ? workDetailStrings.related.genreReason(label)
+                      : lead.group === "theme"
+                        ? workDetailStrings.related.themeReason(label)
+                        : workDetailStrings.related.axisReason(label);
                   const genreLabels = related.genres
                     .slice(0, 3)
                     .map((genre) => onboardingStrings.step1.genreLabels[genre]);
@@ -1405,8 +1361,13 @@ function WorkDetailContent({ catalog, work }: Readonly<{ catalog: CatalogV1; wor
                       coverUrl={coverUrls.get(related.id)}
                       creators={related.creators}
                       key={related.id}
-                      metadata={<GenreChips inline labels={genreLabels} max={2} />}
-                      metadataAccessibleLabel={genres}
+                      metadata={
+                        <span className="grid gap-[var(--space-2)]">
+                          <GenreChips inline labels={genreLabels} max={2} />
+                          <span className="text-[length:var(--text-caption-size)]">{reason}</span>
+                        </span>
+                      }
+                      metadataAccessibleLabel={[genres, reason].filter(Boolean).join(" · ")}
                       onCoverVisible={() => requestCover(related.id)}
                       title={related.title}
                       variant="unranked"

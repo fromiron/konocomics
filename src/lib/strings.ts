@@ -1275,8 +1275,11 @@ export const workDetailStrings = {
     unavailable: "現在の好みから相性を表示できません。",
   },
   related: {
-    heading: "この作品と近い作品",
-    description: "テーマや雰囲気が近いカタログ作品です。",
+    heading: (title: string) => `『${title}』が好きなら`,
+    description: "この作品との共通点から選んでいます。",
+    genreReason: (label: string) => `共通するジャンル：${label}`,
+    themeReason: (label: string) => `共通するテーマ：${label}`,
+    axisReason: (label: string) => `「${label}」の度合いが近い`,
   },
   contrast: {
     heading: "違う味わいの作品",
@@ -1296,6 +1299,8 @@ export const workDetailStrings = {
   },
   sameAuthor: {
     heading: (author: string) => `${author}の作品`,
+    multipleHeading: "同じ作者のほかの作品",
+    sharedCreators: (authors: readonly string[]) => authors.join("・"),
     othersHeading: "そのほかの作品",
     reviews: (average: number, count: number) =>
       `楽天レビュー ${average.toFixed(1)} · ${String(count)}件`,
