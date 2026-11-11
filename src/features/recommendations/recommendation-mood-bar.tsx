@@ -4,6 +4,8 @@ import { ChoiceChipRadio, ChoiceChipRadioGroup } from "@/components/design-syste
 import { RECOMMENDATION_MOODS, type RecommendationMood } from "@/domain/recommendation/mood";
 import { recommendationStrings } from "@/lib/strings";
 
+import { RECOMMENDATION_FILTER_ROW_CLASSNAME } from "./recommendation-filter-bar";
+
 const strings = recommendationStrings.mood;
 const NO_MOOD = "none";
 
@@ -28,27 +30,29 @@ export function RecommendationMoodBar({
   return (
     <section
       aria-labelledby="recommendation-mood-heading"
-      className="mt-[var(--space-3)] grid gap-[var(--space-2)]"
+      className="mt-[var(--space-2)] grid gap-[var(--space-2)]"
       data-recommendation-mood={mood ?? NO_MOOD}
     >
-      <div className="flex flex-wrap items-center gap-x-[var(--space-3)] gap-y-[var(--space-2)]">
+      <div className={RECOMMENDATION_FILTER_ROW_CLASSNAME}>
         <h2
-          className="text-[length:var(--font-size-14)] font-bold text-text-strong"
+          className="shrink-0 text-[length:var(--font-size-14)] font-bold whitespace-nowrap text-text-strong"
           id="recommendation-mood-heading"
         >
           {strings.heading}
         </h2>
         <ChoiceChipRadioGroup<MoodValue>
           aria-labelledby="recommendation-mood-heading"
-          className="w-auto"
+          className="w-auto max-md:shrink-0 max-md:flex-nowrap"
           disabled={disabled}
           name="recommendation-mood"
           onValueChange={(value) => onMoodChange(value === NO_MOOD ? null : value)}
           value={mood ?? NO_MOOD}
         >
-          <ChoiceChipRadio<MoodValue> value={NO_MOOD}>{strings.none}</ChoiceChipRadio>
+          <ChoiceChipRadio<MoodValue> chipClassName="whitespace-nowrap" value={NO_MOOD}>
+            {strings.none}
+          </ChoiceChipRadio>
           {RECOMMENDATION_MOODS.map((value) => (
-            <ChoiceChipRadio<MoodValue> key={value} value={value}>
+            <ChoiceChipRadio<MoodValue> chipClassName="whitespace-nowrap" key={value} value={value}>
               {strings.labels[value]}
             </ChoiceChipRadio>
           ))}

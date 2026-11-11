@@ -7,7 +7,7 @@
 - Repository: `fromiron/konocomics`
 - Baseline: `main@87ba09e733901e16279e758d2f437dd51476d663`
 - Theme: dark-only
-- Primary: `oklch(0.7525 0.1382 236.09)` / `#43BBFA`
+- Primary: 2026-11-11 사용자 결정으로 고정 primary 대신 사용자가 고르는 여섯 accent 테마(기본 `butter` バターイエロー `oklch(0.91 0.12 98)`, 이전 앰버 `oklch(0.76 0.11 72)`는 `amber` 테마로 남음)다. 값의 권위는 `04` §2.1·`AGENTS.md` §1이다. 번들 작성 당시의 `oklch(0.7525 0.1382 236.09)` / `#43BBFA`는 폐기했으며 `visual-targets/*.png`의 파란 accent도 현재 색이 아니다.
 - Desktop: 상단 GNB만 표시
 - Mobile: 하단 navigation만 표시
 - 로그인·계정·아바타 UI 없음

@@ -1,5 +1,7 @@
 import type { ExplanationFactorId, ExplanationLexicon } from "@/domain/explanation";
 
+import type { AccentThemeId } from "./accent-theme";
+
 const explanationFactorLabels = {
   action: "アクション",
   fantasy: "ファンタジー",
@@ -300,17 +302,6 @@ export const mediaStrings = {
         : remainingGenres > 0
           ? `${genre} +${String(remainingGenres)}`
           : genre,
-    standard: (genre: string | undefined, remainingGenres: number, status: string) =>
-      [
-        genre === undefined
-          ? undefined
-          : remainingGenres > 0
-            ? `${genre} ほか${String(remainingGenres)}`
-            : genre,
-        status,
-      ]
-        .filter((value) => value !== undefined)
-        .join(" · "),
     accessible: (genres: readonly string[], status: string) =>
       [genres.length === 0 ? undefined : `ジャンル ${genres.join("、")}`, `刊行状況 ${status}`]
         .filter((value) => value !== undefined)
@@ -407,58 +398,25 @@ export const landingStrings = {
   },
   sharedEntry: "シェアされた Manga DNA から来た方へ",
   hero: {
+    description: "好きな作品を5つ選ぶと、どこが合うのかを添えて次の一冊を提案します。",
     trust: (workCount: string) => [
       "登録なし",
       `${workCount}作品から提案`,
       "データはこの端末だけに保存",
     ],
-    /** The sound effect lettered large in the hero's effect panel, per scene. */
-    panelEffect: { battle: "ドンッ!!!", romance: "ドキッ..!" },
-    /** Decorative sound effects lettered faintly on the blank pages under each hero scene. */
-    soundEffects: {
-      battle: ["ゴゴゴ", "ドンッ", "ザッ", "ズドン", "ガッ", "バッ"],
-      romance: ["ドキッ", "キュン", "ふわっ", "ドキドキ", "ぽっ", "きらっ"],
-    },
-    motionPause: "アニメーションを一時停止",
-    motionPlay: "アニメーションを再生",
+    /** The evidence stage shows an example taste, never the visitor's own. */
+    stageLabel: "例：この5作品が好きな場合",
+    /** The group of the example's recommended works; each option is named by its title. */
+    stageSelectorLabel: "おすすめ作品の例",
+    stagePosition: (current: number, total: number) => `${String(current)} / ${String(total)}`,
   },
   sample: {
-    caption: (titles: readonly string[]) =>
-      `例：${titles.map((title) => `『${title}』`).join("")}などが好きな場合`,
-    label: "おすすめの一冊",
-    detail: (title: string) => `『${title}』の詳細を見る`,
-  },
-  how: {
-    title: "5作品を選ぶと、好みが言葉になる",
-    /** Line-break units of the title; it never wraps inside one. */
-    titlePhrases: ["5作品を選ぶと、", "好みが言葉になる"],
-    /** The part of the title set in the accent colour. */
-    titleAccent: "好み",
-    progressLabel: "3つのステップ",
-    steps: [
-      { title: "選ぶ", description: "好きなマンガを5〜10作品選びます。" },
-      { title: "好みが見える", description: "選んだ作品の傾向を Manga DNA として可視化します。" },
-      {
-        title: "理由つきでおすすめ",
-        description: "好みのどこに合うのかを添えて、次の一冊を提案します。",
-      },
-    ],
-    anchorsLabel: "選んだ作品",
-    dnaTitle: "Manga DNA",
-    dnaBasis: (title: string, count: number) => `『${title}』ほか${String(count)}作品から`,
-  },
-  wheel: {
-    title: (axisCount: number) => `${String(axisCount)}の軸で、好みを読む`,
-    axesLabel: "Manga DNA の軸",
-    legend: "例のプロフィールで強く出た軸",
+    /** Quick Preview on the home: the example's reason only, with no reading state. */
+    quickPreviewDescription: "例の好みに合うおすすめ理由を、詳細へ移動せずに確認できます。",
   },
   ranking: {
     title: "最初におすすめしたい Top 10",
     description: "はじめての方に読んでほしい10作品です。個人向けの順位ではありません。",
-  },
-  discovery: {
-    title: "まだ知らない一冊へ",
-    description: "ジャンルを横断して選んだ作品です。",
   },
   closing: {
     // A no-break space keeps the product name on one line.
@@ -498,6 +456,19 @@ export const navigationStrings = {
     about: "このサイトについて",
   },
   routeAnnouncement: (pageLabel: string) => `${pageLabel}ページに移動しました。`,
+} as const;
+
+export const accentStrings = {
+  title: "アクセントカラー",
+  trigger: (name: string) => `アクセントカラー：${name}`,
+  names: {
+    butter: "バターイエロー",
+    kinaka: "金赤",
+    lime: "ライム",
+    ice: "アイスブルー",
+    paper: "ペーパーホワイト",
+    amber: "アンバー",
+  } satisfies Record<AccentThemeId, string>,
 } as const;
 
 export const catalogStrings = {
@@ -542,6 +513,7 @@ export const onboardingStrings = {
     description: "好きなマンガを選ぶだけ。登録なし、データはこのブラウザの中だけに保存されます。",
     stepsLabel: "Manga DNA ができるまで",
     currentStep: "いまここ",
+    doneStep: "完了",
     steps: [
       {
         title: "好きな作品を選ぶ",
@@ -561,7 +533,7 @@ export const onboardingStrings = {
   readingConfirmation: {
     title: "選んだ作品の読書状態",
     description:
-      "好きという感想と、読書状態を別々に保存します。まとめて選んだ後、作品ごとに変更できます。",
+      "選んだ作品は「読んだ」として保存します。読んでいる途中の作品は、作品ごとに変更できます。",
     workLabel: (title: string) => `${title}の読書状態`,
     allReading: "すべて読んでいる",
     allCompleted: "すべて読んだ",
@@ -593,7 +565,7 @@ export const onboardingStrings = {
       firstRun: [
         "作品の ＋ を押して選ぶ",
         "特に好きな作品は ☆ で「大好き」に",
-        "5 作品から「次へ」に進めます",
+        "5 作品から次へ進めます",
       ],
       add: [
         "作品の ＋ を押して選ぶ",
@@ -625,6 +597,8 @@ export const onboardingStrings = {
     noResults: "見つかりませんでした。別の書き方で試してください",
     catalogLater: "カタログにない作品は、あとでライブラリから追加できます。",
     selectedTray: "選んだマンガ",
+    /** The mobile tray's count opens the selected thumbnails, which fold behind it. */
+    showSelected: "選んだ作品を表示",
     selectedCount: (count: number, maximum: number) => `${String(count)} / ${String(maximum)} 作品`,
     emptySelected: "まだ選ばれていません",
     select: "好きに追加",
@@ -638,7 +612,7 @@ export const onboardingStrings = {
     maximum: "最大 10 作品までです",
     remaining: (count: number) => `あと ${String(count)} 作品`,
     needMore: (count: number) => `あと ${String(count)} 作品選んでください。`,
-    next: (count: number) => `次へ (${String(count)}/10)`,
+    next: "合わなかった作品へ進む",
     genreHeading: "ジャンルから探す",
     allGenres: "すべて",
     genreLabels: {
@@ -793,6 +767,22 @@ export const tasteStrings = {
   anchorsHeading: "好みを代表する作品",
   anchorsDescription: (count: number) =>
     `あなたの好みをかたちづくった作品から、${String(count)}作品を紹介します。`,
+  /** What a representative work's expand panel and Quick Preview say about it. */
+  anchorEvidence: {
+    /**
+     * 「A」「B」の好みは、この作品から読み取りました。 Each preference label is its own segment so
+     * the caller can set it in bold.
+     */
+    factors: (labels: readonly string[]) => [
+      ...labels.flatMap((label) => [
+        { text: "「", emphasis: false },
+        { text: label, emphasis: true },
+        { text: "」", emphasis: false },
+      ]),
+      { text: "の好みは、この作品から読み取りました。", emphasis: false },
+    ],
+    previewDescription: "この作品から読み取った好みを、詳細へ移動せずに確認できます。",
+  },
   axesHeading: "好みの軸",
   axesPending: "確認できる好みの軸を分析しています。",
   wheel: {
@@ -1026,6 +1016,7 @@ export const recommendationStrings = {
     basisWithoutPreferences: (count: number) =>
       `好きな ${String(count)}作品の分析から選んでいます。`,
     dnaLink: "Manga DNA",
+    details: "選び方の詳細",
     policies: "適用中の条件",
     adjusted: (labels: string) => `おすすめの調整：${labels}`,
   },
@@ -1189,6 +1180,11 @@ export const recommendationStrings = {
       completed: (title: string) => `「${title}」を読んだに記録しました。`,
       hidden: (title: string) => `「${title}」を興味なしにしました。`,
     },
+    /** The single undoable notice after 「興味なし」 also says what the removal did to the list. */
+    hiddenAndBackfilled: (title: string) =>
+      `「${title}」を興味なしにしました。新しい候補を追加しました。`,
+    hiddenWithoutBackfill: (title: string) =>
+      `「${title}」を興味なしにしました。おすすめ候補が不足しています。`,
     undo: "元に戻す",
     undone: (title: string) => `「${title}」をおすすめに戻しました。`,
     undoConflict: "ほかの画面で記録が更新されたため、元に戻しませんでした。",
@@ -1197,10 +1193,6 @@ export const recommendationStrings = {
   feedbackDialog: {
     completedTitle: "読んだ感想を残しますか？",
     completedDescription: (title: string) => `「${title}」の感想を選んでください。`,
-    hiddenTitle: "おすすめから外しました",
-    hiddenDescription: (title: string) =>
-      `「${title}」を興味なしに変更しました。感想と進行は保ちます。「いまいち」の評価は追加しません。閉じた後の「元に戻す」、またはライブラリの「興味なし」から変更できます。`,
-    close: "閉じる",
     reactionLegend: "感想",
     reactionLabels: {
       highest: "最高",
@@ -1272,7 +1264,8 @@ export const workDetailStrings = {
     supportingAnchor: "好みのつながり",
     anchorFactors: "近いポイント",
     confidence: "分析の確信度",
-    unavailable: "現在の好みから相性を表示できません。",
+    noProfile: "好きな作品を5つ選ぶと、この作品があなたに合うかを理由といっしょに表示します。",
+    noProfileAction: "好きなマンガを選ぶ",
   },
   related: {
     heading: (title: string) => `『${title}』が好きなら`,
@@ -1416,6 +1409,8 @@ export const workDetailStrings = {
     reviewCountLabel: "レビュー件数",
     rating: (value: number) => `${value.toFixed(1)} / 5`,
     reviewCount: (value: number) => `${String(value)} 件`,
+    /** The detail meta line keeps the count beside the score: 「4.4 / 5（130 件）」. */
+    reviewCountInline: (value: number) => `（${String(value)} 件）`,
     price: (value: number) => yenFormatter.format(value),
     availability: {
       1: "在庫あり",

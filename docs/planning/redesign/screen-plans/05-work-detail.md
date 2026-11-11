@@ -14,20 +14,23 @@
 
 ## 화면 구조
 
+> 2026-11-11 현재 구성(권위는 `03` §6): 아래 블록 이름은 번들 작성 당시의 계획이며, 히어로 정보 열의 실제 순서는 제목 → 작가 → 한 줄 메타(출판사·권수·대표권 가격·楽天レビュー, 상자 없음) → 장르·테마 태그 → あなたとの相性(근거 표지 옆 종이 말풍선) → 読書状態 → 구매 링크·공유 → 고지·재고다. 본문은 あらすじ → この作品の傾向 → 서지, 그 뒤 같은 작가 → 『…』が好きなら → 違う味わいの作品이다. 별도 평점 요약 섹션은 두지 않고 楽天レビュー는 한 줄 메타에 있다.
+
 ```text
 WorkDetailShell
   DetailHero
     CoverImage foreground
     HeroBackdrop
-    IdentityAndMetadata
+    IdentityAndMetadata (title, creators, one-line meta, genre/theme tags)
+    CompatibilityReasons (evidence cover + paper ReasonBubble)
     ReadingStateActions
-  CompatibilityReasons
-  WorkMetadata
-  ProviderPurchasePanel
+    ProviderPurchaseLink + Share
+  Synopsis
+  WorkTraits
+  BookMetadata
+  SameAuthorSection
   RelatedWorkShelf
-  SameMoodShelf
-  ReaderAlsoViewed replacement/optional catalog shelf
-  ProviderRatingSummary (available only)
+  ContrastShelf
   SiteFooter
 ```
 
@@ -48,7 +51,7 @@ WorkDetailShell
 - 기존 `scoreWorkCompatibility`와 explanation을 그대로 사용
 - numeric match 대신 qualitative confidence
 - positive reasons, caution, anchors 표시
-- profile이 없으면 compatibility section 숨김
+- profile이 없으면 같은 자리에 온보딩 안내와 링크만 표시(말풍선·이유 없음, `03` §6 정보 위계 6)
 
 ## 관련 Shelf
 
@@ -98,6 +101,6 @@ WorkDetailShell
 
 ## 수용 기준
 
-- 모바일 첫 viewport에서 제목, 추천 이유 요약, 주요 상태 action 확인 가능
+- 모바일 첫 viewport에서 제목과 「あなたとの相性」 제목·말풍선의 시작 확인 가능, desktop 1440×900 첫 viewport에서 제목·상성 말풍선·読書状態 행·구매 링크 확인 가능(2026-11-11, `03` §6)
 - Catalog/external의 기존 persistence/URL 계약 불변
 - unsupported reader/community 기능 없음

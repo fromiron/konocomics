@@ -10,6 +10,7 @@ import { useUrlSyncedQuery } from "@/components/design-system/use-url-synced-que
 import { NativeSelect } from "@/components/design-system/native-select";
 import { SegmentedControl } from "@/components/design-system/segmented-control";
 import { SummarySection, summaryLinkClassName } from "@/components/layout/summary-section";
+import { Notice } from "@/components/design-system/notice";
 import recommendationContextJson from "@/data/generated/recommendation-context-v1.json";
 import { confirmedSeriesVolumeCounts } from "@/domain/catalog/series";
 import { recommendationContextSchema } from "@/domain/recommendation/context-schema";
@@ -333,12 +334,9 @@ export function LibraryView({
       />
 
       {storageDegraded ? (
-        <p
-          className="mb-[var(--space-4)] border-l-[length:var(--space-content-tight)] border-warn bg-surface-1 px-[var(--space-4)] py-[var(--space-3)]"
-          role="status"
-        >
+        <Notice className="mb-[var(--space-4)]" tone="warn">
           {libraryStrings.storageWarning}
-        </p>
+        </Notice>
       ) : null}
 
       {rows.length === 0 ? (
@@ -679,9 +677,7 @@ export function LibraryView({
                     <span className="inline-flex min-h-6 w-fit items-center rounded-[var(--radius-pill)] border border-line px-[var(--space-content)] py-0.5 text-[length:var(--text-caption-size)] font-bold text-text-muted">
                       {libraryStrings.externalBadge}
                     </span>
-                    <p className="border-l-[length:var(--space-content-tight)] border-line bg-canvas p-[var(--space-3)] text-[length:var(--text-caption-size)] text-text-muted">
-                      {libraryStrings.externalExclusion}
-                    </p>
+                    <Notice className="bg-canvas">{libraryStrings.externalExclusion}</Notice>
                   </>
                 ) : null}
                 {selectedRow.kind === "catalog-missing" ? (
@@ -689,9 +685,9 @@ export function LibraryView({
                     <span className="inline-flex min-h-6 w-fit items-center rounded-[var(--radius-pill)] border border-line px-[var(--space-content)] py-0.5 text-[length:var(--text-caption-size)] font-bold text-text-muted">
                       {libraryStrings.catalogMissing.badge}
                     </span>
-                    <p className="border-l-[length:var(--space-content-tight)] border-line bg-canvas p-[var(--space-3)] text-[length:var(--text-caption-size)] text-text-muted">
+                    <Notice className="bg-canvas">
                       {libraryStrings.catalogMissing.description}
-                    </p>
+                    </Notice>
                   </>
                 ) : selectedRow.kind === "catalog" ? (
                   <Link

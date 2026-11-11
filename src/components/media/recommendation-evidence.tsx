@@ -1,4 +1,8 @@
+import { Fragment } from "react";
+
+import type { Work } from "@/domain/catalog/types";
 import type { TasteExplanationSentence } from "@/domain/explanation/types";
+import { recommendationStrings } from "@/lib/strings";
 import { cn } from "@/lib/utils";
 
 import { ReasonBubble } from "./reason-bubble";
@@ -79,6 +83,35 @@ export function ConfidenceLabel({
       )}
     >
       {prefix}: {label}
+    </p>
+  );
+}
+
+/**
+ * Publication status and volume count, known values only: an unknown status or an unconfirmed
+ * volume count is missing data, never a signal, so it gets no words (03 §5). Renders nothing when
+ * neither is known.
+ */
+export function KnownPublicationMeta({
+  className,
+  status,
+  volumeCount,
+}: Readonly<{ className?: string; status: Work["status"]; volumeCount?: number | null }>) {
+  const labels = [
+    ...(status === "unknown" ? [] : [recommendationStrings.workStatus[status]]),
+    ...(volumeCount === undefined || volumeCount === null || volumeCount < 1
+      ? []
+      : [recommendationStrings.volumeCount(volumeCount)]),
+  ];
+  if (labels.length === 0) return null;
+  return (
+    <p className={className}>
+      {labels.map((label, index) => (
+        <Fragment key={label}>
+          {index === 0 ? null : <span aria-hidden="true"> · </span>}
+          {label}
+        </Fragment>
+      ))}
     </p>
   );
 }

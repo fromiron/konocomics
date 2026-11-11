@@ -5,6 +5,7 @@ import { type FormEvent, type ReactNode, useState } from "react";
 import { Button } from "@/components/design-system/button";
 import { ChoiceChipRadio, ChoiceChipRadioGroup } from "@/components/design-system/choice-chip";
 import { Input } from "@/components/design-system/input";
+import { Notice } from "@/components/design-system/notice";
 import { FACTOR_BACKED_NEGATIVE_REASON_IDS } from "@/domain/profile/constants";
 import { READING_STATES } from "@/domain/profile/reading-state";
 import type {
@@ -106,9 +107,7 @@ function ReasonPicker({
         ))}
       </div>
       {hasExternalReason ? (
-        <p className="border-l-[length:var(--space-content-tight)] border-line bg-canvas p-[var(--space-3)] text-[length:var(--text-caption-size)] text-text-muted">
-          {libraryStrings.editor.externalReason}
-        </p>
+        <Notice className="bg-canvas">{libraryStrings.editor.externalReason}</Notice>
       ) : null}
     </fieldset>
   );

@@ -5,6 +5,7 @@ import { useState } from "react";
 import { Button } from "@/components/design-system/button";
 
 import { CoverImage } from "@/components/cover/CoverImage";
+import { SectionHeading } from "@/components/layout/section-heading";
 import type { Work } from "@/domain/catalog/types";
 import { mediaStrings, tasteStrings } from "@/lib/strings";
 import { cn } from "@/lib/utils";
@@ -107,12 +108,12 @@ export function RecommendationDiffPreview({
       className={cn("taste-recommendation-preview grid gap-[var(--space-3)]", className)}
     >
       <div className="grid gap-[var(--space-content-tight)]">
-        <h2
-          className="text-[length:var(--text-subheading-size)] text-text-strong"
+        <SectionHeading
+          className="mb-0"
+          compact
           id="taste-recommendation-preview-heading"
-        >
-          {tasteStrings.previewHeading}
-        </h2>
+          title={tasteStrings.previewHeading}
+        />
         <p className="text-[length:var(--font-size-12)] text-text-muted">
           {tasteStrings.previewDescription}
         </p>

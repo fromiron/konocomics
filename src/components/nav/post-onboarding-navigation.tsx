@@ -1,5 +1,6 @@
 import { Link } from "@tanstack/react-router";
 
+import { AccentControl } from "@/features/appearance/accent-control";
 import { navigationStrings } from "@/lib/strings";
 import { cn } from "@/lib/utils";
 
@@ -78,12 +79,17 @@ export function PostOnboardingNavigation({
   variant,
 }: PostOnboardingNavigationProps) {
   if (variant === "mobile") {
+    // Mobile has no top header: the accent selector takes the tab bar's last cell, after the
+    // four tabs and outside their link list (03 §0).
     return (
       <nav
         aria-label={navigationStrings.mobileLabel}
         className="app-navigation app-navigation--mobile fixed inset-x-0 bottom-0 z-30 flex min-h-[var(--layout-mobile-navigation-clearance)] pb-[var(--layout-safe-area-bottom)] md:hidden"
       >
         <NavigationLinks activePathname={activePathname} variant={variant} />
+        <div className="app-navigation__accent flex h-[var(--mobile-navigation-height)] shrink-0 items-center px-[var(--space-2)]">
+          <AccentControl side="top" />
+        </div>
       </nav>
     );
   }
@@ -92,9 +98,12 @@ export function PostOnboardingNavigation({
     <header className="app-navigation app-navigation--desktop sticky top-0 z-30 hidden h-[var(--desktop-navigation-height)] md:block">
       <div className="app-navigation__desktop-inner mx-auto grid h-full w-full max-w-[var(--layout-width-navigation)] grid-cols-[auto_minmax(0,1fr)] items-center gap-[var(--space-6)] px-[var(--layout-page-padding)]">
         <BrandMark />
-        <nav aria-label={navigationStrings.desktopLabel} className="justify-self-end">
-          <NavigationLinks activePathname={activePathname} variant={variant} />
-        </nav>
+        <div className="flex min-w-0 items-center gap-[var(--space-3)] justify-self-end">
+          <nav aria-label={navigationStrings.desktopLabel}>
+            <NavigationLinks activePathname={activePathname} variant={variant} />
+          </nav>
+          <AccentControl />
+        </div>
       </div>
     </header>
   );

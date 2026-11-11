@@ -439,15 +439,14 @@ async function completeKeyboardOnboarding(
   await observations.beforeStepTwo?.(page);
   await positiveSearch.fill("MONSTER");
   await expect(page).toHaveURL(/q=MONSTER/u);
-  await tabUntil(page, /^\s*すべて読んだ\s*$/u, 40);
-  await page.keyboard.press("Enter");
+  // Each chosen work already starts as 「読んだ」; no reading-state step stands before Step 2.
   await expect
     .poll(async () => {
       const entries = (await readProductState(page)).onboardingDraft[0]?.positiveEntries ?? [];
       return entries.length === 8 && entries.every((entry) => entry.readingState === "completed");
     })
     .toBe(true);
-  const next = await tabUntil(page, /^\s*次へ \(8\/10\)\s*$/u);
+  const next = await tabUntil(page, /^\s*合わなかった作品へ進む\s*$/u);
   expect(next.disabled).toBe(false);
   await page.keyboard.press("Enter");
   await expect(
@@ -536,6 +535,9 @@ type LateFactorProbe = {
   firstRow: HTMLElement;
   secondRow: HTMLElement;
   enteredAt: number | null;
+  /** Each row's own viewport entry, so scrolling between the two rows is not counted. */
+  firstEnteredAt: number | null;
+  secondEnteredAt: number | null;
   firstChangedAt: number | null;
   secondChangedAt: number | null;
 };
@@ -600,12 +602,39 @@ async function verifyLateViewportFactorReveal(page: Page) {
     const probe: LateFactorProbe = {
       ...selected,
       enteredAt: null,
+      firstEnteredAt: null,
+      secondEnteredAt: null,
       firstChangedAt: null,
       secondChangedAt: null,
     };
     (
       window as typeof window & { __konocomicsLateFactorProbe?: LateFactorProbe }
     ).__konocomicsLateFactorProbe = probe;
+
+    // Each row's own entry is observed the way the bar's in-view trigger observes it (an
+    // IntersectionObserver at 40% that starts on the first intersecting entry), so the entry time
+    // is when that bar's reveal delay starts, not when a sampled frame happened to notice it.
+    const firstTrack = probe.firstRow.querySelector(".taste-factor-bar__track");
+    const secondTrack = probe.secondRow.querySelector(".taste-factor-bar__track");
+    const entryObserver = new IntersectionObserver(
+      (entries) => {
+        for (const entry of entries) {
+          if (!entry.isIntersecting) continue;
+          if (entry.target === firstTrack && probe.firstEnteredAt === null) {
+            probe.firstEnteredAt = entry.time;
+          }
+          if (entry.target === secondTrack && probe.secondEnteredAt === null) {
+            probe.secondEnteredAt = entry.time;
+          }
+        }
+        if (probe.firstEnteredAt !== null && probe.secondEnteredAt !== null) {
+          entryObserver.disconnect();
+        }
+      },
+      { threshold: 0.4 },
+    );
+    if (firstTrack !== null) entryObserver.observe(firstTrack);
+    if (secondTrack !== null) entryObserver.observe(secondTrack);
 
     const sample = (now: number) => {
       if (
@@ -616,13 +645,19 @@ async function verifyLateViewportFactorReveal(page: Page) {
       ) {
         probe.enteredAt = now;
       }
-      if (probe.enteredAt !== null) {
-        if (probe.firstChangedAt === null && scaleX(probe.firstRow) > 0.01) {
-          probe.firstChangedAt = now;
-        }
-        if (probe.secondChangedAt === null && scaleX(probe.secondRow) > 0.01) {
-          probe.secondChangedAt = now;
-        }
+      if (
+        probe.firstEnteredAt !== null &&
+        probe.firstChangedAt === null &&
+        scaleX(probe.firstRow) > 0.01
+      ) {
+        probe.firstChangedAt = now;
+      }
+      if (
+        probe.secondEnteredAt !== null &&
+        probe.secondChangedAt === null &&
+        scaleX(probe.secondRow) > 0.01
+      ) {
+        probe.secondChangedAt = now;
       }
       if (probe.firstChangedAt === null || probe.secondChangedAt === null) {
         requestAnimationFrame(sample);
@@ -684,6 +719,8 @@ async function verifyLateViewportFactorReveal(page: Page) {
     if (
       probe?.enteredAt === null ||
       probe?.enteredAt === undefined ||
+      probe.firstEnteredAt === null ||
+      probe.secondEnteredAt === null ||
       probe.firstChangedAt === null ||
       probe.secondChangedAt === null
     ) {
@@ -691,7 +728,12 @@ async function verifyLateViewportFactorReveal(page: Page) {
     }
     return {
       firstAfterViewportMs: probe.firstChangedAt - probe.enteredAt,
-      localStaggerMs: probe.secondChangedAt - probe.firstChangedAt,
+      // Each row starts from its own viewport entry, so the in-section stagger is the difference
+      // of the two waits; the scroll time between the rows' entries is not part of it.
+      localStaggerMs:
+        probe.secondChangedAt -
+        probe.secondEnteredAt -
+        (probe.firstChangedAt - probe.firstEnteredAt),
     };
   });
   expect(timing).not.toBeNull();
@@ -1166,9 +1208,14 @@ test.describe("Slice 7 recommendation journeys", () => {
     expect(previewTitle).toBeTruthy();
     const previewDialog = page.getByRole("dialog", { name: previewTitle });
 
+    // With a fine pointer the stage card shows its actions only on hover or focus-within, so reach
+    // the opener through its own card as a keyboard user does; pointer position and scrolling
+    // then cannot hide it before it is focused.
+    await previewItem.getByRole("link", { name: /作品詳細を見る$/u }).focus();
     await previewOpener.scrollIntoViewIfNeeded();
     await page.evaluate(() => window.scrollTo(0, 200));
     await previewOpener.focus();
+    await expect(previewOpener).toBeFocused();
     const scrollYBeforePreview = await page.evaluate(() => window.scrollY);
     expect(scrollYBeforePreview).toBeGreaterThan(0);
     // Activate the focused opener without Playwright's click auto-scrolling before activation.
@@ -1284,18 +1331,10 @@ test.describe("Slice 7 recommendation journeys", () => {
     await page.goBack();
     await expect(previewDialog).toBeHidden();
 
-    if (testInfo.project.name === "mobile-chromium") {
-      const policySummary = page.locator("summary").filter({ hasText: "おすすめの方針" });
-      await policySummary.focus();
-      await policySummary.press("Enter");
-      await expect(page.getByRole("checkbox", { name: "完結作を優先" })).toBeVisible();
-    }
-    await tabUntil(
-      page,
-      /^\s*完結作を優先\s*$/u,
-      120,
-      testInfo.project.name === "chromium" ? "Shift+Tab" : "Tab",
-    );
+    // Below md the policy chips sit in the toolbar's single scrolling row, never folded away, so
+    // both viewports walk back from the Featured opener to the toolbar above it.
+    await expect(page.getByRole("checkbox", { name: "完結作を優先" })).toBeAttached();
+    await tabUntil(page, /^\s*完結作を優先\s*$/u, 120, "Shift+Tab");
     await page.keyboard.press("Space");
     await expect(page.getByRole("checkbox", { name: "完結作を優先" })).toBeChecked();
     await expect(page.getByText("おすすめの方針を反映しました。", { exact: true })).toBeVisible();
@@ -1316,9 +1355,6 @@ test.describe("Slice 7 recommendation journeys", () => {
     const policyIds = await recommendationIds(page);
 
     await page.reload();
-    if (testInfo.project.name === "mobile-chromium") {
-      await page.locator("summary").filter({ hasText: "おすすめの方針" }).click();
-    }
     await expect(page.getByRole("checkbox", { name: "完結作を優先" })).toBeChecked();
     await expect(
       page.locator("li[data-recommendation-work-id]:not([data-carousel-clone])"),
@@ -1551,7 +1587,12 @@ test.describe("Slice 7 recommendation journeys", () => {
     const anchorDetail = page.locator("main[data-work-detail-id]");
     await expect(anchorDetail.getByRole("heading", { level: 1, name: anchorTitle })).toBeVisible();
     const compatibility = anchorDetail.getByRole("region", { name: "あなたとの相性" });
-    await expect(compatibility.getByText(anchorSummary.text, { exact: true })).toBeVisible();
+    // A shelf may rotate which shown reason leads (02 §6.9 #61); the detail keeps the same shown
+    // reasons in their own order, so the card's lead factor is its lead or one of 近いポイント.
+    const anchorLeadLabel = /「([^」]+)」/u.exec(anchorSummary.text)?.[1];
+    expect(anchorLeadLabel).toBeTruthy();
+    await expect(compatibility).toBeVisible();
+    await expect(compatibility).toContainText(anchorLeadLabel!);
     await expect(anchorDetail.getByRole("button", { name: "読みたい", exact: true })).toBeVisible();
     await page.goBack();
     await expect(anchorCard).toBeVisible();
@@ -1674,7 +1715,12 @@ test.describe("Slice 7 recommendation journeys", () => {
       .poll(() => readStoredRecord(page, "userWorks", removedWorkId))
       .toEqual(expect.objectContaining({ readingState: "completed" }));
 
+    // While the 「元に戻す」 notice is up, 「更新」 waits (03 §5); once that notice times out, the
+    // still-changed input brings 「更新」 back. Keep the pointer off the notice so its timer runs.
     const update = page.getByRole("button", { name: "更新" });
+    await expect(update).toHaveCount(0);
+    await page.mouse.move(1, 1);
+    await expect(page.getByRole("button", { name: "元に戻す" })).toBeHidden({ timeout: 12_000 });
     await expect(update).toBeEnabled();
     await update.click();
     await expect(
@@ -1735,17 +1781,30 @@ test.describe("Slice 7 recommendation journeys", () => {
         .poll(() => readStoredRecord(page, "userWorks", workId))
         .toEqual(expect.objectContaining({ readingState: "planned" }));
       await actions.getByRole("button", { name: label, exact: true }).click();
-      await expect(page.getByRole("dialog")).toBeVisible();
+      if (readingState === "completed") {
+        await expect(page.getByRole("dialog")).toBeVisible();
+      }
       await expect
         .poll(() => readStoredRecord(page, "userWorks", workId))
         .toEqual(expect.objectContaining({ readingState }));
-      await page.keyboard.press("Escape");
+      if (readingState === "completed") {
+        await page.keyboard.press("Escape");
+      } else {
+        // 「興味なし」 is complete in one click: no follow-up sheet, one undoable notice.
+        await expect(page.getByRole("button", { name: "元に戻す" })).toBeVisible();
+      }
       await expect(page.getByRole("dialog")).toBeHidden();
       await expect(page.locator(`[id='${neighborId}']`).getByRole("link")).toBeFocused();
       await expect(page.locator(`[id='recommendation-shelf-work-${workId}']`)).toHaveCount(0);
       expect(await recommendationIds(page)).toEqual(updatedIds);
     }
-    await page.getByRole("button", { name: "更新", exact: true }).click();
+    // While the hide's 「元に戻す」 notice is up, 「更新」 waits (03 §5); once that notice times out,
+    // the still-changed input brings 「更新」 back. Keep the pointer off the notice so its timer runs.
+    const updateAfterHide = page.getByRole("button", { name: "更新", exact: true });
+    await expect(updateAfterHide).toHaveCount(0);
+    await page.mouse.move(1, 1);
+    await expect(page.getByRole("button", { name: "元に戻す" })).toBeHidden({ timeout: 12_000 });
+    await updateAfterHide.click();
     await expect(
       page.getByText(
         /^(おすすめを更新しました。|変更を反映しました。上位作品と順番は同じです。)$/u,

@@ -84,9 +84,18 @@ export type BaselineRecommendationExplanation = {
 
 export type WorkTitleResolver = (workId: string) => string | undefined;
 
+/**
+ * How the lead reason is chosen among the selected positives (02 §6.9). `axisOrThemeFirst` leads
+ * with the strongest Axis/Theme reason and lets a Genre match lead only when no Axis/Theme reason
+ * is shown; `contributionValue` keeps the plain value order that frozen experiment output records.
+ */
+export type LeadReasonOrder = "axisOrThemeFirst" | "contributionValue";
+
 export type GenerateTasteExplanationInput = {
   /** Presentation only: choose an existing valid reason before rendering its wording. */
   preferredFactorId?: ExplanationFactorId;
+  /** Presentation only; defaults to `axisOrThemeFirst`. Never changes which reasons are shown. */
+  leadReasonOrder?: LeadReasonOrder;
   contributions: readonly GroupContribution[];
   confidenceLevel: ConfidenceLevel;
   lexicon: ExplanationLexicon;

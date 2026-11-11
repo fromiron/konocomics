@@ -3,8 +3,9 @@ import { Suspense, useCallback, useState } from "react";
 
 import { StaticAssetCatalogProvider } from "@/features/catalog/static-asset-catalog-provider";
 import { RecommendationsFlow } from "@/features/recommendations/recommendations-flow";
+import { RecommendationsLoadingPage } from "@/features/recommendations/recommendations-skeleton";
 import { recommendationsSearchSchema } from "@/lib/route-search";
-import { recommendationStrings } from "@/lib/strings";
+import { catalogStrings, recommendationStrings } from "@/lib/strings";
 
 export const Route = createFileRoute("/recommendations")({
   ssr: false,
@@ -30,14 +31,10 @@ function RecommendationsPage() {
           : undefined
       }
     >
-      <Suspense
-        fallback={
-          <main className="recommendations-page recommendations-page--loading">
-            <p aria-live="polite">{recommendationStrings.loading}</p>
-          </main>
-        }
-      >
-        <StaticAssetCatalogProvider>
+      <Suspense fallback={<RecommendationsLoadingPage status={recommendationStrings.loading} />}>
+        <StaticAssetCatalogProvider
+          loadingFallback={<RecommendationsLoadingPage status={catalogStrings.loading} />}
+        >
           {(context) => (
             <RecommendationsFlow
               context={context}

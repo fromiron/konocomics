@@ -13,6 +13,7 @@ import { AppShell } from "@/components/nav/app-shell";
 import { PersonalCatalogProvider } from "@/features/catalog/personal-catalog-provider";
 import { LazyCatalogIdentityProvider } from "@/features/catalog/catalog-provider";
 import { PersistenceProvider } from "@/infrastructure/db";
+import { accentBootScript } from "@/infrastructure/display-preferences";
 import { securityHeaders, siteMetadata } from "@/lib/site-metadata";
 import { coreStrings, routeBoundaryStrings } from "@/lib/strings";
 
@@ -47,6 +48,8 @@ export const Route = createRootRouteWithContext<{
         { rel: "apple-touch-icon", href: "/icons/apple-touch-icon.png", sizes: "180x180" },
         ...metadata.links,
       ],
+      // Applies the stored accent before first paint (05 §6); the prerendered HTML stays default.
+      scripts: [{ children: accentBootScript }],
     };
   },
   errorComponent: GlobalError,
@@ -100,7 +103,8 @@ function GlobalNotFound() {
 
 function RootDocument() {
   return (
-    <html className="dark" lang="ja">
+    // `data-accent` is set by the head script before hydration and is not a React prop.
+    <html className="dark" lang="ja" suppressHydrationWarning>
       <head>
         <HeadContent />
       </head>

@@ -201,7 +201,7 @@ const contracts = [
       expect(landingProjectionSchema.parse(landingJson).catalogVersion).toBe(
         catalogJson.catalogVersion,
       );
-      expect(source("src/routes/recommendations.tsx")).toContain("<StaticAssetCatalogProvider>");
+      expect(source("src/routes/recommendations.tsx")).toMatch(/<StaticAssetCatalogProvider[\s>]/u);
       expect(source("src/routes/__root.tsx")).not.toContain(
         "@/data/generated/catalog-identity-v1.json",
       );

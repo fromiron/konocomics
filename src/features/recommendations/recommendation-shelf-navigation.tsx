@@ -91,7 +91,10 @@ export function RecommendationShelfNavigation({
         aria-hidden={!visible}
         aria-label={recommendationStrings.shelfNavigation.label}
         className={cn(
-          "absolute inset-x-0 top-0 flex h-[var(--control-min-size)] gap-[var(--space-2)] overflow-x-auto bg-canvas [scrollbar-width:none]",
+          // The band is the header's canvas from edge to edge: a canvas spread paints past the
+          // content column on both sides (clipped to the band's height) so shelves and their fades
+          // never show beside it, without widening the page.
+          "absolute inset-x-0 top-0 flex h-[var(--control-min-size)] gap-[var(--space-2)] overflow-x-auto bg-canvas shadow-[0_0_0_100vmax_var(--canvas)] [clip-path:inset(0_-100vmax)] [scrollbar-width:none]",
           !visible && "invisible",
         )}
         id="recommendation-navigation"

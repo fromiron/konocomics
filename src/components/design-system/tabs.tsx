@@ -14,7 +14,8 @@ export function TabsList({ className, ...props }: ComponentProps<typeof Primitiv
   return (
     <PrimitiveTabsList
       className={cn(
-        "min-h-[var(--control-min-size)] bg-surface-2 text-text-muted group-data-[orientation=horizontal]/tabs:h-auto",
+        // A 12px track with 4px padding holds the 8px tabs (04 §2.3 nesting rule).
+        "min-h-[var(--control-min-size)] rounded-[var(--radius-card)] bg-surface-2 p-[var(--space-1)] text-text-muted group-data-[orientation=horizontal]/tabs:h-auto",
         className,
       )}
       {...props}

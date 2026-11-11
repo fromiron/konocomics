@@ -1,6 +1,6 @@
-import { CircleAlertIcon } from "lucide-react";
 import type { ComponentPropsWithoutRef, ReactNode } from "react";
 
+import { Notice } from "@/components/design-system/notice";
 import { cn } from "@/lib/utils";
 
 type SettingsPanelProps = Omit<ComponentPropsWithoutRef<"section">, "title"> &
@@ -34,7 +34,7 @@ export function SettingsPanel({
       className={cn(
         "grid min-w-0 scroll-mt-[calc(var(--control-min-size)+var(--space-6))] content-start gap-[var(--space-5)] md:scroll-mt-[calc(var(--desktop-navigation-height)+var(--space-6))]",
         tone === "danger"
-          ? "border border-line-danger bg-surface-danger-soft p-[var(--space-5)] md:p-[var(--space-6)]"
+          ? "rounded-[var(--radius-card)] border border-line-danger bg-surface-danger-soft p-[var(--space-5)] md:p-[var(--space-6)]"
           : "border-t-2 border-text-strong pt-[var(--space-5)]",
         className,
       )}
@@ -107,28 +107,23 @@ export function SettingsRow({
   );
 }
 
-/** Inline feedback under a row. `role` makes errors interrupt and progress stay polite. */
+/**
+ * Inline feedback under a row. An error is the shared danger `Notice` (it interrupts); progress
+ * stays a polite caption line.
+ */
 export function SettingsNotice({
   children,
   tone,
 }: Readonly<{ children: ReactNode; tone: "error" | "progress" }>) {
+  if (tone === "error") {
+    return <Notice tone="danger">{children}</Notice>;
+  }
   return (
     <p
-      className={cn(
-        "flex min-w-0 items-start gap-[var(--space-content)] [overflow-wrap:anywhere]",
-        tone === "error"
-          ? "rounded-[var(--radius-control)] border border-line-danger bg-surface-danger-soft px-[var(--space-4)] py-[var(--space-3)] text-text-strong"
-          : "text-[length:var(--text-caption-size)] text-text-muted",
-      )}
-      role={tone === "error" ? "alert" : "status"}
+      className="min-w-0 text-[length:var(--text-caption-size)] text-text-muted [overflow-wrap:anywhere]"
+      role="status"
     >
-      {tone === "error" ? (
-        <CircleAlertIcon
-          aria-hidden="true"
-          className="mt-[var(--space-content-tight)] size-[var(--space-4)] shrink-0 text-danger"
-        />
-      ) : null}
-      <span className="min-w-0">{children}</span>
+      {children}
     </p>
   );
 }

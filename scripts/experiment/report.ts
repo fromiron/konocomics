@@ -344,6 +344,8 @@ function buildProfileReport(options: {
         confidenceLevel: recommendation.confidenceLevel,
         lexicon,
         resolveTitle,
+        // The report reproduces recorded sentences in their frozen value order (02 §6.9).
+        leadReasonOrder: "contributionValue",
       }),
       coverageWarnings: calculateCoverageWarnings(work, bestAnchor),
     };

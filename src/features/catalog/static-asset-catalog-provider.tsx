@@ -26,9 +26,14 @@ type CatalogLoadState =
 
 type StaticAssetCatalogProviderProps = Readonly<{
   children: (context: RecommendationContext) => ReactNode;
+  /** The page's own loading layout; without it, one status line. */
+  loadingFallback?: ReactNode;
 }>;
 
-export function StaticAssetCatalogProvider({ children }: StaticAssetCatalogProviderProps) {
+export function StaticAssetCatalogProvider({
+  children,
+  loadingFallback,
+}: StaticAssetCatalogProviderProps) {
   const identity = useCatalogIdentity();
   const [attempt, setAttempt] = useState(0);
   const requestKey = `${identity.catalogVersion}\0${identity.workIds.join("\0")}\0${String(attempt)}`;
@@ -95,6 +100,7 @@ export function StaticAssetCatalogProvider({ children }: StaticAssetCatalogProvi
   }, [identity, requestCache, requestKey]);
 
   if (state.requestKey !== requestKey || state.kind === "loading") {
+    if (loadingFallback !== undefined) return loadingFallback;
     return (
       <main
         className="recommendations-page recommendations-page--loading mx-auto grid min-h-dvh w-full max-w-[var(--layout-width-media)] place-items-center px-[var(--layout-page-padding)] py-[var(--layout-page-block-start)] text-text-muted"

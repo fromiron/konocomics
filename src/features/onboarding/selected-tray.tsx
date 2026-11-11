@@ -1,21 +1,55 @@
 "use client";
 
 import { AnimatePresence, domMax, LazyMotion, m, useReducedMotion } from "motion/react";
-import { PlusIcon, XIcon } from "lucide-react";
-import { useEffect, useId, useRef } from "react";
+import { ChevronUpIcon, PlusIcon, XIcon } from "lucide-react";
+import { type RefObject, useEffect, useId, useRef, useState } from "react";
 
 import { CoverImage } from "@/components/cover/CoverImage";
 import { Button } from "@/components/design-system/button";
 import type { Work } from "@/domain/catalog/types";
 import type { PositiveOnboardingEntry } from "@/domain/profile/onboarding";
+import { onboardingStrings } from "@/lib/strings";
 import { cn } from "@/lib/utils";
 
 /**
  * Shared shell of the onboarding action panel: a fixed bottom bar on mobile and a sticky
  * side panel on desktop. STEP 1 and STEP 2 use the same frame so the primary action never moves.
+ * On mobile the bar is only as tall as its content (03 §2, 2026-11-11 one-row tray).
  */
 export const ONBOARDING_PANEL_CLASS =
-  "fixed inset-x-0 bottom-0 z-20 grid min-h-[calc(var(--space-12)+var(--space-12)+var(--space-8)+var(--space-1))] min-w-0 grid-cols-[minmax(0,1fr)_auto] content-center gap-[var(--space-content-loose)] border-t border-line bg-surface-1 p-[var(--space-3)] px-[max(var(--layout-page-padding),calc((100vw-var(--layout-width-onboarding))/2+var(--layout-page-padding)))] pb-[calc(var(--space-3)+var(--layout-safe-area-bottom))] md:sticky md:top-[calc(var(--desktop-navigation-height)+var(--space-5))] md:right-auto md:bottom-auto md:left-auto md:max-h-[calc(100dvh-var(--desktop-navigation-height)-var(--space-5)*2)] md:grid-cols-1 md:content-start md:overflow-y-auto md:rounded-[var(--radius-card)] md:border-0 md:p-[var(--space-5)]";
+  "fixed inset-x-0 bottom-0 z-20 grid min-w-0 grid-cols-[minmax(0,1fr)_auto] content-center gap-x-[var(--space-3)] gap-y-[var(--space-2)] border-t border-line bg-surface-1 p-[var(--space-3)] px-[max(var(--layout-page-padding),calc((100vw-var(--layout-width-onboarding))/2+var(--layout-page-padding)))] pb-[calc(var(--space-3)+var(--layout-safe-area-bottom))] md:sticky md:top-[calc(var(--desktop-navigation-height)+var(--space-5))] md:right-auto md:bottom-auto md:left-auto md:max-h-[calc(100dvh-var(--desktop-navigation-height)-var(--space-5)*2)] md:grid-cols-1 md:content-start md:gap-[var(--space-content-loose)] md:overflow-y-auto md:rounded-[var(--radius-card)] md:border-0 md:p-[var(--space-5)]";
+
+const PANEL_CLEARANCE_PROPERTY = "--layout-onboarding-tray-clearance";
+
+/**
+ * While the panel is fixed to the bottom of the screen, it publishes its own height as the
+ * onboarding clearance token (04 §2.4), so the page's scroll end and `scroll-padding-bottom` match
+ * it exactly and no control can rest underneath. The sticky desktop panel needs no clearance.
+ */
+export function useOnboardingPanelClearance(panelRef: RefObject<HTMLElement | null>) {
+  useEffect(() => {
+    const panel = panelRef.current;
+    if (panel === null || typeof ResizeObserver === "undefined") {
+      return;
+    }
+    const root = document.documentElement;
+    const publish = () => {
+      if (getComputedStyle(panel).position === "fixed") {
+        const height = Math.ceil(panel.getBoundingClientRect().height);
+        root.style.setProperty(PANEL_CLEARANCE_PROPERTY, `${String(height)}px`);
+      } else {
+        root.style.removeProperty(PANEL_CLEARANCE_PROPERTY);
+      }
+    };
+    publish();
+    const observer = new ResizeObserver(publish);
+    observer.observe(panel);
+    return () => {
+      observer.disconnect();
+      root.style.removeProperty(PANEL_CLEARANCE_PROPERTY);
+    };
+  }, [panelRef]);
+}
 
 export type SelectedTrayClarity = Readonly<{
   label: string;
@@ -35,11 +69,14 @@ export type SelectedTrayGuide = Readonly<{
 }>;
 
 /** 「DNAの鮮明さ」: a stage label and a fill only; the underlying value is never shown. */
-export function ClarityMeter({ clarity }: Readonly<{ clarity: SelectedTrayClarity }>) {
+export function ClarityMeter({
+  className = "col-span-full",
+  clarity,
+}: Readonly<{ className?: string; clarity: SelectedTrayClarity }>) {
   const labelId = useId();
 
   return (
-    <div className="onboarding-clarity col-span-full grid gap-[var(--space-1)]">
+    <div className={cn("onboarding-clarity grid gap-[var(--space-1)]", className)}>
       <div className="hidden items-baseline justify-between gap-[var(--space-3)] text-[length:var(--text-caption-size)] md:flex">
         <span className="text-text-muted" id={labelId}>
           {clarity.label}
@@ -117,11 +154,16 @@ export function SelectedTray({
   onClear,
 }: SelectedTrayProps) {
   const remainingId = useId();
+  const worksId = useId();
   const reducedMotion = useReducedMotion();
   const allowMotion = reducedMotion === false;
   const itemRefs = useRef(new Map<string, HTMLButtonElement>());
   const trayRef = useRef<HTMLElement>(null);
   const pendingFocus = useRef<Readonly<{ workId: string }> | "tray" | null>(null);
+  // Mobile only: the selected thumbnails fold behind the count until it is pressed.
+  const [worksOpen, setWorksOpen] = useState(false);
+  const showWorks = worksOpen && selections.length > 0;
+  useOnboardingPanelClearance(trayRef);
 
   useEffect(() => {
     const target = pendingFocus.current;
@@ -146,6 +188,12 @@ export function SelectedTray({
     onRemove(workId);
   };
 
+  // Below `md` the compact cell also says what the reader needs next. While works are still
+  // missing, the button's own description line ("あと N 作品") moves under the count; once the
+  // minimum is met, the line under the count says how clear the DNA already is (sight-only: the
+  // meter keeps its own value text).
+  const compactStatus = remainingLabel ? undefined : clarity?.levelLabel;
+
   return (
     <LazyMotion features={domMax}>
       <aside
@@ -161,23 +209,47 @@ export function SelectedTray({
               : "selected-tray--limit-1 motion-safe:animate-[selected-tray-limit-1_240ms_linear]"),
         )}
         data-limit-active={limitActive ? "true" : undefined}
+        data-works-open={showWorks ? "true" : undefined}
         ref={trayRef}
         tabIndex={-1}
       >
-        <div className="selected-tray__heading col-span-full flex items-baseline justify-between gap-[var(--space-4)]">
-          <strong className="text-text-strong">{label}</strong>
+        <div className="selected-tray__heading col-span-full flex items-baseline justify-between gap-[var(--space-4)] max-md:contents">
+          <strong className="text-text-strong max-md:sr-only">{label}</strong>
           {countLabel === undefined ? null : (
-            <span className="text-[length:var(--text-caption-size)] font-bold text-accent-ink">
+            <span className="text-[length:var(--text-caption-size)] font-bold text-accent-ink max-md:col-start-1 max-md:row-start-1 max-md:self-start max-md:pe-[var(--space-6)] max-md:leading-[var(--space-4)]">
               {countLabel}
-              {clarity === undefined ? null : (
-                <span aria-hidden="true" className="font-medium text-text-muted md:hidden">
-                  {` ・ ${clarity.levelLabel}`}
+              {compactStatus === undefined ? null : (
+                <span aria-hidden="true" className="block font-medium text-text-muted md:hidden">
+                  {compactStatus}
                 </span>
               )}
             </span>
           )}
         </div>
-        {clarity === undefined ? null : <ClarityMeter clarity={clarity} />}
+        {selections.length === 0 ? null : (
+          <button
+            aria-controls={worksId}
+            aria-expanded={showWorks}
+            aria-label={onboardingStrings.step1.showSelected}
+            className="selected-tray__works-toggle z-10 col-start-1 row-start-1 flex min-h-[var(--control-min-size)] items-start justify-end rounded-[var(--radius-control)] bg-transparent p-0 text-text-muted focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-ring md:hidden"
+            onClick={() => setWorksOpen((open) => !open)}
+            type="button"
+          >
+            <ChevronUpIcon
+              aria-hidden="true"
+              className={cn(
+                "size-4 transition-transform duration-[var(--motion-duration-value)] motion-reduce:transition-none",
+                showWorks && "rotate-180",
+              )}
+            />
+          </button>
+        )}
+        {clarity === undefined ? null : (
+          <ClarityMeter
+            className="col-span-full max-md:pointer-events-none max-md:col-span-1 max-md:col-start-1 max-md:row-start-1 max-md:self-end"
+            clarity={clarity}
+          />
+        )}
         {guide === undefined || selections.length > 0 ? null : (
           <div className="selected-tray__guide col-span-full hidden border-t border-line pt-[var(--space-4)] text-[length:var(--text-caption-size)] leading-[1.8] text-text-muted md:block">
             <strong className="text-text-strong">{guide.title}</strong>
@@ -190,10 +262,13 @@ export function SelectedTray({
         )}
         <div
           className={cn(
-            "selected-tray__works flex min-h-[calc(var(--space-7)*2)] min-w-0 flex-auto items-center gap-[var(--space-content)] overflow-x-auto [scrollbar-width:none] md:min-h-[calc(var(--space-8)*2+var(--space-1))] pt-[var(--space-1)] md:flex-wrap md:overflow-visible [&::-webkit-scrollbar]:hidden",
+            "selected-tray__works col-span-full flex min-h-[calc(var(--space-7)*2)] min-w-0 flex-auto items-center gap-[var(--space-content)] overflow-x-auto [scrollbar-width:none] md:min-h-[calc(var(--space-8)*2+var(--space-1))] pt-[var(--space-1)] md:flex-wrap md:overflow-visible [&::-webkit-scrollbar]:hidden",
+            "max-md:row-start-2",
+            !showWorks && "max-md:hidden",
             selections.length === 0 && "overflow-x-hidden",
             selections.length === 0 && guide !== undefined && "md:hidden",
           )}
+          id={worksId}
         >
           {selections.length === 0 ? (
             <p className="whitespace-normal text-text-muted">{emptyLabel}</p>
@@ -259,10 +334,10 @@ export function SelectedTray({
             </span>
           ) : null}
         </div>
-        <div className="grid content-center gap-[var(--space-content-tight)]">
+        <div className="grid content-center gap-[var(--space-content-tight)] max-md:contents">
           {remainingLabel ? (
             <p
-              className="text-center text-[length:var(--text-caption-size)] text-text-muted"
+              className="text-center text-[length:var(--text-caption-size)] text-text-muted max-md:col-start-1 max-md:row-start-1 max-md:self-start max-md:pt-[var(--space-4)] max-md:pe-[var(--space-6)] max-md:text-start max-md:leading-[var(--space-4)]"
               id={remainingId}
             >
               {remainingLabel}
@@ -270,7 +345,7 @@ export function SelectedTray({
           ) : null}
           <Button
             aria-describedby={remainingLabel ? remainingId : undefined}
-            className="selected-tray__continue min-w-32 md:w-full md:min-w-0"
+            className="selected-tray__continue min-w-32 max-md:col-start-2 max-md:row-start-1 max-md:self-center md:w-full md:min-w-0"
             disabled={disabled || selections.length === 0}
             onClick={onContinue}
             type="button"

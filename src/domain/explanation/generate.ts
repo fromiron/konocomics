@@ -1,7 +1,12 @@
 import { AXIS_IDS } from "../catalog/constants";
 import { compareText } from "../recommendation/math";
 import type { BaselineContribution, GroupContribution } from "../recommendation/types";
-import { explanationClusterFor, isExplanationFactorId, isGenreTag } from "./constants";
+import {
+  explanationClusterFor,
+  isExplanationFactorId,
+  isGenreTag,
+  LEAD_ROTATION_VALUE_FLOOR_RATIO,
+} from "./constants";
 import type {
   BaselineExplanationSentence,
   BaselineRecommendationExplanation,
@@ -12,6 +17,7 @@ import type {
   ExplanationTemplateId,
   GenerateBaselineExplanationInput,
   GenerateTasteExplanationInput,
+  LeadReasonOrder,
   TasteExplanationSentence,
   TasteRecommendationExplanation,
   WorkTitleResolver,
@@ -338,14 +344,25 @@ function baselineSentenceFor(options: {
   };
 }
 
+/** A Genre match reads as the weakest evidence, so it leads only when nothing else is shown. */
+function isGenreMatch(reason: Pick<GroupContribution, "group">) {
+  return reason.group === "genre";
+}
+
 export function generateTasteExplanation({
   confidenceLevel,
   contributions,
   lexicon,
   resolveTitle,
   preferredFactorId,
+  leadReasonOrder = "axisOrThemeFirst",
 }: GenerateTasteExplanationInput): TasteRecommendationExplanation {
   const { selectedCaution, selectedPositives } = selectTasteContributions(contributions, lexicon);
+  if (leadReasonOrder === "axisOrThemeFirst") {
+    // Only the lead moves; the selected set and the rest of the value order stay as they are.
+    const index = selectedPositives.findIndex(({ contribution }) => !isGenreMatch(contribution));
+    if (index > 0) selectedPositives.unshift(...selectedPositives.splice(index, 1));
+  }
   if (preferredFactorId !== undefined) {
     const index = selectedPositives.findIndex(
       (candidate) => candidate.factorId === preferredFactorId,
@@ -458,6 +475,24 @@ export function generateBaselineExplanation({
   };
 }
 
+/**
+ * The shown reasons a rotated card may lead with (02 §6.9 #61): the applicable family (Axis/Theme
+ * when any is shown, else Genre matches), cut to values of at least
+ * `LEAD_ROTATION_VALUE_FLOOR_RATIO` of that family's strongest. The frozen value order keeps
+ * every shown reason, as before 2026-11-11.
+ */
+function leadRotationCandidates(
+  reasons: readonly TasteExplanationSentence[],
+  leadReasonOrder: LeadReasonOrder,
+): readonly TasteExplanationSentence[] {
+  if (leadReasonOrder === "contributionValue") return reasons;
+  const family = reasons.some((reason) => !isGenreMatch(reason))
+    ? reasons.filter((reason) => !isGenreMatch(reason))
+    : reasons;
+  const strongest = Math.max(...family.map((reason) => reason.value));
+  return family.filter((reason) => reason.value >= strongest * LEAD_ROTATION_VALUE_FLOOR_RATIO);
+}
+
 /** Reuses valid reasons across a shelf; neither rank nor contribution data is edited. */
 export function generateVariedTasteExplanations(
   inputs: readonly (GenerateTasteExplanationInput & { workId: string })[],
@@ -468,7 +503,12 @@ export function generateVariedTasteExplanations(
   for (const input of inputs) {
     if (explanations.has(input.workId)) continue;
     const initial = generateTasteExplanation(input);
-    const lead = [...initial.positiveReasons].sort(
+    const lead = [
+      ...leadRotationCandidates(
+        initial.positiveReasons,
+        input.leadReasonOrder ?? "axisOrThemeFirst",
+      ),
+    ].sort(
       (left, right) =>
         (factors.get(left.factorId) ?? 0) - (factors.get(right.factorId) ?? 0) ||
         (anchors.get(left.anchorWorkIds.join()) ?? 0) -

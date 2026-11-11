@@ -11,7 +11,7 @@ afterEach(() => {
   vi.unstubAllGlobals();
 });
 
-it("keeps active policies and policy progress visible when narrow-screen policy controls are folded", () => {
+it("keeps every policy chip and the policy progress in the toolbar row on narrow screens", () => {
   vi.stubGlobal("matchMedia", () => ({
     matches: true,
     addEventListener: vi.fn(),
@@ -30,24 +30,27 @@ it("keeps active policies and policy progress visible when narrow-screen policy 
     onPolicyToggle,
   };
   const { container, rerender } = render(<RecommendationFilterBar {...props} />);
-  const disclosure = container.querySelector("details");
-  const summary = container.querySelector("summary");
-  expect(disclosure?.open).toBe(false);
-  expect(summary?.textContent).toContain(recommendationStrings.policyLabels.preferCompleted);
-  expect(summary?.textContent).not.toContain(recommendationStrings.policyLabels.preferHidden);
+  // Nothing is folded away: below md the row scrolls sideways instead (03 §5).
+  expect(container.querySelector("details")).toBeNull();
+  const row = container.querySelector("#recommendation-genre")!.closest("div.flex.min-w-0")!;
+  expect(row.className).toContain("max-md:overflow-x-auto");
+  expect(row.className).toContain("max-md:flex-nowrap");
+  const completed = screen.getByRole("checkbox", {
+    name: recommendationStrings.policyLabels.preferCompleted,
+  });
+  expect(row.contains(completed)).toBe(true);
+  expect(completed.getAttribute("aria-checked")).toBe("true");
+  expect(
+    screen
+      .getByRole("checkbox", { name: recommendationStrings.policyLabels.preferHidden })
+      .getAttribute("aria-checked"),
+  ).toBe("false");
 
-  disclosure!.open = true;
-  fireEvent(disclosure!, new Event("toggle"));
-  fireEvent.click(
-    screen.getByRole("checkbox", { name: recommendationStrings.policyLabels.preferCompleted }),
-  );
+  fireEvent.click(completed);
   expect(onPolicyToggle).toHaveBeenCalledWith("preferCompleted");
-  disclosure!.open = false;
-  fireEvent(disclosure!, new Event("toggle"));
   rerender(<RecommendationFilterBar {...props} policyUpdating />);
   const region = screen.getByRole("region", { name: recommendationStrings.policiesHeading });
   expect(within(region).getByRole("status").textContent).toBe(
     recommendationStrings.policiesUpdating,
   );
-  expect(disclosure?.open).toBe(false);
 });

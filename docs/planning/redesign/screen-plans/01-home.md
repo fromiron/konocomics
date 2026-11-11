@@ -4,6 +4,15 @@
 
 확정 Home 이미지의 시네마틱 Hero, 추천 예시 Shelf, Top 10형 랭킹, 발견 Shelf, 서비스 설명, footer를 구현합니다. 현재 profile 보유 사용자의 `/recommendations` redirect 계약은 유지합니다.
 
+## 2026-11-11 개정 (사용자 결정, 플랜 승인)
+
+홈의 구성은 `03` §1이 정합니다. 이 문서와 다르면 `03` §1과 `04` §2.10 선반 카드 문법이 우선합니다.
+
+- Hero는 `03` §1의 「근거 무대」입니다(2026-11-11 사용자 결정, 시안 A: 왼쪽 문구·CTA, 오른쪽 표지 무대와 종이 말풍선). `home-hero-motion-plan.md`의 만화 한 페이지와 아래의 `HeroBackdrop + poster mosaic` 안은 쓰지 않습니다.
+- Hero 아래는 샘플 취향의 실물 선반입니다: 공용 무대 카드(`StageCard`) 3장 → 공용 펼침 카드(`ExpandableMediaCard`) 선반 1줄 → editorial Top 10(공용 `RankingShelf`) → 마무리 CTA → footer.
+- 발견 Shelf, 서비스 설명(사용법) 카드, 홈 전용 showcase 카드, 스크롤 연동 연출은 두지 않습니다. 아래에서 이들을 다루는 항목은 이력입니다.
+- redirect, `?landing=1`, 단일 CTA, editorial Top 10의 데이터·크기·접근성 계약은 그대로입니다.
+
 ## 현재 소스
 
 - `src/app/page.tsx`
@@ -40,6 +49,8 @@ LandingFlow
   SiteFooter
 ```
 
+2026-11-11부터 위 구성 중 `HomeShowcaseShelf`·`HomeDiscoveryShelf`·`HomeHowItWorks`는 만들지 않습니다. Hero 아래는 `StageCard` 3장, `ExpandableMediaCard`를 담은 `MediaShelf` 1줄, `RankingShelf`를 그대로 씁니다(`04` §2.10).
+
 신규 후보:
 
 - `src/features/landing/home-hero.tsx`
@@ -60,7 +71,8 @@ LandingFlow
 ## Shelf 크기 계약
 
 - editorial Top 10은 같은 `RankingCard`의 `editorial-ranking` 변형을 사용하며 mobile 96px, `sm` 이상 112px 폭과 원본 표지용 `30 / 43` 비율을 유지한다. desktop에서는 10번째 card 일부가 보이는 overflow를 만들어 공통 `MediaShelf`의 탐색 control을 노출한다.
-- discovery의 `MediaPosterCard` `cover-overlay` 변형은 mobile에서 정확히 2.4장이 보이는 fluid 폭을 유지하고, `sm` 이상에서는 152px 폭을 사용한다. desktop에서는 7장이 한 화면에 들어오는 밀도를 목표로 한다.
+- (2026-11-11 폐기: 홈에 discovery Shelf를 두지 않는다. 소비자가 없어진 `MediaPosterCard`·`MediaMetaLine`은 같은 날 정리에서 삭제했다.) discovery의 `MediaPosterCard` `cover-overlay` 변형은 mobile에서 정확히 2.4장이 보이는 fluid 폭을 유지하고, `sm` 이상에서는 152px 폭을 사용한다. desktop에서는 7장이 한 화면에 들어오는 밀도를 목표로 한다.
+- 2026-11-11: 샘플 무대 카드와 펼침 선반은 `/recommendations`의 Featured·관점 선반과 같은 공용 규격을 쓰며 홈 전용 크기를 만들지 않는다.
 - `personalized-ranking`과 standard poster의 기존 크기는 변경하지 않는다. 비슷한 Shelf라도 ranking accessory, 카드 밀도, 탐색 control의 유무로 섹션 역할을 구분한다.
 - 별도 carousel 의존성을 추가하지 않는다. 공통 `MediaShelf`의 CSS scroll-snap, touch scroll, keyboard focus 이동, overflow 조건부 control을 그대로 사용한다.
 
@@ -94,5 +106,5 @@ LandingFlow
 
 - 첫 viewport에서 가치 제안, CTA, 실제 표지 기반 hero가 보임
 - editorial 추천과 개인화 추천, market popularity를 서로 오인시키지 않음
-- showcase 확장만 hover/focus의 spatial state로 사용하고 editorial 순위는 고정하며, 해당 카드에 generic 상단 lift를 추가하지 않음
+- 2026-11-11: hover/focus의 spatial state는 `04` §2.10의 무대 카드 제자리 공개와 펼침 카드 폭 확장뿐이며(이전 showcase 확장을 대체), editorial 순위는 고정하고 해당 카드에 generic 상단 lift를 추가하지 않음
 - footer까지 full-page layout이 확정 이미지의 밀도와 일치

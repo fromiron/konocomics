@@ -1,35 +1,52 @@
-import { landingEditorialRankingIds, landingSampleProfile } from "../../src/data/landing-showcase";
-import { AXIS_IDS, GENRE_TAGS } from "../../src/domain/catalog/constants";
+import {
+  LANDING_LENS_MIN_ITEMS,
+  LANDING_STAGE_COUNT,
+  landingEditorialRankingIds,
+  landingSampleProfile,
+} from "../../src/data/landing-showcase";
 import type { CatalogV1, Work } from "../../src/domain/catalog/types";
-import { summarizeMangaDna } from "../../src/domain/profile/dna-summary";
+import { generateVariedTasteExplanations } from "../../src/domain/explanation/generate";
+import {
+  groupRecommendationLenses,
+  RECOMMENDATION_LENS_CANDIDATE_LIMIT,
+} from "../../src/domain/explanation/lens";
+import type { TasteRecommendationExplanation } from "../../src/domain/explanation/types";
 import type { UserWorkRecord } from "../../src/domain/profile/types";
-import { rankRecommendations } from "../../src/domain/recommendation/rank";
-import type { RecommendationContext } from "../../src/domain/recommendation/types";
+import {
+  buildRecommendationPlan,
+  selectRecommendationPlanEntries,
+} from "../../src/domain/recommendation/rank";
+import type {
+  RecommendationContext,
+  RecommendationInput,
+  RecommendationPlanEntry,
+} from "../../src/domain/recommendation/types";
+import { explanationLexicon } from "../../src/lib/strings";
 
-const DISCOVERY_LIMIT = 8;
-const SAMPLE_AXIS_LIMIT = 4;
 // Fixed so the generated projection is byte-stable across builds.
 const SAMPLE_RECORDED_AT = "2026-01-01T00:00:00.000Z";
 
-function compareIds(left: string, right: string) {
-  return left < right ? -1 : left > right ? 1 : 0;
-}
-
-/** The static landing projection: editorial picks plus an engine-computed example. */
+/**
+ * The static landing projection: the editorial Top 10 plus engine-computed examples for a fixed
+ * sample profile. The examples are its best recommendations (stage cards) and one liked-work lens,
+ * explained and grouped exactly as the recommendations page explains and groups its shelves.
+ */
 export function buildLandingProjection(catalog: CatalogV1, context: RecommendationContext) {
   const volumesById = new Map(catalog.volumes.map((volume) => [volume.id, volume] as const));
   const worksById = new Map(catalog.works.map((work) => [work.id, work] as const));
+  const representativeVolume = (workId: string) => {
+    const volumeId = catalog.representativeVolumeByWorkId[workId];
+    return volumeId === undefined ? undefined : volumesById.get(volumeId);
+  };
   const toLandingWork = (work: Work) => {
-    const representativeVolumeId = catalog.representativeVolumeByWorkId[work.id];
+    const isbn = representativeVolume(work.id)?.isbn;
     return {
       id: work.id,
       title: work.title,
       creators: work.creators,
       genres: work.genres,
       status: work.status,
-      ...(representativeVolumeId === undefined
-        ? {}
-        : { isbn: volumesById.get(representativeVolumeId)?.isbn }),
+      ...(isbn === undefined ? {} : { isbn }),
     };
   };
   const requireWork = (workId: string, purpose: string) => {
@@ -56,13 +73,7 @@ export function buildLandingProjection(catalog: CatalogV1, context: Recommendati
     reaction,
     updatedAt: SAMPLE_RECORDED_AT,
   }));
-
-  // The example is the best-ranked result that the page does not already feature.
-  const featuredIds = new Set<string>([
-    ...landingEditorialRankingIds,
-    ...records.map((r) => r.workId),
-  ]);
-  const recommendation = rankRecommendations({
+  const input: RecommendationInput = {
     catalog,
     records,
     adjustments: { axes: {}, themes: {} },
@@ -73,48 +84,77 @@ export function buildLandingProjection(catalog: CatalogV1, context: Recommendati
       excludeIncomplete: false,
     },
     context,
-  }).find((entry) => !featuredIds.has(entry.workId));
-  if (recommendation === undefined) {
-    throw new Error("Landing sample profile produced no example recommendation");
-  }
+  };
+  // Reasons name only the sample's own works, exactly as the home resolves them at runtime.
+  const sampleTitles = new Map(sampleWorks.map((work) => [work.id, work.title] as const));
+  const resolveTitle = (workId: string) => sampleTitles.get(workId);
   // Recommendations may come from works that onboarding does not list, so only existence matters.
-  const recommendedWork = worksById.get(recommendation.workId);
-  if (recommendedWork === undefined) {
+  // The stored lead factor lets the home render the very lead chosen here from the contributions.
+  const toRecommendation = (
+    entry: RecommendationPlanEntry,
+    explanations: ReadonlyMap<string, TasteRecommendationExplanation>,
+  ) => {
+    const work = worksById.get(entry.workId);
+    const lead = explanations.get(entry.workId)?.positiveReasons[0];
+    if (work === undefined) {
+      throw new Error(`Landing example recommendation is outside the Catalog: ${entry.workId}`);
+    }
+    if (lead === undefined) {
+      throw new Error(`Landing example recommendation has no lead reason: ${entry.workId}`);
+    }
+    return {
+      work: toLandingWork(work),
+      confidenceLevel: entry.confidenceLevel,
+      contributions: entry.contributions,
+      preferredFactorId: lead.factorId,
+    };
+  };
+
+  // The page never repeats a work: examples skip the sample's own works and the Top 10.
+  const shownIds = new Set<string>([
+    ...landingEditorialRankingIds,
+    ...records.map((record) => record.workId),
+  ]);
+  const plan = buildRecommendationPlan(input);
+  // The stage is the top of what `rankRecommendations` returns for this profile.
+  const stage = selectRecommendationPlanEntries(plan, input.policies)
+    .filter((entry) => !shownIds.has(entry.workId))
+    .slice(0, LANDING_STAGE_COUNT);
+  stage.forEach((entry) => shownIds.add(entry.workId));
+  // The rest of the plan's top feeds the lens grouping, as on the recommendations page.
+  const lensCandidates = plan
+    .filter((entry) => !shownIds.has(entry.workId))
+    .slice(0, RECOMMENDATION_LENS_CANDIDATE_LIMIT);
+  // Displayed entries first, then the lens candidates: the page's order of operations, so the
+  // stage leads vary first and the lens groups by the varied leads.
+  const explanations = generateVariedTasteExplanations(
+    [...stage, ...lensCandidates].map((entry) => ({
+      workId: entry.workId,
+      contributions: entry.contributions,
+      confidenceLevel: entry.confidenceLevel,
+      lexicon: explanationLexicon,
+      resolveTitle,
+    })),
+  );
+  if (
+    stage.length < LANDING_STAGE_COUNT ||
+    stage.some((entry) => explanations.get(entry.workId)?.positiveReasons[0] === undefined)
+  ) {
     throw new Error(
-      `Landing example recommendation is outside the Catalog: ${recommendation.workId}`,
+      `Landing sample profile produced fewer than ${String(LANDING_STAGE_COUNT)} explained examples`,
     );
   }
 
-  const axisOrder = new Map(AXIS_IDS.map((axisId, index) => [axisId, index] as const));
-  const axes = summarizeMangaDna(catalog.works, records)
-    .axes.flatMap((axis) =>
-      axis.state === "known" && axis.value !== null && axis.value > 0
-        ? [{ axisId: axis.factorId, value: axis.value }]
-        : [],
-    )
-    .sort(
-      (left, right) =>
-        right.value - left.value ||
-        (axisOrder.get(left.axisId) ?? 0) - (axisOrder.get(right.axisId) ?? 0),
-    )
-    .slice(0, SAMPLE_AXIS_LIMIT);
-
-  // One work per genre, in genre order, never repeating a work featured elsewhere on the page.
-  const usedIds = new Set([...featuredIds, recommendedWork.id]);
-  const discoveryWorks: Work[] = [];
-  const candidates = catalog.works
-    .filter(
-      (work) => work.eligibility.onboardingEligible && work.eligibility.recommendationEligible,
-    )
-    .sort((left, right) => compareIds(left.id, right.id));
-  for (const genre of GENRE_TAGS) {
-    const work = candidates.find(
-      (candidate) => candidate.genres.includes(genre) && !usedIds.has(candidate.id),
+  const lens = groupRecommendationLenses({
+    items: lensCandidates,
+    leadReasonOf: (entry) => explanations.get(entry.workId)?.positiveReasons[0],
+    lexicon: explanationLexicon,
+    resolveTitle,
+  }).find((candidate) => candidate.kind === "anchor");
+  if (lens?.kind !== "anchor" || lens.items.length < LANDING_LENS_MIN_ITEMS) {
+    throw new Error(
+      `Landing sample profile produced no liked-work lens of ${String(LANDING_LENS_MIN_ITEMS)} works`,
     );
-    if (work === undefined) continue;
-    usedIds.add(work.id);
-    discoveryWorks.push(work);
-    if (discoveryWorks.length === DISCOVERY_LIMIT) break;
   }
 
   return {
@@ -122,15 +162,16 @@ export function buildLandingProjection(catalog: CatalogV1, context: Recommendati
     recommendableWorkCount: catalog.works.filter((work) => work.eligibility.recommendationEligible)
       .length,
     editorialRankingWorks: editorialRankingWorks.map(toLandingWork),
-    discoveryWorks: discoveryWorks.map(toLandingWork),
     sample: {
       anchorWorks: sampleWorks.map(toLandingWork),
-      recommendation: {
-        work: toLandingWork(recommendedWork),
-        confidenceLevel: recommendation.confidenceLevel,
-        contributions: recommendation.contributions,
+      stage: stage.map((entry) => toRecommendation(entry, explanations)),
+      lens: {
+        anchorWorkId: lens.anchorWorkId,
+        items: lens.items.map((entry) => {
+          const caption = representativeVolume(entry.workId)?.metadata?.itemCaption?.trim();
+          return { ...toRecommendation(entry, explanations), ...(caption ? { caption } : {}) };
+        }),
       },
-      axes,
     },
   };
 }

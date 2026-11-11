@@ -1,16 +1,24 @@
 // @vitest-environment jsdom
 
-import { cleanup, render, screen, waitFor, within } from "@testing-library/react";
+import { act, cleanup, fireEvent, render, screen, waitFor, within } from "@testing-library/react";
 import type { ReactNode } from "react";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 
 import type { CatalogV1 } from "@/domain/catalog/types";
+import { generateTasteExplanation } from "@/domain/explanation";
+import type { ExplanationFactorId } from "@/domain/explanation/types";
 import type { OnboardingDraft } from "@/domain/profile/onboarding";
 import type { UserWorkRecord } from "@/domain/profile/types";
 import { entrySource } from "@/features/landing/entry-source";
 import { LandingFlow } from "@/features/landing/landing-flow";
-import type { LandingSample } from "@/features/landing/landing-types";
-import { coreStrings, landingStrings } from "@/lib/strings";
+import type { LandingRecommendation, LandingSample } from "@/features/landing/landing-types";
+import {
+  coreStrings,
+  explanationLexicon,
+  landingStrings,
+  mediaStrings,
+  recommendationStrings,
+} from "@/lib/strings";
 import { createTestCatalog, createTestWork } from "../../helpers/catalog";
 
 const testState = vi.hoisted(() => ({
@@ -71,9 +79,10 @@ vi.mock("@/infrastructure/db", () => ({
   }),
 }));
 
-const works = Array.from({ length: 6 }, (_, index) =>
-  createTestWork({ id: `landing-${String(index + 1)}` }),
-);
+const works = Array.from({ length: 13 }, (_, index) => ({
+  ...createTestWork({ id: `landing-${String(index + 1)}` }),
+  title: `作品${String(index + 1)}`,
+}));
 const baseCatalog = createTestCatalog(works[0]);
 
 const toLandingWork = (work: (typeof works)[number]) => ({
@@ -84,33 +93,66 @@ const toLandingWork = (work: (typeof works)[number]) => ({
   status: work.status,
 });
 
+/** A recommendation whose one reason is its similarity to `anchor` on `factorId`. */
+const recommendation = (
+  work: (typeof works)[number],
+  anchor: (typeof works)[number],
+  factorId: ExplanationFactorId,
+  group: "genre" | "narrative" | "tone",
+): LandingRecommendation => ({
+  work: toLandingWork(work),
+  confidenceLevel: "normal",
+  contributions: [
+    {
+      source: "similarity",
+      group,
+      factorId,
+      value: 0.4,
+      anchorWorkIds: [anchor.id],
+      explainable: true,
+    },
+  ],
+  preferredFactorId: factorId,
+});
+
+const anchor = works[0]!;
 const sample: LandingSample = {
   anchorWorks: works.slice(0, 2).map(toLandingWork),
-  recommendation: {
-    work: toLandingWork(works[5]!),
-    confidenceLevel: "normal",
-    contributions: [
+  stage: [
+    recommendation(works[2]!, anchor, "mysteryReveal", "narrative"),
+    recommendation(works[3]!, works[1]!, "horror", "genre"),
+    recommendation(works[4]!, anchor, "darkness", "tone"),
+  ],
+  lens: {
+    anchorWorkId: anchor.id,
+    items: [
+      recommendation(works[5]!, anchor, "mysteryReveal", "narrative"),
       {
-        source: "similarity",
-        group: "narrative",
-        factorId: "mysteryReveal",
-        value: 0.4,
-        anchorWorkIds: [works[0]!.id],
-        explainable: true,
+        ...recommendation(works[6]!, anchor, "horror", "genre"),
+        caption: "出版社による作品紹介です。",
       },
+      recommendation(works[7]!, anchor, "darkness", "tone"),
+      recommendation(works[8]!, anchor, "mysteryReveal", "narrative"),
     ],
   },
-  axes: [
-    { axisId: "mysteryReveal", value: 3.8 },
-    { axisId: "darkness", value: 3.4 },
-  ],
 };
+
+/** The lead reason the engine's contributions give, exactly as the recommendations page says it. */
+function leadReason({ confidenceLevel, contributions, preferredFactorId }: LandingRecommendation) {
+  const titles = new Map(sample.anchorWorks.map((work) => [work.id, work.title] as const));
+  return generateTasteExplanation({
+    contributions,
+    confidenceLevel,
+    lexicon: explanationLexicon,
+    preferredFactorId,
+    resolveTitle: (workId) => titles.get(workId),
+  }).positiveReasons[0]?.text;
+}
 
 function renderLanding(showIntroduction = false, via?: "share-card") {
   return render(
     <LandingFlow
-      discoveryWorks={works.slice(4, 5).map(toLandingWork)}
-      editorialRankingWorks={works.slice(0, 4)}
+      editorialRankingWorks={works.slice(9, 13)}
       entrySource={via}
       recommendableWorkCount={2410}
       sample={sample}
@@ -185,24 +227,185 @@ describe("LandingFlow profile routing", () => {
       screen.getByText("登録なし · 2,410作品から提案 · データはこの端末だけに保存"),
     ).toBeTruthy();
 
-    // The example is labelled as one and explains itself only from its contributions.
-    const example = screen
-      .getByText(landingStrings.sample.caption([works[0]!.title, works[1]!.title]))
-      .closest("figure");
-    expect(example).toBeTruthy();
-    if (example === null) return;
+    expect(testState.navigate).not.toHaveBeenCalled();
+  });
+
+  it("says the selected sample's lead reason in the hero bubble, as content", () => {
+    testState.userWorks = [];
+
+    renderLanding();
+
+    const [first] = sample.stage;
+    const stage = screen.getByRole("figure", { name: landingStrings.hero.stageLabel });
+    const cover = within(stage).getByRole("link");
+    expect(cover.getAttribute("aria-label")).toBe(mediaStrings.openDetails(first.work.title));
+    // The sentence is the reason the engine's contributions give, not decoration, and it is in
+    // the accessibility tree with the scene it belongs to.
+    const scene = cover.closest("[data-landing-stage-work-id]");
+    const reason = scene?.querySelector("strong")?.closest("p");
+    expect(reason?.textContent).toBe(leadReason(first));
+    expect(reason?.querySelector("strong")?.textContent).toBe(anchor.title);
+    expect(reason?.closest("[aria-hidden='true']")).toBeNull();
+    // An example with no rank numbers.
+    expect(within(stage).queryByText(/位/u)).toBeNull();
+  });
+
+  it("switches the stage's cover, bubble, title and named anchor together", async () => {
+    testState.userWorks = [];
+    const setItem = vi.spyOn(Storage.prototype, "setItem");
+
+    renderLanding(true);
+
+    const stage = screen.getByRole("figure", { name: landingStrings.hero.stageLabel });
+    const options = within(stage).getAllByRole("radio");
     expect(
-      within(example).getByRole("link", { name: landingStrings.sample.detail(works[5]!.title) }),
+      within(stage).getByRole("radiogroup", { name: landingStrings.hero.stageSelectorLabel }),
     ).toBeTruthy();
-    expect(within(example).getByText(works[0]!.title, { selector: "strong" })).toBeTruthy();
-    expect(within(example).queryByText(/位/u)).toBeNull();
-    expect(
-      screen.getAllByRole("meter").map((meter) => meter.getAttribute("aria-valuenow")),
-    ).toEqual(["3.8", "3.4"]);
+    expect(options.map((option) => option.getAttribute("aria-label"))).toEqual(
+      sample.stage.map(({ work }) => work.title),
+    );
+
+    /** The one scene in the accessibility tree, with the sample works the stage marks. */
+    const shown = () => {
+      const [cover, ...others] = within(stage).getAllByRole("link");
+      expect(others).toHaveLength(0);
+      const scene = cover?.closest<HTMLElement>("[data-landing-stage-work-id]");
+      if (scene === null || scene === undefined) throw new Error("The stage shows no scene");
+      return {
+        cover: cover?.getAttribute("aria-label"),
+        reason: scene.querySelector("strong")?.closest("p")?.textContent,
+        title: within(scene).getByText(/^作品\d+$/u, { selector: "p" }).textContent,
+        named: [...stage.querySelectorAll("[data-named]")].map((anchorItem) =>
+          anchorItem.getAttribute("data-landing-anchor-work-id"),
+        ),
+        checked: options.find((option) => option.getAttribute("aria-checked") === "true"),
+      };
+    };
+    const expected = (index: number) => {
+      const entry = sample.stage[index]!;
+      return {
+        cover: mediaStrings.openDetails(entry.work.title),
+        reason: leadReason(entry),
+        title: entry.work.title,
+        named: [entry.contributions[0]!.anchorWorkIds[0]],
+        checked: options[index],
+      };
+    };
+
+    // Only the sample work the lead reason names is marked.
+    expect(shown()).toEqual(expected(0));
+    expect(stage.querySelectorAll("[data-muted]")).toHaveLength(sample.anchorWorks.length - 1);
+
+    fireEvent.click(options[1]!);
+    expect(shown()).toEqual(expected(1));
+    expect(shown().named).toEqual([works[1]!.id]);
+
+    // Arrow keys move the selection, as in any radio group.
+    act(() => options[1]!.focus());
+    fireEvent.keyDown(options[1]!, { key: "ArrowRight" });
+    await waitFor(() => expect(shown()).toEqual(expected(2)));
+    expect(document.activeElement).toBe(options[2]);
+    fireEvent.keyDown(options[2]!, { key: "ArrowLeft" });
+    await waitFor(() => expect(shown()).toEqual(expected(1)));
+
+    // The selection is local: no URL, no storage.
+    expect(testState.navigate).not.toHaveBeenCalled();
+    expect(setItem).not.toHaveBeenCalled();
+  });
+
+  it("shows the hero, then the lens shelf, the Top 10 and the closing action", () => {
+    testState.userWorks = [];
+
+    renderLanding();
+
+    const lensTitle = recommendationStrings.lensShelves.anchor.title(anchor.title);
+    // Page headings in document order (card titles inside the shelves are h3).
+    const [title, ...sections] = screen
+      .getAllByRole("heading")
+      .filter((heading) => heading.tagName === "H1" || heading.tagName === "H2");
+    expect(title).toBe(screen.getByRole("heading", { level: 1, name: landingStrings.tagline }));
+    expect(sections.map((heading) => [heading.tagName, heading.textContent])).toEqual([
+      ["H2", lensTitle],
+      ["H2", landingStrings.ranking.title],
+      ["H2", landingStrings.closing.title],
+    ]);
+    // The evidence stage is in the hero, and its works are not shown again below it.
+    const stage = screen.getByRole("figure", { name: landingStrings.hero.stageLabel });
+    expect(stage.closest("section")?.querySelector("h1")).toBe(title);
+    const stageWorkIds = sample.stage.map(({ work }) => work.id);
+    const shownBelow = [...document.querySelectorAll("[data-landing-sample-work-id]")].map((card) =>
+      card.getAttribute("data-landing-sample-work-id"),
+    );
+    expect(shownBelow.length).toBeGreaterThan(0);
+    expect(shownBelow.filter((workId) => stageWorkIds.includes(workId ?? ""))).toEqual([]);
+
+    // Expand cards: the liked work in the shelf title is in every card's lead reason.
+    const lens = screen.getByRole("heading", { level: 2, name: lensTitle }).closest("section");
+    expect(lens).toBeTruthy();
+    if (lens === null) return;
+    const lensCards = [...lens.querySelectorAll("article")];
+    expect(lensCards).toHaveLength(sample.lens.items.length);
+    lensCards.forEach((card, index) => {
+      const entry = sample.lens.items[index]!;
+      const reason = card.querySelector("[data-expandable-panel] p");
+      expect(reason?.textContent).toBe(leadReason(entry));
+      expect(reason?.textContent).toContain(anchor.title);
+      expect(reason?.querySelector("strong")?.textContent).toBe(anchor.title);
+    });
+    // A caption only where the bundled data carries one.
+    expect(within(lens).getAllByText("出版社による作品紹介です。", { exact: true })).toHaveLength(
+      1,
+    );
+
     const editorialRanking = screen.getByRole("list", { name: landingStrings.ranking.title });
     expect(within(editorialRanking).getAllByRole("link", { name: /^おすすめ\d+位/u })).toHaveLength(
       4,
     );
+    expect(screen.getAllByText(/個人向けの順位ではありません/u)).toHaveLength(1);
+
+    // The home's one action is the CTA: sample cards only lead to work details.
+    const actionNames = screen
+      .queryAllByRole("button", { hidden: true })
+      .map((button) => button.getAttribute("aria-label") ?? button.textContent);
+    for (const action of Object.values(recommendationStrings.actions)) {
+      expect(actionNames).not.toContain(action);
+    }
+    const sampleLinks = [stage, lens].flatMap((shelf) =>
+      within(shelf).getAllByRole("link", { hidden: true }),
+    );
+    expect(sampleLinks.every((link) => link.getAttribute("href") === "/works/$workId")).toBe(true);
+  });
+
+  it("opens a lens card's reason in Quick Preview with no reading state and no writes", async () => {
+    testState.userWorks = [];
+    const setItem = vi.spyOn(Storage.prototype, "setItem");
+
+    // The storage-free entry, so any write would come from Quick Preview itself.
+    renderLanding(true);
+
+    const item = sample.lens.items[1]!;
+    const opener = screen.getByRole("button", {
+      name: recommendationStrings.quickPreview.open(item.work.title),
+    });
+    fireEvent.click(opener);
+
+    const dialog = await screen.findByRole("dialog", { name: item.work.title });
+    expect(within(dialog).getByText(landingStrings.sample.quickPreviewDescription)).toBeTruthy();
+    const reason = within(dialog).getByText(anchor.title, { selector: "strong" }).closest("p");
+    expect(reason?.textContent).toBe(leadReason(item));
+    expect(within(dialog).getByText("出版社による作品紹介です。")).toBeTruthy();
+    expect(
+      within(dialog)
+        .getAllByRole("link")
+        .map((link) => link.getAttribute("aria-label")),
+    ).toEqual([mediaStrings.openDetails(item.work.title)]);
+    const buttonNames = within(dialog)
+      .getAllByRole("button")
+      .map((button) => button.getAttribute("aria-label") ?? button.textContent);
+    for (const action of Object.values(recommendationStrings.actions)) {
+      expect(buttonNames).not.toContain(action);
+    }
+    expect(setItem).not.toHaveBeenCalled();
     expect(testState.navigate).not.toHaveBeenCalled();
   });
 

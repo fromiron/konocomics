@@ -8,7 +8,7 @@ import { landingProjectionSchema } from "@/features/landing/landing-types";
 import { landingSearchSchema } from "@/lib/route-search";
 import { landingStrings } from "@/lib/strings";
 
-const { discoveryWorks, editorialRankingWorks, recommendableWorkCount, sample } =
+const { editorialRankingWorks, recommendableWorkCount, sample } =
   landingProjectionSchema.parse(landingJson);
 
 export const Route = createFileRoute("/")({
@@ -31,7 +31,6 @@ function HomePage() {
   return (
     <Suspense fallback={<LandingFallback />}>
       <LandingFlow
-        discoveryWorks={discoveryWorks}
         editorialRankingWorks={editorialRankingWorks}
         entrySource={via}
         recommendableWorkCount={recommendableWorkCount}

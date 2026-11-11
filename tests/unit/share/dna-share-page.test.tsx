@@ -149,7 +149,8 @@ describe("DnaSharePage", () => {
     expect(document.body.textContent).not.toMatch(/retired-work|%/u);
 
     const recommendations = screen.getByRole("region", { name: strings.recommendationsHeading });
-    const items = within(recommendations).getAllByRole("listitem");
+    // Morph cards: the reason is always shown when the link carries one, and never made up.
+    const items = within(recommendations).getAllByRole("article");
     expect(items.map((item) => item.getAttribute("data-share-recommendation"))).toEqual([
       "fire-punch",
       "jujutsu-kaisen",
@@ -158,6 +159,7 @@ describe("DnaSharePage", () => {
       within(items[0]!).getByText(strings.reasonChip(explanationLexicon.clusterLabels.toneLoad)),
     ).toBeTruthy();
     expect(within(items[1]!).queryByText(/が近い/u)).toBeNull();
+    expect(within(items[1]!).getByText("作者 テスト作者", { selector: "p" })).toBeTruthy();
 
     await waitFor(() =>
       expect(within(items[0]!).getByText(workDetailStrings.provider.affiliate)).toBeTruthy(),

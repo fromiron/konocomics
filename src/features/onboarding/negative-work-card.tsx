@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useId, useRef } from "react";
+import { type Ref, useEffect, useId, useRef } from "react";
 import { XIcon } from "lucide-react";
 
 import { CoverImage } from "@/components/cover/CoverImage";
@@ -10,9 +10,16 @@ import {
   ChoiceChipRadio,
   ChoiceChipRadioGroup,
 } from "@/components/design-system/choice-chip";
+import {
+  COVER_CARD_META_CLASSNAME,
+  COVER_CARD_SURFACE_CLASSNAME,
+  COVER_CARD_SURFACE_TRANSITION_CLASSNAME,
+  COVER_CARD_TITLE_CLASSNAME,
+} from "@/components/media/cover-card";
 import type { Work } from "@/domain/catalog/types";
 import type { NegativeDisposition, NegativeOnboardingEntry } from "@/domain/profile/onboarding";
 import type { NegativeReasonId } from "@/domain/profile/types";
+import { cn } from "@/lib/utils";
 
 type NegativeWorkCardProps = Readonly<{
   work: Work;
@@ -32,8 +39,9 @@ type NegativeWorkCardProps = Readonly<{
 }>;
 
 /**
- * A step-2 candidate drawn like the step-1 cover cards: the cover with its title over a scrim,
- * then the two dispositions to choose from (or why it cannot be chosen).
+ * A step-2 candidate drawn like the step-1 cover cards, on the common cover card face (04 §2.10):
+ * the cover, its title and creators under it, then the two dispositions to choose from (or why it
+ * cannot be chosen).
  */
 export function NegativeWorkCard({
   work,
@@ -47,10 +55,16 @@ export function NegativeWorkCard({
 }: NegativeWorkCardProps) {
   const unavailable = isPositive || isSelected;
   const dispositionName = `negative-result-disposition-${work.id}`;
-  const hasRemoteCover = (coverUrl?.trim() ?? "") !== "";
 
   return (
-    <article className="negative-result-card" data-disabled={unavailable || undefined}>
+    <article
+      className={cn(
+        "negative-result-card rounded-[var(--radius-media-card)] p-[var(--space-2)]",
+        COVER_CARD_SURFACE_CLASSNAME,
+        COVER_CARD_SURFACE_TRANSITION_CLASSNAME,
+      )}
+      data-disabled={unavailable || undefined}
+    >
       <span className="negative-result-card__cover">
         <CoverImage
           coverUrl={coverUrl}
@@ -59,11 +73,13 @@ export function NegativeWorkCard({
           requestedSize={400}
           title={work.title}
         />
-        {/* Without a cover the placeholder already shows the title; the heading stays for
-            screen readers. */}
-        <span className={hasRemoteCover ? "negative-result-card__identity" : "sr-only"}>
-          <h3 className="negative-result-card__title">{work.title}</h3>
-          <span className="negative-result-card__creators">{work.creators.join("・")}</span>
+      </span>
+      <span className="negative-result-card__identity grid min-w-0 gap-[var(--space-content-tight)]">
+        <h3 className={cn("negative-result-card__title", COVER_CARD_TITLE_CLASSNAME)}>
+          {work.title}
+        </h3>
+        <span className={cn("negative-result-card__creators", COVER_CARD_META_CLASSNAME)}>
+          {work.creators.join("・")}
         </span>
       </span>
       {unavailable ? (
@@ -86,12 +102,51 @@ export function NegativeWorkCard({
             }}
             value=""
           >
-            <ChoiceChipRadio value="disliked">{labels.disliked}</ChoiceChipRadio>
-            <ChoiceChipRadio value="dropped">{labels.dropped}</ChoiceChipRadio>
+            <DispositionChoice label={labels.disliked} value="disliked" />
+            <DispositionChoice label={labels.dropped} value="dropped" />
           </ChoiceChipRadioGroup>
         </fieldset>
       )}
     </article>
+  );
+}
+
+/**
+ * A disposition radio named by its visible label alone. The name points at the label text (not
+ * the wrapping `<label>`, which also holds the radio) and repeats it as `aria-label`, so neither a
+ * late label lookup nor a DOM-reading tool falls back to the stored value (`disliked`/`dropped`).
+ */
+function DispositionChoice({
+  inputRef,
+  label,
+  value,
+}: Readonly<{ inputRef?: Ref<HTMLInputElement>; label: string; value: NegativeDisposition }>) {
+  const labelId = useId();
+  return (
+    <ChoiceChipRadio aria-label={label} aria-labelledby={labelId} inputRef={inputRef} value={value}>
+      <span id={labelId}>{label}</span>
+    </ChoiceChipRadio>
+  );
+}
+
+/** A reason chip named by its visible label; its hidden input carries no reason ID. */
+function ReasonChoice({
+  checked,
+  disabled,
+  label,
+  onToggle,
+}: Readonly<{ checked: boolean; disabled: boolean; label: string; onToggle: () => void }>) {
+  const labelId = useId();
+  return (
+    <ChoiceChipCheckbox
+      aria-label={label}
+      aria-labelledby={labelId}
+      checked={checked}
+      disabled={disabled}
+      onCheckedChange={onToggle}
+    >
+      <span id={labelId}>{label}</span>
+    </ChoiceChipCheckbox>
   );
 }
 
@@ -202,12 +257,8 @@ export function NegativeEntryEditor({
           onValueChange={(disposition) => onDispositionChange(work.id, disposition)}
           value={entry.disposition}
         >
-          <ChoiceChipRadio inputRef={dislikedInputRef} value="disliked">
-            {labels.disliked}
-          </ChoiceChipRadio>
-          <ChoiceChipRadio inputRef={droppedInputRef} value="dropped">
-            {labels.dropped}
-          </ChoiceChipRadio>
+          <DispositionChoice inputRef={dislikedInputRef} label={labels.disliked} value="disliked" />
+          <DispositionChoice inputRef={droppedInputRef} label={labels.dropped} value="dropped" />
         </ChoiceChipRadioGroup>
       </fieldset>
 
@@ -241,15 +292,13 @@ export function NegativeEntryEditor({
               </span>
               <div className="flex flex-wrap gap-[var(--space-content)]">
                 {options.map((option) => (
-                  <ChoiceChipCheckbox
+                  <ReasonChoice
                     checked={entry.reasons.includes(option.id)}
                     disabled={disabled}
                     key={option.id}
-                    onCheckedChange={() => onReasonToggle(work.id, option.id)}
-                    value={option.id}
-                  >
-                    {option.label}
-                  </ChoiceChipCheckbox>
+                    label={option.label}
+                    onToggle={() => onReasonToggle(work.id, option.id)}
+                  />
                 ))}
               </div>
             </div>

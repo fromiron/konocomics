@@ -1,16 +1,10 @@
 import { Link } from "@tanstack/react-router";
-import { BookOpen } from "lucide-react";
 import type { ReactNode } from "react";
 
 import { CoverImage } from "@/components/cover/CoverImage";
 import { RankCrown, rankMedalFor } from "@/components/media/rank-crown";
 import { mediaStrings } from "@/lib/strings";
 import { cn } from "@/lib/utils";
-
-type EvidencePlaceholderProps = Readonly<{
-  variant: "evidence-placeholder";
-  className?: string;
-}>;
 
 type RankingCardProps = Readonly<{
   workId: string;
@@ -29,27 +23,10 @@ type RankingCardProps = Readonly<{
         rankingKind: "editorial-ranking" | "personalized-ranking";
         position: number;
       }>
-    | Readonly<{ variant: "evidence" | "unranked"; rankingKind?: never; position?: never }>
+    | Readonly<{ variant: "unranked"; rankingKind?: never; position?: never }>
   );
 
-export function RankingCard(props: RankingCardProps | EvidencePlaceholderProps) {
-  if (props.variant === "evidence-placeholder") {
-    return (
-      <li
-        aria-hidden="true"
-        className={cn(
-          "grid min-w-0 place-items-center rounded-[var(--radius-media-card)] bg-surface-1/40 p-[var(--space-2)] text-text-muted",
-          props.className,
-        )}
-      >
-        <span className="grid aspect-[30/43] w-full content-center justify-items-center gap-[var(--space-2)] text-center text-[length:var(--text-caption-size)] font-medium">
-          <BookOpen aria-hidden="true" className="size-[var(--space-6)]" strokeWidth={1.5} />
-          <span>{mediaStrings.evidencePlaceholder}</span>
-        </span>
-      </li>
-    );
-  }
-
+export function RankingCard(props: RankingCardProps) {
   const {
     className,
     coverUrl,
@@ -64,25 +41,19 @@ export function RankingCard(props: RankingCardProps | EvidencePlaceholderProps) 
     variant = "ranking",
     workId,
   } = props;
-  const isEvidence = variant === "evidence";
   const isEditorialRanking = rankingKind === "editorial-ranking";
-  // Gold, silver, and bronze mark only the personalized top three (04 §2.5).
-  const medal = isEvidence ? undefined : rankMedalFor(position);
-  const positionLabel =
-    position === undefined
-      ? undefined
-      : isEditorialRanking
-        ? mediaStrings.editorialRank(position)
-        : mediaStrings.rank(position);
-  const linkLabel = [positionLabel, mediaStrings.openDetails(title), metadataAccessibleLabel]
-    .filter(Boolean)
-    .join(" · ");
+  const linkLabel = rankingCardLinkLabel({
+    metadataAccessibleLabel,
+    position,
+    rankingKind,
+    title,
+  });
 
   return (
     <li
       className={cn(
-        "min-w-0",
-        !isEvidence && ["shrink-0 snap-start", isEditorialRanking ? "w-24 sm:w-28" : "w-44"],
+        "min-w-0 shrink-0 snap-start",
+        isEditorialRanking ? "w-24 sm:w-28" : "w-44",
         className,
       )}
       data-ranking-kind={rankingKind}
@@ -133,67 +104,124 @@ export function RankingCard(props: RankingCardProps | EvidencePlaceholderProps) 
         <article className="h-full min-w-0">
           <Link
             aria-label={linkLabel}
-            className={cn(
-              "ranking-card-link group/ranking relative grid h-full min-h-[var(--control-min-size)] content-start gap-[var(--space-2)] rounded-[var(--radius-media-card)] transition-colors duration-[var(--motion-duration-value)] ease-[var(--motion-ease-direct)] focus-visible:bg-surface-2 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-ring motion-reduce:transition-none [@media(hover:hover)_and_(pointer:fine)]:hover:bg-surface-2",
-              isEvidence ? "bg-surface-1 p-[var(--space-2)]" : "bg-transparent p-[var(--space-3)]",
-            )}
+            className="ranking-card-link group/ranking relative grid h-full min-h-[var(--control-min-size)] content-start gap-[var(--space-2)] rounded-[var(--radius-media-card)] bg-transparent p-[var(--space-3)] transition-colors duration-[var(--motion-duration-value)] ease-[var(--motion-ease-direct)] focus-visible:bg-surface-2 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-ring motion-reduce:transition-none [@media(hover:hover)_and_(pointer:fine)]:hover:bg-surface-2"
             params={{ workId }}
             preload={false}
             to="/works/$workId"
           >
-            <span className="relative block">
-              <CoverImage
-                className="w-full shadow-[var(--shadow-cover-featured)]"
-                coverUrl={coverUrl}
-                creators={creators}
-                fit={isEvidence ? "contain" : "cover"}
-                onVisible={onCoverVisible}
-                priority={priority && position === 1}
-                requestedSize={400}
-                title={title}
-              />
-              {position === undefined ? null : (
-                <span
-                  aria-hidden="true"
-                  className="ranking-badge pointer-events-none absolute right-[var(--space-2)] bottom-[var(--space-2)] grid size-[var(--space-12)] place-items-center rounded-full bg-accent font-display text-[length:var(--font-size-16)] leading-none font-black text-on-accent shadow-[var(--shadow-floating-action)] tabular-nums"
-                  data-medal={medal}
-                  data-ranking-badge-position="true"
-                >
-                  {position}
-                  {medal === undefined ? null : <RankCrown medal={medal} />}
-                </span>
-              )}
-            </span>
-            <span className="grid min-w-0 gap-[var(--space-content-tight)]">
-              <span
-                className={cn(
-                  "ranking-card-title leading-snug text-text-strong [overflow-wrap:anywhere]",
-                  isEvidence
-                    ? "line-clamp-3 text-[length:var(--font-size-14)] font-bold"
-                    : "line-clamp-2 text-[length:var(--font-size-16)] font-medium",
-                  // Ranked rows keep their labels on one line; elsewhere metadata follows the title.
-                  variant === "ranking" && "min-h-[2lh]",
-                )}
-              >
-                {title}
-              </span>
-              {metadata === undefined ? null : (
-                <span
-                  className={cn(
-                    "ranking-card-meta leading-snug text-text-muted",
-                    isEvidence
-                      ? "order-first text-[length:var(--text-caption-size)]"
-                      : "text-[length:var(--font-size-14)]",
-                  )}
-                  data-ranking-label={variant === "ranking" ? "true" : undefined}
-                >
-                  {metadata}
-                </span>
-              )}
-            </span>
+            <RankingCardBody
+              coverUrl={coverUrl}
+              creators={creators}
+              metadata={metadata}
+              onCoverVisible={onCoverVisible}
+              position={position}
+              priority={priority && position === 1}
+              title={title}
+              variant={variant}
+            />
           </Link>
         </article>
       )}
     </li>
+  );
+}
+
+/** The ranking card link's accessible name: rank, destination, then the metadata it shows. */
+export function rankingCardLinkLabel({
+  metadataAccessibleLabel,
+  position,
+  rankingKind,
+  title,
+}: Readonly<{
+  title: string;
+  position?: number;
+  rankingKind?: "editorial-ranking" | "personalized-ranking";
+  metadataAccessibleLabel?: string;
+}>) {
+  const positionLabel =
+    position === undefined
+      ? undefined
+      : rankingKind === "editorial-ranking"
+        ? mediaStrings.editorialRank(position)
+        : mediaStrings.rank(position);
+  return [positionLabel, mediaStrings.openDetails(title), metadataAccessibleLabel]
+    .filter(Boolean)
+    .join(" · ");
+}
+
+type RankingCardBodyProps = Readonly<{
+  title: string;
+  creators: readonly string[];
+  coverUrl?: string | null;
+  metadata?: ReactNode;
+  /** Drawn as the always-visible badge on the cover. */
+  position?: number;
+  priority?: boolean;
+  onCoverVisible?: () => void;
+  variant: "ranking" | "unranked";
+}>;
+
+/**
+ * The cover with its rank badge, then the title and metadata. The caller owns the link around
+ * it (a `ranking-card-link` grid) and the card surface.
+ */
+export function RankingCardBody({
+  coverUrl,
+  creators,
+  metadata,
+  onCoverVisible,
+  position,
+  priority = false,
+  title,
+  variant,
+}: RankingCardBodyProps) {
+  // Gold, silver, and bronze mark only the personalized top three (04 §2.5).
+  const medal = rankMedalFor(position);
+
+  return (
+    <>
+      <span className="relative block">
+        <CoverImage
+          className="w-full shadow-[var(--shadow-cover-featured)]"
+          coverUrl={coverUrl}
+          creators={creators}
+          fit="cover"
+          onVisible={onCoverVisible}
+          priority={priority}
+          requestedSize={400}
+          title={title}
+        />
+        {position === undefined ? null : (
+          <span
+            aria-hidden="true"
+            className="ranking-badge pointer-events-none absolute right-[var(--space-2)] bottom-[var(--space-2)] grid size-[var(--space-12)] place-items-center rounded-full bg-accent font-display text-[length:var(--font-size-16)] leading-none font-black text-on-accent shadow-[var(--shadow-floating-action)] tabular-nums"
+            data-medal={medal}
+            data-ranking-badge-position="true"
+          >
+            {position}
+            {medal === undefined ? null : <RankCrown medal={medal} />}
+          </span>
+        )}
+      </span>
+      <span className="grid min-w-0 gap-[var(--space-content-tight)]">
+        <span
+          className={cn(
+            "ranking-card-title line-clamp-2 text-[length:var(--font-size-16)] leading-snug font-medium text-text-strong [overflow-wrap:anywhere]",
+            // Ranked rows keep their labels on one line; elsewhere metadata follows the title.
+            variant === "ranking" && "min-h-[2lh]",
+          )}
+        >
+          {title}
+        </span>
+        {metadata === undefined ? null : (
+          <span
+            className="ranking-card-meta text-[length:var(--font-size-14)] leading-snug text-text-muted"
+            data-ranking-label={variant === "ranking" ? "true" : undefined}
+          >
+            {metadata}
+          </span>
+        )}
+      </span>
+    </>
   );
 }

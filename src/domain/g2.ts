@@ -495,6 +495,8 @@ export async function createG2Experiment(options: {
       confidenceLevel: result.confidenceLevel,
       lexicon: options.lexicon,
       resolveTitle,
+      // Recorded experiment sentences keep the value order they were frozen with (02 §6.9).
+      leadReasonOrder: "contributionValue",
     });
     const explanationTexts = [
       ...explanation.positiveReasons.map((reason) => reason.text),

@@ -39,13 +39,7 @@ export function WorkDetailShell({
           />
         </div>
 
-        <div
-          className={
-            kind === "catalog"
-              ? "flex min-w-0 flex-col justify-between gap-[var(--space-5)]"
-              : "grid min-w-0 content-start gap-[var(--space-5)] md:gap-[var(--space-4)]"
-          }
-        >
+        <div className="grid min-w-0 content-start gap-[var(--space-5)] md:gap-[var(--space-4)]">
           {children}
         </div>
       </div>

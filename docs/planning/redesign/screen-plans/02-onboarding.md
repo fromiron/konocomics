@@ -49,6 +49,8 @@ OnboardingFlow
    - desktop: selected summary panel 또는 sticky inline tray
    - mobile: bottom sheet/tray
    - empty일 때 한 줄 상태로 축소
+   - 2026-11-11 위임 결정: mobile tray는 항상 한 줄(개수·「DNAの鮮明さ」 막대·상태 한 줄 + 진행 버튼)이고 썸네일은 「選んだ作品を表示」 disclosure 뒤에 접힌다. 스크롤 끝 여백은 측정한 패널 높이와 같다(`03` §2 6번, `04` §2.4)
+   - 같은 날 `IntroAndBenefits` 자리의 웰컴은 내용 크기의 종이 말풍선(「はじめに」·h1·안내 한 줄)이다(`03` §2 0번, `04` §2.9)
 7. 기존 favorite/negative 단계도 같은 visual system으로 리스타일
 8. finalize 성공 후 `/taste` 이동 유지
 

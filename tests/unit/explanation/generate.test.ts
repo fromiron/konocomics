@@ -523,6 +523,8 @@ describe("Taste explanations", () => {
       confidenceLevel: "normal",
       lexicon: explanationLexicon,
       resolveTitle,
+      // Value order keeps a Genre match first, so its own first-mention wording is covered.
+      leadReasonOrder: "contributionValue",
     });
 
     expect(result.positiveReasons.map(({ text }) => text)).toEqual([
@@ -530,6 +532,105 @@ describe("Taste explanations", () => {
       "「復讐」も『作品A』と共通しています。",
       "「世界観の作り込み」の度合いも『作品A』と近い作品です。",
     ]);
+  });
+
+  it("leads with the strongest shown Axis or Theme reason before a Genre match", () => {
+    const contributions = [
+      tasteContribution({ group: "genre", factorId: "fantasy", value: 0.09 }),
+      tasteContribution({ group: "theme", factorId: "revenge", value: 0.05 }),
+      tasteContribution({ group: "narrative", factorId: "worldBuilding", value: 0.07 }),
+      tasteContribution({ group: "tone", factorId: "darkness", value: -0.2 }),
+    ];
+    const original = structuredClone(contributions);
+    const input = {
+      contributions,
+      confidenceLevel: "normal" as const,
+      lexicon: explanationLexicon,
+      resolveTitle: titleResolver({ "anchor-a": "作品A" }),
+    };
+    const result = generateTasteExplanation(input);
+    const byValue = generateTasteExplanation({ ...input, leadReasonOrder: "contributionValue" });
+
+    // Only the lead moves: the strongest Axis/Theme reason, then the rest in value order.
+    expect(result.positiveReasons.map(({ factorId }) => factorId)).toEqual([
+      "worldBuilding",
+      "fantasy",
+      "revenge",
+    ]);
+    expect(byValue.positiveReasons.map(({ factorId }) => factorId)).toEqual([
+      "fantasy",
+      "worldBuilding",
+      "revenge",
+    ]);
+    expect(result.positiveReasons.map(({ text }) => text)).toEqual([
+      "『作品A』と「世界観の作り込み」の度合いが近い作品です。",
+      "「ファンタジー」も『作品A』と共通しています。",
+      "「復讐」も『作品A』と共通しています。",
+    ]);
+    // The shown set, the caution, the anchors and the contributions themselves are unchanged.
+    const identities = (reasons: readonly TasteExplanationSentence[]) =>
+      reasons.map((reason) => ({ ...reason, text: "" })).sort((a, b) => b.value - a.value);
+    expect(identities(result.positiveReasons)).toEqual(identities(byValue.positiveReasons));
+    expect(result.caution).toEqual(byValue.caution);
+    expect(result.anchors).toEqual(byValue.anchors);
+    expect(
+      result.positiveReasons.every((reason) => tasteIdentityExists(reason, contributions)),
+    ).toBe(true);
+    expect(contributions).toEqual(original);
+    expect(
+      generateTasteExplanation({ ...input, contributions: [...contributions].reverse() }),
+    ).toEqual(result);
+  });
+
+  it("counts DNA adjustments as Axis or Theme reasons and lets a Genre match lead only alone", () => {
+    const input = {
+      confidenceLevel: "normal" as const,
+      lexicon: explanationLexicon,
+      resolveTitle: titleResolver({ "anchor-a": "作品A" }),
+    };
+    const genre = tasteContribution({ group: "genre", factorId: "action", value: 0.09 });
+    const lowerAxis = tasteContribution({
+      source: "adjustment",
+      group: "tone",
+      factorId: "comedy",
+      value: 0.01,
+      anchorWorkIds: [],
+      axisPreferenceDirection: "lower",
+    });
+    expect(
+      generateTasteExplanation({ ...input, contributions: [genre, lowerAxis] }).positiveReasons.map(
+        ({ factorId }) => factorId,
+      ),
+    ).toEqual(["comedy", "action"]);
+    expect(
+      generateTasteExplanation({ ...input, contributions: [genre] }).positiveReasons.map(
+        ({ text }) => text,
+      ),
+    ).toEqual(["『作品A』と同じ「アクション」の作品です。"]);
+    // A non-explainable or non-positive Axis contribution never qualifies as the lead.
+    expect(
+      generateTasteExplanation({
+        ...input,
+        contributions: [
+          genre,
+          tasteContribution({
+            group: "narrative",
+            factorId: "pacing",
+            value: 0.2,
+            explainable: false,
+          }),
+          tasteContribution({ group: "tone", factorId: "darkness", value: -0.01 }),
+        ],
+      }).positiveReasons.map(({ factorId }) => factorId),
+    ).toEqual(["action"]);
+    // An explicit preferred factor still wins, even a Genre match.
+    expect(
+      generateTasteExplanation({
+        ...input,
+        contributions: [genre, lowerAxis],
+        preferredFactorId: "action",
+      }).positiveReasons.map(({ factorId }) => factorId),
+    ).toEqual(["action", "comedy"]);
   });
 
   it("names the liked work in full for each reason that cites a different work", () => {
@@ -574,6 +675,8 @@ describe("Taste explanations", () => {
       contributions,
       confidenceLevel: "normal" as const,
       resolveTitle: titleResolver({ "anchor-a": "作品A" }),
+      // Frozen experiment output keeps its recorded value order (02 §6.9).
+      leadReasonOrder: "contributionValue" as const,
     };
     const withoutText = (sentences: readonly TasteExplanationSentence[]) =>
       sentences.map((sentence) => ({ ...sentence, text: "" }));
@@ -809,4 +912,112 @@ it("varies only existing positive reasons across cards, keeping one-reason cards
   expect(explanations.get("two")?.positiveReasons[0]?.text).not.toContain("も『");
   expect(explanations.get("three")?.positiveReasons).toHaveLength(1);
   expect(contributions).toEqual(before);
+});
+
+it("rotates shelf leads among Axis and Theme reasons before falling back to a Genre match", async () => {
+  const { generateVariedTasteExplanations } = await import("@/domain/explanation/generate");
+  const genre = tasteContribution({ group: "genre", factorId: "action", value: 0.3 });
+  const axis = tasteContribution({ group: "narrative", factorId: "pacing", value: 0.1 });
+  const base = {
+    lexicon: explanationLexicon,
+    confidenceLevel: "normal" as const,
+    resolveTitle: titleResolver({ "anchor-a": "作品A" }),
+  };
+  const explanations = generateVariedTasteExplanations([
+    { ...base, workId: "one", contributions: [genre, axis] },
+    // The Genre factor is still unused here, yet the shown Axis reason keeps the lead.
+    { ...base, workId: "two", contributions: [genre, axis] },
+    { ...base, workId: "three", contributions: [genre] },
+  ]);
+  expect(explanations.get("one")?.positiveReasons.map(({ factorId }) => factorId)).toEqual([
+    "pacing",
+    "action",
+  ]);
+  expect(explanations.get("two")?.positiveReasons[0]?.factorId).toBe("pacing");
+  expect(explanations.get("three")?.positiveReasons[0]?.factorId).toBe("action");
+  const frozenOrder = generateVariedTasteExplanations([
+    { ...base, workId: "one", contributions: [genre, axis], leadReasonOrder: "contributionValue" },
+    { ...base, workId: "two", contributions: [genre, axis], leadReasonOrder: "contributionValue" },
+  ]);
+  expect(frozenOrder.get("one")?.positiveReasons[0]?.factorId).toBe("action");
+  expect(frozenOrder.get("two")?.positiveReasons[0]?.factorId).toBe("pacing");
+});
+
+describe("shelf lead rotation floor", () => {
+  const base = {
+    lexicon: explanationLexicon,
+    confidenceLevel: "normal" as const,
+    resolveTitle: titleResolver({ "anchor-a": "作品A" }),
+  };
+  const leads = async (
+    cards: readonly (readonly GroupContribution[])[],
+    leadReasonOrder?: "contributionValue",
+  ) => {
+    const { generateVariedTasteExplanations } = await import("@/domain/explanation/generate");
+    const explanations = generateVariedTasteExplanations(
+      cards.map((contributions, index) => ({
+        ...base,
+        workId: `card-${String(index)}`,
+        contributions: [...contributions],
+        ...(leadReasonOrder === undefined ? {} : { leadReasonOrder }),
+      })),
+    );
+    return cards.map((_, index) => explanations.get(`card-${String(index)}`)?.positiveReasons);
+  };
+  const theme = (value: number) =>
+    tasteContribution({ group: "theme", factorId: "foundFamily", value });
+  const axis = (value: number) =>
+    tasteContribution({ group: "narrative", factorId: "pacing", value });
+  const genre = (factorId: string, value: number) =>
+    tasteContribution({ group: "genre", factorId, value });
+
+  it("keeps a reason under half its family's strongest value from leading, even if less used", async () => {
+    // 0.1 < 0.5 × 0.3, so the second card keeps the strongest reason although it was used first.
+    const [first, second] = await leads([
+      [theme(0.3), axis(0.1)],
+      [theme(0.3), axis(0.1)],
+    ]);
+    expect(first?.[0]?.factorId).toBe("foundFamily");
+    expect(second?.map(({ factorId }) => factorId)).toEqual(["foundFamily", "pacing"]);
+  });
+
+  it("rotates as before among reasons at or over the floor, measured within the family", async () => {
+    // A strong Genre match does not raise the floor: the family is Axis/Theme with 0.3 at the top.
+    const [, second] = await leads([
+      [genre("action", 0.9), theme(0.3), axis(0.16)],
+      [genre("action", 0.9), theme(0.3), axis(0.16)],
+    ]);
+    expect(second?.[0]?.factorId).toBe("pacing");
+    expect(second?.map(({ factorId }) => factorId).sort()).toEqual(
+      ["action", "foundFamily", "pacing"].sort(),
+    );
+  });
+
+  it("includes a value exactly at the floor", async () => {
+    const [, second] = await leads([
+      [theme(0.3), axis(0.15)],
+      [theme(0.3), axis(0.15)],
+    ]);
+    expect(0.15 >= 0.3 * 0.5).toBe(true);
+    expect(second?.[0]?.factorId).toBe("pacing");
+  });
+
+  it("lets a Genre-only card lead with its one shown Genre match", async () => {
+    // One reason per group, so a Genre-only card shows one Genre match; it leads even when used.
+    const [first, second] = await leads([
+      [genre("action", 0.3), genre("fantasy", 0.2)],
+      [genre("action", 0.3), genre("fantasy", 0.2)],
+    ]);
+    expect(first?.map(({ factorId }) => factorId)).toEqual(["action"]);
+    expect(second?.map(({ factorId }) => factorId)).toEqual(["action"]);
+  });
+
+  it("leaves the contribution-value order's rotation without the family rule or the floor", async () => {
+    const card = [genre("action", 0.9), theme(0.3), axis(0.1)];
+    const [first, second, third] = await leads([card, card, card], "contributionValue");
+    expect(first?.map(({ factorId }) => factorId)).toEqual(["action", "foundFamily", "pacing"]);
+    expect(second?.[0]?.factorId).toBe("foundFamily");
+    // Least-used first in the plain value order: a reason far under the floor may still lead.
+    expect(third?.[0]?.factorId).toBe("pacing");
+  });
 });

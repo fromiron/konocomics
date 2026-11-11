@@ -169,7 +169,7 @@ S0~S5 동안 9개 CSV가 쓰기 권한을 가졌고 SQLite는 OS 임시 shadow�
 
 - **목표:** 핵심 효용의 완성. E2E #1·#2가 도는 상태.
 - **의존:** 슬라이스 6.
-- **파일:** `features/recommendations/`(inputHash 재계산·recommendationCache·백필 로직), `ReasonChips`, `StateActionRow`, 후속 시트(reaction·興味なし 이유), 정책 칩.
+- **파일:** `features/recommendations/`(inputHash 재계산·recommendationCache·백필 로직), `ReasonChips`, `StateActionRow`, `読んだ` 후속 시트(reaction; `興味なし`는 2026-11-11부터 시트 없이 「元に戻す」 Snackbar), 정책 칩.
 - **구현 결정:** `03` §5 계약 전부. 카드 data-attribute에 contribution 요약을 노출해 E2E가 설명-근거 일치를 검증.
 - **교차 슬라이스 경계:** Slice 7에서는 아직 없는 `/works/[id]`로 이동하는 false affordance를 만들지 않는다. 카드 identity는 비대화형으로 두고, Slice 8의 실제 상세 구현과 함께 whole-card link를 활성화한다.
 - **완료 기준:** §5 수용 기준 전부. E2E #1(온보딩→DNA→추천), #2(読んだ→다음 추천 제외) 통과.

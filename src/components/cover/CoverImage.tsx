@@ -14,7 +14,10 @@ export type CoverImageProps = Readonly<{
   creators: readonly string[];
   coverUrl?: string | null;
   requestedSize?: CoverImageSize;
+  /** The LCP-grade cover: eager and high fetch priority. */
   priority?: boolean;
+  /** A cover fixed on the first screen: eager at the default fetch priority (04 §4.1). */
+  eager?: boolean;
   className?: string;
   decorative?: boolean;
   variant?: "standard" | "hero";
@@ -47,12 +50,52 @@ export function coverSourceForSize(source: string, size: CoverImageSize) {
   return `${sizedBase}${hash}`;
 }
 
+/**
+ * The typographic placeholder's words (04 §4.3): the title, the creators below it and a corner of
+ * screentone. A missing cover shows them for good; a loading cover shows them on its shimmer, so a
+ * slot is never an empty box. On the shimmer the words are `generated`: CSS draws them from a data
+ * attribute, so the page's text keeps one copy of the title beside the card's own heading.
+ */
+function PlaceholderContent({
+  creatorLine,
+  generated = false,
+  title,
+}: Readonly<{ creatorLine: string; generated?: boolean; title: string }>) {
+  return (
+    <span
+      aria-hidden="true"
+      className="cover-image__placeholder-content absolute inset-0 grid place-items-center text-text-muted"
+    >
+      {/* The shimmer is already a screentone; only the settled placeholder adds the corner. */}
+      {generated ? null : (
+        <span
+          aria-hidden="true"
+          className="cover-image__screentone absolute top-0 right-0 h-[30%] w-[42%] bg-[radial-gradient(color-mix(in_oklch,var(--text-strong)_8%,transparent)_1px,transparent_1px)] [background-size:12px_12px]"
+        />
+      )}
+      <span
+        className="cover-image__placeholder-title relative z-10 line-clamp-2 w-[72%] text-center text-[length:var(--font-size-14)] leading-[1.55] font-medium tracking-[0.06em] text-balance text-text-muted [overflow-wrap:anywhere]"
+        data-placeholder-text={generated ? title : undefined}
+      >
+        {generated ? null : title}
+      </span>
+      <span
+        className="cover-image__placeholder-creator absolute right-[var(--space-3)] bottom-[var(--space-3)] left-[var(--space-3)] z-10 truncate text-[length:var(--text-caption-size)] leading-[1.4]"
+        data-placeholder-text={generated ? creatorLine : undefined}
+      >
+        {generated ? null : creatorLine}
+      </span>
+    </span>
+  );
+}
+
 export function CoverImage({
   title,
   creators,
   coverUrl,
   requestedSize = 400,
   priority = false,
+  eager = false,
   className,
   decorative = false,
   fit = "contain",
@@ -185,21 +228,7 @@ export function CoverImage({
             className="cover-image__hero-frame cover-image--placeholder relative z-10 h-[calc(100%-var(--space-8))] w-auto max-w-[calc(100%-var(--space-8))] overflow-hidden rounded-[var(--radius-cover)] border border-line/50 bg-surface-1 text-text-muted shadow-[var(--shadow-raised)] aspect-[30/43]"
             role={decorative ? undefined : "img"}
           >
-            <span
-              aria-hidden="true"
-              className="cover-image__placeholder-content absolute inset-0 grid place-items-center"
-            >
-              <span
-                aria-hidden="true"
-                className="cover-image__screentone absolute top-0 right-0 h-[30%] w-[42%] bg-[radial-gradient(color-mix(in_oklch,var(--text-strong)_8%,transparent)_1px,transparent_1px)] [background-size:12px_12px]"
-              />
-              <span className="cover-image__placeholder-title relative z-10 line-clamp-2 w-[72%] text-center text-[length:var(--font-size-14)] leading-[1.55] font-medium tracking-[0.06em] text-balance text-text-muted">
-                {title}
-              </span>
-              <span className="cover-image__placeholder-creator absolute right-[var(--space-3)] bottom-[var(--space-3)] left-[var(--space-3)] z-10 truncate text-[length:var(--text-caption-size)] leading-[1.4]">
-                {creatorLine}
-              </span>
-            </span>
+            <PlaceholderContent creatorLine={creatorLine} title={title} />
           </div>
         </div>
       );
@@ -216,21 +245,7 @@ export function CoverImage({
         )}
         role={decorative ? undefined : "img"}
       >
-        <span
-          aria-hidden="true"
-          className="cover-image__placeholder-content absolute inset-0 grid place-items-center"
-        >
-          <span
-            aria-hidden="true"
-            className="cover-image__screentone absolute top-0 right-0 h-[30%] w-[42%] bg-[radial-gradient(color-mix(in_oklch,var(--text-strong)_8%,transparent)_1px,transparent_1px)] [background-size:12px_12px]"
-          />
-          <span className="cover-image__placeholder-title relative z-10 line-clamp-2 w-[72%] text-center text-[length:var(--font-size-14)] leading-[1.55] font-medium tracking-[0.06em] text-balance text-text-muted">
-            {title}
-          </span>
-          <span className="cover-image__placeholder-creator absolute right-[var(--space-3)] bottom-[var(--space-3)] left-[var(--space-3)] z-10 truncate text-[length:var(--text-caption-size)] leading-[1.4]">
-            {creatorLine}
-          </span>
-        </span>
+        <PlaceholderContent creatorLine={creatorLine} title={title} />
       </span>
     );
   }
@@ -257,7 +272,9 @@ export function CoverImage({
           className="cover-image__hero-paper pointer-events-none absolute inset-0 z-0 bg-cover-paper"
         />
         <div className="cover-image__hero-frame relative z-10 h-[calc(100%-var(--space-8))] w-auto max-w-[calc(100%-var(--space-8))] overflow-hidden rounded-[var(--radius-cover)] border border-line/50 bg-surface-1 shadow-[var(--shadow-raised)] aspect-[30/43]">
-          <CoverShimmer loaded={loaded} />
+          <CoverShimmer loaded={loaded}>
+            <PlaceholderContent creatorLine={creatorLine} generated title={title} />
+          </CoverShimmer>
           <img
             ref={setImageRef}
             alt={decorative ? "" : coverStrings.alt(title)}
@@ -270,7 +287,7 @@ export function CoverImage({
             draggable={false}
             fetchPriority={priority ? "high" : "auto"}
             height={Math.round((requestedSize * 43) / 30)}
-            loading={priority ? "eager" : "lazy"}
+            loading={priority || eager ? "eager" : "lazy"}
             onError={() => {
               setFailure({
                 primarySource: requestedSource,
@@ -295,7 +312,9 @@ export function CoverImage({
       )}
       style={frameAspectRatio === undefined ? undefined : { aspectRatio: frameAspectRatio }}
     >
-      <CoverShimmer loaded={loaded} />
+      <CoverShimmer loaded={loaded}>
+        <PlaceholderContent creatorLine={creatorLine} generated title={title} />
+      </CoverShimmer>
       <span
         className={cn(
           "cover-image__artwork relative z-[1] block max-h-full max-w-full overflow-hidden rounded-[var(--radius-cover)]",
@@ -317,7 +336,7 @@ export function CoverImage({
           draggable={false}
           fetchPriority={priority ? "high" : "auto"}
           height={Math.round((requestedSize * 43) / 30)}
-          loading={priority ? "eager" : "lazy"}
+          loading={priority || eager ? "eager" : "lazy"}
           onError={() => {
             setFailure({
               primarySource: requestedSource,

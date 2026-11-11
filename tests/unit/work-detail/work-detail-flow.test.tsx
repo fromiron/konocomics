@@ -936,17 +936,42 @@ describe("WorkDetailFlow", () => {
     expect(screen.queryByText(workDetailStrings.state.plannedRemoved)).toBeNull();
   });
 
-  it("omits compatibility without a profile and keeps the grounded provider failure fallback", async () => {
+  it("draws nothing in the compatibility slot while records load", () => {
     testState.status = { state: "ready", mode: "indexeddb", warning: null };
-    renderDetail();
+    testState.userWorks = undefined;
+    const view = renderDetail();
 
     expect(
       screen.queryByRole("heading", { name: workDetailStrings.compatibility.heading }),
     ).toBeNull();
+    expect(view.container.querySelector("[data-slot='work-compatibility']")).toBeNull();
+  });
+
+  it("invites onboarding without a profile, invents no reason, and keeps the provider fallback", async () => {
+    testState.status = { state: "ready", mode: "indexeddb", warning: null };
+    renderDetail();
+
+    const heading = screen.getByRole("heading", { name: workDetailStrings.compatibility.heading });
+    const slot = heading.closest("section")!;
+    expect(slot.textContent).toContain(workDetailStrings.compatibility.noProfile);
+    expect(
+      within(slot)
+        .getByRole("link", { name: workDetailStrings.compatibility.noProfileAction })
+        .getAttribute("href"),
+    ).toBe("/onboarding");
+    // No engine output without a profile: no bubble, no evidence covers, no reason lines.
+    expect(slot.querySelector("[data-reason-bubble]")).toBeNull();
+    expect(
+      within(slot).queryByRole("list", { name: workDetailStrings.compatibility.anchors }),
+    ).toBeNull();
+    expect(within(slot).queryByText(workDetailStrings.compatibility.anchorFactors)).toBeNull();
     const fallback = await screen.findByRole<HTMLAnchorElement>("link", {
       name: workDetailStrings.provider.searchNewTab,
     });
     expect(fallback.getAttribute("href")).toBe(buildRakutenBooksSearchUrl(target.title));
+    expect(
+      heading.compareDocumentPosition(fallback) & Node.DOCUMENT_POSITION_FOLLOWING,
+    ).toBeTruthy();
     expect(
       await screen.findByRole("button", { name: workDetailStrings.provider.retry }),
     ).toBeTruthy();
@@ -1217,5 +1242,18 @@ describe("WorkDetailFlow", () => {
       within(evidence).queryByRole("button", { name: workDetailStrings.compatibility.allAnchors }),
     ).toBeNull();
     expect(evidence.querySelector("[data-ranking-position]")).toBeNull();
+
+    // 相性 comes before the purchase block, whose shop link is a neutral button, not the accent.
+    const purchase = await screen.findByRole<HTMLAnchorElement>("link", {
+      name: workDetailStrings.provider.searchNewTab,
+    });
+    expect(
+      summary.compareDocumentPosition(purchase) & Node.DOCUMENT_POSITION_FOLLOWING,
+    ).toBeTruthy();
+    expect(summary.contains(purchase)).toBe(false);
+    expect(purchase.className).not.toContain("bg-primary");
+    expect(purchase.className).toContain("bg-surface-2");
+    expect(purchase.getAttribute("target")).toBe("_blank");
+    expect(purchase.getAttribute("rel")).toBe("noreferrer");
   });
 });

@@ -142,122 +142,6 @@
       "isbn": "9784088736211"
     }
   ],
-  "discoveryWorks": [
-    {
-      "id": "dr-stone",
-      "title": "Dr.STONE",
-      "creators": [
-        "Boichi",
-        "稲垣理一郎"
-      ],
-      "genres": [
-        "action",
-        "comedy",
-        "scienceFiction"
-      ],
-      "status": "completed",
-      "isbn": "9784088811840"
-    },
-    {
-      "id": "dragon-ball",
-      "title": "DRAGON BALL",
-      "creators": [
-        "鳥山明"
-      ],
-      "genres": [
-        "action",
-        "comedy",
-        "fantasy"
-      ],
-      "status": "completed",
-      "isbn": "9784088518312"
-    },
-    {
-      "id": "inuyasha",
-      "title": "犬夜叉",
-      "creators": [
-        "高橋留美子"
-      ],
-      "genres": [
-        "action",
-        "comedy",
-        "fantasy",
-        "historical",
-        "romance"
-      ],
-      "status": "completed",
-      "isbn": "9784091252012"
-    },
-    {
-      "id": "fire-force",
-      "title": "炎炎ノ消防隊",
-      "creators": [
-        "大久保篤"
-      ],
-      "genres": [
-        "action",
-        "fantasy",
-        "scienceFiction"
-      ],
-      "status": "completed",
-      "isbn": "9784063955675"
-    },
-    {
-      "id": "work-0029e59a039dce3f6e74",
-      "title": "【推しの子】",
-      "creators": [
-        "赤坂 アカ",
-        "横槍 メンゴ"
-      ],
-      "genres": [
-        "fantasy",
-        "mystery"
-      ],
-      "status": "unknown",
-      "isbn": "9784088916507"
-    },
-    {
-      "id": "initial-d",
-      "title": "頭文字Ｄ",
-      "creators": [
-        "しげの秀一"
-      ],
-      "genres": [
-        "action",
-        "sports"
-      ],
-      "status": "completed",
-      "isbn": "9784063235678"
-    },
-    {
-      "id": "dungeon-meshi",
-      "title": "ダンジョン飯",
-      "creators": [
-        "九井諒子"
-      ],
-      "genres": [
-        "action",
-        "comedy",
-        "fantasy"
-      ],
-      "status": "completed",
-      "isbn": "9784047301535"
-    },
-    {
-      "id": "work-00bb50c604411dba486f",
-      "title": "魍魎の匣",
-      "creators": [
-        "志水アキ",
-        "京極夏彦"
-      ],
-      "genres": [
-        "horror",
-        "mystery"
-      ],
-      "status": "unknown",
-      "isbn": "9784048541565"
-    }
-  ],
   "sample": {
     "anchorWorks": [
       {
@@ -332,238 +216,2223 @@
         "isbn": "9784063959383"
       }
     ],
-    "recommendation": {
-      "work": {
-        "id": "20th-century-boys",
-        "title": "20世紀少年",
-        "creators": [
-          "浦沢直樹"
+    "stage": [
+      {
+        "work": {
+          "id": "20th-century-boys",
+          "title": "20世紀少年",
+          "creators": [
+            "浦沢直樹"
+          ],
+          "genres": [
+            "mystery"
+          ],
+          "status": "completed",
+          "isbn": "9784091855312"
+        },
+        "confidenceLevel": "normal",
+        "contributions": [
+          {
+            "source": "baseline",
+            "group": "overall",
+            "factorId": "neutralBaseline",
+            "value": 0.5,
+            "anchorWorkIds": [],
+            "explainable": false
+          },
+          {
+            "source": "similarity",
+            "group": "theme",
+            "factorId": "investigation",
+            "value": 0.05,
+            "anchorWorkIds": [
+              "monster"
+            ],
+            "explainable": true
+          },
+          {
+            "source": "similarity",
+            "group": "genre",
+            "factorId": "horror",
+            "value": -0.0375,
+            "anchorWorkIds": [
+              "monster"
+            ],
+            "explainable": true
+          },
+          {
+            "source": "similarity",
+            "group": "genre",
+            "factorId": "mystery",
+            "value": 0.0375,
+            "anchorWorkIds": [
+              "monster"
+            ],
+            "explainable": true
+          },
+          {
+            "source": "similarity",
+            "group": "narrative",
+            "factorId": "mysteryReveal",
+            "value": 0.028189066059,
+            "anchorWorkIds": [
+              "monster"
+            ],
+            "explainable": true
+          },
+          {
+            "source": "similarity",
+            "group": "art",
+            "factorId": "artRealism",
+            "value": 0.025531914894,
+            "anchorWorkIds": [
+              "monster"
+            ],
+            "explainable": true
+          },
+          {
+            "source": "similarity",
+            "group": "theme",
+            "factorId": "historicalReconstruction",
+            "value": -0.025,
+            "anchorWorkIds": [
+              "monster"
+            ],
+            "explainable": true
+          },
+          {
+            "source": "similarity",
+            "group": "theme",
+            "factorId": "school",
+            "value": -0.025,
+            "anchorWorkIds": [
+              "monster"
+            ],
+            "explainable": true
+          },
+          {
+            "source": "similarity",
+            "group": "theme",
+            "factorId": "workplace",
+            "value": 0.025,
+            "anchorWorkIds": [
+              "monster"
+            ],
+            "explainable": true
+          },
+          {
+            "source": "similarity",
+            "group": "narrative",
+            "factorId": "problemSolving",
+            "value": 0.024487471526,
+            "anchorWorkIds": [
+              "monster"
+            ],
+            "explainable": true
+          },
+          {
+            "source": "similarity",
+            "group": "narrative",
+            "factorId": "worldBuilding",
+            "value": 0.024487471526,
+            "anchorWorkIds": [
+              "monster"
+            ],
+            "explainable": true
+          },
+          {
+            "source": "similarity",
+            "group": "tone",
+            "factorId": "darkness",
+            "value": 0.022298850575,
+            "anchorWorkIds": [
+              "monster"
+            ],
+            "explainable": true
+          },
+          {
+            "source": "similarity",
+            "group": "tone",
+            "factorId": "relationshipStructure",
+            "value": 0.020229885057,
+            "anchorWorkIds": [
+              "monster"
+            ],
+            "explainable": true
+          },
+          {
+            "source": "similarity",
+            "group": "tone",
+            "factorId": "romance",
+            "value": 0.015632183908,
+            "anchorWorkIds": [
+              "monster"
+            ],
+            "explainable": true
+          },
+          {
+            "source": "similarity",
+            "group": "narrative",
+            "factorId": "pacing",
+            "value": 0.012813211845,
+            "anchorWorkIds": [
+              "monster"
+            ],
+            "explainable": true
+          },
+          {
+            "source": "similarity",
+            "group": "art",
+            "factorId": "artDensity",
+            "value": 0.012632978723,
+            "anchorWorkIds": [
+              "monster"
+            ],
+            "explainable": true
+          },
+          {
+            "source": "similarity",
+            "group": "art",
+            "factorId": "visualSoftness",
+            "value": 0.01210106383,
+            "anchorWorkIds": [
+              "monster"
+            ],
+            "explainable": true
+          },
+          {
+            "source": "similarity",
+            "group": "narrative",
+            "factorId": "strategy",
+            "value": 0.011104783599,
+            "anchorWorkIds": [
+              "monster"
+            ],
+            "explainable": true
+          },
+          {
+            "source": "similarity",
+            "group": "tone",
+            "factorId": "mentalStress",
+            "value": 0.010574712644,
+            "anchorWorkIds": [
+              "monster"
+            ],
+            "explainable": true
+          },
+          {
+            "source": "similarity",
+            "group": "tone",
+            "factorId": "characterArcWeight",
+            "value": 0.010344827586,
+            "anchorWorkIds": [
+              "monster"
+            ],
+            "explainable": true
+          }
         ],
-        "genres": [
-          "mystery"
-        ],
-        "status": "completed",
-        "isbn": "9784091855312"
+        "preferredFactorId": "investigation"
       },
-      "confidenceLevel": "normal",
-      "contributions": [
+      {
+        "work": {
+          "id": "dragon-head",
+          "title": "ドラゴンヘッド",
+          "creators": [
+            "望月峯太郎"
+          ],
+          "genres": [
+            "horror",
+            "mystery"
+          ],
+          "status": "completed",
+          "isbn": "9784063235197"
+        },
+        "confidenceLevel": "normal",
+        "contributions": [
+          {
+            "source": "baseline",
+            "group": "overall",
+            "factorId": "neutralBaseline",
+            "value": 0.5,
+            "anchorWorkIds": [],
+            "explainable": false
+          },
+          {
+            "source": "similarity",
+            "group": "genre",
+            "factorId": "horror",
+            "value": 0.0375,
+            "anchorWorkIds": [
+              "monster"
+            ],
+            "explainable": true
+          },
+          {
+            "source": "similarity",
+            "group": "genre",
+            "factorId": "mystery",
+            "value": 0.0375,
+            "anchorWorkIds": [
+              "monster"
+            ],
+            "explainable": true
+          },
+          {
+            "source": "similarity",
+            "group": "theme",
+            "factorId": "investigation",
+            "value": 0.03125,
+            "anchorWorkIds": [
+              "monster"
+            ],
+            "explainable": true
+          },
+          {
+            "source": "similarity",
+            "group": "theme",
+            "factorId": "postApocalypse",
+            "value": -0.03125,
+            "anchorWorkIds": [
+              "monster"
+            ],
+            "explainable": true
+          },
+          {
+            "source": "similarity",
+            "group": "theme",
+            "factorId": "survival",
+            "value": -0.03125,
+            "anchorWorkIds": [
+              "monster"
+            ],
+            "explainable": true
+          },
+          {
+            "source": "similarity",
+            "group": "art",
+            "factorId": "artRealism",
+            "value": 0.025,
+            "anchorWorkIds": [
+              "monster"
+            ],
+            "explainable": true
+          },
+          {
+            "source": "similarity",
+            "group": "narrative",
+            "factorId": "mysteryReveal",
+            "value": 0.021004098361,
+            "anchorWorkIds": [
+              "monster"
+            ],
+            "explainable": true
+          },
+          {
+            "source": "similarity",
+            "group": "narrative",
+            "factorId": "pacing",
+            "value": 0.021004098361,
+            "anchorWorkIds": [
+              "monster"
+            ],
+            "explainable": true
+          },
+          {
+            "source": "similarity",
+            "group": "narrative",
+            "factorId": "problemSolving",
+            "value": 0.021004098361,
+            "anchorWorkIds": [
+              "monster"
+            ],
+            "explainable": true
+          },
+          {
+            "source": "similarity",
+            "group": "narrative",
+            "factorId": "progression",
+            "value": 0.021004098361,
+            "anchorWorkIds": [
+              "monster"
+            ],
+            "explainable": true
+          },
+          {
+            "source": "similarity",
+            "group": "narrative",
+            "factorId": "strategy",
+            "value": 0.019979508197,
+            "anchorWorkIds": [
+              "monster"
+            ],
+            "explainable": true
+          },
+          {
+            "source": "similarity",
+            "group": "tone",
+            "factorId": "comedy",
+            "value": 0.016666666667,
+            "anchorWorkIds": [
+              "monster"
+            ],
+            "explainable": true
+          },
+          {
+            "source": "similarity",
+            "group": "tone",
+            "factorId": "darkness",
+            "value": 0.016666666667,
+            "anchorWorkIds": [
+              "monster"
+            ],
+            "explainable": true
+          },
+          {
+            "source": "similarity",
+            "group": "tone",
+            "factorId": "mentalStress",
+            "value": 0.016666666667,
+            "anchorWorkIds": [
+              "monster"
+            ],
+            "explainable": true
+          },
+          {
+            "source": "similarity",
+            "group": "theme",
+            "factorId": "historicalReconstruction",
+            "value": -0.015625,
+            "anchorWorkIds": [
+              "monster"
+            ],
+            "explainable": true
+          },
+          {
+            "source": "similarity",
+            "group": "theme",
+            "factorId": "workplace",
+            "value": -0.015625,
+            "anchorWorkIds": [
+              "monster"
+            ],
+            "explainable": true
+          },
+          {
+            "source": "similarity",
+            "group": "art",
+            "factorId": "artDensity",
+            "value": 0.0125,
+            "anchorWorkIds": [
+              "monster"
+            ],
+            "explainable": true
+          },
+          {
+            "source": "similarity",
+            "group": "art",
+            "factorId": "visualSoftness",
+            "value": 0.0125,
+            "anchorWorkIds": [
+              "monster"
+            ],
+            "explainable": true
+          },
+          {
+            "source": "similarity",
+            "group": "narrative",
+            "factorId": "worldBuilding",
+            "value": 0.01050204918,
+            "anchorWorkIds": [
+              "monster"
+            ],
+            "explainable": true
+          },
+          {
+            "source": "similarity",
+            "group": "tone",
+            "factorId": "characterArcWeight",
+            "value": 0.008333333333,
+            "anchorWorkIds": [
+              "monster"
+            ],
+            "explainable": true
+          },
+          {
+            "source": "similarity",
+            "group": "tone",
+            "factorId": "relationshipStructure",
+            "value": 0.008333333333,
+            "anchorWorkIds": [
+              "monster"
+            ],
+            "explainable": true
+          },
+          {
+            "source": "consensus",
+            "group": "overall",
+            "factorId": "consensus",
+            "value": 0.005,
+            "anchorWorkIds": [
+              "promised-neverland"
+            ],
+            "explainable": false
+          },
+          {
+            "source": "similarity",
+            "group": "tone",
+            "factorId": "romance",
+            "value": 0.004166666667,
+            "anchorWorkIds": [
+              "monster"
+            ],
+            "explainable": true
+          }
+        ],
+        "preferredFactorId": "artRealism"
+      },
+      {
+        "work": {
+          "id": "homunculus",
+          "title": "ホムンクルス",
+          "creators": [
+            "山本英夫"
+          ],
+          "genres": [
+            "fantasy",
+            "horror",
+            "mystery"
+          ],
+          "status": "completed",
+          "isbn": "9784091870711"
+        },
+        "confidenceLevel": "normal",
+        "contributions": [
+          {
+            "source": "baseline",
+            "group": "overall",
+            "factorId": "neutralBaseline",
+            "value": 0.5,
+            "anchorWorkIds": [],
+            "explainable": false
+          },
+          {
+            "source": "similarity",
+            "group": "theme",
+            "factorId": "investigation",
+            "value": 0.0625,
+            "anchorWorkIds": [
+              "monster"
+            ],
+            "explainable": true
+          },
+          {
+            "source": "similarity",
+            "group": "theme",
+            "factorId": "historicalReconstruction",
+            "value": -0.03125,
+            "anchorWorkIds": [
+              "monster"
+            ],
+            "explainable": true
+          },
+          {
+            "source": "similarity",
+            "group": "theme",
+            "factorId": "workplace",
+            "value": -0.03125,
+            "anchorWorkIds": [
+              "monster"
+            ],
+            "explainable": true
+          },
+          {
+            "source": "similarity",
+            "group": "art",
+            "factorId": "artRealism",
+            "value": 0.025,
+            "anchorWorkIds": [
+              "monster"
+            ],
+            "explainable": true
+          },
+          {
+            "source": "similarity",
+            "group": "art",
+            "factorId": "visualSoftness",
+            "value": 0.025,
+            "anchorWorkIds": [
+              "monster"
+            ],
+            "explainable": true
+          },
+          {
+            "source": "similarity",
+            "group": "genre",
+            "factorId": "fantasy",
+            "value": -0.025,
+            "anchorWorkIds": [
+              "monster"
+            ],
+            "explainable": true
+          },
+          {
+            "source": "similarity",
+            "group": "genre",
+            "factorId": "horror",
+            "value": 0.025,
+            "anchorWorkIds": [
+              "monster"
+            ],
+            "explainable": true
+          },
+          {
+            "source": "similarity",
+            "group": "genre",
+            "factorId": "mystery",
+            "value": 0.025,
+            "anchorWorkIds": [
+              "monster"
+            ],
+            "explainable": true
+          },
+          {
+            "source": "similarity",
+            "group": "narrative",
+            "factorId": "mysteryReveal",
+            "value": 0.021004098361,
+            "anchorWorkIds": [
+              "monster"
+            ],
+            "explainable": true
+          },
+          {
+            "source": "similarity",
+            "group": "narrative",
+            "factorId": "progression",
+            "value": 0.021004098361,
+            "anchorWorkIds": [
+              "monster"
+            ],
+            "explainable": true
+          },
+          {
+            "source": "similarity",
+            "group": "narrative",
+            "factorId": "strategy",
+            "value": 0.019979508197,
+            "anchorWorkIds": [
+              "monster"
+            ],
+            "explainable": true
+          },
+          {
+            "source": "similarity",
+            "group": "tone",
+            "factorId": "characterArcWeight",
+            "value": 0.016666666667,
+            "anchorWorkIds": [
+              "monster"
+            ],
+            "explainable": true
+          },
+          {
+            "source": "similarity",
+            "group": "tone",
+            "factorId": "comedy",
+            "value": 0.016666666667,
+            "anchorWorkIds": [
+              "monster"
+            ],
+            "explainable": true
+          },
+          {
+            "source": "similarity",
+            "group": "tone",
+            "factorId": "darkness",
+            "value": 0.016666666667,
+            "anchorWorkIds": [
+              "monster"
+            ],
+            "explainable": true
+          },
+          {
+            "source": "similarity",
+            "group": "tone",
+            "factorId": "mentalStress",
+            "value": 0.016666666667,
+            "anchorWorkIds": [
+              "monster"
+            ],
+            "explainable": true
+          },
+          {
+            "source": "similarity",
+            "group": "art",
+            "factorId": "artDensity",
+            "value": 0.0125,
+            "anchorWorkIds": [
+              "monster"
+            ],
+            "explainable": true
+          },
+          {
+            "source": "similarity",
+            "group": "narrative",
+            "factorId": "pacing",
+            "value": 0.01050204918,
+            "anchorWorkIds": [
+              "monster"
+            ],
+            "explainable": true
+          },
+          {
+            "source": "similarity",
+            "group": "narrative",
+            "factorId": "problemSolving",
+            "value": 0.01050204918,
+            "anchorWorkIds": [
+              "monster"
+            ],
+            "explainable": true
+          },
+          {
+            "source": "similarity",
+            "group": "narrative",
+            "factorId": "worldBuilding",
+            "value": 0.01050204918,
+            "anchorWorkIds": [
+              "monster"
+            ],
+            "explainable": true
+          },
+          {
+            "source": "similarity",
+            "group": "tone",
+            "factorId": "relationshipStructure",
+            "value": 0.008333333333,
+            "anchorWorkIds": [
+              "monster"
+            ],
+            "explainable": true
+          },
+          {
+            "source": "similarity",
+            "group": "tone",
+            "factorId": "romance",
+            "value": 0.004166666667,
+            "anchorWorkIds": [
+              "monster"
+            ],
+            "explainable": true
+          }
+        ],
+        "preferredFactorId": "investigation"
+      }
+    ],
+    "lens": {
+      "anchorWorkId": "monster",
+      "items": [
         {
-          "source": "baseline",
-          "group": "overall",
-          "factorId": "neutralBaseline",
-          "value": 0.5,
-          "anchorWorkIds": [],
-          "explainable": false
+          "work": {
+            "id": "the-summer-hikaru-died",
+            "title": "光が死んだ夏",
+            "creators": [
+              "モクモクれん"
+            ],
+            "genres": [
+              "horror",
+              "mystery"
+            ],
+            "status": "ongoing",
+            "isbn": "9784041122730"
+          },
+          "confidenceLevel": "normal",
+          "contributions": [
+            {
+              "source": "baseline",
+              "group": "overall",
+              "factorId": "neutralBaseline",
+              "value": 0.5,
+              "anchorWorkIds": [],
+              "explainable": false
+            },
+            {
+              "source": "similarity",
+              "group": "theme",
+              "factorId": "investigation",
+              "value": 0.041666666667,
+              "anchorWorkIds": [
+                "monster"
+              ],
+              "explainable": true
+            },
+            {
+              "source": "similarity",
+              "group": "theme",
+              "factorId": "school",
+              "value": -0.041666666667,
+              "anchorWorkIds": [
+                "monster"
+              ],
+              "explainable": true
+            },
+            {
+              "source": "similarity",
+              "group": "genre",
+              "factorId": "horror",
+              "value": 0.0375,
+              "anchorWorkIds": [
+                "monster"
+              ],
+              "explainable": true
+            },
+            {
+              "source": "similarity",
+              "group": "genre",
+              "factorId": "mystery",
+              "value": 0.0375,
+              "anchorWorkIds": [
+                "monster"
+              ],
+              "explainable": true
+            },
+            {
+              "source": "similarity",
+              "group": "art",
+              "factorId": "artDensity",
+              "value": 0.025,
+              "anchorWorkIds": [
+                "monster"
+              ],
+              "explainable": true
+            },
+            {
+              "source": "similarity",
+              "group": "art",
+              "factorId": "visualSoftness",
+              "value": 0.025,
+              "anchorWorkIds": [
+                "monster"
+              ],
+              "explainable": true
+            },
+            {
+              "source": "similarity",
+              "group": "narrative",
+              "factorId": "mysteryReveal",
+              "value": 0.021004098361,
+              "anchorWorkIds": [
+                "monster"
+              ],
+              "explainable": true
+            },
+            {
+              "source": "similarity",
+              "group": "narrative",
+              "factorId": "progression",
+              "value": 0.021004098361,
+              "anchorWorkIds": [
+                "monster"
+              ],
+              "explainable": true
+            },
+            {
+              "source": "similarity",
+              "group": "theme",
+              "factorId": "historicalReconstruction",
+              "value": -0.020833333333,
+              "anchorWorkIds": [
+                "monster"
+              ],
+              "explainable": true
+            },
+            {
+              "source": "similarity",
+              "group": "theme",
+              "factorId": "workplace",
+              "value": -0.020833333333,
+              "anchorWorkIds": [
+                "monster"
+              ],
+              "explainable": true
+            },
+            {
+              "source": "similarity",
+              "group": "narrative",
+              "factorId": "strategy",
+              "value": 0.019979508197,
+              "anchorWorkIds": [
+                "monster"
+              ],
+              "explainable": true
+            },
+            {
+              "source": "similarity",
+              "group": "tone",
+              "factorId": "characterArcWeight",
+              "value": 0.016666666667,
+              "anchorWorkIds": [
+                "monster"
+              ],
+              "explainable": true
+            },
+            {
+              "source": "similarity",
+              "group": "tone",
+              "factorId": "darkness",
+              "value": 0.016666666667,
+              "anchorWorkIds": [
+                "monster"
+              ],
+              "explainable": true
+            },
+            {
+              "source": "similarity",
+              "group": "tone",
+              "factorId": "mentalStress",
+              "value": 0.016666666667,
+              "anchorWorkIds": [
+                "monster"
+              ],
+              "explainable": true
+            },
+            {
+              "source": "similarity",
+              "group": "tone",
+              "factorId": "romance",
+              "value": 0.016666666667,
+              "anchorWorkIds": [
+                "monster"
+              ],
+              "explainable": true
+            },
+            {
+              "source": "similarity",
+              "group": "art",
+              "factorId": "artRealism",
+              "value": 0.0125,
+              "anchorWorkIds": [
+                "monster"
+              ],
+              "explainable": true
+            },
+            {
+              "source": "similarity",
+              "group": "narrative",
+              "factorId": "pacing",
+              "value": 0.01050204918,
+              "anchorWorkIds": [
+                "monster"
+              ],
+              "explainable": true
+            },
+            {
+              "source": "similarity",
+              "group": "narrative",
+              "factorId": "problemSolving",
+              "value": 0.01050204918,
+              "anchorWorkIds": [
+                "monster"
+              ],
+              "explainable": true
+            },
+            {
+              "source": "similarity",
+              "group": "narrative",
+              "factorId": "worldBuilding",
+              "value": 0.01050204918,
+              "anchorWorkIds": [
+                "monster"
+              ],
+              "explainable": true
+            },
+            {
+              "source": "similarity",
+              "group": "tone",
+              "factorId": "comedy",
+              "value": 0.008333333333,
+              "anchorWorkIds": [
+                "monster"
+              ],
+              "explainable": true
+            },
+            {
+              "source": "similarity",
+              "group": "tone",
+              "factorId": "relationshipStructure",
+              "value": 0.008333333333,
+              "anchorWorkIds": [
+                "monster"
+              ],
+              "explainable": true
+            },
+            {
+              "source": "consensus",
+              "group": "overall",
+              "factorId": "consensus",
+              "value": 0.001047619048,
+              "anchorWorkIds": [
+                "promised-neverland"
+              ],
+              "explainable": false
+            }
+          ],
+          "preferredFactorId": "artDensity"
         },
         {
-          "source": "similarity",
-          "group": "theme",
-          "factorId": "investigation",
-          "value": 0.05,
-          "anchorWorkIds": [
-            "monster"
+          "work": {
+            "id": "work-0b8f0f3bfc30d6da8ad0",
+            "title": "ウツボラ",
+            "creators": [
+              "中村明日美子"
+            ],
+            "genres": [
+              "horror",
+              "mystery"
+            ],
+            "status": "unknown",
+            "isbn": "9784778321130"
+          },
+          "confidenceLevel": "normal",
+          "contributions": [
+            {
+              "source": "baseline",
+              "group": "overall",
+              "factorId": "neutralBaseline",
+              "value": 0.5,
+              "anchorWorkIds": [],
+              "explainable": false
+            },
+            {
+              "source": "similarity",
+              "group": "theme",
+              "factorId": "investigation",
+              "value": 0.0625,
+              "anchorWorkIds": [
+                "monster"
+              ],
+              "explainable": true
+            },
+            {
+              "source": "similarity",
+              "group": "genre",
+              "factorId": "horror",
+              "value": 0.0375,
+              "anchorWorkIds": [
+                "monster"
+              ],
+              "explainable": true
+            },
+            {
+              "source": "similarity",
+              "group": "genre",
+              "factorId": "mystery",
+              "value": 0.0375,
+              "anchorWorkIds": [
+                "monster"
+              ],
+              "explainable": true
+            },
+            {
+              "source": "similarity",
+              "group": "theme",
+              "factorId": "historicalReconstruction",
+              "value": -0.03125,
+              "anchorWorkIds": [
+                "monster"
+              ],
+              "explainable": true
+            },
+            {
+              "source": "similarity",
+              "group": "theme",
+              "factorId": "workplace",
+              "value": -0.03125,
+              "anchorWorkIds": [
+                "monster"
+              ],
+              "explainable": true
+            },
+            {
+              "source": "similarity",
+              "group": "narrative",
+              "factorId": "mysteryReveal",
+              "value": 0.022338403042,
+              "anchorWorkIds": [
+                "monster"
+              ],
+              "explainable": true
+            },
+            {
+              "source": "similarity",
+              "group": "narrative",
+              "factorId": "worldBuilding",
+              "value": 0.0213878327,
+              "anchorWorkIds": [
+                "monster"
+              ],
+              "explainable": true
+            },
+            {
+              "source": "similarity",
+              "group": "tone",
+              "factorId": "characterArcWeight",
+              "value": 0.017216117216,
+              "anchorWorkIds": [
+                "monster"
+              ],
+              "explainable": true
+            },
+            {
+              "source": "similarity",
+              "group": "tone",
+              "factorId": "darkness",
+              "value": 0.017216117216,
+              "anchorWorkIds": [
+                "monster"
+              ],
+              "explainable": true
+            },
+            {
+              "source": "similarity",
+              "group": "tone",
+              "factorId": "mentalStress",
+              "value": 0.017216117216,
+              "anchorWorkIds": [
+                "monster"
+              ],
+              "explainable": true
+            },
+            {
+              "source": "similarity",
+              "group": "tone",
+              "factorId": "comedy",
+              "value": 0.016483516484,
+              "anchorWorkIds": [
+                "monster"
+              ],
+              "explainable": true
+            },
+            {
+              "source": "similarity",
+              "group": "narrative",
+              "factorId": "pacing",
+              "value": 0.01069391635,
+              "anchorWorkIds": [
+                "monster"
+              ],
+              "explainable": true
+            },
+            {
+              "source": "similarity",
+              "group": "narrative",
+              "factorId": "problemSolving",
+              "value": 0.010218631179,
+              "anchorWorkIds": [
+                "monster"
+              ],
+              "explainable": true
+            },
+            {
+              "source": "similarity",
+              "group": "narrative",
+              "factorId": "strategy",
+              "value": 0.009268060837,
+              "anchorWorkIds": [
+                "monster"
+              ],
+              "explainable": true
+            },
+            {
+              "source": "similarity",
+              "group": "tone",
+              "factorId": "relationshipStructure",
+              "value": 0.008058608059,
+              "anchorWorkIds": [
+                "monster"
+              ],
+              "explainable": true
+            },
+            {
+              "source": "similarity",
+              "group": "tone",
+              "factorId": "romance",
+              "value": 0.007875457875,
+              "anchorWorkIds": [
+                "monster"
+              ],
+              "explainable": true
+            },
+            {
+              "source": "consensus",
+              "group": "overall",
+              "factorId": "consensus",
+              "value": 0.001713878424,
+              "anchorWorkIds": [
+                "promised-neverland"
+              ],
+              "explainable": false
+            }
           ],
-          "explainable": true
+          "preferredFactorId": "investigation"
         },
         {
-          "source": "similarity",
-          "group": "genre",
-          "factorId": "horror",
-          "value": -0.0375,
-          "anchorWorkIds": [
-            "monster"
+          "work": {
+            "id": "work-69cbf6ddfccd6845e063",
+            "title": "狂骨の夢",
+            "creators": [
+              "京極 夏彦",
+              "志水 アキ"
+            ],
+            "genres": [
+              "horror",
+              "mystery"
+            ],
+            "status": "unknown",
+            "isbn": "9784048545822"
+          },
+          "confidenceLevel": "normal",
+          "contributions": [
+            {
+              "source": "baseline",
+              "group": "overall",
+              "factorId": "neutralBaseline",
+              "value": 0.5,
+              "anchorWorkIds": [],
+              "explainable": false
+            },
+            {
+              "source": "similarity",
+              "group": "theme",
+              "factorId": "investigation",
+              "value": 0.0625,
+              "anchorWorkIds": [
+                "monster"
+              ],
+              "explainable": true
+            },
+            {
+              "source": "similarity",
+              "group": "genre",
+              "factorId": "horror",
+              "value": 0.0375,
+              "anchorWorkIds": [
+                "monster"
+              ],
+              "explainable": true
+            },
+            {
+              "source": "similarity",
+              "group": "genre",
+              "factorId": "mystery",
+              "value": 0.0375,
+              "anchorWorkIds": [
+                "monster"
+              ],
+              "explainable": true
+            },
+            {
+              "source": "similarity",
+              "group": "theme",
+              "factorId": "historicalReconstruction",
+              "value": -0.03125,
+              "anchorWorkIds": [
+                "monster"
+              ],
+              "explainable": true
+            },
+            {
+              "source": "similarity",
+              "group": "theme",
+              "factorId": "workplace",
+              "value": -0.03125,
+              "anchorWorkIds": [
+                "monster"
+              ],
+              "explainable": true
+            },
+            {
+              "source": "similarity",
+              "group": "narrative",
+              "factorId": "mysteryReveal",
+              "value": 0.022142857143,
+              "anchorWorkIds": [
+                "monster"
+              ],
+              "explainable": true
+            },
+            {
+              "source": "similarity",
+              "group": "narrative",
+              "factorId": "worldBuilding",
+              "value": 0.021428571429,
+              "anchorWorkIds": [
+                "monster"
+              ],
+              "explainable": true
+            },
+            {
+              "source": "similarity",
+              "group": "tone",
+              "factorId": "characterArcWeight",
+              "value": 0.017127071823,
+              "anchorWorkIds": [
+                "monster"
+              ],
+              "explainable": true
+            },
+            {
+              "source": "similarity",
+              "group": "tone",
+              "factorId": "darkness",
+              "value": 0.017127071823,
+              "anchorWorkIds": [
+                "monster"
+              ],
+              "explainable": true
+            },
+            {
+              "source": "similarity",
+              "group": "tone",
+              "factorId": "mentalStress",
+              "value": 0.017127071823,
+              "anchorWorkIds": [
+                "monster"
+              ],
+              "explainable": true
+            },
+            {
+              "source": "similarity",
+              "group": "tone",
+              "factorId": "comedy",
+              "value": 0.016574585635,
+              "anchorWorkIds": [
+                "monster"
+              ],
+              "explainable": true
+            },
+            {
+              "source": "similarity",
+              "group": "narrative",
+              "factorId": "pacing",
+              "value": 0.010714285714,
+              "anchorWorkIds": [
+                "monster"
+              ],
+              "explainable": true
+            },
+            {
+              "source": "similarity",
+              "group": "narrative",
+              "factorId": "problemSolving",
+              "value": 0.010238095238,
+              "anchorWorkIds": [
+                "monster"
+              ],
+              "explainable": true
+            },
+            {
+              "source": "similarity",
+              "group": "narrative",
+              "factorId": "strategy",
+              "value": 0.009285714286,
+              "anchorWorkIds": [
+                "monster"
+              ],
+              "explainable": true
+            },
+            {
+              "source": "similarity",
+              "group": "tone",
+              "factorId": "relationshipStructure",
+              "value": 0.008103130755,
+              "anchorWorkIds": [
+                "monster"
+              ],
+              "explainable": true
+            },
+            {
+              "source": "consensus",
+              "group": "overall",
+              "factorId": "consensus",
+              "value": 0.00453931738,
+              "anchorWorkIds": [
+                "promised-neverland"
+              ],
+              "explainable": false
+            },
+            {
+              "source": "similarity",
+              "group": "tone",
+              "factorId": "romance",
+              "value": 0.003959484346,
+              "anchorWorkIds": [
+                "monster"
+              ],
+              "explainable": true
+            }
           ],
-          "explainable": true
+          "preferredFactorId": "investigation"
         },
         {
-          "source": "similarity",
-          "group": "genre",
-          "factorId": "mystery",
-          "value": 0.0375,
-          "anchorWorkIds": [
-            "monster"
+          "work": {
+            "id": "work-c221a17d6b962b17c9f4",
+            "title": "屍鬼",
+            "creators": [
+              "藤崎竜",
+              "小野不由美"
+            ],
+            "genres": [
+              "horror",
+              "mystery"
+            ],
+            "status": "unknown",
+            "isbn": "9784088745497"
+          },
+          "confidenceLevel": "normal",
+          "contributions": [
+            {
+              "source": "baseline",
+              "group": "overall",
+              "factorId": "neutralBaseline",
+              "value": 0.5,
+              "anchorWorkIds": [],
+              "explainable": false
+            },
+            {
+              "source": "similarity",
+              "group": "theme",
+              "factorId": "investigation",
+              "value": 0.0625,
+              "anchorWorkIds": [
+                "monster"
+              ],
+              "explainable": true
+            },
+            {
+              "source": "similarity",
+              "group": "genre",
+              "factorId": "horror",
+              "value": 0.0375,
+              "anchorWorkIds": [
+                "monster"
+              ],
+              "explainable": true
+            },
+            {
+              "source": "similarity",
+              "group": "genre",
+              "factorId": "mystery",
+              "value": 0.0375,
+              "anchorWorkIds": [
+                "monster"
+              ],
+              "explainable": true
+            },
+            {
+              "source": "similarity",
+              "group": "theme",
+              "factorId": "historicalReconstruction",
+              "value": -0.03125,
+              "anchorWorkIds": [
+                "monster"
+              ],
+              "explainable": true
+            },
+            {
+              "source": "similarity",
+              "group": "theme",
+              "factorId": "workplace",
+              "value": -0.03125,
+              "anchorWorkIds": [
+                "monster"
+              ],
+              "explainable": true
+            },
+            {
+              "source": "similarity",
+              "group": "narrative",
+              "factorId": "worldBuilding",
+              "value": 0.030303030303,
+              "anchorWorkIds": [
+                "monster"
+              ],
+              "explainable": true
+            },
+            {
+              "source": "similarity",
+              "group": "tone",
+              "factorId": "darkness",
+              "value": 0.021800947867,
+              "anchorWorkIds": [
+                "monster"
+              ],
+              "explainable": true
+            },
+            {
+              "source": "similarity",
+              "group": "narrative",
+              "factorId": "mysteryReveal",
+              "value": 0.016287878788,
+              "anchorWorkIds": [
+                "monster"
+              ],
+              "explainable": true
+            },
+            {
+              "source": "similarity",
+              "group": "narrative",
+              "factorId": "pacing",
+              "value": 0.01553030303,
+              "anchorWorkIds": [
+                "monster"
+              ],
+              "explainable": true
+            },
+            {
+              "source": "similarity",
+              "group": "narrative",
+              "factorId": "problemSolving",
+              "value": 0.01553030303,
+              "anchorWorkIds": [
+                "monster"
+              ],
+              "explainable": true
+            },
+            {
+              "source": "similarity",
+              "group": "art",
+              "factorId": "artDensity",
+              "value": 0.01286101083,
+              "anchorWorkIds": [
+                "monster"
+              ],
+              "explainable": true
+            },
+            {
+              "source": "similarity",
+              "group": "art",
+              "factorId": "visualSoftness",
+              "value": 0.012725631769,
+              "anchorWorkIds": [
+                "monster"
+              ],
+              "explainable": true
+            },
+            {
+              "source": "similarity",
+              "group": "tone",
+              "factorId": "romance",
+              "value": 0.01018957346,
+              "anchorWorkIds": [
+                "monster"
+              ],
+              "explainable": true
+            },
+            {
+              "source": "similarity",
+              "group": "tone",
+              "factorId": "relationshipStructure",
+              "value": 0.00971563981,
+              "anchorWorkIds": [
+                "monster"
+              ],
+              "explainable": true
+            }
           ],
-          "explainable": true
+          "preferredFactorId": "investigation"
         },
         {
-          "source": "similarity",
-          "group": "narrative",
-          "factorId": "mysteryReveal",
-          "value": 0.028189066059,
-          "anchorWorkIds": [
-            "monster"
+          "work": {
+            "id": "work-2215341f5cdd54ba34ed",
+            "title": "ガンニバル",
+            "creators": [
+              "二宮正明"
+            ],
+            "genres": [
+              "horror",
+              "mystery"
+            ],
+            "status": "unknown",
+            "isbn": "9784537138818"
+          },
+          "confidenceLevel": "normal",
+          "contributions": [
+            {
+              "source": "baseline",
+              "group": "overall",
+              "factorId": "neutralBaseline",
+              "value": 0.5,
+              "anchorWorkIds": [],
+              "explainable": false
+            },
+            {
+              "source": "similarity",
+              "group": "theme",
+              "factorId": "investigation",
+              "value": 0.0625,
+              "anchorWorkIds": [
+                "monster"
+              ],
+              "explainable": true
+            },
+            {
+              "source": "similarity",
+              "group": "genre",
+              "factorId": "horror",
+              "value": 0.0375,
+              "anchorWorkIds": [
+                "monster"
+              ],
+              "explainable": true
+            },
+            {
+              "source": "similarity",
+              "group": "genre",
+              "factorId": "mystery",
+              "value": 0.0375,
+              "anchorWorkIds": [
+                "monster"
+              ],
+              "explainable": true
+            },
+            {
+              "source": "similarity",
+              "group": "narrative",
+              "factorId": "mysteryReveal",
+              "value": 0.034824046921,
+              "anchorWorkIds": [
+                "monster"
+              ],
+              "explainable": true
+            },
+            {
+              "source": "similarity",
+              "group": "theme",
+              "factorId": "historicalReconstruction",
+              "value": -0.03125,
+              "anchorWorkIds": [
+                "monster"
+              ],
+              "explainable": true
+            },
+            {
+              "source": "similarity",
+              "group": "theme",
+              "factorId": "workplace",
+              "value": -0.03125,
+              "anchorWorkIds": [
+                "monster"
+              ],
+              "explainable": true
+            },
+            {
+              "source": "similarity",
+              "group": "narrative",
+              "factorId": "pacing",
+              "value": 0.029325513196,
+              "anchorWorkIds": [
+                "monster"
+              ],
+              "explainable": true
+            },
+            {
+              "source": "similarity",
+              "group": "tone",
+              "factorId": "darkness",
+              "value": 0.025661375661,
+              "anchorWorkIds": [
+                "monster"
+              ],
+              "explainable": true
+            },
+            {
+              "source": "similarity",
+              "group": "tone",
+              "factorId": "mentalStress",
+              "value": 0.024867724868,
+              "anchorWorkIds": [
+                "monster"
+              ],
+              "explainable": true
+            },
+            {
+              "source": "similarity",
+              "group": "narrative",
+              "factorId": "worldBuilding",
+              "value": 0.016129032258,
+              "anchorWorkIds": [
+                "monster"
+              ],
+              "explainable": true
+            },
+            {
+              "source": "similarity",
+              "group": "narrative",
+              "factorId": "problemSolving",
+              "value": 0.014296187683,
+              "anchorWorkIds": [
+                "monster"
+              ],
+              "explainable": true
+            },
+            {
+              "source": "similarity",
+              "group": "tone",
+              "factorId": "characterArcWeight",
+              "value": 0.011243386243,
+              "anchorWorkIds": [
+                "monster"
+              ],
+              "explainable": true
+            },
+            {
+              "source": "similarity",
+              "group": "tone",
+              "factorId": "relationshipStructure",
+              "value": 0.011111111111,
+              "anchorWorkIds": [
+                "monster"
+              ],
+              "explainable": true
+            },
+            {
+              "source": "consensus",
+              "group": "overall",
+              "factorId": "consensus",
+              "value": 0.002174875394,
+              "anchorWorkIds": [
+                "promised-neverland"
+              ],
+              "explainable": false
+            }
           ],
-          "explainable": true
+          "preferredFactorId": "mysteryReveal"
         },
         {
-          "source": "similarity",
-          "group": "art",
-          "factorId": "artRealism",
-          "value": 0.025531914894,
-          "anchorWorkIds": [
-            "monster"
+          "work": {
+            "id": "work-31b4dc55b32d1b29be08",
+            "title": "こころの一番暗い部屋",
+            "creators": [
+              "雨夜幽歩"
+            ],
+            "genres": [
+              "horror",
+              "mystery"
+            ],
+            "status": "completed",
+            "isbn": "9784088847375"
+          },
+          "confidenceLevel": "normal",
+          "contributions": [
+            {
+              "source": "baseline",
+              "group": "overall",
+              "factorId": "neutralBaseline",
+              "value": 0.5,
+              "anchorWorkIds": [],
+              "explainable": false
+            },
+            {
+              "source": "similarity",
+              "group": "theme",
+              "factorId": "investigation",
+              "value": 0.0625,
+              "anchorWorkIds": [
+                "monster"
+              ],
+              "explainable": true
+            },
+            {
+              "source": "similarity",
+              "group": "genre",
+              "factorId": "horror",
+              "value": 0.0375,
+              "anchorWorkIds": [
+                "monster"
+              ],
+              "explainable": true
+            },
+            {
+              "source": "similarity",
+              "group": "genre",
+              "factorId": "mystery",
+              "value": 0.0375,
+              "anchorWorkIds": [
+                "monster"
+              ],
+              "explainable": true
+            },
+            {
+              "source": "similarity",
+              "group": "narrative",
+              "factorId": "mysteryReveal",
+              "value": 0.034256559767,
+              "anchorWorkIds": [
+                "monster"
+              ],
+              "explainable": true
+            },
+            {
+              "source": "similarity",
+              "group": "theme",
+              "factorId": "historicalReconstruction",
+              "value": -0.03125,
+              "anchorWorkIds": [
+                "monster"
+              ],
+              "explainable": true
+            },
+            {
+              "source": "similarity",
+              "group": "theme",
+              "factorId": "workplace",
+              "value": -0.03125,
+              "anchorWorkIds": [
+                "monster"
+              ],
+              "explainable": true
+            },
+            {
+              "source": "similarity",
+              "group": "narrative",
+              "factorId": "pacing",
+              "value": 0.030612244898,
+              "anchorWorkIds": [
+                "monster"
+              ],
+              "explainable": true
+            },
+            {
+              "source": "similarity",
+              "group": "narrative",
+              "factorId": "worldBuilding",
+              "value": 0.029883381924,
+              "anchorWorkIds": [
+                "monster"
+              ],
+              "explainable": true
+            },
+            {
+              "source": "similarity",
+              "group": "tone",
+              "factorId": "characterArcWeight",
+              "value": 0.025378632828,
+              "anchorWorkIds": [
+                "monster"
+              ],
+              "explainable": true
+            },
+            {
+              "source": "similarity",
+              "group": "narrative",
+              "factorId": "problemSolving",
+              "value": 0.015123906706,
+              "anchorWorkIds": [
+                "monster"
+              ],
+              "explainable": true
+            },
+            {
+              "source": "similarity",
+              "group": "tone",
+              "factorId": "relationshipStructure",
+              "value": 0.011734206577,
+              "anchorWorkIds": [
+                "monster"
+              ],
+              "explainable": true
+            },
+            {
+              "source": "similarity",
+              "group": "tone",
+              "factorId": "mentalStress",
+              "value": 0.011461318052,
+              "anchorWorkIds": [
+                "monster"
+              ],
+              "explainable": true
+            },
+            {
+              "source": "consensus",
+              "group": "overall",
+              "factorId": "consensus",
+              "value": 0.00467910237,
+              "anchorWorkIds": [
+                "promised-neverland"
+              ],
+              "explainable": false
+            }
           ],
-          "explainable": true
+          "preferredFactorId": "mysteryReveal",
+          "caption": "人気作家「ちせばし」の盗作疑惑について“友を疑う”ことに葛藤する奏。キーワード怪談に宿るヒントを頼りにたどり着いた、「なな」の心に向き合う方法とは──？ 恐ろしいのに優しくて、怖いのに温かい。新感覚ホラー×セラピー！"
         },
         {
-          "source": "similarity",
-          "group": "theme",
-          "factorId": "historicalReconstruction",
-          "value": -0.025,
-          "anchorWorkIds": [
-            "monster"
+          "work": {
+            "id": "work-b4e0b441b6857e1111b1",
+            "title": "ウシミツガオ",
+            "creators": [
+              "板垣巴留"
+            ],
+            "genres": [
+              "horror",
+              "mystery"
+            ],
+            "status": "unknown",
+            "isbn": "9784253298810"
+          },
+          "confidenceLevel": "normal",
+          "contributions": [
+            {
+              "source": "baseline",
+              "group": "overall",
+              "factorId": "neutralBaseline",
+              "value": 0.5,
+              "anchorWorkIds": [],
+              "explainable": false
+            },
+            {
+              "source": "similarity",
+              "group": "theme",
+              "factorId": "investigation",
+              "value": 0.0625,
+              "anchorWorkIds": [
+                "monster"
+              ],
+              "explainable": true
+            },
+            {
+              "source": "similarity",
+              "group": "genre",
+              "factorId": "horror",
+              "value": 0.0375,
+              "anchorWorkIds": [
+                "monster"
+              ],
+              "explainable": true
+            },
+            {
+              "source": "similarity",
+              "group": "genre",
+              "factorId": "mystery",
+              "value": 0.0375,
+              "anchorWorkIds": [
+                "monster"
+              ],
+              "explainable": true
+            },
+            {
+              "source": "similarity",
+              "group": "theme",
+              "factorId": "historicalReconstruction",
+              "value": -0.03125,
+              "anchorWorkIds": [
+                "monster"
+              ],
+              "explainable": true
+            },
+            {
+              "source": "similarity",
+              "group": "theme",
+              "factorId": "workplace",
+              "value": -0.03125,
+              "anchorWorkIds": [
+                "monster"
+              ],
+              "explainable": true
+            },
+            {
+              "source": "similarity",
+              "group": "narrative",
+              "factorId": "mysteryReveal",
+              "value": 0.025,
+              "anchorWorkIds": [
+                "monster"
+              ],
+              "explainable": true
+            },
+            {
+              "source": "similarity",
+              "group": "narrative",
+              "factorId": "pacing",
+              "value": 0.025,
+              "anchorWorkIds": [
+                "monster"
+              ],
+              "explainable": true
+            },
+            {
+              "source": "similarity",
+              "group": "narrative",
+              "factorId": "problemSolving",
+              "value": 0.025,
+              "anchorWorkIds": [
+                "monster"
+              ],
+              "explainable": true
+            },
+            {
+              "source": "similarity",
+              "group": "tone",
+              "factorId": "darkness",
+              "value": 0.016666666667,
+              "anchorWorkIds": [
+                "monster"
+              ],
+              "explainable": true
+            },
+            {
+              "source": "similarity",
+              "group": "tone",
+              "factorId": "relationshipStructure",
+              "value": 0.016666666667,
+              "anchorWorkIds": [
+                "monster"
+              ],
+              "explainable": true
+            },
+            {
+              "source": "similarity",
+              "group": "tone",
+              "factorId": "romance",
+              "value": 0.016666666667,
+              "anchorWorkIds": [
+                "monster"
+              ],
+              "explainable": true
+            },
+            {
+              "source": "similarity",
+              "group": "narrative",
+              "factorId": "worldBuilding",
+              "value": 0.0125,
+              "anchorWorkIds": [
+                "monster"
+              ],
+              "explainable": true
+            },
+            {
+              "source": "similarity",
+              "group": "tone",
+              "factorId": "characterArcWeight",
+              "value": 0.008333333333,
+              "anchorWorkIds": [
+                "monster"
+              ],
+              "explainable": true
+            },
+            {
+              "source": "similarity",
+              "group": "tone",
+              "factorId": "comedy",
+              "value": 0.008333333333,
+              "anchorWorkIds": [
+                "monster"
+              ],
+              "explainable": true
+            },
+            {
+              "source": "similarity",
+              "group": "tone",
+              "factorId": "mentalStress",
+              "value": 0.008333333333,
+              "anchorWorkIds": [
+                "monster"
+              ],
+              "explainable": true
+            },
+            {
+              "source": "consensus",
+              "group": "overall",
+              "factorId": "consensus",
+              "value": 0.002,
+              "anchorWorkIds": [
+                "promised-neverland"
+              ],
+              "explainable": false
+            }
           ],
-          "explainable": true
+          "preferredFactorId": "investigation"
         },
         {
-          "source": "similarity",
-          "group": "theme",
-          "factorId": "school",
-          "value": -0.025,
-          "anchorWorkIds": [
-            "monster"
+          "work": {
+            "id": "work-62e51d8166d487f9e6e3",
+            "title": "白暮のクロニクル",
+            "creators": [
+              "ゆうき まさみ"
+            ],
+            "genres": [
+              "fantasy",
+              "horror",
+              "mystery"
+            ],
+            "status": "unknown",
+            "isbn": "9784091858474"
+          },
+          "confidenceLevel": "normal",
+          "contributions": [
+            {
+              "source": "baseline",
+              "group": "overall",
+              "factorId": "neutralBaseline",
+              "value": 0.5,
+              "anchorWorkIds": [],
+              "explainable": false
+            },
+            {
+              "source": "similarity",
+              "group": "theme",
+              "factorId": "investigation",
+              "value": 0.0625,
+              "anchorWorkIds": [
+                "monster"
+              ],
+              "explainable": true
+            },
+            {
+              "source": "similarity",
+              "group": "theme",
+              "factorId": "historicalReconstruction",
+              "value": -0.03125,
+              "anchorWorkIds": [
+                "monster"
+              ],
+              "explainable": true
+            },
+            {
+              "source": "similarity",
+              "group": "theme",
+              "factorId": "workplace",
+              "value": 0.03125,
+              "anchorWorkIds": [
+                "monster"
+              ],
+              "explainable": true
+            },
+            {
+              "source": "similarity",
+              "group": "genre",
+              "factorId": "fantasy",
+              "value": -0.025,
+              "anchorWorkIds": [
+                "monster"
+              ],
+              "explainable": true
+            },
+            {
+              "source": "similarity",
+              "group": "genre",
+              "factorId": "horror",
+              "value": 0.025,
+              "anchorWorkIds": [
+                "monster"
+              ],
+              "explainable": true
+            },
+            {
+              "source": "similarity",
+              "group": "genre",
+              "factorId": "mystery",
+              "value": 0.025,
+              "anchorWorkIds": [
+                "monster"
+              ],
+              "explainable": true
+            },
+            {
+              "source": "similarity",
+              "group": "narrative",
+              "factorId": "mysteryReveal",
+              "value": 0.021946564885,
+              "anchorWorkIds": [
+                "monster"
+              ],
+              "explainable": true
+            },
+            {
+              "source": "similarity",
+              "group": "tone",
+              "factorId": "characterArcWeight",
+              "value": 0.017037037037,
+              "anchorWorkIds": [
+                "monster"
+              ],
+              "explainable": true
+            },
+            {
+              "source": "similarity",
+              "group": "tone",
+              "factorId": "darkness",
+              "value": 0.017037037037,
+              "anchorWorkIds": [
+                "monster"
+              ],
+              "explainable": true
+            },
+            {
+              "source": "similarity",
+              "group": "tone",
+              "factorId": "mentalStress",
+              "value": 0.017037037037,
+              "anchorWorkIds": [
+                "monster"
+              ],
+              "explainable": true
+            },
+            {
+              "source": "similarity",
+              "group": "narrative",
+              "factorId": "pacing",
+              "value": 0.010734732824,
+              "anchorWorkIds": [
+                "monster"
+              ],
+              "explainable": true
+            },
+            {
+              "source": "similarity",
+              "group": "narrative",
+              "factorId": "problemSolving",
+              "value": 0.010257633588,
+              "anchorWorkIds": [
+                "monster"
+              ],
+              "explainable": true
+            },
+            {
+              "source": "similarity",
+              "group": "narrative",
+              "factorId": "strategy",
+              "value": 0.009303435115,
+              "anchorWorkIds": [
+                "monster"
+              ],
+              "explainable": true
+            },
+            {
+              "source": "similarity",
+              "group": "tone",
+              "factorId": "relationshipStructure",
+              "value": 0.008148148148,
+              "anchorWorkIds": [
+                "monster"
+              ],
+              "explainable": true
+            },
+            {
+              "source": "similarity",
+              "group": "tone",
+              "factorId": "romance",
+              "value": 0.007962962963,
+              "anchorWorkIds": [
+                "monster"
+              ],
+              "explainable": true
+            }
           ],
-          "explainable": true
-        },
-        {
-          "source": "similarity",
-          "group": "theme",
-          "factorId": "workplace",
-          "value": 0.025,
-          "anchorWorkIds": [
-            "monster"
-          ],
-          "explainable": true
-        },
-        {
-          "source": "similarity",
-          "group": "narrative",
-          "factorId": "problemSolving",
-          "value": 0.024487471526,
-          "anchorWorkIds": [
-            "monster"
-          ],
-          "explainable": true
-        },
-        {
-          "source": "similarity",
-          "group": "narrative",
-          "factorId": "worldBuilding",
-          "value": 0.024487471526,
-          "anchorWorkIds": [
-            "monster"
-          ],
-          "explainable": true
-        },
-        {
-          "source": "similarity",
-          "group": "tone",
-          "factorId": "darkness",
-          "value": 0.022298850575,
-          "anchorWorkIds": [
-            "monster"
-          ],
-          "explainable": true
-        },
-        {
-          "source": "similarity",
-          "group": "tone",
-          "factorId": "relationshipStructure",
-          "value": 0.020229885057,
-          "anchorWorkIds": [
-            "monster"
-          ],
-          "explainable": true
-        },
-        {
-          "source": "similarity",
-          "group": "tone",
-          "factorId": "romance",
-          "value": 0.015632183908,
-          "anchorWorkIds": [
-            "monster"
-          ],
-          "explainable": true
-        },
-        {
-          "source": "similarity",
-          "group": "narrative",
-          "factorId": "pacing",
-          "value": 0.012813211845,
-          "anchorWorkIds": [
-            "monster"
-          ],
-          "explainable": true
-        },
-        {
-          "source": "similarity",
-          "group": "art",
-          "factorId": "artDensity",
-          "value": 0.012632978723,
-          "anchorWorkIds": [
-            "monster"
-          ],
-          "explainable": true
-        },
-        {
-          "source": "similarity",
-          "group": "art",
-          "factorId": "visualSoftness",
-          "value": 0.01210106383,
-          "anchorWorkIds": [
-            "monster"
-          ],
-          "explainable": true
-        },
-        {
-          "source": "similarity",
-          "group": "narrative",
-          "factorId": "strategy",
-          "value": 0.011104783599,
-          "anchorWorkIds": [
-            "monster"
-          ],
-          "explainable": true
-        },
-        {
-          "source": "similarity",
-          "group": "tone",
-          "factorId": "mentalStress",
-          "value": 0.010574712644,
-          "anchorWorkIds": [
-            "monster"
-          ],
-          "explainable": true
-        },
-        {
-          "source": "similarity",
-          "group": "tone",
-          "factorId": "characterArcWeight",
-          "value": 0.010344827586,
-          "anchorWorkIds": [
-            "monster"
-          ],
-          "explainable": true
+          "preferredFactorId": "investigation"
         }
       ]
-    },
-    "axes": [
-      {
-        "axisId": "mysteryReveal",
-        "value": 3.809523809524
-      },
-      {
-        "axisId": "mentalStress",
-        "value": 3.619047619048
-      },
-      {
-        "axisId": "darkness",
-        "value": 3.428571428571
-      },
-      {
-        "axisId": "characterArcWeight",
-        "value": 3.238095238095
-      }
-    ]
+    }
   }
 }

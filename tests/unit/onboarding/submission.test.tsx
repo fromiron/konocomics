@@ -4,6 +4,7 @@ import { act, cleanup, fireEvent, render, screen, waitFor, within } from "@testi
 import { type ReactNode, useState } from "react";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 
+import { finalizeOnboardingDraft, type OnboardingDraft } from "@/domain/profile/onboarding";
 import { OnboardingFlow } from "@/features/onboarding/onboarding-flow";
 import {
   OnboardingAlreadyCompletedError,
@@ -60,6 +61,9 @@ const monster = {
 const defaultPositiveWorks = Array.from({ length: 5 }, (_, index) =>
   createTestWork({ id: `positive-${String(index + 1)}` }),
 );
+
+/** The first-run Step 1 primary action, named for what it does next. */
+const NEXT_STEP = "合わなかった作品へ進む";
 
 beforeEach(() => {
   const baseCatalog = createTestCatalog(monster);
@@ -136,7 +140,7 @@ describe("OnboardingFlow finalization", () => {
       positiveEntries: defaultPositiveWorks.map((work) => ({ workId: work.id, reaction: "liked" })),
     };
     render(<OnboardingFlow />);
-    fireEvent.click(screen.getByRole("button", { name: "次へ (5/10)" }));
+    fireEvent.click(screen.getByRole("button", { name: NEXT_STEP }));
     expect(screen.getByRole("status").textContent).toContain("読書状態を確認");
     expect(testState.finalizeOnboarding).not.toHaveBeenCalled();
     fireEvent.click(screen.getByRole("button", { name: "すべて読んでいる" }));
@@ -145,7 +149,7 @@ describe("OnboardingFlow finalization", () => {
     const firstWorkStates = workStates[0] ?? screen.getByRole("radiogroup");
     expect(within(firstWorkStates).queryByRole("radio", { name: /読みたい/u })).toBeNull();
     fireEvent.click(within(firstWorkStates).getByRole("radio", { name: "読んだ" }));
-    fireEvent.click(screen.getByRole("button", { name: "次へ (5/10)" }));
+    fireEvent.click(screen.getByRole("button", { name: NEXT_STEP }));
     expect(testState.saveOnboardingDraft).toHaveBeenLastCalledWith(
       expect.objectContaining({
         step: 2,
@@ -156,6 +160,49 @@ describe("OnboardingFlow finalization", () => {
         })),
       }),
     );
+  });
+
+  it("starts each chosen work as 読んだ, exactly as picking 読んだ would, and goes straight to Step 2", () => {
+    const works = defaultPositiveWorks.map((work, index) => ({
+      ...work,
+      title: `好きな作品${String(index + 1)}`,
+    }));
+    testState.catalog = { ...createTestCatalog(monster), works: [...works, monster] };
+    testState.draft = null;
+    render(<OnboardingFlow />);
+
+    for (const work of works) {
+      fireEvent.click(screen.getAllByRole("button", { name: `${work.title} — 好きに追加` })[0]!);
+    }
+    const defaulted = testState.saveOnboardingDraft.mock.calls.at(-1)?.[0] as OnboardingDraft;
+    expect(defaulted.positiveEntries).toEqual(
+      works.map((work) => ({ workId: work.id, reaction: "liked", readingState: "completed" })),
+    );
+
+    // The explicit path: switch the first work away and back with its own control.
+    const firstStates = screen.getByRole("radiogroup", { name: "好きな作品1の読書状態" });
+    fireEvent.click(within(firstStates).getByRole("radio", { name: "読んでいる" }));
+    fireEvent.click(within(firstStates).getByRole("radio", { name: "読んだ" }));
+    const explicit = testState.saveOnboardingDraft.mock.calls.at(-1)?.[0] as OnboardingDraft;
+    expect(explicit.positiveEntries).toEqual(defaulted.positiveEntries);
+    // Same store input, so the same records reach the engine once onboarding completes.
+    const completedAt = "2026-11-11T00:00:00.000Z";
+    expect(finalizeOnboardingDraft(explicit, completedAt)).toEqual(
+      finalizeOnboardingDraft(defaulted, completedAt),
+    );
+
+    // The favourite toggle keeps the default reading state.
+    fireEvent.click(screen.getAllByRole("button", { name: "好きな作品2 — 大好きにする" })[0]!);
+    expect(
+      (testState.saveOnboardingDraft.mock.calls.at(-1)?.[0] as OnboardingDraft).positiveEntries[1],
+    ).toEqual({ workId: works[1]!.id, reaction: "favorite", readingState: "completed" });
+
+    fireEvent.click(screen.getByRole("button", { name: NEXT_STEP }));
+    expect(screen.getByRole("searchbox", { name: "合わなかったマンガを検索" })).toBeTruthy();
+    expect(testState.saveOnboardingDraft).toHaveBeenLastCalledWith(
+      expect.objectContaining({ step: 2 }),
+    );
+    expect(screen.queryByText("選んだ作品の読書状態を確認してください。")).toBeNull();
   });
 
   it("offers eligible recommendation works even when they are not discovery starters", () => {
@@ -206,7 +253,7 @@ describe("OnboardingFlow finalization", () => {
     };
     render(<OnboardingFlow />);
     testState.saveOnboardingDraft.mockClear();
-    fireEvent.click(screen.getByRole("button", { name: "次へ (3/10)" }));
+    fireEvent.click(screen.getByRole("button", { name: NEXT_STEP }));
     expect(screen.getByText("あと 2 作品選んでください。")).toBeTruthy();
     expect(screen.getByRole("searchbox", { name: "好きなマンガを検索" })).toBeTruthy();
     expect(testState.saveOnboardingDraft).not.toHaveBeenCalled();
@@ -237,8 +284,7 @@ describe("OnboardingFlow finalization", () => {
         "MONSTER",
       ),
     );
-    fireEvent.click(screen.getByRole("button", { name: "すべて読んだ" }));
-    fireEvent.click(screen.getByRole("button", { name: "次へ (5/10)" }));
+    fireEvent.click(screen.getByRole("button", { name: NEXT_STEP }));
     await waitFor(() =>
       expect(screen.getByRole("searchbox", { name: "合わなかったマンガを検索" })).toHaveProperty(
         "value",
@@ -304,8 +350,7 @@ describe("OnboardingFlow finalization", () => {
     const main = container.querySelector("main");
 
     expect(main?.getAttribute("data-page-entry-b")).toBe("active");
-    fireEvent.click(screen.getByRole("button", { name: "すべて読んだ" }));
-    fireEvent.click(screen.getByRole("button", { name: "次へ (5/10)" }));
+    fireEvent.click(screen.getByRole("button", { name: NEXT_STEP }));
 
     expect(container.querySelector("main")).toBe(main);
     expect(main?.classList.contains("onboarding-page--entry-b")).toBe(false);
@@ -346,8 +391,8 @@ describe("OnboardingFlow finalization", () => {
     // The step strip names the current step; there is no separate step heading.
     expect(currentStep()?.textContent).toContain("好きな作品を選ぶ");
     expect(screen.getByText("あと 5 作品")).toBeTruthy();
-    fireEvent.click(screen.getByRole("button", { name: "次へ (0/10)" }));
-    expect(screen.getByRole("button", { name: "次へ (0/10)" }).matches(":disabled")).toBe(true);
+    fireEvent.click(screen.getByRole("button", { name: NEXT_STEP }));
+    expect(screen.getByRole("button", { name: NEXT_STEP }).matches(":disabled")).toBe(true);
     expect(testState.finalizeOnboarding).not.toHaveBeenCalled();
     expect(screen.getByText("まだ選ばれていません")).toBeTruthy();
   });
@@ -450,7 +495,7 @@ describe("OnboardingFlow finalization", () => {
     fireEvent.click(screen.getByRole("button", { name: "追加候補 — 好きに追加" }));
     expect(screen.getByRole("status").textContent).toContain("最大 10 作品までです");
 
-    fireEvent.click(screen.getByRole("button", { name: "次へ (10/10)" }));
+    fireEvent.click(screen.getByRole("button", { name: NEXT_STEP }));
 
     expect(
       screen.getByRole("heading", {
@@ -558,6 +603,49 @@ describe("OnboardingFlow finalization", () => {
     expect(screen.getByRole("alert").textContent).toContain("好みを保存できませんでした");
   });
 
+  it("marks the current step in the step line and the finished one as done", () => {
+    render(<OnboardingFlow />);
+
+    const steps = within(screen.getByRole("list", { name: "Manga DNA ができるまで" })).getAllByRole(
+      "listitem",
+    );
+    expect(steps).toHaveLength(3);
+    expect(steps[0]?.textContent).toContain("好きな作品を選ぶ");
+    expect(steps[0]?.textContent).toContain("完了");
+    expect(steps[0]?.hasAttribute("aria-current")).toBe(false);
+    expect(steps[1]?.getAttribute("aria-current")).toBe("step");
+    expect(steps[1]?.textContent).toContain("合わなかった作品");
+    expect(steps[1]?.textContent).toContain("いまここ");
+    expect(steps[2]?.textContent).not.toContain("完了");
+  });
+
+  it("names Step 2 choices by their visible labels, not their stored values", () => {
+    testState.draft = { ...(testState.draft as object), negativeEntries: [] };
+    render(<OnboardingFlow />);
+
+    const candidate = screen.getByRole("radiogroup", { name: "MONSTER — この作品について" });
+    const radioNames = within(candidate)
+      .getAllByRole("radio")
+      .map((radio) => radio.getAttribute("aria-label"));
+    expect(radioNames).toEqual(["合わなかった", "途中でやめた"]);
+    fireEvent.click(within(candidate).getByRole("radio", { name: "合わなかった" }));
+
+    const editor = screen.getByRole("group", { name: "MONSTER — この作品について" });
+    expect(
+      within(editor)
+        .getAllByRole("radio")
+        .map((radio) => radio.getAttribute("aria-label")),
+    ).toEqual(["合わなかった", "途中でやめた"]);
+    const reason = screen.getByRole("checkbox", { name: "展開が遅い" });
+    expect(reason.getAttribute("aria-label")).toBe("展開が遅い");
+    const stepTwo = document.querySelector(".onboarding-step-two");
+    const hiddenValues = [...(stepTwo?.querySelectorAll("input") ?? [])].map(
+      (input) => input.value,
+    );
+    expect(hiddenValues).not.toContain("tooSlow");
+    expect(hiddenValues.some((value) => value.startsWith("external:"))).toBe(false);
+  });
+
   it("offers one primary action without chosen works and lets STEP 2 go back to STEP 1", () => {
     testState.draft = { ...(testState.draft as object), negativeEntries: [] };
 
@@ -601,7 +689,9 @@ describe("OnboardingFlow finalization", () => {
     expect(testState.saveOnboardingDraft).toHaveBeenLastCalledWith(
       expect.objectContaining({
         negativeEntries: [],
-        positiveEntries: expect.arrayContaining([{ workId: "monster", reaction: "liked" }]),
+        positiveEntries: expect.arrayContaining([
+          { workId: "monster", reaction: "liked", readingState: "completed" },
+        ]),
       }),
     );
   });
@@ -666,7 +756,6 @@ describe("OnboardingFlow add mode", () => {
     expect(container.querySelector("main")?.getAttribute("data-page-entry-b")).toBe("active");
     expect(screen.queryByText("STEP 1 / 2")).toBeNull();
     fireEvent.click(screen.getByRole("button", { name: "追加候補 — 好きに追加" }));
-    fireEvent.click(screen.getByRole("button", { name: "すべて読んだ" }));
     fireEvent.click(screen.getByRole("button", { name: "追加する (1/10)" }));
 
     await waitFor(() => {
@@ -693,7 +782,6 @@ describe("OnboardingFlow add mode", () => {
 
     render(<OnboardingFlow />);
     fireEvent.click(screen.getByRole("button", { name: "追加候補 — 好きに追加" }));
-    fireEvent.click(screen.getByRole("button", { name: "すべて読んだ" }));
     fireEvent.click(screen.getByRole("button", { name: "DNAに戻る" }));
 
     await waitFor(() => {
@@ -739,7 +827,6 @@ describe("OnboardingFlow add mode", () => {
 
     render(<OnboardingFlow />);
     fireEvent.click(screen.getByRole("button", { name: "追加候補 — 好きに追加" }));
-    fireEvent.click(screen.getByRole("button", { name: "すべて読んだ" }));
     fireEvent.click(screen.getByRole("button", { name: "追加する (1/10)" }));
 
     await waitFor(() => {
