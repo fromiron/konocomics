@@ -97,22 +97,26 @@ describe("MediaShelf", () => {
 
     fireEvent.scroll(track);
     expect(screen.getByText(/\/ 2作品$/)).toBeTruthy();
-    const previous = screen.getByRole<HTMLButtonElement>("button", { name: /前へ/ });
     const next = screen.getByRole<HTMLButtonElement>("button", { name: /次へ/ });
     const startFade = container.querySelector(".media-shelf-edge-fade--start");
     const endFade = container.querySelector(".media-shelf-edge-fade--end");
     expect(container.querySelector(".media-shelf-overlay")).not.toBeNull();
-    expect(previous.disabled).toBe(true);
+    // An overlay shelf drops the arrow it cannot use instead of disabling it (04 §7).
+    expect(screen.queryByRole("button", { name: /前へ/ })).toBeNull();
     expect(next.disabled).toBe(false);
     expect(startFade?.classList.contains("hidden")).toBe(true);
     expect(endFade?.classList.contains("hidden")).toBe(false);
 
+    next.focus();
     fireEvent.click(next);
     fireEvent.scroll(track);
 
     expect(onPageChange).toHaveBeenCalledWith(1);
+    const previous = screen.getByRole<HTMLButtonElement>("button", { name: /前へ/ });
     expect(previous.disabled).toBe(false);
-    expect(next.disabled).toBe(true);
+    expect(screen.queryByRole("button", { name: /次へ/ })).toBeNull();
+    // The focused arrow left with its end, so focus moves to the one that remains.
+    expect(document.activeElement).toBe(previous);
     expect(startFade?.classList.contains("hidden")).toBe(false);
     expect(endFade?.classList.contains("hidden")).toBe(true);
   });
@@ -182,7 +186,7 @@ describe("MediaShelf", () => {
       expect(screen.queryByRole("button", { name: /次へ/ })).toBeNull();
       width = 100;
       act(() => resize?.());
-      expect(screen.getByRole<HTMLButtonElement>("button", { name: /前へ/ }).disabled).toBe(true);
+      expect(screen.queryByRole("button", { name: /前へ/ })).toBeNull();
       expect(screen.getByRole<HTMLButtonElement>("button", { name: /次へ/ }).disabled).toBe(false);
       expect(track.querySelectorAll("article")).toHaveLength(2);
       expect(track.querySelector("[data-carousel-clone]")).toBeNull();

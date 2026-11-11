@@ -14,6 +14,12 @@ export const EXPLANATION_CLUSTERS = {
   toneLoad: ["darkness", "mentalStress"],
 } as const satisfies Readonly<Record<ExplanationClusterId, readonly AxisId[]>>;
 
+/**
+ * Floor for the shelf lead rotation (02 §6.9 #61): a shown reason may lead a rotated card only
+ * when its value is at least this share of the strongest value in its family. Inclusive.
+ */
+export const LEAD_ROTATION_VALUE_FLOOR_RATIO = 0.5;
+
 const EXPLANATION_FACTOR_IDS = new Set<string>([...AXIS_IDS, ...GENRE_TAGS, ...THEME_TAGS]);
 
 const GENRE_TAG_IDS = new Set<string>(GENRE_TAGS);

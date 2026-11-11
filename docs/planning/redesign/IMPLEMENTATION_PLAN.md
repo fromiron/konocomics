@@ -7,7 +7,7 @@
 - Framework: Next.js 16.3 / React 19.2 / TypeScript 5 / Tailwind CSS 4 / Motion 13
 - Persistence: Dexie + IndexedDB, memory degradation fallback
 - Theme: dark-only
-- Primary: `oklch(0.7525 0.1382 236.09)` / `#43BBFA`
+- Primary: `oklch(0.7525 0.1382 236.09)` / `#43BBFA` — 번들 작성 당시 값. 2026-11-11 사용자 결정으로 폐기했고 현재는 사용자가 고르는 여섯 accent(기본 `butter`)다. 값의 권위는 `04` §2.1이다(`README.md` 「기준」).
 - Visual target: `visual-targets/`의 확정 이미지 7장
 
 ## 1. 권위와 non-goal
@@ -133,6 +133,8 @@ R0에서는 runtime 파일을 수정하지 않습니다.
 
 `#43BBFA` 위에는 흰 글자가 아니라 `--on-accent`의 어두운 글자를 사용합니다.
 
+> 현재 상태: 위 블록은 R1 당시 권장값이며 사양이 아닙니다. accent 하늘색(hue 236)은 폐기했고, 토큰 값·accent 테마·radius 단계는 `04` §2.1·§2.3과 `src/styles/globals.css`가 정합니다. accent 위 텍스트는 각 테마의 어두운 `--on-accent`를 그대로 씁니다.
+
 ### 4.3 신규 공통 컴포넌트
 
 ```text
@@ -155,6 +157,8 @@ src/components/layout/
 src/components/search/
   global-work-search.tsx   # 실제 기능을 함께 구현할 때만
 ```
+
+> 현재 상태: `media-poster-card.tsx`(및 `media-meta-line.tsx`)는 2026-11-11 홈 재구성으로 소비자가 없어져 삭제했습니다. 표지 카드 문법과 공용 카드(`StageCard`·`ExpandableMediaCard`·`DiscoveryCard`)는 `04` §2.10이 정합니다.
 
 원칙:
 

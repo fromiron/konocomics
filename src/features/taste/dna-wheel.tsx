@@ -9,6 +9,7 @@ import { explanationLexicon, tasteStrings } from "@/lib/strings";
 import { cn } from "@/lib/utils";
 
 import { DNA_WHEEL_VIEW_BOX, dnaWheelSegment } from "./dna-wheel-geometry";
+import { SectionHeading } from "@/components/layout/section-heading";
 
 export function DnaWheel({
   animateReveal,
@@ -33,19 +34,13 @@ export function DnaWheel({
 
   return (
     <section aria-labelledby="taste-axes-heading" className="taste-axes grid gap-[var(--space-4)]">
-      <header className="grid gap-[var(--space-1)]">
-        <h2
-          className="text-[length:var(--text-subheading-size)] text-text-strong"
-          id="taste-axes-heading"
-        >
-          {tasteStrings.axesHeading}
-        </h2>
-        {axes.length === 0 ? null : (
-          <p className="text-[length:var(--font-size-14)] text-text-muted">
-            {strings.description(axes.length)}
-          </p>
-        )}
-      </header>
+      <SectionHeading
+        className="mb-0"
+        compact
+        description={axes.length === 0 ? undefined : strings.description(axes.length)}
+        id="taste-axes-heading"
+        title={tasteStrings.axesHeading}
+      />
       {axes.length === 0 ? (
         <p className="text-text-muted">{tasteStrings.axesPending}</p>
       ) : (

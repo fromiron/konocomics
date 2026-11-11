@@ -16,10 +16,13 @@ import {
   AlertDialogTitle,
 } from "@/components/design-system/alert-dialog";
 import { Button } from "@/components/design-system/button";
+import { Notice } from "@/components/design-system/notice";
+import { PageHeader } from "@/components/layout/page-header";
 import { pageEntryFadeProps, usePageEntryMotion } from "@/components/motion/use-page-entry-motion";
 import { parseExternalWorkDetailQuery } from "@/domain/catalog/external-work";
 import { LibraryRecordEditor } from "@/features/library/record-editor";
 import { WorkDetailShell } from "@/features/work-detail/work-detail-shell";
+import { WorkMetaLine } from "@/features/work-detail/work-meta-line";
 import {
   type ExternalWorkLookupResult,
   type ExternalWorkRecord,
@@ -66,8 +69,9 @@ function ExternalDetailMessage({
         <p aria-atomic="true" aria-live="polite" className="sr-only">
           {navigationStrings.routeAnnouncement(copy.title)}
         </p>
-        <h1>{copy.title}</h1>
-        <p>{copy.description}</p>
+        <PageHeader title={copy.title}>
+          <p>{copy.description}</p>
+        </PageHeader>
         <Link
           className="inline-flex min-h-[var(--control-min-size)] items-center font-bold text-accent-ink underline underline-offset-[var(--space-content-tight)] transition-transform duration-[var(--motion-duration-press)] active:scale-[0.97] motion-reduce:transition-none"
           to="/library"
@@ -86,10 +90,9 @@ function ExternalDetailLoading() {
         className="mx-auto grid min-h-dvh w-full max-w-[var(--layout-width-media)] px-[var(--layout-page-padding)] pt-[var(--layout-page-block-start)]"
         data-external-detail-state="loading"
       >
-        <header className="grid gap-[var(--space-content-loose)]">
-          <h1>{externalDetailStrings.title}</h1>
+        <PageHeader title={externalDetailStrings.title}>
           <p aria-live="polite">{externalDetailStrings.loading}</p>
-        </header>
+        </PageHeader>
       </main>
     </>
   );
@@ -146,25 +149,25 @@ function ExternalDetailRecord({
                 ? externalDetailStrings.metadata.unknownCreator
                 : coverStrings.creatorLine(record.creators)}
             </p>
-            <dl className="m-0 flex flex-wrap gap-x-[var(--space-6)] gap-y-[var(--space-3)] p-0 [&>div]:grid [&>div]:gap-[var(--space-content-tight)] [&_dd]:m-0 [&_dd]:font-bold [&_dd]:text-text-strong [&_dt]:text-[length:var(--text-caption-size)] [&_dt]:font-medium [&_dt]:text-text-muted">
-              <div>
-                <dt>{externalDetailStrings.metadata.isbn}</dt>
-                <dd>{isbnListFormatter.format(record.isbnSamples)}</dd>
-              </div>
-            </dl>
-            <p className="border-l-[length:var(--space-content-tight)] border-line bg-canvas p-[var(--space-3)] text-[length:var(--text-caption-size)] text-text-muted">
-              {externalDetailStrings.exclusion}
-            </p>
+            {/* The same one-line meta as the Catalog hero, with the values a local record has. */}
+            <WorkMetaLine
+              items={
+                record.isbnSamples.length === 0
+                  ? []
+                  : [
+                      {
+                        key: "isbn",
+                        term: externalDetailStrings.metadata.isbn,
+                        termVisible: true,
+                        value: isbnListFormatter.format(record.isbnSamples),
+                      },
+                    ]
+              }
+            />
+            <Notice>{externalDetailStrings.exclusion}</Notice>
           </header>
 
-          {storageDegraded ? (
-            <p
-              className="border-l-[length:var(--space-content-tight)] border-warn bg-surface-1 px-[var(--space-4)] py-[var(--space-3)]"
-              role="status"
-            >
-              {workDetailStrings.storageWarning}
-            </p>
-          ) : null}
+          {storageDegraded ? <Notice tone="warn">{workDetailStrings.storageWarning}</Notice> : null}
 
           <section
             aria-labelledby="external-work-state-heading"

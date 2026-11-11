@@ -3,10 +3,11 @@ import type { ReactNode } from "react";
 import { cn } from "@/lib/utils";
 
 /**
- * The speech bubble (吹き出し) around recommendation reasons (04 §2.9). The frame is static:
- * the tail and border are decoration and add nothing to the accessibility tree. Cautions keep
- * their own warn-bordered block and never use this bubble. Only the landing example opts into
- * paper grain and supplies a typed reason; this wrapper never animates operational reasons.
+ * The paper speech bubble (吹き出し) around recommendation reasons (04 §2.9): paper and ink
+ * wherever it appears, cards and the work detail alike. The frame is static: the tail and border
+ * are decoration and add nothing to the accessibility tree. Cautions keep their own warn-bordered
+ * block and never use this bubble. Only the landing example opts into paper grain and supplies a
+ * typed reason; this wrapper never animates operational reasons.
  *
  * `tail="top"` points up at the cover or title above. `tail="side"` is for panels that open
  * beside a cover: it points back at the cover, following the nearest `data-expansion-side`
@@ -17,19 +18,16 @@ export function ReasonBubble({
   className,
   tail = "top",
   paperGrain = false,
-  surface = "paper",
 }: Readonly<{
   children: ReactNode;
   className?: string;
   tail?: "top" | "side";
   paperGrain?: boolean;
-  surface?: "paper" | "dark";
 }>) {
   return (
     <div
       className={cn(
-        "relative min-w-0 rounded-[var(--radius-card)] border border-line bg-surface-2 px-[var(--space-3)] py-[var(--space-2)]",
-        surface === "paper" && "reason-bubble",
+        "reason-bubble relative min-w-0 rounded-[var(--radius-bubble)] border border-line bg-surface-2 px-[var(--space-3)] py-[var(--space-2)]",
         tail === "top" && "mt-[6px]",
         paperGrain && "paper-grain",
         className,

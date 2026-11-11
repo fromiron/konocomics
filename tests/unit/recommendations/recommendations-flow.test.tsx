@@ -720,9 +720,9 @@ describe("RecommendationsFlow", () => {
     expect(plannedAction.className).toContain("size-[var(--control-min-size)]");
     expect(plannedAction.getAttribute("aria-pressed")).toBe("false");
     expect(firstCard.querySelector("h3")?.className).toContain("line-clamp-2");
-    expect(lead?.className).toContain("recommendation-featured-card__reason");
+    expect(lead?.className).toContain("stage-card__reason");
     expect(lead?.className).toContain("line-clamp-3");
-    expect(selectButton.className).toContain("recommendation-featured-card__artwork");
+    expect(selectButton.className).toContain("stage-card__artwork");
     expect(selectButton.className).toContain("w-fit");
     expect(selectButton.querySelector('[role="img"]')?.className).toContain(
       "shadow-[var(--shadow-cover-featured)]",
@@ -731,7 +731,7 @@ describe("RecommendationsFlow", () => {
     expect(article?.className).toContain("overflow-hidden");
     expect(article?.className).not.toContain("hover:border");
     const title = firstCard.querySelector("h3");
-    const actionRail = firstCard.querySelector(".recommendation-featured-card__actions");
+    const actionRail = firstCard.querySelector(".stage-card__actions");
     if (title === null || lead === null || lead === undefined || actionRail === null) {
       throw new Error("Expected featured card title, reason, and action rail");
     }
@@ -765,13 +765,27 @@ describe("RecommendationsFlow", () => {
     expect(within(ranking).getAllByRole("link", { name: /^\d+位/u })).toHaveLength(
       plan.length - 10,
     );
-    expect(within(ranking).queryByRole("button", { name: /クイック表示/u })).toBeNull();
+    // Ranks 11-20 are expand cards: Quick Preview stands in where they cannot expand.
+    expect(within(ranking).getAllByRole("button", { name: /クイック表示/u })).toHaveLength(
+      plan.length - 10,
+    );
     expect(within(list).queryAllByRole("link", { name: /^\d+位/u })).toHaveLength(0);
     const firstRankingCard = within(ranking).getAllByRole("listitem")[0];
-    expect(firstRankingCard?.className).toContain("w-44");
+    // The article owns the width so it can widen; the list item only holds the place.
+    expect(firstRankingCard?.className).not.toContain("w-44");
     expect(firstRankingCard?.className).not.toContain("md:min-w-[4.5rem]");
     expect(firstRankingCard?.getAttribute("data-ranking-kind")).toBe("personalized-ranking");
     expect(firstRankingCard?.getAttribute("data-ranking-position")).toBe("11");
+    const firstRankingArticle = firstRankingCard?.querySelector<HTMLElement>(
+      '[data-recommendation-shelf-card="ranking"]',
+    );
+    expect(firstRankingArticle?.className).toContain("w-44");
+    expect(
+      firstRankingArticle?.querySelector("[data-expandable-panel]")?.hasAttribute("inert"),
+    ).toBe(true);
+    expect(
+      firstRankingArticle?.querySelector("[data-expandable-panel] [data-contribution-summary]"),
+    ).toBeTruthy();
     expect([...ranking.querySelectorAll("a")].map((link) => link.getAttribute("href"))).toEqual(
       plan.slice(10).map((entry) => `/works/${entry.workId}`),
     );
@@ -1046,22 +1060,22 @@ describe("RecommendationsFlow", () => {
         return button;
       });
       fireEvent.click(retryAction);
-      const dialog = await screen.findByRole("dialog");
+      if (reactionLabel === null) {
+        // 「興味なし」 is complete in one click: no follow-up dialog, one undoable notice.
+        await screen.findByRole("button", { name: recommendationStrings.announcements.undo });
+        expect(screen.queryByRole("dialog")).toBeNull();
+      }
       const base = parseUserWork(testState.saveUserWork.mock.calls[1]![0]);
       expect(base.progress).toEqual({ volume: 7 });
       expect(base.droppedReasons).toBeUndefined();
       expect(testState.saveUserWork.mock.calls[1]![1]).toBe(previous.updatedAt);
       if (reactionLabel !== null) {
+        const dialog = await screen.findByRole("dialog");
         fireEvent.click(within(dialog).getByRole("radio", { name: reactionLabel }));
-      } else {
-        expect(within(dialog).queryByRole("checkbox")).toBeNull();
+        fireEvent.click(within(dialog).getByRole("button", { name: "保存" }));
+        await waitFor(() => expect(screen.queryByRole("dialog")).toBeNull());
       }
-      fireEvent.click(
-        within(dialog).getByRole("button", {
-          name: reactionLabel === null ? recommendationStrings.feedbackDialog.close : "保存",
-        }),
-      );
-      await waitFor(() => expect(screen.queryByRole("dialog")).toBeNull());
+      expect(testState.saveUserWork).toHaveBeenCalledTimes(reactionLabel === null ? 2 : 3);
       const saved = parseUserWork(testState.saveUserWork.mock.calls.at(-1)![0]);
       expect(saved.progress).toEqual({ volume: 7 });
       expect(saved.positiveReasons).toEqual(["strategy"]);
@@ -1116,7 +1130,11 @@ describe("RecommendationsFlow", () => {
     render(<RecommendationsFlow previewWorkId={auxiliary.workId} />);
     const dialog = await screen.findByRole("dialog");
     fireEvent.click(within(dialog).getByRole("button", { name: "興味なし" }));
-    await screen.findByText(recommendationStrings.announcements.removed);
+    const title = catalog.works.find((work) => work.id === auxiliary.workId)!.title;
+    await screen.findByText(recommendationStrings.announcements.recorded.hidden(title));
+    expect(
+      screen.queryByText(recommendationStrings.announcements.hiddenWithoutBackfill(title)),
+    ).toBeNull();
     expect(
       screen.queryByText(recommendationStrings.announcements.removedWithoutBackfill),
     ).toBeNull();
@@ -1561,8 +1579,13 @@ describe("RecommendationsFlow", () => {
     });
     expect(screen.queryByText("おすすめを計算しています…")).toBeNull();
     act(() => vi.advanceTimersByTime(201));
-    expect(screen.getByText("おすすめを計算しています…")).toBeTruthy();
-    expect(document.querySelectorAll(".recommendations-skeleton ol li")).toHaveLength(10);
+    expect(screen.getByText("おすすめを計算しています…").getAttribute("role")).toBe("status");
+    // The silhouettes follow the real layout: stage card frames, then shelf cover slots.
+    expect(document.querySelectorAll("[data-recommendation-skeleton-frame]")).toHaveLength(4);
+    expect(document.querySelectorAll("[data-recommendation-skeleton-cover]")).toHaveLength(8);
+    expect(
+      document.querySelector(".recommendations-skeleton [aria-hidden='true']")?.textContent,
+    ).toBe("");
 
     await act(async () => {
       pendingCache.resolve(cacheRecord(makePlan()));
@@ -1700,34 +1723,6 @@ describe("RecommendationsFlow", () => {
     });
   });
 
-  it("stacks pending update, feedback announcement and Undo in one fixed container", async () => {
-    const { container, rerender } = render(<RecommendationsFlow />);
-    await waitFor(() => expect(container.querySelectorAll(featuredItemSelector)).toHaveLength(10));
-    const firstCard = container.querySelector(featuredItemSelector) as HTMLElement;
-    fireEvent.click(within(firstCard).getByRole("button", { name: "読んだ" }));
-    await screen.findByRole("dialog");
-    fireEvent.click(
-      screen.getByRole("button", { name: recommendationStrings.feedbackDialog.skip }),
-    );
-    await screen.findByRole("button", { name: "元に戻す" });
-    vi.mocked(globalThis.crypto.subtle.digest).mockResolvedValue(new Uint8Array(32).fill(1).buffer);
-    testState.userWorks = testState.userWorks.map((record, index) =>
-      index === 0 ? { ...record, reaction: "favorite" } : record,
-    );
-    rerender(<RecommendationsFlow />);
-    const update = await screen.findByRole("button", { name: recommendationStrings.update });
-    const undo = screen.getByRole("button", { name: "元に戻す" });
-    const stack = container.querySelector("[data-recommendation-notifications]");
-    expect(stack?.contains(update)).toBe(true);
-    expect(stack?.contains(undo)).toBe(true);
-    expect(stack?.className).toContain("flex-col");
-    expect(stack?.className).toContain("fixed");
-    for (const notice of stack?.children ?? []) {
-      expect(notice.classList.contains("static")).toBe(true);
-      expect(notice.classList.contains("fixed")).toBe(false);
-    }
-  });
-
   it("undoes a 読んだ removal from the snackbar and restores the previous list", async () => {
     testState.loadMotionList.mockRejectedValueOnce(new Error("motion chunk failed"));
     const { container } = render(<RecommendationsFlow />);
@@ -1777,11 +1772,9 @@ describe("RecommendationsFlow", () => {
     const removedWorkId = firstCard.dataset.recommendationWorkId!;
 
     fireEvent.click(within(firstCard).getByRole("button", { name: "興味なし" }));
-    expect(await screen.findByRole("dialog")).toBeTruthy();
-    fireEvent.click(
-      screen.getByRole("button", { name: recommendationStrings.feedbackDialog.close }),
-    );
-    fireEvent.click(await screen.findByRole("button", { name: "元に戻す" }));
+    const undo = await screen.findByRole("button", { name: "元に戻す" });
+    expect(screen.queryByRole("dialog")).toBeNull();
+    fireEvent.click(undo);
 
     expect(await screen.findByText(recommendationStrings.announcements.undoConflict)).toBeTruthy();
     expect(testState.addUserWorkIfAbsent).not.toHaveBeenCalled();
@@ -1809,7 +1802,8 @@ describe("RecommendationsFlow", () => {
       fireEvent.pointerDown(within(firstCard).getByRole("button", { name: "興味なし" }));
       fireEvent.click(within(firstCard).getByRole("button", { name: "興味なし" }));
 
-      expect(await screen.findByRole("dialog")).toBeTruthy();
+      expect(await screen.findByRole("button", { name: "元に戻す" })).toBeTruthy();
+      expect(screen.queryByRole("dialog")).toBeNull();
       expect(testState.loadMotionList).not.toHaveBeenCalled();
       expect(testState.saveUserWork).toHaveBeenCalledTimes(1);
       expect(
@@ -1979,12 +1973,8 @@ describe("RecommendationsFlow", () => {
     firstCard = container.querySelector(featuredItemSelector) as HTMLElement;
     const selectedReasonWorkId = firstCard.dataset.recommendationWorkId;
     fireEvent.click(within(firstCard).getByRole("button", { name: "興味なし" }));
-    const dialog = await screen.findByRole("dialog");
-    expect(within(dialog).queryByRole("checkbox")).toBeNull();
-    fireEvent.click(
-      within(dialog).getByRole("button", { name: recommendationStrings.feedbackDialog.close }),
-    );
-    await waitFor(() => expect(screen.queryByRole("dialog")).toBeNull());
+    await screen.findByRole("button", { name: "元に戻す" });
+    expect(screen.queryByRole("dialog")).toBeNull();
     expect(testState.saveUserWork).toHaveBeenLastCalledWith(
       {
         workId: selectedReasonWorkId,
@@ -2001,19 +1991,187 @@ describe("RecommendationsFlow", () => {
     );
     if (nextCard === undefined) throw new Error("Expected a surviving recommendation card");
     fireEvent.click(within(nextCard).getByRole("button", { name: "興味なし" }));
-    await screen.findByRole("dialog");
-    fireEvent.click(
-      screen.getByRole("button", { name: recommendationStrings.feedbackDialog.close }),
+    await waitFor(() =>
+      expect(testState.saveUserWork).toHaveBeenLastCalledWith(
+        {
+          workId: nextCard.dataset.recommendationWorkId,
+          readingState: "hidden",
+          updatedAt: expect.any(String),
+        },
+        null,
+      ),
     );
+    expect(screen.queryByRole("dialog")).toBeNull();
+  });
+
+  it("applies 興味なし in one click with one undoable notice and focus on the next card", async () => {
+    testState.loadMotionList.mockRejectedValueOnce(new Error("motion chunk failed"));
+    const { container } = render(<RecommendationsFlow />);
+    await waitFor(() => {
+      expect(container.querySelectorAll(featuredItemSelector)).toHaveLength(10);
+    });
+    const firstCard = container.querySelector(featuredItemSelector) as HTMLElement;
+    const removedWorkId = firstCard.dataset.recommendationWorkId!;
+    const removedTitle = catalog.works.find((work) => work.id === removedWorkId)!.title;
+    const hidden = within(firstCard).getByRole("button", { name: "興味なし" });
+    hidden.focus();
+    fireEvent.click(hidden);
+
+    const undo = await screen.findByRole("button", { name: "元に戻す" });
+    expect(screen.queryByRole("dialog")).toBeNull();
+    expect(testState.saveUserWork).toHaveBeenCalledTimes(1);
     expect(testState.saveUserWork).toHaveBeenLastCalledWith(
-      {
-        workId: nextCard.dataset.recommendationWorkId,
-        readingState: "hidden",
-        updatedAt: expect.any(String),
-      },
+      { workId: removedWorkId, readingState: "hidden", updatedAt: expect.any(String) },
       null,
     );
+    // The undoable notice also reports the backfill; the separate live line stays empty, so
+    // exactly one notice is on screen.
+    const stack = container.querySelector("[data-recommendation-notifications]")!;
+    const notices = [...stack.children].filter((notice) => notice.textContent !== "");
+    expect(notices).toHaveLength(1);
+    expect(notices[0]!.getAttribute("role")).toBe("status");
+    expect(notices[0]!.contains(undo)).toBe(true);
+    expect(notices[0]!.textContent).toContain(
+      recommendationStrings.announcements.hiddenAndBackfilled(removedTitle),
+    );
+    expect(screen.queryByText(recommendationStrings.announcements.removedAndBackfilled)).toBeNull();
+    expect(container.querySelector(`[data-recommendation-work-id='${removedWorkId}']`)).toBeNull();
+    await waitFor(() => {
+      expect(document.activeElement).toBe(
+        container.querySelector(
+          `${featuredItemSelector}[data-recommendation-work-id='${makePlan()[1]!.workId}'] article`,
+        ),
+      );
+    });
   });
+
+  // 「読んだ」 opens its follow-up sheet first; skipping it shows the same undoable notice.
+  async function removeWithUndo(card: HTMLElement, label: "興味なし" | "読んだ") {
+    fireEvent.click(within(card).getByRole("button", { name: label }));
+    if (label === "読んだ") {
+      await screen.findByRole("dialog");
+      fireEvent.click(
+        screen.getByRole("button", { name: recommendationStrings.feedbackDialog.skip }),
+      );
+    }
+    return screen.findByRole("button", { name: "元に戻す" });
+  }
+
+  it.each(["興味なし", "読んだ"] as const)(
+    "holds the stale-input notice behind the %s undo notice until that notice expires",
+    async (label) => {
+      vi.useFakeTimers({ shouldAdvanceTime: true });
+      testState.loadMotionList.mockRejectedValueOnce(new Error("motion chunk failed"));
+      const digest = vi.mocked(globalThis.crypto.subtle.digest);
+      const { container, rerender } = render(<RecommendationsFlow />);
+      await waitFor(() =>
+        expect(container.querySelectorAll(featuredItemSelector)).toHaveLength(10),
+      );
+      const firstCard = container.querySelector(featuredItemSelector) as HTMLElement;
+      fireEvent.click(within(firstCard).getByRole("button", { name: label }));
+      await waitFor(() => expect(testState.saveUserWork).toHaveBeenCalledTimes(1));
+
+      // The saved record reaches the live records and changes the input hash.
+      const hashCalls = digest.mock.calls.length;
+      digest.mockResolvedValue(new Uint8Array(32).fill(1).buffer);
+      testState.userWorks = [
+        ...testState.userWorks,
+        testState.saveUserWork.mock.calls[0]![0] as UserWorkRecord,
+      ];
+      rerender(<RecommendationsFlow />);
+      await waitFor(() => expect(digest.mock.calls.length).toBeGreaterThan(hashCalls));
+      await act(async () => {
+        await Promise.resolve();
+      });
+      if (label === "読んだ") {
+        // Still held while the follow-up sheet is open.
+        await screen.findByRole("dialog");
+        expect(screen.queryByRole("button", { name: recommendationStrings.update })).toBeNull();
+        fireEvent.click(
+          screen.getByRole("button", { name: recommendationStrings.feedbackDialog.skip }),
+        );
+      }
+      const undo = await screen.findByRole("button", { name: "元に戻す" });
+      expect(screen.queryByRole("button", { name: recommendationStrings.update })).toBeNull();
+      const stack = container.querySelector("[data-recommendation-notifications]")!;
+      expect(stack.className).toContain("flex-col");
+      expect(stack.className).toContain("fixed");
+      const notices = [...stack.children].filter((notice) => notice.textContent !== "");
+      expect(notices).toHaveLength(1);
+      expect(notices[0]!.contains(undo)).toBe(true);
+
+      // Once the undoable notice times out, the list is still stale, so 「更新」 takes the corner.
+      await act(async () => {
+        await vi.advanceTimersByTimeAsync(8_000);
+      });
+      expect(screen.queryByRole("button", { name: "元に戻す" })).toBeNull();
+      const update = screen.getByRole("button", { name: recommendationStrings.update });
+      expect(stack.contains(update)).toBe(true);
+      expect(screen.getByText(recommendationStrings.pendingChanges)).toBeTruthy();
+      for (const notice of stack.children) {
+        expect(notice.classList.contains("static")).toBe(true);
+        expect(notice.classList.contains("fixed")).toBe(false);
+      }
+    },
+  );
+
+  it.each(["興味なし", "読んだ"] as const)(
+    "never shows the stale-input notice when 元に戻す undoes %s and the list is current again",
+    async (label) => {
+      testState.loadMotionList.mockRejectedValueOnce(new Error("motion chunk failed"));
+      const digest = vi.mocked(globalThis.crypto.subtle.digest);
+      const originalRecords = testState.userWorks;
+      const { container, rerender } = render(<RecommendationsFlow />);
+      await waitFor(() =>
+        expect(container.querySelectorAll(featuredItemSelector)).toHaveLength(10),
+      );
+      const firstCard = container.querySelector(featuredItemSelector) as HTMLElement;
+      const removedWorkId = firstCard.dataset.recommendationWorkId!;
+      const removedTitle = catalog.works.find((work) => work.id === removedWorkId)!.title;
+      const updateButtons: number[] = [];
+      const observer = new MutationObserver(() => {
+        updateButtons.push(
+          screen.queryAllByRole("button", { name: recommendationStrings.update }).length,
+        );
+      });
+      observer.observe(container, { childList: true, subtree: true });
+      const undo = await removeWithUndo(firstCard, label);
+
+      let hashCalls = digest.mock.calls.length;
+      digest.mockResolvedValue(new Uint8Array(32).fill(1).buffer);
+      testState.userWorks = [
+        ...originalRecords,
+        testState.saveUserWork.mock.calls[0]![0] as UserWorkRecord,
+      ];
+      rerender(<RecommendationsFlow />);
+      await waitFor(() => expect(digest.mock.calls.length).toBeGreaterThan(hashCalls));
+
+      // The undo resolves before the live records drop the removal; the notice still waits.
+      fireEvent.click(undo);
+      expect(
+        await screen.findByText(recommendationStrings.announcements.undone(removedTitle)),
+      ).toBeTruthy();
+      await act(async () => {
+        await Promise.resolve();
+      });
+      expect(screen.queryByRole("button", { name: recommendationStrings.update })).toBeNull();
+
+      hashCalls = digest.mock.calls.length;
+      digest.mockResolvedValue(new Uint8Array(32).buffer);
+      testState.userWorks = originalRecords;
+      rerender(<RecommendationsFlow />);
+      await waitFor(() => expect(digest.mock.calls.length).toBeGreaterThan(hashCalls));
+      await act(async () => {
+        await Promise.resolve();
+      });
+      expect(
+        container.querySelector(`[data-recommendation-work-id='${removedWorkId}']`),
+      ).toBeTruthy();
+      observer.disconnect();
+      expect(updateButtons.every((count) => count === 0)).toBe(true);
+      expect(screen.queryByText(recommendationStrings.pendingChanges)).toBeNull();
+    },
+  );
 
   it("keeps planned cards and preserves the hidden fourth policy when a visible policy changes", async () => {
     testState.policies = { ...testState.policies, excludeIncomplete: true };
@@ -2045,9 +2203,24 @@ describe("RecommendationsFlow", () => {
     render(<RecommendationsFlow />);
 
     const criteria = await screen.findByRole("region", { name: "今回のおすすめ基準" });
+    // The basis is one sentence with the Manga DNA link inline; the ledger starts folded behind a
+    // trigger at the end of the same line and opens directly below it.
     expect(criteria.querySelector("p")?.textContent).toMatch(
-      /^好きな 5作品の分析(?:（.+）)?から選んでいます。$/u,
+      /^好きな 5作品の分析(?:（.+）)?から選んでいます。 Manga DNA$/u,
     );
+    const details = within(criteria).getByRole("button", {
+      name: recommendationStrings.criteria.details,
+    });
+    expect(details.getAttribute("aria-expanded")).toBe("false");
+    expect(details.parentElement).toBe(criteria.querySelector("p")?.parentElement);
+    const ledger = document.getElementById(details.getAttribute("aria-controls") ?? "");
+    expect(ledger?.hidden).toBe(true);
+    expect(ledger?.textContent).toMatch(/^全記録 /u);
+    fireEvent.click(details);
+    expect(details.getAttribute("aria-expanded")).toBe("true");
+    expect(ledger?.hidden).toBe(false);
+    fireEvent.click(details);
+    expect(ledger?.hidden).toBe(true);
     expect(within(criteria).getByRole("link", { name: "Manga DNA" }).getAttribute("href")).toBe(
       "/taste",
     );

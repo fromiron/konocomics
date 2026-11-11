@@ -1,10 +1,13 @@
 "use client";
 
 import { Link } from "@tanstack/react-router";
+import { ExternalLinkIcon } from "lucide-react";
 import { useEffect, useMemo } from "react";
 
 import { buttonClassName } from "@/components/design-system/button";
-import { CoverImage } from "@/components/cover/CoverImage";
+import { PageHeader } from "@/components/layout/page-header";
+import { DiscoveryCard, DiscoveryReason } from "@/components/media/discovery-card";
+import { MediaShelf } from "@/components/media/media-shelf";
 import type { Work } from "@/domain/catalog/types";
 import { explanationClusterFor } from "@/domain/explanation";
 import {
@@ -27,7 +30,6 @@ import {
   coverStrings,
   dnaSharePageStrings,
   explanationLexicon,
-  mediaStrings,
   tasteStrings,
   workDetailStrings,
 } from "@/lib/strings";
@@ -102,6 +104,11 @@ function ShareFootnote() {
   );
 }
 
+/**
+ * A recommendation from the link as a morph card: the reason only when the link carries one. The
+ * store link is the card's action beside the cover; the reason and the link's disclosure take the
+ * full-width row under it, so their wrapping never pushes the text past the cover's height.
+ */
 function SharedRecommendation({
   coverUrl,
   links,
@@ -116,57 +123,44 @@ function SharedRecommendation({
   work: Work;
 }>) {
   const directUrl = links?.affiliateUrl ?? links?.itemUrl;
-  const reason = reasonFactorId === undefined ? "" : reasonLabel(reasonFactorId);
+  const affiliate = links?.affiliateUrl !== undefined;
   return (
-    <li
-      className="grid min-w-0 grid-cols-[76px_minmax(0,1fr)] gap-[var(--space-4)] rounded-[var(--radius-card)] border border-line bg-surface-1 p-[var(--space-4)]"
-      data-share-recommendation={work.id}
-    >
-      <CoverImage
-        className="aspect-[30/43] w-full overflow-hidden rounded-[var(--radius-control)]"
-        coverUrl={coverUrl}
-        creators={work.creators}
-        decorative
-        onVisible={onCoverVisible}
-        requestedSize={200}
-        title={work.title}
-      />
-      <div className="grid min-w-0 content-start justify-items-start gap-[var(--space-1)]">
-        <h3 className="text-[length:var(--font-size-14)] leading-snug font-bold [overflow-wrap:anywhere] text-text-strong">
-          <Link
-            className="underline-offset-4 hover:underline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-ring"
-            params={{ workId: work.id }}
-            preload={false}
-            to="/works/$workId"
-          >
-            {work.title}
-          </Link>
-        </h3>
-        <p className="text-[length:var(--text-caption-size)] text-text-muted">
-          {coverStrings.creatorLine(work.creators)}
-        </p>
-        {reason === "" ? null : (
-          <span className="mt-[var(--space-1)] w-fit max-w-full rounded-[var(--radius-pill)] border border-accent/25 bg-accent-soft px-[var(--space-2)] py-[var(--space-1)] text-[length:var(--text-caption-size)] leading-snug text-accent-ink">
-            {strings.reasonChip(reason)}
-          </span>
-        )}
+    <DiscoveryCard
+      action={
         <a
           aria-label={`${work.title} ${directUrl === undefined ? providerStrings.searchNewTab : providerStrings.openNewTab}`}
-          className="inline-flex min-h-[var(--control-min-size)] items-center text-[length:var(--font-size-14)] font-bold text-accent-ink underline-offset-4 hover:underline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-ring"
+          className="mt-auto flex min-h-[var(--control-min-size)] items-center gap-[var(--space-1)] self-start text-[length:var(--text-caption-size)] font-bold text-accent-ink underline-offset-4 hover:underline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-ring"
           href={directUrl ?? buildRakutenBooksSearchUrl(work.title)}
           rel="noreferrer"
           target="_blank"
         >
-          {directUrl === undefined ? providerStrings.search : providerStrings.view}
-          <span aria-hidden="true">{mediaStrings.externalNewTab} ›</span>
+          {/* The name says it opens a new tab; in the narrow card the icon shows it. */}
+          <span>{directUrl === undefined ? providerStrings.search : providerStrings.view}</span>
+          <ExternalLinkIcon aria-hidden="true" className="size-3.5 shrink-0" />
         </a>
-        {links?.affiliateUrl === undefined ? null : (
-          <p className="text-[length:var(--text-caption-size)] text-text-muted">
-            {providerStrings.affiliate}
-          </p>
-        )}
-      </div>
-    </li>
+      }
+      articleData={{ "data-share-recommendation": work.id }}
+      byline={coverStrings.creatorLine(work.creators)}
+      coverUrl={coverUrl}
+      creators={work.creators}
+      footer={
+        reasonFactorId === undefined && !affiliate ? undefined : (
+          <>
+            {reasonFactorId === undefined ? null : (
+              <DiscoveryReason>{strings.reasonChip(reasonLabel(reasonFactorId))}</DiscoveryReason>
+            )}
+            {affiliate ? (
+              <p className="text-[length:var(--text-caption-size)] leading-[1.4] [word-break:auto-phrase] text-text-muted">
+                {providerStrings.affiliate}
+              </p>
+            ) : null}
+          </>
+        )
+      }
+      onCoverVisible={onCoverVisible}
+      title={work.title}
+      workId={work.id}
+    />
   );
 }
 
@@ -285,7 +279,7 @@ function SharedDna({
                   </li>
                 ))}
                 {unnamedCount > 0 ? (
-                  <li className="bg-surface-2 px-[var(--space-3)] py-[var(--space-1)] text-[length:var(--text-caption-size)] text-text-muted">
+                  <li className="rounded-[var(--radius-pill)] bg-surface-2 px-[var(--space-3)] py-[var(--space-1)] text-[length:var(--text-caption-size)] text-text-muted">
                     {strings.moreWorks(unnamedCount)}
                   </li>
                 ) : null}
@@ -296,22 +290,15 @@ function SharedDna({
       </section>
 
       {recommendations.length === 0 ? null : (
-        <section
-          aria-labelledby="dna-share-recommendations-heading"
-          className="grid gap-[var(--space-4)]"
-        >
-          <header className="grid gap-[var(--space-1)]">
-            <h2
-              className="text-[length:var(--text-section-title-size)] font-bold text-text-strong"
-              id="dna-share-recommendations-heading"
-            >
-              {strings.recommendationsHeading}
-            </h2>
-            <p className="text-[length:var(--font-size-14)] text-text-muted">
-              {strings.recommendationsDescription}
-            </p>
-          </header>
-          <ul className="m-0 grid list-none gap-[var(--space-4)] p-0 sm:grid-cols-2">
+        <div className="grid gap-[var(--space-2)]">
+          <MediaShelf
+            controlsPlacement="overlay"
+            description={strings.recommendationsDescription}
+            title={strings.recommendationsHeading}
+            // Each card keeps its own height: stretched, a card without a reason or disclosure row
+            // would widen its cover with the extra height.
+            trackClassName="items-start !pb-[var(--space-1)]"
+          >
             {recommendations.map((recommendation) => (
               <SharedRecommendation
                 coverUrl={coverUrls.get(recommendation.workId)}
@@ -322,11 +309,11 @@ function SharedDna({
                 work={recommendation.work}
               />
             ))}
-          </ul>
+          </MediaShelf>
           <p className="text-[length:var(--text-caption-size)] text-text-muted">
             {providerStrings.credit}
           </p>
-        </section>
+        </div>
       )}
 
       <ShareCta visitor={visitor} />
@@ -354,17 +341,18 @@ export function DnaSharePage({ search }: Readonly<{ search: string }>) {
       data-entry-source="share-card"
       data-share-state={link === null ? "invalid" : "ready"}
     >
-      <header className="grid justify-items-center gap-[var(--space-3)] text-center">
-        <span className="rounded-[var(--radius-pill)] border border-line-accent bg-accent-soft px-[var(--space-4)] py-[var(--space-1)] text-[length:var(--text-caption-size)] font-bold tracking-[0.2em] text-accent-ink">
-          {strings.kicker}
-        </span>
-        <h1 className="font-display text-[length:var(--text-page-title-size)] leading-[var(--line-height-heading)] text-text-strong">
-          {link === null ? strings.invalid.title : strings.title}
-        </h1>
+      <PageHeader
+        action={
+          <span className="rounded-[var(--radius-pill)] border border-line-accent bg-accent-soft px-[var(--space-4)] py-[var(--space-1)] text-[length:var(--text-caption-size)] font-bold tracking-[0.2em] text-accent-ink">
+            {strings.kicker}
+          </span>
+        }
+        title={link === null ? strings.invalid.title : strings.title}
+      >
         <p className="text-[length:var(--font-size-14)] text-text-muted">
           {link === null ? strings.invalid.description : strings.basis(link.analyzedWorkCount)}
         </p>
-      </header>
+      </PageHeader>
 
       {link === null ? (
         <ShareCta visitor={visitor} />

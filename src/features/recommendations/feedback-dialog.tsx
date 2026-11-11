@@ -14,12 +14,17 @@ import {
 import type { CompletedRecommendationReaction } from "@/domain/profile/recommendation-feedback";
 import { recommendationStrings } from "@/lib/strings";
 
+/** 「読んだ」 asks for a reaction afterwards; 「興味なし」 is complete in one click (03 §5). */
+export type RecommendationRemovalKind = "completed" | "hidden";
+
 export type PendingRecommendationFeedback = Readonly<{
-  kind: "completed" | "hidden";
+  kind: "completed";
   workId: string;
   title: string;
   updatedAt: string;
   focusWorkId: string | null;
+  /** Set when focus returns to a ranks 11-20 card rather than the same work's other card. */
+  focusShelf?: "ranking";
 }>;
 
 type FeedbackDialogProps = Readonly<{
@@ -46,17 +51,10 @@ export function FeedbackDialog({
     reaction: (typeof REACTIONS)[number] | null;
   }>({ feedbackKey: "closed", reaction: null });
   const reaction = selection.feedbackKey === feedbackKey ? selection.reaction : null;
-  const completed = feedback?.kind === "completed";
-  const title = completed
-    ? recommendationStrings.feedbackDialog.completedTitle
-    : recommendationStrings.feedbackDialog.hiddenTitle;
   const description =
     feedback === null
       ? ""
-      : completed
-        ? recommendationStrings.feedbackDialog.completedDescription(feedback.title)
-        : recommendationStrings.feedbackDialog.hiddenDescription(feedback.title);
-  const canSave = completed && reaction !== null;
+      : recommendationStrings.feedbackDialog.completedDescription(feedback.title);
 
   return (
     <Dialog
@@ -75,42 +73,40 @@ export function FeedbackDialog({
           className="grid max-h-[88dvh] gap-[var(--space-5)] overflow-y-auto px-[var(--layout-page-padding)] pt-[var(--space-6)] pb-[calc(var(--space-6)+var(--layout-safe-area-bottom))] md:p-[var(--space-8)]"
           onSubmit={(event) => {
             event.preventDefault();
-            if (feedback?.kind === "completed" && reaction !== null) {
-              onSaveCompleted(reaction);
-            }
+            if (feedback !== null && reaction !== null) onSaveCompleted(reaction);
           }}
         >
           <DialogHeader className="grid gap-[var(--space-content)]">
-            <DialogTitle id="recommendation-feedback-title">{title}</DialogTitle>
+            <DialogTitle id="recommendation-feedback-title">
+              {recommendationStrings.feedbackDialog.completedTitle}
+            </DialogTitle>
             <DialogDescription id="recommendation-feedback-description">
               {description}
             </DialogDescription>
           </DialogHeader>
 
-          {completed ? (
-            <fieldset className="m-0 min-w-0 border-0 p-0">
-              <legend className="mb-[var(--space-content)] p-0 font-bold text-text-strong">
-                {recommendationStrings.feedbackDialog.reactionLegend}
-              </legend>
-              <ChoiceChipRadioGroup<(typeof REACTIONS)[number] | "">
-                aria-label={recommendationStrings.feedbackDialog.reactionLegend}
-                disabled={busy}
-                name="recommendation-reaction"
-                onValueChange={(value) => {
-                  if (value !== "") {
-                    setSelection({ feedbackKey, reaction: value });
-                  }
-                }}
-                value={reaction ?? ""}
-              >
-                {REACTIONS.map((value) => (
-                  <ChoiceChipRadio key={value} value={value}>
-                    {recommendationStrings.feedbackDialog.reactionLabels[value]}
-                  </ChoiceChipRadio>
-                ))}
-              </ChoiceChipRadioGroup>
-            </fieldset>
-          ) : null}
+          <fieldset className="m-0 min-w-0 border-0 p-0">
+            <legend className="mb-[var(--space-content)] p-0 font-bold text-text-strong">
+              {recommendationStrings.feedbackDialog.reactionLegend}
+            </legend>
+            <ChoiceChipRadioGroup<(typeof REACTIONS)[number] | "">
+              aria-label={recommendationStrings.feedbackDialog.reactionLegend}
+              disabled={busy}
+              name="recommendation-reaction"
+              onValueChange={(value) => {
+                if (value !== "") {
+                  setSelection({ feedbackKey, reaction: value });
+                }
+              }}
+              value={reaction ?? ""}
+            >
+              {REACTIONS.map((value) => (
+                <ChoiceChipRadio key={value} value={value}>
+                  {recommendationStrings.feedbackDialog.reactionLabels[value]}
+                </ChoiceChipRadio>
+              ))}
+            </ChoiceChipRadioGroup>
+          </fieldset>
 
           {errorMessage ? (
             <p
@@ -128,22 +124,18 @@ export function FeedbackDialog({
               type="button"
               variant="outline"
             >
-              {completed
-                ? recommendationStrings.feedbackDialog.skip
-                : recommendationStrings.feedbackDialog.close}
+              {recommendationStrings.feedbackDialog.skip}
             </Button>
-            {completed ? (
-              <Button
-                className="min-h-[var(--control-min-size)] px-[var(--space-4)] py-[var(--space-content)] font-bold"
-                busy={busy}
-                disabled={!canSave}
-                type="submit"
-              >
-                {busy
-                  ? recommendationStrings.feedbackDialog.saving
-                  : recommendationStrings.feedbackDialog.save}
-              </Button>
-            ) : null}
+            <Button
+              className="min-h-[var(--control-min-size)] px-[var(--space-4)] py-[var(--space-content)] font-bold"
+              busy={busy}
+              disabled={reaction === null}
+              type="submit"
+            >
+              {busy
+                ? recommendationStrings.feedbackDialog.saving
+                : recommendationStrings.feedbackDialog.save}
+            </Button>
           </div>
         </form>
       </DialogContent>

@@ -3,6 +3,7 @@
 import { type ReactNode, type Ref, useEffect, useRef, useState } from "react";
 import {
   BookmarkIcon,
+  CheckIcon,
   ChevronDownIcon,
   Grid2X2Icon,
   SparklesIcon,
@@ -45,58 +46,98 @@ function keepRangesTogether(text: string): ReactNode {
   );
 }
 
+type OnboardingStepState = "done" | "current" | "upcoming";
+
 /**
- * The first-registration steps as a strip of panels: the current step in the amber spot colour
- * (and `aria-current`), divided from the next by a slanted gutter. It stands under the welcome on
- * step 1 and at the top of step 2, so both steps share one picture of where the visitor is.
+ * The first-registration steps as one compact line on the dark page (03 §2, 2026-11-11): a badge
+ * and a short name per step. The current step is the accent block with `aria-current`, set apart
+ * by weight too and, from `md`, by a visible 「いまここ」, so it still reads under an accent that is
+ * close to the text colour (ペーパーホワイト). Past steps are muted with a check. Below `md` only the
+ * current step keeps a visible name. Every description stays in the strip for screen readers; the
+ * current one is repeated under the strip for sight only. It stands under the welcome on step 1 and
+ * at the top of step 2, so both steps share one picture of where the visitor is.
  */
 export function OnboardingSteps({ current }: Readonly<{ current: number }>) {
   const copy = onboardingStrings.welcome;
   const currentStep = copy.steps[current];
   return (
-    <>
-      <ol aria-label={copy.stepsLabel} className="ob-welcome__steps">
+    <div className="onboarding-steps grid min-w-0 gap-[var(--space-2)]">
+      <ol
+        aria-label={copy.stepsLabel}
+        className="m-0 flex min-w-0 list-none items-center gap-[var(--space-3)] p-0 md:gap-[var(--space-5)]"
+      >
         {copy.steps.map((step, index) => {
-          const isCurrent = index === current;
+          const state: OnboardingStepState =
+            index < current ? "done" : index === current ? "current" : "upcoming";
           return (
             <li
-              aria-current={isCurrent ? "step" : undefined}
-              className="ob-welcome__step"
+              aria-current={state === "current" ? "step" : undefined}
+              className={cn(
+                "relative flex min-h-9 min-w-0 items-center gap-[var(--space-2)] rounded-[var(--radius-control)] p-[var(--space-1)] md:min-h-10",
+                // The short rule joining a step to the one before it.
+                index > 0 &&
+                  "before:absolute before:top-1/2 before:right-full before:h-px before:w-[var(--space-3)] before:bg-line md:before:w-[var(--space-5)]",
+                state === "current"
+                  ? "bg-accent pe-[var(--space-3)] text-on-accent"
+                  : "shrink-0 md:pe-[var(--space-2)]",
+                state === "done" && "text-text-muted",
+                state === "upcoming" && "text-text",
+              )}
+              data-step-state={state}
               key={step.title}
             >
-              <span className="ob-welcome__step-head">
-                <span aria-hidden="true" className="ob-welcome__number">
-                  {index + 1}
-                </span>
-                {isCurrent ? <span className="ob-welcome__current">{copy.currentStep}</span> : null}
+              <span
+                aria-hidden="true"
+                className={cn(
+                  "grid size-6 shrink-0 place-items-center rounded-[var(--radius-pill)] font-display text-[length:var(--font-size-12)] font-bold tabular-nums md:size-7",
+                  state === "current" ? "bg-on-accent text-accent" : "bg-surface-2",
+                )}
+              >
+                {state === "done" ? <CheckIcon className="size-3.5" /> : index + 1}
               </span>
-              <strong className="ob-welcome__step-title">
-                {step.title}
+              <span
+                className={cn(
+                  "flex min-w-0 items-center gap-[var(--space-2)] text-[length:var(--font-size-14)] whitespace-nowrap",
+                  state === "current" ? "font-bold" : "font-medium max-md:sr-only",
+                )}
+              >
+                <span className="min-w-0 truncate">{step.title}</span>
+                {/* Below `sm` the Step 2 heading right under the line shows 「任意」 instead. */}
                 {"optional" in step ? (
-                  <span className="ob-welcome__optional">{step.optional}</span>
+                  <span
+                    className={cn(
+                      "shrink-0 rounded-[var(--radius-pill)] px-[var(--space-2)] text-[length:var(--font-size-12)] leading-[1.5] font-medium max-sm:sr-only",
+                      state === "current" ? "bg-on-accent/15" : "bg-surface-2",
+                    )}
+                  >
+                    {step.optional}
+                  </span>
                 ) : null}
-              </strong>
-              <span className="ob-welcome__step-description">{step.description}</span>
+              </span>
+              {state === "current" ? (
+                <span className="hidden shrink-0 text-[length:var(--font-size-12)] font-bold md:inline">
+                  {copy.currentStep}
+                </span>
+              ) : null}
+              {state === "done" ? <span className="sr-only">{copy.doneStep}</span> : null}
+              <span className="sr-only">{step.description}</span>
             </li>
           );
         })}
       </ol>
-      {/* On narrow screens the step descriptions are hidden in the strip; the current one is
-          repeated here for sight only (screen readers already have it in the strip). */}
       {currentStep === undefined ? null : (
-        <p aria-hidden="true" className="ob-welcome__current-note">
+        <p aria-hidden="true" className="text-[length:var(--text-caption-size)] text-text-muted">
           {currentStep.description}
         </p>
       )}
-    </>
+    </div>
   );
 }
 
 /**
- * The first-registration welcome, drawn like the home hero's panels: a white narration panel
- * framed in ink with the heading, then the three steps as a strip of panels, the current one in
- * the amber spot colour and divided from the next by a slanted gutter. On narrow screens the
- * step descriptions stay for screen readers only, so the strip stays short.
+ * The first-registration welcome (03 §2, 2026-11-11): the product's first words as a paper speech
+ * bubble sized to its content (eyebrow, the page's h1 at section-heading size, one line), its tail
+ * pointing at the compact step line below. It is the onboarding's one paper surface (04 §1).
  */
 export function OnboardingWelcome({
   headingRef,

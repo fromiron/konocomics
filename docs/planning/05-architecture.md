@@ -192,6 +192,7 @@ src/
 │  └─ g2.ts               # holdout/slot/result schema/metric의 단일 순수 모듈
 ├─ infrastructure/
 │  ├─ db/                 # Dexie 스키마, 훅 래퍼, export/import
+│  ├─ display-preferences/ # accent 선택(localStorage 한 키, Dexie·Export 밖)
 │  └─ rakuten/            # 클라이언트 fetch 래퍼, providerCache TTL
 ├─ lib/strings.ts         # 일본어 UI 문자열 중앙 테이블
 └─ data/generated/
@@ -272,7 +273,12 @@ db.version(2).stores({
 - external 상태·감상 편집은 `saveExternalUserRecord(id, expectedNormalizedKey, record)`의 update-only transaction을 사용한다. caller는 화면이 읽은 immutable key를 함께 보내고 transaction은 최신 row를 다시 읽어 exact ID/key와 nested `record.workId`를 확인한 뒤 nested user record만 교체하므로, stale UI snapshot이 최신 title·creators·cover·canonical ISBN union을 덮을 수 없다. 대상 row가 없거나 손상되었거나 pre-read 이후 key가 달라지면 insert·repair·re-key 없이 거부한다. primary mutation/readback이 불확실한 실패는 stale mirror에 재실행하지 않는다.
 - 저장된 `id + normalizedKey`가 immutable identity다. 표시 title·creators·cover는 identity를 재계산하지 않고 갱신할 수 있다. external 목록은 row별로 독립 검증해 유효 row만 UI/memory mirror에 반영하고, 손상 row 하나를 IndexedDB operation failure로 취급하거나 다른 유효 row를 숨기지 않는다. 손상 raw row는 primary storage에 남겨 ID별 상세 read가 `corrupt`를 반환하게 한다. ID별 authoritative read가 `corrupt`를 확인하면 그 ID의 과거 valid mirror는 즉시 무효화하여 이후 storage failure에서 stale `found`로 부활하지 않게 한다. 상세 read는 `found / missing / corrupt / unavailable`을 구분하고 `inspectExternalWork`는 malformed ID를 자체 enqueue/ID별 DB 조회 전에 거부한다. 전역 provider 초기화는 별개이며 corrupt row는 자동 복구·re-key·provider refresh 대상이 아니다. degraded memory mirror의 부재는 영구 저장소 부재를 증명하지 못하므로 `missing`이 아니라 `unavailable`이고, 이미 검증된 mirror hit만 `found`가 될 수 있다.
 
-- **로컬 상태 vs 영속 상태:** 위 테이블이 영속의 전부다. 열림/선택/입력 중 텍스트 등 UI 일시 상태는 React state. URL이 표현 가능한 상태(탭, reveal 모드)는 URL이 소유.
+- **로컬 상태 vs 영속 상태:** 위 테이블이 사용자 데이터 영속의 전부다. 열림/선택/입력 중 텍스트 등 UI 일시 상태는 React state. URL이 표현 가능한 상태(탭, reveal 모드)는 URL이 소유.
+- **기기 표시 설정(2026-11-11 사용자 결정):** accent 선택(`04` §2.1, `03` §0 「accent 선택」)은 사용자 데이터가 아니라 이 브라우저의 표시 설정이다. Dexie 밖의 `localStorage` 한 키 `konocomics:accent`에 테마 id 문자열 하나만 저장하며, 판매순 발견 질문 기록처럼 Export/Import·`inputHash`·URL에 넣지 않는다. Dexie 스키마(v2)와 Export v1 형식은 바꾸지 않는다.
+  - 읽기·쓰기·검증은 `src/infrastructure/display-preferences/`가 소유한다. 저장값은 zod로 여섯 id 중 하나만 받고, 없음·잘못된 값·저장소 접근 실패는 기본 `butter`다. 쓰기 실패는 현재 탭 적용을 막지 않는다.
+  - 허용 id 목록은 한 모듈(`src/lib/accent-theme.ts`)이 소유하며 아래 inline script 문자열, `globals.css` 테마 블록 검사, selector가 같은 목록을 쓴다.
+  - 첫 paint 전 적용: root document `head`의 작은 inline script가 저장값을 검증해 `<html data-accent="<id>">`를 붙인다(기본 `butter`는 속성 없음). server/prerender HTML에는 `data-accent`가 없고, React가 소유하지 않는 이 속성 때문에 `<html>`에만 hydration 경고 억제를 둔다. script는 외부 요청·Dexie·다른 저장소를 읽지 않으며 실패하면 아무것도 하지 않는다(= `butter`). 기존 CSP(`script-src-attr 'none'`)는 inline event attribute만 막으므로 바꾸지 않는다.
+  - 전체 삭제가 `applied`로 끝나면 판매순 발견 질문 기록과 함께 이 키를 지우고 `<html>`의 속성을 제거한다. Import는 이 키를 바꾸지 않는다.
 - `onboardingDraft` readback은 `02` §5.3의 `mode: "firstRun" | "add"` strict union으로 파싱한다. 완료 변환은 시간 값을 인자로 받고 positive/disliked/dropped mapping을 적용하며 domain이 런타임 시계를 직접 읽지 않는다.
 - `firstRun` 완료는 신규 `userWorks` insert-only + `profile.onboardingCompletedAt` 최초 기록 + draft 삭제를 한 트랜잭션으로 수행한다. 이미 완료 marker가 있거나 workId가 충돌하면 stale tab으로 간주해 전체를 거부한다. `add` 완료는 신규 workId의 insert-only 추가 + draft 삭제만 한 트랜잭션으로 수행하고 기존 `userWorks`와 최초 `onboardingCompletedAt`을 byte-equivalent로 보존한다. add workId 충돌도 트랜잭션 전체를 롤백한다.
 - 추가 모드의 일반 닫기는 draft를 보존한다. 명시적 폐기만 draft 단일 행을 삭제한다. 성공한 추가는 새 anchor가 `inputHash`를 바꾸지만 reveal marker와 최초 완료 시각은 바꾸지 않는다.
@@ -280,7 +286,7 @@ db.version(2).stores({
 - recommendation cache의 `plan`은 점수 재계산 없는 백필을 위해 전체 정렬 후보를 보존한다. 각 항목은 공개 추천 결과(contributions 포함)와 `isDiscovery / majorThemeKey / seriesGroupId` 제약 metadata를 가지며 렌더링된 설명 문장은 저장하지 않는다. 최초 10개와 이후 백필은 같은 plan에서만 고른다.
 - `/recommendations`의 cache miss 계산은 browser module Worker에서 같은 순수 추천 함수를 호출한다. 화면 mount의 첫 요청만 검증 완료 `catalog + context`를 보내고 이후 요청은 `records + adjustments + policies`만 보낸다. 응답은 request ID로 대응하고 Worker crash·message 실패 시 pending 요청을 모두 실패 처리한 뒤 다음 요청에서 새 Worker를 만든다. Worker API가 없는 테스트 환경은 같은 함수를 동적 import해 결정론을 유지한다.
 - `inputHash` = `hash(engineVersion + catalogVersion + 정렬된 anchor·reaction + 부정 항목·disposition·이유 + adjustments + policies + 제외 workId 목록)`. 추천 재계산 판정의 단일 기준(`03` §5)이다. `updatedAt`·진행률·자유 positive text·추천 산식에 영향을 주지 않는 planned-only record는 hash에서 제외한다.
-- 추천 카드 피드백은 record 쓰기와 authoritative readback이 성공한 뒤에만 화면에 반영한다. `読んだ`는 completed + 선택 reaction(스킵 시 없음), `興味なし`는 hidden + 선택 이유가 있을 때만 disliked/negativeReasons(스킵 시 둘 다 없음)이다. 현재 세션은 기존 plan으로 백필하고 기존 계산 hash를 유지해 입력 변경 상태를 정직하게 표시하며, 재진입이나 명시적 更新에서 새 `inputHash`의 유효한 전체 plan cache를 재사용하고 cache miss일 때만 계산한다.
+- 추천 카드 피드백은 record 쓰기와 authoritative readback이 성공한 뒤에만 화면에 반영한다. `読んだ`는 completed + 선택 reaction(스킵 시 없음), `興味なし`는 hidden만 저장하고 기존 감상·진도를 보존하며 reaction·negativeReasons를 만들지 않는다(2026-10-09 #67; 2026-11-11부터 후속 시트 없이 「元に戻す」 Snackbar, `03` §5). 현재 세션은 기존 plan으로 백필하고 기존 계산 hash를 유지해 입력 변경 상태를 정직하게 표시하며, 재진입이나 명시적 更新에서 새 `inputHash`의 유효한 전체 plan cache를 재사용하고 cache miss일 때만 계산한다.
 - 마이그레이션: Dexie version() 체인 사용. 파괴적 변경 시 meta.schemaVersion 확인 후 변환.
 
 ## 7. Export / Import (v1 계약)

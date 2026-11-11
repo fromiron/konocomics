@@ -1,16 +1,24 @@
 import { Link } from "@tanstack/react-router";
-import { ScanSearchIcon } from "lucide-react";
+import type { ReactNode } from "react";
 
-import { CoverImage } from "@/components/cover/CoverImage";
 import { DiscoveryCard } from "@/components/media/discovery-card";
-import { ReasonBubble } from "@/components/media/reason-bubble";
+import { ExpandPanel } from "@/components/media/expand-panel";
+import {
+  EXPAND_CARD_IDENTITY_LINK_CLASSNAME,
+  EXPAND_CARD_SURFACE_CLASSNAME,
+  ExpandCardPreviewSlot,
+  ExpandShelfCard,
+  QuickPreviewControl,
+} from "@/components/media/expand-shelf-card";
 import { ExpandableMediaCard } from "@/components/media/expandable-media-card";
-import { QuietTextAction, StateActionRow } from "@/components/media/state-action-row";
+import { LeadReasonText } from "@/components/media/lead-reason-text";
+import { RankingCardBody, rankingCardLinkLabel } from "@/components/media/ranking-card";
+import { StateActionRow } from "@/components/media/state-action-row";
 import type { Work } from "@/domain/catalog/types";
 import { generateTasteExplanation } from "@/domain/explanation/generate";
 import type { TasteRecommendationExplanation } from "@/domain/explanation/types";
 import type { RecommendationPlanEntry } from "@/domain/recommendation/types";
-import { explanationLexicon, mediaStrings, recommendationStrings } from "@/lib/strings";
+import { explanationLexicon, recommendationStrings } from "@/lib/strings";
 import { cn } from "@/lib/utils";
 
 type RecommendationShelfCardProps = Readonly<{
@@ -23,7 +31,6 @@ type RecommendationShelfCardProps = Readonly<{
   coverUrl?: string | null;
   itemCaption?: string;
   priority?: boolean;
-  variant: "anchor" | "factor" | "discovery";
   resolveTitle: (workId: string) => string | undefined;
   planned: boolean;
   onCompleted: () => void;
@@ -32,7 +39,27 @@ type RecommendationShelfCardProps = Readonly<{
   onDismissForToday?: () => void;
   onPreview: () => void;
   onCoverVisible?: () => void;
-}>;
+}> &
+  (
+    | Readonly<{
+        variant: "anchor" | "factor" | "discovery";
+        rank?: never;
+        metadata?: never;
+        metadataAccessibleLabel?: never;
+      }>
+    | Readonly<{
+        /** Ranks 11-20: the ranking card at rest, opening the same panel as the lens cards. */
+        variant: "ranking";
+        rank: number;
+        metadata?: ReactNode;
+        metadataAccessibleLabel?: string;
+      }>
+  );
+
+/** DOM id of a ranks 11-20 card; the same work can also have a lens shelf card. */
+export function rankingShelfCardId(workId: string) {
+  return `recommendation-ranking-work-${workId}`;
+}
 
 export function RecommendationShelfCard({
   busy,
@@ -41,6 +68,8 @@ export function RecommendationShelfCard({
   explanation: suppliedExplanation,
   expanded = false,
   itemCaption,
+  metadata,
+  metadataAccessibleLabel,
   onCompleted,
   onExpandedChange,
   onCoverVisible,
@@ -50,6 +79,7 @@ export function RecommendationShelfCard({
   onPreview,
   planned,
   priority = false,
+  rank,
   resolveTitle,
   variant,
   work,
@@ -70,18 +100,15 @@ export function RecommendationShelfCard({
           .map(resolveTitle)
           .find((title) => title !== undefined && title !== "")
       : undefined;
-  const anchorMention = anchorTitle ?? "";
-  const anchorMentionIndex = anchorMention === "" ? -1 : leadReason.indexOf(anchorMention);
+  const anchorIndex = anchorTitle === undefined ? -1 : leadReason.indexOf(anchorTitle);
   const compact = variant === "discovery";
+  // Where the card cannot expand, Quick Preview is the way to the same reason and actions.
   const previewControl = (
-    <QuietTextAction
-      aria-label={recommendationStrings.quickPreview.open(work.title)}
-      className={cn("gap-[var(--space-1)] px-0 whitespace-nowrap", compact && "mt-auto self-start")}
+    <QuickPreviewControl
+      className={compact ? "mt-auto self-start" : undefined}
       onClick={onPreview}
-    >
-      <ScanSearchIcon aria-hidden="true" className="size-4" />
-      {recommendationStrings.quickPreview.openLabel}
-    </QuietTextAction>
+      title={work.title}
+    />
   );
   if (compact) {
     return (
@@ -100,76 +127,14 @@ export function RecommendationShelfCard({
     );
   }
 
-  const identityLinkClassName =
-    "min-h-[var(--control-min-size)] focus-visible:outline-2 focus-visible:outline-offset-[-2px] focus-visible:outline-ring";
-  const titleClassName =
-    "line-clamp-2 text-[length:var(--font-size-14)] leading-tight font-bold text-text-strong min-h-[2.5em]";
-
-  const cardClassName = cn(
-    "group/shelf-card shrink-0 snap-start overflow-hidden rounded-[var(--radius-media-card)] border border-transparent bg-transparent focus-within:bg-surface-2 [@media(hover:hover)_and_(pointer:fine)]:hover:bg-surface-2",
-    "data-[expanded=true]:bg-surface-2",
-    "w-[calc((100vw-(var(--layout-page-padding)*2)-(var(--space-content-loose)*2))/2.4)] max-w-44 sm:w-32 md:w-[calc((100%-var(--space-content-loose)*7)/8)] md:min-w-28 md:max-w-32",
-  );
-  const content = (
-    <>
-      <Link
-        aria-label={mediaStrings.openDetails(work.title)}
-        className={cn(identityLinkClassName, "relative !grid gap-[var(--space-2)]")}
-        params={{ workId: work.id }}
-        preload={false}
-        to="/works/$workId"
-      >
-        <CoverImage
-          className="aspect-[30/43] w-full overflow-hidden rounded-[var(--radius-cover)] border border-transparent bg-transparent"
-          coverUrl={coverUrl}
-          creators={work.creators}
-          fit="cover-square"
-          onVisible={onCoverVisible}
-          priority={priority}
-          requestedSize={400}
-          title={work.title}
-        />
-        <h3 className={titleClassName}>{work.title}</h3>
-      </Link>
-      <div className="[@media(min-width:768px)_and_(hover:hover)_and_(pointer:fine)]:hidden">
-        {previewControl}
-      </div>
-    </>
-  );
-
-  return (
-    <ExpandableMediaCard
-      className={cardClassName}
-      data-lead-anchor-work-ids={leadSentence?.anchorWorkIds.join(" ")}
-      data-recommendation-shelf-card={variant}
-      expanded={expanded}
-      id={`recommendation-shelf-work-${work.id}`}
-      onExpandedChange={(next) => onExpandedChange?.(next)}
-      panel={
-        <div className="flex h-full flex-col gap-[var(--space-2)]">
-          <div className="grid min-h-0 flex-1 content-start gap-[var(--space-2)] overflow-y-auto overscroll-contain">
-            <ReasonBubble tail="side">
-              <p
-                className="text-[length:var(--font-size-14)] leading-[var(--line-height-body)] text-text"
-                data-contribution-summary={JSON.stringify(leadSentence ?? null)}
-              >
-                {anchorMentionIndex < 0 ? (
-                  leadReason
-                ) : (
-                  <>
-                    {leadReason.slice(0, anchorMentionIndex)}
-                    <strong className="font-bold text-text-strong">{anchorMention}</strong>
-                    {leadReason.slice(anchorMentionIndex + anchorMention.length)}
-                  </>
-                )}
-              </p>
-            </ReasonBubble>
-            {itemCaption ? (
-              <p className="line-clamp-3 text-[length:var(--text-caption-size)] leading-[var(--line-height-body)] text-text-muted">
-                {itemCaption}
-              </p>
-            ) : null}
-          </div>
+  const cardProps = {
+    "data-lead-anchor-work-ids": leadSentence?.anchorWorkIds.join(" "),
+    "data-recommendation-shelf-card": variant,
+    expanded,
+    onExpandedChange: (next: boolean) => onExpandedChange?.(next),
+    panel: (
+      <ExpandPanel
+        actions={
           <StateActionRow
             busy={busy}
             className="shrink-0 flex-wrap sm:justify-start"
@@ -180,10 +145,80 @@ export function RecommendationShelfCard({
             onPlanned={onPlanned}
             planned={planned}
           />
-        </div>
-      }
-    >
-      <div className="p-[var(--space-2)] md:py-[var(--space-3)]">{content}</div>
-    </ExpandableMediaCard>
+        }
+        caption={itemCaption}
+        reason={
+          <LeadReasonText
+            anchorIndex={anchorIndex}
+            anchorTitle={anchorTitle}
+            strongClassName="font-bold text-text-strong"
+            text={leadReason}
+          />
+        }
+        reasonData={{ "data-contribution-summary": JSON.stringify(leadSentence ?? null) }}
+      />
+    ),
+  };
+
+  if (variant === "ranking") {
+    // The list item only holds the place in the ordered list; the article owns the width, so
+    // it can widen and push its neighbours along.
+    return (
+      <li
+        className="shrink-0 snap-start"
+        data-ranking-kind="personalized-ranking"
+        data-ranking-position={rank}
+      >
+        <ExpandableMediaCard
+          {...cardProps}
+          className={cn(EXPAND_CARD_SURFACE_CLASSNAME, "h-full w-44")}
+          id={rankingShelfCardId(work.id)}
+        >
+          <div className="p-[var(--space-3)]">
+            <Link
+              aria-label={rankingCardLinkLabel({
+                metadataAccessibleLabel,
+                position: rank,
+                rankingKind: "personalized-ranking",
+                title: work.title,
+              })}
+              className={cn(
+                EXPAND_CARD_IDENTITY_LINK_CLASSNAME,
+                "ranking-card-link relative grid content-start gap-[var(--space-2)]",
+              )}
+              params={{ workId: work.id }}
+              preload={false}
+              to="/works/$workId"
+            >
+              <RankingCardBody
+                coverUrl={coverUrl}
+                creators={work.creators}
+                metadata={metadata}
+                onCoverVisible={onCoverVisible}
+                position={rank}
+                priority={priority}
+                title={work.title}
+                variant="ranking"
+              />
+            </Link>
+            <ExpandCardPreviewSlot>{previewControl}</ExpandCardPreviewSlot>
+          </div>
+        </ExpandableMediaCard>
+      </li>
+    );
+  }
+
+  return (
+    <ExpandShelfCard
+      {...cardProps}
+      coverUrl={coverUrl}
+      creators={work.creators}
+      id={`recommendation-shelf-work-${work.id}`}
+      onCoverVisible={onCoverVisible}
+      preview={previewControl}
+      priority={priority}
+      title={work.title}
+      workId={work.id}
+    />
   );
 }

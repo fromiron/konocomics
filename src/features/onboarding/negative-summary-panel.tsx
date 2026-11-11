@@ -1,5 +1,7 @@
 "use client";
 
+import { useRef } from "react";
+
 import { CoverImage } from "@/components/cover/CoverImage";
 import { Button } from "@/components/design-system/button";
 import type { Work } from "@/domain/catalog/types";
@@ -10,7 +12,12 @@ import {
 import { onboardingStrings } from "@/lib/strings";
 import { cn } from "@/lib/utils";
 
-import { ClarityMeter, ONBOARDING_PANEL_CLASS, type SelectedTrayClarity } from "./selected-tray";
+import {
+  ClarityMeter,
+  ONBOARDING_PANEL_CLASS,
+  type SelectedTrayClarity,
+  useOnboardingPanelClearance,
+} from "./selected-tray";
 
 type NegativeSummaryPanelProps = Readonly<{
   entries: readonly NegativeOnboardingEntry[];
@@ -43,6 +50,8 @@ export function NegativeSummaryPanel({
   worksById,
 }: NegativeSummaryPanelProps) {
   const copy = onboardingStrings.step2;
+  const panelRef = useRef<HTMLElement>(null);
+  useOnboardingPanelClearance(panelRef);
   const visibleEntries = entries.flatMap((entry) => {
     const work = worksById.get(entry.workId);
     return work === undefined ? [] : [{ entry, work }];
@@ -62,6 +71,7 @@ export function NegativeSummaryPanel({
             : "motion-safe:animate-[selected-tray-limit-1_240ms_linear]"),
       )}
       data-limit-active={limitActive ? "true" : undefined}
+      ref={panelRef}
     >
       <div className="col-span-full flex items-baseline justify-between gap-[var(--space-4)]">
         <strong className="text-text-strong">{copy.panel.title}</strong>
@@ -83,7 +93,7 @@ export function NegativeSummaryPanel({
         <ul className="col-span-full m-0 hidden list-none gap-[var(--space-content)] p-0 md:grid">
           {visibleEntries.map(({ entry, work }) => (
             <li
-              className="grid grid-cols-[var(--space-8)_minmax(0,1fr)] items-center gap-[var(--space-3)] rounded-[var(--radius-card)] border border-line bg-surface-2 p-[var(--space-2)]"
+              className="grid grid-cols-[var(--space-8)_minmax(0,1fr)] items-center gap-[var(--space-3)] rounded-[var(--radius-media-card)] border border-line bg-surface-2 p-[var(--space-2)]"
               key={work.id}
             >
               <CoverImage

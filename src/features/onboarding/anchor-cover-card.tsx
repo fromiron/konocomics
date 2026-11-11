@@ -5,6 +5,12 @@ import { CheckIcon, PlusIcon, StarIcon } from "lucide-react";
 
 import { CoverImage } from "@/components/cover/CoverImage";
 import { Button } from "@/components/design-system/button";
+import {
+  COVER_CARD_META_CLASSNAME,
+  COVER_CARD_SURFACE_CLASSNAME,
+  COVER_CARD_SURFACE_TRANSITION_CLASSNAME,
+  COVER_CARD_TITLE_CLASSNAME,
+} from "@/components/media/cover-card";
 import { useSaveConfirmation } from "@/components/motion/use-save-confirmation";
 import type { Work } from "@/domain/catalog/types";
 import type { PositiveOnboardingEntry } from "@/domain/profile/onboarding";
@@ -48,7 +54,6 @@ export function AnchorCoverCard({
 }: AnchorCoverCardProps) {
   const isSelected = selection !== undefined;
   const isFavorite = selection?.reaction === "favorite";
-  const hasRemoteCover = (coverUrl?.trim() ?? "") !== "";
   // The selection prop changes only after the draft accepted the work (04 §6 D·G).
   const {
     attach: saveAttach,
@@ -57,14 +62,22 @@ export function AnchorCoverCard({
   } = useSaveConfirmation<HTMLSpanElement>(isSelected);
 
   return (
+    // A selection tool on the common cover card face (04 §2.10): the face takes `surface-2` on
+    // hover or focus, the title sits under the cover, and the stamps stay on the cover.
     <article
-      className="anchor-card relative w-[104px] min-w-[104px] snap-start md:w-32 md:min-w-32"
+      className={cn(
+        "anchor-card relative w-[104px] min-w-[104px] snap-start rounded-[var(--radius-media-card)] p-[var(--space-2)] md:w-32 md:min-w-32",
+        COVER_CARD_SURFACE_CLASSNAME,
+        COVER_CARD_SURFACE_TRANSITION_CLASSNAME,
+      )}
       data-selected={isSelected || undefined}
     >
       <Button
         aria-label={`${work.title} — ${isSelected ? labels.remove : labels.select}`}
         aria-pressed={isSelected}
-        className="anchor-card__selection group/selection !grid !h-auto min-h-[var(--control-min-size)] w-full !grid-cols-1 !justify-start rounded-[var(--radius-card)] border-0 bg-transparent p-0 text-start"
+        // The card face owns the hover and pressed colours: the button itself stays transparent,
+        // so the title under the cover never sits on a filled button.
+        className="anchor-card__selection group/selection !grid !h-auto min-h-[var(--control-min-size)] w-full !grid-cols-1 !justify-start gap-[var(--space-2)] rounded-[var(--radius-cover)] border-0 bg-transparent p-0 text-start whitespace-normal hover:bg-transparent aria-pressed:bg-transparent aria-pressed:hover:bg-transparent aria-pressed:active:bg-transparent [@media(hover:hover)_and_(pointer:fine)]:hover:bg-transparent [@media(hover:hover)_and_(pointer:fine)]:aria-pressed:hover:bg-transparent"
         onClick={() => {
           saveMarkPressed();
           onToggleSelection(work.id);
@@ -78,7 +91,7 @@ export function AnchorCoverCard({
       >
         <span
           className={cn(
-            "anchor-card__cover relative block overflow-hidden rounded-[var(--radius-cover-selection)] border-2 border-transparent bg-surface-2 [@media(hover:hover)_and_(pointer:fine)]:group-hover/selection:shadow-[var(--shadow-raised)]",
+            "anchor-card__cover relative block overflow-hidden rounded-[var(--radius-cover-selection)] border-2 border-transparent bg-surface-2",
             isSelected &&
               "border-accent shadow-[0_0_0_2px_var(--accent-soft)] motion-safe:animate-[anchor-card-selected_var(--motion-duration-feedback)_var(--motion-ease-direct)]",
           )}
@@ -90,27 +103,6 @@ export function AnchorCoverCard({
             requestedSize={400}
             title={work.title}
           />
-          {hasRemoteCover ? (
-            <>
-              <span
-                aria-hidden="true"
-                className="anchor-card__scrim pointer-events-none absolute inset-x-0 bottom-0 h-[62%] bg-gradient-to-t from-canvas via-canvas/80 to-transparent"
-              />
-              <span
-                className={cn(
-                  "anchor-card__identity pointer-events-none absolute inset-x-0 bottom-0 grid gap-[var(--space-content-tight)] p-[var(--space-2)]",
-                  isSelected && "pe-[calc(var(--control-min-size)+var(--space-1))]",
-                )}
-              >
-                <span className="anchor-card__title line-clamp-2 text-[length:var(--font-size-14)] leading-[1.35] font-bold text-text-strong">
-                  {work.title}
-                </span>
-                <span className="anchor-card__creator line-clamp-1 text-[length:var(--text-caption-size)] leading-[1.35] text-text-muted">
-                  {work.creators.join("・")}
-                </span>
-              </span>
-            </>
-          ) : null}
           {isSelected ? (
             <span
               aria-hidden="true"
@@ -135,18 +127,27 @@ export function AnchorCoverCard({
             </span>
           )}
         </span>
+        <span className="anchor-card__identity grid min-w-0 gap-[var(--space-content-tight)]">
+          <span className={cn("anchor-card__title", COVER_CARD_TITLE_CLASSNAME)}>{work.title}</span>
+          <span className={cn("anchor-card__creator", COVER_CARD_META_CLASSNAME)}>
+            {work.creators.join("・")}
+          </span>
+        </span>
       </Button>
       {isSelected ? (
-        <Button
-          aria-label={`${work.title} — ${isFavorite ? labels.markLiked : labels.markFavorite}`}
-          aria-pressed={isFavorite}
-          className="anchor-card__favorite absolute right-1 bottom-1 !size-[var(--control-min-size)] min-h-[var(--control-min-size)] min-w-[var(--control-min-size)] rounded-full border border-line bg-surface-1/90 p-0 text-text-muted aria-pressed:border-accent aria-pressed:bg-surface-1/90 aria-pressed:text-accent-ink [&>svg]:size-4"
-          onClick={() => onToggleFavorite(work.id)}
-          type="button"
-          variant="ghost"
-        >
-          <StarIcon aria-hidden="true" />
-        </Button>
+        // A box over the cover keeps the star on the cover's corner, clear of the title.
+        <span className="pointer-events-none absolute inset-x-[var(--space-2)] top-[var(--space-2)] aspect-[30/43]">
+          <Button
+            aria-label={`${work.title} — ${isFavorite ? labels.markLiked : labels.markFavorite}`}
+            aria-pressed={isFavorite}
+            className="anchor-card__favorite pointer-events-auto absolute right-1 bottom-1 !size-[var(--control-min-size)] min-h-[var(--control-min-size)] min-w-[var(--control-min-size)] rounded-full border border-line bg-surface-1/90 p-0 text-text-muted aria-pressed:border-accent aria-pressed:bg-surface-1/90 aria-pressed:text-accent-ink [&>svg]:size-4"
+            onClick={() => onToggleFavorite(work.id)}
+            type="button"
+            variant="ghost"
+          >
+            <StarIcon aria-hidden="true" />
+          </Button>
+        </span>
       ) : null}
     </article>
   );

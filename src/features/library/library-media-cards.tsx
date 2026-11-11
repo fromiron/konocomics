@@ -5,6 +5,12 @@ import { useId } from "react";
 
 import { CoverImage } from "@/components/cover/CoverImage";
 import { Button } from "@/components/design-system/button";
+import {
+  COVER_CARD_META_CLASSNAME,
+  COVER_CARD_SURFACE_CLASSNAME,
+  COVER_CARD_SURFACE_TRANSITION_CLASSNAME,
+  COVER_CARD_TITLE_CLASSNAME,
+} from "@/components/media/cover-card";
 import type { Work } from "@/domain/catalog/types";
 import type { UserWorkRecord } from "@/domain/profile/types";
 import type { ExternalWorkRecord } from "@/infrastructure/db";
@@ -110,7 +116,7 @@ export function RowMedia({
 
 function CreatorLine({ row }: Readonly<{ row: LibraryRow }>) {
   return (
-    <span className="line-clamp-1 text-[length:var(--text-caption-size)] text-text-muted">
+    <span className={COVER_CARD_META_CLASSNAME}>
       {row.kind === "catalog-missing"
         ? libraryStrings.catalogMissing.workId(row.id)
         : rowCreators(row).join("・") || libraryStrings.unknownCreator}
@@ -147,15 +153,18 @@ function RowBadges({
     <span className="flex min-w-0 flex-wrap items-center gap-[var(--space-content-tight)] text-[length:var(--text-caption-size)] text-text-muted">
       {parts.length === 0 ? null : <span>{parts.join("・")}</span>}
       {badge === undefined ? null : (
-        <span className="bg-surface-2 px-[var(--space-2)] py-[var(--space-1)]">{badge}</span>
+        <span className="rounded-[var(--radius-pill)] bg-surface-2 px-[var(--space-2)] py-[var(--space-1)]">
+          {badge}
+        </span>
       )}
     </span>
   );
 }
 
 /**
- * How a record reads at a glance: a disliked, dropped or hidden work is "negative" (its cover is
- * dimmed, since it now counts against similar recommendations), a favourite is "favorite".
+ * How a record reads at a glance: a disliked, dropped or hidden work is "negative" (an ink stamp,
+ * since it now counts against similar recommendations), a favourite is "favorite" (an accent
+ * stamp). The cover itself is never dimmed.
  */
 function recordTone(row: LibraryRow): "negative" | "favorite" | undefined {
   const { reaction, readingState } = row.record;
@@ -277,7 +286,9 @@ export function LibraryStateCard({
         aria-label={rowOpenLabel(row)}
         aria-describedby={descriptionId}
         className={cn(
-          "group/card !grid h-full min-h-[var(--control-min-size)] w-full items-start justify-stretch gap-[var(--space-2)] rounded-[var(--radius-media-card)] border border-transparent bg-transparent p-[var(--space-2)] text-start whitespace-normal text-text transition-colors duration-[var(--motion-duration-value)] ease-[var(--motion-ease-direct)] focus-within:bg-surface-2 motion-reduce:transition-none [@media(hover:hover)_and_(pointer:fine)]:hover:bg-surface-2",
+          "group/card !grid h-full min-h-[var(--control-min-size)] w-full items-start justify-stretch gap-[var(--space-2)] rounded-[var(--radius-media-card)] border border-transparent p-[var(--space-2)] text-start whitespace-normal text-text",
+          COVER_CARD_SURFACE_CLASSNAME,
+          COVER_CARD_SURFACE_TRANSITION_CLASSNAME,
           view === "list" ? "grid-cols-[calc(var(--space-8)*2)_minmax(0,1fr)]" : "content-start",
         )}
         onClick={(event) => onOpen(event.currentTarget, row)}
@@ -294,7 +305,13 @@ export function LibraryStateCard({
           {view === "grid" ? <RecordStamp row={row} /> : null}
         </span>
         <span className="grid min-w-0 content-start gap-[var(--space-content-tight)]">
-          <strong className="line-clamp-2 text-[length:var(--font-size-14)] leading-tight [overflow-wrap:anywhere] text-text-strong">
+          <strong
+            className={cn(
+              COVER_CARD_TITLE_CLASSNAME,
+              "[overflow-wrap:anywhere]",
+              view === "list" && "min-h-0",
+            )}
+          >
             {rowTitle(row)}
           </strong>
           <CreatorLine row={row} />

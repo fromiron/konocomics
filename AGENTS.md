@@ -40,7 +40,7 @@
 - **서버 경계:** 서버 코드는 TanStack Start server route의 `/api/rakuten/search`·`/api/rakuten/item` 둘뿐. 임의 server function·새 server route·runtime database·auth·runtime LLM 추가 금지. `09`의 tracked SQLite authority와 OS 임시 shadow는 빌드 타임에만 존재하며 `08` §3의 route별 SSR/client 경계를 바꾸지 않는다.
 - **의존성 추가 금지(허용 목록 외):** TanStack Start/Router, Vite/React plugin/Nitro, react, tailwindcss v4, shadcn Base UI 계열, motion, zod, dexie(+react-hooks), fuse.js, tsx, csv-parse, vitest, @testing-library/*, playwright. 그 외가 필요하면 **추가하지 말고 사유를 남기고 사용자에게 물어라.** React Bits·NumberFlow·Embla·Swiper·AutoAnimate·GSAP·TanStack Query·Zustand·next-themes는 추가하지 않는다(React Bits는 2026-10-01 사용자 결정으로 효과 레퍼런스로만 쓰고 Motion·CSS로 자작한다, `04` §7). 별도 G2 harness의 동결된 Next dependency는 제품 M9와 격리한다.
 - **UI primitive:** shadcn CLI의 Base UI 기반 primitive를 필요한 것만 `src/components/ui/**`에 생성하고, 시맨틱 dark token과 접근성 기본값은 `src/components/design-system/**` wrapper에서 적용한다. route/feature가 생성 primitive를 직접 소비하지 않는다.
-- **dark-only:** theme selector와 전역 light theme을 만들지 않는다. 2026-09-11 사용자가 선택한 판매순 발견 배너와 상세 근거 배너, 2026-10-01 사용자가 선택한 추천 이유 말풍선(`04` §2.9)에만 밝은 `--discovery-*`·`--evidence-surface` 표면·텍스트 토큰을 허용한다. 확정 primary는 `oklch(0.76 0.11 72)`이며 accent 위 텍스트는 어두운 `--on-accent`를 쓴다.
+- **dark-only:** 전역 light theme과 표면 테마 전환(surface theme selector)을 만들지 않는다. canvas·surface·text·종이 말풍선 토큰은 한 벌이다. 밝은 종이 표면·텍스트 토큰은 제품이 독자에게 말을 거는 자리에만 허용한다(2026-11-11 사용자 결정, `04` §1 「종이는 제품이 말하는 자리」): 추천 이유 말풍선(`04` §2.9, 2026-10-01), 판매순 발견 질문 배너(2026-09-11), 작품 상세 「あなたとの相性」의 근거 말풍선(현재 색 variant는 `04` §2.9), 층 2의 편집 만화 컷(온보딩 웰컴). 종이 면 위에서는 accent를 글자색으로 쓰지 않고 굵기로 강조한다. **accent만 고를 수 있다(2026-11-11 사용자 결정):** 헤더·홈 히어로의 accent selector는 정확히 여섯 accent(`butter` バターイエロー·`kinaka` 金赤·`lime` ライム·`ice` アイスブルー·`paper` ペーパーホワイト·`amber` アンバー) 중 하나를 고르고 기본값은 `butter`다. 값은 `04` §2.1의 표가 단일 원천이며 accent 위 텍스트는 각 테마의 어두운 `--on-accent`를 쓴다. 선택은 기기 표시 설정으로 `localStorage`에만 두고 Dexie·Export에 넣지 않는다(`05` §6).
 - **표지 이미지:** 원본 비율 유지(크롭·누끼·텍스트 합성 금지), 블러 배경은 동일 URL + `aria-hidden`, 자체 저장소 복제 금지. `_ex` 확대는 로드 실패 시 200x200 폴백 필수.
 - **비밀키:** `RAKUTEN_APPLICATION_ID` 등은 서버 전용. 클라이언트 번들·커밋에 포함 금지.
 - **UI 언어는 일본어**, 문자열은 전부 `src/lib/strings.ts` 경유. 코드·주석·커밋은 영어, 문서는 한국어.
@@ -99,7 +99,7 @@ pnpm --silent experiment:baseline # Taste vs Baseline CLI 비교 리포트(stdou
 
 - TypeScript strict. `any`·`as` 캐스팅 지양, 경계(외부 API·파일·Import)는 반드시 zod 파싱.
 - 의존 방향: `routes → features → domain`, `features → infrastructure`. **domain은 아무것도 import하지 않는다.** 컴포넌트에서 Dexie 직접 접근 금지(`infrastructure/db` 훅 래퍼 경유).
-- 스타일은 Tailwind + `globals.css`의 시맨틱 토큰(`04` §2)만 사용. 임의 hex·px 매직넘버로 토큰을 우회하지 않는다. `--accent`는 의미 있는 곳(로고 kono·mi, 상위 취향, 주요 CTA, 선택, focus)에만.
+- 스타일은 Tailwind + `globals.css`의 시맨틱 토큰(`04` §2)만 사용. 임의 hex·px 매직넘버로 토큰을 우회하지 않는다. `--accent`는 의미 있는 곳(로고 kono·mi, 상위 취향, 주요 CTA, 선택, focus)에만. accent 파생 토큰은 `--accent`에서 계산하고 테마 블록 밖에 accent 색 리터럴을 두지 않는다. 모서리는 `04` §2.3의 radius 단계 토큰만 쓴다.
 - 모션은 `04` §6의 분류 A~G 중 하나에 속해야 하며(G는 허용 목록의 위치만), 상시 루프 애니메이션 금지(loading skeleton 예외). `prefers-reduced-motion`은 모션을 끄는 것이 아니라 `04` §6 대체 원칙(이동·확대·포인터 추적·반복 제거, opacity·색 변화 유지)을 따른다.
 - 테스트는 `07`의 계약 목록이 기준이다. fixed 5 product E2E를 늘리거나 새 visual-regression infrastructure를 만들지 않고 기존 fixture·테스트를 migration 회귀에 재사용한다.
 - 접근성 기본선: focus-visible 링, 터치 타깃 ≥44px, 장식 요소 `aria-hidden`, 확인된 FactorBar는 `role="meter"`, 미확인 축은 이름 있는 비수치 상태, 리스트 변경 `aria-live` — 상세는 `03` 각 화면.

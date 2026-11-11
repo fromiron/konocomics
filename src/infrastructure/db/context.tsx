@@ -9,6 +9,7 @@ import type {
   UserWorkRecord,
 } from "@/domain/profile/types";
 import type { ExternalWorkId } from "@/domain/catalog/external-work";
+import { clearAccentPreference } from "@/infrastructure/display-preferences";
 
 import {
   createPersistence,
@@ -346,6 +347,8 @@ export function PersistenceProvider({ children, persistence }: PersistenceProvid
         } catch {
           /* Browser may deny optional prompt storage. */
         }
+        // Full deletion also resets this browser's display preference (03 §8).
+        clearAccentPreference();
         await refresh();
       }
       return result;

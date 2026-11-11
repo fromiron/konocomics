@@ -55,7 +55,7 @@ function renderShelf() {
 }
 
 describe("WorkShelf roving focus", () => {
-  it("keeps the contract widths and layers remote-cover identity inside the cover surface", () => {
+  it("keeps the contract widths, the title under the cover, and the stamp on the cover", () => {
     render(
       <WorkShelf
         coverUrls={new Map(works.map((work) => [work.id, `https://example.com/${work.id}.jpg`]))}
@@ -73,8 +73,10 @@ describe("WorkShelf roving focus", () => {
 
     expect(firstCard?.classList.contains("w-[104px]")).toBe(true);
     expect(firstCard?.classList.contains("md:w-32")).toBe(true);
+    // The common cover card spec (04 §2.10): no text over the cover, the title outside it.
+    expect(firstCover?.querySelector(".anchor-card__identity")).toBeNull();
     expect(
-      firstCover?.querySelector(".anchor-card__identity .anchor-card__title")?.textContent,
+      firstCard?.querySelector(".anchor-card__identity .anchor-card__title")?.textContent,
     ).toBe("作品1");
     expect(firstCover?.querySelector(".anchor-card__add")).not.toBeNull();
   });

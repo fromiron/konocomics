@@ -22,6 +22,7 @@ import {
 } from "@/components/design-system/alert-dialog";
 import { Button, buttonClassName } from "@/components/design-system/button";
 import { Input } from "@/components/design-system/input";
+import { Notice } from "@/components/design-system/notice";
 import {
   DataTransferError,
   ExportDraftConflictError,
@@ -387,12 +388,12 @@ export function DataSettings({
                   </div>
                 </dl>
                 {preview.catalogVersionMismatch ? (
-                  <p className="settings-import-preview__warning border-l-[length:var(--space-1)] border-warn bg-surface-1 px-[var(--space-4)] py-[var(--space-3)] [overflow-wrap:anywhere]">
+                  <Notice className="settings-import-preview__warning" tone="warn">
                     {settingsStrings.data.import.preview.catalogMismatch(
                       preview.catalogVersion,
                       currentCatalog.catalogVersion,
                     )}
-                  </p>
+                  </Notice>
                 ) : null}
                 <Button
                   className="w-full sm:w-fit"
@@ -457,7 +458,7 @@ export function DataSettings({
 
       {success === null && busyAction !== "export" ? null : (
         <p
-          className="fixed right-[var(--layout-page-padding)] bottom-[calc(var(--layout-mobile-navigation-clearance)+var(--space-4))] left-[var(--layout-page-padding)] z-65 mx-auto w-fit max-w-[calc(100%-(var(--layout-page-padding)*2))] rounded-[var(--radius-control)] bg-surface-1 px-[var(--space-4)] py-[var(--space-3)] text-text-strong shadow-[var(--shadow-raised)]"
+          className="fixed right-[var(--layout-page-padding)] bottom-[calc(var(--layout-mobile-navigation-clearance)+var(--space-4))] left-[var(--layout-page-padding)] z-65 mx-auto w-fit max-w-[calc(100%-(var(--layout-page-padding)*2))] rounded-[var(--radius-card)] bg-surface-1 px-[var(--space-4)] py-[var(--space-3)] text-text-strong shadow-[var(--shadow-raised)]"
           role="status"
         >
           {busyAction === "export" ? settingsStrings.data.export.exporting : success}
@@ -484,7 +485,7 @@ export function DataSettings({
               </li>
             ))}
           </ul>
-          {error === null ? null : <p role="alert">{error}</p>}
+          {error === null ? null : <Notice tone="danger">{error}</Notice>}
           <div className="flex flex-wrap justify-end gap-[var(--space-content)]">
             <Button
               disabled={busyAction === "export"}
@@ -524,14 +525,7 @@ export function DataSettings({
               {settingsStrings.data.import.confirm.replacing}
             </p>
           ) : null}
-          {error === null ? null : (
-            <p
-              className="border-l-[length:var(--space-1)] border-warn bg-surface-1 px-[var(--space-4)] py-[var(--space-3)]"
-              role="alert"
-            >
-              {error}
-            </p>
-          )}
+          {error === null ? null : <Notice tone="danger">{error}</Notice>}
           <div className="flex flex-wrap justify-end gap-[var(--space-content)]">
             <Button
               disabled={busyAction === "replace"}
@@ -601,14 +595,7 @@ export function DataSettings({
               {settingsStrings.data.delete.confirm.deleting}
             </p>
           ) : null}
-          {error === null ? null : (
-            <p
-              className="border-l-[length:var(--space-1)] border-warn bg-surface-1 px-[var(--space-4)] py-[var(--space-3)]"
-              role="alert"
-            >
-              {error}
-            </p>
-          )}
+          {error === null ? null : <Notice tone="danger">{error}</Notice>}
           <AlertDialogFooter className="m-0 flex flex-row flex-wrap justify-end gap-[var(--space-content)] rounded-none border-0 bg-transparent p-0">
             <AlertDialogCancel disabled={busyAction === "delete"} onClick={closeDialog}>
               {settingsStrings.dialog.cancel}

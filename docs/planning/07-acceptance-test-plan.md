@@ -52,7 +52,7 @@
 - Art 4축이 모두 `unknown`인 Work도 다른 네 필수 그룹을 충족하면 `recommendationEligible`을 통과한다. 커뮤니티 근거의 Art는 이미지 manifest 없이 허용하고, publisher/manual 이미지 근거의 known Art는 기존 manifest·표본·맥락 검사를 그대로 통과해야 한다.
 - Export→Import 라운드트립: 임의 사용자 상태 생성 → export → import → userWorks/externalWorks/profile/draft 동등, cache empty와 current runtime meta 확인.
 - Import 거부: schemaVersion 2 / 필드 손상 / 부분 손상 배열 — mutation 전 전체 거부와 일곱 store 불변.
-- 독서 상태 보존(2026-10-09 #60): `reading` record는 저장 read·Export v1 Import preview·Library `?state=reading`에서 그대로 보존하며 progress·reaction도 유지한다. 기존 completed는 재분류하지 않는다. 미확인 온보딩 draft 완료 거부·읽는중/읽음 명시적 선택·과거 planned 초안의 미확인 복원·기존 4개+신규 1개를 검증한다.
+- 독서 상태 보존(2026-10-09 #60): `reading` record는 저장 read·Export v1 Import preview·Library `?state=reading`에서 그대로 보존하며 progress·reaction도 유지한다. 기존 completed는 재분류하지 않는다. 과거 미확인 온보딩 draft 완료 거부·선택 시 기본 読んだ(2026-11-11)와 작품별 읽는중/읽음 변경·과거 planned 초안의 미확인 복원·기존 4개+신규 1개를 검증한다.
 - providerCache TTL: 주입 시간 기준 가격·재고 24시간 / 기타 metadata 90일의 직전·정확 경계, 상업 필드만 먼저 숨기는 상태, legacy 단일 `expiresAt` cache miss.
 - 추천 표지 resolver: 표시 순 representative ISBN registry, 첫 `target[0]` metadata만 자동 시작, 후속 target은 `CoverImage` viewport 진입 요청 뒤 시작, 전체 최대 4개 동시 처리와 결과별 commit(실제 이미지 load/error는 기다리지 않음), 동일 target 중복 수요 dedupe, fresh exact-workId/no-image와 실패 결과 terminal, expired·mismatch·miss 갱신+저장 readback, stale generation 차단, generation 전환 동안 가시성 수요와 survivor URL 보존. normalized ISBN 동시 요청은 한 provider 호출에 합류한다.
 - 추천 계산 Worker client: 첫 요청만 `catalog + context`를 포함하고 이후 요청은 동적 입력만 보내며 request ID로 응답을 연결한다. crash·message 실패는 pending 요청 전체를 reject하고 Worker를 reset하며 다음 요청은 정적 입력부터 다시 시작한다. Worker API 부재 환경은 같은 순수 추천 함수 fallback을 사용한다.
@@ -187,14 +187,16 @@ E2E 내 기본 조작성 스모크: 시나리오 1을 키보드만으로 완주�
 
 - [ ] Anchor 패널·Quick Preview·작품 상세·랜딩 「例」의 이유가 같은 말풍선 표현이며 caution은 `--warn` 좌측 보더 블록으로 구분된다. Featured 카드는 말풍선 없이 기존 reason 줄이다.
 - [ ] Anchor 옆 패널의 꼬리는 표지 쪽 측면을 가리킨다(오른쪽으로 열리면 왼쪽, 왼쪽으로 열리면 오른쪽). 패널 본문에 가로 스크롤이 생기지 않고 `data-contribution-summary` 근거 대조가 유지된다.
+- [ ] (2026-11-11) 작품 상세 「あなたとの相性」의 말풍선도 종이 말풍선이며, 근거 표지가 하나면 표지 옆에서 꼬리가 표지를 가리키고 여럿이면 표지 줄 아래에서 첫 표지를 가리킨다. 이 작품 표지·화살표가 없고 390px에서 가로 넘침이 없다.
 
 ### 비주얼 충실도 (04 문서 대조)
 
-- [ ] 토큰 값·radius(카드 8/표지 4)·accent 사용처 제한 준수.
+- [ ] 토큰 값·radius 단계(표지 4 / 조작·표지 카드 8 / 패널·대화상자·팝오버 12 / 칩·태그·배지 999 / 종이 말풍선 6, `04` §2.3 중첩 규칙)·accent 사용처 제한 준수. 테마 블록 밖에 accent 색 리터럴이 없다.
 - [ ] 표지가 어떤 화면에서도 크롭되지 않음(세로/가로 특이 비율 표지 3종으로 확인).
 - [ ] placeholder 표지·빈 상태·오류 상태를 화면별로 강제 재현해 확인(라쿠텐 차단 + 데이터 비움).
 - [ ] 스크린톤이 지정 표면(랜딩 hero·빈 상태·DNA 요약)에만 존재.
-- [ ] dark-only canvas에서 본문/보조/control 상태 대비와 블러/overlay 위 텍스트 4.5:1을 재측정하고 theme selector가 없음을 확인한다.
+- [ ] dark-only canvas에서 본문/보조/control 상태 대비와 블러/overlay 위 텍스트 4.5:1을 재측정하고 표면 테마 전환이 없음을 확인한다. accent selector의 여섯 테마마다 on-accent/accent·accent 글자/canvas·surface-1·surface-2 ≥ 4.5:1, focus ring/인접 표면 ≥ 3:1이며(`04` §2.1 표), 종이 면 위에 accent 글자가 없다.
+- [ ] accent selector: 헤더(또는 mobile 탭 바)와 홈 히어로에서 한 화면에 하나만 보이고, radiogroup 방향키·즉시 적용·열린 채 유지·Esc/바깥 누름 닫힘과 트리거 포커스 복귀가 동작한다. 새로고침 첫 paint부터 저장된 accent이며 hydration 경고가 없다. 저장 키 파싱·기본값 폴백과 radiogroup 동작은 유닛 테스트로 고정하고 제품 E2E 시나리오는 늘리지 않는다.
 
 ### 성능 (독립 production-local 계측, 예산·프로토콜은 04 §8)
 
@@ -287,7 +289,7 @@ E2E 내 기본 조작성 스모크: 시나리오 1을 키보드만으로 완주�
 ### 기술 계약 테스트 (fixed 5 E2E는 늘리지 않는다)
 
 - 검색(A): `tests/unit/onboarding/search.test.tsx` — URL 지연 반영 중 끝 공백 유지, IME 조합 중 URL 미기록·확정 시 1회 기록, 자기 반영 무시·외부 URL 변경 추종, 제외 사유(`registered`/`notAnalyzable`) 분류. `submission.test.tsx` — add mode에서 기록 작품은 선택 불가이며 이유를 표시. `tests/unit/taste/factor-bar.test.tsx` — `aria-valuenow` 소수 1자리, 막대 길이 불변.
-- 설명(C): `tests/unit/explanation/generate.test.ts` — 문장 유형 표, 같은 작품명 반복 표현, 제품/동결 lexicon 사이에 선택 contribution·anchor·caution이 동일. 기존 관점 선반·카드·상세 테스트가 그대로 통과한다.
+- 설명(C): `tests/unit/explanation/generate.test.ts` — 문장 유형 표, 같은 작품명 반복 표현, 제품/동결 lexicon 사이에 선택 contribution·anchor·caution이 동일. 기존 관점 선반·카드·상세 테스트가 그대로 통과한다. 2026-11-11 사용자 결정(`02` §6.9 첫 이유의 팩터 계열 우선) 이후 #61 회전으로 관점 선반 카드의 첫 이유가 상세의 첫 이유와 다를 수 있으므로, 핵심 여정 E2E는 카드 문장 전체 대신 카드 첫 이유의 팩터가 상세 「あなたとの相性」에 첫 이유 또는 「近いポイント」로 있는지 확인한다.
 - 공유(D·E): `tests/unit/landing/landing-flow.test.tsx` — 4개 방문자 상태 CTA, 공유 표지의 메모리 기록과 저장소 무변경. `tests/unit/profile/dna-share.test.ts` — 분석 작품 수가 근거 목록 합이 아님, 숨김이 수를 바꾸지 않음, 빈 분석 거부, 링크 왕복 동일·형식 위반 거부, `via` 허용 값. `tests/unit/taste/dna-share-dialog.test.tsx` — 실제 근거만 선택지, 링크 복사·클립보드 거부 시 링크 칸, 빈 분석 안내. `tests/unit/share/dna-share-page.test.tsx` — 링크 렌더·열 수 없는 링크·Catalog 밖 작품 생략·affiliate 고지 조건.
 - 무드(F·G): `tests/unit/recommendation/mood.test.ts` — `known`만 충족, plan 순서·객체 보존, 무드별 제외·세션 제외 후 목록 제약, Discovery 창이 남은 후보 기준. `tests/unit/recommendations/mood-session.test.ts` — 무드별 제외 분리·재적용, Catalog 범위, 초기화. `recommendations-flow.test.tsx` — 메인·선반이 무드 후보뿐이고 「今日はパス」가 저장하지 않으며 해제 시 기본 목록 복귀.
 

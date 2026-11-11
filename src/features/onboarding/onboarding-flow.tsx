@@ -11,9 +11,10 @@ import {
   useState,
 } from "react";
 
-import { ChevronLeftIcon, InfoIcon } from "lucide-react";
+import { ChevronLeftIcon } from "lucide-react";
 
 import { Button } from "@/components/design-system/button";
+import { Notice } from "@/components/design-system/notice";
 import { SegmentedControl } from "@/components/design-system/segmented-control";
 import { SectionHeading } from "@/components/layout/section-heading";
 import { pageEntryFadeProps, usePageEntryMotion } from "@/components/motion/use-page-entry-motion";
@@ -160,7 +161,7 @@ function ResolvedOnboardingPage({
   return (
     <main
       className={cn(
-        "onboarding-page mx-auto min-h-dvh w-[min(100%,var(--layout-width-onboarding))] px-[var(--layout-page-padding)] pt-[var(--layout-page-block-start)] pb-[calc(var(--space-12)+var(--space-12)+var(--space-12)+var(--space-8)+var(--layout-safe-area-bottom))] text-text md:min-h-[calc(100dvh-var(--desktop-navigation-height))] md:pt-[var(--space-4)] md:pb-0",
+        "onboarding-page mx-auto min-h-dvh w-[min(100%,var(--layout-width-onboarding))] px-[var(--layout-page-padding)] pt-[var(--layout-page-block-start)] pb-0 text-text md:min-h-[calc(100dvh-var(--desktop-navigation-height))] md:pt-[var(--space-4)] md:pb-0",
         pageEntryMotion.active &&
           "onboarding-page--entry-b motion-safe:[&>.onboarding-step-one]:animate-[page-entry-b-enter_var(--motion-duration-page)_var(--motion-ease-direct)_both]",
       )}
@@ -520,7 +521,12 @@ export function OnboardingFlow({
       return;
     }
     setSelectionMessage(onboardingStrings.step1.selectedAnnouncement(workTitle));
-    const positiveEntries = [...draft.positiveEntries, { workId, reaction: "liked" as const }];
+    // A chosen favourite starts as 「読んだ」: the same entry the per-work control writes when the
+    // reader picks it explicitly, so the stored draft and the finalized record do not change.
+    const positiveEntries = [
+      ...draft.positiveEntries,
+      { workId, reaction: "liked" as const, readingState: "completed" as const },
+    ];
     updateDraft(
       draft.mode === "add"
         ? { ...draft, positiveEntries }
@@ -775,20 +781,20 @@ export function OnboardingFlow({
       pageEntryConsumed={pageEntryConsumed}
     >
       {storageWarning ? (
-        <div
-          className="onboarding-alert mb-[var(--space-4)] max-w-[var(--layout-width-reading)] border-l-[length:var(--space-1)] border-warn bg-surface-1 px-[var(--space-4)] py-[var(--space-3)]"
-          role="alert"
+        <Notice
+          className="onboarding-alert mb-[var(--space-4)] max-w-[var(--layout-width-reading)]"
+          tone="warn"
         >
           {onboardingStrings.storageWarning}
-        </div>
+        </Notice>
       ) : null}
       {errorMessage ? (
-        <div
-          className="onboarding-alert mb-[var(--space-4)] max-w-[var(--layout-width-reading)] border-l-[length:var(--space-1)] border-warn bg-surface-1 px-[var(--space-4)] py-[var(--space-3)]"
-          role="alert"
+        <Notice
+          className="onboarding-alert mb-[var(--space-4)] max-w-[var(--layout-width-reading)]"
+          tone="danger"
         >
           {errorMessage}
-        </div>
+        </Notice>
       ) : null}
       {limitMessage ? (
         <div
@@ -1007,7 +1013,7 @@ export function OnboardingFlow({
                   ? onboardingStrings.addMode.saving
                   : isAddMode
                     ? onboardingStrings.addMode.submit(draft.positiveEntries.length)
-                    : onboardingStrings.step1.next(draft.positiveEntries.length)
+                    : onboardingStrings.step1.next
               }
               countLabel={onboardingStrings.step1.selectedCount(
                 draft.positiveEntries.length,
@@ -1053,7 +1059,7 @@ export function OnboardingFlow({
           className="onboarding-step-two m-0 min-w-0 border-0 p-0"
           disabled={submitting}
         >
-          <div className="ob-welcome">
+          <div className="mb-[var(--space-6)]">
             <OnboardingSteps current={1} />
           </div>
           <div className="onboarding-layout grid gap-[var(--space-6)] md:grid-cols-[minmax(0,1fr)_minmax(0,var(--layout-width-onboarding-panel))] md:items-start lg:gap-[var(--space-8)]">
@@ -1078,10 +1084,9 @@ export function OnboardingFlow({
                     {onboardingStrings.step2.optional}
                   </span>
                 </h1>
-                <p className="onboarding-principle mt-[var(--space-2)] flex items-start gap-[var(--space-2)] rounded-[var(--radius-card)] border border-line bg-surface-1 px-[var(--space-4)] py-[var(--space-3)] text-[length:var(--text-caption-size)] text-text [&>svg]:mt-[2px] [&>svg]:size-4 [&>svg]:shrink-0 [&>svg]:text-text-muted">
-                  <InfoIcon aria-hidden="true" />
+                <Notice className="onboarding-principle mt-[var(--space-2)] text-text">
                   {onboardingStrings.step2.principle}
-                </p>
+                </Notice>
               </header>
 
               {draft.negativeEntries.length > 0 ? (

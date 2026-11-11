@@ -8,6 +8,7 @@ import { RankingCard } from "@/components/media/ranking-card";
 import type { Work } from "@/domain/catalog/types";
 import { explanationLexicon, workDetailStrings } from "@/lib/strings";
 import { cn } from "@/lib/utils";
+import { SectionHeading } from "@/components/layout/section-heading";
 
 type SameAuthorSectionProps = Readonly<{
   authors: readonly string[];
@@ -48,14 +49,16 @@ export function SameAuthorSection({
       : workDetailStrings.sameAuthor.sharedCreators(sharedAuthorsByWorkId.get(featured.id) ?? []);
   return (
     <section aria-labelledby="same-author-heading" className="grid gap-[var(--space-4)]">
-      <h2
-        className="text-[length:var(--text-subheading-size)] tracking-tight text-text-strong"
+      <SectionHeading
+        className="mb-0"
+        compact
         id="same-author-heading"
-      >
-        {multipleAuthors
-          ? workDetailStrings.sameAuthor.multipleHeading
-          : workDetailStrings.sameAuthor.heading(authors[0]!)}
-      </h2>
+        title={
+          multipleAuthors
+            ? workDetailStrings.sameAuthor.multipleHeading
+            : workDetailStrings.sameAuthor.heading(authors[0]!)
+        }
+      />
       <div
         className={cn(
           "same-author-panel grid min-w-0 items-center gap-[var(--space-4)]",

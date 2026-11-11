@@ -15,38 +15,53 @@ import { workDetailStrings } from "@/lib/strings";
 import type { WorkEvidence } from "./work-detail-data";
 
 type EvidenceProps = Readonly<{
+  /** `named`: the lead sentence already names the lone anchor, so its caption is left out. */
+  captions?: "visible" | "named";
   evidence: readonly WorkEvidence[];
   coverUrls: ReadonlyMap<string, string | null>;
   onCoverVisible(workId: string): void;
 }>;
 
-/** One library work behind the recommendation: its cover and title, linking to its detail. */
+/** Evidence covers are small enough to sit beside the reason bubble: 56px, 72px from `md`. */
+const EVIDENCE_COVER_WIDTH =
+  "w-[calc(var(--space-12)+var(--space-2))] md:w-[calc(var(--space-12)+var(--space-6))]";
+
+/**
+ * One library work behind the recommendation: its cover and title, linking to its detail. The
+ * title caption never breaks inside a word: it keeps whole words over at most two lines. When the
+ * bubble's lead sentence already names the work in bold, the caption is left out and the cover's
+ * own alt text is the link's only name, so nothing is read twice.
+ */
 function EvidenceCover({
+  caption = true,
   item,
   coverUrl,
   onCoverVisible,
 }: Readonly<{
+  caption?: boolean;
   item: WorkEvidence;
   coverUrl: string | null | undefined;
   onCoverVisible(workId: string): void;
 }>) {
   return (
     <Link
-      className="grid w-[calc(var(--space-8)*2+var(--space-6))] content-start gap-[var(--space-2)] rounded-[var(--radius-cover)] text-[length:var(--text-caption-size)] leading-snug text-text hover:text-text-strong focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-ring"
+      className={`grid ${EVIDENCE_COVER_WIDTH} content-start gap-[var(--space-1)] rounded-[var(--radius-cover)] text-[length:var(--text-caption-size)] leading-snug text-text hover:text-text-strong focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-ring`}
       params={{ workId: item.work.id }}
       preload={false}
       to="/works/$workId"
     >
       <CoverImage
-        className="w-[calc(var(--space-8)*2)]"
+        className="w-full"
         coverUrl={coverUrl}
         creators={item.work.creators}
-        decorative
+        decorative={caption}
         onVisible={() => onCoverVisible(item.work.id)}
         requestedSize={200}
         title={item.work.title}
       />
-      <span className="line-clamp-2 [overflow-wrap:anywhere]">{item.work.title}</span>
+      {caption ? (
+        <span className="line-clamp-2 text-ellipsis [word-break:keep-all]">{item.work.title}</span>
+      ) : null}
     </Link>
   );
 }
@@ -59,7 +74,7 @@ function EvidenceDialog({ evidence, coverUrls, onCoverVisible }: EvidenceProps) 
       <DialogTrigger
         render={
           <Button
-            className="grid size-[calc(var(--space-8)*2)] place-items-center rounded-[var(--radius-cover)]"
+            className={`grid aspect-[30/43] h-auto ${EVIDENCE_COVER_WIDTH} place-items-center rounded-[var(--radius-cover)]`}
             variant="outline"
           />
         }
@@ -100,11 +115,17 @@ function EvidenceDialog({ evidence, coverUrls, onCoverVisible }: EvidenceProps) 
 }
 
 /**
- * The library works that carry this recommendation, strongest first. They sit above the reason
- * bubble, whose tail points at the first cover, so the reason reads as coming from them. The
- * bubble already holds the lead sentence, so the covers repeat no text and carry no role badges.
+ * The library works that carry this recommendation, strongest first. A single work sits beside
+ * the reason bubble and several sit in a row above it; either way the bubble's tail points at the
+ * first cover, so the reason reads as coming from them (03 §6). The bubble already holds the lead
+ * sentence, so the covers repeat no reason and carry no role badges.
  */
-export function WorkEvidenceList({ evidence, coverUrls, onCoverVisible }: EvidenceProps) {
+export function WorkEvidenceList({
+  captions = "visible",
+  evidence,
+  coverUrls,
+  onCoverVisible,
+}: EvidenceProps) {
   if (evidence.length === 0) return null;
   return (
     <ul
@@ -115,6 +136,7 @@ export function WorkEvidenceList({ evidence, coverUrls, onCoverVisible }: Eviden
       {evidence.slice(0, 3).map((item) => (
         <li key={item.work.id}>
           <EvidenceCover
+            caption={captions === "visible"}
             coverUrl={coverUrls.get(item.work.id)}
             item={item}
             onCoverVisible={onCoverVisible}

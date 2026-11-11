@@ -8,6 +8,7 @@ import { Button } from "@/components/design-system/button";
 import { NativeSelect } from "@/components/design-system/native-select";
 import { useUrlSyncedQuery } from "@/components/design-system/use-url-synced-query";
 import { Input } from "@/components/design-system/input";
+import { Notice } from "@/components/design-system/notice";
 import { GENRE_TAGS } from "@/domain/catalog/constants";
 import type { CatalogV1, Work, GenreTag } from "@/domain/catalog/types";
 import { searchRakutenBooks, type RakutenBookItem } from "@/infrastructure/rakuten";
@@ -379,15 +380,11 @@ export function WorkSearchSheet({
       ) : null}
 
       {provider.phase === "error" || !online ? (
-        <p
-          className="border-l-[length:var(--space-content-tight)] border-warn bg-canvas p-[var(--space-3)] text-text-strong"
-          role="status"
-          id="library-provider-status"
-        >
+        <Notice className="bg-canvas" id="library-provider-status" tone="warn">
           {online
             ? libraryStrings.search.providerUnavailable
             : libraryStrings.search.providerOffline}
-        </p>
+        </Notice>
       ) : null}
       {provider.phase === "ready" ? (
         <section

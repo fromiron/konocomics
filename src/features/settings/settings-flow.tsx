@@ -13,6 +13,7 @@ import { useCallback, useEffect, useRef, useState } from "react";
 
 import { buttonClassName } from "@/components/design-system/button";
 import { PageHeader } from "@/components/layout/page-header";
+import { Notice } from "@/components/design-system/notice";
 import { useCatalogIdentity } from "@/features/catalog/catalog-provider";
 import { usePersistence } from "@/infrastructure/db";
 import { settingsStrings } from "@/lib/strings";
@@ -144,8 +145,8 @@ function SectionNavigation({
               <a
                 aria-current={isCurrent ? "location" : undefined}
                 className={cn(
-                  "flex min-h-[var(--control-min-size)] items-center gap-[var(--space-content-loose)] px-[var(--space-3)] text-[length:var(--font-size-14)] font-bold whitespace-nowrap text-text-muted transition-colors duration-[var(--motion-duration-feedback)] ease-[var(--motion-ease-direct)] focus-visible:outline-2 focus-visible:-outline-offset-2 focus-visible:outline-ring [@media(hover:hover)_and_(pointer:fine)]:hover:text-text-strong",
-                  // The current section is the amber block of the header and tab bar.
+                  "flex min-h-[var(--control-min-size)] items-center gap-[var(--space-content-loose)] rounded-[var(--radius-control)] px-[var(--space-3)] text-[length:var(--font-size-14)] font-bold whitespace-nowrap text-text-muted transition-colors duration-[var(--motion-duration-feedback)] ease-[var(--motion-ease-direct)] focus-visible:outline-2 focus-visible:-outline-offset-2 focus-visible:outline-ring [@media(hover:hover)_and_(pointer:fine)]:hover:text-text-strong",
+                  // The current section is the accent block of the header and tab bar.
                   "aria-[current=location]:bg-accent aria-[current=location]:text-on-accent [@media(hover:hover)_and_(pointer:fine)]:aria-[current=location]:hover:text-on-accent",
                 )}
                 onClick={(event) => {
@@ -295,12 +296,9 @@ export function SettingsFlow({
       </PageHeader>
 
       {storageDegraded ? (
-        <p
-          className="mb-[var(--space-6)] border-l-[length:var(--space-1)] border-warn bg-surface-1 px-[var(--space-4)] py-[var(--space-3)]"
-          role="status"
-        >
+        <Notice className="mb-[var(--space-6)]" tone="warn">
           {settingsStrings.storage.sessionOnly}
-        </p>
+        </Notice>
       ) : null}
 
       <div className="grid grid-cols-[minmax(0,1fr)] items-start md:grid-cols-[calc(var(--control-min-size)*5)_minmax(0,1fr)] md:gap-x-[var(--space-12)]">

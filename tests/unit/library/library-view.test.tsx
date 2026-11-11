@@ -175,6 +175,34 @@ describe("LibraryView", () => {
     ).toBeTruthy();
   });
 
+  it("tells a grid record's state by its stamp and description, never by dimming the cover", () => {
+    const [disliked, dropped, favorite] = catalog.works;
+    if (disliked === undefined || dropped === undefined || favorite === undefined) {
+      throw new Error("Expected three catalog works");
+    }
+    renderLibrary({
+      externalWorks: [],
+      userWorks: [
+        { ...catalogRecord, workId: disliked.id, readingState: "completed", reaction: "disliked" },
+        { workId: dropped.id, readingState: "dropped", updatedAt: catalogRecord.updatedAt },
+        { ...catalogRecord, workId: favorite.id, readingState: "completed", reaction: "favorite" },
+      ],
+    });
+    const stamps = [
+      [disliked.id, libraryStrings.reactions.disliked],
+      [dropped.id, libraryStrings.tabs.dropped],
+      [favorite.id, libraryStrings.reactions.favorite],
+    ] as const;
+    for (const [workId, stamp] of stamps) {
+      const card = document.querySelector<HTMLElement>(`[data-work-id="${workId}"]`)!;
+      const cover = card.querySelector(".library-card__cover")!;
+      expect(cover.querySelector(".library-card__stamp")?.textContent).toBe(stamp);
+      expect(cover.innerHTML).not.toMatch(/grayscale|opacity-/u);
+      const description = within(card).getByRole("button").getAttribute("aria-describedby");
+      expect(document.getElementById(description ?? "")?.textContent).toContain(stamp);
+    }
+  });
+
   it("does not turn an unknown total or progress beyond known volumes into a percentage", () => {
     renderLibrary({
       externalWorks: [

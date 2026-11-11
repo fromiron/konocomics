@@ -86,7 +86,7 @@ Catalog의 성적 콘텐츠 제외 기준은 **porn / non-porn**이다. 성인�
 /onboarding     STEP 1  좋아한 작품 5~10개 선택 (검색 + 장르 Shelf)
                 STEP 2  (선택) 싫어했거나 하차한 작품 0~3개 + 이유 선택
 /taste?reveal=1 STEP 3  Manga DNA reveal → 인라인 보정 → CTA「おすすめを見る」
-/recommendations 추천 10개 + 이유. 카드 액션: 読みたい / 読んだ / 興味なし(+이유)
+/recommendations 추천 10개 + 이유. 카드 액션: 読みたい / 読んだ(+감상) / 興味なし(이유 입력 없음)
 /works/[workId] Catalog 상세: 표지·블러 배경·DNA 대조·추천 근거·라쿠텐 링크
 /works/external?workId=<ExternalWorkId> 로컬 external 상세(고정 정적 셸)
 /share?v=1&dna=…  공유된 Manga DNA 페이지(URL이 곧 데이터, 저장 없음; 03 §4.1)
@@ -103,7 +103,7 @@ Catalog의 성적 콘텐츠 제외 기준은 **porn / non-porn**이다. 성인�
 
 **추천 재계산 계약:** 추천 목록은 `(프로필 입력 해시)`가 마지막 계산 시점과 다를 때만 페이지 진입 시 재계산한다. 같은 입력이면 동일한 목록을 유지한다(결정론). 카드 개별 제거는 재계산이 아니라 백필이다.
 
-추천 카드 피드백은 호출자가 주입한 한 `updatedAt`으로 저장한다. `読んだ`는 먼저 `readingState="completed"`로 저장하고, 후속 시트의 `最高 / 良かった / 普通 / いまいち`를 각각 `favorite / liked / neutral / disliked`에 대응한다. 시트를 스킵하면 reaction을 만들지 않는다. `興味なし`는 먼저 `readingState="hidden"`으로 저장한다. 2026-10-09 #67: 숨김만으로 reaction·negativeReasons를 추가하지 않으며 기존 감상·진도를 보존한다. 후속 안내에서 숨김과 평가의 차이 및 복구 경로를 알린다. 싫어요·이유 입력은 Library의 명시적 감상 편집에서만 한다. 「普通」는 neutral, 평가 생략은 새 reaction 없음이다.
+추천 카드 피드백은 호출자가 주입한 한 `updatedAt`으로 저장한다. `読んだ`는 먼저 `readingState="completed"`로 저장하고, 후속 시트의 `最高 / 良かった / 普通 / いまいち`를 각각 `favorite / liked / neutral / disliked`에 대응한다. 시트를 스킵하면 reaction을 만들지 않는다. `興味なし`는 먼저 `readingState="hidden"`으로 저장한다. 2026-10-09 #67: 숨김만으로 reaction·negativeReasons를 추가하지 않으며 기존 감상·진도를 보존한다. 2026-11-11 사용자 결정으로 `興味なし`에는 후속 시트를 두지 않고, 저장 직후 「元に戻す」를 가진 Snackbar 하나로 결과와 복구 경로를 알린다(`03` §5). 싫어요·이유 입력은 Library의 명시적 감상 편집에서만 한다. 「普通」는 neutral, 평가 생략은 새 reaction 없음이다.
 
 ---
 
@@ -285,7 +285,7 @@ type OnboardingDraft = {
 - `add` 완료는 기존 `UserWorkRecord`를 덮어쓰지 않는 insert-only 작업이다. 기존 workId와 충돌하면 draft·기존 기록을 그대로 둔 채 전체 작업을 거부한다. 누적 positive 총량에는 별도 상한을 두지 않고 10개는 추가 세션 하나의 상한이다.
 - usable profile과 온보딩 mode는 현재 Catalog의 서로 다른 positive anchor 수와 완료 marker를 함께 해석한다. 5개 이상이면 `onboardingCompletedAt` 유무와 관계없이 usable profile이다. 5개 미만이면서 marker가 있으면 `firstRun`을 다시 열지 않고 `add` recovery로 진입하고, 5개 미만이면서 marker가 `null`이면 `firstRun`이다. recovery는 현재 Catalog 기준 5개를 회복할 때까지 profile guard를 유지하며 최초 완료 시각과 reveal marker를 바꾸지 않는다.
 - `vagueDislike`는 해당 작품의 유일한 사유여야 한다. 이유를 고르지 않은 negative entry는 완료 시 `vagueDislike` 하나로 정규화한다. `external:*`은 `external:[a-z0-9]+(?:-[a-z0-9]+)*` 형식의 10~64자 id만 허용하고 같은 entry 안의 reason id는 중복될 수 없다.
-- 완료 변환은 호출자가 주입한 동일 `completedAt`을 새 record의 `updatedAt`으로 쓴다. positive entry는 사용자가 확인한 `readingState`를 그대로 쓴다. 미확인 entry는 완료를 거부한다. 2026-10-12부터 온보딩 positive entry는 `planned`를 고를 수 없으며 과거 초안의 `planned`는 미확인으로 복원한다. `reading`·`completed`는 보존된 reaction을 쓴다. `disliked` entry는 `readingState="completed"` + `reaction="disliked"` + `negativeReasons`, `dropped` entry는 `readingState="dropped"` + reaction 미지정 + `droppedReasons`가 된다. `add` 완료는 최초 `profile.onboardingCompletedAt`을 변경하지 않으므로 DNA reveal을 다시 열지 않는다.
+- 완료 변환은 호출자가 주입한 동일 `completedAt`을 새 record의 `updatedAt`으로 쓴다. positive entry는 entry의 `readingState`를 그대로 쓴다(2026-11-11부터 작품을 고르면 `completed`로 시작하고 작품별로 `reading`으로 바꿀 수 있다, `03` §2). 그 이전에 저장된 미확인 entry는 완료를 거부한다. 2026-10-12부터 온보딩 positive entry는 `planned`를 고를 수 없으며 과거 초안의 `planned`는 미확인으로 복원한다. `reading`·`completed`는 보존된 reaction을 쓴다. `disliked` entry는 `readingState="completed"` + `reaction="disliked"` + `negativeReasons`, `dropped` entry는 `readingState="dropped"` + reaction 미지정 + `droppedReasons`가 된다. `add` 완료는 최초 `profile.onboardingCompletedAt`을 변경하지 않으므로 DNA reveal을 다시 열지 않는다.
 
 ### 5.4 데이터 주권·호환 프로필 계약
 
@@ -513,9 +513,23 @@ type RecommendationWorkMarketSignal = {
 - positive 후보는 `explainable=true && value>0`, caution 후보는 best Anchor와의 차이인 `source=similarity && explainable=true && value<0`만이다. factor penalty·soft adjustment·policy를 Anchor 차이 문장으로 바꾸지 않는다.
 - Axis adjustment는 `axisPreferenceDirection`이 있어야만 렌더링 후보가 된다. 이 provenance가 빠졌거나 Theme/다른 source에 잘못 붙은 contribution은 일반 positive 문장으로 추정하지 않고 설명 대상에서 제외한다.
 - 안정 fallback은 `source → group → factorId → axisPreferenceDirection → anchorWorkIds.join("\\0") → negativeReasonId` 오름차순이다. 음수 similarity를 `value asc → fallback`으로 정렬한 첫 1개만 global caution 후보로 둔다.
-- 모든 positive와 global caution 하나를 `abs(value) desc → fallback`으로 순회한다. 이미 쓴 group/Cluster는 건너뛰고 positive 최대 3, caution 최대 1을 고른다. caution이 더 강한 positive와 충돌하면 다른 음수로 백필하지 않고 생략한다.
+- 모든 positive와 global caution 하나를 `abs(value) desc → fallback`으로 순회한다. 이미 쓴 group/Cluster는 건너뛰고 positive 최대 3, caution 최대 1을 고른다. caution이 더 강한 positive와 충돌하면 다른 음수로 백필하지 않고 생략한다. 고른 positive는 `value desc → fallback`으로 정렬한 뒤 아래 「첫 이유의 팩터 계열 우선」 표로 첫 이유만 정한다.
 - 2026-10-07 #54: positive similarity에서 같은 의미 팩터(`factorId`)와 같은 근거 작품 목록(`anchorWorkIds`)을 반복하는 후보는 설명 선택에서 건너뛴다. 예를 들어 Genre/Tone의 `romance`가 같은 작품을 근거로 삼으면 강한 기여 하나만 설명하고, 아직 사용하지 않은 group/Cluster의 실제 후보가 있으면 이어서 선택한다. 다른 팩터·같은 근거 및 같은 팩터·다른 근거는 이 규칙으로 합치지 않는다. 주의 의미·원본 contributions·추천 점수·순위는 유지하며 근거가 부족하면 3개를 채우지 않는다.
-- 2026-10-09 #61: 추천 카드 묶음은 위 규칙으로 이미 선택된 유효 positive 중 선행 카드에서 첫 이유로 가장 적게 쓴 factor를 우선하고, 동률이면 anchor 노출 수, 기존 기여 순서로 고른다. 고정 plan 순서에서 결정론적으로 선택하며 상한·임의 문구·새 기여를 만들지 않는다. 첫 이유가 바뀌면 문장 템플릿과 Anchor 순서를 함께 다시 렌더링한다. 카드/미리보기는 같은 설명을 사용하고 상세는 같은 팩터의 의미를 유지한다. 원본 contribution/score/rank 및 동결 실험 출력은 불변이다. 대안 이유가 없으면 기존 하나만 표시한다.
+- 2026-10-09 #61: 추천 카드 묶음은 위 규칙으로 이미 선택된 유효 positive 중 선행 카드에서 첫 이유로 가장 적게 쓴 factor를 우선하고, 동률이면 anchor 노출 수, 기존 기여 순서로 고른다. 고정 plan 순서에서 결정론적으로 선택하며 상한·임의 문구·새 기여를 만들지 않는다. 첫 이유가 바뀌면 문장 템플릿과 Anchor 순서를 함께 다시 렌더링한다. 카드/미리보기는 같은 설명을 사용하고 상세는 같은 팩터의 의미를 유지한다. 원본 contribution/score/rank 및 동결 실험 출력은 불변이다. 대안 이유가 없으면 기존 하나만 표시한다. 2026-11-11부터 이 회전은 아래 「첫 이유의 팩터 계열 우선」을 먼저 적용한다. 카드에 표시되는 Axis/Theme positive가 있으면 그 안에서만 위 순서(첫 이유 사용 수 → anchor 노출 수 → 기존 순서)로 고르고, 없을 때만 Genre 일치를 고른다.
+  - 2026-11-11 사용자 결정 — 회전 하한: 회전 후보는 그 카드에서 표시가 확정된 positive 중 적용 계열(Axis/Theme positive가 있으면 그 계열, 없으면 Genre 일치) 안에서 contribution value가 그 계열 최댓값의 `LEAD_ROTATION_VALUE_FLOOR_RATIO`배 이상인 것으로 제한한다. 비교에는 엔진이 반환한 value를 그대로 쓰며 새 반올림·새 기여·새 문구를 만들지 않는다. 정확히 하한과 같은 값(경계)은 후보에 포함하고, 계열 최댓값 항목은 항상 후보이므로 후보가 하나면 그것이 첫 이유다. 후보 안의 순서는 위와 같다(첫 이유 사용 수 → anchor 노출 수 → 기존 순서). 하한은 회전이 고를 첫 이유 후보만 좁히고 표시 집합은 바꾸지 않는다. 선택 집합·개수·caution·추천 점수·순위·`contributions[]`·목록 제약·관점 선반 산식은 불변이다. `leadReasonOrder: "contributionValue"` 경로(G2·Taste-vs-Baseline의 기록 재현)는 계열 우선과 하한 없이 기존 회전을 그대로 쓴다. 호출자가 `preferredFactorId`를 명시하는 경로(아래 표 우선 1)는 그대로이며, 랜딩 projection은 그 값을 이 회전으로 고르므로 하한이 반영된 첫 이유를 기록한다.
+
+  | 상수 | 값 | 쓰임 |
+  |---|---|---|
+  | `LEAD_ROTATION_VALUE_FLOOR_RATIO` | 0.5 | #61 회전의 첫 이유 후보 하한. 적용 계열 최댓값 대비 비율이며 경계를 포함한다 |
+- 2026-11-11 사용자 결정 — 첫 이유의 팩터 계열 우선(표시 순서만): 장르 일치(`source=similarity`, `group=genre`)는 근거 중 가장 약하게 읽히므로, 표시할 Axis·Theme 근거가 있는 카드는 장르 일치로 시작하지 않는다. 대상은 위 선택 규칙(`explainable=true && value>0`, lexicon label 존재, group/Cluster당 1개, #54 반복 제외, 최대 3개)으로 **이미 표시가 확정된** positive뿐이며 표시 집합에 새 임계·새 후보를 더하지 않는다(위 #61 회전 하한은 회전이 고를 첫 이유 후보만 좁히고 표시 집합은 바꾸지 않는다). 첫 이유는 아래 표의 첫 번째로 해당하는 행으로 정한다.
+
+  | 우선 | 조건 (표시 확정 positive 기준) | 첫 이유 |
+  |---|---|---|
+  | 1 | 호출자가 준 `preferredFactorId`와 같은 factor의 positive가 있음 | 그 positive (#61 회전과 랜딩 sample이 쓰는 명시 지정, 기존 동작 유지) |
+  | 2 | `group≠genre`인 positive(Axis similarity·Axis adjustment(`higher`/`lower`)·Theme similarity·Theme adjustment)가 하나 이상 있음 | 그중 기존 순서(`value desc → 안정 fallback`)의 첫 항목 |
+  | 3 | 그 밖(표시 positive가 Genre 일치뿐) | 기존 순서의 첫 항목(Genre 일치) |
+
+  첫 이유를 앞으로 옮긴 뒤 나머지 positive는 기존 순서를 그대로 유지한다. 선택 집합·개수·caution·group/Cluster 경쟁은 바뀌지 않으며, 문장 템플릿(작품명 반복 여부)과 근거 Anchor 수집은 기존 규칙대로 새 렌더링 순서를 따른다. 추천 점수·순위·`contributions[]`·목록 제약·관점 선반 산식은 불변이고 관점 선반은 바뀐 첫 이유를 그대로 입력으로 쓴다. G2·Taste-vs-Baseline 실험 도구는 기록된 출력을 재현해야 하므로 `leadReasonOrder: "contributionValue"`로 기존 `value desc` 순서를 명시적으로 유지한다(기본값은 위 표의 `"axisOrThemeFirst"`).
 - 렌더링 가능한 factor는 `ExplanationLexicon.factorLabels`에 정의된 Axis/Genre/Theme뿐이다. Cluster 소속 factor는 cluster label, 나머지는 factor label을 쓰되 구조화 identity에는 원래 factorId를 보존한다.
 - 근거 Anchor는 렌더링된 positive 순서 뒤 caution 순서에서 `source=similarity`의 실제 `anchorWorkIds`를 먼저 수집한다. 2026-09-11 사용자 승인에 따라 이후 `source=consensus, group=overall, factorId=consensus, value>0`인 실제 적용 bonus의 supporter ID를 안정 identity 순서로 추가한다. 제목이 해결된 distinct 최대 3개이며 similarity는 「主な根拠」, consensus만으로 추가된 작품은 「好みのつながり」로 구분한다. consensus의 `explainable=false`와 이유 문장 선택·추천 산식은 유지한다. penalty·미렌더 similarity·0 이하 bonus·제목 미해결 ID는 제외하고, 0개면 bestAnchorId나 무관한 작품을 보충하지 않은 채 Anchor 구역을 생략한다.
 - confidence는 Taste에만 정확히 `高い / ふつう / 低め(データ収集中)`로 표시한다. 모든 일본어 label/template은 `src/lib/strings.ts`가 소유하고 순수 설명기에 lexicon으로 주입한다.

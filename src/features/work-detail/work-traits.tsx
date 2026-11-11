@@ -9,6 +9,7 @@ import type { MangaDnaSummary } from "@/domain/profile/dna-summary";
 import { type OverlapLevel, workTasteOverlap } from "@/domain/profile/work-taste-overlap";
 import { explanationLexicon, tasteStrings, workDetailStrings } from "@/lib/strings";
 import { cn } from "@/lib/utils";
+import { SectionHeading } from "@/components/layout/section-heading";
 
 const TRAIT_GROUPS = [
   ["narrative", NARRATIVE_AXIS_IDS],
@@ -81,12 +82,7 @@ export function WorkTraits({
 
   return (
     <section aria-labelledby="work-traits-heading" className="grid gap-[var(--space-4)]">
-      <h2
-        className="text-[length:var(--text-subheading-size)] font-bold text-text-strong"
-        id="work-traits-heading"
-      >
-        {strings.heading}
-      </h2>
+      <SectionHeading className="mb-0" compact id="work-traits-heading" title={strings.heading} />
       <div className="grid gap-[var(--space-4)] rounded-[var(--radius-card)] bg-surface-1 p-[var(--space-5)] md:p-[var(--space-6)]">
         {!tasteReady ? null : overlap === null ? (
           standout.length === 0 ? null : (
@@ -170,12 +166,12 @@ export function WorkTraits({
                 className="grid content-start gap-[var(--space-3)]"
                 key={group}
               >
-                <h3
-                  className="text-[length:var(--font-size-16)] font-bold text-text-strong"
+                <SectionHeading
+                  className="mb-0"
+                  headingLevel={3}
                   id={`work-traits-${group}`}
-                >
-                  {strings.groups[group]}
-                </h3>
+                  title={strings.groups[group]}
+                />
                 <ul className="m-0 grid list-none gap-[var(--space-3)] p-0">
                   {ids.map((id) => {
                     const factor = work.axes[id];

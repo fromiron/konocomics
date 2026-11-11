@@ -1,8 +1,8 @@
 import { PageHeader } from "@/components/layout/page-header";
+import { SectionHeading } from "@/components/layout/section-heading";
 import { aboutStrings, mediaStrings } from "@/lib/strings";
 
 const sectionClassName = "grid gap-[var(--space-content)] border-t border-line pt-[var(--space-6)]";
-const headingClassName = "text-[length:var(--text-section-title-size)] text-text-strong";
 const paragraphClassName = "text-text-muted";
 
 export function AboutPage() {
@@ -11,9 +11,13 @@ export function AboutPage() {
       <PageHeader title={aboutStrings.title}>
         <p className={paragraphClassName}>{aboutStrings.lead}</p>
       </PageHeader>
-      {aboutStrings.sections.map((section) => (
+      {aboutStrings.sections.map((section, index) => (
         <section className={sectionClassName} key={section.title}>
-          <h2 className={headingClassName}>{section.title}</h2>
+          <SectionHeading
+            className="mb-0"
+            id={`about-section-${String(index)}`}
+            title={section.title}
+          />
           {section.paragraphs.map((paragraph) => (
             <p className={paragraphClassName} key={paragraph}>
               {paragraph}
@@ -22,7 +26,11 @@ export function AboutPage() {
         </section>
       ))}
       <section className={sectionClassName}>
-        <h2 className={headingClassName}>{aboutStrings.contact.title}</h2>
+        <SectionHeading
+          className="mb-0"
+          id="about-contact-heading"
+          title={aboutStrings.contact.title}
+        />
         <p className={paragraphClassName}>{aboutStrings.contact.description}</p>
         <a
           aria-label={aboutStrings.contact.linkLabel}

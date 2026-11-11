@@ -23,6 +23,7 @@ export type {
   ExplanationTemplateId,
   GenerateBaselineExplanationInput,
   GenerateTasteExplanationInput,
+  LeadReasonOrder,
   StructuredExplanationSentence,
   TasteExplanationSentence,
   TasteRecommendationExplanation,

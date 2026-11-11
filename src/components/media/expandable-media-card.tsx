@@ -18,6 +18,9 @@ type ExpandableMediaCardProps = ComponentPropsWithoutRef<"article"> &
     panel: ReactNode;
   }>;
 
+/** The shelf card grammar's hover intent (docs/planning/04-visual-interaction-spec.md). */
+const HOVER_INTENT_MS = 200;
+
 function supportsExpansion() {
   return (
     window.matchMedia?.("(min-width: 768px) and (hover: hover) and (pointer: fine)").matches ??
@@ -126,7 +129,7 @@ export function ExpandableMediaCard({
     hoverTimer.current = setTimeout(() => {
       hoverTimer.current = null;
       open(card);
-    }, 200);
+    }, HOVER_INTENT_MS);
   };
 
   useEffect(() => () => cancelHoverIntent(), []);

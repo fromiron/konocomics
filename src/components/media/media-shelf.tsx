@@ -44,6 +44,8 @@ type ScrollState = Readonly<{
   first: number;
   last: number;
   total: number;
+  /** The first cover's vertical centre in the track, where the overlay controls sit. */
+  controlTop: number | null;
 }>;
 
 const initialScrollState: ScrollState = {
@@ -54,15 +56,23 @@ const initialScrollState: ScrollState = {
   first: 0,
   last: 0,
   total: 0,
+  controlTop: null,
 };
 
-/** Scroll padding that bleeds the track under the edge fades; cards align inside it. */
+/** The faded edges of the track: cards outside the scroll padding are not fully shown (04 §7). */
 function trackInset(track: HTMLElement) {
   const style = getComputedStyle(track);
   return {
     start: parseFloat(style.scrollPaddingLeft) || 0,
     end: parseFloat(style.scrollPaddingRight) || 0,
   };
+}
+
+function coverCentre(track: HTMLElement, trackTop: number) {
+  const cover = track.querySelector(".cover-image")?.getBoundingClientRect();
+  return cover === undefined || cover.height <= 0
+    ? null
+    : Math.round(cover.top + cover.height / 2 - trackTop);
 }
 
 const focusableCardTarget =
@@ -85,6 +95,10 @@ export function MediaShelf({
 }: MediaShelfProps) {
   const headingId = useId();
   const trackRef = useRef<HTMLElement | null>(null);
+  const previousButtonRef = useRef<HTMLButtonElement | null>(null);
+  const nextButtonRef = useRef<HTMLButtonElement | null>(null);
+  // A focused control that disappears at its end hands focus to the opposite control.
+  const pendingFocusRef = useRef<-1 | 1 | null>(null);
   const [scrollState, setScrollState] = useState(initialScrollState);
   const updateScrollState = useCallback(() => {
     const track = trackRef.current;
@@ -94,12 +108,13 @@ export function MediaShelf({
     const cards = Array.from(track.children);
     const bounds = track.getBoundingClientRect();
     const { start, end } = trackInset(track);
-    // Cards peeking into the faded inset are not counted as shown.
+    const visibleLeft = bounds.left + start;
+    const visibleRight = bounds.right - end;
+    // A card counts as shown when at least half of it is outside the faded edges.
     const visible = cards.flatMap((card, index) => {
       const rect = card.getBoundingClientRect();
-      return rect.right > bounds.left + start + 1 && rect.left < bounds.right - end - 1
-        ? [index + 1]
-        : [];
+      const shown = Math.min(rect.right, visibleRight) - Math.max(rect.left, visibleLeft);
+      return shown > 0 && shown >= rect.width / 2 ? [index + 1] : [];
     });
     const next = {
       measured: true,
@@ -109,7 +124,14 @@ export function MediaShelf({
       first: visible[0] ?? (cards.length > 0 ? 1 : 0),
       last: visible.at(-1) ?? cards.length,
       total: cards.length,
+      controlTop: coverCentre(track, bounds.top),
     };
+    const active = document.activeElement;
+    if (active !== null && active === previousButtonRef.current && !next.canScrollBack) {
+      pendingFocusRef.current = 1;
+    } else if (active !== null && active === nextButtonRef.current && !next.canScrollForward) {
+      pendingFocusRef.current = -1;
+    }
     setScrollState((current) =>
       current.measured &&
       current.hasOverflow === next.hasOverflow &&
@@ -117,7 +139,8 @@ export function MediaShelf({
       current.canScrollForward === next.canScrollForward &&
       current.first === next.first &&
       current.last === next.last &&
-      current.total === next.total
+      current.total === next.total &&
+      current.controlTop === next.controlTop
         ? current
         : next,
     );
@@ -139,6 +162,13 @@ export function MediaShelf({
   }, [children, updateScrollState]);
 
   useLayoutEffect(updateScrollState, [children, updateScrollState]);
+
+  useLayoutEffect(() => {
+    const direction = pendingFocusRef.current;
+    if (direction === null) return;
+    pendingFocusRef.current = null;
+    (direction === -1 ? previousButtonRef : nextButtonRef).current?.focus({ preventScroll: true });
+  }, [scrollState]);
 
   if (Children.count(children) === 0) return null;
 
@@ -233,11 +263,19 @@ export function MediaShelf({
       aria-label={direction === -1 ? mediaStrings.previous(title) : mediaStrings.next(title)}
       className={
         controlsPlacement === "overlay"
-          ? "pointer-events-auto rounded-full border-line bg-surface-overlay"
+          ? "media-shelf-overlay__button pointer-events-auto rounded-full border-line bg-surface-overlay"
           : "rounded-full"
       }
-      disabled={direction === -1 ? !scrollState.canScrollBack : !scrollState.canScrollForward}
+      // Overlay controls are not rendered at their own end; heading controls keep their place.
+      disabled={
+        controlsPlacement === "overlay"
+          ? undefined
+          : direction === -1
+            ? !scrollState.canScrollBack
+            : !scrollState.canScrollForward
+      }
       onClick={() => move(direction)}
+      ref={direction === -1 ? previousButtonRef : nextButtonRef}
       size="icon"
       type="button"
       variant="outline"
@@ -249,13 +287,14 @@ export function MediaShelf({
       )}
     </Button>
   );
+  const controlStyle = { top: scrollState.controlTop ?? "50%" };
 
   const hasHeadingControls = scrollState.hasOverflow && controlsPlacement === "heading";
   const headingAction = (
     <>
       {action}
       {hasHeadingControls ? (
-        <span className="hidden gap-[var(--space-content-tight)] [@media(min-width:768px)_and_(hover:hover)_and_(pointer:fine)]:flex">
+        <span className="hidden gap-[var(--space-content-tight)] fine-hover:flex">
           {scrollButton(-1)}
           {scrollButton(1)}
         </span>
@@ -267,7 +306,7 @@ export function MediaShelf({
     <section
       aria-label={hideHeading ? title : undefined}
       aria-labelledby={hideHeading ? undefined : headingId}
-      className={cn("relative min-w-0", className)}
+      className={cn("media-shelf relative min-w-0", className)}
     >
       {hideHeading ? (
         action != null || hasHeadingControls ? (
@@ -301,10 +340,12 @@ export function MediaShelf({
         </p>
       )}
       {controlsPlacement === "overlay" ? (
+        // The overlay is its own stacking context: fades and controls sit over the cards but never
+        // over the sticky header or anything else on the page (04 §7).
         <div className="media-shelf-overlay relative">
           {track}
           {scrollState.hasOverflow ? (
-            <span className="pointer-events-none absolute inset-0 z-30 hidden [@media(min-width:768px)_and_(hover:hover)_and_(pointer:fine)]:block">
+            <span className="pointer-events-none absolute inset-0 z-10 hidden fine-hover:block">
               <span
                 aria-hidden="true"
                 className={cn(
@@ -319,12 +360,22 @@ export function MediaShelf({
                   !scrollState.canScrollForward && "hidden",
                 )}
               />
-              <span className="media-shelf-overlay__control--start absolute top-1/2 left-0 z-10 -translate-y-1/2">
-                {scrollButton(-1)}
-              </span>
-              <span className="media-shelf-overlay__control--end absolute top-1/2 right-0 z-10 -translate-y-1/2">
-                {scrollButton(1)}
-              </span>
+              {scrollState.canScrollBack ? (
+                <span
+                  className="media-shelf-overlay__control--start absolute left-0 z-10 -translate-y-1/2"
+                  style={controlStyle}
+                >
+                  {scrollButton(-1)}
+                </span>
+              ) : null}
+              {scrollState.canScrollForward ? (
+                <span
+                  className="media-shelf-overlay__control--end absolute right-0 z-10 -translate-y-1/2"
+                  style={controlStyle}
+                >
+                  {scrollButton(1)}
+                </span>
+              ) : null}
             </span>
           ) : null}
         </div>

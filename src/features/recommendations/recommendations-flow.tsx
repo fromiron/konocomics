@@ -21,8 +21,8 @@ import { Snackbar, snackbarClassName, type SnackbarNotice } from "@/components/l
 import { Button } from "@/components/design-system/button";
 import { PageHeader } from "@/components/layout/page-header";
 import { MediaShelf } from "@/components/media/media-shelf";
-import { RankingCard } from "@/components/media/ranking-card";
 import { RankingShelf } from "@/components/media/ranking-shelf";
+import { EXPAND_SHELF_TRACK_CLASSNAME, useExpandShelf } from "@/components/media/use-expand-shelf";
 import { confirmedSeriesVolumeCounts } from "@/domain/catalog/series";
 import type { GenreTag } from "@/domain/catalog/types";
 import type { ExplanationFactorId } from "@/domain/explanation";
@@ -76,7 +76,7 @@ import {
 } from "@/lib/strings";
 import { cn } from "@/lib/utils";
 
-import type { PendingRecommendationFeedback } from "./feedback-dialog";
+import type { PendingRecommendationFeedback, RecommendationRemovalKind } from "./feedback-dialog";
 import { FeedbackImpactSummary } from "./feedback-impact-summary";
 import { dismissForMood, selectMood, useMoodSession } from "./mood-session";
 import { RecommendationCard } from "./recommendation-card";
@@ -94,14 +94,15 @@ import {
   type RecommendationShelfDestination,
 } from "./recommendation-shelf-navigation";
 import { loadRecommendationMotionList } from "./recommendation-motion-loader";
-import { RecommendationShelfCard } from "./recommendation-shelf-card";
+import { RecommendationsLoadingPage, RecommendationsSkeleton } from "./recommendations-skeleton";
+import { RecommendationShelfCard, rankingShelfCardId } from "./recommendation-shelf-card";
 import type {
   RecommendationMotionItem,
   RecommendationMotionListProps,
 } from "./recommendation-motion-list";
 
 const RECOMMENDATION_CAROUSEL_TRACK_CLASSNAME =
-  "recommendations-list relative items-stretch gap-[var(--space-3)] [--featured-card-basis:17rem] sm:[--featured-card-basis:19rem] [@media(min-width:768px)_and_(hover:hover)_and_(pointer:fine)]:[--featured-card-basis:21.5rem]";
+  "recommendations-list relative items-stretch gap-[var(--space-3)] [--featured-card-basis:17rem] sm:[--featured-card-basis:19rem] fine-hover:[--featured-card-basis:21.5rem]";
 
 function scrollToRecommendationShelf(shelf: string, focus = false) {
   const target = document.getElementById(`recommendation-shelf-${shelf}`);
@@ -125,7 +126,7 @@ const EMPTY_RECORDS: readonly UserWorkRecord[] = [];
 
 /** What a 「読んだ」/「興味なし」 removal replaced, so the snackbar can put it back. */
 type RecommendationRemoval = Readonly<{
-  kind: PendingRecommendationFeedback["kind"];
+  kind: RecommendationRemovalKind;
   workId: string;
   title: string;
   updatedAt: string;
@@ -133,6 +134,15 @@ type RecommendationRemoval = Readonly<{
   previousVisibleEntries: RecommendationPlanEntry[];
   removedVisibleEntries: RecommendationPlanEntry[];
 }>;
+/**
+ * Why the stale-input 「更新」 notice waits after an undoable removal (「読んだ」 or 「興味なし」,
+ * 03 §5): the removal is still being saved or its follow-up sheet is open, its 「元に戻す」 notice
+ * is on screen, or an undo has not yet reached the hashed input.
+ */
+type StaleNoticeHold =
+  | Readonly<{ kind: "pending" }>
+  | Readonly<{ kind: "undoNotice"; noticeId: number }>
+  | Readonly<{ kind: "undoing"; workId: string; updatedAt: string }>;
 function mergeFeedbackRecord(previous: UserWorkRecord | undefined, feedback: UserWorkRecord) {
   const next = { ...previous, ...feedback };
   if (next.reaction !== "disliked") delete next.negativeReasons;
@@ -313,45 +323,6 @@ async function recommendationInputHash(input: RecommendationInput) {
   return sha256(serializeRecommendationInput(input));
 }
 
-function RecommendationsSkeleton() {
-  return (
-    <section
-      aria-label={recommendationStrings.calculating}
-      aria-live="polite"
-      className="recommendations-skeleton"
-    >
-      <p className="mb-[var(--space-4)] text-text-muted">{recommendationStrings.calculating}</p>
-      <ol aria-hidden="true" className="m-0 grid list-none gap-[var(--space-4)] p-0">
-        {Array.from({ length: 10 }, (_, index) => (
-          <li
-            className="grid min-h-[calc(var(--recommendation-cover-width)*1.43)] grid-cols-[var(--recommendation-cover-width)_minmax(0,1fr)] gap-[var(--space-4)] rounded-[var(--radius-media-card)] border border-line bg-surface-1 p-[var(--space-4)]"
-            key={index}
-          >
-            <span
-              className="skeleton-tone block aspect-[30/43] rounded-[var(--radius-cover)]"
-              data-reduced-motion="fade"
-            />
-            <div className="grid content-start gap-[var(--space-3)]">
-              <span
-                className="skeleton-tone block h-[var(--space-4)] rounded-[var(--radius-cover)]"
-                data-reduced-motion="fade"
-              />
-              <span
-                className="skeleton-tone block h-[var(--space-4)] w-2/3 rounded-[var(--radius-cover)]"
-                data-reduced-motion="fade"
-              />
-              <span
-                className="skeleton-tone block h-[var(--space-8)] rounded-[var(--radius-cover)]"
-                data-reduced-motion="fade"
-              />
-            </div>
-          </li>
-        ))}
-      </ol>
-    </section>
-  );
-}
-
 export function RecommendationsFlow({
   context,
   genre,
@@ -383,7 +354,9 @@ export function RecommendationsFlow({
     externalWorks,
   } = usePersistence();
   const [localPolicies, setLocalPolicies] = useState<RecommendationPolicies | null>(null);
-  const [expandedAnchorId, setExpandedAnchorId] = useState<string | null>(null);
+  // The one open shelf card panel on the page: a lens card's work ID, or `ranking:<workId>` for
+  // a ranks 11-20 card, since the same work can be in both shelves.
+  const expandShelf = useExpandShelf();
   const introRef = useRef<HTMLDivElement>(null);
   const featuredEntryConsumed = useRef(false);
   const restoredShelf = useRef<string | undefined>(undefined);
@@ -409,6 +382,7 @@ export function RecommendationsFlow({
   const [feedbackBaseBusy, setFeedbackBaseBusy] = useState(false);
   const [feedbackError, setFeedbackError] = useState("");
   const [undoNotice, setUndoNotice] = useState<SnackbarNotice | undefined>(undefined);
+  const [staleNoticeHold, setStaleNoticeHold] = useState<StaleNoticeHold | null>(null);
   const lastRemoval = useRef<RecommendationRemoval | null>(null);
   const undoNoticeSequence = useRef(0);
   const [MotionList, setMotionList] = useState<RecommendationMotionListComponent | null>(null);
@@ -429,6 +403,7 @@ export function RecommendationsFlow({
   const motionListRequest = useRef<Promise<void> | null>(null);
   const pendingMotionFocus = useRef<MotionFocusTarget | null>(null);
   const [previewOpener, setPreviewOpener] = useState<HTMLElement | null>(null);
+  const [previewShelf, setPreviewShelf] = useState<"ranking" | undefined>(undefined);
   const records = userWorks ?? EMPTY_RECORDS;
   const libraryRecords = [...records, ...(externalWorks ?? []).map((work) => work.record)];
   const profileRecords = useMemo(
@@ -506,6 +481,35 @@ export function RecommendationsFlow({
     [moodPlan, planPolicies, policies],
   );
   const displayedEntries = moodVisibleEntries ?? visibleEntries;
+  // Ranks 11-20 continue the all-genre list with the same list constraints.
+  // A short top list means the constraints found nothing more, so ranks 11-20 stay empty.
+  const rankingPlanEntries = useMemo(() => {
+    const hasCatalogData = (entry: RecommendationPlanEntry) =>
+      !excludedWorkIds.has(entry.workId) &&
+      worksById.has(entry.workId) &&
+      context?.constraintByWorkId[entry.workId] !== undefined;
+    const renderedEntries = displayedEntries.filter(hasCatalogData);
+    if (renderedEntries.length < FEATURED_RECOMMENDATION_LIMIT) return [];
+    const renderedWorkIds = new Set(renderedEntries.map((entry) => entry.workId));
+    const candidates = (moodPlan ?? plan ?? []).filter(hasCatalogData);
+    const rankingWorkIds = new Set(
+      selectRecommendationPlanEntries(
+        candidates.filter((entry) => !renderedWorkIds.has(entry.workId)),
+        planPolicies ?? policies,
+        RANKING_RECOMMENDATION_LIMIT,
+      ).map((entry) => entry.workId),
+    );
+    return candidates.filter((entry) => rankingWorkIds.has(entry.workId));
+  }, [
+    context,
+    displayedEntries,
+    excludedWorkIds,
+    moodPlan,
+    plan,
+    planPolicies,
+    policies,
+    worksById,
+  ]);
   const explanations = useMemo(
     () =>
       generateVariedTasteExplanations(
@@ -516,6 +520,8 @@ export function RecommendationsFlow({
               (entry) => genre === undefined || worksById.get(entry.workId)?.genres.includes(genre),
             )
             .slice(0, RECOMMENDATION_LENS_CANDIDATE_LIMIT),
+          // Last, so their cards and Quick Preview share one reason without changing the rest.
+          ...rankingPlanEntries,
         ].map((entry) => ({
           workId: entry.workId,
           contributions: entry.contributions,
@@ -524,7 +530,7 @@ export function RecommendationsFlow({
           resolveTitle: (workId: string) => worksById.get(workId)?.title,
         })),
       ),
-    [displayedEntries, genre, moodPlan, plan, worksById],
+    [displayedEntries, genre, moodPlan, plan, rankingPlanEntries, worksById],
   );
   const {
     discoveryEntries,
@@ -604,30 +610,13 @@ export function RecommendationsFlow({
     const nextDiscoveryEntries = auxiliaryEntries
       .filter(({ entry }) => entry.isDiscovery && !usedAuxiliaryIds.has(entry.workId))
       .slice(0, 6);
-    // Ranks 11-20 continue the all-genre list with the same list constraints.
-    // A short top list means the constraints found nothing more, so ranks 11-20 stay empty.
-    const renderedWorkIds = new Set(nextRenderedEntries.map(({ entry }) => entry.workId));
-    const rankingWorkIds = new Set(
-      nextRenderedEntries.length < FEATURED_RECOMMENDATION_LIMIT
-        ? []
-        : selectRecommendationPlanEntries(
-            candidatePlanEntries
-              .map(({ entry }) => entry)
-              .filter((entry) => !renderedWorkIds.has(entry.workId)),
-            planPolicies ?? policies,
-            RANKING_RECOMMENDATION_LIMIT,
-          ).map((entry) => entry.workId),
-    );
-    const nextRankingEntries = candidatePlanEntries.filter(({ entry }) =>
-      rankingWorkIds.has(entry.workId),
-    );
 
     return {
       discoveryEntries: nextDiscoveryEntries,
       featuredEntries: nextFeaturedEntries,
       lensShelves: nextLensShelves,
       previewEntry: nextAllPlanEntries.find(({ entry }) => entry.workId === previewWorkId) ?? null,
-      rankingEntries: nextRankingEntries,
+      rankingEntries: withCatalogData(rankingPlanEntries),
       renderedEntries: nextRenderedEntries,
     };
   }, [
@@ -638,9 +627,8 @@ export function RecommendationsFlow({
     genre,
     moodPlan,
     plan,
-    planPolicies,
-    policies,
     previewWorkId,
+    rankingPlanEntries,
     worksById,
   ]);
   const shelfDestinations = useMemo<RecommendationShelfDestination[]>(() => {
@@ -952,16 +940,20 @@ export function RecommendationsFlow({
     });
   };
 
-  const focusAfterDialog = (workId: string | null) => {
+  const focusAfterDialog = (workId: string | null, shelf?: "ranking") => {
     window.requestAnimationFrame(() => {
       window.requestAnimationFrame(() => {
         const target =
           workId === null
             ? null
-            : (articleRefs.current.get(workId) ??
-              document
-                .getElementById(`recommendation-shelf-work-${workId}`)
-                ?.querySelector<HTMLAnchorElement>("a"));
+            : shelf === "ranking"
+              ? document
+                  .getElementById(rankingShelfCardId(workId))
+                  ?.querySelector<HTMLAnchorElement>("a")
+              : (articleRefs.current.get(workId) ??
+                document
+                  .getElementById(`recommendation-shelf-work-${workId}`)
+                  ?.querySelector<HTMLAnchorElement>("a"));
         if (target?.isConnected) {
           target.focus();
         } else {
@@ -978,6 +970,9 @@ export function RecommendationsFlow({
     }
     feedbackBaseInFlight.current = true;
     setFeedbackBaseBusy(true);
+    // An undone removal keeps the 「更新」 notice back until the restored input is hashed, so a
+    // list that is current again never flashes it.
+    setStaleNoticeHold({ kind: "undoing", workId: removal.workId, updatedAt: removal.updatedAt });
     setUndoNotice(undefined);
     setActionError("");
     try {
@@ -990,6 +985,7 @@ export function RecommendationsFlow({
       } else {
         const result = await removeUserWorkIfUnchanged(removal.workId, removal.updatedAt);
         if (result !== "removed") {
+          setStaleNoticeHold(null);
           announce(recommendationStrings.announcements.undoConflict);
           return;
         }
@@ -1007,6 +1003,7 @@ export function RecommendationsFlow({
       setBackfillIds(new Set([removal.workId]));
       announce(recommendationStrings.announcements.undone(removal.title));
     } catch (error) {
+      setStaleNoticeHold(null);
       setActionError(
         error instanceof UserWorkConflictError
           ? recommendationStrings.announcements.undoConflict
@@ -1018,24 +1015,38 @@ export function RecommendationsFlow({
     }
   };
 
+  // The removal line is replaced by the undoable confirmation in the same corner, so only one
+  // notice is ever on screen.
+  const showUndoNotice = (removal: RecommendationRemoval, text: string) => {
+    const id = (undoNoticeSequence.current += 1);
+    announce("");
+    // The undoable notice has the corner to itself; 「更新」 waits until it is gone (03 §5).
+    setStaleNoticeHold({ kind: "undoNotice", noticeId: id });
+    setUndoNotice({
+      id,
+      text,
+      tone: "status",
+      action: {
+        label: recommendationStrings.announcements.undo,
+        onAction: () => void undoRemoval(removal),
+      },
+    });
+  };
+
   const closeFeedback = () => {
     const focusWorkId = feedback?.focusWorkId ?? null;
     const removal = lastRemoval.current;
     setFeedback(null);
     setFeedbackError("");
-    focusAfterDialog(focusWorkId);
+    focusAfterDialog(focusWorkId, feedback?.focusShelf);
     if (removal !== null && removal.workId === feedback?.workId) {
-      // The removal line is replaced by the undoable confirmation in the same corner.
-      announce("");
-      setUndoNotice({
-        id: (undoNoticeSequence.current += 1),
-        text: recommendationStrings.announcements.recorded[removal.kind](removal.title),
-        tone: "status",
-        action: {
-          label: recommendationStrings.announcements.undo,
-          onAction: () => void undoRemoval(removal),
-        },
-      });
+      showUndoNotice(
+        removal,
+        recommendationStrings.announcements.recorded[removal.kind](removal.title),
+      );
+    } else {
+      // Nothing to undo, so nothing keeps 「更新」 back.
+      setStaleNoticeHold(null);
     }
   };
 
@@ -1079,7 +1090,7 @@ export function RecommendationsFlow({
     }
   };
 
-  const dismissForToday = (entry: RecommendationPlanEntry) => {
+  const dismissForToday = (entry: RecommendationPlanEntry, origin?: "ranking") => {
     const work = worksById.get(entry.workId);
     if (
       mood === null ||
@@ -1090,7 +1101,10 @@ export function RecommendationsFlow({
     ) {
       return;
     }
+    // A ranks 11-20 card keeps focus in its own shelf, even when a lens shelf has the work too.
+    const rankingShelf = rankingEntries.map(({ entry: item }) => item);
     const shelf = [
+      ...(origin === "ranking" ? [rankingShelf] : []),
       ...lensShelves.map(({ items }) => items.map(({ entry: item }) => item)),
       discoveryEntries.map(({ entry: item }) => item),
       displayedEntries,
@@ -1101,11 +1115,11 @@ export function RecommendationsFlow({
       activateLoadedMotionList();
     }
     if (previewWorkId === entry.workId) onPreviewClose?.();
-    setExpandedAnchorId(null);
+    expandShelf.close();
     setBackfillIds(new Set());
     dismissForMood(mood, entry.workId, catalog.catalogVersion);
     announce(recommendationStrings.mood.dismissed(work.title));
-    focusAfterDialog(neighbor?.workId ?? null);
+    focusAfterDialog(neighbor?.workId ?? null, shelf === rankingShelf ? "ranking" : undefined);
   };
 
   const changeMood = (nextMood: RecommendationMood | null) => {
@@ -1113,7 +1127,7 @@ export function RecommendationsFlow({
       return;
     }
     deactivateMotionList();
-    setExpandedAnchorId(null);
+    expandShelf.close();
     setBackfillIds(new Set());
     selectMood(nextMood, catalog.catalogVersion);
     onMoodChange?.(nextMood);
@@ -1121,7 +1135,8 @@ export function RecommendationsFlow({
 
   const removeForFeedback = async (
     entry: RecommendationPlanEntry,
-    kind: PendingRecommendationFeedback["kind"],
+    kind: RecommendationRemovalKind,
+    origin?: "ranking",
   ) => {
     const work = worksById.get(entry.workId);
     if (
@@ -1137,6 +1152,8 @@ export function RecommendationsFlow({
     setFeedbackBaseBusy(true);
     setWorkBusy(entry.workId, true);
     setActionError("");
+    // Held through the save and, for 「読んだ」, its follow-up sheet until the undoable notice.
+    setStaleNoticeHold({ kind: "pending" });
     setUndoNotice(undefined);
     const previousRecord = records.find((record) => record.workId === entry.workId);
     const previousVisibleEntries = visibleEntries;
@@ -1198,9 +1215,12 @@ export function RecommendationsFlow({
           .filter((candidate) => !displayedSurvivorIds.has(candidate.workId))
           .map((candidate) => candidate.workId),
       );
-      const shelf = [...lensShelves.map(({ items }) => items), discoveryEntries].find((entries) =>
-        entries.some((candidate) => candidate.entry.workId === entry.workId),
-      );
+      // A ranks 11-20 card keeps focus in its own shelf, even when a lens shelf has the work too.
+      const shelf = [
+        ...(origin === "ranking" ? [rankingEntries] : []),
+        ...lensShelves.map(({ items }) => items),
+        discoveryEntries,
+      ].find((entries) => entries.some((candidate) => candidate.entry.workId === entry.workId));
       const shelfIndex = shelf?.findIndex((candidate) => candidate.entry.workId === entry.workId);
       const shelfNeighbor =
         shelfIndex === undefined ? undefined : (shelf?.[shelfIndex + 1] ?? shelf?.[shelfIndex - 1]);
@@ -1208,11 +1228,11 @@ export function RecommendationsFlow({
         shelfNeighbor?.entry ??
         nextDisplayed[Math.min(Math.max(displayedIndex, 0), nextDisplayed.length - 1)];
       if (displayedIndex >= 0) activateLoadedMotionList();
-      setExpandedAnchorId(null);
+      expandShelf.close();
       setExcludedWorkIds(nextExcludedWorkIds);
       setBackfillIds(addedIds);
       setVisibleEntries(nextEntries);
-      lastRemoval.current = {
+      const removal: RecommendationRemoval = {
         kind,
         workId: entry.workId,
         title: work.title,
@@ -1221,10 +1241,30 @@ export function RecommendationsFlow({
         previousVisibleEntries,
         removedVisibleEntries: nextEntries,
       };
+      lastRemoval.current = removal;
+      const backfilled = addedIds.size > 0;
+      const shortage = !backfilled && displayedIndex >= 0 && nextDisplayed.length < 10;
+      const focusWorkId = focusEntry?.workId ?? null;
+      const focusShelf =
+        shelfNeighbor !== undefined && shelf === rankingEntries ? ("ranking" as const) : undefined;
+      if (kind === "hidden") {
+        // One click is the whole action: the saved record is final, so there is no follow-up
+        // sheet, and one undoable notice also says what happened to the list.
+        showUndoNotice(
+          removal,
+          backfilled
+            ? recommendationStrings.announcements.hiddenAndBackfilled(work.title)
+            : shortage
+              ? recommendationStrings.announcements.hiddenWithoutBackfill(work.title)
+              : recommendationStrings.announcements.recorded.hidden(work.title),
+        );
+        focusAfterDialog(focusWorkId, focusShelf);
+        return;
+      }
       announce(
-        addedIds.size > 0
+        backfilled
           ? recommendationStrings.announcements.removedAndBackfilled
-          : displayedIndex >= 0 && nextDisplayed.length < 10
+          : shortage
             ? recommendationStrings.announcements.removedWithoutBackfill
             : recommendationStrings.announcements.removed,
       );
@@ -1233,9 +1273,11 @@ export function RecommendationsFlow({
         workId: entry.workId,
         title: work.title,
         updatedAt,
-        focusWorkId: focusEntry?.workId ?? null,
+        focusWorkId,
+        focusShelf,
       });
     } catch (error) {
+      setStaleNoticeHold(null);
       setActionError(
         error instanceof UserWorkConflictError
           ? libraryStrings.editor.conflict
@@ -1338,8 +1380,9 @@ export function RecommendationsFlow({
     });
   };
 
-  const openPreview = (workId: string) => {
+  const openPreview = (workId: string, shelf?: "ranking") => {
     setPreviewOpener(document.activeElement instanceof HTMLElement ? document.activeElement : null);
+    setPreviewShelf(shelf);
     onPreviewOpen?.(workId);
   };
 
@@ -1349,11 +1392,7 @@ export function RecommendationsFlow({
     storedAdjustments === undefined ||
     storedPolicies === undefined
   ) {
-    return (
-      <main className="mx-auto min-h-dvh w-full max-w-[var(--layout-width-media)] px-[var(--layout-page-padding)] pt-[var(--layout-page-block-start)] [--recommendation-cover-width:104px]">
-        <p aria-live="polite">{recommendationStrings.loading}</p>
-      </main>
-    );
+    return <RecommendationsLoadingPage status={recommendationStrings.loading} />;
   }
 
   const previewExplanation =
@@ -1368,12 +1407,28 @@ export function RecommendationsFlow({
         }));
   const hasInvalidEntry = renderedEntries.length !== displayedEntries.length;
   const moodLabel = mood === null ? null : recommendationStrings.mood.labels[mood];
-  const moodDismissHandler = (entry: RecommendationPlanEntry) =>
-    mood === null ? undefined : () => dismissForToday(entry);
+  const moodDismissHandler = (entry: RecommendationPlanEntry, origin?: "ranking") =>
+    mood === null ? undefined : () => dismissForToday(entry, origin);
   const previewMatchesMood =
     mood !== null && previewEntry !== null && workMatchesMood(previewEntry.work, mood);
   const showInitialError =
     (context === null || calculationError !== "" || hasInvalidEntry) && plan === null;
+  const staleNoticeHeld =
+    staleNoticeHold?.kind === "pending" ||
+    (staleNoticeHold?.kind === "undoNotice" && undoNotice?.id === staleNoticeHold.noticeId) ||
+    (staleNoticeHold?.kind === "undoing" &&
+      (currentHash === null ||
+        currentHashResult?.input.records.some(
+          (record) =>
+            record.workId === staleNoticeHold.workId &&
+            record.updatedAt === staleNoticeHold.updatedAt,
+        ) === true));
+  const showStaleNotice =
+    !isPolicySaving &&
+    !staleNoticeHeld &&
+    displayedHash !== null &&
+    currentHash !== null &&
+    displayedHash !== currentHash;
   const updateDisabled =
     isComputing ||
     isPolicySaving ||
@@ -1440,34 +1495,35 @@ export function RecommendationsFlow({
     renderedEntries.length >= 1 &&
     renderedEntries.length <= 9 &&
     recommendationItems.length > 0;
-  const renderShelfCard = (
+  // Lens and ranking cards share one open panel; a ranking card has its own key and origin.
+  const shelfCardProps = (
     { entry, work }: (typeof discoveryEntries)[number],
+    origin?: "ranking",
+  ) => {
+    const cardKey = origin === "ranking" ? `ranking:${entry.workId}` : entry.workId;
+    return {
+      busy: isComputing || isPolicySaving || feedbackBaseBusy || busyWorkIds.has(entry.workId),
+      coverUrl: recommendationCoverUrls.get(entry.workId),
+      entry,
+      explanation: explanations.get(entry.workId),
+      ...expandShelf.cardProps(cardKey),
+      itemCaption: itemCaptions.get(entry.workId),
+      onCompleted: () => void removeForFeedback(entry, "completed", origin),
+      onCoverVisible: () => requestCover(entry.workId),
+      onDismissForToday: moodDismissHandler(entry, origin),
+      onHidden: () => void removeForFeedback(entry, "hidden", origin),
+      onPlanned: () => void savePlanned(entry),
+      onPreview: () => openPreview(entry.workId, origin),
+      planned: plannedIds.has(entry.workId),
+      resolveTitle: (workId: string) => worksById.get(workId)?.title,
+      work,
+    };
+  };
+  const renderShelfCard = (
+    item: (typeof discoveryEntries)[number],
     variant: "anchor" | "factor" | "discovery",
   ) => (
-    <RecommendationShelfCard
-      busy={isComputing || isPolicySaving || feedbackBaseBusy || busyWorkIds.has(entry.workId)}
-      coverUrl={recommendationCoverUrls.get(entry.workId)}
-      entry={entry}
-      explanation={explanations.get(entry.workId)}
-      expanded={variant !== "discovery" && expandedAnchorId === entry.workId}
-      itemCaption={itemCaptions.get(entry.workId)}
-      key={entry.workId}
-      onCompleted={() => void removeForFeedback(entry, "completed")}
-      onCoverVisible={() => requestCover(entry.workId)}
-      onDismissForToday={moodDismissHandler(entry)}
-      onExpandedChange={(expanded) =>
-        setExpandedAnchorId((current) =>
-          expanded ? entry.workId : current === entry.workId ? null : current,
-        )
-      }
-      onHidden={() => void removeForFeedback(entry, "hidden")}
-      onPlanned={() => void savePlanned(entry)}
-      onPreview={() => openPreview(entry.workId)}
-      planned={plannedIds.has(entry.workId)}
-      resolveTitle={(workId) => worksById.get(workId)?.title}
-      variant={variant}
-      work={work}
-    />
+    <RecommendationShelfCard {...shelfCardProps(item)} key={item.entry.workId} variant={variant} />
   );
 
   return (
@@ -1555,7 +1611,7 @@ export function RecommendationsFlow({
 
             {showSkeleton ? (
               <FeaturedRecommendationState>
-                <RecommendationsSkeleton />
+                <RecommendationsSkeleton status={recommendationStrings.calculating} />
               </FeaturedRecommendationState>
             ) : showInitialError ? (
               <FeaturedRecommendationState>
@@ -1708,12 +1764,7 @@ export function RecommendationsFlow({
                   className="scroll-mt-[var(--space-4)] md:scroll-mt-[calc(var(--control-min-size)+var(--space-2))]"
                   id={`recommendation-shelf-${lens.key}`}
                 />
-                <div
-                  onPointerLeave={(event) => {
-                    if (!event.currentTarget.contains(document.activeElement))
-                      setExpandedAnchorId(null);
-                  }}
-                >
+                <div {...expandShelf.boundaryProps}>
                   <MediaShelf
                     className={cn(
                       "scroll-mt-[var(--space-4)] md:scroll-mt-[calc(var(--control-min-size)+var(--space-2))]",
@@ -1721,9 +1772,9 @@ export function RecommendationsFlow({
                     )}
                     compactHeading
                     controlsPlacement="overlay"
-                    onPageChange={() => setExpandedAnchorId(null)}
+                    onPageChange={expandShelf.close}
                     title={lens.title}
-                    trackClassName="!pb-[var(--space-1)] has-[[data-expansion-active]]:!snap-none"
+                    trackClassName={cn("!pb-[var(--space-1)]", EXPAND_SHELF_TRACK_CLASSNAME)}
                   >
                     {lens.items.map((item) => renderShelfCard(item, lens.variant))}
                   </MediaShelf>
@@ -1756,42 +1807,39 @@ export function RecommendationsFlow({
                   className="scroll-mt-[var(--space-4)] md:scroll-mt-[calc(var(--control-min-size)+var(--space-2))]"
                   id="recommendation-shelf-ranking"
                 />
-                <RankingShelf
-                  className="mt-[var(--space-shelf)] scroll-mt-[var(--space-4)] md:scroll-mt-[calc(var(--control-min-size)+var(--space-2))]"
-                  compactHeading
-                  controlsPlacement="overlay"
-                  description={
-                    mood === null
-                      ? recommendationStrings.shelves.ranking.description
-                      : recommendationStrings.mood.rankingDescription
-                  }
-                  rankingKind="personalized-ranking"
-                  title={recommendationStrings.shelves.ranking.title}
-                  trackClassName="!pb-[var(--space-1)]"
-                >
-                  {rankingEntries.map(({ entry, work }, index) => {
-                    const genres = work.genres
-                      .slice(0, 3)
-                      .map((genre) => onboardingStrings.step1.genreLabels[genre]);
-                    const genreLabels = genres.join(" · ");
+                <div {...expandShelf.boundaryProps}>
+                  <RankingShelf
+                    className="mt-[var(--space-shelf)] scroll-mt-[var(--space-4)] md:scroll-mt-[calc(var(--control-min-size)+var(--space-2))]"
+                    compactHeading
+                    controlsPlacement="overlay"
+                    description={
+                      mood === null
+                        ? recommendationStrings.shelves.ranking.description
+                        : recommendationStrings.mood.rankingDescription
+                    }
+                    onPageChange={expandShelf.close}
+                    rankingKind="personalized-ranking"
+                    title={recommendationStrings.shelves.ranking.title}
+                    trackClassName={cn("!pb-[var(--space-1)]", EXPAND_SHELF_TRACK_CLASSNAME)}
+                  >
+                    {rankingEntries.map((item, index) => {
+                      const genres = item.work.genres
+                        .slice(0, 3)
+                        .map((genre) => onboardingStrings.step1.genreLabels[genre]);
 
-                    return (
-                      <RankingCard
-                        coverUrl={recommendationCoverUrls.get(entry.workId)}
-                        creators={work.creators}
-                        key={entry.workId}
-                        metadata={<GenreChips inline labels={genres} max={2} />}
-                        metadataAccessibleLabel={genreLabels}
-                        onCoverVisible={() => requestCover(entry.workId)}
-                        position={FEATURED_RECOMMENDATION_LIMIT + index + 1}
-                        priority={featuredEntries.length === 0 && index === 0}
-                        rankingKind="personalized-ranking"
-                        title={work.title}
-                        workId={work.id}
-                      />
-                    );
-                  })}
-                </RankingShelf>
+                      return (
+                        <RecommendationShelfCard
+                          {...shelfCardProps(item, "ranking")}
+                          key={item.entry.workId}
+                          metadata={<GenreChips inline labels={genres} max={2} />}
+                          metadataAccessibleLabel={genres.join(" · ")}
+                          rank={FEATURED_RECOMMENDATION_LIMIT + index + 1}
+                          variant="ranking"
+                        />
+                      );
+                    })}
+                  </RankingShelf>
+                </div>
               </>
             ) : null}
             <FeedbackImpactSummary
@@ -1835,15 +1883,17 @@ export function RecommendationsFlow({
                 opener={previewOpener}
                 onCompleted={() => {
                   onPreviewClose?.();
-                  void removeForFeedback(previewEntry.entry, "completed");
+                  void removeForFeedback(previewEntry.entry, "completed", previewShelf);
                 }}
                 onHidden={() => {
                   onPreviewClose?.();
-                  void removeForFeedback(previewEntry.entry, "hidden");
+                  void removeForFeedback(previewEntry.entry, "hidden", previewShelf);
                 }}
                 onCoverVisible={() => requestCover(previewEntry.entry.workId)}
                 onDismissForToday={
-                  previewMatchesMood ? () => dismissForToday(previewEntry.entry) : undefined
+                  previewMatchesMood
+                    ? () => dismissForToday(previewEntry.entry, previewShelf)
+                    : undefined
                 }
                 {...(previewMatchesMood && mood !== null
                   ? { moodLine: recommendationStrings.mood.matchLine[mood] }
@@ -1865,10 +1915,7 @@ export function RecommendationsFlow({
           className="fixed right-[var(--layout-page-padding)] bottom-[calc(var(--layout-mobile-navigation-clearance)+var(--space-4))] z-40 flex w-[min(var(--layout-width-form),calc(100vw-(var(--layout-page-padding)*2)))] flex-col items-end gap-[var(--space-2)] md:bottom-[var(--space-6)]"
           data-recommendation-notifications
         >
-          {!isPolicySaving &&
-          displayedHash !== null &&
-          currentHash !== null &&
-          displayedHash !== currentHash ? (
+          {showStaleNotice ? (
             <div
               className={cn(
                 snackbarClassName,

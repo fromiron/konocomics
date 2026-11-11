@@ -16,7 +16,7 @@ import type {
 } from "@/domain/profile/types";
 import { TasteFlow } from "@/features/taste/taste-flow";
 import { RecommendationDiffPreview } from "@/features/taste/taste-insights";
-import { tasteStrings, mediaStrings } from "@/lib/strings";
+import { explanationLexicon, tasteStrings, mediaStrings } from "@/lib/strings";
 import { createTestAxes, createTestCatalog, createTestWork } from "../../helpers/catalog";
 
 const testState = vi.hoisted(() => ({
@@ -304,8 +304,74 @@ describe("TasteFlow", () => {
     expect(
       within(anchorRegion)
         .getAllByRole("link")
-        .map((link) => link.querySelector("strong")?.textContent),
+        .map((link) => link.querySelector("h3")?.textContent),
     ).toEqual(["作品6", "作品1", "作品2", "作品3", "作品4"]);
+  });
+
+  it("says in each expand panel which preferences the work made, else the reaction", async () => {
+    render(<TasteFlow />);
+
+    const anchorRegion = await screen.findByRole("region", { name: tasteStrings.anchorsHeading });
+    const summary = summarizeMangaDna(
+      (testState.catalog as ReturnType<typeof createTestCatalog>).works,
+      testState.userWorks,
+    );
+    const cards = within(anchorRegion).getAllByRole("article");
+    expect(cards).toHaveLength(5);
+    let withFactors = 0;
+    for (const card of cards) {
+      const title = card.querySelector("h3")?.textContent ?? "";
+      const workId = `work-${title.replace("作品", "")}`;
+      const labels = summary.topPreferences
+        .filter((preference) => preference.anchorWorkIds.includes(workId))
+        .map((preference) => explanationLexicon.factorLabels[preference.factorId]);
+      const panel = card.querySelector("[data-expandable-panel]");
+      expect(panel?.hasAttribute("inert")).toBe(true);
+      const reason = panel?.querySelector("p");
+      if (labels.length > 0) {
+        withFactors += 1;
+        expect(reason?.textContent).toBe(
+          tasteStrings.anchorEvidence
+            .factors(labels)
+            .map((segment) => segment.text)
+            .join(""),
+        );
+        expect([...(reason?.querySelectorAll("strong") ?? [])].map((s) => s.textContent)).toEqual(
+          labels,
+        );
+      } else {
+        expect(reason?.textContent).toBe(tasteStrings.feedbackLabels.liked);
+      }
+      // The panel's one action is the detail page; nothing in it changes a record.
+      expect(
+        [...(panel?.querySelectorAll("a, button") ?? [])].map((action) =>
+          action.getAttribute("aria-label"),
+        ),
+      ).toEqual([mediaStrings.openDetails(title)]);
+    }
+    expect(withFactors).toBeGreaterThan(0);
+  });
+
+  it("opens the same sentence in Quick Preview without changing the URL or saving", async () => {
+    render(<TasteFlow />);
+
+    const anchorRegion = await screen.findByRole("region", { name: tasteStrings.anchorsHeading });
+    const firstCard = within(anchorRegion).getAllByRole("article")[0]!;
+    const title = firstCard.querySelector("h3")?.textContent ?? "";
+    const panelReason = firstCard.querySelector("[data-expandable-panel] p")?.textContent;
+    const urlBefore = window.location.href;
+    fireEvent.click(within(firstCard).getByRole("button", { name: `「${title}」をクイック表示` }));
+
+    const dialog = await screen.findByRole("dialog", { name: title });
+    expect(within(dialog).getByText(tasteStrings.anchorEvidence.previewDescription)).toBeTruthy();
+    expect(dialog.querySelector("[data-reason-bubble] p")?.textContent).toBe(panelReason);
+    expect(
+      within(dialog)
+        .getAllByRole("link")
+        .map((link) => link.getAttribute("aria-label")),
+    ).toEqual([mediaStrings.openDetails(title)]);
+    expect(window.location.href).toBe(urlBefore);
+    expect(testState.saveProfileAdjustments).not.toHaveBeenCalled();
   });
 
   it("renders cached Rakuten covers for positive anchor works", async () => {
@@ -323,10 +389,11 @@ describe("TasteFlow", () => {
       metadataExpiresAt: "2099-08-14T00:00:00.000Z",
     });
 
-    const { container } = render(<TasteFlow />);
+    render(<TasteFlow />);
 
+    const anchorRegion = await screen.findByRole("region", { name: tasteStrings.anchorsHeading });
     await waitFor(() => {
-      const source = container.querySelector<HTMLImageElement>(".taste-anchor-cover img")?.src;
+      const source = anchorRegion.querySelector<HTMLImageElement>("article img")?.src;
       expect(source).toBeTruthy();
       const url = new URL(source!);
       // Cover sizing can adapt to the grid; the cached source image must be preserved.
@@ -563,9 +630,11 @@ describe("TasteFlow", () => {
     expect(firstSegment.getAttribute("aria-pressed")).toBe("false");
     expect(testState.saveProfileAdjustments).not.toHaveBeenCalled();
     const anchorRegion = screen.getByRole("region", { name: tasteStrings.anchorsHeading });
-    expect(within(anchorRegion).queryByRole("img")).toBeNull();
-    expect(anchorRegion.querySelectorAll("li > a")).toHaveLength(5);
-    expect(anchorRegion.querySelector("li > .visually-hidden")).toBeNull();
+    const anchorCards = within(anchorRegion).getAllByRole("article");
+    expect(anchorCards).toHaveLength(5);
+    for (const card of anchorCards) {
+      expect(card.querySelector("[data-expandable-panel] p")?.textContent).toBeTruthy();
+    }
     expect(anchorRegion.innerHTML).not.toContain("linear-gradient");
     expect(screen.queryByRole("heading", { name: tasteStrings.topPreferencesHeading })).toBeNull();
     expect(axes.textContent).toContain("『作品");

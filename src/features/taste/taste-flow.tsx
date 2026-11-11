@@ -3,12 +3,26 @@
 import { Link } from "@tanstack/react-router";
 import { ChevronDownIcon, RotateCcwIcon } from "lucide-react";
 import { LazyMotion, domAnimation, m } from "motion/react";
-import { type CSSProperties, useCallback, useEffect, useMemo, useRef, useState } from "react";
+import {
+  type CSSProperties,
+  Fragment,
+  lazy,
+  Suspense,
+  useCallback,
+  useEffect,
+  useMemo,
+  useRef,
+  useState,
+} from "react";
 
 import { Button, buttonClassName } from "@/components/design-system/button";
 import { PageHeader } from "@/components/layout/page-header";
 import { summaryLinkClassName } from "@/components/layout/summary-section";
-import { CoverImage } from "@/components/cover/CoverImage";
+import { ExpandPanel, PanelReason } from "@/components/media/expand-panel";
+import { ExpandShelfCard, QuickPreviewControl } from "@/components/media/expand-shelf-card";
+import { MediaShelf } from "@/components/media/media-shelf";
+import { EXPAND_SHELF_TRACK_CLASSNAME, useExpandShelf } from "@/components/media/use-expand-shelf";
+import { WorkDetailLink } from "@/components/media/work-detail-link";
 import { useCountUp } from "@/components/motion/use-count-up";
 import { useLiveReducedMotion } from "@/components/motion/use-live-reduced-motion";
 import { usePointerEffect } from "@/components/motion/use-pointer-effects";
@@ -29,6 +43,7 @@ import { calculateProfileConfidence, getConfidenceLevel } from "@/domain/profile
 import type {
   AdjustmentPreference,
   ProfileAdjustments,
+  Reaction,
   UserWorkRecord,
 } from "@/domain/profile/types";
 import { isExternalNegativeReason } from "@/domain/profile/constants";
@@ -46,6 +61,8 @@ import { useTastePreview } from "./use-taste-preview";
 import { DnaShareButton } from "./dna-share-dialog";
 import { AdjustmentRadiogroup } from "./adjustment-radiogroup";
 import { FactorBar } from "@/components/media/factor-bar";
+import { Notice } from "@/components/design-system/notice";
+import { SectionHeading } from "@/components/layout/section-heading";
 import { RecommendationDiffPreview } from "./taste-insights";
 import { DnaWheel } from "./dna-wheel";
 
@@ -102,72 +119,114 @@ function positiveAnchorWorks(
   });
 }
 
-function AnchorStrip({
+/** Where a representative work's evidence comes from: the preferences it made, else the reaction. */
+type AnchorEvidence =
+  | Readonly<{ kind: "factors"; labels: readonly string[] }>
+  | Readonly<{ kind: "reaction"; reaction: Reaction }>;
+
+/** The evidence sentence names at most three preferences. */
+const ANCHOR_FACTOR_LIMIT = 3;
+
+// Loaded on first use, as on the recommendations page.
+const QuickPreviewDialog = lazy(async () => {
+  const module = await import("@/components/media/quick-preview-dialog");
+  return { default: module.QuickPreviewDialog };
+});
+
+/**
+ * The preferences this work made, with their labels in bold; without one, the reader's reaction,
+ * as the old evidence chip said. Nothing here is new evidence.
+ */
+function AnchorEvidenceText({ evidence }: Readonly<{ evidence: AnchorEvidence | undefined }>) {
+  if (evidence === undefined) return null;
+  if (evidence.kind === "reaction") return tasteStrings.feedbackLabels[evidence.reaction];
+  return tasteStrings.anchorEvidence.factors(evidence.labels).map((segment, index) =>
+    segment.emphasis ? (
+      <strong className="font-bold text-text-strong" key={index}>
+        {segment.text}
+      </strong>
+    ) : (
+      <Fragment key={index}>{segment.text}</Fragment>
+    ),
+  );
+}
+
+/**
+ * The representative works as a shelf of expand cards (04 §2.10). A card's panel says which
+ * preferences the work made and links to its detail page; where cards cannot expand, Quick
+ * Preview shows the same. Opening either changes nothing, and its open state stays local.
+ */
+function AnchorShelf({
   anchors,
   animateReveal,
   coverUrls,
-  evidenceLabels,
+  evidence,
   onCoverVisible,
 }: Readonly<{
   anchors: Work[];
   animateReveal: boolean;
   coverUrls: ReadonlyMap<string, string | null>;
-  evidenceLabels: ReadonlyMap<string, string>;
+  evidence: ReadonlyMap<string, AnchorEvidence>;
   onCoverVisible(workId: string): void;
 }>) {
+  const expandShelf = useExpandShelf();
+  const [preview, setPreview] = useState<{ work: Work; opener: HTMLElement } | null>(null);
   const content = (
-    <section
-      aria-labelledby="taste-anchors-heading"
-      className="taste-anchor-strip grid gap-[var(--space-4)]"
-    >
-      <header className="grid gap-[var(--space-1)]">
-        <h2
-          className="text-[length:var(--text-subheading-size)] text-text-strong"
-          id="taste-anchors-heading"
-        >
-          {tasteStrings.anchorsHeading}
-        </h2>
-        <p className="text-[length:var(--font-size-14)] text-text-muted">
-          {tasteStrings.anchorsDescription(anchors.length)}
-        </p>
-      </header>
-      <ul
-        aria-label={tasteStrings.anchorsHeading}
-        className="m-0 grid list-none grid-cols-2 gap-[var(--space-4)] p-0 sm:grid-cols-3 lg:grid-cols-5"
+    <div {...expandShelf.boundaryProps}>
+      <MediaShelf
+        compactHeading
+        controlsPlacement="overlay"
+        description={tasteStrings.anchorsDescription(anchors.length)}
+        onPageChange={expandShelf.close}
+        title={tasteStrings.anchorsHeading}
+        trackClassName={cn("!pb-[var(--space-1)]", EXPAND_SHELF_TRACK_CLASSNAME)}
       >
         {anchors.map((work) => (
-          <li className="min-w-0" key={work.id}>
-            <Link
-              aria-label={mediaStrings.openDetails(work.title)}
-              className="group/evidence grid h-full min-h-[var(--control-min-size)] grid-rows-[auto_1fr] overflow-hidden rounded-[var(--radius-media-card)] border border-line bg-surface-1 transition-colors duration-[var(--motion-duration-value)] focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-ring focus-visible:bg-surface-2 [@media(hover:hover)_and_(pointer:fine)]:hover:bg-surface-2"
-              params={{ workId: work.id }}
-              preload={false}
-              to="/works/$workId"
-            >
-              <CoverImage
-                className="taste-anchor-cover aspect-[30/43] w-full overflow-hidden rounded-none border-0"
-                coverUrl={coverUrls.get(work.id)}
-                creators={work.creators}
-                decorative
-                onVisible={() => onCoverVisible(work.id)}
-                requestedSize={400}
+          <ExpandShelfCard
+            {...expandShelf.cardProps(work.id)}
+            coverUrl={coverUrls.get(work.id)}
+            creators={work.creators}
+            key={work.id}
+            onCoverVisible={() => onCoverVisible(work.id)}
+            panel={
+              <ExpandPanel
+                actions={<WorkDetailLink title={work.title} workId={work.id} />}
+                reason={<AnchorEvidenceText evidence={evidence.get(work.id)} />}
+              />
+            }
+            preview={
+              <QuickPreviewControl
+                onClick={(event) => setPreview({ work, opener: event.currentTarget })}
                 title={work.title}
               />
-              <span className="grid min-w-0 content-start gap-[var(--space-2)] p-[var(--space-3)]">
-                <strong className="line-clamp-2 min-h-[2lh] text-[length:var(--font-size-14)] leading-tight text-text-strong">
-                  {work.title}
-                </strong>
-                {evidenceLabels.has(work.id) ? (
-                  <span className="w-fit max-w-full rounded-[var(--radius-pill)] border border-accent/25 bg-accent-soft px-[var(--space-2)] py-[var(--space-1)] text-[length:var(--text-caption-size)] leading-snug text-accent-ink">
-                    {evidenceLabels.get(work.id)}
-                  </span>
-                ) : null}
-              </span>
-            </Link>
-          </li>
+            }
+            title={work.title}
+            workId={work.id}
+          />
         ))}
-      </ul>
-    </section>
+      </MediaShelf>
+      {preview === null ? null : (
+        <Suspense fallback={null}>
+          <QuickPreviewDialog
+            actions={<WorkDetailLink title={preview.work.title} workId={preview.work.id} />}
+            coverUrl={coverUrls.get(preview.work.id)}
+            description={tasteStrings.anchorEvidence.previewDescription}
+            finalFocusTarget={() => (preview.opener.isConnected ? preview.opener : null)}
+            onCoverVisible={() => onCoverVisible(preview.work.id)}
+            onOpenChange={(open) => {
+              if (!open) setPreview(null);
+            }}
+            open
+            opener={preview.opener}
+            work={preview.work}
+          >
+            <PanelReason>
+              <AnchorEvidenceText evidence={evidence.get(preview.work.id)} />
+            </PanelReason>
+          </QuickPreviewDialog>
+        </Suspense>
+      )}
+    </div>
   );
   return animateReveal ? (
     <m.div
@@ -433,7 +492,7 @@ function FactorGroup<FactorId extends ExplanationFactorId>({
                   orderedPreferences.length,
                   showAll,
                 )}
-                className="mx-auto mt-[var(--space-4)] flex w-fit gap-[var(--space-2)] rounded-[var(--radius-pill)] text-[length:var(--text-caption-size)]"
+                className="mx-auto mt-[var(--space-4)] flex w-fit gap-[var(--space-2)] text-[length:var(--text-caption-size)]"
                 onClick={() => {
                   if (showAll) setPinnedIds(adjustedIds());
                   setShowAll(!showAll);
@@ -569,17 +628,13 @@ function ConfidenceCoachSummary() {
       aria-labelledby="taste-coach-heading"
       className="taste-coach-banner mt-[var(--space-shelf)] flex flex-wrap items-center justify-between gap-[var(--space-5)] rounded-[var(--radius-card)] border border-accent/30 bg-surface-1 p-[var(--space-6)]"
     >
-      <div className="grid gap-[var(--space-2)]">
-        <h2
-          className="text-[length:var(--text-subheading-size)] text-text-strong"
-          id="taste-coach-heading"
-        >
-          {tasteStrings.coach.heading}
-        </h2>
-        <p className="text-[length:var(--font-size-14)] text-text-muted">
-          {tasteStrings.coach.description}
-        </p>
-      </div>
+      <SectionHeading
+        className="mb-0"
+        compact
+        description={tasteStrings.coach.description}
+        id="taste-coach-heading"
+        title={tasteStrings.coach.heading}
+      />
       <Link
         className={buttonClassName({ className: "px-[var(--space-6)]" })}
         preload={false}
@@ -640,13 +695,13 @@ function RecentFeedbackSummary({
       aria-labelledby="taste-negative-heading"
       className="taste-negative-summary mt-[var(--space-shelf-group)] grid gap-[var(--space-3)]"
     >
-      <header className="flex flex-wrap items-center justify-between gap-x-[var(--space-6)]">
-        <h2
-          className="text-[length:var(--text-subheading-size)] leading-snug font-bold text-text-strong"
+      <div className="flex flex-wrap items-center justify-between gap-x-[var(--space-6)]">
+        <SectionHeading
+          className="mb-0"
+          compact
           id="taste-negative-heading"
-        >
-          {tasteStrings.recentFeedbackHeading}
-        </h2>
+          title={tasteStrings.recentFeedbackHeading}
+        />
         <span className="flex flex-wrap items-center gap-x-[var(--space-6)]">
           <Link className={summaryLinkClassName} preload={false} to="/library">
             {tasteStrings.openLibrary}
@@ -661,7 +716,7 @@ function RecentFeedbackSummary({
             </Link>
           ) : null}
         </span>
-      </header>
+      </div>
       <ul className="m-0 flex list-none flex-wrap gap-x-[var(--space-8)] gap-y-[var(--space-4)] p-0">
         {[...groups].map(([status, entries]) => (
           <li className="grid content-start gap-[var(--space-2)]" key={status}>
@@ -821,19 +876,23 @@ export function TasteFlow({
       })
       .slice(0, 5);
   }, [profileRecords, summary.topPreferences, worksById]);
-  const anchorEvidenceLabels = useMemo(() => {
-    const labels = new Map<string, string>();
-    for (const preference of summary.topPreferences) {
-      for (const workId of preference.anchorWorkIds) {
-        if (!labels.has(workId)) labels.set(workId, factorLabel(preference.factorId));
-      }
+  // The same source as the old evidence chip: the top preferences whose evidence names the work,
+  // else the reader's reaction to it.
+  const anchorEvidence = useMemo(() => {
+    const evidence = new Map<string, AnchorEvidence>();
+    for (const work of anchors) {
+      const labels = summary.topPreferences
+        .filter((preference) => preference.anchorWorkIds.includes(work.id))
+        .slice(0, ANCHOR_FACTOR_LIMIT)
+        .map((preference) => factorLabel(preference.factorId));
+      const reaction = profileRecords.find(
+        (record) => record.workId === work.id && record.reaction !== undefined,
+      )?.reaction;
+      if (labels.length > 0) evidence.set(work.id, { kind: "factors", labels });
+      else if (reaction !== undefined) evidence.set(work.id, { kind: "reaction", reaction });
     }
-    for (const record of profileRecords) {
-      if (labels.has(record.workId) || record.reaction === undefined) continue;
-      labels.set(record.workId, tasteStrings.feedbackLabels[record.reaction]);
-    }
-    return labels;
-  }, [profileRecords, summary.topPreferences]);
+    return evidence;
+  }, [anchors, profileRecords, summary.topPreferences]);
   const confidenceLevel = getConfidenceLevel(calculateProfileConfidence(profileRecords));
   const revealCtaRef = usePointerEffect<HTMLAnchorElement>("magnet");
   // The analysed work count is a real integer, so the reveal may count it up (04 §5.2).
@@ -1119,28 +1178,22 @@ export function TasteFlow({
         </div>
 
         {status.state === "degraded" ? (
-          <p
-            className="taste-alert mb-[var(--space-4)] border-l-[length:var(--space-1)] border-warn bg-surface-1 px-[var(--space-4)] py-[var(--space-3)]"
-            role="status"
-          >
+          <Notice className="taste-alert mb-[var(--space-4)]" tone="warn">
             {tasteStrings.storageWarning}
-          </p>
+          </Notice>
         ) : null}
         {errorMessage ? (
-          <p
-            className="taste-alert mb-[var(--space-4)] border-l-[length:var(--space-1)] border-warn bg-surface-1 px-[var(--space-4)] py-[var(--space-3)]"
-            role="alert"
-          >
+          <Notice className="taste-alert mb-[var(--space-4)]" tone="danger">
             {errorMessage}
-          </p>
+          </Notice>
         ) : null}
 
         <div className="mt-[var(--space-shelf)]" {...revealFadeStep(0)}>
-          <AnchorStrip
+          <AnchorShelf
             anchors={anchors}
             animateReveal={revealExperience.animate}
             coverUrls={coverUrls}
-            evidenceLabels={anchorEvidenceLabels}
+            evidence={anchorEvidence}
             onCoverVisible={requestCover}
           />
         </div>
